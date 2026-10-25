@@ -981,13 +981,18 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 			writeAtVersion: async (criteria, columns) =>
 				await em.nativeUpdate(EquipmentSharing, criteria as any, this.mikroOrmUpdateRow({ ...columns }) as any),
 			replaceMembers: async (id, tenantId, members) => {
+				// `filters: false`: MikroORM's default soft-delete filter would hide a sharing this transaction has just
+				// retired (a membership upsert stating `deletedAt`), and the memberships would silently not be replaced.
+				// The tenant stays in the criteria.
 				const sharing = (await em.findOne(
 					EquipmentSharing,
 					{ id, tenantId } as any,
-					{ populate: ['employees', 'teams'], refresh: true } as any
+					{ populate: ['employees', 'teams'], refresh: true, filters: false } as any
 				)) as any;
 				if (!sharing) {
-					return;
+					// The compare-and-set wrote the row in this transaction: not finding it now fails the transaction
+					// rather than committing the columns without the memberships.
+					throw new NotFoundException('Equipment Sharing not found');
 				}
 				if (members.employees) {
 					sharing.employees.set(

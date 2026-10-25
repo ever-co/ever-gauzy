@@ -7,7 +7,7 @@ import { ApprovalPolicyTypesStringEnum, RequestApprovalStatusTypesEnum, RolesEnu
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
-import { RequestApproval } from '../core/entities/internal';
+import { Employee, RequestApproval } from '../core/entities/internal';
 import { ApiException } from '../core/errors/api-exception';
 import { MultiORMEnum } from '../core/utils';
 import { EquipmentSharing } from './equipment-sharing.entity';
@@ -526,5 +526,82 @@ describe('the locked upsert on TypeORM', () => {
 		expect(builder.relation).toHaveBeenCalledWith(EquipmentSharing, 'employees');
 		expect(relation.remove).toHaveBeenCalledWith([EMPLOYEE_1]);
 		expect(relation.add).toHaveBeenCalledWith([EMPLOYEE_2]);
+	});
+});
+
+describe('the locked upsert on MikroORM', () => {
+	beforeEach(() => asUser());
+	afterEach(() => jest.restoreAllMocks());
+
+	function mikroOrm(loaded: Row | null = { employees: { set: jest.fn() }, teams: { set: jest.fn() } }) {
+		const em = {
+			find: jest.fn(async (..._args: unknown[]) => []),
+			findOne: jest.fn(async (..._args: unknown[]) => loaded),
+			getReference: jest.fn((entity: unknown, id: string) => ({ entity, id })),
+			flush: jest.fn(async () => undefined),
+			nativeUpdate: jest.fn(async (..._args: unknown[]) => 1),
+			getMetadata: () => ({ find: () => undefined })
+		};
+		const stored = {
+			id: ID,
+			organizationId: ORG,
+			equipmentId: EQUIPMENT,
+			equipmentSharingPolicyId: null,
+			version: 2
+		};
+		const service = new EquipmentSharingService(
+			{
+				metadata: {
+					tableName: 'equipment_sharing',
+					// The columns the upsert may write (`deletedAt` among them), as the sharing's metadata names them.
+					columns: ['id', 'organizationId', 'equipmentId', 'equipmentSharingPolicyId', 'deletedAt'].map(
+						(propertyName) => ({ propertyName, isPrimary: propertyName === 'id', isUpdate: true })
+					)
+				},
+				findOne: jest.fn(async () => ({ ...stored, deletedAt: null }))
+			} as any,
+			{ getEntityManager: () => ({ transactional: jest.fn(async (work: any) => await work(em)) }) } as any,
+			{} as any,
+			{ dbConnectionOptions: { type: 'postgres' } } as any
+		);
+		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.MikroORM);
+		const read = jest.spyOn(service, 'findOneByIdString').mockResolvedValue({ ...stored, tenantId: TENANT } as any);
+		jest.spyOn(service, 'assertReferencesAreInScope').mockResolvedValue(undefined);
+		jest.spyOn(service as any, 'assertNotForeignRow').mockResolvedValue(undefined);
+		jest.spyOn(service as any, 'assertNestedGraphNotForeign').mockResolvedValue(undefined);
+		jest.spyOn(service as any, 'assertInsideOrganizationBoundary').mockResolvedValue(undefined);
+		jest.spyOn(service as any, 'mikroOrmUpdateRow').mockImplementation((row: any) => ({ ...row }));
+		return { service, em, read };
+	}
+
+	it('replaces the memberships of a sharing the same upsert retires: the reload sees past the soft-delete filter', async () => {
+		const loaded = { employees: { set: jest.fn() }, teams: { set: jest.fn() } };
+		const { service, em, read } = mikroOrm(loaded);
+		const deletedAt = '2026-10-25T09:00:00.000Z';
+
+		await service.storeCreate({ id: ID, version: 2, deletedAt, employees: [EMPLOYEE_2] } as any, jest.fn());
+
+		// The column write retires the row first (it carries `deletedAt`), then the memberships are read and set.
+		expect(em.nativeUpdate.mock.calls[0][2]).toEqual(expect.objectContaining({ deletedAt }));
+		expect(em.findOne).toHaveBeenCalledWith(
+			EquipmentSharing,
+			{ id: ID, tenantId: TENANT },
+			{ populate: ['employees', 'teams'], refresh: true, filters: false }
+		);
+		expect(loaded.employees.set).toHaveBeenCalledWith([{ entity: Employee, id: EMPLOYEE_2 }]);
+		expect(em.flush).toHaveBeenCalledTimes(1);
+		// And the retired sharing is answered as written.
+		expect(read).toHaveBeenLastCalledWith(ID, { relations: { employees: true, teams: true }, withDeleted: true });
+	});
+
+	it('fails the transaction, rather than commit the columns without the memberships, when the row is not found', async () => {
+		const { service, em } = mikroOrm(null);
+
+		const error = await service
+			.storeCreate({ id: ID, version: 2, employees: [EMPLOYEE_2] } as any, jest.fn())
+			.catch((reason) => reason);
+
+		expect((error as { getStatus(): number }).getStatus()).toBe(404);
+		expect(em.flush).not.toHaveBeenCalled();
 	});
 });
