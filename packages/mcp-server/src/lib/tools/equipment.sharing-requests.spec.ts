@@ -11,6 +11,7 @@ import { apiClient } from '../common/api-client';
 import { authManager } from '../common/auth-manager';
 import {
 	EQUIPMENT_SHARING_REQUESTS_RELATIONS,
+	EQUIPMENT_SHARING_TEAM_MEMBERS_RELATION,
 	equipmentSharingRequestsQuery,
 	equipmentSharingStatusValue,
 	registerEquipmentTools,
@@ -53,6 +54,18 @@ describe('get_equipment_sharing_requests — the query the route reads', () => {
 			relations: [...EQUIPMENT_SHARING_REQUESTS_RELATIONS],
 			findInput: { organizationId: ORGANIZATION, tenantId: TENANT, equipmentId: EQUIPMENT, status: 2 }
 		});
+	});
+
+	it("reads the memberships of the sharings' teams only when an employee is named", () => {
+		const withEmployee = sentData(
+			equipmentSharingRequestsQuery({ organizationId: ORGANIZATION }, { employeeId: EMPLOYEE })
+		);
+		const without = sentData(equipmentSharingRequestsQuery({ organizationId: ORGANIZATION }));
+
+		expect(withEmployee.relations).toContain(EQUIPMENT_SHARING_TEAM_MEMBERS_RELATION);
+		// The employee is applied to the answer, never sent as a column.
+		expect(withEmployee.findInput).toEqual({ organizationId: ORGANIZATION });
+		expect(without.relations).not.toContain(EQUIPMENT_SHARING_TEAM_MEMBERS_RELATION);
 	});
 
 	it('filters on the organization alone when no other filter is given, and loads the memberships', () => {
@@ -109,6 +122,43 @@ describe('get_equipment_sharing_requests — the answer', () => {
 			items: [items[3], items[4]],
 			total: 5
 		});
+	});
+
+	it('matches the employee in any case: a uuid may come upper-case from the caller', () => {
+		expect(selectEquipmentSharingRequests(items, { employeeId: EMPLOYEE.toUpperCase() }).total).toBe(3);
+	});
+
+	it('keeps a sharing for a team the employee is an active member of, and answers it without the memberships', () => {
+		const team = (id: string, members: Array<Record<string, unknown>>) => ({ id, name: id, members });
+		const teamOnly = [
+			{ id: 't1', employees: [], teams: [team('design', [{ employeeId: EMPLOYEE, isActive: true }])] },
+			{ id: 't2', employees: [], teams: [team('ops', [{ employeeId: EMPLOYEE, isActive: false }])] },
+			{
+				id: 't3',
+				employees: [],
+				teams: [team('qa', [{ employeeId: EMPLOYEE, deletedAt: '2026-10-01T00:00:00.000Z' }])]
+			},
+			{ id: 't4', employees: [], teams: [team('sales', [{ employee: { id: EMPLOYEE.toUpperCase() } }])] },
+			{ id: 't5', employees: [], teams: [team('hr', [{ employeeId: OTHER_EMPLOYEE }])] }
+		];
+
+		const selected = selectEquipmentSharingRequests(teamOnly, { employeeId: EMPLOYEE });
+
+		// Active memberships only (an inactive or a removed one is not), in either form the member is read in.
+		expect(selected.items.map((s) => s.id)).toEqual(['t1', 't4']);
+		expect(selected.total).toBe(2);
+		expect(selected.items[0].teams).toEqual([{ id: 'design', name: 'design' }]);
+	});
+
+	it.each([
+		['a page of 0', { page: 0, limit: 2 }],
+		['a negative limit', { page: 1, limit: -1 }],
+		['a fractional page', { page: 1.5, limit: 2 }]
+	])('reads %s as the default page', (_, paging) => {
+		const { items: page } = selectEquipmentSharingRequests(items, paging);
+
+		expect(page[0]).toBe(items[0]);
+		expect(page.length).toBeGreaterThan(0);
 	});
 });
 
