@@ -1801,6 +1801,36 @@
 		}
 	},
 	"DASHBOARD_PAGE": {
+		"TEAMS_DASHBOARD": {
+			"ALL_TEAMS": "Alle Teams",
+			"WORKED_TODAY": "Heute gearbeitet",
+			"TEAMS_ACTIVE": "Aktive Teams",
+			"OF_TEAMS": "von {{ total }} Teams haben Zeit erfasst",
+			"MEMBERS_WORKED": "Aktive Mitglieder",
+			"OF_PROJECTS": "von {{ total }} Projekten",
+			"TEAMS_CAPTION": "Wer am ausgewählten Tag in welchem Team gearbeitet hat",
+			"TOP_MEMBERS": "Top-Mitglieder",
+			"TRACKING_NOW": "Erfassen gerade",
+			"ONLINE_META": "{{ count }} online",
+			"PROJECTS_META": "mit Zeit am ausgewählten Tag",
+			"MEMBERS_CAPTION": "Aufgaben, Zeit und Aktivität jedes Mitglieds am ausgewählten Tag",
+			"OPEN_TEAM": "Teamseite öffnen",
+			"MORE_TASKS": "+{{ count }} weitere",
+			"OF_WORKDAY": "{{ percent }} von {{ hours }}",
+			"SHOW_MEMBERS": "Mitglieder anzeigen",
+			"EXPAND_ALL": "Alle Mitglieder anzeigen",
+			"COLLAPSE_ALL": "Mitglieder ausblenden",
+			"TOTAL_TODAY": "Gesamt heute",
+			"WORKDAY": "Arbeitstag",
+			"SCROLL_TEAMS_BACK": "Vorherige Teams anzeigen",
+			"SCROLL_TEAMS_FORWARD": "Weitere Teams anzeigen",
+			"COLUMNS": {
+				"TEAM": "Team",
+				"WORKED": "Gearbeitet",
+				"NOW": "Jetzt",
+				"NOT_WORKED": "Nicht gearbeitet"
+			}
+		},
 		"ACCOUNTING": "Buchhaltung",
 		"HUMAN_RESOURCES": "Humanressourcen",
 		"TIME_TRACKING": "Zeiterfassung",

@@ -1852,6 +1852,36 @@
 		}
 	},
 	"DASHBOARD_PAGE": {
+		"TEAMS_DASHBOARD": {
+			"ALL_TEAMS": "Все команды",
+			"WORKED_TODAY": "Отработано сегодня",
+			"TEAMS_ACTIVE": "Активные команды",
+			"OF_TEAMS": "из {{ total }} команд учли время",
+			"MEMBERS_WORKED": "Активные участники",
+			"OF_PROJECTS": "из {{ total }} проектов",
+			"TEAMS_CAPTION": "Кто работал в каждой команде в выбранный день",
+			"TOP_MEMBERS": "Самые активные участники",
+			"TRACKING_NOW": "Сейчас учитывают время",
+			"ONLINE_META": "{{ count }} в сети",
+			"PROJECTS_META": "со временем в выбранный день",
+			"MEMBERS_CAPTION": "Задачи, время и активность каждого участника в выбранный день",
+			"OPEN_TEAM": "Открыть страницу команды",
+			"MORE_TASKS": "ещё +{{ count }}",
+			"OF_WORKDAY": "{{ percent }} из {{ hours }}",
+			"SHOW_MEMBERS": "Показать участников",
+			"EXPAND_ALL": "Показать всех участников",
+			"COLLAPSE_ALL": "Скрыть участников",
+			"TOTAL_TODAY": "Всего сегодня",
+			"WORKDAY": "Рабочий день",
+			"SCROLL_TEAMS_BACK": "Показать предыдущие команды",
+			"SCROLL_TEAMS_FORWARD": "Показать ещё команды",
+			"COLUMNS": {
+				"TEAM": "Команда",
+				"WORKED": "Работали",
+				"NOW": "Сейчас",
+				"NOT_WORKED": "Не работали"
+			}
+		},
 		"ACCOUNTING": "Бухгалтер",
 		"HUMAN_RESOURCES": "Людские ресурсы",
 		"TIME_TRACKING": "Время отслеживания",

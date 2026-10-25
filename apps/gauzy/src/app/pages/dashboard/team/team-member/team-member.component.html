@@ -1,101 +1,168 @@
-<nb-card>
-	<nb-card-body>
-		<div class="row w-100">
-			<div [class]="isClassic ? 'col-5' : 'col-3'">
-				<div [class]="isClassic ? 'user-container' : 'row'">
-					<div class="col-3 dot-column">
-						<div class="dot-container">
-							<div
-								[class.online]="member?.isRunningTimer"
-								[class.offline]="!member?.isWorkingToday"
-								class="dot"
-							></div>
-						</div>
-					</div>
-					<div [class]="isClassic ? 'col-9' : 'col-12'">
-						<ngx-avatar
-							[class]="isClassic ? 'avatar-dashboard' : 'report-table'"
-							[id]="$safeNavigationMigration(member?.employee?.id)"
-							[name]="$safeNavigationMigration(member?.employee?.user?.name)"
-							[src]="$safeNavigationMigration(member?.employee?.user?.imageUrl)"
-							[employee]="$safeNavigationMigration(member?.employee)"
-						></ngx-avatar>
-					</div>
-				</div>
-			</div>
-			@if (!isClassic) {
-			<div class="col-8">
-				@for (task of member?.tasks; track task.id) {
-				<div class="row">
-					<div class="col-6">
-						{{ task.title ? task.title : ('REPORT_PAGE.NO_TASK' | translate) }}
-					</div>
-					<div class="col-6">
-						<div class="row align-items-center">
-							<div class="col-3">
-								{{ task.duration | durationFormat }}
-							</div>
-							<div class="col">
-								<nb-progress-bar
-									[displayValue]="false"
-									[status]="progressStatus(calculatePercentage(task.duration, $safeNavigationMigration(task?.estimate)))"
-									[value]="calculatePercentage(task.duration, $safeNavigationMigration(task?.estimate))"
-									class="mb-1"
-									size="tiny"
-								></nb-progress-bar>
-							</div>
-							<div class="col-3">
-								@if (task?.estimate) {
-								{{ $safeNavigationMigration(task?.estimate) | durationFormat }}
-								}
-							</div>
-						</div>
-					</div>
-				</div>
-				} @empty {
-				<div class="col-6">&#8212;</div>
+@if (isClassic) {
+<!-- ── Compact line: under a team in the "All teams" overview ── -->
+<a class="member" [routerLink]="['/pages/employees/view', member.employeeId]">
+	<span class="member-avatar member-avatar--sm" [class]="'member-avatar member-avatar--sm presence-' + member.presence">
+		<img type="user" [src]="member.avatarUrl" [alt]="member.name" />
+		<span class="avatar-dot"></span>
+	</span>
+	<span class="member-text">
+		<span class="cell-title" [title]="member.name">{{ member.name }}</span>
+		@if (member.tasks.length) {
+		<span class="cell-meta" [title]="member.tasks[0].title || ''">
+			{{ member.tasks[0].title || ('REPORT_PAGE.NO_TASK' | translate) }}
+		</span>
+		}
+	</span>
+</a>
+<span
+	class="bar-track workday-track"
+	[title]="'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_WORKDAY' | translate: { percent: formatPercent(member.workdayShare), hours: formatDuration(member.workPeriod) }"
+>
+	<span class="bar" [class.bar--live]="member.presence === 'tracking'" [style.width.%]="member.workdayShare"></span>
+</span>
+<span class="figure" [class.cell-strong]="member.duration > 0" [class.cell-muted]="!member.duration">
+	{{ member.duration > 0 ? formatDuration(member.duration) : ('ORGANIZATIONS_PAGE.NOT_WORKED' | translate) }}
+</span>
+<span class="figure figure--activity">
+	@if (member.isWorking) {
+	<span class="activity" [class]="'activity activity--' + activityTone(member.activity)">{{ formatPercent(member.activity) }}</span>
+	} @else {
+	<span class="cell-muted">—</span>
+	}
+</span>
+} @else {
+<!--
+  ── Table cells: Name | Task | Duration | Progress | Estimate | Activity ──
+  The four task columns hold one line per task, then the member's "Total today"
+  line — so a task's time, progress bar and estimate sit side by side, and the
+  total's progress bar is the working day.
+-->
+<td class="col-name">
+	<a class="member" [routerLink]="['/pages/employees/view', member.employeeId]">
+		<span class="member-avatar" [class]="'member-avatar presence-' + member.presence">
+			<img type="user" [src]="member.avatarUrl" [alt]="member.name" />
+			<span class="avatar-dot"></span>
+		</span>
+		<span class="member-text">
+			<span class="cell-title" [title]="member.name">{{ member.name }}</span>
+			<span class="member-meta">
+				<span class="presence-label" [class]="'presence-label presence-' + member.presence">
+					<span class="presence-dot" aria-hidden="true"></span>
+					{{ 'EMPLOYEES_PAGE.VIEW.PRESENCE.' + member.presence.toUpperCase() | translate }}
+				</span>
+				@if (member.isManager) {
+				<span class="chip role-chip is-manager">{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ROLE.MANAGER' | translate }}</span>
 				}
-			</div>
-			@if (member?.isWorkingToday) {
-			<div class="col-1">
-				<nb-badge
-					[status]="progressStatus(member?.activity || 0)"
-					[text]="(member?.activity || 0) + '%'"
-				></nb-badge>
-			</div>
-			} } @else {
-			<div class="col-7">
-				<div class="row align-items-center">
-					<div class="col-7">
-						<nb-progress-bar
-							[displayValue]="false"
-							[status]="
-								progressStatus(calculatePercentage($safeNavigationMigration(member?.todayWorkDuration), $safeNavigationMigration(member?.workPeriod)))
-							"
-							[value]="calculatePercentage($safeNavigationMigration(member?.todayWorkDuration), $safeNavigationMigration(member?.workPeriod))"
-							class="mb-1"
-							size="tiny"
-						>
-						</nb-progress-bar>
-					</div>
-					<div [class]="member?.isWorkingToday ? 'col-3 text-right' : 'col-4'">
-						{{
-							member?.todayWorkDuration > 0
-								? humanize($safeNavigationMigration(member?.todayWorkDuration))
-								: ('ORGANIZATIONS_PAGE.NOT_WORKED' | translate)
-						}}
-					</div>
-					@if (member?.isWorkingToday) {
-					<div class="col-1">
-						<nb-badge
-							[status]="progressStatus(member?.activity || 0)"
-							[text]="(member?.activity || 0) + '%'"
-						></nb-badge>
-					</div>
-					}
-				</div>
-			</div>
-			}
-		</div>
-	</nb-card-body>
-</nb-card>
+			</span>
+		</span>
+	</a>
+</td>
+
+<!-- Task -->
+<td class="col-lines">
+	@for (task of visibleTasks; track task.key) {
+	<div class="line">
+		<span class="cell-title" [title]="task.title || ''">{{ task.title || ('REPORT_PAGE.NO_TASK' | translate) }}</span>
+		@if (task.projectName) {
+		<span class="cell-meta" [title]="task.projectName">{{ task.projectName }}</span>
+		}
+	</div>
+	}
+	@if (hiddenTasks > 0 || showAllTasks) {
+	<div class="line line--toggle">
+		<button type="button" class="panel-link tasks-toggle" (click)="showAllTasks = !showAllTasks">
+			{{
+				showAllTasks
+					? ('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.SHOW_LESS' | translate)
+					: ('DASHBOARD_PAGE.TEAMS_DASHBOARD.MORE_TASKS' | translate: { count: hiddenTasks })
+			}}
+		</button>
+	</div>
+	}
+	<div class="line line--total" [class.is-alone]="!member.tasks.length">
+		@if (member.tasks.length) {
+		<span class="total-label">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.TOTAL_TODAY' | translate }}</span>
+		} @else {
+		<span class="cell-muted">—</span>
+		}
+	</div>
+</td>
+
+<!-- Duration -->
+<td class="col-lines num">
+	@for (task of visibleTasks; track task.key) {
+	<div class="line">{{ formatDuration(task.duration) }}</div>
+	}
+	@if (hiddenTasks > 0 || showAllTasks) {
+	<div class="line line--toggle"></div>
+	}
+	<div class="line line--total" [class.is-alone]="!member.tasks.length">
+		<span [class.cell-strong]="member.duration > 0" [class.cell-muted]="!member.duration">{{ formatDuration(member.duration) }}</span>
+	</div>
+</td>
+
+<!-- Progress: against the task's estimate, then the total against the working day -->
+<td class="col-lines">
+	@for (task of visibleTasks; track task.key) {
+	<div class="line">
+		@if (task.estimate) {
+		<span class="bar-line">
+			<span class="bar-track" aria-hidden="true">
+				<span class="bar" [class.bar--over]="task.isOverEstimate" [style.width.%]="task.estimateShare"></span>
+			</span>
+			<span class="progress-percent" [class.is-over]="task.isOverEstimate">
+				{{ formatPercent(task.isOverEstimate ? (task.duration / task.estimate) * 100 : task.estimateShare) }}
+			</span>
+		</span>
+		} @else {
+		<span class="cell-muted">—</span>
+		}
+	</div>
+	}
+	@if (hiddenTasks > 0 || showAllTasks) {
+	<div class="line line--toggle"></div>
+	}
+	<div
+		class="line line--total"
+		[class.is-alone]="!member.tasks.length"
+		[title]="'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_WORKDAY' | translate: { percent: formatPercent(member.workdayShare), hours: formatDuration(member.workPeriod) }"
+	>
+		<span class="bar-line">
+			<span class="bar-track" aria-hidden="true">
+				<span class="bar" [class.bar--live]="member.presence === 'tracking'" [style.width.%]="member.workdayShare"></span>
+			</span>
+			<span class="progress-percent" [class.cell-muted]="!member.duration">{{ formatPercent(member.workdayShare) }}</span>
+		</span>
+	</div>
+</td>
+
+<!-- Estimate: the task's, then the working day's length -->
+<td class="col-lines num">
+	@for (task of visibleTasks; track task.key) {
+	<div class="line" [class.is-over]="task.isOverEstimate">
+		@if (task.estimate) {
+		{{ formatDuration(task.estimate) }}
+		} @else {
+		<span class="cell-muted">—</span>
+		}
+	</div>
+	}
+	@if (hiddenTasks > 0 || showAllTasks) {
+	<div class="line line--toggle"></div>
+	}
+	<div class="line line--total" [class.is-alone]="!member.tasks.length">
+		<span class="cell-muted" [title]="'DASHBOARD_PAGE.TEAMS_DASHBOARD.WORKDAY' | translate">{{ formatDuration(member.workPeriod) }}</span>
+	</div>
+</td>
+
+<!-- Activity -->
+<td class="num col-activity">
+	<div class="line">
+		@if (member.isWorking) {
+		<span class="activity" [class]="'activity activity--' + activityTone(member.activity)">{{ formatPercent(member.activity) }}</span>
+		} @else {
+		<span class="cell-muted">—</span>
+		}
+	</div>
+</td>
+}
