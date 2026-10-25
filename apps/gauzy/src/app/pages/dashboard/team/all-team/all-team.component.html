@@ -30,7 +30,28 @@
 		}
 	</div>
 	<div class="kpi">
-		<span class="kpi-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
+		<div class="kpi-head">
+			<span class="kpi-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
+			<!-- Opens the projects behind the figure — always there, empty days included. In Nebular's
+			     naming `bottom-start` lines the popover's END edge up with the button's, so it opens into
+			     the page; `noop` keeps it there — Nebular's vertical fallback only knows centred top and
+			     bottom, which would push it off the screen's edge. The tiles sit at the top of the page,
+			     so there is always room below. -->
+			<button
+				type="button"
+				class="kpi-action"
+				[nbPopover]="projectsList"
+				[nbPopoverContext]="projects"
+				nbPopoverTrigger="click"
+				nbPopoverPlacement="bottom-start"
+				nbPopoverAdjustment="noop"
+				nbPopoverClass="projects-popover"
+				[attr.aria-label]="('BUTTONS.VIEW' | translate) + ': ' + ('TIMESHEET.PROJECTS_WORKED' | translate)"
+			>
+				{{ 'BUTTONS.VIEW' | translate }}
+				<nb-icon icon="chevron-down-outline" aria-hidden="true"></nb-icon>
+			</button>
+		</div>
 		<span class="kpi-value">{{ overview?.projectsWorked || 0 }}</span>
 		<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_PROJECTS' | translate: { total: projectCount } }}</span>
 		@if (projectCount > 0) {
@@ -189,3 +210,8 @@
 		</div>
 	</section>
 </div>
+
+<!-- The projects behind a "Projects worked" tile, opened from its View button. -->
+<ng-template #projectsList let-projects>
+	<gauzy-team-projects-list [projects]="projects"></gauzy-team-projects-list>
+</ng-template>

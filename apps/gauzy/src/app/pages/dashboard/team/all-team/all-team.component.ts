@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import {
 	IMemberRow,
+	IProjectWorked,
 	IRankedMember,
 	ITeamRow,
 	activityTone,
@@ -42,6 +43,8 @@ export class AllTeamComponent {
 	@Input() public teams: ITeamRow[] = [];
 	@Input() public membersByTeam: Record<string, IMemberRow[]> = {};
 	@Input() public topMembers: IRankedMember[] = [];
+	/** The projects behind the "Projects worked" tile, for its View list. */
+	@Input() public projects: IProjectWorked[] = [];
 	@Input() public overview: ITeamsOverview;
 	@Input() public projectCount = 0;
 
