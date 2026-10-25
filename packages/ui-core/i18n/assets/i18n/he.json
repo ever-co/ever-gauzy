@@ -5588,6 +5588,7 @@
 			"SEED_CREDENTIALS_MESSAGE": "שמור את הסיסמאות האלה עכשיו. הן מוצגות פעם אחת בלבד.",
 			"SEED_CREDENTIALS_DETAIL": "התקנה זו יצרה את החשבונות שלה עם סיסמאות אקראיות במקום ערכי ברירת המחדל שפורסמו.\n\n{{ accounts }}\n\nתוכל לשנות סיסמה מאוחר יותר בדף הפרופיל שלך ב-Gauzy.",
 			"SEED_CREDENTIALS_COPIED": "הועתק ללוח.",
+			"SEED_CREDENTIALS_COPY_FAILED": "ההעתקה ללוח נכשלה. לחצו על „העתקה“ כדי לנסות שוב, או רשמו את הסיסמאות לפני האישור.",
 			"SEED_CREDENTIALS_SAVED": "שמרתי אותן",
 			"SEED_ROLE_SUPER_ADMIN": "מנהל-על",
 			"SEED_ROLE_ADMIN": "מנהל",

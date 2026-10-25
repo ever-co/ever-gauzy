@@ -151,7 +151,7 @@ describe('DesktopSignInNotices', () => {
 		expect(dialogOptions(1).detail).toContain('Copied to the clipboard.');
 	});
 
-	it('does not claim "Copied" when the clipboard write fails, and keeps going', async () => {
+	it('says the copy failed when the clipboard write fails, and keeps going', async () => {
 		startAndSeed();
 		mockWriteText.mockRejectedValueOnce(new Error('clipboard unavailable'));
 		mockShowMessageBox.mockResolvedValueOnce({ response: 0 }).mockResolvedValueOnce({ response: 1 });
@@ -161,7 +161,26 @@ describe('DesktopSignInNotices', () => {
 
 		expect(mockShowMessageBox).toHaveBeenCalledTimes(2);
 		expect(dialogOptions(1).detail).not.toContain('Copied to the clipboard.');
+		// Review (CodeRabbit): the user sees the failure in the dialog, not only in the log.
+		expect(dialogOptions(1).detail).toContain('Could not copy to the clipboard.');
 		expect(mockStore.has(DESKTOP_SEED_CREDENTIALS_STORE_KEY)).toBe(false);
+		consoleError.mockRestore();
+	});
+
+	it('drops the failure notice once a retried copy succeeds', async () => {
+		startAndSeed();
+		mockWriteText.mockRejectedValueOnce(new Error('clipboard unavailable')).mockResolvedValueOnce(undefined);
+		mockShowMessageBox
+			.mockResolvedValueOnce({ response: 0 })
+			.mockResolvedValueOnce({ response: 0 })
+			.mockResolvedValueOnce({ response: 1 });
+		const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+		await notices.show();
+
+		expect(dialogOptions(1).detail).toContain('Could not copy to the clipboard.');
+		expect(dialogOptions(2).detail).toContain('Copied to the clipboard.');
+		expect(dialogOptions(2).detail).not.toContain('Could not copy to the clipboard.');
 		consoleError.mockRestore();
 	});
 
