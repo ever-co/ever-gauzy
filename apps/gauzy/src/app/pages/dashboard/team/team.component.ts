@@ -25,6 +25,8 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '@gauzy/ui-core/sha
 import {
 	IMemberRow,
 	IRankedMember,
+	ITeamPerson,
+	ITeamPersonDay,
 	ITeamRow,
 	activityOf,
 	activityTone,
@@ -500,7 +502,9 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					isWorkingToday: known.isWorkingToday || member.isWorkingToday,
 					isRunningTimer: known.isRunningTimer || member.isRunningTimer,
 					teamName: isLargerShare ? team.name : known.teamName,
-					teamDuration: isLargerShare ? duration : known.teamDuration
+					teamDuration: isLargerShare ? duration : known.teamDuration,
+					role: isLargerShare ? member.role : known.role,
+					tasks: [...(known.tasks ?? []), ...(member.tasks ?? [])]
 				});
 			}
 		}
@@ -510,6 +514,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		this.topMembers = ranked.map((member) => ({
 			id: member.id,
 			employeeId: member.employeeId,
+			// The whole day across teams: summed time, every task, the day's own activity.
+			person: this._personOf(member, member.teamName, member.dayActivity),
 			name: member.employee?.user?.name,
 			// The whole day across teams, matching the summed duration.
 			meta: `${member.teamName} · ${formatPercent(member.dayActivity)}`,
@@ -543,6 +549,43 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		this.memberRows = (this.selectedTeamId && this.membersByTeam[this.selectedTeamId]) || [];
 	}
 
+	/**
+	 * A team member as their hover card shows them: who they are, read the way the
+	 * team page reads an assignee, and their selected day on `teamName`.
+	 */
+	private _personOf(member: any, teamName: string | null, activity: number | null): ITeamPerson {
+		const employee = member.employee;
+		const user = employee?.user;
+		return {
+			employeeId: member.employeeId,
+			name: user?.name || '',
+			avatarUrl: avatarOf(user?.image?.fullUrl || user?.imageUrl),
+			presence: presenceOf(employee, member.isRunningTimer),
+			email: user?.email || null,
+			bio: employee?.short_description?.trim() || null,
+			since: employee?.startedWorkOn ? moment(employee.startedWorkOn).format('ll') : null,
+			teamName,
+			isManager: this._isManager(member),
+			timeZone: user?.timeZone || null,
+			day: this._dayOf(member, activity)
+		};
+	}
+
+	private _dayOf(member: any, activity: number | null): ITeamPersonDay {
+		const tasks: any[] = member.tasks ?? [];
+		const duration = member.todayWorkDuration || 0;
+		const workPeriod = member.workPeriod || this._period;
+		const [task] = [...tasks].sort((a, b) => (b?.duration || 0) - (a?.duration || 0));
+		return {
+			duration,
+			activity: member.isWorkingToday && activity !== null && activity !== undefined ? Number(activity) : null,
+			tasksCount: tasks.length,
+			workPeriod,
+			workdayShare: toPercentage(duration, workPeriod),
+			task: task ? { title: task.title || null, projectName: task.project?.name || null } : null
+		};
+	}
+
 	private _memberRowsOf(team: any): IMemberRow[] {
 		return (team.members as any[])
 			.map((member) => {
@@ -550,12 +593,9 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				const workPeriod = member.workPeriod || this._period;
 				const duration = member.todayWorkDuration || 0;
 				return {
+					...this._personOf(member, team.name, member.activity),
 					id: member.id,
-					employeeId: member.employeeId,
-					name: user?.name || '',
 					caption: member.employee?.organizationPosition?.name || user?.email || null,
-					avatarUrl: avatarOf(user?.image?.fullUrl || user?.imageUrl),
-					presence: presenceOf(member.employee, member.isRunningTimer),
 					isManager: this._isManager(member),
 					isWorking: !!member.isWorkingToday,
 					tasks: (member.tasks ?? []).map((task, index) => {

@@ -37,15 +37,44 @@ export interface ITaskRow {
 	isOverEstimate: boolean;
 }
 
-/** One member of a team's members table. */
-export interface IMemberRow {
-	id: string;
+/** What a member's hover card shows — the team page's assignee card. */
+export interface ITeamPerson {
 	employeeId: string;
 	name: string;
-	caption: string | null;
 	/** The member's photo, or the default avatar when they have none. */
 	avatarUrl: string;
 	presence: Presence;
+	email: string | null;
+	/** The employee's short description. */
+	bio: string | null;
+	/** When they started, e.g. `Mar 4, 2024`. */
+	since: string | null;
+	/** The team the card is shown for, and the person's role in it. */
+	teamName: string | null;
+	isManager: boolean;
+	/** The person's own time zone, for their local time; `null` when unset. */
+	timeZone: string | null;
+	/** Their selected day so far. */
+	day: ITeamPersonDay;
+}
+
+/** A person's selected day, as their hover card summarizes it. */
+export interface ITeamPersonDay {
+	duration: number;
+	/** `null` when no activity was recorded. */
+	activity: number | null;
+	tasksCount: number;
+	/** The organization's working day, in seconds, and the share of it worked, 0..100. */
+	workPeriod: number;
+	workdayShare: number;
+	/** The longest task of the day — the one running, while tracking. */
+	task: { title: string | null; projectName: string | null } | null;
+}
+
+/** One member of a team's members table. */
+export interface IMemberRow extends ITeamPerson {
+	id: string;
+	caption: string | null;
 	isManager: boolean;
 	isWorking: boolean;
 	/** Longest first. */
@@ -64,6 +93,8 @@ export interface IRankedMember {
 	employeeId: string;
 	name: string;
 	meta: string;
+	/** For the hover card on the name. */
+	person: ITeamPerson;
 	duration: number;
 	/** Bar length against the top line, 0..100. */
 	width: number;
