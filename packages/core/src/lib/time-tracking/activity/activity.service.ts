@@ -297,6 +297,9 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 				if (isNotEmpty(request.projectIds)) {
 					where.projectId = { $in: request.projectIds };
 				}
+				if (isNotEmpty(request.taskIds)) {
+					where.taskId = { $in: request.taskIds };
+				}
 				// The requested period, as the TypeORM branch reads it (`recordedAt` between the bounds): the
 				// range was ignored here, so a one-day request listed (and paged) the activities of every day
 				if (startDate && endDate) {
@@ -319,6 +322,11 @@ export class ActivityService extends TenantAwareCrudService<Activity> {
 			case MultiORMEnum.TypeORM:
 			default: {
 				const query = this.filterQuery(request);
+				// Kept out of filterQuery, which the daily and report reads build on too (on TypeORM only)
+				if (isNotEmpty(request.taskIds)) {
+					const taskPredicate = p(`"${query.alias}"."taskId" IN (:...taskIds)`);
+					query.andWhere(taskPredicate, { taskIds: request.taskIds });
+				}
 				if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 					query.leftJoinAndSelect(`${query.alias}.employee`, 'activityEmployee');
 					query.leftJoinAndSelect(
