@@ -1,0 +1,48 @@
+<section class="projects-list" [attr.aria-label]="'EMPLOYEES_PAGE.VIEW.PROJECTS' | translate">
+	<header class="projects-list-header">
+		<span class="projects-list-title">{{ 'EMPLOYEES_PAGE.VIEW.PROJECTS' | translate }}</span>
+		<span class="projects-list-count">{{ projects.length }}</span>
+	</header>
+	@if (!projects.length) {
+	<div class="projects-list-empty">
+		<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NO_PROJECTS' | translate }}</p>
+	</div>
+	} @else {
+	<ul class="projects-list-rows">
+		@for (project of projects; track project.id) {
+		<li class="project-row" [class.is-idle]="!project.duration">
+			<span class="project-badge" aria-hidden="true">
+				@if (project.imageUrl) {
+				<img [src]="project.imageUrl" alt="" />
+				} @else {
+				{{ project.initials }}
+				}
+			</span>
+			<span class="project-text">
+				<span class="project-name-row">
+					<span class="project-name" [title]="project.name">{{ project.name }}</span>
+					@if (!project.isLinked) {
+					<span
+						class="project-chip"
+						[nbTooltip]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NOT_LINKED_HINT' | translate"
+						nbTooltipPlacement="top"
+						>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.NOT_LINKED' | translate }}</span
+					>
+					}
+				</span>
+				<span class="project-meta">
+					@if (project.members) {
+					{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.MEMBERS_COUNT' | translate: { count: project.members } }}
+					} @else {
+					{{ 'EMPLOYEES_PAGE.VIEW.NO_TIME' | translate }}
+					}
+				</span>
+				<span class="project-bar" aria-hidden="true"><span [style.width.%]="project.width"></span></span>
+			</span>
+			<span class="project-time">{{ formatDuration(project.duration) }}</span>
+		</li>
+		}
+	</ul>
+	}
+</section>
