@@ -62,11 +62,11 @@ runs:
         #
         # Jobs in this repo run on a MIX of runners:
         #   in-network - [self-hosted, Windows, X64] and the ever-k8s ARC pools
-        #   external   - windows-11-arm, ubicloud-*-arm, cirruslabs macOS, ubuntu-latest
+        #   external   - windows-11-arm, ubicloud-*-arm, cirruslabs macOS, ubuntu-24.04
         # Only in-network runners can reach the VIP, and the internal cache buys an external
         # runner nothing while adding a failure mode. The choice is therefore made by PROBING
         # the VIP rather than by hardcoding a runner list, because release-linux runs on
-        # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-latest" and so is not statically known.
+        # "vars.RUNNER_LINUX_APPS_X64 or ubuntu-24.04" and so is not statically known.
         #
         # NO-REMOVAL RULE: the packages.ever.co path below is GATED, not deleted. Set the
         # repo/org variable VERDACCIO_FORCE_PUBLIC=true to bring it back.

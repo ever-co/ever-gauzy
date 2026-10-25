@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   e2e-tests-setup:
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     timeout-minutes: 360
 
     steps:
@@ -22,7 +22,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Cypress install
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v7
 
         # let's give this action an ID so we can refer to its output values later
         id: cypress
@@ -42,7 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   e2e-tests:
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     timeout-minutes: 360
 
     # we can try to run tests in the Docker containers later
@@ -86,7 +86,7 @@ jobs:
       # Route the installs below through the internal Verdaccio cache. This job resolves to the
       # self-hosted ARC pool (vars.RUNNER_LINUX_X64_8), which is the only place the VIP is
       # reachable; the action PROBES it and falls back to the public npm registry otherwise, so the
-      # `|| 'ubuntu-latest'` fallback runner degrades to today's behaviour instead of hanging.
+      # `|| 'ubuntu-24.04'` fallback runner degrades to today's behaviour instead of hanging.
       #
       # Placed AFTER the yarn cache restore on purpose: the action rewrites yarn.lock's resolved
       # URLs (that rewrite is the load-bearing half — yarn v1 fetches the URL recorded in the
@@ -165,7 +165,7 @@ jobs:
           npx cypress version --component node
 
       - name: Cypress run
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v7
 
         # let's give this action an ID so we can refer to its output values later
         id: cypress

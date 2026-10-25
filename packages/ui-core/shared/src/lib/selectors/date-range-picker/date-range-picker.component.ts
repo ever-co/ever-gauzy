@@ -26,7 +26,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
-import { dayOfWeekAsString, selectUnitOfTime, shiftUTCtoLocal } from './date-picker.utils';
+import { dayOfWeekAsString, selectUnitOfTime, toPickerDateRange, toPickerRange } from './date-picker.utils';
 import { DateRangeClicked, DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
 import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
@@ -196,6 +196,8 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 */
 	private _selectedDateRange: IDateRangePicker;
 	@Input() set selectedDateRange(range: IDateRangePicker) {
+		// `[(ngModel)]` also lands here with the library's own dayjs objects; see `toPickerDateRange`.
+		range = toPickerDateRange(range);
 		if (isNotEmpty(range)) {
 			// Get the date picker configuration
 			const datePickerConfig = this._dateRangePickerBuilderService.datePickerConfig;
@@ -536,16 +538,16 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 			return;
 		}
 
-		const { startDate, endDate } = shiftUTCtoLocal(event);
+		// The library's dates carry the picked days in their wall-clock fields; read them as local days.
+		// (Subtracting the UTC offset, as for the 6.x library, moved 22.x dates by a day: see `toPickerRange`.)
+		const pickedRange = toPickerRange(event, this.isLockDatePicker, this.unitOfTime);
 
 		// Return early if either date is missing
-		if (!startDate || !endDate) {
+		if (!pickedRange) {
 			return;
 		}
 
-		// Ensure start and end are moment objects
-		const startMoment = this.isLockDatePicker ? moment(startDate).startOf(this.unitOfTime) : moment(startDate);
-		const endMoment = this.isLockDatePicker ? moment(startDate).endOf(this.unitOfTime) : moment(endDate);
+		const { startDate: startMoment, endDate: endMoment } = pickedRange;
 
 		// Construct the range object directly
 		const range: IDateRangePicker = {
