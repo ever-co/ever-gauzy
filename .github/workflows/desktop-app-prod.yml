@@ -820,6 +820,23 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
 
+      # Electron 44 needs macOS 13 or later, and the latest-mac.yml electron-builder just published does
+      # not say so - so on macOS 12 the installed app would auto-update into a build that does not start.
+      # This adds minimumSystemVersion: 22.0.0 (Darwin 22 = macOS 13) to that manifest, which makes
+      # electron-updater there skip the update; details in the action. It fails the job when the published
+      # manifest cannot be updated. owner/repo must stay equal to the bump step's *_REPO_OWNER/*_REPO_NAME
+      # (the action checks them, and the tag, against the package that step wrote). Before the scrub step,
+      # which stays last; it needs no registry credential.
+      - name: Declare macOS 13 as the minimum in latest-mac.yml
+        timeout-minutes: 15
+        uses: ./.github/actions/set-mac-minimum-system-version
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          owner: 'ever-co'
+          repo: 'ever-gauzy-desktop'
+          tag: ${{ needs.check-release-tag.outputs.tag }}
+          app-package-json: 'apps/desktop/src/package.json'
+
       - name: Scrub registry credentials
         if: always()
         shell: bash
