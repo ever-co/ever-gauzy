@@ -32,6 +32,7 @@ import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { Readable } from 'node:stream';
 import { ImportService } from './import.service';
 import { generateImportArchiveFileName } from './import-archive-file-name';
 
@@ -225,6 +226,35 @@ describe('ImportService', () => {
 
 			await service.removeExtractedFiles(dir);
 			expect(fs.existsSync(dir)).toBe(false);
+		});
+
+		it('imports an archive the S3-family providers return as the SDK body stream, not a Buffer', async () => {
+			const { service, imported } = buildService();
+			const dir = await service.createExtractDirectory();
+			created.push(dir);
+			const bytes = await buildArchive(ARCHIVES['import/tenant-a.zip']);
+			// `GetObjectCommandOutput.Body`: a Node stream with the SDK's transform methods mixed in.
+			getFile.mockImplementation(async () =>
+				Object.assign(Readable.from([bytes.subarray(0, 10), bytes.subarray(10)]), {
+					transformToByteArray: async () => new Uint8Array(bytes)
+				})
+			);
+
+			await service.unzipAndParse(dir, 'import/tenant-a.zip');
+
+			expect(imported.map((row) => row['id'])).toEqual(['row-a']);
+		});
+
+		it('names the storage key when the provider cannot read the archive', async () => {
+			const { service } = buildService();
+			const dir = await service.createExtractDirectory();
+			created.push(dir);
+			// The S3 family and the local provider log their error and resolve undefined.
+			getFile.mockResolvedValue(undefined);
+
+			await expect(service.unzipAndParse(dir, 'import/gone.zip')).rejects.toThrow(
+				/stored file 'import\/gone\.zip' could not be read/
+			);
 		});
 
 		it('refuses an empty path instead of deleting a default one', async () => {

@@ -29,12 +29,15 @@ export {
 	fileContentToBuffer,
 	imageUploadFileFilter,
 	isMarkupContent,
+	readStorageFileAsBuffer,
+	StorageFileReadError,
 	shouldScanForMarkup,
 	thumbnailFileName,
 	videoUploadFileFilter,
 	RENDERABLE_KEY_EXTENSIONS,
 	toSafeStorageExtension
 } from './lib/core/file-storage';
+export type { ReadStorageFileOptions, StorageFileReadFailure, StoredFileContent } from './lib/core/file-storage';
 export { LazyFileInterceptor } from './lib/core/interceptors';
 export * from './lib/core/seeds';
 export {

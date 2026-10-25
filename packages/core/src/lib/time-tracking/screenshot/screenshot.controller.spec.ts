@@ -15,7 +15,7 @@ import { BadRequestException, InternalServerErrorException, PayloadTooLargeExcep
 import { Test, TestingModule } from '@nestjs/testing';
 import { RequestContext } from '../../core/context';
 import { FileStorage } from '../../core/file-storage';
-import { MAX_BUFFERED_FILE_BYTES } from '../../core/file-storage/helpers/image-thumbnail';
+import { MAX_BUFFERED_FILE_BYTES } from '../../core/file-storage/helpers/stored-file-content';
 import { ScreenshotController } from './screenshot.controller';
 describe('Screenshot Controller', () => {
 	let controller: ScreenshotController;
