@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   prepare:
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     timeout-minutes: 300
     outputs:
       uuid: ${{ steps.uuid.outputs.value }}
@@ -30,7 +30,7 @@ jobs:
         run: echo "Generated Unique Build ID ${{ steps.uuid.outputs.value }}"
 
   e2e-tests:
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     timeout-minutes: 360
     needs: ['prepare']
 
@@ -90,7 +90,7 @@ jobs:
       # Route the installs below through the internal Verdaccio cache. This job resolves to the
       # self-hosted ARC pool (vars.RUNNER_LINUX_X64_8), which is the only place the VIP is
       # reachable; the action PROBES it and falls back to the public npm registry otherwise, so the
-      # `|| 'ubuntu-latest'` fallback runner degrades to today's behaviour instead of hanging.
+      # `|| 'ubuntu-24.04'` fallback runner degrades to today's behaviour instead of hanging.
       #
       # Placed AFTER the yarn cache restore on purpose: the action rewrites yarn.lock's resolved
       # URLs (that rewrite is the load-bearing half — yarn v1 fetches the URL recorded in the

@@ -36,7 +36,7 @@ env:
 
 jobs:
   gauzy-api:
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     timeout-minutes: 300
     steps:
       - name: Checkout
@@ -164,7 +164,7 @@ jobs:
     #      docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-api-stage:latest
 
   gauzy-webapp:
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     timeout-minutes: 300
     steps:
       - name: Checkout
@@ -290,7 +290,7 @@ jobs:
     #      docker push ${{ secrets.CW_DOCKER_REGISTRY }}/ever-co/gauzy-webapp-stage:latest
 
   gauzy-worker:
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     timeout-minutes: 300
     steps:
       - name: Checkout

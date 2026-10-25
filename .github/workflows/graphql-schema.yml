@@ -54,16 +54,16 @@ jobs:
     # the internal Verdaccio registry with `secrets.VERDACCIO_TOKEN`, so a fork's pull request would execute its
     # own code on the fleet with that secret in the environment. Same guard as build.yml's jobs.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     # A cold dependency install on this fleet is measured in hours, not minutes. The ceiling costs
     # nothing on the warm path, which is a cache lookup.
     timeout-minutes: 360
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -71,7 +71,7 @@ jobs:
         # The same key the build workflow writes, so a push that already built this exact lockfile
         # reuses that tree instead of installing again. The restore script below installs from
         # scratch when the archive is absent, so a miss is not fatal.
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           path: ${{ env.NODE_MODULES_ARCHIVE }}

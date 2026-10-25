@@ -1705,7 +1705,16 @@
 		"typeof",
 		"dotenv",
 		"seald",
-		"mapbox"
+		"mapbox",
+		"vcvarsall",
+		"VCINSTALLDIR",
+		"VSINSTALLDIR",
+		"LIBPATH",
+		"errorlevel",
+		"notmatch",
+		"endgroup",
+		"ghadelimiter",
+		"ENOSPC"
 	],
 	"useGitignore": true,
 	"ignorePaths": [

@@ -52,12 +52,12 @@ jobs:
     # This is a deliberate, narrow exception to the self-hosted-only convention: the entire purpose
     # of this job is to talk to Cloudflare, which a self-hosted runner structurally cannot do.
     # ever-gauzy is a public repository, so GitHub-hosted minutes are free.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '26'
 

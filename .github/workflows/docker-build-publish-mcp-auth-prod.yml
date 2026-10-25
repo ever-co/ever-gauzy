@@ -22,7 +22,7 @@ env:
 
 jobs:
   gauzy-mcp-auth:
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     timeout-minutes: 300
     steps:
       - name: Checkout
