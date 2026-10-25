@@ -5570,6 +5570,7 @@
 			"SEED_CREDENTIALS_MESSAGE": "Enregistrez ces mots de passe maintenant. Ils ne sont affichés qu'une seule fois.",
 			"SEED_CREDENTIALS_DETAIL": "Cette installation a créé ses comptes avec des mots de passe aléatoires au lieu des valeurs par défaut publiées.\n\n{{ accounts }}\n\nVous pourrez modifier un mot de passe plus tard depuis votre page de profil dans Gauzy.",
 			"SEED_CREDENTIALS_COPIED": "Copié dans le presse-papiers.",
+			"SEED_CREDENTIALS_COPY_FAILED": "Impossible de copier dans le presse-papiers. Cliquez sur Copier pour réessayer, ou notez les mots de passe avant de confirmer.",
 			"SEED_CREDENTIALS_SAVED": "Je les ai enregistrés",
 			"SEED_ROLE_SUPER_ADMIN": "Super administrateur",
 			"SEED_ROLE_ADMIN": "Administrateur",

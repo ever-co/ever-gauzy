@@ -5573,6 +5573,7 @@
 			"SEED_CREDENTIALS_MESSAGE": "Bewaar deze wachtwoorden nu. Ze worden maar één keer getoond.",
 			"SEED_CREDENTIALS_DETAIL": "Deze installatie heeft haar accounts aangemaakt met willekeurige wachtwoorden in plaats van de gepubliceerde standaardwaarden.\n\n{{ accounts }}\n\nU kunt een wachtwoord later wijzigen op uw profielpagina in Gauzy.",
 			"SEED_CREDENTIALS_COPIED": "Gekopieerd naar het klembord.",
+			"SEED_CREDENTIALS_COPY_FAILED": "Kopiëren naar het klembord is mislukt. Klik nogmaals op Kopiëren of schrijf de wachtwoorden op voordat u bevestigt.",
 			"SEED_CREDENTIALS_SAVED": "Ik heb ze bewaard",
 			"SEED_ROLE_SUPER_ADMIN": "Superbeheerder",
 			"SEED_ROLE_ADMIN": "Beheerder",

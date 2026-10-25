@@ -20,6 +20,8 @@
 		[bindValue]="bindValue"
 		nbTooltipStatus="warning"
 		[typeahead]="typeahead"
+		(search)="onSearch($event)"
+		(close)="onClose()"
 		[typeToSearchText]="typeToSearchText | translate"
 		(scrollToEnd)="onScrollToEnd()"
 	>
