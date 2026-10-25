@@ -112,9 +112,10 @@ export interface IRequestApprovalAnswerTransaction {
 	 * equipment sharing — the active members of the teams it is for), inside the tenant (withdrawn rows left out): none
 	 * of them answers the request as an approver. Empty when the document is not there.
 	 *
-	 * Read after the request's row lock: the in-place edit of an equipment sharing, which can change the employees and
-	 * the teams it is for, takes that same lock before it writes (`EquipmentSharingService.updateInPlace`), so the edit
-	 * and the answer run one after the other and the answer reads the memberships as they stand when it decides.
+	 * Read after the request's row lock: the in-place edit of an equipment sharing and the `POST /equipment-sharing`
+	 * upsert of a stored one, which can change the employees and the teams it is for, take that same lock before they
+	 * write (`EquipmentSharingService.updateInPlace` / `storeCreate`), so the edit and the answer run one after the
+	 * other and the answer reads the memberships as they stand when it decides.
 	 *
 	 * Required, so a transaction cannot leave the check out by omission: it would answer as if the document named
 	 * nobody, and re-open self-approval through a team slot.

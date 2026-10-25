@@ -71,7 +71,16 @@ import { IInPlaceSharingMembers, inPlaceSharingChange } from './in-place-update.
 interface IStoredSharingRow extends IStoredSharing {
 	id: ID;
 	version?: number | null;
+	/** Set when the sharing was soft-deleted (the check reads retired rows too, as the upsert does). */
+	deletedAt?: Date | string | null;
 }
+
+/**
+ * Whether a `POST /equipment-sharing` payload states the employees or the teams the sharing is handed to: the
+ * upsert replaces a membership it states, which changes who the sharing is for.
+ */
+const statesSharingMembers = (payload: object): boolean =>
+	(payload as ISharingMembers).employees !== undefined || (payload as ISharingMembers).teams !== undefined;
 
 /** The sharing's request approval, as the decision's locking read finds it. */
 export interface IDecisionRequestApproval {
@@ -101,9 +110,9 @@ export interface IEquipmentSharingDecisionTransaction {
 	/**
 	 * Who the sharing was filed by (its `createdByUserId`) and is for (its employees, and the active members of the
 	 * teams it is for), inside the tenant: none of them decides it, unless they are a tenant administrator. Read after
-	 * {@link lockRequestApproval}, the lock an in-place edit of the memberships takes too (`updateInPlace`), so the two
-	 * take turns and the decision reads the memberships as they stand when it is made. Empty when the sharing is not
-	 * there.
+	 * {@link lockRequestApproval}, the lock an edit of the memberships takes too (`updateInPlace`, and the
+	 * `POST /equipment-sharing` upsert of a stored sharing, `storeCreate`), so the two take turns and the decision
+	 * reads the memberships as they stand when it is made. Empty when the sharing is not there.
 	 */
 	readRequesters(sharingId: ID, tenantId: ID): Promise<IRequestApprovalRequestedFor>;
 	/**
@@ -131,7 +140,8 @@ export interface IEquipmentSharingInPlaceTransaction {
 	 * approval, then the sharing (`decideWithRequestApproval`, and the request approval's own answer, which moves the
 	 * sharing it decides). Taking the sharing's row first would let an edit and a decision each hold one row while
 	 * waiting for the other. It also makes an answer and an edit of the memberships take turns, so the answer's
-	 * requester check reads the employees and the teams the sharing is for as they stand when it decides.
+	 * requester check reads the employees and the teams the sharing is for as they stand when it decides. The
+	 * `POST /equipment-sharing` upsert of a stored sharing's memberships takes it first as well (`storeCreate`).
 	 */
 	lockApprovals(sharingId: ID, tenantId: ID, organizationId: ID | null): Promise<void>;
 	/**
@@ -274,28 +284,115 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 * The body's `version` is a precondition, never a column the upsert writes: a new row starts at 1, and a stored
 	 * row's version is moved on by the claim and by the upsert's own write.
 	 *
+	 * A body that names a live stored sharing and states its employees or its teams changes who the sharing is for,
+	 * which the requester check of a decision reads (`decideWithRequestApproval`, and the request approval's answer).
+	 * That upsert is written as {@link storeMembershipEdit} writes it: under the sharing's request approval's lock,
+	 * taken first, in the order `updateInPlace` and the decisions take theirs (approval, then sharing), in one
+	 * transaction — so a decision either reads the memberships from before the upsert, or waits for it and reads them
+	 * after; never a list the upsert is half way through replacing.
+	 *
 	 * @param input - The raw request body.
 	 * @param create - Persists the checked payload.
-	 * @returns What `create` answers.
+	 * @returns What `create` answers; for a membership edit of a stored sharing, the sharing as written, with its
+	 * employees and teams.
 	 * @throws ForbiddenException when a referenced row is outside the organization the sharing is stored in.
-	 * @throws ApiException 409 `ENTITY_VERSION_CONFLICT` when the stored sharing moved on; 400 for a malformed version.
+	 * @throws ApiException 409 `ENTITY_VERSION_CONFLICT` when the stored sharing moved on; 400 for a malformed version,
+	 * or a membership list that is not a list of ids.
 	 */
 	public async storeCreate<R>(
 		input: ISharingReferences & { id?: unknown; version?: unknown },
 		create: (payload: ISharingColumns & { id?: unknown }) => Promise<R>
-	): Promise<R> {
+	): Promise<R | EquipmentSharing> {
 		const { payload, stored } = await this.checkCreate(input);
 
 		// A stored row outside the caller's organization boundary is not claimed: the upsert refuses it (403), as it
 		// always has, and a claim first would have answered that refusal as a conflict.
 		if (stored && isWithinOrganizationBoundary(stored.organizationId)) {
 			const expected = expectedSharingVersion(input?.version, stored.version);
+			// It changes who the sharing is for: written under the approval's lock, as the in-place edit is.
+			if (!stored.deletedAt && statesSharingMembers(payload)) {
+				return await this.storeMembershipEdit(payload, stored, expected);
+			}
 			if (expected !== null) {
 				await this.updateAtVersion(stored.id, expected, { version: bumpVersion(expected) });
 			}
 		}
 
 		return await create(payload);
+	}
+
+	/**
+	 * Writes a `POST /equipment-sharing` upsert that states the memberships of a live stored sharing (see
+	 * {@link storeCreate}), the way {@link updateInPlace} writes its edit: in one transaction, the sharing's request
+	 * approval is locked first; the payload's columns are written in one statement predicated on the version
+	 * (`UPDATE … SET …, version = version + 1 WHERE id = :id AND version = :expected`); and the stated memberships
+	 * are replaced. A row that moved on matches nothing, and the upsert is refused with 409 `ENTITY_VERSION_CONFLICT`
+	 * before anything is written.
+	 *
+	 * The CRUD base's `create()` wrote the memberships on its own connection, with no lock: a decision that held the
+	 * approval's lock could read the employees and the teams the sharing was for while the upsert replaced them, and
+	 * decide on a list that no longer stood (the gap #11413 left documented). The upsert is still the upsert:
+	 *
+	 * - the refusals `create()` makes before it writes are made first, on the same payload: a row of another tenant,
+	 *   a nested row of another tenant, and an organization outside the caller's reach (the payload's, and the
+	 *   stored row's);
+	 * - it writes the columns the payload states — the organization, the equipment and the policy exactly as
+	 *   {@link checkCreate} checked them, the organization only when it moves the sharing — and nothing else; the
+	 *   request approval keeps its status and name, as under `create()`;
+	 * - a membership list must be ids or `{ id }` objects (400 otherwise): the list replaces the membership, so an
+	 *   entry naming no id would write a shorter list than the caller meant.
+	 *
+	 * @param payload - The checked payload ({@link checkCreate}).
+	 * @param stored - The stored sharing the payload's id names, as the check read it.
+	 * @param expected - The version the upsert is based on (the body's, else the check's read); `null` for a row
+	 * stored without one.
+	 * @returns The sharing, as written, with its employees and teams.
+	 */
+	private async storeMembershipEdit(
+		payload: ISharingColumns & { id?: unknown },
+		stored: IStoredSharingRow,
+		expected: number | null
+	): Promise<EquipmentSharing> {
+		const tenantId = RequestContext.currentTenantId();
+		const row = payload as unknown as EquipmentSharing;
+		// What `create()` refuses before it writes, on the payload it would have written.
+		await this.assertNotForeignRow(row, tenantId);
+		await this.assertNestedGraphNotForeign([row], tenantId);
+		await this.assertInsideOrganizationBoundary([row]);
+
+		const { columns, members } = inPlaceSharingChange(payload as any);
+		const organizationId = (payload.organizationId ?? null) as ID | null;
+		const written = {
+			...columns,
+			// The organization the payload was checked in, when the upsert moves the sharing there.
+			...(organizationId && !sameId(organizationId, stored.organizationId) ? { organizationId } : {})
+		} as Partial<EquipmentSharing>;
+		const criteria = { ...this.atVersion(stored.id, expected), tenantId } as FindOptionsWhere<EquipmentSharing>;
+
+		try {
+			const done = await this.inPlaceTransaction(async (transaction) => {
+				// The approval's lock first: the order the decision, the answer and the in-place edit take theirs in.
+				await transaction.lockApprovals(stored.id, tenantId, stored.organizationId ?? null);
+				if (!(await transaction.writeAtVersion(criteria, written))) {
+					return false;
+				}
+				await transaction.replaceMembers(stored.id, tenantId, members);
+				return true;
+			});
+
+			if (!done) {
+				throw await this.versionConflict(stored.id, expected);
+			}
+		} catch (err) {
+			// An HTTP refusal (the 409 conflict) stands as what it is; any other failure is answered 400, as create().
+			if (err instanceof HttpException) {
+				throw err;
+			}
+			console.error('Error storing an equipment sharing upsert under its lock:', redactDatabaseError(err));
+			throw new BadRequestException(toClientSafeError(err));
+		}
+
+		return await this.findOneByIdString(stored.id, { relations: { employees: true, teams: true } });
 	}
 
 	/**
@@ -358,7 +455,9 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 				organizationId: true,
 				equipmentId: true,
 				equipmentSharingPolicyId: true,
-				version: true
+				version: true,
+				// A retired row is upserted as before, not as a membership edit (`storeCreate`).
+				deletedAt: true
 			},
 			withDeleted: true
 		} as any)) as unknown as IStoredSharingRow | null;
