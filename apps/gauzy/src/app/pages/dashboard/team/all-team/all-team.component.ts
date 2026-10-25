@@ -7,7 +7,7 @@ import {
 	formatDuration,
 	formatPercent
 } from '../team-dashboard.utils';
-import { PersonCardKeyboard } from '../person-card-keyboard';
+import { PersonCardKeyboard, personCardId } from '../person-card-keyboard';
 
 /** Organization-wide figures of the overview's summary strip. */
 export interface ITeamsOverview {
@@ -42,6 +42,8 @@ export class AllTeamComponent {
 
 	/** Keyboard access to the Top members' hover cards. */
 	protected readonly cardKeyboard = new PersonCardKeyboard();
+	/** Prefix of the Top members' card ids; each line adds its index. */
+	protected readonly cardIdPrefix = personCardId();
 
 	@Input() public teams: ITeamRow[] = [];
 	@Input() public membersByTeam: Record<string, IMemberRow[]> = {};

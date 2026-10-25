@@ -3,8 +3,19 @@ import { NbPopoverDirective } from '@nebular/theme';
 /** Every member hover card's popover carries this class (`nbPopoverClass`). */
 const CARD_SELECTOR = '.person-popover';
 
-/** The card's links, in tab order: the email, then the profile. */
-const CARD_LINK_SELECTOR = `${CARD_SELECTOR} a[href]`;
+/** Card ids handed out so far; each trigger gets its own (see {@link personCardId}). */
+let cardCount = 0;
+
+/**
+ * A unique id for the card of one trigger. The popover keeps its overlay to itself,
+ * so a trigger finds its own card by this id — set on the card, carried in the
+ * popover context — rather than by the first card in the document, which may be
+ * another member's card still open under the pointer. Per trigger, not per person:
+ * the same person can be listed under several expanded teams at once.
+ */
+export function personCardId(): string {
+	return `team-person-card-${++cardCount}`;
+}
 
 /**
  * Keyboard access to the Teams dashboard's member hover cards.
@@ -31,14 +42,20 @@ export class PersonCardKeyboard {
 		popover.show();
 	}
 
-	/** Arrow Down on a name: open its card and move focus to the card's first link. */
-	onTriggerKeydown(event: KeyboardEvent, popover: NbPopoverDirective): void {
+	/**
+	 * Arrow Down on a name: open its card and move focus to that card's first link
+	 * (the email, else the profile) — found by the card's own id, `cardId`.
+	 */
+	onTriggerKeydown(event: KeyboardEvent, popover: NbPopoverDirective, cardId: string): void {
 		if (event.key !== 'ArrowDown') return;
 		event.preventDefault();
 		this._open = { popover, trigger: event.currentTarget as HTMLElement };
 		popover.show();
 		// The card renders on the next tick, in the overlay.
-		setTimeout(() => (document.querySelector(CARD_LINK_SELECTOR) as HTMLElement | null)?.focus());
+		setTimeout(() => {
+			const card = document.getElementById(cardId);
+			(card?.querySelector('a[href]') as HTMLElement | null)?.focus();
+		});
 	}
 
 	/** Leaving the name closes its card — unless focus went into that card. */

@@ -179,14 +179,14 @@
 								[routerLink]="['/pages/employees/view', row.employeeId]"
 								#cardPopover="nbPopover"
 								[nbPopover]="personCard"
-								[nbPopoverContext]="row.person"
+								[nbPopoverContext]="{ person: row.person, cardId: cardIdPrefix + '-' + $index }"
 								nbPopoverTrigger="hover"
 								nbPopoverPlacement="top-start"
 								nbPopoverAdjustment="vertical"
 								nbPopoverClass="person-popover"
 								(focus)="cardKeyboard.onTriggerFocus(cardPopover)"
 								(blur)="cardKeyboard.onTriggerBlur($event, cardPopover)"
-								(keydown)="cardKeyboard.onTriggerKeydown($event, cardPopover)"
+								(keydown)="cardKeyboard.onTriggerKeydown($event, cardPopover, cardIdPrefix + '-' + $index)"
 								aria-keyshortcuts="ArrowDown"
 							>
 								{{ row.name }}
@@ -205,10 +205,11 @@
 </div>
 
 <!-- The member's hover card: the team page's assignee card. -->
-<ng-template #personCard let-person>
+<ng-template #personCard let-card>
 	<!-- Arrow Down on the name moves focus in here; the card stays open while focus does. -->
 	<gauzy-team-person-card
-		[person]="person"
+		[attr.id]="card.cardId"
+		[person]="card.person"
 		(focusout)="cardKeyboard.onCardFocusOut($event)"
 		(keydown.escape)="cardKeyboard.onCardEscape()"
 	></gauzy-team-person-card>
