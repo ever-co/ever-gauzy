@@ -13,7 +13,7 @@ import { IntegrationService, IntegrationTenantService, RequestContext } from '@g
 import { SimClientFactory } from './sim-client.factory';
 import { SimRepositoryService } from './sim-repository.service';
 import { SimWorkflowExecution } from './sim-workflow-execution.entity';
-import { mapSimExecutionResult } from './sim-execution-result';
+import { isSimRunNotFound, mapSimExecutionResult } from './sim-execution-result';
 import { SIM_DEFAULT_BASE_URL } from './sim.config';
 import { IConfigureSimInput, IExecuteWorkflowInput, ISimIntegrationSettings, SimSettingName } from './interfaces';
 import { SimEventType, SIM_SUPPORTED_EVENTS, SIM_EVENT_DESCRIPTIONS } from './dto/event-mapping.dto';
@@ -341,14 +341,19 @@ export class SimService {
 		// simstudio-ts-sdk 0.2 runs async executions on the v2 API, whose status is read per workflow
 		// (`/api/v2/workflows/:workflowId/runs/:runId`); `getJobStatus` reads the legacy `/api/jobs/:id`.
 		// The run id is logged as the execution's `executionId`, together with its workflow, so a run
-		// started here is looked up on v2; an id this tenant never logged, or one the v2 API does not
-		// know (a job queued through the legacy API before the upgrade), goes to the legacy endpoint.
+		// started here is looked up on v2; an id this tenant never logged, or one the v2 API reports as
+		// not found (a job queued through the legacy API before the upgrade), goes to the legacy endpoint.
+		// Any other v2 failure (timeout, network, 5xx, auth, rate limit) is the answer: a v2 run does not
+		// exist on the legacy API, so asking it would only replace the real error with "job not found".
 		const workflowId = await this.findWorkflowIdOfRun(taskId);
 		if (workflowId) {
 			try {
 				return await client.getWorkflowRun(workflowId, taskId, { includeOutput: true });
 			} catch (error: any) {
-				this.logger.debug(`SIM v2 run lookup failed for ${taskId}, trying the legacy job status: ${error?.message}`);
+				if (!isSimRunNotFound(error)) {
+					throw error;
+				}
+				this.logger.debug(`SIM v2 API does not know run ${taskId}, trying the legacy job status: ${error?.message}`);
 			}
 		}
 		return client.getJobStatus(taskId);

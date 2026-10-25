@@ -66,9 +66,29 @@ describe('SimService.getJobStatus', () => {
 
 	it('falls back to the legacy job status when the v2 API does not know the id (a pre-upgrade job)', async () => {
 		const { service, client } = setUp(async () => ({ workflowId: 'wf-1', executionId: 'task-9' }));
-		client.getWorkflowRun.mockRejectedValueOnce(new Error('Run not found'));
+		client.getWorkflowRun.mockRejectedValueOnce(simError('Workflow run not found', 'NOT_FOUND', 404));
 
 		await expect(service.getJobStatus('task-9')).resolves.toEqual({ taskId: 'task-9', status: 'queued' });
 		expect(client.getJobStatus).toHaveBeenCalledWith('task-9');
 	});
+
+	// Review (Greptile): a v2 run does not exist on the legacy API, so falling back on any v2 failure replaced a
+	// timeout or a server error with the legacy "job not found". Only a not-found answer moves on.
+	it.each([
+		['a server error', simError('HTTP 500: Internal Server Error', undefined, 500)],
+		['a timeout / network failure (no HTTP status)', simError('fetch failed: ETIMEDOUT', 'STATUS_ERROR')],
+		['an auth failure', simError('Invalid API key', 'UNAUTHORIZED', 401)],
+		['a rate limit', simError('Too many requests', 'RATE_LIMIT_EXCEEDED', 429)]
+	])('surfaces %s from the v2 lookup instead of asking the legacy API', async (_case, error) => {
+		const { service, client } = setUp(async () => ({ workflowId: 'wf-1', executionId: 'run-123' }));
+		client.getWorkflowRun.mockRejectedValueOnce(error);
+
+		await expect(service.getJobStatus('run-123')).rejects.toBe(error);
+		expect(client.getJobStatus).not.toHaveBeenCalled();
+	});
 });
+
+/** The shape the SDK rejects with: `SimStudioError(message, code, status)`. */
+function simError(message: string, code?: string, status?: number): Error {
+	return Object.assign(new Error(message), { name: 'SimStudioError', code, status });
+}

@@ -1,4 +1,4 @@
-import { isSimAsyncRun, mapSimExecutionResult, simAsyncRunId } from './sim-execution-result';
+import { isSimAsyncRun, isSimRunNotFound, mapSimExecutionResult, simAsyncRunId } from './sim-execution-result';
 
 /**
  * simstudio-ts-sdk 0.1 -> 0.2 (2026-10 dependency upgrade): async runs now go to the v2 API and answer
@@ -71,5 +71,25 @@ describe('mapSimExecutionResult', () => {
 		expect(isSimAsyncRun({ success: true, output: {} })).toBe(false);
 		expect(simAsyncRunId({ success: true, runId: 'r', taskId: 't' })).toBe('r');
 		expect(simAsyncRunId(null)).toBeUndefined();
+	});
+});
+
+describe('isSimRunNotFound', () => {
+	it('is true for an HTTP 404, or a not-found code that came without a status', () => {
+		expect(isSimRunNotFound({ status: 404 })).toBe(true);
+		expect(isSimRunNotFound({ status: 404, code: 'WORKFLOW_RUN_NOT_FOUND' })).toBe(true);
+		expect(isSimRunNotFound({ code: 'NOT_FOUND' })).toBe(true);
+		expect(isSimRunNotFound({ code: 'run-not-found' })).toBe(true);
+	});
+
+	it('is false for timeouts, server errors, auth failures, rate limits and non-errors', () => {
+		expect(isSimRunNotFound({ code: 'STATUS_ERROR' })).toBe(false);
+		expect(isSimRunNotFound({ status: 500 })).toBe(false);
+		expect(isSimRunNotFound({ status: 502, code: 'NOT_FOUND' })).toBe(false);
+		expect(isSimRunNotFound({ status: 401, code: 'UNAUTHORIZED' })).toBe(false);
+		expect(isSimRunNotFound({ status: 429 })).toBe(false);
+		expect(isSimRunNotFound(new Error('Run not found'))).toBe(false);
+		expect(isSimRunNotFound(null)).toBe(false);
+		expect(isSimRunNotFound(undefined)).toBe(false);
 	});
 });

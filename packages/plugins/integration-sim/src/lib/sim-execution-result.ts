@@ -58,3 +58,17 @@ export function mapSimExecutionResult(
 
 	execution.error = syncResult.error ? { message: syncResult.error } : undefined;
 }
+
+/**
+ * Whether an error from the SIM SDK says the run does not exist: HTTP 404 (`SimStudioError.status`),
+ * or a not-found error code without a status. Only then may a status lookup move on to another API;
+ * timeouts and network failures (code `STATUS_ERROR`, no status), server errors, auth failures and
+ * rate limits are real answers about a run that may well exist.
+ */
+export function isSimRunNotFound(error: unknown): boolean {
+	const { status, code } = (error ?? {}) as { status?: unknown; code?: unknown };
+	if (status === 404) {
+		return true;
+	}
+	return status == null && typeof code === 'string' && /not[_-]?found/i.test(code);
+}
