@@ -93,6 +93,39 @@ describe('TimeLogService', () => {
 		expect(service).toBeDefined();
 	});
 
+	describe('getTimeLogs time slot projection', () => {
+		const run = async (relations: string[]) => {
+			mockRequestContext({
+				tenantId: TENANT_ID,
+				user: { id: USER_ID, employeeId: CURRENT_EMPLOYEE_ID },
+				canChangeSelectedEmployee: true
+			});
+			const setFindOptions = jest.spyOn(builder, 'setFindOptions');
+			await service.getTimeLogs({
+				organizationId: ORGANIZATION_ID,
+				startDate: '2026-01-05T00:00:00.000Z',
+				endDate: '2026-01-12T00:00:00.000Z',
+				relations
+			} as IGetTimeLogReportInput);
+			return (setFindOptions.mock.calls[0] as unknown as [{ select: Record<string, unknown> }])[0].select;
+		};
+
+		it('loads only the activity columns of a plain timeSlots relation', async () => {
+			const select = await run(['project', 'employee.user', 'timeSlots']);
+			expect(select.timeSlots).toEqual({ id: true, overall: true, duration: true });
+		});
+
+		it('keeps whole slots when a relation below them is requested', async () => {
+			const select = await run(['timeSlots', 'timeSlots.screenshots']);
+			expect(select).not.toHaveProperty('timeSlots');
+		});
+
+		it('leaves the projection alone when slots are not requested', async () => {
+			const select = await run(['project']);
+			expect(select).not.toHaveProperty('timeSlots');
+		});
+	});
+
 	describe('report queries', () => {
 		const request: IGetTimeLogReportInput = {
 			organizationId: ORGANIZATION_ID,

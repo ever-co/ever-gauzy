@@ -1,64 +1,73 @@
-import { Component, EventEmitter, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
-import { UntilDestroy } from '@ngneat/until-destroy';
-import { OrganizationProjectsService, Store } from '@gauzy/ui-core/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import {
+	IMemberRow,
+	IRankedMember,
+	ITeamRow,
+	activityTone,
+	formatDuration,
+	formatPercent
+} from '../team-dashboard.utils';
 
-@UntilDestroy({ checkProperties: true })
+/** Organization-wide figures of the overview's summary strip. */
+export interface ITeamsOverview {
+	teamsWorked: number;
+	membersWorked: number;
+	membersTotal: number;
+	projectsWorked: number;
+	duration: number;
+	activity: number;
+}
+
+/**
+ * The "All teams" tab of the Teams dashboard: the organization's summary strip,
+ * every team with its day — each row opening onto its members and their
+ * working-day bars — and who worked the most.
+ */
 @Component({
-    selector: 'gauzy-all-team',
-    templateUrl: './all-team.component.html',
-    styleUrls: ['./all-team.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	selector: 'gauzy-all-team',
+	templateUrl: './all-team.component.html',
+	styleUrls: [
+		'../../../employees/view-employee/view-employee.component.scss',
+		'../team-dashboard.shared.scss',
+		'./all-team.component.scss'
+	],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
-export class AllTeamComponent implements OnInit {
-	@Input()
-	public teams: any[];
-	@Output()
-	public selectedTeam: EventEmitter<any> = new EventEmitter();
+export class AllTeamComponent {
+	public readonly formatDuration = formatDuration;
+	public readonly formatPercent = formatPercent;
+	public readonly activityTone = activityTone;
 
-	constructor(private readonly _store: Store, private readonly _projectService: OrganizationProjectsService) {
-		this._projectCount = 0;
-		this._organization = null;
+	@Input() public teams: ITeamRow[] = [];
+	@Input() public membersByTeam: Record<string, IMemberRow[]> = {};
+	@Input() public topMembers: IRankedMember[] = [];
+	@Input() public overview: ITeamsOverview;
+	@Input() public projectCount = 0;
+
+	/** Emits the id of the team to open. */
+	@Output() public readonly selectedTeam = new EventEmitter<string>();
+
+	/** Teams whose members are listed under their row. */
+	public expanded = new Set<string>();
+
+	public get allExpanded(): boolean {
+		return this.teams.length > 0 && this.teams.every((team) => this.expanded.has(team.id));
 	}
 
-	private _projectCount: number;
-
-	get projectCount(): number {
-		return this._projectCount;
+	public onSelectTeam(teamId: string): void {
+		this.selectedTeam.emit(teamId);
 	}
 
-	set projectCount(value: number) {
-		this._projectCount = value;
+	public toggle(teamId: string): void {
+		if (this.expanded.has(teamId)) {
+			this.expanded.delete(teamId);
+		} else {
+			this.expanded.add(teamId);
+		}
 	}
 
-	private _organization: any;
-
-	public get organization(): any {
-		return this._organization;
-	}
-
-	@Input()
-	public set organization(value: any) {
-		this._organization = value;
-	}
-
-	ngOnInit(): void {
-		(async () => await this.loadProjectsCount())();
-	}
-
-	public onSelectTeam(team: any) {
-		this.selectedTeam.emit(team);
-	}
-
-	private async loadProjectsCount() {
-		const { tenantId } = this._store.user;
-		const { id: organizationId } = this.organization;
-
-		try {
-			this.projectCount = await this._projectService.getCount({
-				organizationId,
-				tenantId
-			});
-		} catch (e) {}
+	public toggleAll(): void {
+		this.expanded = this.allExpanded ? new Set() : new Set(this.teams.map((team) => team.id));
 	}
 }

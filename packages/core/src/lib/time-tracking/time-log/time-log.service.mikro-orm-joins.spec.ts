@@ -54,6 +54,8 @@ interface IMeasurement {
 	mikroOrm: IRead;
 	/** …and with the caller naming `project`, as the REST route's query string may. */
 	mikroOrmWithProject: IRead;
+	/** …and with the caller naming `timeSlots`, as the Teams dashboard does: the serialized rows as answered. */
+	mikroOrmWithSlots: IRead & { raw: any[] };
 	/** The service read under TypeORM. */
 	typeOrm: IRead;
 	typeOrmWithProject: IRead;
@@ -214,6 +216,7 @@ async function measure(): Promise<IMeasurement> {
 			// The arguments the `timeLogs` field hands the read, and the REST route's `relations` beside them.
 			const request = { organizationId: ORGANIZATION };
 			const withProject = { organizationId: ORGANIZATION, relations: ['project'] };
+			const withSlots = { organizationId: ORGANIZATION, relations: ['project', 'task', 'employee.user', 'timeSlots'] };
 
 			const read = async (statements: string[], run: () => Promise<any[]>): Promise<IRead> => {
 				statements.length = 0;
@@ -269,6 +272,14 @@ async function measure(): Promise<IMeasurement> {
 				measurement.mikroOrmWithProject = await read(mikroOrmStatements, () =>
 					service(new MikroOrmTimeLogRepository(mikroOrm.em.fork(), TimeLog)).getTimeLogs(withProject)
 				);
+				let slotRows: any[] = [];
+				const slotsRead = await read(mikroOrmStatements, async () => {
+					slotRows = await service(new MikroOrmTimeLogRepository(mikroOrm.em.fork(), TimeLog)).getTimeLogs(
+						withSlots
+					);
+					return slotRows;
+				});
+				measurement.mikroOrmWithSlots = { ...slotsRead, raw: slotRows };
 			} finally {
 				await mikroOrm.close(true);
 			}
@@ -358,6 +369,26 @@ describe('TimeLogService.getTimeLogs joins what it loads, on MikroORM as on Type
 		expect(measured.mikroOrmWithProject.rows.map((row) => row.project)).toEqual(['Live', null]);
 		// TypeORM puts `deletedAt IS NULL` on the join, so the relation is not set.
 		expect(measured.typeOrmWithProject.rows.map((row) => row.project)).toEqual(['Live', null]);
+	});
+
+	it('loads only the activity columns of a plain timeSlots relation, and every other field in full', () => {
+		const { error, rows, raw, joins } = measured.mikroOrmWithSlots;
+		expect(error).toBeUndefined();
+		expect(rows).toEqual([
+			{ id: FIRST_LOG, project: 'Live', user: 'Ada', task: 'Task', timeSlots: 1 },
+			{ id: SECOND_LOG, project: null, user: 'Ada', task: 'Task', timeSlots: 1 }
+		]);
+
+		const [first] = raw;
+		// The slot is cut down to what activity is computed from…
+		expect(Object.keys(first.timeSlots[0]).sort()).toEqual(['duration', 'id', 'overall']);
+		// …while the time log keeps its own columns and the other relations theirs.
+		expect(first).toEqual(
+			expect.objectContaining({ employeeId: EMPLOYEE, projectId: LIVE_PROJECT, taskId: TASK, startedAt: expect.anything() })
+		);
+		expect(first.employee.user).toEqual(expect.objectContaining({ firstName: 'Ada', lastName: 'Lovelace' }));
+		// The eager user image is still joined.
+		expect(joins[0]).toEqual(expect.arrayContaining(['image_asset', 'time_slot']));
 	});
 
 	it('leaves the TypeORM statement as it was: the two relations it filters on, and nothing else', () => {

@@ -1845,6 +1845,36 @@
 		}
 	},
 	"DASHBOARD_PAGE": {
+		"TEAMS_DASHBOARD": {
+			"ALL_TEAMS": "כל הצוותים",
+			"WORKED_TODAY": "עבודה היום",
+			"TEAMS_ACTIVE": "צוותים פעילים",
+			"OF_TEAMS": "מתוך {{ total }} צוותים רשמו זמן",
+			"MEMBERS_WORKED": "חברים פעילים",
+			"OF_PROJECTS": "מתוך {{ total }} פרויקטים",
+			"TEAMS_CAPTION": "מי עבד בכל צוות ביום הנבחר",
+			"TOP_MEMBERS": "החברים המובילים",
+			"TRACKING_NOW": "רושמים זמן כעת",
+			"ONLINE_META": "{{ count }} מחוברים",
+			"PROJECTS_META": "עם זמן ביום הנבחר",
+			"MEMBERS_CAPTION": "המשימות, הזמן והפעילות של כל חבר ביום הנבחר",
+			"OPEN_TEAM": "פתיחת דף הצוות",
+			"MORE_TASKS": "+{{ count }} נוספות",
+			"OF_WORKDAY": "{{ percent }} מתוך {{ hours }}",
+			"SHOW_MEMBERS": "הצגת החברים",
+			"EXPAND_ALL": "הצגת כל החברים",
+			"COLLAPSE_ALL": "הסתרת החברים",
+			"TOTAL_TODAY": "סה״כ היום",
+			"WORKDAY": "יום עבודה",
+			"SCROLL_TEAMS_BACK": "הצגת הצוותים הקודמים",
+			"SCROLL_TEAMS_FORWARD": "הצגת צוותים נוספים",
+			"COLUMNS": {
+				"TEAM": "צוות",
+				"WORKED": "עבדו",
+				"NOW": "עכשיו",
+				"NOT_WORKED": "לא עבדו"
+			}
+		},
 		"ACCOUNTING": "Accounting",
 		"HUMAN_RESOURCES": "Human Resources",
 		"TIME_TRACKING": "Time Tracking",
