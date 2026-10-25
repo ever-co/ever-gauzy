@@ -1700,7 +1700,12 @@
 		"roadmaps",
 		"decompile",
 		"reputational",
-		"parenthesised"
+		"parenthesised",
+		"commitish",
+		"typeof",
+		"dotenv",
+		"seald",
+		"mapbox"
 	],
 	"useGitignore": true,
 	"ignorePaths": [
