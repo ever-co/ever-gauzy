@@ -18,6 +18,6 @@ export class FileStorageModule implements NestModule {
 	 * to be processed before handling requests.
 	 */
 	configure(consumer: MiddlewareConsumer) {
-		consumer.apply(TenantSettingsMiddleware).forRoutes('*');
+		consumer.apply(TenantSettingsMiddleware).forRoutes('{*splat}');
 	}
 }
