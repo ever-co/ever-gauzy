@@ -2,15 +2,21 @@
  * Cases for tools/electron/patches: the app-builder-lib patch that `postinstall.electron` applies before any desktop
  * app is packaged.
  *
- * Why the patch exists: electron-builder 26.15.3 builds the x64 snap from its template (`buildWithTemplate` in
- * app-builder-lib/out/targets/snap/coreLegacy.js) and, before running mksquashfs, deletes `chrome-sandbox` from
+ * Why the patch existed: electron-builder 26.15.3 built the x64 snap from its template (`buildWithTemplate` in
+ * app-builder-lib/out/targets/snap/coreLegacy.js) and, before running mksquashfs, deleted `chrome-sandbox` from
  * `linux-unpacked` - the directory every other Linux target packs from at the same time (snap, tar.gz, AppImage and
  * flatpak build concurrently, deb and rpm after them). When the delete lands while the AppImage target is copying
  * that directory, the copy fails and the job with it ("failed to build AppImage error=ENOENT ... copyfile
  * '.../linux-unpacked/chrome-sandbox' -> '.../__appImage-x64/chrome-sandbox'", API Server stage-apps run 40090832195,
  * both attempts). When the AppImage copy wins the race, the deb and rpm are still packed afterwards from a directory
  * without chrome-sandbox. The mksquashfs argument list already filters chrome-sandbox out of the snap, so the delete
- * buys nothing; electron-builder 26.18.0 removed it upstream for this reason. The patch removes it from 26.15.3.
+ * buys nothing; electron-builder 26.18.0 removed it upstream for this reason. The patch removed it from 26.15.3.
+ *
+ * Since electron-builder 26.18.0 (app-builder-lib 26.18.0) the patch is retired: patch-package with --error-on-fail
+ * would fail every desktop build on a patch made for a version that is no longer installed, so from that version on
+ * these cases check that no app-builder-lib patch is left behind. The patch-package step and its directory stay (the
+ * step prints "No patch files found" and succeeds) for the next electron-only patch, and the version check still
+ * applies if app-builder-lib is ever pinned below 26.18.0 again.
  *
  * It lives in its own patch directory, not in patches/: `postinstall.manual` applies patches/ in the API and worker
  * images' production-dependency stages too (.deploy/{api,worker}/Dockerfile), where electron-builder (a
@@ -45,8 +51,10 @@ const read = (relative) => fs.readFileSync(path.join(ROOT, relative), 'utf8');
 
 /** The app-builder-lib patch files in the electron patch directory, with the version each is made for. */
 function appBuilderLibPatches() {
+	const dir = path.join(ROOT, PATCH_DIR);
+	if (!fs.existsSync(dir)) return [];
 	return fs
-		.readdirSync(path.join(ROOT, PATCH_DIR))
+		.readdirSync(dir)
 		.map((name) => ({ name, match: /^app-builder-lib\+(\d+\.\d+\.\d+)\.patch$/.exec(name) }))
 		.filter((entry) => entry.match)
 		.map((entry) => ({ name: entry.name, version: entry.match[1] }));
@@ -94,19 +102,27 @@ function compareVersions(a, b) {
 	return 0;
 }
 
-test('the patch is made for the app-builder-lib the lockfile installs', () => {
-	const patch = thePatch();
+/** Whether the locked app-builder-lib already filters chrome-sandbox instead of deleting it. */
+function fixedUpstream() {
 	const locked = lockedAppBuilderLibVersions();
-
 	assert.equal(locked.length, 1, `yarn.lock resolves app-builder-lib to ${locked.length} versions: ${locked}`);
-	const [version] = locked;
-	if (compareVersions(version, FIXED_UPSTREAM) >= 0) {
-		assert.fail(
-			`yarn.lock now installs app-builder-lib ${version}, which no longer deletes chrome-sandbox ` +
-				`(fixed upstream in ${FIXED_UPSTREAM}). Delete ${PATCH_DIR}/${patch.name}, this spec, ` +
-				'its static-checks step and the patch-package call in the postinstall.electron script.'
+	return compareVersions(locked[0], FIXED_UPSTREAM) >= 0;
+}
+
+test('the patch is made for the app-builder-lib the lockfile installs, and is gone once upstream fixed it', () => {
+	const [version] = lockedAppBuilderLibVersions();
+	if (fixedUpstream()) {
+		const stale = appBuilderLibPatches().map((entry) => entry.name);
+		assert.deepEqual(
+			stale,
+			[],
+			`yarn.lock installs app-builder-lib ${version}, which no longer deletes chrome-sandbox (fixed upstream in ` +
+				`${FIXED_UPSTREAM}): ${stale.join(', ')} in ${PATCH_DIR} no longer applies and patch-package ` +
+				'--error-on-fail would fail every desktop build. Delete it.'
 		);
+		return;
 	}
+	const patch = thePatch();
 	assert.equal(
 		patch.version,
 		version,
@@ -116,7 +132,11 @@ test('the patch is made for the app-builder-lib the lockfile installs', () => {
 	);
 });
 
-test('the patch only stops the snap target deleting chrome-sandbox from the shared app directory', () => {
+test('the patch only stops the snap target deleting chrome-sandbox from the shared app directory', (t) => {
+	if (fixedUpstream()) {
+		t.skip(`app-builder-lib ${FIXED_UPSTREAM}+ is installed: there is no patch to check`);
+		return;
+	}
 	const { files, removed, added } = parse(thePatch().text);
 
 	assert.deepEqual(files, [PATCHED_FILE]);

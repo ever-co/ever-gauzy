@@ -475,12 +475,13 @@ jobs:
         if: always()
         run: node --test tools/electron/before-build.test.js
 
-      # electron-builder 26.15.3's x64 snap target deletes chrome-sandbox from linux-unpacked while the AppImage target
-      # copies that directory, which failed the API Server's Linux x64 release ("failed to build AppImage", ENOENT on
-      # linux-unpacked/chrome-sandbox). postinstall.electron patches the delete out (tools/electron/patches). Only a
-      # release build applies the patch, so these cases keep it made for the app-builder-lib the lockfile installs (and
-      # say when an upgrade makes it obsolete) and out of patches/, which the API and worker images apply without
-      # app-builder-lib installed.
-      - name: The electron-builder snap patch matches the locked app-builder-lib
+      # electron-builder 26.15.3's x64 snap target deleted chrome-sandbox from linux-unpacked while the AppImage target
+      # copied that directory, which failed the API Server's Linux x64 release ("failed to build AppImage", ENOENT on
+      # linux-unpacked/chrome-sandbox). postinstall.electron patched the delete out (tools/electron/patches) until
+      # electron-builder 26.18.0 fixed it upstream; the patch is retired since. Only a release build runs
+      # patch-package --error-on-fail, so these cases keep any app-builder-lib patch made for the locked version (and
+      # none at all from 26.18.0 on, where a leftover patch would fail every desktop build) and out of patches/, which
+      # the API and worker images apply without app-builder-lib installed.
+      - name: The electron-builder snap patch matches the locked app-builder-lib (none from 26.18.0)
         if: always()
         run: node --test tools/electron/app-builder-lib-patch.test.js

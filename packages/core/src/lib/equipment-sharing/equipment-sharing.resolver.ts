@@ -6,6 +6,7 @@ import {
 	ID as Id,
 	IEquipmentSharing,
 	IEquipmentSharingCreateInput,
+	IEquipmentSharingUpdateInPlaceInput,
 	IEquipmentSharingUpdateInput,
 	IPagination,
 	PermissionsEnum,
@@ -27,7 +28,8 @@ import { EquipmentSharingService } from './equipment-sharing.service';
 import {
 	EquipmentSharingCreateCommand,
 	EquipmentSharingStatusCommand,
-	EquipmentSharingUpdateCommand
+	EquipmentSharingUpdateCommand,
+	EquipmentSharingUpdateInPlaceCommand
 } from './commands';
 import { deleteRemovedRows } from '../graphql/delete-answer';
 
@@ -49,6 +51,13 @@ export interface IUpdateEquipmentSharingInput extends ICreateEquipmentSharingInp
 	id: Id;
 	/** The version the edit is based on: a compare-and-set, refused with 409 when the period moved on. */
 	version?: number;
+}
+
+/** The members `UpdateEquipmentSharingInPlaceInput` declares in the schema. */
+export interface IUpdateEquipmentSharingInPlaceInput extends Partial<ICreateEquipmentSharingInput> {
+	id: Id;
+	/** The version the edit is based on: required, the in-place edit is a compare-and-set on it. */
+	version: number;
 }
 
 /**
@@ -398,6 +407,31 @@ export class EquipmentSharingResolver {
 	}
 
 	/**
+	 * Changes a period that exists, in place and at the version the edit is based on.
+	 *
+	 * The same command `PUT /equipment-sharing/:id/in-place` dispatches, carrying the identifier the route reads from
+	 * its path and the body beside it. Unlike `updateEquipmentSharing`, the row is not removed and filed again: the
+	 * members stated are written where the row is, in one statement predicated on `version`, refused with 409
+	 * `ENTITY_VERSION_CONFLICT` when the period has moved on; a member left out keeps its stored value. The scope
+	 * checks are the edit's: the row is read in the caller's scope, and the asset, the policy and the memberships the
+	 * body names are held to the row's own organization.
+	 */
+	@Mutation('updateEquipmentSharingInPlace')
+	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
+	async updateEquipmentSharingInPlace(
+		@Args('input') input: IUpdateEquipmentSharingInPlaceInput
+	): Promise<EquipmentSharing> {
+		const { id, ...values } = input;
+
+		return await this.commandBus.execute(
+			new EquipmentSharingUpdateInPlaceCommand(
+				id,
+				this.writePayload(values) as unknown as IEquipmentSharingUpdateInPlaceInput
+			)
+		);
+	}
+
+	/**
 	 * Approves a filed period.
 	 *
 	 * The same command the delivered route dispatches, with the approved value of the contracts' own
@@ -514,7 +548,7 @@ export class EquipmentSharingResolver {
 	 * window the write receives, and the status is the value it stated.
 	 */
 	private writePayload(
-		input: Omit<ICreateEquipmentSharingInput, 'id'> | IUpdateEquipmentSharingInput
+		input: Partial<ICreateEquipmentSharingInput> & { version?: number }
 	): Record<string, unknown> {
 		const { employeeIds, teamIds, ...values } = input;
 

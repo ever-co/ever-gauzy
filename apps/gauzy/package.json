@@ -99,7 +99,6 @@
 		"chartjs-plugin-annotation": "^3.1.0",
 		"core-js": "^3.50.0",
 		"d3": "^7.9.0",
-		"d3-selection-multi": "^1.0.1",
 		"date-fns": "^4.4.0",
 		"date-holidays": "^3.37.0",
 		"dayjs": "^1.11.23",
