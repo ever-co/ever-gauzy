@@ -190,8 +190,16 @@ export class DesktopSignInNotices {
 			if (response === savedButton) {
 				break;
 			}
-			clipboard.writeText(text);
-			copied = true;
+			// Electron 44 made `clipboard.writeText` return a Promise (it was synchronous up to Electron 38):
+			// awaited, so the next dialog says "Copied" only once the text is there, and a failed write is
+			// reported instead of becoming an unhandled rejection while the dialog claims success.
+			try {
+				await clipboard.writeText(text);
+				copied = true;
+			} catch (error) {
+				copied = false;
+				console.error('Could not copy the sign-in details to the clipboard:', error?.message ?? error);
+			}
 		}
 
 		store.delete(DESKTOP_SEED_CREDENTIALS_STORE_KEY);
