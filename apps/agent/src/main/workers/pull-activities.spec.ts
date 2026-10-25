@@ -50,8 +50,16 @@ const mockApi = {
 	stopTimer: jest.fn()
 };
 const mockLogger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+const mockGetScreenshot = jest.fn(async (): Promise<unknown[]> => []);
 
-jest.mock('electron', () => ({ Notification: class Notification {}, screen: {} }));
+jest.mock('electron', () => ({
+	Notification: class Notification {},
+	screen: {
+		getAllDisplays: () => [{ id: 1, bounds: { x: 0, y: 0, width: 100, height: 100 } }],
+		getCursorScreenPoint: () => ({ x: 1, y: 1 }),
+		getPrimaryDisplay: () => ({ id: 1, workAreaSize: { width: 100, height: 100 } })
+	}
+}));
 jest.mock('is-online', () => ({ __esModule: true, default: jest.fn(async () => false) }));
 jest.mock('../../environments/environment', () => ({ environment: {} }), { virtual: true });
 jest.mock('@gauzy/desktop-activity', () => ({
@@ -91,7 +99,7 @@ jest.mock('@gauzy/desktop-lib', () => ({
 	TranslateService: { instant: (key: string) => key }
 }));
 jest.mock('../window-manager', () => ({ __esModule: true, default: { getInstance: () => ({}) } }));
-jest.mock('../screenshot', () => ({ getScreenshot: jest.fn() }));
+jest.mock('../screenshot', () => ({ getScreenshot: () => mockGetScreenshot() }));
 jest.mock('../agent-logger', () => ({ AgentLogger: { getInstance: () => mockLogger } }));
 jest.mock('../api', () => ({ ApiService: { getInstance: () => mockApi } }));
 jest.mock('../queue/worker-queue', () => ({
@@ -276,13 +284,12 @@ describe('PullActivities', () => {
 			await settleMicrotasks();
 			expect(mockActivityService.saveAndReturn).toHaveBeenCalledTimes(1);
 
-			await pull.stopTracking();
-			// Closed where the chunk being written ends
-			expect(mockTimerService.update).toHaveBeenCalledWith(expect.objectContaining({ id: 7, stoppedAt: at(10) }));
-
+			const stopping = pull.stopTracking();
 			firstChunk.resolve({ id: 1 });
-			await waking;
+			await Promise.all([waking, stopping]);
 
+			// Closed where the chunk being written when the person stopped ends, and nothing recorded after it
+			expect(mockTimerService.update).toHaveBeenCalledWith(expect.objectContaining({ id: 7, stoppedAt: at(10) }));
 			expect(idleActivities().map((a) => a.timeEnd)).toEqual([at(10)]);
 			expect(mockEnqueueTimeSlot).toHaveBeenCalledTimes(1);
 			expect(pull.running).toBe(false);
@@ -301,11 +308,11 @@ describe('PullActivities', () => {
 			await settleMicrotasks();
 
 			// The person stops and restarts tracking, then the device sleeps again, all before the wake-up finishes
-			await pull.stopTracking();
-			await pull.startTracking();
+			const stopping = pull.stopTracking();
+			const starting = pull.startTracking();
 			const sleepingAgain = pull.pauseForSleep();
 			firstChunk.resolve({ id: 1 });
-			await Promise.all([waking, sleepingAgain]);
+			await Promise.all([waking, stopping, starting, sleepingAgain]);
 
 			expect(pull.isPaused).toBe(true);
 			expect(pull.running).toBe(false);
@@ -331,6 +338,127 @@ describe('PullActivities', () => {
 
 			expect(mockTimerService.update).not.toHaveBeenCalled();
 			expect(mockEnqueueTimer).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("the person's stop and start against other transitions", () => {
+		/** The `isStopped` timer jobs queued, in order */
+		const stopJobs = () => mockEnqueueTimer.mock.calls.map(([job]) => job).filter((job) => job.data?.isStopped);
+
+		it('pauses nothing for a sleep that arrives while the stop is still closing the timer', async () => {
+			await pull.startTracking();
+			await settle();
+			const closing = deferred<undefined>();
+			mockTimerService.update.mockImplementationOnce(() => closing.promise);
+
+			const stopping = pull.stopTracking();
+			await settleMicrotasks();
+			const sleeping = pull.pauseForSleep();
+			const waking = pull.resumeAfterSleep();
+			closing.resolve(undefined);
+			await Promise.all([stopping, sleeping, waking]);
+
+			expect(pull.isPaused).toBe(false);
+			expect(pull.running).toBe(false);
+			expect(mockTimerModule.start).toHaveBeenCalledTimes(1);
+		});
+
+		it('pauses nothing even when the stop takes longer than a transition may hold the next', async () => {
+			jest.useFakeTimers();
+			await pull.startTracking();
+			await settleMicrotasks();
+			const closing = deferred<undefined>();
+			mockTimerService.update.mockImplementationOnce(() => closing.promise);
+
+			const stopping = pull.stopTracking();
+			await settleMicrotasks();
+			const sleeping = pull.pauseForSleep();
+			jest.advanceTimersByTime(60_000);
+			await sleeping;
+
+			expect(mockLogger.warn).toHaveBeenCalledWith(expect.stringContaining('the next goes ahead'));
+			expect(pull.isPaused).toBe(false);
+
+			closing.resolve(undefined);
+			await stopping;
+			expect(pull.running).toBe(false);
+		});
+
+		it('starts again only once the stop has closed its timer, on a new timer', async () => {
+			await pull.startTracking();
+			await settle();
+			const closing = deferred<undefined>();
+			mockTimerService.update.mockImplementationOnce(() => closing.promise);
+			mockTimerService.saveAndReturn.mockResolvedValueOnce({ id: 8 });
+
+			const stopping = pull.stopTracking();
+			await settleMicrotasks();
+			const starting = pull.startTracking();
+			await settleMicrotasks();
+			expect(mockTimerService.saveAndReturn).toHaveBeenCalledTimes(1);
+
+			closing.resolve(undefined);
+			await Promise.all([stopping, starting]);
+
+			expect(stopJobs().map((job) => job.timerId)).toEqual([7]);
+			expect(mockTimerService.saveAndReturn).toHaveBeenCalledTimes(2);
+			expect(pull.running).toBe(true);
+		});
+
+		it('saves an activity on its own timer, even when a stop and a start land meanwhile', async () => {
+			await pull.startTracking();
+			await settle();
+			mockStore['appSetting'].allowScreenshotCapture = true;
+			const capturing = deferred<unknown[]>();
+			mockGetScreenshot.mockImplementationOnce(() => capturing.promise);
+			mockTimerService.saveAndReturn.mockResolvedValueOnce({ id: 8 });
+
+			const saving = pull.activityProcess({
+				timeData: { timeStart: at(0), timeEnd: at(1) },
+				screenShot: true,
+				afkDuration: 0,
+				activityState: 'active' as never
+			});
+			await pull.stopTracking();
+			await pull.startTracking();
+			capturing.resolve([]);
+			await saving;
+
+			const [activity] = mockActivityService.saveAndReturn.mock.calls.map(([saved]) => saved);
+			expect(activity.timerId).toBe(7);
+		});
+
+		it('closes the stopped timer, not the next, when a start goes ahead of a slow paused stop', async () => {
+			jest.useFakeTimers({ now: T0 });
+			await pull.startTracking();
+			await settleMicrotasks();
+			jest.setSystemTime(at(5));
+			await pull.pauseForSleep();
+			const closing = deferred<undefined>();
+			mockTimerService.update.mockImplementationOnce(() => closing.promise);
+			mockTimerService.saveAndReturn.mockResolvedValueOnce({ id: 8 });
+
+			const stopping = pull.stopTracking();
+			await settleMicrotasks();
+			const starting = pull.startTracking();
+			jest.advanceTimersByTime(60_000);
+			await starting;
+			expect(pull.running).toBe(true);
+
+			closing.resolve(undefined);
+			await stopping;
+
+			expect(stopJobs()).toEqual([
+				expect.objectContaining({
+					timerId: 7,
+					data: expect.objectContaining({
+						startedAt: new Date(T0).toISOString(),
+						stoppedAt: at(5).toISOString(),
+						isStopped: true
+					})
+				})
+			]);
+			expect(pull.running).toBe(true);
 		});
 	});
 

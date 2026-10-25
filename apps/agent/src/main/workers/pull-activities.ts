@@ -54,6 +54,12 @@ const ORGANIZATION_SETTING_REFRESH_MS = 15 * 60 * 1000;
 /** A settings request that has not completed by then is abandoned, so it cannot hold up later refreshes */
 const ORGANIZATION_SETTING_TIMEOUT_MS = 30 * 1000;
 
+/**
+ * Tracking transitions (start, stop, sleep, wake-up) run one after the other. One stuck on the network holds the next
+ * back at most this long, so it cannot block tracking for good.
+ */
+const TRANSITION_LIMIT_MS = 60 * 1000;
+
 /** A device sleep that paused running tracking, keeping its timer open so the wake-up can continue it */
 type TSleepPause = {
 	/** When the sleep paused tracking */
@@ -91,8 +97,10 @@ class PullActivities {
 	private lastTodayDuration: number;
 	/** The device sleep that paused tracking, until the wake-up resumes it or the person stops it */
 	private sleepPause: TSleepPause | null = null;
-	/** Sleeps and wake-ups are handled one after the other, in the order the system reported them */
-	private sleepTransitions: Promise<void> = Promise.resolve();
+	/** Starts, stops, sleeps and wake-ups are handled one after the other, in the order they were requested */
+	private transitions: Promise<void> = Promise.resolve();
+	/** The person's stops requested and not completed yet */
+	private pendingStops = 0;
 	/** Screenshot interval (seconds) last handed to the timer module */
 	private screenshotIntervalSeconds: number | null = null;
 	/** Counts tracking sessions, so settings requested for an earlier session are dropped */
@@ -146,11 +154,12 @@ class PullActivities {
 	 * tracking is not running (the person stopped it, or it never started).
 	 */
 	public pauseForSleep(): Promise<void> {
-		return this.queueSleepTransition(async () => {
-			if (!this.isStarted) {
+		return this.queueTransition(async () => {
+			// A stop the person requested and that is still closing the timer leaves nothing to pause
+			if (!this.isStarted || this.pendingStops > 0) {
 				return;
 			}
-			await this.stopTracking(true);
+			await this.stopTrackingNow(true);
 			const pausedAt = new Date();
 			this.sleepPause = { pausedAt, idleUntil: pausedAt, cancelled: false };
 		});
@@ -162,27 +171,48 @@ class PullActivities {
 	 * nothing left to resume, so the sleep time is recorded once.
 	 */
 	public resumeAfterSleep(): Promise<void> {
-		return this.queueSleepTransition(async () => {
+		return this.queueTransition(async () => {
 			const pause = this.sleepPause;
 			if (!pause) {
 				this.agentLogger.info('Device resumed: no tracking was paused by the sleep, so nothing resumes');
 				return;
 			}
 			await this.recordIdleTime(pause);
-			if (this.sleepPause !== pause) {
-				// The person stopped tracking while the sleep time was being recorded
+			if (this.sleepPause !== pause || pause.cancelled) {
+				// The person stopped tracking while the sleep time was being recorded: their stop, queued next, closes
+				// the timer where the recorded sleep time ends
 				return;
 			}
 			this.sleepPause = null;
-			await this.startTracking(true);
+			await this.startTrackingNow(true);
 		});
 	}
 
-	private queueSleepTransition(transition: () => Promise<void>): Promise<void> {
-		this.sleepTransitions = this.sleepTransitions.then(transition).catch((error) => {
-			this.agentLogger.error(`Sleep or wake-up handling failed: ${error?.message}`);
+	/**
+	 * Run a transition after the ones requested before it. The returned promise settles when this transition is done;
+	 * the next one waits for it, but at most `TRANSITION_LIMIT_MS`.
+	 */
+	private queueTransition(transition: () => Promise<void>): Promise<void> {
+		let done: Promise<void> = Promise.resolve();
+		const turn = this.transitions.then(() => {
+			done = transition().catch((error) => {
+				this.agentLogger.error(`Tracking transition failed: ${error?.message}`);
+			});
+			return this.holdAtMost(done, TRANSITION_LIMIT_MS);
 		});
-		return this.sleepTransitions;
+		this.transitions = turn;
+		return turn.then(() => done);
+	}
+
+	private holdAtMost(transition: Promise<void>, limitMs: number): Promise<void> {
+		let limit: ReturnType<typeof setTimeout>;
+		const overrun = new Promise<void>((resolve) => {
+			limit = setTimeout(() => {
+				this.agentLogger.warn(`A tracking transition runs past ${limitMs / 1000} s; the next goes ahead`);
+				resolve();
+			}, limitMs);
+		});
+		return Promise.race([transition, overrun]).finally(() => clearTimeout(limit));
 	}
 
 	public updateAppUserAuth(user: UserLogin) {
@@ -229,7 +259,12 @@ class PullActivities {
 		});
 	};
 
-	async startTracking(isResume = false) {
+	/** Start tracking, once the transitions requested before it (a stop still closing its timer, a sleep) are done */
+	startTracking(isResume = false): Promise<void> {
+		return this.queueTransition(() => this.startTrackingNow(isResume));
+	}
+
+	private async startTrackingNow(isResume = false) {
 		if (!this.listenerModule) {
 			this.getListenerModule();
 		}
@@ -310,21 +345,28 @@ class PullActivities {
 		}
 	}
 
-	async handleManualTimeLog(authConfig: TAuthConfig) {
+	async handleManualTimeLog(
+		authConfig: TAuthConfig,
+		timer: { timerId: number; startedAt: Date; stoppedAt: Date } = {
+			timerId: this.currentTimerId,
+			startedAt: this.startedDate,
+			stoppedAt: this.stoppedDate
+		}
+	) {
 		const timerLocal = await this.timerService.findById({
-			id: this.currentTimerId
+			id: timer.timerId
 		});
 		if (timerLocal.timelogId) {
 			await this.apiService.updateTimeLog(timerLocal.timelogId, {
 				tenantId: authConfig?.user?.employee?.tenantId,
 				organizationId: authConfig?.user?.employee?.organizationId,
-				startedAt: this.startedDate,
-				stoppedAt: this.stoppedDate,
+				startedAt: timer.startedAt,
+				stoppedAt: timer.stoppedAt,
 				isBillable: true,
 				employeeId: authConfig?.user?.employee?.id
 			});
 			await this.timerService.update(new Timer({
-				id: this.currentTimerId,
+				id: timer.timerId,
 				synced: true
 			}));
 			return;
@@ -332,12 +374,16 @@ class PullActivities {
 	}
 
 	async stopTimerApi(stoppedAt?: Date) {
-		this.stoppedDate = stoppedAt ?? new Date();
+		// The timer this stop closes, read before any await: a start that follows cannot get its timer closed instead
+		const timerId = this.currentTimerId;
+		const startedAt = this.startedDate;
+		const stoppedDate = stoppedAt ?? new Date();
+		this.stoppedDate = stoppedDate;
 		const authConfig = getAuthConfig();
 		try {
 			await this.timerService.update(new Timer({
-				id: this.currentTimerId,
-				stoppedAt: this.stoppedDate,
+				id: timerId,
+				stoppedAt: stoppedDate,
 			}));
 			const online = await isOnline({ timeout: 1200 }).catch(() => false);
 			if (online) {
@@ -345,27 +391,27 @@ class PullActivities {
 					await this.apiService.stopTimer({
 						organizationId: authConfig?.user?.employee?.organizationId,
 						tenantId: authConfig?.user?.employee?.tenantId,
-						startedAt: this.startedDate,
+						startedAt,
 						organizationTeamId: null,
 						organizationContactId: null,
-						stoppedAt: this.stoppedDate
+						stoppedAt: stoppedDate
 					});
 					await this.timerService.update(new Timer({
-						id: this.currentTimerId,
+						id: timerId,
 						synced: true
 					}));
 				} catch (error) {
 					if (error.status === 406 && error.message?.includes('No running log found')) {
-						await this.handleManualTimeLog(authConfig);
+						await this.handleManualTimeLog(authConfig, { timerId, startedAt, stoppedAt: stoppedDate });
 					} else {
 						console.error('Error stopping timer online', error.message);
 						this.workerQueue.desktopQueue.enqueueTimer({
 							attempts: 1,
 							queue: 'timer',
-							timerId: this.currentTimerId,
+							timerId,
 							data: {
-								startedAt: this.startedDate.toISOString(),
-								stoppedAt: this.stoppedDate.toISOString(),
+								startedAt: startedAt.toISOString(),
+								stoppedAt: stoppedDate.toISOString(),
 								isStopped: true
 							}
 						});
@@ -380,10 +426,10 @@ class PullActivities {
 			this.workerQueue.desktopQueue.enqueueTimer({
 				attempts: 1,
 				queue: 'timer',
-				timerId: this.currentTimerId,
+				timerId,
 				data: {
-					startedAt: this.startedDate.toISOString(),
-					stoppedAt: this.stoppedDate.toISOString(),
+					startedAt: startedAt.toISOString(),
+					stoppedAt: stoppedDate.toISOString(),
 					isStopped: true
 				}
 			});
@@ -411,7 +457,30 @@ class PullActivities {
 		this.agentLogger.info('Keyboard and mouse activity listener stopped');
 	}
 
-	async stopTracking(isPaused = false) {
+	/**
+	 * Stop tracking (with `isPaused`, pause it for a sleep, keeping the timer open), once the transitions requested
+	 * before it are done. The person's stop counts from the moment it is requested, before it waits for anything: it
+	 * cancels the sleep-time recording of a wake-up in progress, and a sleep arriving before it completes pauses
+	 * nothing.
+	 */
+	stopTracking(isPaused = false): Promise<void> {
+		if (isPaused) {
+			return this.queueTransition(() => this.stopTrackingNow(true));
+		}
+		this.pendingStops += 1;
+		if (this.sleepPause) {
+			this.sleepPause.cancelled = true;
+		}
+		return this.queueTransition(async () => {
+			try {
+				await this.stopTrackingNow(false);
+			} finally {
+				this.pendingStops -= 1;
+			}
+		});
+	}
+
+	private async stopTrackingNow(isPaused = false) {
 		if (!this.listenerModule) {
 			this.getListenerModule();
 		}
@@ -698,6 +767,8 @@ class PullActivities {
 	}
 
 	async activityProcess(payload: TActivityProcessParam) {
+		// The timer the activity belongs to, read before any await: a stop and a new start may follow meanwhile
+		const timerId = this.currentTimerId;
 		try {
 			let imgs = [];
 			if (payload.screenShot) {
@@ -725,7 +796,7 @@ class PullActivities {
 				activeWindows: JSON.stringify(activityWindow),
 				syncedActivity: false,
 				isOffline: false,
-				timerId: this.currentTimerId,
+				timerId,
 				activityState: payload.activityState || ActivityState.active
 			});
 			this.initWorkerQueue();
