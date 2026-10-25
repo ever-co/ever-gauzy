@@ -278,6 +278,21 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			});
 		});
 
+		it('keeps a team creator without an employee to the invitations of the teams they created', async () => {
+			signIn(null, [...INVITE_PERMISSIONS, PermissionsEnum.ORG_TEAM_ADD]);
+			const { service, findTeams } = build([MANAGED_TEAM]);
+
+			await service.findAllInvites({} as never);
+
+			expect(findTeams).toHaveBeenCalledWith({ select: { id: true }, where: [{ createdByUserId: CALLER }] });
+			expect(findAll).toHaveBeenCalledWith({
+				where: [
+					{ tenantId: TENANT, id: In(['invite-managed']) },
+					{ tenantId: TENANT, teams: { id: IsNull() } }
+				]
+			});
+		});
+
 		it.each([PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.CHANGE_SELECTED_EMPLOYEE])(
 			'keeps the whole register for a holder of %s',
 			async (grant) => {

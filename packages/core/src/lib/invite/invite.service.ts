@@ -127,6 +127,20 @@ function teamIdsWhere(teamIds?: ID[]): { id?: FindOperator<ID> } {
 }
 
 /**
+ * The conditions on a team under which the caller's employee manages it as a member, or none without an employee.
+ *
+ * @param employeeId - The caller's employee, if any.
+ * @param teamFilter - The condition on the team's id.
+ */
+function managerMembershipsOf(employeeId: ID | null, teamFilter: { id?: FindOperator<ID> }) {
+	if (!employeeId) {
+		return [];
+	}
+	const managerMemberships = teamManagerMembershipWhere({ employeeId });
+	return managerMemberships.map((members) => ({ ...teamFilter, members }));
+}
+
+/**
  * The condition on an invitation's id that keeps the invitations in reach, or, when the request names an invitation,
  * that invitation if it is in reach.
  *
@@ -1077,22 +1091,24 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	/**
 	 * The teams the caller manages among the ones named, or among every team they reach when none is named: the teams
 	 * they created, and the teams their employee manages as a member (`teamManagerMembershipWhere`), the managers who
-	 * decide on a team's join requests. A caller without an employee is a member of no team, and nothing is read for
-	 * them.
+	 * decide on a team's join requests. Without an employee, a caller manages only the teams they created, and creating
+	 * a team takes ORG_TEAM_ADD (or ALL_ORG_EDIT, which reaches every team anyway), so nothing is read for a caller
+	 * with neither.
 	 *
 	 * @param teamIds - The teams to look at, or none for every team.
 	 * @returns The ids of the teams the caller manages.
 	 */
 	private async findManagedTeamIds(teamIds?: ID[]): Promise<ID[]> {
 		const employeeId = RequestContext.currentEmployeeId();
-		if (!employeeId) {
+		const mayHaveCreatedTeams = RequestContext.hasPermission(PermissionsEnum.ORG_TEAM_ADD);
+		const managesNoTeam = !employeeId && !mayHaveCreatedTeams;
+		if (managesNoTeam) {
 			return [];
 		}
 
 		const userId = RequestContext.currentUserId();
 		const teamFilter = teamIdsWhere(teamIds);
-		const managerMemberships = teamManagerMembershipWhere({ employeeId });
-		const managedAsMember = managerMemberships.map((members) => ({ ...teamFilter, members }));
+		const managedAsMember = managerMembershipsOf(employeeId, teamFilter);
 		const createdByCaller = { ...teamFilter, createdByUserId: userId };
 
 		const teams = await this.organizationTeamService.find({
