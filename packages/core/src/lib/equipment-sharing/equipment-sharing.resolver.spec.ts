@@ -23,7 +23,8 @@ import { EquipmentSharingService } from './equipment-sharing.service';
 import {
 	EquipmentSharingCreateCommand,
 	EquipmentSharingStatusCommand,
-	EquipmentSharingUpdateCommand
+	EquipmentSharingUpdateCommand,
+	EquipmentSharingUpdateInPlaceCommand
 } from './commands';
 
 /**
@@ -296,6 +297,7 @@ const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 	{ field: 'equipmentSharingsByEmployee', route: 'findEquipmentSharingsByEmployeeId' },
 	{ field: 'createEquipmentSharing', route: 'createEquipmentSharing' },
 	{ field: 'updateEquipmentSharing', route: 'update' },
+	{ field: 'updateEquipmentSharingInPlace', route: 'updateInPlace' },
 	{ field: 'approveEquipmentSharing', route: 'equipmentSharingsRequestApproval' },
 	{ field: 'refuseEquipmentSharing', route: 'equipmentSharingsRequestRefuse' },
 	{ field: 'deleteEquipmentSharing', route: 'delete' },
@@ -307,6 +309,7 @@ const PERMISSION_PARITY: ReadonlyArray<{ field: string; route: string }> = [
 const WRITES = [
 	'createEquipmentSharing',
 	'updateEquipmentSharing',
+	'updateEquipmentSharingInPlace',
 	'approveEquipmentSharing',
 	'refuseEquipmentSharing',
 	'deleteEquipmentSharing',
@@ -379,7 +382,8 @@ describe('EquipmentSharingResolver — the SDL declares the capabilities the RES
 			'recoverEquipmentSharing',
 			'refuseEquipmentSharing',
 			'softDeleteEquipmentSharing',
-			'updateEquipmentSharing'
+			'updateEquipmentSharing',
+			'updateEquipmentSharingInPlace'
 		]);
 	});
 
@@ -398,6 +402,20 @@ describe('EquipmentSharingResolver — the SDL declares the capabilities the RES
 	it('declares the two write inputs', () => {
 		expect(printed).toMatch(/input CreateEquipmentSharingInput \{/);
 		expect(printed).toMatch(/input UpdateEquipmentSharingInput \{/);
+	});
+
+	it('declares the in-place edit beside the delete-and-recreate edit, which it does not replace', () => {
+		const fieldsOf = (name: string) =>
+			(schema.getType(name) as unknown as { getFields(): Record<string, { type: unknown }> }).getFields();
+
+		expect(printed).toMatch(/input UpdateEquipmentSharingInPlaceInput \{/);
+		expect(fieldType('Mutation', 'updateEquipmentSharingInPlace')).toBe('EquipmentSharing!');
+		expect(fieldType('Mutation', 'updateEquipmentSharing')).toBe('EquipmentSharing!');
+		// The in-place edit is a compare-and-set on the version the caller states, so the version is required, and a
+		// member left out keeps its stored value, so the status is not.
+		expect(String(fieldsOf('UpdateEquipmentSharingInPlaceInput')['version']?.type)).toBe('Int!');
+		expect(String(fieldsOf('UpdateEquipmentSharingInPlaceInput')['status']?.type)).toBe('Int');
+		expect(String(fieldsOf('UpdateEquipmentSharingInPlaceInput')['id']?.type)).toBe('ID!');
 	});
 
 	it('carries the optimistic-concurrency version on the row, and lets an edit state it without requiring it', () => {
@@ -473,6 +491,7 @@ describe('EquipmentSharingResolver — the SDL declares the capabilities the RES
 		const WRITE_ARGS: ReadonlyArray<[string, string[]]> = [
 			['createEquipmentSharing', ['organizationId', 'input']],
 			['updateEquipmentSharing', ['input']],
+			['updateEquipmentSharingInPlace', ['input']],
 			['approveEquipmentSharing', ['id']],
 			['refuseEquipmentSharing', ['id']],
 			['deleteEquipmentSharing', ['id']],
@@ -838,6 +857,30 @@ describe('EquipmentSharingResolver — one resource, two protocols, the same ope
 		expect(command.input).toEqual({ status: RequestApprovalStatusTypesEnum.APPROVED, version: 3 });
 	});
 
+	it('changes a period in place through the command the REST in-place route dispatches, with the path identifier', async () => {
+		const { resolver, commandBus } = surfaces();
+
+		await resolver.updateEquipmentSharingInPlace({
+			id: APPROVED_PERIOD,
+			version: 4,
+			shareEndDay: new Date('2026-07-01T10:00:00.000Z'),
+			employeeIds: [EMPLOYEE],
+			teamIds: []
+		});
+
+		const command = commandBus.execute.mock.calls[0][0];
+		expect(command).toBeInstanceOf(EquipmentSharingUpdateInPlaceCommand);
+		expect(command.id).toBe(APPROVED_PERIOD);
+		// The version is handed on as the precondition, a member left out stays out (it keeps its stored value), and
+		// the memberships are the identifiers the pivots are written from, an empty list among them.
+		expect(command.input).toEqual({
+			version: 4,
+			shareEndDay: new Date('2026-07-01T10:00:00.000Z'),
+			employees: [{ id: EMPLOYEE }],
+			teams: []
+		});
+	});
+
 	it('approves a period through the status command, with the approved value', async () => {
 		const { resolver, commandBus } = surfaces();
 
@@ -967,6 +1010,7 @@ describe('EquipmentSharingResolver — the guard stack and the permission are th
 
 		for (const [field, route] of [
 			['updateEquipmentSharing', 'update'],
+			['updateEquipmentSharingInPlace', 'updateInPlace'],
 			['approveEquipmentSharing', 'equipmentSharingsRequestApproval'],
 			['refuseEquipmentSharing', 'equipmentSharingsRequestRefuse']
 		] as const) {

@@ -27,6 +27,109 @@ const convertEquipmentDateFields = (equipmentData: EquipmentDateFields) => {
 	};
 };
 
+/**
+ * The status a filed equipment sharing starts at: `RequestApprovalStatusTypesEnum.REQUESTED` (`1`). The column is an
+ * integer of the request approval's vocabulary; the server decides the status anyway for a caller who may not decide
+ * a sharing (requested, or approved when the equipment auto-approves its shares).
+ */
+const EQUIPMENT_SHARING_REQUESTED = 1;
+
+/**
+ * The label a request is filed under when the caller states neither a name nor a reason: the request approval filed
+ * beside the sharing requires a name, and the route saves the sharing before it files the approval, so a request
+ * without one would leave a sharing without its approval.
+ */
+export const EQUIPMENT_SHARING_REQUEST_DEFAULT_NAME = 'Equipment sharing request';
+
+/**
+ * An ISO 8601 date (`2026-11-02`) or date-time (`2026-11-02T09:00`, `2026-11-02T09:00:00.000Z`,
+ * `2026-11-02T09:00:00+02:00`), and nothing else: `new Date()` alone also reads `Nov 2 2026`, and rolls an impossible
+ * day such as `2026-02-30` over into March.
+ */
+const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?(Z|[+-](\d{2}):(\d{2}))?)?$/;
+
+/** The arguments of the `request_equipment_sharing` tool. */
+export interface EquipmentSharingRequestArgs {
+	equipmentId: string;
+	shareWithEmployeeId: string;
+	shareStartDate: string;
+	shareEndDate: string;
+	name?: string;
+	reason?: string;
+}
+
+/**
+ * Reads an ISO date argument of the `request_equipment_sharing` tool: the grammar of {@link ISO_DATE_PATTERN}, a day
+ * the calendar has, a time of day and an offset in range.
+ *
+ * @param value The argument.
+ * @param field The argument's name, for the error.
+ * @throws Error when the value is not an ISO date, or names a day, time or offset that does not exist.
+ */
+const toShareDate = (value: string, field: string): Date => {
+	const invalid = () => new Error(`${field} is not a valid date (ISO 8601 expected, e.g. 2026-11-02T09:00:00Z)`);
+	const match = typeof value === 'string' ? ISO_DATE_PATTERN.exec(value.trim()) : null;
+	if (!match) {
+		throw invalid();
+	}
+	const [, year, month, day, hour = '0', minute = '0', second = '0', , offsetHour = '0', offsetMinute = '0'] = match;
+	const calendar = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+	if (
+		calendar.getUTCFullYear() !== Number(year) ||
+		calendar.getUTCMonth() !== Number(month) - 1 ||
+		calendar.getUTCDate() !== Number(day) ||
+		Number(hour) > 23 ||
+		Number(minute) > 59 ||
+		Number(second) > 59 ||
+		Number(offsetHour) > 23 ||
+		Number(offsetMinute) > 59
+	) {
+		throw invalid();
+	}
+	const date = new Date(value.trim());
+	if (Number.isNaN(date.getTime())) {
+		throw invalid();
+	}
+	return date;
+};
+
+/**
+ * The body `POST /api/equipment-sharing/organization/:organizationId` files an equipment sharing request from, in the
+ * field names the equipment sharing carries.
+ *
+ * The tool used to post its arguments under their own names (`shareStartDate`, `shareEndDate`, `shareRequestDate`,
+ * `shareWithEmployeeId`, `reason`) and a string `status: 'REQUESTED'` to `POST /api/equipment-sharing`. No column maps
+ * those names, so the period and the employee were dropped, the status was not the integer the column holds, and that
+ * route (the CRUD base's raw create, which needs the decision permission) files no request approval beside the row.
+ * The request route is the one the web app files a request through: open to `EQUIPMENT_MAKE_REQUEST`, it stores the
+ * row in the organization of its path and records the request approval an approver acts on.
+ *
+ * An equipment sharing has no reason column: the reason is filed as the request's `name` (its label) when no name is
+ * given, and {@link EQUIPMENT_SHARING_REQUEST_DEFAULT_NAME} when neither is (the request approval requires a name).
+ *
+ * @param args The tool's arguments.
+ * @param now When the request is filed.
+ * @returns The body to post.
+ * @throws Error when a date argument is not an ISO date, or the period ends before it starts.
+ */
+export const equipmentSharingRequestBody = (args: EquipmentSharingRequestArgs, now: Date = new Date()) => {
+	const name = [args.name, args.reason].find((label) => typeof label === 'string' && label.trim() !== '');
+	const shareStartDay = toShareDate(args.shareStartDate, 'shareStartDate');
+	const shareEndDay = toShareDate(args.shareEndDate, 'shareEndDate');
+	if (shareEndDay.getTime() < shareStartDay.getTime()) {
+		throw new Error('shareEndDate is before shareStartDate: a sharing period ends after it starts');
+	}
+	return {
+		name: name?.trim() ?? EQUIPMENT_SHARING_REQUEST_DEFAULT_NAME,
+		equipmentId: args.equipmentId,
+		employees: [{ id: args.shareWithEmployeeId }],
+		shareRequestDay: now,
+		shareStartDay,
+		shareEndDay,
+		status: EQUIPMENT_SHARING_REQUESTED
+	};
+};
+
 export const registerEquipmentTools = (server: McpServer) => {
 	// Get equipment tool
 	registerTool(
@@ -542,27 +645,35 @@ export const registerEquipmentTools = (server: McpServer) => {
 		{
 			equipmentId: z.string().uuid().describe('The equipment ID'),
 			shareWithEmployeeId: z.string().uuid().describe('The employee ID to share with'),
-			shareStartDate: z.string().describe('The start date for sharing (ISO format)'),
-			shareEndDate: z.string().describe('The end date for sharing (ISO format)'),
-			reason: z.string().optional().describe('Reason for sharing request')
+			shareStartDate: z.string().describe('The start date for sharing (ISO 8601, e.g. 2026-11-02T09:00:00Z)'),
+			shareEndDate: z.string().describe('The end date for sharing (ISO 8601, not before the start date)'),
+			name: z
+				.string()
+				.optional()
+				.describe('A label for the sharing request (defaults to the reason, else "Equipment sharing request")'),
+			reason: z
+				.string()
+				.optional()
+				.describe('Reason for sharing request (filed as the request label when no name is given)')
 		},
-		async ({ equipmentId, shareWithEmployeeId, shareStartDate, shareEndDate, reason }) => {
+		async ({ equipmentId, shareWithEmployeeId, shareStartDate, shareEndDate, name, reason }) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const requestData = {
+				// The request route reads the organization from its path and the tenant from the caller's token.
+				const requestData = equipmentSharingRequestBody({
 					equipmentId,
 					shareWithEmployeeId,
-					shareStartDate: new Date(shareStartDate),
-					shareEndDate: new Date(shareEndDate),
-					shareRequestDate: new Date(),
-					status: 'REQUESTED',
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(reason && { reason })
-				};
+					shareStartDate,
+					shareEndDate,
+					name,
+					reason
+				});
 
-				const response = await apiClient.post(`/api/equipment-sharing`, requestData);
+				const response = await apiClient.post(
+					`/api/equipment-sharing/organization/${defaultParams.organizationId}`,
+					requestData
+				);
 
 				return {
 					content: [

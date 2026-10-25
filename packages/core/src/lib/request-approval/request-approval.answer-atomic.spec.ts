@@ -183,6 +183,8 @@ class Store {
 				return slots;
 			},
 			readApproverTeams: async () => [],
+			// The document's filer and subjects: nobody here, so only the request's own requester is refused.
+			readLinkedDocumentRequesters: async () => ({ userIds: [], employeeIds: [] }),
 			writeSlots: async (_kind, ids, _tenantId, status) => {
 				pending.push(() => {
 					this.employeeSlots
@@ -667,7 +669,11 @@ describe('the answer transaction on each ORM', () => {
 				});
 				expect(manager.update.mock.calls).toEqual([
 					[EquipmentSharing, { id: 'sharing-1', tenantId: TENANT }, { status: APPROVED }],
-					[RequestApprovalEmployee, { id: In(['slot-alice']), tenantId: TENANT }, { status: APPROVED }],
+					[
+						RequestApprovalEmployee,
+						{ id: In(['slot-alice']), tenantId: TENANT },
+						{ status: APPROVED, updatedByUserId: ALICE.id }
+					],
 					[RequestApproval, { id: 'approval-1', tenantId: TENANT }, { status: APPROVED }]
 				]);
 				// The service's own update runs on another connection, which would wait on this transaction's lock.
@@ -806,7 +812,11 @@ describe('the answer transaction on each ORM', () => {
 			);
 			expect(em.nativeUpdate.mock.calls).toEqual([
 				[EquipmentSharing, { id: 'sharing-1', tenantId: TENANT }, { status: APPROVED }],
-				[RequestApprovalEmployee, { id: { $in: ['slot-alice'] }, tenantId: TENANT }, { status: APPROVED }],
+				[
+					RequestApprovalEmployee,
+					{ id: { $in: ['slot-alice'] }, tenantId: TENANT },
+					{ status: APPROVED, updatedByUserId: ALICE.id }
+				],
 				[RequestApproval, { id: 'approval-1', tenantId: TENANT }, { status: APPROVED }]
 			]);
 		});

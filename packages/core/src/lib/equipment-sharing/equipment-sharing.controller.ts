@@ -1,7 +1,14 @@
 import { Controller, HttpStatus, Get, HttpCode, UseGuards, Put, Param, Body, Query, Post, Delete, UsePipes } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ID, IEquipmentSharing, IPagination, PermissionsEnum, RequestApprovalStatusTypesEnum } from '@gauzy/contracts';
+import {
+	ID,
+	IEquipmentSharing,
+	IEquipmentSharingUpdateInPlaceInput,
+	IPagination,
+	PermissionsEnum,
+	RequestApprovalStatusTypesEnum
+} from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
 import { EquipmentSharing } from './equipment-sharing.entity';
 import { EquipmentSharingService } from './equipment-sharing.service';
@@ -9,7 +16,8 @@ import { EquipmentSharingService } from './equipment-sharing.service';
 import {
 	EquipmentSharingStatusCommand,
 	EquipmentSharingCreateCommand,
-	EquipmentSharingUpdateCommand
+	EquipmentSharingUpdateCommand,
+	EquipmentSharingUpdateInPlaceCommand
 } from './commands';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { ParseJsonPipe, UUIDValidationPipe, UseValidationPipe, AbstractValidationPipe } from './../shared/pipes';
@@ -230,6 +238,49 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 		@Body() equipmentSharing: EquipmentSharing
 	): Promise<IEquipmentSharing> {
 		return await this.commandBus.execute(new EquipmentSharingUpdateCommand(id, equipmentSharing));
+	}
+
+	/**
+	 * UPDATE equipment sharing by id, in place and at the version the edit is based on.
+	 *
+	 * `PUT /:id` above removes the row and files it again (its documented contract, kept as it is). This route writes
+	 * the row where it is, in one statement predicated on the body's `version` (required), and is refused with 409
+	 * `ENTITY_VERSION_CONFLICT` when the stored row has moved on. A member the body leaves out keeps its stored value;
+	 * `employees` / `teams`, when stated, replace the memberships. Same permission and scope checks as `PUT /:id`: the
+	 * row is read in the caller's scope (404 otherwise), and the equipment, the policy, the employees and the teams the
+	 * body names must be the row's organization's.
+	 *
+	 * @param id The sharing.
+	 * @param equipmentSharing The edit, with the version it is based on.
+	 * @returns The sharing, as written.
+	 */
+	@ApiOperation({ summary: 'Update an existing record in place, at the version the edit is based on' })
+	@ApiResponse({
+		status: HttpStatus.ACCEPTED,
+		description: 'The record has been successfully edited in place.'
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@ApiResponse({
+		status: HttpStatus.CONFLICT,
+		description: 'The record changed since the version the edit is based on (ENTITY_VERSION_CONFLICT)'
+	})
+	@ApiResponse({
+		status: HttpStatus.BAD_REQUEST,
+		description: 'Invalid input (a missing or malformed version among them), The response body may contain clues'
+	})
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.EQUIPMENT_APPROVE_REQUEST, PermissionsEnum.ORG_EQUIPMENT_SHARING_EDIT)
+	@Put('/:id/in-place')
+	async updateInPlace(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() equipmentSharing: EquipmentSharing
+	): Promise<IEquipmentSharing> {
+		const input = equipmentSharing as unknown as IEquipmentSharingUpdateInPlaceInput;
+		return await this.commandBus.execute(new EquipmentSharingUpdateInPlaceCommand(id, input));
 	}
 
 	/**
