@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { NotAcceptableException } from '@nestjs/common';
 import { In } from 'typeorm';
-import { ITimesheet, TimesheetStatus } from '@gauzy/contracts';
+import { ID, ITimesheet, PermissionsEnum, TimesheetStatus } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../../../core/context';
 import { EmailService } from './../../../../email-send/email.service';
@@ -25,6 +25,8 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 	 * If the status is changed to `APPROVED`, it records the approver's ID and approval timestamp.
 	 * If the status is changed to `DENIED`, it records the given reason.
 	 * After updating, it fetches the updated timesheets and sends email notifications to employees.
+	 * A caller without `CAN_APPROVE_TIMESHEET` may only move the timesheets of the members of the teams
+	 * they manage, never their own (see `TimeSheetService.forManagedEmployeeTimesheets`).
 	 */
 	public async execute(command: TimesheetUpdateStatusCommand): Promise<ITimesheet[]> {
 		const { input } = command;
@@ -51,6 +53,35 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
 
+		const applyChange = () => this.applyStatusChange(ids, organizationId, tenantId, updatePayload);
+
+		if (this.needsTeamManagerCheck()) {
+			return await this._timeSheetService.forManagedEmployeeTimesheets(ids, organizationId, applyChange);
+		}
+
+		return await applyChange();
+	}
+
+	/**
+	 * Whether the change comes from a signed-in caller who may not approve every timesheet, so it has
+	 * to go through the team manager check. A call with no user in context keeps the direct path.
+	 */
+	private needsTeamManagerCheck(): boolean {
+		const hasCaller = RequestContext.currentUser() !== null;
+		const canApproveAnyTimesheet = RequestContext.hasPermission(PermissionsEnum.CAN_APPROVE_TIMESHEET);
+
+		return hasCaller && !canApproveAnyTimesheet;
+	}
+
+	/**
+	 * Writes the new status, reads the timesheets back and e-mails their employees.
+	 */
+	private async applyStatusChange(
+		ids: ID[],
+		organizationId: ID,
+		tenantId: ID,
+		updatePayload: Partial<ITimesheet>
+	): Promise<ITimesheet[]> {
 		// Update timesheets
 		await this._timeSheetService.update({ id: In(ids), organizationId, tenantId }, updatePayload);
 
