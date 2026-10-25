@@ -1,0 +1,91 @@
+@let day = person.day;
+<div class="person-card team-person-card">
+	<div class="person-card-banner" aria-hidden="true"></div>
+	<div class="person-card-photo" [class]="'person-card-photo presence-' + person.presence">
+		<img type="user" [src]="person.avatarUrl" [alt]="person.name" />
+		<span class="person-card-dot" [title]="'EMPLOYEES_PAGE.VIEW.PRESENCE.' + person.presence.toUpperCase() | translate"></span>
+	</div>
+
+	<div class="person-card-body">
+		<!-- Who: name, then role and team -->
+		<span class="person-card-name">{{ person.name }}</span>
+		@if (person.teamName) {
+		<span class="person-role">
+			<span class="chip role-chip" [class.is-manager]="person.isManager">
+				{{ (person.isManager ? 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ROLE.MANAGER' : 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.ROLE.MEMBER') | translate }}
+			</span>
+			<span class="person-team" [title]="person.teamName">{{ person.teamName }}</span>
+		</span>
+		}
+		@if (person.email) {
+		<a class="person-card-handle" [href]="'mailto:' + person.email">{{ person.email }}</a>
+		}
+
+		<!-- Where they are: presence, local time, tenure -->
+		<span class="person-card-meta">
+			<span class="person-card-status" [class]="'person-card-status presence-' + person.presence">
+				<span class="person-card-status-dot" aria-hidden="true"></span>
+				{{ 'EMPLOYEES_PAGE.VIEW.PRESENCE.' + person.presence.toUpperCase() | translate }}
+			</span>
+			@if (localTime) {
+			<span [title]="person.timeZone">{{ 'EMPLOYEES_PAGE.VIEW.LOCAL_TIME' | translate }} {{ localTime }}</span>
+			}
+			@if (person.since) {
+			<span>{{ 'EMPLOYEES_PAGE.VIEW.MEMBER_SINCE' | translate }} {{ person.since }}</span>
+			}
+		</span>
+
+		<!-- Their day so far -->
+		<div class="person-day">
+			<dl class="person-stats">
+				<div class="person-stat">
+					<dt>{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.WORKED_TODAY' | translate }}</dt>
+					<dd [class.is-muted]="!day.duration">{{ formatDuration(day.duration) }}</dd>
+				</div>
+				<div class="person-stat">
+					<dt>{{ 'REPORT_PAGE.ACTIVITY' | translate }}</dt>
+					<dd>
+						@if (day.activity !== null) {
+						<span class="activity" [class]="'activity activity--' + activityTone(day.activity)">{{ formatPercent(day.activity) }}</span>
+						} @else {
+						<span class="is-muted">—</span>
+						}
+					</dd>
+				</div>
+				<div class="person-stat">
+					<dt>{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.PERSON_TASKS' | translate }}</dt>
+					<dd [class.is-muted]="!day.tasksCount">{{ day.tasksCount }}</dd>
+				</div>
+			</dl>
+			<div class="person-workday">
+				<span class="bar-track" aria-hidden="true">
+					<span class="bar" [class.bar--live]="person.presence === 'tracking'" [style.width.%]="day.workdayShare"></span>
+				</span>
+				<span class="person-workday-label">
+					{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.PERSON_WORKDAY' | translate: { percent: formatPercent(day.workdayShare), hours: formatDuration(day.workPeriod) } }}
+				</span>
+			</div>
+			@if (day.task) {
+			<div class="person-task">
+				<span class="person-task-label">
+					{{ (person.presence === 'tracking' ? 'DASHBOARD_PAGE.TEAMS_DASHBOARD.WORKING_ON' : 'DASHBOARD_PAGE.TEAMS_DASHBOARD.LAST_TASK') | translate }}
+				</span>
+				<span class="person-task-title" [title]="day.task.title || ''">{{ day.task.title || ('REPORT_PAGE.NO_TASK' | translate) }}</span>
+				@if (day.task.projectName) {
+				<span class="person-task-project">{{ day.task.projectName }}</span>
+				}
+			</div>
+			}
+		</div>
+
+		@if (person.bio) {
+		<p class="person-card-bio">{{ person.bio }}</p>
+		}
+		@if (person.employeeId) {
+		<a class="person-card-action" [routerLink]="['/pages/employees/view', person.employeeId]">
+			{{ 'EMPLOYEES_PAGE.VIEW.VIEW_PROFILE' | translate }}
+			<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+		</a>
+		}
+	</div>
+</div>
