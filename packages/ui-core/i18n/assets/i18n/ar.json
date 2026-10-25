@@ -1800,6 +1800,36 @@
 		}
 	},
 	"DASHBOARD_PAGE": {
+		"TEAMS_DASHBOARD": {
+			"ALL_TEAMS": "كل الفرق",
+			"WORKED_TODAY": "العمل اليوم",
+			"TEAMS_ACTIVE": "الفرق النشطة",
+			"OF_TEAMS": "من أصل {{ total }} فرق سجّلت وقتًا",
+			"MEMBERS_WORKED": "الأعضاء النشطون",
+			"OF_PROJECTS": "من أصل {{ total }} مشاريع",
+			"TEAMS_CAPTION": "من عمل في كل فريق في اليوم المحدد",
+			"TOP_MEMBERS": "أبرز الأعضاء",
+			"TRACKING_NOW": "يتتبعون الآن",
+			"ONLINE_META": "{{ count }} متصل",
+			"PROJECTS_META": "بوقت مسجّل في اليوم المحدد",
+			"MEMBERS_CAPTION": "مهام كل عضو ووقته ونشاطه في اليوم المحدد",
+			"OPEN_TEAM": "فتح صفحة الفريق",
+			"MORE_TASKS": "+{{ count }} أخرى",
+			"OF_WORKDAY": "{{ percent }} من {{ hours }}",
+			"SHOW_MEMBERS": "إظهار الأعضاء",
+			"EXPAND_ALL": "إظهار كل الأعضاء",
+			"COLLAPSE_ALL": "إخفاء الأعضاء",
+			"TOTAL_TODAY": "إجمالي اليوم",
+			"WORKDAY": "يوم العمل",
+			"SCROLL_TEAMS_BACK": "إظهار الفرق السابقة",
+			"SCROLL_TEAMS_FORWARD": "إظهار مزيد من الفرق",
+			"COLUMNS": {
+				"TEAM": "الفريق",
+				"WORKED": "عملوا",
+				"NOW": "الآن",
+				"NOT_WORKED": "لم يعملوا"
+			}
+		},
 		"ACCOUNTING": "المحاسبة",
 		"HUMAN_RESOURCES": "موارد بشرية",
 		"TIME_TRACKING": "تتبع الوقت",

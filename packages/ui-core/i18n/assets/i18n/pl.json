@@ -1800,6 +1800,36 @@
 		}
 	},
 	"DASHBOARD_PAGE": {
+		"TEAMS_DASHBOARD": {
+			"ALL_TEAMS": "Wszystkie zespoły",
+			"WORKED_TODAY": "Przepracowano dziś",
+			"TEAMS_ACTIVE": "Aktywne zespoły",
+			"OF_TEAMS": "z {{ total }} zespołów rejestrowało czas",
+			"MEMBERS_WORKED": "Aktywni członkowie",
+			"OF_PROJECTS": "z {{ total }} projektów",
+			"TEAMS_CAPTION": "Kto pracował w każdym zespole w wybranym dniu",
+			"TOP_MEMBERS": "Najaktywniejsi członkowie",
+			"TRACKING_NOW": "Rejestrują teraz",
+			"ONLINE_META": "{{ count }} online",
+			"PROJECTS_META": "z czasem w wybranym dniu",
+			"MEMBERS_CAPTION": "Zadania, czas i aktywność każdego członka w wybranym dniu",
+			"OPEN_TEAM": "Otwórz stronę zespołu",
+			"MORE_TASKS": "+{{ count }} więcej",
+			"OF_WORKDAY": "{{ percent }} z {{ hours }}",
+			"SHOW_MEMBERS": "Pokaż członków",
+			"EXPAND_ALL": "Pokaż wszystkich członków",
+			"COLLAPSE_ALL": "Ukryj członków",
+			"TOTAL_TODAY": "Łącznie dziś",
+			"WORKDAY": "Dzień pracy",
+			"SCROLL_TEAMS_BACK": "Pokaż poprzednie zespoły",
+			"SCROLL_TEAMS_FORWARD": "Pokaż więcej zespołów",
+			"COLUMNS": {
+				"TEAM": "Zespół",
+				"WORKED": "Pracowali",
+				"NOW": "Teraz",
+				"NOT_WORKED": "Nie pracowali"
+			}
+		},
 		"ACCOUNTING": "Rachunkowość",
 		"HUMAN_RESOURCES": "Zasoby ludzkie",
 		"TIME_TRACKING": "Śledzenie czasu",

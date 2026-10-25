@@ -1801,6 +1801,36 @@
 		}
 	},
 	"DASHBOARD_PAGE": {
+		"TEAMS_DASHBOARD": {
+			"ALL_TEAMS": "Alle teams",
+			"WORKED_TODAY": "Vandaag gewerkt",
+			"TEAMS_ACTIVE": "Actieve teams",
+			"OF_TEAMS": "van {{ total }} teams hebben tijd geregistreerd",
+			"MEMBERS_WORKED": "Actieve leden",
+			"OF_PROJECTS": "van {{ total }} projecten",
+			"TEAMS_CAPTION": "Wie er op de geselecteerde dag in elk team heeft gewerkt",
+			"TOP_MEMBERS": "Topleden",
+			"TRACKING_NOW": "Registreren nu",
+			"ONLINE_META": "{{ count }} online",
+			"PROJECTS_META": "met tijd op de geselecteerde dag",
+			"MEMBERS_CAPTION": "Taken, tijd en activiteit van elk lid op de geselecteerde dag",
+			"OPEN_TEAM": "Teampagina openen",
+			"MORE_TASKS": "+{{ count }} meer",
+			"OF_WORKDAY": "{{ percent }} van {{ hours }}",
+			"SHOW_MEMBERS": "Leden tonen",
+			"EXPAND_ALL": "Alle leden tonen",
+			"COLLAPSE_ALL": "Leden verbergen",
+			"TOTAL_TODAY": "Totaal vandaag",
+			"WORKDAY": "Werkdag",
+			"SCROLL_TEAMS_BACK": "Vorige teams tonen",
+			"SCROLL_TEAMS_FORWARD": "Meer teams tonen",
+			"COLUMNS": {
+				"TEAM": "Team",
+				"WORKED": "Gewerkt",
+				"NOW": "Nu",
+				"NOT_WORKED": "Niet gewerkt"
+			}
+		},
 		"ACCOUNTING": "Boekhouding",
 		"HUMAN_RESOURCES": "Human Resources",
 		"TIME_TRACKING": "Tijdregistratie",
