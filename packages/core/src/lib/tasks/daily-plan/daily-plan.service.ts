@@ -841,7 +841,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 						tenantId,
 						organizationId,
 						employeeId,
-						date: { $gte: new Date(currentDate) }
+						date: { $gte: storedDayStart(currentDate) }
 					};
 
 					// Without a team, the plans of every team and of none: each stored team is checked below.
