@@ -1,6 +1,7 @@
 // Must stay first: loads the entity graph before any handler pulls an entity (see activity.controller.spec.ts).
 import '../../../../core/entities/internal';
 
+import { ForbiddenException } from '@nestjs/common';
 import { In } from 'typeorm';
 import { PermissionsEnum, TimesheetStatus } from '@gauzy/contracts';
 import { RequestContext } from '../../../../core/context';
@@ -48,7 +49,7 @@ describe('TimesheetUpdateStatusHandler approver', () => {
 
 /**
  * A signed-in caller without CAN_APPROVE_TIMESHEET reaches the status change as a team manager: it runs only
- * through the team manager check. An approver keeps the direct change, any status.
+ * through the team manager check, and only to approve or deny. An approver keeps the direct change, any status.
  */
 describe('TimesheetUpdateStatusHandler team manager path', () => {
 	const setup = (granted: PermissionsEnum[]) => {
@@ -92,6 +93,19 @@ describe('TimesheetUpdateStatusHandler team manager path', () => {
 			);
 			expect(timeSheetService.update).not.toHaveBeenCalled();
 			expect(timeSheetService.find).not.toHaveBeenCalled();
+		}
+	);
+
+	it.each([TimesheetStatus.DRAFT, TimesheetStatus.PENDING, TimesheetStatus.IN_REVIEW])(
+		'refuses %s to a caller without CAN_APPROVE_TIMESHEET, who may only approve or deny',
+		async (status) => {
+			const { timeSheetService, update } = setup([PermissionsEnum.TIME_TRACKER]);
+
+			const refusal = update(status);
+
+			await expect(refusal).rejects.toBeInstanceOf(ForbiddenException);
+			expect(timeSheetService.forManagedEmployeeTimesheets).not.toHaveBeenCalled();
+			expect(timeSheetService.update).not.toHaveBeenCalled();
 		}
 	);
 

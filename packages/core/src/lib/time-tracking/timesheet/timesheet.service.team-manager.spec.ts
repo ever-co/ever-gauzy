@@ -49,6 +49,9 @@ const UNKNOWN_TIMESHEET = 'c1400000-0000-4000-8000-0000000000f9';
 const MEMBER_USER = 'user-member';
 const MEMBER_EMAIL = `${MEMBER_USER}@example.com`;
 
+/** Every stored timesheet starts submitted and waiting for its approver. */
+const WAITING = { status: TimesheetStatus.PENDING, approvedById: null, reason: null };
+
 const TenantSchema = new EntitySchema<ObjectLiteral>({
 	name: 'Tenant',
 	tableName: 'tenant',
@@ -420,6 +423,18 @@ describe('Timesheet status change by a team manager, on a real database', () => 
 
 			const member = await stored(target, MEMBER_TIMESHEET);
 			expect(member).toEqual({ status: TimesheetStatus.DENIED, approvedById: null, reason: 'Missing hours' });
+		});
+
+		it('refuses the team manager any status but approved or denied, and writes nothing', async () => {
+			const target = await fresh();
+			const draftMember = () => changeStatus(target, [MEMBER_TIMESHEET], TimesheetStatus.DRAFT);
+
+			const refusal = as(TEAM_MANAGER, draftMember);
+
+			await expect(refusal).rejects.toBeInstanceOf(ForbiddenException);
+			const member = await stored(target, MEMBER_TIMESHEET);
+			expect(member).toEqual(WAITING);
+			expect(target.emails.setTimesheetAction).not.toHaveBeenCalled();
 		});
 
 		it('lets a CAN_APPROVE_TIMESHEET holder move any timesheet to any status, their own included, without the team check', async () => {

@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { NotAcceptableException } from '@nestjs/common';
+import { ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { In } from 'typeorm';
 import { ID, ITimesheet, PermissionsEnum, TimesheetStatus } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
@@ -7,6 +7,24 @@ import { RequestContext } from './../../../../core/context';
 import { EmailService } from './../../../../email-send/email.service';
 import { TimesheetUpdateStatusCommand } from '../timesheet-update-status.command';
 import { TimeSheetService } from '../../timesheet.service';
+
+/**
+ * The statuses a team manager may give a member's timesheet: approved or denied.
+ */
+const TEAM_MANAGER_STATUSES: readonly TimesheetStatus[] = [TimesheetStatus.APPROVED, TimesheetStatus.DENIED];
+
+/**
+ * Refuses any other status to a caller who reaches the change as a team manager.
+ *
+ * @param status - The status the change asks for.
+ * @throws ForbiddenException When the status is neither APPROVED nor DENIED.
+ */
+function assertTeamManagerStatus(status: TimesheetStatus): void {
+	const approvesOrDenies = TEAM_MANAGER_STATUSES.includes(status);
+	if (!approvesOrDenies) {
+		throw new ForbiddenException('A team manager can only approve or deny a timesheet');
+	}
+}
 
 @CommandHandler(TimesheetUpdateStatusCommand)
 export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUpdateStatusCommand> {
@@ -25,8 +43,8 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 	 * If the status is changed to `APPROVED`, it records the approver's ID and approval timestamp.
 	 * If the status is changed to `DENIED`, it records the given reason.
 	 * After updating, it fetches the updated timesheets and sends email notifications to employees.
-	 * A caller without `CAN_APPROVE_TIMESHEET` may only move the timesheets of the members of the teams
-	 * they manage, never their own (see `TimeSheetService.forManagedEmployeeTimesheets`).
+	 * A caller without `CAN_APPROVE_TIMESHEET` may only approve or deny the timesheets of the members of
+	 * the teams they manage, never their own (see `TimeSheetService.forManagedEmployeeTimesheets`).
 	 */
 	public async execute(command: TimesheetUpdateStatusCommand): Promise<ITimesheet[]> {
 		const { input } = command;
@@ -56,6 +74,7 @@ export class TimesheetUpdateStatusHandler implements ICommandHandler<TimesheetUp
 		const applyChange = () => this.applyStatusChange(ids, organizationId, tenantId, updatePayload);
 
 		if (this.needsTeamManagerCheck()) {
+			assertTeamManagerStatus(status);
 			return await this._timeSheetService.forManagedEmployeeTimesheets(ids, organizationId, applyChange);
 		}
 
