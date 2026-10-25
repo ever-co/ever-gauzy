@@ -13,7 +13,7 @@ import {
 	Logger,
 	HttpCode
 } from '@nestjs/common';
-import { ListMcpServersDto, ActivepiecesMcpUpdateDto } from './dto';
+import { ListMcpServersDto, ActivepiecesMcpUpdateDto, McpServerProjectQueryDto } from './dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard, Permissions } from '@gauzy/core';
@@ -25,7 +25,16 @@ import {
 	IActivepiecesMcpServersListResponsePublic
 } from '@gauzy/contracts';
 
+/** The `projectId` query of the routes that name a server. */
+const PROJECT_QUERY_DESCRIPTION =
+	"ActivePieces project ID of the server (MCP 2.0: required with the tenant's own key; the tenant's own project is used when the server pins one)";
+
 /**
+ * The tenant's Activepieces MCP server. Activepieces MCP 2.0 (the default; `GAUZY_ACTIVEPIECES_MCP_API=legacy` keeps
+ * the routes before it) has one server per project: the routes that name a server read the project's and answer 404
+ * for any other id; `projectId` (query) names the project with the tenant's own key. MCP accepts only user tokens:
+ * in the `platform_project` mode, or with a tenant's own API key, every route answers 400 with an explanation.
+ *
  * `TenantPermissionGuard` asks only whether ANY role of the tenant holds the permission a route states;
  * `PermissionGuard` is what asks it of the caller's own role. With the tenant guard alone, every
  * `@Permissions` below let any authenticated member of the tenant through (VIEWER, EMPLOYEE, CANDIDATE),
@@ -142,6 +151,7 @@ export class ActivepiecesMcpController {
 	 */
 	@ApiOperation({ summary: 'Get ActivePieces MCP server by ID' })
 	@ApiParam({ name: 'serverId', required: true, type: String, description: 'MCP server ID' })
+	@ApiQuery({ name: 'projectId', required: false, type: String, description: PROJECT_QUERY_DESCRIPTION })
 	@ApiResponse({
 		status: 200,
 		description: 'Returns MCP server details',
@@ -149,11 +159,14 @@ export class ActivepiecesMcpController {
 	})
 	@Get('/:serverId')
 	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
-	async getMcpServer(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServerPublic> {
+	async getMcpServer(
+		@Param('serverId') serverId: string,
+		@Query() { projectId }: McpServerProjectQueryDto
+	): Promise<IActivepiecesMcpServerPublic> {
 		try {
 			const id = this.validateAndTrimId('Server ID', serverId);
 
-			const server = await this.activepiecesMcpService.getMcpServer(id);
+			const server = await this.activepiecesMcpService.getMcpServer(id, projectId);
 			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			this.handleError('Failed to get ActivePieces MCP server', error);
@@ -163,8 +176,9 @@ export class ActivepiecesMcpController {
 	/**
 	 * Update MCP server
 	 */
-	@ApiOperation({ summary: 'Update ActivePieces MCP server' })
+	@ApiOperation({ summary: 'Update ActivePieces MCP server (MCP 2.0: its disabledTools)' })
 	@ApiParam({ name: 'serverId', required: true, type: String, description: 'MCP server ID' })
+	@ApiQuery({ name: 'projectId', required: false, type: String, description: PROJECT_QUERY_DESCRIPTION })
 	@ApiResponse({
 		status: 200,
 		description: 'Returns updated MCP server',
@@ -174,12 +188,13 @@ export class ActivepiecesMcpController {
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
 	async updateMcpServer(
 		@Param('serverId') serverId: string,
-		@Body() updateData: ActivepiecesMcpUpdateDto
+		@Body() updateData: ActivepiecesMcpUpdateDto,
+		@Query() { projectId }: McpServerProjectQueryDto
 	): Promise<IActivepiecesMcpServerPublic> {
 		try {
 			const id = this.validateAndTrimId('Server ID', serverId);
 
-			const server = await this.activepiecesMcpService.updateMcpServer(id, updateData);
+			const server = await this.activepiecesMcpService.updateMcpServer(id, updateData, projectId);
 			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			this.handleError('Failed to update ActivePieces MCP server', error);
@@ -191,6 +206,7 @@ export class ActivepiecesMcpController {
 	 */
 	@ApiOperation({ summary: 'Rotate ActivePieces MCP server token' })
 	@ApiParam({ name: 'serverId', required: true, type: String, description: 'MCP server ID' })
+	@ApiQuery({ name: 'projectId', required: false, type: String, description: PROJECT_QUERY_DESCRIPTION })
 	@ApiResponse({
 		status: 200,
 		description: 'Returns MCP server (token is not returned)',
@@ -199,11 +215,14 @@ export class ActivepiecesMcpController {
 	@HttpCode(HttpStatus.OK)
 	@Post('/:serverId/rotate')
 	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
-	async rotateMcpServerToken(@Param('serverId') serverId: string): Promise<IActivepiecesMcpServerPublic> {
+	async rotateMcpServerToken(
+		@Param('serverId') serverId: string,
+		@Query() { projectId }: McpServerProjectQueryDto
+	): Promise<IActivepiecesMcpServerPublic> {
 		try {
 			const id = this.validateAndTrimId('Server ID', serverId);
 
-			const server = await this.activepiecesMcpService.rotateMcpServerToken(id);
+			const server = await this.activepiecesMcpService.rotateMcpServerToken(id, projectId);
 			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			this.handleError('Failed to rotate ActivePieces MCP server token', error);

@@ -300,6 +300,11 @@ export class EquipmentSharingController extends CrudController<EquipmentSharing>
 	 * is stored with exactly the organization, equipment and policy that were checked, none of them left for the
 	 * upsert to keep from the stored row (`EquipmentSharingService.assertCreateIsInScope`).
 	 *
+	 * A body that names a stored sharing and states its `employees` or `teams` changes who the sharing is for, which a
+	 * decision's requester check reads. It is written under the sharing's request approval's lock, taken first (the
+	 * lock order of `PUT /:id/in-place` and of the decisions), in one transaction, so a concurrent decision never
+	 * reads memberships the upsert is replacing (`EquipmentSharingService.storeCreate`).
+	 *
 	 * @param entity The record to store.
 	 * @param options The inherited options, forwarded to the service.
 	 * @returns The created record.

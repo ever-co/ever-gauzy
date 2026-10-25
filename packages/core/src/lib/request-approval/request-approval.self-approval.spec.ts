@@ -2,6 +2,7 @@
 import '../core/entities/internal';
 
 import { ForbiddenException } from '@nestjs/common';
+import { In } from 'typeorm';
 import {
 	ApprovalPolicyTypesStringEnum,
 	PermissionsEnum,
@@ -10,7 +11,12 @@ import {
 } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
-import { EquipmentSharing, RequestApprovalEmployee } from '../core/entities/internal';
+import {
+	EquipmentSharing,
+	OrganizationTeamEmployee,
+	RequestApprovalEmployee,
+	TimeOffRequest
+} from '../core/entities/internal';
 import { MultiORMEnum } from '../core/utils';
 import { RequestApproval } from './request-approval.entity';
 import { IRequestApprovalRequestedFor } from './request-approval-decision';
@@ -18,7 +24,8 @@ import {
 	IRequestApprovalAnswerTransaction,
 	RequestApprovalLinkedDocumentKind,
 	requestersOfDocument,
-	RequestApprovalService
+	RequestApprovalService,
+	teamIdsOfDocument
 } from './request-approval.service';
 
 /**
@@ -341,11 +348,40 @@ describe('requestersOfDocument', () => {
 	it.each([null, undefined, 'not-a-row'])('answers nobody for %p', (row) => {
 		expect(requestersOfDocument(row)).toEqual({ userIds: [], employeeIds: [] });
 	});
+
+	it('counts the members of the teams the document is for among the employees it is for, each once', () => {
+		const row = { createdByUserId: 'user-filer', employees: [{ id: 'employee-1' }] };
+
+		expect(requestersOfDocument(row, ['employee-2', null, 'employee-1', undefined, 'employee-3'])).toEqual({
+			userIds: ['user-filer'],
+			employeeIds: ['employee-1', 'employee-2', 'employee-3']
+		});
+	});
+
+	it('answers nobody for a document that is not there, whatever members are given', () => {
+		expect(requestersOfDocument(null, ['employee-2'])).toEqual({ userIds: [], employeeIds: [] });
+	});
+});
+
+describe('teamIdsOfDocument', () => {
+	it('reads the teams of a TypeORM row, and of a loaded MikroORM collection', () => {
+		expect(teamIdsOfDocument({ teams: [{ id: 'team-1' }, { id: 'team-2' }] })).toEqual(['team-1', 'team-2']);
+		const loaded = { isInitialized: () => true, getItems: () => [{ id: 'team-1' }] };
+		expect(teamIdsOfDocument({ teams: loaded })).toEqual(['team-1']);
+	});
+
+	it.each([
+		['a time-off request, which has no teams', { employees: [] }],
+		['a collection that was not loaded', { teams: { isInitialized: () => false, getItems: () => [{ id: 't' }] } }],
+		['no row', null]
+	])('answers no team for %s', (_, row) => {
+		expect(teamIdsOfDocument(row)).toEqual([]);
+	});
 });
 
 describe('the requesters of the linked document on each ORM', () => {
 	/** An equipment-sharing request, with Alice's slot and Mallory's. */
-	const request = () => ({
+	const request = (overrides: Record<string, any> = {}) => ({
 		id: 'approval-1',
 		tenantId: TENANT,
 		organizationId: ORGANIZATION,
@@ -353,27 +389,41 @@ describe('the requesters of the linked document on each ORM', () => {
 		min_count: 1,
 		createdByUserId: 'user-requester',
 		requestType: ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING,
-		requestId: SHARING_ID
+		requestId: SHARING_ID,
+		...overrides
 	});
+	/** The team an equipment sharing is handed to. */
+	const DESIGN = 'team-design';
 
 	afterEach(() => jest.restoreAllMocks());
 
 	describe('TypeORM', () => {
-		function typeOrm(sharing: Record<string, any>) {
+		/**
+		 * @param document The linked document the transaction reads.
+		 * @param memberships The active memberships of the teams the document is for.
+		 * @param row The request.
+		 */
+		function typeOrm(
+			document: Record<string, any>,
+			memberships: Record<string, any>[] = [],
+			row: Record<string, any> = request()
+		) {
 			const query = {
 				where: jest.fn().mockReturnThis(),
 				setLock: jest.fn().mockReturnThis(),
-				getOne: jest.fn(async () => request())
+				getOne: jest.fn(async () => row)
 			};
 			const manager = {
 				createQueryBuilder: jest.fn(() => query),
-				find: jest.fn(async (entity: unknown) =>
+				find: jest.fn(async (entity: unknown, ..._args: unknown[]) =>
 					entity === RequestApprovalEmployee
 						? [{ id: 'slot-alice', employeeId: ALICE.employeeId, status: REQUESTED }]
+						: entity === OrganizationTeamEmployee
+						? memberships
 						: []
 				),
 				findOne: jest.fn(async (entity: unknown, ..._args: unknown[]) =>
-					entity === EquipmentSharing ? sharing : null
+					entity === EquipmentSharing || entity === TimeOffRequest ? document : null
 				),
 				update: jest.fn(async (..._args: unknown[]) => ({ affected: 1 }))
 			};
@@ -383,26 +433,34 @@ describe('the requesters of the linked document on each ORM', () => {
 				...(Array.from({ length: 7 }, () => ({})) as [any, any, any, any, any, any, any])
 			);
 			jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
-			jest.spyOn(service, 'findOneByIdString').mockResolvedValue(request() as any);
-			return { service, manager };
+			jest.spyOn(service, 'findOneByIdString').mockResolvedValue(row as any);
+			const membershipReads = () =>
+				manager.find.mock.calls.filter(([entity]) => entity === OrganizationTeamEmployee);
+			return { service, manager, membershipReads };
 		}
 
-		it('reads the filer and the employees on the transaction, and stamps the slot with the answering user', async () => {
+		it('reads the filer, the employees and the teams on the transaction, and stamps the slot with the answering user', async () => {
 			asUser(ALICE);
-			const { service, manager } = typeOrm({ id: SHARING_ID, createdByUserId: MALLORY.id, employees: [] });
+			const { service, manager, membershipReads } = typeOrm({
+				id: SHARING_ID,
+				createdByUserId: MALLORY.id,
+				employees: [],
+				teams: []
+			});
 
 			await service.answer('approval-1', APPROVED);
 
 			expect(manager.findOne).toHaveBeenCalledWith(EquipmentSharing, {
 				where: { id: SHARING_ID, tenantId: TENANT },
-				relations: { employees: true },
+				relations: { employees: true, teams: true },
 				loadEagerRelations: false
 			});
-			expect(manager.update).toHaveBeenCalledWith(
-				RequestApprovalEmployee,
-				expect.anything(),
-				{ status: APPROVED, updatedByUserId: ALICE.id }
-			);
+			// A sharing for no team reads no membership.
+			expect(membershipReads()).toEqual([]);
+			expect(manager.update).toHaveBeenCalledWith(RequestApprovalEmployee, expect.anything(), {
+				status: APPROVED,
+				updatedByUserId: ALICE.id
+			});
 		});
 
 		it('refuses an approver the equipment sharing is for: 403, nothing written', async () => {
@@ -416,10 +474,82 @@ describe('the requesters of the linked document on each ORM', () => {
 			await expect(service.answer('approval-1', APPROVED)).rejects.toBeInstanceOf(ForbiddenException);
 			expect(manager.update).not.toHaveBeenCalled();
 		});
+
+		it.each([APPROVED, REFUSED])(
+			'refuses (%p) an approver who is an active member of a team the sharing is for: 403, nothing written',
+			async (status) => {
+				asUser(ALICE);
+				const { service, manager, membershipReads } = typeOrm(
+					{ id: SHARING_ID, createdByUserId: MALLORY.id, employees: [], teams: [{ id: DESIGN }] },
+					[{ organizationTeamId: DESIGN, employeeId: ALICE.employeeId, isActive: true }]
+				);
+
+				await expect(service.answer('approval-1', status as any)).rejects.toBeInstanceOf(ForbiddenException);
+				// The active members of the sharing's teams, inside the tenant, on the answer's transaction.
+				expect(membershipReads()).toEqual([
+					[
+						OrganizationTeamEmployee,
+						{ where: { organizationTeamId: In([DESIGN]), tenantId: TENANT, isActive: true } }
+					]
+				]);
+				expect(manager.update).not.toHaveBeenCalled();
+			}
+		);
+
+		it('lets an approver answer a sharing for a team they are not a member of', async () => {
+			asUser(ALICE);
+			const { service, manager } = typeOrm(
+				{ id: SHARING_ID, createdByUserId: MALLORY.id, employees: [], teams: [{ id: DESIGN }] },
+				[{ organizationTeamId: DESIGN, employeeId: MALLORY.employeeId, isActive: true }]
+			);
+
+			expect((await service.answer('approval-1', APPROVED)).status).toBe(APPROVED);
+			expect(manager.update).toHaveBeenCalledWith(RequestApprovalEmployee, expect.anything(), {
+				status: APPROVED,
+				updatedByUserId: ALICE.id
+			});
+		});
+
+		it('still lets a tenant administrator who is a member of the sharing’s team decide it, reading nothing more', async () => {
+			asUser(ADMIN);
+			const { service, manager, membershipReads } = typeOrm(
+				{ id: SHARING_ID, createdByUserId: MALLORY.id, employees: [], teams: [{ id: DESIGN }] },
+				[{ organizationTeamId: DESIGN, employeeId: 'employee-of-admin', isActive: true }]
+			);
+
+			expect((await service.answer('approval-1', APPROVED)).status).toBe(APPROVED);
+			expect(manager.findOne).not.toHaveBeenCalled();
+			expect(membershipReads()).toEqual([]);
+		});
+
+		it('reads a time-off request with its employees alone: a leave is for no team', async () => {
+			asUser(ALICE);
+			const { service, manager, membershipReads } = typeOrm(
+				{ id: TIME_OFF_ID, createdByUserId: MALLORY.id, employees: [] },
+				[],
+				request({ requestType: ApprovalPolicyTypesStringEnum.TIME_OFF, requestId: TIME_OFF_ID })
+			);
+
+			await service.answer('approval-1', APPROVED);
+
+			expect(manager.findOne).toHaveBeenCalledWith(TimeOffRequest, {
+				where: { id: TIME_OFF_ID, tenantId: TENANT },
+				relations: { employees: true },
+				loadEagerRelations: false
+			});
+			expect(membershipReads()).toEqual([]);
+		});
 	});
 
 	describe('MikroORM', () => {
-		function mikroOrm(row: Record<string, any>, slots: Record<string, any>[]) {
+		function mikroOrm(
+			row: Record<string, any>,
+			slots: Record<string, any>[],
+			{
+				teams = [],
+				memberships = []
+			}: { teams?: Record<string, any>[]; memberships?: Record<string, any>[] } = {}
+		) {
 			const em = {
 				findOne: jest.fn(async (entity: unknown, ..._args: unknown[]) =>
 					entity === RequestApproval
@@ -428,11 +558,14 @@ describe('the requesters of the linked document on each ORM', () => {
 						? {
 								id: SHARING_ID,
 								createdByUser: { id: 'user-filer' },
-								employees: { isInitialized: () => true, getItems: () => [] }
+								employees: { isInitialized: () => true, getItems: () => [] },
+								teams: { isInitialized: () => true, getItems: () => teams }
 						  }
 						: null
 				),
-				find: jest.fn(async (entity: unknown) => (entity === RequestApprovalEmployee ? slots : [])),
+				find: jest.fn(async (entity: unknown, ..._args: unknown[]) =>
+					entity === RequestApprovalEmployee ? slots : entity === OrganizationTeamEmployee ? memberships : []
+				),
 				nativeUpdate: jest.fn(async (..._args: unknown[]) => 1),
 				getMetadata: () => ({ find: () => undefined })
 			};
@@ -450,7 +583,7 @@ describe('the requesters of the linked document on each ORM', () => {
 			return { service, em };
 		}
 
-		it('reads the filer and the loaded employees from the table, on the transaction', async () => {
+		it('reads the filer, the loaded employees and the teams from the table, on the transaction', async () => {
 			asUser(ALICE);
 			const { service, em } = mikroOrm(request(), [
 				{ id: 'slot-alice', employee: { id: ALICE.employeeId }, status: REQUESTED }
@@ -461,13 +594,34 @@ describe('the requesters of the linked document on each ORM', () => {
 			expect(em.findOne).toHaveBeenCalledWith(
 				EquipmentSharing,
 				{ id: SHARING_ID, tenantId: TENANT },
-				{ disableIdentityMap: true, populate: ['employees'] }
+				{ disableIdentityMap: true, populate: ['employees', 'teams'] }
 			);
+			expect(em.find.mock.calls.filter(([entity]) => entity === OrganizationTeamEmployee)).toEqual([]);
 			expect(em.nativeUpdate).toHaveBeenCalledWith(
 				RequestApprovalEmployee,
 				{ id: { $in: ['slot-alice'] }, tenantId: TENANT },
 				{ status: APPROVED, updatedByUserId: ALICE.id }
 			);
+		});
+
+		it('refuses an approver who is an active member of a team the sharing is for, read from the table: 403', async () => {
+			asUser(ALICE);
+			const { service, em } = mikroOrm(
+				request(),
+				[{ id: 'slot-alice', employee: { id: ALICE.employeeId }, status: REQUESTED }],
+				{
+					teams: [{ id: DESIGN }],
+					memberships: [{ organizationTeam: { id: DESIGN }, employee: { id: ALICE.employeeId } }]
+				}
+			);
+
+			await expect(service.answer('approval-1', APPROVED)).rejects.toBeInstanceOf(ForbiddenException);
+			expect(em.find).toHaveBeenCalledWith(
+				OrganizationTeamEmployee,
+				{ organizationTeamId: { $in: [DESIGN] }, tenantId: TENANT, isActive: true },
+				{ disableIdentityMap: true }
+			);
+			expect(em.nativeUpdate).not.toHaveBeenCalled();
 		});
 
 		it('knows the requester from the relation key when the `persist: false` mirror is unhydrated: 403', async () => {

@@ -48,6 +48,28 @@ export interface IActivepiecesCredential {
 	readonly enforceProject: boolean;
 }
 
+/** The MCP routes of the installation's Activepieces: MCP 2.0 (`v2`, the default) or the `legacy` routes before it. */
+export type ActivepiecesMcpApi = 'v2' | 'legacy';
+
+/**
+ * Reads `GAUZY_ACTIVEPIECES_MCP_API`: blank (or not set) and `v2` are MCP 2.0, `legacy` the routes before it, in any
+ * case. Anything else (a typo, `v1`) is `null`: refused where MCP is called
+ * ({@link ActivepiecesCredentialsService.mcpApi}), rather than read as MCP 2.0 and answered with Activepieces' 404s
+ * on an older installation.
+ *
+ * @param value - The setting, as configured.
+ */
+export function parseActivepiecesMcpApi(value: unknown): ActivepiecesMcpApi | null {
+	if (value === undefined || value === null) {
+		return 'v2';
+	}
+	const text = typeof value === 'string' ? value.trim().toLowerCase() : null;
+	if (text === '' || text === 'v2') {
+		return 'v2';
+	}
+	return text === 'legacy' ? 'legacy' : null;
+}
+
 /** What the operator of the installation configured. Never handed to a tenant. */
 export interface IActivepiecesOperatorSettings {
 	readonly platformApiKey: string;
@@ -55,6 +77,8 @@ export interface IActivepiecesOperatorSettings {
 	readonly signingPrivateKey: string;
 	readonly tenantProjectsEnabled: boolean;
 	readonly externalIdPrefix: string;
+	/** The MCP routes to call (`GAUZY_ACTIVEPIECES_MCP_API`); MCP 2.0 when not stated, `null` for an unknown value. */
+	readonly mcpApi?: ActivepiecesMcpApi | null;
 }
 
 /** A project token is obtained again when it has less than this left (Activepieces issues them for 7 days). */
@@ -162,8 +186,26 @@ export class ActivepiecesCredentialsService {
 			signingKeyId: text(config.signingKeyId),
 			signingPrivateKey: text(config.signingPrivateKey),
 			tenantProjectsEnabled: config.tenantProjectsEnabled !== false,
-			externalIdPrefix: text(config.projectExternalIdPrefix) || ACTIVEPIECES_DEFAULT_EXTERNAL_ID_PREFIX
+			externalIdPrefix: text(config.projectExternalIdPrefix) || ACTIVEPIECES_DEFAULT_EXTERNAL_ID_PREFIX,
+			mcpApi: parseActivepiecesMcpApi(config.mcpApi)
 		};
+	}
+
+	/**
+	 * The MCP routes to call. An unknown `GAUZY_ACTIVEPIECES_MCP_API` is refused (500, the setting named in the log
+	 * only) rather than guessed: read as MCP 2.0, an older self-hosted Activepieces would answer every call with 404.
+	 * Only the MCP routes read it, so the other Activepieces calls are not held up by it.
+	 *
+	 * @throws InternalServerErrorException for a value that is neither `v2` nor `legacy`.
+	 */
+	mcpApi(settings: IActivepiecesOperatorSettings = this.operatorSettings()): ActivepiecesMcpApi {
+		if (settings?.mcpApi === null) {
+			this.logger.error('GAUZY_ACTIVEPIECES_MCP_API must be "v2" (the default) or "legacy"');
+			throw new InternalServerErrorException(
+				'The Activepieces MCP setting of this installation is not valid: ask its operator to correct it.'
+			);
+		}
+		return settings?.mcpApi ?? 'v2';
 	}
 
 	/** Whether the operator configured the signing key that project tokens need. */
@@ -187,15 +229,27 @@ export class ActivepiecesCredentialsService {
 	 * @param options.integrationTenantId - The tenant's integration row the request is about, when it names one. A row
 	 * of another tenant is never read: the rows are those of the tenant in context.
 	 * @param options.organizationId - The organization the request is about, when it names one.
+	 * @param options.beforeConnect - Called with the mode the request runs under (and, in the `tenant_api_key` mode,
+	 * the tenant's own key) once it is decided, before anything is obtained for it: no project token is exchanged and
+	 * no tenant project is looked up or created when it throws. A caller that cannot use a mode refuses it here (MCP,
+	 * which accepts only user tokens, refuses `platform_project` before the tenant's project is provisioned).
 	 * @throws BadRequestException when the tenant has no way to reach Activepieces, or chose one that is not available.
 	 */
-	async resolve(options: { integrationTenantId?: string; organizationId?: string } = {}): Promise<IActivepiecesCredential> {
+	async resolve(
+		options: {
+			integrationTenantId?: string;
+			organizationId?: string;
+			beforeConnect?: (mode: ActivepiecesConnectionMode | null, ownApiKey?: string) => void;
+		} = {}
+	): Promise<IActivepiecesCredential> {
 		const settings = this.operatorSettings();
 		const view = await this.tenantView(this.currentTenantId(), options);
 		const mode =
 			view.requestedMode === ActivepiecesConnectionMode.AUTO
 				? this.automaticMode(!!view.ownApiKey, settings)
 				: view.requestedMode;
+
+		options.beforeConnect?.(mode, mode === ActivepiecesConnectionMode.TENANT_API_KEY ? view.ownApiKey : undefined);
 
 		switch (mode) {
 			case ActivepiecesConnectionMode.TENANT_API_KEY:
