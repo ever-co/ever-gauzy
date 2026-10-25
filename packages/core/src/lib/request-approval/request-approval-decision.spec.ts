@@ -6,6 +6,7 @@ import {
 	IRequestApprovalAnswerer,
 	isRequesterOfRequestApproval,
 	REQUESTER_DOES_NOT_ANSWER,
+	RequestApprovalVerdict,
 	requiredApprovalCount
 } from './request-approval-decision';
 
@@ -397,7 +398,7 @@ describe('answerRequestApproval — the requester answers through no slot', () =
 			teamApprovals: [{ id: 'slot-finance', teamId: FINANCE, status: REQUESTED }]
 		});
 
-	it.each([APPROVED, REFUSED])(
+	it.each<RequestApprovalVerdict>([APPROVED, REFUSED])(
 		'refuses the person who raised the request answering (%p) through an approver team they belong to',
 		(verdict) => {
 			const row = { ...financeOnly(), createdByUserId: MALLORY.userId };
