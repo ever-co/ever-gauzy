@@ -63,6 +63,7 @@
 				[totalItems]="$safeNavigationMigration(pagination?.totalItems)"
 				[settings]="smartTableSettings"
 				[source]="proposals"
+				[componentInputs]="{ author: { linkTo: 'view' } }"
 				(onSelectedItem)="selectProposal($event)"
 				(scroll)="onScroll()"
 			></ga-card-grid>
