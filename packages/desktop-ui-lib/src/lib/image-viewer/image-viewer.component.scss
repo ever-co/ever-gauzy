@@ -68,9 +68,9 @@
   }
 }
 
-::ng-deep body {
-  -webkit-app-region: drag;
-}
+// No `-webkit-app-region: drag` on `body`: since Electron 44 (Chromium 152) the property is inherited, which
+// made every button and thumbnail of the viewer a drag handle that no click reaches (see the time tracker's
+// stylesheet). Moving the window is left to the title bar's own drag region.
 
 .date-box {
   width: 100%;

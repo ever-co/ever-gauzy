@@ -14,7 +14,7 @@ import {
 	NbRadioModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ApprovalPolicyService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -43,7 +43,7 @@ import { ApprovalPolicyRoutingModule } from './approval-policy-routing.module';
 		CardGridModule,
 		ApprovalPolicyMutationModule,
 		ApprovalPolicyRoutingModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule
 	],

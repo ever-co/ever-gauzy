@@ -15,13 +15,12 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { DangerZoneMutationModule, SharedModule } from '@gauzy/ui-core/shared';
 import { SettingsRoutingModule } from './settings-routing.module';
 import { SettingsComponent } from './settings.component';
 import { DangerZoneComponent } from './danger-zone/danger-zone.component';
 import { EmailHistoryComponent } from './email-history/email-history.component';
-import { EmailFiltersComponent } from './email-history/email-filters/email-filters.component';
 import { EmailTemplatesModule } from '../email-templates/email-templates.module';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
 import { AccountingTemplatesModule } from '../accounting-templates/accounting-templates.module';
@@ -42,7 +41,7 @@ import { AccountingTemplatesModule } from '../accounting-templates/accounting-te
 		NbTooltipModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SettingsRoutingModule,
 		SharedModule,
 		EmailTemplatesModule,
@@ -53,7 +52,6 @@ import { AccountingTemplatesModule } from '../accounting-templates/accounting-te
 		SettingsComponent,
 		DangerZoneComponent,
 		EmailHistoryComponent,
-		EmailFiltersComponent,
 		SmsGatewayComponent
 	],
 	providers: []

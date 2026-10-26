@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, AfterViewInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -23,6 +23,7 @@ import { Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 	selector: 'ngx-edit-time-log-modal',
 	templateUrl: './edit-time-log-modal.component.html',
 	styleUrls: ['./edit-time-log-modal.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EditTimeLogModalComponent implements OnInit, AfterViewInit, OnDestroy {

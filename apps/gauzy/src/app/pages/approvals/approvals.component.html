@@ -54,7 +54,7 @@
     } @else {
       <ga-card-grid
         [loading]="loading"
-        [totalItems]="pagination?.totalItems"
+        [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
         (scroll)="onScroll()"
         (onSelectedItem)="selectRequestApproval($event)"
         [settings]="settingsSmartTable"
@@ -124,8 +124,9 @@
      so the record renderer is built fresh for each request that is opened. -->
 <ngx-record-view-drawer
   [open]="!!viewedRequestApproval"
+  [fullViewLink]="viewedRequestApproval ? '/pages/employees/approvals/view/' + viewedRequestApproval.id : null"
   heading="APPROVAL_REQUEST_PAGE.HEADER"
-  [subtitle]="viewedRequestApproval?.name"
+  [subtitle]="$safeNavigationMigration(viewedRequestApproval?.name)"
   (closed)="closeView()"
   >
   @if (viewedRequestApproval) {

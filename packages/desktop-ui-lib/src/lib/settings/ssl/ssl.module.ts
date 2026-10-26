@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 import { SslComponent } from './ssl.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { LanguageModule } from '../../language/language.module';
 
 
@@ -31,7 +31,7 @@ import { LanguageModule } from '../../language/language.module';
     NbTooltipModule,
     NbSpinnerModule,
     LanguageModule,
-    TranslateModule,
+    TranslatePipe,
     SslComponent
 ],
     providers: [],

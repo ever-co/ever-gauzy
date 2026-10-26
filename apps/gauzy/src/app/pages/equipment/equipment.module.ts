@@ -7,14 +7,16 @@ import {
 	NbDialogModule,
 	NbSpinnerModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
 	EquipmentMutationModule,
 	SharedModule,
 	TableComponentsModule,
-	UserFormsModule
+	UserFormsModule,
+	FavoriteToggleModule,
+	RecordViewModule
 } from '@gauzy/ui-core/shared';
 import { EquipmentRoutingModule } from './equipment-routing.module';
 import { EquipmentComponent } from './equipment.component';
@@ -22,6 +24,8 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 
 @NgModule({
 	imports: [
+		RecordViewModule,
+		FavoriteToggleModule,
 		EquipmentRoutingModule,
 		SharedModule,
 		UserFormsModule,
@@ -33,7 +37,7 @@ import { AutoApproveComponent } from './auto-approve/auto-approve.component';
 		EquipmentMutationModule,
 		TableComponentsModule,
 		CardGridModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbSpinnerModule,
 		SmartDataViewLayoutModule
 	],

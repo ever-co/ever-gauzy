@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { DialogsModule, SharedModule } from '@gauzy/ui-core/shared';
 import { ImportExportRoutingModule } from './import-export-routing.module';
 import { ImportExportComponent } from './import-export.component';
@@ -19,7 +19,7 @@ import { ExternalRedirectComponent } from './external-redirect/external-redirect
 		NbSpinnerModule,
 		NgxPermissionsModule.forChild(),
 		SharedModule,
-		TranslateModule.forChild()
+		TranslatePipe
 	],
 	declarations: [ImportExportComponent, ExternalRedirectComponent],
 	providers: []

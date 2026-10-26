@@ -153,22 +153,32 @@ export abstract class EntityEventSubscriber<Entity>
 		try {
 			let entity: Entity;
 			let entityManager: MultiOrmEntityManager;
+			let changedProperties: string[] | undefined;
 
 			switch (ormType) {
 				case MultiORMEnum.MikroORM:
 					entity = (event as EventArgs<Entity>).entity;
 					entityManager = (event as EventArgs<Entity>).em;
+					// The entity is the whole managed row: only the change set says what this flush writes.
+					changedProperties = Object.keys((event as EventArgs<Entity>).changeSet?.payload ?? {});
 					break;
-				case MultiORMEnum.TypeORM:
+				case MultiORMEnum.TypeORM: {
+					const { databaseEntity, updatedColumns, updatedRelations } = event as UpdateEvent<Entity>;
 					entity = (event as UpdateEvent<Entity>).entity as Entity;
 					entityManager = (event as UpdateEvent<Entity>).manager;
+					// Only save() diffs the write against the stored row. A query builder update() reports no
+					// diff, and its entity already holds just the values it sets.
+					changedProperties = databaseEntity
+						? [...updatedColumns, ...updatedRelations].map(({ propertyName }) => propertyName)
+						: undefined;
 					break;
+				}
 				default:
 					throw new Error(`Unsupported ORM type: ${ormType}`);
 			}
 
 			if (entity) {
-				await this.beforeEntityUpdate(entity, entityManager);
+				await this.beforeEntityUpdate(entity, entityManager, changedProperties);
 			}
 		} catch (error) {
 			console.error('EntityEventSubscriber: Error in beforeUpdate:', error);
@@ -180,9 +190,15 @@ export abstract class EntityEventSubscriber<Entity>
 	 *
 	 * @param entity The entity that is about to be updated.
 	 * @param em The EntityManager, which can be either from TypeORM or MikroORM.
+	 * @param changedProperties The names of the properties this write changes, or undefined when the ORM
+	 * does not report them (a TypeORM query builder update).
 	 * @returns {Promise<void>}
 	 */
-	protected abstract beforeEntityUpdate(entity: Entity, em?: MultiOrmEntityManager): Promise<void>;
+	protected abstract beforeEntityUpdate(
+		entity: Entity,
+		em?: MultiOrmEntityManager,
+		changedProperties?: string[]
+	): Promise<void>;
 
 	/**
 	 * Handles the 'after update' event for both MikroORM and TypeORM entities. It determines the

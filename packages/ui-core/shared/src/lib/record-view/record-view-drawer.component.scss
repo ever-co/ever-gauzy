@@ -97,9 +97,22 @@ $drawer-z-index: 1043;
   overflow-wrap: anywhere;
 }
 
-.record-drawer-close {
+.record-drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex: 0 0 auto;
+}
+
+.record-drawer-close,
+.record-drawer-expand {
   flex: 0 0 auto;
   padding: 0 0.25rem;
+}
+
+.record-drawer-expand.has-label {
+  padding: 0 0.5rem;
+  text-transform: none;
 }
 
 .record-drawer-body {

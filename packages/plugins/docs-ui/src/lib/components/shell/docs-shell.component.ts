@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -23,6 +23,7 @@ import { DOCS_PREVIEW_DIALOG_CONFIG, DOCS_TREE_COLLAPSED_KEY } from '../../docs.
 	selector: 'gz-docs-shell',
 	templateUrl: './docs-shell.component.html',
 	styleUrls: ['./docs-shell.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsShellComponent extends TranslationBaseComponent implements OnInit {

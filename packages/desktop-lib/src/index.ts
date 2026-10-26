@@ -8,6 +8,7 @@ export * from './lib/desktop-menu';
 export * from './lib/desktop-notifier';
 export * from './lib/desktop-screenshot';
 export * from './lib/desktop-server';
+export * from './lib/desktop-sign-in-notices';
 export * from './lib/desktop-store';
 export * from './lib/desktop-theme-listener';
 export * from './lib/desktop-timer';

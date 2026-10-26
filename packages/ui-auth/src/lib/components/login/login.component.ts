@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Inject, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormGroupDirective } from '@angular/forms';
 import { NbAuthService, NbLoginComponent, NB_AUTH_OPTIONS } from '@nebular/auth';
@@ -12,6 +12,7 @@ import { ElectronService } from '@gauzy/ui-core/core';
 	selector: 'ngx-login',
 	templateUrl: './login.component.html',
 	styleUrls: ['./login.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class NgxLoginComponent extends NbLoginComponent implements OnInit {

@@ -1,3 +1,4 @@
+// cspell:ignore noext
 /**
  * Thumbnail generation (07 §4.4).
  *
@@ -20,27 +21,31 @@ const providerStub = {
 	url: jest.fn()
 };
 
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		FileStorage: class {
-			setProvider() {
-				return this;
-			}
-			getProviderInstance() {
-				return providerStub;
-			}
+jest.mock('@gauzy/core', () => ({
+	// The real storage read helper (dependency-free), so the specs read what the providers really return.
+	...jest.requireActual('@gauzy/core/src/lib/core/file-storage/helpers/stored-file-content'),
+	FileStorage: class {
+		setProvider() {
+			return this;
 		}
-	}),
-	{ virtual: true }
-);
+		getProviderInstance() {
+			return providerStub;
+		}
+	}
+}));
 jest.mock('../../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../../repositories/type-orm-document.repository', () => ({ TypeOrmDocumentRepository: class {} }));
 
-import * as sharp from 'sharp';
+import { Readable } from 'stream';
+import * as sharpModule from 'sharp';
 import { DocumentKindEnum } from '@gauzy/contracts';
 import { DocumentThumbnailService } from './document-thumbnail.service';
 import { DOCS_THUMBNAIL_MAX_PX, isThumbnailableMime, thumbnailKeyFor } from './thumbnail.constants';
+
+// sharp 0.35 types its entry point as an ES module (a default export), while `require('sharp')` still returns the
+// function itself: take whichever this runtime hands back.
+const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
+	sharpModule) as unknown as typeof sharpModule.default;
 
 /** A real 600x400 PNG, so `sharp` genuinely resizes rather than being mocked away. */
 const realPng = async (): Promise<Buffer> =>
@@ -135,6 +140,22 @@ describe('DocumentThumbnailService — happy path', () => {
 			{ thumbKey: 'docs/org-1/diagram-thumb.webp' }
 		);
 		expect(document.thumbKey).toBe('docs/org-1/diagram-thumb.webp');
+	});
+
+	it('reads a source the S3-family providers return as the SDK body stream, not a Buffer', async () => {
+		const png = await realPng();
+		// `GetObjectCommandOutput.Body`: a Node stream with the SDK's transform methods mixed in.
+		providerStub.getFile.mockResolvedValue(
+			Object.assign(Readable.from([png.subarray(0, 64), png.subarray(64)]), {
+				transformToByteArray: async () => new Uint8Array(png)
+			})
+		);
+		const { service } = buildService();
+
+		await expect(service.generate(documentRow(), JOB)).resolves.toBe('generated');
+
+		const [bytes] = providerStub.putFile.mock.calls[0];
+		expect((await sharp(bytes).metadata()).format).toBe('webp');
 	});
 
 	it('honors a key the storage provider rewrote', async () => {

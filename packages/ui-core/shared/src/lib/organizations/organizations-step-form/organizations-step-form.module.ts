@@ -16,7 +16,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { OrganizationDepartmentsService } from '@gauzy/ui-core/core';
 import { OrganizationsStepFormComponent } from './organizations-step-form.component';
 import { ImageUploaderModule } from '../../image-uploader/image-uploader.module';
@@ -47,7 +47,7 @@ import { TimeZoneSelectorModule } from '../../modules/selectors';
 		NbSpinnerModule,
 		RemoveLodashModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		TagsColorInputModule,
 		CurrencyModule,
 		CountryModule,

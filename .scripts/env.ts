@@ -2,7 +2,37 @@
 // We are using dotenv (.env) for consistency with other Platform projects
 // This is Angular app and all settings will be loaded into the client browser!
 
-import { bool, cleanEnv, num, str } from 'envalid';
+import * as dotenv from 'dotenv';
+import { cleanEnv, EnvError, makeValidator, str } from 'envalid';
+
+// envalid 7+ no longer reads `.env` itself (its `dotEnvPath` option is gone) and is always strict: `.env` is loaded
+// here, as envalid 6 did, without overriding a variable the environment already sets.
+dotenv.config({ path: __dirname + '/../.env', quiet: true });
+
+// The .env files write an unset value as `KEY=`. envalid 6, which these specs were written for, read an empty number as
+// 0 and an empty boolean as null; envalid 7+ rejects both. These keep envalid 6's parsing, so the generated
+// environment does not change.
+const num = makeValidator<number>((input) => {
+	const coerced = +input;
+	if (Number.isNaN(coerced)) {
+		throw new EnvError(`Invalid number input: "${input}"`);
+	}
+	return coerced;
+});
+const bool = makeValidator<boolean>((input) => {
+	switch (input) {
+		case 'true':
+		case 't':
+		case '1':
+			return true;
+		case 'false':
+		case 'f':
+		case '0':
+			return false;
+		default:
+			return null;
+	}
+});
 
 export type Env = Readonly<{
 	production: boolean;
@@ -440,6 +470,5 @@ export const env: Env = cleanEnv(
 		// Deployed release version (git tag) + commit SHA, embedded at build time.
 		GAUZY_APP_VERSION: str({ default: '' }),
 		GAUZY_APP_COMMIT: str({ default: '' })
-	},
-	{ strict: true, dotEnvPath: __dirname + '/../.env' }
+	}
 );

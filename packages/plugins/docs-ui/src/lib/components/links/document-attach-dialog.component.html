@@ -24,15 +24,20 @@
 			{{ 'DOCS.LINKS.ATTACH_NO_DOCUMENTS' | translate }}
 		</p>
 
+		<!-- Pick as many as needed: each row toggles, and the selection survives a new search. -->
 		<div class="docs-attach-list" *ngIf="filtered.length">
 			<button
 				type="button"
 				class="docs-attach-item"
 				*ngFor="let document of filtered; trackBy: trackByDocument"
-				[class.selected]="selectedId === document.id"
+				[class.selected]="isSelected(document)"
+				[attr.aria-pressed]="isSelected(document)"
 				[disabled]="saving"
-				(click)="selectedId = document.id"
+				(click)="toggle(document)"
 			>
+				<span class="docs-attach-check" aria-hidden="true">
+					<nb-icon *ngIf="isSelected(document)" icon="checkmark-outline"></nb-icon>
+				</span>
 				<nb-icon [icon]="iconOf(document)" size="tiny"></nb-icon>
 				<span class="docs-attach-item-name" [title]="document.name">{{ document.name }}</span>
 			</button>
@@ -40,9 +45,16 @@
 	</nb-card-body>
 
 	<nb-card-footer class="docs-dialog-footer">
+		<span class="docs-attach-count" *ngIf="selectedCount" aria-live="polite">
+			{{ 'DOCS.LINKS.ATTACH_SELECTED' | translate : { count: selectedCount } }}
+		</span>
 		<button nbButton ghost [disabled]="saving" (click)="cancel()">{{ 'DOCS.UPLOAD.CANCEL' | translate }}</button>
 		<button nbButton status="primary" [disabled]="!canConfirm" (click)="confirm()">
-			{{ 'DOCS.LINKS.CONFIRM' | translate }}
+			@if (selectedCount > 1) {
+				{{ 'DOCS.LINKS.ATTACH_CONFIRM_COUNT' | translate : { count: selectedCount } }}
+			} @else {
+				{{ 'DOCS.LINKS.CONFIRM' | translate }}
+			}
 		</button>
 	</nb-card-footer>
 </nb-card>

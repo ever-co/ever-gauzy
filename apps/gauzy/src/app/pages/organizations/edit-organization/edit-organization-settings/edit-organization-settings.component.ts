@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Input, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IOrganization } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -12,6 +12,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'ngx-edit-organization-settings',
     templateUrl: './edit-organization-settings.component.html',
     styleUrls: ['./edit-organization-settings.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditOrganizationSettingsComponent extends TranslationBaseComponent implements AfterViewInit, OnInit {

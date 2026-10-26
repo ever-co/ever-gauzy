@@ -6,14 +6,14 @@
 					<div class="row">
 						<div class="col-12 d-flex justify-content-center">
 							<div class="logo">
-								<img [src]="application?.iconPath" />
+								<img [src]="$safeNavigationMigration(application?.iconPath)" />
 							</div>
 						</div>
 						<div class="col-12 name-text text-center mt-2">
 							<span>{{ application?.name }}</span>
 						</div>
 						<div class="col-12 version-text">
-							<span>{{ 'TIMER_TRACKER.VERSION' | translate : { version: application?.version } }}</span>
+							<span>{{ 'TIMER_TRACKER.VERSION' | translate : { version: $safeNavigationMigration(application?.version) } }}</span>
 						</div>
 						<div class="col-12 version-text mb-2">
 							<span>{{ 'TIMER_TRACKER.OS' | translate : { os, arch, systemVersion} }}</span>

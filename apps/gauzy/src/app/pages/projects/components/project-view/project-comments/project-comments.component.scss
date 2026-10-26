@@ -1,0 +1,668 @@
+@use 'gauzy/_gauzy-cards' as *;
+
+// The project's comments, laid out as the objective dialog's Comments tab (goal-details.component.scss): quiet
+// chat messages at a 12px scale, a thread card hung off a comment's avatar, and the comment box as the footer.
+$control-font-size: 12px;
+$control-padding-x: 0.75rem;
+$inset: 1rem;
+$divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+$muted: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
+$radius: var(--gauzy-radius-sm, 0.375rem);
+$avatar: 1.75rem;
+$avatar-small: 1.25rem;
+$gutter-gap: 0.625rem;
+$thread-line: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.28));
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 5rem;
+  font-size: $control-font-size;
+  line-height: 1rem;
+  color: $muted;
+}
+
+// A failed read: the message over its retry.
+.load-error {
+  flex-direction: column;
+  gap: 0.5rem;
+
+  button {
+    margin: 0;
+  }
+}
+
+.comments,
+.replies {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comments {
+  padding: 0.25rem 0;
+}
+
+// Each comment as a chat message: a small round avatar in a gutter, the author and time on one line and the
+// text under them. A comment with replies hangs a thread card off its avatar — a hairline stem down the
+// gutter, then an elbow into the card.
+.comment {
+  position: relative;
+  display: grid;
+  grid-template-columns: $avatar minmax(0, 1fr);
+  column-gap: $gutter-gap;
+  padding: 0.5rem 0.375rem;
+  border-radius: $radius;
+  font-size: $control-font-size;
+  line-height: 1rem;
+}
+
+.comment-gutter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+// The thread's line, from under the avatar to the foot of the message; the elbow on `.thread` carries it on
+// into the card.
+.thread-stem {
+  display: none;
+  flex: 1 1 auto;
+  width: 0;
+  margin-top: 0.25rem;
+  border-inline-start: $thread-line;
+}
+
+.has-thread .thread-stem {
+  display: block;
+}
+
+.comment-avatar-link {
+  display: inline-flex;
+}
+
+.comment-avatar {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: $avatar;
+  height: $avatar;
+  overflow: hidden;
+  border-radius: 50%;
+  background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  color: $muted;
+  font-size: 10px;
+  font-weight: 500;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  &.small {
+    width: $avatar-small;
+    height: $avatar-small;
+    font-size: 8px;
+
+    nb-icon {
+      width: 0.75rem;
+      height: 0.75rem;
+      font-size: 0.75rem;
+    }
+  }
+}
+
+.comment-main {
+  min-width: 0;
+}
+
+.comment-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.125rem 0.5rem;
+}
+
+.comment-author {
+  font-weight: 500;
+  color: var(--gauzy-text-color-1, inherit);
+  text-decoration: none;
+}
+
+a.comment-author:hover {
+  text-decoration: underline;
+}
+
+.comment-time {
+  font-size: 11px;
+  color: $muted;
+}
+
+.comment-text {
+  margin: 0.125rem 0 0;
+  color: var(--gauzy-text-color-1, inherit);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+// Reply and Delete, as small muted links under the text.
+.comment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.delete-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.625rem;
+}
+
+.delete-question {
+  margin-top: 0.25rem;
+  font-size: 11px;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-1, inherit);
+}
+
+.comment-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: $muted;
+  font-size: 11px;
+  line-height: 1rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+
+  nb-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  &:hover {
+    color: nb-theme(color-primary-default);
+  }
+
+  &.danger:hover,
+  &.confirm {
+    color: nb-theme(color-danger-default);
+  }
+
+  &.confirm {
+    font-weight: 500;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  // The trash icon on its own, with a small hit area around it.
+  &.icon-only {
+    padding: 0.125rem;
+    margin-inline-start: -0.125rem;
+    border-radius: $radius;
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+// The card under the message, in the text's column, with the elbow reaching back to the stem in the gutter
+// and into the card's first line.
+.thread {
+  position: relative;
+  grid-column: 2;
+  margin-top: 0.375rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -0.375rem;
+    inset-inline-start: calc(-1 * (#{$gutter-gap} + #{$avatar} / 2) - 0.5px);
+    width: calc(#{$gutter-gap} + #{$avatar} / 2 - 0.25rem);
+    height: 1.3rem;
+    border-inline-start: $thread-line;
+    border-bottom: $thread-line;
+    border-end-start-radius: 0.5rem;
+  }
+}
+
+.thread-card {
+  max-width: 26rem;
+  padding: 0.375rem 0.625rem;
+  border: $divider;
+  border-radius: $radius;
+  background-color: var(--gauzy-card-1, var(--card-background-color));
+
+  &.open {
+    max-width: none;
+  }
+}
+
+.thread-summary,
+.thread-latest {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.thread-title,
+.thread-latest-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.thread-title {
+  font-weight: 500;
+  color: var(--gauzy-text-color-1, inherit);
+}
+
+.thread-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: nb-theme(color-primary-default);
+  font-size: 11px;
+  font-weight: 400;
+  cursor: pointer;
+
+  nb-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+.thread-latest {
+  margin-top: 0.125rem;
+  justify-content: space-between;
+  font-size: 11px;
+  color: $muted;
+
+  b {
+    font-weight: 500;
+  }
+}
+
+.thread-age {
+  flex: 0 0 auto;
+}
+
+.replies {
+  margin-top: 0.375rem;
+}
+
+.reply {
+  display: grid;
+  grid-template-columns: $avatar-small minmax(0, 1fr);
+  column-gap: 0.5rem;
+  padding: 0.375rem 0;
+  border-top: $divider;
+}
+
+// The comment box, under the list.
+.comment-footer {
+  padding: 0.5rem $inset $inset;
+}
+
+// A box as one quiet block: the picked images, a borderless text area that starts on one line and grows with the
+// text, then a toolbar — the paperclip on the left, the send icon on the right. One faint hairline that stays the
+// same while typing; no colour until there is something to send.
+.composer {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.18));
+  border-radius: 0.5rem;
+  background-color: var(--gauzy-card-1, var(--card-background-color));
+
+  &--reply {
+    margin-top: 0.375rem;
+  }
+}
+
+// The block is the field: the text area drops what the app's global styles give every textarea
+// (_gauzy-overrides.scss) — the inset shadow that reads as a border, the rounded corners, the fixed 102px height
+// and the input background, which comes with `!important`.
+.composer .composer-input {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 1.75rem;
+  max-height: 10rem;
+  padding: 0.375rem 0.625rem 0;
+  overflow-y: auto;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent !important;
+  color: var(--gauzy-text-color-1, inherit);
+  font-family: inherit;
+  font-size: $control-font-size;
+  line-height: 1.125rem;
+  // Grows with the text, up to `max-height`, where it scrolls.
+  field-sizing: content;
+  resize: none;
+
+  &::placeholder {
+    color: $muted;
+  }
+
+  // No ring of its own either: the theme's input focus styles do not reach into the block.
+  &:focus,
+  &:focus-visible {
+    border: 0;
+    outline: 0;
+    box-shadow: none;
+  }
+}
+
+.composer-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0 0.25rem 0.25rem;
+}
+
+// The toolbar's icons — the paperclip and the send button: bare and muted, a soft square on hover.
+.composer-tool,
+.composer-send {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.25rem;
+  background: none;
+  color: $muted;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    color: var(--gauzy-text-color-1, inherit);
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 1px;
+  }
+}
+
+// The send icon sits on the right and takes the primary colour only once there is something to send; it fades
+// while the comment posts.
+.composer-send {
+  margin-inline-start: auto;
+
+  &:not(:disabled) {
+    color: nb-theme(color-primary-default);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  &.is-busy {
+    animation: composer-send-busy 0.9s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes composer-send-busy {
+  to {
+    opacity: 0.25;
+  }
+}
+
+// A comment's images, as thumbnails under its text; each opens full size.
+.comment-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+}
+
+.comment-image {
+  display: block;
+  width: 7.5rem;
+  height: 5rem;
+  padding: 0;
+  overflow: hidden;
+  border: $divider;
+  border-radius: $radius;
+  background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+  cursor: zoom-in;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.15s ease;
+  }
+
+  &:hover img {
+    transform: scale(1.04);
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 2px;
+  }
+}
+
+// An image first being looked up (empty), or one whose lookup failed (an image icon; a click tries again).
+.comment-image.is-unavailable {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: $muted;
+  cursor: default;
+
+  &:not(:disabled) {
+    cursor: pointer;
+  }
+
+  nb-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+  }
+}
+
+.reply .comment-image {
+  width: 6rem;
+  height: 4rem;
+}
+
+// The images picked for a box, at the top of its block: small thumbnails, each with a remove button, dimmed
+// while uploading.
+.pending-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0.5rem 0.625rem 0;
+  list-style: none;
+}
+
+.pending-image {
+  position: relative;
+  width: 3.5rem;
+  height: 3.5rem;
+  overflow: hidden;
+  border: $divider;
+  border-radius: $radius;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &.is-uploading img {
+    opacity: 0.5;
+  }
+}
+
+.pending-remove {
+  position: absolute;
+  top: 0.125rem;
+  inset-inline-end: 0.125rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  cursor: pointer;
+
+  nb-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: nb-theme(color-danger-default);
+  }
+
+  // While the box posts its images.
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid nb-theme(color-primary-default);
+    outline-offset: 1px;
+  }
+}
+
+// An image open full size over the page, on a dark backdrop, with its close button and a link to the file.
+.image-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 1rem 1.5rem;
+  background-color: rgba(0, 0, 0, 0.85);
+  cursor: zoom-out;
+
+  img {
+    max-width: 100%;
+    max-height: calc(100% - 2.5rem);
+    object-fit: contain;
+    border-radius: $radius;
+    cursor: default;
+  }
+}
+
+.image-viewer-close {
+  position: absolute;
+  top: 0.75rem;
+  inset-inline-end: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+
+  nb-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+  }
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.24);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+
+.image-viewer-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: $control-font-size;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  &:hover {
+    color: #fff;
+    text-decoration: underline;
+  }
+}

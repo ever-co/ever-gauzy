@@ -1,12 +1,12 @@
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import * as multer from 'multer';
 import * as fs from 'node:fs';
-import { basename, join, resolve } from 'node:path';
-import * as moment from 'moment';
+import { basename, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { environment, getConfig } from '@gauzy/config';
 import { getApiPublicPath } from '../../util/path-util';
 import { Provider } from './provider';
+import { defaultStoredFileName } from '../helpers/stored-file-name';
 
 /**
  * Local file storage provider
@@ -71,11 +71,23 @@ export class LocalProvider extends Provider<LocalProvider> {
 	 * Gets the full path of the file storage by joining the root path with the provided file path.
 	 *
 	 * @param filePath - The file path for which to get the full path.
-	 * @returns The full path of the file storage or null if the file path is falsy.
+	 * @returns The full path of the file storage or null if the file path is falsy or resolves outside the root path.
 	 */
 	public path(filePath: string): string | null {
 		// If the file path is truthy, join it with the root path; otherwise, return null
-		return filePath ? join(this.config.rootPath, filePath) : null;
+		const fullPath = filePath ? join(this.config.rootPath, filePath) : null;
+		return fullPath && this.isInsideRoot(fullPath) ? fullPath : null;
+	}
+
+	/**
+	 * Checks that a path is the root path or lies under it once resolved, so ".." segments in a key cannot reach other files.
+	 *
+	 * @param fullPath - The path to check.
+	 * @returns True when the path stays inside the root path.
+	 */
+	private isInsideRoot(fullPath: string): boolean {
+		const relativePath = relative(resolve(this.config.rootPath), resolve(fullPath));
+		return !isAbsolute(relativePath) && relativePath !== '..' && !relativePath.startsWith(`..${sep}`);
 	}
 
 	/**
@@ -111,7 +123,7 @@ export class LocalProvider extends Provider<LocalProvider> {
 						? typeof filename === 'string'
 							? filename
 							: filename(file, extension)
-						: `${prefix}-${moment().unix()}-${parseInt('' + Math.random() * 1000, 10)}.${extension}`;
+						: defaultStoredFileName(prefix, extension);
 
 					callback(null, fileName);
 				}
@@ -130,7 +142,12 @@ export class LocalProvider extends Provider<LocalProvider> {
 	 */
 	async getFile(file: string): Promise<Buffer | any> {
 		try {
-			return await fs.promises.readFile(this.path(file));
+			const filePath = this.path(file);
+			if (file && !filePath) {
+				this.logger.warn(`Refusing to read file "${file}": it resolves outside the storage root`);
+				return undefined;
+			}
+			return await fs.promises.readFile(filePath);
 		} catch (error) {
 			this.logger.error(`Error while reading file "${file}"`, error?.stack ?? String(error));
 		}
@@ -146,6 +163,9 @@ export class LocalProvider extends Provider<LocalProvider> {
 	async putFile(fileContent: any, path: string = ''): Promise<UploadedFile> {
 		try {
 			const fullPath = join(this.config.rootPath, path);
+			if (!this.isInsideRoot(fullPath)) {
+				throw new Error(`The path "${path}" resolves outside the storage root`);
+			}
 			await fs.promises.writeFile(fullPath, fileContent);
 
 			const stats = await fs.promises.stat(fullPath);
@@ -176,6 +196,10 @@ export class LocalProvider extends Provider<LocalProvider> {
 	async deleteFile(file: string): Promise<void> {
 		try {
 			const filePath = this.path(file);
+			if (file && !filePath) {
+				this.logger.warn(`Refusing to delete file "${file}": it resolves outside the storage root`);
+				return;
+			}
 
 			// Check if the file exists before attempting to delete
 			if (fs.existsSync(filePath)) {

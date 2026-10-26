@@ -12,11 +12,12 @@ import {
 	NbSelectModule
 } from '@nebular/theme';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { EmailTemplateService } from '@gauzy/ui-core/core';
 import { LanguageSelectorModule, TableComponentsModule, UserFormsModule } from '@gauzy/ui-core/shared';
 import { EmailTemplatesRoutingModule } from './email-templates-routing.module';
 import { EmailTemplatesComponent } from './email-templates.component';
+import { SandboxedSrcdocDirective } from './sandboxed-srcdoc.directive';
 
 @NgModule({
 	imports: [
@@ -33,12 +34,12 @@ import { EmailTemplatesComponent } from './email-templates.component';
 		NbIconModule,
 		NbDialogModule.forChild(),
 		TableComponentsModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbSpinnerModule,
 		AceEditorModule,
 		LanguageSelectorModule
 	],
 	providers: [EmailTemplateService],
-	declarations: [EmailTemplatesComponent]
+	declarations: [EmailTemplatesComponent, SandboxedSrcdocDirective]
 })
 export class EmailTemplatesModule {}

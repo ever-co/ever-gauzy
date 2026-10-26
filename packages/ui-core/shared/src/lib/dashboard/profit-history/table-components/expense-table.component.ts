@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { IOrganization } from '@gauzy/contracts';
@@ -12,6 +12,7 @@ import { Store } from '@gauzy/ui-core/core';
 			{{ rowData.expense ? '- ' + rowData.expense + ' ' + organization?.currency : '' }}
 		</span>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ExpenseTableComponent implements OnInit {

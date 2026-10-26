@@ -1,6 +1,9 @@
 import {
+	BadRequestException,
 	Controller,
+	InternalServerErrorException,
 	Logger,
+	PayloadTooLargeException,
 	UseGuards,
 	HttpStatus,
 	Post,
@@ -13,8 +16,8 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { isUUID } from 'class-validator';
 import * as path from 'path';
-import * as fs from 'fs';
-import * as Jimp from 'jimp';
+import { createImageThumbnail, thumbnailFileName } from './../../core/file-storage/helpers/image-thumbnail';
+import { FileContentTooLargeError, fileContentToBuffer } from './../../core/file-storage/helpers/stored-file-content';
 import { ID, IScreenshot, PermissionsEnum, UploadedFile } from '@gauzy/contracts';
 import { EventBus } from '../../event-bus/event-bus';
 import { ScreenshotEvent } from '../../event-bus/events/screenshot.event';
@@ -27,7 +30,6 @@ import {
 	imageUploadFileFilter,
 	UploadedFileStorage
 } from '../../core/file-storage';
-import { tempFile } from '../../core/utils';
 import { LazyFileInterceptor } from './../../core/interceptors';
 import { Permissions } from './../../shared/decorators';
 import { PermissionGuard, TenantPermissionGuard } from './../../shared/guards';
@@ -35,6 +37,7 @@ import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { DeleteScreenshotDTO } from './dto/delete-screenshot.dto';
 import { Screenshot } from './screenshot.entity';
 import { ScreenshotService } from './screenshot.service';
+import { TimeSlotService } from '../time-slot/time-slot.service';
 
 @ApiTags('Screenshot')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -44,7 +47,11 @@ export class ScreenshotController {
 	private readonly logger = new Logger(ScreenshotController.name);
 	private logging: boolean = true;
 
-	constructor(private readonly _screenshotService: ScreenshotService, private readonly _eventBus: EventBus) {}
+	constructor(
+		private readonly _screenshotService: ScreenshotService,
+		private readonly _eventBus: EventBus,
+		private readonly _timeSlotService: TimeSlotService
+	) {}
 
 	/**
 	 * Capture a start/stop screenshot
@@ -98,8 +105,43 @@ export class ScreenshotController {
 		// Initialize file storage provider and process thumbnail
 		const provider = new FileStorage().getProvider();
 
-		// Retrieve file content from the file storage provider
-		const fileContent = await provider.getFile(file.key);
+		// Retrieve file content from the file storage provider (the S3-family providers return a stream)
+		let fileContent: Buffer | undefined;
+		try {
+			fileContent = await fileContentToBuffer(await provider.getFile(file.key));
+		} catch (error) {
+			// Too large to read back (the route sets no multer size limit, so it is already stored): delete it, or it
+			// stays served from `/public/` with no record to delete it through, and answer 413.
+			if (error instanceof FileContentTooLargeError) {
+				try {
+					await provider.deleteFile(file.key);
+				} catch {
+					this.logger.error('Error while deleting an oversized screenshot from file storage provider');
+				}
+				throw new PayloadTooLargeException('The screenshot file is too large');
+			}
+			throw error;
+		}
+
+		// An empty upload (a display the desktop timer could not capture) has no image to record. Refuse it here,
+		// OUTSIDE the try/catch below: in there the thumbnail step failed on it, the error was swallowed and the
+		// client got a 201 with no screenshot while the 0-byte file stayed on disk.
+		// A provider that could not read the object back returns nothing: that is a server-side failure, not a
+		// success without a record (the file is kept — it may be readable on the client's retry).
+		if (!fileContent) {
+			this.logger.error(
+				`Could not read the uploaded screenshot '${file.key}' back from the file storage provider`
+			);
+			throw new InternalServerErrorException('The uploaded screenshot could not be read back from storage');
+		}
+		if (fileContent.length === 0) {
+			try {
+				await provider.deleteFile(file.key);
+			} catch {
+				this.logger.error('Error while deleting an empty screenshot from file storage provider');
+			}
+			throw new BadRequestException('The screenshot file is empty');
+		}
 
 		// Content-based validation: the multer fileFilter only inspects the client-controlled MIME type
 		// and filename, which can be spoofed. Re-check the actual stored bytes and reject markup that
@@ -118,35 +160,15 @@ export class ScreenshotController {
 		}
 
 		try {
-			// Create temporary files for input and output of thumbnail processing
-			const inputFile = await tempFile('screenshot-thumb');
-			const outputFile = await tempFile('screenshot-thumb');
-
-			// Write the file content to the input temporary file
-			await fs.promises.writeFile(inputFile, fileContent);
-
-			// Resize the image using Jimp library
-			const image = await Jimp.read(inputFile);
-
-			// we are using Jimp.AUTO for height instead of hardcode (e.g. 150px)
-			image.resize(250, Jimp.AUTO);
-
-			// Write the resized image to the output temporary file
-			await image.writeAsync(outputFile);
-
-			// Read the resized image data from the output temporary file
-			const data = await fs.promises.readFile(outputFile);
-
-			try {
-				// Remove the temporary input and output files
-				await fs.promises.unlink(inputFile);
-				await fs.promises.unlink(outputFile);
-			} catch (error) {
-				this.logger.error('Error while unlinking temp files');
-			}
+			// The thumbnail: 250 px wide, the height following the aspect ratio, in the screenshot's own format,
+			// oriented as the image displays — sharp (libvips) on its own thread pool, Jimp only for a format libvips
+			// does not decode (BMP). Jimp did every one in JavaScript on the event loop: a full-resolution screenshot
+			// per upload, from every tracker every few minutes, and every other request of the API waited for it.
+			const { data, extension } = await createImageThumbnail(fileContent);
 
 			// Define thumbnail file name and directory
-			const thumbName = `thumb-${file.filename}`;
+			// Named for what the bytes are, not for the client-supplied extension of the upload
+			const thumbName = thumbnailFileName(file.filename, extension);
 			const thumbDir = path.dirname(file.key);
 
 			// Replace double backslashes with single forward slashes
@@ -164,7 +186,7 @@ export class ScreenshotController {
 				file: file.key,
 				thumb: thumb.key,
 				storageProvider: provider.name.toUpperCase(),
-				timeSlotId: isUUID(input.timeSlotId) ? input.timeSlotId : null,
+				timeSlotId: await this.ownTimeSlotId(input.timeSlotId),
 				recordedAt: input.recordedAt ? input.recordedAt : new Date()
 			});
 
@@ -180,7 +202,7 @@ export class ScreenshotController {
 			// Find screenshot by ID
 			return await this._screenshotService.findOneByIdString(screenshot.id);
 		} catch (error) {
-			this.logger.error(`Error while creating screenshot`);
+			this.logger.error(`Error while creating screenshot: ${error?.message ?? error}`, error?.stack);
 		}
 	}
 
@@ -215,5 +237,28 @@ export class ScreenshotController {
 	@UseValidationPipe()
 	async delete(@Param('id', UUIDValidationPipe) id: ID, @Query() options: DeleteScreenshotDTO): Promise<IScreenshot> {
 		return await this._screenshotService.deleteScreenshot(id, options);
+	}
+
+	/**
+	 * The time slot an uploaded screenshot is filed under, when the caller may record time in it.
+	 *
+	 * The body's `timeSlotId` was stored as sent, so an employee could file their own image under a colleague's
+	 * slot, where it shows in that colleague's timesheet and activity as their screenshot. The slot is read through
+	 * the time-slot service, which limits a caller without CHANGE_SELECTED_EMPLOYEE to their own slots; any other id
+	 * — like one that is not a UUID — leaves the screenshot without a slot.
+	 *
+	 * @param timeSlotId - The `timeSlotId` of the request body.
+	 * @returns The slot id, or null.
+	 */
+	private async ownTimeSlotId(timeSlotId: unknown): Promise<ID | null> {
+		if (!isUUID(timeSlotId)) {
+			return null;
+		}
+		try {
+			const slot = await this._timeSlotService.findOneByIdString(timeSlotId as ID);
+			return slot?.id ?? null;
+		} catch {
+			return null;
+		}
 	}
 }

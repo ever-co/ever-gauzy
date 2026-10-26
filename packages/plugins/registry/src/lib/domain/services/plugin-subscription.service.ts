@@ -1,13 +1,14 @@
-import { ID, PluginScope, PluginSubscriptionStatus } from '@gauzy/contracts';
-import { TenantAwareCrudService } from '@gauzy/core';
+import { ID, PluginScope, PluginSubscriptionStatus, IPagination } from '@gauzy/contracts';
+import { parseFindOptionsRelations } from '@gauzy/core';
 import { Injectable, Logger } from '@nestjs/common';
 import { In } from 'typeorm';
 import { IPluginSubscription } from '../../shared';
 import { PluginSubscription } from '../entities';
 import { MikroOrmPluginSubscriptionRepository, TypeOrmPluginSubscriptionRepository } from '../repositories';
+import { RegistryTenantAwareCrudService } from './registry-crud.service';
 
 @Injectable()
-export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubscription> {
+export class PluginSubscriptionService extends RegistryTenantAwareCrudService<PluginSubscription> {
 	private readonly logger = new Logger(PluginSubscriptionService.name);
 
 	constructor(
@@ -15,6 +16,21 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		public readonly mikroOrmPluginSubscriptionRepository: MikroOrmPluginSubscriptionRepository
 	) {
 		super(typeOrmPluginSubscriptionRepository, mikroOrmPluginSubscriptionRepository);
+	}
+
+	/**
+	 * Every subscription to a plugin, in every tenant, newest first, with its plan: the publisher's list, past the
+	 * tenant scope of every other read here. Only for the plugin's publisher: the caller must have checked that first.
+	 *
+	 * @param pluginId - The plugin.
+	 */
+	public async findAllOfPluginInAnyTenant(pluginId: ID): Promise<IPagination<PluginSubscription>> {
+		const [items, total] = await this.typeOrmPluginSubscriptionRepository.findAndCount({
+			where: { pluginId },
+			relations: { plan: true },
+			order: { createdAt: 'DESC' }
+		});
+		return { items, total };
 	}
 
 	/**
@@ -139,6 +155,41 @@ export class PluginSubscriptionService extends TenantAwareCrudService<PluginSubs
 		}
 
 		return revokedSubscriptions;
+	}
+
+	/**
+	 * A subscription by id in whichever tenant holds it, past the tenant scope of every other read here. Only for the
+	 * publisher of its plugin, who sells to every tenant: the caller must have checked that first.
+	 *
+	 * @param id - The subscription.
+	 * @param relations - The relations to load with it.
+	 * @returns The subscription, or `null` when there is none.
+	 */
+	public findOneInAnyTenant(id: ID, relations: string[] = []): Promise<PluginSubscription | null> {
+		return this.typeOrmPluginSubscriptionRepository.findOne({
+			where: { id },
+			relations: parseFindOptionsRelations<PluginSubscription>(relations)
+		});
+	}
+
+	/**
+	 * Writes to a subscription in whichever tenant holds it. Only for the publisher of its plugin, as
+	 * {@link findOneInAnyTenant}; its tenant, organization and subscriber stay as stored.
+	 *
+	 * @param id - The subscription.
+	 * @param changes - The fields to write.
+	 */
+	public async updateInAnyTenant(id: ID, changes: Partial<IPluginSubscription>): Promise<void> {
+		await this.typeOrmPluginSubscriptionRepository.update({ id }, changes as Partial<PluginSubscription>);
+	}
+
+	/**
+	 * Saves a subscription read with {@link findOneInAnyTenant}, in its own tenant rather than the caller's.
+	 *
+	 * @param subscription - The subscription, as read and changed.
+	 */
+	public saveInAnyTenant(subscription: PluginSubscription): Promise<PluginSubscription> {
+		return this.saveWithoutEnrichment(subscription);
 	}
 
 	public upsert(entity: IPluginSubscription): Promise<IPluginSubscription> {

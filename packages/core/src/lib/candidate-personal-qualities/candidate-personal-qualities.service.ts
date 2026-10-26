@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ICandidatePersonalQualities, ICandidatePersonalQualitiesCreateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
+import { findTenantInterviewCriteria } from './../candidate-interview/interview-criteria.helper';
 import { TypeOrmCandidatePersonalQualitiesRepository } from './repository/type-orm-candidate-personal-qualities.repository';
 import { MikroOrmCandidatePersonalQualitiesRepository } from './repository/mikro-orm-candidate-personal-qualities.repository';
 import { CandidatePersonalQualities } from './candidate-personal-qualities.entity';
@@ -29,11 +30,12 @@ export class CandidatePersonalQualitiesService extends TenantAwareCrudService<Ca
 	 * @returns
 	 */
 	async getPersonalQualitiesByInterviewId(interviewId: string): Promise<ICandidatePersonalQualities[]> {
-		return await this.typeOrmRepository
-			.createQueryBuilder('candidate_personal_quality')
-			.where('candidate_personal_quality.interviewId = :interviewId', {
-				interviewId
-			})
-			.getMany();
+		const items = await findTenantInterviewCriteria(
+			this.ormType,
+			this.typeOrmRepository,
+			this.mikroOrmRepository,
+			interviewId
+		);
+		return items.map((item) => this.serialize(item));
 	}
 }

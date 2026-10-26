@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,6 +8,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'ga-add-icon',
     templateUrl: 'add-icon.component.html',
     styleUrls: ['add-icon.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AddIconComponent extends TranslationBaseComponent implements OnDestroy {

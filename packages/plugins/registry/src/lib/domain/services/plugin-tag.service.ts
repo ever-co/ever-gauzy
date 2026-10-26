@@ -1,6 +1,6 @@
 import { ID, IPagination } from '@gauzy/contracts';
-import { MultiORMEnum, RequestContext, TenantAwareCrudService } from '@gauzy/core';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { MultiORMEnum, RequestContext } from '@gauzy/core';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { FindOptionsWhere, In } from 'typeorm';
 import {
 	IPluginTag,
@@ -17,6 +17,7 @@ import {
 import { PluginTag } from '../entities/plugin-tag.entity';
 import { MikroOrmPluginTagRepository } from '../repositories/mikro-orm-plugin-tag.repository';
 import { TypeOrmPluginTagRepository } from '../repositories/type-orm-plugin-tag.repository';
+import { RegistryTenantAwareCrudService } from './registry-crud.service';
 
 /**
  * PluginTag Service
@@ -34,7 +35,7 @@ import { TypeOrmPluginTagRepository } from '../repositories/type-orm-plugin-tag.
  * - Data integrity validation
  */
 @Injectable()
-export class PluginTagService extends TenantAwareCrudService<PluginTag> {
+export class PluginTagService extends RegistryTenantAwareCrudService<PluginTag> {
 	constructor(
 		public readonly typeOrmPluginTagRepository: TypeOrmPluginTagRepository,
 		public readonly mikroOrmPluginTagRepository: MikroOrmPluginTagRepository
@@ -84,8 +85,9 @@ export class PluginTagService extends TenantAwareCrudService<PluginTag> {
 	async bulkCreate(input: IPluginTagBulkCreateInput): Promise<IPluginTagBulkCreateResponse> {
 		const { pluginId, tagIds, tenantId, organizationId } = input;
 
-		// Get current context
-		const currentTenantId = tenantId || RequestContext.currentTenantId();
+		// Get current context. The tenant is always the caller's: a stated one used to win over it, which filed
+		// the relationships into whichever tenant the payload named.
+		const currentTenantId = this.callerTenantId(tenantId);
 		const currentOrgId = organizationId || RequestContext.currentOrganizationId();
 
 		// Check existing relationships
@@ -127,7 +129,17 @@ export class PluginTagService extends TenantAwareCrudService<PluginTag> {
 	 * @returns Promise<number> - Number of deleted relationships
 	 */
 	async bulkDelete(input: IPluginTagBulkDeleteInput): Promise<number> {
-		const whereConditions: FindOptionsWhere<PluginTag> = {};
+		// The delete goes straight to the repository, so nothing applies the caller's tenant unless this does. It
+		// used to apply only a tenant the caller stated: `PUT /plugins/:pluginId/tags` without one removed every
+		// tenant's tags of the plugin. With the tenant now always applied, a payload that names nothing else would
+		// remove every relationship of the tenant, so it is refused instead.
+		const tenantId = this.callerTenantId(input.tenantId);
+
+		if (!input.pluginId && !input.tagId && !(input.ids && input.ids.length > 0)) {
+			throw new BadRequestException('A bulk delete must name a plugin, a tag or the relationships to delete.');
+		}
+
+		const whereConditions: FindOptionsWhere<PluginTag> = { tenantId };
 
 		// Build where conditions based on input
 		if (input.pluginId) {
@@ -147,10 +159,7 @@ export class PluginTagService extends TenantAwareCrudService<PluginTag> {
 			whereConditions.pluginId = input.pluginId;
 		}
 
-		// Add tenant/organization context
-		if (input.tenantId) {
-			whereConditions.tenantId = input.tenantId;
-		}
+		// Narrow to an organization when one is stated
 		if (input.organizationId) {
 			whereConditions.organizationId = input.organizationId;
 		}
@@ -520,7 +529,7 @@ export class PluginTagService extends TenantAwareCrudService<PluginTag> {
 	 *
 	 * @param pluginId - Plugin ID
 	 * @param tagIds - New tag IDs
-	 * @param tenantId - Optional tenant ID
+	 * @param tenantId - Optional tenant ID; the caller's own is the only one accepted (see `callerTenantId`)
 	 * @param organizationId - Optional organization ID
 	 * @returns Promise<IPluginTag[]>
 	 */
@@ -626,5 +635,29 @@ export class PluginTagService extends TenantAwareCrudService<PluginTag> {
 		} catch (error) {
 			return false;
 		}
+	}
+
+	/**
+	 * The tenant a raw write runs in: always the caller's.
+	 *
+	 * A tenant the payload states is accepted only when it is the caller's own, so a caller cannot create or
+	 * delete another tenant's rows by naming it. A request that carries no tenant is refused rather than given
+	 * every tenant.
+	 *
+	 * @param stated - The tenant the payload names, if any.
+	 * @returns The caller's tenant.
+	 * @throws ForbiddenException when the request has no tenant, or the payload names another one.
+	 */
+	private callerTenantId(stated?: ID): ID {
+		const tenantId = RequestContext.currentTenantId();
+
+		if (!tenantId) {
+			throw new ForbiddenException('A tenant is required to change plugin tags.');
+		}
+		if (stated && stated !== tenantId) {
+			throw new ForbiddenException('Plugin tags of another tenant cannot be changed.');
+		}
+
+		return tenantId;
 	}
 }

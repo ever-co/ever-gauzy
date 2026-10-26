@@ -1,0 +1,73 @@
+import '../core/entities/internal';
+
+import * as moment from 'moment';
+import { ExpenseService } from './expense.service';
+
+/**
+ * `findAllExpenses(filter, filterDate)` limits expenses to the month of `filterDate`. The bounds used to
+ * go through a 'YYYY-MM-DD hh:mm:ss' string, whose 12-hour `hh` turned the month into
+ * "noon on the 1st to noon on the last day".
+ */
+describe('ExpenseService.findAllExpenses month range', () => {
+	it('covers the whole month, from midnight on the 1st to the end of the last day', async () => {
+		const findAll = jest.fn().mockResolvedValue({ items: [], total: 0 });
+
+		await ExpenseService.prototype.findAllExpenses.call({ findAll }, undefined, '2026-09-15');
+
+		const [start, end] = findAll.mock.calls[0][0].where.valueDate.value as Date[];
+		expect(start).toEqual(moment('2026-09-15').startOf('month').toDate());
+		expect(end).toEqual(moment('2026-09-15').endOf('month').toDate());
+		expect(start.getHours()).toBe(0);
+		expect(end.getHours()).toBe(23);
+	});
+
+	it('keeps the whole-month range alongside the filter the API passes', async () => {
+		const findAll = jest.fn().mockResolvedValue({ items: [], total: 0 });
+		const filter = { where: { organizationId: 'org-1' }, relations: ['category'] };
+
+		await ExpenseService.prototype.findAllExpenses.call({ findAll }, filter, '2026-09-15');
+
+		const { where, relations } = findAll.mock.calls[0][0];
+		const [start, end] = where.valueDate.value as Date[];
+		expect(start).toEqual(moment('2026-09-15').startOf('month').toDate());
+		expect(end).toEqual(moment('2026-09-15').endOf('month').toDate());
+		expect(where.organizationId).toBe('org-1');
+		expect(relations).toEqual(['category']);
+	});
+
+	it('adds the month range to every clause of an array (OR) filter, as the split-expense query passes', async () => {
+		const findAll = jest.fn().mockResolvedValue({ items: [], total: 0 });
+		const filter = {
+			where: [{ organizationId: 'org-1', splitExpense: true }, { employee: { id: 'employee-1' } }],
+			relations: ['category']
+		};
+
+		await ExpenseService.prototype.findAllExpenses.call({ findAll }, filter, '2026-09-15');
+
+		const { where, relations } = findAll.mock.calls[0][0];
+		expect(Array.isArray(where)).toBe(true);
+		expect(where).toHaveLength(2);
+		for (const clause of where) {
+			const [start, end] = clause.valueDate.value as Date[];
+			expect(start).toEqual(moment('2026-09-15').startOf('month').toDate());
+			expect(end).toEqual(moment('2026-09-15').endOf('month').toDate());
+			expect(clause).not.toHaveProperty('0');
+			expect(clause).not.toHaveProperty('1');
+		}
+		expect(where[0]).toMatchObject({ organizationId: 'org-1', splitExpense: true });
+		expect(where[1]).toMatchObject({ employee: { id: 'employee-1' } });
+		expect(relations).toEqual(['category']);
+	});
+
+	it('reads an empty array filter as no filter, so the month range stays in place', async () => {
+		const findAll = jest.fn().mockResolvedValue({ items: [], total: 0 });
+
+		await ExpenseService.prototype.findAllExpenses.call({ findAll }, { where: [] }, '2026-09-15');
+
+		const { where } = findAll.mock.calls[0][0];
+		expect(Array.isArray(where)).toBe(false);
+		const [start, end] = where.valueDate.value as Date[];
+		expect(start).toEqual(moment('2026-09-15').startOf('month').toDate());
+		expect(end).toEqual(moment('2026-09-15').endOf('month').toDate());
+	});
+});

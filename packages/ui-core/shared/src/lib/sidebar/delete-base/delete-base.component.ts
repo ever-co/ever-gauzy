@@ -1,4 +1,4 @@
-import { Component, OnDestroy, Input, ErrorHandler } from '@angular/core';
+import { Component, OnDestroy, Input, ErrorHandler, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { IHelpCenter } from '@gauzy/contracts';
@@ -9,6 +9,7 @@ import { HelpCenterService } from '@gauzy/ui-core/core';
     selector: 'ga-delete-base',
     templateUrl: 'delete-base.component.html',
     styleUrls: ['delete-base.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class DeleteBaseComponent extends TranslationBaseComponent implements OnDestroy {

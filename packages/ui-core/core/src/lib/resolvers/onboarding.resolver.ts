@@ -15,18 +15,19 @@ export const OnboardingResolver: ResolveFn<Observable<IUser | null>> = (): Obser
 	const _usersService = inject(UsersService);
 	const _errorHandlingService = inject(ErrorHandlingService);
 
-	// Fetch the user data
-	const user$ = _usersService.getMe();
+	// Fetch the user data, with the organizations they belong to
+	const user$ = _usersService.getMe(['organizations']);
 
 	// Fetch the user data from the service
 	return from(user$).pipe(
-		// Map the user object to the user data
 		map((user: IUser) => {
-			if (user.tenantId) {
+			// Only a user who already has an organization is done with onboarding. One who has a tenant
+			// but no organization yet (e.g. the super admin created with the default tenant on a fresh
+			// install) stays on the form, which then creates the organization in that tenant.
+			if (user.tenantId && user.organizations?.length) {
 				_router.navigate(['/onboarding/complete']);
-				return user; // User has a tenantId
 			}
-			return user; // Return the user object if no tenantId
+			return user;
 		}),
 		// Handle any errors
 		catchError((error) => {

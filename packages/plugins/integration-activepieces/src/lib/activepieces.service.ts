@@ -1,6 +1,7 @@
 import {
 	Injectable,
 	BadRequestException,
+	ForbiddenException,
 	Logger,
 	HttpException,
 	HttpStatus,
@@ -12,13 +13,16 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@gauzy/config';
 import { firstValueFrom, catchError, throwError } from 'rxjs';
 import { AxiosError } from 'axios';
+import { IsNull } from 'typeorm';
 import { IntegrationEnum } from '@gauzy/contracts';
-import { IntegrationService, IntegrationTenantService, RequestContext } from '@gauzy/core';
+import { IntegrationService, IntegrationSettingService, IntegrationTenantService, RequestContext } from '@gauzy/core';
 import {
 	IActivepiecesConnection,
 	IActivepiecesConnectionRequest,
 	IActivepiecesConnectionsListResponse,
 	IActivepiecesConnectionsListParams,
+	IActivepiecesConnectionModeStatus,
+	ActivepiecesConnectionMode,
 	ActivepiecesSettingName,
 	ActivepiecesConnectionType,
 	ActivepiecesConnectionScope,
@@ -26,6 +30,20 @@ import {
 	IActivepiecesErrorResponse
 } from '@gauzy/contracts';
 import { ACTIVEPIECES_CONNECTIONS_URL, ACTIVEPIECES_PIECE_NAME } from './activepieces.config';
+import { ActivepiecesCredentialsService, IActivepiecesCredential } from './activepieces-credentials.service';
+
+/**
+ * The query of a connection list. `projectId` is optional: in the modes that pin the tenant's own project, the server
+ * names it; with the tenant's own key, the client must.
+ */
+export type ActivepiecesConnectionsListInput = Omit<IActivepiecesConnectionsListParams, 'projectId'> & {
+	projectId?: string;
+};
+
+/** The Activepieces URL of one app connection. */
+function connectionUrl(connectionId: string): string {
+	return `${ACTIVEPIECES_CONNECTIONS_URL}/${encodeURIComponent(connectionId)}`;
+}
 
 @Injectable()
 export class ActivepiecesService {
@@ -35,7 +53,9 @@ export class ActivepiecesService {
 		private readonly httpService: HttpService,
 		private readonly configService: ConfigService,
 		private readonly integrationService: IntegrationService,
-		private readonly integrationTenantService: IntegrationTenantService
+		private readonly integrationTenantService: IntegrationTenantService,
+		private readonly integrationSettingService: IntegrationSettingService,
+		private readonly credentials: ActivepiecesCredentialsService
 	) {}
 
 	/**
@@ -86,51 +106,13 @@ export class ActivepiecesService {
 			];
 
 			// Look up an existing integration tenant for this tenant/org
-			let existingTenant: any = null;
-			try {
-				existingTenant = await this.integrationTenantService.findOneByOptions({
-					where: {
-						tenantId,
-						...(organizationId ? { organizationId } : {}),
-						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-					},
-					relations: ['settings']
-				});
-			} catch (error) {
-				if (!(error instanceof NotFoundException)) {
-					throw error;
-				}
-			}
+			const existingTenant = await this.findExistingIntegrationTenant(tenantId, organizationId);
 
 			let integrationTenantId: string;
 
 			if (existingTenant?.id) {
 				// Update existing tenant's settings by merging/replacing API_KEY and IS_ENABLED
-				const existingSettings: any[] = existingTenant.settings ?? [];
-				const settingsByName = new Map(settings.map((s) => [s.settingsName, s]));
-
-				// Update existing rows in-place (preserve their database id) and track which were updated
-				const updatedNames = new Set<string>();
-				const mergedSettings = existingSettings.map((existing: any) => {
-					const update = settingsByName.get(existing.settingsName);
-					if (update) {
-						updatedNames.add(existing.settingsName);
-						return { ...existing, settingsValue: update.settingsValue };
-					}
-					return existing;
-				});
-
-				// Append truly new settings that had no pre-existing row
-				for (const [name, setting] of settingsByName) {
-					if (!updatedNames.has(name)) {
-						mergedSettings.push(setting);
-					}
-				}
-
-				await this.integrationTenantService.save({
-					...existingTenant,
-					settings: mergedSettings
-				});
+				await this.saveMergedSettings(existingTenant, settings);
 
 				integrationTenantId = existingTenant.id;
 			} else {
@@ -183,12 +165,23 @@ export class ActivepiecesService {
 			// Create display name for the connection
 			const displayName = input.connectionName || `Ever Gauzy - ${tenantId}`;
 
+			// The credential of the row the connection is saved on, so creating, reading and deleting the connection use
+			// the same one. When that row holds no key, the key of any tenant row; otherwise the tenant's own project
+			// (project token, or the installation's key pinned to that project). Never the installation's key unconfined.
+			const scopedIntegrationTenant = await this.findExistingIntegrationTenant(tenantId, organizationId, true);
+			const credential = await this.credentials.resolve({
+				integrationTenantId: scopedIntegrationTenant?.id,
+				organizationId
+			});
+			// In the modes that pin the tenant's project, the server names it, and another one sent is refused
+			const projectId = this.credentials.projectFor(credential, input.projectId);
+
 			// Prepare the connection request for ActivePieces (upsert format with SECRET_TEXT)
 			const connectionRequest: IActivepiecesConnectionRequest = {
 				externalId,
 				displayName,
 				pieceName: ACTIVEPIECES_PIECE_NAME,
-				projectId: input.projectId,
+				projectId,
 				metadata: {
 					tenantId,
 					organizationId: organizationId || 'default',
@@ -202,36 +195,19 @@ export class ActivepiecesService {
 				}
 			};
 
-			// Get API key for Activepieces API calls
-			let existingIntegrationTenant: any = null;
-			try {
-				existingIntegrationTenant = await this.integrationTenantService.findOneByOptions({
-					where: {
-						tenantId,
-						integration: { provider: IntegrationEnum.ACTIVE_PIECES }
-					}
-				});
-			} catch (error) {
-				if (!(error instanceof NotFoundException)) {
-					throw error;
-				}
-			}
-
-			if (!existingIntegrationTenant) {
-				this.logger.warn(
-					`No integration tenant found for tenant ${tenantId}. ` +
-						'setupIntegration was likely not run; falling back to global GAUZY_ACTIVEPIECES_API_KEY env variable.'
+			if (!scopedIntegrationTenant) {
+				this.logger.log(
+					`No Activepieces integration row for tenant ${tenantId} in this scope yet: ` +
+						`the connection is created in mode ${credential.mode}.`
 				);
 			}
-
-			const apiKey = await this.getApiKey(existingIntegrationTenant?.id);
 
 			// Make the API call to create the connection
 			const response = await firstValueFrom(
 				this.httpService
 					.post<IActivepiecesConnection>(ACTIVEPIECES_CONNECTIONS_URL, connectionRequest, {
 						headers: {
-							Authorization: `Bearer ${apiKey}`,
+							Authorization: `Bearer ${credential.token}`,
 							'Content-Type': 'application/json'
 						}
 					})
@@ -269,7 +245,8 @@ export class ActivepiecesService {
 				response.data,
 				input.accessToken,
 				tenantId,
-				organizationId
+				organizationId,
+				scopedIntegrationTenant
 			);
 
 			this.logger.log(
@@ -295,7 +272,7 @@ export class ActivepiecesService {
 	 * List ActivePieces connections for a project
 	 */
 	async listConnections(
-		params: IActivepiecesConnectionsListParams,
+		params: ActivepiecesConnectionsListInput,
 		integrationId?: string
 	): Promise<IActivepiecesConnectionsListResponse> {
 		try {
@@ -303,11 +280,13 @@ export class ActivepiecesService {
 			if (!integrationId) {
 				throw new BadRequestException('Integration ID is required to list connections');
 			}
-			const apiKey = await this.getApiKey(integrationId);
+			const credential = await this.credentials.resolve({ integrationTenantId: integrationId });
+			// In the modes that pin the tenant's project, the server names it, and another one sent is refused
+			const projectId = this.credentials.projectFor(credential, params.projectId);
 
 			// Build query parameters
 			const queryParams = new URLSearchParams();
-			queryParams.append('projectId', params.projectId);
+			queryParams.append('projectId', projectId);
 
 			if (params.cursor) queryParams.append('cursor', params.cursor);
 			if (params.scope) queryParams.append('scope', params.scope);
@@ -322,7 +301,7 @@ export class ActivepiecesService {
 						`${ACTIVEPIECES_CONNECTIONS_URL}?${queryParams.toString()}`,
 						{
 							headers: {
-								Authorization: `Bearer ${apiKey}`,
+								Authorization: `Bearer ${credential.token}`,
 								'Content-Type': 'application/json'
 							}
 						}
@@ -338,6 +317,15 @@ export class ActivepiecesService {
 					)
 			);
 
+			// Belt and braces: in the modes that pin the tenant's project, nothing of another project is returned
+			if (credential.enforceProject) {
+				return {
+					...response.data,
+					data: (response.data?.data ?? []).filter((connection) =>
+						this.credentials.isInProject(credential, connection?.projectIds)
+					)
+				};
+			}
 			return response.data;
 		} catch (error: any) {
 			this.logger.error('Failed to list ActivePieces connections:', error);
@@ -414,31 +402,14 @@ export class ActivepiecesService {
 				return null;
 			}
 
-			const apiKey = await this.getApiKey(integrationTenantId);
+			const credential = await this.credentials.resolve({ integrationTenantId });
+			const connection = await this.fetchConnection(connectionIdSetting.settingsValue, credential);
 
-			const response = await firstValueFrom(
-				this.httpService
-					.get<IActivepiecesConnection>(
-						`${ACTIVEPIECES_CONNECTIONS_URL}/${connectionIdSetting.settingsValue}`,
-						{
-							headers: {
-								Authorization: `Bearer ${apiKey}`,
-								'Content-Type': 'application/json'
-							}
-						}
-					)
-					.pipe(
-						catchError((error: AxiosError) => {
-							this.logger.error('Error fetching ActivePieces connection:', error.response?.data);
-							throw new HttpException(
-								`Failed to fetch ActivePieces connection: ${error.message}`,
-								error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
-							);
-						})
-					)
-			);
+			// Under the installation's key, Activepieces answers a connection by id from whichever project of the
+			// platform it is in: it is returned only when it is in the tenant's own project
+			this.credentials.assertInProject(credential, connection?.projectIds, 'Activepieces connection');
 
-			return response.data;
+			return connection;
 		} catch (error: any) {
 			this.logger.error('Failed to get ActivePieces connection:', error);
 			throw new HttpException(
@@ -486,13 +457,20 @@ export class ActivepiecesService {
 				return false;
 			}
 
-			const apiKey = await this.getApiKey(integrationTenantId);
+			const credential = await this.credentials.resolve({ integrationTenantId });
+
+			// Under the installation's key, Activepieces deletes a connection by id in whichever project of the platform
+			// it is in: it is first checked to be in the tenant's own project
+			if (credential.enforceProject) {
+				const connection = await this.fetchConnection(connectionIdSetting.settingsValue, credential);
+				this.credentials.assertInProject(credential, connection?.projectIds, 'Activepieces connection');
+			}
 
 			await firstValueFrom(
 				this.httpService
-					.delete(`${ACTIVEPIECES_CONNECTIONS_URL}/${connectionIdSetting.settingsValue}`, {
+					.delete(connectionUrl(connectionIdSetting.settingsValue), {
 						headers: {
-							Authorization: `Bearer ${apiKey}`,
+							Authorization: `Bearer ${credential.token}`,
 							'Content-Type': 'application/json'
 						}
 					})
@@ -520,48 +498,33 @@ export class ActivepiecesService {
 
 	/**
 	 * Get API key for Activepieces API calls.
-	 * Looks for a tenant-specific API key in the database first, then falls back to global config.
+	 *
+	 * The tenant's own key, or its project token. It used to fall back to the installation's key
+	 * (`GAUZY_ACTIVEPIECES_API_KEY`), which reaches every project of the operator's Activepieces platform, so a tenant
+	 * without a key of its own acted on any other tenant's projects. The installation's key is never handed out for a
+	 * tenant: a caller that may run under it uses {@link resolveCredential}, and names the credential's project.
+	 *
 	 * @param integrationTenantId - The integration tenant ID (not the base integration ID)
+	 * @throws ForbiddenException when the tenant's requests run under the installation's key.
 	 */
 	async getApiKey(integrationTenantId?: string): Promise<string> {
-		try {
-			// 1. Try tenant-specific API key from database
-			if (integrationTenantId) {
-				const tenantId = RequestContext.currentTenantId();
-				if (!tenantId) {
-					throw new BadRequestException('Tenant ID not found in request context');
-				}
-
-				let integrationTenant: any = null;
-				try {
-					integrationTenant = await this.integrationTenantService.findOneByOptions({
-						where: { id: integrationTenantId, tenantId },
-						relations: ['settings']
-					});
-				} catch (error) {
-					if (!(error instanceof NotFoundException)) {
-						throw error;
-					}
-				}
-
-				const apiKeySetting = integrationTenant?.settings?.find(
-					(s: any) => s.settingsName === ActivepiecesSettingName.API_KEY
-				);
-
-				if (apiKeySetting?.settingsValue) {
-					return apiKeySetting.settingsValue;
-				}
-			}
-
-			// 2. Fallback to global config
-			const globalApiKey = this.configService.get('activepieces')?.apiKey;
-			if (globalApiKey) {
-				return globalApiKey;
-			}
-
-			throw new InternalServerErrorException(
-				'Activepieces API key is not configured. Set GAUZY_ACTIVEPIECES_API_KEY or run setupIntegration first.'
+		const credential = await this.resolveCredential(integrationTenantId);
+		if (credential.mode === ActivepiecesConnectionMode.PLATFORM_PROJECT) {
+			throw new ForbiddenException(
+				"This tenant reaches Activepieces through the installation's key, confined to its own project: the key itself is never handed out."
 			);
+		}
+		return credential.token;
+	}
+
+	/**
+	 * The credential of the current tenant's request, with the project it is confined to, if any.
+	 *
+	 * @param integrationTenantId - The integration tenant the request is about, if any.
+	 */
+	async resolveCredential(integrationTenantId?: string): Promise<IActivepiecesCredential> {
+		try {
+			return await this.credentials.resolve({ integrationTenantId });
 		} catch (error: any) {
 			if (error instanceof HttpException) {
 				throw error;
@@ -571,6 +534,36 @@ export class ActivepiecesService {
 				HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
+	}
+
+	/**
+	 * How the current tenant reaches Activepieces: the mode it chose, the mode in use, the modes available, its
+	 * project. Never a secret.
+	 */
+	async getConnectionModeStatus(organizationId?: string): Promise<IActivepiecesConnectionModeStatus> {
+		return this.credentials.describe(organizationId);
+	}
+
+	/**
+	 * Saves how the current tenant reaches Activepieces.
+	 */
+	async setConnectionMode(
+		mode: ActivepiecesConnectionMode,
+		organizationId?: string
+	): Promise<IActivepiecesConnectionModeStatus> {
+		return this.credentials.setMode(mode, organizationId);
+	}
+
+	/**
+	 * Connects the current tenant's own Activepieces project now (project-token and platform-project modes), instead of
+	 * at its first call, and answers its id. With the tenant's own key there is no project to connect: the tenant
+	 * names its projects.
+	 */
+	async connectTenantProject(
+		organizationId?: string
+	): Promise<{ mode: IActivepiecesCredential['mode']; projectId: string | null }> {
+		const credential = await this.credentials.resolve({ organizationId });
+		return { mode: credential.mode, projectId: credential.projectId };
 	}
 
 	/**
@@ -692,13 +685,14 @@ export class ActivepiecesService {
 	}
 
 	/**
-	 * Save connection settings to the database
+	 * Save connection settings to the database, on the integration tenant of the connection's scope when one exists
 	 */
 	private async saveConnectionSettings(
 		connection: IActivepiecesConnection,
 		accessToken: string,
 		tenantId: string,
-		organizationId?: string
+		organizationId?: string,
+		existingTenant?: any
 	): Promise<any> {
 		try {
 			// Find or create the integration
@@ -748,14 +742,21 @@ export class ActivepiecesService {
 				}
 			];
 
-			// Create or update integration tenant
-			const integrationTenant = await this.integrationTenantService.create({
-				name: IntegrationEnum.ACTIVE_PIECES,
-				integration,
-				tenantId,
-				organizationId,
-				settings
-			});
+			// Reuse the integration tenant created by setupIntegration for the same scope so the connection keeps its API key
+			let integrationTenant: any;
+
+			if (existingTenant?.id) {
+				await this.saveMergedSettings(existingTenant, settings);
+				integrationTenant = existingTenant;
+			} else {
+				integrationTenant = await this.integrationTenantService.create({
+					name: IntegrationEnum.ACTIVE_PIECES,
+					integration,
+					tenantId,
+					organizationId,
+					settings
+				});
+			}
 
 			this.logger.log(
 				`Successfully saved ActivePieces connection settings for tenant ${tenantId}. ` +
@@ -769,5 +770,90 @@ export class ActivepiecesService {
 			this.logger.error('Failed to save ActivePieces connection settings:', error);
 			throw new BadRequestException(`Failed to save connection settings: ${error.message}`);
 		}
+	}
+
+	/**
+	 * Find the ActivePieces integration tenant of the tenant, scoped to the organization when one is given.
+	 * With `exactScope`, a call without an organization only matches the tenant-level row (organizationId IS NULL),
+	 * so a tenant-level connection never lands on an organization's row.
+	 * Connection calls used to add a row without an API key each time, so among matching rows the one holding a key wins.
+	 */
+	private async findExistingIntegrationTenant(
+		tenantId: string,
+		organizationId?: string,
+		exactScope = false
+	): Promise<any> {
+		let organizationFilter: Record<string, unknown> = {};
+		if (organizationId) {
+			organizationFilter = { organizationId };
+		} else if (exactScope) {
+			organizationFilter = { organizationId: IsNull() };
+		}
+
+		const integrationTenants = await this.integrationTenantService.find({
+			where: {
+				tenantId,
+				...organizationFilter,
+				integration: { provider: IntegrationEnum.ACTIVE_PIECES }
+			},
+			relations: ['settings']
+		});
+
+		return (
+			integrationTenants.find((integrationTenant) => this.hasApiKey(integrationTenant)) ??
+			integrationTenants[0] ??
+			null
+		);
+	}
+
+	/**
+	 * Whether the integration tenant holds an Activepieces API key.
+	 */
+	private hasApiKey(integrationTenant: any): boolean {
+		return !!this.findApiKey(integrationTenant);
+	}
+
+	/**
+	 * The Activepieces API key held by the integration tenant, if any.
+	 */
+	private findApiKey(integrationTenant: any): string | undefined {
+		return integrationTenant?.settings?.find(
+			(setting: any) => setting.settingsName === ActivepiecesSettingName.API_KEY && setting.settingsValue
+		)?.settingsValue;
+	}
+
+	/**
+	 * Merge settings into an existing integration tenant by settingsName.
+	 * Matching rows are updated in place so they keep their database id, missing ones are added to the tenant.
+	 * Only the rows of the given settings are written, so a setting saved meanwhile by another call, such as a new
+	 * API key, is never written back with the value read here.
+	 */
+	private async saveMergedSettings(existingTenant: any, settings: any[]): Promise<void> {
+		await this.credentials.saveMergedSettings(existingTenant, settings);
+	}
+
+	/**
+	 * Reads one app connection by id, with the request's credential.
+	 */
+	private async fetchConnection(connectionId: string, credential: IActivepiecesCredential): Promise<IActivepiecesConnection> {
+		const response = await firstValueFrom(
+			this.httpService
+				.get<IActivepiecesConnection>(connectionUrl(connectionId), {
+					headers: {
+						Authorization: `Bearer ${credential.token}`,
+						'Content-Type': 'application/json'
+					}
+				})
+				.pipe(
+					catchError((error: AxiosError) => {
+						this.logger.error('Error fetching ActivePieces connection:', error.response?.data);
+						throw new HttpException(
+							`Failed to fetch ActivePieces connection: ${error.message}`,
+							error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR
+						);
+					})
+				)
+		);
+		return response.data;
 	}
 }

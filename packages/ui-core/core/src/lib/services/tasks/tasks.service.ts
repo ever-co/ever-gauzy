@@ -64,8 +64,16 @@ export class TasksService extends TranslationBaseComponent {
 			.pipe(catchError((error) => this.errorHandler(error)));
 	}
 
-	getById(id: string) {
-		return firstValueFrom(this._http.get<ITask>(`${this.API_URL}/${id}`));
+	/**
+	 * One task by id. `relations` names the relations to join (the full-width task page loads the ones
+	 * its View reads); none by default, as before.
+	 */
+	getById(id: string, relations: string[] = []) {
+		return firstValueFrom(
+			this._http.get<ITask>(`${this.API_URL}/${id}`, {
+				...(relations.length ? { params: toParams({ relations }) } : {})
+			})
+		);
 	}
 
 	createTask(task): Observable<ITask> {

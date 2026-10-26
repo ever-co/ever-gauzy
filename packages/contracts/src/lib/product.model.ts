@@ -266,6 +266,11 @@ export interface IMerchantCreateInput {
 
 export interface IWarehouseProduct extends IBasePerTenantEntityModel {
 	quantity: number;
+	/**
+	 * Quantity held by open reservations, aggregated over the variants of this product at this
+	 * location.
+	 */
+	reservedQuantity: number;
 	warehouse: IWarehouse;
 	warehouseId?: string;
 	product: IProductTranslatable;
@@ -275,6 +280,35 @@ export interface IWarehouseProduct extends IBasePerTenantEntityModel {
 
 export interface IWarehouseProductVariant extends IBasePerTenantEntityModel {
 	quantity: number;
+	/**
+	 * Quantity held by open reservations at this level. Availability is derived from it and is never
+	 * stored.
+	 */
+	reservedQuantity: number;
+	/**
+	 * Buffer that has to stay unsold, subtracted from availability.
+	 */
+	safetyStock: number;
+	/**
+	 * Quantity already on its way to this level.
+	 */
+	incomingQuantity: number;
+	/**
+	 * How far a hold may exceed the quantity on hand. A null limit means no ceiling was set.
+	 */
+	backorderLimit: number;
+	/**
+	 * Whether the level is untracked.
+	 */
+	isUnlimited: boolean;
+	/**
+	 * Whether a hold may exceed the quantity on hand at this level.
+	 */
+	allowBackorder: boolean;
+	/**
+	 * Optimistic-lock counter.
+	 */
+	version: number;
 	variant: IProductVariant;
 }
 

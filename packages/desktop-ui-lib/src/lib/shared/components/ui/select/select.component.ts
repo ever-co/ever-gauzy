@@ -189,8 +189,42 @@ export class SelectComponent implements ControlValueAccessor {
 	public set typeahead(value: Subject<string>) {
 		this._typeahead = value;
 	}
+	/**
+	 * The term last typed into the search box, while it still filters the `typeahead` results.
+	 *
+	 * ng-select up to 21 pushed `null` into `[typeahead]` whenever it cleared a typed search — on
+	 * close, on select (which closes) and on clear — so the selectors behind this component (task,
+	 * project, client, team) reloaded their full list. ng-select 24 only emits while typing
+	 * ("select/close/clear do not emit"), which left the next opening showing the last search's
+	 * results under an empty search box. {@link resetSearch} restores the old behaviour.
+	 */
+	private searchTerm: string | null = null;
+
+	/** Remembers what was typed (ng-select's `(search)` fires on every keystroke). */
+	public onSearch(event: { term?: string | null } | null): void {
+		this.searchTerm = event?.term || null;
+	}
+
+	/** The panel closed (also after a pick): a typed search ends here, as before ng-select 24. */
+	public onClose(): void {
+		this.resetSearch();
+	}
+
+	/**
+	 * Tells the `typeahead` subscriber the search is over (`null`), exactly when ng-select 21 did:
+	 * only if a term had been typed, so opening and closing without searching reloads nothing.
+	 */
+	private resetSearch(): void {
+		if (!this.searchTerm) {
+			return;
+		}
+		this.searchTerm = null;
+		this.typeahead?.next(null);
+	}
+
 	// Handle clear action
 	public onClear() {
+		this.resetSearch();
 		this.clear.emit();
 		this.onChange(null);
 	}

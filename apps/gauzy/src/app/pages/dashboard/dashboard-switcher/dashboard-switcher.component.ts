@@ -1,4 +1,4 @@
-import { AfterViewChecked, ChangeDetectorRef, Component, computed, ElementRef, Signal, ViewChild } from '@angular/core';
+import { AfterViewChecked, ChangeDetectorRef, Component, computed, ElementRef, type Signal, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, firstValueFrom, of, take, timeout } from 'rxjs';
 import { NbDialogService, NbPopoverDirective } from '@nebular/theme';
@@ -24,6 +24,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ga-dashboard-switcher',
 	templateUrl: './dashboard-switcher.component.html',
 	styleUrls: ['./dashboard-switcher.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DashboardSwitcherComponent extends TranslationBaseComponent implements AfterViewChecked {

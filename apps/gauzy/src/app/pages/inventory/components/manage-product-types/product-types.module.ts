@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { NbCardModule, NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -21,7 +21,7 @@ import { ProductTypesRoutingModule } from './product-types-routing.module';
 		NbSpinnerModule,
 		NbTooltipModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		ProductTypesRoutingModule,
 		SharedModule,
 		CardGridModule,

@@ -1,4 +1,4 @@
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import {
 	enableProdMode,
 	ErrorHandler,
@@ -120,7 +120,7 @@ bootstrapApplication(AppComponent, {
 				...environment
 			}
 		},
-		provideHttpClient(withInterceptorsFromDi()),
+		provideHttpClient(withXhr(), withInterceptorsFromDi()),
 		provideAnimations()
 	]
 }).catch((err) => console.error(err));

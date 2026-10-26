@@ -1,1 +1,1 @@
-<a [href]="'tel:' + rowData?.primaryPhone">{{ rowData?.primaryPhone }}</a>
+<a [href]="'tel:' + $safeNavigationMigration(rowData?.primaryPhone)">{{ rowData?.primaryPhone }}</a>

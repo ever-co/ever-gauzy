@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultEditor } from 'angular2-smart-table';
 import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -30,6 +30,7 @@ import { DateRangePickerBuilderService, EmployeesService, Store } from '@gauzy/u
 		  </nb-select>
 		`,
     styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceEmployeesSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {

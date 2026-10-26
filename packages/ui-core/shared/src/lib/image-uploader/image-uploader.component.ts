@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, AfterViewInit } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { FileItem, FileUploader, FileUploaderOptions } from 'ng2-file-upload';
 import { filter, tap } from 'rxjs/operators';
@@ -24,6 +24,7 @@ import { Store } from '@gauzy/ui-core/core';
 		/>
 	`,
 	styleUrls: ['./image-uploader.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ImageUploaderComponent implements AfterViewInit, OnInit {

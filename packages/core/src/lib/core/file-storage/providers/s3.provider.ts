@@ -1,7 +1,6 @@
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import * as multerS3 from 'multer-s3';
 import { basename, join } from 'node:path';
-import * as moment from 'moment';
 import {
 	S3Client,
 	DeleteObjectCommand,
@@ -12,11 +11,13 @@ import {
 	HeadObjectCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { cachedPresign, getCachedS3Client, PRESIGNED_URL_EXPIRES_IN_SECONDS } from './s3-client-cache';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { trimIfNotEmpty } from '@gauzy/utils';
 import { Provider } from './provider';
+import { defaultStoredFileName } from '../helpers/stored-file-name';
 import { RequestContext } from '../../context';
 
 /**
@@ -146,15 +147,12 @@ export class S3Provider extends Provider<S3Provider> {
 		try {
 			const s3Client = this.getS3Instance();
 
-			const signedUrl = await getSignedUrl(
-				s3Client,
-				new GetObjectCommand({
-					Bucket: this.getS3Bucket(),
-					Key: fileURL
-				}),
-				{
-					expiresIn: 3600
-				}
+			// One signature per object for a few minutes, from a client shared per configuration (s3-client-cache.ts).
+			const bucket = this.getS3Bucket();
+			const signedUrl = await cachedPresign(s3Client, bucket, fileURL, () =>
+				getSignedUrl(s3Client, new GetObjectCommand({ Bucket: bucket, Key: fileURL }), {
+					expiresIn: PRESIGNED_URL_EXPIRES_IN_SECONDS
+				})
 			);
 
 			return signedUrl;
@@ -206,10 +204,7 @@ export class S3Provider extends Provider<S3Provider> {
 						if (filename) {
 							fileName = typeof filename === 'string' ? filename : filename(file, extension);
 						} else {
-							fileName = `${prefix}-${moment().unix()}-${parseInt(
-								'' + Math.random() * 1000,
-								10
-							)}.${extension}`;
+							fileName = defaultStoredFileName(prefix, extension);
 						}
 
 						// Replace double backslashes with single forward slashes
@@ -232,7 +227,9 @@ export class S3Provider extends Provider<S3Provider> {
 	 * Get a file from AWS S3 storage.
 	 *
 	 * @param key - The key of the file to retrieve
-	 * @returns A Promise resolving to a Buffer containing the file data
+	 * @returns A Promise resolving to the AWS SDK v3 body STREAM (`GetObjectCommandOutput.Body`), not a Buffer — read
+	 * it with `readStorageFileAsBuffer` / `fileContentToBuffer` — or `undefined` when the file could not be fetched
+	 * (the error is logged)
 	 */
 	async getFile(key: string): Promise<Buffer | any> {
 		try {
@@ -250,7 +247,10 @@ export class S3Provider extends Provider<S3Provider> {
 			const data: GetObjectCommandOutput = await s3Client.send(command);
 			return data.Body;
 		} catch (error) {
-			this.logger.error(`Error while fetching file with key '${key}'`);
+			// The SDK's error name says why (NoSuchKey, AccessDenied, a network code); callers only see `undefined`.
+			this.logger.error(
+				`Error while fetching file with key '${key}': ${error?.name ?? 'Error'}: ${error?.message ?? error}`
+			);
 		}
 	}
 
@@ -352,7 +352,7 @@ export class S3Provider extends Provider<S3Provider> {
 			const region = this.config.aws_default_region || 'us-east-1';
 
 			if (this.config.aws_access_key_id && this.config.aws_secret_access_key) {
-				const s3Client = new S3Client({
+				const s3Client = getCachedS3Client({
 					credentials: {
 						accessKeyId: this.config.aws_access_key_id,
 						secretAccessKey: this.config.aws_secret_access_key

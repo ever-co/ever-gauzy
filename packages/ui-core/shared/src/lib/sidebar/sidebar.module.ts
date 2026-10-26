@@ -13,7 +13,7 @@ import {
 	NbSidebarModule
 } from '@nebular/theme';
 import { TreeModule } from '@ali-hm/angular-tree-component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { HelpCenterService } from '@gauzy/ui-core/core';
 import { AddIconModule } from './add-icon/add-icon.module';
 import { SidebarComponent } from './sidebar.component';
@@ -36,7 +36,7 @@ import { DeleteBaseModule } from './delete-base/delete-base.module';
 		NbSelectModule,
 		NbSidebarModule.forRoot(),
 		TreeModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		AddIconModule,
 		KnowledgeBaseModule,
 		DeleteBaseModule,

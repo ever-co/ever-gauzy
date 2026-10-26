@@ -1,4 +1,4 @@
-import { Component, OnDestroy, Input, OnInit } from '@angular/core';
+import { Component, OnDestroy, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,6 +11,7 @@ import { HelpCenterService } from '@gauzy/ui-core/core';
 	selector: 'ga-knowledge-base-mutation',
 	templateUrl: './knowledge-base.component.html',
 	styleUrls: ['./knowledge-base.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class KnowledgeBaseComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

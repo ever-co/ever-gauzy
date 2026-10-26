@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
@@ -14,7 +14,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { catchError, filter, firstValueFrom, of, tap } from 'rxjs';
@@ -67,7 +67,7 @@ const BYTES_PER_GIB = 1024 * 1024 * 1024;
 	imports: [
 		CommonModule,
 		FormsModule,
-		TranslateModule,
+		TranslatePipe,
 		NgxPermissionsModule,
 		NbBadgeModule,
 		NbButtonModule,
@@ -82,6 +82,7 @@ const BYTES_PER_GIB = 1024 * 1024 * 1024;
 	],
 	providers: [DocumentsService],
 	templateUrl: './docs-settings-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrls: ['./docs-settings-page.component.scss']
 })
 export class DocsSettingsPageComponent extends TranslationBaseComponent implements OnInit {
@@ -238,15 +239,17 @@ export class DocsSettingsPageComponent extends TranslationBaseComponent implemen
 	public savingQuota = false;
 
 	/**
-	 * Whether this deployment reports a writable org quota at all.
+	 * Whether this caller may change the org quota.
 	 *
-	 * Keyed on `defaults.quotaBytes` — the field the PUT accepts — NOT on the
-	 * computed usage block: a deployment can report usage without accepting a
-	 * per-organization override, and an input bound to a field the server would
-	 * strip is a control that silently does nothing.
+	 * The server says so (`canEditQuota`): only the installation's operator sets the
+	 * limit, and every other `DOCS_MANAGE` holder sees the usage and the limit without
+	 * an editor the `PUT` would refuse. Also keyed on `defaults.quotaBytes` — the field
+	 * the PUT accepts — NOT on the computed usage block: a deployment can report usage
+	 * without accepting a per-organization override, and an input bound to a field the
+	 * server would strip is a control that silently does nothing.
 	 */
 	get canEditQuota(): boolean {
-		return typeof this.settings?.defaults?.quotaBytes === 'number';
+		return this.settings?.canEditQuota === true && typeof this.settings?.defaults?.quotaBytes === 'number';
 	}
 
 	/** True once the field differs from what the server currently holds. */

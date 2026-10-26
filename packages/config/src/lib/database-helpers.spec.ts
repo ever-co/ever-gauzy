@@ -154,11 +154,14 @@ describe('TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR (GHSA-44pv-34gx-q9p4)', () => {
 			}
 		});
 
-		it('CONTROL: under "ignore" a tenant-less DELETE would wipe every tenant', async () => {
+		it('CONTROL: under "ignore" a tenant-less DELETE loses its only criterion (TypeORM >= 1.1 then refuses it)', async () => {
+			// Under "ignore" `{ tenantId: null }` drops to no criteria at all. TypeORM 1.0 ran that as an unfiltered
+			// DELETE and wiped every tenant; TypeORM 1.1 refuses empty delete criteria instead. Either way the
+			// statement no longer means "the tenant-less rows", which is what the fixed setting keeps it meaning.
 			const { dataSource, rows } = await openDataSource({ null: 'ignore', undefined: 'ignore' });
 			try {
-				const { affected } = await rows.delete({ tenantId: null });
-				expect(affected).toBe(3);
+				await expect(rows.delete({ tenantId: null })).rejects.toThrow(/Empty criteria/);
+				expect(names(await rows.find())).toEqual(['global', 'tenant-a', 'tenant-b']);
 			} finally {
 				await dataSource.destroy();
 			}

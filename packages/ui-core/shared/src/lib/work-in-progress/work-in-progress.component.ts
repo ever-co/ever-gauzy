@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
 	selector: 'ga-wip',
@@ -10,6 +10,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 			</div>
 		</div>
 	`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class WorkInProgressComponent implements OnInit, OnDestroy {

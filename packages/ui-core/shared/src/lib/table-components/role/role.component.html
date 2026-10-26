@@ -3,7 +3,7 @@
     <nb-badge
       position="left"
       [status]="status"
-      [text]="role?.name | replace: '_':' '"
+      [text]="$safeNavigationMigration(role?.name) | replace: '_':' '"
     ></nb-badge>
   }
 </div>

@@ -41,6 +41,8 @@ export const DOCS_SUBTREE_NOT_ARCHIVED = 'DOCS_SUBTREE_NOT_ARCHIVED';
 export const DOCS_BULK_MOVE_PARENT_REQUIRED = 'DOCS_BULK_MOVE_PARENT_REQUIRED';
 /** The organization storage quota would be exceeded by this upload. */
 export const DOCS_QUOTA_EXCEEDED = 'DOCS_QUOTA_EXCEEDED';
+/** Only the installation's operator sets an organization's storage quota (owner decision 14, 2026-10-22). */
+export const DOCS_QUOTA_OPERATOR_ONLY = 'DOCS_QUOTA_OPERATOR_ONLY';
 /** The inbound-email webhook is not enabled in this deployment. */
 export const DOCS_INBOUND_DISABLED = 'DOCS_INBOUND_DISABLED';
 /** The inbound-email webhook signature did not verify. */
@@ -102,9 +104,10 @@ export const ENV_GAUZY_DOCS_VECTOR_STORE = 'GAUZY_DOCS_VECTOR_STORE';
 export const ENV_GAUZY_DOCS_ORG_QUOTA_BYTES = 'GAUZY_DOCS_ORG_QUOTA_BYTES';
 export const ENV_GAUZY_DOCS_RETRIEVAL_LOG_ENABLED = 'GAUZY_DOCS_RETRIEVAL_LOG_ENABLED';
 /**
- * Master switch for provider-vision OCR (scanned PDFs + images). Off by default: OCR is a
- * per-page LLM call, so it is opt-in spend. When off, a PDF with no usable text layer and an
- * image upload both fail permanently exactly as they did before OCR existed.
+ * Master switch for provider-vision OCR (scanned PDFs + images). On by default, but OCR is a
+ * per-page LLM call, so it only runs when the AI pipeline is enabled and a provider has
+ * credentials. When off, a PDF with no usable text layer and an image upload both fail
+ * permanently exactly as they did before OCR existed.
  */
 export const ENV_GAUZY_DOCS_OCR_ENABLED = 'GAUZY_DOCS_OCR_ENABLED';
 /** Hard cap on OCR'd pages per document — the cost fuse of the OCR path. */

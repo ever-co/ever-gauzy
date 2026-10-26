@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -26,6 +26,7 @@ import { DocsFilterState, DocsPresetId, foldStatusFacetBuckets } from '../../mod
 	selector: 'gz-docs-filter-bar',
 	templateUrl: './docs-filter-bar.component.html',
 	styleUrls: ['./docs-filter-bar.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsFilterBarComponent extends TranslationBaseComponent {

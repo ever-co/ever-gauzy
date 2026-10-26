@@ -41,6 +41,26 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		];
 		// Initialize Sentry with options
 		Sentry.init({
+			// Sentry 11 replaced `sendDefaultPii` with `dataCollection`, whose defaults now send cookies, request and
+			// response bodies, user info, DB query data and more. This is the migration guide's "keep the v10 default"
+			// baseline, so the upgrade collects nothing it did not collect before (and `attachStacktrace`, now true by
+			// default, stays off). The caller's own options still win.
+			// https://github.com/getsentry/sentry-javascript/blob/develop/MIGRATION.md
+			dataCollection: {
+				userInfo: false,
+				cookies: false,
+				httpHeaders: {
+					request: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+					response: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] }
+				},
+				httpBodies: [],
+				urlQueryParams: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+				genAI: { inputs: false, outputs: false },
+				databaseQueryData: false,
+				queues: false,
+				graphQL: { document: false, variables: false }
+			},
+			attachStacktrace: false,
 			...sentryOptions,
 			profilesSampleRate,
 			integrations: allIntegrations

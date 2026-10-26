@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import {
 	HttpRequest,
 	HttpHandler,
-	HttpEvent,
+	type HttpEvent,
 	HttpInterceptor,
 	HttpErrorResponse,
 	HttpStatusCode
@@ -11,6 +11,7 @@ import { Observable, catchError, retry, throwError } from 'rxjs';
 import { ErrorHandlerService } from '../services/error-handler.service';
 import { Store } from '../services';
 import { ElectronService } from '../electron/services';
+import { SKIP_ERROR_NOTIFICATION } from './skip-error-notification.token';
 
 @Injectable()
 export class ServerErrorInterceptor implements HttpInterceptor {
@@ -33,7 +34,9 @@ export class ServerErrorInterceptor implements HttpInterceptor {
 							this._store.serverConnection = 0;
 							this._electronService.ipcRenderer.send('server-down');
 						}
-						this._errorHandlerService.handleError(error);
+						if (!request.context.get(SKIP_ERROR_NOTIFICATION)) {
+							this._errorHandlerService.handleError(error);
+						}
 					}
 					return error;
 				})

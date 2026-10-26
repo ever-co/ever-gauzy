@@ -1,8 +1,10 @@
 import * as yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 import { devConfig } from "../dev-config";
 import { createMigration, generateMigration, revertLastDatabaseMigration, runDatabaseMigrations } from "./migration-executor";
 
-yargs
+// yargs 18 removed the global singleton: build the parser from this process's arguments.
+yargs(hideBin(process.argv))
     .command({
         command: 'migration:run',
         describe: 'Runs all pending migrations command.',
@@ -61,4 +63,4 @@ yargs
             createMigration(devConfig, { name });
         }
     })
-    .argv; // To set above changes
+    .parse(); // To set above changes

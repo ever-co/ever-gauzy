@@ -1,0 +1,55 @@
+<nb-card class="record-page" [nbSpinner]="state === 'loading'" nbSpinnerStatus="primary" nbSpinnerSize="large">
+	<nb-card-header class="record-page-header">
+		@if (backLink) {
+			<a
+				nbButton
+				ghost
+				size="small"
+				class="record-page-back"
+				[routerLink]="backLink"
+				[attr.aria-label]="'RECORD_VIEW_PAGE.BACK_TO_LIST' | translate"
+				[nbTooltip]="'RECORD_VIEW_PAGE.BACK_TO_LIST' | translate"
+			>
+				<nb-icon icon="arrow-back-outline"></nb-icon>
+			</a>
+		}
+		<div class="record-page-heading">
+			<h4 class="record-page-title">{{ heading | translate }}</h4>
+			@if (subtitle) {
+				<span class="record-page-subtitle">{{ subtitle }}</span>
+			}
+		</div>
+		<div class="record-page-actions">
+			<ng-content select="[recordPageActions]"></ng-content>
+		</div>
+	</nb-card-header>
+	<nb-card-body class="record-page-body">
+		@switch (state) {
+			@case ('not-found') {
+				<div class="record-page-message" role="status">
+					<nb-icon icon="search-outline"></nb-icon>
+					<span>{{ 'RECORD_VIEW_PAGE.NOT_FOUND' | translate }}</span>
+				</div>
+			}
+			@case ('forbidden') {
+				<div class="record-page-message" role="status">
+					<nb-icon icon="lock-outline"></nb-icon>
+					<span>{{ 'RECORD_VIEW_PAGE.FORBIDDEN' | translate }}</span>
+				</div>
+			}
+			@case ('error') {
+				<div class="record-page-message" role="alert">
+					<nb-icon icon="alert-triangle-outline"></nb-icon>
+					<span>{{ 'RECORD_VIEW_PAGE.ERROR' | translate }}</span>
+					<button nbButton size="small" status="basic" (click)="retry.emit()">
+						{{ 'BUTTONS.RETRY' | translate }}
+					</button>
+				</div>
+			}
+		}
+		<!-- The hosting page gates its own content on the record being loaded. -->
+		<div class="record-page-content" [hidden]="state !== 'ready'">
+			<ng-content></ng-content>
+		</div>
+	</nb-card-body>
+</nb-card>

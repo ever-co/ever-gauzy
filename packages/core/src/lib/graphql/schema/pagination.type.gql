@@ -1,0 +1,28 @@
+# Pagination and ordering inputs every connection root field shares.
+#
+# The two pagination styles are exclusive on purpose. A cursor walk is stable while rows are being
+# inserted around it; an offset walk is not, and mixing the two in one request has no defined
+# meaning, so a field that receives both is rejected rather than silently preferring one.
+
+"""
+Cursor pagination. `first`/`after` walk forwards, `last`/`before` walk backwards, and a request that
+states both directions is refused.
+"""
+input PageInput {
+	"The page size, walking forwards from `after`."
+	first: Int
+	"Resume after this cursor. Exclusive."
+	after: String
+	"The page size, walking backwards from `before`."
+	last: Int
+	"Resume before this cursor. Exclusive."
+	before: String
+}
+
+"""
+The direction of one sort key.
+"""
+enum SortDirection {
+	ASC
+	DESC
+}

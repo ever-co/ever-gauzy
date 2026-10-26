@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router, UrlSerializer } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -29,7 +29,7 @@ import {
 } from '../../smart-data-layout/pagination/pagination-filter-base.component';
 import { DateViewComponent } from '../../table-components';
 import { InputFilterComponent, InviteStatusFilterComponent, ToggleFilterComponent } from '../../table-filters';
-import { DeleteConfirmationComponent } from '../../user/forms/delete-confirmation/delete-confirmation.component';
+import { InviteDeleteConfirmationComponent } from './invite-delete-confirmation/invite-delete-confirmation.component';
 import { InviteMutationComponent } from '../invite-mutation/invite-mutation.component';
 import { ProjectNamesComponent } from './project-names/project-names.component';
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
@@ -41,6 +41,7 @@ import { DepartmentNamesComponent } from './department-names/department-names.co
 	selector: 'ga-invites',
 	templateUrl: './invites.component.html',
 	styleUrls: ['invites.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class InvitesComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
@@ -195,7 +196,8 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 			});
 		}
 
-		if (!this.selectedInvite) {
+		// No token: the invitation grants a role the caller may not issue, and the API withheld it.
+		if (!this.selectedInvite?.token) {
 			return;
 		}
 
@@ -469,10 +471,9 @@ export class InvitesComponent extends PaginationFilterBaseComponent implements A
 			});
 		}
 		this.dialogService
-			.open(DeleteConfirmationComponent, {
+			.open(InviteDeleteConfirmationComponent, {
 				context: {
-					recordType:
-						this.selectedInvite.email + ' ' + this.getTranslation('FORM.DELETE_CONFIRMATION.INVITATION')
+					email: this.selectedInvite.email
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))

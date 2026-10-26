@@ -352,6 +352,22 @@ $overlay-item-padding-x: 0.625rem; // 10px
     }
   }
 
+  // The Teams dashboard's "Projects worked" list (`nbPopoverClass` on the tiles'
+  // View button — see `dashboard/team/team-projects-list`). Nebular puts that
+  // class on the overlay PANE, so the popover is reached as its descendant, as
+  // with `.gz-rail-flyout` above. The list draws its own header, rows and
+  // padding, and scrolls inside a height fitted to the screen, so the frame only
+  // clips it to the radius.
+  .cdk-overlay-container .gz-projects-popover nb-popover {
+    padding: 0;
+    border-radius: 0.75rem;
+    overflow: hidden;
+
+    .primitive-overlay {
+      padding: 0;
+    }
+  }
+
   // ── Separators ──────────────────────────────────────────────────────────
   // 1px hairlines at low alpha, never a thick divider. Bootstrap's reboot
   // gives every `hr` a 1px `currentColor` border at 25% opacity, which reads

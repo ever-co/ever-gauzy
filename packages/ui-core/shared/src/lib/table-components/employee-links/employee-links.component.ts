@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
@@ -27,17 +27,20 @@ import { Router } from '@angular/router';
 		`
 	],
 	styleUrls: ['./employee-links.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EmployeeLinksComponent {
 	@Input() rowData: any;
 	@Input() value: any;
 	@Input() isNavigation: boolean = true;
+	/** Which employee page a click opens: the edit form (default) or the read-only profile view. */
+	@Input() linkTo: 'edit' | 'view' = 'edit';
 
 	constructor(private readonly _router: Router) {}
 
 	/**
-	 * Navigates to the employee edit page if the necessary conditions are met.
+	 * Navigates to the employee edit page (or the profile view, per `linkTo`) if the necessary conditions are met.
 	 */
 	navigateToEmployee(): void {
 		// Check if either 'value' or 'isNavigation' is falsy
@@ -46,7 +49,7 @@ export class EmployeeLinksComponent {
 			return;
 		}
 
-		// Navigate to the employee edit page with the ID from 'this.value.id'
-		this._router.navigate([`/pages/employees/edit`, this.value.id]);
+		// Navigate to the employee page with the ID from 'this.value.id'
+		this._router.navigate([`/pages/employees/${this.linkTo}`, this.value.id]);
 	}
 }

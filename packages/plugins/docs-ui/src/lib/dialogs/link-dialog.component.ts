@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, firstValueFrom, of } from 'rxjs';
@@ -50,6 +50,7 @@ import { DocumentsService } from '../services/documents.service';
 	templateUrl: './link-dialog.component.html',
 	styleUrls: ['./link-dialog.component.scss'],
 	providers: [EmployeesService, InvoicesService],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocumentLinkDialogComponent extends TranslationBaseComponent implements OnInit {

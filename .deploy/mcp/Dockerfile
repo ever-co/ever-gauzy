@@ -85,15 +85,27 @@ ARG MCP_WS_TRUSTED_PROXIES
 ARG NX_CLOUD_ACCESS_TOKEN
 ARG NX_BRANCH
 
-FROM node:24.16.0-alpine3.23 AS dependencies
+FROM node:26.12.1-alpine3.24 AS dependencies
 
 LABEL maintainer="ever@ever.co"
 LABEL org.opencontainers.image.source="https://github.com/ever-co/ever-gauzy"
 
-RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
-    && npm install --quiet node-gyp@10.2.0 -g \
-    && npm install yarn -g --force \
-    && npm install --quiet ts-node@10.9.2 -g
+# Global npm installs (here and in the proddependencies stage) go through the internal Verdaccio
+# cache when VERDACCIO_REGISTRY is set and its /-/ping answers - the same probe as the yarn
+# install further down - and through the public npm registry otherwise, exactly as before (forks,
+# external runners, builds without the build-arg). These are public packages Verdaccio proxies,
+# so no token is involved and nothing secret reaches a layer. The fetch-retry flags make a
+# transient ETIMEDOUT on a saturated WAN retry instead of failing the image. In each such RUN,
+# "$@" holds those flags plus `--registry <cache>` when the probe succeeded.
+ARG VERDACCIO_REGISTRY=""
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
+    && npm install --quiet node-gyp@10.2.0 -g "$@" \
+    && npm install yarn -g --force "$@" \
+    && npm install --quiet ts-node@10.9.2 -g "$@"
 
 RUN mkdir /srv/gauzy-mcp && chown -R node:node /srv/gauzy-mcp
 
@@ -110,6 +122,8 @@ COPY --chown=node:node packages/constants/package.json ./packages/constants/
 COPY --chown=node:node packages/contracts/package.json ./packages/contracts/
 COPY --chown=node:node packages/utils/package.json ./packages/utils/
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+# Vendored packages the lockfile resolves from file: (vendor/nebular/README.md)
+COPY --chown=node:node vendor ./vendor
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 # VERDACCIO_TOKEN arrives as a BuildKit secret, never as an ARG: a build-arg is recorded in the
@@ -175,12 +189,19 @@ RUN rm -rf /srv/gauzy-mcp/dist
 RUN yarn build:mcp:prod
 
 # Only prod dependencies
-FROM node:24.16.0-alpine3.23 AS proddependencies
+FROM node:26.12.1-alpine3.24 AS proddependencies
 
-RUN apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
-    && npm install --quiet node-gyp@10.2.0 -g \
-    && npm install yarn -g --force \
-    && npm install --quiet ts-node@10.9.2 -g
+# Global npm installs: internal Verdaccio cache when reachable + fetch retries (see the
+# dependencies stage).
+ARG VERDACCIO_REGISTRY=""
+RUN set -- --fetch-retries=5 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 && \
+    if [ -n "$VERDACCIO_REGISTRY" ] && wget -q -T 5 -O /dev/null "${VERDACCIO_REGISTRY%/}/-/ping"; then \
+    set -- "$@" --registry "$VERDACCIO_REGISTRY"; \
+    fi && \
+    apk add --no-cache python3 python3-dev py3-pip py3-setuptools build-base gcc g++ make autoconf automake git \
+    && npm install --quiet node-gyp@10.2.0 -g "$@" \
+    && npm install yarn -g --force "$@" \
+    && npm install --quiet ts-node@10.9.2 -g "$@"
 
 # Create working directory with correct ownership so node user can create symlinks
 RUN mkdir -p /srv/gauzy-mcp && chown node:node /srv/gauzy-mcp
@@ -195,6 +216,8 @@ COPY --chown=node:node --from=build /srv/gauzy-mcp/dist .
 RUN ln -s . dist
 
 COPY --chown=node:node lerna.json package.json yarn.lock ./
+# Vendored packages the lockfile resolves from file: (vendor/nebular/README.md)
+COPY --chown=node:node vendor ./vendor
 COPY --chown=node:node .scripts/postinstall.js ./.scripts/
 
 # VERDACCIO_TOKEN arrives as a BuildKit secret, never as an ARG: a build-arg is recorded in the

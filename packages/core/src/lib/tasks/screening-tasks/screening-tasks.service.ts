@@ -69,11 +69,14 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 			}
 
 			// Retrieve the maximum task number for the specified project, or handle null projectId if no project
-			const maxNumber = await this.taskService.getMaxTaskNumberByProject({
-				tenantId,
-				organizationId,
-				projectId: project?.id ?? null
-			});
+			const maxNumber = await this.taskService.getMaxTaskNumberByProject(
+				{
+					tenantId,
+					organizationId,
+					projectId: project?.id ?? null
+				},
+				{ withDeleted: true }
+			);
 
 			// Create task
 			const task = await this.taskService.create({
@@ -169,23 +172,31 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 			// Extract the task from the screening task
 			const task = screeningTask.task;
 
-			// Create a new screening task with the updated input
-			const updatedScreeningTask = await super.create({ ...input, id });
-
-			// Update the task accordingly to the screening status
-			if (input.status !== updatedScreeningTask.status) {
-				const isScreeningTask =
-					[input.status, updatedScreeningTask.status].includes(ScreeningTaskStatusEnum.PENDING) ||
-					[input.status, updatedScreeningTask.status].includes(ScreeningTaskStatusEnum.SNOOZED);
-
-				const taskStatus = [ScreeningTaskStatusEnum.DECLINED, ScreeningTaskStatusEnum.DUPLICATED].includes(
+			// Update the task accordingly to the screening status. Compared with the stored status: the saved
+			// screening task always carries the new one, so comparing with it never synced the task.
+			if (input.status && input.status !== screeningTask.status) {
+				// The task stays a screening task (hidden from the task lists) only while pending or snoozed
+				const isScreeningTask = [ScreeningTaskStatusEnum.PENDING, ScreeningTaskStatusEnum.SNOOZED].includes(
 					input.status
-				)
-					? TaskStatusEnum.CANCELLED
-					: task.status;
+				);
+
+				// Declined / duplicated cancel the task; leaving those statuses reopens it, since the cancellation
+				// came from the screening — unless the task has moved on since (completed, in progress, ...), which
+				// is kept. Otherwise the task keeps its own status.
+				const cancelling = [ScreeningTaskStatusEnum.DECLINED, ScreeningTaskStatusEnum.DUPLICATED];
+				let taskStatus = task.status;
+				if (cancelling.includes(input.status)) {
+					taskStatus = TaskStatusEnum.CANCELLED;
+				} else if (cancelling.includes(screeningTask.status) && task.status === TaskStatusEnum.CANCELLED) {
+					taskStatus = TaskStatusEnum.OPEN;
+				}
 
 				await this.taskService.update(task.id, { isScreeningTask, status: taskStatus });
 			}
+
+			// Saved after the task: if the task update fails, the screening status is not saved either, so a
+			// retry of the same request still sees the status change and syncs the task
+			const updatedScreeningTask = await super.create({ ...input, id });
 
 			// Generate the activity log
 			this.activityLogService.logActivity<ScreeningTask>(
@@ -197,7 +208,7 @@ export class ScreeningTasksService extends TenantAwareCrudService<ScreeningTask>
 				updatedScreeningTask,
 				updatedScreeningTask.organizationId,
 				tenantId,
-				updatedScreeningTask,
+				screeningTask,
 				input
 			);
 

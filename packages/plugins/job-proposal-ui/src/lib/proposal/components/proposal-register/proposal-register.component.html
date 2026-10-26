@@ -34,7 +34,7 @@
 								(selectedChange)="onProposalTemplateChange($event)"
 								[ngModelOptions]="{ standalone: true }"
 								[(ngModel)]="proposalTemplateId"
-								[employeeId]="selectedEmployee?.id"
+								[employeeId]="$safeNavigationMigration(selectedEmployee?.id)"
 							></ngx-proposal-template-select>
 						</div>
 					</div>

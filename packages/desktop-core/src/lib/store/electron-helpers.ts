@@ -1,23 +1,23 @@
-import * as ElectronStore from 'electron-store';
-import { StoreSchema } from './types';
+import ElectronStore from 'electron-store';
+import { IStore, StoreSchema } from './types';
 
 /**
  * Lazily-initialized ElectronStore singleton.
  * Construction is deferred until first access so that electron-store's
  * internal call to app.getPath('userData') does not run before app.ready.
  */
-let _store: ElectronStore<StoreSchema> | null = null;
+let _store: IStore | null = null;
 
-function getStore(): ElectronStore<StoreSchema> {
+function getStore(): IStore {
 	if (!_store) {
-		_store = new ElectronStore<StoreSchema>();
+		_store = new ElectronStore<StoreSchema>() as IStore;
 	}
 	return _store;
 }
 
 // Proxy that forwards every property/method access to the lazy instance,
 // preserving the existing `store.get(...)` / `store.set(...)` call-sites.
-export const store = new Proxy({} as ElectronStore<StoreSchema>, {
+export const store = new Proxy({} as IStore, {
 	get(_target, prop) {
 		const instance = getStore();
 		const value = (instance as any)[prop];

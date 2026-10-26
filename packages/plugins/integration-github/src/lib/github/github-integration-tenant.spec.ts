@@ -33,7 +33,6 @@ describe('GitHub integration routes are bound to the caller tenant (GHSA-4rwq-65
 		const cache = { get: jest.fn(async () => undefined), set: jest.fn(async () => undefined) };
 		const integrationTenantService = { findOneByIdString: jest.fn(async () => ({ settings })) };
 		const middleware = new GithubMiddleware(cache as any, integrationTenantService as any);
-		(middleware as any).logging = false;
 		return { middleware, integrationTenantService };
 	};
 

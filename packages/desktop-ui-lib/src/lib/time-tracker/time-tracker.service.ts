@@ -520,6 +520,43 @@ export class TimeTrackerService {
 		return firstValueFrom(timeSlots$);
 	}
 
+	/**
+	 * Most recent time slot of the current employee that carries screenshots, read from the API.
+	 *
+	 * The desktop timer normally shows the screenshots of the last capture it stored locally; a fresh
+	 * install has none yet, so this looks the slot up on the server instead (#8348). The search is
+	 * limited to the last two days to keep the request small; the list endpoint answers oldest first.
+	 */
+	async getLatestTimeSlotWithScreenshots(): Promise<ITimeSlot | null> {
+		const { tenantId, organizationId, user } = this._store;
+		const employeeId = user?.employee?.id;
+		if (!employeeId) {
+			return null;
+		}
+		const params = toParams({
+			tenantId,
+			organizationId,
+			employeeIds: [employeeId],
+			startDate: TimeTrackerDateManager.startOfDaysAgo(1),
+			endDate: TimeTrackerDateManager.endToday,
+			relations: ['screenshots']
+		});
+		const timeSlots = await firstValueFrom(
+			this.http.get<ITimeSlot[]>(`${API_PREFIX}/timesheet/time-slot`, { params })
+		);
+		const latest = [...(timeSlots ?? [])].reverse().find((timeSlot) => timeSlot?.screenshots?.length > 0);
+		if (!latest) {
+			return null;
+		}
+		// Newest screenshot first, like getTimeSlot() asks the API for, since the caller shows the first one.
+		return {
+			...latest,
+			screenshots: [...latest.screenshots].sort(
+				(a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()
+			)
+		};
+	}
+
 	pingAw(host) {
 		return firstValueFrom(this.http.get(host, { responseType: 'text' }));
 	}

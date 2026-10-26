@@ -124,7 +124,68 @@ export enum ActivepiecesSettingName {
 	CLIENT_SECRET = 'client_secret',
 	CALLBACK_URL = 'callback_url',
 	POST_INSTALL_URL = 'post_install_url',
-	STATE_SECRET = 'state_secret'
+	STATE_SECRET = 'state_secret',
+	/**
+	 * How the tenant reaches Activepieces: one of {@link ActivepiecesConnectionMode}. Absent means `auto`.
+	 * Server-managed, like every Activepieces setting: set through `POST /integration/activepieces/connection-mode`.
+	 */
+	CONNECTION_MODE = 'connection_mode',
+	/**
+	 * The Activepieces project the server pinned the tenant to (project-token and platform-project modes). A record of
+	 * what the server resolved, never read from a client: the project is found again by its external id.
+	 */
+	MANAGED_PROJECT_ID = 'managed_project_id'
+}
+
+/**
+ * How a tenant's requests reach Activepieces.
+ *
+ * Activepieces API keys belong to a whole platform (every project on it): there is no project-scoped API key. A tenant
+ * request therefore never acts under the installation's key without a project pinned by the server.
+ */
+export enum ActivepiecesConnectionMode {
+	/** The first available of: the tenant's own key, a project token, the installation key with a pinned project. */
+	AUTO = 'auto',
+	/** The tenant's own Activepieces API key (its own platform), saved through `POST /integration/activepieces/setup`. */
+	TENANT_API_KEY = 'tenant_api_key',
+	/**
+	 * A project-scoped token (7 days) the server obtains for the tenant's own project with the installation's signing
+	 * key (Activepieces managed authentication). Activepieces itself confines the token to that project.
+	 */
+	PROJECT_TOKEN = 'project_token',
+	/**
+	 * The installation's platform key, with the tenant's own project pinned by the server on every call, and every
+	 * resource read, changed or removed by id checked to belong to that project first.
+	 */
+	PLATFORM_PROJECT = 'platform_project'
+}
+
+/**
+ * The tenant's Activepieces connection, as `GET /integration/activepieces/connection-mode` answers it. Never a secret.
+ */
+export interface IActivepiecesConnectionModeStatus {
+	/** The mode the tenant chose (`auto` when it chose none). */
+	requestedMode: ActivepiecesConnectionMode;
+	/** The mode its requests use now, or `null` when none is available. */
+	resolvedMode: Exclude<ActivepiecesConnectionMode, ActivepiecesConnectionMode.AUTO> | null;
+	/** The modes the tenant may choose on this installation. */
+	availableModes: ActivepiecesConnectionMode[];
+	/** Whether the tenant saved an Activepieces API key of its own. */
+	hasOwnApiKey: boolean;
+	/** The Activepieces project the server pinned the tenant to, when known. */
+	projectId: string | null;
+}
+
+/**
+ * What the installation operator configured for Activepieces (`GET /integration/activepieces/platform/status`).
+ * Booleans only: never a key.
+ */
+export interface IActivepiecesPlatformStatus {
+	platformKeyConfigured: boolean;
+	projectTokensConfigured: boolean;
+	tenantProjectsEnabled: boolean;
+	projectExternalIdPrefix: string;
+	baseUrl: string;
 }
 
 /**
@@ -140,7 +201,11 @@ export interface IActivepiecesOAuthCredentials {
  */
 export interface ICreateActivepiecesIntegrationInput extends IBasePerTenantAndOrganizationEntityModel {
 	accessToken: string;
-	projectId: string;
+	/**
+	 * The Activepieces project. Required with the tenant's own key; in the project-token and platform-project modes the
+	 * server pins the tenant's own project, and a different one named here is refused.
+	 */
+	projectId?: string;
 	connectionName?: string;
 }
 
@@ -153,6 +218,9 @@ export interface IActivepiecesProject {
 	ownerId: string;
 	created: string;
 	updated: string;
+	/** The id the platform's owner gave the project (`gauzy-tenant-<tenantId>` for a Gauzy tenant's project). */
+	externalId?: string | null;
+	platformId?: string;
 }
 
 /**
@@ -229,16 +297,34 @@ export interface IActivepiecesMcpTool {
 
 /**
  * ActivePieces MCP Server
+ *
+ * Activepieces MCP 2.0 (November 2025) keeps one MCP server per project (`/v1/projects/:projectId/mcp-server`), with
+ * no name, agent or tool list of its own: it serves the project's flows (`flows`) except the tools disabled for it
+ * (`disabledTools`, and the platform's `platformDisabledTools`). `name`, `agentId` and `tools` are those of the
+ * servers the legacy `/v1/mcp-servers` routes answered (`GAUZY_ACTIVEPIECES_MCP_API=legacy`).
  */
 export interface IActivepiecesMcpServer {
 	id: string;
 	created: string;
 	updated: string;
-	name: string;
 	projectId: string;
 	token: string;
-	agentId: string;
-	tools: IActivepiecesMcpTool[];
+	/** Legacy servers only. */
+	name?: string;
+	/** Legacy servers only. */
+	agentId?: string;
+	/** Legacy servers only. */
+	tools?: IActivepiecesMcpTool[];
+	/** MCP 2.0: the platform of the server. */
+	platformId?: string | null;
+	/** MCP 2.0: `PROJECT` for a project's server. */
+	type?: string;
+	/** MCP 2.0: the tools disabled on the project's server. */
+	disabledTools?: string[] | null;
+	/** MCP 2.0: the flows the server exposes as tools. */
+	flows?: Record<string, unknown>[];
+	/** MCP 2.0: the tools the platform disables on every server. */
+	platformDisabledTools?: string[];
 }
 
 /**
@@ -258,6 +344,9 @@ export interface IActivepiecesMcpServersListResponsePublic extends IActivepieces
 
 /**
  * ActivePieces MCP Server list query params
+ *
+ * Under MCP 2.0 a project has one server: the list answers it alone, and `limit`, `cursor` and `name` (legacy
+ * filters) do not apply.
  */
 export interface IActivepiecesMcpServersListParams {
 	projectId: string;
@@ -270,8 +359,12 @@ export interface IActivepiecesMcpServersListParams {
  * ActivePieces MCP Server update request
  */
 export interface IActivepiecesMcpServerUpdateRequest {
+	/** Legacy servers only. */
 	name?: string;
+	/** Legacy servers only. */
 	tools?: IActivepiecesMcpTool[];
+	/** MCP 2.0: the tools to disable on the project's server (the list replaces the stored one). */
+	disabledTools?: string[];
 }
 
 /**

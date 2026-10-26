@@ -1,12 +1,51 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import * as moment from 'moment';
-import { MultiORM, MultiORMEnum, getORMType } from '@gauzy/core';
+import { MultiORM, MultiORMEnum, RequestContext, getORMType } from '@gauzy/core';
 import { Wakatime } from './wakatime.entity';
 import { TypeOrmWakatimeRepository } from './repository/type-orm-wakatime.repository';
 import { MikroOrmWakatimeRepository } from './repository/mikro-orm-wakatime.repository';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
+
+/**
+ * Splits a number of seconds into whole hours and the minutes left over.
+ *
+ * The summary used `seconds / 60` for the minutes, i.e. the TOTAL minutes, so 3,700 s read "1:61"
+ * instead of "1:01". A day without heartbeats sums to `null`; it, and any non-numeric or negative value,
+ * counts as 0.
+ */
+export function splitDuration(seconds: number | string | null | undefined): {
+	totalSeconds: number;
+	hours: number;
+	minutes: number;
+} {
+	const value = Number(seconds);
+	const totalSeconds = Number.isFinite(value) && value > 0 ? value : 0;
+	return {
+		totalSeconds,
+		hours: Math.floor(totalSeconds / 3600),
+		minutes: Math.floor((totalSeconds % 3600) / 60)
+	};
+}
+
+/**
+ * Shapes the outcome of a MikroORM (knex) insert like TypeORM's `InsertResult`.
+ *
+ * The MikroORM branches ran the insert and returned `undefined`, so `POST /heartbeats.bulk` read
+ * `result.identifiers.length` off nothing and answered 400 although the rows were stored. One identifier
+ * is reported per submitted value, as TypeORM does for `orIgnore()` inserts.
+ */
+export function toInsertResult(
+	count: number,
+	raw: any
+): { identifiers: Record<string, any>[]; generatedMaps: Record<string, any>[]; raw: any } {
+	return {
+		identifiers: Array.from({ length: count }, () => ({})),
+		generatedMaps: [],
+		raw
+	};
+}
 
 @Injectable()
 export class WakatimeService {
@@ -55,16 +94,18 @@ export class WakatimeService {
 				break;
 		}
 
+		const { totalSeconds, hours, minutes } = splitDuration(result[0]?.seconds);
+
 		return {
 			data: [
 				{
 					categories: [],
 					grand_total: {
-						digital: `${Math.floor(result[0].seconds / 3600)}:${Math.floor(result[0].seconds / 60)}`,
-						hours: Math.floor(result[0].seconds / 3600),
-						minute: Math.floor(result[0].seconds / 60),
-						total_seconds: result[0].seconds,
-						text: `${result[0].seconds} secs`
+						digital: `${hours}:${String(minutes).padStart(2, '0')}`,
+						hours,
+						minute: minutes,
+						total_seconds: totalSeconds,
+						text: `${totalSeconds} secs`
 					},
 					range: {
 						date: moment().format('YYYY-MM-DD'),
@@ -88,11 +129,11 @@ export class WakatimeService {
 		switch (ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = (this.mikroOrmWakatimeRepository as any).getKnex();
-				await knex('heartbeats')
+				const raw = await knex('heartbeats')
 					.insert(wakatime.map((w) => ({ ...w })))
 					.onConflict(['time', 'entities'])
 					.ignore();
-				return;
+				return toInsertResult(wakatime.length, raw);
 			}
 			case MultiORMEnum.TypeORM:
 			default:
@@ -114,11 +155,11 @@ export class WakatimeService {
 		switch (ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = (this.mikroOrmWakatimeRepository as any).getKnex();
-				await knex('heartbeats')
+				const raw = await knex('heartbeats')
 					.insert({ ...wakatime })
 					.onConflict(['time', 'entities'])
 					.ignore();
-				return;
+				return toInsertResult(1, raw);
 			}
 			case MultiORMEnum.TypeORM:
 			default:
@@ -132,12 +173,20 @@ export class WakatimeService {
 	}
 
 	/**
+	 * Files the heartbeats a WakaTime client posts, under the caller's own employee.
+	 *
+	 * The heartbeat routes state no permission, and every heartbeat used to be filed under no one
+	 * (`employeeId: null`), so any signed-in member wrote into one pool nobody could tell apart. Owner decision 2
+	 * (2026-10-22) makes them per-user items: a heartbeat is the caller's, by the employee record of the signed-in
+	 * user, never one a body names. A caller with no employee record has no heartbeats to file and is refused.
 	 *
 	 * @param payload
 	 * @param headers
 	 * @returns
+	 * @throws ForbiddenException when the caller has no employee record.
 	 */
 	parameterSanitize(payload, headers) {
+		const employeeId = this.callerEmployeeId();
 		const params = [];
 		if (!Array.isArray(payload)) {
 			payload = [payload];
@@ -145,7 +194,7 @@ export class WakatimeService {
 		payload.forEach((element) => {
 			params.push({
 				type: element.type,
-				employeeId: null,
+				employeeId,
 				time: element.time,
 				categories: element.category,
 				dependencies: element.dependencies,
@@ -167,6 +216,21 @@ export class WakatimeService {
 		} else {
 			return this.save(params[0]);
 		}
+	}
+
+	/**
+	 * The employee a heartbeat is filed under: the signed-in user's own (also for a holder of
+	 * `CHANGE_SELECTED_EMPLOYEE`, for whom `currentEmployeeId()` is null).
+	 *
+	 * @returns The caller's employee id.
+	 * @throws ForbiddenException when the caller has no employee record.
+	 */
+	private callerEmployeeId(): string {
+		const employeeId = RequestContext.currentEmployeeId() ?? RequestContext.currentUser()?.employeeId;
+		if (!employeeId) {
+			throw new ForbiddenException('Only an employee can record WakaTime heartbeats');
+		}
+		return employeeId;
 	}
 
 	/**

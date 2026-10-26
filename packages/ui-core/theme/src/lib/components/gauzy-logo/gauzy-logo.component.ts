@@ -7,7 +7,8 @@ import {
 	ChangeDetectorRef,
 	Input,
 	AfterViewInit,
-	Inject
+	Inject,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { combineLatest } from 'rxjs';
@@ -25,6 +26,7 @@ import { COSMIC_THEME, DARK_THEME, GAUZY_DARK, MATERIAL_DARK_THEME } from '../..
 	selector: 'ngx-gauzy-logo',
 	templateUrl: './gauzy-logo.component.html',
 	styleUrls: ['./gauzy-logo.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class GauzyLogoComponent implements AfterViewInit, OnInit, OnDestroy {

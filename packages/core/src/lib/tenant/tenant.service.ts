@@ -1,6 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ITenantCreateInput, RolesEnum, ITenant, IUser, FileStorageProviderEnum } from '@gauzy/contracts';
+import {
+	FileStorageProviderEnum,
+	ID,
+	ITenant,
+	ITenantCreateInput,
+	ITenantUpdateInput,
+	IUser,
+	RolesEnum
+} from '@gauzy/contracts';
+import { UpdateResult } from 'typeorm';
 import { ConfigService } from '@gauzy/config';
 import { MultiORMEnum } from '../core/utils';
 import { CrudService } from '../core/crud/crud.service';
@@ -18,6 +27,7 @@ import { TypeOrmUserRepository } from '../user/repository/type-orm-user.reposito
 import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.repository';
 import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
 import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
+import { ImageAsset } from '../image-asset/image-asset.entity';
 import { Tenant } from './tenant.entity';
 import { StripeSubscriptionService, describeError } from '../shared/billing/stripe-subscription.service';
 
@@ -306,6 +316,54 @@ export class TenantService extends CrudService<Tenant> {
 		} catch (error) {
 			console.warn('Could not resolve a Stripe customer for this tenant:', (error as Error)?.message);
 			return null;
+		}
+	}
+
+	/**
+	 * Updates a tenant's name and logo.
+	 *
+	 * Under MikroORM `imageId` is a read-only mirror of the `image` relation (`relationId` columns are
+	 * `persist: false`, see `column.helper.ts`), so a plain `update({ imageId })` leaves the logo
+	 * unchanged there. Write the relation instead; `null` clears it. TypeORM writes the column directly.
+	 *
+	 * A new logo must be an image asset of this tenant: an asset id is a bare UUID, and without the check a
+	 * Super Admin could point their tenant's logo at another tenant's upload.
+	 *
+	 * @param id - The tenant to update.
+	 * @param input - The new name and logo; an omitted `imageId` leaves the image as it is.
+	 * @throws BadRequestException when `imageId` names an image asset outside the tenant.
+	 */
+	async updateProfile(id: ID, input: ITenantUpdateInput): Promise<ITenant | UpdateResult> {
+		const { imageId, ...rest } = input;
+		if (imageId === undefined) {
+			return await this.update(id, rest);
+		}
+		if (imageId) {
+			await this.assertImageInTenant(imageId, id);
+		}
+		if (this.ormType === MultiORMEnum.MikroORM) {
+			// MikroORM's nativeUpdate takes the related row's primary key for a many-to-one.
+			const row: Record<string, unknown> = { ...rest, image: imageId ?? null };
+			return await this.update(id, row as Partial<Tenant>);
+		}
+		return await this.update(id, { ...rest, imageId });
+	}
+
+	/**
+	 * Refuses an image asset that does not belong to the given tenant.
+	 *
+	 * @param imageId - The image asset the tenant's logo would point at.
+	 * @param tenantId - The tenant being updated.
+	 * @throws BadRequestException when no image asset with that id belongs to the tenant.
+	 */
+	private async assertImageInTenant(imageId: ID, tenantId: ID): Promise<void> {
+		const where = { id: imageId, tenantId };
+		const exists =
+			this.ormType === MultiORMEnum.MikroORM
+				? (await this.mikroOrmRepository.getEntityManager().count(ImageAsset, where)) > 0
+				: await this.typeOrmRepository.manager.getRepository(ImageAsset).existsBy(where);
+		if (!exists) {
+			throw new BadRequestException('The image does not belong to this tenant.');
 		}
 	}
 

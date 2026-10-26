@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-jest.mock('./../../../../core', () => ({
+jest.mock('./../../../../core/context', () => ({
 	RequestContext: { currentTenantId: () => 'a0000000-0000-4000-8000-00000000000a' }
 }));
 jest.mock('./../../../import-record', () => ({
@@ -84,6 +84,103 @@ describe('ImportEntityFieldMapOrCreateHandler', () => {
 			name: 'Renamed',
 			token: 'real-token-value-0123456789',
 			password: 'hunter2hunter2'
+		});
+	});
+
+	it.each([undefined, ''])(
+		'creates a row the archive gives no id (%p), never saving it over a mapping of the table',
+		async (sourceId) => {
+			const repository = buildRepository();
+			// An import record lookup without a source id dropped that condition and answered an arbitrary mapping.
+			const commandBus = {
+				execute: jest.fn(async () => ({ success: true, record: { destinationId: DESTINATION_ID } }))
+			};
+			const handler = new ImportEntityFieldMapOrCreateHandler(commandBus as any);
+
+			await handler.execute(
+				new ImportEntityFieldMapOrCreateCommand(repository as any, [], { name: 'New' }, sourceId as string)
+			);
+
+			expect(commandBus.execute).not.toHaveBeenCalled();
+			expect(repository.create).toHaveBeenCalledWith({ name: 'New' });
+			expect(repository.save).toHaveBeenCalledWith({ name: 'New' });
+		}
+	);
+
+	it('drops a blank id, which mapping turns into null, so the new row gets a generated one', async () => {
+		const repository = buildRepository();
+		const handler = new ImportEntityFieldMapOrCreateHandler({ execute: jest.fn() } as any);
+
+		await handler.execute(
+			new ImportEntityFieldMapOrCreateCommand(repository as any, [], { id: null, name: 'New' }, '')
+		);
+
+		expect(repository.create).toHaveBeenCalledWith({ name: 'New' });
+	});
+
+	describe('user rows', () => {
+		const VERIFIED_AT = new Date('2026-01-15T10:00:00.000Z');
+
+		const buildUserRepository = (liveEmail: string) => ({
+			...buildRepository(),
+			metadata: { target: class User {}, tableName: 'user' },
+			findOne: jest.fn(async () => ({ id: DESTINATION_ID, email: liveEmail }))
+		});
+		const reimport = async (repository: any, row: Record<string, unknown>) => {
+			const commandBus = {
+				execute: jest.fn(async () => ({ success: true, record: { destinationId: DESTINATION_ID } }))
+			};
+			await new ImportEntityFieldMapOrCreateHandler(commandBus as any).execute(
+				new ImportEntityFieldMapOrCreateCommand(repository, [], row, 'src-1')
+			);
+			return repository.save.mock.calls[0][0];
+		};
+
+		it('never takes the e-mail confirmation or a pending code from the archive', async () => {
+			const repository = buildUserRepository('ada@example.com');
+
+			const saved = await reimport(repository, {
+				firstName: 'Ada',
+				email: 'ada@example.com',
+				emailVerifiedAt: VERIFIED_AT,
+				code: 'KNOWN123',
+				codeExpireAt: new Date('2099-01-01T00:00:00.000Z'),
+				emailToken: 'planted'
+			});
+
+			expect(saved).toEqual({ id: DESTINATION_ID, firstName: 'Ada', email: 'ada@example.com' });
+		});
+
+		it('resets the confirmation when the archive moves the user to a different address', async () => {
+			const repository = buildUserRepository('ada@example.com');
+
+			const saved = await reimport(repository, { email: 'someone-else@example.com', emailVerifiedAt: VERIFIED_AT });
+
+			expect(saved).toEqual({
+				id: DESTINATION_ID,
+				email: 'someone-else@example.com',
+				emailVerifiedAt: null,
+				emailToken: null,
+				code: null,
+				codeExpireAt: null
+			});
+		});
+
+		it('keeps the live confirmation when the address only differs in case', async () => {
+			const repository = buildUserRepository('ada@example.com');
+
+			const saved = await reimport(repository, { email: 'Ada@Example.com' });
+
+			expect(saved).toEqual({ id: DESTINATION_ID, email: 'Ada@Example.com' });
+		});
+
+		it('does not look the user up when the archive row carries no address', async () => {
+			const repository = buildUserRepository('ada@example.com');
+
+			const saved = await reimport(repository, { firstName: 'Ada', emailVerifiedAt: VERIFIED_AT });
+
+			expect(saved).toEqual({ id: DESTINATION_ID, firstName: 'Ada' });
+			expect(repository.findOne).not.toHaveBeenCalled();
 		});
 	});
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, TemplateRef, EventEmitter, Output, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, TemplateRef, EventEmitter, Output, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { take, tap, filter } from 'rxjs/operators';
@@ -12,6 +12,7 @@ export type ItemActionType = 'create' | 'edit' | 'delete';
 	selector: 'ga-editable-grid',
 	templateUrl: './gauzy-editable-grid.component.html',
 	styleUrls: ['./gauzy-editable-grid.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class GauzyEditableGridComponent<T extends { id?: string }>

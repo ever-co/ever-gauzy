@@ -18,7 +18,7 @@ jest.mock('../../shared/validators/constraints', () => {
 	);
 });
 
-jest.mock('../../shared/guards', () => ({ TenantPermissionGuard: class TenantPermissionGuard {} }));
+jest.mock('../../shared/guards', () => ({ TenantPermissionGuard: class TenantPermissionGuard {}, FeatureFlagGuard: class FeatureFlagGuard {} }));
 jest.mock('./task-metadata-bootstrap.service', () => ({
 	TaskMetadataBootstrapService: class TaskMetadataBootstrapService {}
 }));

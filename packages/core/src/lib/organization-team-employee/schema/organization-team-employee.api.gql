@@ -1,0 +1,80 @@
+# The organization team membership domain's root fields.
+#
+# `Mutation` is declared by the kernel and extended here: a root operation type exists once for the
+# whole platform, so a domain adds fields to it and never declares its own.
+#
+# **This domain contributes three mutations and no query field at all, and that absence is the
+# delivery rather than an omission.** The delivered controller is a plain controller rather than a
+# resource controller: it declares no list route, no single-row route and no count route, because a
+# membership has no meaning outside the team it belongs to and the roster is read from the team's own
+# surface. The three writes below are the whole of what the controller serves, so they are the whole
+# of what this document declares. A connection field here would be a list no delivered route serves —
+# a second surface with no counterpart to be held to, which is exactly what the two-protocol rule
+# forbids. The object type these fields answer with stays reachable in the composed schema because the
+# mutations reference it, so nothing declared for this domain is an orphan.
+#
+# Every field below is one the delivered REST route already serves, under the same guard chain and
+# with the same permissions, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other. The controller states
+# `ALL_ORG_EDIT` with `ORG_TEAM_EDIT` on the class, and each of its three routes states its own pair
+# beside the handler: the edit keeps the class pair, the active-task edit replaces the second member
+# with `ORG_TEAM_EDIT_ACTIVE_TASK`, and the removal replaces it with `ORG_TEAM_DELETE`. Every field
+# here states the pair its own route states.
+#
+# **Two of the three writes answer with the row read back rather than with the update envelope.** The
+# delivered routes answer with the platform's `UpdateResult`, whose one member a caller reads is the
+# number of rows the write reached. That count is not a scalar this schema declares, and it is not a
+# fact a client acts on: a write reported as having reached no row is a miss the delivered service
+# raises as such rather than an answer of `0`. The fields below therefore perform the same write the
+# route performs and then read the row back through the same service method the route's read would
+# use — the same operation stated in the shape a client reads next anyway.
+#
+# **The third write is a removal, and its answer is the fact of it.** The delivered route answers with
+# the deletion result, whose one member a caller reads is that the row is gone. A boolean is that fact
+# in a scalar this schema carries, and a membership that is not there is the miss the delivered service
+# raises rather than a `false` answered from here.
+#
+# **No write states the tenant.** The delivered services read the tenant from the credential and fall
+# back to a stated one only when the credential carries none — which a request on this endpoint never
+# does — so a caller-stated tenant would be a member that is accepted and ignored. The tenant the
+# delivered query DTO of the removal also accepts is absent for that reason, and the identifier is
+# never a member of a payload: it is the field's own argument, mirroring the path segment the routes
+# carry it in.
+#
+# Money is not a member of anything here and neither is a duration: a membership records a position in
+# a roster, a role, a pair of flags and a task, so no member of this surface is a `Decimal` and none
+# states a unit.
+
+extend type Mutation {
+	"""
+	Edits a membership: the position of the member in the team's roster, whether the tracker records
+	that member's time for the team, and the task the member is working on.
+	"""
+	updateOrganizationTeamEmployee(id: ID!, input: UpdateOrganizationTeamEmployeeInput!): OrganizationTeamEmployee!
+
+	"""
+	Moves a member onto a different task.
+
+	The delivered method is also where the right to change one is decided — a caller that may select an
+	employee may move any member of the scope, a manager of the team may move any of its members, and
+	everyone else may move only themselves — and that decision is not restated here: the field reaches
+	the delivered method and is refused by the same rules, with the same refusal shape the REST route
+	answers with.
+	"""
+	updateOrganizationTeamEmployeeActiveTask(
+		id: ID!
+		input: OrganizationTeamEmployeeActiveTaskInput!
+	): OrganizationTeamEmployee!
+
+	"""
+	Removes a membership outright: the tasks the member held in this team are unassigned first, and the
+	employee's own record is untouched. The membership is scoped by the identifier together with the
+	organization and the team the delivered route takes from its query string, so the identifier alone
+	does not name a row and a membership of another scope is not reached.
+
+	The answer is `true` once the write has completed. A membership that is not there is the miss the
+	delivered service raises rather than a `false` answered from here, so a caller never has to tell
+	"nothing was removed" from "the removal did not happen".
+	"""
+	deleteOrganizationTeamEmployee(id: ID!, options: OrganizationTeamEmployeeDeleteInput!): Boolean!
+}

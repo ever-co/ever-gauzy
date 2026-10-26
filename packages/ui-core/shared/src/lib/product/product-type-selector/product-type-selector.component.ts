@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output, ChangeDetectionStrategy } from '@angular/core';
 import {
 	IOrganization,
 	IProductTypeTranslatable,
@@ -25,6 +25,7 @@ import { ErrorHandlingService, ProductTypeService, Store } from '@gauzy/ui-core/
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProductTypeSelectorComponent implements OnInit, OnDestroy {

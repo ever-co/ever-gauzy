@@ -24,45 +24,41 @@ const requestContext = {
 	permissions: [] as string[]
 };
 
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		FavoriteService: () => () => undefined,
-		EventBus: class {},
-		MentionService: class {},
-		CreateEntitySubscriptionEvent: class {
-			constructor(public readonly input: any) {}
-		},
-		RequestContext: {
-			currentTenantId: () => requestContext.tenantId,
-			currentOrganizationId: () => requestContext.organizationId,
-			currentUserId: () => requestContext.userId,
-			currentEmployeeId: () => requestContext.employeeId,
-			currentRequestContext: () => ({}),
-			hasPermission: (permission: string) => requestContext.permissions.includes(permission)
-		},
-		TenantAwareCrudService: class {
-			protected typeOrmRepository: any;
-			constructor(typeOrmRepository: any) {
-				this.typeOrmRepository = typeOrmRepository;
-			}
-		},
-		prepareSQLQuery: (sql: string) => sql,
-		sanitizeRichHtml: (html: string) => sanitizeRichHtmlMock(html),
-		// Mock drift, found while working on TASK 9 of the improvement roadmap: `document.service.ts`
-		// calls the real `parseFindOptionsRelations` (converts the legacy string-array `relations`
-		// form TypeORM >= 1.0 rejects into its object form — see the big comment on
-		// `findOneWithinScope`), but this hand-written `@gauzy/core` mock never grew that export, so
-		// EVERY call to `findOneScoped(id, ['parent' | 'children'])` threw `... is not a function`
-		// before reaching the fake repository — the three "joined relations are scoped too" tests
-		// below never actually ran the scoping logic they exist to pin. This is a simplified replica
-		// (flat names only, no dot-path nesting) matching what the fake `findOne` below actually
-		// receives; the real function's full behavior is covered separately in `packages/core`.
-		parseFindOptionsRelations: (relations: string[] = []) =>
-			Object.fromEntries(relations.map((relation) => [relation, true]))
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/core', () => ({
+	FavoriteService: () => () => undefined,
+	EventBus: class {},
+	MentionService: class {},
+	CreateEntitySubscriptionEvent: class {
+		constructor(public readonly input: any) {}
+	},
+	RequestContext: {
+		currentTenantId: () => requestContext.tenantId,
+		currentOrganizationId: () => requestContext.organizationId,
+		currentUserId: () => requestContext.userId,
+		currentEmployeeId: () => requestContext.employeeId,
+		currentRequestContext: () => ({}),
+		hasPermission: (permission: string) => requestContext.permissions.includes(permission)
+	},
+	TenantAwareCrudService: class {
+		protected typeOrmRepository: any;
+		constructor(typeOrmRepository: any) {
+			this.typeOrmRepository = typeOrmRepository;
+		}
+	},
+	prepareSQLQuery: (sql: string) => sql,
+	sanitizeRichHtml: (html: string) => sanitizeRichHtmlMock(html),
+	// Mock drift, found while working on TASK 9 of the improvement roadmap: `document.service.ts`
+	// calls the real `parseFindOptionsRelations` (converts the legacy string-array `relations`
+	// form TypeORM >= 1.0 rejects into its object form — see the big comment on
+	// `findOneWithinScope`), but this hand-written `@gauzy/core` mock never grew that export, so
+	// EVERY call to `findOneScoped(id, ['parent' | 'children'])` threw `... is not a function`
+	// before reaching the fake repository — the three "joined relations are scoped too" tests
+	// below never actually ran the scoping logic they exist to pin. This is a simplified replica
+	// (flat names only, no dot-path nesting) matching what the fake `findOne` below actually
+	// receives; the real function's full behavior is covered separately in `packages/core`.
+	parseFindOptionsRelations: (relations: string[] = []) =>
+		Object.fromEntries(relations.map((relation) => [relation, true]))
+}));
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../entities/document-link.entity', () => ({ DocumentLink: class {} }));
 jest.mock('../events/document.event', () => ({ DocumentEvent: class {} }));
@@ -75,7 +71,7 @@ jest.mock('./document-settings.service', () => ({ DocumentSettingsService: class
 jest.mock('../dto', () => ({}));
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { DocumentVisibilityEnum, PermissionsEnum } from '@gauzy/contracts';
+import { BaseEntityEnum, DocumentVisibilityEnum, PermissionsEnum } from '@gauzy/contracts';
 import { DOCS_ORGANIZATION_REQUIRED, DOCS_WRITE_FORBIDDEN } from '../docs.constants';
 import { DocumentService } from './document.service';
 
@@ -115,11 +111,14 @@ const recordingQueryBuilder = () => {
  * @param access Stubbed answers of the share-overlay service.
  */
 const buildService = (rows: any[] = [], access: { canRead?: boolean; canWrite?: boolean } = {}) => {
-	const findOne = jest.fn(async ({ where }: any) =>
-		rows.find(
-			(row) =>
-				row.id === where.id && row.tenantId === where.tenantId && row.organizationId === where.organizationId
-		) ?? null
+	const findOne = jest.fn(
+		async ({ where }: any) =>
+			rows.find(
+				(row) =>
+					row.id === where.id &&
+					row.tenantId === where.tenantId &&
+					row.organizationId === where.organizationId
+			) ?? null
 	);
 	const queryBuilder = recordingQueryBuilder();
 	const repository: any = {
@@ -430,5 +429,177 @@ describe('DocumentService — HTML sanitization', () => {
 
 		expect(sanitizeRichHtmlMock).toHaveBeenCalledWith('<b>x</b>');
 		expect((service as any).save.mock.calls[0][0].contentHtml).toBe('sanitized(<b>x</b>)');
+	});
+});
+
+/**
+ * `updatedAt` is the editor's optimistic-concurrency token (`expectedUpdatedAt`, 409 on a mismatch).
+ * Measured on a running API (SQLite): the first save of every version-snapshot window left it
+ * UNCHANGED — `captureSnapshotIfNeeded` bumps `version` with an `update()`, which stamps the row's
+ * `updatedAt`, and the save that followed spread the row as LOADED, so TypeORM saw a "changed"
+ * `updatedAt` and wrote the stale value back. The response carried the old token too, so a second
+ * editor holding that same token could save over the first one without a conflict.
+ */
+describe('DocumentService — content save concurrency token', () => {
+	it('never writes the loaded updatedAt back: every content save states a newer token', async () => {
+		const loaded = new Date('2026-10-13T22:04:25.000Z');
+		const { service } = buildService([documentRow({ kind: 'PAGE', updatedAt: loaded, version: 3 })], {
+			canWrite: true
+		});
+		(service as any).save = jest.fn(async (input: any) => ({ ...input, updatedAt: new Date() }));
+		(service as any).documentVersionService = {
+			// What the real one does when a snapshot is due: bumps the counter (and so the row).
+			captureSnapshotIfNeeded: jest.fn(async (document: any) => {
+				document.version = (document.version ?? 1) + 1;
+				return {};
+			})
+		};
+
+		await service.updateContent('doc-1', {
+			contentJson: emptyDoc(),
+			expectedUpdatedAt: loaded.toISOString(),
+			organizationId: 'org-1'
+		} as any);
+
+		const saved = (service as any).save.mock.calls[0][0];
+		expect(saved.updatedAt).toBeInstanceOf(Date);
+		expect(saved.updatedAt.getTime()).toBeGreaterThan(loaded.getTime());
+		expect(saved.version).toBe(4); // the counter the snapshot moved still travels with the save
+		expect(saved.id).toBe('doc-1');
+	});
+});
+
+/**
+ * Greptile on #10559: leaving `updatedAt` to the ORM is not enough on SQLite, whose
+ * `CURRENT_TIMESTAMP` has one-second precision — two saves inside one second would leave the token
+ * unchanged. The save states its own token, strictly newer than the one it replaces.
+ */
+describe('DocumentService — content save token always advances', () => {
+	const saveWithClock = async (loaded: Date, now: number) => {
+		const { service } = buildService([documentRow({ kind: 'PAGE', updatedAt: loaded })], { canWrite: true });
+		(service as any).save = jest.fn(async (input: any) => input);
+		(service as any).documentVersionService = { captureSnapshotIfNeeded: jest.fn() };
+		const clock = jest.spyOn(Date, 'now').mockReturnValue(now);
+		try {
+			await service.updateContent('doc-1', {
+				contentJson: emptyDoc(),
+				expectedUpdatedAt: loaded.toISOString(),
+				organizationId: 'org-1'
+			} as any);
+		} finally {
+			clock.mockRestore();
+		}
+		return (service as any).save.mock.calls[0][0].updatedAt as Date;
+	};
+
+	it('stamps the current time, at millisecond resolution', async () => {
+		const loaded = new Date('2026-10-14T01:00:34.000Z');
+		const token = await saveWithClock(loaded, Date.parse('2026-10-14T01:00:34.250Z'));
+		expect(token).toEqual(new Date('2026-10-14T01:00:34.250Z'));
+	});
+
+	it('moves past the loaded token even when the clock has not (same millisecond, or a clock behind)', async () => {
+		const loaded = new Date('2026-10-14T01:00:34.250Z');
+		expect((await saveWithClock(loaded, loaded.getTime())).getTime()).toBe(loaded.getTime() + 1);
+		expect((await saveWithClock(loaded, loaded.getTime() - 5_000)).getTime()).toBe(loaded.getTime() + 1);
+	});
+});
+
+/**
+ * A mention added in a page is created in the page's organization, as the task and comment edits do since
+ * develop #10531: `updateEntityMentions` published the new mentions without one, so the mention, its
+ * notification and its subscription were not in the organization the page belongs to.
+ */
+describe('DocumentService — mentions carry the document organization', () => {
+	it('on create', async () => {
+		const { service, mentionService } = buildService();
+		(service as any).create = jest.fn(async (input: any) => ({ ...input, id: 'doc-new' }));
+
+		await service.createDocument({ kind: 'PAGE', name: 'p', mentionEmployeeIds: ['employee-2'] } as any);
+
+		expect(mentionService.updateEntityMentions).toHaveBeenCalledWith(
+			BaseEntityEnum.Document,
+			'doc-new',
+			['employee-2'],
+			undefined,
+			undefined,
+			'org-1'
+		);
+	});
+
+	it('on a content save', async () => {
+		const { service, mentionService } = buildService([documentRow({ kind: 'PAGE', updatedAt: new Date(0) })], {
+			canWrite: true
+		});
+		(service as any).save = jest.fn(async (input: any) => input);
+		(service as any).documentVersionService = { captureSnapshotIfNeeded: jest.fn() };
+
+		await service.updateContent('doc-1', { contentJson: emptyDoc(), mentionEmployeeIds: ['employee-2'] } as any);
+
+		expect(mentionService.updateEntityMentions).toHaveBeenCalledWith(
+			BaseEntityEnum.Document,
+			'doc-1',
+			['employee-2'],
+			undefined,
+			undefined,
+			'org-1'
+		);
+	});
+});
+
+/**
+ * An `EDIT` share lets its grantee write the document, and `PUT /documents/:id` accepted `visibility`, `isLocked` and
+ * `organizationId` under that check alone: the grantee of the owner's PRIVATE page could publish it to the whole
+ * organization, lift the owner's lock, or move it into another organization (keeping their share, which matches on
+ * the document id only). Those fields are now the owner's, or a DOCS_MANAGE holder's, as the shares are.
+ */
+describe('DocumentService — the owner keeps visibility, lock and organization', () => {
+	const privatePage = () =>
+		documentRow({ createdByUserId: 'owner-1', visibility: DocumentVisibilityEnum.PRIVATE, isLocked: true });
+
+	const asGrantee = (administersShares: boolean) => {
+		// The grantee reads and writes the page through their EDIT share.
+		const built = buildService([privatePage()], { canRead: true, canWrite: true });
+		built.accessService.canAdministerShares = jest.fn(async () => administersShares);
+		(built.service as any).save = jest.fn(async (input: any) => input);
+		return built;
+	};
+
+	it.each([
+		['publishes it to the organization', { visibility: DocumentVisibilityEnum.ORGANIZATION }],
+		["lifts the owner's lock", { isLocked: false }],
+		['moves it into another organization', { organizationId: 'org-2' }]
+	])('refuses an EDIT grantee who %s, before anything is written', async (_label, input) => {
+		const { service } = asGrantee(false);
+
+		await expect(service.updateDocument('doc-1', input as any)).rejects.toMatchObject({
+			response: { code: DOCS_WRITE_FORBIDDEN }
+		});
+		expect((service as any).save).not.toHaveBeenCalled();
+	});
+
+	it('still lets the grantee edit the rest, and resend the current values (control)', async () => {
+		const { service } = asGrantee(false);
+
+		await expect(
+			service.updateDocument('doc-1', {
+				name: 'Renamed',
+				visibility: DocumentVisibilityEnum.PRIVATE,
+				isLocked: true,
+				organizationId: 'org-1'
+			} as any)
+		).resolves.toMatchObject({ name: 'Renamed', visibility: DocumentVisibilityEnum.PRIVATE });
+	});
+
+	it('lets the owner, or a DOCS_MANAGE holder, change them (control)', async () => {
+		const { service, accessService } = asGrantee(true);
+
+		await expect(
+			service.updateDocument('doc-1', { visibility: DocumentVisibilityEnum.ORGANIZATION, isLocked: false } as any)
+		).resolves.toMatchObject({ visibility: DocumentVisibilityEnum.ORGANIZATION, isLocked: false });
+		expect(accessService.canAdministerShares).toHaveBeenCalledWith({
+			createdByUserId: 'owner-1',
+			visibility: DocumentVisibilityEnum.PRIVATE
+		});
 	});
 });

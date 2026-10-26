@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { filter, tap } from 'rxjs/operators';
@@ -12,6 +12,7 @@ import { Store, ActivepiecesStoreService } from '@gauzy/ui-core/core';
 @Component({
 	selector: 'ngx-activepieces',
 	templateUrl: './activepieces.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ActivepiecesComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

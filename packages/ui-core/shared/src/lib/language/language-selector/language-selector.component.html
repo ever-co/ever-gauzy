@@ -16,7 +16,7 @@
   >
     <ng-template ng-label-tmp let-item="item">
       <span class="language-option">
-        @if (getFlagUrl(item?.code); as flagUrl) {
+        @if (getFlagUrl($safeNavigationMigration(item?.code)); as flagUrl) {
           <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" width="18" height="12" alt="" />
         }
         <span class="language-option-name">{{ item?.name }}</span>
@@ -24,7 +24,7 @@
     </ng-template>
     <ng-template ng-option-tmp let-item="item">
       <span class="language-option">
-        @if (getFlagUrl(item?.code); as flagUrl) {
+        @if (getFlagUrl($safeNavigationMigration(item?.code)); as flagUrl) {
           <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" width="18" height="12" alt="" />
         }
         <span class="language-option-name">{{ item?.name }}</span>
@@ -44,7 +44,7 @@
   >
     <nb-select-label>
       <span class="language-option">
-        @if (getFlagUrl(selectedLanguage?.code); as flagUrl) {
+        @if (getFlagUrl($safeNavigationMigration(selectedLanguage?.code)); as flagUrl) {
           <img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" width="18" height="12" alt="" />
         }
         <span class="language-option-name">{{ selectedLanguage?.name }}</span>

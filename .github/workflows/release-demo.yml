@@ -35,7 +35,7 @@ jobs:
 
     strategy:
       matrix:
-        os: ["${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}"]
+        os: ["${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}"]
 
     steps:
       - name: Check out Git repository
@@ -46,13 +46,33 @@ jobs:
       # tag exists without its release (a cancelled run used to strand one forever: the
       # next run computes the NEXT version and never backfills the orphan).
       - name: Calculate the next version (no tag pushed)
-        uses: mathieudutour/github-tag-action@v6.1
+        uses: mathieudutour/github-tag-action@v7
         id: tag_version
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           dry_run: true
           release_branches: master,main,develop,stage
           pre_release_branches: something_to_possible_use_later
+          # v7 analyzes commits as Conventional Commits by default, v6 analyzed them as Angular
+          # (`feat!:` was a patch there and is a major in v7). Angular keeps the version math as it was.
+          commit_analyzer_preset: angular
+
+      # v6 always returned a version: with no eligible commit since the newest tag it still applied
+      # default_bump (patch). v7 returns an empty new_tag instead - e.g. when this branch is
+      # fast-forwarded to a commit that is already behind the newest tag - and the release step
+      # below would then fail and skip every build keyed off this workflow. In that case only, this
+      # second calculation forces the patch bump v6 made.
+      - name: Calculate the next version - patch fallback (no tag pushed)
+        if: steps.tag_version.outputs.new_tag == ''
+        uses: mathieudutour/github-tag-action@v7
+        id: tag_version_fallback
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dry_run: true
+          release_branches: master,main,develop,stage
+          pre_release_branches: something_to_possible_use_later
+          commit_analyzer_preset: angular
+          force_bump: patch
 
       - name: Create the tag and the GitHub release (one call)
         uses: ncipollo/release-action@v1
@@ -61,8 +81,8 @@ jobs:
           generateReleaseNotes: true
           prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ steps.tag_version.outputs.new_tag }}
+          tag: ${{ steps.tag_version.outputs.new_tag || steps.tag_version_fallback.outputs.new_tag }}
           # Create the tag as part of this call, pinned to the commit that was built.
           commit: ${{ github.sha }}
-          name: ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog }}
+          name: ${{ steps.tag_version.outputs.new_tag || steps.tag_version_fallback.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog || steps.tag_version_fallback.outputs.changelog }}

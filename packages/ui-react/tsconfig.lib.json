@@ -9,5 +9,13 @@
 		"jsx": "react-jsx"
 	},
 	"exclude": ["src/**/*.spec.ts", "src/test-setup.ts", "jest.config.ts", "src/**/*.test.ts"],
-	"include": ["src/**/*.ts", "src/**/*.tsx"]
+	"include": ["src/**/*.ts", "src/**/*.tsx"],
+	"angularCompilerOptions": {
+		"extendedDiagnostics": {
+			"checks": {
+				"nullishCoalescingNotNullable": "suppress",
+				"optionalChainNotNullable": "suppress"
+			}
+		}
+	}
 }

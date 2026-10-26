@@ -1,4 +1,4 @@
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { EMPTY, from, interval, Subject } from 'rxjs';
@@ -13,6 +13,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 @Component({
 	styleUrls: ['./server-down.page.scss'],
 	templateUrl: 'server-down.page.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [NbLayoutModule, TranslatePipe]
 })
 export class ServerDownPage implements OnInit, OnDestroy {

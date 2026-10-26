@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 
 export interface AlertModalOptions {
@@ -11,6 +11,7 @@ export interface AlertModalOptions {
     selector: 'ga-alert-modal',
     templateUrl: './alert-modal.component.html',
     styleUrls: ['./alert-modal.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AlertModalComponent implements OnInit {

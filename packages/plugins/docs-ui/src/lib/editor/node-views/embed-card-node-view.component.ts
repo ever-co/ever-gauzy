@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AngularNodeViewComponent } from '../node-view/angular-node-view-renderer';
 
 /**
@@ -12,7 +12,7 @@ import { AngularNodeViewComponent } from '../node-view/angular-node-view-rendere
 @Component({
 	selector: 'gz-embed-card-node-view',
 	standalone: true,
-	imports: [CommonModule, TranslateModule, NbIconModule],
+	imports: [CommonModule, TranslatePipe, NbIconModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<div class="gz-embed-card" [class.selected]="selected()" tabindex="0" role="group">

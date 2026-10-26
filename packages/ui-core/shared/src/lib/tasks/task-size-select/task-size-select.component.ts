@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
 import { combineLatest, debounceTime, firstValueFrom, Subject } from 'rxjs';
@@ -10,6 +10,7 @@ import {
 	IPagination,
 	ITaskSize,
 	ITaskSizeFindInput,
+	PermissionsEnum,
 	TaskSizeEnum
 } from '@gauzy/contracts';
 import { distinctUntilChange, sluggable } from '@gauzy/ui-core/common';
@@ -30,6 +31,7 @@ import { TaskSizesService } from '@gauzy/ui-core/core';
 			multi: true
 		}
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TaskSizeSelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
@@ -84,6 +86,14 @@ export class TaskSizeSelectComponent extends TranslationBaseComponent implements
 	}
 	@Input() set addTag(value: boolean) {
 		this._addTag = value;
+	}
+
+	/**
+	 * Whether the select offers to create a new size from what the user typed: only when `addTag` allows it and
+	 * the user holds `ORG_TASK_SETTING`, the grant the API requires to create one.
+	 */
+	get canCreate(): boolean {
+		return this.addTag && this.store.hasPermission(PermissionsEnum.ORG_TASK_SETTING);
 	}
 
 	/*

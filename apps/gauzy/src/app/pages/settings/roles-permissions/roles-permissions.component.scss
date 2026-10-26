@@ -4,15 +4,28 @@
   width: 100%;
 }
 
+$divider: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+$hairline: inset 0 0 0 1px var(--gauzy-border-default-color, var(--border-basic-color-3));
+$muted: var(--text-hint-color);
+
 .delete,
 .create {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   width: fit-content;
   color: nb-theme(color-danger-default);
   padding-right: 10px;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
   // Was `600px`. `font-weight` takes a number, not a length, so the declaration
   // was invalid and dropped at parse time — the "Create new role" / "Delete
   // existing role" lines have been rendering at the inherited weight ever since.
-  font-weight: 600;
+  font-weight: 500;
+
+  button[nbButton] {
+    margin: 0;
+  }
 }
 
 .delete {
@@ -23,15 +36,138 @@
   color: nb-theme(color-success-default);
 }
 
+// ── Toolbar ─────────────────────────────────────────────────────────────
+// Role picker, permission search and the role action on one row of 2rem
+// controls; wraps on narrow screens.
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.toolbar-field {
+  flex: 1 1 16rem;
+  min-width: 0;
+
+  nb-form-field {
+    width: 100%;
+  }
+
+  input[nbInput] {
+    height: 2rem;
+    // The global `input` rule sets a ~2.375rem min-height that out-lasts `height`.
+    min-height: 2rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  // The selected role's name: a value, not a heading.
+  &.role-field input[nbInput] {
+    font-weight: 500;
+  }
+
+  &.search-field input[nbInput] {
+    font-weight: 400;
+  }
+
+  nb-icon[nbPrefix] {
+    font-size: 1rem;
+    color: $muted;
+  }
+}
+
+.toolbar-actions {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+
+  &:empty {
+    display: none;
+  }
+}
+
+// Titled sections inside each panel (Dashboards, Finance, …): File Storage's
+// section-title style — small caps in the hint colour — with a rule between
+// sections. Still one column per panel.
+// Each title is a quiet tinted band ruled above and below, so a section reads
+// as a block instead of one more row in a 160-row ladder.
+.section-title {
+  margin: 0;
+  padding: 0.3125rem 1rem;
+  border-bottom: $divider;
+  background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.06));
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $muted;
+}
+
+.permission-section + .permission-section .section-title {
+  border-top: $divider;
+}
+
+// The dark themes give an OFF switch `color-basic-transparent-default` — an ~8%
+// tint — so on the dark panel it all but vanished, and the read-only
+// Administration switches more so. A visible track and edge for these themes
+// only; Gauzy Light already sets a solid grey track and is left alone.
+@each $dark in (gauzy-dark, dark, cosmic, material-dark) {
+  :host-context(.nb-theme-#{$dark}) nb-toggle {
+    --toggle-basic-background-color: rgba(255, 255, 255, 0.16);
+    --toggle-basic-border-color: rgba(255, 255, 255, 0.24);
+    --toggle-basic-hover-background-color: rgba(255, 255, 255, 0.22);
+    --toggle-basic-hover-border-color: rgba(255, 255, 255, 0.32);
+    --toggle-basic-focus-background-color: rgba(255, 255, 255, 0.22);
+    --toggle-basic-focus-border-color: rgba(255, 255, 255, 0.32);
+    --toggle-basic-disabled-background-color: rgba(255, 255, 255, 0.08);
+    --toggle-basic-disabled-border-color: rgba(255, 255, 255, 0.14);
+  }
+}
+
+// One row per permission: 12px label on the start side, the switch on the end,
+// hairline between rows — the Settings > General / File Storage row vocabulary.
 .permission-items-col {
   nb-toggle {
     display: flex;
     flex-direction: column;
+    // A smaller switch for a dense list: 28×14 instead of the theme's 32×16.
+    // Nebular derives the knob's travel from these, so it stays aligned.
+    --toggle-width: 1.75rem;
+    --toggle-height: 0.875rem;
+    --toggle-switcher-size: 0.625rem;
+
+    & + nb-toggle {
+      border-top: $divider;
+    }
 
     ::ng-deep .toggle-label {
       display: flex;
+      align-items: center;
       justify-content: space-between;
+      gap: 1rem;
       flex-grow: 1;
+      margin: 0;
+      // ~28px rows (was ~36px).
+      padding: 0.3125rem 1rem;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+
+      &:hover {
+        background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.06));
+      }
+    }
+
+    // A group this role cannot change: no hover row, no pointer. Matched on the
+    // native input Nebular disables, inside `::ng-deep` so the selector is not
+    // scoped to this component's view.
+    ::ng-deep .toggle-label:has(input:disabled) {
+      cursor: default;
+
+      &:hover {
+        background-color: transparent;
+      }
     }
   }
 }
@@ -100,10 +236,16 @@
   }
 }
 
+// Measured on develop (CDP, 1440×900): the frame described above does not bind.
+// `.settings-shell` carries `min-height: 100%` and grows with its content, so
+// this box ends up as tall as the full list (~6000px) and `nb-layout-column` is
+// what actually scrolls. `overflow: auto` here then only made this box the
+// scroll container of the sticky panel headers — one that never scrolls — so
+// they could not stick. `visible` lets them stick to the column that does.
 .content {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow: visible;
   padding: 0;
   border-radius: nb-theme(border-radius);
 }
@@ -115,12 +257,14 @@
   display: flex;
   flex-direction: column;
 
+  // Was 16px / 600 on every one of ~100 rows, which made the list read as a
+  // wall of headings. 12px / 400 is the body size of the other Settings pages.
   strong {
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 19px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.125rem;
     letter-spacing: 0em;
-    text-align: left;
+    text-align: start;
     color: nb-theme(gauzy-text-color-1);
   }
 }
@@ -131,18 +275,73 @@
     background-color: nb-theme(gauzy-card-2);
     overflow: unset;
 
+    // The General / Administration groups: transparent panels drawn by their
+    // hairline, as File Storage's provider card — no filled header bar, no
+    // second card fill, no shadow.
+    // No `overflow: hidden`: it would make the panel the sticky header's
+    // scroll container, and the header would never stick.
     nb-card {
+      background-color: transparent;
+      border: 0;
+      border-radius: var(--gauzy-radius-sm, 0.5rem);
+      box-shadow: $hairline;
+
+      // Title (+ help) on the start side, the enabled count on the end side.
+      // Sticky in `nb-layout-column` (the element that scrolls — see `.content`),
+      // so the group stays named while its long list scrolls.
+      //
+      // `top` is minus the column's top padding: sticky offsets count from the
+      // column's content box, which would leave a padding-high strip above the
+      // header where rows still show. The fill must be opaque to cover the rows
+      // passing underneath; `gauzy-card-2` alone is a ~3% tint, so it is painted
+      // over the layout background — the same colour the card shows.
       nb-card-header {
-        background-color: nb-theme(gauzy-sidebar-background-3);
-        padding: 0.625rem;
-        font-size: 12px;
-        font-weight: 600;
-        line-height: 15px;
+        position: sticky;
+        top: calc(-1 * var(--layout-padding-top, 1.5rem));
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        background: linear-gradient(nb-theme(gauzy-card-2), nb-theme(gauzy-card-2)),
+          var(--layout-background-color, var(--background-basic-color-2));
+        padding: 0.5rem 1rem;
+        border-bottom: $divider;
+        border-radius: var(--gauzy-radius-sm, 0.5rem) var(--gauzy-radius-sm, 0.5rem) 0 0;
+        // Keeps the panel's hairline visible along the header's sides.
+        box-shadow: inset 1px 0 0 var(--gauzy-border-default-color, var(--border-basic-color-3)),
+          inset -1px 0 0 var(--gauzy-border-default-color, var(--border-basic-color-3)),
+          inset 0 1px 0 var(--gauzy-border-default-color, var(--border-basic-color-3));
+        font-size: 0.8125rem;
+        font-weight: 500;
+        line-height: 1.25rem;
         letter-spacing: 0em;
+
+        .group-title {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.375rem;
+          min-width: 0;
+        }
+
+        .group-count {
+          flex: 0 0 auto;
+          font-size: 0.75rem;
+          font-weight: 400;
+          color: $muted;
+          font-variant-numeric: tabular-nums;
+        }
+
+        nb-icon {
+          font-size: 0.875rem;
+          color: $muted;
+          cursor: help;
+        }
       }
 
       nb-card-body {
-        background-color: nb-theme(gauzy-card-1);
+        padding: 0.25rem 0;
+        background-color: transparent;
         border-radius: 0 0 nb-theme(border-radius) nb-theme(border-radius);
       }
     }

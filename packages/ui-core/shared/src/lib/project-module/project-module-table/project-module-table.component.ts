@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { first, firstValueFrom, tap } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -22,6 +22,7 @@ import { ProjectModuleMutationComponent } from '../project-module-mutation/proje
 	selector: 'ngx-project-module-table',
 	templateUrl: './project-module-table.component.html',
 	styleUrl: './project-module-table.component.scss',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProjectModuleTableComponent extends TranslationBaseComponent implements OnInit {

@@ -7,6 +7,7 @@ import {
 	PayloadTooLargeException
 } from '@nestjs/common';
 import { createHash } from 'crypto';
+import { FindOptionsWhere } from 'typeorm';
 import {
 	DocumentKindEnum,
 	DocumentKnowledgeStatusEnum,
@@ -20,7 +21,13 @@ import {
 	UploadedFile
 } from '@gauzy/contracts';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
-import { FileStorage, RequestContext } from '@gauzy/core';
+import {
+	FileContentTooLargeError,
+	FileStorage,
+	readStorageFileAsBuffer,
+	RequestContext,
+	StorageFileReadError
+} from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import {
 	DOCS_FILE_TOO_LARGE,
@@ -48,12 +55,6 @@ import { IDocumentQuotaState } from './quota.calculator';
 
 /** Sources a client may claim on the upload endpoint — everything else is reserved. */
 const UPLOAD_SOURCE_ALLOWLIST = [DocumentSourceEnum.UPLOAD, DocumentSourceEnum.CHAT, DocumentSourceEnum.EDITOR];
-
-/**
- * Sources that are system-originated captures: over quota they WARN and proceed, so
- * automated intake never silently drops a business record (08 §5.7).
- */
-const QUOTA_WARN_ONLY_SOURCES = [DocumentSourceEnum.CHAT, DocumentSourceEnum.EMAIL];
 
 /**
  * The ONLY stored types a byte response may render in the browser tab (`08 §5.5`). Everything
@@ -113,8 +114,6 @@ interface IUploadBatchContext {
 	classifyWithAi: boolean;
 	/** Mutable: the accepted bytes of this batch accumulate into `usedBytes`. */
 	quotaState: IDocumentQuotaState;
-	/** True for system-originated captures — over quota they WARN and proceed. */
-	quotaWarnOnly: boolean;
 }
 
 /**
@@ -298,8 +297,7 @@ export class DocumentUploadService {
 			importToKnowledge: input.importToKnowledge ?? defaults.importToKnowledgeDefault,
 			defaultVisibility: input.visibility ?? defaults.defaultVisibility,
 			classifyWithAi: input.classifyWithAi ?? defaults.autoClassify,
-			quotaState,
-			quotaWarnOnly: QUOTA_WARN_ONLY_SOURCES.includes(seed.source)
+			quotaState
 		};
 	}
 
@@ -334,14 +332,30 @@ export class DocumentUploadService {
 				};
 			}
 
-			// 1b) Organization storage quota. System captures warn and proceed.
+			// 1b) Organization storage quota.
 			const overQuota = this.rejectOverQuota(file, context);
 			if (overQuota) {
 				return overQuota;
 			}
 
-			// 2) Content sniffing — never trust the client MIME.
-			const buffer = (await context.provider.getFile(file.key)) as Buffer;
+			// 2) Content sniffing — never trust the client MIME. Read as bytes whatever the provider answers:
+			// the S3, Wasabi and DigitalOcean providers return the SDK's body stream, not a Buffer.
+			let buffer: Buffer;
+			try {
+				buffer = await readStorageFileAsBuffer(context.provider, file.key, { maxBytes: context.maxFileSize });
+			} catch (error) {
+				if (error instanceof FileContentTooLargeError) {
+					// The stored bytes outgrow the size the upload reported: the same rejection as step 1.
+					return {
+						oversize: true,
+						rejection: {
+							code: DOCS_FILE_TOO_LARGE,
+							message: `File exceeds the ${context.maxFileSize}-byte limit`
+						}
+					};
+				}
+				throw error;
+			}
 			const sniff = sniffFile(buffer, fileName, file.mimetype);
 			if (!sniff.ok) {
 				return { rejection: { code: sniff.code, message: sniff.message } };
@@ -361,26 +375,22 @@ export class DocumentUploadService {
 	}
 
 	/**
-	 * Organization storage quota check (08 §5.7). System-originated captures (`QUOTA_WARN_ONLY_
-	 * SOURCES`) WARN and proceed so automated intake never silently drops a business record;
-	 * every other source is rejected.
+	 * Organization storage quota check (08 §5.7): a file that would exceed the quota is rejected,
+	 * whatever source the upload claims.
+	 *
+	 * The quota's warn-and-proceed rule is for system-originated captures, so automated intake never
+	 * silently drops a business record, and those (the chat and inbound-mail captures) write their
+	 * documents without passing through this endpoint. Applied here, it was decided by the `source` the
+	 * client claims, and `CHAT` is claimable: any uploader bypassed the quota by stating it.
 	 *
 	 * @param file The stored upload.
 	 * @param context The per-batch context (its `quotaState` carries the running batch usage).
 	 * @returns The rejection to record, or `null` when the file may proceed.
 	 */
 	private rejectOverQuota(file: UploadedFile, context: IUploadBatchContext): IUploadFileOutcome | null {
-		const { organizationId, quotaState, source } = context;
+		const { quotaState } = context;
 
 		if (!this.documentQuotaService.exceeds(file.size, quotaState)) {
-			return null;
-		}
-		if (context.quotaWarnOnly) {
-			this.logger.warn(
-				`Organization ${organizationId} is over its documents storage quota ` +
-					`(${quotaState.usedBytes}/${quotaState.quotaBytes} bytes) — accepting the ` +
-					`${source} capture anyway so automated intake never drops a record.`
-			);
 			return null;
 		}
 		return {
@@ -397,22 +407,25 @@ export class DocumentUploadService {
 	 * Advisory in-org dedup lookup — it never blocks the upload, it only reports the twin.
 	 *
 	 * Soft-deleted rows are excluded by default: dedup is against active rows only, always
-	 * composite with tenant + organization (no cross-tenant lookup exists).
+	 * composite with tenant + organization (no cross-tenant lookup exists). Only a twin the
+	 * uploader may read is reported: the id of another member's PRIVATE file told the uploader
+	 * that someone in the organization keeps a file with these very bytes.
 	 *
 	 * @param sha256 The digest of the stored bytes.
 	 * @param context The per-batch context.
 	 * @returns The existing document id holder, or undefined/null when there is no twin.
 	 */
 	private async findDuplicate(sha256: string, context: IUploadBatchContext): Promise<Document> {
-		return this.typeOrmDocumentRepository.findOne({
-			where: {
-				tenantId: context.tenantId,
-				organizationId: context.organizationId,
-				kind: DocumentKindEnum.FILE,
-				sha256
-			},
-			select: { id: true }
+		const qb = this.typeOrmDocumentRepository.createQueryBuilder('document');
+		qb.select(['document.id']);
+		qb.where({
+			tenantId: context.tenantId,
+			organizationId: context.organizationId,
+			kind: DocumentKindEnum.FILE,
+			sha256
 		});
+		this.documentService.applyVisibilityScope(qb);
+		return qb.getOne();
 	}
 
 	/**
@@ -576,7 +589,18 @@ export class DocumentUploadService {
 			}
 
 			const fileName = (file.originalname ?? file.filename ?? document.name ?? 'file').slice(0, 255);
-			const buffer = (await provider.getFile(file.key)) as Buffer;
+			let buffer: Buffer;
+			try {
+				buffer = await readStorageFileAsBuffer(provider, file.key, { maxBytes: config.maxFileSize });
+			} catch (error) {
+				if (error instanceof FileContentTooLargeError) {
+					throw new PayloadTooLargeException({
+						message: `File exceeds the ${config.maxFileSize}-byte limit`,
+						code: DOCS_FILE_TOO_LARGE
+					});
+				}
+				throw error;
+			}
 			const sniff = sniffFile(buffer, fileName, file.mimetype);
 			if (!sniff.ok) {
 				throw new BadRequestException({ message: sniff.message, code: sniff.code });
@@ -588,11 +612,9 @@ export class DocumentUploadService {
 			throw error;
 		}
 
-		// The swap is committed; the superseded blob is now unreferenced. Best-effort by
+		// The swap is committed; this document no longer uses the superseded blob. Best-effort by
 		// design — an orphaned object costs storage, a thrown cleanup would cost the swap.
-		if (previousStorageKey && previousStorageKey !== file.key) {
-			await this.cleanupOne(new FileStorage().getProvider(previousProvider), { key: previousStorageKey } as any);
-		}
+		await this.releaseReplacedBlob(previousStorageKey, previousProvider, file.key);
 
 		this.documentService.emitDocumentEvent(document, 'updated', {
 			phase: 'crud',
@@ -716,9 +738,19 @@ export class DocumentUploadService {
 		const document = await this.requireFileDocument(id);
 		const provider = new FileStorage().setProvider(document.storageProvider).getProviderInstance();
 
-		const buffer = (await provider.getFile(document.storageKey)) as Buffer;
-		if (!buffer) {
-			throw new NotFoundException(`Document ${id} has no retrievable file`);
+		// As bytes whatever the provider answers (the S3 family returns the SDK's body stream, whose `length` is
+		// undefined): bounded by the per-file limit, or by the document's own size if it was stored under a higher one.
+		let buffer: Buffer;
+		try {
+			buffer = await readStorageFileAsBuffer(provider, document.storageKey, {
+				maxBytes: Math.max(getDocsConfig().maxFileSize || 0, document.fileSize || 0)
+			});
+		} catch (error) {
+			if (error instanceof StorageFileReadError) {
+				this.logger.warn(`Raw read of document ${id} failed: ${error.message}`);
+				throw new NotFoundException(`Document ${id} has no retrievable file`);
+			}
+			throw error;
 		}
 
 		const storedMimeType = document.mimeType ?? '';
@@ -766,6 +798,54 @@ export class DocumentUploadService {
 		// eslint-disable-next-line no-control-regex
 		const stripped = name.replace(/["'\\;\u0000-\u001F\u007F]/g, '').trim();
 		return stripped.slice(0, 255) || 'document';
+	}
+
+	/**
+	 * Deletes the blob a replaced file no longer uses — unless another document still points at it.
+	 *
+	 * A duplicated FILE re-uses its source's storage key (the bytes are not copied), so after a replace
+	 * the superseded key may still be the original's. Deleting it unconditionally let anyone who could
+	 * duplicate a file (read access) and then replace the file on their own copy delete the original's
+	 * bytes. Trashed rows count too: they can still be recovered.
+	 *
+	 * Best-effort, as the delete itself is: it runs after the swap committed, so a reference check, or a storage
+	 * provider that cannot be resolved, keeps the blob (an orphan costs storage) instead of failing a replace that
+	 * already succeeded and skipping its update event and extraction job.
+	 *
+	 * @param storageKey The key the document used before the replace.
+	 * @param storageProvider The provider that key lives on.
+	 * @param replacementKey The key the document uses now.
+	 */
+	private async releaseReplacedBlob(
+		storageKey: string | null | undefined,
+		storageProvider: Document['storageProvider'],
+		replacementKey: string
+	): Promise<void> {
+		if (!storageKey || storageKey === replacementKey) {
+			return;
+		}
+		let stillReferenced: number;
+		try {
+			stillReferenced = await this.typeOrmDocumentRepository.count({
+				where: { storageKey } as FindOptionsWhere<Document>,
+				withDeleted: true
+			});
+		} catch (error) {
+			this.logger.warn(`Kept a replaced file's blob: its reference check failed: ${(error as Error).message}`);
+			return;
+		}
+		if (stillReferenced > 0) {
+			return;
+		}
+		let provider: any;
+		try {
+			provider = new FileStorage().getProvider(storageProvider);
+		} catch (error) {
+			this.logger.warn(`Kept a replaced file's blob: its storage provider failed: ${(error as Error).message}`);
+			return;
+		}
+		// `cleanupOne` never throws: a failed delete is logged.
+		await this.cleanupOne(provider, { key: storageKey } as UploadedFile);
 	}
 
 	/**

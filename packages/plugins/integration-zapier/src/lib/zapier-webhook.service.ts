@@ -5,7 +5,8 @@ import {
 	BadRequestException,
 	ForbiddenException,
 	NotFoundException,
-	InternalServerErrorException
+	InternalServerErrorException,
+	HttpException
 } from '@nestjs/common';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { ID } from '@gauzy/contracts';
@@ -119,12 +120,14 @@ export class ZapierWebhookService {
 	}
 
 	/**
-	 * Deletes a Zapier webhook subscription after verifying tenant ownership.
+	 * Deletes a Zapier webhook subscription after verifying tenant and organization ownership.
 	 *
 	 * @param id - The unique identifier of the subscription to delete.
 	 * @param tenantId - The tenant ID to verify ownership of the subscription.
+	 * @param organizationId - The organization of the caller's integration: another organization's subscription
+	 * of the same tenant is refused, as it would stop that organization's Zap.
 	 */
-	async deleteSubscription(id: ID, tenantId: ID): Promise<void> {
+	async deleteSubscription(id: ID, tenantId: ID, organizationId?: ID): Promise<void> {
 		try {
 			const subscription = await this.zapierWebhookSubscriptionRepository.findOne({
 				where: { id }
@@ -135,9 +138,12 @@ export class ZapierWebhookService {
 				throw new NotFoundException(`No webhook subscription found with id ${id}`);
 			}
 
-			if (subscription.tenantId !== tenantId) {
+			if (
+				subscription.tenantId !== tenantId ||
+				(organizationId && subscription.organizationId !== organizationId)
+			) {
 				this.logger.warn(
-					`Unauthorized deletion attempt: Subscription ID ${id} does not belong to tenant ${tenantId}`
+					`Unauthorized deletion attempt: Subscription ID ${id} does not belong to tenant ${tenantId}, organization ${organizationId}`
 				);
 				throw new ForbiddenException('You do not have permission to delete this webhook subscription.');
 			}
@@ -151,6 +157,10 @@ export class ZapierWebhookService {
 
 			this.logger.log(`Successfully deleted webhook subscription with id ${id}`);
 		} catch (error) {
+			// An unknown subscription (404) or another tenant's (403) is the caller's error: keep it
+			if (error instanceof HttpException) {
+				throw error;
+			}
 			this.logger.error(`Failed to delete webhook subscription with id ${id}`, error);
 			throw new InternalServerErrorException('Failed to delete webhook subscription.');
 		}

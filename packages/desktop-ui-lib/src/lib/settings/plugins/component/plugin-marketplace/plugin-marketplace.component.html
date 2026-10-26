@@ -43,6 +43,8 @@ selectedView = query.selectedView$ | async;
 					<button
 						nbButton
 						[status]="selectedView === 'grid' ? 'primary' : 'basic'"
+						[class.is-active]="(selectedView || 'grid') === 'grid'"
+						[attr.aria-pressed]="(selectedView || 'grid') === 'grid'"
 						(click)="setViewMode('grid')"
 						nbTooltip="Grid view"
 						size="medium"
@@ -52,6 +54,8 @@ selectedView = query.selectedView$ | async;
 					<button
 						nbButton
 						[status]="selectedView === 'list' ? 'primary' : 'basic'"
+						[class.is-active]="selectedView === 'list'"
+						[attr.aria-pressed]="selectedView === 'list'"
 						(click)="setViewMode('list')"
 						nbTooltip="List view"
 						size="medium"

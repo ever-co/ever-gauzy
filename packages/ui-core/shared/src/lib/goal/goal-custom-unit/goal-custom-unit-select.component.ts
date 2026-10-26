@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment as ENV } from '@gauzy/ui-config';
@@ -10,6 +10,7 @@ import { Store } from '@gauzy/ui-core/core';
     selector: 'ga-goal-custom-unit-select',
     templateUrl: './goal-custom-unit-select.component.html',
     styleUrls: ['./goal-custom-unit-select.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class GoalCustomUnitSelectComponent implements OnInit, OnDestroy {

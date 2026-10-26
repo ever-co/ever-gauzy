@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '@gauzy/ui-config';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -58,6 +58,7 @@ export function configuredSignInLink(link: string | undefined): string {
 	selector: 'ngx-social-links',
 	templateUrl: './social-links.component.html',
 	styleUrls: ['./social-links.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class SocialLinksComponent implements OnInit {

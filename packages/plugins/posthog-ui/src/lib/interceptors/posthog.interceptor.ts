@@ -1,5 +1,5 @@
 import { Injectable, Inject, Optional } from '@angular/core';
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent, HttpResponse } from '@angular/common/http';
+import { HttpInterceptor, HttpRequest, HttpHandler, type HttpEvent, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap, finalize } from 'rxjs/operators';
 import { PostHogServiceManager } from '../services/posthog-manager.service';

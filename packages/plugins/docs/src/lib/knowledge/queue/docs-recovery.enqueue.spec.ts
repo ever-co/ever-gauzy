@@ -11,7 +11,7 @@
  * `@gauzy/scheduler` and the Nest/TypeORM seams are mocked at the module boundary; the
  * service under test is real.
  */
-jest.mock('@gauzy/scheduler', () => ({ ScheduledJob: () => () => undefined }), { virtual: true });
+jest.mock('@gauzy/scheduler', () => ({ ScheduledJob: () => () => undefined }));
 jest.mock('../../entities/document.entity', () => ({ Document: class {} }));
 jest.mock('../../repositories/type-orm-document.repository', () => ({ TypeOrmDocumentRepository: class {} }));
 jest.mock('../../repositories/type-orm-document-index-state.repository', () => ({

@@ -15,7 +15,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '../../shared.module';
 import { DialogsModule } from '../../dialogs/dialogs.module';
 import { ProjectSelectModule } from '../../selectors/project';
@@ -45,7 +45,7 @@ import { TaskSelectModule } from '../../tasks/task-select/task-select.module';
 		NbSelectModule,
 		NbOptionModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		DialogsModule,
 		TimerPickerModule,

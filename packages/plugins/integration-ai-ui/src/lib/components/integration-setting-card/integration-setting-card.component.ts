@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { IIntegrationSetting } from '@gauzy/contracts';
@@ -16,6 +16,7 @@ export enum SettingTitlesEnum {
     selector: 'ngx-integration-setting-card',
     styleUrls: ['./integration-setting-card.component.scss'],
     templateUrl: './integration-setting-card.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class IntegrationSettingCardComponent extends TranslationBaseComponent {

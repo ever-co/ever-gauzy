@@ -10,7 +10,7 @@ import {
 	NbTooltipModule,
 	NbBadgeModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TableComponentsModule } from '../table-components/table-components.module';
 import { EntityWithMembersCardComponent } from './entity-with-members-card.component';
 
@@ -25,7 +25,7 @@ import { EntityWithMembersCardComponent } from './entity-with-members-card.compo
 		NbSelectModule,
 		NbTooltipModule,
 		NbToastrModule.forRoot(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		TableComponentsModule
 	],
 	declarations: [EntityWithMembersCardComponent],

@@ -1,5 +1,5 @@
 import { ICandidateInterview } from '@gauzy/contracts';
-import { Component, OnDestroy, Input } from '@angular/core';
+import { Component, OnDestroy, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
@@ -17,6 +17,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'ga-delete-interview',
     templateUrl: 'delete-interview.component.html',
     styleUrls: ['delete-interview.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class DeleteInterviewComponent extends TranslationBaseComponent implements OnDestroy {

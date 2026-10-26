@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy, TemplateRef } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,6 +23,7 @@ import { IconRowComponent } from '../inventory-table-components';
     selector: 'ngx-product-types',
     templateUrl: './product-types.component.html',
     styleUrls: ['./product-types.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProductTypesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

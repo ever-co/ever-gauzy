@@ -3,7 +3,8 @@ import {
 	OnInit,
 	OnDestroy,
 	ViewChild,
-	inject
+	inject,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { BehaviorSubject, EMPTY, from, Observable, Subject } from 'rxjs';
 import { catchError, debounceTime, filter, finalize, switchMap, tap } from 'rxjs/operators';
@@ -74,6 +75,7 @@ export interface IHourSlotGroup extends IScreenshotMap {
 	// As the dashboard's Recent Activities widget does: a screenshot store of this
 	// page's own, and the dialog service that hands it to the gallery (and View
 	// Info) dialogs. With the root dialog service they resolve the root store.
+	changeDetection: ChangeDetectionStrategy.Eager,
 	providers: [GalleryService, NbDialogService]
 })
 export class ScreenshotComponent extends BaseSelectorFilterComponent implements OnInit, OnDestroy {

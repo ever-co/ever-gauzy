@@ -245,7 +245,7 @@ export class InventoryStore {
 			productCategoryId: null,
 			enabled: true,
 			description: '',
-			languageCode: this.translateService.currentLang,
+			languageCode: this.translateService.getCurrentLang(),
 			variants: [],
 			options: [],
 			optionGroups: [],

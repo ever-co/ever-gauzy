@@ -29,7 +29,7 @@
 			</div>
 			<div class="photo__info">
 				<span class="photo__title">{{ 'FORM.SECTIONS.PHOTO' | translate }}</span>
-				@if (form.get('imageUrl')?.value !== null && FormHelpers.isInvalidControl(form, 'imageUrl')) {
+				@if ($safeNavigationMigration(form.get('imageUrl')?.value) !== null && FormHelpers.isInvalidControl(form, 'imageUrl')) {
 					<span class="photo__hint status-danger">{{ 'FORM.ERROR.INVALID_IMAGE_URL' | translate }}</span>
 				} @else {
 					<span class="photo__hint">{{ 'FORM.SECTIONS.PHOTO_HINT' | translate }}</span>

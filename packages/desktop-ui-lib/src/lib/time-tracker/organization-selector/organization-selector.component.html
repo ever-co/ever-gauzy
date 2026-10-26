@@ -1,6 +1,6 @@
 @if (organizations) {
   <div>
-    <ng-select #select [disabled]="disabled" [searchable]="false" [clearable]="false" [items]="organizations"
+    <ng-select #select [disabled]="disabled || switching || (isStartingTimer$ | async)" [searchable]="false" [clearable]="false" [items]="organizations"
       bindLabel="name" nbTooltip="Please stop the timer before changing the organization" nbTooltipStatus="warning"
       [nbTooltipDisabled]="!disabled"
       (change)="selectOrganization($event); select.blur();" (clear)="select.blur();"

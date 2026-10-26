@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { PaymentMethodEnum } from '@gauzy/contracts';
 
@@ -19,6 +19,7 @@ import { PaymentMethodEnum } from '@gauzy/contracts';
 		  }
 		</ng-select>
 		`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PaymentMethodFilterComponent extends DefaultFilter implements OnChanges {

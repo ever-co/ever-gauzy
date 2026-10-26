@@ -9,83 +9,77 @@ import {
 	type IDocsCitationsData
 } from './DocsCitationChips';
 import { parseAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
+import { AttachmentCard } from './AttachmentCard';
+import type { IPreviewableAttachment } from './AttachmentPreview';
 import { chatTheme } from '../chat-theme';
 
 /**
- * The attachment chips shown on a USER message in place of the raw preamble text.
+ * The attachments of a USER message, shown in place of the raw preamble text — as the same cards
+ * the composer shows, in a row above the message, the way Claude shows them.
  *
- * A chip with a `documentId` deep-links into the Documents hub through the same bridge the
- * assistant's citation chips use — and through the same shape (`IDocsCitation` is `{documentId,
- * url, …}`), so the panel's existing `onOpenCitation` handler serves both. A name-only chip
- * (Documents unavailable on this install) has nowhere to link and renders inert.
+ * A card opens the preview when the panel supplies one (the preview links on to Documents).
+ * Without it, a card with a `documentId` deep-links into the Documents hub through the same bridge
+ * the assistant's citation chips use — and through the same shape (`IDocsCitation` is
+ * `{documentId, url, …}`), so the panel's existing `onOpenCitation` handler serves both. A
+ * name-only card (Documents unavailable on this install) then has nowhere to go and renders inert.
  */
 function UserAttachmentChips({
 	attachments,
 	onOpen,
+	onPreview,
+	resolveFile,
 	translate
 }: {
 	attachments: IStagedAttachment[];
 	onOpen?: (citation: IDocsCitation) => void;
+	/** When supplied, every card opens the preview (which itself links on to Documents). */
+	onPreview?: (attachment: IPreviewableAttachment) => void;
+	/** The `File` uploaded this session for the card at `index` (thumbnail, size, preview). */
+	resolveFile?: (index: number) => File | undefined;
 	translate?: (key: string, fallback: string) => string;
 }) {
-	const t = translate ?? ((_key: string, fallback: string) => fallback);
-	const chipStyle: CSSProperties = {
-		display: 'inline-flex',
-		alignItems: 'center',
-		gap: 4,
-		maxWidth: '100%',
-		padding: '3px 8px',
-		borderRadius: 999,
-		border: '1px solid rgba(255, 255, 255, 0.28)',
-		backgroundColor: 'rgba(255, 255, 255, 0.14)',
-		color: 'inherit',
-		fontSize: chatTheme.fontSizeMessage,
-		fontWeight: chatTheme.fontWeightMedium,
-		lineHeight: 1.5,
-		overflow: 'hidden',
-		textOverflow: 'ellipsis',
-		whiteSpace: 'nowrap'
-	};
+	const openInDocuments = (attachment: IStagedAttachment) =>
+		onOpen?.({
+			documentId: attachment.documentId!,
+			// Same deep-link split the server's citation chips use: a PAGE opens at its editor
+			// route, everything else in the file browser.
+			url:
+				attachment.kind === 'PAGE'
+					? `/pages/documents/page/${attachment.documentId}`
+					: `/pages/documents?id=${attachment.documentId}`,
+			name: attachment.name
+		});
 	return (
-		<span style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-			{attachments.map((attachment, chipIndex) =>
-				attachment.documentId && onOpen ? (
-					<button
-						key={`${attachment.documentId}-${chipIndex}`}
-						type="button"
-						className="gz-ai-chat-user-chip"
-						style={{
-							...chipStyle,
-							cursor: 'pointer',
-							font: 'inherit',
-							fontSize: chatTheme.fontSizeMessage,
-							fontWeight: chatTheme.fontWeightMedium
-						}}
-						title={attachment.name}
-						aria-label={t('AI_ASSISTANT.ATTACH_OPEN', 'Open attached document') + `: ${attachment.name}`}
-						onClick={() =>
-							onOpen({
-								documentId: attachment.documentId!,
-								// Same deep-link split the server's citation chips use: a PAGE opens
-								// at its editor route, everything else in the file browser.
-								url:
-									attachment.kind === 'PAGE'
-										? `/pages/documents/page/${attachment.documentId}`
-										: `/pages/documents?id=${attachment.documentId}`,
-								name: attachment.name
-							})
+		<span style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 6 }}>
+			{attachments.map((attachment, chipIndex) => {
+				// By position in THIS message — never by name, which two different files can share.
+				const file = resolveFile?.(chipIndex);
+				const withFile: IPreviewableAttachment = file ? { ...attachment, file } : attachment;
+				return (
+					<AttachmentCard
+						key={`${attachment.documentId ?? attachment.name}-${chipIndex}`}
+						attachment={withFile}
+						translate={translate}
+						onOpen={
+							onPreview
+								? () => onPreview(withFile)
+								: attachment.documentId && onOpen
+									? () => openInDocuments(attachment)
+									: undefined
 						}
-					>
-						📎 {attachment.name}
-					</button>
-				) : (
-					<span key={`${attachment.name}-${chipIndex}`} style={chipStyle} title={attachment.name}>
-						📎 {attachment.name}
-					</span>
-				)
-			)}
+					/>
+				);
+			})}
 		</span>
 	);
+}
+
+/**
+ * True when a text part has nothing to show — empty, whitespace, or zero-width characters only.
+ * Shared with the playground's message renderer.
+ */
+export function isBlankText(text: string | undefined): boolean {
+	return !text || !text.replace(/[\s​-‍⁠﻿]/g, '');
 }
 
 export interface ChatMessageItemProps {
@@ -96,6 +90,10 @@ export interface ChatMessageItemProps {
 	onApprovalResponse?: (approvalId: string, approved: boolean) => void;
 	/** Open a document citation chip (router navigation supplied by the panel). */
 	onOpenCitation?: (citation: IDocsCitation) => void;
+	/** Preview an attachment chip on a user message (the panel's preview overlay). */
+	onPreviewAttachment?: (attachment: IPreviewableAttachment) => void;
+	/** The `File` uploaded this session for card `index` of message `messageId` (thumbnail, size). */
+	resolveAttachmentFile?: (messageId: string, index: number) => File | undefined;
 	/** `t(key, fallback)` from the panel. */
 	translate?: (key: string, fallback: string) => string;
 }
@@ -118,6 +116,8 @@ export function ChatMessageItem({
 	isStreaming,
 	onApprovalResponse,
 	onOpenCitation,
+	onPreviewAttachment,
+	resolveAttachmentFile,
 	translate
 }: ChatMessageItemProps) {
 	const isUser = message.role === 'user';
@@ -150,7 +150,9 @@ export function ChatMessageItem({
 		<div>
 			{message.parts.map((part, index) => {
 				if (part.type === 'text') {
-					if (!part.text) return null;
+					// Models often open a step with a whitespace-only text part (a bare "\n") right
+					// before a tool call; rendered, it is an empty bubble above the tool card.
+					if (isBlankText(part.text)) return null;
 					// A user message that carries attachments starts with the preamble the panel
 					// composed. The MODEL needs that text (it is what makes `docs_read` actionable
 					// and keeps the attachment context alive across turns); the READER does not —
@@ -158,18 +160,26 @@ export function ChatMessageItem({
 					// is never altered.
 					const attachmentView = isUser ? parseAttachmentPreamble(part.text) : null;
 					if (attachmentView) {
+						// Cards in their own row ABOVE the bubble; the bubble holds only the words.
 						return (
-							<div style={rowStyle} key={`${message.id}-${index}`}>
-								<div style={{ ...bubbleStyle, display: 'flex', flexDirection: 'column', gap: 6 }}>
-									<UserAttachmentChips
-										attachments={attachmentView.attachments}
-										{...(onOpenCitation ? { onOpen: onOpenCitation } : {})}
-										{...(translate ? { translate } : {})}
-									/>
-									{attachmentView.text ? (
+							<div
+								key={`${message.id}-${index}`}
+								style={{ ...rowStyle, flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}
+							>
+								<UserAttachmentChips
+									attachments={attachmentView.attachments}
+									{...(onOpenCitation ? { onOpen: onOpenCitation } : {})}
+									{...(onPreviewAttachment ? { onPreview: onPreviewAttachment } : {})}
+									{...(resolveAttachmentFile
+									? { resolveFile: (chipIndex: number) => resolveAttachmentFile(message.id, chipIndex) }
+									: {})}
+									{...(translate ? { translate } : {})}
+								/>
+								{attachmentView.text ? (
+									<div style={bubbleStyle}>
 										<span style={{ whiteSpace: 'pre-wrap' }}>{attachmentView.text}</span>
-									) : null}
-								</div>
+									</div>
+								) : null}
 							</div>
 						);
 					}

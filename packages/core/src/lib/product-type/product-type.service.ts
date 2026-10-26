@@ -67,6 +67,9 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 				// The transactional manager below is raw: TenantAwareCrudService's create/save guards do not
 				// run, so the ownership check has to be explicit here.
 				await this.assertNotForeignRow({ id } as any, tenantId);
+				// Same for the nested translations and products, which save() resolves by id alone. Checked
+				// before the delete, while the caller's own rows are still there to be recognized as owned.
+				await this.assertNestedGraphNotForeign([payload], tenantId);
 				return await this.typeOrmRepository.manager.transaction(async (transactionalEntityManager) => {
 					// 1. Ensure delete is scoped to the current tenant
 					await transactionalEntityManager.delete(ProductType, {
@@ -126,7 +129,9 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	async mapTranslatedProductTypes(items: IProductTypeTranslatable[], languageCode: LanguagesEnum) {
 		if (languageCode) {
 			return Promise.all(
-				items.map((type: IProductTypeTranslatable) => Object.assign({}, type, type.translate(languageCode)))
+				items.map((type: IProductTypeTranslatable) =>
+					Object.assign({}, type, this.translateRow(type, languageCode))
+				)
 			);
 		} else {
 			return items;
@@ -143,12 +148,41 @@ export class ProductTypeService extends TenantAwareCrudService<ProductType> {
 	async mapTranslatedProductType(type: IProductTypeTranslatable, languageCode: LanguagesEnum) {
 		try {
 			if (languageCode) {
-				return Object.assign({}, type, type.translate(languageCode));
+				return Object.assign({}, type, this.translateRow(type, languageCode));
 			} else {
 				return type;
 			}
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * One row the CRUD base answered, with the requested language merged onto it.
+	 *
+	 * **The merge is the entity's, whichever ORM answered the row.** On TypeORM the row is a `ProductType` and
+	 * carries `translate`, and that call is made exactly as it always was. On MikroORM the CRUD base answers
+	 * `wrap(entity).toJSON()` — the row's data as a plain object, without the entity's prototype — so calling the
+	 * method on the row failed with `type.translate is not a function` whenever a language was merged: a 500 from
+	 * `GET /product-types`, `GET /product-types/pagination` and the GraphQL `productTypes` field, and a 400 from
+	 * `POST /product-types` and `createProductType`, whose command merges the row `create()` answered — serialized
+	 * too — and wraps what it catches. The same merge is therefore run on the serialized row, as `ProductType`'s
+	 * own method.
+	 *
+	 * The row is handed to it as it stands. The merge reads nothing of the row but `translations` — loaded eagerly, and
+	 * answered by both ORMs as the array of the row's translations — so no relation the read did not load is ever
+	 * dereferenced; and it mutates the row it is called on, as it mutates the TypeORM entity, which is what the
+	 * callers' `Object.assign` relies on to leave the merged `translations` out of the answer.
+	 *
+	 * @param row The row, as the CRUD base answered it.
+	 * @param languageCode The language to merge.
+	 * @returns What `translate` answers for the row.
+	 */
+	private translateRow(row: IProductTypeTranslatable, languageCode: string): any {
+		if (typeof row.translate === 'function') {
+			return row.translate(languageCode);
+		}
+
+		return ProductType.prototype.translate.call(row, languageCode);
 	}
 }

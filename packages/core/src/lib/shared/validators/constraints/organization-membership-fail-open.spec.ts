@@ -71,6 +71,9 @@ describe('OrganizationBelongsToUserConstraint', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER_ID);
+		// The caller's token names their own organization: the organization boundary
+		// (`organization-belongs-to-user.boundary.spec.ts`) refuses any other one to a non-admin.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(OWN_ORGANIZATION_ID);
 	});
 
 	afterEach(() => jest.restoreAllMocks());

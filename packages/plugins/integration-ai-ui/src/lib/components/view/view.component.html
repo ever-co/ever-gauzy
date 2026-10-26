@@ -65,7 +65,7 @@
                             class="d-block"
                             status="primary"
                             labelPosition="start"
-                            [checked]="jobSearchMatchingSync?.sync"
+                            [checked]="$safeNavigationMigration(jobSearchMatchingSync?.sync)"
 													(checkedChange)="
 														toggleIntegrationEntitySync($event, jobSearchMatchingSync)
 													"
@@ -101,7 +101,7 @@
                             class="d-block"
                             status="primary"
                             labelPosition="start"
-                            [checked]="employeePerformanceAnalysisSync?.sync"
+                            [checked]="$safeNavigationMigration(employeePerformanceAnalysisSync?.sync)"
 													(checkedChange)="
 														toggleIntegrationEntitySync(
 															$event,

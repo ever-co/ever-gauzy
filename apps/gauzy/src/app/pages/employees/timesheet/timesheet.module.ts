@@ -1,14 +1,14 @@
 import { NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
 import { NbCardModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { DynamicTabsModule, SharedModule } from '@gauzy/ui-core/shared';
 import { TimesheetLayoutComponent } from './layout/layout.component';
 import { getTimesheetRoutes } from './timesheet.routes';
 
 @NgModule({
-	imports: [RouterModule.forChild([]), NbCardModule, TranslateModule.forChild(), SharedModule, DynamicTabsModule],
+	imports: [RouterModule.forChild([]), NbCardModule, TranslatePipe, SharedModule, DynamicTabsModule],
 	exports: [RouterModule],
 	declarations: [TimesheetLayoutComponent],
 	providers: [

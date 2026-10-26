@@ -1,0 +1,8 @@
+{
+	"name": "private-deps-fixture",
+	"private": true,
+	"dependencies": {
+		"@ever-platform/x": "github:ever-co/platform#main",
+		"@ever-co/connect-sdk": "1.0.0-rc.5"
+	}
+}

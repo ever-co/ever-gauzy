@@ -37,7 +37,7 @@
 								<div class="responsive-table-row employee-column">
 									<ng-container
 										[ngTemplateOutlet]="employeeEl"
-										[ngTemplateOutletContext]="{ $implicit: day?.employee }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(day?.employee) }"
 									></ng-container>
 								</div>
 								<div class="responsive-table-row project-column"></div>
@@ -45,7 +45,7 @@
 								<div class="responsive-table-row todo-column"></div>
 								<div class="responsive-table-row todo-column"></div>
 								<div class="responsive-table-row time-column">
-									<span>{{ day?.sum | durationFormat }}</span>
+									<span>{{ $safeNavigationMigration(day?.sum) | durationFormat }}</span>
 								</div>
 								<div class="responsive-table-row activity-column">
 									<nb-badge
@@ -58,7 +58,7 @@
 								<div class="responsive-table-row employee-column">
 									<ng-container
 										[ngTemplateOutlet]="projectEl"
-										[ngTemplateOutletContext]="{ $implicit: day?.project }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(day?.project) }"
 									></ng-container>
 								</div>
 								<div class="responsive-table-row project-column"></div>
@@ -66,7 +66,7 @@
 								<div class="responsive-table-row todo-column"></div>
 								<div class="responsive-table-row todo-column"></div>
 								<div class="responsive-table-row time-column">
-									<span>{{ day?.sum | durationFormat }}</span>
+									<span>{{ $safeNavigationMigration(day?.sum) | durationFormat }}</span>
 								</div>
 								<div class="responsive-table-row activity-column">
 									<nb-badge
@@ -79,7 +79,7 @@
 								<div class="responsive-table-row employee-column">
 									<ng-container
 										[ngTemplateOutlet]="clientEl"
-										[ngTemplateOutletContext]="{ $implicit: day?.client }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(day?.client) }"
 									></ng-container>
 								</div>
 								<div class="responsive-table-row project-column"></div>
@@ -87,7 +87,7 @@
 								<div class="responsive-table-row todo-column"></div>
 								<div class="responsive-table-row todo-column"></div>
 								<div class="responsive-table-row time-column">
-									<span>{{ day?.sum | durationFormat }}</span>
+									<span>{{ $safeNavigationMigration(day?.sum) | durationFormat }}</span>
 								</div>
 								<div class="responsive-table-row activity-column">
 									<nb-badge
@@ -101,7 +101,7 @@
 									<ng-container
 										[ngTemplateOutlet]="dateEl"
 										[ngTemplateOutletContext]="{
-											$implicit: day?.date
+											$implicit: $safeNavigationMigration(day?.date)
 										}"
 									></ng-container>
 								</div>
@@ -110,7 +110,7 @@
 								<div class="responsive-table-row todo-column"></div>
 								<div class="responsive-table-row todo-column"></div>
 								<div class="responsive-table-row time-column">
-									<span>{{ day?.sum | durationFormat }}</span>
+									<span>{{ $safeNavigationMigration(day?.sum) | durationFormat }}</span>
 								</div>
 								<div class="responsive-table-row activity-column">
 									<nb-badge
@@ -181,7 +181,7 @@
 								<div class="responsive-table-content employee-column">
 									<ng-container
 										[ngTemplateOutlet]="employeeEl"
-										[ngTemplateOutletContext]="{ $implicit: employeeLog?.employee }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(employeeLog?.employee) }"
 									>
 									</ng-container>
 								</div>
@@ -193,7 +193,7 @@
 								<div class="responsive-table-content project-name">
 									<ng-container
 										[ngTemplateOutlet]="clientEl"
-										[ngTemplateOutletContext]="{ $implicit: task?.client }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(task?.client) }"
 									>
 									</ng-container>
 								</div>
@@ -205,7 +205,7 @@
 								<div class="responsive-table-content project-name">
 									<ng-container
 										[ngTemplateOutlet]="projectEl"
-										[ngTemplateOutletContext]="{ $implicit: logs?.project }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(logs?.project) }"
 									>
 									</ng-container>
 								</div>
@@ -217,7 +217,7 @@
 								<div class="responsive-table-content day-col">
 									<ng-container
 										[ngTemplateOutlet]="taskEl"
-										[ngTemplateOutletContext]="{ $implicit: task?.task }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(task?.task) }"
 									>
 									</ng-container>
 								</div>
@@ -226,8 +226,8 @@
 								<div class="responsive-table-header">
 									{{ 'REPORT_PAGE.NOTES' | translate }}
 								</div>
-								<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
-									{{ task?.description | truncate: 40 }}
+								<div class="responsive-table-content day-col" [nbTooltip]="$safeNavigationMigration(task?.description)">
+									{{ $safeNavigationMigration(task?.description) | truncate: 40 }}
 								</div>
 							</div>
 							<div class="responsive-table-row time-column">
@@ -271,7 +271,7 @@
 								<div class="responsive-table-content">
 									<ng-container
 										[ngTemplateOutlet]="dateEl"
-										[ngTemplateOutletContext]="{ $implicit: day?.date }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(day?.date) }"
 									></ng-container>
 								</div>
 							</div>
@@ -282,7 +282,7 @@
 								<div class="responsive-table-content">
 									<ng-container
 										[ngTemplateOutlet]="clientEl"
-										[ngTemplateOutletContext]="{ $implicit: task?.client }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(task?.client) }"
 									></ng-container>
 								</div>
 							</div>
@@ -293,7 +293,7 @@
 								<div class="responsive-table-content">
 									<ng-container
 										[ngTemplateOutlet]="projectEl"
-										[ngTemplateOutletContext]="{ $implicit: projectLog?.project }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(projectLog?.project) }"
 									></ng-container>
 								</div>
 							</div>
@@ -304,7 +304,7 @@
 								<div class="responsive-table-content day-col">
 									<ng-container
 										[ngTemplateOutlet]="taskEl"
-										[ngTemplateOutletContext]="{ $implicit: task?.task }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(task?.task) }"
 									></ng-container>
 								</div>
 							</div>
@@ -312,8 +312,8 @@
 								<div class="responsive-table-header">
 									{{ 'REPORT_PAGE.NOTES' | translate }}
 								</div>
-								<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
-									{{ task?.description | truncate: 40 }}
+								<div class="responsive-table-content day-col" [nbTooltip]="$safeNavigationMigration(task?.description)">
+									{{ $safeNavigationMigration(task?.description) | truncate: 40 }}
 								</div>
 							</div>
 							<div class="responsive-table-row time-column">
@@ -357,7 +357,7 @@
 								<div class="responsive-table-content project-name">
 									<ng-container
 										[ngTemplateOutlet]="dateEl"
-										[ngTemplateOutletContext]="{ $implicit: day?.date }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(day?.date) }"
 									></ng-container>
 								</div>
 							</div>
@@ -368,7 +368,7 @@
 								<div class="responsive-table-content project-name">
 									<ng-container
 										[ngTemplateOutlet]="employeeEl"
-										[ngTemplateOutletContext]="{ $implicit: employeeLog?.employee }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(employeeLog?.employee) }"
 									>
 									</ng-container>
 								</div>
@@ -380,7 +380,7 @@
 								<div class="responsive-table-content project-name">
 									<ng-container
 										[ngTemplateOutlet]="clientEl"
-										[ngTemplateOutletContext]="{ $implicit: task?.client }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(task?.client) }"
 									>
 									</ng-container>
 								</div>
@@ -392,7 +392,7 @@
 								<div class="responsive-table-content day-col">
 									<ng-container
 										[ngTemplateOutlet]="taskEl"
-										[ngTemplateOutletContext]="{ $implicit: task?.task }"
+										[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(task?.task) }"
 									></ng-container>
 								</div>
 							</div>
@@ -400,8 +400,8 @@
 								<div class="responsive-table-header">
 									{{ 'REPORT_PAGE.NOTES' | translate }}
 								</div>
-								<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
-									{{ task?.description | truncate: 40 }}
+								<div class="responsive-table-content day-col" [nbTooltip]="$safeNavigationMigration(task?.description)">
+									{{ $safeNavigationMigration(task?.description) | truncate: 40 }}
 								</div>
 							</div>
 							<div class="responsive-table-row time-column">
@@ -409,7 +409,7 @@
 									{{ 'REPORT_PAGE.TIME' | translate }}
 								</div>
 								<div class="responsive-table-content day-col">
-									{{ task?.duration | durationFormat }}
+									{{ $safeNavigationMigration(task?.duration) | durationFormat }}
 								</div>
 							</div>
 							<div class="responsive-table-row activity-column">
@@ -446,7 +446,7 @@
 									<div class="responsive-table-content project-name">
 										<ng-container
 											[ngTemplateOutlet]="dateEl"
-											[ngTemplateOutletContext]="{ $implicit: day?.date }"
+											[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(day?.date) }"
 										></ng-container>
 									</div>
 								</div>
@@ -458,7 +458,7 @@
 										<ng-container
 											[ngTemplateOutlet]="employeeEl"
 											[ngTemplateOutletContext]="{
-												$implicit: projectLog?.employee
+												$implicit: $safeNavigationMigration(projectLog?.employee)
 											}"
 										>
 										</ng-container>
@@ -472,7 +472,7 @@
 										<ng-container
 											[ngTemplateOutlet]="projectEl"
 											[ngTemplateOutletContext]="{
-												$implicit: clientLogs?.project
+												$implicit: $safeNavigationMigration(clientLogs?.project)
 											}"
 										>
 										</ng-container>
@@ -485,7 +485,7 @@
 									<div class="responsive-table-content day-col">
 										<ng-container
 											[ngTemplateOutlet]="taskEl"
-											[ngTemplateOutletContext]="{ $implicit: task?.task }"
+											[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(task?.task) }"
 										></ng-container>
 									</div>
 								</div>
@@ -493,8 +493,8 @@
 									<div class="responsive-table-header">
 										{{ 'REPORT_PAGE.NOTES' | translate }}
 									</div>
-									<div class="responsive-table-content day-col" [nbTooltip]="task?.description">
-										{{ task?.description | truncate: 40 }}
+									<div class="responsive-table-content day-col" [nbTooltip]="$safeNavigationMigration(task?.description)">
+										{{ $safeNavigationMigration(task?.description) | truncate: 40 }}
 									</div>
 								</div>
 								<div class="responsive-table-row time-column">
@@ -531,8 +531,8 @@
 
 <ng-template let-task #taskEl>
 	@if (task?.title) {
-		<span [nbTooltip]="task?.title">
-			{{ task?.title | truncate: 40 }}
+		<span [nbTooltip]="$safeNavigationMigration(task?.title)">
+			{{ $safeNavigationMigration(task?.title) | truncate: 40 }}
 		</span>
 	} @else {
 		<span>{{ 'REPORT_PAGE.NO_TASK' | translate }}</span>
@@ -554,10 +554,11 @@
 		@if (employee) {
 			<ngx-avatar
 				class="report-table"
-				[src]="employee?.user?.imageUrl"
-				[name]="employee?.user?.name"
-				[id]="employee?.id"
+				[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
+				[name]="$safeNavigationMigration(employee?.user?.name)"
+				[id]="$safeNavigationMigration(employee?.id)"
 				[employee]="employee"
+				linkTo="view"
 			></ngx-avatar>
 		}
 	</div>

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
 	IEmployee,
@@ -33,6 +33,7 @@ import {
     selector: 'ga-contact-mutation',
     templateUrl: './contact-mutation.component.html',
     styleUrls: ['./contact-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ContactMutationComponent extends TranslationBaseComponent implements OnInit {

@@ -1,21 +1,22 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Brackets, FindOptionsRelations, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from '@gauzy/utils';
-import { FileStorageProviderEnum, IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
+import { IPagination, ITag, ITagFindInput } from '@gauzy/contracts';
 import { getConfig } from '@gauzy/config';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
-import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
+import { mikroOrmContains, MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { Tag } from './tag.entity';
-import { FileStorage } from './../core/file-storage';
+import { localFileUrl } from './../core/file-storage/file-storage';
 import { prepareSQLQuery as p } from './../database/database.helper';
+import { manyToManyCountSubquery } from './relation-count-subquery';
 import { MikroOrmTagRepository } from './repository/mikro-orm-tag.repository';
 import { TypeOrmTagRepository } from './repository/type-orm-tag.repository';
 
 /**
- * Relations a tag can be attached to, with the join alias and the `*_counter` field the tags page sums
- * into the usage count: [relation property, join alias, counter name].
+ * Relations a tag can be attached to, with the alias they had in the tags list query and the `*_counter` field
+ * the tags page sums into the usage count: [relation property, alias, counter name].
  */
 export const TAG_USAGE_COUNTERS: ReadonlyArray<readonly [string, string, string]> = [
 	['candidates', 'candidate', 'candidate_counter'],
@@ -52,6 +53,18 @@ export class TagService extends TenantAwareCrudService<Tag> {
 	}
 
 	/**
+	 * Case-insensitive "contains" filters on name / color / description for the MikroORM tag queries
+	 * (`$ilike` is PostgreSQL-only, see `mikroOrmContains`).
+	 */
+	private mikroOrmTextFilters(fields: Record<string, string | undefined>): Record<string, unknown> {
+		const filters: Record<string, unknown> = {};
+		for (const [field, value] of Object.entries(fields)) {
+			if (isNotEmpty(value)) filters[field] = mikroOrmContains(value);
+		}
+		return filters;
+	}
+
+	/**
 	 * GET tags by tenant or organization level
 	 *
 	 * @param input - Filter criteria for finding tags.
@@ -77,9 +90,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					isSystem: false
 				};
 				if (isNotEmpty(organizationTeamId)) where.organizationTeamId = organizationTeamId;
-				if (isNotEmpty(name)) where.name = { $ilike: `%${name}%` };
-				if (isNotEmpty(color)) where.color = { $ilike: `%${color}%` };
-				if (isNotEmpty(description)) where.description = { $ilike: `%${description}%` };
+				Object.assign(where, this.mikroOrmTextFilters({ name, color, description }));
 
 				const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
 					populate: relations as any[]
@@ -135,9 +146,7 @@ export class TagService extends TenantAwareCrudService<Tag> {
 						isSystem: false
 					};
 					if (isNotEmpty(organizationTeamId)) where.organizationTeamId = organizationTeamId;
-					if (isNotEmpty(name)) where.name = { $ilike: `%${name}%` };
-					if (isNotEmpty(color)) where.color = { $ilike: `%${color}%` };
-					if (isNotEmpty(description)) where.description = { $ilike: `%${description}%` };
+					Object.assign(where, this.mikroOrmTextFilters({ name, color, description }));
 
 					// Always load tagType: tagTypeName below is derived from it, whatever the caller asked for
 					const requested = Array.isArray(relations) ? relations : Object.keys(relations);
@@ -146,13 +155,12 @@ export class TagService extends TenantAwareCrudService<Tag> {
 						populate: [...populate] as any[]
 					});
 
-					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
 					const serialized = await Promise.all(items.map(async (item: any) => {
 						// `tagTypeName` is not a Tag column: the TypeORM branch adds it as a raw select alias
 						const s: Tag & { tagTypeName?: string | null } = this.serialize(item);
 						// Same field the TypeORM branch selects; the tags page shows it in its Type column
 						s.tagTypeName = s.tagType?.type ?? null;
-						if (s.icon) s.fullIconUrl = await store.getProviderInstance().url(s.icon);
+						if (s.icon) s.fullIconUrl = await localFileUrl(s.icon);
 						return s;
 					}));
 					return { items: serialized as ITag[], total };
@@ -167,58 +175,52 @@ export class TagService extends TenantAwareCrudService<Tag> {
 					query.setFindOptions({
 						...(relations ? { relations: parseFindOptionsRelations(relations) } : {})
 					});
+					// The requested relations are joined but not selected (`select` below replaces their columns):
+					// a to-many one repeats the tag row once per match, which the GROUP BY below folds back.
+					const joinsRequestedRelations = query.expressionMap.joinAttributes.length > 0;
 
-					// Left join all relational tables with tag table
 					query.leftJoin(`${query.alias}.tagType`, 'tagType');
-					for (const [relation, alias] of TAG_USAGE_COUNTERS) {
-						query.leftJoin(`${query.alias}.${relation}`, alias);
-					}
-
-					// Custom Entity Fields: Add left joins for each custom field if they exist
-					if (customFields.length > 0) {
-						customFields.forEach((field) => {
-							if (field.relationType === 'many-to-many') {
-								query.leftJoin(`${query.alias}.customFields.${field.name}`, field.name);
-							}
-						});
-					}
 
 					// Add new selection to the SELECT query
 					query.select(`${query.alias}.*`);
-
 					query.addSelect(p(`"tagType"."type"`), `tagTypeName`);
-					// Add the select statement for counting, and cast it to integer. DISTINCT is required: the
-					// relations are all LEFT JOINed at once, so each count would otherwise be multiplied by the
-					// matches of every other relation (2 employees + 3 tasks counted 6 + 6).
-					for (const [, alias, counter] of TAG_USAGE_COUNTERS) {
-						query.addSelect(p(`CAST(COUNT(DISTINCT "${alias}"."id") AS INTEGER)`), counter);
+
+					// Usage counters: one correlated subquery per relation, cast to integer. They used to be
+					// `COUNT(DISTINCT ...)` over LEFT JOINs of every relation at once, which made the database build
+					// the cross product of all of a tag's relation rows before grouping (seconds for a few hundred
+					// tags); each subquery counts the same live rows of one relation (see manyToManyCountSubquery).
+					const { metadata } = this.typeOrmRepository;
+					const { driver } = this.typeOrmRepository.manager.dataSource;
+					const counterOf = (relationPath: string) =>
+						`CAST(${manyToManyCountSubquery(metadata, relationPath, query.alias, driver)} AS INTEGER)`;
+
+					for (const [relation, , counter] of TAG_USAGE_COUNTERS) {
+						query.addSelect(counterOf(relation), counter);
 					}
 
-					// Custom Entity Fields: Add select statements for each custom field if they exist
-					if (customFields.length > 0) {
-						customFields.forEach((field) => {
-							if (field.relationType === 'many-to-many') {
-								const selectionAliasName = `${field.name}_counter`;
-								query.addSelect(
-									`CAST(COUNT(DISTINCT ${field.name}.id) AS INTEGER)`,
-									selectionAliasName
-								);
-							}
-						});
+					// Custom Entity Fields: Add a counter for each many-to-many custom field
+					for (const field of customFields) {
+						if (field.relationType === 'many-to-many') {
+							query.addSelect(counterOf(`customFields.${field.name}`), `${field.name}_counter`);
+						}
 					}
 
-					// Adds GROUP BY condition in the query builder.
-					query.addGroupBy(`${query.alias}.id`);
-					query.addGroupBy(`tagType.type`);
+					// One row per tag: only the requested relations can repeat it (tagType is many-to-one)
+					if (joinsRequestedRelations) {
+						query.addGroupBy(`${query.alias}.id`);
+						query.addGroupBy(`tagType.type`);
+					}
 					// Additionally you can add parameters used in where expression.
 					query.where((qb: SelectQueryBuilder<Tag>) => {
 						this.getFilterTagQuery(qb, input);
 					});
+					// The tags came back ordered by id when every counter was a GROUP BY aggregate (PostgreSQL grouped
+					// by sorting); without the GROUP BY that order is no longer implied, so it is stated.
+					query.orderBy(`${query.alias}.id`, 'ASC');
 					let items = await query.getRawMany();
 
-					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
 					items = await Promise.all(items.map(async (item) => {
-						if (item.icon) item.fullIconUrl = await store.getProviderInstance().url(item.icon);
+						if (item.icon) item.fullIconUrl = await localFileUrl(item.icon);
 						return item;
 					}));
 					const total = items.length;

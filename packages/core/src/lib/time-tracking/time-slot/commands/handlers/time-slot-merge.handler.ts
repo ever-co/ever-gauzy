@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { In } from 'typeorm';
 import * as moment from 'moment';
@@ -26,6 +27,7 @@ interface IAggregatedTimeSlot {
 
 @CommandHandler(TimeSlotMergeCommand)
 export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeCommand> {
+	private readonly logger = new Logger(TimeSlotMergeHandler.name);
 	protected ormType: MultiORM = getORMType();
 
 	constructor(
@@ -54,7 +56,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 			startedAt,
 			stoppedAt
 		});
-		console.log('GET Time Slots To Be Merged Length: %s', slots.length);
+		this.debug(() => `GET Time Slots To Be Merged Length: ${slots.length}`);
 
 		if (isNotEmpty(slots)) {
 			const groupedTimeSlots = this.groupTimeSlots(slots); // Group time slots by rounded start time
@@ -168,15 +170,115 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 			employeeId
 		});
 
-		console.log('Newly Created Time Slot with Aggregated Data:', newTimeSlot);
+		this.debug(() => `Newly Created Time Slot with Aggregated Data: ${JSON.stringify(newTimeSlot)}`);
 		// Save the new time slot to the database
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
-				await this.mikroOrmTimeSlotRepository.persistAndFlush(newTimeSlot);
+				await this.saveMergedTimeSlotWithMikroOrm(newTimeSlot, slots);
 				return newTimeSlot;
 			case MultiORMEnum.TypeORM:
 			default:
-				return await this.typeOrmTimeSlotRepository.save(newTimeSlot);
+				return await this.saveMergedTimeSlotWithTypeOrm(newTimeSlot, slots);
+		}
+	}
+
+	/**
+	 * Saves a merged time slot under TypeORM: the kept slot (the first of the group) takes the aggregated values and
+	 * every time log of the group through `save()`, and the screenshots and activities of the other slots move onto
+	 * it in ONE statement per table.
+	 *
+	 * They used to move through the relations' cascade, which read every child back to diff it and then wrote one
+	 * `UPDATE ... WHERE id = ?` per child: 118,938 of those a month on production, one per activity ever merged,
+	 * issued while the tracker's time-slot request waited (and held its pooled connection).
+	 *
+	 * @param newTimeSlot - The merged time slot, carrying the kept slot's id and the group's children
+	 * @param slots - The time slots of the group, the kept one first
+	 * @returns The saved slot, listing the moved screenshots and activities as the cascade used to
+	 */
+	private async saveMergedTimeSlotWithTypeOrm(newTimeSlot: TimeSlot, slots: ITimeSlot[]): Promise<TimeSlot> {
+		const { screenshots, activities } = newTimeSlot;
+		// Left off the saved slot: the cascade would otherwise rewrite them one by one (and detach the kept slot's
+		// own children that are not in the list).
+		let slotToSave = Object.assign(Object.create(Object.getPrototypeOf(newTimeSlot)), newTimeSlot) as TimeSlot;
+		delete slotToSave.screenshots;
+		delete slotToSave.activities;
+
+		const mergedSlotIds = pluck(slots.slice(1), 'id') as ID[];
+		// What the cascade's updates carried: the new slot, the author (the subscriber sets it on an entity save,
+		// not on a statement) and `updatedAt`, which the update builder sets on its own.
+		const updatedByUserId = RequestContext.currentUserId();
+		const changes = { timeSlotId: newTimeSlot.id, ...(updatedByUserId ? { updatedByUserId } : {}) };
+
+		// One transaction, as the cascading save was: a child update that fails (a lock timeout) must not leave the
+		// kept slot holding the group's totals while the merged slots still exist to be counted again.
+		let saved = await this.typeOrmTimeSlotRepository.manager.transaction(async (manager) => {
+			const savedSlot = await manager.save(TimeSlot, slotToSave);
+			if (isNotEmpty(mergedSlotIds)) {
+				for (const target of [Screenshot, Activity]) {
+					// Without the entity listeners: they run on the SET values of a statement as if those were the
+					// whole row, and ActivitySubscriber would then stamp every moved activity's `recordedAt` with the
+					// merge time (it derives a missing one from `date` + `time`, else now).
+					await manager
+						.createQueryBuilder()
+						.update(target)
+						.set(changes)
+						.where({ timeSlotId: In(mergedSlotIds) })
+						.callListeners(false)
+						.execute();
+				}
+			}
+			return savedSlot;
+		});
+
+		saved.screenshots = screenshots;
+		saved.activities = activities;
+		return saved;
+	}
+
+	/**
+	 * Saves a merged time slot under MikroORM as TypeORM's `save()` does: the kept slot (the first of the group)
+	 * takes the aggregated values and every time log of the group, and the screenshots and activities of the other
+	 * slots move onto it before those slots are cleaned up.
+	 *
+	 * The merged slot itself is not persisted: it carries the kept slot's id without being managed, so MikroORM
+	 * inserted it as a new row and refused its time logs, which are plain serialized objects.
+	 *
+	 * @param newTimeSlot - The merged time slot, carrying the kept slot's id
+	 * @param slots - The time slots of the group, the kept one first
+	 */
+	private async saveMergedTimeSlotWithMikroOrm(newTimeSlot: TimeSlot, slots: ITimeSlot[]): Promise<void> {
+		const { id, tenantId, organizationId, employeeId } = newTimeSlot;
+		const em = this.mikroOrmTimeSlotRepository.getEntityManager();
+
+		const timeSlot = await em.findOneOrFail(
+			TimeSlot,
+			{ id, tenantId, organizationId, employeeId },
+			{ populate: ['timeLogs'] }
+		);
+		em.assign(timeSlot, {
+			duration: newTimeSlot.duration,
+			keyboard: newTimeSlot.keyboard,
+			mouse: newTimeSlot.mouse,
+			overall: newTimeSlot.overall,
+			startedAt: newTimeSlot.startedAt,
+			// By id, so the stored time logs are linked rather than rebuilt from their serialized copies
+			timeLogs: pluck(newTimeSlot.timeLogs, 'id')
+		});
+
+		const mergedSlotIds = pluck(slots.slice(1), 'id');
+		if (isNotEmpty(mergedSlotIds)) {
+			// Through the relation: MikroORM does not write the `timeSlotId` mirror
+			await em.nativeUpdate(Screenshot, { timeSlot: { $in: mergedSlotIds } }, { timeSlot: id });
+			await em.nativeUpdate(Activity, { timeSlot: { $in: mergedSlotIds } }, { timeSlot: id });
+		}
+
+		await em.flush();
+
+		if (isNotEmpty(mergedSlotIds)) {
+			// nativeUpdate bypasses the identity map, where getTimeSlots already loaded these collections, and an
+			// initialized collection is not reloaded by a later populate: refresh them so a read in the same request
+			// (CreateTimeSlotHandler's findOne) returns the moved screenshots and activities too
+			await em.populate(timeSlot, ['screenshots', 'activities'], { refresh: true });
 		}
 	}
 
@@ -192,7 +294,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 			// Keep the most recent time slot by removing it from deletion
 			idsToDelete.splice(0, 1);
 
-			console.log('---------------TimeSlots Ids Will Be Deleted---------------', idsToDelete);
+			this.debug(() => `TimeSlots Ids Will Be Deleted: ${JSON.stringify(idsToDelete)}`);
 
 			if (isNotEmpty(idsToDelete)) {
 				switch (this.ormType) {
@@ -217,7 +319,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 				}
 			}
 		} catch (error) {
-			console.error('Error while cleaning up old time slots:', error);
+			this.logger.error(`Error while cleaning up old time slots: ${error?.message ?? error}`, error?.stack);
 		}
 	}
 
@@ -375,7 +477,7 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 					.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
 					.addOrderBy(p(`"${query.alias}"."createdAt"`), 'ASC');
 
-				console.log('GET Time Slots Query:', query.getQueryAndParameters());
+				this.debug(() => `GET Time Slots Query: ${JSON.stringify(query.getQueryAndParameters())}`);
 				// Execute the query and return the results
 				return await query.getMany();
 			}
@@ -392,8 +494,10 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		 * Update TimeLog Entry Every TimeSlot Request From Desktop Timer
 		 * RECALCULATE timesheet activity
 		 */
-		for await (const timeLog of newTimeSlot.timeLogs) {
-			await this.commandBus.execute(new TimesheetRecalculateCommand(timeLog.timesheetId));
+		// Once per timesheet: the time logs of one slot mostly belong to the same one.
+		const timesheetIds = uniq(pluck(newTimeSlot.timeLogs ?? [], 'timesheetId').filter(Boolean)) as ID[];
+		for (const timesheetId of timesheetIds) {
+			await this.commandBus.execute(new TimesheetRecalculateCommand(timesheetId));
 		}
 
 		/**
@@ -401,6 +505,19 @@ export class TimeSlotMergeHandler implements ICommandHandler<TimeSlotMergeComman
 		 */
 		if (newTimeSlot.employeeId) {
 			await this.commandBus.execute(new UpdateEmployeeTotalWorkedHoursCommand(newTimeSlot.employeeId));
+		}
+	}
+
+	/**
+	 * Diagnostic trace of the merge, at debug level: the message is built only when debug logging is on (these
+	 * ran as unconditional console output before, the merged slot dumped with its screenshots and activities on
+	 * every tracker time-slot write).
+	 *
+	 * @param message - Builds the message to be logged.
+	 */
+	private debug(message: () => string): void {
+		if (Logger.isLevelEnabled('debug')) {
+			this.logger.debug(message());
 		}
 	}
 }

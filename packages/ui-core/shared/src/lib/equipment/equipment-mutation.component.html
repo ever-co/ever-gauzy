@@ -33,7 +33,7 @@
 						</svg>
 						<div class="image-overlay" [style.opacity]="hoverState ? '0.2' : '0'"></div>
 						@if (image && image?.fullUrl) {
-						<img class="featured-image" [src]="image?.fullUrl" alt="Feature image" style="width: 150px" />
+						<img class="featured-image" [src]="$safeNavigationMigration(image?.fullUrl)" alt="Feature image" style="width: 150px" />
 						} @if (!image) {
 						<div class="featured-image no-image" style="width: 150px"></div>
 						}
@@ -148,7 +148,7 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<ga-tags-color-input
-						[selectedTags]="form.get('tags')?.value"
+						[selectedTags]="$safeNavigationMigration(form.get('tags')?.value)"
 						(selectedTagsEvent)="selectedTagsEvent($event)"
 						[isOrgLevel]="true"
 					></ga-tags-color-input>
@@ -172,7 +172,7 @@
 		<button (click)="dialogRef.close()" status="basic" class="mr-2" outline nbButton>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button [disabled]="form.invalid" (click)="saveEquipment()" status="success" nbButton>
+		<button [disabled]="form.invalid || loading" (click)="saveEquipment()" status="success" nbButton>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

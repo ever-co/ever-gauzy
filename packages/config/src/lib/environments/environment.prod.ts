@@ -125,6 +125,13 @@ export const environment: IEnvironment = {
 	THROTTLE_TRUST_CF_CONNECTING_IP: isEnvFlagEnabled('THROTTLE_TRUST_CF_CONNECTING_IP', 'CLOUDFLARE_PROXY_ENABLED'),
 
 	/**
+	 * Secret shared with the Ever Teams server so its forwarded browser address (`X-Ever-Client-IP`, HMAC
+	 * signed) is trusted for per-client rate limits. At least 32 characters, same value on both sides;
+	 * unset (the default) ignores the headers entirely.
+	 */
+	EVER_TEAMS_CLIENT_IP_SECRET: process.env.EVER_TEAMS_CLIENT_IP_SECRET,
+
+	/**
 	 * Identifier-scoped brute-force control (0 disables it).
 	 */
 	AUTH_MAX_FAILED_ATTEMPTS: parseNonNegativeInt(process.env.AUTH_MAX_FAILED_ATTEMPTS, 10),
@@ -242,7 +249,15 @@ export const environment: IEnvironment = {
 	},
 
 	activepieces: {
-		apiKey: process.env.GAUZY_ACTIVEPIECES_API_KEY
+		apiKey: process.env.GAUZY_ACTIVEPIECES_API_KEY,
+		signingKeyId: process.env.GAUZY_ACTIVEPIECES_SIGNING_KEY_ID,
+		signingPrivateKey: process.env.GAUZY_ACTIVEPIECES_SIGNING_PRIVATE_KEY,
+		tenantProjectsEnabled: !['false', '0', 'no', 'off'].includes(
+			(process.env.GAUZY_ACTIVEPIECES_TENANT_PROJECTS ?? '').trim().toLowerCase()
+		),
+		projectExternalIdPrefix: process.env.GAUZY_ACTIVEPIECES_PROJECT_EXTERNAL_ID_PREFIX,
+		// `v2` (blank) or `legacy`; read, and an unknown value refused, by the Activepieces plugin where MCP is called
+		mcpApi: process.env.GAUZY_ACTIVEPIECES_MCP_API
 	},
 
 	sim: {
@@ -289,7 +304,7 @@ export const environment: IEnvironment = {
 		maxAuthCodes: Number.parseInt(process.env.GAUZY_ZAPIER_MAX_AUTH_CODES) || 1000,
 		instanceCount: process.env.GAUZY_ZAPIER_INSTANCE_COUNT === 'true',
 		redirectUri:
-			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/zapier/callback`,
+			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integration/zapier/oauth/callback`,
 		postInstallUrl:
 			process.env.GAUZY_ZAPIER_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/zapier`
 	},
@@ -309,6 +324,7 @@ export const environment: IEnvironment = {
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
 	gauzySeedPath: process.env.GAUZY_SEED_PATH,
 	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
+	reportCatalogueAuthoring: process.env.REPORT_CATALOGUE_AUTHORING_ENABLED === 'true',
 	electronResourcesPath: process.env.ELECTRON_RESOURCES_PATH,
 
 	/**

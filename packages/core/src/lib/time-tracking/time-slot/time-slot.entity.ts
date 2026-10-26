@@ -27,6 +27,12 @@ import { TimeSlotMinute } from './time-slot-minute/time-slot-minute.entity';
 import { TimeSlotSession } from '../time-slot-session/time-slot-session.entity';
 import { MikroOrmTimeSlotRepository } from './repository/mikro-orm-time-slot.repository';
 
+/**
+ * The organization-wide statistics filter on no employee, hence the second index.
+ * Both are built by `AddTimeLogAndTimeSlotCompositeIndexes1790000024000`.
+ */
+@ColumnIndex('IDX_time_slot_tenant_org_employee_started', ['tenantId', 'organizationId', 'employeeId', 'startedAt'])
+@ColumnIndex('IDX_time_slot_tenant_org_started', ['tenantId', 'organizationId', 'startedAt'])
 @MultiORMEntity('time_slot', { mikroOrmRepository: () => MikroOrmTimeSlotRepository })
 export class TimeSlot extends TenantOrganizationBaseEntity implements ITimeSlot {
 	/**

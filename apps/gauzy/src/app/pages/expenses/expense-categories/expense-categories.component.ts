@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,6 +28,7 @@ import { ExpenseCategoryMutationComponent } from './expense-category-mutation/ex
     selector: 'ga-expense-categories',
     templateUrl: './expense-categories.component.html',
     styleUrls: ['expense-categories.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ExpenseCategoriesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

@@ -189,6 +189,7 @@
 		"ADD_MORE_SOURCES": "Добавете още източници",
 		"REMOVE_FROM_FAVORITES": "Премахване от любими",
 		"ADD_TO_FAVORITES": "Добавете към любими",
+		"EXPAND_FULL_WIDTH": "Разгъване на цяла ширина",
 		"UNSELECT_ALL": "Премахни избора на всички",
 		"START_TIMER_ANYWAY": "Стартирай въпреки това",
 		"OPEN_SETTING": "Отвори настройките"
@@ -863,6 +864,7 @@
 		"REGISTER_AS_EMPLOYEE_TOOLTIP": "Трябва да бъдете служител, за да можете да проследявате време, да създавате разделени разходи и да използвате други функции, свързани със служителите."
 	},
 	"MENU": {
+		"INITIATIVES": "Инициативи",
 		"BREADCRUMB": "Навигационен път",
 		"PIPELINES": "Потоци",
 		"DASHBOARD": "Табло",
@@ -1191,9 +1193,54 @@
 		"ADD_ITEM": "Добавете {{ name }}"
 	},
 	"SETTINGS_GENERAL": {
+		"SCOPE": {
+			"PERSONAL": "Само вие",
+			"TENANT": "Всички в този наемател"
+		},
+		"UNSAVED_CHANGES": "Незапазени промени",
+		"ACCOUNT": {
+			"TITLE": "Акаунт",
+			"DESCRIPTION": "Акаунтът, с който сте влезли.",
+			"MANAGE": "Управление на профила",
+			"ROLE": "Роля",
+			"MEMBER_SINCE": "Член от"
+		},
+		"PREFERENCES": {
+			"TITLE": "Предпочитания",
+			"DESCRIPTION": "Как изглежда и работи приложението за вас. Промените се прилагат веднага.",
+			"THEME": "Тема",
+			"THEME_HINT": "Цветова схема на цялото приложение.",
+			"LANGUAGE": "Език",
+			"LANGUAGE_HINT": "Език на менютата, етикетите и съобщенията.",
+			"LAYOUT": "Оформление по подразбиране",
+			"RESET_LAYOUTS": "Нулиране на оформленията на страниците",
+			"SAVE_ERROR": "Предпочитанието ви не можа да бъде запазено.",
+			"LAYOUTS_RESET": "Оформленията на страниците са върнати към подразбиращото се."
+		},
+		"TENANT_PROFILE": {
+			"LOGO_HINT": "Квадратно изображение, поне 128 × 128 px.",
+			"NAME_HINT": "Показва се на всеки потребител на този наемател.",
+			"TENANT_ID": "ID на наемателя",
+			"TENANT_ID_HINT": "Посочете го, когато се свързвате с поддръжката или използвате API.",
+			"COPY_ERROR": "ID на наемателя не можа да бъде копиран.",
+			"TITLE": "Профил на наемателя",
+			"DESCRIPTION": "Името и логото на този наемател, показвани в превключвателя на работни пространства и страничната лента за всички потребители.",
+			"NAME": "Име на наемателя",
+			"NAME_PLACEHOLDER": "Въведете името на наемателя",
+			"NAME_REQUIRED": "Името на наемателя е задължително.",
+			"LOGO": "Лого на наемателя",
+			"LOGO_CHANGE": "Щракнете, за да качите ново лого",
+			"LOGO_REMOVE": "Премахване на логото",
+			"LOGO_UPLOAD_ERROR": "Логото не можа да бъде качено.",
+			"CREATED_AT": "Създаден на",
+			"SAVED": "Профилът на наемателя е запазен",
+			"SAVE_ERROR": "Профилът на наемателя не можа да бъде запазен.",
+			"LOAD_ERROR": "Профилът на наемателя не можа да бъде зареден."
+		},
 		"PREFERRED_UI": {
+			"LABEL": "Интерфейс",
 			"TITLE": "Потребителски интерфейс",
-			"DESCRIPTION": "Изберете кой интерфейс да използват всички в този наемател за страниците, налични и в двата варианта.",
+			"DESCRIPTION": "Изберете кой интерфейс да използват всички в този наемател за страниците, налични и в двата варианта. И двата интерфейса показват едни и същи страници, със същите данни, оформление и функции — различава се само технологията зад тях, така че превключването не променя какво виждат или могат да правят потребителите.",
 			"OPTIONS": {
 				"ANGULAR": "Angular (по подразбиране)",
 				"REACT": "React (нов)"
@@ -1830,6 +1877,40 @@
 		}
 	},
 	"DASHBOARD_PAGE": {
+		"TEAMS_DASHBOARD": {
+			"ALL_TEAMS": "Всички екипи",
+			"WORKED_TODAY": "Работено днес",
+			"TEAMS_ACTIVE": "Активни екипи",
+			"OF_TEAMS": "от {{ total }} екипа са отчели време",
+			"MEMBERS_WORKED": "Активни членове",
+			"OF_PROJECTS": "от {{ total }} проекта",
+			"TEAMS_CAPTION": "Кой е работил във всеки екип през избрания ден",
+			"TOP_MEMBERS": "Най-активни членове",
+			"TRACKING_NOW": "Отчитат в момента",
+			"ONLINE_META": "{{ count }} на линия",
+			"PROJECTS_META": "с време през избрания ден",
+			"MEMBERS_CAPTION": "Задачите, времето и активността на всеки член през избрания ден",
+			"OPEN_TEAM": "Отвори страницата на екипа",
+			"MORE_TASKS": "още +{{ count }}",
+			"OF_WORKDAY": "{{ percent }} от {{ hours }}",
+			"SHOW_MEMBERS": "Покажи членовете",
+			"EXPAND_ALL": "Покажи всички членове",
+			"COLLAPSE_ALL": "Скрий членовете",
+			"TOTAL_TODAY": "Общо днес",
+			"WORKDAY": "Работен ден",
+			"SCROLL_TEAMS_BACK": "Покажи предишните екипи",
+			"SCROLL_TEAMS_FORWARD": "Покажи още екипи",
+			"PERSON_TASKS": "Задачи",
+			"WORKING_ON": "Работи по",
+			"LAST_TASK": "Последна задача",
+			"PERSON_WORKDAY": "{{ percent }} от работен ден от {{ hours }}",
+			"COLUMNS": {
+				"TEAM": "Екип",
+				"WORKED": "Работили",
+				"NOW": "Сега",
+				"NOT_WORKED": "Не са работили"
+			}
+		},
 		"ACCOUNTING": "Счетоводство",
 		"HUMAN_RESOURCES": "Човешки ресурси",
 		"TIME_TRACKING": "Проследяване на времето",
@@ -1979,6 +2060,14 @@
 		}
 	},
 	"EMPLOYEES_PAGE": {
+		"KIND": "Вид",
+		"KIND_ALL": "Всички",
+		"KIND_HUMAN": "Хора",
+		"KIND_AGENT": "Агенти",
+		"AGENT_BADGE": "Агент",
+		"MANAGED_BY_EVER_WORKS": "Управлява се от Ever Works: името и профилът на този агент се променят в Ever Works и се синхронизират с Gauzy.",
+		"MANAGED_EXTERNALLY": "Управлява се външно: името и профилът на този агент се променят в системата, от която идва, и се синхронизират с Gauzy.",
+		"OPEN_MANAGED_AGENT": "Отвори страницата на агента",
 		"HEADER": "Manage Employees",
 		"ADD_EMPLOYEE": "Добавяне на служител",
 		"ACTIVE": "Активен",
@@ -2034,7 +2123,151 @@
 			"PREVIOUS": "Previous"
 		},
 		"NOT_STARTED": "Not Started",
-		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc."
+		"NOT_STARTED_HELP": "Started work on date is not set for this employee. The employee will not be considered in accounts, split expenses etc.",
+		"VIEW": {
+			"PERIOD": "Период",
+			"PERIODS": {
+				"THIS_WEEK": "Тази седмица",
+				"THIS_MONTH": "Този месец",
+				"LAST_30_DAYS": "Последните 30 дни"
+			},
+			"TABS": {
+				"OVERVIEW": "Общ преглед",
+				"PROFILE": "Профил"
+			},
+			"PRESENCE": {
+				"TRACKING": "Отчита време",
+				"ONLINE": "На линия",
+				"AWAY": "Отсъства",
+				"OFFLINE": "Офлайн"
+			},
+			"LOCAL_TIME": "Местно време",
+			"MEMBER_SINCE": "Член от",
+			"WEEKLY_LIMIT": "Седмичен лимит",
+			"WORKED_TODAY": "Работено днес",
+			"WORKED_PERIOD": "Работено за периода",
+			"ACTIVITY_META": "{{ value }} активност",
+			"AVG_ACTIVITY": "Средна активност",
+			"OPEN_TASKS": "Отворени задачи",
+			"OPEN_TASKS_META": "{{ progress }} в процес · {{ overdue }} просрочени",
+			"VS_PREVIOUS": {
+				"THIS_WEEK": "спрямо миналата седмица",
+				"THIS_MONTH": "спрямо миналия месец",
+				"LAST_30_DAYS": "спрямо предходните 30 дни"
+			},
+			"HOURS_WORKED": "Изработени часове",
+			"HOURS_META": "{{ total }} общо · {{ average }} на работен ден",
+			"TRACKED": "Отчетено",
+			"MANUAL": "Ръчно",
+			"OPEN_TIMESHEET": "Отвори графика",
+			"PROJECTS": "Проекти",
+			"RECENT_SCREENSHOTS": "Последни екранни снимки",
+			"VIEW_ALL": "Виж всички",
+			"ASSIGNED_TASKS": "Възложени задачи",
+			"COLUMNS": {
+				"TASK": "Задача",
+				"PROJECT": "Проект",
+				"STATUS": "Статус",
+				"DUE": "Срок",
+				"TIME": "Време",
+				"NAME": "Име",
+				"PRIORITY": "Приоритет"
+			},
+			"TOP_TASKS": "Най-работени задачи",
+			"APPS_URLS": "Приложения и URL адреси",
+			"NO_TIME": "Няма отчетено време за този период",
+			"NO_TASKS": "Няма възложени задачи",
+			"NO_APPS": "Няма активност на приложения или URL за този период",
+			"NO_SCREENSHOTS": "Няма екранни снимки за този период",
+			"UNAVAILABLE": "Нямате достъп до тези данни",
+			"PROFILE": {
+				"ABOUT": "За служителя",
+				"CONTACT": "Контакти",
+				"SKILLS_TAGS": "Умения и етикети",
+				"TIME_ZONE": "Часова зона",
+				"NOT_PROVIDED": "Все още не е посочено",
+				"NO_DESCRIPTION": "Все още няма добавено описание"
+			},
+			"TASKS_HELP": "Задачи, в които участва този човек. Изберете поле, за да филтрирате списъка.",
+			"TASK_FILTERS": {
+				"OPEN": "Отворени",
+				"PROGRESS": "В процес",
+				"OVERDUE": "Просрочени",
+				"DONE": "Завършени"
+			},
+			"DUE": {
+				"NONE": "Без краен срок",
+				"WAS_DUE": "Срокът беше",
+				"OVERDUE_DAY": "1 ден просрочие",
+				"OVERDUE_DAYS": "{{ count }} дни просрочие",
+				"TODAY": "Срок днес",
+				"TOMORROW": "Срок утре",
+				"IN_DAYS": "След {{ count }} дни"
+			},
+			"SHOWING": "Показани {{ shown }} от {{ total }} задачи",
+			"NO_TASKS_IN_VIEW": "Няма задачи в този изглед",
+			"PROJECTS_CAPTION": "Проектите и отработеното време по всеки през този период",
+			"NO_PROJECTS": "Не е член на проект и няма време по проекти през този период",
+			"NOT_A_MEMBER": "Не е член",
+			"NOT_A_MEMBER_HINT": "Отчетено е време по този проект, но лицето не е негов член",
+			"VIEW_PROFILE": "Виж профила",
+			"MEMBERSHIP_UNKNOWN": "Членството в проектите не можа да бъде заредено, затова членовете и нечленовете не се разграничават.",
+			"PROJECT_TIMES_PARTIAL": "Част от времената по проекти не можаха да се заредят, така че проект без време може все пак да има."
+		}
+	},
+	"STRATEGIC_INITIATIVES": {
+		"HEADER": "Стратегически инициативи",
+		"SUBTITLE": "Посоките, в които организацията ви е решила да се развива, и свързаните с тях цели, проекти и екипи.",
+		"ADD": "Добави инициатива",
+		"EDIT": "Редактирай инициатива",
+		"EMPTY": "Все още няма стратегически инициативи.",
+		"TITLE": "Заглавие",
+		"STATE": "Състояние",
+		"VISIBILITY": "Видимост",
+		"TEAMS": "Екипи",
+		"TEAMS_HINT": "При видимост „Екип“ инициативата се вижда от членовете на тези екипи (и на екипите на свързаните проекти).",
+		"PROJECTS": "Проекти",
+		"GOALS": "Цели",
+		"CONFIDENCE": "Увереност",
+		"MOMENTUM": "Инерция",
+		"INTENT": "Намерение",
+		"INTENT_HINT": "Какво съзнателно искаме да придвижим напред и защо?",
+		"STEWARD": "Отговорник",
+		"SIGNALS": "Сигнали",
+		"KNOWN_RISKS": "Известни рискове",
+		"KNOWN_RISKS_HINT": "По един риск на ред",
+		"NOTES": "Бележки",
+		"LAST_ASSESSED": "Последна оценка",
+		"NO_TEAMS": "Няма свързани екипи.",
+		"NO_GOALS": "Няма свързани цели.",
+		"NO_PROJECTS": "Няма свързани проекти.",
+		"NOT_FOUND": "Инициативата не е намерена или нямате достъп до нея.",
+		"DELETE_TITLE": "Изтрий инициатива",
+		"DELETE_CONFIRMATION": "Да се изтрие ли инициативата „{{ name }}“?",
+		"DELETED": "Инициативата „{{ name }}“ е изтрита.",
+		"CREATED": "Инициативата „{{ name }}“ е създадена.",
+		"UPDATED": "Инициативата „{{ name }}“ е обновена.",
+		"STATES": {
+			"DRAFT": "Чернова",
+			"ACTIVE": "Активна",
+			"RESOLVED": "Постигната",
+			"RETIRED": "Прекратена"
+		},
+		"VISIBILITY_SCOPES": {
+			"LEADERSHIP": "Ръководство",
+			"ORGANIZATION": "Организация",
+			"TEAM": "Екип"
+		},
+		"CONFIDENCE_LEVELS": {
+			"LOW": "Ниска",
+			"MEDIUM": "Средна",
+			"HIGH": "Висока"
+		},
+		"MOMENTUMS": {
+			"STALLED": "В застой",
+			"PROGRESSING": "Напредва",
+			"ACCELERATING": "Ускорява се"
+		}
 	},
 	"GOALS_PAGE": {
 		"HEADER": "All Objectives",
@@ -2052,6 +2285,17 @@
 		"UPDATE": "Update",
 		"ALIGNMENTS": "Alignments",
 		"COMMENTS": "Comments",
+		"COMMENT_THREAD": {
+			"REPLY": "Отговори",
+			"ONE_MESSAGE": "1 съобщение",
+			"MESSAGES": "{{ count }} съобщения",
+			"NO_MESSAGES": "Все още няма съобщения в тази нишка.",
+			"REPLY_PLACEHOLDER": "Отговорете на този коментар…",
+			"UNKNOWN_AUTHOR": "Неизвестен",
+			"DELETE_CONFIRM": "Да се изтрие ли този коментар?",
+			"DELETED": "Коментарът е изтрит",
+			"LOAD_ERROR": "Коментарите не можаха да бъдат заредени."
+		},
 		"KEY_RESULTS": "Key Results",
 		"GROUP_BY": "Group By",
 		"DELETE_OBJECTIVE": "Delete Objective",
@@ -2099,6 +2343,7 @@
 			"NO_KEY_RESULT": "No Key Results to display.",
 			"NO_UPDATES": "No Updates yet.",
 			"NO_ALIGNMENT": "No Alignments yet.",
+			"NO_COMMENTS": "Все още няма коментари.",
 			"NO_PROGRESS_DATA": "No progress data to chart yet."
 		},
 		"LEVELS": {
@@ -2413,6 +2658,12 @@
 		}
 	},
 	"ORGANIZATIONS_PAGE": {
+		"DELETE_DIALOG": {
+			"TITLE": "Изтриване на организацията",
+			"WARNING": "{{ name }} ще бъде изтрита окончателно. Това действие не може да бъде отменено.",
+			"TYPE_TO_CONFIRM": "Въведете следното, за да потвърдите:",
+			"CONFIRM": "Изтриване на организацията"
+		},
 		"ORGANIZATIONS": "Организации",
 		"EMPLOYEES": "Служители",
 		"POSITIONS": "Позиции",
@@ -2595,7 +2846,72 @@
 			},
 			"TEAMS_PAGE": {
 				"MANAGERS": "Managers",
-				"MEMBERS": "Members"
+				"MEMBERS": "Members",
+				"VIEW": {
+					"TABS": {
+						"DETAILS": "Подробности"
+					},
+					"PUBLIC": "Публичен",
+					"PRIVATE": "Частен",
+					"PREFIX": "Префикс на задачите",
+					"MEMBERS_COUNT": "{{ count }} членове",
+					"LIVE": "{{ tracking }} проследяват сега · {{ online }} на линия",
+					"OF_MEMBERS": "{{ count }} от {{ total }} членове",
+					"CREATED": "Създаден",
+					"UPDATED": "Последна актуализация",
+					"ACTIVE_MEMBERS": "Активни членове",
+					"ACTIVE_MEMBERS_META": "от {{ total }} членове отчетоха време",
+					"TIME_BY_MEMBER": "Време по членове",
+					"TEAM_TASKS": "Задачи на екипа",
+					"NO_TEAM_TASKS": "Няма задачи, възложени на този екип",
+					"NO_MEMBERS": "Този екип все още няма членове",
+					"NO_PROJECTS": "Няма проекти, свързани с този екип",
+					"COLUMNS": {
+						"MEMBER": "Член",
+						"ROLE": "Роля",
+						"STATUS": "Статус",
+						"CURRENT_TASK": "Текуща задача",
+						"TODAY": "Днес",
+						"ACTIVITY": "Активност"
+					},
+					"ROLE": {
+						"MANAGER": "Мениджър",
+						"MEMBER": "Член"
+					},
+					"GENERAL": "Общи",
+					"SETTINGS": "Настройки",
+					"RECORD": "Запис",
+					"TEAM_SIZE": "Размер на екипа",
+					"COLOR": "Цвят",
+					"EMOJI": "Емоджи",
+					"PROFILE_LINK": "Връзка към профила",
+					"VISIBILITY": "Видимост",
+					"SHARE_PROFILE_VIEW": "Членовете виждат профилите си",
+					"REQUIRE_PLAN": "Изисква план за отчитане на време",
+					"NOT_FOUND": "Този екип не е намерен",
+					"LOAD_FAILED": "Екипът не можа да бъде зареден",
+					"RETRY": "Опитай отново",
+					"OPEN_TASK_DETAILS": "Покажи подробности за {{ title }}",
+					"OPEN_PROJECT_DETAILS": "Покажи подробности за проекта {{ name }}",
+					"PROJECT_PROGRESS": "Напредък",
+					"PROJECT_PROGRESS_META": "{{ done }} от {{ total }} задачи са изпълнени",
+					"NO_PROJECT_TASKS": "Все още няма задачи в този проект",
+					"TOP_CONTRIBUTORS": "Кой е работил най-много",
+					"TOP_CONTRIBUTORS_CAPTION": "Времето на членовете на екипа по този проект · {{ range }}",
+					"PROJECT_ACTIVITY": "Дневна активност",
+					"NEEDS_ATTENTION": "Изисква внимание",
+					"NEEDS_ATTENTION_CAPTION": "Просрочени задачи и задачи с краен срок до 3 дни",
+					"BUDGET_USED": "Използвани {{ used }} от {{ budget }}",
+					"OVER_BUDGET": "{{ value }} над бюджета",
+					"OPEN_TASK_PAGE": "Отвори страницата на {{ title }}",
+					"OPEN_TASK_PAGE_SHORT": "Отвори страницата на задачата",
+					"UNASSIGNED": "Неразпределена",
+					"SHOW_ALL": "Покажи всички",
+					"SHOW_LESS": "Покажи по-малко",
+					"PROJECTS_CAPTION": "Проектите на екипа и времето, отработено по всеки през този период",
+					"NOT_LINKED": "Несвързан",
+					"NOT_LINKED_HINT": "Членовете са отчели време по този проект, но той не е свързан с екипа"
+				}
 			}
 		},
 		"PERMISSIONS": {
@@ -2699,6 +3015,48 @@
 				"ADMINISTRATION": "Администрация"
 			},
 			"ONLY_ADMIN": "These permissions are read-only and enabled only for admin",
+			"ENABLED_COUNT": "{{ enabled }} от {{ total }} включени",
+			"SECTIONS": {
+				"DASHBOARDS": "Табла",
+				"SELECTION": "Избор на работно пространство",
+				"INTEGRATIONS_AI": "Интеграции и AI",
+				"JOBS": "Обяви за работа",
+				"FINANCE": "Финанси",
+				"SALES": "Продажби и контакти",
+				"EMPLOYEES_TEAMS": "Служители и екипи",
+				"CANDIDATES": "Кандидати",
+				"TIME_OFF_APPROVALS": "Отпуски и одобрения",
+				"TIME_TRACKING": "Проследяване на времето",
+				"PROJECTS_TASKS": "Проекти и задачи",
+				"INVENTORY_EQUIPMENT": "Инвентар и оборудване",
+				"CONTENT_COMMUNICATION": "Съдържание и комуникация",
+				"TAGS": "Етикети",
+				"ACCOUNT": "Акаунт",
+				"USERS_ORGANIZATIONS": "Потребители и организации",
+				"SETTINGS_INTEGRATIONS": "Настройки и интеграции",
+				"DATA_LOGS": "Данни и журнали",
+				"DOCUMENTS": "Документи",
+				"COMMERCE_PLATFORM": "Търговия: платформа",
+				"COMMERCE_CATALOG": "Търговия: каталог и цени",
+				"COMMERCE_ORDERS": "Търговия: поръчки и клиенти",
+				"COMMERCE_FULFILLMENT": "Търговия: наличности и доставка",
+				"COMMERCE_PAYMENTS": "Търговия: плащания",
+				"COMMERCE_MARKETPLACE": "Търговия: маркетплейс",
+				"OTHER": "Други"
+			},
+			"ORG_PAYROLL_VIEW": "Преглед на заплати",
+			"ORG_PAYROLL_EDIT": "Създаване/редактиране на ведомости",
+			"ORG_PAYROLL_APPROVE": "Одобряване и изплащане на ведомости",
+			"DOCS_READ": "Преглед на документи",
+			"DOCS_CREATE": "Създаване на документи",
+			"DOCS_UPDATE": "Редактиране на документи",
+			"DOCS_DELETE": "Изтриване на документи",
+			"DOCS_MANAGE": "Управление на категории документи и адреси за прием",
+			"DOCS_REVIEW": "Одобряване/отхвърляне на прегледи на документи",
+			"DOCS_AI_IMPORT": "Управление на AI знанията за документи",
+			"INBOX_VIEW": "Преглед на входящата кутия",
+			"INBOX_MAILBOX_MANAGE": "Управление на пощенски кутии и акаунти на доставчици",
+			"INBOX_MAILBOX_READ_ALL": "Четене на всички споделени пощенски кутии",
 			"INSUFFICIENT": "You do not have sufficient permissions. The following permissions are missing:",
 			"ORG_SPRINT_EDIT": "Редактиране на спринт",
 			"ORG_SPRINT_VIEW": "Преглед на спринт",
@@ -2764,7 +3122,204 @@
 			"ORG_STRATEGIC_INITIATIVE_CREATE": "Създаване на организационна стратегическа инициатива",
 			"ORG_STRATEGIC_INITIATIVE_READ": "Преглед на организационната стратегическа инициатива",
 			"ORG_STRATEGIC_INITIATIVE_UPDATE": "Актуализиране на организационната стратегическа инициатива",
-			"ORG_STRATEGIC_INITIATIVE_DELETE": "Изтриване на организационната стратегическа инициатива"
+			"CHANNELS_VIEW": "Преглед на канали",
+			"CHANNELS_CREATE": "Създаване на канали",
+			"CHANNELS_EDIT": "Редактиране на канали",
+			"CHANNELS_DELETE": "Изтриване на канали",
+			"REGIONS_VIEW": "Преглед на региони",
+			"REGIONS_CREATE": "Създаване на региони",
+			"REGIONS_EDIT": "Редактиране на региони",
+			"REGIONS_DELETE": "Изтриване на региони",
+			"RULES_VIEW": "Преглед на правила",
+			"RULES_EDIT": "Редактиране на правила",
+			"SEQUENCES_VIEW": "Преглед на номерационни последователности",
+			"SEQUENCES_EDIT": "Редактиране на номерационни последователности",
+			"UNITS_VIEW": "Преглед на мерни единици",
+			"UNITS_EDIT": "Редактиране на мерни единици",
+			"PAYMENT_TERMS_VIEW": "Преглед на условия за плащане",
+			"PAYMENT_TERMS_EDIT": "Редактиране на условия за плащане",
+			"PROVIDERS_VIEW": "Преглед на доставчици",
+			"OPERATIONS_VIEW": "Преглед на фонови операции",
+			"OPERATIONS_CANCEL": "Анулиране на фонови операции",
+			"EVENT_OUTBOX_VIEW": "Преглед на изходящата опашка на събития",
+			"EVENT_OUTBOX_RETRY": "Повторно изпращане на съобщения от изходящата опашка на събития",
+			"IDEMPOTENCY_KEYS_VIEW": "Преглед на ключове за идемпотентност",
+			"IDEMPOTENCY_KEYS_DELETE": "Изтриване на ключове за идемпотентност",
+			"WEBHOOKS_VIEW": "Преглед на уебхукове",
+			"WEBHOOKS_CREATE": "Създаване на уебхукове",
+			"WEBHOOKS_EDIT": "Редактиране на уебхукове",
+			"WEBHOOKS_DELETE": "Изтриване на уебхукове",
+			"WEBHOOK_DELIVERIES_RETRY": "Повторно доставяне на уебхукове",
+			"SEARCH_VIEW": "Използване на глобално търсене",
+			"SEARCH_REINDEX": "Повторно изграждане на индекса за търсене",
+			"SEARCH_INDEX_DEFINITIONS_VIEW": "Преглед на дефиниции на индекси за търсене",
+			"SEARCH_INDEX_DEFINITIONS_EDIT": "Редактиране на дефиниции на индекси за търсене",
+			"PRODUCTS_VIEW": "Преглед на продукти",
+			"PRODUCTS_EDIT": "Редактиране на продукти",
+			"PRODUCTS_DELETE": "Изтриване на продукти",
+			"PRODUCTS_BULK_IMPORT": "Масов импорт на продукти",
+			"COLLECTIONS_VIEW": "Преглед на колекции",
+			"COLLECTIONS_CREATE": "Създаване на колекции",
+			"COLLECTIONS_EDIT": "Редактиране на колекции",
+			"COLLECTIONS_DELETE": "Изтриване на колекции",
+			"PRICE_LISTS_VIEW": "Преглед на ценови листи",
+			"PRICE_LISTS_CREATE": "Създаване на ценови листи",
+			"PRICE_LISTS_EDIT": "Редактиране на ценови листи",
+			"PRICE_LISTS_DELETE": "Изтриване на ценови листи",
+			"PRICE_LISTS_SIMULATE": "Симулиране на ценови листи",
+			"PRODUCT_PRICES_VIEW": "Преглед на цени на продукти",
+			"PRODUCT_PRICES_EDIT": "Редактиране на цени на продукти",
+			"PRODUCT_PRICES_BULK_EDIT": "Масово редактиране на цени на продукти",
+			"EXCHANGE_RATES_VIEW": "Преглед на валутни курсове",
+			"EXCHANGE_RATES_EDIT": "Редактиране на валутни курсове",
+			"TAX_CATEGORIES_VIEW": "Преглед на данъчни категории",
+			"TAX_CATEGORIES_EDIT": "Редактиране на данъчни категории",
+			"TAX_RATES_VIEW": "Преглед на данъчни ставки",
+			"TAX_RATES_EDIT": "Редактиране на данъчни ставки",
+			"TAX_REGIMES_VIEW": "Преглед на данъчни режими",
+			"TAX_REGIMES_EDIT": "Редактиране на данъчни режими",
+			"PROMOTIONS_VIEW": "Преглед на промоции",
+			"PROMOTIONS_CREATE": "Създаване на промоции",
+			"PROMOTIONS_EDIT": "Редактиране на промоции",
+			"PROMOTIONS_DELETE": "Изтриване на промоции",
+			"PROMOTIONS_SIMULATE": "Симулиране на промоции",
+			"COUPONS_VIEW": "Преглед на купони",
+			"COUPONS_CREATE": "Създаване на купони",
+			"COUPONS_EDIT": "Редактиране на купони",
+			"COUPONS_DELETE": "Изтриване на купони",
+			"GIFT_CARDS_VIEW": "Преглед на карти за подарък",
+			"GIFT_CARDS_ISSUE": "Издаване на карти за подарък",
+			"GIFT_CARDS_EDIT": "Редактиране на карти за подарък",
+			"CARTS_VIEW": "Преглед на колички",
+			"CARTS_EDIT": "Редактиране на колички",
+			"CARTS_DELETE": "Изтриване на колички",
+			"CARTS_CHECKOUT": "Завършване на поръчката",
+			"ORDERS_VIEW": "Преглед на поръчки",
+			"ORDERS_CREATE": "Създаване на поръчки",
+			"ORDERS_EDIT": "Редактиране на поръчки",
+			"ORDERS_CANCEL": "Анулиране на поръчки",
+			"ORDERS_APPROVE": "Одобряване на поръчки",
+			"RETURNS_VIEW": "Преглед на връщания",
+			"RETURNS_CREATE": "Създаване на връщания",
+			"RETURNS_APPROVE": "Одобряване на връщания",
+			"RETURNS_REJECT": "Отхвърляне на връщания",
+			"RETURNS_RECEIVE": "Приемане на връщания",
+			"CLAIMS_VIEW": "Преглед на рекламации",
+			"CLAIMS_CREATE": "Създаване на рекламации",
+			"CLAIMS_RESOLVE": "Разрешаване на рекламации",
+			"EXCHANGES_VIEW": "Преглед на замени",
+			"EXCHANGES_CREATE": "Създаване на замени",
+			"EXCHANGES_RESOLVE": "Разрешаване на замени",
+			"SUBSCRIPTIONS_VIEW": "Преглед на абонаменти",
+			"SUBSCRIPTIONS_CREATE": "Създаване на абонаменти",
+			"SUBSCRIPTIONS_EDIT": "Редактиране на абонаменти",
+			"SUBSCRIPTIONS_BILL": "Таксуване на абонаменти",
+			"ENTITLEMENTS_VIEW": "Преглед на права за ползване",
+			"ENTITLEMENTS_GRANT": "Предоставяне на права за ползване",
+			"ENTITLEMENTS_EDIT": "Редактиране на права за ползване",
+			"CONTACT_GROUPS_VIEW": "Преглед на групи контакти",
+			"CONTACT_GROUPS_CREATE": "Създаване на групи контакти",
+			"CONTACT_GROUPS_EDIT": "Редактиране на групи контакти",
+			"CONTACT_GROUPS_DELETE": "Изтриване на групи контакти",
+			"CONTACT_CREDENTIALS_VIEW": "Преглед на идентификационни данни на контакти",
+			"CONTACT_CREDENTIALS_MANAGE": "Управление на идентификационни данни на контакти",
+			"CONTACT_CREDITS_EDIT": "Редактиране на кредит на контакти",
+			"CONTACT_TAX_IDENTITY_EDIT": "Редактиране на данъчни идентичности на контакти",
+			"STOCK_VIEW": "Преглед на наличности",
+			"STOCK_EDIT": "Редактиране на наличности",
+			"STOCK_RECONCILE": "Съгласуване на наличности",
+			"STOCK_TRANSFER_VIEW": "Преглед на трансфери на наличности",
+			"STOCK_TRANSFER_CREATE": "Създаване на трансфери на наличности",
+			"STOCK_TRANSFER_APPROVE": "Одобряване на трансфери на наличности",
+			"STOCK_TRANSFER_SHIP": "Изпращане на трансфери на наличности",
+			"STOCK_TRANSFER_RECEIVE": "Приемане на трансфери на наличности",
+			"STOCK_TRANSFER_CANCEL": "Анулиране на трансфери на наличности",
+			"WAREHOUSE_ZONES_VIEW": "Преглед на складови зони",
+			"WAREHOUSE_ZONES_CREATE": "Създаване на складови зони",
+			"WAREHOUSE_ZONES_EDIT": "Редактиране на складови зони",
+			"WAREHOUSE_ZONES_DELETE": "Изтриване на складови зони",
+			"WAREHOUSE_BINS_VIEW": "Преглед на складови клетки",
+			"WAREHOUSE_BINS_CREATE": "Създаване на складови клетки",
+			"WAREHOUSE_BINS_EDIT": "Редактиране на складови клетки",
+			"WAREHOUSE_BINS_DELETE": "Изтриване на складови клетки",
+			"PICK_LISTS_VIEW": "Преглед на списъци за комплектоване",
+			"PICK_LISTS_EDIT": "Редактиране на списъци за комплектоване",
+			"PICK_LISTS_PICK": "Комплектоване на артикули по списъци за комплектоване",
+			"PICK_LISTS_CANCEL": "Анулиране на списъци за комплектоване",
+			"FULFILLMENTS_VIEW": "Преглед на изпълнения на поръчки",
+			"FULFILLMENTS_CREATE": "Създаване на изпълнения на поръчки",
+			"FULFILLMENTS_EDIT": "Редактиране на изпълнения на поръчки",
+			"SHIPPING_OPTIONS_VIEW": "Преглед на опции за доставка",
+			"SHIPPING_OPTIONS_CREATE": "Създаване на опции за доставка",
+			"SHIPPING_OPTIONS_EDIT": "Редактиране на опции за доставка",
+			"SHIPPING_OPTIONS_DELETE": "Изтриване на опции за доставка",
+			"PURCHASE_ORDERS_VIEW": "Преглед на поръчки за покупка",
+			"PURCHASE_ORDERS_CREATE": "Създаване на поръчки за покупка",
+			"PURCHASE_ORDERS_EDIT": "Редактиране на поръчки за покупка",
+			"PURCHASE_ORDERS_APPROVE": "Одобряване на поръчки за покупка",
+			"PURCHASE_ORDERS_SEND": "Изпращане на поръчки за покупка",
+			"GOODS_RECEIPTS_VIEW": "Преглед на приемания на стоки",
+			"GOODS_RECEIPTS_CREATE": "Създаване на приемания на стоки",
+			"VENDOR_TERMS_VIEW": "Преглед на условия на доставчици",
+			"VENDOR_TERMS_EDIT": "Редактиране на условия на доставчици",
+			"PAYMENT_PROVIDERS_VIEW": "Преглед на доставчици на плащания",
+			"PAYMENT_PROVIDERS_CREATE": "Създаване на доставчици на плащания",
+			"PAYMENT_PROVIDERS_EDIT": "Редактиране на доставчици на плащания",
+			"PAYMENT_PROVIDERS_DELETE": "Изтриване на доставчици на плащания",
+			"PAYMENT_SESSIONS_VIEW": "Преглед на платежни сесии",
+			"PAYMENT_SESSIONS_AUTHORIZE": "Авторизиране на плащания",
+			"PAYMENT_SESSIONS_CAPTURE": "Събиране на плащания",
+			"PAYMENT_SESSIONS_CANCEL": "Анулиране на платежни сесии",
+			"REFUNDS_VIEW": "Преглед на възстановявания на суми",
+			"REFUNDS_CREATE": "Създаване на възстановявания на суми",
+			"REFUNDS_APPROVE": "Одобряване на възстановявания на суми",
+			"PAYMENT_CALLBACKS_VIEW": "Преглед на обратни извиквания от доставчици",
+			"PAYMENT_CALLBACKS_REPROCESS": "Повторна обработка на обратни извиквания от доставчици",
+			"PAYMENT_ACCOUNT_HOLDERS_VIEW": "Преглед на титуляри на платежни сметки",
+			"PAYMENT_ACCOUNT_HOLDERS_EDIT": "Редактиране на титуляри на платежни сметки",
+			"PAYMENT_METHOD_TOKENS_VIEW": "Преглед на запазени методи на плащане",
+			"PAYMENT_METHOD_TOKENS_EDIT": "Редактиране на запазени методи на плащане",
+			"PAYMENT_METHOD_TOKENS_CHARGE": "Таксуване на запазени методи на плащане",
+			"SELLERS_VIEW": "Преглед на продавачи",
+			"SELLERS_CREATE": "Създаване на продавачи",
+			"SELLERS_EDIT": "Редактиране на продавачи",
+			"SELLERS_DELETE": "Изтриване на продавачи",
+			"SELLER_OFFERINGS_VIEW": "Преглед на оферти на продавачи",
+			"SELLER_OFFERINGS_EDIT": "Редактиране на оферти на продавачи",
+			"SELLER_COMMISSIONS_VIEW": "Преглед на комисиони на продавачи",
+			"SELLER_COMMISSIONS_EDIT": "Редактиране на комисиони на продавачи",
+			"SELLER_TRANSACTIONS_VIEW": "Преглед на транзакции на продавачи",
+			"SELLER_TRANSACTIONS_SETTLE": "Уреждане на транзакции на продавачи",
+			"SELLER_SETTLEMENTS_VIEW": "Преглед на разплащания с продавачи",
+			"SELLER_SETTLEMENTS_EDIT": "Редактиране на разплащания с продавачи",
+			"SELLER_PAYOUTS_VIEW": "Преглед на изплащания към продавачи",
+			"SELLER_PAYOUTS_CREATE": "Създаване на изплащания към продавачи",
+			"SELLER_PAYOUTS_APPROVE": "Одобряване на изплащания към продавачи",
+			"SELLER_PAYOUTS_CANCEL": "Анулиране на изплащания към продавачи",
+			"ORG_STRATEGIC_INITIATIVE_DELETE": "Изтриване на организационната стратегическа инициатива",
+			"AI_CHAT_ACCESS": "Достъп до чат с ИИ",
+			"AI_CHAT_SETTINGS": "Управление на настройките на чата с ИИ",
+			"ORG_TASK_ADD": "Създаване на задачи",
+			"ORG_TASK_VIEW": "Преглед на задачи",
+			"ORG_TASK_EDIT": "Редактиране на задачи",
+			"ORG_TASK_DELETE": "Изтриване на задачи",
+			"ORG_PROJECT_ADD": "Създаване на проекти",
+			"ORG_PROJECT_VIEW": "Преглед на проекти",
+			"ORG_PROJECT_DELETE": "Изтриване на проекти",
+			"DAILY_PLAN_CREATE": "Създаване на дневни планове",
+			"DAILY_PLAN_READ": "Преглед на дневни планове",
+			"DAILY_PLAN_UPDATE": "Актуализиране на дневни планове",
+			"DAILY_PLAN_DELETE": "Изтриване на дневни планове",
+			"ORG_TEAM_REMOVE_ACCOUNT_AS_MEMBER": "Премахване на акаунта като член на екипа",
+			"MEDIA_GALLERY_ADD": "Добавяне в медийната галерия",
+			"MEDIA_GALLERY_VIEW": "Преглед на медийната галерия",
+			"MEDIA_GALLERY_EDIT": "Редактиране на медийната галерия",
+			"MEDIA_GALLERY_DELETE": "Изтриване от медийната галерия",
+			"CUSTOM_SMTP_EDIT": "Редактиране на персонализиран SMTP",
+			"IMPORT_ADD": "Импортиране на вашите данни",
+			"EXPORT_ADD": "Експортиране на вашите данни",
+			"OAUTH_CLIENT_VIEW": "Преглед на OAuth клиенти",
+			"OAUTH_CLIENT_EDIT": "Управление на OAuth клиенти"
 		},
 		"BILLING": "Billing",
 		"BUDGET": "Budget",
@@ -2772,7 +3327,62 @@
 		"ORGANIZATION_ADD": "Add Organization",
 		"IMAGE": "Снимка",
 		"SPRINTS": "Sprints",
-		"NO_IMAGE": "Image no available"
+		"NO_IMAGE": "Image no available",
+		"ADD_ORGANIZATION": {
+			"SUBTITLE": "Създайте нова организация с адрес, бонуси и регионални настройки.",
+			"PROGRESS": "Напредък",
+			"STEP_DETAILS": "Детайли",
+			"STEP_LOCATION": "Местоположение",
+			"STEP_BONUS": "Бонус",
+			"STEP_SETTINGS": "Настройки",
+			"STEP_EMPLOYEE": "Служител",
+			"PROFILE": "Профил",
+			"LOGO": "Лого на организацията",
+			"LOGO_HINT": "По избор. Щракнете върху логото, за да качите квадратно изображение от поне 256 × 256 px.",
+			"BUSINESS": "Данни за фирмата",
+			"ADDRESS_TITLE": "Адрес",
+			"ADDRESS_HINT": "По избор. Потърсете адрес, въведете го или щракнете върху картата, за да поставите организацията.",
+			"BONUS_TITLE": "Бонус",
+			"BONUS_HINT": "Изберете как се изчисляват бонусите на служителите. Можете да промените това по-късно в настройките на организацията.",
+			"REGIONAL": "Регионални",
+			"FISCAL_YEAR": "Финансова година",
+			"INVITES": "Покани",
+			"EMPLOYEE_TITLE": "Регистрирай се като служител",
+			"EMPLOYEE_HINT": "Добавете себе си към новата организация като служител.",
+			"BACK": "Назад",
+			"CONTINUE": "Продължи",
+			"SKIP": "Пропусни",
+			"CREATE": "Създай организация"
+		},
+		"PROJECT_FORM": {
+			"SECTIONS": "Раздели на проекта",
+			"DETAILS": "Подробности",
+			"LOGO": "Лого на проекта",
+			"LOGO_HINT": "По избор. Щракнете върху логото, за да качите квадратно изображение.",
+			"PEOPLE": "Хора",
+			"TIMELINE": "Времева рамка",
+			"APPEARANCE": "Външен вид",
+			"OPTIONS": "Опции",
+			"REPOSITORY": "Хранилище",
+			"TASK_SYNC": "Синхронизиране на задачи",
+			"CREATE_SUBTITLE": "Създайте нов проект с неговите хора, времева рамка и фактуриране.",
+			"OPEN_SOURCE_TITLE": "Проект с отворен код",
+			"OPEN_SOURCE_DESCRIPTION": "Споделете кода на проекта публично. Включете, за да добавите връзка към публичното му хранилище.",
+			"OPEN_SOURCE_URL_HINT": "Публичният адрес на кода, например хранилище в GitHub или GitLab.",
+			"OPEN_REPOSITORY": "Отвори хранилището",
+			"DESCRIPTION_CARD_DESC": "Опишете целите и обхвата на проекта за всички, които работят по него.",
+			"TAGS_DESC": "Добавете етикети, за да се намира и групира проектът по-лесно.",
+			"BILLING_DESC": "Как се фактурира клиентът за този проект и в каква валута.",
+			"BUDGET_DESC": "Задайте бюджет в часове или в разходи, за да остане проектът в график.",
+			"APPEARANCE_DESC": "Цветът на проекта и как се показват задачите му.",
+			"PUBLIC_TITLE": "Публичен проект",
+			"PUBLIC_DESC": "Всички виждат кой работи по публичен проект. При частен проект всеки вижда само себе си, освен ако няма достъп до частни проекти.",
+			"BILLABLE_DESC": "Отбележете работата по този проект като фактурируема на клиента.",
+			"REPOSITORY_DESC": "Изберете GitHub хранилището, с чиито проблеми работи този проект.",
+			"AUTO_SYNC_DESC": "Поддържайте задачите на проекта в синхрон с проблемите на хранилището. Промените тук се запазват веднага.",
+			"SYNC_LABEL_TITLE": "Синхронизиране по етикет",
+			"SYNC_LABEL_DESC": "Синхронизирайте само проблемите с етикета, който зададете. Промените тук се запазват веднага."
+		}
 	},
 	"CONTACTS_PAGE": {
 		"VISITORS": "Visitors",
@@ -2826,7 +3436,24 @@
 		"EMPLOYEE_UPDATED": "Employee has been updated.",
 		"IMAGE_UPDATED": "The image has been updated.",
 		"FAIL_TO_UPDATE_IMAGE": "Update failed.",
-		"ANONYMOUS": "Anonymous"
+		"ANONYMOUS": "Anonymous",
+		"ABOUT": "За служителя",
+		"INACTIVE": "Неактивен",
+		"PER_HOUR": "/ час",
+		"MEMBER_SINCE": "Член от",
+		"NO_DESCRIPTION": "Все още няма добавено описание",
+		"NO_SKILLS": "Все още няма посочени умения",
+		"NO_EMPLOYEES": "Все още няма служители за показване",
+		"NO_CLIENTS": "Все още няма клиенти за показване",
+		"EMPLOYEES_LOAD_FAILED": "Служителите не можаха да бъдат заредени.",
+		"CLIENTS_LOAD_FAILED": "Клиентите не можаха да бъдат заредени.",
+		"VIEW_COMPANY_PROFILE": "Виж профила на компанията",
+		"EDIT": {
+			"NO_AWARDS": "Все още няма награди",
+			"NO_LANGUAGES": "Все още няма добавени езици",
+			"ADD_AWARD": "Добави награда",
+			"PRIVACY_HELP": "Изберете кои данни посетителите виждат в публичния профил."
+		}
 	},
 	"PROPOSALS_PAGE": {
 		"HEADER": "Предложения - управление",
@@ -3039,7 +3666,8 @@
 			"BEFORE_REQUEST_DAY_ERR": "Date must be after request day.",
 			"EXCEED_PERIOD_ERR": "The maximum allowed days for this item are ",
 			"BEFORE_START_DATE_ERR": "End date cannot be before start date. ",
-			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before "
+			"ITEM_RETURNED_BEFORE_ERR": "Item should be returned before ",
+			"CHANGED_BY_SOMEONE_ELSE": "Тази заявка междувременно е променена от някой друг. Списъкът е презареден: проверете заявката и опитайте отново."
 		},
 		"ACTIONS": "Actions",
 		"APPROVE": "Approve",
@@ -3448,17 +4076,20 @@
 		"USER": {
 			"MANAGE": "Управление на покани за потребители",
 			"HEADER": "Поканете потребители",
-			"ACTION": "Поканете потребители"
+			"ACTION": "Поканете потребители",
+			"DESCRIPTION": "Поканете хора да се присъединят към организацията ви като потребители. Всеки получател получава имейл със защитена връзка за приемане."
 		},
 		"EMPLOYEE": {
 			"MANAGE": "Управление на покани за служители",
 			"HEADER": "Поканете служители",
-			"ACTION": "Поканете служители"
+			"ACTION": "Поканете служители",
+			"DESCRIPTION": "Поканете хора да се присъединят към организацията ви като служители. Всеки получател получава имейл със защитена връзка за приемане."
 		},
 		"CANDIDATE": {
 			"MANAGE": "Управление на покани за кандидати",
 			"HEADER": "Поканете кандидати",
-			"ACTION": "Поканете кандидати"
+			"ACTION": "Поканете кандидати",
+			"DESCRIPTION": "Поканете кандидати в процеса ви по наемане. Всеки получател получава имейл със защитена връзка за приемане."
 		},
 		"SENT": "покани изпратени.",
 		"IGNORED": "общо покани изпратени. бяха вече поканени и бяха игнорирани.",
@@ -3473,6 +4104,23 @@
 			"TWO_WEEK": "14 дни",
 			"MONTH": "30 дни",
 			"NEVER": "Никога"
+		},
+		"FORM": {
+			"RECIPIENTS": "Получатели",
+			"EMAILS_PLACEHOLDER": "name@company.com",
+			"EMAILS_HINT": "Натиснете Enter след всеки адрес, за да добавите няколко получатели.",
+			"CLEAR_EMAILS": "Изчисти всички",
+			"ACCESS": "Достъп",
+			"ACCESS_HINT": "По избор. Изберете до какво ще имат достъп новите членове веднага след присъединяване.",
+			"DETAILS": "Подробности за поканата",
+			"RECIPIENT_COUNT": "Получатели: {{count}}",
+			"NO_RECIPIENTS": "Все още няма добавени получатели"
+		},
+		"DELETE_DIALOG": {
+			"TITLE": "Изтриване на покана",
+			"WARNING": "Поканата за {{ email }} ще бъде изтрита завинаги и връзката ѝ ще спре да работи. Това действие не може да бъде отменено.",
+			"TYPE_TO_CONFIRM": "Въведете следното, за да потвърдите:",
+			"CONFIRM": "Изтрий поканата"
 		}
 	},
 	"INVOICES_PAGE": {
@@ -3780,13 +4428,38 @@
 		"DICTATION_KEY_REJECTED": "Гласовият доставчик отхвърли своя API ключ. Актуализирайте го на страницата с настройки „Доставчици на ИИ“.",
 		"DICTATION_KEY_REJECTED_ASK_ADMIN": "Гласовият доставчик отхвърли своя API ключ — помолете администратор да го актуализира в Настройки → Доставчици на ИИ.",
 		"DICTATION_OPEN_SETTINGS": "Отвори Доставчици на ИИ",
-		"RATE_LIMITED_SHARED": "The free AI tier is rate limited right now. Connect your own OpenRouter account, or configure a different AI provider, for uninterrupted access.",
-		"RATE_LIMITED_OWN": "Your AI provider is rate limiting requests right now. Check your plan and limits with the provider, or configure a different AI provider.",
-		"RATE_LIMIT_RETRY_IN": "You can try again in about {{seconds}}s."
+		"RATE_LIMITED_SHARED": "Безплатното ниво на ИИ в момента е достигнало лимита на заявки. Свържете свой акаунт в OpenRouter или настройте друг доставчик на ИИ за непрекъснат достъп.",
+		"RATE_LIMITED_OWN": "Вашият доставчик на ИИ в момента ограничава заявките. Проверете плана и лимитите си при доставчика или настройте друг доставчик на ИИ.",
+		"RATE_LIMIT_RETRY_IN": "Можете да опитате отново след около {{seconds}} с.",
+		"OPEN_AI_SETTINGS": "Отвори Доставчици на ИИ",
+		"ERROR_NOT_CONFIGURED": "ИИ чатът се нуждае от настроен доставчик. Добавете такъв на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_NOT_CONFIGURED_ASK_ADMIN": "ИИ чатът се нуждае от настроен доставчик — помолете администратор да добави такъв в Настройки → Доставчици на ИИ.",
+		"ERROR_PROVIDER_UNAVAILABLE": "Избраният доставчик на ИИ не може да отговори в момента. Проверете го на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN": "Избраният доставчик на ИИ не може да отговори в момента — помолете администратор да провери Настройки → Доставчици на ИИ.",
+		"ERROR_MODEL_UNAVAILABLE": "Този модел не е достъпен с текущия API ключ. Изберете друг на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_MODEL_UNAVAILABLE_ASK_ADMIN": "Този модел не е достъпен с текущия API ключ — помолете администратор да провери Настройки → Доставчици на ИИ.",
+		"ERROR_KEY_REJECTED": "Доставчикът на ИИ отхвърли своя API ключ. Обновете го на страницата с настройки „Доставчици на ИИ“.",
+		"ERROR_KEY_REJECTED_ASK_ADMIN": "Доставчикът на ИИ отхвърли своя API ключ — помолете администратор да го обнови в Настройки → Доставчици на ИИ.",
+		"ERROR_RATE_LIMITED": "Доставчикът на ИИ ограничава заявките.",
+		"RECORDING": "Запис",
+		"PREVIEW": "Преглед",
+		"PREVIEW_PAGE": "Страница",
+		"PREVIEW_NEW_TAB": "Отваряне в нов раздел",
+		"PREVIEW_CLOSE": "Затваряне на прегледа",
+		"PREVIEW_UNAVAILABLE": "Няма наличен преглед за този файл.",
+		"PREVIEW_OPEN_IN_DOCUMENTS": "Отваряне в Документи",
+		"ATTACH_UPLOADING": "Качване…",
+		"ATTACH_DOCUMENT": "Документ"
 	},
 	"HEADER_TITLE": {
 		"FOR": "за",
 		"FROM": "от"
+	},
+	"RECORD_VIEW_PAGE": {
+		"BACK_TO_LIST": "Обратно към списъка",
+		"NOT_FOUND": "Този запис не съществува или е премахнат.",
+		"FORBIDDEN": "Нямате разрешение да преглеждате този запис.",
+		"ERROR": "Записът не можа да бъде зареден."
 	},
 	"PAGE_NOT_FOUND": {
 		"404_PAGE_NOT_FOUND": "Page Not Found",
@@ -3902,7 +4575,41 @@
 		"ROLES_PERMISSIONS": "Роли и права",
 		"TIME_TRACKING": "Проследяване на време",
 		"ESTIMATE": "Оценка",
-		"DASHBOARD": "Табло"
+		"DASHBOARD": "Табло",
+		"ORDERS": "Поръчки",
+		"CART": "Количка",
+		"CATALOG": "Каталог",
+		"PRICING": "Ценообразуване",
+		"TAX": "Данъци",
+		"PROMOTIONS": "Промоции",
+		"INVENTORY_LEDGER_AND_RESERVATIONS": "Складов регистър и резервации",
+		"GRAPHQL": "GraphQL",
+		"WAREHOUSE_MANAGEMENT": "Управление на склад",
+		"FULFILLMENT": "Изпълнение на поръчки",
+		"RETURNS_CLAIMS_AND_EXCHANGES": "Връщания, рекламации и замени",
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": "Абонаменти и периодично таксуване",
+		"PURCHASING": "Покупки",
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": "Права за ползване, активации и лицензни ключове",
+		"MARKETPLACE": "Маркетплейс",
+		"GLOBAL_SEARCH": "Глобално търсене",
+		"MULTI-CURRENCY_PRICING": "Ценообразуване в няколко валути",
+		"MULTI-REGION_PRICING": "Ценообразуване в няколко региона",
+		"MULTI-LOCATION_ALLOCATION": "Разпределение в няколко локации",
+		"B2B_CREDIT": "B2B кредит",
+		"ORDER_APPROVALS": "Одобряване на поръчки",
+		"GIFT_CARDS": "Карти за подарък",
+		"WEBHOOKS": "Уебхукове",
+		"EXTERNAL_SEARCH_ENGINE": "Външна търсачка",
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": "Четене от индекса за търсене",
+		"BACKORDERS": "Поръчки без наличност",
+		"PRICE_TIERS": "Ценови нива",
+		"BULK_API": "API за масови операции",
+		"DATA_EXPORT": "Експорт на данни",
+		"TAX_PROVIDER": "Доставчик на данъчни изчисления",
+		"SUBSCRIPTION_BILLING_RUN": "Цикъл на таксуване на абонаменти",
+		"MARKETPLACE_PAYOUTS": "Изплащания в маркетплейса",
+		"SCHEDULED_SELLER_PAYOUTS": "Планирани изплащания към продавачи",
+		"DOCUMENTS": "Документи"
 	},
 	"SETTINGS_FEATURES_DESCRIPTION": {
 		"INVOICE": {
@@ -4000,6 +4707,108 @@
 		},
 		"DASHBOARD": {
 			"GO_TO_DASHBOARD_MANAGE_EMPLOYEE_STATISTICS_TIME_TRACKING_DASHBOARD": "Go to dashboard, Manage Employee Statistics, Time Tracking Dashboard"
+		},
+		"ORDERS": {
+			"ORDERS_ORDER_LINES_ORDER_CHANGES_THE_ORDER_TIMELINE_AND_THE_INVOICE_BRIDGE.": "Поръчки, редове на поръчки, промени в поръчки, хронологията на поръчката и връзката с фактурите."
+		},
+		"CART": {
+			"THE_CART_FAMILY_AND_THE_CHECKOUT_SESSION_THAT_TURNS_A_CART_INTO_AN_ORDER.": "Колички и сесията за плащане, която превръща количката в поръчка."
+		},
+		"CATALOG": {
+			"PRODUCT_AND_COLLECTION_PUBLICATION_VARIANT_FACETS_RELATIONS_AND_THE_CATALOG_BULK_ENDPOINT.": "Публикуване на продукти и колекции, фасети на варианти, връзки и крайната точка за масови операции с каталога."
+		},
+		"PRICING": {
+			"PRICE_LISTS_PRODUCT_PRICES_PRICE_PREFERENCES_EXCHANGE_RATES_AND_THE_SIMULATE_ENDPOINTS.": "Ценови листи, цени на продукти, ценови предпочитания, валутни курсове и крайните точки за симулация."
+		},
+		"TAX": {
+			"TAX_CATEGORIES_TAX_RATES_AND_THE_RESOLUTION_A_DOCUMENT_IS_TAXED_THROUGH.": "Данъчни категории, данъчни ставки и определянето на данъчното облагане на документ."
+		},
+		"PROMOTIONS": {
+			"PROMOTIONS_CAMPAIGNS_COUPONS_AND_THE_DISCOUNT_ENGINE_THAT_EVALUATES_THEM.": "Промоции, кампании, купони и механизмът за отстъпки, който ги оценява."
+		},
+		"INVENTORY_LEDGER_AND_RESERVATIONS": {
+			"MOVEMENTS_RESERVATIONS_TRANSFERS_ALERTS_ADJUSTMENTS_COUNTS_AND_RECONCILIATION.": "Движения, резервации, трансфери, сигнали, корекции, преброявания и съгласуване."
+		},
+		"GRAPHQL": {
+			"THE_GRAPHQL_ENDPOINT_AND_ITS_RESOLVERS_UNDER_THE_SAME_GUARDS_AND_PERMISSIONS_AS_REST.": "Крайната точка GraphQL и нейните резолвъри, със същите защити и права като REST."
+		},
+		"WAREHOUSE_MANAGEMENT": {
+			"ZONES_BINS_PICK_WAVES_PICK_LISTS_PACKING_AND_CARRIER_MANIFESTS.": "Зони, клетки, вълни за комплектоване, списъци за комплектоване, опаковане и манифести на превозвачи."
+		},
+		"FULFILLMENT": {
+			"SHIPPING_PROFILES_AND_OPTIONS_FULFILLMENTS_LABELS_AND_THE_PACKING_AND_MANIFEST_FLOW.": "Профили и опции за доставка, изпълнения, етикети и процесът на опаковане и манифести."
+		},
+		"RETURNS_CLAIMS_AND_EXCHANGES": {
+			"THE_POST-PURCHASE_FLOWS_RETURNS_CLAIMS_AND_EXCHANGES_WITH_THEIR_REASONS_AND_STOCK_EFFECTS.": "Процесите след покупка: връщания, рекламации и замени, с техните причини и ефект върху наличностите."
+		},
+		"SUBSCRIPTIONS_AND_RECURRING_BILLING": {
+			"PLANS_SUBSCRIPTIONS_AND_THE_BILLING_HISTORY;_RECURRING_CHARGES_ARE_A_SEPARATE_FLAG.": "Планове, абонаменти и историята на таксуването; периодичните плащания са отделен флаг."
+		},
+		"PURCHASING": {
+			"PURCHASE_ORDERS_VENDOR_TERMS_AND_GOODS_RECEIPTS.": "Поръчки за покупка, условия на доставчици и приемания на стоки."
+		},
+		"ENTITLEMENTS_ACTIVATIONS_AND_LICENCE_KEYS": {
+			"ENTITLEMENTS_THEIR_ACTIVATIONS_AND_THE_KEYS_ISSUED_AGAINST_THEM.": "Права за ползване, техните активации и издадените за тях ключове."
+		},
+		"MARKETPLACE": {
+			"SELLERS_OFFERINGS_COMMISSION_PAYOUTS_AND_SETTLEMENTS.": "Продавачи, оферти, комисиони, изплащания и разплащания."
+		},
+		"GLOBAL_SEARCH": {
+			"THE_SEARCH_SUGGEST_AND_FACET_ENDPOINTS_AND_THE_INDEX_DEFINITIONS_THEY_READ.": "Крайните точки за търсене, предложения и фасети и дефинициите на индекси, които те четат."
+		},
+		"MULTI-CURRENCY_PRICING": {
+			"MORE_THAN_ONE_CURRENCY_ON_A_CHANNEL_EXCHANGE-RATE_USE_CURRENCY_OVERRIDES_AND_FX_CONVERSION.": "Повече от една валута в канал: използване на валутни курсове, заместване на валути и валутно преобразуване."
+		},
+		"MULTI-REGION_PRICING": {
+			"MORE_THAN_ONE_REGION_PER_CHANNEL_WITH_REGION-SPECIFIC_TAX_AND_SHIPPING.": "Повече от един регион в канал, с данъци и доставка според региона."
+		},
+		"MULTI-LOCATION_ALLOCATION": {
+			"ALLOCATION_SPLIT_ACROSS_STOCK_LOCATIONS_PER-LOCATION_AVAILABILITY_AND_TRANSFERS_BETWEEN_THEM.": "Разпределение между складови локации, наличност по локация и трансфери между тях."
+		},
+		"B2B_CREDIT": {
+			"CREDIT_LIMITS_SETTLEMENT_TERMS_PERIOD_SPENDING_LIMITS_AND_THE_CREDIT_CHECK_AT_PLACEMENT.": "Кредитни лимити, условия за разплащане, лимити на разходите за период и кредитната проверка при поръчка."
+		},
+		"ORDER_APPROVALS": {
+			"ROUTING_AN_ORDER_THROUGH_THE_APPROVAL_MODULE_BEFORE_IT_IS_PLACED.": "Насочване на поръчка през модула за одобрения, преди да бъде направена."
+		},
+		"GIFT_CARDS": {
+			"ISSUING_AND_REDEEMING_GIFT_CARDS_AND_THE_BALANCE_LOOKUP_ENDPOINT.": "Издаване и използване на карти за подарък и крайната точка за проверка на баланса."
+		},
+		"WEBHOOKS": {
+			"OUTBOUND_WEBHOOK_SUBSCRIPTIONS_AND_THEIR_DELIVERIES.": "Абонаменти за изходящи уебхукове и техните доставки."
+		},
+		"EXTERNAL_SEARCH_ENGINE": {
+			"USING_AN_EXTERNAL_ENGINE_INSTEAD_OF_THE_BUILT-IN_DATABASE_PROVIDER_FOR_GLOBAL_SEARCH.": "Използване на външна търсачка вместо вградения доставчик на база данни за глобалното търсене."
+		},
+		"SERVE_READS_FROM_THE_SEARCH_INDEX": {
+			"ROUTING_READS_TO_THE_SEARCH_PROJECTION_RATHER_THAN_TO_THE_SOURCE_TABLES.": "Насочване на четенията към проекцията за търсене вместо към изходните таблици."
+		},
+		"BACKORDERS": {
+			"ALLOWING_AN_ORDER_FOR_MORE_THAN_IS_ON_HAND_AND_THE_BACKORDERABLE_AVAILABILITY_RESPONSE.": "Разрешаване на поръчка за повече от наличното и отговорът за наличност при отложена доставка."
+		},
+		"PRICE_TIERS": {
+			"QUANTITY-BAND_PRICES_AND_PER-CONTACT-GROUP_PRICES.": "Цени според количеството и цени по групи контакти."
+		},
+		"BULK_API": {
+			"THE_BATCH_AUTHORING_ENDPOINTS.": "Крайните точки за пакетно създаване."
+		},
+		"DATA_EXPORT": {
+			"STREAMING_EXPORTS_OF_THE_CATALOG_AND_OF_THE_ORDER_DOCUMENTS.": "Поточен експорт на каталога и на документите за поръчки."
+		},
+		"TAX_PROVIDER": {
+			"DELEGATING_TAX_CALCULATION_TO_AN_EXTERNAL_ENGINE_THROUGH_CONFIGURED_INTEGRATION_CREDENTIALS.": "Делегиране на изчисляването на данъци към външен механизъм чрез конфигурирани данни за интеграция."
+		},
+		"SUBSCRIPTION_BILLING_RUN": {
+			"THE_RECURRING_BILLING_RUN_AND_THE_AUTOMATIC_CHARGE_PATH.": "Периодичното таксуване и автоматичното събиране на плащания."
+		},
+		"MARKETPLACE_PAYOUTS": {
+			"BUILDING_APPROVING_AND_EXECUTING_A_PAYOUT_THROUGH_A_PAYMENT_PROVIDER.": "Изготвяне, одобряване и извършване на изплащане чрез доставчик на плащания."
+		},
+		"SCHEDULED_SELLER_PAYOUTS": {
+			"AUTOMATIC_PAYOUT_RUNS_ON_A_SELLER_PAYOUT_SCHEDULE.": "Автоматични изплащания по график за изплащане на продавача."
+		},
+		"DOCUMENTS": {
+			"CENTRAL_HUB_FOR_COMPANY_DOCUMENTS_UPLOADS_WIKI_PAGES_REVIEW_AND_AI_KNOWLEDGE": "Централно място за фирмените документи: качване, уики страници, преглед и знания за ИИ"
 		}
 	},
 	"SETTINGS_FEATURES_TEXT": {
@@ -4124,14 +4933,48 @@
 		"UNTAGGED": "билд без таг",
 		"API_UNAVAILABLE": "Версията на API не е налична",
 		"LEARN_MORE": "Научете повече",
-		"ABOUT": "За нас"
+		"ABOUT": "За нас",
+		"GITHUB": {
+			"TITLE": "В GitHub",
+			"DESCRIPTION": "Ever Gauzy се разработва открито: следете версиите, докладвайте проблем или допринесете.",
+			"RELEASES": "Версии",
+			"ISSUES": "Проблеми",
+			"PULL_REQUESTS": "Заявки за сливане",
+			"CONTRIBUTORS": "Сътрудници",
+			"CONTRIBUTING": "Ръководство за принос",
+			"CODE_OF_CONDUCT": "Кодекс на поведение",
+			"LICENSE_FILE": "Лиценз"
+		},
+		"CARD": {
+			"IN_SYNC": "Синхронизирано",
+			"DIFFERENT": "Различни компилации",
+			"RELEASE_NOTES": "Бележки към версията",
+			"COMMIT": "Къмит",
+			"REPOSITORY": "Хранилище"
+		},
+		"ENV": {
+			"TITLE": "Среда",
+			"BUILD": "Компилация",
+			"PRODUCTION": "Продукционна",
+			"DEVELOPMENT": "Разработка",
+			"MODE": "Режим",
+			"DEMO": "Демо",
+			"STANDARD": "Стандартен",
+			"RUNNING_IN": "Работи в",
+			"DESKTOP": "Настолно приложение",
+			"BROWSER": "Браузър",
+			"API_ADDRESS": "Адрес на API",
+			"WEB_ADDRESS": "Уеб адрес",
+			"COPY": "Копирай {{ name }}"
+		}
 	},
 	"FOOTER": {
 		"BY": "от",
 		"RIGHTS_RESERVED": "Всички права запазени.",
 		"PRESENT": "Present",
 		"TERMS_OF_SERVICE": "Terms Of Service",
-		"PRIVACY_POLICY": "Privacy Policy"
+		"PRIVACY_POLICY": "Privacy Policy",
+		"DPIA_SUPPORT_PACK": "Пакет в подкрепа на ОВЗД"
 	},
 	"TOASTR": {
 		"TITLE": {
@@ -4650,6 +5493,8 @@
 			"API_SERVER_PORT": "Порт на сървъра на API",
 			"UI_SERVER_PORT": "Порт на сървъра на потребителски интерфейс",
 			"SERVER_HOSTNAME": "Име на сървъра / IP адрес",
+			"LAN_ACCESS": "Разрешаване на връзки от други компютри в мрежата",
+			"LAN_ACCESS_HINT": "Когато е изключено, само този компютър може да се свързва с API и уеб интерфейса.",
 			"AUTO_START_STARTUP": "Автоматично стартиране при стартиране на системата",
 			"SERVER_TYPE": "Вид на сървъра",
 			"LOCAL_API_PORT": "Локален порт за API",
@@ -4776,7 +5621,20 @@
 			"DB_CLEANUP_UNKNOWN_DETAIL": "Не можахме да определим дали имате несинхронизирани офлайн данни. Премахването на базата данни може ОКОНЧАТЕЛНО да изтрие незапазена работа. Ако не сте сигурни, кликнете върху 'Запазване'.",
 			"UNSYNCED_TIMERS_COUNT": "{{count}} unsynced timer(s)",
 			"UNSYNCED_INTERVALS_COUNT": "{{count}} unsynced interval(s)",
-			"AND_JOIN": "and"
+			"AND_JOIN": "and",
+			"SEED_CREDENTIALS_TITLE": "Вашите данни за вход",
+			"SEED_CREDENTIALS_MESSAGE": "Запазете тези пароли сега. Те се показват само веднъж.",
+			"SEED_CREDENTIALS_DETAIL": "Тази инсталация създаде своите акаунти със случайни пароли вместо публикуваните стойности по подразбиране.\n\n{{ accounts }}\n\nМожете да смените паролата по-късно от страницата на профила си в Gauzy.",
+			"SEED_CREDENTIALS_COPIED": "Копирано в клипборда.",
+			"SEED_CREDENTIALS_COPY_FAILED": "Копирането в клипборда не бе успешно. Натиснете „Копиране“, за да опитате отново, или запишете паролите, преди да потвърдите.",
+			"SEED_CREDENTIALS_SAVED": "Запазих ги",
+			"SEED_ROLE_SUPER_ADMIN": "Супер администратор",
+			"SEED_ROLE_ADMIN": "Администратор",
+			"SEED_ROLE_EMPLOYEE": "Служител",
+			"SEED_PASSWORD": "Парола",
+			"PUBLISHED_PASSWORDS_TITLE": "Паролата по подразбиране все още се използва",
+			"PUBLISHED_PASSWORDS_MESSAGE": "Сменете паролата по подразбиране на тези акаунти.",
+			"PUBLISHED_PASSWORDS_DETAIL": "{{ accounts }} все още влизат с паролата по подразбиране, публикувана в документацията на Gauzy. Всеки, който има достъп до този сървър, може да влезе с нея. Влезте в Gauzy и я сменете от страницата на профила."
 		},
 		"NO_LIMIT": "∞ Без лимит",
 		"TASK": "Задача",
@@ -4804,7 +5662,12 @@
 			"SERVICE_UNAVAILABLE": "Услугата временно не е достъпна.",
 			"UNEXPECTED_ERROR": "Възникна неочаквана грешка.",
 			"NETWORK_ERROR": "Мрежова грешка: {{message}}",
-			"SCREEN_ACCESS_REQUIRED_MSG": "Разрешението за достъп до екрана е необходимо за активиране на автоматичното заснемане на екран. Моля, дайте разрешение в настройките на системата."
+			"SCREEN_ACCESS_REQUIRED_MSG": "Разрешението за достъп до екрана е необходимо за активиране на автоматичното заснемане на екран. Моля, дайте разрешение в настройките на системата.",
+			"ORGANIZATION_SWITCH_REFUSED": "Неуспешно превключване към {{ name }}: {{ reason }}. Продължавате да работите в текущата си организация.",
+			"ORGANIZATION_NOT_EMPLOYEE": "Не сте активен служител на {{ name }}, затова таймерът не може да отчита време там. Продължавате да работите в текущата си организация.",
+			"ORGANIZATION_SWITCH_IN_PROGRESS": "Организацията се превключва. Стартирайте таймера, след като превключването приключи.",
+			"ORGANIZATION_SWITCH_BACK_FAILED": "Не сте активен служител на {{ name }}, а връщането към предишната ви организация беше неуспешно. Моля, влезте отново.",
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Превключването към {{ name }} не можа да бъде завършено на това устройство. Моля, влезте отново."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Тракерът беше спрян поради неактивност!",
@@ -5052,7 +5915,40 @@
 		"NO_RECORD_FOUND": "Не са намерени записи. Моля, изберете диапазон от дати, служител или проект.",
 		"SCREEN_SELECTED": "{{ count }} Екран(а) избран(и)",
 		"NO_TIME_TRACKED": "Няма проследено време",
-		"MINUTES_TRACKED": "Проследени {{ minutes }} мин"
+		"MINUTES_TRACKED": "Проследени {{ minutes }} мин",
+		"APPS_URLS": {
+			"TOTAL_TIME": "Общо време",
+			"APPS_USED": "Използвани приложения",
+			"SITES_VISITED": "Посетени сайтове",
+			"TOP_APP": "Най-използвано приложение",
+			"TOP_SITE": "Най-посещаван сайт",
+			"VIEW": "Изглед",
+			"BY_APP": "По приложение",
+			"BY_SITE": "По сайт",
+			"BY_MEMBERS": "По член",
+			"BY_HOURS": "По час",
+			"SEARCH_APPS": "Търсене на приложения…",
+			"SEARCH_SITES": "Търсене на сайтове…",
+			"SORT": "Промяна на подредбата",
+			"SORT_TIME": "Най-много време",
+			"SORT_NAME": "Име А–Я",
+			"LOAD_FAILED": "Активността не можа да бъде заредена. Опитайте отново.",
+			"NO_MATCH": "Няма резултати за „{{ search }}“.",
+			"APP": "Приложение",
+			"SITE": "Сайт",
+			"TIME": "Време",
+			"SHOW_PAGES": "Покажи посетените страници в {{ site }}",
+			"LOADING_PAGES": "Зареждане на страниците…",
+			"PAGES_FAILED": "Страниците не можаха да бъдат заредени.",
+			"NO_PAGES": "Не са записани данни за страниците на този сайт.",
+			"SHOW_ALL": "Покажи всички {{ count }}",
+			"SHOW_LESS": "Покажи по-малко",
+			"UNKNOWN_MEMBER": "Неизвестен член",
+			"APPS_COUNT": "{{ count }} приложения",
+			"SITES_COUNT": "{{ count }} сайта",
+			"OF_TOTAL": "{{ value }} от общото",
+			"PAGES_TRUNCATED": "Този сайт има повече записи, отколкото могат да се покажат; разбивката обхваща само част от времето му."
+		}
 	},
 	"ONBOARDING": {
 		"FIRST_ORGANIZATION": "Нека създадем първата ви организация",
@@ -5178,7 +6074,10 @@
 			"payment-receipt": "Касова бележка",
 			"reject-candidate": "Отхвърли кандидат"
 		},
-		"HTML_EDITOR": "HTML редактор"
+		"HTML_EDITOR": "HTML редактор",
+		"FULL_PREVIEW": "Пълен преглед",
+		"VIEW_GRID": "Мрежа",
+		"VIEW_EDITOR": "Редактор"
 	},
 	"PIPELINES_PAGE": {
 		"HEADER": "Тръбопроводи",
@@ -5229,36 +6128,191 @@
 	},
 	"SETTINGS_FILE_STORAGE": {
 		"FILE_PROVIDER": "Доставчик на файлове",
+		"SHOW_SECRET": "Покажи тайната",
+		"HIDE_SECRET": "Скрий тайната",
+		"SUMMARY": {
+			"TITLE": "Текуща конфигурация",
+			"DESCRIPTION": "Последно запазени настройки — използват се за новите качвания.",
+			"PROVIDER": "Доставчик",
+			"BUCKET": "Бъкет / име на облака",
+			"REGION": "Регион",
+			"ENDPOINT": "Крайна точка",
+			"CREDENTIALS": "Идентификационни данни",
+			"CREDENTIALS_SAVED": "Запазени",
+			"CREDENTIALS_INCOMPLETE": "Непълни",
+			"CREDENTIALS_NONE": "Не са зададени",
+			"CREDENTIALS_NOT_NEEDED": "Не са нужни",
+			"SERVER_DEFAULT": "По подразбиране от сървъра"
+		},
+		"PROVIDERS": {
+			"DOCS_LINK": "Откъде да вземете ключовете",
+			"LOCAL": {
+				"NAME": "Локален диск",
+				"DESCRIPTION": "файловете се записват във файловата система на API сървъра."
+			},
+			"S3": {
+				"NAME": "Amazon S3",
+				"DESCRIPTION": "файловете се записват в AWS S3 бъкет. Използвайте IAM ключ за достъп с права за четене и запис в бъкета."
+			},
+			"WASABI": {
+				"NAME": "Wasabi",
+				"DESCRIPTION": "S3-съвместимо облачно хранилище. Данните за достъп се проверяват в Wasabi при запазване."
+			},
+			"CLOUDINARY": {
+				"NAME": "Cloudinary",
+				"DESCRIPTION": "хостинг на изображения и видео. Името на облака и API ключовете са в конзолата на Cloudinary, в раздел API Keys."
+			},
+			"DIGITALOCEAN": {
+				"NAME": "DigitalOcean Spaces",
+				"DESCRIPTION": "S3-съвместимо обектно хранилище с незадължителен CDN. Създайте ключ за достъп до Spaces в контролния панел на DigitalOcean."
+			}
+		},
+		"LOCAL": {
+			"HEADER": "Локално хранилище",
+			"WHERE": "Качените файлове се записват във файловата система на API сървъра.",
+			"NO_CONFIG": "Няма нищо за настройване — локалното хранилище работи веднага.",
+			"WARNING": "Файловете се губят, ако сървърът бъде преинсталиран без постоянен том, и не се споделят между няколко API инстанции. В продукция използвайте облачен доставчик."
+		},
+		"CHECK": {
+			"BUTTON": "Провери конфигурацията",
+			"OK": "Всички задължителни полета са попълнени и URL адресите са валидни. Самите ключове се проверяват само от доставчика.",
+			"OK_LOCAL": "Локалното хранилище не изисква настройка.",
+			"OK_SERVER_DEFAULTS": "Нищо не липсва. Тези празни полета използват конфигурацията на сървъра:",
+			"MISSING": "Липсва:",
+			"INVALID_URL": "Невалиден http(s) URL:",
+			"HTTPS_REQUIRED": "Изисква се https:// — ключовете се изпращат на този адрес:"
+		},
 		"S3": {
-			"HEADER": "S3 Конфигурация",
+			"HEADER": "Конфигурация на S3",
+			"SUBTITLE": "Съхранявайте качените файлове в Amazon S3 бъкет.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "IAM ключ за достъп с права за четене и запис в бъкета.",
+				"BUCKET": "Бъкет",
+				"BUCKET_HINT": "Къде се записват качените файлове."
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"REGION": "AWS регионът на бъкета, напр. us-east-1 или eu-west-1.",
+				"BUCKET": "Името на бъкета точно както е в конзолата на S3."
+			},
 			"LABELS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа"
+				"BUCKET": "Бъкет"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа"
+				"BUCKET": "Бъкет"
 			}
 		},
 		"WASABI": {
-			"HEADER": "Wasabi Конфигурация",
+			"HEADER": "Конфигурация на Wasabi",
+			"SUBTITLE": "Съхранявайте качените файлове в Wasabi бъкет чрез неговия S3-съвместим API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "Двойка ключове за достъп от конзолата на Wasabi.",
+				"BUCKET": "Бъкет и крайна точка",
+				"BUCKET_HINT": "Къде се записват качените файлове.",
+				"OPTIONS": "Опции"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"REGION": "Регионът на бъкета, напр. us-east-1 или eu-central-1.",
+				"SERVICE_URL": "S3 крайната точка за този регион.",
+				"BUCKET": "Малки букви, цифри, точки и тирета. Имената са уникални в целия Wasabi.",
+				"FORCE_PATH_STYLE": "Адресира файловете като endpoint/бъкет/файл вместо бъкет.endpoint/файл. Оставете включено, освен ако не ви трябват virtual-hosted адреси."
+			},
+			"SUGGESTED_ENDPOINT": "Крайна точка за този регион:",
+			"USE_SUGGESTION": "Използвай",
+			"SAVE_NOTE": "При запазване Gauzy използва тези данни, за да създаде бъкета в Wasabi. Ако Wasabi откаже заявката, настройките не се запазват.",
 			"LABELS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа",
-				"SERVICE_URL": "URL на услугата"
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"FORCE_PATH_STYLE": "URL адреси в стил път"
 			},
 			"PLACEHOLDERS": {
-				"ACCESS_KEY_ID": "Идентификатор на ключ за достъп",
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
 				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
 				"REGION": "Регион",
-				"BUCKET": "Кофа",
+				"BUCKET": "Бъкет",
 				"SERVICE_URL": "URL на услугата"
+			}
+		},
+		"CLOUDINARY": {
+			"HEADER": "Конфигурация на Cloudinary",
+			"SUBTITLE": "Съхранявайте качените файлове в Cloudinary и ги доставяйте чрез неговата мрежа.",
+			"SECTIONS": {
+				"ACCOUNT": "Акаунт",
+				"ACCOUNT_HINT": "И трите стойности са в конзолата на Cloudinary, в раздел API Keys.",
+				"DELIVERY": "Доставка",
+				"DELIVERY_HINT": "Как се изграждат връзките към качените файлове."
+			},
+			"HINTS": {
+				"CLOUD_NAME": "Името, показано в горната част на конзолата на Cloudinary.",
+				"ACCESS_API_KEY": "Идентифицира акаунта; използва се заедно с API тайната.",
+				"ACCESS_API_SECRET": "Запазените стойности се връщат маскирани.",
+				"DELIVERY_URL": "Базов адрес на връзките. Оставете https://res.cloudinary.com, освен ако не ползвате собствен домейн.",
+				"SECURE": "Създава връзките с https://. Оставете True."
+			},
+			"LABELS": {
+				"CLOUD_NAME": "Име на облака",
+				"ACCESS_API_KEY": "API ключ",
+				"ACCESS_API_SECRET": "API тайна",
+				"DELIVERY_URL": "URL за доставка",
+				"SECURE": "Защитена връзка (HTTPS)"
+			},
+			"PLACEHOLDERS": {
+				"CLOUD_NAME": "Име на облака",
+				"ACCESS_API_KEY": "API ключ",
+				"ACCESS_API_SECRET": "API тайна",
+				"DELIVERY_URL": "URL за доставка",
+				"SECURE": "Защитена връзка (HTTPS)"
+			}
+		},
+		"DIGITALOCEAN": {
+			"HEADER": "Конфигурация на DigitalOcean",
+			"SUBTITLE": "Съхранявайте качените файлове в DigitalOcean Space чрез неговия S3-съвместим API.",
+			"SECTIONS": {
+				"CREDENTIALS": "Данни за достъп",
+				"CREDENTIALS_HINT": "Ключ за достъп до Spaces от контролния панел на DigitalOcean.",
+				"BUCKET": "Space и крайна точка",
+				"BUCKET_HINT": "Къде се записват качените файлове.",
+				"OPTIONS": "Опции"
+			},
+			"HINTS": {
+				"ACCESS_KEY_ID": "Публичната част от двойката ключове.",
+				"SECRET_ACCESS_KEY": "Показва се само веднъж, при създаване на ключа. Запазените стойности се връщат маскирани.",
+				"SERVICE_URL": "Крайната точка на центъра за данни на вашия Space, напр. https://fra1.digitaloceanspaces.com.",
+				"REGION": "Фиксиран на us-east-1, както изисква Spaces; центърът за данни се определя от крайната точка.",
+				"BUCKET": "Името на Space.",
+				"CDN_URL": "По избор. CDN крайната точка на Space, ако CDN е включен.",
+				"FORCE_PATH_STYLE": "Адресира файловете като endpoint/space/файл вместо space.endpoint/файл."
+			},
+			"LABELS": {
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
+				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
+				"REGION": "Регион",
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"CDN_URL": "URL на CDN",
+				"FORCE_PATH_STYLE": "URL адреси в стил път"
+			},
+			"PLACEHOLDERS": {
+				"ACCESS_KEY_ID": "ID на ключ за достъп",
+				"SECRET_ACCESS_KEY": "Таен ключ за достъп",
+				"REGION": "Регион",
+				"BUCKET": "Бъкет",
+				"SERVICE_URL": "URL на услугата",
+				"CDN_URL": "URL на CDN"
 			}
 		}
 	},
@@ -5296,6 +6350,16 @@
 	},
 	"CUSTOM_SMTP_PAGE": {
 		"HEADER": "Управление на SMTP за '{{ name }}'",
+		"DESCRIPTION_TENANT": "Използва се за имейлите на всяка организация без собствен SMTP, като покани, фактури и известия за графици. Без него се прилагат стандартните пощенски настройки на сървъра. Имейлите за потвърждение на акаунт и нулиране на парола винаги използват настройките на сървъра.",
+		"DESCRIPTION_ORGANIZATION": "Използва се за имейлите на тази организация вместо SMTP на наемателя. Проверете връзката, след което запазете.",
+		"HINTS": {
+			"FROM_ADDRESS": "Адресът на подателя, който получателите виждат във входящата си поща.",
+			"HOST": "Адресът на вашия SMTP сървър, напр. smtp.gmail.com.",
+			"PORT": "Обикновено 587 (STARTTLS) или 465 (SSL).",
+			"SECURE": "Важи само за други портове: 465 винаги използва SSL, а 587 винаги STARTTLS.",
+			"USERNAME": "Акаунтът за вход в SMTP сървъра. Запазените стойности се връщат маскирани; въведете отново потребителското име и паролата, за да промените настройките.",
+			"PASSWORD": "Паролата или паролата за приложение на този акаунт."
+		},
 		"HOST": "Хост",
 		"PORT": "Порт",
 		"SECURE": "Сигурен",
@@ -5306,7 +6370,9 @@
 	},
 	"SMS_GATEWAY_PAGE": {
 		"HEADER": "SMS Доставчик",
-		"TWILIO": "Twilio"
+		"TWILIO": "Twilio",
+		"TWILIO_DESCRIPTION": "Изпращане на SMS известия и покани чрез Twilio Programmable Messaging.",
+		"DOCUMENTATION": "Документация"
 	},
 	"FEATURE_PAGE": {
 		"HEADER": "Управление на функции за '{{ name }}'"
@@ -5327,7 +6393,18 @@
 			"SYSTEM": "Система",
 			"FILTERS": {
 				"TO": "До",
-				"TEMPLATE_LANGUAGE": "Шаблон/Език"
+				"TEMPLATE_LANGUAGE": "Шаблон/Език",
+				"RECIPIENT": "Получател",
+				"TEMPLATE": "Шаблон",
+				"STATUS": "Статус",
+				"ALL_RECIPIENTS": "Всички получатели",
+				"ALL_TEMPLATES": "Всички шаблони",
+				"ALL_STATUSES": "Всички статуси",
+				"SENT": "Изпратен",
+				"FAILED": "Неуспешен",
+				"ARCHIVED": "Архивирани",
+				"SHOWING": "Показани {{ count }} от {{ total }}",
+				"NO_MATCH": "Няма имейли, отговарящи на тези филтри."
 			}
 		}
 	},
@@ -5336,7 +6413,8 @@
 		"PRIVACY_POLICY": "Политика за поверителност",
 		"TERMS_AND_CONDITIONS": "Общи условия",
 		"DOCUMENT_VERSION": "Версия {{ version }}",
-		"DOCUMENT_EFFECTIVE_DATE": "В сила от {{ date }}"
+		"DOCUMENT_EFFECTIVE_DATE": "В сила от {{ date }}",
+		"DPIA_SUPPORT_PACK": "Пакет в подкрепа на ОВЗД"
 	},
 	"LOADING": "Зарежда се, моля изчакайте....",
 	"ACCOUNTING_TEMPLATES_PAGE": {
@@ -5345,7 +6423,11 @@
 			"invoice": "Фактура",
 			"estimate": "Оферта",
 			"receipt": "Касова бележка"
-		}
+		},
+		"VIEW_GRID": "Мрежа",
+		"VIEW_EDITOR": "Редактор",
+		"FULL_PREVIEW": "Пълен преглед",
+		"SAVED": "Шаблонът '{{ templateName }}' беше запазен"
 	},
 	"REGISTER_PAGE": {
 		"TITLE": "Регистрация",
@@ -5389,6 +6471,7 @@
 		"FORGOT_PASSWORD_TITLE": "Забравена парола?",
 		"OR_SIGN_IN_WITH": "Или влезте с",
 		"SIGN_IN_WITH_EVER_ID": "Вход с Ever ID",
+		"LOGIN_WITH_EVER_ID": "Вход с {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Вход с Keycloak",
 		"FORGOT_EMAIL_TITLE": "Забравен имейл?",
 		"LOGIN_MAGIC": {
@@ -5905,5 +6988,82 @@
 			"ROTATE_FAILED": "Неуспешно ротиране на клиентската тайна",
 			"DELETE_FAILED": "Неуспешно отменяне на OAuth клиент"
 		}
+	},
+	"PROJECT_QUICK_LOOK": {
+		"OPEN_DETAILS": "Покажи подробности за проекта {{ name }}",
+		"PROGRESS": "Напредък",
+		"PROGRESS_META": "{{ done }} от {{ total }} задачи са изпълнени",
+		"NO_TASKS": "Все още няма задачи в този проект",
+		"NEEDS_ATTENTION": "Изисква внимание",
+		"NEEDS_ATTENTION_CAPTION": "Просрочени задачи и задачи с краен срок до 3 дни",
+		"ACTIVITY": "Дневна активност",
+		"ACTIVITY_VIEWS": "Изглед на активността",
+		"ACTIVITY_VIEW_CHART": "Диаграма",
+		"ACTIVITY_VIEW_GRID": "Решетка на приноса",
+		"GRID_NONE": "Няма време",
+		"GRID_LAST_YEAR": "Последните 12 месеца",
+		"GRID_OLDER": "Предишна година",
+		"GRID_NEWER": "Следваща година",
+		"GRID_DAY": "{{ time }} на {{ date }}",
+		"GRID_DAY_EMPTY": "Няма време на {{ date }}",
+		"TOP_CONTRIBUTORS": "Кой е работил най-много",
+		"CONTRIBUTORS_CAPTION": "Времето на всички по този проект · {{ range }}",
+		"YOUR_TIME_CAPTION": "Вашето време по този проект · {{ range }}",
+		"TEAM_CONTRIBUTORS_CAPTION": "Времето на членовете на екипа по този проект · {{ range }}",
+		"BUDGET_USED": "Използвани {{ used }} от {{ budget }}",
+		"OVER_BUDGET": "{{ value }} над бюджета",
+		"TOTAL_TRACKED": "Общо отчетено",
+		"TOTAL_TRACKED_HINT": "От началото на проекта",
+		"THIS_PERIOD": "Този период",
+		"VS_PREVIOUS": "{{ value }} спрямо предишния период",
+		"TIMELINE": "Времева линия",
+		"NO_DATES": "Няма зададени дати",
+		"STARTS_IN": "Започва след {{ count }} дни",
+		"STARTS_TOMORROW": "Започва утре",
+		"FINISHED": "Завършен",
+		"TEAM": "Екип",
+		"NO_MEMBERS": "Все още няма членове в този проект",
+		"MODULES": "Модули",
+		"MODULE_TASK": "1 задача",
+		"MODULE_TASKS": "{{ count }} задачи"
+	},
+	"PROJECT_VIEW": {
+		"TABS": {
+			"OVERVIEW": "Общ преглед",
+			"BOARD": "Табло",
+			"ACTIVITY": "Активност",
+			"COMMENTS": "Коментари"
+		},
+		"BOARD": "Табло",
+		"COLUMN_EMPTY": "Няма задачи",
+		"CANNOT_DROP": "Задачите не могат да бъдат преместени в „{{ column }}“, защото това не е статус на този проект.",
+		"ACTIVITY": "Активност",
+		"ACTIVITY_CAPTION": "Последни промени по проекта и задачите му",
+		"NO_ACTIVITY": "Все още няма активност",
+		"ACTIVITY_PARTIAL": "Част от активността не можа да се зареди, така че списъкът може да е непълен.",
+		"ACTIVITY_CREATED": "{{ actor }} създаде",
+		"ACTIVITY_UPDATED": "{{ actor }} обнови",
+		"ACTIVITY_DELETED": "{{ actor }} изтри",
+		"ACTIVITY_COMMENTED": "{{ actor }} коментира",
+		"ACTIVITY_REPLIED": "{{ actor }} отговори на коментар в",
+		"ACTIVITY_FIELDS": "Променено: {{ fields }}",
+		"SOMEONE": "Някой",
+		"TODAY": "Днес",
+		"YESTERDAY": "Вчера",
+		"TASK_PROGRESS": "Напредък",
+		"TASK_PROGRESS_OF": "{{ worked }} от {{ estimate }}",
+		"TASK_PROGRESS_SHARE": "{{ worked }} · {{ share }}% от отчетеното време по проекта (без оценка)",
+		"TASK_TOP_PEOPLE": "Работили най-много",
+		"TASK_NO_ESTIMATE": "Няма оценка",
+		"COMMENTS": "Коментари",
+		"NO_COMMENTS": "Все още няма коментари. Започнете дискусията.",
+		"COMMENT_PLACEHOLDER": "Напишете коментар…",
+		"COMMENT_IMAGE": "Изображение",
+		"ATTACH_IMAGES": "Прикачване на изображения",
+		"REMOVE_IMAGE": "Премахване на изображението",
+		"OPEN_IMAGE": "Отваряне на оригинала",
+		"COMMENT_IMAGE_TYPES": "Могат да се прикачват само изображения PNG, JPEG, GIF, WebP и BMP.",
+		"COMMENT_IMAGE_LIMIT": "Един коментар може да съдържа до {{ count }} изображения.",
+		"COMMENT_IMAGE_FAILED": "{{ name }} не можа да бъде качено."
 	}
 }

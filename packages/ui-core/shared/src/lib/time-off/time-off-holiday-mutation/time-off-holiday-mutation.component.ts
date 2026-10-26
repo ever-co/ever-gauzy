@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDateService, NbDialogRef } from '@nebular/theme';
 import { IEmployee, ITimeOffPolicy, IOrganization, StatusTypesEnum, IUser } from '@gauzy/contracts';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -16,6 +16,7 @@ import { FormHelpers } from '../../forms/helpers';
 	selector: 'ngx-time-off-holiday-mutation',
 	templateUrl: './time-off-holiday-mutation.component.html',
 	styleUrls: ['../time-off-mutation.components.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TimeOffHolidayMutationComponent implements OnInit {

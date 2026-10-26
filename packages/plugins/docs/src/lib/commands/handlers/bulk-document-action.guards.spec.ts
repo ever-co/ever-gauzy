@@ -8,21 +8,17 @@
  */
 const permissions: string[] = [];
 
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		RequestContext: {
-			hasPermission: (permission: string) => permissions.includes(permission)
-		}
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/core', () => ({
+	RequestContext: {
+		hasPermission: (permission: string) => permissions.includes(permission)
+	}
+}));
 jest.mock('../../services/document.service', () => ({ DocumentService: class {} }));
 jest.mock('../../services/document-tree.service', () => ({ DocumentTreeService: class {} }));
 jest.mock('../../services/document-knowledge.service', () => ({ DocumentKnowledgeService: class {} }));
 jest.mock('../../services/document-review.service', () => ({ DocumentReviewService: class {} }));
 
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { DOCS_BULK_MOVE_PARENT_REQUIRED, DOCS_WRITE_FORBIDDEN } from '../../docs.constants';
 import { DocumentBulkActionEnum } from '../../dto/bulk-action.dto';
@@ -96,6 +92,60 @@ describe('BulkDocumentActionHandler — MOVE payload guard', () => {
 		);
 
 		expect(treeService.moveDocument).toHaveBeenCalledWith(expect.objectContaining({ id: 'doc-1' }), 'folder-9');
+	});
+});
+
+describe('BulkDocumentActionHandler — MOVE target access', () => {
+	it('does not move a document into a folder the caller cannot read', async () => {
+		// The tree's own parent lookup checks only the organization, so a writer could move a document into
+		// another member's PRIVATE folder by its id; the target is now read the way a create reads its parent.
+		const { handler, documentService, treeService } = buildHandler();
+		documentService.findOneScoped.mockImplementation(async (id: string) => {
+			if (id === 'private-folder') {
+				throw new NotFoundException('Document was not found');
+			}
+			return { id, organizationId: 'org-1' };
+		});
+
+		const result = await handler.execute(
+			new BulkDocumentActionCommand({
+				ids: ['doc-1'],
+				action: DocumentBulkActionEnum.MOVE,
+				parentId: 'private-folder'
+			} as any)
+		);
+
+		expect(result).toMatchObject({ requested: 1, succeeded: 0, failed: 1 });
+		expect(documentService.findOneScoped).toHaveBeenCalledWith('private-folder', [], 'org-1');
+		expect(treeService.moveDocument).not.toHaveBeenCalled();
+	});
+
+	it('does not move a document into a folder the caller may only read', async () => {
+		// Reading the target is not enough: the move adds to its children and renumbers them, which a VIEW/COMMENT
+		// grantee may not do. The target needs write access, as a duplicate's does.
+		const { handler, documentService, treeService } = buildHandler();
+		documentService.assertCanWrite.mockImplementation(async (document: { id: string }) => {
+			if (document.id === 'shared-folder') {
+				throw new ForbiddenException({ message: 'no write', code: DOCS_WRITE_FORBIDDEN });
+			}
+		});
+
+		const result = await handler.execute(
+			new BulkDocumentActionCommand({
+				ids: ['doc-1'],
+				action: DocumentBulkActionEnum.MOVE,
+				parentId: 'shared-folder'
+			} as any)
+		);
+
+		expect(result).toMatchObject({
+			requested: 1,
+			succeeded: 0,
+			failed: 1,
+			results: [{ id: 'doc-1', ok: false, code: DOCS_WRITE_FORBIDDEN }]
+		});
+		expect(documentService.assertCanWrite).toHaveBeenCalledWith(expect.objectContaining({ id: 'shared-folder' }));
+		expect(treeService.moveDocument).not.toHaveBeenCalled();
 	});
 });
 

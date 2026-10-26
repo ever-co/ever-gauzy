@@ -1,6 +1,6 @@
 import { ForbiddenException, Logger } from '@nestjs/common';
 import { StripeSubscriptionService } from '../billing/stripe-subscription.service';
-import { SubscriptionRequiredGuard } from './subscription-required.guard';
+import { paywallCheckoutUrl, SubscriptionRequiredGuard } from './subscription-required.guard';
 
 /**
  * The signup paywall on `POST /auth/register`: only a subscription to THIS deployment's product opens
@@ -79,6 +79,28 @@ describe('SubscriptionRequiredGuard', () => {
 		await expect(guard().canActivate(context({ user: { email: EMAIL } }))).rejects.toBeInstanceOf(
 			ForbiddenException
 		);
+	});
+
+	it('the checkout link names a plan the shared checkout can resolve (a bare ?email= was a 400)', async () => {
+		stubStripe(byEmail([teamsSub]));
+		const err = await guard()
+			.canActivate(context({ user: { email: ' Buyer@Example.test ' } }))
+			.catch((e) => e);
+		expect(err).toBeInstanceOf(ForbiddenException);
+		const url = new URL((err as ForbiddenException).getResponse()['checkoutUrl']);
+		expect(url.origin + url.pathname).toBe('https://ever.co/checkout');
+		expect(Object.fromEntries(url.searchParams)).toEqual({
+			product: 'gauzy',
+			hosting: 'cloud',
+			tier: 'starter',
+			period: 'annual',
+			email: 'Buyer@Example.test'
+		});
+	});
+
+	it('the checkout link follows BILLING_PRODUCT', () => {
+		process.env.BILLING_PRODUCT = 'teams';
+		expect(new URL(paywallCheckoutUrl('a@b.test')).searchParams.get('product')).toBe('teams');
 	});
 
 	it('BILLING_SIGNUP_PAYWALL=false: signup is open and Stripe is never asked', async () => {

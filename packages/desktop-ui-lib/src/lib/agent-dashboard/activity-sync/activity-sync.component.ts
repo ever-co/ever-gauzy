@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { combineLatest, Subject, Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { QueueItem, SyncHealth } from '../models/logs.models';
@@ -15,6 +15,7 @@ import { NgTemplateOutlet, AsyncPipe } from '@angular/common';
 	selector: 'app-sync-page',
 	templateUrl: './activity-sync.component.html',
 	styleUrls: ['./activity-sync.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [NbCardModule, NbTabsetModule, NgTemplateOutlet, NbSpinnerModule, Angular2SmartTableModule, AsyncPipe]
 })
 export class SyncPageComponent implements OnInit, OnDestroy {

@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
+import { ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator';
 import { ID, IOrganization } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../../core/context';
+import { TENANT_ADMIN_ROLES } from '../../../core/crud/organization-boundary';
 import { MultiORM, MultiORMEnum, getORMType } from '../../../core/utils';
+import { Organization } from '../../../organization/organization.entity';
 import { TypeOrmUserOrganizationRepository } from '../../../user-organization/repository/type-orm-user-organization.repository';
 import { MikroOrmUserOrganizationRepository } from '../../../user-organization/repository/mikro-orm-user-organization.repository';
 
@@ -56,10 +58,19 @@ export class OrganizationBelongsToUserConstraint implements ValidatorConstraintI
 	}
 
 	/**
-	 * Checks if the given organization exists for the current user in the database.
+	 * Checks whether the current user may reach the given organization.
+	 *
+	 * **The organization boundary (owner decision, 2026-10-22).** A tenant admin (`SUPER_ADMIN`, `ADMIN`) reaches
+	 * every organization of the tenant, whether or not they are a member of it. Anyone else reaches only the
+	 * organization of their token (`RequestContext.currentOrganizationId()`, which `JwtStrategy` attaches after
+	 * checking an active membership), and must still be a member of it. Until now any organization the caller
+	 * belonged to passed, so a member of two organizations used the permissions of their role in both at once — read
+	 * and wrote the other one by naming it — while the UI switches organization, and mints a token for it, to work
+	 * in another. This check serves the REST DTOs (`@IsOrganizationBelongsToUser()`) and GraphQL
+	 * (`GraphqlOrganizationMembershipInterceptor`) alike.
 	 *
 	 * @param organizationId - The ID of the organization.
-	 * @returns {Promise<boolean>} - True if found, false otherwise.
+	 * @returns {Promise<boolean>} - True if the caller may reach it, false otherwise.
 	 */
 	async checkOrganizationExistence(organizationId: string): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
@@ -69,6 +80,14 @@ export class OrganizationBelongsToUserConstraint implements ValidatorConstraintI
 		// (`invalidWhereValuesBehavior.undefined: 'ignore'`), and the membership check would then match
 		// ANY organization the caller belongs to (GHSA-44pv-34gx-q9p4).
 		if (!tenantId || !userId || !organizationId || typeof organizationId !== 'string') {
+			return false;
+		}
+
+		if (RequestContext.hasRoles([...TENANT_ADMIN_ROLES])) {
+			return await this.isOrganizationOfTenant(tenantId, organizationId);
+		}
+
+		if (organizationId !== RequestContext.currentOrganizationId()) {
 			return false;
 		}
 
@@ -90,6 +109,36 @@ export class OrganizationBelongsToUserConstraint implements ValidatorConstraintI
 					});
 					return true;
 				}
+				default:
+					throw new Error(`ORM type "${ormType}" not implemented.`);
+			}
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * Whether an organization of the given id exists in the tenant: what a tenant admin may reach.
+	 *
+	 * @param tenantId - The caller's tenant.
+	 * @param organizationId - The ID of the organization.
+	 * @returns {Promise<boolean>} - True if the tenant has that organization.
+	 */
+	private async isOrganizationOfTenant(tenantId: ID, organizationId: ID): Promise<boolean> {
+		try {
+			switch (ormType) {
+				case MultiORMEnum.MikroORM:
+					return (
+						(await this.mikroOrmUserOrganizationRepository
+							.getEntityManager()
+							.count(Organization, { id: organizationId, tenantId } as any)) > 0
+					);
+				case MultiORMEnum.TypeORM:
+					return (
+						(await this.typeOrmUserOrganizationRepository.manager.count(Organization, {
+							where: { id: organizationId, tenantId }
+						})) > 0
+					);
 				default:
 					throw new Error(`ORM type "${ormType}" not implemented.`);
 			}

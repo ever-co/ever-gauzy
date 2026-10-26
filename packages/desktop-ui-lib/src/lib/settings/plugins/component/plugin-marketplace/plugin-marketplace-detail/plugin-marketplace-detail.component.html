@@ -1,23 +1,23 @@
 <!-- check-->
-@let checked = toggleQuery.isEnabled$(plugin?.id) | async;
+@let checked = toggleQuery.isEnabled$($safeNavigationMigration(plugin?.id)) | async;
 <!-- Get the current plugin details -->
 @let currentPlugin = marketplaceQuery.plugin$ | async;
 <!-- Is Selected-->
 @let isSelected = currentPlugin?.id === plugin?.id;
 <!-- Template for Plugin Marketplace Detail Component -->
-@let installing = installationQuery.installing$(plugin?.id) | async;
+@let installing = installationQuery.installing$($safeNavigationMigration(plugin?.id)) | async;
 <!-- Determine if the plugin is currently being installed or uninstalled -->
-@let uninstalling = installationQuery.uninstalling$(plugin?.id) | async;
+@let uninstalling = installationQuery.uninstalling$($safeNavigationMigration(plugin?.id)) | async;
 <!-- Check if the plugin is selected and disabled state for toggles -->
-@let installed = installationQuery.installed$(plugin?.id) | async;
+@let installed = installationQuery.installed$($safeNavigationMigration(plugin?.id)) | async;
 <!-- Disabled state when installing or uninstalling -->
 @let disabled = installing || uninstalling;
 <!-- Disabled state when installing or uninstalling -->
 @let showProgress = disabled;
 <!-- Check if the current user is the owner of the plugin -->
-@let editing = marketplaceQuery.updating$(plugin?.id) | async;
+@let editing = marketplaceQuery.updating$($safeNavigationMigration(plugin?.id)) | async;
 <!-- Subscription  -->
-@let subscription = plugin?.subscriptions?.[0];
+@let subscription = subscription$ | async;
 <!-- Main template -->
 @if(plugin) {
 <div
@@ -38,6 +38,8 @@
 					<nb-badge
 						class="security-badge verified"
 						status="success"
+						role="img"
+						[attr.aria-label]="'PLUGIN.SECURITY.VERIFIED' | translate"
 						[nbTooltip]="'PLUGIN.SECURITY.VERIFIED' | translate"
 					>
 						<nb-icon icon="shield-checkmark-outline"></nb-icon>
@@ -46,6 +48,8 @@
 					<nb-badge
 						class="security-badge signed"
 						status="info"
+						role="img"
+						[attr.aria-label]="'PLUGIN.SECURITY.SIGNED' | translate"
 						[nbTooltip]="'PLUGIN.SECURITY.SIGNED' | translate"
 					>
 						<nb-icon icon="checkmark-circle-outline"></nb-icon>
@@ -115,12 +119,12 @@
 		<div class="subscription-info">
 			<div class="subscription-type">
 				<div class="d-flex align-items-center first">
-					<nb-icon [icon]="getSubscriptionIcon(subscription.plan?.type)"></nb-icon>
-					<span>{{ subscription.plan?.name || (subscription.plan?.type | titlecase) }}</span>
+					<nb-icon [icon]="getSubscriptionIcon($safeNavigationMigration(subscription.plan?.type))"></nb-icon>
+					<span>{{ subscription.plan?.name || ($safeNavigationMigration(subscription.plan?.type) | titlecase) }}</span>
 				</div>
 				@if(subscription.plan?.price > 0) {
 				<div class="d-flex align-items-center">
-					<span class="price">{{ subscription.plan?.price | currency : subscription.plan?.currency }}</span>
+					<span class="price">{{ $safeNavigationMigration(subscription.plan?.price) | currency : $safeNavigationMigration(subscription.plan?.currency) }}</span>
 					<span class="billing-period">/{{ subscription.plan?.billingPeriod?.toLowerCase() }}</span>
 				</div>
 				}

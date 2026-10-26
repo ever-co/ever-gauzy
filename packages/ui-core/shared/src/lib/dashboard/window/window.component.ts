@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NbPopoverDirective } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable } from 'rxjs';
@@ -11,6 +11,7 @@ import { WindowService } from './window.service';
 	selector: 'ga-window',
 	templateUrl: './window.component.html',
 	styleUrls: ['./window.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class WindowComponent extends GuiDrag implements OnInit, AfterViewInit, OnDestroy {

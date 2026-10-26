@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, ChangeDetectionStrategy } from '@angular/core';
 import { IDocumentFacetBucket } from '../../models/docs-api.model';
 
 /**
@@ -168,6 +168,7 @@ import { IDocumentFacetBucket } from '../../models/docs-api.model';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class FacetMultiselectComponent implements OnChanges {

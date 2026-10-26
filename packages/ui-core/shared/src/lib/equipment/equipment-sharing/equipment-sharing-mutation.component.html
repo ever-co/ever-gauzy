@@ -176,7 +176,7 @@
 		<button class="delete mr-3" (click)="dialogRef.close()" nbButton status="basic" outline>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button [disabled]="form.invalid" status="success" nbButton (click)="onSaveRequest()">
+		<button [disabled]="form.invalid || loading" status="success" nbButton (click)="onSaveRequest()">
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

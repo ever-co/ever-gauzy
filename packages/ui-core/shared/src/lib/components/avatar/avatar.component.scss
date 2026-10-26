@@ -36,6 +36,22 @@
     text-overflow: ellipsis;
   }
 
+  // Marks an agent employee (`kind = 'agent'`, e.g. an Ever Works agent) wherever an employee is listed.
+  .agent-badge {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+    color: var(--color-info-default, #0095ff);
+    background-color: var(--color-info-transparent-100, rgba(0, 149, 255, 0.08));
+  }
+
   .link-text:hover {
     text-decoration: underline;
   }

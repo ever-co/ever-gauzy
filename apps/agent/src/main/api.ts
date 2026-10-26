@@ -9,6 +9,10 @@ import MainEvent from './events/events';
 import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../constant';
 import { TaskStatusEnum, IBaseTaskProperties, ITaskStatus, IPagination } from '@gauzy/contracts';
 import { AgentLogger } from './agent-logger';
+import { TOrganizationScreenshotSetting } from './screenshot-interval';
+
+/** A token refresh that has not completed by then is abandoned, for every caller waiting on it */
+const TOKEN_REFRESH_TIMEOUT_MS = 30 * 1000;
 
 export interface ITimerResponse {
 	deletedAt: any
@@ -159,6 +163,7 @@ export class ApiService {
 	private isLogout: boolean;
 	private statusProgress: ITaskStatus;
 	private agentLogger: AgentLogger;
+	private refreshPromise: Promise<string | boolean> | null = null;
 
 	constructor() {
 		this.mainEvent = MainEvent.getInstance();
@@ -208,8 +213,8 @@ export class ApiService {
 		return this.request(uriPath, { method: 'POST', body: payload, headers: {} }, true)
 	}
 
-	get(uriPath: string, params: Record<string, unknown>): Promise<Record<string, unknown>> {
-		return this.request(uriPath, { method: 'GET', headers: {}, params }, false);
+	get(uriPath: string, params: Record<string, unknown>, timeoutMs?: number): Promise<Record<string, unknown>> {
+		return this.request(uriPath, { method: 'GET', headers: {}, params, timeoutMs }, false);
 	}
 
 	put(uriPath: string, payload: Record<string, any>): Promise<Record<string, unknown>> {
@@ -349,23 +354,53 @@ export class ApiService {
 		return employee;
 	}
 
-	async refreshToken(): Promise<string | boolean> {
+	/**
+	 * The organisation's timer settings (screenshot frequency among them), read where the desktop timer reads them:
+	 * the signed-in user's employee organisation. `null` when the response carries none. The whole request, a token
+	 * refresh and retry after a 401 included, rejects once `timeoutMs` has passed, so it cannot hold up later
+	 * refreshes.
+	 */
+	async getOrganizationTimerSetting(timeoutMs?: number): Promise<TOrganizationScreenshotSetting | null> {
+		const user = (await this.get(
+			'/api/user/me',
+			{ includeEmployee: true, includeOrganization: true },
+			timeoutMs
+		)) as { employee?: { organization?: TOrganizationScreenshotSetting | null } | null };
+		return user?.employee?.organization ?? null;
+	}
+
+	refreshToken(): Promise<string | boolean> {
+		// The server rotates refresh tokens, so concurrent 401s must share one refresh call
+		if (!this.refreshPromise) {
+			this.refreshPromise = this.requestTokenRefresh().finally(() => {
+				this.refreshPromise = null;
+			});
+		}
+		return this.refreshPromise;
+	}
+
+	private async requestTokenRefresh(): Promise<string | boolean> {
 		const authConfig = getAuthConfig();
 		if (!authConfig.refreshToken) {
 			return false;
 		}
 		let url = this.baseURL + '/api/auth/refresh-token';
+		// Shared by every caller waiting on a 401, so it has its own deadline rather than one caller's
+		const controller = new AbortController();
+		const deadline = setTimeout(() => controller.abort(), TOKEN_REFRESH_TIMEOUT_MS);
 		const res = await fetch(url, {
 			method: 'POST',
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				refresh_token: authConfig.refreshToken
-			})
-		});
+			}),
+			signal: controller.signal
+		}).finally(() => clearTimeout(deadline));
 		if (res.ok) {
-			const resJson: { token: string } = await res.json();
+			// node-fetch 3 types a JSON body as unknown
+			const resJson = (await res.json()) as { token: string; refresh_token?: string };
 			if (resJson?.token) {
-				updateAuthConfig(resJson.token);
+				updateAuthConfig(resJson.token, resJson.refresh_token);
 				return resJson.token;
 			}
 		}
@@ -420,15 +455,33 @@ export class ApiService {
 		this.statusProgress = taskStatuses.items?.find((i) => i.value === TaskStatusEnum.IN_PROGRESS);
 	}
 
+	/** Stop waiting for `promise` (without cancelling it) once `deadlineAt` has passed */
+	private withinDeadline<T>(promise: Promise<T>, deadlineAt: number | null): Promise<T> {
+		if (!deadlineAt) {
+			return promise;
+		}
+		let timer: ReturnType<typeof setTimeout>;
+		const expired = new Promise<never>((_, reject) => {
+			timer = setTimeout(
+				() => reject(new Error('The request timed out while waiting for the token refresh')),
+				Math.max(0, deadlineAt - Date.now())
+			);
+		});
+		return Promise.race([promise, expired]).finally(() => clearTimeout(timer));
+	}
+
 	async request(
 		path: string,
 		options: {
 			headers?: HeadersInit;
 			method: 'POST' | 'GET' | 'PUT';
 			body?: string;
-			params?: any
+			params?: any;
+			/** GET only: abort the request (and reject) when it has not completed after this many milliseconds */
+			timeoutMs?: number
 		} = { method: 'GET' },
-		isFile?: boolean
+		isFile?: boolean,
+		isRetry = false
 	): Promise<Record<string, unknown>> {
 		let url = this.baseURL + path;
 		if (options.method === 'GET' && options.params) {
@@ -441,8 +494,11 @@ export class ApiService {
 			...options.headers
 		};
 
+		const controller = options.method === 'GET' && options.timeoutMs > 0 ? new AbortController() : null;
+		const deadline = controller ? setTimeout(() => controller.abort(), options.timeoutMs) : null;
+		const deadlineAt = controller ? Date.now() + options.timeoutMs : null;
 		const requestOptions = options.method === 'GET'
-			? { method: options.method, headers }
+			? { method: options.method, headers, ...(controller ? { signal: controller.signal } : {}) }
 			: { ...options, headers };
 
 		try {
@@ -454,10 +510,15 @@ export class ApiService {
 				const respText = await response.text();
 				console.warn('[Response Error]', response.status, respText);
 				if (response.status === 401 && !this.isLogout) {
-					const refreshedToken = await this.refreshToken();
+					// Retry only once: a second 401 with a fresh token means the access itself is revoked
+					// With a deadline, the wait for the (shared) token refresh and the retry fit in what is left of it
+					const refreshedToken = isRetry ? false : await this.withinDeadline(this.refreshToken(), deadlineAt);
 					if (refreshedToken) {
 						requestOptions.headers.Authorization = `Bearer ${refreshedToken as string}`;
-						return this.request(path, options, isFile);
+						const retryOptions = deadlineAt
+							? { ...options, timeoutMs: Math.max(1, deadlineAt - Date.now()) }
+							: options;
+						return this.request(path, retryOptions, isFile, true);
 					}
 					this.handleUnAuthorize();
 				}
@@ -468,7 +529,8 @@ export class ApiService {
 			if (this.isLogout) {
 				this.isLogout = false;
 			}
-			const respJson = await response.json();
+			// node-fetch 3 types a JSON body as unknown
+			const respJson = (await response.json()) as Record<string, unknown>;
 			return respJson;
 		} catch (err) {
 			this.agentLogger.error(`Error API call, ${err.message}`);
@@ -477,6 +539,10 @@ export class ApiService {
 			enhancedError['url'] = url;
 			enhancedError['isNetworkError'] = true;
 			throw enhancedError;
+		} finally {
+			if (deadline) {
+				clearTimeout(deadline);
+			}
 		}
 	}
 }

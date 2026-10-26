@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IInvite, IOrganizationContactRegistrationInput } from '@gauzy/contracts';
@@ -9,6 +9,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
     selector: 'ga-accept-client-invite',
     styleUrls: ['./accept-client-invite.component.scss'],
     templateUrl: './accept-client-invite.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AcceptClientInviteComponent extends TranslationBaseComponent implements OnInit {

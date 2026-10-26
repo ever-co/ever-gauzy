@@ -5,7 +5,7 @@
         <div style="display: flex">
           <ngx-back-navigation></ngx-back-navigation>
           <div class="employee-info">
-            <img class="employee-image" [src]="selectedCandidate?.user.imageUrl" alt="Candidate Avatar" />
+            <img class="employee-image" [src]="$safeNavigationMigration(selectedCandidate?.user.imageUrl)" alt="Candidate Avatar" />
 
             <div class="employee-details">
               <span class="employee-name"

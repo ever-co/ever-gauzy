@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, TemplateRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
 import { IEmployeeLevelInput, ITag, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,6 +20,7 @@ import { EmployeeLevelService, Store, ToastrService } from '@gauzy/ui-core/core'
     selector: 'ga-employee-level',
     templateUrl: './employee-level.component.html',
     styleUrls: ['employee-level.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeLevelComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

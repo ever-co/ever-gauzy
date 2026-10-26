@@ -1,0 +1,178 @@
+$hairline: 1px solid var(--gauzy-border-default-color);
+
+// The popover's frame (`gz-projects-popover`) is styled globally in
+// `packages/ui-core/static/styles/_overlays.scss`: overlays render at the <body>
+// level, out of this component's reach without `::ng-deep`.
+
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  width: 20rem;
+  // Never wider than the screen, whatever width the popover is given.
+  max-width: calc(100vw - 1rem);
+  background-color: var(--gauzy-card-1);
+}
+
+.projects-list-header {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.625rem 1rem;
+  border-bottom: $hairline;
+}
+
+.projects-list-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.projects-list-count {
+  padding: 0 0.4375rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.projects-list-rows {
+  // Shrinks below its content inside the column, so the rows scroll rather than overflow.
+  min-height: 0;
+  margin: 0;
+  padding: 0.25rem 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+// Badge | name, people and bar | time.
+.project-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.75rem;
+  padding: 0.5rem 1rem;
+
+  & + & {
+    border-top: $hairline;
+  }
+}
+
+.project-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--gauzy-radius-sm);
+  background-color: var(--gauzy-active-tint);
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-1);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.project-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.project-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+// Worked on, but not linked to the team — as the team page marks it.
+.project-chip {
+  flex: 0 0 auto;
+  padding: 0 0.375rem;
+  border-radius: var(--gauzy-radius-sm);
+  background-color: var(--gauzy-hover-tint);
+  font-size: 0.625rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+  white-space: nowrap;
+}
+
+// A project nobody worked on that day: listed, but quieter.
+.project-row.is-idle {
+  .project-time {
+    font-weight: 500;
+    color: var(--gauzy-text-color-2);
+  }
+}
+
+.project-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.project-meta {
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.project-bar {
+  display: block;
+  height: 0.25rem;
+  margin-top: 0.3125rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background-color: var(--gauzy-chart-profit);
+  }
+}
+
+.project-time {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-1);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.projects-list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+
+  nb-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+    color: var(--gauzy-text-color-2);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: var(--gauzy-text-color-2);
+  }
+}

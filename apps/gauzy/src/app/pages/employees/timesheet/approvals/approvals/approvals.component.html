@@ -9,7 +9,7 @@
 					buttonTemplate
 					[ngTemplateOutlet]="actionButtons"
 					[ngTemplateOutletContext]="{
-						$implicit: selectedTimesheet?.data
+						$implicit: $safeNavigationMigration(selectedTimesheet?.data)
 					}"
 				>
 				</ng-container>
@@ -78,10 +78,10 @@
 						<div class="col-2">
 							<ngx-avatar
 								class="report-table"
-								[name]="timesheet?.employee?.user?.name"
-								[src]="timesheet?.employee?.user?.imageUrl"
-								[id]="timesheet?.employee?.id"
-								[employee]="timesheet?.employee"
+								[name]="$safeNavigationMigration(timesheet?.employee?.user?.name)"
+								[src]="$safeNavigationMigration(timesheet?.employee?.user?.imageUrl)"
+								[id]="$safeNavigationMigration(timesheet?.employee?.id)"
+								[employee]="$safeNavigationMigration(timesheet?.employee)"
 							></ngx-avatar>
 						</div>
 						<div class="col">

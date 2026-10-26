@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NbCalendarMonthPickerComponent } from '@nebular/theme';
 import { min, addYears, subYears } from 'date-fns';
 import { monthNames } from '@gauzy/ui-core/core';
@@ -11,6 +11,7 @@ import { Store } from '@gauzy/ui-core/core';
     host: {
         '(document:click)': 'clickOutside($event)'
     },
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class DateSelectorComponent implements OnInit {

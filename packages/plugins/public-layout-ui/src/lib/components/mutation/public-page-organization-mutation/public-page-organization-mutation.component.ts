@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -20,6 +20,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ngx-public-page-organization-mutation',
 	templateUrl: './public-page-organization-mutation.component.html',
 	styleUrls: ['./public-page-organization-mutation.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PublicPageOrganizationMutationComponent extends TranslationBaseComponent implements OnInit {
@@ -41,6 +42,38 @@ export class PublicPageOrganizationMutationComponent extends TranslationBaseComp
 	skills: ISkill[] = [];
 	languages: ILanguage[] = [];
 	moment = moment;
+
+	/** The dialog's sections, in tab order: an id, its i18n title and its icon. */
+	readonly tabs = [
+		{ id: 'main', title: 'POP_UPS.MAIN', icon: 'home-outline' },
+		{ id: 'description', title: 'POP_UPS.DESCRIPTION', icon: 'file-text-outline' },
+		{ id: 'awards', title: 'POP_UPS.AWARDS', icon: 'award-outline' },
+		{ id: 'skills', title: 'POP_UPS.SKILLS', icon: 'star-outline' },
+		{ id: 'languages', title: 'POP_UPS.LANGUAGES', icon: 'globe-outline' },
+		{ id: 'privacy', title: 'POP_UPS.PRIVACY', icon: 'shield-outline' }
+	] as const;
+	/**
+	 * The selected section. Panes are hidden, not destroyed, when another is
+	 * selected: the skills input reads its initial value from the organization,
+	 * so re-creating it would drop a selection made before switching.
+	 */
+	activeTab: 'main' | 'description' | 'awards' | 'skills' | 'languages' | 'privacy' = 'main';
+
+	/**
+	 * What visitors may see, one toggle each. The toggles write to the form, not
+	 * to the organization, so a cancelled dialog leaves the page as it was.
+	 */
+	readonly privacySettings = [
+		{ key: 'show_income', translation: 'POP_UPS.TOTAL_INCOME_OR_MONTHLY_INCOME' },
+		{ key: 'show_profits', translation: 'POP_UPS.PROFITS' },
+		{ key: 'show_bonuses_paid', translation: 'POP_UPS.BONUSES_PAID' },
+		{ key: 'show_total_hours', translation: 'POP_UPS.TOTAL_HOURS_WORKED_OVER_GAUZY' },
+		{ key: 'show_minimum_project_size', translation: 'POP_UPS.MINIMUM_PROJECT_SIZE' },
+		{ key: 'show_projects_count', translation: 'POP_UPS.PROJECTS_COUNT' },
+		{ key: 'show_clients_count', translation: 'POP_UPS.CLIENTS_COUNT' },
+		{ key: 'show_clients', translation: 'POP_UPS.SHOW_CLIENTS' },
+		{ key: 'show_employees_count', translation: 'POP_UPS.EMPLOYEES_COUNT' }
+	] as const;
 
 	get totalEmployees() {
 		return this.form.get('totalEmployees').value;
@@ -88,6 +121,7 @@ export class PublicPageOrganizationMutationComponent extends TranslationBaseComp
 	}
 
 	editPublicPage() {
+		this.form.markAllAsTouched();
 		if (this.form.valid) {
 			const formValue = Object.assign(this.form.value);
 			if (!formValue.client_focus) {
@@ -118,15 +152,15 @@ export class PublicPageOrganizationMutationComponent extends TranslationBaseComp
 				founded: moment(this.organization.registrationDate).format('Y'),
 				short_description: this.organization.short_description,
 				overview: this.organization.overview,
-				show_income: this.organization.show_income,
-				show_profits: this.organization.show_profits,
-				show_bonuses_paid: this.organization.show_bonuses_paid,
-				show_total_hours: this.organization.show_total_hours,
-				show_minimum_project_size: this.organization.show_minimum_project_size,
-				show_projects_count: this.organization.show_projects_count,
-				show_clients_count: this.organization.show_clients_count,
-				show_clients: this.organization.show_clients,
-				show_employees_count: this.organization.show_employees_count,
+				show_income: !!this.organization.show_income,
+				show_profits: !!this.organization.show_profits,
+				show_bonuses_paid: !!this.organization.show_bonuses_paid,
+				show_total_hours: !!this.organization.show_total_hours,
+				show_minimum_project_size: !!this.organization.show_minimum_project_size,
+				show_projects_count: !!this.organization.show_projects_count,
+				show_clients_count: !!this.organization.show_clients_count,
+				show_clients: !!this.organization.show_clients,
+				show_employees_count: !!this.organization.show_employees_count,
 				client_focus: [],
 				skills: this.organization.skills,
 				minimumProjectSize: this.organization.minimumProjectSize,
@@ -145,10 +179,6 @@ export class PublicPageOrganizationMutationComponent extends TranslationBaseComp
 
 	selectedLanguageHandler(ev: any) {
 		this.selectedLanguage = ev;
-	}
-
-	changeShowAction(sel: any) {
-		this.form.get(sel).setValue(this.organization[sel]);
 	}
 
 	async addAward(name: string, year: string) {

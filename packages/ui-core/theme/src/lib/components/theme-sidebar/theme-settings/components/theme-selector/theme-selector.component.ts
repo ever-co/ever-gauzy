@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Store } from '@gauzy/ui-core/core';
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -19,6 +19,7 @@ import {
     selector: 'gauzy-theme-selector',
     templateUrl: './theme-selector.component.html',
     styleUrls: ['./theme-selector.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ThemeSelectorComponent implements OnInit {

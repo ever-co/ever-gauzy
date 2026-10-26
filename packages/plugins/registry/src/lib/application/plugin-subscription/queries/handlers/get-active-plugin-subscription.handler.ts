@@ -1,5 +1,4 @@
 import { PluginSubscriptionStatus } from '@gauzy/contracts';
-import { NotFoundException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { FindOptionsWhere, In } from 'typeorm';
 import { PluginSubscriptionService } from '../../../../domain';
@@ -60,7 +59,11 @@ export class GetActivePluginSubscriptionQueryHandler implements IQueryHandler<Ge
 	}
 
 	/**
-	 * Fetches the most recent subscription matching the criteria
+	 * Fetches the most recent subscription matching the criteria, or `null` when there is none.
+	 *
+	 * Having no subscription is an answer, not an error: the marketplace asks `GET /plugins/:pluginId/subscriptions/me`
+	 * for every plugin card it shows, and the desktop apps' error interceptor retries and toasts every failed request,
+	 * so a `404` here put one error toast on the screen per plugin the user does not subscribe to.
 	 */
 	private async findSubscription(
 		whereConditions: FindOptionsWhere<IPluginSubscription>
@@ -71,11 +74,7 @@ export class GetActivePluginSubscriptionQueryHandler implements IQueryHandler<Ge
 			relations: ['plugin', 'plan', 'subscriber', 'parent']
 		});
 
-		if (!success) {
-			throw new NotFoundException('No active plugin subscription found.');
-		}
-
-		return record;
+		return success ? record : null;
 	}
 
 	/**

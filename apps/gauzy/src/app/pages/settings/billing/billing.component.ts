@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
@@ -39,6 +39,7 @@ const INTERVAL_SUFFIX: Record<string, string> = {
 	selector: 'ga-billing',
 	templateUrl: './billing.component.html',
 	styleUrls: ['./billing.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class BillingComponent extends TranslationBaseComponent implements OnInit {

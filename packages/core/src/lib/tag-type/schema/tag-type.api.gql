@@ -1,0 +1,92 @@
+# The tag type domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/tag-types` routes already serve, under the same guard
+# and with the same permission, so a client that reaches a capability over one protocol is not given a
+# narrower or a wider one than the client that reaches it over the other.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. The controller serves its list twice — `GET /` and
+# `GET /pagination`, the latter inherited — and the two answer one question, so the surface states it
+# once: a second root field for the paginated spelling would be a second surface that could disagree
+# with this one, and the connection's own `limit`/`offset` already are the page it performs.
+#
+# The count is a field of its own because a bare number is not a connection, and `totalCount` is not
+# that number: it is the count of the rows the connection narrowed to, while the count route counts the
+# caller's own rows. It takes no argument: the delivered count route binds its query string to the
+# store's own `where`, which the connection protocol does not speak, and a `filter` here would either be
+# handed to a service call that cannot accept it or be evaluated over a second code path that could
+# disagree with the connection. It is nullable because a count is an aggregate a resource may
+# legitimately have no answer for, and a non-null field would turn "not answered" into a fabricated
+# zero.
+#
+# **The reads and the two inherited removals state no permission, because the routes they mirror state
+# none.** This controller carries both guards on the class and no class-level `@Permissions`, so a route
+# that states no permission of its own runs under the guards alone — which is the case for the node
+# query, the removal, the withdrawal and the recovery it inherits from the CRUD base. Its list, its
+# count and its two writes do state their own, and the fields below state the same ones. A field that
+# demanded more than its route would refuse a caller REST serves, and tightening the resource is a
+# change to make in both places at once.
+
+extend type Query {
+	"""
+	The tag types of the caller's tenant.
+	"""
+	tagTypes(
+		filter: TagTypeFilter
+		sort: [TagTypeSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): TagTypeConnection!
+
+	"""
+	One tag type of the caller's tenant, or null when there is none.
+	"""
+	tagType(id: ID!): TagType
+
+	"""
+	How many tag types the caller's tenant holds.
+	"""
+	tagTypeCount: Int
+}
+
+extend type Mutation {
+	"""
+	Declares a group.
+	"""
+	createTagType(input: CreateTagTypeInput!): TagType!
+
+	"""
+	Changes a group that exists. A member the caller leaves out is left as it is: the delivered write
+	updates the columns the body states rather than replacing the row — see `UpdateTagTypeInput`.
+	"""
+	updateTagType(input: UpdateTagTypeInput!): TagType!
+
+	"""
+	Removes a group outright. What becomes of the tags that were filed under it is the store's own
+	constraint to decide — the relation is declared to clear rather than to cascade — and this field
+	does not pre-empt it.
+	"""
+	deleteTagType(id: ID!): Boolean!
+
+	"""
+	Withdraws a group without removing it: the row keeps its identifier and the tags filed under it keep
+	pointing at it, and the delivered reader stops answering it.
+	"""
+	softDeleteTagType(id: ID!): TagType!
+
+	"""
+	Puts a withdrawn group back.
+	"""
+	recoverTagType(id: ID!): TagType!
+}

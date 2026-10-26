@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,6 +32,7 @@ import {
 	selector: 'ngx-add-task-dialog',
 	templateUrl: './add-task-dialog.component.html',
 	styleUrls: ['./add-task-dialog.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class AddTaskDialogComponent extends TranslationBaseComponent implements OnInit {

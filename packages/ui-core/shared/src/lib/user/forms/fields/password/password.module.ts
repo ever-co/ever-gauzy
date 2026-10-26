@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NbButtonModule, NbFormFieldModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { PasswordFormFieldComponent } from './password.component';
 
@@ -16,7 +16,7 @@ import { PasswordFormFieldComponent } from './password.component';
 		NbFormFieldModule,
 		NbIconModule,
 		NbInputModule,
-		TranslateModule.forChild()
+		TranslatePipe
 	]
 })
 export class PasswordFormFieldModule {}

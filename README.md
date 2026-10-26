@@ -156,8 +156,10 @@ More information about our Server & Desktop Apps:
 -   Download for your OS from the official [Downloads](https://web.gauzy.co/downloads) page or see the section "Download" above for other links to our releases pages.
 -   Setup Gauzy Server with default choices in Setup Wizard and run it.
 -   You can also setup Gauzy Desktop App (can run independently or connect to Gauzy Server) or Gauzy Desktop Timer App (should be connected to Gauzy Server)
--   You can login with `admin@ever.co` and password `admin` to check Admin functionality if you installed Gauzy Server or Gauzy Desktop App. Note: such an Admin user is not an employee, so you will not be able to track time.
--   You can login with `employee@ever.co` and password `12345678` to check Employee-related functionality in Gauzy UI or to run Desktop Timer from an "Employee" perspective (such a user is an Employee and can track time).
+-   Gauzy Server and Gauzy Desktop App create three accounts on their first start: `admin@ever.co` (Super Admin), `local.admin@ever.co` (Admin) and `employee@ever.co` (Employee). Each gets a random password generated for that installation, which the app shows once, right after that first start: save them then (you can change them later on your profile page). Sign in as `admin@ever.co` to check Admin functionality. Note: such an Admin user is not an employee, so you will not be able to track time.
+-   Sign in as `employee@ever.co` to check Employee-related functionality in Gauzy UI or to run Desktop Timer from an "Employee" perspective (such a user is an Employee and can track time).
+-   An installation set up before these random passwords keeps its existing ones (`admin` and `12345678`) and shows a warning at every start until you change them.
+-   Gauzy Desktop App's integrated server accepts connections from the same computer only. To serve other computers (for example the Desktop Timer apps of your team), use Gauzy Server: it accepts connections from the network unless you turn off "Allow other computers on the network to connect" in its settings.
 -   If you install Gauzy Server, it is possible to connect to it using a browser (by default on <http://localhost:4200>) or using Gauzy Desktop Apps (make sure to configure Desktop apps to connect to Gauzy API on <http://127.0.0.1:3000/api> because it's where Gauzy Server API runs by default).
 -   You can read more information about our Desktop Apps on the [Desktop Apps Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Desktop-Apps) and our Server at the [Server Wiki Page](https://github.com/ever-co/ever-gauzy/wiki/Gauzy-Server).
 
@@ -209,7 +211,7 @@ Note: those credentials exist only because this stack runs with `DEMO=true`. The
 
 -   Edit `.env.compose`: you **must** set `JWT_SECRET`, `JWT_REFRESH_TOKEN_SECRET`, `JWT_VERIFICATION_TOKEN_SECRET` and `EXPRESS_SESSION_SECRET` to strong, unique values (e.g. `openssl rand -hex 64`). The API refuses to start on the shipped blank/default secrets — shared defaults let anyone forge authentication tokens and sessions. Adjust any other settings (e.g. DB type) there too.
 -   You **must** also set `DEMO_SUPER_ADMIN_PASSWORD`, `DEMO_ADMIN_PASSWORD` and `DEMO_EMPLOYEE_PASSWORD` (and optionally the matching `*_EMAIL` variables). The first boot against an empty database seeds a Super Admin, an Admin and an Employee from those variables, and their shipped defaults are documented right here in this README — so the API refuses to seed while they are unset or left at the defaults.
--   Set `TRUST_PROXY` to the number of proxy hops in front of the API (`1` behind a single nginx/ingress) or to your trusted proxy CIDRs, so the login rate limiter counts against the real client address. Set `THROTTLE_TRUST_CF_CONNECTING_IP=true` only if every request reaches the API through Cloudflare.
+-   Set `TRUST_PROXY` to the number of proxy hops in front of the API (`1` behind a single nginx/ingress) or to your trusted proxy CIDRs, so the login rate limiter counts against the real client address. Set `THROTTLE_TRUST_CF_CONNECTING_IP=true` only if every request reaches the API through Cloudflare. If Ever Teams runs against this API, set `EVER_TEAMS_CLIENT_IP_SECRET` to the same strong value (at least 32 characters) on both, so the per-address limits on sign-in, invites and password reset count each browser instead of the Ever Teams server; signed-in requests are limited per user.
 -   Set `REDIS_ENABLED=true` (with `REDIS_URL`, or `REDIS_HOST`/`REDIS_PORT`) when you run more than one API replica: rate-limit buckets are otherwise per-process, so the effective limit is multiplied by the replica count.
 -   Failed sign-ins are also counted per account: once `AUTH_MAX_FAILED_ATTEMPTS` (default 10) consecutive failures for one account have come from at least two different client addresses, that account answers HTTP 429 (with `Retry-After`) for `AUTH_LOCKOUT_SECONDS` (default 900). Failures from a single address never block an account. Because anyone who knows an email address can submit wrong passwords for it, an attacker with several addresses can still block that account for a while; set `AUTH_MAX_FAILED_ATTEMPTS=0` to switch the per-account control off and rely on the per-address rate limit alone.
 -   Run `docker-compose up -d`, if you want to run the platform in minimal production configuration using our prebuilt Docker images. _(Note: Docker Compose will use latest images pre-build automatically from head of `master` branch using GitHub CI/CD.)_
@@ -225,8 +227,9 @@ Note: we recommend using Kubernetes for production workloads instead of Docker C
 Notes:
 
 -   while demo `docker-compose.demo.yml` runs a minimum amount of containers (API, Web UI, and DB), other Docker Compose files run multiple infrastructure dependencies (see full list below).
+-   `docker-compose.yml` and `docker-compose.build.yml` also run a `worker` container next to the API. With Redis enabled the API only enqueues scheduled jobs, so the worker is what fires them, including the per-minute event outbox dispatch that delivers webhooks.
 -   you can also run ONLY infra dependencies (without our API / Web containers) with `docker-compose -f docker-compose.infra.yml up -d` command. We already doing it using `include` in our main docker compose files.
--   you can add something like `--env-file .env.something` to the docker-compose `up` command to instruct Docker Compose to use a specific `.env.something` file with your custom settings
+-   API and Web UI settings live in the service `env_file` (`.env.compose`, or `.env.demo.compose` for the demo): edit that file to change them. Their lines read `KEY=${KEY:-default}`, and Docker Compose resolves `${...}` in an env file from the shell and `--env-file` first, so a shell variable or `--env-file .env.something` on the docker-compose `up` command still overrides a single setting (ports and host names in the compose files themselves are read from there too). `DEMO` and the variables without a `${...}` default are read from the env file only.
 
 Together with Gauzy, the Docker Compose commands described above for Production (`docker-compose.yml`) and Build (`docker-compose.build.yml`) will run the following infrastructure components:
 
@@ -245,7 +248,7 @@ Together with Gauzy, the Docker Compose commands described above for Production 
 
 #### Required
 
--   Install [NodeJs](https://nodejs.org/en/download) LTS version or later (e.g. version 22.x or 24.x).
+-   Install [NodeJs](https://nodejs.org/en/download) version 26.x or later (the `engines` field in `package.json` requires `>=26`; the exact version used by the repo is pinned in [`.nvmrc`](https://github.com/ever-co/ever-gauzy/blob/develop/.nvmrc), so `nvm use` picks it up).
 -   Install [Yarn](https://github.com/yarnpkg/yarn) v1.22.x (if you don't have it) with `npm i -g yarn`.
 -   Install NPM packages and Bootstrap solution using the command `yarn bootstrap`.
 -   If you will need to make code changes (and push to Git repo), please run `yarn prepare:husky`.
@@ -314,6 +317,22 @@ Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/d
 
 [easypanel-btn]: https://easypanel.io/img/deploy-on-easypanel-40.svg
 [easypanel-deploy]: https://easypanel.io/templates/ever-gauzy
+
+#### Deploy on ZopDay
+
+[ZopDay](https://zop.dev/zopday) runs a Docker image on its managed ZopCloud or in your own AWS or GCP account. Gauzy runs as two containers, so deploy them in this order:
+
+1.  **API** — [![Deploy the Gauzy API on ZopDay][zopday-btn]][zopday-api]
+
+    Before starting it, create a PostgreSQL database in ZopDay and point the service at it with `DB_TYPE=postgres` plus `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASS` — left unset, the image falls back to a SQLite file inside the container, which is lost whenever the container is replaced. Set `JWT_SECRET`, `JWT_REFRESH_TOKEN_SECRET`, `JWT_VERIFICATION_TOKEN_SECRET` and `EXPRESS_SESSION_SECRET` as described under "Production" above — in production the API refuses to start while those are unset or left at their defaults. Set the `DEMO_*_PASSWORD` values too: they are checked when an empty database is first seeded, so a fresh instance will not get past that seed while they are left at the published defaults.
+
+2.  **Web app** — [![Deploy the Gauzy web app on ZopDay][zopday-btn]][zopday-webapp]
+
+    Set `API_BASE_URL` to the public URL the API service got, otherwise the browser is sent to `http://localhost:3000` instead of the API.
+
+[zopday-btn]: https://zop.dev/deploytozopday-inkhard.svg
+[zopday-api]: https://zop.dev/zopday/app/deploy?image=ghcr.io/ever-co/gauzy-api:latest&port=3000&name=gauzy-api
+[zopday-webapp]: https://zop.dev/zopday/app/deploy?image=ghcr.io/ever-co/gauzy-webapp:latest&port=4200&name=gauzy-webapp
 
 ## 💌 Contact Us
 

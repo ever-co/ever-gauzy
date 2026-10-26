@@ -1,0 +1,151 @@
+# The invoice estimate history's object type.
+#
+# A row is one entry in the log of what happened to an invoice or an estimate: an action, an optional
+# title, who performed it and which document it was performed on. The delivered resource is a plain CRUD
+# surface over that log — a list, a node, a count, a creation, an edit, a removal and the two lifecycle
+# moves — and this type is the row those routes answer.
+#
+# **The two relations are not carried.** A row holds a user and an invoice, and no delivered read joins
+# either of them: the list read is the CRUD base's own find with the criterion the caller bound and no
+# relations unless the caller names them, and the node read joins nothing at all. A member for a relation
+# would therefore be present or absent depending on whether a REST caller happened to name it in its
+# query string — a member whose presence a client cannot predict, which is the kind of member this schema
+# refuses. The two identifier columns are carried instead, and each relation has its own surface: the user
+# through the user domain and the invoice through the invoice domain.
+#
+# `action` is carried as its delivered value rather than declared as a schema enum, because there is no
+# vocabulary to declare: the column is free text that the platform's own invoicing paths write, and a
+# closed enum here would refuse the next action a caller adds. `title` is nullable because a row may log
+# an action with no heading.
+#
+# `deletedAt` is carried, because withdrawing and restoring are delivered routes: the CRUD base's own
+# `DELETE /:id/soft` and `PUT /:id/recover` are mounted on this controller, and this column is the whole
+# of what they write. Without it the answer to the write that withdrew a row would not say so.
+#
+# Nothing in this domain is a secret. What a row holds is the record of an action on a document, and the
+# document itself — with the amounts and the parties on it — is reached through the invoice resource and
+# its own guards.
+
+"""
+One entry in the log of what happened to an invoice or an estimate.
+"""
+type InvoiceEstimateHistory {
+	id: ID!
+	"What was done: the free-text action the platform's invoicing paths record."
+	action: String!
+	"An optional heading for the entry."
+	title: String
+	"The user who performed the action. A column, not the joined relation."
+	userId: ID
+	"The invoice or estimate the action was performed on. A column, not the joined relation."
+	invoiceId: ID
+	"The organization the document belongs to, when the entry names one."
+	organizationId: ID
+	"The tenant the entry belongs to, stamped from the credential."
+	tenantId: ID
+	"""
+	When the row was withdrawn, or null while it is live. Withdrawing and restoring are the CRUD base's
+	own routes and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+}
+
+"""
+The boundary of one page of log entries.
+"""
+type InvoiceEstimateHistoryEdge {
+	node: InvoiceEstimateHistory!
+	cursor: String!
+}
+
+"""
+One page of log entries, with the total the filters select and the boundary cursors.
+"""
+type InvoiceEstimateHistoryConnection {
+	nodes: [InvoiceEstimateHistory!]!
+	edges: [InvoiceEstimateHistoryEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a log list may be sorted by.
+"""
+enum InvoiceEstimateHistorySortField {
+	createdAt
+	updatedAt
+	action
+	title
+}
+
+"""
+The order the log list is returned in. At most three keys are accepted.
+"""
+input InvoiceEstimateHistorySort {
+	field: InvoiceEstimateHistorySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a log list may be narrowed by. `and` is the default; `or` requires any of its members and `not`
+excludes the rows that match it.
+
+`invoiceId` is the narrowing the resource exists for: the log is read one document at a time, and the
+entries of that document are the entries whose column names it.
+"""
+input InvoiceEstimateHistoryFilter {
+	id: IDFilter
+	action: StringFilter
+	title: StringFilter
+	userId: IDFilter
+	invoiceId: IDFilter
+	organizationId: IDFilter
+	tenantId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [InvoiceEstimateHistoryFilter!]
+	or: [InvoiceEstimateHistoryFilter!]
+	not: InvoiceEstimateHistoryFilter
+}
+
+"""
+What a caller states when it files a log entry.
+
+The members are the row's own writable columns: what was done, an optional heading, the user it is
+attributed to, the document it concerns and the organization that owns it. The tenant is not a member,
+because the tenant a row is written into comes from the credential on every write on this platform and a
+member naming one would promise a scope the write does not honour.
+"""
+input CreateInvoiceEstimateHistoryInput {
+	"What was done."
+	action: String!
+	"An optional heading for the entry."
+	title: String
+	"The user the entry is attributed to."
+	userId: ID
+	"The invoice or estimate the entry concerns."
+	invoiceId: ID
+	"The organization the document belongs to."
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a log entry that exists.
+
+The delivered edit is the CRUD base's own: it hands the store the identifier from the path and the body
+beside it, so a member the caller leaves out is left as it is. An entry is a record of something that
+happened, so an edit is a correction rather than a change of history — and a caller that means "withdraw
+this entry" reaches for the soft removal below instead.
+"""
+input UpdateInvoiceEstimateHistoryInput {
+	id: ID!
+	action: String
+	title: String
+	userId: ID
+	invoiceId: ID
+	organizationId: ID
+}

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ITaskRender, TaskRenderComponent } from '../task-render.component';
 import { ITaskStatus, TaskStatusEnum } from '@gauzy/contracts';
 import { Store } from '../../../services';
@@ -15,6 +15,7 @@ import { AsyncPipe } from '@angular/common';
     selector: 'gauzy-task-status',
     templateUrl: './task-status.component.html',
     styleUrls: ['./task-status.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [TaskBadgeViewComponent, NbPopoverModule, TaskBadgeDefaultComponent, AsyncPipe]
 })
 export class TaskStatusComponent extends TaskRenderComponent implements OnInit {

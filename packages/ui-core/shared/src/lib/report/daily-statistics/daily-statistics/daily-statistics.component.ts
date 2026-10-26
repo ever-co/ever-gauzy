@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ICountsStatistics, IGetCountsStatistics, ITimeLogFilters, PermissionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { pick } from 'underscore';
@@ -21,6 +21,7 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../../timesheet
 	selector: 'ga-daily-statistics',
 	templateUrl: './daily-statistics.component.html',
 	styleUrls: ['./daily-statistics.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DailyStatisticsComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {

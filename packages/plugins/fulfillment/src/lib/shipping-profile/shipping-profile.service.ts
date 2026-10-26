@@ -1,0 +1,254 @@
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { DeepPartial, FindOptionsWhere, IsNull } from 'typeorm';
+import { ID, IPagination } from '@gauzy/contracts';
+import { RequestContext } from '@gauzy/core';
+import { ShippingProfile } from './shipping-profile.entity';
+import { TypeOrmShippingProfileRepository } from './repository/type-orm-shipping-profile.repository';
+import { MikroOrmShippingProfileRepository } from './repository/mikro-orm-shipping-profile.repository';
+import { ShippingProfileVariant } from '../shipping-profile-variant/shipping-profile-variant.entity';
+import { ShippingProfileVariantService } from '../shipping-profile-variant/shipping-profile-variant.service';
+import { FulfillmentCrudService } from '../fulfillment-crud.service';
+
+/**
+ * The sets of variants that ship the same way.
+ *
+ * Two invariants are owned here, both of them unenforceable by a plain unique constraint and both of
+ * them consequential: **one default profile per organization** — two defaults would make a variant's
+ * shipping behaviour depend on row order — and **one profile per variant**, which the pivot service
+ * enforces by reassigning rather than duplicating.
+ */
+@Injectable()
+export class ShippingProfileService extends FulfillmentCrudService<ShippingProfile> {
+	constructor(
+		readonly typeOrmShippingProfileRepository: TypeOrmShippingProfileRepository,
+		readonly mikroOrmShippingProfileRepository: MikroOrmShippingProfileRepository,
+		private readonly pivotService: ShippingProfileVariantService
+	) {
+		super(typeOrmShippingProfileRepository, mikroOrmShippingProfileRepository);
+	}
+
+	/**
+	 * Creates a profile, refusing a duplicate code and demoting any previous default.
+	 *
+	 * @param entity The profile to create.
+	 * @returns The created profile.
+	 */
+	public async create(entity: DeepPartial<ShippingProfile>): Promise<ShippingProfile> {
+		if (!entity.code) {
+			throw new BadRequestException('SHIPPING_PROFILE_CODE_REQUIRED: a profile needs a code.');
+		}
+
+		// The code and the default are those of the organization the profile is written in (below), which for a tenant
+		// admin need not be the organization of their token; the base refuses it to anyone else.
+		const organizationId = entity.organizationId ?? RequestContext.currentOrganizationId() ?? undefined;
+
+		await this.assertCodeIsFree(entity.code, organizationId);
+
+		if (entity.isDefault) {
+			await this.clearExistingDefault(organizationId);
+		}
+
+		// The GraphQL input declares no organization (tenancy is resolved from the caller) and the tenant-aware base
+		// stamps only the tenant, so a profile created over GraphQL was written with `organizationId = NULL` — and the
+		// organization-scoped reads never found it again (review R2-G37, the R2-23 class). The caller's organization is
+		// stamped when the input states none; an organization the request stated is kept (REST validates it against the
+		// caller).
+		return super.create({
+			...entity,
+			organizationId
+		});
+	}
+
+	/**
+	 * Updates a profile, keeping the two invariants.
+	 *
+	 * @param id The profile.
+	 * @param entity The fields to change.
+	 * @returns The update result or the profile.
+	 */
+	public async update(id: any, entity: any): Promise<any> {
+		if (entity?.code || entity?.isDefault) {
+			// The profile is read first: its organization is the one whose code and default are checked, and a profile
+			// the caller cannot reach is the read's 404 before anything is demoted.
+			const organizationId = await this.organizationAfterUpdate(id, entity);
+
+			if (entity.code) {
+				await this.assertCodeIsFree(entity.code, organizationId, id as ID);
+			}
+
+			if (entity.isDefault) {
+				await this.clearExistingDefault(organizationId, id as ID);
+			}
+		}
+
+		return super.update(id, entity);
+	}
+
+	/**
+	 * Finds the profile a variant ships under, falling back to the organization's default.
+	 *
+	 * @param variantId The variant.
+	 * @returns The profile, or null when the organization has neither an attachment nor a default.
+	 */
+	public async resolveForVariant(variantId: ID): Promise<ShippingProfile | null> {
+		const attachments = (await this.pivotService.findAll({
+			where: { variantId }
+		})) as IPagination<ShippingProfileVariant>;
+
+		if (attachments.items.length > 0) {
+			return this.findOneByIdString(attachments.items[0].profileId);
+		}
+
+		// A fallback needs one organization, and the variant's own is not known here: it is the request's, the
+		// organization of the caller's token (for a tenant admin too), or the tenant's own profiles when there is none.
+		const profiles = (await this.findAll({
+			where: this.inOrganization(RequestContext.currentOrganizationId())
+		})) as IPagination<ShippingProfile>;
+
+		return profiles.items.find((profile: ShippingProfile) => profile.isDefault) ?? null;
+	}
+
+	/**
+	 * Attaches a set of variants to a profile and detaches another set.
+	 *
+	 * @param profileId The profile.
+	 * @param changes The variants to add and to remove.
+	 * @returns The attachments that exist after the change.
+	 */
+	public async assignVariants(
+		profileId: ID,
+		changes: { add?: ID[]; remove?: ID[] }
+	): Promise<ShippingProfileVariant[]> {
+		const profile = await this.findOneByIdString(profileId);
+
+		if (!profile) {
+			throw new BadRequestException(`SHIPPING_PROFILE_NOT_FOUND: no profile exists with id ${profileId}.`);
+		}
+
+		// A variant of another tenant is refused before any attachment is removed or moved (P0 #6c).
+		await this.pivotService.assertReferences((changes.add ?? []).map((variantId) => ({ variantId })));
+
+		for (const variantId of changes.remove ?? []) {
+			const existing = (await this.pivotService.findAll({
+				where: { profileId, variantId }
+			})) as IPagination<ShippingProfileVariant>;
+
+			for (const attachment of existing.items) {
+				await this.pivotService.delete(attachment.id);
+			}
+		}
+
+		for (const variantId of changes.add ?? []) {
+			// A variant belongs to at most one profile: an existing attachment is moved rather than
+			// duplicated, so a reassignment cannot leave a variant with two shipping behaviours.
+			const existing = (await this.pivotService.findAll({
+				where: { variantId }
+			})) as IPagination<ShippingProfileVariant>;
+
+			for (const attachment of existing.items) {
+				if (attachment.profileId === profileId) {
+					continue;
+				}
+
+				await this.pivotService.delete(attachment.id);
+			}
+
+			if (!existing.items.some((attachment: ShippingProfileVariant) => attachment.profileId === profileId)) {
+				await this.pivotService.create({ profileId, variantId } as DeepPartial<ShippingProfileVariant>);
+			}
+		}
+
+		const attachments = (await this.pivotService.findAll({
+			where: { profileId }
+		})) as IPagination<ShippingProfileVariant>;
+
+		return attachments.items;
+	}
+
+	/**
+	 * @param code The code to test.
+	 * @param organizationId The organization the code is claimed in; none for the tenant's own profiles.
+	 * @param exceptId A profile to exclude from the test, when updating.
+	 */
+	private async assertCodeIsFree(code: string, organizationId: ID | null | undefined, exceptId?: ID): Promise<void> {
+		// "Is this code still free?" is a question whose answer may be yes, so it is asked of the read
+		// that reports a miss instead of raising one: the platform's reads by id raise
+		// `NotFoundException` on a miss, which is right for reading a resource and wrong for a test
+		// whose whole subject is the absence. `ITryRequest` carries the answer.
+		const { success, record: existing } = await this.findOneOrFailByWhereOptions({
+			code,
+			...this.inOrganization(organizationId)
+		} as FindOptionsWhere<ShippingProfile>);
+
+		if (success && existing.id !== exceptId) {
+			throw new BadRequestException({
+				message: `SHIPPING_PROFILE_CODE_TAKEN: a profile with code ${code} already exists.`,
+				code: 'SHIPPING_PROFILE_CODE_TAKEN',
+				details: { code, profileId: existing.id }
+			});
+		}
+	}
+
+	/**
+	 * Demotes the organization's current default, so that setting a new one cannot leave two.
+	 *
+	 * @param organizationId The organization whose default is demoted; none for the tenant's own profiles.
+	 * @param exceptId The profile being promoted, which is not demoted.
+	 */
+	private async clearExistingDefault(organizationId: ID | null | undefined, exceptId?: ID): Promise<void> {
+		const profiles = (await this.findAll({
+			where: this.inOrganization(organizationId)
+		})) as IPagination<ShippingProfile>;
+
+		for (const profile of profiles.items) {
+			if (profile.isDefault && profile.id !== exceptId) {
+				await super.update(profile.id, { isDefault: false } as any);
+			}
+		}
+	}
+
+	/**
+	 * The organization a profile is in once an update lands, which is the one its code and its default are checked in.
+	 *
+	 * It is the organization the profile is stored in, unless the update moves the profile: a tenant admin may move it
+	 * to any organization, a caller confined to their organization only into that one (the base drops any other move).
+	 *
+	 * @param id The profile, or the conditions it satisfies.
+	 * @param entity The fields to change.
+	 * @returns The organization, or null for a profile of no organization.
+	 * @throws NotFoundException when no profile the caller can reach matches.
+	 */
+	private async organizationAfterUpdate(
+		id: ID | FindOptionsWhere<ShippingProfile>,
+		entity: { organizationId?: ID | null }
+	): Promise<ID | null> {
+		const stored = typeof id === 'string' ? await this.findOneByIdString(id) : await this.findOneByWhereOptions(id);
+		const moved = entity.organizationId;
+
+		if (moved === undefined) {
+			return stored.organizationId ?? null;
+		}
+
+		const boundary = this.organizationBoundary();
+		const moves =
+			!boundary || (!!moved && !!boundary.organizationId && String(moved) === String(boundary.organizationId));
+
+		return moves ? (moved ?? null) : (stored.organizationId ?? null);
+	}
+
+	/**
+	 * An organization, as a condition.
+	 *
+	 * The default, and the code, are one per organization, but the tenant-aware reads narrow to the tenant (and, for a
+	 * caller who is not a tenant admin, to the organization of their token): the default a variant fell back to was any
+	 * organization's, promoting a profile demoted every other organization's default, and a code another organization
+	 * uses was refused, naming that organization's profile. The profiles of no organization are the tenant's own, and
+	 * share one default and one set of codes.
+	 *
+	 * @param organizationId The organization, or none.
+	 * @returns The condition.
+	 */
+	private inOrganization(organizationId: ID | null | undefined): FindOptionsWhere<ShippingProfile> {
+		return { organizationId: organizationId ? organizationId : IsNull() } as FindOptionsWhere<ShippingProfile>;
+	}
+}

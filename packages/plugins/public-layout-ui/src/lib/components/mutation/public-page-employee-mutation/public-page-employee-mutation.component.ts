@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, Validators, UntypedFormGroup } from '@angular/forms';
 import { Observable, EMPTY } from 'rxjs';
 import { switchMap, map, tap, filter, catchError } from 'rxjs/operators';
@@ -31,6 +31,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ngx-public-page-employee-mutation',
 	templateUrl: './public-page-employee-mutation.component.html',
 	styleUrls: ['./public-page-employee-mutation.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PublicPageEmployeeMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
@@ -43,6 +44,21 @@ export class PublicPageEmployeeMutationComponent extends TranslationBaseComponen
 	privacySettings: any[];
 	employeeAwards: IEmployeeAward[] = [];
 	showAddAward: boolean;
+
+	/** The dialog's sections, in tab order: an id, its i18n title and its icon. */
+	readonly tabs = [
+		{ id: 'account', title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.ACCOUNT', icon: 'person-outline' },
+		{ id: 'employment', title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.EMPLOYMENT', icon: 'briefcase-outline' },
+		{ id: 'rates', title: 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.RATES', icon: 'pricetags-outline' },
+		{ id: 'awards', title: 'POP_UPS.AWARDS', icon: 'award-outline' },
+		{ id: 'privacy', title: 'POP_UPS.PRIVACY', icon: 'shield-outline' }
+	] as const;
+	/**
+	 * The selected section. Panes are hidden, not destroyed, when another is
+	 * selected: the tags and skills inputs read their initial value from the
+	 * employee, so re-creating them would drop a selection made before switching.
+	 */
+	activeTab: 'account' | 'employment' | 'rates' | 'awards' | 'privacy' = 'account';
 
 	constructor(
 		private readonly fb: UntypedFormBuilder,

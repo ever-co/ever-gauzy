@@ -20,6 +20,8 @@ import { AiProviderWhisperCppPlugin } from '@gauzy/plugin-ai-provider-whisper-cp
 import { AiProviderOpenAiCompatiblePlugin } from '@gauzy/plugin-ai-provider-openai-compatible';
 import { ChangelogPlugin } from '@gauzy/plugin-changelog';
 import { DocsPlugin } from '@gauzy/plugin-docs';
+import { EverConnectPlugin, isEverConnectEnabled } from '@gauzy/plugin-ever-connect';
+import { EverStatsPlugin, isEverStatsEnabled } from '@gauzy/plugin-ever-stats';
 import { IntegrationAIPlugin } from '@gauzy/plugin-integration-ai';
 import { IntegrationGithubPlugin } from '@gauzy/plugin-integration-github';
 import { IntegrationJiraPlugin } from '@gauzy/plugin-integration-jira';
@@ -30,6 +32,13 @@ import { IntegrationActivepiecesPlugin } from '@gauzy/plugin-integration-activep
 import { IntegrationSimPlugin } from '@gauzy/plugin-integration-sim';
 import { IntegrationPlanePlugin } from '@gauzy/plugin-integration-plane';
 import { IntegrationEverAsyncPlugin } from '@gauzy/plugin-integration-ever-async';
+import { IntegrationEverWorksPlugin, isEverWorksEnabled } from '@gauzy/plugin-integration-ever-works';
+import { InboxEmailPlugin, InboxPlugin, isInboxEmailEnabled, isInboxEnabled } from '@gauzy/plugin-inbox';
+import { EmailProviderPostmarkPlugin, isPostmarkEnabled } from '@gauzy/plugin-email-provider-postmark';
+import { EmailProviderResendPlugin, isResendEnabled } from '@gauzy/plugin-email-provider-resend';
+import { EmailProviderMailgunPlugin, isMailgunEnabled } from '@gauzy/plugin-email-provider-mailgun';
+import { EmailProviderSendGridPlugin, isSendGridEnabled } from '@gauzy/plugin-email-provider-sendgrid';
+import { EmailProviderSesPlugin, isSesEnabled } from '@gauzy/plugin-email-provider-ses';
 import { IntegrationUpworkPlugin } from '@gauzy/plugin-integration-upwork';
 import { JitsuAnalyticsPlugin } from '@gauzy/plugin-jitsu-analytics';
 import { JobProposalPlugin } from '@gauzy/plugin-job-proposal';
@@ -40,9 +49,28 @@ import { VideosPlugin } from '@gauzy/plugin-videos';
 import { RegistryPlugin } from '@gauzy/plugin-registry';
 import { CamshotPlugin } from '@gauzy/plugin-camshot';
 
+import { CatalogPlugin } from '@gauzy/plugin-catalog';
+import { PricingPlugin } from '@gauzy/plugin-pricing';
+import { TaxPlugin } from '@gauzy/plugin-tax';
+import { InventoryPlugin } from '@gauzy/plugin-inventory';
+import { WarehousePlugin } from '@gauzy/plugin-warehouse';
+import { CartPlugin } from '@gauzy/plugin-cart';
+import { OrderPlugin } from '@gauzy/plugin-order';
+import { PaymentPlugin } from '@gauzy/plugin-payment';
+import { PromotionPlugin } from '@gauzy/plugin-promotion';
+import { FulfillmentPlugin } from '@gauzy/plugin-fulfillment';
+import { ReturnsPlugin } from '@gauzy/plugin-returns';
+import { SubscriptionPlugin } from '@gauzy/plugin-subscription';
+import { PurchasingPlugin } from '@gauzy/plugin-purchasing';
+import { EntitlementPlugin } from '@gauzy/plugin-entitlement';
+import { MarketplacePlugin } from '@gauzy/plugin-marketplace';
+import { SearchPlugin } from '@gauzy/plugin-search';
+
 import { SentryTracing as SentryPlugin } from './sentry';
 import { PosthogAnalytics as PosthogPlugin } from './posthog';
 import { SoundshotPlugin } from '@gauzy/plugin-soundshot';
+
+import { PluginCompositionModule } from './plugin-composition';
 
 const { jitsu, sentry, posthog } = environment;
 
@@ -63,6 +91,60 @@ export const plugins = [
 	// Keycloak as an additional sign-in method. Off unless KEYCLOAK_ENABLED=true and a Keycloak client
 	// id and secret are set; when off it is not loaded at all.
 	...(isKeycloakEnabled() ? [AuthKeycloakPlugin] : []),
+
+	// Anonymous usage statistics (one signed report a day: counts and monthly totals, never a name or a
+	// record). On unless EVER_STATS_ENABLED=false; when off it is not loaded at all (no route, no timer,
+	// no outbound request). Any other value keeps it on and is logged once.
+	...(isEverStatsEnabled(process.env, (message) => console.warn(message)) ? [EverStatsPlugin] : []),
+
+	// Ever Platform connection (connect code, organization links, consented integrations). Off unless
+	// EVER_CONNECT_ENABLED=true; when off it is not loaded at all (no route, no timer, no outbound
+	// request). Any other value keeps it off and is logged once.
+	...(isEverConnectEnabled(process.env, (message) => console.warn(message)) ? [EverConnectPlugin] : []),
+
+	// Ever Works integration (two-way sync of tasks, teams, goals, missions, ideas, agents, inbox and
+	// docs with an Ever Works tenant). Off unless EVER_WORKS_ENABLED=true; when off it is not loaded at
+	// all (no route, no table, no timer, no outbound request). Any other value keeps it off and is
+	// logged once.
+	...(isEverWorksEnabled(process.env, (message) => console.warn(message)) ? [IntegrationEverWorksPlugin] : []),
+
+	// Inbox (questions, approvals, escalations and notices addressed to a user, each with its own state; the
+	// Ever Works integration feeds it through a source-handler registry). Off unless GAUZY_INBOX_ENABLED=true;
+	// when off it is not loaded at all (no route, no table, no role grant). Any other value keeps it off and is
+	// logged once.
+	...(isInboxEnabled(process.env, (message) => console.warn(message)) ? [InboxPlugin] : []),
+
+	// Inbox email (mailboxes, the inbound pipeline, email provider accounts and the transport seam's provider
+	// transports; plan 04 §5). Only on top of the Inbox, and off unless GAUZY_INBOX_EMAIL_ENABLED=true as well; when
+	// off it is not loaded at all (no route, no table, no transport: mail goes out over SMTP as before).
+	...(isInboxEnabled(process.env) && isInboxEmailEnabled(process.env, (message) => console.warn(message))
+		? [InboxEmailPlugin]
+		: []),
+
+	// Email provider: Resend (plan 04 §5.2). Off unless EMAIL_PROVIDER_RESEND_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isResendEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderResendPlugin] : []),
+
+	// Email provider: Postmark (plan 04 §5.2). Off unless EMAIL_PROVIDER_POSTMARK_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isPostmarkEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderPostmarkPlugin] : []),
+
+	// Email provider: Mailgun (plan 04 §5.2). Off unless EMAIL_PROVIDER_MAILGUN_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isMailgunEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderMailgunPlugin] : []),
+
+	// Email provider: SendGrid (plan 04 §5.2). Off unless EMAIL_PROVIDER_SENDGRID_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isSendGridEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderSendGridPlugin] : []),
+
+	// Email provider: Amazon SES (plan 04 §5.2). Off unless EMAIL_PROVIDER_SES_ENABLED=true; when off it is not
+	// loaded at all. It registers with the Inbox email provider registry, so it only does something where
+	// GAUZY_INBOX_EMAIL_ENABLED=true too.
+	...(isSesEnabled(process.env, (message) => console.warn(message)) ? [EmailProviderSesPlugin] : []),
 
 	// Initializes the Jitsu Analytics Plugin by providing a configuration object.
 	JitsuAnalyticsPlugin.init({
@@ -136,5 +218,45 @@ export const plugins = [
 	// Indicates the inclusion or intention to use the SoundshotPlugin in the codebase.
 	SoundshotPlugin,
 	// Indicates the inclusion or intention to use the RegistryPlugin in the codebase.
-	RegistryPlugin
+	RegistryPlugin,
+
+	// The commerce domains. Each owns its own tables, migrations, permissions and feature flags.
+	// Their migrations are merged into the connection before it is opened and ORDERED BY THE
+	// PLATFORM, so their position here does not affect them. Their mount order is resolved from
+	// `dependsOn` by `resolvePluginLoadOrder`, which is applied to this list where it is installed —
+	// so this order is a readable default rather than the contract, and the declaration each plugin
+	// makes is what actually decides. A prerequisite that is not in this list is refused at boot,
+	// naming the plugin and the dependency, rather than surfacing later as a missing provider.
+	//
+	// The order below is the dependency order for a full installation:
+	//   catalog, pricing, tax        — the sellable thing, what it costs, what it is taxed
+	//   inventory, warehouse         — the stock ledger, then the inside of the building
+	//   cart, order, payment         — the cart, the order it becomes, the money that settles it
+	//   promotion, fulfillment       — what discounts an order, how it reaches the buyer
+	//   returns, subscription        — post-purchase flows, and the recurring ones
+	//   purchasing, entitlement      — procuring stock, and the rights a purchase grants
+	//   marketplace, search          — third-party selling, and the global index over all of it
+	CatalogPlugin,
+	PricingPlugin,
+	TaxPlugin,
+	InventoryPlugin,
+	WarehousePlugin,
+	CartPlugin,
+	OrderPlugin,
+	PaymentPlugin,
+	PromotionPlugin,
+	FulfillmentPlugin,
+	ReturnsPlugin,
+	SubscriptionPlugin,
+	PurchasingPlugin,
+	EntitlementPlugin,
+	MarketplacePlugin,
+	SearchPlugin,
+
+	// Not a plugin: this installation's composition point, and the one entry here that carries no
+	// plugin metadata. It declares no table, migration or route — it is what binds the capabilities
+	// one package offers to the ports another package declares, so that neither has to import the
+	// other. It is global, so the tokens it binds resolve inside every module that injects them, and
+	// it declares no `dependsOn`, so the load-order resolver leaves it exactly here.
+	PluginCompositionModule
 ];

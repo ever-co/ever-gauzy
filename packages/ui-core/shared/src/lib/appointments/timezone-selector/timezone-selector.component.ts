@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import timezone from 'moment-timezone';
@@ -7,6 +7,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 @Component({
 	templateUrl: './timezone-selector.component.html',
 	styleUrls: ['./timezone-selector.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TimezoneSelectorComponent extends TranslationBaseComponent implements OnInit {

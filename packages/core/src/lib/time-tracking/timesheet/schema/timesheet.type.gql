@@ -1,0 +1,191 @@
+# The timesheet object type.
+#
+# A timesheet is not a time log and not a time slot. A time slot is ten minutes of one employee's
+# tracked activity; a time log is one stretch of work against a project and a task; a timesheet is the
+# **period** those are collected into — one employee, one organization, one calendar period — and it
+# is the document an approver moves through its lifecycle and the platform later bills. That is why it
+# carries the settling dates of its own (`submittedAt`, `approvedAt`, `lockedAt`), the flags that say
+# where it stands (`status`, `isBilled`) and the totals the platform recomputed over its slots.
+#
+# **Every member below is a column of this row.** The delivered reads load a relation only when the
+# caller names it in `relations`, and this surface names none, so a member for `employee`,
+# `approvedBy`, `organization` or `timeLogs` would be absent on the rows of one store and partly
+# filled on the other — which is worse than no member at all, because a client cannot tell the two
+# apart. Each relation is carried as the identifier that always travels (`employeeId`,
+# `approvedById`, `organizationId`), and the row behind it is read from its own domain's surface: the
+# engagement from `employee(id)`, the account that approved from `user(id)`, the time logs of a period
+# from `timeLogs(filter: { timesheetId: ... })`. The delivered project-change-request read is a
+# surface of its own for the same reason.
+#
+# **The four totals are the recalculation's, not the row's own arithmetic.** `duration` is the sum of
+# the slots' tracked seconds, and `keyboard`, `mouse` and `overall` are their averages — the platform
+# recomputes all four whenever a slot changes, so they are carried as the delivered columns rather
+# than derived here, and each states its unit below. `duration` is a duration **in seconds** and is
+# not money; nothing on this resource is money, so nothing here is a `Decimal`.
+#
+# **`editedAt` is carried and `isEdited` is not.** The entity declares a virtual `isEdited` member and
+# a load subscriber derives it from `editedAt`, but the two stores do not fill it the same way — so a
+# member for it would answer on one installation and be empty on the other. Whether a period has been
+# edited is `editedAt` being set, which is exactly what the derived member means; the status
+# vocabulary is carried as its value for the same kind of reason.
+
+"""
+One employee's tracked time over one period, with the lifecycle an approver moves it through and the
+totals the platform recomputed over its slots.
+"""
+type Timesheet {
+	id: ID!
+	"The tracked time this period collects, **in seconds**, summed from its slots by the platform's own recalculation. A duration rather than an amount, so an `Int` and never a `Decimal`."
+	duration: Int!
+	"The number of keyboard interactions, averaged over the slots of this period by the same recalculation. A count, not a duration."
+	keyboard: Int!
+	"The number of mouse interactions, averaged over the slots of this period by the same recalculation. A count, not a duration."
+	mouse: Int!
+	"The slots' own activity measure, averaged over this period. It is the raw figure the platform divides by the tracked time to state activity as a percentage, so it is not itself a percentage."
+	overall: Int!
+	"When the period begins."
+	startedAt: DateTime
+	"When the period was closed for tracking, or null while it is still open."
+	stoppedAt: DateTime
+	"When an approver approved the period, or null while it has not been approved."
+	approvedAt: DateTime
+	"When the period was submitted to its approver, or null while it has not been submitted."
+	submittedAt: DateTime
+	"When the period was locked against further edits, or null while it is open."
+	lockedAt: DateTime
+	"When the period was last edited, or null while it has never been. Whether a period has been edited is this column being set, which is the fact the entity's own derived `isEdited` member spells as a boolean."
+	editedAt: DateTime
+	"Whether the period has been billed. A billed period is one the platform refuses to move tracked time out of."
+	isBilled: Boolean
+	"The period's lifecycle status, as the contracts package's own `TimesheetStatus` value: `DRAFT`, `PENDING`, `IN REVIEW`, `DENIED` or `APPROVED`. Carried as its value rather than declared as a schema enum because the vocabulary belongs to the contracts package — and because one of its five members carries a space."
+	status: String!
+	"The employee the period belongs to. The engagement behind it is read from the employee surface by this identifier."
+	employeeId: ID
+	"The account that approved the period, where one did. The account is read from the user surface by this identifier."
+	approvedById: ID
+	tenantId: ID
+	"The organization the period is settled in."
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	"When the period was withdrawn, or null while it is live. Withdrawing is a delivered route, so without this column a caller could not tell a withdrawn period from a live one on the answer to the write that withdrew it."
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of timesheets.
+"""
+type TimesheetEdge {
+	node: Timesheet!
+	cursor: String!
+}
+
+"""
+One page of timesheets, with the total the filters select and the boundary cursors.
+"""
+type TimesheetConnection {
+	nodes: [Timesheet!]!
+	edges: [TimesheetEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields the timesheet list may be sorted by.
+
+Every member is a column of the row. The set is the one a payroll screen reads a period in an order
+for — the dates a period is filed and settled on, the tracked total and the two flags that say where
+it stands — and it is deliberately narrower than the columns the type carries: sorting a tenant's
+periods by who approved them is a report, and a report belongs to the statistics surface.
+"""
+enum TimesheetSortField {
+	createdAt
+	updatedAt
+	startedAt
+	stoppedAt
+	approvedAt
+	submittedAt
+	lockedAt
+	duration
+	status
+	isBilled
+}
+
+"""
+The order the timesheets are returned in. At most three keys are accepted.
+"""
+input TimesheetSort {
+	field: TimesheetSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields the timesheet list may be narrowed by.
+
+Every member is a column of the row, which is what makes it answerable: the delivered read loads no
+relation, so a member for one would narrow by a value those rows do not carry. The two employee
+identifiers are here for the reason they exist — selecting the periods of one engagement, or the
+periods one account approved, is the read they are for — and the organization and the dates are here
+as well as among the field's own arguments, because the read narrows by them in the store while the
+connection narrows the rows the read answered.
+"""
+input TimesheetFilter {
+	id: IDFilter
+	employeeId: IDFilter
+	approvedById: IDFilter
+	duration: NumberFilter
+	keyboard: NumberFilter
+	mouse: NumberFilter
+	overall: NumberFilter
+	startedAt: DateTimeFilter
+	stoppedAt: DateTimeFilter
+	approvedAt: DateTimeFilter
+	submittedAt: DateTimeFilter
+	lockedAt: DateTimeFilter
+	editedAt: DateTimeFilter
+	isBilled: BooleanFilter
+	status: StringFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TimesheetFilter!]
+	or: [TimesheetFilter!]
+	not: TimesheetFilter
+}
+
+"""
+What a caller states when it moves periods to a new status.
+
+The delivered body also carries a tenant; this input does not, because the handler reads the tenant
+from the credential — a member that could never change the write is not a member. The organization is
+carried because the handler does read it: it narrows which of the caller's own periods the update may
+touch.
+"""
+input UpdateTimesheetStatusInput {
+	"The periods to move. The delivered handler refuses a body that states none."
+	ids: [ID!]!
+	"The status to move them to, as the contracts package's own `TimesheetStatus` value. Approving one records the approver and the instant."
+	status: String
+	"The organization the periods belong to, which narrows the update."
+	organizationId: ID
+}
+
+"""
+What a caller states when it submits periods to their approver, or withdraws them.
+"""
+input SubmitTimesheetInput {
+	"The periods to submit or withdraw. The delivered handler refuses a body that states none."
+	ids: [ID!]!
+	"`submit` stamps the submission instant and mails the employees; `unsubmit` clears it. The two directions are one route on the delivered surface, so they are one field here."
+	status: String!
+	"The organization the periods belong to, which narrows the write."
+	organizationId: ID
+}

@@ -1,4 +1,5 @@
 import { EventSubscriber } from 'typeorm';
+import { EmployeeKindEnum } from '@gauzy/contracts';
 import { extractNameFromEmail, sluggable } from '@gauzy/utils';
 import { Employee } from './employee.entity';
 import { getORMType, getUserDummyImage, MultiORM, MultiORMEnum } from '../core/utils';
@@ -40,7 +41,8 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	}
 
 	/**
-	 * Counts the total number of employees for an organization.
+	 * Counts the total number of employees for an organization: people only, agent employees
+	 * (`kind = 'agent'`) are not part of the headcount.
 	 *
 	 * @param em The entity manager
 	 * @param organizationId The organization ID
@@ -57,12 +59,13 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		switch (ormType) {
 			case MultiORMEnum.TypeORM:
 				if (em instanceof TypeOrmEntityManager) {
-					return em.countBy(Employee, { organizationId, tenantId });
+					// People only: an agent employee (`kind = 'agent'`) is not part of the headcount.
+					return em.countBy(Employee, { organizationId, tenantId, kind: EmployeeKindEnum.HUMAN });
 				}
 				break;
 			case MultiORMEnum.MikroORM:
 				if (em instanceof MikroOrmEntityManager) {
-					return em.count(Employee, { organizationId, tenantId });
+					return em.count(Employee, { organizationId, tenantId, kind: EmployeeKindEnum.HUMAN });
 				}
 				break;
 		}
@@ -149,7 +152,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			}
 
 			// Updates the employee's status based on the start and end work dates.
-			this.updateEmployeeStatus(entity, em);
+			await this.updateEmployeeStatus(entity, em, !!entity.startedWorkOn, !!entity.endWork);
 		} catch (error) {
 			console.error(
 				'EmployeeSubscriber: An error occurred during the beforeEntityCreate process:',
@@ -162,11 +165,25 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 * Called before the entity is updated in the database.
 	 *
 	 * @param entity - The employee entity to be updated.
+	 * @param em - The entity manager, either TypeORM's or MikroORM's.
+	 * @param changedProperties - The properties this write changes, or undefined when the ORM does not report them.
 	 */
-	async beforeEntityUpdate(entity: Employee, em?: MultiOrmEntityManager): Promise<void> {
+	async beforeEntityUpdate(
+		entity: Employee,
+		em?: MultiOrmEntityManager,
+		changedProperties?: string[]
+	): Promise<void> {
 		try {
+			// A work date this write leaves as stored neither starts nor ends work: edit forms send the stored
+			// start date back, and under MikroORM the entity is the whole stored row.
+			const isChanged = (property: string) => !changedProperties || changedProperties.includes(property);
+			const hasStartedWork = !!entity.startedWorkOn && isChanged('startedWorkOn');
+			const hasEndedWork = !!entity.endWork && isChanged('endWork');
+			// "Back to Work" clears the stored end date: the employee resumes work.
+			const hasResumedWork = entity.endWork === null && !!changedProperties?.includes('endWork');
+
 			// Updates the employee's status based on the start and end work dates.
-			this.updateEmployeeStatus(entity, em);
+			await this.updateEmployeeStatus(entity, em, hasStartedWork || hasResumedWork, hasEndedWork);
 		} catch (error) {
 			console.error(
 				'EmployeeSubscriber: An error occurred during the beforeEntityUpdate process:',
@@ -310,16 +327,21 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 *
 	 * @param {Employee} entity - The employee entity to be updated.
 	 * @param {MultiOrmEntityManager} em - The entity manager used to interact with the database.
+	 * @param {boolean} hasStartedWork - True when the write sets a start work date.
+	 * @param {boolean} hasEndedWork - True when the write sets an end work date.
+	 * @returns {Promise<void>} Resolves once the membership update has run, so it runs inside the write's
+	 *   transaction rather than after the entity manager has committed or released it.
 	 */
-	private updateEmployeeStatus(entity: Employee, em: MultiOrmEntityManager): void {
-		// Check if the employee has started or ended work
-		const hasStartedWork = !!entity.startedWorkOn;
-		const hasEndedWork = !!entity.endWork;
-
+	private async updateEmployeeStatus(
+		entity: Employee,
+		em: MultiOrmEntityManager,
+		hasStartedWork: boolean,
+		hasEndedWork: boolean
+	): Promise<void> {
 		// Update the employee's status based on the work dates
 		if (hasStartedWork || hasEndedWork) {
 			this.setEmployeeStatus(entity, hasStartedWork, hasEndedWork);
-			this.setUserOrganizationStatus(em, entity, hasStartedWork, hasEndedWork);
+			await this.setUserOrganizationStatus(em, entity, hasStartedWork, hasEndedWork);
 
 			if (hasStartedWork) {
 				entity.endWork = null; // Clear the end work date if the employee has started work
@@ -358,7 +380,7 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 *
 	 * @param em The entity manager
 	 * @param id The employee ID
-	 * @param organizationId The organization ID
+	 * @param organizationId The organization ID; when the write omits it, the employee is matched in any organization
 	 * @param tenantId The tenant ID
 	 * @param ormType The ORM type
 	 * @returns The employee entity or null if not found
@@ -370,15 +392,17 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		tenantId: string,
 		ormType: MultiORM
 	): Promise<Employee | null> {
+		const where = { id, tenantId, ...(organizationId ? { organizationId } : {}) };
+
 		switch (ormType) {
 			case MultiORMEnum.TypeORM:
 				if (em instanceof TypeOrmEntityManager) {
-					return em.findOne(Employee, { where: { id, organizationId, tenantId } });
+					return em.findOne(Employee, { where });
 				}
 				break;
 			case MultiORMEnum.MikroORM:
 				if (em instanceof MikroOrmEntityManager) {
-					return em.findOne(Employee, { id, organizationId, tenantId });
+					return em.findOne(Employee, where);
 				}
 				break;
 		}
@@ -468,8 +492,16 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 				return;
 			}
 
-			// Update the UserOrganization status
-			await this.updateUserOrganization(em, employee.userId, organizationId, isActive, isArchived, ormType);
+			// The stored employee's organization: a write may omit it (a TypeORM entity holds only the payload,
+			// and Back to Work sends only the end date), and when it is sent the lookup above matched it.
+			await this.updateUserOrganization(
+				em,
+				employee.userId,
+				employee.organizationId,
+				isActive,
+				isArchived,
+				ormType
+			);
 		} catch (error) {
 			console.error('EmployeeSubscriber: Error while updating user organization as active/inactive:', error);
 		}

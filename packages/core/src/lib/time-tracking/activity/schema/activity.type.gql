@@ -1,0 +1,424 @@
+# The tracked-activity domain's object types.
+#
+# An activity is one slice of what a person did while the tracker was running: the title of the window,
+# application or URL they were in, how many seconds it lasted, the day and time it was recorded at, and
+# the ten-minute slot it was filed into. Everything this platform reports *about* tracked time — the
+# daily aggregation, the grouped report, the statistics a dashboard reads — is computed over these rows
+# rather than over a second table invented beside them.
+#
+# **No relation is declared as an object, and that is a statement about the delivered reads.** The two
+# reads this surface mirrors fill different things:
+#
+# - the list read inner-joins the engagement, the slot and the slot's log rows in order to *narrow* by
+#   them, and selects the engagement row only when the caller may change the selected employee; it never
+#   selects the project and never selects the task. So a relation member would be filled on one
+#   installation and absent on the next, which is worse than no member at all;
+# - the daily aggregation selects five columns of its own and joins nothing into the row.
+#
+# Each relation is therefore carried as **the identifier that always travels** — `employeeId`,
+# `projectId`, `timeSlotId`, `taskId` — and the row behind an identifier is read through the domain that
+# owns it.
+#
+# **A duration states its unit, and the unit is seconds.** `Activity.duration` is the column the tracker
+# writes, and the slot the activity belongs to documents that same column's unit as "the number of
+# seconds employee spent in the given time slot"; `DailyActivity.duration` is the read's own `SUM` of that
+# column. A duration is never money: the two are different quantities and are carried as different types
+# here.
+#
+# `IDailyActivity` also declares `description`, `durationPercentage` and `childItems`. None of them is
+# declared on `DailyActivity`, because the delivered aggregation fills none of them: it groups five
+# columns, and a member no read produces is a member that answers null on every row. The share the
+# platform computes over tracked time is declared once, on the report row below, where the delivered
+# grouping actually computes it.
+
+"""
+One slice of tracked activity, as the list read answers it.
+"""
+type Activity {
+	id: ID!
+	"The activity's title: the window title, or the name of the application or URL the person was in."
+	title: String
+	"What the activity was, when the tracker recorded more than its title."
+	description: String
+	"""
+	The tracker's own extras for the activity, as the document column holds them — the URL metadata the
+	clients render. Carried as `JSON` because it is a document rather than a column with a shape this
+	schema could state.
+	"""
+	metaData: JSON
+	"The calendar day the activity was recorded on, in the store's own date form (`YYYY-MM-DD`)."
+	date: String
+	"The time of day the activity was recorded at, in the store's own time form."
+	time: String
+	"""
+	How long the activity lasted, **in seconds** — the unit the slot it was filed into is measured in,
+	and the unit every duration in this domain is measured in.
+	"""
+	duration: Int
+	"""
+	What kind of activity it is, as the delivered value: `APP` for an application and `URL` for a page.
+	Carried as its value because the value set is a fixed contract set the tracker writes.
+	"""
+	type: String
+	"""
+	Where the tracking came from, as the delivered value — `BROWSER`, `DESKTOP`, `MOBILE`,
+	`BROWSER_EXTENSION` and the integrations the platform ships.
+	"""
+	source: String
+	"""
+	The instant the activity was recorded at. This is the column a date range narrows on, which is why
+	it is carried beside `date` and `time`: those two are what the aggregation groups by, and this one is
+	what a range selects.
+	"""
+	recordedAt: DateTime
+	"The engagement the activity belongs to. The row behind the identifier is the employee domain's."
+	employeeId: ID
+	"The project the activity is attributed to, when it is attributed to one."
+	projectId: ID
+	"""
+	The ten-minute slot the activity was filed into. The row behind the identifier is the slot domain's,
+	and it is the row both aggregations group through.
+	"""
+	timeSlotId: ID
+	"The task the activity is attributed to, when it is attributed to one."
+	taskId: ID
+	"When the activity was withdrawn, or null while it is live."
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of activities.
+"""
+type ActivityEdge {
+	node: Activity!
+	cursor: String!
+}
+
+"""
+One page of activities, with the total the narrowing selects and the boundary cursors.
+"""
+type ActivityConnection {
+	nodes: [Activity!]!
+	edges: [ActivityEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an activity list may be sorted by.
+"""
+enum ActivitySortField {
+	createdAt
+	updatedAt
+	date
+	time
+	duration
+	title
+	type
+	source
+	recordedAt
+}
+
+"""
+The order the activities are returned in. At most three keys are accepted.
+"""
+input ActivitySort {
+	field: ActivitySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an activity list may be narrowed by. `and` is the default; `or` requires any of its members
+and `not` excludes the rows that match it.
+
+Every member is a column of the activity row, which is what the connection protocol can evaluate over the
+rows the delivered read returned. The narrowings that are **not** columns are deliberately absent, and
+each is an argument of the list field instead, stated the way the delivered query string states it:
+which slot's activity band a row falls in is a condition on `time_slot.overall`, and which log a row was
+tracked under is a condition on the log rows the read joins — `logType` in particular has no column of
+its own on the activity row, so a filter for it here could only ever select the empty set.
+
+`source` is the one name that appears in both places, and the two are different questions rather than a
+duplication: as a filter it narrows on the **activity's own** source column — where this activity was
+tracked — and as an argument it narrows on the **log's** source, which is the timer the slot belongs to.
+"""
+input ActivityFilter {
+	id: IDFilter
+	title: StringFilter
+	description: StringFilter
+	metaData: JSONFilter
+	date: StringFilter
+	time: StringFilter
+	duration: NumberFilter
+	type: StringFilter
+	source: StringFilter
+	recordedAt: DateTimeFilter
+	employeeId: IDFilter
+	projectId: IDFilter
+	timeSlotId: IDFilter
+	taskId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [ActivityFilter!]
+	or: [ActivityFilter!]
+	not: ActivityFilter
+}
+
+"""
+The activity band a list narrows to, stated as the percentage of the slot it is measured against.
+
+The delivered read converts the two bounds into the unit the slot's `overall` column is measured in
+before it compares them, which is why the band is stated as a percentage here and as a percentage in the
+delivered query string: the conversion belongs to the read, not to the caller.
+"""
+input ActivityLevelInput {
+	"Where the band starts, as a percentage of the slot's overall activity, from 0 to 100."
+	start: Int!
+	"Where the band ends, as a percentage of the slot's overall activity, from 0 to 100."
+	end: Int!
+}
+
+"""
+One day's activity for one engagement and one title, as the daily aggregation folds it.
+
+The aggregation groups by the day, the title and the engagement, and answers one row per group, so
+`duration` is a sum and `sessions` is a count rather than a single activity's facts. Both are nullable
+because they are the store's own aggregate values rather than columns of a row, and an aggregate the
+store answered as absent is not a zero this schema may invent.
+"""
+type DailyActivity {
+	"""
+	How many activity rows the group folds together. The delivered read names this count `sessions`,
+	which is the read's own name for the fold — it counts activity rows, not tracking sessions, and the
+	two are different quantities.
+	"""
+	sessions: Int
+	"How long the group's activities lasted in total, **in seconds**."
+	duration: Int
+	"The engagement whose activities the group folds together."
+	employeeId: ID
+	"The calendar day the group is for."
+	date: String
+	"The activity title the group is for."
+	title: String
+}
+
+"""
+How a daily-activities report groups the rows it computed.
+
+The values are the delivered filter's own, and the three declared here are the three the delivered route
+actually groups by. The filter declares a fourth value, and the route does nothing with it: a caller that
+states it is answered the ungrouped rows. Offering it here would be offering an argument whose effect is
+that no grouping happened, which the omission of `groupBy` already states.
+"""
+enum DailyActivityReportGrouping {
+	date
+	employee
+	project
+}
+
+"""
+The grouped daily-activities report.
+
+**One field answers all three groupings and the ungrouped rows, because they are one computation.** The
+delivered route reads the report rows once and then nests them one of three ways; three root fields would
+recompute the same rows three times and could disagree with each other. Which nesting an answer carries is
+therefore stated by the `groupBy` argument, and exactly one of the four members below is filled.
+
+The nesting is the delivered mapper's own, and it is not symmetric — each grouping puts a different thing
+at the outside:
+
+- by date, a day holds its engagements, and an engagement holds its projects;
+- by employee, an engagement holds its days, and a day holds its projects;
+- by project, a project holds its days, and a day holds its engagements.
+"""
+type DailyActivityReport {
+	"The report rows themselves, when the caller stated no grouping."
+	activities: [DailyActivityReportRow!]
+	"The days, when the caller grouped by date."
+	dates: [DailyActivityReportDate!]
+	"The engagements, when the caller grouped by employee."
+	employees: [DailyActivityReportEmployee!]
+	"The projects, when the caller grouped by project."
+	projects: [DailyActivityReportProject!]
+}
+
+"""
+One row of the grouped report: a title on a day for an engagement and a project, with the time it holds.
+
+The members are the columns the delivered report read selects. The engagement row and the project row the
+mapper nests beside them are not declared here — they belong to the domains that own those resources, and
+the identifier the group is keyed by is what always travels.
+"""
+type DailyActivityReportRow {
+	"How many activity rows the group folds together."
+	sessions: Int
+	"How long the group's activities lasted in total, **in seconds**."
+	duration: Int
+	"""
+	The row's share of the tracked time of the group it is nested under, **as a percentage**: the
+	delivered mapper divides this row's duration by the sum of the durations the grouping ran over — the
+	day for a date grouping, the engagement for an employee grouping, the project for a project grouping
+	— and answers the share to two decimal places. So the same row carries a different percentage under
+	two different groupings, which is what makes reading it without its `groupBy` meaningless.
+
+	The delivered grouping writes this number onto the row under the contract's own snake-case member
+	name; this surface carries it under the member name the contract declares for it.
+	"""
+	durationPercentage: Float
+	"The engagement the row belongs to; the engagement `groupBy: employee` groups by."
+	employeeId: ID
+	"The project the row is attributed to; the project `groupBy: project` groups by."
+	projectId: ID
+	"The calendar day the row is for."
+	date: String
+	"The activity title the row is for."
+	title: String
+}
+
+"""
+One project's activity inside a day, or inside an engagement's day.
+"""
+type DailyActivityReportProjectGroup {
+	"The project the group's rows are attributed to."
+	projectId: ID
+	"The rows attributed to that project."
+	activity: [DailyActivityReportRow!]!
+}
+
+"""
+One engagement's activity inside a day.
+"""
+type DailyActivityReportEmployeeGroup {
+	"The engagement the group's rows belong to."
+	employeeId: ID
+	"The rows belonging to that engagement."
+	activity: [DailyActivityReportRow!]!
+}
+
+"""
+One engagement inside a day, with the projects it worked on.
+"""
+type DailyActivityReportEmployeeProjects {
+	"The engagement."
+	employeeId: ID
+	"The projects the engagement worked on that day."
+	projects: [DailyActivityReportProjectGroup!]!
+}
+
+"""
+One day inside an engagement, with the projects worked on.
+"""
+type DailyActivityReportDateProjects {
+	"The day, as the mapper's own `YYYY-MM-DD` key."
+	date: String!
+	"The projects worked on that day."
+	projects: [DailyActivityReportProjectGroup!]!
+}
+
+"""
+One day inside a project, with the engagements that worked on it.
+"""
+type DailyActivityReportDateEmployees {
+	"The day, as the mapper's own `YYYY-MM-DD` key."
+	date: String!
+	"The engagements that worked on the project that day."
+	employees: [DailyActivityReportEmployeeGroup!]!
+}
+
+"""
+One day of the report, with the engagements that were active in it.
+"""
+type DailyActivityReportDate {
+	"The day, as the mapper's own `YYYY-MM-DD` key."
+	date: String!
+	"The engagements active that day."
+	employees: [DailyActivityReportEmployeeProjects!]!
+}
+
+"""
+One engagement of the report, with the days it was active on.
+"""
+type DailyActivityReportEmployee {
+	"The engagement."
+	employeeId: ID
+	"The days the engagement was active on."
+	dates: [DailyActivityReportDateProjects!]!
+}
+
+"""
+One project of the report, with the days it was worked on.
+"""
+type DailyActivityReportProject {
+	"The project."
+	projectId: ID
+	"The days the project was worked on."
+	dates: [DailyActivityReportDateEmployees!]!
+}
+
+"""
+What a caller states when it files several activities at once.
+
+The organization and the engagement are stated because the delivered body states them and its validation
+requires them; the tenant is not, because the delivered write reads it from the credential and overwrites
+whatever a body carries. The engagement and the project are also stamped onto every row the write persists,
+which is what makes the two of them the envelope's members rather than each row's.
+"""
+input ActivityBulkInput {
+	"The organization every filed activity belongs to."
+	organizationId: ID!
+	"The engagement every filed activity belongs to."
+	employeeId: ID!
+	"The project to attribute every filed activity to, when the caller attributes them to one."
+	projectId: ID
+	"The activities to file."
+	activities: [ActivityInput!]!
+}
+
+"""
+One activity a bulk write files.
+
+The members are the columns the delivered write persists from the body. The organization, the tenant, the
+engagement and the project are deliberately **not** members: the delivered handler stamps all four onto
+every row, so a row that stated them would have them overwritten — an input member whose value is
+discarded is worse than one that is absent.
+"""
+input ActivityInput {
+	"The activity's title."
+	title: String
+	"What the activity was."
+	description: String
+	"The tracker's own extras for the activity, as a document."
+	metaData: JSON
+	"The calendar day the activity belongs to, in the store's own date form."
+	date: String
+	"The time of day the activity belongs to, in the store's own time form."
+	time: String
+	"How long the activity lasted, **in seconds**."
+	duration: Int
+	"What kind of activity it is."
+	type: String
+	"Where the tracking came from."
+	source: String
+	"""
+	The instant the activity was recorded at. The delivered write stamps this itself when a row states
+	none, so a row that states it is stating the instant the row is filed under.
+	"""
+	recordedAt: DateTime
+	"The slot to file the activity into, when the caller files it into a known one."
+	timeSlotId: ID
+	"The task to attribute the activity to."
+	taskId: ID
+}

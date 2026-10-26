@@ -1,6 +1,6 @@
 import { PickType } from '@nestjs/swagger';
 import { IBasePerTenantAndOrganizationEntityModel } from '@gauzy/contracts';
-import { TenantOrganizationBaseDTO } from '../../core/dto';
+import { TenantOrganizationBaseDTO } from '../../core/dto/tenant-organization-base.dto';
 
 /**
  * Delete query DTO

@@ -69,3 +69,54 @@ describe('RedisHealthIndicator boot logging', () => {
 		expect(logs.lines.join('\n')).not.toContain(SECRET);
 	});
 });
+
+/**
+ * Each health check wrote `redis-health-check-<uuid>` with no TTL and never deleted it. With probes and uptime
+ * monitors calling /api/health around the clock, the shared Redis held more than 11 million such keys (about 1 GB of
+ * a 2 GB `noeviction` instance). The probe key must now expire and be removed after the read.
+ */
+describe('RedisHealthIndicator health check key', () => {
+	captureBootLogs(REDIS_ENV_KEYS);
+
+	let client: { on: jest.Mock; connect: jest.Mock; set: jest.Mock; get: jest.Mock; del: jest.Mock };
+
+	beforeEach(() => {
+		client = {
+			on: jest.fn().mockReturnThis(),
+			connect: jest.fn().mockResolvedValue(undefined),
+			set: jest.fn().mockResolvedValue('OK'),
+			get: jest.fn().mockResolvedValue('redis'),
+			del: jest.fn().mockResolvedValue(1)
+		};
+		(createClient as jest.Mock).mockReset().mockReturnValue(client);
+		process.env.REDIS_ENABLED = 'true';
+		process.env.REDIS_URL = 'redis://127.0.0.1:6379';
+	});
+
+	const bootIndicator = async () => {
+		const indicator = new RedisHealthIndicator();
+		await new Promise((resolve) => setImmediate(resolve));
+		return indicator;
+	};
+
+	it('writes the probe key with a TTL and deletes it after reading it back', async () => {
+		const indicator = await bootIndicator();
+
+		await expect(indicator.isHealthy('redis')).resolves.toEqual({ redis: { status: 'up' } });
+
+		const [key, value, options] = client.set.mock.calls[0];
+		expect(key).toMatch(/^redis-health-check-/);
+		expect(value).toBe('redis');
+		expect(options).toEqual({ expiration: { type: 'EX', value: 60 } });
+		expect(client.del).toHaveBeenCalledWith(key);
+	});
+
+	it('still deletes the probe key when the read fails', async () => {
+		client.get.mockRejectedValue(new Error('connection lost'));
+		const indicator = await bootIndicator();
+
+		await expect(indicator.isHealthy('redis')).rejects.toThrow('Redis health check failed');
+
+		expect(client.del).toHaveBeenCalledWith(client.set.mock.calls[0][0]);
+	});
+});

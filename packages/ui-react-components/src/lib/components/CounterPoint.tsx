@@ -56,14 +56,15 @@ export function computeCounterPoints(total: number, value: number, color: string
  * @param color Point colour.
  */
 export function counterPointBackground(color: string): string {
-	if (color === 'basic') return 'var(--progress-bar-danger-background-color)';
+	if (color === 'basic') return 'var(--gauzy-hover-tint)';
 	if (/^(#|rgb|hsl|var\()/i.test(color)) return color;
 	return `var(--color-${color}-default)`;
 }
 
 /**
  * CounterPoint — React port of `<gauzy-counter-point>`: a strip of up to 24 pill-shaped dots
- * (10px high, 3px apart) or, with `progress`, a 10px Nebular progress bar.
+ * (6px high, 3px apart, unfilled ones on the hover-tint track) or, with `progress`, a 6px
+ * Nebular progress bar.
  */
 export function CounterPoint({ total, value = 0, color = '', progress = false, className, style }: CounterPointProps) {
 	// An UNKNOWN capacity (`total` undefined — the employees/projects count not loaded yet, or a
@@ -77,7 +78,7 @@ export function CounterPoint({ total, value = 0, color = '', progress = false, c
 	if (progress) {
 		return (
 			<div className={className} style={style}>
-				<ProgressBar value={value} height="10px" />
+				<ProgressBar value={value} height="6px" />
 			</div>
 		);
 	}
@@ -89,7 +90,7 @@ export function CounterPoint({ total, value = 0, color = '', progress = false, c
 				display: 'flex',
 				flexDirection: 'row',
 				width: '100%',
-				height: '10px',
+				height: '6px',
 				justifyContent: 'space-between',
 				...style
 			}}
@@ -100,8 +101,8 @@ export function CounterPoint({ total, value = 0, color = '', progress = false, c
 					className={`gzrc-counter-point ${point.color === 'basic' ? 'basic' : 'filled'}`}
 					style={{
 						width: '100%',
-						height: '10px',
-						borderRadius: '5px',
+						height: '6px',
+						borderRadius: '3px',
 						marginInlineEnd: '3px',
 						background: counterPointBackground(point.color)
 					}}

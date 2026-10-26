@@ -41,6 +41,12 @@
 	&.selected {
 		background: var(--color-primary-transparent-200);
 		font-weight: 600;
+
+		.docs-attach-check {
+			border-color: var(--color-primary-default);
+			background: var(--color-primary-default);
+			color: var(--text-control-color);
+		}
 	}
 
 	&:disabled {
@@ -55,8 +61,33 @@
 	white-space: nowrap;
 }
 
+// A checkbox-like box, so the rows read as a multiple choice
+.docs-attach-check {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 1rem;
+	height: 1rem;
+	border: 1px solid var(--border-basic-color-4);
+	border-radius: 0.25rem;
+
+	nb-icon {
+		width: 0.75rem;
+		height: 0.75rem;
+		font-size: 0.75rem;
+	}
+}
+
 .docs-dialog-footer {
 	display: flex;
+	align-items: center;
 	justify-content: flex-end;
 	gap: 0.5rem;
+}
+
+.docs-attach-count {
+	margin-inline-end: auto;
+	font-size: 0.8125rem;
+	color: var(--text-hint-color);
 }

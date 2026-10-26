@@ -1,0 +1,148 @@
+import { Injector } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { NavigationBuilderService, NavMenuBuilderService } from '@gauzy/ui-core/core';
+import {
+	INBOX_HEADER_ACTION_ID,
+	INBOX_LINK,
+	INBOX_MAILBOXES_NAV_ID,
+	INBOX_MAILBOXES_SETTINGS_LINK,
+	INBOX_NAV_ID,
+	INBOX_PROVIDERS_NAV_ID,
+	INBOX_PROVIDERS_SETTINGS_LINK
+} from './inbox-ui.constants';
+import {
+	INBOX_CHILD_ROUTES,
+	INBOX_MAILBOXES_SETTINGS_ROUTE,
+	INBOX_PAGE_ROUTE,
+	INBOX_PROVIDERS_SETTINGS_ROUTE,
+	InboxUiPlugin,
+	registerInboxEntryPoints,
+	registerInboxSettingsEntryPoints
+} from './inbox-ui.plugin';
+import { InboxAvailabilityService } from './services/inbox-availability.service';
+import { InboxEmailAvailabilityService } from './services/inbox-email-availability.service';
+
+/** The plugin: the route always; the nav entry and the badge only where the API serves the Inbox. */
+describe('InboxUiPlugin', () => {
+	function injectorWith(available: BehaviorSubject<boolean | null>) {
+		const nav = { addNavMenuSection: jest.fn(), addNavMenuItems: jest.fn() };
+		const header = { registerHeaderAction: jest.fn(), removeHeaderAction: jest.fn() };
+		const availability = {
+			available$: available.pipe() as unknown as InboxAvailabilityService['available$']
+		};
+		const injector = Injector.create({
+			providers: [
+				{ provide: NavMenuBuilderService, useValue: nav },
+				{ provide: NavigationBuilderService, useValue: header },
+				{ provide: InboxAvailabilityService, useValue: availability },
+				{ provide: InboxEmailAvailabilityService, useValue: availability }
+			]
+		});
+		return { injector, nav, header };
+	}
+
+	it('declares /pages/inbox behind INBOX_VIEW, with the INBOX translations', () => {
+		expect(InboxUiPlugin.id).toBe('inbox');
+		expect(InboxUiPlugin.routes).toEqual([
+			INBOX_PAGE_ROUTE,
+			INBOX_PROVIDERS_SETTINGS_ROUTE,
+			INBOX_MAILBOXES_SETTINGS_ROUTE
+		]);
+		// "My mailbox" is a child of the Inbox page (INBOX_VIEW, as the page).
+		expect(INBOX_CHILD_ROUTES.map((route) => route.path)).toEqual(['', 'mailbox']);
+		expect(INBOX_PAGE_ROUTE).toMatchObject({
+			location: 'page-sections',
+			path: 'inbox',
+			data: { permissions: { only: [PermissionsEnum.INBOX_VIEW] } }
+		});
+		expect(InboxUiPlugin.translationNamespace).toBe('INBOX');
+		expect(InboxUiPlugin.translations?.['en']).toHaveProperty('MENU', 'Inbox');
+		expect(typeof InboxUiPlugin.bootstrap).toBe('function');
+	});
+
+	it('adds the nav entry and the badge once the API answered, and only once', () => {
+		const available = new BehaviorSubject<boolean | null>(null);
+		const { injector, nav, header } = injectorWith(available);
+		registerInboxEntryPoints(injector);
+		expect(nav.addNavMenuSection).not.toHaveBeenCalled();
+
+		available.next(true);
+		expect(nav.addNavMenuSection).toHaveBeenCalledTimes(1);
+		expect(nav.addNavMenuSection.mock.calls[0][0]).toMatchObject({ id: INBOX_NAV_ID, link: INBOX_LINK });
+		expect(header.registerHeaderAction).toHaveBeenCalledWith(
+			expect.objectContaining({ id: INBOX_HEADER_ACTION_ID, permissions: [PermissionsEnum.INBOX_VIEW] })
+		);
+
+		available.next(true);
+		expect(nav.addNavMenuSection).toHaveBeenCalledTimes(1);
+		const section = nav.addNavMenuSection.mock.calls[0][0];
+		expect(section.data.hide()).toBe(false);
+
+		// Signed out (or another user without the Inbox): the badge goes, the entry is hidden, and the menu is built
+		// again (the entry replaces itself) so it reads that (review F68).
+		available.next(false);
+		expect(header.removeHeaderAction).toHaveBeenCalledWith(INBOX_HEADER_ACTION_ID);
+		expect(section.data.hide()).toBe(true);
+		expect(nav.addNavMenuSection).toHaveBeenCalledTimes(2);
+
+		// Back (a later sign-in, its first counts call retried): the badge again, and the entry is added again, so
+		// the menu shows it without waiting for an unrelated rebuild (review F68).
+		available.next(true);
+		expect(header.registerHeaderAction).toHaveBeenCalledTimes(2);
+		expect(nav.addNavMenuSection).toHaveBeenCalledTimes(3);
+		expect(nav.addNavMenuSection.mock.calls[2][0]).toMatchObject({ id: INBOX_NAV_ID });
+		expect(nav.addNavMenuSection.mock.calls[2][0].data.hide()).toBe(false);
+		expect(section.data.hide()).toBe(false);
+	});
+
+	it('adds nothing where the API does not serve the Inbox', () => {
+		const available = new BehaviorSubject<boolean | null>(false);
+		const { injector, nav, header } = injectorWith(available);
+		registerInboxEntryPoints(injector);
+		expect(nav.addNavMenuSection).not.toHaveBeenCalled();
+		expect(header.registerHeaderAction).not.toHaveBeenCalled();
+	});
+
+	it('declares Settings → Inbox → Providers and Mailboxes in the settings shell, behind INBOX_MAILBOX_MANAGE', () => {
+		expect(INBOX_PROVIDERS_SETTINGS_ROUTE).toMatchObject({
+			location: 'settings-sections',
+			path: 'inbox-providers',
+			data: { permissions: { only: [PermissionsEnum.INBOX_MAILBOX_MANAGE], redirectTo: '/pages/settings' } }
+		});
+		expect(INBOX_MAILBOXES_SETTINGS_ROUTE).toMatchObject({
+			location: 'settings-sections',
+			path: 'inbox-mailboxes',
+			data: { permissions: { only: [PermissionsEnum.INBOX_MAILBOX_MANAGE], redirectTo: '/pages/settings' } }
+		});
+		expect(typeof INBOX_PROVIDERS_SETTINGS_ROUTE.loadComponent).toBe('function');
+	});
+
+	it('adds the Settings → Inbox entries once the API serves the email features, and hides them after', () => {
+		const available = new BehaviorSubject<boolean | null>(false);
+		const { injector, nav } = injectorWith(available);
+		registerInboxSettingsEntryPoints(injector);
+		expect(nav.addNavMenuItems).not.toHaveBeenCalled();
+
+		available.next(true);
+		available.next(true);
+		expect(nav.addNavMenuItems).toHaveBeenCalledTimes(1);
+		const [items, section] = nav.addNavMenuItems.mock.calls[0];
+		expect(section).toBe('settings');
+		expect(items[0]).toMatchObject({
+			id: INBOX_PROVIDERS_NAV_ID,
+			link: INBOX_PROVIDERS_SETTINGS_LINK,
+			data: { permissionKeys: [PermissionsEnum.INBOX_MAILBOX_MANAGE] }
+		});
+		expect(items[1]).toMatchObject({ id: INBOX_MAILBOXES_NAV_ID, link: INBOX_MAILBOXES_SETTINGS_LINK });
+		expect(items[0].data.hide()).toBe(false);
+		available.next(false);
+		expect(items[0].data.hide()).toBe(true);
+		expect(items[1].data.hide()).toBe(true);
+		// Each change builds the menu again, so the entries show again after a later sign-in (review F68).
+		expect(nav.addNavMenuItems).toHaveBeenCalledTimes(2);
+		available.next(true);
+		expect(nav.addNavMenuItems).toHaveBeenCalledTimes(3);
+		expect(nav.addNavMenuItems.mock.calls[2][0][0].data.hide()).toBe(false);
+	});
+});

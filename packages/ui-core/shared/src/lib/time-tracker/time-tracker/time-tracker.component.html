@@ -132,12 +132,12 @@
 					</label>
 					<ga-contact-selector
 						name="organizationContactId"
-						[employeeId]="employee?.id"
+						[employeeId]="$safeNavigationMigration(employee?.id)"
 						[disabled]="running"
 						[placeholder]="'TIMER_TRACKER.PLACEHOLDERS.SELECT_CLIENT' | translate"
 						[(ngModel)]="organizationContactId"
 						#clientInput="ngModel"
-						[required]="organization?.requireClient"
+						[required]="$safeNavigationMigration(organization?.requireClient)"
 					></ga-contact-selector>
 					@if (clientInput.invalid && form.submitted) {
 					<div class="invalid-feedback d-block">
@@ -160,11 +160,11 @@
 						[placeholder]="'TIMER_TRACKER.PLACEHOLDERS.SELECT_PROJECT' | translate"
 						[defaultSelected]="false"
 						[organizationContactId]="organizationContactId"
-						[employeeId]="employee?.id"
+						[employeeId]="$safeNavigationMigration(employee?.id)"
 						[disabled]="running"
 						[(ngModel)]="projectId"
 						#projectInput="ngModel"
-						[required]="organization?.requireProject"
+						[required]="$safeNavigationMigration(organization?.requireProject)"
 					></ga-project-selector>
 					@if (projectInput.invalid && form.submitted) {
 					<div class="invalid-feedback d-block">
@@ -187,7 +187,7 @@
 						[showAllOption]="false"
 						[defaultSelected]="false"
 						[placeholder]="'TIMER_TRACKER.PLACEHOLDERS.SELECT_TEAM' | translate"
-						[employeeId]="employee?.id"
+						[employeeId]="$safeNavigationMigration(employee?.id)"
 						[projectId]="projectId"
 						[(ngModel)]="organizationTeamId"
 						[required]="false"
@@ -201,12 +201,12 @@
 					<ga-task-selector
 						name="taskId"
 						[projectId]="projectId"
-						[employeeId]="employee?.id"
+						[employeeId]="$safeNavigationMigration(employee?.id)"
 						[disabled]="running"
 						[placeholder]="'TIMER_TRACKER.PLACEHOLDERS.SELECT_TASK' | translate"
 						[(ngModel)]="taskId"
 						#taskInput="ngModel"
-						[required]="organization?.requireTask"
+						[required]="$safeNavigationMigration(organization?.requireTask)"
 					></ga-task-selector>
 					@if (taskInput.invalid && form.submitted) {
 					<div class="invalid-feedback d-block">
@@ -231,7 +231,7 @@
 						[disabled]="running"
 						[(ngModel)]="description"
 						#descriptionInput="ngModel"
-						[required]="organization?.requireDescription"
+						[required]="$safeNavigationMigration(organization?.requireDescription)"
 					></textarea>
 					@if (descriptionInput.invalid && form.submitted) {
 					<div class="invalid-feedback d-block">

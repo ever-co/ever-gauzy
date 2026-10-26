@@ -1,4 +1,4 @@
-import { OnInit, Component } from '@angular/core';
+import { OnInit, Component, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { IEquipment, ITag, IOrganization, IImageAsset } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
@@ -16,6 +16,7 @@ import { SelectAssetComponent } from '../select-asset-modal/select-asset.compone
     selector: 'ngx-equipment-mutation',
     templateUrl: './equipment-mutation.component.html',
     styleUrls: ['./equipment-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EquipmentMutationComponent extends TranslationBaseComponent implements OnInit {
@@ -25,6 +26,8 @@ export class EquipmentMutationComponent extends TranslationBaseComponent impleme
 	selectedCurrency: string;
 	organization: IOrganization;
 	hoverState = false;
+	/** True while the save request is in flight: the Save button is disabled so a second click cannot create the equipment twice. */
+	loading = false;
 
 	private newImageUploadedEvent$ = new Subject<any>();
 	private newImageStoredEvent$ = new Subject<any>();
@@ -108,7 +111,7 @@ export class EquipmentMutationComponent extends TranslationBaseComponent impleme
 	}
 
 	async saveEquipment() {
-		if (!this.organization) {
+		if (!this.organization || this.loading) {
 			return;
 		}
 		if (!this.form.get('id').value) {
@@ -117,13 +120,19 @@ export class EquipmentMutationComponent extends TranslationBaseComponent impleme
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		const equipment = await this.equipmentService.save({
-			...this.form.value,
-			tenantId,
-			organizationId,
-			image: this.image
-		});
-		this.closeDialog(equipment);
+		this.loading = true;
+		try {
+			const equipment = await this.equipmentService.save({
+				...this.form.value,
+				tenantId,
+				organizationId,
+				image: this.image
+			});
+			this.closeDialog(equipment);
+		} finally {
+			// Re-enable the button whether the request succeeded or failed, so a failed save can be retried.
+			this.loading = false;
+		}
 	}
 
 	async closeDialog(equipment?: IEquipment) {

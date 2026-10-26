@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,6 +21,7 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/ga
 	selector: 'ga-daily-grid',
 	templateUrl: './daily-grid.component.html',
 	styleUrls: ['./daily-grid.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DailyGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {

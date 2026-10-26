@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { ITasksStatistics } from '@gauzy/contracts';
 import { BehaviorSubject, Observable } from 'rxjs';
 
@@ -10,6 +10,7 @@ export interface ITaskRender extends ITasksStatistics {
 
 @Component({
     template: '',
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export abstract class TaskRenderComponent {

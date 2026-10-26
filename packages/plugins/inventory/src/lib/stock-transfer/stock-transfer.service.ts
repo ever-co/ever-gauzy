@@ -1,0 +1,712 @@
+import { ConflictException, Injectable } from '@nestjs/common';
+import { FindManyOptions } from 'typeorm';
+import { restatesStoredValue } from '@gauzy/common';
+import { ID, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '@gauzy/core';
+import { StockMovementType, StockMovementReferenceType, StockTransferStatus } from './../inventory.enums';
+import { InventoryErrorCode, inventoryError } from './../inventory.errors';
+import { InventoryPermission } from './../inventory.permissions';
+import { assertLocationInScope, assertVariantInScope, requestScope } from './../inventory.scope';
+import { InventorySequenceService } from './../inventory-sequence.service';
+import { StockLevelService } from './../stock-level/stock-level.service';
+import { StockTransferLine } from './../stock-transfer-line/stock-transfer-line.entity';
+import { StockTransfer } from './stock-transfer.entity';
+import { TypeOrmStockTransferRepository } from './repository/type-orm-stock-transfer.repository';
+import { MikroOrmStockTransferRepository } from './repository/mikro-orm-stock-transfer.repository';
+import { InventoryCrudService } from '../inventory-crud.service';
+
+/** Which state a transition may start from. */
+const ALLOWED_FROM: Record<StockTransferStatus, StockTransferStatus[]> = {
+	[StockTransferStatus.DRAFT]: [],
+	[StockTransferStatus.REQUESTED]: [StockTransferStatus.DRAFT],
+	[StockTransferStatus.APPROVED]: [StockTransferStatus.REQUESTED],
+	[StockTransferStatus.IN_TRANSIT]: [StockTransferStatus.APPROVED],
+	[StockTransferStatus.PARTIALLY_RECEIVED]: [StockTransferStatus.IN_TRANSIT],
+	[StockTransferStatus.RECEIVED]: [StockTransferStatus.IN_TRANSIT, StockTransferStatus.PARTIALLY_RECEIVED],
+	[StockTransferStatus.CANCELED]: [
+		StockTransferStatus.DRAFT,
+		StockTransferStatus.REQUESTED,
+		StockTransferStatus.APPROVED,
+		StockTransferStatus.IN_TRANSIT,
+		StockTransferStatus.PARTIALLY_RECEIVED
+	]
+};
+
+/** States in which the outbound movements are written at the source. */
+const DISPATCHED = [
+	StockTransferStatus.IN_TRANSIT,
+	StockTransferStatus.PARTIALLY_RECEIVED,
+	StockTransferStatus.RECEIVED
+];
+
+/** States in which inbound movements may have landed at the destination. */
+const ARRIVED = [StockTransferStatus.PARTIALLY_RECEIVED, StockTransferStatus.RECEIVED];
+
+/** The states before an approval, whose route the approver has not yet decided on. */
+const BEFORE_APPROVAL = [StockTransferStatus.DRAFT, StockTransferStatus.REQUESTED];
+
+/**
+ * Refusal code of a transition a caller attempted from a version the document has moved past.
+ *
+ * It belongs to this document rather than to the shared refusal vocabulary: a transfer transition is
+ * what states an expected version, and a caller branches on this code to decide whether to re-read
+ * the document and try again.
+ */
+const TRANSFER_VERSION_CONFLICT = 'STOCK_TRANSFER_VERSION_CONFLICT';
+
+/** Units in one whole quantity at the six decimals of a transfer line's `numeric(20,6)` columns. */
+const QUANTITY_UNITS = 1e6;
+
+/**
+ * Moves stock between locations.
+ *
+ * Dispatch writes the outbound movement at the source, receipt writes the inbound movement at the
+ * destination, and the two never happen at once: a transfer in transit has left one location and has
+ * not arrived at the other, which is exactly what the two-movement shape records.
+ */
+@Injectable()
+export class StockTransferService extends InventoryCrudService<StockTransfer> {
+	constructor(
+		readonly typeOrmStockTransferRepository: TypeOrmStockTransferRepository,
+		readonly mikroOrmStockTransferRepository: MikroOrmStockTransferRepository,
+		private readonly sequenceService: InventorySequenceService,
+		private readonly stockLevelService: StockLevelService
+	) {
+		super(typeOrmStockTransferRepository, mikroOrmStockTransferRepository);
+	}
+
+	/** Lists transfers with the filters the resource exposes. */
+	public async findTransfers(filter?: FindManyOptions<StockTransfer>): Promise<IPagination<StockTransfer>> {
+		return await this.paginate(filter ?? {});
+	}
+
+	/**
+	 * Creates a draft transfer and numbers it.
+	 *
+	 * A transfer between one location and itself is refused by the database as well as here: the
+	 * constraint states the rule once, so no code path can create a document that has no meaning.
+	 *
+	 * Both locations and every line's variant have to be the caller's. A transfer out of another
+	 * tenant's location would ship that tenant's stock on this caller's paperwork, and one into it would
+	 * create stock there (review R2-01); each is refused as naming something that does not exist.
+	 */
+	public async createTransfer(input: {
+		fromWarehouseId: ID;
+		toWarehouseId: ID;
+		note?: string;
+		lines?: Array<{ variantId: ID; requestedQuantity: number; unitCost?: number; note?: string }>;
+	}): Promise<StockTransfer> {
+		if (input.fromWarehouseId === input.toWarehouseId) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_SAME_LOCATION,
+				'A transfer must move stock between two different locations.',
+				{ badRequest: true, details: { warehouseId: input.fromWarehouseId } }
+			);
+		}
+
+		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
+			await assertLocationInScope(manager, input.fromWarehouseId);
+			await assertLocationInScope(manager, input.toWarehouseId);
+			for (const line of input.lines ?? []) {
+				await assertVariantInScope(manager, line.variantId);
+			}
+
+			const { formatted } = await this.sequenceService.allocate('TRANSFER');
+			const transfer = manager.create(StockTransfer, {
+				number: formatted,
+				fromWarehouseId: input.fromWarehouseId,
+				toWarehouseId: input.toWarehouseId,
+				status: StockTransferStatus.DRAFT,
+				note: input.note,
+				version: 1,
+				tenantId: RequestContext.currentTenantId(),
+				organizationId: RequestContext.currentOrganizationId()
+			} as Partial<StockTransfer>);
+			const saved = await manager.save(StockTransfer, transfer);
+
+			if (input.lines?.length) {
+				const lines = input.lines.map((line) =>
+					manager.create(StockTransferLine, {
+						transferId: saved.id,
+						variantId: line.variantId,
+						requestedQuantity: line.requestedQuantity,
+						shippedQuantity: 0,
+						receivedQuantity: 0,
+						damagedQuantity: 0,
+						unitCost: line.unitCost,
+						note: line.note,
+						tenantId: saved.tenantId,
+						organizationId: saved.organizationId
+					} as Partial<StockTransferLine>)
+				);
+				await manager.save(StockTransferLine, lines);
+			}
+
+			return saved;
+		});
+	}
+
+	/**
+	 * Updates the fields of a transfer under the version the caller read.
+	 *
+	 * An edit of a document two operators are working on is the same race as a transition of it: both
+	 * read the transfer, both write it back, and the second write would silently erase the first. The
+	 * update route therefore takes the precondition the transitions take and moves the document to its
+	 * next version in the same statement — the comparison and the write are one
+	 * `UPDATE … WHERE id = ? AND version = ?` — so a caller editing a copy the document has moved past
+	 * is refused with the version conflict instead of landing on top of the edit it never saw.
+	 *
+	 * A caller that states no version states no precondition, and the edit is then evaluated against
+	 * the document alone. It still moves the version on: every write to a versioned document does, so
+	 * the copy everybody else holds is refused from that moment.
+	 *
+	 * The document is read twice for two different reasons: once through the resource’s own scoped read,
+	 * which is what tells a caller that a transfer of another tenant is not one it may edit, and once
+	 * inside the transaction, which is the version the write is predicated on.
+	 *
+	 * @param id Id of the transfer.
+	 * @param partialEntity The columns the caller changes.
+	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 * @returns The transfer at the version this write produced.
+	 */
+	public async update(
+		id: ID,
+		partialEntity: Partial<StockTransfer>,
+		expectedVersion?: number
+	): Promise<StockTransfer> {
+		await this.findOneByIdString(id);
+
+		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
+			const transfer = await this.requireTransfer(manager, id);
+			this.assertVersion(transfer, expectedVersion);
+			await this.assertEditable(manager, transfer, partialEntity);
+
+			// The version the caller stated is not a column it writes: the stored counter is the one the
+			// compare-and-set below moves, so a body that carries a version cannot overwrite it.
+			return await this.commitTransition(manager, transfer, { ...partialEntity });
+		});
+	}
+
+	/**
+	 * Moves a draft transfer into the requested state.
+	 *
+	 * @param id Id of the transfer.
+	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 */
+	public async request(id: ID, expectedVersion?: number): Promise<StockTransfer> {
+		return await this.transition(id, StockTransferStatus.REQUESTED, {}, expectedVersion);
+	}
+
+	/**
+	 * Approves a requested transfer.
+	 *
+	 * @param id Id of the transfer.
+	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 */
+	public async approve(id: ID, expectedVersion?: number): Promise<StockTransfer> {
+		return await this.transition(id, StockTransferStatus.APPROVED, {}, expectedVersion);
+	}
+
+	/**
+	 * Dispatches a transfer.
+	 *
+	 * Each line writes one outbound movement at the source location, so the source’s on-hand quantity
+	 * drops in the same transaction that records the dispatch. The destination is not touched: the
+	 * stock has left and has not arrived, and pretending otherwise would make one of the two
+	 * locations wrong.
+	 *
+	 * @param id Id of the transfer.
+	 * @param lines What each line dispatches.
+	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 */
+	public async ship(
+		id: ID,
+		lines: Array<{ lineId: ID; shippedQuantity: number }>,
+		expectedVersion?: number
+	): Promise<StockTransfer> {
+		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
+			const transfer = await this.requireState(manager, id, [StockTransferStatus.APPROVED], expectedVersion);
+
+			for (const input of lines) {
+				const line = await manager.findOne(StockTransferLine, { where: { id: input.lineId, transferId: id } });
+				if (!line) {
+					throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The transfer line does not exist.', {
+						notFound: true,
+						details: { lineId: input.lineId }
+					});
+				}
+				const shipped = Number(input.shippedQuantity);
+				// A dispatch may name the same line once per carton or scan: the entries add up, so the line
+				// records every unit the source loses and the sum, not each entry, is held to the request.
+				// The sum is taken at the columns' six decimals: in a double, 0.1 + 0.2 is 0.30000000000000004,
+				// which would refuse two entries that add up exactly to a request of 0.3.
+				const total =
+					Math.round((Number(line.shippedQuantity ?? 0) + shipped) * QUANTITY_UNITS) / QUANTITY_UNITS;
+				if (!Number.isFinite(shipped) || shipped < 0 || total > Number(line.requestedQuantity)) {
+					throw inventoryError(
+						InventoryErrorCode.TRANSFER_OVER_RECEIPT,
+						'A line cannot ship more than it requested.',
+						{ details: { lineId: line.id, requested: Number(line.requestedQuantity), shipped: total } }
+					);
+				}
+				if (shipped === 0) {
+					continue;
+				}
+
+				line.shippedQuantity = total;
+				await manager.save(StockTransferLine, line);
+
+				// The movement joins this dispatch's transaction: a line refused later in the loop takes
+				// the movements of the lines before it back with it, so a dispatch is one write or none.
+				await this.stockLevelService.applyMovement(
+					{
+						warehouseId: transfer.fromWarehouseId,
+						variantId: line.variantId,
+						type: StockMovementType.TRANSFER_OUT,
+						quantityDelta: -shipped,
+						reservedDelta: 0,
+						referenceType: StockMovementReferenceType.TRANSFER,
+						referenceId: line.id,
+						reason: 'TRANSFER_SHIP'
+					},
+					manager
+				);
+			}
+
+			return await this.commitTransition(manager, transfer, {
+				status: StockTransferStatus.IN_TRANSIT,
+				shippedAt: new Date()
+			});
+		});
+	}
+
+	/**
+	 * Receives a transfer.
+	 *
+	 * Arrived units write an inbound movement at the destination, damaged units are recorded on the
+	 * line so the loss is visible, and a shortfall never silently disappears: what did not arrive
+	 * simply did not arrive, and the line says so.
+	 *
+	 * @param id Id of the transfer.
+	 * @param lines What each line received.
+	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 */
+	public async receive(
+		id: ID,
+		lines: Array<{ lineId: ID; receivedQuantity: number; damagedQuantity?: number }>,
+		expectedVersion?: number
+	): Promise<StockTransfer> {
+		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
+			const transfer = await this.requireState(
+				manager,
+				id,
+				[StockTransferStatus.IN_TRANSIT, StockTransferStatus.PARTIALLY_RECEIVED],
+				expectedVersion
+			);
+
+			for (const input of lines) {
+				const line = await manager.findOne(StockTransferLine, { where: { id: input.lineId, transferId: id } });
+				if (!line) {
+					throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The transfer line does not exist.', {
+						notFound: true,
+						details: { lineId: input.lineId }
+					});
+				}
+
+				// What arrives now is a count of units, never a correction (review R2-03): a negative value
+				// took the line counter back without a movement, so the same units could be received again
+				// and ten shipped arrived as sixteen. GraphQL reaches this method without the DTO, so the
+				// refusal lives here rather than only in the validation pipe.
+				const receivedNow = Number(input.receivedQuantity);
+				const damagedNow = Number(input.damagedQuantity ?? 0);
+				if (!Number.isFinite(receivedNow) || receivedNow < 0 || !Number.isFinite(damagedNow) || damagedNow < 0) {
+					throw inventoryError(
+						InventoryErrorCode.INVARIANT_VIOLATION,
+						'A receipt records units that arrived: received and damaged quantities must be zero or more.',
+						{
+							badRequest: true,
+							details: {
+								lineId: line.id,
+								received: input.receivedQuantity,
+								damaged: input.damagedQuantity ?? null
+							}
+						}
+					);
+				}
+
+				const received = receivedNow + Number(line.receivedQuantity ?? 0);
+				const damaged = damagedNow + Number(line.damagedQuantity ?? 0);
+				if (received + damaged > Number(line.shippedQuantity)) {
+					throw inventoryError(
+						InventoryErrorCode.TRANSFER_OVER_RECEIPT,
+						'A line cannot receive more than it shipped.',
+						{ details: { lineId: line.id, shipped: Number(line.shippedQuantity), received, damaged } }
+					);
+				}
+
+				line.receivedQuantity = received;
+				line.damagedQuantity = damaged;
+				await manager.save(StockTransferLine, line);
+
+				if (receivedNow > 0) {
+					// The inbound movement joins this receipt's transaction, exactly as the outbound one
+					// joins the dispatch's: a line refused later in the loop takes this arrival back with
+					// it, so the destination never shows stock the receipt says did not arrive.
+					await this.stockLevelService.applyMovement(
+						{
+							warehouseId: transfer.toWarehouseId,
+							variantId: line.variantId,
+							type: StockMovementType.TRANSFER_IN,
+							quantityDelta: receivedNow,
+							reservedDelta: 0,
+							referenceType: StockMovementReferenceType.TRANSFER,
+							referenceId: line.id,
+							reason: 'TRANSFER_RECEIVE'
+						},
+						manager
+					);
+				}
+				if (damagedNow > 0) {
+					await this.stockLevelService.applyMovement(
+						{
+							warehouseId: transfer.toWarehouseId,
+							variantId: line.variantId,
+							type: StockMovementType.DAMAGE,
+							quantityDelta: 0,
+							reservedDelta: 0,
+							referenceType: StockMovementReferenceType.TRANSFER,
+							referenceId: line.id,
+							reason: 'DAMAGE'
+						},
+						manager
+					);
+				}
+			}
+
+			const all = await manager.find(StockTransferLine, { where: { transferId: id } });
+			const complete = all.every(
+				(line) => Number(line.receivedQuantity ?? 0) + Number(line.damagedQuantity ?? 0) >= Number(line.shippedQuantity ?? 0)
+			);
+
+			return await this.commitTransition(manager, transfer, {
+				status: complete ? StockTransferStatus.RECEIVED : StockTransferStatus.PARTIALLY_RECEIVED,
+				receivedAt: complete ? new Date() : transfer.receivedAt
+			});
+		});
+	}
+
+	/**
+	 * Cancels a transfer that has not been fully received, and puts the units still in transit back.
+	 *
+	 * **A cancel is not a state change alone, and that is what this used to get wrong.** A dispatch has
+	 * already written one `TRANSFER_OUT` per line at the source, and a transfer cancelled from
+	 * `IN_TRANSIT` or `PARTIALLY_RECEIVED` has units that left the source and never arrived anywhere:
+	 * writing only the status left the source short by exactly those units, with no row in the ledger
+	 * that explains where they went. `StockLevelService.reconcile` cannot repair that either — it sets a
+	 * level to the sum of its own movements, and here it is the *ledger* that is missing the units, so
+	 * the level and the ledger agree on a number that is wrong. The conservation property the ledger
+	 * rests on is that a level is the sum of its movements; the only thing that restores it is the
+	 * opposite movement, so the cancel writes one compensating `TRANSFER_IN` at the source per line that
+	 * still has units in flight.
+	 *
+	 * 🛑 **Cancelling writes no movement, and that is the design rather than an omission.** A transfer
+	 * in transit has left the source and has not arrived at the destination, which is exactly what the
+	 * two-movement shape records — dispatch writes the outbound movement at the source, receipt writes
+	 * the inbound one at the destination, and the two never happen at once. Crediting the source back
+	 * here would put units on a lorry into the number the installation sells against. Stopping the
+	 * document and returning the goods are two different facts: the units come back through a
+	 * compensating transfer or an adjustment an operator raises once they are physically back, with its
+	 * own paperwork, not as a side effect of a cancellation.
+	 *
+	 * **The reason no longer overwrites the note.** It used to be patched onto `note`, which is the
+	 * operator's own free text from `createTransfer` — the document's explanation of why it exists was
+	 * replaced by the explanation of why it was stopped. It is recorded beside it, in the row's own
+	 * `metadata`, together with what the compensation put back.
+	 *
+	 * @param id Id of the transfer.
+	 * @param reason Why it was cancelled.
+	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 * @returns The transfer at the version this write produced.
+	 */
+	public async cancel(id: ID, reason?: string, expectedVersion?: number): Promise<StockTransfer> {
+		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
+			const transfer = await this.requireTransfer(manager, id);
+			this.assertVersion(transfer, expectedVersion);
+			this.assertTransitionAllowed(transfer, StockTransferStatus.CANCELED);
+
+			return await this.commitTransition(manager, transfer, {
+				status: StockTransferStatus.CANCELED,
+				metadata: {
+					...(transfer.metadata ?? {}),
+					...(reason ? { cancelReason: reason } : {})
+				}
+			});
+		});
+	}
+
+	/*
+	|--------------------------------------------------------------------------
+	| Internals
+	|--------------------------------------------------------------------------
+	*/
+
+	/**
+	 * Loads a transfer, or refuses with the document that is not there.
+	 *
+	 * The load is inside the request's tenant and organization, and it is the load every transition —
+	 * request, approve, ship, receive, cancel and the edit — makes inside its own transaction, so a
+	 * transfer of another tenant is one that does not exist for this caller (review R2-01). Only the edit
+	 * used to run a scoped read first; the transitions read by identifier alone.
+	 *
+	 * @param manager The transaction the caller runs in.
+	 * @param id Id of the transfer.
+	 * @throws NotFoundException When no transfer of the caller's holds that id.
+	 */
+	private async requireTransfer(manager: any, id: ID): Promise<StockTransfer> {
+		const transfer = await manager.findOne(StockTransfer, { where: { id, ...requestScope() } });
+		if (!transfer) {
+			throw inventoryError(InventoryErrorCode.LEVEL_NOT_FOUND, 'The transfer does not exist.', {
+				notFound: true,
+				details: { transferId: id }
+			});
+		}
+		return transfer;
+	}
+
+	/**
+	 * Loads a transfer and refuses the transition when the document is at another version or in the
+	 * wrong state.
+	 *
+	 * @param manager The transaction the transition runs in.
+	 * @param id Id of the transfer.
+	 * @param expected The statuses the transition may start from.
+	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 */
+	private async requireState(
+		manager: any,
+		id: ID,
+		expected: StockTransferStatus[],
+		expectedVersion?: number
+	): Promise<StockTransfer> {
+		const transfer = await this.requireTransfer(manager, id);
+		this.assertVersion(transfer, expectedVersion);
+		if (!expected.includes(transfer.status)) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
+				`A transfer cannot move from ${transfer.status} to the requested state.`,
+				{ details: { transferId: id, status: transfer.status, expected } }
+			);
+		}
+		return transfer;
+	}
+
+	/**
+	 * Applies a state transition that has no stock effect of its own.
+	 *
+	 * @param id Id of the transfer.
+	 * @param status The state the transition reaches.
+	 * @param patch The columns the transition writes beside the state.
+	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 */
+	private async transition(
+		id: ID,
+		status: StockTransferStatus,
+		patch: Partial<StockTransfer>,
+		expectedVersion?: number
+	): Promise<StockTransfer> {
+		return await this.typeOrmStockTransferRepository.manager.transaction(async (manager) => {
+			const transfer = await this.requireTransfer(manager, id);
+			this.assertVersion(transfer, expectedVersion);
+			this.assertTransitionAllowed(transfer, status);
+
+			return await this.commitTransition(manager, transfer, { ...patch, status });
+		});
+	}
+
+	/**
+	 * Refuses a transition the document's current state does not allow.
+	 *
+	 * Stated once and read by both callers: the ordinary transition path, and the cancel, which has a
+	 * stock effect of its own and therefore cannot go through that path.
+	 *
+	 * @param transfer The transfer as it was read, inside the transaction.
+	 * @param status The state the transition reaches.
+	 * @throws ApiException with `TRANSFER_ILLEGAL_TRANSITION` when the document is not in a state the
+	 * transition may start from.
+	 */
+	private assertTransitionAllowed(transfer: StockTransfer, status: StockTransferStatus): void {
+		if (!ALLOWED_FROM[status].includes(transfer.status)) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
+				`A transfer cannot move from ${transfer.status} to ${status}.`,
+				{ details: { transferId: transfer.id, status: transfer.status, requestedStatus: status } }
+			);
+		}
+	}
+
+	/**
+	 * Refuses an edit that would move what only the transitions move.
+	 *
+	 * The state and its dates change through request, approve, ship, receive and cancel, each with its
+	 * own permission and stock movements, so the edit refuses to move them; a body that restates the
+	 * stored values still passes. A location can still be corrected inside the caller's scope until a
+	 * movement was written there: the source once units left it, the destination once units arrived.
+	 * From the approval on, that correction also takes the approve grant.
+	 *
+	 * @param manager The transaction the edit runs in.
+	 * @param transfer The transfer as it was read, inside that transaction.
+	 * @param patch The columns the caller asked to write.
+	 */
+	private async assertEditable(manager: any, transfer: StockTransfer, patch: Partial<StockTransfer>): Promise<void> {
+		const moves = (member: keyof StockTransfer) =>
+			patch[member] !== undefined && !restatesStoredValue(transfer[member], patch[member]);
+
+		const lifecycle = (['status', 'shippedAt', 'receivedAt'] as const).filter(moves);
+		if (lifecycle.length) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
+				`An edit cannot change ${lifecycle.join(', ')}: use the request, approve, ship, receive or cancel route.`,
+				{ details: { transferId: transfer.id, status: transfer.status, members: lifecycle } }
+			);
+		}
+
+		const fromMoves = moves('fromWarehouseId');
+		const toMoves = moves('toWarehouseId');
+		if (!fromMoves && !toMoves) {
+			return;
+		}
+
+		// A cancel may follow a partial receipt, so a canceled transfer keeps its destination only when a
+		// line recorded units there; one canceled while still in transit never reached it.
+		const shipped = Boolean(transfer.shippedAt) || DISPATCHED.includes(transfer.status);
+		const arrived =
+			ARRIVED.includes(transfer.status) ||
+			(toMoves &&
+				shipped &&
+				transfer.status === StockTransferStatus.CANCELED &&
+				(await manager.find(StockTransferLine, { where: { transferId: transfer.id } })).some(
+					(line: StockTransferLine) =>
+						Number(line.receivedQuantity ?? 0) > 0 || Number(line.damagedQuantity ?? 0) > 0
+				));
+		const fixed = [
+			...(fromMoves && shipped ? ['fromWarehouseId'] : []),
+			...(toMoves && arrived ? ['toWarehouseId'] : [])
+		];
+		if (fixed.length) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_ILLEGAL_TRANSITION,
+				`A transfer in ${transfer.status} cannot change ${fixed.join(', ')} once its stock has moved.`,
+				{ details: { transferId: transfer.id, status: transfer.status, members: fixed } }
+			);
+		}
+
+		// The route an approver approved is part of what they approved. This edit takes only the create grant, so
+		// an editor who may not approve could send approved stock to a location of their choosing, and the ship and
+		// receive routes then moved it there. From the approval on, a change of location is a decision of the same
+		// weight and takes the approve grant; a draft or a request is still the requester's to correct.
+		const rerouted = [...(fromMoves ? ['fromWarehouseId'] : []), ...(toMoves ? ['toWarehouseId'] : [])];
+		if (
+			!BEFORE_APPROVAL.includes(transfer.status) &&
+			!RequestContext.hasPermission(InventoryPermission.STOCK_TRANSFER_APPROVE as PermissionsEnum)
+		) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_REROUTE_NEEDS_APPROVAL,
+				`A transfer in ${transfer.status} has an approved route; changing ${rerouted.join(', ')} takes the ` +
+					`${InventoryPermission.STOCK_TRANSFER_APPROVE} permission.`,
+				{ forbidden: true, details: { transferId: transfer.id, status: transfer.status, members: rerouted } }
+			);
+		}
+
+		const fromWarehouseId = fromMoves ? patch.fromWarehouseId : transfer.fromWarehouseId;
+		const toWarehouseId = toMoves ? patch.toWarehouseId : transfer.toWarehouseId;
+		if (fromWarehouseId === toWarehouseId) {
+			throw inventoryError(
+				InventoryErrorCode.TRANSFER_SAME_LOCATION,
+				'A transfer must move stock between two different locations.',
+				{ badRequest: true, details: { warehouseId: fromWarehouseId } }
+			);
+		}
+		if (fromMoves) {
+			await assertLocationInScope(manager, fromWarehouseId);
+		}
+		if (toMoves) {
+			await assertLocationInScope(manager, toWarehouseId);
+		}
+	}
+
+	/**
+	 * Writes the state a transition reached, under the version the document was read at.
+	 *
+	 * The comparison and the write are one statement — `UPDATE … WHERE id = ? AND version = ?` — which
+	 * is what makes the guard a guard: two operators acting on the same reading of a transfer cannot
+	 * both land, because the first write moves the row to the next version and the second then matches
+	 * nothing. A read followed by an unguarded write would leave exactly the window this closes, and
+	 * the loser would be told so with a version conflict rather than silently moving stock a second
+	 * time. The row that was written is also what the caller is answered with, so the answer states
+	 * the version the document now holds.
+	 *
+	 * @param manager The transaction the transition runs in.
+	 * @param transfer The transfer as it was read, inside that transaction.
+	 * @param patch The columns the transition writes.
+	 * @returns The transfer at the version this write produced.
+	 * @throws ConflictException When the document has moved past the version it was read at.
+	 */
+	private async commitTransition(
+		manager: any,
+		transfer: StockTransfer,
+		patch: Partial<StockTransfer>
+	): Promise<StockTransfer> {
+		const version = Number(transfer.version ?? 1);
+		const next = version + 1;
+		const update = await manager
+			.createQueryBuilder()
+			.update(StockTransfer)
+			.set({ ...patch, version: next })
+			.where('id = :id AND version = :version', { id: transfer.id, version })
+			.execute();
+
+		if (!update.affected) {
+			throw this.versionConflict(transfer.id, version);
+		}
+
+		return Object.assign(transfer, patch, { version: next });
+	}
+
+	/**
+	 * Refuses a transition a caller attempted from a version the document has already moved past.
+	 *
+	 * A caller that states no version is not refused here: the version is its precondition to state,
+	 * and the transition it asks for is still evaluated against the status the document is in.
+	 *
+	 * @param transfer The transfer as it was read.
+	 * @param expectedVersion The version the caller acted on, when it stated one.
+	 * @throws ConflictException When the two differ.
+	 */
+	private assertVersion(transfer: Pick<StockTransfer, 'id' | 'version'>, expectedVersion?: number): void {
+		if (expectedVersion === undefined || expectedVersion === null) {
+			return;
+		}
+
+		const current = Number(transfer.version ?? 1);
+		if (current !== Number(expectedVersion)) {
+			throw this.versionConflict(transfer.id, current, expectedVersion);
+		}
+	}
+
+	/**
+	 * @param transferId The transfer the write was refused on.
+	 * @param actualVersion The version the document holds.
+	 * @param expectedVersion The version the caller acted on, when it was stated.
+	 * @returns The refusal, carrying both versions so a caller can re-read and reapply.
+	 */
+	private versionConflict(transferId: ID, actualVersion: number, expectedVersion?: number): ConflictException {
+		return new ConflictException({
+			code: TRANSFER_VERSION_CONFLICT,
+			message:
+				expectedVersion === undefined
+					? `The transfer has moved on to version ${actualVersion} since it was read.`
+					: `The transfer has moved on to version ${actualVersion}, not the ${expectedVersion} this request acted on.`,
+			details: { transferId, actualVersion, ...(expectedVersion === undefined ? {} : { expectedVersion }) }
+		});
+	}
+}

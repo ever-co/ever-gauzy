@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, catchError } from 'rxjs';
-import { IFavorite, IFavoriteCreateInput } from '@gauzy/contracts';
+import { BaseEntityEnum, ICandidate, ID, IEmployee, IFavorite, IFavoriteCreateInput } from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 
 @Injectable({
@@ -48,6 +48,26 @@ export class FavoriteService {
 					catchError((error) => {
 						console.error('Error getting favorite details:', error);
 						throw new Error('Failed to get favorite details');
+					})
+				)
+		);
+	}
+
+	/**
+	 * Loads an employee or candidate together with its user, which holds the person's name.
+	 */
+	getPersonWithUser(entity: BaseEntityEnum.Employee | BaseEntityEnum.Candidate, id: ID): Promise<IEmployee | ICandidate> {
+		const path = entity === BaseEntityEnum.Employee ? 'employee' : 'candidate';
+		return firstValueFrom(
+			this.http
+				.get<IEmployee | ICandidate>(`${API_PREFIX}/${path}/${id}`, {
+					params: toParams({ relations: ['user'] })
+				})
+				.pipe(
+					catchError((error) => {
+						console.error(`Error loading ${path} with user:`, error);
+						// Rethrow as is: the caller falls back to the favorite without a name.
+						throw error;
 					})
 				)
 		);

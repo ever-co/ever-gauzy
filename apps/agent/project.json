@@ -72,7 +72,7 @@
 						}
 					],
 					"optimization": true,
-					"sourceMap": true,
+					"sourceMap": false,
 					"namedChunks": false,
 					"extractLicenses": true,
 					"vendorChunk": false,

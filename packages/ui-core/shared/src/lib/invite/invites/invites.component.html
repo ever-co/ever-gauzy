@@ -42,7 +42,7 @@
         @case (componentLayoutStyleEnum.CARDS_GRID) {
           <ga-card-grid
             [loading]="loading"
-            [totalItems]="pagination?.totalItems"
+            [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
             [settings]="settingsSmartTable"
             [source]="invites"
             (onSelectedItem)="selectInvite($event)"
@@ -63,18 +63,21 @@
   <div class="btn-group actions">
     <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_INVITE_EDIT]">
       @if (selectedInvite?.status === InviteStatusEnum.INVITED) {
-        <button
-          nbButton
-          ngxClipboard
-          [disabled]="disableButton"
-          status="basic"
-          class="action success"
-          (click)="copyToClipboard(selectedItem)"
-          size="small"
-          >
-          <i class="fas fa-link mr-1"></i>
-          {{ 'BUTTONS.COPY_LINK' | translate }}
-        </button>
+        <!-- The API answers the token only for an invitation the caller may issue -->
+        @if (selectedInvite?.token) {
+          <button
+            nbButton
+            ngxClipboard
+            [disabled]="disableButton"
+            status="basic"
+            class="action success"
+            (click)="copyToClipboard(selectedItem)"
+            size="small"
+            >
+            <i class="fas fa-link mr-1"></i>
+            {{ 'BUTTONS.COPY_LINK' | translate }}
+          </button>
+        }
         <button
           nbButton
           [disabled]="disableButton"

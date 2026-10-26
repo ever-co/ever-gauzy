@@ -1,0 +1,317 @@
+# The time slot's object types.
+#
+# A slot is a ten-minute window of one employee's tracked time, and the row is what the trackers report
+# against it: how long the window counted, how much activity was recorded in it, and the raw activity
+# documents the client posted. The delivered list read returns the row's own columns plus a projection
+# of the organization and a projection of the employee it belongs to, and this file states the row —
+# the two projections are carried as the identifiers the row itself holds, and the comment on those
+# identifiers says why.
+#
+# **A duration is in seconds here, and the activity counters are what the percentages are computed
+# from.** The entity's own description says so for `duration`, and the delivered list read's activity
+# band confirms it: a caller states a band of percentages, the read multiplies each end by six because
+# a ten-minute window is six hundred seconds, and narrows the stored counter by the result. So
+# `overall` is seconds of activity inside the window, `keyboard` and `mouse` are numbers of
+# interactions, and `location` is a number of movements — a count of something, never a duration and
+# never an amount of money. No money is carried on this resource at all: a rate or an amount belongs to
+# the engagement, the project or the timesheet that computes it, and if one ever arrives here it is a
+# `Decimal` rather than a `Float`.
+#
+# **Four members are derived rather than stored, and they are carried because the read answers with
+# them.** `stoppedAt`, `percentage`, `keyboardPercentage` and `mousePercentage` are declared on the
+# entity as virtual members and computed when a row is loaded — the window's end is its start plus the
+# ten minutes it spans, and each percentage is its counter against the duration. They are stated here
+# as what they are, and they are deliberately neither filterable nor sortable: the store holds no such
+# column, so a filter over one would narrow by a value nobody ever wrote.
+#
+# `id` is the only identifier a slot is read by, and it is a UUID. Everything else on the type is
+# either a column of the row or one of those four derived members.
+
+"""
+One ten-minute window of one employee's tracked time.
+"""
+type TimeSlot {
+	id: ID!
+	"""
+	The seconds this window counted. Seconds, never money: a value beyond the six hundred a ten-minute
+	window spans is a slot the delivered merge has not yet split.
+	"""
+	duration: Int!
+	"The number of keyboard interactions recorded inside the window."
+	keyboard: Int!
+	"The number of mouse interactions recorded inside the window."
+	mouse: Int!
+	"The number of movements the client reported inside the window."
+	location: Int!
+	"""
+	The seconds of activity recorded inside the window — the counter the activity band is stated
+	against and the numerator of `percentage`.
+	"""
+	overall: Int!
+	"The instant the window starts at."
+	startedAt: DateTime!
+	"""
+	The instant the window ends at: its start plus the ten minutes it spans, derived when the row is
+	loaded rather than stored. It is the end the delivered removal spans when it removes the logs a slot
+	covers.
+	"""
+	stoppedAt: DateTime
+	"""
+	The percentage of the window that was active — `overall` against `duration`, in the range 0 to 100.
+	A ratio and never an amount of money.
+	"""
+	percentage: Float
+	"The percentage of the window that was spent at the keyboard, in the range 0 to 100."
+	keyboardPercentage: Float
+	"The percentage of the window that was spent on the mouse, in the range 0 to 100."
+	mousePercentage: Float
+	"The raw keyboard and mouse activity the client posted for the window, as the document it sent."
+	kbMouseActivity: JSON
+	"The raw location activity the client posted for the window, as the document it sent."
+	locationActivity: JSON
+	"The document the tracking extensions attached to the window."
+	customActivity: JSON
+	"""
+	The employee the window belongs to. The delivered list read does join the employee and selects a
+	projection of it — the identifier, and the name and image of the account behind it — and this
+	surface carries the identifier rather than that projection: a partly selected row is not a row a
+	client can read anything else from, while the identifier is the one member that always travels and
+	is what the employee is read by.
+	"""
+	employeeId: ID!
+	"The organization the window belongs to."
+	organizationId: ID
+	"The tenant the window belongs to."
+	tenantId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"""
+	When the row was withdrawn, or null while it is live. The delivered writes remove slots outright
+	rather than withdrawing them, so this column is stated for what it narrows — a REST caller can filter
+	by it — and no field on this surface writes it.
+	"""
+	deletedAt: DateTime
+}
+
+"""
+The boundary of one page of slots.
+"""
+type TimeSlotEdge {
+	node: TimeSlot!
+	cursor: String!
+}
+
+"""
+One page of slots, with the total the filters select and the boundary cursors.
+"""
+type TimeSlotConnection {
+	nodes: [TimeSlot!]!
+	edges: [TimeSlotEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a slot list may be sorted by. Every member is a column of the row; the four derived members
+are not sortable, because the store has no such column to order by.
+"""
+enum TimeSlotSortField {
+	createdAt
+	updatedAt
+	startedAt
+	duration
+	keyboard
+	mouse
+	overall
+	location
+}
+
+"""
+The order the slots are returned in. At most three keys are accepted.
+"""
+input TimeSlotSort {
+	field: TimeSlotSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a slot list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read returns. `employeeId` and `organizationId`
+are the identifiers the row carries for the two relations that read joins, which is how a client asks
+for one employee's slots or for one organization's within the set the credential may read — the
+service applies the tenant and the organization from the credential as well, so a filter naming
+another scope narrows to nothing rather than reading across it.
+"""
+input TimeSlotFilter {
+	id: IDFilter
+	duration: NumberFilter
+	keyboard: NumberFilter
+	mouse: NumberFilter
+	overall: NumberFilter
+	location: NumberFilter
+	startedAt: DateTimeFilter
+	kbMouseActivity: JSONFilter
+	locationActivity: JSONFilter
+	customActivity: JSONFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TimeSlotFilter!]
+	or: [TimeSlotFilter!]
+	not: TimeSlotFilter
+}
+
+"""
+The band of activity a slot list is narrowed to, as percentages of the window.
+
+The delivered read converts each end into the seconds its activity counter is stored in — a ten-minute
+window is six hundred seconds, so one percent of it is six — so the two members are percentages and
+the conversion stays where the delivered read states it.
+"""
+input TimeSlotActivityLevelInput {
+	"The lower end of the band, as a percentage of the window."
+	start: Int!
+	"The upper end of the band, as a percentage of the window."
+	end: Int!
+}
+
+"""
+One activity of the window, as a tracker reports it.
+
+The members are the activity document's own: what was in front of the employee, for how long, and when.
+The employee, the organization and the tenant are deliberately absent — the delivered write stamps all
+three from the credential of the call — and so is the window the activity ends up in, which is the slot
+the write is being made for rather than a member a caller chooses.
+"""
+input TimeSlotActivityInput {
+	"The title of what the employee was looking at — a page title, an application name."
+	title: String
+	"A longer description of it, where the client sent one."
+	description: String
+	"The document the client attached to the activity."
+	metaData: JSON
+	"The calendar date the activity happened on, as the client stated it."
+	date: String
+	"The time of day the activity happened at, as the client stated it."
+	time: String
+	"The seconds the employee spent on it. Seconds, never money."
+	duration: Int
+	"The kind of activity — `URL` or `APP`, as the activity domain states it. Carried as its value: the vocabulary belongs to that domain."
+	type: String
+	"The source the activity is attributed to, by value (`DESKTOP`, `BROWSER`, …)."
+	source: String
+	"When the activity was recorded."
+	recordedAt: DateTime
+	"The task the activity is attributed to. Omit it and the activity belongs to no task."
+	taskId: ID
+	"""
+	The project the activity is attributed to. The slot's own `projectId` overwrites it when one is
+	stated on the slot, which is the delivered write's own rule.
+	"""
+	projectId: ID
+}
+
+"""
+What a caller states when it records a window of tracked time.
+
+The employee, the organization and the tenant are optional here rather than absent, and that is the
+delivered write's own shape: the handler stamps each of them from the credential when the body does not
+state one, so a tracker that reports on behalf of the account it is signed in as states neither.
+
+The instant is the member the whole write turns on. The delivered handler rounds it to the second,
+looks for the slot that instant already belongs to — answering that one rather than writing a second —
+and merges the result into the ten-minute window it falls in. An absent instant is the instant the
+write is handled at, which is what the handler does with it.
+"""
+input CreateTimeSlotInput {
+	"The organization to record the window in. Omit it and the delivered write takes the employee's own."
+	organizationId: ID
+	"The employee the window belongs to. Omit it and the delivered write stamps the caller's own employee."
+	employeeId: ID
+	"The project the activities of this window are attributed to."
+	projectId: ID
+	"The instant the window starts at. Omit it and the delivered write takes the instant it is handling the call."
+	startedAt: DateTime
+	"The seconds the window counted. Seconds, never money."
+	duration: Int
+	"The number of keyboard interactions recorded inside the window."
+	keyboard: Int
+	"The number of mouse interactions recorded inside the window."
+	mouse: Int
+	"The seconds of activity recorded inside the window."
+	overall: Int
+	"The number of movements the client reported inside the window."
+	location: Int
+	"The raw keyboard and mouse activity of the window, as the document the client sent."
+	kbMouseActivity: JSON
+	"The raw location activity of the window, as the document the client sent."
+	locationActivity: JSON
+	"The document the tracking extensions attached to the window."
+	customActivity: JSON
+	"The source the window's log is attributed to, by value."
+	source: String
+	"The kind of log the window is attached to, by value."
+	logType: String
+	"""
+	The log to attach the window to when the delivered write's own lookup finds none. The delivered body
+	admits one identifier or a list of them; this surface states the single identifier, which is what a
+	tracker reports a window against.
+	"""
+	timeLogId: ID
+	"The activities recorded inside the window, as the client reported them."
+	activities: [TimeSlotActivityInput!]
+}
+
+"""
+What a caller states when it edits a window of tracked time that exists.
+
+The identifier is the path of the delivered route and is the first member here for the same reason: the
+route states it beside the body, and the resolver hands the two to the command separately.
+
+There is no `timeLogId` member, although the create body has one: the delivered edit never reads it, so
+a caller stating it would be stating something the write drops. `source` and `logType` are absent for a
+sharper reason — they are not columns of the row, and the delivered edit persists the body it is handed
+column for column, so a caller stating them would be handing the store a column the row does not have.
+"""
+input UpdateTimeSlotInput {
+	"The window to edit. It is stated here because a GraphQL mutation has no path."
+	id: ID!
+	"The organization the row is written to."
+	organizationId: ID
+	"""
+	The employee the row is written to. The delivered handler refuses to move a row onto another
+	employee for a caller that may not select employees, and writes the row it found for everyone else.
+	"""
+	employeeId: ID
+	"The project the activities of this window are attributed to."
+	projectId: ID
+	"The instant the window starts at. The delivered write rounds it to the second."
+	startedAt: DateTime
+	"The seconds the window counted. Seconds, never money."
+	duration: Int
+	"The number of keyboard interactions recorded inside the window."
+	keyboard: Int
+	"The number of mouse interactions recorded inside the window."
+	mouse: Int
+	"The seconds of activity recorded inside the window."
+	overall: Int
+	"The number of movements the client reported inside the window."
+	location: Int
+	"The raw keyboard and mouse activity of the window, as the document the client sent."
+	kbMouseActivity: JSON
+	"The raw location activity of the window, as the document the client sent."
+	locationActivity: JSON
+	"The document the tracking extensions attached to the window."
+	customActivity: JSON
+	"The activities to file against the window, beside the ones it already carries."
+	activities: [TimeSlotActivityInput!]
+}

@@ -186,3 +186,144 @@ nb-badge {
   text-align: left;
   padding: 4px 8px;
 }
+
+// ── Polish, same layout ─────────────────────────────────────────────────
+// Type and density brought to the Settings scale (12px body, quiet table headers, small badges)
+// without moving anything: the drop zone, radios, queue and history stay where they were.
+
+// Instructions beside the title: 12px muted (was 14px), closer to the title.
+.info-text {
+  gap: 1.5rem;
+}
+
+.message {
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+}
+
+// Import History, as the landing page's panel: one bordered block — title and muted line on
+// the card's own surface, then the table edge to edge (the header was a separate bar with a
+// page-size h4, and the table sat inset in the body).
+h4.title {
+  margin: 0 0 0.125rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+.history-card {
+  nb-card-header {
+    padding: 0.75rem 1rem 0.625rem;
+    border-bottom: 0;
+    background-color: transparent;
+  }
+
+  nb-card-body {
+    padding: 0;
+    background-color: transparent;
+  }
+}
+
+.well {
+  font-size: 0.75rem;
+}
+
+// Selected file name beside Browse.
+.uploader-zone {
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+}
+
+// Queue progress: a slim bar (was 1.25rem tall), 12px label and percent.
+.table-zone .queue-progress {
+  margin: 1.25rem 0;
+
+  h6,
+  .progress-percent {
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+  }
+
+  h6 {
+    margin-bottom: 0.375rem;
+  }
+
+  .progress-percent {
+    align-items: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .progress {
+    height: 0.375rem;
+  }
+}
+
+.table-zone .progress,
+.custom-body .progress {
+  overflow: hidden;
+  border-radius: 999px;
+  // The empty track: `gauzy-card-2` (~3%) all but vanished on the dark card.
+  background-color: rgba(126, 126, 143, 0.22);
+
+  .progress-bar {
+    border-radius: 999px;
+    background-color: var(--color-primary-default);
+  }
+}
+
+// Per-file bar in the queue rows: the template sets `height: 10px` inline.
+.custom-body .progress {
+  height: 0.375rem !important;
+}
+
+// Table header, as the landing page's Import history panel: no filled bar — small caps in
+// the hint colour between two hairlines, flush with the rows.
+$table-divider: 1px solid var(--gauzy-border-default-color, rgba(126, 126, 143, 0.24));
+
+.custom-header {
+  height: 2.25rem;
+  padding: 0;
+  border-top: $table-divider;
+  border-bottom: $table-divider;
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+// Rows: 12px and denser (Bootstrap's `py-3` is 1rem a side), flush with the header.
+.custom-body {
+  margin-top: 0;
+  padding-left: 0;
+  border-radius: 0;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  background: transparent;
+
+  .row.py-3 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  .row:hover {
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.06));
+  }
+}
+
+// Status badges: smaller, inline with the row text.
+nb-badge {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+
+:host ::ng-deep nb-radio span.text {
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+}
+
+.custom-body [nbButton] {
+  text-transform: none;
+}

@@ -195,33 +195,36 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 
 				// Update nested entity (Organization Sprint Members)
 				await this.updateOrganizationSprintMembers(id, organizationId, sprintMembers, managerIds, memberIds);
-
-				// Update the organization sprint with the prepared members
-				const { id: organizationSprintId } = organizationSprint;
-				const updatedSprint = await super.create({
-					...input,
-					organizationId,
-					tenantId,
-					id: organizationSprintId
-				});
-
-				// Generate the activity log
-				this._activityLogService.logActivity<OrganizationSprint>(
-					BaseEntityEnum.OrganizationSprint,
-					ActionTypeEnum.Updated,
-					ActorTypeEnum.User,
-					updatedSprint.id,
-					updatedSprint.name,
-					updatedSprint,
-					organizationId,
-					tenantId,
-					organizationSprint,
-					input
-				);
-
-				// return updated sprint
-				return updatedSprint;
 			}
+
+			// Update the organization sprint itself. This used to happen only together with a member change,
+			// so an update without member ids (completing a sprint, editing its name or dates, moving a task
+			// into it) saved nothing while the request still succeeded.
+			const { id: organizationSprintId } = organizationSprint;
+			const updatedSprint = await super.create({
+				...input,
+				organizationId,
+				tenantId,
+				id: organizationSprintId
+			});
+
+			// Generate the activity log
+			this._activityLogService.logActivity<OrganizationSprint>(
+				BaseEntityEnum.OrganizationSprint,
+				ActionTypeEnum.Updated,
+				ActorTypeEnum.User,
+				updatedSprint.id,
+				// A partial update may not carry the name
+				updatedSprint.name ?? organizationSprint.name,
+				updatedSprint,
+				organizationId,
+				tenantId,
+				organizationSprint,
+				input
+			);
+
+			// return updated sprint
+			return updatedSprint;
 		} catch (error) {
 			// Handle errors and return an appropriate error response
 			throw new HttpException(`Failed to update organization sprint: ${error.message}`, HttpStatus.BAD_REQUEST);
@@ -291,10 +294,13 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				await Promise.all(
 					removedMembers.map(
 						async (member) =>
-							await this._entitySubscriptionService.delete({
+							// `member.employee` is not loaded (it threw, swallowed below, and the removed member stayed
+							// subscribed); `deleteForEmployee` reaches that member's row for a manager without
+							// CHANGE_SELECTED_EMPLOYEE, whose own employee `delete()` would target instead.
+							await this._entitySubscriptionService.deleteForEmployee({
 								entity: BaseEntityEnum.OrganizationSprint,
 								entityId: organizationSprintId,
-								employeeId: member.employee.id,
+								employeeId: member.employeeId,
 								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
@@ -310,9 +316,13 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 				const isManager = managerIds.includes(member.employeeId);
 				const newRole = isManager ? managerRole : null;
 
-				// Only update if the role has changed
-				if (newRole && newRole.id !== member.roleId) {
-					await this.typeOrmOrganizationSprintEmployeeRepository.update(member.id, { role: newRole });
+				// Only update if the role or the manager flag has changed. A manager taken off the managers
+				// (`newRole` null) used to be skipped and kept the manager role, and `isManager` was never set.
+				if ((newRole?.id ?? null) !== (member.roleId ?? null) || !!member.isManager !== isManager) {
+					await this.typeOrmOrganizationSprintEmployeeRepository.update(member.id, {
+						role: newRole,
+						isManager
+					});
 				}
 			})
 		);

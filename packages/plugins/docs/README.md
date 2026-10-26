@@ -28,9 +28,11 @@ error, not a silent DOM fallback.
 |---|---|---|
 | `GAUZY_DOCS_MAX_FILE_SIZE` | `52428800` | Per-file upload size limit in bytes (50 MB) |
 | `GAUZY_DOCS_MAX_BINARY_BYTES` | `10485760` | Cap on the PAGE `contentBinary` CRDT column (10 MB) |
-| `GAUZY_DOCS_AI_ENABLED` | `false` | Master switch for the AI pipeline (classification, embedding, retrieval) |
+| `GAUZY_DOCS_AI_ENABLED` | `true` | Master switch for the AI pipeline (classification, embedding, retrieval). The AI stages are skipped when no AI provider is registered; set `false` to keep them off even when one is |
 | `GAUZY_DOCS_EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model id (1536 dims) |
 | `GAUZY_DOCS_CLASSIFY_MODEL` | *(chat default)* | Classification model id |
+| `GAUZY_DOCS_OCR_ENABLED` | `true` | Provider-vision OCR for scanned PDFs and image uploads: one provider call per rendered page. Runs only when `GAUZY_DOCS_AI_ENABLED` is also on and a provider resolves credentials (tenant BYOK → environment → platform), using the classification model; otherwise a file with no text layer stays an extraction failure |
+| `GAUZY_DOCS_OCR_MAX_PAGES` | `20` | Hard cap on the pages OCR renders and transcribes per document (the OCR cost fuse). Read like the other integer variables here, with `Number.parseInt(value, 10)`: the base-10 digits after optional leading whitespace and a `+`/`-` sign count, so `100pages` caps at 100, `+2pages` at 2 and `2.5` at 2; when the result is not a finite number of at least 1 (empty, `0`, negative, no leading digits), the default applies |
 | `GAUZY_DOCS_VERSION_DEBOUNCE_MINUTES` | `10` | Server-side debounce window for PAGE version snapshots |
 | `GAUZY_DOCS_QUEUE_CONCURRENCY` | `2` | `docs-processing` worker concurrency per process (queued mode only) |
 | `GAUZY_DOCS_QUEUE_ENABLED` | *(follows `isSchedulerQueueRootEnabled()`)* | Register the BullMQ queue. Off ⇒ the pipeline runs **inline** |
@@ -115,7 +117,7 @@ they are absent, and that fallback will not match a real provider's signature.
 
 ### Gates, in order
 
-1. Channel enabled (`GAUZY_DOCS_INBOUND_EMAIL_ENABLED`) — otherwise 404, as if the route did not exist
+1. Channel enabled (`GAUZY_DOCS_INBOUND_EMAIL_ENABLED`, default `true`) — otherwise 404, as if the route did not exist
 2. Authentication — either proof above, else 403
 3. Recipient resolves to an armed address — else 404
 4. SPF/DKIM verdicts, when the provider reports them

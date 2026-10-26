@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,6 +35,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	selector: 'ngx-project-module-mutation',
 	templateUrl: './project-module-mutation.component.html',
 	styleUrl: './project-module-mutation.component.scss',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProjectModuleMutationComponent extends TranslationBaseComponent implements OnInit {

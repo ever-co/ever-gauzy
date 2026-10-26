@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { GoalLevelEnum, IOrganizationTeam, IEmployee } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -8,6 +8,7 @@ import { OrganizationTeamsService } from '@gauzy/ui-core/core';
     selector: 'ga-goal-level-select',
     templateUrl: './goal-level-select.component.html',
     styleUrls: ['./goal-level-select.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class GoalLevelSelectComponent {

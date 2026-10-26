@@ -22,7 +22,7 @@
 						<ng-container
 							buttonTemplate
 							[ngTemplateOutlet]="actionButtons"
-							[ngTemplateOutletContext]="{ $implicit: selectedLog?.data }"
+							[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(selectedLog?.data) }"
 						></ng-container>
 					</ngx-gauzy-button-action>
 				</div>
@@ -103,9 +103,9 @@
 										}
 										<div class="mt-2 small">
 											@if (log?.task) {
-												<span [nbTooltip]="log?.task?.title">
+												<span [nbTooltip]="$safeNavigationMigration(log?.task?.title)">
 													<strong>{{ 'TIMESHEET.TODO' | translate }}:</strong>
-													{{ log?.task?.title | truncate: 40 }}
+													{{ $safeNavigationMigration(log?.task?.title) | truncate: 40 }}
 												</span>
 											} @else {
 												<span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
@@ -119,10 +119,10 @@
 										<div class="name-container">
 											<ngx-avatar
 												class="report-table"
-												[name]="log?.employee?.user?.name"
-												[src]="log?.employee?.user?.imageUrl"
-												[id]="log?.employee?.id"
-												[employee]="log?.employee"
+												[name]="$safeNavigationMigration(log?.employee?.user?.name)"
+												[src]="$safeNavigationMigration(log?.employee?.user?.imageUrl)"
+												[id]="$safeNavigationMigration(log?.employee?.id)"
+												[employee]="$safeNavigationMigration(log?.employee)"
 											></ngx-avatar>
 										</div>
 									</div>
@@ -133,12 +133,12 @@
 									</div>
 									<div class="col source-version">
 										<ngx-badge-label
-											[text]="log?.source | replace: '_' : ' ' | titlecase"
+											[text]="$safeNavigationMigration(log?.source) | replace: '_' : ' ' | titlecase"
 											class="badge-item"
 										></ngx-badge-label>
 										@if (log?.version) {
 											<ngx-badge-label
-												[text]="log?.version"
+												[text]="$safeNavigationMigration(log?.version)"
 												status="info"
 												class="badge-item"
 											></ngx-badge-label>
@@ -151,8 +151,8 @@
 										<span class="start-timer">
 											{{
 												log.startedAt
-													| utcToTimezone: filters?.timeZone
-													| timeFormat: filters?.timeFormat
+													| utcToTimezone: $safeNavigationMigration(filters?.timeZone)
+													| timeFormat: $safeNavigationMigration(filters?.timeFormat)
 											}}
 										</span>
 										-
@@ -160,8 +160,8 @@
 											<span class="end-timer">
 												{{
 													log.stoppedAt
-														| utcToTimezone: filters?.timeZone
-														| timeFormat: filters?.timeFormat
+														| utcToTimezone: $safeNavigationMigration(filters?.timeZone)
+														| timeFormat: $safeNavigationMigration(filters?.timeFormat)
 												}}
 											</span>
 										} @else {

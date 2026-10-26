@@ -1,0 +1,213 @@
+# The time-off policy's object type, its filter, its sort, and the two bodies its writes take.
+#
+# A policy is one leave arrangement: the category of leave it grants, what an employee is entitled to
+# under it, whether unused days roll over and up to how many, how fast the entitlement accrues, whether
+# taking leave under it needs an approval, and whether it is the organization's default. Two of those
+# are columns rather than configuration — `requiresApproval` and `paid` — and the rest are the
+# entitlement the platform's own input type states, so the body below is that interface in the schema's
+# vocabulary rather than a second design of the same thing.
+#
+# **The two vocabularies are carried as their values, not redeclared as enums.** `leaveType` and
+# `accrualFrequency` are closed sets the contracts package owns — the leave categories and the accrual
+# periods — and the entity validates against those enums directly. Declaring them again here would
+# claim a value set this domain does not own, and the next domain that needed the same categories would
+# collide with this file rather than reuse the vocabulary. The member is the value, and the value is
+# what a filter on it compares against.
+#
+# **Neither relation is a member, and both for the same reason.** `employees` and `timeOffRequests` are
+# loaded only when a REST caller names them in `relations`, and the read this surface's list mirrors
+# names none; a member for either would therefore be absent from exactly the rows answered here. The
+# membership is written rather than read through this surface — `employeeIds` on the two bodies below
+# is where a caller states it — and a policy's requests are reachable as `TimeOffRequest.policyId`.
+#
+# **Every entitlement figure is a number of days or a days-per-period rate, never money.** The entity
+# stores each as a `numeric(10,2)` column behind a numeric transformer, which is why they are carried as
+# the exact `Decimal` scalar rather than as a `Float`: `0.5` has no exact binary representation, and a
+# filter that rounds is a filter that returns the wrong rows.
+#
+# The lifecycle columns are carried because the delivered reads return them and one delivered route
+# writes one of them: `deletedAt` is the whole of what withdrawing writes.
+
+"""
+One leave arrangement of an organization.
+
+Every entitlement figure on it is a number of **days**, or of days per accrual period, and is carried as
+an exact decimal rather than a binary fraction: half a day is an entitlement this platform grants, and a
+ledger that rounds is a ledger that disagrees with itself.
+"""
+type TimeOffPolicy {
+	id: ID!
+	"The policy's name, unique enough within an organization to be recognised in a list."
+	name: String!
+	"Whether taking leave under this policy needs an approval before it counts."
+	requiresApproval: Boolean!
+	"Whether leave taken under this policy is paid."
+	paid: Boolean!
+	"""
+	The category of leave this policy grants, as the contracts package's own vocabulary states it:
+	`ANNUAL`, `SICK`, `MATERNITY`, `PATERNITY`, `UNPAID`, `COMPENSATORY`, `BEREAVEMENT`, `STUDY` or
+	`OTHER`. The value is deliberately not redeclared as a schema enum here.
+	"""
+	leaveType: String
+	"The upper bound, in days, on what an employee may take in a year under this policy."
+	maxDaysPerYear: Decimal
+	"Whether unused days roll over into the next year."
+	allowCarryForward: Boolean
+	"""
+	The upper bound, in days, on what may roll over. `0` or an absent value means no cap, which is the
+	rule the delivered carry-forward reads.
+	"""
+	maxCarryForwardDays: Decimal
+	"The days accrued per accrual period, under this policy."
+	accrualRate: Decimal
+	"""
+	How often the accrual rate is granted, as the contracts package's own vocabulary states it:
+	`DAILY`, `WEEKLY`, `BIWEEKLY`, `MONTHLY` or `ANNUALLY`.
+	"""
+	accrualFrequency: String
+	"Whether this is the organization's default policy."
+	isDefault: Boolean
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	"When the policy was withdrawn, or null while it is live."
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of policies.
+"""
+type TimeOffPolicyEdge {
+	node: TimeOffPolicy!
+	cursor: String!
+}
+
+"""
+One page of policies, with the total the filters select and the boundary cursors.
+"""
+type TimeOffPolicyConnection {
+	nodes: [TimeOffPolicy!]!
+	edges: [TimeOffPolicyEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a policy list may be sorted by.
+"""
+enum TimeOffPolicySortField {
+	createdAt
+	updatedAt
+	name
+	leaveType
+	maxDaysPerYear
+	allowCarryForward
+	isDefault
+	requiresApproval
+	paid
+}
+
+"""
+The order the policies are returned in. At most three keys are accepted.
+"""
+input TimeOffPolicySort {
+	field: TimeOffPolicySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a policy list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the row the delivered list read returns. The two vocabularies compare as
+text, because the row carries the vocabulary's own value; the entitlement figures compare as exact
+decimals. Neither relation is a member: the rows carry none.
+"""
+input TimeOffPolicyFilter {
+	id: IDFilter
+	name: StringFilter
+	requiresApproval: BooleanFilter
+	paid: BooleanFilter
+	leaveType: StringFilter
+	maxDaysPerYear: DecimalFilter
+	allowCarryForward: BooleanFilter
+	maxCarryForwardDays: DecimalFilter
+	accrualRate: DecimalFilter
+	accrualFrequency: StringFilter
+	isDefault: BooleanFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [TimeOffPolicyFilter!]
+	or: [TimeOffPolicyFilter!]
+	not: TimeOffPolicyFilter
+}
+
+"""
+What a caller states when it files a policy.
+
+`organizationId` is required because the delivered write names the organization on the row it builds and
+resolves the membership against it; the tenant is stamped from the credential, as it is on every write of
+this platform, and is therefore not a member.
+
+`name`, `requiresApproval` and `paid` are required because they are the three columns the row cannot be
+without: the entity declares them non-nullable and the delivered write assigns each of them from the
+body. Everything else is the entitlement the platform's own input type states, and an omitted member is
+the column's own default.
+"""
+input CreateTimeOffPolicyInput {
+	"The organization the policy belongs to, and the one its membership is resolved against."
+	organizationId: ID!
+	name: String!
+	requiresApproval: Boolean!
+	paid: Boolean!
+	"""
+	The employees the policy applies to, by identifier. The delivered write resolves them to employees of
+	the caller's own organization and replaces the policy's membership with the result, which is the only
+	way this surface states a membership — the list read loads no relation and the type therefore carries
+	none.
+	"""
+	employeeIds: [ID!]
+	"The category of leave this policy grants, as the contracts package's vocabulary states it."
+	leaveType: String
+	maxDaysPerYear: Decimal
+	allowCarryForward: Boolean
+	maxCarryForwardDays: Decimal
+	accrualRate: Decimal
+	"The accrual period, as the contracts package's vocabulary states it."
+	accrualFrequency: String
+	isDefault: Boolean
+}
+
+"""
+What a caller states when it edits a policy that exists.
+
+The same body as the filing above plus the identifier, because the two writes reach the same service
+shape: the delivered edit takes the identifier from its own argument and assigns every member the body
+states. There is no partial body here — a member the caller leaves out is not written — which is why the
+three columns the row cannot be without are required on this body too.
+"""
+input UpdateTimeOffPolicyInput {
+	id: ID!
+	organizationId: ID!
+	name: String!
+	requiresApproval: Boolean!
+	paid: Boolean!
+	employeeIds: [ID!]
+	leaveType: String
+	maxDaysPerYear: Decimal
+	allowCarryForward: Boolean
+	maxCarryForwardDays: Decimal
+	accrualRate: Decimal
+	accrualFrequency: String
+	isDefault: Boolean
+}

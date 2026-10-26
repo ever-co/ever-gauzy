@@ -73,6 +73,16 @@ $height: 42px;
 	}
 }
 
+// Option rows: ng-select 24 renders the dropdown panel in a CDK overlay outside this component's host, where the
+// `:host ng-select img` rule below no longer reaches, so option images lost their spacing. The option template is
+// this component's own markup (emulated encapsulation tags it with our attribute wherever it renders), so a
+// selector without `:host` / `ng-select` still matches it inside the overlay.
+.common-template img {
+	margin-right: 5px;
+	border-radius: calc(var(--border-radius) * 1 / 2);
+	box-shadow: var(--gauzy-shadow);
+}
+
 :host {
 	.multiple-select {
 		width: 100%;

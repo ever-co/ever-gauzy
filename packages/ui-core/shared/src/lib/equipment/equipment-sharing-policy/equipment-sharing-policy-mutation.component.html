@@ -48,7 +48,7 @@
 		<button class="delete mr-3" (click)="closeDialog()" nbButton status="basic" outline>
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button [disabled]="form.invalid" (click)="saveEquipmentSharingPolicy()" status="success" nbButton>
+		<button [disabled]="form.invalid || loading" (click)="saveEquipmentSharingPolicy()" status="success" nbButton>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

@@ -9,6 +9,7 @@ import { TypeOrmOrganizationRepository } from './../../organization/repository/t
 import { MikroOrmOrganizationRepository } from './../../organization/repository/mikro-orm-organization.repository';
 import { TimeSlot } from './time-slot.entity';
 import { TimeSlotController } from './time-slot.controller';
+import { TimeSlotResolver } from './time-slot.resolver';
 import { TimeSlotService } from './time-slot.service';
 import { TimeLogModule } from './../time-log/time-log.module';
 import { EmployeeModule } from './../../employee/employee.module';
@@ -34,6 +35,9 @@ import { MikroOrmTimeSlotMinuteRepository } from './time-slot-minute/repositorie
 	],
 	providers: [
 		TimeSlotService,
+		// The GraphQL view of the same resource: declared here because a resolver can only inject
+		// services its own module can reach, and this module is what reaches them.
+		TimeSlotResolver,
 		TypeOrmTimeSlotRepository,
 		MikroOrmTimeSlotRepository,
 		TypeOrmTimeSlotMinuteRepository,

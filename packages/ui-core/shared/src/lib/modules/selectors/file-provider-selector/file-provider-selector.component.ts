@@ -1,4 +1,4 @@
-import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, forwardRef, Input, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
@@ -15,6 +15,7 @@ import { FileStorageProviderEnum } from '@gauzy/contracts';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class FileProviderSelectorComponent implements OnInit {

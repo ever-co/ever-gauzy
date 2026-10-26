@@ -14,7 +14,7 @@ import {
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
 import { SmartDataViewLayoutModule, SharedModule, StatusBadgeModule } from '@gauzy/ui-core/shared';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ApprovalsRoutingModule } from './approvals-routing.module';
 import { ApprovalsComponent } from './approvals/approvals.component';
 
@@ -31,7 +31,7 @@ import { ApprovalsComponent } from './approvals/approvals.component';
 		NbPopoverModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		MomentModule,
 		SharedModule,
 		ApprovalsRoutingModule,

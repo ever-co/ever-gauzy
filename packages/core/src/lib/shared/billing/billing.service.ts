@@ -7,7 +7,7 @@ import {
 	ServiceUnavailableException,
 	UnauthorizedException
 } from '@nestjs/common';
-import { subscriptionIsForProduct } from './billing-product';
+import { planItemOf, seatLookupKey, subscriptionIsForProduct } from './billing-product';
 import { StripeSubscriptionService } from './stripe-subscription.service';
 
 /**
@@ -240,12 +240,36 @@ export class BillingService {
 			throw new NotFoundException(`No active plan with lookup key "${lookupKey}".`);
 		}
 
-		const item = subscription.items?.data?.[0];
+		// The plan item, found by its price: a subscription bought with extra employees also carries a
+		// per-employee add-on item, and re-pricing that one as if it were the plan would be wrong.
+		const item = planItemOf(subscription);
 		if (!item) {
 			throw new BadRequestException('That subscription has no billable item to change.');
 		}
 		if (item.price?.id === price.id) {
 			throw new BadRequestException('The subscription is already on that plan.');
+		}
+
+		// The add-on is priced per plan (`seat_<plan lookup key>`: $5 on Small Business, $10 on
+		// Enterprise), so it moves with the plan. A target with no add-on price of its own (the free
+		// Starter) cannot carry extra employees; refuse rather than keep billing the old plan's rate.
+		const currentPlanKey = item.price?.lookup_key;
+		const seatItem = currentPlanKey
+			? subscription.items?.data?.find(
+					(candidate) => candidate !== item && candidate.price?.lookup_key === seatLookupKey(currentPlanKey)
+				)
+			: undefined;
+		let seatPrice: StripePriceObject | undefined;
+		if (seatItem) {
+			const { data: seatPrices } = await this.get<{ data: StripePriceObject[] }>(
+				`/prices?lookup_keys[]=${encodeURIComponent(seatLookupKey(lookupKey))}&active=true&limit=1`
+			);
+			seatPrice = seatPrices?.[0];
+			if (!seatPrice) {
+				throw new BadRequestException(
+					'This subscription includes additional employees, which that plan does not offer. Please contact support to change it.'
+				);
+			}
 		}
 
 		// A paid target needs something to pay with. Checked here, before anything is changed, because
@@ -259,6 +283,15 @@ export class BillingService {
 			{
 				'items[0][id]': item.id,
 				'items[0][price]': price.id,
+				// The add-on keeps its employee count; it is sent explicitly so the new price never bills a
+				// different number of employees than the old one did.
+				...(seatItem && seatPrice
+					? {
+							'items[1][id]': seatItem.id,
+							'items[1][price]': seatPrice.id,
+							'items[1][quantity]': String(seatItem.quantity ?? 1)
+						}
+					: {}),
 				// A pending cancellation would otherwise survive the switch and quietly kill the new plan.
 				cancel_at_period_end: 'false'
 			},
@@ -454,7 +487,7 @@ export class BillingService {
 	}
 
 	private async toSubscription(subscription: StripeSubscriptionObject): Promise<BillingSubscription> {
-		const item = subscription.items?.data?.[0];
+		const item = planItemOf(subscription);
 		const price = item?.price;
 
 		return {
@@ -645,7 +678,7 @@ const IDEMPOTENCY_WINDOW_MS = 60 * 1000;
  */
 function planChangeIdempotencyKey(subscription: StripeSubscriptionObject, targetPriceId: string): string {
 	const window = Math.floor(Date.now() / IDEMPOTENCY_WINDOW_MS);
-	const currentPrice = subscription.items?.data?.[0]?.price?.id ?? 'none';
+	const currentPrice = planItemOf(subscription)?.price?.id ?? 'none';
 	const latestInvoice =
 		typeof subscription.latest_invoice === 'string'
 			? subscription.latest_invoice
@@ -718,7 +751,7 @@ interface StripeSubscriptionObject {
 	trial_end?: number | null;
 	current_period_end?: number | null;
 	cancel_at_period_end?: boolean;
-	items?: { data?: Array<{ id: string; price?: StripePriceObject }> };
+	items?: { data?: Array<{ id: string; quantity?: number; price?: StripePriceObject }> };
 	/** Advances whenever a proration is actually charged; used to separate repeated plan changes. */
 	latest_invoice?: string | { id?: string } | null;
 }

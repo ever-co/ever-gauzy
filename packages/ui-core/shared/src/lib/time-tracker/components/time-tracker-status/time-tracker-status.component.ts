@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ITimerIcon } from '@gauzy/ui-core/core';
 import { TimeTrackerStatusService } from './time-tracker-status.service';
@@ -7,6 +7,7 @@ import { TimeTrackerStatusService } from './time-tracker-status.service';
     selector: 'ga-time-tracker-status',
     templateUrl: './time-tracker-status.component.html',
     styleUrls: ['./time-tracker-status.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TimeTrackerStatusComponent {

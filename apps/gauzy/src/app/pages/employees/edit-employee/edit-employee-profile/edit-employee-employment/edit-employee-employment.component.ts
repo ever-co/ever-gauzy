@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import {
 	IEmployee,
@@ -29,6 +29,7 @@ import { ToastrService } from '@gauzy/ui-core/core';
 	selector: 'ga-edit-employee-employment',
 	templateUrl: './edit-employee-employment.component.html',
 	styleUrls: ['./edit-employee-employment.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EditEmployeeEmploymentComponent implements OnInit, OnDestroy {

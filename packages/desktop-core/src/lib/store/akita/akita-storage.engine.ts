@@ -1,15 +1,16 @@
-import * as ElectronStore from 'electron-store';
+import ElectronStore from 'electron-store';
+import type { ElectronStoreOf } from '../types';
 
 export class AkitaStorageEngine {
-	private readonly store: ElectronStore;
+	private readonly store: ElectronStoreOf;
 
 	/**
 	 * Create a new AkitaStorageEngine.
 	 *
 	 * @param store - Optional ElectronStore instance.
 	 */
-	constructor(store?: ElectronStore) {
-		this.store = store ?? new ElectronStore({ name: 'window-state' });
+	constructor(store?: ElectronStoreOf) {
+		this.store = store ?? (new ElectronStore({ name: 'window-state' }) as ElectronStoreOf);
 	}
 
 	/**

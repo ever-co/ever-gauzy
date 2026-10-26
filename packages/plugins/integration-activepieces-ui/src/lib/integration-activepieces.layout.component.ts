@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, merge, tap, distinctUntilChanged } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -10,6 +10,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 @Component({
 	selector: 'ngx-integration-activepieces-layout',
 	template: `<router-outlet></router-outlet>`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class IntegrationActivepiecesLayoutComponent implements OnInit, OnDestroy {

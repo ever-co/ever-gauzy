@@ -7,6 +7,7 @@ import { parseFindOptionsRelations, RequestContext, TypeOrmEmployeeRepository } 
 import { EmployeeUpworkJobsSearchCriterion } from '../../employee-upwork-jobs-search-criterion.entity';
 import { JobPreset } from '../../job-preset.entity';
 import { SaveEmployeePresetCommand } from '../save-employee-preset.command';
+import { presetCriterionForEmployee } from './preset-criterion-for-employee';
 import { TypeOrmJobPresetRepository } from '../../repository/type-orm-job-preset.repository';
 import { TypeOrmEmployeeUpworkJobsSearchCriterionRepository } from '../../repository/type-orm-employee-upwork-jobs-search-criterion.repository';
 
@@ -70,7 +71,7 @@ export class SaveEmployeePresetHandler implements ICommandHandler<SaveEmployeePr
 		// Map every preset's criteria to employee criterions
 		const employeeCriterions = jobPresets.flatMap((jobPreset) =>
 			(jobPreset.jobPresetCriterions ?? []).map(
-				(item) => new EmployeeUpworkJobsSearchCriterion({ ...item, employeeId })
+				(item) => new EmployeeUpworkJobsSearchCriterion(presetCriterionForEmployee(item, employeeId))
 			)
 		);
 

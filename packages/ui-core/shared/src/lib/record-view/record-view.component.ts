@@ -1,5 +1,6 @@
-import { Component, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, inject, Input, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
+import { NbPopoverDirective } from '@nebular/theme';
 import { ISelectedEmployee } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 import {
@@ -26,6 +27,7 @@ const PLACEHOLDER_AVATAR = /avatar-default\.svg|dummyimage\.com/i;
 	selector: 'ngx-record-view',
 	templateUrl: './record-view.component.html',
 	styleUrls: ['./record-view.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class RecordViewComponent implements OnChanges {
@@ -42,6 +44,10 @@ export class RecordViewComponent implements OnChanges {
 
 	private readonly router = inject(Router);
 	private readonly store = inject(Store);
+	/** The team chip whose member list is open, to close it and give focus back to the chip. */
+	private teamList: { popover: NbPopoverDirective; trigger: HTMLElement } | null = null;
+	/** Numbers each team's member list, so focus goes to the list of the chip that opened it. */
+	private static teamListSequence = 0;
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['record'] || changes['sections']) {
@@ -70,6 +76,53 @@ export class RecordViewComponent implements OnChanges {
 			imageUrl: person.imageUrl
 		} as ISelectedEmployee;
 		this.router.navigate([`/pages/employees/edit/${employee.id}/account`]);
+	}
+
+	/**
+	 * A click on a team chip opens its member list — for touch screens, which have no hover. From the
+	 * keyboard (Enter / Space, a click with no pointer) focus moves into the list: the list renders in an
+	 * overlay at the end of the page, out of the tab order.
+	 */
+	openTeam(event: MouseEvent, popover: NbPopoverDirective, listId: string): void {
+		this.teamList = { popover, trigger: event.currentTarget as HTMLElement };
+		popover.show();
+		if (event.detail === 0) {
+			// The list renders on the next tick, in the overlay. Only this team's list: another team's may still
+			// be open. Its first member, or the list itself when no member opens a profile.
+			setTimeout(() => {
+				const list = document.querySelector<HTMLElement>(`[data-team-list="${listId}"]`);
+				(list?.querySelector<HTMLElement>('button.record-team-member') ?? list)?.focus();
+			});
+		}
+	}
+
+	/** Leaving a team chip closes its list, unless focus went into that list. */
+	onTeamBlur(event: FocusEvent, popover: NbPopoverDirective): void {
+		if (RecordViewComponent.isInTeamList(event.relatedTarget)) return;
+		popover.hide();
+	}
+
+	/** Focus leaving the member list, other than back to its chip, closes it. */
+	onTeamListFocusOut(event: FocusEvent): void {
+		const target = event.relatedTarget;
+		if (RecordViewComponent.isInTeamList(target) || target === this.teamList?.trigger) return;
+		this.closeTeamList(false);
+	}
+
+	/** Escape closes the member list and gives focus back to its chip. */
+	onTeamListEscape(): void {
+		this.closeTeamList(true);
+	}
+
+	private closeTeamList(refocus: boolean): void {
+		const list = this.teamList;
+		this.teamList = null;
+		list?.popover.hide();
+		if (refocus) list?.trigger.focus();
+	}
+
+	private static isInTeamList(target: EventTarget | null): boolean {
+		return target instanceof Element && !!target.closest('.record-team-popover');
 	}
 
 	/**
@@ -113,13 +166,19 @@ export class RecordViewComponent implements OnChanges {
 				row.isEmpty = row.people.length === 0;
 				break;
 			case 'teams':
-				// Team objects or plain names — the two shapes the grid's teams cell accepts.
+				// Team objects or plain names — the two shapes the grid's teams cell accepts. A team's members
+				// (team-employee rows, each carrying its employee) are listed on hover over its chip.
 				row.teams = (Array.isArray(value) ? value : [])
-					.map((team: any) =>
-						typeof team === 'string'
-							? { name: team, count: 0 }
-							: { name: team?.name, count: team?.members?.length || 0 }
-					)
+					.map((team: any) => {
+						const listId = `record-team-${++RecordViewComponent.teamListSequence}`;
+						if (typeof team === 'string') {
+							return { name: team, count: 0, members: [], listId };
+						}
+						const members = (team?.members || [])
+							.map((member: any) => RecordViewComponent.toPerson(member?.employee || member))
+							.filter(Boolean);
+						return { name: team?.name, count: team?.members?.length || 0, members, listId };
+					})
 					.filter((team) => !!team.name);
 				row.isEmpty = row.teams.length === 0;
 				break;

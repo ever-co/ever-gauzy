@@ -1,12 +1,23 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, inject, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { GA_MENU_ALWAYS_EXPANDED } from '@gauzy/ui-core/core';
 
 @Component({
 	selector: 'gauzy-workspace-menu',
 	templateUrl: './workspace-menu.component.html',
 	styleUrls: ['./workspace-menu.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	// The panel's nav menus are full-width lists, so they must not follow the menu sidebar
+	// into its collapsed icon rail.
+	providers: [{ provide: GA_MENU_ALWAYS_EXPANDED, useValue: true }],
 	standalone: false
 })
 export class WorkspaceMenuComponent implements OnInit, OnDestroy {
+	private readonly _router = inject(Router);
+	private readonly _destroyRef = inject(DestroyRef);
+
 	@Output()
 	public close: EventEmitter<void> = new EventEmitter<void>();
 
@@ -26,6 +37,20 @@ export class WorkspaceMenuComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {
 		this.armTimer = setTimeout(() => (this.armed = true));
+
+		// Close once the page picked from the panel has loaded. Its links are INSIDE the panel, so
+		// `gauzyOutside` never dismisses it, and it used to stay open over the new page. Compared on
+		// the path only: pages that rewrite their own query params (the dashboard's date range, for
+		// one) emit NavigationEnd too, and that must not close a panel the user just opened.
+		const pathOf = (url: string) => url.split(/[?#]/)[0];
+		const openedOn = pathOf(this._router.url);
+		this._router.events
+			.pipe(
+				filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+				filter((event) => pathOf(event.urlAfterRedirects) !== openedOn),
+				takeUntilDestroyed(this._destroyRef)
+			)
+			.subscribe(() => this.onClick());
 	}
 
 	ngOnDestroy(): void {

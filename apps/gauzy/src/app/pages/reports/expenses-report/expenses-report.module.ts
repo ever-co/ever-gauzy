@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { NbIconModule, NbSpinnerModule, NbCardModule, NbSelectModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	ExpenseCategorySelectModule,
 	ExpensesReportGridModule,
@@ -15,7 +15,7 @@ import { ExpensesReportComponent } from './expenses-report/expenses-report.compo
 	declarations: [ExpensesReportComponent],
 	imports: [
 		ExpensesReportRoutingModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		NbIconModule,
 		NbSpinnerModule,

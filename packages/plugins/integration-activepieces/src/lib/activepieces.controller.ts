@@ -16,17 +16,31 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
-import { Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
+import { PermissionGuard, Permissions, TenantPermissionGuard, UUIDValidationPipe } from '@gauzy/core';
 import { ActivepiecesService } from './activepieces.service';
-import { CreateActivepiecesIntegrationDto, SetupActivepiecesIntegrationDto, ActivepiecesConnectionsListQueryDto } from './dto';
+import {
+	CreateActivepiecesIntegrationDto,
+	SetupActivepiecesIntegrationDto,
+	ActivepiecesConnectionsListQueryDto,
+	SetActivepiecesConnectionModeDto
+} from './dto';
 import {
 	IActivepiecesConnection,
+	IActivepiecesConnectionModeStatus,
 	IActivepiecesConnectionsListResponse
 } from '@gauzy/contracts';
 
+/**
+ * `TenantPermissionGuard` asks only whether ANY role of the tenant holds the permission a route states;
+ * `PermissionGuard` is what asks it of the caller's own role. With the tenant guard alone, every
+ * `@Permissions` below let any authenticated member of the tenant through (VIEWER, EMPLOYEE, CANDIDATE),
+ * while the `INTEGRATION_*` grants belong to ADMIN and SUPER_ADMIN by default.
+ */
 @ApiTags('ActivePieces Integration')
 @ApiBearerAuth()
-@UseGuards(TenantPermissionGuard)
+// `TenantPermissionGuard` asks only whether some role of the tenant holds a permission; `PermissionGuard` is what
+// checks the caller's own role against the `@Permissions` below, as the other integration controllers do.
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('/integration/activepieces')
 export class ActivepiecesController {
 	private readonly logger = new Logger(ActivepiecesController.name);
@@ -57,6 +71,72 @@ export class ActivepiecesController {
 			}
 			this.logger.error('Failed to set up ActivePieces integration', { message: error?.message, stack: error?.stack });
 			throw new HttpException('Failed to set up ActivePieces integration', HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	/**
+	 * How the tenant reaches Activepieces: the mode it chose, the mode in use, the modes available, its project.
+	 */
+	@ApiOperation({ summary: 'Get how the tenant reaches ActivePieces (connection mode)' })
+	@ApiResponse({
+		status: 200,
+		description: 'The connection mode chosen and in use, the modes available and the pinned project. Never a key.'
+	})
+	@Get('/connection-mode')
+	@Permissions(PermissionsEnum.INTEGRATION_VIEW)
+	async getConnectionMode(@Query('organizationId') organizationId?: string): Promise<IActivepiecesConnectionModeStatus> {
+		try {
+			return await this.activepiecesService.getConnectionModeStatus(this.optionalId(organizationId));
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			this.logger.error('Failed to get ActivePieces connection mode', { message: error?.message, stack: error?.stack });
+			throw new HttpException('Failed to get ActivePieces connection mode', HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	/**
+	 * Chooses how the tenant reaches Activepieces: its own key, a project token, or the installation's key pinned to
+	 * the tenant's own project, or `auto` (the first available, in that order).
+	 */
+	@ApiOperation({ summary: 'Choose how the tenant reaches ActivePieces (connection mode)' })
+	@ApiResponse({ status: 201, description: 'The connection mode saved' })
+	@ApiResponse({ status: 400, description: 'The mode is not available on this installation, or to this tenant' })
+	@Post('/connection-mode')
+	@Permissions(PermissionsEnum.INTEGRATION_EDIT)
+	@UsePipes(new ValidationPipe({ whitelist: true, transform: true }))
+	async setConnectionMode(@Body() input: SetActivepiecesConnectionModeDto): Promise<IActivepiecesConnectionModeStatus> {
+		try {
+			return await this.activepiecesService.setConnectionMode(input.mode, input.organizationId);
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			this.logger.error('Failed to set ActivePieces connection mode', { message: error?.message, stack: error?.stack });
+			throw new HttpException('Failed to set ActivePieces connection mode', HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	/**
+	 * Connects the tenant's own Activepieces project now (project-token and platform-project modes), instead of at its
+	 * first call, and answers its id.
+	 */
+	@ApiOperation({ summary: "Connect the tenant's own ActivePieces project" })
+	@ApiResponse({ status: 201, description: 'The mode in use and the tenant project id (none with its own key)' })
+	@Post('/project')
+	@Permissions(PermissionsEnum.INTEGRATION_ADD)
+	async connectProject(
+		@Query('organizationId') organizationId?: string
+	): Promise<{ mode: string; projectId: string | null }> {
+		try {
+			return await this.activepiecesService.connectTenantProject(this.optionalId(organizationId));
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			this.logger.error('Failed to connect the ActivePieces project', { message: error?.message, stack: error?.stack });
+			throw new HttpException('Failed to connect the ActivePieces project', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -241,5 +321,13 @@ export class ActivepiecesController {
 			throw new HttpException(
 				'Failed to get ActivePieces integration tenant', HttpStatus.INTERNAL_SERVER_ERROR);
 		}
+	}
+
+	/**
+	 * An optional id from the query: trimmed, absent when empty. Only ever matched against the tenant's own rows.
+	 */
+	private optionalId(value?: string): string | undefined {
+		const trimmed = typeof value === 'string' ? value.trim() : '';
+		return trimmed || undefined;
 	}
 }

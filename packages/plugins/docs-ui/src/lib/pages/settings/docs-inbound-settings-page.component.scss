@@ -1,44 +1,104 @@
+// Settings > Inbound email, on the same scale as the other Settings pages (File Storage,
+// Custom SMTP, Anonymous usage statistics): a card surface, 12px body, hairline panels with a
+// quiet header, label | value rows, monospace wells for addresses and DNS values, small buttons.
+//
+// Every custom property carries a fallback — `--gauzy-*` is undefined in the material themes.
+// Font sizes are set on each text element: the theme's global paragraph rule (~15px) beats a
+// size inherited from a container.
+$border: var(--gauzy-border-default-color, var(--divider-color, rgba(126, 126, 143, 0.24)));
+$divider: 1px solid $border;
+$hairline: inset 0 0 0 1px $border;
+$muted: var(--text-hint-color, rgba(126, 126, 143, 1));
+$radius: var(--gauzy-radius-sm, 0.5rem);
+$tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.08));
+$mono: var(--font-family-monospace, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+
 :host {
 	display: block;
 }
 
+// The page frame: the card surface every other Settings page sits on.
 .docs-inbound {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
-	padding: 1rem;
 	min-height: 12rem;
+	padding: 1rem 1.25rem 1.25rem;
+	border-radius: var(--card-border-radius, 0.5rem);
+	background-color: var(--gauzy-card-2, var(--card-background-color));
+	font-size: 0.75rem;
+	line-height: 1.125rem;
 }
 
+// Was a 24px h4 over a 15px paragraph.
 .docs-inbound-header {
 	h4 {
 		margin: 0;
+		font-size: 1rem;
+		font-weight: 600;
+		line-height: 1.5rem;
+	}
+
+	.muted {
+		margin-top: 0.125rem;
+		max-width: 60rem;
 	}
 }
 
 .muted {
-	color: var(--text-hint-color);
 	margin: 0;
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	color: $muted;
 }
 
 .hint {
-	color: var(--text-hint-color);
+	margin-top: 0.375rem;
 	font-size: 0.75rem;
-	margin-top: 0.25rem;
+	line-height: 1.125rem;
+	color: $muted;
 
 	&.warn {
 		color: var(--text-warning-color);
 	}
 }
 
+// Field label: File Storage's section-title style.
 .label {
 	display: block;
-	margin-bottom: 0.25rem;
+	margin-bottom: 0.375rem;
+	font-size: 0.6875rem;
 	font-weight: 600;
+	line-height: 1rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: $muted;
 }
 
+// ── Panels ──────────────────────────────────────────────────────────────
+// Transparent, drawn by their hairline; no fill of their own, no shadow.
 .docs-inbound-card {
 	margin: 0;
+	border: 0;
+	border-radius: $radius;
+	background-color: transparent;
+	box-shadow: $hairline;
+
+	nb-card-header {
+		padding: 0.75rem 1rem 0.625rem;
+		border-bottom: $divider;
+		background-color: transparent;
+		font-size: 0.875rem;
+		font-weight: 600;
+		line-height: 1.25rem;
+	}
+
+	nb-card-body {
+		padding: 0.875rem 1rem 1rem;
+		background-color: transparent;
+		font-size: 0.75rem;
+		line-height: 1.125rem;
+	}
 }
 
 .docs-inbound-card-header {
@@ -48,12 +108,33 @@
 	gap: 0.75rem;
 }
 
+// Unsupported / load error / capture switched off: one line with its icon, not a full card.
 .docs-inbound-notice {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
+
+	nb-icon {
+		flex: 0 0 auto;
+		font-size: 1rem;
+	}
+
+	button[nbButton] {
+		margin-inline-start: auto;
+	}
 }
 
+// ── Buttons ─────────────────────────────────────────────────────────────
+button[nbButton] {
+	margin: 0;
+	text-transform: none;
+
+	nb-icon {
+		font-size: 1rem;
+	}
+}
+
+// ── Address ─────────────────────────────────────────────────────────────
 .docs-inbound-address-row {
 	display: flex;
 	align-items: center;
@@ -61,11 +142,17 @@
 	flex-wrap: wrap;
 }
 
+// The address itself: a monospace well, as the copied value reads.
 .docs-inbound-address {
-	padding: 0.375rem 0.5rem;
-	border: 1px solid var(--divider-color);
-	border-radius: 0.25rem;
-	font-size: 0.875rem;
+	padding: 0.375rem 0.625rem;
+	border: 0;
+	border-radius: $radius;
+	background: $tint;
+	box-shadow: $hairline;
+	font-family: $mono;
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	color: var(--text-basic-color);
 	// An address can be long; wrap it rather than pushing the copy button off the card.
 	overflow-wrap: anywhere;
 }
@@ -75,13 +162,14 @@
  * overlaying a host element — this reads inline, next to the address it describes.
  */
 .docs-inbound-status {
-	padding: 0.125rem 0.5rem;
-	border-radius: 0.75rem;
-	font-size: 0.6875rem;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.02em;
+	padding: 0.0625rem 0.5rem;
 	border: 1px solid currentColor;
+	border-radius: 0.75rem;
+	font-size: 0.625rem;
+	font-weight: 600;
+	line-height: 1rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
 
 	&.is-success {
 		color: var(--text-success-color);
@@ -96,72 +184,123 @@
 	}
 }
 
+// One custom domain per block, ruled apart.
 .docs-inbound-domain {
 	padding: 1rem 0;
 
+	&:last-child {
+		padding-bottom: 0;
+	}
+
 	& + & {
-		border-top: 1px solid var(--divider-color);
+		border-top: $divider;
 	}
 }
 
+// ── DNS verification ────────────────────────────────────────────────────
+// A tinted hairline well: the record to publish, then where verification stands.
 .docs-inbound-verification {
 	margin-top: 1rem;
-	padding: 0.75rem;
-	border: 1px solid var(--divider-color);
-	border-radius: 0.25rem;
+	padding: 0.75rem 1rem;
+	border: 0;
+	border-radius: $radius;
+	background: $tint;
+	box-shadow: $hairline;
+
+	> button[nbButton] {
+		margin-top: 0.75rem;
+	}
 }
 
 .docs-inbound-record {
 	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 0.25rem 1rem;
-	margin: 0 0 0.5rem;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	gap: 0.375rem 1rem;
+	margin: 0 0 0.25rem;
 
 	dt {
-		color: var(--text-hint-color);
-		font-size: 0.75rem;
+		font-size: 0.6875rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
 		text-transform: uppercase;
+		color: $muted;
 	}
 
 	dd {
 		display: flex;
 		align-items: center;
-		gap: 0.375rem;
-		margin: 0;
+		gap: 0.25rem;
 		min-width: 0;
+		margin: 0;
+		font-weight: 400;
 
 		code {
-			font-size: 0.8125rem;
+			font-family: $mono;
+			font-size: 0.6875rem;
+			color: var(--text-basic-color);
 			overflow-wrap: anywhere;
 		}
 	}
 }
 
+// Counts and dates: label | value, labels in the hint colour, values regular weight.
 .docs-inbound-meta {
 	display: grid;
-	grid-template-columns: auto 1fr;
+	grid-template-columns: minmax(7rem, max-content) minmax(0, 1fr);
 	gap: 0.25rem 1rem;
 	margin: 0.75rem 0 0;
 
 	dt {
-		color: var(--text-hint-color);
+		font-weight: 400;
+		color: $muted;
 	}
 
 	dd {
 		margin: 0;
+		font-weight: 400;
+		font-variant-numeric: tabular-nums;
+		color: var(--text-basic-color);
 	}
 }
 
+// ── Shared controls: allowlist, body import, active ─────────────────────
+// Each control is a block ruled off from the one above it.
 .docs-inbound-controls {
 	margin-top: 1rem;
+	border-top: $divider;
 }
 
+.docs-inbound-allowlist,
 .docs-inbound-row {
-	margin-top: 1rem;
+	margin: 0;
+	padding: 0.875rem 0 0;
 }
 
-.docs-inbound-allowlist {
-	margin-top: 1rem;
+.docs-inbound-row + .docs-inbound-row {
+	padding-top: 0.75rem;
+}
+
+// The dark themes give an OFF switch `color-basic-transparent-default` (~8%), which all but
+// vanishes on the dark panel — the same fix as Settings > Roles & Permissions. Gauzy Light
+// already sets a solid grey track and is left alone.
+@each $dark in (gauzy-dark, dark, cosmic, material-dark) {
+	:host-context(.nb-theme-#{$dark}) .docs-inbound-row nb-toggle {
+		--toggle-basic-background-color: rgba(255, 255, 255, 0.16);
+		--toggle-basic-border-color: rgba(255, 255, 255, 0.24);
+		--toggle-basic-hover-background-color: rgba(255, 255, 255, 0.22);
+		--toggle-basic-hover-border-color: rgba(255, 255, 255, 0.32);
+		--toggle-basic-focus-background-color: rgba(255, 255, 255, 0.22);
+		--toggle-basic-focus-border-color: rgba(255, 255, 255, 0.32);
+		--toggle-basic-disabled-background-color: rgba(255, 255, 255, 0.08);
+		--toggle-basic-disabled-border-color: rgba(255, 255, 255, 0.14);
+	}
+}
+
+.docs-inbound-row nb-toggle ::ng-deep .text {
+	font-size: 0.75rem;
+	font-weight: 500;
+	line-height: 1.125rem;
 }
 
 .docs-inbound-chips {
@@ -174,13 +313,16 @@
 .docs-inbound-chip {
 	display: inline-flex;
 	align-items: center;
-	gap: 0.25rem;
-	padding: 0.125rem 0.25rem 0.125rem 0.5rem;
-	border: 1px solid var(--divider-color);
+	gap: 0.125rem;
+	padding: 0 0.125rem 0 0.5rem;
+	border: 0;
 	border-radius: 1rem;
+	box-shadow: $hairline;
 
 	code {
-		font-size: 0.8125rem;
+		font-family: $mono;
+		font-size: 0.6875rem;
+		color: var(--text-basic-color);
 	}
 }
 
@@ -193,13 +335,28 @@
 	input {
 		flex: 1 1 16rem;
 		min-width: 12rem;
+		height: 2rem;
+		// The global `input` rule sets a ~2.375rem min-height that out-lasts `height`.
+		min-height: 2rem;
+		font-size: 0.75rem;
+		font-weight: 400;
+
+		// Nebular sizes the placeholder separately (~15px); match the value text.
+		&::placeholder {
+			font-size: inherit;
+		}
 	}
 }
 
+// ── Rotate (address / secret) ───────────────────────────────────────────
 .docs-inbound-danger {
-	margin-top: 1.5rem;
-	padding-top: 1rem;
-	border-top: 1px solid var(--divider-color);
+	margin-top: 1rem;
+	padding-top: 0.875rem;
+	border-top: $divider;
+
+	.hint {
+		margin-top: 0.5rem;
+	}
 }
 
 .docs-inbound-confirm {

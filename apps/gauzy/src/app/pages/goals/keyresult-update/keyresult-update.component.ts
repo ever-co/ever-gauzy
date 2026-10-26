@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import {
@@ -18,6 +18,7 @@ import { Store } from '@gauzy/ui-core/core';
     selector: 'ga-keyresult-update',
     templateUrl: './keyresult-update.component.html',
     styleUrls: ['./keyresult-update.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class KeyResultUpdateComponent extends TranslationBaseComponent implements OnInit {
@@ -67,10 +68,14 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent implement
 	}
 
 	async getKPI() {
+		// The key result's own KPI, the one the server judges a KPI report by; the organization's last KPI stood in
+		// for it before, and still does for a key result that names none
 		await this.goalSettingsService
-			.getAllKPI({
-				organization: { id: this.store.selectedOrganization.id }
-			})
+			.getAllKPI(
+				this.keyResult.kpiId
+					? { id: this.keyResult.kpiId }
+					: { organization: { id: this.store.selectedOrganization.id } }
+			)
 			.then((kpi) => {
 				const { items } = kpi;
 				this.KPI = items.pop();
@@ -99,6 +104,9 @@ export class KeyResultUpdateComponent extends TranslationBaseComponent implement
 			}
 		}
 		this.keyResult.status = this.keyResultUpdateForm.value.newStatus;
+		// Filing the update is the whole report: the server applies it to the key result and its goal (owner
+		// decision 2(a), 2026-10-23) and computes the progress itself. The values above only keep the page current
+		// until it re-reads.
 		try {
 			// The endpoint validates against `TenantOrganizationBaseDTO`, which requires the tenancy
 			// fields — without them the POST is rejected and the dialog can never be dismissed.

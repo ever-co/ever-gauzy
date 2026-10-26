@@ -12,7 +12,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { MomentModule } from 'ngx-moment';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { DialogsModule } from '../../../dialogs/dialogs.module';
 import { TableComponentsModule } from '../../../table-components';
 import { GalleryModule } from '../../../gallery/gallery.module';
@@ -36,7 +36,7 @@ import { ScreenshotsItemComponent } from './screenshots-item.component';
 		NbProgressBarModule,
 		NbTooltipModule,
 		MomentModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		DialogsModule,
 		GalleryModule,

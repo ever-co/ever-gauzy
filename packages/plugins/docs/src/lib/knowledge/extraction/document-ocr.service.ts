@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import * as sharp from 'sharp';
+import * as sharpModule from 'sharp';
 import { ID } from '@gauzy/contracts';
 import { getDocsConfig } from '../../docs.config';
 import { DocsAiService, IResolvedChatModel } from '../ai/docs-ai.service';
@@ -7,6 +7,11 @@ import { DocsTransientError } from '../errors';
 import { IDocumentExtractionContext, IDocumentOcrProvenance } from './extractor.interface';
 import { buildOcrCapNote, buildOcrPageFailureNote, OCR_MAX_OUTPUT_TOKENS, OCR_SYSTEM_PROMPT, OCR_USER_PROMPT } from './ocr.prompt';
 import { PdfRasterizerService } from './pdf-rasterizer.service';
+
+// sharp 0.35 types its entry point as an ES module (a default export), while `require('sharp')` still returns the
+// function itself: take whichever this runtime hands back.
+const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
+	sharpModule) as unknown as typeof sharpModule.default;
 
 /** Longest side an image is downscaled to before it is sent to the model (07 §4 row 8). */
 export const OCR_IMAGE_MAX_PX = 2000;

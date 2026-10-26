@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Input, OnDestroy, ChangeDetectorRef, TemplateRef } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, OnDestroy, ChangeDetectorRef, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Data, ParamMap, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import {
@@ -48,6 +48,7 @@ import { BaseEntityEnum } from '@gauzy/contracts';
 	selector: 'ngx-contacts-list',
 	templateUrl: './contacts.component.html',
 	styleUrls: ['./contacts.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ContactsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

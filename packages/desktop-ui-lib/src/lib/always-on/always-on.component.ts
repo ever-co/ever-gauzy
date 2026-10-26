@@ -1,4 +1,4 @@
-import { Component, NgZone, OnDestroy, OnInit, Inject, Renderer2, HostBinding, HostListener } from '@angular/core';
+import { Component, NgZone, OnDestroy, OnInit, Inject, Renderer2, HostBinding, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import {
 	NbIconLibraries,
 	NbLayoutModule,
@@ -22,6 +22,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 	selector: 'gauzy-always-on',
 	templateUrl: './always-on.component.html',
 	styleUrls: ['./always-on.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		NbLayoutModule,
 		NbCardModule,

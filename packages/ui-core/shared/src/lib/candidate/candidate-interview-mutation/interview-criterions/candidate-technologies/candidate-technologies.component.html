@@ -3,7 +3,7 @@
 	heading="CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK"
 	placeholder="FORM.PLACEHOLDERS.ADD_TECHNOLOGY"
 	emptyText="CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_PLACEHOLDER"
-	[group]="form ? technologies?.at(0) : null"
+	[group]="form ? $safeNavigationMigration(technologies?.at(0)) : null"
 	[items]="technologiesList"
 	[existedNames]="existedTechNames"
 	(save)="save()"

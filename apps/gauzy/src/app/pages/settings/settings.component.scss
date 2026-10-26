@@ -7,11 +7,13 @@
 }
 
 // Two-column settings shell: narrow settings menu | selected page content.
+// `min-height`, not `height`: the shell must grow with long pages, or the sticky menu
+// below is released as soon as the first viewport of content scrolls past.
 .settings-shell {
 	display: flex;
 	align-items: flex-start;
 	gap: 1rem;
-	height: 100%;
+	min-height: 100%;
 }
 
 .settings-nav {
@@ -21,6 +23,12 @@
 	background-color: nb-theme(gauzy-card-2);
 	border-radius: nb-theme(border-radius);
 	padding: 0.75rem 0.5rem;
+
+	// Stays in view while the page column scrolls; scrolls itself on short viewports.
+	position: sticky;
+	top: 0;
+	max-height: calc(100vh - 9rem);
+	overflow-y: auto;
 }
 
 .settings-nav-title {
@@ -108,16 +116,33 @@
 	height: 100%;
 }
 
+// A page that fills the content area and scrolls inside itself (the template editors)
+// marks its host `settings-page-fill`. `min-height` alone leaves the shell's height
+// indefinite, so the page's `height: 100%` resolved to its content and it overflowed
+// the column; for such a page the shell takes the column's exact height instead. Long
+// pages keep `min-height` and grow, which is what keeps the sticky menu in view.
+.settings-shell:has(> .settings-content > .settings-page-fill) {
+	height: 100%;
+}
+
 @include respond(md) {
 	.settings-shell {
 		flex-direction: column;
 	}
 
 	.settings-nav {
+		position: static;
 		width: 100%;
+		max-height: none;
 	}
 
 	.settings-content {
 		width: 100%;
+	}
+
+	// Stacked under the menu, a fill page takes what the menu leaves.
+	.settings-shell:has(> .settings-content > .settings-page-fill) > .settings-content {
+		flex: 1 1 0;
+		min-height: 0;
 	}
 }

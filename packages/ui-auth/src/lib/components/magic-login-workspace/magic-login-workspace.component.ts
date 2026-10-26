@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { EMPTY, firstValueFrom } from 'rxjs';
 import { catchError, filter, tap } from 'rxjs/operators';
@@ -12,6 +12,7 @@ import { AuthService, ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 	selector: 'ngx-magic-sign-in-workspace',
 	templateUrl: './magic-login-workspace.component.html',
 	styleUrls: ['./magic-login-workspace.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class NgxMagicSignInWorkspaceComponent implements OnInit {

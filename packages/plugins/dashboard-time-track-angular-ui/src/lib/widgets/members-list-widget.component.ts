@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, Signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, type Signal } from '@angular/core';
 import { NbBadgeModule, NbComponentStatus } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { IMembersStatistics } from '@gauzy/contracts';
@@ -38,7 +38,7 @@ interface IMemberRow extends IMembersStatistics {
 	templateUrl: './members-list-widget.component.html',
 	styleUrls: ['./time-track-list-widget.scss'],
 	standalone: true,
-	imports: [NbBadgeModule, TranslateModule, ComponentsModule, DurationFormatPipe, TimeTrackWidgetStateComponent],
+	imports: [NbBadgeModule, TranslatePipe, ComponentsModule, DurationFormatPipe, TimeTrackWidgetStateComponent],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MembersListWidgetComponent extends BaseTimeTrackListWidgetComponent<IMemberRow> {

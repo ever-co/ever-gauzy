@@ -102,9 +102,13 @@
   padding-top: 0;
 }
 
+// No `-webkit-app-region: drag` on `body` (or `html`): since Electron 44 (Chromium 152) the property is
+// inherited, so every element of the window became a drag handle and Windows/macOS/Linux took each click as
+// a click on the title bar; the whole timer stopped reacting to the mouse. Up to Electron 38 the rule was
+// harmless only because custom-electron-titlebar moves the page into an absolutely positioned
+// `.cet-container`, leaving `body` 0 px high. Moving the window is left to the title bar's own drag region.
 ::ng-deep body {
   overflow: hidden !important;
-  -webkit-app-region: drag;
 }
 
 .top-space {

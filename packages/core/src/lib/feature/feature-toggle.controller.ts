@@ -1,7 +1,7 @@
 import { BadRequestException, Body, Controller, Get, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { FeatureInterface } from 'unleash-client/lib/feature';
+import { EnhancedFeatureInterface } from 'unleash-client/lib/feature';
 import { getFeatureToggleDefinitions } from 'unleash-client';
 import { FeatureEnum, IFeature, IFeatureOrganization, IPagination, PermissionsEnum } from '@gauzy/contracts';
 import { Public } from '@gauzy/common';
@@ -31,7 +31,8 @@ export class FeatureToggleController {
 	@Get('/definition')
 	@Public()
 	async getFeatureToggleDefinitions() {
-		let featureToggles: FeatureInterface[] = [];
+		// unleash-client 6 answers its enhanced definitions (or undefined before the first fetch).
+		let featureToggles: EnhancedFeatureInterface[] = [];
 
 		// load toggles definitions from Unleash if it's enabled
 		if (unleashConfig.url) {
@@ -40,7 +41,7 @@ export class FeatureToggleController {
 			// only support gauzy feature and removed other
 			const featureEnums: string[] = Object.values(FeatureEnum);
 			if (featureToggles) {
-				featureToggles = featureToggles.filter((toggle: FeatureInterface) =>
+				featureToggles = featureToggles.filter((toggle: EnhancedFeatureInterface) =>
 					featureEnums.includes(toggle.name)
 				);
 			}

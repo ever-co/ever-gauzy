@@ -154,3 +154,59 @@ describe('EmailService.emailVerification', () => {
 		expect(options.message.headers).toEqual({ 'X-PM-TrackLinks': 'None' });
 	});
 });
+
+/**
+ * The verification notice may only say "we sent you a link" when a working one went out: the status
+ * endpoint looks at the LATEST verification email to the user's current address inside the link's
+ * validity window, and counts it only if the provider accepted it. Each attempt replaces the stored
+ * token and code before sending, so a failed resend leaves no working link even after an earlier
+ * successful one.
+ */
+describe('EmailService.hasSentVerificationEmail', () => {
+	function makeLookupService(findOne: () => Promise<{ status?: EmailStatusEnum } | null>) {
+		const historyRepository = { findOne: jest.fn(findOne) };
+		const service = new EmailService(historyRepository as any, {} as any, {} as any, {} as any);
+		return { service, historyRepository };
+	}
+
+	beforeEach(() => {
+		jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('reads the newest verification email to this user and address since the given time', async () => {
+		const { service, historyRepository } = makeLookupService(async () => ({ status: EmailStatusEnum.SENT }));
+		const since = new Date('2026-09-28T10:00:00Z');
+
+		await expect(service.hasSentVerificationEmail('user-1', 'jane@corp.co', since)).resolves.toBe(true);
+
+		const [{ where, order }] = historyRepository.findOne.mock.calls[0] as unknown as [{ where: any; order: any }];
+		expect(where.userId).toBe('user-1');
+		expect(where.email).toBe('jane@corp.co');
+		expect(where.emailTemplate).toEqual({ name: 'email-verification/html' });
+		// Any status: the newest attempt decides, so a FAILED resend must be able to win.
+		expect(where.status).toBeUndefined();
+		// MoreThanOrEqual(since): a FindOperator carrying the window start.
+		expect(where.createdAt.type).toBe('moreThanOrEqual');
+		expect(where.createdAt.value).toBe(since);
+		expect(order).toEqual({ createdAt: 'DESC' });
+	});
+
+	it('answers false when the newest attempt failed, even if an earlier one was sent', async () => {
+		const { service } = makeLookupService(async () => ({ status: EmailStatusEnum.FAILED }));
+		await expect(service.hasSentVerificationEmail('user-1', 'jane@corp.co', new Date())).resolves.toBe(false);
+	});
+
+	it('answers false when no verification email exists in the window (control)', async () => {
+		const { service } = makeLookupService(async () => null);
+		await expect(service.hasSentVerificationEmail('user-1', 'jane@corp.co', new Date())).resolves.toBe(false);
+	});
+
+	it('answers false instead of throwing when the history cannot be read', async () => {
+		const { service } = makeLookupService(async () => {
+			throw new Error('db down');
+		});
+		await expect(service.hasSentVerificationEmail('user-1', 'jane@corp.co', new Date())).resolves.toBe(false);
+	});
+});

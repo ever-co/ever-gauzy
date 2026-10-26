@@ -73,7 +73,7 @@
 				<div class="panel-heading">
 					<h6>{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.REVIEW_TITLE' | translate }}</h6>
 					<p>
-						{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.REVIEW_HINT' | translate: { organization: organization?.name } }}
+						{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.REVIEW_HINT' | translate: { organization: $safeNavigationMigration(organization?.name) } }}
 					</p>
 				</div>
 				<ng-container *ngTemplateOutlet="employeeList"></ng-container>
@@ -98,7 +98,7 @@
 					nbButton
 					status="primary"
 					size="small"
-					[disabled]="userBasicInfo?.form?.invalid"
+					[disabled]="$safeNavigationMigration(userBasicInfo?.form?.invalid)"
 					(click)="stepper.next()"
 				>
 					{{ 'EMPLOYEES_PAGE.ADD_EMPLOYEES.CONTINUE' | translate }}

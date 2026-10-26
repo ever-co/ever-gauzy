@@ -265,6 +265,7 @@ export class TaskMetadataService<BaseEntity extends TenantBaseEntity> extends Te
 		const items = await this.createKnexQueryBuilder(this.knexConnection).modify(
 			(qb: KnexConnection.QueryBuilder<any, any>) => {
 				qb.where('isSystem', true);
+				qb.whereNull('deletedAt');
 				qb.whereNull('tenantId');
 				qb.whereNull('organizationId');
 				qb.whereNull('projectId');
@@ -282,6 +283,8 @@ export class TaskMetadataService<BaseEntity extends TenantBaseEntity> extends Te
 	 * @param request - Filter parameters.
 	 */
 	getFilterQueryByKnex(qb: KnexConnection.QueryBuilder<any, any>, request: TaskMetadataFindInput) {
+		// Raw Knex has no soft-delete filter: exclude soft-deleted rows as the TypeORM / MikroORM paths do
+		qb.whereNull('deletedAt');
 		for (const [column, value] of this.getScopeFilters(request)) {
 			if (value !== null) {
 				qb.where(column, value);

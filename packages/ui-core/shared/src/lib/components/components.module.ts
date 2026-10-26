@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { NbBadgeModule, NbButtonModule, NbCardModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AlertModalComponent } from './alert-modal/alert-modal.component';
 import { AvatarComponent } from './avatar/avatar.component';
 import { BackNavigationComponent } from './back-navigation/back-navigation.component';
@@ -42,7 +42,7 @@ export const Components = [
 		NbTooltipModule,
 		NbIconModule,
 		PipesModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild()
 	],
 	declarations: [...Components],

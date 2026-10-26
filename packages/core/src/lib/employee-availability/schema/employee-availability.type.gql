@@ -1,0 +1,195 @@
+# The employee availability's object type.
+#
+# An availability row is one recurring window in an employee's week, bounded in time: `dayOfWeek` says
+# which day of the week the window belongs to, `startDate`/`endDate` say between which two instants the
+# arrangement holds, and `startTime`/`endTime` on the slot resource beside this one say what the hours
+# of a particular day are. The three together are what a scheduling surface reads to know whether
+# somebody can be booked.
+#
+# `dayOfWeek` is a whole number from `0` to `6`, and the vocabulary is the delivered one: `0` is Sunday
+# and `6` is Saturday. It is carried as `Int` rather than as an enum because the column is an integer
+# and the delivered validation is a range check on it, so a caller that states a number is stating
+# exactly what the write stores.
+#
+# `availabilityStatus` is carried as its string value rather than declared as a schema enum, and the
+# mapping lives in exactly one place: the column is an `int` mapped through
+# `AvailabilityStatusTransformer` in `employee-availability/pipes/employee-availability-status.pipe.ts`,
+# which turns the stored integer into the vocabulary's own value on the way out and back into the
+# integer on the way in. The vocabulary itself — `AvailabilityStatusEnum` — belongs to the contracts
+# package, which is where the entity's own validation reads it from; declaring it a second time here
+# would claim a value set this domain does not own, and the next domain that needed the same states
+# would collide with this file rather than reuse the vocabulary. The member is therefore the label, and
+# the label is what a filter on it compares against.
+#
+# `employee` is deliberately not a field. The relation is loaded only when a REST caller names it in
+# `relations`, and none of the reads this surface performs names it, so the member would be absent from
+# exactly the rows answered here. What always travels is the foreign key, `employeeId`, and everything
+# about the employee is read from the employee's own surface.
+#
+# The three lifecycle columns are carried because the two lifecycle routes are delivered: `deletedAt`
+# is the whole of what withdrawing writes, and without it the answer to the write that withdrew a row
+# could not say so.
+
+"""
+One recurring window of an employee's availability.
+"""
+type EmployeeAvailability {
+	id: ID!
+	"The instant the arrangement takes effect."
+	startDate: DateTime!
+	"The instant the arrangement stops holding."
+	endDate: DateTime!
+	"""
+	The day of the week the window belongs to, as the delivered vocabulary states it: `0` is Sunday and
+	`6` is Saturday.
+	"""
+	dayOfWeek: Int!
+	"""
+	The employee's state for this window, as `AvailabilityStatusEnum` states it — `Available`, `Partial`
+	or `Unavailable`. The stored column is an integer and the label is what the mapping in
+	`employee-availability-status.pipe.ts` produces; the vocabulary is the contracts package's and is
+	deliberately not redeclared as a schema enum here.
+	"""
+	availabilityStatus: String!
+	"Free-form notes about the window, for example why a partial day is partial."
+	availabilityNotes: String
+	"The employee the window belongs to. Read the employee itself from its own surface."
+	employeeId: ID!
+	tenantId: ID
+	organizationId: ID
+	isActive: Boolean
+	isArchived: Boolean
+	archivedAt: DateTime
+	"When the row was withdrawn, or null while it is live."
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of availability rows.
+"""
+type EmployeeAvailabilityEdge {
+	node: EmployeeAvailability!
+	cursor: String!
+}
+
+"""
+One page of availability rows, with the total the filters select and the boundary cursors.
+"""
+type EmployeeAvailabilityConnection {
+	nodes: [EmployeeAvailability!]!
+	edges: [EmployeeAvailabilityEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields an availability list may be sorted by.
+"""
+enum EmployeeAvailabilitySortField {
+	createdAt
+	updatedAt
+	startDate
+	endDate
+	dayOfWeek
+	availabilityStatus
+}
+
+"""
+The order the availability rows are returned in. At most three keys are accepted.
+"""
+input EmployeeAvailabilitySort {
+	field: EmployeeAvailabilitySortField!
+	direction: SortDirection!
+}
+
+"""
+The fields an availability list may be narrowed by. `and` is the default; `or` requires any of its
+members and `not` excludes the rows that match it.
+
+`dayOfWeek` compares as a whole number, so a range over it is a range over the week as the delivered
+vocabulary numbers it. The two window bounds compare as instants, which is what makes "whose
+arrangement covers next week" a question this input can express. `availabilityStatus` compares as
+text, because the label is the value the row carries by the time the connection sees it.
+"""
+input EmployeeAvailabilityFilter {
+	id: IDFilter
+	startDate: DateTimeFilter
+	endDate: DateTimeFilter
+	dayOfWeek: NumberFilter
+	availabilityStatus: StringFilter
+	availabilityNotes: StringFilter
+	employeeId: IDFilter
+	tenantId: IDFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	archivedAt: DateTimeFilter
+	deletedAt: DateTimeFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [EmployeeAvailabilityFilter!]
+	or: [EmployeeAvailabilityFilter!]
+	not: EmployeeAvailabilityFilter
+}
+
+"""
+What a caller states when it files an availability window.
+
+The three members that make the window are required, because the row is meaningless without them: a day
+of the week, and the two instants the arrangement holds between. `availabilityStatus` is required for the
+same reason — a row whose state is unstated says nothing about whether the employee can be booked — and
+it is stated as the vocabulary's label.
+
+`employeeId` is required because the entity's relation identifier is not nullable: an availability row
+that belongs to nobody is not a row this resource has. It is stated by the caller and then resolved
+against the credential by the delivered service — an actor that is itself an employee and does not hold
+the permission that lets it select one writes its own row, whatever the body said — so the member names
+the employee whose availability is being filed for a caller that may choose, and is answered by the
+credential for one that may not.
+
+`organizationId` is optional, and that is the delivered body's own statement rather than a relaxation:
+the DTO validates the organization against the caller's own memberships whichever way it is named, and
+accepts a body that names the organization by identifier or as an embedded object. The identifier is the
+member this surface carries because it is the one that always travels and the one the write stores;
+the tenant is never a member, because the handler stamps it from the credential.
+"""
+input CreateEmployeeAvailabilityInput {
+	"The day of the week, `0` (Sunday) through `6` (Saturday)."
+	dayOfWeek: Int!
+	"The instant the arrangement takes effect."
+	startDate: DateTime!
+	"The instant the arrangement stops holding."
+	endDate: DateTime!
+	"""
+	The state for this window, as `AvailabilityStatusEnum` states it: `Available`, `Partial` or
+	`Unavailable`.
+	"""
+	availabilityStatus: String!
+	"The employee the window belongs to."
+	employeeId: ID!
+	availabilityNotes: String
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes an availability row that exists.
+
+Every member but the identifier is optional, because the delivered DTO is the create DTO with all of
+its members made optional — and the optionality is a fact about the write rather than a convenience:
+**a member that is absent is left as it is.** The delivered update reads the row under the caller's own
+tenant and then states the columns the caller gave, so a body that omits `endDate` keeps the row's
+existing end date. Stating this here is what keeps a client from reading the create and the update as
+one operation.
+"""
+input UpdateEmployeeAvailabilityInput {
+	id: ID!
+	dayOfWeek: Int
+	startDate: DateTime
+	endDate: DateTime
+	availabilityStatus: String
+	employeeId: ID
+	availabilityNotes: String
+	organizationId: ID
+}

@@ -10,7 +10,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Angular2SmartTableModule } from 'angular2-smart-table';
 import { TaskCacheService } from '../../services';
 import { ProjectSelectorModule } from '../../shared/features/project-selector/project-selector.module';
@@ -35,7 +35,7 @@ import { SearchTermStore } from './search/+state/search-term.store';
 		TaskSelectorModule,
 		ProjectSelectorModule,
 		TeamSelectorModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		Angular2SmartTableModule,
 		NbSpinnerModule,
 		RouterModule.forChild([

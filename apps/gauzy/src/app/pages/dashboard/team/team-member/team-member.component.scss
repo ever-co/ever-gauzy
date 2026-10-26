@@ -1,188 +1,174 @@
-@use 'themes' as *;
+/*
+ * The cells below are this component's own, but the table around them is the
+ * parent's — so the shared sheet's `.data-table td` rules do not reach them.
+ * The same cell chrome is restated here for the `<tr>` host.
+ */
 
-:host {
-  display: block;
+$hairline: 1px solid var(--gauzy-border-default-color);
+
+/* ── Table row ───────────────────────────────────────────────────────────── */
+
+:host(tr) {
+  transition: background-color 0.12s ease-in-out;
 }
 
-nb-card {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  margin: 0;
+:host(tr:hover) {
+  background-color: var(--gauzy-hover-tint);
+}
 
-  nb-card-body {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0 0 0.625rem;
-    border-bottom: 1px solid var(--gauzy-border-default-color);
-    background: transparent;
-    font-size: nb-theme(gauzy-table-font-size);
-    line-height: nb-theme(gauzy-table-line-height);
-    color: var(--gauzy-text-color-2);
-  }
-
-  .row {
-    margin-inline: -0.375rem;
-
-    > [class^='col'],
-    > [class*=' col'] {
-      padding-inline: 0.375rem;
-      min-width: 0;
-    }
-  }
-
-  .user-container {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
+:host(tr) {
+  > td {
+    padding: 0.5rem 0.5rem;
+    border-bottom: $hairline;
+    text-align: start;
+    vertical-align: middle;
     min-width: 0;
 
-    .col-3,
-    .col-9 {
-      width: auto;
-      max-width: none;
-      padding-inline: 0;
+    &:first-child {
+      padding-inline-start: 1rem;
     }
 
-    .col-3 {
-      flex: 0 0 auto;
+    &:last-child {
+      padding-inline-end: 1rem;
     }
 
-    .col-9 {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-  }
-
-  .row:has(.user-container) {
-    flex-wrap: nowrap;
-    align-items: center;
-
-    > .col-5 {
-      flex: 1 1 auto;
-      width: auto;
-      max-width: none;
-      min-width: 0;
-    }
-
-    > .col-7 {
-      flex: 0 1 15rem;
-      width: auto;
-      max-width: none;
-      min-width: 0;
-
-      > .row {
-        flex-wrap: nowrap;
-
-        > .col-7 {
-          flex: 1 1 auto;
-          width: auto;
-          max-width: none;
-          min-width: 2.5rem;
-        }
-
-        > .col-3,
-        > .col-4,
-        > .col-1 {
-          flex: 0 0 auto;
-          width: auto;
-          max-width: none;
-        }
-      }
-    }
-  }
-
-  .dot-column {
-    display: none;
-  }
-}
-
-:host(:last-child) nb-card nb-card-body {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-:host ::ng-deep ngx-avatar.avatar-dashboard.avatar-dashboard {
-  .image-container.image-container {
-    width: 1.5rem;
-
-    img {
-      width: 1.5rem;
-      height: 1.5rem;
-    }
-  }
-
-  .link-text {
-    font-size: nb-theme(gauzy-table-font-size);
-    font-weight: 500;
-    line-height: 1.125rem;
-    color: var(--gauzy-text-color-2) !important;
-
-    &:hover {
-      color: var(--gauzy-text-color-1) !important;
+    &.num {
+      text-align: end;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
   }
 }
 
-:host ::ng-deep nb-progress-bar.size-tiny {
-  .progress-container {
-    height: 0.25rem;
-    border-radius: 0.125rem;
-    background-color: var(--gauzy-hover-tint);
-  }
+:host(tr:last-child) > td {
+  border-bottom: 0;
+}
 
-  .progress-container .progress-value.progress-value {
-    border-radius: 0.125rem;
-    background-color: var(--color-primary-default);
+@media (prefers-reduced-motion: reduce) {
+  :host(tr) {
+    transition: none;
   }
 }
 
-:host ::ng-deep ngx-avatar.report-table.report-table {
-  .inner-wrapper {
-    padding: 0;
-    background-color: transparent;
+/*
+ * Task columns: every column stacks the same lines — one per task, the
+ * "+N more" toggle, then the total — at fixed heights, so a task's title,
+ * time, progress bar and estimate line up across the row.
+ */
+$line-height: 2.25rem;
+
+:host(tr) > td {
+  vertical-align: top;
+}
+
+.col-name {
+  padding-top: 0.625rem;
+}
+
+.member-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.125rem 0.375rem;
+  margin-top: 0.125rem;
+}
+
+.col-lines {
+  font-variant-numeric: tabular-nums;
+}
+
+.line {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: $line-height;
+  min-width: 0;
+
+  .num & {
+    align-items: flex-end;
   }
 
-  .image-container.image-container {
-    width: 1.5rem;
-
-    img {
-      width: 1.5rem;
-      height: 1.5rem;
-    }
-  }
-
-  .link-text {
-    font-size: nb-theme(gauzy-table-font-size);
-    font-weight: 500;
-    line-height: 1.125rem;
-    color: var(--gauzy-text-color-2) !important;
-
-    &:hover {
-      color: var(--gauzy-text-color-1) !important;
-    }
+  &.is-over {
+    color: var(--gauzy-action-danger-text);
   }
 }
 
-.text-right {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  color: var(--gauzy-text-color-2);
+.line--toggle {
+  height: 1.5rem;
 }
 
-:host ::ng-deep nb-badge {
-  position: relative;
-  display: inline-block;
-  padding: 0;
-  background: none;
-  box-shadow: none;
-  border-radius: 0;
-  font-size: nb-theme(text-caption-font-size);
+// The member's day: a hairline above it whenever there are task lines.
+.line--total {
+  height: 2rem;
+  border-top: 1px dashed var(--gauzy-border-default-color);
+
+  &.is-alone {
+    height: $line-height;
+    border-top: 0;
+  }
+}
+
+.total-label {
+  font-size: 0.6875rem;
   font-weight: 500;
-  line-height: 1rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   color: var(--gauzy-text-color-2);
-  white-space: nowrap;
+}
+
+// Bar and percentage on one line.
+.bar-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+
+  .bar-track {
+    flex: 1 1 auto;
+    margin-top: 0;
+  }
+}
+
+.progress-percent {
+  flex: 0 0 2.5rem;
+  text-align: end;
+  font-size: 0.6875rem;
+  color: var(--gauzy-text-color-2);
+
+  &.is-over {
+    color: var(--gauzy-action-danger-text);
+    font-weight: 500;
+  }
+}
+
+.tasks-toggle {
+  align-self: flex-start;
+  margin-inline-start: -0.5rem;
+}
+
+.workday-track {
+  width: 100%;
+}
+
+/* ── Compact line: avatar and name | workday bar | time | activity ───────── */
+
+:host(:not(tr)) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(3rem, 7rem) 5.5rem 3rem;
+  align-items: center;
+  column-gap: 0.75rem;
+  padding: 0.4375rem 1rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+
+  .workday-track {
+    margin: 0;
+    max-width: none;
+  }
+
+  .figure {
+    text-align: end;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
 }

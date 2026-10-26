@@ -18,14 +18,14 @@
 					<ngx-employee-with-links [value]="task?.employees || []"></ngx-employee-with-links>
 				</span>
 				<span class="col">
-					<ngx-date-view [value]="task?.dueDate"></ngx-date-view>
+					<ngx-date-view [value]="$safeNavigationMigration(task?.dueDate)"></ngx-date-view>
 				</span>
 				<span class="col">
 					<ngx-status-view
 						[nbPopover]="contextMenu"
 						nbPopoverTrigger="hover"
 						[rowData]="task"
-						[value]="task?.status"
+						[value]="$safeNavigationMigration(task?.status)"
 						class="mr-2 status-view"
 					></ngx-status-view>
 				</span>

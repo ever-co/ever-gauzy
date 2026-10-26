@@ -4,6 +4,11 @@ import { loadEnv } from './load-env';
 
 async function bootstrap() {
 	loadEnv();
+	// libuv's 4-thread default is shared by DNS, pg SCRAM, bcrypt and fs: see apps/api/src/preload-env.ts. Set
+	// before anything uses the threadpool (everything up to here is synchronous).
+	if (!process.env.UV_THREADPOOL_SIZE) {
+		process.env.UV_THREADPOOL_SIZE = '16';
+	}
 	const { registerPluginConfig } = await import('@gauzy/core');
 	const { plugins } = await import('./plugins');
 	await registerPluginConfig({ plugins });

@@ -71,7 +71,7 @@
 																<ng-container
 																	[ngTemplateOutlet]="employeeEl"
 																	[ngTemplateOutletContext]="{
-																		$implicit: timeLogRow?.employee
+																		$implicit: $safeNavigationMigration(timeLogRow?.employee)
 																	}"
 																>
 																</ng-container>
@@ -85,7 +85,7 @@
 																<ng-container
 																	[ngTemplateOutlet]="projectEl"
 																	[ngTemplateOutletContext]="{
-																		$implicit: timeLogRow?.project
+																		$implicit: $safeNavigationMigration(timeLogRow?.project)
 																	}"
 																>
 																</ng-container>
@@ -99,7 +99,7 @@
 																<ng-container
 																	[ngTemplateOutlet]="taskEl"
 																	[ngTemplateOutletContext]="{
-																		$implicit: timeLogRow?.task
+																		$implicit: $safeNavigationMigration(timeLogRow?.task)
 																	}"
 																>
 																</ng-container>
@@ -200,10 +200,11 @@
 		@if (employee) {
 			<ngx-avatar
 				class="report-table"
-				[src]="employee?.user?.imageUrl"
-				[name]="employee?.user?.name"
-				[id]="employee?.id"
+				[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
+				[name]="$safeNavigationMigration(employee?.user?.name)"
+				[id]="$safeNavigationMigration(employee?.id)"
 				[employee]="employee"
+				linkTo="view"
 			></ngx-avatar>
 		}
 	</div>

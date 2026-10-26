@@ -36,7 +36,7 @@
     } @else {
       <ga-card-grid
         [loading]="loading"
-        [totalItems]="pagination?.totalItems"
+        [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
         [settings]="settingsSmartTable"
         [source]="organizations"
         (onSelectedItem)="selectOrganization($event)"
@@ -101,8 +101,9 @@
      so the record renderer is built fresh for each organization that is opened. -->
 <ngx-record-view-drawer
   [open]="!!viewedOrganization"
+  [fullViewLink]="viewedOrganization && canOpenOrganizationPage ? '/pages/organizations/edit/' + viewedOrganization.id : null"
   heading="ORGANIZATIONS_PAGE.ORGANIZATIONS"
-  [subtitle]="viewedOrganization?.name"
+  [subtitle]="$safeNavigationMigration(viewedOrganization?.name)"
   (closed)="closeView()"
   >
   @if (viewedOrganization) {

@@ -11,7 +11,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
@@ -42,7 +42,7 @@ const COMPONENTS = [DocumentsComponent, UploadDocumentComponent];
 		FileUploaderModule,
 		NgSelectModule,
 		NbSpinnerModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SmartDataViewLayoutModule
 	],
 	declarations: [...COMPONENTS],

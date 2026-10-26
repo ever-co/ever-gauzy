@@ -57,6 +57,12 @@ describe('CandidateService.pagination sort order', () => {
 			await paginate(service);
 			expect(query.setFindOptions).toHaveBeenCalledWith(expect.objectContaining({ order: {} }));
 		});
+
+		it('joins the tags the `where[tags]` filter reads ("tags"."id")', async () => {
+			await paginate(service);
+			expect(query.leftJoin).toHaveBeenCalledWith('candidate.user', 'user');
+			expect(query.leftJoin).toHaveBeenCalledWith('candidate.tags', 'tags');
+		});
 	});
 
 	describe('MikroORM', () => {

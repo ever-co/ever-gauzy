@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { NbBadgeModule } from '@nebular/theme';
 import { TitleCasePipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -7,6 +7,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     selector: 'ngx-plugin-status',
     templateUrl: './plugin-status.component.html',
     styleUrls: ['./plugin-status.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbBadgeModule, TitleCasePipe, TranslatePipe]
 })
 export class PluginStatusComponent {

@@ -8,7 +8,8 @@ import {
 	OnDestroy,
 	OnInit,
 	Optional,
-	ViewChild
+	ViewChild,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -64,6 +65,7 @@ import { PermissionManagerComponent } from '../permission-manager/permission-man
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		NbLayoutModule,
 		NbSpinnerModule,
@@ -377,6 +379,40 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			]
 		},
 		{
+			title: 'Anonymous usage statistics',
+			fields: [
+				{
+					// `false` switches the anonymous usage statistics off (applies on the next start).
+					name: 'EVER_STATS_ENABLED',
+					field: 'EVER_STATS_ENABLED',
+					value: ''
+				},
+				{
+					// Two-letter country to declare in the reports (empty: undeclared).
+					name: 'EVER_STATS_COUNTRY',
+					field: 'EVER_STATS_COUNTRY',
+					value: ''
+				}
+			]
+		},
+		{
+			title: 'Ever Platform',
+			fields: [
+				{
+					// `true` loads the Ever Platform connection (applies on the next start; off otherwise).
+					name: 'EVER_CONNECT_ENABLED',
+					field: 'EVER_CONNECT_ENABLED',
+					value: ''
+				},
+				{
+					// `interval` reads Ever Platform events every 15 minutes instead of a long poll.
+					name: 'EVER_CONNECT_FEED_MODE',
+					field: 'EVER_CONNECT_FEED_MODE',
+					value: ''
+				}
+			]
+		},
+		{
 			title: 'Other',
 			fields: [
 				{
@@ -411,6 +447,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	periodOption = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS;
 	selectedPeriod = 5;
 	screenshotNotification = null;
+	/** Display chosen for the screenshot notification; `null` is the primary display (the default) */
+	screenshotNotificationDisplayId: number | null = null;
+	/** The connected displays offered for that choice, loaded from the main process */
+	notificationDisplays: { id: number; label: string }[] = [];
 	config = {
 		/* Default Selected dialect	*/
 		db: 'better-sqlite',
@@ -437,6 +477,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		port: 3000,
 		portUi: 4200,
 		host: '0.0.0.0',
+		/* Server apps: whether other computers may connect. Unset (null) means on, as before the setting */
+		lanAccess: null,
 		secureProxy: {
 			ssl: {
 				key: '',
@@ -631,6 +673,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			this.serverConnectivity();
 			this._monitorsOption = { value: setting?.monitor?.captured };
 			this.screenshotNotification = setting?.screenshotNotification;
+			this.screenshotNotificationDisplayId = setting?.screenshotNotificationDisplayId ?? null;
+			await this.loadNotificationDisplays();
 			this.muted = setting?.mutedNotification;
 			this.autoLaunch = setting?.autoLaunch;
 			this.minimizeOnStartup = setting?.minimizeOnStartup;
@@ -801,6 +845,10 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				});
 				break;
 			}
+			case 'displays_changed': {
+				this._ngZone.run(() => this.loadNotificationDisplays());
+				break;
+			}
 			case 'show_about': {
 				this._ngZone.run(() => {
 					this._dialogService.open(AboutComponent);
@@ -841,6 +889,33 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 				});
 			});
 		}
+	}
+
+	/**
+	 * Lists the connected displays for the notification display setting. Reloaded whenever the main
+	 * process reports a display change.
+	 *
+	 * The saved choice is left as it is on purpose when its display is disconnected: the selector then
+	 * shows the primary-display placeholder, which matches what the main process does (it falls back to
+	 * the primary display), and the choice applies again as soon as that display is plugged back in.
+	 */
+	async loadNotificationDisplays(): Promise<void> {
+		try {
+			const displays: { id: number; label?: string; bounds: { width: number; height: number } }[] =
+				await this.electronService.ipcRenderer.invoke('GET_ALL_DISPLAYS');
+			this.notificationDisplays = displays.map((display, index) => {
+				const name = display.label || `Display ${index + 1}`;
+				return { id: display.id, label: `${name} (${display.bounds.width}×${display.bounds.height})` };
+			});
+		} catch (error) {
+			console.error('Could not list the displays:', error);
+			this.notificationDisplays = [];
+		}
+	}
+
+	selectNotificationDisplay(displayId: number | null) {
+		this.screenshotNotificationDisplayId = displayId;
+		this.updateSetting(displayId, 'screenshotNotificationDisplayId');
 	}
 
 	selectMonitorOption(item) {

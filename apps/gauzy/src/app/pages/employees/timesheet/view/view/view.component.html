@@ -108,10 +108,10 @@
                     >
                     <div class="name-container">
                       <ngx-avatar
-                        [id]="log?.employee?.id"
-                        [name]="log?.employee?.user?.name"
-                        [src]="log?.employee?.user?.imageUrl"
-                        [employee]="log?.employee"
+                        [id]="$safeNavigationMigration(log?.employee?.id)"
+                        [name]="$safeNavigationMigration(log?.employee?.user?.name)"
+                        [src]="$safeNavigationMigration(log?.employee?.user?.imageUrl)"
+                        [employee]="$safeNavigationMigration(log?.employee)"
                       ></ngx-avatar>
                     </div>
                   </div>
@@ -158,11 +158,11 @@
         <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME">
           <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MODIFY_TIME">
             <button
-              [disabled]="selectedLog?.data?.isRunning"
+              [disabled]="$safeNavigationMigration(selectedLog?.data?.isRunning)"
               class="action primary"
               nbButton
               status="basic"
-              (click)="openEditDialog(selectedLog?.data)"
+              (click)="openEditDialog($safeNavigationMigration(selectedLog?.data))"
               size="small"
               >
               <nb-icon icon="edit"></nb-icon>
@@ -173,14 +173,14 @@
         <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
           <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
             <button
-              [disabled]="selectedLog?.data?.isRunning"
+              [disabled]="$safeNavigationMigration(selectedLog?.data?.isRunning)"
               class="action"
               nbButton
               status="basic"
               size="small"
               ngxConfirmDialog
               [message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-              (confirm)="deleteTimeLog(selectedLog?.data)"
+              (confirm)="deleteTimeLog($safeNavigationMigration(selectedLog?.data))"
               >
               <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
             </button>

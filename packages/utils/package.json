@@ -29,13 +29,13 @@
 	"dependencies": {
 		"@gauzy/constants": "^0.1.0",
 		"generate-password": "^1.7.1",
-		"slugify": "^1.6.6",
-		"tslib": "^2.6.2"
+		"slugify": "^1.6.9",
+		"tslib": "^2.8.1"
 	},
 	"devDependencies": {
 		"@types/jest": "30.0.0",
-		"@types/node": "^24.10.0",
-		"typescript": "^5.9.3"
+		"@types/node": "^26.6.5",
+		"typescript": "~6.0.3"
 	},
 	"keywords": [
 		"common",
@@ -48,7 +48,7 @@
 		"toolkit"
 	],
 	"engines": {
-		"node": ">=22",
+		"node": ">=26",
 		"yarn": ">=1.22"
 	},
 	"sideEffects": false

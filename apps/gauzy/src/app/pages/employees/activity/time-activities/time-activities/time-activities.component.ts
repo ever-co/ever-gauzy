@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ITimeLogFilters, ReportGroupByFilter, ReportGroupFilterEnum } from '@gauzy/contracts';
 import { DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-core/core';
@@ -8,6 +8,7 @@ import { GauzyFiltersComponent } from '@gauzy/ui-core/shared';
 	selector: 'gauzy-time-activities',
 	templateUrl: './time-activities.component.html',
 	styleUrls: ['./time-activities.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TimeActivitiesComponent implements OnInit {

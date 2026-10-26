@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
@@ -10,6 +10,7 @@ import { InviteService, OrganizationContactService, ToastrService, UsersService 
     selector: 'ga-invite-contact',
     templateUrl: './invite-contact.component.html',
     styleUrls: ['./invite-contact.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InviteContactComponent extends TranslationBaseComponent implements OnInit {

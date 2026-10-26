@@ -463,7 +463,7 @@ nb-accordion {
   align-items: center;
   min-height: ga-overrides.$default-height;
   padding: ga-overrides.$control-padding-y 0.75rem;
-  background-color: var(--gauzy-card-4, var(--gauzy-card-1, var(--card-background-color)));
+  background-color: var(--gauzy-card-1, var(--card-background-color));
   border: none;
   box-shadow: ga-overrides.$control-hairline;
   border-radius: $panel-radius;

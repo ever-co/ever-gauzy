@@ -30,7 +30,7 @@
             <nb-card-body class="chart">
               <ngx-line-chart
                 [data]="charts"
-                [standardWorkHours]="organization?.standardWorkHoursPerDay"
+                [standardWorkHours]="$safeNavigationMigration(organization?.standardWorkHoursPerDay)"
                 [enableAnnotations]="true"
               ></ngx-line-chart>
             </nb-card-body>

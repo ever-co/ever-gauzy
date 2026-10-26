@@ -13,10 +13,10 @@
 				optionsListClass="fit-content gz-panel-options"
 			>
 				<nb-select-label>
-					@if (getFlagUrl(selectedLanguage?.code); as flagUrl) {
+					@if (getFlagUrl($safeNavigationMigration(selectedLanguage?.code)); as flagUrl) {
 						<img class="flag-icon" [src]="flagUrl" (error)="onFlagError($event)" alt="" />
 					}
-					{{ selectedLanguage?.name | translate }}
+					{{ $safeNavigationMigration(selectedLanguage?.name) | translate }}
 				</nb-select-label>
 				@for (lang of languages; track lang) {
 					<nb-option [value]="lang.value">

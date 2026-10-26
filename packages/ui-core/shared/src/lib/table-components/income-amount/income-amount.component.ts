@@ -1,11 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { InvoiceTotalValueComponent } from '../invoice-total-value/invoice-total-value.component';
 
 @Component({
     selector: 'ga-income-amount',
     template: `
 		<span
-		  >{{ value | currency : rowData?.currency | position : organization?.currencyPosition }}
+		  >{{ value | currency : $safeNavigationMigration(rowData?.currency) | position : $safeNavigationMigration(organization?.currencyPosition) }}
 		  @if (rowData?.isBonus) {
 		    <nb-icon
 		      nbTooltip="{{ 'INCOME_PAGE.BONUS_TOOLTIP' | translate }}"
@@ -37,6 +37,7 @@ import { InvoiceTotalValueComponent } from '../invoice-total-value/invoice-total
 		</span>
 		`,
     styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class IncomeExpenseAmountComponent extends InvoiceTotalValueComponent {}

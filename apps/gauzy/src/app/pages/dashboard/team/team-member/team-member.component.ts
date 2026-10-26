@@ -1,54 +1,59 @@
-import { Component, Input, OnInit } from '@angular/core';
-import * as moment from 'moment';
-import { IOrganizationTeamEmployee } from '@gauzy/contracts';
-import { progressStatus } from '@gauzy/ui-core/common';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { IMemberRow, activityTone, formatDuration, formatPercent } from '../team-dashboard.utils';
+import { PersonCardKeyboard, personCardId } from '../person-card-keyboard';
 
+/** Tasks listed in a row before "Show all". */
+const VISIBLE_TASKS = 2;
+
+/**
+ * One member of the Teams dashboard.
+ *
+ * Attached to a `<tr>` it renders the cells of the members table — every task
+ * of the day with its time and estimate bar, and the day's time against the
+ * working day. With `isClassic` (on any block element) it renders the compact
+ * line listed under a team in the "All teams" overview.
+ */
 @Component({
-    selector: 'gauzy-team-member',
-    templateUrl: './team-member.component.html',
-    styleUrls: ['./team-member.component.scss'],
-    standalone: false
+	selector: '[gauzy-team-member]',
+	templateUrl: './team-member.component.html',
+	styleUrls: [
+		'../../../employees/view-employee/view-employee.component.scss',
+		'../team-dashboard.shared.scss',
+		'./team-member.component.scss'
+	],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
-export class TeamMemberComponent implements OnInit {
-	private _member: IOrganizationTeamEmployee | any;
+export class TeamMemberComponent {
+	public readonly formatDuration = formatDuration;
+	public readonly formatPercent = formatPercent;
+	public readonly activityTone = activityTone;
 
-	public get member(): IOrganizationTeamEmployee | any {
+	/** Keyboard access to the member's hover card. */
+	protected readonly cardKeyboard = new PersonCardKeyboard();
+	/** The id of this member's card, so the keyboard reaches this card and no other. */
+	protected readonly cardId = personCardId();
+
+	/** `true` renders the compact overview line instead of table cells. */
+	@Input() public isClassic = false;
+
+	private _member: IMemberRow;
+	public get member(): IMemberRow {
 		return this._member;
 	}
-
-	@Input()
-	public set member(value: IOrganizationTeamEmployee | any) {
+	@Input() public set member(value: IMemberRow) {
 		this._member = value;
+		this.showAllTasks = false;
 	}
 
-	private _isClassic: boolean;
+	public showAllTasks = false;
 
-	public get isClassic(): boolean {
-		return this._isClassic;
+	public get visibleTasks() {
+		const tasks = this.member?.tasks ?? [];
+		return this.showAllTasks ? tasks : tasks.slice(0, VISIBLE_TASKS);
 	}
 
-	@Input()
-	public set isClassic(value: boolean) {
-		this._isClassic = value;
+	public get hiddenTasks(): number {
+		return Math.max((this.member?.tasks?.length ?? 0) - VISIBLE_TASKS, 0);
 	}
-
-	public progressStatus(value) {
-		return progressStatus(value);
-	}
-
-	public calculatePercentage(a, b) {
-		let value = Math.abs((a / b) * 100);
-		value = isFinite(value) ? value : 0;
-		return value;
-	}
-
-	public humanize(duration: number) {
-		return moment.duration(duration, 'seconds').humanize();
-	}
-
-	constructor() {
-		this._isClassic = false;
-	}
-
-	ngOnInit(): void {}
 }

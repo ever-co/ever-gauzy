@@ -7,7 +7,7 @@ import {
 	LineChartModule,
 	SharedModule
 } from '@gauzy/ui-core/shared';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TimeReportsRoutingModule } from './time-reports-routing.module';
 import { TimeReportsComponent } from './time-reports/time-reports.component';
 
@@ -18,7 +18,7 @@ import { TimeReportsComponent } from './time-reports/time-reports.component';
 		NbIconModule,
 		NbSelectModule,
 		NbSpinnerModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		DailyGridModule,
 		DailyStatisticsModule,

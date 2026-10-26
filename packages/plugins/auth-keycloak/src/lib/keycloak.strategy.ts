@@ -12,26 +12,29 @@ export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
 	/**
 	 * Validates the provided tokens and user profile from the OAuth provider.
 	 *
+	 * Passport contract (`@nestjs/passport`'s `PassportStrategy` mixin): the returned value is the user and a
+	 * thrown error is the error; the mixin reports either one to passport's `done` exactly once, so this
+	 * method never calls `done` itself (doing both reported every sign-in twice: a success, then a failure).
+	 *
+	 * The request comes first because `parseKeycloakConfig` sets `passReqToCallback`. Without it,
+	 * passport-oauth2 calls the verify callback as `(accessToken, refreshToken, profile, done)` — the mixin's
+	 * callback takes rest parameters, so its arity cannot tell passport otherwise — and every argument here
+	 * would be shifted by one, the profile being the `done` function.
+	 *
 	 * @param _request - The HTTP request object.
 	 * @param accessToken - The access token from the provider.
 	 * @param refreshToken - The refresh token from the provider.
 	 * @param profile - The user profile information.
-	 * @param done - The callback function to return the user or an error.
+	 * @returns The user object built from the profile.
 	 */
-	async validate(
-		_request: any,
-		accessToken: string,
-		refreshToken: string,
-		profile: any,
-		done: (err: unknown, user?: unknown) => void
-	): Promise<void> {
+	async validate(_request: any, accessToken: string, refreshToken: string, profile: any) {
 		try {
 			// Destructure the profile to extract user details
 			const { name, emails, photos } = profile;
 			const [picture] = photos || [];
 
-			// Construct the user object with the desired properties
-			const user = {
+			// Construct the user object with the desired properties; the returned user is what passport authenticates.
+			return {
 				emails,
 				firstName: name?.givenName,
 				lastName: name?.familyName,
@@ -39,13 +42,10 @@ export class KeycloakStrategy extends PassportStrategy(Strategy, 'keycloak') {
 				accessToken,
 				refreshToken
 			};
-
-			// Invoke the callback with the user object
-			done(null, user);
 		} catch (error) {
-			// In case of error, pass the error to the callback
+			// The thrown error is what passport reports as the authentication failure.
 			console.error('Error during Keycloak OAuth validation:', error);
-			done(error, false);
+			throw error;
 		}
 	}
 }
@@ -82,6 +82,8 @@ export const parseKeycloakConfig = (configService: ConfigService): StrategyOptio
 		realm,
 		authServerURL,
 		cookieKey,
-		callbackURL: callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/keycloak/callback`
+		callbackURL: callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/keycloak/callback`,
+		// Hand the request to `validate` as its first argument (see KeycloakStrategy.validate).
+		passReqToCallback: true
 	};
 };

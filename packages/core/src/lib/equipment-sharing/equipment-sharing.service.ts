@@ -1,29 +1,218 @@
-import { Injectable, BadRequestException, HttpStatus, HttpException } from '@nestjs/common';
-import { Brackets, DeleteResult, WhereExpressionBuilder } from 'typeorm';
 import {
+	Injectable,
+	BadRequestException,
+	ForbiddenException,
+	HttpStatus,
+	HttpException,
+	NotFoundException
+} from '@nestjs/common';
+import { LockMode } from '@mikro-orm/core';
+import type { EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
+import { Brackets, DeleteResult, EntityManager, FindOptionsWhere, In, WhereExpressionBuilder } from 'typeorm';
+import {
+	ApprovalPolicyTypesStringEnum,
 	ID,
 	IEquipmentSharing,
 	IEquipmentSharingCreateInput,
+	IEquipmentSharingUpdateInPlaceInput,
 	IEquipmentSharingUpdateInput,
 	IPagination,
-	PermissionsEnum
+	PermissionsEnum,
+	RolesEnum
 } from '@gauzy/contracts';
-import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
+import { ConfigService, DatabaseTypeEnum, isMySQL, isPostgres } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { EquipmentSharing } from './equipment-sharing.entity';
+import { Employee, OrganizationTeam, RequestApproval } from './../core/entities/internal';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from './../core/crud';
+import { isWithinOrganizationBoundary } from '../core/crud/organization-boundary';
 import { MultiORMEnum, parseSortOrder } from '../core/utils';
 import { TypeOrmEquipmentSharingRepository } from './repository/type-orm-equipment-sharing.repository';
 import { MikroOrmEquipmentSharingRepository } from './repository/mikro-orm-equipment-sharing.repository';
 import { TypeOrmRequestApprovalRepository } from './../request-approval/repository/type-orm-request-approval.repository';
-import { assertReferencesAreInScope, IReferenceScope } from './reference-scope.helper';
+import {
+	mikroOrmActiveTeamMemberIds,
+	requestersOfDocument,
+	teamIdsOfDocument,
+	typeOrmActiveTeamMemberIds
+} from './../request-approval/request-approval.service';
+import {
+	IRequestApprovalRequestedFor,
+	isRequesterOfRequestApproval,
+	REQUESTER_DOES_NOT_ANSWER
+} from './../request-approval/request-approval-decision';
+import { bumpVersion, parseEntityVersion } from '../concurrency/version.util';
+import { ApiException } from '../core/errors/api-exception';
+import { redactDatabaseError, toClientSafeError } from '../core/errors/database-error';
+import {
+	assertMembersAreInScope,
+	assertReferencesAreInScope,
+	IReferenceScope,
+	ISharingColumns,
+	ISharingMembers,
+	ISharingReferences,
+	IStoredSharing,
+	sharingAsStored,
+	sharingMemberReferences,
+	sharingReferences,
+	withReferencesAsIds
+} from './reference-scope.helper';
+import {
+	affectedRows,
+	expectedSharingVersion,
+	requiredSharingVersion,
+	sharingVersionConflict
+} from './sharing-version.helper';
+import { IInPlaceSharingMembers, IN_PLACE_SHARING_COLUMNS, inPlaceSharingChange } from './in-place-update.helper';
+
+/** The stored sharing a `POST /equipment-sharing` body id names, as the upsert's check reads it. */
+interface IStoredSharingRow extends IStoredSharing {
+	id: ID;
+	version?: number | null;
+	/** Set when the sharing was soft-deleted (the check reads retired rows too, as the upsert does). */
+	deletedAt?: Date | string | null;
+}
+
+/**
+ * Whether a `POST /equipment-sharing` payload states the employees or the teams the sharing is handed to: the
+ * upsert replaces a membership it states, which changes who the sharing is for.
+ */
+const statesSharingMembers = (payload: object): boolean =>
+	(payload as ISharingMembers).employees !== undefined || (payload as ISharingMembers).teams !== undefined;
+
+/** What a membership upsert reads of a column of the sharing's TypeORM metadata. */
+interface IUpsertColumnMetadata {
+	propertyName: string;
+	isPrimary?: boolean;
+	isVersion?: boolean;
+	isCreateDate?: boolean;
+	isUpdateDate?: boolean;
+	isVirtual?: boolean;
+	isUpdate?: boolean;
+}
+
+/**
+ * The columns a membership upsert writes when the sharing's TypeORM metadata names none (a store double): those of
+ * the in-place edit, the organization, and the base entity's activity and archive columns.
+ */
+const UPSERT_FALLBACK_COLUMNS: ReadonlyArray<string> = [
+	...IN_PLACE_SHARING_COLUMNS,
+	'organizationId',
+	'isActive',
+	'isArchived',
+	'archivedAt'
+];
+
+/** The sharing's request approval, as the decision's locking read finds it. */
+export interface IDecisionRequestApproval {
+	id: ID;
+	/** The sharing the approval is recorded beside. */
+	requestId?: ID | null;
+	/** The approval's organization, as stored. */
+	organizationId?: ID | null;
+	/** The user who raised the approval, as stored. */
+	createdByUserId?: ID | null;
+}
+
+/**
+ * The statements of one decision of a sharing and of its request approval, all made on one transaction: see
+ * {@link EquipmentSharingService.decideWithRequestApproval}.
+ */
+export interface IEquipmentSharingDecisionTransaction {
+	/**
+	 * Reads the sharing's request approval by its own id, inside the tenant, and holds its row until the transaction
+	 * ends (`SELECT … FOR UPDATE` on PostgreSQL and MySQL; SQLite serializes the transaction instead, and the read
+	 * is a plain one there). An answer through the request approval's own route locks that row first as well
+	 * (ever-co/ever-gauzy#11382), so the two routes take their locks in one order.
+	 *
+	 * @returns The approval as stored now, or null when it is no longer there.
+	 */
+	lockRequestApproval(requestApprovalId: ID, tenantId: ID): Promise<IDecisionRequestApproval | null>;
+	/**
+	 * Who the sharing was filed by (its `createdByUserId`) and is for (its employees, and the active members of the
+	 * teams it is for), inside the tenant: none of them decides it, unless they are a tenant administrator. Read after
+	 * {@link lockRequestApproval}, the lock an edit of the memberships takes too (`updateInPlace`, and the
+	 * `POST /equipment-sharing` upsert of a stored sharing, `storeCreate`), so the two take turns and the decision
+	 * reads the memberships as they stand when it is made. Empty when the sharing is not there.
+	 */
+	readRequesters(sharingId: ID, tenantId: ID): Promise<IRequestApprovalRequestedFor>;
+	/**
+	 * `UPDATE equipment_sharing SET status = :status, version = version + 1 WHERE <criteria>`: the decision's
+	 * compare-and-set, which holds the sharing's row until the transaction ends.
+	 *
+	 * @returns How many rows were written: 0 when the sharing moved on from the version in the criteria.
+	 */
+	writeSharingStatus(criteria: FindOptionsWhere<EquipmentSharing>, status: number): Promise<number>;
+	/** Writes the status of the sharing's request approval, by its own id, inside the tenant. */
+	writeRequestApprovalStatus(requestApprovalId: ID, tenantId: ID, status: number): Promise<void>;
+}
+
+/**
+ * The statements of one in-place edit of a sharing, all made on one transaction: see
+ * {@link EquipmentSharingService.updateInPlace}.
+ */
+export interface IEquipmentSharingInPlaceTransaction {
+	/**
+	 * Locks the sharing's request approval — the approval of this sharing (`requestType` `EQUIPMENT_SHARING`,
+	 * `requestId` the sharing's id) in the sharing's organization, inside the tenant — until the transaction ends:
+	 * `SELECT … FOR UPDATE` on PostgreSQL and MySQL; a plain read on SQLite, whose transactions are serialized.
+	 *
+	 * The edit's first statement, so it takes its locks in the order every other writer of the pair takes them: the
+	 * approval, then the sharing (`decideWithRequestApproval`, and the request approval's own answer, which moves the
+	 * sharing it decides). Taking the sharing's row first would let an edit and a decision each hold one row while
+	 * waiting for the other. It also makes an answer and an edit of the memberships take turns, so the answer's
+	 * requester check reads the employees and the teams the sharing is for as they stand when it decides. The
+	 * `POST /equipment-sharing` upsert of a stored sharing's memberships takes it first as well (`storeCreate`).
+	 */
+	lockApprovals(sharingId: ID, tenantId: ID, organizationId: ID | null): Promise<void>;
+	/**
+	 * `UPDATE equipment_sharing SET <columns>, version = version + 1 WHERE <criteria>`: the edit's compare-and-set,
+	 * which holds the sharing's row until the transaction ends. The version is moved on even when no column is
+	 * stated (an edit of the memberships alone).
+	 *
+	 * @returns How many rows were written: 0 when the sharing moved on from the version in the criteria.
+	 */
+	writeAtVersion(criteria: FindOptionsWhere<EquipmentSharing>, columns: Partial<EquipmentSharing>): Promise<number>;
+	/** Replaces the employees and / or the teams the sharing is handed to (its pivot rows), as the members state. */
+	replaceMembers(id: ID, tenantId: ID, members: IInPlaceSharingMembers): Promise<void>;
+	/**
+	 * Writes the sharing's request approval (the one {@link lockApprovals} locked): its status and / or its name, so
+	 * the two keep agreeing when the edit changes the sharing's status or renames it. The approval keeps its id and
+	 * its approver slots.
+	 */
+	writeApproval(sharingId: ID, tenantId: ID, organizationId: ID | null, patch: ISharingApprovalPatch): Promise<void>;
+}
+
+/** What an in-place edit of a sharing writes on its request approval. */
+export interface ISharingApprovalPatch {
+	status?: number;
+	name?: string;
+}
+
+/**
+ * The request approval of a sharing: the approval filed beside it (`requestType` `EQUIPMENT_SHARING`, `requestId` the
+ * sharing's id), in the sharing's organization and the caller's tenant. Approvals of other organizations can carry the
+ * same `requestId` (`POST /request-approval` stores the one it is given), so the organization is part of it.
+ */
+const sharingApprovalCriteria = (sharingId: ID, tenantId: ID, organizationId: ID | null) => ({
+	requestId: sharingId,
+	requestType: ApprovalPolicyTypesStringEnum.EQUIPMENT_SHARING,
+	tenantId,
+	...(organizationId ? { organizationId } : {})
+});
 
 /**
  * Columns the equipment sharing table can be sorted by. Any other `order` key from the query string is ignored.
  */
 const SORTABLE_COLUMNS = ['shareRequestDay', 'shareStartDay', 'shareEndDay'] as const;
+
+/**
+ * Whether two identifiers name the same row: a request approval's `requestId` is a text column, which may hold the
+ * sharing's uuid in another case than the uuid column answers it in.
+ */
+const sameId = (a: unknown, b: unknown): boolean => !!a && !!b && String(a).toLowerCase() === String(b).toLowerCase();
 
 @Injectable()
 export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSharing> {
@@ -46,22 +235,401 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	 *
 	 * Both targets extend TenantOrganizationBaseEntity, so both are scopeable.
 	 *
+	 * Each target is checked in both forms the body can name it, the column (`equipmentSharingPolicyId`) and the
+	 * related object (`equipmentSharingPolicy: { id }`), which the ORM persists as the foreign key just the same —
+	 * see `sharingReferences`.
+	 *
+	 * The employees and the teams the sharing is handed to (`employees`, `teams`, each entry a related object or a
+	 * bare id) are held to the same scope: the CRUD base checks the nested rows against the tenant only, so a body
+	 * could list another organization's employees or teams of the same tenant — see `sharingMemberReferences`. A
+	 * sharing may list many, so each table is read once, with all of its ids (`assertMembersAreInScope`).
+	 *
 	 * @param input - The update/create payload.
 	 * @param scope - The tenant/organization the record belongs to.
-	 * @throws ForbiddenException when a referenced row is outside the scope.
+	 * @throws ForbiddenException when a referenced row or a listed member is outside the scope.
 	 */
 	public async assertReferencesAreInScope(
-		input: Partial<IEquipmentSharingUpdateInput>,
+		input: Partial<IEquipmentSharingUpdateInput> | (ISharingReferences & ISharingMembers),
 		scope: IReferenceScope
 	): Promise<void> {
-		await assertReferencesAreInScope(
-			[
-				['equipment', input?.equipmentId as ID],
-				['equipment_sharing_policy', input?.equipmentSharingPolicyId as ID]
-			],
-			scope,
-			(table, where) => this.typeOrmRepository.manager.findOne(table, { where: where as any })
+		await assertReferencesAreInScope(sharingReferences(input), scope, (table, where) =>
+			this.typeOrmRepository.manager.findOne(table, { where: where as any })
 		);
+		// The contract types name no member lists, but the body the route receives can carry them
+		const members = sharingMemberReferences(input as ISharingMembers);
+		await assertMembersAreInScope(members, scope, (table, ids, criteria) =>
+			this.typeOrmRepository.manager.find(table, {
+				where: { ...criteria, id: In(ids) } as any,
+				select: { id: true } as any
+			})
+		);
+	}
+
+	/**
+	 * Refuses a `POST /equipment-sharing` payload whose equipment or policy is not a row of the organization the
+	 * sharing is stored in, and answers the payload to store.
+	 *
+	 * The payload is read as the row it will store ({@link sharingAsStored}): the organization in either form the body
+	 * names it, and — the CRUD base's `create()` being an upsert by id — the organization and the references of the
+	 * stored row a body-supplied id names, where the body states none. The payload answered states the organization,
+	 * the equipment and the policy exactly as they were checked, each as its column, so the upsert keeps none of the
+	 * stored row's: the row is stored where, and with what, it was checked, even when another write changed the
+	 * stored row in the meantime.
+	 *
+	 * @param input - The raw request body.
+	 * @returns The payload to hand to `create()`.
+	 * @throws BadRequestException when the body's id is not a string.
+	 * @throws ForbiddenException when a referenced row is outside the organization the sharing is stored in.
+	 */
+	public async assertCreateIsInScope(
+		input: ISharingReferences & { id?: unknown }
+	): Promise<ISharingColumns & { id?: unknown }> {
+		return (await this.checkCreate(input)).payload;
+	}
+
+	/**
+	 * Stores a `POST /equipment-sharing` payload once {@link assertCreateIsInScope} has checked it, through `create`
+	 * (the CRUD base's upsert, which the controller hands in).
+	 *
+	 * A body whose id names a stored sharing is an edit of that sharing, and two of them used to interleave column by
+	 * column: the upsert's `save()` writes only the columns that differ from what it loads, so an edit checked in one
+	 * organization could land after another edit moved the sharing and keep half of each (review on
+	 * ever-co/ever-gauzy#11359). Such an upsert first claims the version of the row the check read — or the version
+	 * the body states — in one conditional statement, `UPDATE … SET version = :next WHERE id = :id AND version =
+	 * :read`, and is refused with 409 when the row has moved on; the upsert then stores the checked payload. Of two
+	 * edits based on the same read, one claims the version and the other is refused before it writes anything.
+	 *
+	 * The claim and the upsert are two statements, so an edit that reads the row between another's claim and its write
+	 * reads the claimed version with the columns from before that write; closing that window needs the upsert itself
+	 * to be predicated, which the CRUD base's `save()` cannot be. `PUT /equipment-sharing/:id`, the edit the UI makes,
+	 * has no such window (see `EquipmentSharingUpdateHandler`).
+	 *
+	 * The body's `version` is a precondition, never a column the upsert writes: a new row starts at 1, and a stored
+	 * row's version is moved on by the claim and by the upsert's own write.
+	 *
+	 * A body that names a live stored sharing and states its employees or its teams changes who the sharing is for,
+	 * which the requester check of a decision reads (`decideWithRequestApproval`, and the request approval's answer).
+	 * That upsert is written as {@link storeMembershipEdit} writes it: under the sharing's request approval's lock,
+	 * taken first, in the order `updateInPlace` and the decisions take theirs (approval, then sharing), in one
+	 * transaction — so a decision either reads the memberships from before the upsert, or waits for it and reads them
+	 * after; never a list the upsert is half way through replacing.
+	 *
+	 * @param input - The raw request body.
+	 * @param create - Persists the checked payload.
+	 * @returns What `create` answers; for a membership edit of a stored sharing, the sharing as written, with its
+	 * employees and teams.
+	 * @throws ForbiddenException when a referenced row is outside the organization the sharing is stored in.
+	 * @throws ApiException 409 `ENTITY_VERSION_CONFLICT` when the stored sharing moved on; 400 for a malformed version,
+	 * or a membership list that is not a list of ids.
+	 */
+	public async storeCreate<R>(
+		input: ISharingReferences & { id?: unknown; version?: unknown },
+		create: (payload: ISharingColumns & { id?: unknown }) => Promise<R>
+	): Promise<R | EquipmentSharing> {
+		const { payload, stored } = await this.checkCreate(input);
+
+		// A stored row outside the caller's organization boundary is not claimed: the upsert refuses it (403), as it
+		// always has, and a claim first would have answered that refusal as a conflict.
+		if (stored && isWithinOrganizationBoundary(stored.organizationId)) {
+			const expected = expectedSharingVersion(input?.version, stored.version);
+			// It changes who the sharing is for: written under the approval's lock, as the in-place edit is.
+			if (!stored.deletedAt && statesSharingMembers(payload)) {
+				return await this.storeMembershipEdit(payload, stored, expected);
+			}
+			if (expected !== null) {
+				await this.updateAtVersion(stored.id, expected, { version: bumpVersion(expected) });
+			}
+		}
+
+		return await create(payload);
+	}
+
+	/**
+	 * Writes a `POST /equipment-sharing` upsert that states the memberships of a live stored sharing (see
+	 * {@link storeCreate}), the way {@link updateInPlace} writes its edit: in one transaction, the sharing's request
+	 * approval is locked first; the payload's columns are written in one statement predicated on the version
+	 * (`UPDATE … SET …, version = version + 1 WHERE id = :id AND version = :expected`); and the stated memberships
+	 * are replaced. A row that moved on matches nothing, and the upsert is refused with 409 `ENTITY_VERSION_CONFLICT`
+	 * before anything is written.
+	 *
+	 * The CRUD base's `create()` wrote the memberships on its own connection, with no lock: a decision that held the
+	 * approval's lock could read the employees and the teams the sharing was for while the upsert replaced them, and
+	 * decide on a list that no longer stood (the gap #11413 left documented). The upsert is still the upsert:
+	 *
+	 * - the refusals `create()` makes before it writes are made first, on the same payload: a row of another tenant,
+	 *   a nested row of another tenant, and an organization outside the caller's reach (the payload's, and the
+	 *   stored row's);
+	 * - it writes every column the payload states, as `create()` saved them ({@link upsertColumns}): `isActive`,
+	 *   `isArchived`, `archivedAt`, the name, the dates, the status, and the organization, the equipment and the
+	 *   policy exactly as {@link checkCreate} checked them (the organization only when it moves the sharing); the
+	 *   request approval keeps its status and name, as under `create()`;
+	 * - a membership list must be ids or `{ id }` objects (400 otherwise): the list replaces the membership, so an
+	 *   entry naming no id would write a shorter list than the caller meant.
+	 *
+	 * @param payload - The checked payload ({@link checkCreate}).
+	 * @param stored - The stored sharing the payload's id names, as the check read it.
+	 * @param expected - The version the upsert is based on (the body's, else the check's read); `null` for a row
+	 * stored without one.
+	 * @returns The sharing, as written, with its employees and teams.
+	 */
+	private async storeMembershipEdit(
+		payload: ISharingColumns & { id?: unknown },
+		stored: IStoredSharingRow,
+		expected: number | null
+	): Promise<EquipmentSharing> {
+		const tenantId = RequestContext.currentTenantId();
+		const row = payload as unknown as EquipmentSharing;
+		// What `create()` refuses before it writes, on the payload it would have written.
+		await this.assertNotForeignRow(row, tenantId);
+		await this.assertNestedGraphNotForeign([row], tenantId);
+		await this.assertInsideOrganizationBoundary([row]);
+
+		// The memberships to replace, and the refusal of a status that is not one (the in-place edit's reading).
+		const { members } = inPlaceSharingChange(payload as any);
+		const written = this.upsertColumns(payload as Record<string, unknown>, stored);
+		const criteria = { ...this.atVersion(stored.id, expected), tenantId } as FindOptionsWhere<EquipmentSharing>;
+
+		try {
+			const done = await this.inPlaceTransaction(async (transaction) => {
+				// The approval's lock first: the order the decision, the answer and the in-place edit take theirs in.
+				await transaction.lockApprovals(stored.id, tenantId, stored.organizationId ?? null);
+				if (!(await transaction.writeAtVersion(criteria, written))) {
+					return false;
+				}
+				await transaction.replaceMembers(stored.id, tenantId, members);
+				return true;
+			});
+
+			if (!done) {
+				throw await this.versionConflict(stored.id, expected);
+			}
+		} catch (err) {
+			// An HTTP refusal (the 409 conflict) stands as what it is; any other failure is answered 400, as create().
+			if (err instanceof HttpException) {
+				throw err;
+			}
+			console.error('Error storing an equipment sharing upsert under its lock:', redactDatabaseError(err));
+			throw new BadRequestException(toClientSafeError(err));
+		}
+
+		// A sharing the upsert retired (a stated `deletedAt`) is answered as written too.
+		const retired = (written as { deletedAt?: unknown }).deletedAt != null;
+		return await this.findOneByIdString(stored.id, {
+			relations: { employees: true, teams: true },
+			...(retired ? { withDeleted: true } : {})
+		});
+	}
+
+	/**
+	 * The columns a membership upsert ({@link storeMembershipEdit}) writes in place: every column of the sharing the
+	 * payload states, as the CRUD base's upsert (`save()`) wrote them — `isActive`, `isArchived`, `archivedAt`, the
+	 * name, the dates, the status, the references — so the locked path drops nothing the unlocked one stored. Left
+	 * out: the identity (the primary key, and the tenant, always the caller's), the version (the upsert's
+	 * precondition, moved on by the write itself), the dates the store stamps (`createdAt`, `updatedAt`), any column
+	 * TypeORM never updates, and a value that is an object or a list (a relation stated as an object; the memberships
+	 * are replaced on their own). The organization is written only when the upsert moves the sharing.
+	 *
+	 * The columns are read from the sharing's TypeORM metadata, which is initialised whichever ORM serves the write
+	 * (the CRUD base's foreign-graph check reads it the same way).
+	 *
+	 * @param payload - The checked payload.
+	 * @param stored - The stored sharing, as the check read it.
+	 */
+	private upsertColumns(payload: Record<string, unknown>, stored: IStoredSharingRow): Partial<EquipmentSharing> {
+		const metadataColumns = ((this.typeOrmRepository as any)?.metadata?.columns ?? []) as IUpsertColumnMetadata[];
+		const names = metadataColumns.length
+			? metadataColumns
+					.filter(
+						(column) =>
+							!column.isPrimary &&
+							!column.isVersion &&
+							!column.isCreateDate &&
+							!column.isUpdateDate &&
+							!column.isVirtual &&
+							column.isUpdate !== false &&
+							column.propertyName !== 'tenantId'
+					)
+					.map((column) => column.propertyName)
+			: UPSERT_FALLBACK_COLUMNS;
+
+		const written: Record<string, unknown> = {};
+		for (const name of names) {
+			const value = payload[name];
+			if (value === undefined || (value !== null && typeof value === 'object' && !(value instanceof Date))) {
+				continue;
+			}
+			written[name] = value;
+		}
+		// The row keeps its own organization unless the upsert moves it to the one the payload was checked in.
+		if (!written['organizationId'] || sameId(written['organizationId'], stored.organizationId)) {
+			delete written['organizationId'];
+		}
+		return written as Partial<EquipmentSharing>;
+	}
+
+	/**
+	 * The check of a `POST /equipment-sharing` body: see {@link assertCreateIsInScope}.
+	 *
+	 * @param input - The raw request body.
+	 * @returns The payload to persist (without the body's `version`, a precondition rather than a column), and the
+	 * stored sharing the body's id names, as it was read for the check.
+	 */
+	private async checkCreate(
+		input: ISharingReferences & { id?: unknown; version?: unknown }
+	): Promise<{ payload: ISharingColumns & { id?: unknown }; stored: IStoredSharingRow | null }> {
+		const tenantId = RequestContext.currentTenantId();
+		type Body = ISharingReferences & ISharingMembers & { id?: unknown; version?: unknown };
+		const { version: _version, ...body } = (input ?? {}) as Body;
+		const values: ISharingColumns & ISharingMembers & { id?: unknown } = withReferencesAsIds(body);
+		const stored = await this.findStoredSharing(values.id, tenantId);
+		const {
+			values: payload,
+			references,
+			organizationId
+		} = sharingAsStored(values, stored, RequestContext.currentOrganizationId());
+
+		// The employees and the teams the body lists are stored with the row too, so they are checked in the same
+		// organization as its equipment and its policy.
+		await this.assertReferencesAreInScope(
+			{ ...references, employees: values.employees, teams: values.teams },
+			{ tenantId, organizationId }
+		);
+		return { payload, stored };
+	}
+
+	/**
+	 * The organization and the references of the stored sharing a body-supplied id names, read in the caller's
+	 * tenant (a row of another tenant is refused by the CRUD base's `create()`), soft-deleted rows included as the
+	 * upsert reads them.
+	 *
+	 * @param id - The body's id.
+	 * @param tenantId - The caller's tenant.
+	 * @returns The stored row's columns (and its version, which an upsert of it is a compare-and-set on), or `null`
+	 * when the body names no stored row of the tenant.
+	 * @throws BadRequestException when the id is not a string: an object would be handed to the lookup (and to the
+	 * upsert's) as a criterion rather than compared as a value.
+	 */
+	private async findStoredSharing(id: unknown, tenantId: ID | null): Promise<IStoredSharingRow | null> {
+		if (id === undefined || id === null || id === '') {
+			return null;
+		}
+		if (typeof id !== 'string') {
+			throw new BadRequestException('The id of an equipment sharing must be a string');
+		}
+		if (!tenantId) {
+			return null;
+		}
+		// A `select` read is typed as the whole entity; only the selected columns are read, the ones the row type names
+		return (await this.typeOrmRepository.findOne({
+			where: { id, tenantId },
+			select: {
+				id: true,
+				organizationId: true,
+				equipmentId: true,
+				equipmentSharingPolicyId: true,
+				version: true,
+				// A retired row is upserted as before, not as a membership edit (`storeCreate`).
+				deletedAt: true
+			},
+			withDeleted: true
+		} as any)) as unknown as IStoredSharingRow | null;
+	}
+
+	/**
+	 * Removes a sharing for the recreate of its edit (`EquipmentSharingUpdateHandler`), only at the version the edit is
+	 * based on, with the request approval recorded beside it.
+	 *
+	 * This is the edit's compare-and-set: `DELETE … WHERE id = :id AND version = :expected`, in the caller's tenant and
+	 * organization boundary. Of two edits based on the same version, one removes the row and recreates it at the next
+	 * version, and the other matches nothing and is refused before it has removed or written anything — so two edits
+	 * can no longer recreate the row one over the other and interleave their columns.
+	 *
+	 * @param id - The sharing.
+	 * @param expected - The version the edit is based on; `null` for a row stored without one, removed as before.
+	 * @throws ApiException 409 `ENTITY_VERSION_CONFLICT` when the row has moved on, or is being replaced.
+	 */
+	public async deleteAtVersion(id: ID, expected: number | null): Promise<void> {
+		const tenantId = RequestContext.currentTenantId();
+		const result = await super.delete(this.atVersion(id, expected));
+
+		if (!affectedRows(result)) {
+			throw await this.versionConflict(id, expected);
+		}
+		// As `delete()` does: the approval row is removed on a raw repository, so only once the sharing row was
+		// really the caller's, and only inside the caller's tenant.
+		if (tenantId) {
+			await this.typeOrmRequestApprovalRepository.delete({ requestId: id, tenantId });
+		}
+	}
+
+	/**
+	 * Writes columns of a sharing only at a version: `UPDATE … SET …, version = version + 1 WHERE id = :id AND
+	 * version = :expected`, one statement, in the caller's tenant and organization boundary (the CRUD base's
+	 * `update`). TypeORM increments the `@VersionColumn` in that statement, and `CrudService.update` does on MikroORM,
+	 * unless the patch states the version itself.
+	 *
+	 * @param id - The sharing.
+	 * @param expected - The version the write is based on; `null` for a row stored without one, written as before.
+	 * @param patch - The columns to write.
+	 * @throws ApiException 409 `ENTITY_VERSION_CONFLICT` when the row has moved on.
+	 */
+	public async updateAtVersion(id: ID, expected: number | null, patch: Partial<EquipmentSharing>): Promise<void> {
+		const result = await super.update(this.atVersion(id, expected), patch as any);
+
+		if (!affectedRows(result)) {
+			throw await this.versionConflict(id, expected);
+		}
+	}
+
+	/** The criteria of a write predicated on a version. */
+	private atVersion(id: ID, expected: number | null): FindOptionsWhere<EquipmentSharing> {
+		return (expected === null ? { id } : { id, version: expected }) as FindOptionsWhere<EquipmentSharing>;
+	}
+
+	/**
+	 * The 409 for a write whose precondition matched no row, with the version the row holds now when it can be read:
+	 * the read is diagnostic, and a failure to make it leaves the conflict standing without it.
+	 *
+	 * @param id - The sharing.
+	 * @param expected - The version the write was predicated on.
+	 */
+	private async versionConflict(id: ID, expected: number | null): Promise<ApiException> {
+		let actualVersion: number | null = null;
+		try {
+			const tenantId = RequestContext.currentTenantId();
+			if (tenantId) {
+				const row = await this.typeOrmRepository.findOne({
+					where: { id, tenantId },
+					select: { id: true, version: true }
+				} as any);
+				actualVersion = parseEntityVersion((row as { version?: unknown } | null)?.version);
+			}
+		} catch {
+			// Diagnostic only: the conflict is decided already.
+		}
+		return sharingVersionConflict(id, expected, actualVersion);
+	}
+
+	/**
+	 * Whether the equipment a new sharing names auto-approves its shares, read from the store in the sharing's scope.
+	 *
+	 * An equipment outside the scope, or none at all, answers `false`: a request for it is filed as `REQUESTED`.
+	 *
+	 * @param equipmentId - The equipment the sharing names.
+	 * @param scope - The tenant/organization the sharing is filed in.
+	 */
+	public async autoApprovesShare(equipmentId: ID | undefined, scope: IReferenceScope): Promise<boolean> {
+		if (!equipmentId || !scope.tenantId) {
+			return false;
+		}
+		const equipment = await this.typeOrmRepository.manager.findOne('equipment', {
+			where: {
+				id: equipmentId,
+				tenantId: scope.tenantId,
+				...(scope.organizationId ? { organizationId: scope.organizationId } : {})
+			} as any
+		});
+		return (equipment as { autoApproveShare?: boolean } | null)?.autoApproveShare === true;
 	}
 
 	/**
@@ -98,11 +666,18 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 						);
 						break;
 					case DatabaseTypeEnum.postgres:
-					case DatabaseTypeEnum.mysql:
 						query.leftJoinAndSelect(
 							'request_approval',
 							'requestApproval',
 							'uuid(equipment_sharing.id) = uuid(requestApproval.requestId)'
+						);
+						break;
+					case DatabaseTypeEnum.mysql:
+						// MySQL's UUID() takes no argument: the PostgreSQL cast failed the whole query (as in pagination())
+						query.leftJoinAndSelect(
+							'request_approval',
+							'requestApproval',
+							p(`"equipment_sharing"."id" = "requestApproval"."requestId"`)
 						);
 						break;
 					default:
@@ -116,8 +691,8 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 					.where(
 						new Brackets((qb: WhereExpressionBuilder) => {
 							const tenantId = RequestContext.currentTenantId();
-							qb.andWhere(`"${query.alias}"."tenantId" = :tenantId`, { tenantId });
-							qb.andWhere(`"${query.alias}"."organizationId" = :organizationId`, { organizationId });
+							qb.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+							qb.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 						})
 					)
 					.getManyAndCount();
@@ -215,6 +790,233 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	}
 
 	/**
+	 * Edits a sharing in place, at the version the edit is based on: `PUT /equipment-sharing/:id/in-place` and GraphQL
+	 * `updateEquipmentSharingInPlace` (`EquipmentSharingUpdateInPlaceHandler`).
+	 *
+	 * `PUT /equipment-sharing/:id` removes the row and files it again under the same id (its documented GraphQL
+	 * contract, kept as it is). Between the two statements the row is missing, and a `POST /equipment-sharing` that
+	 * names its id in that moment inserts it, which the recreate then overwrites (ever-co/ever-gauzy#11398). This edit
+	 * writes the row where it is instead, so there is no such moment:
+	 *
+	 * - the row is read in the caller's scope (tenant and organization boundary; 404 otherwise), and the equipment,
+	 *   the policy, the employees and the teams the body names are held to the row's own organization, as the other
+	 *   edit holds them;
+	 * - then, in one transaction: the sharing's request approval is locked first (the lock order of the decision and
+	 *   of the request approval's answer: approval, then sharing); the stated columns are written in one statement
+	 *   predicated on the version the body states (`UPDATE … SET …, version = version + 1 WHERE id = :id AND version =
+	 *   :expected`); the memberships the body states are replaced; and — when the edit changes the status or the
+	 *   name — the approval follows, so the two agree. A row that moved on matches nothing, and the edit is refused
+	 *   with 409 `ENTITY_VERSION_CONFLICT` before anything is written; the transaction rolls everything back on any
+	 *   failure.
+	 *
+	 * A member the body leaves out keeps its stored value (the other edit resets it to its default); the organization
+	 * stays the row's own; the request approval keeps its id and its approver slots (the other edit files a new one).
+	 * The version is required: it is how the caller says which state of the row the edit is based on.
+	 *
+	 * @param id The sharing.
+	 * @param input The edit, with the version it is based on.
+	 * @returns The sharing, as written, with its employees and teams.
+	 * @throws ApiException 400 `VALIDATION_FAILED` without a version, or for a status that is not one.
+	 * @throws NotFoundException when the sharing is not in the caller's scope.
+	 * @throws ForbiddenException when a referenced row or a listed member is outside the sharing's organization.
+	 * @throws ApiException 409 `ENTITY_VERSION_CONFLICT` when the sharing moved on from the version stated.
+	 * @throws BadRequestException when another error occurs.
+	 */
+	async updateInPlace(id: ID, input: IEquipmentSharingUpdateInPlaceInput): Promise<EquipmentSharing> {
+		const expected = requiredSharingVersion((input as { version?: unknown } | null | undefined)?.version);
+		const { columns, members } = inPlaceSharingChange(input as any);
+
+		// The row in the caller's scope: tenant-scoped, inside the organization boundary, 404 otherwise.
+		const existing = await this.findOneByIdString(id);
+		const tenantId = RequestContext.currentTenantId() ?? existing.tenantId;
+
+		// What the edit points the row at, and hands it to, must be rows of the row's own organization.
+		await this.assertReferencesAreInScope(
+			{
+				...(columns.equipmentId !== undefined ? { equipmentId: columns.equipmentId as ID | null } : {}),
+				...(columns.equipmentSharingPolicyId !== undefined
+					? { equipmentSharingPolicyId: columns.equipmentSharingPolicyId as ID | null }
+					: {}),
+				employees: members.employees,
+				teams: members.teams
+			},
+			{ tenantId: existing.tenantId, organizationId: existing.organizationId }
+		);
+
+		const criteria = { ...this.atVersion(existing.id, expected), tenantId } as FindOptionsWhere<EquipmentSharing>;
+		const organizationId = existing.organizationId ?? null;
+		// What the approval follows: a changed status, and a changed name (the approval's name is required, so a name
+		// cleared on the sharing leaves the approval's as it is).
+		const approvalPatch: ISharingApprovalPatch = {
+			...(columns.status !== undefined && columns.status !== existing.status
+				? { status: columns.status as number }
+				: {}),
+			...(typeof columns.name === 'string' && columns.name.trim() !== '' && columns.name !== existing.name
+				? { name: columns.name }
+				: {})
+		};
+
+		try {
+			const written = await this.inPlaceTransaction(async (transaction) => {
+				// The approval's lock first: the order the decision and the answer take their locks in.
+				await transaction.lockApprovals(existing.id, tenantId, organizationId);
+				if (!(await transaction.writeAtVersion(criteria, columns as Partial<EquipmentSharing>))) {
+					return false;
+				}
+				if (members.employees || members.teams) {
+					await transaction.replaceMembers(existing.id, tenantId, members);
+				}
+				if (Object.keys(approvalPatch).length) {
+					await transaction.writeApproval(existing.id, tenantId, organizationId, approvalPatch);
+				}
+				return true;
+			});
+
+			if (!written) {
+				throw await this.versionConflict(id, expected);
+			}
+		} catch (err) {
+			// An HTTP refusal (the 409 conflict) stands as what it is; any other failure is answered 400.
+			if (err instanceof HttpException) {
+				throw err;
+			}
+			console.error('Error editing an equipment sharing in place:', redactDatabaseError(err));
+			throw new BadRequestException(toClientSafeError(err));
+		}
+
+		return await this.findOneByIdString(id, { relations: { employees: true, teams: true } });
+	}
+
+	/**
+	 * Runs one in-place edit in one transaction on the ORM the installation runs, and hands it the statements it makes
+	 * on that transaction's connection (see {@link decisionTransaction}). On PostgreSQL and MySQL the approval's lock
+	 * and the compare-and-set's `UPDATE` hold their rows until the transaction ends; SQLite serializes the transaction.
+	 *
+	 * @param work - The transaction body.
+	 * @returns What the body answers.
+	 */
+	protected async inPlaceTransaction<R>(
+		work: (transaction: IEquipmentSharingInPlaceTransaction) => Promise<R>
+	): Promise<R> {
+		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
+		const rowLock = isPostgres() || isMySQL();
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository
+					.getEntityManager()
+					.transactional(async (em) => await work(this.mikroOrmInPlaceTransaction(em, rowLock)));
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmRepository.manager.transaction(
+					async (manager) => await work(this.typeOrmInPlaceTransaction(manager, rowLock))
+				);
+		}
+	}
+
+	/**
+	 * The TypeORM arm of {@link inPlaceTransaction}: everything on the transaction's manager. TypeORM's update query
+	 * increments the `@VersionColumn` and stamps the update date, even when no column is stated; the memberships go
+	 * through the relation's own pivot (`relation(EquipmentSharing, 'employees').of(id)`), only the difference.
+	 */
+	private typeOrmInPlaceTransaction(manager: EntityManager, rowLock: boolean): IEquipmentSharingInPlaceTransaction {
+		return {
+			lockApprovals: async (sharingId, tenantId, organizationId) => {
+				// The approval rows alone (a query builder joins no eager relation), so the lock is on those rows.
+				const query = manager
+					.createQueryBuilder(RequestApproval, 'request_approval')
+					.where(sharingApprovalCriteria(sharingId, tenantId, organizationId));
+				await (rowLock ? query.setLock('pessimistic_write').getMany() : query.getMany());
+			},
+			writeAtVersion: async (criteria, columns) =>
+				affectedRows(await manager.update(EquipmentSharing, criteria, { ...columns } as any)),
+			replaceMembers: async (id, _tenantId, members) => {
+				const lists: Array<readonly ['employees' | 'teams', ID[] | undefined]> = [
+					['employees', members.employees],
+					['teams', members.teams]
+				];
+				for (const [relation, ids] of lists) {
+					if (!ids) {
+						continue;
+					}
+					const pivot = manager.createQueryBuilder().relation(EquipmentSharing, relation).of(id);
+					const current = ((await pivot.loadMany()) as Array<{ id: ID }>).map((row) => row.id);
+					const removed = current.filter((memberId) => !ids.includes(memberId));
+					const added = ids.filter((memberId) => !current.includes(memberId));
+					if (removed.length) {
+						await pivot.remove(removed);
+					}
+					if (added.length) {
+						await pivot.add(added);
+					}
+				}
+			},
+			writeApproval: async (sharingId, tenantId, organizationId, patch) => {
+				await manager.update(RequestApproval, sharingApprovalCriteria(sharingId, tenantId, organizationId), {
+					...patch
+				});
+			}
+		};
+	}
+
+	/**
+	 * The MikroORM arm of {@link inPlaceTransaction}: everything on the transaction's fork. The sharing's row is the
+	 * one `CrudService.update` writes (`mikroOrmUpdateRow`: the update date, the version incremented in the statement);
+	 * the memberships are set on the sharing's collections, read again from the table (`refresh`, so the version the
+	 * compare-and-set wrote is the one the flush sees), and flushed on the transaction.
+	 */
+	private mikroOrmInPlaceTransaction(
+		em: MikroOrmEntityManager,
+		rowLock: boolean
+	): IEquipmentSharingInPlaceTransaction {
+		return {
+			lockApprovals: async (sharingId, tenantId, organizationId) => {
+				// From the table, not the identity map the fork inherited from the request's context.
+				await em.find(
+					RequestApproval,
+					sharingApprovalCriteria(sharingId, tenantId, organizationId) as any,
+					{ disableIdentityMap: true, ...(rowLock ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {}) } as any
+				);
+			},
+			writeAtVersion: async (criteria, columns) =>
+				await em.nativeUpdate(EquipmentSharing, criteria as any, this.mikroOrmUpdateRow({ ...columns }) as any),
+			replaceMembers: async (id, tenantId, members) => {
+				// `filters: false`: MikroORM's default soft-delete filter would hide a sharing this transaction has just
+				// retired (a membership upsert stating `deletedAt`), and the memberships would silently not be replaced.
+				// The tenant stays in the criteria.
+				const sharing = (await em.findOne(
+					EquipmentSharing,
+					{ id, tenantId } as any,
+					{ populate: ['employees', 'teams'], refresh: true, filters: false } as any
+				)) as any;
+				if (!sharing) {
+					// The compare-and-set wrote the row in this transaction: not finding it now fails the transaction
+					// rather than committing the columns without the memberships.
+					throw new NotFoundException('Equipment Sharing not found');
+				}
+				if (members.employees) {
+					sharing.employees.set(
+						members.employees.map((memberId) => em.getReference(Employee as any, memberId as any))
+					);
+				}
+				if (members.teams) {
+					sharing.teams.set(
+						members.teams.map((memberId) => em.getReference(OrganizationTeam as any, memberId as any))
+					);
+				}
+				await em.flush();
+			},
+			writeApproval: async (sharingId, tenantId, organizationId, patch) => {
+				await em.nativeUpdate(
+					RequestApproval,
+					sharingApprovalCriteria(sharingId, tenantId, organizationId) as any,
+					this.mikroOrmRequestApprovalRow(em, { ...patch }) as any
+				);
+			}
+		};
+	}
+
+	/**
 	 * Deletes an equipment sharing record and its associated request approval.
 	 *
 	 * This function concurrently deletes the equipment sharing record from the primary repository
@@ -249,27 +1051,300 @@ export class EquipmentSharingService extends TenantAwareCrudService<EquipmentSha
 	/**
 	 * Updates the status of an Equipment Sharing record by an admin.
 	 *
-	 * This function retrieves an Equipment Sharing record using its ID. If the record is found,
-	 * it updates the status property to the provided value and saves the updated record.
-	 * If the record is not found, it throws a NotFoundException.
+	 * The record is read in the caller's tenant, and its status is then written as a compare-and-set on the version
+	 * that read found ({@link updateAtVersion}), which moves the version on. It used to be a `save()` of the copy read:
+	 * `save()` writes back every column the copy differs from the stored row in, so an edit that landed between the
+	 * read and the write was reverted to the copy, and the edit's author was never told.
 	 *
 	 * @param id - The unique identifier of the Equipment Sharing record.
 	 * @param status - The new status value to set for the Equipment Sharing record.
 	 * @returns A promise that resolves to the updated EquipmentSharing record.
-	 * @throws NotFoundException if no Equipment Sharing record is found with the provided ID.
-	 * @throws BadRequestException if an error occurs during the update process.
+	 * @throws ApiException 409 `ENTITY_VERSION_CONFLICT` when the record changed after it was read.
+	 * @throws BadRequestException if the record is not found, or an error occurs during the update process.
 	 */
 	async updateStatusEquipmentSharingByAdmin(id: ID, status: number): Promise<EquipmentSharing> {
 		try {
 			// Use tenant-scoped lookup instead of direct repository access
 			const equipmentSharing = await this.findOneByIdString(id);
 
-			equipmentSharing.status = status;
+			await this.updateAtVersion(
+				equipmentSharing.id,
+				expectedSharingVersion(undefined, equipmentSharing.version),
+				{ status }
+			);
 
-			return await this.save(equipmentSharing);
+			return await this.findOneByIdString(id);
 		} catch (err) {
+			// The conflict stands as the 409 it is; everything else is answered as before.
+			if (err instanceof ApiException) {
+				throw err;
+			}
 			throw new BadRequestException(err);
 		}
+	}
+
+	/**
+	 * Decides an equipment sharing, and the request approval recorded beside it, in one transaction:
+	 * `PUT /equipment-sharing/approval|refuse/:id` and the GraphQL approve / refuse (`EquipmentSharingStatusHandler`).
+	 *
+	 * The sharing is read in the caller's scope, then, on one transaction: the request approval's row is locked, the
+	 * sharing's status is written as a compare-and-set on the version read (which holds the sharing's row), and the
+	 * request approval's status is written. The two writes used to be separate statements, so the sharing's new version
+	 * was visible before the approval was written: a decision that approved the sharing and paused there let a refusal
+	 * read that version, refuse the sharing and its approval, and then wrote its own approval over the refusal — the
+	 * sharing refused, its approval approved. Now a second decision based on a read made before the first committed
+	 * waits for it and gets 409; one that reads after it decides after it, both rows at once.
+	 *
+	 * The compare-and-set also keeps the scoped read's organization boundary: every write moves the version on, so a
+	 * sharing moved out of the caller's reach since it was read is not matched.
+	 *
+	 * The request approval is the one the handler read in the caller's scope, and the transaction locks and writes
+	 * that row by its own id. Writing every approval whose `requestId` names the sharing reached further than the
+	 * scoped write it replaced (`RequestApprovalService.update`): approvals of other organizations of the tenant can
+	 * carry the same `requestId` (`POST /request-approval` stores the one it is given). The locked row must still be
+	 * there, still be this sharing's, still be in the sharing's organization and inside the caller's organization
+	 * boundary, or nothing is written (404). That also covers an edit of the sharing caught half way
+	 * (`EquipmentSharingUpdateHandler` recreates the sharing first and its approval after it, under a new id): a
+	 * decision that read the recreated sharing and the approval the edit removed finds no approval under the lock, so
+	 * it no longer commits a decided sharing whose approval the edit then files as requested.
+	 *
+	 * @param id - The sharing.
+	 * @param status - The decision.
+	 * @param requestApprovalId - The sharing's request approval, as the caller's scoped read found it.
+	 * @returns The sharing, as decided.
+	 * @throws ApiException 409 `ENTITY_VERSION_CONFLICT` when the sharing changed after it was read; nothing is
+	 * written then.
+	 * @throws NotFoundException when the sharing or its request approval is no longer there (or no longer in the
+	 * caller's reach); nothing is written then.
+	 * @throws ForbiddenException when the caller, not a tenant administrator, raised the sharing's approval, filed the
+	 * sharing, or is an employee it is for (one it names, or an active member of a team it is for); nothing is written
+	 * then.
+	 * @throws BadRequestException when another error occurs.
+	 */
+	async decideWithRequestApproval(id: ID, status: number, requestApprovalId: ID): Promise<EquipmentSharing> {
+		try {
+			const equipmentSharing = await this.findOneByIdString(id);
+			const tenantId = RequestContext.currentTenantId() ?? equipmentSharing.tenantId;
+			const expected = expectedSharingVersion(undefined, equipmentSharing.version);
+
+			const criteria = {
+				...this.atVersion(equipmentSharing.id, expected),
+				tenantId
+			} as FindOptionsWhere<EquipmentSharing>;
+
+			// Who decides: a tenant administrator decides any sharing, as on the request approval's own answer route.
+			const user = RequestContext.currentUser();
+			const decider = { userId: user?.id ?? null, employeeId: user?.employeeId ?? null };
+			const isTenantAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]);
+
+			const decided = await this.decisionTransaction(async (transaction) => {
+				// The approval's lock first, the order the request approval's own answer route takes its locks in.
+				const approval = await transaction.lockRequestApproval(requestApprovalId, tenantId);
+				// Nobody decides a sharing they raised or that is for them (owner decision Q9): the user who raised its
+				// approval, the user who filed the sharing, and the employees it is for, members of its teams included
+				// — the rule the request approval's answer applies to the same request. Read after the lock, before
+				// anything is written.
+				if (!isTenantAdmin) {
+					const requestedFor = await transaction.readRequesters(equipmentSharing.id, tenantId);
+					if (
+						isRequesterOfRequestApproval({ createdByUserId: approval?.createdByUserId }, decider, requestedFor)
+					) {
+						throw new ForbiddenException(REQUESTER_DOES_NOT_ANSWER);
+					}
+				}
+				// The compare-and-set before the approval's checks, so a decision based on a read another write has
+				// overtaken is told so (409) whatever that write did to the approval.
+				const written = await transaction.writeSharingStatus(criteria, status);
+				if (!written) {
+					return false;
+				}
+				// The approval the handler read, still the sharing's: in the sharing's own organization (a move does
+				// not change the sharing's version, and an administrator's boundary takes in every organization, so
+				// only this comparison sees it), and inside the caller's boundary.
+				if (
+					!approval ||
+					!sameId(approval.requestId, equipmentSharing.id) ||
+					(!!equipmentSharing.organizationId &&
+						!sameId(approval.organizationId, equipmentSharing.organizationId)) ||
+					!isWithinOrganizationBoundary(approval.organizationId)
+				) {
+					// Thrown inside the transaction, so the sharing's write above is rolled back with it.
+					throw new NotFoundException('Request Approval not found');
+				}
+				await transaction.writeRequestApprovalStatus(approval.id, tenantId, status);
+				return true;
+			});
+
+			if (!decided) {
+				throw await this.versionConflict(id, expected);
+			}
+			return await this.findOneByIdString(id);
+		} catch (err) {
+			// An HTTP refusal (the 409 conflict, the 404 of a missing approval) stands as what it is; any other
+			// failure is answered 400, as before.
+			if (err instanceof HttpException) {
+				throw err;
+			}
+			throw new BadRequestException(err);
+		}
+	}
+
+	/**
+	 * Runs one decision in one transaction on the ORM the installation runs, and hands it the statements it makes on
+	 * that transaction's connection. A statement made through a repository instead would run on another pooled
+	 * connection, outside the transaction, and wait for the locks the transaction holds.
+	 *
+	 * @param work - The transaction body.
+	 * @returns What the body answers.
+	 */
+	protected async decisionTransaction<R>(
+		work: (transaction: IEquipmentSharingDecisionTransaction) => Promise<R>
+	): Promise<R> {
+		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
+		const rowLock = isPostgres() || isMySQL();
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				return await this.mikroOrmRepository
+					.getEntityManager()
+					.transactional(async (em) => await work(this.mikroOrmDecisionTransaction(em, rowLock)));
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmRepository.manager.transaction(
+					async (manager) => await work(this.typeOrmDecisionTransaction(manager, rowLock))
+				);
+		}
+	}
+
+	/**
+	 * The TypeORM arm of {@link decisionTransaction}: everything on the transaction's manager. TypeORM's update query
+	 * increments the sharing's `@VersionColumn` and stamps the update date, as `CrudService.update` does.
+	 */
+	private typeOrmDecisionTransaction(manager: EntityManager, rowLock: boolean): IEquipmentSharingDecisionTransaction {
+		return {
+			lockRequestApproval: async (requestApprovalId, tenantId) => {
+				if (!requestApprovalId || !tenantId) {
+					return null;
+				}
+				// The approval's row alone (a query builder joins no eager relation), so the lock is on that row.
+				const query = manager
+					.createQueryBuilder(RequestApproval, 'request_approval')
+					.where({ id: requestApprovalId, tenantId });
+				const row = rowLock ? await query.setLock('pessimistic_write').getOne() : await query.getOne();
+				return row
+					? {
+							id: row.id,
+							requestId: row.requestId,
+							organizationId: row.organizationId,
+							createdByUserId: row.createdByUserId
+					  }
+					: null;
+			},
+			readRequesters: async (sharingId, tenantId) => {
+				// The filer, the employees and the teams alone, no other eager relation.
+				const row = await manager.findOne(EquipmentSharing, {
+					where: { id: sharingId, tenantId },
+					relations: { employees: true, teams: true },
+					loadEagerRelations: false
+				});
+				// The sharing is also for the active members of its teams.
+				return requestersOfDocument(
+					row,
+					await typeOrmActiveTeamMemberIds(manager, teamIdsOfDocument(row), tenantId)
+				);
+			},
+			writeSharingStatus: async (criteria, status) =>
+				affectedRows(await manager.update(EquipmentSharing, criteria, { status })),
+			writeRequestApprovalStatus: async (requestApprovalId, tenantId, status) => {
+				await manager.update(RequestApproval, { id: requestApprovalId, tenantId }, { status });
+			}
+		};
+	}
+
+	/**
+	 * The MikroORM arm of {@link decisionTransaction}: everything on the transaction's fork. The sharing's row is the
+	 * one `CrudService.update` writes (`mikroOrmUpdateRow`: the update date, the version incremented in the statement);
+	 * the request approval's gets its update date and audit stamp the same way.
+	 */
+	private mikroOrmDecisionTransaction(
+		em: MikroOrmEntityManager,
+		rowLock: boolean
+	): IEquipmentSharingDecisionTransaction {
+		return {
+			lockRequestApproval: async (requestApprovalId, tenantId) => {
+				if (!requestApprovalId || !tenantId) {
+					return null;
+				}
+				// From the table, not the identity map the fork inherited from the request's context.
+				const row = (await em.findOne(
+					RequestApproval,
+					{ id: requestApprovalId, tenantId } as any,
+					{
+						disableIdentityMap: true,
+						...(rowLock ? { lockMode: LockMode.PESSIMISTIC_WRITE } : {})
+					} as any
+				)) as any;
+				// As stored: the `persist: false` organization mirror may be left unhydrated; the relation has its key.
+				return row
+					? {
+							id: row.id,
+							requestId: row.requestId,
+							organizationId: row.organizationId ?? row.organization?.id ?? null,
+							// The requester the same way: an unhydrated mirror would let them decide their own sharing.
+							createdByUserId: row.createdByUserId ?? row.createdByUser?.id ?? null
+						}
+					: null;
+			},
+			readRequesters: async (sharingId, tenantId) => {
+				const row = await em.findOne(
+					EquipmentSharing,
+					{ id: sharingId, tenantId } as any,
+					{ disableIdentityMap: true, populate: ['employees', 'teams'] } as any
+				);
+				// The sharing is also for the active members of its teams.
+				return requestersOfDocument(
+					row,
+					await mikroOrmActiveTeamMemberIds(em, teamIdsOfDocument(row), tenantId)
+				);
+			},
+			writeSharingStatus: async (criteria, status) =>
+				await em.nativeUpdate(EquipmentSharing, criteria as any, this.mikroOrmUpdateRow({ status }) as any),
+			writeRequestApprovalStatus: async (requestApprovalId, tenantId, status) => {
+				await em.nativeUpdate(
+					RequestApproval,
+					{ id: requestApprovalId, tenantId } as any,
+					this.mikroOrmRequestApprovalRow(em, { status }) as any
+				);
+			}
+		};
+	}
+
+	/**
+	 * The row MikroORM's `nativeUpdate` is handed for a request approval's write: each property's `onUpdate` value
+	 * (the update date) and the user who wrote it, which TypeORM's update query writes without being asked. The audit
+	 * stamp is the `updatedByUser` relation's `persist: false` mirror, which `nativeUpdate` writes when it is stated
+	 * alone.
+	 */
+	private mikroOrmRequestApprovalRow(em: MikroOrmEntityManager, patch: Record<string, unknown>) {
+		const meta = em.getMetadata().find(RequestApproval.name);
+		if (!meta) {
+			return patch;
+		}
+		const row: Record<string, unknown> = { ...patch };
+		for (const property of meta.props) {
+			if (
+				typeof property.onUpdate === 'function' &&
+				property.persist !== false &&
+				row[property.name] === undefined
+			) {
+				row[property.name] = property.onUpdate(row as never, em);
+			}
+		}
+		const userId = RequestContext.currentUserId();
+		if (userId && row['updatedByUserId'] === undefined && meta.properties?.['updatedByUserId']) {
+			row['updatedByUserId'] = userId;
+		}
+		return row;
 	}
 
 	/**

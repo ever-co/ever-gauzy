@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { IOrganization, IUserOrganizationCreateInput } from '@gauzy/contracts';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
@@ -21,6 +21,7 @@ import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
     selector: 'ngx-edit-user-organization',
     templateUrl: './edit-user-organizations.component.html',
     styleUrls: ['./edit-user-organizations.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditUserOrganizationsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

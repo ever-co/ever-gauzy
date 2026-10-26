@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, debounceTime, withLatestFrom, tap } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
@@ -31,7 +31,7 @@ import { KeyResultDetailsComponent } from './keyresult-details/keyresult-details
 import { KeyResultParametersComponent } from './key-result-parameters/key-result-parameters.component';
 import { GoalTemplateSelectComponent } from './goal-template-select/goal-template-select.component';
 import { CommonModule } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	NbCardModule,
 	NbButtonModule,
@@ -53,10 +53,11 @@ import { GauzyButtonActionModule } from '@gauzy/ui-core/shared';
 	templateUrl: './goals.component.html',
 	styleUrls: ['./goals.component.scss'],
 	standalone: true,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		GoalsComponentsModule,
 		CommonModule,
-		TranslateModule,
+		TranslatePipe,
 		NbCardModule,
 		NbButtonModule,
 		NbIconModule,
@@ -530,10 +531,9 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 				);
 				this.loadPage();
 			} else {
-				this.goals[index].progress = this.calculateGoalProgress(this.goals[index].keyResults);
-				const goalData = this.goals[index];
-				delete goalData.keyResults;
-				await this.goalService.update(this.goals[index].id, goalData);
+				// A progress update filed in the details moved the key result and its goal on the server (owner
+				// decision 2(a), 2026-10-23); writing the goal back with `PUT /goals/:id` needs `GOALS_EDIT` and
+				// refused an employee reporting their own key result. The page re-reads instead.
 				this.toastrService.success('TOASTR.MESSAGE.KEY_RESULT_UPDATED');
 				this.loadPage();
 			}
@@ -555,12 +555,8 @@ export class GoalsComponent extends TranslationBaseComponent implements OnInit, 
 		});
 		const response = await firstValueFrom(keyResultDialog.onClose);
 		if (!!response) {
-			const keyResultData = response;
-			delete keyResultData.goal;
-			delete keyResultData.updates;
-			await this.keyResultService.update(selectedKeyResult.id, keyResultData);
-			this.goals[index].progress = this.calculateGoalProgress(this.goals[index].keyResults);
-			await this.goalService.update(this.goals[index].id, this.goals[index]);
+			// The dialog filed the update and the server applied it to the key result and its goal, so neither is
+			// written back here (`PUT /key-results/:id` and `PUT /goals/:id` need `GOALS_EDIT`).
 			this.toastrService.success('TOASTR.MESSAGE.KEY_RESULT_UPDATED');
 			this.loadPage();
 		}

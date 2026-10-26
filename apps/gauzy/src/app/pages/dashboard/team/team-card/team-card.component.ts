@@ -1,34 +1,22 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { IEmployee, IOrganizationTeam, RolesEnum } from '@gauzy/contracts';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { ITeamRow } from '../team-dashboard.utils';
 
+/**
+ * The open team's header on the Teams dashboard: badge, name, visibility and
+ * prefix, the live line and managers — the team page's own header, with a
+ * link to that page.
+ */
 @Component({
-    selector: 'gauzy-team-card',
-    templateUrl: './team-card.component.html',
-    styleUrls: ['./team-card.component.scss'],
-    standalone: false
+	selector: 'gauzy-team-card',
+	templateUrl: './team-card.component.html',
+	styleUrls: [
+		'../../../employees/view-employee/view-employee.component.scss',
+		'../team-dashboard.shared.scss',
+		'./team-card.component.scss'
+	],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
-export class TeamCardComponent implements OnInit {
-	constructor() {}
-
-	_managers: IEmployee[];
-	get managers(): IEmployee[] {
-		return this._team.members
-			.filter((member) => member.role && member.role.name === RolesEnum.MANAGER)
-			.map((item) => item.employee);
-	}
-
-	_members: IEmployee[];
-	get members(): IEmployee[] {
-		return this._team.members.filter((member) => !member.role).map((item) => item.employee);
-	}
-
-	private _team: IOrganizationTeam | any;
-	public get team(): IOrganizationTeam | any {
-		return this._team;
-	}
-	@Input() public set team(value: IOrganizationTeam | any) {
-		this._team = value;
-	}
-
-	ngOnInit(): void {}
+export class TeamCardComponent {
+	@Input() public team: ITeamRow;
 }

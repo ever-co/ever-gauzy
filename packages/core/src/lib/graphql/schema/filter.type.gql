@@ -1,0 +1,129 @@
+# The filter operator family.
+#
+# A filter input is generated per resource from that resource's declared query schema, so this family
+# is the whole vocabulary a generated input is built from: a field's kind decides which of these
+# types it gets, and therefore which operators a caller may use on it. A field that is not declared
+# filterable has no input at all, so "not filterable" and "filterable with no operators" cannot be
+# confused.
+#
+# `isNull` is a filter rather than a bare `null` because the two mean different things to a client:
+# `isNull: true` selects the rows where the column is absent, and omitting the field entirely selects
+# every row. `i`-prefixed operators are the case-insensitive spellings.
+
+"""
+Equality and set membership on an identifier.
+"""
+input IDFilter {
+	"The value is equal to this."
+	eq: ID
+	"The value is not equal to this. Rows where the column is absent are excluded."
+	ne: ID
+	"The value is one of these."
+	in: [ID!]
+	"The value is none of these. Rows where the column is absent are excluded."
+	nin: [ID!]
+	"Whether the column is absent. `true` selects absent values, `false` selects present ones."
+	isNull: Boolean
+}
+
+"""
+Comparison and pattern matching on text.
+"""
+input StringFilter {
+	eq: String
+	ne: String
+	in: [String!]
+	nin: [String!]
+	"A case-sensitive pattern. `%` and `_` are wildcards."
+	like: String
+	"A case-insensitive pattern. `%` and `_` are wildcards."
+	ilike: String
+	isNull: Boolean
+	"A value contained in a document or array column."
+	contains: [String!]
+}
+
+"""
+Comparison on a whole number.
+"""
+input NumberFilter {
+	eq: Int
+	ne: Int
+	in: [Int!]
+	nin: [Int!]
+	gt: Int
+	gte: Int
+	lt: Int
+	lte: Int
+	"Exactly two bounds, inclusive at both ends, lower first."
+	between: [Int!]
+	isNull: Boolean
+}
+
+"""
+Comparison on an exact decimal, such as a money amount or a rate.
+
+Values are decimal strings rather than floating-point numbers, for the same reason the output is:
+`100.10` has no exact binary representation, and a filter that rounds is a filter that returns the
+wrong rows.
+"""
+input DecimalFilter {
+	eq: Decimal
+	ne: Decimal
+	in: [Decimal!]
+	nin: [Decimal!]
+	gt: Decimal
+	gte: Decimal
+	lt: Decimal
+	lte: Decimal
+	"Exactly two bounds, inclusive at both ends, lower first."
+	between: [Decimal!]
+	isNull: Boolean
+}
+
+"""
+Comparison on a flag.
+"""
+input BooleanFilter {
+	eq: Boolean
+	ne: Boolean
+	isNull: Boolean
+}
+
+"""
+Comparison on an instant.
+"""
+input DateTimeFilter {
+	eq: DateTime
+	ne: DateTime
+	gt: DateTime
+	gte: DateTime
+	lt: DateTime
+	lte: DateTime
+	"Exactly two bounds, inclusive at both ends, earlier first."
+	between: [DateTime!]
+	isNull: Boolean
+}
+
+"""
+Comparison on a document column.
+"""
+input JSONFilter {
+	eq: JSON
+	ne: JSON
+	contains: [String!]
+	isNull: Boolean
+}
+
+"""
+A tenant filter, with exactly one member.
+
+The tenant a read runs under comes from the credential, never from a filter, so there is nothing for
+a caller to choose here: the single member exists so that a resource whose rows are shared across
+organizations inside one tenant can say so in its generated input, and its value is checked against
+the caller's own tenant before it is used.
+"""
+input TenantFilter {
+	"The tenant the caller is acting in. It must be the caller's own tenant."
+	id: ID!
+}

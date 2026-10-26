@@ -9,7 +9,7 @@
 			[nbPopoverOffset]="8"
 			nbPopoverClass="worked-employees-popover"
 		>
-			<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
+			<img draggable="false" [src]="$safeNavigationMigration(lastScreenshot?.thumbUrl)" />
 			<span class="screenshot-count">
 				<i class="fas fa-users"></i>
 				{{ employees.length }}
@@ -44,7 +44,7 @@
 						<nb-icon icon="trash-2-outline"></nb-icon>
 					</button>
 					} @if (lastScreenshot?.description) {
-					<button class="ml-2" status="info" nbButton size="tiny" [nbTooltip]="lastScreenshot?.description">
+					<button class="ml-2" status="info" nbButton size="tiny" [nbTooltip]="$safeNavigationMigration(lastScreenshot?.description)">
 						<nb-icon icon="info-outline" size="small"></nb-icon>
 					</button>
 					}
@@ -76,7 +76,7 @@
 				</div>
 			</div>
 			@if (lastScreenshot) {
-			<img draggable="false" [src]="lastScreenshot?.thumbUrl" />
+			<img draggable="false" [src]="$safeNavigationMigration(lastScreenshot?.thumbUrl)" />
 			} @else {
 			<img draggable="false" [src]="fallbackSvg" class="default-image" />
 			<span class="no-image p-3">
@@ -119,7 +119,7 @@
 	<nb-list>
 		@for (employee of employees; track employee) {
 		<nb-list-item class="worked-employee">
-			<ngx-employee-links [value]="employee?.user" [isNavigation]="false"></ngx-employee-links>
+			<ngx-employee-links [value]="$safeNavigationMigration(employee?.user)" [isNavigation]="false"></ngx-employee-links>
 		</nb-list-item>
 		}
 	</nb-list>

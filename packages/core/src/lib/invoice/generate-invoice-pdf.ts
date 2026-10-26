@@ -1,9 +1,42 @@
 import {
+	DiscountTaxTypeEnum,
 	IInvoice,
 	IOrganization,
 	IOrganizationContact,
+	IProductTranslatable,
 	InvoiceTypeEnum
 } from '@gauzy/contracts';
+import { Product } from '../product/product.entity';
+import { formatCurrencyAmount } from './invoice-currency.util';
+import { formatInvoiceDay } from './invoice-date.util';
+
+/**
+ * An invoice line's product, with the invoice's language merged onto it.
+ *
+ * **The merge is the entity's, whichever ORM read the invoice.** On TypeORM the line's product is a `Product`
+ * and carries `translate`, and that call is made exactly as it always was. On MikroORM the invoice comes from
+ * the CRUD base as `wrap(entity).toJSON()` — its data, and its loaded relations', as plain objects without the
+ * entities' prototypes — so the call failed with `product.translate is not a function`, and no invoice billed by
+ * product could be rendered: the PDF download (REST and GraphQL) answered an error, and the invoice e-mail, which
+ * attaches the same PDF, was logged as failed and never sent. The same merge is therefore run on the serialized
+ * product, as `Product`'s own method.
+ *
+ * The product is handed to it as it stands. The merge reads nothing of it but `translations` — which the invoice
+ * read loads (the entity loads them eagerly besides), and both ORMs answer as the array of the product's
+ * translations — so no relation the read did not load is ever dereferenced; and it mutates the object it is called
+ * on, as it mutates the TypeORM entity.
+ *
+ * @param product The line's product, as the invoice read answered it.
+ * @param language The language to merge.
+ * @returns What `translate` answers for the product.
+ */
+function translatedProduct(product: IProductTranslatable, language: string): any {
+	if (typeof product.translate === 'function') {
+		return product.translate(language);
+	}
+
+	return Product.prototype.translate.call(product, language);
+}
 
 export async function generateInvoicePdfDefinition(
 	invoice: IInvoice,
@@ -12,35 +45,54 @@ export async function generateInvoicePdfDefinition(
 	translatedText?: any,
 	language?: string
 ) {
+	// Every amount follows the organization's "Currency Position" setting, like the web app does.
+	const amount = (value: number | string) =>
+		formatCurrencyAmount(value, invoice.currency, organization?.currencyPosition);
+
+	// A tax or discount is a flat amount, a percentage, or — when its type was never set on the
+	// invoice — a bare number, which must not be dressed up as a percentage.
+	const taxOrDiscount = (value: number | string, type?: DiscountTaxTypeEnum | string) => {
+		switch (type) {
+			case DiscountTaxTypeEnum.FLAT_VALUE:
+				return amount(value);
+			case DiscountTaxTypeEnum.PERCENT:
+				return `${value}%`;
+			default:
+				return `${value}`;
+		}
+	};
+
 	const body = [];
+	// A line's employee, project, task, product or expense is set to null when that record is deleted:
+	// the line is then printed with an empty item instead of failing the whole PDF.
 	for (const item of invoice.invoiceItems) {
 		const currentItem = [
 			`${item.description}`,
 			`${item.quantity}`,
-			`${invoice.currency} ${item.price}`,
-			`${invoice.currency} ${item.totalValue}`
+			amount(item.price),
+			amount(item.totalValue)
 		];
 		switch (invoice.invoiceType) {
 			case InvoiceTypeEnum.BY_EMPLOYEE_HOURS:
 				const employee = item.employee;
-				currentItem.unshift(`${employee.user.name}`);
+				currentItem.unshift(employee?.user?.name ?? '');
 				break;
 			case InvoiceTypeEnum.BY_PROJECT_HOURS:
 				const project = item.project;
-				currentItem.unshift(`${project.name}`);
+				currentItem.unshift(project?.name ?? '');
 				break;
 			case InvoiceTypeEnum.BY_TASK_HOURS:
 				const task = item.task;
-				currentItem.unshift(`${task.title}`);
+				currentItem.unshift(task?.title ?? '');
 				break;
 			case InvoiceTypeEnum.BY_PRODUCTS:
 				let product: any = item.product;
-				product = product.translate(language);
-				currentItem.unshift(`${product.name}`);
+				product = product ? translatedProduct(product, language) : null;
+				currentItem.unshift(product?.name ?? '');
 				break;
 			case InvoiceTypeEnum.BY_EXPENSES:
 				const expense = item.expense;
-				currentItem.unshift(`${expense.purpose}`);
+				currentItem.unshift(expense?.purpose ?? '');
 				break;
 			default:
 				break;
@@ -110,7 +162,7 @@ export async function generateInvoicePdfDefinition(
 										: translatedText.invoice
 									} ${translatedText.date}: `
 							},
-							`${invoice.invoiceDate.toString().slice(0, 10)}`
+							invoice.invoiceDate ? formatInvoiceDay(invoice.invoiceDate, organization) : ''
 						]
 					}
 				]
@@ -124,7 +176,7 @@ export async function generateInvoicePdfDefinition(
 								bold: true,
 								text: `${translatedText.dueDate}: `
 							},
-							`${invoice.dueDate.toString().slice(0, 10)}`
+							invoice.dueDate ? formatInvoiceDay(invoice.dueDate, organization) : ''
 						]
 					}
 				]
@@ -150,7 +202,7 @@ export async function generateInvoicePdfDefinition(
 						bold: true,
 						text: `${translatedText.to}:\n`
 					},
-					`${organizationContact.name}`
+					organizationContact?.name ?? ''
 				]
 			},
 			' ',
@@ -185,9 +237,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.taxType === 'FLAT' ? invoice.currency : ''
-							} ${invoice.tax}${invoice.taxType === 'PERCENT' ? '%' : ''
-							}`
+						text: taxOrDiscount(invoice.tax, invoice.taxType)
 					}
 				]
 			},
@@ -207,9 +257,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.tax2Type === 'FLAT' ? invoice.currency : ''
-							} ${invoice.tax2}${invoice.tax2Type === 'PERCENT' ? '%' : ''
-							}`
+						text: taxOrDiscount(invoice.tax2, invoice.tax2Type)
 					}
 				]
 			},
@@ -229,11 +277,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						alignment: 'right',
 						width: '10%',
-						text: `${invoice.discountType === 'FLAT'
-								? invoice.currency
-								: ''
-							} ${invoice.discountValue}${invoice.discountType === 'PERCENT' ? '%' : ''
-							}`
+						text: taxOrDiscount(invoice.discountValue, invoice.discountType)
 					}
 				]
 			},
@@ -244,7 +288,7 @@ export async function generateInvoicePdfDefinition(
 					{
 						bold: true,
 						alignment: 'right',
-						text: `${translatedText.totalValue}: ${invoice.currency} ${invoice.totalValue}`
+						text: `${translatedText.totalValue}: ${amount(invoice.totalValue)}`
 					}
 				]
 			},
@@ -255,12 +299,12 @@ export async function generateInvoicePdfDefinition(
 					? [
 						{
 							width: '50%',
-							text: `${translatedText.alreadyPaid}: ${invoice.currency} ${invoice.alreadyPaid}`
+							text: `${translatedText.alreadyPaid}: ${amount(invoice.alreadyPaid)}`
 						},
 						{
 							alignment: 'right',
 							width: '50%',
-							text: `${translatedText.amountDue}: ${invoice.currency} ${invoice.amountDue}`
+							text: `${translatedText.amountDue}: ${amount(invoice.amountDue)}`
 						}
 					]
 					: []

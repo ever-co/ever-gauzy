@@ -24,7 +24,7 @@ permissions:
 jobs:
   deploy-mcp-prod:
     if: ${{ vars.DO_ENABLED == 'true' }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     timeout-minutes: 300
 
     environment: prod
@@ -85,6 +85,9 @@ jobs:
           MCP_AUTH_JWT_ALGORITHMS: '${{ secrets.MCP_AUTH_JWT_ALGORITHMS }}'
           MCP_AUTH_JWT_JWKS_URI: '${{ secrets.MCP_AUTH_JWT_JWKS_URI }}'
           MCP_AUTH_TOKEN_CACHE_TTL: '${{ secrets.MCP_AUTH_TOKEN_CACHE_TTL }}'
+          MCP_AUTH_INTROSPECTION_ENDPOINT: '${{ secrets.MCP_AUTH_INTROSPECTION_ENDPOINT }}'
+          MCP_AUTH_INTROSPECTION_CLIENT_ID: '${{ secrets.MCP_AUTH_INTROSPECTION_CLIENT_ID }}'
+          MCP_AUTH_INTROSPECTION_CLIENT_SECRET: '${{ secrets.MCP_AUTH_INTROSPECTION_CLIENT_SECRET }}'
           MCP_AUTH_METADATA_CACHE_TTL: '${{ secrets.MCP_AUTH_METADATA_CACHE_TTL }}'
 
           # Session Management

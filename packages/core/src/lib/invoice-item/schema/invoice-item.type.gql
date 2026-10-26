@@ -1,0 +1,255 @@
+# The invoice item's object types.
+#
+# One billed line. A line is what the totals chain is computed from — the price of a unit, how many
+# units, and the line's own total — and it is what explains a document to the buyer and to an
+# accountant, which is why the row carries a description and names the thing it bills (a task, an
+# employee's time, a project, a catalogue product, or a reimbursable expense).
+#
+# Every amount and every quantity on this type is `Decimal`, never `Float`. `price` and `totalValue`
+# are money, and money read as a binary fraction is money that does not add up; `quantity` is an exact
+# decimal for the same reason, because it is the factor the line's total is the product of — hours and
+# weights are billed in parts of a unit, and a quantity rounded before it is multiplied is a total
+# that is wrong by more than the rounding.
+#
+# **A line carries no currency of its own.** The document it belongs to states the currency, and every
+# line of one document is expressed in it: the table has no currency column here, so a member with a
+# code would be inventing a second answer to a question the invoice already answers once. The amounts
+# below are carried exactly as the row holds them — nothing is rescaled, reformatted or converted.
+#
+# `deletedAt` is carried, because withdrawing and restoring are delivered routes whose whole effect is
+# that column; it is not filterable, for the reason `InvoiceItemFilter` states.
+#
+# Members the delivered reads could produce are deliberately absent, each for its own reason:
+#
+# - `invoice`, `product`, `project`, `employee`, `task` and `expense` are not exposed as relations.
+#   Each is loaded only when a REST caller names it in the `relations` of its `data` query string, and
+#   no read this surface performs names any — the connection states none and the node query carries
+#   none either — so a relation member would be absent from exactly the rows this surface answers. The
+#   identifiers are columns and are answered by every read, and each named row is reachable from the
+#   resource that owns it; the document a line belongs to is served by this platform's invoice surface
+#   itself, which is what `invoiceId` is read against.
+
+"""
+One billed line of a document: what it charges for, at what price, for how many units.
+"""
+type InvoiceItem {
+	id: ID!
+	"The line's text — what the buyer reads on the document."
+	description: String
+	"The price of one unit, in the currency the document states."
+	price: Decimal!
+	"""
+	How many units the line bills, as an exact decimal.
+
+	Not an integer: time and weight are billed in parts of a unit, and the line's total is this factor's
+	product with the price, so a rounded quantity would make the total wrong by more than the rounding.
+	"""
+	quantity: Decimal!
+	"The line's total, in the currency the document states."
+	totalValue: Decimal!
+	"Whether the document's first tax applies to this line."
+	applyTax: Boolean
+	"Whether the document's discount applies to this line."
+	applyDiscount: Boolean
+	"The document this line belongs to."
+	invoiceId: ID
+	"The task this line bills, when it bills time on one."
+	taskId: ID
+	"The employee this line bills, when it bills their time."
+	employeeId: ID
+	"The project this line bills, when it bills time on one."
+	projectId: ID
+	"The catalogue product this line bills, when it bills a stocked item."
+	productId: ID
+	"The expense this line bills, when it bills a reimbursable cost."
+	expenseId: ID
+	"""
+	The purchase order line this bill line settles.
+
+	The bill line's own provenance, and the third of the three quantities a three-way match needs. Null
+	on a sales line and on a bill imported before the column existed, which is reconciled by the
+	purchase-side audit rather than backfilled with a guessed match.
+	"""
+	purchaseOrderLineId: ID
+	"""
+	When the line was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes — the two removals this resource serves — and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	createdAt: DateTime
+	updatedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	tenantId: ID
+	organizationId: ID
+}
+
+"""
+The boundary of one page of lines.
+"""
+type InvoiceItemEdge {
+	node: InvoiceItem!
+	cursor: String!
+}
+
+"""
+One page of lines, with the total the filters select and the boundary cursors.
+"""
+type InvoiceItemConnection {
+	nodes: [InvoiceItem!]!
+	edges: [InvoiceItemEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a line list may be sorted by.
+
+The two timestamps are how a line is found again, and the three amounts and quantities are what a
+line list is read by: what a document's lines cost, and how much of each was billed. `description` is
+not a sort key, because the order of a text is the order of its spelling rather than a fact about the
+line, and `invoiceId` is not one either — a document's lines are read by narrowing the list to that
+document, which is a filter, and the order they come back in is then the order above.
+"""
+enum InvoiceItemSortField {
+	createdAt
+	updatedAt
+	price
+	quantity
+	totalValue
+}
+
+"""
+The order the lines are returned in. At most three keys are accepted.
+"""
+input InvoiceItemSort {
+	field: InvoiceItemSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a line list may be narrowed by. `and` is the default; `or` requires any of its members and
+`not` excludes the rows that match it.
+
+Every member is a column of the line's own row, which is why the set is what it is: the delivered list
+read answers those columns, so each one narrows rows the connection was handed. `invoiceId` is the
+member a document's own screen reads its lines by.
+
+`deletedAt` is deliberately absent although the object carries it: the delivered list reads answer
+live rows only, so a condition on that column could only ever match the empty set, and an argument
+that cannot be honoured is worse than an argument that is not offered. The tenant and the organization
+are absent for a different reason — both are applied to the criterion from the credential rather than
+from the caller, so a member here would suggest a scope decision the caller does not have.
+
+The amounts and the quantity are stated through the decimal family, which is the family money and
+exact quantities are compared in. **The values are the row's own**: the columns are `numeric` read
+through the platform's numeric transformer, so an equality states the value as the read produces it,
+while the range operators — which are what a line list is actually searched with — need no such care.
+"""
+input InvoiceItemFilter {
+	id: IDFilter
+	description: StringFilter
+	price: DecimalFilter
+	quantity: DecimalFilter
+	totalValue: DecimalFilter
+	applyTax: BooleanFilter
+	applyDiscount: BooleanFilter
+	invoiceId: IDFilter
+	taskId: IDFilter
+	employeeId: IDFilter
+	projectId: IDFilter
+	productId: IDFilter
+	expenseId: IDFilter
+	purchaseOrderLineId: IDFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [InvoiceItemFilter!]
+	or: [InvoiceItemFilter!]
+	not: InvoiceItemFilter
+}
+
+# The write surface.
+#
+# `CreateInvoiceItemInput` and `UpdateInvoiceItemInput` declare what the delivered write paths store,
+# and nothing else. Three consequences are deliberate:
+#
+# - A member that names a related row is stated as that row's identifier. The delivered paths persist
+#   the foreign key and never the row beside it, so an input member carrying a whole related object
+#   would offer members nothing honours.
+# - The tenant is not a member of either input. The delivered write stamps the caller's own tenant
+#   onto the row and overwrites whatever a body states, so a member here would promise a scope the
+#   write refuses. The organization **is** a member: the delivered client states it per line and the
+#   column is what the write stores.
+# - `isActive` and `isArchived` are not members. They belong to the base row the platform keeps for
+#   every record, no delivered route here writes them, and a member that no write honours would be a
+#   promise this surface cannot keep.
+
+"""
+What a caller states when it records one line.
+
+The three members the store will not accept a row without — the price, the quantity and the total —
+are required here too. `invoiceId` is not: it is the identifier that attaches the line to its document
+and the delivered bulk write's own validation requires it on every line of its body, while the single
+create route validates nothing and the column is nullable, so the member is declared as the looser of
+the two and the requirement stays where it is enforced.
+"""
+input CreateInvoiceItemInput {
+	"The line's text — what the buyer reads on the document."
+	description: String
+	"The price of one unit, in the currency the document states."
+	price: Decimal!
+	"How many units the line bills."
+	quantity: Decimal!
+	"The line's total, in the currency the document states."
+	totalValue: Decimal!
+	"The document this line belongs to."
+	invoiceId: ID
+	"The organization the line is filed under."
+	organizationId: ID
+	"The task this line bills, when it bills time on one."
+	taskId: ID
+	"The employee this line bills, when it bills their time."
+	employeeId: ID
+	"The project this line bills, when it bills time on one."
+	projectId: ID
+	"The catalogue product this line bills, when it bills a stocked item."
+	productId: ID
+	"The expense this line bills, when it bills a reimbursable cost."
+	expenseId: ID
+	"The purchase order line this bill line settles."
+	purchaseOrderLineId: ID
+	"Whether the document's first tax applies to this line."
+	applyTax: Boolean
+	"Whether the document's discount applies to this line."
+	applyDiscount: Boolean
+}
+
+"""
+What a caller states when it changes a line that exists.
+
+**A member the caller leaves out is left as it is.** The delivered write is a primitive statement over
+the columns the body states, never a replacement of the row, so omitting `price` keeps the price and
+omitting `description` keeps the text. A caller that means to clear an optional member states it as
+null.
+
+Every column is optional here, and that is the delivered route's own shape rather than a promise made
+here: it validates nothing beyond the identifier the path names, and a body that states one member is
+a body it serves.
+"""
+input UpdateInvoiceItemInput {
+	id: ID!
+	description: String
+	price: Decimal
+	quantity: Decimal
+	totalValue: Decimal
+	invoiceId: ID
+	organizationId: ID
+	taskId: ID
+	employeeId: ID
+	projectId: ID
+	productId: ID
+	expenseId: ID
+	purchaseOrderLineId: ID
+	applyTax: Boolean
+	applyDiscount: Boolean
+}

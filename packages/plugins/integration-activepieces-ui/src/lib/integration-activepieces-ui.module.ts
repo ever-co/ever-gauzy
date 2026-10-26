@@ -19,7 +19,7 @@ import {
 	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SmartDataViewLayoutModule, SelectorsModule, SharedModule, TableComponentsModule } from '@gauzy/ui-core/shared';
 import { IntegrationActivepiecesRoutes } from './integration-activepieces.routes';
 import { ActivepiecesAuthorizeComponent } from './components/activepieces-authorize/activepieces-authorize.component';
@@ -56,7 +56,7 @@ import { ActivepiecesMcpServersComponent } from './components/activepieces-mcp-s
 		NbTabsetModule,
 		NbToggleModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		IntegrationActivepiecesRoutes,
 		SmartDataViewLayoutModule,
 		SelectorsModule,

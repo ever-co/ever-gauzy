@@ -8,7 +8,8 @@ import {
 	ElementRef,
 	ViewChild,
 	EventEmitter,
-	Output
+	Output,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { AbstractControl, ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -29,6 +30,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PasswordFormFieldComponent

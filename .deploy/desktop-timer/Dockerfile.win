@@ -5,6 +5,8 @@ WORKDIR /opt/src
 COPY apps/desktop-timer/package.json ./apps/desktop-timer/
 COPY apps/api/package.json ./apps/api/
 COPY package.json yarn.lock ./
+# Vendored packages the lockfile resolves from file: (vendor/nebular/README.md)
+COPY vendor ./vendor
 
 # Copy patch-package patches so `yarn postinstall.manual` (patch-package) can apply them.
 # Without this, patch-package prints "No patch files found" and the typeorm v1 compat patch

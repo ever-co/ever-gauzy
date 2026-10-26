@@ -134,6 +134,7 @@ jest.mock('@gauzy/core', () => {
 		unixTimestampToDate: jest.fn((value: any) => value),
 		// Services injected into `UpworkService` — DI tokens only, never called by these specs.
 		ExpenseService: class {},
+		IntegrationTenantSyncService: class {},
 		IncomeService: class {},
 		IntegrationMapService: class {},
 		OrganizationService: class {},
@@ -244,10 +245,11 @@ const buildController = (
 	const transactionService: any = { handleTransactions: jest.fn(async () => 'handled') };
 
 	const noop: any = {};
-	const service = new UpworkService(noop, noop, noop, userService, noop, noop, noop, noop, noop, noop, commandBus);
+	const syncService: any = { recordSyncCompleted: jest.fn(async () => undefined) };
+	const service = new UpworkService(noop, noop, noop, userService, noop, noop, noop, noop, noop, noop, commandBus, syncService);
 	const controller = new UpworkController(transactionService, service);
 
-	return { controller, service, commandBus, userService, transactionService };
+	return { controller, service, commandBus, userService, transactionService, syncService };
 };
 
 /**
@@ -646,6 +648,71 @@ describe('UpworkController — GHSA-3rqg-gpm9-gx84 credential exposure', () => {
 				} as any)
 			).rejects.toBeInstanceOf(BadRequestException);
 		});
+
+		it('ends a finished run by recording it, in the scope the run was authorized in (integrationSyncCompleted)', async () => {
+			const { controller, syncService } = buildController();
+
+			await controller.syncContracts({
+				integrationId: INTEGRATION_ID,
+				organizationId: ORGANIZATION_ID,
+				tenantId: FOREIGN_TENANT_ID,
+				contracts: []
+			} as any);
+
+			expect(syncService.recordSyncCompleted).toHaveBeenCalledTimes(1);
+			// The tenant is the request's, never the body's.
+			expect(syncService.recordSyncCompleted).toHaveBeenCalledWith(INTEGRATION_ID, {
+				organizationId: ORGANIZATION_ID,
+				tenantId: CURRENT_TENANT_ID,
+				counts: { contract: 0 }
+			});
+		});
+
+		it('a failed recording does not fail an Upwork run: the recording is the run’s epilogue, not part of the import', async () => {
+			const contracts = buildController();
+			contracts.syncService.recordSyncCompleted.mockRejectedValueOnce(new Error('the outbox is unavailable'));
+			const related = buildController();
+			related.syncService.recordSyncCompleted.mockRejectedValueOnce(new Error('the outbox is unavailable'));
+
+			await expect(
+				contracts.controller.syncContracts({ integrationId: INTEGRATION_ID, organizationId: ORGANIZATION_ID, contracts: [] } as any)
+			).resolves.toEqual([]);
+			await expect(
+				related.controller.syncContractsRelatedData({
+					integrationId: INTEGRATION_ID,
+					organizationId: ORGANIZATION_ID,
+					contracts: [],
+					entitiesToSync: [],
+					employeeId: 'employee-1'
+				} as any)
+			).resolves.toEqual([]);
+
+			expect(contracts.syncService.recordSyncCompleted).toHaveBeenCalledTimes(1);
+			expect(related.syncService.recordSyncCompleted).toHaveBeenCalledTimes(1);
+		});
+
+		it('records nothing for a run that was refused', async () => {
+			const refusedScope = buildController({ integration: null });
+			const refusedBody = buildController();
+
+			await expect(
+				refusedScope.controller.syncContracts({
+					integrationId: INTEGRATION_ID,
+					organizationId: ORGANIZATION_ID,
+					contracts: []
+				} as any)
+			).rejects.toBeInstanceOf(NotFoundException);
+			await expect(
+				refusedBody.controller.syncContracts({
+					integrationId: INTEGRATION_ID,
+					organizationId: ORGANIZATION_ID,
+					contracts: { length: 1 }
+				} as any)
+			).rejects.toBeInstanceOf(BadRequestException);
+
+			expect(refusedScope.syncService.recordSyncCompleted).not.toHaveBeenCalled();
+			expect(refusedBody.syncService.recordSyncCompleted).not.toHaveBeenCalled();
+		});
 	});
 
 	describe('POST /token-secret-pair/:organizationId', () => {
@@ -847,5 +914,45 @@ describe('UpworkController — GHSA-3rqg-gpm9-gx84 credential exposure', () => {
 			).rejects.toThrow('invalid verifier');
 			expect(dispatched(commandBus, IntegrationSettingCreateCommand)).toHaveLength(0);
 		});
+	});
+});
+
+/**
+ * The report range was re-parsed from `format('YYYY-MM-DD hh:mm:ss')`, a 12-hour clock without a meridiem:
+ * midnight became noon and 23:59:59 became 11:59:59, so the first half of the first day and the second half of
+ * the last day fell out of the synced incomes and expenses.
+ */
+describe('UpworkService.getReportListByIntegration — date range', () => {
+	const start = new Date(2024, 2, 1, 0, 0, 0);
+	const end = new Date(2024, 2, 31, 23, 59, 59);
+
+	const setup = () => {
+		const findAll = () => jest.fn(async () => ({ items: [], total: 0 }));
+		const stub: any = {
+			_resolveScope: jest.fn(async () => ({ organizationId: ORGANIZATION_ID, tenantId: CURRENT_TENANT_ID })),
+			_integrationMapService: {
+				findAll: jest.fn(async () => ({ items: [{ gauzyId: 'income-1' }], total: 1 }))
+			},
+			_incomeService: { findAll: findAll() },
+			_expenseService: { findAll: findAll() }
+		};
+		return stub;
+	};
+
+	it('keeps the whole first and last day, on a 24-hour clock', async () => {
+		const stub = setup();
+
+		await UpworkService.prototype.getReportListByIntegration.call(
+			stub,
+			INTEGRATION_ID,
+			{ organizationId: ORGANIZATION_ID, dateRange: { start, end } },
+			{ income: [], expense: [] }
+		);
+
+		for (const service of [stub._incomeService, stub._expenseService]) {
+			const [from, to] = service.findAll.mock.calls[0][0].where.valueDate.value;
+			expect(from).toEqual(start);
+			expect(to).toEqual(end);
+		}
 	});
 });

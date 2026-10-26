@@ -8,7 +8,8 @@ import {
 	Input,
 	OnDestroy,
 	OnInit,
-	Output
+	Output,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime, take, tap } from 'rxjs/operators';
@@ -25,6 +26,7 @@ import { ActivityLevel, TimesheetFilterService } from '@gauzy/ui-core/core';
     selector: 'ngx-gauzy-filters',
     templateUrl: './gauzy-filters.component.html',
     styleUrls: ['./gauzy-filters.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class GauzyFiltersComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

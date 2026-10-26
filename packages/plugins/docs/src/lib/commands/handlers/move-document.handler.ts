@@ -21,6 +21,18 @@ export class MoveDocumentHandler implements ICommandHandler<MoveDocumentCommand>
 	public async execute(command: MoveDocumentCommand): Promise<IDocument> {
 		const document = await this.documentService.findOneScoped(command.id);
 		await this.documentService.assertCanWrite(document);
+		// The new parent is read through the scope a create reads it through: the tree's own lookup checks only
+		// the organization, so a writer could move a document into another member's PRIVATE folder by its id.
+		// And it must be writable, as a duplicate's target is: the move adds to its children and renumbers them, so a
+		// VIEW/COMMENT grantee could otherwise file documents into a folder they may only read.
+		if (command.input.parentId) {
+			const parent = await this.documentService.findOneScoped(
+				command.input.parentId,
+				[],
+				document.organizationId
+			);
+			await this.documentService.assertCanWrite(parent);
+		}
 		const previousParentId = document.parentId ?? null;
 		const moved = await this.documentTreeService.moveDocument(document, command.input.parentId, command.input.index);
 		// `field` + before/after so the activity timeline records the re-parenting (R-COL-03),

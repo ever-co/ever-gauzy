@@ -20,14 +20,18 @@
  * completely unchanged — and pin `sanitizeMediaUrl`, the app's scheme ALLOWLIST, as the thing
  * that actually refuses them before they reach the binding.
  */
-import { SecurityContext } from '@angular/core';
+import { DOCUMENT, Injector, runInInjectionContext, SecurityContext } from '@angular/core';
 import { DomSanitizer, ɵDomSanitizerImpl as DomSanitizerImpl } from '@angular/platform-browser';
 import { isAllowedUrl, sanitizeMediaUrl } from '../../editor/read-only/safe-url.util';
 
 describe('preview media URL sanitization', () => {
 	// Constructed directly: `TestBed` is unusable in this package (see the note in
-	// `editor/read-only/markdown-render.util.spec.ts`). This is the real sanitizer class.
-	const sanitizer: DomSanitizer = new DomSanitizerImpl(document);
+	// `editor/read-only/markdown-render.util.spec.ts`). This is the real sanitizer class, built in an
+	// injector that provides only the document it `inject()`s (Angular 22).
+	const sanitizer: DomSanitizer = runInInjectionContext(
+		Injector.create({ providers: [{ provide: DOCUMENT, useValue: document }] }),
+		() => new DomSanitizerImpl()
+	);
 
 	const asUrl = (value: string): string | null => sanitizer.sanitize(SecurityContext.URL, value);
 

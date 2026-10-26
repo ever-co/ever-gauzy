@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -16,6 +16,7 @@ import { CandidateFeedbacksService } from '@gauzy/ui-core/core';
     selector: 'ga-average-criterions-rating-chart',
     templateUrl: './average-criterions-rating-chart.component.html',
     styleUrls: ['./average-criterions-rating-chart.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AverageCriterionsRatingChartComponent implements OnInit, OnDestroy {

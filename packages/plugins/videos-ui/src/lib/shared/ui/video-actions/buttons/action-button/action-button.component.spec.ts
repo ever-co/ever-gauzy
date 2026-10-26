@@ -1,6 +1,6 @@
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService, TranslatePipe } from '@ngx-translate/core';
 import { ActionButton } from '../../../../../shared/models/action-button.model';
 import { ActionButtonComponent } from './action-button.component';
 describe('ActionButtonComponent', () => {
@@ -8,7 +8,8 @@ describe('ActionButtonComponent', () => {
 	let fixture: ComponentFixture<ActionButtonComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			imports: [TranslateModule.forRoot()],
+			imports: [TranslatePipe],
+			providers: [provideTranslateService()],
 			declarations: [ActionButtonComponent],
 			// The template uses Nebular directives (nbButton, nbSpinner, nb-icon); ignore them here
 			// so the unit test stays focused on the component, matching the sibling camshot-viewer spec.
