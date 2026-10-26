@@ -46,6 +46,8 @@ import {
 // Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
 // imported directly — the Documents hub module is never pulled in here.
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
+// The project page's Activity tab, which the task page shows for the task. Standalone.
+import { ProjectActivityComponent } from '../projects/components/project-view/project-activity/project-activity.component';
 import { TaskComponent } from './components/task/task.component';
 import { TaskViewHeaderComponent } from './components/task-view/task-view-header.component';
 import { TaskViewPageComponent } from './components/task-view/task-view-page.component';
@@ -111,7 +113,8 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		TaskSizeSelectModule,
 		TaskStatusSelectModule,
 		TaskNumberFieldModule,
-		DocumentLinksPanelComponent
+		DocumentLinksPanelComponent,
+		ProjectActivityComponent
 	]
 })
 export class TasksModule {}
