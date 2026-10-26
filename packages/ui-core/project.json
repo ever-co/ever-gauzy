@@ -32,14 +32,17 @@
 			"defaultConfiguration": "development"
 		},
 		"config": {
-			"executor": "nx:run-commands",
-			"configurations": {
-				"production": {
-					"commands": ["nx build ui-config --configuration=production"]
-				},
-				"development": {
-					"commands": ["nx build ui-config --configuration=development"]
+			"executor": "nx:noop",
+			"dependsOn": [
+				{
+					"projects": ["ui-config"],
+					"target": "build",
+					"params": "forward"
 				}
+			],
+			"configurations": {
+				"production": {},
+				"development": {}
 			},
 			"defaultConfiguration": "development"
 		},
