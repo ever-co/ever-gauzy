@@ -73,15 +73,51 @@ jobs:
           commit_analyzer_preset: angular
           force_bump: patch
 
+      # GitHub refuses a release body over 125 000 characters (422 "body is too long"). With
+      # `generateReleaseNotes` the action appended GitHub's list of every PR since the previous full
+      # release, and the first production release after the 2026-10 stage-only period (v111.138.2,
+      # ~3 700 commits since v111.48.2) failed on exactly that. The same notes are built here instead:
+      # the changelog, then GitHub's generated list, cut at a line boundary below the limit, with a
+      # link to the full comparison.
+      - name: Release notes within GitHub's 125 000-character limit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_TAG: ${{ steps.tag_version.outputs.new_tag || steps.tag_version_fallback.outputs.new_tag }}
+          CHANGELOG: ${{ steps.tag_version.outputs.changelog || steps.tag_version_fallback.outputs.changelog }}
+        run: |
+          set -u
+          limit=120000
+          prev=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq .tag_name 2>/dev/null || true)
+          args=(-f tag_name="$NEW_TAG" -f target_commitish="$GITHUB_SHA")
+          if [ -n "$prev" ] && [ "$prev" != "$NEW_TAG" ]; then
+            args+=(-f previous_tag_name="$prev")
+          fi
+          generated=$(gh api -X POST "repos/${GITHUB_REPOSITORY}/releases/generate-notes" "${args[@]}" --jq .body 2>/dev/null || true)
+          { printf '%s\n\n' "$CHANGELOG"; printf '%s\n' "$generated"; } > release-body.md
+          if [ "$(wc -c < release-body.md)" -gt "$limit" ]; then
+            # Cut by bytes, then drop the last (possibly split) line so no UTF-8 character is broken.
+            head -c "$limit" release-body.md | sed '$d' > release-body.cut
+            {
+              cat release-body.cut
+              printf '\n(List truncated to fit the GitHub release-notes limit.)'
+              if [ -n "$prev" ]; then
+                printf ' Full comparison: %s/%s/compare/%s...%s' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$prev" "$NEW_TAG"
+              fi
+              printf '\n'
+            } > release-body.md
+            echo "::notice::Release notes truncated to ${limit} bytes (the generated list was longer)."
+          fi
+
       - name: Create the tag and the GitHub release (one call)
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          generateReleaseNotes: true
+          # The notes are built, and kept under the size limit, by the step above.
+          generateReleaseNotes: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.tag_version.outputs.new_tag || steps.tag_version_fallback.outputs.new_tag }}
           # Create the tag as part of this call, pinned to the commit that was built.
           commit: ${{ github.sha }}
           name: ${{ steps.tag_version.outputs.new_tag || steps.tag_version_fallback.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog || steps.tag_version_fallback.outputs.changelog }}
+          bodyFile: release-body.md
