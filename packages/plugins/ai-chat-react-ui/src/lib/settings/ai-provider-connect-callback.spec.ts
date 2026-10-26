@@ -47,6 +47,11 @@ describe('AI provider Connect callback', () => {
 			expect(readPendingConnect()).toBeNull();
 			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify({ ...pending, startedAt: 0 }));
 			expect(readPendingConnect(sessionStorage, CONNECT_SESSION_TTL_MS + 1)).toBeNull();
+			// A start time that is not a number cannot be aged, so it cannot be trusted either.
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify({ ...pending, startedAt: '1000' }));
+			expect(readPendingConnect(sessionStorage, 2_000)).toBeNull();
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify({ ...pending, startedAt: null }));
+			expect(readPendingConnect(sessionStorage, 2_000)).toBeNull();
 		});
 	});
 

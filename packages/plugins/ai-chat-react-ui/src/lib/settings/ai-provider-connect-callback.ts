@@ -38,7 +38,10 @@ export function readPendingConnect(storage?: Storage, now: number = Date.now()):
 		if (!raw) return null;
 		const parsed = JSON.parse(raw) as PendingConnect;
 		if (!parsed?.providerId || !parsed?.verifier) return null;
-		if (typeof parsed.startedAt === 'number' && now - parsed.startedAt > CONNECT_SESSION_TTL_MS) return null;
+		// No `startedAt` at all: a flow started before it was recorded. Anything else must be a time within the TTL.
+		if (parsed.startedAt !== undefined) {
+			if (typeof parsed.startedAt !== 'number' || now - parsed.startedAt > CONNECT_SESSION_TTL_MS) return null;
+		}
 		return parsed;
 	} catch {
 		return null;

@@ -176,6 +176,17 @@ describe('TenantOrganizationBaseDTO organization checks', () => {
 		});
 
 		it('still requires the two fields to agree, and the object to name an organization', async () => {
+			// Both organizations pass the membership check here (as for a tenant admin), so only the
+			// same-organization rule can refuse the pair.
+			jest.spyOn(OrganizationBelongsToUserConstraint.prototype, 'checkOrganizationExistence').mockImplementation(
+				async (id: string) => id === OWN_ORGANIZATION_ID || id === SIBLING_ORGANIZATION_ID
+			);
+			await expect(
+				failingOptional({
+					organizationId: SIBLING_ORGANIZATION_ID,
+					organization: { id: SIBLING_ORGANIZATION_ID }
+				})
+			).resolves.toEqual([]);
 			await expect(
 				failingOptional({ organizationId: OWN_ORGANIZATION_ID, organization: { id: SIBLING_ORGANIZATION_ID } })
 			).resolves.toEqual(['organization']);
