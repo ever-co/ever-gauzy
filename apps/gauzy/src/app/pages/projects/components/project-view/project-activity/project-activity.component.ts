@@ -72,6 +72,8 @@ const TASK_LOG_PAGES = 10;
  * updated (and which fields), deleted — and of the comments posted on the project, by whom and when, newest
  * first, under each day. It reads the project's own log, the organization's task logs kept to the events that
  * happened in this project, and the project's newest comments (comments write no activity log of their own).
+ *
+ * With `taskId` set, it is the task page's Activity tab instead: the task's own log and its comments.
  */
 @Component({
 	selector: 'ga-project-activity',
@@ -96,6 +98,9 @@ const TASK_LOG_PAGES = 10;
 export class ProjectActivityComponent implements OnChanges {
 	@Input() projectId: string;
 	@Input() projectName: string;
+	/** A task whose own activity the feed shows, in place of a project's. */
+	@Input() taskId: string | null = null;
+	@Input() taskTitle: string;
 	@Input() organizationId: string;
 	@Input() tenantId: string;
 	/** i18n key under the heading: what the feed covers. */
@@ -125,7 +130,8 @@ export class ProjectActivityComponent implements OnChanges {
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
-		if (this.projectId && (changes['projectId'] || changes['organizationId'])) {
+		const changed = changes['projectId'] || changes['taskId'] || changes['organizationId'];
+		if ((this.taskId || this.projectId) && changed) {
 			void this.load();
 		}
 	}
@@ -155,6 +161,11 @@ export class ProjectActivityComponent implements OnChanges {
 					})
 				})
 			);
+
+		if (this.taskId) {
+			await this.loadTaskFeed(sequence, logs);
+			return;
+		}
 
 		// The project's tasks first (their titles, and the tasks a log that records no project belongs to), then the
 		// project's own log and its task logs — each on its own.
@@ -198,6 +209,38 @@ export class ProjectActivityComponent implements OnChanges {
 			),
 			...(taskLogs.status === 'fulfilled' ? taskLogs.value.items : []).map((log) =>
 				this.toEntry(log, titles.get(log.entityId) || (log.data as any)?.title || '', log.entityId)
+			),
+			...(comments.status === 'fulfilled' ? comments.value || [] : []).map((comment) =>
+				this.toCommentEntry(comment)
+			)
+		]
+			.sort((a, b) => b.time.localeCompare(a.time))
+			.slice(0, FEED_LIMIT);
+		this.show(entries);
+	}
+
+	/** A task's feed: its own log and its comments, each read on its own. */
+	private async loadTaskFeed(
+		sequence: number,
+		logs: (entity: BaseEntityEnum, extra: Record<string, unknown>) => Promise<IPagination<IActivityLog>>
+	): Promise<void> {
+		const { organizationId, tenantId, taskId } = this;
+		const [taskLogs, comments] = await Promise.allSettled([
+			logs(BaseEntityEnum.Task, { entityId: taskId, take: FEED_LIMIT }),
+			this._comments.getLatest(BaseEntityEnum.Task, taskId, { organizationId, tenantId }, FEED_LIMIT)
+		]);
+		if (sequence !== this._sequence) return;
+
+		if (taskLogs.status === 'rejected' && comments.status === 'rejected') {
+			this.feed = failed([]);
+			return;
+		}
+		this.partial = taskLogs.status === 'rejected' || comments.status === 'rejected';
+
+		// The page is the task's own: its entries name it without linking back to it.
+		const entries = [
+			...(taskLogs.status === 'fulfilled' ? taskLogs.value?.items || [] : []).map((log) =>
+				this.toEntry(log, this.taskTitle || (log.data as any)?.title || '', null)
 			),
 			...(comments.status === 'fulfilled' ? comments.value || [] : []).map((comment) =>
 				this.toCommentEntry(comment)
@@ -307,7 +350,7 @@ export class ProjectActivityComponent implements OnChanges {
 	}
 
 	/**
-	 * A comment as an entry: "Ann commented on Project X" (or "replied on"), with its text on one line under it —
+	 * A comment as an entry: "Ann commented on Project X" (or on the task), with its text on one line under it —
 	 * "Image" for a comment of images only. Its author is the employee, or the user who posted it.
 	 */
 	private toCommentEntry(comment: IComment): IActivityEntry {
@@ -318,12 +361,13 @@ export class ProjectActivityComponent implements OnChanges {
 			actor: personOf(comment.employee) ?? personOf(comment.createdByUser),
 			actorLink: comment.employee?.id ? ['/pages/employees/view', comment.employee.id] : null,
 			sentence: comment.parentId ? 'PROJECT_VIEW.ACTIVITY_REPLIED' : 'PROJECT_VIEW.ACTIVITY_COMMENTED',
-			target: this.projectName || '—',
+			target: (this.taskId ? this.taskTitle : this.projectName) || '—',
 			taskId: null,
 			fields: '',
 			excerpt: text.replace(/\s+/g, ' '),
 			imageOnly: !text && images.length > 0,
-			isComment: true,
+			// The target opens the project page's Comments tab; the task page has none.
+			isComment: !this.taskId,
 			time: time.toISOString(),
 			timeLong: time.format('LLL'),
 			icon: 'message-square-outline',
