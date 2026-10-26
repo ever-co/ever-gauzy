@@ -74,6 +74,24 @@ describe('AI provider Connect callback', () => {
 			expect(current()).toBe('/?code=abc-123#/pages/dashboard');
 		});
 
+		it('never throws when the browser blocks storage', () => {
+			visit('/?code=abc-123');
+			let storageRead = false;
+			const blocked = {
+				location: window.location,
+				history: window.history,
+				get sessionStorage(): Storage {
+					storageRead = true;
+					throw new DOMException('The operation is insecure.', 'SecurityError');
+				}
+			} as unknown as Window;
+
+			expect(() => takeConnectCallbackFromLocation(blocked)).not.toThrow();
+			expect(takeConnectCallbackFromLocation(blocked)).toBeNull();
+			expect(storageRead).toBe(true);
+			expect(current()).toBe('/?code=abc-123');
+		});
+
 		it('does nothing on a normal start', () => {
 			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify(pending));
 			visit('/#/pages/settings/ai');

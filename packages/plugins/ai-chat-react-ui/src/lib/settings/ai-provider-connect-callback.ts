@@ -25,15 +25,16 @@ export interface PendingConnect {
 }
 
 /**
- * Reads the in-flight Connect flow, or `null` when there is none, it is malformed, or it is older
- * than {@link CONNECT_SESSION_TTL_MS}.
+ * Reads the in-flight Connect flow, or `null` when there is none, it is malformed, it is older
+ * than {@link CONNECT_SESSION_TTL_MS}, or storage is unavailable.
  *
- * @param storage - Where the flow was stashed (sessionStorage).
+ * @param storage - Where the flow was stashed (default: sessionStorage, looked up inside the guard:
+ *                  the getter itself throws a `SecurityError` when the browser blocks storage).
  * @param now - The current time, for tests.
  */
-export function readPendingConnect(storage: Storage = sessionStorage, now: number = Date.now()): PendingConnect | null {
+export function readPendingConnect(storage?: Storage, now: number = Date.now()): PendingConnect | null {
 	try {
-		const raw = storage.getItem(CONNECT_SESSION_KEY);
+		const raw = (storage ?? sessionStorage).getItem(CONNECT_SESSION_KEY);
 		if (!raw) return null;
 		const parsed = JSON.parse(raw) as PendingConnect;
 		if (!parsed?.providerId || !parsed?.verifier) return null;
@@ -66,20 +67,31 @@ export function buildConnectCallbackUrl(loc: Pick<Location, 'origin' | 'pathname
  * (`/#/pages/settings/ai?code=…`), where the settings page completes the exchange. Other query
  * parameters are kept; a `?code=` with no flow in flight is left untouched.
  *
+ * Never throws: it runs at app start, where a failure (storage blocked by browser policy, a
+ * refused `replaceState`) must not take the app down with it.
+ *
  * @param win - The window whose location is rewritten.
  * @returns The app URL to navigate to, or `null` when there was nothing to take.
  */
 export function takeConnectCallbackFromLocation(win: Window = window): string | null {
-	const params = new URLSearchParams(win.location.search);
-	const code = params.get('code');
-	if (!code || !readPendingConnect(win.sessionStorage)) {
+	try {
+		const params = new URLSearchParams(win.location.search);
+		const code = params.get('code');
+		if (!code || !readPendingConnect(win.sessionStorage)) {
+			return null;
+		}
+		params.delete('code');
+		const search = params.toString();
+		const target = `${AI_SETTINGS_URL}?code=${encodeURIComponent(code)}`;
+		win.history.replaceState(
+			win.history.state,
+			'',
+			`${win.location.pathname}${search ? `?${search}` : ''}#${target}`
+		);
+		return target;
+	} catch {
 		return null;
 	}
-	params.delete('code');
-	const search = params.toString();
-	const target = `${AI_SETTINGS_URL}?code=${encodeURIComponent(code)}`;
-	win.history.replaceState(win.history.state, '', `${win.location.pathname}${search ? `?${search}` : ''}#${target}`);
-	return target;
 }
 
 /**
