@@ -4647,10 +4647,10 @@
     playwright-core "1.62.1"
     yaml "2.9.1"
 
-"@ever-co/legal@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.npmjs.org/@ever-co/legal/-/legal-0.4.1.tgz#8f2525643d47f22ed2c3845a6ecf928b9a9c167e"
-  integrity sha512-TAfel4s0OuVXIeD2vDUQ2bp1ILNF+MpIa6RtKrls9nuerOUIhJEaNhRODW3sMEd5mOVR0o39T/J/lSm/alFH7A==
+"@ever-co/legal@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.npmjs.org/@ever-co/legal/-/legal-0.5.1.tgz#88fc23e7619c45f5a13a44282ac7eb65df139f2f"
+  integrity sha512-JVGdDuCz6NiP4AFURJmnC99XxfY1GQymJRYX1Sj9T2p3+iy3dnrcjnATetyf9MvrNTcM/NqiijYLmmqhE15YIQ==
 
 "@ever-gauzy/plugin-integration-plane-api@^0.1.11":
   version "0.1.11"
