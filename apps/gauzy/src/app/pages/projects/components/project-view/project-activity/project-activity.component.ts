@@ -98,6 +98,8 @@ export class ProjectActivityComponent implements OnChanges {
 	@Input() projectName: string;
 	@Input() organizationId: string;
 	@Input() tenantId: string;
+	/** i18n key under the heading: what the feed covers. */
+	@Input() caption = 'PROJECT_VIEW.ACTIVITY_CAPTION';
 
 	public feed: Loadable<IActivityEntry[]> = loading([]);
 	/** The current page's entries under their day. */
