@@ -1,4 +1,4 @@
-import { IEmployee, TaskStatusEnum } from '@gauzy/contracts';
+import { IEmployee, ITaskStatus, TaskStatusEnum } from '@gauzy/contracts';
 
 /**
  * Small helpers shared by the project page — its Overview (the project quick look) and its Board and
@@ -192,6 +192,28 @@ export function taskWorkersOf(
 		}))
 		.filter((worker): worker is ITaskWorker => !!worker.person)
 		.slice(0, limit);
+}
+
+/**
+ * The task statuses a project's tasks take: the project's own, else the organization's, else the system defaults.
+ * A scope with no statuses of its own does not answer empty: the server answers with the system defaults, so
+ * each answer is kept only if its statuses belong to the scope asked for. `read` lists the statuses of a scope.
+ */
+export async function scopedTaskStatusesOf(
+	read: (where: Record<string, string>) => Promise<ITaskStatus[]>,
+	scope: { organizationId: string; tenantId: string; projectId?: string | null }
+): Promise<ITaskStatus[]> {
+	const { organizationId, tenantId, projectId } = scope;
+	const forProject = projectId ? await read({ organizationId, tenantId, projectId }) : [];
+	const own = forProject.filter((status) => !status.isSystem && status.projectId === projectId);
+	if (own.length) return own;
+	const forOrganization = await read({ organizationId, tenantId });
+	const shared = forOrganization.filter(
+		(status) => !status.isSystem && status.organizationId === organizationId && !status.projectId
+	);
+	if (shared.length) return shared;
+	// Neither has its own: the system defaults either answer carried.
+	return forOrganization.length ? forOrganization : forProject;
 }
 
 /** "3h 05m": seconds as hours and minutes. */

@@ -30,6 +30,7 @@ import {
 	failed,
 	personOf,
 	projectWorkedTimeOf,
+	scopedTaskStatusesOf,
 	statusGroupOf,
 	taskProgressOf
 } from '../project-view.utils';
@@ -255,11 +256,7 @@ export class ProjectBoardComponent implements OnChanges {
 		}
 	}
 
-	/**
-	 * The project's own statuses, else the organization's, else the system defaults. A scope with no
-	 * statuses of its own does not answer empty: the server answers with the system defaults, so each
-	 * answer is kept only if its statuses belong to the scope asked for.
-	 */
+	/** The project's own statuses, else the organization's, else the system defaults. */
 	private async fetchStatuses(): Promise<ITaskStatus[]> {
 		const { organizationId, tenantId, projectId } = this;
 		const read = async (where: Record<string, string>) =>
@@ -270,16 +267,7 @@ export class ProjectBoardComponent implements OnChanges {
 					})
 				)
 			)?.items || [];
-		const forProject = await read({ organizationId, tenantId, projectId });
-		const own = forProject.filter((status) => !status.isSystem && status.projectId === projectId);
-		if (own.length) return own;
-		const forOrganization = await read({ organizationId, tenantId });
-		const shared = forOrganization.filter(
-			(status) => !status.isSystem && status.organizationId === organizationId && !status.projectId
-		);
-		if (shared.length) return shared;
-		// Neither has its own: the system defaults either answer carried.
-		return forOrganization.length ? forOrganization : forProject;
+		return scopedTaskStatusesOf(read, { organizationId, tenantId, projectId });
 	}
 
 	/**
