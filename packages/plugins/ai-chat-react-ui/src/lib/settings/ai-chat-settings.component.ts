@@ -43,6 +43,12 @@ import { ChatSidebarService, Store } from '@gauzy/ui-core/core';
 import { ComponentsModule, ConfirmComponent } from '@gauzy/ui-core/shared';
 import { AiChatAvailabilityService } from '../ai-chat-availability.service';
 import { AiChatSettingsService } from './ai-chat-settings.service';
+import {
+	buildConnectCallbackUrl,
+	CONNECT_SESSION_KEY,
+	PendingConnect,
+	readPendingConnect
+} from './ai-provider-connect-callback';
 import { IProviderLogo, PROVIDER_LOGOS } from './provider-logos';
 
 /** Sentinel select value meaning "type a custom model id". */
@@ -90,9 +96,6 @@ const CHAT_NOTICES: Record<AiChatNoticeKind, { status: NbComponentStatus; icon: 
 		}
 	};
 
-/** sessionStorage key holding the in-flight Connect (PKCE) state. */
-const CONNECT_SESSION_KEY = 'gauzy_ai_provider_connect';
-
 /** Typed shape of the per-provider credential form. */
 interface ProviderCredentialForm {
 	apiKey: FormControl<string>;
@@ -136,8 +139,9 @@ export type CapabilityFilter = 'all' | 'chat' | 'speech' | 'local';
  * The list view also has a **Voice (dictation)** section: which configured
  * providers can transcribe and which one is the tenant's voice default.
  *
- * The OpenRouter PKCE callback also lands here (`?code=...`): the code +
- * the sessionStorage verifier are exchanged server-side for an API key.
+ * The OpenRouter PKCE callback also lands here (`?code=...`, moved from the
+ * app's root URL by `provideAiProviderConnectCallback`): the code + the
+ * sessionStorage verifier are exchanged server-side for an API key.
  *
  * Requires the `AI_CHAT_SETTINGS` permission (route guard + backend).
  */
@@ -1017,19 +1021,21 @@ export class AiChatSettingsComponent implements OnInit {
 			const challenge = this.base64Url(new Uint8Array(digest));
 			// Bind the pending flow to the workspace (tenant + organization) it
 			// was started in so a mid-flight switch can't store the key elsewhere.
-			sessionStorage.setItem(
-				CONNECT_SESSION_KEY,
-				JSON.stringify({
-					providerId: provider.id,
-					verifier,
-					tenantId: this.store.user?.tenantId ?? null,
-					organizationId: this.store.organizationId ?? null
-				})
-			);
+			const pending: PendingConnect = {
+				providerId: provider.id,
+				verifier,
+				tenantId: this.store.user?.tenantId ?? null,
+				organizationId: this.store.organizationId ?? null,
+				startedAt: Date.now()
+			};
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify(pending));
 
 			// The authorize page comes from the provider definition (backend
 			// config) so additional connect-capable providers need no UI change.
-			const callbackUrl = `${location.origin}${location.pathname}#/pages/settings/ai`;
+			// The callback is the app's root URL, not this page's `#/` route: the
+			// provider returns `?code=` in the real query string, which the hash
+			// router never reads — `provideAiProviderConnectCallback` moves it here.
+			const callbackUrl = buildConnectCallbackUrl();
 			const authorizeUrl =
 				`${provider.connectAuthorizeUrl}?callback_url=${encodeURIComponent(callbackUrl)}` +
 				`&code_challenge=${challenge}&code_challenge_method=S256`;
@@ -1102,20 +1108,8 @@ export class AiChatSettingsComponent implements OnInit {
 		this.refreshChatAvailability();
 	}
 
-	private readConnectSession(): {
-		providerId: string;
-		verifier: string;
-		tenantId?: string | null;
-		organizationId?: string | null;
-	} | null {
-		try {
-			const raw = sessionStorage.getItem(CONNECT_SESSION_KEY);
-			if (!raw) return null;
-			const parsed = JSON.parse(raw);
-			return parsed?.providerId && parsed?.verifier ? parsed : null;
-		} catch {
-			return null;
-		}
+	private readConnectSession(): PendingConnect | null {
+		return readPendingConnect();
 	}
 
 	private base64Url(bytes: Uint8Array): string {
