@@ -189,11 +189,8 @@ export class PosthogService implements OnModuleDestroy {
 	public captureException(exception: any, distinctId: string, properties?: Record<string, any>): void {
 		const client = this.getClientForCurrentRequest();
 		if (!client) return;
-		client.captureException({
-			exception,
-			distinctId,
-			properties
-		});
+		// posthog-node takes positional arguments: (error, distinctId, additionalProperties).
+		client.captureException(exception, distinctId, properties);
 	}
 
 	/**
