@@ -78,35 +78,43 @@ jobs:
       # release, and the first production release after the 2026-10 stage-only period (v111.138.2,
       # ~3 700 commits since v111.48.2) failed on exactly that. The same notes are built here instead:
       # the changelog, then GitHub's generated list, cut at a line boundary below the limit, with a
-      # link to the full comparison.
+      # link to the full comparison. actions/github-script rather than the gh CLI, which the ARC
+      # runner image this job may run on does not ship.
       - name: Release notes within GitHub's 125 000-character limit
+        uses: actions/github-script@v8
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEW_TAG: ${{ steps.tag_version.outputs.new_tag || steps.tag_version_fallback.outputs.new_tag }}
           CHANGELOG: ${{ steps.tag_version.outputs.changelog || steps.tag_version_fallback.outputs.changelog }}
-        run: |
-          set -u
-          limit=120000
-          prev=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq .tag_name 2>/dev/null || true)
-          args=(-f tag_name="$NEW_TAG" -f target_commitish="$GITHUB_SHA")
-          if [ -n "$prev" ] && [ "$prev" != "$NEW_TAG" ]; then
-            args+=(-f previous_tag_name="$prev")
-          fi
-          generated=$(gh api -X POST "repos/${GITHUB_REPOSITORY}/releases/generate-notes" "${args[@]}" --jq .body 2>/dev/null || true)
-          { printf '%s\n\n' "$CHANGELOG"; printf '%s\n' "$generated"; } > release-body.md
-          if [ "$(wc -c < release-body.md)" -gt "$limit" ]; then
-            # Cut by bytes, then drop the last (possibly split) line so no UTF-8 character is broken.
-            head -c "$limit" release-body.md | sed '$d' > release-body.cut
-            {
-              cat release-body.cut
-              printf '\n(List truncated to fit the GitHub release-notes limit.)'
-              if [ -n "$prev" ]; then
-                printf ' Full comparison: %s/%s/compare/%s...%s' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$prev" "$NEW_TAG"
-              fi
-              printf '\n'
-            } > release-body.md
-            echo "::notice::Release notes truncated to ${limit} bytes (the generated list was longer)."
-          fi
+        with:
+          script: |
+            const fs = require('fs');
+            const limit = 120000;
+            const newTag = process.env.NEW_TAG;
+            let previous = '';
+            try {
+              previous = (await github.rest.repos.getLatestRelease(context.repo)).data.tag_name;
+            } catch (error) {
+              core.warning(`No previous release found (${error.message}); generating notes without a base.`);
+            }
+            let generated = '';
+            try {
+              const params = { ...context.repo, tag_name: newTag, target_commitish: context.sha };
+              if (previous && previous !== newTag) params.previous_tag_name = previous;
+              generated = (await github.rest.repos.generateReleaseNotes(params)).data.body;
+            } catch (error) {
+              core.warning(`Could not generate the list of changes (${error.message}); the release carries the changelog only.`);
+            }
+            let body = `${process.env.CHANGELOG || ''}\n\n${generated}\n`;
+            if (body.length > limit) {
+              const compare = previous
+                ? ` Full comparison: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/compare/${previous}...${newTag}`
+                : '';
+              const footer = `\n(List truncated to fit the GitHub release-notes limit.)${compare}\n`;
+              const cut = body.slice(0, limit - footer.length);
+              body = cut.slice(0, cut.lastIndexOf('\n')) + footer;
+              core.notice(`Release notes truncated to ${body.length} characters (the generated list was longer).`);
+            }
+            fs.writeFileSync('release-body.md', body);
 
       - name: Create the tag and the GitHub release (one call)
         uses: ncipollo/release-action@v1
