@@ -30,7 +30,28 @@
 		}
 	</div>
 	<div class="kpi">
-		<span class="kpi-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
+		<div class="kpi-head">
+			<span class="kpi-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
+			<!-- Opens the projects behind the figure — always there, empty days included. Each click fits
+			     the popover to the screen first (fitProjectsPopover): below the button, or above it when
+			     there is more room there, with the list capped to that room. -->
+			<button
+				type="button"
+				class="kpi-action"
+				[nbPopover]="projectsList"
+				#projectsPopover="nbPopover"
+				[nbPopoverContext]="{ projects: projects, maxHeight: 352, maxWidth: 320 }"
+				nbPopoverTrigger="click"
+				nbPopoverPlacement="bottom-start"
+				nbPopoverAdjustment="noop"
+				(click)="fitProjectsPopover(projectsPopover, $event.currentTarget, projects)"
+				nbPopoverClass="gz-projects-popover"
+				[attr.aria-label]="('BUTTONS.VIEW' | translate) + ': ' + ('TIMESHEET.PROJECTS_WORKED' | translate)"
+			>
+				{{ 'BUTTONS.VIEW' | translate }}
+				<nb-icon icon="chevron-down-outline" aria-hidden="true"></nb-icon>
+			</button>
+		</div>
 		<span class="kpi-value">{{ overview?.projectsWorked || 0 }}</span>
 		<span class="kpi-meta">{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_PROJECTS' | translate: { total: projectCount } }}</span>
 		@if (projectCount > 0) {
@@ -203,6 +224,15 @@
 		</div>
 	</section>
 </div>
+
+<!-- The projects behind a "Projects worked" tile, opened from its View button. -->
+<ng-template #projectsList let-list>
+	<gauzy-team-projects-list
+		[projects]="list.projects"
+		[maxHeight]="list.maxHeight"
+		[maxWidth]="list.maxWidth"
+	></gauzy-team-projects-list>
+</ng-template>
 
 <!-- The member's hover card: the team page's assignee card. -->
 <ng-template #personCard let-card>

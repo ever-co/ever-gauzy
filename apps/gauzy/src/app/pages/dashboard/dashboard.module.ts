@@ -71,6 +71,7 @@ import {
 	TeamCardComponent,
 	TeamComponent,
 	TeamMemberComponent,
+	TeamProjectsListComponent,
 	TeamPersonCardComponent
 } from './team';
 
@@ -133,6 +134,7 @@ const COMPONENTS = [
 	TeamMemberComponent,
 	ChartComponent,
 	AllTeamComponent,
+	TeamProjectsListComponent,
 	TeamPersonCardComponent
 ];
 
