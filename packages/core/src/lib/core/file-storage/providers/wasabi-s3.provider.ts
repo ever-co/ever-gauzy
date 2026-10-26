@@ -343,7 +343,9 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	 * Get a file from Wasabi storage.
 	 *
 	 * @param key - The key of the file to retrieve
-	 * @returns A Promise resolving to a Buffer containing the file data
+	 * @returns A Promise resolving to the AWS SDK v3 body STREAM (`GetObjectCommandOutput.Body`), not a Buffer — read
+	 * it with `readStorageFileAsBuffer` / `fileContentToBuffer` — or `undefined` when the file could not be fetched
+	 * (the error is logged)
 	 */
 	async getFile(key: string): Promise<Buffer | any> {
 		try {
@@ -365,7 +367,10 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				this.logger.error('Error while retrieving file: s3Client is null');
 			}
 		} catch (error) {
-			this.logger.error(`Error while fetching file with key '${key}'`);
+			// The SDK's error name says why (NoSuchKey, AccessDenied, a network code); callers only see `undefined`.
+			this.logger.error(
+				`Error while fetching file with key '${key}': ${error?.name ?? 'Error'}: ${error?.message ?? error}`
+			);
 		}
 	}
 

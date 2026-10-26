@@ -4,6 +4,7 @@ import {
 	FileStorage,
 	FileStorageFactory,
 	LazyFileInterceptor,
+	readStorageFileAsBuffer,
 	shouldScanForMarkup,
 	videoUploadFileFilter,
 	BaseQueryDTO,
@@ -149,7 +150,10 @@ export class VideosController {
 			// large uploads, which would have to be held in memory to read — see shouldScanForMarkup.
 			if (shouldScanForMarkup(file.size)) {
 				try {
-					assertNotMarkupContent(await provider.getFile(file.key));
+					// As bytes whatever the provider answers: the S3 family returns the SDK's body stream, which the
+					// markup check used to stringify as "[object Object]" (passing every upload) and never consumed.
+					// A file that cannot be read back fails the upload (and is deleted) rather than skipping the check.
+					assertNotMarkupContent(await readStorageFileAsBuffer(provider, file.key));
 				} catch (error) {
 					try {
 						await provider.deleteFile(file.key);

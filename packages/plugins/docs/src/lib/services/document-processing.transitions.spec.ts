@@ -14,6 +14,8 @@
 jest.mock(
 	'@gauzy/core',
 	() => ({
+		// The real storage read helper (dependency-free), so the specs read what the providers really return.
+		...jest.requireActual('@gauzy/core/src/lib/core/file-storage/helpers/stored-file-content'),
 		FileStorage: class {
 			getProvider() {
 				return { getFile: async () => Buffer.alloc(0) };
@@ -35,12 +37,13 @@ jest.mock('../dto', () => ({}));
 jest.mock('./document.service', () => ({ DocumentService: class {} }));
 jest.mock('../knowledge/queue/docs-queue.service', () => ({ DocsQueueService: class {} }));
 
+import { Readable } from 'stream';
 import {
 	DocumentReviewReasonEnum,
 	DocumentReviewStatusEnum,
 	DocumentStatusEnum
 } from '@gauzy/contracts';
-import { DocsPermanentError } from '../knowledge/errors';
+import { DocsPermanentError, DocsTransientError } from '../knowledge/errors';
 import {
 	createCorruptPdf,
 	createDocxFixture,
@@ -85,7 +88,7 @@ const documentRow = (overrides: Record<string, any> = {}): any => ({
  * Builds the service with the real extraction registry and a recording repository.
  * `getFile` returns whichever fixture bytes the test supplies.
  */
-const buildService = (fileBytes: Buffer, ocrService?: any) => {
+const buildService = (fileBytes: unknown, ocrService?: any) => {
 	const updates: any[] = [];
 	const repository: any = {
 		update: jest.fn(async (_criteria: any, patch: any) => {
@@ -136,6 +139,30 @@ describe('DocumentProcessingService — extraction status/review transitions', (
 			expect(document.status).toBe(DocumentStatusEnum.READY);
 			// No review is requested for a clean extraction.
 			expect(updates.some((patch) => patch.reviewStatus)).toBe(false);
+		});
+
+		it('extracts a blob the S3-family providers return as the SDK body stream, not a Buffer', async () => {
+			const pdf = createTextLayerPdf(TEXT_LAYER_PDF_PAGES);
+			// `GetObjectCommandOutput.Body`: a Node stream with the SDK's transform methods mixed in.
+			const body = Object.assign(Readable.from([pdf.subarray(0, 16), pdf.subarray(16)]), {
+				transformToByteArray: async () => new Uint8Array(pdf)
+			});
+			const { service, updates } = buildService(body);
+			const document = documentRow();
+
+			await expect(service.runExtraction(document, { documentId: 'doc-1' } as any)).resolves.toBe(true);
+
+			expect(updates[1]).toMatchObject({ status: DocumentStatusEnum.READY, statusMessage: null });
+			expect(updates[1].extractedText).toContain('## Page 1');
+		});
+
+		it('fails as a retryable storage hiccup naming the key, not a TypeError, when the provider cannot read the blob', async () => {
+			const { service, updates } = buildService(undefined);
+
+			const run = service.runExtraction(documentRow(), { documentId: 'doc-1' } as any);
+			await expect(run).rejects.toBeInstanceOf(DocsTransientError);
+			await expect(run).rejects.toThrow(/stored file 'docs\/org-1\/fixture\.pdf' could not be read/);
+			expect(updates.some((patch) => patch.status === DocumentStatusEnum.READY)).toBe(false);
 		});
 
 		it('records the extraction metadata under metadata.extraction', async () => {

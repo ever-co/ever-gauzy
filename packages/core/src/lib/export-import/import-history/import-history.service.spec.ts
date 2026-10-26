@@ -30,12 +30,15 @@ jest.mock('./repository/mikro-orm-import-history.repository', () => ({
 	MikroOrmImportHistoryRepository: class MikroOrmImportHistoryRepository {}
 }));
 
+import { Readable } from 'node:stream';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ImportHistoryService } from './import-history.service';
 
 const TENANT = 'a0000000-0000-4000-8000-00000000000a';
 const OTHER_TENANT = 'b0000000-0000-4000-8000-00000000000b';
 const HISTORY_ID = 'c0000000-0000-4000-8000-00000000000c';
+/** The local-file-header signature a ZIP opens with, `PK` 03 04. */
+const ZIP_MAGIC = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
 
 /**
  * The uploaded import archive is a full tenant data dump. It used to be offered at a guessable,
@@ -65,6 +68,26 @@ describe('ImportHistoryService.getArchive', () => {
 		expect(mockFindOneByIdString).toHaveBeenCalledWith(HISTORY_ID, { where: { tenantId: TENANT } });
 		expect(mockGetFile).toHaveBeenCalledWith('import/.import-1.zip');
 		expect(archive).toEqual({ file: 'tenant-dump.zip', content: Buffer.from('PK') });
+	});
+
+	it('returns the archive as bytes when the provider answers with the SDK body stream (S3, Wasabi, DigitalOcean)', async () => {
+		mockFindOneByIdString.mockResolvedValue({
+			id: HISTORY_ID,
+			tenantId: TENANT,
+			file: 'tenant-dump.zip',
+			path: 'import/.import-1.zip'
+		});
+		// `res.send()` of the stream itself would answer JSON (or throw on its circular structure), not the ZIP.
+		mockGetFile.mockResolvedValue(
+			Object.assign(Readable.from([Buffer.from('PK'), Buffer.from([3, 4])]), {
+				transformToByteArray: async () => new Uint8Array(ZIP_MAGIC)
+			})
+		);
+
+		const archive = await service.getArchive(HISTORY_ID);
+
+		expect(Buffer.isBuffer(archive.content)).toBe(true);
+		expect(archive.content.equals(ZIP_MAGIC)).toBe(true);
 	});
 
 	it('refuses a request that carries no tenant, before touching the database', async () => {
