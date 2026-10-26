@@ -37,7 +37,7 @@ import { generateAlphaNumericCode } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { MultiORMEnum } from '../core/utils';
 import { RequestContext } from './../core/context';
-import { OrganizationTeamEmployee, User } from './../core/entities/internal';
+import { User } from './../core/entities/internal';
 import { EmailService } from './../email-send/email.service';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
@@ -48,6 +48,7 @@ import { TypeOrmOrganizationTeamJoinRequestRepository } from './repository/type-
 import { MikroOrmOrganizationTeamJoinRequestRepository } from './repository/mikro-orm-organization-team-join-request.repository';
 import { TypeOrmUserRepository } from '../user/repository/type-orm-user.repository';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
+import { teamManagerMembershipWhere } from '../organization-team-employee/team-manager-membership';
 import { LoginAttemptScope, LoginAttemptService } from '../auth/login-attempt.service';
 import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
 
@@ -62,19 +63,6 @@ const ACT_ON_ANY_TEAM_JOIN_REQUEST: PermissionsEnum[] = [
  * accepts too.
  */
 const LIST_ANY_TEAM_JOIN_REQUEST: PermissionsEnum[] = [PermissionsEnum.ALL_ORG_VIEW, ...ACT_ON_ANY_TEAM_JOIN_REQUEST];
-
-/**
- * The memberships that make an employee a manager of a team: flagged `isManager`, or with the team role MANAGER,
- * ADMIN or SUPER_ADMIN. `member` holds the tenant, the employee and, to check a single team, that team.
- */
-function managerMembershipsWhere(
-	member: FindOptionsWhere<OrganizationTeamEmployee>
-): FindOptionsWhere<OrganizationTeamEmployee>[] {
-	return [
-		{ ...member, isManager: true },
-		{ ...member, role: { name: In([RolesEnum.MANAGER, RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN]) } }
-	];
-}
 
 /**
  * The team a list condition names, as an operator `And` can combine with another: an operator as it is, a list as
@@ -606,9 +594,8 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 
 		if (user.employeeId) {
 			const member = { tenantId, organizationTeamId, employeeId: user.employeeId };
-			const managesTeam = await this.typeOrmOrganizationTeamEmployeeRepository.existsBy(
-				managerMembershipsWhere(member)
-			);
+			const managerMemberships = teamManagerMembershipWhere(member);
+			const managesTeam = await this.typeOrmOrganizationTeamEmployeeRepository.existsBy(managerMemberships);
 			if (managesTeam) {
 				return;
 			}
@@ -653,7 +640,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		if (user.employeeId) {
 			const member = { tenantId, employeeId: user.employeeId };
 			const memberships = await this.typeOrmOrganizationTeamEmployeeRepository.find({
-				where: managerMembershipsWhere(member),
+				where: teamManagerMembershipWhere(member),
 				select: { organizationTeamId: true }
 			});
 			for (const membership of memberships) {
