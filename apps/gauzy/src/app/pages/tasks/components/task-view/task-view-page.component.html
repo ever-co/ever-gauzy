@@ -1,3 +1,4 @@
+<!-- A task's own page, laid out as the project page: tabs — Overview and Activity. -->
 <ngx-record-view-page heading="TASKS_PAGE.HEADER" [backLink]="backLink" [state]="state" (retry)="load()">
 	@if (task) {
 		<ngx-favorite-toggle
@@ -11,8 +12,285 @@
 		></ngx-favorite-toggle>
 	}
 	@if (task) {
-		<ngx-record-view [record]="task" [sections]="sections" [placeholder]="'SM_TABLE.NONE' | translate">
-			<ga-task-view-header recordViewHeader [task]="task" [status]="status" [large]="true"></ga-task-view-header>
-		</ngx-record-view>
+		<div class="project-page">
+			<div class="tab-row project-page-tabs">
+				<div class="tabs" role="tablist" [attr.aria-label]="task.title">
+					@for (item of tabs; track item.id) {
+						<button
+							type="button"
+							role="tab"
+							class="tab"
+							[id]="'task-view-tab-' + item.id"
+							[attr.aria-controls]="'task-view-pane-' + item.id"
+							[class.is-active]="tab === item.id"
+							[attr.aria-selected]="tab === item.id"
+							(click)="selectTab(item.id)"
+						>
+							<nb-icon [icon]="item.icon" aria-hidden="true"></nb-icon>
+							{{ item.label | translate }}
+						</button>
+					}
+				</div>
+			</div>
+
+			<!-- Overview: the headline and its four figures, then the subtasks and the drawer's sections beside the time. -->
+			<div
+				class="project-page-pane"
+				role="tabpanel"
+				id="task-view-pane-overview"
+				aria-labelledby="task-view-tab-overview"
+				[hidden]="tab !== 'overview'"
+			>
+				<div class="project-view-top">
+					<div class="project-view-headline">
+						<div class="project-view-header">
+							<ga-task-view-header [task]="task" [status]="status" [large]="true"></ga-task-view-header>
+						</div>
+
+						<dl class="project-facts">
+							<!-- Time worked, all time, against the estimate: red once over it. -->
+							<div class="project-fact">
+								<dt>{{ 'TASK_VIEW.TIME_WORKED' | translate }}</dt>
+								<dd>
+									{{ progress?.worked || '—' }}
+									@if (progress?.estimate) {
+										<span
+											class="project-timeline-track"
+											[class.is-overdue]="progress.over"
+											role="progressbar"
+											aria-valuemin="0"
+											[attr.aria-valuenow]="progress.share"
+											[attr.aria-label]="'TASK_VIEW.TIME_WORKED' | translate"
+											[nbTooltip]="'PROJECT_VIEW.TASK_PROGRESS_OF' | translate : { worked: progress.worked, estimate: progress.estimate }"
+											nbTooltipPlacement="top"
+											><span [style.width.%]="progress.fill"></span
+										></span>
+										<span class="project-fact-hint" [class.is-overdue]="progress.over">{{
+											'TASK_VIEW.OF_ESTIMATE' | translate : { share: progress.share, estimate: progress.estimate }
+										}}</span>
+									} @else if (!timeLoading) {
+										<span class="project-fact-hint">{{ 'PROJECT_VIEW.TASK_NO_ESTIMATE' | translate }}</span>
+									}
+								</dd>
+							</div>
+
+							<!-- The due date, and how far off it is. -->
+							<div class="project-fact">
+								<dt>{{ 'TASKS_PAGE.DUE_DATE' | translate }}</dt>
+								<dd>
+									@if (due; as due) {
+										{{ due.date }}
+										<span class="project-fact-hint" [class.is-overdue]="due.overdue">{{
+											due.words.key | translate : { count: due.words.count }
+										}}</span>
+									} @else {
+										<span class="project-fact-muted">{{ 'EMPLOYEES_PAGE.VIEW.DUE.NONE' | translate }}</span>
+									}
+								</dd>
+							</div>
+
+							<!-- Priority, with the size under it. -->
+							<div class="project-fact">
+								<dt>{{ 'TASKS_PAGE.TASK_PRIORITY' | translate }}</dt>
+								<dd>
+									@if (priority; as priority) {
+										<span class="task-fact-chip">
+											<span [class]="'project-status tone-' + (priority.tone || 'basic')">{{ priority.text }}</span>
+										</span>
+									} @else {
+										—
+									}
+									@if (size; as size) {
+										<span class="project-fact-hint">{{ ('TASKS_PAGE.TASK_SIZE' | translate) + ': ' + size.text }}</span>
+									}
+								</dd>
+							</div>
+
+							<!-- The subtasks done out of all of them. -->
+							<div class="project-fact">
+								<dt>{{ 'TASK_VIEW.SUBTASKS' | translate }}</dt>
+								<dd>
+									@if (subtaskCount; as count) {
+										{{ count.done + ' / ' + count.total }}
+										<span
+											class="project-timeline-track"
+											[class.is-done]="count.done === count.total"
+											role="progressbar"
+											aria-valuemin="0"
+											aria-valuemax="100"
+											[attr.aria-valuenow]="count.percent | number : '1.0-0'"
+											[attr.aria-label]="'TASK_VIEW.SUBTASKS' | translate"
+											><span [style.width.%]="count.percent"></span
+										></span>
+										<span class="project-fact-hint">{{
+											'TASK_VIEW.SUBTASKS_DONE' | translate : { done: count.done, total: count.total }
+										}}</span>
+									} @else {
+										<span class="project-fact-muted">{{ 'TASK_VIEW.NO_SUBTASKS' | translate }}</span>
+									}
+								</dd>
+							</div>
+						</dl>
+					</div>
+
+					<!-- The work: the subtasks, open ones first, then the task's details, description and stamps. -->
+					<div class="project-view-col project-view-col--main">
+						<section class="panel project-view-panel">
+							<header class="panel-header">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="list-outline" aria-hidden="true"></nb-icon>
+									{{ 'TASK_VIEW.SUBTASKS' | translate }}
+									@if (subtasks.length) {
+										<span class="title-count">{{ subtasks.length }}</span>
+									}
+								</h5>
+							</header>
+							<div class="panel-body panel-body--flush">
+								@if (subtasks.length) {
+									<ul class="task-subtasks">
+										@for (subtask of subtasks; track subtask.id) {
+											<li>
+												<a class="task-subtask" [class.is-done]="subtask.done" [routerLink]="subtaskLink(subtask.id)">
+													<nb-icon
+														class="task-subtask-check"
+														[icon]="subtask.done ? 'checkmark-circle-2' : 'radio-button-off-outline'"
+														aria-hidden="true"
+													></nb-icon>
+													@if (subtask.key) {
+														<span class="task-subtask-key">{{ subtask.key }}</span>
+													}
+													<span class="task-subtask-title" [nbTooltip]="subtask.title" nbTooltipPlacement="top">{{
+														subtask.title
+													}}</span>
+													@if (subtask.status; as status) {
+														<span [class]="'project-status tone-' + (status.tone || 'basic')">{{ status.text }}</span>
+													}
+												</a>
+											</li>
+										}
+									</ul>
+								} @else {
+									<div class="state state--compact">
+										<nb-icon icon="list-outline" aria-hidden="true"></nb-icon>
+										<p>{{ 'TASK_VIEW.NO_SUBTASKS' | translate }}</p>
+									</div>
+								}
+							</div>
+						</section>
+
+						<ngx-record-view [record]="task" [sections]="sections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+					</div>
+
+					<!-- Where it stands: the time worked on it and who worked most. -->
+					<div class="project-view-col project-view-col--side">
+						<section
+							class="panel project-view-panel"
+							[nbSpinner]="timeLoading"
+							nbSpinnerSize="small"
+							nbSpinnerStatus="basic"
+						>
+							<header class="panel-header">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
+									{{ 'TASK_VIEW.TIME' | translate }}
+								</h5>
+							</header>
+							<div class="panel-body">
+								@if (progress || workers.length) {
+									<div class="project-task-head">
+										<!-- Time worked against the estimate; without an estimate, the share of the project's tracked time. -->
+										@if (progress; as progress) {
+											<div
+												class="project-task-progress"
+												[class.is-over]="progress.over"
+												[class.is-relative]="progress.relative"
+											>
+												<span class="project-task-progress-label">
+													<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
+													{{ 'PROJECT_VIEW.TASK_PROGRESS' | translate }}
+												</span>
+												@if (progress.hint; as hint) {
+													<span
+														class="project-task-progress-bar"
+														role="progressbar"
+														aria-valuemin="0"
+														[attr.aria-valuenow]="progress.share"
+														[attr.aria-label]="'PROJECT_VIEW.TASK_PROGRESS' | translate"
+														[attr.aria-valuetext]="hint.key | translate : hint.params"
+														[nbTooltip]="hint.key | translate : hint.params"
+														nbTooltipPlacement="top"
+														><span [style.width.%]="progress.fill"></span
+													></span>
+												} @else {
+													<span class="project-task-progress-none">{{ 'PROJECT_VIEW.TASK_NO_ESTIMATE' | translate }}</span>
+												}
+												<span class="project-task-progress-figures">
+													<span class="project-task-progress-time">{{ progress.worked }}</span>
+													@if (progress.share !== null) {
+														<span class="project-task-progress-share">{{ progress.share }}%</span>
+													}
+												</span>
+											</div>
+										}
+										<!-- Who worked most on the task: photo and name | bar | time over share. -->
+										@if (workers.length) {
+											<div class="project-task-workers">
+												<span class="project-task-workers-title">{{ 'PROJECT_VIEW.TASK_TOP_PEOPLE' | translate }}</span>
+												<ol class="project-task-workers-list">
+													@for (worker of workers; track worker.person.id) {
+														<li class="project-task-worker">
+															<a class="project-task-worker-person" [routerLink]="['/pages/employees/view', worker.person.id]">
+																<span class="project-task-worker-avatar">
+																	@if (worker.person.avatarUrl) {
+																		<img [src]="worker.person.avatarUrl" [alt]="worker.person.name" />
+																	} @else {
+																		<span aria-hidden="true">{{ worker.person.initials }}</span>
+																	}
+																</span>
+																<span
+																	class="project-task-worker-name"
+																	[nbTooltip]="worker.person.name"
+																	nbTooltipPlacement="top"
+																	>{{ worker.person.name }}</span
+																>
+															</a>
+															<span class="project-task-progress-bar" aria-hidden="true"
+																><span [style.width.%]="worker.share"></span
+															></span>
+															<span class="project-task-progress-figures">
+																<span class="project-task-progress-time">{{ worker.worked }}</span>
+																<span class="project-task-progress-share">{{ worker.share }}%</span>
+															</span>
+														</li>
+													}
+												</ol>
+											</div>
+										}
+									</div>
+								} @else if (!timeLoading) {
+									<div class="state state--compact">
+										<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
+										<p>{{ 'TASK_VIEW.NO_TIME' | translate }}</p>
+									</div>
+								}
+							</div>
+						</section>
+					</div>
+				</div>
+			</div>
+
+			<!-- Activity loads each time it is opened. -->
+			@if (tab === 'activity') {
+				<div class="project-page-pane" role="tabpanel" id="task-view-pane-activity" aria-labelledby="task-view-tab-activity">
+					<ga-project-activity
+						[taskId]="task.id"
+						[taskTitle]="task.title"
+						[organizationId]="organization?.id"
+						[tenantId]="organization?.tenantId"
+						caption="TASK_VIEW.ACTIVITY_CAPTION"
+					></ga-project-activity>
+				</div>
+			}
+		</div>
 	}
 </ngx-record-view-page>
