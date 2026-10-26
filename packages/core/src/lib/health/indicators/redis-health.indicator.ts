@@ -188,7 +188,9 @@ export class RedisHealthIndicator {
 			} catch (error) {
 				console.error('Redis Health Error: ', error);
 			} finally {
-				await this._client.del(randomKey).catch(() => undefined);
+				// Not awaited: while Redis reconnects, node-redis queues the command, and awaiting it would hold the
+				// health probe open for the whole outage. The TTL above removes the key if this delete never runs.
+				void this._client.del(randomKey)?.catch?.(() => undefined);
 			}
 		}
 
