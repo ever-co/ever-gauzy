@@ -132,6 +132,21 @@ test('a custom element whose name starts with a or area is not a link', () => {
 	);
 });
 
+test('link-shaped text in another quoted attribute or a raw-text element is not a link', () => {
+	assert.deepEqual(
+		[
+			...hrefs(
+				'<p title="<a href=\'https://gauzy.co/attr\'>x</a>">p</p> ' +
+					'<textarea><a href="https://gauzy.co/textarea">t</a></textarea> ' +
+					'<script>"<a href=\'https://gauzy.co/script\'>"</script> ' +
+					'<a href="https://gauzy.co/dpa">after them</a>'
+			)
+		],
+		['https://gauzy.co/dpa']
+	);
+	assert.deepEqual([...hrefs('<textarea><a href="https://gauzy.co/unclosed">')], []);
+});
+
 test('only the html a generated document renders counts, not its header comment or other fields', () => {
 	const source = [
 		'/** <a href="https://gauzy.co/comment">in the header</a> */',

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// cspell:words noembed
 /**
  * The standing exception to "ui-baseline.json may only shrink": the links a legal document vendored
  * from the `@ever-co/legal` corpus writes, on the legal page that renders that document.
@@ -84,10 +85,24 @@ export function documentOf(route) {
 }
 
 /**
- * An `<a>` or `<area>` start tag (the whole name: not `<a-widget>` or `<area-x>`), quote-aware (a `>`
- * inside a quoted value does not end it).
+ * The markup tokens the link scan walks, in order: a comment, or a start tag with its whole name and
+ * the text after it, quote-aware (a `>` or a `<` inside a quoted value belongs to that value).
  */
-const LINK_TAG = /<(?:a|area)(?=[\s/>])((?:[^>"']|"[^"]*"|'[^']*')*)>/gi;
+const TOKEN = /<!--[\s\S]*?-->|<([a-z][^\s/>]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/gi;
+
+/** Elements whose content the browser reads as text, never as markup. */
+const RAW_TEXT = new Set([
+	'iframe',
+	'noembed',
+	'noframes',
+	'noscript',
+	'plaintext',
+	'script',
+	'style',
+	'textarea',
+	'title',
+	'xmp'
+]);
 
 /**
  * The attributes of a start tag (the text after its name), read one after the other so a quoted
@@ -107,14 +122,25 @@ export function attributes(source) {
 }
 
 /**
- * The absolute `href` values the links of a vendored document write, as the browser leg records
- * them. Comments are dropped first, so a commented-out link counts for nothing.
+ * The absolute `href` values the links (`<a>`, `<area>`: the whole tag name, not `<a-widget>`) of a
+ * vendored document write, as the browser leg records them. The markup is walked tag by tag, so link-
+ * shaped text inside a comment, a quoted attribute value or a raw-text element (`<textarea>`,
+ * `<script>`...) counts for nothing.
  */
-export function hrefs(text) {
+export function hrefs(html) {
 	const out = new Set();
-	const markup = text.replace(/<!--[\s\S]*?-->/g, '');
-	for (const [, source] of markup.matchAll(LINK_TAG)) {
-		const href = attributes(source).get('href');
+	const lower = html.toLowerCase();
+	const token = new RegExp(TOKEN.source, TOKEN.flags);
+	for (let m = token.exec(html); m; m = token.exec(html)) {
+		const name = m[1]?.toLowerCase();
+		if (name === undefined) continue; // a comment
+		if (RAW_TEXT.has(name)) {
+			const end = lower.indexOf(`</${name}`, token.lastIndex);
+			token.lastIndex = end < 0 ? html.length : end;
+			continue;
+		}
+		if (name !== 'a' && name !== 'area') continue;
+		const href = attributes(m[2]).get('href');
 		const url = href === undefined ? null : recorded(decodeAttribute(href));
 		if (url) out.add(url);
 	}
