@@ -17,7 +17,6 @@ let lastName = ' ';
 let username = ' ';
 let password = ' ';
 let email = ' ';
-let imgUrl = ' ';
 let editFirstName = ' ';
 let editLastName = ' ';
 
@@ -27,7 +26,6 @@ When('I add a user to edit', async () => {
 	username = faker.internet.username();
 	email = faker.internet.exampleEmail();
 	password = faker.internet.password();
-	imgUrl = faker.image.avatar();
 	editFirstName = faker.person.firstName();
 	editLastName = faker.person.lastName();
 
@@ -46,8 +44,9 @@ When('I add a user to edit', async () => {
 	await addUserPage.selectUserRoleData(AddUserPageData.role);
 	await addUserPage.passwordInputVisible();
 	await addUserPage.enterPasswordInputData(password);
-	await addUserPage.imageInputVisible();
-	await addUserPage.enterImageDataUrl(imgUrl);
+	// The image-URL field became an avatar uploader (#10336): give the user a picture by uploading one.
+	await addUserPage.imageUploaderVisible();
+	await addUserPage.uploadImage();
 	await addUserPage.confirmAddButtonVisible();
 	await addUserPage.clickConfirmAddButton();
 	await addUserPage.waitMessageToHide();

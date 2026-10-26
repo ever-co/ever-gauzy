@@ -12,7 +12,13 @@ import {
 	verifyByText,
 	verifyByLength,
 	dispatchClick,
-	waitForSpinnerGone
+	waitForSpinnerGone,
+	clickElementByText,
+	clickWhenEnabled,
+	dispatchClickWhenSettled,
+	scopeGridTo,
+	verifyElementNotExist,
+	verifyTextNotExisting
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
@@ -35,7 +41,7 @@ export const clickGridButton = async (index: number) => {
 
 export const tableBodyExists = async () => verifyElementIsVisibleByIndex(ManageUserInvitesPage.selectTableRowCss, 0);
 
-export const clickTableRow = async (index: number) => {
+export const clickTableRow = async (index: number, text?: string) => {
 	// Selecting a grid row TOGGLES selection and enables the toolbar (Copy/Resend/Delete are gated on
 	// the selected invite). Settle the grid first so the row isn't re-rendered out from under the click
 	// (which would lose selection), then click once and poll the Delete toolbar button's real `disabled`
@@ -44,15 +50,20 @@ export const clickTableRow = async (index: number) => {
 	await getPage().waitForLoadState('networkidle').catch(() => {});
 	await getPage().waitForTimeout(1500);
 
-	// Copy + Resend only render for an invite whose status is INVITED (the seed assigns each invite a
-	// RANDOM status, so a blind nth(0) often lands on ACCEPTED/EXPIRED and those buttons never appear).
-	// Prefer a row whose status cell reads "INVITED"; fall back to the requested index if none is shown.
-	const invitedRows = getPage()
-		.locator(ManageUserInvitesPage.selectTableRowCss)
-		.filter({ hasText: 'INVITED' });
-	const row = (await invitedRows.count()) > 0
-		? invitedRows.first()
-		: getPage().locator(ManageUserInvitesPage.selectTableRowCss).nth(index);
+	// Prefer the invite this scenario created (`text` = its email): it is INVITED and carries a token,
+	// so Copy link + Resend render for it. Otherwise Copy + Resend only render for an invite whose status
+	// is INVITED (seeded invites get a RANDOM status, so a blind nth(0) can land on ACCEPTED/EXPIRED and
+	// those buttons never appear): prefer a row whose status cell reads "INVITED", and fall back to the
+	// requested index if none is shown.
+	const rows = getPage().locator(ManageUserInvitesPage.selectTableRowCss);
+	const ownRows = text ? rows.filter({ hasText: text }) : null;
+	const invitedRows = rows.filter({ hasText: 'INVITED' });
+	let row = rows.nth(index);
+	if (ownRows && (await ownRows.count()) > 0) {
+		row = ownRows.first();
+	} else if ((await invitedRows.count()) > 0) {
+		row = invitedRows.first();
+	}
 	const toolbarBtn = getPage().locator(ManageUserInvitesPage.deleteInviteButtonCss).first();
 
 	await row.click({ force: true });
@@ -111,16 +122,63 @@ export const clickCancelDeleteInviteButton = async () =>
 export const confirmDeleteInviteButtonVisible = async () =>
 	verifyElementIsVisible(ManageUserInvitesPage.confirmDeleteInviteButtonCss);
 
-export const clickConfirmDeleteInviteButton = async () =>
-	// OK inside the delete-confirmation nb-dialog: dispatch so (click)="delete()" fires past the
-	// dialog's own backdrop.
-	dispatchClick(ManageUserInvitesPage.confirmDeleteInviteButtonCss);
+// The invite delete dialog (InviteDeleteConfirmationComponent, #10761) keeps Delete disabled, and its
+// delete() returns early, until the invitee's email is typed back exactly. Read the phrase the dialog
+// asks for and type it, as a user has to. Remembered so the confirm step can prove that row is gone.
+let deletedInvitePhrase = '';
+export const typeDeleteConfirmation = async (): Promise<string> => {
+	const phrase = getPage().locator(ManageUserInvitesPage.deleteConfirmationPhraseCss).first();
+	await phrase.waitFor({ state: 'visible', timeout: 24_000 });
+	deletedInvitePhrase = ((await phrase.textContent()) || '').trim();
+	await enterInput(ManageUserInvitesPage.deleteConfirmationInputCss, deletedInvitePhrase);
+	return deletedInvitePhrase;
+};
+
+export const clickConfirmDeleteInviteButton = async () => {
+	// Delete is enabled only once the typed email matches; gate on that, then click it.
+	await clickWhenEnabled(ManageUserInvitesPage.confirmDeleteInviteButtonCss, { force: true });
+	// delete() closes the dialog with 'ok' only for a confirmed phrase; the page then deletes the invite
+	// and reloads the grid. Prove both: the dialog closed and the deleted invite's row is gone.
+	await verifyElementNotExist(ManageUserInvitesPage.deleteInviteDialogCss);
+	if (deletedInvitePhrase) {
+		await verifyTextNotExisting(ManageUserInvitesPage.selectTableRowCss, deletedInvitePhrase);
+	}
+};
 
 export const waitMessageToHide = async () => waitElementToHide(ManageUserInvitesPage.toastrMessageCss);
 
 export const inviteButtonVisible = async () => verifyElementIsVisible(ManageUserInvitesPage.inviteButtonCss);
 
-export const clickInviteButton = async () => clickButton(ManageUserInvitesPage.inviteButtonCss);
+export const clickInviteButton = async () =>
+	// The invites card is [nbSpinner]="loading" while the grid loads; settle, dispatch at the header
+	// Invite button and confirm the invite dialog opened (its #emails tag input).
+	dispatchClickWhenSettled(ManageUserInvitesPage.inviteButtonCss, ManageUserInvitesPage.emailInputCss);
+
+// Narrow the invites grid to one email (server-side LIKE on the Email column filter) so the invite this
+// scenario created is on page 1 whatever else earlier specs left in the shard's DB. Best-effort: when the
+// filter row is absent the grid is left as is and clickTableRow still prefers the row with that email.
+export const filterByEmail = async (email: string) => {
+	await scopeGridTo(ManageUserInvitesPage.emailFilterInputCss, email);
+};
+
+/**
+ * Create a USER invite through the invites page's own Invite dialog (the same InviteMutationComponent the
+ * Users page opens) and wait until it was sent.
+ *
+ * The scenario used to find its invites already in the grid: from the DEMO seed's random invites or from
+ * invite-user.feature running earlier in the same shard. CI seeds with DEMO=false (seedBasicDefaultData
+ * creates no invites) and invite-user runs in another shard, so on stage run 40364004456 the grid read
+ * "You have not invited any users." and there was nothing to copy, resend or delete. Creating the invite
+ * here makes the scenario independent of seed and shard order; a fresh invite is INVITED and carries a
+ * token, so Copy link and Resend render for it.
+ */
+export const createUserInvite = async (email: string, role: string) => {
+	await clickInviteButton();
+	await enterEmailInputData(email);
+	await clickButton(ManageUserInvitesPage.rolesInputCss);
+	await clickElementByText(ManageUserInvitesPage.rolesDropdownCss, role);
+	await clickSaveButton();
+};
 
 export const emailInputVisible = async () => verifyElementIsVisible(ManageUserInvitesPage.emailInputCss);
 
@@ -137,7 +195,13 @@ export const enterDateInputData = async () => {
 
 export const saveButtonVisible = async () => verifyElementIsVisible(ManageUserInvitesPage.saveButtonCss);
 
-export const clickSaveButton = async () => clickButton(ManageUserInvitesPage.saveButtonCss);
+export const clickSaveButton = async () => {
+	// Send is [disabled]="emailInviteForm.form.invalid" (an email tag + a role are required for a USER
+	// invite); gate on enabled, then wait for the dialog to close: invite-mutation add() closes it only
+	// once the invites were created.
+	await clickWhenEnabled(ManageUserInvitesPage.saveButtonCss, { force: true });
+	await verifyElementNotExist(ManageUserInvitesPage.inviteDialogCss);
+};
 
 export const clickKeyboardButtonByKeyCode = async (keycode: number) => clickKeyboardBtnByKeycode(keycode);
 
