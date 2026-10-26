@@ -1,0 +1,81 @@
+// The task page's own pieces; the layout, panels and figures are the project page's.
+
+// The priority lozenge sits on the figure's line, at its own width.
+.task-fact-chip {
+  display: flex;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+}
+
+/* ── Subtasks ── */
+
+.task-subtasks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li + li {
+    border-top: 1px solid var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
+  }
+}
+
+// Check | key | title | status, one line per subtask; the row opens the subtask's page.
+.task-subtask {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-1);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--gauzy-hover-tint);
+    text-decoration: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: -2px;
+  }
+
+  .project-status {
+    flex: 0 0 auto;
+    font-size: 0.6875rem;
+  }
+
+  &.is-done .task-subtask-title {
+    color: var(--gauzy-text-color-2);
+    text-decoration: line-through;
+  }
+}
+
+.task-subtask-check {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  font-size: 1rem;
+  color: var(--gauzy-text-color-2);
+
+  .is-done & {
+    color: var(--gauzy-chart-revenue);
+  }
+}
+
+.task-subtask-key {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--gauzy-text-color-2);
+}
+
+.task-subtask-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
