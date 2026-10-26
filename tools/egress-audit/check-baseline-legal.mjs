@@ -49,17 +49,18 @@ const LEGAL_ROUTE = /^\/(?:pages\/)?legal(?:\/([a-z-]+))?$/;
 
 const show = (e) => `${e.route} ${e.attribute} ${e.url}`;
 
-/** The character references an HTML attribute value may hold, decoded as the browser decodes them. */
-const NAMED = { amp: '&', quot: '"', apos: "'", lt: '<', gt: '>' };
+/**
+ * An attribute value as the browser reads it, for the one character reference the corpus writes in
+ * a URL (`&amp;`); null for any other `&`, whose reading depends on HTML's reference tables (the
+ * strict reader then reads no link from the document).
+ */
 export function decodeAttribute(value) {
-	return value.replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (all, dec, hex, name) => {
-		if (dec !== undefined || hex !== undefined) {
-			const code = dec !== undefined ? Number.parseInt(dec, 10) : Number.parseInt(hex, 16);
-			return code <= 0x10ffff ? String.fromCodePoint(code) : all;
-		}
-		return NAMED[name.toLowerCase()] ?? all;
-	});
+	const decoded = value.split('&amp;');
+	return decoded.some((part) => part.includes('&')) ? null : decoded.join('&');
 }
+
+/** HTML's whitespace between a tag's name and its attributes (ASCII only, unlike `\s`). */
+const WS = '[\\t\\n\\f\\r ]';
 
 /**
  * A URL as the browser leg records it: resolved (`https://gauzy.co` -> `https://gauzy.co/`), then the
@@ -98,8 +99,8 @@ const MARKDOWN_ELEMENTS = new Set(
  * One tag of that markup, read from a `<`: its whole lower-case name and double-quoted attributes
  * whose values hold no `<`, `>` or `"`.
  */
-const TAG = /<(\/?)([a-z][a-z0-9]*)((?:\s+[a-z][a-z0-9-]*="[^"<>]*")*)\s*\/?>/y;
-const ATTRIBUTE = /\s+([a-z][a-z0-9-]*)="([^"<>]*)"/g;
+const TAG = new RegExp(`<(/?)([a-z][a-z0-9]*)((?:${WS}+[a-z][a-z0-9-]*="[^"<>]*")*)${WS}*/?>`, 'y');
+const ATTRIBUTE = new RegExp(`${WS}+([a-z][a-z0-9-]*)="([^"<>]*)"`, 'g');
 
 /**
  * The absolute `href` values the `<a>` links of a vendored document write, as the browser leg records
@@ -120,7 +121,9 @@ export function hrefs(html) {
 		if (!m || !MARKDOWN_ELEMENTS.has(m[2])) return null;
 		if (m[1] || m[2] !== 'a') continue;
 		const href = [...m[3].matchAll(ATTRIBUTE)].find(([, name]) => name === 'href')?.[2];
-		const url = href === undefined ? null : recorded(decodeAttribute(href));
+		const value = href === undefined ? null : decodeAttribute(href);
+		// An href this reader cannot decode (a character reference other than &amp;) excuses nothing.
+		const url = value === null ? null : recorded(value);
 		if (url) out.add(url);
 	}
 	return out;

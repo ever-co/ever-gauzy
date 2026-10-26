@@ -103,6 +103,16 @@ test('the links of a document are read as the browser leg records them', () => {
 		['https://gauzy.co/dpa']
 	);
 	assert.deepEqual([...hrefs('<p>href="https://gauzy.co/e"</p> <div data-href="https://gauzy.co/a"></div>')], []);
+	// Any & but &amp; depends on HTML's reference tables (&#x80; reads as U+20AC): that href excuses nothing.
+	assert.deepEqual(
+		[
+			...hrefs(
+				'<a href="https://gauzy.co/&#x80;">x</a> <a href="https://gauzy.co/x?a=1&b=2">y</a> ' +
+					'<a href="https://gauzy.co/dpa">z</a>'
+			)
+		],
+		['https://gauzy.co/dpa']
+	);
 });
 
 test('markup the corpus does not render to makes the whole document unreadable, so it excuses nothing', () => {
@@ -124,7 +134,11 @@ test('markup the corpus does not render to makes the whole document unreadable, 
 		'<A HREF="https://gauzy.co/extra">x</A>',
 		"<a href='https://gauzy.co/extra'>x</a>",
 		'<a title="a > b" href="https://gauzy.co/extra">x</a>',
-		'<p>a < b</p>'
+		'<p>a < b</p>',
+		// only HTML's ASCII whitespace separates a tag's name and attributes, not   or \v
+		'<a href="https://gauzy.co/extra">x</a>',
+		'<a\vhref="https://gauzy.co/extra">x</a>',
+		'<a href="https://gauzy.co/extra" >x</a>'
 	]) {
 		assert.equal(hrefs(`<p>${link}</p>${markup}`), null, markup);
 		assert.equal(
