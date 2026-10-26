@@ -6,12 +6,23 @@ import {
 	HttpStatus,
 	NotFoundException
 } from '@nestjs/common';
-import { MoreThanOrEqual, SelectQueryBuilder, IsNull, FindManyOptions, In } from 'typeorm';
+import {
+	MoreThanOrEqual,
+	SelectQueryBuilder,
+	IsNull,
+	FindManyOptions,
+	In,
+	And,
+	Equal,
+	FindOperator,
+	FindOptionsWhere
+} from 'typeorm';
 import { JwtPayload } from 'jsonwebtoken';
 import * as moment from 'moment';
 import { IAppIntegrationConfig } from '@gauzy/common';
 import { environment } from '@gauzy/config';
 import {
+	ID,
 	IOrganizationTeamJoinRequest,
 	IOrganizationTeamJoinRequestCreateInput,
 	IOrganizationTeamJoinRequestValidateInput,
@@ -26,7 +37,7 @@ import { generateAlphaNumericCode } from '@gauzy/utils';
 import { TenantAwareCrudService } from './../core/crud';
 import { MultiORMEnum } from '../core/utils';
 import { RequestContext } from './../core/context';
-import { User } from './../core/entities/internal';
+import { OrganizationTeamEmployee, User } from './../core/entities/internal';
 import { EmailService } from './../email-send/email.service';
 import { OrganizationTeamJoinRequest } from './organization-team-join-request.entity';
 import { OrganizationTeamService } from './../organization-team/organization-team.service';
@@ -39,6 +50,85 @@ import { TypeOrmUserRepository } from '../user/repository/type-orm-user.reposito
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { LoginAttemptScope, LoginAttemptService } from '../auth/login-attempt.service';
 import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
+
+/** Who accepts or rejects the join requests of every team, not only of the teams they manage. */
+const ACT_ON_ANY_TEAM_JOIN_REQUEST: PermissionsEnum[] = [
+	PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
+	PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+];
+
+/**
+ * Who lists the join requests of every team: whoever acts on all of them, and ALL_ORG_VIEW, which the list route
+ * accepts too.
+ */
+const LIST_ANY_TEAM_JOIN_REQUEST: PermissionsEnum[] = [PermissionsEnum.ALL_ORG_VIEW, ...ACT_ON_ANY_TEAM_JOIN_REQUEST];
+
+/**
+ * The memberships that make an employee a manager of a team: flagged `isManager`, or with the team role MANAGER,
+ * ADMIN or SUPER_ADMIN. `member` holds the tenant, the employee and, to check a single team, that team.
+ */
+function managerMembershipsWhere(
+	member: FindOptionsWhere<OrganizationTeamEmployee>
+): FindOptionsWhere<OrganizationTeamEmployee>[] {
+	return [
+		{ ...member, isManager: true },
+		{ ...member, role: { name: In([RolesEnum.MANAGER, RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN]) } }
+	];
+}
+
+/**
+ * The team a list condition names, as an operator `And` can combine with another: an operator as it is, a list as
+ * membership (MikroORM reads a plain list that way), any other value as equality.
+ */
+function statedTeamOperator(statedTeam: unknown): FindOperator<ID> {
+	if (statedTeam instanceof FindOperator) {
+		return statedTeam;
+	}
+
+	if (Array.isArray(statedTeam)) {
+		return In(statedTeam);
+	}
+
+	return Equal(statedTeam as ID);
+}
+
+/**
+ * A list condition kept to the given teams. A team the condition already names is intersected with them, never
+ * replaced, so filtering on a team the caller cannot act on lists nothing.
+ */
+function conditionWithinTeams(
+	condition: FindOptionsWhere<OrganizationTeamJoinRequest> | undefined,
+	teamIds: ID[]
+): FindOptionsWhere<OrganizationTeamJoinRequest> {
+	const withinTeams = In(teamIds);
+	const statedTeam = condition?.organizationTeamId;
+	if (statedTeam === undefined) {
+		return { ...condition, organizationTeamId: withinTeams };
+	}
+
+	const statedTeamCondition = statedTeamOperator(statedTeam);
+	const statedTeamWithinTeams = And(statedTeamCondition, withinTeams);
+	return { ...condition, organizationTeamId: statedTeamWithinTeams };
+}
+
+/**
+ * A list `where` kept to the given teams, each alternative of an array on its own. The base read takes an empty array
+ * for no condition at all, so it is narrowed as one.
+ */
+function whereWithinTeams(
+	where: FindManyOptions<OrganizationTeamJoinRequest>['where'],
+	teamIds: ID[]
+): FindManyOptions<OrganizationTeamJoinRequest>['where'] {
+	if (!Array.isArray(where)) {
+		return conditionWithinTeams(where, teamIds);
+	}
+
+	if (where.length === 0) {
+		return conditionWithinTeams(undefined, teamIds);
+	}
+
+	return where.map((alternative) => conditionWithinTeams(alternative, teamIds));
+}
 
 @Injectable()
 export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<OrganizationTeamJoinRequest> {
@@ -65,7 +155,13 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 	public async findAll(
 		options?: FindManyOptions<OrganizationTeamJoinRequest>
 	): Promise<IPagination<OrganizationTeamJoinRequest>> {
-		return await super.findAll(options);
+		const teamIds = await this.findTeamIdsCallerMayList();
+		if (teamIds === null) {
+			return await super.findAll(options);
+		}
+
+		const where = whereWithinTeams(options?.where, teamIds);
+		return await super.findAll({ ...options, where });
 	}
 
 	/**
@@ -498,12 +594,7 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 			return;
 		}
 
-		if (
-			RequestContext.hasAnyPermission([
-				PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
-				PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-			])
-		) {
+		if (RequestContext.hasAnyPermission(ACT_ON_ANY_TEAM_JOIN_REQUEST)) {
 			return;
 		}
 
@@ -515,10 +606,9 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 
 		if (user.employeeId) {
 			const member = { tenantId, organizationTeamId, employeeId: user.employeeId };
-			const managesTeam = await this.typeOrmOrganizationTeamEmployeeRepository.existsBy([
-				{ ...member, isManager: true },
-				{ ...member, role: { name: In([RolesEnum.MANAGER, RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN]) } }
-			]);
+			const managesTeam = await this.typeOrmOrganizationTeamEmployeeRepository.existsBy(
+				managerMembershipsWhere(member)
+			);
 			if (managesTeam) {
 				return;
 			}
@@ -532,5 +622,53 @@ export class OrganizationTeamJoinRequestService extends TenantAwareCrudService<O
 		if (!createdTeam.success) {
 			throw new ForbiddenException('You can only accept or reject join requests for teams you manage.');
 		}
+	}
+
+	/**
+	 * The teams whose join requests the caller may list: the teams `assertMayActOnRequest` lets them accept or
+	 * reject requests for, read through the same conditions, so the list never shows a request the caller cannot
+	 * act on. `null` when the list is not narrowed: a call without a request user is an internal one, and a caller
+	 * with one of LIST_ANY_TEAM_JOIN_REQUEST lists every team.
+	 *
+	 * @returns The team ids, or `null` for every team.
+	 */
+	private async findTeamIdsCallerMayList(): Promise<ID[] | null> {
+		const user = RequestContext.currentUser();
+		if (!user) {
+			return null;
+		}
+
+		if (RequestContext.hasAnyPermission(LIST_ANY_TEAM_JOIN_REQUEST)) {
+			return null;
+		}
+
+		// TypeORM drops an undefined where value, which would widen the reads below to every tenant.
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			return [];
+		}
+
+		const teamIds = new Set<ID>();
+
+		if (user.employeeId) {
+			const member = { tenantId, employeeId: user.employeeId };
+			const memberships = await this.typeOrmOrganizationTeamEmployeeRepository.find({
+				where: managerMembershipsWhere(member),
+				select: { organizationTeamId: true }
+			});
+			for (const membership of memberships) {
+				teamIds.add(membership.organizationTeamId);
+			}
+		}
+
+		const createdTeams = await this._organizationTeamService.find({
+			where: { tenantId, createdByUserId: user.id },
+			select: { id: true }
+		});
+		for (const team of createdTeams) {
+			teamIds.add(team.id);
+		}
+
+		return [...teamIds];
 	}
 }
