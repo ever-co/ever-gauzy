@@ -301,7 +301,12 @@
 											}
 										}
 										<span class="task-entry-main">
-											<span class="task-entry-name">{{ entry.person?.name || ('PROJECT_VIEW.SOMEONE' | translate) }}</span>
+											<!-- The name opens the employee's profile, as the avatar does. -->
+											@if (entry.person && entry.personLink) {
+												<a class="task-entry-name" [routerLink]="entry.personLink">{{ entry.person.name }}</a>
+											} @else {
+												<span class="task-entry-name">{{ entry.person?.name || ('PROJECT_VIEW.SOMEONE' | translate) }}</span>
+											}
 											<span class="task-entry-when">{{ entry.date }} · {{ entry.range }}</span>
 										</span>
 										<span class="task-entry-figures">
