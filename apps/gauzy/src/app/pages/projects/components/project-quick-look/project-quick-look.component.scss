@@ -1372,6 +1372,13 @@ $weight-medium: 500;
     gap: 0.5rem;
     padding: 0.25rem 0.375rem;
 
+    // A row without a label (the description), or a long one, keeps the full width, as the record view
+    // draws it; the label column above would squeeze it into 6.5rem.
+    &.no-label,
+    &.wide {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
     // Groups are already apart in columns; no hairline between them.
     &.has-divider {
       margin-top: 0;
