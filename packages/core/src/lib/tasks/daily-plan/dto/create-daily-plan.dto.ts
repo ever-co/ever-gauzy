@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsUUID } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsUUID, Min } from 'class-validator';
 import { DailyPlanStatusEnum, ID, IDailyPlanCreateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '../../../core/dto';
 import { EmployeeFeatureDTO } from '../../../employee/dto';
@@ -19,9 +19,10 @@ export class CreateDailyPlanDTO
 	@IsDate()
 	readonly date: Date;
 
-	@ApiProperty({ type: () => Number })
+	@ApiProperty({ type: () => Number, minimum: 0 })
 	@IsNotEmpty()
 	@IsNumber()
+	@Min(0)
 	readonly workTimePlanned: number;
 
 	@ApiProperty({ type: () => String, enum: DailyPlanStatusEnum })
