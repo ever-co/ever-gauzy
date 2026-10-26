@@ -199,9 +199,8 @@ export interface IProjectsPopoverContext {
 	maxWidth: number;
 }
 
-/** The list's own caps, and the least height it shrinks to on a short screen (it scrolls inside either way). */
+/** The list's own caps; on a short screen it shrinks to the room it has (it scrolls inside either way). */
 const PROJECTS_LIST_MAX_HEIGHT = 352;
-const PROJECTS_LIST_MIN_HEIGHT = 160;
 const PROJECTS_LIST_MAX_WIDTH = 320;
 /** Nebular's 15px popover offset, plus a little room from the screen's edge. */
 const POPOVER_GAP = 24;
@@ -237,7 +236,7 @@ export function fitProjectsPopover(popover: NbPopoverDirective, trigger: EventTa
 	popover.position = placeBelow ? NbPosition.BOTTOM_START : NbPosition.TOP_START;
 	popover.context = {
 		projects,
-		maxHeight: Math.max(Math.min(room, PROJECTS_LIST_MAX_HEIGHT), PROJECTS_LIST_MIN_HEIGHT),
+		maxHeight: Math.max(Math.min(room, PROJECTS_LIST_MAX_HEIGHT), 0),
 		maxWidth: Math.max(Math.min(rect.right - POPOVER_EDGE, PROJECTS_LIST_MAX_WIDTH), 0)
 	} as IProjectsPopoverContext;
 	popover.rebuild();
