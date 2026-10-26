@@ -34,7 +34,7 @@ export const clickSettingsButton = async () => {
 	await ensurePanelOpen();
 };
 
-// index: 0 = Language, 1 = Themes, 2 = Layout
+// index: 0 = Language, 1 = Layout (Themes is a button.theme-trigger popover, not an nb-select)
 export const clickThemesDropdown = async (index: number) => {
 	await ensurePanelOpen();
 	await clickButtonByIndex(SettingsButton.dropdownButtonCss, index);
