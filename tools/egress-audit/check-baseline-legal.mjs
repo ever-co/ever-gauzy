@@ -13,18 +13,23 @@
  *
  *   node tools/egress-audit/check-baseline-legal.mjs --base <git ref> [--config <egress-audit.config.json>]
  *
- * Passes when the baseline existed at the base under the same path, base_commit is unchanged, every
- * entry has the shape of the harness's schema, and every entry added since the base is an `href` on a
- * legal page of the route list (/legal/<page> or /pages/legal/<page>, and /legal and /pages/legal,
- * which redirect to the Terms) whose URL that page's vendored document writes as an `href`. A link the
- * document does not write, the same link on any other route and any other attribute still fail, and
- * an entry still excuses only that link on that route, never a lookup or a request. Exit 0, 1 naming
- * each entry it does not cover, 2 on a usage error.
+ * It runs the harness's own check again and passes only when growth is the one problem it reports: a
+ * moved or new baseline, a changed or foreign base_commit and a schema violation stay failures. Then
+ * every entry added since the base (the harness's `addedEntries`) must be an `href` on a legal page of
+ * the route list (/legal/<page> or /pages/legal/<page>, and /legal and /pages/legal, which redirect to
+ * the Terms) whose URL that page's vendored document writes as the `href` of a link (`<a>`, `<area>`;
+ * not in a comment), compared as the browser leg records it (character references decoded, then the
+ * harness's `redactUrl`: query values and the fragment dropped). A link the document does not write,
+ * the same link on any other route and any other attribute still fail, and an entry still excuses
+ * only that link on that route, never a lookup or a request. Exit 0, 1 naming what it does not cover,
+ * 2 on a usage error.
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { addedEntries, check as harnessCheck } from '@ever-co/connect-tools/egress-audit/check-baseline-shrink';
+import { redactUrl } from '@ever-co/connect-tools/egress-audit/har';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(HERE, '..', '..');
@@ -41,15 +46,30 @@ export const CONTENT_DIR = 'packages/plugins/legal-ui/src/lib/content';
 export const PAGES = Object.freeze({ '': 'tos', terms: 'tos', privacy: 'privacy', cookies: 'cookies', dpia: 'dpia' });
 
 const LEGAL_ROUTE = /^\/(?:pages\/)?legal(?:\/([a-z-]+))?$/;
-const ENTRY_KEYS = ['route', 'attribute', 'url', 'reason'];
 
-const key = (e) => `${e.route}|${e.attribute}|${e.url}`;
 const show = (e) => `${e.route} ${e.attribute} ${e.url}`;
 
-/** A URL as the browser writes it (`https://gauzy.co` -> `https://gauzy.co/`); null when it is none. */
-function normal(url) {
+/** The character references an HTML attribute value may hold, decoded as the browser decodes them. */
+const NAMED = { amp: '&', quot: '"', apos: "'", lt: '<', gt: '>' };
+export function decodeAttribute(value) {
+	return value.replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (all, dec, hex, name) => {
+		if (dec !== undefined || hex !== undefined) {
+			const code = dec !== undefined ? Number.parseInt(dec, 10) : Number.parseInt(hex, 16);
+			return code <= 0x10ffff ? String.fromCodePoint(code) : all;
+		}
+		return NAMED[name.toLowerCase()] ?? all;
+	});
+}
+
+/**
+ * A URL as the browser leg records it: resolved (`https://gauzy.co` -> `https://gauzy.co/`), then the
+ * harness's `redactUrl` (query values, the fragment and user info dropped); null when it is not an
+ * absolute http(s) URL.
+ */
+export function recorded(url) {
 	try {
-		return new URL(url).href;
+		const u = new URL(url);
+		return /^https?:$/.test(u.protocol) ? redactUrl(u.href) : null;
 	} catch {
 		return null;
 	}
@@ -59,15 +79,26 @@ function normal(url) {
 export function documentOf(route) {
 	const m = LEGAL_ROUTE.exec(route);
 	if (!m) return null;
-	return Object.hasOwn(PAGES, m[1] ?? '') ? PAGES[m[1] ?? ''] : null;
+	const page = m[1] ?? '';
+	return Object.hasOwn(PAGES, page) ? PAGES[page] : null;
 }
 
-/** The absolute `href` values a vendored document writes, as the browser writes them. */
+/** An `<a>` or `<area>` start tag, and an `href` attribute in it (not `data-href` or another name). */
+const LINK_TAG = /<(?:a|area)\b[^>]*>/gi;
+const HREF = /[\s"'](href)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i;
+
+/**
+ * The absolute `href` values the links of a vendored document write, as the browser leg records
+ * them. Comments are dropped first, so a commented-out link counts for nothing.
+ */
 export function hrefs(text) {
 	const out = new Set();
-	for (const m of text.matchAll(/\bhref="([^"]+)"/g)) {
-		const url = normal(m[1]);
-		if (url && /^https?:/.test(url)) out.add(url);
+	const markup = text.replace(/<!--[\s\S]*?-->/g, '');
+	for (const [tag] of markup.matchAll(LINK_TAG)) {
+		const m = HREF.exec(tag);
+		if (!m) continue;
+		const url = recorded(decodeAttribute(m[2] ?? m[3] ?? m[4]));
+		if (url) out.add(url);
 	}
 	return out;
 }
@@ -82,42 +113,31 @@ export function readDocument(document, root = REPO_ROOT) {
 export function covered(entry, hrefsOf) {
 	if (entry.attribute !== 'href') return false;
 	const document = documentOf(entry.route);
-	const url = normal(entry.url);
+	const url = recorded(entry.url);
 	if (!document || !url) return false;
 	return hrefsOf(document)?.has(url) ?? false;
 }
 
-/** The schema problems this check repeats from the harness, so a fallback to it cannot hide them. */
-export function shapeProblems(doc) {
-	const problems = [];
-	if (typeof doc?.base_commit !== 'string' || !/^[0-9a-f]{7,40}$/.test(doc.base_commit))
-		problems.push('base_commit is not a commit SHA');
-	if (!Array.isArray(doc?.entries)) return [...problems, 'entries is not an array'];
-	doc.entries.forEach((e, i) => {
-		const keys = e && typeof e === 'object' ? Object.keys(e) : [];
-		if (keys.length !== ENTRY_KEYS.length || !ENTRY_KEYS.every((k) => typeof e[k] === 'string' && e[k].length > 0))
-			problems.push(`entries/${i} is not {route, attribute, url, reason} with non-empty strings`);
-	});
-	return problems;
-}
-
 /**
- * The verdict on a baseline (`current`) against the one at the base (`base`, null when the base has
- * none). `path` and `pathAtBase` are the baseline paths the config names now and at the base;
- * `hrefsOf(document)` answers the links a vendored document writes.
+ * The verdict on a baseline (`current`) against the one at the base (`base`), given the harness's own
+ * verdict on it (`harness`, from check-baseline-shrink's `check`) and the baseline's repository path
+ * (`path`). `hrefsOf(document)` answers the links a vendored document writes.
  */
-export function check({ current, base, path, pathAtBase, hrefsOf }) {
-	if (pathAtBase !== null && pathAtBase !== path)
-		return { exit: 1, problems: [`the baseline moved since the base (${pathAtBase} -> ${path})`] };
-	if (!base) return { exit: 1, problems: [`${path} is new since the base: this exception covers growth only`] };
-	const problems = shapeProblems(current).map((p) => `${path} ${p}`);
-	if (problems.length) return { exit: 1, problems };
-	if (current.base_commit !== base.base_commit)
-		return { exit: 1, problems: ['base_commit changed; it is fixed once the baseline exists'] };
-	const before = new Set((base.entries ?? []).map(key));
-	const added = current.entries.filter((e) => !before.has(key(e)));
+export function legalVerdict({ harness, current, base, path, hrefsOf }) {
+	if (harness.exit === 0) return { exit: 0, problems: [], added: 0 };
+	const growth = `${path} may only shrink; added since `;
+	const other = harness.problems.filter((p) => !p.startsWith(growth));
+	if (harness.exit !== 1 || other.length > 0 || harness.problems.length === 0 || !base)
+		return {
+			exit: harness.exit === 2 ? 2 : 1,
+			problems: [
+				'the harness reports more than growth, which this exception never covers:',
+				...(other.length ? other : harness.problems)
+			]
+		};
+	const added = addedEntries(current, base);
 	const unknown = added.filter((e) => !covered(e, hrefsOf));
-	if (unknown.length)
+	if (unknown.length || added.length === 0)
 		return {
 			exit: 1,
 			problems: [
@@ -128,23 +148,6 @@ export function check({ current, base, path, pathAtBase, hrefsOf }) {
 	return { exit: 0, problems: [], added: added.length };
 }
 
-function git(args) {
-	return execFileSync('git', args, { cwd: REPO_ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-}
-
-/** A repository path at a ref, or null when it does not exist there. */
-function showAt(ref, path) {
-	try {
-		git(['cat-file', '-e', `${ref}:${path}`]);
-	} catch {
-		return null;
-	}
-	return git(['show', `${ref}:${path}`]);
-}
-
-const repoPath = (abs) => relative(REPO_ROOT, abs).split(sep).join('/');
-const baselinePathOf = (config, configFile) => resolve(dirname(configFile), config?.ui_baseline ?? 'ui-baseline.json');
-
 export function main(
 	argv,
 	io = { log: (s) => process.stdout.write(`${s}\n`), err: (s) => process.stderr.write(`${s}\n`) }
@@ -154,33 +157,32 @@ export function main(
 		return i >= 0 ? argv[i + 1] : undefined;
 	};
 	const ref = arg('base');
-	const configFile = resolve(arg('config') ?? DEFAULT_CONFIG);
+	const config = arg('config') ?? DEFAULT_CONFIG;
 	if (!ref) {
 		io.err('check-baseline-legal: --base <git ref> is required');
 		return 2;
 	}
 	let verdict;
 	try {
-		git(['rev-parse', '--verify', '--quiet', `${ref}^{commit}`]);
-		const config = JSON.parse(readFileSync(configFile, 'utf8'));
-		const path = repoPath(baselinePathOf(config, configFile));
-		const configAtBase = showAt(ref, repoPath(configFile));
-		const pathAtBase =
-			configAtBase === null ? null : repoPath(baselinePathOf(JSON.parse(configAtBase), configFile));
-		const baseText = showAt(ref, path);
+		const harness = harnessCheck({ base: ref, config });
+		const settings = JSON.parse(readFileSync(resolve(config), 'utf8'));
+		const file = resolve(dirname(resolve(config)), settings.ui_baseline ?? 'ui-baseline.json');
+		const path = relative(REPO_ROOT, file).split(sep).join('/');
+		const growth = harness.problems.find((p) => p.startsWith(`${path} may only shrink; added since `));
 		const documents = new Map();
-		verdict = check({
-			current: JSON.parse(readFileSync(join(REPO_ROOT, path), 'utf8')),
-			base: baseText === null ? null : JSON.parse(baseText),
+		verdict = legalVerdict({
+			harness,
+			current: JSON.parse(readFileSync(file, 'utf8')),
+			// The harness read the base and found growth only: the file exists there.
+			base: growth ? JSON.parse(gitShow(ref, path)) : null,
 			path,
-			pathAtBase,
 			hrefsOf: (d) => {
 				if (!documents.has(d)) documents.set(d, readDocument(d));
 				return documents.get(d);
 			}
 		});
 	} catch (error) {
-		io.err(`check-baseline-legal: ${String(error.stderr ?? '').trim() || error.message}`);
+		io.err(`check-baseline-legal: ${error.message}`);
 		return 2;
 	}
 	for (const p of verdict.problems) io.err(`check-baseline-legal: ${p}`);
@@ -189,6 +191,11 @@ export function main(
 			`check-baseline-legal: ok (${verdict.added} entries added, each a link the vendored legal document of its legal page writes)`
 		);
 	return verdict.exit;
+}
+
+/** A repository file at a ref. */
+function gitShow(ref, path) {
+	return execFileSync('git', ['show', `${ref}:${path}`], { cwd: REPO_ROOT, encoding: 'utf8' });
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))

@@ -224,12 +224,13 @@ jobs:
             git show "$BASE:$AUDIT_DIR/ui-baseline.json" > "$RUNNER_TEMP/ui-baseline.base.json"
             node tools/egress-audit/check-baseline-rewalk.mjs --base-file "$RUNNER_TEMP/ui-baseline.base.json"
           else
-            # The standing exception: growth (exit 1, and only that) is checked again, and passes when
-            # every entry added is a link a legal document vendored from the @ever-co/legal corpus
-            # writes, on the legal page that renders it (a corpus re-sync, as the DPIA Support Pack of
-            # @ever-co/legal 0.5.0 linking the Data Processing Addendum). The static scan exempts the
-            # same files for the same reason. check-baseline-legal.mjs repeats the harness's other checks (base_commit,
-            # the entries' shape, a moved or new baseline), so falling back to it hides none of them.
+            # The standing exception: on growth (exit 1), check-baseline-legal.mjs runs the harness's
+            # check again and goes on only when growth is the one problem it reports (a moved or new
+            # baseline, a changed or foreign base_commit and a schema violation stay failures). It
+            # passes when every entry added is a link a legal document vendored from the @ever-co/legal
+            # corpus writes, on the legal page that renders it: a corpus re-sync, as the DPIA Support
+            # Pack of @ever-co/legal 0.5.0 linking the Data Processing Addendum. The static scan exempts
+            # the same files for the same reason.
             set +e
             node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
               --base "$BASE" --config "$AUDIT_CONFIG" $flag
