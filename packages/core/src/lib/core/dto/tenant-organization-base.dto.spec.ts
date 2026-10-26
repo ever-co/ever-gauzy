@@ -1,5 +1,6 @@
 import '../entities/internal';
 
+import { PartialType } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { useContainer, validate } from 'class-validator';
 import { RequestContext } from '../context';
@@ -141,5 +142,46 @@ describe('TenantOrganizationBaseDTO organization checks', () => {
 		expect(LEGACY_CONDITIONS.organizationId({ sentTo: 'contact-1', organizationId: FOREIGN_ORGANIZATION_ID })).toBe(
 			false
 		);
+	});
+
+	/**
+	 * The optional-organization base (`PartialType(TenantOrganizationBaseDTO)`): tags, task types and priorities, and the
+	 * tenant-wide AI provider credentials, which a tenant admin saves with no organization selected. Optional must mean
+	 * "may be absent", not "is not checked": an organization that IS sent still goes through both checks.
+	 */
+	describe('as PartialType(TenantOrganizationBaseDTO)', () => {
+		class OptionalOrganizationDTO extends PartialType(TenantOrganizationBaseDTO) {}
+
+		const failingOptional = async (payload: Record<string, unknown>): Promise<string[]> => {
+			const errors = await validate(plainToInstance(OptionalOrganizationDTO, payload));
+			return errors.map((error) => error.property).sort();
+		};
+
+		it('accepts a payload with no organization', async () => {
+			await expect(failingOptional({})).resolves.toEqual([]);
+		});
+
+		it('accepts the caller’s own organization', async () => {
+			await expect(failingOptional({ organizationId: OWN_ORGANIZATION_ID })).resolves.toEqual([]);
+			await expect(failingOptional({ organization: { id: OWN_ORGANIZATION_ID } })).resolves.toEqual([]);
+		});
+
+		it('still refuses an organization the caller is not a member of', async () => {
+			await expect(failingOptional({ organizationId: FOREIGN_ORGANIZATION_ID })).resolves.toEqual([
+				'organizationId'
+			]);
+			await expect(failingOptional({ organization: { id: FOREIGN_ORGANIZATION_ID } })).resolves.toEqual([
+				'organization'
+			]);
+		});
+
+		it('still requires the two fields to agree, and the object to name an organization', async () => {
+			await expect(
+				failingOptional({ organizationId: OWN_ORGANIZATION_ID, organization: { id: SIBLING_ORGANIZATION_ID } })
+			).resolves.toEqual(['organization']);
+			await expect(failingOptional({ organizationId: OWN_ORGANIZATION_ID, organization: {} })).resolves.toEqual([
+				'organization'
+			]);
+		});
 	});
 });
