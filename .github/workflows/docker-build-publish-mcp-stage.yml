@@ -47,6 +47,7 @@ jobs:
           driver: docker
 
       - name: Build
+        id: build
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -110,6 +111,10 @@ jobs:
           done
 
       - name: Login to GitHub Container Registry
+        # GHCR is what the clusters deploy from. Push there whenever the image built, even when the Docker Hub
+        # login or push above failed (Docker Hub is only the public mirror; a registry-1.docker.io timeout kept
+        # the 2026-10-26 production worker image off GHCR).
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -117,6 +122,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push to Github Registry
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           for attempt in 1 2 3 4 5; do
             docker push ghcr.io/ever-co/gauzy-mcp-stage:latest && break
