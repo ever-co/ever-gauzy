@@ -10,6 +10,7 @@ import {
 	hrefs,
 	htmlOf,
 	legalVerdict,
+	main,
 	PAGES,
 	readDocument,
 	REPO_ROOT
@@ -87,82 +88,51 @@ test('the links of a document are read as the browser leg records them', () => {
 	assert.deepEqual(
 		[
 			...hrefs(
-				'<a href="https://gauzy.co">x</a> <a class="l" href=\'https://gauzy.co/dpa#s2\'>y</a> ' +
-					'<a href="https://gauzy.co/x?a=1&amp;b=2">z</a> <a href="#s2">in page</a>'
+				'<p><a href="https://gauzy.co">x</a> <a id="l" href="https://gauzy.co/dpa#s2">y</a> ' +
+					'<a href="https://gauzy.co/x?a=1&amp;b=2">z</a> <a href="#s2">in page</a> a &lt; b > c</p>'
 			)
 		],
 		['https://gauzy.co/', 'https://gauzy.co/dpa', 'https://gauzy.co/x?a=&b=']
 	);
-});
-
-test('an attribute that is not the href of a link, or a commented-out link, counts for nothing', () => {
 	assert.deepEqual(
-		[
-			...hrefs(
-				'<div data-href="https://gauzy.co/a"></div> <a data-href="https://gauzy.co/b">b</a> ' +
-					'<!-- <a href="https://gauzy.co/c">c</a> --> <link href="https://gauzy.co/d"> ' +
-					'<p>href="https://gauzy.co/e"</p>'
-			)
-		],
-		[]
-	);
-});
-
-test('an href inside another quoted attribute value is not the link, and a quoted > does not end the tag', () => {
-	assert.deepEqual(
-		[...hrefs('<a title="href=\'https://gauzy.co/extra\'" href="https://gauzy.co/dpa">x</a>')],
-		['https://gauzy.co/dpa']
-	);
-	assert.deepEqual([...hrefs('<a title="a > b" href="https://gauzy.co/dpa">x</a>')], ['https://gauzy.co/dpa']);
-	assert.deepEqual([...hrefs('<a title="href=\'https://gauzy.co/extra\'">x</a>')], []);
-	assert.deepEqual(
-		[...hrefs('<a HREF="https://gauzy.co/dpa" href="https://gauzy.co/extra">x</a>')],
-		['https://gauzy.co/dpa']
-	);
-});
-
-test('a custom element whose name starts with a or area is not a link', () => {
-	assert.deepEqual(
-		[...hrefs('<a-widget href="https://gauzy.co/extra"></a-widget> <area-x href="https://gauzy.co/extra">')],
+		[...hrefs('<p><a title="href=\'https://gauzy.co/extra\'">x</a> <a data-href="https://gauzy.co/b">b</a></p>')],
 		[]
 	);
 	assert.deepEqual(
-		[...hrefs('<a\nhref="https://gauzy.co/dpa">x</a> <area href="https://gauzy.co/x"/>')],
-		['https://gauzy.co/dpa', 'https://gauzy.co/x']
+		[...hrefs('<a href="https://gauzy.co/dpa" href="https://gauzy.co/extra">x</a>')],
+		['https://gauzy.co/dpa']
 	);
+	assert.deepEqual([...hrefs('<p>href="https://gauzy.co/e"</p> <div data-href="https://gauzy.co/a"></div>')], []);
 });
 
-test('link-shaped text in another quoted attribute or a raw-text element is not a link', () => {
-	assert.deepEqual(
-		[
-			...hrefs(
-				'<p title="<a href=\'https://gauzy.co/attr\'>x</a>">p</p> ' +
-					'<textarea><a href="https://gauzy.co/textarea">t</a></textarea> ' +
-					'<script>"<a href=\'https://gauzy.co/script\'>"</script> ' +
-					'<a href="https://gauzy.co/dpa">after them</a>'
-			)
-		],
-		['https://gauzy.co/dpa']
-	);
-	assert.deepEqual([...hrefs('<textarea><a href="https://gauzy.co/unclosed">')], []);
-	// An unterminated comment runs to the end; a quoted value in the end tag belongs to that tag.
-	assert.deepEqual([...hrefs('<!-- <a href="https://gauzy.co/extra">x</a>')], []);
-	assert.deepEqual(
-		[
-			...hrefs(
-				'<textarea></textarea data-x="><a href=\'https://gauzy.co/extra\'>"><a href="https://gauzy.co/dpa">'
-			)
-		],
-		['https://gauzy.co/dpa']
-	);
-	// Only the element's own end tag, whole name, ends its text; <plaintext> never ends.
-	assert.deepEqual([...hrefs('<textarea></textarea-extra><a href="https://gauzy.co/extra"></textarea>')], []);
-	assert.deepEqual([...hrefs('<script>"</script-not><a href=\'https://gauzy.co/extra\'>"</script>')], []);
-	assert.deepEqual([...hrefs('<plaintext></plaintext><a href="https://gauzy.co/extra">')], []);
-	assert.deepEqual(
-		[...hrefs('<TEXTAREA>t</TextArea ><a href="https://gauzy.co/dpa">x</a>')],
-		['https://gauzy.co/dpa']
-	);
+test('markup the corpus does not render to makes the whole document unreadable, so it excuses nothing', () => {
+	const link = '<a href="https://gauzy.co/dpa">a real link</a>';
+	for (const markup of [
+		// link-shaped text where the browser makes no link
+		'<!-- <a href="https://gauzy.co/extra">x</a> -->',
+		'<!-- <a href="https://gauzy.co/extra">x</a>',
+		'<p title="<a href=\'https://gauzy.co/extra\'>x</a>">p</p>',
+		'<p>text</p title="<a href=\'https://gauzy.co/extra\'>x</a>">',
+		'<template><a href="https://gauzy.co/extra">x</a></template>',
+		'<textarea></textarea-extra><a href="https://gauzy.co/extra"></textarea>',
+		'<script>"</script-not><a href=\'https://gauzy.co/extra\'>"</script>',
+		'<plaintext></plaintext><a href="https://gauzy.co/extra">',
+		'<a-widget href="https://gauzy.co/extra"></a-widget>',
+		'<area href="https://gauzy.co/extra">',
+		'<link href="https://gauzy.co/extra">',
+		// anything else outside the plain subset: case, quoting, a `>` or `<` in a value, a stray `<`
+		'<A HREF="https://gauzy.co/extra">x</A>',
+		"<a href='https://gauzy.co/extra'>x</a>",
+		'<a title="a > b" href="https://gauzy.co/extra">x</a>',
+		'<p>a < b</p>'
+	]) {
+		assert.equal(hrefs(`<p>${link}</p>${markup}`), null, markup);
+		assert.equal(
+			covered(entry('/legal/dpia', 'https://gauzy.co/dpa'), () => hrefs(`${link}${markup}`)),
+			false,
+			markup
+		);
+	}
 });
 
 test('only the html a generated document renders counts, not its header comment or other fields', () => {
@@ -175,6 +145,15 @@ test('only the html a generated document renders counts, not its header comment 
 	assert.equal(htmlOf(source), '<p>See <a href="https://gauzy.co/dpa">the DPA</a>, `code` and ${x}.</p>');
 	assert.deepEqual([...hrefs(htmlOf(source))], ['https://gauzy.co/dpa']);
 	assert.equal(htmlOf('export const X = {};'), null);
+});
+
+test('the command line runs the pinned harness: no growth since HEAD passes, a base that is no commit is a usage error', () => {
+	const lines = [];
+	const io = { log: (s) => lines.push(s), err: (s) => lines.push(s) };
+	assert.equal(main(['--base', 'HEAD'], io), 0, lines.join('\n'));
+	assert.match(lines.join('\n'), /ok \(0 entries added/);
+	assert.equal(main(['--base', 'no-such-ref-for-this-test'], io), 2);
+	assert.equal(main([], io), 2);
 });
 
 test('a link the page does not write, another route, another attribute or another document fail', () => {

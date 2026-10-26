@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-// cspell:words noembed
 /**
  * The standing exception to "ui-baseline.json may only shrink": the links a legal document vendored
  * from the `@ever-co/legal` corpus writes, on the legal page that renders that document.
@@ -18,8 +17,8 @@
  * moved or new baseline, a changed or foreign base_commit and a schema violation stay failures. Then
  * every entry added since the base (the harness's `addedEntries`) must be an `href` on a legal page of
  * the route list (/legal/<page> or /pages/legal/<page>, and /legal and /pages/legal, which redirect to
- * the Terms) whose URL that page's vendored document writes as the `href` of a link (`<a>`, `<area>`;
- * not in a comment), compared as the browser leg records it (character references decoded, then the
+ * the Terms) whose URL that page's vendored document writes as the `href` of an `<a>` (read strictly,
+ * see `hrefs`), compared as the browser leg records it (character references decoded, then the
  * harness's `redactUrl`: query values and the fragment dropped). A link the document does not write,
  * the same link on any other route and any other attribute still fail, and an entry still excuses
  * only that link on that route, never a lookup or a request. Exit 0, 1 naming what it does not cover,
@@ -85,70 +84,42 @@ export function documentOf(route) {
 }
 
 /**
- * The markup tokens the link scan walks, in order: a comment (to its `-->`, or to the end when it
- * has none), or a start tag with its whole name and the text after it, quote-aware (a `>` or a `<`
- * inside a quoted value belongs to that value).
+ * The elements the corpus's Markdown renders to (the vendored documents use a subset of them, with
+ * `id`, `tabindex` and `href` as their only attributes). A document with any other markup is read
+ * as having no link at all.
  */
-const TOKEN = /<!--[\s\S]*?(?:-->|$)|<([a-z][^\s/>]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/gi;
-
-/** The text after a tag's name, to its `>`, quote-aware. */
-const TAG_REST = `(?:[^>"']|"[^"]*"|'[^']*')*>`;
-
-/** Elements whose content the browser reads as text, never as markup. */
-const RAW_TEXT = new Set([
-	'iframe',
-	'noembed',
-	'noframes',
-	'noscript',
-	'plaintext',
-	'script',
-	'style',
-	'textarea',
-	'title',
-	'xmp'
-]);
+const MARKDOWN_ELEMENTS = new Set(
+	'a b blockquote br code dd del div dl dt em h1 h2 h3 h4 h5 h6 hr i li ol p pre s span strong sub sup table tbody td tfoot th thead tr ul'.split(
+		' '
+	)
+);
 
 /**
- * The attributes of a start tag (the text after its name), read one after the other so a quoted
- * value is never searched for another attribute; names lower-cased, the first of a repeated name
- * kept, as the browser keeps it. Reading stops at markup it cannot parse.
+ * One tag of that markup, read from a `<`: its whole lower-case name and double-quoted attributes
+ * whose values hold no `<`, `>` or `"`.
  */
-export function attributes(source) {
-	const out = new Map();
-	const attribute = /[\s/]*([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/y;
-	while (attribute.lastIndex < source.length) {
-		const m = attribute.exec(source);
-		if (!m) break;
-		const name = m[1].toLowerCase();
-		if (!out.has(name)) out.set(name, m[2] ?? m[3] ?? m[4] ?? '');
-	}
-	return out;
-}
+const TAG = /<(\/?)([a-z][a-z0-9]*)((?:\s+[a-z][a-z0-9-]*="[^"<>]*")*)\s*\/?>/y;
+const ATTRIBUTE = /\s+([a-z][a-z0-9-]*)="([^"<>]*)"/g;
 
 /**
- * The absolute `href` values the links (`<a>`, `<area>`: the whole tag name, not `<a-widget>`) of a
- * vendored document write, as the browser leg records them. The markup is walked tag by tag, so link-
- * shaped text inside a comment, a quoted attribute value or a raw-text element (`<textarea>`,
- * `<script>`...) counts for nothing.
+ * The absolute `href` values the `<a>` links of a vendored document write, as the browser leg records
+ * them; null when the document is not the plain markup the corpus renders to.
+ *
+ * The reader is strict on purpose, instead of being a partial HTML parser: every `<` must open a tag
+ * of MARKDOWN_ELEMENTS with double-quoted attributes that hold no `<` or `>`. So nothing link-shaped
+ * can hide where the browser makes no link (a comment, another attribute's value, a `<template>`,
+ * the text of a `<textarea>` or `<script>`, a custom element): any such markup makes the whole
+ * document unreadable, and then it excuses nothing (the exception fails closed).
  */
 export function hrefs(html) {
 	const out = new Set();
-	const token = new RegExp(TOKEN.source, TOKEN.flags);
-	for (let m = token.exec(html); m; m = token.exec(html)) {
-		const name = m[1]?.toLowerCase();
-		if (name === undefined) continue; // a comment
-		if (RAW_TEXT.has(name)) {
-			// The content runs to the element's own end tag (the whole name, `</textarea-x>` is text),
-			// and the scan resumes after that tag, read quote-aware like a start tag; without one, or
-			// for <plaintext>, which has none, the rest is text.
-			if (name === 'plaintext') break;
-			const close = new RegExp(`</${name}(?=[\\s/>])${TAG_REST}`, 'gi');
-			close.lastIndex = token.lastIndex;
-			token.lastIndex = close.exec(html) ? close.lastIndex : html.length;
-			continue;
-		}
-		if (name !== 'a' && name !== 'area') continue;
-		const href = attributes(m[2]).get('href');
+	const tag = new RegExp(TAG.source, 'y');
+	for (let at = html.indexOf('<'); at >= 0; at = html.indexOf('<', tag.lastIndex)) {
+		tag.lastIndex = at;
+		const m = tag.exec(html);
+		if (!m || !MARKDOWN_ELEMENTS.has(m[2])) return null;
+		if (m[1] || m[2] !== 'a') continue;
+		const href = [...m[3].matchAll(ATTRIBUTE)].find(([, name]) => name === 'href')?.[2];
 		const url = href === undefined ? null : recorded(decodeAttribute(href));
 		if (url) out.add(url);
 	}
@@ -165,10 +136,15 @@ export function htmlOf(source) {
 	return m ? m[1].replace(/\\([\\`$])/g, '$1') : null;
 }
 
-/** The `href` values of a vendored document (`hrefs` of its `html`), or null when it has no file. */
+/**
+ * The `href` values of a vendored document (`hrefs` of its `html`); null when it has no file, no
+ * `html`, or markup the strict reader does not read.
+ */
 export function readDocument(document, root = REPO_ROOT) {
 	const file = join(root, CONTENT_DIR, `${document}.en.generated.ts`);
-	return existsSync(file) ? hrefs(htmlOf(readFileSync(file, 'utf8')) ?? '') : null;
+	if (!existsSync(file)) return null;
+	const html = htmlOf(readFileSync(file, 'utf8'));
+	return html === null ? null : hrefs(html);
 }
 
 /** Whether an added entry is a link its legal page's vendored document writes. */
