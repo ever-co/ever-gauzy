@@ -178,12 +178,19 @@ export class RedisHealthIndicator {
 
 		if (this._client) {
 			try {
-				await this._client.set(randomKey, 'redis');
+				// The probe key expires on its own and is deleted right after the read. It used to be written with
+				// no TTL and never removed, so every health check left one key behind for good: millions of them
+				// on the shared Redis, which runs with `maxmemory-policy noeviction`.
+				await this._client.set(randomKey, 'redis', { expiration: { type: 'EX', value: 60 } });
 				const value = await this._client.get(randomKey);
 
 				if (value === 'redis') isRedisHealthy = true;
 			} catch (error) {
 				console.error('Redis Health Error: ', error);
+			} finally {
+				// Not awaited: while Redis reconnects, node-redis queues the command, and awaiting it would hold the
+				// health probe open for the whole outage. The TTL above removes the key if this delete never runs.
+				void this._client.del(randomKey)?.catch?.(() => undefined);
 			}
 		}
 

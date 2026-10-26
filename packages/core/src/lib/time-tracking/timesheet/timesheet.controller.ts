@@ -48,6 +48,8 @@ export class TimeSheetController {
 	/**
 	 * UPDATE timesheet status
 	 * This method updates the status of a timesheet based on the data provided in the DTO.
+	 * TIME_TRACKER lets a team manager reach it; without CAN_APPROVE_TIMESHEET the handler accepts only
+	 * the timesheets of the members of the teams they manage, never their own.
 	 *
 	 * @param entity - The DTO containing the updated status for the timesheet.
 	 * @returns Promise<ITimesheet[]> - The updated list of timesheets after applying the status changes.
@@ -63,6 +65,7 @@ export class TimeSheetController {
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@Put('/status')
+	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET, PermissionsEnum.TIME_TRACKER)
 	@UseValidationPipe({ whitelist: true })
 	async updateTimesheetStatus(@Body() entity: UpdateTimesheetStatusDTO): Promise<ITimesheet[]> {
 		return await this._commandBus.execute(new TimesheetUpdateStatusCommand(entity));

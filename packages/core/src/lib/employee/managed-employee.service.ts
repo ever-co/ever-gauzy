@@ -427,7 +427,9 @@ export class ManagedEmployeeService {
 	 * @returns true if the current employee manages the target employee in at least one team
 	 */
 	private async canManageEmployeeInAnyTeam(targetEmployeeId: ID, organizationId?: ID): Promise<boolean> {
-		const currentEmployeeId = RequestContext.currentEmployeeId();
+		// The caller's own employee, read as `canManageEmployee` reads it. `currentEmployeeId()` is null for a
+		// CHANGE_SELECTED_EMPLOYEE holder and would refuse a team manager who holds it: only memberships count here.
+		const currentEmployeeId = RequestContext.currentUser()?.employeeId;
 		const tenantId = RequestContext.currentTenantId();
 
 		// Fail closed on a missing target as well: an undefined key is dropped from the membership
