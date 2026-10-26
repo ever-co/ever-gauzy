@@ -7022,7 +7022,6 @@
 		"COMMENT_IMAGE_FAILED": "Impossibile caricare {{ name }}."
 	},
 	"TASK_VIEW": {
-		"BREADCRUMB": "Percorso di navigazione",
 		"CHANGE_STATUS": "Cambia stato",
 		"LINK_COPIED": "Link copiato",
 		"SUBTASKS": "Sottoattività",

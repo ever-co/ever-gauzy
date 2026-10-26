@@ -7018,7 +7018,6 @@
 		"COMMENT_IMAGE_FAILED": "Impossible de téléverser {{ name }}."
 	},
 	"TASK_VIEW": {
-		"BREADCRUMB": "Fil d'Ariane",
 		"CHANGE_STATUS": "Changer le statut",
 		"LINK_COPIED": "Lien copié",
 		"SUBTASKS": "Sous-tâches",

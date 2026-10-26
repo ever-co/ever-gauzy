@@ -7022,7 +7022,6 @@
 		"COMMENT_IMAGE_FAILED": "Não foi possível enviar {{ name }}."
 	},
 	"TASK_VIEW": {
-		"BREADCRUMB": "Trilha de navegação",
 		"CHANGE_STATUS": "Alterar status",
 		"LINK_COPIED": "Link copiado",
 		"SUBTASKS": "Subtarefas",

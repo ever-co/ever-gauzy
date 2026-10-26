@@ -7021,7 +7021,6 @@
 		"COMMENT_IMAGE_FAILED": "Nie udało się przesłać {{ name }}."
 	},
 	"TASK_VIEW": {
-		"BREADCRUMB": "Ścieżka nawigacji",
 		"CHANGE_STATUS": "Zmień status",
 		"LINK_COPIED": "Link skopiowany",
 		"SUBTASKS": "Podzadania",

@@ -7024,7 +7024,6 @@
 		"COMMENT_IMAGE_FAILED": "No se pudo subir {{ name }}."
 	},
 	"TASK_VIEW": {
-		"BREADCRUMB": "Ruta de navegación",
 		"CHANGE_STATUS": "Cambiar estado",
 		"LINK_COPIED": "Enlace copiado",
 		"SUBTASKS": "Subtareas",

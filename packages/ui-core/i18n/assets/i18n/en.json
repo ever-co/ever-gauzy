@@ -8221,7 +8221,6 @@
 		"COMMENT_IMAGE_FAILED": "Couldn’t upload {{ name }}."
 	},
 	"TASK_VIEW": {
-		"BREADCRUMB": "Breadcrumb",
 		"CHANGE_STATUS": "Change status",
 		"LINK_COPIED": "Link copied",
 		"SUBTASKS": "Subtasks",

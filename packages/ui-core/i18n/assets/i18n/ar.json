@@ -7014,7 +7014,6 @@
 		"COMMENT_IMAGE_FAILED": "تعذّر رفع {{ name }}."
 	},
 	"TASK_VIEW": {
-		"BREADCRUMB": "مسار التنقل",
 		"CHANGE_STATUS": "تغيير الحالة",
 		"LINK_COPIED": "تم نسخ الرابط",
 		"SUBTASKS": "المهام الفرعية",

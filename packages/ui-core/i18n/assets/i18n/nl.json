@@ -7022,7 +7022,6 @@
 		"COMMENT_IMAGE_FAILED": "{{ name }} kon niet worden geüpload."
 	},
 	"TASK_VIEW": {
-		"BREADCRUMB": "Kruimelpad",
 		"CHANGE_STATUS": "Status wijzigen",
 		"LINK_COPIED": "Link gekopieerd",
 		"SUBTASKS": "Subtaken",

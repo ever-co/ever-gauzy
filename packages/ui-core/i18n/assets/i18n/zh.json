@@ -7022,7 +7022,6 @@
 		"COMMENT_IMAGE_FAILED": "无法上传 {{ name }}。"
 	},
 	"TASK_VIEW": {
-		"BREADCRUMB": "面包屑导航",
 		"CHANGE_STATUS": "更改状态",
 		"LINK_COPIED": "链接已复制",
 		"SUBTASKS": "子任务",

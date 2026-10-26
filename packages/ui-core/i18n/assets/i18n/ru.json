@@ -7040,7 +7040,6 @@
 		"COMMENT_IMAGE_FAILED": "Не удалось загрузить {{ name }}."
 	},
 	"TASK_VIEW": {
-		"BREADCRUMB": "Навигационная цепочка",
 		"CHANGE_STATUS": "Изменить статус",
 		"LINK_COPIED": "Ссылка скопирована",
 		"SUBTASKS": "Подзадачи",
