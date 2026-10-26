@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Length, Matches } from 'class-validator';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
 
@@ -10,8 +10,11 @@ import { TenantOrganizationBaseDTO } from '@gauzy/core';
  * backend exchanges `code` + `codeVerifier` for an API key server-side
  * (the key never passes through the browser) and stores it as the
  * tenant's BYOK credential.
+ *
+ * The organization is optional for the same reason as on
+ * `CreateAiProviderCredentialDTO`: the credential is tenant-wide.
  */
-export class ConnectAiProviderCredentialDTO extends TenantOrganizationBaseDTO {
+export class ConnectAiProviderCredentialDTO extends PartialType(TenantOrganizationBaseDTO) {
 	@ApiProperty({ type: () => String, description: 'AI provider identifier (must support a connect flow)' })
 	@IsNotEmpty({ message: 'Provider id is required' })
 	@IsString({ message: 'Provider id must be a string' })

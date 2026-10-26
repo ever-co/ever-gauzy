@@ -1,0 +1,85 @@
+import {
+	buildConnectCallbackUrl,
+	CONNECT_SESSION_KEY,
+	CONNECT_SESSION_TTL_MS,
+	readPendingConnect,
+	takeConnectCallbackFromLocation
+} from './ai-provider-connect-callback';
+
+/**
+ * The app routes with the hash location strategy, but OpenRouter returns the Connect code in the real query
+ * string. The old callback (`…/#/pages/settings/ai`) came back as `https://app.gauzy.co/?code=…`, the router never
+ * saw the code, and the flow silently stored nothing.
+ */
+describe('AI provider Connect callback', () => {
+	const pending = { providerId: 'openrouter', verifier: 'v'.repeat(64), tenantId: 't', organizationId: null };
+
+	const visit = (url: string) => window.history.replaceState(null, '', url);
+	const current = () => `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+	beforeEach(() => {
+		sessionStorage.clear();
+		visit('/');
+	});
+
+	it('hands the provider the document URL, without the hash route', () => {
+		expect(buildConnectCallbackUrl({ origin: 'https://app.gauzy.co', pathname: '/' })).toBe(
+			'https://app.gauzy.co/'
+		);
+	});
+
+	describe('readPendingConnect', () => {
+		it('returns the flow in flight', () => {
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify({ ...pending, startedAt: 1_000 }));
+			expect(readPendingConnect(sessionStorage, 2_000)).toMatchObject({ providerId: 'openrouter' });
+		});
+
+		it('accepts a flow started before `startedAt` was recorded', () => {
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify(pending));
+			expect(readPendingConnect()).toMatchObject({ providerId: 'openrouter' });
+		});
+
+		it('ignores a missing, malformed or expired flow', () => {
+			expect(readPendingConnect()).toBeNull();
+			sessionStorage.setItem(CONNECT_SESSION_KEY, '{not json');
+			expect(readPendingConnect()).toBeNull();
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify({ providerId: 'openrouter' }));
+			expect(readPendingConnect()).toBeNull();
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify({ ...pending, startedAt: 0 }));
+			expect(readPendingConnect(sessionStorage, CONNECT_SESSION_TTL_MS + 1)).toBeNull();
+		});
+	});
+
+	describe('takeConnectCallbackFromLocation', () => {
+		it('moves the code from the root URL into the AI Providers route', () => {
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify(pending));
+			visit('/?code=abc-123');
+
+			expect(takeConnectCallbackFromLocation()).toBe('/pages/settings/ai?code=abc-123');
+			expect(current()).toBe('/#/pages/settings/ai?code=abc-123');
+		});
+
+		it('replaces whatever hash route the provider kept, and keeps other query parameters', () => {
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify(pending));
+			visit('/?ref=x&code=a%2Bb#/pages/dashboard');
+
+			expect(takeConnectCallbackFromLocation()).toBe('/pages/settings/ai?code=a%2Bb');
+			expect(current()).toBe('/?ref=x#/pages/settings/ai?code=a%2Bb');
+		});
+
+		it('leaves a `?code=` alone when no Connect flow is in flight', () => {
+			visit('/?code=abc-123#/pages/dashboard');
+
+			expect(takeConnectCallbackFromLocation()).toBeNull();
+			expect(current()).toBe('/?code=abc-123#/pages/dashboard');
+		});
+
+		it('does nothing on a normal start', () => {
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify(pending));
+			visit('/#/pages/settings/ai');
+
+			expect(takeConnectCallbackFromLocation()).toBeNull();
+			expect(current()).toBe('/#/pages/settings/ai');
+		});
+	});
+});
