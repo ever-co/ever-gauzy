@@ -13,8 +13,11 @@ import {
 	verifyByLength,
 	verifyTextNotExisting,
 	dispatchClick,
-	waitForSpinnerGone
+	waitForSpinnerGone,
+	clickAndAwaitDialogClose,
+	scopeGridTo
 } from '../util';
+import { expect } from '@playwright/test';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ManageCandidatesInvitesPage } from '../../../src/support/Base/pageobjects/ManageCandidatesInvitesPageObject';
@@ -50,11 +53,20 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	// Save sits in nb-card-footer of the invite dialog, right after the nb-datepicker overlay was
-	// opened/closed by the appliedDate field. A coordinate click (even force) lands on the fading
-	// cdk-overlay backdrop and the dialog stays open (invite never created). Dispatch the click
-	// straight to the element so the (click)="add()" handler fires regardless of the backdrop.
-	await dispatchClick(ManageCandidatesInvitesPage.saveButtonCss);
+	// Send sits in the invite dialog footer, right after the nb-datepicker overlay was opened/closed by
+	// the appliedDate field. A coordinate click (even force) lands on the fading cdk-overlay backdrop and
+	// the dialog stays open (invite never created), so the click is dispatched straight to the element.
+	// The button is [disabled] while the email form is invalid: clickAndAwaitDialogClose waits for it to be
+	// enabled, dispatches (click)="add()", and waits for ga-invite-mutation to detach (add() only closes the
+	// dialog once the invites were saved). Whether the invite really exists is asserted by the next steps.
+	await clickAndAwaitDialogClose(ManageCandidatesInvitesPage.saveButtonCss, ManageCandidatesInvitesPage.inviteDialogCss);
+};
+
+// Narrow the server-paginated invites grid to this scenario's email (best-effort: no-op when the grid has
+// no filter row). Invites accumulate across scenarios on the shared serial DB, so the new one is not
+// guaranteed to be on page 1; the email filter is a server-side ILIKE, so case differences don't matter.
+export const scopeGridToInvite = async (email: string) => {
+	await scopeGridTo(ManageCandidatesInvitesPage.emailFilterInputCss, email);
 };
 
 export const waitMessageToHide = async () => {
@@ -126,10 +138,26 @@ export const confirmDeleteButtonVisible = async () => {
 	await verifyElementIsVisible(ManageCandidatesInvitesPage.confirmDeleteButtonCss);
 };
 
+// The invite delete dialog (ga-invite-delete-confirmation) asks to type the invitee's email back before
+// its Delete button enables (an irreversible revoke). Type the exact email and wait for the button to
+// enable, so the confirmation that follows is a real one.
+export const enterDeleteConfirmation = async (email: string) => {
+	const input = getPage().locator(ManageCandidatesInvitesPage.deleteConfirmationInputCss).first();
+	await input.waitFor({ state: 'visible', timeout: 24000 });
+	await input.fill(String(email));
+	await expect(getPage().locator(ManageCandidatesInvitesPage.confirmDeleteButtonCss).first()).toBeEnabled({
+		timeout: 24000
+	});
+};
+
 export const clickConfirmDeleteButton = async () => {
-	// OK button inside the delete-confirmation nb-dialog. Dispatch the click so the (click)="delete()"
-	// handler fires past the dialog's own cdk-overlay backdrop.
-	await dispatchClick(ManageCandidatesInvitesPage.confirmDeleteButtonCss);
+	// Delete button inside the delete-confirmation nb-dialog. Dispatched so the (click)="delete()" handler
+	// fires past the dialog's own cdk-overlay backdrop; then wait for the dialog to close (it closes with
+	// 'ok', which is what triggers the DELETE request).
+	await clickAndAwaitDialogClose(
+		ManageCandidatesInvitesPage.confirmDeleteButtonCss,
+		ManageCandidatesInvitesPage.deleteDialogCss
+	);
 };
 
 export const clickKeyboardButtonByKeyCode = async (keycode) => {

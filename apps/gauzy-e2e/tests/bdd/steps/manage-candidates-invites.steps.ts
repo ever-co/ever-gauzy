@@ -26,6 +26,8 @@ When('I invite a candidate', async () => {
 	await manageCandidatesInvitesPage.saveButtonVisible();
 	await manageCandidatesInvitesPage.clickSaveButton();
 	await manageCandidatesInvitesPage.waitMessageToHide();
+	// Server-paginated grid on a shared DB: filter it to this invite's email first (best-effort).
+	await manageCandidatesInvitesPage.scopeGridToInvite(email);
 	await manageCandidatesInvitesPage.verifyInviteExist(email);
 });
 
@@ -45,6 +47,8 @@ When('I delete the candidate invite', async () => {
 	await manageCandidatesInvitesPage.deleteButtonVisible();
 	await manageCandidatesInvitesPage.clickDeleteButton();
 	await manageCandidatesInvitesPage.confirmDeleteButtonVisible();
+	// The redesigned delete dialog keeps Delete disabled until the invitee's email is typed back.
+	await manageCandidatesInvitesPage.enterDeleteConfirmation(email);
 	await manageCandidatesInvitesPage.clickConfirmDeleteButton();
 	await manageCandidatesInvitesPage.verifyInviteIsDeleted(email);
 });
