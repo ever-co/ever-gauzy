@@ -1104,6 +1104,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				mayIssueInvites: RequestContext.hasPermission(PermissionsEnum.ORG_INVITE_EDIT),
 				findRoles: (ids: ID[]) => this.roleService.find({ where: { id: In(ids) } })
 			});
+			await this.withholdTokensOfUnmanagedTeams(invites.items);
 			return invites;
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -1262,6 +1263,64 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 			return null;
 		}
 		return read.record.teams ?? [];
+	}
+
+	/**
+	 * Removes the accept-invite token from every listed invitation that names a team the caller does not manage, when
+	 * they are confined to the teams they manage. Whoever holds the token accepts the invitation into all its teams, so
+	 * the token takes a manager of them all, as sending and resending do; the invitation itself stays listed. Its teams
+	 * are read apart from the register, soft-deleted ones included, whatever relations and filters the register names.
+	 *
+	 * @param invites - The invitations the register lists.
+	 */
+	private async withholdTokensOfUnmanagedTeams(invites: IInvite[]): Promise<void> {
+		if (!this.isConfinedToManagedTeams()) {
+			return;
+		}
+		const withToken = invites.filter((invite) => invite.token);
+		if (isEmpty(withToken)) {
+			return;
+		}
+
+		const inviteIds = withToken.map((invite) => invite.id);
+		const teamIdsByInvite = await this.findTeamIdsOfInvitations(inviteIds);
+		const teamIdLists = [...teamIdsByInvite.values()];
+		const allTeamIds = teamIdLists.flat();
+		const namedTeamIds = [...new Set(allTeamIds)];
+		if (isEmpty(namedTeamIds)) {
+			return;
+		}
+
+		const managedTeamIds = await this.findManagedTeamIds(namedTeamIds);
+		for (const invite of withToken) {
+			const teamIds = teamIdsByInvite.get(invite.id) ?? [];
+			const namesUnmanagedTeam = teamIds.some((teamId) => !managedTeamIds.includes(teamId));
+			if (namesUnmanagedTeam) {
+				delete invite.token;
+			}
+		}
+	}
+
+	/**
+	 * The teams the given invitations name, soft-deleted ones included, read apart from the register.
+	 *
+	 * @param inviteIds - The invitations, at least one.
+	 * @returns The ids of the teams of each invitation, by the invitation's id.
+	 */
+	private async findTeamIdsOfInvitations(inviteIds: ID[]): Promise<Map<ID, ID[]>> {
+		const invites = await super.find({
+			where: { id: In(inviteIds) },
+			relations: { teams: true },
+			withDeleted: true
+		});
+
+		const teamIdsByInvite = new Map<ID, ID[]>();
+		for (const invite of invites) {
+			const teams = invite.teams ?? [];
+			const teamIds = teams.map((team) => team.id);
+			teamIdsByInvite.set(invite.id, teamIds);
+		}
+		return teamIdsByInvite;
 	}
 
 	/**

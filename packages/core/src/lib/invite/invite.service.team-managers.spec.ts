@@ -44,6 +44,8 @@ interface ISpecInvite {
 	id: string;
 	email: string;
 	tenantId: string;
+	token?: string;
+	roleId?: string;
 	teams?: ISpecTeam[];
 }
 
@@ -99,7 +101,9 @@ const TYPEORM_INVITE = new TypeOrmEntitySchema<ISpecInvite>({
 	columns: {
 		id: { primary: true, type: 'varchar' },
 		email: { type: 'varchar' },
-		tenantId: { type: 'varchar' }
+		tenantId: { type: 'varchar' },
+		token: { type: 'varchar', nullable: true },
+		roleId: { type: 'varchar', nullable: true }
 	},
 	relations: {
 		teams: {
@@ -139,6 +143,8 @@ class MikroOrmInvite {
 	id!: string;
 	email!: string;
 	tenantId!: string;
+	token?: string;
+	roleId?: string;
 	teams?: unknown;
 }
 
@@ -181,6 +187,8 @@ const MIKRO_ORM_INVITE = new MikroOrmEntitySchema<MikroOrmInvite>({
 		id: { type: 'string', primary: true },
 		email: { type: 'string' },
 		tenantId: { type: 'string' },
+		token: { type: 'string', nullable: true },
+		roleId: { type: 'string', nullable: true },
 		teams: {
 			kind: 'm:n',
 			entity: () => MikroOrmInviteTeam,
@@ -340,6 +348,15 @@ describe('InviteService - the invitations of a team are handled by its managers'
 		return operator.objectLiteralParameters;
 	}
 
+	/** The tokens the register hands the caller, by invitation. */
+	function tokensById(items: { id?: string; token?: string }[]): Record<string, string | undefined> {
+		const tokens: Record<string, string | undefined> = {};
+		for (const item of items) {
+			tokens[item.id] = item.token;
+		}
+		return tokens;
+	}
+
 	afterEach(() => jest.restoreAllMocks());
 
 	describe('findAllInvites', () => {
@@ -435,6 +452,29 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			expect(findTeams).toHaveBeenCalledWith({ select: { id: true }, where: [{ createdByUserId: CALLER }] });
 			const [ofManagedTeam] = registerWhere();
 			expect(parametersOf(ofManagedTeam.id)).toEqual({ inviteTeamsInReach: [MANAGED_TEAM.id] });
+		});
+
+		it('withholds the token of an invitation that also names a team the employee does not manage', async () => {
+			signIn(EMPLOYEE);
+			const { service, findTeams } = build([MANAGED_TEAM]);
+			const ofBothTeams = { id: 'invite-both', token: 'token-both', role: { name: RolesEnum.EMPLOYEE } };
+			const ofManagedTeam = { id: 'invite-managed', token: 'token-managed', role: { name: RolesEnum.EMPLOYEE } };
+			findAll.mockResolvedValue({ items: [ofBothTeams, ofManagedTeam], total: 2 });
+			findInvites.mockResolvedValue([
+				{ id: 'invite-both', teams: [MANAGED_TEAM, OTHER_TEAM] },
+				{ id: 'invite-managed', teams: [MANAGED_TEAM] }
+			]);
+
+			const { items } = await service.findAllInvites({} as never);
+
+			// The teams of each listed invitation are read apart, deleted ones included, whatever the register loaded.
+			expect(findInvites).toHaveBeenCalledWith({
+				where: { id: In(['invite-both', 'invite-managed']) },
+				relations: { teams: true },
+				withDeleted: true
+			});
+			expect(findTeams).toHaveBeenLastCalledWith(managedTeamsRead([MANAGED_TEAM.id, OTHER_TEAM.id]));
+			expect(items).toEqual([{ ...ofBothTeams, token: undefined }, ofManagedTeam]);
 		});
 
 		it.each([PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.CHANGE_SELECTED_EMPLOYEE])(
@@ -725,7 +765,8 @@ describe('InviteService - the invitations of a team are handled by its managers'
 				await execute(insertMember, [member.id, member.teamId, EMPLOYEE, member.isManager, member.roleId]);
 			}
 			for (const row of INVITES) {
-				await execute('INSERT INTO invite (id, email, tenantId) VALUES (?, ?, ?)', [row.id, row.email, TENANT]);
+				const insertInvite = 'INSERT INTO invite (id, email, tenantId, token, roleId) VALUES (?, ?, ?, ?, ?)';
+				await execute(insertInvite, [row.id, row.email, TENANT, `token-${row.id}`, 'role-employee']);
 				for (const teamId of row.teamIds) {
 					const pivot = 'INSERT INTO invite_organization_team (inviteId, organizationTeamId) VALUES (?, ?)';
 					await execute(pivot, [row.id, teamId]);
@@ -797,12 +838,20 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			jest.spyOn(TenantAwareCrudService.prototype, 'findOneOrFailByOptions').mockImplementation((options) =>
 				invites.findOneOrFailByOptions(options as never)
 			);
+			jest.spyOn(TenantAwareCrudService.prototype, 'find').mockImplementation((options) =>
+				invites.find(options as never)
+			);
 		});
 
 		/** The service, reading the caller's teams and the invitations' pivot from the stores. */
 		function buildOnStores(): InviteService {
 			const { service } = build();
-			Object.assign(service, { organizationTeamService: teams, typeOrmRepository: inviteRepository });
+			const roleService = { find: jest.fn(async () => ROLES) };
+			Object.assign(service, {
+				organizationTeamService: teams,
+				typeOrmRepository: inviteRepository,
+				roleService
+			});
 			return service;
 		}
 
@@ -908,6 +957,30 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			for (const item of items) {
 				expect(inReach).toContain(item.id);
 			}
+		});
+
+		it('keeps the token of an invitation whose teams the caller all manages, and withholds the others', async () => {
+			signIn(EMPLOYEE);
+			const service = buildOnStores();
+
+			const { items } = await service.findAllInvites({} as never);
+
+			const tokens = tokensById(items);
+			expect(tokens['invite-managed']).toBe('token-invite-managed');
+			expect(tokens['invite-no-team']).toBe('token-invite-no-team');
+			expect(tokens['invite-both']).toBeUndefined();
+		});
+
+		it('withholds that token when the request names the managed team and loads only that one of its teams', async () => {
+			signIn(EMPLOYEE);
+			const service = buildOnStores();
+			const options = { where: { teams: { id: [MANAGED_TEAM.id] } }, relations: { teams: true } };
+
+			const { items } = await service.findAllInvites(options as never);
+
+			const tokens = tokensById(items);
+			expect(tokens['invite-managed']).toBe('token-invite-managed');
+			expect(tokens['invite-both']).toBeUndefined();
 		});
 
 		describe('delete', () => {
