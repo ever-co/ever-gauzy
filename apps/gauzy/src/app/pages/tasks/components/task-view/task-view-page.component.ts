@@ -59,6 +59,12 @@ import {
 /** The relations the page reads: the View's, and the subtasks with their status. */
 export const TASK_PAGE_RELATIONS: string[] = [...TASK_VIEW_RELATIONS, 'children', 'children.taskStatus'];
 
+/**
+ * The relations the edit dialog reads, as the task list loads them: the View's and the modules. The dialog saves
+ * the modules it was given, so a task read without them would come back with none.
+ */
+export const TASK_EDIT_RELATIONS: string[] = [...TASK_VIEW_RELATIONS, 'modules'];
+
 /** Days the hours chart covers. */
 export const HOURS_DAYS = 14;
 /** Days the recent time entries are read over. */
@@ -201,8 +207,13 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			return;
 		}
 		const sequence = ++this.loadSequence;
-		// Nothing of the previous task (or organization) stays on screen — nor reachable by the star.
+		// Nothing of the previous task (or organization) stays on screen — nor reachable by the star. Its figures
+		// and its project's statuses go too: the menu stays hidden until this task's own statuses arrive.
 		this.task = null;
+		this.tracking = loading(null);
+		this.workers = [];
+		this.statuses = [];
+		this.currentStatusId = null;
 		this.state = 'loading';
 		try {
 			const task = await this.tasksService.getById(id, TASK_PAGE_RELATIONS);
@@ -225,18 +236,32 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		}
 	}
 
-	/** Reads the task again in place, after a change: the page stays on screen while it does. */
-	private async refresh(): Promise<void> {
+	/**
+	 * Reads the task again in place, after a change to `taskId`: the page stays on screen while it does. A change
+	 * that lands once the page has moved on to another task leaves that task's load alone.
+	 */
+	private async refresh(taskId: string): Promise<void> {
+		if (this.state !== 'ready' || this.task?.id !== taskId) return;
 		const sequence = ++this.loadSequence;
 		try {
-			const task = await this.tasksService.getById(this.taskId, TASK_PAGE_RELATIONS);
-			if (sequence !== this.loadSequence || !task?.id) return;
+			const task = await this.tasksService.getById(taskId, TASK_PAGE_RELATIONS);
+			if (sequence !== this.loadSequence) return;
+			if (!task?.id) {
+				this.reloadPanels(sequence);
+				return;
+			}
 			this.task = task;
 			this.show();
 			this.loadPanels(task, sequence);
 		} catch {
-			// The page keeps what it showed.
+			// The page keeps the task it showed; its panels, whose reads the new sequence discarded, read again.
+			if (sequence === this.loadSequence) this.reloadPanels(sequence);
 		}
+	}
+
+	/** Reads the panels of the task on screen again, so none keeps a spinner a discarded read left. */
+	private reloadPanels(sequence: number): void {
+		if (this.task) this.loadPanels(this.task, sequence);
 	}
 
 	/* ── Actions ── */
@@ -248,16 +273,17 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	async changeStatus(statusId: string): Promise<void> {
 		const status = this.statuses.find((item) => item.id === statusId);
 		if (!status || !this.task || this.savingStatus || status.id === this.currentStatusId) return;
+		const taskId = this.task.id;
 		this.savingStatus = true;
 		try {
 			await firstValueFrom(
-				this.http.put<ITask>(`${API_PREFIX}/tasks/${this.task.id}/status`, {
+				this.http.put<ITask>(`${API_PREFIX}/tasks/${taskId}/status`, {
 					status: status.value || status.name,
 					taskStatusId: status.id,
 					...this.scope()
 				})
 			);
-			await this.refresh();
+			await this.refresh(taskId);
 		} catch (error) {
 			this.toastrService.danger(error);
 		} finally {
@@ -265,10 +291,24 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		}
 	}
 
-	/** Opens the task dialog the task list edits with, then saves what it answers and reads the task again. */
+	/**
+	 * Opens the task dialog the task list edits with, on the task read as the list reads it — with its modules,
+	 * which the dialog saves back — then saves what it answers and reads the task again. A failed read opens no
+	 * dialog: one opened without the modules would unlink them all.
+	 */
 	async edit(): Promise<void> {
 		if (!this.task || !this.canEdit) return;
-		const dialog = this.dialogService.open(AddTaskDialogComponent, { context: { selectedTask: this.task } });
+		const taskId = this.task.id;
+		let selectedTask: ITask;
+		try {
+			selectedTask = await this.tasksService.getById(taskId, TASK_EDIT_RELATIONS);
+		} catch (error) {
+			this.toastrService.danger(error);
+			return;
+		}
+		// The page moved on to another task while the read was under way.
+		if (!selectedTask?.id || this.task?.id !== taskId) return;
+		const dialog = this.dialogService.open(AddTaskDialogComponent, { context: { selectedTask } });
 		const data: any = await firstValueFrom(dialog.onClose.pipe(first()));
 		if (!data) return;
 		const { estimateDays, estimateHours, estimateMinutes } = data;
@@ -280,10 +320,10 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 					...data,
 					estimate: estimate || null,
 					...this.scope(),
-					id: this.task.id
+					id: taskId
 				})
 			);
-			await this.refresh();
+			await this.refresh(taskId);
 		} catch (error) {
 			this.toastrService.danger(error);
 		}

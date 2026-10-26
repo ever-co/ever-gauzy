@@ -13,7 +13,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { TimeZoneService } from '@gauzy/ui-core/shared';
-import { TASK_PAGE_RELATIONS, TaskViewPageComponent } from './task-view-page.component';
+import { TASK_EDIT_RELATIONS, TASK_PAGE_RELATIONS, TaskViewPageComponent } from './task-view-page.component';
 import { buildTaskViewSections } from './task-view-sections';
 
 const TASK_ID = 'aaaaaaaa-1111-4111-8111-111111111111';
@@ -47,6 +47,7 @@ describe('TaskViewPageComponent', () => {
 	let timesheetService: { getDailyReportChart: jest.Mock; getTimeLogs: jest.Mock };
 	let http: { get: jest.Mock; put: jest.Mock };
 	let toastr: { success: jest.Mock; danger: jest.Mock };
+	let dialogService: { open: jest.Mock };
 	let router: { navigate: jest.Mock; createUrlTree: jest.Mock; serializeUrl: jest.Mock };
 	let permissions: PermissionsEnum[];
 
@@ -83,6 +84,7 @@ describe('TaskViewPageComponent', () => {
 			put: jest.fn(() => of({}))
 		};
 		toastr = { success: jest.fn(), danger: jest.fn() };
+		dialogService = { open: jest.fn(() => ({ onClose: of(null) })) };
 		router = {
 			navigate: jest.fn(async () => true),
 			createUrlTree: jest.fn((commands: string[]) => commands),
@@ -98,7 +100,7 @@ describe('TaskViewPageComponent', () => {
 				},
 				{ provide: Router, useValue: router },
 				{ provide: HttpClient, useValue: http },
-				{ provide: NbDialogService, useValue: { open: jest.fn() } },
+				{ provide: NbDialogService, useValue: dialogService },
 				{ provide: TasksService, useValue: tasksService },
 				{ provide: TimesheetService, useValue: timesheetService },
 				{ provide: TimesheetStatisticsService, useValue: statisticsService },
@@ -420,6 +422,112 @@ describe('TaskViewPageComponent', () => {
 			expect(toastr.danger).toHaveBeenCalled();
 			expect(page.task.id).toBe(TASK_ID);
 			expect(page.savingStatus).toBe(false);
+		});
+	});
+
+	describe('edit', () => {
+		it('opens the dialog on the task read with its modules, which the dialog saves back', async () => {
+			permissions = [PermissionsEnum.ORG_TASK_EDIT];
+			const page = create();
+			await settle();
+			const modules = [{ id: 'm1', name: 'Auth' }];
+			tasksService.getById.mockResolvedValueOnce(task({ modules } as any));
+
+			await page.edit();
+
+			expect(tasksService.getById).toHaveBeenLastCalledWith(TASK_ID, TASK_EDIT_RELATIONS);
+			expect(TASK_EDIT_RELATIONS).toContain('modules');
+			expect(dialogService.open).toHaveBeenCalledWith(
+				expect.anything(),
+				expect.objectContaining({ context: { selectedTask: expect.objectContaining({ modules }) } })
+			);
+		});
+
+		it('opens no dialog when the task cannot be read with its modules', async () => {
+			permissions = [PermissionsEnum.ORG_TASK_EDIT];
+			const page = create();
+			await settle();
+			tasksService.getById.mockRejectedValueOnce(new HttpErrorResponse({ status: 500 }));
+
+			await page.edit();
+
+			expect(dialogService.open).not.toHaveBeenCalled();
+			expect(toastr.danger).toHaveBeenCalled();
+		});
+	});
+
+	describe('moving to another task', () => {
+		const STATUSES = [{ id: 'st-1', name: 'In Progress', value: 'in-progress', order: 1, organizationId: ORGANIZATION }];
+
+		it("drops the previous task's statuses and figures while the next one loads", async () => {
+			permissions = [PermissionsEnum.ORG_TASK_EDIT];
+			statuses = STATUSES;
+			statisticsService.getTaskEmployees.mockResolvedValueOnce([
+				{ id: 'e1', duration: 3600, user: { firstName: 'Ann', lastName: 'Brown' } }
+			]);
+			const page = create();
+			await settle();
+			await flush();
+			expect(page.statuses.length).toBe(1);
+			expect(page.workers.length).toBe(1);
+
+			tasksService.getById.mockImplementationOnce(() => new Promise<ITask>(() => undefined)); // the next task waits
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			fixture.detectChanges();
+
+			expect(page.state).toBe('loading');
+			expect(page.statuses).toEqual([]);
+			expect(page.currentStatusId).toBeNull();
+			expect(page.workers).toEqual([]);
+			expect(page.tracking).toEqual(expect.objectContaining({ loading: true, value: null }));
+		});
+
+		it('lets the next task finish loading when a status save for the previous one lands after it', async () => {
+			permissions = [PermissionsEnum.ORG_TASK_EDIT];
+			statuses = [...STATUSES, { id: 'st-2', name: 'Done', value: 'done', order: 2, organizationId: ORGANIZATION }];
+			let answerSave: (value: unknown) => void;
+			http.put.mockReturnValueOnce({
+				subscribe: (observer: any) => {
+					answerSave = (value) => {
+						observer.next?.(value);
+						observer.complete?.();
+					};
+					return { unsubscribe: () => undefined };
+				}
+			});
+			const page = create();
+			await settle();
+			await flush();
+
+			const saving = page.changeStatus('st-2'); // still saving
+			params$.next(convertToParamMap({ id: OTHER_ID })); // the user follows a linked task
+			await settle();
+			answerSave({});
+			await saving;
+			await settle();
+
+			expect(page.task.id).toBe(OTHER_ID);
+			expect(page.state).toBe('ready');
+		});
+
+		it('reads the panels again when the read after a change fails', async () => {
+			permissions = [PermissionsEnum.ORG_TASK_EDIT];
+			statuses = [
+				...STATUSES,
+				{ id: 'st-2', name: 'Done', value: 'done', order: 2, organizationId: ORGANIZATION }
+			];
+			const page = create();
+			await settle();
+			await flush();
+			const reads = timesheetService.getTimeLogs.mock.calls.length;
+			tasksService.getById.mockRejectedValueOnce(new HttpErrorResponse({ status: 500 }));
+
+			await page.changeStatus('st-2');
+			await flush();
+
+			expect(timesheetService.getTimeLogs.mock.calls.length).toBe(reads + 1);
+			expect(page.task.id).toBe(TASK_ID);
+			expect(page.entries.loading).toBe(false);
 		});
 	});
 
