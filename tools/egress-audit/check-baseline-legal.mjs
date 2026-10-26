@@ -85,10 +85,14 @@ export function documentOf(route) {
 }
 
 /**
- * The markup tokens the link scan walks, in order: a comment, or a start tag with its whole name and
- * the text after it, quote-aware (a `>` or a `<` inside a quoted value belongs to that value).
+ * The markup tokens the link scan walks, in order: a comment (to its `-->`, or to the end when it
+ * has none), or a start tag with its whole name and the text after it, quote-aware (a `>` or a `<`
+ * inside a quoted value belongs to that value).
  */
-const TOKEN = /<!--[\s\S]*?-->|<([a-z][^\s/>]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/gi;
+const TOKEN = /<!--[\s\S]*?(?:-->|$)|<([a-z][^\s/>]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/gi;
+
+/** The text after a tag's name, to its `>`, quote-aware. */
+const TAG_REST = `(?:[^>"']|"[^"]*"|'[^']*')*>`;
 
 /** Elements whose content the browser reads as text, never as markup. */
 const RAW_TEXT = new Set([
@@ -135,9 +139,10 @@ export function hrefs(html) {
 		if (name === undefined) continue; // a comment
 		if (RAW_TEXT.has(name)) {
 			// The content runs to the element's own end tag (the whole name, `</textarea-x>` is text),
-			// and the scan resumes after that tag; <plaintext> has none: the rest is text.
+			// and the scan resumes after that tag, read quote-aware like a start tag; without one, or
+			// for <plaintext>, which has none, the rest is text.
 			if (name === 'plaintext') break;
-			const close = new RegExp(`</${name}(?=[\\s/>])[^>]*>`, 'gi');
+			const close = new RegExp(`</${name}(?=[\\s/>])${TAG_REST}`, 'gi');
 			close.lastIndex = token.lastIndex;
 			token.lastIndex = close.exec(html) ? close.lastIndex : html.length;
 			continue;

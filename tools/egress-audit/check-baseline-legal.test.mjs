@@ -145,6 +145,16 @@ test('link-shaped text in another quoted attribute or a raw-text element is not 
 		['https://gauzy.co/dpa']
 	);
 	assert.deepEqual([...hrefs('<textarea><a href="https://gauzy.co/unclosed">')], []);
+	// An unterminated comment runs to the end; a quoted value in the end tag belongs to that tag.
+	assert.deepEqual([...hrefs('<!-- <a href="https://gauzy.co/extra">x</a>')], []);
+	assert.deepEqual(
+		[
+			...hrefs(
+				'<textarea></textarea data-x="><a href=\'https://gauzy.co/extra\'>"><a href="https://gauzy.co/dpa">'
+			)
+		],
+		['https://gauzy.co/dpa']
+	);
 	// Only the element's own end tag, whole name, ends its text; <plaintext> never ends.
 	assert.deepEqual([...hrefs('<textarea></textarea-extra><a href="https://gauzy.co/extra"></textarea>')], []);
 	assert.deepEqual([...hrefs('<script>"</script-not><a href=\'https://gauzy.co/extra\'>"</script>')], []);
