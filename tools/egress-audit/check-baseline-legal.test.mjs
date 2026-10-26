@@ -8,6 +8,7 @@ import {
 	covered,
 	documentOf,
 	hrefs,
+	htmlOf,
 	legalVerdict,
 	PAGES,
 	readDocument,
@@ -61,6 +62,17 @@ test('every link the vendored DPIA writes is covered on both DPIA pages (the rea
 		for (const url of links) assert.equal(covered(entry(route, url), readDocument), true, `${route} ${url}`);
 });
 
+test('the DPIA links the baseline records are links the vendored DPIA writes (the real files)', () => {
+	// Each of the four, on both DPIA pages, while the baseline keeps it: a re-sync that drops one from
+	// the document drops its entries too (the baseline may shrink), and never leaves one unchecked.
+	const recorded = read(PATH).entries.filter(
+		(e) => /^\/(pages\/)?legal\/dpia$/.test(e.route) && DPIA_LINKS.includes(e.url)
+	);
+	for (const e of recorded) assert.equal(covered(e, readDocument), true, `${e.route} ${e.url}`);
+	for (const url of DPIA_LINKS)
+		if (recorded.some((e) => e.url === url)) assert.ok(readDocument('dpia').has(url), url);
+});
+
 test('every legal page the walk opens renders a vendored document, and every document of the map is vendored', () => {
 	const legal = read('tools/egress-audit/ui-routes.json')
 		.routes.map((r) => r.path)
@@ -107,6 +119,29 @@ test('an href inside another quoted attribute value is not the link, and a quote
 		[...hrefs('<a HREF="https://gauzy.co/dpa" href="https://gauzy.co/extra">x</a>')],
 		['https://gauzy.co/dpa']
 	);
+});
+
+test('a custom element whose name starts with a or area is not a link', () => {
+	assert.deepEqual(
+		[...hrefs('<a-widget href="https://gauzy.co/extra"></a-widget> <area-x href="https://gauzy.co/extra">')],
+		[]
+	);
+	assert.deepEqual(
+		[...hrefs('<a\nhref="https://gauzy.co/dpa">x</a> <area href="https://gauzy.co/x"/>')],
+		['https://gauzy.co/dpa', 'https://gauzy.co/x']
+	);
+});
+
+test('only the html a generated document renders counts, not its header comment or other fields', () => {
+	const source = [
+		'/** <a href="https://gauzy.co/comment">in the header</a> */',
+		"export const X = { domain: 'gauzy.co', note: '<a href=\"https://gauzy.co/field\">x</a>',",
+		'\thtml: `<p>See <a href="https://gauzy.co/dpa">the DPA</a>, \\`code\\` and \\${x}.</p>`',
+		'};'
+	].join('\n');
+	assert.equal(htmlOf(source), '<p>See <a href="https://gauzy.co/dpa">the DPA</a>, `code` and ${x}.</p>');
+	assert.deepEqual([...hrefs(htmlOf(source))], ['https://gauzy.co/dpa']);
+	assert.equal(htmlOf('export const X = {};'), null);
 });
 
 test('a link the page does not write, another route, another attribute or another document fail', () => {

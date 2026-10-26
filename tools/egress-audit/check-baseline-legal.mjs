@@ -83,8 +83,11 @@ export function documentOf(route) {
 	return Object.hasOwn(PAGES, page) ? PAGES[page] : null;
 }
 
-/** An `<a>` or `<area>` start tag, quote-aware (a `>` inside a quoted value does not end it). */
-const LINK_TAG = /<(?:a|area)\b((?:[^>"']|"[^"]*"|'[^']*')*)>/gi;
+/**
+ * An `<a>` or `<area>` start tag (the whole name: not `<a-widget>` or `<area-x>`), quote-aware (a `>`
+ * inside a quoted value does not end it).
+ */
+const LINK_TAG = /<(?:a|area)(?=[\s/>])((?:[^>"']|"[^"]*"|'[^']*')*)>/gi;
 
 /**
  * The attributes of a start tag (the text after its name), read one after the other so a quoted
@@ -118,10 +121,20 @@ export function hrefs(text) {
 	return out;
 }
 
-/** The `href` values of a vendored document (`hrefs` of its file), or null when it has no file. */
+/**
+ * The HTML a generated document renders: its `html` template literal, unescaped as
+ * sync-legal-content.mjs escapes it (a backslash, a backtick and `${` get a backslash); null when the
+ * source has none. Nothing else of the file (its header comment, its other fields) is rendered.
+ */
+export function htmlOf(source) {
+	const m = /^\s*html:\s*`((?:[^`\\]|\\[\s\S])*)`/m.exec(source);
+	return m ? m[1].replace(/\\([\\`$])/g, '$1') : null;
+}
+
+/** The `href` values of a vendored document (`hrefs` of its `html`), or null when it has no file. */
 export function readDocument(document, root = REPO_ROOT) {
 	const file = join(root, CONTENT_DIR, `${document}.en.generated.ts`);
-	return existsSync(file) ? hrefs(readFileSync(file, 'utf8')) : null;
+	return existsSync(file) ? hrefs(htmlOf(readFileSync(file, 'utf8')) ?? '') : null;
 }
 
 /** Whether an added entry is a link its legal page's vendored document writes. */
