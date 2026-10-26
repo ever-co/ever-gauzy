@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HealthIndicatorResult } from '@nestjs/terminus';
 import { v4 as uuid } from 'uuid';
-import { createClient } from 'redis';
+import { createClient, type RedisClientOptions } from 'redis';
 import { redactUrlCredentials, redactUrlErrorInput } from '../../core/util/redact-credentials';
 
 @Injectable()
@@ -129,7 +129,9 @@ export class RedisHealthIndicator {
 					host,
 					port,
 					passphrase: password,
-					keepAlive: 10_000, // enable TCP keepalive (initial delay in ms)
+					// TCP keepalive: node-redis 5+ takes the switch and the initial delay (ms) as two options
+					keepAlive: true,
+					keepAliveInitialDelay: 10_000,
 					reconnectStrategy: (retries: number) => Math.min(1000 * Math.pow(2, retries), 5000),
 					connectTimeout: 10_000,
 					rejectUnauthorized: process.env.NODE_ENV === 'production'
@@ -140,7 +142,8 @@ export class RedisHealthIndicator {
 			};
 
 			// Create Redis client
-			this._client = createClient(redisConnectionOptions).on('error', (err) =>
+			// node-redis 6 types `socket` as a TCP-or-TLS union keyed on a literal `tls`; this object decides it at runtime.
+			this._client = createClient(redisConnectionOptions as RedisClientOptions).on('error', (err) =>
 				console.error('Redis Health Client Error', err)
 			);
 
@@ -175,12 +178,19 @@ export class RedisHealthIndicator {
 
 		if (this._client) {
 			try {
-				await this._client.set(randomKey, 'redis');
+				// The probe key expires on its own and is deleted right after the read. It used to be written with
+				// no TTL and never removed, so every health check left one key behind for good: millions of them
+				// on the shared Redis, which runs with `maxmemory-policy noeviction`.
+				await this._client.set(randomKey, 'redis', { expiration: { type: 'EX', value: 60 } });
 				const value = await this._client.get(randomKey);
 
 				if (value === 'redis') isRedisHealthy = true;
 			} catch (error) {
 				console.error('Redis Health Error: ', error);
+			} finally {
+				// Not awaited: while Redis reconnects, node-redis queues the command, and awaiting it would hold the
+				// health probe open for the whole outage. The TTL above removes the key if this delete never runs.
+				void this._client.del(randomKey)?.catch?.(() => undefined);
 			}
 		}
 

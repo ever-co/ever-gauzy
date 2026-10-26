@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, FormControl } from '@angular/forms';
 import {
@@ -33,6 +33,7 @@ import { endOfTomorrow } from 'date-fns';
     selector: 'ga-edit-keyresults',
     templateUrl: './edit-keyresults.component.html',
     styleUrls: ['./edit-keyresults.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditKeyResultsComponent implements OnInit, OnDestroy {

@@ -7,9 +7,15 @@ import { Permissions } from './../../shared/decorators';
 import { UUIDValidationPipe } from './../../shared/pipes';
 import { ImportHistoryService } from './import-history.service';
 
+/**
+ * The ledger of imports and the archives they were made from.
+ *
+ * 🛑 Granted by `IMPORT_ADD` alone: an import archive is a dump of a tenant's tables, so reading it is the import
+ * capability, not the read-only `ALL_ORG_VIEW` that used to grant it too (`@Permissions` is any-of).
+ */
 @ApiTags('Import History')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.IMPORT_ADD)
+@Permissions(PermissionsEnum.IMPORT_ADD)
 @Controller('/import/history')
 export class ImportHistoryController {
 	constructor(private readonly _importHistoryService: ImportHistoryService) {}

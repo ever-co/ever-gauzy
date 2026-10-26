@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -23,6 +23,7 @@ import { ProductService, Store, TranslatableService } from '@gauzy/ui-core/core'
 		</nb-select>
 		`,
     styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceProductsSelectorComponent extends DefaultEditor implements OnInit, OnDestroy {
@@ -41,7 +42,7 @@ export class InvoiceProductsSelectorComponent extends DefaultEditor implements O
 	}
 
 	ngOnInit() {
-		this.selectedLanguage = this.translateService.currentLang;
+		this.selectedLanguage = this.translateService.getCurrentLang();
 		this.store.selectedOrganization$
 			.pipe(
 				filter((organization: IOrganization) => !!organization),

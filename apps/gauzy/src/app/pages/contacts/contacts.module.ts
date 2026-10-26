@@ -13,7 +13,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { InviteService, OrganizationContactService, OrganizationProjectsService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -59,7 +59,7 @@ const COMPONENTS = [ContactsComponent, InviteContactComponent, ContactMutationCo
 		SmartDataViewLayoutModule,
 		SharedModule,
 		TagsColorInputModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild()
 	],
 

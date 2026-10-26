@@ -1,6 +1,9 @@
 import { RequestContext } from '@gauzy/core';
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { PluginSubscriptionAccessService } from '../../domain/services/plugin-subscription-access.service';
+
+// Per-request trace lines: printed at debug level, i.e. only when LOG_LEVEL is debug/verbose (or unset).
+const logger = new Logger('PluginSubscriptionGuard');
 
 /**
  * Guard to validate that the user has a valid subscription before installing a plugin
@@ -15,7 +18,7 @@ export class PluginSubscriptionGuard implements CanActivate {
 	 * @returns Promise<boolean> indicating if the user has valid subscription
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		console.log('PluginSubscriptionGuard canActivate called');
+		logger.debug('PluginSubscriptionGuard canActivate called');
 
 		const request = context.switchToHttp().getRequest();
 		const pluginId = request.params.pluginId;

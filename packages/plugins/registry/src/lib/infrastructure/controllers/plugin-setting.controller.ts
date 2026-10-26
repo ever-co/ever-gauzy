@@ -34,6 +34,22 @@ import {
 	PluginSettingQueryDTO
 } from '../../shared';
 
+/**
+ * A setting marked `isEncrypted` holds a secret the tenant configured for the plugin, such as an API key or a token,
+ * stored as entered. The reads below need only PLUGIN_VIEW, which every role holds by default, candidates and viewers
+ * included. Only a caller who may change the setting (PLUGIN_CONFIGURE) gets its value back; anyone else sees that the
+ * setting exists, not what it holds.
+ *
+ * @param setting - A setting as loaded for this request.
+ */
+export function withSecretValueHidden<T extends IPluginSetting | null | undefined>(setting: T): T {
+	if (!setting?.isEncrypted || RequestContext.hasPermission(PermissionsEnum.PLUGIN_CONFIGURE)) {
+		return setting;
+	}
+	setting.value = null;
+	return setting;
+}
+
 @ApiTags('Plugin Settings')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugins/:pluginId/settings')
@@ -108,7 +124,7 @@ export class PluginSettingController {
 
 		// Handle category filter
 		if (query.category) {
-			return await this.queryBus.execute(
+			const settings: IPluginSetting[] = await this.queryBus.execute(
 				new GetPluginSettingsByCategoryQuery(
 					pluginId,
 					query.category,
@@ -118,6 +134,7 @@ export class PluginSettingController {
 					organizationId
 				)
 			);
+			return settings.map(withSecretValueHidden);
 		}
 
 		// Handle key filter
@@ -132,13 +149,14 @@ export class PluginSettingController {
 					organizationId
 				)
 			);
-			return setting ? [setting] : [];
+			return setting ? [withSecretValueHidden(setting)] : [];
 		}
 
 		// Default: get all settings
-		return await this.queryBus.execute(
+		const settings: IPluginSetting[] = await this.queryBus.execute(
 			new GetPluginSettingsByPluginIdQuery(pluginId, ['plugin', 'pluginTenant'], tenantId, organizationId)
 		);
+		return settings.map(withSecretValueHidden);
 	}
 
 	@ApiOperation({ summary: 'Get plugin setting by ID' })
@@ -156,8 +174,8 @@ export class PluginSettingController {
 		@Param('id', ParseUUIDPipe) id: string
 	): Promise<IPluginSetting> {
 		const tenantId = RequestContext.currentTenantId();
-		return await this.queryBus.execute(
-			new GetPluginSettingByIdQuery(id, ['plugin', 'pluginTenant'], tenantId, null)
+		return withSecretValueHidden(
+			await this.queryBus.execute(new GetPluginSettingByIdQuery(id, ['plugin', 'pluginTenant'], tenantId, null))
 		);
 	}
 

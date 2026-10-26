@@ -12,7 +12,7 @@ import {
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	ProjectSelectModule,
@@ -45,7 +45,7 @@ import { GithubSettingsComponent } from './components/settings/settings.componen
 		NbToggleModule,
 		NgSelectModule,
 		NgxPermissionsModule.forRoot(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		IntegrationGithubRoutes,
 		SharedModule,
 		SmartDataViewLayoutModule,

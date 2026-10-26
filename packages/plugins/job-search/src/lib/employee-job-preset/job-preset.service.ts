@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeleteResult, SelectQueryBuilder } from 'typeorm';
 import { isNotEmpty } from 'class-validator';
@@ -22,6 +22,7 @@ import {
 } from '@gauzy/core';
 import { prepareSQLQuery as p } from '@gauzy/core';
 import { JobPreset } from './job-preset.entity';
+import { jobPresetListQuery } from './job-preset-list.query';
 import {
 	CreateJobPresetCommand,
 	SaveEmployeeCriterionCommand,
@@ -47,6 +48,21 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	}
 
 	/**
+	 * The caller's tenant. The lookups and deletes below go through raw repositories, which scope nothing, and a
+	 * `tenantId: undefined` key is dropped from the SQL (GHSA-44pv-34gx-q9p4), so there is no fallback: no tenant,
+	 * no query.
+	 *
+	 * @throws ForbiddenException without a tenant in the request context.
+	 */
+	private requireTenantId(): ID {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new ForbiddenException('Tenant context is required');
+		}
+		return tenantId;
+	}
+
+	/**
 	 * Retrieves all job presets optionally filtered by tenant ID, organization ID, search string, or employee ID.
 	 *
 	 * @param request Additional parameters for filtering the job presets.
@@ -67,21 +83,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 			case MultiORMEnum.MikroORM: {
 				// MikroORM: Use Knex for left join on employees relation
 				const knex = (this.mikroOrmRepository as any).getKnex();
-				let qb = knex('job_preset')
-					.leftJoin('job_preset_employee', 'job_preset.id', 'job_preset_employee.jobPresetId')
-					.where('job_preset.tenantId', tenantId);
-
-				if (isNotEmpty(organizationId)) {
-					qb = qb.andWhere('job_preset.organizationId', organizationId);
-				}
-				if (isNotEmpty(search)) {
-					qb = qb.andWhere('job_preset.name', 'ILIKE', `%${search}%`);
-				}
-				if (isNotEmpty(employeeId)) {
-					qb = qb.andWhere('job_preset_employee.employeeId', employeeId);
-				}
-
-				qb = qb.select('job_preset.*').orderBy('job_preset.name', 'asc').distinct();
+				const qb = jobPresetListQuery(knex, { tenantId, organizationId, search, employeeId });
 
 				const rawItems = await qb;
 				return rawItems.map((row: any) => this.mikroOrmRepository.map(row));
@@ -141,13 +143,15 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	public async get(id: ID, request?: IGetJobPresetCriterionInput) {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				// MikroORM: Use repository find with populate
+				// MikroORM: Use repository find with populate (a preset of another tenant is not found)
 				const populate = ['jobPresetCriterions'] as any[];
 				if (request?.employeeId) {
 					populate.push('employeeCriterions');
 				}
 
-				const result = await this.mikroOrmRepository.findOne({ id } as any, { populate });
+				const result = await this.mikroOrmRepository.findOne({ id, tenantId: this.requireTenantId() } as any, {
+					populate
+				});
 
 				// Filter employeeCriterions by employeeId if needed
 				if (request?.employeeId && result?.employeeCriterions) {
@@ -160,6 +164,7 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
+				const tenantId = this.requireTenantId();
 				const query = this.typeOrmRepository.createQueryBuilder();
 
 				// Left join job preset criterions
@@ -171,13 +176,14 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 					query.leftJoinAndSelect(
 						`${query.alias}.employeeCriterions`,
 						'employeeCriterions',
-						'employeeCriterions.employeeId = :employeeId',
-						{ employeeId }
+						'employeeCriterions.employeeId = :employeeId AND employeeCriterions.tenantId = :tenantId',
+						{ employeeId, tenantId }
 					);
 				}
 
-				// Filter by job preset ID
+				// Filter by job preset ID, in the caller's tenant: a preset of another tenant is not found
 				query.andWhere(`${query.alias}.id = :id`, { id });
+				query.andWhere(`${query.alias}.tenantId = :tenantId`, { tenantId });
 
 				// Execute the query and return the result
 				return await query.getOne();
@@ -192,7 +198,10 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 */
 	public async getJobPresetCriterion(presetId: string) {
 		// Use the job preset ID to find related job preset criterion
-		return await this.typeOrmJobPresetUpworkJobSearchCriterionRepository.findBy({ jobPresetId: presetId });
+		return await this.typeOrmJobPresetUpworkJobSearchCriterionRepository.findBy({
+			jobPresetId: presetId,
+			tenantId: this.requireTenantId()
+		});
 	}
 
 	/**
@@ -203,7 +212,8 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	public async getEmployeeCriterion(input: IGetMatchingCriterions) {
 		return await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.findBy({
 			...(input.jobPresetId ? { jobPresetId: input.jobPresetId } : {}),
-			employeeId: input.employeeId
+			employeeId: input.employeeId,
+			tenantId: this.requireTenantId()
 		});
 	}
 
@@ -244,9 +254,12 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	async getEmployeePreset(employeeId: ID): Promise<IJobPreset[]> {
 		// Find the employee with the specified ID and include jobPresets relation
 		const employee = await this.typeOrmEmployeeRepository.findOne({
-			where: { id: employeeId },
+			where: { id: employeeId, tenantId: this.requireTenantId() },
 			relations: parseFindOptionsRelations(['customFields.jobPresets'])
 		});
+		if (!employee) {
+			throw new NotFoundException(`Employee with id ${employeeId} not found`);
+		}
 
 		// Return the job presets associated with the employee
 		return employee.customFields['jobPresets'];
@@ -272,7 +285,8 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 		// Delete the employee criterion with the specified ID associated with the employee ID
 		return await this.typeOrmEmployeeUpworkJobsSearchCriterionRepository.delete({
 			id: creationId,
-			employeeId: employeeId
+			employeeId: employeeId,
+			tenantId: this.requireTenantId()
 		});
 	}
 
@@ -282,7 +296,10 @@ export class JobPresetService extends TenantAwareCrudService<JobPreset> {
 	 * @returns A Promise that resolves to the result of the deletion operation.
 	 */
 	async deleteJobPresetCriterion(creationId: string) {
-		// Delete the job preset criterion with the specified ID
-		return await this.typeOrmJobPresetUpworkJobSearchCriterionRepository.delete(creationId);
+		// Delete the job preset criterion with the specified ID, in the caller's tenant only
+		return await this.typeOrmJobPresetUpworkJobSearchCriterionRepository.delete({
+			id: creationId,
+			tenantId: this.requireTenantId()
+		});
 	}
 }

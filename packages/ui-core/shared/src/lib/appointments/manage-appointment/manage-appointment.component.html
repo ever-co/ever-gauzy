@@ -1,209 +1,213 @@
-<nb-card class="card-scroll">
-	<nb-card-header class="header">
+<nb-card class="card-scroll appointment-card">
+	<nb-card-header class="appointment-header">
 		<ngx-back-navigation></ngx-back-navigation>
-		<h4>
-			{{ (editMode ? 'APPOINTMENTS_PAGE.EDIT_APPOINTMENT' : 'APPOINTMENTS_PAGE.ADD_APPOINTMENT') | translate }}
-		</h4>
-	</nb-card-header>
-	<nb-card-body>
-		<div class="appointment-form">
-			@if (form) {
-			<form [formGroup]="form">
-				<div class="row">
-					<div class="col-6">
-						<div class="form-group">
-							<label for="agenda" class="label">{{ 'FORM.LABELS.MEETING_AGENDA' | translate }}</label>
-							<input
-								fullWidth
-								id="agenda"
-								type="text"
-								nbInput
-								formControlName="agenda"
-								placeholder="{{ 'FORM.PLACEHOLDERS.MEETING_AGENDA' | translate }}"
-							/>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-6">
-						<ngx-timer-range-picker
-							[timezoneOffset]="timezoneOffset"
-							[slotStartTime]="start"
-							[slotEndTime]="end"
-							[maxDate]="selectedRange.end"
-							[minDate]="selectedRange.start"
-							[allowedDuration]="allowedDuration"
-							[disableDatePicker]="disabled"
-							[disableEndPicker]="disabled"
-							name="selectedRange"
-							formControlName="selectedRange"
-							fromEmployeeAppointment="true"
-						></ngx-timer-range-picker>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-2">
-						<div class="form-group">
-							<nb-checkbox formControlName="bufferTime">
-								{{ 'APPOINTMENTS_PAGE.BUFFER_TIME' | translate }}
-							</nb-checkbox>
-						</div>
-					</div>
-					@if (form.get('bufferTime').value) {
-					<div class="col-2">
-						<div class="form-group">
-							<nb-checkbox formControlName="bufferTimeStart">
-								{{ 'APPOINTMENTS_PAGE.BUFFER_AT_START' | translate }}
-							</nb-checkbox>
-						</div>
-					</div>
-					} @if (form.get('bufferTime').value) {
-					<div class="col-2">
-						<div class="form-group">
-							<nb-checkbox formControlName="bufferTimeEnd">
-								{{ 'APPOINTMENTS_PAGE.BUFFER_AT_END' | translate }}
-							</nb-checkbox>
-						</div>
-					</div>
-					}
-				</div>
-				<div class="row">
-					@if (form.get('bufferTime').value) {
-					<div class="col-6 form-group">
-						<input
-							fullWidth
-							id="bufferTimeInMins"
-							type="number"
-							nbInput
-							[min]="0"
-							formControlName="bufferTimeInMins"
-							placeholder="{{ 'FORM.PLACEHOLDERS.BUFFER_TIME' | translate }}"
-						/>
-					</div>
-					}
-				</div>
-				<div class="row">
-					<div class="col-3">
-						<div class="form-group">
-							<nb-checkbox formControlName="breakTime">
-								{{ 'APPOINTMENTS_PAGE.BREAK_TIME' | translate }}
-							</nb-checkbox>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					@if (form.get('breakTime').value) {
-					<div class="col-6 form-group">
-						<ga-timer-picker
-							name="break_start_time"
-							[min]="form.get('selectedRange').value.start"
-							[max]="form.get('selectedRange').value.end"
-							formControlName="breakStartTime"
-						></ga-timer-picker>
-					</div>
-					}
-				</div>
-				<div class="row">
-					@if (form.get('breakTime').value) {
-					<div class="col-6 form-group">
-						<input
-							fullWidth
-							id="breakTimeInMins"
-							type="number"
-							[min]="0"
-							nbInput
-							formControlName="breakTimeInMins"
-							placeholder="{{ 'FORM.PLACEHOLDERS.BREAK_TIME' | translate }}"
-						/>
-					</div>
-					}
-				</div>
-				<div class="row">
-					<div class="col-6">
-						<div class="form-group">
-							<label for="location" class="label">{{ 'FORM.LABELS.MEETING_LOCATION' | translate }}</label>
-							<input
-								fullWidth
-								id="location"
-								type="text"
-								nbInput
-								formControlName="location"
-								placeholder="{{ 'FORM.PLACEHOLDERS.MEETING_LOCATION' | translate }}"
-							/>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="col-6">
-						<div class="form-group">
-							<label for="description" class="label">{{
-								'FORM.LABELS.MEETING_DESCRIPTION' | translate
-							}}</label>
-							<textarea
-								fullWidth
-								id="description"
-								type="text"
-								nbInput
-								formControlName="description"
-								placeholder="{{ 'FORM.PLACEHOLDERS.MEETING_DESCRIPTION' | translate }}"
-							></textarea>
-						</div>
-					</div>
-				</div>
-				@if (!hidePrivateFields) {
-				<div class="row">
-					<div class="col-4">
-						<div class="form-group">
-							<label for="description" class="label">{{
-								'FORM.LABELS.MEETING_INVITEES' | translate
-							}}</label>
-							<ga-employee-multi-select
-								#employeeSelector
-								[label]="false"
-								[selectedEmployeeIds]="selectedEmployeeIds"
-								[allEmployees]="employees"
-								(selectedChange)="onMembersSelected($event)"
-							></ga-employee-multi-select>
-						</div>
-					</div>
-				</div>
-				} @if (hidePrivateFields) {
-				<div class="row">
-					<div class="col-sm-6">
-						<div class="form-group">
-							<label for="emailsSelect" class="label">{{ 'FORM.LABELS.EMAILS' | translate }}</label>
-							<ng-select
-								id="emailsSelect"
-								class="adjust-height"
-								[items]="[]"
-								[addTag]="addTagFn"
-								[hideSelected]="true"
-								multiple="true"
-								bindLabel="emailAddress"
-								formControlName="emails"
-								placeholder="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
-								notFoundText="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
-								appendTo="body"
-								[class.item-invalid]="emails.invalid && (emails.dirty || emails.touched)"
-								[class.item-valid]="emails.valid && (emails.dirty || emails.touched)"
-							>
-							</ng-select>
-						</div>
-					</div>
-				</div>
-				}
-			</form>
-			}
+		<div class="heading">
+			<h5 class="title">
+				{{ (editMode ? 'APPOINTMENTS_PAGE.EDIT_APPOINTMENT' : 'APPOINTMENTS_PAGE.ADD_APPOINTMENT') | translate }}
+			</h5>
+			<p class="subtitle">{{ 'APPOINTMENTS_PAGE.FORM_HINT' | translate }}</p>
 		</div>
+	</nb-card-header>
+	<nb-card-body class="appointment-body">
+		@if (form) {
+			<form [formGroup]="form" class="appointment-form">
+				<!-- Left column: what the meeting is -->
+				<div class="form-column">
+					<!-- Details -->
+					<section class="form-section">
+						<div class="section-heading">
+							<h6>{{ 'APPOINTMENTS_PAGE.DETAILS' | translate }}</h6>
+							<p>{{ 'APPOINTMENTS_PAGE.DETAILS_HINT' | translate }}</p>
+						</div>
+						<div class="section-fields">
+							<div class="form-group">
+								<label for="agenda" class="label">{{ 'FORM.LABELS.MEETING_AGENDA' | translate }}</label>
+								<input
+									fullWidth
+									id="agenda"
+									type="text"
+									nbInput
+									formControlName="agenda"
+									placeholder="{{ 'FORM.PLACEHOLDERS.MEETING_AGENDA' | translate }}"
+								/>
+							</div>
+							<div class="form-group">
+								<label for="location" class="label">{{ 'FORM.LABELS.MEETING_LOCATION' | translate }}</label>
+								<input
+									fullWidth
+									id="location"
+									type="text"
+									nbInput
+									formControlName="location"
+									placeholder="{{ 'FORM.PLACEHOLDERS.MEETING_LOCATION' | translate }}"
+								/>
+							</div>
+							<div class="form-group">
+								<label for="description" class="label">{{
+									'FORM.LABELS.MEETING_DESCRIPTION' | translate
+								}}</label>
+								<textarea
+									fullWidth
+									id="description"
+									nbInput
+									formControlName="description"
+									placeholder="{{ 'FORM.PLACEHOLDERS.MEETING_DESCRIPTION' | translate }}"
+								></textarea>
+							</div>
+						</div>
+					</section>
+				</div>
+
+				<!-- Right column: when and who -->
+				<div class="form-column">
+					<!-- Schedule -->
+					<section class="form-section">
+						<div class="section-heading">
+							<h6>{{ 'APPOINTMENTS_PAGE.SCHEDULE' | translate }}</h6>
+							<p>{{ 'APPOINTMENTS_PAGE.SCHEDULE_HINT' | translate }}</p>
+						</div>
+						<div class="section-fields">
+							<ngx-timer-range-picker
+								class="range-picker"
+								[timezoneOffset]="timezoneOffset"
+								[slotStartTime]="start"
+								[slotEndTime]="end"
+								[maxDate]="selectedRange.end"
+								[minDate]="selectedRange.start"
+								[allowedDuration]="allowedDuration"
+								[disableDatePicker]="disabled"
+								[disableEndPicker]="disabled"
+								name="selectedRange"
+								formControlName="selectedRange"
+								fromEmployeeAppointment="true"
+							></ngx-timer-range-picker>
+
+							<div class="option" [class.active]="form.get('bufferTime').value">
+								<nb-checkbox formControlName="bufferTime" class="option-toggle">
+									<span class="option-title">{{ 'APPOINTMENTS_PAGE.BUFFER_TIME' | translate }}</span>
+									<span class="option-hint">{{ 'APPOINTMENTS_PAGE.BUFFER_TIME_HINT' | translate }}</span>
+								</nb-checkbox>
+								@if (form.get('bufferTime').value) {
+									<div class="option-fields">
+										<div class="form-group">
+											<label for="bufferTimeInMins" class="label">{{
+												'FORM.PLACEHOLDERS.BUFFER_TIME' | translate
+											}}</label>
+											<input
+												fullWidth
+												id="bufferTimeInMins"
+												type="number"
+												nbInput
+												[min]="0"
+												formControlName="bufferTimeInMins"
+												placeholder="{{ 'FORM.PLACEHOLDERS.BUFFER_TIME' | translate }}"
+											/>
+										</div>
+										<div class="checks">
+											<nb-checkbox formControlName="bufferTimeStart">
+												{{ 'APPOINTMENTS_PAGE.BUFFER_AT_START' | translate }}
+											</nb-checkbox>
+											<nb-checkbox formControlName="bufferTimeEnd">
+												{{ 'APPOINTMENTS_PAGE.BUFFER_AT_END' | translate }}
+											</nb-checkbox>
+										</div>
+									</div>
+								}
+							</div>
+
+							<div class="option" [class.active]="form.get('breakTime').value">
+								<nb-checkbox formControlName="breakTime" class="option-toggle">
+									<span class="option-title">{{ 'APPOINTMENTS_PAGE.BREAK_TIME' | translate }}</span>
+									<span class="option-hint">{{ 'APPOINTMENTS_PAGE.BREAK_TIME_HINT' | translate }}</span>
+								</nb-checkbox>
+								@if (form.get('breakTime').value) {
+									<div class="option-fields">
+										<div class="form-group">
+											<span class="label">{{ 'APPOINTMENTS_PAGE.BREAK_START' | translate }}</span>
+											<ga-timer-picker
+												name="break_start_time"
+												[ariaLabel]="'APPOINTMENTS_PAGE.BREAK_START' | translate"
+												[min]="form.get('selectedRange').value.start"
+												[max]="form.get('selectedRange').value.end"
+												formControlName="breakStartTime"
+											></ga-timer-picker>
+										</div>
+										<div class="form-group">
+											<label for="breakTimeInMins" class="label">{{
+												'FORM.PLACEHOLDERS.BREAK_TIME' | translate
+											}}</label>
+											<input
+												fullWidth
+												id="breakTimeInMins"
+												type="number"
+												[min]="0"
+												nbInput
+												formControlName="breakTimeInMins"
+												placeholder="{{ 'FORM.PLACEHOLDERS.BREAK_TIME' | translate }}"
+											/>
+										</div>
+									</div>
+								}
+							</div>
+						</div>
+					</section>
+
+					<!-- Participants -->
+					<section class="form-section">
+						<div class="section-heading">
+							<h6>{{ 'APPOINTMENTS_PAGE.PARTICIPANTS' | translate }}</h6>
+							<p>{{ 'APPOINTMENTS_PAGE.PARTICIPANTS_HINT' | translate }}</p>
+						</div>
+						<div class="section-fields">
+							@if (!hidePrivateFields) {
+								<div class="form-group">
+									<label class="label">{{ 'FORM.LABELS.MEETING_INVITEES' | translate }}</label>
+									<ga-employee-multi-select
+										#employeeSelector
+										[label]="false"
+										[selectedEmployeeIds]="selectedEmployeeIds"
+										[allEmployees]="employees"
+										(selectedChange)="onMembersSelected($event)"
+									></ga-employee-multi-select>
+								</div>
+							} @else {
+								<div class="form-group">
+									<label for="emailsSelect" class="label">{{ 'FORM.LABELS.EMAILS' | translate }}</label>
+									<ng-select
+										id="emailsSelect"
+										class="adjust-height"
+										[items]="[]"
+										[addTag]="addTagFn"
+										[hideSelected]="true"
+										multiple="true"
+										bindLabel="emailAddress"
+										formControlName="emails"
+										placeholder="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
+										notFoundText="{{ 'FORM.PLACEHOLDERS.EMAILS' | translate }}"
+										appendTo="body"
+										[class.item-invalid]="emails.invalid && (emails.dirty || emails.touched)"
+										[class.item-valid]="emails.valid && (emails.dirty || emails.touched)"
+									>
+									</ng-select>
+								</div>
+							}
+						</div>
+					</section>
+				</div>
+			</form>
+		}
 	</nb-card-body>
-	<nb-card-footer>
-		<button status="success" nbButton (click)="onSaveRequest()">
+	<nb-card-footer class="appointment-footer">
+		@if (editMode) {
+			<button type="button" nbButton ghost status="danger" size="small" (click)="cancelAppointment()">
+				<nb-icon icon="close-circle-outline"></nb-icon>
+				{{ 'APPOINTMENTS_PAGE.CANCEL_APPOINTMENT' | translate }}
+			</button>
+		}
+		<span class="spacer"></span>
+		<button type="button" nbButton status="primary" size="small" (click)="onSaveRequest()">
+			<nb-icon icon="checkmark-outline"></nb-icon>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
-		@if (editMode) {
-		<button style="margin-left: 10px" status="warning" nbButton (click)="cancelAppointment()">
-			{{ 'APPOINTMENTS_PAGE.CANCEL_APPOINTMENT' | translate }}
-		</button>
-		}
 	</nb-card-footer>
 </nb-card>

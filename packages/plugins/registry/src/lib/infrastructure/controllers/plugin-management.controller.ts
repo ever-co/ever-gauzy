@@ -91,7 +91,9 @@ export class PluginManagementController {
 			fileFilter: documentUploadFileFilter
 		})
 	)
-	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
+	// Publishing puts a plugin — code the desktop app installs — in every tenant's marketplace: PLUGIN_PUBLISH
+	// (ADMIN, SUPER_ADMIN), not PLUGIN_CONFIGURE, which MANAGER and DATA_ENTRY hold for their tenant's plugins.
+	@Permissions(PermissionsEnum.PLUGIN_PUBLISH)
 	@Post()
 	public async create(
 		@Body() input: CreatePluginDTO,

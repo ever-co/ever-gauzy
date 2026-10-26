@@ -1,10 +1,7 @@
+// Must stay the first import: it loads .env and .env.local before any other module reads the
+// environment (see preload-env.ts).
+import './preload-env';
 import * as chalk from 'chalk';
-import { loadEnv } from './load-env';
-
-// Load environment variables
-console.log('Loading Environment Variables...');
-loadEnv();
-console.log('Environment Variables Loaded');
 
 // Start measuring the overall API startup time
 console.time(chalk.green(`✔ Total API Startup Time`));

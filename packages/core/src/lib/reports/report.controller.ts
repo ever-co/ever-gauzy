@@ -1,6 +1,10 @@
-import { Body, Controller, Get, HttpStatus, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { GetReportMenuItemsInput, IPagination, UpdateReportMenuInput } from '@gauzy/contracts';
+import { GetReportMenuItemsInput, IPagination, RolesEnum, UpdateReportMenuInput } from '@gauzy/contracts';
+import { Roles } from '../shared/decorators';
+import { RoleGuard, TenantPermissionGuard } from '../shared/guards';
+import { UseValidationPipe } from '../shared/pipes';
+import { CreateReportDTO } from './dto';
 import { Report } from './report.entity';
 import { ReportService } from './report.service';
 import { ReportOrganizationService } from './report-organization.service';
@@ -57,5 +61,27 @@ export class ReportController {
 	@Post('/menu-item')
 	async updateReportMenu(@Body() input?: UpdateReportMenuInput) {
 		return await this._reportOrganizationService.updateReportMenu(input);
+	}
+
+	/**
+	 * Files one report into the platform-wide catalogue.
+	 *
+	 * The catalogue has no tenant — an entry here is offered to every tenant's menu, where each organization
+	 * still switches it on for itself — so the route is gated to `SUPER_ADMIN` by role, under the tenant
+	 * guard that checks the credential's tenant first. The slug must be free and the category live.
+	 */
+	@ApiOperation({ summary: 'Create a report in the catalogue (SUPER_ADMIN).' })
+	@ApiResponse({ status: HttpStatus.CREATED, description: 'The report.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'No such category.' })
+	@ApiResponse({ status: HttpStatus.CONFLICT, description: 'The slug is taken.' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The caller is not a SUPER_ADMIN.' })
+	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(TenantPermissionGuard, RoleGuard)
+	@Roles(RolesEnum.SUPER_ADMIN)
+	@Post('/')
+	@UseValidationPipe({ whitelist: true })
+	async create(@Body() input: CreateReportDTO): Promise<Report> {
+		return await this._reportService.createReport(input);
 	}
 }

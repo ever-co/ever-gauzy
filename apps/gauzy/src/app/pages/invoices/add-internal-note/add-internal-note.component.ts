@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { IInvoice } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
@@ -12,6 +12,7 @@ import { ToastrService } from '@gauzy/ui-core/core';
     selector: 'ga-add-internal-note',
     templateUrl: './add-internal-note.component.html',
     styleUrls: ['./add-internal-note.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class AddInternalNoteComponent extends TranslationBaseComponent implements OnInit {

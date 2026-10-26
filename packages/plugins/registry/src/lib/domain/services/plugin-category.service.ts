@@ -1,13 +1,14 @@
-import { MultiORMEnum, TenantAwareCrudService } from '@gauzy/core';
+import { LIKE_OPERATOR, MultiORMEnum } from '@gauzy/core';
 import { Injectable } from '@nestjs/common';
 import { Not } from 'typeorm';
 import { IPluginCategoryFindInput, IPluginCategoryTree } from '../../shared/models';
 import { PluginCategory } from '../entities/plugin-category.entity';
 import { MikroOrmPluginCategoryRepository } from '../repositories/mikro-orm-plugin-category.repository';
 import { TypeOrmPluginCategoryRepository } from '../repositories/type-orm-plugin-category.repository';
+import { RegistryTenantAwareCrudService } from './registry-crud.service';
 
 @Injectable()
-export class PluginCategoryService extends TenantAwareCrudService<PluginCategory> {
+export class PluginCategoryService extends RegistryTenantAwareCrudService<PluginCategory> {
 	constructor(
 		public readonly typeOrmPluginCategoryRepository: TypeOrmPluginCategoryRepository,
 		public readonly mikroOrmPluginCategoryRepository: MikroOrmPluginCategoryRepository
@@ -32,8 +33,9 @@ export class PluginCategoryService extends TenantAwareCrudService<PluginCategory
 				if (options?.isActive !== undefined) {
 					qb = qb.where('category.isActive', options.isActive);
 				}
+				// `ILIKE` only exists on PostgreSQL: LIKE_OPERATOR answers `LIKE` on MySQL / SQLite
 				if (options?.name) {
-					qb = qb.andWhere('category.name', 'ILIKE', `%${options.name}%`);
+					qb = qb.andWhere('category.name', LIKE_OPERATOR, `%${options.name}%`);
 				}
 
 				qb = qb.select('category.*').orderBy('category.order', 'asc').orderBy('category.name', 'asc');
@@ -54,7 +56,7 @@ export class PluginCategoryService extends TenantAwareCrudService<PluginCategory
 				}
 
 				if (options?.name) {
-					queryBuilder.andWhere('category.name ILIKE :name', { name: `%${options.name}%` });
+					queryBuilder.andWhere(`category.name ${LIKE_OPERATOR} :name`, { name: `%${options.name}%` });
 				}
 
 				// Get all categories with their relationships

@@ -1,6 +1,6 @@
 <nb-layout
-	[nbSpinner]="(processing$ | async)?.state"
-	[nbSpinnerMessage]="(processing$ | async)?.message"
+	[nbSpinner]="$safeNavigationMigration((processing$ | async)?.state)"
+	[nbSpinnerMessage]="$safeNavigationMigration((processing$ | async)?.message)"
 	nbSpinnerSize="small"
 >
 	<nb-layout-column class="top-space">
@@ -77,7 +77,7 @@
 										(click)="toggleStart(true)"
 										[class.pulse-border]="isProcessingEnabled"
 										[class.start-button]="isProcessingEnabled"
-										[disabled]="loading || !isTrackingEnabled"
+										[disabled]="loading || !isTrackingEnabled || (isSwitchingOrganization$ | async)"
 										class="button-ghost"
 										nbButton
 										status="success"
@@ -138,7 +138,7 @@
 										@if ((lastScreenCapture$ | async)?.recordedAt) {
 										<div class="screen-capture-label-left">
 											<span>{{ 'TIMER_TRACKER.LAST_CAPTURE_TAKEN' | translate }} </span>
-											<span>{{ (lastScreenCapture$ | async)?.recordedAt | humanize }}</span>
+											<span>{{ $safeNavigationMigration((lastScreenCapture$ | async)?.recordedAt) | humanize }}</span>
 										</div>
 										}
 									</nb-card-header>
@@ -146,7 +146,7 @@
 										@if ((lastScreenCapture$ | async)?.thumbUrl) {
 										<img
 											(error)="updateImageUrl($event)"
-											[src]="(lastScreenCapture$ | async)?.thumbUrl"
+											[src]="$safeNavigationMigration((lastScreenCapture$ | async)?.thumbUrl)"
 											class="screen-capture-img"
 										/>
 										} @if (!(lastScreenCapture$ | async)?.thumbUrl) {
@@ -237,7 +237,7 @@
 		} @if ((inQueue$ | async)?.size) {
 		<div class="sync-container">
 			<nb-badge
-				[text]="(inQueue$ | async)?.size"
+				[text]="$safeNavigationMigration((inQueue$ | async)?.size)"
 				class="sync-badge"
 				position="top right"
 				size="small"

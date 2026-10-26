@@ -39,7 +39,7 @@
     },
     "packageManager": "yarn",
     "analytics": false,
-    "defaultCollection": "@nstudio/xplat"
+    "defaultCollection": "@nx/angular"
   },
   "generators": {
     "@nx/angular": {
@@ -170,6 +170,7 @@
       "cache": true,
       "inputs": [
         "default",
+        "^default",
         "{workspaceRoot}/.eslintrc.json",
         "{workspaceRoot}/tools/eslint-rules/**/*"
       ]
@@ -179,7 +180,10 @@
       "inputs": [
         "default",
         "^production",
-        "{workspaceRoot}/jest.preset.js"
+        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.resolver.js",
+        "{workspaceRoot}/jest.interop.js",
+        "{workspaceRoot}/jest.angular-defaults.ts"
       ],
       "options": {
         "passWithNoTests": true

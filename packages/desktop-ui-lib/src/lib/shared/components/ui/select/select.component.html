@@ -20,6 +20,8 @@
 		[bindValue]="bindValue"
 		nbTooltipStatus="warning"
 		[typeahead]="typeahead"
+		(search)="onSearch($event)"
+		(close)="onClose()"
 		[typeToSearchText]="typeToSearchText | translate"
 		(scrollToEnd)="onScrollToEnd()"
 	>
@@ -56,7 +58,7 @@
 	<span class="text-container">
 		@if (item?.number) {
 			<span class="gray-bold-text">
-				#{{ item?.prefix ? (item?.prefix + '-' + item?.number | uppercase) : item?.number }}
+				#{{ item?.prefix ? ($safeNavigationMigration(item?.prefix) + '-' + $safeNavigationMigration(item?.number) | uppercase) : item?.number }}
 			</span>
 		}
 		<span class="black-bold-text">{{ item?.title }}</span>
@@ -67,7 +69,7 @@
 <ng-template #commonTemplate let-item="item" let-label="label">
 	<div class="common-template">
 		@if (item?.imageUrl) {
-			<img [src]="item?.imageUrl" height="20px" width="20px" />
+			<img [src]="$safeNavigationMigration(item?.imageUrl)" height="20px" width="20px" />
 		}
 		<span class="black-bold-text">{{ label }}</span>
 	</div>

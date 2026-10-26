@@ -7,6 +7,7 @@ import { ProductOption } from './product-option.entity';
 import { TypeOrmProductOptionRepository } from './repository/type-orm-product-option.repository';
 import { MikroOrmProductOptionRepository } from './repository/mikro-orm-product-option.repository';
 import { TypeOrmProductOptionTranslationRepository } from './repository/type-orm-product-option-translation.repository';
+import { assertTranslationsOfTenant } from './translation-ownership.helper';
 
 @Injectable()
 export class ProductOptionService extends TenantAwareCrudService<ProductOption> {
@@ -21,10 +22,20 @@ export class ProductOptionService extends TenantAwareCrudService<ProductOption> 
 	async saveProductOptionTranslations(
 		translationsInput: ProductOptionTranslation[]
 	): Promise<ProductOptionTranslation[]> {
+		await assertTranslationsOfTenant(
+			this.typeOrmProductOptionTranslationRepository,
+			translationsInput,
+			this.typeOrmProductOptionRepository
+		);
 		return this.typeOrmProductOptionTranslationRepository.save(translationsInput);
 	}
 
 	async saveProductOptionTranslation(translationInput: ProductOptionTranslation): Promise<ProductOptionTranslation> {
+		await assertTranslationsOfTenant(
+			this.typeOrmProductOptionTranslationRepository,
+			translationInput,
+			this.typeOrmProductOptionRepository
+		);
 		return this.typeOrmProductOptionTranslationRepository.save(translationInput);
 	}
 
@@ -32,13 +43,19 @@ export class ProductOptionService extends TenantAwareCrudService<ProductOption> 
 	 * Delete multiple product options.
 	 */
 	async deleteBulk(productOptionsInput: IProductOptionTranslatable[]): Promise<void> {
-		const ids = productOptionsInput.filter((o) => (o as ProductOption).id).map((o) => (o as ProductOption).id);
+		const ids = (productOptionsInput ?? [])
+			.filter((o) => (o as ProductOption).id)
+			.map((o) => (o as ProductOption).id);
 		if (ids.length > 0) {
 			await this.delete({ id: In(ids) } as any);
 		}
 	}
 
 	async deleteOptionTranslationsBulk(productOptionTranslationsInput: IProductOptionTranslation[]) {
+		await assertTranslationsOfTenant(
+			this.typeOrmProductOptionTranslationRepository,
+			productOptionTranslationsInput
+		);
 		return this.typeOrmProductOptionTranslationRepository.remove(productOptionTranslationsInput as any);
 	}
 }

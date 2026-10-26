@@ -1,4 +1,12 @@
 @use 'report' as *;
+@use 'report-table' as *;
+
+// The shared row-table chrome — surface, hairlines, row padding and the 12px
+// type scale. The column widths below are deliberately left as they were: this
+// grid resolves the same columns inside two different boxes (see the note on
+// the accordion header further down), and re-sizing them is a separate job from
+// bringing the type into line with the other report tables.
+@include report-table(44px);
 
 .group-by-wrapper {
   display: flex;
@@ -60,6 +68,33 @@
 :host ::ng-deep nb-accordion-item-header {
   @include nb-ltr(padding-right, 40px);
   @include nb-rtl(padding-left, 40px);
+}
+
+// This header is not a title, it is a summary ROW: the columns are its direct
+// children, not children of a `.table-inner-wrapper`. So it takes the row's own
+// metrics rather than the group-title padding the shared mixin gives every other
+// report, and the same column gap, so its figures line up with the table under
+// it instead of sitting on a different rhythm.
+:host .card nb-accordion-item-header.card-title {
+  @include nb-ltr(padding, $report-row-padding-y 40px $report-row-padding-y $report-row-gutter);
+  @include nb-rtl(padding, $report-row-padding-y $report-row-gutter $report-row-padding-y 40px);
+  gap: $report-column-gap;
+  font-size: $report-cell-font-size;
+  line-height: 16px;
+
+  // The group label here is a full date - "Monday, September 21, 2026" - sitting
+  // in a column capped at 200px for the avatar chips the BODY puts there. It
+  // wrapped onto two lines, which made the header taller than the row it
+  // summarises.
+  //
+  // It is allowed to run past the cap rather than the cap being raised: the two
+  // columns following it in this header are empty spacers, so the text has
+  // somewhere to go, and every column keeps its x - which is what holds the
+  // header's Time and Activity over the same columns in the table below.
+  .employee-column {
+    white-space: nowrap;
+    overflow: visible;
+  }
 }
 
 @include respond(lg) {

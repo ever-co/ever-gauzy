@@ -61,6 +61,48 @@
 	min-height: 5.5rem;
 }
 
+// Folder card + its kebab. The kebab is a sibling of the card button (a button may not
+// nest another), laid over the card's top-right corner.
+.docs-card-folder-wrap {
+	position: relative;
+	display: flex;
+	min-width: 0;
+
+	.docs-card-folder .docs-card-head {
+		// Keeps a long folder name clear of the kebab.
+		padding-right: 1.75rem;
+	}
+}
+
+.docs-card-folder-actions {
+	position: absolute;
+	top: 0.625rem;
+	right: 0.625rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	padding: 0;
+	border-radius: var(--docs-radius, 0.375rem);
+	opacity: 0;
+
+	nb-icon {
+		margin: 0;
+	}
+}
+
+.docs-card-folder-wrap:hover .docs-card-folder-actions,
+.docs-card-folder-wrap:focus-within .docs-card-folder-actions {
+	opacity: 1;
+}
+
+@media (hover: none) {
+	.docs-card-folder-wrap .docs-card-folder-actions {
+		opacity: 1;
+	}
+}
+
 // Preview tile of a document card. The height is FIXED and the tile always renders — a
 // thumbnail appears later (the P1 job runs after upload, and the hub polls while a document
 // is still processing), so reserving the space is what keeps the grid from jumping when one

@@ -11,7 +11,7 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule, OrganizationsStepFormModule, PasswordFormFieldModule } from '@gauzy/ui-core/shared';
 import { ThemeModule } from '@gauzy/ui-core/theme';
 import { TenantService, OrganizationsService, UsersService, WorkspaceAuthService } from '@gauzy/ui-core/core';
@@ -38,7 +38,7 @@ const routes: Routes = [
 		NbFormFieldModule,
 		NbSpinnerModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		OrganizationsStepFormModule,
 		PasswordFormFieldModule,

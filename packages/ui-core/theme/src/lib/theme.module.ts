@@ -1,4 +1,4 @@
-import { ModuleWithProviders, NgModule } from '@angular/core';
+import { type ModuleWithProviders, NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatRippleModule } from '@angular/material/core';
@@ -26,7 +26,7 @@ import {
 } from '@nebular/theme';
 import { NbSecurityModule } from '@nebular/security';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	CommonNavModule,
 	LanguagesService,
@@ -36,6 +36,7 @@ import {
 } from '@gauzy/ui-core/core';
 import {
 	DirectivesModule,
+	EmailVerificationNoticeComponent,
 	SelectorsModule,
 	TimeTrackerModule,
 	TimeTrackerStatusModule,
@@ -91,7 +92,7 @@ const NB_MODULES = [
 
 const MODULES = [
 	SelectorsModule,
-	TranslateModule.forChild(),
+	TranslatePipe,
 	NgxPermissionsModule.forChild(),
 	ThemeLanguageSelectorModule,
 	ThemeSelectorModule,
@@ -99,7 +100,8 @@ const MODULES = [
 	CommonNavModule,
 	DirectivesModule,
 	TimeTrackerModule,
-	TimeTrackerStatusModule
+	TimeTrackerStatusModule,
+	EmailVerificationNoticeComponent
 ];
 
 const COMPONENTS = [

@@ -1,0 +1,86 @@
+# The skill domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The guard chain and the permissions are the controller's: open reads, a write grant.**
+# `SkillController` states `TenantPermissionGuard` on the class and no `@Permissions` there, so its reads —
+# the list, the node, the count and the name route — are tenant-guarded and otherwise unpermissioned, and
+# so are the three query fields below. Every write — the filing, the edit, the removal and the two
+# lifecycle moves — states `SKILLS_EDIT` behind `PermissionGuard`, on the route and on the mutation field
+# alike: the CRUD base declares no permission and the guard answers `true` to empty metadata, so any member
+# of the tenant could change the skills vocabulary (GHSA-v79w-54p2-wmh5) until owner decision 2
+# (2026-10-22) gave the resource a write grant of its own. The two protocols stay symmetric: a grant
+# stated on one side and not the other would make one of them the better surface.
+#
+# The list is a connection rather than a bare array: the same filters in `filter`, the same keys in
+# `sort`, the same page in `page`, and the same `PageInfo` the kernel gives every other connection, so
+# a cursor obtained over REST resumes here. The `pagination` route folds into it — the page is what
+# the connection answers with — and the count is a nullable `Int` with no argument, because a count is
+# not a connection and the delivered count route's query string is the store's own `where`.
+#
+# **The name route is a filter rather than a root field of its own.** `GET /skills/getByName/:name`
+# reads one skill by its name and joins nothing the list read does not: its answer is the row a
+# `name` filter over the connection selects, so stating it twice would be two surfaces that could
+# disagree. Both answer only the caller's own rows: the route scopes its query by the caller's
+# tenant, and the connection's read is the tenant-scoped list read.
+
+extend type Query {
+	"""
+	The skills of the caller's tenant, newest first.
+	"""
+	skills(
+		filter: SkillFilter
+		sort: [SkillSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): SkillConnection!
+
+	"""
+	One skill of the caller's tenant, or null when there is none.
+	"""
+	skill(id: ID!): Skill
+
+	"""
+	How many skills the caller's tenant holds.
+	"""
+	skillCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a skill. The name and the colour are required because the store requires them: both columns
+	are `NOT NULL` and carry no default.
+	"""
+	createSkill(input: CreateSkillInput!): Skill!
+
+	"""
+	Changes a skill. A member the caller leaves out is left as it is, because the delivered edit is a
+	partial column update rather than a replacement of the row.
+	"""
+	updateSkill(input: UpdateSkillInput!): Skill!
+
+	"""
+	Removes a skill outright. The employees and organizations that pointed at it keep their own rows —
+	the pivots that attached them are what cascades — which is why a caller that means "stop offering
+	this skill" reaches for the soft removal below instead.
+	"""
+	deleteSkill(id: ID!): Boolean!
+
+	"""
+	Withdraws a skill without removing it. The answer is the row as it now stands, which is what the
+	delivered route answers with.
+	"""
+	softDeleteSkill(id: ID!): Skill!
+
+	"""
+	Puts a withdrawn skill back, clearing the marker the withdrawal set.
+	"""
+	recoverSkill(id: ID!): Skill!
+}

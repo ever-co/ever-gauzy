@@ -1,6 +1,6 @@
-import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import {
 	NbAccordionModule,
 	NbPopoverDirective,
@@ -19,6 +19,8 @@ import { JitsuService } from '../../../../../services/analytics/jitsu.service';
 import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum } from '../../../../../services/analytics/event.type';
 import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 import { ChildrenMenuItemComponent } from '../children-menu-item/children-menu-item.component';
+import { isSameMenuItem } from '../../menu-item.utils';
+import { GA_MENU_ALWAYS_EXPANDED } from '../../menu-item.tokens';
 
 /** Tag of the Nebular sidebar this menu renders into (see one-column.layout.html). */
 const MENU_SIDEBAR_TAG = 'menu-sidebar';
@@ -32,6 +34,7 @@ let railFlyoutSequence = 0;
 	templateUrl: './menu-item.component.html',
 	styleUrls: ['./menu-item.component.scss'],
 	standalone: true,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		CommonModule,
 		NbAccordionModule,
@@ -50,6 +53,7 @@ export class MenuItemComponent implements OnInit {
 	private readonly _jitsuService = inject(JitsuService);
 	private readonly _store = inject(Store);
 	private readonly _permissionsService = inject(NgxPermissionsService);
+	private readonly _alwaysExpanded = inject(GA_MENU_ALWAYS_EXPANDED, { optional: true }) ?? false;
 
 	private _user: IUser;
 
@@ -249,6 +253,18 @@ export class MenuItemComponent implements OnInit {
 			// This emits the 'selectedChange' event with the 'item' as the data
 			this.selectedChange.emit(this.item);
 		}
+
+		this.checkUrl(this._router.url);
+		this._router.events
+			.pipe(
+				filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+				untilDestroyed(this)
+			)
+			.subscribe((event) => this.checkUrl(event.urlAfterRedirects));
+	}
+
+	public isSelectedChild(child: IMenuItem): boolean {
+		return isSameMenuItem(child, this.selectedChildren);
 	}
 
 	/**
@@ -439,6 +455,12 @@ export class MenuItemComponent implements OnInit {
 	 * forever waiting for a second emission that never comes.
 	 */
 	private syncSidebarState(): void {
+		// Rendered outside the menu sidebar (the workspace panel): never fold into the icon rail.
+		if (this._alwaysExpanded) {
+			this.state = true;
+			this._cdr.markForCheck();
+			return;
+		}
 		this._sidebarService
 			.getSidebarState(MENU_SIDEBAR_TAG)
 			.pipe(
@@ -450,5 +472,17 @@ export class MenuItemComponent implements OnInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	private checkUrl(url: string): void {
+		if (this.selected || this.hasChildren || !this.item?.link) {
+			return;
+		}
+		const pathOnly = url.split(/[?#]/)[0];
+		const { link, pathMatch } = this.item;
+		const matches = pathOnly === link || (pathMatch === 'prefix' && pathOnly.startsWith(`${link}/`));
+		if (matches) {
+			this.selectedChange.emit(this.item);
+		}
 	}
 }

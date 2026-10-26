@@ -118,6 +118,8 @@ export abstract class ServerTask {
 	): void {
 		const msg = data.toString();
 		this.loggerObserver.notify(msg);
+		// Before the success check: what the output reports must be recorded before `start()` resolves.
+		this.onOutput(msg);
 
 		if (msg.includes(this.successMessage)) {
 			const name = String(this.args.serviceName);
@@ -142,6 +144,18 @@ export abstract class ServerTask {
 		const errorMsg = data.toString();
 		console.error('stderr:', errorMsg);
 		this.loggerObserver.notify(errorMsg);
+		this.onOutput(errorMsg);
+	}
+
+	/**
+	 * Called with every chunk the process writes to stdout or stderr. Does nothing here; a service
+	 * that reacts to what its process reports overrides it.
+	 *
+	 * @param {string} _output - The chunk, as text.
+	 * @returns {void}
+	 */
+	protected onOutput(_output: string): void {
+		// Nothing to do by default.
 	}
 
 	/**

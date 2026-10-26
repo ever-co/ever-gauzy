@@ -52,7 +52,7 @@
 							'FORM.RATES.ERRORS.BILL_RATE'
 								| translate
 									: {
-											min: billRateValue.errors?.['min']?.min,
+											min: $safeNavigationMigration(billRateValue.errors?.['min']?.min),
 											currency: billRateCurrency.value
 									  }
 						}}
@@ -80,7 +80,7 @@
 							'FORM.RATES.ERRORS.BILL_RATE_MIN'
 								| translate
 									: {
-											min: minimumBillingRate.errors?.['min']?.min,
+											min: $safeNavigationMigration(minimumBillingRate.errors?.['min']?.min),
 											currency: billRateCurrency.value
 									  }
 						}}
@@ -114,12 +114,12 @@
 				/>
 				@if (reWeeklyLimit.errors?.['max']) {
 					<div class="caption status-danger">
-						{{ 'FORM.RATES.ERRORS.LIMIT_MAX' | translate : { max: reWeeklyLimit.errors?.['max']?.max } }}
+						{{ 'FORM.RATES.ERRORS.LIMIT_MAX' | translate : { max: $safeNavigationMigration(reWeeklyLimit.errors?.['max']?.max) } }}
 					</div>
 				}
 				@if (reWeeklyLimit.errors?.['min']) {
 					<div class="caption status-danger">
-						{{ 'FORM.RATES.ERRORS.LIMIT_MIN' | translate : { min: reWeeklyLimit.errors?.['min']?.min } }}
+						{{ 'FORM.RATES.ERRORS.LIMIT_MIN' | translate : { min: $safeNavigationMigration(reWeeklyLimit.errors?.['min']?.min) } }}
 					</div>
 				}
 			</div>

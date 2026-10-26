@@ -33,6 +33,12 @@ export interface ITenantCreateInput extends ITenantUpdateInput {
 	isImporting?: boolean;
 	sourceId?: string;
 	userSourceId?: ID;
+	/**
+	 * The Stripe Checkout Session the creator completed before registering, when there is one. On a
+	 * hosted deployment the new tenant is linked to that session's customer once the server has verified
+	 * it; the id itself is never stored on the tenant.
+	 */
+	stripeCheckoutSessionId?: string;
 }
 
 export interface ITenantUpdateInput extends IRelationalImageAsset {

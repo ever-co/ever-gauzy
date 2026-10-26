@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { pageOf, validateOrganizationContext } from './utils';
 import { KeyResultInputSchema } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -376,13 +376,18 @@ export const registerKeyResultTools = (server: McpServer) => {
 	registerTool(
 		server,
 		'create_key_result_update',
-		'Create an update for a key result',
+		'Create an update for a key result; the server moves the key result and its goal to it',
 		{
 			keyResultId: z.string().uuid().describe('The key result ID'),
 			update_data: z
 				.object({
 					update: z.number().describe('The current value/update'),
-					progress: z.number().min(0).max(100).describe('The progress percentage (0-100)'),
+					progress: z
+						.number()
+						.min(0)
+						.max(100)
+						.optional()
+						.describe('Ignored: the server computes the progress from the value and the key result'),
 					description: z.string().optional().describe('Description of the update'),
 					status: z.string().optional().describe('Status of the key result')
 				})
@@ -392,14 +397,25 @@ export const registerKeyResultTools = (server: McpServer) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
+				// The route requires the owner and status of the update: take them from the key result
+				const { items = [] } = await apiClient.get<{
+					items?: { ownerId?: string; owner?: { id: string }; status?: string }[];
+				}>(`/api/key-results/${keyResultId}`);
+				const [keyResult] = items;
+				if (!keyResult) {
+					throw new Error(`Key result ${keyResultId} not found`);
+				}
+
 				const createData = {
 					...update_data,
+					owner: keyResult.ownerId ?? keyResult.owner?.id,
+					status: update_data.status ?? keyResult.status,
 					keyResultId,
 					organizationId: defaultParams.organizationId,
 					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId })
 				};
 
-				const response = await apiClient.post('/api/keyresult-updates', createData);
+				const response = await apiClient.post('/api/key-result-updates', createData);
 
 				return {
 					content: [
@@ -428,13 +444,11 @@ export const registerKeyResultTools = (server: McpServer) => {
 		},
 		async ({ keyResultId, page = 1, limit = 10 }) => {
 			try {
-				const params = {
-					keyResultId,
-					page,
-					limit
-				};
-
-				const response = await apiClient.get('/api/keyresult-updates', { params });
+				// The route answers every update of the key result: page them here
+				const { items = [] } = await apiClient.get<{ items?: unknown[] }>(
+					`/api/key-result-updates/${keyResultId}`
+				);
+				const response = pageOf(items, page, limit);
 
 				return {
 					content: [

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { AlertComponent } from '../alert/alert.component';
 
@@ -13,6 +13,7 @@ export interface ConfirmDialogOptions {
     selector: 'ngx-confirm',
     templateUrl: './confirm.component.html',
     styleUrls: ['./confirm.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ConfirmComponent implements OnInit {

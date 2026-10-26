@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { IEditEntityByMemberInput, IEmployee, IOrganization, IOrganizationContact } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -11,6 +11,7 @@ import { Store } from '@gauzy/ui-core/core';
     selector: 'ga-edit-employee-contacts',
     templateUrl: './edit-employee-contact.component.html',
     styleUrls: ['./edit-employee-contact.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditEmployeeContactComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

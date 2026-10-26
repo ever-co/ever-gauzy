@@ -6,7 +6,7 @@ import {
 	ForbiddenException,
 	NotFoundException
 } from '@nestjs/common';
-import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull, FindManyOptions } from 'typeorm';
+import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull, FindManyOptions, SaveOptions } from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -35,6 +35,7 @@ import {
 	parseFindOptionsSelect
 } from '../core/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
+import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
 import { UserService } from './../user/user.service';
@@ -51,6 +52,19 @@ import { OrganizationTeam } from './organization-team.entity';
 import { TypeOrmOrganizationTeamRepository } from './repository/type-orm-organization-team.repository';
 import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
+
+/**
+ * Whether a team membership is still in effect. Both flags are nullable, so a row stored without them counts
+ * as active, as `ManagedEmployeeService` reads it.
+ *
+ * @param membership - The membership row.
+ * @returns True when the row is neither deactivated nor archived.
+ */
+function isActiveMembership(membership: Pick<IOrganizationTeamEmployee, 'isActive' | 'isArchived'>): boolean {
+	const isDeactivated = membership.isActive === false;
+	const isArchived = membership.isArchived === true;
+	return !isDeactivated && !isArchived;
+}
 
 @FavoriteService(BaseEntityEnum.OrganizationTeam)
 @Injectable()
@@ -83,6 +97,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const { organizationTeamId, query } = input;
 			const { withLastWorkedTask } = query;
 
+			await this.assertMayReadTeam(organizationTeamId);
+
 			/**
 			 * Find the organization team by ID with optional relations.
 			 */
@@ -104,6 +120,60 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * Lets a caller who may not see every team (neither CHANGE_SELECTED_EMPLOYEE nor ALL_ORG_VIEW) read only a
+	 * team they are an active member of or created, as the team list answers them only their own teams. Anyone
+	 * else gets the answer of an unknown id. The check reads no relation, so the team read that follows still
+	 * loads every member for those it lets through.
+	 *
+	 * @param organizationTeamId - The team read.
+	 * @throws NotFoundException When the caller may not read the team, as for a team that does not exist.
+	 */
+	private async assertMayReadTeam(organizationTeamId: ID): Promise<void> {
+		const userId = RequestContext.currentUserId();
+		if (!userId) {
+			return;
+		}
+
+		const seesEveryTeam = RequestContext.hasAnyPermission([
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
+			PermissionsEnum.ALL_ORG_VIEW
+		]);
+		if (seesEveryTeam) {
+			return;
+		}
+
+		const isMember = await this.isActiveMemberOfTeam(organizationTeamId);
+		if (isMember) {
+			return;
+		}
+
+		// Throws the base's own not-found answer unless the caller created the team.
+		await this.findOneByIdString(organizationTeamId, {
+			where: { createdByUserId: userId }
+		});
+	}
+
+	/**
+	 * Whether the caller's employee is an active member of a team.
+	 *
+	 * @param organizationTeamId - The team.
+	 * @returns Whether one of their memberships of the team is active. A caller with no employee is not a member:
+	 * a missing id would be dropped from the query and match any member.
+	 */
+	private async isActiveMemberOfTeam(organizationTeamId: ID): Promise<boolean> {
+		const employeeId = RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			return false;
+		}
+
+		const memberships = await this.organizationTeamEmployeeService.find({
+			where: { organizationTeamId, employeeId }
+		});
+
+		return memberships.some(isActiveMembership);
 	}
 
 	/**
@@ -133,42 +203,36 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				...(parseToBoolean(withLastWorkedTask) ? { relations: ['task'] } : {})
 			});
 
+			// The task statistics of all members at once, so the number of queries does not grow with the team.
+			const [totalWorkedTasks, totalTodayTasks] = await Promise.all([
+				this.statisticService.getTasksByEmployee({ organizationId, tenantId, organizationTeamId, employeeIds }),
+				this.statisticService.getTasksByEmployee({
+					organizationId,
+					tenantId,
+					organizationTeamId,
+					employeeIds,
+					startDate,
+					endDate
+				})
+			]);
+
 			//
-			const memberPromises = members.map(async (member: IOrganizationTeamEmployee) => {
+			return members.map((member: IOrganizationTeamEmployee) => {
 				const { employeeId } = member;
 				//
 				const timerWorkedStatus = statistics.find(
 					(statistic: ITimerStatus) => statistic.lastLog.employeeId === employeeId
 				);
-				//
-				const [totalWorkedTasks, totalTodayTasks] = await Promise.all([
-					this.statisticService.getTasks({
-						organizationId,
-						tenantId,
-						organizationTeamId,
-						employeeIds: [employeeId]
-					}),
-					this.statisticService.getTasks({
-						organizationId,
-						tenantId,
-						organizationTeamId,
-						employeeIds: [employeeId],
-						startDate,
-						endDate
-					})
-				]);
 				return {
 					...member,
 					lastWorkedTask: parseToBoolean(withLastWorkedTask) ? timerWorkedStatus?.lastLog?.task : null,
 					running: timerWorkedStatus?.running,
 					duration: timerWorkedStatus?.duration,
 					timerStatus: timerWorkedStatus?.timerStatus,
-					totalWorkedTasks,
-					totalTodayTasks
+					totalWorkedTasks: totalWorkedTasks.get(employeeId),
+					totalTodayTasks: totalTodayTasks.get(employeeId)
 				};
 			});
-
-			return await Promise.all(memberPromises);
 		} catch (error) {
 			console.error('Error while retrieving team members last worked task', error);
 			return []; // or handle the error in an appropriate way
@@ -244,6 +308,12 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
 
+			// `isManager` lets a manager act for the team's members (their daily plans and time logs, through
+			// ManagedEmployeeService). Only a caller who may already act for every employee hands that on. An
+			// employee, who picks the members of a team they create and is made its manager above, keeps the
+			// MANAGER role without the flag, as before.
+			const flagsManagers = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 			// Use destructuring to directly extract 'id' from 'employee'
 			const members = employees.map(
 				({ id: employeeId }) =>
@@ -251,6 +321,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						employee: { id: employeeId },
 						organization: { id: organizationId },
 						tenant: { id: tenantId },
+						isManager: flagsManagers && managerIdsSet.has(employeeId),
 						role: managerIdsSet.has(employeeId) ? managerRole : null
 					})
 			);
@@ -310,31 +381,40 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 */
 	async update(id: ID, input: IOrganizationTeamUpdateInput): Promise<IOrganizationTeam> {
 		const tenantId = RequestContext.currentTenantId() || input.tenantId;
-		const { managerIds, memberIds, organizationId } = input;
+		const { organizationId } = input;
+		// A list the body does not name is an empty list here, as the DTO's `= []` default used to make it: a body
+		// that names only the managers still replaces the set with those managers. The default itself is gone from
+		// the body (`UpdateOrganizationTeamDTO` is built through `WithoutInitializers`) because it also wrote
+		// `projects: []` back into the team on every update that did not name its projects (review R3-04).
+		const memberIds = input.memberIds ?? [];
+		const managerIds = input.managerIds ?? [];
 
 		let organizationTeam = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId }
 		});
 
-		// Check permission for CHANGE_SELECTED_EMPLOYEE
+		// Without CHANGE_SELECTED_EMPLOYEE the caller must be a MANAGER member of the team, which needs an
+		// employee identity. A caller without one is refused, as deleteTeam refuses it: skipping the check
+		// let any user holding ORG_TEAM_EDIT (the default EMPLOYEE role does) with no employee record
+		// rewrite any team of the tenant, its members and managers included.
 		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
 			try {
 				const employeeId = RequestContext.currentEmployeeId();
-				// If employee ID is present, restrict update to manager role
-				if (employeeId) {
-					organizationTeam = await super.findOneByIdString(id, {
-						where: {
-							organizationId,
-							tenantId,
-							members: {
-								employeeId,
-								tenantId,
-								organizationId,
-								role: { name: RolesEnum.MANAGER }
-							}
-						}
-					});
+				if (!employeeId) {
+					throw new ForbiddenException();
 				}
+				organizationTeam = await super.findOneByIdString(id, {
+					where: {
+						organizationId,
+						tenantId,
+						members: {
+							employeeId,
+							tenantId,
+							organizationId,
+							role: { name: RolesEnum.MANAGER }
+						}
+					}
+				});
 			} catch (error) {
 				throw new ForbiddenException();
 			}
@@ -373,6 +453,61 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * Adds one employee to a team — or changes whether that member manages it — without restating the rest
+	 * of the team.
+	 *
+	 * The set-based edit (`update`, behind `PUT /organization-team/:id`) is the one path that writes team
+	 * membership: it checks the caller may edit the team (any team with `CHANGE_SELECTED_EMPLOYEE`, otherwise
+	 * only a team the caller manages), unassigns, subscribes and re-roles as it goes. This method reads the
+	 * team's current members, adds the one employee, and hands the whole set to that same edit — so the rules
+	 * are the edit's own, stated once. The employee must belong to the organization: the set-based edit drops
+	 * an outsider silently, and a single add that answered "done" for one would be a lie, so it is refused.
+	 *
+	 * `isManager` left out keeps an existing member's role (a new member joins as a member); `true` makes the
+	 * employee a manager and `false` makes them a plain member. Adding a member who is already on the team is
+	 * therefore a no-op unless the role is stated.
+	 *
+	 * @param id The team.
+	 * @param input The organization, the employee, and optionally whether they manage the team.
+	 * @returns The team, as the set-based edit answers it.
+	 * @throws NotFoundException when the employee is not an employee of the organization.
+	 */
+	async addMember(
+		id: ID,
+		input: { organizationId: ID; employeeId: ID; isManager?: boolean; tenantId?: ID }
+	): Promise<IOrganizationTeam> {
+		const tenantId = RequestContext.currentTenantId() || input?.tenantId;
+		const { organizationId, employeeId, isManager } = input ?? ({} as never);
+
+		if (!tenantId || !organizationId || !employeeId) {
+			throw new BadRequestException('A team member is added within one organization, by its employee.');
+		}
+
+		const [employee] = await this.retrieveEmployees([employeeId], [], organizationId, tenantId);
+
+		if (!employee) {
+			throw new NotFoundException(`Employee with id '${employeeId}' was not found in this organization`);
+		}
+
+		const current = await this.organizationTeamEmployeeService.findMemberSets(id, organizationId);
+		const memberIds = Array.from(new Set([...current.memberIds, employeeId]));
+		let managerIds = current.managerIds;
+
+		if (isManager === true) {
+			managerIds = Array.from(new Set([...managerIds, employeeId]));
+		} else if (isManager === false) {
+			managerIds = managerIds.filter((managerId) => managerId !== employeeId);
+		}
+
+		return await this.update(id, {
+			organizationId,
+			tenantId,
+			memberIds,
+			managerIds
+		} as IOrganizationTeamUpdateInput);
 	}
 
 	/**
@@ -431,6 +566,14 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
+
+		// Whether retired (soft-deleted) teams are answered too. Both surfaces reach this read: the GraphQL
+		// field hands a boolean, while the REST list route mounts its validation pipe without `transform`,
+		// so its query string arrives as the text 'true' / 'false' — and a truthiness test reads 'false' as
+		// a request for the retired rows. It is read once, as a boolean, so both ORM branches answer the
+		// same request the same way. Lifting the soft-delete predicate never lifts the tenant scope: each
+		// branch still pins `tenantId` itself below.
+		const withDeleted = parseToBoolean(options?.withDeleted);
 
 		// Initialize variables to store the retrieved items and total count.
 		let items: OrganizationTeam[]; // Array to store retrieved items
@@ -498,10 +641,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					options.where.id = In(organizationTeamIds);
 				}
 
-				// Converts TypeORM find options to a format compatible with MikroORM for a given entity.
-				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<OrganizationTeam>(
-					options as FindManyOptions
-				);
+				// Converts TypeORM find options to a format compatible with MikroORM for a given entity. The
+				// normalised `withDeleted` replaces the raw one, so the converter disables MikroORM's
+				// soft-delete filter (and only that filter) exactly when the caller asked for retired teams.
+				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<OrganizationTeam>({
+					...options,
+					withDeleted
+				} as FindManyOptions);
 				// Retrieve the items and total count
 				const [entities, totalEntities] = await this.mikroOrmOrganizationTeamRepository.findAndCount(
 					enhanceWhereWithTenantId(tenantId, where), // Add a condition for the tenant ID
@@ -576,7 +722,11 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 						...(options.select ? { select: parseFindOptionsSelect(options.select) } : {}),
 						...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {}),
 						...(options.where ? { where: options.where } : {}),
-						...(options.order ? { order: options.order } : {})
+						...(options.order ? { order: options.order } : {}),
+						// A query builder adds `deletedAt IS NULL` to every read of a soft-deletable entity
+						// unless it is told otherwise, so without this the flag the MikroORM branch honours
+						// was dropped here and the two ORMs answered the same request differently.
+						...(withDeleted ? { withDeleted: true } : {})
 					});
 				}
 
@@ -649,6 +799,97 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	}
 
 	/**
+	 * Soft deletes a team (`DELETE /organization-team/:id/soft`, `softDeleteOrganizationTeam`), only for a
+	 * caller who may edit it. See {@link assertMayManageTeam}.
+	 *
+	 * @param id - The team to soft delete.
+	 * @param options - Find options, passed to the base method with `where.id` bound to `id`.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The soft-deleted team.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<OrganizationTeam>,
+		saveOptions?: SaveOptions
+	): Promise<OrganizationTeam> {
+		await this.assertMayManageTeam(id, false);
+
+		return super.softRemove(id, this.bindTeamId(id, options), saveOptions);
+	}
+
+	/**
+	 * Restores a soft-deleted team (`PUT /organization-team/:id/recover`, `recoverOrganizationTeam`), only for
+	 * a caller who may edit it. See {@link assertMayManageTeam}.
+	 *
+	 * @param id - The team to restore.
+	 * @param options - Find options, passed to the base method with `where.id` bound to `id`.
+	 * @param saveOptions - Save options, passed to the base method unchanged.
+	 * @returns The restored team.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: IFindOneOptions<OrganizationTeam>,
+		saveOptions?: SaveOptions
+	): Promise<OrganizationTeam> {
+		await this.assertMayManageTeam(id, true);
+
+		return super.softRecover(id, this.bindTeamId(id, options), saveOptions);
+	}
+
+	/**
+	 * The find options for the base method, with the checked team's id set last: the base lookup spreads
+	 * `options.where` over the id, so a `where.id` there would name a team the check never saw. The inherited
+	 * routes pass their rest parameter, an array, which carries no options.
+	 *
+	 * @param id - The team the check passed for.
+	 * @param options - The find options received.
+	 * @returns The options, acting on `id` only.
+	 */
+	private bindTeamId(id: ID, options?: IFindOneOptions<OrganizationTeam>): IFindOneOptions<OrganizationTeam> {
+		const findOptions = options && typeof options === 'object' && !Array.isArray(options) ? options : {};
+		const { where } = findOptions as { where?: Record<string, unknown> };
+
+		return { ...findOptions, where: { ...where, id } } as IFindOneOptions<OrganizationTeam>;
+	}
+
+	/**
+	 * Applies the rule `deleteTeam` enforces: without CHANGE_SELECTED_EMPLOYEE, the caller must be a manager
+	 * of the team, which needs an employee identity. A caller without one is refused, as `deleteTeam` refuses
+	 * it: `currentEmployeeId()` is also null when the request context cannot be read. The manager membership
+	 * must carry the team's own tenant and organization. It runs before the base method, which turns every
+	 * failure into a 404.
+	 *
+	 * @param id - The team acted on.
+	 * @param withDeleted - Whether the team is read among soft-deleted rows (a restoration).
+	 * @throws {ForbiddenException} When the caller does not manage the team.
+	 */
+	private async assertMayManageTeam(id: ID, withDeleted: boolean): Promise<void> {
+		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return;
+		}
+
+		const employeeId = RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			throw new ForbiddenException();
+		}
+
+		const deleted = withDeleted ? { withDeleted: true } : {};
+		try {
+			const { tenantId, organizationId } = await this.findOneByIdString(id, deleted);
+			await this.findOneByIdString(id, {
+				where: {
+					tenantId,
+					organizationId,
+					members: { employeeId, tenantId, organizationId, role: { name: RolesEnum.MANAGER } }
+				},
+				...deleted
+			});
+		} catch {
+			throw new ForbiddenException();
+		}
+	}
+
+	/**
 	 * Checks if a user is a member of any teams and performs necessary actions.
 	 *
 	 * @param userId - The ID of the user to check.
@@ -683,16 +924,24 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 
 		try {
-			// Check if the user is only a manager (has no specific role)
-			await this.organizationTeamEmployeeService.findOneByOptions({
+			// The teams the user leaves: the ones they joined as a plain member (no role), not the ones they manage
+			const memberships = await this.organizationTeamEmployeeService.find({
 				where: {
 					employeeId: employee.id,
 					roleId: IsNull()
 				}
 			});
 
-			// Unassign this user from all tasks in a team
-			await this.taskService.unassignEmployeeFromTeamTasks(employee.id, undefined);
+			if (!memberships.length) {
+				throw new NotFoundException('The user is not a plain member of any team');
+			}
+
+			// Unassign this user only from the tasks of the teams they leave, one team at a time so that two
+			// saves never race on a task shared by two of these teams
+			const organizationTeamIds = new Set(memberships.map(({ organizationTeamId }) => organizationTeamId));
+			for (const organizationTeamId of organizationTeamIds) {
+				await this.taskService.unassignEmployeeFromTeamTasks(employee.id, organizationTeamId);
+			}
 
 			// Delete the team employee record
 			return await this.organizationTeamEmployeeService.delete({

@@ -70,14 +70,13 @@ export function MultiORMOneToOne<T, O>(
 		// Determine which ORM is in use
 		const ormType = getORMType();
 
-		// Apply TypeORM decorator when using TypeORM
-		if (ormType === MultiORMEnum.TypeORM) {
-			TypeOrmOneToOne(
-				typeFunctionOrTarget as TypeORMTarget<T>,
-				inverseSideOrOptions as TypeORMInverseSide<T>,
-				options as TypeORMRelationOptions
-			)(target, propertyKey);
-		}
+		// TypeORM's relation under every ORM, MikroORM's only under `DB_ORM=mikro-orm`: the TypeORM
+		// DataSource runs in both modes (see `MultiORMColumn`).
+		TypeOrmOneToOne(
+			typeFunctionOrTarget as TypeORMTarget<T>,
+			inverseSideOrOptions as TypeORMInverseSide<T>,
+			options as TypeORMRelationOptions
+		)(target, propertyKey);
 
 		// Apply MikroORM decorator when using MikroORM
 		if (ormType === MultiORMEnum.MikroORM) {
@@ -141,6 +140,12 @@ export function mapOneToOneArgsForMikroORM<T, O>({
 		...(typeOrmOptions?.onDelete ? { deleteRule: typeOrmOptions?.onDelete?.toLocaleLowerCase() } : {}),
 		...(typeOrmOptions?.onUpdate ? { updateRule: typeOrmOptions?.onUpdate?.toLocaleLowerCase() } : {})
 	};
+
+	// The owning side is nullable unless stated otherwise, as TypeORM's one-to-one is; MikroORM's default is the
+	// opposite (see the same default in `mapManyToOneArgsForMikroORM`).
+	if (mikroOrmOptions.owner === true && mikroOrmOptions.nullable === undefined) {
+		mikroOrmOptions.nullable = true;
+	}
 
 	// Set default joinColumn if not overwritten in options
 	if (mikroOrmOptions.owner === true && !mikroOrmOptions.joinColumn && propertyKey) {

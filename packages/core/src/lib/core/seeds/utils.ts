@@ -3,9 +3,27 @@ import { ApplicationPluginConfig } from '@gauzy/common';
 import * as chalk from 'chalk';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as rimraf from 'rimraf';
-import * as sharp from 'sharp';
+import { rimraf } from 'rimraf';
+import * as sharpModule from 'sharp';
 import { getApiPublicPath } from '../util';
+
+// sharp 0.35 types its entry point as an ES module (a default export), while `require('sharp')` still returns the
+// function itself: take whichever this runtime hands back.
+const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
+	sharpModule) as unknown as typeof sharpModule.default;
+
+/**
+ * Deletes the generated files of a directory, keeping `rimraf` and `.gitkeep` (the old seed cleaners' pattern).
+ *
+ * rimraf 6 is promise-based and expands a glob only when asked (`glob: true`); the glob it uses reads a backslash as
+ * an escape, where rimraf 3's glob turned Windows separators into `/` itself. The desktop server seeds on Windows, so
+ * the pattern is built with forward slashes.
+ *
+ * @param dir - The directory to clean.
+ * @returns Whether anything was removed.
+ */
+export const removeGeneratedFiles = (dir: string): Promise<boolean> =>
+	rimraf(`${dir.split(path.sep).join('/')}/!(rimraf|.gitkeep)`, { glob: true });
 
 /**
  * Retrieves the dimensions of an image file, including SVG files, asynchronously.
@@ -17,7 +35,7 @@ import { getApiPublicPath } from '../util';
  * @returns A promise resolving to the dimensions of the image as an object containing `width`, `height`, and optionally `type`.
  *          Defaults to `{ width: 0, height: 0 }` if an error occurs.
  */
-export const getImageDimensions = async (filePath: string): Promise<sharp.Metadata> => {
+export const getImageDimensions = async (filePath: string): Promise<sharpModule.Metadata> => {
 	try {
 		// Read the image file as a buffer
 		const fileBuffer = fs.readFileSync(filePath);
@@ -32,7 +50,8 @@ export const getImageDimensions = async (filePath: string): Promise<sharp.Metada
 		console.error('Error getting image dimensions:', error);
 
 		// Return default dimensions in case of failure
-		return { width: 0, height: 0, size: 0 }; // Default values
+		// sharp 0.35 declares every Metadata field: the callers only read these three.
+		return { width: 0, height: 0, size: 0 } as sharpModule.Metadata; // Default values
 	}
 };
 
@@ -134,20 +153,13 @@ export async function cleanAssets(config: Partial<ApplicationPluginConfig>, dest
 		? path.resolve(env.gauzyUserPath, 'public', destDir) // Electron-specific path
 		: path.join(config.assetOptions.assetPublicPath, destDir); // Standard path for other environments
 
-	// Delete old files in the directory except for `rimraf` and `.gitkeep`
-	await new Promise((resolve, reject) => {
-		rimraf(
-			`${dir}/!(rimraf|.gitkeep)`,
-			() => {
-				console.log(chalk.green(`CLEANED UP EVER ICONS: ${dir}`));
-				resolve(null); // Resolve on successful cleanup
-			},
-			() => {
-				console.error(chalk.red(`FAILED TO CLEAN EVER ICONS: ${dir}`));
-				reject(null); // Reject on failure
-			}
-		);
-	});
+	// Delete old files in the directory except for `rimraf` and `.gitkeep`.
+	// A failed cleanup never stopped the seed: rimraf 3 took the failure handler for its options argument and called
+	// the success one either way. It still does not, now with the failure logged.
+	await removeGeneratedFiles(dir).then(
+		() => console.log(chalk.green(`CLEANED UP EVER ICONS: ${dir}`)),
+		(error) => console.error(chalk.red(`FAILED TO CLEAN EVER ICONS: ${dir}: ${error?.message ?? error}`))
+	);
 }
 
 /**

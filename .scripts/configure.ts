@@ -4,8 +4,12 @@
 
 import { existsSync, mkdirSync, unlinkSync, writeFile } from 'fs';
 import * as path from 'path';
-import { argv } from 'yargs';
+import * as yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import { env } from './env';
+
+// yargs 18 has no `argv` singleton: the process arguments are parsed explicitly.
+const argv = yargs(hideBin(process.argv)).parseSync();
 
 const environment = argv.environment;
 const isProd = environment === 'prod';
@@ -147,6 +151,8 @@ if (!isDocker) {
 		TWITTER_AUTH_LINK: API_BASE_URL + '/api/auth/twitter',
 		MICROSOFT_AUTH_LINK: API_BASE_URL + '/api/auth/microsoft',
 		AUTH0_AUTH_LINK: API_BASE_URL + '/api/auth/auth0',
+		ZITADEL_AUTH_LINK: '${env.ZITADEL_AUTH_LINK}',
+		KEYCLOAK_AUTH_LINK: '${env.KEYCLOAK_AUTH_LINK}',
 
 		NO_INTERNET_LOGO: '${env.NO_INTERNET_LOGO}',
 
@@ -314,6 +320,8 @@ if (!isDocker) {
 		TWITTER_AUTH_LINK: API_BASE_URL + '/api/auth/twitter',
 		MICROSOFT_AUTH_LINK: API_BASE_URL + '/api/auth/microsoft',
 		AUTH0_AUTH_LINK: API_BASE_URL + '/api/auth/auth0',
+		ZITADEL_AUTH_LINK: 'DOCKER_ZITADEL_AUTH_LINK',
+		KEYCLOAK_AUTH_LINK: 'DOCKER_KEYCLOAK_AUTH_LINK',
 
 		NO_INTERNET_LOGO: 'DOCKER_NO_INTERNET_LOGO',
 

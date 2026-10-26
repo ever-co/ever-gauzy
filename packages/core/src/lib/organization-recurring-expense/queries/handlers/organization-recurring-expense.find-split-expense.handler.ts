@@ -1,10 +1,11 @@
-import { IOrganizationRecurringExpenseForEmployeeOutput, IPagination } from '@gauzy/contracts';
+import { EmployeeKindEnum, IOrganizationRecurringExpenseForEmployeeOutput, IPagination } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { EmployeeService } from '../../../employee/employee.service';
 import { OrganizationService } from '../../../organization/organization.service';
 import { OrganizationRecurringExpenseService } from '../../organization-recurring-expense.service';
 import { OrganizationRecurringExpenseFindSplitExpenseQuery } from '../organization-recurring-expense.find-split-expense.query';
 import { MoreThanOrEqual, IsNull, LessThanOrEqual } from 'typeorm';
+import * as moment from 'moment';
 /**
  * Finds the split recurring expense for a given organization.
  *
@@ -30,7 +31,10 @@ export class OrganizationRecurringExpenseFindSplitExpenseHandler
 			findInput: { year, month }
 		} = query;
 
-		const filterDate = new Date(year, month, 1);
+		// The expenses running during the month: started by its end, and open-ended or ending after its start.
+		// Comparing both dates with the 1st alone dropped an expense starting later in the month from that month.
+		const monthStart = new Date(year, month, 1);
+		const monthEnd = moment(monthStart).endOf('month').toDate();
 
 		//1. Find all recurring expenses for the organization which have splitExpense = true
 		const {
@@ -41,14 +45,14 @@ export class OrganizationRecurringExpenseFindSplitExpenseHandler
 				{
 					splitExpense: true,
 					organizationId : orgId,
-					startDate: LessThanOrEqual(filterDate),
+					startDate: LessThanOrEqual(monthEnd),
 					endDate: IsNull()
 				},
 				{
 					splitExpense: true,
 					organizationId : orgId,
-					startDate: LessThanOrEqual(filterDate),
-					endDate: MoreThanOrEqual(filterDate)
+					startDate: LessThanOrEqual(monthEnd),
+					endDate: MoreThanOrEqual(monthStart)
 				}
 			]
 		});
@@ -57,10 +61,11 @@ export class OrganizationRecurringExpenseFindSplitExpenseHandler
 			id: orgId
 		});
 
-		//2. Find all employees of the organization
+		//2. Find all employees of the organization: people only, an agent employee takes no share of an expense
 		const orgEmployees = await this.employeeService.findAll({
 			where: {
-				organizationId: organization.id
+				organizationId: organization.id,
+				kind: EmployeeKindEnum.HUMAN
 			}
 		});
 

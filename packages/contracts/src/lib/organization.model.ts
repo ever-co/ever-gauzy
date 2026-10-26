@@ -179,6 +179,7 @@ export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee,
 
 export interface IOrganizationUpdateInput extends IOrganizationCreateInput {
 	id?: string;
+	acknowledgeAgentExitLogoutRestriction?: boolean;
 }
 
 export enum OrganizationSelectInput {
@@ -309,6 +310,7 @@ export interface IKeyValuePair {
 export interface IOrganizationAgentSetting {
 	allowAgentAppExit?: boolean;
 	allowLogoutFromAgentApp?: boolean;
+	acknowledgeAgentExitLogoutRestriction?: boolean;
 }
 
 export interface IOrganizationTimerSetting {

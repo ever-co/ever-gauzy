@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import { humanizeBytes } from '../../models/docs-format.util';
 
 /**
@@ -17,6 +17,7 @@ import { humanizeBytes } from '../../models/docs-format.util';
 	selector: 'gz-docs-drop-strip',
 	templateUrl: './docs-drop-strip.component.html',
 	styleUrls: ['./docs-drop-strip.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsDropStripComponent {

@@ -4,6 +4,7 @@ import { getUserDummyImage } from '../core/utils';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { MultiOrmEntityManager } from '../core/entities/subscribers/entity-event-subscriber.types';
 import { User } from './user.entity';
+import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
 
 @EventSubscriber()
 export class UserSubscriber extends BaseEntityEventSubscriber<User> {
@@ -129,23 +130,22 @@ export class UserSubscriber extends BaseEntityEventSubscriber<User> {
 	}
 
 	/**
-	 * Simulate an asynchronous operation to set the imageUrl.
+	 * Sets `imageUrl` from the image's `fullUrl`, falling back to the existing `imageUrl`. Waits only for the
+	 * image's own URL resolution, and not at all when there is no image (see `imageAssetUrlsReady`).
 	 *
 	 * @param entity
 	 * @returns
 	 */
-	private setImageUrl(entity: User): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(() => {
-					entity.imageUrl = entity.image?.fullUrl ?? entity.imageUrl;
-					resolve();
-				});
-			} catch (error) {
-				console.error('UserSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
+	private async setImageUrl(entity: User): Promise<void> {
+		try {
+			const ready = imageAssetUrlsReady(entity.image);
+			if (ready) {
+				await ready;
 			}
-		});
+			entity.imageUrl = entity.image?.fullUrl ?? entity.imageUrl;
+		} catch (error) {
+			console.error('UserSubscriber: Error during the setImageUrl process:', error);
+			throw error;
+		}
 	}
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
+import { Component, OnInit, Input, EventEmitter, Output, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { IOrganization } from '@gauzy/contracts';
@@ -9,6 +9,7 @@ import { OrganizationsService, Store, UserIdService, UsersOrganizationsService }
     selector: 'ga-edit-user-organizations-mutation',
     templateUrl: './edit-user-organizations-mutation.component.html',
     styleUrls: ['../../../edit-user-mutation/edit-user-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditUserOrganizationsMutationComponent extends TranslationBaseComponent implements OnInit {

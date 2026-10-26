@@ -7,17 +7,25 @@
  * `"An error occurred."` unless an `onError` mapper is supplied. Widening that mask generally would
  * leak provider internals to the browser, so only classified rate limits get a structured envelope
  * and everything else keeps the generic string.
+ *
+ * A rejected provider key (401/403) is the one other failure classified here: like a rate limit, the
+ * user can only act on it if they are told which provider to fix.
  */
 
-import { AI_CHAT_RATE_LIMIT_CODE, IAiChatRateLimitEnvelope } from '@gauzy/contracts';
+import {
+	AI_CHAT_KEY_REJECTED_CODE,
+	AI_CHAT_RATE_LIMIT_CODE,
+	IAiChatKeyRejectedEnvelope,
+	IAiChatRateLimitEnvelope
+} from '@gauzy/contracts';
 
 /**
  * Re-exported for backend callers. The definitions live in @gauzy/contracts because the browser
  * needs the same runtime constant, and it must not import this plugin (that would pull NestJS into
  * the web bundle).
  */
-export { AI_CHAT_RATE_LIMIT_CODE as RATE_LIMIT_CODE };
-export type { IAiChatRateLimitEnvelope };
+export { AI_CHAT_RATE_LIMIT_CODE as RATE_LIMIT_CODE, AI_CHAT_KEY_REJECTED_CODE as KEY_REJECTED_CODE };
+export type { IAiChatRateLimitEnvelope, IAiChatKeyRejectedEnvelope };
 
 /** Unwrap the wrappers an error can arrive in before it is inspected. */
 const unwrap = (error: unknown): unknown[] => {
@@ -89,3 +97,37 @@ export const rateLimitRetryAfter = (error: unknown): number | undefined => {
  * parses it back out.
  */
 export const buildRateLimitEnvelope = (envelope: IAiChatRateLimitEnvelope): string => JSON.stringify(envelope);
+
+/**
+ * Is this the AI SDK's provider HTTP error (`APICallError`)?
+ *
+ * Checked structurally — the SDK's `AI_APICallError` name plus the request URL every such error
+ * carries — not with `instanceof`, because provider packages bundle their own copy of
+ * `@ai-sdk/provider`. This is what separates a provider's 401/403 from anything else in the chain.
+ */
+const isProviderCallError = (candidate: unknown): boolean => {
+	const e = candidate as { name?: unknown; url?: unknown };
+	return e?.name === 'AI_APICallError' && typeof e.url === 'string';
+};
+
+/**
+ * Did the AI provider reject its credential (HTTP 401/403)?
+ *
+ * Only a PROVIDER's own HTTP error counts ({@link isProviderCallError}, possibly wrapped in the
+ * SDK's `RetryError` or a `cause`). This mask also runs over tool errors, and the SDK hands it a
+ * tool's raw thrown value: a contributed tool can throw `{ statusCode: 403 }`, a Nest
+ * `ForbiddenException` (`status: 403`), an `{ error: { code: 403 } }` body or an MCP transport error
+ * (`code: 401`) — all of them the USER's permission or another server's answer, never the AI
+ * provider's key, and none may send the user to the AI Providers page. They keep the generic error.
+ */
+export const isKeyRejectedError = (error: unknown): boolean => {
+	for (const candidate of unwrap(error)) {
+		if (!isProviderCallError(candidate)) continue;
+		const status = Number((candidate as { statusCode?: unknown }).statusCode);
+		if (status === 401 || status === 403) return true;
+	}
+	return false;
+};
+
+/** Build the JSON string handed to the stream's error channel for a rejected key. */
+export const buildKeyRejectedEnvelope = (envelope: IAiChatKeyRejectedEnvelope): string => JSON.stringify(envelope);

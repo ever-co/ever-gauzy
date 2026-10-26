@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -22,7 +22,7 @@ import {
 	Store,
 	ToastrService
 } from '@gauzy/ui-core/core';
-import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, isEntityVersionConflict } from '@gauzy/ui-core/common';
 import {
 	CreatedByUserComponent,
 	DateViewComponent,
@@ -38,6 +38,7 @@ import { EquipmentSharingPolicyTableComponent } from './table-components';
 @Component({
     templateUrl: './equipment-sharing.component.html',
     styleUrls: ['./equipment-sharing.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EquipmentSharingComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
@@ -291,7 +292,7 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 			}
 		} catch (error) {
 			// Handle any errors that occur during the approval process
-			this.errorHandlingService.handleError(error);
+			this.handleDecisionError(error);
 		} finally {
 			// Trigger a refresh of data and update the equipment sharing observable
 			this._refresh$.next(true);
@@ -327,12 +328,30 @@ export class EquipmentSharingComponent extends PaginationFilterBaseComponent imp
 			}
 		} catch (error) {
 			// Handle any errors that occur during the saving process
-			this.errorHandlingService.handleError(error);
+			this.handleDecisionError(error);
 		} finally {
 			// Trigger a refresh of data and update the equipment sharing observable
 			this._refresh$.next(true);
 			this.equipmentSharing$.next(true);
 		}
+	}
+
+	/**
+	 * Reports a failed approve / refuse.
+	 *
+	 * The server decides a sharing only at the version it reads (ever-co/ever-gauzy#11384), so a decision that loses
+	 * the race with another decision or an edit is answered `409 ENTITY_VERSION_CONFLICT`. That is not an error of the
+	 * user's: they are told the request changed, and the list, which the caller reloads, shows what it is now. Any
+	 * other failure is shown as before.
+	 *
+	 * @param error - What the request rejected with.
+	 */
+	private handleDecisionError(error: unknown): void {
+		if (isEntityVersionConflict(error)) {
+			this.toastrService.warning('EQUIPMENT_SHARING_PAGE.MESSAGES.CHANGED_BY_SOMEONE_ELSE');
+			return;
+		}
+		this.errorHandlingService.handleError(error);
 	}
 
 	/**

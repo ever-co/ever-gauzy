@@ -7,7 +7,8 @@ import {
 	OnDestroy,
 	OnInit,
 	ViewChild,
-	inject
+	inject,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -21,10 +22,10 @@ import {
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { Actions } from '@ngneat/effects-ng';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { distinctUntilChanged, filter, firstValueFrom, map } from 'rxjs';
+import { combineLatest, distinctUntilChanged, filter, firstValueFrom, map } from 'rxjs';
 import {
 	BaseEntityEnum,
 	DocumentKindEnum,
@@ -48,6 +49,7 @@ import { DocsExportService } from '../../services/docs-export.service';
 import { DocumentPermissionService } from '../../services/document-permission.service';
 import { DocumentTreeStore, IDocsTreeNode } from '../../services/document-tree.store';
 import { DocumentsService } from '../../services/documents.service';
+import { documentPageLayouts } from './document-page-view';
 
 type RailTab = 'toc' | 'info' | 'comments';
 
@@ -70,7 +72,7 @@ const BLOCK_ANCHOR_RETRY_MS = 150;
 		CommonModule,
 		FormsModule,
 		RouterModule,
-		TranslateModule,
+		TranslatePipe,
 		NgxPermissionsModule,
 		NbButtonModule,
 		NbCardModule,
@@ -85,6 +87,7 @@ const BLOCK_ANCHOR_RETRY_MS = 150;
 		VersionHistoryPanelComponent
 	],
 	templateUrl: './document-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrls: ['./document-page.component.scss']
 })
 export class DocumentPageComponent implements OnInit, OnDestroy {
@@ -202,6 +205,26 @@ export class DocumentPageComponent implements OnInit, OnDestroy {
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe((id) => void this.load(id));
+
+		// `?view=full`: a sidebar favorite opens the page as wide as the shell allows, right rail closed
+		// (handover §4.P). Only that entry point carries it; the viewer can still toggle both afterwards.
+		// Normal navigation away from it (breadcrumb, tree) restores the defaults, as the component is reused.
+		// Keyed on the document too, so a second favorite re-applies the full view (`documentPageLayouts`).
+		documentPageLayouts(
+			combineLatest([
+				this.route.paramMap.pipe(
+					map((params) => params.get('id')),
+					filter((id): id is string => !!id)
+				),
+				this.route.queryParamMap.pipe(map((params) => params.get('view')))
+			]).pipe(map(([id, view]) => ({ id, view })))
+		)
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((layout) => {
+				this.fullWidth = layout.fullWidth;
+				this.railOpen = layout.railOpen;
+				this.cdr.markForCheck();
+			});
 
 		// `?block=` deep link (spec 05 §8): scroll to the block, flash it, and open its
 		// thread. Tracked separately from `:id` so a link to another block of the SAME

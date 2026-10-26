@@ -1,4 +1,6 @@
 :host {
+  display: block;
+
   ::ng-deep {
     .ng-select.ng-select-multiple .ng-select-container .ng-value-container {
       flex-wrap: nowrap;
@@ -6,10 +8,65 @@
     }
   }
 }
-ngx-avatar ::ng-deep .inner-wrapper {
-  display: flex;
-  flex-direction: row;
-  .names-wrapper {
-    margin: 0 10px;
+
+// The options render in the CDK overlay, but they are declared in this
+// template, so these scoped rules still reach them (and outrank the shared
+// `.cdk-overlay-container nb-option-list nb-option` row in _overlays.scss).
+// Not wrapped in `nb-install-component`: its `:host-context` would require the
+// options to sit inside the host element, and the overlay is outside it.
+nb-option.employee-option {
+  gap: 0.625rem;
+  min-height: 2.25rem;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.25rem;
+
+  // Selection is shown by the checkbox; keep the ticked row light so a long
+  // multi-selection does not turn into a wall of bold, tinted blocks.
+  &.selected,
+  &.selected:hover,
+  &.selected:focus {
+    font-weight: 400;
+    background-color: var(--gauzy-hover-tint);
   }
+}
+
+.employee-avatar {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  overflow: hidden;
+  border-radius: 50%;
+  background-color: var(--color-primary-transparent-100);
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+
+  &::before {
+    content: attr(data-initials);
+    font-size: 0.625rem;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    color: var(--color-primary-default);
+  }
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.employee-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-basic-color);
 }

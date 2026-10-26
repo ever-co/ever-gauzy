@@ -1,4 +1,5 @@
 import { AfterLoad } from 'typeorm';
+import { OnLoad } from '@mikro-orm/core';
 import { ApiProperty } from '@nestjs/swagger';
 import * as moment from 'moment';
 import { IPasswordReset } from '@gauzy/contracts';
@@ -46,8 +47,12 @@ export class PasswordReset extends TenantBaseEntity implements IPasswordReset {
 
 	/**
 	 * Called after entity is loaded to check if the entity is expired.
+	 *
+	 * On both ORMs, as `TimeLog` does: with `@AfterLoad` alone `expired` was never set under `DB_ORM=mikro-orm`, so
+	 * the password reset's "Token has expired" check never refused a stale token (only the JWT's own lifetime did).
 	 */
 	@AfterLoad()
+	@OnLoad()
 	afterLoadEntity?() {
 		// Calculate the difference between current time and createdAt in minutes
 		const expiredAt = moment();

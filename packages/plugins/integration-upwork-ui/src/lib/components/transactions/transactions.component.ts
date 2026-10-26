@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, signal, WritableSignal } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, signal, type WritableSignal } from '@angular/core';
 import { filter, tap, finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';

@@ -1,4 +1,4 @@
-import { OnInit, Component, OnDestroy } from '@angular/core';
+import { OnInit, Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, AbstractControl } from '@angular/forms';
 import {
 	IEquipmentSharing,
@@ -14,7 +14,7 @@ import {
 	IEquipmentSharingUpdateInput
 } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEntityVersionConflict, isNotEmpty } from '@gauzy/ui-core/common';
 import { filter } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -23,8 +23,10 @@ import {
 	EquipmentService,
 	EquipmentSharingPolicyService,
 	EquipmentSharingService,
+	ErrorHandlingService,
 	OrganizationTeamsService,
-	Store
+	Store,
+	ToastrService
 } from '@gauzy/ui-core/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 
@@ -33,6 +35,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
     selector: 'ngx-equipment-sharing-mutation',
     templateUrl: './equipment-sharing-mutation.component.html',
     styleUrls: ['./equipment-sharing-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EquipmentSharingMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
@@ -45,7 +48,9 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 		public readonly translationService: TranslateService,
 		private readonly employeesService: EmployeesService,
 		private readonly organizationTeamsService: OrganizationTeamsService,
-		private readonly equipmentSharingPolicyService: EquipmentSharingPolicyService
+		private readonly equipmentSharingPolicyService: EquipmentSharingPolicyService,
+		private readonly toastrService: ToastrService,
+		private readonly errorHandlingService: ErrorHandlingService
 	) {
 		super(translationService);
 	}
@@ -54,6 +59,8 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 	equipmentSharing: IEquipmentSharing;
 	employees: IEmployee[] = [];
 	disabled: boolean;
+	/** True while the save request is in flight: the Save button is disabled so a second click cannot create the request twice. */
+	loading = false;
 	selectedOrganization: IOrganization;
 	requestStatus: number;
 	participants = EquipmentSharingParticipantEnum.EMPLOYEE;
@@ -160,6 +167,9 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 	}
 
 	async onSaveRequest() {
+		if (this.loading) {
+			return;
+		}
 		const shareRequest = {
 			equipmentId: this.form.value['equipment'],
 			equipment: this.equipmentItems.find((eq) => eq.id === this.form.value['equipment']),
@@ -181,13 +191,42 @@ export class EquipmentSharingMutationComponent extends TranslationBaseComponent 
 
 		let equipmentSharing: IEquipmentSharingCreateInput | IEquipmentSharingUpdateInput;
 
-		if (this.equipmentSharing) {
-			equipmentSharing = await this.equipmentSharingService.update(this.equipmentSharing.id, shareRequest);
-		} else {
-			equipmentSharing = await this.equipmentSharingService.create(shareRequest, this.selectedOrganization.id);
-		}
+		this.loading = true;
+		try {
+			if (this.equipmentSharing) {
+				// The version of the row this dialog was opened on: the server writes the edit only at that version
+				// (ever-co/ever-gauzy#11384), so a decision or another edit saved while the dialog was open is not
+				// overwritten by this one's columns (its `status` included, read when the dialog opened) — the save
+				// is refused with 409 instead. The edit is made in place (the row is updated where it is rather than
+				// removed and filed again). A row read before the column existed carries no version, and is saved
+				// through the edit that removes and files it again, which then uses the version the server reads.
+				const version = this.equipmentSharing.version;
+				equipmentSharing =
+					typeof version === 'number'
+						? await this.equipmentSharingService.updateInPlace(this.equipmentSharing.id, {
+								...shareRequest,
+								version
+						  })
+						: await this.equipmentSharingService.update(this.equipmentSharing.id, shareRequest);
+			} else {
+				equipmentSharing = await this.equipmentSharingService.create(shareRequest, this.selectedOrganization.id);
+			}
 
-		this.closeDialog(equipmentSharing);
+			this.closeDialog(equipmentSharing);
+		} catch (error) {
+			if (this.equipmentSharing && isEntityVersionConflict(error)) {
+				// Someone else changed the request since the dialog was opened. The dialog closes without a result,
+				// which makes the page read its list again; the user reopens the request on what is stored now.
+				this.toastrService.warning('EQUIPMENT_SHARING_PAGE.MESSAGES.CHANGED_BY_SOMEONE_ELSE');
+				this.closeDialog();
+				return;
+			}
+			// Any other failure is shown, and the dialog stays open with what the user entered, to retry.
+			this.errorHandlingService.handleError(error);
+		} finally {
+			// Re-enable the button whether the request succeeded or failed, so a failed save can be retried.
+			this.loading = false;
+		}
 	}
 
 	async closeDialog(equipmentSharing?: IEquipmentSharingCreateInput | IEquipmentSharingUpdateInput) {

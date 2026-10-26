@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'ga-onboarding',
@@ -10,6 +10,7 @@ import { Component } from '@angular/core';
 			</nb-layout-column>
 		</nb-layout>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class OnboardingComponent {}

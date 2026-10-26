@@ -20,7 +20,7 @@ module.exports = composePlugins(
 	withNx({
 		target: 'node' // Target for Node.js
 	}),
-	(config) => {
+	(config, ctx) => {
 		// Configure watch options for development
 		// Watches core source files for automatic restart via tsconfig-paths resolution
 		config.watchOptions = {
@@ -68,7 +68,10 @@ module.exports = composePlugins(
 		// Generate copy patterns for built packages
 		// Logs timing to track performance
 		console.time('✔️ Copying all built package folders to dist node_modules');
-		const packagePatterns = getCopyPatterns(distPackagesDir, targetNodeModulesDir);
+		// The production configuration ships @gauzy/config's environment.prod.ts (see getCopyPatterns).
+		const environment = ctx?.context?.configurationName === 'production' ? 'production' : 'development';
+		console.log(`   @gauzy/config environment for this build: ${environment}`);
+		const packagePatterns = getCopyPatterns(distPackagesDir, targetNodeModulesDir, { environment });
 		console.timeEnd('✔️ Copying all built package folders to dist node_modules');
 
 		// Log number of packages being copied

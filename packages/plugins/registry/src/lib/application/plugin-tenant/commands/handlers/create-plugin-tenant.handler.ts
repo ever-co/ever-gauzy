@@ -4,6 +4,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginService, PluginTenant, PluginTenantService } from '../../../../domain';
 import { IPluginTenant } from '../../../../shared';
 import { CreatePluginTenantCommand } from '../create-plugin-tenant.command';
+import { assertMayChangeAccessFlags, NEW_PLUGIN_TENANT_ACCESS_FLAGS } from '../../plugin-tenant-access-flags';
 
 @CommandHandler(CreatePluginTenantCommand)
 export class CreatePluginTenantCommandHandler implements ICommandHandler<CreatePluginTenantCommand> {
@@ -27,6 +28,9 @@ export class CreatePluginTenantCommandHandler implements ICommandHandler<CreateP
 		if (!input) {
 			throw new BadRequestException('Plugin tenant data is required');
 		}
+
+		// Flags other than a new installation's defaults need the grant of the flag's own route
+		assertMayChangeAccessFlags(input, NEW_PLUGIN_TENANT_ACCESS_FLAGS);
 
 		// Get context info
 		const tenantId = input.tenantId || RequestContext.currentTenantId();

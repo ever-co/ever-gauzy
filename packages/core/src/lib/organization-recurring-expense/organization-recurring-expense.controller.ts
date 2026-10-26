@@ -2,7 +2,9 @@ import {
 	IStartUpdateTypeInfo,
 	IOrganizationRecurringExpenseForEmployeeOutput,
 	IRecurringExpenseEditInput,
-	IPagination
+	IPagination,
+	ID,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import {
 	Body,
@@ -15,13 +17,14 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UsePipes
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CrudController } from './../core/crud';
-import { ParseJsonPipe, UUIDValidationPipe } from './../shared/pipes';
-import { TenantPermissionGuard } from './../shared/guards';
+import { BaseQueryDTO, CrudController } from './../core/crud';
+import { ParseJsonPipe, UUIDValidationPipe, AbstractValidationPipe } from './../shared/pipes';
+import { TenantPermissionGuard, PermissionGuard } from './../shared/guards';
 import { OrganizationRecurringExpense } from './organization-recurring-expense.entity';
 import { OrganizationRecurringExpenseService } from './organization-recurring-expense.service';
 import {
@@ -34,7 +37,22 @@ import {
 	OrganizationRecurringExpenseFindSplitExpenseQuery,
 	OrganizationRecurringExpenseStartDateUpdateTypeQuery
 } from './queries';
+import { Permissions } from '../shared/decorators';
+import { TenantOrganizationBaseDTO } from '../core/dto';
+import { FindOptionsWhere } from 'typeorm';
 
+/**
+ * The recurring costs of an organization.
+ *
+ * Every write states `ORG_EXPENSES_EDIT` (GHSA-v79w-54p2-wmh5) and every read states `ORG_EXPENSES_VIEW`: the
+ * grant the page that shows them requires (the "Expense Recurring" menu entries of the accounting and the
+ * organization sections), and the one the expense reads state (`ExpenseController`). The reads used to state
+ * no permission at all behind `TenantPermissionGuard` alone, so any member of the tenant (an EMPLOYEE, a
+ * VIEWER, a CANDIDATE) could list what the organization pays for and how much. Every default role that holds
+ * `ORG_EXPENSES_EDIT` (SUPER_ADMIN, ADMIN, DATA_ENTRY) holds `ORG_EXPENSES_VIEW` too. The employee statistics
+ * that fold these costs into profit read them through the service, not through these routes, and are not
+ * changed. The GraphQL fields that mirror these reads state the same.
+ */
 @ApiTags('OrganizationRecurringExpense')
 @UseGuards(TenantPermissionGuard)
 @Controller('/organization-recurring-expense')
@@ -45,6 +63,44 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		private readonly organizationRecurringExpenseService: OrganizationRecurringExpenseService
 	) {
 		super(organizationRecurringExpenseService);
+	}
+
+	/**
+	 * Counts the standing costs.
+	 *
+	 * Overrides the inherited `CrudController.getCount()` route only to state the read grant, `ORG_EXPENSES_VIEW`.
+	 *
+	 * @param options The criterion, forwarded to the base route.
+	 * @returns How many standing costs match.
+	 */
+	@ApiOperation({ summary: 'Get total record count' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Total record count retrieved successfully' })
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
+	@Get('count')
+	async getCount(@Query() options?: FindOptionsWhere<OrganizationRecurringExpense>): Promise<number | void> {
+		return await super.getCount(options);
+	}
+
+	/**
+	 * Pages through the standing costs.
+	 *
+	 * Overrides the inherited `CrudController.pagination()` route only to state the read grant, `ORG_EXPENSES_VIEW`.
+	 *
+	 * @param filter The page and the criterion, forwarded to the base route.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns One page of standing costs.
+	 */
+	@ApiOperation({ summary: 'Get paginated records' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Records retrieved successfully' })
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
+	@Get('pagination')
+	async pagination(
+		@Query() filter?: BaseQueryDTO<OrganizationRecurringExpense>,
+		...options: any[]
+	): Promise<IPagination<OrganizationRecurringExpense> | undefined> {
+		return await super.pagination(filter, ...options);
 	}
 
 	/**
@@ -65,6 +121,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('/month')
 	async findAllExpenses(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<OrganizationRecurringExpense>> {
 		const { findInput } = data;
@@ -88,6 +146,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('/date-update-type')
 	async findStartDateUpdateType(@Query('data', ParseJsonPipe) data: any): Promise<IStartUpdateTypeInfo> {
 		const { findInput } = data;
@@ -112,6 +172,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get('/employee/:organizationId')
 	async getSplitExpensesForEmployee(
 		@Query('data', ParseJsonPipe) data: any,
@@ -139,6 +201,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		status: HttpStatus.NOT_FOUND,
 		description: 'Record not found'
 	})
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
 	@Get()
 	async findAll(@Query('data', ParseJsonPipe) data: any): Promise<IPagination<OrganizationRecurringExpense>> {
 		const { findInput, order = {} } = data;
@@ -146,6 +210,27 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 			where: findInput,
 			order: order
 		});
+	}
+
+	/**
+	 * Reads one standing cost.
+	 *
+	 * Overrides the inherited `CrudController.findById()` route only to state the read grant, `ORG_EXPENSES_VIEW`.
+	 * It is declared after `count`, `pagination`, `month` and `date-update-type` so that `:id` does not shadow
+	 * them.
+	 *
+	 * @param id The standing cost to read.
+	 * @param options The inherited options, forwarded to the base route.
+	 * @returns The standing cost.
+	 */
+	@ApiOperation({ summary: 'Find record by ID' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'Record retrieved successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_VIEW)
+	@Get(':id')
+	async findById(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationRecurringExpense> {
+		return await super.findById(id, ...options);
 	}
 
 	/**
@@ -164,6 +249,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.CREATED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Post()
 	async create(@Body() entity: OrganizationRecurringExpense): Promise<OrganizationRecurringExpense> {
 		return this.commandBus.execute(new OrganizationRecurringExpenseCreateCommand(entity));
@@ -190,6 +277,8 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Put(':id')
 	async update(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -215,9 +304,59 @@ export class OrganizationRecurringExpenseController extends CrudController<Organ
 		description: 'Record not found'
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string, @Query('data', ParseJsonPipe) data: any): Promise<any> {
 		const { deleteInput } = data;
 		return this.commandBus.execute(new OrganizationRecurringExpenseDeleteCommand(id, deleteInput));
+	}
+
+	/**
+	 * Soft deletes a record by id.
+	 *
+	 * Overrides the inherited `CrudController.softRemove()` route only to attach a permission. The base declares
+	 * the route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member
+	 * of the tenant could retire the row. It now states `ORG_EXPENSES_EDIT`: the organization-expenses edit grant
+	 * (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states the same.
+	 *
+	 * @param id The record to soft delete.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The soft-deleted record.
+	 */
+	@ApiOperation({ summary: 'Soft delete a record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record soft deleted successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
+	@Delete(':id/soft')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationRecurringExpense> {
+		return await super.softRemove(id, ...options);
+	}
+
+	/**
+	 * Restores a record by id.
+	 *
+	 * Overrides the inherited `CrudController.softRecover()` route only to attach a permission. The base declares
+	 * the route with no permission metadata, and `PermissionGuard` answers `true` to empty metadata, so any member
+	 * of the tenant could restore the row. It now states `ORG_EXPENSES_EDIT`: the organization-expenses edit grant
+	 * (GHSA-v79w-54p2-wmh5). The GraphQL field that mirrors it states the same.
+	 *
+	 * @param id The record to restore.
+	 * @param options The inherited options, forwarded to the service.
+	 * @returns The restored record.
+	 */
+	@ApiOperation({ summary: 'Restore a soft-deleted record by ID' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Record restored successfully' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Record not found or not in a soft-deleted state' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@UseGuards(PermissionGuard)
+	@Permissions(PermissionsEnum.ORG_EXPENSES_EDIT)
+	@Put(':id/recover')
+	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
+	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationRecurringExpense> {
+		return await super.softRecover(id, ...options);
 	}
 }

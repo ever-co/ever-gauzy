@@ -18,7 +18,9 @@ import { Store } from '../store/store.service';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { TimesheetFilterService } from '../timesheet/timesheet-filter.service';
 import { AuthService } from './auth.service';
+import { isCheckoutSessionId } from './checkout-session';
 import { ElectronService } from './electron.service';
+import { readRegisterError } from './register-error';
 
 @Injectable()
 export class AuthStrategy extends NbAuthStrategy {
@@ -37,7 +39,10 @@ export class AuthStrategy extends NbAuthStrategy {
 				failure: null
 			},
 			defaultErrors: ['Something went wrong, please try again.'],
-			defaultMessages: ['You have been successfully registered.']
+			defaultMessages: ['You have been successfully registered.'],
+			confirmEmailMessages: [
+				'Your account has been created. Open the link in the email we sent you to activate it, then sign in.'
+			]
 		},
 		logout: {
 			redirect: {
@@ -152,6 +157,7 @@ export class AuthStrategy extends NbAuthStrategy {
 			tags,
 			terms,
 			termsDocuments,
+			stripeCheckoutSessionId,
 			preferredLanguage = LanguagesEnum.ENGLISH
 		} = data;
 		if (password !== confirmPassword) {
@@ -189,7 +195,10 @@ export class AuthStrategy extends NbAuthStrategy {
 			},
 			password,
 			confirmPassword,
-			terms: termsClaims
+			terms: termsClaims,
+			// The buyer's completed Stripe Checkout Session, when they came from the shared checkout.
+			// Only a well-formed id is sent; the API verifies it with Stripe.
+			...(isCheckoutSessionId(stripeCheckoutSessionId) ? { stripeCheckoutSessionId } : {})
 		};
 		return this.authService.register(register).pipe(
 			switchMap((res: IUser | any) => {
@@ -197,6 +206,13 @@ export class AuthStrategy extends NbAuthStrategy {
 					throw new Error(res.message);
 				}
 				const user: IUser = res;
+				// A self-registration stays inactive until the link in its verification email is opened: a
+				// sign-in now would only be refused, so the person is asked to confirm their address first.
+				if (isNotEmpty(user) && user.isActive === false) {
+					return of(
+						new NbAuthResult(true, res, false, [], AuthStrategy.config.register.confirmEmailMessages)
+					);
+				}
 				if (isNotEmpty(user)) {
 					return this.login({ email, password });
 				} else {
@@ -204,8 +220,12 @@ export class AuthStrategy extends NbAuthStrategy {
 				}
 			}),
 			catchError((err) => {
+				// Show what the API told the person (e.g. "A subscription is required…") instead of the
+				// generic default. The response stays on the result, so the register form can read
+				// `checkoutUrl` from it and offer the way to the checkout.
+				const { messages } = readRegisterError(err);
 				return of(
-					new NbAuthResult(false, err, false, AuthStrategy.config.register.defaultErrors, [
+					new NbAuthResult(false, err, false, messages ?? AuthStrategy.config.register.defaultErrors, [
 						AuthStrategy.config.register.defaultErrors
 					])
 				);

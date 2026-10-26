@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, TemplateRef, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, TemplateRef, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { tap } from 'rxjs/operators';
@@ -15,6 +15,7 @@ import { CurrencyPositionPipe } from '../../../pipes/currency-position.pipe';
     templateUrl: './invoice-view-inner.component.html',
     styleUrls: ['./invoice-view-inner.component.scss'],
     providers: [TranslatableService, CurrencyPipe, CurrencyPositionPipe],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoiceViewInnerComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

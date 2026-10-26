@@ -1,8 +1,12 @@
 import * as fs from 'fs';
-import { argv } from 'yargs';
+import * as yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import * as path from 'path';
 import { IPackage } from './interfaces/i-package';
 import { PackagerFactory } from './packager-factory';
+
+// yargs 18 has no `argv` singleton: the process arguments are parsed explicitly.
+const argv = yargs(hideBin(process.argv)).parseSync();
 
 export class PackageUtil {
 	private static _instance: PackageUtil;

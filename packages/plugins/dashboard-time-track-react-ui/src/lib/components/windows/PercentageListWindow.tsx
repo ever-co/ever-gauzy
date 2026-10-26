@@ -18,39 +18,51 @@ export interface PercentageListWindowProps {
 	rows: PercentageListRow[];
 	loading: boolean;
 	emptyMessage: string;
-	/** Optional "View All" button (the Tasks window has one, Projects does not). */
+	/** Optional "View All" header button (the Tasks window has one, Projects does not). */
 	action?: { label: string; onClick: () => void };
+	/** Extra class on the `nb-list` (`projects-list`). */
+	listClassName?: string;
 }
 
 /**
  * The Tasks (`gaWindowTemplate` #2) and Projects (#3) windows: name, `x%` + tiny progress bar,
- * duration — the same `nb-list` row both Angular templates render.
+ * duration — the same `.data-list` row both Angular templates render.
  */
-export function PercentageListWindow({ title, rows, loading, emptyMessage, action }: PercentageListWindowProps) {
+export function PercentageListWindow({ title, rows, loading, emptyMessage, action, listClassName }: PercentageListWindowProps) {
 	return (
-		<WindowCard title={title} loading={loading} hasData={rows.length > 0} emptyMessage={emptyMessage} flexHeader={!!action}>
-			{action ? (
-				<div className="gz-rtt-custom-card-button">
+		<WindowCard
+			title={title}
+			loading={loading}
+			hasData={rows.length > 0}
+			emptyMessage={emptyMessage}
+			action={
+				action ? (
 					<NbButton appearance="outline" status="primary" size="small" onClick={action.onClick}>
 						{action.label}
 					</NbButton>
-				</div>
-			) : null}
-			<nb-list>
+				) : null
+			}
+		>
+			<nb-list className={`gz-rtt-data-list${listClassName ? ` ${listClassName}` : ''}`}>
 				{rows.map((row) => {
 					const percentage = row.durationPercentage ?? 0;
 					return (
 						<nb-list-item key={row.id}>
 							<div className="gz-rtt-w-100">
 								<div className="gz-rtt-row gz-rtt-align-items-center">
-									<div className="gz-rtt-col-5 gz-rtt-project-name gz-rtt-text-left">{row.name}</div>
-									<div className="gz-rtt-col-4 gz-rtt-text-center">
-										<div className="gz-rtt-percent-cell">
-											{percentage}%
+									<div
+										className="gz-rtt-col-5 gz-rtt-cell gz-rtt-project-name"
+										title={typeof row.name === 'string' ? row.name : undefined}
+									>
+										{row.name}
+									</div>
+									<div className="gz-rtt-col-4 gz-rtt-cell">
+										<div className="gz-rtt-progress-cell">
+											<span className="gz-rtt-progress-cell-value">{percentage}%</span>
 											<ProgressBar className="gz-rtt-custom-progress" value={percentage} status={progressStatus(percentage)} height="5px" />
 										</div>
 									</div>
-									<div className="gz-rtt-col gz-rtt-text-right">{durationFormat(row.duration)}</div>
+									<div className="gz-rtt-col gz-rtt-cell gz-rtt-cell-numeric">{durationFormat(row.duration)}</div>
 								</div>
 							</div>
 						</nb-list-item>

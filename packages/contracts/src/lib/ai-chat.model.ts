@@ -69,6 +69,39 @@ export interface IAiSpeechErrorBody {
 }
 
 /**
+ * Machine-readable reasons a chat turn (`POST /api/ai-chat`) is refused before it starts streaming.
+ *
+ * Shared by the API (which puts them in the error body) and the chat client (which maps them to a
+ * translated message with a deep link to the provider on the AI Providers settings page).
+ */
+export enum AiChatErrorCode {
+	/** No chat-capable provider has usable credentials for this tenant. */
+	NOT_CONFIGURED = 'AI_CHAT_NOT_CONFIGURED',
+	/** The chosen provider cannot serve chat, or has nothing it can serve right now. */
+	PROVIDER_UNAVAILABLE = 'AI_CHAT_PROVIDER_UNAVAILABLE',
+	/** The requested model is not available with the credential in use (e.g. the free tier). */
+	MODEL_UNAVAILABLE = 'AI_CHAT_MODEL_UNAVAILABLE'
+}
+
+/**
+ * Body of a refused chat turn — the same `{ message, code, settingsPath }` shape as
+ * {@link IAiSpeechErrorBody}, so old clients still find a readable `message`.
+ */
+export interface IAiChatErrorBody {
+	/** Human-readable explanation (kept for clients that only know `message`). */
+	message: string;
+	code: AiChatErrorCode;
+	/** Where the problem is fixed (`/pages/settings/ai`). */
+	settingsPath: string;
+	/** The provider at fault, when one is known — the client opens its settings directly. */
+	providerId?: string;
+	/** HTTP status, as in Nest's default exception body. */
+	statusCode?: number;
+	/** HTTP status text ('Service Unavailable'), as in Nest's default exception body. */
+	error?: string;
+}
+
+/**
  * "Connect" flows a provider supports as an alternative to pasting an API
  * key. Currently only OpenRouter's PKCE flow (the user authorizes on
  * openrouter.ai and the platform exchanges the returned code for a key).
@@ -106,6 +139,21 @@ export interface IAiChatRateLimitEnvelope {
 	credentialSource: AiCredentialSource;
 	/** Seconds until the limit resets, when the provider says so. */
 	retryAfterSeconds?: number;
+}
+
+/**
+ * Discriminator for a provider that rejected its credential (HTTP 401/403) mid-stream. Rides the same
+ * error-text channel as {@link AI_CHAT_RATE_LIMIT_CODE}, for the same reason.
+ */
+export const AI_CHAT_KEY_REJECTED_CODE = 'ai-chat/key-rejected';
+
+/** Structured key-rejected payload, JSON-encoded into the stream's single error-text channel. */
+export interface IAiChatKeyRejectedEnvelope {
+	code: typeof AI_CHAT_KEY_REJECTED_CODE;
+	/** Which provider rejected the key, so the UI can deep-link to its settings. */
+	providerId: string;
+	/** Which credential was rejected. */
+	credentialSource: AiCredentialSource;
 }
 
 /**

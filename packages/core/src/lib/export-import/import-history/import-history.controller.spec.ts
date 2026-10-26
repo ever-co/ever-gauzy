@@ -28,8 +28,8 @@ describe('ImportHistoryController', () => {
 
 		// The handler declares none of its own, so the class-level list is the one `PermissionGuard` reads.
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ImportHistoryController.prototype.download)).toBeUndefined();
+		// The import grant alone: a read-only ALL_ORG_VIEW role must not download a tenant dump.
 		expect(Reflect.getMetadata(PERMISSIONS_METADATA, ImportHistoryController)).toEqual([
-			PermissionsEnum.ALL_ORG_VIEW,
 			PermissionsEnum.IMPORT_ADD
 		]);
 

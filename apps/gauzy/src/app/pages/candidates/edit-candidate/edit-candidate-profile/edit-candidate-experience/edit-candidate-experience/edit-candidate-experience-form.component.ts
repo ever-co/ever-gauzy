@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators } from '@angular/forms';
 import { takeUntil } from 'rxjs/operators';
@@ -13,6 +13,7 @@ import { CandidateExperienceService, CandidateStore, Store, ToastrService } from
     selector: 'ga-edit-candidate-experience-form',
     templateUrl: './edit-candidate-experience-form.component.html',
     styleUrls: ['./edit-candidate-experience-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditCandidateExperienceFormComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

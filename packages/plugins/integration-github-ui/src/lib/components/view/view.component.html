@@ -49,7 +49,7 @@
 							<div class="col-4">
 								<ngx-github-repository-selector
 									id="auto-repository"
-									[sourceId]="(project$ | async)?.customFields?.repository?.repositoryId"
+									[sourceId]="$safeNavigationMigration((project$ | async)?.customFields?.repository?.repositoryId)"
 									[integration]="integration"
 									(onChanged)="selectAutoRepository($event)"
 									[selected]="true"
@@ -114,7 +114,7 @@
 							<div class="col-4">
 								<ngx-github-repository-selector
 									id="manual-repository"
-									[sourceId]="(project$ | async)?.customFields?.repository?.repositoryId"
+									[sourceId]="$safeNavigationMigration((project$ | async)?.customFields?.repository?.repositoryId)"
 									[integration]="integration"
 									(onChanged)="selectManualRepository($event)"
 									[selected]="true"
@@ -171,9 +171,9 @@
 								(selectedOption)="onUpdateOption($event)"
 								(selectedPage)="onPageChange($event)"
 								[doEmit]="false"
-								[totalItems]="pagination?.totalItems"
-								[itemsPerPage]="pagination?.itemsPerPage"
-								[activePage]="pagination?.activePage"
+								[totalItems]="$safeNavigationMigration(pagination?.totalItems)"
+								[itemsPerPage]="$safeNavigationMigration(pagination?.itemsPerPage)"
+								[activePage]="$safeNavigationMigration(pagination?.activePage)"
 							></ga-pagination>
 							}
 						</div>

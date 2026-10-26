@@ -109,6 +109,15 @@ export interface IEnvironment {
 	THROTTLE_TRUST_CF_CONNECTING_IP?: boolean;
 
 	/**
+	 * Secret shared with the Ever Teams server (the same value on both sides, at least 32 characters).
+	 * With it, the Ever Teams server forwards the browser's address on its calls to this API
+	 * (`X-Ever-Client-IP`, signed with an HMAC in `X-Ever-Client-IP-Timestamp` /
+	 * `X-Ever-Client-IP-Signature`), and per-client limits (anonymous routes, sign-in attempts) count
+	 * that address instead of the Ever Teams server's. Unset, blank or shorter: the headers are ignored.
+	 */
+	EVER_TEAMS_CLIENT_IP_SECRET?: string;
+
+	/**
 	 * Identifier-scoped brute-force control. Counts consecutive authentication failures per account
 	 * identifier (not per IP), so rotating source addresses does not reset the counter.
 	 */
@@ -150,6 +159,13 @@ export interface IEnvironment {
 	isElectron?: boolean;
 	gauzyUserPath?: string;
 	allowSuperAdminRole?: boolean;
+	/**
+	 * Whether a Super Admin may write the report catalogue (`report`, `report_category`). Those tables have no
+	 * tenant: a row one tenant writes is in every tenant's report menu, and every tenant owner is a Super Admin
+	 * of their own tenant, so authoring is off unless the deployment serves one organisation
+	 * (`REPORT_CATALOGUE_AUTHORING_ENABLED=true`).
+	 */
+	reportCatalogueAuthoring?: boolean;
 	gauzySeedPath?: string;
 	electronResourcesPath?: string;
 

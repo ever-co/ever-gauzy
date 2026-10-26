@@ -1,9 +1,10 @@
-import { HttpStatus, ID, IPagination, PluginSourceType } from '@gauzy/contracts';
+import { HttpStatus, ID, IPagination, PermissionsEnum, PluginSourceType } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	FileStorage,
 	FileStorageFactory,
 	PermissionGuard,
+	Permissions,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe,
@@ -35,6 +36,7 @@ import {
 import { LazyAnyFileInterceptor, PluginOwnerGuard } from '../../core';
 import { PluginVersion } from '../../domain';
 import { FileDTO, IPluginSource, IPluginVersion, PluginVersionDTO, UpdatePluginVersionDTO } from '../../shared';
+import { allowedRelations, ownColumnFilter, VERSION_LIST_RELATIONS } from './public-read-options';
 import { GauzyStorageProvider, UploadedPluginStorage } from '../storage';
 
 @ApiTags('Plugin Versions')
@@ -59,6 +61,11 @@ export class PluginVersionController {
 		@Param('pluginId', UUIDValidationPipe) id: ID,
 		@Query() params: BaseQueryDTO<IPluginVersion>
 	): Promise<IPagination<IPluginVersion>> {
+		// Only the relations the version list shows, filters on the version's own columns (see public-read-options.ts)
+		Object.assign(params, {
+			relations: allowedRelations(params.relations, VERSION_LIST_RELATIONS),
+			where: ownColumnFilter(params.where)
+		});
 		return this.queryBus.execute(new ListPluginVersionsQuery(id, params));
 	}
 
@@ -84,6 +91,7 @@ export class PluginVersionController {
 		})
 	)
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Post()
 	public async createVersion(
 		@Param('pluginId', UUIDValidationPipe) id: ID,
@@ -188,6 +196,7 @@ export class PluginVersionController {
 		})
 	)
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Put(':versionId')
 	public async update(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
@@ -295,6 +304,7 @@ export class PluginVersionController {
 		forbidNonWhitelisted: true
 	})
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Patch(':versionId/status')
 	public async updateStatus(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
@@ -346,6 +356,7 @@ export class PluginVersionController {
 		forbidNonWhitelisted: true
 	})
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	@Delete(':versionId')
 	public async delete(
 		@Param('versionId', UUIDValidationPipe) versionId: ID,

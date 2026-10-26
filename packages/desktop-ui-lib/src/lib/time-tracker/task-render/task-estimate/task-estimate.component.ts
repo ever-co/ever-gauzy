@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, EventEmitter, Input } from '@angular/core';
+import { Component, EventEmitter, Input, ChangeDetectionStrategy } from '@angular/core';
 import { TaskStatusEnum } from '@gauzy/contracts';
 import { NbIconModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -15,6 +15,7 @@ import { TaskEstimateInputComponent } from './task-estimate-input/task-estimate-
 	selector: 'gauzy-task-estimate',
 	templateUrl: './task-estimate.component.html',
 	styleUrls: ['./task-estimate.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [NbIconModule, TaskEstimateInputComponent, AsyncPipe, TranslatePipe, DurationFormatPipe]
 })
 export class TaskEstimateComponent {

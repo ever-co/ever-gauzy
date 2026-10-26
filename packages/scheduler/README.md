@@ -122,6 +122,15 @@ export class TokenCleanupWorker extends QueueWorkerHost {
 }
 ```
 
+A `@QueueWorker(...)` host does not consume while the application is still booting. `@QueueWorker` registers
+the BullMQ worker with `autorun: false`, and `QueueWorkerHost` starts it from `onApplicationBootstrap`, after
+every module's `onModuleInit` and after `CqrsModule` has registered the command, query and event handlers a job
+may dispatch to. Before this, a job already waiting in Redis could be processed against an empty `CommandBus`
+(`CommandHandlerNotFoundException`). Passing `autorun` yourself keeps your value, and `QueueWorkerHost` then
+leaves the start to you: an explicit `autorun: false` stays stopped until you call `this.worker.run()`. A subclass that implements
+`onApplicationBootstrap` must call `super.onApplicationBootstrap()`. Shutdown is unchanged: `@nestjs/bullmq`
+closes every worker on `onApplicationShutdown`.
+
 ## 4) Feature registration
 
 Register queues and providers for the feature.

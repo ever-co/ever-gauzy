@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbCardModule, NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -6,6 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     selector: 'ngx-no-data-message',
     templateUrl: './no-data-message.component.html',
     styleUrls: ['./no-data-message.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbCardModule, NbIconModule, TranslatePipe]
 })
 export class NoDataMessageComponent implements OnInit {

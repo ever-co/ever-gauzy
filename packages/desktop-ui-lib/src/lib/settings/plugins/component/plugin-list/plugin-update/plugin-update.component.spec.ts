@@ -9,6 +9,8 @@ describe('PluginUpdateComponent', () => {
 		}).compileComponents();
 		fixture = TestBed.createComponent(PluginUpdateComponent);
 		component = fixture.componentInstance;
+		// A smart-table cell renderer: the table sets `rowData` before the first render.
+		component.rowData = { updatedAt: new Date('2026-01-05T09:00:00.000Z') };
 		fixture.detectChanges();
 	});
 	it('should create', () => {

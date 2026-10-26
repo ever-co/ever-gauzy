@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, AfterViewInit, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, AfterViewInit, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { IImageAsset } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -8,6 +8,7 @@ import { ImageUploaderBaseComponent } from '../image-uploader/image-uploader-bas
     selector: 'ngx-file-uploader-input',
     templateUrl: './file-uploader-input.component.html',
     styleUrls: ['./file-uploader-input.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class FileUploaderInputComponent extends ImageUploaderBaseComponent implements AfterViewInit, OnInit {
@@ -99,10 +100,15 @@ export class FileUploaderInputComponent extends ImageUploaderBaseComponent imple
 		if (fileUrl) {
 			try {
 				await this._setupImage(fileUrl);
-				this.uploadedImgUrl.emit(fileUrl);
+				// The input may have been cleared or changed while the image loaded: report only the current URL
+				if (this.inputControl.value === fileUrl) {
+					this.uploadedImgUrl.emit(fileUrl);
+				}
 			} catch (error) {
 				console.log('Error while retrieving image from URL', error);
 			}
+		} else {
+			this.uploadedImgUrl.emit(fileUrl);
 		}
 	}
 

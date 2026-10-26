@@ -7,6 +7,30 @@ import { arrayToObject, isNotEmpty } from '@gauzy/utils';
 import { IntegrationTenantService } from '@gauzy/core';
 import { RequestConfigProvider } from './request-config.provider';
 
+/**
+ * The `tenantId` claim of the request's bearer token, read without verifying the token, or undefined.
+ *
+ * This middleware runs before authentication, and it used to take the tenant from the `tenant-id` header or the body:
+ * a signed-in user of one tenant who named another tenant there had that tenant's Gauzy AI and OpenAI keys loaded for
+ * the request, and the job routes then called Gauzy AI with them. The token's own claim names the caller's tenant. It
+ * is only decoded here, as `TenantSettingsMiddleware` does: every route this middleware serves runs after the
+ * AuthGuard has verified the token, so the keys of a tenant named by a forged token never reach a handler.
+ *
+ * @param authorization The `Authorization` header.
+ */
+export function bearerTenantId(authorization: string | undefined): string | undefined {
+	const payload = /^Bearer\s+([^.\s]+)\.([^.\s]+)\.[^\s]*$/i.exec(authorization ?? '')?.[2];
+	if (!payload) {
+		return undefined;
+	}
+	try {
+		const claims = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+		return typeof claims?.tenantId === 'string' && claims.tenantId ? claims.tenantId : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
 @Injectable()
 export class IntegrationAIMiddleware implements NestMiddleware {
 	private logging = false;
@@ -26,8 +50,8 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 	 */
 	async use(request: Request, _response: Response, next: NextFunction) {
 		try {
-			// Extract tenant and organization IDs from request headers and body
-			const tenantId = request.header('tenant-id') || request.body?.tenantId;
+			// The caller's tenant (never a header or the body: see bearerTenantId), and an organization within it
+			const tenantId = bearerTenantId(request.header('authorization'));
 			const organizationId = request.header('organization-id') || request.body?.organizationId;
 
 			// Logging tenant and organization IDs if logging is enabled

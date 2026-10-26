@@ -116,6 +116,99 @@ describe('RoleAuthorizationService', () => {
 		expect(typeOrmRoleRepository.findOne).toHaveBeenCalledTimes(1);
 	});
 
+	describe('concurrent misses of one role', () => {
+		/** A repository whose `findOne` resolves only when the test says so, to hold several callers in the miss. */
+		function buildSlow(role: unknown) {
+			let release: () => void = () => undefined;
+			const gate = new Promise<void>((resolve) => (release = resolve));
+			const { service, typeOrmRoleRepository, cacheManager } = build(role);
+			typeOrmRoleRepository.findOne.mockImplementation(async () => {
+				await gate;
+				return role;
+			});
+			return { service, typeOrmRoleRepository, cacheManager, release: () => release() };
+		}
+
+		it('run the role query once and all receive its state', async () => {
+			const { service, typeOrmRoleRepository, cacheManager, release } = buildSlow({
+				id: 'role-1',
+				name: RolesEnum.EMPLOYEE,
+				rolePermissions: [rolePermission(PermissionsEnum.ORG_TEAM_VIEW)]
+			});
+
+			const pending = Promise.all([1, 2, 3, 4, 5].map(() => service.getAuthorizationState('role-1')));
+			// Every caller has passed the cache miss and is waiting on the one load.
+			await new Promise((resolve) => setImmediate(resolve));
+			expect(typeOrmRoleRepository.findOne).toHaveBeenCalledTimes(1);
+
+			release();
+			const states = await pending;
+
+			expect(states.every((state) => state === states[0])).toBe(true);
+			expect(states[0]?.permissions).toEqual([PermissionsEnum.ORG_TEAM_VIEW]);
+			expect(cacheManager.set).toHaveBeenCalledTimes(1);
+			// The next miss (after the TTL) loads again: nothing is left in flight.
+			expect((service as any).loading.size).toBe(0);
+		});
+
+		it('are independent per role', async () => {
+			const roles: Record<string, unknown> = {
+				'role-1': {
+					id: 'role-1',
+					name: RolesEnum.EMPLOYEE,
+					rolePermissions: [rolePermission(PermissionsEnum.ORG_TEAM_VIEW)]
+				},
+				'role-2': {
+					id: 'role-2',
+					name: RolesEnum.ADMIN,
+					rolePermissions: [rolePermission(PermissionsEnum.ALL_ORG_EDIT)]
+				}
+			};
+			const { service, typeOrmRoleRepository } = build(null);
+			let release: () => void = () => undefined;
+			const gate = new Promise<void>((resolve) => (release = resolve));
+			// Each lookup answers for the role it was asked about, once released.
+			(typeOrmRoleRepository.findOne as jest.Mock).mockImplementation(async ({ where }: any) => {
+				await gate;
+				return roles[where.id];
+			});
+
+			const pending = Promise.all([
+				service.getAuthorizationState('role-1'),
+				service.getAuthorizationState('role-2')
+			]);
+			// Both loads are in flight at once, one per role.
+			await new Promise((resolve) => setImmediate(resolve));
+			expect(typeOrmRoleRepository.findOne).toHaveBeenCalledTimes(2);
+
+			release();
+			const [first, second] = await pending;
+			expect(first?.role).toEqual(expect.objectContaining({ id: 'role-1', name: RolesEnum.EMPLOYEE }));
+			expect(first?.permissions).toEqual([PermissionsEnum.ORG_TEAM_VIEW]);
+			expect(second?.role).toEqual(expect.objectContaining({ id: 'role-2', name: RolesEnum.ADMIN }));
+			expect(second?.permissions).toEqual([PermissionsEnum.ALL_ORG_EDIT]);
+			expect((service as any).loading.size).toBe(0);
+		});
+
+		it('all see the failure of the shared load, and the next call loads again', async () => {
+			const { service, typeOrmRoleRepository } = build(null);
+			typeOrmRoleRepository.findOne
+				.mockRejectedValueOnce(new Error('database is away'))
+				.mockResolvedValueOnce({ id: 'role-1', name: RolesEnum.ADMIN, rolePermissions: [] });
+
+			const results = await Promise.allSettled([
+				service.getAuthorizationState('role-1'),
+				service.getAuthorizationState('role-1')
+			]);
+
+			expect(results.map((result) => result.status)).toEqual(['rejected', 'rejected']);
+			expect((service as any).loading.size).toBe(0);
+			await expect(service.getAuthorizationState('role-1')).resolves.toMatchObject({
+				role: { name: RolesEnum.ADMIN }
+			});
+		});
+	});
+
 	it('still resolves when the cache is unavailable', async () => {
 		const { service } = build({ id: 'role-1', name: RolesEnum.ADMIN, rolePermissions: [] });
 		(service as any).cacheManager = {

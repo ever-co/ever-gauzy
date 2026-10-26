@@ -1,15 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AppsUrlsReportComponent } from './apps-urls-report.component';
+import { AppsUrlsReportModule } from '../apps-urls-report.module';
+import { DateRangePickerBuilderService, DEFAULT_DATE_PICKER_CONFIG } from '@gauzy/ui-core/core';
 describe('AppsUrlsReportComponent', () => {
 	let component: AppsUrlsReportComponent;
 	let fixture: ComponentFixture<AppsUrlsReportComponent>;
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			declarations: [AppsUrlsReportComponent],
+			// Not standalone: import the NgModule that declares it, for the template's real scope.
+			imports: [AppsUrlsReportModule],
 			teardown: { destroyAfterEach: false }
 		}).compileComponents();
 	});
 	beforeEach(() => {
+		// In the app the page's route data sets this before the page renders; the template reads
+		// `(datePickerConfig$ | async).isSaveDatePicker`, which is null until something does.
+		TestBed.inject(DateRangePickerBuilderService).setDatePickerConfig(DEFAULT_DATE_PICKER_CONFIG);
 		fixture = TestBed.createComponent(AppsUrlsReportComponent);
 		component = fixture.componentInstance;
 		fixture.detectChanges();
@@ -18,4 +24,3 @@ describe('AppsUrlsReportComponent', () => {
 		expect(component).toBeTruthy();
 	});
 });
-

@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { sessionManager } from './session-manager';
 import { EventEmitter } from 'node:events';
+import { sessionIdForLog } from '../common/error-utils';
 
 const logger = new Logger('SessionMonitor');
 
@@ -164,7 +165,7 @@ class SessionMonitor extends EventEmitter {
 			this.checkForAlerts(event);
 		}
 
-		logger.debug(`Session event: ${event.type} for session ${event.sessionId}`);
+		logger.debug(`Session event: ${event.type} for session ${sessionIdForLog(event.sessionId)}`);
 	}
 
 	/**
@@ -430,7 +431,7 @@ class SessionMonitor extends EventEmitter {
 			const timeout = setTimeout(() => {
 				this.logAlert({
 					level: 'info',
-					message: `Long-running session detected: ${event.sessionId} (${this.config.alertThresholds.sessionDurationWarning / 1000 / 60} minutes)`,
+					message: `Long-running session detected: ${sessionIdForLog(event.sessionId)} (${this.config.alertThresholds.sessionDurationWarning / 1000 / 60} minutes)`,
 					timestamp: new Date(),
 					sessionId: event.sessionId,
 					userId: event.userId,

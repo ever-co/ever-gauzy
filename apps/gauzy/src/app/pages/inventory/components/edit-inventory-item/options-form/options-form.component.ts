@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef, ChangeDetectionStrategy } from '@angular/core';
 import {
 	IProductOption,
 	IProductOptionGroupTranslatable,
@@ -45,6 +45,7 @@ export interface IProductOptionUI extends IProductOptionTranslatable {
 	selector: 'ngx-options-form',
 	templateUrl: './options-form.component.html',
 	styleUrls: ['./options-form.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class OptionsFormComponent implements OnInit {

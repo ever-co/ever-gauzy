@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Output, ViewChild, computed, input, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Output, ViewChild, computed, input, signal, ChangeDetectionStrategy } from '@angular/core';
 import { SoundshotQuery } from '../../../../+state/soundshot/soundshot.query';
 import { ActionButton, IActionButton } from '../../../models/action-button.model';
 import { ISoundshot, Soundshot } from '../../../models/soundshot.model';
@@ -7,6 +7,7 @@ import { ISoundshot, Soundshot } from '../../../models/soundshot.model';
 	selector: 'plug-soundshot-player',
 	standalone: false,
 	templateUrl: './soundshot-player.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './soundshot-player.component.scss'
 })
 export class SoundshotPlayerComponent {

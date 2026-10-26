@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { filter, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -31,6 +31,7 @@ import {
 	selector: 'ga-proposal-register',
 	templateUrl: './proposal-register.component.html',
 	styleUrls: ['././proposal-register.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProposalRegisterComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {

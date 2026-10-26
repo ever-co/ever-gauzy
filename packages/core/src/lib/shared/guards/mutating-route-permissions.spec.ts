@@ -250,9 +250,12 @@ describe('OrganizationPermissionGuard placement', () => {
 		);
 	}
 
-	it('gates exactly the three manual time-log routes on the organization policy', () => {
+	it('gates exactly the manual time-log routes on the organization policy', () => {
+		// `bulk` is `POST /timesheet/time-log/bulk`: many `addManualTime` bodies in one request. It carries
+		// the single route's guard and grant, and asks the same guard about every item again.
 		expect(organizationGuardedRoutes(TimeLogController)).toEqual({
 			addManualTime: [PermissionsEnum.ALLOW_MANUAL_TIME],
+			bulk: [PermissionsEnum.ALLOW_MANUAL_TIME],
 			updateManualTime: [PermissionsEnum.ALLOW_MODIFY_TIME],
 			deleteTimeLog: [PermissionsEnum.ALLOW_DELETE_TIME]
 		});
@@ -325,6 +328,12 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// AuthController: acts on the session of the caller and nobody else
 	'AuthController.logout',
 	'AuthController.switchWorkspace',
+	// AuthZitadelController (auth-zitadel plugin): Ever ID account links of the caller only: each route requires a signed-in
+	// user (currentUserId() throws 401 without one) and ZitadelLinkService scopes every step to that user
+	'AuthZitadelController.link', // issues a link ticket bound to the caller (zitadel-link.service.ts createTicket)
+	'AuthZitadelController.linkConfirm', // pending link must belong to the caller (pendingFor), plus the e-mail code for same-address accounts
+	'AuthZitadelController.linkPreview', // reads the caller's own pending link (pendingFor rejects another user's key)
+	'AuthZitadelController.unlink', // findOwnLink(id, caller): another user's link id is a 404; the last sign-in method is a 409
 	// CommentController: user-owned: CommentService pins the author to the employee of the caller, and only a
 	// CHANGE_SELECTED_EMPLOYEE holder may edit or delete another employee comment
 	// (comment.service.ts:52, 125)
@@ -335,21 +344,51 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'CommentController.update',
 	// EmailVerificationController: re-sends the confirmation link to the address of the caller
 	'EmailVerificationController.resendConfirmationLink',
-	// EmployeeNotificationController: own notifications: EmployeeNotificationService pins the receiver to the employee of the caller and
-	// the rows are employee scoped (employee-notification.service.ts:126)
+	// EmployeeController: own presence: the employee comes from RequestContext.currentUser().employeeId, never from the
+	// request, and the body only carries isIdle (employee.service.ts updatePresence)
+	'EmployeeController.updatePresence',
+	// EmployeeNotificationController: own notifications. create files the notification as the caller: the sender is
+	// always the caller's employee (a caller with none is refused), and the receiver is the caller's own employee
+	// unless they hold CHANGE_SELECTED_EMPLOYEE, in which case it must be an employee of the notification's
+	// organization (employee-notification.service.ts createForCaller). update never re-addresses a row (sender and
+	// receiver are dropped from the patch); update / softRemove / softRecover pre-read through the receiver-scoped
+	// findOneByIdString, and delete adds the receiver to its criteria, so a non-holder only reaches their own rows
 	'EmployeeNotificationController.create',
 	'EmployeeNotificationController.delete',
 	'EmployeeNotificationController.markAllAsRead',
 	'EmployeeNotificationController.softRecover',
 	'EmployeeNotificationController.softRemove',
 	'EmployeeNotificationController.update',
-	// EmployeeSettingController: own settings: the rows carry employeeId, so TenantAwareCrudService scopes every read and write to
-	// the employee of the caller unless they hold CHANGE_SELECTED_EMPLOYEE (employee-setting.service.ts:30)
+	// EmployeeNotificationSettingController: own settings: the rows carry employeeId, so TenantAwareCrudService
+	// scopes every read and write to the employee of the caller unless they hold CHANGE_SELECTED_EMPLOYEE; a caller
+	// with neither reaches no row and may not create one (employee-notification-setting.service.ts
+	// findConditionsWithoutOwnEmployee, create)
+	'EmployeeNotificationSettingController.create',
+	'EmployeeNotificationSettingController.delete',
+	'EmployeeNotificationSettingController.softRecover',
+	'EmployeeNotificationSettingController.softRemove',
+	'EmployeeNotificationSettingController.update',
+	// EmployeeSettingController: own settings: the rows carry employeeId, so TenantAwareCrudService scopes every
+	// read and write to the employee of the caller unless they hold CHANGE_SELECTED_EMPLOYEE; a caller with neither
+	// reaches no row and may not create one (employee-setting.service.ts findConditionsWithoutOwnEmployee, create)
 	'EmployeeSettingController.create',
 	'EmployeeSettingController.delete',
+	// PATCH /employee-settings/:id/data is the same own-settings write, key by key (every employee saves their own
+	// sidebar pins and widget toggles through it, so a permission would lock them out). It reads the row in the
+	// tenant of the caller and refuses another employee's setting unless they hold ALL_ORG_EDIT or
+	// CHANGE_SELECTED_EMPLOYEE (employee-setting.service.ts:192 assertMayPatch)
+	'EmployeeSettingController.patchData',
 	'EmployeeSettingController.softRecover',
 	'EmployeeSettingController.softRemove',
 	'EmployeeSettingController.update',
+	// EntitySubscriptionController: own subscriptions: the create DTO and input carry no employee, so the subscriber is the
+	// caller; EntitySubscriptionService refuses to change, withdraw, restore or unsubscribe a subscription of another
+	// employee unless the caller is a tenant admin (entity-subscription.service.ts assertCallerMayChange)
+	'EntitySubscriptionController.create',
+	'EntitySubscriptionController.delete',
+	'EntitySubscriptionController.softRecover',
+	'EntitySubscriptionController.softRemove',
+	'EntitySubscriptionController.update',
 	// FavoriteController: user-owned: FavoriteService pins the favorite to the employee of the caller and refuses to delete
 	// one that belongs to somebody else (favorite.service.ts:58, 117)
 	'FavoriteController.create',
@@ -357,9 +396,32 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'FavoriteController.softRecover',
 	'FavoriteController.softRemove',
 	'FavoriteController.update',
+	// KeyResultUpdateController: user-owned progress updates: the author is stamped from the request; KeyResultUpdateService
+	// refuses to change, withdraw, restore or remove an update somebody else wrote unless the caller is a tenant admin, and
+	// the bulk removal removes the caller's own updates only (keyresult-update.service.ts assertCallerMayChange,
+	// deleteByKeyResultId); filing one moves its key result and goal, so only the key result's owner or lead, a
+	// GOALS_EDIT holder or a tenant admin may file it (assertCallerMayReportProgress)
+	'KeyResultUpdateController.create',
+	'KeyResultUpdateController.delete',
+	'KeyResultUpdateController.deleteBulkByKeyResultId',
+	'KeyResultUpdateController.softRecover',
+	'KeyResultUpdateController.softRemove',
+	'KeyResultUpdateController.update',
+	// MentionController: user-owned: MentionService pins the mentioning employee to the caller and refuses to change,
+	// withdraw, restore or remove a mention somebody else wrote unless the caller is a tenant admin
+	// (mention.service.ts assertCallerMayChange)
+	'MentionController.create',
+	'MentionController.delete',
+	'MentionController.softRecover',
+	'MentionController.softRemove',
+	'MentionController.update',
 	// OrganizationVendorController: the shared ga-vendor-select creates a vendor inline from the Expenses dialog, which expense editors
 	// reach without ALL_ORG_EDIT; renaming and deleting a vendor stay behind ALL_ORG_EDIT
 	'OrganizationVendorController.create',
+	// PluginActivationController (registry plugin): own installation: activating and deactivating find the installation
+	// by its id, its plugin and installedById = the employee of the caller, and refuse any other
+	// (activate-plugin-command.handler.ts, deactivate-plugin-command.handler.ts)
+	'PluginActivationController.updateStatus',
 	// ReactionController: user-owned: ReactionService pins the reacting employee to the caller and refuses to update or delete
 	// the reaction of another employee (reaction.service.ts:32, 98, 134)
 	'ReactionController.create',
@@ -367,6 +429,25 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	'ReactionController.softRecover',
 	'ReactionController.softRemove',
 	'ReactionController.update',
+	// SharedEntityController: author-owned: creating a share checks the caller may read what it shares
+	// (shared-entity.access.ts assertCallerMayShare), and the edit, removal, withdrawal and restoration of a share
+	// are refused to anyone but its author or an ALL_ORG_EDIT holder (shared-entity.service.ts assertCallerManages)
+	'SharedEntityController.create',
+	'SharedEntityController.delete',
+	'SharedEntityController.softRecover',
+	'SharedEntityController.softRemove',
+	'SharedEntityController.update',
+	// ReportController: an organization's report menu entry is switched only by its author or a tenant admin, and only a
+	// tenant admin adds a missing one (report-organization.service.ts updateReportMenu)
+	'ReportController.updateReportMenu',
+	// ResourceLinkController: user-owned: ResourceLinkService pins the linking employee to the caller and refuses to change,
+	// withdraw, restore or remove a link somebody else wrote unless the caller is a tenant admin
+	// (resource-link.service.ts assertCallerMayChange)
+	'ResourceLinkController.create',
+	'ResourceLinkController.delete',
+	'ResourceLinkController.softRecover',
+	'ResourceLinkController.softRemove',
+	'ResourceLinkController.update',
 	// TenantController: onboarding: a user without a tenant creates their own and becomes its SUPER_ADMIN
 	// (tenant.service.ts onboardTenant)
 	'TenantController.create',
@@ -374,298 +455,15 @@ const DELIBERATELY_OPEN: ReadonlyArray<string> = Object.freeze([
 	// (user.service.ts:569, 583, 607)
 	'UserController.updatePreferredComponentLayout',
 	'UserController.updatePreferredLanguage',
-	'UserController.updateUiPreferences'
+	'UserController.updateUiPreferences',
+	// WakatimeController (integration-wakatime plugin): own heartbeats: WakatimeService files every heartbeat under the
+	// employee of the caller, never one the body names, and refuses a caller with no employee (wakatime.service.ts
+	// parameterSanitize)
+	'WakatimeController.save',
+	'WakatimeController.saveData'
 ]);
 
-const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([
-	'AppointmentEmployeesController.create',
-	'AppointmentEmployeesController.delete',
-	'AppointmentEmployeesController.softRecover',
-	'AppointmentEmployeesController.softRemove',
-	'AppointmentEmployeesController.update',
-	'AvailabilitySlotsController.create',
-	'AvailabilitySlotsController.createBulkAvailabilitySlot',
-	'AvailabilitySlotsController.delete',
-	'AvailabilitySlotsController.softRecover',
-	'AvailabilitySlotsController.softRemove',
-	'AvailabilitySlotsController.update',
-	'BroadcastController.softRecover',
-	'BroadcastController.softRemove',
-	'CandidateFeedbacksController.delete',
-	'CandidateFeedbacksController.softRecover',
-	'CandidateFeedbacksController.softRemove',
-	'CandidatePersonalQualitiesController.softRecover',
-	'CandidatePersonalQualitiesController.softRemove',
-	'CandidatePersonalQualitiesController.update',
-	'CandidateTechnologiesController.softRecover',
-	'CandidateTechnologiesController.softRemove',
-	'CandidateTechnologiesController.update',
-	'ContactController.create',
-	'ContactController.delete',
-	'ContactController.softRecover',
-	'ContactController.softRemove',
-	'ContactController.update',
-	'EmployeeAppointmentController.create',
-	'EmployeeAppointmentController.delete',
-	'EmployeeAppointmentController.softRecover',
-	'EmployeeAppointmentController.softRemove',
-	'EmployeeAppointmentController.update',
-	'EmployeeLevelController.create',
-	'EmployeeLevelController.delete',
-	'EmployeeLevelController.softRecover',
-	'EmployeeLevelController.softRemove',
-	'EmployeeLevelController.update',
-	'EmployeeNotificationSettingController.create',
-	'EmployeeNotificationSettingController.delete',
-	'EmployeeNotificationSettingController.softRecover',
-	'EmployeeNotificationSettingController.softRemove',
-	'EmployeeNotificationSettingController.update',
-	'EmployeePresetController.deleteEmployeeCriterion',
-	'EmployeePresetController.saveEmployeePreset',
-	'EmployeePresetController.saveUpdateEmployeeCriterion',
-	'EntitySubscriptionController.create',
-	'EntitySubscriptionController.delete',
-	'EntitySubscriptionController.softRecover',
-	'EntitySubscriptionController.softRemove',
-	'EntitySubscriptionController.update',
-	'EquipmentController.create',
-	'EquipmentController.delete',
-	'EquipmentController.softRecover',
-	'EquipmentController.softRemove',
-	'EquipmentController.update',
-	'EquipmentSharingController.create',
-	'EquipmentSharingController.delete',
-	'EquipmentSharingController.softRecover',
-	'EquipmentSharingController.softRemove',
-	'EventTypeController.create',
-	'EventTypeController.delete',
-	'EventTypeController.softRecover',
-	'EventTypeController.softRemove',
-	'EventTypeController.update',
-	'GoalController.create',
-	'GoalController.delete',
-	'GoalController.softRecover',
-	'GoalController.softRemove',
-	'GoalController.update',
-	'GoalGeneralSettingController.create',
-	'GoalGeneralSettingController.delete',
-	'GoalGeneralSettingController.softRecover',
-	'GoalGeneralSettingController.softRemove',
-	'GoalGeneralSettingController.update',
-	'GoalKpiController.create',
-	'GoalKpiController.delete',
-	'GoalKpiController.softRecover',
-	'GoalKpiController.softRemove',
-	'GoalKpiController.update',
-	'GoalKpiTemplateController.create',
-	'GoalKpiTemplateController.delete',
-	'GoalKpiTemplateController.softRecover',
-	'GoalKpiTemplateController.softRemove',
-	'GoalKpiTemplateController.update',
-	'GoalTemplateController.create',
-	'GoalTemplateController.delete',
-	'GoalTemplateController.softRecover',
-	'GoalTemplateController.softRemove',
-	'GoalTemplateController.update',
-	'GoalTimeFrameController.create',
-	'GoalTimeFrameController.delete',
-	'GoalTimeFrameController.softRecover',
-	'GoalTimeFrameController.softRemove',
-	'GoalTimeFrameController.update',
-	'InvoiceEstimateHistoryController.create',
-	'InvoiceEstimateHistoryController.delete',
-	'InvoiceEstimateHistoryController.softRecover',
-	'InvoiceEstimateHistoryController.softRemove',
-	'InvoiceEstimateHistoryController.update',
-	'InvoiceItemController.create',
-	'InvoiceItemController.delete',
-	'InvoiceItemController.softRecover',
-	'InvoiceItemController.softRemove',
-	'InvoiceItemController.update',
-	'IssueTypeController.create',
-	'IssueTypeController.delete',
-	'IssueTypeController.markAsDefault',
-	'IssueTypeController.softRecover',
-	'IssueTypeController.softRemove',
-	'IssueTypeController.update',
-	'JobSearchCategoryController.create',
-	'JobSearchCategoryController.delete',
-	'JobSearchCategoryController.softRecover',
-	'JobSearchCategoryController.softRemove',
-	'JobSearchCategoryController.update',
-	'JobSearchOccupationController.create',
-	'JobSearchOccupationController.delete',
-	'JobSearchOccupationController.softRecover',
-	'JobSearchOccupationController.softRemove',
-	'JobSearchOccupationController.update',
-	'JobSearchPresetController.createJobPreset',
-	'JobSearchPresetController.deleteJobPresetCriterion',
-	'JobSearchPresetController.saveUpdate',
-	'KeyResultController.create',
-	'KeyResultController.createBulkKeyResults',
-	'KeyResultController.delete',
-	'KeyResultController.softRecover',
-	'KeyResultController.softRemove',
-	'KeyResultController.update',
-	'KeyResultUpdateController.create',
-	'KeyResultUpdateController.delete',
-	'KeyResultUpdateController.deleteBulkByKeyResultId',
-	'KeyResultUpdateController.softRecover',
-	'KeyResultUpdateController.softRemove',
-	'KeyResultUpdateController.update',
-	'KeyresultTemplateController.create',
-	'KeyresultTemplateController.delete',
-	'KeyresultTemplateController.softRecover',
-	'KeyresultTemplateController.softRemove',
-	'KeyresultTemplateController.update',
-	'MentionController.create',
-	'MentionController.delete',
-	'MentionController.softRecover',
-	'MentionController.softRemove',
-	'MentionController.update',
-	'OrganizationAwardController.create',
-	'OrganizationAwardController.delete',
-	'OrganizationAwardController.softRecover',
-	'OrganizationAwardController.softRemove',
-	'OrganizationAwardController.update',
-	'OrganizationDocumentController.create',
-	'OrganizationDocumentController.delete',
-	'OrganizationDocumentController.softRecover',
-	'OrganizationDocumentController.softRemove',
-	'OrganizationDocumentController.update',
-	'OrganizationLanguageController.create',
-	'OrganizationLanguageController.delete',
-	'OrganizationLanguageController.softRecover',
-	'OrganizationLanguageController.softRemove',
-	'OrganizationLanguageController.update',
-	'OrganizationRecurringExpenseController.create',
-	'OrganizationRecurringExpenseController.delete',
-	'OrganizationRecurringExpenseController.softRecover',
-	'OrganizationRecurringExpenseController.softRemove',
-	'OrganizationRecurringExpenseController.update',
-	'OrganizationStrategicInitiativeController.softRecover',
-	'OrganizationStrategicInitiativeController.softRemove',
-	'PluginActivationController.updateStatus',
-	'PluginBillingController.create',
-	'PluginBillingController.update',
-	'PluginBillingController.updateStatus',
-	'PluginCategoryController.create',
-	'PluginCategoryController.delete',
-	'PluginCategoryController.partialUpdate',
-	'PluginCategoryController.update',
-	'PluginSecurityController.createVerification',
-	'PluginSourceController.create',
-	'PluginSourceController.delete',
-	'PluginSourceController.updateStatus',
-	'PluginTagController.batchCreate',
-	'PluginTagController.batchDelete',
-	'PluginTagController.create',
-	'PluginTagController.delete',
-	'PluginTagController.update',
-	'PluginTagsController.replacePluginTags',
-	'PluginTenantController.bulkUpdate',
-	'PluginTenantController.create',
-	'PluginTenantController.disable',
-	'PluginTenantController.enable',
-	'PluginTenantController.managePluginTenantUsers',
-	'PluginTenantController.remove',
-	'PluginTenantController.update',
-	'PluginTenantController.updateApproval',
-	'PluginTenantController.updateConfiguration',
-	'PluginUserAssignmentController.assignUsersToPlugin',
-	'PluginUserAssignmentController.unassignUsersFromPlugin',
-	'PluginVersionController.createVersion',
-	'PluginVersionController.delete',
-	'PluginVersionController.update',
-	'PluginVersionController.updateStatus',
-	'ProductController.softRecover',
-	'ProductController.softRemove',
-	'ProductOptionController.create',
-	'ProductOptionController.delete',
-	'ProductOptionController.softRecover',
-	'ProductOptionController.softRemove',
-	'ProductOptionController.update',
-	'ProductVariantController.create',
-	'ProductVariantController.createProductVariants',
-	'ProductVariantController.delete',
-	'ProductVariantController.deleteFeaturedImage',
-	'ProductVariantController.softRecover',
-	'ProductVariantController.softRemove',
-	'ProductVariantController.update',
-	'ProductVariantPriceController.create',
-	'ProductVariantPriceController.delete',
-	'ProductVariantPriceController.softRecover',
-	'ProductVariantPriceController.softRemove',
-	'ProductVariantPriceController.update',
-	'ProductVariantSettingController.create',
-	'ProductVariantSettingController.delete',
-	'ProductVariantSettingController.softRecover',
-	'ProductVariantSettingController.softRemove',
-	'ProductVariantSettingController.update',
-	'ReportController.updateReportMenu',
-	'RequestApprovalController.delete',
-	'RequestApprovalController.softRecover',
-	'RequestApprovalController.softRemove',
-	'ResourceLinkController.create',
-	'ResourceLinkController.delete',
-	'ResourceLinkController.softRecover',
-	'ResourceLinkController.softRemove',
-	'ResourceLinkController.update',
-	'ScreeningTasksController.create',
-	'ScreeningTasksController.delete',
-	'ScreeningTasksController.softRecover',
-	'ScreeningTasksController.softRemove',
-	'ScreeningTasksController.update',
-	'SharedEntityController.create',
-	'SharedEntityController.delete',
-	'SharedEntityController.softRecover',
-	'SharedEntityController.softRemove',
-	'SharedEntityController.update',
-	'SkillController.create',
-	'SkillController.delete',
-	'SkillController.softRecover',
-	'SkillController.softRemove',
-	'SkillController.update',
-	'TagTypeController.delete',
-	'TagTypeController.softRecover',
-	'TagTypeController.softRemove',
-	'TaskPriorityController.create',
-	'TaskPriorityController.delete',
-	'TaskPriorityController.softRecover',
-	'TaskPriorityController.softRemove',
-	'TaskPriorityController.update',
-	'TaskRelatedIssueTypeController.create',
-	'TaskRelatedIssueTypeController.delete',
-	'TaskRelatedIssueTypeController.softRecover',
-	'TaskRelatedIssueTypeController.softRemove',
-	'TaskRelatedIssueTypeController.update',
-	'TaskSizeController.create',
-	'TaskSizeController.delete',
-	'TaskSizeController.softRecover',
-	'TaskSizeController.softRemove',
-	'TaskSizeController.update',
-	'TaskStatusController.create',
-	'TaskStatusController.delete',
-	'TaskStatusController.markAsDefault',
-	'TaskStatusController.reorder',
-	'TaskStatusController.softRecover',
-	'TaskStatusController.softRemove',
-	'TaskStatusController.update',
-	'TaskVersionController.create',
-	'TaskVersionController.delete',
-	'TaskVersionController.softRecover',
-	'TaskVersionController.softRemove',
-	'TaskVersionController.update',
-	'TaskViewController.create',
-	'TaskViewController.delete',
-	'TaskViewController.softRecover',
-	'TaskViewController.softRemove',
-	'TaskViewController.update',
-	'WakatimeController.save',
-	'WakatimeController.saveData',
-	'ZapierWebhookController.createWebhook',
-	'ZapierWebhookController.deleteWebhook'
-]);
+const AWAITING_TRIAGE: ReadonlyArray<string> = Object.freeze([]);
 
 /** Roots the scan walks. */
 const SCANNED_ROOTS = ['packages/core/src', 'packages/plugins'];

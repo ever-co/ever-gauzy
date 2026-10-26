@@ -44,8 +44,8 @@
           <div class="col">
             <ga-stage-form
               formArrayName="stages"
-              [pipelineId]="pipeline?.id"
-              [values]="pipeline?.stages"
+              [pipelineId]="$safeNavigationMigration(pipeline?.id)"
+              [values]="$safeNavigationMigration(pipeline?.stages)"
             ></ga-stage-form>
           </div>
         </div>

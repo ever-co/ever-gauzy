@@ -54,7 +54,7 @@
 					} @else {
 						<ga-card-grid
 							[loading]="loading"
-							[totalItems]="pagination?.totalItems"
+							[totalItems]="$safeNavigationMigration(pagination?.totalItems)"
 							[settings]="settingsSmartTable"
 							[source]="availableTasks$ | async"
 							(onSelectedItem)="selectTask($event)"
@@ -174,15 +174,24 @@
 	</ng-template>
 </ng-template>
 
-<!-- Read-only View. The projected content is gated here (not inside the drawer)
-     so the record renderer is built fresh for each task that is opened. -->
+<!-- Read-only View: a quick look in the drawer; its expand icon opens the task's own full-width page
+     (/pages/tasks/view/:id — bookmarkable and shareable). The projected content is gated here (not inside
+     the drawer) so the record renderer is built fresh for each task that is opened. -->
 <ngx-record-view-drawer
 	[open]="!!viewedTask"
 	[heading]="viewHeadingKey"
-	[subtitle]="viewedTask?.title"
+	[wide]="true"
+	[fullViewLink]="viewedTask ? '/pages/tasks/view/' + viewedTask.id : null"
 	(closed)="closeView()"
 >
 	@if (viewedTask) {
-		<ngx-record-view [record]="viewedTask" [sections]="viewSections"></ngx-record-view>
+		<ngx-record-view
+			[record]="viewedTask"
+			[sections]="viewSections"
+			[placeholder]="'SM_TABLE.NONE' | translate"
+		>
+			<!-- Issue-style header: project / key, title, status. -->
+			<ga-task-view-header recordViewHeader [task]="viewedTask" [status]="viewStatus"></ga-task-view-header>
+		</ngx-record-view>
 	}
 </ngx-record-view-drawer>

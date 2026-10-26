@@ -15,7 +15,7 @@ export class BootstrapModule implements NestModule, OnApplicationShutdown {
 	 * @param consumer - An instance of `MiddlewareConsumer` that allows configuring middleware in the app.
 	 */
 	configure(consumer: MiddlewareConsumer) {
-		consumer.apply().forRoutes('*');
+		consumer.apply().forRoutes('{*splat}');
 	}
 
 	/**

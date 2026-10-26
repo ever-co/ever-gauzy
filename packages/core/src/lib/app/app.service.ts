@@ -57,6 +57,8 @@ export class AppService {
 			if (matches.length === 0) {
 				return;
 			}
+			// Do not change the "INSECURE ACCOUNTS:" prefix or the ", " separator: the desktop apps read this
+			// line to warn their user (DESKTOP_API_PUBLISHED_PASSWORDS_MARKER in @gauzy/desktop-lib).
 			console.error(chalk.bgRed.whiteBright.bold(` INSECURE ACCOUNTS: ${matches.join(', ')} `));
 			console.error(
 				chalk.red(

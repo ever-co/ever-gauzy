@@ -1,0 +1,45 @@
+:host {
+  display: block;
+}
+
+.email-verification-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--color-warning-default);
+  border-radius: 0.375rem;
+  background: var(--color-warning-transparent-300, var(--background-basic-color-2));
+  color: var(--text-basic-color);
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+
+  &.inline {
+    margin: 0.5rem 0 0;
+  }
+}
+
+.notice-text {
+  margin: 0;
+  flex: 1 1 18rem;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.notice-feedback {
+  font-size: 0.75rem;
+
+  &.error {
+    color: var(--color-danger-default, var(--text-basic-color));
+  }
+}

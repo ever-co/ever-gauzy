@@ -73,7 +73,7 @@
 											<ng-container
 												[ngTemplateOutlet]="clientEl"
 												[ngTemplateOutletContext]="{
-													$implicit: paymentRow?.organizationContact
+													$implicit: $safeNavigationMigration(paymentRow?.organizationContact)
 												}"
 											>
 											</ng-container>
@@ -87,7 +87,7 @@
 											@if (paymentIndex == 0) {
 												<ng-container
 													[ngTemplateOutlet]="projectEl"
-													[ngTemplateOutletContext]="{ $implicit: projectRow?.project }"
+													[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(projectRow?.project) }"
 												>
 												</ng-container>
 											}
@@ -113,9 +113,9 @@
 										</div>
 										<div class="responsive-table-content project-name">
 											{{
-												paymentRow?.amount
-													| currency: paymentRow?.currency
-													| position: organization?.currencyPosition
+												$safeNavigationMigration(paymentRow?.amount)
+													| currency: $safeNavigationMigration(paymentRow?.currency)
+													| position: $safeNavigationMigration(organization?.currencyPosition)
 											}}
 										</div>
 									</div>
@@ -131,7 +131,7 @@
 
 <ng-template let-client #groupByClientCardEl>
 	<nb-card-header class="card-title">
-		<ng-container [ngTemplateOutlet]="clientEl" [ngTemplateOutletContext]="{ $implicit: client?.client }">
+		<ng-container [ngTemplateOutlet]="clientEl" [ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(client?.client) }">
 		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
@@ -164,7 +164,7 @@
 												<ng-container
 													class="project-span"
 													[ngTemplateOutlet]="projectEl"
-													[ngTemplateOutletContext]="{ $implicit: projectRow?.project }"
+													[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(projectRow?.project) }"
 												>
 												</ng-container>
 											}
@@ -190,9 +190,9 @@
 										</div>
 										<div class="responsive-table-content project-name">
 											{{
-												paymentRow?.amount
-													| currency: paymentRow?.currency
-													| position: organization?.currencyPosition
+												$safeNavigationMigration(paymentRow?.amount)
+													| currency: $safeNavigationMigration(paymentRow?.currency)
+													| position: $safeNavigationMigration(organization?.currencyPosition)
 											}}
 										</div>
 									</div>
@@ -208,7 +208,7 @@
 
 <ng-template let-project #groupByProjectCardEl>
 	<nb-card-header class="card-title">
-		<ng-container [ngTemplateOutlet]="projectEl" [ngTemplateOutletContext]="{ $implicit: project?.project }">
+		<ng-container [ngTemplateOutlet]="projectEl" [ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(project?.project) }">
 		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
@@ -239,7 +239,7 @@
 												<ng-container
 													[ngTemplateOutlet]="clientEl"
 													[ngTemplateOutletContext]="{
-														$implicit: paymentRow?.organizationContact
+														$implicit: $safeNavigationMigration(paymentRow?.organizationContact)
 													}"
 												>
 												</ng-container>
@@ -266,9 +266,9 @@
 										</div>
 										<div class="responsive-table-content project-name">
 											{{
-												paymentRow?.amount
-													| currency: paymentRow?.currency
-													| position: organization?.currencyPosition
+												$safeNavigationMigration(paymentRow?.amount)
+													| currency: $safeNavigationMigration(paymentRow?.currency)
+													| position: $safeNavigationMigration(organization?.currencyPosition)
 											}}
 										</div>
 									</div>

@@ -49,12 +49,12 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 					(project: IOrganizationProject) => project.members
 				);
 
-				// Map each project employee to IEmployee
-				const projectMembers: IEmployee[] = await Promise.all(
-					projectEmployees
-						.flatMap((projectEmployee: IOrganizationProjectEmployee) => projectEmployee.employee)
-						.map((employee: IEmployee) => employee)
-				);
+				// Each project member's employee, once. By id: the members are loaded without their `employee`
+				// relation, so reading it gave `undefined` entries and the contact was created without members.
+				const employeeIds = [
+					...new Set(projectEmployees.map(({ employeeId }: IOrganizationProjectEmployee) => employeeId))
+				].filter(Boolean);
+				const projectMembers = employeeIds.map((id) => ({ id }) as IEmployee);
 
 				// Assign to input.members, ensuring input.members is initialized
 				input.members = [...(input.members || []), ...projectMembers];

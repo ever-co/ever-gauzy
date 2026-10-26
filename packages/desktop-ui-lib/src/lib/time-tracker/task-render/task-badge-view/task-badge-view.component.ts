@@ -1,5 +1,5 @@
 import { AsyncPipe, TitleCasePipe } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { SafeUrl } from '@angular/platform-browser';
 import { ITaskPriority, ITaskSize, ITaskStatus } from '@gauzy/contracts';
 import { Observable } from 'rxjs';
@@ -13,6 +13,7 @@ export type ITaskBadge = ITaskStatus | ITaskSize | ITaskPriority;
 	selector: 'gauzy-task-badge-view',
 	templateUrl: './task-badge-view.component.html',
 	styleUrls: ['./task-badge-view.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [AsyncPipe, TitleCasePipe, ReplacePipe]
 })
 export class TaskBadgeViewComponent {

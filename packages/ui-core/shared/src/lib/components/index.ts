@@ -14,3 +14,4 @@ export * from './popup/popup.component';
 export * from './search-input/search-input.component';
 export * from './dynamic-tabs/dynamic-tabs.component';
 export * from './dynamic-tabs/dynamic-tabs.module';
+export * from './email-verification-notice/email-verification-notice.component';

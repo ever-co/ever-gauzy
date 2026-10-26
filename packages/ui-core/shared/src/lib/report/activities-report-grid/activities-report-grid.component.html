@@ -1,25 +1,34 @@
-<div class="group-by-wrapper">
-	<div class="label">
-		{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+@if (showGroupBy) {
+	<div class="group-by-wrapper">
+		<div class="label">
+			{{ 'REPORT_PAGE.GROUP_BY' | translate }}
+		</div>
+		<div>
+			<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()" optionsListClass="nb-options">
+				<nb-option value="date">
+					{{ 'REPORT_PAGE.DATE' | translate }}
+				</nb-option>
+				<nb-option value="employee">
+					{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
+				</nb-option>
+				<nb-option value="project">
+					{{ 'REPORT_PAGE.PROJECT' | translate }}
+				</nb-option>
+			</nb-select>
+		</div>
 	</div>
-	<div>
-		<nb-select [(ngModel)]="groupBy" (selectedChange)="groupByChange()" optionsListClass="nb-options">
-			<nb-option value="date">
-				{{ 'REPORT_PAGE.DATE' | translate }}
-			</nb-option>
-			<nb-option value="employee">
-				{{ 'REPORT_PAGE.EMPLOYEE' | translate }}
-			</nb-option>
-			<nb-option value="project">
-				{{ 'REPORT_PAGE.PROJECT' | translate }}
-			</nb-option>
-		</nb-select>
-	</div>
-</div>
+}
 <div class="weekly-logs row-table" [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
 	<ng-template #columnsHeader>
+		<!--
+			`font-weight-bold align-items-center` used to sit on the wrapper. Both
+			were redundant with the stylesheet — `.table-inner-wrapper` already
+			centres its items — and the bootstrap utility carries `!important`,
+			which pinned the column labels at 700 and made the 600 they are set in
+			unreachable from SCSS.
+		-->
 		<div class="columns-header">
-			<div class="table-inner-wrapper font-weight-bold align-items-center">
+			<div class="table-inner-wrapper">
 				@if (groupBy != 'date') {
 					<div class="responsive-table-row employee-column">
 						{{ 'REPORT_PAGE.DATE' | translate }}
@@ -86,7 +95,7 @@
 	<div class="responsive-table-row duration-column">
 		<div class="responsive-table-header">{{ 'REPORT_PAGE.DURATION' | translate }}</div>
 		<div class="responsive-table-content day-col">
-			{{ activityRow?.duration | durationFormat }}
+			{{ $safeNavigationMigration(activityRow?.duration) | durationFormat }}
 		</div>
 	</div>
 	<div class="responsive-table-row progress-bar-column">
@@ -94,7 +103,7 @@
 			<ngx-progress-status
 				[defaultStatus]="'success'"
 				class="report-progress"
-				[percentage]="activityRow?.duration_percentage"
+				[percentage]="$safeNavigationMigration(activityRow?.duration_percentage)"
 			>
 			</ngx-progress-status>
 		</div>
@@ -109,7 +118,7 @@
 			@if (activityIndex === 0) {
 				<ng-container
 					[ngTemplateOutlet]="projectEl"
-					[ngTemplateOutletContext]="{ $implicit: projectRow?.project }"
+					[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(projectRow?.project) }"
 				></ng-container>
 			}
 		</div>
@@ -124,7 +133,7 @@
 			@if (activityIndex === 0) {
 				<ng-container
 					[ngTemplateOutlet]="employeeEl"
-					[ngTemplateOutletContext]="{ $implicit: employeeRow?.employee }"
+					[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(employeeRow?.employee) }"
 				></ng-container>
 			}
 		</div>
@@ -152,7 +161,7 @@
 											<div class="responsive-table-content employee">
 												<ng-container
 													[ngTemplateOutlet]="employeeEl"
-													[ngTemplateOutletContext]="{ $implicit: employeeRow?.employee }"
+													[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(employeeRow?.employee) }"
 												>
 												</ng-container>
 											</div>
@@ -183,7 +192,7 @@
 
 <ng-template let-employee #groupByEmployeeCardEl>
 	<nb-card-header class="card-title">
-		<ng-container [ngTemplateOutlet]="employeeEl" [ngTemplateOutletContext]="{ $implicit: employee?.employee }">
+		<ng-container [ngTemplateOutlet]="employeeEl" [ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(employee?.employee) }">
 		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
@@ -230,7 +239,7 @@
 
 <ng-template let-project #groupByProjectCardEl>
 	<nb-card-header class="card-title">
-		<ng-container [ngTemplateOutlet]="projectEl" [ngTemplateOutletContext]="{ $implicit: project?.project }">
+		<ng-container [ngTemplateOutlet]="projectEl" [ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(project?.project) }">
 		</ng-container>
 	</nb-card-header>
 	<nb-card-body>
@@ -296,10 +305,11 @@
 		<div class="avatar-wrapper-outer">
 			<ngx-avatar
 				class="report-table"
-				[src]="employee?.user?.imageUrl"
-				[name]="employee?.user?.name"
-				[id]="employee?.id"
+				[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
+				[name]="$safeNavigationMigration(employee?.user?.name)"
+				[id]="$safeNavigationMigration(employee?.id)"
 				[employee]="employee"
+				linkTo="view"
 			></ngx-avatar>
 		</div>
 	} @else {

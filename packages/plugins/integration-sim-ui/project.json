@@ -29,7 +29,7 @@
 			"executor": "@nx/jest:jest",
 			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
 			"options": {
-				"jestConfig": "packages/plugins/integration-sim-ui/jest.config.ts",
+				"jestConfig": "packages/plugins/integration-sim-ui/jest.config.cts",
 				"tsConfig": "packages/plugins/integration-sim-ui/tsconfig.spec.json"
 			}
 		},

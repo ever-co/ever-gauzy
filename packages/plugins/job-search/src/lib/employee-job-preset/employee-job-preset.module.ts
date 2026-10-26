@@ -3,7 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GauzyAIModule } from '@gauzy/plugin-integration-ai';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { EmployeeModule } from '@gauzy/core';
+import { EmployeeModule, RolePermissionModule } from '@gauzy/core';
 import { CommandHandlers } from './commands/handlers';
 import { EmployeePresetController } from './employee-preset.controller';
 import { EmployeeUpworkJobsSearchCriterion } from './employee-upwork-jobs-search-criterion.entity';
@@ -36,6 +36,7 @@ export const entities = [
 		TypeOrmModule.forFeature([...entities]),
 		MikroOrmModule.forFeature([...entities]),
 		EmployeeModule,
+		RolePermissionModule,
 		GauzyAIModule.forRoot(),
 		CqrsModule
 	],

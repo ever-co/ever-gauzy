@@ -4,12 +4,13 @@ import {
 	NbAccordionModule,
 	NbButtonModule,
 	NbCardModule,
+	NbIconModule,
 	NbInputModule,
 	NbSpinnerModule,
 	NbTabsetModule,
 	NbToggleModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TenantService } from '@gauzy/ui-core/core';
 import { SharedModule } from '@gauzy/ui-core/shared';
 import { MonitoringComponent } from './monitoring.component';
@@ -27,11 +28,12 @@ const routes: Routes = [
 		NbAccordionModule,
 		NbButtonModule,
 		NbCardModule,
+	NbIconModule,
 		NbInputModule,
 		NbSpinnerModule,
 		NbTabsetModule,
 		NbToggleModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule
 	],
 	declarations: [MonitoringComponent],

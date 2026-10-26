@@ -193,9 +193,9 @@
 
 				<div class="pagination-container">
 					<ga-pagination
-						[totalItems]="pagination?.totalItems"
-						[activePage]="pagination?.activePage"
-						[itemsPerPage]="pagination?.itemsPerPage"
+						[totalItems]="$safeNavigationMigration(pagination?.totalItems)"
+						[activePage]="$safeNavigationMigration(pagination?.activePage)"
+						[itemsPerPage]="$safeNavigationMigration(pagination?.itemsPerPage)"
 						[doEmit]="false"
 						(selectedOption)="onUpdateOption($event)"
 						(selectedPage)="onPageChange($event)"

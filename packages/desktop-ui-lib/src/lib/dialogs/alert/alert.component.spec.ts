@@ -11,6 +11,8 @@ describe('AlertComponent', () => {
 	beforeEach(() => {
 		fixture = TestBed.createComponent(AlertComponent);
 		component = fixture.componentInstance;
+		// Opened by NbDialogService with a `data` context; the template reads it unguarded.
+		component.data = { title: 'Title', message: 'Message', status: 'info' };
 		fixture.detectChanges();
 	});
 	it('should create', () => {

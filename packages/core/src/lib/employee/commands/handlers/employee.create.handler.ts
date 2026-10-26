@@ -1,12 +1,20 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { ComponentLayoutStyleEnum, IEmployee, IUser, LanguagesEnum, RolesEnum } from '@gauzy/contracts';
+import {
+	ComponentLayoutStyleEnum,
+	EmployeeKindEnum,
+	IEmployee,
+	IUser,
+	LanguagesEnum,
+	RolesEnum
+} from '@gauzy/contracts';
 import { environment } from '@gauzy/config';
 import { isEmpty } from '@gauzy/utils';
 import { RequestContext } from './../../../core/context';
 import { AuthService } from '../../../auth/auth.service';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { EmployeeService } from '../../employee.service';
+import { assertNoAgentRestrictionOnCreate } from '../../agent-exit-logout-restriction';
 import { EmployeeCreateCommand } from '../employee.create.command';
 import { EmailService } from './../../../email-send/email.service';
 import { UserCreateCommand } from './../../../user/commands';
@@ -35,6 +43,8 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 	public async execute(command: EmployeeCreateCommand): Promise<IEmployee> {
 		const { input, originUrl = environment.clientBaseUrl } = command;
 		const languageCode = command.languageCode || LanguagesEnum.ENGLISH;
+		// Issue #9873: exit/logout can only be restricted on an existing employee, with an acknowledgement.
+		assertNoAgentRestrictionOnCreate(input);
 		const { organizationId } = input;
 
 		if (isEmpty(input.userId)) {
@@ -60,6 +70,9 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			}
 
 			if (existingUser) {
+				// The account behind an agent is not filed as a person (409).
+				await this._employeeService.assertNotAgentAccount(existingUser.id, tenantId);
+
 				// Check if an employee already exists for this user in this organization
 				try {
 					const existingEmployee = await this._employeeService.findOneByWhereOptions({
@@ -84,6 +97,8 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 				// User already exists in this tenant - create only the employee
 				const employee = await this._employeeService.create({
 					...input,
+					// The employee routes file people; an agent is provisioned only by createAgentEmployee.
+					kind: EmployeeKindEnum.HUMAN,
 					user: existingUser,
 					organizationId,
 					organization: { id: organizationId },
@@ -128,6 +143,7 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			// 4. Create employee for specific user
 			const employee = await this._employeeService.create({
 				...input,
+				kind: EmployeeKindEnum.HUMAN,
 				user,
 				organizationId,
 				organization: { id: organizationId }
@@ -142,6 +158,10 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 			this._emailService.welcomeUser(user, languageCode, organizationId, originUrl);
 			return employee;
 		} else {
+			// The account behind an agent is not filed as a person (409). Checked before the `try` below, which
+			// logs and swallows what fails.
+			await this._employeeService.assertNotAgentAccount(input.userId, RequestContext.currentTenantId());
+
 			try {
 				const user = await this._userService.findOneByIdString(input.userId, {
 					relations: { role: true }
@@ -153,6 +173,7 @@ export class EmployeeCreateHandler implements ICommandHandler<EmployeeCreateComm
 				//1. Create employee for specific user
 				return await this._employeeService.create({
 					...input,
+					kind: EmployeeKindEnum.HUMAN,
 					user,
 					organizationId,
 					organization: { id: organizationId },

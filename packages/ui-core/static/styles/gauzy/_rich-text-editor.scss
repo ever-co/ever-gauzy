@@ -15,13 +15,13 @@
 @mixin rich-text-editor() {
   ga-rich-text-editor {
     .rich-text-editor {
-      border: 1px solid var(--border-basic-color-3);
+      border: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
       border-radius: var(--border-radius);
       background: var(--background-basic-color-1);
 
       &--focused {
         border-color: var(--color-primary-default);
-        box-shadow: 0 0 0 1px var(--color-primary-default);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-default) 18%, transparent);
       }
 
       &--disabled {
@@ -30,9 +30,10 @@
       }
     }
 
+    // The toolbar sits on the editor's own surface, divided by a hairline
     .rich-text-toolbar {
-      background: var(--background-basic-color-2);
-      border-bottom: 1px solid var(--border-basic-color-3);
+      background: transparent;
+      border-bottom: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
     }
 
     .rich-text-editor__footer {
@@ -40,7 +41,7 @@
     }
 
     .ProseMirror {
-      padding: 0.75rem 1rem;
+      padding: 0.875rem 1rem;
       color: var(--text-basic-color);
       caret-color: var(--color-primary-default);
       outline: none;

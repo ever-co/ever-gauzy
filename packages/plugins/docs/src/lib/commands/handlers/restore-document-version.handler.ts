@@ -15,11 +15,15 @@ export class RestoreDocumentVersionHandler implements ICommandHandler<RestoreDoc
 	 * Handles the `RestoreDocumentVersionCommand`: **non-destructive** restore — first snapshots
 	 * the current content as a new version, then copies the target snapshot onto the document.
 	 *
+	 * A restore rewrites the page's name and content, so it needs write access, as every other content mutation does:
+	 * reading the page (an ORGANIZATION page, or a PRIVATE one shared at VIEW or COMMENT) is not enough.
+	 *
 	 * @param command - The command carrying the document and version ids.
 	 * @returns The updated document.
 	 */
 	public async execute(command: RestoreDocumentVersionCommand): Promise<IDocument> {
 		const document = await this.documentService.findOneScoped(command.id);
+		await this.documentService.assertCanWrite(document);
 		const restored = await this.documentVersionService.restoreVersion(document, command.versionId);
 		this.documentService.emitDocumentEvent(restored, 'updated');
 		return restored;

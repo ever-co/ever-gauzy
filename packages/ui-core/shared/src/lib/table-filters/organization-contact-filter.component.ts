@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { IOrganizationContact } from '@gauzy/contracts';
 
@@ -11,6 +11,7 @@ import { IOrganizationContact } from '@gauzy/contracts';
 			(onChanged)="onChange($event)"
 		></ga-contact-select>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class OrganizationContactFilterComponent extends DefaultFilter implements OnChanges {

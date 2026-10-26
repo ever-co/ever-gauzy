@@ -1,4 +1,4 @@
-import { computed, Directive, inject, OnInit, Signal, signal } from '@angular/core';
+import { computed, Directive, inject, OnInit, type Signal, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { combineLatest, Observable, of, Subject } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, startWith, switchMap, tap } from 'rxjs/operators';

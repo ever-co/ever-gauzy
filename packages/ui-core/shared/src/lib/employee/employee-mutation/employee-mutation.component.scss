@@ -1,1 +1,328 @@
-@forward '@shared/_employee-mutation';
+@use 'themes' as *;
+@use 'gauzy/_gauzy-overrides' as *;
+
+:host {
+	display: block;
+
+	// Same filled inputs, selects (tags) and labels as every other Gauzy dialog
+	@include dialog(var(--gauzy-card-1), var(--gauzy-sidebar-background-4));
+}
+
+.employee-dialog {
+	width: 640px;
+	max-width: calc(100vw - 2rem);
+	max-height: calc(100vh - 4rem);
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--gauzy-card-1);
+	border: none;
+	border-radius: nb-theme(border-radius);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	overflow: hidden;
+}
+
+// Header
+.dialog-header {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1.25rem 1.5rem 0;
+	border-bottom: 1px solid var(--gauzy-border-default-color);
+
+	.header-row {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.title {
+		margin: 0;
+		font-size: 1rem;
+		font-weight: 500;
+		line-height: 1.5rem;
+		color: nb-theme(text-basic-color);
+	}
+
+	.subtitle {
+		margin: 0.125rem 0 0;
+		font-size: 0.75rem;
+		line-height: 1rem;
+		color: nb-theme(text-hint-color);
+	}
+
+	.close {
+		margin: -0.25rem -0.5rem 0 0;
+		color: nb-theme(text-hint-color);
+	}
+}
+
+// Step indicator
+.steps {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem 0;
+	border-top: 1px solid var(--gauzy-border-default-color);
+
+	.step {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex-shrink: 0;
+		font-size: 0.75rem;
+		line-height: 1rem;
+		color: nb-theme(text-hint-color);
+	}
+
+	.index {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.25rem;
+		height: 1.25rem;
+		border-radius: 50%;
+		font-size: 0.6875rem;
+		font-weight: 500;
+		box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+
+		nb-icon {
+			font-size: 0.875rem;
+		}
+	}
+
+	.step.active {
+		color: nb-theme(text-basic-color);
+		font-weight: 500;
+
+		.index {
+			color: nb-theme(text-control-color);
+			background-color: nb-theme(color-primary-default);
+			box-shadow: none;
+		}
+	}
+
+	.step.done .index {
+		color: nb-theme(color-primary-default);
+		box-shadow: inset 0 0 0 1px nb-theme(color-primary-default);
+	}
+
+	.connector {
+		flex: 1;
+		height: 1px;
+		min-width: 1rem;
+		background-color: var(--gauzy-border-default-color);
+
+		&.done {
+			background-color: nb-theme(color-primary-default);
+		}
+	}
+
+	// Narrow dialogs: the three labels plus connectors no longer fit, and the
+	// card clips overflow. Keep every step's number, but name only the current
+	// step (ellipsized if it still does not fit).
+	@media (max-width: 479.98px) {
+		gap: 0.5rem;
+
+		.step:not(.active) .name {
+			display: none;
+		}
+
+		.step.active {
+			flex-shrink: 1;
+			min-width: 0;
+
+			.name {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+		}
+
+		.connector {
+			min-width: 0.5rem;
+		}
+	}
+}
+
+// Body — scrolls on its own so header and footer stay visible
+.dialog-body {
+	flex: 1;
+	min-height: 0;
+	padding: 1.25rem 1.5rem;
+	overflow-y: auto;
+}
+
+// The custom indicator above replaces Nebular's step header
+.stepper ::ng-deep {
+	.header {
+		display: none !important;
+	}
+
+	.step-content {
+		padding: 0 !important;
+	}
+}
+
+.queue-note {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 1.25rem;
+	padding: 0.5rem 0.75rem;
+	font-size: 0.75rem;
+	line-height: 1rem;
+	color: nb-theme(text-hint-color);
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-hover-tint);
+
+	nb-icon {
+		flex-shrink: 0;
+		font-size: 1rem;
+		color: nb-theme(color-primary-default);
+	}
+
+	strong {
+		font-weight: 500;
+		color: nb-theme(text-basic-color);
+	}
+}
+
+.panel-heading {
+	margin-bottom: 1rem;
+
+	h6 {
+		margin: 0;
+		font-size: 0.875rem;
+		font-weight: 500;
+		line-height: 1.25rem;
+		color: nb-theme(text-basic-color);
+	}
+
+	p {
+		margin: 0.125rem 0 0;
+		font-size: 0.75rem;
+		line-height: 1rem;
+		color: nb-theme(text-hint-color);
+	}
+}
+
+// Employee list (steps 2 and 3)
+.employee-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border-radius: var(--gauzy-radius-sm);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.employee-row {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.625rem 0.75rem;
+
+	& + & {
+		border-top: 1px solid var(--gauzy-border-default-color);
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+	}
+
+	.identity {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.name,
+	.email {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		line-height: 1rem;
+	}
+
+	.name {
+		font-size: 0.75rem;
+		font-weight: 500;
+		color: nb-theme(text-basic-color);
+	}
+
+	.email {
+		font-size: 0.75rem;
+		color: nb-theme(text-hint-color);
+	}
+
+	.badge {
+		flex-shrink: 0;
+		padding: 0.125rem 0.5rem;
+		font-size: 0.6875rem;
+		line-height: 1rem;
+		color: nb-theme(color-primary-default);
+		border-radius: var(--gauzy-radius-sm);
+		box-shadow: inset 0 0 0 1px nb-theme(color-primary-transparent-default);
+	}
+
+	.remove {
+		flex-shrink: 0;
+		color: nb-theme(text-hint-color);
+	}
+}
+
+.avatar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 50%;
+	overflow: hidden;
+	font-size: 0.6875rem;
+	font-weight: 500;
+	color: nb-theme(text-hint-color);
+	background-color: var(--gauzy-hover-tint);
+
+	img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+}
+
+.empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 2rem 1rem;
+	font-size: 0.75rem;
+	color: nb-theme(text-hint-color);
+	border-radius: var(--gauzy-radius-sm);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+
+	nb-icon {
+		font-size: 1.5rem;
+	}
+}
+
+// Footer
+.dialog-footer {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.75rem 1.5rem;
+	border-top: 1px solid var(--gauzy-border-default-color);
+
+	.spacer {
+		flex: 1;
+	}
+
+	[nbButton] {
+		text-transform: none;
+	}
+}

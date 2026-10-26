@@ -238,6 +238,8 @@ describe('sensitive-relation enforcement on hand-rolled queries', () => {
 		it('lets a listing with an unprotected relation reach its query', async () => {
 			const repository = repositoryFor('Task');
 			const service = new (TaskService as any)(repository, {}, {}, {}, {}, {}, {}, {}, {}, {}) as TaskService;
+			// findTeamTasks returns early for a caller with no employee identity; give this one an employee.
+			jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue('7d3c2b1a-0f9e-4d8c-b7a6-5f4e3d2c1b0a');
 
 			// Reaching the query builder is the proof the check let the request through.
 			await expect(

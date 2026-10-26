@@ -1,0 +1,148 @@
+# The goal general setting's object type.
+#
+# The setting is the organization's own policy for the programme: how many objectives an organization
+# may hold at once, how many key results one objective may carry, whether an employee may open an
+# objective at all, who may own an objective and who may own a key result, and which kinds of key
+# result the organization works with. It is the document every screen in this tree reads before it
+# offers a control, which is why it is a resource of its own rather than a column on the objective.
+#
+# Every member is non-nullable because every column is: a policy that left one of these unstated would
+# be a policy a caller could not apply. The two ownership members are carried as their values rather
+# than declared here as enums — the vocabulary belongs to the domain's own contract — and the four
+# counts and flags are `Int` and `Boolean`, which is what their columns are.
+
+"""
+One organization's policy for the objective programme.
+"""
+type GoalGeneralSetting {
+	id: ID!
+	"How many objectives an organization may hold at once."
+	maxObjectives: Int!
+	"How many key results one objective may carry."
+	maxKeyResults: Int!
+	"Whether an employee may open an objective without an administrator doing it for them."
+	employeeCanCreateObjective: Boolean!
+	"""
+	Who may own an objective. The value set belongs to the domain's own contract, so it is carried as
+	its value rather than declared here as an enum.
+	"""
+	canOwnObjectives: String!
+	"""
+	Who may own a key result. Carried as its value for the same reason `canOwnObjectives` is.
+	"""
+	canOwnKeyResult: String!
+	"Whether the organization tracks key results as measures."
+	krTypeKPI: Boolean!
+	"Whether the organization tracks key results as pieces of work."
+	krTypeTask: Boolean!
+	"""
+	When the policy was withdrawn, or null while it is live. Withdrawing and restoring are delivered
+	routes, and this column is the whole of what they write.
+	"""
+	deletedAt: DateTime
+	isActive: Boolean
+	isArchived: Boolean
+	"The tenant the policy belongs to, stamped from the credential."
+	tenantId: ID
+	"The organization the policy is scoped to."
+	organizationId: ID
+	createdAt: DateTime
+	updatedAt: DateTime
+}
+
+"""
+The boundary of one page of policies.
+"""
+type GoalGeneralSettingEdge {
+	node: GoalGeneralSetting!
+	cursor: String!
+}
+
+"""
+One page of policies, with the total the filters select and the boundary cursors.
+"""
+type GoalGeneralSettingConnection {
+	nodes: [GoalGeneralSetting!]!
+	edges: [GoalGeneralSettingEdge!]!
+	totalCount: Int!
+	pageInfo: PageInfo!
+}
+
+"""
+The fields a policy list may be sorted by.
+"""
+enum GoalGeneralSettingSortField {
+	createdAt
+	updatedAt
+	maxObjectives
+	maxKeyResults
+}
+
+"""
+The order the policies are returned in. At most three keys are accepted.
+"""
+input GoalGeneralSettingSort {
+	field: GoalGeneralSettingSortField!
+	direction: SortDirection!
+}
+
+"""
+The fields a policy list may be narrowed by. Every member is a column of the setting row.
+"""
+input GoalGeneralSettingFilter {
+	id: IDFilter
+	maxObjectives: NumberFilter
+	maxKeyResults: NumberFilter
+	employeeCanCreateObjective: BooleanFilter
+	canOwnObjectives: StringFilter
+	canOwnKeyResult: StringFilter
+	krTypeKPI: BooleanFilter
+	krTypeTask: BooleanFilter
+	organizationId: IDFilter
+	isActive: BooleanFilter
+	isArchived: BooleanFilter
+	createdAt: DateTimeFilter
+	updatedAt: DateTimeFilter
+	and: [GoalGeneralSettingFilter!]
+	or: [GoalGeneralSettingFilter!]
+	not: GoalGeneralSettingFilter
+}
+
+"""
+What a caller states when it files a policy.
+
+The delivered DTO requires the objective ceiling and leaves the rest optional at validation, while
+every one of these columns is non-nullable — so a body that omits one is refused by the store rather
+than by validation, and the members are optional here for the same reason they are optional there. The
+tenant is never a member — the service stamps it from the credential — and `organizationId` is,
+because it is the row's own column and the delivered validation does not strip it.
+"""
+input CreateGoalGeneralSettingInput {
+	maxObjectives: Int!
+	maxKeyResults: Int
+	employeeCanCreateObjective: Boolean
+	canOwnObjectives: String
+	canOwnKeyResult: String
+	krTypeKPI: Boolean
+	krTypeTask: Boolean
+	organizationId: ID
+}
+
+"""
+What a caller states when it changes a policy.
+
+**A member that is absent is left as it is.** The delivered edit is an update-through-create: the
+stated members are merged onto the row the store holds, and an identifier that names a row of another
+tenant is refused by the service rather than overwritten.
+"""
+input UpdateGoalGeneralSettingInput {
+	id: ID!
+	maxObjectives: Int
+	maxKeyResults: Int
+	employeeCanCreateObjective: Boolean
+	canOwnObjectives: String
+	canOwnKeyResult: String
+	krTypeKPI: Boolean
+	krTypeTask: Boolean
+	organizationId: ID
+}

@@ -423,249 +423,387 @@ $default-box-shadow: $control-hairline;
   }
 }
 
+/// Every FullCalendar in the app (appointments, the public booking page, the
+/// candidate interview calendar). A compact, line-based grid: one line per hour,
+/// a fainter dashed one per half hour, soft day dividers, a solid header row,
+/// soft tinted events and nothing above 12px.
+///
+/// `@fullcalendar/angular` puts the `fc` class ON the `<full-calendar>` element,
+/// so the rules hang off `full-calendar.fc` rather than a descendant `.fc`.
+///
+/// Event tints are mixed from `--color-primary-default`: the gauzy themes only
+/// override `color-primary-transparent-100`, so -200 and up are still Nebular's
+/// default blue.
 @mixin full-calendar() {
-  /* Overrides full-calendar */
-  full-calendar {
-    /* Header */
-    div.fc-header-toolbar {
-      .fc-toolbar-chunk {
-        h2.fc-toolbar-title {
-          // The calendar month/week title. 18px was its own size, off the
-          // heading scale in both directions; `text-heading-6-font-size` (1rem)
-          // is the scale step this belongs to. Line box held at its previous
-          // 30px so the toolbar keeps its height.
-          font-size: nb-theme(text-heading-6-font-size);
-          font-weight: 600;
-          line-height: 1.875rem;
-          letter-spacing: 0em;
-          text-align: left;
-        }
+  full-calendar.fc {
+    --calendar-line: var(--gauzy-border-default-color);
+    --calendar-line-soft: var(--gauzy-sidebar-background-4);
+    --calendar-base: var(--card-background-color);
 
-        .btn-group {
-          padding: 4px 0px 3px 0px;
-          box-shadow: 0px 1px 1px 0px rgba(0, 0, 0, 0.1) inset;
-          border-radius: nb-theme(button-rectangle-border-radius);
-
-          .fc-next-button,
-          .fc-prev-button {
-            border-radius: nb-theme(button-rectangle-border-radius);
-            font-size: 12px;
-            padding: 0;
-            background-color: nb-theme(background-primary-color-1);
-            border-color: nb-theme(background-primary-color-1);
-            margin: 0 4px;
-
-            span {
-              padding: 8px 10px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-          }
-
-          .fc-timeGridDay-button,
-          .fc-timeGridWeek-button,
-          .fc-dayGridMonth-button {
-            border-color: var(--gauzy-border-default-color);
-            border-width: 2px;
-            background-color: transparent;
-            color: var(--text-hint-color);
-            padding: 8px 16px;
-            font-style: normal;
-            font-weight: 600;
-            // Same 12px as before, resolved from the caption step of the scale
-            // instead of retyped in px.
-            font-size: nb-theme(text-caption-font-size);
-            line-height: 0.6875rem;
-            border-radius: nb-theme(button-rectangle-border-radius);
-            text-transform: capitalize;
-            margin: 0 4px;
-
-            &.active {
-              background-color: nb-theme(background-primary-color-1);
-              border-color: nb-theme(background-primary-color-1);
-              color: white;
-            }
-          }
-        }
-
-        .fc-next-button,
-        .fc-prev-button {
-          border-radius: nb-theme(button-rectangle-border-radius);
-          font-size: nb-theme(text-caption-font-size);
-          padding: 0;
-          background-color: nb-theme(background-primary-color-1);
-          border-color: nb-theme(background-primary-color-1);
-          margin: 0 4px;
-
-          span {
-            padding: 8px 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-        }
-
-        .fc-today-button {
-          border-color: var(--gauzy-border-default-color);
-          border-width: 2px;
-          background-color: transparent;
-          color: var(--text-hint-color);
-          padding: 8px 24px;
-          font-style: normal;
-          font-weight: 600;
-          font-size: nb-theme(text-caption-font-size);
-          line-height: 0.6875rem;
-          border-radius: nb-theme(button-rectangle-border-radius);
-          text-transform: capitalize;
-        }
-      }
-    }
-
-    .btn-primary:focus {
-      box-shadow: 0 0 0 0.2rem nb-theme(color-primary-transparent-default) !important;
-    }
-
-    /*table*/
-
-    thead .fc-col-header-cell-cushion {
-      font-size: 12px;
-      font-weight: 400;
-      line-height: 15px;
-      letter-spacing: 0em;
-      text-align: left;
-      text-decoration: none;
-      padding: 4px 10px;
-    }
-
-    table {
-      border-spacing: 4px !important;
-      border-collapse: separate !important;
-      border: none !important;
-
-      table {
-        border-spacing: 4px !important;
-        border-collapse: separate !important;
-        border: none !important;
-
-        .fc-col-header {
-          background-color: transparent;
-        }
-
-        th.fc-col-header-cell {
-          border: none;
-          border-radius: nb-theme(border-radius);
-          // Was rgba(white, 0.75) — a near-white block on every column header,
-          // in every theme.
-          background-color: var(--gauzy-sidebar-background-3);
-          padding: 11px 15px 11px 10px;
-        }
-
-        th.fc-timegrid-axis {
-          border: none;
-        }
-
-        .fc .fc-timegrid-divider {
-          padding: 0;
-        }
-
-        // Both were rgba(white, 0.25): every time lane and every day column
-        // rendered as a light-grey block regardless of theme.
-        td.fc-timegrid-slot-lane {
-          background-color: var(--gauzy-sidebar-background-4);
-          border-radius: nb-theme(border-radius);
-        }
-
-        td[role='gridcell'].fc-timegrid-col {
-          background-color: var(--gauzy-sidebar-background-4);
-          border-radius: nb-theme(border-radius);
-        }
-      }
-    }
+    font-size: 0.75rem;
 
     a {
       text-decoration: none;
     }
-  }
 
-  .fc .fc-scrollgrid-section-sticky > * {
-    background: unset !important;
-  }
+    // ── Toolbar ─────────────────────────────────────────────────────────────
+    .fc-header-toolbar {
+      margin: 0 0 0.75rem;
+      padding: 0 0 0.75rem;
+      border-bottom: 1px solid var(--calendar-line);
 
-  table-bordered th,
-  .table-bordered td {
-    border: none;
-  }
+      .fc-toolbar-chunk {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
 
-  .fc .fc-timegrid-divider {
-    display: none;
-  }
+      h2.fc-toolbar-title {
+        margin: 0;
+        font-size: 0.75rem;
+        font-weight: 500;
+        line-height: 1rem;
+        letter-spacing: 0;
+        color: var(--text-basic-color);
+      }
 
-  .fc-daygrid-event-dot {
-    width: 7px !important;
-    height: 7px !important;
-    border-radius: 32px !important;
-    border-width: 2px !important;
-    border-color: nb-theme(background-primary-color-1) !important;
+      .btn {
+        margin: 0;
+        font-size: 0.75rem;
+        line-height: 1rem;
+        text-transform: none;
+        box-shadow: none;
 
-    font-family: 'Font Awesome 7 Free' !important;
-    font-style: normal !important;
-    font-weight: 400 !important;
-    font-size: 7px !important;
-    line-height: 7px !important;
-    /* identical to box height */
+        &:focus {
+          box-shadow: 0 0 0 0.125rem color-mix(in srgb, var(--color-primary-default) 16%, transparent) !important;
+        }
+      }
 
-    display: flex !important;
-    align-items: center !important;
+      // Previous / next: quiet square icon buttons
+      .fc-prev-button,
+      .fc-next-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        color: var(--text-basic-color);
+        background-color: transparent;
+        border: none;
+        border-radius: var(--gauzy-radius-sm);
+        box-shadow: inset 0 0 0 1px var(--calendar-line);
 
-    /* Inside auto layout */
+        &:hover {
+          background-color: var(--gauzy-hover-tint);
+        }
+      }
 
-    flex: none !important;
-    order: 0 !important;
-    flex-grow: 0 !important;
-  }
+      .btn-group:has(.fc-prev-button, .fc-next-button) {
+        gap: 0.25rem;
+      }
 
-  .fc-event {
-    background-color: var(--gauzy-card-3);
-    border-radius: nb-theme(border-radius);
+      // Today: an outlined text button
+      .fc-today-button {
+        height: 2rem;
+        padding: 0 0.75rem;
+        font-weight: 500;
+        color: var(--text-basic-color);
+        background-color: transparent;
+        border: none;
+        border-radius: var(--gauzy-radius-sm);
+        box-shadow: inset 0 0 0 1px var(--calendar-line);
 
-    &.fc-v-event {
-      background-color: nb-theme(gauzy-background-transparent) !important;
-      border-color: nb-theme(gauzy-background-transparent) !important;
+        &:hover {
+          background-color: var(--gauzy-hover-tint);
+        }
+
+        &:disabled {
+          opacity: 0.45;
+        }
+      }
+
+      // View switch (month / week / day): a segmented control
+      .btn-group:has(.fc-dayGridMonth-button, .fc-timeGridWeek-button, .fc-timeGridDay-button) {
+        gap: 0.125rem;
+        padding: 0.125rem;
+        border-radius: var(--gauzy-radius-sm);
+        box-shadow: inset 0 0 0 1px var(--calendar-line);
+      }
+
+      .fc-dayGridMonth-button,
+      .fc-timeGridWeek-button,
+      .fc-timeGridDay-button {
+        padding: 0.375rem 0.75rem;
+        font-weight: 500;
+        color: var(--text-hint-color);
+        background-color: transparent;
+        border: none;
+        border-radius: var(--gauzy-radius-sm);
+
+        &:hover {
+          color: var(--text-basic-color);
+          background-color: var(--gauzy-hover-tint);
+        }
+
+        &.active {
+          color: var(--color-primary-default);
+          background-color: var(--color-primary-transparent-100);
+        }
+      }
     }
-  }
 
-  .fc-day-today .fc-daygrid-day-number {
-    background-color: nb-theme(background-primary-color-1) !important;
-    color: white !important;
-    border-radius: 50%;
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+    // ── Frame and tables ────────────────────────────────────────────────────
+    .fc-view {
+      border-radius: var(--gauzy-radius-sm);
+      box-shadow: inset 0 0 0 1px var(--calendar-line);
+      // `clip`, not `hidden`: rounds the corners without becoming a scroll
+      // container, so the sticky header row keeps sticking
+      overflow: clip;
+    }
 
-  .fc .fc-timegrid-slot-minor {
-    border: unset !important;
-  }
+    table {
+      border-spacing: 0;
+      border-collapse: separate;
+      border: none;
+    }
 
-  .fc-h-event {
-    background-color: nb-theme(background-primary-color-1) !important;
-  }
+    .fc-scrollgrid,
+    .fc-scrollgrid-section > td,
+    .fc-scrollgrid-section > th,
+    .table-bordered th,
+    .table-bordered td {
+      border: none;
+    }
 
-  .fc .fc-timegrid-slot-label,
-  .fc .fc-timegrid-axis-frame,
-  .fc .fc-daygrid-day-frame,
-  .fc fc-timegrid-col-bg > * {
-    // Was rgba(white, 0.5) — the day cells themselves, i.e. the largest area of
-    // the calendar, painted 50 % white in every theme.
-    background-color: var(--gauzy-card-2);
-    border-radius: nb-theme(border-radius);
-  }
+    // ── Day headers: one solid row with a bottom rule ───────────────────────
+    .fc-scrollgrid-section-header > th,
+    .fc-scrollgrid-section-sticky > * {
+      background: var(--calendar-base);
+      border-bottom: 1px solid var(--calendar-line);
+    }
 
-  .fc .fc-daygrid-day.fc-day-today {
-    border-radius: nb-theme(border-radius);
+    th.fc-col-header-cell {
+      padding: 0;
+      background: transparent;
+      border: none;
+      border-left: 1px solid var(--calendar-line-soft);
+    }
+
+    .fc-col-header-cell-cushion {
+      display: block;
+      padding: 0.625rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1rem;
+      text-align: center;
+      color: var(--text-hint-color);
+    }
+
+    th.fc-day-today .fc-col-header-cell-cushion {
+      font-weight: 600;
+      color: var(--color-primary-default);
+    }
+
+    // ── Time grid ───────────────────────────────────────────────────────────
+    .fc-timegrid-slot {
+      height: 1.75rem;
+    }
+
+    td.fc-timegrid-slot-lane {
+      background: transparent;
+      border: none;
+      border-top: 1px solid var(--calendar-line);
+    }
+
+    td.fc-timegrid-slot-lane.fc-timegrid-slot-minor {
+      border-top: 1px dashed var(--calendar-line-soft);
+    }
+
+    td.fc-timegrid-col {
+      background: transparent;
+      border: none;
+      border-left: 1px solid var(--calendar-line-soft);
+    }
+
+    .fc-timegrid-col.fc-day-today,
+    .fc-daygrid-day.fc-day-today {
+      background-color: var(--color-primary-transparent-100);
+    }
+
+    .fc-timegrid-divider {
+      display: none;
+    }
+
+    // All-day row
+    .fc-timegrid .fc-daygrid-body {
+      border-bottom: 1px solid var(--calendar-line);
+    }
+
+    .fc-timegrid .fc-daygrid-day-frame {
+      min-height: 2rem;
+    }
+
+    // ── Time axis: a quiet rail, labels on the hour lines ───────────────────
+    .fc-timegrid-slot-label,
+    .fc-timegrid-axis,
+    .fc-timegrid-axis-frame {
+      background: transparent;
+      border: none;
+    }
+
+    .fc-timegrid-slot-label {
+      vertical-align: top;
+    }
+
+    .fc-timegrid-axis-frame {
+      justify-content: flex-end;
+      align-items: center;
+    }
+
+    .fc-timegrid-slot-label-cushion,
+    .fc-timegrid-axis-cushion {
+      padding: 0 0.625rem 0 0.5rem;
+      font-size: 0.6875rem;
+      font-weight: 500;
+      line-height: 1rem;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      color: var(--text-hint-color);
+    }
+
+    // Centre each label on its hour line; the first one would slide under the
+    // all-day row, so it stays just below the line instead
+    .fc-timegrid-slot-label-cushion {
+      position: relative;
+      top: -0.5rem;
+    }
+
+    .fc-timegrid-slots tr:first-child .fc-timegrid-slot-label-cushion {
+      top: 0.125rem;
+    }
+
+    .fc-timegrid-now-indicator-line {
+      border-color: var(--color-danger-default);
+    }
+
+    // ── Events: soft tinted cards ───────────────────────────────────────────
+    .fc-event {
+      text-decoration: none;
+    }
+
+    // `!important` beats the inline colours set in code (green / grey / light
+    // blue), which the previous global style also overrode: events keep one
+    // consistent tint
+    .fc-v-event,
+    .fc-h-event {
+      background-color: color-mix(in srgb, var(--color-primary-default) 24%, transparent) !important;
+      border: none;
+      border-radius: var(--gauzy-radius-sm);
+      // Outer ring in the card colour separates overlapping events
+      box-shadow:
+        0 0 0 1px var(--calendar-base),
+        inset 0 0 0 1px color-mix(in srgb, var(--color-primary-default) 40%, transparent);
+
+      &:hover {
+        background-color: color-mix(in srgb, var(--color-primary-default) 32%, transparent) !important;
+      }
+
+      .fc-event-main {
+        padding: 0.25rem 0.375rem;
+        color: var(--text-basic-color);
+      }
+    }
+
+    .fc-event-time {
+      font-size: 0.6875rem;
+      font-weight: 500;
+      line-height: 1rem;
+      color: var(--text-hint-color);
+    }
+
+    .fc-event-title {
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1rem;
+      color: var(--text-basic-color);
+    }
+
+    // Timed events in a month cell: a quiet row with a small dot
+    .fc-daygrid-dot-event {
+      gap: 0.375rem;
+      margin: 0 0.25rem 0.125rem;
+      padding: 0.125rem 0.375rem;
+      background-color: transparent;
+      border-radius: var(--gauzy-radius-sm);
+
+      &:hover {
+        background-color: var(--gauzy-hover-tint);
+      }
+
+      .fc-daygrid-event-dot {
+        width: 0.375rem;
+        height: 0.375rem;
+        margin: 0;
+        border: none;
+        border-radius: 50%;
+        background-color: var(--color-primary-default);
+      }
+
+      .fc-event-time {
+        margin: 0;
+        font-weight: 400;
+      }
+
+      .fc-event-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .fc-daygrid-more-link {
+      font-size: 0.75rem;
+      color: var(--text-hint-color);
+    }
+
+    // ── Month view ──────────────────────────────────────────────────────────
+    td.fc-daygrid-day {
+      border: none;
+      border-top: 1px solid var(--calendar-line-soft);
+      border-left: 1px solid var(--calendar-line-soft);
+    }
+
+    .fc-daygrid-day-frame {
+      background: transparent;
+    }
+
+    .fc-dayGridMonth-view .fc-daygrid-day-frame {
+      min-height: 5.5rem;
+    }
+
+    .fc-daygrid-day-number {
+      padding: 0.375rem 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-hint-color);
+    }
+
+    .fc-day-today .fc-daygrid-day-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5rem;
+      height: 1.5rem;
+      margin: 0.25rem;
+      padding: 0;
+      font-weight: 600;
+      color: var(--text-control-color);
+      background-color: var(--color-primary-default);
+      border-radius: 50%;
+    }
+
+    .fc-day-other .fc-daygrid-day-number {
+      opacity: 0.45;
+    }
   }
 }
 

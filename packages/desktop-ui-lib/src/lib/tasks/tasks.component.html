@@ -217,7 +217,7 @@
 		<button (click)="close()" nbButton outline status="basic">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button (click)="save()" [disabled]="form?.invalid" nbButton status="success">
+		<button (click)="save()" [disabled]="$safeNavigationMigration(form?.invalid)" nbButton status="success">
 			{{ 'BUTTONS.SAVE' | translate }}
 			<nb-icon *gauzySpinnerButton="isSaving" [style.display]="'none'"></nb-icon>
 		</button>

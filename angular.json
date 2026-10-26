@@ -6,7 +6,7 @@
 		},
 		"packageManager": "yarn",
 		"analytics": false,
-		"schematicCollections": ["@nstudio/xplat"]
+		"schematicCollections": ["@nx/angular"]
 	},
 	"version": 1,
 	"newProjectRoot": "",

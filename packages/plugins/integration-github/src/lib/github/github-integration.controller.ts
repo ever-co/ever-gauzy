@@ -10,8 +10,9 @@ import {
 } from '@gauzy/core';
 import { OctokitResponse, OctokitService } from '../probot/octokit.service';
 import { GithubIssuesQueryDTO } from './dto';
+import { GithubIntegrationTenantGuard } from './github-integration-tenant.guard';
 
-@UseGuards(TenantPermissionGuard, PermissionGuard)
+@UseGuards(TenantPermissionGuard, PermissionGuard, GithubIntegrationTenantGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
 @Controller('/integration/github/:integrationId')
 export class GitHubIntegrationController {

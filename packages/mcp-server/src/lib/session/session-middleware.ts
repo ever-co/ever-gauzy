@@ -2,8 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import { Logger } from '@nestjs/common';
 import { sessionManager, UserContext, SessionValidationResult } from './session-manager';
 import { rateLimit } from 'express-rate-limit';
+import { minimatch } from 'minimatch';
 import crypto from 'node:crypto';
 import type { CsrfTokenGeneratorRequestUtil } from 'csrf-csrf';
+import { sessionIdForLog } from '../common/error-utils';
 
 const logger = new Logger('SessionMiddleware');
 
@@ -266,7 +268,7 @@ class SessionMiddleware {
 				return req.sessionId || this.getClientIP(req, trustedProxies);
 			},
 			handler: (req: Request, res: Response) => {
-				logger.warn(`Rate limit exceeded for session: ${req.sessionId || 'unknown'} from IP: ${this.getClientIP(req, trustedProxies)}`);
+				logger.warn(`Rate limit exceeded for session: ${sessionIdForLog(req.sessionId)} from IP: ${this.getClientIP(req, trustedProxies)}`);
 				res.status(429).json({
 					error: 'Too Many Requests',
 					message: 'Rate limit exceeded. Please try again later.',
@@ -425,7 +427,7 @@ class SessionMiddleware {
 				// Simple glob pattern matching
 				// Escape special regex characters except *
 				// Use a safe glob matcher instead of dynamic RegExp
-            	return require('minimatch')(path, excludedPath, { nocase: false, dot: true });
+				return minimatch(path, excludedPath, { nocase: false, dot: true });
 			}
 			return path === excludedPath;
 		});

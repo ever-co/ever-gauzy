@@ -8,6 +8,7 @@
   (clear)="select.blur()"
   [(ngModel)]="selectedEmployee"
   [placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_EMPLOYEES' | translate"
+  [ariaLabel]="ariaLabel"
   [addTagText]="'FORM.PLACEHOLDERS.ADD_EMPLOYEE' | translate"
   [searchFn]="searchEmployee"
   bindName="firstName"

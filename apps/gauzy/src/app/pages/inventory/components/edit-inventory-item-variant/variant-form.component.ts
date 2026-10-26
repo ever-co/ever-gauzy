@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { BillingInvoicingPolicyEnum, IProductVariant, IOrganization, IImageAsset } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
@@ -31,6 +31,7 @@ export interface IVariantCreateInput {
 	selector: 'ngx-inventory-variant-form',
 	templateUrl: './variant-form.component.html',
 	styleUrls: ['./variant-form.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class InventoryVariantFormComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

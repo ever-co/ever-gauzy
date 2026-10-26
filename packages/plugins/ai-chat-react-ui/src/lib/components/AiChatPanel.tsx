@@ -16,8 +16,10 @@ import {
 import { useInjector } from '@gauzy/ui-react';
 import { AgentPageBridgeService, ChatSidebarService, Store } from '@gauzy/ui-core/core';
 import {
+	AI_CHAT_KEY_REJECTED_CODE,
 	AI_CHAT_RATE_LIMIT_CODE,
 	AI_CHAT_SETTINGS_PATH,
+	AiChatErrorCode,
 	PermissionsEnum,
 	type IAiChatRateLimitEnvelope,
 	type IAiSpeechErrorBody
@@ -31,7 +33,10 @@ import { ChatInput, DictationError } from './ChatInput';
 import { ChatWelcome } from './ChatWelcome';
 import { ChatHistoryPanel, type IChatHistoryItem } from './ChatHistoryPanel';
 import { DocsAttachPicker } from './DocsAttachPicker';
+import { AttachmentPreview, type IPreviewableAttachment } from './AttachmentPreview';
+import { AttachmentCard } from './AttachmentCard';
 import { buildAttachmentPreamble, type IStagedAttachment } from './attachment-preamble';
+import { useChatTooltips } from '../use-chat-tooltips';
 import { chatTheme } from '../chat-theme';
 import { chatMarkdownCss } from '../chat-markdown-css';
 
@@ -44,6 +49,40 @@ interface IDocsUploadResponseSlice {
 	results?: { document?: { id?: string; name?: string; kind?: string } }[];
 	rejected?: { fileName?: string; message?: string }[];
 	message?: string;
+}
+
+/**
+ * What the error bar renders for a failed turn: a translated line, and — when the fix lives on the
+ * AI Providers page — where to send the user.
+ */
+interface ChatErrorView {
+	message: string;
+	/** Present when the problem is fixed on the AI Providers settings page. */
+	settingsPath?: string;
+	/** The provider at fault, when known — its configure view opens directly (`?provider=`). */
+	providerId?: string;
+}
+
+/**
+ * The structured slice of a failed turn, when the server sent one.
+ *
+ * Both channels arrive as `error.message`: a refused request carries the HTTP body (`DefaultChatTransport`
+ * throws `new Error(await response.text())`), a mid-stream failure carries the error-text envelope.
+ * Anything that does not parse is a plain failure.
+ */
+function parseChatError(error: Error | undefined): { code?: string; providerId?: string; settingsPath?: string } {
+	if (!error?.message) return {};
+	try {
+		const parsed = JSON.parse(error.message);
+		if (!parsed || typeof parsed !== 'object') return {};
+		return {
+			code: typeof parsed.code === 'string' ? parsed.code : undefined,
+			providerId: typeof parsed.providerId === 'string' ? parsed.providerId : undefined,
+			settingsPath: typeof parsed.settingsPath === 'string' ? parsed.settingsPath : undefined
+		};
+	} catch {
+		return {};
+	}
 }
 
 /**
@@ -86,9 +125,26 @@ export function AiChatPanel() {
 	// Attachments staged for the NEXT message: a picked Documents entry carries its id (so
 	// `docs_read` can open exactly that one), an uploaded file only its name (the capture into
 	// Documents is asynchronous, so no id exists yet when the upload returns).
-	const [attachments, setAttachments] = useState<IStagedAttachment[]>([]);
+	// An upload also keeps its picked `File`, so the preview opens instantly from memory.
+	const [attachments, setAttachments] = useState<IPreviewableAttachment[]>([]);
+	/** The attachment open in the preview overlay, if any. */
+	const [previewAttachment, setPreviewAttachment] = useState<IPreviewableAttachment | null>(null);
+	/**
+	 * Files uploaded this session, keyed by the id of the message they were sent with — one entry per
+	 * attachment, in order — so a card on a SENT message can still preview from memory. Cleared with
+	 * the panel; history reloads fall back to the Documents copy.
+	 */
+	const sentFilesRef = useRef(new Map<string, (File | undefined)[]>());
+	/**
+	 * Files of the message just sent, until it shows up in `messages` with its id. Keyed by the
+	 * MESSAGE (and the attachment's position in it), never by file name: without Documents a sent
+	 * file has no id, and two different `report.pdf` files would otherwise overwrite each other.
+	 */
+	const pendingSentFilesRef = useRef<{ text: string; files: (File | undefined)[] } | null>(null);
 	const [showAttachPicker, setShowAttachPicker] = useState(false);
 	const [isAttaching, setIsAttaching] = useState(false);
+	/** Name of the file being uploaded right now — shown as a placeholder card until it lands. */
+	const [uploadingName, setUploadingName] = useState<string | null>(null);
 	const [attachmentError, setAttachmentError] = useState<string | null>(null);
 
 	// Docking / maximize state comes straight from the Angular
@@ -100,6 +156,8 @@ export function AiChatPanel() {
 	// dock, maximize, resize or collapse there, so those controls are dropped.
 	const isDetachedView = useAngularSignal(injector, chatSidebar.detachedView);
 	const rootRef = useRef<HTMLDivElement>(null);
+	// Every control with a `title` shows the app's own tooltip (the sidebar menu's bubble).
+	useChatTooltips(rootRef);
 
 	const authHeaders = useCallback(
 		(): Record<string, string> => ({
@@ -184,17 +242,18 @@ export function AiChatPanel() {
 	);
 
 	/**
-	 * Open the AI Providers settings page from a dictation error, when this user may.
+	 * Open the AI Providers settings page from a dictation or chat error, when this user may.
 	 *
 	 * Passed to the input as `onOpenAiSettings` ONLY when the user holds `AI_CHAT_SETTINGS` — the
 	 * input then shows an "Open AI Providers" action; without it, the message tells the user to ask
 	 * an administrator instead of offering a link that would bounce them to the settings index.
+	 * With a `providerId`, that provider's configure view opens rather than the list.
 	 */
 	const openAiSettings = useCallback(
-		(settingsPath?: string) => {
+		(settingsPath?: string, providerId?: string) => {
 			void injector
 				.get(AgentPageBridgeService)
-				.openPage(settingsPath || AI_CHAT_SETTINGS_PATH)
+				.openPage(settingsPath || AI_CHAT_SETTINGS_PATH, providerId ? { provider: providerId } : undefined)
 				.catch(() => undefined);
 		},
 		[injector]
@@ -324,6 +383,67 @@ export function AiChatPanel() {
 			.catch(() => undefined);
 	};
 
+	/**
+	 * The error bar's content for the current failure.
+	 *
+	 * A failure whose fix lives on the AI Providers page says so with a link — straight to the
+	 * provider at fault when the server named one — rather than "Something went wrong." A user
+	 * without `AI_CHAT_SETTINGS` gets the "ask an administrator" wording instead, since the link
+	 * would only bounce them to the settings index.
+	 */
+	const errorView = useMemo((): ChatErrorView | null => {
+		if (!error) return null;
+		const { code, providerId, settingsPath: sentPath } = parseChatError(error);
+		const settingsPath = sentPath || AI_CHAT_SETTINGS_PATH;
+		const canOpen = canOpenAiSettings();
+		const actionable = (key: string, fallback: string, askAdminKey: string, askAdminFallback: string) =>
+			canOpen
+				? { message: t(key, fallback), settingsPath, providerId }
+				: { message: t(askAdminKey, askAdminFallback) };
+
+		switch (code) {
+			case AiChatErrorCode.NOT_CONFIGURED:
+				return actionable(
+					'AI_ASSISTANT.ERROR_NOT_CONFIGURED',
+					'AI chat needs a configured provider. Add one on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_NOT_CONFIGURED_ASK_ADMIN',
+					'AI chat needs a configured provider — ask an administrator to add one in Settings → AI Providers.'
+				);
+			case AiChatErrorCode.PROVIDER_UNAVAILABLE:
+				return actionable(
+					'AI_ASSISTANT.ERROR_PROVIDER_UNAVAILABLE',
+					'The selected AI provider cannot answer right now. Check it on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_PROVIDER_UNAVAILABLE_ASK_ADMIN',
+					'The selected AI provider cannot answer right now — ask an administrator to check Settings → AI Providers.'
+				);
+			case AiChatErrorCode.MODEL_UNAVAILABLE:
+				return actionable(
+					'AI_ASSISTANT.ERROR_MODEL_UNAVAILABLE',
+					'This model is not available with the current API key. Choose another one on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_MODEL_UNAVAILABLE_ASK_ADMIN',
+					'This model is not available with the current API key — ask an administrator to check Settings → AI Providers.'
+				);
+			case AI_CHAT_KEY_REJECTED_CODE:
+				return actionable(
+					'AI_ASSISTANT.ERROR_KEY_REJECTED',
+					'The AI provider rejected its API key. Update it on the AI Providers settings page.',
+					'AI_ASSISTANT.ERROR_KEY_REJECTED_ASK_ADMIN',
+					'The AI provider rejected its API key — ask an administrator to update it in Settings → AI Providers.'
+				);
+			case AI_CHAT_RATE_LIMIT_CODE:
+				// The full explanation is already in the thread (see handleStreamErrorRef); the bar
+				// only names the problem and carries the link.
+				return actionable(
+					'AI_ASSISTANT.ERROR_RATE_LIMITED',
+					'The AI provider is rate limiting requests.',
+					'AI_ASSISTANT.ERROR_RATE_LIMITED',
+					'The AI provider is rate limiting requests.'
+				);
+			default:
+				return { message: t('AI_ASSISTANT.ERROR', 'Something went wrong.') };
+		}
+	}, [error, t, canOpenAiSettings]);
+
 	const isBusy = status === 'submitted' || status === 'streaming';
 	const hasMessages = messages.length > 0;
 
@@ -345,8 +465,14 @@ export function AiChatPanel() {
 			// what lets it actually open what the user attached. Cleared on send — an attachment
 			// belongs to the message it was attached to, not to the conversation.
 			const preamble = buildAttachmentPreamble(attachments);
+			const messageText = preamble ? `${preamble}\n\n${text}` : text;
+			// In attachment order — the same order the preamble lists them, so a card's index on the
+			// sent message finds its own file.
+			if (attachments.some((attachment) => attachment.file)) {
+				pendingSentFilesRef.current = { text: messageText, files: attachments.map((attachment) => attachment.file) };
+			}
 			setAttachments([]);
-			void sendMessage({ text: preamble ? `${preamble}\n\n${text}` : text });
+			void sendMessage({ text: messageText });
 		},
 		[attachments, input, isBusy, sendMessage]
 	);
@@ -357,6 +483,7 @@ export function AiChatPanel() {
 		conversationIdRef.current = newConversationId();
 		setActiveConversationId(conversationIdRef.current);
 		setShowHistory(false);
+		setPreviewAttachment(null);
 	}, [stop, setMessages]);
 
 	const handleApprovalResponse = useCallback(
@@ -405,6 +532,7 @@ export function AiChatPanel() {
 	const handleAttachFile = useCallback(
 		async (file: File): Promise<void> => {
 			setIsAttaching(true);
+			setUploadingName(file.name);
 			setAttachmentError(null);
 			try {
 				const docsForm = new FormData();
@@ -430,7 +558,8 @@ export function AiChatPanel() {
 							{
 								documentId: document.id,
 								name: document.name || file.name,
-								...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {})
+								...(document.kind === 'PAGE' ? { kind: 'PAGE' as const } : {}),
+								file
 							}
 						]);
 						return;
@@ -482,11 +611,12 @@ export function AiChatPanel() {
 					throw new Error(detail || `Attachment failed (HTTP ${response.status})`);
 				}
 				const saved = (await response.json()) as { name?: string };
-				setAttachments((current) => [...current, { name: saved?.name || file.name }]);
+				setAttachments((current) => [...current, { name: saved?.name || file.name, file }]);
 			} catch (attachError) {
 				setAttachmentError(attachError instanceof Error ? attachError.message : String(attachError));
 			} finally {
 				setIsAttaching(false);
+				setUploadingName(null);
 			}
 		},
 		[authHeaders, attachScope]
@@ -506,6 +636,54 @@ export function AiChatPanel() {
 		]);
 		setShowAttachPicker(false);
 	}, []);
+
+	/**
+	 * Preview an attachment chip — staged or on a sent message. A sent chip is rebuilt from the
+	 * message text, so it gets back the `File` uploaded this session when there is one.
+	 */
+	const handlePreviewAttachment = useCallback((attachment: IPreviewableAttachment) => {
+		setShowAttachPicker(false);
+		setPreviewAttachment(attachment);
+	}, []);
+
+	// Bind the files of the message just sent to its id, once the message appears. Matched by its
+	// exact text, newest first, so a rate-limit notice or an assistant reply landing in between
+	// cannot claim them.
+	useEffect(() => {
+		const pending = pendingSentFilesRef.current;
+		if (!pending) return;
+		for (let index = messages.length - 1; index >= 0; index--) {
+			const message = messages[index];
+			if (message.role !== 'user') continue;
+			const firstText = message.parts.find((part) => part.type === 'text') as { text?: string } | undefined;
+			if (firstText?.text === pending.text) {
+				sentFilesRef.current.set(message.id, pending.files);
+				pendingSentFilesRef.current = null;
+				return;
+			}
+		}
+	}, [messages]);
+
+	/** The `File` uploaded this session for card `index` of a sent message (thumbnail, size, preview). */
+	const resolveAttachmentFile = useCallback(
+		(messageId: string, index: number) => sentFilesRef.current.get(messageId)?.[index],
+		[]
+	);
+
+	/** "Open in Documents" from the preview — the same deep link the attachment chips use. */
+	const handleOpenAttachmentInDocuments = useCallback(
+		(attachment: IStagedAttachment) => {
+			if (!attachment.documentId) return;
+			setPreviewAttachment(null);
+			handleOpenCitation({
+				url:
+					attachment.kind === 'PAGE'
+						? `/pages/documents/page/${attachment.documentId}`
+						: `/pages/documents?id=${attachment.documentId}`
+			});
+		},
+		[handleOpenCitation]
+	);
 
 	const handleCollapse = useCallback(() => chatSidebar.collapse(), [chatSidebar]);
 
@@ -719,6 +897,31 @@ export function AiChatPanel() {
 					border-radius: 4px;
 				}
 
+				/* Attachment cards. The card opens the preview; the corner ✕ shows on hover or
+				   keyboard focus, and always on touch screens, which have no hover. */
+				.gz-ai-chat-attachment-card {
+					transition: border-color ${chatTheme.transitionSpeed} ease, background-color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-attachment-card:hover {
+					border-color: ${chatTheme.inputFocusBorder} !important;
+					background-color: color-mix(in srgb, currentColor 7%, transparent) !important;
+				}
+				.gz-ai-chat-attachment-card:focus-visible,
+				.gz-ai-chat-attachment-remove:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+				}
+				.gz-ai-chat-attachment-remove {
+					opacity: 0;
+					transition: opacity ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-attachment:hover .gz-ai-chat-attachment-remove,
+				.gz-ai-chat-attachment:focus-within .gz-ai-chat-attachment-remove { opacity: 1; }
+				.gz-ai-chat-attachment-remove:hover { color: inherit !important; }
+				@media (hover: none) {
+					.gz-ai-chat-attachment-remove { opacity: 1; }
+				}
+
 				/* Attachment chips on a user message. */
 				.gz-ai-chat-user-chip { transition: background-color ${chatTheme.transitionSpeed} ease; }
 				.gz-ai-chat-user-chip:hover { background-color: rgba(255, 255, 255, 0.26) !important; }
@@ -749,6 +952,37 @@ export function AiChatPanel() {
 				.gz-ai-chat-send-btn:hover:not(:disabled) { transform: scale(1.05); filter: brightness(1.08); }
 				.gz-ai-chat-send-btn:active:not(:disabled) { transform: scale(0.96); }
 				.gz-ai-chat-send-btn:disabled { cursor: default; }
+
+				/* Dictation, in the composer's action row: round Cancel / Done at the trailing edge,
+				   a turning ring on the mic while the take is transcribed. */
+				@keyframes gzRecSpin { to { transform: rotate(360deg); } }
+				.gz-ai-chat-rec-spinner { animation: gzRecSpin 0.8s linear infinite; }
+				.gz-ai-chat-rec-switch { transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-rec-switch:hover { background-color: color-mix(in srgb, currentColor 8%, transparent) !important; color: inherit !important; }
+				.gz-ai-chat-rec-cancel {
+					transition: background-color ${chatTheme.transitionSpeed} ease, color ${chatTheme.transitionSpeed} ease;
+				}
+				.gz-ai-chat-rec-cancel:hover {
+					background-color: color-mix(in srgb, currentColor 10%, transparent) !important;
+					color: inherit !important;
+				}
+				.gz-ai-chat-rec-done { transition: filter ${chatTheme.transitionSpeed} ease, transform ${chatTheme.transitionSpeed} ease; }
+				.gz-ai-chat-rec-done:hover { filter: brightness(1.1); transform: scale(1.05); }
+				.gz-ai-chat-rec-done:active { transform: scale(0.96); }
+				.gz-ai-chat-rec-switch:focus-visible,
+				.gz-ai-chat-rec-cancel:focus-visible,
+				.gz-ai-chat-rec-done:focus-visible {
+					outline: 2px solid rgba(51, 102, 255, 0.6);
+					outline-offset: 2px;
+				}
+				@media (prefers-reduced-motion: reduce) {
+					.gz-ai-chat-rec-spinner { animation-duration: 2s; }
+					.gz-ai-chat-rec-done:hover, .gz-ai-chat-rec-done:active { transform: none; }
+				}
+				/* A narrow panel keeps the switch but drops its label; the title still names it. */
+				@container (max-width: 340px) {
+					.gz-ai-chat-rec-switch .gz-ai-chat-rec-switch-label { display: none; }
+				}
 
 				/* Panel header controls. Inline styles cannot express :hover, so these
 				   buttons gave no feedback at all and read as decoration. */
@@ -805,8 +1039,15 @@ export function AiChatPanel() {
 					strokeLinecap="round"
 					strokeLinejoin="round"
 					style={{ flexShrink: 0 }}
+					aria-hidden="true"
 				>
-					<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+					{/* The robot — the same glyph as the sidebar's AI assistant launcher. */}
+					<path d="M12 8V4H8" />
+					<rect width="16" height="12" x="4" y="8" rx="2" />
+					<path d="M2 14h2" />
+					<path d="M20 14h2" />
+					<path d="M15 13v2" />
+					<path d="M9 13v2" />
 				</svg>
 				<span style={headerTitleStyle}>{t('AI_ASSISTANT.TITLE', 'AI Assistant')}</span>
 
@@ -1051,12 +1292,26 @@ export function AiChatPanel() {
 						onClose={() => setShowAttachPicker(false)}
 					/>
 				)}
+				{/* Attachment preview overlay — same slot as the picker, above the conversation. */}
+				{previewAttachment && (
+					<AttachmentPreview
+						attachment={previewAttachment}
+						apiBaseUrl={environment.API_BASE_URL}
+						headers={authHeaders}
+						scope={attachScope}
+						translate={t}
+						onOpenInDocuments={handleOpenAttachmentInDocuments}
+						onClose={() => setPreviewAttachment(null)}
+					/>
+				)}
 				{hasMessages ? (
 					<ChatMessageList
 						messages={messages}
 						status={status}
 						onApprovalResponse={handleApprovalResponse}
 						onOpenCitation={handleOpenCitation}
+						onPreviewAttachment={handlePreviewAttachment}
+						resolveAttachmentFile={resolveAttachmentFile}
 						translate={t}
 					/>
 				) : (
@@ -1064,8 +1319,9 @@ export function AiChatPanel() {
 				)}
 
 				{/* Error bar */}
-				{error && (
+				{errorView && (
 					<div
+						role="alert"
 						style={{
 							padding: '8px 12px',
 							backgroundColor: 'rgba(255, 61, 113, 0.12)',
@@ -1074,16 +1330,43 @@ export function AiChatPanel() {
 							lineHeight: 1.5,
 							borderTop: `1px solid ${chatTheme.border}`,
 							display: 'flex',
-							alignItems: 'center',
+							alignItems: 'flex-start',
 							gap: 7
 						}}
 					>
 						<span>⚠</span>
-						<span>{t('AI_ASSISTANT.ERROR', 'Something went wrong.')}</span>
+						<span style={{ flex: 1 }}>
+							{errorView.message}
+							{/* The fix lives on the AI Providers page: link to it — to the provider at
+							    fault when known — rather than naming a page the user then has to find. */}
+							{errorView.settingsPath && (
+								<>
+									{' '}
+									<button
+										type="button"
+										onClick={() => openAiSettings(errorView.settingsPath, errorView.providerId)}
+										style={{
+											background: 'none',
+											border: 'none',
+											color: chatTheme.accent,
+											cursor: 'pointer',
+											textDecoration: 'underline',
+											fontSize: chatTheme.fontSizeSmall,
+											fontWeight: chatTheme.fontWeightMedium,
+											fontFamily: 'inherit',
+											padding: 0
+										}}
+									>
+										{t('AI_ASSISTANT.OPEN_AI_SETTINGS', 'Open AI Providers')}
+									</button>
+								</>
+							)}
+						</span>
 						<button
 							type="button"
 							onClick={() => regenerate()}
 							style={{
+								flexShrink: 0,
 								background: 'none',
 								border: 'none',
 								color: chatTheme.accent,
@@ -1103,74 +1386,18 @@ export function AiChatPanel() {
 				{/* Input area. Escape closes the docked panel; in the detached window
 				    it must do nothing — collapse() persists the docked state for the
 				    next page load, and there is no panel here to close. */}
-				{/* Staged attachments — removable until the message is sent. */}
-				{(attachments.length > 0 || attachmentError) && (
+				{/* An attachment that failed — the staged cards themselves live inside the composer. */}
+				{attachmentError && (
 					<div
+						role="alert"
 						style={{
-							display: 'flex',
-							flexWrap: 'wrap',
-							alignItems: 'center',
-							gap: 5,
-							padding: '10px 12px 0'
+							padding: '8px 12px 0',
+							color: chatTheme.red,
+							fontSize: chatTheme.fontSizeSmall,
+							lineHeight: 1.5
 						}}
 					>
-						{attachments.map((attachment, index) => (
-							<span
-								key={`${attachment.documentId ?? attachment.name}-${index}`}
-								style={{
-									display: 'inline-flex',
-									alignItems: 'center',
-									gap: 5,
-									maxWidth: '100%',
-									padding: '4px 9px',
-									borderRadius: 999,
-									border: `1px solid ${chatTheme.border}`,
-									backgroundColor: chatTheme.surface,
-									color: chatTheme.textPrimary,
-									fontSize: chatTheme.fontSizeMessage,
-									fontWeight: chatTheme.fontWeightMedium,
-									lineHeight: 1.5
-								}}
-							>
-								<span aria-hidden="true">📎</span>
-								<span
-									style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-									title={attachment.name}
-								>
-									{attachment.name}
-								</span>
-								<button
-									type="button"
-									onClick={() =>
-										setAttachments((current) =>
-											current.filter((_entry, entryIndex) => entryIndex !== index)
-										)
-									}
-									aria-label={`${t('AI_ASSISTANT.ATTACH_REMOVE', 'Remove attachment')}: ${attachment.name}`}
-									style={{
-										background: 'none',
-										border: 'none',
-										color: chatTheme.textSecondary,
-										cursor: 'pointer',
-										padding: 0,
-										lineHeight: 1
-									}}
-								>
-									×
-								</button>
-							</span>
-						))}
-						{attachmentError && (
-							<span
-								style={{
-									color: chatTheme.red,
-									fontSize: chatTheme.fontSizeSmall,
-									lineHeight: 1.5
-								}}
-							>
-								{attachmentError}
-							</span>
-						)}
+						{attachmentError}
 					</div>
 				)}
 
@@ -1190,6 +1417,36 @@ export function AiChatPanel() {
 						setShowAttachPicker(true);
 					}}
 					isAttaching={isAttaching}
+					attachmentsSlot={
+						attachments.length > 0 || uploadingName ? (
+							<div
+								style={{
+									display: 'flex',
+									flexWrap: 'wrap',
+									gap: 8,
+									// Room for the corner ✕, which sits outside each card.
+									padding: '6px 6px 4px 2px'
+								}}
+							>
+								{attachments.map((attachment, index) => (
+									<AttachmentCard
+										key={`${attachment.documentId ?? attachment.name}-${index}`}
+										attachment={attachment}
+										translate={t}
+										onOpen={() => handlePreviewAttachment(attachment)}
+										onRemove={() =>
+											setAttachments((current) =>
+												current.filter((_entry, entryIndex) => entryIndex !== index)
+											)
+										}
+									/>
+								))}
+								{uploadingName && (
+									<AttachmentCard attachment={{ name: uploadingName }} pending translate={t} />
+								)}
+							</div>
+						) : null
+					}
 					composingFor={activeConversationId}
 				/>
 			</div>

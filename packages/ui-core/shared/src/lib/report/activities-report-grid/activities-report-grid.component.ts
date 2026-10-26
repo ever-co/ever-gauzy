@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import {
 	IGetTimeLogReportInput,
 	IReportDayData,
@@ -20,12 +20,36 @@ import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/ga
 	selector: 'ga-activities-report-grid',
 	templateUrl: './activities-report-grid.component.html',
 	styleUrls: ['./activities-report-grid.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ActivitiesReportGridComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {
 	dailyData: IReportDayData[] = [];
 	loading: boolean;
-	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
+
+	/**
+	 * Whether this grid draws its own Group By control.
+	 *
+	 * The Apps & URLs page turns it off and projects the same control into the
+	 * page's filter row instead, so Group sits on one line with Source, Activity
+	 * Level and Log Type rather than on a line of its own underneath them.
+	 */
+	@Input() showGroupBy: boolean = true;
+
+	private _groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
+	get groupBy(): ReportGroupByFilter {
+		return this._groupBy;
+	}
+
+	/**
+	 * Settable from outside so the control can live in the page header, and still
+	 * bound with `[(ngModel)]` by this component's own select when it draws one —
+	 * a getter/setter pair serves both.
+	 */
+	@Input() set groupBy(value: ReportGroupByFilter) {
+		this._groupBy = value || ReportGroupFilterEnum.date;
+		this.subject$.next(true);
+	}
 
 	private _filters: ITimeLogFilters;
 	get filters(): ITimeLogFilters {

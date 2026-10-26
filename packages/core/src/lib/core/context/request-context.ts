@@ -3,14 +3,19 @@
 // Copyright (c) 2018 Sumanth Chinthagunta
 
 import { ID, IRole, IUser, LanguagesEnum, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
-import { environment } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { trace } from '@opentelemetry/api';
 import { Request, Response } from 'express';
 import { CLS_ID, ClsService } from 'nestjs-cls';
 import { ExtractJwt } from 'passport-jwt';
 import { v4 as uuidv4 } from 'uuid';
-import { resolveThrottlerTracker, UNRESOLVED_THROTTLER_TRACKER } from '../../throttler/tracker';
+import { narrowRolesToOAuthAppScopes, oauthAppScopesOf } from '../../auth/oauth-app-scope';
+import {
+	resolveThrottlerTracker,
+	throttlerTrackerOptions,
+	UNRESOLVED_THROTTLER_TRACKER
+} from '../../throttler/tracker';
 import { IAuthenticatedUser, SerializedRequestContext } from './types';
 
 export class RequestContext {
@@ -98,12 +103,79 @@ export class RequestContext {
 	}
 
 	/**
+	 * The id an operator quotes when a caller reports a failure.
+	 *
+	 * Tracing deployments already have a trace id, and it is the better answer there because it
+	 * joins this request to every span it produced. Everything else has the correlation id: the
+	 * middleware puts `x-correlation-id` — or a generated one — into the context for every request,
+	 * and the log lines for that request carry it. Either way the value returned here is the one
+	 * that appears in the log, which is the whole point: a support ticket naming this id must lead
+	 * to a log record.
+	 *
+	 * No new state is introduced. When neither exists — a script, a unit test, a background job
+	 * that never entered a request — the answer is `undefined` and the envelope renders an empty
+	 * string rather than inventing an id that maps to nothing.
+	 *
+	 * @returns The active trace id, the correlation id, or undefined.
+	 */
+	public static currentTraceId(): string | undefined {
+		const span = trace.getActiveSpan();
+		const traceId = span?.spanContext().traceId;
+		return traceId ?? RequestContext.getContextId() ?? undefined;
+	}
+
+	/**
 	 * Sets the ClsService instance to be used by RequestContext.
 	 *
 	 * @param service - The ClsService instance to set.
 	 */
 	static setClsService(service: ClsService) {
 		RequestContext.clsService = service;
+	}
+
+	/**
+	 * Runs work inside a request context of its own, for an operation `RequestContextMiddleware` never
+	 * sees.
+	 *
+	 * The middleware is Express middleware, so it opens the store for an HTTP request and for nothing
+	 * else. An operation on the GraphQL subscription socket arrives in a WebSocket message instead, and
+	 * without a store of its own every accessor on this class answered as if nobody were signed in:
+	 * `currentTenantId()` was null, so `TenantPermissionGuard` refused every subscription, and the filter
+	 * a subscription scopes its events with compared each event's tenant with null.
+	 *
+	 * This opens the store the middleware opens and puts a context built from `req` in it, under the
+	 * key the middleware uses. The store is always a **fresh** one (`ifNested: 'override'`): the default
+	 * would copy an enclosing store's values into it, and an operation must never start out holding a
+	 * context it did not build. The request is held by reference, which is what lets the credential
+	 * through — the guard that authenticates the operation attaches the user to `req`, and every
+	 * accessor here reads the user from there, exactly as on HTTP.
+	 *
+	 * The store lives as long as the work and whatever continues from it, and no longer: code that
+	 * runs after `callback` has returned, outside anything it started, sees no context at all.
+	 *
+	 * Without a CLS service — a script, or a unit test that never booted the application — the work
+	 * runs as it did before, with no context, rather than failing.
+	 *
+	 * @param req - The request the operation is authenticated and scoped from.
+	 * @param callback - The work to run inside the context.
+	 * @param options - The context id (the correlation id); a random one is generated when absent.
+	 * @returns Whatever `callback` returns.
+	 */
+	static runWithRequest<T>(req: Request, callback: () => T, options: { id?: ID } = {}): T {
+		const clsService = RequestContext.clsService;
+
+		if (!clsService) {
+			return callback();
+		}
+
+		return clsService.run({ ifNested: 'override' }, () => {
+			// The constructor stores the context id in this same store, so the correlation id of the
+			// operation is readable through `getContextId()` as it is on HTTP.
+			const context = new RequestContext({ id: options.id, req });
+			clsService.set(RequestContext.name, context);
+
+			return callback();
+		});
 	}
 
 	/**
@@ -258,6 +330,20 @@ export class RequestContext {
 	static currentPermissions(): PermissionsEnum[] {
 		const user: IAuthenticatedUser | null = RequestContext.currentUser();
 		return Array.isArray(user?.permissions) ? user.permissions : [];
+	}
+
+	/**
+	 * The scopes the user approved for the third-party OAuth app whose token authenticated this request.
+	 *
+	 * `JwtStrategy` records them on `request.user` for a token minted by the OAuth-app code exchange (unless
+	 * `OAUTH_APP_TOKEN_SCOPE_ENFORCEMENT=false`); the request is then held to them: its permissions are the role's
+	 * intersected with what the scopes allow, and role checks refuse (see `auth/oauth-app-scope.ts`).
+	 *
+	 * @returns The approved scopes (possibly none), or `null` for every other caller: a first-party session, a token
+	 * issued before scopes were recorded, an API key, no caller at all.
+	 */
+	static currentOAuthAppScopes(): string[] | null {
+		return oauthAppScopesOf(RequestContext.currentUser());
 	}
 
 	/**
@@ -449,7 +535,12 @@ export class RequestContext {
 		// OrganizationPermissionGuard grant on the strength of it — until that token expired.
 		const role: RolesEnum | null = RequestContext.currentRoleName();
 
-		if (role && roles.includes(role)) {
+		// A third-party OAuth-app token acts with the user's role only where an approved scope explicitly allows that
+		// role (none does today): it never reaches a `@Roles(...)` route, a SUPER_ADMIN or tenant-admin exemption.
+		const oauthAppScopes = RequestContext.currentOAuthAppScopes();
+		const accepted = oauthAppScopes === null ? roles : narrowRolesToOAuthAppScopes(roles, oauthAppScopes);
+
+		if (role && accepted.includes(role)) {
 			return true;
 		}
 
@@ -465,9 +556,10 @@ export class RequestContext {
 	 * 🛑 This used to return the LEFTMOST `X-Forwarded-For` entry — the one the client itself writes —
 	 * so the address recorded in an access token was whatever the caller claimed it was, on every
 	 * deployment shape (GHSA-86mw-2crg-vmhc). It now resolves the client the same way the rate limiter
-	 * does: `CF-Connecting-IP` only where the deployment declares it is behind Cloudflare, otherwise
-	 * Express's `req.ip`, which honours the operator's `TRUST_PROXY` hop count. An address that cannot
-	 * be attributed falls back to the socket peer, which no header can move.
+	 * does: the browser address the Ever Teams server forwards when its HMAC proof verifies
+	 * (`EVER_TEAMS_CLIENT_IP_SECRET`), then `CF-Connecting-IP` only where the deployment declares it is
+	 * behind Cloudflare, otherwise Express's `req.ip`, which honours the operator's `TRUST_PROXY` hop
+	 * count. An address that cannot be attributed falls back to the socket peer, which no header can move.
 	 *
 	 * Note the resolution buckets IPv6 by /64 (see `normalizeTrackerIp`), so an IPv6 client is recorded
 	 * as its prefix rather than its exact address. This value is informational — it is written into the
@@ -479,9 +571,7 @@ export class RequestContext {
 		const requestContext = RequestContext.currentRequestContext();
 		if (requestContext) {
 			const req = requestContext._req;
-			const tracker = resolveThrottlerTracker(req as unknown as Record<string, any>, {
-				trustCloudflareConnectingIp: environment.THROTTLE_TRUST_CF_CONNECTING_IP === true
-			});
+			const tracker = resolveThrottlerTracker(req as unknown as Record<string, any>, throttlerTrackerOptions());
 
 			if (tracker !== UNRESOLVED_THROTTLER_TRACKER) {
 				return tracker;

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, NgZone, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, NgZone, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { transition, trigger, style, animate } from '@angular/animations';
 import { ElectronService } from '../electron/services';
 import { SafeUrl } from '@angular/platform-browser';
@@ -25,6 +25,7 @@ export const fadeInOutAnimation = trigger('fadeInOut', [
 	templateUrl: './image-viewer.component.html',
 	styleUrls: ['./image-viewer.component.scss'],
 	animations: [fadeInOutAnimation],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [NbLayoutModule, NbButtonModule, NbIconModule, NbSpinnerModule, NgTemplateOutlet, AsyncPipe, DateTimePipe]
 })
 export class ImageViewerComponent implements OnInit, OnDestroy {

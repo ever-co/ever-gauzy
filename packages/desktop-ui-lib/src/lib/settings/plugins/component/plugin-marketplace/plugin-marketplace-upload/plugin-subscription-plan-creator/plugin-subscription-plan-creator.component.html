@@ -267,10 +267,10 @@
 							<div class="preview-value">
 								<span class="price-text">
 									{{
-										formatCurrency(planGroup.get('price')?.value, planGroup.get('currency')?.value)
+										formatCurrency($safeNavigationMigration(planGroup.get('price')?.value), $safeNavigationMigration(planGroup.get('currency')?.value))
 									}}
 									<span class="period-text"
-										>/ {{ formatBillingPeriod(planGroup.get('billingPeriod')?.value) }}</span
+										>/ {{ formatBillingPeriod($safeNavigationMigration(planGroup.get('billingPeriod')?.value)) }}</span
 									>
 								</span>
 							</div>

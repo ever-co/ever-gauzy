@@ -33,3 +33,21 @@
 	</header>
 	<div class="legal-doc__body" [innerHtml]="cookie_policy"></div>
 </section>
+
+<section class="dpia__support-pack" *ngIf="showDpia">
+	<header class="legal-doc__header" *ngIf="dpia">
+		<h1 class="legal-doc__title">{{ dpia.title }}</h1>
+		<p class="legal-doc__meta">
+			<span class="legal-doc__product">{{ dpia.productName }}</span>
+			<span class="legal-doc__separator" aria-hidden="true">&middot;</span>
+			<span class="legal-doc__version">
+				{{ 'LEGAL.DOCUMENT_VERSION' | translate: { version: dpia.version } }}
+			</span>
+			<span class="legal-doc__separator" aria-hidden="true">&middot;</span>
+			<span class="legal-doc__effective-date">
+				{{ 'LEGAL.DOCUMENT_EFFECTIVE_DATE' | translate: { date: dpia.effectiveDate } }}
+			</span>
+		</p>
+	</header>
+	<div class="legal-doc__body" [innerHtml]="dpia_policy"></div>
+</section>

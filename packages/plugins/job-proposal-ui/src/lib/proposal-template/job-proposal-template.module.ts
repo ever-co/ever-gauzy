@@ -1,6 +1,6 @@
 import { inject, NgModule } from '@angular/core';
 import { ROUTES, RouterModule } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	applyDeclarativeRegistrations,
 	IOnPluginUiBootstrap,
@@ -12,7 +12,6 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { LoggerService, NavMenuBuilderService, PageRouteRegistryService, Store } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
-	DialogsModule,
 	EmployeeMultiSelectModule,
 	NebularModule,
 	RecordViewModule,
@@ -30,12 +29,11 @@ import { ProposalTemplateFormComponent } from './components/proposal-template-fo
 		RouterModule.forChild([]),
 		NebularModule,
 		RichTextEditorModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SharedModule,
 		SmartDataViewLayoutModule,
 		StatusBadgeModule,
 		EmployeeMultiSelectModule,
-		DialogsModule,
 		RecordViewModule
 	],
 	providers: [

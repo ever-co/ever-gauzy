@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { combineLatest, Subject } from 'rxjs';
@@ -9,6 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
 	IProposal,
+	BaseEntityEnum,
 	ComponentLayoutStyleEnum,
 	IOrganization,
 	IProposalViewModel,
@@ -52,9 +53,12 @@ import {
 	selector: 'ga-proposal-list',
 	templateUrl: './proposal.component.html',
 	styleUrls: ['./proposal.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class ProposalComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
+	/** The favorite toggle binds the enum member: the library compiles its templates strictly. */
+	protected readonly BaseEntityEnum = BaseEntityEnum;
 	public smartTableSettings: any;
 	public selectedEmployeeId: ID | null;
 	public selectedDateRange: IDateRangePicker;
@@ -502,6 +506,7 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 					}),
 					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 						instance.value = cell.getValue();
+						instance.linkTo = 'view';
 					}
 				},
 				statusBadge: {

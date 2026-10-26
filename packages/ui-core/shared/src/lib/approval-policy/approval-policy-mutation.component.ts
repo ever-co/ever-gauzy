@@ -1,4 +1,4 @@
-import { OnInit, Component, Input, ViewChild } from '@angular/core';
+import { OnInit, Component, Input, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators, FormGroupDirective } from '@angular/forms';
 import { IApprovalPolicy, IApprovalPolicyCreateInput, IOrganization } from '@gauzy/contracts';
 import { NbDialogRef } from '@nebular/theme';
@@ -15,6 +15,7 @@ import { FormHelpers } from '../forms/helpers';
     selector: 'ngx-approval-policy-mutation',
     templateUrl: './approval-policy-mutation.component.html',
     styleUrls: ['./approval-policy-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ApprovalPolicyMutationComponent extends TranslationBaseComponent implements OnInit {

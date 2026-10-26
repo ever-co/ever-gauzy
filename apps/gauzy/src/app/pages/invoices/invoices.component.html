@@ -313,7 +313,7 @@
 															@if (currentUser?.imageUrl) {
 																<img [src]="currentUser.imageUrl" alt="" />
 															} @else {
-																{{ authorInitials(currentUser?.name) }}
+																{{ authorInitials($safeNavigationMigration(currentUser?.name)) }}
 															}
 														</span>
 														<div class="comment-form-fields">
@@ -402,7 +402,7 @@
 																	@if (history.user?.imageUrl) {
 																		<img [src]="history.user.imageUrl" alt="" />
 																	} @else {
-																		{{ authorInitials(history.user?.name) }}
+																		{{ authorInitials($safeNavigationMigration(history.user?.name)) }}
 																	}
 																</span>
 																<div class="comment-body">
@@ -491,7 +491,7 @@
 			<div class="grid">
 				<ga-card-grid
 					[loading]="loading"
-					[totalItems]="pagination?.totalItems"
+					[totalItems]="$safeNavigationMigration(pagination?.totalItems)"
 					[settings]="settingsSmartTable"
 					[source]="invoices"
 					(onSelectedItem)="selectInvoice($event)"
@@ -504,6 +504,17 @@
 
 <ng-template #actionButtons>
 	<div class="btn-group actions">
+		<!-- Favorite the selected invoice / estimate: its sidebar entry opens its view page. -->
+		@if (selectedInvoice?.id) {
+			<ngx-favorite-toggle
+				[entityType]="'Invoice'"
+				[entityId]="selectedInvoice.id"
+				[entityName]="'#' + selectedInvoice.invoiceNumber"
+				size="small"
+				status="basic"
+				spacing="list"
+			></ngx-favorite-toggle>
+		}
 		<ng-template ngxPermissionsOnly="INVOICES_EDIT">
 			@if (isEstimate) {
 				<button
@@ -559,7 +570,7 @@
 					nbButton
 					status="basic"
 					(click)="view()"
-					class="action secondary"
+					class="action primary"
 					[disabled]="disableButton"
 					size="small"
 				>
@@ -595,7 +606,7 @@
 				nbButton
 				status="basic"
 				(click)="payments()"
-				class="action secondary mr-2"
+				class="action primary mr-2"
 				[disabled]="!selectedInvoice && disableButton"
 				size="small"
 			>

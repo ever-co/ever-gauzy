@@ -12,14 +12,15 @@ import {
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
 	CardGridModule,
 	FavoriteToggleModule,
 	SharedModule,
 	TableComponentsModule,
-	TagsColorInputModule
+	TagsColorInputModule,
+	RecordViewModule
 } from '@gauzy/ui-core/shared';
 import { VendorsComponent } from './vendors.component';
 import { VendorsRoutingModule } from './vendors-routing.module';
@@ -43,10 +44,11 @@ const STANDALONE_MODULES = [
 ];
 
 // Third Party Modules
-const THIRD_PARTY_MODULES = [TranslateModule.forChild(), NgxPermissionsModule.forChild()];
+const THIRD_PARTY_MODULES = [TranslatePipe, NgxPermissionsModule.forChild()];
 
 @NgModule({
 	imports: [
+		RecordViewModule,
 		...STANDALONE_MODULES,
 		...NB_MODULES,
 		...THIRD_PARTY_MODULES,

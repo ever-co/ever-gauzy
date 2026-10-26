@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, HttpException, HttpStatus, Logger, NotFoundException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { CommandBus } from '@nestjs/cqrs';
 import { AxiosError, AxiosResponse } from 'axios';
@@ -55,6 +55,7 @@ import {
 	RoleService,
 	OrganizationService,
 	IntegrationTenantService,
+	IntegrationTenantSyncService,
 	IntegrationTenantUpdateOrCreateCommand,
 	OrganizationContactCreateCommand,
 	RequestContext,
@@ -63,6 +64,42 @@ import {
 	mergeOverlappingDateRanges
 } from '@gauzy/core';
 import { HUBSTAFF_AUTHORIZATION_URL } from './hubstaff.config';
+
+/**
+ * The names a Hubstaff run's result members are counted under in the `integration_tenant.synced` fact.
+ */
+const HUBSTAFF_SYNC_COUNTED: Readonly<Record<string, string>> = {
+	projectsMap: 'project',
+	tasks: 'task',
+	activities: 'activity',
+	screenshots: 'screenshot',
+	clients: 'client'
+};
+
+/**
+ * How many records of each kind one automatic run handled, read off what `autoSync` answers.
+ *
+ * Each entity setting answers an object of arrays — the projects, tasks, time logs, screenshots or clients it
+ * synchronised, some of them nested per project — so each member is counted flat, and only counts leave the run.
+ *
+ * @param results What the run's entity settings answered.
+ * @returns The counts, keyed by entity.
+ */
+export function hubstaffSyncCounts(results: ReadonlyArray<Record<string, unknown> | undefined>): Record<string, number> {
+	const counts: Record<string, number> = {};
+
+	for (const result of results ?? []) {
+		for (const [member, entity] of Object.entries(HUBSTAFF_SYNC_COUNTED)) {
+			const value = result?.[member];
+
+			if (Array.isArray(value)) {
+				counts[entity] = (counts[entity] ?? 0) + value.flat(Infinity).filter((item) => item !== undefined && item !== null).length;
+			}
+		}
+	}
+
+	return counts;
+}
 
 /**
  * What the refresh endpoint returns to the client: the short-lived access token only. The refresh
@@ -77,6 +114,8 @@ export interface IHubstaffAccessTokenResponse {
 
 @Injectable()
 export class HubstaffService {
+	private readonly logger = new Logger(HubstaffService.name);
+
 	constructor(
 		private readonly _httpService: HttpService,
 		private readonly _commandBus: CommandBus,
@@ -86,7 +125,8 @@ export class HubstaffService {
 		private readonly _roleService: RoleService,
 		private readonly _organizationService: OrganizationService,
 		private readonly _userService: UserService,
-		private readonly _integrationService: IntegrationService
+		private readonly _integrationService: IntegrationService,
+		private readonly _integrationTenantSyncService: IntegrationTenantSyncService
 	) {}
 
 	/**
@@ -716,9 +756,16 @@ export class HubstaffService {
 		timeSlots: IHubstaffTimeSlotActivity[]
 	): Promise<any> {
 		try {
-			return timeSlots
-				.filter(async (timeslot: IHubstaffTimeSlotActivity) => {
-					return !!(await this._commandBus.execute(
+			// Wait for every slot mapping. `Array.filter` does not await its callback: the promise it got was
+			// always truthy, so every slot was kept, the mappings ran unawaited after the time log was saved,
+			// and their failures escaped this try / catch as unhandled rejections.
+			// A failed mapping is logged, and its slot is still submitted with the time log, as it always was:
+			// the mapping only records the Hubstaff slot id, while the activity (keyboard, mouse, overall)
+			// travels in the time log. Dropping the slot would replace its activity with a blank slot, and
+			// since the time log is then mapped as imported, the next sync would not bring it back.
+			const mapped = await Promise.allSettled(
+				timeSlots.map((timeslot: IHubstaffTimeSlotActivity) =>
+					this._commandBus.execute(
 						new IntegrationMapSyncTimeSlotCommand({
 							entity: {
 								...timeslot,
@@ -728,15 +775,21 @@ export class HubstaffService {
 							integrationId,
 							organizationId
 						})
-					));
-				})
-				.map(({ keyboard, mouse, overall, tracked, time_slot }) => ({
-					keyboard,
-					mouse,
-					overall,
-					duration: tracked,
-					startedAt: time_slot
-				}));
+					)
+				)
+			);
+			mapped.forEach((result, index) => {
+				if (result.status === 'rejected') {
+					console.error(`Error syncing Hubstaff time slot ${timeSlots[index].id}:`, result.reason?.message);
+				}
+			});
+			return timeSlots.map(({ keyboard, mouse, overall, tracked, time_slot }) => ({
+				keyboard,
+				mouse,
+				overall,
+				duration: tracked,
+				startedAt: time_slot
+			}));
 		} catch (error) {
 			throw new BadRequestException(error, `Can\'t sync ${IntegrationEntity.TIME_SLOT}`);
 		}
@@ -1555,6 +1608,22 @@ export class HubstaffService {
 			})
 		);
 		console.log(`${IntegrationEnum.HUBSTAFF} integration end for ${integrationId}`);
+
+		// The run finished: stamp the connection and announce it (`integration_tenant.synced`) in one transaction. A run
+		// that failed above threw before reaching this, so a failure is never announced as a completion. The recording
+		// is the run's epilogue, not part of the import — Hubstaff stamped nothing before it existed — so a recording
+		// that cannot be made is logged and the run answers what it imported, as it always did.
+		try {
+			await this._integrationTenantSyncService.recordSyncCompleted(integrationId, {
+				organizationId: gauzyId,
+				counts: hubstaffSyncCounts(integratedMaps as Array<Record<string, unknown>>)
+			});
+		} catch (error) {
+			this.logger.warn(
+				`The finished ${IntegrationEnum.HUBSTAFF} sync of integration ${integrationId} could not be recorded: ${(error as Error)?.message}`
+			);
+		}
+
 		return integratedMaps;
 	}
 

@@ -25,7 +25,7 @@
     <form [formGroup]="pluginForm" (ngSubmit)="submit()">
       <nb-stepper orientation="horizontal" #stepper>
         <!-- Step 1: Basic Info -->
-        <nb-step [stepControl]="pluginForm?.get('name')" [label]="'PLUGIN.FORM.BASIC_INFO' | translate">
+        <nb-step [stepControl]="$safeNavigationMigration(pluginForm?.get('name'))" [label]="'PLUGIN.FORM.BASIC_INFO' | translate">
           <lib-plugin-basic-information
             [form]="pluginForm"
             [pluginTypes]="pluginTypes"
@@ -38,12 +38,12 @@
         </nb-step>
 
         <!-- Step 2: Source -->
-        <nb-step [stepControl]="pluginForm?.get('version.sources')" [label]="'PLUGIN.FORM.SOURCE' | translate">
+        <nb-step [stepControl]="$safeNavigationMigration(pluginForm?.get('version.sources'))" [label]="'PLUGIN.FORM.SOURCE' | translate">
           @if(isEdit && plugin){
             <lib-form-row>
               <div class="d-flex flex-column">
                 <label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
-                <gauzy-version-selector [pluginId]="plugin?.id"></gauzy-version-selector>
+                <gauzy-version-selector [pluginId]="$safeNavigationMigration(plugin?.id)"></gauzy-version-selector>
               </div>
             </lib-form-row>
           }
@@ -65,12 +65,12 @@
         </nb-step>
 
         <!-- Step 3: Version -->
-        <nb-step [stepControl]="pluginForm?.get('version')" [label]="'PLUGIN.FORM.VERSION' | translate">
+        <nb-step [stepControl]="$safeNavigationMigration(pluginForm?.get('version'))" [label]="'PLUGIN.FORM.VERSION' | translate">
           <lib-plugin-version
             class="grow"
             [isEdit]="isEdit"
-            [pluginId]="plugin?.id"
-            [form]="pluginForm?.get('version')"
+            [pluginId]="$safeNavigationMigration(plugin?.id)"
+            [form]="$safeNavigationMigration(pluginForm?.get('version'))"
           ></lib-plugin-version>
           <div class="stepper-buttons">
             <button nbButton outline status="basic" nbStepperPrevious>
@@ -116,9 +116,9 @@
               <div class="subscription-creator-container">
                 <lib-plugin-subscription-plan-creator
                   #subscriptionPlanCreator
-                  [pluginId]="plugin?.id"
+                  [pluginId]="$safeNavigationMigration(plugin?.id)"
                   [allowMultiplePlans]="true"
-                  [requireAtLeastOnePlan]="pluginForm.get('requiresSubscription')?.value"
+                  [requireAtLeastOnePlan]="$safeNavigationMigration(pluginForm.get('requiresSubscription')?.value)"
                   (plansChanged)="onSubscriptionPlansChanged($event)"
                   (validationStateChanged)="onSubscriptionValidationChanged($event)"
                 ></lib-plugin-subscription-plan-creator>

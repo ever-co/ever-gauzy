@@ -36,6 +36,12 @@ export class AuthorizationMiddleware {
 		options: {
 			requiredScopes?: string[];
 			optional?: boolean; // Allow requests without tokens if true
+			/**
+			 * Whether the request comes from this machine (see `isLocalCaller`). Such a caller may come without a
+			 * token, and then acts as the GAUZY_AUTO_LOGIN account: the loopback desktop mode. A token it does
+			 * send is checked like any other.
+			 */
+			isLocalCaller?: (req: Request) => boolean;
 		} = {}
 	) {
 		return async (req: AuthorizedRequest, res: Response, next: NextFunction) => {
@@ -54,6 +60,12 @@ export class AuthorizationMiddleware {
 				if (!token) {
 					if (options.optional) {
 						this.securityLogger.debug('No token provided, but authorization is optional');
+						return next();
+					}
+					if (options.isLocalCaller?.(req)) {
+						this.securityLogger.debug(
+							'No token provided by a caller on this machine (loopback desktop mode)'
+						);
 						return next();
 					}
 

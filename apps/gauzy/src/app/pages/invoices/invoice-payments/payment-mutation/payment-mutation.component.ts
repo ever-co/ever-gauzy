@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
@@ -25,6 +25,7 @@ import { InvoicesService, OrganizationSettingService, Store } from '@gauzy/ui-co
     selector: 'ga-payment-add',
     templateUrl: './payment-mutation.component.html',
     styleUrls: ['./payment-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PaymentMutationComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { ICandidate } from '@gauzy/contracts';
 import { CandidateStore } from '@gauzy/ui-core/core';
@@ -9,6 +9,7 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
     selector: 'ga-edit-candidate-hiring',
     templateUrl: './edit-candidate-hiring.component.html',
     styleUrls: ['./edit-candidate-hiring.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditCandidateHiringComponent implements OnInit, OnDestroy {

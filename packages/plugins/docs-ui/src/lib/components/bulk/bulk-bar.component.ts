@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
@@ -36,6 +36,7 @@ export type DocumentBulkPanel = 'tags' | 'more';
 	selector: 'gz-docs-bulk-bar',
 	templateUrl: './bulk-bar.component.html',
 	styleUrls: ['./bulk-bar.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class BulkBarComponent extends TranslationBaseComponent implements OnChanges {

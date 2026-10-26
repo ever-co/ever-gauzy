@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Input } from '@angular/core';
+import { Component, OnDestroy, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,6 +18,7 @@ import {
 	selector: 'ga-add-article',
 	templateUrl: 'add-article.component.html',
 	styleUrls: ['add-article.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class AddArticleComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

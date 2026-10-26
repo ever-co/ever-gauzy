@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { UserMutationComponent } from './user-mutation.component';
 import { UserFormsModule } from '../forms/user-forms.module';
 
@@ -13,7 +13,7 @@ import { UserFormsModule } from '../forms/user-forms.module';
 		NbButtonModule,
 		NbCardModule,
 		NbIconModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		UserFormsModule
 	],
 	exports: [UserMutationComponent],

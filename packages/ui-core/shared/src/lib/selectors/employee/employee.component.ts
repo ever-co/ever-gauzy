@@ -79,6 +79,12 @@ export class EmployeeSelectorComponent implements OnInit, OnDestroy, OnChanges, 
 	@Input() dropdownClass: string;
 
 	/**
+	 * Accessible name for the inner combobox. A `<label>` next to this component
+	 * cannot name it (the host is not a form control), so pass the label text here.
+	 */
+	@Input() ariaLabel: string;
+
+	/**
 	 * The class list ng-select puts on its appended panel. See `entitySelectPanelClass()` for
 	 * why an appended panel needs the whole list rebuilt rather than added to.
 	 */

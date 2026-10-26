@@ -3,7 +3,7 @@ import {
 	IRecurringExpenseByMonthFindInput,
 	IRecurringExpenseModel
 } from '@gauzy/contracts';
-import { Between, FindOptionsWhere, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { FindOptionsWhere, IsNull, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import * as moment from 'moment';
 import { CrudService } from './../../core/crud';
 import { getDateRangeFormat } from './../../core/utils';
@@ -45,17 +45,22 @@ export abstract class FindRecurringExpenseByMonthHandler<
 			moment.utc(startDate),
 			moment.utc(endDate)
 		);
+		// An expense belongs to the month when its own period overlaps it: it started on or before the
+		// month's end, and it is open-ended or ends on or after the month's start. The first branch used
+		// to require the start date INSIDE the month, so an open-ended expense was listed in its first
+		// month only; the second required the expense to cover the whole month, which dropped the first
+		// and last months of an expense that starts or ends mid-month.
 		const expenses = await this.crudService.findAll({
 			where: [
 				{
 					...where,
-					startDate: Between(start, end),
+					startDate: LessThanOrEqual(end),
 					endDate: IsNull()
 				},
 				{
 					...where,
-					startDate: LessThanOrEqual(start),
-					endDate: MoreThanOrEqual(end)
+					startDate: LessThanOrEqual(end),
+					endDate: MoreThanOrEqual(start)
 				}
 			] as FindOptionsWhere<T>[],
 			relations

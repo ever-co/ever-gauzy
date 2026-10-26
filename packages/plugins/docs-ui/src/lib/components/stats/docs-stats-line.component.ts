@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { catchError, filter, of, Subject, switchMap, tap } from 'rxjs';
 import { DocumentStatusEnum } from '@gauzy/contracts';
@@ -31,6 +31,7 @@ interface IDocsStatTile {
 	selector: 'gz-docs-stats-line',
 	templateUrl: './docs-stats-line.component.html',
 	styleUrls: ['./docs-stats-line.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsStatsLineComponent implements OnInit {

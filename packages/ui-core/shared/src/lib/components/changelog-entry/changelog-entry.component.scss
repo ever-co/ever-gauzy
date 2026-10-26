@@ -153,3 +153,87 @@
 :host(.compact.last) .entry {
 	border-bottom: 0;
 }
+
+// Login page panel: entries on the primary gradient card, styled like the
+// register page's "Gauzy features" cards. All text is solid white — the only
+// value that reaches WCAG AA (4.5:1) on the gradient's light end; weight and
+// size carry the hierarchy instead of opacity. Themes whose primary-400 is too
+// light for white get a darker gradient in @shared/_whats-new.
+:host(.on-gradient) {
+	.entry {
+		border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+		padding: 0 0 12px;
+		margin-bottom: 12px;
+		color: white;
+
+		&.linked {
+			border-radius: 0;
+			&:hover {
+				background: none;
+				.entry-header {
+					text-decoration: underline;
+				}
+			}
+		}
+
+		.entry-headings-wrapper {
+			align-items: flex-start;
+			gap: 5px;
+			margin-bottom: 6px;
+
+			.icon {
+				flex-shrink: 0;
+				margin: 1.5px 0 0;
+				width: 14px;
+				height: 14px;
+				font-size: 14px;
+				color: white;
+			}
+
+			.entry-header {
+				font-size: 13px;
+				line-height: 16px;
+				margin-bottom: 2px;
+			}
+
+			.entry-header-date {
+				font-size: 11px;
+				line-height: 14px;
+				color: white;
+			}
+		}
+
+		.paragraph {
+			margin: 0;
+			font-size: 11px;
+			line-height: 15px;
+			// The theme colours every <p>; inheriting would give dark text here.
+			color: white;
+		}
+
+		.entry-img {
+			width: 100%;
+			max-width: 176px;
+			height: 104px;
+			margin: 10px auto 0;
+			border: 1px solid black;
+			border-radius: 5px;
+			box-shadow: 0 8px 21px -11px #000000;
+			object-fit: contain;
+		}
+
+		.learn-more-hint {
+			margin: 6px 0 0;
+			font-size: 11px;
+			line-height: 15px;
+			color: white;
+			text-decoration: underline;
+		}
+	}
+}
+
+:host(.on-gradient.last) .entry {
+	border-bottom: 0;
+	padding-bottom: 0;
+	margin-bottom: 0;
+}

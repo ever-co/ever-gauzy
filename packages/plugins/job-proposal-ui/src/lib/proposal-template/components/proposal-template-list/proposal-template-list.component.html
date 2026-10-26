@@ -67,9 +67,7 @@
 				nbButton
 				status="basic"
 				size="small"
-				ngxConfirmDialog
-				[message]="'PROPOSAL_TEMPLATE.CONFIRM_DELETE' | translate"
-				(confirm)="deleteProposalTemplate()"
+				(click)="deleteProposalTemplate()"
 				[disabled]="!selectedItem && disableButton"
 				class="action mr-2"
 				[nbTooltip]="'BUTTONS.DELETE' | translate"
@@ -137,8 +135,9 @@
      so the record renderer is built fresh for each entry that is opened. -->
 <ngx-record-view-drawer
 	[open]="!!viewedTemplate"
+	[fullViewLink]="viewedTemplate ? '/pages/jobs/proposal-template/view/' + viewedTemplate.id : null"
 	heading="PROPOSAL_TEMPLATE.PROPOSAL_TEMPLATE"
-	[subtitle]="viewedTemplate?.name"
+	[subtitle]="$safeNavigationMigration(viewedTemplate?.name)"
 	(closed)="closeView()"
 >
 	@if (viewedTemplate) {

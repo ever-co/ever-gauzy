@@ -1,0 +1,72 @@
+# Makes the latest-mac.yml that a release-mac job just published declare the minimum macOS.
+#
+# Electron 44 (in the apps since the 2026-10-13 upgrade) needs macOS 13 or later. Every app already sets
+# build.mac.minimumSystemVersion "13.0", but that only reaches the app's Info.plist: electron-builder does
+# not write it into the update manifest, and its `releaseInfo` cannot carry it either (the schema allows
+# only releaseName, releaseNotes, releaseNotesFile, releaseDate and vendor). So on macOS 12 the INSTALLED
+# app's electron-updater sees an ordinary update, downloads it, and replaces itself with an app that will
+# not start. electron-updater (AppUpdater.checkIfUpdateSupported, 6.x) skips an update when
+# semver.lt(os.release(), minimumSystemVersion), and os.release() is the Darwin kernel version - macOS 13
+# is Darwin 22.0.0 - so the manifest must say `minimumSystemVersion: 22.0.0`. The installed app decides,
+# which is why the key has to be in the published file and not in the new build.
+#
+# The apps read the manifest from GitHub only: https://github.com/<owner>/<repo>/releases/download/<tag>/
+# latest-mac.yml (packages/desktop-lib: GithubCdn + CdnUpdate, electron-updater's generic provider). The R2
+# mirror (mirror-releases-to-r2) copies installers only, never latest*.yml, so there is no second copy.
+#
+# Behaviour: the release is resolved (tag input, else v<version> of app-package-json - an ad-hoc 'temp'
+# push publishes too), latest-mac.yml is downloaded, the key is added when missing (or raised when lower
+# or unreadable) and every other byte is kept, and the file is swapped in via a staged asset and verified.
+# Transient errors are retried; anything that leaves the release unguarded fails the step.
+name: Set the minimum macOS in latest-mac.yml
+description: >-
+  Add minimumSystemVersion (a Darwin version) to the latest-mac.yml of a GitHub release that
+  electron-builder has just published to, so electron-updater on older macOS skips the update.
+
+inputs:
+  token:
+    description: Token that can edit the release assets - the PAT electron-builder published with.
+    required: true
+  owner:
+    description: Owner of the release repository (the build's *_REPO_OWNER).
+    required: true
+  repo:
+    description: Name of the release repository (the build's *_REPO_NAME).
+    required: true
+  tag:
+    description: >-
+      The vX.Y.Z release tag, normally the check-release-tag output. When empty it is derived from
+      app-package-json; when neither yields one, the step skips with a notice.
+    required: false
+    default: ''
+  app-package-json:
+    description: >-
+      Path to the app package.json the bump step wrote (e.g. apps/desktop-timer/src/package.json).
+      Fills an empty tag with v<version>, and fails the step when tag, owner or repo disagree with
+      the version and github publish entry electron-builder actually published with.
+    required: false
+    default: ''
+  minimum:
+    description: Darwin version to require, X.Y.Z. 22.0.0 is macOS 13 (Electron 44's minimum).
+    required: false
+    default: '22.0.0'
+
+runs:
+  using: composite
+  steps:
+    - name: Add minimumSystemVersion to latest-mac.yml
+      # github-script rather than the gh CLI: it needs nothing from the runner image beyond the
+      # Actions runtime, and the same action already runs in every release-mac job (the bump step).
+      uses: actions/github-script@v9
+      env:
+        ACTION_DIR: ${{ github.action_path }}
+        RELEASE_OWNER: ${{ inputs.owner }}
+        RELEASE_REPO: ${{ inputs.repo }}
+        RELEASE_TAG: ${{ inputs.tag }}
+        APP_PACKAGE_JSON: ${{ inputs.app-package-json }}
+        MINIMUM_SYSTEM_VERSION: ${{ inputs.minimum }}
+      with:
+        github-token: ${{ inputs.token }}
+        script: |
+          const run = require(require('path').join(process.env.ACTION_DIR, 'index.cjs'));
+          await run({ github, core });

@@ -5,9 +5,16 @@ import {
 	Inject,
 	Injectable,
 	NestInterceptor,
-	Optional
+	Optional,
+	ContextType
 } from '@nestjs/common';
-import { ContextType, HttpArgumentsHost, RpcArgumentsHost, WsArgumentsHost } from '@nestjs/common/interfaces';
+// Nest 12 exports the per-transport hosts from neither the package root nor an `interfaces` entry; they are
+// types only, so this import is erased and nothing is required at run time.
+import type {
+	HttpArgumentsHost,
+	RpcArgumentsHost,
+	WsArgumentsHost
+} from '@nestjs/common/interfaces/features/arguments-host.interface.js';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { PosthogInterceptorOptions, PosthogInterceptorOptionsFilter } from './posthog.interfaces';
@@ -113,7 +120,7 @@ export class PosthogErrorInterceptor implements NestInterceptor {
 		const data = {
 			request: {
 				method: request.method,
-				url: request.originalUrl || request.url,
+				url: SanitizerUtil.sanitizeUrl(request.originalUrl || request.url),
 				path: request.path,
 				route: route,
 				headers: SanitizerUtil.sanitizeHeaders(request.headers),

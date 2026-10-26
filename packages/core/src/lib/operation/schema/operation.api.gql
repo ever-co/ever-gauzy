@@ -1,0 +1,143 @@
+# The durable-operation resource's root fields.
+#
+# `Query`, `Mutation` and `Subscription` are declared by the kernel and extended here: a root
+# operation type exists once for the whole platform, so a domain adds fields to it and never declares
+# its own. `Operation` and `OperationStep` are kernel types too, so this document references them and
+# declares none of them — see `operation.type.gql` for what that costs and why it is the rule.
+#
+# Every field below is one the `/api/operations` routes serve, under the same guard chain and with the
+# same permission, so a client that reaches a capability over one protocol is not given a narrower or
+# a wider one than the client that reaches it over the other. Nothing here decides anything: each
+# field calls the same `OperationService` method the route behind it calls.
+#
+# `operations` is a connection rather than a bare array, and it is *the* list: the endpoint table's
+# `/pagination` spelling is the same rows under the same filters, one sliced by `take`/`skip`, and the
+# connection's own `limit` and `offset` are that page — so it folds in, rather than becoming a second
+# root field that could disagree with this one.
+#
+# `operationsByAggregate` is the one query here with no route of its own, and it is a *read* rather
+# than a capability: the aggregate's history is reachable over REST through the list route's
+# `aggregateType` and `aggregateId` parameters, and it is a root field here because a client looking
+# at one cart, order or subscription asks for it directly rather than by assembling a filter. It
+# carries the read permission the rest of this surface carries, and it answers a connection for the
+# same reason `operations` does — the narrowing that names the aggregate is the read's identity, not
+# a reason to hand back an unbounded list.
+#
+# `resumeOperation` is the one move with no route of its own. The endpoint table names a cancel and a
+# retry, because those are the two decisions an operator makes about an operation; a resume is what
+# the recovery sweep does, and the field exists so the same move is reachable by an operator who has
+# just fixed what stalled it. It carries the moves' permission, not the reads'.
+
+extend type Query {
+	"""
+	The operations of the caller's tenant, newest first.
+	"""
+	operations(
+		filter: OperationFilter
+		sort: [OperationSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OperationConnection!
+
+	"""
+	One operation of the caller's tenant, or null when there is none.
+
+	A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such
+	row" on a field that may have none, and the REST route's `404` is that same fact stated in the
+	other protocol's vocabulary.
+	"""
+	operation(id: ID!): Operation
+
+	"""
+	The operations of one aggregate, newest first.
+
+	At most one of them is live at a time — the runtime's exclusivity rule — so what this usually
+	answers is the run in flight followed by the attempts that came before it, which is what an
+	operator investigating an aggregate reads.
+
+	**A connection rather than a bare array**, and for the same reason `operations` is one: an
+	aggregate's history grows with every attempt, every retry and every compensation the runtime runs,
+	so the client that has to render it needs the count and a page rather than an unbounded list. The
+	two members that name the aggregate stay the identity of the read; everything else is the same
+	narrowing `operations` takes, over the same rows.
+	"""
+	operationsByAggregate(
+		aggregateType: String!
+		aggregateId: ID!
+		filter: OperationFilter
+		sort: [OperationSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+	): OperationConnection!
+}
+
+extend type Mutation {
+	"""
+	Requests cancellation, which compensates what the operation already applied.
+
+	A cancellation is a request the runtime observes at its next checkpoint rather than a kill, so the
+	answer is the operation as the request left it — already settled when it had applied nothing, and
+	compensating when it had. A completed operation is refused: there is nothing left to cancel.
+	"""
+	cancelOperation(id: ID!, reason: String): Operation!
+
+	"""
+	Re-drives an operation that failed, under a fresh attempt budget.
+
+	The steps a failed attempt left have their attempt counters reset, and where the retry continues
+	falls out of the persisted step statuses: an operation whose compensation finished re-runs its
+	plan on a clean aggregate, and one that still owes an undo is handed back to the compensation
+	walk. A completed operation, and one a caller cancelled, are refused — this door does not resurrect
+	work somebody deliberately abandoned.
+	"""
+	retryOperation(id: ID!): Operation!
+
+	"""
+	Continues an interrupted operation.
+
+	Recovery needs no external state: the persisted step statuses say where to continue, so resuming
+	is executing under a fresh lease. An operation that already reached a terminal status is answered
+	unchanged, because there is no move left to make.
+	"""
+	resumeOperation(id: ID!): Operation!
+}
+
+extend type Subscription {
+	"""
+	A step of an operation of the caller's tenant moving: it started, succeeded, failed, or was
+	compensated during the undo walk.
+
+	The payload is the operation in its state at delivery, so a subscriber follows a run without
+	polling. Narrowing by `operationId` and by `stepName` only ever narrows what the credential may
+	already read: the caller without `OPERATIONS_VIEW` is refused by the guard before the stream is
+	opened, and the tenant is taken from the credential rather than from an argument.
+	"""
+	operationStepChanged(operationId: ID, stepName: String): Operation!
+
+	"""
+	An operation of the caller's tenant reaching `COMPLETED`: every step of its plan ran.
+	"""
+	operationCompleted(operationId: ID): Operation!
+
+	"""
+	An operation of the caller's tenant that will not complete: it entered the compensation walk, or it
+	settled compensated, failed or cancelled.
+
+	The payload says which of the four it was — its `status` — and the step list says what was left
+	behind, so a client never has to infer the outcome from the stream's name.
+
+	A subscription is a notification and never a system of record: an event produced while the client
+	is disconnected is not replayed, and a client that must not miss one reads the operation by id.
+	"""
+	operationFailed(operationId: ID): Operation!
+}

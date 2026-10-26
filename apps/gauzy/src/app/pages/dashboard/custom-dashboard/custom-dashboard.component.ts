@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, firstValueFrom } from 'rxjs';
@@ -51,6 +51,7 @@ import { WidgetConfigDialogComponent } from './widget-config-dialog.component';
 	 * widget towards the bottom of a canvas taller than the window simply stopped at
 	 * the fold: the page never scrolled, so the lower half was unreachable by drag.
 	 */
+	changeDetection: ChangeDetectionStrategy.Eager,
 	hostDirectives: [CdkScrollable]
 })
 export class CustomDashboardComponent extends TranslationBaseComponent implements OnInit {

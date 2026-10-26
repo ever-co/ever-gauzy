@@ -1,4 +1,5 @@
 import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import {
 	NbBadgeModule,
 	NbButtonModule,
@@ -15,7 +16,7 @@ import {
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ClipboardModule } from 'ngx-clipboard';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CardGridModule } from '../../card-grid/card-grid.module';
 import { SharedModule } from '../../shared.module';
 import { SmartDataViewLayoutModule } from '../../smart-data-layout/smart-data-view-layout.module';
@@ -26,6 +27,7 @@ import { ProjectNamesComponent } from './project-names/project-names.component';
 import { ResendConfirmationComponent } from './resend-confirmation/resend-confirmation.component';
 import { ClientNamesComponent } from './client-names/client-names.component';
 import { DepartmentNamesComponent } from './department-names/department-names.component';
+import { InviteDeleteConfirmationComponent } from './invite-delete-confirmation/invite-delete-confirmation.component';
 
 // Nebular Modules
 const NB_MODULES = [
@@ -48,15 +50,17 @@ const COMPONENTS = [
 	ProjectNamesComponent,
 	ClientNamesComponent,
 	DepartmentNamesComponent,
-	ResendConfirmationComponent
+	ResendConfirmationComponent,
+	InviteDeleteConfirmationComponent
 ];
 
 @NgModule({
 	imports: [
 		...NB_MODULES,
+		FormsModule,
 		NgSelectModule,
 		ClipboardModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		SharedModule,
 		SmartDataViewLayoutModule,

@@ -16,6 +16,7 @@ import {
 import { Transform, TransformFnParams } from 'class-transformer';
 import {
 	CurrenciesEnum,
+	EmployeeKindEnum,
 	IEmployee,
 	PayPeriodEnum,
 	IContact,
@@ -383,6 +384,33 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 	@IsBoolean()
 	@MultiORMColumn({ type: Boolean, nullable: true, default: false })
 	isTrackingTime?: boolean;
+
+	/**
+	 * When the last presence heartbeat was received, by the server clock. Written only by
+	 * `PUT /employee/me/presence`, so it is deliberately absent from every input DTO.
+	 */
+	@ApiPropertyOptional({ type: () => Date })
+	@MultiORMColumn({ nullable: true })
+	lastSeenAt?: Date;
+
+	/** Whether the last presence heartbeat reported no keyboard, mouse or touch input for a while. */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@MultiORMColumn({ type: Boolean, nullable: true })
+	isIdle?: boolean;
+
+	/**
+	 * What this row represents: a person (`human`, the default and the value of every row the employee
+	 * routes create) or an agent (`agent`), which only `EmployeeService.createAgentEmployee` creates. An
+	 * agent has no password, receives no welcome email, and is left out of payroll, statistics and seat
+	 * counts. Deliberately absent from every create and update DTO: a row's kind is decided when it is
+	 * provisioned and never changed through the API.
+	 */
+	@ApiPropertyOptional({ type: () => String, enum: EmployeeKindEnum, default: EmployeeKindEnum.HUMAN })
+	@IsOptional()
+	@IsEnum(EmployeeKindEnum)
+	@ColumnIndex()
+	@MultiORMColumn({ type: 'varchar', length: 16, default: EmployeeKindEnum.HUMAN })
+	kind?: EmployeeKindEnum;
 
 	/**
 	 * Enabled/Disabled Screen Capture Feature

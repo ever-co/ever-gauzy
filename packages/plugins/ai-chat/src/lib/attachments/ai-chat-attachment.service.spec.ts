@@ -8,12 +8,14 @@ jest.mock('@gauzy/core', () => ({
 		currentUserId: jest.fn(() => 'user-1'),
 		currentRequest: jest.fn(() => ({ headers: {} }))
 	},
+	// The organization rule `@IsOrganizationBelongsToUser()` applies; each test decides its verdict.
+	assertCurrentUserBelongsToOrganization: jest.fn(async () => undefined),
 	// The service discards a rejected upload through the active provider.
 	FileStorage: jest.fn().mockImplementation(() => ({ getProvider: () => ({ deleteFile }) }))
 }));
 
-import { BadRequestException } from '@nestjs/common';
-import { RequestContext } from '@gauzy/core';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { assertCurrentUserBelongsToOrganization, RequestContext } from '@gauzy/core';
 import { AiChatAttachmentSavedEvent } from './ai-chat-attachment.event';
 import { AiChatAttachmentService } from './ai-chat-attachment.service';
 
@@ -31,6 +33,10 @@ const requestContext = RequestContext as unknown as {
 	currentUserId: jest.Mock;
 	currentRequest: jest.Mock;
 };
+const assertMembership = assertCurrentUserBelongsToOrganization as unknown as jest.Mock;
+
+/** An organization a request may name in its `Organization-Id` header. */
+const HEADER_ORG = '6f1d3c2a-8b4e-4f7a-9c1d-2e3f4a5b6c7d';
 
 const uploaded = (overrides: Record<string, unknown> = {}) =>
 	({
@@ -45,14 +51,18 @@ const uploaded = (overrides: Record<string, unknown> = {}) =>
 describe('AiChatAttachmentService', () => {
 	let publish: jest.Mock;
 	let service: AiChatAttachmentService;
+	const manager = { name: 'entity-manager' };
 
 	beforeEach(() => {
 		publish = jest.fn(async () => undefined);
-		service = new AiChatAttachmentService({ publish } as any);
+		service = new AiChatAttachmentService({ publish } as any, { manager } as any);
 		requestContext.currentTenantId.mockReturnValue('tenant-1');
 		requestContext.currentOrganizationId.mockReturnValue('org-1');
 		requestContext.currentUserId.mockReturnValue('user-1');
 		requestContext.currentRequest.mockReturnValue({ headers: {} });
+		assertMembership.mockReset();
+		assertMembership.mockResolvedValue(undefined);
+		deleteFile.mockClear();
 	});
 
 	it('publishes the event the Documents plugin subscribes to, with the full scope snapshot', async () => {
@@ -87,13 +97,47 @@ describe('AiChatAttachmentService', () => {
 		});
 	});
 
-	it('falls back to the `Organization-Id` header when the JWT carries no organization', async () => {
+	it('falls back to the `Organization-Id` header when the JWT carries no organization — once the caller may reach it', async () => {
 		requestContext.currentOrganizationId.mockReturnValue(null);
-		requestContext.currentRequest.mockReturnValue({ headers: { 'organization-id': 'org-header' } });
+		requestContext.currentRequest.mockReturnValue({ headers: { 'organization-id': HEADER_ORG } });
 
 		await service.save(uploaded());
 
-		expect(publish.mock.calls[0][0].payload.organizationId).toBe('org-header');
+		expect(assertMembership).toHaveBeenCalledWith(manager, HEADER_ORG);
+		expect(publish.mock.calls[0][0].payload.organizationId).toBe(HEADER_ORG);
+	});
+
+	/**
+	 * The header is only the client's word. Unchecked, a member of one organization filed an attachment —
+	 * and, through the Documents plugin's capture, a document — into any other organization of the tenant.
+	 */
+	it('refuses a header naming an organization the caller may not reach — and removes the stored bytes', async () => {
+		requestContext.currentOrganizationId.mockReturnValue(null);
+		requestContext.currentRequest.mockReturnValue({ headers: { 'organization-id': HEADER_ORG } });
+		assertMembership.mockRejectedValue(new ForbiddenException('You are not a member of this organization'));
+
+		await expect(service.save(uploaded())).rejects.toBeInstanceOf(ForbiddenException);
+		expect(publish).not.toHaveBeenCalled();
+		expect(deleteFile).toHaveBeenCalledWith('ai-chat/tenant-1/org-1/abc.pdf');
+	});
+
+	it('refuses a header that is not a UUID without looking it up', async () => {
+		requestContext.currentOrganizationId.mockReturnValue(null);
+		requestContext.currentRequest.mockReturnValue({ headers: { 'organization-id': 'org-header' } });
+
+		await expect(service.save(uploaded())).rejects.toBeInstanceOf(BadRequestException);
+		expect(assertMembership).not.toHaveBeenCalled();
+		expect(publish).not.toHaveBeenCalled();
+		expect(deleteFile).toHaveBeenCalledWith('ai-chat/tenant-1/org-1/abc.pdf');
+	});
+
+	it('files under the token organization, whatever the header says, without a second check', async () => {
+		requestContext.currentRequest.mockReturnValue({ headers: { 'organization-id': HEADER_ORG } });
+
+		await service.save(uploaded());
+
+		expect(assertMembership).not.toHaveBeenCalled();
+		expect(publish.mock.calls[0][0].payload.organizationId).toBe('org-1');
 	});
 
 	/**
@@ -103,7 +147,6 @@ describe('AiChatAttachmentService', () => {
 	it('refuses an attachment it cannot attribute to an organization — and removes the stored bytes', async () => {
 		requestContext.currentOrganizationId.mockReturnValue(null);
 		requestContext.currentRequest.mockReturnValue({ headers: {} });
-		deleteFile.mockClear();
 
 		await expect(service.save(uploaded())).rejects.toBeInstanceOf(BadRequestException);
 		expect(publish).not.toHaveBeenCalled();

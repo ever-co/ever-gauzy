@@ -40,7 +40,7 @@ import {
 	TasksStoreService,
 	TranslatableService
 } from '@gauzy/ui-core/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { InvoiceAddComponent } from './invoice-add/invoice-add.component';
 import { InvoicesComponent } from './invoices.component';
 import { InvoicesRoutingModule } from './invoices-routing.module';
@@ -59,7 +59,8 @@ import {
 	TableComponentsModule,
 	TagsColorInputModule,
 	UserFormsModule,
-	InvoiceViewInnerModule
+	InvoiceViewInnerModule,
+	FavoriteToggleModule
 } from '@gauzy/ui-core/shared';
 import { InvoiceEmailMutationComponent } from './invoice-email/invoice-email-mutation.component';
 import { InvoiceDownloadMutationComponent } from './invoice-download/invoice-download-mutation.component';
@@ -94,6 +95,7 @@ import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 
 @NgModule({
 	imports: [
+		FavoriteToggleModule,
 		TableComponentsModule,
 		TagsColorInputModule,
 		InvoicesRoutingModule,
@@ -122,7 +124,7 @@ import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 		NbPopoverModule,
 		NbFormFieldModule,
 		NbListModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		CurrencyModule,
 		SmartDataViewLayoutModule,

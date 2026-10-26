@@ -136,16 +136,36 @@
   border-radius: nb-theme(border-radius);
   background-color: nb-theme(background-basic-color-1);
 }
+// An hour is six 10-minute positions, so a row holds at most six cards: six
+// whenever six fit at $slot-min-width, and fewer, wrapping to the next line, on a
+// narrower screen. The column minimum is a sixth of the row (less a pixel, so
+// rounding never drops the sixth) or $slot-min-width, whichever is larger.
+$slot-min-width: 12rem;
+$slot-gap: 1rem;
+// The row's content width at which six columns fit.
+$six-columns-width: $slot-min-width * 6 + $slot-gap * 5;
+
 .grid-container {
   display: grid;
   -webkit-box-align: center;
   align-items: center;
   -webkit-box-pack: start;
   justify-content: start;
-  column-gap: 1rem;
-  grid-gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  column-gap: $slot-gap;
+  grid-gap: $slot-gap;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(max(#{$slot-min-width}, calc((100% - #{$slot-gap * 5}) / 6 - 1px)), 1fr)
+  );
   padding: 0 1rem;
+  // Lets the gap blocks ask whether this row has its six columns.
+  container-type: inline-size;
+
+  // Held to their column: a card's time line is cut with an ellipsis rather than
+  // widening the card into its neighbour.
+  > * {
+    min-width: 0;
+  }
 }
 .hour-label {
   font-size: 14px;
@@ -154,11 +174,6 @@
   letter-spacing: 0em;
   text-align: left;
   text-transform: none;
-}
-@media screen and (min-width: 1690px) {
-  .grid-container {
-    grid-template-columns: repeat(6, 1fr);
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -242,6 +257,93 @@
       font-variant-numeric: tabular-nums;
     }
   }
+}
+
+// ---------------------------------------------------------------------------
+// Time without tracking.
+//
+// Each hour row has six 10-minute positions. A run of empty positions is one
+// dashed block that names the gap, so blank space never reads as a card that
+// failed to load. When the row has its six columns the block spans the positions
+// it covers, keeping every card under its minute; when the row wraps, the
+// columns no longer line up with the minutes, so it takes one cell.
+// ---------------------------------------------------------------------------
+.hour-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 1rem;
+
+	.hour-label {
+		margin: 0;
+	}
+}
+
+.hour-coverage {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.coverage-bar {
+	display: flex;
+	gap: 2px;
+}
+
+.coverage-segment {
+	width: 0.75rem;
+	height: 0.375rem;
+	border-radius: 2px;
+	background-color: var(--gauzy-border-default-color);
+
+	&.filled {
+		background-color: nb-theme(color-primary-500);
+	}
+}
+
+.coverage-text {
+	font-size: 12px;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
+
+.empty-range {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.25rem;
+	align-self: stretch;
+	min-height: 6rem;
+	padding: 1rem;
+	// The card border's colour is too faint to carry a dash; the secondary text
+	// colour, thinned, reads as a boundary in both themes.
+	border: 1px dashed color-mix(in srgb, var(--gauzy-text-color-2) 40%, transparent);
+	border-radius: nb-theme(border-radius);
+	background-color: var(--gauzy-hover-tint);
+	text-align: center;
+}
+
+.empty-range-time {
+	font-size: 12px;
+	font-weight: 600;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
+
+.empty-range-label {
+	font-size: 12px;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	opacity: 0.8;
+}
+
+@container (min-width: #{$six-columns-width}) {
+	.empty-range {
+		grid-column: span var(--span, 1);
+	}
 }
 
 // Page chrome around the grid — capped at the shared table-header size like the

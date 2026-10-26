@@ -67,12 +67,19 @@ export function isNotEmpty(item: any): boolean {
 
 /**
  * Check value empty.
+ * - Arrays: empty when no member holds a value.
+ * - Dates: a valid date is a value; an invalid one (a date whose time is NaN) is empty.
+ * - Objects: empty when no own property holds something other than null, undefined or ''.
+ * - Other types: empty for falsy values and for the strings 'null' / 'undefined'.
  * @param item
  * @returns {boolean}
  */
 export function isEmpty(item: any): boolean {
 	if (item instanceof Array) {
 		return item.filter((val) => !isEmpty(val)).length === 0;
+	} else if (item instanceof Date) {
+		// A value whenever it holds a time; only an invalid date is empty.
+		return Number.isNaN(item.getTime());
 	} else if (item && typeof item === 'object') {
 		// Check if there is any key with a non-empty value
 		for (const key in item) {
@@ -179,12 +186,12 @@ export function retrieveNameFromEmail(email: string): string {
 	return '';
 }
 
-// convert local time to another timezone
+// convert local time to another timezone (24-hour clock by default: `hh` without `A` dropped AM / PM)
 export function convertLocalToTimezone(
 	localDt: string | Date,
 	localDtFormat: string,
 	timeZone: string,
-	format = 'YYYY-MM-DD hh:mm:ss'
+	format = 'YYYY-MM-DD HH:mm:ss'
 ) {
 	return timezone(localDt, localDtFormat).tz(timeZone).format(format);
 }

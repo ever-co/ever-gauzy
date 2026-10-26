@@ -1,4 +1,4 @@
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import {
 	enableProdMode,
 	ErrorHandler,
@@ -49,7 +49,7 @@ if (environment.SENTRY_DSN) {
 	if (environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
 	} else {
-		console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
+		console.log('Enabling Sentry');
 		initializeSentry();
 	}
 }
@@ -120,7 +120,7 @@ bootstrapApplication(AppComponent, {
 				...environment
 			}
 		},
-		provideHttpClient(withInterceptorsFromDi()),
+		provideHttpClient(withXhr(), withInterceptorsFromDi()),
 		provideAnimations()
 	]
 }).catch((err) => console.error(err));

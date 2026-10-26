@@ -27,7 +27,7 @@ import { Store } from '../../../../services';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
 import { DateRangeKeyEnum, DateRanges, IDateRangePicker, TimePeriod } from './date-picker.interface';
-import { dayOfWeekAsString, shiftUTCtoLocal } from './date-picker.utils';
+import { dayOfWeekAsString, toPickerRange } from './date-picker.utils';
 import { NbButtonModule, NbIconModule, NbInputModule } from '@nebular/theme';
 import { FormsModule } from '@angular/forms';
 
@@ -351,11 +351,12 @@ export class DateRangePickerComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		const { startDate, endDate } = shiftUTCtoLocal(event);
-		if (startDate && endDate) {
+		// The library's dates carry the picked days in their wall-clock fields; read them as local days.
+		// (Subtracting the UTC offset, as for the 6.x library, moved 22.x dates by a day: see `toPickerRange`.)
+		const pickedRange = toPickerRange(event, this.isLockDatePicker, this.unitOfTime);
+		if (pickedRange) {
 			const range = {} as IDateRangePicker;
-			const start = this.isLockDatePicker ? moment(startDate).startOf(this.unitOfTime) : startDate;
-			const end = this.isLockDatePicker ? moment(startDate).endOf(this.unitOfTime) : endDate;
+			const { startDate: start, endDate: end } = pickedRange;
 
 			range.startDate = start.toDate();
 			range.endDate = end.toDate();

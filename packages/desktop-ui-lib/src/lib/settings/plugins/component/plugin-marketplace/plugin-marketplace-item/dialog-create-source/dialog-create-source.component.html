@@ -10,7 +10,7 @@
 						<h5 class="title">
 							{{
 								'PLUGIN.DIALOG.SOURCE.CREATE.TITLE'
-									| translate : { name: plugin?.name, number: plugin?.version?.number }
+									| translate : { name: $safeNavigationMigration(plugin?.name), number: $safeNavigationMigration(plugin?.version?.number) }
 							}}
 						</h5>
 					</div>
@@ -29,7 +29,7 @@
 							<nb-icon icon="layers-outline" class="field-icon"></nb-icon>
 							<label class="label" for="version-number">{{ 'PLUGIN.FORM.VERSION' | translate }}</label>
 						</div>
-						<gauzy-version-selector [pluginId]="plugin?.id"></gauzy-version-selector>
+						<gauzy-version-selector [pluginId]="$safeNavigationMigration(plugin?.id)"></gauzy-version-selector>
 					</div>
 				</lib-form-row>
 			</div>

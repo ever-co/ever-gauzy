@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, inject } from '@angular/core';
+import { Component, OnInit, Input, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ICandidate, ICandidateInterview, IEmployee } from '@gauzy/contracts';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { CandidatesService } from '@gauzy/ui-core/core';
@@ -7,6 +7,7 @@ import { CandidatesService } from '@gauzy/ui-core/core';
 	selector: 'ga-candidate-email',
 	templateUrl: 'candidate-email.component.html',
 	styleUrls: ['candidate-email.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class CandidateEmailComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, OnDestroy } from '@angular/core';
+import { Component, OnInit, Input, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
@@ -22,6 +22,7 @@ import { distinctUntilChange } from '@gauzy/ui-core/common';
     selector: 'ngx-product-category-mutation',
     templateUrl: './product-category-mutation.component.html',
     styleUrls: ['./product-category-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ProductCategoryMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

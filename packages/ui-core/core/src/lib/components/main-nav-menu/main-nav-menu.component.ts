@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, input, OnInit } from '@angular/core';
+import { Component, input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Observable, catchError, map } from 'rxjs';
 import { BaseNavMenuComponent } from '../base-nav-menu/base-nav-menu.component';
@@ -12,6 +12,7 @@ import { NavMenuCategory, NavMenuSectionItem } from '../../services/nav-builder/
 	templateUrl: './main-nav-menu.component.html',
 	styleUrls: ['./main-nav-menu.component.scss'],
 	standalone: true,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [CommonModule, SidebarMenuComponent]
 })
 export class MainNavMenuComponent extends BaseNavMenuComponent implements OnInit {

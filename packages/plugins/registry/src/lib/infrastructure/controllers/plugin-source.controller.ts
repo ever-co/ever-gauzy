@@ -1,9 +1,10 @@
-import { HttpStatus, ID, IPagination, PluginSourceType } from '@gauzy/contracts';
+import { HttpStatus, ID, IPagination, PermissionsEnum, PluginSourceType } from '@gauzy/contracts';
 import {
 	BaseQueryDTO,
 	FileStorage,
 	FileStorageFactory,
 	PermissionGuard,
+	Permissions,
 	TenantPermissionGuard,
 	UseValidationPipe,
 	UUIDValidationPipe,
@@ -32,6 +33,7 @@ import {
 } from '../../application';
 import { LazyAnyFileInterceptor, PluginOwnerGuard } from '../../core';
 import { CreatePluginSourceDTO, FileDTO, IPluginSource, IPluginVersion, PluginSourceDTO } from '../../shared';
+import { allowedRelations, ownColumnFilter, SOURCE_LIST_RELATIONS } from './public-read-options';
 import { GauzyStorageProvider, UploadedPluginStorage } from '../storage';
 
 @ApiTags('Plugin Sources')
@@ -57,6 +59,11 @@ export class PluginSourceController {
 		@Param('versionId', UUIDValidationPipe) versionId: ID,
 		@Query() params: BaseQueryDTO<IPluginVersion>
 	): Promise<IPagination<IPluginVersion>> {
+		// Only the relations the source list shows, filters on the source's own columns (see public-read-options.ts)
+		Object.assign(params, {
+			relations: allowedRelations(params.relations, SOURCE_LIST_RELATIONS),
+			where: ownColumnFilter(params.where)
+		});
 		return this.queryBus.execute(new ListPluginSourcesQuery(pluginId, versionId, params));
 	}
 
@@ -88,6 +95,7 @@ export class PluginSourceController {
 		})
 	)
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Post()
 	public async create(
 		@Param('pluginId', UUIDValidationPipe) pluginId: ID,
@@ -211,6 +219,7 @@ export class PluginSourceController {
 		forbidNonWhitelisted: true
 	})
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	@Delete(':sourceId')
 	public async delete(
 		@Param('sourceId', UUIDValidationPipe) sourceId: ID,
@@ -284,6 +293,7 @@ export class PluginSourceController {
 		forbidNonWhitelisted: true
 	})
 	@UseGuards(PluginOwnerGuard, TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_UPDATE)
 	@Patch(':sourceId/status')
 	public async updateStatus(
 		@Param('sourceId', UUIDValidationPipe) sourceId: ID,

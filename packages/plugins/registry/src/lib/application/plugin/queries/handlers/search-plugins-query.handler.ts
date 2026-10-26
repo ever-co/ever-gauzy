@@ -1,12 +1,9 @@
 import { IPagination, IPlugin } from '@gauzy/contracts';
-import { MultiORM, MultiORMEnum, getORMType } from '@gauzy/core';
+import { LIKE_OPERATOR, MultiORMEnum } from '@gauzy/core';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PluginService } from '../../../../domain';
 import { PLUGIN_SORTABLE_FIELDS, PLUGIN_SORT_DIRECTIONS, PluginSearchFilterDTO } from '../../../../shared';
 import { SearchPluginsQuery } from '../search-plugins.query';
-
-// Get the type of the Object-Relational Mapping (ORM) used in the application.
-const ormType: MultiORM = getORMType();
 
 /**
  * Query handler for searching and filtering plugins with advanced criteria
@@ -74,7 +71,13 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 
 		const isArray = Array.isArray(relations);
 
-		switch (ormType) {
+		// The ORM the plugin service runs on, not `DB_ORM`: each arm reads that service's own repository, and the
+		// registry's tables are read through TypeORM under either ORM (see `REGISTRY_ORM_TYPE`). Deciding by
+		// `DB_ORM` sent the search to the MikroORM arm under `DB_ORM=mikro-orm`, which answers raw Knex rows —
+		// without the relations it was asked for, and without the download count, latest version and
+		// installation state `PluginSubscriber.afterLoad` computes on a TypeORM load. Under `DB_ORM=typeorm`
+		// both answers are TypeORM.
+		switch (this.pluginService.ormType) {
 			case MultiORMEnum.MikroORM: {
 				// MikroORM: Use Knex for the complex search query
 				const knex = (this.pluginService.mikroOrmPluginRepository as any).getKnex();
@@ -99,24 +102,24 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 					}
 				}
 
-				// Global search
+				// Global search. `ILIKE` only exists on PostgreSQL: LIKE_OPERATOR answers `LIKE` on MySQL / SQLite.
 				if (search) {
 					qb = qb.where(function () {
-						this.where('plugins.name', 'ILIKE', `%${search}%`)
-							.orWhere('plugins.description', 'ILIKE', `%${search}%`)
-							.orWhere('plugins.author', 'ILIKE', `%${search}%`);
+						this.where('plugins.name', LIKE_OPERATOR, `%${search}%`)
+							.orWhere('plugins.description', LIKE_OPERATOR, `%${search}%`)
+							.orWhere('plugins.author', LIKE_OPERATOR, `%${search}%`);
 					});
 				}
 
 				// Field-specific filters
 				if (name) qb = qb.andWhere('plugins.name', name);
-				if (description) qb = qb.andWhere('plugins.description', 'ILIKE', `%${description}%`);
+				if (description) qb = qb.andWhere('plugins.description', LIKE_OPERATOR, `%${description}%`);
 				if (type) qb = qb.andWhere('plugins.type', type);
 				if (status) qb = qb.andWhere('plugins.status', status);
 				if (isActive !== undefined) qb = qb.andWhere('plugins.isActive', isActive);
 				if (categoryId) qb = qb.andWhere('plugins.categoryId', categoryId);
-				if (author) qb = qb.andWhere('plugins.author', 'ILIKE', `%${author}%`);
-				if (license) qb = qb.andWhere('plugins.license', 'ILIKE', `%${license}%`);
+				if (author) qb = qb.andWhere('plugins.author', LIKE_OPERATOR, `%${author}%`);
+				if (license) qb = qb.andWhere('plugins.license', LIKE_OPERATOR, `%${license}%`);
 				if (uploadedById) qb = qb.andWhere('plugins.uploadedById', uploadedById);
 				if (uploadedAfter) qb = qb.andWhere('plugins.uploadedAt', '>=', uploadedAfter);
 				if (uploadedBefore) qb = qb.andWhere('plugins.uploadedAt', '<=', uploadedBefore);
@@ -231,10 +234,10 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 					}
 				}
 
-				// Global search across multiple fields
+				// Global search across multiple fields (LIKE_OPERATOR: `ILIKE` on PostgreSQL only, `LIKE` elsewhere)
 				if (search) {
 					queryBuilder.andWhere(
-						'(plugin.name ILIKE :search OR plugin.description ILIKE :search OR plugin.author ILIKE :search)',
+						`(plugin.name ${LIKE_OPERATOR} :search OR plugin.description ${LIKE_OPERATOR} :search OR plugin.author ${LIKE_OPERATOR} :search)`,
 						{ search: `%${search}%` }
 					);
 				}
@@ -246,7 +249,7 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 
 				// Description partial match
 				if (description) {
-					queryBuilder.andWhere('plugin.description ILIKE :description', { description: `%${description}%` });
+					queryBuilder.andWhere(`plugin.description ${LIKE_OPERATOR} :description`, { description: `%${description}%` });
 				}
 
 				// Plugin type filter
@@ -271,12 +274,12 @@ export class SearchPluginsQueryHandler implements IQueryHandler<SearchPluginsQue
 
 				// Author filter
 				if (author) {
-					queryBuilder.andWhere('plugin.author ILIKE :author', { author: `%${author}%` });
+					queryBuilder.andWhere(`plugin.author ${LIKE_OPERATOR} :author`, { author: `%${author}%` });
 				}
 
 				// License filter
 				if (license) {
-					queryBuilder.andWhere('plugin.license ILIKE :license', { license: `%${license}%` });
+					queryBuilder.andWhere(`plugin.license ${LIKE_OPERATOR} :license`, { license: `%${license}%` });
 				}
 
 				// Uploaded by user filter

@@ -1,4 +1,4 @@
-import { PermissionsEnum, PluginSubscriptionStatus } from '@gauzy/contracts';
+import { IPagination, PermissionsEnum, PluginSubscriptionStatus } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import {
 	Body,
@@ -25,13 +25,16 @@ import {
 	GetPluginSubscriptionByIdQuery,
 	GetPluginSubscriptionsByPluginIdQuery,
 	GetPluginSubscriptionsBySubscriberIdQuery,
+	GetPublisherPluginSubscriptionsQuery,
 	PurchasePluginSubscriptionCommand,
 	RenewPluginSubscriptionCommand,
 	UpdatePluginSubscriptionCommand,
 	UpgradePluginSubscriptionCommand
 } from '../../application';
+import { PluginOwnerGuard } from '../../core';
 import { PluginSubscription } from '../../domain';
 import { PluginSubscriptionQueryDTO, PurchasePluginSubscriptionDTO, UpdatePluginSubscriptionDTO } from '../../shared';
+import { allowedRelations, SUBSCRIPTION_LIST_RELATIONS } from './public-read-options';
 
 @ApiTags('Plugin Subscriptions')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -88,6 +91,8 @@ export class PluginSubscriptionController {
 		const tenantId = RequestContext.currentTenantId();
 		const organizationId = RequestContext.currentOrganizationId();
 		const subscriberId = query.subscriberId || RequestContext.currentUserId();
+		// Only the relations this list shows: a joined relation is not tenant-scoped (see public-read-options.ts)
+		const extraRelations = allowedRelations(relations, SUBSCRIPTION_LIST_RELATIONS);
 
 		// Note: Access checks and expiring subscriptions analytics have been moved to
 		// plugin-subscription-analytics.controller.ts for better separation of concerns
@@ -108,7 +113,7 @@ export class PluginSubscriptionController {
 					'pluginTenant',
 					'subscriber',
 					'plan',
-					...relations
+					...extraRelations
 				])
 			);
 		}
@@ -120,7 +125,7 @@ export class PluginSubscriptionController {
 				'pluginTenant',
 				'subscriber',
 				'plan',
-				...relations
+				...extraRelations
 			])
 		);
 	}
@@ -129,7 +134,8 @@ export class PluginSubscriptionController {
 	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
 	@ApiResponse({
 		status: HttpStatus.OK,
-		description: "Current user's active plugin subscription retrieved successfully",
+		description:
+			"Current user's active plugin subscription retrieved successfully; an empty body when the user has none",
 		type: PluginSubscription
 	})
 	@Permissions(PermissionsEnum.PLUGIN_VIEW)
@@ -144,6 +150,27 @@ export class PluginSubscriptionController {
 		return this.queryBus.execute(
 			new GetActivePluginSubscriptionQuery(pluginId, tenantId, organizationId, subscriberId)
 		);
+	}
+
+	@ApiOperation({
+		summary: "List every subscription to the plugin, for the plugin's publisher",
+		description:
+			"Every tenant's subscriptions to the plugin, with their plans. Only the user who published the plugin may read them; the public plugin read does not list subscriptions."
+	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'The subscriptions to the plugin, newest first',
+		type: [PluginSubscription]
+	})
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The caller did not publish the plugin' })
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
+	@UseGuards(PluginOwnerGuard)
+	@Get('publisher')
+	async findAllForPublisher(
+		@Param('pluginId', ParseUUIDPipe) pluginId: string
+	): Promise<IPagination<PluginSubscription>> {
+		return this.queryBus.execute(new GetPublisherPluginSubscriptionsQuery(pluginId));
 	}
 
 	@ApiOperation({ summary: 'Get plugin subscription by ID' })
@@ -161,7 +188,11 @@ export class PluginSubscriptionController {
 		);
 	}
 
-	@ApiOperation({ summary: 'Update plugin subscription status' })
+	@ApiOperation({
+		summary: 'Update plugin subscription status',
+		description:
+			"Cancelling is the subscriber's own. Any other status, and a renewal, is set only by the plugin's publisher; for anyone else it is ignored."
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Plugin subscription updated successfully',
@@ -179,7 +210,7 @@ export class PluginSubscriptionController {
 		if (updateDto.status === 'cancelled') {
 			return await this.commandBus.execute(new CancelPluginSubscriptionCommand(id, updateDto.reason));
 		} else if (updateDto.status === 'renewed') {
-			return await this.commandBus.execute(new RenewPluginSubscriptionCommand(id));
+			return await this.commandBus.execute(new RenewPluginSubscriptionCommand(id, pluginId));
 		} else {
 			// For other status updates, use UpdatePluginSubscriptionCommand with minimal data
 			const updateData: Partial<UpdatePluginSubscriptionDTO> = {};
@@ -191,26 +222,32 @@ export class PluginSubscriptionController {
 				updateData.status = PluginSubscriptionStatus.SUSPENDED;
 			}
 			return await this.commandBus.execute(
-				new UpdatePluginSubscriptionCommand(id, updateData as UpdatePluginSubscriptionDTO)
+				new UpdatePluginSubscriptionCommand(id, updateData as UpdatePluginSubscriptionDTO, pluginId)
 			);
 		}
 	}
 
-	@ApiOperation({ summary: 'Update plugin subscription' })
+	@ApiOperation({
+		summary: 'Update plugin subscription',
+		description:
+			"The subscriber's tenant may change autoRenew and metadata; the plugin's publisher the status and the dates. Other fields are ignored."
+	})
 	@ApiResponse({
 		status: HttpStatus.OK,
 		description: 'Plugin subscription updated successfully',
 		type: PluginSubscription
 	})
+	@ApiParam({ name: 'pluginId', description: 'Plugin ID', type: String, format: 'uuid' })
 	@ApiParam({ name: 'id', description: 'Plugin subscription ID' })
 	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Put(':id')
 	async update(
+		@Param('pluginId', ParseUUIDPipe) pluginId: string,
 		@Param('id', ParseUUIDPipe) id: string,
 		@Body() updateDto: UpdatePluginSubscriptionDTO
 	): Promise<PluginSubscription> {
-		return await this.commandBus.execute(new UpdatePluginSubscriptionCommand(id, updateDto));
+		return await this.commandBus.execute(new UpdatePluginSubscriptionCommand(id, updateDto, pluginId));
 	}
 
 	@ApiOperation({ summary: 'Upgrade plugin subscription to a higher plan' })

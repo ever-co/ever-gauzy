@@ -1,5 +1,5 @@
-import { IPagination } from '@gauzy/contracts';
-import { PermissionGuard, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
+import { IPagination, PermissionsEnum } from '@gauzy/contracts';
+import { PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe, UUIDValidationPipe } from '@gauzy/core';
 import {
 	Body,
 	Controller,
@@ -34,8 +34,22 @@ import {
 	PluginCategoryQueryDTO,
 	UpdatePluginCategoryDTO
 } from '../../shared';
+import { allowedRelations, PUBLIC_PLUGIN_CATEGORY_RELATIONS } from './public-read-options';
 
+/**
+ * The categories plugins are filed under, per tenant.
+ *
+ * The guard pair is stated on the class and each route states its own grant (the node read stays `@Public`,
+ * which `TenantPermissionGuard` lets through and which states no permission for `PermissionGuard` to check).
+ * The writes used to state the guards with no permission, which `PermissionGuard` answers `true` to, and the
+ * full update and the list stated nothing at all, so any member of the tenant could create, rewrite or delete a
+ * category. Creating and editing one now states `PLUGIN_CONFIGURE`, the grant publishing a plugin
+ * (`POST /plugins`) requires, since the category picker of the publish and settings forms creates them inline;
+ * deleting one states `PLUGIN_DELETE`; and the list the marketplace filters on states `PLUGIN_VIEW`, which
+ * every role holds.
+ */
 @ApiTags('Plugin Categories')
+@UseGuards(TenantPermissionGuard, PermissionGuard)
 @Controller('plugin-categories')
 export class PluginCategoryController {
 	constructor(private readonly commandBus: CommandBus, private readonly queryBus: QueryBus) {}
@@ -51,7 +65,7 @@ export class PluginCategoryController {
 	})
 	@HttpCode(HttpStatus.CREATED)
 	@UseValidationPipe({ whitelist: true })
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post()
 	async create(@Body() input: CreatePluginCategoryDTO): Promise<IPluginCategory> {
 		// Ensure order has a default value if not provided
@@ -77,6 +91,7 @@ export class PluginCategoryController {
 		status: HttpStatus.OK,
 		description: 'Plugin categories retrieved successfully'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_VIEW)
 	@Get()
 	async findAll(
 		@Query('format') format?: 'tree' | 'flat',
@@ -86,7 +101,16 @@ export class PluginCategoryController {
 		if (format === 'tree') {
 			return this.queryBus.execute(new GetPluginCategoryTreeQuery(options));
 		}
-		return this.queryBus.execute(new GetPluginCategoriesQuery(options));
+		// The category scope is the caller's tenant, but a joined relation is not: `relations[]=plugins.settings` or
+		// `plugins.subscriptions.subscriber` loaded those rows for every tenant (see public-read-options.ts)
+		return this.queryBus.execute(
+			new GetPluginCategoriesQuery(
+				options && {
+					...options,
+					relations: allowedRelations(options.relations, PUBLIC_PLUGIN_CATEGORY_RELATIONS)
+				}
+			)
+		);
 	}
 
 	/**
@@ -103,7 +127,10 @@ export class PluginCategoryController {
 		@Param('id', UUIDValidationPipe) id: string,
 		@Query('relations') relations?: string[]
 	): Promise<IPluginCategory> {
-		return this.queryBus.execute(new GetPluginCategoryQuery(id, relations));
+		// A public read: never the category's or its plugins' settings (see public-read-options.ts)
+		return this.queryBus.execute(
+			new GetPluginCategoryQuery(id, allowedRelations(relations, PUBLIC_PLUGIN_CATEGORY_RELATIONS))
+		);
 	}
 
 	/**
@@ -114,6 +141,7 @@ export class PluginCategoryController {
 		status: HttpStatus.OK,
 		description: 'Plugin category updated successfully'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Put(':id')
 	@UseValidationPipe({ whitelist: true })
 	async update(
@@ -131,8 +159,8 @@ export class PluginCategoryController {
 		status: HttpStatus.OK,
 		description: 'Plugin category partially updated successfully'
 	})
+	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Patch(':id')
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
 	@UseValidationPipe({ whitelist: true })
 	async partialUpdate(
 		@Param('id', UUIDValidationPipe) id: string,
@@ -150,7 +178,7 @@ export class PluginCategoryController {
 		description: 'Plugin category deleted successfully'
 	})
 	@HttpCode(HttpStatus.NO_CONTENT)
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.PLUGIN_DELETE)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: string): Promise<void> {
 		await this.commandBus.execute(new DeletePluginCategoryCommand(id));

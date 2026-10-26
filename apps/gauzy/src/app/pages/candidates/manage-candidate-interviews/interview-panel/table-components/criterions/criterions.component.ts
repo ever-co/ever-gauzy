@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
     selector: 'ga-interview-criterions',
@@ -22,8 +22,15 @@ import { Component, Input } from '@angular/core';
 			ul {
 				list-style-type: '- ';
 			}
+			ul,
+			li,
+			span {
+				font-size: 10px;
+				line-height: 0.875rem;
+			}
 		`
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InterviewCriterionsTableComponent {

@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ConfigService, DatabaseTypeEnum } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
@@ -11,6 +12,7 @@ import { MikroOrmTimeLogRepository } from '../../repository/mikro-orm-time-log.r
 
 @CommandHandler(UpdateEmployeeTotalWorkedHoursCommand)
 export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<UpdateEmployeeTotalWorkedHoursCommand> {
+	private readonly logger = new Logger(UpdateEmployeeTotalWorkedHoursHandler.name);
 	protected ormType: MultiORM = getORMType();
 
 	constructor(
@@ -43,7 +45,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 			return;
 		}
 
-		console.log('Updated Employee Total Worked Hours: %s', Math.floor(totalWorkHours));
+		this.debug(() => `Updated Employee Total Worked Hours: ${Math.floor(totalWorkHours)}`);
 
 		// Update employee's total worked hours
 		await this._employeeService.update(employeeId, {
@@ -65,24 +67,25 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 				const knex = this.mikroOrmTimeLogRepository.getKnex();
 				const sumQuery = this.getSumQuery('time_log');
 
+				// Raw knex skips MikroORM's soft-delete filter: deleted time logs must not count
 				result = await knex('time_log')
 					.withSchema(knex.userParams.schema)
-					.innerJoin('time_slot_time_logs', 'time_slot_time_logs.timeLogId', 'time_log.id')
-					.innerJoin('time_slot', 'time_slot.id', 'time_slot_time_logs.timeSlotId')
 					.select(knex.raw(`${sumQuery} as duration`))
 					.where({ 'time_log.employeeId': employeeId, 'time_log.tenantId': tenantId })
+					.whereNull('time_log.deletedAt')
 					.first();
 				break;
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
 				// Create a query builder for the TimeLog entity
+				// No join on the time slots: the sum is over each time log's own start / stop, and joining its
+				// slots repeated every log once per slot (a 1h log with six 10-minute slots counted as 6h).
 				const query = this.typeOrmTimeLogRepository.createQueryBuilder();
-				query.innerJoin(`${query.alias}.timeSlots`, 'time_slot');
 
 				// Get the sum of durations between startedAt and stoppedAt
 				const sumQuery = this.getSumQuery(query.alias);
-				console.log('sum of durations between startedAt and stoppedAt', sumQuery);
+				this.debug(() => `sum of durations between startedAt and stoppedAt ${sumQuery}`);
 
 				// Execute the query and get the duration
 				result = await query
@@ -96,7 +99,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 			}
 		}
 
-		console.log(`get sum duration for specific employee: ${employeeId}`, +result.duration);
+		this.debug(() => `get sum duration for specific employee: ${employeeId} ${+result.duration}`);
 
 		// Convert duration from seconds to hours
 		return Number(+result.duration || 0) / 3600;
@@ -149,7 +152,7 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 								THEN TIMESTAMPDIFF(SECOND, \`${logQueryAlias}\`.\`startedAt\`, \`${logQueryAlias}\`.\`stoppedAt\`)
 								ELSE 0
 							END
-						) AS DECIMAL(10, 6)
+						) AS DECIMAL(20, 6)
 					)
 				`);
 				break;
@@ -158,5 +161,17 @@ export class UpdateEmployeeTotalWorkedHoursHandler implements ICommandHandler<Up
 		}
 
 		return sumQuery;
+	}
+
+	/**
+	 * Diagnostic trace at debug level: the message is built only when debug logging is on (these ran as
+	 * unconditional console output, three lines per tracker time-slot write).
+	 *
+	 * @param message - Builds the message to be logged.
+	 */
+	private debug(message: () => string): void {
+		if (Logger.isLevelEnabled('debug')) {
+			this.logger.debug(message());
+		}
 	}
 }

@@ -1,7 +1,6 @@
-import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import {
 	enableProdMode,
-	ErrorHandler,
 	importProvidersFrom,
 	inject,
 	provideAppInitializer,
@@ -18,7 +17,6 @@ import {
 	AuthStrategy,
 	DEFAULT_TIMEOUT,
 	ElectronService,
-	ErrorHandlerService,
 	GAUZY_ENV,
 	GauzyStorageService,
 	LanguageInterceptor,
@@ -26,6 +24,7 @@ import {
 	LoggerService,
 	NgxDesktopThemeModule,
 	OrganizationInterceptor,
+	provideGlobalErrorHandler,
 	providePluginInitializers,
 	providePluginsEffects,
 	RefreshTokenInterceptor,
@@ -38,6 +37,7 @@ import {
 } from '@gauzy/desktop-ui-lib';
 import { environment as gauzyEnvironment } from '@gauzy/ui-config';
 import { provideI18n } from '@gauzy/ui-core/i18n';
+import { provideNgSelectPanelSizing } from '@gauzy/ui-core/shared';
 import { TablerIconsModule } from '@gauzy/ui-core/icons';
 import {
 	NbDatepickerModule,
@@ -72,7 +72,7 @@ if (environment.SENTRY_DSN) {
 	if (environment.SENTRY_DSN === 'DOCKER_SENTRY_DSN') {
 		console.warn('You are running inside Docker but does not have SENTRY_DSN env set');
 	} else {
-		console.log(`Enabling Sentry with DSN: ${environment.SENTRY_DSN}`);
+		console.log('Enabling Sentry');
 		initializeSentry();
 	}
 }
@@ -136,12 +136,7 @@ bootstrapApplication(AppComponent, {
 			useClass: OrganizationInterceptor,
 			multi: true
 		},
-		{
-			provide: ErrorHandler,
-			useValue: Sentry.createErrorHandler({
-				showDialog: true
-			})
-		},
+		provideGlobalErrorHandler(Sentry.createErrorHandler({ showDialog: true, logErrors: false })),
 		{
 			provide: Sentry.TraceService,
 			deps: [Router]
@@ -150,10 +145,6 @@ bootstrapApplication(AppComponent, {
 			const initializerFn = ((trace: Sentry.TraceService) => () => {})(inject(Sentry.TraceService));
 			return initializerFn();
 		}),
-		{
-			provide: ErrorHandler,
-			useClass: ErrorHandlerService
-		},
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: ServerErrorInterceptor,
@@ -197,7 +188,10 @@ bootstrapApplication(AppComponent, {
 
 			iconLibraries.setDefaultPack('eva');
 		}),
-		provideHttpClient(withInterceptorsFromDi()),
+		// This app loads ui-core's global styles, whose panel rules take the select's width as the floor
+		// of every ng-select panel from the pane (ng-select 24 no longer states it) — see the service.
+		provideNgSelectPanelSizing(),
+		provideHttpClient(withXhr(), withInterceptorsFromDi()),
 		provideAnimations()
 	]
 }).catch((error) => console.error(error));

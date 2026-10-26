@@ -1,5 +1,5 @@
 import { environment } from '@gauzy/config';
-import { SentryPlugin, DefaultSentryIntegrations } from '@gauzy/plugin-sentry';
+import { SentryPlugin, DefaultSentryIntegrations, parseSentryLogLevels } from '@gauzy/plugin-sentry';
 import { version } from '../version';
 
 /**
@@ -17,15 +17,19 @@ export function initializeSentry(): typeof SentryPlugin | null {
 		return null;
 	}
 
-	console.log('Initializing Sentry with DSN:', environment.sentry.dsn);
+	// Never print the DSN: it carries the project's ingest key.
+	console.log('Initializing Sentry');
 
 	// Configure Sentry
 	return SentryPlugin.init({
 		dsn: environment.sentry.dsn,
-		debug: process.env.SENTRY_DEBUG === 'true' || !environment.production,
+		// Only on request: `environment.production` is false in the published API image, so tying debug to it
+		// printed several SDK lines per request in every production pod.
+		debug: process.env.SENTRY_DEBUG === 'true',
 		environment: environment.production ? 'production' : 'development',
 		release: `gauzy@${version}`,
-		logLevels: ['error'],
+		// Levels that become Sentry events (SENTRY_LOG_LEVELS, default `error`); the rest are breadcrumbs.
+		logLevels: parseSentryLogLevels(process.env.SENTRY_LOG_LEVELS),
 		integrations: [...DefaultSentryIntegrations],
 		tracesSampleRate: parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.01'),
 		profilesSampleRate: parseFloat(process.env.SENTRY_PROFILE_SAMPLE_RATE || '1'),

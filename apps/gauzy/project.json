@@ -35,6 +35,12 @@
 						"glob": "**/*",
 						"input": "packages/ui-core/i18n/assets/i18n",
 						"output": "assets/i18n/"
+					},
+					{
+						"glob": "**/*",
+						"input": "node_modules/pdfjs-dist/wasm",
+						"ignore": ["quickjs-eval.*"],
+						"output": "assets/pdfjs/wasm/"
 					}
 				],
 				"styles": [
@@ -108,6 +114,9 @@
 						}
 					]
 				},
+				"development": {
+					"outputHashing": "all"
+				},
 				"local": {
 					"optimization": false,
 					"buildOptimizer": false,
@@ -154,6 +163,7 @@
 		},
 		"serve": {
 			"executor": "@angular-builders/custom-webpack:dev-server",
+			"defaultConfiguration": "local",
 			"options": {
 				"buildTarget": "gauzy:build",
 				"proxyConfig": "apps/gauzy/proxy.conf.json",
@@ -170,8 +180,7 @@
 					"liveReload": true,
 					"poll": 0
 				}
-			},
-			"defaultConfiguration": "local"
+			}
 		},
 		"extract-i18n": {
 			"executor": "@angular-devkit/build-angular:extract-i18n",
@@ -182,8 +191,7 @@
 		"test": {
 			"executor": "@nx/jest:jest",
 			"options": {
-				"jestConfig": "apps/gauzy/jest.config.js",
-				"setupFile": "apps/gauzy/src/test-setup.ts",
+				"jestConfig": "apps/gauzy/jest.config.ts",
 				"tsConfig": "apps/gauzy/tsconfig.spec.json"
 			}
 		},
@@ -218,6 +226,12 @@
 						"glob": "**/*",
 						"input": "packages/ui-core/i18n/assets/i18n",
 						"output": "assets/i18n/"
+					},
+					{
+						"glob": "**/*",
+						"input": "node_modules/pdfjs-dist/wasm",
+						"ignore": ["quickjs-eval.*"],
+						"output": "assets/pdfjs/wasm/"
 					}
 				],
 				"styles": [
@@ -331,6 +345,12 @@
 						"glob": "**/*",
 						"input": "packages/ui-core/i18n/assets/i18n",
 						"output": "assets/i18n/"
+					},
+					{
+						"glob": "**/*",
+						"input": "node_modules/pdfjs-dist/wasm",
+						"ignore": ["quickjs-eval.*"],
+						"output": "assets/pdfjs/wasm/"
 					}
 				],
 				"styles": [

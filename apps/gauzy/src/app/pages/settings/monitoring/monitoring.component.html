@@ -24,6 +24,7 @@
 							(keydown.enter)="posthog.toggle()"
 							(keydown.space)="posthog.toggle(); $event.preventDefault()"
 						>
+							<span class="status-dot" [class.on]="isEnabled('posthog')" aria-hidden="true"></span>
 							{{ 'SETTINGS_MONITORING.POSTHOG.TITLE' | translate }}
 						</li>
 						<li
@@ -35,6 +36,7 @@
 							(keydown.enter)="sentry.toggle()"
 							(keydown.space)="sentry.toggle(); $event.preventDefault()"
 						>
+							<span class="status-dot" [class.on]="isEnabled('sentry')" aria-hidden="true"></span>
 							{{ 'SETTINGS_MONITORING.SENTRY.TITLE' | translate }}
 						</li>
 						<li
@@ -46,6 +48,7 @@
 							(keydown.enter)="jitsu.toggle()"
 							(keydown.space)="jitsu.toggle(); $event.preventDefault()"
 						>
+							<span class="status-dot" [class.on]="isEnabled('jitsu')" aria-hidden="true"></span>
 							{{ 'SETTINGS_MONITORING.JITSU.TITLE' | translate }}
 						</li>
 					</ul>
@@ -56,12 +59,31 @@
 							<!-- PostHog Settings -->
 							<nb-accordion-item #posthog [expanded]="true">
 								<nb-accordion-item-header>
-									{{ 'SETTINGS_MONITORING.POSTHOG.TITLE' | translate }}
+									<span class="service-mark" aria-hidden="true">
+										<nb-icon icon="bar-chart-2-outline"></nb-icon>
+									</span>
+									<span class="service-heading">
+										<span class="service-title">{{ 'SETTINGS_MONITORING.POSTHOG.TITLE' | translate }}</span>
+										<span class="service-meta">
+											{{ 'SETTINGS_MONITORING.SCOPE' | translate }}:
+											{{
+												(activeScope().posthog === SettingsScope.GLOBAL
+													? 'SETTINGS_MONITORING.GLOBAL'
+													: 'MENU.TENANT'
+												) | translate
+											}}
+										</span>
+									</span>
+									<span class="service-status" [class.on]="isEnabled('posthog')">
+										<span class="status-dot" [class.on]="isEnabled('posthog')" aria-hidden="true"></span>
+										{{ (isEnabled('posthog') ? 'BUTTONS.ENABLED' : 'BUTTONS.DISABLED') | translate }}
+									</span>
 								</nb-accordion-item-header>
 								<nb-accordion-item-body #posthogBody [hidden]="posthogBody?.state === 'collapsed'">
 									<nb-tabset class="scope-tabset" (changeTab)="onPosthogTabChange($event)">
 										<!-- Global Tab -->
 										<nb-tab
+											tabId="global"
 											[tabTitle]="'SETTINGS_MONITORING.GLOBAL' | translate"
 											*ngxPermissionsOnly="[PermissionsEnum.GLOBAL_SETTING]"
 										>
@@ -70,34 +92,44 @@
 													[ngTemplateOutlet]="posthogFields"
 													[ngTemplateOutletContext]="{ form: globalPosthogForm }"
 												></ng-container>
-												<div class="actions mt-3">
+												<div class="actions">
+													@if (globalPosthogForm.dirty) {
+														<span class="form-status">{{ 'SETTINGS_GENERAL.UNSAVED_CHANGES' | translate }}</span>
+													}
 													<button
 														[disabled]="globalPosthogForm.invalid || loading()"
 														(throttledClick)="saveGlobalPosthog()"
 														debounceClick
 														nbButton
-														status="success"
+														size="small"
+														status="primary"
 													>
+														<nb-icon icon="save-outline"></nb-icon>
 														{{ 'BUTTONS.SAVE' | translate }}
 													</button>
 												</div>
 											</form>
 										</nb-tab>
 										<!-- Tenant Tab -->
-										<nb-tab [tabTitle]="'MENU.TENANT' | translate">
+										<nb-tab tabId="tenant" [tabTitle]="'MENU.TENANT' | translate">
 											<form [formGroup]="tenantPosthogForm">
 												<ng-container
 													[ngTemplateOutlet]="posthogFields"
 													[ngTemplateOutletContext]="{ form: tenantPosthogForm }"
 												></ng-container>
-												<div class="actions mt-3">
+												<div class="actions">
+													@if (tenantPosthogForm.dirty) {
+														<span class="form-status">{{ 'SETTINGS_GENERAL.UNSAVED_CHANGES' | translate }}</span>
+													}
 													<button
 														[disabled]="tenantPosthogForm.invalid || loading()"
 														(throttledClick)="saveTenantPosthog()"
 														debounceClick
 														nbButton
-														status="success"
+														size="small"
+														status="primary"
 													>
+														<nb-icon icon="save-outline"></nb-icon>
 														{{ 'BUTTONS.SAVE' | translate }}
 													</button>
 												</div>
@@ -110,12 +142,31 @@
 							<!-- Sentry Settings -->
 							<nb-accordion-item #sentry>
 								<nb-accordion-item-header>
-									{{ 'SETTINGS_MONITORING.SENTRY.TITLE' | translate }}
+									<span class="service-mark" aria-hidden="true">
+										<nb-icon icon="alert-triangle-outline"></nb-icon>
+									</span>
+									<span class="service-heading">
+										<span class="service-title">{{ 'SETTINGS_MONITORING.SENTRY.TITLE' | translate }}</span>
+										<span class="service-meta">
+											{{ 'SETTINGS_MONITORING.SCOPE' | translate }}:
+											{{
+												(activeScope().sentry === SettingsScope.GLOBAL
+													? 'SETTINGS_MONITORING.GLOBAL'
+													: 'MENU.TENANT'
+												) | translate
+											}}
+										</span>
+									</span>
+									<span class="service-status" [class.on]="isEnabled('sentry')">
+										<span class="status-dot" [class.on]="isEnabled('sentry')" aria-hidden="true"></span>
+										{{ (isEnabled('sentry') ? 'BUTTONS.ENABLED' : 'BUTTONS.DISABLED') | translate }}
+									</span>
 								</nb-accordion-item-header>
 								<nb-accordion-item-body #sentryBody [hidden]="sentryBody?.state === 'collapsed'">
 									<nb-tabset class="scope-tabset" (changeTab)="onSentryTabChange($event)">
 										<!-- Global Tab -->
 										<nb-tab
+											tabId="global"
 											[tabTitle]="'SETTINGS_MONITORING.GLOBAL' | translate"
 											*ngxPermissionsOnly="[PermissionsEnum.GLOBAL_SETTING]"
 										>
@@ -124,34 +175,44 @@
 													[ngTemplateOutlet]="sentryFields"
 													[ngTemplateOutletContext]="{ form: globalSentryForm }"
 												></ng-container>
-												<div class="actions mt-3">
+												<div class="actions">
+													@if (globalSentryForm.dirty) {
+														<span class="form-status">{{ 'SETTINGS_GENERAL.UNSAVED_CHANGES' | translate }}</span>
+													}
 													<button
 														[disabled]="globalSentryForm.invalid || loading()"
 														(throttledClick)="saveGlobalSentry()"
 														debounceClick
 														nbButton
-														status="success"
+														size="small"
+														status="primary"
 													>
+														<nb-icon icon="save-outline"></nb-icon>
 														{{ 'BUTTONS.SAVE' | translate }}
 													</button>
 												</div>
 											</form>
 										</nb-tab>
 										<!-- Tenant Tab -->
-										<nb-tab [tabTitle]="'MENU.TENANT' | translate">
+										<nb-tab tabId="tenant" [tabTitle]="'MENU.TENANT' | translate">
 											<form [formGroup]="tenantSentryForm">
 												<ng-container
 													[ngTemplateOutlet]="sentryFields"
 													[ngTemplateOutletContext]="{ form: tenantSentryForm }"
 												></ng-container>
-												<div class="actions mt-3">
+												<div class="actions">
+													@if (tenantSentryForm.dirty) {
+														<span class="form-status">{{ 'SETTINGS_GENERAL.UNSAVED_CHANGES' | translate }}</span>
+													}
 													<button
 														[disabled]="tenantSentryForm.invalid || loading()"
 														(throttledClick)="saveTenantSentry()"
 														debounceClick
 														nbButton
-														status="success"
+														size="small"
+														status="primary"
 													>
+														<nb-icon icon="save-outline"></nb-icon>
 														{{ 'BUTTONS.SAVE' | translate }}
 													</button>
 												</div>
@@ -164,12 +225,31 @@
 							<!-- Jitsu Settings -->
 							<nb-accordion-item #jitsu>
 								<nb-accordion-item-header>
-									{{ 'SETTINGS_MONITORING.JITSU.TITLE' | translate }}
+									<span class="service-mark" aria-hidden="true">
+										<nb-icon icon="activity-outline"></nb-icon>
+									</span>
+									<span class="service-heading">
+										<span class="service-title">{{ 'SETTINGS_MONITORING.JITSU.TITLE' | translate }}</span>
+										<span class="service-meta">
+											{{ 'SETTINGS_MONITORING.SCOPE' | translate }}:
+											{{
+												(activeScope().jitsu === SettingsScope.GLOBAL
+													? 'SETTINGS_MONITORING.GLOBAL'
+													: 'MENU.TENANT'
+												) | translate
+											}}
+										</span>
+									</span>
+									<span class="service-status" [class.on]="isEnabled('jitsu')">
+										<span class="status-dot" [class.on]="isEnabled('jitsu')" aria-hidden="true"></span>
+										{{ (isEnabled('jitsu') ? 'BUTTONS.ENABLED' : 'BUTTONS.DISABLED') | translate }}
+									</span>
 								</nb-accordion-item-header>
 								<nb-accordion-item-body #jitsuBody [hidden]="jitsuBody?.state === 'collapsed'">
 									<nb-tabset class="scope-tabset" (changeTab)="onJitsuTabChange($event)">
 										<!-- Global Tab -->
 										<nb-tab
+											tabId="global"
 											[tabTitle]="'SETTINGS_MONITORING.GLOBAL' | translate"
 											*ngxPermissionsOnly="[PermissionsEnum.GLOBAL_SETTING]"
 										>
@@ -178,34 +258,44 @@
 													[ngTemplateOutlet]="jitsuFields"
 													[ngTemplateOutletContext]="{ form: globalJitsuForm }"
 												></ng-container>
-												<div class="actions mt-3">
+												<div class="actions">
+													@if (globalJitsuForm.dirty) {
+														<span class="form-status">{{ 'SETTINGS_GENERAL.UNSAVED_CHANGES' | translate }}</span>
+													}
 													<button
 														[disabled]="globalJitsuForm.invalid || loading()"
 														(throttledClick)="saveGlobalJitsu()"
 														debounceClick
 														nbButton
-														status="success"
+														size="small"
+														status="primary"
 													>
+														<nb-icon icon="save-outline"></nb-icon>
 														{{ 'BUTTONS.SAVE' | translate }}
 													</button>
 												</div>
 											</form>
 										</nb-tab>
 										<!-- Tenant Tab -->
-										<nb-tab [tabTitle]="'MENU.TENANT' | translate">
+										<nb-tab tabId="tenant" [tabTitle]="'MENU.TENANT' | translate">
 											<form [formGroup]="tenantJitsuForm">
 												<ng-container
 													[ngTemplateOutlet]="jitsuFields"
 													[ngTemplateOutletContext]="{ form: tenantJitsuForm }"
 												></ng-container>
-												<div class="actions mt-3">
+												<div class="actions">
+													@if (tenantJitsuForm.dirty) {
+														<span class="form-status">{{ 'SETTINGS_GENERAL.UNSAVED_CHANGES' | translate }}</span>
+													}
 													<button
 														[disabled]="tenantJitsuForm.invalid || loading()"
 														(throttledClick)="saveTenantJitsu()"
 														debounceClick
 														nbButton
-														status="success"
+														size="small"
+														status="primary"
 													>
+														<nb-icon icon="save-outline"></nb-icon>
 														{{ 'BUTTONS.SAVE' | translate }}
 													</button>
 												</div>
@@ -222,58 +312,72 @@
 	</nb-card-body>
 </nb-card>
 
+<!-- Field rows: label on the start side, control on the end side, hairline
+     between rows — the same vocabulary as Settings > File Storage. -->
+
 <!-- PostHog Fields Template -->
 <ng-template #posthogFields let-form="form">
 	<div class="fields" [formGroup]="form">
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group toggle-switch">
-					<nb-toggle class="d-block" formControlName="posthogEnabled" status="primary" labelPosition="start">
-						{{ 'SETTINGS_MONITORING.POSTHOG.ENABLED' | translate }}
-					</nb-toggle>
-				</div>
+		<!-- The visible text is the toggle's own label: it names the switch and
+		     clicking it toggles. `start` puts the text before the switch. -->
+		<div class="field-row toggle-row">
+			<nb-toggle class="row-toggle" formControlName="posthogEnabled" status="primary" labelPosition="start">
+				<span class="field-label">{{ 'SETTINGS_MONITORING.POSTHOG.ENABLED' | translate }}</span>
+			</nb-toggle>
+		</div>
+		<div class="field-row">
+			<div class="field-copy">
+				<label class="field-label">{{ 'SETTINGS_MONITORING.POSTHOG.API_KEY' | translate }}</label>
+			</div>
+			<div class="field-control">
+				<input
+					nbInput
+					fullWidth
+					fieldSize="small"
+					class="mono"
+					type="password"
+					autocomplete="new-password"
+					spellcheck="false"
+					formControlName="posthogKey"
+					[attr.aria-label]="'SETTINGS_MONITORING.POSTHOG.API_KEY' | translate"
+					[placeholder]="'SETTINGS_MONITORING.POSTHOG.API_KEY_PLACEHOLDER' | translate"
+				/>
 			</div>
 		</div>
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">{{ 'SETTINGS_MONITORING.POSTHOG.API_KEY' | translate }}</label>
-					<input
-						nbInput
-						fullWidth
-						type="password"
-						formControlName="posthogKey"
-						[placeholder]="'SETTINGS_MONITORING.POSTHOG.API_KEY_PLACEHOLDER' | translate"
-					/>
-				</div>
+		<div class="field-row">
+			<div class="field-copy">
+				<label class="field-label">{{ 'SETTINGS_MONITORING.POSTHOG.HOST' | translate }}</label>
 			</div>
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">{{ 'SETTINGS_MONITORING.POSTHOG.HOST' | translate }}</label>
-					<input
-						nbInput
-						fullWidth
-						formControlName="posthogHost"
-						[placeholder]="'SETTINGS_MONITORING.POSTHOG.HOST_PLACEHOLDER' | translate"
-					/>
-				</div>
+			<div class="field-control">
+				<input
+					nbInput
+					fullWidth
+					fieldSize="small"
+					class="mono"
+					autocomplete="off"
+					spellcheck="false"
+					formControlName="posthogHost"
+					[attr.aria-label]="'SETTINGS_MONITORING.POSTHOG.HOST' | translate"
+					[placeholder]="'SETTINGS_MONITORING.POSTHOG.HOST_PLACEHOLDER' | translate"
+				/>
 			</div>
 		</div>
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">{{ 'SETTINGS_MONITORING.POSTHOG.FLUSH_INTERVAL' | translate }}</label>
-					<input
-						nbInput
-						fullWidth
-						type="number"
-						formControlName="posthogFlushInterval"
-						[placeholder]="'SETTINGS_MONITORING.POSTHOG.FLUSH_INTERVAL_PLACEHOLDER' | translate"
-					/>
-					<p class="text-hint">
-						{{ 'SETTINGS_MONITORING.POSTHOG.FLUSH_INTERVAL_HINT' | translate }}
-					</p>
-				</div>
+		<div class="field-row">
+			<div class="field-copy">
+				<label class="field-label">{{ 'SETTINGS_MONITORING.POSTHOG.FLUSH_INTERVAL' | translate }}</label>
+				<span class="field-hint">{{ 'SETTINGS_MONITORING.POSTHOG.FLUSH_INTERVAL_HINT' | translate }}</span>
+			</div>
+			<div class="field-control">
+				<input
+					nbInput
+					fullWidth
+					fieldSize="small"
+					class="mono"
+					type="number"
+					formControlName="posthogFlushInterval"
+					[attr.aria-label]="'SETTINGS_MONITORING.POSTHOG.FLUSH_INTERVAL' | translate"
+					[placeholder]="'SETTINGS_MONITORING.POSTHOG.FLUSH_INTERVAL_PLACEHOLDER' | translate"
+				/>
 			</div>
 		</div>
 	</div>
@@ -282,27 +386,30 @@
 <!-- Sentry Fields Template -->
 <ng-template #sentryFields let-form="form">
 	<div class="fields" [formGroup]="form">
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group toggle-switch">
-					<nb-toggle class="d-block" formControlName="sentryEnabled" status="primary" labelPosition="start">
-						{{ 'SETTINGS_MONITORING.SENTRY.ENABLED' | translate }}
-					</nb-toggle>
-				</div>
-			</div>
+		<!-- The visible text is the toggle's own label: it names the switch and
+		     clicking it toggles. `start` puts the text before the switch. -->
+		<div class="field-row toggle-row">
+			<nb-toggle class="row-toggle" formControlName="sentryEnabled" status="primary" labelPosition="start">
+				<span class="field-label">{{ 'SETTINGS_MONITORING.SENTRY.ENABLED' | translate }}</span>
+			</nb-toggle>
 		</div>
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">{{ 'SETTINGS_MONITORING.SENTRY.DSN' | translate }}</label>
-					<input
-						nbInput
-						fullWidth
-						type="password"
-						formControlName="sentryDsn"
-						[placeholder]="'SETTINGS_MONITORING.SENTRY.DSN_PLACEHOLDER' | translate"
-					/>
-				</div>
+		<div class="field-row">
+			<div class="field-copy">
+				<label class="field-label">{{ 'SETTINGS_MONITORING.SENTRY.DSN' | translate }}</label>
+			</div>
+			<div class="field-control">
+				<input
+					nbInput
+					fullWidth
+					fieldSize="small"
+					class="mono"
+					type="password"
+					autocomplete="new-password"
+					spellcheck="false"
+					formControlName="sentryDsn"
+					[attr.aria-label]="'SETTINGS_MONITORING.SENTRY.DSN' | translate"
+					[placeholder]="'SETTINGS_MONITORING.SENTRY.DSN_PLACEHOLDER' | translate"
+				/>
 			</div>
 		</div>
 	</div>
@@ -311,38 +418,48 @@
 <!-- Jitsu Fields Template -->
 <ng-template #jitsuFields let-form="form">
 	<div class="fields" [formGroup]="form">
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group toggle-switch">
-					<nb-toggle class="d-block" formControlName="jitsuEnabled" status="primary" labelPosition="start">
-						{{ 'SETTINGS_MONITORING.JITSU.ENABLED' | translate }}
-					</nb-toggle>
-				</div>
+		<!-- The visible text is the toggle's own label: it names the switch and
+		     clicking it toggles. `start` puts the text before the switch. -->
+		<div class="field-row toggle-row">
+			<nb-toggle class="row-toggle" formControlName="jitsuEnabled" status="primary" labelPosition="start">
+				<span class="field-label">{{ 'SETTINGS_MONITORING.JITSU.ENABLED' | translate }}</span>
+			</nb-toggle>
+		</div>
+		<div class="field-row">
+			<div class="field-copy">
+				<label class="field-label">{{ 'SETTINGS_MONITORING.JITSU.HOST' | translate }}</label>
+			</div>
+			<div class="field-control">
+				<input
+					nbInput
+					fullWidth
+					fieldSize="small"
+					class="mono"
+					autocomplete="off"
+					spellcheck="false"
+					formControlName="jitsuHost"
+					[attr.aria-label]="'SETTINGS_MONITORING.JITSU.HOST' | translate"
+					[placeholder]="'SETTINGS_MONITORING.JITSU.HOST_PLACEHOLDER' | translate"
+				/>
 			</div>
 		</div>
-		<div class="row">
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">{{ 'SETTINGS_MONITORING.JITSU.HOST' | translate }}</label>
-					<input
-						nbInput
-						fullWidth
-						formControlName="jitsuHost"
-						[placeholder]="'SETTINGS_MONITORING.JITSU.HOST_PLACEHOLDER' | translate"
-					/>
-				</div>
+		<div class="field-row">
+			<div class="field-copy">
+				<label class="field-label">{{ 'SETTINGS_MONITORING.JITSU.WRITE_KEY' | translate }}</label>
 			</div>
-			<div class="col-6">
-				<div class="form-group">
-					<label class="label">{{ 'SETTINGS_MONITORING.JITSU.WRITE_KEY' | translate }}</label>
-					<input
-						nbInput
-						fullWidth
-						type="password"
-						formControlName="jitsuWriteKey"
-						[placeholder]="'SETTINGS_MONITORING.JITSU.WRITE_KEY_PLACEHOLDER' | translate"
-					/>
-				</div>
+			<div class="field-control">
+				<input
+					nbInput
+					fullWidth
+					fieldSize="small"
+					class="mono"
+					type="password"
+					autocomplete="new-password"
+					spellcheck="false"
+					formControlName="jitsuWriteKey"
+					[attr.aria-label]="'SETTINGS_MONITORING.JITSU.WRITE_KEY' | translate"
+					[placeholder]="'SETTINGS_MONITORING.JITSU.WRITE_KEY_PLACEHOLDER' | translate"
+				/>
 			</div>
 		</div>
 	</div>

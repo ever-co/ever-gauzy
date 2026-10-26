@@ -1,0 +1,51 @@
+# The statistics resource's root fields.
+#
+# `Query` is declared by the kernel and extended here; `Mutation` is not extended at all, and that is
+# the delivery rather than an omission. The delivered controller serves exactly one route —
+# `GET /api/stats/global` — and no route of it writes: the resource has no table, no identifier and no
+# lifecycle of its own, because everything it answers is computed from the records other domains own. A
+# mutation here would be a capability the REST surface does not have, which is the one thing this
+# surface may not invent.
+#
+# **`globalStats` is a computed answer, so it is a root field of its own.** It is not a row of a
+# resource and not a connection over one: there is nothing to filter, nothing to order and no page to
+# take, because the answer is one document of aggregates rather than a set of rows. The connection
+# protocol would therefore state an argument the method cannot honour, which is why this field takes
+# none — and why it is documented here as what it is rather than offered as a list of one.
+#
+# **The route is public, and so is this field.** `StatsController` carries the platform's `Public()`
+# marker, declares no guard and no permission — the aggregates it answers are the installation's own
+# totals, which is exactly the kind of answer an operator publishes on a status page — and the resolver
+# behind this field states the same, so neither protocol asks for a credential the other does not.
+#
+# **The route's capability is the open-stats switch, and it is mirrored rather than replaced.**
+# `FEATURE_OPEN_STATS` is off unless the deployment switches it on (`FEATURE_OPEN_STATS=true`), which is
+# what keeps the totals of an installation from being published by an installation that never asked for
+# them; the route states that code, and this field states the same one so the switch reaches both
+# doors. The route's own guard is mirrored beside it, and the two agree because they read the same
+# code: the capability's guard is the one that answers the refusal, and it answers it in this protocol's
+# vocabulary — a field that is not served reads as a field that does not exist — rather than by
+# reaching for an HTTP request a GraphQL call does not have.
+#
+# One thing this surface cannot state, and it is stated here rather than left to be discovered: a
+# field is behind **one** capability code. The guard resolves a single code per field, reading the
+# handler's statement before the class's, so a field that mirrored the route's code is gated by
+# `FEATURE_OPEN_STATS` and not additionally by the endpoint's own `FEATURE_GRAPHQL` — the class states
+# that code for the resolver as a whole, and this field's own statement is what the guard reads. Both
+# codes gating one field would need a guard that aggregates two codes, which is a change to shared
+# machinery rather than to this domain.
+
+extend type Query {
+	"""
+	The platform's own aggregates: how much of everything this installation holds.
+
+	The answer is computed on the request from the records the other domains own, so it is a document
+	of totals rather than a row. It carries no argument: there is nothing to narrow, order or page.
+
+	The delivered read is scoped by the caller's own credential where there is one — the services it
+	aggregates apply the tenant of the request context — and covers the installation's whole tables
+	where there is none, which is the state a public caller is in. This field inherits that behaviour
+	rather than restating it, because it makes the same call the route makes.
+	"""
+	globalStats: GlobalStats!
+}

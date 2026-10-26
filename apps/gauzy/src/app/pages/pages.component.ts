@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, inject, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Data, Router } from '@angular/router';
 import { NbMenuItem } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,6 +32,7 @@ import { ReportService } from './reports/all-report/report.service';
 			</ngx-one-column-layout>
 		}
 	`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class PagesComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

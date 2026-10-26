@@ -48,14 +48,14 @@
 												<nb-icon
 													class="all-monitor_icon"
 													icon="monitor-outline"
-													[status]="item?.status"
+													[status]="$safeNavigationMigration(item?.status)"
 												>
 												</nb-icon>
 												@if (item?.value === 'all') {
 													<nb-icon
 														class="all-monitor_icon monitor-many"
 														icon="monitor-outline"
-														[status]="item?.status"
+														[status]="$safeNavigationMigration(item?.status)"
 													>
 													</nb-icon>
 												}
@@ -68,7 +68,7 @@
 															: 'title-tile'
 													"
 												>
-													{{ item?.title | translate }}
+													{{ $safeNavigationMigration(item?.title) | translate }}
 												</span>
 											</div>
 											<div class="col-12">
@@ -79,7 +79,7 @@
 															: 'subtitle-tile'
 													"
 												>
-													{{ item?.subtitle | translate }}
+													{{ $safeNavigationMigration(item?.subtitle) | translate }}
 												</span>
 											</div>
 										</div>
@@ -121,7 +121,7 @@
 										<div class="col-12">
 											<nb-toggle
 												[(ngModel)]="screenshotNotification"
-												[disabled]="appSetting?.timerStarted"
+												[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 												(ngModelChange)="toggleNotificationChange($event)"
 												status="basic"
 											>
@@ -143,7 +143,7 @@
 										<div class="col-12">
 											<nb-toggle
 												[checked]="simpleScreenshotNotification$ | async"
-												[disabled]="appSetting?.timerStarted"
+												[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 												(checkedChange)="toggleSimpleNotificationChange($event)"
 												status="basic"
 											>
@@ -165,6 +165,42 @@
 					</nb-card>
 				</div>
 			</div>
+			@if (!isAgent && notificationDisplays.length > 1) {
+				<div class="row mt-2">
+					<div class="col-12">
+						<h6>
+							{{ 'TIMER_TRACKER.SETTINGS.NOTIFICATION_DISPLAY' | translate }}
+						</h6>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-12">
+						<p>
+							{{ 'TIMER_TRACKER.SETTINGS.SHOW_NOTIF_ON_DISPLAY' | translate }}
+						</p>
+					</div>
+				</div>
+				<div class="row notification">
+					<div class="col-10">
+						<nb-card>
+							<nb-card-body>
+								<nb-select
+									[placeholder]="'TIMER_TRACKER.SETTINGS.PRIMARY_DISPLAY' | translate"
+									[(ngModel)]="screenshotNotificationDisplayId"
+									(ngModelChange)="selectNotificationDisplay($event)"
+								>
+									<nb-option [value]="null">
+										{{ 'TIMER_TRACKER.SETTINGS.PRIMARY_DISPLAY' | translate }}
+									</nb-option>
+									@for (display of notificationDisplays; track display.id) {
+										<nb-option [value]="display.id">{{ display.label }}</nb-option>
+									}
+								</nb-select>
+							</nb-card-body>
+						</nb-card>
+					</div>
+				</div>
+			}
 			<div class="row mt-2">
 				<div class="col-12">
 					<h6>
@@ -185,7 +221,7 @@
 						<nb-card-body>
 							<nb-toggle
 								[checked]="!muted"
-								[disabled]="appSetting?.timerStarted"
+								[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 								(checkedChange)="toggleNotificationSoundChange($event)"
 								status="basic"
 							>
@@ -278,7 +314,7 @@
 								[(ngModel)]="appSetting.preventDisplaySleep"
 								(ngModelChange)="togglePreventDisplaySleep($event)"
 								status="basic"
-								[disabled]="appSetting?.timerStarted"
+								[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 								>{{ 'TIMER_TRACKER.SETTINGS.PREVENT_DISPLAY_SLEEP' | translate }}
 							</nb-toggle>
 						</nb-card-body>
@@ -307,7 +343,7 @@
 								[placeholder]="'TIMER_TRACKER.SETTINGS.TIMEZONE_PLACEHOLDER' | translate"
 								[(ngModel)]="selectedZone"
 								(ngModelChange)="selectZone($event)"
-								[disabled]="appSetting?.timerStarted"
+								[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 							>
 								@for (zone of zones; track zone) {
 									<nb-option [value]="zone.name">
@@ -341,7 +377,7 @@
 								[(ngModel)]="appSetting.alwaysOn"
 								(ngModelChange)="toggleAlwaysOn($event)"
 								status="basic"
-								[disabled]="appSetting?.timerStarted"
+								[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 								>{{ 'TIMER_TRACKER.SETTINGS.WIDGET' | translate }}
 							</nb-toggle>
 						</nb-card-body>
@@ -383,7 +419,7 @@
 												[checked]="automaticUpdate$ | async"
 												(checkedChange)="toggleAutomaticUpdate($event)"
 												status="basic"
-												[disabled]="appSetting?.timerStarted"
+												[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 												>{{ 'TIMER_TRACKER.SETTINGS.ENABLE_AUTOMATIC_UPDATE' | translate }}
 											</nb-toggle>
 										</div>
@@ -403,7 +439,7 @@
 														"
 														[selected]="automaticUpdateDelay$ | async"
 														(selectedChange)="selectAutomaticUpdateDelay($event)"
-														[disabled]="appSetting?.timerStarted"
+														[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 													>
 														@for (delay of delayOptions; track delay) {
 															<nb-option [value]="delay">
@@ -440,7 +476,7 @@
 									<div class="row">
 										<div class="col-6">
 											<nb-toggle
-												[checked]="(updaterServer$ | async)?.github"
+												[checked]="$safeNavigationMigration((updaterServer$ | async)?.github)"
 												(checkedChange)="toggleGithubDefaultServer($event)"
 												status="basic"
 												[disabled]="appSetting?.timerStarted || showProgressBar"
@@ -450,7 +486,7 @@
 										</div>
 										<div class="col-6">
 											<nb-toggle
-												[checked]="(updaterServer$ | async)?.digitalOcean"
+												[checked]="$safeNavigationMigration((updaterServer$ | async)?.digitalOcean)"
 												(checkedChange)="toggleDigitalOceanDefaultServer($event)"
 												status="basic"
 												[disabled]="appSetting?.timerStarted || showProgressBar"
@@ -460,7 +496,7 @@
 										</div>
 										<div class="col-12">
 											<nb-toggle
-												[checked]="(updaterServer$ | async)?.local"
+												[checked]="$safeNavigationMigration((updaterServer$ | async)?.local)"
 												(checkedChange)="toggleLocalServer($event)"
 												status="basic"
 												[disabled]="appSetting?.timerStarted || showProgressBar"
@@ -488,7 +524,7 @@
 															<nb-icon icon="folder-outline"></nb-icon>
 															{{ 'BUTTONS.FILES' | translate }}
 														</button>
-														<div class="file-uri" [nbTooltip]="(file$ | async)?.uri">
+														<div class="file-uri" [nbTooltip]="$safeNavigationMigration((file$ | async)?.uri)">
 															{{ (file$ | async)?.uri }}
 														</div>
 													</div>
@@ -592,11 +628,11 @@
 							<button
 								nbButton
 								outline
-								[status]="message?.status"
+								[status]="$safeNavigationMigration(message?.status)"
 								size="small"
 								class="update-message-content"
 							>
-								{{ message?.text | translate }}
+								{{ $safeNavigationMigration(message?.text) | translate }}
 							</button>
 						</div>
 						@if (showProgressBar) {
@@ -683,7 +719,7 @@
 																	fullWidth
 																	[(ngModel)]="config.serverType"
 																	(ngModelChange)="onServerChange($event)"
-																	[disabled]="appSetting?.timerStarted"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 																>
 																	@for (item of serverOptions; track item) {
 																		<nb-option [value]="item">
@@ -710,7 +746,7 @@
 																	type="text"
 																	nbInput
 																	fullWidth
-																	[disabled]="appSetting?.timerStarted"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 																	status="basic"
 																/>
 															</div>
@@ -732,7 +768,7 @@
 																	type="number"
 																	nbInput
 																	fullWidth
-																	[disabled]="appSetting?.timerStarted"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 																	status="basic"
 																	(ngModelChange)="portChange($event, 'api')"
 																/>
@@ -755,9 +791,21 @@
 																	type="number"
 																	nbInput
 																	fullWidth
-																	[disabled]="appSetting?.timerStarted"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 																	status="basic"
 																/>
+															</div>
+														}
+														@if (isServer) {
+															<div class="col-12 form-group">
+																<nb-toggle
+																	[ngModel]="config?.lanAccess !== false"
+																	(ngModelChange)="config.lanAccess = $event"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
+																	status="basic"
+																	>{{ 'TIMER_TRACKER.SETTINGS.LAN_ACCESS' | translate }}
+																</nb-toggle>
+																<p class="caption">{{ 'TIMER_TRACKER.SETTINGS.LAN_ACCESS_HINT' | translate }}</p>
 															</div>
 														}
 														@if (!config?.isLocalServer) {
@@ -792,11 +840,11 @@
 																	status="basic"
 																	class="check-db"
 																	(click)="checkHostConnectivity()"
-																	[disabled]="appSetting?.timerStarted"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 																>
 																	<nb-icon
 																		*gauzySpinnerButton="
-																			(isCheckHost$ | async)?.isLoading
+																			$safeNavigationMigration((isCheckHost$ | async)?.isLoading)
 																		"
 																		[status]="
 																			(isCheckHost$ | async)?.status
@@ -826,7 +874,7 @@
 																</button>
 																<div class="message-db-connection">
 																	{{
-																		(isCheckHost$ | async)?.message
+																		$safeNavigationMigration((isCheckHost$ | async)?.message)
 																			| translate
 																				: {
 																						url: config.serverUrl
@@ -859,7 +907,7 @@
 																	fullWidth
 																	[(ngModel)]="config.db"
 																	(ngModelChange)="onDriverChange($event)"
-																	[disabled]="appSetting?.timerStarted"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 																>
 																	@for (item of driverOptions; track item) {
 																		<nb-option [value]="item">
@@ -883,7 +931,7 @@
 																	status="basic"
 																	class="check-db"
 																	(click)="checkDatabaseConnectivity()"
-																	[disabled]="appSetting?.timerStarted"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 																>
 																	<nb-icon
 																		*gauzySpinnerButton="isCheckDatabase$ | async"
@@ -975,7 +1023,7 @@
 										@if (isServer) {
 											<div class="col-12 mb-3">
 												<gauzy-ssl
-													[config]="config?.secureProxy"
+													[config]="$safeNavigationMigration(config?.secureProxy)"
 													(update)="updateSslSetting($event)"
 												></gauzy-ssl>
 											</div>
@@ -1004,7 +1052,7 @@
 															</div>
 															<div class="col-7 form-group">
 																<input
-																	[disabled]="appSetting?.timerStarted"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 																	[(ngModel)]="config.awPort"
 																	type="text"
 																	nbInput
@@ -1015,7 +1063,7 @@
 															</div>
 															<div class="col-12">
 																<nb-toggle
-																	[disabled]="appSetting?.timerStarted"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 																	[(ngModel)]="appSetting.visibleAwOption"
 																	(ngModelChange)="toggleAwView($event)"
 																	status="basic"
@@ -1027,7 +1075,7 @@
 															</div>
 															<div class="col-12">
 																<nb-toggle
-																	[disabled]="appSetting?.timerStarted"
+																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 																	[(ngModel)]="appSetting.visibleWakatimeOption"
 																	(ngModelChange)="toggleWakatimeView($event)"
 																	status="basic"
@@ -1051,7 +1099,7 @@
 														<div class="row">
 															<div class="col-12">
 																<p class="subtitle-tile third-party-item">
-																	<i [class]="'fab fa-' + item?.title | lowercase"></i
+																	<i [class]="'fab fa-' + $safeNavigationMigration(item?.title) | lowercase"></i
 																	>{{ item?.title }}
 																</p>
 															</div>
@@ -1069,7 +1117,7 @@
 																				type="text"
 																				nbInput
 																				fullWidth
-																				[disabled]="appSetting?.timerStarted"
+																				[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 																				status="basic"
 																			/>
 																		</div>
@@ -1099,7 +1147,7 @@
 		@if ((selectedMenu$ | async) === 'TIMER_TRACKER.PERMISSIONS.MENU_LABEL') {
 			<ngx-permission-manager
 				[isDialog]="false"
-				[timerStarted]="appSetting?.timerStarted"
+				[timerStarted]="$safeNavigationMigration(appSetting?.timerStarted)"
 			>
 			</ngx-permission-manager>
 		}
@@ -1145,8 +1193,8 @@
 						'TIMER_TRACKER.SETTINGS.SIGN_IN_AS'
 							| translate
 								: {
-										name: (currentUser$ | async)?.name,
-										email: (currentUser$ | async)?.email
+										name: $safeNavigationMigration((currentUser$ | async)?.name),
+										email: $safeNavigationMigration((currentUser$ | async)?.email)
 								  }
 					}}
 					-
@@ -1173,7 +1221,7 @@
 				nbInput
 				fullWidth
 				status="basic"
-				[disabled]="appSetting?.timerStarted"
+				[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 				(ngModelChange)="portChange($event, 'db')"
 			/>
 		</div>
@@ -1187,7 +1235,7 @@
 				nbInput
 				fullWidth
 				status="basic"
-				[disabled]="appSetting?.timerStarted"
+				[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 				(ngModelChange)="portChange($event, 'db')"
 			/>
 		</div>
@@ -1201,7 +1249,7 @@
 				nbInput
 				fullWidth
 				status="basic"
-				[disabled]="appSetting?.timerStarted"
+				[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 				(ngModelChange)="portChange($event, 'db')"
 			/>
 		</div>
@@ -1215,7 +1263,7 @@
 				nbInput
 				fullWidth
 				status="basic"
-				[disabled]="appSetting?.timerStarted"
+				[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
 				(ngModelChange)="portChange($event, 'db')"
 			/>
 		</div>
@@ -1225,7 +1273,7 @@
 	<div
 		class="restart-btn-container"
 		nbTooltip="Check database connectivity"
-		[nbTooltipDisabled]="(isConnectedDatabase$ | async)?.status"
+		[nbTooltipDisabled]="$safeNavigationMigration((isConnectedDatabase$ | async)?.status)"
 	>
 		<button
 			nbButton

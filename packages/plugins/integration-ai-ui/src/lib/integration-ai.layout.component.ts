@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, merge, tap } from 'rxjs';
 import { NgxPermissionsService } from 'ngx-permissions';
@@ -12,6 +12,7 @@ import { I18nService } from '@gauzy/ui-core/i18n';
 @Component({
 	selector: 'ngx-integration-ai-layout',
 	template: `<router-outlet></router-outlet>`,
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class IntegrationAILayoutComponent implements OnInit {

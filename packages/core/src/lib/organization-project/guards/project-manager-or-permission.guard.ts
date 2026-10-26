@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Inject, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Inject, Injectable, Logger } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Reflector } from '@nestjs/core';
@@ -6,6 +6,9 @@ import { RequestContext } from '../../core/context';
 import { PermissionGuard } from '../../shared/guards';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
 import { OrganizationProjectService } from '../organization-project.service';
+
+// Per-request trace lines: printed at debug level, i.e. only when LOG_LEVEL is debug/verbose (or unset).
+const logger = new Logger('ProjectManagerOrPermissionGuard');
 
 @Injectable()
 export class ProjectManagerOrPermissionGuard extends PermissionGuard implements CanActivate {
@@ -36,7 +39,13 @@ export class ProjectManagerOrPermissionGuard extends PermissionGuard implements 
 
 		// If either employeeId or projectId is missing, defer to PermissionGuard
 		if (!employeeId || !projectId) {
-			console.log('⚠️ Missing employeeId or projectId, deferring to PermissionGuard.');
+			logger.debug('⚠️ Missing employeeId or projectId, deferring to PermissionGuard.');
+			return super.canActivate(context);
+		}
+
+		// A third-party OAuth-app token takes the manager's way in only when its approved scopes reach the route's
+		// permissions (owner decision Q12): a read-only app never edits a project through its user's management.
+		if (!this.oauthAppScopesReachRoute(context)) {
 			return super.canActivate(context);
 		}
 

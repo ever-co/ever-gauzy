@@ -8,12 +8,12 @@ import {
 	NgZone,
 	OnChanges,
 	OnDestroy,
-	SimpleChanges,
+	type SimpleChanges,
 	ViewChild,
 	inject
 } from '@angular/core';
 import { NbButtonModule, NbIconModule, NbTooltipModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Editor } from '@tiptap/core';
 import { BubbleMenuPlugin } from '@tiptap/extension-bubble-menu';
 import { PluginKey } from '@tiptap/pm/state';
@@ -29,7 +29,7 @@ const pluginKey = new PluginKey('gzTableBubbleMenu');
 @Component({
 	selector: 'gz-table-bubble-menu',
 	standalone: true,
-	imports: [TranslateModule, NbButtonModule, NbIconModule, NbTooltipModule],
+	imports: [TranslatePipe, NbButtonModule, NbIconModule, NbTooltipModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<div class="gz-bubble-menu gz-table-menu" #menu>

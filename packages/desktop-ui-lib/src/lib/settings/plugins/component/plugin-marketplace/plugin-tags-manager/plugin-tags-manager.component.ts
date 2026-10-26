@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { IPlugin, ITag } from '@gauzy/contracts';
 import { NbDialogService, NbIconModule, NbButtonModule, NbTooltipModule, NbTagModule, NbFormFieldModule, NbInputModule, NbSelectModule, NbOptionModule, NbCheckboxModule } from '@nebular/theme';
@@ -27,6 +27,7 @@ interface ITagSuggestion {
     selector: 'lib-plugin-tags-manager',
     templateUrl: './plugin-tags-manager.component.html',
     styleUrls: ['./plugin-tags-manager.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbIconModule, NbButtonModule, NbTooltipModule, NbTagModule, NbFormFieldModule, NbInputModule, FormsModule, ReactiveFormsModule, NbSelectModule, NbOptionModule, NbCheckboxModule, AsyncPipe, DatePipe]
 })
 export class PluginTagsManagerComponent implements OnInit, OnDestroy {

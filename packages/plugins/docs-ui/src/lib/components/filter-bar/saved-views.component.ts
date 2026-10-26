@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -34,6 +34,7 @@ const MIN_PANEL_HEIGHT_PX = 200;
 	selector: 'gz-docs-saved-views',
 	templateUrl: './saved-views.component.html',
 	styleUrls: ['./saved-views.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class SavedViewsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

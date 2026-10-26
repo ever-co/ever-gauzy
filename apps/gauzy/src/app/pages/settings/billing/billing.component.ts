@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
@@ -39,6 +39,7 @@ const INTERVAL_SUFFIX: Record<string, string> = {
 	selector: 'ga-billing',
 	templateUrl: './billing.component.html',
 	styleUrls: ['./billing.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class BillingComponent extends TranslationBaseComponent implements OnInit {
@@ -121,12 +122,29 @@ export class BillingComponent extends TranslationBaseComponent implements OnInit
 		if (this.working || this.isCurrentPlan(plan)) return;
 		this.working = true;
 		try {
-			this.subscription = await firstValueFrom(this.billingService.changePlan(plan.lookupKey));
+			this.subscription = await firstValueFrom(
+				this.billingService.changePlan(plan.lookupKey, window.location.href)
+			);
 			this.toastrService.success('SETTINGS_MENU.BILLING_PLAN_CHANGED', { name: plan.productName });
 			// Switching plans issues an invoice, so the list below is now stale.
 			this.invoices = await this.safe(() => firstValueFrom(this.billingService.getInvoices()), this.invoices);
 		} catch (error) {
-			this.errorHandlingService.handleError(error);
+			// An upgrade to a paid plan from one with no card on file: the API refuses it rather than
+			// leave an invoice nobody can pay, and hands back a Stripe portal link to add a card. Send the
+			// admin there; they return to this page and switch again.
+			const body = (error as { status?: number; error?: { code?: string; portalUrl?: string } })?.error;
+			if ((error as { status?: number })?.status === 402 && body?.code === 'payment_method_required') {
+				// The API still answers 402 when Stripe could not open a portal session, just without the
+				// link — then say so, and point at the page's own "manage billing" action instead.
+				if (body.portalUrl) {
+					this.toastrService.info('SETTINGS_MENU.BILLING_PAYMENT_METHOD_REQUIRED', 'TOASTR.TITLE.INFO');
+					window.location.href = body.portalUrl;
+					return;
+				}
+				this.toastrService.warning('SETTINGS_MENU.BILLING_PAYMENT_METHOD_REQUIRED_NO_PORTAL');
+			} else {
+				this.errorHandlingService.handleError(error);
+			}
 		} finally {
 			this.working = false;
 		}

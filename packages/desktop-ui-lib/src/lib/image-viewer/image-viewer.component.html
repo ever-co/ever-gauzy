@@ -14,7 +14,7 @@
 					</button>
 				</div>
 				<div
-					[nbSpinner]="!(item?.fullUrl | async)"
+					[nbSpinner]="!($safeNavigationMigration(item?.fullUrl) | async)"
 					nbSpinnerStatus="primary"
 					class="media-viewer"
 					(click)="$event.stopPropagation()"
@@ -22,18 +22,18 @@
 					<ng-template
 						[ngTemplateOutlet]="defaultLoader"
 						[ngTemplateOutletContext]="{
-							$implicit: (item?.thumbUrl | async)
+							$implicit: ($safeNavigationMigration(item?.thumbUrl) | async)
 						}"
 					></ng-template>
 					<img
 						#imageMedia
 						loading="eager"
-						[class.blur-transition]="item?.fullUrl | async"
-						[src]="item?.fullUrl | async"
+						[class.blur-transition]="$safeNavigationMigration(item?.fullUrl) | async"
+						[src]="$safeNavigationMigration(item?.fullUrl) | async"
 					/>
-					@if (item?.fullUrl | async) {
+					@if ($safeNavigationMigration(item?.fullUrl) | async) {
 					<div class="date">
-						{{ item?.recordedAt | dateTime : 'llll' }}
+						{{ $safeNavigationMigration(item?.recordedAt) | dateTime : 'llll' }}
 					</div>
 					}
 				</div>
@@ -56,18 +56,18 @@
 						<ng-template
 							[ngTemplateOutlet]="defaultLoader"
 							[ngTemplateOutletContext]="{
-								$implicit: (thumb?.thumbUrl | async)
+								$implicit: ($safeNavigationMigration(thumb?.thumbUrl) | async)
 							}"
 						></ng-template>
 						<img
 							loading="eager"
-							[class.blur-transition]="thumb?.thumbUrl | async"
-							[src]="thumb?.thumbUrl | async"
+							[class.blur-transition]="$safeNavigationMigration(thumb?.thumbUrl) | async"
+							[src]="$safeNavigationMigration(thumb?.thumbUrl) | async"
 						/>
-						@if (thumb?.thumbUrl | async) {
+						@if ($safeNavigationMigration(thumb?.thumbUrl) | async) {
 						<div class="date-box">
 							<div class="thumb-date">
-								{{ thumb?.recordedAt | dateTime }}
+								{{ $safeNavigationMigration(thumb?.recordedAt) | dateTime }}
 							</div>
 						</div>
 						}

@@ -18,8 +18,10 @@ services:
             value: true
           - key: LOG_LEVEL
             value: info
+          # Your own Sentry DSN: Render asks for it when the Blueprint is created (leave it empty to disable
+          # Sentry). A DSN shipped here would send every install's errors to the Ever Gauzy project.
           - key: SENTRY_DSN
-            value: https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292
+            sync: false
           - key: SENTRY_HTTP_TRACING_ENABLED
             value: false
           - key: SENTRY_PROFILING_ENABLED
@@ -53,8 +55,10 @@ services:
             value: jFoSXEjGmqhUhqU3zfgkFfMt
           - key: CLOUDINARY_API_KEY
             value: 256868982483961
+          # Your own Sentry DSN: Render asks for it when the Blueprint is created (leave it empty to disable
+          # Sentry). A DSN shipped here would send every install's errors to the Ever Gauzy project.
           - key: SENTRY_DSN
-            value: https://7cd381188b6f446ca0e69185227b9031@o51327.ingest.sentry.io/4397292
+            sync: false
           - key: CLOUDINARY_CLOUD_NAME
             value: dv6ezkfxg
           - key: API_BASE_URL

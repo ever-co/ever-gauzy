@@ -13,7 +13,7 @@
 							{{
 								isEdit
 									? ('PLUGIN.DIALOG.VERSION.UPDATE.TITLE' | translate : { number: version.number })
-									: ('PLUGIN.DIALOG.VERSION.CREATE.TITLE' | translate : { name: plugin?.name })
+									: ('PLUGIN.DIALOG.VERSION.CREATE.TITLE' | translate : { name: $safeNavigationMigration(plugin?.name) })
 							}}
 						</h5>
 					</div>
@@ -26,7 +26,7 @@
 		<nb-card-body>
 			<nb-stepper orientation="horizontal" #stepper>
 				<!-- Step 1 : Sources -->
-				<nb-step [stepControl]="versionForm?.get('sources')" [label]="'PLUGIN.FORM.SOURCES' | translate">
+				<nb-step [stepControl]="$safeNavigationMigration(versionForm?.get('sources'))" [label]="'PLUGIN.FORM.SOURCES' | translate">
 					@if(isEdit && plugin){
 					<div class="version-section mb-3">
 						<lib-form-row>
@@ -37,7 +37,7 @@
 										'PLUGIN.FORM.VERSION' | translate
 									}}</label>
 								</div>
-								<gauzy-version-selector [pluginId]="plugin?.id"></gauzy-version-selector>
+								<gauzy-version-selector [pluginId]="$safeNavigationMigration(plugin?.id)"></gauzy-version-selector>
 							</div>
 						</lib-form-row>
 					</div>
@@ -60,10 +60,10 @@
 				</nb-step>
 
 				<!-- Step 2: Version -->
-				<nb-step [stepControl]="versionForm?.get('number')" [label]="'PLUGIN.FORM.VERSION' | translate">
+				<nb-step [stepControl]="$safeNavigationMigration(versionForm?.get('number'))" [label]="'PLUGIN.FORM.VERSION' | translate">
 					<lib-plugin-version
 						class="grow"
-						[pluginId]="plugin?.id"
+						[pluginId]="$safeNavigationMigration(plugin?.id)"
 						[isEdit]="isEdit"
 						[form]="versionForm"
 					></lib-plugin-version>

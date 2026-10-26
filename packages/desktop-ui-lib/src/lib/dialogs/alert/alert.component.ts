@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef, NbCardModule, NbButtonModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 
@@ -13,6 +13,7 @@ export interface AlertDialogOptions {
     selector: 'ngx-alert',
     templateUrl: './alert.component.html',
     styleUrls: ['./alert.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     imports: [NbCardModule, NbButtonModule, TranslatePipe]
 })
 export class AlertComponent {

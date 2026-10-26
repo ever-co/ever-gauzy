@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, forwardRef, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { Subject, firstValueFrom, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -18,6 +18,7 @@ import { AuthService, Store, TasksService, ToastrService } from '@gauzy/ui-core/
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAccessor {

@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, Input, OnInit, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, Input, OnInit, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup, FormControl } from '@angular/forms';
 import { Location } from '@angular/common';
 import {
@@ -37,6 +37,7 @@ import { FormHelpers } from '../../../forms/helpers';
     selector: 'ga-user-basic-info-form',
     templateUrl: 'basic-info-form.component.html',
     styleUrls: ['basic-info-form.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class BasicInfoFormComponent extends TranslationBaseComponent implements OnInit, AfterViewInit {
@@ -128,7 +129,7 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 	}
 
 	ngOnInit(): void {
-		this.excludeRoles();
+		void this.excludeRoles();
 		this._store.selectedOrganization$
 			.pipe(
 				distinctUntilChange(),
@@ -147,7 +148,8 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 	async excludeRoles(): Promise<void> {
 		const hasSuperAdminRole = await firstValueFrom(this._authService.hasRole([RolesEnum.SUPER_ADMIN]));
 		if (!hasSuperAdminRole) {
-			this.excludes.push(RolesEnum.SUPER_ADMIN);
+			// A new array, not push(): the role field only sees a changed reference
+			this.excludes = [...this.excludes, RolesEnum.SUPER_ADMIN];
 		}
 	}
 
@@ -163,6 +165,21 @@ export class BasicInfoFormComponent extends TranslationBaseComponent implements 
 
 	get showImageMeta() {
 		return this.form.get('imageUrl') && this.form.get('imageUrl').value;
+	}
+
+	/** True while the pointer is over the avatar uploader. */
+	protected avatarHover = false;
+
+	/** An image is set and loaded without error. */
+	protected get hasAvatar(): boolean {
+		return !!this.showImageMeta && !this.form.get('imageUrl').invalid;
+	}
+
+	/**
+	 * Reports a failed avatar upload.
+	 */
+	protected handleImageUploadError(error: any): void {
+		this._errorHandlingService.handleError(error);
 	}
 
 	/**

@@ -4,11 +4,21 @@ jest.mock('@gauzy/core', () => {
 	const helpers = jest.requireActual('../../../../core/src/lib/auth/purpose-token');
 	return { isAccessTokenPayload: helpers.isAccessTokenPayload, JWT_ALGORITHMS: helpers.JWT_ALGORITHMS };
 });
-jest.mock('@ever-gauzy/plugin-integration-plane-api', () => ({ mountPlaneProxy: jest.fn() }));
+// The session-cookie codec is pure (zlib only); load the real one from its own file so the spec
+// reads cookies exactly as production does without booting the proxy's Nest module graph.
+jest.mock('@ever-gauzy/plugin-integration-plane-api', () => {
+	const { dirname, join } = jest.requireActual('path');
+	const entry = require.resolve('@ever-gauzy/plugin-integration-plane-api');
+	return {
+		mountPlaneProxy: jest.fn(),
+		...jest.requireActual(join(dirname(entry), 'config/utils/session-cookie.utils'))
+	};
+});
 jest.mock('./plane-integration.service', () => ({ PlaneIntegrationService: class PlaneIntegrationService {} }));
 
 import { environment } from '@gauzy/config';
 import { sign, verify } from 'jsonwebtoken';
+import { encodeSessionToken } from '@ever-gauzy/plugin-integration-plane-api';
 import { PlaneProxyService } from './plane-proxy.service';
 
 /**
@@ -51,5 +61,49 @@ describe('PlaneProxyService token checks (GHSA-28wv-vrxj-rp4q)', () => {
 
 	it('still refuses an access token for another tenant', () => {
 		expect(() => service.validateTenantFromToken(bearer(access), 't2')).toThrow(/Tenant ID mismatch/);
+	});
+});
+
+/**
+ * Since plugin 0.1.7 the session cookie holds the JWT with its payload deflated, so an admin token
+ * (380 permissions, ~11.5 KB) fits in one cookie instead of three. The tenant resolver must read
+ * that compact form and still accept the legacy raw-JWT chunks of sessions created before it.
+ */
+describe('PlaneProxyService session cookie formats', () => {
+	const service: any = Object.create(PlaneProxyService.prototype);
+	Object.assign(service, { logger: { warn: jest.fn(), debug: jest.fn(), log: jest.fn(), error: jest.fn() } });
+
+	const permissions = Array.from({ length: 380 }, (_, i) => `ORG_PERMISSION_${i}_VIEW`);
+	const admin = sign(
+		{ id: 'u1', tenantId: 't1', tokenType: 'ACCESS_TOKEN_TYPE', permissions },
+		environment.JWT_SECRET
+	);
+	const chunked = (value: string) => ({
+		headers: {
+			cookie: ['tenant-id=t9', ...(value.match(/.{1,3999}/g) ?? []).map((c, i) => `auth-proxy-plane-token-${i}=${c}`)].join(
+				'; '
+			)
+		}
+	}) as any;
+
+	it('reads the compact single-cookie session', () => {
+		const compact = encodeSessionToken(admin);
+		expect(compact.startsWith('z1.')).toBe(true);
+		expect(compact.length).toBeLessThan(3999);
+		expect(service.readSessionToken(chunked(compact))).toBe(admin);
+		expect(service.extractSessionTenantId(chunked(compact))).toBe('t1');
+	});
+
+	it('still reads a legacy multi-chunk raw-JWT session', () => {
+		expect(admin.length).toBeGreaterThan(3999);
+		expect(service.readSessionToken(chunked(admin))).toBe(admin);
+		expect(service.extractSessionTenantId(chunked(admin))).toBe('t1');
+	});
+
+	it('treats a tampered compact cookie as no session', () => {
+		const compact = encodeSessionToken(admin);
+		const [marker, header, , signature] = compact.split('.');
+		const forged = `${marker}.${header}.${encodeSessionToken(sign({ id: 'x', tenantId: 't2', tokenType: 'ACCESS_TOKEN_TYPE', permissions }, 'wrong-secret')).split('.')[2]}.${signature}`;
+		expect(service.extractSessionTenantId(chunked(forged))).toBeUndefined();
 	});
 });

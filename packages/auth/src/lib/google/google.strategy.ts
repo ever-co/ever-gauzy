@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, StrategyOptionsWithRequest, VerifyCallback } from 'passport-google-oauth20';
+import { Strategy, StrategyOptionsWithRequest } from 'passport-google-oauth20';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -16,16 +16,14 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 	 * @param accessToken - The OAuth access token.
 	 * @param refreshToken - The OAuth refresh token.
 	 * @param profile - The user profile provided by the OAuth provider.
-	 * @param done - The callback to be invoked with the result.
-	 * @returns A Promise that resolves once validation is complete.
+	 *
+	 * Passport contract (`@nestjs/passport`'s `PassportStrategy` mixin): the returned value is the user and a
+	 * thrown error is the error; the mixin reports either one to passport's `done` exactly once, so this
+	 * method never calls `done` itself (doing both reported every sign-in twice: a success, then a failure).
+	 *
+	 * @returns The user object built from the profile.
 	 */
-	async validate(
-		request: any,
-		accessToken: string,
-		refreshToken: string,
-		profile: any,
-		done: VerifyCallback
-	): Promise<void> {
+	async validate(request: any, accessToken: string, refreshToken: string, profile: any) {
 		try {
 			// Destructure name, emails, and photos from the profile with default values.
 			const { name, emails, photos } = profile;
@@ -43,12 +41,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 				accessToken
 			};
 
-			// Invoke the callback with the user object.
-			done(null, user);
+			// The returned user is what passport authenticates.
+			return user;
 		} catch (error) {
-			// If an error occurs, pass the error to the callback.
+			// The thrown error is what passport reports as the authentication failure.
 			console.error('Error during Google OAuth validation:', error);
-			done(error, false);
+			throw error;
 		}
 	}
 }

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ROUTES, RouterModule } from '@angular/router';
 import { NbButtonModule, NbCardModule, NbIconModule, NbLayoutModule, NbSpinnerModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import {
 	AuthService,
@@ -11,7 +11,7 @@ import {
 	RoleGuard,
 	TenantService
 } from '@gauzy/ui-core/core';
-import { OrganizationsStepFormModule } from '@gauzy/ui-core/shared';
+import { EmailVerificationNoticeComponent, OrganizationsStepFormModule } from '@gauzy/ui-core/shared';
 import { ThemeModule, ThemeSelectorModule, ThemeSettingsModule } from '@gauzy/ui-core/theme';
 import { createOnboardingRoutes } from './onboarding.routes';
 import { OnboardingComponent } from './components/onboarding.component';
@@ -28,11 +28,12 @@ import { OnboardingCompleteComponent } from './components/onboarding-complete/on
 		NbLayoutModule,
 		NbSpinnerModule,
 		NgxPermissionsModule.forRoot(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		ThemeModule,
 		ThemeSelectorModule,
 		ThemeSettingsModule,
-		OrganizationsStepFormModule
+		OrganizationsStepFormModule,
+		EmailVerificationNoticeComponent
 	],
 	exports: [RouterModule],
 	declarations: [OnboardingComponent, TenantOnboardingComponent, OnboardingCompleteComponent],

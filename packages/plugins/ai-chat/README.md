@@ -17,6 +17,10 @@ chat sidebar rendered between the navigation menu and the page content
 | `/api/ai-chat/transcribe` | POST | `AI_CHAT_ACCESS` | Dictation: multipart `file` (audio as recorded by the browser, ≤ 25 MB) → `{ text }`. On failure a **503 with a structured body** `{ message, code, settingsPath }` where `code` ∈ `AI_SPEECH_NOT_CONFIGURED` / `AI_SPEECH_KEY_REJECTED` / `AI_SPEECH_FAILED` and `settingsPath` = `/pages/settings/ai` (see *Voice / speech-to-text providers*). |
 | `/api/ai-chat/providers/:id/models` | GET | `AI_CHAT_ACCESS` or `AI_CHAT_SETTINGS` | Live model catalogue of one provider for the settings picker (fails open to the curated list). |
 
+With `GAUZY_AI_CHAT_ENABLED=false`, the two routes that reach a model provider (`POST /api/ai-chat` and
+`POST /api/ai-chat/transcribe`) answer **503** before resolving any credential, so the switch holds even for
+a client that ignores `/config`.
+
 ## Architecture
 
 ```

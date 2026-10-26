@@ -24,6 +24,8 @@ export interface IEquipmentSharing extends IBaseEquipmentSharing, IEquipmentShar
 	equipmentId: ID;
 	equipmentSharingPolicy: IEquipmentSharingPolicy;
 	equipmentSharingPolicyId: ID;
+	/** The row's optimistic-concurrency version: 1 when filed, moved on by every write. */
+	version?: number;
 }
 
 // Input interface for creating a new Equipment Sharing record.
@@ -36,7 +38,28 @@ export interface IEquipmentSharingCreateInput extends IBaseEquipmentSharing {
 }
 
 // Update input can simply extend the create input.
-export interface IEquipmentSharingUpdateInput extends Partial<IEquipmentSharingCreateInput> {}
+export interface IEquipmentSharingUpdateInput extends Partial<IEquipmentSharingCreateInput> {
+	/**
+	 * The version of the sharing the edit is based on. The edit is refused (409) when the stored row has moved on;
+	 * omitted, the server uses the version it reads.
+	 */
+	version?: number;
+}
+
+/**
+ * The input of the in-place, version-checked edit of a sharing (`PUT /equipment-sharing/:id/in-place`, GraphQL
+ * `updateEquipmentSharingInPlace`). The row is updated where it is, rather than removed and filed again, and only at
+ * the version the edit is based on: refused with 409 `ENTITY_VERSION_CONFLICT` when the stored row has moved on. A
+ * member left out keeps its stored value; `employees` / `teams`, when stated, replace the sharing's members.
+ */
+export interface IEquipmentSharingUpdateInPlaceInput extends IEquipmentSharingUpdateInput {
+	/** The version of the sharing the edit is based on. Required: it is what the edit is a compare-and-set on. */
+	version: number;
+	/** The employees the asset is handed to: each an employee (or an object with its id), or a bare id. */
+	employees?: Array<Pick<IEmployee, 'id'> | ID>;
+	/** The teams the asset is handed to: each a team (or an object with its id), or a bare id. */
+	teams?: Array<Pick<IOrganizationTeam, 'id'> | ID>;
+}
 
 export enum EquipmentSharingStatusEnum {
 	REQUESTED = 'REQUESTED',

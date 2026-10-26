@@ -1,12 +1,12 @@
 import { ICandidateInterview, IOrganization } from '@gauzy/contracts';
-import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { filter, tap } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, IsActiveMatchOptions } from '@angular/router';
 import { Store } from '@gauzy/ui-core/core';
 import { CandidateInterviewService, ToastrService } from '@gauzy/ui-core/core';
 import { CandidateInterviewMutationComponent } from '@gauzy/ui-core/shared';
@@ -16,6 +16,7 @@ import { CandidateInterviewMutationComponent } from '@gauzy/ui-core/shared';
     selector: 'ga-manage-candidate-interviews',
     templateUrl: './manage-candidate-interviews.component.html',
     styleUrls: ['./manage-candidate-interviews.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ManageCandidateInterviewsComponent
@@ -25,6 +26,18 @@ export class ManageCandidateInterviewsComponent
 	interviews$: Subject<any> = new Subject();
 	loading: boolean;
 	tabs: any[];
+
+	/**
+	 * Tab matching for the route tabset. Nebular defaults to `exact: true`, which also
+	 * compares query params, and the app appends `?organizationId=…` after load, so on a
+	 * fresh page no tab matched and the active tab lost its style until clicked.
+	 */
+	readonly tabLinkOptions: IsActiveMatchOptions = {
+		paths: 'exact',
+		queryParams: 'ignored',
+		matrixParams: 'ignored',
+		fragment: 'ignored'
+	};
 	interviews: ICandidateInterview[] = [];
 	organization: IOrganization;
 	currentTab: string;

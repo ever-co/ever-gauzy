@@ -1,7 +1,9 @@
 import { NgModule } from '@angular/core';
 import {
 	NbAccordionModule,
+	NbButtonModule,
 	NbCardModule,
+	NbIconModule,
 	NbLayoutModule,
 	NbListModule,
 	NbRouteTabsetModule,
@@ -17,7 +19,7 @@ import {
 	SharedModule,
 	TableComponentsModule
 } from '@gauzy/ui-core/shared';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 // Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
 // imported directly — the Documents hub module is never pulled in here.
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
@@ -29,7 +31,7 @@ import { ContactViewRoutingModule } from './contact-view-routing.module';
 		ContactViewRoutingModule,
 		NbCardModule,
 		NbRouteTabsetModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbLayoutModule,
 		NbTabsetModule,
 		NbUserModule,
@@ -38,6 +40,9 @@ import { ContactViewRoutingModule } from './contact-view-routing.module';
 		// The About panel puts the unbroken email / URL / fiscal string on a tooltip,
 		// so a value that wraps across lines can still be read (and copied) in one piece.
 		NbTooltipModule,
+		// The remove action on each member row.
+		NbButtonModule,
+		NbIconModule,
 		LeafletMapModule,
 		NbListModule,
 		SharedModule,

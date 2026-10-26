@@ -146,6 +146,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
+			PermissionsEnum.EVENT_TYPES_EDIT,
+			PermissionsEnum.GOALS_EDIT,
+			PermissionsEnum.SKILLS_EDIT,
 			PermissionsEnum.TENANT_ADD_EXISTING_USER,
 			/** Integration CRUD Permissions Start */
 			PermissionsEnum.INTEGRATION_ADD,
@@ -172,6 +175,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PAYMENT_GATEWAY_VIEW,
 			PermissionsEnum.SMS_GATEWAY_VIEW,
 			PermissionsEnum.CUSTOM_SMTP_VIEW,
+			PermissionsEnum.CUSTOM_SMTP_EDIT,
 			/** Job Post Permissions Start */
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 			PermissionsEnum.ORG_JOB_MATCHING_VIEW,
@@ -237,6 +241,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
 			/** Organization Strategic Initiative Permissions End */
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			PermissionsEnum.INBOX_MAILBOX_MANAGE,
+			PermissionsEnum.INBOX_MAILBOX_READ_ALL,
+			/** Inbox Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -250,7 +259,205 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PLUGIN_RESTRICT,
 			PermissionsEnum.PLUGIN_DELETE,
 			PermissionsEnum.PLUGIN_DELETE_FOREVER,
-			PermissionsEnum.PLUGIN_ASSIGN_ACCESS
+			PermissionsEnum.PLUGIN_ASSIGN_ACCESS,
+			/** Commerce Permissions Start */
+			/** Platform: channels, regions, rules, numbering, operations, outbox, idempotency */
+			PermissionsEnum.CHANNELS_VIEW,
+			PermissionsEnum.CHANNELS_CREATE,
+			PermissionsEnum.CHANNELS_EDIT,
+			PermissionsEnum.CHANNELS_DELETE,
+			PermissionsEnum.REGIONS_VIEW,
+			PermissionsEnum.REGIONS_CREATE,
+			PermissionsEnum.REGIONS_EDIT,
+			PermissionsEnum.REGIONS_DELETE,
+			PermissionsEnum.RULES_VIEW,
+			PermissionsEnum.RULES_EDIT,
+			PermissionsEnum.SEQUENCES_VIEW,
+			PermissionsEnum.SEQUENCES_EDIT,
+			PermissionsEnum.OPERATIONS_VIEW,
+			PermissionsEnum.OPERATIONS_CANCEL,
+			PermissionsEnum.EVENT_OUTBOX_VIEW,
+			PermissionsEnum.EVENT_OUTBOX_RETRY,
+			PermissionsEnum.IDEMPOTENCY_KEYS_VIEW,
+			PermissionsEnum.IDEMPOTENCY_KEYS_DELETE,
+			PermissionsEnum.UNITS_VIEW,
+			PermissionsEnum.UNITS_EDIT,
+			PermissionsEnum.PAYMENT_TERMS_VIEW,
+			PermissionsEnum.PAYMENT_TERMS_EDIT,
+			/** Catalog */
+			PermissionsEnum.PRODUCTS_VIEW,
+			PermissionsEnum.PRODUCTS_EDIT,
+			PermissionsEnum.PRODUCTS_DELETE,
+			PermissionsEnum.PRODUCTS_BULK_IMPORT,
+			PermissionsEnum.COLLECTIONS_VIEW,
+			PermissionsEnum.COLLECTIONS_CREATE,
+			PermissionsEnum.COLLECTIONS_EDIT,
+			PermissionsEnum.COLLECTIONS_DELETE,
+			/** Pricing and currency */
+			PermissionsEnum.PRICE_LISTS_VIEW,
+			PermissionsEnum.PRICE_LISTS_CREATE,
+			PermissionsEnum.PRICE_LISTS_EDIT,
+			PermissionsEnum.PRICE_LISTS_DELETE,
+			PermissionsEnum.PRICE_LISTS_SIMULATE,
+			PermissionsEnum.PRODUCT_PRICES_VIEW,
+			PermissionsEnum.PRODUCT_PRICES_EDIT,
+			PermissionsEnum.PRODUCT_PRICES_BULK_EDIT,
+			PermissionsEnum.EXCHANGE_RATES_VIEW,
+			PermissionsEnum.EXCHANGE_RATES_EDIT,
+			/** Tax */
+			PermissionsEnum.TAX_CATEGORIES_VIEW,
+			PermissionsEnum.TAX_CATEGORIES_EDIT,
+			PermissionsEnum.TAX_RATES_VIEW,
+			PermissionsEnum.TAX_RATES_EDIT,
+			PermissionsEnum.TAX_REGIMES_VIEW,
+			PermissionsEnum.TAX_REGIMES_EDIT,
+			/** Contacts, groups, credentials and credit */
+			PermissionsEnum.CONTACT_GROUPS_VIEW,
+			PermissionsEnum.CONTACT_GROUPS_CREATE,
+			PermissionsEnum.CONTACT_GROUPS_EDIT,
+			PermissionsEnum.CONTACT_GROUPS_DELETE,
+			PermissionsEnum.CONTACT_CREDENTIALS_VIEW,
+			PermissionsEnum.CONTACT_CREDENTIALS_MANAGE,
+			PermissionsEnum.CONTACT_CREDITS_EDIT,
+			PermissionsEnum.CONTACT_TAX_IDENTITY_EDIT,
+			/** Stock */
+			PermissionsEnum.STOCK_VIEW,
+			PermissionsEnum.STOCK_EDIT,
+			PermissionsEnum.STOCK_RECONCILE,
+			PermissionsEnum.STOCK_TRANSFER_VIEW,
+			PermissionsEnum.STOCK_TRANSFER_CREATE,
+			PermissionsEnum.STOCK_TRANSFER_APPROVE,
+			PermissionsEnum.STOCK_TRANSFER_SHIP,
+			PermissionsEnum.STOCK_TRANSFER_RECEIVE,
+			PermissionsEnum.STOCK_TRANSFER_CANCEL,
+			/** Warehouse */
+			PermissionsEnum.WAREHOUSE_ZONES_VIEW,
+			PermissionsEnum.WAREHOUSE_ZONES_CREATE,
+			PermissionsEnum.WAREHOUSE_ZONES_EDIT,
+			PermissionsEnum.WAREHOUSE_ZONES_DELETE,
+			PermissionsEnum.WAREHOUSE_BINS_VIEW,
+			PermissionsEnum.WAREHOUSE_BINS_CREATE,
+			PermissionsEnum.WAREHOUSE_BINS_EDIT,
+			PermissionsEnum.WAREHOUSE_BINS_DELETE,
+			PermissionsEnum.PICK_LISTS_VIEW,
+			PermissionsEnum.PICK_LISTS_EDIT,
+			PermissionsEnum.PICK_LISTS_PICK,
+			PermissionsEnum.PICK_LISTS_CANCEL,
+			/** Fulfilment and shipping */
+			PermissionsEnum.FULFILLMENTS_VIEW,
+			PermissionsEnum.FULFILLMENTS_CREATE,
+			PermissionsEnum.FULFILLMENTS_EDIT,
+			PermissionsEnum.SHIPPING_OPTIONS_VIEW,
+			PermissionsEnum.SHIPPING_OPTIONS_CREATE,
+			PermissionsEnum.SHIPPING_OPTIONS_EDIT,
+			PermissionsEnum.SHIPPING_OPTIONS_DELETE,
+			/** Returns, claims and exchanges */
+			PermissionsEnum.RETURNS_VIEW,
+			PermissionsEnum.RETURNS_CREATE,
+			PermissionsEnum.RETURNS_APPROVE,
+			PermissionsEnum.RETURNS_REJECT,
+			PermissionsEnum.RETURNS_RECEIVE,
+			PermissionsEnum.CLAIMS_VIEW,
+			PermissionsEnum.CLAIMS_CREATE,
+			PermissionsEnum.CLAIMS_RESOLVE,
+			PermissionsEnum.EXCHANGES_VIEW,
+			PermissionsEnum.EXCHANGES_CREATE,
+			PermissionsEnum.EXCHANGES_RESOLVE,
+			/** Orders */
+			PermissionsEnum.ORDERS_VIEW,
+			PermissionsEnum.ORDERS_CREATE,
+			PermissionsEnum.ORDERS_EDIT,
+			PermissionsEnum.ORDERS_CANCEL,
+			PermissionsEnum.ORDERS_APPROVE,
+			/** Carts and checkout */
+			PermissionsEnum.CARTS_VIEW,
+			PermissionsEnum.CARTS_EDIT,
+			PermissionsEnum.CARTS_DELETE,
+			PermissionsEnum.CARTS_CHECKOUT,
+			/** Promotions, coupons and gift cards */
+			PermissionsEnum.PROMOTIONS_VIEW,
+			PermissionsEnum.PROMOTIONS_CREATE,
+			PermissionsEnum.PROMOTIONS_EDIT,
+			PermissionsEnum.PROMOTIONS_DELETE,
+			PermissionsEnum.PROMOTIONS_SIMULATE,
+			PermissionsEnum.COUPONS_VIEW,
+			PermissionsEnum.COUPONS_CREATE,
+			PermissionsEnum.COUPONS_EDIT,
+			PermissionsEnum.COUPONS_DELETE,
+			PermissionsEnum.GIFT_CARDS_VIEW,
+			PermissionsEnum.GIFT_CARDS_ISSUE,
+			PermissionsEnum.GIFT_CARDS_EDIT,
+			/** Payments, refunds and provider callbacks */
+			PermissionsEnum.PAYMENT_PROVIDERS_VIEW,
+			PermissionsEnum.PAYMENT_PROVIDERS_CREATE,
+			PermissionsEnum.PAYMENT_PROVIDERS_EDIT,
+			PermissionsEnum.PAYMENT_PROVIDERS_DELETE,
+			PermissionsEnum.PAYMENT_SESSIONS_VIEW,
+			PermissionsEnum.PAYMENT_SESSIONS_AUTHORIZE,
+			PermissionsEnum.PAYMENT_SESSIONS_CAPTURE,
+			PermissionsEnum.PAYMENT_SESSIONS_CANCEL,
+			PermissionsEnum.REFUNDS_VIEW,
+			PermissionsEnum.REFUNDS_CREATE,
+			PermissionsEnum.REFUNDS_APPROVE,
+			PermissionsEnum.PAYMENT_CALLBACKS_VIEW,
+			PermissionsEnum.PAYMENT_CALLBACKS_REPROCESS,
+			PermissionsEnum.PAYMENT_ACCOUNT_HOLDERS_VIEW,
+			PermissionsEnum.PAYMENT_ACCOUNT_HOLDERS_EDIT,
+			PermissionsEnum.PAYMENT_METHOD_TOKENS_VIEW,
+			PermissionsEnum.PAYMENT_METHOD_TOKENS_EDIT,
+			PermissionsEnum.PAYMENT_METHOD_TOKENS_CHARGE,
+			/** Subscriptions */
+			PermissionsEnum.SUBSCRIPTIONS_VIEW,
+			PermissionsEnum.SUBSCRIPTIONS_CREATE,
+			PermissionsEnum.SUBSCRIPTIONS_EDIT,
+			PermissionsEnum.SUBSCRIPTIONS_BILL,
+			/** Purchasing */
+			PermissionsEnum.PURCHASE_ORDERS_VIEW,
+			PermissionsEnum.PURCHASE_ORDERS_CREATE,
+			PermissionsEnum.PURCHASE_ORDERS_EDIT,
+			PermissionsEnum.PURCHASE_ORDERS_APPROVE,
+			PermissionsEnum.PURCHASE_ORDERS_SEND,
+			PermissionsEnum.GOODS_RECEIPTS_VIEW,
+			PermissionsEnum.GOODS_RECEIPTS_CREATE,
+			PermissionsEnum.VENDOR_TERMS_VIEW,
+			PermissionsEnum.VENDOR_TERMS_EDIT,
+			/** Entitlements */
+			PermissionsEnum.ENTITLEMENTS_VIEW,
+			PermissionsEnum.ENTITLEMENTS_GRANT,
+			PermissionsEnum.ENTITLEMENTS_EDIT,
+			/** Marketplace */
+			PermissionsEnum.SELLERS_VIEW,
+			PermissionsEnum.SELLERS_CREATE,
+			PermissionsEnum.SELLERS_EDIT,
+			PermissionsEnum.SELLERS_DELETE,
+			PermissionsEnum.SELLER_PAYOUTS_VIEW,
+			PermissionsEnum.SELLER_PAYOUTS_CREATE,
+			PermissionsEnum.SELLER_PAYOUTS_APPROVE,
+			PermissionsEnum.SELLER_PAYOUTS_CANCEL,
+			/** Search */
+			PermissionsEnum.SEARCH_VIEW,
+			PermissionsEnum.SEARCH_REINDEX,
+			/** Webhooks */
+			PermissionsEnum.WEBHOOKS_VIEW,
+			PermissionsEnum.WEBHOOKS_CREATE,
+			PermissionsEnum.WEBHOOKS_EDIT,
+			PermissionsEnum.WEBHOOKS_DELETE,
+			PermissionsEnum.WEBHOOK_DELIVERIES_RETRY,
+			/** Sub-capabilities the plugin catalogues declare on top of the pairs above */
+			PermissionsEnum.SELLER_OFFERINGS_VIEW,
+			PermissionsEnum.SELLER_OFFERINGS_EDIT,
+			PermissionsEnum.SELLER_COMMISSIONS_VIEW,
+			PermissionsEnum.SELLER_COMMISSIONS_EDIT,
+			PermissionsEnum.SELLER_TRANSACTIONS_VIEW,
+			PermissionsEnum.SELLER_TRANSACTIONS_SETTLE,
+			PermissionsEnum.SELLER_SETTLEMENTS_VIEW,
+			PermissionsEnum.SELLER_SETTLEMENTS_EDIT,
+			PermissionsEnum.SEARCH_INDEX_DEFINITIONS_VIEW,
+			PermissionsEnum.SEARCH_INDEX_DEFINITIONS_EDIT
+,
+			/** Platform: channels, regions, rules, numbering, operations, outbox, idempotency */
+			PermissionsEnum.PROVIDERS_VIEW
+			/** Commerce Permissions End */
 		]
 	},
 	{
@@ -401,6 +608,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_TEAM_JOIN_REQUEST_EDIT,
 			PermissionsEnum.ORG_CONTRACT_EDIT,
 			PermissionsEnum.EVENT_TYPES_VIEW,
+			PermissionsEnum.EVENT_TYPES_EDIT,
+			PermissionsEnum.GOALS_EDIT,
+			PermissionsEnum.SKILLS_EDIT,
 			PermissionsEnum.TENANT_ADD_EXISTING_USER,
 
 			/** Integration CRUD Permissions Start */
@@ -431,6 +641,7 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PAYMENT_GATEWAY_VIEW,
 			PermissionsEnum.SMS_GATEWAY_VIEW,
 			PermissionsEnum.CUSTOM_SMTP_VIEW,
+			PermissionsEnum.CUSTOM_SMTP_EDIT,
 			/** Job Post Permissions Start */
 			PermissionsEnum.ORG_JOB_EMPLOYEE_VIEW,
 			PermissionsEnum.ORG_JOB_MATCHING_VIEW,
@@ -495,6 +706,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
 			/** Organization Strategic Initiative Permissions End */
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			PermissionsEnum.INBOX_MAILBOX_MANAGE,
+			PermissionsEnum.INBOX_MAILBOX_READ_ALL,
+			/** Inbox Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -508,7 +724,174 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.PLUGIN_RESTRICT,
 			PermissionsEnum.PLUGIN_ASSIGN_ACCESS,
 			PermissionsEnum.PLUGIN_DELETE,
-			PermissionsEnum.PLUGIN_DELETE_FOREVER
+			PermissionsEnum.PLUGIN_DELETE_FOREVER,
+			/** Commerce Permissions Start */
+			/** Platform: channels, regions, rules, numbering, operations, outbox, idempotency */
+			PermissionsEnum.CHANNELS_VIEW,
+			PermissionsEnum.REGIONS_VIEW,
+			PermissionsEnum.RULES_VIEW,
+			PermissionsEnum.SEQUENCES_VIEW,
+			PermissionsEnum.OPERATIONS_VIEW,
+			PermissionsEnum.EVENT_OUTBOX_VIEW,
+			PermissionsEnum.IDEMPOTENCY_KEYS_VIEW,
+			PermissionsEnum.UNITS_VIEW,
+			PermissionsEnum.PAYMENT_TERMS_VIEW,
+			/** Catalog */
+			PermissionsEnum.PRODUCTS_VIEW,
+			PermissionsEnum.PRODUCTS_EDIT,
+			PermissionsEnum.PRODUCTS_DELETE,
+			PermissionsEnum.COLLECTIONS_VIEW,
+			PermissionsEnum.COLLECTIONS_CREATE,
+			PermissionsEnum.COLLECTIONS_EDIT,
+			PermissionsEnum.COLLECTIONS_DELETE,
+			/** Pricing and currency */
+			PermissionsEnum.PRICE_LISTS_VIEW,
+			PermissionsEnum.PRICE_LISTS_CREATE,
+			PermissionsEnum.PRICE_LISTS_EDIT,
+			PermissionsEnum.PRICE_LISTS_DELETE,
+			PermissionsEnum.PRICE_LISTS_SIMULATE,
+			PermissionsEnum.PRODUCT_PRICES_VIEW,
+			PermissionsEnum.PRODUCT_PRICES_EDIT,
+			PermissionsEnum.EXCHANGE_RATES_VIEW,
+			/** Tax */
+			PermissionsEnum.TAX_CATEGORIES_VIEW,
+			PermissionsEnum.TAX_CATEGORIES_EDIT,
+			PermissionsEnum.TAX_RATES_VIEW,
+			PermissionsEnum.TAX_RATES_EDIT,
+			PermissionsEnum.TAX_REGIMES_VIEW,
+			/** Contacts, groups, credentials and credit */
+			PermissionsEnum.CONTACT_GROUPS_VIEW,
+			PermissionsEnum.CONTACT_GROUPS_CREATE,
+			PermissionsEnum.CONTACT_GROUPS_EDIT,
+			PermissionsEnum.CONTACT_GROUPS_DELETE,
+			PermissionsEnum.CONTACT_CREDENTIALS_VIEW,
+			/** Stock */
+			PermissionsEnum.STOCK_VIEW,
+			PermissionsEnum.STOCK_EDIT,
+			PermissionsEnum.STOCK_TRANSFER_VIEW,
+			PermissionsEnum.STOCK_TRANSFER_CREATE,
+			PermissionsEnum.STOCK_TRANSFER_APPROVE,
+			PermissionsEnum.STOCK_TRANSFER_SHIP,
+			PermissionsEnum.STOCK_TRANSFER_RECEIVE,
+			PermissionsEnum.STOCK_TRANSFER_CANCEL,
+			/** Warehouse */
+			PermissionsEnum.WAREHOUSE_ZONES_VIEW,
+			PermissionsEnum.WAREHOUSE_ZONES_CREATE,
+			PermissionsEnum.WAREHOUSE_ZONES_EDIT,
+			PermissionsEnum.WAREHOUSE_ZONES_DELETE,
+			PermissionsEnum.WAREHOUSE_BINS_VIEW,
+			PermissionsEnum.WAREHOUSE_BINS_CREATE,
+			PermissionsEnum.WAREHOUSE_BINS_EDIT,
+			PermissionsEnum.WAREHOUSE_BINS_DELETE,
+			PermissionsEnum.PICK_LISTS_VIEW,
+			PermissionsEnum.PICK_LISTS_EDIT,
+			PermissionsEnum.PICK_LISTS_PICK,
+			PermissionsEnum.PICK_LISTS_CANCEL,
+			/** Fulfilment and shipping */
+			PermissionsEnum.FULFILLMENTS_VIEW,
+			PermissionsEnum.FULFILLMENTS_CREATE,
+			PermissionsEnum.FULFILLMENTS_EDIT,
+			PermissionsEnum.SHIPPING_OPTIONS_VIEW,
+			PermissionsEnum.SHIPPING_OPTIONS_CREATE,
+			PermissionsEnum.SHIPPING_OPTIONS_EDIT,
+			PermissionsEnum.SHIPPING_OPTIONS_DELETE,
+			/** Returns, claims and exchanges */
+			PermissionsEnum.RETURNS_VIEW,
+			PermissionsEnum.RETURNS_CREATE,
+			PermissionsEnum.RETURNS_APPROVE,
+			PermissionsEnum.RETURNS_REJECT,
+			PermissionsEnum.RETURNS_RECEIVE,
+			PermissionsEnum.CLAIMS_VIEW,
+			PermissionsEnum.CLAIMS_CREATE,
+			PermissionsEnum.CLAIMS_RESOLVE,
+			PermissionsEnum.EXCHANGES_VIEW,
+			PermissionsEnum.EXCHANGES_CREATE,
+			PermissionsEnum.EXCHANGES_RESOLVE,
+			/** Orders */
+			PermissionsEnum.ORDERS_VIEW,
+			PermissionsEnum.ORDERS_CREATE,
+			PermissionsEnum.ORDERS_EDIT,
+			PermissionsEnum.ORDERS_CANCEL,
+			PermissionsEnum.ORDERS_APPROVE,
+			/** Carts and checkout */
+			PermissionsEnum.CARTS_VIEW,
+			PermissionsEnum.CARTS_EDIT,
+			PermissionsEnum.CARTS_DELETE,
+			PermissionsEnum.CARTS_CHECKOUT,
+			/** Promotions, coupons and gift cards */
+			PermissionsEnum.PROMOTIONS_VIEW,
+			PermissionsEnum.PROMOTIONS_CREATE,
+			PermissionsEnum.PROMOTIONS_EDIT,
+			PermissionsEnum.PROMOTIONS_DELETE,
+			PermissionsEnum.PROMOTIONS_SIMULATE,
+			PermissionsEnum.COUPONS_VIEW,
+			PermissionsEnum.COUPONS_CREATE,
+			PermissionsEnum.COUPONS_EDIT,
+			PermissionsEnum.COUPONS_DELETE,
+			PermissionsEnum.GIFT_CARDS_VIEW,
+			PermissionsEnum.GIFT_CARDS_ISSUE,
+			PermissionsEnum.GIFT_CARDS_EDIT,
+			/** Payments, refunds and provider callbacks */
+			PermissionsEnum.PAYMENT_PROVIDERS_VIEW,
+			PermissionsEnum.PAYMENT_SESSIONS_VIEW,
+			PermissionsEnum.PAYMENT_SESSIONS_AUTHORIZE,
+			PermissionsEnum.PAYMENT_SESSIONS_CANCEL,
+			PermissionsEnum.REFUNDS_VIEW,
+			PermissionsEnum.REFUNDS_CREATE,
+			PermissionsEnum.PAYMENT_CALLBACKS_VIEW,
+			PermissionsEnum.PAYMENT_CALLBACKS_REPROCESS,
+			PermissionsEnum.PAYMENT_ACCOUNT_HOLDERS_VIEW,
+			PermissionsEnum.PAYMENT_METHOD_TOKENS_VIEW,
+			PermissionsEnum.PAYMENT_METHOD_TOKENS_EDIT,
+			/** Subscriptions */
+			PermissionsEnum.SUBSCRIPTIONS_VIEW,
+			PermissionsEnum.SUBSCRIPTIONS_CREATE,
+			PermissionsEnum.SUBSCRIPTIONS_EDIT,
+			PermissionsEnum.SUBSCRIPTIONS_BILL,
+			/** Purchasing */
+			PermissionsEnum.PURCHASE_ORDERS_VIEW,
+			PermissionsEnum.PURCHASE_ORDERS_CREATE,
+			PermissionsEnum.PURCHASE_ORDERS_EDIT,
+			PermissionsEnum.PURCHASE_ORDERS_APPROVE,
+			PermissionsEnum.PURCHASE_ORDERS_SEND,
+			PermissionsEnum.GOODS_RECEIPTS_VIEW,
+			PermissionsEnum.GOODS_RECEIPTS_CREATE,
+			PermissionsEnum.VENDOR_TERMS_VIEW,
+			PermissionsEnum.VENDOR_TERMS_EDIT,
+			/** Entitlements */
+			PermissionsEnum.ENTITLEMENTS_VIEW,
+			PermissionsEnum.ENTITLEMENTS_GRANT,
+			PermissionsEnum.ENTITLEMENTS_EDIT,
+			/** Marketplace */
+			PermissionsEnum.SELLERS_VIEW,
+			PermissionsEnum.SELLERS_CREATE,
+			PermissionsEnum.SELLERS_EDIT,
+			PermissionsEnum.SELLERS_DELETE,
+			PermissionsEnum.SELLER_PAYOUTS_VIEW,
+			PermissionsEnum.SELLER_PAYOUTS_CREATE,
+			PermissionsEnum.SELLER_PAYOUTS_CANCEL,
+			/** Search */
+			PermissionsEnum.SEARCH_VIEW,
+			/** Webhooks */
+			PermissionsEnum.WEBHOOKS_VIEW,
+			PermissionsEnum.WEBHOOKS_CREATE,
+			PermissionsEnum.WEBHOOKS_EDIT,
+			PermissionsEnum.WEBHOOK_DELIVERIES_RETRY,
+			/** Sub-capabilities the plugin catalogues declare on top of the pairs above */
+			PermissionsEnum.SELLER_OFFERINGS_VIEW,
+			PermissionsEnum.SELLER_OFFERINGS_EDIT,
+			PermissionsEnum.SELLER_COMMISSIONS_VIEW,
+			PermissionsEnum.SELLER_COMMISSIONS_EDIT,
+			PermissionsEnum.SELLER_TRANSACTIONS_VIEW,
+			PermissionsEnum.SELLER_TRANSACTIONS_SETTLE,
+			PermissionsEnum.SELLER_SETTLEMENTS_VIEW,
+			PermissionsEnum.SELLER_SETTLEMENTS_EDIT,
+			PermissionsEnum.SEARCH_INDEX_DEFINITIONS_VIEW,
+			PermissionsEnum.SEARCH_INDEX_DEFINITIONS_EDIT
+,
+			/** Platform: channels, regions, rules, numbering, operations, outbox, idempotency */
+			PermissionsEnum.PROVIDERS_VIEW
+			/** Commerce Permissions End */
 		]
 	},
 	{
@@ -678,6 +1061,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			/** Organization Strategic Initiative Permissions Start */
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
 			/** Organization Strategic Initiative Permissions End */
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			/** Inbox Permissions End */
 			// Plugin permissions
 			PermissionsEnum.PLUGIN_VIEW,
 			PermissionsEnum.PLUGIN_DISCOVER,
@@ -711,6 +1097,31 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_UPDATE,
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_DELETE,
 			/** Organization Strategic Initiative Permissions End */
+			/** Goals, Skills and Event Types Permissions Start */
+			PermissionsEnum.GOALS_EDIT,
+			PermissionsEnum.SKILLS_EDIT,
+			PermissionsEnum.EVENT_TYPES_EDIT,
+			/** Goals, Skills and Event Types Permissions End */
+			/**
+			 * Task settings and availability writes (owner decision 2(b), 2026-10-23): the organization's task
+			 * settings, and availability slots, appointments and their invitations. Existing tenants get the same from
+			 * `GrantManagerTaskSettingAndAvailabilityPermissions1791000000841`.
+			 */
+			PermissionsEnum.ORG_TASK_SETTING,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_CREATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_READ,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_UPDATE,
+			PermissionsEnum.EMPLOYEE_AVAILABILITY_DELETE,
+			/**
+			 * Switching among the organizations the user belongs to (`POST /auth/switch-organization`, which checks the
+			 * membership): since ever-co/ever-gauzy#11316 a non-admin works only in the organization of their token, so a
+			 * manager of two organizations needs it to reach the second. Existing tenants get the same from
+			 * `GrantChangeSelectedOrganizationPermission1791000000861`.
+			 */
+			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
+			/** Inbox Permissions Start */
+			PermissionsEnum.INBOX_VIEW,
+			/** Inbox Permissions End */
 			/** Documents Permissions Start */
 			PermissionsEnum.DOCS_READ,
 			PermissionsEnum.DOCS_CREATE,
@@ -735,6 +1146,11 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 		role: RolesEnum.VIEWER,
 		defaultEnabledPermissions: [
 			PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ,
+			/**
+			 * Switching among the organizations the user belongs to; see the note on `MANAGER`. Existing tenants get it
+			 * from `GrantChangeSelectedOrganizationPermission1791000000861`.
+			 */
+			PermissionsEnum.CHANGE_SELECTED_ORGANIZATION,
 			/** Documents Permissions Start */
 			PermissionsEnum.DOCS_READ,
 			/** Documents Permissions End */

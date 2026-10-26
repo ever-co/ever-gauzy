@@ -215,9 +215,79 @@ describe('buildDocsActionMenu — one action set for tree, table and cards', () 
 	it('carries the action id on `data.action` so callers never match on a translated title', () => {
 		const items = buildDocsActionMenu(target(), context());
 
-		expect(items.every((item) => !!docsActionOf(item))).toBe(true);
+		expect(items.filter((item) => !item.group).every((item) => !!docsActionOf(item))).toBe(true);
 		expect(docsActionOf(undefined)).toBeUndefined();
 		expect(docsActionOf({ title: 'x' } as NbMenuItem)).toBeUndefined();
+	});
+
+	describe('layout', () => {
+		it('puts dividers only between sections — never leading, trailing or doubled', () => {
+			for (const permissions of [ALL_PERMISSIONS, NO_PERMISSIONS]) {
+				for (const kind of Object.values(DocumentKindEnum)) {
+					const items = buildDocsActionMenu(target({ kind }), context({ permissions, surface: 'row' }));
+					const dividers = items.map((item) => !!item.group);
+
+					expect(dividers[0]).toBe(false);
+					expect(dividers[dividers.length - 1]).toBe(false);
+					expect(dividers.some((isDivider, index) => isDivider && dividers[index + 1])).toBe(false);
+					// A divider is inert: no action for a menu click to route.
+					expect(items.filter((item) => item.group).every((item) => !docsActionOf(item))).toBe(true);
+				}
+			}
+		});
+
+		it('gives every action an icon, and marks Delete as danger', () => {
+			const items = buildDocsActionMenu(target({ isArchived: true }), context());
+
+			expect(items.filter((item) => !item.group).every((item) => !!item.icon)).toBe(true);
+			expect(items.find((item) => docsActionOf(item) === 'delete')?.icon).toEqual(
+				expect.objectContaining({ status: 'danger' })
+			);
+		});
+
+		it('shows the tree keyboard shortcuts only in the tree, where they are bound', () => {
+			const badgeOf = (surface: 'tree' | 'row', action: DocsActionId) =>
+				buildDocsActionMenu(target(), context({ surface })).find((item) => docsActionOf(item) === action)?.badge;
+
+			expect(badgeOf('tree', 'rename')?.text).toBe('F2');
+			expect(badgeOf('tree', 'archive')?.text).toBe('Del');
+			expect(badgeOf('row', 'rename')).toBeUndefined();
+		});
+	});
+
+	describe('smart defaults', () => {
+		// In a content view "Open" on a FILE IS the preview — offering both listed one action twice.
+		it('offers a FILE row Preview instead of a second, identical Open', () => {
+			const rowFile = actionsOf(
+				buildDocsActionMenu(target({ kind: DocumentKindEnum.FILE }), context({ surface: 'row' }))
+			);
+
+			expect(rowFile).toContain('preview');
+			expect(rowFile).not.toContain('open');
+		});
+
+		it('labels Open by where it goes in a content view', () => {
+			const openTitle = (kind: DocumentKindEnum) =>
+				buildDocsActionMenu(target({ kind }), context({ surface: 'row' })).find(
+					(item) => docsActionOf(item) === 'open'
+				)?.title;
+
+			expect(openTitle(DocumentKindEnum.FOLDER)).toBe('DOCS.ACTION_MENU.OPEN_FOLDER');
+			expect(openTitle(DocumentKindEnum.PAGE)).toBe('DOCS.ACTION_MENU.OPEN_EDITOR');
+		});
+
+		it('drops "Duplicate with children" for a container the list reports as empty', () => {
+			const empty = actionsOf(
+				buildDocsActionMenu(target({ kind: DocumentKindEnum.FOLDER, childrenCount: 0 }), context())
+			);
+			const filled = actionsOf(
+				buildDocsActionMenu(target({ kind: DocumentKindEnum.FOLDER, childrenCount: 2 }), context())
+			);
+
+			expect(empty).toContain('duplicate');
+			expect(empty).not.toContain('duplicate-deep');
+			expect(filled).toContain('duplicate-deep');
+		});
 	});
 });
 
@@ -227,7 +297,8 @@ describe('docsActionMenuSignature — the memo key the kebab bindings rely on', 
 	it.each([
 		['kind', target({ kind: DocumentKindEnum.FILE })],
 		['archived', target({ isArchived: true })],
-		['knowledge status', target({ knowledgeStatus: DocumentKnowledgeStatusEnum.INDEXED })]
+		['knowledge status', target({ knowledgeStatus: DocumentKnowledgeStatusEnum.INDEXED })],
+		['empty-container state', target({ childrenCount: 0 })]
 	])('changes when the %s changes', (_label, changed) => {
 		expect(docsActionMenuSignature(changed, context())).not.toBe(docsActionMenuSignature(target(), context()));
 	});

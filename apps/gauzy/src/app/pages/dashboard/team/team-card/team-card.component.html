@@ -1,19 +1,40 @@
-<nb-card>
-	<nb-card-header class="team-header">
-		<h6 class="team-name">{{'ORGANIZATIONS_PAGE.TEAM_NAME' | translate : {name: team?.name} }}</h6>
-	</nb-card-header>
-	<nb-card-body class="team-container">
-		<div class="d-flex align-items-center">
-			<div class="h1">
-				{{team?.statistics?.countWorking}}
-			</div>
-			<div>/{{team?.statistics?.countTotal}}</div>
+<div class="profile-row">
+	<span class="avatar team-badge team-badge--lg" [class.has-color]="!!team.color && !team.logoUrl" [style.--team-color]="team.color">
+		@if (team.logoUrl) {
+		<img [src]="team.logoUrl" [alt]="team.name" />
+		} @else {
+		<span class="avatar-initials" aria-hidden="true">{{ team.initials }}</span>
+		}
+	</span>
+	<div class="profile-text">
+		<div class="profile-name-row">
+			<h4 class="profile-name">{{ team.name }}</h4>
+			<span class="chip status-chip" [class.tone-success]="team.isPublic">
+				<nb-icon [icon]="team.isPublic ? 'globe-2-outline' : 'lock-outline'" aria-hidden="true"></nb-icon>
+				{{ (team.isPublic ? 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PUBLIC' : 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PRIVATE') | translate }}
+			</span>
+			@if (team.prefix) {
+			<span class="chip" [title]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.PREFIX' | translate">{{ team.prefix }}</span>
+			}
 		</div>
-		<div class="counter-container">
-			<gauzy-counter-point
-				[total]="team?.statistics?.countTotal"
-				[value]="team?.statistics?.countWorking || 0"
-			></gauzy-counter-point>
+		<div class="profile-sub">
+			<span>{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.MEMBERS_COUNT' | translate: { count: team.total } }}</span>
+			<span class="live" [class.is-live]="team.tracking > 0">
+				<span class="live-dot" aria-hidden="true"></span>
+				{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.LIVE' | translate: { tracking: team.tracking, online: team.online } }}
+			</span>
+			@if (team.managers.length) {
+			<span>
+				{{ 'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.MANAGERS' | translate }}:
+				{{ team.managers[0] }}{{ team.managers.length > 1 ? ' +' + (team.managers.length - 1) : '' }}
+			</span>
+			}
 		</div>
-	</nb-card-body>
-</nb-card>
+	</div>
+	<div class="profile-actions">
+		<a nbButton ghost size="small" status="primary" class="open-team" [routerLink]="['/pages/organization/teams/view', team.id]">
+			{{ 'DASHBOARD_PAGE.TEAMS_DASHBOARD.OPEN_TEAM' | translate }}
+			<nb-icon icon="arrow-forward-outline"></nb-icon>
+		</a>
+	</div>
+</div>

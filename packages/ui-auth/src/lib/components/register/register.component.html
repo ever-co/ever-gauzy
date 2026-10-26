@@ -15,6 +15,11 @@
 				<li class="alert-message">{{ error }}</li>
 				}
 			</ul>
+			@if (checkoutUrl) {
+			<a nbButton status="primary" size="small" class="checkout-link" [attr.href]="checkoutUrl">
+				{{ 'REGISTER_PAGE.CONTINUE_TO_CHECKOUT' | translate }}
+			</a>
+			}
 		</nb-alert>
 		} @if (showMessages?.success && messages?.length && !submitted) {
 		<nb-alert outline="success" role="alert">

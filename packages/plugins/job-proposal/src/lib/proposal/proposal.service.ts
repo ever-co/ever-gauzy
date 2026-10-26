@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions, Between, Raw, DeepPartial } from 'typeorm';
 import * as moment from 'moment';
-import { IPagination } from '@gauzy/contracts';
-import { LIKE_OPERATOR, TenantAwareCrudService, sanitizeRichHtml } from '@gauzy/core';
+import { BaseEntityEnum, IPagination } from '@gauzy/contracts';
+import { FavoriteService, LIKE_OPERATOR, TenantAwareCrudService, sanitizeRichHtml } from '@gauzy/core';
 import { Proposal } from './proposal.entity';
 import { MikroOrmProposalRepository } from './repository/mikro-orm-proposal.repository';
 import { TypeOrmProposalRepository } from './repository/type-orm-proposal.repository';
 
+@FavoriteService(BaseEntityEnum.Proposal)
 @Injectable()
 export class ProposalService extends TenantAwareCrudService<Proposal> {
 	constructor(

@@ -41,7 +41,7 @@
 											<div class="responsive-table-content project-name">
 												<ng-container
 													[ngTemplateOutlet]="employeeEl"
-													[ngTemplateOutletContext]="{ $implicit: employeeRow?.employee }"
+													[ngTemplateOutletContext]="{ $implicit: $safeNavigationMigration(employeeRow?.employee) }"
 												></ng-container>
 											</div>
 										</div>
@@ -52,8 +52,8 @@
 											<div class="responsive-table-content day-col">
 												{{
 													employeeRow?.employee?.billRateValue || 0
-														| currency: employeeRow?.employee?.billRateCurrency
-														| position: organization?.currencyPosition
+														| currency: $safeNavigationMigration(employeeRow?.employee?.billRateCurrency)
+														| position: $safeNavigationMigration(organization?.currencyPosition)
 												}}
 											</div>
 										</div>
@@ -62,7 +62,7 @@
 												{{ 'REPORT_PAGE.HOURS' | translate }}
 											</div>
 											<div class="responsive-table-content day-col">
-												{{ employeeRow?.duration | durationFormat }}
+												{{ $safeNavigationMigration(employeeRow?.duration) | durationFormat }}
 											</div>
 										</div>
 										<div class="responsive-table-row amount-column">
@@ -72,8 +72,8 @@
 											<div class="responsive-table-content day-col">
 												{{
 													employeeRow?.amount || 0
-														| currency: employeeRow?.employee?.billRateCurrency
-														| position: organization?.currencyPosition
+														| currency: $safeNavigationMigration(employeeRow?.employee?.billRateCurrency)
+														| position: $safeNavigationMigration(organization?.currencyPosition)
 												}}
 											</div>
 										</div>
@@ -110,10 +110,11 @@
 			@if (employee) {
 				<ngx-avatar
 					class="report-table"
-					[src]="employee?.user?.imageUrl"
-					[name]="employee?.user?.name"
-					[id]="employee?.id"
+					[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
+					[name]="$safeNavigationMigration(employee?.user?.name)"
+					[id]="$safeNavigationMigration(employee?.id)"
 					[employee]="employee"
+					linkTo="view"
 				></ngx-avatar>
 			}
 			<ng-template #noEmployee>

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnInit, forwardRef, OnDestroy } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, forwardRef, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { combineLatest, filter, Subject, tap } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -19,11 +19,18 @@ import { Store } from '@gauzy/ui-core/core';
             multi: true
         }
     ],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	loaded: boolean;
 	preSelected: string[] | string;
+
+	/**
+	 * Image URLs that failed to load; those options fall back to initials. Keyed by
+	 * URL, not employee, so a new photo URL for the same employee is tried again.
+	 */
+	protected readonly brokenImages = new Set<string>();
 
 	@Input()
 	public set reset(value: boolean | null) {
@@ -44,6 +51,14 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 	public set allEmployees(value: IEmployee[]) {
 		this._allEmployees = value;
 		this.employees = this._allEmployees;
+
+		// A consumer that supplies its own list needs no date range to fetch working
+		// employees, so show the select now instead of waiting for `selectedDateRange$`,
+		// which never emits on pages that turn the date selector off (Interviews).
+		if (value?.length && !this.loaded) {
+			this.select.setValue(this.preSelected);
+			this.loaded = true;
+		}
 	}
 
 	@Input()
@@ -178,6 +193,16 @@ export class EmployeeSelectComponent implements OnInit, OnDestroy {
 			true
 		);
 		this.employees = items;
+	}
+
+	/** Up to two initials from the employee's name, shown when there is no usable image. */
+	protected getInitials(employee: IEmployee): string {
+		const name = (employee.user?.name || '').trim();
+		return name
+			.split(/\s+/)
+			.slice(0, 2)
+			.map((part) => part.charAt(0).toUpperCase())
+			.join('');
 	}
 
 	ngOnDestroy(): void {}

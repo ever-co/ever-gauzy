@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { combineLatest, Subject } from 'rxjs';
@@ -44,11 +44,13 @@ import {
 	TagsOnlyComponent,
 	getAdjustDateRangeFutureAllowed
 } from '@gauzy/ui-core/shared';
+import { buildIncomeViewSections } from './income-record-view';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     templateUrl: './income.component.html',
     styleUrls: ['./income.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class IncomeComponent extends PaginationFilterBaseComponent implements AfterViewInit, OnInit, OnDestroy {
@@ -230,6 +232,9 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 					title: this.getTranslation('SM_TABLE.DATE'),
 					type: 'custom',
 					width: '15%',
+					// Newest income first by default: without an initial sort the API answered in
+					// insertion order, so an edited record moved to the last page (#530).
+					sortDirection: 'desc',
 					isFilterable: false,
 					renderComponent: DateViewComponent,
 					componentInitFunction: (instance: DateViewComponent, cell: Cell) => {
@@ -405,42 +410,12 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 			return;
 		}
 
-		this.viewSections = this.buildViewSections();
+		this.viewSections = buildIncomeViewSections();
 		this.viewedIncome = income;
 	}
 
 	closeView(): void {
 		this.viewedIncome = null;
-	}
-
-	/**
-	 * Field descriptor for the drawer — the grid columns, read vertically.
-	 */
-	private buildViewSections(): IRecordViewSection[] {
-		return [
-			{
-				fields: [
-					{ label: 'SM_TABLE.DATE', key: 'valueDate', type: 'date' },
-					{ label: 'SM_TABLE.VALUE', key: 'amount', type: 'money' },
-					{ label: 'SM_TABLE.BONUS', key: 'isBonus', type: 'boolean' },
-					{ label: 'SM_TABLE.CONTACT', key: 'client.name' },
-					{
-						label: 'SM_TABLE.EMPLOYEE',
-						key: 'employee',
-						type: 'person',
-						// Same rule the grid applies: without this permission the
-						// employee column is removed, so the View must not show it either.
-						permission: PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-					}
-				]
-			},
-			{
-				fields: [
-					{ label: 'SM_TABLE.NOTES', key: 'notes', type: 'multiline', wide: true },
-					{ label: 'SM_TABLE.TAGS', key: 'tags', type: 'tags', wide: true }
-				]
-			}
-		];
 	}
 
 	/**
@@ -601,6 +576,9 @@ export class IncomeComponent extends PaginationFilterBaseComponent implements Af
 				this.loading = false;
 			}
 		});
+		// The grid applies the Date column's default sort itself, but the cards layout never mounts
+		// the grid and kept the server's insertion order: ask for newest first here as well (#530).
+		this.smartTableSource.setSort([{ field: 'valueDate', direction: 'desc' }], false);
 	}
 
 	/**

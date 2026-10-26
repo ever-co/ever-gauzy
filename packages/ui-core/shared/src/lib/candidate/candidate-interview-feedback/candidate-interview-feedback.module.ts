@@ -9,7 +9,7 @@ import {
 	NbRadioModule,
 	NbAccordionModule
 } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	CandidateCriterionsRatingService,
 	CandidatePersonalQualitiesService,
@@ -36,7 +36,7 @@ import { StarRatingOutputModule } from '../../star-rating/star-rating-output/sta
 		CandidateSelectModule,
 		CandidateInterviewerSelectModule,
 		NbAccordionModule,
-		TranslateModule.forChild()
+		TranslatePipe
 	],
 	exports: [CandidateInterviewFeedbackComponent],
 	declarations: [CandidateInterviewFeedbackComponent],

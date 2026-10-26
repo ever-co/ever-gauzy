@@ -9,7 +9,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { ExportAllService } from '@gauzy/ui-core/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { FileUploaderModule, SharedModule } from '@gauzy/ui-core/shared';
 import { ExportComponent } from './export.component';
 import { ExportRoutingModule } from './export-routing.module';
@@ -23,7 +23,7 @@ import { ExportRoutingModule } from './export-routing.module';
 		NbInputModule,
 		NbRadioModule,
 		NbSpinnerModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		FileUploaderModule,
 		SharedModule,
 		ExportRoutingModule

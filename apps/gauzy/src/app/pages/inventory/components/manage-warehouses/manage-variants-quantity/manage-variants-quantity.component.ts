@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
@@ -10,6 +10,7 @@ import { ManageVariantsQuantityFormComponent } from '../manage-variants-quantity
     selector: 'ga-manage-variants-quantity',
     templateUrl: './manage-variants-quantity.component.html',
     styleUrls: ['./manage-variants-quantity.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ManageVariantsQuantityComponent extends TranslationBaseComponent {

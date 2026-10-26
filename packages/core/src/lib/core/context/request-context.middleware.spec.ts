@@ -1,5 +1,6 @@
 import { AsyncLocalStorage } from 'async_hooks';
-import { RequestContextMiddleware } from './request-context.middleware';
+import { Logger } from '@nestjs/common';
+import { isHealthCheckRequest, RequestContextMiddleware } from './request-context.middleware';
 import { RequestContext } from './request-context';
 
 /**
@@ -170,6 +171,70 @@ describe('RequestContextMiddleware — correlation id propagation', () => {
 		middleware.use(req, res, jest.fn());
 
 		expect(responseHeaders['x-correlation-id']).toHaveLength(36);
+	});
+
+	describe('request lifecycle logging', () => {
+		afterEach(() => jest.restoreAllMocks());
+
+		function runRequest(originalUrl: string, headers: Record<string, string> = {}) {
+			const cls = buildClsService();
+			RequestContext.setClsService(cls);
+			const middleware = new RequestContextMiddleware(cls);
+			const { req, res } = buildReqRes(headers);
+			req.originalUrl = originalUrl;
+			middleware.use(req, res, jest.fn());
+			res.end();
+		}
+
+		it('prints the lifecycle lines at the log level when API_REQUEST_LIFECYCLE_LOG=true', () => {
+			const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+			const debug = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+			process.env.API_REQUEST_LIFECYCLE_LOG = 'true';
+			try {
+				runRequest('/api/employee');
+			} finally {
+				delete process.env.API_REQUEST_LIFECYCLE_LOG;
+			}
+			expect(log).toHaveBeenCalledTimes(2);
+			expect(debug).not.toHaveBeenCalled();
+		});
+
+		it('logs the start and the end of an ordinary request', () => {
+			const log = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+
+			runRequest('/api/employee');
+
+			expect(log).toHaveBeenCalledTimes(2);
+			expect(log.mock.calls[0][0]).toContain('GET request to http://localhost/api/employee started.');
+			expect(log.mock.calls[1][0]).toContain('completed with status 200.');
+		});
+
+		// Kubernetes probes every pod every few seconds; each logged line was also a Sentry event.
+		it.each(['/api/health', '/api/health?full=true', '/api/health/database'])(
+			'does not log the health check %s',
+			(url) => {
+				const log = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+
+				runRequest(url);
+
+				expect(log).not.toHaveBeenCalled();
+			}
+		);
+
+		// The User-Agent is client-controlled: a probe-like one must not hide an ordinary request.
+		it('still logs an ordinary request that claims to be a Kubernetes probe', () => {
+			const log = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+
+			runRequest('/api/auth/login', { 'user-agent': 'kube-probe/1.33' });
+
+			expect(log).toHaveBeenCalledTimes(2);
+		});
+
+		it('only treats the health endpoint itself as a health check', () => {
+			expect(isHealthCheckRequest({ originalUrl: '/api/healthcare' })).toBe(false);
+			expect(isHealthCheckRequest({ originalUrl: '/api/employee?next=/api/health' })).toBe(false);
+			expect(isHealthCheckRequest({ originalUrl: '/api/health' })).toBe(true);
+		});
 	});
 
 	it("does not leak the correlation id outside the request's own run() scope", () => {

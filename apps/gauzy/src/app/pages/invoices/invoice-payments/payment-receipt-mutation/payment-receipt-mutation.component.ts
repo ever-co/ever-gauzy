@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { PaymentService } from '@gauzy/ui-core/core';
@@ -9,6 +9,7 @@ import { IInvoice, IPayment } from '@gauzy/contracts';
     selector: 'ga-payment-receipt-mutation',
     templateUrl: './payment-receipt-mutation.component.html',
     styleUrls: ['../payment-mutation/payment-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoicePaymentReceiptMutationComponent extends TranslationBaseComponent {

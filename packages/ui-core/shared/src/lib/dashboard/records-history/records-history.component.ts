@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, Optional, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { debounceTime, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { NbDialogRef } from '@nebular/theme';
@@ -19,6 +19,7 @@ import { ContactLinksComponent, DateViewComponent, IncomeExpenseAmountComponent 
 	selector: 'ngx-records-history',
 	templateUrl: './records-history.component.html',
 	styleUrls: ['./records-history.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class RecordsHistoryComponent extends PaginationFilterBaseComponent implements OnInit, OnChanges {

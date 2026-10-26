@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, OnDestroy, TemplateRef } from '@angular/core';
+import { Component, OnInit, ViewChild, OnDestroy, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder, FormArray, Validators, AbstractControl } from '@angular/forms';
 import { IOrganizationDocument, ComponentLayoutStyleEnum, IOrganization } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
@@ -25,6 +25,7 @@ import { Subject } from 'rxjs';
 	selector: 'ga-documents',
 	templateUrl: './documents.component.html',
 	styleUrls: ['documents.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocumentsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {

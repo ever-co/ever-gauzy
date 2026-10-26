@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { Observable, catchError, filter, of, switchMap, tap } from 'rxjs';
@@ -12,6 +12,7 @@ import { EmployeesService, ErrorHandlingService, EventTypeService } from '@gauzy
     templateUrl: './create-appointment.component.html',
     styleUrls: ['../public-appointment/public-appointment.component.scss'],
     providers: [EventTypeService],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CreateAppointmentComponent extends TranslationBaseComponent implements OnInit, OnDestroy {

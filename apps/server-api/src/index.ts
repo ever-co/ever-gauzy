@@ -42,6 +42,9 @@ import {
 	DialogOpenFile,
 	DialogStopServerExitConfirmation,
 	desktopSecretsToEnv,
+	desktopSeedCredentialsToEnv,
+	DesktopSignInNotices,
+	desktopStatsEnv,
 	ensureDesktopSecrets,
 	ErrorEventManager,
 	ErrorReport,
@@ -59,7 +62,13 @@ import {
 	TranslateLoader,
 	TranslateService
 } from '@gauzy/desktop-lib';
-import { createAboutWindow, createServerWindow, PluginMarketplaceWindow, SplashScreen } from '@gauzy/desktop-window';
+import {
+	createAboutWindow,
+	createServerWindow,
+	installNavigationGuard,
+	PluginMarketplaceWindow,
+	SplashScreen
+} from '@gauzy/desktop-window';
 import * as Sentry from '@sentry/electron/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { autoUpdater } from 'electron-updater';
@@ -136,7 +145,9 @@ const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER,
 const controller = new AbortController();
 const { signal } = controller;
 
-const desktopServer = new DesktopServer();
+// The server apps serve remote timers (and browsers), so they may listen on the network: the LAN access
+// setting (on unless the user turned it off) decides between every interface and the loopback address.
+const desktopServer = new DesktopServer(false, { allowLanAccess: true });
 
 /* Load translations */
 TranslateLoader.load(__dirname + '/assets/i18n/');
@@ -212,7 +223,7 @@ ipcMain.handle('PREFERRED_THEME', () => {
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
 	showDialog: false,
-	onError(error, versions, submitIssue) {
+	onError({ error, versions, createIssue: submitIssue }) {
 		// Set user information, as well as tags and further extras
 		const scope = new Sentry.Scope();
 		scope.setExtra('Version', versions.app);
@@ -330,6 +341,9 @@ const runMainWindow = async () => {
 		setting: serverConfig.setting
 	});
 
+	// Generated passwords of a database seeded in an earlier run whose dialog was never confirmed.
+	void DesktopSignInNotices.show(serverWindow);
+
 	new DesktopThemeListener();
 };
 
@@ -366,6 +380,10 @@ const runServer = async () => {
 			signal,
 			uiPort
 		);
+
+		// The API has started: show the generated passwords if it just seeded a new database, or warn
+		// if the accounts of an existing one still use a published password.
+		void DesktopSignInNotices.show(serverWindow);
 	} catch (error) {
 		if (error.name === 'AbortError') {
 			console.log('You exit without to stop the server');
@@ -401,7 +419,14 @@ const getEnvApi = () => {
 		}),
 		DEBUG: 'true',
 		API_PORT: String(config.port),
+		// This install's random passwords for the accounts the API creates when it seeds an empty
+		// database, instead of the published `admin` / `12345678` (GHSA-4r2r-mv32-3468). A password set
+		// in the environment, or in the additional settings below, is left as it is.
+		...desktopSeedCredentialsToEnv(DesktopSignInNotices.provisionSeedCredentials(), process.env),
 		...addsConfig,
+		// The embedded server reports its anonymous usage statistics as a desktop installation of
+		// this release, and the statistics switch typed in the settings is normalised.
+		...desktopStatsEnv(addsConfig, app.getVersion()),
 		...desktopSecretsToEnv(secret)
 	};
 };
@@ -801,6 +826,9 @@ ipcMain.on('update_app_setting', (event, arg) => {
 	LocalStore.updateApplicationSetting(arg.values);
 });
 
+// A window with Node or a preload follows no link out of its own pages; a link opens in the browser instead.
+installNavigationGuard();
+
 app.on('browser-window-created', (_, window) => {
 	require('@electron/remote/main').enable(window.webContents);
 });
@@ -837,14 +865,12 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean): void {
 	switch (process.platform) {
 		case 'darwin':
 			app.setLoginItemSettings({
-				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAtLogin: autoLaunch
 			});
 			break;
 		case 'win32':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden,
 				path: app.getPath('exe'),
 				args: hidden
 					? ['--processStart', `"${executableName}"`, '--process-start-args', `"--hidden"`]
@@ -853,8 +879,7 @@ function launchAtStartup(autoLaunch: boolean, hidden: boolean): void {
 			break;
 		case 'linux':
 			app.setLoginItemSettings({
-				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAtLogin: autoLaunch
 			});
 			break;
 		default:

@@ -111,3 +111,10 @@
 		font-size: 0.8125rem;
 	}
 }
+
+// Embedded in a page (`inline`): the page decides the size, and the card is the page's content rather than a dialog.
+:host(.inline) .docs-preview {
+	width: 100%;
+	height: 100%;
+	max-width: none;
+}

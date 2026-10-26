@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpStatusCode } from '@angular/common/http';
 import {
@@ -46,6 +46,7 @@ import {
 	selector: 'ga-teams',
 	templateUrl: './teams.component.html',
 	styleUrls: ['./teams.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TeamsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
@@ -418,6 +419,18 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 		this.selected.state = res.state;
 		this.selected.team = team;
 		this.selectedTeam = this.selected.team;
+	}
+
+	/**
+	 * Navigates to the read-only View of the selected team.
+	 *
+	 * @param selectedItem The team to open
+	 */
+	view(selectedItem?: IOrganizationTeam): void {
+		const team = selectedItem ?? this.selectedTeam;
+		if (team) {
+			this.router.navigate(['/pages/organization/teams/view', team.id]);
+		}
 	}
 
 	private _loadSmartTableSettings() {

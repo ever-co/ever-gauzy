@@ -8,7 +8,7 @@ Object.assign(console, log.functions);
 import * as remoteMain from '@electron/remote/main';
 import { setupTitlebar } from 'custom-electron-titlebar/main';
 import { BrowserWindow, Menu, MenuItemConstructorOptions, app, dialog, ipcMain, nativeTheme, shell } from 'electron';
-import * as Store from 'electron-store';
+import Store from 'electron-store';
 import * as path from 'node:path';
 
 import { environment } from './environments/environment';
@@ -30,7 +30,11 @@ import {
 	DesktopThemeListener,
 	DesktopUpdater,
 	DialogErrorHandler,
+	DESKTOP_LOOPBACK_HOST,
 	desktopSecretsToEnv,
+	desktopSeedCredentialsToEnv,
+	DesktopSignInNotices,
+	applyDesktopStatsEnv,
 	ensureDesktopSecrets,
 	ErrorEventManager,
 	ErrorReport,
@@ -59,6 +63,7 @@ import {
 	createGauzyWindow,
 	createSettingsWindow,
 	createTimeTrackerWindow,
+	installNavigationGuard,
 	setLaunchPathAndLoad
 } from '@gauzy/desktop-window';
 
@@ -67,7 +72,7 @@ import * as Sentry from '@sentry/electron/main';
 import { fork } from 'child_process';
 import { autoUpdater } from 'electron-updater';
 import { initSentry } from './sentry';
-import { IConfig } from '@gauzy/desktop-core';
+import { ElectronStoreOf, IConfig } from '@gauzy/desktop-core';
 
 /**
  * Describes the configuration for building the Gauzy API base URL.
@@ -108,6 +113,10 @@ log.info(`GAUZY_SEED_PATH: ${process.env.GAUZY_SEED_PATH}`);
 const sqlite3filename = `${process.env.GAUZY_USER_PATH}/gauzy.sqlite3`;
 log.info(`Sqlite DB path: ${sqlite3filename}`);
 
+// The environment the app was started with, before the integrated server's settings are written into
+// it: a seed password set there is the operator's, and the generated one never replaces it.
+const launchEnv: Record<string, string | undefined> = { ...process.env };
+
 try {
 	initSentry();
 } catch (error) {
@@ -119,7 +128,8 @@ const knex = provider.connection;
 
 const exeName = path.basename(process.execPath);
 
-const store = new Store();
+// Typed with its inherited API (see IElectronStoreApi in @gauzy/desktop-core).
+const store = new Store() as ElectronStoreOf;
 
 let serve: boolean;
 const args = process.argv.slice(1);
@@ -161,6 +171,8 @@ const report = new ErrorReport(new ErrorReportRepository(process.env.REPO_OWNER,
 
 const eventErrorManager = ErrorEventManager.instance;
 
+// API only, and on the loopback address only: the integrated server is for this computer. Remote timers
+// connect to Gauzy Server, which can listen on the network.
 const server = new DesktopServer(true);
 const controller = new AbortController();
 const { signal } = controller;
@@ -209,7 +221,7 @@ ipcMain.handle('PREFERRED_THEME', () => {
 // setup logger to catch all unhandled errors and submit as bug reports to our repo
 log.catchErrors({
 	showDialog: false,
-	onError(error, versions, submitIssue) {
+	onError({ error, versions, createIssue: submitIssue }) {
 		// Set user information, as well as tags and further extras
 		const scope = new Sentry.Scope();
 		scope.setExtra('Version', versions.app);
@@ -393,17 +405,30 @@ async function startServer(setupConfig: DesktopSetupConfig, restart = false) {
 	if (setupConfig.isLocalServer) {
 		console.log(`Starting local server on port ${setupConfig.port || environment.API_DEFAULT_PORT}`);
 		process.env.API_PORT = setupConfig.port ? String(setupConfig.port) : String(environment.API_DEFAULT_PORT);
-		process.env.API_HOST = '0.0.0.0';
+		process.env.API_HOST = DESKTOP_LOOPBACK_HOST;
 		process.env.API_BASE_URL = `http://127.0.0.1:${setupConfig.port || environment.API_DEFAULT_PORT}`;
 
 		// All four are already provisioned above, so this returns them unchanged.
 		Object.assign(process.env, desktopSecretsToEnv(ensureDesktopSecrets(setupConfig.secret).secret));
+
+		// This install's random passwords for the accounts the API creates when it seeds an empty
+		// database, instead of the published `admin` / `12345678` (GHSA-4r2r-mv32-3468). Shown once,
+		// after the seed, by DesktopSignInNotices.
+		Object.assign(
+			process.env,
+			desktopSeedCredentialsToEnv(DesktopSignInNotices.provisionSeedCredentials(), launchEnv)
+		);
 
 		console.log('Setting additional environment variables...', process.env.API_PORT);
 		console.log('Setting additional environment variables...', process.env.API_HOST);
 		console.log('Setting additional environment variables...', process.env.API_BASE_URL);
 
 		setEnvAdditional();
+
+		// The integrated server reports its anonymous usage statistics as a desktop installation of
+		// this release (after the additional settings, so they cannot change it), and the statistics
+		// switch typed in the settings is normalised.
+		applyDesktopStatsEnv(process.env, LocalStore.getAdditionalConfig(), app.getVersion());
 
 		try {
 			console.log('Starting local server...', path.join(__dirname, 'api/main.js'));
@@ -658,6 +683,12 @@ app.on('ready', async () => {
 		if (configs && configs.isSetup) {
 			setGlobalVariable(configs);
 			await startServer(configs);
+			if (configs.isLocalServer) {
+				// The generated passwords, if the integrated server seeded a new database (the setup
+				// screen relaunches the app right after the first start, so they appear here), or a
+				// warning if its accounts still use a published password.
+				void DesktopSignInNotices.show(gauzyWindow ?? timeTrackerWindow);
+			}
 		} else {
 			await appWindowManager.initSetupWindow(pathWindow.timeTrackerUi);
 			appWindowManager.setupWindow?.show?.();
@@ -927,14 +958,12 @@ function launchAtStartup(autoLaunch, hidden) {
 	switch (process.platform) {
 		case 'darwin':
 			app.setLoginItemSettings({
-				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAtLogin: autoLaunch
 			});
 			break;
 		case 'win32':
 			app.setLoginItemSettings({
 				openAtLogin: autoLaunch,
-				openAsHidden: hidden,
 				path: app.getPath('exe'),
 				args: hidden
 					? ['--processStart', `"${exeName}"`, '--process-start-args', `"--hidden"`]
@@ -943,8 +972,7 @@ function launchAtStartup(autoLaunch, hidden) {
 			break;
 		case 'linux':
 			app.setLoginItemSettings({
-				openAtLogin: autoLaunch,
-				openAsHidden: hidden
+				openAtLogin: autoLaunch
 			});
 			break;
 		default:
@@ -960,6 +988,17 @@ ipcMain.handle('PREFERRED_LANGUAGE', (event, arg) => {
 		appWindowManager?.settingWindow?.webContents?.send?.('preferred_language_change', arg);
 	}
 	return TranslateService.preferredLanguage;
+});
+
+// A window with Node or a preload follows no link out of its own pages (a task description's link loaded the
+// linked page with Node); the configured API stays reachable, where the social sign-in links start.
+installNavigationGuard({
+	trustedUrls: () => {
+		// What getApiBaseUrl answers, without its logging of the whole configs on every navigation
+		const configs: Partial<IConfig> = LocalStore.getStore('configs') || {};
+		const port = configs.port ?? environment.API_DEFAULT_PORT;
+		return [configs.serverUrl, `http://127.0.0.1:${port}`, `http://localhost:${port}`];
+	}
 });
 
 app.on('browser-window-created', (_, window) => {

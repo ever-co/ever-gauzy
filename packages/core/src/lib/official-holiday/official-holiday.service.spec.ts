@@ -30,6 +30,8 @@ describe('OfficialHolidayService.findAllByFilter organization scope', () => {
 		service = new OfficialHolidayService(repository as any, {} as any);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER_ID);
+		// The caller's token names their organization: the only one the organization boundary lets a non-admin name.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION_ID);
 	});
 
 	afterEach(() => {
@@ -49,6 +51,8 @@ describe('OfficialHolidayService.findAllByFilter organization scope', () => {
 	});
 
 	it('refuses an organization the caller is not a member of, even when `sentTo` skipped the DTO check', async () => {
+		// The token names the sibling organization, so the refusal is the membership lookup's.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(SIBLING_ORGANIZATION_ID);
 		await expect(
 			service.findAllByFilter({ organizationId: SIBLING_ORGANIZATION_ID } as any)
 		).rejects.toBeInstanceOf(ForbiddenException);
@@ -61,6 +65,14 @@ describe('OfficialHolidayService.findAllByFilter organization scope', () => {
 			userId: USER_ID,
 			organizationId: SIBLING_ORGANIZATION_ID
 		});
+		expect(repository.findAndCount).not.toHaveBeenCalled();
+	});
+
+	it('refuses an organization other than the one of the token, before any lookup (organization boundary)', async () => {
+		await expect(
+			service.findAllByFilter({ organizationId: SIBLING_ORGANIZATION_ID } as any)
+		).rejects.toBeInstanceOf(ForbiddenException);
+		expect(repository.manager.count).not.toHaveBeenCalled();
 		expect(repository.findAndCount).not.toHaveBeenCalled();
 	});
 
@@ -150,7 +162,12 @@ describe('OfficialHolidayService by-id organization scope', () => {
 		storedIn(ORGANIZATION_ID);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_ID);
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(USER_ID);
-		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: USER_ID, tenantId: TENANT_ID } as any);
+		// The caller's token names their organization, as `JwtStrategy` attaches it after checking the membership.
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+			id: USER_ID,
+			tenantId: TENANT_ID,
+			lastOrganizationId: ORGANIZATION_ID
+		} as any);
 	});
 
 	afterEach(() => {
@@ -175,6 +192,8 @@ describe('OfficialHolidayService by-id organization scope', () => {
 
 	it('refuses to read a holiday of a sibling organization of the tenant', async () => {
 		storedIn(SIBLING_ORGANIZATION_ID);
+		// The token names the sibling organization, so the refusal is the membership lookup's.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(SIBLING_ORGANIZATION_ID);
 
 		await expect(service.findOneByIdString(HOLIDAY_ID)).rejects.toBeInstanceOf(ForbiddenException);
 		expect(repository.manager.count.mock.calls[0][1].where).toEqual({
@@ -193,6 +212,8 @@ describe('OfficialHolidayService by-id organization scope', () => {
 
 	it("refuses to re-parent a sibling organization's holiday by naming its own in the body", async () => {
 		storedIn(SIBLING_ORGANIZATION_ID);
+		// The token names the sibling organization, so the refusal is the membership lookup's.
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(SIBLING_ORGANIZATION_ID);
 
 		await expect(service.update(HOLIDAY_ID, { organizationId: ORGANIZATION_ID } as any)).rejects.toBeInstanceOf(
 			ForbiddenException
@@ -208,7 +229,13 @@ describe('OfficialHolidayService by-id organization scope', () => {
 
 		// The membership check is an unlocked read and the base class otherwise writes by raw id, so the
 		// organization it was decided on has to reach the UPDATE's own WHERE.
-		expect(repository.update.mock.calls[0][0]).toEqual({ id: HOLIDAY_ID, organizationId: ORGANIZATION_ID });
+		// The tenant-aware base also pins the caller's tenant onto the UPDATE's WHERE on this branch, so the
+		// statement is predicated on the tenant as well as on the organization the membership check decided.
+		expect(repository.update.mock.calls[0][0]).toEqual({
+			id: HOLIDAY_ID,
+			organizationId: ORGANIZATION_ID,
+			tenantId: TENANT_ID
+		});
 		expect(repository.manager.count).toHaveBeenCalledTimes(1);
 	});
 

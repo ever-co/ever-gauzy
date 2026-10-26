@@ -1,4 +1,4 @@
-import { Component, HostListener, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, Inject, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { NbPopoverDirective } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +19,7 @@ interface IVersionDisplay {
 	selector: 'ngx-footer',
 	styleUrls: ['./footer.component.scss'],
 	templateUrl: './footer.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class FooterComponent extends TranslationBaseComponent implements OnInit {

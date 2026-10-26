@@ -1,0 +1,155 @@
+// Must stay first: loads the entity graph before the service pulls an entity (see activity.controller.spec.ts).
+import '../core/entities/internal';
+
+import { FindOperator, In } from 'typeorm';
+import { RequestContext } from '../core/context';
+import { CrudService } from '../core/crud/crud.service';
+import { MultiORMEnum } from '../core/utils';
+import { RequestApprovalService } from './request-approval.service';
+
+/**
+ * GHSA-gwpq-mmw7-vx85 sibling — POST / PUT /request-approval resolved the body's approver employees
+ * and teams through raw repositories with no tenant predicate, attached the loaded rows, and echoed
+ * them back: a foreign-tenant employee or team was read and linked by its UUID.
+ *
+ * The fake repositories evaluate the where clause against fixtures. CONTROL arms replay the pre-fix
+ * `{ id: In(ids) }` lookups and show the foreign rows coming back.
+ */
+
+const TENANT_A = 'tenant-a';
+const TENANT_B = 'tenant-b';
+
+const EMPLOYEES = [
+	{ id: 'employee-own', tenantId: TENANT_A },
+	{ id: 'employee-foreign', tenantId: TENANT_B }
+];
+const TEAMS = [
+	{ id: 'team-own', tenantId: TENANT_A },
+	{ id: 'team-foreign', tenantId: TENANT_B }
+];
+
+const matches = (row: Record<string, any>, where: Record<string, any>) =>
+	Object.entries(where).every(([key, value]) =>
+		value === undefined ? true : value instanceof FindOperator ? (value.value as any[]).includes(row[key]) : row[key] === value
+	);
+
+const fakeRepository = (rows: any[]) => ({
+	find: jest.fn(async ({ where }: any) => rows.filter((row) => matches(row, where)))
+});
+
+function createService() {
+	const employees = fakeRepository(EMPLOYEES);
+	const teams = fakeRepository(TEAMS);
+	// The request repository: the edit now removes the previous approver rows on its transaction (below).
+	const requestApprovals = {
+		createQueryBuilder: () => {
+			const builder: any = {
+				delete: () => builder,
+				from: () => builder,
+				where: () => builder,
+				execute: async () => ({ affected: 0 })
+			};
+			return builder;
+		}
+	};
+	const service = new RequestApprovalService(
+		requestApprovals as any,
+		{} as any,
+		employees as any,
+		{} as any,
+		teams as any,
+		{} as any
+	);
+	jest.spyOn(service, 'save').mockImplementation(async (entity: any) => entity);
+	// The edit runs in a transaction under the request's lock (`request-approval.edit-atomic.spec.ts` pins it); here,
+	// one that finds the request and saves what it is handed.
+	for (const check of ['assertNotForeignRow', 'assertNestedGraphNotForeign', 'assertInsideOrganizationBoundary']) {
+		jest.spyOn(service as any, check).mockResolvedValue(undefined);
+	}
+	jest.spyOn(service as any, 'editTransaction').mockImplementation((work: any) =>
+		work({
+			lockRequest: async (id: string) => ({ id, tenantId: TENANT_A }),
+			deleteSlots: async () => undefined,
+			saveRequest: async (entity: any) => entity,
+			writeRequestStatus: async () => undefined
+		})
+	);
+	return { service, employees, teams };
+}
+
+describe('RequestApprovalService approver lookups (GHSA-gwpq-mmw7-vx85 sibling)', () => {
+	beforeEach(() => {
+		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_A);
+	});
+	afterEach(() => jest.restoreAllMocks());
+
+	const input: any = {
+		name: 'approval',
+		organizationId: 'org-a',
+		employeeApprovals: ['employee-own', 'employee-foreign'],
+		teams: ['team-own', 'team-foreign']
+	};
+
+	it('CONTROL: the pre-fix lookups return the foreign employee and team', async () => {
+		const { employees, teams } = createService();
+
+		expect((await employees.find({ where: { id: In(input.employeeApprovals) } })).map((e) => e.id)).toContain(
+			'employee-foreign'
+		);
+		expect((await teams.find({ where: { id: In(input.teams) } })).map((t) => t.id)).toContain('team-foreign');
+	});
+
+	it('links only approvers of the caller tenant on create', async () => {
+		const { service, employees, teams } = createService();
+
+		const created: any = await service.createRequestApproval(input);
+
+		expect(created.employeeApprovals.map((row: any) => row.employeeId)).toEqual(['employee-own']);
+		expect(created.teamApprovals.map((row: any) => row.teamId)).toEqual(['team-own']);
+		expect(JSON.stringify(created)).not.toContain(TENANT_B);
+		// Scoped at the lookup itself, not filtered after loading foreign rows.
+		for (const lookup of [employees.find, teams.find]) {
+			expect(lookup).toHaveBeenCalledWith({ where: expect.objectContaining({ tenantId: TENANT_A }) });
+		}
+	});
+
+	it('links only approvers of the caller tenant on update', async () => {
+		const { service, employees, teams } = createService();
+		jest.spyOn(service, 'findOneByIdString').mockResolvedValue({ id: 'approval-1', tenantId: TENANT_A } as any);
+
+		const updated: any = await service.updateRequestApproval('approval-1', input);
+
+		expect(updated.employeeApprovals.map((row: any) => row.employeeId)).toEqual(['employee-own']);
+		expect(updated.teamApprovals.map((row: any) => row.teamId)).toEqual(['team-own']);
+		expect(JSON.stringify(updated)).not.toContain(TENANT_B);
+		// Scoped at the lookup itself, not filtered after loading foreign rows.
+		for (const lookup of [employees.find, teams.find]) {
+			expect(lookup).toHaveBeenCalledWith({ where: expect.objectContaining({ tenantId: TENANT_A }) });
+		}
+	});
+
+	it('keeps a requestId only when it is an identifier', async () => {
+		const { service } = createService();
+		const RECORD = '0f7c1a2e-0000-4000-8000-00000000f001';
+
+		const named: any = await service.createRequestApproval({ ...input, requestId: RECORD, requestType: 'TIME_OFF' });
+		expect(named.requestId).toBe(RECORD);
+		expect(named.requestType).toBe('TIME_OFF');
+
+		// A free-text value is left out, as every value was before the field was stored: the equipment-sharing
+		// list joins on `uuid("requestId")`, which one non-identifier row makes fail for every tenant.
+		const freeText: any = await service.createRequestApproval({ ...input, requestId: 'PO-2026-0001' });
+		expect(freeText.requestId).toBeUndefined();
+	});
+
+	it('matches nothing without a tenant', async () => {
+		const { service, employees } = createService();
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(null);
+
+		const created: any = await service.createRequestApproval(input);
+
+		expect(created.employeeApprovals).toEqual([]);
+		expect(employees.find).not.toHaveBeenCalled();
+	});
+});

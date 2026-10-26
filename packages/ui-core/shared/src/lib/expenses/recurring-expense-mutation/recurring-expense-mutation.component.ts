@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, Input, OnDestroy, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, Input, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { debounceTime, filter, firstValueFrom, tap } from 'rxjs';
@@ -35,6 +35,7 @@ import { DEFAULT_CATEGORIES } from './recurring-expense.setting';
 	selector: 'ga-recurring-expense-mutation',
 	templateUrl: './recurring-expense-mutation.component.html',
 	styleUrls: ['./recurring-expense-mutation.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class RecurringExpenseMutationComponent

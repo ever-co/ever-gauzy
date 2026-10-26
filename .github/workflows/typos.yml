@@ -3,16 +3,20 @@ on:
   push:
     branches:
       - develop
-  pull_request:
-    branches:
-      - develop
+  # Off by owner decision (2026-09-21): a pull request INTO develop no longer starts a run: the cost
+  # belonged to every commit on the branch being merged, and the run belongs to the merge. The push
+  # trigger above runs the whole workflow when code lands on develop. To restore the PR trigger,
+  # replace this comment with:
+  #   pull_request:
+  #     branches:
+  #       - develop
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
 # Least-privilege scope for the automatic GITHUB_TOKEN.
-# This workflow only builds/tests/deploys from a checkout — read access is sufficient.
+# This workflow only builds/tests/deploys from a checkout - read access is sufficient.
 permissions:
   contents: read
 
@@ -21,13 +25,15 @@ jobs:
     name: Cspell
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v5
-      - uses: streetsidesoftware/cspell-action@v2
+      - uses: streetsidesoftware/cspell-action@v9
+        # v9 runs CSpell 10, the same major as the repo's own `cspell` devDependency (^10.3.6).
         with:
-          # Github token used to fetch the list of changed files in the commit.
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # No `github_token` input any more: since v6 the action lists the changed files with the
+          # local git (deepening the checkout itself when it needs more history), and v9 no longer
+          # declares the input, so passing it would only add an "Unexpected input" warning.
           strict: true
           config: '.cspell.json'

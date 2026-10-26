@@ -12,7 +12,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { IncomeService, OrganizationsService } from '@gauzy/ui-core/core';
 import { SelectorsModule } from '../../selectors/selectors.module';
 import { CurrencyModule } from '../../modules/currency/currency.module';
@@ -34,7 +34,7 @@ import { IncomeMutationComponent } from './income-mutation.component';
 		NbSelectModule,
 		NbCheckboxModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		SelectorsModule,
 		CurrencyModule,
 		ContactSelectModule,

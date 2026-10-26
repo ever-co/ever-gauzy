@@ -20,7 +20,7 @@ import {
 	NbTreeGridModule
 } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { BaseChartDirective } from 'ng2-charts';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -65,7 +65,15 @@ import {
 	EmployeeHorizontalBarChartComponent,
 	EmployeeStackedBarChartComponent
 } from './employee-charts';
-import { AllTeamComponent, ChartComponent, TeamCardComponent, TeamComponent, TeamMemberComponent } from './team';
+import {
+	AllTeamComponent,
+	ChartComponent,
+	TeamCardComponent,
+	TeamComponent,
+	TeamMemberComponent,
+	TeamProjectsListComponent,
+	TeamPersonCardComponent
+} from './team';
 
 // NB Modules
 const NB_MODULES = [
@@ -98,7 +106,7 @@ const THIRD_PARTY_MODULES = [
 	LineChartModule,
 	NgSelectModule,
 	NgxPermissionsModule.forChild(),
-	TranslateModule.forChild()
+	TranslatePipe
 ];
 
 // Components
@@ -125,7 +133,9 @@ const COMPONENTS = [
 	TeamCardComponent,
 	TeamMemberComponent,
 	ChartComponent,
-	AllTeamComponent
+	AllTeamComponent,
+	TeamProjectsListComponent,
+	TeamPersonCardComponent
 ];
 
 @NgModule({

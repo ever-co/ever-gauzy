@@ -50,7 +50,7 @@ function assemblePdf(objects: (string | undefined)[], trailerExtras = ''): Buffe
 
 /**
  * Builds a PDF whose pages carry a real text layer (Helvetica `Tj` runs), which is what
- * `PdfExtractor` reads through `pdf-parse`'s `pagerender` hook.
+ * `PdfExtractor` reads page by page through `pdf-parse`'s `getText()`.
  *
  * @param pages One entry per page; each entry is the list of text lines on that page.
  * @returns The PDF bytes.
@@ -103,6 +103,37 @@ export function createScannedPdf(): Buffer {
 		'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
 		'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>',
 		`<< /Length ${Buffer.byteLength(stream, 'latin1')} >>\nstream\n${stream}\nendstream`
+	]);
+}
+
+/**
+ * Builds a one-page PDF that draws a raster image, a vector shape and a line of text — the
+ * shape of a logo-bearing letterhead or a scanned page. A raster image is what makes pdf.js
+ * paint through a scratch canvas of its own (then `drawImage` it onto the page canvas), which
+ * is where two `@napi-rs/canvas` copies in one process crash it.
+ *
+ * Page layout (612x792 pt): the image (8x8 px of pure red, uncompressed DeviceRGB) is
+ * scaled to 200x150 pt at (50, 500); a pure-blue rectangle fills 200x100 pt at (50, 300);
+ * the text sits at (72, 720) in Helvetica.
+ */
+export function createImagePdf(): Buffer {
+	const side = 8;
+	const pixels = '\xff\x00\x00'.repeat(side * side);
+	const stream = [
+		'q 200 0 0 150 50 500 cm /Im1 Do Q',
+		'0 0 1 rg 50 300 200 100 re f',
+		`BT /F1 18 Tf 72 720 Td (${escapePdfText('Letterhead with a logo')}) Tj ET`
+	].join('\n');
+	return assemblePdf([
+		undefined,
+		'<< /Type /Catalog /Pages 2 0 R >>',
+		'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+		'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] ' +
+			'/Resources << /Font << /F1 5 0 R >> /XObject << /Im1 6 0 R >> >> /Contents 4 0 R >>',
+		`<< /Length ${Buffer.byteLength(stream, 'latin1')} >>\nstream\n${stream}\nendstream`,
+		'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+		`<< /Type /XObject /Subtype /Image /Width ${side} /Height ${side} /ColorSpace /DeviceRGB ` +
+			`/BitsPerComponent 8 /Length ${Buffer.byteLength(pixels, 'latin1')} >>\nstream\n${pixels}\nendstream`
 	]);
 }
 

@@ -1,4 +1,88 @@
 const nxPreset = require('@nx/jest/preset').default;
 
+// Dependencies that ship ESM-only builds Jest cannot `require`. A suite that reaches one of them
+// fails to LOAD rather than failing an assertion — Jest reports that as a suite error, which reads
+// like "no tests here" instead of "coverage is zero", so the tests silently stop running.
+//
+// This list used to live in `packages/core/jest.config.ts` (with a copy in integration-zapier), so
+// the other projects that inherit this preset started without it. That is why the videos,
+// job-proposal and wakatime service/controller specs — whose testing modules load `@gauzy/core` —
+// failed to load. It lives here so a project gets it by inheriting the preset. Keep it to packages
+// actually reached by a spec, and add whole dependency subtrees (walk for `"type": "module"`) rather
+// than one package per failing run:
+//   sanitize-html + its parser stack -> rich-html-sanitizer / public-html-sanitizer
+//   uuid                             -> time-tracking + email-check suites, and any spec that loads
+//                                       `@gauzy/core` for real
+//   camelcase                        -> time-tracking suites
+//   @faker-js/faker                  -> reached through the entity graph (core/seeds)
+//   @nestjs/axios                    -> ships a raw `index.ts` that re-exports `./dist`
+//   @datorama/akita, @ngneat/*       -> the Angular state stores (ui-core and every UI plugin reach them)
+//   lodash-es                        -> Angular UI code, and angular2-smart-table's .mjs bundle
+//   d3-*, internmap                  -> @swimlane/ngx-charts (desktop-ui-lib's recap module, which the
+//                                       desktop apps' shells load through the library's entry point)
+//   jose                             -> the shared OpenID Connect library in `@gauzy/auth` (the auth,
+//                                       auth-keycloak and auth-zitadel suites)
+//   marked                           -> docs-ui's markdown rendering (ESM-only from marked 16, `.esm.js`)
+//   hash-it                          -> desktop-ui-lib's cache services (ESM-only from hash-it 7)
+// plus every `.mjs` file: Angular and its ecosystem ship ESM-only `fesm2022/*.mjs` bundles, which the
+// Angular projects compile with jest-preset-angular. A Node project only pays for that alternative
+// when one of its specs actually reaches an `.mjs` file, which would otherwise fail to load anyway.
+// Listing packages, rather than transforming all of node_modules, bounds the transform work. The
+// `(?:.*/)?` prefix also matches nested copies and same-named directories inside other packages
+// (e.g. `@smithy/uuid`); that only costs some transform time.
+//
+// Things this depends on that are easy to break from elsewhere:
+//   - ts-jest (>= 29.3.2; pinned at 29.4.6) compiles a `.js` file under `node_modules` to CommonJS
+//     whenever Jest hands it over, whatever `allowJs` says — so a project needs nothing else for this
+//     list to take effect. `allowJs` only matters for repo-local `.js` files.
+//   - A project that sets its own `transformIgnorePatterns` REPLACES this one rather than adding to
+//     it. The Angular projects used to do exactly that with `['node_modules/(?!.*\\.mjs$)']` — the
+//     `.mjs` exception and nothing else — so akita, @ngneat/effects and lodash-es never got
+//     transformed there and ~22 Angular suites failed to load. They now inherit this list, which is
+//     why the `.mjs` alternative lives here. Still defining their own: `docs` (a narrower list),
+//     `integration-zapier` (a copy of this list, which has to track it) and the three React
+//     projects (`.mjs` only, which is all they need today).
+//   - `@gauzy/*` is deliberately absent, and adding it would do nothing. Jest resolves workspace
+//     packages to their real source path (`packages/<pkg>/src/index.ts`), which has no
+//     `node_modules/` segment, so this pattern is never consulted for them.
+//
+// The list itself lives in `jest.patterns.js`, beside the variant the Node projects use: they load ES modules natively
+// under `--experimental-vm-modules`, which NestJS 12 (ES modules) needs — see there.
+const vm = require('node:vm');
+const { transformIgnorePatterns, nodeTransformIgnorePatterns } = require('./jest.patterns');
 
-module.exports = { ...nxPreset };
+// Which variant applies follows from how THIS process loads ES modules, not from the kind of project: with the flag
+// (`vm.SourceTextModule` exists) Jest evaluates every `.mjs` and every `"type": "module"` package as an ES module,
+// so compiling one to CommonJS breaks it, and the Node variant leaves them alone. Every project inherits the key
+// (none restates it); without the flag, the list above.
+const loadsEsModulesNatively = typeof vm.SourceTextModule === 'function';
+
+module.exports = {
+	...nxPreset,
+	transformIgnorePatterns: loadsEsModulesNatively ? nodeTransformIgnorePatterns : transformIgnorePatterns,
+	// A ts-jest worker keeps every module graph it compiled, so on the projects with hundreds of suites
+	// (core: 551) each worker grows to several GB, and `nx run-many --parallel=2` x (cores - 1) workers
+	// exhausted the 68 GiB unit-test runner (run 37932712666, OOM-killed at 67.4 GiB). Jest restarts a
+	// worker whose idle heap passes this limit between test files, which bounds the total without
+	// slowing the small projects.
+	workerIdleMemoryLimit: '2GB',
+	// And at most half the cores per project (Jest's default is cores - 1): the run above was still killed
+	// with only the idle limit (run 37986158097), because a single heavy suite grows a worker past it before
+	// the worker is idle. Two concurrent projects then hold at most `cores` workers between them.
+	maxWorkers: '50%',
+	// The Nx resolver plus one rule: a Jest project sees ONE copy of `@angular/*`. See the file.
+	resolver: require.resolve('./jest.resolver.js'),
+	// ngx-daterangepicker-material (ui-core's date-range selector) imports `dayjs/esm` and its plugins
+	// from an `.mjs` bundle. Transforming that ESM tree is not enough: an `.mjs` importer gets Node's
+	// default-import semantics (the whole module object), so `dayjs.extend` came out undefined and
+	// every suite reaching the selector failed to load. The package's CommonJS build is the same code
+	// with `module.exports = dayjs`, which is what those semantics expect. (Jest merges a preset's
+	// `moduleNameMapper` with a project's own.)
+	moduleNameMapper: {
+		'^dayjs/esm$': 'dayjs',
+		'^dayjs/esm/(.*)$': 'dayjs/$1'
+	},
+	// `moment` and `randomcolor` load with both default and namespace imports, as the bundlers allow.
+	// Jest CONCATENATES a preset's `setupFiles` with a project's own, so no project loses it.
+	setupFiles: [require.resolve('./jest.interop.js')]
+};

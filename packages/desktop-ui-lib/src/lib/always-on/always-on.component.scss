@@ -53,7 +53,9 @@ button {
 	}
 }
 
+// The collapsed widget's drag surface (the expanded one is `.timer-card`), see `.main` below.
 #drag-handle {
+	-webkit-app-region: drag;
 	-webkit-border-radius: 50px;
 	-moz-border-radius: 50px;
 	border-radius: 50px;
@@ -93,8 +95,69 @@ button {
 	}
 }
 
+.monitoring-badge {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
+	padding: 2px 4px;
+	cursor: default;
+	// The always-on window is a fixed 270px; the full text is in the tooltip.
+	min-width: 0;
+	flex-shrink: 1;
+
+	.pulse-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background-color: var(--gauzy-text-color-2);
+
+		&.recording {
+			background-color: var(--color-danger-default);
+			box-shadow: 0 0 6px var(--color-danger-default);
+			animation: pulse-ring 1.5s infinite;
+		}
+	}
+
+	.monitoring-text {
+		font-size: 10px;
+		color: var(--gauzy-text-color-2);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 110px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.monitoring-badge .pulse-dot.recording {
+		animation: none;
+	}
+}
+
+@keyframes pulse-ring {
+	0% {
+		transform: scale(0.95);
+		opacity: 0.8;
+	}
+	50% {
+		transform: scale(1.15);
+		opacity: 1;
+	}
+	100% {
+		transform: scale(0.95);
+		opacity: 0.8;
+	}
+}
+
+// No drag region on `.main`: it is the <nb-layout>, and Nebular appends its overlay container (tooltips,
+// popovers) inside <nb-layout>. Since Electron 44 (Chromium 152) `-webkit-app-region` is inherited, so with the
+// drag here that fixed, full-window container became a drag region whenever a tooltip was open, laid over the
+// buttons' `no-drag`, and a click on play/pause moved the window instead. The drag lives on the widget's own
+// surfaces, `.timer-card` (expanded) and `#drag-handle` (collapsed), which the overlay container is not inside.
+// (Resetting the container instead does not work: an explicit `app-region: none` is applied as `no-drag`, so the
+// widget could not be dragged while a tooltip is open.)
 .main {
-	-webkit-app-region: drag;
 	-webkit-border-radius: 50px;
 	-moz-border-radius: 50px;
 	border-radius: 50px;

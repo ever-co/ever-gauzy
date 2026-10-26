@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
-import { NbCardModule, NbButtonModule } from '@nebular/theme';
+import { NbCardModule, NbButtonModule, NbIconModule } from '@nebular/theme';
 import { NgSelectModule } from '@ng-select/ng-select';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { TimezoneSelectorComponent } from './timezone-selector.component';
 
 @NgModule({
@@ -13,8 +13,9 @@ import { TimezoneSelectorComponent } from './timezone-selector.component';
 		ReactiveFormsModule,
 		NbButtonModule,
 		NbCardModule,
+		NbIconModule,
 		NgSelectModule,
-		TranslateModule.forChild()
+		TranslatePipe
 	],
 	exports: [TimezoneSelectorComponent],
 	declarations: [TimezoneSelectorComponent],

@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NbAutocompleteModule, NbCheckboxModule, NbSelectModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { NbAutocompleteModule, NbCheckboxModule, NbInputModule, NbSelectModule } from '@nebular/theme';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SharedModule } from '../../../shared.module';
 import { CandidateSelectComponent } from './candidate-select.component';
 
@@ -14,7 +14,8 @@ import { CandidateSelectComponent } from './candidate-select.component';
 		NbCheckboxModule,
 		NbSelectModule,
 		NbAutocompleteModule,
-		TranslateModule.forChild(),
+		NbInputModule,
+		TranslatePipe,
 		SharedModule
 	],
 	declarations: [CandidateSelectComponent],

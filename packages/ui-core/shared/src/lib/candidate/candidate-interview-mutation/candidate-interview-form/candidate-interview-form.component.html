@@ -1,38 +1,39 @@
 <form class="form" [formGroup]="form">
-	<div class="form-group title-wrap">
-		<div [class.title-width]="isCalendar" [class.title-width-small]="!isCalendar" class="name-valid-parent">
+	<div class="title-row">
+		<div class="form-group title-field">
 			<label for="inputTitle" class="label">{{ 'FORM.LABELS.TITLE' | translate }}</label>
 			<input
 				nbInput
 				type="text"
 				id="inputTitle"
-				[class.title-width]="!isCalendar"
-				[class.title-width-small]="isCalendar"
 				fullWidth
 				placeholder="{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.TITLE' | translate }}"
 				formControlName="title"
 			/>
 			@if (isTitleExisted) {
-			<div class="name-valid">
-				{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW_TITLE_EXIST' | translate }}
-			</div>
+				<div class="name-valid">
+					{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.INTERVIEW_TITLE_EXIST' | translate }}
+				</div>
 			}
 		</div>
 		@if (!isCalendar) {
-		<button status="success" class="button" nbButton nbStepperSave (click)="findTime()">
-			{{ 'BUTTONS.FIND_TIME' | translate }}
-		</button>
+			<button type="button" class="find-time" nbButton ghost status="basic" size="small" (click)="findTime()">
+				<nb-icon icon="calendar-outline"></nb-icon>
+				{{ 'BUTTONS.FIND_TIME' | translate }}
+			</button>
 		}
 	</div>
 
 	<ngx-timer-range-picker
+		class="range-picker"
 		name="selectedRange"
 		[minDate]="yesterday"
 		[ngModelOptions]="{ standalone: true }"
 		[(ngModel)]="selectedRange"
 	>
 	</ngx-timer-range-picker>
-	<div class="form-group">
+
+	<div class="form-group employees-field">
 		<ga-employee-multi-select
 			[allEmployees]="employees"
 			(selectedChange)="onMembersSelected($event)"
@@ -40,23 +41,22 @@
 		>
 		</ga-employee-multi-select>
 	</div>
-	<div class="form-group checkbox-wrap">
-		<label class="label radio-label">
-			{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.TYPE' | translate }}
-		</label>
+
+	<div class="form-group type-row">
+		<span class="label">{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.TYPE' | translate }}</span>
 		<nb-radio-group
 			[(ngModel)]="isMeeting"
 			(ngModelChange)="detectChanges($event)"
 			[ngModelOptions]="{ standalone: true }"
 			class="radio-group"
 		>
-			<nb-radio [value]="false" [checked]="true">{{
-				'FORM.PLACEHOLDERS.ADD_INTERVIEW.CALL' | translate
-			}}</nb-radio>
+			<nb-radio [value]="false" [checked]="true">{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.CALL' | translate }}</nb-radio>
 			<nb-radio [value]="true">{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.MEETING' | translate }}</nb-radio>
 		</nb-radio-group>
-		@if (isMeeting) {
-		<div class="location">
+	</div>
+
+	@if (isMeeting) {
+		<div class="form-group location-field">
 			<label for="location" class="label">{{ 'FORM.LABELS.LOCATION' | translate }}</label>
 			<input
 				fullWidth
@@ -67,10 +67,9 @@
 				placeholder="{{ 'FORM.PLACEHOLDERS.ADD_INTERVIEW.LOCATION' | translate }}"
 			/>
 		</div>
-		}
-	</div>
+	}
 
-	<div class="form-group">
+	<div class="form-group note-field">
 		<label for="note" class="label">{{ 'FORM.LABELS.NOTE' | translate }}</label>
 		<input
 			fullWidth

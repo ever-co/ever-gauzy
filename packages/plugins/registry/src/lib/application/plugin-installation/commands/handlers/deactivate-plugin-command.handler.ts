@@ -1,5 +1,6 @@
 import { PluginInstallationStatus } from '@gauzy/contracts';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { RequestContext } from '@gauzy/core';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PluginInstallationService } from '../../../../domain';
 import { DeactivatePluginCommand } from '../deactivate-plugin.command';
@@ -16,10 +17,13 @@ export class DeactivatePluginCommandHandler implements ICommandHandler<Deactivat
 	 * @param command - Command containing the installation ID to deactivate
 	 * @returns Promise resolving to void upon successful deactivation
 	 * @throws BadRequestException if installation ID is missing
-	 * @throws NotFoundException if installation doesn't exist
+	 * @throws ForbiddenException if the installation is not the caller's installation of the plugin
 	 */
 	public async execute(command: DeactivatePluginCommand) {
-		const { installationId } = command;
+		// The caller's own installation of the plugin of the path, as activating it requires: the installation was
+		// read by its id alone, so any member with access to a plugin could switch a colleague's installation off.
+		const installedById = RequestContext.currentUser()?.employeeId || null;
+		const { installationId, pluginId } = command;
 
 		// Validate input
 		if (!installationId) {
@@ -27,10 +31,14 @@ export class DeactivatePluginCommandHandler implements ICommandHandler<Deactivat
 		}
 
 		// Find the plugin installation
-		const found = await this.pluginInstallationService.findOneOrFailByIdString(installationId);
+		const found = await this.pluginInstallationService.findOneOrFailByWhereOptions({
+			id: installationId,
+			installedById,
+			pluginId
+		});
 
 		if (!found.success) {
-			throw new NotFoundException('Plugin installation not found');
+			throw new ForbiddenException('You do not have permission to deactivate this plugin installation');
 		}
 
 		// Get the installation record

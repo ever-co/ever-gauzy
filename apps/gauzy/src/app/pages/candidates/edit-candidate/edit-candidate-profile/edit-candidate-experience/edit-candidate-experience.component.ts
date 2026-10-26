@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 export interface ICandidateSkill {
 	name: string;
@@ -36,6 +36,7 @@ export interface ICandidateSkill {
 		</nb-tabset>
 	`,
     styleUrls: ['./edit-candidate-experience.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class EditCandidateExperienceComponent {}

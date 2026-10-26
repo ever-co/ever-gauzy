@@ -1,0 +1,147 @@
+# The payment domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# Every field below is one the delivered `/api/payments` routes already serve, under the same guard
+# chain and with the same permission, so a client that reaches a capability over one protocol is not
+# given a narrower or a wider one than the client that reaches it over the other. Nothing here decides
+# anything: each field calls the same `PaymentService` method the route behind it calls, with the same
+# payload and the same request facts, which is the whole of what a resolver on this platform owns.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection, so a cursor
+# obtained over one surface resumes on the other. `withDeleted` is offered because the delivered list
+# route offers it: `BaseQueryDTO` carries it and that route hands its query string straight to the
+# same read, so a REST caller can ask for withdrawn rows and a connection that could not would hide
+# them.
+#
+# The controller serves its list twice — `GET /` and `GET /pagination` — and the two answer the same
+# rows under the same filters, one of them sliced by `take`/`skip` and the other not. That is one
+# capability, so it is one root field: `payments`, mirroring `GET /`, which is the route that reads the
+# whole filtered set the connection protocol is applied to. Two of the three narrowings the paginated
+# spelling interprets on the way are stated in the connection's own vocabulary — the note pattern as
+# `note`, the date window as `between` on `paymentDate` — so no caller loses those questions by asking
+# them here. The third is a tag membership, and it is not offered: the delivered list read loads no
+# relations, so a condition on a tags collection could only ever match the empty set.
+#
+# `payment` and `paymentCount` carry the class-level edit permission, not the view one, because the
+# delivered routes they mirror carry it: the node read and the count are inherited from the base
+# controller without a permission of their own, so the controller's class-level permission is the one
+# they run under. Stating anything else here would give GraphQL a scope REST does not have. The
+# asymmetry between listing payments and reading one of them is the controller's to resolve, and
+# resolving it in one surface only is exactly what this delivery exists to prevent. `paymentCount`
+# takes no filter, and that is a statement rather than an omission: the delivered count route passes
+# its query string through as the store's own `where`, which the connection protocol does not speak, so
+# a `filter` argument here would either be handed to a service call that cannot accept it or be
+# evaluated over a second code path that could disagree with the connection's `totalCount`. It is
+# nullable because a count is an aggregate a resource may legitimately have no answer for, and a
+# non-null field would turn "not answered" into a fabricated zero.
+#
+# `sendPaymentReceipt` mirrors `POST /receipt`, the action route of this resource's own: it writes no
+# row and it is a Mutation because the route behind it is a POST. Its answer is the boolean the
+# delivered dispatch answers — `true` once the message was handed to the mailer, and `false` when the
+# dispatch refused, which the delivered method reports rather than raising — so this field states what
+# the route establishes and never claims delivery. Its inputs carry the members the delivered dispatch
+# reads off the two posted objects, and nothing else; see `SendPaymentReceiptInput`.
+#
+# **Two delivered reads are deliberately not here, and the reasons are properties of those routes
+# rather than an omission.** The report route answers one of three different nestings of the payment
+# rows depending on the grouping it was asked for — and the two it nests through a project and through
+# an employee carry those rows, for which this schema declares no type at all: a project and an
+# employee each belong to the resource that owns them, and neither has a GraphQL surface to reference.
+# Its group aggregate is derived from a member no payment row has, so the value it divides by is not a
+# number. The daily chart route answers a series whose one member is a string on the days that have
+# payments and the number zero on the days that have none, and the string is the day's total rounded to
+# a single decimal place — a shape no scalar can hold, and a figure this surface may not restate as an
+# exact decimal because it is not one. Delivering either would mean inventing types for other resources
+# or stating money as something it is not, so both are left to REST.
+
+extend type Query {
+	"""
+	The payments of the caller's tenant, newest movement first.
+	"""
+	payments(
+		filter: PaymentFilter
+		sort: [PaymentSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): PaymentConnection!
+
+	"""
+	One payment of the caller's tenant, or null when there is none.
+
+	A row that is not there answers `null` rather than a refusal: GraphQL has one answer for "no such
+	row" on a field that may have none, and the REST route's `404` is that same fact stated in the other
+	protocol's vocabulary.
+	"""
+	payment(id: ID!): Payment
+
+	"""
+	How many payments the caller's tenant holds.
+	"""
+	paymentCount: Int
+}
+
+extend type Mutation {
+	"""
+	Records a money movement.
+
+	The tenant the new row belongs to is stamped from the credential and is never stated by the caller,
+	so a payment cannot be written into a tenant the caller is not acting in. The amount is the exact
+	decimal the column stores, which is the one member the delivered body validation requires beside the
+	organization.
+	"""
+	createPayment(input: CreatePaymentInput!): Payment!
+
+	"""
+	Changes a movement that exists.
+
+	The delivered edit reaches the same write the create does, carrying the identifier in the path and
+	the body together, so a member the caller leaves out is left as it is — see `UpdatePaymentInput`,
+	which also states what an identifier naming no row does. The delivered route relabels every failure
+	of this write as a bad request; this field answers the failure the service raised instead, so a
+	caller reads what actually happened rather than a label.
+	"""
+	updatePayment(input: UpdatePaymentInput!): Payment!
+
+	"""
+	Removes a movement outright.
+
+	This is the hard removal, and it is the one to reach for only for a row recorded in error: the
+	capture and refund rows that point at a movement are the store's own to refuse or to cascade, and a
+	movement a document already accounts for is withdrawn instead.
+	"""
+	deletePayment(id: ID!): Boolean!
+
+	"""
+	Withdraws a movement without removing the row.
+
+	The delivered list stops answering it and the rows that reference it keep resolving the identifier
+	they hold. The answer is the withdrawn row; it is recoverable until it is removed outright.
+	"""
+	softDeletePayment(id: ID!): Payment!
+
+	"""
+	Puts a withdrawn movement back.
+	"""
+	recoverPayment(id: ID!): Payment!
+
+	"""
+	Sends a receipt for one movement, as an email carrying the amount it acknowledges.
+
+	The answer is the boolean the delivered dispatch answers, which is the whole of what the route
+	establishes: `true` once the message was handed to the mailer and `false` when the dispatch refused
+	it, which the delivered method reports rather than raising. The language and the origin are the
+	request's own headers, as they are on the route, so a caller cannot state one origin over one
+	protocol and a different one over the other.
+	"""
+	sendPaymentReceipt(input: SendPaymentReceiptInput!): Boolean!
+}

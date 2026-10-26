@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { MenuItemComponent } from './menu-items/concrete/menu-item/menu-item.component';
 import { IMenuItem } from './menu-items/interface/menu-item.interface';
+import { isSameMenuItem } from './menu-items/menu-item.utils';
 import { SidebarMenuService } from '../../services/nav-builder/sidebar-menu.service';
 
 @Component({
@@ -49,6 +50,10 @@ export class SidebarMenuComponent implements AfterContentChecked, AfterViewInit 
 
 	ngAfterViewInit(): void {
 		this._cdr.detectChanges();
+	}
+
+	public isSelected(item: IMenuItem): boolean {
+		return isSameMenuItem(item, this.selectedItem);
 	}
 
 	/**

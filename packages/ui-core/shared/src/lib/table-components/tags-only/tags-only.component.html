@@ -1,7 +1,7 @@
 <div [class.contacts-img]="layout === ComponentLayoutStyleEnum.CARDS_GRID">
 	@if (value?.imageUrl) {
 	<div>
-		<img height="30" width="50" [src]="value?.imageUrl" alt="Avatar" class="avatar" />
+		<img height="30" width="50" [src]="$safeNavigationMigration(value?.imageUrl)" alt="Avatar" class="avatar" />
 	</div>
 	} @if (value?.name) {
 	<div>{{ value?.name }}</div>
@@ -15,7 +15,7 @@
 	<nb-badge
 		class="color"
 		position="centered"
-		[style.background]="background(tag?.color)"
+		[style.background]="background($safeNavigationMigration(tag?.color))"
 		[style.color]="backgroundContrast(tag.color)"
 		[text]="tag.name"
 	></nb-badge>
@@ -23,7 +23,7 @@
 	<nb-badge
 		class="color"
 		position="centered"
-		[style.background]="background(tag?.color)"
+		[style.background]="background($safeNavigationMigration(tag?.color))"
 		[style.color]="backgroundContrast(tag.color)"
 		[text]="tag.name"
 	></nb-badge>

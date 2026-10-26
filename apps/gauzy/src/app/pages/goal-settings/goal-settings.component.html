@@ -294,7 +294,7 @@
       <ng-template #gridLayout>
         <ga-card-grid
           [loading]="loading"
-          [totalItems]="pagination?.totalItems"
+          [totalItems]="$safeNavigationMigration(pagination?.totalItems)"
           [settings]="smartTableSettings"
           [source]="goalTimeFrames"
           (onSelectedItem)="selectRow($event)"
@@ -306,8 +306,9 @@
            so the record renderer is built fresh for each entry that is opened. -->
       <ngx-record-view-drawer
         [open]="!!viewedRecord"
+        [fullViewLink]="viewedRecord ? viewFullLink : null"
         [heading]="viewHeading"
-        [subtitle]="viewedRecord?.name"
+        [subtitle]="$safeNavigationMigration(viewedRecord?.name)"
         (closed)="closeView()"
         >
         @if (viewedRecord) {

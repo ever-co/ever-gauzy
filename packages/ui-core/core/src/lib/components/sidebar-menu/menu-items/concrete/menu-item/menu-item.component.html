@@ -1,4 +1,4 @@
-<nb-accordion *ngxPermissionsOnly="item?.data?.permissionKeys" [class]="item?.class" [class.closed]="!state">
+<nb-accordion *ngxPermissionsOnly="$safeNavigationMigration(item?.data?.permissionKeys)" [class]="item?.class" [class.closed]="!state">
 	<nb-accordion-item [collapsed]="collapse" (collapsedChange)="onCollapse($event)" [class.opened]="selected">
 		<!-- Collapsed rail. The two variants are SIBLING blocks, never an @if nested in an @if:
 		     nb-accordion-item projects by selector only (`select="nb-accordion-item-header"`, no
@@ -41,8 +41,8 @@
 		} @if (!state && !hasChildren) {
 		<nb-accordion-item-header
 			[attr.aria-label]="item?.title"
-			[gaTooltip]="item?.title"
-			[icon]="item?.icon"
+			[gaTooltip]="$safeNavigationMigration(item?.title)"
+			[icon]="$safeNavigationMigration(item?.icon)"
 			[class.collapsed]="onCollapse"
 			(click)="redirectTo()"
 		>
@@ -50,14 +50,14 @@
 		</nb-accordion-item-header>
 		} @if (state) {
 		<nb-accordion-item-header
-			[nbTooltip]="item?.title"
+			[nbTooltip]="$safeNavigationMigration(item?.title)"
 			nbTooltipPlacement="right"
 			[class.collapsed]="onCollapse"
 			(click)="redirectTo()"
 		>
 			<i [class]="item?.icon"></i>
 			<span>
-				<a [href]="getExternalUrl(item?.link)" onclick="return false;">
+				<a [href]="getExternalUrl($safeNavigationMigration(item?.link))" onclick="return false;">
 					{{ item?.title }}
 				</a>
 			</span>
@@ -67,11 +67,11 @@
 			@for (subItem of visibleChildren; track subItem?.title) {
 			<div>
 				<ga-children-menu-item
-					[id]="subItem?.id"
+					[id]="$safeNavigationMigration(subItem?.id)"
 					[item]="subItem"
 					[parent]="item"
 					[collapse]="state"
-					[selected]="subItem === selectedChildren && selected"
+					[selected]="selected && isSelectedChild(subItem)"
 					(focusItemChange)="focusOn($event)"
 				></ga-children-menu-item>
 			</div>
@@ -98,7 +98,7 @@
 				[collapse]="true"
 				[tooltipDisabled]="true"
 				[trackActiveRoute]="false"
-				[selected]="subItem === selectedChildren && selected"
+				[selected]="selected && isSelectedChild(subItem)"
 				(focusItemChange)="focusOn($event)"
 			></ga-children-menu-item>
 			}

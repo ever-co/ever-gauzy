@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ITask, TaskStatusEnum } from '@gauzy/contracts';
 import { TeamsWidgetStateComponent } from '../teams/teams-widget-state.component';
 import { BaseProjectManagementWidgetComponent } from './base-project-management-widget.component';
@@ -23,7 +23,7 @@ import { BaseProjectManagementWidgetComponent } from './base-project-management-
 	templateUrl: './my-tasks-widget.component.html',
 	styleUrls: ['./project-management-list-widget.shared.scss', './my-tasks-widget.component.scss'],
 	standalone: true,
-	imports: [TranslateModule, TeamsWidgetStateComponent],
+	imports: [TranslatePipe, TeamsWidgetStateComponent],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MyTasksWidgetComponent extends BaseProjectManagementWidgetComponent {

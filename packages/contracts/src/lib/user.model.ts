@@ -160,6 +160,11 @@ export interface IUserRegistrationInput extends ITermsAcceptanceInput {
 	sourceId?: string;
 	inviteId?: string;
 	featureAsEmployee?: boolean;
+	/**
+	 * The Stripe Checkout Session (`cs_live_...` / `cs_test_...`) the registrant completed on the shared
+	 * checkout, when they arrive from it. Hosted deployments use it as proof of purchase; ignored elsewhere.
+	 */
+	stripeCheckoutSessionId?: string;
 }
 
 /**

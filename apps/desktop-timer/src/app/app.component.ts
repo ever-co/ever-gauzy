@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, NgZone, OnInit, Renderer2 } from '@angular/core';
+import { AfterViewInit, Component, NgZone, OnInit, Renderer2, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import {
 	ActivityWatchElectronService,
@@ -21,6 +21,7 @@ import { AppService } from './app.service';
 	selector: 'gauzy-root',
 	template: '<router-outlet></router-outlet>',
 	styleUrls: ['./app.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [RouterOutlet]
 })
 export class AppComponent implements OnInit, AfterViewInit {
@@ -151,6 +152,24 @@ export class AppComponent implements OnInit, AfterViewInit {
 					this.store.userId = arg.userId;
 					this.store.token = arg.token;
 					await this.authFromSocial(arg);
+				} catch (error) {
+					console.log('ERROR', error);
+				}
+			})
+		);
+
+		// A provider sign-in for an address with several workspaces ends at the workspace picker, with a one-time
+		// sign-in code instead of a token: the timer's own picker confirms the code, lists the workspaces and signs
+		// in to the one chosen. The code goes in the navigation state, never in the URL.
+		this.electronService.ipcRenderer.on('social_auth_workspaces', (event, arg) =>
+			this._ngZone.run(async () => {
+				if (!arg?.email || !arg?.code) {
+					return;
+				}
+				try {
+					await this.router.navigate(['/auth/magic-sign-in'], {
+						state: { email: arg.email, code: arg.code }
+					});
 				} catch (error) {
 					console.log('ERROR', error);
 				}

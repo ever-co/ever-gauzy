@@ -1,0 +1,174 @@
+# The organization team membership's object type.
+#
+# A membership is the row that puts an employee on a team. It carries the position of the member in
+# the roster, whether the member manages the team, whether the tracker records that member's time for
+# the team, and the task the member is working on there. The employee, the team and the role are rows
+# of their own domains; this row is the fact that they belong together, and it is the answer the three
+# writes of this domain give.
+#
+# **The members are the columns of the row the delivered service reads back.** Each write reads the
+# membership through the platform's own find-by-identifier, which joins no relation, so a relation is
+# carried as its identifier column with the surface its row is read from named beside it, and never as
+# a member that would answer null on every answer this surface can give. The four relations that
+# travel this way are the task a member is working on, the team, the employee and the role.
+#
+# **The withdrawal pair is not carried, and the omission is a statement about this resource.** The one
+# removal this controller serves is a hard delete: the membership row goes, nothing marks it. The
+# delivered reads exclude a withdrawn row in any case, so `deletedAt` and `deletedByUserId` could only
+# ever answer null here — a member with one possible value is not a member. The flags an operator sets
+# on a live row, `isActive`, `isArchived` and `archivedAt`, are carried: those rows are answered, and
+# they are what a client switches a roster row on.
+#
+# **No member is money and no member states a unit.** A membership records a position among siblings,
+# two flags and a set of references; the fractional and exact-decimal members of this platform belong
+# to amounts and rates, which this row carries none of. `order` is therefore an `Int`: it is the index
+# of a member among the others, not a quantity of anything.
+#
+# The enum vocabularies of the platform are not redeclared here. A membership has no lifecycle column
+# of its own and no status column, so nothing on this type would need one; the role it carries is a
+# row, read through `roleId`, rather than a value set this domain would have to own.
+
+"""
+One membership: the row that puts an employee on an organization team, with the role, the roster
+position and the task the member works on there.
+"""
+type OrganizationTeamEmployee {
+	id: ID!
+	"The position of the member in the team's roster. An ordering among siblings, not a quantity."
+	order: Int
+	"Whether the tracker records this member's time for the team."
+	isTrackingEnabled: Boolean
+	"Whether the member manages the team. The membership's own flag, beside the role it carries."
+	isManager: Boolean
+	"When the member was assigned to the team."
+	assignedAt: DateTime
+	"""
+	The task the member is currently working on, by identifier. The task row is not joined by the read
+	these writes answer with; it is read from the task surface by this identifier.
+	"""
+	activeTaskId: ID
+	"""
+	The team the membership belongs to, by identifier. The team row is not joined by the read these
+	writes answer with; it is read from the organization team surface by this identifier.
+	"""
+	organizationTeamId: ID!
+	"""
+	The employee the membership puts on the team, by identifier. The employee row is not joined by the
+	read these writes answer with; it is read from the employee surface by this identifier.
+	"""
+	employeeId: ID!
+	"""
+	The role the membership carries, by identifier, or null for a member who carries none. Nullable
+	because the delivered writes store no role for an ordinary member. The role row is not joined by
+	the read these writes answer with; it is read from the role surface by this identifier.
+	"""
+	roleId: ID
+	"""
+	The tenant the membership is filed under, by identifier. The tenant is stamped from the credential
+	on every write here and is never stated by a caller; the row is read from the tenant surface.
+	"""
+	tenantId: ID
+	"""
+	The organization the membership is filed under, by identifier. The organization row is not joined
+	by the read these writes answer with; it is read from the organization surface by this identifier.
+	"""
+	organizationId: ID
+	"When the membership was filed."
+	createdAt: DateTime
+	"When the membership was last changed."
+	updatedAt: DateTime
+	"Whether the membership is active. A flag an operator sets, not a statement about the row's lifecycle."
+	isActive: Boolean
+	"Whether the membership is archived. A flag an operator sets, not a statement about the row's lifecycle."
+	isArchived: Boolean
+	"When the membership was archived, when an operator archived it."
+	archivedAt: DateTime
+	"""
+	The person who put the member on the team, by identifier. The membership write stamps this from the
+	credential, and the user row is not joined by the read.
+	"""
+	createdByUserId: ID
+	"""
+	The person who last changed the membership, by identifier. The user row is not joined by the read.
+	"""
+	updatedByUserId: ID
+}
+
+"""
+What a caller states when it edits a membership.
+
+The members are the ones the delivered edit body validates. The delivered route carries the identifier
+in its path and the facts in its body; the identifier is stated here as the field's own argument rather
+than inside the payload, so no payload can name one membership and no path another.
+
+Three members the route's own DTO carries are deliberately absent, and a fourth member of the
+platform's update input is absent for a reason of its own:
+
+- the tenant is not declared. The delivered service reads the tenant from the credential first and
+  falls back to a stated one only when the credential carries none, which a request on this endpoint
+  never does, so a caller-stated tenant could not change the row that is written;
+- `organization` is not declared beside `organizationId`. The delivered validator accepts the relation
+  object in place of the identifier for a REST caller that has one loaded; a GraphQL caller states the
+  identifier, and the row it names is read from the organization surface;
+- `sentTo` is not declared. The delivered DTO carries it so that a flow which sends the membership
+  onward can omit the organization, and the delivered write never reads it: a caller that sent one
+  would be told nothing and no column would change;
+- `isManager` is not declared. It is a member of the platform's own update input, but the delivered
+  route's body whitelist drops it — the edit DTO does not carry it — so a write stating it would be
+  accepted and silently discarded. A flag a caller may set has to be a flag that is written.
+"""
+input UpdateOrganizationTeamEmployeeInput {
+	"The organization the membership is filed under. The delivered write scopes its criteria by it."
+	organizationId: ID!
+	"The team the membership belongs to. The delivered write scopes its criteria by it."
+	organizationTeamId: ID!
+	"The task the member is moved onto, by identifier. The task row is read from the task surface."
+	activeTaskId: ID
+	"Whether the tracker records this member's time for the team."
+	isTrackingEnabled: Boolean
+	"The position of the member in the team's roster."
+	order: Int
+}
+
+"""
+What a caller states when it moves a member onto a different task.
+
+The delivered route validates the same organization and team members as the edit above — they are the
+scope the write's criteria are built from — and reads the task from the payload. The identifier is the
+field's own argument, as it is on the edit, because the delivered route carries it in the path.
+"""
+input OrganizationTeamEmployeeActiveTaskInput {
+	"The organization the membership is filed under. The delivered write scopes its criteria by it."
+	organizationId: ID!
+	"The team the membership belongs to. The delivered write scopes its criteria by it."
+	organizationTeamId: ID!
+	"""
+	The task the member is moved onto, by identifier. The task row is read from the task surface.
+	Nullable because the delivered body declares it so: a request that names no task passes the route's
+	own validation, and a field that demanded one would refuse a request the REST route serves.
+	"""
+	activeTaskId: ID
+}
+
+"""
+What a caller states when it removes a membership.
+
+The delivered route is a removal whose scope is taken from its query string rather than from a body —
+`DELETE /api/organization-team-employee/:id?organizationId=…&organizationTeamId=…` — and the delivered
+service builds its criteria from all of it together with the path identifier, so the identifier alone
+does not name a row: what the removal reaches is a membership of the caller's own tenant, in the
+stated organization and the stated team.
+
+The members are the query string's own names, kept exactly as the delivered DTO declares them, and they
+are grouped in one input rather than spread across the field's arguments so that the scope of the
+removal reads as the one thing the request states beside the identifier. The tenant the DTO also
+accepts is not declared: the delivered service reads the tenant from the credential first and falls
+back to a stated one only when the credential carries none, which a request on this endpoint never
+does.
+"""
+input OrganizationTeamEmployeeDeleteInput {
+	"The organization the membership is filed under. The delivered write scopes its criteria by it."
+	organizationId: ID!
+	"The team the membership belongs to. The delivered write scopes its criteria by it."
+	organizationTeamId: ID!
+}

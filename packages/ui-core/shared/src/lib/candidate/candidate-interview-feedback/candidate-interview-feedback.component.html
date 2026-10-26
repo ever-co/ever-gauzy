@@ -1,96 +1,107 @@
-<nb-card class="card-wrap">
-	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"><i class="fas fa-times" (click)="closeDialog()"></i></span>
-		<h5 class="title">
-			{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.LEAVE_FEEDBACK' | translate }}
-			{{ currentInterview?.title }}
-		</h5>
+<nb-card class="feedback-dialog">
+	<nb-card-header class="dialog-header">
+		<div class="heading">
+			<span class="title-badge"><nb-icon icon="message-square-outline"></nb-icon></span>
+			<h5 class="dialog-title">
+				{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.LEAVE_FEEDBACK' | translate }}
+				<span class="interview-name">{{ currentInterview?.title }}</span>
+			</h5>
+		</div>
+		<button
+			type="button"
+			class="close"
+			nbButton
+			ghost
+			size="small"
+			status="basic"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			(click)="closeDialog()"
+		>
+			<nb-icon icon="close-outline"></nb-icon>
+		</button>
 	</nb-card-header>
-	<nb-card-body>
+
+	<nb-card-body class="dialog-body">
 		@if (form) {
 			<form class="form" [formGroup]="form">
-				<ga-candidate-interviewer-select
-					class="select"
-					[interviewers]="currentInterview.employees"
-					[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEE' | translate"
-					[disabledIds]="disabledIds"
-					(selectedChange)="onMembersSelected($event)"
-				></ga-candidate-interviewer-select>
-				<div class="label-wrap">
-					@if (technologiesList[0] || personalQualitiesList[0]) {
-						<ga-star-rating-output [rate]="averageRating"></ga-star-rating-output>
-					}
-					@if (!(technologiesList[0] || personalQualitiesList[0])) {
-						<ga-star-rating-input formControlName="rating"></ga-star-rating-input>
-					}
-					<nb-radio-group [(ngModel)]="status" [ngModelOptions]="{ standalone: true }" class="radio-group">
-						<nb-radio [value]="'HIRED'" [disabled]="isRejected"
-							>{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE' | translate }}
-							@if (interviewers?.length > 1) {
-								<span> ({{ statusHire }}/{{ interviewers?.length }}) </span>
-							}
-							<i class="fas fa-thumbs-up" [class.success]="!isRejected" [class.disabled]="isRejected"></i>
-						</nb-radio>
-						<nb-radio [value]="'REJECTED'"
-							>{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT' | translate }}
-							<i class="fas error fa-thumbs-down"></i
-						></nb-radio>
-					</nb-radio-group>
-				</div>
+				<!-- Interviewer -->
 				<div class="form-group">
-					@if (technologiesList[0] || personalQualitiesList[0]) {
-						<div>
-							<div class="form-blocks mt-3">
-								@if (technologiesList.length > 0) {
-									<div [style.width]="personalQualitiesList.length === 0 ? '100%' : '50%'">
-										<div class="label mb-2">
-											{{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK' | translate }}
-										</div>
-										@for (
-											technologyRating of form.get('technologies').controls;
-											track technologyRating;
-											let i = $index
-										) {
-											<div class="criterion">
-												@if (technologiesList) {
-													<div>
-														{{ technologiesList[i]?.name }}
-													</div>
-												}
-												<ga-star-rating-input
-													[formControl]="technologyRating"
-												></ga-star-rating-input>
-											</div>
-										}
-									</div>
-								}
-								@if (personalQualitiesList.length > 0) {
-									<div [style.width]="technologiesList.length === 0 ? '100%' : '50%'">
-										<div class="label mb-2">
-											{{ 'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate }}
-										</div>
-										@for (
-											personalQualityRating of form.get('personalQualities').controls;
-											track personalQualityRating;
-											let i = $index
-										) {
-											<div class="criterion">
-												@if (personalQualitiesList) {
-													<div>
-														{{ personalQualitiesList[i]?.name }}
-													</div>
-												}
-												<ga-star-rating-input
-													[formControl]="personalQualityRating"
-												></ga-star-rating-input>
-											</div>
-										}
-									</div>
-								}
-							</div>
-						</div>
-					}
+					<span class="label">{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEWER' | translate }}</span>
+					<ga-candidate-interviewer-select
+						class="select"
+						[interviewers]="currentInterview.employees"
+						[placeholder]="'FORM.PLACEHOLDERS.ADD_REMOVE_EMPLOYEE' | translate"
+						[disabledIds]="disabledIds"
+						(selectedChange)="onMembersSelected($event)"
+					></ga-candidate-interviewer-select>
 				</div>
+
+				<!-- Overall rating and decision -->
+				<div class="form-group">
+					<span class="label">{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.RATING' | translate }}</span>
+					<div class="decision-row">
+						@if (technologiesList[0] || personalQualitiesList[0]) {
+							<ga-star-rating-output [rate]="averageRating"></ga-star-rating-output>
+						} @else {
+							<ga-star-rating-input formControlName="rating"></ga-star-rating-input>
+						}
+						<nb-radio-group [(ngModel)]="status" [ngModelOptions]="{ standalone: true }" class="decision">
+							<nb-radio [value]="'HIRED'" [disabled]="isRejected">
+								{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.HIRE' | translate }}
+								@if (interviewers?.length > 1) {
+									<span class="count">({{ statusHire }}/{{ interviewers?.length }})</span>
+								}
+								<i class="fas fa-thumbs-up decision-icon hire" [class.disabled]="isRejected"></i>
+							</nb-radio>
+							<nb-radio [value]="'REJECTED'">
+								{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.REJECT' | translate }}
+								<i class="fas fa-thumbs-down decision-icon reject"></i>
+							</nb-radio>
+						</nb-radio-group>
+					</div>
+				</div>
+
+				<!-- Criterion ratings -->
+				@if (technologiesList[0] || personalQualitiesList[0]) {
+					<div class="criteria">
+						@if (technologiesList.length > 0) {
+							<div class="criteria-group">
+								<span class="label">{{ 'CANDIDATES_PAGE.CRITERIONS.TECHNOLOGY_STACK' | translate }}</span>
+								<ul class="criteria-list">
+									@for (
+										technologyRating of form.get('technologies').controls;
+										track technologyRating;
+										let i = $index
+									) {
+										<li class="criterion">
+											<span class="criterion-name">{{ technologiesList[i]?.name }}</span>
+											<ga-star-rating-input [formControl]="technologyRating"></ga-star-rating-input>
+										</li>
+									}
+								</ul>
+							</div>
+						}
+						@if (personalQualitiesList.length > 0) {
+							<div class="criteria-group">
+								<span class="label">{{ 'CANDIDATES_PAGE.CRITERIONS.PERSONAL_QUALITIES' | translate }}</span>
+								<ul class="criteria-list">
+									@for (
+										personalQualityRating of form.get('personalQualities').controls;
+										track personalQualityRating;
+										let i = $index
+									) {
+										<li class="criterion">
+											<span class="criterion-name">{{ personalQualitiesList[i]?.name }}</span>
+											<ga-star-rating-input [formControl]="personalQualityRating"></ga-star-rating-input>
+										</li>
+									}
+								</ul>
+							</div>
+						}
+					</div>
+				}
+
+				<!-- Description -->
 				<div class="form-group">
 					<label for="description" class="label">{{ 'FORM.LABELS.FEEDBACK_DESCRIPTION' | translate }}</label>
 					<textarea
@@ -104,11 +115,13 @@
 			</form>
 		}
 	</nb-card-body>
-	<nb-card-footer>
-		<button (click)="closeDialog()" size="small" nbButton status="basic" outline>
+
+	<nb-card-footer class="dialog-footer">
+		<button type="button" nbButton ghost status="basic" size="small" (click)="closeDialog()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
-		<button class="mr-3 ml-3" (click)="createFeedback()" nbButton status="success" size="small">
+		<button type="button" nbButton status="primary" size="small" (click)="createFeedback()">
+			<nb-icon icon="checkmark-outline"></nb-icon>
 			{{ 'BUTTONS.SAVE' | translate }}
 		</button>
 	</nb-card-footer>

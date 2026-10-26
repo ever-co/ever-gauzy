@@ -21,10 +21,11 @@ export class EmployeeRecurringExpenseDTO extends TenantOrganizationBaseDTO {
     @Max(31)
     readonly startDay: number;
 
-    @ApiProperty({ type: () => Number, minimum: 1, maximum: 12, readOnly: true })
+    // Months are 0-based like Date.getMonth(), so January is 0.
+    @ApiProperty({ type: () => Number, minimum: 0, maximum: 12, readOnly: true })
     @IsNumber()
     @IsNotEmpty()
-    @Min(1)
+    @Min(0)
     @Max(12)
     readonly startMonth: number;
 
@@ -45,10 +46,10 @@ export class EmployeeRecurringExpenseDTO extends TenantOrganizationBaseDTO {
     @Max(31)
     readonly endDay: number;
 
-    @ApiProperty({ type: () => Number, minimum: 1, maximum: 12, readOnly: true })
+    @ApiProperty({ type: () => Number, minimum: 0, maximum: 12, readOnly: true })
     @IsOptional()
     @IsNumber()
-    @Min(1)
+    @Min(0)
     @Max(12)
     readonly endMonth: number;
 

@@ -4,7 +4,7 @@
  * See invite-accept.security.spec.ts.
  */
 import '../core/entities/internal';
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { RolesEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { InviteService } from './invite.service';
@@ -12,19 +12,39 @@ import { InviteService } from './invite.service';
 /**
  * GHSA-x4mv-fhwj-g3rp sibling — `POST /invite/emails` (ORG_INVITE_EDIT or ORG_TEAM_ADD).
  *
- * The service decided which role an invitation may carry (an EMPLOYEE inviter is limited to the
- * EMPLOYEE role; others to the role they asked for, SUPER_ADMIN only for a super admin) and then
- * persisted the BODY `roleId` regardless. An employee could therefore mint SUPER_ADMIN invitations.
- * The invitation now carries the role that was checked.
+ * The service decided which role an invitation may carry and then persisted the BODY `roleId`
+ * regardless. An employee could therefore mint SUPER_ADMIN invitations. The invitation now carries
+ * the role that was checked.
+ *
+ * Role ceiling (owner decision, 2026-10-22): an inviter grants only their own level or lower —
+ * SUPER_ADMIN > ADMIN > MANAGER > DATA_ENTRY / EMPLOYEE > VIEWER / CANDIDATE / INTERVIEWER. Before it,
+ * any inviter but an employee could grant any role except SUPER_ADMIN, so a manager invited admins.
  */
 describe('InviteService.createBulk role (GHSA-x4mv-fhwj-g3rp)', () => {
 	const TENANT = 'tenant-1';
 	const ORGANIZATION = 'org-1';
-	const ROLES: Record<string, { id: string; name: RolesEnum }> = {
-		'role-employee': { id: 'role-employee', name: RolesEnum.EMPLOYEE },
+	const ROLES: Record<string, { id: string; name: string }> = {
+		'role-super-admin': { id: 'role-super-admin', name: RolesEnum.SUPER_ADMIN },
+		'role-admin': { id: 'role-admin', name: RolesEnum.ADMIN },
 		'role-manager': { id: 'role-manager', name: RolesEnum.MANAGER },
-		'role-super-admin': { id: 'role-super-admin', name: RolesEnum.SUPER_ADMIN }
+		'role-data-entry': { id: 'role-data-entry', name: RolesEnum.DATA_ENTRY },
+		'role-employee': { id: 'role-employee', name: RolesEnum.EMPLOYEE },
+		'role-viewer': { id: 'role-viewer', name: RolesEnum.VIEWER },
+		'role-candidate': { id: 'role-candidate', name: RolesEnum.CANDIDATE },
+		'role-interviewer': { id: 'role-interviewer', name: RolesEnum.INTERVIEWER },
+		// A role the tenant created itself.
+		'role-custom': { id: 'role-custom', name: 'RECRUITER' }
 	};
+
+	/** The owner's order, highest first; roles on one line share a level. */
+	const LEVELS: string[][] = [
+		['role-super-admin'],
+		['role-admin'],
+		['role-manager'],
+		['role-data-entry', 'role-employee'],
+		['role-viewer', 'role-candidate', 'role-interviewer']
+	];
+	const levelOf = (roleId: string) => LEVELS.length - LEVELS.findIndex((level) => level.includes(roleId));
 
 	/** Thrown by the stubbed saveMany so the test stops before the e-mail side effects. */
 	class Saved extends Error {
@@ -39,7 +59,7 @@ describe('InviteService.createBulk role (GHSA-x4mv-fhwj-g3rp)', () => {
 		jest.spyOn(RequestContext, 'currentRoleId').mockReturnValue(callerRoleId);
 
 		const roleService = {
-			// The real call is tenant-scoped; `where: { name }` narrows the caller-role probe to EMPLOYEE.
+			// The real call is tenant-scoped; `where: { name }` narrowed the caller-role probe to EMPLOYEE.
 			findOneByIdString: jest.fn(async (id: string, options?: any) => {
 				const role = ROLES[id];
 				if (!role || (options?.where?.name && options.where.name !== role.name)) {
@@ -89,17 +109,16 @@ describe('InviteService.createBulk role (GHSA-x4mv-fhwj-g3rp)', () => {
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('an EMPLOYEE inviter asking for SUPER_ADMIN issues an EMPLOYEE invitation', async () => {
+	it('an EMPLOYEE inviter asking for SUPER_ADMIN is refused, and no invitation is written', async () => {
 		const { service } = build('role-employee');
 
-		const [invite] = await invitesOf(service, { roleId: 'role-super-admin' });
-
-		// CONTROL: the body asked for SUPER_ADMIN; pre-fix this is exactly what was persisted.
-		expect(invite.roleId).not.toBe('role-super-admin');
-		expect(invite.roleId).toBe('role-employee');
+		// CONTROL: before GHSA-x4mv-fhwj-g3rp the body role was persisted; before the ceiling it was
+		// swapped for EMPLOYEE without a word. Now the request is refused.
+		await expect(invitesOf(service, { roleId: 'role-super-admin' })).rejects.toBeInstanceOf(ForbiddenException);
+		expect(service.saveMany).not.toHaveBeenCalled();
 	});
 
-	it('a manager still invites with the role it asked for', async () => {
+	it('a manager still invites an employee with the role it asked for', async () => {
 		const { service } = build('role-manager');
 
 		const [invite] = await invitesOf(service, { roleId: 'role-employee' });
@@ -107,12 +126,71 @@ describe('InviteService.createBulk role (GHSA-x4mv-fhwj-g3rp)', () => {
 		expect(invite.roleId).toBe('role-employee');
 	});
 
-	it('still refuses a non-super-admin asking for SUPER_ADMIN, in any form', async () => {
-		for (const body of [{ roleId: 'role-super-admin' }, { role: 'role-super-admin' }, { role: { id: 'role-super-admin' } }]) {
+	it('a manager cannot invite an ADMIN, in any form', async () => {
+		for (const body of [{ roleId: 'role-admin' }, { role: 'role-admin' }, { role: { id: 'role-admin' } }]) {
 			const { service } = build('role-manager');
-			await expect(invitesOf(service, body)).rejects.toBeInstanceOf(UnauthorizedException);
+			await expect(invitesOf(service, body)).rejects.toBeInstanceOf(ForbiddenException);
+			expect(service.saveMany).not.toHaveBeenCalled();
 			jest.restoreAllMocks();
 		}
+	});
+
+	it('still refuses a non-super-admin asking for SUPER_ADMIN, in any form', async () => {
+		for (const caller of ['role-admin', 'role-manager']) {
+			for (const body of [
+				{ roleId: 'role-super-admin' },
+				{ role: 'role-super-admin' },
+				{ role: { id: 'role-super-admin' } }
+			]) {
+				const { service } = build(caller);
+				await expect(invitesOf(service, body)).rejects.toBeInstanceOf(ForbiddenException);
+				jest.restoreAllMocks();
+			}
+		}
+	});
+
+	it('every built-in inviter grants exactly its own level and the levels below it', async () => {
+		const ids = LEVELS.flat();
+		for (const caller of ids) {
+			for (const requested of ids) {
+				const { service } = build(caller);
+				const outcome = await invitesOf(service, { roleId: requested }).then(
+					([invite]) => invite.roleId,
+					(error) => (error instanceof ForbiddenException ? 'refused' : error)
+				);
+				const expected = levelOf(requested) <= levelOf(caller) ? requested : 'refused';
+				expect({ caller, requested, outcome }).toEqual({ caller, requested, outcome: expected });
+				jest.restoreAllMocks();
+			}
+		}
+	});
+
+	it('only a tenant admin grants a role the tenant created, and an inviter holding one ranks lowest', async () => {
+		for (const caller of ['role-super-admin', 'role-admin']) {
+			const { service } = build(caller);
+			const [invite] = await invitesOf(service, { roleId: 'role-custom' });
+			expect(invite.roleId).toBe('role-custom');
+			jest.restoreAllMocks();
+		}
+		for (const caller of ['role-manager', 'role-employee', 'role-viewer', 'role-custom']) {
+			const { service } = build(caller);
+			await expect(invitesOf(service, { roleId: 'role-custom' })).rejects.toBeInstanceOf(ForbiddenException);
+			jest.restoreAllMocks();
+		}
+
+		const { service } = build('role-custom');
+		const [invite] = await invitesOf(service, { roleId: 'role-viewer' });
+		expect(invite.roleId).toBe('role-viewer');
+		jest.restoreAllMocks();
+
+		const { service: custom } = build('role-custom');
+		await expect(invitesOf(custom, { roleId: 'role-employee' })).rejects.toBeInstanceOf(ForbiddenException);
+	});
+
+	it('refuses an inviter with no role', async () => {
+		const { service } = build('role-gone');
+
+		await expect(invitesOf(service, { roleId: 'role-viewer' })).rejects.toBeInstanceOf(ForbiddenException);
 	});
 
 	it('refuses a body naming two different roles, or none', async () => {
@@ -124,9 +202,8 @@ describe('InviteService.createBulk role (GHSA-x4mv-fhwj-g3rp)', () => {
 	});
 
 	/**
-	 * The EMPLOYEE branch is force-assigned the EMPLOYEE role, so a bad payload was never a privilege
-	 * escalation here — but it was silently accepted, and the same body answered 400 for every other
-	 * inviter. Input validation now runs before the branch, so the answer no longer depends on who asks.
+	 * An EMPLOYEE inviter's malformed payload was once silently accepted, while the same body answered
+	 * 400 for every other inviter. Input validation runs first, so the answer does not depend on who asks.
 	 */
 	it('refuses a malformed or self-contradicting body from an EMPLOYEE inviter too', async () => {
 		for (const body of [

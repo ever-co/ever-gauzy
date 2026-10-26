@@ -4,7 +4,7 @@ query.selectedCategory$ | async;
 <div class="category-selector-container">
 	<gauzy-select
 		class="w-100"
-		[selectedItem]="selected?.id"
+		[selectedItem]="$safeNavigationMigration(selected?.id)"
 		[items]="categories"
 		bindLabel="name"
 		bindValue="id"

@@ -13,10 +13,10 @@
   <div class="row centered">
     @for (row of block; track row) {
       <div class="col-3">
-        <nb-card class="shortcut-card" [status]="row?.status" (click)="navigateTo(row?.link)">
+        <nb-card class="shortcut-card" [status]="$safeNavigationMigration(row?.status)" (click)="navigateTo($safeNavigationMigration(row?.link))">
           <nb-card-header>
             @if (row?.icon) {
-              <nb-icon [icon]="row?.icon"></nb-icon>
+              <nb-icon [icon]="$safeNavigationMigration(row?.icon)"></nb-icon>
             }
             {{ row?.name }}
           </nb-card-header>

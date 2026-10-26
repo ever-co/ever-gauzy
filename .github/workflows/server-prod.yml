@@ -31,7 +31,7 @@ jobs:
     # 'master' -> 'apps' promotion PR (the tag then points at the merged
     # 'master' tip, HEAD^2). Retries absorb the short delay until 'Release Prod' tags
     # the 'master' commit.
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -93,6 +93,86 @@ jobs:
           echo "::error::No release tag points at this commit, and its merge parent does not match the tagged 'master' tip. Promote by merging the 'master' -> 'apps' PR (or fast-forwarding: git push origin origin/master:apps) after 'Release Prod' has created the tag; if 'master' has moved since the promotion PR was opened, re-promote."
           exit 1
 
+      - name: Create the GitHub release once, before the build matrix
+        # Every release-* job publishes with electron-builder's GitHub publisher, which creates the
+        # release in the app's release repo when it is missing. That create is not race-safe: two
+        # publishers that both find no release both POST it, and the second fails its job with
+        # "422 Validation Failed: Published releases must have a valid tag" ("Cannot cleanup"), although
+        # every artifact was built and uploaded. It even happens inside ONE job: electron-builder 26
+        # caches a publisher only after an await, so two artifacts finishing together get two
+        # publishers (the mac jobs on 2026-10-24: two "creating GitHub release" lines < 1 s apart).
+        # Creating the release here, once, before the matrix starts, means every publisher finds it and
+        # only uploads (electron-builder uploads to an existing release; EP_GH_IGNORE_TIME lifts its
+        # 2-hour age limit in every build step).
+        # It is the release electron-builder would create: tag = the gate's vX.Y.Z (vPrefixedTagName
+        # default), name = the version without the "v", draft false, prerelease false (releaseType
+        # 'release', which .scripts/bump-version-electron.js writes for prod: isProd=true), and no
+        # target_commitish or body (electron-builder sends neither: no releaseInfo / release-notes.md).
+        # RELEASE_OWNER / RELEASE_REPO must stay equal to the DESKTOP_SERVER_REPO_OWNER /
+        # DESKTOP_SERVER_REPO_NAME that the build jobs pass to their bump step.
+        # The release is visible before its assets arrive - as it already was between the first and the
+        # last job finishing: the apps' updater skips a release without its platform's update file
+        # (packages/desktop-lib/src/lib/strategies/concretes/cdn-update.ts).
+        # Best-effort: if it cannot find or create the release it only warns, and the build jobs create
+        # it themselves, as before. actions/github-script rather than the gh CLI, which the ARC runner
+        # image this job may run on does not ship.
+        # The if: is only a guard: on 'apps' the gate above resolves a tag or fails.
+        if: ${{ steps.resolve.outputs.tag != '' }}
+        continue-on-error: true
+        timeout-minutes: 5
+        uses: actions/github-script@v8
+        env:
+          RELEASE_TAG: ${{ steps.resolve.outputs.tag }}
+          RELEASE_OWNER: 'ever-co'
+          RELEASE_REPO: 'ever-gauzy-server'
+          RELEASE_TYPE: 'release'
+        with:
+          # The PAT the build jobs publish with; this job's own GITHUB_TOKEN is read-only.
+          github-token: ${{ secrets.GH_TOKEN }}
+          script: |
+            const { RELEASE_OWNER: owner, RELEASE_REPO: repo, RELEASE_TAG: tag, RELEASE_TYPE: releaseType } = process.env;
+            const version = tag.replace(/^v/, '');
+            const where = `${owner}/${repo}`;
+            const describe = (release) => `${release.html_url} (draft: ${release.draft}, prerelease: ${release.prerelease})`;
+            // The lookup electron-builder makes before it creates: any release - drafts included, which
+            // the get-release-by-tag endpoint does not return - tagged with the vX.Y.Z tag or the bare version.
+            const findRelease = async () => {
+              const { data } = await github.rest.repos.listReleases({ owner, repo, per_page: 100 });
+              return data.find((release) => release.tag_name === tag || release.tag_name === version);
+            };
+            const attempts = 5;
+            for (let attempt = 1; attempt <= attempts; attempt++) {
+              try {
+                const existing = await findRelease();
+                if (existing) {
+                  core.info(`Release ${tag} already exists in ${where}: ${describe(existing)} - nothing to do.`);
+                  return;
+                }
+                const { data: created } = await github.rest.repos.createRelease({
+                  owner,
+                  repo,
+                  tag_name: tag,
+                  name: version,
+                  draft: false,
+                  prerelease: releaseType === 'prerelease'
+                });
+                core.info(`Created release ${tag} in ${where}: ${describe(created)}`);
+                return;
+              } catch (error) {
+                // 422 is the race itself (someone created it between the lookup and the POST): the next
+                // lookup finds it. 429, 5xx and network errors are transient. Any other status
+                // (401/403/404: a token or repo problem) will not improve with a retry.
+                core.info(`Attempt ${attempt}/${attempts} failed: ${error.status || 'no status'} ${error.message}`);
+                if (error.status && error.status !== 422 && error.status !== 429 && error.status < 500) {
+                  break;
+                }
+              }
+              if (attempt < attempts) {
+                await new Promise((resolve) => setTimeout(resolve, attempt * 5000));
+              }
+            }
+            core.warning(`Could not find or create release ${tag} in ${where}; the build jobs will create it themselves, as before.`);
+
   release-linux:
     needs: check-release-tag
     runs-on: ${{ matrix.os }}
@@ -103,7 +183,7 @@ jobs:
         # Flatpak (bwrap) and Snapcraft (snapd) cannot run inside the k8s ARC container
         # runners - this packaging job needs a VM-class runner. Override with the
         # RUNNER_LINUX_APPS_X64 org/repo variable to use a self-hosted VM.
-        os: ["${{ vars.RUNNER_LINUX_APPS_X64 || 'ubuntu-latest' }}"]
+        os: ["${{ vars.RUNNER_LINUX_APPS_X64 || 'ubuntu-24.04' }}"]
 
     steps:
       - name: Check out Git repository
@@ -112,7 +192,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.17.0
+          node-version: 26.12.1
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -133,8 +213,13 @@ jobs:
       - name: Change permissions
         run: 'sudo chown -R $(whoami) ./*'
 
+      # The X11 headers are for uiohook-napi (activity tracking), which electron-builder rebuilds from
+      # source for Electron: its prebuilds are not in a layout @electron/rebuild recognises. Without
+      # them the rebuild dies on "X11/keysym.h: No such file or directory" (stage-apps 2026-10-23).
+      # Same list as release-linux-arm64, whose identical rebuild passes; uiohook links X11, Xrandr,
+      # Xtst and Xt.
       - name: Install system dependencies
-        run: 'sudo apt-get update && sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick flatpak flatpak-builder'
+        run: 'sudo apt-get update && sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a apt install -y curl gnupg git libappindicator3-1 ca-certificates binutils icnsutils graphicsmagick libx11-dev libxtst-dev libxt-dev libxinerama-dev libx11-xcb-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbfile-dev libxrandr-dev flatpak flatpak-builder'
 
       - name: Initialize Flatpak
         run: |
@@ -156,7 +241,7 @@ jobs:
         # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
         # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
         id: py311
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.11'
 
@@ -245,7 +330,10 @@ jobs:
           NX_DAEMON: false
 
       - name: Build Server App
-        run: 'yarn build:gauzy-server:linux:release:gh:x64:isolated'
+        # Snap Store channel: prod ('apps') releases to 'stable', stage ('stage-apps') to 'edge' (the
+        # electron-builder default). yarn appends these flags to the script's last command, the
+        # electron-builder call. Override snap.publish only: a -c.publish override lands in the GitHub entry.
+        run: 'yarn build:gauzy-server:linux:release:gh:x64:isolated -c.snap.publish.provider=snapStore -c.snap.publish.channels=stable'
         env:
           USE_HARD_LINKS: false
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -370,7 +458,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.17.0
+          node-version: 26.12.1
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -451,7 +539,7 @@ jobs:
         # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
         # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
         id: py311
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.11'
 
@@ -542,7 +630,10 @@ jobs:
           NX_DAEMON: false
 
       - name: Build Server App
-        run: 'yarn build:gauzy-server:linux:release:gh:arm64:isolated'
+        # Snap Store channel: prod ('apps') releases to 'stable', stage ('stage-apps') to 'edge' (the
+        # electron-builder default). yarn appends these flags to the script's last command, the
+        # electron-builder call. Override snap.publish only: a -c.publish override lands in the GitHub entry.
+        run: 'yarn build:gauzy-server:linux:release:gh:arm64:isolated -c.snap.publish.provider=snapStore -c.snap.publish.channels=stable'
         env:
           USE_HARD_LINKS: false
           USE_SYSTEM_FPM: true
@@ -669,7 +760,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.17.0
+          node-version: 26.12.1
 
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
@@ -827,6 +918,23 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
 
+      # Electron 44 needs macOS 13 or later, and the latest-mac.yml electron-builder just published does
+      # not say so - so on macOS 12 the installed app would auto-update into a build that does not start.
+      # This adds minimumSystemVersion: 22.0.0 (Darwin 22 = macOS 13) to that manifest, which makes
+      # electron-updater there skip the update; details in the action. It fails the job when the published
+      # manifest cannot be updated. owner/repo must stay equal to the bump step's *_REPO_OWNER/*_REPO_NAME
+      # (the action checks them, and the tag, against the package that step wrote). Before the scrub step,
+      # which stays last; it needs no registry credential.
+      - name: Declare macOS 13 as the minimum in latest-mac.yml
+        timeout-minutes: 15
+        uses: ./.github/actions/set-mac-minimum-system-version
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          owner: 'ever-co'
+          repo: 'ever-gauzy-server'
+          tag: ${{ needs.check-release-tag.outputs.tag }}
+          app-package-json: 'apps/server/src/package.json'
+
       - name: Scrub registry credentials
         if: always()
         shell: bash
@@ -930,6 +1038,31 @@ jobs:
         os: [[self-hosted, Windows, X64]]
 
     steps:
+      # `shell: bash` runs whichever bash.exe the runner SERVICE finds first on its PATH. On EVERDESK3
+      # and EVERGR (stage-apps, 2026-10-23) C:\Windows\System32 comes before Git for Windows, so that
+      # is System32\bash.exe - the WSL launcher - which refuses to start under the service account:
+      # "Running WSL as local system is not supported" (Bash/WSL_E_LOCAL_SYSTEM_NOT_SUPPORTED). Every
+      # bash step then fails before running a line: Configure Registry, Ensure dist directory exists
+      # and Scrub registry credentials. EVERDESK1/EVERDESK4 resolve Git Bash and pass, which is why
+      # the failure followed the runner, not the workflow. The runner resolves `bash` with GITHUB_PATH
+      # prepended, so adding Git's bin directory there makes every later bash step use Git Bash on
+      # every runner. First step, ahead of the checkout, so the always() scrub step is covered even
+      # when the checkout fails. Git\bin holds only bash, sh and git: nothing else on PATH is shadowed.
+      - name: Use Git Bash for bash steps
+        shell: powershell
+        run: |
+          $candidates = @()
+          $git = Get-Command git.exe -ErrorAction SilentlyContinue
+          if ($git) { $candidates += Join-Path (Split-Path (Split-Path $git.Source -Parent) -Parent) 'bin' }
+          $candidates += Join-Path $env:ProgramFiles 'Git\bin'
+          $bin = $candidates | Where-Object { Test-Path (Join-Path $_ 'bash.exe') } | Select-Object -First 1
+          if ($bin) {
+            Write-Host "Using Git Bash from $bin"
+            $bin | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          } else {
+            Write-Host "::warning title=Git Bash not found::No Git for Windows bash.exe on $env:RUNNER_NAME - bash steps fall back to the first bash on the runner's PATH."
+          }
+
       - name: Check out Git repository
         uses: actions/checkout@v5
         with:
@@ -949,7 +1082,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.17.0
+          node-version: 26.12.1
 
       - name: Install Visual Studio 2022 Build Tools (VCTools)
         shell: powershell
@@ -966,9 +1099,37 @@ jobs:
         run: python3 -m pip install packaging setuptools
 
       - name: Setup MSVC (VS 2022 dev env)
-        uses: ilammy/msvc-dev-cmd@v1
+        # Local replacement for ilammy/msvc-dev-cmd@v1, whose every release runs on the deprecated Node 20:
+        # same vcvarsall.bat environment export, same VS instance (see the action's header).
+        uses: ./.github/actions/setup-msvc-dev-env
         with:
           arch: x64
+          # Pin VS 2022, matching msvs_version=2022 above. Unpinned, the action takes the newest VS, and
+          # on an image whose newest is VS 2026 (windows-11-arm today) node-gyp then refuses the
+          # mismatched VS Command Prompt.
+          vsversion: 2022
+
+      - name: Put setup-node's Node back ahead of the VS dev env on PATH
+        # The MSVC step above exports the whole PATH (ilammy/msvc-dev-cmd did, and its local replacement keeps
+        # that), which put an older Node (24.x) ahead of the one installed above, so yarn refused the engine
+        # (">=26"). The same setup-node again, from the tool cache, puts it first.
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26.12.1
+
+      - name: Install Yarn next to setup-node's Node
+        # Node 26 ships no corepack/yarn, so `yarn` resolved to the runner's own C:\Program Files\nodejs\yarn.cmd,
+        # whose shim runs the node.exe beside it (24.x): yarn then refused the engine (">=26"). A yarn installed
+        # into setup-node's directory, which is ahead on PATH, runs setup-node's node.exe.
+        shell: bash
+        run: |
+          node_dir="$RUNNER_TOOL_CACHE/node/26.12.1/${RUNNER_ARCH,,}"
+          [ -x "$node_dir/node.exe" ] || { echo "::error::no setup-node Node in $node_dir"; exit 1; }
+          npm install --quiet -g --prefix "$node_dir" yarn@1.22.22
+          echo "yarn: $(command -v yarn), $(yarn --version)"
+          yarn_node="$(yarn --silent node --version)"
+          echo "node under yarn: $yarn_node"
+          case "$yarn_node" in v26.*) ;; *) echo "::error::yarn runs Node $yarn_node, not 26"; exit 1 ;; esac
 
       - name: Install latest version of NPM
         run: 'npm install -g npm@11.6.2'
@@ -1075,7 +1236,7 @@ jobs:
       # ("sdk-not-found") and signing is skipped. Provision it here rather than on the host,
       # so the requirement lives in Git and applies to every runner.
       - name: Install .NET SDK (required by Azure Trusted Signing)
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.0.x'
 
@@ -1268,7 +1429,7 @@ jobs:
       - name: Install Node.js, NPM and Yarn
         uses: actions/setup-node@v6
         with:
-          node-version: 24.17.0
+          node-version: 26.12.1
           architecture: arm64
 
       - name: Get yarn cache directory path
@@ -1290,22 +1451,31 @@ jobs:
       - name: Install Visual Studio 2022 Build Tools (VCTools with ARM64)
         shell: powershell
         run: |
-          # The runner image normally ships VS with the VC ARM64 toolset. Only reach for
-          # Chocolatey if it is genuinely missing — community.chocolatey.org returning 504
-          # has failed this job before ("Chocolatey installed 0/0 packages"), and installing
-          # something already present costs ~6 min for nothing.
+          # Only reach for Chocolatey if VS 2022 with the VC ARM64 toolset is genuinely missing —
+          # community.chocolatey.org returning 504 has failed this job before ("Chocolatey
+          # installed 0/0 packages"), and installing something already present costs ~6 min.
+          #
+          # The probe is pinned to VS 2022, [17.0,18.0). windows-11-arm now boots the
+          # windows-11-vs2026-arm64 image, which ships only VS 2026 (version 18) - the last green
+          # build (2026-09-24) ran on windows-11-arm64 with VS 2022. The old unpinned probe accepted
+          # VS 2026 and skipped this install, and node-gyp, held to msvs_version=2022 by the next
+          # step, then found no Visual Studio at all: "Could not find any Visual Studio installation
+          # to use" rebuilding msgpackr-extract (stage-apps 2026-10-23, all six app workflows).
+          # Moving to VS 2026 instead is not a drop-in: node-gyp only learned it in 12.1, and this
+          # build still carries node-gyp 10 (the global install below, and get-windows' own
+          # dependency, used when it builds from source - it ships no win32-arm64 prebuild).
           $ErrorActionPreference = "Continue"
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           $have = $false
           if (Test-Path $vswhere) {
-            $found = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath 2>$null
-            if ($found) { $have = $true; Write-Host "VC ARM64 toolset already present: $found" }
+            $found = & $vswhere -latest -products * -version "[17.0,18.0)" -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -property installationPath 2>$null
+            if ($found) { $have = $true; Write-Host "VS 2022 with the VC ARM64 toolset already present: $found" }
           }
           if (-not $have) {
-            Write-Host "VC ARM64 toolset not found - installing via Chocolatey"
+            Write-Host "VS 2022 with the VC ARM64 toolset not found - installing via Chocolatey"
             choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --includeRecommended --passive --norestart"
             if ($LASTEXITCODE -ne 0) {
-              # Do not fail the job on a Chocolatey feed outage; the next step (msvc-dev-cmd)
+              # Do not fail the job on a Chocolatey feed outage; the MSVC setup step below
               # will either find a usable toolchain or fail with an unambiguous message.
               Write-Warning "Chocolatey install failed (exit $LASTEXITCODE) - continuing; the MSVC setup step will report definitively."
             }
@@ -1322,9 +1492,38 @@ jobs:
         run: python3 -m pip install packaging setuptools
 
       - name: Setup MSVC (VS 2022 dev env)
-        uses: ilammy/msvc-dev-cmd@v1
+        # Local replacement for ilammy/msvc-dev-cmd@v1, whose every release runs on the deprecated Node 20:
+        # same vcvarsall.bat environment export, same VS instance (see the action's header).
+        uses: ./.github/actions/setup-msvc-dev-env
         with:
           arch: arm64
+          # Pin VS 2022, matching msvs_version=2022 above. Unpinned, the action takes the newest VS, and
+          # on an image whose newest is VS 2026 (windows-11-arm today) node-gyp then refuses the
+          # mismatched VS Command Prompt.
+          vsversion: 2022
+
+      - name: Put setup-node's Node back ahead of the VS dev env on PATH
+        # The MSVC step above exports the whole PATH (ilammy/msvc-dev-cmd did, and its local replacement keeps
+        # that), which put an older Node (24.x) ahead of the one installed above, so yarn refused the engine
+        # (">=26"). The same setup-node again, from the tool cache, puts it first.
+        uses: actions/setup-node@v6
+        with:
+          node-version: 26.12.1
+          architecture: arm64
+
+      - name: Install Yarn next to setup-node's Node
+        # Node 26 ships no corepack/yarn, so `yarn` resolved to the runner's own C:\Program Files\nodejs\yarn.cmd,
+        # whose shim runs the node.exe beside it (24.x): yarn then refused the engine (">=26"). A yarn installed
+        # into setup-node's directory, which is ahead on PATH, runs setup-node's node.exe.
+        shell: bash
+        run: |
+          node_dir="$RUNNER_TOOL_CACHE/node/26.12.1/${RUNNER_ARCH,,}"
+          [ -x "$node_dir/node.exe" ] || { echo "::error::no setup-node Node in $node_dir"; exit 1; }
+          npm install --quiet -g --prefix "$node_dir" yarn@1.22.22
+          echo "yarn: $(command -v yarn), $(yarn --version)"
+          yarn_node="$(yarn --silent node --version)"
+          echo "node under yarn: $yarn_node"
+          case "$yarn_node" in v26.*) ;; *) echo "::error::yarn runs Node $yarn_node, not 26"; exit 1 ;; esac
 
       - name: Install latest version of NPM
         run: 'npm install -g npm@11.6.2'
@@ -1428,7 +1627,7 @@ jobs:
       # ("sdk-not-found") and signing is skipped. Provision it here rather than on the host,
       # so the requirement lives in Git and applies to every runner.
       - name: Install .NET SDK (required by Azure Trusted Signing)
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.0.x'
 

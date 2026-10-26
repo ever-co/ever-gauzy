@@ -1,6 +1,6 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Observable } from 'rxjs';
-import { IGetActivitiesInput, ITimeLogFilters } from '@gauzy/contracts';
+import { IGetActivitiesInput, ITimeLogFilters, ReportGroupByFilter, ReportGroupFilterEnum } from '@gauzy/contracts';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { DateRangePickerBuilderService, Store, TimesheetFilterService } from '@gauzy/ui-core/core';
@@ -11,10 +11,19 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 	selector: 'ga-apps-urls-report',
 	templateUrl: './apps-urls-report.component.html',
 	styleUrls: ['./apps-urls-report.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class AppsUrlsReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit, OnDestroy {
 	filters: IGetActivitiesInput;
+
+	/**
+	 * Owned here rather than by the grid so the control can be projected into the
+	 * filter row, where it reads as the first of this page's filters instead of
+	 * as a second row of chrome beneath them. The grid takes it as an input and
+	 * refetches on change.
+	 */
+	groupBy: ReportGroupByFilter = ReportGroupFilterEnum.date;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;

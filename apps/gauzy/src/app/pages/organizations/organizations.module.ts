@@ -32,9 +32,10 @@ import {
 	TableComponentsModule,
 	UserFormsModule
 } from '@gauzy/ui-core/shared';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { OrganizationsRoutingModule } from './organizations-routing.module';
 import { OrganizationsComponent } from './organizations.component';
+import { OrganizationDeleteConfirmationComponent } from './organization-delete-confirmation/organization-delete-confirmation.component';
 import {
 	OrganizationsCurrencyComponent,
 	OrganizationTotalEmployeesCountComponent,
@@ -64,7 +65,7 @@ import {
 		RecurringExpenseMutationModule,
 		RecurringExpenseDeleteConfirmationModule,
 		NbTooltipModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NbSpinnerModule,
 		NbActionsModule,
 		RecurringExpenseHistoryModule,
@@ -77,6 +78,7 @@ import {
 	],
 	declarations: [
 		OrganizationsComponent,
+		OrganizationDeleteConfirmationComponent,
 		OrganizationsStatusComponent,
 		OrganizationTotalEmployeesCountComponent,
 		OrganizationsCurrencyComponent

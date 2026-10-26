@@ -117,9 +117,12 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	profile_link?: string;
 	isTrackingEnabled: boolean;
 	isDeleted?: boolean;
+	/** `human` for a person (every row created through the employee routes), `agent` for an agent employee. */
+	kind?: EmployeeKindEnum;
 	/**	Agent Settings */
 	allowAgentAppExit?: boolean;
 	allowLogoutFromAgentApp?: boolean;
+	acknowledgeAgentExitLogoutRestriction?: boolean;
 	/**	Timer Settings */
 	allowScreenshotCapture?: boolean;
 	allowManualTime?: boolean;
@@ -137,7 +140,18 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	isTrackingTime?: boolean;
 	// True mean active, false away
 	isAway?: boolean;
+	/** When the last presence heartbeat was received, by the server clock. Null until the first one. */
+	lastSeenAt?: Date;
+	/** Whether the last presence heartbeat reported no keyboard, mouse or touch input for a while. */
+	isIdle?: boolean;
 }
+
+/** Body of a presence heartbeat sent by a client for the signed-in employee. */
+export interface IEmployeePresenceInput {
+	isIdle: boolean;
+}
+
+export type IEmployeePresence = Pick<IEmployee, 'lastSeenAt' | 'isIdle'>;
 
 export type IEmployeeJobsStatisticsResponse = IEmployee & IEmployeeJobsStatistics;
 
@@ -192,6 +206,7 @@ export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntit
 	/**	Agent Settings */
 	allowAgentAppExit?: boolean;
 	allowLogoutFromAgentApp?: boolean;
+	acknowledgeAgentExitLogoutRestriction?: boolean;
 	/**	Timer Settings */
 	allowScreenshotCapture?: boolean;
 	allowManualTime?: boolean;
@@ -257,6 +272,16 @@ export interface ISelectedEmployee extends ITaggable {
 export enum DEFAULT_TYPE {
 	ALL_EMPLOYEE = 'ALL_EMPLOYEE',
 	NO_EMPLOYEE = 'NO_EMPLOYEE'
+}
+
+/**
+ * What an employee row represents. Every existing and new employee is a `HUMAN` unless created through the
+ * agent-provisioning path (`AGENT`): an agent has no login, receives no welcome email, and is excluded from
+ * payroll, statistics and seat counts.
+ */
+export enum EmployeeKindEnum {
+	HUMAN = 'human',
+	AGENT = 'agent'
 }
 
 export enum PayPeriodEnum {

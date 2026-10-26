@@ -13,9 +13,16 @@ concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
   cancel-in-progress: true
 
+# docker/build-push-action uploads a build record artifact and a job summary for every build.
+# The record holds every build-arg value in plain text, and on a public repo anyone signed in to
+# GitHub can download it, so neither is produced. (BuildKit `secrets:` are never recorded.)
+env:
+  DOCKER_BUILD_RECORD_UPLOAD: false
+  DOCKER_BUILD_SUMMARY: false
+
 jobs:
   gauzy-mcp-auth:
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     timeout-minutes: 300
     steps:
       - name: Checkout
@@ -65,7 +72,12 @@ jobs:
 
       - name: Push to Docker Hub Registry
         run: |
-          docker push everco/gauzy-mcp-auth:latest
+          for attempt in 1 2 3 4 5; do
+            docker push everco/gauzy-mcp-auth:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push everco/gauzy-mcp-auth:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
       - name: Install doctl
         if: ${{ vars.DO_ENABLED == 'true' }}
@@ -80,7 +92,12 @@ jobs:
       - name: Push to DigitalOcean Registry
         if: ${{ vars.DO_ENABLED == 'true' }}
         run: |
-          docker push registry.digitalocean.com/ever/gauzy-mcp-auth:latest
+          for attempt in 1 2 3 4 5; do
+            docker push registry.digitalocean.com/ever/gauzy-mcp-auth:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push registry.digitalocean.com/ever/gauzy-mcp-auth:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -91,7 +108,12 @@ jobs:
 
       - name: Push to Github Registry
         run: |
-          docker push ghcr.io/ever-co/gauzy-mcp-auth:latest
+          for attempt in 1 2 3 4 5; do
+            docker push ghcr.io/ever-co/gauzy-mcp-auth:latest && break
+            [ "$attempt" = 5 ] && exit 1
+            echo "::warning::docker push ghcr.io/ever-co/gauzy-mcp-auth:latest failed (attempt $attempt of 5), retrying in $((attempt * 15)) s"
+            sleep $((attempt * 15))
+          done
 
     #   - name: Login to CW Container Registry
     #     uses: docker/login-action@v4

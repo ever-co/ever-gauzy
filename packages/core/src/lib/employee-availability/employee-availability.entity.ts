@@ -5,7 +5,9 @@ import { AvailabilityStatusEnum, ID, IEmployee, IEmployeeAvailability } from '@g
 import { Employee, TenantOrganizationBaseEntity } from '../core/entities/internal';
 import { MultiORMColumn, MultiORMEntity, MultiORMManyToOne } from './../core/decorators/entity';
 import { AvailabilityStatusTransformer } from './pipes/employee-availability-status.pipe';
-import { IsBeforeDate } from '../shared/validators';
+// The decorator file, not the `shared/validators` barrel: the barrel loads the employee repositories
+// and, through them, every entity, so an entity importing it closes a CommonJS cycle.
+import { IsBeforeDate } from '../shared/validators/is-before-date.decorator';
 
 @MultiORMEntity('employee_availability')
 export class EmployeeAvailability extends TenantOrganizationBaseEntity implements IEmployeeAvailability {

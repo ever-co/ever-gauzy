@@ -1,0 +1,63 @@
+@use 'themes' as *;
+
+// The Add and Edit project pages: a back button, the title with a one-line
+// subtitle under it and, on Edit, the favorite star; then the project form.
+:host {
+  // A compact header row: the form below starts right under it, so the body
+  // drops its own top padding and the header's bottom padding is the gap.
+  nb-card nb-card-header.main-header {
+    padding: 0.75rem 1.5rem;
+    border-bottom: none;
+  }
+
+  nb-card nb-card-body.custom-body-content {
+    padding-top: 0;
+  }
+
+  .page-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .page-heading__title {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .heading {
+    min-width: 0;
+  }
+
+  .title {
+    margin: 0;
+  }
+
+  .subtitle {
+    margin: 0.125rem 0 0;
+    overflow: hidden;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: nb-theme(text-hint-color);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  // The body scrolls, and the form's action bar sticks to its bottom edge.
+  // Spelled `nb-card nb-card-body` to outrank `_pg-card`'s `overflow: unset`,
+  // which otherwise lets the Documents panel spill out under the card.
+  nb-card nb-card-body.custom-body-content {
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: unset;
+  }
+
+  // The form fills the body, so its own panes scroll and the tabs and action
+  // bar stay in view (Add Project; Edit places it through its layout grid).
+  nb-card-body.custom-body-content > ga-project-mutation {
+    flex: 1 1 auto;
+  }
+}

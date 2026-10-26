@@ -1,6 +1,7 @@
 import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { Brackets, ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
 import {
 	ActionTypeEnum,
 	BaseEntityEnum,
@@ -14,6 +15,7 @@ import {
 	IOrganizationProjectsFindInput,
 	IOrganizationProjectUpdateInput,
 	IPagination,
+	PermissionsEnum,
 	RolesEnum,
 	EntitySubscriptionTypeEnum
 } from '@gauzy/contracts';
@@ -108,6 +110,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Create a Set for faster membership checks
 			const managerIdsSet = new Set(managerIds);
 
+			// `isManager` lets a project manager act for the project's members (ManagedEmployeeService: their
+			// time-tracking statistics and activity; the tracked-data guard). Only a caller who may already act for
+			// every employee hands that on, as for teams (ever-co/ever-gauzy#11197). An employee, who picks the
+			// members of a project they create and is made its manager above, gets the MANAGER role without the
+			// flag; the role alone still lets them edit the project (`isManagerOfProject`).
+			const flagsManagers = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 			// Use destructuring to directly extract 'id' from 'employee'
 			const members = employees.map(({ id: employeeId }) => {
 				// If the employee is a manager, assign the existing manager with the latest assignedAt date
@@ -118,7 +127,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 					employeeId,
 					organizationId,
 					tenantId,
-					isManager,
+					isManager: flagsManagers && isManager,
 					assignedAt,
 					role: isManager ? managerRole : null
 				});
@@ -189,7 +198,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			input.description = sanitizeRichHtml(input.description);
 		}
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-		const { memberIds, managerIds, organizationId, ...entity } = input;
+		// `members` is never saved from the input: the relation cascades, so a membership row stated in the body
+		// (`{ id, isManager: true }`) was written as given and raised the flag `updateOrganizationProjectMembers`
+		// gates. The members change through `memberIds` / `managerIds` alone.
+		const { memberIds, managerIds, organizationId, members: _members, ...entity } = input;
+		void _members;
 
 		const organizationProject = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId },
@@ -317,6 +330,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	): Promise<void> {
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
 
+		// `isManager` lets a project manager act for the project's members (ManagedEmployeeService). Only a caller
+		// who may already act for every employee sets it, on a new manager or on an existing member, and repairs a
+		// manager row that lacks it. Anyone else who edits the members (a project manager, through
+		// ProjectManagerOrPermissionGuard) changes the MANAGER role only: the flag is never raised by them, and is
+		// cleared when the role is taken away, as teams do (ever-co/ever-gauzy#11197).
+		const flagsManagers = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
 		// Find the manager role
 		const managerRole = await this._roleService.findOneByWhereOptions({
 			name: RolesEnum.MANAGER
@@ -344,10 +364,13 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				await Promise.all(
 					removedMembers.map(
 						async (member) =>
-							await this._entitySubscriptionService.delete({
+							// `member.employee` is not loaded (it threw, swallowed below, and the removed member stayed
+							// subscribed); `deleteForEmployee` reaches that member's row for a manager without
+							// CHANGE_SELECTED_EMPLOYEE, whose own employee `delete()` would target instead.
+							await this._entitySubscriptionService.deleteForEmployee({
 								entity: BaseEntityEnum.OrganizationProject,
 								entityId: organizationProjectId,
-								employeeId: member.employee.id,
+								employeeId: member.employeeId,
 								type: EntitySubscriptionTypeEnum.ASSIGNMENT,
 								organizationId,
 								tenantId
@@ -364,12 +387,14 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			updatedMembers.map(async (member) => {
 				const isManager = managerIds.includes(member.employeeId);
 				const newRole = isManager ? managerRole : null;
+				// Without CHANGE_SELECTED_EMPLOYEE a manager keeps the flag they already have, and a member gets none
+				const flag = flagsManagers ? isManager : isManager && !!member.isManager;
 
-				// Only update if the role has changed
-				if (newRole?.id !== member.roleId) {
+				// Only update if the role or the manager flag has changed
+				if ((newRole?.id ?? null) !== (member.roleId ?? null) || !!member.isManager !== flag) {
 					await this.typeOrmOrganizationProjectEmployeeRepository.update(member.id, {
 						role: newRole,
-						isManager
+						isManager: flag
 					});
 				}
 			})
@@ -384,7 +409,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						employeeId: employee.id,
 						tenantId,
 						organizationId,
-						isManager: managerIds.includes(employee.id),
+						isManager: flagsManagers && managerIds.includes(employee.id),
 						roleId: managerIds.includes(employee.id) ? managerRole.id : null
 					})
 			);
@@ -644,22 +669,54 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	async findSyncedProjects(options?: BaseQueryDTO<OrganizationProject>): Promise<IPagination<OrganizationProject>> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
+				// The TypeORM branch below reads a project's link from the GitHub plugin's custom fields: it
+				// inner-joins `customFields.repository` (filtered on the tenant and on every key of `where`, like
+				// the project) and requires the row's `repositoryId` column. This branch used to name that column
+				// as a property of the entity, `{ repositoryId: { $ne: null } }`, but under MikroORM it is a member
+				// of the `customFields` embeddable, so every call failed with "Trying to query by not existing
+				// property OrganizationProject.repositoryId" — the GraphQL field `syncedOrganizationProjects` and
+				// `GET /organization-projects/synced` alike. Where MikroORM maps the plugin's relation, it is
+				// filtered and loaded the way TypeORM joins it; where it does not (no GitHub plugin, or custom
+				// fields registered after MikroORM discovered the entities), the column is read directly, which is
+				// what TypeORM does when there is no `repository` custom field to join.
 				const tenantId = RequestContext.currentTenantId();
-				const where: any = { tenantId };
-
-				if (options?.where) {
-					for (const key of Object.keys(options.where)) {
-						where[key] = options.where[key];
-					}
+				if (!tenantId) {
+					// No credential tenant, no rows: a criterion `{ tenantId: undefined }` would scope nothing.
+					return { items: [], total: 0 };
 				}
 
-				// Match TypeORM's repositoryId IS NOT NULL filter
-				where.repositoryId = { $ne: null };
+				// The caller's keys first and the credential's tenant last, so a stated `tenantId` cannot widen
+				// the read. Each key is compared for equality, as TypeORM binds it: a MikroORM criterion would
+				// read an object value as operators (`{ $ne: … }`), which TypeORM never does.
+				const criteria: Record<string, unknown> = {};
+				for (const [key, value] of Object.entries(options?.where ?? {})) {
+					if (value !== null && typeof value === 'object') {
+						throw new BadRequestException(`Invalid value for where.${key}`);
+					}
+					criteria[key] = value;
+				}
+				criteria['tenantId'] = tenantId;
 
-				const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
-					limit: options?.take || 10,
-					offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0
-				});
+				const joinsRepository = this.mikroOrmMapsCustomField('repository');
+				let where: Record<string, unknown>;
+				if (joinsRepository) {
+					where = { ...criteria, customFields: { repository: { ...criteria } } };
+				} else {
+					const column = this.mikroOrmRepository
+						.getEntityManager()
+						.getPlatform()
+						.quoteIdentifier('repositoryId');
+					where = { ...criteria, [raw((alias: string) => `${alias}.${column}`)]: { $ne: null } };
+				}
+
+				const [items, total] = await this.mikroOrmRepository.findAndCount(
+					where as FilterQuery<OrganizationProject>,
+					{
+						...(joinsRepository ? { populate: ['customFields.repository'] as never } : {}),
+						limit: options?.take || 10,
+						offset: options?.skip ? (options.take || 10) * (options.skip - 1) : 0
+					}
+				);
 				return { items: items.map((e) => this.serialize(e)) as OrganizationProject[], total };
 			}
 			case MultiORMEnum.TypeORM:
@@ -685,6 +742,27 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				return { items, total };
 			}
 		}
+	}
+
+	/**
+	 * Whether MikroORM maps a custom field of the project's `customFields` embeddable.
+	 *
+	 * The TypeORM branch of {@link findSyncedProjects} asks the configuration whether a plugin declared the field.
+	 * MikroORM has to be asked itself: a custom field reaches its metadata only when it was registered before
+	 * MikroORM discovered the entities, and a criterion naming a member it does not map is refused
+	 * ("property 'repository' does not exist in embeddable 'MikroOrmOrganizationProjectEntityCustomFields'").
+	 *
+	 * @param name - The custom field's name, e.g. `repository`.
+	 * @returns `true` when MikroORM maps `customFields.<name>` of `OrganizationProject`.
+	 */
+	private mikroOrmMapsCustomField(name: string): boolean {
+		const meta = this.mikroOrmRepository
+			.getEntityManager()
+			.getMetadata()
+			.find(this.mikroOrmRepository.getEntityName());
+		const customFields = meta?.properties?.['customFields' as never] as EntityProperty | undefined;
+
+		return !!customFields?.embeddedProps?.[name];
 	}
 
 	/**
@@ -767,6 +845,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	/**
 	 * Checks if a given employee is a manager of a specific project.
 	 *
+	 * A manager is a member flagged `isManager` or holding the MANAGER role on the project. It is what lets them
+	 * edit the project (ProjectManagerOrPermissionGuard, and the app's project-manager route guard). The flag is
+	 * set only by a caller holding CHANGE_SELECTED_EMPLOYEE, because it also lets the manager act for the
+	 * project's members (ManagedEmployeeService); an employee who creates a project gets the role alone, as a team
+	 * manager does, and still edits the project they created.
+	 *
 	 * @param projectId - The ID of the project.
 	 * @param employeeId - The ID of the employee.
 	 * @returns A boolean indicating whether the employee is a manager of the project.
@@ -780,7 +864,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 						employeeId,
 						isActive: true,
 						isArchived: false,
-						isManager: true
+						$or: [{ isManager: true }, { role: { name: RolesEnum.MANAGER } }]
 					}
 				} as any);
 				return !!project;
@@ -790,11 +874,17 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				const project = await this.typeOrmRepository
 					.createQueryBuilder('project')
 					.innerJoin('project.members', 'members')
+					.leftJoin('members.role', 'memberRole')
 					.where('project.id = :projectId', { projectId })
 					.andWhere('members.employeeId = :employeeId', { employeeId })
 					.andWhere('members.isActive = :isActive', { isActive: true })
 					.andWhere('members.isArchived = :isArchived', { isArchived: false })
-					.andWhere('members.isManager = :isManager', { isManager: true })
+					.andWhere(
+						new Brackets((qb) => {
+							qb.where('members.isManager = :isManager', { isManager: true });
+							qb.orWhere('memberRole.name = :managerRoleName', { managerRoleName: RolesEnum.MANAGER });
+						})
+					)
 					.getOne();
 
 				return !!project;

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NbDialogService } from '@nebular/theme';
@@ -28,7 +28,8 @@ import {
 	ITag,
 	PermissionsEnum,
 	IFavorite,
-	BaseEntityEnum
+	BaseEntityEnum,
+	EmployeeKindEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, ComponentEnum, distinctUntilChange, getEntityDisplayName } from '@gauzy/ui-core/common';
 import {
@@ -60,9 +61,11 @@ import {
 	selector: 'ga-employees-list',
 	templateUrl: './employees.component.html',
 	styleUrls: ['./employees.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class EmployeesComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
+	private readonly pageSizeStorageKey = 'employeesPageSize';
 	public dataTableId: PageDataTablePageId = this._route.snapshot.data.dataTableId; // The identifier for the data table
 	public settingsSmartTable: Settings;
 	public smartTableSource: ServerDataSource;
@@ -75,6 +78,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	public bonusForSelectedMonth = 0;
 	public disableButton: boolean = true;
 	public includeDeleted: boolean = false;
+	/** The "Kind" filter: every employee (`''`), people only, or agent employees only. */
+	public kindFilter: '' | EmployeeKindEnum = '';
+	/** The latest card-grid page request: a page that was loading when the list changed is not appended. */
+	private cardsRequest = 0;
+	public readonly employeeKindEnum = EmployeeKindEnum;
 	public loading: boolean = false;
 	public organization: IOrganization;
 	public refresh$: Subject<any> = new Subject();
@@ -113,6 +121,14 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	}
 
 	ngOnInit() {
+		try {
+			const savedPageSize = Number(localStorage.getItem(this.pageSizeStorageKey));
+			if (Number.isSafeInteger(savedPageSize) && savedPageSize > 0) {
+				this.setPagination({ ...this.getPagination(), itemsPerPage: savedPageSize });
+			}
+		} catch {
+			// Keep the default when browser storage is unavailable.
+		}
 		this._registerDataTableColumns();
 		this._loadSmartTableSettings();
 		this._subscribeToQueryParams();
@@ -153,6 +169,22 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	protected refreshPagination(): void {
+		this.setPagination({ ...this.getPagination(), activePage: 1 });
+	}
+
+	public onPageSizeChange(itemsPerPage: number): void {
+		this.pagination = { ...this.getPagination(), activePage: 1, itemsPerPage };
+		this.smartTableSource.setPaging(1, itemsPerPage, false);
+		// Updating table settings refreshes the existing source; do not also emit pagination$.
+		this._loadSmartTableSettings();
+		try {
+			localStorage.setItem(this.pageSizeStorageKey, String(itemsPerPage));
+		} catch {
+			// The selected size still works for this visit.
+		}
 	}
 
 	ngAfterViewInit(): void {
@@ -221,7 +253,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			if (customComponentInstance?.constructor === AllowScreenshotCaptureComponent) {
 				this.disableButton = true;
 				const instance: AllowScreenshotCaptureComponent = customComponentInstance;
-				this._updateAllowScreenshotCapture(instance.rowData, !instance.allowed);
+				void this._updateAllowScreenshotCapture(instance.rowData, !instance.allowed);
 				this._grid.clearCustomViewComponent();
 				this.clearItem();
 			}
@@ -251,8 +283,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			// Process response if available
 			if (employees) {
 				employees.forEach((employee: IEmployee) => {
-					const { firstName, lastName } = employee.user;
-					const fullName = firstName && lastName ? `${firstName} ${lastName}` : 'Unknown Employee';
+					const fullName = this.getEmployeeDisplayName(employee) || 'Unknown Employee';
 
 					this._toastrService.success('TOASTR.MESSAGE.EMPLOYEE_ADDED', {
 						name: fullName,
@@ -331,7 +362,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 *
 	 * @param selectedItem The employee view model to delete.
 	 */
-	async delete(selectedItem?: EmployeeViewModel): Promise<void> {
+	delete(selectedItem?: EmployeeViewModel): void {
 		if (selectedItem) {
 			this.selectEmployee({
 				isSelected: true,
@@ -583,6 +614,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				where: {
 					organizationId,
 					tenantId,
+					...(this.kindFilter ? { kind: this.kindFilter } : {}), // People or agent employees only
 					...(this.filters.where ? this.filters.where : {}) // Include additional filter conditions
 				},
 				resultMap: (employee: IEmployee) => {
@@ -606,10 +638,11 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 * @param totalItems - Total items returned from the server
 	 */
 	updatePagination(totalItems: number) {
-		this.setPagination({
+		// A response updates the count without requesting the same employees again.
+		this.pagination = {
 			...this.getPagination(),
 			totalItems
-		});
+		};
 	}
 
 	/**
@@ -631,8 +664,15 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 
 			// Fetch elements based on layout style
 			if (this.dataLayoutStyle === ComponentLayoutStyleEnum.CARDS_GRID) {
-				await this.smartTableSource.getElements();
-				this.employees.push(...this.smartTableSource.getData());
+				const request = ++this.cardsRequest;
+				const source = this.smartTableSource;
+				await source.getElements();
+				// The Kind filter (or a newer request) changed the list while this page was loading: its rows
+				// belong to the previous list, which the grid no longer shows.
+				if (request !== this.cardsRequest) {
+					return;
+				}
+				this.employees.push(...source.getData());
 			}
 		} catch (error) {
 			console.log('Error while fetching employees', error);
@@ -705,12 +745,15 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				title: () => this.getTranslation('SM_TABLE.FULL_NAME'),
 				type: 'custom',
 				class: 'align-row',
-				width: '20%',
+				// Names are short chips; the spare width goes to Status / Screen Capture.
+				width: '15%',
 				isFilterable: true,
 				renderComponent: PictureNameTagsComponent,
 				componentInitFunction: (instance: PictureNameTagsComponent, cell: Cell) => {
 					instance.rowData = cell.getRow().getData();
 					instance.value = cell.getRawValue();
+					// Clicking a name opens the read-only profile, not the edit form.
+					instance.linkTo = 'view';
 				},
 				filter: {
 					type: 'custom',
@@ -725,8 +768,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				title: () => this.getTranslation('SM_TABLE.EMAIL'),
 				type: 'text',
 				class: 'align-row',
-				// Two points to the number columns below.
-				width: '18%',
+				width: '15%',
 				isFilterable: true,
 				filter: {
 					type: 'custom',
@@ -809,8 +851,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				order: 6,
 				title: () => this.getTranslation('SM_TABLE.TAGS'),
 				type: 'custom',
-				// Three points to the number columns above.
-				width: '17%',
+				width: '16%',
 				isFilterable: true,
 				isSortable: false,
 				filter: {
@@ -835,7 +876,8 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 				title: () => this.getTranslation('SM_TABLE.STATUS'),
 				type: 'custom',
 				class: 'text-center',
-				width: '5%',
+				// Was 5%: "Active" and "Not Started" stacked on two lines.
+				width: '10%',
 				isFilterable: true,
 				isSortable: false,
 				filter: {
@@ -924,7 +966,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 			title: () => this.getTranslation('SM_TABLE.SCREEN_CAPTURE'), // The title of the column
 			type: 'custom', // The type of the column
 			class: 'text-center', // The class of the column
-			width: '5%', // The width of the column
+			width: '10%', // Was 5%: the "Screen Capture" heading wrapped and the toggle + label were squeezed
 			isFilterable: true, // Indicates whether the column is filterable
 			isSortable: false,
 			hide: allowScreenshotCapture === false,
@@ -946,7 +988,7 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 					next: (isAllow: boolean) => {
 						// Clear selected items and update allowScreenshotCapture
 						this.clearItem();
-						this._updateAllowScreenshotCapture(instance.rowData, isAllow);
+						void this._updateAllowScreenshotCapture(instance.rowData, isAllow);
 					},
 					error: (err: any) => {
 						console.warn(err);
@@ -995,6 +1037,22 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	 */
 	changeIncludeDeleted(checked: boolean): void {
 		this.includeDeleted = checked;
+		this.refresh$.next(true);
+		this.employees$.next(true);
+	}
+
+	/**
+	 * Change the "Kind" filter (every employee, people only, or agent employees only) and refresh the list.
+	 *
+	 * @param kind The kind to list, or `''` for every employee.
+	 */
+	changeKindFilter(kind: '' | EmployeeKindEnum): void {
+		this.kindFilter = kind || '';
+		// A card-grid page of the previous list that is still loading is dropped when it arrives.
+		this.cardsRequest++;
+		// Back to the first page in both layouts: a later page of the previous list can be past the end of the
+		// filtered one. The pagination and list signals are debounced into one request.
+		this.refreshPagination();
 		this.refresh$.next(true);
 		this.employees$.next(true);
 	}
@@ -1080,9 +1138,9 @@ export class EmployeesComponent extends PaginationFilterBaseComponent implements
 	/**
 	 * Handle employee favorite toggle event from the new component
 	 */
-	onEmployeeFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
+		onEmployeeFavoriteToggled(_event: { isFavorite: boolean; favorite?: IFavorite }): void {
 		// Reload favorites to keep the list in sync
-		this.loadFavoriteEmployees();
+		void this.loadFavoriteEmployees();
 	}
 
 	getEmployeeDisplayName(employee: IEmployee): string {

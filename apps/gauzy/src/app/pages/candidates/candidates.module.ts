@@ -33,9 +33,10 @@ import {
 	OrganizationEmploymentTypesService,
 	OrganizationsService
 } from '@gauzy/ui-core/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import {
 	SmartDataViewLayoutModule,
+	CandidateCriterionCardModule,
 	CandidateInterviewFeedbackModule,
 	CandidateInterviewInfoModule,
 	CandidateInterviewMutationModule,
@@ -165,7 +166,7 @@ const COMPONENTS = [
 		NbTooltipModule,
 		NgSelectModule,
 		NgxPermissionsModule.forChild(),
-		TranslateModule.forChild(),
+		TranslatePipe,
 		TableComponentsModule,
 		SharedModule,
 		CandidatesRoutingModule,
@@ -176,6 +177,7 @@ const COMPONENTS = [
 		TagsColorInputModule,
 		CandidateMutationModule,
 		CandidateInterviewMutationModule,
+		CandidateCriterionCardModule,
 		CandidateInterviewInfoModule,
 		InviteMutationModule,
 		InviteTableModule,

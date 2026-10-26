@@ -11,19 +11,15 @@
  * `@gauzy/core` boots the whole application graph on import, so the decorator seams are stubbed at
  * the module boundary; the function under test is the real one.
  */
-jest.mock('@gauzy/common', () => ({ FeatureFlag: () => () => undefined }), { virtual: true });
-jest.mock(
-	'@gauzy/core',
-	() => ({
-		FeatureFlagGuard: class {},
-		PermissionGuard: class {},
-		Permissions: () => () => undefined,
-		TenantPermissionGuard: class {},
-		UseValidationPipe: () => () => undefined,
-		UUIDValidationPipe: class {}
-	}),
-	{ virtual: true }
-);
+jest.mock('@gauzy/common', () => ({ FeatureFlag: () => () => undefined }));
+jest.mock('@gauzy/core', () => ({
+	FeatureFlagGuard: class {},
+	PermissionGuard: class {},
+	Permissions: () => () => undefined,
+	TenantPermissionGuard: class {},
+	UseValidationPipe: () => () => undefined,
+	UUIDValidationPipe: class {}
+}));
 jest.mock('../entities/document.entity', () => ({ Document: class {} }));
 // The DTO classes extend `TenantOrganizationBaseDTO`, which the mock above cannot provide.
 jest.mock('../dto', () => ({}));

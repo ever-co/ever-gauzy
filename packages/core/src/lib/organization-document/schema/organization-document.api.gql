@@ -1,0 +1,88 @@
+# The organization document domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists
+# once for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# **The controller declares one route and inherits eight.** Its `GET /` is its own; the count, the
+# paginated list, the one-row read, the create, the edit, the removal and the two lifecycle moves come
+# from the CRUD base it extends. Inherited is not the same as absent — Nest registers an inherited
+# handler with the decorators it carries — so this surface mirrors all nine, and the list routes fold
+# into one connection because they answer one question.
+#
+# **No field here states a permission, and that is the parity rather than an omission.** The delivered
+# controller carries `TenantPermissionGuard` on the class and no `@Permissions` anywhere — not on the
+# route it declares and not on any of the eight it inherits — so every one of its routes is
+# tenant-guarded and otherwise unpermissioned. A field that demanded a permission would refuse a caller
+# the REST route serves, which is the asymmetry the two-protocol rule forbids; tightening the resource
+# is a change to make in both places at once, and it is not this delivery's to make.
+#
+# The list is a connection rather than a bare array. It takes the same query protocol the REST list
+# route takes — the same filters in `filter`, the same keys in `sort`, the same page in `page` — and
+# answers with the same shape the kernel's `PageInfo` gives every other connection. `withDeleted` is
+# offered because the delivered list route offers it: the paginated spelling of that list takes
+# `BaseQueryDTO`, which carries the member, and hands its query string straight to the same read — so
+# a REST caller can ask for withdrawn rows and a connection that could not would hide them.
+#
+# `organizationDocumentCount` takes no filter, and that is a statement rather than an omission. The
+# delivered count route passes its query string through as the store's own `where`, which the
+# connection protocol does not speak; a `filter` argument here would either be handed to a service call
+# that cannot accept it or be evaluated over a second code path that could disagree with the
+# connection's `totalCount`.
+
+extend type Query {
+	"""
+	The documents of the caller's tenant, newest first.
+	"""
+	organizationDocuments(
+		filter: OrganizationDocumentFilter
+		sort: [OrganizationDocumentSort!]
+		page: PageInput
+		first: Int
+		after: String
+		last: Int
+		before: String
+		limit: Int
+		offset: Int
+		withDeleted: Boolean
+	): OrganizationDocumentConnection!
+
+	"""
+	One document of the caller's tenant, or null when there is none.
+	"""
+	organizationDocument(id: ID!): OrganizationDocument
+
+	"""
+	How many documents the caller's tenant keeps.
+	"""
+	organizationDocumentCount: Int
+}
+
+extend type Mutation {
+	"""
+	Files a document.
+	"""
+	createOrganizationDocument(input: CreateOrganizationDocumentInput!): OrganizationDocument!
+
+	"""
+	Changes the stated facts of a document. A member the caller leaves out is left as it is, because the
+	delivered edit is a partial column update rather than a replacement of the row.
+	"""
+	updateOrganizationDocument(input: UpdateOrganizationDocumentInput!): OrganizationDocument!
+
+	"""
+	Removes a document outright. The file the asset holds is not removed with it; the asset is a row of
+	its own domain.
+	"""
+	deleteOrganizationDocument(id: ID!): Boolean!
+
+	"""
+	Withdraws a document without removing it: the row keeps its identifier and the organization keeps
+	it, and the delivered list stops answering it.
+	"""
+	softDeleteOrganizationDocument(id: ID!): OrganizationDocument!
+
+	"""
+	Puts a withdrawn document back.
+	"""
+	recoverOrganizationDocument(id: ID!): OrganizationDocument!
+}

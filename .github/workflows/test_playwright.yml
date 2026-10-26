@@ -54,7 +54,7 @@ jobs:
     name: Install dependencies
     permissions:
       contents: read
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     # `yarn bootstrap` is the whole budget here: measured at 88 min, 3 h 20 m and 3 h 46 m on these
     # runners. This job exists so that cost is paid ONCE per run — everything downstream unpacks the
     # archive it publishes. Nothing else runs here, so an evicted pod costs only the install.
@@ -69,6 +69,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      # The runner image ships Node 24, and package.json requires Node >=26 (engines), so `yarn` refused
+      # to run at all: 'The engine "node" is incompatible'. Same pin as build.yml.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
 
       # NO actions/cache here, deliberately — see the archive step below. The budget is full of
       # caches that other workflows genuinely need, and writing this one would evict them.
@@ -150,7 +156,7 @@ jobs:
     permissions:
       contents: read
     needs: deps
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     # Observed: build:package:all 7-13 min, web build >47 min (it never finished before the pod
     # died). 120 min is a realistic ceiling once node_modules comes from the cache; if it is
     # exceeded the right answer is another split, not a bigger budget.
@@ -159,6 +165,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      # The runner image ships Node 24, and package.json requires Node >=26 (engines), so `yarn` refused
+      # to run at all: 'The engine "node" is incompatible'. Same pin as build.yml.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
 
       - name: Download node_modules archive
         id: archive
@@ -205,9 +217,11 @@ jobs:
           fi
           echo "container memory: ${limit_mb:-unknown} MB, cpus: $(nproc 2>/dev/null || echo '?') -> node heap ${heap_mb} MB"
           free -h || true
-          echo "NODE_OPTIONS=--max-old-space-size=${heap_mb}" >> "$GITHUB_ENV"
-          # Also published on its own so the web build can pass the flag directly on the node
-          # command line. NODE_OPTIONS alone was demonstrably not enough — see that step.
+          # NODE_OPTIONS can no longer be set through $GITHUB_ENV: the runner refuses it ("Can't store
+          # NODE_OPTIONS output parameter using '$GITHUB_ENV' command", stage run 40138625355). The heap
+          # is published as NODE_HEAP_MB instead, and every step that needs it passes
+          # --max-old-space-size itself (the web build on the node command line, the package build
+          # through its own script's NODE_OPTIONS).
           echo "NODE_HEAP_MB=${heap_mb}" >> "$GITHUB_ENV"
 
       - name: Build all packages
@@ -286,7 +300,11 @@ jobs:
           node --max-old-space-size=$heap_mb -e "console.log('with the flag on the command line   =', Math.round(require('v8').getHeapStatistics().heap_size_limit/1048576), 'MB')"
           echo "----------------------------------------------------------------"
           # Drive nx through node directly so the ceiling cannot be lost in a wrapper.
-          build() { node --max-old-space-size=$heap_mb ./node_modules/nx/bin/nx.js build gauzy -c ci; }
+          # nx's CLI entry moved (nx 23: ./dist/bin/nx.js, before: ./bin/nx.js), so read it from nx's
+          # own package.json "bin" instead of hard-coding the path.
+          nx_bin=$(node -p "const path = require('path'); const p = require('nx/package.json'); path.join(path.dirname(require.resolve('nx/package.json')), typeof p.bin === 'string' ? p.bin : p.bin.nx)")
+          echo "nx CLI: $nx_bin"
+          build() { node --max-old-space-size=$heap_mb "$nx_bin" build gauzy -c ci; }
           build || { echo "::warning::gauzy build failed — retry 1 (nx cache skips done deps)"; build; }
           # The bundle bakes the API URL as http://localhost:3000; the API runs on :3001 in the test
           # job (this shared runner's :3000 is taken by other dev processes), so repoint the built
@@ -340,7 +358,7 @@ jobs:
     permissions:
       contents: read
     needs: [deps, build]
-    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_8 || 'ubuntu-24.04' }}
     # Fixed cost per shard is ~25 min (cache restore + artifact download + browser install + the
     # API's fresh-DB seed); the shard's own tests are capped at 75 min by the step timeout below,
     # which leaves the job room to still upload its report before this ceiling.
@@ -360,6 +378,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      # The runner image ships Node 24, and package.json requires Node >=26 (engines), so `yarn` refused
+      # to run at all: 'The engine "node" is incompatible'. Same pin as build.yml.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
 
       - name: Download node_modules archive
         id: archive
@@ -436,7 +460,23 @@ jobs:
         # prebuilt bundle directly. Same file, same workspace-root cwd — which is what both the
         # .env lookup and the sqlite path in @gauzy/config resolve against — minus the webpack
         # watcher.
-        run: forever start dist/apps/api/main.js
+        #
+        # The committed `.env.local` (local-dev defaults: API_PORT=3000, API_BASE_URL=:3000, DEMO=true)
+        # is loaded WITH override by apps/api/src/preload-env.ts, before any module reads the config
+        # (since 4370087d90, 2026-10-03). It therefore beats the env below: the API bound :3000 in DEMO
+        # mode, the :3001 readiness probe never answered and every shard timed out from that day on.
+        # Pin this job's values in that file too (dotenv: the last occurrence of a key wins); the
+        # checkout restores the tracked file on the next run.
+        run: |
+          {
+            echo ''
+            echo '# test_playwright.yml e2e job overrides'
+            echo "API_PORT=$API_PORT"
+            echo "API_BASE_URL=$API_BASE_URL"
+            echo "DEMO=$DEMO"
+            echo "DB_TYPE=$DB_TYPE"
+          } >> .env.local
+          forever start dist/apps/api/main.js
         env:
           # The heap ceiling `start:api:forever` used.
           NODE_OPTIONS: --max-old-space-size=12288
@@ -477,9 +517,12 @@ jobs:
         shell: bash
         # Poll both ports, but FAIL FAST if a server process has crashed (forever -> STOPPED)
         # instead of waiting out the whole window. Web is a static server (instant); the API seeds
-        # a fresh DB (~5-7 min: migrations + seedDefault), so a 10-min cap is ample.
+        # a fresh DB (migrations + seedDefault). That took ~5-7 min when the cap was set at 10 min, but
+        # the seed has grown: on 2026-10-08/09 every shard was still seeding (~10 min in) when the cap
+        # hit (stage runs 37763321450, 37883190996), so the suite never ran. 20 min still fits the
+        # job's 120-min ceiling (~25 min fixed cost + the 75-min test step cap).
         run: |
-          deadline=$((SECONDS + 600))   # 10 min hard cap
+          deadline=$((SECONDS + 1200))   # 20 min hard cap
           while (( SECONDS < deadline )); do
             api=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:3001/api || true)
             web=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 http://localhost:4200 || true)
@@ -549,7 +592,7 @@ jobs:
     # `always()`: the tree is just as useless after a failed shard, and leaving ~3 GB behind on a red
     # run is how the quota filled in the first place.
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:

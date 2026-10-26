@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { DocumentStatusEnum, IDocument, PermissionsEnum } from '@gauzy/contracts';
 import { DOCS_PERMISSIONS } from '../../../docs-permission-groups';
 
@@ -75,6 +75,7 @@ import { DOCS_PERMISSIONS } from '../../../docs-permission-groups';
 			}
 		`
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class StatusBadgeComponent {

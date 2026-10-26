@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { FindManyOptions, Between, In, Raw } from 'typeorm';
 import * as moment from 'moment';
-import { ID, IDateRangePicker, IIncome, IPagination } from '@gauzy/contracts';
+import { BaseEntityEnum, ID, IDateRangePicker, IIncome, IPagination } from '@gauzy/contracts';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { LIKE_OPERATOR } from '../core/util';
 import { Income } from './income.entity';
 import { MikroOrmIncomeRepository } from './repository/mikro-orm-income.repository';
 import { TypeOrmIncomeRepository } from './repository/type-orm-income.repository';
+import { FavoriteService } from '../core/decorators';
 
+@FavoriteService(BaseEntityEnum.Income)
 @Injectable()
 export class IncomeService extends TenantAwareCrudService<Income> {
 	constructor(
@@ -30,12 +32,19 @@ export class IncomeService extends TenantAwareCrudService<Income> {
 			const startOfMonth = moment(filterDate).startOf('month').toDate();
 			const endOfMonth = moment(filterDate).endOf('month').toDate();
 
+			// An array `where` is an OR of clauses: the month range goes into each clause, since spreading
+			// the array itself would only add its indexes ("0", "1") as keys. An empty array is read as no filter.
 			return filter
 				? await this.findAll({
-						where: {
-							valueDate: Between<Date>(startOfMonth, endOfMonth),
-							...(filter.where as Object)
-						},
+						where: Array.isArray(filter.where) && filter.where.length > 0
+							? filter.where.map((clause) => ({
+									valueDate: Between<Date>(startOfMonth, endOfMonth),
+									...(clause as Object)
+							  }))
+							: {
+									valueDate: Between<Date>(startOfMonth, endOfMonth),
+									...(filter.where as Object)
+							  },
 						relations: filter?.relations || []
 				  })
 				: await this.findAll({

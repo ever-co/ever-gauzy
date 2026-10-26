@@ -1,5 +1,5 @@
 import { HelpCenterActionEnum, HelpCenterFlagEnum, IHelpCenter, IOrganization } from '@gauzy/contracts';
-import { Component, ViewChild, OnInit, OnDestroy, Output, EventEmitter, AfterViewInit } from '@angular/core';
+import { Component, ViewChild, OnInit, OnDestroy, Output, EventEmitter, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
 import { TreeComponent, ITreeOptions } from '@ali-hm/angular-tree-component';
 import { firstValueFrom } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -18,6 +18,7 @@ import { KnowledgeBaseComponent } from './knowledge-base/knowledge-base.componen
 	selector: 'ga-sidebar',
 	templateUrl: './sidebar.component.html',
 	styleUrls: ['./sidebar.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class SidebarComponent extends TranslationBaseComponent implements OnInit, OnDestroy, AfterViewInit {

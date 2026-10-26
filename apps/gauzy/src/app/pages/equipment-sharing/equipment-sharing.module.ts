@@ -10,7 +10,7 @@ import {
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ApprovalPolicyService, EmployeesService, EquipmentSharingService } from '@gauzy/ui-core/core';
 import {
 	SmartDataViewLayoutModule,
@@ -39,7 +39,7 @@ import { EquipmentSharingStatusComponent } from './table-components/equipment-sh
 		TableComponentsModule,
 		NbDatepickerModule,
 		CardGridModule,
-		TranslateModule.forChild(),
+		TranslatePipe,
 		NgxPermissionsModule.forChild(),
 		NbSpinnerModule,
 		SmartDataViewLayoutModule,

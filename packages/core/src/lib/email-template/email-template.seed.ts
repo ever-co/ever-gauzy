@@ -99,7 +99,7 @@ const pathToEmailTemplate = async (
 		switch (fileExtension) {
 			case 'mjml':
 				template.mjml = fileContent;
-				template.hbs = compileMjml(fileContent).html;
+				template.hbs = (await compileMjml(fileContent)).html;
 				break;
 			case 'hbs':
 				template.hbs = fileContent;

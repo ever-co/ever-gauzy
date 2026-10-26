@@ -36,7 +36,34 @@ export interface OAuth2ServerConfig {
 	// Optional providers that can be configured during initialization
 	userInfoProvider?: (userId: string) => Promise<UserInfo | null>;
 	userAuthenticator?: (credentials: LoginCredentials) => Promise<AuthenticatedUser | null>;
+	/**
+	 * Names which of these user ids can no longer sign in (deactivated, archived or deleted). When set,
+	 * the holders of live refresh tokens are checked every minute and each one it names has every token
+	 * revoked, so a deactivation ends MCP access even for tokens nobody uses meanwhile. It must reject,
+	 * not answer an empty list, when the lookup could not be performed.
+	 */
+	inactiveUsersProvider?: (userIds: string[]) => Promise<string[]>;
 }
+
+/** How often the holders of live refresh tokens are checked against `inactiveUsersProvider`. */
+const ACCOUNT_SWEEP_INTERVAL_MS = 60 * 1000;
+/** How many user ids one `inactiveUsersProvider` call is asked about. */
+const ACCOUNT_SWEEP_BATCH_SIZE = 500;
+
+/**
+ * Per-address budgets of the token introspection endpoint, kept apart from the 100 requests per 15 minutes the other
+ * endpoints share. Its caller is the operator's resource server (the MCP server), asking from one address about each
+ * bearer token it is shown, at most once a minute per token (its cache). Under the shared budget seven continuously
+ * active users used it up, and the MCP server then refused every request as if its token were invalid.
+ *
+ * - `requests`: every introspection request; this many tokens in use at once per MCP server address.
+ * - `failedAuthentications`: only the requests refused for their client credentials (401), with the budget the
+ *   endpoint had before, so guessing the resource server's secret (a bcrypt comparison each) is no cheaper.
+ */
+const INTROSPECTION_RATE_LIMITS = Object.freeze({
+	requests: Object.freeze({ windowMs: 60 * 1000, limit: 600 }),
+	failedAuthentications: Object.freeze({ windowMs: 15 * 60 * 1000, limit: 100 })
+});
 
 export interface UserInfo {
 	userId: string;
@@ -57,6 +84,11 @@ export interface AuthenticatedUser extends UserInfo {
 export interface LoginCredentials {
 	email: string;
 	password: string;
+	/**
+	 * The login form submission, so the authenticator can attribute the attempt to its client (per-account
+	 * failure counting tells one guesser from many by address) and answer on its response.
+	 */
+	request?: Request;
 }
 
 export interface IntrospectionRequest {
@@ -95,6 +127,8 @@ export class OAuth2AuthorizationServer {
 	private configManager: ConfigManager;
 	private userInfoProvider?: (userId: string) => Promise<UserInfo | null>;
 	private authenticateUser?: (credentials: LoginCredentials) => Promise<AuthenticatedUser | null>;
+	private accountSweep?: NodeJS.Timeout;
+	private accountSweepRunning = false;
 
 	// Add CSRF protection properties
 	private csrfProtection: any;
@@ -148,6 +182,71 @@ export class OAuth2AuthorizationServer {
 
 		// Validate configuration during initialization
 		this.validateConfiguration();
+
+		if (config.inactiveUsersProvider) {
+			this.accountSweep = setInterval(
+				() => void this.revokeTokensOfInactiveAccounts(),
+				ACCOUNT_SWEEP_INTERVAL_MS
+			);
+			// Do not keep the process alive just for the sweep
+			this.accountSweep.unref();
+		}
+	}
+
+	/**
+	 * Revokes every token of each refresh token holder whose account can no longer sign in, as
+	 * `inactiveUsersProvider` answers. A failed lookup revokes nothing; the next sweep asks again.
+	 *
+	 * @returns How many users had their tokens revoked.
+	 */
+	async revokeTokensOfInactiveAccounts(): Promise<number> {
+		const provider = this.config.inactiveUsersProvider;
+		if (!provider || this.accountSweepRunning) {
+			return 0;
+		}
+		this.accountSweepRunning = true;
+		let revokedUsers = 0;
+		try {
+			const holders = this.tokenManager.getRefreshTokenHolders();
+			for (let i = 0; i < holders.length; i += ACCOUNT_SWEEP_BATCH_SIZE) {
+				const batch = holders.slice(i, i + ACCOUNT_SWEEP_BATCH_SIZE);
+				const inactive = new Set(await provider(batch));
+				// Only ids that were asked about: an answer naming anyone else is ignored.
+				for (const userId of batch.filter((id) => inactive.has(id))) {
+					this.tokenManager.revokeUserTokens(userId);
+					revokedUsers++;
+				}
+			}
+		} catch (error) {
+			this.securityLogger.error('Account sweep failed; no further tokens revoked this round', error as Error);
+		} finally {
+			this.accountSweepRunning = false;
+		}
+		return revokedUsers;
+	}
+
+	/**
+	 * Re-reads the account a user token belongs to, for every use that would otherwise trust a sign-in
+	 * made earlier. An account that can no longer sign in has every token revoked.
+	 *
+	 * @returns `active`, `inactive`, or `unavailable` when the lookup could not be performed (or no
+	 * provider is configured), which callers answer with a retryable error and never as `active`.
+	 */
+	private async checkAccount(userId: string): Promise<'active' | 'inactive' | 'unavailable'> {
+		if (!this.userInfoProvider) {
+			this.securityLogger.error('User info provider not configured; account status cannot be checked');
+			return 'unavailable';
+		}
+		try {
+			if (await this.userInfoProvider(userId)) {
+				return 'active';
+			}
+		} catch (error) {
+			this.securityLogger.error(`Account lookup failed for user ${userId}`, error as Error);
+			return 'unavailable';
+		}
+		this.tokenManager.revokeUserTokens(userId);
+		return 'inactive';
 	}
 
 	/**
@@ -374,21 +473,24 @@ export class OAuth2AuthorizationServer {
 		// Session management
 		// IMPORTANT: For environments proxy (Cloudflare, etc), we need to use 'auto' for secure
 		// This allows Express to determine secure based on req.secure (which respects X-Forwarded-Proto)
+		// Kept as its own value: express-session 1.19 types `cookie` as options or a per-request function, and the
+		// configuration logged below reads these options directly.
+		const cookieOptions: session.CookieOptions = {
+			// Use 'auto' to let express-session determine secure based on req.secure
+			// This works correctly with trust proxy and X-Forwarded-Proto header
+			secure: isHttps ? 'auto' : false,
+			httpOnly: true,
+			maxAge: 1000 * 60 * 60 * 24, // 24 hours
+			sameSite: 'lax',
+			// Only set domain for HTTPS if we have a valid, non-proxy domain
+			...(sessionCookieDomain && isHttps ? { domain: sessionCookieDomain } : {})
+		};
 		const sessionConfig: session.SessionOptions = {
 			secret: this.config.sessionSecret,
 			name: 'mcp-oauth-session',
 			resave: false,
 			saveUninitialized: false,
-			cookie: {
-				// Use 'auto' to let express-session determine secure based on req.secure
-				// This works correctly with trust proxy and X-Forwarded-Proto header
-				secure: isHttps ? 'auto' : false,
-				httpOnly: true,
-				maxAge: 1000 * 60 * 60 * 24, // 24 hours
-				sameSite: 'lax',
-				// Only set domain for HTTPS if we have a valid, non-proxy domain
-				...(sessionCookieDomain && isHttps ? { domain: sessionCookieDomain } : {}),
-			},
+			cookie: cookieOptions,
 			rolling: true,
 			proxy: isHttps || serverConfig.environment === 'production' // Trust proxy for session
 		};
@@ -397,16 +499,22 @@ export class OAuth2AuthorizationServer {
 		const redisUrl = serverConfig.redisUrl;
 		if (redisUrl) {
 			try {
-				const RedisStore = require('connect-redis').default;
-				const Redis = require('ioredis');
-				const redisClient = new Redis(redisUrl, {
-					// Production-ready Redis configuration
-					retryDelayOnFailover: 100,
-					enableReadyCheck: false,
-					maxRetriesPerRequest: 3,
-					lazyConnect: true,
+				// connect-redis 9+ exports the store by name and talks to a node-redis client only (it dropped ioredis).
+				const { RedisStore } = require('connect-redis');
+				const { createClient } = require('redis');
+				const redisClient = createClient({
+					url: redisUrl,
 					// Log connection events for better monitoring
-					connectionName: 'mcp-oauth-session-store'
+					name: 'mcp-oauth-session-store',
+					socket: {
+						// Keeps reconnecting, backing off to one attempt every 5 s.
+						reconnectStrategy: (retries: number) => Math.min(100 * Math.pow(2, retries), 5000)
+					},
+					// What bounds a request during an outage (ioredis: maxRetriesPerRequest: 3): a session read or write
+					// queued while Redis is unreachable fails after 5 s instead of waiting for the reconnect. Stated
+					// rather than left to node-redis's default (5 s in 6.3), so a change of default cannot make sign-in
+					// requests hang.
+					commandOptions: { timeout: 5000 }
 				});
 
 				// Handle Redis connection events
@@ -418,6 +526,12 @@ export class OAuth2AuthorizationServer {
 				});
 				redisClient.on('ready', () => {
 					this.securityLogger.info('Redis session store ready');
+				});
+
+				// node-redis connects explicitly (ioredis connected lazily on first use); a failure is logged by the
+				// 'error' handler above and the client keeps reconnecting.
+				redisClient.connect().catch((error: unknown) => {
+					this.securityLogger.error('Redis session store connection failed:', error as Error);
 				});
 
 				sessionConfig.store = new RedisStore({
@@ -472,9 +586,9 @@ export class OAuth2AuthorizationServer {
 		this.securityLogger.info('Session configuration initialized', {
 			cookieName: sessionConfig.name,
 			cookieDomain: sessionCookieDomain || 'not-set',
-			secure: sessionConfig.cookie?.secure,
-			sameSite: sessionConfig.cookie?.sameSite,
-			httpOnly: sessionConfig.cookie?.httpOnly,
+			secure: cookieOptions.secure,
+			sameSite: cookieOptions.sameSite,
+			httpOnly: cookieOptions.httpOnly,
 			hasStore: !!sessionConfig.store,
 			domainSet: !!sessionCookieDomain,
 			isHttps,
@@ -544,10 +658,11 @@ export class OAuth2AuthorizationServer {
 			next();
 		});
 
-		// Rate limiting
+		// Rate limiting. Token introspection has budgets of its own (see setupRoutes), so it is left out of this one.
 		const authRateLimit = rateLimit({
 			windowMs: 15 * 60 * 1000, // 15 minutes
 			max: 100, // requests per windowMs
+			skip: (req) => this.isIntrospectionRequest(req),
 			message: {
 				error: 'too_many_requests',
 				error_description: 'Rate limit exceeded'
@@ -558,9 +673,46 @@ export class OAuth2AuthorizationServer {
 
 		this.app.use(authRateLimit);
 
-		// Body parsing
-		this.app.use(express.json({ limit: '10mb' }));
-		this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+		// Body parsing: an OAuth request (a token request, a login or consent form, a client registration) is a few
+		// hundred bytes; 10 MB let anyone make the server parse, and dynamic registration keep, megabytes per request.
+		this.app.use(express.json({ limit: '64kb' }));
+		this.app.use(express.urlencoded({ extended: true, limit: '64kb' }));
+	}
+
+	/**
+	 * Whether a request is a token introspection request, which has budgets of its own ({@link INTROSPECTION_RATE_LIMITS})
+	 * instead of the one the other endpoints share. Any other spelling of the path stays under the shared budget too.
+	 */
+	private isIntrospectionRequest(req: Request): boolean {
+		return (
+			!!this.config.introspectionEndpoint &&
+			req.method === 'POST' &&
+			req.path === this.config.introspectionEndpoint
+		);
+	}
+
+	/**
+	 * The rate limits in front of the introspection endpoint ({@link INTROSPECTION_RATE_LIMITS}).
+	 */
+	private createIntrospectionRateLimits() {
+		const message = { error: 'too_many_requests', error_description: 'Rate limit exceeded' };
+		return {
+			requests: rateLimit({
+				...INTROSPECTION_RATE_LIMITS.requests,
+				message,
+				standardHeaders: true,
+				legacyHeaders: false
+			}),
+			failedAuthentications: rateLimit({
+				...INTROSPECTION_RATE_LIMITS.failedAuthentications,
+				// Only the requests refused for their client credentials count
+				skipSuccessfulRequests: true,
+				requestWasSuccessful: (_req, res) => res.statusCode !== 401,
+				message,
+				standardHeaders: false,
+				legacyHeaders: false
+			})
+		};
 	}
 
 	/**
@@ -613,7 +765,8 @@ export class OAuth2AuthorizationServer {
 
 		// Token introspection endpoint (RFC 7662)
 		if (this.config.introspectionEndpoint) {
-			this.app.post(this.config.introspectionEndpoint, (req, res) => {
+			const { requests, failedAuthentications } = this.createIntrospectionRateLimits();
+			this.app.post(this.config.introspectionEndpoint, requests, failedAuthentications, (req, res) => {
 				this.handleTokenIntrospection(req, res);
 			});
 		}
@@ -889,7 +1042,21 @@ export class OAuth2AuthorizationServer {
 			let user: AuthenticatedUser | null = null;
 
 			if (this.authenticateUser) {
-				user = await this.authenticateUser({ email, password });
+				try {
+					user = await this.authenticateUser({ email, password, request: req });
+				} catch (error) {
+					// The account has had too many failed attempts: the authenticator checked no password.
+					if (isTooManyAttempts(error)) {
+						this.securityLogger.warn('Login refused: too many failed attempts for this account', {
+							ip: req.ip
+						});
+						const normalizedReturnUrl = this.normalizeReturnUrl(returnUrl);
+						return res.redirect(
+							`${this.config.loginEndpoint}?error=too_many_attempts&return_url=${encodeURIComponent(normalizedReturnUrl)}`
+						);
+					}
+					throw error;
+				}
 			} else {
 				// No authenticator configured
 				this.securityLogger.error('User authenticator not configured');
@@ -1246,15 +1413,16 @@ export class OAuth2AuthorizationServer {
 
 			this.securityLogger.debug('Token exchange: Client validated', { clientId: params.client_id });
 
-			// Exchange authorization code
-			const authCode = oAuth2AuthorizationCodeManager.exchangeAuthorizationCode(
+			// Check the code without using it up: the account lookup below can fail for a while, and its 503 asks the
+			// client to retry with this same code.
+			const pendingCode = oAuth2AuthorizationCodeManager.checkAuthorizationCode(
 				params.code,
 				params.client_id,
 				params.redirect_uri,
 				params.code_verifier
 			);
 
-			if (!authCode) {
+			if (!pendingCode) {
 				this.securityLogger.error('Token exchange: Invalid authorization code', {
 					clientId: params.client_id,
 					redirectUri: params.redirect_uri,
@@ -1270,9 +1438,61 @@ export class OAuth2AuthorizationServer {
 
 			this.securityLogger.debug('Token exchange: Authorization code validated', {
 				clientId: params.client_id,
-				userId: authCode.userId,
-				scopes: authCode.scopes.join(' ')
+				userId: pendingCode.userId,
+				scopes: pendingCode.scopes.join(' ')
 			});
+
+			// The sign-in completes here, not at the login form: a code (or a login session) from before a
+			// deactivation must not turn into tokens.
+			const account = await this.checkAccount(pendingCode.userId);
+			if (account === 'unavailable') {
+				// The code stays unused, so the retry this answer asks for can still exchange it.
+				this.securityLogger.warn('Token exchange: account status unavailable; code kept for a retry', {
+					clientId: params.client_id,
+					userId: pendingCode.userId
+				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError(
+						'temporarily_unavailable',
+						'Account status could not be verified, retry later'
+					),
+					503
+				);
+				return;
+			}
+
+			// Use the code up now, once and for all. It may have been exchanged meanwhile by a concurrent request with
+			// the same code: that request won, and this one is refused.
+			const authCode = oAuth2AuthorizationCodeManager.exchangeAuthorizationCode(
+				params.code,
+				params.client_id,
+				params.redirect_uri,
+				params.code_verifier
+			);
+			if (!authCode) {
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_grant', 'Invalid authorization code'),
+					400
+				);
+				return;
+			}
+
+			// An inactive account's code is used up with the rest: it can never turn into tokens.
+			if (account !== 'active') {
+				this.securityLogger.warn('Token exchange: account cannot sign in', {
+					clientId: params.client_id,
+					userId: authCode.userId,
+					account
+				});
+				this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_grant', 'The account is not active'),
+					400
+				);
+				return;
+			}
 
 			// Generate tokens
 			const tokenPair = await this.tokenManager.generateTokenPair(
@@ -1281,6 +1501,7 @@ export class OAuth2AuthorizationServer {
 				authCode.scopes,
 				{ includeRefreshToken: true }
 			);
+			oAuth2ClientManager.markClientUsed(params.client_id);
 
 			this.securityLogger.info('Token exchange: Success', {
 				clientId: params.client_id,
@@ -1382,6 +1603,7 @@ export class OAuth2AuthorizationServer {
 			);
 			return;
 		}
+		oAuth2ClientManager.markClientUsed(params.client_id);
 
 		this.responseBuilder.sendTokenResponse(res, {
 			access_token: newTokenPair.accessToken,
@@ -1402,6 +1624,26 @@ export class OAuth2AuthorizationServer {
 				res,
 				BaseErrorHandler.createAuthError('invalid_client', 'Client authentication failed'),
 				401
+			);
+			return;
+		}
+
+		// RFC 6749 §4.4: only a confidential client, which authenticated with its secret above, may use this grant, and
+		// only one registered for it. `validateClient` lets a public client through with no secret at all, so anyone
+		// could name `chatgpt-mcp-client` and receive a signed token for any of its scopes. The grant types must be a
+		// list: a bare string kept from a registration body (`"grant_types": "client_credentials"`) `includes` it too.
+		if (
+			client.clientType !== 'confidential' ||
+			!Array.isArray(client.grantTypes) ||
+			!client.grantTypes.includes('client_credentials')
+		) {
+			this.errorHandler.handleOAuthError(
+				res,
+				BaseErrorHandler.createAuthError(
+					'unauthorized_client',
+					'The client is not authorized to use the client_credentials grant'
+				),
+				400
 			);
 			return;
 		}
@@ -1443,6 +1685,22 @@ export class OAuth2AuthorizationServer {
 	 */
 	private async handleClientRegistration(req: Request, res: Response) {
 		try {
+			// Registration is open to anyone, and a client_credentials token acts for no user: a client that may use
+			// that grant is one the operator registers, never one that registers itself. A bare string counts as well
+			// (`"grant_types": "client_credentials"`, or a form field): registerClient keeps it as sent.
+			const grantTypes: unknown = req.body?.grant_types;
+			if (
+				(Array.isArray(grantTypes) || typeof grantTypes === 'string') &&
+				grantTypes.includes('client_credentials')
+			) {
+				this.errorHandler.handleStandardError(res, {
+					code: 'invalid_client_metadata',
+					message: 'The client_credentials grant is not available through dynamic registration',
+					statusCode: 400
+				});
+				return;
+			}
+
 			const registrationResponse = await oAuth2ClientManager.registerClient(req.body);
 			this.responseBuilder.sendClientRegistrationResponse(res, registrationResponse);
 		} catch (error: any) {
@@ -1494,6 +1752,16 @@ export class OAuth2AuthorizationServer {
 				401
 				);
 			}
+			// RFC 7662 §2.1: the protected resource authenticates. `validateClient` lets a public client through
+			// without a secret, and anyone may register a client, so only a resource server the operator registered
+			// (MCP_AUTH_INTROSPECTION_CLIENT_ID / _SECRET) is answered.
+			if (!oAuth2ClientManager.isResourceServer(client)) {
+				return this.errorHandler.handleOAuthError(
+					res,
+					BaseErrorHandler.createAuthError('invalid_client', 'The client may not introspect tokens'),
+					401
+				);
+			}
 
 			// Validate the token
 			const validation = await this.oAuthValidator.validateToken(token);
@@ -1504,6 +1772,36 @@ export class OAuth2AuthorizationServer {
 					active: false
 				});
 				return;
+			}
+
+			// Only an access token is a bearer credential for the resource server; a refresh token is not.
+			if (validation.payload?.token_type !== 'access_token') {
+				this.responseBuilder.sendIntrospectionResponse(res, { active: false });
+				return;
+			}
+
+			// A revoked token, or a user token whose account can no longer sign in, is not active.
+			if (this.tokenManager.isTokenRevoked(validation.payload ?? {})) {
+				this.responseBuilder.sendIntrospectionResponse(res, { active: false });
+				return;
+			}
+			if (validation.payload?.token_use !== 'client_credentials' && validation.subject) {
+				const account = await this.checkAccount(validation.subject);
+				if (account === 'unavailable') {
+					this.errorHandler.handleOAuthError(
+						res,
+						BaseErrorHandler.createAuthError(
+							'temporarily_unavailable',
+							'Account status could not be verified, retry later'
+						),
+						503
+					);
+					return;
+				}
+				if (account === 'inactive') {
+					this.responseBuilder.sendIntrospectionResponse(res, { active: false });
+					return;
+				}
 			}
 
 			// Token is active, return token information
@@ -1570,6 +1868,12 @@ export class OAuth2AuthorizationServer {
 			if (!validation.valid) {
 				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
 				const authError = BaseErrorHandler.createAuthError('invalid_token', validation.error || 'Token validation failed');
+				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
+			}
+
+			if (this.tokenManager.isTokenRevoked(validation.payload ?? {})) {
+				const resourceMetadataUrl = `${this.config.baseUrl}/.well-known/oauth-protected-resource`;
+				const authError = BaseErrorHandler.createAuthError('invalid_token', 'Token has been revoked');
 				return this.errorHandler.handleAuthError(res, authError, resourceMetadataUrl);
 			}
 
@@ -1740,6 +2044,7 @@ export class OAuth2AuthorizationServer {
 		const messages: { [key: string]: string } = {
 			'missing_credentials': 'Please enter both email and password.',
 			'invalid_credentials': 'Invalid email or password. Please try again.',
+			'too_many_attempts': 'Too many failed sign-in attempts for this account. Please try again later.',
 			'server_error': 'An error occurred. Please try again later.'
 		};
 		return messages[error] || 'An error occurred during sign in.';
@@ -2012,4 +2317,14 @@ export class OAuth2AuthorizationServer {
 			});
 		});
 	}
+}
+
+/**
+ * Whether an authenticator refused because the account has had too many failed attempts: an HTTP 429, as the
+ * Gauzy API's per-account login counter raises it (an `HttpException` whose `getStatus()` is 429).
+ */
+function isTooManyAttempts(error: unknown): boolean {
+	const candidate = error as { getStatus?: () => unknown; status?: unknown } | null;
+	const status = typeof candidate?.getStatus === 'function' ? candidate.getStatus() : candidate?.status;
+	return status === 429;
 }

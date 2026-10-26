@@ -1,5 +1,5 @@
-import { ModuleWithProviders, NgModule } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { type ModuleWithProviders, NgModule } from '@angular/core';
+import { provideTranslateService, TranslatePipe } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from './translate-http-loader';
 
 /**
@@ -38,19 +38,17 @@ import { provideTranslateHttpLoader } from './translate-http-loader';
  * @see {@link provideI18n}
  */
 @NgModule({
-	imports: [
-		TranslateModule.forRoot({
-			loader: provideTranslateHttpLoader()
-		})
-	],
-	exports: [TranslateModule]
+	imports: [TranslatePipe],
+	// Registered wherever this module is imported, as TranslateModule.forRoot() in `imports` was (ngx-translate 18 removed it).
+	providers: [provideTranslateService({ loader: provideTranslateHttpLoader() })],
+	exports: [TranslatePipe]
 })
 export class I18nModule {
 	/**
 	 * Configures I18nModule for the root module.
 	 *
 	 * The ngx-translate root providers (`TranslateService`, `TranslateStore`, HTTP loader)
-	 * are registered via `TranslateModule.forRoot()` in the `@NgModule` decorator.
+	 * are registered via `provideTranslateService()` in the `@NgModule` decorator.
 	 *
 	 * @return {ModuleWithProviders<I18nModule>} A ModuleWithProviders object with the I18nModule.
 	 */

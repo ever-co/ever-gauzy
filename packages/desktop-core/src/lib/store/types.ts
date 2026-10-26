@@ -1,4 +1,4 @@
-import * as ElectronStore from 'electron-store';
+import type ElectronStore from 'electron-store';
 
 /**
  * Represents the structure of a file path object used in the application.
@@ -72,6 +72,8 @@ export interface IConfig {
 	};
 	serverConfigConnected?: boolean;
 	hardwareAccelerationDisabled?: boolean;
+	/** Server apps: whether other computers may connect (see `DesktopSetupConfig.lanAccess`). */
+	lanAccess?: boolean | null;
 }
 
 export interface IAuth {
@@ -104,11 +106,14 @@ export interface IApplicationSetting {
 		captured: 'all' | 'active-only';
 	};
 	timer: {
-		updatePeriod: 1 | 5 | 10;
+		/** Minutes between screenshots. The organisation's screenshot frequency options are 1, 3, 5 and 10 */
+		updatePeriod: number;
 	};
 	SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer';
 	screenshotNotification: boolean;
 	simpleScreenshotNotification: boolean;
+	/** Display that shows the screenshot notification: an Electron display id, or `null` for the primary display */
+	screenshotNotificationDisplayId?: number | null;
 	mutedNotification: boolean;
 	autoLaunch: boolean;
 	visibleAwOption: boolean;
@@ -130,6 +135,12 @@ export interface IApplicationSetting {
 	alwaysOn: boolean;
 	enforced: boolean;
 	theme: 'light' | 'dark'; // Based on nativeTheme
+	/**
+	 * Asynchronous timer data sync: timer jobs (durations, time-slot links, ActivityWatch events) go through a
+	 * persistent SQLite queue that survives quits and crashes and retries failures, instead of the in-memory queue.
+	 * Off unless `true`; read when the first timer job of a session is queued, so a change applies from the next start.
+	 */
+	asyncTimerDataSync?: boolean;
 	[key: string]: any; // Allow for additional settings
 }
 
@@ -145,4 +156,33 @@ export interface IApplicationConfig {
 	additionalSetting: IAdditionalSetting | undefined;
 }
 
-export type IStore = ElectronStore<StoreSchema>;
+/**
+ * The part of electron-store's API used here, which electron-store 11 inherits from `conf`. `conf` is ESM-only and
+ * publishes its types under `exports` only, which this repository's `moduleResolution: node` ignores: there an
+ * ElectronStore appears to have none of these members (only the type is affected; the instance has them all). The
+ * signatures are `conf`'s, less its dot-notation overloads (as electron-store 8 declared them).
+ * Drop once the repository resolves modules by `exports` (`moduleResolution: node16` or `bundler`).
+ */
+export interface IElectronStoreApi<T extends Record<string, any> = Record<string, unknown>> {
+	readonly path: string;
+	readonly size: number;
+	store: T;
+	get<Key extends keyof T>(key: Key): T[Key];
+	get<Key extends keyof T>(key: Key, defaultValue: Required<T>[Key]): Required<T>[Key];
+	get<Key extends string, Value = unknown>(key: Exclude<Key, keyof T>, defaultValue?: Value): Value;
+	set<Key extends keyof T>(key: Key, value?: T[Key]): void;
+	set(key: string, value: unknown): void;
+	set(object: Partial<T>): void;
+	has(key: keyof T | string): boolean;
+	reset<Key extends keyof T>(...keys: Key[]): void;
+	delete(key: keyof T | string): void;
+	clear(): void;
+	onDidChange<Key extends keyof T>(key: Key, callback: (newValue?: T[Key], oldValue?: T[Key]) => void): () => void;
+	onDidAnyChange(callback: (newValue?: Readonly<T>, oldValue?: Readonly<T>) => void): () => void;
+}
+
+/** An electron-store instance (see `IElectronStoreApi`). */
+export type ElectronStoreOf<T extends Record<string, any> = Record<string, unknown>> = ElectronStore<T> &
+	IElectronStoreApi<T>;
+
+export type IStore = ElectronStoreOf<StoreSchema>;

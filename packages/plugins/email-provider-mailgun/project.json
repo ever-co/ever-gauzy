@@ -1,0 +1,44 @@
+{
+	"name": "plugin-email-provider-mailgun",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/plugins/email-provider-mailgun/src",
+	"projectType": "library",
+	"release": {
+		"version": {
+			"manifestRootsToUpdate": ["dist/{projectRoot}"],
+			"currentVersionResolver": "git-tag",
+			"fallbackCurrentVersionResolver": "disk"
+		}
+	},
+	"tags": ["type:plugin"],
+	"implicitDependencies": ["common", "contracts", "core", "plugin", "plugin-inbox", "utils"],
+	"targets": {
+		"build": {
+			"executor": "@nx/js:tsc",
+			"outputs": ["{options.outputPath}"],
+			"options": {
+				"outputPath": "dist/packages/plugins/email-provider-mailgun",
+				"tsConfig": "packages/plugins/email-provider-mailgun/tsconfig.lib.json",
+				"packageJson": "packages/plugins/email-provider-mailgun/package.json",
+				"main": "packages/plugins/email-provider-mailgun/src/index.ts",
+				"assets": ["packages/plugins/email-provider-mailgun/*.md"]
+			},
+			"dependsOn": ["^build"]
+		},
+		"nx-release-publish": {
+			"options": {
+				"packageRoot": "dist/{projectRoot}"
+			}
+		},
+		"lint": {
+			"executor": "@nx/eslint:lint"
+		},
+		"test": {
+			"executor": "@nx/jest:jest",
+			"outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+			"options": {
+				"jestConfig": "packages/plugins/email-provider-mailgun/jest.config.ts"
+			}
+		}
+	}
+}

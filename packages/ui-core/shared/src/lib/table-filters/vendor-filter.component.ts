@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { IOrganizationVendor } from '@gauzy/contracts';
 
@@ -13,6 +13,7 @@ import { IOrganizationVendor } from '@gauzy/contracts';
 			(onChanged)="selectedVendorEvent($event)"
 		></ga-vendor-select>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class VendorFilterComponent extends DefaultFilter implements OnChanges {

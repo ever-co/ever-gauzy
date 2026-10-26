@@ -120,6 +120,19 @@ export const DOCUMENT_LIST_COLUMNS = [
 	'externalId'
 ];
 
+/**
+ * The concurrency token a content save writes: now, at millisecond resolution — and never the token
+ * it replaces, even when the clock has not moved past it (same millisecond, or a clock behind the
+ * replica that wrote the last one), so every accepted save hands out a token no earlier editor holds.
+ *
+ * @param loaded The `updatedAt` the save replaces.
+ */
+export function nextContentToken(loaded?: Date | string | null): Date {
+	const previous = loaded ? new Date(loaded).getTime() : Number.NaN;
+	const now = Date.now();
+	return new Date(Number.isFinite(previous) ? Math.max(now, previous + 1) : now);
+}
+
 @FavoriteService(BaseEntityEnum.Document)
 @Injectable()
 export class DocumentService extends TenantAwareCrudService<Document> {
@@ -230,6 +243,20 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	}
 
 	/**
+	 * Whether the requester may READ the given row (§3.4: visibility OR ownership OR `DOCS_MANAGE` OR a share grant),
+	 * for rows loaded past `findOneScoped`, such as the descendants a subtree operation walks.
+	 *
+	 * @param document The document row.
+	 * @returns True when the requester may read it.
+	 */
+	public canRead(document: Document): Promise<boolean> {
+		return this.documentAccessService.canRead(
+			{ createdByUserId: document.createdByUserId, visibility: document.visibility },
+			document.id
+		);
+	}
+
+	/**
 	 * Asserts that the requester may MUTATE the given row (§1.6 ownership + the `EDIT` share
 	 * level). The route guard only proves the verb permission — this adds the row-level half,
 	 * so a `VIEW`/`COMMENT` grantee can read a shared document but never write it.
@@ -248,6 +275,37 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		if (!permitted) {
 			throw new ForbiddenException({
 				message: 'You do not have write access to this document',
+				code: DOCS_WRITE_FORBIDDEN
+			});
+		}
+	}
+
+	/**
+	 * The fields that decide who reaches a document — its visibility and its organization — and its lock are its
+	 * owner's (or a `DOCS_MANAGE` holder's) to change, as its shares are (§3.3: a grantee, even at `EDIT`, can never
+	 * re-share). `assertCanWrite` lets an `EDIT` grantee write the document, so without this a grantee could publish
+	 * the owner's PRIVATE page to the whole organization (`visibility`), lift the owner's view-only lock
+	 * (`isLocked`), or move the document out of the owner's organization while keeping their share (`organizationId`).
+	 * A value equal to the current one is not a change: clients resend the selected organization on every save.
+	 *
+	 * @param document The document about to be updated.
+	 * @param input The metadata update.
+	 */
+	private async assertMayChangeOwnerFields(document: Document, input: UpdateDocumentDTO): Promise<void> {
+		const changesOwnerField =
+			(input.visibility !== undefined && input.visibility !== document.visibility) ||
+			(input.isLocked !== undefined && input.isLocked !== !!document.isLocked) ||
+			(input.organizationId !== undefined && input.organizationId !== document.organizationId);
+		if (!changesOwnerField) {
+			return;
+		}
+		const permitted = await this.documentAccessService.canAdministerShares({
+			createdByUserId: document.createdByUserId,
+			visibility: document.visibility
+		});
+		if (!permitted) {
+			throw new ForbiddenException({
+				message: "Only the document's owner may change its visibility, lock or organization",
 				code: DOCS_WRITE_FORBIDDEN
 			});
 		}
@@ -394,7 +452,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 
 		// The create DTO accepts `mentionEmployeeIds`, so it has to mean something: without this
 		// the field was whitelisted, parsed and silently dropped.
-		await this.syncMentions(document.id, input.mentionEmployeeIds);
+		await this.syncMentions(document.id, input.mentionEmployeeIds, document.organizationId ?? organizationId);
 		await this.syncDocumentLinks(document, contentJson);
 		this.subscribeRequesterToDocument(document, EntitySubscriptionTypeEnum.CREATED_ENTITY);
 
@@ -474,6 +532,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	async updateDocument(id: ID, input: UpdateDocumentDTO): Promise<Document> {
 		const document = await this.findOneScoped(id);
 		await this.assertCanWrite(document);
+		await this.assertMayChangeOwnerFields(document, input);
 
 		const updated = await this.save({
 			...document,
@@ -538,9 +597,18 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 			force: input.forceSnapshot === true
 		});
 
+		// 🛑 The loaded `updatedAt` must not travel with the save. It is the concurrency token, and the
+		// snapshot above may have just moved the row (its `version` update stamps `updatedAt`): spread
+		// back, the stale value read as a change to TypeORM, which then WROTE it — the token stayed put
+		// on the first save of every snapshot window, and so did the one the response handed the editor.
+		// Nor can the ORM's own stamp be relied on: on SQLite `CURRENT_TIMESTAMP` has one-second
+		// precision, so two saves inside one second would share a token. The save states its own,
+		// strictly newer than the one it replaces (see `nextContentToken`).
+		const { updatedAt: loadedToken, ...current } = document;
 		const updated = await this.save({
-			...document,
+			...current,
 			id: document.id,
+			updatedAt: nextContentToken(loadedToken),
 			contentJson,
 			// 🛑 NOT `?? document.contentHtml`: reusing the stored HTML when the client omits it
 			// leaves the render cache describing the PREVIOUS revision, which is what read-only
@@ -556,7 +624,7 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 		// (`MentionService.updateEntityMentions`: publish the newly added ids, delete the ones the
 		// editor dropped). Awaited so the fan-out is done before the response, but best-effort by
 		// contract: a failure logs and never rolls back the content save.
-		await this.syncMentions(document.id, input.mentionEmployeeIds);
+		await this.syncMentions(document.id, input.mentionEmployeeIds, document.organizationId);
 		// The `+` cross-link half of the same idea (`05-editor-spec.md` §7.2).
 		await this.syncDocumentLinks(updated, contentJson);
 
@@ -719,13 +787,14 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	/**
 	 * Narrows a set of document ids to those the requester may read, in the caller's
 	 * tenant scope and the GIVEN organization (the same single-query predicate every
-	 * list path uses).
+	 * list path uses). The tree operations hand it to `DocumentTreeService` so a subtree
+	 * archive, unarchive, delete or reorder never reaches a document the caller cannot see.
 	 *
 	 * @param ids The candidate document ids.
 	 * @param organizationId The organization to filter in — the saved document's own scope.
 	 * @returns The subset that resolves inside the read scope.
 	 */
-	private async filterReadableDocumentIds(ids: ID[], organizationId: ID): Promise<ID[]> {
+	public async filterReadableDocumentIds(ids: ID[], organizationId: ID): Promise<ID[]> {
 		const tenantId = RequestContext.currentTenantId();
 
 		const qb = this.typeOrmRepository.createQueryBuilder('document');
@@ -749,13 +818,26 @@ export class DocumentService extends TenantAwareCrudService<Document> {
 	 *
 	 * @param documentId The document the mentions belong to.
 	 * @param mentionEmployeeIds The editor's current mention id set (omitted = no-op).
+	 * @param organizationId The document's organization: the new mentions, their notification and their
+	 *   subscription belong to it (as the task and comment edits pass theirs, develop #10531).
 	 */
-	private async syncMentions(documentId: ID, mentionEmployeeIds?: ID[]): Promise<void> {
+	private async syncMentions(
+		documentId: ID,
+		mentionEmployeeIds: ID[] | undefined,
+		organizationId: ID
+	): Promise<void> {
 		if (!Array.isArray(mentionEmployeeIds)) {
 			return;
 		}
 		try {
-			await this._mentionService.updateEntityMentions(BaseEntityEnum.Document, documentId, mentionEmployeeIds);
+			await this._mentionService.updateEntityMentions(
+				BaseEntityEnum.Document,
+				documentId,
+				mentionEmployeeIds,
+				undefined,
+				undefined,
+				organizationId
+			);
 		} catch (error) {
 			this.logger.warn(`Failed to sync mentions for document ${documentId}: ${(error as Error).message}`);
 		}

@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - develop
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches:
-      - develop
+  # Off by owner decision (2026-09-21): a pull request INTO develop no longer starts a run: the cost
+  # belonged to every commit on the branch being merged, and the run belongs to the merge. The push
+  # trigger above runs the whole workflow when code lands on develop. To restore the PR trigger,
+  # replace this comment with:
+  #   pull_request:
+  #     branches:
+  #       - develop
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -26,7 +29,7 @@ jobs:
     name: Analyze
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     timeout-minutes: 300
 
     steps:
@@ -42,6 +45,6 @@ jobs:
           args: --sarif-file-output=snyk.sarif
 
       - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: snyk.sarif

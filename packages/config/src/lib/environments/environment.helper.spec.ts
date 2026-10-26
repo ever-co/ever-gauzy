@@ -2,7 +2,7 @@ jest.mock('dotenv', () => ({
 	config: jest.fn(() => ({ parsed: {} }))
 }));
 
-import { isEnvFlagEnabled, parseNonNegativeInt } from './environment.helper';
+import { isEnvFlagEnabled, parseNonNegativeInt, resolveAppLink } from './environment.helper';
 
 describe('parseNonNegativeInt', () => {
 	it('parses a plain non-negative integer, keeping an explicit 0', () => {
@@ -59,5 +59,44 @@ describe('isEnvFlagEnabled', () => {
 
 		delete process.env.GAUZY_TEST_FLAG_A;
 		expect(isEnvFlagEnabled('GAUZY_TEST_FLAG_A', 'GAUZY_TEST_FLAG_B')).toBe(true);
+	});
+});
+
+describe('resolveAppLink', () => {
+	const saved = { APP_LINK: process.env['APP_LINK'], CLIENT_BASE_URL: process.env['CLIENT_BASE_URL'] };
+
+	afterEach(() => {
+		for (const [key, value] of Object.entries(saved)) {
+			if (value === undefined) delete process.env[key];
+			else process.env[key] = value;
+		}
+	});
+
+	it('uses APP_LINK when it holds a value', () => {
+		process.env['APP_LINK'] = 'https://example.test/app/';
+		process.env['CLIENT_BASE_URL'] = 'https://other.test';
+		expect(resolveAppLink('http://localhost:4200/')).toBe('https://example.test/app/');
+	});
+
+	it('derives the link from CLIENT_BASE_URL when APP_LINK is empty - the hosted deployments case', () => {
+		// app.gauzy.co carries APP_LINK as an empty key; the fallback used to win and every welcome
+		// email footer pointed at http://localhost:4200/.
+		process.env['APP_LINK'] = '';
+		process.env['CLIENT_BASE_URL'] = 'https://app.gauzy.co';
+		expect(resolveAppLink('http://localhost:4200/')).toBe('https://app.gauzy.co/');
+	});
+
+	it('does not double the trailing slash and ignores whitespace', () => {
+		delete process.env['APP_LINK'];
+		process.env['CLIENT_BASE_URL'] = '  https://stage.gauzy.co//  ';
+		expect(resolveAppLink('http://localhost:4200/')).toBe('https://stage.gauzy.co/');
+	});
+
+	it('falls back only when neither variable is set', () => {
+		delete process.env['APP_LINK'];
+		delete process.env['CLIENT_BASE_URL'];
+		expect(resolveAppLink('http://localhost:4200/')).toBe('http://localhost:4200/');
+		process.env['APP_LINK'] = '   ';
+		expect(resolveAppLink('https://app.gauzy.co/')).toBe('https://app.gauzy.co/');
 	});
 });

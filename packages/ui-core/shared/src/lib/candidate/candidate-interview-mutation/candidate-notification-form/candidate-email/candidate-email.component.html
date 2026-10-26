@@ -1,27 +1,17 @@
 <nb-card class="email-wrap">
-  <nb-card-body class="info-block">
-    @if (isCandidate) {
-      <div>
-        <span>{{
-          'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.TO' | translate
-        }}</span>
+  <nb-card-body class="info-block recipients">
+    <span class="info-label">{{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.TO' | translate }}</span>
+    <span class="recipient-list">
+      @if (isCandidate) {
         <span class="email">{{ selectedCandidate?.user.email }}</span>
-      </div>
-    }
-    @if (!isCandidate) {
-      <div>
-        <span>{{
-          'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.TO' | translate
-        }}</span>
+      } @else {
         @for (employee of employees; track employee) {
-          <span class="email">{{
-            employee?.user.email
-          }}</span>
+          <span class="email">{{ employee?.user.email }}</span>
         }
-      </div>
-    }
+      }
+    </span>
   </nb-card-body>
-  <nb-card-body class="info-block">
+  <nb-card-body class="info-block subject">
     {{ templateData?.title }}
     {{ 'CANDIDATES_PAGE.EDIT_CANDIDATE.INTERVIEW.ON' | translate }}
     {{ dateTemplate }}
@@ -33,6 +23,7 @@
           formControlName="text"
           preset="email"
           outputFormat="html"
+          minHeight="12rem"
           (changed)="onChange($event)"
         ></ga-rich-text-editor>
       </form>

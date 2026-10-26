@@ -3,7 +3,7 @@
 
 <gauzy-select
 	class="w-100"
-	[selectedItem]="selected?.id"
+	[selectedItem]="$safeNavigationMigration(selected?.id)"
 	[items]="versions"
 	bindLabel="number"
 	bindValue="id"

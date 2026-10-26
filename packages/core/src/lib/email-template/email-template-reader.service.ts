@@ -27,7 +27,7 @@ export class EmailTemplateReaderService implements OnModuleInit {
      *
      * @param name
      */
-    public readEmailTemplate(folder: string): Array<Object> {
+    public async readEmailTemplate(folder: string): Promise<Array<Object>> {
         const files = [];
         if (EmailTemplateUtils.fileExists(this.folderPath)) {
             const folderPath = path.join(this.folderPath, folder);
@@ -36,6 +36,6 @@ export class EmailTemplateReaderService implements OnModuleInit {
             EmailTemplateUtils.readdirSync(folderPath, files);
         }
         // Convert files to email templates
-        return EmailTemplateUtils.filesToTemplates(files);
+        return await EmailTemplateUtils.filesToTemplates(files);
     }
 }

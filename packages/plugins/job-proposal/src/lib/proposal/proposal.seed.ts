@@ -40,6 +40,11 @@ export const createDefaultProposals = async (
 		})
 	);
 
+	// Without an employee there is no one to file a proposal under
+	if (!employees?.length) {
+		return [];
+	}
+
 	// Generate proposals for each organization
 	organizations.forEach((organization) => {
 		const tags = tagsMap.get(organization.id) || [];
@@ -51,7 +56,8 @@ export const createDefaultProposals = async (
 			proposal.jobPostContent = faker.person.jobTitle();
 			proposal.organization = organization;
 			proposal.status = faker.helpers.arrayElement(Object.values(ProposalStatusEnum));
-			proposal.tags = [faker.helpers.arrayElement(tags)];
+			// An organization may have no tag (the task seed creates them from issue labels)
+			proposal.tags = tags.length ? [faker.helpers.arrayElement(tags)] : [];
 			proposal.valueDate = moment(faker.date.recent({ days: 0.5 })).startOf('day').toDate();
 			proposal.proposalContent = faker.person.jobDescriptor();
 			proposal.tenant = tenant;
@@ -109,7 +115,8 @@ export const createRandomProposals = async (
 
 		for (const organization of organizations) {
 			const employees = organizationEmployeesMap.get(organization);
-			if (!employees) continue;
+			// `faker.helpers.arrayElement` throws "Cannot get value from empty dataset" on an empty list
+			if (!employees?.length) continue;
 
 			const { id: organizationId } = organization;
 
@@ -122,7 +129,8 @@ export const createRandomProposals = async (
 				proposal.jobPostUrl = faker.internet.url();
 				proposal.jobPostContent = faker.person.jobTitle();
 				proposal.status = faker.helpers.arrayElement(Object.values(ProposalStatusEnum));
-				proposal.tags = [faker.helpers.arrayElement(tags)];
+				// An organization may have no tag (the task seed creates them from issue labels)
+				proposal.tags = tags.length ? [faker.helpers.arrayElement(tags)] : [];
 				proposal.valueDate = moment(faker.date.recent({ days: 0.5 })).startOf('day').toDate();
 				proposal.proposalContent = faker.person.jobDescriptor();
 				proposal.organization = organization;

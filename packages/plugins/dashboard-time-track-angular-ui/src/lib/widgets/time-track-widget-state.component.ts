@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { NbButtonModule, NbIconModule } from '@nebular/theme';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /** Rows rendered while loading when the host asks for no (or a nonsensical) count. */
 const DEFAULT_SKELETON_ROWS = 4;
@@ -28,7 +28,7 @@ const DEFAULT_SKELETON_ROWS = 4;
 	templateUrl: './time-track-widget-state.component.html',
 	styleUrls: ['./time-track-widget-state.component.scss'],
 	standalone: true,
-	imports: [NbButtonModule, NbIconModule, TranslateModule],
+	imports: [NbButtonModule, NbIconModule, TranslatePipe],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TimeTrackWidgetStateComponent {

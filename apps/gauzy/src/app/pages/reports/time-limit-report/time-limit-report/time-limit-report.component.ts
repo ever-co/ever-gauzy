@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
@@ -14,6 +14,7 @@ import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } f
 	selector: 'ga-time-limit-report',
 	templateUrl: './time-limit-report.component.html',
 	styleUrls: ['./time-limit-report.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TimeLimitReportComponent extends BaseSelectorFilterComponent implements OnInit, AfterViewInit {

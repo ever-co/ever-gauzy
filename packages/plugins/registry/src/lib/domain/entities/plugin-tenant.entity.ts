@@ -164,7 +164,9 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		}
 	})
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	// `simple-json` on SQLite, which TypeORM serializes there: declared `text`, the object was handed to better-sqlite3
+	// as it was, and the write failed ("Too few parameter values were provided") under either ORM.
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'simple-json', nullable: true })
 	tenantConfiguration?: Record<string, any>;
 
 	@ApiPropertyOptional({
@@ -176,7 +178,9 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		}
 	})
 	@IsOptional()
-	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'text', nullable: true })
+	// `simple-json` on SQLite, which TypeORM serializes there: declared `text`, the object was handed to better-sqlite3
+	// as it was, and the write failed ("Too few parameter values were provided") under either ORM.
+	@MultiORMColumn({ type: isPostgres() ? 'jsonb' : isMySQL() ? 'json' : 'simple-json', nullable: true })
 	preferences?: Record<string, any>;
 
 	/**
@@ -283,7 +287,9 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'plugin_tenant_allowed_roles',
-		joinColumn: 'pluginTenantId',
+		// The column the marketplace migration created (TypeORM's default for the `plugin_tenants` table);
+		// `pluginTenantId` does not exist, so every MikroORM read or write of this list failed.
+		joinColumn: 'pluginTenantsId',
 		inverseJoinColumn: 'roleId'
 	})
 	@JoinTable({ name: 'plugin_tenant_allowed_roles' })
@@ -298,7 +304,9 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'plugin_tenant_allowed_users',
-		joinColumn: 'pluginTenantId',
+		// The column the marketplace migration created (TypeORM's default for the `plugin_tenants` table);
+		// `pluginTenantId` does not exist, so every MikroORM read or write of this list failed.
+		joinColumn: 'pluginTenantsId',
 		inverseJoinColumn: 'userId'
 	})
 	@JoinTable({ name: 'plugin_tenant_allowed_users' })
@@ -313,7 +321,9 @@ export class PluginTenant extends TenantOrganizationBaseEntity implements IPlugi
 		onDelete: 'CASCADE',
 		owner: true,
 		pivotTable: 'plugin_tenant_denied_users',
-		joinColumn: 'pluginTenantId',
+		// The column the marketplace migration created (TypeORM's default for the `plugin_tenants` table);
+		// `pluginTenantId` does not exist, so every MikroORM read or write of this list failed.
+		joinColumn: 'pluginTenantsId',
 		inverseJoinColumn: 'userId'
 	})
 	@JoinTable({ name: 'plugin_tenant_denied_users' })

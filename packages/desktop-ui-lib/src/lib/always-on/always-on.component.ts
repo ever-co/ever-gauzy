@@ -1,4 +1,4 @@
-import { Component, NgZone, OnDestroy, OnInit, Inject, Renderer2, HostBinding, HostListener } from '@angular/core';
+import { Component, NgZone, OnDestroy, OnInit, Inject, Renderer2, HostBinding, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import {
 	NbIconLibraries,
 	NbLayoutModule,
@@ -22,6 +22,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 	selector: 'gauzy-always-on',
 	templateUrl: './always-on.component.html',
 	styleUrls: ['./always-on.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [
 		NbLayoutModule,
 		NbCardModule,
@@ -82,10 +83,12 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 						switch (state) {
 							case AlwaysOnStateEnum.STARTED:
 								this.start$.next(true);
+								this.running = true;
 								this.loading = false;
 								break;
 							case AlwaysOnStateEnum.STOPPED:
 								this.start$.next(false);
+								this.running = false;
 								this.loading = false;
 								break;
 							case AlwaysOnStateEnum.LOADING:
@@ -111,6 +114,8 @@ export class AlwaysOnComponent implements OnInit, OnDestroy {
 			)
 			.subscribe();
 		if (this.isExpandMode) {
+			// `timer_status` is only answered by the agent, whose widget opens in expand mode; asking
+			// for it from the compact desktop-timer widget would leave `loading` stuck on.
 			this._alwaysOnService.checkTimerStatus$
 				.pipe(
 					tap(() => {

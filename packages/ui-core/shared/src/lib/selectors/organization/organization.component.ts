@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, distinctUntilChanged, filter, map, of, tap } from 'rxjs';
 import { Observable } from 'rxjs';
@@ -21,6 +21,7 @@ import { entitySelectPanelClass } from '../entity-select-panel-class';
 	selector: 'ga-organization-selector',
 	templateUrl: './organization.component.html',
 	styleUrls: ['./organization.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class OrganizationSelectorComponent implements AfterViewInit, OnInit, OnDestroy {

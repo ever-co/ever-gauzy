@@ -11,7 +11,7 @@ name: External Uptime Monitor
 #  homelab cluster. On 2026-08-15 a routing fault at the owner's ISP (Orange, Spain) made
 #  Cloudflare's 188.114.96.0/22 prefix unreachable *from the homelab only*. All gauzy.co
 #  hostnames resolve into that prefix, so every internal probe went red at once and it
-#  looked exactly like "production is down". It was not — real users were served the whole
+#  looked exactly like "production is down". It was not - real users were served the whole
 #  time. Hours were lost chasing a false alarm.
 #
 #  The ONLY value of this workflow is that it observes production from a vantage point
@@ -19,8 +19,10 @@ name: External Uptime Monitor
 #  the exact same uplink, so moving this job to them would silently destroy the entire
 #  point of it while still appearing to work.
 #
-#  If you are here because a CI policy linter flagged `runs-on: ubuntu-latest`, the answer
-#  is to exempt this file, not to change it.
+#  If you are here because a CI policy linter flagged `runs-on: ubuntu-24.04`, the answer
+#  is to exempt this file, not to change it. (It names the image explicitly rather than
+#  `ubuntu-latest` only so that GitHub's move of that label to Ubuntu 26 does not change the
+#  OS underneath the probe - it is still a GitHub-hosted runner.)
 #
 #  COST: ever-co/ever-gauzy is a PUBLIC repository, so GitHub-hosted minutes are free and
 #  unlimited. This costs $0. If the repo ever goes private, reduce the cron to hourly.
@@ -30,6 +32,7 @@ name: External Uptime Monitor
 # with `strict: true` on every PR to develop, so without this the Cspell check goes red.
 # cspell:ignore homelab ttfb blackhole redirs namelookup appconnect starttransfer esac selftest
 # cspell:ignore SIGPIPE
+# cspell:ignore cfallow cfcleanup startswith fromdateiso tolower alnum
 
 on:
   schedule:
@@ -47,7 +50,7 @@ on:
         # Without this, every route into the alerting code is closed off in advance: pull_request
         # forces alerting off, dry_run forces it off, and a manual run against a HEALTHY production
         # takes the recovery branch and exits early. That leaves `gh issue create` / `comment` /
-        # `close` executing for the first time in their lives DURING a real incident — a monitor
+        # `close` executing for the first time in their lives DURING a real incident - a monitor
         # whose alert delivery has only ever been assumed. This input lets a human rehearse the
         # full open → comment → close cycle on demand.
         description: 'Rehearsal only: add an extra CRITICAL target that is expected to FAIL (e.g. https://httpstat.us/503) to exercise the real alert open/comment/close path. This WILL open a real issue.'
@@ -60,11 +63,19 @@ on:
   # This trigger is also the only way to exercise the workflow pre-merge: `workflow_dispatch`
   # is not available until the file exists on the default branch.
   pull_request:
+    # Off by owner decision (2026-09-21): a pull request INTO develop no longer starts this self-test. Here it
+    # proves the YAML parses and the probes work before the change is merged, and develop is the branch the
+    # merge itself is about - so the rehearsal stays for PRs aimed at other branches, and the scheduled and
+    # manual runs below are untouched.
+    branches-ignore:
+      - develop
     paths:
       - '.github/workflows/external-uptime-monitor.yml'
 
 # Least privilege: the workflow default is read-only. `issues: write` is granted narrowly to the
-# one job that needs it (below). GITHUB_TOKEN is provided automatically — NO new secrets required.
+# one job that needs it (below). GITHUB_TOKEN is provided automatically. The only other secret,
+# CLOUDFLARE_UPTIME_ALLOWLIST_TOKEN, is optional and is handed to two steps only (see "Let this
+# runner past Bot Fight Mode").
 permissions:
   contents: read
 
@@ -85,10 +96,11 @@ concurrency:
 jobs:
   probe:
     name: Probe public endpoints from outside the homelab
-    # 🛑 DO NOT CHANGE — see the header block. GitHub-hosted is the whole point.
+    # 🛑 DO NOT CHANGE - see the header block. GitHub-hosted is the whole point (ubuntu-24.04 is
+    # GitHub's hosted image, pinned instead of ubuntu-latest so its Ubuntu 26 migration is a choice).
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     permissions:
@@ -135,14 +147,148 @@ jobs:
           set -euo pipefail
           # Knowing WHERE the probe observed from is what separates "production is down"
           # from "this particular network path is broken".
+          # IPv4 only (-4), like the probes below: the temporary Cloudflare allow rule is created for
+          # exactly this address, so it must be the one the probes leave from.
           IP=""
           for svc in https://api.ipify.org https://checkip.amazonaws.com https://ifconfig.me/ip; do
-            IP=$(curl -sS --connect-timeout 5 --max-time 10 "$svc" 2>/dev/null | tr -d '[:space:]') || IP=""
-            if [ -n "$IP" ]; then break; fi
+            # -f + the IPv4 check: an HTTP error page or any other non-address reply must not stop the
+            # loop, or the allow step gets no usable IP and every probe is challenged.
+            IP=$(curl -4 -fsS --connect-timeout 5 --max-time 10 "$svc" 2>/dev/null | tr -d '[:space:]') || IP=""
+            if printf '%s' "$IP" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then break; fi
+            IP=""
           done
           if [ -z "$IP" ]; then IP="unknown"; fi
           echo "Runner public egress IP: ${IP}"
           echo "ip=${IP}" >> "$GITHUB_OUTPUT"
+
+      # ---------------------------------------------------------------------------------------------
+      #  Why a temporary Cloudflare allow rule (owner decision 2026-10-20, alert issue #11069)
+      #
+      #  From 2026-10-18 ~11:3xZ every probe from a GitHub-hosted (Azure) runner got HTTP 403 "Just a
+      #  moment..." (a Cloudflare managed challenge) on all five targets, while real users were served
+      #  normally - so the monitor stayed red and could no longer see a real outage. ever.team and
+      #  ever.works (same Cloudflare account) started doing the same within the hour; their Security
+      #  events name the cause: Bot Fight Mode, newly switched on, challenging Microsoft's ASN 8075.
+      #
+      #  On the Free plan Bot Fight Mode CANNOT be skipped by a WAF custom rule (no Skip / Allow action
+      #  reaches it - it runs outside the Ruleset Engine). The one thing that takes precedence is an IP
+      #  Access rule that matches first. So, for the length of one run only:
+      #    1. allow THIS runner's own IPv4 egress address on the gauzy.co zone (not account-wide);
+      #    2. probe;
+      #    3. delete the rule in an `always()` step, even if the probe failed or the run was cancelled;
+      #    4. every run also deletes OUR rules older than 20 minutes (longer than the 15-minute job
+      #       timeout, so never a rule a running job still needs), in case a run died before step 3.
+      #  Bot Fight Mode stays on for everyone else.
+      #
+      #  Token: repo secret CLOUDFLARE_UPTIME_ALLOWLIST_TOKEN = a Cloudflare API token limited to zone
+      #  gauzy.co with Zone:Read + Zone:Firewall Services:Edit and nothing else. It reaches only this
+      #  step and the clean-up step. A pull request from a fork can never see it: GitHub gives fork
+      #  PRs no secrets, the job is skipped for fork PRs (`if:` above), and this workflow does not use
+      #  `pull_request_target`. With no token the probe still runs, and a challenged probe is reported
+      #  as "refused by Cloudflare's edge" instead of a bare HTTP 403.
+      # ---------------------------------------------------------------------------------------------
+      - name: Let this runner past Bot Fight Mode (temporary IP Access rule)
+        id: cfallow
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_UPTIME_ALLOWLIST_TOKEN }}
+          CF_ZONE_NAME: gauzy.co
+          EGRESS_IP: ${{ steps.egress.outputs.ip }}
+        run: |
+          # Never fails the run: if Cloudflare cannot be asked, the probe still runs and its report says
+          # who refused it. -e is on (see above), so every call that may fail is guarded.
+          set -euo pipefail
+          # Outputs: zone_id; rule_id only when THIS run created the rule (only then may it delete it);
+          # uncertain=true when a create may have taken effect but could not be confirmed either way.
+          NOTE_TAG='ever-gauzy-uptime-monitor'
+          API='https://api.cloudflare.com/client/v4'
+
+          if [ -z "${CF_TOKEN}" ]; then
+            echo "::warning::CLOUDFLARE_UPTIME_ALLOWLIST_TOKEN is not set, so the probe runs without the temporary allow and Bot Fight Mode will challenge it (HTTP 403)."
+            exit 0
+          fi
+          if ! printf '%s' "${EGRESS_IP}" | grep -Eq '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
+            echo "::warning::Runner egress IP '${EGRESS_IP}' is not an IPv4 address, so no allow rule can be made for it."
+            exit 0
+          fi
+
+          # cf METHOD PATH [JSON]: prints the response body. Fails only when curl itself fails.
+          cf() {
+            local args=(-sS --connect-timeout 10 --max-time 30 -X "$1"
+              -H "Authorization: Bearer ${CF_TOKEN}" -H 'Content-Type: application/json')
+            if [ "$#" -ge 3 ]; then args+=(--data "$3"); fi
+            curl "${args[@]}" "${API}$2"
+          }
+          # cf_errors: Cloudflare's error list from the last response, for a warning line.
+          cf_errors() {
+            local e=''
+            e=$(printf '%s' "${RESP:-}" | jq -c '.errors // empty' 2>/dev/null) || e=''
+            printf '%s' "${e:-no answer from Cloudflare}"
+          }
+
+          RESP=''
+          if ! RESP=$(cf GET "/zones?name=${CF_ZONE_NAME}") \
+              || ! ZONE_ID=$(jq -er '.result[0].id' <<< "${RESP}" 2>/dev/null); then
+            echo "::warning::Could not look up zone ${CF_ZONE_NAME}: $(cf_errors)"
+            exit 0
+          fi
+          echo "zone_id=${ZONE_ID}" >> "$GITHUB_OUTPUT"
+          # On Pro and above, Super Bot Fight Mode replaces Bot Fight Mode and CAN be skipped by a WAF
+          # rule, which would make this whole step unnecessary - so say which plan the zone is on.
+          echo "Zone ${CF_ZONE_NAME} plan: $(jq -r '.result[0].plan.name // "unknown"' <<< "${RESP}" 2>/dev/null || echo unknown)"
+
+          # Sweep: only IP allow rules whose note starts with OUR prefix (only this workflow writes it),
+          # older than 20 minutes. The owner's own rules ("Ruslan Home", rules with no note) show up in
+          # this listing too and never match. Deliberately not keyed on `scope.type`: Cloudflare
+          # documents only "user" / "organization" there, so a zone check could hide our own leftovers.
+          if RESP=$(cf GET "/zones/${ZONE_ID}/firewall/access_rules/rules?per_page=100&mode=whitelist&notes=${NOTE_TAG}")               && jq -e '.success == true' <<< "${RESP}" > /dev/null 2>&1; then
+            STALE=$(jq -r --arg tag "${NOTE_TAG} run " '.result[]?
+              | select(.mode == "whitelist" and .configuration.target == "ip")
+              | select((.notes // "") | startswith($tag))
+              | select((.created_on | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601) < (now - 1200))
+              | .id' <<< "${RESP}" 2>/dev/null || true)
+            for id in ${STALE}; do
+              if cf DELETE "/zones/${ZONE_ID}/firewall/access_rules/rules/${id}" | jq -e '.success == true' > /dev/null 2>&1; then
+                echo "Removed a stale allow rule left by an earlier run: ${id}"
+              else
+                echo "::warning::Could not remove stale allow rule ${id}; the next run will try again."
+              fi
+            done
+          else
+            # An error answer must not read as "nothing to sweep".
+            echo "::warning::Could not list earlier runs' allow rules, so the stale sweep was skipped this run: $(cf_errors)"
+          fi
+
+          NOTE="${NOTE_TAG} run ${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT} - temporary, deleted when the probe ends"
+          DATA=$(jq -nc --arg ip "${EGRESS_IP}" --arg n "${NOTE}" \
+            '{mode: "whitelist", configuration: {target: "ip", value: $ip}, notes: $n}')
+          if RESP=$(cf POST "/zones/${ZONE_ID}/firewall/access_rules/rules" "${DATA}") \
+              && RULE_ID=$(jq -er 'select(.success == true) | .result.id' <<< "${RESP}" 2>/dev/null); then
+            echo "rule_id=${RULE_ID}" >> "$GITHUB_OUTPUT"
+            echo "Temporary allow rule ${RULE_ID} for ${EGRESS_IP} on ${CF_ZONE_NAME}."
+            # IP Access rules apply within seconds; the probe's own retries cover any remaining lag.
+            sleep 5
+          else
+            echo "::warning::Could not confirm the allow rule for ${EGRESS_IP}: $(cf_errors)"
+            # A lost or cut-off answer does not mean nothing was created. The note names this run
+            # attempt, so a rule carrying exactly that note is ours: recover its id so the clean-up step
+            # still deletes it. Anything else (e.g. "already exists": another rule, the owner's or an
+            # overlapping run's, allows this IP) is not ours to delete, and the probe simply runs.
+            if LOOK=$(cf GET "/zones/${ZONE_ID}/firewall/access_rules/rules?per_page=100&mode=whitelist&configuration.target=ip&configuration.value=${EGRESS_IP}") \
+                && jq -e '.success == true' <<< "${LOOK}" > /dev/null 2>&1; then
+              RULE_ID=$(jq -r --arg n "${NOTE}" '[.result[]? | select(.notes == $n) | .id][0] // empty' <<< "${LOOK}")
+              if [ -n "${RULE_ID}" ]; then
+                echo "rule_id=${RULE_ID}" >> "$GITHUB_OUTPUT"
+                echo "The create did take effect: recovered allow rule ${RULE_ID}; the clean-up step deletes it."
+                sleep 5
+              else
+                echo "No rule of this run exists, so there is nothing to clean up; probing without one."
+              fi
+            else
+              # Cannot tell either way: make the run red at the end, so a possible leftover is not silent.
+              echo "uncertain=true" >> "$GITHUB_OUTPUT"
+              echo "::warning::Could not check whether the allow rule exists either; the run will be marked failed at the end."
+            fi
+          fi
 
       - name: Probe endpoints
         id: probe
@@ -163,7 +309,7 @@ jobs:
           # answer 200 for a wrong-image deploy, a different app on the hostname, or a default
           # page. `<ga-app` is the Angular root selector, verified present in the live index.html.
           # Be honest about what this buys: it closes "the content served is not the Gauzy app",
-          # NOT "the app boots in a browser" — the selector is in index.html whether or not the JS
+          # NOT "the app boots in a browser" - the selector is in index.html whether or not the JS
           # bundle loads. It also cannot detect a bad route: this is an SPA, so a bogus path
           # correctly returns the same shell (measured: /bogus-xyz-9931 -> 200, identical bytes).
           TARGETS=(
@@ -179,8 +325,21 @@ jobs:
           # reorder a real target.
           if [ -n "${TEST_TARGET_URL}" ]; then
             TARGETS+=("selftest|critical|${TEST_TARGET_URL}|")
-            echo "::warning::Rehearsal target added: ${TEST_TARGET_URL} — if it fails, this run WILL open a real ${ALERT_LABEL} issue."
+            echo "::warning::Rehearsal target added: ${TEST_TARGET_URL} - if it fails, this run WILL open a real ${ALERT_LABEL} issue."
           fi
+
+          # header_value <name> <header-file>: the value from the FINAL response only. `curl -L -D` writes
+          # every response of a redirect chain, so each status line starts a new block and resets.
+          header_value() {
+            awk -v want="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" '
+              /^HTTP\// { v = "" }
+              {
+                line = $0; sub(/\r$/, "", line)
+                i = index(line, ":")
+                if (i > 0 && tolower(substr(line, 1, i - 1)) == want) v = substr(line, i + 1)
+              }
+              END { sub(/^[ \t]+/, "", v); sub(/[ \t]+$/, "", v); printf "%s", v }' "$2" 2>/dev/null || true
+          }
 
           REPORT="${RUNNER_TEMP}/report.md"
           : > "$REPORT"
@@ -201,15 +360,22 @@ jobs:
 
             for attempt in $(seq 1 "${ATTEMPTS}"); do
               body="${RUNNER_TEMP}/body_${id}.txt"
+              # Reset both per attempt, so a stale challenge page or header from the previous attempt
+              # is never read as this attempt's answer.
               : > "$body"
+              : > "$body.hdr"
 
               # -L: follow redirects (the web apps redirect to their login route).
               # The -w fields are the load-bearing diagnostic: on 2026-08-15 the whole
               # diagnosis hinged on connect=0.000 with a healthy dns, which proves a
               # TCP-level blackhole rather than an application error.
-              w=$(curl -sS -L --max-redirs 5 \
+              # -4: leave from the IPv4 address the temporary Cloudflare allow rule was made for.
+              # -D: response headers, read below to tell "Cloudflare's edge refused us" apart from
+              # "the origin answered with an error".
+              w=$(curl -4 -sS -L --max-redirs 5 \
                     --connect-timeout "${CONNECT_TIMEOUT}" --max-time "${MAX_TIME}" \
                     -A 'ever-gauzy-external-uptime-monitor (+https://github.com/ever-co/ever-gauzy)' \
+                    -D "$body.hdr" \
                     -o "$body" \
                     -w '%{http_code}|%{time_namelookup}|%{time_connect}|%{time_appconnect}|%{time_starttransfer}|%{time_total}|%{remote_ip}' \
                     "$url" 2>/dev/null) || true
@@ -243,6 +409,12 @@ jobs:
 
               if [ "$http_ok" != true ]; then
                 reason="HTTP ${code}"
+                # Still a failure (a monitor that cannot get in cannot vouch for the site), but say who
+                # refused: Cloudflare sets `cf-mitigated: challenge` on every challenge page it serves.
+                mitigated=$(header_value cf-mitigated "$body.hdr" | tr -cd '[:alnum:]_-')
+                if [ -n "$mitigated" ]; then
+                  reason="${reason}, refused by Cloudflare's edge (cf-mitigated: ${mitigated}); the origin was not reached"
+                fi
               else
                 reason="body assertion failed (HTTP ${code}, expected /${expect}/)"
               fi
@@ -256,7 +428,7 @@ jobs:
             if [ "$ok" = true ]; then
               verdict="✅ up"
             else
-              verdict="❌ DOWN — ${reason}"
+              verdict="❌ DOWN - ${reason}"
               if [ "$sev" = "critical" ]; then
                 FAILED_CRITICAL="${FAILED_CRITICAL}${id} "
               else
@@ -277,7 +449,7 @@ jobs:
           FAILED_WARN=$(echo "$FAILED_WARN" | xargs || true)
 
           # Fingerprint of the exact failing set, so a sustained outage does not produce a
-          # comment every 15 minutes — we only comment when the situation actually changes.
+          # comment every 15 minutes - we only comment when the situation actually changes.
           FP=$(printf '%s|%s' "$FAILED_CRITICAL" "$FAILED_WARN" | sha256sum | cut -c1-12)
 
           {
@@ -290,6 +462,11 @@ jobs:
             echo "### External uptime probe"
             echo
             echo "Observed from GitHub-hosted runner egress IP \`${EGRESS_IP}\` (outside the homelab)."
+            if [ -n "${CF_ALLOW_RULE}" ]; then
+              echo "Temporary Cloudflare allow rule for that IP on gauzy.co: \`${CF_ALLOW_RULE}\` (removed by the next step)."
+            else
+              echo "No temporary Cloudflare allow rule this run (see the step before the probe), so Bot Fight Mode may challenge the probe."
+            fi
             echo
             cat "$REPORT"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -297,8 +474,36 @@ jobs:
           echo "failed_critical='${FAILED_CRITICAL}' failed_warn='${FAILED_WARN}' fp=${FP}"
         env:
           EGRESS_IP: ${{ steps.egress.outputs.ip }}
+          CF_ALLOW_RULE: ${{ steps.cfallow.outputs.rule_id }}
           # Empty on every trigger except a manual rehearsal run. Declared here so `set -u` sees it.
           TEST_TARGET_URL: ${{ github.event.inputs.test_target_url }}
+
+      - name: Remove the temporary Cloudflare allow rule
+        id: cfcleanup
+        # always(): also when the probe failed, its own tooling broke, or the run was cancelled. Placed
+        # straight after the probe so the IP is allowed for as short a time as possible. It never fails
+        # itself (that would skip the alert steps below); a rule it could not remove fails the run in
+        # the last step instead, and a later run's sweep removes it.
+        if: always() && steps.cfallow.outputs.rule_id != ''
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_UPTIME_ALLOWLIST_TOKEN }}
+          ZONE_ID: ${{ steps.cfallow.outputs.zone_id }}
+          RULE_ID: ${{ steps.cfallow.outputs.rule_id }}
+        run: |
+          set -euo pipefail
+          URL="https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/firewall/access_rules/rules/${RULE_ID}"
+          for attempt in 1 2 3; do
+            RESP=$(curl -sS --connect-timeout 10 --max-time 30 -X DELETE \
+                     -H "Authorization: Bearer ${CF_TOKEN}" "${URL}" 2>/dev/null) || RESP=''
+            if jq -e '.success == true' <<< "${RESP}" > /dev/null 2>&1; then
+              echo "Removed temporary allow rule ${RULE_ID}."
+              echo "removed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "::warning::Attempt ${attempt}/3 to remove allow rule ${RULE_ID} failed: $(jq -c '.errors' <<< "${RESP}" 2>/dev/null || echo 'no response')"
+            sleep 5
+          done
+          echo "removed=false" >> "$GITHUB_OUTPUT"
 
       - name: Ensure alert label exists
         if: steps.mode.outputs.alerting == 'on'
@@ -328,8 +533,8 @@ jobs:
           {
             echo "## 🔴 Production unreachable from OUTSIDE the homelab"
             echo
-            echo "A GitHub-hosted runner — which is **not** on the homelab network or the owner's"
-            echo "ISP uplink — could not reach the endpoint(s) below on **${ATTEMPTS} consecutive**"
+            echo "A GitHub-hosted runner - which is **not** on the homelab network or the owner's"
+            echo "ISP uplink - could not reach the endpoint(s) below on **${ATTEMPTS} consecutive**"
             echo "attempts, ${RETRY_SLEEP}s apart."
             echo
             echo "Because this vantage point is external, this is evidence of a **real, user-facing**"
@@ -350,6 +555,8 @@ jobs:
             echo "  blackhole (routing/prefix/firewall), **not** an application fault."
             echo "- \`connect\` fine but \`tls\` = 0 → TLS handshake failed (certificate/SNI/edge)."
             echo "- All timings fine but a non-2xx code or a failed body assertion → the app itself."
+            echo "- HTTP 403 \"refused by Cloudflare's edge (cf-mitigated: ...)\" → Cloudflare challenged the probe"
+            echo "  itself (bot protection); the origin never saw it. Check the run's temporary allow step first."
             echo
             echo "This issue is updated in place; it is **not** reopened every run. It closes"
             echo "automatically when the probe recovers."
@@ -357,7 +564,7 @@ jobs:
             echo "<!-- uptime-fingerprint: ${FINGERPRINT} -->"
           } > "$BODY"
 
-          # A FAILED lookup must never be mistaken for "no issue is open" — that would open a
+          # A FAILED lookup must never be mistaken for "no issue is open" - that would open a
           # duplicate issue on every run during an API blip, which is exactly the spam that gets
           # monitors muted. Distinguish command failure from an empty result.
           if ! NUM=$(gh issue list --repo "${GITHUB_REPOSITORY}" --label "${ALERT_LABEL}" \
@@ -367,7 +574,7 @@ jobs:
           fi
 
           if [ -z "${NUM}" ]; then
-            echo "No open alert issue — creating one."
+            echo "No open alert issue - creating one."
             gh issue create --repo "${GITHUB_REPOSITORY}" \
               --title "🔴 External uptime alert: ${FAILED_CRITICAL} unreachable from outside the homelab" \
               --label "${ALERT_LABEL}" \
@@ -383,11 +590,11 @@ jobs:
             fi
             # No pipe in a decision. Under `pipefail`, a producer killed by SIGPIPE can make an
             # already-MATCHED grep report failure, which would post a redundant comment on every
-            # run of a steady outage — defeating the de-duplication exactly when it matters most.
+            # run of a steady outage - defeating the de-duplication exactly when it matters most.
             if grep -q "uptime-fingerprint: ${FINGERPRINT}" <<< "${LAST}"; then
-              echo "State unchanged (fingerprint ${FINGERPRINT}) — not commenting, to avoid issue spam."
+              echo "State unchanged (fingerprint ${FINGERPRINT}) - not commenting, to avoid issue spam."
             else
-              echo "State changed — adding one comment."
+              echo "State changed - adding one comment."
               gh issue comment "${NUM}" --repo "${GITHUB_REPOSITORY}" --body-file "$BODY"
             fi
           fi
@@ -408,7 +615,7 @@ jobs:
             exit 1
           fi
           if [ -z "${NUM}" ]; then
-            echo "All critical endpoints healthy and no alert issue open — nothing to do."
+            echo "All critical endpoints healthy and no alert issue open - nothing to do."
             exit 0
           fi
 
@@ -430,11 +637,11 @@ jobs:
 
           # Never let a failed recovery comment block the close. Under `set -e` a transient
           # secondary-rate-limit on the comment would abort this step BEFORE the close below,
-          # leaving a stale "production is down" issue open on a recovered service — exactly the
+          # leaving a stale "production is down" issue open on a recovered service - exactly the
           # outcome the comment above says this step exists to prevent. Warn, then close anyway.
           gh issue comment "${NUM}" --repo "${GITHUB_REPOSITORY}" --body-file "$BODY" \
             || echo "::warning::Recovery comment on #${NUM} failed; closing the issue regardless."
-          # The close itself stays fatal under -e — that one must never fail silently.
+          # The close itself stays fatal under -e - that one must never fail silently.
           gh issue close "${NUM}" --repo "${GITHUB_REPOSITORY}" --reason completed
 
       - name: Fail the run if a critical endpoint is down
@@ -451,4 +658,28 @@ jobs:
         # broke" becomes indistinguishable from "production is down". Say so explicitly.
         if: failure() && steps.probe.outcome == 'failure'
         run: |
-          echo "::error::The probe step itself failed — this run is NOT evidence about production. Investigate the runner/tooling, not the endpoints."
+          echo "::error::The probe step itself failed - this run is NOT evidence about production. Investigate the runner/tooling, not the endpoints."
+
+      - name: Fail the run if the temporary allow rule was left behind
+        # A leftover rule lets one Azure IP past Bot Fight Mode on gauzy.co until a later run's sweep
+        # removes it. Rare, but it must be loud, not a warning in a log. Two ways to get here: this run
+        # owns a rule (rule_id) that the clean-up step did not confirm removed - it failed, or it was
+        # interrupted before saying so - or the allow step could not tell whether its create took
+        # effect at all. (A runner lost outright runs no later step; the next runs' sweep covers that.)
+        if: >-
+          always() && (
+            (steps.cfallow.outputs.rule_id != '' && steps.cfcleanup.outputs.removed != 'true')
+            || steps.cfallow.outputs.uncertain == 'true'
+          )
+        env:
+          RULE_ID: ${{ steps.cfallow.outputs.rule_id }}
+        run: |
+          # A run's sweep removes only rules older than 20 minutes, and the next scheduled run starts
+          # ~15 minutes after this one, so it is usually the SECOND run after this one (~30 minutes).
+          WHERE="Cloudflare dashboard → gauzy.co → Security → WAF → Tools → IP Access Rules, note 'ever-gauzy-uptime-monitor run ${GITHUB_RUN_ID}/${GITHUB_RUN_ATTEMPT}'"
+          if [ -n "${RULE_ID}" ]; then
+            echo "::error::Temporary Cloudflare allow rule ${RULE_ID} on gauzy.co could not be removed. A later run deletes it once it is older than 20 minutes (usually the second scheduled run after this one, ~30 minutes). To remove it now: ${WHERE}."
+          else
+            echo "::error::Could not confirm whether this run created a temporary Cloudflare allow rule on gauzy.co. If it did, a later run deletes it once it is older than 20 minutes (~30 minutes). To check now: ${WHERE}."
+          fi
+          exit 1

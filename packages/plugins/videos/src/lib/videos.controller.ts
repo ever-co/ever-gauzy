@@ -4,6 +4,7 @@ import {
 	FileStorage,
 	FileStorageFactory,
 	LazyFileInterceptor,
+	readStorageFileAsBuffer,
 	shouldScanForMarkup,
 	videoUploadFileFilter,
 	BaseQueryDTO,
@@ -45,6 +46,7 @@ import { GetVideoCountQuery } from './queries/get-video-count.query';
 import { GetVideoQuery } from './queries/get-video.query';
 import { GetVideosQuery } from './queries/get-videos.query';
 import { IDeleteVideo, IVideo } from './video.model';
+import { videoUploaderOf } from './video-uploader';
 
 @ApiTags('Video Plugin')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
@@ -148,7 +150,10 @@ export class VideosController {
 			// large uploads, which would have to be held in memory to read — see shouldScanForMarkup.
 			if (shouldScanForMarkup(file.size)) {
 				try {
-					assertNotMarkupContent(await provider.getFile(file.key));
+					// As bytes whatever the provider answers: the S3 family returns the SDK's body stream, which the
+					// markup check used to stringify as "[object Object]" (passing every upload) and never consumed.
+					// A file that cannot be read back fails the upload (and is deleted) rather than skipping the check.
+					assertNotMarkupContent(await readStorageFileAsBuffer(provider, file.key));
 				} catch (error) {
 					try {
 						await provider.deleteFile(file.key);
@@ -162,7 +167,7 @@ export class VideosController {
 			// Extract necessary properties from the request body
 			const tenantId = input.tenantId || RequestContext.currentTenantId();
 			const organizationId = input.organizationId;
-			const uploadedById = input.uploadedById || RequestContext.currentEmployeeId();
+			const uploadedById = videoUploaderOf(input.uploadedById);
 			const storageProvider = provider.name.toUpperCase() as FileStorageProviderEnum;
 
 			// Create a new video record

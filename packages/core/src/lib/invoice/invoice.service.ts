@@ -1,9 +1,19 @@
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { Invoice } from './invoice.entity';
-import { Between, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Between, FindOperator, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EmailService } from './../email-send/email.service';
-import { IInvoice, IOrganization, InvoiceStats, LanguagesEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	DecimalString,
+	ID,
+	IInvoice,
+	IOrganization,
+	InvoiceStats,
+	LanguagesEnum
+} from '@gauzy/contracts';
+import { isPlainObject } from '@gauzy/utils';
+import { addDecimalStrings, normalizeDecimalString } from '../money/decimal';
 import { signPurposeToken, TokenPurposeEnum } from '../auth/purpose-token';
 import { MultiORMEnum } from './../core/utils';
 import { RequestContext } from './../core/context';
@@ -16,7 +26,41 @@ import { generateInvoicePdfDefinition, generateInvoicePaymentPdfDefinition } fro
 import { OrganizationService } from './../organization';
 import { TypeOrmInvoiceRepository } from './repository/type-orm-invoice.repository';
 import { MikroOrmInvoiceRepository } from './repository/mikro-orm-invoice.repository';
+import { FavoriteService } from '../core/decorators';
 
+/**
+ * What sending a document by e-mail did.
+ *
+ * `reason` names the step that failed when the message was not sent: the estimate e-mail record or the
+ * organization could not be prepared, the PDF could not be generated, or the mail transport refused it.
+ */
+export interface IInvoiceEmailOutcome {
+	/** Whether the message was handed to the mail transport. */
+	sent: boolean;
+	/** The step that failed, when it was not. */
+	reason?: 'EMAIL_NOT_PREPARED' | 'DOCUMENT_NOT_GENERATED' | 'EMAIL_NOT_SENT';
+}
+
+/** One total of invoice values in one currency: how many documents, and their exact sum. */
+export interface IInvoiceCurrencyTotal {
+	currency: string;
+	count: number;
+	totalValue: DecimalString;
+}
+
+/** One status's total in one currency. */
+export interface IInvoiceStatusTotal extends IInvoiceCurrencyTotal {
+	status: string | null;
+}
+
+/** One organization's invoices (or estimates), counted and totalled per currency and per status. */
+export interface IInvoiceStatistics {
+	count: number;
+	totals: IInvoiceCurrencyTotal[];
+	byStatus: IInvoiceStatusTotal[];
+}
+
+@FavoriteService(BaseEntityEnum.Invoice)
 @Injectable()
 export class InvoiceService extends TenantAwareCrudService<Invoice> {
 	constructor(
@@ -40,8 +84,10 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const knex = this.mikroOrmRepository.getEntityManager().getKnex();
+				// Raw knex bypasses the soft-delete filter that TypeORM's query builder applies
 				const result = await knex('invoice')
 					.where('isEstimate', false)
+					.whereNull('deletedAt')
 					.count('id as count')
 					.sum('totalValue as amount')
 					.first();
@@ -65,6 +111,73 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				};
 			}
 		}
+	}
+
+	/**
+	 * One organization's invoices — or, when asked, its estimates — counted and totalled per currency and per
+	 * status.
+	 *
+	 * Scoped where `getInvoiceStats` is not: that read feeds the platform-wide statistics and counts every
+	 * tenant's invoices together, and is left as it is. This one reads only the credential's tenant (the CRUD
+	 * read applies it) and the one organization named, and refuses to run without an organization rather
+	 * than widening to the whole tenant. A soft-deleted document is not counted, because the CRUD read does
+	 * not return it.
+	 *
+	 * Money is summed as exact decimal strings and never across currencies: an invoice in euros and one in
+	 * dollars have no total. A document with no stored total counts and adds nothing.
+	 *
+	 * @param input The organization, and whether to read estimates instead of invoices (default: invoices).
+	 * @returns The count, the totals per currency, and the totals per status and currency.
+	 */
+	async getStatistics(input: {
+		tenantId?: ID;
+		organizationId?: ID;
+		isEstimate?: boolean;
+	}): Promise<IInvoiceStatistics> {
+		const { organizationId } = input ?? {};
+
+		if (!organizationId) {
+			throw new BadRequestException('INVOICE_ORGANIZATION_REQUIRED: invoice statistics are per organization.');
+		}
+
+		const rows = await this.find({
+			where: { organizationId, isEstimate: input.isEstimate === true },
+			select: { id: true, status: true, currency: true, totalValue: true }
+		});
+
+		const totals = new Map<string, IInvoiceCurrencyTotal>();
+		const byStatus = new Map<string, IInvoiceStatusTotal>();
+
+		for (const row of rows ?? []) {
+			const currency = row.currency;
+			const status = row.status ?? null;
+			// The column is numeric; a driver may hand it over as a number or as text, and a document may hold
+			// none. Each is read as the exact decimal it spells.
+			const value = normalizeDecimalString(row.totalValue ?? 0);
+
+			const total = totals.get(currency) ?? { currency, count: 0, totalValue: '0' };
+			total.count += 1;
+			total.totalValue = addDecimalStrings(total.totalValue, value);
+			totals.set(currency, total);
+
+			const key = `${status}|${currency}`;
+			const bucket = byStatus.get(key) ?? { status, currency, count: 0, totalValue: '0' };
+			bucket.count += 1;
+			bucket.totalValue = addDecimalStrings(bucket.totalValue, value);
+			byStatus.set(key, bucket);
+		}
+
+		return {
+			count: rows?.length ?? 0,
+			totals: Array.from(totals.values()).map((total) => ({
+				...total,
+				totalValue: normalizeDecimalString(total.totalValue)
+			})),
+			byStatus: Array.from(byStatus.values()).map((bucket) => ({
+				...bucket,
+				totalValue: normalizeDecimalString(bucket.totalValue)
+			}))
+		};
 	}
 
 	/**
@@ -94,7 +207,10 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				case MultiORMEnum.TypeORM:
 				default: {
 					const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+					// Soft-deleted invoices included: they keep their number under UNIQUE(tenantId, invoiceNumber),
+					// so leaving them out (the query builder's default) handed out a number already taken
 					return await query
+						.withDeleted()
 						.select(`COALESCE(MAX(${query.alias}.invoiceNumber), 0)`, 'max')
 						.where(`${query.alias}.tenantId = :tenantId`, { tenantId })
 						.getRawOne();
@@ -105,6 +221,18 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		}
 	}
 
+	/**
+	 * Sends an invoice or an estimate to a recipient, with the document attached as a PDF.
+	 *
+	 * A failure is logged and never raised — the route answers an accepted status whatever happened, and
+	 * that is unchanged. What the method now also does is **say** what happened: a caller that records a
+	 * document and then sends it (an order's quote) has to be able to report the send's outcome without
+	 * failing the write it already made, and a send that answered nothing could only be reported as
+	 * "attempted". The reason is a fixed code rather than the transport's own text, which can carry the
+	 * mail server's details.
+	 *
+	 * @returns Whether the message was handed to the mail transport, and when it was not, which step failed.
+	 */
 	async sendEmail(
 		languageCode: LanguagesEnum,
 		email: string,
@@ -113,17 +241,19 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 		isEstimate: boolean,
 		origin: string,
 		organizationId: string
-	) {
+	): Promise<IInvoiceEmailOutcome> {
 		try {
 			//create estimate email record
 			const estimateEmail = await this.estimateEmailService.createEstimateEmail(invoiceId, email);
 			const organization: IOrganization = await this.organizationService.findOneByIdString(organizationId);
+			let step: IInvoiceEmailOutcome['reason'] = 'DOCUMENT_NOT_GENERATED';
 			try {
 				//generate estimate/invoice pdf and attached in email
 				const buffer: Buffer = await this.generateInvoicePdf(invoiceId, languageCode);
 				if (!buffer) throw new Error('PDF generation failed');
 				const base64 = buffer?.toString('base64');
 
+				step = 'EMAIL_NOT_SENT';
 				await this.emailService.emailInvoice(
 					languageCode,
 					email,
@@ -135,11 +265,17 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					origin,
 					organization
 				);
+
+				return { sent: true };
 			} catch (error) {
 				console.log(`Error while sending estimate email ${invoiceNumber}: %s`, error?.message);
+
+				return { sent: false, reason: step };
 			}
 		} catch (error) {
 			console.log(`Error while creating estimate email for invoice ${invoiceId}: %s`, error?.message);
+
+			return { sent: false, reason: 'EMAIL_NOT_PREPARED' };
 		}
 	}
 
@@ -310,6 +446,8 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					id: In(where.toContact)
 				};
 			}
+			// The end bounds below cover their whole last second: the add/edit forms save dates with
+			// `endOf('day')` (23:59:59.999), which a `HH:mm:ss` bound of 23:59:59 would exclude.
 			if ('invoiceDate' in where) {
 				const { invoiceDate } = where;
 				const { startDate, endDate } = invoiceDate;
@@ -317,7 +455,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				if (startDate && endDate) {
 					filter.where.invoiceDate = Between(
 						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
-						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
+						moment.utc(endDate).endOf('second').format('YYYY-MM-DD HH:mm:ss.SSS')
 					);
 				} else {
 					filter.where.invoiceDate = Between(
@@ -333,7 +471,7 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				if (startDate && endDate) {
 					filter.where.dueDate = Between(
 						moment.utc(startDate).format('YYYY-MM-DD HH:mm:ss'),
-						moment.utc(endDate).format('YYYY-MM-DD HH:mm:ss')
+						moment.utc(endDate).endOf('second').format('YYYY-MM-DD HH:mm:ss.SSS')
 					);
 				} else {
 					filter.where.dueDate = Between(
@@ -343,8 +481,11 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 				}
 			}
 
-			if ('totalValue' in where && where.totalValue) {
-				const { min, max } = where.totalValue as { min?: number; max?: number };
+			// Only a `{ min, max }` range is rewritten: a scalar is the exact amount the Invoices search form sends.
+			if (isPlainObject(where.totalValue) && !(where.totalValue instanceof FindOperator)) {
+				const range = where.totalValue as { min?: unknown; max?: unknown };
+				const min = this.toRangeBound(range.min);
+				const max = this.toRangeBound(range.max);
 
 				if (min !== undefined && max !== undefined && min > max) {
 					throw new BadRequestException('Minimum value cannot be greater than maximum value');
@@ -356,9 +497,25 @@ export class InvoiceService extends TenantAwareCrudService<Invoice> {
 					filter.where.totalValue = MoreThanOrEqual(min);
 				} else if (max !== undefined) {
 					filter.where.totalValue = LessThanOrEqual(max);
+				} else {
+					delete filter.where.totalValue;
 				}
 			}
 		}
 		return super.paginate(filter);
+	}
+
+	/**
+	 * Reads one bound of a range filter as a number.
+	 *
+	 * Bounds come from the query string as text, which compares as text ('50' > '100'), and a bound the
+	 * client left empty comes as `false` (it sends `null`, which `convertNativeLeaf` maps to `false`).
+	 *
+	 * @param value - The `min` or `max` of the range, as received.
+	 * @returns A finite number, or `undefined` for a missing, empty or non-numeric bound.
+	 */
+	private toRangeBound(value: unknown): number | undefined {
+		const bound = typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
+		return typeof bound === 'number' && Number.isFinite(bound) ? bound : undefined;
 	}
 }

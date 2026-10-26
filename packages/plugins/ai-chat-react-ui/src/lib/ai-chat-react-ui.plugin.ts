@@ -2,7 +2,7 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, PluginRouteInput } from '@gauzy/plugin-ui';
 import { PLAYGROUND_ROUTE } from './playground.routes';
 import { AI_CHAT_SETTINGS_ROUTE } from './settings';
-import { provideAiChatSidebar } from './provide-ai-chat-sidebar';
+import { AI_CHAT_REACT_UI_PLUGIN_ID, provideAiChatSidebar } from './provide-ai-chat-sidebar';
 import en from '../i18n/en.json';
 
 /**
@@ -22,7 +22,7 @@ import en from '../i18n/en.json';
  * The chat talks to the `@gauzy/plugin-ai-chat` backend plugin
  * (`POST /api/ai-chat`, Vercel AI SDK UI message stream).
  */
-export const AiChatReactUiPlugin = defineDeclarativePlugin('ai-chat-react-ui', {
+export const AiChatReactUiPlugin = defineDeclarativePlugin(AI_CHAT_REACT_UI_PLUGIN_ID, {
 	// ── Versioning & Compatibility ────────────────────────────────
 	version: '1.0.0',
 
@@ -58,6 +58,9 @@ export const AiChatReactUiPlugin = defineDeclarativePlugin('ai-chat-react-ui', {
 		title: 'AI Chat',
 		description: 'Configure the AI Chat assistant widget in the sidebar.',
 		category: 'ai',
+		// `chatEnabled` is read by `provideAiChatSidebar`. Whether the chat opens expanded is
+		// not a plugin setting: it is the user's own persisted preference (`ChatSidebarService`),
+		// and the sidebar registers expanded for users who have none yet.
 		fields: [
 			{
 				key: 'chatEnabled',
@@ -65,13 +68,6 @@ export const AiChatReactUiPlugin = defineDeclarativePlugin('ai-chat-react-ui', {
 				label: 'Enable AI Chat',
 				defaultValue: true,
 				order: 1
-			},
-			{
-				key: 'defaultExpanded',
-				type: 'boolean',
-				label: 'Open chat expanded by default',
-				defaultValue: false,
-				order: 2
 			}
 		]
 	},

@@ -1,0 +1,56 @@
+# The estimate email domain's root fields.
+#
+# `Query` and `Mutation` are declared by the kernel and extended here: a root operation type exists once
+# for the whole platform, so a domain adds fields to it and never declares its own.
+#
+# The controller is mounted at `/api/estimate-email` and serves one route, `GET /validate`, and it is
+# **open**: the controller carries `@Public()` and names no guard and no permission, because the caller is
+# the recipient of an invitation who has no account on this installation. The field below mirrors that
+# exactly — it states no permission and adds no guard of its own, because a guard here would refuse a
+# caller the REST route serves, which is the asymmetry the two-protocol rule forbids.
+#
+# **The read verifies rather than filters.** The delivered route hands the service the address and the
+# token, the service verifies the token's signature against the installation's own secret and reads the
+# row the verified claims name — the tenant, the organization, the address and the token together — and
+# refuses an invitation whose validity has lapsed. That is a read that resolves and checks, not a page of
+# rows, which is why it is a root field of its own and why it is a `Query` although a caller might expect
+# a mutation: nothing is written.
+#
+# **The answer is the row and never a refusal-shaped null.** The delivered read raises when the token does
+# not verify, when no row matches the verified claims, or when the invitation has expired, and the field
+# answers a non-null row for the same reason: an invitation that cannot be validated is not an invitation
+# with no data, it is a request the caller could not make correctly — and a client that received `null`
+# for a forged token and `null` for an expired one could not tell the recipient which of the two had
+# happened.
+#
+# **One capability, no count, and no write.** The controller serves no list, no node route, no count and no
+# mutation, so this surface declares none: an estimate email is created by the platform's own invoicing
+# path when an estimate is sent, and there is nothing for a caller to page, count or change.
+#
+# **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for the
+# GraphQL endpoint and its resolvers, and the check that holds every resolver to it is a platform rule
+# with no exception for an open route. The consequence is stated rather than discovered: an invitation
+# recipient presents no credential, so the guard resolves the capability for a scope with no tenant and
+# the field is refused for exactly the caller this read exists for. The delivered REST route is not gated
+# and keeps serving that caller, and the capability's own exemption list — for surfaces the gate cannot
+# evaluate — is outside this delivery's scope.
+
+extend type Query {
+	"""
+	The invitation one token names, verified against the installation's own signing secret and answered
+	only while it is still valid.
+
+	The address is required beside the token because the delivered read verifies the token's claims
+	against the row it finds, address included: a token presented with a different address matches no
+	row. `relations` is the delivered query's own member and states which of the two relations the answer
+	should carry, because the read joins only what it is asked for.
+	"""
+	estimateEmailValidation(
+		"The address the invitation was sent to. Verified against the token's own claim."
+		email: String!
+		"The signed token the invitation carried."
+		token: String!
+		"The relations to join onto the answer. Omit for none, which is the delivered default."
+		relations: [EstimateEmailRelation!]
+	): EstimateEmail!
+}

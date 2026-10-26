@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ITreeOptions, TreeComponent, TreeModel, TreeNode, TREE_ACTIONS } from '@ali-hm/angular-tree-component';
 import { NbDialogService, NbMenuItem, NbMenuService } from '@nebular/theme';
@@ -21,6 +21,7 @@ import {
 	docsActionMenuSignature,
 	docsActionOf,
 	DocsActionId,
+	DOCS_ACTION_MENU_CLASS,
 	IDocsActionMenuContext
 } from '../actions/docs-action-menu';
 import { DocsRowActionsService } from '../actions/docs-row-actions.service';
@@ -65,6 +66,7 @@ const TREE_KEY = {
 	selector: 'gz-docs-tree',
 	templateUrl: './docs-tree.component.html',
 	styleUrls: ['./docs-tree.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsTreeComponent extends TranslationBaseComponent implements OnInit {
@@ -74,6 +76,7 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 	public recents: IRecentEntry[] = [];
 	public favorites$: Observable<{ title: string; link?: string; icon?: unknown }[]>;
 	public readonly kindEnum = DocumentKindEnum;
+	protected readonly actionMenuClass = DOCS_ACTION_MENU_CLASS;
 
 	/** Public: the empty-state create buttons are gated on it in the template. */
 	public canCreate = false;
@@ -105,6 +108,22 @@ export class DocsTreeComponent extends TranslationBaseComponent implements OnIni
 		 * is also what stops the page-level shortcut map from seeing these events.
 		 */
 		actionMapping: {
+			/**
+			 * 🛑 The node kebab cannot stop `click` propagation itself: `nbContextMenu`'s
+			 * click trigger listens on `document`, so a stopped click never opens the menu
+			 * (the Shift+F10 path clicks the same button). The node skips it here instead.
+			 *
+			 * The keyboard is the opposite case: the tree handles Enter/Space on `body` and
+			 * calls `preventDefault()` for them, which would cancel the button's own click.
+			 * So the button's template stops Enter/Space propagation — WITHOUT preventing
+			 * the default, which is what opens the menu.
+			 */
+			mouse: {
+				click: (tree: TreeModel, node: TreeNode, event: MouseEvent) => {
+					if ((event?.target as HTMLElement | null)?.closest?.('.docs-tree-node-menu')) return;
+					TREE_ACTIONS.TOGGLE_ACTIVE(tree, node, event);
+				}
+			},
 			keys: {
 				[TREE_KEY.F2]: (_tree: TreeModel, node: TreeNode) => void this.runNodeAction('rename', node),
 				// Archive, not delete: `DELETE /documents/:id` answers 409

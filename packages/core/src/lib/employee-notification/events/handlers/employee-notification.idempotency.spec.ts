@@ -95,15 +95,19 @@ describe('EmployeeCreateNotificationEventHandler idempotency', () => {
 		tenant = createTenantFixture();
 		repository = new NotificationRepository();
 
+		const everyTypeOn = {
+			payment: true,
+			assignment: true,
+			comment: true,
+			mention: true,
+			message: true,
+			invitation: true
+		};
 		const settingService = {
-			findOneByWhereOptions: jest.fn().mockResolvedValue({
-				payment: true,
-				assignment: true,
-				comment: true,
-				mention: true,
-				message: true,
-				invitation: true
-			})
+			// The service reads the RECEIVER's settings through findByEmployee (develop #10495); the plain
+			// read is kept for anything that still calls it.
+			findByEmployee: jest.fn().mockResolvedValue(everyTypeOn),
+			findOneByWhereOptions: jest.fn().mockResolvedValue(everyTypeOn)
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} as any;
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -43,8 +43,15 @@
 					nbSpinnerSize="giant"
 					nbSpinnerStatus="primary"
 				>
+					<!--
+						The rows used to sit inside a bare `<ng-template class="table-template">`.
+						An ng-template with no structural directive and no ngTemplateOutlet is
+						never instantiated, so this branch rendered NOTHING - which is the
+						branch taken whenever the report has data. The page was blank exactly
+						when there was something to show, and only the empty state below ever
+						appeared.
+					-->
 					@if (dailyData?.length > 0) {
-						<ng-template class="table-template">
 							@for (day of dailyData; track day) {
 								<nb-card class="card">
 									<nb-card-header class="card-title">
@@ -64,7 +71,7 @@
 																<ng-container
 																	[ngTemplateOutlet]="employeeEl"
 																	[ngTemplateOutletContext]="{
-																		$implicit: timeLogRow?.employee
+																		$implicit: $safeNavigationMigration(timeLogRow?.employee)
 																	}"
 																>
 																</ng-container>
@@ -78,7 +85,7 @@
 																<ng-container
 																	[ngTemplateOutlet]="projectEl"
 																	[ngTemplateOutletContext]="{
-																		$implicit: timeLogRow?.project
+																		$implicit: $safeNavigationMigration(timeLogRow?.project)
 																	}"
 																>
 																</ng-container>
@@ -92,7 +99,7 @@
 																<ng-container
 																	[ngTemplateOutlet]="taskEl"
 																	[ngTemplateOutletContext]="{
-																		$implicit: timeLogRow?.task
+																		$implicit: $safeNavigationMigration(timeLogRow?.task)
 																	}"
 																>
 																</ng-container>
@@ -160,7 +167,6 @@
 									</nb-card-body>
 								</nb-card>
 							}
-						</ng-template>
 					} @else {
 						<ngx-no-data-message
 							[loading]="loading"
@@ -194,10 +200,11 @@
 		@if (employee) {
 			<ngx-avatar
 				class="report-table"
-				[src]="employee?.user?.imageUrl"
-				[name]="employee?.user?.name"
-				[id]="employee?.id"
+				[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
+				[name]="$safeNavigationMigration(employee?.user?.name)"
+				[id]="$safeNavigationMigration(employee?.id)"
 				[employee]="employee"
+				linkTo="view"
 			></ngx-avatar>
 		}
 	</div>

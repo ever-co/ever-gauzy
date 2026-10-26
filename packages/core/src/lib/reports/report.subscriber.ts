@@ -1,7 +1,6 @@
 import { EventSubscriber } from 'typeorm';
-import { FileStorageProviderEnum } from '@gauzy/contracts';
 import { Report } from './report.entity';
-import { FileStorage } from './../core/file-storage';
+import { localFileUrl } from './../core/file-storage/file-storage';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 
 @EventSubscriber()
@@ -35,24 +34,17 @@ export class ReportSubscriber extends BaseEntityEventSubscriber<Report> {
 	}
 
 	/**
-	 * Simulate an asynchronous operation to set the image URL.
+	 * Sets the full image URL, as served by the LOCAL file storage provider.
 	 *
 	 * @param entity
 	 * @returns
 	 */
 	private async setImageUrl(entity: Report): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			try {
-				// Simulate async operation, e.g., fetching fullUrl from a service
-				setTimeout(async () => {
-					const store = new FileStorage().setProvider(FileStorageProviderEnum.LOCAL);
-					entity.imageUrl = await store.getProviderInstance().url(entity.image);
-					resolve();
-				});
-			} catch (error) {
-				console.error('ReportSubscriber: Error during the setImageUrl process:', error);
-				reject(null);
-			}
-		});
+		try {
+			entity.imageUrl = await localFileUrl(entity.image);
+		} catch (error) {
+			console.error('ReportSubscriber: Error during the setImageUrl process:', error);
+			throw error;
+		}
 	}
 }

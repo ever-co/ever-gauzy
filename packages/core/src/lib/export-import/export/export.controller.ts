@@ -15,10 +15,15 @@ import { ExportService } from './export.service';
  * request could overwrite mid-export (GHSA-g235-c4fm-4fc7). The `finally` makes the delete
  * unconditional, where a throw anywhere in the sequence used to leave the plaintext CSVs and the
  * archive on disk indefinitely.
+ *
+ * 🛑 The export is a dump of every table of the tenant, so it is granted by `EXPORT_ADD` alone. It used to be
+ * granted by `ALL_ORG_VIEW` as well (`@Permissions` is any-of), which made a read-only "see every organization"
+ * role enough to download the tenant's employees, invoices, payments and time logs, including the ones that role
+ * has no view permission of its own for.
  */
 @ApiTags('Download')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
-@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.EXPORT_ADD)
+@Permissions(PermissionsEnum.EXPORT_ADD)
 @Controller('/export')
 export class ExportController {
 	constructor(private readonly _exportService: ExportService) {}

@@ -11,7 +11,7 @@
 				[disabled]="disabled || !canUndo"
 				(click)="run('undo')"
 			>
-				<nb-icon icon="corner-up-left-outline"></nb-icon>
+				<nb-icon pack="rich-text" icon="undo"></nb-icon>
 			</button>
 			<button
 				nbButton
@@ -22,7 +22,7 @@
 				[disabled]="disabled || !canRedo"
 				(click)="run('redo')"
 			>
-				<nb-icon icon="corner-up-right-outline"></nb-icon>
+				<nb-icon pack="rich-text" icon="redo"></nb-icon>
 			</button>
 		</div>
 		<div class="rich-text-toolbar__divider"></div>
@@ -62,7 +62,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleBold')"
 			>
-				<i class="fas fa-bold" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="bold"></nb-icon>
 			</button>
 			<button
 				*ngIf="hasMarkButton('italic')"
@@ -76,7 +76,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleItalic')"
 			>
-				<i class="fas fa-italic" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="italic"></nb-icon>
 			</button>
 			<button
 				*ngIf="hasMarkButton('underline')"
@@ -90,7 +90,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleUnderline')"
 			>
-				<i class="fas fa-underline" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="underline"></nb-icon>
 			</button>
 			<button
 				*ngIf="hasMarkButton('strike')"
@@ -104,7 +104,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleStrike')"
 			>
-				<i class="fas fa-strikethrough" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="strike"></nb-icon>
 			</button>
 		</div>
 		<div class="rich-text-toolbar__divider"></div>
@@ -125,7 +125,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleCode')"
 			>
-				<nb-icon icon="code-outline"></nb-icon>
+				<nb-icon pack="rich-text" icon="code"></nb-icon>
 			</button>
 			<button
 				*ngIf="inGroup('codeBlock') && hasNode('codeBlock')"
@@ -139,7 +139,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleCodeBlock')"
 			>
-				<nb-icon icon="code-download-outline"></nb-icon>
+				<nb-icon pack="rich-text" icon="code-block"></nb-icon>
 			</button>
 		</div>
 		<div class="rich-text-toolbar__divider"></div>
@@ -159,7 +159,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleSubscript')"
 			>
-				<i class="fas fa-subscript" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="subscript"></nb-icon>
 			</button>
 			<button
 				nbButton
@@ -172,7 +172,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleSuperscript')"
 			>
-				<i class="fas fa-superscript" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="superscript"></nb-icon>
 			</button>
 		</div>
 		<div class="rich-text-toolbar__divider"></div>
@@ -191,7 +191,7 @@
 				[disabled]="disabled"
 				(click)="toggleTextColorPanel()"
 			>
-				<i class="fas fa-font" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="text-color"></nb-icon>
 			</button>
 			<button
 				*ngIf="hasMark('highlight')"
@@ -206,7 +206,7 @@
 				[disabled]="disabled"
 				(click)="toggleHighlightPanel()"
 			>
-				<i class="fas fa-highlighter" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="highlight"></nb-icon>
 			</button>
 			<div *ngIf="textColorOpen" class="rich-text-toolbar__popover rich-text-toolbar__popover--swatches">
 				<button
@@ -223,7 +223,7 @@
 					[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.CLEAR_FORMAT' | translate"
 					(click)="setTextColor(null)"
 				>
-					<nb-icon icon="close-outline"></nb-icon>
+					<nb-icon pack="rich-text" icon="close"></nb-icon>
 				</button>
 			</div>
 			<div *ngIf="highlightOpen" class="rich-text-toolbar__popover rich-text-toolbar__popover--swatches">
@@ -241,7 +241,7 @@
 					[nbTooltip]="'RICH_TEXT_EDITOR.TOOLBAR.CLEAR_FORMAT' | translate"
 					(click)="setHighlight(null)"
 				>
-					<nb-icon icon="close-outline"></nb-icon>
+					<nb-icon pack="rich-text" icon="close"></nb-icon>
 				</button>
 			</div>
 		</div>
@@ -283,7 +283,7 @@
 				[disabled]="disabled"
 				(click)="setAlignment('left')"
 			>
-				<i class="fas fa-align-left" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="align-left"></nb-icon>
 			</button>
 			<button
 				*ngIf="hasAlignment('center')"
@@ -297,7 +297,7 @@
 				[disabled]="disabled"
 				(click)="setAlignment('center')"
 			>
-				<i class="fas fa-align-center" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="align-center"></nb-icon>
 			</button>
 			<button
 				*ngIf="hasAlignment('right')"
@@ -311,7 +311,7 @@
 				[disabled]="disabled"
 				(click)="setAlignment('right')"
 			>
-				<i class="fas fa-align-right" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="align-right"></nb-icon>
 			</button>
 			<button
 				*ngIf="hasAlignment('justify')"
@@ -325,7 +325,7 @@
 				[disabled]="disabled"
 				(click)="setAlignment('justify')"
 			>
-				<i class="fas fa-align-justify" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="align-justify"></nb-icon>
 			</button>
 		</div>
 		<div class="rich-text-toolbar__divider"></div>
@@ -345,7 +345,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleBulletList')"
 			>
-				<nb-icon icon="list-outline"></nb-icon>
+				<nb-icon pack="rich-text" icon="bullet-list"></nb-icon>
 			</button>
 			<button
 				nbButton
@@ -358,7 +358,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleOrderedList')"
 			>
-				<i class="fas fa-list-ol" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="ordered-list"></nb-icon>
 			</button>
 			<button
 				*ngIf="hasNode('taskList')"
@@ -372,7 +372,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleTaskList')"
 			>
-				<nb-icon icon="checkmark-square-2-outline"></nb-icon>
+				<nb-icon pack="rich-text" icon="task-list"></nb-icon>
 			</button>
 		</div>
 		<div class="rich-text-toolbar__divider"></div>
@@ -392,7 +392,7 @@
 				[disabled]="disabled"
 				(click)="run('toggleBlockquote')"
 			>
-				<i class="fas fa-quote-right" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="blockquote"></nb-icon>
 			</button>
 			<button
 				*ngIf="hasNode('horizontalRule')"
@@ -404,7 +404,7 @@
 				[disabled]="disabled"
 				(click)="run('setHorizontalRule')"
 			>
-				<nb-icon icon="minus-outline"></nb-icon>
+				<nb-icon pack="rich-text" icon="horizontal-rule"></nb-icon>
 			</button>
 		</div>
 		<div class="rich-text-toolbar__divider"></div>
@@ -425,7 +425,7 @@
 				[disabled]="disabled"
 				(click)="toggleLinkForm()"
 			>
-				<nb-icon icon="link-2-outline"></nb-icon>
+				<nb-icon pack="rich-text" icon="link"></nb-icon>
 			</button>
 			<button
 				*ngIf="hasNode('table')"
@@ -437,7 +437,7 @@
 				[disabled]="disabled"
 				(click)="insertTable()"
 			>
-				<i class="fas fa-table" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="table"></nb-icon>
 			</button>
 			<button
 				*ngIf="hasNode('image')"
@@ -450,7 +450,7 @@
 				[disabled]="disabled"
 				(click)="toggleImageForm()"
 			>
-				<nb-icon icon="image-outline"></nb-icon>
+				<nb-icon pack="rich-text" icon="image"></nb-icon>
 			</button>
 
 			<!-- Inline link popover -->
@@ -507,7 +507,7 @@
 				[disabled]="disabled"
 				(click)="clearFormatting()"
 			>
-				<i class="fas fa-eraser" aria-hidden="true"></i>
+				<nb-icon pack="rich-text" icon="clear-format"></nb-icon>
 			</button>
 		</div>
 	</ng-container>
@@ -534,7 +534,7 @@
 			[disabled]="disabled"
 			(click)="run('addRowBefore')"
 		>
-			<nb-icon icon="arrow-upward-outline"></nb-icon>
+			<nb-icon pack="rich-text" icon="row-add-above"></nb-icon>
 		</button>
 		<button
 			nbButton
@@ -545,7 +545,7 @@
 			[disabled]="disabled"
 			(click)="run('addRowAfter')"
 		>
-			<nb-icon icon="arrow-downward-outline"></nb-icon>
+			<nb-icon pack="rich-text" icon="row-add-below"></nb-icon>
 		</button>
 		<button
 			nbButton
@@ -556,7 +556,7 @@
 			[disabled]="disabled"
 			(click)="run('deleteRow')"
 		>
-			<nb-icon icon="collapse-outline"></nb-icon>
+			<nb-icon pack="rich-text" icon="row-delete"></nb-icon>
 		</button>
 	</div>
 	<div class="rich-text-toolbar__divider"></div>
@@ -570,7 +570,7 @@
 			[disabled]="disabled"
 			(click)="run('addColumnBefore')"
 		>
-			<nb-icon icon="arrow-back-outline"></nb-icon>
+			<nb-icon pack="rich-text" icon="col-add-left"></nb-icon>
 		</button>
 		<button
 			nbButton
@@ -581,7 +581,7 @@
 			[disabled]="disabled"
 			(click)="run('addColumnAfter')"
 		>
-			<nb-icon icon="arrow-forward-outline"></nb-icon>
+			<nb-icon pack="rich-text" icon="col-add-right"></nb-icon>
 		</button>
 		<button
 			nbButton
@@ -592,7 +592,7 @@
 			[disabled]="disabled"
 			(click)="run('deleteColumn')"
 		>
-			<nb-icon icon="collapse-outline" class="rich-text-toolbar__icon--rotated"></nb-icon>
+			<nb-icon pack="rich-text" icon="col-delete"></nb-icon>
 		</button>
 	</div>
 	<div class="rich-text-toolbar__divider"></div>
@@ -606,7 +606,7 @@
 			[disabled]="disabled"
 			(click)="run('toggleHeaderRow')"
 		>
-			<i class="fas fa-heading" aria-hidden="true"></i>
+			<nb-icon pack="rich-text" icon="header-row"></nb-icon>
 		</button>
 		<button
 			nbButton
@@ -618,7 +618,7 @@
 			[disabled]="disabled"
 			(click)="run('deleteTable')"
 		>
-			<nb-icon icon="trash-2-outline"></nb-icon>
+			<nb-icon pack="rich-text" icon="table-delete"></nb-icon>
 		</button>
 	</div>
 </div>

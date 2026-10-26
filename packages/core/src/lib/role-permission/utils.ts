@@ -163,6 +163,14 @@ export class RolePermissionUtils {
 			: `("tenantId", "roleId", "permission", "enabled")`;
 		const columnsPerRow = needsExplicitId ? 5 : 4;
 
+		// `role_permission` is unique on (tenantId, roleId, permission). Another process running this
+		// same reload can insert a row between our read and our insert; skip that row instead of failing,
+		// which would leave every tenant after this one without its new permissions. Only duplicates are
+		// skipped: Postgres and SQLite (3.24+) share the ON CONFLICT form, and MySQL's no-op update is
+		// its equivalent (INSERT IGNORE would also hide other errors).
+		const onDuplicate =
+			dbType === DatabaseTypeEnum.mysql ? ` ON DUPLICATE KEY UPDATE "id" = "id"` : ` ON CONFLICT DO NOTHING`;
+
 		// Keep each statement well inside the strictest driver's bind-parameter ceiling
 		// (SQLite defaults to 999 in older builds).
 		const maxRowsPerStatement = Math.max(1, Math.floor(900 / columnsPerRow));
@@ -186,7 +194,9 @@ export class RolePermissionUtils {
 				values.push(...payload);
 			}
 
-			let query = p(`INSERT INTO "role_permission" ${columns} VALUES ${placeholderGroups.join(', ')}`);
+			let query = p(
+				`INSERT INTO "role_permission" ${columns} VALUES ${placeholderGroups.join(', ')}${onDuplicate}`
+			);
 			query = replacePlaceholders(query, dbType);
 
 			await queryRunner.dataSource.manager.query(query, values);

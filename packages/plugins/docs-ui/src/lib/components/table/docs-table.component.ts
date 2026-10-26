@@ -7,7 +7,8 @@ import {
 	OnDestroy,
 	OnInit,
 	Output,
-	SimpleChanges
+	type SimpleChanges,
+	ChangeDetectionStrategy
 } from '@angular/core';
 import { NbMenuService } from '@nebular/theme';
 import { Cell, IColumns, LocalDataSource, Settings } from 'angular2-smart-table';
@@ -27,8 +28,10 @@ import { DocsRowActionsService } from '../actions/docs-row-actions.service';
 import { DocumentPermissionService } from '../../services/document-permission.service';
 import { RowActionsComponent } from './cells/row-actions.component';
 import {
+	DOCS_TABLE_COLUMN_ICONS,
 	DOCS_TABLE_COLUMN_KEYS,
 	DOCS_TABLE_COLUMN_TITLE_KEYS,
+	DOCS_TABLE_NARROW_HIDDEN_COLUMNS,
 	DOCS_TABLE_REQUIRED_COLUMNS,
 	DocsTableColumnKey,
 	DocsTableColumnPreferences,
@@ -58,6 +61,7 @@ const ROW_MENU_TAG_PREFIX = 'gz-docs-row-actions-';
 	selector: 'gz-docs-table',
 	templateUrl: './docs-table.component.html',
 	styleUrls: ['./docs-table.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DocsTableComponent extends TranslationBaseComponent implements OnInit, OnChanges, OnDestroy {
@@ -99,6 +103,9 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	public readonly selectableColumns: DocsTableColumnKey[] = DOCS_TABLE_COLUMN_KEYS.filter(
 		(key) => !DOCS_TABLE_REQUIRED_COLUMNS.includes(key)
 	);
+	/** Always-on columns, listed locked at the top of the chooser. */
+	protected readonly requiredColumns: readonly DocsTableColumnKey[] = DOCS_TABLE_REQUIRED_COLUMNS;
+	protected readonly totalColumnCount = DOCS_TABLE_COLUMN_KEYS.length;
 	/** Effective visibility — stored preference over the narrow-viewport defaults. */
 	public columnVisibility: Record<DocsTableColumnKey, boolean> = resolveDocsTableColumns({}, false);
 
@@ -207,6 +214,52 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 		this.buildSettings();
 	}
 
+	protected columnIcon(column: DocsTableColumnKey): string {
+		return DOCS_TABLE_COLUMN_ICONS[column];
+	}
+
+	protected get visibleColumnCount(): number {
+		return DOCS_TABLE_COLUMN_KEYS.filter((key) => this.isColumnVisible(key)).length;
+	}
+
+	protected get allColumnsVisible(): boolean {
+		return this.visibleColumnCount === this.totalColumnCount;
+	}
+
+	/** True once the user toggled anything — only then is there a default to go back to. */
+	protected get hasColumnPreferences(): boolean {
+		return Object.keys(this.columnPreferences).length > 0;
+	}
+
+	/** Hidden by the `< lg` defaults rather than by the user — the chooser says so. */
+	protected isColumnAutoHidden(column: DocsTableColumnKey): boolean {
+		return (
+			this.narrowViewport &&
+			DOCS_TABLE_NARROW_HIDDEN_COLUMNS.includes(column) &&
+			typeof this.columnPreferences[column] !== 'boolean'
+		);
+	}
+
+	/** Pins every column on, as explicit preferences so a narrow viewport does not take them back. */
+	protected showAllColumns(): void {
+		if (this.allColumnsVisible) return;
+		this.columnPreferences = Object.fromEntries(
+			this.selectableColumns.map((key) => [key, true])
+		) as DocsTableColumnPreferences;
+		writeDocsTableColumnPreferences(this.columnPreferences);
+		this.resolveColumns();
+		this.buildSettings();
+	}
+
+	/** Drops every stored choice — visibility falls back to the breakpoint defaults. */
+	protected resetColumns(): void {
+		if (!this.hasColumnPreferences) return;
+		this.columnPreferences = {};
+		writeDocsTableColumnPreferences(this.columnPreferences);
+		this.resolveColumns();
+		this.buildSettings();
+	}
+
 	private resolveColumns(): void {
 		this.columnVisibility = resolveDocsTableColumns(this.columnPreferences, this.narrowViewport);
 	}
@@ -291,9 +344,8 @@ export class DocsTableComponent extends TranslationBaseComponent implements OnIn
 	 */
 	onRowDoubleClick(event: MouseEvent): void {
 		this.cancelPendingRowOpen();
-		// Child controls stop `click` propagation but not `dblclick`, so this handler sees bubbled
-		// double clicks from the kebab, the Retry button and the select checkbox. Same guard as the
-		// single-click path, or double-clicking any of them would open the row behind it.
+		// Double clicks bubble here from the kebab, the Retry button and the select checkbox. Same guard
+		// as the single-click path, or double-clicking any of them would open the row behind it.
 		if (this.isControlEvent(event)) return;
 		const index = this.resolveRowIndex(event);
 		if (index === undefined) return;

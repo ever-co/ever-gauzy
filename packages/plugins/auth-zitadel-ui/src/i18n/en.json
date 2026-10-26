@@ -1,0 +1,71 @@
+{
+	"BACK_TO_LOGIN": "Back to sign in",
+	"ERRORS": {
+		"email_unverified": "Your Ever ID e-mail address is not verified yet. Verify it in your Ever ID account, then try again.",
+		"sign_in_failed": "Signing in with Ever ID did not work. Please try again.",
+		"cancelled": "Signing in with Ever ID was cancelled.",
+		"expired": "This step has expired. Please sign in with Ever ID again.",
+		"reauth_required": "To connect Ever ID, sign in to Ever ID again: the sign-in must be recent.",
+		"link_failed": "Ever ID could not be connected to this account.",
+		"last_signin_method": "This is the only way left to sign in to this account, so it cannot be disconnected.",
+		"wrong_code": "That code is not correct. Check the e-mail and try again.",
+		"try_again": "Something went wrong. Please try again.",
+		"busy": "This step is still being processed. Wait a moment, then try again."
+	},
+	"HANDOFF": {
+		"TITLE": "Sign in with Ever ID",
+		"SIGNING_IN": "Signing you in…",
+		"NO_WORKSPACE": "No workspace can be opened with this Ever ID."
+	},
+	"WORKSPACES": {
+		"CHOOSE": "Choose a workspace:",
+		"NEW_WORKSPACE": "Set up your workspace",
+		"BLOCKED": "These workspaces need their organization's own sign-in:",
+		"BLOCKED_REASON": {
+			"COMPANY_SIGN_IN": "use your company sign-in for this organization",
+			"FILTERED": "not available with this sign-in"
+		}
+	},
+	"CONFIRM": {
+		"TITLE": "Confirm it is you",
+		"DESCRIPTION": "Your Ever ID e-mail address matches an existing account. We sent a one-time code to that address; enter it to connect your Ever ID to the account.",
+		"CODE": "One-time code",
+		"SUBMIT": "Confirm",
+		"WRONG_CODE": "That code is not correct. Check the e-mail and try again.",
+		"NO_WORKSPACE": "The code was correct, but no workspace can be opened with this Ever ID."
+	},
+	"SIGNUP": {
+		"TITLE": "Create a Gauzy workspace with this Ever ID",
+		"DESCRIPTION": "No Gauzy account uses this Ever ID yet. You can create one now; nothing is created until you confirm.",
+		"EMAIL": "E-mail",
+		"FIRST_NAME": "First name",
+		"LAST_NAME": "Last name",
+		"ACCEPT_TERMS": "I accept the",
+		"CONFIRM": "Create a Gauzy workspace with this Ever ID",
+		"CREATE": "Create workspace",
+		"CANCEL": "Cancel",
+		"RETRY": "Try again",
+		"SUBSCRIPTION_REQUIRED": "A subscription is needed before the workspace can be created.",
+		"CONTINUE_TO_CHECKOUT": "Continue to checkout",
+		"AFTER_CHECKOUT": "Use {{ email }} at checkout. Afterwards, come back and choose Sign in with Ever ID to finish creating your workspace."
+	},
+	"SETTINGS": {
+		"MENU": "Connected identities",
+		"TITLE": "Connected identities",
+		"NOT_ENABLED": "Signing in with Ever ID is not enabled on this server.",
+		"NONE": "No Ever ID is connected to this account.",
+		"CONNECT": "Connect Ever ID",
+		"DISCONNECT": "Disconnect",
+		"DISCONNECTED": "Ever ID was disconnected from this account.",
+		"LINKED": "Ever ID is now connected to this account.",
+		"LINKED_ON": "connected",
+		"CONFIRM_TITLE": "Connect this Ever ID?",
+		"CONFIRM_DESCRIPTION": "Check both addresses before you connect:",
+		"EVER_ID_EMAIL": "Ever ID",
+		"ACCOUNT_EMAIL": "This account",
+		"SIBLINGS": "The same address also has accounts in these workspaces. Tick the ones to connect too; we will send a one-time code to confirm.",
+		"CODE_SENT": "We sent a one-time code to your e-mail address. Enter it to connect the selected workspaces.",
+		"CONFIRM": "Connect",
+		"CANCEL": "Cancel"
+	}
+}

@@ -1,5 +1,83 @@
 @use '@shared/reusable' as *;
 
+.sign-in-providers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  margin-bottom: 12px;
+}
+
+// "Login with Ever ID": the Ever brand kit button (ever-co/platform packages/brand, README "The Login with Ever ID
+// button"): the form's full width, 40 px, radius 8, padding 0 16px, 8 px gaps, 14/20 px at weight 500. Light themes:
+// #0A0A0A with white text (hover #262626); dark themes: #EDEDED with #0A0A0A text (hover #FFF). Focus ring 2 px,
+// offset 2. Specific enough to win over the theme's `[nbButton].appearance-filled.status-basic` rules.
+a[nbButton].sign-in-provider.ever-id-sign-in {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  height: auto;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 16px;
+  border: 1px solid #0a0a0a;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #ffffff;
+  background-color: #0a0a0a;
+  box-shadow: none;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
+  &:focus {
+    color: #ffffff;
+    background-color: #0a0a0a;
+    border-color: #0a0a0a;
+    box-shadow: none;
+  }
+  &:hover,
+  &:active {
+    color: #ffffff;
+    background-color: #262626;
+    border-color: #0a0a0a;
+  }
+  &:focus-visible {
+    outline: 2px solid #231645;
+    outline-offset: 2px;
+  }
+}
+
+// The dark themes (the same list the other components use).
+:host-context(.nb-theme-gauzy-dark),
+:host-context(.nb-theme-dark),
+:host-context(.nb-theme-cosmic),
+:host-context(.nb-theme-material-dark) {
+  a[nbButton].sign-in-provider.ever-id-sign-in {
+    color: #0a0a0a;
+    background-color: #ededed;
+    border-color: rgba(255, 255, 255, 0.09);
+    &:focus {
+      color: #0a0a0a;
+      background-color: #ededed;
+      border-color: rgba(255, 255, 255, 0.09);
+    }
+    &:hover,
+    &:active {
+      color: #0a0a0a;
+      background-color: #ffffff;
+    }
+    &:focus-visible {
+      outline-color: #cc66ff;
+    }
+  }
+}
+
 .links {
   margin-top: 0;
   font-size: 13px;

@@ -53,7 +53,10 @@ export const createAuthRoutes = (_pageRouteRegistryService: PageRouteRegistrySer
 			{
 				path: 'confirm-email',
 				component: ConfirmEmailComponent,
-				canActivate: [NoAuthGuard],
+				// No NoAuthGuard here, unlike the other auth pages. Registering signs the person in, so
+				// the emailed link is normally opened by a signed-in user; the guard sent them to the
+				// dashboard before the resolver ran, and the address was never verified. The token in
+				// the link is the proof, whoever is signed in, and the API accepts it only once.
 				resolve: { resolver: ConfirmEmailResolver }
 			},
 			{

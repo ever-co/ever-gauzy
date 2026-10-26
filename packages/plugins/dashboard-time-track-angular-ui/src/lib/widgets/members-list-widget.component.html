@@ -19,17 +19,17 @@
 					<ngx-avatar
 						class="avatar-dashboard"
 						size="sm"
-						[name]="member?.user?.name"
-						[src]="member?.user?.imageUrl"
-						[id]="member?.id"
+						[name]="$safeNavigationMigration(member?.user?.name)"
+						[src]="$safeNavigationMigration(member?.user?.imageUrl)"
+						[id]="$safeNavigationMigration(member?.id)"
 						[employee]="member"
 					></ngx-avatar>
 
 					<div class="member-metric">
 						<span class="metric-duration">{{ member?.todayTime?.duration || 0 | durationFormat }}</span>
 						<nb-badge
-							[status]="statusFor(member?.todayTime?.overall)"
-							[text]="activityLabel(member?.todayTime?.overall)"
+							[status]="statusFor($safeNavigationMigration(member?.todayTime?.overall))"
+							[text]="activityLabel($safeNavigationMigration(member?.todayTime?.overall))"
 						></nb-badge>
 					</div>
 
@@ -37,8 +37,8 @@
 						<div class="member-metric">
 							<span class="metric-duration">{{ member?.weekTime?.duration || 0 | durationFormat }}</span>
 							<nb-badge
-								[status]="statusFor(member?.weekTime?.overall)"
-								[text]="activityLabel(member?.weekTime?.overall)"
+								[status]="statusFor($safeNavigationMigration(member?.weekTime?.overall))"
+								[text]="activityLabel($safeNavigationMigration(member?.weekTime?.overall))"
 							></nb-badge>
 						</div>
 

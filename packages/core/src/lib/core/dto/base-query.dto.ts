@@ -146,9 +146,30 @@ export const convertNativeParameters = (parameters: PlainObject): any => {
 			}, {});
 		}
 
-		// Convert boolean values to their numeric representation
-		return parseBool(parameters);
+		return convertNativeLeaf(parameters);
 	} catch (error) {
 		return parameters;
+	}
+};
+
+/**
+ * Converts one query-string leaf: the boolean literals become booleans, everything else is kept as is.
+ *
+ * Every leaf used to go through `parseBool` (`Boolean(JSON.parse(value))`), which also turned any
+ * numeric text into a boolean: a search for "2024" reached the services as `true` (`LIKE '%true%'`)
+ * and "0" as `false`. `"null"` keeps its previous `false` mapping so existing callers are unaffected.
+ *
+ * @param value - A leaf value of the query parameters.
+ * @returns {any} - `true` / `false` for the boolean (and `"null"`) literals, otherwise the value unchanged.
+ */
+export const convertNativeLeaf = (value: any): any => {
+	switch (value) {
+		case 'true':
+			return true;
+		case 'false':
+		case 'null':
+			return false;
+		default:
+			return value;
 	}
 };

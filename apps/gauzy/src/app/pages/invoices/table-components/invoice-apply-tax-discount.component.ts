@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultEditor } from 'angular2-smart-table';
 
 @Component({
@@ -6,15 +6,17 @@ import { DefaultEditor } from 'angular2-smart-table';
 		<nb-toggle
 			class="d-block apply-tax"
 			status="primary"
+			[checked]="cell.getNewRawValue() === true"
 			(checkedChange)="toggleSeparateTaxDiscount($event)"
 		></nb-toggle>
 	`,
 	styles: ['.apply-tax {text-align: center}'],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class InvoiceApplyTaxDiscountComponent extends DefaultEditor implements OnInit {
 	ngOnInit() {
-		this.cell.setValue(this.cell.getValue());
+		this.toggleSeparateTaxDiscount(this.cell.getRawValue() === true);
 	}
 
 	/**

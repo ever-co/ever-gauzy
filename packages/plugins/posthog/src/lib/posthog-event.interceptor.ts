@@ -1,5 +1,19 @@
-import { CallHandler, ExecutionContext, Inject, Injectable, NestInterceptor, Optional } from '@nestjs/common';
-import { ContextType, HttpArgumentsHost, RpcArgumentsHost, WsArgumentsHost } from '@nestjs/common/interfaces';
+import {
+	CallHandler,
+	ExecutionContext,
+	Inject,
+	Injectable,
+	NestInterceptor,
+	Optional,
+	ContextType
+} from '@nestjs/common';
+// Nest 12 exports the per-transport hosts from neither the package root nor an `interfaces` entry; they are
+// types only, so this import is erased and nothing is required at run time.
+import type {
+	HttpArgumentsHost,
+	RpcArgumentsHost,
+	WsArgumentsHost
+} from '@nestjs/common/interfaces/features/arguments-host.interface.js';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import * as crypto from 'crypto';
@@ -99,11 +113,11 @@ export class PosthogEventInterceptor implements NestInterceptor {
 
 		const eventProperties = {
 			request_method: request.method,
-			request_url: request.originalUrl || request.url,
+			request_url: SanitizerUtil.sanitizeUrl(request.originalUrl || request.url),
 			request_path: request.path,
 			request_query: SanitizerUtil.sanitizeObject(request.query),
 			user_agent: request.headers['user-agent'],
-			referer: request.headers.referer || request.headers.referrer,
+			referer: SanitizerUtil.sanitizeUrl(request.headers.referer || request.headers.referrer),
 			ip_address: request.ip,
 			user_id: request.user?.id || request.user?.userId,
 			route: this.extractRouteFromRequest(request),
@@ -261,8 +275,8 @@ export class PosthogEventInterceptor implements NestInterceptor {
 			return request.route.path;
 		}
 
-		// Fallback to the raw URL
-		return request.originalUrl || request.url;
+		// Fallback to the URL, without the credentials its query may carry
+		return SanitizerUtil.sanitizeUrl(request.originalUrl || request.url) ?? '';
 	}
 
 	/**

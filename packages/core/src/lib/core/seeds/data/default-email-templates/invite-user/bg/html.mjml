@@ -40,7 +40,7 @@
 						натискане на бутона, копирайте приложеният по-долу адрес
 						в лентата на браузера:
 					</p>
-					<p>http://localhost:4200/#/pages/income</p>
+					<p>{{generatedUrl}}</p>
 				</mj-text>
 				<mj-divider
 					border-color="#1B005D"

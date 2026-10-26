@@ -2,6 +2,7 @@ import {
 	Body,
 	ClassSerializerInterceptor,
 	Controller,
+	Get,
 	HttpCode,
 	HttpStatus,
 	Post,
@@ -62,6 +63,24 @@ export class EmailVerificationController {
 		if (!!user) {
 			return await this.emailConfirmationService.confirmEmail(user);
 		}
+	}
+
+	/**
+	 * Whether the signed-in user still has to verify their email.
+	 *
+	 * The web app reads this before showing its "verify your email" notice. It is behind the same
+	 * feature flag as the rest of this controller, so a deployment with verification switched off
+	 * answers 404 and the notice never appears - `user.isEmailVerified` alone cannot tell the app
+	 * that, because on such a deployment nobody is ever verified. `verificationEmailSent` says
+	 * whether a still-valid verification email actually went out, so the notice only claims one did
+	 * when it is true.
+	 */
+	@ApiOperation({ summary: 'Email verification status of the signed-in user' })
+	@HttpCode(HttpStatus.OK)
+	@Get('status')
+	@Throttle({ default: { limit: 30, ttl: 60000 } })
+	public async getVerificationStatus(): Promise<{ isEmailVerified: boolean; verificationEmailSent: boolean }> {
+		return await this.emailConfirmationService.getVerificationStatus();
 	}
 
 	/**

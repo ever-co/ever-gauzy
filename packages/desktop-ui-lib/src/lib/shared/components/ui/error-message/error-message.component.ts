@@ -1,9 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl, NgModel } from '@angular/forms';
 
 @Component({
     selector: 'ngx-error-message',
     templateUrl: './error-message.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
     styleUrls: ['./error-message.component.scss']
 })
 export class ErrorMessageComponent {

@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { pageOf, validateOrganizationContext } from './utils';
 import { EquipmentTypeEnum, EquipmentStatusEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -26,6 +26,257 @@ const convertEquipmentDateFields = (equipmentData: EquipmentDateFields) => {
 		warrantyEndDate: equipmentData.warrantyEndDate ? new Date(equipmentData.warrantyEndDate) : undefined
 	};
 };
+
+/**
+ * The status a filed equipment sharing starts at: `RequestApprovalStatusTypesEnum.REQUESTED` (`1`). The column is an
+ * integer of the request approval's vocabulary; the server decides the status anyway for a caller who may not decide
+ * a sharing (requested, or approved when the equipment auto-approves its shares).
+ */
+const EQUIPMENT_SHARING_REQUESTED = 1;
+
+/**
+ * The label a request is filed under when the caller states neither a name nor a reason: the request approval filed
+ * beside the sharing requires a name, and the route saves the sharing before it files the approval, so a request
+ * without one would leave a sharing without its approval.
+ */
+export const EQUIPMENT_SHARING_REQUEST_DEFAULT_NAME = 'Equipment sharing request';
+
+/**
+ * An ISO 8601 date (`2026-11-02`) or date-time (`2026-11-02T09:00`, `2026-11-02T09:00:00.000Z`,
+ * `2026-11-02T09:00:00+02:00`), and nothing else: `new Date()` alone also reads `Nov 2 2026`, and rolls an impossible
+ * day such as `2026-02-30` over into March.
+ */
+const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?(Z|[+-](\d{2}):(\d{2}))?)?$/;
+
+/** The arguments of the `request_equipment_sharing` tool. */
+export interface EquipmentSharingRequestArgs {
+	equipmentId: string;
+	shareWithEmployeeId: string;
+	shareStartDate: string;
+	shareEndDate: string;
+	name?: string;
+	reason?: string;
+}
+
+/**
+ * Reads an ISO date argument of the `request_equipment_sharing` tool: the grammar of {@link ISO_DATE_PATTERN}, a day
+ * the calendar has, a time of day and an offset in range.
+ *
+ * @param value The argument.
+ * @param field The argument's name, for the error.
+ * @throws Error when the value is not an ISO date, or names a day, time or offset that does not exist.
+ */
+const toShareDate = (value: string, field: string): Date => {
+	const invalid = () => new Error(`${field} is not a valid date (ISO 8601 expected, e.g. 2026-11-02T09:00:00Z)`);
+	const match = typeof value === 'string' ? ISO_DATE_PATTERN.exec(value.trim()) : null;
+	if (!match) {
+		throw invalid();
+	}
+	const [, year, month, day, hour = '0', minute = '0', second = '0', , offsetHour = '0', offsetMinute = '0'] = match;
+	const calendar = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+	if (
+		calendar.getUTCFullYear() !== Number(year) ||
+		calendar.getUTCMonth() !== Number(month) - 1 ||
+		calendar.getUTCDate() !== Number(day) ||
+		Number(hour) > 23 ||
+		Number(minute) > 59 ||
+		Number(second) > 59 ||
+		Number(offsetHour) > 23 ||
+		Number(offsetMinute) > 59
+	) {
+		throw invalid();
+	}
+	const date = new Date(value.trim());
+	if (Number.isNaN(date.getTime())) {
+		throw invalid();
+	}
+	return date;
+};
+
+/**
+ * The body `POST /api/equipment-sharing/organization/:organizationId` files an equipment sharing request from, in the
+ * field names the equipment sharing carries.
+ *
+ * The tool used to post its arguments under their own names (`shareStartDate`, `shareEndDate`, `shareRequestDate`,
+ * `shareWithEmployeeId`, `reason`) and a string `status: 'REQUESTED'` to `POST /api/equipment-sharing`. No column maps
+ * those names, so the period and the employee were dropped, the status was not the integer the column holds, and that
+ * route (the CRUD base's raw create, which needs the decision permission) files no request approval beside the row.
+ * The request route is the one the web app files a request through: open to `EQUIPMENT_MAKE_REQUEST`, it stores the
+ * row in the organization of its path and records the request approval an approver acts on.
+ *
+ * An equipment sharing has no reason column: the reason is filed as the request's `name` (its label) when no name is
+ * given, and {@link EQUIPMENT_SHARING_REQUEST_DEFAULT_NAME} when neither is (the request approval requires a name).
+ *
+ * @param args The tool's arguments.
+ * @param now When the request is filed.
+ * @returns The body to post.
+ * @throws Error when a date argument is not an ISO date, or the period ends before it starts.
+ */
+export const equipmentSharingRequestBody = (args: EquipmentSharingRequestArgs, now: Date = new Date()) => {
+	const name = [args.name, args.reason].find((label) => typeof label === 'string' && label.trim() !== '');
+	const shareStartDay = toShareDate(args.shareStartDate, 'shareStartDate');
+	const shareEndDay = toShareDate(args.shareEndDate, 'shareEndDate');
+	if (shareEndDay.getTime() < shareStartDay.getTime()) {
+		throw new Error('shareEndDate is before shareStartDate: a sharing period ends after it starts');
+	}
+	return {
+		name: name?.trim() ?? EQUIPMENT_SHARING_REQUEST_DEFAULT_NAME,
+		equipmentId: args.equipmentId,
+		employees: [{ id: args.shareWithEmployeeId }],
+		shareRequestDay: now,
+		shareStartDay,
+		shareEndDay,
+		status: EQUIPMENT_SHARING_REQUESTED
+	};
+};
+
+/**
+ * The statuses an equipment sharing can be at, by the names the `get_equipment_sharing_requests` tool accepts: the
+ * integer vocabulary of the request approval (`RequestApprovalStatusTypesEnum`) that the `status` column holds.
+ */
+export const EQUIPMENT_SHARING_STATUSES: Readonly<Record<string, number>> = Object.freeze({
+	REQUESTED: 1,
+	APPROVED: 2,
+	REFUSED: 3
+});
+
+/**
+ * Reads the `status` filter of the `get_equipment_sharing_requests` tool: a status name (`REQUESTED`, `APPROVED`,
+ * `REFUSED`, any case) or its integer (`1`, `2`, `3`, as a number or a string). The column is an integer, so the
+ * string the tool used to forward could never match it.
+ *
+ * @param status The filter as given.
+ * @returns The integer the `status` column holds.
+ * @throws Error for any other value, rather than a filter that matches nothing.
+ */
+export const equipmentSharingStatusValue = (status: string | number): number => {
+	const text = String(status).trim().toUpperCase();
+	if (Object.prototype.hasOwnProperty.call(EQUIPMENT_SHARING_STATUSES, text)) {
+		return EQUIPMENT_SHARING_STATUSES[text];
+	}
+	const value = Number(text);
+	if (text !== '' && Object.values(EQUIPMENT_SHARING_STATUSES).includes(value)) {
+		return value;
+	}
+	throw new Error(
+		`status must be one of ${Object.keys(EQUIPMENT_SHARING_STATUSES).join(', ')} (or ${Object.values(
+			EQUIPMENT_SHARING_STATUSES
+		).join(', ')})`
+	);
+};
+
+/** The filters of `get_equipment_sharing_requests`: the columns the route applies, and the employee it reads for. */
+export interface EquipmentSharingRequestsFindInput {
+	equipmentId?: string;
+	status?: string | number;
+	/** Applied to the answer; the teams' memberships are read with each sharing for it. */
+	employeeId?: string;
+}
+
+/** The relations `get_equipment_sharing_requests` reads each sharing with (`employees` also serves its filter). */
+export const EQUIPMENT_SHARING_REQUESTS_RELATIONS = Object.freeze(['equipment', 'employees', 'teams']);
+
+/**
+ * The relation read besides, for the employee filter: the memberships of the sharing's teams. A sharing is for the
+ * active members of its teams as much as for the employees it names (the requester rule of the equipment sharing).
+ */
+export const EQUIPMENT_SHARING_TEAM_MEMBERS_RELATION = 'teams.members';
+
+/** Whether two identifiers name the same row: a uuid may come in either case. */
+const sameId = (a: unknown, b: unknown): boolean =>
+	typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/** A positive integer, or the fallback for anything else (`0`, a negative, a fraction, not a number). */
+const positiveInteger = (value: unknown, fallback: number): number =>
+	typeof value === 'number' && Number.isInteger(value) && value >= 1 ? value : fallback;
+
+/**
+ * The query `GET /api/equipment-sharing` reads: one `data` parameter, the JSON of `{ relations, findInput }`
+ * (`ParseJsonPipe`), whose `findInput` becomes the read's `where`.
+ *
+ * The tool used to send `organizationId`, `equipmentId`, `employeeId`, `status`, `page` and `limit` as query parameters
+ * of their own. The route reads none of them (a missing `data` parses to `{}`), so every filter was dropped and the
+ * tool answered every sharing of the tenant, unpaged. The organization, the equipment and the status are columns of
+ * the sharing, so they go into `findInput`; the employee is a membership and the route has no paging, so those two
+ * are applied to the answer ({@link selectEquipmentSharingRequests}). With an employee named, the memberships of the
+ * sharings' teams are read too ({@link EQUIPMENT_SHARING_TEAM_MEMBERS_RELATION}).
+ *
+ * @param defaultParams The caller's organization and tenant.
+ * @param filters The tool's column filters, and the employee it filters on.
+ * @returns The query parameters to send.
+ * @throws Error for a status the column cannot hold.
+ */
+export const equipmentSharingRequestsQuery = (
+	defaultParams: { organizationId: string; tenantId?: string | null },
+	{ equipmentId, status, employeeId }: EquipmentSharingRequestsFindInput = {}
+) => {
+	const findInput: Record<string, unknown> = {
+		organizationId: defaultParams.organizationId,
+		...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
+		...(equipmentId && { equipmentId }),
+		...(status !== undefined && status !== null && status !== '' && { status: equipmentSharingStatusValue(status) })
+	};
+	const relations = [
+		...EQUIPMENT_SHARING_REQUESTS_RELATIONS,
+		...(employeeId ? [EQUIPMENT_SHARING_TEAM_MEMBERS_RELATION] : [])
+	];
+	return { data: JSON.stringify({ relations, findInput }) };
+};
+
+/**
+ * Whether a sharing is for an employee: one it names, or an active member of one of its teams (`isActive: true`, as
+ * the core requester read asks; a null or false flag is not active). Identifiers are compared in any case.
+ *
+ * @param sharing A sharing, with its employees and its teams' members.
+ * @param employeeId The employee.
+ */
+export const isEquipmentSharingFor = (sharing: Record<string, any>, employeeId: string): boolean =>
+	(Array.isArray(sharing?.employees) &&
+		sharing.employees.some((employee: { id?: string } | null) => sameId(employee?.id, employeeId))) ||
+	(Array.isArray(sharing?.teams) &&
+		sharing.teams.some(
+			(team: { members?: Array<Record<string, any>> } | null) =>
+				Array.isArray(team?.members) &&
+				team.members.some(
+					(member) =>
+						member?.isActive === true &&
+						!member?.deletedAt &&
+						sameId(member?.employeeId ?? member?.employee?.id, employeeId)
+				)
+		));
+
+/**
+ * The page of sharings `get_equipment_sharing_requests` answers: the sharings for the employee (one they are named in,
+ * or one for a team they are an active member of: {@link isEquipmentSharingFor}), when one is named, then the page
+ * asked for. `total` counts every sharing that passed the filters. A page or a limit that is not a positive integer
+ * reads as the default (1, 10). The teams' memberships read for the filter are not answered.
+ *
+ * @param items The sharings the route answered.
+ * @param options The employee filter and the page.
+ */
+export const selectEquipmentSharingRequests = (
+	items: Array<Record<string, any>>,
+	{ employeeId, page, limit }: { employeeId?: string; page?: number; limit?: number } = {}
+) => {
+	const shared = employeeId ? items.filter((sharing) => isEquipmentSharingFor(sharing, employeeId)) : items;
+	const answered = employeeId ? shared.map(withoutTeamMembers) : shared;
+	return pageOf(answered, positiveInteger(page, 1), positiveInteger(limit, 10));
+};
+
+/** A sharing without the memberships of its teams (read for the employee filter only). */
+const withoutTeamMembers = (sharing: Record<string, any>): Record<string, any> =>
+	Array.isArray(sharing?.teams)
+		? {
+				...sharing,
+				teams: sharing.teams.map((team: Record<string, any> | null) => {
+					if (!team || typeof team !== 'object') {
+						return team;
+					}
+					const { members: _members, ...rest } = team;
+					return rest;
+				})
+			}
+		: sharing;
 
 export const registerEquipmentTools = (server: McpServer) => {
 	// Get equipment tool
@@ -542,27 +793,35 @@ export const registerEquipmentTools = (server: McpServer) => {
 		{
 			equipmentId: z.string().uuid().describe('The equipment ID'),
 			shareWithEmployeeId: z.string().uuid().describe('The employee ID to share with'),
-			shareStartDate: z.string().describe('The start date for sharing (ISO format)'),
-			shareEndDate: z.string().describe('The end date for sharing (ISO format)'),
-			reason: z.string().optional().describe('Reason for sharing request')
+			shareStartDate: z.string().describe('The start date for sharing (ISO 8601, e.g. 2026-11-02T09:00:00Z)'),
+			shareEndDate: z.string().describe('The end date for sharing (ISO 8601, not before the start date)'),
+			name: z
+				.string()
+				.optional()
+				.describe('A label for the sharing request (defaults to the reason, else "Equipment sharing request")'),
+			reason: z
+				.string()
+				.optional()
+				.describe('Reason for sharing request (filed as the request label when no name is given)')
 		},
-		async ({ equipmentId, shareWithEmployeeId, shareStartDate, shareEndDate, reason }) => {
+		async ({ equipmentId, shareWithEmployeeId, shareStartDate, shareEndDate, name, reason }) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const requestData = {
+				// The request route reads the organization from its path and the tenant from the caller's token.
+				const requestData = equipmentSharingRequestBody({
 					equipmentId,
 					shareWithEmployeeId,
-					shareStartDate: new Date(shareStartDate),
-					shareEndDate: new Date(shareEndDate),
-					shareRequestDate: new Date(),
-					status: 'REQUESTED',
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(reason && { reason })
-				};
+					shareStartDate,
+					shareEndDate,
+					name,
+					reason
+				});
 
-				const response = await apiClient.post(`/api/equipment-sharing`, requestData);
+				const response = await apiClient.post(
+					`/api/equipment-sharing/organization/${defaultParams.organizationId}`,
+					requestData
+				);
 
 				return {
 					content: [
@@ -587,25 +846,24 @@ export const registerEquipmentTools = (server: McpServer) => {
 		{
 			equipmentId: z.string().uuid().optional().describe('Filter by equipment ID'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			status: z.string().optional().describe('Filter by sharing status'),
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page')
+			status: z
+				.union([z.string(), z.number()])
+				.optional()
+				.describe('Filter by sharing status: REQUESTED, APPROVED or REFUSED (or 1, 2, 3)'),
+			page: z.number().int().min(1).optional().default(1).describe('Page number for pagination'),
+			limit: z.number().int().min(1).optional().default(10).describe('Number of items per page')
 		},
 		async ({ equipmentId, employeeId, status, page = 1, limit = 10 }) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(equipmentId && { equipmentId }),
-					...(employeeId && { employeeId }),
-					...(status && { status }),
-					page,
-					limit
-				};
-
-				const response = await apiClient.get('/api/equipment-sharing', { params });
+				// The route reads a `data` JSON find-input only; the employee and the page are applied to its answer.
+				const params = equipmentSharingRequestsQuery(defaultParams, { equipmentId, status, employeeId });
+				const { items = [] } = await apiClient.get<{ items?: Array<Record<string, any>> }>(
+					'/api/equipment-sharing',
+					{ params }
+				);
+				const response = selectEquipmentSharingRequests(items, { employeeId, page, limit });
 
 				return {
 					content: [

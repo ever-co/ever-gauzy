@@ -452,6 +452,8 @@ export interface IRepositoryModel<T = any> {
 	relations?: IColumnRelationMetadata<T>[];
 	foreignKeys?: IForeignKey<any>[];
 	uniqueIdentifiers?: { column: string }[];
+	/** Property names of every column of each unique constraint, one entry per constraint. */
+	uniqueConstraints?: string[][];
 
 	// additional condition
 	isStatic?: boolean;
@@ -463,6 +465,12 @@ export interface IRepositoryModel<T = any> {
 		originalField: string;
 		substituteField: string;
 	};
+	/**
+	 * This table never holds shared default rows: a row with no tenant and no organization belongs
+	 * to some tenant that could not be resolved (e.g. an email sent from a public route), so the
+	 * export must not add it to another tenant's archive.
+	 */
+	excludeGlobalDefaults?: boolean;
 }
 
 @Injectable()
@@ -861,7 +869,9 @@ export class RepositoriesService implements OnModuleInit {
 		@InjectRepository(ProductCategory)
 		public typeOrmProductCategoryRepository: TypeOrmProductCategoryRepository,
 
-		mikroOrmProductCategoryRepository: MikroOrmProductCategoryRepository,
+		// Public for `ImportService.rebuildProductCategoryClosure`, which writes through the manager of the
+		// ORM `DB_ORM` selects rather than through TypeORM's on a MikroORM deployment.
+		public mikroOrmProductCategoryRepository: MikroOrmProductCategoryRepository,
 
 		@InjectRepository(ProductCategoryTranslation)
 		public typeOrmProductCategoryTranslationRepository: TypeOrmProductCategoryTranslationRepository,
@@ -1202,6 +1212,19 @@ export class RepositoriesService implements OnModuleInit {
 				};
 			}) || [];
 
+		// A constraint on a relation property has no key of its own in an imported row, and matching on
+		// only part of a constraint would match rows it does not cover, so such a constraint is left out.
+		const uniqueConstraints = entityMetadata.uniques
+			.map((unique) => unique.columns.map((col) => col.propertyName))
+			.filter(
+				(columns) =>
+					columns.length > 0 &&
+					columns.every(
+						(propertyName) =>
+							!entityMetadata.relations.some((relation) => relation.propertyName === propertyName)
+					)
+			);
+
 		// Get foreign keys and relations
 		const foreignKeys =
 			entityMetadata.relations
@@ -1243,6 +1266,7 @@ export class RepositoriesService implements OnModuleInit {
 			repository,
 			isCheckRelation: foreignKeys.length > 0,
 			uniqueIdentifiers,
+			uniqueConstraints,
 			foreignKeys,
 			relations,
 			isTenantBased
@@ -1258,14 +1282,15 @@ export class RepositoriesService implements OnModuleInit {
 	async buildRepositoriesRelationsGraph() {
 		const result: IRepositoryModel[] = [];
 		for await (const item of this.repositories) {
-			const { repository, isStatic, substitute } = item;
+			const { repository, isStatic, substitute, excludeGlobalDefaults } = item;
 
 			const repositoryRelationsGraph = await this.getRepositoryRelationsGraph(repository);
 
 			result.push({
 				...repositoryRelationsGraph,
 				isStatic,
-				substitute
+				substitute,
+				excludeGlobalDefaults
 			});
 		}
 
@@ -1507,7 +1532,8 @@ export class RepositoriesService implements OnModuleInit {
 				repository: this.typeOrmEmailTemplateRepository
 			},
 			{
-				repository: this.typeOrmEmailHistoryRepository
+				repository: this.typeOrmEmailHistoryRepository,
+				excludeGlobalDefaults: true
 			},
 			{
 				repository: this.typeOrmEstimateEmailRepository

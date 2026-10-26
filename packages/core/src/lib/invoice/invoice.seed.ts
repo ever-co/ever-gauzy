@@ -96,14 +96,14 @@ const generateInvoice = async (
 		.value();
 
 	const invoiceDate = faker.date.between({
-		from: faker.date.past({ years: 0.3 }),
+		from: faker.date.recent({ days: 110 }),
 		to: new Date()
 	});
 	invoice.invoiceDate = moment(invoiceDate).startOf('day').toDate();
 
 	const dueDate = faker.date.between({
 		from: new Date(),
-		to: faker.date.future({ years: 0.3 })
+		to: faker.date.soon({ days: 110 })
 	});
 	invoice.dueDate = moment(dueDate).startOf('day').toDate();
 

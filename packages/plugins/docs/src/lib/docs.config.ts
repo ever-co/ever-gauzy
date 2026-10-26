@@ -97,7 +97,7 @@ export interface IDocsConfig {
 	orgQuotaBytes: number;
 	/** Kill-switch for the structured retrieval/AI-usage telemetry lines (§16). */
 	retrievalLogEnabled: boolean;
-	/** Master switch for the inbound-email capture webhook (§17.2) — off unless explicitly true. */
+	/** Master switch for the inbound-email capture webhook (§17.2) — on unless explicitly false. */
 	inboundEmailEnabled: boolean;
 	/** Shared secret of the generic signed-webhook reference adapter (HMAC-SHA256). */
 	inboundWebhookSecret?: string;
@@ -106,9 +106,9 @@ export interface IDocsConfig {
 	/** Capture-address domain (`docs-<token>@<domain>`) — informational, reported in settings. */
 	inboundDomain?: string;
 	/**
-	 * Master switch for provider-vision OCR (scanned PDFs + image uploads). Off by default:
-	 * OCR is one LLM call per page, so it is opt-in spend. Also gated by {@link aiEnabled} —
-	 * OCR runs through the same provider seam as classification.
+	 * Master switch for provider-vision OCR (scanned PDFs + image uploads). On by default, but
+	 * OCR is one LLM call per page, so it is also gated by {@link aiEnabled} and a provider with
+	 * credentials — OCR runs through the same provider seam as classification.
 	 */
 	ocrEnabled: boolean;
 	/** Hard cap on the pages OCR transcribes per document — the cost fuse of the OCR path. */

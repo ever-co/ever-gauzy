@@ -1,4 +1,4 @@
-import { Inject, Injectable, ConsoleLogger, OnApplicationShutdown } from '@nestjs/common';
+import { Inject, Injectable, ConsoleLogger, LogLevel, OnApplicationShutdown } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import { RequestContext } from '@gauzy/core';
 import { SENTRY_MODULE_OPTIONS } from './sentry.constants';
@@ -41,6 +41,26 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		];
 		// Initialize Sentry with options
 		Sentry.init({
+			// Sentry 11 replaced `sendDefaultPii` with `dataCollection`, whose defaults now send cookies, request and
+			// response bodies, user info, DB query data and more. This is the migration guide's "keep the v10 default"
+			// baseline, so the upgrade collects nothing it did not collect before (and `attachStacktrace`, now true by
+			// default, stays off). The caller's own options still win.
+			// https://github.com/getsentry/sentry-javascript/blob/develop/MIGRATION.md
+			dataCollection: {
+				userInfo: false,
+				cookies: false,
+				httpHeaders: {
+					request: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+					response: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] }
+				},
+				httpBodies: [],
+				urlQueryParams: { deny: ['forwarded', '-ip', 'remote-', 'via', '-user'] },
+				genAI: { inputs: false, outputs: false },
+				databaseQueryData: false,
+				queues: false,
+				graphQL: { document: false, variables: false }
+			},
+			attachStacktrace: false,
 			...sentryOptions,
 			profilesSampleRate,
 			integrations: allIntegrations
@@ -61,6 +81,18 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 			// No request context
 		}
 		return !!this.opts?.dsn;
+	}
+
+	/**
+	 * Whether a message logged at `level` becomes its own Sentry event. `opts.logLevels` is the allow-list
+	 * (the API passes SENTRY_LOG_LEVELS, default `error`); every other level is kept as a breadcrumb, so it
+	 * still shows up on the next captured event. Capturing every Logger call made each request two events
+	 * (RequestContextMiddleware logs its start and end), which used up the org's monthly error quota within
+	 * hours of each reset. An unset or empty list keeps the previous behaviour of capturing every level.
+	 */
+	private captures(level: LogLevel): boolean {
+		const levels = this.opts?.logLevels;
+		return !levels?.length || levels.includes(level);
 	}
 
 	/**
@@ -85,15 +117,11 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		try {
 			super.log(message, context);
 			if (!this.isEnabled()) return;
-			asBreadcrumb
-				? Sentry.addBreadcrumb({
-						message,
-						level: 'log',
-						data: {
-							context
-						}
-				  })
-				: Sentry.captureMessage(message, 'log');
+			if (asBreadcrumb || !this.captures('log')) {
+				Sentry.addBreadcrumb({ message, level: 'log', data: { context } });
+			} else {
+				Sentry.captureMessage(message, 'log');
+			}
 		} catch (err) {
 			// do nothing to avoid blocking the application
 		}
@@ -110,7 +138,11 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		try {
 			super.error(message, trace, context);
 			if (!this.isEnabled()) return;
-			Sentry.captureMessage(message, 'error');
+			if (this.captures('error')) {
+				Sentry.captureMessage(message, 'error');
+			} else {
+				Sentry.addBreadcrumb({ message, level: 'error', data: { context } });
+			}
 		} catch (err) {
 			// do nothing to avoid blocking the application
 		}
@@ -127,15 +159,11 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		try {
 			super.warn(message, context);
 			if (!this.isEnabled()) return;
-			asBreadcrumb
-				? Sentry.addBreadcrumb({
-						message,
-						level: 'warning',
-						data: {
-							context
-						}
-				  })
-				: Sentry.captureMessage(message, 'warning');
+			if (asBreadcrumb || !this.captures('warn')) {
+				Sentry.addBreadcrumb({ message, level: 'warning', data: { context } });
+			} else {
+				Sentry.captureMessage(message, 'warning');
+			}
 		} catch (err) {
 			// do nothing to avoid blocking the application
 		}
@@ -152,15 +180,11 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		try {
 			super.debug(message, context);
 			if (!this.isEnabled()) return;
-			asBreadcrumb
-				? Sentry.addBreadcrumb({
-						message,
-						level: 'debug',
-						data: {
-							context
-						}
-				  })
-				: Sentry.captureMessage(message, 'debug');
+			if (asBreadcrumb || !this.captures('debug')) {
+				Sentry.addBreadcrumb({ message, level: 'debug', data: { context } });
+			} else {
+				Sentry.captureMessage(message, 'debug');
+			}
 		} catch (err) {
 			// do nothing to avoid blocking the application
 		}
@@ -177,15 +201,33 @@ export class SentryService extends ConsoleLogger implements OnApplicationShutdow
 		try {
 			super.verbose(message, context);
 			if (!this.isEnabled()) return;
-			asBreadcrumb
-				? Sentry.addBreadcrumb({
-						message,
-						level: 'info',
-						data: {
-							context
-						}
-				  })
-				: Sentry.captureMessage(message, 'info');
+			if (asBreadcrumb || !this.captures('verbose')) {
+				Sentry.addBreadcrumb({ message, level: 'info', data: { context } });
+			} else {
+				Sentry.captureMessage(message, 'info');
+			}
+		} catch (err) {
+			// do nothing to avoid blocking the application
+		}
+	}
+
+	/**
+	 * A fatal log is at least as severe as an error, so it becomes an event whenever `fatal` or `error`
+	 * is captured. Without this override Nest's ConsoleLogger.fatal printed it and Sentry never saw it.
+	 *
+	 * @param message
+	 * @param context
+	 */
+	fatal(message: string, context?: string) {
+		message = `${this.app} ${message}`;
+		try {
+			super.fatal(message, context);
+			if (!this.isEnabled()) return;
+			if (this.captures('fatal') || this.captures('error')) {
+				Sentry.captureMessage(message, 'fatal');
+			} else {
+				Sentry.addBreadcrumb({ message, level: 'fatal', data: { context } });
+			}
 		} catch (err) {
 			// do nothing to avoid blocking the application
 		}

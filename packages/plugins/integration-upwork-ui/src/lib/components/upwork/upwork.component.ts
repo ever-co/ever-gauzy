@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, signal, WritableSignal } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, signal, type WritableSignal } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NbMenuItem, NbRouteTab } from '@nebular/theme';
 import { filter } from 'rxjs/operators';

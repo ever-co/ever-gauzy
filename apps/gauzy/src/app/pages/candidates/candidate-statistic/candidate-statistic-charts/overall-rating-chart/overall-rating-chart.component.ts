@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { ICandidate } from '@gauzy/contracts';
@@ -22,6 +22,7 @@ import { ICandidate } from '@gauzy/contracts';
 		  </div>
 		}
 		`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class CandidateRatingChartComponent implements OnInit, OnDestroy {

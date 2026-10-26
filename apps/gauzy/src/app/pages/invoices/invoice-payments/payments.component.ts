@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -38,6 +38,7 @@ import { InvoicePaymentReceiptMutationComponent } from './payment-receipt-mutati
     selector: 'ga-payments',
     templateUrl: './payments.component.html',
     styleUrls: ['./payments.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class InvoicePaymentsComponent extends TranslationBaseComponent implements OnInit {

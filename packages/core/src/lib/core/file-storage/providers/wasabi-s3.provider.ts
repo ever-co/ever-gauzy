@@ -1,7 +1,6 @@
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 import * as multerS3 from 'multer-s3';
 import { basename, join } from 'node:path';
-import * as moment from 'moment';
 import {
 	S3Client,
 	DeleteObjectCommand,
@@ -12,11 +11,14 @@ import {
 	HeadObjectCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { cachedPresign, getCachedS3Client, PRESIGNED_URL_EXPIRES_IN_SECONDS } from './s3-client-cache';
 import { StorageEngine } from 'multer';
 import { environment } from '@gauzy/config';
 import { FileStorageOption, FileStorageProviderEnum, UploadedFile } from '@gauzy/contracts';
 import { ensureHttpPrefix, trimIfNotEmpty } from '@gauzy/utils';
 import { Provider } from './provider';
+import { refusalForStorageEndpoint, tenantStorageHttpsAgent } from '../storage-endpoint-policy';
+import { defaultStoredFileName } from '../helpers/stored-file-name';
 import { RequestContext } from '../../context';
 
 /**
@@ -110,6 +112,8 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	public instance: WasabiS3Provider;
 	public config: IWasabiProviderConfig;
 	public defaultConfig: IWasabiProviderConfig;
+	/** Whether the service URL in use is the tenant's own (see storage-endpoint-policy.ts). */
+	private endpointFromTenant = false;
 
 	constructor() {
 		super();
@@ -156,6 +160,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 		this.config = {
 			...this.defaultConfig
 		};
+		this.endpointFromTenant = false;
 
 		if (this.detailedLoggingEnabled) this.logger.debug('setWasabiConfiguration: initializing with default config');
 
@@ -189,12 +194,21 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					}
 
 					if (trimIfNotEmpty(settings.wasabi_aws_service_url)) {
-						this.config.wasabi_aws_service_url = ensureHttpPrefix(
-							trimIfNotEmpty(settings.wasabi_aws_service_url)
-						);
+						// The API connects to it: a tenant URL that points at a private network is not used.
+						const refusal = refusalForStorageEndpoint(settings.wasabi_aws_service_url);
+						if (refusal) {
+							this.logger.warn(
+								`setWasabiConfiguration: tenant wasabi_aws_service_url ignored. ${refusal}`
+							);
+						} else {
+							this.config.wasabi_aws_service_url = ensureHttpPrefix(
+								trimIfNotEmpty(settings.wasabi_aws_service_url)
+							);
+							this.endpointFromTenant = true;
 
-						if (this.detailedLoggingEnabled) {
-							this.logger.debug('setWasabiConfiguration: wasabi_aws_service_url overridden');
+							if (this.detailedLoggingEnabled) {
+								this.logger.debug('setWasabiConfiguration: wasabi_aws_service_url overridden');
+							}
 						}
 					}
 
@@ -243,15 +257,12 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			const s3Client = this.getWasabiInstance();
 
 			if (s3Client) {
-				const signedUrl = await getSignedUrl(
-					s3Client,
-					new GetObjectCommand({
-						Bucket: this.getWasabiBucket(),
-						Key: fileURL
-					}),
-					{
-						expiresIn: 3600
-					}
+				// One signature per object for a few minutes, from a client shared per configuration (s3-client-cache.ts).
+				const bucket = this.getWasabiBucket();
+				const signedUrl = await cachedPresign(s3Client, bucket, fileURL, () =>
+					getSignedUrl(s3Client, new GetObjectCommand({ Bucket: bucket, Key: fileURL }), {
+						expiresIn: PRESIGNED_URL_EXPIRES_IN_SECONDS
+					})
 				);
 
 				return signedUrl;
@@ -309,10 +320,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 						if (filename) {
 							fileName = typeof filename === 'string' ? filename : filename(file, extension);
 						} else {
-							fileName = `${prefix}-${moment().unix()}-${parseInt(
-								'' + Math.random() * 1000,
-								10
-							)}.${extension}`;
+							fileName = defaultStoredFileName(prefix, extension);
 						}
 
 						// Replace double backslashes with single forward slashes
@@ -335,7 +343,9 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	 * Get a file from Wasabi storage.
 	 *
 	 * @param key - The key of the file to retrieve
-	 * @returns A Promise resolving to a Buffer containing the file data
+	 * @returns A Promise resolving to the AWS SDK v3 body STREAM (`GetObjectCommandOutput.Body`), not a Buffer — read
+	 * it with `readStorageFileAsBuffer` / `fileContentToBuffer` — or `undefined` when the file could not be fetched
+	 * (the error is logged)
 	 */
 	async getFile(key: string): Promise<Buffer | any> {
 		try {
@@ -357,7 +367,10 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 				this.logger.error('Error while retrieving file: s3Client is null');
 			}
 		} catch (error) {
-			this.logger.error(`Error while fetching file with key '${key}'`);
+			// The SDK's error name says why (NoSuchKey, AccessDenied, a network code); callers only see `undefined`.
+			this.logger.error(
+				`Error while fetching file with key '${key}': ${error?.name ?? 'Error'}: ${error?.message ?? error}`
+			);
 		}
 	}
 
@@ -471,7 +484,7 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 			) {
 				const endpoint = ensureHttpPrefix(this.config.wasabi_aws_service_url);
 
-				const s3Client = new S3Client({
+				const s3Client = getCachedS3Client({
 					credentials: {
 						accessKeyId: this.config.wasabi_aws_access_key_id,
 						secretAccessKey: this.config.wasabi_aws_secret_access_key
@@ -484,7 +497,9 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 					 * https://s3.wasabisys.com
 					 * (e.g., https://s3.wasabisys.com/<bucketName>/<key> instead of https://<bucketName>.s3.wasabisys.com/<key>
 					 */
-					forcePathStyle: this.config.wasabi_aws_force_path_style
+					forcePathStyle: this.config.wasabi_aws_force_path_style,
+					// A tenant's public host name that resolves to a private address is refused at connect time.
+					...(this.endpointFromTenant ? { requestHandler: { httpsAgent: tenantStorageHttpsAgent() } } : {})
 				});
 
 				return s3Client;

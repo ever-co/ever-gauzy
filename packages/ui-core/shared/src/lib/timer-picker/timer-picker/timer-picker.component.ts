@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, forwardRef, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, forwardRef, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import moment from 'moment';
 import { IOrganization } from '@gauzy/contracts';
@@ -13,6 +13,7 @@ import { IOrganization } from '@gauzy/contracts';
 			multi: true
 		}
 	],
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class TimerPickerComponent implements OnInit {
@@ -24,6 +25,8 @@ export class TimerPickerComponent implements OnInit {
 	onTouched: any = () => {};
 	val: any;
 	@Input() disabled = false;
+	/** Accessible name for the inner combobox (a sibling `<label>` cannot name it). */
+	@Input() ariaLabel: string;
 	@Input()
 	public get min(): string {
 		return this._min;

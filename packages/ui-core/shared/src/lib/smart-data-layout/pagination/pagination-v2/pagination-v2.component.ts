@@ -1,5 +1,5 @@
 /* It's a pagination component that works with the angular2-smart-table component */
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { LocalDataSource } from 'angular2-smart-table';
 import { Subscription, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -9,9 +9,13 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
     selector: 'ngx-pagination',
     templateUrl: './pagination-v2.component.html',
     styleUrls: ['./pagination-v2.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class PaginationV2Component implements OnChanges, OnDestroy {
+	/** Disable when the parent handles reloading after a page-size change. */
+	@Input() public refreshOnPerPageChange = true;
+
 	private _source: LocalDataSource;
 	private _perPageSelect: any[];
 	private _currentPerPage: any;
@@ -129,7 +133,10 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 				this._source.getPaging().perPage = null;
 			} else {
 				this._source.getPaging().perPage = this._currentPerPage * 1;
-				this._source.refresh();
+				if (this.refreshOnPerPageChange) {
+					this._source.refresh();
+				}
+				this.perPageChange.emit(this._source.getPaging().perPage);
 			}
 			this._initPages();
 		}
@@ -201,6 +208,8 @@ export class PaginationV2Component implements OnChanges, OnDestroy {
 	public get changePage(): EventEmitter<{ page: number }> {
 		return this._changePage;
 	}
+
+	@Output() public readonly perPageChange = new EventEmitter<number>();
 
 	ngOnDestroy(): void {}
 }

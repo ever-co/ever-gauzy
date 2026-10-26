@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, Validators, UntypedFormGroup, FormControl } from '@angular/forms';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,6 +28,7 @@ import { ALL_EMPLOYEES_SELECTED } from '../../selectors/employee/default-employe
     selector: 'ga-expenses-mutation',
     templateUrl: './expenses-mutation.component.html',
     styleUrls: ['./expenses-mutation.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class ExpensesMutationComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {

@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, type SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { DefaultFilter } from 'angular2-smart-table';
 import { ITag } from '@gauzy/contracts';
 
@@ -12,6 +12,7 @@ import { ITag } from '@gauzy/contracts';
 			[label]="false"
 		></ga-tags-color-input>
 	`,
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class TagsColorFilterComponent extends DefaultFilter implements OnChanges {

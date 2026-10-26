@@ -940,6 +940,17 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						}
 					},
 					{
+						id: 'goals-initiatives',
+						title: 'Initiatives',
+						link: '/pages/goals/initiatives',
+						icon: 'fas fa-bullseye',
+						data: {
+							translationKey: 'MENU.INITIATIVES',
+							permissionKeys: [PermissionsEnum.ORG_STRATEGIC_INITIATIVE_READ],
+							featureKey: FeatureEnum.FEATURE_GOAL
+						}
+					},
+					{
 						id: 'goals-report',
 						title: 'Report',
 						link: '/pages/goals/reports',
@@ -1044,11 +1055,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				menuCategory: 'workspace',
 				data: {
 					translationKey: 'MENU.IMPORT_EXPORT.IMPORT_EXPORT',
-					permissionKeys: [
-						PermissionsEnum.ALL_ORG_VIEW,
-						PermissionsEnum.IMPORT_ADD,
-						PermissionsEnum.EXPORT_ADD
-					],
+					permissionKeys: [PermissionsEnum.IMPORT_ADD, PermissionsEnum.EXPORT_ADD],
 					featureKey: FeatureEnum.FEATURE_IMPORT_EXPORT
 				}
 			},

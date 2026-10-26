@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormGroup, UntypedFormBuilder } from '@angular/forms';
 import { debounceTime, filter, firstValueFrom, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -22,18 +22,17 @@ import {
 	ComponentLayoutStyleEnum,
 	GoalOwnershipEnum,
 	IGoalGeneralSetting,
-	IKPI,
-	IOrganization,
-	KpiMetricEnum,
-	KpiOperatorEnum
+	IOrganization
 } from '@gauzy/contracts';
 import { EditTimeFrameComponent } from './edit-time-frame/edit-time-frame.component';
+import { buildKpiViewSections, buildTimeFrameViewSections } from './goal-settings-record-view';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ga-goal-settings',
     templateUrl: './goal-settings.component.html',
     styleUrls: ['./goal-settings.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
 export class GoalSettingsComponent extends PaginationFilterBaseComponent implements OnInit, OnDestroy {
@@ -51,6 +50,8 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 	 */
 	viewedRecord: any = null;
 	viewHeading: string;
+	/** The viewed KPI's / time frame's own full-width page, for the drawer's expand icon. */
+	viewFullLink: string = null;
 	viewSections: IRecordViewSection[] = [];
 
 	selectedOrganizationId: string;
@@ -201,89 +202,23 @@ export class GoalSettingsComponent extends PaginationFilterBaseComponent impleme
 				return;
 			}
 			this.viewHeading = 'GOALS_PAGE.SETTINGS.KPI';
-			this.viewSections = this.buildKpiViewSections(kpi);
+			this.viewSections = buildKpiViewSections(kpi, (key) => this.getTranslation(key));
 			this.viewedRecord = kpi;
+			this.viewFullLink = '/pages/goals/settings/kpi/' + kpi.id;
 		} else if (this.selectedTab === 'timeframe') {
 			const timeFrame = selectedItem ?? this.selectedTimeFrame;
 			if (!timeFrame) {
 				return;
 			}
 			this.viewHeading = 'GOALS_PAGE.SETTINGS.TIME_FRAME_PAGE_TITLE';
-			this.viewSections = this.buildTimeFrameViewSections();
+			this.viewSections = buildTimeFrameViewSections();
 			this.viewedRecord = timeFrame;
+			this.viewFullLink = '/pages/goals/settings/time-frame/' + timeFrame.id;
 		}
 	}
 
 	closeView(): void {
 		this.viewedRecord = null;
-	}
-
-	/**
-	 * Field descriptors for a KPI — the grid columns, read vertically, then the
-	 * fields the grid has no room for.
-	 */
-	private buildKpiViewSections(kpi: IKPI): IRecordViewSection[] {
-		return [
-			{
-				fields: [
-					{ label: 'SM_TABLE.NAME', key: 'name' },
-					// The grid renders these through ValueWithUnitComponent — the
-					// value followed by the KPI's unit — so the View reads the same.
-					{ label: 'SM_TABLE.CURRENT_VALUE', value: this.withUnit(kpi.currentValue, kpi.unit) },
-					{ label: 'SM_TABLE.TARGET_VALUE', value: this.withUnit(kpi.targetValue, kpi.unit) },
-					{ label: 'SM_TABLE.LAST_UPDATED', key: 'updatedAt', type: 'date' }
-				]
-			},
-			{
-				fields: [
-					{ label: 'FORM.LABELS.DESCRIPTION', key: 'description', type: 'multiline', wide: true },
-					{
-						label: 'GOALS_PAGE.FORM.LABELS.KPI_METRIC',
-						value: this.translateEnum(kpi.type, KpiMetricEnum, 'GOALS_PAGE.KPI_METRIC')
-					},
-					{
-						label: 'GOALS_PAGE.FORM.LABELS.KPI_SHOULD_BE',
-						value: this.translateEnum(kpi.operator, KpiOperatorEnum, 'GOALS_PAGE.KPI_OPERATOR')
-					},
-					{ label: 'GOALS_PAGE.FORM.LABELS.LEAD', key: 'lead', type: 'person' }
-				]
-			}
-		];
-	}
-
-	/**
-	 * Field descriptors for a Time Frame — the grid columns, read vertically.
-	 */
-	private buildTimeFrameViewSections(): IRecordViewSection[] {
-		return [
-			{
-				fields: [
-					{ label: 'SM_TABLE.NAME', key: 'name' },
-					{ label: 'SM_TABLE.START_DATE', key: 'startDate', type: 'date' },
-					{ label: 'SM_TABLE.END_DATE', key: 'endDate', type: 'date' },
-					// `status` was replaced by `statusMapper` when the rows were
-					// loaded, so it is already the `{ text, class }` a badge expects.
-					{ label: 'SM_TABLE.STATUS', key: 'status', type: 'badge' }
-				]
-			}
-		];
-	}
-
-	/** Mirrors ValueWithUnitComponent: the value followed by the KPI's unit. */
-	private withUnit(value: number, unit?: string): string | number | undefined {
-		if (value === null || value === undefined) {
-			return undefined;
-		}
-		return unit ? `${value} ${unit}` : value;
-	}
-
-	/**
-	 * The record stores the enum VALUE ('Numerical', '>=') while the i18n keys
-	 * are indexed by the enum KEY — reverse-map before translating.
-	 */
-	private translateEnum(value: string, enumType: Record<string, string>, i18nPrefix: string): string {
-		const key = Object.keys(enumType).find((enumKey) => enumType[enumKey] === value);
-		return key ? this.getTranslation(`${i18nPrefix}.${key}`) : value;
 	}
 
 	private async _loadTableData(tab) {
