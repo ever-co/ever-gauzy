@@ -1,7 +1,9 @@
+import { expect } from '@playwright/test';
 import {
 	verifyElementIsVisible,
 	clickButton,
 	dispatchClick,
+	dispatchClickWhenSettled,
 	waitForSpinnerGone,
 	clearField,
 	enterInput,
@@ -15,6 +17,9 @@ import {
 } from '../util';
 import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
+// Clients, Leads and Customers all render the same ga-contact-mutation wizard: its drivers live once, in
+// ContactsLeads.po.
+import { clickWizardForward, pickContactMember, settleWizardForm } from './ContactsLeads.po';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ClientsPage } from '../../../src/support/Base/pageobjects/ClientsPageObject';
 
@@ -31,9 +36,11 @@ export const addButtonVisible = async () => {
 };
 
 export const clickAddButton = async () => {
-	// dispatchClick past the post-navigation load spinner so the Add stepper reliably opens.
-	await waitForSpinnerGone();
-	await dispatchClick(ClientsPage.addButtonCss);
+	// dispatchClick past the post-navigation load spinner so the Add stepper reliably opens; confirmed on
+	// the wizard's Name field (re-dispatched once if the click was swallowed), then let the wizard's
+	// delayed form patch land before filling (see ContactsLeads.po settleWizardForm).
+	await dispatchClickWhenSettled(ClientsPage.addButtonCss, ClientsPage.nameInputCss);
+	await settleWizardForm();
 };
 
 export const nameInputVisible = async () => {
@@ -78,7 +85,10 @@ export const clickCountryDropdown = async () => {
 	await clickButton(ClientsPage.countryDropdownCss);
 };
 
-export const selectCountryFromDropdown = async (text) => {
+export const selectCountryFromDropdown = async (country) => {
+	// Trimmed: ClientsData.country is ' Bulgaria ', and ga-country's searchFn matches the raw term, so the
+	// padded value typed into an already-open panel would filter on ' Bul' and match nothing.
+	const text = String(country).trim();
 	const page = getPage();
 	const input = page.locator(ClientsPage.countryDropdownCss).locator('input').first();
 	const option = page.locator(ClientsPage.countryDropdownOptionCss);
@@ -100,9 +110,8 @@ export const nextButtonVisible = async () => {
 
 export const clickNextButton = async () => {
 	// Stepper-advance buttons sit under a full-card spinner on async steps; wait briefly then dispatch
-	// the click (nbStepperNext fires on click and still gates on form validity). See ContactsLeads.po.
-	await waitForSpinnerGone();
-	await dispatchClick(ClientsPage.nextButtonCss);
+	// the click (nbStepperNext fires on click and still gates on form validity) once it is enabled.
+	await clickWizardForward(ClientsPage.nextButtonCss);
 };
 
 export const cityInputVisible = async () => {
@@ -141,7 +150,12 @@ export const clickProjectDropdown = async () => {
 };
 
 export const selectProjectFromDropdown = async (text) => {
-	await clickElementByText(ClientsPage.projectsDropdownOptionCss, text);
+	// Shared ng-select driver: re-opens by keyboard if the click above was lost, skips the
+	// "Loading…/No items found" rows and proves the pick on `div.ng-value`. Strict, like the
+	// clickElementByText it replaces.
+	if (!(await selectNgOption(ClientsPage.projectsDropdownCss, ClientsPage.projectsDropdownOptionCss, String(text)))) {
+		throw new Error(`Project "${text}" could not be selected in the contact wizard's Projects picker`);
+	}
 };
 
 export const selectEmployeeDropdownVisible = async () => {
@@ -154,21 +168,17 @@ export const clickSelectEmployeeDropdown = async () => {
 };
 
 export const selectEmployeeDropdownOption = async (index) => {
-	const page = getPage();
-	const option = page.locator(ClientsPage.dropdownOptionCss);
-	// Best-effort employee pick: the option list (org employees "working" in the header date range)
-	// loads async and can legitimately be empty. Select one if it shows; otherwise leave members empty
-	// — a client saves fine without members — so the stepper still finishes. Avoids a hard 60s timeout.
-	try {
-		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await option.nth(index).click({ force: true });
-	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
-	}
+	// Best-effort, as before: members are optional (a client saves fine without them), so an empty list
+	// still lets the wizard finish. The Members picker is now ng-select.members-select — see
+	// ContactsLeads.po pickContactMember for why the pick is confirmed on the option itself.
+	await pickContactMember(ClientsPage.usersMultiSelectCss, ClientsPage.membersOptionCss, index);
 };
 
 export const selectEmployeeFromDropdownByName = async (name) => {
-	await clickElementByText(ClientsPage.dropdownOptionCss, name);
+	// Strict, like the clickElementByText it replaces: a NAMED member must end up selected.
+	if (!(await pickContactMember(ClientsPage.usersMultiSelectCss, ClientsPage.membersOptionCss, String(name)))) {
+		throw new Error(`Employee "${name}" could not be added on the contact wizard's Members step`);
+	}
 };
 
 export const tagsMultiSelectVisible = async () => {
@@ -209,8 +219,8 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	await waitForSpinnerGone();
-	await dispatchClick(ClientsPage.saveButtonCss);
+	// Step 1's forward button ("Next"); waits for it to be enabled (Name valid) before dispatching.
+	await clickWizardForward(ClientsPage.saveButtonCss);
 };
 
 export const inviteButtonVisible = async () => {
@@ -219,8 +229,8 @@ export const inviteButtonVisible = async () => {
 
 export const clickInviteButton = async () => {
 	// dispatchClick the toolbar Invite — a fading dialog backdrop otherwise swallows the coordinate click.
-	await waitForSpinnerGone();
-	await dispatchClick(ClientsPage.inviteButtonCss);
+	// Confirmed on the Invite Contact dialog's name field (re-dispatched once if the click was lost).
+	await dispatchClickWhenSettled(ClientsPage.inviteButtonCss, ClientsPage.clientNameCss);
 };
 
 export const saveInviteButtonVisible = async () => {
@@ -240,15 +250,26 @@ export const clickSaveInviteButton = async () => {
 	await waitForSpinnerGone();
 	await page.waitForTimeout(1200); // allow the getUserByEmail async validator round-trip to resolve
 	for (let attempt = 0; attempt < 6; attempt++) {
-		await dispatchClick(ClientsPage.saveInviteButtonCss);
+		if ((await dialog.count().catch(() => 0)) === 0) {
+			return; // closed (a slow earlier dispatch landed) — never click into the page behind it
+		}
+		await page
+			.locator(ClientsPage.saveInviteButtonCss)
+			.first()
+			.dispatchEvent('click', undefined, { timeout: 5000 })
+			.catch(() => undefined);
 		try {
-			await dialog.first().waitFor({ state: 'detached', timeout: 3000 });
+			await dialog.first().waitFor({ state: 'detached', timeout: 5000 });
 			return; // dialog closed -> invite persisted and the grid will refresh
 		} catch {
 			// still open (form was PENDING/invalid at click time) — settle again and retry the dispatch
 			await page.waitForTimeout(900);
 		}
 	}
+	// Fail here, naming the cause, instead of in the next grid assertion.
+	await expect(dialog, 'the Invite Contact dialog never closed after "Email Invite"').toHaveCount(0, {
+		timeout: 5000
+	});
 };
 
 export const tableRowVisible = async () => {
@@ -287,6 +308,8 @@ export const selectTableRowByName = async (name: string) => {
 	await page.waitForTimeout(1500);
 	const row = page.locator(ClientsPage.selectTableRowCss).filter({ hasText: name }).first();
 	const editBtn = page.locator(ClientsPage.editButtonCss).first();
+	// Fail on the missing row itself (24 s), not on a click that would wait out the whole test.
+	await row.waitFor({ state: 'visible', timeout: 24_000 });
 	for (let attempt = 0; attempt < 4; attempt++) {
 		await row.click({ force: true });
 		for (let i = 0; i < 8; i++) {
@@ -305,8 +328,9 @@ export const editButtonVisible = async () => {
 };
 
 export const clickEditButton = async (_index: number = 0) => {
-	await waitForSpinnerGone();
-	await dispatchClick(ClientsPage.editButtonCss);
+	// Confirmed on the wizard's Name field, then settled (see ContactsLeads.po settleWizardForm).
+	await dispatchClickWhenSettled(ClientsPage.editButtonCss, ClientsPage.nameInputCss);
+	await settleWizardForm();
 };
 
 export const deleteButtonVisible = async () => {
@@ -375,8 +399,16 @@ export const lastStepBtnVisible = async () => {
 };
 
 export const clickLastStepBtn = async () => {
-	await waitForSpinnerGone();
-	await dispatchClick(ClientsPage.lastStepBtnCss);
+	await clickWizardForward(ClientsPage.lastStepBtnCss);
+};
+
+// The wizard is replaced by the grid only once addOrEditOrganizationContact() persisted the contact (on an
+// API error it stays up with a danger toast): proves the save landed, and fails HERE if it did not.
+export const verifyContactFormClosed = async () => {
+	await expect(
+		getPage().locator(ClientsPage.contactMutationCss),
+		'the contact wizard is still open after Save — the client was not saved'
+	).toHaveCount(0, { timeout: 24_000 });
 };
 
 export const budgetInputVisible = async () => {
