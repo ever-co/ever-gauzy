@@ -35,7 +35,7 @@ export class ApiCallLogModule implements NestModule {
 	configure(consumer: MiddlewareConsumer) {
 		consumer.apply(ApiCallLogMiddleware).forRoutes(
 			// POST Routes
-			{ path: '/timesheet/timer/*', method: RequestMethod.POST },
+			{ path: '/timesheet/timer/{*splat}', method: RequestMethod.POST },
 			{ path: '/timesheet/time-log', method: RequestMethod.POST },
 			{ path: '/timesheet/activity/bulk', method: RequestMethod.POST },
 			{ path: '/timesheet/time-slot', method: RequestMethod.POST },

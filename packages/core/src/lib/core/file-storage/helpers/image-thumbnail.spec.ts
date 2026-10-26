@@ -1,14 +1,7 @@
-import { Readable } from 'node:stream';
 import { crc32 } from 'node:zlib';
 import { Jimp, JimpMime } from 'jimp';
 import * as sharpModule from 'sharp';
-import {
-	FileContentTooLargeError,
-	createImageThumbnail,
-	fileContentToBuffer,
-	MAX_BUFFERED_FILE_BYTES,
-	thumbnailFileName
-} from './image-thumbnail';
+import { createImageThumbnail, thumbnailFileName } from './image-thumbnail';
 
 const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
 	sharpModule) as unknown as typeof sharpModule.default;
@@ -104,61 +97,5 @@ describe('thumbnailFileName', () => {
 		['no-extension', 'jpg', 'thumb-no-extension.jpg']
 	])('names %s with the thumbnail format', (filename, extension, expected) => {
 		expect(thumbnailFileName(filename, extension)).toBe(expected);
-	});
-});
-
-describe('fileContentToBuffer', () => {
-	it.each([
-		['nothing', undefined, undefined],
-		['null', null, undefined],
-		['a Buffer', Buffer.from('abc'), 'abc'],
-		['a Uint8Array', new Uint8Array([97, 98, 99]), 'abc'],
-		['a string', 'abc', 'abc'],
-		['an object without bytes', { foo: 'bar' }, undefined]
-	])('handles %s', async (_label, content, expected) => {
-		const buffer = await fileContentToBuffer(content);
-		expect(buffer === undefined ? undefined : buffer.toString()).toBe(expected);
-	});
-
-	it('reads an SDK body with transformToByteArray', async () => {
-		const body = { transformToByteArray: async () => new Uint8Array([97, 98, 99]) };
-		expect((await fileContentToBuffer(body))?.toString()).toBe('abc');
-	});
-
-	it('reads a stream to the end', async () => {
-		const stream = Readable.from([Buffer.from('ab'), Buffer.from('c')]);
-		expect((await fileContentToBuffer(stream))?.toString()).toBe('abc');
-	});
-
-	it('is bounded by default', () => {
-		expect(MAX_BUFFERED_FILE_BYTES).toBe(64 * 1024 * 1024);
-	});
-
-	it('stops reading a stream that exceeds the bound, holding nothing more', async () => {
-		let served = 0;
-		async function* chunks() {
-			for (;;) {
-				served += 1;
-				yield Buffer.alloc(1024);
-			}
-		}
-		await expect(fileContentToBuffer(chunks(), 4096)).rejects.toThrow(/larger than the 4096 bytes/);
-		expect(served).toBe(5);
-	});
-
-	it('reads an SDK body that is also a stream chunk by chunk, so the bound stops the read', async () => {
-		async function* chunks() {
-			for (;;) yield Buffer.alloc(1024);
-		}
-		const body = Object.assign(Readable.from(chunks()), { transformToByteArray: jest.fn() });
-		await expect(fileContentToBuffer(body, 4096)).rejects.toThrow(/larger than the 4096 bytes/);
-		expect(body.transformToByteArray).not.toHaveBeenCalled();
-	});
-
-	it('refuses bytes already in memory beyond the bound', async () => {
-		await expect(fileContentToBuffer(Buffer.alloc(10), 9)).rejects.toBeInstanceOf(FileContentTooLargeError);
-		await expect(fileContentToBuffer(Buffer.alloc(10), 9)).rejects.toThrow(/larger than the 9 bytes/);
-		const body = { transformToByteArray: async () => new Uint8Array(10) };
-		await expect(fileContentToBuffer(body, 9)).rejects.toThrow(/larger than the 9 bytes/);
 	});
 });

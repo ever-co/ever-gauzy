@@ -49,8 +49,8 @@ export class SentryPlugin implements NestModule, IOnPluginBootstrap {
 	 */
 	configure(consumer: MiddlewareConsumer) {
 		if (process.env.SENTRY_DSN) {
-			consumer.apply(SentryRequestMiddleware).forRoutes('*');
-			consumer.apply(SentryTraceMiddleware).forRoutes('*');
+			consumer.apply(SentryRequestMiddleware).forRoutes('{*splat}');
+			consumer.apply(SentryTraceMiddleware).forRoutes('{*splat}');
 		}
 	}
 

@@ -12,7 +12,7 @@ import {
 	FileStorageProviderEnum,
 	ID
 } from '@gauzy/contracts';
-import { EventBus, FileStorage } from '@gauzy/core';
+import { EventBus, FileStorage, readStorageFileAsBuffer } from '@gauzy/core';
 import { Document } from '../entities/document.entity';
 import { TypeOrmDocumentRepository } from '../repositories/type-orm-document.repository';
 import { DocumentProcessingService } from '../services/document-processing.service';
@@ -133,7 +133,9 @@ export class ChatCaptureSubscriber implements OnModuleInit, OnModuleDestroy {
 
 		try {
 			const provider = new FileStorage().getProvider();
-			const buffer = (await provider.getFile(payload.file.key)) as Buffer;
+			// As bytes whatever the provider answers (the S3 family returns the SDK's body stream). A file that cannot
+			// be read throws here, into the catch below, so nothing is deleted on a failed read.
+			const buffer = await readStorageFileAsBuffer(provider, payload.file.key);
 
 			// The same magic-byte gauntlet as the upload endpoint — a chat attachment is
 			// user-supplied content and gets no discount.
@@ -141,17 +143,17 @@ export class ChatCaptureSubscriber implements OnModuleInit, OnModuleDestroy {
 			if (!sniff.ok) {
 				this.logger.warn(`Chat attachment '${fileName.slice(0, 40)}' rejected: ${sniff.code}`);
 				// Nothing will ever reference a REJECTED object: remove it instead of leaving an orphan
-				// (best effort — the rejection stands either way). Only when the bytes were actually READ:
-				// LocalProvider.getFile swallows fs errors and returns undefined, and a transient read
-				// failure must not destroy a valid attachment. A zero-length Buffer is a successful read
-				// of an empty file (which sniffFile rejects) — that one IS ours to clean up, so the test
-				// is "is it a Buffer", not "is it non-empty".
-				if (Buffer.isBuffer(buffer)) {
-					try {
-						await provider.deleteFile(payload.file.key);
-					} catch (error) {
-						this.logger.warn(`Could not remove rejected chat attachment '${payload.file.key}': ${error?.message ?? error}`);
-					}
+				// (best effort — the rejection stands either way). The bytes were actually READ to get here:
+				// a failed read (a provider that swallows its error and returns nothing, a transient fault)
+				// throws out of readStorageFileAsBuffer above, so it can never destroy a valid attachment. A
+				// zero-length Buffer is a successful read of an empty file (which sniffFile rejects) — that
+				// one IS ours to clean up.
+				try {
+					await provider.deleteFile(payload.file.key);
+				} catch (error) {
+					this.logger.warn(
+						`Could not remove rejected chat attachment '${payload.file.key}': ${error?.message ?? error}`
+					);
 				}
 				return null;
 			}

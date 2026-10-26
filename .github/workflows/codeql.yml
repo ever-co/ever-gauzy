@@ -94,7 +94,7 @@ jobs:
     # Same pool default setup used (`runner_label: ever-k8s-linux-x64-4`), read through the repo
     # variable the rest of this directory uses so a fleet rename is a one-place change. The
     # fallback keeps the workflow runnable if the ARC pool is ever unavailable.
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     timeout-minutes: 120
     permissions:
       # Upload the SARIF results to the code scanning API. Required by every advanced setup.

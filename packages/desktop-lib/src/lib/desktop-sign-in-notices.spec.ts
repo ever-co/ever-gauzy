@@ -130,6 +130,60 @@ describe('DesktopSignInNotices', () => {
 		expect(mockStore.has(DESKTOP_SEED_CREDENTIALS_STORE_KEY)).toBe(false);
 	});
 
+	it('says "Copied" only once the clipboard write resolved (Electron 44 made it asynchronous)', async () => {
+		startAndSeed();
+		let resolveWrite: () => void = () => undefined;
+		mockWriteText.mockReturnValueOnce(new Promise<void>((resolve) => (resolveWrite = resolve)));
+		mockShowMessageBox.mockResolvedValueOnce({ response: 0 }).mockResolvedValueOnce({ response: 1 });
+
+		const shown = notices.show();
+		// Let the first dialog answer "Copy": the write is pending, so the second dialog must wait for it.
+		for (let i = 0; i < 10; i++) {
+			await Promise.resolve();
+		}
+		expect(mockWriteText).toHaveBeenCalledTimes(1);
+		expect(mockShowMessageBox).toHaveBeenCalledTimes(1);
+
+		resolveWrite();
+		await shown;
+
+		expect(mockShowMessageBox).toHaveBeenCalledTimes(2);
+		expect(dialogOptions(1).detail).toContain('Copied to the clipboard.');
+	});
+
+	it('says the copy failed when the clipboard write fails, and keeps going', async () => {
+		startAndSeed();
+		mockWriteText.mockRejectedValueOnce(new Error('clipboard unavailable'));
+		mockShowMessageBox.mockResolvedValueOnce({ response: 0 }).mockResolvedValueOnce({ response: 1 });
+		const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+		await expect(notices.show()).resolves.toBeUndefined();
+
+		expect(mockShowMessageBox).toHaveBeenCalledTimes(2);
+		expect(dialogOptions(1).detail).not.toContain('Copied to the clipboard.');
+		// Review (CodeRabbit): the user sees the failure in the dialog, not only in the log.
+		expect(dialogOptions(1).detail).toContain('Could not copy to the clipboard.');
+		expect(mockStore.has(DESKTOP_SEED_CREDENTIALS_STORE_KEY)).toBe(false);
+		consoleError.mockRestore();
+	});
+
+	it('drops the failure notice once a retried copy succeeds', async () => {
+		startAndSeed();
+		mockWriteText.mockRejectedValueOnce(new Error('clipboard unavailable')).mockResolvedValueOnce(undefined);
+		mockShowMessageBox
+			.mockResolvedValueOnce({ response: 0 })
+			.mockResolvedValueOnce({ response: 0 })
+			.mockResolvedValueOnce({ response: 1 });
+		const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+		await notices.show();
+
+		expect(dialogOptions(1).detail).toContain('Could not copy to the clipboard.');
+		expect(dialogOptions(2).detail).toContain('Copied to the clipboard.');
+		expect(dialogOptions(2).detail).not.toContain('Could not copy to the clipboard.');
+		consoleError.mockRestore();
+	});
+
 	it('a dialog never confirmed (the app was closed) comes back at the next start', async () => {
 		const credentials = startAndSeed();
 

@@ -13,6 +13,7 @@ import { canInviteWithRole, ID, IRole, PermissionsEnum, RolesEnum } from '@gauzy
 import { isNotEmpty } from '@gauzy/utils';
 import { convertToDatetime, getORMType, MultiORMEnum } from '../../core/utils';
 import { FileStorage } from '../../core/file-storage';
+import { readStorageFileAsBuffer } from '../../core/file-storage/helpers/stored-file-content';
 import { Organization } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {
@@ -23,7 +24,7 @@ import {
 import { fromSpreadsheetSafeCsvRow } from '../spreadsheet-safe-row';
 import { usesSpreadsheetSafeCells } from '../export-manifest';
 import { ImportEntityFieldMapOrCreateCommand } from './commands';
-import { extractImportArchive } from './import-archive-extract';
+import { extractImportArchive, IMPORT_ARCHIVE_LIMITS } from './import-archive-extract';
 import { ImportRecordFindOrFailCommand, ImportRecordUpdateOrCreateCommand } from '../import-record';
 import {
 	mikroOrmClosureRebuildRunner,
@@ -211,7 +212,11 @@ export class ImportService {
 	 * @param cleanup - Whether to wipe the tenant's existing rows first (`ImportTypeEnum.CLEAN`).
 	 */
 	public async unzipAndParse(extractPath: string, filePath: string, cleanup: boolean = false) {
-		const file = await new FileStorage().getProvider().getFile(filePath);
+		// The S3-family providers return the SDK's body stream, not a Buffer: read the archive's bytes (bounded by the
+		// upload limit). A missing or unreadable archive fails here with the storage key, not as "not a ZIP archive".
+		const file = await readStorageFileAsBuffer(new FileStorage().getProvider(), filePath, {
+			maxBytes: IMPORT_ARCHIVE_LIMITS.maxArchiveBytes
+		});
 		await extractImportArchive(file, extractPath);
 		await this.parse(extractPath, cleanup);
 	}

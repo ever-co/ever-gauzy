@@ -1,0 +1,188 @@
+# Sets up the Visual Studio C++ developer environment (what a "Developer Command Prompt" has) for
+# the rest of the job, and is the single place that logic lives.
+#
+# It replaces ilammy/msvc-dev-cmd@v1 in the 30 Windows release jobs (agent, desktop, desktop timer,
+# server, server API and server MCP, demo/stage/prod, x64 and arm64). That action's last release
+# (v1.13.0, January 2024) declares the Node 20 runtime, which GitHub deprecated: every job logged
+# "Node.js 20 is deprecated ... being forced to run on Node.js 24", and no release runs on Node 24.
+#
+# Behaviour is the same as msvc-dev-cmd's:
+# - Instance selection. msvc-dev-cmd asked vswhere for `-version "17.0,17.9"` when given
+#   vsversion 2022. That range excludes every VS 2022 from 17.10 on (vswhere returns nothing for a
+#   17.14 BuildTools), so on every runner it logged "Not found with vswhere" and took the first
+#   existing standard location, Program Files (x86) before Program Files, Enterprise, Professional,
+#   Community, then BuildTools (stage-apps 2026-10-25: (x86)\2022\BuildTools on EVERDESK4 and on
+#   windows-11-arm). Those locations are tried first here, in that order, so the same instance is
+#   chosen. vswhere follows, with a correct range, for installs outside the standard folders.
+# - It runs `vcvarsall.bat <arch>` in cmd.exe, compares the environment before and after, and
+#   exports every variable that is new or changed (Path, INCLUDE, LIB, LIBPATH, VSINSTALLDIR,
+#   VCINSTALLDIR, VCToolsInstallDir, WindowsSdkDir, WindowsSDKVersion, ...) to GITHUB_ENV. The
+#   path-like ones are de-duplicated, first occurrence wins.
+# - Path is exported WHOLE, as msvc-dev-cmd did, so the callers' follow-up steps ("Put setup-node's
+#   Node back ahead of the VS dev env on PATH", "Install Yarn next to setup-node's Node") keep
+#   working unchanged: they run after this action and put setup-node's Node and yarn first again.
+# - The Visual Studio Installer directory (vswhere's home) ends up on that Path, as it did there.
+name: Set up the MSVC developer environment
+description: >-
+  Run Visual Studio's vcvarsall.bat for the requested architecture and export every environment
+  variable it sets or changes to GITHUB_ENV, so later steps build as if run from a Visual Studio
+  Developer Command Prompt. Local replacement for ilammy/msvc-dev-cmd@v1 (Node 20).
+
+inputs:
+  arch:
+    description: >-
+      Target architecture passed to vcvarsall.bat: x64, x86, arm64, or a host_target pair such as
+      amd64_arm64. win32, win64, x86_64 and x86-64 are accepted as aliases, as msvc-dev-cmd did.
+    required: false
+    default: x64
+  vsversion:
+    description: >-
+      Visual Studio to use, as a year (2017, 2019, 2022, 2026) or a major version (15, 16, 17, 18).
+      Empty means the newest installed.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Run vcvarsall.bat and export its environment
+      if: runner.os == 'Windows'
+      # Windows PowerShell, like the rest of these jobs: the self-hosted Windows runners are not
+      # guaranteed to have pwsh.
+      shell: powershell
+      env:
+        MSVC_DEV_ENV_ARCH: ${{ inputs.arch }}
+        MSVC_DEV_ENV_VSVERSION: ${{ inputs.vsversion }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+
+        # Architecture: msvc-dev-cmd's aliases, then a strict check, because the value ends up on a
+        # cmd.exe command line.
+        $arch = "$env:MSVC_DEV_ENV_ARCH".Trim()
+        if (-not $arch) { $arch = 'x64' }
+        $aliases = @{ 'win32' = 'x86'; 'win64' = 'x64'; 'x86_64' = 'x64'; 'x86-64' = 'x64' }
+        if ($aliases.ContainsKey($arch.ToLowerInvariant())) { $arch = $aliases[$arch.ToLowerInvariant()] }
+        if ($arch -notmatch '^[A-Za-z0-9_]+$') { throw "Unsupported arch '$arch'." }
+
+        # Visual Studio version: a year or a major version number.
+        $yearToMajor = @{ '2017' = 15; '2019' = 16; '2022' = 17; '2026' = 18 }
+        $vsversion = "$env:MSVC_DEV_ENV_VSVERSION".Trim()
+        $major = $null
+        if ($vsversion) {
+          if ($yearToMajor.ContainsKey($vsversion)) { $major = $yearToMajor[$vsversion] }
+          elseif ($vsversion -match '^(\d+)(\.\d+)*$') { $major = [int]$Matches[1] }
+          else { throw "Unsupported vsversion '$vsversion': use a year (2022) or a major version (17)." }
+        }
+        # Standard install folders, the ones msvc-dev-cmd scanned (VS 2026 installs under '18' and
+        # is left to vswhere).
+        $majorToFolder = @{ 15 = '2017'; 16 = '2019'; 17 = '2022' }
+
+        $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+        $installerDir = Split-Path $vswhere -Parent
+        if (-not (($env:PATH -split ';') -contains $installerDir)) { $env:PATH = "$env:PATH;$installerDir" }
+
+        $candidates = New-Object System.Collections.Generic.List[string]
+        function Add-StandardLocations([string[]]$folders) {
+          foreach ($programFiles in @(${env:ProgramFiles(x86)}, $env:ProgramFiles)) {
+            foreach ($folder in $folders) {
+              foreach ($edition in @('Enterprise', 'Professional', 'Community', 'BuildTools')) {
+                $candidates.Add((Join-Path $programFiles "Microsoft Visual Studio\$folder\$edition"))
+              }
+            }
+          }
+        }
+        function Add-VswhereResults([string[]]$vswhereArgs) {
+          if (-not (Test-Path -LiteralPath $vswhere)) { Write-Host "vswhere not found at $vswhere"; return }
+          $found = & $vswhere @vswhereArgs
+          if ($LASTEXITCODE -ne 0) { Write-Host "vswhere $($vswhereArgs -join ' ') failed (exit $LASTEXITCODE)"; return }
+          foreach ($path in @($found)) { if ($path -and $path.Trim()) { $candidates.Add($path.Trim()) } }
+        }
+        if ($major) {
+          if ($majorToFolder.ContainsKey($major)) { Add-StandardLocations @($majorToFolder[$major]) }
+          Add-VswhereResults @('-products', '*', '-prerelease', '-version', "[$major.0,$($major + 1).0)", '-property', 'installationPath')
+        } else {
+          Add-VswhereResults @('-products', '*', '-prerelease', '-latest', '-property', 'installationPath')
+          Add-StandardLocations @('2022', '2019', '2017')
+        }
+
+        $vcvarsall = $null
+        foreach ($dir in $candidates) {
+          $bat = Join-Path $dir 'VC\Auxiliary\Build\vcvarsall.bat'
+          if (Test-Path -LiteralPath $bat) { $vcvarsall = $bat; break }
+          Write-Host "Not found: $bat"
+        }
+        if (-not $vcvarsall) {
+          throw "No Visual Studio $vsversion with the C++ build tools (VC\Auxiliary\Build\vcvarsall.bat) was found."
+        }
+        Write-Host "Found: $vcvarsall"
+
+        # One cmd.exe runs vcvarsall.bat between two `set` dumps. Each dump comes from a child
+        # `cmd /u`, which writes UTF-16 to its file, so no value is mangled by the console code page.
+        $tempDir = if ($env:RUNNER_TEMP) { $env:RUNNER_TEMP } else { [IO.Path]::GetTempPath() }
+        $id = [guid]::NewGuid().ToString('N')
+        $script = Join-Path $tempDir "msvc-dev-env-$id.cmd"
+        $env:MSVC_DEV_ENV_ARCH = $arch
+        $env:MSVC_DEV_ENV_VCVARSALL = $vcvarsall
+        $env:MSVC_DEV_ENV_BEFORE = Join-Path $tempDir "msvc-dev-env-$id.before"
+        $env:MSVC_DEV_ENV_AFTER = Join-Path $tempDir "msvc-dev-env-$id.after"
+        $lines = @(
+          '@echo off',
+          'cmd.exe /d /u /c set > "%MSVC_DEV_ENV_BEFORE%"',
+          'call "%MSVC_DEV_ENV_VCVARSALL%" %MSVC_DEV_ENV_ARCH%',
+          'if errorlevel 1 exit /b 1',
+          'cmd.exe /d /u /c set > "%MSVC_DEV_ENV_AFTER%"',
+          'exit /b 0'
+        )
+        [IO.File]::WriteAllText($script, (($lines -join "`r`n") + "`r`n"), [Text.Encoding]::ASCII)
+
+        try {
+          # vcvarsall.bat and its helpers write to stderr now and then; under 'Stop' Windows
+          # PowerShell would turn that into a failure, so only the exit code and [ERROR] lines count.
+          $ErrorActionPreference = 'Continue'
+          $output = @(& cmd.exe /d /c $script)
+          $exitCode = $LASTEXITCODE
+          $ErrorActionPreference = 'Stop'
+          foreach ($line in $output) { Write-Host $line }
+
+          # vcvarsall.bat reports some bad command lines with an [ERROR:...] line and still exits 0.
+          $errors = @($output | Where-Object { $_ -match '^\[ERROR' -and $_ -notmatch 'Error in script usage\. The correct usage is:$' })
+          if ($exitCode -ne 0 -or $errors.Count -gt 0) {
+            throw "vcvarsall.bat $arch failed (exit $exitCode). $($errors -join ' ')"
+          }
+
+          $before = New-Object 'System.Collections.Generic.Dictionary[string,string]' ([StringComparer]::OrdinalIgnoreCase)
+          foreach ($line in [IO.File]::ReadAllLines($env:MSVC_DEV_ENV_BEFORE, [Text.Encoding]::Unicode)) {
+            $i = $line.IndexOf('=')
+            if ($i -gt 0) { $before[$line.Substring(0, $i)] = $line.Substring($i + 1) }
+          }
+          $afterLines = [IO.File]::ReadAllLines($env:MSVC_DEV_ENV_AFTER, [Text.Encoding]::Unicode)
+          if (-not ($afterLines | Where-Object { $_ -like 'VCINSTALLDIR=*' })) {
+            throw "vcvarsall.bat $arch ran but did not set VCINSTALLDIR - the Visual Studio C++ environment is not configured."
+          }
+
+          # Export everything new or changed. The heredoc form keeps any character in a value intact.
+          $pathLike = @('PATH', 'INCLUDE', 'LIB', 'LIBPATH')
+          $delimiter = "ghadelimiter_$id"
+          $exports = New-Object System.Text.StringBuilder
+          Write-Host '::group::Environment variables'
+          foreach ($line in $afterLines) {
+            $i = $line.IndexOf('=')
+            if ($i -le 0) { continue }
+            $name = $line.Substring(0, $i)
+            $value = $line.Substring($i + 1)
+            if ($before.ContainsKey($name) -and $before[$name] -ceq $value) { continue }
+            if ($pathLike -contains $name) {
+              # vcvarsall.bat prepends without checking what is already there.
+              $seen = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+              $value = @($value -split ';' | Where-Object { $_ -ne '' -and $seen.Add($_) }) -join ';'
+            }
+            Write-Host "Setting $name"
+            [void]$exports.Append("$name<<$delimiter`n$value`n$delimiter`n")
+          }
+          Write-Host '::endgroup::'
+          [IO.File]::AppendAllText($env:GITHUB_ENV, $exports.ToString(), (New-Object System.Text.UTF8Encoding $false))
+          Write-Host "Configured the Visual Studio developer environment ($arch) from $vcvarsall"
+        } finally {
+          Remove-Item -LiteralPath $script, $env:MSVC_DEV_ENV_BEFORE, $env:MSVC_DEV_ENV_AFTER -Force -ErrorAction SilentlyContinue
+        }
+        exit 0

@@ -66,4 +66,17 @@ export class ActivepiecesMcpUpdateDto {
 	@Type(() => ActivepiecesMcpToolDto)
 	@IsOptional()
 	readonly tools?: ActivepiecesMcpToolDto[];
+
+	@ApiPropertyOptional({
+		description:
+			"Activepieces MCP 2.0: the tools to disable on the project's MCP server " +
+			'(the list replaces the stored one). A server has no name or tool list of its own there.',
+		type: [String],
+		required: false
+	})
+	@IsOptional()
+	@IsArray()
+	@IsString({ each: true })
+	@IsNotEmpty({ each: true })
+	readonly disabledTools?: string[];
 }

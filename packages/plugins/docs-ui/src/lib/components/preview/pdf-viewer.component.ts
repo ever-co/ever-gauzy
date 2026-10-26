@@ -10,6 +10,7 @@ import {
 	ViewChild,
 	ChangeDetectionStrategy
 } from '@angular/core';
+import { pdfjsDocumentParams, type PdfjsDocumentParams } from './pdfjs-assets';
 
 /** Minimal structural typings for the parts of pdfjs-dist the viewer touches. */
 interface PdfPageProxy {
@@ -28,6 +29,12 @@ interface PdfDocumentProxy {
 interface PdfLoadingTask {
 	promise: Promise<unknown>;
 	destroy(): Promise<void>;
+}
+
+/** The parts of the pdf.js module the viewer uses. */
+interface PdfjsModule {
+	GlobalWorkerOptions: { workerSrc: string; workerPort: Worker | null };
+	getDocument(params: PdfjsDocumentParams): PdfLoadingTask;
 }
 
 /**
@@ -132,7 +139,8 @@ export class PdfViewerComponent implements OnChanges, OnDestroy {
 		try {
 			const pdfjs = await this.loadPdfjs();
 			const data = new Uint8Array(await blob.arrayBuffer());
-			const loadingTask = pdfjs.getDocument({ data });
+			// `window.document`: this method declares a local `document` below.
+			const loadingTask = pdfjs.getDocument(pdfjsDocumentParams(data, window.document.baseURI));
 			const document = (await loadingTask.promise) as PdfDocumentProxy;
 			if (this.destroyed) {
 				void loadingTask.destroy();
@@ -152,25 +160,32 @@ export class PdfViewerComponent implements OnChanges, OnDestroy {
 	}
 
 	/** Dynamic import + worker setup; falls back to the main-thread fake worker. */
-	private async loadPdfjs(): Promise<{
-		getDocument(params: { data: Uint8Array }): PdfLoadingTask;
-	}> {
-		const pdfjs = (await import('pdfjs-dist')) as unknown as {
-			GlobalWorkerOptions: { workerSrc: string; workerPort: Worker | null };
-			getDocument(params: { data: Uint8Array }): PdfLoadingTask;
-		};
+	private async loadPdfjs(): Promise<PdfjsModule> {
+		const pdfjs = await this.importPdfjs();
 		if (!pdfjs.GlobalWorkerOptions.workerSrc && !pdfjs.GlobalWorkerOptions.workerPort) {
 			try {
 				pdfjs.GlobalWorkerOptions.workerPort = new Worker(
-					new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url),
+					new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs', import.meta.url),
 					{ type: 'module' }
 				);
 			} catch {
 				// Registers globalThis.pdfjsWorker — pdf.js's fake worker picks it up.
-				await import('pdfjs-dist/build/pdf.worker.min.mjs' as string);
+				await import('pdfjs-dist/legacy/build/pdf.worker.min.mjs' as string);
 			}
 		}
 		return pdfjs;
+	}
+
+	/**
+	 * Loads pdf.js — the LEGACY build, on purpose. pdfjs-dist 6's default build targets only the
+	 * newest browsers: it calls `Map.prototype.getOrInsertComputed` (main thread) and
+	 * `Math.sumPrecise` (worker), recent additions to JavaScript, with no fallback, so in any
+	 * browser that does not ship them yet (older Safari/iOS, Firefox ESR, not-yet-updated Chrome)
+	 * every preview failed with a TypeError and dropped to the fallback view; 4.x used neither.
+	 * The legacy build is the same API with those polyfilled.
+	 */
+	private async importPdfjs(): Promise<PdfjsModule> {
+		return (await import('pdfjs-dist/legacy/build/pdf.mjs')) as unknown as PdfjsModule;
 	}
 
 	private async renderPage(): Promise<void> {

@@ -115,9 +115,11 @@ export class SimWorkflowsComponent extends TranslationBaseComponent implements O
 				this.executionResult.set(result);
 				this.executing.set(false);
 
-				// If async, pre-fill the job status form
-				if (result?.taskId) {
-					this.jobForm.get('taskId')?.setValue(result.taskId);
+				// If async, pre-fill the job status form: `runId` from the v2 SIM API (simstudio-ts-sdk 0.2),
+				// `taskId` from the legacy one.
+				const asyncRunId = result?.runId || result?.taskId;
+				if (asyncRunId) {
+					this.jobForm.get('taskId')?.setValue(asyncRunId);
 				}
 			},
 			error: (err) => {

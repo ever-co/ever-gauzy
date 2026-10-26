@@ -659,7 +659,7 @@ describe('the in-place edit on each ORM', () => {
 			expect(em.findOne).toHaveBeenCalledWith(
 				EquipmentSharing,
 				{ id: ID, tenantId: TENANT },
-				{ populate: ['employees', 'teams'], refresh: true }
+				{ populate: ['employees', 'teams'], refresh: true, filters: false }
 			);
 			expect(loaded.teams.set).toHaveBeenCalledWith([{ entity: OrganizationTeam, id: 'team-2' }]);
 			expect(loaded.employees.set).not.toHaveBeenCalled();

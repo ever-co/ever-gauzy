@@ -40,7 +40,10 @@ describe('Activepieces MCP server URLs', () => {
 			resolve: jest
 				.fn()
 				.mockResolvedValue({ mode: 'tenant_api_key', token: 'tenant-key', projectId: null, enforceProject: false }),
-			assertInProject: jest.fn()
+			assertInProject: jest.fn(),
+			// The legacy routes, which name a server by id (MCP 2.0 names the project: activepieces-mcp.v2.spec.ts)
+			operatorSettings: () => ({ mcpApi: 'legacy' }),
+			mcpApi: () => 'legacy'
 		};
 		const service = new ActivepiecesMcpService({} as any, {} as any, {} as any, credentials as any);
 		Object.assign(service, { logger: { log: jest.fn(), error: jest.fn() } });

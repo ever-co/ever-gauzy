@@ -31,7 +31,7 @@ jobs:
     # 'master' -> 'apps' promotion PR (the tag then points at the merged
     # 'master' tip, HEAD^2). Retries absorb the short delay until 'Release Prod' tags
     # the 'master' commit.
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -183,7 +183,7 @@ jobs:
         # Flatpak (bwrap) and Snapcraft (snapd) cannot run inside the k8s ARC container
         # runners - this packaging job needs a VM-class runner. Override with the
         # RUNNER_LINUX_APPS_X64 org/repo variable to use a self-hosted VM.
-        os: ["${{ vars.RUNNER_LINUX_APPS_X64 || 'ubuntu-latest' }}"]
+        os: ["${{ vars.RUNNER_LINUX_APPS_X64 || 'ubuntu-24.04' }}"]
 
     steps:
       - name: Check out Git repository
@@ -241,7 +241,7 @@ jobs:
         # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
         # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
         id: py311
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.11'
 
@@ -539,7 +539,7 @@ jobs:
         # rejects it ("unterminated string literal"), breaking better-sqlite3's source rebuild
         # (no prebuilt exists for Electron 38's ABI). Python 3.11 parses it fine. Pinned to a SHA.
         id: py311
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.11'
 
@@ -918,6 +918,23 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
 
+      # Electron 44 needs macOS 13 or later, and the latest-mac.yml electron-builder just published does
+      # not say so - so on macOS 12 the installed app would auto-update into a build that does not start.
+      # This adds minimumSystemVersion: 22.0.0 (Darwin 22 = macOS 13) to that manifest, which makes
+      # electron-updater there skip the update; details in the action. It fails the job when the published
+      # manifest cannot be updated. owner/repo must stay equal to the bump step's *_REPO_OWNER/*_REPO_NAME
+      # (the action checks them, and the tag, against the package that step wrote). Before the scrub step,
+      # which stays last; it needs no registry credential.
+      - name: Declare macOS 13 as the minimum in latest-mac.yml
+        timeout-minutes: 15
+        uses: ./.github/actions/set-mac-minimum-system-version
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          owner: 'ever-co'
+          repo: 'ever-gauzy-server'
+          tag: ${{ needs.check-release-tag.outputs.tag }}
+          app-package-json: 'apps/server/src/package.json'
+
       - name: Scrub registry credentials
         if: always()
         shell: bash
@@ -1082,7 +1099,9 @@ jobs:
         run: python3 -m pip install packaging setuptools
 
       - name: Setup MSVC (VS 2022 dev env)
-        uses: ilammy/msvc-dev-cmd@v1
+        # Local replacement for ilammy/msvc-dev-cmd@v1, whose every release runs on the deprecated Node 20:
+        # same vcvarsall.bat environment export, same VS instance (see the action's header).
+        uses: ./.github/actions/setup-msvc-dev-env
         with:
           arch: x64
           # Pin VS 2022, matching msvs_version=2022 above. Unpinned, the action takes the newest VS, and
@@ -1091,8 +1110,9 @@ jobs:
           vsversion: 2022
 
       - name: Put setup-node's Node back ahead of the VS dev env on PATH
-        # ilammy/msvc-dev-cmd exports a PATH that puts an older Node (24.x) ahead of the one installed above,
-        # so yarn refused the engine (">=26"). The same setup-node again, from the tool cache, puts it first.
+        # The MSVC step above exports the whole PATH (ilammy/msvc-dev-cmd did, and its local replacement keeps
+        # that), which put an older Node (24.x) ahead of the one installed above, so yarn refused the engine
+        # (">=26"). The same setup-node again, from the tool cache, puts it first.
         uses: actions/setup-node@v6
         with:
           node-version: 26.12.1
@@ -1216,7 +1236,7 @@ jobs:
       # ("sdk-not-found") and signing is skipped. Provision it here rather than on the host,
       # so the requirement lives in Git and applies to every runner.
       - name: Install .NET SDK (required by Azure Trusted Signing)
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.0.x'
 
@@ -1455,7 +1475,7 @@ jobs:
             Write-Host "VS 2022 with the VC ARM64 toolset not found - installing via Chocolatey"
             choco install -y visualstudio2022buildtools --execution-timeout=21600 --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.ARM64 --includeRecommended --passive --norestart"
             if ($LASTEXITCODE -ne 0) {
-              # Do not fail the job on a Chocolatey feed outage; the next step (msvc-dev-cmd)
+              # Do not fail the job on a Chocolatey feed outage; the MSVC setup step below
               # will either find a usable toolchain or fail with an unambiguous message.
               Write-Warning "Chocolatey install failed (exit $LASTEXITCODE) - continuing; the MSVC setup step will report definitively."
             }
@@ -1472,7 +1492,9 @@ jobs:
         run: python3 -m pip install packaging setuptools
 
       - name: Setup MSVC (VS 2022 dev env)
-        uses: ilammy/msvc-dev-cmd@v1
+        # Local replacement for ilammy/msvc-dev-cmd@v1, whose every release runs on the deprecated Node 20:
+        # same vcvarsall.bat environment export, same VS instance (see the action's header).
+        uses: ./.github/actions/setup-msvc-dev-env
         with:
           arch: arm64
           # Pin VS 2022, matching msvs_version=2022 above. Unpinned, the action takes the newest VS, and
@@ -1481,8 +1503,9 @@ jobs:
           vsversion: 2022
 
       - name: Put setup-node's Node back ahead of the VS dev env on PATH
-        # ilammy/msvc-dev-cmd exports a PATH that puts an older Node (24.x) ahead of the one installed above,
-        # so yarn refused the engine (">=26"). The same setup-node again, from the tool cache, puts it first.
+        # The MSVC step above exports the whole PATH (ilammy/msvc-dev-cmd did, and its local replacement keeps
+        # that), which put an older Node (24.x) ahead of the one installed above, so yarn refused the engine
+        # (">=26"). The same setup-node again, from the tool cache, puts it first.
         uses: actions/setup-node@v6
         with:
           node-version: 26.12.1
@@ -1604,7 +1627,7 @@ jobs:
       # ("sdk-not-found") and signing is skipped. Provision it here rather than on the host,
       # so the requirement lives in Git and applies to every runner.
       - name: Install .NET SDK (required by Azure Trusted Signing)
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.0.x'
 

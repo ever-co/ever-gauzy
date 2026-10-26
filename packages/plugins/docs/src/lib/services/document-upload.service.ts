@@ -21,7 +21,13 @@ import {
 	UploadedFile
 } from '@gauzy/contracts';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
-import { FileStorage, RequestContext } from '@gauzy/core';
+import {
+	FileContentTooLargeError,
+	FileStorage,
+	readStorageFileAsBuffer,
+	RequestContext,
+	StorageFileReadError
+} from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import {
 	DOCS_FILE_TOO_LARGE,
@@ -332,8 +338,24 @@ export class DocumentUploadService {
 				return overQuota;
 			}
 
-			// 2) Content sniffing — never trust the client MIME.
-			const buffer = (await context.provider.getFile(file.key)) as Buffer;
+			// 2) Content sniffing — never trust the client MIME. Read as bytes whatever the provider answers:
+			// the S3, Wasabi and DigitalOcean providers return the SDK's body stream, not a Buffer.
+			let buffer: Buffer;
+			try {
+				buffer = await readStorageFileAsBuffer(context.provider, file.key, { maxBytes: context.maxFileSize });
+			} catch (error) {
+				if (error instanceof FileContentTooLargeError) {
+					// The stored bytes outgrow the size the upload reported: the same rejection as step 1.
+					return {
+						oversize: true,
+						rejection: {
+							code: DOCS_FILE_TOO_LARGE,
+							message: `File exceeds the ${context.maxFileSize}-byte limit`
+						}
+					};
+				}
+				throw error;
+			}
 			const sniff = sniffFile(buffer, fileName, file.mimetype);
 			if (!sniff.ok) {
 				return { rejection: { code: sniff.code, message: sniff.message } };
@@ -567,7 +589,18 @@ export class DocumentUploadService {
 			}
 
 			const fileName = (file.originalname ?? file.filename ?? document.name ?? 'file').slice(0, 255);
-			const buffer = (await provider.getFile(file.key)) as Buffer;
+			let buffer: Buffer;
+			try {
+				buffer = await readStorageFileAsBuffer(provider, file.key, { maxBytes: config.maxFileSize });
+			} catch (error) {
+				if (error instanceof FileContentTooLargeError) {
+					throw new PayloadTooLargeException({
+						message: `File exceeds the ${config.maxFileSize}-byte limit`,
+						code: DOCS_FILE_TOO_LARGE
+					});
+				}
+				throw error;
+			}
 			const sniff = sniffFile(buffer, fileName, file.mimetype);
 			if (!sniff.ok) {
 				throw new BadRequestException({ message: sniff.message, code: sniff.code });
@@ -705,9 +738,19 @@ export class DocumentUploadService {
 		const document = await this.requireFileDocument(id);
 		const provider = new FileStorage().setProvider(document.storageProvider).getProviderInstance();
 
-		const buffer = (await provider.getFile(document.storageKey)) as Buffer;
-		if (!buffer) {
-			throw new NotFoundException(`Document ${id} has no retrievable file`);
+		// As bytes whatever the provider answers (the S3 family returns the SDK's body stream, whose `length` is
+		// undefined): bounded by the per-file limit, or by the document's own size if it was stored under a higher one.
+		let buffer: Buffer;
+		try {
+			buffer = await readStorageFileAsBuffer(provider, document.storageKey, {
+				maxBytes: Math.max(getDocsConfig().maxFileSize || 0, document.fileSize || 0)
+			});
+		} catch (error) {
+			if (error instanceof StorageFileReadError) {
+				this.logger.warn(`Raw read of document ${id} failed: ${error.message}`);
+				throw new NotFoundException(`Document ${id} has no retrievable file`);
+			}
+			throw error;
 		}
 
 		const storedMimeType = document.mimeType ?? '';

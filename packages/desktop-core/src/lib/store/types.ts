@@ -106,7 +106,8 @@ export interface IApplicationSetting {
 		captured: 'all' | 'active-only';
 	};
 	timer: {
-		updatePeriod: 1 | 5 | 10;
+		/** Minutes between screenshots. The organisation's screenshot frequency options are 1, 3, 5 and 10 */
+		updatePeriod: number;
 	};
 	SCREENSHOTS_ENGINE_METHOD: 'ElectronDesktopCapturer';
 	screenshotNotification: boolean;

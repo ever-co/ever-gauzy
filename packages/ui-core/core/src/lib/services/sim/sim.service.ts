@@ -34,7 +34,11 @@ export interface ISimWorkflowExecutionResult {
 	executionId?: string;
 	status?: string;
 	result?: Record<string, unknown>;
+	/** Async run id of the legacy SIM API (simstudio-ts-sdk 0.1). */
 	taskId?: string;
+	/** Async run id of the v2 SIM API (simstudio-ts-sdk 0.2), with `async: true`. */
+	runId?: string;
+	async?: boolean;
 	metadata?: Record<string, unknown>;
 	[key: string]: unknown;
 }
@@ -43,7 +47,9 @@ export interface ISimWorkflowExecutionResult {
  * Async job status response.
  */
 export interface ISimJobStatusResponse {
-	taskId: string;
+	/** Set for a legacy job; a v2 run answers with `runId` (and `workflowId`) instead. */
+	taskId?: string;
+	runId?: string;
 	status: string;
 	result?: Record<string, unknown>;
 	[key: string]: unknown;

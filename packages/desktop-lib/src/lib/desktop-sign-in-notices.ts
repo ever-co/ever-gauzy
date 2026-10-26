@@ -162,6 +162,7 @@ export class DesktopSignInNotices {
 		const copyButton = 0;
 		const savedButton = 1;
 		let copied = false;
+		let copyFailed = false;
 		for (;;) {
 			const detail = translate(
 				'TIMER_TRACKER.DIALOG.SEED_CREDENTIALS_DETAIL',
@@ -177,7 +178,12 @@ export class DesktopSignInNotices {
 				),
 				detail: copied
 					? `${detail}\n\n${translate('TIMER_TRACKER.DIALOG.SEED_CREDENTIALS_COPIED', 'Copied to the clipboard.')}`
-					: detail,
+					: copyFailed
+						? `${detail}\n\n${translate(
+								'TIMER_TRACKER.DIALOG.SEED_CREDENTIALS_COPY_FAILED',
+								'Could not copy to the clipboard. Press Copy to try again, or write the passwords down before you confirm.'
+							)}`
+						: detail,
 				buttons: [
 					translate('BUTTONS.COPY', 'Copy'),
 					translate('TIMER_TRACKER.DIALOG.SEED_CREDENTIALS_SAVED', 'I have saved them')
@@ -190,8 +196,18 @@ export class DesktopSignInNotices {
 			if (response === savedButton) {
 				break;
 			}
-			clipboard.writeText(text);
-			copied = true;
+			// Electron 44 made `clipboard.writeText` return a Promise (it was synchronous up to Electron 38):
+			// awaited, so the next dialog says "Copied" only once the text is there, and a failed write says so in
+			// that dialog (retry, or note the passwords) instead of becoming an unhandled rejection.
+			try {
+				await clipboard.writeText(text);
+				copied = true;
+				copyFailed = false;
+			} catch (error) {
+				copied = false;
+				copyFailed = true;
+				console.error('Could not copy the sign-in details to the clipboard:', error?.message ?? error);
+			}
 		}
 
 		store.delete(DESKTOP_SEED_CREDENTIALS_STORE_KEY);

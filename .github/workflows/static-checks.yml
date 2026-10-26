@@ -50,7 +50,7 @@ jobs:
     name: typecheck-configs
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
@@ -58,7 +58,7 @@ jobs:
           # Read-only job; the checkout credential does not need to outlive the step.
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -83,7 +83,7 @@ jobs:
     name: lint (non-blocking)
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     # Non-blocking at the JOB level, not just on the ESLint step. The step-level flag below keeps
     # a red lint result from failing the job; this keeps anything else in the job - a cache miss,
     # a registry hiccup, an install failure on the fleet - from doing it either. The requirement
@@ -97,11 +97,11 @@ jobs:
       # Action versions deliberately match `build.yml` rather than the newer majors used elsewhere:
       # this job consumes the node_modules cache that workflow writes, so producer and consumer are
       # kept on the same actions.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -109,7 +109,7 @@ jobs:
         # Best effort: the same key the build workflow writes, so a push that already built this
         # exact lockfile reuses that tree instead of installing again. The restore script below
         # installs from scratch when the archive is absent, so a miss is not fatal.
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         continue-on-error: true
         with:
           path: ${{ env.NODE_MODULES_ARCHIVE }}
@@ -183,7 +183,7 @@ jobs:
     name: platform-gates
     # Never run jobs for a pull request from a fork (owner decision 2026-09-16); branch PRs and pushes still run.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-latest' }}
+    runs-on: ${{ vars.RUNNER_LINUX_X64_4 || 'ubuntu-24.04' }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
@@ -191,7 +191,7 @@ jobs:
           # Read-only job; the checkout credential does not need to outlive the step.
           persist-credentials: false
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 26
 
@@ -485,3 +485,11 @@ jobs:
       - name: The electron-builder snap patch matches the locked app-builder-lib (none from 26.18.0)
         if: always()
         run: node --test tools/electron/app-builder-lib-patch.test.js
+
+      # Every release-mac job ends by adding minimumSystemVersion (Darwin 22.0.0 = macOS 13, Electron 44's minimum) to
+      # the latest-mac.yml it published; without it electron-updater on macOS 12 updates into an app that does not
+      # start. Only a release run reaches that action, so its manifest edit and its staged swap of the release asset
+      # (against an in-memory Octokit: no network) run here.
+      - name: The latest-mac.yml minimum-macOS edit keeps the manifest and swaps it safely
+        if: always()
+        run: node --test .github/actions/set-mac-minimum-system-version/set-mac-minimum-system-version.test.cjs
