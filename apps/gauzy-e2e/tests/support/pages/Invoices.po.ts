@@ -1,452 +1,666 @@
+import { expect, Locator } from '@playwright/test';
 import {
 	enterInput,
 	verifyElementIsVisible,
 	clickButton,
-	dispatchClick,
-	waitForSpinnerGone,
 	clearField,
 	clickKeyboardBtnByKeycode,
 	clickButtonByIndex,
 	clickElementByText,
-	waitElementToHide,
 	verifyValue,
 	scrollDown,
 	verifyElementIsNotVisible
 } from '../util';
-import { committedValues, selectNgOption } from '../ng-select';
+import { committedValues, realOptionSelector, selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { InvoicesPage } from '../../../src/support/Base/pageobjects/InvoicesPageObject';
+
+// ────────────────────────────────────────────────────────────────────────────────────────────────
+// Settle helpers. Every wait is bounded: the scenario chains ~9 CRUD operations inside the 240 s
+// per-test budget, so nothing here may block on an open-ended network/spinner state.
+// ────────────────────────────────────────────────────────────────────────────────────────────────
+
+/** The list card's own `[nbSpinner]="loading"` (on nb-card-body since #10182) and the table's loading class. */
+const settleGrid = async () => {
+	const page = getPage();
+	await page.locator(InvoicesPage.listSpinnerCss).first().waitFor({ state: 'detached', timeout: 8000 }).catch(() => {});
+	await page
+		.waitForFunction(() => !document.querySelector('ngx-invoices angular2-smart-table.ga-table-loading'), undefined, {
+			timeout: 8000
+		})
+		.catch(() => {});
+	await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+};
+
+/** The add/edit form card's `[nbSpinner]="loading"`. */
+const settleForm = async () => {
+	await getPage().locator(InvoicesPage.formSpinnerCss).first().waitFor({ state: 'detached', timeout: 8000 }).catch(() => {});
+};
+
+/**
+ * Close the toolbar "more" popover if it is open. Its `gauzyOutside` handler only closes it for a click
+ * INSIDE it (outside.directive.ts emits `clickedInside`), so a row click leaves it open on top of the
+ * grid's right-hand side, where a later coordinate click could land on one of its actions. Toggling the
+ * More button again is what closes it (toggleActionsPopover()).
+ */
+const closeActionsPopover = async () => {
+	const page = getPage();
+	const popover = page.locator(InvoicesPage.popoverCss).first();
+	if (!(await popover.isVisible().catch(() => false))) return;
+	await page.locator(InvoicesPage.moreButtonCss).first().dispatchEvent('click').catch(() => {});
+	await popover.waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {});
+};
 
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
-export const gridBtnClick = async (index: number) => {
+export const gridBtnClick = async (index) => {
 	/* no-op: grid list/grid layout toggle removed from the app */
 };
 
-export const addButtonVisible = async () => verifyElementIsVisible(InvoicesPage.addButtonCss);
-
-export const clickAddButton = async () => {
-	// dispatchClick past the post-navigation load spinner so the Add invoice form reliably opens
-	// (a coordinate click can land on the fading list-page spinner overlay).
-	await waitForSpinnerGone();
-	await dispatchClick(InvoicesPage.addButtonCss);
+export const addButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.addButtonCss);
 };
 
-export const tagsDropdownVisible = async () => verifyElementIsVisible(InvoicesPage.addTagsDropdownCss);
+export const clickAddButton = async () => {
+	// add() navigates to /invoices/add. Dispatch past the list spinner, then wait for the add form to
+	// actually render; re-dispatch once if the click was swallowed.
+	const page = getPage();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await settleGrid();
+		await page.locator(InvoicesPage.addButtonCss).first().dispatchEvent('click').catch(() => {});
+		try {
+			await page.locator(`ga-invoice-add ${InvoicesPage.discountInputCss}`).first().waitFor({ state: 'visible', timeout: 15000 });
+			await settleForm();
+			return;
+		} catch {
+			/* still on the list — retry */
+		}
+	}
+};
+
+export const tagsDropdownVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.addTagsDropdownCss);
+};
 
 export const clickTagsDropdown = async () => {
-	// focus + ArrowDown (NOT a click): #addTags is an ng-select that opens on MOUSEDOWN; a force-click
-	// lands on the add-form backdrop and dismisses the whole route form, so the options never render
-	// (this was the test's timeout: div.ng-option never appeared). The focus MUST target the inner
-	// <input> — focusing the ng-select host leaves the input unfocused so ArrowDown goes to <body>.
-	await waitForSpinnerGone();
+	// focus + ArrowDown (NOT a click): ng-select opens on mousedown; keyboard opens it without hit-testing.
+	// The focus MUST target the inner <input> — focusing the ng-select host leaves ArrowDown on <body>.
+	await settleForm();
 	await getPage().locator(`${InvoicesPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
 	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
-export const selectTagFromDropdown = async (index: number) => {
-	// Routed through the ONE shared ng-select driver (tests/support/ng-select.ts). It counts only REAL
-	// options: a bare `div.ng-option` ALSO matches ng-select's disabled "No items found" / "Loading…"
-	// rows, so the old wait-then-click was satisfied by an EMPTY list and then clicked a row ng-select
-	// ignores — a silent no-op that left this field unset. It re-opens the panel via the control's own
-	// container until real options render (NEVER Escape: nb-dialog opens with closeOnEsc and that closed
-	// the whole form), and it confirms the pick against `div.ng-value`, the only node that exists once a
-	// value is really bound. Still best-effort — the tag is optional here — but it can no longer
-	// half-succeed, and it can no longer kill the dialog on a slow list.
+export const selectTagFromDropdown = async (index) => {
+	// Shared ng-select driver: real options only, commit proven by div.ng-value. Best-effort (the tag is
+	// optional on the form).
 	await selectNgOption(InvoicesPage.addTagsDropdownCss, InvoicesPage.tagsDropdownOption, index);
 };
 
 export const clickCardBody = async () => {
-	// Close the still-open tags ng-select ([closeOnSelect]=false keeps it open after a pick) by pressing
-	// Escape — NOT by clicking nb-card-header.d-flex. That header hosts <ngx-back-navigation> (a goBack()
-	// button); a force-click on the header can dispatch to it and navigate OUT of the add-invoice route,
-	// which dismissed the whole form (the test then waited forever on div.ng-option with the list showing).
-	await getPage().keyboard.press('Escape').catch(() => {});
+	// Close the tags panel ([closeOnSelect]="false" keeps it open after a pick). It is appended to body and
+	// hangs over the fields below it, where the next force-clicks (discount/tax nb-selects) would land on
+	// a tag option instead. Escape in its input closes it (ng-select keydown); if it is still up, a click
+	// on the inert form title closes it via ng-select's outside-mousedown handler. Never click the header
+	// itself — it hosts the back-navigation button.
+	const page = getPage();
+	const panel = page.locator('ng-dropdown-panel').first();
+	await page.locator(`${InvoicesPage.addTagsDropdownCss} input`).first().focus().catch(() => {});
+	await page.keyboard.press('Escape').catch(() => {});
+	if (await panel.isVisible().catch(() => false)) {
+		await page.locator(InvoicesPage.cardBodyCss).first().click({ force: true, timeout: 5000 }).catch(() => {});
+	}
+	await panel.waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {});
 };
 
-export const waitMessageToHide = async () => waitElementToHide(InvoicesPage.toastrMessageCss);
+export const waitMessageToHide = async () => {
+	// Bounded replacement for util.waitElementToHide's unconditional 10 s sleep (this scenario calls it
+	// six times; the sleeps alone used a quarter of the 240 s budget). Settle the mutation that raised the
+	// toast (spinners + network), then keep the original assertion: no toast left on screen. Toasts last
+	// 5 s (ToastrService config), so the 24 s window is ample.
+	const page = getPage();
+	await page.waitForTimeout(1000);
+	await settleForm();
+	await settleGrid();
+	await expect(page.locator(InvoicesPage.toastrMessageCss)).toHaveCount(0, { timeout: 24000 });
+};
 
-export const discountInputVisible = async () => verifyElementIsVisible(InvoicesPage.discountInputCss);
+export const discountInputVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.discountInputCss);
+};
 
-export const enterDiscountData = async (data: string) => {
+export const enterDiscountData = async (data) => {
 	await clearField(InvoicesPage.discountInputCss);
 	await enterInput(InvoicesPage.discountInputCss, data);
 };
 
-export const discountTypeDropdownVisible = async () => verifyElementIsVisible(InvoicesPage.discountTypeDropdownCss);
+export const discountTypeDropdownVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.discountTypeDropdownCss);
+};
 
-export const clickDiscountDropdown = async () => clickButton(InvoicesPage.discountTypeDropdownCss);
+export const clickDiscountDropdown = async () => {
+	await clickButton(InvoicesPage.discountTypeDropdownCss);
+};
 
-export const selectDiscountTypeFromDropdown = async (text: string) =>
-	clickElementByText(InvoicesPage.dropdownOptionCss, text);
+export const selectDiscountTypeFromDropdown = async (text) => {
+	await clickElementByText(InvoicesPage.dropdownOptionCss, text);
+};
 
-export const contactDropdownVisible = async () => verifyElementIsVisible(InvoicesPage.organizationContactDropdownCss);
+export const contactDropdownVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.organizationContactDropdownCss);
+};
 
 export const clickContactDropdown = async () => {
-	// ga-contact-select is an ng-select (opens on mousedown, options appendTo body) — same hazard as the
-	// tags one: a force-click is backdrop-blocked / can dismiss the route form. Open via the inner input.
-	await waitForSpinnerGone();
+	// ga-contact-select is an ng-select (opens on mousedown, options appendTo body): open via the keyboard.
+	await settleForm();
 	await getPage().locator(`${InvoicesPage.organizationContactDropdownCss} input`).first().focus().catch(() => {});
 	await getPage().keyboard.press('ArrowDown').catch(() => {});
 };
 
-export const selectContactFromDropdown = async (nameOrIndex: string | number) => {
+export const selectContactFromDropdown = async (nameOrIndex) => {
+	// The contact is REQUIRED (form.invalid disables Save) and it is what scopes every later row operation
+	// (the grid's Contact column shows it), so the pick must really commit. Typeahead-filter to the
+	// scenario's unique faker contact (ga-contact-select searchFn = name.includes(term)), click it, and
+	// prove the commit against `div.ng-value` (only rendered once a value is bound). The control has
+	// [addTag]="true": an "Add item" row (span.ng-tag-label) also contains the typed name and would create
+	// a NEW contact — it is excluded. Always click (even on edit, where the contact is already set) so the
+	// single-select panel closes; an open panel would sit over the fields below.
 	const page = getPage();
-	const option = page.locator(InvoicesPage.contactOptionCss);
-	const input = page.locator(`${InvoicesPage.organizationContactDropdownCss} input`).first();
-	// POLLUTION RESILIENCE: EstimatesTest runs BEFORE this spec (alphabetically) and converts an estimate into
-	// an invoice, so by the time this spec runs the contact ng-select already holds foreign contacts from
-	// earlier specs — a plain .nth(0) would link the WRONG contact and break every later name-scoped row/select.
-	// When given this spec's UNIQUE faker contact name, typeahead-filter to it (ga-contact-select uses a
-	// name.toLowerCase().includes() searchFn) and pick the matching option, so EVERY invoice this spec creates
-	// carries that name in the grid's Contact column. Re-open the ng-select via keyboard first (opens on
-	// mousedown so a click is backdrop-blocked). The contact is a REQUIRED control (form.invalid disables Save),
-	// retry generously. Mirrors the proven SalesInvoices.po pattern.
 	const byName = typeof nameOrIndex === 'string';
-	// The selected contact renders as a label INSIDE the ng-select control (ng-label-tmp -> the contact
-	// name). Verifying that label committed is what proves organizationContactId will land on the saved
-	// invoice — a REQUIRED gate: send() opens the confirm dialog only if selectedInvoice.organizationContactId
-	// is set (else it toasts "NOT_LINKED" and never sends), and the popover Send button is [disabled]="!canBeSend"
-	// which is false when the row has no toContact. A silent mis-pick here => the invoice stays DRAFT and
-	// verifySentBadgeClass times out three steps later. So confirm the label, and re-pick if it didn't take.
-	//
-	// VERIFY AGAINST div.ng-value, NOT the control's own text. Reading `control.innerText()` back is the
-	// self-validating trap: ng-select renders its OPEN PANEL inside the <ng-select> element unless the app
-	// sets appendTo="body", and the step immediately before this typeahead-filters the panel down to the
-	// wanted contact — so the check would be satisfied by the option it just typed, and report a commit
-	// while nothing was selected. (It only holds today because contact-select.component.html happens to
-	// carry appendTo="body" — an app-side detail no spec should depend on.) `div.ng-value` is the value
-	// container ng-select writes ONLY once a value is really bound, so it cannot be satisfied by the panel.
+	const control = page.locator(InvoicesPage.organizationContactDropdownCss).first();
+	const input = control.locator('input').first();
+	const options = page.locator(realOptionSelector(InvoicesPage.contactOptionCss));
 	const values = committedValues(InvoicesPage.organizationContactDropdownCss);
 	const committed = async () =>
 		byName
 			? (await values.first().innerText().catch(() => '')).toLowerCase().includes(String(nameOrIndex).toLowerCase())
 			: (await values.count().catch(() => 0)) > 0;
-
 	for (let attempt = 0; attempt < 3; attempt++) {
-		for (let i = 0; i < 6; i++) {
-			if (await option.first().isVisible().catch(() => false)) break;
-			await waitForSpinnerGone();
+		for (let i = 0; i < 5 && !(await options.first().isVisible().catch(() => false)); i++) {
+			await settleForm();
 			await input.focus().catch(() => {});
 			await page.keyboard.press('ArrowDown').catch(() => {});
-			await page.waitForTimeout(800);
+			await page.waitForTimeout(700);
 		}
+		let target = options.nth(byName ? 0 : Number(nameOrIndex));
 		if (byName) {
-			await input.fill('').catch(() => {});
-			await input.pressSequentially(String(nameOrIndex), { delay: 20 }).catch(() => {});
-			await page.waitForTimeout(600);
-			const match = option.filter({ hasText: String(nameOrIndex) }).first();
-			try {
-				await match.waitFor({ state: 'visible', timeout: 8000 });
-				await match.click({ force: true });
-				await page.waitForTimeout(400);
-				if (await committed()) return;
-				// pick didn't commit onto the control — reopen and retry (below).
-			} catch {
-				// named contact didn't surface (shouldn't happen — addContact created it — but keep the flow moving);
-				// clear the typed filter so the fallback picks a real (unfiltered) option, not an empty filtered list.
-				await input.fill('').catch(() => {});
-				await page.waitForTimeout(400);
-			}
+			await input.fill(String(nameOrIndex)).catch(() => {});
+			await page.waitForTimeout(500);
+			target = options.filter({ hasText: String(nameOrIndex), hasNot: page.locator('.ng-tag-label') }).first();
 		}
-		// index path (or named-fallback): best-effort — if no option shows, Escape and continue rather than hanging.
-		if (await option.first().isVisible().catch(() => false)) {
-			await option.nth(byName ? 0 : (nameOrIndex as number)).click({ force: true }).catch(() => {});
-			await page.waitForTimeout(400);
-			if (await committed()) return;
-		} else if (!byName) {
-			await page.keyboard.press('Escape').catch(() => {});
+		if (await target.waitFor({ state: 'visible', timeout: 8000 }).then(() => true).catch(() => false)) {
+			await target.click({ force: true }).catch(() => {});
+			await page.waitForTimeout(500);
+		}
+		if (await committed()) {
+			await page.locator('ng-dropdown-panel').first().waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
 			return;
 		}
-		// not committed yet — reopen the ng-select for another attempt (opens on mousedown, so keyboard).
-		await input.focus().catch(() => {});
-		await page.keyboard.press('ArrowDown').catch(() => {});
-		await page.waitForTimeout(500);
 	}
+	throw new Error(`selectContactFromDropdown: contact "${nameOrIndex}" could not be selected on the invoice form`);
 };
 
-export const taxInputVisible = async () => verifyElementIsVisible(InvoicesPage.taxInputCss);
+export const taxInputVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.taxInputCss);
+};
 
-export const enterTaxData = async (data: string) => {
+export const enterTaxData = async (data) => {
 	await clearField(InvoicesPage.taxInputCss);
 	await enterInput(InvoicesPage.taxInputCss, data);
 };
 
-export const taxTypeDropdownVisible = async () => verifyElementIsVisible(InvoicesPage.taxTypeDropdownCss);
+export const taxTypeDropdownVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.taxTypeDropdownCss);
+};
 
-export const clickTaxTypeDropdown = async () => clickButton(InvoicesPage.taxTypeDropdownCss);
+export const clickTaxTypeDropdown = async () => {
+	await clickButton(InvoicesPage.taxTypeDropdownCss);
+};
 
-export const selectTaxTypeFromDropdown = async (text: string) =>
-	clickElementByText(InvoicesPage.dropdownOptionCss, text);
+export const selectTaxTypeFromDropdown = async (text) => {
+	await clickElementByText(InvoicesPage.dropdownOptionCss, text);
+};
 
-export const invoiceTypeDropdownVisible = async () => verifyElementIsVisible(InvoicesPage.invoiceTypeDropdownCss);
+export const invoiceTypeDropdownVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.invoiceTypeDropdownCss);
+};
 
-export const clickInvoiceTypeDropdown = async () => clickButton(InvoicesPage.invoiceTypeDropdownCss);
+export const clickInvoiceTypeDropdown = async () => {
+	await clickButton(InvoicesPage.invoiceTypeDropdownCss);
+};
 
-export const selectInvoiceTypeFromDropdown = async (text: string) =>
-	clickElementByText(InvoicesPage.dropdownOptionCss, text);
+export const selectInvoiceTypeFromDropdown = async (text) => {
+	await clickElementByText(InvoicesPage.dropdownOptionCss, text);
+};
 
-export const employeeDropdownVisible = async () => verifyElementIsVisible(InvoicesPage.selectEmployeeCss);
+export const employeeDropdownVisible = async () => {
+	// ga-employee-multi-select renders its nb-select only once the working employees loaded (`loaded`).
+	await verifyElementIsVisible(InvoicesPage.selectEmployeeCss);
+};
 
 export const clickEmployeeDropdown = async () => {
-	// Settle the form's full-card spinner first (it overlays the select, swallowing the open click), then
-	// open the employee multi-select (an nb-select; options are '.option-list nb-option').
-	await waitForSpinnerGone();
+	await settleForm();
 	await clickButton(InvoicesPage.selectEmployeeCss);
 };
 
-export const selectEmployeeFromDropdown = async (index: number) => {
+export const selectEmployeeFromDropdown = async (index) => {
+	// With "By Employee Hours", invoice-add.generateTable() only builds line items for the selected
+	// employees, and Save as Draft aborts with NO_ITEMS (persisting nothing) on an empty table — so the
+	// pick must register. Open the multi nb-select until an option renders, click the option ONCE and
+	// poll its `selected` class (a second blind click would toggle it off), then close the overlay with
+	// Escape (nb-select closes on Escape) so it cannot intercept the Generate/Save clicks.
 	const page = getPage();
-	const option = page.locator(InvoicesPage.dropdownOptionCss);
-	// Best-effort employee pick (mirrors ContactsLeads.po selectEmployeeDropdownOption): the option list
-	// is the org's employees "working" in the header date range (getWorkingEmployees), loaded async, and
-	// can legitimately be EMPTY on the test DB. Select one if it shows; otherwise leave members empty (the
-	// invoice still generates/saves) so the flow proceeds — avoids a hard 60s timeout on an empty list.
-	try {
-		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await option.nth(index).click({ force: true });
-	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
+	const option = page.locator(InvoicesPage.employeeOptionCss);
+	for (let attempt = 0; attempt < 4; attempt++) {
+		if (await option.first().isVisible().catch(() => false)) break;
+		await clickButton(InvoicesPage.selectEmployeeCss).catch(() => {});
+		await page.waitForTimeout(800);
 	}
+	await option
+		.first()
+		.waitFor({ state: 'visible', timeout: 12000 })
+		.catch(() => {
+			throw new Error('selectEmployeeFromDropdown: the employee select has no options (no working employee)');
+		});
+	const picked = option.nth(index);
+	const isSelected = async () => /\bselected\b/.test((await picked.getAttribute('class').catch(() => '')) || '');
+	for (let attempt = 0; attempt < 2 && !(await isSelected()); attempt++) {
+		await picked.click({ force: true }).catch(() => {});
+		await expect.poll(isSelected, { timeout: 3000 }).toBe(true).catch(() => {});
+	}
+	await page.keyboard.press('Escape').catch(() => {});
+	await option.first().waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
 };
 
-export const clickKeyboardButtonByKeyCode = async (keycode: number) => clickKeyboardBtnByKeycode(keycode);
+export const clickKeyboardButtonByKeyCode = async (keycode) => {
+	await clickKeyboardBtnByKeycode(keycode);
+};
 
-export const generateItemsButtonVisible = async () => verifyElementIsVisible(InvoicesPage.generateItemsButtonCss);
+export const generateItemsButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.generateItemsButtonCss);
+};
 
 export const clickGenerateItemsButton = async () => {
-	// dispatchClick past the form's full-card nb-spinner that overlays the buttons while it loads items.
-	await waitForSpinnerGone();
-	await dispatchClick(InvoicesPage.generateItemsButtonCss);
-};
-
-export const saveAsDraftButtonVisible = async () => verifyElementIsVisible(InvoicesPage.saveAsDraftButtonCss);
-
-export const clickSaveAsDraftButton = async (text: string) => {
-	// Footer Save: settle the card spinner first, then DOM-dispatch the click so it fires even if a
-	// fading overlay sits on top (a coordinate click would land on the overlay instead of the button).
-	await waitForSpinnerGone();
-	await getPage()
-		.locator('button', { hasText: text })
-		.first()
-		.dispatchEvent('click')
-		.catch(() => {});
-};
-
-export const tableRowVisible = async () => verifyElementIsVisible(InvoicesPage.tableRowCss);
-
-export const selectTableRow = async (index: number, name?: string) => {
+	// Click Generate, then wait for at least one generated line-item row (Save as Draft needs items).
+	// Re-dispatch if none appeared — the first click can land while the form spinner is still up.
 	const page = getPage();
-	// Let the grid settle after the preceding mutation (it re-renders/refetches); a click during that
-	// window is lost or instantly cleared. Then click the data row ONCE and poll the toolbar Edit button to
-	// enable — clicking a row TOGGLES its selection, so a blind second click would deselect it. Only
-	// re-click if the first was lost to a late re-render. (Polls isDisabled() rather than holding an
-	// elementHandle, which goes stale across the grid's re-render. Mirrors the proven SalesInvoices.po.)
-	//
-	// POLLUTION RESILIENCE: EstimatesTest runs BEFORE this spec (alphabetically) and CONVERTS an estimate to
-	// an invoice, so the invoices grid already holds a foreign invoice row (with a different contact) before
-	// this spec even selects a row. A plain .nth(0) would then grab the WRONG record. When `name` (this
-	// spec's unique faker contact) is given, scope the row to it (the grid's Contact column renders the
-	// contact name) so we always act on OUR invoice regardless of order. Falls back to .nth(index) if the
-	// named row hasn't rendered yet.
-	await waitForSpinnerGone();
-	await page.waitForLoadState('networkidle').catch(() => {});
-	await page.waitForTimeout(1500);
-	const rows = page.locator(InvoicesPage.tableRowCss);
-	const namedRow = name ? rows.filter({ hasText: name }).first() : rows.nth(index);
-	const editBtn = page.locator(InvoicesPage.editButtonCss).first();
-	for (let attempt = 0; attempt < 4; attempt++) {
-		// Prefer the uniquely-named row; if it isn't present yet (late render), fall back to the index row.
-		const row =
-			name && (await namedRow.count().catch(() => 0)) > 0 ? namedRow : rows.nth(index);
-		await row.click({ force: true }).catch(() => {});
-		for (let i = 0; i < 8; i++) {
-			await page.waitForTimeout(350);
-			if (!(await editBtn.isDisabled().catch(() => true))) return;
-		}
-	}
-};
-
-export const actionButtonVisible = async () => verifyElementIsVisible(InvoicesPage.popoverButtonCss);
-
-export const clickActionButtonByText = async (text: string) =>
-	// dispatchClick: the popover action (Send/Email) is reached right after the More popover opens; a
-	// fading overlay can intercept a coordinate click. Dispatch the event straight to the matched button.
-	getPage()
-		.locator(`${InvoicesPage.popoverButtonCss}`)
-		.filter({ hasText: text })
-		.first()
-		.dispatchEvent('click');
-
-export const backButtonVisible = async () => verifyElementIsVisible(InvoicesPage.backButtonCss);
-
-export const clickBackButton = async () => dispatchClick(InvoicesPage.backButtonCss);
-
-export const confirmButtonVisible = async () => verifyElementIsVisible(InvoicesPage.confirmButtonCss);
-
-export const clickConfirmButton = async () => {
-	// Send/Email confirm dialog OK button. ROOT CAUSE of the round-7 failure (captured DOM: "Send this
-	// invoice to Pamela Gislason ?" dialog STILL up, its ga-invoice-pdf iframe + Cancel/Send, the row still
-	// Draft, so div.badge-success never rendered): the round-6 attempt used a REAL `.click({force:true})` on
-	// the footer Send button. That regressed the step. The dialog body is <ga-invoice-pdf> — a `height:90vh`
-	// card whose iframe (`height:100%; width:60vw`) fills the body; a coordinate/real click hit-tests at the
-	// button's center and the browser routes it to whatever is topmost at that point (the iframe / a fading
-	// cdk-overlay backdrop), NOT the button — `{force:true}` only skips the actionability WAIT, it still
-	// dispatches at screen coordinates (ROOT CAUSE #2). So `send()`'s `await invoicesService.update(...)` never
-	// ran, the dialog stayed open, the invoice never left Draft. FIX: mirror the PROVEN-GREEN SalesInvoices.po
-	// exactly — `dispatchEvent('click')` fires straight on the button element regardless of what overlay sits
-	// on top or whether it's scrolled below the fold, which is what reliably drives async send()/sendEmail()
-	// and closes the dialog. Wait for the LIVE dialog host to render first (the (click) handler isn't wired
-	// until then), scope the confirm button to that host (never a stale leaked footer), loop-dispatch and poll
-	// the host to DETACH so the mutation truly fired before we move on; page-level dispatchClick is a fallback.
-	const page = getPage();
-	const dialogHost = page.locator('ga-invoice-send, ga-invoice-email').first();
-	// Wait for the mutation dialog to actually be on screen before dispatching — the (click)="send()/sendEmail()"
-	// handler isn't wired until the dialog component has rendered.
-	await dialogHost.waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
-	// The email dialog's Send is `[disabled]="form.invalid"`, but the spec fills the email field before this,
-	// so the button is enabled; the retry loop below absorbs Angular's settle tick.
-	const confirmBtn = dialogHost.locator('nb-card-footer.text-left > button[status="success"]').first();
-	for (let i = 0; i < 8; i++) {
-		await waitForSpinnerGone();
-		await confirmBtn.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
-		// FORCE-click FIRST (was an actionable click — that regressed: the ga-invoice-pdf <iframe> streams into
-		// the card body and overlays the nb-card-footer coordinates, so a non-force click spins on the "receives
-		// pointer events" check and burns the whole 180s test cap). force skips only the actionability CHECK,
-		// still dispatches a trusted click that drives the async nbButton (click) -> send()/sendEmail() ->
-		// invoicesService.update(status: SENT). Keep dispatch fallbacks for a mid-animation detach.
-		await confirmBtn.click({ force: true, timeout: 6000 }).catch(async () => {
-			await confirmBtn.dispatchEvent('click').catch(async () => {
-				await dispatchClick(InvoicesPage.confirmButtonCss).catch(() => {});
-			});
-		});
+	const itemRow = page.locator(InvoicesPage.generatedItemRowCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await settleForm();
+		await page.locator(InvoicesPage.generateItemsButtonCss).first().dispatchEvent('click').catch(() => {});
 		try {
-			// Detach window sized so all 8 retries fit within the 180s test cap. send() awaits invoicesService.update()
-			// before dialogRef.close(); 6s absorbs a normal round-trip, and a lingering dialog just loops to re-click.
-			await dialogHost.waitFor({ state: 'detached', timeout: 6000 });
-			// let the onClose refresh ($refresh$ / invoices$) settle so the grid repaints the SENT badge
-			await waitForSpinnerGone();
-			await page.waitForLoadState('networkidle').catch(() => {});
+			await itemRow.waitFor({ state: 'visible', timeout: 5000 });
 			return;
 		} catch {
-			// dialog still open — the click didn't take (PDF preview still wiring up); loop and re-click
+			/* no rows yet — dispatch again */
 		}
 	}
 };
 
-export const emailInputVisible = async () => verifyElementIsVisible(InvoicesPage.emailInputCss);
-
-export const enterEmailData = async (data: string) => enterInput(InvoicesPage.emailInputCss, data);
-
-export const editButtonVisible = async () => verifyElementIsVisible(InvoicesPage.editButtonCss);
-
-export const clickEditButton = async (index: number) => {
-	// editButtonCss now resolves to a single button (scoped to "Edit"); dispatchClick past any fading
-	// toastr/overlay from the prior save so the edit route opens reliably. (index kept for API parity.)
-	await waitForSpinnerGone();
-	await getPage()
-		.locator(InvoicesPage.editButtonCss)
-		.nth(index)
-		.dispatchEvent('click')
-		.catch(() => {});
+export const saveAsDraftButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.saveAsDraftButtonCss);
 };
 
-export const viewButtonVisible = async () => verifyElementIsVisible(InvoicesPage.viewButtonCss);
-
-export const clickViewButton = async (index: number) => {
-	// viewButtonCss is scoped to the "View" button; dispatchClick to bypass any fading overlay.
-	await waitForSpinnerGone();
-	await getPage()
-		.locator(InvoicesPage.viewButtonCss)
-		.first()
-		.dispatchEvent('click')
-		.catch(() => {});
+export const clickSaveAsDraftButton = async (text) => {
+	// addInvoice()/updateInvoice() navigate back to the list ONLY after the record persisted; a NO_ITEMS /
+	// INVALID_DATES / duplicate-number abort keeps the form open. So: wait for Save to be enabled (it is
+	// `[disabled]="disableSaveButton || form.invalid"`), dispatch, and require the route to leave
+	// /add | /edit. Fail HERE if it never does — otherwise the next Draft-badge check could be satisfied
+	// by an older row and hide that nothing was saved.
+	const page = getPage();
+	const button = page.locator(InvoicesPage.saveAsDraftButtonCss).filter({ hasText: text }).first();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await settleForm();
+		await expect(button).toBeEnabled({ timeout: 15000 }).catch(() => {});
+		await button.dispatchEvent('click').catch(() => {});
+		try {
+			await page.waitForFunction(() => !/\/(add|edit)(\b|\/|$)/.test(location.hash), undefined, { timeout: 20000 });
+			await settleGrid();
+			return;
+		} catch {
+			/* still on the form — retry once */
+		}
+	}
+	throw new Error(`clickSaveAsDraftButton: "${text}" did not save the invoice (still on ${await page.evaluate(() => location.hash)})`);
 };
 
-export const deleteButtonVisible = async () => verifyElementIsVisible(InvoicesPage.deleteButtonCss);
+export const tableRowVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.tableRowCss);
+};
 
-export const clickDeleteButton = async () => dispatchClick(InvoicesPage.deleteButtonCss);
+export const selectTableRow = async (index: number | string, name?: string) => {
+	const indexOrName = name ?? index;
+	// Row clicks TOGGLE selection (angular2-smart-table DataSet.selectRow), and a grid refresh
+	// (invoices$ -> _clearItem) drops it, so: close the actions popover, let the grid settle, then click
+	// only when the row is not already selected and confirm the selection held. Rows are scoped by the
+	// scenario's unique contact name (grid Contact column) so a foreign row is never used. The click goes
+	// to the first cell (invoice number) — the Contact cell's link navigates to the contact page.
+	const page = getPage();
+	await closeActionsPopover();
+	await settleGrid();
+	const rows = page.locator(InvoicesPage.tableRowCss);
+	const row = typeof indexOrName === 'string' ? rows.filter({ hasText: indexOrName }).first() : rows.nth(indexOrName);
+	await row.waitFor({ state: 'visible', timeout: 20000 });
+	const editBtn = page.locator(InvoicesPage.editButtonCss).first();
+	const isSelected = async () => {
+		if (!(await editBtn.isEnabled().catch(() => false))) return false;
+		if (/\bselected\b/.test((await row.getAttribute('class').catch(() => '')) || '')) return true;
+		// Edit is enabled but this row lacks the class: only accept if NO row carries it (class not rendered).
+		return (await page.locator(`${InvoicesPage.tableRowCss}.selected`).count().catch(() => 0)) === 0;
+	};
+	for (let attempt = 0; attempt < 5; attempt++) {
+		if (!(await isSelected())) {
+			await row.locator('td').first().click({ force: true, timeout: 10000 }).catch(() => {});
+		}
+		const ok = await expect
+			.poll(isSelected, { timeout: 4000 })
+			.toBe(true)
+			.then(() => true)
+			.catch(() => false);
+		if (ok) {
+			await page.waitForTimeout(400);
+			if (await isSelected()) return;
+		}
+		await settleGrid();
+	}
+	throw new Error(`selectTableRow: could not select the invoice row for "${indexOrName}"`);
+};
 
-export const confirmDeleteButtonVisible = async () => verifyElementIsVisible(InvoicesPage.confirmDeleteButtonCss);
+export const actionButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.popoverButtonCss);
+};
+
+/** Click a "more" popover action once it is enabled (Send is [disabled]="!canBeSend", the rest "disableButton"). */
+const clickPopoverAction = async (button: Locator, label: string, rowName?: string) => {
+	const page = getPage();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await clickMoreButton();
+		await button.waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+		if (await button.isEnabled().catch(() => false)) {
+			// Dispatched straight at the button: Angular's (click) runs, and the popover closes itself
+			// (its gauzyOutside handler sees a click inside).
+			await button.dispatchEvent('click');
+			return;
+		}
+		// Disabled => the row lost its selection (a grid refresh). Re-select it and reopen the popover.
+		if (rowName) await selectTableRow(0, rowName);
+		else await page.waitForTimeout(800);
+	}
+	throw new Error(`"${label}" stayed disabled in the actions popover — no invoice row is selected`);
+};
+
+export const clickActionButtonByText = async (text, rowName?: string) => {
+	const button = getPage().locator(InvoicesPage.popoverButtonCss).filter({ hasText: text }).first();
+	await clickPopoverAction(button, text, rowName);
+};
+
+export const backButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.backButtonCss);
+};
+
+export const clickBackButton = async () => {
+	// goBack() = location.back() to the list (the edit/view page was pushed from it).
+	const page = getPage();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await settleForm();
+		await page.locator(InvoicesPage.backButtonCss).first().dispatchEvent('click').catch(() => {});
+		try {
+			await page.waitForFunction(() => !/\/(edit|view)\//.test(location.hash), undefined, { timeout: 10000 });
+			break;
+		} catch {
+			/* still there — retry */
+		}
+	}
+	await page.locator(InvoicesPage.addButtonCss).first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => {});
+	await settleGrid();
+};
+
+export const confirmButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.dialogConfirmButtonCss);
+};
+
+export const clickConfirmButton = async () => {
+	// Confirm button of the Send (ga-invoice-send) / Email (ga-invoice-email) dialog. send()/sendEmail()
+	// await the API update and only then close the dialog, so the proof the mutation ran is the dialog
+	// host DETACHING. Wait for the button to be enabled (Email's Send is [disabled]="form.invalid"), click
+	// it once (real click; dispatch as fallback), and give the awaited request a generous window before
+	// clicking again — a re-click while the first request is in flight would send twice.
+	const page = getPage();
+	// The dialog host is an inline custom element, so wait on its confirm BUTTON for visibility and on the
+	// host only for detachment.
+	const dialog = page.locator(InvoicesPage.mutationDialogCss).first();
+	const confirm = page.locator(InvoicesPage.dialogConfirmButtonCss).first();
+	await confirm.waitFor({ state: 'visible', timeout: 15000 });
+	for (let attempt = 0; attempt < 3; attempt++) {
+		if ((await dialog.count().catch(() => 0)) === 0) break;
+		await expect(confirm).toBeEnabled({ timeout: 10000 }).catch(() => {});
+		await confirm.click({ timeout: 6000 }).catch(async () => {
+			await confirm.dispatchEvent('click').catch(() => {});
+		});
+		try {
+			await dialog.waitFor({ state: 'detached', timeout: 25000 });
+			break;
+		} catch {
+			/* still open — click again */
+		}
+	}
+	if ((await page.locator(InvoicesPage.mutationDialogCss).count().catch(() => 0)) > 0) {
+		throw new Error('clickConfirmButton: the send/email dialog never closed — the invoice was not sent');
+	}
+	await settleGrid();
+};
+
+export const emailInputVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.emailInputCss);
+};
+
+export const enterEmailData = async (data) => {
+	await enterInput(InvoicesPage.emailInputCss, data);
+};
+
+export const editButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.editButtonCss);
+};
+
+export const clickEditButton = async (index) => {
+	// edit() navigates to /invoices/edit/:id, where getInvoiceById() fills the form asynchronously with
+	// form.setValue(...) — which would overwrite anything typed before it lands. Wait for the route AND
+	// for the record to be in the form (invoice number filled, spinner gone) before the step edits it.
+	void index;
+	const page = getPage();
+	const button = page.locator(InvoicesPage.editButtonCss).first();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await expect(button).toBeEnabled({ timeout: 10000 }).catch(() => {});
+		await button.dispatchEvent('click').catch(() => {});
+		try {
+			await page.waitForFunction(() => /\/edit\//.test(location.hash), undefined, { timeout: 15000 });
+			break;
+		} catch {
+			/* still on the list — retry */
+		}
+	}
+	await page
+		.waitForFunction(
+			(css) => {
+				const el = document.querySelector(css) as HTMLInputElement | null;
+				return !!el && el.value !== '';
+			},
+			InvoicesPage.editFormInvoiceNumberCss,
+			{ timeout: 20000 }
+		)
+		.catch(() => {});
+	await settleForm();
+};
+
+export const viewButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.viewButtonCss);
+};
+
+export const clickViewButton = async (index) => {
+	// Single View button in the toolbar (the step's index is a Cypress-era artifact). view() navigates
+	// to /invoices/view/:id.
+	void index;
+	const page = getPage();
+	const button = page.locator(InvoicesPage.viewButtonCss).first();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await expect(button).toBeEnabled({ timeout: 10000 }).catch(() => {});
+		await button.dispatchEvent('click').catch(() => {});
+		try {
+			await page.waitForFunction(() => /\/view\//.test(location.hash), undefined, { timeout: 15000 });
+			return;
+		} catch {
+			/* still on the list — retry */
+		}
+	}
+};
+
+export const deleteButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.deleteButtonCss);
+};
+
+export const clickDeleteButton = async (rowName?: string) => {
+	// Popover Delete action ([disabled]="disableButton") — opens the ga-delete-confirmation dialog.
+	await clickPopoverAction(getPage().locator(InvoicesPage.deleteButtonCss).first(), 'Delete', rowName);
+};
+
+export const confirmDeleteButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.confirmDeleteButtonCss);
+};
 
 export const clickConfirmDeleteButton = async () => {
-	// Delete-confirmation dialog OK button — dispatchClick so the closing popover/dialog backdrop can't
-	// intercept it.
-	await waitForSpinnerGone();
-	await dispatchClick(InvoicesPage.confirmDeleteButtonCss);
+	await getPage().locator(InvoicesPage.confirmDeleteButtonCss).first().dispatchEvent('click');
 };
 
-export const setStatusButtonVisible = async () => verifyElementIsVisible(InvoicesPage.setStatusButtonCss);
+export const verifyEstimateExists = async (val) => {
+	await verifyValue(InvoicesPage.verifyInvoiceCss, val);
+};
 
-export const clickSetStatusButton = async (text: string) => clickElementByText(InvoicesPage.setStatusButtonCss, text);
+export const setStatusButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.setStatusButtonCss);
+};
 
-export const setStatusFromDropdown = async (text: string) => clickElementByText(InvoicesPage.dropdownOptionCss, text);
+export const clickSetStatusButton = async (text) => {
+	// The toolbar "Set Status" nb-select ([disabled]="disableButton"); its placeholder reads "Set Status"
+	// (hasText is case-insensitive, so the pagedata 'SET STATUS' matches). Force click opens it; the row
+	// selection of the step before enabled it.
+	await clickElementByText(InvoicesPage.setStatusButtonCss, text);
+};
 
-export const verifyEstimateExists = async (val: string) => verifyValue(InvoicesPage.verifyInvoiceCss, val);
+export const setStatusFromDropdown = async (text) => {
+	// selectStatus() PUTs /invoices/:id/action {status}; wait for it so the next step starts from the
+	// refreshed grid rather than racing the update.
+	const page = getPage();
+	const updated = page
+		.waitForResponse((res) => res.request().method() === 'PUT' && /\/invoices\/[^/?]+\/action/.test(res.url()), {
+			timeout: 20000
+		})
+		.catch(() => null);
+	await clickElementByText(InvoicesPage.dropdownOptionCss, text);
+	await updated;
+	await settleGrid();
+};
 
-export const verifyDraftBadgeClass = async () => verifyElementIsVisible(InvoicesPage.draftBadgeCss);
+export const verifyDraftBadgeClass = async () => {
+	await verifyElementIsVisible(InvoicesPage.draftBadgeCss);
+};
 
-export const verifySentBadgeClass = async () => verifyElementIsVisible(InvoicesPage.successBadgeCss);
+export const verifySentBadgeClass = async () => {
+	await verifyElementIsVisible(InvoicesPage.successBadgeCss);
+};
 
-export const verifyElementIsDeleted = async (text: string) => {
-	// "Invoice deleted" check. The passed pagedata text ('No data for the currently selected employee.')
-	// no longer matches the grid's empty message, so don't assert on that stale string. An empty-grid
-	// assertion is also unsafe: intra-run pollution (a prior spec's invoice row, or SalesInvoices) can
-	// leave rows, false-failing toBeHidden on the data row. Assert the true intent instead (mirrors the
-	// proven Estimates.po): the delete-confirmation nb-dialog dispatched and detached (the delete actually
-	// fired), then let the grid refresh settle.
+export const verifyElementIsDeleted = async (text) => {
+	// "Invoice deleted" check: the confirmation dialog closed with OK (delete() then calls the API and
+	// refreshes the grid). The grid can still hold other specs' invoices (e.g. the one EstimatesTest
+	// converts), so an empty-grid check would be wrong, and the pagedata empty-grid text is stale
+	// (the grid now says "You have not created any invoices.").
 	void text;
 	const page = getPage();
-	await page
-		.locator('ga-delete-confirmation')
-		.first()
-		.waitFor({ state: 'detached', timeout: 12000 })
-		.catch(() => {});
-	await waitForSpinnerGone();
-	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.locator('ga-delete-confirmation').first().waitFor({ state: 'detached', timeout: 12000 });
+	await settleGrid();
 };
 
-export const scrollEmailInviteTemplate = async () => scrollDown(InvoicesPage.emailCardCss);
+export const scrollEmailInviteTemplate = async () => {
+	await scrollDown(InvoicesPage.emailCardCss);
+};
 
-export const moreButtonVisible = async () => verifyElementIsVisible(InvoicesPage.moreButtonCss);
+export const moreButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.moreButtonCss);
+};
 
 export const clickMoreButton = async () => {
-	// The "more" (vertical dots) toolbar button toggles the actions popover; dispatchClick past any
-	// fading toastr/overlay so the popover opens reliably.
-	await waitForSpinnerGone();
-	await dispatchClick(InvoicesPage.moreButtonCss);
+	// Open the toolbar actions popover (More = vertical dots; toggleActionsPopover()). It is a toggle, so
+	// only dispatch when it is not already open, and confirm it opened.
+	const page = getPage();
+	const popover = page.locator(InvoicesPage.popoverCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		if (await popover.isVisible().catch(() => false)) return;
+		await page.locator(InvoicesPage.listSpinnerCss).first().waitFor({ state: 'detached', timeout: 4000 }).catch(() => {});
+		await page.locator(InvoicesPage.moreButtonCss).first().dispatchEvent('click').catch(() => {});
+		await popover.waitFor({ state: 'visible', timeout: 4000 }).catch(() => {});
+	}
 };
 
-export const verifyTabButtonVisible = async () => verifyElementIsVisible(InvoicesPage.tabButtonCss);
+export const verifyTabButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.tabButtonCss);
+};
 
-export const clickTabButton = async (index: number) => clickButtonByIndex(InvoicesPage.tabButtonCss, index);
+export const clickTabButton = async (index) => {
+	await clickButtonByIndex(InvoicesPage.tabButtonCss, index);
+};
 
-export const verifyEstimateNumberInputVisible = async () => verifyElementIsVisible(InvoicesPage.inputInvoiceNumberCss);
+export const verifyEstimateNumberInputVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.inputInvoiceNumberCss);
+};
 
-export const enterEstimateNumberInputData = async (data: string) => {
+export const enterEstimateNumberInputData = async (data) => {
 	await clearField(InvoicesPage.inputInvoiceNumberCss);
 	await enterInput(InvoicesPage.inputInvoiceNumberCss, data);
 };
 
-export const verifyEstimateDateInput = async () => verifyElementIsVisible(InvoicesPage.estimateDateCss);
+export const verifyEstimateDateInput = async () => {
+	await verifyElementIsVisible(InvoicesPage.estimateDateCss);
+};
 
-export const verifyEstimateDueDateInput = async () => verifyElementIsVisible(InvoicesPage.dueDateInputCss);
+export const verifyEstimateDueDateInput = async () => {
+	await verifyElementIsVisible(InvoicesPage.dueDateInputCss);
+};
 
-export const verifyTotalValueInputVisible = async () => verifyElementIsVisible(InvoicesPage.totalValueInputCss);
+export const verifyTotalValueInputVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.totalValueInputCss);
+};
 
-export const verifyCurrencyDropdownVisible = async () => verifyElementIsVisible(InvoicesPage.currencySelectCss);
+export const verifyCurrencyDropdownVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.currencySelectCss);
+};
 
-export const verifyStatusInputVisible = async () => verifyElementIsVisible(InvoicesPage.inputStatusCss);
+export const verifyStatusInputVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.inputStatusCss);
+};
 
-export const searchButtonVisible = async () => verifyElementIsVisible(InvoicesPage.searchButtonCss);
+export const searchButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.searchButtonCss);
+};
 
-export const clickSearchButton = async () => clickButton(InvoicesPage.searchButtonCss);
+export const clickSearchButton = async () => {
+	await clickButton(InvoicesPage.searchButtonCss);
+	await settleGrid();
+};
 
-export const verifyDraftBadgeNotVisible = async () => verifyElementIsNotVisible(InvoicesPage.draftBadgeCss);
+export const verifyDraftBadgeNotVisible = async () => {
+	await verifyElementIsNotVisible(InvoicesPage.draftBadgeCss);
+};
 
-export const resetButtonVisible = async () => verifyElementIsVisible(InvoicesPage.resetButtonCss);
+export const resetButtonVisible = async () => {
+	await verifyElementIsVisible(InvoicesPage.resetButtonCss);
+};
 
-export const clickResetButton = async () => clickButton(InvoicesPage.resetButtonCss);
+export const clickResetButton = async () => {
+	await clickButton(InvoicesPage.resetButtonCss);
+	await settleGrid();
+};
+
+export const verifyMoreButton = async () => {
+	await verifyElementIsVisible(InvoicesPage.moreButtonCss);
+};

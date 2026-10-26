@@ -221,10 +221,8 @@ When('I send the sales estimate by email', async () => {
 When('I convert the sales estimate to an invoice', async () => {
 	await salesEstimatesPage.selectTableRow(fullName);
 	// No actionButtonVisible() here — "To invoice" is a TOOLBAR button (button.action.info), not a
-	// popover action. selectTableRow clicks the grid row, which fires the popover's (clickOutside)
-	// and CLOSES it, so asserting the popover action button (div.popover-container-action
-	// button.action) would time out. Only the toolbar convert button is needed (enabled by the row
-	// selection above). Mirrors the proven EstimatesTest convert step.
+	// popover action; selectTableRow closes the actions popover before it selects the row. Only the
+	// toolbar convert button is needed (enabled by the row selection above).
 	await salesEstimatesPage.convertToInvoiceButtonVisible();
 	await salesEstimatesPage.clickConvertToInvoiceButton(0);
 });
@@ -277,7 +275,7 @@ When('I delete the sales estimate', async () => {
 	await salesEstimatesPage.moreButtonVisible();
 	await salesEstimatesPage.clickMoreButton();
 	await salesEstimatesPage.deleteButtonVisible();
-	await salesEstimatesPage.clickDeleteButton();
+	await salesEstimatesPage.clickDeleteButton(fullName);
 	await salesEstimatesPage.confirmDeleteButtonVisible();
 	await salesEstimatesPage.clickConfirmDeleteButton();
 	await salesEstimatesPage.verifyElementIsDeleted(
