@@ -204,7 +204,10 @@ jobs:
           # below, and so does a baseline renamed in the config on a base that has this file.
           promotion=false
           case "$PR_BASE_REF:$PR_HEAD_REF" in
-            stage:develop | master:stage) promotion=true ;;
+            # The desktop release branches are promotions too: `apps` takes `master` and `stage-apps`
+            # takes `stage`. Without them the first master → apps PR after the baseline landed
+            # (#11493, 2026-10-26) failed "the baseline only shrinks" instead of adopting it.
+            stage:develop | master:stage | apps:master | stage-apps:stage) promotion=true ;;
           esac
           if [ "$promotion" = "true" ] && ! git cat-file -e "$BASE:$AUDIT_DIR/ui-baseline.json" 2> /dev/null; then
             echo "$BASE has no $AUDIT_DIR/ui-baseline.json yet: this change adopts it (--first-version)"
