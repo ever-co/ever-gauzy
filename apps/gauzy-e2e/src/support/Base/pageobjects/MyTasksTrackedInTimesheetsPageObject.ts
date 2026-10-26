@@ -6,7 +6,11 @@ export const MyTasksTrackedInTimesheets = {
 	// /tasks/me opens MyTaskDialogComponent. Project is a ga-project-selector (ng-select) bound to
 	// formControlName="projectId". Target the inner ng-select so the keyboard-open helper can focus its input
 	// (ng-select opens on mousedown and a coordinate/force click is backdrop-blocked).
-	projectDropdownCss: 'ga-project-selector ng-select',
+	// Scoped to the dialog: once the employee is a member of a project, the app HEADER renders its own
+	// <ga-project-selector> on /pages/tasks/me (header.component.html, showProjectsSelector), and it precedes
+	// the dialog in DOM order. MyTaskDialogComponent does NOT follow the header's project, so driving the
+	// header one left the new task without a project.
+	projectDropdownCss: 'ngx-my-task-dialog ga-project-selector ng-select',
 	// Options for every ng-select render in a body-level `.ng-dropdown-panel` (appendTo="body" on the status
 	// select; the project/tags panels are `.ng-dropdown-panel` too). `.ng-option` is the option row for all.
 	dropdownOptionCss: '.ng-dropdown-panel .ng-option',
@@ -18,8 +22,10 @@ export const MyTasksTrackedInTimesheets = {
 	// checkbox multiselect). Open via keyboard; options are `.ng-option` in the body panel.
 	tagsSelectCss: '#addTags',
 	tagsSelectOptionCss: '.ng-dropdown-panel .ng-option',
-	// Dialog body host — clicking it dismisses an open ng-select panel before moving on.
-	cardBodyCss: 'nb-card-body.body',
+	// Neutral spot inside the dialog — clicking it dismisses an open ng-select panel (outside click) before
+	// moving on. The dialog title, not the body: a click at the CENTRE of nb-card-body.body lands on whichever
+	// form control sits there (a priority/size ng-select would open instead). Mirrors TeamsTasksPage.cardBodyCss.
+	cardBodyCss: 'ngx-my-task-dialog nb-card-header h5.title',
 	dueDateInputCss: '[formControlName="dueDate"]',
 	estimateDaysInputCss: '[formControlName="estimateDays"]',
 	estimateHoursInputCss: '[formControlName="estimateHours"]',
@@ -39,7 +45,9 @@ export const MyTasksTrackedInTimesheets = {
 	timerBtnCss: 'nb-action.timer-action nb-icon[icon="clock-outline"]',
 	// Task select inside the timer window is <ga-task-selector> (an ng-select). The Cypress
 	// ng-reflect-placeholder attribute selector is stale/prod-stripped — target the component's ng-select.
-	taskSelectCss: 'ga-task-selector ng-select',
+	// Scoped to the timer window host (<ngx-web-time-tracker>, time-tracker.component.ts) so a task dialog's
+	// "Parent task" ga-task-selector can never match first.
+	taskSelectCss: 'ngx-web-time-tracker ga-task-selector ng-select',
 	// Start/Stop is ONE toggle button whose [status] flips success->danger. div.actions div.toggle scopes it
 	// to the timer widget (the view-log block also has a status="success" START button, avoided here).
 	// Both use the CLASS form: time-tracker.component.html property-binds [status]="running ? 'danger' :
