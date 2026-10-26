@@ -7065,5 +7065,15 @@
 		"COMMENT_IMAGE_TYPES": "Могат да се прикачват само изображения PNG, JPEG, GIF, WebP и BMP.",
 		"COMMENT_IMAGE_LIMIT": "Един коментар може да съдържа до {{ count }} изображения.",
 		"COMMENT_IMAGE_FAILED": "{{ name }} не можа да бъде качено."
+	},
+	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Последни промени по задачата и коментарите към нея",
+		"TIME_WORKED": "Отработено време",
+		"OF_ESTIMATE": "{{ share }}% от оценката {{ estimate }}",
+		"SUBTASKS": "Подзадачи",
+		"SUBTASKS_DONE": "{{ done }} от {{ total }} готови",
+		"NO_SUBTASKS": "Няма подзадачи",
+		"TIME": "Време",
+		"NO_TIME": "Все още няма отчетено време по тази задача"
 	}
 }

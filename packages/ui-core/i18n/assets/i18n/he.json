@@ -7030,5 +7030,15 @@
 		"COMMENT_IMAGE_TYPES": "ניתן לצרף רק תמונות PNG, JPEG, GIF, WebP ו-BMP.",
 		"COMMENT_IMAGE_LIMIT": "תגובה יכולה לכלול עד {{ count }} תמונות.",
 		"COMMENT_IMAGE_FAILED": "לא ניתן היה להעלות את {{ name }}."
+	},
+	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "שינויים אחרונים במשימה ובתגובות שלה",
+		"TIME_WORKED": "זמן עבודה",
+		"OF_ESTIMATE": "{{ share }}% מההערכה של {{ estimate }}",
+		"SUBTASKS": "תתי־משימות",
+		"SUBTASKS_DONE": "{{ done }} מתוך {{ total }} הושלמו",
+		"NO_SUBTASKS": "אין תתי־משימות",
+		"TIME": "זמן",
+		"NO_TIME": "עדיין לא נרשם זמן במשימה זו"
 	}
 }

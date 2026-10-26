@@ -7016,5 +7016,15 @@
 		"COMMENT_IMAGE_TYPES": "Seules les images PNG, JPEG, GIF, WebP et BMP peuvent être jointes.",
 		"COMMENT_IMAGE_LIMIT": "Un commentaire peut contenir jusqu’à {{ count }} images.",
 		"COMMENT_IMAGE_FAILED": "Impossible de téléverser {{ name }}."
+	},
+	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Changements récents de la tâche et ses commentaires",
+		"TIME_WORKED": "Temps travaillé",
+		"OF_ESTIMATE": "{{ share }} % de l’estimation de {{ estimate }}",
+		"SUBTASKS": "Sous-tâches",
+		"SUBTASKS_DONE": "{{ done }} sur {{ total }} terminées",
+		"NO_SUBTASKS": "Aucune sous-tâche",
+		"TIME": "Temps",
+		"NO_TIME": "Aucun temps suivi sur cette tâche pour le moment"
 	}
 }

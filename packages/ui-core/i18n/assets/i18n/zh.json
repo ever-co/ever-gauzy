@@ -7020,5 +7020,15 @@
 		"COMMENT_IMAGE_TYPES": "只能附加 PNG、JPEG、GIF、WebP 和 BMP 图片。",
 		"COMMENT_IMAGE_LIMIT": "一条评论最多可包含 {{ count }} 张图片。",
 		"COMMENT_IMAGE_FAILED": "无法上传 {{ name }}。"
+	},
+	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "任务的最新变更及其评论",
+		"TIME_WORKED": "已工作时间",
+		"OF_ESTIMATE": "占预估 {{ estimate }} 的 {{ share }}%",
+		"SUBTASKS": "子任务",
+		"SUBTASKS_DONE": "已完成 {{ done }} / {{ total }}",
+		"NO_SUBTASKS": "没有子任务",
+		"TIME": "时间",
+		"NO_TIME": "此任务尚未记录时间"
 	}
 }

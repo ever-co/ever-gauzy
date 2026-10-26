@@ -7020,5 +7020,15 @@
 		"COMMENT_IMAGE_TYPES": "Si possono allegare solo immagini PNG, JPEG, GIF, WebP e BMP.",
 		"COMMENT_IMAGE_LIMIT": "Un commento può contenere fino a {{ count }} immagini.",
 		"COMMENT_IMAGE_FAILED": "Impossibile caricare {{ name }}."
+	},
+	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Modifiche recenti all'attività e ai suoi commenti",
+		"TIME_WORKED": "Tempo lavorato",
+		"OF_ESTIMATE": "{{ share }}% della stima di {{ estimate }}",
+		"SUBTASKS": "Sottoattività",
+		"SUBTASKS_DONE": "{{ done }} su {{ total }} completate",
+		"NO_SUBTASKS": "Nessuna sottoattività",
+		"TIME": "Tempo",
+		"NO_TIME": "Nessun tempo registrato per quest'attività"
 	}
 }

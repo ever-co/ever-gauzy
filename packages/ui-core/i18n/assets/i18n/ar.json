@@ -7012,5 +7012,15 @@
 		"COMMENT_IMAGE_TYPES": "يمكن إرفاق صور PNG وJPEG وGIF وWebP وBMP فقط.",
 		"COMMENT_IMAGE_LIMIT": "يمكن أن يحمل التعليق ما يصل إلى {{ count }} صور.",
 		"COMMENT_IMAGE_FAILED": "تعذّر رفع {{ name }}."
+	},
+	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "أحدث التغييرات على المهمة وتعليقاتها",
+		"TIME_WORKED": "الوقت المستغرق",
+		"OF_ESTIMATE": "{{ share }}% من التقدير {{ estimate }}",
+		"SUBTASKS": "المهام الفرعية",
+		"SUBTASKS_DONE": "أُنجز {{ done }} من {{ total }}",
+		"NO_SUBTASKS": "لا توجد مهام فرعية",
+		"TIME": "الوقت",
+		"NO_TIME": "لم يُسجَّل وقت على هذه المهمة بعد"
 	}
 }

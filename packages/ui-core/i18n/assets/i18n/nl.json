@@ -7020,5 +7020,15 @@
 		"COMMENT_IMAGE_TYPES": "Alleen PNG-, JPEG-, GIF-, WebP- en BMP-afbeeldingen kunnen worden bijgevoegd.",
 		"COMMENT_IMAGE_LIMIT": "Een opmerking kan maximaal {{ count }} afbeeldingen bevatten.",
 		"COMMENT_IMAGE_FAILED": "{{ name }} kon niet worden geüpload."
+	},
+	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Recente wijzigingen aan de taak en de reacties erop",
+		"TIME_WORKED": "Gewerkte tijd",
+		"OF_ESTIMATE": "{{ share }}% van de schatting van {{ estimate }}",
+		"SUBTASKS": "Subtaken",
+		"SUBTASKS_DONE": "{{ done }} van {{ total }} klaar",
+		"NO_SUBTASKS": "Geen subtaken",
+		"TIME": "Tijd",
+		"NO_TIME": "Nog geen tijd geregistreerd op deze taak"
 	}
 }

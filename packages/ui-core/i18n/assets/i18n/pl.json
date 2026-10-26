@@ -7019,5 +7019,15 @@
 		"COMMENT_IMAGE_TYPES": "Można załączać tylko obrazy PNG, JPEG, GIF, WebP i BMP.",
 		"COMMENT_IMAGE_LIMIT": "Komentarz może zawierać do {{ count }} obrazów.",
 		"COMMENT_IMAGE_FAILED": "Nie udało się przesłać {{ name }}."
+	},
+	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Ostatnie zmiany w zadaniu i jego komentarze",
+		"TIME_WORKED": "Przepracowany czas",
+		"OF_ESTIMATE": "{{ share }}% szacunku {{ estimate }}",
+		"SUBTASKS": "Podzadania",
+		"SUBTASKS_DONE": "Ukończono {{ done }} z {{ total }}",
+		"NO_SUBTASKS": "Brak podzadań",
+		"TIME": "Czas",
+		"NO_TIME": "Nie zarejestrowano jeszcze czasu dla tego zadania"
 	}
 }

@@ -6039,5 +6039,15 @@
 		"COMMENT_IMAGE_TYPES": "Only PNG, JPEG, GIF, WebP and BMP images can be attached.",
 		"COMMENT_IMAGE_LIMIT": "A comment can carry up to {{ count }} images.",
 		"COMMENT_IMAGE_FAILED": "Couldn’t upload {{ name }}."
+	},
+	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Recent changes to the task and its comments",
+		"TIME_WORKED": "Time worked",
+		"OF_ESTIMATE": "{{ share }}% of the {{ estimate }} estimate",
+		"SUBTASKS": "Subtasks",
+		"SUBTASKS_DONE": "{{ done }} of {{ total }} done",
+		"NO_SUBTASKS": "No subtasks",
+		"TIME": "Time",
+		"NO_TIME": "No time tracked on this task yet"
 	}
 }
