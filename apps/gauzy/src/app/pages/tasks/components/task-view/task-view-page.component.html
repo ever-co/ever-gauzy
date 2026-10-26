@@ -16,48 +16,32 @@
 			<!-- Where it sits, what it is, and what can be done with it. -->
 			<div class="project-view-headline">
 				<div class="project-view-header task-page-header">
-					<div class="task-page-heading">
-						<nav class="task-crumbs" [attr.aria-label]="'TASK_VIEW.BREADCRUMB' | translate">
-							@if (task.project?.id) {
-								<a class="task-crumb" [routerLink]="projectLink(task.project.id)">
-									@if (task.project.imageUrl) {
-										<img class="task-crumb-logo" [src]="task.project.imageUrl" alt="" />
-									} @else {
-										<nb-icon icon="folder-outline" aria-hidden="true"></nb-icon>
-									}
-									{{ task.project.name }}
-								</a>
-								<nb-icon class="task-crumb-sep" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
-							}
-							@if (parentLabel; as parent) {
-								<a class="task-crumb" [routerLink]="taskLink(task.parent.id)">
-									<nb-icon icon="corner-left-up-outline" aria-hidden="true"></nb-icon>
-									{{ parent }}
-								</a>
-								<nb-icon class="task-crumb-sep" icon="chevron-right-outline" aria-hidden="true"></nb-icon>
-							}
-							@if (taskKey) {
-								<span class="task-crumb task-crumb--current" aria-current="page">{{ taskKey }}</span>
-							}
-						</nav>
-						<h1 class="task-page-title">{{ task.title }}</h1>
-					</div>
+					<!-- The task's own header, as the drawers show it: project and key, the title, and — when there is no
+					     status menu beside it — the status. -->
+					<ga-task-view-header
+						class="task-page-heading"
+						[task]="task"
+						[status]="canEdit && statuses.length ? null : status"
+						[large]="true"
+					></ga-task-view-header>
 
 					<div class="task-page-actions">
-						<!-- The status, as Jira's status button: a menu for those who may edit, a lozenge for the others. -->
+						<!-- The status, as Jira's status button, for those who may edit; the header shows it to the others. -->
 						@if (canEdit && statuses.length) {
+							<!-- A status the menu does not list still shows its name, as the placeholder. -->
 							<nb-select
 								class="task-status-select"
 								size="small"
 								status="basic"
-								[selected]="task.taskStatusId"
+								[selected]="currentStatusId"
+								[placeholder]="status?.text"
 								[disabled]="savingStatus"
 								[attr.aria-label]="'TASK_VIEW.CHANGE_STATUS' | translate"
 								(selectedChange)="changeStatus($event)"
 							>
 								<nb-select-label>
-									<span class="task-status-dot" [style.background-color]="status?.color" aria-hidden="true"></span>
-									{{ status?.text }}
+									<span class="task-status-dot" [style.background-color]="currentStatus?.color" aria-hidden="true"></span>
+									{{ currentStatus?.name || status?.text }}
 								</nb-select-label>
 								@for (option of statuses; track option.id) {
 									<nb-option [value]="option.id">
@@ -66,19 +50,17 @@
 									</nb-option>
 								}
 							</nb-select>
-						} @else if (status; as status) {
-							<span [class]="'project-status task-status-lozenge tone-' + (status.tone || 'basic')">{{ status.text }}</span>
 						}
 						@if (canEdit) {
-							<button nbButton outline size="small" status="basic" type="button" (click)="edit()">
+							<button nbButton outline size="tiny" status="basic" type="button" (click)="edit()">
 								<nb-icon icon="edit-outline"></nb-icon>
-								{{ 'BUTTONS.EDIT' | translate }}
+								{{ 'TASKS_PAGE.EDIT_TASK' | translate }}
 							</button>
 						}
 						<button
 							nbButton
 							ghost
-							size="small"
+							size="tiny"
 							status="basic"
 							type="button"
 							[nbTooltip]="'BUTTONS.COPY_LINK' | translate"

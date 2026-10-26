@@ -142,6 +142,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	/** The statuses the task can move to; read for those who may edit it. */
 	statuses: ITaskStatus[] = [];
+	/** The status menu's entry for the task's status: by its status row, else by its value or name. */
+	currentStatusId: string | null = null;
 	savingStatus = false;
 
 	readonly canEdit: boolean;
@@ -245,7 +247,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	 */
 	async changeStatus(statusId: string): Promise<void> {
 		const status = this.statuses.find((item) => item.id === statusId);
-		if (!status || !this.task || this.savingStatus || status.id === this.task.taskStatusId) return;
+		if (!status || !this.task || this.savingStatus || status.id === this.currentStatusId) return;
 		this.savingStatus = true;
 		try {
 			await firstValueFrom(
@@ -304,26 +306,13 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	/* ── View helpers ── */
 
+	/** The menu's entry for the task's status, for the button's label and colour. */
+	get currentStatus(): ITaskStatus | null {
+		return this.statuses.find((status) => status.id === this.currentStatusId) || null;
+	}
+
 	taskLink(id: string): string[] {
 		return ['/pages/tasks/view', id];
-	}
-
-	projectLink(id: string): string[] {
-		return ['/pages/organization/projects/view', id];
-	}
-
-	/** The parent task as the breadcrumb names it: "#12 Parent title". */
-	get parentLabel(): string | null {
-		const parent = this.task?.parent as any;
-		if (!parent?.id) return null;
-		return [parent.taskNumber ? this.hashNumberPipe.transform(parent.taskNumber) : '', parent.title]
-			.filter(Boolean)
-			.join(' ');
-	}
-
-	get taskKey(): string {
-		const number = (this.task as any)?.taskNumber;
-		return number ? this.hashNumberPipe.transform(number) : '';
 	}
 
 	/** The total of the hours chart, so an empty fortnight says so instead of drawing flat bars. */
@@ -438,9 +427,23 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			const statuses = await scopedTaskStatusesOf(read, { ...this.scope(), projectId: task.projectId });
 			if (sequence !== this.loadSequence) return;
 			this.statuses = [...statuses].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+			this.currentStatusId = this.currentStatusOf(task);
 		} catch {
 			// The status shows without its menu.
 		}
+	}
+
+	/**
+	 * The task's status among the menu's, as the project board finds a card's column: by its status row, else by
+	 * its status value or name — many tasks carry only the value. None when the menu has no such status.
+	 */
+	private currentStatusOf(task: ITask): string | null {
+		const normalize = (value?: string) => (value || '').trim().toLowerCase().replace(/\s+/g, '-');
+		const byRow = task.taskStatusId && this.statuses.find((status) => status.id === task.taskStatusId);
+		if (byRow) return byRow.id;
+		const keys = new Set([normalize(task.status), normalize(task.taskStatus?.name)].filter(Boolean));
+		const byName = this.statuses.find((status) => keys.has(normalize(status.value)) || keys.has(normalize(status.name)));
+		return byName?.id ?? null;
 	}
 
 	private scope() {
