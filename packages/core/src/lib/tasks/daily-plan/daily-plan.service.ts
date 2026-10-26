@@ -55,6 +55,36 @@ const storedPlanDay = (date: Date | string): string =>
 const storedDayStart = (day: string): Date =>
 	(storesDatesInUtc() ? moment.utc(day, 'YYYY-MM-DD') : moment(day, 'YYYY-MM-DD')).toDate();
 
+/** From UTC-12 to UTC+14, the current day of every time zone is at most one day away from the UTC date. */
+const MAX_DAYS_FROM_UTC_DATE = 1;
+
+/**
+ * The first plan day a bulk task removal changes, as `YYYY-MM-DD`. Plans are stored on the user's own calendar day,
+ * so the caller may send its current day. A value that is not a valid day that is today somewhere is ignored, and
+ * the UTC date stays the cutoff, as for a caller that sends nothing.
+ */
+const removalCutoffDay = (callerToday: unknown): string => {
+	const utcToday = moment.utc().startOf('day');
+	const utcDay = utcToday.format('YYYY-MM-DD');
+
+	if (typeof callerToday !== 'string') {
+		return utcDay;
+	}
+
+	const callerDay = moment.utc(callerToday, 'YYYY-MM-DD', true);
+	const isValidDay = callerDay.isValid();
+	const daysFromUtcToday = callerDay.diff(utcToday, 'days');
+	const distanceInDays = Math.abs(daysFromUtcToday);
+	const isTodaySomewhere = distanceInDays <= MAX_DAYS_FROM_UTC_DATE;
+	const isCallerToday = isValidDay && isTodaySomewhere;
+
+	if (!isCallerToday) {
+		return utcDay;
+	}
+
+	return callerDay.format('YYYY-MM-DD');
+};
+
 @Injectable()
 export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 	constructor(
@@ -788,7 +818,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 			// No list means every plan holding the task. The GraphQL mutation forwards the list as `planIds`.
 			const plansIds =
 				input.plansIds ?? (input as IDailyPlansTasksUpdateInput & { planIds?: ID[] }).planIds ?? [];
-			const currentDate = new Date().toISOString().split('T')[0];
+			const currentDate = removalCutoffDay(input.today);
 
 			// The employee comes from the request body, so the caller must be allowed to act on them.
 			// The message matches the not-found case below, so a probe cannot tell the two apart.
@@ -811,7 +841,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 						tenantId,
 						organizationId,
 						employeeId,
-						date: { $gte: new Date(currentDate) }
+						date: { $gte: storedDayStart(currentDate) }
 					};
 
 					// Without a team, the plans of every team and of none: each stored team is checked below.
