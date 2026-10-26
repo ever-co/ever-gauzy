@@ -131,6 +131,9 @@ env:
   # harness or route generator): the baseline may then gain entries for those routes, and only for
   # links it already excused on other routes (tools/egress-audit/check-baseline-rewalk.mjs). The next
   # change sets it back to 'false'.
+  # One exception stands without a switch: an entry for a link a legal document vendored from the
+  # @ever-co/legal corpus writes, on the legal page that renders it (a re-sync of the corpus can add
+  # one; tools/egress-audit/check-baseline-legal.mjs).
   BASELINE_REWALK: 'false'
 
 jobs:
@@ -187,6 +190,9 @@ jobs:
           node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" ui-routes \
             --framework angular --entry apps/gauzy/src/app/app.routes.ts --out "$AUDIT_DIR/ui-routes.json" --check
 
+      - name: The baseline's one standing exception covers only the links the vendored legal documents write
+        run: node --test tools/egress-audit/check-baseline-legal.test.mjs
+
       - name: The baseline of Ever links only shrinks
         if: ${{ steps.base.outputs.ref != '' }}
         env:
@@ -221,8 +227,24 @@ jobs:
             git show "$BASE:$AUDIT_DIR/ui-baseline.json" > "$RUNNER_TEMP/ui-baseline.base.json"
             node tools/egress-audit/check-baseline-rewalk.mjs --base-file "$RUNNER_TEMP/ui-baseline.base.json"
           else
+            # The standing exception: on growth (exit 1), check-baseline-legal.mjs runs the harness's
+            # check again and goes on only when growth is the one problem it reports (a moved or new
+            # baseline, a changed or foreign base_commit and a schema violation stay failures). It
+            # passes when every entry added is a link a legal document vendored from the @ever-co/legal
+            # corpus writes, on the legal page that renders it: a corpus re-sync, as the DPIA Support
+            # Pack of @ever-co/legal 0.5.0 linking the Data Processing Addendum. The static scan exempts
+            # the same files for the same reason.
+            set +e
             node "$AUDIT_DIR/node_modules/@ever-co/connect-tools/dist/egress-audit/run.mjs" check-baseline-shrink \
               --base "$BASE" --config "$AUDIT_CONFIG" $flag
+            code=$?
+            set -e
+            if [ "$code" -eq 1 ] && [ -z "$flag" ]; then
+              echo "(the entries added are checked next against the links of the vendored legal documents)"
+              node tools/egress-audit/check-baseline-legal.mjs --base "$BASE" --config "$AUDIT_CONFIG"
+            elif [ "$code" -ne 0 ]; then
+              exit "$code"
+            fi
           fi
 
       - name: The mock platform's clock patch applies to the pinned harness, and does what it says

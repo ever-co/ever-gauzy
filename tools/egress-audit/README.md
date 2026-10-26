@@ -54,7 +54,14 @@ This directory holds only Gauzy's inputs:
 - `route-params.json`: values for route parameters (the adapter adds the seeded ids);
 - `ui-baseline.json`: the links to Ever hosts the web app rendered before the modules (the product
   site, legal pages, downloads), recorded with both modules off from `base_commit`. It may only
-  shrink, and an entry excuses that one link on that one route, never a lookup or a request.
+  shrink, and an entry excuses that one link on that one route, never a lookup or a request. Two
+  exceptions let it grow: `BASELINE_REWALK` for the one change that makes the walk open routes it
+  did not open before (`check-baseline-rewalk.mjs`: only the links already excused elsewhere), and,
+  standing, the links a legal document vendored from the `@ever-co/legal` corpus writes, on the
+  legal page that renders it (`check-baseline-legal.mjs`): a re-sync of the corpus can add one, as
+  the DPIA Support Pack of `@ever-co/legal` 0.5.0 did with its links to the Data Processing
+  Addendum, Privacy Policy, sub-processor list and Security page. The static scan exempts the same
+  files (`*.generated.ts` of the legal UI plugin) for the same reason.
 
 `allowed_external_hosts` names the third-party hosts the web app reaches by default whatever the
 modules do, none of them Ever's: Google Fonts (`fonts.googleapis.com`, the fonts' stylesheet), Google
