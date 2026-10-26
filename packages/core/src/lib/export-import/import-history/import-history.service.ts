@@ -3,6 +3,8 @@ import { ID, IPagination } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../../core/crud';
 import { RequestContext } from './../../core/context';
 import { FileStorage } from './../../core/file-storage';
+import { readStorageFileAsBuffer } from './../../core/file-storage/helpers/stored-file-content';
+import { IMPORT_ARCHIVE_LIMITS } from '../import/import-archive-extract';
 import { ImportHistory } from './import-history.entity';
 import { TypeOrmImportHistoryRepository } from './repository/type-orm-import-history.repository';
 import { MikroOrmImportHistoryRepository } from './repository/mikro-orm-import-history.repository';
@@ -60,14 +62,14 @@ export class ImportHistoryService extends TenantAwareCrudService<ImportHistory> 
 			throw new NotFoundException('The requested import archive was not found');
 		}
 
-		// The local provider logs and resolves `undefined` for a missing file; cloud providers throw.
-		let content: Buffer | undefined;
+		// As bytes whatever the provider answers (the S3 family returns the SDK's body stream, which `res.send` cannot
+		// send); a file the provider cannot find or read — or one larger than any import accepts — is not found.
+		let content: Buffer;
 		try {
-			content = await new FileStorage().getProvider().getFile(history.path);
+			content = await readStorageFileAsBuffer(new FileStorage().getProvider(), history.path, {
+				maxBytes: IMPORT_ARCHIVE_LIMITS.maxArchiveBytes
+			});
 		} catch {
-			content = undefined;
-		}
-		if (!content) {
 			throw new NotFoundException('The requested import archive was not found');
 		}
 

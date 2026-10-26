@@ -227,7 +227,9 @@ export class S3Provider extends Provider<S3Provider> {
 	 * Get a file from AWS S3 storage.
 	 *
 	 * @param key - The key of the file to retrieve
-	 * @returns A Promise resolving to a Buffer containing the file data
+	 * @returns A Promise resolving to the AWS SDK v3 body STREAM (`GetObjectCommandOutput.Body`), not a Buffer — read
+	 * it with `readStorageFileAsBuffer` / `fileContentToBuffer` — or `undefined` when the file could not be fetched
+	 * (the error is logged)
 	 */
 	async getFile(key: string): Promise<Buffer | any> {
 		try {
@@ -245,7 +247,10 @@ export class S3Provider extends Provider<S3Provider> {
 			const data: GetObjectCommandOutput = await s3Client.send(command);
 			return data.Body;
 		} catch (error) {
-			this.logger.error(`Error while fetching file with key '${key}'`);
+			// The SDK's error name says why (NoSuchKey, AccessDenied, a network code); callers only see `undefined`.
+			this.logger.error(
+				`Error while fetching file with key '${key}': ${error?.name ?? 'Error'}: ${error?.message ?? error}`
+			);
 		}
 	}
 

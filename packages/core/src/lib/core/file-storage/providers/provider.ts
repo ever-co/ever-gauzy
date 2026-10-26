@@ -1,5 +1,6 @@
 import { StorageEngine } from 'multer';
 import { FileStorageOption, FileStorageProvider, FileSystem, UploadedFile } from '@gauzy/contracts';
+import type { StoredFileContent } from '../helpers/stored-file-content';
 
 export abstract class Provider<T> {
 	public abstract instance: any | undefined;
@@ -27,10 +28,13 @@ export abstract class Provider<T> {
 	abstract handler(options: FileStorageOption): StorageEngine;
 
 	/**
-	 * Get the content of a file as a Buffer.
+	 * Get the content of a file — NOT always a Buffer: the local and Cloudinary providers resolve a Buffer, the S3,
+	 * Wasabi and DigitalOcean providers resolve the AWS SDK v3 body stream, and a file that could not be read resolves
+	 * `undefined`/`null` (most providers log the error and swallow it). Code that needs the bytes reads them with
+	 * `readStorageFileAsBuffer(provider, key)` (or `fileContentToBuffer(content)`), never by casting this to a Buffer.
 	 * @param filePath The path of the file.
 	 */
-	abstract getFile(filePath: string): Promise<Buffer>;
+	abstract getFile(filePath: string): Promise<StoredFileContent>;
 
 	/**
 	 * Upload a file to the storage provider.

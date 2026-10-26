@@ -12,6 +12,8 @@ const providerStub = {
 };
 
 jest.mock('@gauzy/core', () => ({
+	// The real storage read helper (dependency-free), so the specs read what the providers really return.
+	...jest.requireActual('@gauzy/core/src/lib/core/file-storage/helpers/stored-file-content'),
 	FileStorage: class {
 		getProvider() {
 			return providerStub;

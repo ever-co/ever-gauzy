@@ -42,7 +42,7 @@ export class PosthogPlugin implements NestModule, IOnPluginBootstrap, IOnPluginD
 	 */
 	configure(consumer: MiddlewareConsumer) {
 		if (this.shouldEnableTracking()) {
-			consumer.apply(PosthogRequestMiddleware).forRoutes('*').apply(PosthogTraceMiddleware).forRoutes('*');
+			consumer.apply(PosthogRequestMiddleware).forRoutes('{*splat}').apply(PosthogTraceMiddleware).forRoutes('{*splat}');
 		}
 	}
 
