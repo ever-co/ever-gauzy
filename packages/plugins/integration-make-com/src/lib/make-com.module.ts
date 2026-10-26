@@ -60,7 +60,7 @@ export class MakeComModule implements NestModule {
 			},
 			// Make.com API proxy routes
 			{
-				path: '/integration/make-com/api/*',
+				path: '/integration/make-com/api/{*splat}',
 				method: RequestMethod.ALL
 			}
 		);
