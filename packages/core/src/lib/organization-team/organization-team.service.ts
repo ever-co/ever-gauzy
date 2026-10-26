@@ -53,6 +53,19 @@ import { TypeOrmOrganizationTeamRepository } from './repository/type-orm-organiz
 import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 
+/**
+ * Whether a team membership is still in effect. Both flags are nullable, so a row stored without them counts
+ * as active, as `ManagedEmployeeService` reads it.
+ *
+ * @param membership - The membership row.
+ * @returns True when the row is neither deactivated nor archived.
+ */
+function isActiveMembership(membership: Pick<IOrganizationTeamEmployee, 'isActive' | 'isArchived'>): boolean {
+	const isDeactivated = membership.isActive === false;
+	const isArchived = membership.isArchived === true;
+	return !isDeactivated && !isArchived;
+}
+
 @FavoriteService(BaseEntityEnum.OrganizationTeam)
 @Injectable()
 export class OrganizationTeamService extends TenantAwareCrudService<OrganizationTeam> {
@@ -84,6 +97,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const { organizationTeamId, query } = input;
 			const { withLastWorkedTask } = query;
 
+			await this.assertMayReadTeam(organizationTeamId);
+
 			/**
 			 * Find the organization team by ID with optional relations.
 			 */
@@ -105,6 +120,60 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		} catch (error) {
 			throw new BadRequestException(error);
 		}
+	}
+
+	/**
+	 * Lets a caller who may not see every team (neither CHANGE_SELECTED_EMPLOYEE nor ALL_ORG_VIEW) read only a
+	 * team they are an active member of or created, as the team list answers them only their own teams. Anyone
+	 * else gets the answer of an unknown id. The check reads no relation, so the team read that follows still
+	 * loads every member for those it lets through.
+	 *
+	 * @param organizationTeamId - The team read.
+	 * @throws NotFoundException When the caller may not read the team, as for a team that does not exist.
+	 */
+	private async assertMayReadTeam(organizationTeamId: ID): Promise<void> {
+		const userId = RequestContext.currentUserId();
+		if (!userId) {
+			return;
+		}
+
+		const seesEveryTeam = RequestContext.hasAnyPermission([
+			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
+			PermissionsEnum.ALL_ORG_VIEW
+		]);
+		if (seesEveryTeam) {
+			return;
+		}
+
+		const isMember = await this.isActiveMemberOfTeam(organizationTeamId);
+		if (isMember) {
+			return;
+		}
+
+		// Throws the base's own not-found answer unless the caller created the team.
+		await this.findOneByIdString(organizationTeamId, {
+			where: { createdByUserId: userId }
+		});
+	}
+
+	/**
+	 * Whether the caller's employee is an active member of a team.
+	 *
+	 * @param organizationTeamId - The team.
+	 * @returns Whether one of their memberships of the team is active. A caller with no employee is not a member:
+	 * a missing id would be dropped from the query and match any member.
+	 */
+	private async isActiveMemberOfTeam(organizationTeamId: ID): Promise<boolean> {
+		const employeeId = RequestContext.currentEmployeeId();
+		if (!employeeId) {
+			return false;
+		}
+
+		const memberships = await this.organizationTeamEmployeeService.find({
+			where: { organizationTeamId, employeeId }
+		});
+
+		return memberships.some(isActiveMembership);
 	}
 
 	/**
