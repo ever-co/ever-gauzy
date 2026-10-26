@@ -43,10 +43,31 @@ export const confirmBtnExists = async () => {
 	await verifyElementIsVisible(DeleteOrganizationPage.confirmDeleteCss);
 };
 
-// Confirm OK is clicked right after the dialog opens; a fading backdrop can intercept a coordinate
-// click — use dispatchClick so the (click)->delete() handler fires regardless.
+/**
+ * The confirmation is type-to-confirm since #10616: the danger button stays `[disabled]="!isConfirmed"`
+ * until the organization's name (`confirmationPhrase`) is typed back into #org-delete-name exactly.
+ * `fill` fires the `input` event the `[(ngModel)]` listens to; then prove the button unlocked.
+ */
+export const enterConfirmationName = async (name: string) => {
+	const page = getPage();
+	const input = page.locator(DeleteOrganizationPage.confirmNameInputCss).first();
+	await input.waitFor({ state: 'visible', timeout: 24_000 });
+	await input.fill(name);
+	await expect(
+		page.locator(DeleteOrganizationPage.confirmDeleteCss).first(),
+		`typing "${name}" did not unlock the organization delete confirmation`
+	).toBeEnabled({ timeout: 24_000 });
+};
+
+// Confirm is clicked right after the dialog opens; a fading backdrop can intercept a coordinate
+// click — use dispatchClick so the (click)->delete() handler fires regardless. delete() closes the
+// dialog with 'ok' (which is what triggers the API delete), so prove the dialog went away.
 export const confirmBtnClick = async () => {
 	await dispatchClick(DeleteOrganizationPage.confirmDeleteCss);
+	await getPage()
+		.locator(DeleteOrganizationPage.confirmDialogCss)
+		.first()
+		.waitFor({ state: 'detached', timeout: 24_000 });
 };
 
 /**

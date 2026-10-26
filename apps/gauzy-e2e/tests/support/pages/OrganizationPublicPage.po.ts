@@ -1,4 +1,4 @@
-import dayjs from 'dayjs';
+import { expect } from '@playwright/test';
 import {
 	applySmartTableFilter,
 	clearField,
@@ -14,10 +14,15 @@ import {
 	clickButtonByIndex,
 	verifyText,
 	getLastElement,
-	dispatchClickWhenSettled
+	dispatchClickWhenSettled,
+	dispatchClick,
+	waitForSpinnerGone
 } from '../util';
+import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { OrganizationPublicPage } from '../../../src/support/Base/pageobjects/OrganizationPublicPagePageObject';
+// The organization is created through the same Add Organization dialog the add-organization spec drives.
+import * as addOrganizationPage from './AddOrganization.po';
 
 export const organizationDropdownVisible = async () => {
 	await verifyElementIsVisible(OrganizationPublicPage.organizationDropdownCss);
@@ -55,8 +60,39 @@ export const manageBtnExists = async () => {
 	await verifyElementIsVisible(OrganizationPublicPage.manageButtonCss);
 };
 
+// Manage sits in the toolbar's selection strip, which slides in (~0.2s) once the row is selected and is
+// [disabled] until then; a coordinate click during the slide lands elsewhere. Wait until it is enabled,
+// dispatch the click at it (once — it navigates away), and wait for the edit page's Main tab to render.
 export const manageBtnClick = async () => {
-	await clickButton(OrganizationPublicPage.manageButtonCss);
+	const page = getPage();
+	await expect(page.locator(OrganizationPublicPage.manageButtonCss).first()).toBeEnabled({ timeout: 24_000 });
+	await waitForSpinnerGone();
+	await dispatchClick(OrganizationPublicPage.manageButtonCss);
+	await page
+		.locator(OrganizationPublicPage.profileLinkInputCss)
+		.first()
+		.waitFor({ state: 'visible', timeout: 30_000 });
+};
+
+/**
+ * The organization id from the edit page URL (`/pages/organizations/edit/<id>/main`).
+ *
+ * The public page route is `/share/organization/:profileLink/:organizationId` (public-layout.routes.ts,
+ * since 111390d137 "add organization UUID for public page"); the old `/share/organization/:profileLink`
+ * the Cypress spec navigated to now renders NotFound. The edit page's own "Edit public page" button builds
+ * the same URL from `profile_link` + `id` and opens it in a NEW TAB (window.open), so the spec reads the id
+ * here and navigates in the same page instead.
+ */
+export const getEditedOrganizationId = async (): Promise<string> => {
+	const page = getPage();
+	const pattern = /\/pages\/organizations\/edit\/([^/?#]+)/;
+	await expect
+		.poll(() => pattern.test(page.url()), {
+			timeout: 24_000,
+			message: 'Not on an organization edit page (/pages/organizations/edit/<id>)'
+		})
+		.toBe(true);
+	return page.url().match(pattern)[1];
 };
 
 export const profileLinkInputVisible = async () => {
@@ -73,8 +109,20 @@ export const saveButtonVisible = async () => {
 	await verifyElementIsVisible(OrganizationPublicPage.saveButtonCss);
 };
 
+// Main tab Save: `[disabled]="form.invalid"` (profile_link must match ^[a-z0-9-]+$), and a successful save
+// returns to the organizations list (edit-organization-main updateOrganizationSettings) — wait for both so
+// a save that did not take fails here.
 export const clickSaveButton = async () => {
-	await clickButton(OrganizationPublicPage.saveButtonCss);
+	const page = getPage();
+	await waitForSpinnerGone();
+	await expect(page.locator(OrganizationPublicPage.saveButtonCss).first()).toBeEnabled({ timeout: 24_000 });
+	await dispatchClick(OrganizationPublicPage.saveButtonCss);
+	await expect
+		.poll(() => page.url().includes('/pages/organizations/edit/'), {
+			timeout: 24_000,
+			message: 'Saving the organization profile link did not return to the organizations list'
+		})
+		.toBe(false);
 };
 
 export const waitMessageToHide = async () => {
@@ -94,8 +142,13 @@ export const companyNameInputVisible = async () => {
 	await verifyElementIsVisible(OrganizationPublicPage.companyNameInputCss);
 };
 
+// The Cypress original TYPED the copyright sign after the existing company name (`cy.type` appends);
+// Playwright's fill() replaced the whole name with " ©". Append at the end of the current value instead.
 export const enterCompanyNameInputData = async (data: string) => {
-	await enterInput(OrganizationPublicPage.companyNameInputCss, data);
+	const input = getPage().locator(OrganizationPublicPage.companyNameInputCss).first();
+	await input.click({ timeout: 60_000 });
+	await input.press('End');
+	await input.pressSequentially(data);
 };
 
 export const companySizeInputVisible = async () => {
@@ -363,156 +416,53 @@ export const enterTaxId = async (data) => {
 	await enterInput(OrganizationPublicPage.taxFieldCss, data);
 };
 
+// Steps 1-4 of the Add Organization dialog (ga-organizations-step-form) — the SAME dialog the
+// add-organization spec drives, so the same driver is used (AddOrganization.po): DOM-dispatched dropdowns
+// and the footer's primary action. #10608 (ffc762ee8a) moved the step actions out of nb-stepper into
+// nb-card-footer.dialog-footer, so the old `button[type="submit"]` matched nothing and the first
+// "Next" timed out; advanceStepForm presses "Continue" / "Create organization" and proves each took.
 export const clickOnNextButton = async () => {
-	await clickButton(OrganizationPublicPage.nextButtonCss);
+	await addOrganizationPage.advanceStepForm();
 };
 
 export const verifyOrganizationExists = async (text) => {
 	await verifyText(OrganizationPublicPage.verifyOrganizationCss, text);
 };
 
-export const countryDropdownVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.countryDropdownCss);
-};
-
-export const clickCountryDropdown = async () => {
-	await clickButton(OrganizationPublicPage.countryDropdownCss);
-};
-
-export const selectCountryFromDropdown = async (text) => {
-	// ng-select options, not nb-select options — see countryDropdownOptionCss.
-	await clickElementByText(OrganizationPublicPage.countryDropdownOptionCss, text);
-};
-
-export const cityInputVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.cityInputCss);
-};
-
-export const enterCityInputData = async (data) => {
-	await clearField(OrganizationPublicPage.cityInputCss);
-	await enterInput(OrganizationPublicPage.cityInputCss, data);
-};
-
-export const postcodeInputVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.postCodeInputCss);
-};
-
-export const enterPostcodeInputData = async (data) => {
-	await clearField(OrganizationPublicPage.postCodeInputCss);
-	await enterInput(OrganizationPublicPage.postCodeInputCss, data);
-};
-
-export const streetInputVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.streetInputCss);
-};
-
-export const enterStreetInputData = async (data) => {
-	await clearField(OrganizationPublicPage.streetInputCss);
-	await enterInput(OrganizationPublicPage.streetInputCss, data);
-};
-
-export const bonusTypeDropdownVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.bonusTypeDropdownCss);
-};
-
-export const clickBonusTypeDropdown = async () => {
-	await clickButton(OrganizationPublicPage.bonusTypeDropdownCss);
-};
-
-export const selectBonusTypeFromDropdown = async (text) => {
-	await clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
-};
-
-export const bonusPercentageInputVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.bonusPercentageCss);
-};
-
-export const enterBonusPercentageInputData = async (data) => {
-	await clearField(OrganizationPublicPage.bonusPercentageCss);
-	await enterInput(OrganizationPublicPage.bonusPercentageCss, data);
-};
-
-export const expiryPeriodInputVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.expiryPeriodInputCss);
-};
-
-export const enterExpiryPeriodInputData = async (data) => {
-	await clearField(OrganizationPublicPage.expiryPeriodInputCss);
-	await enterInput(OrganizationPublicPage.expiryPeriodInputCss, data);
-};
-
-export const timeZoneDropdownVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.timeZoneDropdownCss);
-};
-
-export const clickTimeZoneDropdown = async () => {
-	await clickButton(OrganizationPublicPage.timeZoneDropdownCss);
-};
-
-export const selectTimeZoneFromDropdown = async (text) => {
-	await clickElementByText(OrganizationPublicPage.timeZoneDropdownOptionCss, text);
-};
-
-export const startOfWeekDropdownVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.startOfWeekDropdownCss);
-};
-
-export const clickStartOfWeekDropdown = async () => {
-	await clickButton(OrganizationPublicPage.startOfWeekDropdownCss);
-};
-
-export const selectStartOfWeekFromDropdown = async (text) => {
-	await clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
-};
-
-export const dateTypeDropdownVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.dateTypeDropdownCss);
-};
-
-export const clickDateTypeDropdown = async () => {
-	await clickButton(OrganizationPublicPage.dateTypeDropdownCss);
-};
-
-export const selectDateTypeFromDropdown = async (text) => {
-	await clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
-};
-
-export const regionDropdownVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.regionCodeDropdownCss);
-};
-
-export const clickRegionDropdown = async () => {
-	await clickButton(OrganizationPublicPage.regionCodeDropdownCss);
-};
-
-export const selectRegionFromDropdown = async (text) => {
-	await clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
-};
-
-export const numberFormatDropdownVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.numberFormatDropdownCss);
-};
-
-export const clickNumberFormatDropdown = async () => {
-	await clickButton(OrganizationPublicPage.numberFormatDropdownCss);
-};
-
-export const selectNumberFormatFromDropdown = async (text) => {
-	await clickElementByText(OrganizationPublicPage.dropdownOptionCss, text);
-};
-
-export const dateFormatDropdownVisible = async () => {
-	await verifyElementIsVisible(OrganizationPublicPage.dateFormatDropdownCss);
-};
-
-export const clickDateFormatDropdown = async () => {
-	await clickButton(OrganizationPublicPage.dateFormatDropdownCss);
-};
-
-export const selectDateFormatFromDropdown = async () => {
-	const today = dayjs().format('MM/DD/YYYY');
-	await clickElementByText(OrganizationPublicPage.dropdownOptionCss, today);
-};
+export const countryDropdownVisible = addOrganizationPage.countryDropdownVisible;
+export const clickCountryDropdown = addOrganizationPage.clickCountryDropdown;
+export const selectCountryFromDropdown = addOrganizationPage.selectCountryFromDropdown;
+export const cityInputVisible = addOrganizationPage.cityInputVisible;
+export const enterCityInputData = addOrganizationPage.enterCityInputData;
+export const postcodeInputVisible = addOrganizationPage.postcodeInputVisible;
+export const enterPostcodeInputData = addOrganizationPage.enterPostcodeInputData;
+export const streetInputVisible = addOrganizationPage.streetInputVisible;
+export const enterStreetInputData = addOrganizationPage.enterStreetInputData;
+export const bonusTypeDropdownVisible = addOrganizationPage.bonusTypeDropdownVisible;
+export const clickBonusTypeDropdown = addOrganizationPage.clickBonusTypeDropdown;
+export const selectBonusTypeFromDropdown = addOrganizationPage.selectBonusTypeFromDropdown;
+export const bonusPercentageInputVisible = addOrganizationPage.bonusPercentageInputVisible;
+export const enterBonusPercentageInputData = addOrganizationPage.enterBonusPercentageInputData;
+export const expiryPeriodInputVisible = addOrganizationPage.expiryPeriodInputVisible;
+export const enterExpiryPeriodInputData = addOrganizationPage.enterExpiryPeriodInputData;
+export const timeZoneDropdownVisible = addOrganizationPage.timeZoneDropdownVisible;
+export const clickTimeZoneDropdown = addOrganizationPage.clickTimeZoneDropdown;
+export const selectTimeZoneFromDropdown = addOrganizationPage.selectTimeZoneFromDropdown;
+export const startOfWeekDropdownVisible = addOrganizationPage.startOfWeekDropdownVisible;
+export const clickStartOfWeekDropdown = addOrganizationPage.clickStartOfWeekDropdown;
+export const selectStartOfWeekFromDropdown = addOrganizationPage.selectStartOfWeekFromDropdown;
+export const dateTypeDropdownVisible = addOrganizationPage.dateTypeDropdownVisible;
+export const clickDateTypeDropdown = addOrganizationPage.clickDateTypeDropdown;
+export const selectDateTypeFromDropdown = addOrganizationPage.selectDateTypeFromDropdown;
+export const regionDropdownVisible = addOrganizationPage.regionDropdownVisible;
+export const clickRegionDropdown = addOrganizationPage.clickRegionDropdown;
+export const selectRegionFromDropdown = addOrganizationPage.selectRegionFromDropdown;
+export const numberFormatDropdownVisible = addOrganizationPage.numberFormatDropdownVisible;
+export const clickNumberFormatDropdown = addOrganizationPage.clickNumberFormatDropdown;
+export const selectNumberFormatFromDropdown = addOrganizationPage.selectNumberFormatFromDropdown;
+export const dateFormatDropdownVisible = addOrganizationPage.dateFormatDropdownVisible;
+export const clickDateFormatDropdown = addOrganizationPage.clickDateFormatDropdown;
+export const selectDateFormatFromDropdown = addOrganizationPage.selectDateFormatFromDropdown;
 
 export const selectTableRow = async () => {
 	await getLastElement(OrganizationPublicPage.tableRowCss);

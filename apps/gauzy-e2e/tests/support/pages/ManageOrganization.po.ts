@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { expect } from '@playwright/test';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -7,7 +8,8 @@ import {
 	clearField,
 	clickButtonByIndex,
 	dispatchClick,
-	waitForSpinnerGone
+	waitForSpinnerGone,
+	scopeGridTo
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
@@ -133,8 +135,11 @@ export const clickTabButton = async (index: number) => {
 	await getPage().waitForTimeout(800);
 };
 
-export const verifyOrganizationExists = async (text: string) =>
-	verifyText(ManageOrganizationPage.verifyOrganizationCss, text);
+export const verifyOrganizationExists = async (text: string) => {
+	// Narrow the 10-row grid to the name first (best-effort: no filter row leaves the check as it was).
+	await scopeGridTo(ManageOrganizationPage.nameFilterInputCss, text);
+	await verifyText(ManageOrganizationPage.verifyOrganizationCss, text);
+};
 
 export const waitMessageToHide = async () => waitElementToHide(ManageOrganizationPage.toastrMessageCss);
 
@@ -236,30 +241,47 @@ export const selectDateFormatFromDropdown = async () => {
 export const saveButtonVisible = async () => verifyElementIsVisible(ManageOrganizationPage.saveButtonCss);
 
 // Save the Main tab. dispatchClick so a fading dropdown-panel/overlay can't intercept the click.
+// The button is `[disabled]="form.invalid"`, and a dispatched click on a disabled button is a silent
+// no-op — so wait for it to be enabled first. A successful save (edit-organization-main
+// updateOrganizationSettings) returns to the organizations list: wait for that, so a save that did not
+// take fails HERE instead of being papered over by the later "organization exists" check (the
+// organization exists whether or not this save happened).
 export const clickSaveButton = async () => {
+	const page = getPage();
 	await waitForSpinnerGone();
+	await expect(page.locator(ManageOrganizationPage.saveButtonCss).first()).toBeEnabled({ timeout: 24_000 });
 	await dispatchClick(ManageOrganizationPage.saveButtonCss);
+	await expect
+		.poll(() => page.url().includes('/pages/organizations/edit/'), {
+			timeout: 24_000,
+			message: 'Saving the organization Main tab did not return to the organizations list'
+		})
+		.toBe(false);
 };
 
-// Select the (last) grid row to enable the toolbar Manage button. The row click TOGGLES selection,
-// so settle first, click once, then poll the real `disabled` attribute of the Manage button and
-// only re-click if selection was lost — never rapid re-click.
-export const selectTableRow = async () => {
+// Select a grid row to enable the toolbar Manage button. With `name` (the organization this spec just
+// created) the grid is narrowed to it first and THAT row is selected; without it the last row is used as
+// before. The row click TOGGLES selection, so settle first, click once, then poll the real `disabled`
+// attribute of the Manage button and only re-click if selection was lost — never rapid re-click.
+export const selectTableRow = async (name?: string) => {
 	const page = getPage();
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
 	await page.waitForTimeout(1500);
-	const row = page.locator(ManageOrganizationPage.tableRowCss).last();
+	if (name) {
+		await scopeGridTo(ManageOrganizationPage.nameFilterInputCss, name);
+	}
+	const rows = page.locator(ManageOrganizationPage.tableRowCss);
+	const row = name ? rows.filter({ hasText: name }).first() : rows.last();
+	await row.waitFor({ state: 'visible', timeout: 24_000 });
 	const manageBtn = page.locator(ManageOrganizationPage.manageButtonCss).first();
 	for (let attempt = 0; attempt < 4; attempt++) {
 		await row.click({ force: true }).catch(() => {});
-		try {
-			await manageBtn.waitFor({ state: 'visible', timeout: 3000 });
-			const disabled = await manageBtn.getAttribute('disabled');
-			if (disabled === null) return; // enabled => row is selected
-		} catch {
-			/* button not rendered yet — retry */
+		// The Manage button is always attached (the toolbar's selection strip only collapses while
+		// disabled), so poll its real `disabled` attribute for a while before concluding the click was lost.
+		for (let poll = 0; poll < 8; poll++) {
+			if ((await manageBtn.getAttribute('disabled').catch(() => 'disabled')) === null) return; // enabled => selected
+			await page.waitForTimeout(350);
 		}
-		await page.waitForTimeout(1000);
 	}
 };
