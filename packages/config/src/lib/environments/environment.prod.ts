@@ -255,7 +255,9 @@ export const environment: IEnvironment = {
 		tenantProjectsEnabled: !['false', '0', 'no', 'off'].includes(
 			(process.env.GAUZY_ACTIVEPIECES_TENANT_PROJECTS ?? '').trim().toLowerCase()
 		),
-		projectExternalIdPrefix: process.env.GAUZY_ACTIVEPIECES_PROJECT_EXTERNAL_ID_PREFIX
+		projectExternalIdPrefix: process.env.GAUZY_ACTIVEPIECES_PROJECT_EXTERNAL_ID_PREFIX,
+		// `v2` (blank) or `legacy`; read, and an unknown value refused, by the Activepieces plugin where MCP is called
+		mcpApi: process.env.GAUZY_ACTIVEPIECES_MCP_API
 	},
 
 	sim: {
@@ -302,7 +304,7 @@ export const environment: IEnvironment = {
 		maxAuthCodes: Number.parseInt(process.env.GAUZY_ZAPIER_MAX_AUTH_CODES) || 1000,
 		instanceCount: process.env.GAUZY_ZAPIER_INSTANCE_COUNT === 'true',
 		redirectUri:
-			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/zapier/callback`,
+			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integration/zapier/oauth/callback`,
 		postInstallUrl:
 			process.env.GAUZY_ZAPIER_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/zapier`
 	},

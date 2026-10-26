@@ -71,7 +71,9 @@ const STORED_SHARING_SELECT = {
 	equipmentId: true,
 	equipmentSharingPolicyId: true,
 	// The version an upsert of the stored row is a compare-and-set on (`EquipmentSharingService.storeCreate`).
-	version: true
+	version: true,
+	// A retired row is upserted as before, not as a membership edit under the approval's lock (`storeCreate`).
+	deletedAt: true
 };
 
 /** The service over a store double: the sharing repository answers by id and tenant, as a database would. */

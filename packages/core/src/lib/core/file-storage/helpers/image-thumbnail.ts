@@ -7,24 +7,6 @@ import * as sharpModule from 'sharp';
 const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
 	sharpModule) as unknown as typeof sharpModule.default;
 
-/**
- * The most bytes {@link fileContentToBuffer} buffers from a provider: an upload bigger than this (the upload
- * endpoints set no multer size limit) is refused rather than held in memory chunk by chunk.
- */
-export const MAX_BUFFERED_FILE_BYTES = 64 * 1024 * 1024;
-
-/**
- * Thrown by {@link fileContentToBuffer} when the stored file is larger than it may buffer. The upload endpoints set no
- * multer size limit, so the file is already stored when this is thrown: the caller deletes it (it would otherwise
- * stay served from `/public/` with no record to delete it through) and answers 413.
- */
-export class FileContentTooLargeError extends Error {
-	constructor(readonly maxBytes: number) {
-		super(`The file is larger than the ${maxBytes} bytes that can be processed`);
-		this.name = 'FileContentTooLargeError';
-	}
-}
-
 /** The formats the image upload endpoints accept that libvips decodes (BMP, also accepted, goes to Jimp). */
 const SHARP_THUMBNAIL_FORMATS: ReadonlySet<string> = new Set(['jpeg', 'png', 'webp', 'gif']);
 
@@ -42,50 +24,6 @@ export interface ImageThumbnail {
 	format: string;
 	/** The file extension for that format (`jpg` for `jpeg`), so the file name says what the bytes are. */
 	extension: string;
-}
-
-/**
- * The stored file's bytes as a Buffer. The local provider returns a Buffer; the S3, Wasabi and DigitalOcean
- * providers return the SDK's stream (`GetObjectCommandOutput.Body`). `undefined` when the provider returned nothing.
- *
- * @param content What the file storage provider's `getFile` returned.
- * @param maxBytes The most bytes accepted; beyond it the content is refused (a stream is left unread).
- * @returns The bytes, or `undefined`.
- * @throws When the content exceeds `maxBytes`.
- */
-export async function fileContentToBuffer(
-	content: unknown,
-	maxBytes: number = MAX_BUFFERED_FILE_BYTES
-): Promise<Buffer | undefined> {
-	const bounded = (buffer: Buffer): Buffer => {
-		if (buffer.length > maxBytes) {
-			throw new FileContentTooLargeError(maxBytes);
-		}
-		return buffer;
-	};
-	if (content === null || content === undefined) return undefined;
-	if (Buffer.isBuffer(content)) return bounded(content);
-	if (content instanceof Uint8Array) return bounded(Buffer.from(content));
-	if (typeof content === 'string') return bounded(Buffer.from(content));
-	// An S3-family SDK body is a Readable AND has transformToByteArray(): read it chunk by chunk first, so the
-	// bound stops the read rather than being checked once the whole object is in memory.
-	if (typeof (content as AsyncIterable<unknown>)[Symbol.asyncIterator] === 'function') {
-		const chunks: Buffer[] = [];
-		let length = 0;
-		for await (const chunk of content as AsyncIterable<Buffer | Uint8Array | string>) {
-			const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array);
-			length += buffer.length;
-			if (length > maxBytes) {
-				// Stop reading: nothing more is held, and the stream is left to its owner.
-				throw new FileContentTooLargeError(maxBytes);
-			}
-			chunks.push(buffer);
-		}
-		return Buffer.concat(chunks, length);
-	}
-	const body = content as { transformToByteArray?: () => Promise<Uint8Array> };
-	if (typeof body.transformToByteArray === 'function') return bounded(Buffer.from(await body.transformToByteArray()));
-	return undefined;
 }
 
 /**

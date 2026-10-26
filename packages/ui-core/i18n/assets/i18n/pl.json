@@ -1823,6 +1823,10 @@
 			"WORKDAY": "Dzień pracy",
 			"SCROLL_TEAMS_BACK": "Pokaż poprzednie zespoły",
 			"SCROLL_TEAMS_FORWARD": "Pokaż więcej zespołów",
+			"PERSON_TASKS": "Zadania",
+			"WORKING_ON": "Pracuje nad",
+			"LAST_TASK": "Ostatnie zadanie",
+			"PERSON_WORKDAY": "{{ percent }} dnia pracy ({{ hours }})",
 			"COLUMNS": {
 				"TEAM": "Zespół",
 				"WORKED": "Pracowali",
@@ -5572,6 +5576,7 @@
 			"SEED_CREDENTIALS_MESSAGE": "Zapisz teraz te hasła. Są wyświetlane tylko raz.",
 			"SEED_CREDENTIALS_DETAIL": "Ta instalacja utworzyła swoje konta z losowymi hasłami zamiast opublikowanych wartości domyślnych.\n\n{{ accounts }}\n\nHasło możesz później zmienić na swojej stronie profilu w Gauzy.",
 			"SEED_CREDENTIALS_COPIED": "Skopiowano do schowka.",
+			"SEED_CREDENTIALS_COPY_FAILED": "Nie udało się skopiować do schowka. Kliknij Kopiuj, aby spróbować ponownie, lub zapisz hasła przed potwierdzeniem.",
 			"SEED_CREDENTIALS_SAVED": "Zapisałem je",
 			"SEED_ROLE_SUPER_ADMIN": "Superadministrator",
 			"SEED_ROLE_ADMIN": "Administrator",

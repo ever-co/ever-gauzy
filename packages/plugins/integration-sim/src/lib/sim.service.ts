@@ -13,6 +13,7 @@ import { IntegrationService, IntegrationTenantService, RequestContext } from '@g
 import { SimClientFactory } from './sim-client.factory';
 import { SimRepositoryService } from './sim-repository.service';
 import { SimWorkflowExecution } from './sim-workflow-execution.entity';
+import { isSimRunNotFound, mapSimExecutionResult } from './sim-execution-result';
 import { SIM_DEFAULT_BASE_URL } from './sim.config';
 import { IConfigureSimInput, IExecuteWorkflowInput, ISimIntegrationSettings, SimSettingName } from './interfaces';
 import { SimEventType, SIM_SUPPORTED_EVENTS, SIM_EVENT_DESCRIPTIONS } from './dto/event-mapping.dto';
@@ -271,7 +272,7 @@ export class SimService {
 			}
 
 			this.logger.debug(
-				`Executing workflow: POST ${SIM_DEFAULT_BASE_URL}/api/workflows/${input.workflowId}/execute | ` +
+				`Executing workflow: POST ${SIM_DEFAULT_BASE_URL}/api/v2/workflows/${input.workflowId}/execute | ` +
 					`async: ${input.runAsync || false}`
 			);
 
@@ -336,7 +337,41 @@ export class SimService {
 		}
 
 		const client = await this.simClientFactory.getClient(integrationTenant.id);
+
+		// simstudio-ts-sdk 0.2 runs async executions on the v2 API, whose status is read per workflow
+		// (`/api/v2/workflows/:workflowId/runs/:runId`); `getJobStatus` reads the legacy `/api/jobs/:id`.
+		// The run id is logged as the execution's `executionId`, together with its workflow, so a run
+		// started here is looked up on v2; an id this tenant never logged, or one the v2 API reports as
+		// not found (a job queued through the legacy API before the upgrade), goes to the legacy endpoint.
+		// Any other v2 failure (timeout, network, 5xx, auth, rate limit) is the answer: a v2 run does not
+		// exist on the legacy API, so asking it would only replace the real error with "job not found".
+		const workflowId = await this.findWorkflowIdOfRun(taskId);
+		if (workflowId) {
+			try {
+				return await client.getWorkflowRun(workflowId, taskId, { includeOutput: true });
+			} catch (error: any) {
+				if (!isSimRunNotFound(error)) {
+					throw error;
+				}
+				this.logger.debug(`SIM v2 API does not know run ${taskId}, trying the legacy job status: ${error?.message}`);
+			}
+		}
 		return client.getJobStatus(taskId);
+	}
+
+	/**
+	 * The workflow of the execution this tenant logged with `executionId` = `runId`, if any.
+	 */
+	private async findWorkflowIdOfRun(runId: string): Promise<string | null> {
+		try {
+			const execution = await this.simRepositoryService.findOneByOptions({ where: { executionId: runId } });
+			return execution?.workflowId ?? null;
+		} catch (error) {
+			if (!(error instanceof NotFoundException)) {
+				throw error;
+			}
+			return null;
+		}
 	}
 
 	/**
@@ -693,33 +728,10 @@ export class SimService {
 
 	/**
 	 * Map a SIM API execution result onto a SimWorkflowExecution entity.
-	 * Handles both sync and async response shapes.
+	 * Handles both sync and async response shapes, of both SDK generations ({@link mapSimExecutionResult}).
 	 */
 	private mapExecutionResult(execution: SimWorkflowExecution, result: WorkflowExecutionResult | AsyncExecutionResult): void {
-		const syncResult = result as WorkflowExecutionResult;
-		const asyncResult = result as AsyncExecutionResult;
-		const resultAny = result as Record<string, any>;
-		const taskId = asyncResult.taskId;
-
-		if (taskId) {
-			execution.status = 'queued';
-		} else if (syncResult.success === true) {
-			execution.status = 'completed';
-		} else if (syncResult.success === false) {
-			execution.status = 'failed';
-		} else {
-			execution.status = 'completed';
-		}
-
-		execution.output = syncResult.output ?? result;
-
-		// Extract executionId — check metadata (SDK type), root level (API may return it there), or async taskId
-		execution.executionId = syncResult.metadata?.executionId ?? resultAny['executionId'] ?? taskId;
-
-		// Extract duration — check metadata (SDK type), totalDuration, or root level
-		execution.duration = syncResult.metadata?.duration ?? syncResult.totalDuration ?? resultAny['duration'];
-
-		execution.error = syncResult.error ? { message: syncResult.error } : undefined;
+		mapSimExecutionResult(execution, result);
 	}
 
 	/**

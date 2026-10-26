@@ -1824,6 +1824,10 @@
 			"WORKDAY": "Giornata lavorativa",
 			"SCROLL_TEAMS_BACK": "Mostra i team precedenti",
 			"SCROLL_TEAMS_FORWARD": "Mostra altri team",
+			"PERSON_TASKS": "Attività",
+			"WORKING_ON": "Sta lavorando su",
+			"LAST_TASK": "Ultima attività",
+			"PERSON_WORKDAY": "{{ percent }} di una giornata di {{ hours }}",
 			"COLUMNS": {
 				"TEAM": "Team",
 				"WORKED": "Hanno lavorato",
@@ -5573,6 +5577,7 @@
 			"SEED_CREDENTIALS_MESSAGE": "Salva subito queste password. Vengono mostrate una sola volta.",
 			"SEED_CREDENTIALS_DETAIL": "Questa installazione ha creato i suoi account con password casuali invece dei valori predefiniti pubblicati.\n\n{{ accounts }}\n\nPuoi cambiare una password in seguito dalla tua pagina del profilo in Gauzy.",
 			"SEED_CREDENTIALS_COPIED": "Copiato negli appunti.",
+			"SEED_CREDENTIALS_COPY_FAILED": "Impossibile copiare negli appunti. Premi Copia per riprovare oppure annota le password prima di confermare.",
 			"SEED_CREDENTIALS_SAVED": "Le ho salvate",
 			"SEED_ROLE_SUPER_ADMIN": "Super amministratore",
 			"SEED_ROLE_ADMIN": "Amministratore",

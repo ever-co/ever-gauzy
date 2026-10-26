@@ -1,22 +1,85 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Between, In, SelectQueryBuilder, Brackets, WhereExpressionBuilder } from 'typeorm';
 import * as moment from 'moment';
-import { IGetTimesheetInput, PermissionsEnum, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
+import { ID, IGetTimesheetInput, PermissionsEnum, ITimesheet, TimesheetStatus } from '@gauzy/contracts';
 import { RequestContext } from './../../core/context';
 import { TenantAwareCrudService } from './../../core/crud';
 import { getDateRangeFormat, MultiORMEnum, parseFindOptionsRelations } from './../../core/utils';
+import { ManagedEmployeeService } from './../../employee/managed-employee.service';
 import { Timesheet } from './timesheet.entity';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { TypeOrmTimesheetRepository } from './repository/type-orm-timesheet.repository';
 import { MikroOrmTimesheetRepository } from './repository/mikro-orm-timesheet.repository';
 
+const NOT_A_MANAGED_EMPLOYEE_TIMESHEET = 'You can only change the status of timesheets of employees you manage';
+
 @Injectable()
 export class TimeSheetService extends TenantAwareCrudService<Timesheet> {
 	constructor(
 		typeOrmTimesheetRepository: TypeOrmTimesheetRepository,
-		mikroOrmTimesheetRepository: MikroOrmTimesheetRepository
+		mikroOrmTimesheetRepository: MikroOrmTimesheetRepository,
+		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {
 		super(typeOrmTimesheetRepository, mikroOrmTimesheetRepository);
+	}
+
+	/**
+	 * Runs a status change on timesheets of employees the caller manages in a team.
+	 *
+	 * A caller without CAN_APPROVE_TIMESHEET may move a timesheet only when it belongs to a member of a
+	 * team they manage, and never their own. Every timesheet named has to pass, or nothing is written.
+	 * The callback then runs without the caller's employee filter, which would keep the update and the
+	 * read back on the caller's own rows.
+	 *
+	 * @param ids - The timesheets the change names.
+	 * @param organizationId - The organization the change is made in.
+	 * @param callback - The change to run once the check passes.
+	 * @returns The callback's result.
+	 * @throws ForbiddenException When a timesheet is the caller's own or belongs to an employee they do not manage.
+	 */
+	public async forManagedEmployeeTimesheets<R>(
+		ids: ID[],
+		organizationId: ID,
+		callback: () => Promise<R>
+	): Promise<R> {
+		await this.assertManagesTimesheetEmployees(ids, organizationId);
+
+		return await this.withoutEmployeeFilter(callback);
+	}
+
+	/**
+	 * Refuses a status change unless every timesheet it names belongs to another employee the caller
+	 * manages in a team.
+	 *
+	 * `canManageEmployees` also accepts the caller's own employee when they belong to a team they manage,
+	 * so the caller's own timesheets are refused first. A timesheet not found in the organization counts
+	 * as one the caller does not manage.
+	 *
+	 * @param ids - The timesheets the change names.
+	 * @param organizationId - The organization the change is made in.
+	 */
+	private async assertManagesTimesheetEmployees(ids: ID[], organizationId: ID): Promise<void> {
+		const uniqueIds = [...new Set(ids)];
+		const where = { id: In(uniqueIds), organizationId };
+		const timesheets = await this.withoutEmployeeFilter(() => this.find({ where }));
+
+		const everyTimesheetFound = timesheets.length === uniqueIds.length;
+		if (!everyTimesheetFound) {
+			throw new ForbiddenException(NOT_A_MANAGED_EMPLOYEE_TIMESHEET);
+		}
+
+		const ownEmployeeId = RequestContext.currentUser()?.employeeId;
+		const includesOwnTimesheet = timesheets.some((timesheet) => timesheet.employeeId === ownEmployeeId);
+		if (includesOwnTimesheet) {
+			throw new ForbiddenException('You cannot change the status of your own timesheet');
+		}
+
+		const timesheetEmployeeIds = timesheets.map((timesheet) => timesheet.employeeId);
+		const employeeIds = [...new Set(timesheetEmployeeIds)];
+		const managesEveryEmployee = await this._managedEmployeeService.canManageEmployees(employeeIds);
+		if (!managesEveryEmployee) {
+			throw new ForbiddenException(NOT_A_MANAGED_EMPLOYEE_TIMESHEET);
+		}
 	}
 
 	/**

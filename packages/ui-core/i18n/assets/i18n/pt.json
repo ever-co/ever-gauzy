@@ -1824,6 +1824,10 @@
 			"WORKDAY": "Jornada",
 			"SCROLL_TEAMS_BACK": "Mostrar equipes anteriores",
 			"SCROLL_TEAMS_FORWARD": "Mostrar mais equipes",
+			"PERSON_TASKS": "Tarefas",
+			"WORKING_ON": "Trabalhando em",
+			"LAST_TASK": "Última tarefa",
+			"PERSON_WORKDAY": "{{ percent }} de uma jornada de {{ hours }}",
 			"COLUMNS": {
 				"TEAM": "Equipe",
 				"WORKED": "Trabalharam",
@@ -5573,6 +5577,7 @@
 			"SEED_CREDENTIALS_MESSAGE": "Salve estas senhas agora. Elas são exibidas apenas uma vez.",
 			"SEED_CREDENTIALS_DETAIL": "Esta instalação criou suas contas com senhas aleatórias em vez dos valores padrão publicados.\n\n{{ accounts }}\n\nVocê pode alterar uma senha depois na sua página de perfil no Gauzy.",
 			"SEED_CREDENTIALS_COPIED": "Copiado para a área de transferência.",
+			"SEED_CREDENTIALS_COPY_FAILED": "Não foi possível copiar para a área de transferência. Clique em Copiar para tentar novamente ou anote as senhas antes de confirmar.",
 			"SEED_CREDENTIALS_SAVED": "Já as salvei",
 			"SEED_ROLE_SUPER_ADMIN": "Superadministrador",
 			"SEED_ROLE_ADMIN": "Administrador",

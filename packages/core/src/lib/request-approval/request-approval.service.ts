@@ -108,13 +108,14 @@ export interface IRequestApprovalAnswerTransaction {
 		answeredByUserId?: ID | null
 	): Promise<void>;
 	/**
-	 * Who the document a request is about was filed by (its `createdByUserId`) and is for (its employees), inside the
-	 * tenant (withdrawn rows left out): none of them answers the request as an approver. Empty when the document is
-	 * not there.
+	 * Who the document a request is about was filed by (its `createdByUserId`) and is for (its employees, and — for an
+	 * equipment sharing — the active members of the teams it is for), inside the tenant (withdrawn rows left out): none
+	 * of them answers the request as an approver. Empty when the document is not there.
 	 *
-	 * Read after the request's row lock: the in-place edit of an equipment sharing, which can change the employees it
-	 * is for, takes that same lock before it writes (`EquipmentSharingService.updateInPlace`), so the edit and the
-	 * answer run one after the other and the answer reads the memberships as they stand when it decides.
+	 * Read after the request's row lock: the in-place edit of an equipment sharing and the `POST /equipment-sharing`
+	 * upsert of a stored one, which can change the employees and the teams it is for, take that same lock before they
+	 * write (`EquipmentSharingService.updateInPlace` / `storeCreate`), so the edit and the answer run one after the
+	 * other and the answer reads the memberships as they stand when it decides.
 	 *
 	 * Required, so a transaction cannot leave the check out by omission: it would answer as if the document named
 	 * nobody, and re-open self-approval through a team slot.
@@ -181,31 +182,109 @@ export interface IRequestApprovalSettlement {
 }
 
 /**
+ * The ids of the rows of a to-many relation, as either ORM loads it: an array under TypeORM, a collection under
+ * MikroORM, read only once it is loaded (one that was not loaded names nobody rather than throwing).
+ *
+ * @param relation The relation's value on the row.
+ */
+function loadedRelationIds(relation: unknown): ID[] {
+	const collection = relation as { getItems?: () => unknown[]; isInitialized?: () => boolean } | null | undefined;
+	const rows: any[] = Array.isArray(relation)
+		? relation
+		: typeof collection?.getItems === 'function' &&
+		  (typeof collection.isInitialized !== 'function' || collection.isInitialized())
+		? collection.getItems()
+		: [];
+	return rows.map((row) => row?.id).filter((id): id is ID => !!id);
+}
+
+/**
  * Who a time-off request or an equipment sharing was filed by and is for, as either ORM reads it: its
  * `createdByUserId` (under MikroORM the mirror is `persist: false` and may be left unhydrated, so the key of the
  * `createdByUser` relation is read too) and the ids of its employees (an array under TypeORM, a collection under
- * MikroORM, read only once it is loaded).
+ * MikroORM, read only once it is loaded) — together with the active members of the teams it is for, which the caller
+ * reads ({@link teamIdsOfDocument}, then {@link typeOrmActiveTeamMemberIds} / {@link mikroOrmActiveTeamMemberIds}).
  *
  * @param row The document, or null when it is not there.
+ * @param teamMemberIds The employees who are active members of the teams the document is for (an equipment sharing's
+ * `teams`): the sharing is for them as much as for the employees it names.
  */
-export function requestersOfDocument(row: unknown): IRequestApprovalRequestedFor {
+export function requestersOfDocument(
+	row: unknown,
+	teamMemberIds: ReadonlyArray<ID | null | undefined> = []
+): IRequestApprovalRequestedFor {
 	if (!row || typeof row !== 'object') {
 		return { userIds: [], employeeIds: [] };
 	}
 	const document = row as Record<string, any>;
-	const employees = document.employees;
-	const members: any[] = Array.isArray(employees)
-		? employees
-		: typeof employees?.getItems === 'function' &&
-		  (typeof employees.isInitialized !== 'function' || employees.isInitialized())
-		? employees.getItems()
-		: [];
 	const filer: ID | null = document.createdByUserId ?? document.createdByUser?.id ?? null;
+	const employeeIds = [...loadedRelationIds(document.employees), ...teamMemberIds.filter((id): id is ID => !!id)];
 
 	return {
 		userIds: filer ? [filer] : [],
-		employeeIds: members.map((employee) => employee?.id).filter((id): id is ID => !!id)
+		employeeIds: employeeIds.filter((id, index) => employeeIds.indexOf(id) === index)
 	};
+}
+
+/**
+ * The teams a document is for: an equipment sharing's `teams`, as either ORM loads them (a time-off request has
+ * none). Their active members are among the people the document is for (see {@link requestersOfDocument}).
+ *
+ * @param row The document, or null when it is not there.
+ */
+export function teamIdsOfDocument(row: unknown): ID[] {
+	return row && typeof row === 'object' ? loadedRelationIds((row as Record<string, unknown>)['teams']) : [];
+}
+
+/**
+ * The employees who are active members of the teams named, inside the tenant, read on a TypeORM transaction's
+ * manager: the same membership an approver team is answered through (`readApproverTeams`). No team, no read.
+ *
+ * Team membership is not part of the document and is not locked: it is read as committed when the requester check
+ * runs, after the request approval's row lock.
+ *
+ * @param manager The transaction's manager.
+ * @param teamIds The teams the document is for.
+ * @param tenantId The caller's tenant.
+ */
+export async function typeOrmActiveTeamMemberIds(
+	manager: EntityManager,
+	teamIds: ReadonlyArray<ID>,
+	tenantId: ID
+): Promise<ID[]> {
+	if (!teamIds.length || !tenantId) {
+		return [];
+	}
+	const memberships = await manager.find(OrganizationTeamEmployee, {
+		where: { organizationTeamId: In([...teamIds]), tenantId, isActive: true }
+	});
+	return memberships.map((membership) => membership.employeeId).filter((id): id is ID => !!id);
+}
+
+/**
+ * The MikroORM form of {@link typeOrmActiveTeamMemberIds}: on the transaction's fork, from the table rather than the
+ * identity map the fork inherited.
+ *
+ * @param em The transaction's entity manager.
+ * @param teamIds The teams the document is for.
+ * @param tenantId The caller's tenant.
+ */
+export async function mikroOrmActiveTeamMemberIds(
+	em: MikroOrmEntityManager,
+	teamIds: ReadonlyArray<ID>,
+	tenantId: ID
+): Promise<ID[]> {
+	if (!teamIds.length || !tenantId) {
+		return [];
+	}
+	const memberships = (await em.find(
+		OrganizationTeamEmployee,
+		{ organizationTeamId: { $in: [...teamIds] }, tenantId, isActive: true } as any,
+		{ disableIdentityMap: true } as any
+	)) as any[];
+	return memberships
+		.map((membership) => membership.employee?.id ?? membership.employeeId)
+		.filter((id): id is ID => !!id);
 }
 
 @Injectable()
@@ -920,7 +999,8 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 
 	/**
 	 * Who the document a request is about was filed by and is for, read on the answer's transaction: a time-off
-	 * request's or an equipment sharing's `createdByUserId` and employees. A request about no such document (a
+	 * request's or an equipment sharing's `createdByUserId` and employees, and the active members of the teams a
+	 * sharing is for. A request about no such document (a
 	 * business trip, an order), or naming no row (a `requestId` that is not an identifier, which PostgreSQL would
 	 * refuse to compare with a uuid column, aborting the transaction), answers null: its own requester is the one
 	 * the request names.
@@ -1038,17 +1118,23 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				return row ? { id: row.id, organizationId: row.organizationId, status: row.status } : null;
 			},
 			readLinkedDocumentRequesters: async (kind, id, tenantId) => {
-				// The filer and the employees alone, no other eager relation.
-				const options = {
-					where: { id, tenantId },
-					relations: { employees: true },
-					loadEagerRelations: false
-				};
+				// The filer, the employees and (a sharing's) teams alone, no other eager relation.
 				const row =
 					kind === 'time-off'
-						? await manager.findOne(TimeOffRequest, options)
-						: await manager.findOne(EquipmentSharing, options);
-				return requestersOfDocument(row);
+						? await manager.findOne(TimeOffRequest, {
+								where: { id, tenantId },
+								relations: { employees: true },
+								loadEagerRelations: false
+						  })
+						: await manager.findOne(EquipmentSharing, {
+								where: { id, tenantId },
+								relations: { employees: true, teams: true },
+								loadEagerRelations: false
+						  });
+				return requestersOfDocument(
+					row,
+					await typeOrmActiveTeamMemberIds(manager, teamIdsOfDocument(row), tenantId)
+				);
 			},
 			moveTimeOff: async (id, tenantId, status) => {
 				const result = await manager.update(
@@ -1155,12 +1241,13 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 			},
 			readLinkedDocumentRequesters: async (kind, id, tenantId) => {
 				const entity = kind === 'time-off' ? TimeOffRequest : EquipmentSharing;
-				const row = await em.findOne(
-					entity as any,
-					{ id, tenantId } as any,
-					{ ...fromTable, populate: ['employees'] } as any
+				// A sharing is also for the members of its teams.
+				const populate = kind === 'time-off' ? ['employees'] : ['employees', 'teams'];
+				const row = await em.findOne(entity as any, { id, tenantId } as any, { ...fromTable, populate } as any);
+				return requestersOfDocument(
+					row,
+					await mikroOrmActiveTeamMemberIds(em, teamIdsOfDocument(row), tenantId)
 				);
-				return requestersOfDocument(row);
 			},
 			moveTimeOff: async (id, tenantId, status) =>
 				await em.nativeUpdate(

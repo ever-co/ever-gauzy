@@ -116,6 +116,7 @@ type ConcurrencyMetrics = {
 	fulfilled: number;
 	rejected: number;
 	selects: number;
+	eventLoopSamples: number;
 	eventLoopP95Milliseconds: number;
 	eventLoopMaxMilliseconds: number;
 	cpuMicroseconds: { user: number; system: number; total: number };
@@ -352,6 +353,7 @@ describe('profile activity in-process concurrency evidence', () => {
 					fulfilled: fulfilled.length,
 					rejected: rejected.length,
 					selects: selects.length,
+					eventLoopSamples: eventLoopDelay.count,
 					eventLoopP95Milliseconds: roundedMilliseconds(eventLoopDelay.percentile(95)),
 					eventLoopMaxMilliseconds: roundedMilliseconds(eventLoopDelay.max),
 					cpuMicroseconds: { user: cpu.user, system: cpu.system, total: cpu.user + cpu.system },
@@ -373,7 +375,11 @@ describe('profile activity in-process concurrency evidence', () => {
 				expect(Number.isFinite(metrics.eventLoopP95Milliseconds)).toBe(true);
 				expect(Number.isFinite(metrics.eventLoopMaxMilliseconds)).toBe(true);
 				expect(metrics.eventLoopP95Milliseconds).toBeGreaterThanOrEqual(0);
-				expect(metrics.eventLoopMaxMilliseconds).toBeGreaterThanOrEqual(metrics.eventLoopP95Milliseconds);
+				// An empty histogram (the 32 calls finished inside one sampling interval) reports `max` 0 but
+				// `percentile(95)` as its lowest bucket (0.001 ms), so the ordering only holds once it has samples.
+				if (metrics.eventLoopSamples > 0) {
+					expect(metrics.eventLoopMaxMilliseconds).toBeGreaterThanOrEqual(metrics.eventLoopP95Milliseconds);
+				}
 			} finally {
 				capture = false;
 				eventLoopDelay.disable();

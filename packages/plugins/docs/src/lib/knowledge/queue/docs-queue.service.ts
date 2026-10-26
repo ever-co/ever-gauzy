@@ -14,6 +14,30 @@ import { IDocsJobBase } from './docs-job.types';
 import { DOCS_PIPELINE_RUNNER, IDocsPipelineRunner, inlineStageJob } from './docs-pipeline.types';
 
 /**
+ * BullMQ 6 refuses a custom job id that contains `:` unless it has exactly three `:`-separated parts (the shape of its
+ * repeatable-job keys) with "Custom Id cannot contain :". The deterministic stage id `docs:<stage>:<documentId>` has
+ * three, but every run-unique id built on it has more: a chained stage (`…:<hash>`), a park (`…:parked:<ts>`), a
+ * recovery sweep (`…:<runId>`), a reprocess, re-index or replace (`…:<Date.now()>`). Each of those enqueues was
+ * rejected and fell back to inline dispatch in whichever process asked, the API included.
+ *
+ * The first three parts are kept and the rest is joined with `-`, so the id stays unique and readable and the
+ * deterministic three-part id is unchanged.
+ *
+ * @param jobId The job id as the pipeline builds it.
+ * @returns An id BullMQ accepts.
+ */
+export function toBullMqJobId(jobId: string): string {
+	const parts = jobId.split(':');
+	if (parts.length === 1 || parts.length === 3) {
+		return jobId;
+	}
+	if (parts.length < 3) {
+		return parts.join('-');
+	}
+	return `${parts.slice(0, 3).join(':')}-${parts.slice(3).join('-')}`;
+}
+
+/**
  * The single dispatch seam of the `docs-processing` pipeline. Two modes:
  *
  * **QUEUED** — a `@gauzy/scheduler` root with queueing exists in this process, so
@@ -115,13 +139,14 @@ export class DocsQueueService implements OnModuleInit {
 				jobName,
 				data: payload,
 				options: {
-					jobId,
 					attempts: DOCS_JOB_ATTEMPTS,
 					backoff: { type: 'exponential', delay: DOCS_JOB_BACKOFF_DELAY_MS },
 					removeOnComplete: DOCS_JOB_REMOVE_ON_COMPLETE,
 					removeOnFail: DOCS_JOB_REMOVE_ON_FAIL,
 					...this.priorityFor(payload),
-					...options
+					...options,
+					// After the spread, so an explicit run-unique `options.jobId` is converted too.
+					jobId: toBullMqJobId(jobId)
 				}
 			});
 			this.logger.log(

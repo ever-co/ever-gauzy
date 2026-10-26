@@ -1986,6 +1986,10 @@
 			"WORKDAY": "Workday",
 			"SCROLL_TEAMS_BACK": "Show previous teams",
 			"SCROLL_TEAMS_FORWARD": "Show more teams",
+			"PERSON_TASKS": "Tasks",
+			"WORKING_ON": "Working on",
+			"LAST_TASK": "Last task",
+			"PERSON_WORKDAY": "{{ percent }} of a {{ hours }} workday",
 			"COLUMNS": {
 				"TEAM": "Team",
 				"WORKED": "Worked",
@@ -6172,6 +6176,7 @@
 			"SEED_CREDENTIALS_MESSAGE": "Save these passwords now. They are shown only once.",
 			"SEED_CREDENTIALS_DETAIL": "This installation created its accounts with random passwords instead of the published defaults.\n\n{{ accounts }}\n\nYou can change a password later on your profile page in Gauzy.",
 			"SEED_CREDENTIALS_COPIED": "Copied to the clipboard.",
+			"SEED_CREDENTIALS_COPY_FAILED": "Could not copy to the clipboard. Press Copy to try again, or write the passwords down before you confirm.",
 			"SEED_CREDENTIALS_SAVED": "I have saved them",
 			"SEED_ROLE_SUPER_ADMIN": "Super Admin",
 			"SEED_ROLE_ADMIN": "Admin",

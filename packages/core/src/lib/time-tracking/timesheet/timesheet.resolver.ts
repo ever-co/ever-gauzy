@@ -132,8 +132,8 @@ const TIMESHEET_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  *
  * **The guard chain and the class permission are the controller's.** `TimeSheetController` carries
  * `TenantPermissionGuard` and `PermissionGuard` on the class, under the timesheet-approval
- * permission, and none of its five handlers states a permission or a guard of its own — so every
- * route runs under the class's grant and every field here states the same one. That is the parity,
+ * permission. No handler states a guard of its own, and only the status route states a permission
+ * of its own, so every field here states the permission its route runs under. That is the parity,
  * and it is the reason this class carries a `@Permissions` at all: without it a caller that may
  * approve a timesheet but holds no organizational edit would be refused a read its own route serves.
  *
@@ -279,13 +279,16 @@ export class TimesheetResolver {
 	 * organization that narrows the update. Approving records the approver and the instant, and the
 	 * handler owns that — restating it here would be the copy that drifts.
 	 *
+	 * It states the pair the status route states: CAN_APPROVE_TIMESHEET, or TIME_TRACKER for a team
+	 * manager, whom the handler then holds to the timesheets of the members of the teams they manage.
+	 *
 	 * The answer is the rows the handler read back rather than a page of them, because the delivered
 	 * route answers the rows: a client that moved five timesheets and read back four has learned
 	 * something a page envelope would have hidden, which is the same reason the employee bulk create
 	 * answers the rows it filed.
 	 */
 	@Mutation('updateTimesheetStatus')
-	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET)
+	@Permissions(PermissionsEnum.CAN_APPROVE_TIMESHEET, PermissionsEnum.TIME_TRACKER)
 	async updateTimesheetStatus(@Args('input') input: IUpdateTimesheetStatus): Promise<Timesheet[]> {
 		requireOrganization(input.organizationId, 'updateTimesheetStatus');
 		return await this.commandBus.execute(

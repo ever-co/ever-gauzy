@@ -35,6 +35,12 @@
 						"glob": "**/*",
 						"input": "packages/ui-core/i18n/assets/i18n",
 						"output": "assets/i18n/"
+					},
+					{
+						"glob": "**/*",
+						"input": "node_modules/pdfjs-dist/wasm",
+						"ignore": ["quickjs-eval.*"],
+						"output": "assets/pdfjs/wasm/"
 					}
 				],
 				"styles": [
@@ -220,6 +226,12 @@
 						"glob": "**/*",
 						"input": "packages/ui-core/i18n/assets/i18n",
 						"output": "assets/i18n/"
+					},
+					{
+						"glob": "**/*",
+						"input": "node_modules/pdfjs-dist/wasm",
+						"ignore": ["quickjs-eval.*"],
+						"output": "assets/pdfjs/wasm/"
 					}
 				],
 				"styles": [
@@ -333,6 +345,12 @@
 						"glob": "**/*",
 						"input": "packages/ui-core/i18n/assets/i18n",
 						"output": "assets/i18n/"
+					},
+					{
+						"glob": "**/*",
+						"input": "node_modules/pdfjs-dist/wasm",
+						"ignore": ["quickjs-eval.*"],
+						"output": "assets/pdfjs/wasm/"
 					}
 				],
 				"styles": [

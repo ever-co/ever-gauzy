@@ -17,6 +17,8 @@ describe('InviteService.findAllInvites pagination', () => {
 		({ restore } = asTenantUser(createTenantFixture()));
 		findAll = jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockResolvedValue({ items: [], total: 0 });
 		service = Object.create(InviteService.prototype);
+		// The register reads the teams a caller without an organization-wide grant created; this one created none.
+		Object.assign(service, { organizationTeamService: { find: jest.fn(async () => []) } });
 	});
 
 	afterEach(() => {

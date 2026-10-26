@@ -3,7 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { Logger } from '@nestjs/common';
 import { z } from 'zod';
 import { apiClient } from '../common/api-client';
-import { validateOrganizationContext } from './utils';
+import { pageOf, validateOrganizationContext } from './utils';
 import { EquipmentTypeEnum, EquipmentStatusEnum } from '../input-schemas';
 import { sanitizeErrorMessage, sanitizeForLogging } from '../common/error-utils';
 
@@ -129,6 +129,154 @@ export const equipmentSharingRequestBody = (args: EquipmentSharingRequestArgs, n
 		status: EQUIPMENT_SHARING_REQUESTED
 	};
 };
+
+/**
+ * The statuses an equipment sharing can be at, by the names the `get_equipment_sharing_requests` tool accepts: the
+ * integer vocabulary of the request approval (`RequestApprovalStatusTypesEnum`) that the `status` column holds.
+ */
+export const EQUIPMENT_SHARING_STATUSES: Readonly<Record<string, number>> = Object.freeze({
+	REQUESTED: 1,
+	APPROVED: 2,
+	REFUSED: 3
+});
+
+/**
+ * Reads the `status` filter of the `get_equipment_sharing_requests` tool: a status name (`REQUESTED`, `APPROVED`,
+ * `REFUSED`, any case) or its integer (`1`, `2`, `3`, as a number or a string). The column is an integer, so the
+ * string the tool used to forward could never match it.
+ *
+ * @param status The filter as given.
+ * @returns The integer the `status` column holds.
+ * @throws Error for any other value, rather than a filter that matches nothing.
+ */
+export const equipmentSharingStatusValue = (status: string | number): number => {
+	const text = String(status).trim().toUpperCase();
+	if (Object.prototype.hasOwnProperty.call(EQUIPMENT_SHARING_STATUSES, text)) {
+		return EQUIPMENT_SHARING_STATUSES[text];
+	}
+	const value = Number(text);
+	if (text !== '' && Object.values(EQUIPMENT_SHARING_STATUSES).includes(value)) {
+		return value;
+	}
+	throw new Error(
+		`status must be one of ${Object.keys(EQUIPMENT_SHARING_STATUSES).join(', ')} (or ${Object.values(
+			EQUIPMENT_SHARING_STATUSES
+		).join(', ')})`
+	);
+};
+
+/** The filters of `get_equipment_sharing_requests`: the columns the route applies, and the employee it reads for. */
+export interface EquipmentSharingRequestsFindInput {
+	equipmentId?: string;
+	status?: string | number;
+	/** Applied to the answer; the teams' memberships are read with each sharing for it. */
+	employeeId?: string;
+}
+
+/** The relations `get_equipment_sharing_requests` reads each sharing with (`employees` also serves its filter). */
+export const EQUIPMENT_SHARING_REQUESTS_RELATIONS = Object.freeze(['equipment', 'employees', 'teams']);
+
+/**
+ * The relation read besides, for the employee filter: the memberships of the sharing's teams. A sharing is for the
+ * active members of its teams as much as for the employees it names (the requester rule of the equipment sharing).
+ */
+export const EQUIPMENT_SHARING_TEAM_MEMBERS_RELATION = 'teams.members';
+
+/** Whether two identifiers name the same row: a uuid may come in either case. */
+const sameId = (a: unknown, b: unknown): boolean =>
+	typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/** A positive integer, or the fallback for anything else (`0`, a negative, a fraction, not a number). */
+const positiveInteger = (value: unknown, fallback: number): number =>
+	typeof value === 'number' && Number.isInteger(value) && value >= 1 ? value : fallback;
+
+/**
+ * The query `GET /api/equipment-sharing` reads: one `data` parameter, the JSON of `{ relations, findInput }`
+ * (`ParseJsonPipe`), whose `findInput` becomes the read's `where`.
+ *
+ * The tool used to send `organizationId`, `equipmentId`, `employeeId`, `status`, `page` and `limit` as query parameters
+ * of their own. The route reads none of them (a missing `data` parses to `{}`), so every filter was dropped and the
+ * tool answered every sharing of the tenant, unpaged. The organization, the equipment and the status are columns of
+ * the sharing, so they go into `findInput`; the employee is a membership and the route has no paging, so those two
+ * are applied to the answer ({@link selectEquipmentSharingRequests}). With an employee named, the memberships of the
+ * sharings' teams are read too ({@link EQUIPMENT_SHARING_TEAM_MEMBERS_RELATION}).
+ *
+ * @param defaultParams The caller's organization and tenant.
+ * @param filters The tool's column filters, and the employee it filters on.
+ * @returns The query parameters to send.
+ * @throws Error for a status the column cannot hold.
+ */
+export const equipmentSharingRequestsQuery = (
+	defaultParams: { organizationId: string; tenantId?: string | null },
+	{ equipmentId, status, employeeId }: EquipmentSharingRequestsFindInput = {}
+) => {
+	const findInput: Record<string, unknown> = {
+		organizationId: defaultParams.organizationId,
+		...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
+		...(equipmentId && { equipmentId }),
+		...(status !== undefined && status !== null && status !== '' && { status: equipmentSharingStatusValue(status) })
+	};
+	const relations = [
+		...EQUIPMENT_SHARING_REQUESTS_RELATIONS,
+		...(employeeId ? [EQUIPMENT_SHARING_TEAM_MEMBERS_RELATION] : [])
+	];
+	return { data: JSON.stringify({ relations, findInput }) };
+};
+
+/**
+ * Whether a sharing is for an employee: one it names, or an active member of one of its teams (`isActive: true`, as
+ * the core requester read asks; a null or false flag is not active). Identifiers are compared in any case.
+ *
+ * @param sharing A sharing, with its employees and its teams' members.
+ * @param employeeId The employee.
+ */
+export const isEquipmentSharingFor = (sharing: Record<string, any>, employeeId: string): boolean =>
+	(Array.isArray(sharing?.employees) &&
+		sharing.employees.some((employee: { id?: string } | null) => sameId(employee?.id, employeeId))) ||
+	(Array.isArray(sharing?.teams) &&
+		sharing.teams.some(
+			(team: { members?: Array<Record<string, any>> } | null) =>
+				Array.isArray(team?.members) &&
+				team.members.some(
+					(member) =>
+						member?.isActive === true &&
+						!member?.deletedAt &&
+						sameId(member?.employeeId ?? member?.employee?.id, employeeId)
+				)
+		));
+
+/**
+ * The page of sharings `get_equipment_sharing_requests` answers: the sharings for the employee (one they are named in,
+ * or one for a team they are an active member of: {@link isEquipmentSharingFor}), when one is named, then the page
+ * asked for. `total` counts every sharing that passed the filters. A page or a limit that is not a positive integer
+ * reads as the default (1, 10). The teams' memberships read for the filter are not answered.
+ *
+ * @param items The sharings the route answered.
+ * @param options The employee filter and the page.
+ */
+export const selectEquipmentSharingRequests = (
+	items: Array<Record<string, any>>,
+	{ employeeId, page, limit }: { employeeId?: string; page?: number; limit?: number } = {}
+) => {
+	const shared = employeeId ? items.filter((sharing) => isEquipmentSharingFor(sharing, employeeId)) : items;
+	const answered = employeeId ? shared.map(withoutTeamMembers) : shared;
+	return pageOf(answered, positiveInteger(page, 1), positiveInteger(limit, 10));
+};
+
+/** A sharing without the memberships of its teams (read for the employee filter only). */
+const withoutTeamMembers = (sharing: Record<string, any>): Record<string, any> =>
+	Array.isArray(sharing?.teams)
+		? {
+				...sharing,
+				teams: sharing.teams.map((team: Record<string, any> | null) => {
+					if (!team || typeof team !== 'object') {
+						return team;
+					}
+					const { members: _members, ...rest } = team;
+					return rest;
+				})
+			}
+		: sharing;
 
 export const registerEquipmentTools = (server: McpServer) => {
 	// Get equipment tool
@@ -698,25 +846,24 @@ export const registerEquipmentTools = (server: McpServer) => {
 		{
 			equipmentId: z.string().uuid().optional().describe('Filter by equipment ID'),
 			employeeId: z.string().uuid().optional().describe('Filter by employee ID'),
-			status: z.string().optional().describe('Filter by sharing status'),
-			page: z.number().optional().default(1).describe('Page number for pagination'),
-			limit: z.number().optional().default(10).describe('Number of items per page')
+			status: z
+				.union([z.string(), z.number()])
+				.optional()
+				.describe('Filter by sharing status: REQUESTED, APPROVED or REFUSED (or 1, 2, 3)'),
+			page: z.number().int().min(1).optional().default(1).describe('Page number for pagination'),
+			limit: z.number().int().min(1).optional().default(10).describe('Number of items per page')
 		},
 		async ({ equipmentId, employeeId, status, page = 1, limit = 10 }) => {
 			try {
 				const defaultParams = validateOrganizationContext();
 
-				const params = {
-					organizationId: defaultParams.organizationId,
-					...(defaultParams.tenantId && { tenantId: defaultParams.tenantId }),
-					...(equipmentId && { equipmentId }),
-					...(employeeId && { employeeId }),
-					...(status && { status }),
-					page,
-					limit
-				};
-
-				const response = await apiClient.get('/api/equipment-sharing', { params });
+				// The route reads a `data` JSON find-input only; the employee and the page are applied to its answer.
+				const params = equipmentSharingRequestsQuery(defaultParams, { equipmentId, status, employeeId });
+				const { items = [] } = await apiClient.get<{ items?: Array<Record<string, any>> }>(
+					'/api/equipment-sharing',
+					{ params }
+				);
+				const response = selectEquipmentSharingRequests(items, { employeeId, page, limit });
 
 				return {
 					content: [

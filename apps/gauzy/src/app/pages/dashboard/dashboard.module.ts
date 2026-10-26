@@ -71,7 +71,8 @@ import {
 	TeamCardComponent,
 	TeamComponent,
 	TeamMemberComponent,
-	TeamProjectsListComponent
+	TeamProjectsListComponent,
+	TeamPersonCardComponent
 } from './team';
 
 // NB Modules
@@ -133,7 +134,8 @@ const COMPONENTS = [
 	TeamMemberComponent,
 	ChartComponent,
 	AllTeamComponent,
-	TeamProjectsListComponent
+	TeamProjectsListComponent,
+	TeamPersonCardComponent
 ];
 
 @NgModule({

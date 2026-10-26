@@ -195,7 +195,21 @@
 					@for (row of topMembers; track row.id) {
 					<tr>
 						<td class="cell-main">
-							<a class="cell-title member-link" [routerLink]="['/pages/employees/view', row.employeeId]" [title]="row.name">
+							<a
+								class="cell-title member-link"
+								[routerLink]="['/pages/employees/view', row.employeeId]"
+								#cardPopover="nbPopover"
+								[nbPopover]="personCard"
+								[nbPopoverContext]="{ person: row.person, cardId: cardIdPrefix + '-' + $index }"
+								nbPopoverTrigger="hover"
+								nbPopoverPlacement="top-start"
+								nbPopoverAdjustment="vertical"
+								nbPopoverClass="person-popover"
+								(focus)="cardKeyboard.onTriggerFocus(cardPopover)"
+								(blur)="cardKeyboard.onTriggerBlur($event, cardPopover)"
+								(keydown)="cardKeyboard.onTriggerKeydown($event, cardPopover, cardIdPrefix + '-' + $index)"
+								aria-keyshortcuts="ArrowDown"
+							>
 								{{ row.name }}
 							</a>
 							<span class="cell-meta">{{ row.meta }}</span>
@@ -218,4 +232,15 @@
 		[maxHeight]="list.maxHeight"
 		[maxWidth]="list.maxWidth"
 	></gauzy-team-projects-list>
+</ng-template>
+
+<!-- The member's hover card: the team page's assignee card. -->
+<ng-template #personCard let-card>
+	<!-- Arrow Down on the name moves focus in here; the card stays open while focus does. -->
+	<gauzy-team-person-card
+		[attr.id]="card.cardId"
+		[person]="card.person"
+		(focusout)="cardKeyboard.onCardFocusOut($event)"
+		(keydown.escape)="cardKeyboard.onCardEscape()"
+	></gauzy-team-person-card>
 </ng-template>

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as sharpModule from 'sharp';
 import { DocumentKindEnum } from '@gauzy/contracts';
-import { FileStorage } from '@gauzy/core';
+import { FileStorage, readStorageFileAsBuffer } from '@gauzy/core';
 import { Document } from '../../entities/document.entity';
 import { TypeOrmDocumentRepository } from '../../repositories/type-orm-document.repository';
 import { PdfRasterizerService } from '../extraction/pdf-rasterizer.service';
@@ -74,7 +74,11 @@ export class DocumentThumbnailService {
 			}
 
 			const provider = new FileStorage().setProvider(document.storageProvider).getProviderInstance();
-			const source = (await provider.getFile(document.storageKey)) as Buffer;
+			// As bytes whatever the provider answers (the S3 family returns the SDK's body stream), up to the
+			// document's recorded size (the default bound when it has none); a failed read lands in the catch below.
+			const source = await readStorageFileAsBuffer(provider, document.storageKey, {
+				maxBytes: document.fileSize
+			});
 
 			const pixels = await this.sourcePixels(document, source);
 			if (!pixels) {

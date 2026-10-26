@@ -9,13 +9,20 @@ import {
 	IDocument
 } from '@gauzy/contracts';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
-import { EventBus, FileStorage, RequestContext } from '@gauzy/core';
+import {
+	EventBus,
+	FileContentTooLargeError,
+	FileStorage,
+	readStorageFileAsBuffer,
+	RequestContext,
+	StorageFileReadError
+} from '@gauzy/core';
 import { getDocsConfig } from '../docs.config';
 import { DOCS_EXTRACTED_TEXT_EDITED, DOCS_NOT_A_FILE } from '../docs.constants';
 import { ReprocessDocumentDTO, UpdateExtractedTextDTO } from '../dto';
 import { Document } from '../entities/document.entity';
 import { DocumentEvent, IDocumentEventContext } from '../events/document.event';
-import { DocsPermanentError } from '../knowledge/errors';
+import { DocsPermanentError, DocsTransientError } from '../knowledge/errors';
 import { ExtractionRegistryService, IDocumentExtractionResult } from '../knowledge/extraction';
 import { DOCS_JOB_CHUNK, DOCS_JOB_EXTRACT } from '../knowledge/queue/constants';
 import { DocsJobReason, IDocsExtractJob, IDocsJobBase } from '../knowledge/queue/docs-job.types';
@@ -86,11 +93,27 @@ export class DocumentProcessingService {
 
 		await this.transition(document, { status: DocumentStatusEnum.PROCESSING });
 
-		// Load the blob through the provider recorded on the row.
+		// Load the blob through the provider recorded on the row, as bytes whatever the provider answers (the S3,
+		// Wasabi and DigitalOcean providers return the SDK's body stream). A failed read is a storage hiccup to
+		// retry: the providers swallow their errors, so "nothing returned" cannot tell a missing object from a
+		// network fault, and the last attempt dead-letters the row anyway.
 		const provider = new FileStorage().getProvider(document.storageProvider);
-		const buffer = await provider.getFile(document.storageKey);
+		let buffer: Buffer;
+		try {
+			buffer = await readStorageFileAsBuffer(provider, document.storageKey, {
+				maxBytes: Math.max(config.maxFileSize || 0, document.fileSize || 0)
+			});
+		} catch (error) {
+			if (error instanceof FileContentTooLargeError) {
+				throw new DocsPermanentError('The stored file is larger than the documents file size limit.');
+			}
+			if (error instanceof StorageFileReadError) {
+				throw new DocsTransientError(error.message, error);
+			}
+			throw error;
+		}
 
-		const result: IDocumentExtractionResult = await this.extractionRegistry.extract(buffer as Buffer, {
+		const result: IDocumentExtractionResult = await this.extractionRegistry.extract(buffer, {
 			filename: document.originalFilename ?? document.name,
 			mimeType: document.mimeType,
 			maxChars: config.maxExtractedChars,
