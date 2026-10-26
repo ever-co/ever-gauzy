@@ -45,6 +45,7 @@ interface ISpecInvite {
 	email: string;
 	tenantId: string;
 	token?: string;
+	code?: string;
 	roleId?: string;
 	teams?: ISpecTeam[];
 }
@@ -103,6 +104,7 @@ const TYPEORM_INVITE = new TypeOrmEntitySchema<ISpecInvite>({
 		email: { type: 'varchar' },
 		tenantId: { type: 'varchar' },
 		token: { type: 'varchar', nullable: true },
+		code: { type: 'varchar', nullable: true },
 		roleId: { type: 'varchar', nullable: true }
 	},
 	relations: {
@@ -144,6 +146,7 @@ class MikroOrmInvite {
 	email!: string;
 	tenantId!: string;
 	token?: string;
+	code?: string;
 	roleId?: string;
 	teams?: unknown;
 }
@@ -188,6 +191,7 @@ const MIKRO_ORM_INVITE = new MikroOrmEntitySchema<MikroOrmInvite>({
 		email: { type: 'string' },
 		tenantId: { type: 'string' },
 		token: { type: 'string', nullable: true },
+		code: { type: 'string', nullable: true },
 		roleId: { type: 'string', nullable: true },
 		teams: {
 			kind: 'm:n',
@@ -348,13 +352,19 @@ describe('InviteService - the invitations of a team are handled by its managers'
 		return operator.objectLiteralParameters;
 	}
 
-	/** The tokens the register hands the caller, by invitation. */
-	function tokensById(items: { id?: string; token?: string }[]): Record<string, string | undefined> {
-		const tokens: Record<string, string | undefined> = {};
+	/** The credentials that accept an invitation, as the register hands them to the caller. */
+	interface ISpecCredentials {
+		token?: string;
+		code?: string;
+	}
+
+	/** The credentials the register hands the caller, by invitation. */
+	function credentialsById(items: ({ id?: string } & ISpecCredentials)[]): Record<string, ISpecCredentials> {
+		const credentials: Record<string, ISpecCredentials> = {};
 		for (const item of items) {
-			tokens[item.id] = item.token;
+			credentials[item.id] = { token: item.token, code: item.code };
 		}
-		return tokens;
+		return credentials;
 	}
 
 	afterEach(() => jest.restoreAllMocks());
@@ -454,11 +464,17 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			expect(parametersOf(ofManagedTeam.id)).toEqual({ inviteTeamsInReach: [MANAGED_TEAM.id] });
 		});
 
-		it('withholds the token of an invitation that also names a team the employee does not manage', async () => {
+		it('withholds the token and code of an invitation that also names a team the employee does not manage', async () => {
 			signIn(EMPLOYEE);
 			const { service, findTeams } = build([MANAGED_TEAM]);
-			const ofBothTeams = { id: 'invite-both', token: 'token-both', role: { name: RolesEnum.EMPLOYEE } };
-			const ofManagedTeam = { id: 'invite-managed', token: 'token-managed', role: { name: RolesEnum.EMPLOYEE } };
+			const employeeRole = { name: RolesEnum.EMPLOYEE };
+			const ofBothTeams = { id: 'invite-both', token: 'token-both', code: 'code-both', role: employeeRole };
+			const ofManagedTeam = {
+				id: 'invite-managed',
+				token: 'token-managed',
+				code: 'code-managed',
+				role: employeeRole
+			};
 			findAll.mockResolvedValue({ items: [ofBothTeams, ofManagedTeam], total: 2 });
 			findInvites.mockResolvedValue([
 				{ id: 'invite-both', teams: [MANAGED_TEAM, OTHER_TEAM] },
@@ -474,7 +490,7 @@ describe('InviteService - the invitations of a team are handled by its managers'
 				withDeleted: true
 			});
 			expect(findTeams).toHaveBeenLastCalledWith(managedTeamsRead([MANAGED_TEAM.id, OTHER_TEAM.id]));
-			expect(items).toEqual([{ ...ofBothTeams, token: undefined }, ofManagedTeam]);
+			expect(items).toEqual([{ ...ofBothTeams, token: undefined, code: undefined }, ofManagedTeam]);
 		});
 
 		it.each([PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.CHANGE_SELECTED_EMPLOYEE])(
@@ -770,8 +786,10 @@ describe('InviteService - the invitations of a team are handled by its managers'
 				await execute(insertMember, [member.id, member.teamId, EMPLOYEE, member.isManager, member.roleId]);
 			}
 			for (const row of INVITES) {
-				const insertInvite = 'INSERT INTO invite (id, email, tenantId, token, roleId) VALUES (?, ?, ?, ?, ?)';
-				await execute(insertInvite, [row.id, row.email, TENANT, `token-${row.id}`, 'role-employee']);
+				const columns = 'id, email, tenantId, token, code, roleId';
+				const insertInvite = `INSERT INTO invite (${columns}) VALUES (?, ?, ?, ?, ?, ?)`;
+				const credentials = [`token-${row.id}`, `code-${row.id}`];
+				await execute(insertInvite, [row.id, row.email, TENANT, ...credentials, 'role-employee']);
 				for (const teamId of row.teamIds) {
 					const pivot = 'INSERT INTO invite_organization_team (inviteId, organizationTeamId) VALUES (?, ?)';
 					await execute(pivot, [row.id, teamId]);
@@ -966,39 +984,48 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			}
 		});
 
-		it('keeps the token of an invitation whose teams the caller all manages, and withholds the others', async () => {
+		it('keeps the token and code of an invitation whose teams the caller all manages, and withholds the others', async () => {
 			signIn(EMPLOYEE);
 			const service = buildOnStores();
 
 			const { items } = await service.findAllInvites({} as never);
 
-			const tokens = tokensById(items);
-			expect(tokens['invite-managed']).toBe('token-invite-managed');
-			expect(tokens['invite-no-team']).toBe('token-invite-no-team');
-			expect(tokens['invite-both']).toBeUndefined();
+			const credentials = credentialsById(items);
+			expect(credentials['invite-managed']).toEqual({
+				token: 'token-invite-managed',
+				code: 'code-invite-managed'
+			});
+			expect(credentials['invite-no-team']).toEqual({
+				token: 'token-invite-no-team',
+				code: 'code-invite-no-team'
+			});
+			expect(credentials['invite-both']).toEqual({});
 		});
 
-		it('lists an invitation of a managed team and a soft-deleted one, without its token', async () => {
+		it('lists an invitation of a managed team and a soft-deleted one, without its token and code', async () => {
 			signIn(EMPLOYEE);
 			const service = buildOnStores();
 
 			const { items } = await service.findAllInvites({} as never);
 
-			const tokens = tokensById(items);
-			expect(tokens).toHaveProperty(['invite-managed-deleted']);
-			expect(tokens['invite-managed-deleted']).toBeUndefined();
+			const credentials = credentialsById(items);
+			expect(credentials).toHaveProperty(['invite-managed-deleted']);
+			expect(credentials['invite-managed-deleted']).toEqual({});
 		});
 
-		it('withholds that token when the request names the managed team and loads only that one of its teams', async () => {
+		it('withholds them when the request names the managed team and loads only that one of its teams', async () => {
 			signIn(EMPLOYEE);
 			const service = buildOnStores();
 			const options = { where: { teams: { id: [MANAGED_TEAM.id] } }, relations: { teams: true } };
 
 			const { items } = await service.findAllInvites(options as never);
 
-			const tokens = tokensById(items);
-			expect(tokens['invite-managed']).toBe('token-invite-managed');
-			expect(tokens['invite-both']).toBeUndefined();
+			const credentials = credentialsById(items);
+			expect(credentials['invite-managed']).toEqual({
+				token: 'token-invite-managed',
+				code: 'code-invite-managed'
+			});
+			expect(credentials['invite-both']).toEqual({});
 		});
 
 		describe('delete', () => {

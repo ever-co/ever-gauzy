@@ -221,6 +221,17 @@ function idInReach(requestedId: unknown, reach: FindOperator<ID>): FindOperator<
 }
 
 /**
+ * Whether a listed invitation carries a credential that accepts it: its token, or its code.
+ *
+ * @param invite - A listed invitation.
+ */
+function carriesAcceptCredential(invite: IInvite): boolean {
+	const hasToken = isNotEmpty(invite.token);
+	const hasCode = isNotEmpty(invite.code);
+	return hasToken || hasCode;
+}
+
+/**
  * On MikroORM, a condition on an invitation's teams stated with a collection operator (`$some`, `$none`), which
  * MikroORM reads in a subquery of its own. TypeORM's types do not name these operators; the CRUD base hands them to
  * MikroORM as they are.
@@ -1104,7 +1115,7 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 				mayIssueInvites: RequestContext.hasPermission(PermissionsEnum.ORG_INVITE_EDIT),
 				findRoles: (ids: ID[]) => this.roleService.find({ where: { id: In(ids) } })
 			});
-			await this.withholdTokensOfUnmanagedTeams(invites.items);
+			await this.withholdCredentialsOfUnmanagedTeams(invites.items);
 			return invites;
 		} catch (error) {
 			throw new BadRequestException(error);
@@ -1266,23 +1277,24 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 	}
 
 	/**
-	 * Removes the accept-invite token from every listed invitation that names a team the caller does not manage, when
-	 * they are confined to the teams they manage. Whoever holds the token accepts the invitation into all its teams, so
-	 * the token takes a manager of them all, as sending and resending do; the invitation itself stays listed. Its teams
-	 * are read apart from the register, soft-deleted ones included, whatever relations and filters the register names.
+	 * Removes the accept-invite token and code from every listed invitation that names a team the caller does not
+	 * manage, when they are confined to the teams they manage. Whoever holds either one accepts the invitation into all
+	 * its teams, so they take a manager of them all, as sending and resending do; the invitation itself stays listed. The
+	 * code is removed too because on MikroORM the register's rows are plain objects, which `@Exclude` does not apply to.
+	 * The teams are read apart from the register, soft-deleted ones included, whatever relations and filters it names.
 	 *
 	 * @param invites - The invitations the register lists.
 	 */
-	private async withholdTokensOfUnmanagedTeams(invites: IInvite[]): Promise<void> {
+	private async withholdCredentialsOfUnmanagedTeams(invites: IInvite[]): Promise<void> {
 		if (!this.isConfinedToManagedTeams()) {
 			return;
 		}
-		const withToken = invites.filter((invite) => invite.token);
-		if (isEmpty(withToken)) {
+		const withCredential = invites.filter((invite) => carriesAcceptCredential(invite));
+		if (isEmpty(withCredential)) {
 			return;
 		}
 
-		const inviteIds = withToken.map((invite) => invite.id);
+		const inviteIds = withCredential.map((invite) => invite.id);
 		const teamIdsByInvite = await this.findTeamIdsOfInvitations(inviteIds);
 		const teamIdLists = [...teamIdsByInvite.values()];
 		const allTeamIds = teamIdLists.flat();
@@ -1292,11 +1304,12 @@ export class InviteService extends TenantAwareCrudService<Invite> {
 		}
 
 		const managedTeamIds = await this.findManagedTeamIds(namedTeamIds);
-		for (const invite of withToken) {
+		for (const invite of withCredential) {
 			const teamIds = teamIdsByInvite.get(invite.id) ?? [];
 			const namesUnmanagedTeam = teamIds.some((teamId) => !managedTeamIds.includes(teamId));
 			if (namesUnmanagedTeam) {
 				delete invite.token;
+				delete invite.code;
 			}
 		}
 	}
