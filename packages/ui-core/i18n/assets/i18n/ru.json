@@ -7040,13 +7040,33 @@
 		"COMMENT_IMAGE_FAILED": "Не удалось загрузить {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Последние изменения задачи и комментарии к ней",
-		"TIME_WORKED": "Отработано",
-		"OF_ESTIMATE": "{{ share }}% от оценки {{ estimate }}",
+		"BREADCRUMB": "Навигационная цепочка",
+		"CHANGE_STATUS": "Изменить статус",
+		"LINK_COPIED": "Ссылка скопирована",
 		"SUBTASKS": "Подзадачи",
 		"SUBTASKS_DONE": "Выполнено {{ done }} из {{ total }}",
 		"NO_SUBTASKS": "Нет подзадач",
-		"TIME": "Время",
-		"NO_TIME": "По этой задаче ещё не учтено время"
+		"LINKED_ISSUES": "Связанные задачи",
+		"NO_LINKED_ISSUES": "Нет связанных задач",
+		"LINKS": {
+			"BLOCKS": "Блокирует",
+			"IS_BLOCKED_BY": "Заблокирована",
+			"CLONES": "Клонирует",
+			"IS_CLONED_BY": "Клонирована",
+			"DUPLICATES": "Дублирует",
+			"IS_DUPLICATED_BY": "Дублируется",
+			"RELATES_TO": "Связана с"
+		},
+		"TIME_TRACKING": "Учёт времени",
+		"LOGGED": "учтено",
+		"REMAINING": "осталось",
+		"OVER_ESTIMATE": "На {{ value }} больше оценки",
+		"HOURS_PER_DAY": "Часы по дням",
+		"LAST_DAYS": "Последние {{ count }} дн.",
+		"NO_HOURS": "В последнее время по задаче не учтено время",
+		"TIME_ENTRIES": "Последние записи времени",
+		"NO_TIME_ENTRIES": "В последнее время нет записей времени",
+		"RUNNING": "Идёт",
+		"ACTIVITY_LEVEL": "Активность: использование клавиатуры и мыши во время учёта"
 	}
 }

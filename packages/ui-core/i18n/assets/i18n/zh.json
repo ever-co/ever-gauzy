@@ -7022,13 +7022,33 @@
 		"COMMENT_IMAGE_FAILED": "无法上传 {{ name }}。"
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "任务的最新变更及其评论",
-		"TIME_WORKED": "已工作时间",
-		"OF_ESTIMATE": "占预估 {{ estimate }} 的 {{ share }}%",
+		"BREADCRUMB": "面包屑导航",
+		"CHANGE_STATUS": "更改状态",
+		"LINK_COPIED": "链接已复制",
 		"SUBTASKS": "子任务",
 		"SUBTASKS_DONE": "已完成 {{ done }} / {{ total }}",
 		"NO_SUBTASKS": "没有子任务",
-		"TIME": "时间",
-		"NO_TIME": "此任务尚未记录时间"
+		"LINKED_ISSUES": "关联任务",
+		"NO_LINKED_ISSUES": "没有关联任务",
+		"LINKS": {
+			"BLOCKS": "阻塞",
+			"IS_BLOCKED_BY": "被阻塞于",
+			"CLONES": "克隆",
+			"IS_CLONED_BY": "被克隆于",
+			"DUPLICATES": "重复",
+			"IS_DUPLICATED_BY": "被重复于",
+			"RELATES_TO": "相关"
+		},
+		"TIME_TRACKING": "时间跟踪",
+		"LOGGED": "已记录",
+		"REMAINING": "剩余",
+		"OVER_ESTIMATE": "超出预估 {{ value }}",
+		"HOURS_PER_DAY": "每日小时数",
+		"LAST_DAYS": "最近 {{ count }} 天",
+		"NO_HOURS": "最近此任务没有记录时间",
+		"TIME_ENTRIES": "最近的时间记录",
+		"NO_TIME_ENTRIES": "最近没有时间记录",
+		"RUNNING": "进行中",
+		"ACTIVITY_LEVEL": "活跃度：跟踪期间键盘和鼠标的使用情况"
 	}
 }

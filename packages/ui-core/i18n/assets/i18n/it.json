@@ -7022,13 +7022,33 @@
 		"COMMENT_IMAGE_FAILED": "Impossibile caricare {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Modifiche recenti all'attività e ai suoi commenti",
-		"TIME_WORKED": "Tempo lavorato",
-		"OF_ESTIMATE": "{{ share }}% della stima di {{ estimate }}",
+		"BREADCRUMB": "Percorso di navigazione",
+		"CHANGE_STATUS": "Cambia stato",
+		"LINK_COPIED": "Link copiato",
 		"SUBTASKS": "Sottoattività",
 		"SUBTASKS_DONE": "{{ done }} su {{ total }} completate",
 		"NO_SUBTASKS": "Nessuna sottoattività",
-		"TIME": "Tempo",
-		"NO_TIME": "Nessun tempo registrato per quest'attività"
+		"LINKED_ISSUES": "Attività collegate",
+		"NO_LINKED_ISSUES": "Nessuna attività collegata",
+		"LINKS": {
+			"BLOCKS": "Blocca",
+			"IS_BLOCKED_BY": "È bloccata da",
+			"CLONES": "Clona",
+			"IS_CLONED_BY": "È clonata da",
+			"DUPLICATES": "Duplica",
+			"IS_DUPLICATED_BY": "È duplicata da",
+			"RELATES_TO": "È collegata a"
+		},
+		"TIME_TRACKING": "Monitoraggio del tempo",
+		"LOGGED": "registrato",
+		"REMAINING": "rimanente",
+		"OVER_ESTIMATE": "{{ value }} oltre la stima",
+		"HOURS_PER_DAY": "Ore al giorno",
+		"LAST_DAYS": "Ultimi {{ count }} giorni",
+		"NO_HOURS": "Nessun tempo registrato di recente per quest'attività",
+		"TIME_ENTRIES": "Registrazioni di tempo recenti",
+		"NO_TIME_ENTRIES": "Nessuna registrazione di tempo recente",
+		"RUNNING": "In corso",
+		"ACTIVITY_LEVEL": "Attività: uso di tastiera e mouse durante il monitoraggio"
 	}
 }

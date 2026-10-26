@@ -7021,13 +7021,33 @@
 		"COMMENT_IMAGE_FAILED": "Nie udało się przesłać {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Ostatnie zmiany w zadaniu i jego komentarze",
-		"TIME_WORKED": "Przepracowany czas",
-		"OF_ESTIMATE": "{{ share }}% szacunku {{ estimate }}",
+		"BREADCRUMB": "Ścieżka nawigacji",
+		"CHANGE_STATUS": "Zmień status",
+		"LINK_COPIED": "Link skopiowany",
 		"SUBTASKS": "Podzadania",
 		"SUBTASKS_DONE": "Ukończono {{ done }} z {{ total }}",
 		"NO_SUBTASKS": "Brak podzadań",
-		"TIME": "Czas",
-		"NO_TIME": "Nie zarejestrowano jeszcze czasu dla tego zadania"
+		"LINKED_ISSUES": "Powiązane zadania",
+		"NO_LINKED_ISSUES": "Brak powiązanych zadań",
+		"LINKS": {
+			"BLOCKS": "Blokuje",
+			"IS_BLOCKED_BY": "Jest blokowane przez",
+			"CLONES": "Klonuje",
+			"IS_CLONED_BY": "Jest klonowane przez",
+			"DUPLICATES": "Duplikuje",
+			"IS_DUPLICATED_BY": "Jest duplikowane przez",
+			"RELATES_TO": "Jest powiązane z"
+		},
+		"TIME_TRACKING": "Śledzenie czasu",
+		"LOGGED": "zarejestrowano",
+		"REMAINING": "pozostało",
+		"OVER_ESTIMATE": "{{ value }} ponad szacunek",
+		"HOURS_PER_DAY": "Godziny dziennie",
+		"LAST_DAYS": "Ostatnie {{ count }} dni",
+		"NO_HOURS": "Ostatnio nie zarejestrowano czasu dla tego zadania",
+		"TIME_ENTRIES": "Ostatnie wpisy czasu",
+		"NO_TIME_ENTRIES": "Ostatnio brak wpisów czasu",
+		"RUNNING": "W toku",
+		"ACTIVITY_LEVEL": "Aktywność: użycie klawiatury i myszy podczas śledzenia"
 	}
 }

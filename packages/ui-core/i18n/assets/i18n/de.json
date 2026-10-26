@@ -7018,13 +7018,33 @@
 		"COMMENT_IMAGE_FAILED": "{{ name }} konnte nicht hochgeladen werden."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Letzte Änderungen an der Aufgabe und ihre Kommentare",
-		"TIME_WORKED": "Gearbeitete Zeit",
-		"OF_ESTIMATE": "{{ share }} % der Schätzung von {{ estimate }}",
+		"BREADCRUMB": "Brotkrumennavigation",
+		"CHANGE_STATUS": "Status ändern",
+		"LINK_COPIED": "Link kopiert",
 		"SUBTASKS": "Unteraufgaben",
 		"SUBTASKS_DONE": "{{ done }} von {{ total }} erledigt",
 		"NO_SUBTASKS": "Keine Unteraufgaben",
-		"TIME": "Zeit",
-		"NO_TIME": "Für diese Aufgabe wurde noch keine Zeit erfasst"
+		"LINKED_ISSUES": "Verknüpfte Aufgaben",
+		"NO_LINKED_ISSUES": "Keine verknüpften Aufgaben",
+		"LINKS": {
+			"BLOCKS": "Blockiert",
+			"IS_BLOCKED_BY": "Wird blockiert von",
+			"CLONES": "Klont",
+			"IS_CLONED_BY": "Wird geklont von",
+			"DUPLICATES": "Dupliziert",
+			"IS_DUPLICATED_BY": "Wird dupliziert von",
+			"RELATES_TO": "Bezieht sich auf"
+		},
+		"TIME_TRACKING": "Zeiterfassung",
+		"LOGGED": "erfasst",
+		"REMAINING": "verbleibend",
+		"OVER_ESTIMATE": "{{ value }} über der Schätzung",
+		"HOURS_PER_DAY": "Stunden pro Tag",
+		"LAST_DAYS": "Letzte {{ count }} Tage",
+		"NO_HOURS": "Zuletzt keine Zeit für diese Aufgabe erfasst",
+		"TIME_ENTRIES": "Letzte Zeiteinträge",
+		"NO_TIME_ENTRIES": "Zuletzt keine Zeiteinträge",
+		"RUNNING": "Läuft",
+		"ACTIVITY_LEVEL": "Aktivität: Tastatur- und Mausnutzung während der Erfassung"
 	}
 }

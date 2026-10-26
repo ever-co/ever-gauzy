@@ -7014,13 +7014,33 @@
 		"COMMENT_IMAGE_FAILED": "تعذّر رفع {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "أحدث التغييرات على المهمة وتعليقاتها",
-		"TIME_WORKED": "الوقت المستغرق",
-		"OF_ESTIMATE": "{{ share }}% من التقدير {{ estimate }}",
+		"BREADCRUMB": "مسار التنقل",
+		"CHANGE_STATUS": "تغيير الحالة",
+		"LINK_COPIED": "تم نسخ الرابط",
 		"SUBTASKS": "المهام الفرعية",
 		"SUBTASKS_DONE": "أُنجز {{ done }} من {{ total }}",
 		"NO_SUBTASKS": "لا توجد مهام فرعية",
-		"TIME": "الوقت",
-		"NO_TIME": "لم يُسجَّل وقت على هذه المهمة بعد"
+		"LINKED_ISSUES": "المهام المرتبطة",
+		"NO_LINKED_ISSUES": "لا توجد مهام مرتبطة",
+		"LINKS": {
+			"BLOCKS": "يعيق",
+			"IS_BLOCKED_BY": "معاق بواسطة",
+			"CLONES": "يستنسخ",
+			"IS_CLONED_BY": "مستنسخ بواسطة",
+			"DUPLICATES": "يكرر",
+			"IS_DUPLICATED_BY": "مكرر بواسطة",
+			"RELATES_TO": "مرتبط بـ"
+		},
+		"TIME_TRACKING": "تتبع الوقت",
+		"LOGGED": "مسجل",
+		"REMAINING": "متبقٍ",
+		"OVER_ESTIMATE": "{{ value }} فوق التقدير",
+		"HOURS_PER_DAY": "الساعات يوميًا",
+		"LAST_DAYS": "آخر {{ count }} يومًا",
+		"NO_HOURS": "لم يُسجَّل وقت على هذه المهمة مؤخرًا",
+		"TIME_ENTRIES": "أحدث إدخالات الوقت",
+		"NO_TIME_ENTRIES": "لا توجد إدخالات وقت مؤخرًا",
+		"RUNNING": "قيد التشغيل",
+		"ACTIVITY_LEVEL": "النشاط: استخدام لوحة المفاتيح والفأرة أثناء التتبع"
 	}
 }

@@ -7022,13 +7022,33 @@
 		"COMMENT_IMAGE_FAILED": "Não foi possível enviar {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Mudanças recentes na tarefa e em seus comentários",
-		"TIME_WORKED": "Tempo trabalhado",
-		"OF_ESTIMATE": "{{ share }}% da estimativa de {{ estimate }}",
+		"BREADCRUMB": "Trilha de navegação",
+		"CHANGE_STATUS": "Alterar status",
+		"LINK_COPIED": "Link copiado",
 		"SUBTASKS": "Subtarefas",
 		"SUBTASKS_DONE": "{{ done }} de {{ total }} concluídas",
 		"NO_SUBTASKS": "Sem subtarefas",
-		"TIME": "Tempo",
-		"NO_TIME": "Ainda não há tempo registrado nesta tarefa"
+		"LINKED_ISSUES": "Tarefas vinculadas",
+		"NO_LINKED_ISSUES": "Sem tarefas vinculadas",
+		"LINKS": {
+			"BLOCKS": "Bloqueia",
+			"IS_BLOCKED_BY": "É bloqueada por",
+			"CLONES": "Clona",
+			"IS_CLONED_BY": "É clonada por",
+			"DUPLICATES": "Duplica",
+			"IS_DUPLICATED_BY": "É duplicada por",
+			"RELATES_TO": "Relaciona-se com"
+		},
+		"TIME_TRACKING": "Controle de tempo",
+		"LOGGED": "registrado",
+		"REMAINING": "restante",
+		"OVER_ESTIMATE": "{{ value }} acima da estimativa",
+		"HOURS_PER_DAY": "Horas por dia",
+		"LAST_DAYS": "Últimos {{ count }} dias",
+		"NO_HOURS": "Nenhum tempo registrado nesta tarefa recentemente",
+		"TIME_ENTRIES": "Registros de tempo recentes",
+		"NO_TIME_ENTRIES": "Nenhum registro de tempo recente",
+		"RUNNING": "Em andamento",
+		"ACTIVITY_LEVEL": "Atividade: uso do teclado e do mouse durante o controle"
 	}
 }

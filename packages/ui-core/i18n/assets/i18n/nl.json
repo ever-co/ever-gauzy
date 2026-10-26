@@ -7022,13 +7022,33 @@
 		"COMMENT_IMAGE_FAILED": "{{ name }} kon niet worden geüpload."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Recente wijzigingen aan de taak en de reacties erop",
-		"TIME_WORKED": "Gewerkte tijd",
-		"OF_ESTIMATE": "{{ share }}% van de schatting van {{ estimate }}",
+		"BREADCRUMB": "Kruimelpad",
+		"CHANGE_STATUS": "Status wijzigen",
+		"LINK_COPIED": "Link gekopieerd",
 		"SUBTASKS": "Subtaken",
 		"SUBTASKS_DONE": "{{ done }} van {{ total }} klaar",
 		"NO_SUBTASKS": "Geen subtaken",
-		"TIME": "Tijd",
-		"NO_TIME": "Nog geen tijd geregistreerd op deze taak"
+		"LINKED_ISSUES": "Gekoppelde taken",
+		"NO_LINKED_ISSUES": "Geen gekoppelde taken",
+		"LINKS": {
+			"BLOCKS": "Blokkeert",
+			"IS_BLOCKED_BY": "Wordt geblokkeerd door",
+			"CLONES": "Kloont",
+			"IS_CLONED_BY": "Wordt gekloond door",
+			"DUPLICATES": "Dupliceert",
+			"IS_DUPLICATED_BY": "Wordt gedupliceerd door",
+			"RELATES_TO": "Hangt samen met"
+		},
+		"TIME_TRACKING": "Tijdregistratie",
+		"LOGGED": "geregistreerd",
+		"REMAINING": "resterend",
+		"OVER_ESTIMATE": "{{ value }} boven de schatting",
+		"HOURS_PER_DAY": "Uren per dag",
+		"LAST_DAYS": "Laatste {{ count }} dagen",
+		"NO_HOURS": "De laatste tijd geen tijd geregistreerd op deze taak",
+		"TIME_ENTRIES": "Recente tijdregistraties",
+		"NO_TIME_ENTRIES": "De laatste tijd geen tijdregistraties",
+		"RUNNING": "Loopt",
+		"ACTIVITY_LEVEL": "Activiteit: toetsenbord- en muisgebruik tijdens het registreren"
 	}
 }

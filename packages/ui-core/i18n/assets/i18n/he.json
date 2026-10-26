@@ -7032,13 +7032,33 @@
 		"COMMENT_IMAGE_FAILED": "לא ניתן היה להעלות את {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "שינויים אחרונים במשימה ובתגובות שלה",
-		"TIME_WORKED": "זמן עבודה",
-		"OF_ESTIMATE": "{{ share }}% מההערכה של {{ estimate }}",
+		"BREADCRUMB": "נתיב ניווט",
+		"CHANGE_STATUS": "שינוי סטטוס",
+		"LINK_COPIED": "הקישור הועתק",
 		"SUBTASKS": "תתי־משימות",
 		"SUBTASKS_DONE": "{{ done }} מתוך {{ total }} הושלמו",
 		"NO_SUBTASKS": "אין תתי־משימות",
-		"TIME": "זמן",
-		"NO_TIME": "עדיין לא נרשם זמן במשימה זו"
+		"LINKED_ISSUES": "משימות מקושרות",
+		"NO_LINKED_ISSUES": "אין משימות מקושרות",
+		"LINKS": {
+			"BLOCKS": "חוסמת את",
+			"IS_BLOCKED_BY": "חסומה על ידי",
+			"CLONES": "משכפלת את",
+			"IS_CLONED_BY": "משוכפלת על ידי",
+			"DUPLICATES": "כפילות של",
+			"IS_DUPLICATED_BY": "כפולה על ידי",
+			"RELATES_TO": "קשורה ל"
+		},
+		"TIME_TRACKING": "מעקב זמן",
+		"LOGGED": "נרשם",
+		"REMAINING": "נותר",
+		"OVER_ESTIMATE": "{{ value }} מעל ההערכה",
+		"HOURS_PER_DAY": "שעות ליום",
+		"LAST_DAYS": "{{ count }} הימים האחרונים",
+		"NO_HOURS": "לא נרשם זמן במשימה זו לאחרונה",
+		"TIME_ENTRIES": "רשומות זמן אחרונות",
+		"NO_TIME_ENTRIES": "אין רשומות זמן לאחרונה",
+		"RUNNING": "פועל",
+		"ACTIVITY_LEVEL": "פעילות: שימוש במקלדת ובעכבר בזמן המעקב"
 	}
 }
