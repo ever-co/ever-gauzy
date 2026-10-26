@@ -741,7 +741,12 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			{ id: 'invite-other', email: 'other@ever.co', teamIds: [OTHER_TEAM.id] },
 			{ id: 'invite-both', email: 'both@ever.co', teamIds: [MANAGED_TEAM.id, OTHER_TEAM.id] },
 			{ id: 'invite-other-deleted', email: 'other-deleted@ever.co', teamIds: [OTHER_TEAM.id, DELETED_TEAM.id] },
-			{ id: 'invite-deleted', email: 'deleted@ever.co', teamIds: [DELETED_TEAM.id] }
+			{ id: 'invite-deleted', email: 'deleted@ever.co', teamIds: [DELETED_TEAM.id] },
+			{
+				id: 'invite-managed-deleted',
+				email: 'managed-deleted@ever.co',
+				teamIds: [MANAGED_TEAM.id, DELETED_TEAM.id]
+			}
 		];
 
 		let invites: SpecStore;
@@ -873,6 +878,7 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			const expected = [
 				'both@ever.co',
 				'created@ever.co',
+				'managed-deleted@ever.co',
 				'managed@ever.co',
 				'no-team@ever.co',
 				'role-managed@ever.co'
@@ -910,7 +916,7 @@ describe('InviteService - the invitations of a team are handled by its managers'
 
 			const emails = await listed({ where: { teams: { id: [MANAGED_TEAM.id] } } });
 
-			expect(emails).toEqual(['both@ever.co', 'managed@ever.co']);
+			expect(emails).toEqual(['both@ever.co', 'managed-deleted@ever.co', 'managed@ever.co']);
 		});
 
 		it('lists the invitation a request names when it is in reach, and nothing when it is not', async () => {
@@ -949,6 +955,7 @@ describe('InviteService - the invitations of a team are handled by its managers'
 				'invite-both',
 				'invite-created',
 				'invite-managed',
+				'invite-managed-deleted',
 				'invite-no-team',
 				'invite-role-managed'
 			];
@@ -969,6 +976,17 @@ describe('InviteService - the invitations of a team are handled by its managers'
 			expect(tokens['invite-managed']).toBe('token-invite-managed');
 			expect(tokens['invite-no-team']).toBe('token-invite-no-team');
 			expect(tokens['invite-both']).toBeUndefined();
+		});
+
+		it('lists an invitation of a managed team and a soft-deleted one, without its token', async () => {
+			signIn(EMPLOYEE);
+			const service = buildOnStores();
+
+			const { items } = await service.findAllInvites({} as never);
+
+			const tokens = tokensById(items);
+			expect(tokens).toHaveProperty(['invite-managed-deleted']);
+			expect(tokens['invite-managed-deleted']).toBeUndefined();
 		});
 
 		it('withholds that token when the request names the managed team and loads only that one of its teams', async () => {
