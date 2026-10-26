@@ -1,7 +1,11 @@
+import { createEnvironmentInjector, EnvironmentInjector } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import {
 	buildConnectCallbackUrl,
 	CONNECT_SESSION_KEY,
 	CONNECT_SESSION_TTL_MS,
+	provideAiProviderConnectCallback,
 	readPendingConnect,
 	takeConnectCallbackFromLocation
 } from './ai-provider-connect-callback';
@@ -103,6 +107,45 @@ describe('AI provider Connect callback', () => {
 
 			expect(takeConnectCallbackFromLocation()).toBeNull();
 			expect(current()).toBe('/#/pages/settings/ai');
+		});
+	});
+
+	/** The initializer as the plugin installs it: an environment injector created during app start-up. */
+	describe('provideAiProviderConnectCallback', () => {
+		const boot = (navigated: boolean) => {
+			const router = { navigated, navigateByUrl: jest.fn().mockResolvedValue(true) };
+			TestBed.configureTestingModule({ providers: [{ provide: Router, useValue: router }] });
+			createEnvironmentInjector([provideAiProviderConnectCallback()], TestBed.inject(EnvironmentInjector));
+			return router;
+		};
+
+		it('before the initial navigation: rewrites the URL only, for that navigation to read', () => {
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify(pending));
+			visit('/?code=abc-123');
+
+			const router = boot(false);
+
+			expect(current()).toBe('/#/pages/settings/ai?code=abc-123');
+			expect(router.navigateByUrl).not.toHaveBeenCalled();
+		});
+
+		it('after the router already navigated: sends it to the AI Providers page', () => {
+			sessionStorage.setItem(CONNECT_SESSION_KEY, JSON.stringify(pending));
+			visit('/?code=abc-123#/pages/dashboard');
+
+			const router = boot(true);
+
+			expect(current()).toBe('/#/pages/settings/ai?code=abc-123');
+			expect(router.navigateByUrl).toHaveBeenCalledWith('/pages/settings/ai?code=abc-123');
+		});
+
+		it('leaves a normal start alone', () => {
+			visit('/#/pages/dashboard');
+
+			const router = boot(true);
+
+			expect(current()).toBe('/#/pages/dashboard');
+			expect(router.navigateByUrl).not.toHaveBeenCalled();
 		});
 	});
 });
