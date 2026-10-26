@@ -96,6 +96,19 @@ test('an attribute that is not the href of a link, or a commented-out link, coun
 	);
 });
 
+test('an href inside another quoted attribute value is not the link, and a quoted > does not end the tag', () => {
+	assert.deepEqual(
+		[...hrefs('<a title="href=\'https://gauzy.co/extra\'" href="https://gauzy.co/dpa">x</a>')],
+		['https://gauzy.co/dpa']
+	);
+	assert.deepEqual([...hrefs('<a title="a > b" href="https://gauzy.co/dpa">x</a>')], ['https://gauzy.co/dpa']);
+	assert.deepEqual([...hrefs('<a title="href=\'https://gauzy.co/extra\'">x</a>')], []);
+	assert.deepEqual(
+		[...hrefs('<a HREF="https://gauzy.co/dpa" href="https://gauzy.co/extra">x</a>')],
+		['https://gauzy.co/dpa']
+	);
+});
+
 test('a link the page does not write, another route, another attribute or another document fail', () => {
 	for (const added of [
 		// a link no vendored document writes, on a legal page

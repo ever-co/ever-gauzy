@@ -83,9 +83,25 @@ export function documentOf(route) {
 	return Object.hasOwn(PAGES, page) ? PAGES[page] : null;
 }
 
-/** An `<a>` or `<area>` start tag, and an `href` attribute in it (not `data-href` or another name). */
-const LINK_TAG = /<(?:a|area)\b[^>]*>/gi;
-const HREF = /[\s"'](href)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i;
+/** An `<a>` or `<area>` start tag, quote-aware (a `>` inside a quoted value does not end it). */
+const LINK_TAG = /<(?:a|area)\b((?:[^>"']|"[^"]*"|'[^']*')*)>/gi;
+
+/**
+ * The attributes of a start tag (the text after its name), read one after the other so a quoted
+ * value is never searched for another attribute; names lower-cased, the first of a repeated name
+ * kept, as the browser keeps it. Reading stops at markup it cannot parse.
+ */
+export function attributes(source) {
+	const out = new Map();
+	const attribute = /[\s/]*([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/y;
+	while (attribute.lastIndex < source.length) {
+		const m = attribute.exec(source);
+		if (!m) break;
+		const name = m[1].toLowerCase();
+		if (!out.has(name)) out.set(name, m[2] ?? m[3] ?? m[4] ?? '');
+	}
+	return out;
+}
 
 /**
  * The absolute `href` values the links of a vendored document write, as the browser leg records
@@ -94,10 +110,9 @@ const HREF = /[\s"'](href)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i;
 export function hrefs(text) {
 	const out = new Set();
 	const markup = text.replace(/<!--[\s\S]*?-->/g, '');
-	for (const [tag] of markup.matchAll(LINK_TAG)) {
-		const m = HREF.exec(tag);
-		if (!m) continue;
-		const url = recorded(decodeAttribute(m[2] ?? m[3] ?? m[4]));
+	for (const [, source] of markup.matchAll(LINK_TAG)) {
+		const href = attributes(source).get('href');
+		const url = href === undefined ? null : recorded(decodeAttribute(href));
 		if (url) out.add(url);
 	}
 	return out;
