@@ -1,16 +1,23 @@
 export const HumanResourcesPage = {
-	// Accounting dashboard employee rows: each clickable row is `.table-scrollable .block-content`
-	// (the column-title header above the list is `.sub-header .block-content`, which we must NOT match).
-	// Clicking a row calls selectEmployee() -> navigates to the HR dashboard (/pages/dashboard/hr).
-	employeeRowCss: '.table-scrollable .block-content',
-	// The employee name inside a row is rendered by ngx-avatar as `a.link-text`.
-	employeeRowNameCss: '.table-scrollable ngx-avatar a.link-text',
+	// Accounting dashboard employee rows. The "accounting dashboard polish" redesign (#10327, a15f8536cd)
+	// replaced the `.table-scrollable .block-content` list with a Breakdown panel
+	// (apps/gauzy/src/app/pages/dashboard/accounting/accounting.component.html): `div.breakdown` holds a
+	// heading row (`.breakdown-row--head`), one `div.breakdown-row[role=row]` per employee with
+	// (click)="selectEmployee(row.employee)", and a totals row (`.breakdown-row--total`) — only the
+	// per-employee rows may match. Clicking one stores the employee and navigates to the HR dashboard
+	// (/pages/dashboard/hr).
+	employeeRowCss: 'div.breakdown > div.breakdown-row:not(.breakdown-row--head):not(.breakdown-row--total)',
+	// The employee name inside a row is rendered by ngx-avatar as `a.link-text` (its own (click) opens the
+	// employee EDIT page, so the row — not this link — is what gets clicked).
+	employeeRowNameCss:
+		'div.breakdown > div.breakdown-row:not(.breakdown-row--head):not(.breakdown-row--total) ngx-avatar a.link-text',
 	// The selected employee's name is read from the PAGE-HEADER employee selector label, not the HR
 	// card's `.identity-name` span. Reason: clicking an accounting row calls accounting.selectEmployee()
 	// which writes store.selectedEmployee WITHOUT `fullName`; the HR card binds `selectedEmployee.fullName`
 	// (`human-resources.component.html`) so that span renders EMPTY via this path. The header
-	// ga-employee-selector (`ng-select.employee` -> `ng-label-tmp`) instead renders the name from its own
-	// employee list via getShortenedName(firstName,lastName), so it correctly shows e.g. "Default Employee".
+	// ga-employee-selector (`ng-select.employee` -> `ng-label-tmp`) renders the name from firstName +
+	// lastName via getFullName(item) — the FULL, untruncated name since 238e1b4e2c ("update topbar
+	// selector UI"; it used getShortenedName before).
 	employeeNameCss: 'ng-select.employee .selector-template span',
 	// The HR dashboard no longer renders ga-info-block. Its figures now live in two kinds of element:
 	//   * `.kpi`      — the four headline tiles (Total Income, Total Expenses, Profit, Total Bonus)

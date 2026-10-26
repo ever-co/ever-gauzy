@@ -1,5 +1,4 @@
 import { When } from '../../support/bdd';
-import { getPage } from '../../support/page-context';
 import * as appointmentsPage from '../../support/pages/Appointments.po';
 import { AppointmentsPageData } from '../../../src/support/Base/pagedata/AppointmentsPageData';
 import { CustomCommands } from '../../support/commands';
@@ -36,7 +35,9 @@ When('I book a public appointment', async () => {
 		password,
 		imgUrl
 	);
-	await getPage().goto('/#/pages/employees/appointments');
+	// Same destination as the old bare goto, but it proves the calendar actually rendered (re-forcing the
+	// hash route if the navigation from the employees grid was a same-document no-op).
+	await appointmentsPage.gotoAppointments();
 	await appointmentsPage.bookPublicAppointmentButtonVisible();
 	await appointmentsPage.clickBookPublicAppointmentButton(AppointmentsPageData.bookAppointmentButton);
 	await appointmentsPage.employeeDropdownVisible();

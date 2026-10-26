@@ -10,11 +10,9 @@ import { getPage } from '../page-context';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
 import { HumanResourcesPage } from '../../../src/support/Base/pageobjects/HumanResourcesPageObject';
 
-// Reads the displayed name of the first employee row on the accounting dashboard. The spec used to
-// hard-code the freshly-created faker employee, but that employee never appears here: the accounting
-// list comes from findWorkingEmployees(...startedWorkOn <= endDate...) and the shared quick-add
-// addEmployee command does NOT set "Date when started work", so the new employee is filtered out.
-// We instead drive the flow with whichever employee IS present (the seeded "Default Employee").
+// Reads the displayed name of the first employee row on the accounting dashboard (its Breakdown panel,
+// see HumanResourcesPage.employeeRowCss). The flow is driven with whichever employee the list puts first
+// and the HR page is then checked for that same name.
 export const getFirstEmployeeName = async (): Promise<string> => {
 	// The accounting employee list loads asynchronously (aggregate stats + spinner); wait for the row.
 	await waitForSpinnerGone();
@@ -25,38 +23,33 @@ export const getFirstEmployeeName = async (): Promise<string> => {
 	return name.trim();
 };
 
-// Selects the first employee row, which calls selectEmployee() and navigates to the HR dashboard.
-// dispatchClick bypasses any fading cdk-overlay backdrop left by the just-closed add-employee dialog
-// (a coordinate click would land on the backdrop). Settle first so the async aggregate stats have
-// rendered the row.
-export const selectFirstEmployee = async () => {
+// Selects an employee row, which calls selectEmployee() and navigates to the HR dashboard. When `name` is
+// given (the one getFirstEmployeeName read) the row is picked by that name, so a re-sort of the breakdown
+// in between (its statistics load asynchronously) can't swap in a different employee. dispatchClick
+// bypasses any fading cdk-overlay backdrop left by the just-closed add-employee dialog (a coordinate click
+// would land on the backdrop), and it is dispatched on the ROW: the name link inside it opens the employee
+// edit page instead. Settle first so the async aggregate stats have rendered the row.
+export const selectFirstEmployee = async (name?: string) => {
+	const page = getPage();
 	await waitForSpinnerGone();
-	await getPage().waitForLoadState('networkidle').catch(() => {});
-	await getPage().waitForTimeout(1500);
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
 	await verifyElementIsVisible(HumanResourcesPage.employeeRowNameCss);
-	await dispatchClick(HumanResourcesPage.employeeRowCss);
+	const rows = page.locator(HumanResourcesPage.employeeRowCss);
+	const row = name
+		? rows.filter({ has: page.locator('ngx-avatar a.link-text', { hasText: name }) }).first()
+		: rows.first();
+	await row.dispatchEvent('click');
+	await page.waitForURL(/\/pages\/dashboard\/hr/, { timeout: 24_000 }).catch(() => undefined);
 };
 
-// The accounting row's `a.link-text` renders the FULL user name ("First Last"), but the page-header
-// ga-employee-selector label (`ng-select.employee .selector-template span`) renders a SHORTENED form:
-// getShortenedName(firstName, lastName, 18) truncates firstName to 9 chars (no suffix) and lastName to
-// 9 chars + "." if longer (employee.component.ts + truncate.pipe.ts). So a `hasText: <full name>` filter
-// fails whenever either part exceeds 9 chars (e.g. "Valentine Schamberger" -> header "Valentine Schamberg.").
-// Replicate that exact truncation from the full name so the assertion matches whatever the header renders.
+// The page-header ga-employee-selector label (`ng-select.employee .selector-template span`) renders
+// getFullName(item) — the full "First Last" name, the same `user.name` the accounting row shows — since
+// 238e1b4e2c ("update topbar selector UI"). It used to render getShortenedName(firstName, lastName, 18)
+// (each part cut to 9 chars, "." after a cut last name), which this check had to replicate; matching that
+// shortened form against the full label now fails for any name part longer than 9 chars.
 export const verifyEmployeeName = async (text: string) => {
-	const truncate = (value: string, limit: number, ellipsis: string) =>
-		value.length > limit ? value.substring(0, limit) + ellipsis : value;
-	// user.name is `[firstName, lastName].join(' ')` (user.subscriber.ts) — split into first token + rest.
-	const trimmed = text.trim();
-	const spaceIdx = trimmed.indexOf(' ');
-	const firstName = spaceIdx === -1 ? trimmed : trimmed.slice(0, spaceIdx);
-	const lastName = spaceIdx === -1 ? '' : trimmed.slice(spaceIdx + 1);
-	const limit = 18;
-	const shortened =
-		firstName && lastName
-			? `${truncate(firstName, limit / 2, '')} ${truncate(lastName, limit / 2, '.')}`
-			: truncate(trimmed, limit, '');
-	await verifyText(HumanResourcesPage.employeeNameCss, shortened);
+	await verifyText(HumanResourcesPage.employeeNameCss, text.trim());
 };
 
 export const verifyCardTextExist = async (text: string) => {

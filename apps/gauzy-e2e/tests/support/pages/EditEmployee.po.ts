@@ -13,11 +13,25 @@ import {
 	verifyText
 } from '../util';
 import { getPage } from '../page-context';
+import { selectNgOption } from '../ng-select';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { EditEmployeePage } from '../../../src/support/Base/pageobjects/EditEmployeePageObject';
 
 export const selectEmployeeByName = async (name: string) => {
-	await clickElementByText(EditEmployeePage.employeeCss, name);
+	// The accounting dashboard lists working employees as breakdown rows whose (click) selects the
+	// employee and opens the HR dashboard. The row also holds an <ngx-avatar> whose NAME LINK has its own
+	// (click)="edit(id)" straight to the edit form — a coordinate click on the row's text would land on
+	// that link and skip the HR dashboard this flow goes through. Dispatch the click on the row element
+	// itself so only the row's selectEmployee() fires. The rows render after the aggregate statistics
+	// request resolves, so wait for ours first.
+	const row = getPage().locator(EditEmployeePage.employeeCss).filter({ hasText: name }).first();
+	await row.waitFor({ state: 'visible', timeout: 60_000 });
+	await row.dispatchEvent('click');
+	await getPage()
+		.waitForFunction(() => location.hash.split('?')[0].endsWith('/pages/dashboard/hr'), undefined, {
+			timeout: 30_000
+		})
+		.catch(() => undefined);
 };
 
 export const editButtonVisible = async () => {
@@ -84,21 +98,43 @@ export const tabButtonVisible = async () => {
 	await verifyElementIsVisible(EditEmployeePage.tabButtonCss);
 };
 
-export const clickTabButton = async (index: number) => {
+export const clickTabButton = async (tab: number | string) => {
 	// Route-tabs are <li.route-tab> wrapping an <a.tab-link routerLink>; the navigation lives on the
 	// inner anchor. A coordinate click on the <li> (clickButtonByIndex) can land on a fading
 	// cdk-overlay backdrop left by the just-closed datepicker / nb-select / ng-select on the previous
 	// tab, so the hash route never changes and the next tab's lazy component never renders (round-4:
 	// the Location tab stayed on Hiring after the date pickers closed). Settle any transient spinner,
 	// then dispatch the click straight to the nth anchor so routerLink fires regardless of any overlay.
+	//
+	// A string addresses the tab by its route id (account, networks, employment, hiring, location, rates,
+	// projects, contacts, ...): the tabs are registered through PageTabRegistryService
+	// (edit-employee-profile.component.ts) and rendered by gz-dynamic-tabs as an nb-route-tabset whose
+	// anchors carry `href="#/pages/employees/edit/<id>/<tab>"`, so the id survives a tab being added,
+	// hidden or reordered — an index does not. The route change is then confirmed on location.hash.
 	await waitForSpinnerGone();
-	const anchor = getPage()
-		.locator(`${EditEmployeePage.tabButtonCss} a.tab-link`)
-		.nth(index);
-	await anchor.dispatchEvent('click');
-	// Let the hash route swap + the destination tab component begin rendering before the caller's
-	// *Visible() poll (each tab is a separate lazy route component).
-	await getPage().waitForTimeout(800);
+	const page = getPage();
+	const anchor =
+		typeof tab === 'string'
+			? page.locator(`${EditEmployeePage.tabButtonCss} a.tab-link[href$="/${tab}"]`).first()
+			: page.locator(`${EditEmployeePage.tabButtonCss} a.tab-link`).nth(tab);
+	if (typeof tab !== 'string') {
+		await anchor.dispatchEvent('click');
+		// Let the hash route swap + the destination tab component begin rendering before the caller's
+		// *Visible() poll (each tab is a separate lazy route component).
+		await page.waitForTimeout(800);
+		return;
+	}
+	const onTab = () =>
+		page
+			.waitForFunction((id) => location.hash.split('?')[0].endsWith(`/${id}`), tab, { timeout: 8000 })
+			.then(() => true)
+			.catch(() => false);
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await anchor.dispatchEvent('click');
+		if (await onTab()) break;
+		await waitForSpinnerGone();
+	}
+	await page.waitForTimeout(800);
 };
 
 export const linkedinInputVisible = async () => {
@@ -205,7 +241,15 @@ export const clickPayPeriodDropdown = async () => {
 };
 
 export const selectPayPeriodOption = async (text: string) => {
-	await clickElementByText(EditEmployeePage.dropdownOptionCss, text);
+	// Exact label: the pay periods render as "None", "Bi Weekly", "Weekly", ... (PayPeriodEnum order), so a
+	// substring match on "Weekly" picked "Bi Weekly", the first option containing it.
+	const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const exact = new RegExp(`^\\s*${escaped}\\s*$`);
+	await getPage()
+		.locator(EditEmployeePage.dropdownOptionCss)
+		.filter({ hasText: exact })
+		.first()
+		.click({ force: true, timeout: 60_000 });
 };
 
 export const weeklyLimitInputVisible = async () => {
@@ -247,35 +291,24 @@ export const clickProjectOrContactDropdown = async () => {
 };
 
 export const selectProjectOrContactFromDropdown = async (index: number) => {
+	// #departmentsSelect is the <ga-edit-employee-membership> ng-select (multiple, hideSelected,
+	// appendTo="body"). Driven through the shared ng-select driver: it opens the control by keyboard,
+	// counts only REAL options (ng-select's "No items found" row is also a `div.ng-option`, which the old
+	// loop happily "clicked" as if it were a project), and confirms the pick by the chip it commits.
+	// BEST-EFFORT by design: the list is "all org entities MINUS the ones already assigned to this
+	// employee", so on the Projects tab it is legitimately EMPTY when CustomCommands.addProject already
+	// made this employee a member of every project. In that case nothing is picked, the add form's "Add"
+	// stays disabled, and the caller's verifyProjectOrContactExist still checks the employee's list.
 	const page = getPage();
-	const control = page.locator(EditEmployeePage.projectOrContactsDropdownCss);
-	const input = control.locator('input').first();
-	const option = page.locator(EditEmployeePage.projectOrContactDropdownOptionCss);
-	// Open the ng-select via the keyboard (focus the search input + ArrowDown), NOT a click: ng-select
-	// opens on mousedown and a leftover stepper/dialog backdrop swallows a coordinate click, so the
-	// option panel never rendered. Settle first so the async option list (organizationEntities) is
-	// loaded, then open + pick in ONE tight loop — opening in a separate pass from the click let the
-	// panel auto-close on blur before the click ran, so 'div.ng-option' was never present (round-4
-	// 60s timeout). BEST-EFFORT by design: the dropdown source is "all org entities MINUS the ones
-	// already assigned to this employee". On the Projects tab the only seeded/added project
-	// ("Gauzy Web Site") is assigned to this same employee by CustomCommands.addProject (it picks
-	// member index 0 = our just-added employee), so the list is legitimately EMPTY — there is nothing
-	// to add. Don't hard-fail: close the panel and return; the caller's verifyProjectOrContactExist
-	// still passes (the entities card shows the already-assigned project). On the Contacts tab the
-	// just-added contact is NOT yet assigned, so an option is present and gets picked.
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
-	for (let i = 0; i < 10; i++) {
-		if (await option.first().isVisible().catch(() => false)) {
-			await option.nth(index).click({ force: true }).catch(() => {});
-			return;
-		}
-		await input.focus().catch(() => {});
-		await page.keyboard.press('ArrowDown').catch(() => {});
-		await page.waitForTimeout(700);
-	}
-	// No selectable option after ~7s of polling → empty list (everything already assigned). Close the
-	// open ng-select panel so its body-appended overlay can't swallow the next footer/tab click.
+	await selectNgOption(
+		EditEmployeePage.projectOrContactsDropdownCss,
+		EditEmployeePage.projectOrContactDropdownOptionCss,
+		index
+	);
+	// Close the body-appended panel (no dialog here, so Escape can't dismiss anything else) so it can't
+	// sit over the add form's buttons.
 	await page.keyboard.press('Escape').catch(() => {});
 };
 
@@ -300,7 +333,10 @@ export const saveBtnExists = async () => {
 };
 
 export const saveBtnClick = async () => {
-	await clickButton(EditEmployeePage.saveButtonCss);
+	// Dispatched: the success toasts of the Projects/Contacts adds just before can still be on screen,
+	// and a coordinate click must not land on one. The button is enabled (the account form is valid).
+	await waitForSpinnerGone();
+	await dispatchClick(EditEmployeePage.saveButtonCss);
 };
 
 export const verifyEmployee = async (text: string) => {

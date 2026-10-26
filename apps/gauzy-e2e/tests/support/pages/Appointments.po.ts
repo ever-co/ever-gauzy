@@ -15,6 +15,24 @@ import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AppointmentsPage } from '../../../src/support/Base/pageobjects/AppointmentsPageObject';
 
+// Open the appointments calendar (/pages/employees/appointments). The previous screen is the employees
+// grid (addEmployee), which shares the /pages/employees path prefix; if the hash goto turned out to be a
+// same-document no-op and the calendar never mounted, re-assign the hash and, failing that, reload the
+// target URL so the router renders it.
+export const gotoAppointments = async () => {
+	const page = getPage();
+	const route = '#/pages/employees/appointments';
+	const calendar = page.locator(AppointmentsPage.appointmentCalendarCss).first();
+	await page.goto(`/${route}`);
+	if (await calendar.waitFor({ state: 'visible', timeout: 15_000 }).then(() => true).catch(() => false)) return;
+	await page.evaluate((h) => {
+		if (location.hash.split('?')[0] !== h) location.hash = h;
+	}, route);
+	if (await calendar.waitFor({ state: 'visible', timeout: 10_000 }).then(() => true).catch(() => false)) return;
+	await page.reload({ waitUntil: 'domcontentloaded' }).catch(() => undefined);
+	await calendar.waitFor({ state: 'visible', timeout: 24_000 });
+};
+
 export const bookPublicAppointmentButtonVisible = async () => {
 	await verifyElementIsVisible(AppointmentsPage.bookPublicAppointmentButtonCss);
 };
@@ -116,9 +134,13 @@ export const bookAppointmentButtonVisible = async () => {
 
 export const clickBookAppointmentButton = async () => {
 	// bookPublicEmployeeAppointment() fetches event types then navigates to /share/employee/:id (the
-	// public-appointment page). Click, then wait for that URL so the next visibility probe is on the
-	// right page.
-	await clickButton(AppointmentsPage.bookAppointmentButtonCss);
+	// public-appointment page). The footer button is [disabled]="!organization" and NbButton swallows
+	// clicks on a disabled host, so wait until it is enabled, then dispatch the click (the body-appended
+	// employee ng-select panel may still be fading out over the card footer). Wait for that URL so the
+	// next visibility probe is on the right page.
+	const button = getPage().locator(AppointmentsPage.bookAppointmentButtonCss).first();
+	await expect(button).toBeEnabled({ timeout: 24_000 });
+	await dispatchClick(AppointmentsPage.bookAppointmentButtonCss);
 	await getPage().waitForURL(/\/share\/employee\/[^/]+$/, { timeout: 24_000 });
 	await waitForSpinnerGone();
 };
