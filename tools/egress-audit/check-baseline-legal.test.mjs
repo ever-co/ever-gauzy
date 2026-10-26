@@ -145,6 +145,14 @@ test('link-shaped text in another quoted attribute or a raw-text element is not 
 		['https://gauzy.co/dpa']
 	);
 	assert.deepEqual([...hrefs('<textarea><a href="https://gauzy.co/unclosed">')], []);
+	// Only the element's own end tag, whole name, ends its text; <plaintext> never ends.
+	assert.deepEqual([...hrefs('<textarea></textarea-extra><a href="https://gauzy.co/extra"></textarea>')], []);
+	assert.deepEqual([...hrefs('<script>"</script-not><a href=\'https://gauzy.co/extra\'>"</script>')], []);
+	assert.deepEqual([...hrefs('<plaintext></plaintext><a href="https://gauzy.co/extra">')], []);
+	assert.deepEqual(
+		[...hrefs('<TEXTAREA>t</TextArea ><a href="https://gauzy.co/dpa">x</a>')],
+		['https://gauzy.co/dpa']
+	);
 });
 
 test('only the html a generated document renders counts, not its header comment or other fields', () => {

@@ -129,14 +129,17 @@ export function attributes(source) {
  */
 export function hrefs(html) {
 	const out = new Set();
-	const lower = html.toLowerCase();
 	const token = new RegExp(TOKEN.source, TOKEN.flags);
 	for (let m = token.exec(html); m; m = token.exec(html)) {
 		const name = m[1]?.toLowerCase();
 		if (name === undefined) continue; // a comment
 		if (RAW_TEXT.has(name)) {
-			const end = lower.indexOf(`</${name}`, token.lastIndex);
-			token.lastIndex = end < 0 ? html.length : end;
+			// The content runs to the element's own end tag (the whole name, `</textarea-x>` is text),
+			// and the scan resumes after that tag; <plaintext> has none: the rest is text.
+			if (name === 'plaintext') break;
+			const close = new RegExp(`</${name}(?=[\\s/>])[^>]*>`, 'gi');
+			close.lastIndex = token.lastIndex;
+			token.lastIndex = close.exec(html) ? close.lastIndex : html.length;
 			continue;
 		}
 		if (name !== 'a' && name !== 'area') continue;
