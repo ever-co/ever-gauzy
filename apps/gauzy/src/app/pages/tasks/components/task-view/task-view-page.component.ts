@@ -1,51 +1,68 @@
 import { ChangeDetectionStrategy, Component, HostBinding, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
+import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { combineLatest } from 'rxjs';
-import { distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { combineLatest, firstValueFrom } from 'rxjs';
+import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import * as moment from 'moment-timezone';
-import { BaseEntityEnum, IOrganization, ITask } from '@gauzy/contracts';
-import { Store, TasksService, TimesheetStatisticsService } from '@gauzy/ui-core/core';
+import {
+	BaseEntityEnum,
+	IOrganization,
+	IPagination,
+	ITask,
+	ITaskLinkedIssue,
+	ITaskStatus,
+	PermissionsEnum
+} from '@gauzy/contracts';
+import { API_PREFIX, toParams, toUtcOffset } from '@gauzy/ui-core/common';
+import {
+	Store,
+	TasksService,
+	TimesheetService,
+	TimesheetStatisticsService,
+	ToastrService
+} from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import {
+	AddTaskDialogComponent,
 	HashNumberPipe,
 	IRecordViewSection,
 	IRecordViewStatus,
 	RecordViewPageState,
-	recordViewPageStateOf
+	recordViewPageStateOf,
+	TimeZoneService
 } from '@gauzy/ui-core/shared';
+import { IEmployeeHoursDay } from '../../../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
 import {
-	dueInWords,
-	ITaskProgress,
+	failed,
+	formatDuration,
 	ITaskWorker,
-	projectWorkedTimeOf,
-	taskProgressOf,
+	Loadable,
+	loaded,
+	loading,
+	scopedTaskStatusesOf,
 	taskWorkersOf
 } from '../../../projects/components/project-view/project-view.utils';
+import { buildTaskViewSections, isTaskFinished, taskStatusOf, TASK_VIEW_RELATIONS } from './task-view-sections';
 import {
-	buildTaskViewSections,
-	isTaskFinished,
-	taskPriorityOf,
-	taskSizeOf,
-	taskStatusOf,
-	TASK_VIEW_RELATIONS
-} from './task-view-sections';
-
-/** The page's tabs, as on the project page; the open one is in the URL (`?tab=`). */
-export type TaskViewTab = 'overview' | 'activity';
-
-const TABS: TaskViewTab[] = ['overview', 'activity'];
+	hoursDaysOf,
+	ILinkedIssueGroup,
+	ITimeEntryRow,
+	ITimeTracking,
+	linkedIssueGroupsOf,
+	timeEntriesOf,
+	timeTrackingOf
+} from './task-view-page.utils';
 
 /** The relations the page reads: the View's, and the subtasks with their status. */
 export const TASK_PAGE_RELATIONS: string[] = [...TASK_VIEW_RELATIONS, 'children', 'children.taskStatus'];
 
-/** The headline's due date: the date, and how far off it is. */
-export interface ITaskDue {
-	date: string;
-	words: { key: string; count?: number };
-	overdue: boolean;
-}
+/** Days the hours chart covers. */
+export const HOURS_DAYS = 14;
+/** Days the recent time entries are read over. */
+export const ENTRIES_DAYS = 30;
 
 /** One subtask, as the Subtasks panel lists it. */
 export interface ISubtaskRow {
@@ -69,9 +86,10 @@ export interface ISubtaskCount {
  * sidebar opens, and where the task drawer's "expand to full width" icon leads. The URL is the task's —
  * bookmark it, share it, reload it.
  *
- * Laid out as the project page is. Overview: the task's header and four figures — time worked against the
- * estimate, the due date, the priority and the subtasks done — then its subtasks beside its time (who worked
- * most on it), then the sections the drawer shows, from the same builder. Activity: what changed on it.
+ * Laid out as Jira's issue page: a breadcrumb, the title and the actions — the status, Edit and Copy link —
+ * across the top; the work in the wide column — the description, the hours per day as Hubstaff charts them,
+ * the subtasks and the linked issues; and the facts in the side column — the details, the time tracking with
+ * who worked most and the recent time entries, then the stamps.
  *
  * The page belongs to the organization selected in the header, like the task lists: a task of another
  * organization reads "not found" (its favorite star would otherwise file it under the wrong organization),
@@ -95,33 +113,38 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	@HostBinding('class.is-page') readonly isPage = true;
 
 	readonly favoriteEntity = BaseEntityEnum.Task;
+	readonly hoursDays = HOURS_DAYS;
+	readonly entriesDays = ENTRIES_DAYS;
 	/** The list a task belongs to, for the page's back button. */
 	readonly backLink = '/pages/tasks/dashboard';
-	readonly tabs: { id: TaskViewTab; label: string; icon: string }[] = [
-		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
-		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' }
-	];
-	tab: TaskViewTab = 'overview';
 
 	task: ITask = null;
 	status: IRecordViewStatus = null;
-	sections: IRecordViewSection[] = [];
+	/** The description, in the wide column. */
+	mainSections: IRecordViewSection[] = [];
+	/** The details, at the top of the side column. */
+	detailsSections: IRecordViewSection[] = [];
+	/** The created / updated stamps, at the foot of the side column. */
+	metaSections: IRecordViewSection[] = [];
 	state: RecordViewPageState = 'loading';
 	organization: IOrganization | null = null;
 
-	/** The headline's figures, worked out with the task. */
-	priority: IRecordViewStatus | null = null;
-	size: IRecordViewStatus | null = null;
-	due: ITaskDue | null = null;
 	subtasks: ISubtaskRow[] = [];
 	subtaskCount: ISubtaskCount | null = null;
 
-	/** The time reads are under way. */
-	timeLoading = false;
-	/** The time worked on the task against its estimate, once read; `null` until then, or with neither. */
-	progress: ITaskProgress | null = null;
+	/** The time worked against the estimate, once read. */
+	tracking: Loadable<ITimeTracking | null> = loading(null);
 	/** The people who worked most on the task, once read. */
 	workers: ITaskWorker[] = [];
+	hours: Loadable<IEmployeeHoursDay[]> = loading([]);
+	entries: Loadable<ITimeEntryRow[]> = loading([]);
+	links: Loadable<ILinkedIssueGroup[]> = loading([]);
+
+	/** The statuses the task can move to; read for those who may edit it. */
+	statuses: ITaskStatus[] = [];
+	savingStatus = false;
+
+	readonly canEdit: boolean;
 
 	private taskId: string = null;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
@@ -132,11 +155,17 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		public readonly translateService: TranslateService,
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
+		private readonly http: HttpClient,
+		private readonly dialogService: NbDialogService,
 		private readonly tasksService: TasksService,
+		private readonly timesheetService: TimesheetService,
 		private readonly statisticsService: TimesheetStatisticsService,
+		private readonly timeZoneService: TimeZoneService,
+		private readonly toastrService: ToastrService,
 		private readonly store: Store
 	) {
 		super(translateService);
+		this.canEdit = this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT);
 	}
 
 	ngOnInit(): void {
@@ -158,27 +187,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				this.organization = organization;
 				void this.load();
 			});
-		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back.
-		this.route.queryParamMap
-			.pipe(
-				map((params) => params.get('tab') as TaskViewTab),
-				distinctUntilChanged(),
-				untilDestroyed(this)
-			)
-			.subscribe((tab) => (this.tab = TABS.includes(tab) ? tab : 'overview'));
 		// The estimate is spelled out in the viewer's language.
 		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => this.show());
-	}
-
-	/** Opens a tab, keeping it in the URL without a new history entry per click. */
-	selectTab(tab: TaskViewTab): void {
-		this.tab = tab;
-		void this.router.navigate([], {
-			relativeTo: this.route,
-			queryParams: { tab: tab === 'overview' ? null : tab },
-			queryParamsHandling: 'merge',
-			replaceUrl: true
-		});
 	}
 
 	/** Loads (or reloads, after an error) the task the URL names. */
@@ -191,8 +201,6 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		const sequence = ++this.loadSequence;
 		// Nothing of the previous task (or organization) stays on screen — nor reachable by the star.
 		this.task = null;
-		this.progress = null;
-		this.workers = [];
 		this.state = 'loading';
 		try {
 			const task = await this.tasksService.getById(id, TASK_PAGE_RELATIONS);
@@ -205,7 +213,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			this.task = task;
 			this.show();
 			this.state = 'ready';
-			void this.loadTime(task, sequence);
+			this.loadPanels(task, sequence);
 		} catch (error) {
 			if (sequence !== this.loadSequence) {
 				return;
@@ -215,56 +223,240 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		}
 	}
 
-	subtaskLink(id: string): string[] {
-		return ['/pages/tasks/view', id];
-	}
-
-	/** The time worked against the estimate and who worked most, read together; each lands on its own. */
-	private async loadTime(task: ITask, sequence: number): Promise<void> {
-		this.timeLoading = true;
-		await Promise.all([this.loadProgress(task, sequence), this.loadWorkers(task, sequence)]);
-		if (sequence === this.loadSequence) this.timeLoading = false;
-	}
-
-	/**
-	 * The time worked on the task, all time, against its estimate — or, without one, against its project's
-	 * tracked time, as the project page's task drawer reads it. A failed read shows no progress.
-	 */
-	private async loadProgress(task: ITask, sequence: number): Promise<void> {
+	/** Reads the task again in place, after a change: the page stays on screen while it does. */
+	private async refresh(): Promise<void> {
+		const sequence = ++this.loadSequence;
 		try {
-			const rows = await this.statisticsService.getTasksStatistics({
-				...this.scope(),
-				...(task.projectId ? { projectIds: [task.projectId] } : { taskIds: [task.id] })
-			});
-			if (sequence !== this.loadSequence) return;
-			const seconds = (rows || []).map((row) => Number(row.duration) || 0);
-			const row = (rows || []).find((item) => item.id === task.id);
-			this.progress = taskProgressOf(Number(row?.duration) || 0, task.estimate, projectWorkedTimeOf(seconds));
+			const task = await this.tasksService.getById(this.taskId, TASK_PAGE_RELATIONS);
+			if (sequence !== this.loadSequence || !task?.id) return;
+			this.task = task;
+			this.show();
+			this.loadPanels(task, sequence);
 		} catch {
-			// The page stays without progress.
+			// The page keeps what it showed.
 		}
 	}
 
+	/* ── Actions ── */
+
 	/**
-	 * Who worked most on the task, all time: each employee's time on it, summed by the server. The project
-	 * lets a manager of it see its members' time. A failed read lists no one.
+	 * Moves the task to another status — the status alone, as the project board does, so nothing else read
+	 * with the page can undo a newer edit — then reads the task again.
 	 */
-	private async loadWorkers(task: ITask, sequence: number): Promise<void> {
+	async changeStatus(statusId: string): Promise<void> {
+		const status = this.statuses.find((item) => item.id === statusId);
+		if (!status || !this.task || this.savingStatus || status.id === this.task.taskStatusId) return;
+		this.savingStatus = true;
 		try {
-			const rows = await this.statisticsService.getTaskEmployees({
-				...this.scope(),
-				taskIds: [task.id],
-				...(task.projectId ? { projectIds: [task.projectId] } : {})
+			await firstValueFrom(
+				this.http.put<ITask>(`${API_PREFIX}/tasks/${this.task.id}/status`, {
+					status: status.value || status.name,
+					taskStatusId: status.id,
+					...this.scope()
+				})
+			);
+			await this.refresh();
+		} catch (error) {
+			this.toastrService.danger(error);
+		} finally {
+			this.savingStatus = false;
+		}
+	}
+
+	/** Opens the task dialog the task list edits with, then saves what it answers and reads the task again. */
+	async edit(): Promise<void> {
+		if (!this.task || !this.canEdit) return;
+		const dialog = this.dialogService.open(AddTaskDialogComponent, { context: { selectedTask: this.task } });
+		const data: any = await firstValueFrom(dialog.onClose.pipe(first()));
+		if (!data) return;
+		const { estimateDays, estimateHours, estimateMinutes } = data;
+		const estimate =
+			(Number(estimateDays) || 0) * 24 * 60 * 60 + (Number(estimateHours) || 0) * 60 * 60 + (Number(estimateMinutes) || 0) * 60;
+		try {
+			await firstValueFrom(
+				this.tasksService.editTask({
+					...data,
+					estimate: estimate || null,
+					...this.scope(),
+					id: this.task.id
+				})
+			);
+			await this.refresh();
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	}
+
+	/** Copies the page's address, to paste in a chat or a ticket. */
+	async copyLink(): Promise<void> {
+		if (!this.task) return;
+		const path = this.router.serializeUrl(this.router.createUrlTree(['/pages/tasks/view', this.task.id]));
+		const { origin, pathname, hash } = window.location;
+		// The app routes by the hash (`/#/pages/…`); the link keeps to it.
+		const url = hash.startsWith('#/') ? `${origin}${pathname}#${path}` : `${origin}${path}`;
+		try {
+			await navigator.clipboard.writeText(url);
+			this.toastrService.success('TASK_VIEW.LINK_COPIED');
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
+	}
+
+	/* ── View helpers ── */
+
+	taskLink(id: string): string[] {
+		return ['/pages/tasks/view', id];
+	}
+
+	projectLink(id: string): string[] {
+		return ['/pages/organization/projects/view', id];
+	}
+
+	/** The parent task as the breadcrumb names it: "#12 Parent title". */
+	get parentLabel(): string | null {
+		const parent = this.task?.parent as any;
+		if (!parent?.id) return null;
+		return [parent.taskNumber ? this.hashNumberPipe.transform(parent.taskNumber) : '', parent.title]
+			.filter(Boolean)
+			.join(' ');
+	}
+
+	get taskKey(): string {
+		const number = (this.task as any)?.taskNumber;
+		return number ? this.hashNumberPipe.transform(number) : '';
+	}
+
+	/** The total of the hours chart, so an empty fortnight says so instead of drawing flat bars. */
+	get hoursTotal(): number {
+		return (this.hours.value || []).reduce((sum, day) => sum + day.tracked + day.manual, 0);
+	}
+
+	formatHours = (hours: number): string => formatDuration((Number(hours) || 0) * 3600);
+
+	/* ── Reads ── */
+
+	/** Every panel reads on its own; a failure (most often a 403) blanks only its panel. */
+	private loadPanels(task: ITask, sequence: number): void {
+		void this.loadTime(task, sequence);
+		void this.loadHours(task, sequence);
+		void this.loadEntries(task, sequence);
+		void this.loadLinks(task, sequence);
+		if (this.canEdit) void this.loadStatuses(task, sequence);
+	}
+
+	/**
+	 * The time worked on the task, all time, against its estimate, and who worked most on it: each employee's
+	 * time on it, summed by the server. The project lets a manager of it see its members' time.
+	 */
+	private async loadTime(task: ITask, sequence: number): Promise<void> {
+		this.tracking = loading(this.tracking.value);
+		const filters = { ...this.scope(), taskIds: [task.id], ...(task.projectId ? { projectIds: [task.projectId] } : {}) };
+		const [totals, people] = await Promise.allSettled([
+			this.statisticsService.getTasksStatistics(filters),
+			this.statisticsService.getTaskEmployees(filters)
+		]);
+		if (sequence !== this.loadSequence) return;
+		if (totals.status === 'fulfilled') {
+			const row = (totals.value || []).find((item) => item.id === task.id);
+			this.tracking = loaded(timeTrackingOf(Number(row?.duration) || 0, task.estimate));
+		} else {
+			this.tracking = failed(null);
+		}
+		this.workers = people.status === 'fulfilled' ? taskWorkersOf(people.value || [], 5) : [];
+	}
+
+	/** The hours worked on the task each day of the last fortnight, tracked and manual. */
+	private async loadHours(task: ITask, sequence: number): Promise<void> {
+		this.hours = loading([]);
+		try {
+			const rows = await this.timesheetService.getDailyReportChart({
+				...this.range(HOURS_DAYS),
+				taskIds: [task.id]
 			});
 			if (sequence !== this.loadSequence) return;
-			this.workers = taskWorkersOf(rows || [], 5);
+			this.hours = loaded(hoursDaysOf(rows));
 		} catch {
-			// The page stays without its people.
+			if (sequence === this.loadSequence) this.hours = failed([]);
+		}
+	}
+
+	/** The newest time entries of the last month, with their activity; the server keeps to what the viewer may see. */
+	private async loadEntries(task: ITask, sequence: number): Promise<void> {
+		this.entries = loading([]);
+		try {
+			const logs = await this.timesheetService.getTimeLogs({ ...this.range(ENTRIES_DAYS), taskIds: [task.id] }, [
+				'employee',
+				'employee.user',
+				'timeSlots'
+			]);
+			if (sequence !== this.loadSequence) return;
+			this.entries = loaded(timeEntriesOf(logs || []));
+		} catch {
+			if (sequence === this.loadSequence) this.entries = failed([]);
+		}
+	}
+
+	/** The links the task starts and the links that end at it, read side by side. */
+	private async loadLinks(task: ITask, sequence: number): Promise<void> {
+		this.links = loading([]);
+		const read = (where: Record<string, string>, relations: string[]) =>
+			firstValueFrom(
+				this.http.get<IPagination<ITaskLinkedIssue>>(`${API_PREFIX}/task-linked-issue`, {
+					params: toParams({ where: { ...this.scope(), ...where }, relations })
+				})
+			);
+		const [outgoing, incoming] = await Promise.allSettled([
+			read({ taskFromId: task.id }, ['taskTo', 'taskTo.taskStatus']),
+			read({ taskToId: task.id }, ['taskFrom', 'taskFrom.taskStatus'])
+		]);
+		if (sequence !== this.loadSequence) return;
+		if (outgoing.status === 'rejected' && incoming.status === 'rejected') {
+			this.links = failed([]);
+			return;
+		}
+		this.links = loaded(
+			linkedIssueGroupsOf(
+				outgoing.status === 'fulfilled' ? outgoing.value?.items || [] : [],
+				incoming.status === 'fulfilled' ? incoming.value?.items || [] : [],
+				task.id,
+				(value) => this.hashNumberPipe.transform(value)
+			)
+		);
+	}
+
+	/** The statuses the task's project takes, in their order, as the project board's columns. */
+	private async loadStatuses(task: ITask, sequence: number): Promise<void> {
+		try {
+			const read = async (where: Record<string, string>) =>
+				(
+					await firstValueFrom(
+						this.http.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, {
+							params: toParams(where)
+						})
+					)
+				)?.items || [];
+			const statuses = await scopedTaskStatusesOf(read, { ...this.scope(), projectId: task.projectId });
+			if (sequence !== this.loadSequence) return;
+			this.statuses = [...statuses].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+		} catch {
+			// The status shows without its menu.
 		}
 	}
 
 	private scope() {
 		return { organizationId: this.organization?.id, tenantId: this.organization?.tenantId };
+	}
+
+	/** The last `days` days, to the end of today, as the time endpoints read a window. */
+	private range(days: number) {
+		const timeZone = this.timeZoneService.currentTimeZone;
+		const format = (date: moment.Moment) => toUtcOffset(date, timeZone).format('YYYY-MM-DD HH:mm:ss');
+		return {
+			...this.scope(),
+			startDate: format(moment().subtract(days - 1, 'days').startOf('day')),
+			endDate: format(moment().endOf('day')),
+			timeZone
+		};
 	}
 
 	/** Works out everything the page shows from the task. */
@@ -274,31 +466,24 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			return;
 		}
 		this.status = taskStatusOf(task);
-		this.priority = taskPriorityOf(task);
-		this.size = taskSizeOf(task);
-		this.due = this.dueOf(task);
 		this.subtasks = this.subtasksOf(task);
 		const done = this.subtasks.filter((row) => row.done).length;
 		const total = this.subtasks.length;
 		this.subtaskCount = total ? { done, total, percent: (done / total) * 100 } : null;
-		this.sections = buildTaskViewSections(task, {
+		const sections = buildTaskViewSections(task, {
 			translate: (key) => this.getTranslation(key),
 			hash: (value) => this.hashNumberPipe.transform(value)
 		});
-	}
-
-	/** The due date, and how far off it is; a finished task's due date is no longer a deadline. */
-	private dueOf(task: ITask): ITaskDue | null {
-		if (!task.dueDate) {
-			return null;
-		}
-		const finished = isTaskFinished(task);
-		const daysLeft = moment(task.dueDate).startOf('day').diff(moment().startOf('day'), 'days');
-		return {
-			date: moment(task.dueDate).format('ll'),
-			words: dueInWords(daysLeft, finished),
-			overdue: !finished && daysLeft < 0
-		};
+		// The description is the work, beside the subtasks; the details and the stamps are the facts. The
+		// status is the header's button, as in Jira, so the details leave it out.
+		this.mainSections = sections.filter((section) => section.variant === 'plain');
+		this.metaSections = sections.filter((section) => section.variant === 'meta');
+		this.detailsSections = sections
+			.filter((section) => section.variant !== 'plain' && section.variant !== 'meta')
+			.map((section) => ({
+				...section,
+				fields: section.fields.filter((field) => field.label !== 'TASKS_PAGE.TASKS_STATUS')
+			}));
 	}
 
 	/** Open subtasks first, then the finished ones, each by number. */
