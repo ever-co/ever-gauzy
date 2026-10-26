@@ -1986,6 +1986,10 @@
 			"WORKDAY": "Workday",
 			"SCROLL_TEAMS_BACK": "Show previous teams",
 			"SCROLL_TEAMS_FORWARD": "Show more teams",
+			"PERSON_TASKS": "Tasks",
+			"WORKING_ON": "Working on",
+			"LAST_TASK": "Last task",
+			"PERSON_WORKDAY": "{{ percent }} of a {{ hours }} workday",
 			"COLUMNS": {
 				"TEAM": "Team",
 				"WORKED": "Worked",

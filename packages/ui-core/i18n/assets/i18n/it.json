@@ -1824,6 +1824,10 @@
 			"WORKDAY": "Giornata lavorativa",
 			"SCROLL_TEAMS_BACK": "Mostra i team precedenti",
 			"SCROLL_TEAMS_FORWARD": "Mostra altri team",
+			"PERSON_TASKS": "Attività",
+			"WORKING_ON": "Sta lavorando su",
+			"LAST_TASK": "Ultima attività",
+			"PERSON_WORKDAY": "{{ percent }} di una giornata di {{ hours }}",
 			"COLUMNS": {
 				"TEAM": "Team",
 				"WORKED": "Hanno lavorato",
