@@ -1,12 +1,15 @@
 import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
 import {
 	IMemberRow,
+	IProjectWorked,
 	IRankedMember,
 	ITeamRow,
 	activityTone,
+	fitProjectsPopover,
 	formatDuration,
 	formatPercent
 } from '../team-dashboard.utils';
+import { PersonCardKeyboard, personCardId } from '../person-card-keyboard';
 
 /** Organization-wide figures of the overview's summary strip. */
 export interface ITeamsOverview {
@@ -38,10 +41,19 @@ export class AllTeamComponent {
 	public readonly formatDuration = formatDuration;
 	public readonly formatPercent = formatPercent;
 	public readonly activityTone = activityTone;
+	/** Fits the "Projects worked" popover to the screen as it opens. */
+	protected readonly fitProjectsPopover = fitProjectsPopover;
+
+	/** Keyboard access to the Top members' hover cards. */
+	protected readonly cardKeyboard = new PersonCardKeyboard();
+	/** Prefix of the Top members' card ids; each line adds its index. */
+	protected readonly cardIdPrefix = personCardId();
 
 	@Input() public teams: ITeamRow[] = [];
 	@Input() public membersByTeam: Record<string, IMemberRow[]> = {};
 	@Input() public topMembers: IRankedMember[] = [];
+	/** The projects behind the "Projects worked" tile, for its View list. */
+	@Input() public projects: IProjectWorked[] = [];
 	@Input() public overview: ITeamsOverview;
 	@Input() public projectCount = 0;
 

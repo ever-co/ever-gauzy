@@ -1823,6 +1823,10 @@
 			"WORKDAY": "Dzień pracy",
 			"SCROLL_TEAMS_BACK": "Pokaż poprzednie zespoły",
 			"SCROLL_TEAMS_FORWARD": "Pokaż więcej zespołów",
+			"PERSON_TASKS": "Zadania",
+			"WORKING_ON": "Pracuje nad",
+			"LAST_TASK": "Ostatnie zadanie",
+			"PERSON_WORKDAY": "{{ percent }} dnia pracy ({{ hours }})",
 			"COLUMNS": {
 				"TEAM": "Zespół",
 				"WORKED": "Pracowali",

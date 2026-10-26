@@ -1875,6 +1875,10 @@
 			"WORKDAY": "Рабочий день",
 			"SCROLL_TEAMS_BACK": "Показать предыдущие команды",
 			"SCROLL_TEAMS_FORWARD": "Показать ещё команды",
+			"PERSON_TASKS": "Задачи",
+			"WORKING_ON": "Работает над",
+			"LAST_TASK": "Последняя задача",
+			"PERSON_WORKDAY": "{{ percent }} рабочего дня ({{ hours }})",
 			"COLUMNS": {
 				"TEAM": "Команда",
 				"WORKED": "Работали",

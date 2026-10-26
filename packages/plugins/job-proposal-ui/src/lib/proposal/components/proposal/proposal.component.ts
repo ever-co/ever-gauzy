@@ -506,6 +506,7 @@ export class ProposalComponent extends PaginationFilterBaseComponent implements 
 					}),
 					componentInitFunction: (instance: EmployeeLinksComponent, cell: Cell) => {
 						instance.value = cell.getValue();
+						instance.linkTo = 'view';
 					}
 				},
 				statusBadge: {

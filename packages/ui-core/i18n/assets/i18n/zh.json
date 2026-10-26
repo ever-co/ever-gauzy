@@ -1824,6 +1824,10 @@
 			"WORKDAY": "工作日",
 			"SCROLL_TEAMS_BACK": "显示上一组团队",
 			"SCROLL_TEAMS_FORWARD": "显示更多团队",
+			"PERSON_TASKS": "任务",
+			"WORKING_ON": "正在处理",
+			"LAST_TASK": "最近任务",
+			"PERSON_WORKDAY": "{{ hours }} 工作日的 {{ percent }}",
 			"COLUMNS": {
 				"TEAM": "团队",
 				"WORKED": "已工作",
