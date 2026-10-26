@@ -364,6 +364,19 @@ describe('TaskViewPageComponent', () => {
 			expect(page.statuses.map((status) => status.id)).toEqual(['st-1', 'st-2']);
 		});
 
+		it("finds the task's status in the menu by its row, else by its value", async () => {
+			permissions = [PermissionsEnum.ORG_TASK_EDIT];
+			statuses = STATUSES;
+			// Many tasks carry only the status value, with no status row.
+			tasksService.getById.mockResolvedValueOnce(task({ status: TaskStatusEnum.IN_PROGRESS, taskStatusId: null }));
+			const page = create();
+			await settle();
+			await flush();
+
+			expect(page.currentStatusId).toBe('st-1');
+			expect(page.currentStatus?.name).toBe('In Progress');
+		});
+
 		it('reads no statuses for those who may not edit the task', async () => {
 			statuses = STATUSES;
 			const page = create();
