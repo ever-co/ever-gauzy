@@ -10,9 +10,17 @@ import {
 	MultiOrmEntityManager,
 	TypeOrmEntityManager
 } from '../core/entities/subscribers/entity-event-subscriber.types';
+import { recountMembersOfEmployeeProjects } from '../organization-project/organization-project-members-count';
 
 @EventSubscriber()
 export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
+	/**
+	 * The employees whose write, seen before the update, starts or ends their work or changes `isActive` /
+	 * `isArchived`. Both ORMs hand the same entity object to the hooks before and after the update, which recounts
+	 * their projects' members.
+	 */
+	private readonly workStatusChanged = new WeakSet<Employee>();
+
 	/**
 	 * Indicates that this subscriber only listen to Employee events.
 	 */
@@ -184,11 +192,36 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 
 			// Updates the employee's status based on the start and end work dates.
 			await this.updateEmployeeStatus(entity, em, hasStartedWork || hasResumedWork, hasEndedWork);
+
+			// The flags the members count reads can also be written directly (`PUT /employee/:id` takes them), and
+			// a write whose changes are not reported may carry them.
+			if (hasStartedWork || hasResumedWork || hasEndedWork || isChanged('isActive') || isChanged('isArchived')) {
+				this.workStatusChanged.add(entity);
+			}
 		} catch (error) {
 			console.error(
 				'EmployeeSubscriber: An error occurred during the beforeEntityUpdate process:',
 				error.message
 			);
+		}
+	}
+
+	/**
+	 * Called after the entity is updated in the database.
+	 *
+	 * When the write started or ended the employee's work, the members count of each of their projects is
+	 * recounted: an employee whose work ended stays a member (Back to Work restores them) but is not counted.
+	 *
+	 * @param entity - The employee entity that was updated.
+	 * @param em - The entity manager of the write, either TypeORM's or MikroORM's.
+	 */
+	async afterEntityUpdate(entity: Employee, em?: MultiOrmEntityManager): Promise<void> {
+		try {
+			if (this.workStatusChanged.delete(entity)) {
+				await recountMembersOfEmployeeProjects(em, entity.id);
+			}
+		} catch (error) {
+			console.error('EmployeeSubscriber: An error occurred during the afterEntityUpdate process:', error);
 		}
 	}
 	/**

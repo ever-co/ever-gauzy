@@ -134,6 +134,8 @@ describe('OrganizationProjectService.updateOrganizationProjectMembers — manage
 				save: jest.fn()
 			},
 			deleteMemberByIds: jest.fn(),
+			// Every existing member still works in the organization
+			findWorkingEmployeeIds: jest.fn().mockImplementation(async (ids: string[]) => new Set(ids)),
 			_entitySubscriptionService: { deleteForEmployee: jest.fn() },
 			_eventBus: { publish: jest.fn() }
 		};
