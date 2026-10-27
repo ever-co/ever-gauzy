@@ -7017,5 +7017,34 @@
 		"COMMENT_IMAGE_TYPES": "يمكن إرفاق صور PNG وJPEG وGIF وWebP وBMP فقط.",
 		"COMMENT_IMAGE_LIMIT": "يمكن أن يحمل التعليق ما يصل إلى {{ count }} صور.",
 		"COMMENT_IMAGE_FAILED": "تعذّر رفع {{ name }}."
+	},
+	"TASK_VIEW": {
+		"CHANGE_STATUS": "تغيير الحالة",
+		"LINK_COPIED": "تم نسخ الرابط",
+		"SUBTASKS": "المهام الفرعية",
+		"SUBTASKS_DONE": "أُنجز {{ done }} من {{ total }}",
+		"NO_SUBTASKS": "لا توجد مهام فرعية",
+		"LINKED_ISSUES": "المهام المرتبطة",
+		"NO_LINKED_ISSUES": "لا توجد مهام مرتبطة",
+		"LINKS": {
+			"BLOCKS": "يعيق",
+			"IS_BLOCKED_BY": "معاق بواسطة",
+			"CLONES": "يستنسخ",
+			"IS_CLONED_BY": "مستنسخ بواسطة",
+			"DUPLICATES": "يكرر",
+			"IS_DUPLICATED_BY": "مكرر بواسطة",
+			"RELATES_TO": "مرتبط بـ"
+		},
+		"TIME_TRACKING": "تتبع الوقت",
+		"LOGGED": "مسجل",
+		"REMAINING": "متبقٍ",
+		"OVER_ESTIMATE": "{{ value }} فوق التقدير",
+		"HOURS_PER_DAY": "الساعات يوميًا",
+		"LAST_DAYS": "آخر {{ count }} يومًا",
+		"NO_HOURS": "لم يُسجَّل وقت على هذه المهمة مؤخرًا",
+		"TIME_ENTRIES": "أحدث إدخالات الوقت",
+		"NO_TIME_ENTRIES": "لا توجد إدخالات وقت مؤخرًا",
+		"RUNNING": "قيد التشغيل",
+		"ACTIVITY_LEVEL": "النشاط: استخدام لوحة المفاتيح والفأرة أثناء التتبع"
 	}
 }

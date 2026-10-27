@@ -7043,5 +7043,34 @@
 		"COMMENT_IMAGE_TYPES": "Можно прикреплять только изображения PNG, JPEG, GIF, WebP и BMP.",
 		"COMMENT_IMAGE_LIMIT": "Комментарий может содержать до {{ count }} изображений.",
 		"COMMENT_IMAGE_FAILED": "Не удалось загрузить {{ name }}."
+	},
+	"TASK_VIEW": {
+		"CHANGE_STATUS": "Изменить статус",
+		"LINK_COPIED": "Ссылка скопирована",
+		"SUBTASKS": "Подзадачи",
+		"SUBTASKS_DONE": "Выполнено {{ done }} из {{ total }}",
+		"NO_SUBTASKS": "Нет подзадач",
+		"LINKED_ISSUES": "Связанные задачи",
+		"NO_LINKED_ISSUES": "Нет связанных задач",
+		"LINKS": {
+			"BLOCKS": "Блокирует",
+			"IS_BLOCKED_BY": "Заблокирована",
+			"CLONES": "Клонирует",
+			"IS_CLONED_BY": "Клонирована",
+			"DUPLICATES": "Дублирует",
+			"IS_DUPLICATED_BY": "Дублируется",
+			"RELATES_TO": "Связана с"
+		},
+		"TIME_TRACKING": "Учёт времени",
+		"LOGGED": "учтено",
+		"REMAINING": "осталось",
+		"OVER_ESTIMATE": "На {{ value }} больше оценки",
+		"HOURS_PER_DAY": "Часы по дням",
+		"LAST_DAYS": "Последние {{ count }} дн.",
+		"NO_HOURS": "В последнее время по задаче не учтено время",
+		"TIME_ENTRIES": "Последние записи времени",
+		"NO_TIME_ENTRIES": "В последнее время нет записей времени",
+		"RUNNING": "Идёт",
+		"ACTIVITY_LEVEL": "Активность: использование клавиатуры и мыши во время учёта"
 	}
 }

@@ -7021,5 +7021,34 @@
 		"COMMENT_IMAGE_TYPES": "Seules les images PNG, JPEG, GIF, WebP et BMP peuvent être jointes.",
 		"COMMENT_IMAGE_LIMIT": "Un commentaire peut contenir jusqu’à {{ count }} images.",
 		"COMMENT_IMAGE_FAILED": "Impossible de téléverser {{ name }}."
+	},
+	"TASK_VIEW": {
+		"CHANGE_STATUS": "Changer le statut",
+		"LINK_COPIED": "Lien copié",
+		"SUBTASKS": "Sous-tâches",
+		"SUBTASKS_DONE": "{{ done }} sur {{ total }} terminées",
+		"NO_SUBTASKS": "Aucune sous-tâche",
+		"LINKED_ISSUES": "Tâches liées",
+		"NO_LINKED_ISSUES": "Aucune tâche liée",
+		"LINKS": {
+			"BLOCKS": "Bloque",
+			"IS_BLOCKED_BY": "Est bloquée par",
+			"CLONES": "Clone",
+			"IS_CLONED_BY": "Est clonée par",
+			"DUPLICATES": "Duplique",
+			"IS_DUPLICATED_BY": "Est dupliquée par",
+			"RELATES_TO": "Est liée à"
+		},
+		"TIME_TRACKING": "Suivi du temps",
+		"LOGGED": "enregistré",
+		"REMAINING": "restant",
+		"OVER_ESTIMATE": "{{ value }} au-delà de l’estimation",
+		"HOURS_PER_DAY": "Heures par jour",
+		"LAST_DAYS": "{{ count }} derniers jours",
+		"NO_HOURS": "Aucun temps suivi récemment sur cette tâche",
+		"TIME_ENTRIES": "Entrées de temps récentes",
+		"NO_TIME_ENTRIES": "Aucune entrée de temps récente",
+		"RUNNING": "En cours",
+		"ACTIVITY_LEVEL": "Activité : utilisation du clavier et de la souris pendant le suivi"
 	}
 }

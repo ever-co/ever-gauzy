@@ -7024,5 +7024,34 @@
 		"COMMENT_IMAGE_TYPES": "Można załączać tylko obrazy PNG, JPEG, GIF, WebP i BMP.",
 		"COMMENT_IMAGE_LIMIT": "Komentarz może zawierać do {{ count }} obrazów.",
 		"COMMENT_IMAGE_FAILED": "Nie udało się przesłać {{ name }}."
+	},
+	"TASK_VIEW": {
+		"CHANGE_STATUS": "Zmień status",
+		"LINK_COPIED": "Link skopiowany",
+		"SUBTASKS": "Podzadania",
+		"SUBTASKS_DONE": "Ukończono {{ done }} z {{ total }}",
+		"NO_SUBTASKS": "Brak podzadań",
+		"LINKED_ISSUES": "Powiązane zadania",
+		"NO_LINKED_ISSUES": "Brak powiązanych zadań",
+		"LINKS": {
+			"BLOCKS": "Blokuje",
+			"IS_BLOCKED_BY": "Jest blokowane przez",
+			"CLONES": "Klonuje",
+			"IS_CLONED_BY": "Jest klonowane przez",
+			"DUPLICATES": "Duplikuje",
+			"IS_DUPLICATED_BY": "Jest duplikowane przez",
+			"RELATES_TO": "Jest powiązane z"
+		},
+		"TIME_TRACKING": "Śledzenie czasu",
+		"LOGGED": "zarejestrowano",
+		"REMAINING": "pozostało",
+		"OVER_ESTIMATE": "{{ value }} ponad szacunek",
+		"HOURS_PER_DAY": "Godziny dziennie",
+		"LAST_DAYS": "Ostatnie {{ count }} dni",
+		"NO_HOURS": "Ostatnio nie zarejestrowano czasu dla tego zadania",
+		"TIME_ENTRIES": "Ostatnie wpisy czasu",
+		"NO_TIME_ENTRIES": "Ostatnio brak wpisów czasu",
+		"RUNNING": "W toku",
+		"ACTIVITY_LEVEL": "Aktywność: użycie klawiatury i myszy podczas śledzenia"
 	}
 }

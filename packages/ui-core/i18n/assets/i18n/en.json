@@ -8224,5 +8224,34 @@
 		"COMMENT_IMAGE_TYPES": "Only PNG, JPEG, GIF, WebP and BMP images can be attached.",
 		"COMMENT_IMAGE_LIMIT": "A comment can carry up to {{ count }} images.",
 		"COMMENT_IMAGE_FAILED": "Couldn’t upload {{ name }}."
+	},
+	"TASK_VIEW": {
+		"CHANGE_STATUS": "Change status",
+		"LINK_COPIED": "Link copied",
+		"SUBTASKS": "Subtasks",
+		"SUBTASKS_DONE": "{{ done }} of {{ total }} done",
+		"NO_SUBTASKS": "No subtasks",
+		"LINKED_ISSUES": "Linked issues",
+		"NO_LINKED_ISSUES": "No linked issues",
+		"LINKS": {
+			"BLOCKS": "Blocks",
+			"IS_BLOCKED_BY": "Is blocked by",
+			"CLONES": "Clones",
+			"IS_CLONED_BY": "Is cloned by",
+			"DUPLICATES": "Duplicates",
+			"IS_DUPLICATED_BY": "Is duplicated by",
+			"RELATES_TO": "Relates to"
+		},
+		"TIME_TRACKING": "Time tracking",
+		"LOGGED": "logged",
+		"REMAINING": "remaining",
+		"OVER_ESTIMATE": "{{ value }} over the estimate",
+		"HOURS_PER_DAY": "Hours per day",
+		"LAST_DAYS": "Last {{ count }} days",
+		"NO_HOURS": "No time tracked on this task lately",
+		"TIME_ENTRIES": "Recent time entries",
+		"NO_TIME_ENTRIES": "No time entries lately",
+		"RUNNING": "Running",
+		"ACTIVITY_LEVEL": "Activity: keyboard and mouse use while tracking"
 	}
 }
