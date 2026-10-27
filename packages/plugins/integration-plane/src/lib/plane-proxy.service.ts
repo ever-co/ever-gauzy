@@ -214,11 +214,12 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 	 */
 	private getUpstreamUrl(): string {
 		const httpServer: http.Server = this.httpAdapterHost.httpAdapter.getHttpServer();
-		const upstreamUrl = resolvePlaneProxyUpstreamUrl(
-			httpServer.address(),
-			process.env[PLANE_PROXY_UPSTREAM_URL_ENV],
-			environment.port
-		);
+		const upstreamUrl = resolvePlaneProxyUpstreamUrl({
+			address: httpServer.address(),
+			override: process.env[PLANE_PROXY_UPSTREAM_URL_ENV],
+			port: environment.port,
+			publicBaseUrl: environment.baseUrl || 'http://localhost:3000'
+		});
 
 		if (upstreamUrl !== this.loggedUpstreamUrl) {
 			this.loggedUpstreamUrl = upstreamUrl;

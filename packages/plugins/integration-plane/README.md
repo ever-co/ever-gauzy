@@ -12,7 +12,8 @@ The Plane proxy is mounted inside this API, on `/api/plane`, and turns Plane
 UI calls into Gauzy API calls. It sends those calls to this API process over
 loopback, on the address and port the API listens on: an API on
 `0.0.0.0:3000` is called at `http://127.0.0.1:3000/api`. The calls never
-leave the host.
+leave the host. An API on a pipe or Unix socket, which a URL cannot dial,
+keeps calling its public `API_BASE_URL`.
 
 `PLANE_PROXY_UPSTREAM_URL` (optional) sets another Gauzy API for the proxy
 to call, in the same form as `API_BASE_URL`; an `/api` suffix is optional.

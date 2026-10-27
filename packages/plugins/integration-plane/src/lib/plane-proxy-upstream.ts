@@ -7,6 +7,20 @@ import type { AddressInfo } from 'node:net';
  */
 export const PLANE_PROXY_UPSTREAM_URL_ENV = 'PLANE_PROXY_UPSTREAM_URL';
 
+export interface PlaneProxyUpstreamInput {
+	/** `address()` of the HTTP server the proxy is mounted on. */
+	address: AddressInfo | string | null;
+	/** The PLANE_PROXY_UPSTREAM_URL value; wins when set. */
+	override?: string;
+	/** Port to dial on loopback while the server address is not known yet. */
+	port: number | string;
+	/**
+	 * The public API_BASE_URL. Used only when the server listens on a pipe or Unix socket, which an
+	 * HTTP URL cannot dial.
+	 */
+	publicBaseUrl: string;
+}
+
 /**
  * Resolve the Gauzy API base URL (with the `/api` prefix) the Plane proxy sends its calls to.
  *
@@ -14,26 +28,35 @@ export const PLANE_PROXY_UPSTREAM_URL_ENV = 'PLANE_PROXY_UPSTREAM_URL';
  * the address that server listens on. Calling the public API_BASE_URL instead sends every proxied
  * call out of the host, through the CDN and back in: a public round trip per call, and a failure
  * whenever that egress path is down.
- *
- * @param address      `address()` of the HTTP server the proxy is mounted on.
- * @param override     The PLANE_PROXY_UPSTREAM_URL value; wins when set.
- * @param fallbackPort Port to dial when the server address is unknown (not listening yet, or a pipe).
  */
-export function resolvePlaneProxyUpstreamUrl(
-	address: AddressInfo | string | null,
-	override: string | undefined,
-	fallbackPort: number | string
-): string {
-	const explicit = override?.trim().replace(/\/+$/, '');
+export function resolvePlaneProxyUpstreamUrl({
+	address,
+	override,
+	port,
+	publicBaseUrl
+}: PlaneProxyUpstreamInput): string {
+	const explicit = override?.trim();
 	if (explicit) {
-		return explicit.endsWith('/api') ? explicit : `${explicit}/api`;
+		return withApiPrefix(explicit);
 	}
 
-	if (address && typeof address === 'object') {
+	if (typeof address === 'string') {
+		return withApiPrefix(publicBaseUrl);
+	}
+
+	if (address) {
 		return `http://${dialHost(address.address)}:${address.port}/api`;
 	}
 
-	return `http://127.0.0.1:${fallbackPort}/api`;
+	return `http://127.0.0.1:${port}/api`;
+}
+
+/**
+ * `url` without trailing slashes, ending in `/api`.
+ */
+function withApiPrefix(url: string): string {
+	const base = url.trim().replace(/\/+$/, '');
+	return base.endsWith('/api') ? base : `${base}/api`;
 }
 
 /**

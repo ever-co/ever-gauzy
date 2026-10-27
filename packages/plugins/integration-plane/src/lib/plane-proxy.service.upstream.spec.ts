@@ -19,6 +19,10 @@ import { PLANE_PROXY_UPSTREAM_URL_ENV, resolvePlaneProxyUpstreamUrl } from './pl
 const v4 = (address: string, port: number): AddressInfo => ({ address, port, family: 'IPv4' });
 const v6 = (address: string, port: number): AddressInfo => ({ address, port, family: 'IPv6' });
 
+const PUBLIC_BASE = 'https://api.example.com';
+const resolve = (address: AddressInfo | string | null, override?: string, port: number | string = 9999) =>
+	resolvePlaneProxyUpstreamUrl({ address, override, port, publicBaseUrl: PUBLIC_BASE });
+
 /**
  * The proxy runs inside the API process, but it used to call Gauzy on the public API_BASE_URL, so every
  * pm.gauzy.co call left the pod, went through Cloudflare and came back in. When that egress path
@@ -32,12 +36,18 @@ describe('resolvePlaneProxyUpstreamUrl', () => {
 		['a specific IPv4 bind', v4('10.0.0.5', 3000), 'http://10.0.0.5:3000/api'],
 		['a specific IPv6 bind', v6('fd00::5', 3000), 'http://[fd00::5]:3000/api']
 	])('dials the server itself for %s', (_label, address, expected) => {
-		expect(resolvePlaneProxyUpstreamUrl(address, undefined, 9999)).toBe(expected);
+		expect(resolve(address)).toBe(expected);
 	});
 
-	it('falls back to loopback on the configured port when the address is unknown', () => {
-		expect(resolvePlaneProxyUpstreamUrl(null, undefined, 3000)).toBe('http://127.0.0.1:3000/api');
-		expect(resolvePlaneProxyUpstreamUrl('/run/gauzy.sock', undefined, '3200')).toBe('http://127.0.0.1:3200/api');
+	it('falls back to loopback on the configured port before the server listens', () => {
+		expect(resolve(null, undefined, 3000)).toBe('http://127.0.0.1:3000/api');
+		expect(resolve(null, undefined, '3200')).toBe('http://127.0.0.1:3200/api');
+	});
+
+	it('keeps the public URL for a server on a pipe or Unix socket, which a URL cannot dial', () => {
+		expect(resolve('/run/gauzy.sock')).toBe('https://api.example.com/api');
+		expect(resolve('\\\\.\\pipe\\gauzy')).toBe('https://api.example.com/api');
+		expect(resolve('/run/gauzy.sock', 'http://gauzy-api.svc:3000')).toBe('http://gauzy-api.svc:3000/api');
 	});
 
 	it.each([
@@ -46,18 +56,18 @@ describe('resolvePlaneProxyUpstreamUrl', () => {
 		['https://api.example.com/api', 'https://api.example.com/api'],
 		[' http://gauzy-api.svc:3000/api/ ', 'http://gauzy-api.svc:3000/api']
 	])('PLANE_PROXY_UPSTREAM_URL=%j wins over the server address', (override, expected) => {
-		expect(resolvePlaneProxyUpstreamUrl(v4('0.0.0.0', 3000), override, 3000)).toBe(expected);
+		expect(resolve(v4('0.0.0.0', 3000), override)).toBe(expected);
 	});
 
 	it('ignores a blank PLANE_PROXY_UPSTREAM_URL', () => {
-		expect(resolvePlaneProxyUpstreamUrl(v4('0.0.0.0', 3000), '  ', 3000)).toBe('http://127.0.0.1:3000/api');
+		expect(resolve(v4('0.0.0.0', 3000), '  ')).toBe('http://127.0.0.1:3000/api');
 	});
 
 	it.each(['0.0.0.0', '127.0.0.1'])('reaches a real server bound to %s', async (host) => {
 		const server = http.createServer((req, res) => res.end(req.url));
 		await new Promise<void>((resolve) => server.listen(0, host, resolve));
 		try {
-			const url = resolvePlaneProxyUpstreamUrl(server.address(), undefined, 1);
+			const url = resolve(server.address(), undefined, 1);
 			const body = await new Promise<string>((resolve, reject) => {
 				http.get(`${url}/health`, (res) => {
 					let data = '';
