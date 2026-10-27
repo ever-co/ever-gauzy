@@ -52,7 +52,7 @@ export function readPendingConnect(storage?: Storage, now: number = Date.now()):
  * The `callback_url` handed to the provider: the app's own document URL, WITHOUT the `#/…` route.
  *
  * The app routes with the hash location strategy, and OpenRouter returns the code in the real query
- * string (`https://app.gauzy.co/?code=…`, which is where its docs read it from: `location.search`),
+ * string (`https://<app host>/?code=…`, which is where its docs read it from: `location.search`),
  * never inside the hash. A callback of `…/#/pages/settings/ai` therefore came back as the root URL
  * with `?code=` before (or without) the hash, the router never saw the code, and the Connect flow
  * silently did nothing. The code is picked up from the query string by
