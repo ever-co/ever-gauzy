@@ -79,6 +79,31 @@ describe('leaveOutFormerEmployees', () => {
 		expect(project.organizationContact.members).toEqual([]);
 	});
 
+	it('filters a module tree at any depth in a page, as in a single record', async () => {
+		// `children.children.children.children.members`, a valid relation path, read through `/pagination`
+		const deepest = { id: 'module-5', members: [row('d1', 'employee-ended'), row('d2', 'employee-a')] };
+		let tree: Record<string, unknown> = deepest;
+		for (let level = 4; level >= 1; level--) {
+			tree = { id: `module-${level}`, members: [], children: [tree] };
+		}
+		const page = { items: [tree], total: 1 };
+
+		await leaveOutFormerEmployees(page, lookup());
+
+		expect(idsOf(deepest.members)).toEqual(['d2']);
+	});
+
+	it('ends on a cycle of relations', async () => {
+		const team: Record<string, unknown> = { id: 'team-1', members: [row('m1', 'employee-ended')] };
+		const project = { id: 'project-1', teams: [team], members: [row('p1', 'employee-a')] };
+		team.projects = [project];
+
+		await leaveOutFormerEmployees(team, lookup());
+
+		expect(team.members).toEqual([]);
+		expect(idsOf(project.members)).toEqual(['p1']);
+	});
+
 	it('keeps the former employees of historical records: a task’s assignees, a comment’s mentions', async () => {
 		// A team read with `relations: ['tasks.members']`: the task's members are who was assigned the work
 		const team = {

@@ -49,9 +49,6 @@ const MEMBERSHIP_HOLDER_KEYS = new Set([
 	'organizationDepartment'
 ]);
 
-/** How deep a response is searched for member lists: a page of records, their relations, and theirs. */
-const MAX_DEPTH = 8;
-
 /** One member list found in a response, and where it sits. */
 interface IMemberList {
 	holder: Record<string, unknown>;
@@ -93,30 +90,38 @@ function statesItsStatus(member: Member): boolean {
 
 /**
  * Collects the member lists of the records of a response: the records it answers (itself, a page's `items`, a
- * connection's nodes) and the organizational records related to them ({@link MEMBERSHIP_HOLDER_KEYS}).
+ * connection's nodes) and the organizational records related to them ({@link MEMBERSHIP_HOLDER_KEYS}), at any depth
+ * — a module's children's children are read in a page as in a single record. The walk is breadth-first and
+ * iterative, and visits each object once, so a deep tree or a cycle of relations ends it rather than overflowing.
  */
-function collectMemberLists(value: unknown, found: IMemberList[], seen: WeakSet<object>, depth = 0): void {
-	if (!value || typeof value !== 'object' || depth > MAX_DEPTH || seen.has(value) || value instanceof Date) {
-		return;
-	}
-	seen.add(value);
+function collectMemberLists(response: unknown): IMemberList[] {
+	const found: IMemberList[] = [];
+	const seen = new WeakSet<object>();
+	const queue: unknown[] = [response];
 
-	if (Array.isArray(value)) {
-		for (const item of value) {
-			collectMemberLists(item, found, seen, depth + 1);
+	for (let next = 0; next < queue.length; next++) {
+		const value = queue[next];
+		if (!value || typeof value !== 'object' || value instanceof Date || seen.has(value)) {
+			continue;
 		}
-		return;
-	}
+		seen.add(value);
 
-	const record = value as Record<string, unknown>;
-	if (Array.isArray(record[MEMBER_LIST_KEY])) {
-		found.push({ holder: record, list: record[MEMBER_LIST_KEY] as unknown[] });
-	}
-	for (const [key, item] of Object.entries(record)) {
-		if (RECORD_KEYS.has(key) || MEMBERSHIP_HOLDER_KEYS.has(key)) {
-			collectMemberLists(item, found, seen, depth + 1);
+		if (Array.isArray(value)) {
+			queue.push(...value);
+			continue;
+		}
+
+		const record = value as Record<string, unknown>;
+		if (Array.isArray(record[MEMBER_LIST_KEY])) {
+			found.push({ holder: record, list: record[MEMBER_LIST_KEY] as unknown[] });
+		}
+		for (const [key, item] of Object.entries(record)) {
+			if (RECORD_KEYS.has(key) || MEMBERSHIP_HOLDER_KEYS.has(key)) {
+				queue.push(item);
+			}
 		}
 	}
+	return found;
 }
 
 /**
@@ -134,8 +139,7 @@ function collectMemberLists(value: unknown, found: IMemberList[], seen: WeakSet<
  * @param lookup - Which employees still work; without it, only the employee rows that state their status are read.
  */
 export async function leaveOutFormerEmployees(response: unknown, lookup?: IWorkingEmployeeLookup): Promise<void> {
-	const lists: IMemberList[] = [];
-	collectMemberLists(response, lists, new WeakSet());
+	const lists = collectMemberLists(response);
 	if (!lists.length) {
 		return;
 	}
