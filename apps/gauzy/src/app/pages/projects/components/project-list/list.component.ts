@@ -32,6 +32,7 @@ import {
 	GenericFavoriteService
 } from '@gauzy/ui-core/core';
 import {
+	ArchiveConfirmationComponent,
 	CardGridComponent,
 	ContactLinksComponent,
 	DateViewComponent,
@@ -73,6 +74,8 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 	public project$: Subject<boolean> = this.subject$;
 	private _refresh$: Subject<boolean> = new Subject();
 	public favoriteProjects: IFavorite[] = [];
+	/** Whether the list shows archived projects too ("Include Archived"); by default the API leaves them out. */
+	public includeArchived: boolean = false;
 
 	/**
 	 * Represents a component property for handling the project view.
@@ -219,6 +222,89 @@ export class ProjectListComponent extends PaginationFilterBaseComponent implemen
 			}
 		} catch (error) {
 			console.error('Error while removing project', error?.message);
+			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 * Shows archived projects too, or hides them again. No list but this one offers an archived project, and it
+	 * does only on request: the API leaves them out unless `isArchived` is stated.
+	 *
+	 * @param includeArchived Whether to show archived projects too.
+	 */
+	changeIncludeArchived(includeArchived: boolean): void {
+		this.includeArchived = includeArchived;
+		this.cancel();
+		this._refresh$.next(true);
+		this.setFilter({ field: 'isArchived', search: includeArchived ? [false, true] : null });
+	}
+
+	/**
+	 * Archives a project after confirmation: a project the organization finished with. It keeps everything it
+	 * holds, but no list or picker offers it any more; "Include Archived" shows it here, to unarchive it.
+	 *
+	 * @param selectedItem The project to archive.
+	 */
+	async archiveProject(selectedItem: IOrganizationProject): Promise<void> {
+		if (!selectedItem) {
+			return;
+		}
+
+		try {
+			const result = await firstValueFrom(
+				this._dialogService.open(ArchiveConfirmationComponent, {
+					context: { recordType: selectedItem.name }
+				}).onClose
+			);
+			if (!result) {
+				return;
+			}
+
+			const project = await this._organizationProjectsService.archive(selectedItem.id);
+
+			// The pickers drop it, as they drop a deleted project
+			this._organizationProjectStore.organizationProjectAction = {
+				project: { ...selectedItem, ...project },
+				action: CrudActionEnum.DELETED
+			};
+			this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ARCHIVE_PROJECT', {
+				name: selectedItem.name
+			});
+
+			this.cancel();
+			this._refresh$.next(true);
+			this.project$.next(true);
+		} catch (error) {
+			this._errorHandlingService.handleError(error);
+		}
+	}
+
+	/**
+	 * Brings an archived project back: the lists and pickers offer it again.
+	 *
+	 * @param selectedItem The archived project.
+	 */
+	async unarchiveProject(selectedItem: IOrganizationProject): Promise<void> {
+		if (!selectedItem) {
+			return;
+		}
+
+		try {
+			const project = await this._organizationProjectsService.unarchive(selectedItem.id);
+
+			// The pickers offer it again, as they offer a new project
+			this._organizationProjectStore.organizationProjectAction = {
+				project: { ...selectedItem, ...project },
+				action: CrudActionEnum.CREATED
+			};
+			this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.UNARCHIVE_PROJECT', {
+				name: selectedItem.name
+			});
+
+			this.cancel();
+			this._refresh$.next(true);
+			this.project$.next(true);
+		} catch (error) {
 			this._errorHandlingService.handleError(error);
 		}
 	}

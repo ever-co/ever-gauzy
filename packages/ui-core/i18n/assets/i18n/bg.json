@@ -57,6 +57,7 @@
 		"VIEW": "Преглед",
 		"SEND": "Изпратете",
 		"ARCHIVE": "Архив",
+		"UNARCHIVE": "Разархивиране",
 		"HIRE": "Наемете",
 		"MANAGE_CATEGORIES": "Управление на категории",
 		"REJECT": "Отхвърли",
@@ -5247,6 +5248,8 @@
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "Project '{{ name }}' was saved",
 				"REMOVE_PROJECT": "Project '{{ name }}' was removed",
+				"ARCHIVE_PROJECT": "Проектът '{{ name }}' беше архивиран",
+				"UNARCHIVE_PROJECT": "Проектът '{{ name }}' беше разархивиран",
 				"INVALID_PROJECT_NAME": "Please fill in the name of your project",
 				"VISIBILITY": "Now project is {{ name }} "
 			},
@@ -5254,7 +5257,9 @@
 				"ADD_NEW_TEAM": "Team '{{ name }}' was added",
 				"EDIT_EXISTING_TEAM": "Team '{{ name }}' was changed",
 				"INVALID_TEAM_NAME": "Please add a Team name and at least one member",
-				"REMOVE_TEAM": "Team '{{ name }}' was removed"
+				"REMOVE_TEAM": "Team '{{ name }}' was removed",
+				"ARCHIVE_TEAM": "Екипът '{{ name }}' беше архивиран",
+				"UNARCHIVE_TEAM": "Екипът '{{ name }}' беше разархивиран"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was added",

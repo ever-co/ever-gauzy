@@ -7,7 +7,15 @@
         </ngx-header-title>
       </h4>
     </div>
-    <div class="d-flex justify-content-end">
+    <div class="d-flex justify-content-end align-items-center">
+      <nb-toggle
+        status="primary"
+        class="include-archived mr-3"
+        [checked]="includeArchived"
+        (checkedChange)="changeIncludeArchived($event)"
+        >
+        {{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
+      </nb-toggle>
       <ngx-gauzy-button-action
         [buttonTemplateVisible]="visibleButton"
         [isDisable]="disableButton"
@@ -118,6 +126,33 @@
         <nb-icon class="mr-1" icon="plus-circle-outline"></nb-icon>
         {{ 'BUTTONS.ADD_MODULE' | translate }}
       </button>
+    </ng-template>
+    <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT]">
+      @if (selectedProject?.isArchived) {
+        <button
+          nbButton
+          status="basic"
+          class="action info"
+          size="small"
+          (click)="unarchiveProject(selectedProject)"
+          [disabled]="disableButton"
+          >
+          <nb-icon class="mr-1" icon="undo-outline"></nb-icon>
+          {{ 'BUTTONS.UNARCHIVE' | translate }}
+        </button>
+      } @else {
+        <button
+          nbButton
+          status="basic"
+          class="action warning"
+          size="small"
+          (click)="archiveProject(selectedProject)"
+          [disabled]="disableButton"
+          >
+          <nb-icon class="mr-1" icon="archive-outline"></nb-icon>
+          {{ 'BUTTONS.ARCHIVE' | translate }}
+        </button>
+      }
     </ng-template>
     <ng-template [ngxPermissionsOnly]="[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_DELETE]">
       <button

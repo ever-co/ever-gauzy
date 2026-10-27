@@ -441,6 +441,24 @@ export class OrganizationTeamResolver {
 	}
 
 	/**
+	 * Archives a team the organization finished with, as `PUT /organization-team/:id/archive` does.
+	 */
+	@Mutation('archiveOrganizationTeam')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
+	async archiveOrganizationTeam(@Args('id', { type: () => ID }) id: Id): Promise<IOrganizationTeam> {
+		return await this.organizationTeamService.setArchived(id, true);
+	}
+
+	/**
+	 * Brings an archived team back, as `PUT /organization-team/:id/unarchive` does.
+	 */
+	@Mutation('unarchiveOrganizationTeam')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
+	async unarchiveOrganizationTeam(@Args('id', { type: () => ID }) id: Id): Promise<IOrganizationTeam> {
+		return await this.organizationTeamService.setArchived(id, false);
+	}
+
+	/**
 	 * The payload the delivered write persists.
 	 *
 	 * The members and the managers are the two lists the delivered body names, and they are handed over

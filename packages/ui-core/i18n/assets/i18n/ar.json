@@ -53,6 +53,7 @@
 		"VIEW": "مشاهدة",
 		"SEND": "إرسال",
 		"ARCHIVE": "أرشفة",
+		"UNARCHIVE": "إلغاء الأرشفة",
 		"HIRE": "توظيف",
 		"MANAGE_CATEGORIES": "إدارة الفئات",
 		"REJECT": "رفض",
@@ -5195,6 +5196,8 @@
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "تم حفظ المشروع '{{ name }}'",
 				"REMOVE_PROJECT": "تمت إزالة المشروع '{{ name }}'",
+				"ARCHIVE_PROJECT": "تمت أرشفة المشروع '{{ name }}'",
+				"UNARCHIVE_PROJECT": "تم إلغاء أرشفة المشروع '{{ name }}'",
 				"INVALID_PROJECT_NAME": "يرجى ملء اسم مشروعك",
 				"VISIBILITY": "المشروع الآن هو {{ name }}"
 			},
@@ -5202,7 +5205,9 @@
 				"ADD_NEW_TEAM": "تمت إضافة الفريق '{{ name }}'",
 				"EDIT_EXISTING_TEAM": "تم تغيير فريق \"{{ name }}\"",
 				"INVALID_TEAM_NAME": "يرجى إضافة اسم فريق وعلى الأقل عضو واحد",
-				"REMOVE_TEAM": "تمت إزالة الفريق '{{ name }}'"
+				"REMOVE_TEAM": "تمت إزالة الفريق '{{ name }}'",
+				"ARCHIVE_TEAM": "تمت أرشفة الفريق '{{ name }}'",
+				"UNARCHIVE_TEAM": "تم إلغاء أرشفة الفريق '{{ name }}'"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "تمت إضافة مستوى الموظف '{{ name }}'",

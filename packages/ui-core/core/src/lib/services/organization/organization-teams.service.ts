@@ -62,6 +62,27 @@ export class OrganizationTeamsService {
 	}
 
 	/**
+	 * Archives a team the organization finished with: no list offers it any more unless archived teams are
+	 * asked for (`where.isArchived`). It stays readable by its ID.
+	 *
+	 * @param id - The ID of the team to archive.
+	 * @returns A promise resolving to the archived team.
+	 */
+	archive(id: ID): Promise<IOrganizationTeam> {
+		return firstValueFrom(this.http.put<IOrganizationTeam>(`${API_PREFIX}/organization-team/${id}/archive`, {}));
+	}
+
+	/**
+	 * Brings an archived team back: the lists offer it again.
+	 *
+	 * @param id - The ID of the team to unarchive.
+	 * @returns A promise resolving to the team, no longer archived.
+	 */
+	unarchive(id: ID): Promise<IOrganizationTeam> {
+		return firstValueFrom(this.http.put<IOrganizationTeam>(`${API_PREFIX}/organization-team/${id}/unarchive`, {}));
+	}
+
+	/**
 	 * Deletes an organization team by ID.
 	 *
 	 * @param id - The ID of the team to delete.

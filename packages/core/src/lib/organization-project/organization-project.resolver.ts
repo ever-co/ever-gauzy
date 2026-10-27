@@ -540,4 +540,22 @@ export class OrganizationProjectResolver {
 	async recoverOrganizationProject(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationProject> {
 		return await this.organizationProjectService.softRecover(id);
 	}
+
+	/**
+	 * Archives a project the organization finished with, as `PUT /organization-projects/:id/archive` does.
+	 */
+	@Mutation('archiveOrganizationProject')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
+	async archiveOrganizationProject(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationProject> {
+		return (await this.organizationProjectService.setArchived(id, true)) as OrganizationProject;
+	}
+
+	/**
+	 * Brings an archived project back, as `PUT /organization-projects/:id/unarchive` does.
+	 */
+	@Mutation('unarchiveOrganizationProject')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
+	async unarchiveOrganizationProject(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationProject> {
+		return (await this.organizationProjectService.setArchived(id, false)) as OrganizationProject;
+	}
 }

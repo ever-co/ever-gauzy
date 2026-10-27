@@ -1,6 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Brackets, ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { Brackets, FindOptionsWhere, ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
 import {
 	ActionTypeEnum,
@@ -24,6 +24,7 @@ import { CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { isNotEmpty } from '@gauzy/utils';
 import { RelationsQueryDTO } from '../shared/dto';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
+import { archivedStates, withArchivedScope } from '../core/crud/archived-scope';
 import { sanitizeRichHtml } from '../core/html-sanitizer';
 import { RequestContext } from '../core/context';
 import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
@@ -472,13 +473,16 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId; // Use the current tenant ID or fallback to input tenantId
 		const { organizationId, organizationContactId, organizationTeamId, relations = [] } = input;
+		// The employee's projects that are not archived, unless the caller states `isArchived` (see archivedStates)
+		const isArchived = archivedStates(input?.isArchived);
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const where: any = {
 					tenantId,
 					organizationId,
-					members: { employeeId }
+					members: { employeeId },
+					isArchived: { $in: isArchived }
 				};
 				if (isNotEmpty(organizationContactId)) {
 					where.organizationContactId = organizationContactId;
@@ -514,7 +518,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				query
 					.where(`project_members.employeeId = :employeeId`, { employeeId })
 					.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
-					.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
+					.andWhere(p(`"${query.alias}"."isArchived" IN (:...isArchived)`), { isArchived });
 
 				// Apply additional filters if organizationContactId is provided
 				if (isNotEmpty(organizationContactId)) {
@@ -546,8 +551,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			options.where.organizationContactId = IsNull();
 		}
 
-		// Call the parent class's findAll method with the modified options
-		const result = await super.findAll(options);
+		// Call the parent class's findAll method with the modified options, on the projects that are not archived
+		// unless the caller states `isArchived`
+		const result = await super.findAll({ ...options, where: withArchivedScope(options?.where) });
 		await this.withoutFormerEmployees(result.items);
 		return result;
 	}
@@ -570,10 +576,62 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			options.where.name = ILike(`%${options.where.name}%`);
 		}
 
-		// Call the parent class's paginate method with the modified options
-		const result = await super.paginate(options);
+		// Call the parent class's paginate method with the modified options, on the projects that are not archived
+		// unless the caller states `isArchived` (the Projects page's "Include Archived" states both)
+		const result = await super.paginate({ ...options, where: withArchivedScope(options?.where) });
 		await this.withoutFormerEmployees(result.items);
 		return result;
+	}
+
+	/**
+	 * Counts the projects that are not archived, unless the caller states `isArchived`: an archived project is
+	 * counted nowhere it is not listed.
+	 *
+	 * @param options - The caller's `where`.
+	 * @returns The number of projects.
+	 */
+	public async countBy(options?: FindOptionsWhere<OrganizationProject>): Promise<number> {
+		return super.countBy(withArchivedScope(options) as FindOptionsWhere<OrganizationProject>);
+	}
+
+	/**
+	 * Archives a project, or brings an archived one back.
+	 *
+	 * An archived project is one the organization finished with. It keeps everything it holds — members, tasks,
+	 * time logged — and stays readable by its id, but no list offers it unless the caller asks for archived
+	 * projects (`archivedStates`): not the pickers, the timers, the dashboards. Deleting a project is still there,
+	 * for one created by mistake.
+	 *
+	 * @param id - The project.
+	 * @param isArchived - `true` to archive it, `false` to bring it back.
+	 * @returns The project, in its new state.
+	 */
+	async setArchived(id: ID, isArchived: boolean): Promise<IOrganizationProject> {
+		const project = await this.findOneByIdString(id);
+		const { organizationId, tenantId } = project;
+
+		const updated = await super.create({
+			id: project.id,
+			organizationId,
+			tenantId,
+			isArchived,
+			archivedAt: isArchived ? new Date() : null
+		});
+
+		this._activityLogService.logActivity<OrganizationProject>(
+			BaseEntityEnum.OrganizationProject,
+			ActionTypeEnum.Updated,
+			ActorTypeEnum.User,
+			project.id,
+			project.name,
+			updated,
+			organizationId,
+			tenantId,
+			project,
+			{ isArchived }
+		);
+
+		return { ...project, ...updated };
 	}
 
 	/**

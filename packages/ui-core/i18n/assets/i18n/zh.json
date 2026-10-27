@@ -53,6 +53,7 @@
 		"VIEW": "查看",
 		"SEND": "发送",
 		"ARCHIVE": "存档",
+		"UNARCHIVE": "取消归档",
 		"HIRE": "聘请",
 		"MANAGE_CATEGORIES": "管理分类",
 		"REJECT": "拒绝",
@@ -5197,6 +5198,8 @@
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "项目 '{{ name }}' 已保存。",
 				"REMOVE_PROJECT": "项目 '{{ name }}' 已被删除",
+				"ARCHIVE_PROJECT": "项目 '{{ name }}' 已归档",
+				"UNARCHIVE_PROJECT": "项目 '{{ name }}' 已取消归档",
 				"INVALID_PROJECT_NAME": "请填写您的项目名称。",
 				"VISIBILITY": "现在的项目是 {{ name }}"
 			},
@@ -5204,7 +5207,9 @@
 				"ADD_NEW_TEAM": "团队 \"{{ name }}\" 已被添加",
 				"EDIT_EXISTING_TEAM": "团队 '{{ name }}' 已经改变了。",
 				"INVALID_TEAM_NAME": "请添加一个团队名称和至少一个成员。",
-				"REMOVE_TEAM": "团队“{{ name }}”已被移除"
+				"REMOVE_TEAM": "团队“{{ name }}”已被移除",
+				"ARCHIVE_TEAM": "团队 '{{ name }}' 已归档",
+				"UNARCHIVE_TEAM": "团队 '{{ name }}' 已取消归档"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "员工级别'{{ name }}'已添加",

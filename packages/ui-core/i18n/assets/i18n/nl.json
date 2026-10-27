@@ -53,6 +53,7 @@
 		"VIEW": "Bekijken",
 		"SEND": "Verstuur",
 		"ARCHIVE": "Archiveren",
+		"UNARCHIVE": "Dearchiveren",
 		"HIRE": "Inhuren",
 		"MANAGE_CATEGORIES": "Beheren van categorieën",
 		"REJECT": "Afwijzen",
@@ -5197,6 +5198,8 @@
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "Project '{{ name }}' is opgeslagen",
 				"REMOVE_PROJECT": "Project '{{ name }}' is verwijderd",
+				"ARCHIVE_PROJECT": "Project '{{ name }}' is gearchiveerd",
+				"UNARCHIVE_PROJECT": "Project '{{ name }}' is gedearchiveerd",
 				"INVALID_PROJECT_NAME": "Vul alstublieft de naam van uw project in",
 				"VISIBILITY": "Nu is het project {{ name }}."
 			},
@@ -5204,7 +5207,9 @@
 				"ADD_NEW_TEAM": "Team '{{ name }}' is toegevoegd",
 				"EDIT_EXISTING_TEAM": "Team '{{ name }}' is gewijzigd",
 				"INVALID_TEAM_NAME": "Voeg alstublieft een teamnaam toe en ten minste één lid.",
-				"REMOVE_TEAM": "Team '{{ name }}' is verwijderd"
+				"REMOVE_TEAM": "Team '{{ name }}' is verwijderd",
+				"ARCHIVE_TEAM": "Team '{{ name }}' is gearchiveerd",
+				"UNARCHIVE_TEAM": "Team '{{ name }}' is gedearchiveerd"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Werknemersniveau '{{ name }}' is toegevoegd",

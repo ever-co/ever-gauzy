@@ -7879,6 +7879,15 @@ type Mutation {
   recoverOrganizationProject(id: ID!): OrganizationProject!
 
   """
+  Archives a project the organization finished with: it keeps its members, tasks and time, and stays
+  readable by its identifier, but no list answers it unless the caller asks for archived projects.
+  """
+  archiveOrganizationProject(id: ID!): OrganizationProject!
+
+  """Brings an archived project back: the lists answer it again."""
+  unarchiveOrganizationProject(id: ID!): OrganizationProject!
+
+  """
   Records a standing cost.
   
   The tenant the new row belongs to is stamped from the credential and is never stated by the caller, so
@@ -8156,6 +8165,16 @@ type Mutation {
 
   """Puts a withdrawn team back, clearing the marker the withdrawal set."""
   recoverOrganizationTeam(id: ID!): OrganizationTeam!
+
+  """
+  Archives a team the organization finished with: it keeps its members, projects and history, and stays
+  readable by its identifier, but no list answers it unless the caller asks for archived teams. A caller
+  who may not act for every employee must manage the team, as for editing it.
+  """
+  archiveOrganizationTeam(id: ID!): OrganizationTeam!
+
+  """Brings an archived team back: the lists answer it again."""
+  unarchiveOrganizationTeam(id: ID!): OrganizationTeam!
 
   """
   Records a supplier.

@@ -6,7 +6,16 @@ import {
 	ForbiddenException,
 	NotFoundException
 } from '@nestjs/common';
-import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull, FindManyOptions, SaveOptions } from 'typeorm';
+import {
+	In,
+	ILike,
+	SelectQueryBuilder,
+	DeleteResult,
+	IsNull,
+	FindManyOptions,
+	FindOptionsWhere,
+	SaveOptions
+} from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -35,6 +44,7 @@ import {
 	parseFindOptionsSelect
 } from '../core/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
+import { withArchivedScope } from '../core/crud/archived-scope';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
@@ -564,6 +574,10 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		// controller mounts `SensitiveRelationsInterceptor`.
 		this.assertRelationsPermitted(options);
 
+		// The teams that are not archived, unless the caller states `isArchived` (the Teams page's "Include
+		// Archived" states both): an archived team is one the organization finished with, offered by no list.
+		options = { ...options, where: withArchivedScope(options?.where) };
+
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
 
@@ -742,6 +756,46 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 
 		return { items, total };
+	}
+
+	/**
+	 * Counts the teams that are not archived, unless the caller states `isArchived`: an archived team is counted
+	 * nowhere it is not listed.
+	 *
+	 * @param options - The caller's `where`.
+	 * @returns The number of teams.
+	 */
+	public async countBy(options?: FindOptionsWhere<OrganizationTeam>): Promise<number> {
+		return super.countBy(withArchivedScope(options) as FindOptionsWhere<OrganizationTeam>);
+	}
+
+	/**
+	 * Archives a team, or brings an archived one back, for a caller who may edit it (see
+	 * {@link assertMayManageTeam}).
+	 *
+	 * An archived team is one the organization finished with. It keeps its members, projects and history and
+	 * stays readable by its id, but no list offers it unless the caller asks for archived teams: not the team
+	 * pickers, the timers, nor the apps built on the API (`GET /organization-team/me`). Deleting a team is still
+	 * there, for one created by mistake.
+	 *
+	 * @param id - The team.
+	 * @param isArchived - `true` to archive it, `false` to bring it back.
+	 * @returns The team, in its new state.
+	 * @throws {ForbiddenException} When the caller does not manage the team.
+	 */
+	async setArchived(id: ID, isArchived: boolean): Promise<IOrganizationTeam> {
+		await this.assertMayManageTeam(id, false);
+
+		const team = await this.findOneByIdString(id);
+		const updated = await super.create({
+			id: team.id,
+			organizationId: team.organizationId,
+			tenantId: team.tenantId,
+			isArchived,
+			archivedAt: isArchived ? new Date() : null
+		});
+
+		return { ...team, ...updated };
 	}
 
 	/**

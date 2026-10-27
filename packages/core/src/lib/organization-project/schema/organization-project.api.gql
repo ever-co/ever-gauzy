@@ -218,4 +218,15 @@ extend type Mutation {
 	Puts a withdrawn project back, clearing the marker the withdrawal set.
 	"""
 	recoverOrganizationProject(id: ID!): OrganizationProject!
+
+	"""
+	Archives a project the organization finished with: it keeps its members, tasks and time, and stays
+	readable by its identifier, but no list answers it unless the caller asks for archived projects.
+	"""
+	archiveOrganizationProject(id: ID!): OrganizationProject!
+
+	"""
+	Brings an archived project back: the lists answer it again.
+	"""
+	unarchiveOrganizationProject(id: ID!): OrganizationProject!
 }
