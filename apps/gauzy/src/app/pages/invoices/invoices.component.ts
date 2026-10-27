@@ -1267,7 +1267,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		// Same guard as toggleTableSettingsPopover: when the page renders a single
 		// NbPopoverDirective, `first` and `last` are the SAME instance, so hiding
 		// `first` unconditionally would undo the toggle above and the actions
-		// popover would never open. onClickOutside routes through here too.
+		// popover would never open.
 		if (this.popups.length > 1) {
 			this.popups.first.hide();
 		}
@@ -1362,12 +1362,21 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	}
 
 	/**
-	 * Handle event when user click outside tag
-	 * @param event is a boolean
+	 * Closes the actions menu once one of its enabled buttons — an action or the
+	 * header's close button — is clicked. Clicks on the header text or the gaps
+	 * between items leave it open. A disabled button fires no click, so the event
+	 * target is then the menu itself and nothing closes.
+	 *
+	 * Hides rather than toggles, so it can never reopen a menu that is already
+	 * shut.
+	 *
+	 * @param event - The click that bubbled up to the menu container.
 	 */
-	onClickOutside(event: boolean) {
-		// Close popover after click any button inside
-		if (event) this.toggleActionsPopover();
+	onActionsMenuClick(event: MouseEvent) {
+		const target = event.target as HTMLElement | null;
+		if (target?.closest('button:not([disabled])')) {
+			this.popups?.last?.hide();
+		}
 	}
 
 	ngOnDestroy() {}

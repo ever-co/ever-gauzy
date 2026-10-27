@@ -692,87 +692,85 @@
 </ng-template>
 
 <ng-template #actionsPopover>
-	<div gauzyOutside (clickOutside)="onClickOutside($event)" class="popover-container-action d-flex flex-column">
-		<button
-			nbButton
-			status="basic"
-			class="action primary"
-			size="small"
-			(click)="addInternalNote()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="book-open-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.NOTE' | translate }}</span>
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action primary"
-			size="small"
-			(click)="duplicated()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="copy-outline"></nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.DUPLICATE' | translate }}</span>
-		</button>
-		<button nbButton status="basic" class="action primary" size="small" (click)="send()" [disabled]="!canBeSend">
-			<nb-icon icon="upload-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.SEND' | translate }}</span>
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action primary"
-			size="small"
-			(click)="generatePublicLink()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="link-2-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.PUBLIC_LINK' | translate }}</span>
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action primary"
-			size="small"
-			(click)="email()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="email-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.EMAIL' | translate }}</span>
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action primary"
-			size="small"
-			(click)="exportToCsv()"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="file-text-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}</span>
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action primary"
-			size="small"
-			(click)="archive()"
-			[disabled]="disableButton || selectedInvoice.isArchived"
-		>
-			<nb-icon icon="archive-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.ARCHIVE' | translate }}</span>
-		</button>
-		<button
-			nbButton
-			status="basic"
-			class="action danger"
-			size="small"
-			(click)="delete()"
-			[disabled]="disableButton"
-		>
-			<nb-icon status="danger" icon="trash-2-outline"> </nb-icon>
-			<span class="icon-text">{{ 'BUTTONS.DELETE' | translate }}</span>
-		</button>
+	<!-- A click on any enabled action closes the menu (see onActionsMenuClick); the
+	     header's close button does the same, and clicks on the header itself do not. -->
+	<div class="popover-container-action" role="menu" (click)="onActionsMenuClick($event)">
+		<div class="actions-menu-header">
+			<span class="actions-menu-title">{{ 'INVOICES_PAGE.ACTIONS' | translate }}</span>
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				class="actions-menu-close"
+				[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+				[nbTooltip]="'BUTTONS.CLOSE' | translate"
+			>
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
+		<div class="actions-menu-list">
+			<button
+				nbButton
+				ghost
+				role="menuitem"
+				class="menu-item"
+				(click)="addInternalNote()"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="book-open-outline"></nb-icon>
+				<span>{{ 'BUTTONS.NOTE' | translate }}</span>
+			</button>
+			<button nbButton ghost role="menuitem" class="menu-item" (click)="duplicated()" [disabled]="disableButton">
+				<nb-icon icon="copy-outline"></nb-icon>
+				<span>{{ 'BUTTONS.DUPLICATE' | translate }}</span>
+			</button>
+			<button nbButton ghost role="menuitem" class="menu-item" (click)="send()" [disabled]="!canBeSend">
+				<nb-icon icon="upload-outline"></nb-icon>
+				<span>{{ 'BUTTONS.SEND' | translate }}</span>
+			</button>
+			<button
+				nbButton
+				ghost
+				role="menuitem"
+				class="menu-item"
+				(click)="generatePublicLink()"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="link-2-outline"></nb-icon>
+				<span>{{ 'BUTTONS.PUBLIC_LINK' | translate }}</span>
+			</button>
+			<button nbButton ghost role="menuitem" class="menu-item" (click)="email()" [disabled]="disableButton">
+				<nb-icon icon="email-outline"></nb-icon>
+				<span>{{ 'BUTTONS.EMAIL' | translate }}</span>
+			</button>
+			<button nbButton ghost role="menuitem" class="menu-item" (click)="exportToCsv()" [disabled]="disableButton">
+				<nb-icon icon="file-text-outline"></nb-icon>
+				<span>{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}</span>
+			</button>
+			<button
+				nbButton
+				ghost
+				role="menuitem"
+				class="menu-item"
+				(click)="archive()"
+				[disabled]="disableButton || selectedInvoice?.isArchived"
+			>
+				<nb-icon icon="archive-outline"></nb-icon>
+				<span>{{ 'BUTTONS.ARCHIVE' | translate }}</span>
+			</button>
+			<div class="menu-divider" role="separator"></div>
+			<button
+				nbButton
+				ghost
+				role="menuitem"
+				class="menu-item menu-item-danger"
+				(click)="delete()"
+				[disabled]="disableButton"
+			>
+				<nb-icon icon="trash-2-outline"></nb-icon>
+				<span>{{ 'BUTTONS.DELETE' | translate }}</span>
+			</button>
+		</div>
 	</div>
 </ng-template>
