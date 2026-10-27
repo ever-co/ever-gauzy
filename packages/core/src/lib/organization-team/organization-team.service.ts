@@ -447,7 +447,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					employees,
 					role,
 					managerIds,
-					memberIds
+					memberIds,
+					this.employeeService
 				);
 			}
 

@@ -1,4 +1,5 @@
-import { NotFoundException, ParseEnumPipe, UseGuards } from '@nestjs/common';
+import { NotFoundException, ParseEnumPipe, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FormerEmployeesInterceptor } from '../employee/former-employees.interceptor';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
@@ -199,6 +200,7 @@ const ORGANIZATION_CONTACT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('OrganizationContact')
+@UseInterceptors(FormerEmployeesInterceptor)
 @UseGuards(TenantPermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class OrganizationContactResolver {
