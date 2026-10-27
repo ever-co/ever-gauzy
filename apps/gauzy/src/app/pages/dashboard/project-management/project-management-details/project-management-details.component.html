@@ -52,7 +52,18 @@
 			>
 				@for (task of tasks; track task.id) {
 				@let due = dueState(task);
-				<div class="task-row" role="row" [class.is-closed]="isClosed(task)">
+				<!-- A row opens the task's quick look; its project chip opens the project's. -->
+				<div
+					class="task-row task-row--interactive"
+					role="row"
+					tabindex="0"
+					[class.is-closed]="isClosed(task)"
+					[class.is-viewed]="viewedTask?.id === task.id"
+					[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_DETAILS' | translate : { title: task.title }"
+					(click)="openTask(task)"
+					(keydown.enter)="openTask(task)"
+					(keydown.space)="$event.preventDefault(); openTask(task)"
+				>
 					<div class="task-cell task-main" role="cell">
 						<span class="status-dot" [attr.data-tone]="statusTone(task.status)" aria-hidden="true"></span>
 						<span class="task-text">
@@ -64,14 +75,22 @@
 					</div>
 					<div class="task-cell" role="cell">
 						@if (task.project) {
-						<span class="project-chip" [title]="task.project.name">
+						<button
+							type="button"
+							class="project-chip"
+							[title]="task.project.name"
+							[attr.aria-label]="'PROJECT_QUICK_LOOK.OPEN_DETAILS' | translate : { name: task.project.name }"
+							(click)="$event.stopPropagation(); openProject(task.project)"
+							(keydown.enter)="$event.stopPropagation()"
+							(keydown.space)="$event.stopPropagation()"
+						>
 							<span
 								class="project-swatch"
 								[style.background-color]="task.project.color || null"
 								aria-hidden="true"
 							></span>
 							<span class="project-chip-name">{{ task.project.name }}</span>
-						</span>
+						</button>
 						} @else {
 						<span class="is-muted">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.NO_PROJECT' | translate }}</span>
 						}
@@ -158,11 +177,19 @@
 			</header>
 			<ul class="side-list">
 				@for (project of projects; track project.id) {
-				<li class="side-item side-item--project">
-					<ngx-project [rowData]="{ project: project }"></ngx-project>
-					<span class="panel-count">
-						{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.TASKS_COUNT' | translate : { count: projectTaskCount(project) } }}
-					</span>
+				<li>
+					<button
+						type="button"
+						class="side-item side-item--project side-open"
+						[class.is-viewed]="viewedProject?.id === project.id"
+						[attr.aria-label]="'PROJECT_QUICK_LOOK.OPEN_DETAILS' | translate : { name: project.name }"
+						(click)="openProject(project)"
+					>
+						<ngx-project [rowData]="{ project: project }"></ngx-project>
+						<span class="panel-count">
+							{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.TASKS_COUNT' | translate : { count: projectTaskCount(project) } }}
+						</span>
+					</button>
 				</li>
 				} @empty {
 				<li class="pm-state pm-state--compact">
@@ -192,14 +219,22 @@
 			</header>
 			<ul class="side-list">
 				@for (task of assigned; track task.id) {
-				<li class="side-item side-item--stacked">
-					<span class="side-text">
-						<span class="side-title" [title]="task.title">{{ task.title }}</span>
-						@if (task.project?.name) {
-						<span class="side-meta">{{ task.project.name }}</span>
-						}
-					</span>
-					<ga-only-tags [rowData]="task"></ga-only-tags>
+				<li>
+					<button
+						type="button"
+						class="side-item side-item--stacked side-open"
+						[class.is-viewed]="viewedTask?.id === task.id"
+						[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_DETAILS' | translate : { title: task.title }"
+						(click)="openTask(task)"
+					>
+						<span class="side-text">
+							<span class="side-title" [title]="task.title">{{ task.title }}</span>
+							@if (task.project?.name) {
+							<span class="side-meta">{{ task.project.name }}</span>
+							}
+						</span>
+						<ga-only-tags [rowData]="task"></ga-only-tags>
+					</button>
 				</li>
 				} @empty {
 				<li class="pm-state pm-state--compact">
@@ -212,3 +247,30 @@
 		}
 	</div>
 </div>
+
+<!-- Task quick look: the same drawer as the employee page and the task lists, with an expand icon to the task's own page. -->
+<ngx-record-view-drawer
+	[open]="!!viewedTask"
+	[heading]="taskDrawerHeading"
+	[wide]="true"
+	[fullViewLink]="viewedTask ? '/pages/tasks/view/' + viewedTask.id : null"
+	(closed)="closeTask()"
+>
+	@if (viewedTask) {
+	<ngx-record-view [record]="viewedTask" [sections]="viewSections" [placeholder]="'SM_TABLE.NONE' | translate">
+		<ga-task-view-header recordViewHeader [task]="viewedTask" [status]="viewStatus"></ga-task-view-header>
+	</ngx-record-view>
+	}
+</ngx-record-view-drawer>
+
+<!-- Project quick look: the same drawer as the employee page, over the dashboard's date range. -->
+<ngx-project-quick-look
+	[project]="viewedProject"
+	[organizationId]="organizationId"
+	[tenantId]="tenantId"
+	[rangeStart]="rangeStart"
+	[rangeEnd]="rangeEnd"
+	[scopeEmployeeIds]="selectedEmployeeId ? [selectedEmployeeId] : null"
+	[highlightEmployeeId]="selectedEmployeeId"
+	(closed)="closeProject()"
+></ngx-project-quick-look>
