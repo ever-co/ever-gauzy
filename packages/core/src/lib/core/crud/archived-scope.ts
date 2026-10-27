@@ -72,6 +72,7 @@ function namesField(value: unknown, field: string, depth = 0): boolean {
  * @returns The stated rows, and the linked archived rows the edit did not state.
  */
 export function withArchivedLinks<T extends { id?: string; isArchived?: boolean }>(stated: T[], linked: T[] = []): T[] {
-	const kept = (linked ?? []).filter((row) => row?.isArchived && !stated.some((it) => it?.id === row.id));
+	const statedIds = new Set(stated.filter(Boolean).map(({ id }) => id));
+	const kept = (linked ?? []).filter((row) => !!row && row.isArchived === true && !statedIds.has(row.id));
 	return [...stated, ...kept];
 }

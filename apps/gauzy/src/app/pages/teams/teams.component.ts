@@ -542,10 +542,8 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 					// An archived team is listed only with "Include Archived", and says so. The table hands the
 					// cell, the card grid the row itself.
 					valuePrepareFunction: (name: string, cell: Cell | IOrganizationTeam) => {
-						const team =
-							typeof (cell as Cell)?.getRow === 'function'
-								? (cell as Cell).getRow().getData()
-								: (cell as IOrganizationTeam);
+						const isCell = !!cell && typeof (cell as Cell).getRow === 'function';
+						const team = isCell ? (cell as Cell).getRow().getData() : (cell as IOrganizationTeam);
 						return team?.isArchived ? `${name} (${this.getTranslation('ORGANIZATIONS_PAGE.ARCHIVED')})` : name;
 					},
 					filter: {
