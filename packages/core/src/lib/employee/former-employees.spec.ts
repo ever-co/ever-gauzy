@@ -166,6 +166,25 @@ describe('leaveOutFormerEmployees', () => {
 		expect(workingLookup.findWorkingEmployeeIds).not.toHaveBeenCalled();
 	});
 
+	it('leaves out a deleted employee row, whose flags a soft delete keeps (a read `withDeleted`)', async () => {
+		const department = {
+			members: [
+				{ id: 'employee-a', userId: 'u1', isActive: true, isArchived: false, deletedAt: null },
+				{
+					id: 'employee-deleted',
+					userId: 'u2',
+					isActive: true,
+					isArchived: false,
+					deletedAt: '2026-10-01T00:00:00Z'
+				}
+			]
+		};
+
+		await leaveOutFormerEmployees(department, lookup());
+
+		expect(idsOf(department.members)).toEqual(['employee-a']);
+	});
+
 	it('looks up an employee row that does not state its status', async () => {
 		const contact = {
 			members: [

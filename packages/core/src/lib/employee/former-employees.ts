@@ -62,6 +62,7 @@ type Member = Record<string, unknown> & {
 	employee?: { id?: ID } | ID;
 	isActive?: boolean;
 	isArchived?: boolean;
+	deletedAt?: Date | string | null;
 };
 
 /**
@@ -171,7 +172,8 @@ export async function leaveOutFormerEmployees(response: unknown, lookup?: IWorki
 			return true;
 		}
 		if (statesItsStatus(member)) {
-			return member.isActive && !member.isArchived;
+			// A soft delete keeps the flags: a deleted employee (read `withDeleted`) works no more than an ended one
+			return member.isActive && !member.isArchived && !member.deletedAt;
 		}
 		return !member.id || !working || working.has(member.id);
 	};
