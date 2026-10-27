@@ -15,8 +15,9 @@ import { recountMembersOfEmployeeProjects } from '../organization-project/organi
 @EventSubscriber()
 export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	/**
-	 * The employees whose write, seen before the update, starts or ends their work. Both ORMs hand the same
-	 * entity object to the hooks before and after the update, which recounts their projects' members.
+	 * The employees whose write, seen before the update, starts or ends their work or changes `isActive` /
+	 * `isArchived`. Both ORMs hand the same entity object to the hooks before and after the update, which recounts
+	 * their projects' members.
 	 */
 	private readonly workStatusChanged = new WeakSet<Employee>();
 
@@ -192,7 +193,9 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			// Updates the employee's status based on the start and end work dates.
 			await this.updateEmployeeStatus(entity, em, hasStartedWork || hasResumedWork, hasEndedWork);
 
-			if (hasStartedWork || hasResumedWork || hasEndedWork) {
+			// The flags the members count reads can also be written directly (`PUT /employee/:id` takes them), and
+			// a write whose changes are not reported may carry them.
+			if (hasStartedWork || hasResumedWork || hasEndedWork || isChanged('isActive') || isChanged('isArchived')) {
 				this.workStatusChanged.add(entity);
 			}
 		} catch (error) {

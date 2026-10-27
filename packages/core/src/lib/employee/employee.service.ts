@@ -54,6 +54,7 @@ import { Employee } from './employee.entity';
 import { FavoriteService } from '../core/decorators';
 import { EmployeeAgentProfile, Organization, Role, Tenant, User } from '../core/entities/internal';
 import { writeAgentProfile } from '../employee-agent-profile/employee-agent-profile.service';
+import { recountMembersOfEmployeeProjects } from '../organization-project/organization-project-members-count';
 import { defaultAgentEmail, findOneForUpdate, isAgentEmail, isEmployeeKind } from './agent-employee';
 
 /**
@@ -1080,10 +1081,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const tenantId = RequestContext.currentTenantId() || params.tenantId;
 
 			// Perform the soft delete operation
-			return await super.softRemove(employeeId, {
+			const employee = await super.softRemove(employeeId, {
 				where: { organizationId, tenantId },
 				relations: { user: { organizations: true }, teams: true }
 			});
+			// A deleted employee no longer counts in the members of their projects
+			await this.recountMembersOfProjects(employeeId);
+			return employee;
 		} catch (error) {
 			console.error('Error during soft delete for employee', error);
 			throw new BadRequestException(error.message || 'Soft delete failed');
@@ -1110,15 +1114,38 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const tenantId = RequestContext.currentTenantId() || params.tenantId;
 
 			// Perform the soft recovery operation using the ID, organization ID, and tenant ID
-			return await super.softRecover(employeeId, {
+			const employee = await super.softRecover(employeeId, {
 				where: { organizationId, tenantId },
 				relations: { user: { organizations: true }, teams: true },
 				withDeleted: true
 			});
+			// A recovered employee who still works counts in the members of their projects again
+			await this.recountMembersOfProjects(employeeId);
+			return employee;
 		} catch (error) {
 			console.error('Error during soft recovery operation for employee:', error);
 			// Throw a BadRequestException if any error occurs during soft recovery
 			throw new BadRequestException(error.message || 'Failed to recover soft-deleted employee');
+		}
+	}
+
+	/**
+	 * Recounts `membersCount` of the employee's projects after a soft delete or its recovery, which change whether
+	 * the employee counts there but run no update hook (`EmployeeSubscriber` recounts for the writes that do). A
+	 * failure is logged and does not undo the write: the count is derived, and the next save of the project
+	 * recounts it.
+	 *
+	 * @param employeeId - The employee deleted or recovered.
+	 */
+	private async recountMembersOfProjects(employeeId: ID): Promise<void> {
+		try {
+			const em =
+				this.ormType === MultiORMEnum.MikroORM
+					? this.mikroOrmRepository.getEntityManager()
+					: this.typeOrmRepository.manager;
+			await recountMembersOfEmployeeProjects(em, employeeId);
+		} catch (error) {
+			console.error('EmployeeService: could not recount the members of the employee’s projects', error);
 		}
 	}
 }

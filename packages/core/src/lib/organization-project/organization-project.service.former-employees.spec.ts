@@ -133,6 +133,51 @@ describe('OrganizationProjectService reads — members whose work ended are not 
 		expect(employeeIdsOf(found.members)).toEqual(['employee-a', 'employee-b']);
 	});
 
+	it('names the employee of a MikroORM membership through its relation, which leaves `employeeId` unset', async () => {
+		// MikroORM maps the column through `employee`: a loaded row carries the employee (or, serialized as a
+		// reference, its key) and no `employeeId`. Reading `employeeId` alone left every working member out.
+		const mikroOrmProject = {
+			id: 'project-1',
+			members: [
+				{ id: 'row-a', employee: { id: 'employee-a' } },
+				{ id: 'row-ended', employee: { id: 'employee-ended' } },
+				{ id: 'row-b', employee: 'employee-b' }
+			],
+			teams: [
+				{
+					id: 'team-1',
+					members: [
+						{ id: 'row-c', employee: 'employee-c' },
+						{ id: 'row-x', employee: 'employee-ended' }
+					]
+				}
+			]
+		};
+		jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockResolvedValue({
+			items: [mikroOrmProject],
+			total: 1
+		} as never);
+
+		const { items } = await service.findAll({} as never);
+
+		expect(items[0].members.map(({ id }) => id)).toEqual(['row-a', 'row-b']);
+		expect(items[0].teams[0].members.map(({ id }) => id)).toEqual(['row-c']);
+		expect(employeeFind.mock.calls[0][0].where.id).toEqual(
+			In(['employee-a', 'employee-ended', 'employee-b', 'employee-c'])
+		);
+	});
+
+	it('keeps a member whose employee the read does not name: only an employee known not to work is left out', async () => {
+		jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockResolvedValue({
+			items: [{ id: 'project-1', members: [{ id: 'row-unnamed' }, member('employee-ended')] }],
+			total: 1
+		} as never);
+
+		const { items } = await service.findAll({} as never);
+
+		expect(items[0].members.map(({ id }) => id)).toEqual(['row-unnamed']);
+	});
+
 	it('looks nothing up for projects read without their members', async () => {
 		const { members: _members, teams: _teams, ...bare } = project();
 		jest.spyOn(TenantAwareCrudService.prototype, 'paginate').mockResolvedValue({

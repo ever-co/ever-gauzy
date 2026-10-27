@@ -10,6 +10,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { DataSource } from 'typeorm';
+import { EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
+import { MultiORMEnum } from '../core/utils';
 import { RecountProjectMembersOfWorkingEmployees1791000003430 } from '../database/migrations/1791000003430-RecountProjectMembersOfWorkingEmployees';
 import { recountMembersOfEmployeeProjects } from './organization-project-members-count';
 import { OrganizationProjectSubscriber } from './organization-project.subscriber';
@@ -133,5 +135,44 @@ describe('organization project members count, on SQLite', () => {
 		await recountMembersOfEmployeeProjects(dataSource.manager, 'working-1');
 
 		expect(await counts()).toEqual({ [PROJECT]: 2, [OTHER_PROJECT]: 99 });
+	});
+});
+
+/**
+ * Under MikroORM the recount runs from the update hook, inside the flush's transaction. On its own connection it
+ * would read the employee row as it was before the write, or wait for the transaction that waits for the hook.
+ */
+describe('recountMembersOfEmployeeProjects under MikroORM', () => {
+	const previous = process.env.DB_ORM;
+
+	beforeEach(() => {
+		process.env.DB_ORM = MultiORMEnum.MikroORM;
+	});
+
+	afterEach(() => {
+		if (previous === undefined) {
+			delete process.env.DB_ORM;
+		} else {
+			process.env.DB_ORM = previous;
+		}
+	});
+
+	it("runs in the write's transaction", async () => {
+		const execute = jest.fn().mockResolvedValue(undefined);
+		const transaction = { name: 'the flush transaction' };
+		const em = Object.assign(Object.create(MikroOrmEntityManager.prototype), {
+			getConnection: () => ({ execute }),
+			getTransactionContext: () => transaction
+		});
+
+		await recountMembersOfEmployeeProjects(em, 'employee-1');
+
+		expect(execute).toHaveBeenCalledTimes(1);
+		const [sql, params, method, context] = execute.mock.calls[0];
+		expect(sql).toContain('UPDATE "organization_project"');
+		expect(sql).not.toMatch(/\$\d/);
+		expect(params).toEqual(['employee-1']);
+		expect(method).toBe('run');
+		expect(context).toBe(transaction);
 	});
 });

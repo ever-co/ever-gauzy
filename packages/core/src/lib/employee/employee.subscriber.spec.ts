@@ -221,6 +221,20 @@ describe('EmployeeSubscriber — project members count on a work status change',
 		expect(recount).toHaveBeenCalledWith(em, 'employee-1');
 	});
 
+	it('recounts after a write that changes `isActive` or `isArchived` directly, without a work date', async () => {
+		// `PUT /employee/:id` takes both flags, which are what the members count reads
+		const deactivated = employee({ isActive: false });
+
+		await subscriber.beforeEntityUpdate(deactivated, em, ['isActive']);
+		await subscriber.afterEntityUpdate(deactivated, em);
+
+		const unarchived = employee({ isArchived: false });
+		await subscriber.beforeEntityUpdate(unarchived, em, ['isArchived']);
+		await subscriber.afterEntityUpdate(unarchived, em);
+
+		expect(recount).toHaveBeenCalledTimes(2);
+	});
+
 	it('does not recount for a write that neither starts nor ends work, nor twice for one write', async () => {
 		const edited = employee({ position: 'Lead' } as Partial<Employee>);
 

@@ -36,8 +36,9 @@ export const WORKING_MEMBERS_COUNT_SUBQUERY = `
 /**
  * Recounts `membersCount` of every project the employee is a member of.
  *
- * Called when the employee's working status changes (End Work, Back to Work, a new start date): the count of
- * each of their projects includes them or not from then on, without waiting for the project to be saved. The
+ * Called when the employee's working status changes (End Work, Back to Work, a new start date, an edit of
+ * `isActive` / `isArchived`, a soft delete or its recovery): the count of each of their projects includes them or
+ * not from then on, without waiting for the project to be saved. The
  * projects are the ones the employee's own membership rows name, so the statement never reaches another tenant.
  *
  * @param em - The entity manager of the write, so the recount reads the employee row it has just updated.
@@ -68,6 +69,8 @@ export async function recountMembersOfEmployeeProjects(
 	if (ormType === MultiORMEnum.TypeORM && em instanceof TypeOrmEntityManager) {
 		await em.query(query, [employeeId]);
 	} else if (ormType === MultiORMEnum.MikroORM && em instanceof MikroOrmEntityManager) {
-		await em.getConnection().execute(query.replace(/\$\d/g, '?'), [employeeId]);
+		// In the write's transaction, if there is one: on its own connection the recount would read the employee
+		// row as it was before the write, or wait for the transaction that is waiting for this hook.
+		await em.getConnection().execute(query.replace(/\$\d/g, '?'), [employeeId], 'run', em.getTransactionContext());
 	}
 }

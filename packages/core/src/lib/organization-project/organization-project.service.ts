@@ -42,6 +42,19 @@ import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-orga
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-orm-organization-project-employee.repository';
 
+/** A project or team membership, as a read answers it under either ORM. */
+type IMembership = { employeeId?: ID; employee?: { id?: ID } | ID };
+
+/**
+ * The employee of a membership. TypeORM answers its `employeeId` column; MikroORM maps that column through the
+ * `employee` relation and leaves `employeeId` unset on a loaded row, so the relation is read too — the employee
+ * when it was loaded, or its key as a serialized reference.
+ */
+function memberEmployeeId(member: IMembership): ID | undefined {
+	const employee = member?.employee;
+	return member?.employeeId ?? (typeof employee === 'string' ? employee : employee?.id);
+}
+
 @FavoriteService(BaseEntityEnum.OrganizationProject)
 @Injectable()
 export class OrganizationProjectService extends TenantAwareCrudService<OrganizationProject> {
@@ -584,10 +597,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			return projects;
 		}
 
-		const workingEmployeeIds = await this.findWorkingEmployeeIds(
-			memberLists.flat().map((member) => member?.employeeId)
-		);
-		const isWorking = (member: { employeeId?: ID }) => workingEmployeeIds.has(member?.employeeId);
+		const workingEmployeeIds = await this.findWorkingEmployeeIds(memberLists.flat().map(memberEmployeeId));
+		// A member whose employee cannot be named is kept: only an employee known not to work is left out
+		const isWorking = (member: IMembership) => {
+			const employeeId = memberEmployeeId(member);
+			return !employeeId || workingEmployeeIds.has(employeeId);
+		};
 
 		for (const project of projects.filter(Boolean)) {
 			if (Array.isArray(project.members)) {
