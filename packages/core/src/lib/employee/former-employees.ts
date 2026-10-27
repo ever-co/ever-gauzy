@@ -20,22 +20,33 @@ const MEMBER_LIST_KEY = 'members';
 const RECORD_KEYS = new Set(['items', 'nodes', 'edges', 'node']);
 
 /**
- * The relations whose records are organizational member lists too: a team's projects, a project's teams and
- * modules, a module's sprints... A relation not named here is not searched: a task's `members` are its assignees
+ * The relations whose records are organizational member lists too: a team's projects, a sprint's project, a
+ * module's parent and children, a project's client... A relation not named here is not searched: a task's `members` are its assignees
  * and a comment's its mentions, records of who did the work, which keep every employee they name.
  */
 const MEMBERSHIP_HOLDER_KEYS = new Set([
+	// Lists of them
 	'teams',
 	'organizationTeams',
 	'projects',
 	'organizationProjects',
 	'modules',
 	'organizationProjectModules',
+	'children',
 	'sprints',
 	'organizationSprints',
 	'departments',
 	'organizationDepartments',
-	'organizationContacts'
+	'organizationContacts',
+	// One of them
+	'project',
+	'organizationProject',
+	'parent',
+	'organizationTeam',
+	'organizationSprint',
+	'organizationProjectModule',
+	'organizationContact',
+	'organizationDepartment'
 ]);
 
 /** How deep a response is searched for member lists: a page of records, their relations, and theirs. */

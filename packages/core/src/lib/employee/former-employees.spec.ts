@@ -49,6 +49,36 @@ describe('leaveOutFormerEmployees', () => {
 		expect(idsOf(team.projects[0].members)).toEqual(['p2']);
 	});
 
+	it('filters the organizational records a record is related to: a sprint’s project, a module’s parent and children', async () => {
+		const sprint = {
+			id: 'sprint-1',
+			members: [],
+			project: { id: 'project-1', members: [row('p1', 'employee-ended')] }
+		};
+		const projectModule = {
+			id: 'module-1',
+			members: [],
+			parent: { id: 'module-0', members: [row('m0', 'employee-ended'), row('m1', 'employee-a')] },
+			children: [{ id: 'module-2', members: [row('m2', 'employee-ended')] }]
+		};
+		const project = {
+			id: 'project-1',
+			organizationContact: {
+				id: 'contact-1',
+				members: [{ id: 'employee-ended', userId: 'u2', isActive: false, isArchived: true }]
+			}
+		};
+
+		await leaveOutFormerEmployees(sprint, lookup());
+		await leaveOutFormerEmployees(projectModule, lookup());
+		await leaveOutFormerEmployees(project, lookup());
+
+		expect(sprint.project.members).toEqual([]);
+		expect(idsOf(projectModule.parent.members)).toEqual(['m1']);
+		expect(projectModule.children[0].members).toEqual([]);
+		expect(project.organizationContact.members).toEqual([]);
+	});
+
 	it('keeps the former employees of historical records: a task’s assignees, a comment’s mentions', async () => {
 		// A team read with `relations: ['tasks.members']`: the task's members are who was assigned the work
 		const team = {
