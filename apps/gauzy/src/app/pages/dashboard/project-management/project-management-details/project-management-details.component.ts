@@ -97,6 +97,9 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 	public readonly permissions = PermissionsEnum;
 	public totalTasks = 0;
 	public tasksLoading = false;
+	// Bumped by every reload and every fetch: a response from an older one is dropped, so it can
+	// neither append rows from the previous filters nor end the newer fetch's loading state.
+	private _taskRequest = 0;
 
 	// Quick looks: the same task and project drawers as the employee page.
 	public viewedTask: ITask | null = null;
@@ -219,6 +222,8 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 	 * Starts the task list over from its first page.
 	 */
 	private _reload(): void {
+		// The next fetch waits out a debounce; a request still in flight must not refill the list meanwhile.
+		this._taskRequest++;
 		this.refreshPagination();
 		this.tasks = [];
 		this._task$.next(true);
@@ -330,13 +335,16 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		if (searchInput) {
 			searchInput.value = '';
 		}
+		// Restarts the search debounce with the cleared term, so a term typed just before clearing
+		// is dropped instead of being applied once its delay runs out.
+		this._search$.next('');
 		this._reload();
 	}
 
 	/*
 	 * Register Smart Table Source Config
 	 */
-	private _setSmartTableSource() {
+	private _setSmartTableSource(): ServerDataSource | undefined {
 		if (!this._organization) {
 			return;
 		}
@@ -347,29 +355,44 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		});
 		// Sent as `filters[field]` query parameters; the smart-table typing only allows string searches.
 		this._smartTableSource.setFilter(this.advancedFilters() as any, false);
+		return this._smartTableSource;
 	}
 
 	private async _getTasks() {
 		if (!this._organization) {
 			return;
 		}
+		const request = ++this._taskRequest;
 		this.tasksLoading = true;
 		try {
-			this._setSmartTableSource();
+			// Its own source: a later fetch replaces `_smartTableSource` while this one is in flight.
+			const source = this._setSmartTableSource();
 			const { activePage, itemsPerPage } = this.getPagination();
 
-			this._smartTableSource.setPaging(activePage, itemsPerPage, false);
-			this._smartTableSource.setSort([{ field: 'dueDate', direction: 'asc' }]);
+			source.setPaging(activePage, itemsPerPage, false);
+			source.setSort([{ field: 'dueDate', direction: 'asc' }]);
 
-			await this._smartTableSource.getElements();
-			this._tasks.push(...this._smartTableSource.getData());
-			this.totalTasks = this._smartTableSource.count();
+			await source.getElements();
+			if (request !== this._taskRequest) {
+				return;
+			}
+			this._tasks.push(...source.getData());
+			this.totalTasks = source.count();
 			this._sortProjectByPopularity();
 		} catch (error) {
-			this._errorHandlingService.handleError(error);
+			if (request === this._taskRequest) {
+				this._errorHandlingService.handleError(error);
+			}
 		} finally {
-			this.tasksLoading = false;
+			if (request === this._taskRequest) {
+				this.tasksLoading = false;
+			}
 		}
+	}
+
+	/** More tasks exist on the server than the list holds. */
+	public get hasMoreTasks(): boolean {
+		return this.tasks.length < this.totalTasks;
 	}
 
 	private _sortProjectByPopularity() {
@@ -391,8 +414,9 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		return this.selectedEmployeeId === this._store.user.employee?.id;
 	}
 
+	/** Next page, from the list's infinite scroll or its "Show more" button. */
 	public onScrollTasks(): void {
-		if (this.tasksLoading || this.tasks.length >= this.totalTasks) {
+		if (this.tasksLoading || !this.hasMoreTasks) {
 			return;
 		}
 		const activePage = this.pagination.activePage + 1;

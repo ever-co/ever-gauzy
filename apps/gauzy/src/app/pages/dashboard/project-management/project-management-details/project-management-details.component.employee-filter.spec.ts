@@ -118,9 +118,104 @@ describe('ProjectManagementDetailsComponent filter bar', () => {
 		expect(component._smartTableSource.filterConf).toEqual([{ field: 'statuses', search: ['open'] }]);
 	});
 
+	it('restarts the search debounce with an empty term when clearing, so a pending term is dropped', () => {
+		const component = withFilters({ searchTerm: 'invoice', statusFilter: 'open' });
+		const searchNext = jest.fn();
+		Object.assign(component, { _search$: { next: searchNext }, _reload: jest.fn() });
+		const input = { value: 'invoice' } as HTMLInputElement;
+
+		component.clearFilters(input);
+
+		expect(searchNext).toHaveBeenCalledWith('');
+		expect(input.value).toBe('');
+		expect(component.searchTerm).toBe('');
+		expect(component.hasActiveFilters).toBe(false);
+	});
+
 	it('reports whether any filter is active', () => {
 		expect(withFilters({}).hasActiveFilters).toBe(false);
 		expect(withFilters({ searchTerm: 'x' }).hasActiveFilters).toBe(true);
 		expect(withFilters({ dueFilter: 'none' }).hasActiveFilters).toBe(true);
+	});
+});
+
+/**
+ * A reload empties the list at once, but the next fetch waits out a debounce: a request still in
+ * flight from the previous filters must not refill the list, nor end the newer fetch's spinner.
+ */
+describe('ProjectManagementDetailsComponent task fetches', () => {
+	const fakeSource = (rows: object[], total: number) => {
+		let resolve: () => void;
+		const done = new Promise<void>((r) => (resolve = r));
+		return {
+			source: {
+				setPaging: jest.fn(),
+				setSort: jest.fn(),
+				getElements: jest.fn(() => done),
+				getData: () => rows,
+				count: () => total
+			},
+			resolve: () => resolve()
+		};
+	};
+
+	const build = () => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const component: any = Object.create(ProjectManagementDetailsComponent.prototype);
+		Object.assign(component, {
+			_organization: { id: 'org-1', tenantId: 'tenant-1' },
+			_tasks: [],
+			_projects: [],
+			_projectTaskCount: {},
+			_taskRequest: 0,
+			totalTasks: 0,
+			tasksLoading: false,
+			_errorHandlingService: { handleError: jest.fn() },
+			getPagination: () => ({ activePage: 1, itemsPerPage: 10 }),
+			refreshPagination: jest.fn(),
+			_task$: { next: jest.fn() }
+		});
+		return component;
+	};
+
+	it('drops a response that lands after a reload', async () => {
+		const component = build();
+		const stale = fakeSource([{ id: 'old' }], 1);
+		component._setSmartTableSource = () => stale.source;
+
+		const fetch = component._getTasks();
+		component._reload();
+		stale.resolve();
+		await fetch;
+
+		expect(component.tasks).toEqual([]);
+		expect(component.totalTasks).toBe(0);
+	});
+
+	it('leaves the loading state to the newest fetch', async () => {
+		const component = build();
+		const older = fakeSource([{ id: 'old' }], 1);
+		const newer = fakeSource([{ id: 'new' }], 1);
+		component._setSmartTableSource = jest.fn().mockReturnValueOnce(older.source).mockReturnValueOnce(newer.source);
+
+		const first = component._getTasks();
+		const second = component._getTasks();
+		older.resolve();
+		await first;
+		expect(component.tasksLoading).toBe(true);
+
+		newer.resolve();
+		await second;
+		expect(component.tasksLoading).toBe(false);
+		expect(component.tasks).toEqual([{ id: 'new' }]);
+	});
+
+	it('offers more tasks only while the server holds more than the list', () => {
+		const component = build();
+		Object.assign(component, { _tasks: new Array(10).fill({}), totalTasks: 25 });
+		expect(component.hasMoreTasks).toBe(true);
+
+		component.totalTasks = 10;
+		expect(component.hasMoreTasks).toBe(false);
 	});
 });
