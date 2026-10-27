@@ -1,3 +1,67 @@
+<!-- Filter bar: narrows Today and, through it, the projects and recently assigned panels. -->
+<section class="filter-bar" [attr.aria-label]="'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.FILTERS' | translate">
+	<label class="filter-search">
+		<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+		<input
+			#searchInput
+			type="search"
+			class="filter-search-input"
+			[placeholder]="'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.SEARCH_PLACEHOLDER' | translate"
+			[attr.aria-label]="'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.SEARCH_PLACEHOLDER' | translate"
+			(input)="onSearch(searchInput.value)"
+		/>
+	</label>
+
+	<div class="status-tabs" role="tablist" [attr.aria-label]="'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.COLUMN_STATUS' | translate">
+		@for (option of statusFilters; track option.key) {
+		<button
+			type="button"
+			role="tab"
+			class="status-tab"
+			[class.is-active]="statusFilter === option.key"
+			[attr.aria-selected]="statusFilter === option.key"
+			(click)="setStatusFilter(option.key)"
+		>
+			{{ option.label | translate }}
+		</button>
+		}
+	</div>
+
+	<div class="filter-selects">
+		<nb-select
+			size="tiny"
+			class="filter-select"
+			[selected]="priorityFilter"
+			(selectedChange)="setPriorityFilter($event)"
+			[attr.aria-label]="'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.PRIORITY' | translate"
+		>
+			<nb-option value="all">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.ANY_PRIORITY' | translate }}</nb-option>
+			@for (option of priorityFilters; track option.key) {
+			<nb-option [value]="option.key">{{ option.label | translate }}</nb-option>
+			}
+		</nb-select>
+
+		<nb-select
+			size="tiny"
+			class="filter-select"
+			[selected]="dueFilter"
+			(selectedChange)="setDueFilter($event)"
+			[attr.aria-label]="'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.COLUMN_DUE' | translate"
+		>
+			@for (option of dueFilters; track option.key) {
+			<nb-option [value]="option.key">{{ option.label | translate }}</nb-option>
+			}
+		</nb-select>
+
+		@if (hasActiveFilters) {
+		<button nbButton ghost size="tiny" status="basic" type="button" (click)="clearFilters(searchInput)">
+			<nb-icon icon="close-outline"></nb-icon>
+			{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.CLEAR_FILTERS' | translate }}
+		</button>
+		}
+	</div>
+</section>
+
 <div class="pm-grid">
 	<!-- Today: tasks, soonest due first; scrolling the list loads the next page. -->
 	<section class="panel panel--tasks">
@@ -122,13 +186,22 @@
 						}
 					</div>
 				</div>
-				} @empty { @if (!tasksLoading) {
+				} @empty { @if (!tasksLoading) { @if (hasActiveFilters) {
+				<div class="pm-state" role="row">
+					<nb-icon icon="funnel-outline" aria-hidden="true"></nb-icon>
+					<p class="state-title" role="cell">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.NO_MATCHES' | translate }}</p>
+					<p class="state-hint">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.NO_MATCHES_HINT' | translate }}</p>
+					<button nbButton outline size="tiny" status="basic" type="button" (click)="clearFilters(searchInput)">
+						{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.CLEAR_FILTERS' | translate }}
+					</button>
+				</div>
+				} @else {
 				<div class="pm-state" role="row">
 					<nb-icon icon="clipboard-outline" aria-hidden="true"></nb-icon>
 					<p class="state-title" role="cell">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.NO_TASKS' | translate }}</p>
 					<p class="state-hint">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.NO_TASKS_HINT' | translate }}</p>
 				</div>
-				} }
+				} } }
 			</div>
 		</div>
 

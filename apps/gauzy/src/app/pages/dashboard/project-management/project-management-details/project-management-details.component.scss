@@ -28,6 +28,144 @@ $weight-normal: 400; // labels, captions, chips
 	min-width: 0;
 }
 
+/* ── Filter bar ──────────────────────────────────────────────────────────── */
+
+// Wraps on narrow screens: search on its own line, then the tabs, then the selects.
+.filter-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $gap-sm $gap-md;
+	padding: $gap-sm $gap-md;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.filter-search {
+	display: flex;
+	align-items: center;
+	gap: $gap-xs;
+	flex: 1 1 14rem;
+	min-width: 12rem;
+	max-width: 22rem;
+	height: 2rem;
+	margin: 0;
+	padding: 0 $gap-sm;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-2);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	color: var(--gauzy-text-color-2);
+	cursor: text;
+
+	&:focus-within {
+		box-shadow: inset 0 0 0 1px var(--gauzy-action-info-text);
+	}
+
+	nb-icon {
+		flex: 0 0 auto;
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+}
+
+// A bare `<input>`, so the global form-control rule (`text-inputs-overrides`) lands on it and
+// paints a second control inside the pill: a radius, an inset shadow and a full control's
+// min-height, which overflows the 2rem pill. Strip that chrome so it reads as the pill's text.
+.filter-search-input {
+	flex: 1 1 auto;
+	min-width: 0;
+	height: 100%;
+	min-height: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	outline: 0;
+	box-shadow: none;
+	background: transparent;
+	font: inherit;
+	font-size: 0.75rem;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-1);
+	appearance: none;
+
+	&::placeholder {
+		color: var(--gauzy-text-color-2);
+	}
+
+	// The browser's own search chrome: keep the clear button, drop the rest.
+	&::-webkit-search-decoration,
+	&::-webkit-search-results-button,
+	&::-webkit-search-results-decoration {
+		appearance: none;
+	}
+
+	&::-webkit-search-cancel-button {
+		cursor: pointer;
+	}
+}
+
+// Segmented control, like the employee page's task filter.
+.status-tabs {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 0.125rem;
+	padding: 0.125rem;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-2);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.status-tab {
+	padding: 0.25rem 0.625rem;
+	border: 0;
+	border-radius: var(--gauzy-radius-sm);
+	background: transparent;
+	font: inherit;
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: $weight-medium;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	white-space: nowrap;
+	cursor: pointer;
+	transition:
+		background-color 0.12s ease-in-out,
+		color 0.12s ease-in-out;
+
+	&:hover {
+		color: var(--gauzy-text-color-1);
+	}
+
+	&.is-active {
+		background-color: var(--gauzy-card-1);
+		color: var(--gauzy-text-color-1);
+		box-shadow: 0 0 0 1px var(--gauzy-border-default-color);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: 1px;
+	}
+}
+
+.filter-selects {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $gap-sm;
+	margin-inline-start: auto;
+}
+
+.filter-select {
+	min-width: 9rem;
+}
+
+.pm-state [nbButton] {
+	margin-top: $gap-sm;
+}
+
 /* ── Layout ──────────────────────────────────────────────────────────────── */
 
 .pm-grid {
@@ -546,6 +684,7 @@ $weight-normal: 400; // labels, captions, chips
 	.task-row,
 	.side-item,
 	.project-chip,
+	.status-tab,
 	.add-todo {
 		transition: none;
 	}
