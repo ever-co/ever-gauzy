@@ -6471,6 +6471,50 @@
 			}
 		}
 	},
+	"DELETE_ACCOUNT_PAGE": {
+		"LOGIN_LINK": "Delete my account",
+		"BACK_TO_LOGIN": "Back to sign in",
+		"REQUEST": {
+			"TITLE": "Delete your account",
+			"SUB_TITLE": "Enter the email address of your account. We will email you a link to review and confirm the deletion of every account registered with it. No password needed.",
+			"EMAIL": "Email address",
+			"EMAIL_PLACEHOLDER": "you@company.com",
+			"STEP_1": "Open the link in the email within 30 minutes. It works once.",
+			"STEP_2": "Review the accounts and workspaces that will be deleted.",
+			"STEP_3": "Confirm. Nothing is deleted until you do.",
+			"SUBMIT": "Email me a deletion link",
+			"SENT_TITLE": "Check your inbox",
+			"SENT": "If an account exists for that address, we sent it a link to delete it. The link expires in 30 minutes. Nothing has been deleted yet.",
+			"TOO_MANY": "Too many requests. Please wait a minute and try again.",
+			"FAILED": "Something went wrong. Please try again."
+		},
+		"CONFIRM": {
+			"TITLE": "Confirm account deletion",
+			"LOADING": "Checking your link...",
+			"INVALID_TITLE": "This link cannot be used",
+			"INVALID": "It is invalid, has expired, was replaced by a newer one, or has already been used. Request a new link to continue.",
+			"REQUEST_NEW": "Request a new link",
+			"INTRO": "These accounts are registered with {{ email }} and will be deleted:",
+			"UNNAMED": "Workspace",
+			"OUTCOME_WORKSPACE": "You are the only member: the whole workspace and all of its data will be deleted.",
+			"OUTCOME_ACCOUNT": "Shared with {{ members }} other member(s): your account, profile and your own records (time logs, screenshots, activity) will be deleted. Content you created for the workspace stays with it, without your name.",
+			"SOLE_ADMIN": "You are this workspace's only admin. Its other members will have no admin after you leave.",
+			"KEPT": "Kept: an audit record of this request (no name, a hashed address), billing records we must keep by law, and encrypted backups until they are overwritten (14 days).",
+			"UNDERSTAND": "I understand this cannot be undone.",
+			"TYPE_WORD": "Type {{ word }} to confirm",
+			"SUBMIT": "Delete permanently",
+			"FAILED": "The deletion did not complete. Your link still works until it expires: please try again.",
+			"DONE_TITLE": "Your account has been deleted",
+			"DONE": "Deleted {{ accounts }} account(s), including {{ workspaces }} whole workspace(s). A confirmation email is on its way.",
+			"FINISH": "Done"
+		},
+		"DANGER_ZONE_HELP": {
+			"DELETE_ACCOUNT": "Delete account: permanently deletes your account in this workspace, your profile, sign-in data and your own records (time logs, screenshots, activity). Content you created for the workspace stays with it, without your name. If you are the only member, use Delete all data first.",
+			"DELETE_ALL_DATA": "Delete all data: deletes all the data of the organizations in this workspace (employees, projects, tasks, time tracking, invoices, ...) and keeps your account.",
+			"BY_EMAIL": "Have accounts in several workspaces, or cannot sign in?",
+			"BY_EMAIL_LINK": "Delete them all by email link"
+		}
+	},
 	"FORGOT_PASSWORD_PAGE": {
 		"TITLE": "Passwort vergessen",
 		"SUB_TITLE": "Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.",

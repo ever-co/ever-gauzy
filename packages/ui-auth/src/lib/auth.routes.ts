@@ -13,6 +13,8 @@ import { EstimateEmailComponent } from './components/estimate-email/estimate-ema
 import { EstimateEmailResolver } from './components/estimate-email/estimate-email.resolver';
 import { AcceptClientInviteComponent } from './components/accept-client-invite/accept-client-invite.component';
 import { OAuthAuthorizeComponent } from './components/oauth-authorize/oauth-authorize.component';
+import { NgxDeleteAccountComponent } from './components/delete-account/delete-account.component';
+import { NgxDeleteAccountConfirmComponent } from './components/delete-account/delete-account-confirm.component';
 
 /**
  * Creates routes for the auth module.
@@ -78,6 +80,16 @@ export const createAuthRoutes = (_pageRouteRegistryService: PageRouteRegistrySer
 			{
 				path: 'oauth-authorize',
 				component: OAuthAuthorizeComponent
+			},
+			// Deleting your account(s) by emailed link. No NoAuthGuard on either: a signed-in user may use them
+			// too (e.g. to delete the accounts they hold in other workspaces), and the token is the only proof.
+			{
+				path: 'delete-account',
+				component: NgxDeleteAccountComponent
+			},
+			{
+				path: 'delete-account/confirm',
+				component: NgxDeleteAccountConfirmComponent
 			},
 			{
 				path: 'logout',

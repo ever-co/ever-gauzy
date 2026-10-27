@@ -16,6 +16,9 @@ import posthog, { PostHogConfig, Properties } from 'posthog-js';
  * - Error monitoring
  * - Page views
  */
+/** Event properties PostHog fills with a URL. */
+const URL_PROPERTIES = ['$current_url', 'current_url', '$referrer', '$initial_referrer', '$pathname', 'url'];
+
 @Injectable({
 	providedIn: 'root'
 })
@@ -37,6 +40,18 @@ export class PostHogService {
 				api_host: config.api_host || 'https://app.posthog.com',
 				capture_pageview: false, // We'll handle page views manually for more control
 				...config
+			};
+			// Emailed links (account deletion, password reset, invitations) carry a single-use token in the URL,
+			// in the fragment under hash routing; every PostHog event records the full URL. Redact it first.
+			const sanitize = this.config.sanitize_properties;
+			this.config.sanitize_properties = (properties, eventName) => {
+				const cleaned = sanitize ? sanitize(properties, eventName) : properties;
+				for (const key of URL_PROPERTIES) {
+					if (typeof cleaned?.[key] === 'string') {
+						cleaned[key] = cleaned[key].replace(/([?&#])(token|code)=[^&#]*/gi, '$1$2=[redacted]');
+					}
+				}
+				return cleaned;
 			};
 
 			// Initialize PostHog with API key and configuration

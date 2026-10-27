@@ -1,6 +1,7 @@
 import * as Sentry from '@sentry/angular';
 import { Client, ClientOptions, BaseTransportOptions } from '@sentry/core';
 import { environment } from '@gauzy/ui-config';
+import { redactUrlSecrets } from '@gauzy/ui-core/common';
 import { version } from '../../version';
 
 /**
@@ -28,6 +29,23 @@ export function initializeSentry(): Client<ClientOptions<BaseTransportOptions>> 
 			graphQL: { document: false, variables: false }
 		},
 		attachStacktrace: false,
+		// Emailed links (account deletion, password reset, invitations) carry a single-use token in the URL; with
+		// hash routing it sits in the fragment, which Sentry records verbatim in `request.url` and in navigation
+		// breadcrumbs. Redact it before anything leaves the browser.
+		beforeBreadcrumb(breadcrumb) {
+			if (breadcrumb?.data) {
+				for (const key of ['from', 'to', 'url']) {
+					breadcrumb.data[key] = redactUrlSecrets(breadcrumb.data[key]);
+				}
+			}
+			return breadcrumb;
+		},
+		beforeSend(event) {
+			if (event.request?.url) {
+				event.request.url = redactUrlSecrets(event.request.url);
+			}
+			return event;
+		},
 		dsn: environment.SENTRY_DSN,
 		environment: environment.production ? 'production' : 'development',
 		debug: !environment.production,

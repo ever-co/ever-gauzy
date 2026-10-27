@@ -45,31 +45,29 @@ export class DangerZoneComponent extends TranslationBaseComponent implements OnI
 			})
 			.onClose.pipe(untilDestroyed(this))
 			.subscribe(async (data) => {
-				if (data) {
-					try {
-						await this.userService
-							.getUserById(this.store.userId)
-							.then((user) => {
-								this.userService.delete(this.store.userId, data.user);
+				if (!data) {
+					return;
+				}
+				try {
+					const user = await this.userService.getUserById(this.store.userId);
+					// Awaited: the success message and the sign-out used to run even when the API refused.
+					await this.userService.delete(this.store.userId, data.user);
 
-								this.toastrService.success(
-									this.getTranslation('NOTES.DANGER_ZONE.ACCOUNT_DELETED', {
-										username: user.firstName + ' ' + user.lastName
-									})
-								);
-							})
-							.then(() => {
-								setTimeout(() => {
-									this.router.navigate(['/auth/register']);
-								}, 2500);
-							});
-					} catch (error) {
-						this.toastrService.danger(
-							this.getTranslation('NOTES.ORGANIZATIONS.DATA_ERROR', {
-								error: error.error.message || error.message
-							})
-						);
-					}
+					this.toastrService.success(
+						this.getTranslation('NOTES.DANGER_ZONE.ACCOUNT_DELETED', {
+							username: user.firstName + ' ' + user.lastName
+						})
+					);
+					// The account is gone: drop the session this browser still holds, then leave the app.
+					setTimeout(() => {
+						this.router.navigate(['/auth/logout']);
+					}, 2500);
+				} catch (error) {
+					this.toastrService.danger(
+						this.getTranslation('NOTES.ORGANIZATIONS.DATA_ERROR', {
+							error: error?.error?.message || error?.message
+						})
+					);
 				}
 			});
 	}
@@ -104,7 +102,7 @@ export class DangerZoneComponent extends TranslationBaseComponent implements OnI
 							this.process = 50;
 						}, 200);
 
-						this.userService
+						await this.userService
 							.deleteAllData()
 							.then((organization: any) => {
 								if (organization) {
@@ -125,9 +123,10 @@ export class DangerZoneComponent extends TranslationBaseComponent implements OnI
 								this.loading = false;
 							});
 					} catch (error) {
+						this.process = 0;
 						this.toastrService.danger(
 							this.getTranslation('NOTES.ORGANIZATIONS.DATA_ERROR', {
-								error: error.error.message || error.message
+								error: error?.error?.message || error?.message
 							})
 						);
 					}
