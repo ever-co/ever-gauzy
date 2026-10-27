@@ -627,9 +627,11 @@
 		</button>
 		<button
 			nbButton
+			status="basic"
 			nbPopoverPlacement="bottom"
-			class="action"
+			class="action primary more-actions"
 			[nbPopover]="actionsPopover"
+			[attr.aria-label]="'INVOICES_PAGE.ACTIONS' | translate"
 			nbPopoverTrigger="noop"
 			(click)="toggleActionsPopover()"
 			size="small"

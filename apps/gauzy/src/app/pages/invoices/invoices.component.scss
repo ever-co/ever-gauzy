@@ -391,6 +391,19 @@ ga-pagination {
     }
   }
 
+  // The ⋮ trigger: carried no `status`, so Nebular drew it as a default filled
+  // button instead of taking the strip's `--gauzy-card-2` fill above. Its icon
+  // stays neutral like the rest of the strip's chrome and brightens on hover.
+  &.more-actions[nbButton].appearance-filled.status-basic {
+    color: var(--text-hint-color);
+
+    &:hover,
+    &:focus-visible {
+      color: nb-theme(text-basic-color);
+      background-color: var(--gauzy-card-3, var(--gauzy-card-2));
+    }
+  }
+
   // ── The "Set status" trigger, rebuilt as a View button ──────────────
   // Matching the select's metrics one by one got the numbers right and still
   // left it reading as a form field, because its BOX MODEL is a field's: the
