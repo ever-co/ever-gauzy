@@ -7,7 +7,15 @@ type MaybeTask = { id?: string; syncScope?: string | null } | null | undefined;
  * its id — a task private to the Ever platform never reaches Sim with its title, description or other fields.
  */
 export function taskForSim(task: MaybeTask): MaybeTask {
-	return task && !isTaskSyncAllowed(task, 'third-party') ? { id: task.id } : task;
+	if (!task) return task;
+	if (!isTaskSyncAllowed(task, 'third-party')) return { id: task.id };
+	// An allowed task can carry a loaded parent / children: each is reduced by its own scope.
+	const graph = task as { parent?: MaybeTask; children?: MaybeTask[] };
+	return {
+		...task,
+		...(graph.parent ? { parent: taskForSim(graph.parent) } : {}),
+		...(Array.isArray(graph.children) ? { children: graph.children.map(taskForSim) } : {})
+	} as MaybeTask;
 }
 
 /** A time log (or any record carrying a loaded `task`) with that task reduced by `taskForSim`. */
