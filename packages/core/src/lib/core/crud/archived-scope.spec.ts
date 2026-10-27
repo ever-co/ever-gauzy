@@ -63,7 +63,7 @@ describe('archivedScopeOfFilter', () => {
 });
 
 describe('withArchivedLinks', () => {
-	const linked = [
+	const linked: Array<{ id: string; isArchived?: boolean }> = [
 		{ id: 'team-active', isArchived: false },
 		{ id: 'team-archived', isArchived: true }
 	];
