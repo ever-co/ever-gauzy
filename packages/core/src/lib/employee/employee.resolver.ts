@@ -521,10 +521,10 @@ export class EmployeeResolver {
 	 * connection's filter: the rows the read returns carry neither membership, so the connection could
 	 * not narrow by either.
 	 *
-	 * It carries the route's team check too. ORG_MEMBERS_VIEW, which the EMPLOYEE role holds, covers only the
-	 * caller's own teams, and `findMembers` narrows by team only when one is given: without the check this field
-	 * answered an employee the whole organization's roster, or any team's, which the route has refused since
-	 * the check was added there.
+	 * It carries the route's scope too. ORG_MEMBERS_VIEW, which the EMPLOYEE role holds, covers only the people the
+	 * caller works with, and `findMembers` narrows by team or project only when one is given: without the scope
+	 * this field answered an employee the whole organization's roster, or any team's. A named team or project
+	 * must be the caller's; naming neither answers the people the caller shares an active team or project with.
 	 */
 	@Query('employeeMembers')
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_MEMBERS_VIEW)
@@ -547,18 +547,27 @@ export class EmployeeResolver {
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		]);
 
-		if (
-			!hasOrganizationWideView &&
-			!(await this.managedEmployeeService.isMemberOfTeam(RequestContext.currentEmployeeId(), organizationTeamId))
-		) {
-			throw new ForbiddenException('You can only list the members of a team you belong to.');
+		let employeeIds: Id[] | undefined;
+		if (!hasOrganizationWideView) {
+			const scope = await this.managedEmployeeService.scopeMembersRead(
+				RequestContext.currentEmployeeId(),
+				organizationTeamId,
+				organizationProjectId
+			);
+			if (!scope.allowed) {
+				throw new ForbiddenException('You can only list the members of a team or project you belong to.');
+			}
+			employeeIds = scope.employeeIds;
 		}
 
-		const { items }: IPagination<IEmployee> = await this.employeeService.findMembers({
-			organizationId,
-			organizationTeamId,
-			organizationProjectId
-		} as IFindMembersInput);
+		const { items }: IPagination<IEmployee> = await this.employeeService.findMembers(
+			{
+				organizationId,
+				organizationTeamId,
+				organizationProjectId
+			} as IFindMembersInput,
+			employeeIds
+		);
 
 		return buildConnection<Employee>({
 			rows: (items ?? []) as Employee[],

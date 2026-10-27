@@ -51,6 +51,7 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { Employee } from './employee.entity';
+import { NO_ACCESSIBLE_EMPLOYEE_ID } from './managed-employee.service';
 import { FavoriteService } from '../core/decorators';
 import { EmployeeAgentProfile, Organization, Role, Tenant, User } from '../core/entities/internal';
 import { writeAgentProfile } from '../employee-agent-profile/employee-agent-profile.service';
@@ -287,9 +288,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * Finds members based on provided options.
 	 *
 	 * @param options - The options to filter members.
+	 * @param employeeIds - Narrows the list to these employees (a caller's colleagues); not a client input.
 	 * @returns A pagination object containing the list of members and total count.
 	 */
-	async findMembers(options: IFindMembersInput): Promise<IPagination<IEmployee>> {
+	async findMembers(options: IFindMembersInput, employeeIds?: ID[]): Promise<IPagination<IEmployee>> {
 		const { organizationId, organizationTeamId, organizationProjectId } = options;
 		const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
@@ -308,6 +310,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				}
 				if (organizationTeamId) {
 					mWhere.teams = { organizationTeamId };
+				}
+				if (employeeIds) {
+					mWhere.id = { $in: employeeIds };
 				}
 
 				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere, {
@@ -353,6 +358,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				if (organizationTeamId) {
 					query.leftJoin('employee.teams', 'teams');
 					query.andWhere('teams.organizationTeamId = :organizationTeamId', { organizationTeamId });
+				}
+
+				// A caller's colleagues. An empty list matches no one, and is never read as "no filter".
+				if (employeeIds) {
+					query.andWhere(p(`"${query.alias}"."id" IN (:...employeeIds)`), {
+						employeeIds: employeeIds.length ? employeeIds : [NO_ACCESSIBLE_EMPLOYEE_ID]
+					});
 				}
 
 				// Apply filter conditions using TypeORM SelectQueryBuilder
