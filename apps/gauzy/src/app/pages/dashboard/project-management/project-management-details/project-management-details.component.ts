@@ -419,6 +419,10 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		if (this.tasksLoading || !this.hasMoreTasks) {
 			return;
 		}
+		// Pending from now, not from when the debounced fetch starts: a second click or scroll in
+		// between would advance past this page, and only the later one would be fetched. The fetch
+		// for this page clears it, whether it succeeds or fails.
+		this.tasksLoading = true;
 		const activePage = this.pagination.activePage + 1;
 		this.setPagination({
 			...this.getPagination(),

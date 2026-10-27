@@ -210,6 +210,25 @@ describe('ProjectManagementDetailsComponent task fetches', () => {
 		expect(component.tasks).toEqual([{ id: 'new' }]);
 	});
 
+	it('accepts one page advance at a time, until that page has loaded', () => {
+		const component = build();
+		const setPagination = jest.fn((value) => (component.pagination = value));
+		Object.assign(component, {
+			_tasks: new Array(10).fill({}),
+			totalTasks: 30,
+			pagination: { activePage: 1, itemsPerPage: 10 },
+			setPagination,
+			getPagination: () => component.pagination
+		});
+
+		component.onScrollTasks();
+		component.onScrollTasks();
+
+		expect(setPagination).toHaveBeenCalledTimes(1);
+		expect(component.pagination.activePage).toBe(2);
+		expect(component.tasksLoading).toBe(true);
+	});
+
 	it('offers more tasks only while the server holds more than the list', () => {
 		const component = build();
 		Object.assign(component, { _tasks: new Array(10).fill({}), totalTasks: 25 });
