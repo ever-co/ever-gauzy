@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { IAccountDeletionRequestInput, LanguagesEnum } from '@gauzy/contracts';
 
@@ -22,9 +22,14 @@ export class RequestAccountDeletionDTO implements IAccountDeletionRequestInput {
 	@MaxLength(2048)
 	readonly callbackUrl?: string;
 
+	/**
+	 * The language of the emails. Any short string is accepted and an unknown one is ignored (English is used):
+	 * a request forwarded by another site (ever.co) must not fail validation over a locale Gauzy lacks.
+	 */
 	@ApiPropertyOptional({ enum: LanguagesEnum })
 	@IsOptional()
-	@IsEnum(LanguagesEnum)
+	@IsString()
+	@MaxLength(16)
 	readonly locale?: LanguagesEnum;
 
 	@ApiPropertyOptional({ type: () => String })

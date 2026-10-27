@@ -139,7 +139,7 @@ export class AccountDeletionService {
 					expiresAt: new Date(now.getTime() + ttlMinutes * 60 * 1000),
 					requestIpHash: hashAccountDeletionIp(meta.ip),
 					userAgent: meta.userAgent ? meta.userAgent.slice(0, 255) : null,
-					locale: input.locale || users[0].preferredLanguage || LanguagesEnum.ENGLISH
+					locale: supportedLanguage(input.locale) || users[0].preferredLanguage || LanguagesEnum.ENGLISH
 				})
 			);
 
@@ -534,6 +534,18 @@ export class AccountDeletionService {
 			withAllowedEmailLinks(overrides, warnRejectedEmailLink(this.logger, 'the account deletion email'))
 		);
 	}
+}
+
+/** `locale` (or its language part, `pt-BR` → `pt`) when Gauzy has emails in it, otherwise undefined. */
+function supportedLanguage(locale?: string): LanguagesEnum | undefined {
+	const languages = Object.values(LanguagesEnum) as string[];
+	for (const candidate of [locale, locale?.split(/[-_]/)[0]]) {
+		const normalized = candidate?.toLowerCase();
+		if (normalized && languages.includes(normalized)) {
+			return normalized as LanguagesEnum;
+		}
+	}
+	return undefined;
 }
 
 /** The first 12 hex characters of a hash: enough to correlate log lines, not to look anything up. */
