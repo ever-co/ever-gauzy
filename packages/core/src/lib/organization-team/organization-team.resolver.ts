@@ -23,6 +23,7 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { BaseQueryDTO } from '../core/crud';
+import { archivedScopeOfFilter } from '../core/crud/archived-scope';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -217,7 +218,11 @@ export class OrganizationTeamResolver {
 		// which of its two reads to run. Passing nothing made it take the other branch and dereference a
 		// row it had not loaded ("Cannot use 'in' operator to search for 'members' in undefined"), which
 		// is why this states the criterion rather than leaving it out.
-		const options = { where: {}, ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<OrganizationTeam>;
+		// A `filter` on `isArchived` is answered from both states: the service reads no archived team otherwise.
+		const options = {
+			where: archivedScopeOfFilter(filter),
+			...(withDeleted ? { withDeleted: true } : {})
+		} as BaseQueryDTO<OrganizationTeam>;
 		const { items }: IPagination<IOrganizationTeam> = await this.organizationTeamService.findAll(options);
 
 		return buildConnection<IOrganizationTeam>({
@@ -258,7 +263,8 @@ export class OrganizationTeamResolver {
 		// transform turns an unstated `where` into `{}` before the service sees it, and the service reads
 		// that criterion to decide which of its two reads to run. Nothing here names whose teams are read,
 		// because the read resolves that from the credential.
-		const options = { where: {} } as BaseQueryDTO<OrganizationTeam>;
+		// A `filter` on `isArchived` is answered from both states: the service reads no archived team otherwise.
+		const options = { where: archivedScopeOfFilter(filter) } as BaseQueryDTO<OrganizationTeam>;
 		const { items }: IPagination<IOrganizationTeam> = await this.organizationTeamService.findMyTeams(options);
 
 		return buildConnection<IOrganizationTeam>({

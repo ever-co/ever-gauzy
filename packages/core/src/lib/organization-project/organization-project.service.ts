@@ -24,7 +24,7 @@ import { CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { isNotEmpty } from '@gauzy/utils';
 import { RelationsQueryDTO } from '../shared/dto';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
-import { archivedStates, withArchivedScope } from '../core/crud/archived-scope';
+import { archivedStates, withArchivedLinks, withArchivedScope } from '../core/crud/archived-scope';
 import { sanitizeRichHtml } from '../core/html-sanitizer';
 import { RequestContext } from '../core/context';
 import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
@@ -248,6 +248,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			// Update nested entity (Organization Project Members)
 
 			const { id: organizationProjectId } = organizationProject;
+
+			// A client edits the teams from a list that offers no archived team: the archived teams the project is
+			// linked to are kept, or the save would unlink them
+			if (Array.isArray(entity.teams)) {
+				entity.teams = withArchivedLinks(entity.teams, organizationProject.teams);
+			}
 
 			// Update the organization project with the prepared members
 			const updatedProject = await super.create({

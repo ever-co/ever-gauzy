@@ -34,3 +34,44 @@ export function withArchivedScope<W extends object>(where?: W): W & { isArchived
 	const states = archivedStates((where as { isArchived?: unknown })?.isArchived);
 	return { ...(where ?? ({} as W)), isArchived: states.length === 1 ? states[0] : In(states) };
 }
+
+/**
+ * The `where` of a GraphQL list read for its connection `filter`.
+ *
+ * The list fields read the rows first and apply the connection `filter` to what was read, so the default above
+ * would leave an `isArchived` filter nothing archived to select. A filter that names `isArchived` anywhere — in a
+ * boolean group too — is read from both states and narrows them itself; any other reads the default.
+ *
+ * @param filter - The connection `filter` the caller sent.
+ * @returns `{ isArchived: [false, true] }` when the filter names `isArchived`, otherwise an empty `where`.
+ */
+export function archivedScopeOfFilter(filter: unknown): Record<string, unknown> {
+	return namesField(filter, 'isArchived') ? { isArchived: [false, true] } : {};
+}
+
+/** Whether a filter names a field at any depth. */
+function namesField(value: unknown, field: string, depth = 0): boolean {
+	if (!value || typeof value !== 'object' || depth > 32) {
+		return false;
+	}
+	if (Array.isArray(value)) {
+		return value.some((item) => namesField(item, field, depth + 1));
+	}
+	return Object.entries(value).some(([key, item]) => key === field || namesField(item, field, depth + 1));
+}
+
+/**
+ * The rows an edit links a record to: the ones it states, and the archived ones the record is already linked to.
+ *
+ * The lists offer no archived row, so a client that edits a project's teams or a team's projects never sends back
+ * an archived one it is linked to. Saving the stated list as it is would remove that link; it is kept instead,
+ * and unarchiving the row shows it linked again.
+ *
+ * @param stated - The rows the edit states.
+ * @param linked - The rows the record is linked to now, as stored.
+ * @returns The stated rows, and the linked archived rows the edit did not state.
+ */
+export function withArchivedLinks<T extends { id?: string; isArchived?: boolean }>(stated: T[], linked: T[] = []): T[] {
+	const kept = (linked ?? []).filter((row) => row?.isArchived && !stated.some((it) => it?.id === row.id));
+	return [...stated, ...kept];
+}

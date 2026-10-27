@@ -98,3 +98,30 @@ describe('OrganizationTeamService.countBy', () => {
 		expect(countBy).toHaveBeenNthCalledWith(2, { organizationId: ORGANIZATION, isArchived: true });
 	});
 });
+
+describe('OrganizationTeamService.update — links to archived projects', () => {
+	it('keeps the archived projects the edit could not see, as the project list offers none', async () => {
+		findOneByIdString.mockResolvedValue({
+			...stored,
+			projects: [
+				{ id: 'project-active', isArchived: false },
+				{ id: 'project-archived', isArchived: true }
+			]
+		} as never);
+
+		// The edit form lists active projects only: it states a new one and leaves the active one out
+		await service.update('team-1', {
+			name: 'Gauzy',
+			organizationId: ORGANIZATION,
+			projects: [{ id: 'project-new' }]
+		} as never);
+
+		expect(saved.projects.map(({ id }) => id)).toEqual(['project-new', 'project-archived']);
+	});
+
+	it('leaves the projects alone when the edit does not state them', async () => {
+		await service.update('team-1', { name: 'Renamed', organizationId: ORGANIZATION } as never);
+
+		expect(saved).not.toHaveProperty('projects');
+	});
+});

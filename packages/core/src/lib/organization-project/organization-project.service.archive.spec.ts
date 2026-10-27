@@ -162,3 +162,46 @@ describe('OrganizationProjectService.setArchived', () => {
 		expect(saved).toBeUndefined();
 	});
 });
+
+describe('OrganizationProjectService.update — links to archived teams', () => {
+	it('keeps the archived teams the edit could not see, as the team list offers none', async () => {
+		let saved: Record<string, any>;
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({
+			id: 'project-1',
+			name: 'Ever Works',
+			teams: [
+				{ id: 'team-active', isArchived: false },
+				{ id: 'team-archived', isArchived: true }
+			]
+		} as never);
+		jest.spyOn(TenantAwareCrudService.prototype, 'create').mockImplementation(async (entity) => {
+			saved = entity;
+			return { id: 'project-1', ...entity } as never;
+		});
+
+		// The edit form lists active teams only: it states the active team it kept and a new one
+		await service.update('project-1', {
+			name: 'Ever Works',
+			organizationId: ORGANIZATION,
+			teams: [{ id: 'team-new' }]
+		} as never);
+
+		expect(saved.teams.map(({ id }) => id)).toEqual(['team-new', 'team-archived']);
+	});
+
+	it('leaves the teams alone when the edit does not state them', async () => {
+		let saved: Record<string, any>;
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({
+			id: 'project-1',
+			teams: [{ id: 'team-archived', isArchived: true }]
+		} as never);
+		jest.spyOn(TenantAwareCrudService.prototype, 'create').mockImplementation(async (entity) => {
+			saved = entity;
+			return { id: 'project-1', ...entity } as never;
+		});
+
+		await service.update('project-1', { name: 'Renamed', organizationId: ORGANIZATION } as never);
+
+		expect(saved).not.toHaveProperty('teams');
+	});
+});

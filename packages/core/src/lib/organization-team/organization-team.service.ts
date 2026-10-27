@@ -44,7 +44,7 @@ import {
 	parseFindOptionsSelect
 } from '../core/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
-import { withArchivedScope } from '../core/crud/archived-scope';
+import { withArchivedLinks, withArchivedScope } from '../core/crud/archived-scope';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
@@ -452,6 +452,16 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			}
 
 			const { id: organizationTeamId } = organizationTeam;
+
+			// A client edits the projects from a list that offers no archived project: the archived projects the
+			// team is linked to are kept, or the save would unlink them
+			if (Array.isArray(input.projects)) {
+				const { projects: linked = [] } = await super.findOneByIdString(organizationTeamId, {
+					where: { organizationId, tenantId },
+					relations: { projects: true }
+				});
+				input = { ...input, projects: withArchivedLinks(input.projects, linked) };
+			}
 
 			// Update the organization team with the prepared members
 			return await super.create({
