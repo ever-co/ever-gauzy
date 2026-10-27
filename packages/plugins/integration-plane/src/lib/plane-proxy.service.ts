@@ -10,6 +10,7 @@ import {
 	readSessionTokenFromCookieHeader
 } from '@ever-gauzy/plugin-integration-plane-api';
 import { PlaneIntegrationService } from './plane-integration.service';
+import { PLANE_PROXY_UPSTREAM_URL_ENV, resolvePlaneProxyUpstreamUrl } from './plane-proxy-upstream';
 
 const PROXY_PREFIX = '/api/plane';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -39,6 +40,7 @@ const REQ_TENANT_ID = '__planeResolvedTenantId';
 export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger(PlaneProxyService.name);
 	private proxyResult: MountPlaneProxyResult | null = null;
+	private loggedUpstreamUrl: string | null = null;
 
 	constructor(
 		private readonly httpAdapterHost: HttpAdapterHost,
@@ -149,7 +151,7 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 					}
 
 					return {
-						externalBaseApiUrl: config.externalBaseApiUrl,
+						externalBaseApiUrl: this.getUpstreamUrl(),
 						apiKey: config.apiKey,
 						apiSecret: config.apiSecret,
 						clientBaseUrl: config.clientBaseUrl,
@@ -188,7 +190,6 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 	 * and provides CORS origins for Plane UI dev ports.
 	 */
 	private getDefaultProxyConfig() {
-		const baseUrl = environment.baseUrl || 'http://localhost:3000';
 		// Shared mode: pre-auth bootstrap requests (auth/email-check, login) carry no
 		// tenant, so this default config is what authenticates the proxy's internal
 		// email-check call. Empty strings here would SHADOW the proxy's own
@@ -197,13 +198,34 @@ export class PlaneProxyService implements OnModuleInit, OnModuleDestroy {
 		// magic-code flow. The pair is tenant-scoped and only ever grants the
 		// email-existence check (ApiKeyAuthGuard sets tenantId only; single guarded route).
 		return {
-			externalBaseApiUrl: `${baseUrl}/api`,
+			externalBaseApiUrl: this.getUpstreamUrl(),
 			apiKey: process.env['GAUZY_API_KEY'] || '',
 			apiSecret: process.env['GAUZY_API_SECRET'] || '',
 			clientBaseUrl: process.env['PLANE_CLIENT_BASE_URL'] || 'http://localhost:3001',
 			clientAdminUrl: process.env['PLANE_CLIENT_ADMIN_URL'] || 'http://localhost:3002',
 			clientSpaceUrl: process.env['PLANE_CLIENT_SPACE_URL'] || 'http://localhost:3003'
 		};
+	}
+
+	/**
+	 * The Gauzy API base URL (with `/api`) the proxy sends its calls to: this API process over
+	 * loopback, unless PLANE_PROXY_UPSTREAM_URL says otherwise. Not the public API_BASE_URL, which
+	 * routes every proxied call out through the CDN and back in.
+	 */
+	private getUpstreamUrl(): string {
+		const httpServer: http.Server = this.httpAdapterHost.httpAdapter.getHttpServer();
+		const upstreamUrl = resolvePlaneProxyUpstreamUrl(
+			httpServer.address(),
+			process.env[PLANE_PROXY_UPSTREAM_URL_ENV],
+			environment.port
+		);
+
+		if (upstreamUrl !== this.loggedUpstreamUrl) {
+			this.loggedUpstreamUrl = upstreamUrl;
+			this.logger.log(`Plane proxy calls the Gauzy API at ${upstreamUrl}`);
+		}
+
+		return upstreamUrl;
 	}
 
 	// ── Tenant ID extraction ──────────────────────────────────────────
