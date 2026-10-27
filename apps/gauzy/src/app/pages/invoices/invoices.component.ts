@@ -8,7 +8,8 @@ import {
 	ViewChildren,
 	TemplateRef,
 	AfterViewInit,
-	ChangeDetectionStrategy
+	ChangeDetectionStrategy,
+	HostListener
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -169,6 +170,14 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	 */
 	@ViewChild('actionButtons', { static: true })
 	actionButtons: TemplateRef<any>;
+
+	/**
+	 * The ⋮ "more actions" popover, queried on its own: `popups.last` is only
+	 * this one while the settings popover renders too, and it is absent for a
+	 * user without INVOICES_EDIT.
+	 */
+	@ViewChild('moreActionsTrigger', { read: NbPopoverDirective })
+	moreActionsPopover: NbPopoverDirective;
 
 	constructor(
 		private readonly fb: UntypedFormBuilder,
@@ -1375,8 +1384,27 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	onActionsMenuClick(event: MouseEvent) {
 		const target = event.target as HTMLElement | null;
 		if (target?.closest('button:not([disabled])')) {
-			this.popups?.last?.hide();
+			this.moreActionsPopover?.hide();
 		}
+	}
+
+	/**
+	 * Closes the actions menu on a click anywhere outside it. Clicks on the ⋮
+	 * trigger are left to its own toggle — closing here as well would shut the
+	 * menu and the toggle would reopen it, or the reverse on the opening click.
+	 *
+	 * @param event - Any click on the document.
+	 */
+	@HostListener('document:click', ['$event'])
+	onDocumentClick(event: MouseEvent) {
+		if (!this.moreActionsPopover?.isShown) {
+			return;
+		}
+		const target = event.target as HTMLElement | null;
+		if (target?.closest('.popover-container-action, .more-actions')) {
+			return;
+		}
+		this.moreActionsPopover.hide();
 	}
 
 	ngOnDestroy() {}
