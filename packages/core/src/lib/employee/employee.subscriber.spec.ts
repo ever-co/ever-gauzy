@@ -4,6 +4,7 @@
  */
 import '../core/entities/internal';
 
+import * as membersCount from '../organization-project/organization-project-members-count';
 import { Employee } from './employee.entity';
 import { EmployeeSubscriber } from './employee.subscriber';
 
@@ -169,5 +170,68 @@ describe('EmployeeSubscriber — work status on update', () => {
 			isTrackingEnabled: true,
 			allowScreenshotCapture: true
 		});
+	});
+});
+
+/**
+ * End Work keeps the employee's project memberships (Back to Work restores them), but they no longer count in the
+ * project's `membersCount`. A write that starts or ends their work recounts their projects once it is stored.
+ */
+describe('EmployeeSubscriber — project members count on a work status change', () => {
+	let subscriber: EmployeeSubscriber;
+	let recount: jest.SpyInstance;
+	const em = {} as never;
+
+	beforeEach(() => {
+		subscriber = new EmployeeSubscriber();
+		jest.spyOn(subscriber, 'setUserOrganizationStatus').mockResolvedValue(undefined);
+		recount = jest.spyOn(membersCount, 'recountMembersOfEmployeeProjects').mockResolvedValue(undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const employee = (fields: Partial<Employee> = {}) =>
+		Object.assign(new Employee(), {
+			id: 'employee-1',
+			organizationId: 'org-1',
+			tenantId: 'tenant-1',
+			startedWorkOn: new Date('2018-03-20T00:00:00.000Z'),
+			isActive: true,
+			isArchived: false,
+			...fields
+		});
+
+	it("recounts the employee's projects after End Work is stored", async () => {
+		const ended = employee({ endWork: new Date('2026-10-01T00:00:00.000Z') });
+
+		await subscriber.beforeEntityUpdate(ended, em, ['endWork']);
+		expect(recount).not.toHaveBeenCalled();
+
+		await subscriber.afterEntityUpdate(ended, em);
+		expect(recount).toHaveBeenCalledTimes(1);
+		expect(recount).toHaveBeenCalledWith(em, 'employee-1');
+	});
+
+	it("recounts the employee's projects after Back to Work is stored", async () => {
+		const back = employee({ endWork: null, isActive: false, isArchived: true });
+
+		await subscriber.beforeEntityUpdate(back, em, ['endWork']);
+		await subscriber.afterEntityUpdate(back, em);
+
+		expect(recount).toHaveBeenCalledWith(em, 'employee-1');
+	});
+
+	it('does not recount for a write that neither starts nor ends work, nor twice for one write', async () => {
+		const edited = employee({ position: 'Lead' } as Partial<Employee>);
+
+		await subscriber.beforeEntityUpdate(edited, em, ['position']);
+		await subscriber.afterEntityUpdate(edited, em);
+		expect(recount).not.toHaveBeenCalled();
+
+		const ended = employee({ endWork: new Date('2026-10-01T00:00:00.000Z') });
+		await subscriber.beforeEntityUpdate(ended, em, ['endWork']);
+		await subscriber.afterEntityUpdate(ended, em);
+		await subscriber.afterEntityUpdate(ended, em);
+		expect(recount).toHaveBeenCalledTimes(1);
 	});
 });
