@@ -138,10 +138,12 @@ $weight-normal: 400; // labels, captions, chips
 		color: var(--gauzy-text-color-1);
 	}
 
+	// The theme's primary purple, as on the employee page's task filter, so every
+	// "you are here" segment in the app reads alike.
 	&.is-active {
-		background-color: var(--gauzy-card-1);
-		color: var(--gauzy-text-color-1);
-		box-shadow: 0 0 0 1px var(--gauzy-border-default-color);
+		background-color: nb-theme(color-primary-transparent-100);
+		box-shadow: inset 0 0 0 1px nb-theme(color-primary-500);
+		color: nb-theme(color-primary-500);
 	}
 
 	&:focus-visible {
@@ -229,51 +231,29 @@ $weight-normal: 400; // labels, captions, chips
 	font-variant-numeric: tabular-nums;
 }
 
+// Same spacing as the filter bar's selects, so Plan My Day, Add Todo and View all
+// read as separate buttons; a wrapped row keeps a tighter vertical gap.
 .panel-actions {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: $gap-xs;
+	gap: $gap-xs $gap-sm;
 	min-width: 0;
 	margin-inline-start: auto;
 }
 
-/* "Add Todo": the full-width row closing the Today panel. */
-.add-todo {
+/* "Add Todo", beside Plan My Day in the Today header. */
+.add-todo nb-icon {
+	margin-inline-end: 0.125rem;
+}
+
+/* "Show more" under the Today table. */
+.load-more {
 	display: flex;
-	align-items: center;
-	gap: $gap-sm;
-	width: 100%;
-	padding: $gap-sm $gap-md;
-	border: 0;
+	justify-content: center;
+	padding: $gap-xs $gap-md;
 	border-top: 1px solid var(--gauzy-border-default-color);
 	background-color: var(--gauzy-card-2);
-	font: inherit;
-	font-size: nb-theme(text-caption-font-size);
-	font-weight: $weight-medium;
-	line-height: 1rem;
-	color: var(--gauzy-text-color-2);
-	text-align: start;
-	cursor: pointer;
-	transition:
-		background-color 0.12s ease-in-out,
-		color 0.12s ease-in-out;
-
-	nb-icon {
-		width: 0.875rem;
-		height: 0.875rem;
-		font-size: 0.875rem;
-	}
-
-	&:hover {
-		background-color: var(--gauzy-hover-tint);
-		color: var(--gauzy-text-color-1);
-	}
-
-	&:focus-visible {
-		outline: 2px solid var(--gauzy-action-info-text);
-		outline-offset: -2px;
-	}
 }
 
 .inbox-body {
@@ -684,8 +664,7 @@ $weight-normal: 400; // labels, captions, chips
 	.task-row,
 	.side-item,
 	.project-chip,
-	.status-tab,
-	.add-todo {
+	.status-tab {
 		transition: none;
 	}
 }

@@ -76,6 +76,18 @@
 				<button underConstruction nbButton outline size="tiny" status="primary" type="button">
 					{{ 'DASHBOARD_PAGE.PLAN_MY_DAY' | translate }}
 				</button>
+				<button
+					*ngxPermissionsOnly="[permissions.ORG_TASK_ADD]"
+					nbButton
+					size="tiny"
+					status="primary"
+					type="button"
+					class="add-todo"
+					(click)="addTodo()"
+				>
+					<nb-icon icon="plus-outline"></nb-icon>
+					{{ 'DASHBOARD_PAGE.ADD_TODO' | translate }}
+				</button>
 				@if (isMyTask) {
 				<button nbButton ghost size="tiny" status="basic" type="button" (click)="redirectToMyTasks()">
 					{{ 'BUTTONS.VIEW_ALL' | translate }}
@@ -205,15 +217,28 @@
 			</div>
 		</div>
 
-		<button
-			*ngxPermissionsOnly="[permissions.ORG_TASK_ADD]"
-			type="button"
-			class="add-todo"
-			(click)="addTodo()"
-		>
-			<nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
-			{{ 'DASHBOARD_PAGE.ADD_TODO' | translate }}
-		</button>
+		<!--
+			Next page on demand. Infinite scroll alone is not enough: a short page fits inside the
+			list without a scrollbar, and nothing would ever ask for the rest.
+		-->
+		@if (hasMoreTasks) {
+		<div class="load-more">
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				type="button"
+				[disabled]="tasksLoading"
+				[nbSpinner]="tasksLoading"
+				nbSpinnerSize="tiny"
+				nbSpinnerStatus="basic"
+				(click)="onScrollTasks()"
+			>
+				{{ 'BUTTONS.SHOW_MORE' | translate }}
+			</button>
+		</div>
+		}
 	</section>
 
 	<div class="pm-side">
