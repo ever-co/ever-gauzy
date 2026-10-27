@@ -22,6 +22,7 @@ import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { EntitySubscriptionService } from '../entity-subscription/entity-subscription.service';
 import { TypeOrmOrganizationTeamEmployeeRepository } from './repository/type-orm-organization-team-employee.repository';
 import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
+import { IWorkingEmployeeLookup } from '../employee/former-employees';
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
@@ -44,6 +45,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 	 * @param role - The role to assign to managers in the team
 	 * @param managerIds - Array of employee IDs to be assigned as managers
 	 * @param memberIds - Array of employee IDs to be assigned as members
+	 * @param lookup - Which employees still work. With it, the membership of an employee whose work ended is kept
+	 *   when the edit leaves them out: the member lists never show them (`former-employees.ts`), so an edit never
+	 *   sends them back, and Back to Work restores them.
 	 * @returns Promise<void>
 	 */
 	async updateOrganizationTeam(
@@ -52,7 +56,8 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		employees: IEmployee[],
 		role: Role,
 		managerIds: ID[],
-		memberIds: ID[]
+		memberIds: ID[],
+		lookup?: IWorkingEmployeeLookup
 	): Promise<void> {
 		const tenantId = RequestContext.currentTenantId();
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
@@ -74,8 +79,15 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		// Create a map for fast lookup of current team members
 		const existingMemberMap = new Map(teamMembers.map((member) => [member.employeeId, member]));
 
+		// The members whose work ended are never listed, so the edit could not keep them: they stay
+		const working = lookup
+			? await lookup.findWorkingEmployeeIds(teamMembers.map(({ employeeId }) => employeeId))
+			: null;
+
 		// Separate members to remove and to update
-		const removedMembers = teamMembers.filter((member) => !membersToUpdate.has(member.employeeId));
+		const removedMembers = teamMembers.filter(
+			(member) => !membersToUpdate.has(member.employeeId) && (!working || working.has(member.employeeId))
+		);
 		const updatedMembers = teamMembers.filter((member) => membersToUpdate.has(member.employeeId));
 
 		// 1. Remove members who are no longer in the team

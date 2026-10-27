@@ -131,6 +131,42 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 			)
 		);
 
+	const editTeamWith = (lookup: { findWorkingEmployeeIds: jest.Mock }) =>
+		requestStorage.run(new Map(), () =>
+			service.updateOrganizationTeam(
+				teamId,
+				manager.organizationId,
+				[],
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				{ id: 'role-manager' } as any,
+				['manager-employee'],
+				[],
+				lookup
+			)
+		);
+
+	it('keeps the membership of a member whose work ended, which the edit never sends back', async () => {
+		// The Teams page and Ever Teams no longer list member-employee once their work ended, so the manager's edit
+		// states the manager alone: the membership stays, and Back to Work restores it.
+		const lookup = { findWorkingEmployeeIds: jest.fn().mockResolvedValue(new Set(['manager-employee'])) };
+
+		await editTeamWith(lookup);
+
+		expect(lookup.findWorkingEmployeeIds).toHaveBeenCalledWith(['manager-employee', 'member-employee']);
+		expect(deleted).toEqual([]);
+		expect(entitySubscriptionService.deleteForEmployee).not.toHaveBeenCalled();
+	});
+
+	it('still removes a working member the edit takes off', async () => {
+		const lookup = {
+			findWorkingEmployeeIds: jest.fn().mockResolvedValue(new Set(['manager-employee', 'member-employee']))
+		};
+
+		await editTeamWith(lookup);
+
+		expect(deleted).toEqual(['row-member']);
+	});
+
 	it('reads every member for a single add, past the manager’s own employee filter', async () => {
 		// Read through the employee filter, a manager would see only their own row, and a set rebuilt from
 		// it would remove every other member when it is handed back to the set-based edit.

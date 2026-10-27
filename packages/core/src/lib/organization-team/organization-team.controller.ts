@@ -12,6 +12,7 @@ import {
 	Delete,
 	UseInterceptors
 } from '@nestjs/common';
+import { FormerEmployeesInterceptor } from '../employee/former-employees.interceptor';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
@@ -38,7 +39,7 @@ import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sens
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
-@UseInterceptors(SensitiveRelationsInterceptor)
+@UseInterceptors(SensitiveRelationsInterceptor, FormerEmployeesInterceptor)
 @SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/organization-team')
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {

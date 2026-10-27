@@ -1,4 +1,5 @@
-import { NotFoundException, UseGuards } from '@nestjs/common';
+import { NotFoundException, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FormerEmployeesInterceptor } from '../employee/former-employees.interceptor';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { requireOrganization } from '../graphql/organization-required';
@@ -183,6 +184,7 @@ const ORGANIZATION_TEAM_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * it.
  */
 @Resolver('OrganizationTeam')
+@UseInterceptors(FormerEmployeesInterceptor)
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)

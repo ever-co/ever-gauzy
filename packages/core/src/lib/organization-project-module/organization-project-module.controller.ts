@@ -10,8 +10,10 @@ import {
 	Post,
 	Put,
 	Query,
-	UseGuards
+	UseGuards,
+	UseInterceptors
 } from '@nestjs/common';
+import { FormerEmployeesInterceptor } from '../employee/former-employees.interceptor';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { ID, IOrganizationProjectModule, IPagination, PermissionsEnum } from '@gauzy/contracts';
@@ -31,6 +33,7 @@ import { OrganizationProjectModuleCreateCommand, OrganizationProjectModuleUpdate
 @ApiTags('Project Modules')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
+@UseInterceptors(FormerEmployeesInterceptor)
 @Controller('/organization-project-modules')
 export class OrganizationProjectModuleController extends CrudController<OrganizationProjectModule> {
 	constructor(

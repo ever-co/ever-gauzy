@@ -379,6 +379,26 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
+	 * The employees, among the given ones, who still work in the organization: active and not archived. End Work
+	 * sets both flags (`EmployeeSubscriber`); a deleted employee is not found. The member lists leave the others
+	 * out, and the member edits keep their memberships (`former-employees.ts`).
+	 *
+	 * @param employeeIds - The employees to look up; empty values are ignored.
+	 * @returns The IDs of the working employees.
+	 */
+	async findWorkingEmployeeIds(employeeIds: ID[]): Promise<Set<ID>> {
+		const ids = [...new Set((employeeIds ?? []).filter(Boolean))];
+		if (!ids.length) {
+			return new Set();
+		}
+
+		const employees = await this.find({
+			where: { id: In(ids), isActive: true, isArchived: false }
+		});
+		return new Set(employees.map(({ id }) => id));
+	}
+
+	/**
 	 * Retrieves a list of active, non-archived employees based on provided employee IDs,
 	 * organization ID, and tenant ID.
 	 *

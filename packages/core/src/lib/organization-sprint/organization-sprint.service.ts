@@ -280,8 +280,16 @@ export class OrganizationSprintService extends TenantAwareCrudService<Organizati
 		// Create a map of existing members for quick lookup
 		const existingMemberMap = new Map(sprintMembers.map((member) => [member.employeeId, member]));
 
+		// The members whose work ended are never listed (`former-employees.ts`), so the edit could not keep them:
+		// they stay, and Back to Work restores them
+		const working = await this._employeeService.findWorkingEmployeeIds(
+			sprintMembers.map(({ employeeId }) => employeeId)
+		);
+
 		// Separate members into removed, updated and new members
-		const removedMembers = sprintMembers.filter((member) => !membersToUpdate.has(member.employeeId));
+		const removedMembers = sprintMembers.filter(
+			(member) => !membersToUpdate.has(member.employeeId) && working.has(member.employeeId)
+		);
 		const updatedMembers = sprintMembers.filter((member) => membersToUpdate.has(member.employeeId));
 		const newMembers = employees.filter((employee) => !existingMemberMap.has(employee.id));
 
