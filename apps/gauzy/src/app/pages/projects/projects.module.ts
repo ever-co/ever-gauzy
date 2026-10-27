@@ -8,6 +8,7 @@ import {
 	NbInputModule,
 	NbSelectModule,
 	NbSpinnerModule,
+	NbToggleModule,
 	NbTooltipModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
@@ -48,6 +49,7 @@ import { TaskViewHeaderComponent } from '../tasks/components/task-view/task-view
 		NbInputModule,
 		NbSelectModule,
 		NbSpinnerModule,
+		NbToggleModule,
 		NbTooltipModule,
 		TranslatePipe,
 		NgxPermissionsModule.forChild(),

@@ -8,6 +8,12 @@
 >
 	@if (card) {
 	<div recordPageActions class="project-page-actions">
+		@if (isArchived) {
+		<span class="project-page-archived">
+			<nb-icon icon="archive-outline" aria-hidden="true"></nb-icon>
+			{{ 'ORGANIZATIONS_PAGE.ARCHIVED' | translate }}
+		</span>
+		}
 		<ngx-favorite-toggle
 			[entityType]="'OrganizationProject'"
 			[entityId]="card.id"

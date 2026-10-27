@@ -83,6 +83,8 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	state: RecordViewPageState = 'loading';
 	/** The project as the quick look opens it: its name and logo; the quick look reads the rest. */
 	card: IProjectQuickLookCard | null = null;
+	/** The project is archived: no list offers it, but its page still opens (from a link, a time log, a task). */
+	isArchived = false;
 	organization: IOrganization | null = null;
 
 	readonly period$ = new BehaviorSubject<ProjectViewPeriod>(ProjectViewPeriod.THIS_WEEK);
@@ -294,6 +296,7 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		const sequence = ++this.loadSequence;
 		// Nothing of the previous project (or organization) stays on screen.
 		this.card = null;
+		this.isArchived = false;
 		this.commentCount = 0;
 		this.commentCountFromTab = false;
 		this.state = 'loading';
@@ -309,6 +312,7 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 				imageUrl: project.imageUrl || project.image?.fullUrl,
 				initials: initialsOf(project.name)
 			};
+			this.isArchived = !!project.isArchived;
 			this.state = 'ready';
 			void this.loadCommentCount(project.id, sequence);
 		} catch (error) {

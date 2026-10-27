@@ -53,6 +53,7 @@
 		"VIEW": "Ansicht",
 		"SEND": "Senden",
 		"ARCHIVE": "Archiv",
+		"UNARCHIVE": "Archivierung aufheben",
 		"HIRE": "Einstellen",
 		"MANAGE_CATEGORIES": "Kategorien verwalten",
 		"REJECT": "Ablehnen",
@@ -5193,6 +5194,8 @@
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "Das Projekt '{{ name }}' wurde gespeichert.",
 				"REMOVE_PROJECT": "Das Projekt '{{ name }}' wurde entfernt.",
+				"ARCHIVE_PROJECT": "Das Projekt '{{ name }}' wurde archiviert.",
+				"UNARCHIVE_PROJECT": "Die Archivierung des Projekts '{{ name }}' wurde aufgehoben.",
 				"INVALID_PROJECT_NAME": "Bitte tragen Sie den Namen Ihres Projekts ein.",
 				"VISIBILITY": "Jetzt heißt das Projekt {{ name }}."
 			},
@@ -5200,7 +5203,9 @@
 				"ADD_NEW_TEAM": "Das Team '{{ name }}' wurde hinzugefügt.",
 				"EDIT_EXISTING_TEAM": "Das Team '{{ name }}' wurde geändert.",
 				"INVALID_TEAM_NAME": "Bitte fügen Sie einen Teamnamen und mindestens ein Mitglied hinzu.",
-				"REMOVE_TEAM": "Das Team '{{ Name }}' wurde entfernt."
+				"REMOVE_TEAM": "Das Team '{{ Name }}' wurde entfernt.",
+				"ARCHIVE_TEAM": "Das Team '{{ name }}' wurde archiviert.",
+				"UNARCHIVE_TEAM": "Die Archivierung des Teams '{{ name }}' wurde aufgehoben."
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Mitarbeiter-Stufe '{{ name }}' wurde hinzugefügt.",

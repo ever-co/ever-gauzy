@@ -53,6 +53,7 @@
 		"VIEW": "Вид",
 		"SEND": "Отправить",
 		"ARCHIVE": "Архивировать",
+		"UNARCHIVE": "Разархивировать",
 		"HIRE": "Нанять",
 		"MANAGE_CATEGORIES": "Управление категориями",
 		"REJECT": "Отклонить",
@@ -5220,6 +5221,8 @@
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "Проект '{{ name }}' был сохранен",
 				"REMOVE_PROJECT": "Проект '{{ name }}' ' был удален",
+				"ARCHIVE_PROJECT": "Проект '{{ name }}' архивирован",
+				"UNARCHIVE_PROJECT": "Проект '{{ name }}' разархивирован",
 				"INVALID_PROJECT_NAME": "Пожалуйста, введите название вашего проекта",
 				"VISIBILITY": "Сейчас проект {{ name }} "
 			},
@@ -5227,7 +5230,9 @@
 				"ADD_NEW_TEAM": "Команда '{{ name }}' была добавлена",
 				"EDIT_EXISTING_TEAM": "Команда '{{ name }}' ' была изменена",
 				"INVALID_TEAM_NAME": "Пожалуйста, добавьте название команды и хотя бы одного участника",
-				"REMOVE_TEAM": "Команда '{{ name }}' ' удалена"
+				"REMOVE_TEAM": "Команда '{{ name }}' ' удалена",
+				"ARCHIVE_TEAM": "Команда '{{ name }}' архивирована",
+				"UNARCHIVE_TEAM": "Команда '{{ name }}' разархивирована"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Уровень сотрудника '{{ name }}' ' был добавлен",
