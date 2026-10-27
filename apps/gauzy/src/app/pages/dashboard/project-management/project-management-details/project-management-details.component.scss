@@ -1,224 +1,493 @@
-// `nb-theme()` below needs the theming module in scope. Without this line Sass does
-// not error — an unknown function is passed through verbatim — so the build stays
-// green while the browser drops `border: 1px solid nb-theme(...)` as invalid and
-// the completion dot loses both its ring and its fill on every theme.
 @use 'gauzy/_gauzy-cards' as *;
 
-// The grid fills the available page card; the parent owns overflow when the
-// dashboard panels contain more content than the available height.
-$gap: 1rem;
+/*
+ * ── Project management dashboard ─────────────────────────────────────────────
+ *
+ * Built on the Accounting and HR dashboards' vocabulary: the same panel, the
+ * same three type weights and the same gauzy-* tokens: what is
+ * due next on the left, where the work lives on the right.
+ */
+
+$gap-lg: 1rem;
+$gap-md: 0.75rem;
+$gap-sm: 0.5rem;
+$gap-xs: 0.25rem;
+
+$panel-header-height: 1.875rem + 2 * $gap-md;
+// Ten rows before the list scrolls and loads the next page.
+$task-list-max-height: 10 * 3.25rem;
+
+$weight-strong: 600; // KPI values, and nothing else
+$weight-medium: 500; // titles, headings, secondary figures
+$weight-normal: 400; // labels, captions, chips
 
 :host {
-  display: block;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+	min-width: 0;
 }
 
-.main {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: $gap;
-  height: auto;
-  max-height: 100%;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-right: 0.375rem;
+/* ── Layout ──────────────────────────────────────────────────────────────── */
 
-  .inbox {
-    height: 100%;
-    .soon {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
-    }
-  }
-  .today {
-    height: 100%;
-    .more {
-      font-size: nb-theme(text-caption-font-size);
-      font-weight: 500;
-      line-height: 1rem;
-      letter-spacing: 0em;
-      color: var(--gauzy-text-color-2);
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      padding: 0.5rem 0.625rem;
-      gap: 0.5rem;
-      background-color: var(--gauzy-card-4);
-      border-radius: var(--gauzy-radius-sm);
-      cursor: pointer;
-      transition:
-        background-color 0.12s ease-in-out,
-        color 0.12s ease-in-out;
+.pm-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+	gap: $gap-lg;
+	align-items: start;
 
-      &:hover {
-        background-color: var(--gauzy-hover-tint);
-        color: var(--gauzy-text-color-1);
-      }
-
-      i {
-        font-size: 0.625rem;
-        border: 1px solid var(--gauzy-border-default-color);
-        color: var(--gauzy-text-color-2);
-        line-height: 1;
-      }
-    }
-    .card.todo {
-      display: flex;
-      gap: 0.625rem;
-      align-items: flex-start;
-      flex-direction: row;
-      padding: 0.5rem 0.625rem;
-      border: unset;
-      box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
-      background-color: var(--gauzy-card-1);
-      border-radius: var(--gauzy-radius-sm);
-      width: 100%;
-      cursor: pointer;
-      .dot {
-        // Was a literal `#6e49e8` on both the ring and the checked fill — the
-        // accent, spelled out rather than resolved, so it stayed the same purple
-        // on every theme including the ones whose primary is not purple.
-        border: 1px solid nb-theme(color-primary-default);
-        flex: 0 0 auto;
-        width: 0.625rem;
-        height: 0.625rem;
-        margin-top: 0.1875rem;
-        border-radius: 50%;
-        &.checked {
-          background-color: nb-theme(color-primary-default);
-        }
-      }
-      .status {
-        color: var(--gauzy-text-color-2);
-        font-size: nb-theme(text-caption-font-size);
-        font-weight: 500;
-        line-height: 0.875rem;
-        letter-spacing: 0em;
-        margin-bottom: 0.125rem;
-      }
-      .title {
-        width: 100%;
-        color: var(--gauzy-text-color-1);
-        font-size: 11px;
-        font-weight: 400;
-        line-height: 1.125rem;
-        letter-spacing: 0em;
-      }
-    }
-  }
-  .last-column {
-    display: flex;
-    flex-direction: column;
-    gap: $gap;
-    height: auto;
-    min-width: 0;
-    min-height: 0;
-    .card.project {
-      display: flex;
-      gap: 0.625rem;
-      align-items: center;
-      flex-direction: row;
-      padding: 0.375rem 0.625rem;
-      border: unset;
-      box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
-      background-color: var(--gauzy-card-1);
-      border-radius: var(--gauzy-radius-sm);
-      width: 100%;
-    }
-    nb-card {
-      height: auto;
-      min-height: 0;
-      flex: 0 0 auto;
-    }
-    .card.assigned {
-      padding: 0.5rem 0.625rem;
-      background-color: transparent;
-      border: 1px solid var(--gauzy-border-default-color);
-      border-radius: var(--gauzy-radius-sm);
-    }
-    .card.assigned .title {
-      color: var(--gauzy-text-color-2);
-      font-size: 11px;
-      margin-bottom: 0.8rem;
-      line-height: 1rem;
-      letter-spacing: 0em;
-    }
-  }
+	@media (max-width: 1199.98px) {
+		grid-template-columns: minmax(0, 1fr);
+	}
 }
 
-:host ::ng-deep .last-column .projects .card.project ngx-project {
-  .name,
-  .member {
-    font-size: 12px;
-  }
+.pm-side {
+	display: flex;
+	flex-direction: column;
+	gap: $gap-lg;
+	min-width: 0;
 }
 
-:host {
-  nb-card {
-    background-color: var(--gauzy-card-1);
-    margin: 0;
-    box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
-    nb-card-header {
-      color: var(--gauzy-text-color-2);
-      font-size: nb-theme(text-subtitle-2-font-size);
-      font-weight: 600;
-      line-height: 1rem;
-      padding: 0.75rem 0.875rem;
-    }
-    nb-card-body {
-      background-color: var(--gauzy-sidebar-background-2);
-      border-radius: 0 0 var(--border-radius) var(--border-radius);
-      padding: 0.75rem 0.875rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.625rem;
-      min-height: 0;
+/* ── Panels ──────────────────────────────────────────────────────────────── */
 
-      [nbButton].appearance-outline.status-primary {
-        align-self: flex-start;
-        height: 2rem;
-        min-height: 2rem;
-        padding-block: 0.375rem;
-        padding-inline: 0.625rem;
-        font-size: 12px;
-        line-height: 1rem;
-      }
+.panel {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-card-1);
+	box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	overflow: hidden;
+}
 
-      .card-body-content {
-        margin: 0;
-        @include nb-ltr(padding-right, 0.375rem);
-        @include nb-rtl(padding-left, 0.375rem);
-        overflow: auto;
-        flex: 1 1 auto;
-        min-height: 0;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
+.panel-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $gap-xs $gap-sm;
+	padding: $gap-xs $gap-md;
+	min-height: $panel-header-height;
+	border-bottom: 1px solid var(--gauzy-border-default-color);
+}
 
-    }
-  }
+.panel-title {
+	margin: 0;
+	font-size: 0.75rem;
+	font-weight: $weight-medium;
+	line-height: 1rem;
+	letter-spacing: -0.009em;
+	color: var(--gauzy-text-color-1);
+}
 
-  // Four rows: 4 x 40px row height plus three 8px gaps.
-  nb-card.today nb-card-body .card-body-content,
-  nb-card.projects nb-card-body .card-body-content,
-  nb-card.recently nb-card-body .card-body-content {
-    max-height: 11.5rem !important;
-    flex: 0 1 auto;
-  }
+.panel-count {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.0625rem 0.375rem;
+	border-radius: var(--gauzy-radius-sm);
+	background-color: var(--gauzy-hover-tint);
+	font-size: nb-theme(text-caption-font-size);
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
 
-  ::ng-deep {
-    ngx-no-data-message {
-      height: 100%;
-      .no-data-found {
-        height: 100% !important;
-      }
-    }
-  }
+.panel-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: $gap-xs;
+	min-width: 0;
+	margin-inline-start: auto;
+}
+
+/* "Add Todo": the full-width row closing the Today panel. */
+.add-todo {
+	display: flex;
+	align-items: center;
+	gap: $gap-sm;
+	width: 100%;
+	padding: $gap-sm $gap-md;
+	border: 0;
+	border-top: 1px solid var(--gauzy-border-default-color);
+	background-color: var(--gauzy-card-2);
+	font: inherit;
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: $weight-medium;
+	line-height: 1rem;
+	color: var(--gauzy-text-color-2);
+	text-align: start;
+	cursor: pointer;
+	transition:
+		background-color 0.12s ease-in-out,
+		color 0.12s ease-in-out;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+		color: var(--gauzy-text-color-1);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: -2px;
+	}
+}
+
+.inbox-body {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 6rem;
+	padding: $gap-md;
+}
+
+/* ── Task table ──────────────────────────────────────────────────────────── */
+
+.task-table {
+	--task-columns: minmax(12rem, 2fr) minmax(8rem, 1fr) minmax(7rem, 0.8fr) minmax(6.5rem, 0.7fr);
+
+	overflow-x: auto;
+}
+
+.task-body {
+	position: relative;
+	max-height: $task-list-max-height;
+	min-height: 6rem;
+	overflow-y: auto;
+	min-width: 38rem;
+}
+
+.task-row {
+	display: grid;
+	grid-template-columns: var(--task-columns);
+	align-items: center;
+	gap: $gap-md;
+	min-width: 38rem;
+	padding: $gap-sm $gap-md;
+	font-size: 0.75rem;
+	line-height: 1.25rem;
+	color: var(--gauzy-text-color-1);
+	transition: background-color 0.12s ease-in-out;
+
+	& + & {
+		border-top: 1px solid var(--gauzy-border-default-color);
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+	}
+
+	&.is-closed .task-title {
+		color: var(--gauzy-text-color-2);
+		text-decoration: line-through;
+	}
+
+	&--head {
+		padding-block: 0.375rem;
+		background-color: var(--gauzy-card-2);
+		border-bottom: 1px solid var(--gauzy-border-default-color);
+
+		&:hover {
+			background-color: var(--gauzy-card-2);
+		}
+
+		.task-cell {
+			font-size: nb-theme(text-caption-font-size);
+			font-weight: $weight-medium;
+			line-height: 1rem;
+			letter-spacing: 0.04em;
+			text-transform: uppercase;
+			color: var(--gauzy-text-color-2);
+		}
+	}
+}
+
+.task-cell {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.task-main {
+	gap: $gap-sm;
+}
+
+.task-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.task-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: $weight-medium;
+}
+
+.task-ref {
+	font-size: 0.625rem;
+	line-height: 0.875rem;
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+}
+
+.is-muted {
+	color: var(--gauzy-text-color-2);
+}
+
+/* Status: a dot beside the title and a pill in its own column, both from one tone. */
+[data-tone] {
+	--tone-text: var(--gauzy-text-color-2);
+	--tone-tint: var(--gauzy-hover-tint);
+}
+
+[data-tone='success'] {
+	--tone-text: var(--gauzy-action-success-text);
+	--tone-tint: var(--gauzy-action-success-tint-strong);
+}
+
+[data-tone='info'] {
+	--tone-text: var(--gauzy-action-info-text);
+	--tone-tint: var(--gauzy-action-info-tint-strong);
+}
+
+[data-tone='warning'] {
+	--tone-text: var(--gauzy-action-warning-text);
+	--tone-tint: var(--gauzy-action-warning-tint-strong);
+}
+
+[data-tone='danger'] {
+	--tone-text: var(--gauzy-action-danger-text);
+	--tone-tint: var(--gauzy-action-danger-tint-strong);
+}
+
+[data-tone='neutral'] {
+	--tone-text: var(--gauzy-text-color-1);
+}
+
+.status-dot {
+	flex: 0 0 auto;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 50%;
+	background-color: var(--tone-text);
+}
+
+.status-pill {
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
+	padding: 0.0625rem 0.5rem;
+	border-radius: 999px;
+	background-color: var(--tone-tint);
+	color: var(--tone-text);
+	font-size: nb-theme(text-caption-font-size);
+	font-weight: $weight-medium;
+	line-height: 1.125rem;
+	text-transform: capitalize;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.project-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	min-width: 0;
+	max-width: 100%;
+}
+
+.project-swatch {
+	flex: 0 0 auto;
+	width: 0.5rem;
+	height: 0.5rem;
+	border-radius: 2px;
+	background-color: nb-theme(color-primary-default);
+}
+
+.project-chip-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.due {
+	display: inline-flex;
+	align-items: center;
+	gap: $gap-xs;
+	padding: 0.0625rem 0.375rem;
+	margin-inline-start: -0.375rem;
+	border-radius: var(--gauzy-radius-sm);
+	color: var(--gauzy-text-color-2);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+
+	&[data-state='overdue'] {
+		color: var(--gauzy-action-danger-text);
+		background-color: var(--gauzy-action-danger-tint);
+		font-weight: $weight-medium;
+	}
+
+	&[data-state='today'] {
+		color: var(--gauzy-action-warning-text);
+		background-color: var(--gauzy-action-warning-tint);
+		font-weight: $weight-medium;
+	}
+
+	&[data-state='soon'] {
+		color: var(--gauzy-text-color-1);
+	}
+}
+
+/* ── Side lists ──────────────────────────────────────────────────────────── */
+
+.side-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	max-height: 18rem;
+	overflow-y: auto;
+}
+
+.side-item {
+	display: flex;
+	align-items: center;
+	gap: $gap-sm;
+	padding: $gap-sm $gap-md;
+	transition: background-color 0.12s ease-in-out;
+
+	& + & {
+		border-top: 1px solid var(--gauzy-border-default-color);
+	}
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+	}
+
+	&--stacked {
+		flex-direction: column;
+		align-items: stretch;
+		gap: $gap-xs;
+	}
+}
+
+.side-item--project {
+	justify-content: space-between;
+
+	ngx-project {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.panel-count {
+		flex: 0 0 auto;
+		white-space: nowrap;
+	}
+}
+
+:host ::ng-deep .side-item--project ngx-project {
+	.name,
+	.member {
+		font-size: 12px;
+	}
+}
+
+.side-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	flex: 1 1 auto;
+}
+
+.side-title {
+	font-size: 0.75rem;
+	font-weight: $weight-medium;
+	line-height: 1.125rem;
+	color: var(--gauzy-text-color-1);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.side-meta {
+	font-size: 0.625rem;
+	line-height: 0.875rem;
+	color: var(--gauzy-text-color-2);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ── Empty states ────────────────────────────────────────────────────────── */
+
+.pm-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: $gap-xs;
+	padding: 2.5rem $gap-lg;
+	text-align: center;
+
+	&--compact {
+		padding-block: 1.5rem;
+	}
+
+	nb-icon {
+		width: 1.5rem;
+		height: 1.5rem;
+		font-size: 1.5rem;
+		margin-bottom: $gap-xs;
+		color: var(--gauzy-text-color-2);
+	}
+
+	.state-title {
+		margin: 0;
+		font-size: 0.75rem;
+		font-weight: $weight-medium;
+		color: var(--gauzy-text-color-1);
+	}
+
+	.state-hint {
+		margin: 0;
+		max-width: 22rem;
+		font-size: nb-theme(text-caption-font-size);
+		line-height: 1rem;
+		color: var(--gauzy-text-color-2);
+	}
+}
+
+.visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+	.task-row,
+	.side-item,
+	.add-todo {
+		transition: none;
+	}
 }
