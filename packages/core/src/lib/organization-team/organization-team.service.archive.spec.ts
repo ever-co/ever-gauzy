@@ -37,6 +37,11 @@ beforeEach(() => {
 		saved = entity;
 		return { ...stored, ...entity } as never;
 	});
+	// The archive's narrow write: `update(id, columns)`
+	jest.spyOn(TenantAwareCrudService.prototype, 'update').mockImplementation(async (id, columns) => {
+		saved = { id, ...(columns as object) };
+		return { affected: 1 } as never;
+	});
 
 	service = Object.create(OrganizationTeamService.prototype);
 });
@@ -46,11 +51,12 @@ afterEach(() => {
 });
 
 describe('OrganizationTeamService.setArchived', () => {
-	it('archives the team, stamping when, and writes nothing else', async () => {
+	it('archives the team, stamping when, and writes the two archive columns alone', async () => {
+		// A save of the whole row ran the team's update hook, which under MikroORM rewrote a custom profile link
 		const archived = await service.setArchived('team-1', true);
 
-		expect(Object.keys(saved).sort()).toEqual(['archivedAt', 'id', 'isArchived', 'organizationId', 'tenantId']);
-		expect(saved).toMatchObject({ id: 'team-1', organizationId: ORGANIZATION, tenantId: TENANT, isArchived: true });
+		expect(Object.keys(saved).sort()).toEqual(['archivedAt', 'id', 'isArchived']);
+		expect(saved).toMatchObject({ id: 'team-1', isArchived: true });
 		expect(saved.archivedAt).toBeInstanceOf(Date);
 		expect(archived).toMatchObject({ id: 'team-1', name: 'Gauzy', isArchived: true });
 	});

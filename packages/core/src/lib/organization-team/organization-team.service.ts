@@ -586,7 +586,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 		// The teams that are not archived, unless the caller states `isArchived` (the Teams page's "Include
 		// Archived" states both): an archived team is one the organization finished with, offered by no list.
-		options = { ...options, where: withArchivedScope(options?.where) };
+		options = { ...options, where: withArchivedScope(options?.where) as FindOptionsWhere<OrganizationTeam> };
 
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
@@ -797,15 +797,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		await this.assertMayManageTeam(id, false);
 
 		const team = await this.findOneByIdString(id);
-		const updated = await super.create({
-			id: team.id,
-			organizationId: team.organizationId,
-			tenantId: team.tenantId,
-			isArchived,
-			archivedAt: isArchived ? new Date() : null
-		});
 
-		return { ...team, ...updated };
+		// The two archive columns alone: a save of the whole row runs the team's update hook, which under MikroORM
+		// (the entity is the whole stored row, name included) rewrote a custom `profile_link` from the name
+		const archive = { isArchived, archivedAt: isArchived ? new Date() : null };
+		await super.update(team.id, archive);
+
+		return { ...team, ...archive };
 	}
 
 	/**

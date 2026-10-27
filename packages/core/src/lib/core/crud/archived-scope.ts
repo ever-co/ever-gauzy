@@ -27,11 +27,23 @@ export function archivedStates(isArchived: unknown): boolean[] {
 /**
  * The caller's `where`, reading only the archive states {@link archivedStates} answers.
  *
+ * A list of `where` objects (TypeORM's OR form) is scoped branch by branch, each keeping the states it states.
+ *
  * @param where - The caller's `where`; left as it is.
- * @returns A copy whose `isArchived` is one state, or `In` the two.
+ * @returns A copy whose `isArchived` is one state, or `In` the two — per branch for the OR form.
  */
-export function withArchivedScope<W extends object>(where?: W): W & { isArchived: unknown } {
-	const states = archivedStates((where as { isArchived?: unknown })?.isArchived);
+export function withArchivedScope<W extends object>(
+	where?: W | W[]
+): (W & { isArchived: unknown }) | Array<W & { isArchived: unknown }> {
+	if (Array.isArray(where)) {
+		return where.length ? where.map((branch) => scopeBranch(branch)) : [scopeBranch(undefined)];
+	}
+	return scopeBranch(where);
+}
+
+/** One `where` object, reading only the archive states it states, or the rows that are not archived. */
+function scopeBranch<W extends object>(where?: W): W & { isArchived: unknown } {
+	const states = archivedStates((where as { isArchived?: unknown } | undefined)?.isArchived);
 	return { ...(where ?? ({} as W)), isArchived: states.length === 1 ? states[0] : In(states) };
 }
 

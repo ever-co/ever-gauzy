@@ -616,13 +616,10 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const project = await this.findOneByIdString(id);
 		const { organizationId, tenantId } = project;
 
-		const updated = await super.create({
-			id: project.id,
-			organizationId,
-			tenantId,
-			isArchived,
-			archivedAt: isArchived ? new Date() : null
-		});
+		// The two archive columns alone: a save of the whole row would run its update hooks over every column
+		const archive = { isArchived, archivedAt: isArchived ? new Date() : null };
+		await super.update(project.id, archive);
+		const updated = { ...project, ...archive };
 
 		this._activityLogService.logActivity<OrganizationProject>(
 			BaseEntityEnum.OrganizationProject,
@@ -637,7 +634,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			{ isArchived }
 		);
 
-		return { ...project, ...updated };
+		return updated;
 	}
 
 	/**

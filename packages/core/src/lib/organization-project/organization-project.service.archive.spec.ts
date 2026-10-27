@@ -112,27 +112,26 @@ describe('OrganizationProjectService lists — archived projects are left out un
 describe('OrganizationProjectService.setArchived', () => {
 	const stored = { id: 'project-1', name: 'Ever Works', organizationId: ORGANIZATION, tenantId: TENANT };
 	let saved: Record<string, any>;
+	let create: jest.SpyInstance;
 
 	beforeEach(() => {
 		saved = undefined;
 		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({ ...stored } as never);
-		jest.spyOn(TenantAwareCrudService.prototype, 'create').mockImplementation(async (entity) => {
-			saved = entity;
-			return { ...stored, ...entity } as never;
+		// The narrow write: `update(id, columns)`, which runs no save over the whole row
+		jest.spyOn(TenantAwareCrudService.prototype, 'update').mockImplementation(async (id, columns) => {
+			saved = { id, ...(columns as object) };
+			return { affected: 1 } as never;
 		});
+		create = jest.spyOn(TenantAwareCrudService.prototype, 'create');
 	});
 
-	it('archives the project, stamping when, and writes nothing else', async () => {
+	it('archives the project, stamping when, and writes the two archive columns alone', async () => {
 		const archived = await service.setArchived('project-1', true);
 
-		expect(Object.keys(saved).sort()).toEqual(['archivedAt', 'id', 'isArchived', 'organizationId', 'tenantId']);
-		expect(saved).toMatchObject({
-			id: 'project-1',
-			organizationId: ORGANIZATION,
-			tenantId: TENANT,
-			isArchived: true
-		});
+		expect(Object.keys(saved).sort()).toEqual(['archivedAt', 'id', 'isArchived']);
+		expect(saved).toMatchObject({ id: 'project-1', isArchived: true });
 		expect(saved.archivedAt).toBeInstanceOf(Date);
+		expect(create).not.toHaveBeenCalled();
 		expect(archived).toMatchObject({ id: 'project-1', name: 'Ever Works', isArchived: true });
 		expect(logActivity).toHaveBeenCalledWith(
 			BaseEntityEnum.OrganizationProject,

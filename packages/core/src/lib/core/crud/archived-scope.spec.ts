@@ -42,6 +42,14 @@ describe('withArchivedScope', () => {
 		expect(withArchivedScope(undefined)).toEqual({ isArchived: false });
 	});
 
+	it('scopes each branch of the OR form, keeping the states each states', () => {
+		expect(withArchivedScope([{ name: 'A' }, { name: 'B', isArchived: 'true' }])).toEqual([
+			{ name: 'A', isArchived: false },
+			{ name: 'B', isArchived: true }
+		]);
+		expect(withArchivedScope([])).toEqual([{ isArchived: false }]);
+	});
+
 	it('reads the stated state, or `In` both', () => {
 		expect(withArchivedScope({ isArchived: 'true' })).toEqual({ isArchived: true });
 		expect(withArchivedScope({ isArchived: [false, true] })).toEqual({ isArchived: In([false, true]) });
