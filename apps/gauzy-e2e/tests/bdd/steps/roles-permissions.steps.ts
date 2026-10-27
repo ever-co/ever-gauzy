@@ -74,7 +74,7 @@ const getPermissionByLabel = (): Map<string, PermissionsEnum> => {
 	if (permissionByLabel) return permissionByLabel;
 	const enJsonPath = path.resolve(__dirname, '../../../../../packages/ui-core/i18n/assets/i18n/en.json');
 	const labels: Record<string, string> = JSON.parse(fs.readFileSync(enJsonPath, 'utf8')).ORGANIZATIONS_PAGE.PERMISSIONS;
-	const map = new Map<string, PermissionsEnum>();
+	let map = new Map<string, PermissionsEnum>();
 	for (const permission of new Set([...GENERAL_PERMISSIONS, ...ADMINISTRATION_PERMISSIONS])) {
 		const label = labels[permission];
 		if (typeof label !== 'string' || !label.trim()) {
@@ -103,8 +103,8 @@ const cardProblems = (
 ): string[] => {
 	const byLabel = getPermissionByLabel();
 	const accepted = new Set(variants.flat());
-	const problems: string[] = [];
-	const rendered: PermissionsEnum[] = [];
+	let problems: string[] = [];
+	let rendered: PermissionsEnum[] = [];
 	for (const { label, checked } of toggles) {
 		const permission = byLabel.get(normaliseLabel(label));
 		if (!permission || !accepted.has(permission)) {

@@ -56,13 +56,20 @@ export const clickTableRow = async (index: number, text?: string) => {
 	// those buttons never appear): prefer a row whose status cell reads "INVITED", and fall back to the
 	// requested index if none is shown.
 	const rows = getPage().locator(ManageUserInvitesPage.selectTableRowCss);
-	const ownRows = text ? rows.filter({ hasText: text }) : null;
-	const invitedRows = rows.filter({ hasText: 'INVITED' });
 	let row = rows.nth(index);
-	if (ownRows && (await ownRows.count()) > 0) {
-		row = ownRows.first();
-	} else if ((await invitedRows.count()) > 0) {
-		row = invitedRows.first();
+	if (text) {
+		// The caller asked for ITS invite: wait for that row and fail if it never shows. Falling back to
+		// another row would copy/resend/delete an unrelated invite and still pass (the delete dialog's
+		// type-to-confirm phrase is read from whichever invite was selected).
+		row = rows.filter({ hasText: text }).first();
+		await row.waitFor({ state: 'visible', timeout: 24_000 }).catch(() => {
+			throw new Error(`clickTableRow: no invite row for "${text}" in the invites grid.`);
+		});
+	} else {
+		const invitedRows = rows.filter({ hasText: 'INVITED' });
+		if ((await invitedRows.count()) > 0) {
+			row = invitedRows.first();
+		}
 	}
 	const toolbarBtn = getPage().locator(ManageUserInvitesPage.deleteInviteButtonCss).first();
 

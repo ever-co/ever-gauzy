@@ -232,6 +232,8 @@ export const filterProposalsByJobPostContent = async (content: string) => {
 			return;
 		}
 	}
+	// Fail before the caller picks a row from an unfiltered grid (row 0 would be an arbitrary seeded proposal).
+	await expect(page.locator(ProposalsPage.jobTitleFilterInputCss).first()).toHaveValue(term, { timeout: 5_000 });
 };
 
 // The edit page patches its form from the resolved proposal after a debounceTime(100) on route.data,

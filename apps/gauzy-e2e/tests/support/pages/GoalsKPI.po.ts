@@ -183,6 +183,9 @@ const selectRowAndAwaitToolbar = async (row) => {
 		if (stillDisabled === null) return;
 		if (i === 2) await row.click({ force: true, timeout: 60_000 }); // single re-click halfway
 	}
+	// Name the real cause here: a disabled Nebular button ignores the dispatched Edit/Delete click, so
+	// carrying on would only fail later as a dialog that never opened.
+	throw new Error('selectRowAndAwaitToolbar: selecting the KPI row never enabled the toolbar Edit button.');
 };
 
 const settleGrid = async () => {

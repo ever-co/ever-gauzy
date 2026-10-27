@@ -552,13 +552,16 @@ export const setStatusFromDropdown = async (text) => {
 	// selectStatus() PUTs /invoices/:id/action {status}; wait for it so the next step starts from the
 	// refreshed grid rather than racing the update.
 	const page = getPage();
-	const updated = page
-		.waitForResponse((res) => res.request().method() === 'PUT' && /\/invoices\/[^/?]+\/action/.test(res.url()), {
-			timeout: 20000
-		})
-		.catch(() => null);
+	const updated = page.waitForResponse(
+		(res) => res.request().method() === 'PUT' && /\/invoices\/[^/?]+\/action/.test(res.url()),
+		{ timeout: 20000 }
+	);
 	await clickElementByText(SalesInvoicesPage.dropdownOptionCss, text);
-	await updated;
+	const response = await updated;
+	expect(
+		response.ok(),
+		`setting the invoice status failed: PUT ${response.url()} answered ${response.status()}`
+	).toBe(true);
 	await settleGrid();
 };
 

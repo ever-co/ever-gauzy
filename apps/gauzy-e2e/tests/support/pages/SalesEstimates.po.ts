@@ -471,13 +471,16 @@ export const clickConvertToInvoiceButton = async (index) => {
 	const button = page.locator(SalesEstimatesPage.convertToInvoiceButton).first();
 	await closeActionsPopover();
 	await expect(button).toBeEnabled({ timeout: 10000 });
-	const converted = page
-		.waitForResponse((res) => res.request().method() === 'PUT' && /\/invoices\/[^/?]+\/action/.test(res.url()), {
-			timeout: 20000
-		})
-		.catch(() => null);
+	const converted = page.waitForResponse(
+		(res) => res.request().method() === 'PUT' && /\/invoices\/[^/?]+\/action/.test(res.url()),
+		{ timeout: 20000 }
+	);
 	await button.dispatchEvent('click');
-	await converted;
+	const response = await converted;
+	expect(
+		response.ok(),
+		`converting the estimate to an invoice failed: PUT ${response.url()} answered ${response.status()}`
+	).toBe(true);
 	await settleGrid();
 };
 
