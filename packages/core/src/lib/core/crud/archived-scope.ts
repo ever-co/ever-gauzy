@@ -77,7 +77,7 @@ function namesField(value: unknown, field: string, depth = 0): boolean {
  *
  * The lists offer no archived row, so a client that edits a project's teams or a team's projects never sends back
  * an archived one it is linked to. Saving the stated list as it is would remove that link; it is kept instead,
- * and unarchiving the row shows it linked again.
+ * and bringing the row back from the archive shows it linked again.
  *
  * @param stated - The rows the edit states.
  * @param linked - The rows the record is linked to now, as stored.
