@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { combineLatest, debounceTime, filter, first, firstValueFrom, Subject } from 'rxjs';
+import { combineLatest, debounceTime, filter, first, firstValueFrom, map, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { pluck } from 'underscore';
+import * as moment from 'moment';
 import {
 	ID,
 	IOrganization,
@@ -14,6 +15,7 @@ import {
 	ISelectedEmployee,
 	ITask,
 	PermissionsEnum,
+	TaskPriorityEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import {
@@ -45,8 +47,33 @@ export type TaskStatusTone = 'success' | 'info' | 'warning' | 'danger' | 'muted'
 /** How close a task is to its due date; `null` when it has none or is already closed. */
 export type TaskDueState = 'overdue' | 'today' | 'soon' | null;
 
+/** The status tabs; each stands for one or more task statuses. */
+export type TaskStatusFilter = 'all' | 'open' | 'progress' | 'review' | 'done';
+
+/** The due-date filter. */
+export type TaskDueFilter = 'any' | 'overdue' | 'today' | 'week' | 'none';
+
+/** One `filters[...]` query parameter, as the server data source sends it. */
+interface IAdvancedFilterParam {
+	field: string;
+	search: string | string[] | boolean;
+}
+
 const CLOSED_STATUSES: string[] = [TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED];
 const DUE_SOON_DAYS = 3;
+const SEARCH_DEBOUNCE_MS = 300;
+
+export const STATUS_FILTER_STATUSES: Record<Exclude<TaskStatusFilter, 'all'>, TaskStatusEnum[]> = {
+	open: [TaskStatusEnum.OPEN],
+	progress: [TaskStatusEnum.IN_PROGRESS],
+	review: [TaskStatusEnum.READY_FOR_REVIEW, TaskStatusEnum.IN_REVIEW],
+	done: [TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED]
+};
+
+/** Every status a task can still be worked in: what "Overdue" means with no status tab picked. */
+const ACTIVE_STATUSES: TaskStatusEnum[] = Object.values(TaskStatusEnum).filter(
+	(status) => !CLOSED_STATUSES.includes(status)
+);
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -83,6 +110,34 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 	private _viewSequence = 0;
 	private readonly _hashPipe = new HashNumberPipe();
 
+	// Filter bar. Every filter is applied by the server, so paging and the "n of total" count stay right.
+	public readonly statusFilters: { key: TaskStatusFilter; label: string }[] = [
+		{ key: 'all', label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.FILTER_ALL' },
+		{ key: 'open', label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.FILTER_OPEN' },
+		{ key: 'progress', label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.FILTER_IN_PROGRESS' },
+		{ key: 'review', label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.FILTER_IN_REVIEW' },
+		{ key: 'done', label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.FILTER_DONE' }
+	];
+	public readonly priorityFilters: { key: TaskPriorityEnum; label: string }[] = [
+		{ key: TaskPriorityEnum.URGENT, label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.PRIORITY_URGENT' },
+		{ key: TaskPriorityEnum.HIGH, label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.PRIORITY_HIGH' },
+		{ key: TaskPriorityEnum.MEDIUM, label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.PRIORITY_MEDIUM' },
+		{ key: TaskPriorityEnum.LOW, label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.PRIORITY_LOW' }
+	];
+	public readonly dueFilters: { key: TaskDueFilter; label: string }[] = [
+		{ key: 'any', label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.ANY_DUE_DATE' },
+		{ key: 'overdue', label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.OVERDUE' },
+		{ key: 'today', label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.DUE_TODAY' },
+		{ key: 'week', label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.DUE_THIS_WEEK' },
+		{ key: 'none', label: 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.NO_DUE_DATE' }
+	];
+	public statusFilter: TaskStatusFilter = 'all';
+	// `'all'` rather than null: nb-select shows the selected option's label, and null has none.
+	public priorityFilter: TaskPriorityEnum | 'all' = 'all';
+	public dueFilter: TaskDueFilter = 'any';
+	public searchTerm = '';
+	private readonly _search$ = new Subject<string>();
+
 	constructor(
 		readonly translateService: TranslateService,
 		private readonly _httpClient: HttpClient,
@@ -97,6 +152,19 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 	}
 
 	ngOnInit(): void {
+		this._search$
+			.pipe(
+				debounceTime(SEARCH_DEBOUNCE_MS),
+				map((term) => (term || '').trim()),
+				// Against the applied term, not the last typed one, so it holds after "Clear filters".
+				filter((term) => term !== this.searchTerm),
+				tap((term) => {
+					this.searchTerm = term;
+					this._reload();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		this._dateRangePickerBuilderService.selectedDateRange$
 			.pipe(
 				filter((range) => !!range?.startDate && !!range?.endDate),
@@ -174,8 +242,95 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 			// `/tasks/employee` reads the selected employee from `members.id` (as the Tasks page sends it)
 			...(this.selectedEmployeeId ? { members: { id: this.selectedEmployeeId } } : {}),
 			...(this.selectedProjectId ? { projectId: this.selectedProjectId } : {}),
+			// Both task endpoints match `title` with LIKE.
+			...(this.searchTerm ? { title: this.searchTerm } : {}),
 			...(this.filters.where ? this.filters.where : {})
 		};
+	}
+
+	/**
+	 * The filter bar's status, priority and due-date choices as the API's advanced filters
+	 * (`filters[statuses]`, `filters[dueDateTo]`…). "Overdue" with no status tab picked leaves out
+	 * closed tasks: a done task past its due date is not overdue.
+	 */
+	public advancedFilters(now: Date = new Date()): IAdvancedFilterParam[] {
+		const params: IAdvancedFilterParam[] = [];
+
+		let statuses: string[] = STATUS_FILTER_STATUSES[this.statusFilter as Exclude<TaskStatusFilter, 'all'>] ?? [];
+		if (this.dueFilter === 'overdue' && !statuses.length) {
+			statuses = ACTIVE_STATUSES;
+		}
+		if (statuses.length) {
+			params.push({ field: 'statuses', search: statuses });
+		}
+		if (this.priorityFilter && this.priorityFilter !== 'all') {
+			params.push({ field: 'priorities', search: [this.priorityFilter] });
+		}
+
+		const today = moment(now).startOf('day');
+		switch (this.dueFilter) {
+			case 'overdue':
+				params.push({ field: 'dueDateTo', search: today.clone().subtract(1, 'millisecond').toISOString() });
+				break;
+			case 'today':
+				params.push({ field: 'dueDateFrom', search: today.toISOString() });
+				params.push({ field: 'dueDateTo', search: today.clone().endOf('day').toISOString() });
+				break;
+			case 'week':
+				// From today to the end of the locale's week; anything earlier is "Overdue".
+				params.push({ field: 'dueDateFrom', search: today.toISOString() });
+				params.push({ field: 'dueDateTo', search: today.clone().endOf('week').toISOString() });
+				break;
+			case 'none':
+				params.push({ field: 'withoutDueDate', search: true });
+				break;
+		}
+		return params;
+	}
+
+	public get hasActiveFilters(): boolean {
+		return (
+			this.statusFilter !== 'all' ||
+			this.priorityFilter !== 'all' ||
+			this.dueFilter !== 'any' ||
+			!!this.searchTerm
+		);
+	}
+
+	public setStatusFilter(value: TaskStatusFilter): void {
+		if (value !== this.statusFilter) {
+			this.statusFilter = value;
+			this._reload();
+		}
+	}
+
+	public setPriorityFilter(value: TaskPriorityEnum | 'all'): void {
+		if (value !== this.priorityFilter) {
+			this.priorityFilter = value;
+			this._reload();
+		}
+	}
+
+	public setDueFilter(value: TaskDueFilter): void {
+		if (value !== this.dueFilter) {
+			this.dueFilter = value;
+			this._reload();
+		}
+	}
+
+	public onSearch(value: string): void {
+		this._search$.next(value);
+	}
+
+	public clearFilters(searchInput?: HTMLInputElement): void {
+		this.statusFilter = 'all';
+		this.priorityFilter = 'all';
+		this.dueFilter = 'any';
+		this.searchTerm = '';
+		if (searchInput) {
+			searchInput.value = '';
+		}
+		this._reload();
 	}
 
 	/*
@@ -190,6 +345,8 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 			relations: ['project', 'tags'],
 			where: this._buildWhere()
 		});
+		// Sent as `filters[field]` query parameters; the smart-table typing only allows string searches.
+		this._smartTableSource.setFilter(this.advancedFilters() as any, false);
 	}
 
 	private async _getTasks() {
