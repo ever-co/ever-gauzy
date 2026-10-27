@@ -9,3 +9,11 @@ export class ConfirmAccountDeletionDTO extends AccountDeletionTokenDTO {
 	@Equals(true)
 	readonly confirm: boolean;
 }
+
+/** Body of `POST /account-deletion/me`: an explicit `confirm: true`. */
+export class ConfirmCurrentAccountDeletionDTO {
+	@ApiProperty({ type: () => Boolean, example: true })
+	@IsBoolean()
+	@Equals(true)
+	readonly confirm: boolean;
+}

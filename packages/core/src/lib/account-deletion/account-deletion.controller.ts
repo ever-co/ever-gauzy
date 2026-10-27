@@ -1,22 +1,25 @@
-import { Body, Controller, Header, HttpCode, HttpStatus, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiGoneResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from '@gauzy/common';
-import { IAccountDeletionPreview, IAccountDeletionResult } from '@gauzy/contracts';
+import { IAccountDeletionPreview, IAccountDeletionResult, PermissionsEnum } from '@gauzy/contracts';
+import { Permissions } from '../shared/decorators';
+import { PermissionGuard, TenantPermissionGuard } from '../shared/guards';
 import { UseValidationPipe } from '../shared/pipes';
 import { resolveThrottlerTracker, throttlerTrackerOptions } from '../throttler/tracker';
 import { AccountDeletionService } from './account-deletion.service';
-import { AccountDeletionTokenDTO, ConfirmAccountDeletionDTO, RequestAccountDeletionDTO } from './dto';
+import { AccountDeletionTokenDTO, ConfirmAccountDeletionDTO, ConfirmCurrentAccountDeletionDTO, RequestAccountDeletionDTO } from './dto';
 
 /** The body `POST /account-deletion/request` always answers with. */
 export const ACCOUNT_DELETION_REQUEST_ACCEPTED = Object.freeze({ status: 'accepted' });
 
 /**
- * Deleting your account(s) through a link sent to your email address, without signing in.
+ * Deleting your account(s): through a link sent to your email address, without signing in
+ * (`request` / `verify` / `confirm`), or from a session (`GET|POST /me`, the in-app Danger Zone).
  *
- * All three routes are public and rate limited per client address (`@Throttle`, on top of the per-address
- * limit the service keeps per email). Answers are never cached. Deletion only ever happens on
- * `POST /confirm`, never by opening the link.
+ * The link routes are public and rate limited per client address (`@Throttle`, on top of the per-address
+ * limit the service keeps per email). Answers are never cached. Deletion only ever happens on a POST
+ * (`/confirm`, `/me`), never by opening the link.
  */
 @ApiTags('Account Deletion')
 @Controller('/account-deletion')
@@ -75,5 +78,33 @@ export class AccountDeletionController {
 	@UseValidationPipe({ whitelist: true })
 	async confirm(@Body() body: ConfirmAccountDeletionDTO): Promise<IAccountDeletionResult> {
 		return await this.accountDeletionService.confirm(body.token);
+	}
+
+	/**
+	 * What deleting the signed-in user's account in the current workspace would do (same shape as `verify`).
+	 */
+	@ApiOperation({ summary: "Preview the deletion of the signed-in user's account" })
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ACCESS_DELETE_ACCOUNT)
+	@Get('/me')
+	@Header('Cache-Control', 'no-store')
+	async previewMe(): Promise<IAccountDeletionPreview> {
+		return await this.accountDeletionService.previewCurrentUser();
+	}
+
+	/**
+	 * Deletes the signed-in user's account in the current workspace, with the emailed link's rules: the whole
+	 * workspace when nobody else uses it, otherwise the account only, shared content kept without the name.
+	 */
+	@ApiOperation({ summary: "Delete the signed-in user's account (and their workspace when they are its only member)" })
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ACCESS_DELETE_ACCOUNT)
+	@Post('/me')
+	@HttpCode(HttpStatus.OK)
+	@Header('Cache-Control', 'no-store')
+	@Throttle({ default: { limit: 5, ttl: 60000 } })
+	@UseValidationPipe({ whitelist: true })
+	async deleteMe(@Body() _body: ConfirmCurrentAccountDeletionDTO): Promise<IAccountDeletionResult> {
+		return await this.accountDeletionService.deleteCurrentUser();
 	}
 }

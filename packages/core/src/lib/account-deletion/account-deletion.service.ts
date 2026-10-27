@@ -1,4 +1,4 @@
-import { GoneException, Injectable, Logger, Optional } from '@nestjs/common';
+import { ForbiddenException, GoneException, Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntityManager, IsNull, MoreThan, Not } from 'typeorm';
 import { pick } from 'underscore';
@@ -6,6 +6,7 @@ import { environment } from '@gauzy/config';
 import { deepMerge } from '@gauzy/utils';
 import {
 	AccountDeletionOutcomeEnum,
+	FileStorageProvider,
 	IAccountDeletionAccount,
 	IAccountDeletionPreview,
 	IAccountDeletionRequestInput,
@@ -14,9 +15,12 @@ import {
 	LanguagesEnum,
 	RolesEnum
 } from '@gauzy/contracts';
-import { allowedEmailLink, warnRejectedEmailLink, withAllowedEmailLinks } from '../auth/email-link-origin';
+import { allowedEmailLink, emailLinkOrigin, warnRejectedEmailLink, withAllowedEmailLinks } from '../auth/email-link-origin';
+import { assertFirstPartyRequest } from '../auth/oauth-app-first-party';
 import { AuthenticatedUserCache } from '../auth/strategies/authenticated-user-cache';
-import { Tenant, User, UserOrganization } from '../core/entities/internal';
+import { RequestContext } from '../core/context';
+import { FileStorage } from '../core/file-storage';
+import { ImageAsset, Screenshot, Tenant, User, UserOrganization } from '../core/entities/internal';
 import { EmailService } from '../email-send/email.service';
 import { isDefaultProtectedUser } from '../user/default-protected-users';
 import { detachUserAuthorship } from '../user/user-authorship';
@@ -49,6 +53,12 @@ const ADMIN_ROLES: string[] = [RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN];
 export interface AccountDeletionRequestMeta {
 	ip?: string | null;
 	userAgent?: string | null;
+}
+
+/** A file in storage that goes with a deleted row (a screenshot, an avatar, an uploaded image). */
+export interface StoredFile {
+	provider?: FileStorageProvider | null;
+	key: string;
 }
 
 /** One account of the address, with what confirming would do to it. */
@@ -200,9 +210,13 @@ export class AccountDeletionService {
 		try {
 			const planned = await this.plan(this.dataSource.manager, email);
 			for (const { user, account } of planned) {
+				const files = await this.collectStoredFiles(this.dataSource.manager, user, account.outcome);
 				await this.dataSource.transaction(async (manager) => {
 					await this.eraseAccount(manager, user, account.outcome);
 				});
+				// Only once the rows are gone for good: the database cascade runs no entity subscriber, so the
+				// files those subscribers would have removed are removed here. Not awaited (can be many).
+				void this.deleteStoredFiles(request.id, files);
 				deletedUserIds.push(user.id);
 				accounts++;
 				if (account.outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED) {
@@ -241,6 +255,94 @@ export class AccountDeletionService {
 		});
 
 		return { deleted: true, accounts, workspacesDeleted };
+	}
+
+	/**
+	 * What deleting the signed-in user's account (in the current workspace only) would do.
+	 */
+	async previewCurrentUser(): Promise<IAccountDeletionPreview> {
+		const { planned, user } = await this.planCurrentUser();
+		return {
+			email: maskAccountDeletionEmail(user.email),
+			expiresAt: null,
+			accounts: planned.map((item) => item.account)
+		};
+	}
+
+	/**
+	 * Deletes the signed-in user's account in the current workspace, with the same rules as the emailed link
+	 * (the whole workspace when nobody else uses it, otherwise the account only). The session is the proof:
+	 * accounts with the same address in other workspaces are left alone (the emailed link covers those).
+	 * Writes the same audit row and sends the same confirmation email.
+	 */
+	async deleteCurrentUser(): Promise<IAccountDeletionResult> {
+		assertFirstPartyRequest('Deleting a user account');
+		const { planned, user } = await this.planCurrentUser();
+		const now = new Date();
+		const audit = await this.typeOrmAccountDeletionRequestRepository.save(
+			this.typeOrmAccountDeletionRequestRepository.create({
+				emailHash: hashAccountDeletionEmail(user.email),
+				// No link was emailed: a random, never-revealed value keeps the column unique and unusable.
+				tokenHash: hashAccountDeletionToken(generateAccountDeletionToken()),
+				expiresAt: now,
+				usedAt: now,
+				locale: user.preferredLanguage || LanguagesEnum.ENGLISH
+			})
+		);
+
+		let workspacesDeleted = 0;
+		for (const { user: account, account: summary } of planned) {
+			const files = await this.collectStoredFiles(this.dataSource.manager, account, summary.outcome);
+			await this.dataSource.transaction(async (manager) => {
+				await this.eraseAccount(manager, account, summary.outcome);
+			});
+			void this.deleteStoredFiles(audit.id, files);
+			this.authenticatedUserCache?.forget(account.id);
+			if (summary.outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED) {
+				workspacesDeleted++;
+			}
+		}
+
+		await this.typeOrmAccountDeletionRequestRepository.update(
+			{ id: audit.id },
+			{
+				result: JSON.stringify({
+					accounts: planned.length,
+					workspacesDeleted,
+					completedAt: now.toISOString(),
+					via: 'session'
+				})
+			}
+		);
+		this.logger.log(
+			`Account deletion ${audit.id} completed from a session: ${planned.length} account(s), ${workspacesDeleted} workspace(s).`
+		);
+		await this.emailService.sendAccountDeletionCompleted({
+			email: normalizeAccountDeletionEmail(user.email),
+			accounts: planned.length,
+			workspacesDeleted,
+			locale: (user.preferredLanguage as LanguagesEnum) || LanguagesEnum.ENGLISH,
+			integration: environment.appIntegrationConfig
+		});
+		return { deleted: true, accounts: planned.length, workspacesDeleted };
+	}
+
+	/** The signed-in user's account in the current workspace, planned like the emailed link's. */
+	private async planCurrentUser(): Promise<{ user: User; planned: PlannedAccount[] }> {
+		const userId = RequestContext.currentUserId();
+		const tenantId = RequestContext.currentTenantId();
+		const user = userId ? await this.dataSource.manager.findOne(User, { where: { id: userId } }) : null;
+		if (!user || !user.email || (tenantId && user.tenantId !== tenantId)) {
+			throw new ForbiddenException('You are not allowed to delete this account.');
+		}
+		if (environment.demo && isDefaultProtectedUser(user.email)) {
+			throw new ForbiddenException('This demo account cannot be deleted.');
+		}
+		const planned = (await this.plan(this.dataSource.manager, user.email)).filter((item) => item.user.id === user.id);
+		if (!planned.length) {
+			throw new ForbiddenException('You are not allowed to delete this account.');
+		}
+		return { user, planned };
 	}
 
 	/**
@@ -328,6 +430,73 @@ export class AccountDeletionService {
 		}
 		// Also when the tenant went: a no-op then, and it covers a user row the tenant did not cascade to.
 		await manager.delete(User, { id: user.id });
+
+		// The profile picture is a row of the workspace (`user.imageId` only clears on delete): remove it too.
+		if (user.imageId) {
+			await manager.delete(ImageAsset, { id: user.imageId });
+		}
+	}
+
+	/**
+	 * The stored files that go with an account: its screenshots and profile picture, or every screenshot and
+	 * image of the workspace when the workspace goes. Read before the delete, raw (no entity hooks).
+	 */
+	private async collectStoredFiles(
+		manager: EntityManager,
+		user: User,
+		outcome: AccountDeletionOutcomeEnum
+	): Promise<StoredFile[]> {
+		const wholeWorkspace = outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED && !!user.tenantId;
+		const screenshots = manager
+			.getRepository(Screenshot)
+			.createQueryBuilder('screenshot')
+			.withDeleted()
+			.select(['screenshot.file AS file', 'screenshot.thumb AS thumb', 'screenshot.storageProvider AS provider']);
+		const images = manager
+			.getRepository(ImageAsset)
+			.createQueryBuilder('image')
+			.withDeleted()
+			.select(['image.url AS file', 'image.thumb AS thumb', 'image.storageProvider AS provider']);
+
+		if (wholeWorkspace) {
+			screenshots.where('screenshot.tenantId = :tenantId', { tenantId: user.tenantId });
+			images.where('image.tenantId = :tenantId', { tenantId: user.tenantId });
+		} else {
+			screenshots.where('screenshot.userId = :userId', { userId: user.id });
+			images.where('image.id = :imageId', { imageId: user.imageId || null });
+		}
+
+		const rows: Array<{ file?: string; thumb?: string; provider?: FileStorageProvider }> = [
+			...(await screenshots.getRawMany()),
+			...(user.imageId || wholeWorkspace ? await images.getRawMany() : [])
+		];
+		const files: StoredFile[] = [];
+		for (const row of rows) {
+			for (const key of [row.file, row.thumb]) {
+				// Only storage keys: an image can also be an absolute URL to somewhere else (e.g. a Gravatar).
+				if (key && !/^https?:\/\//i.test(key)) {
+					files.push({ provider: row.provider, key });
+				}
+			}
+		}
+		return files;
+	}
+
+	/** Removes stored files, best effort; logs counts only. */
+	private async deleteStoredFiles(requestId: ID, files: StoredFile[]): Promise<void> {
+		let failed = 0;
+		for (const { provider, key } of files) {
+			try {
+				await new FileStorage().getProvider(provider || undefined).deleteFile(key);
+			} catch {
+				failed++;
+			}
+		}
+		if (files.length) {
+			this.logger.log(
+				`Account deletion ${requestId}: removed ${files.length - failed} of ${files.length} stored file(s).`
+			);
+		}
 	}
 
 	/** The active (not soft-deleted) users with this address, in every tenant, with their role and tenant. */
@@ -348,7 +517,7 @@ export class AccountDeletionService {
 	private confirmUrl(callbackUrl?: string): string {
 		const allowed = callbackUrl ? allowedEmailLink(callbackUrl) : null;
 		if (callbackUrl && !allowed) {
-			warnRejectedEmailLink(this.logger, 'the account deletion email')('callbackUrl', null);
+			warnRejectedEmailLink(this.logger, 'the account deletion email')('callbackUrl', emailLinkOrigin(callbackUrl));
 		}
 		return (
 			allowed ||

@@ -5,7 +5,14 @@ jest.mock('@gauzy/config', () => ({
 		appIntegrationConfig: { appName: 'Gauzy', appLink: 'https://app.gauzy.co' }
 	}
 }));
-jest.mock('../core/entities/internal', () => ({ Tenant: class Tenant {}, User: class User {}, UserOrganization: class {} }));
+jest.mock('../core/entities/internal', () => ({
+	ImageAsset: class ImageAsset {},
+	Screenshot: class Screenshot {},
+	Tenant: class Tenant {},
+	User: class User {},
+	UserOrganization: class {}
+}));
+jest.mock('../core/file-storage', () => ({ FileStorage: class {} }));
 jest.mock('../email-send/email.service', () => ({ EmailService: class EmailService {} }));
 jest.mock('../auth/strategies/authenticated-user-cache', () => ({ AuthenticatedUserCache: class {} }));
 jest.mock('../user/user-authorship', () => ({ detachUserAuthorship: jest.fn().mockResolvedValue(0) }));
@@ -43,6 +50,7 @@ function setup() {
 	const service = new AccountDeletionService(repository as any, dataSource as any, emailService as any, cache as any);
 	const findUsers = jest.spyOn(service as any, 'findUsersByEmail');
 	const plan = jest.spyOn(service as any, 'plan');
+	jest.spyOn(service as any, 'collectStoredFiles').mockResolvedValue([]);
 	return { service, repository, execute, dataSource, transactionManager, emailService, cache, findUsers, plan };
 }
 

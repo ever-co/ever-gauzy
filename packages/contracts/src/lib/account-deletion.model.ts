@@ -52,15 +52,16 @@ export interface IAccountDeletionAccount {
 	outcome: AccountDeletionOutcomeEnum;
 }
 
-/** Response of `POST /account-deletion/verify`. */
+/** Response of `POST /account-deletion/verify` and `GET /account-deletion/me`. */
 export interface IAccountDeletionPreview {
 	/** The address the link was sent to, masked (`j***@example.com`). */
 	email: string;
-	expiresAt: Date;
+	/** When the link stops working; null for the signed-in preview (`GET /account-deletion/me`). */
+	expiresAt: Date | null;
 	accounts: IAccountDeletionAccount[];
 }
 
-/** Response of `POST /account-deletion/confirm`. */
+/** Response of `POST /account-deletion/confirm` and `POST /account-deletion/me`. */
 export interface IAccountDeletionResult {
 	deleted: boolean;
 	accounts: number;
