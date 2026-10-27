@@ -1841,6 +1841,20 @@
 		"TIME_TRACKING": "Suivi du temps",
 		"PROJECT_MANAGEMENT": "Gestion de projet",
 		"EMPLOYEE_STATISTICS": "Statistiques des employés",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} sur {{ total }}",
+			"COLUMN_TASK": "Tâche",
+			"COLUMN_PROJECT": "Projet",
+			"COLUMN_DUE": "Échéance",
+			"COLUMN_STATUS": "Statut",
+			"NO_PROJECT": "Aucun projet",
+			"OVERDUE": "En retard",
+			"DUE_TODAY": "Échéance aujourd’hui",
+			"TASKS_COUNT": "{{ count }} tâches affichées",
+			"NO_TASKS": "Aucune tâche pour le moment",
+			"NO_TASKS_HINT": "Les tâches de la sélection actuelle apparaîtront ici, les plus urgentes en premier.",
+			"NO_PROJECTS_HINT": "Les projets apparaissent ici dès que les tâches listées y sont liées."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Sur {{ count }} employés",
 			"OF_INCOME": "{{ value }} % des revenus",

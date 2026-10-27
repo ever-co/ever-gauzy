@@ -1840,6 +1840,20 @@
 		"TIME_TRACKING": "Zeiterfassung",
 		"PROJECT_MANAGEMENT": "Projektmanagement",
 		"EMPLOYEE_STATISTICS": "Mitarbeiterstatistiken",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} von {{ total }}",
+			"COLUMN_TASK": "Aufgabe",
+			"COLUMN_PROJECT": "Projekt",
+			"COLUMN_DUE": "Fälligkeitsdatum",
+			"COLUMN_STATUS": "Status",
+			"NO_PROJECT": "Kein Projekt",
+			"OVERDUE": "Überfällig",
+			"DUE_TODAY": "Heute fällig",
+			"TASKS_COUNT": "{{ count }} Aufgaben in der Ansicht",
+			"NO_TASKS": "Noch keine Aufgaben",
+			"NO_TASKS_HINT": "Aufgaben für die aktuelle Auswahl erscheinen hier, die am frühesten fälligen zuerst.",
+			"NO_PROJECTS_HINT": "Projekte erscheinen hier, sobald die aufgeführten Aufgaben mit ihnen verknüpft sind."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Über {{ count }} Mitarbeiter",
 			"OF_INCOME": "{{ value }}% der Einnahmen",

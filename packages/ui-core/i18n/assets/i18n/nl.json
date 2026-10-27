@@ -1840,6 +1840,20 @@
 		"TIME_TRACKING": "Tijdregistratie",
 		"PROJECT_MANAGEMENT": "Projectmanagement",
 		"EMPLOYEE_STATISTICS": "Werknemersstatistieken",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} van {{ total }}",
+			"COLUMN_TASK": "Taak",
+			"COLUMN_PROJECT": "Project",
+			"COLUMN_DUE": "Vervaldatum",
+			"COLUMN_STATUS": "Status",
+			"NO_PROJECT": "Geen project",
+			"OVERDUE": "Achterstallig",
+			"DUE_TODAY": "Vandaag verschuldigd",
+			"TASKS_COUNT": "{{ count }} taken in beeld",
+			"NO_TASKS": "Nog geen taken",
+			"NO_TASKS_HINT": "Taken voor de huidige selectie verschijnen hier, de eerst vervallende bovenaan.",
+			"NO_PROJECTS_HINT": "Projecten verschijnen hier zodra de vermelde taken eraan gekoppeld zijn."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Over {{ count }} werknemers",
 			"OF_INCOME": "{{ value }}% van de inkomsten",

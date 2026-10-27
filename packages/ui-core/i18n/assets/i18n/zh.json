@@ -1840,6 +1840,20 @@
 		"TIME_TRACKING": "时间跟踪",
 		"PROJECT_MANAGEMENT": "项目管理",
 		"EMPLOYEE_STATISTICS": "员工统计",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} / {{ total }}",
+			"COLUMN_TASK": "任务",
+			"COLUMN_PROJECT": "项目",
+			"COLUMN_DUE": "截止日期",
+			"COLUMN_STATUS": "状态",
+			"NO_PROJECT": "无项目",
+			"OVERDUE": "已逾期",
+			"DUE_TODAY": "今天到期",
+			"TASKS_COUNT": "当前显示 {{ count }} 个任务",
+			"NO_TASKS": "暂无任务",
+			"NO_TASKS_HINT": "当前选择的任务将显示在此处，最早到期的排在最前。",
+			"NO_PROJECTS_HINT": "列出的任务关联到项目后，项目会显示在此处。"
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "共 {{ count }} 名员工",
 			"OF_INCOME": "占收入的 {{ value }}%",

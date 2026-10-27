@@ -1884,6 +1884,20 @@
 		"TIME_TRACKING": "Time Tracking",
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} מתוך {{ total }}",
+			"COLUMN_TASK": "משימה",
+			"COLUMN_PROJECT": "פרויקט",
+			"COLUMN_DUE": "תאריך יעד",
+			"COLUMN_STATUS": "סטטוס",
+			"NO_PROJECT": "ללא פרויקט",
+			"OVERDUE": "באיחור",
+			"DUE_TODAY": "לביצוע היום",
+			"TASKS_COUNT": "{{ count }} משימות בתצוגה",
+			"NO_TASKS": "אין משימות עדיין",
+			"NO_TASKS_HINT": "משימות עבור הבחירה הנוכחית יופיעו כאן, הדחופות ביותר תחילה.",
+			"NO_PROJECTS_HINT": "פרויקטים יופיעו כאן לאחר שהמשימות המוצגות יקושרו אליהם."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "על פני {{ count }} עובדים",
 			"OF_INCOME": "{{ value }}% מההכנסה",

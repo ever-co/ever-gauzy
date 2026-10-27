@@ -1840,6 +1840,20 @@
 		"TIME_TRACKING": "Rastreamento de tempo",
 		"PROJECT_MANAGEMENT": "Gestão de Projetos",
 		"EMPLOYEE_STATISTICS": "Estatísticas dos funcionários",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} de {{ total }}",
+			"COLUMN_TASK": "Tarefa",
+			"COLUMN_PROJECT": "Projeto",
+			"COLUMN_DUE": "Data de vencimento",
+			"COLUMN_STATUS": "Status",
+			"NO_PROJECT": "Sem projeto",
+			"OVERDUE": "Atrasada",
+			"DUE_TODAY": "Vence hoje",
+			"TASKS_COUNT": "{{ count }} tarefas na visualização",
+			"NO_TASKS": "Ainda não há tarefas",
+			"NO_TASKS_HINT": "As tarefas da seleção atual aparecerão aqui, as que vencem primeiro no topo.",
+			"NO_PROJECTS_HINT": "Os projetos aparecem aqui quando as tarefas listadas estão vinculadas a eles."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Entre {{ count }} funcionários",
 			"OF_INCOME": "{{ value }}% da receita",

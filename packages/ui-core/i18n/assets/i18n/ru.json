@@ -1891,6 +1891,20 @@
 		"TIME_TRACKING": "Время отслеживания",
 		"PROJECT_MANAGEMENT": "Управление проектом",
 		"EMPLOYEE_STATISTICS": "Статистика сотрудников",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} из {{ total }}",
+			"COLUMN_TASK": "Задача",
+			"COLUMN_PROJECT": "Проект",
+			"COLUMN_DUE": "Срок",
+			"COLUMN_STATUS": "Статус",
+			"NO_PROJECT": "Без проекта",
+			"OVERDUE": "Просрочена",
+			"DUE_TODAY": "Срок сегодня",
+			"TASKS_COUNT": "Задач в списке: {{ count }}",
+			"NO_TASKS": "Задач пока нет",
+			"NO_TASKS_HINT": "Задачи для текущего выбора появятся здесь, начиная с ближайших по сроку.",
+			"NO_PROJECTS_HINT": "Проекты появятся здесь, когда перечисленные задачи будут к ним привязаны."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "По {{ count }} сотрудникам",
 			"OF_INCOME": "{{ value }}% от дохода",

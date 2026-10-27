@@ -1840,6 +1840,20 @@
 		"TIME_TRACKING": "Rilevamento del tempo",
 		"PROJECT_MANAGEMENT": "Gestione del progetto",
 		"EMPLOYEE_STATISTICS": "Statistiche dei dipendenti",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} di {{ total }}",
+			"COLUMN_TASK": "Attività",
+			"COLUMN_PROJECT": "Progetto",
+			"COLUMN_DUE": "Scadenza",
+			"COLUMN_STATUS": "Stato",
+			"NO_PROJECT": "Nessun progetto",
+			"OVERDUE": "Scaduta",
+			"DUE_TODAY": "Scade oggi",
+			"TASKS_COUNT": "{{ count }} attività visualizzate",
+			"NO_TASKS": "Ancora nessuna attività",
+			"NO_TASKS_HINT": "Le attività della selezione corrente appariranno qui, dalla scadenza più vicina.",
+			"NO_PROJECTS_HINT": "I progetti appaiono qui quando le attività elencate sono collegate a essi."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Su {{ count }} dipendenti",
 			"OF_INCOME": "{{ value }}% delle entrate",

@@ -1839,6 +1839,20 @@
 		"TIME_TRACKING": "تتبع الوقت",
 		"PROJECT_MANAGEMENT": "إدارة المشاريع",
 		"EMPLOYEE_STATISTICS": "إحصاءات الموظفين",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} من {{ total }}",
+			"COLUMN_TASK": "المهمة",
+			"COLUMN_PROJECT": "المشروع",
+			"COLUMN_DUE": "تاريخ الاستحقاق",
+			"COLUMN_STATUS": "الحالة",
+			"NO_PROJECT": "بدون مشروع",
+			"OVERDUE": "متأخرة",
+			"DUE_TODAY": "مستحقة اليوم",
+			"TASKS_COUNT": "{{ count }} مهام معروضة",
+			"NO_TASKS": "لا توجد مهام بعد",
+			"NO_TASKS_HINT": "ستظهر مهام التحديد الحالي هنا، الأقرب استحقاقًا أولاً.",
+			"NO_PROJECTS_HINT": "تظهر المشاريع هنا بمجرد ربط المهام المدرجة بها."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "عبر {{ count }} موظفين",
 			"OF_INCOME": "{{ value }}% من الإيرادات",

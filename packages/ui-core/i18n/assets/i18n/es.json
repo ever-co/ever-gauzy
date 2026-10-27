@@ -1842,6 +1842,20 @@
 		"TIME_TRACKING": "Seguimiento del tiempo",
 		"PROJECT_MANAGEMENT": "Gestión de Proyectos",
 		"EMPLOYEE_STATISTICS": "Estadísticas de empleados",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} de {{ total }}",
+			"COLUMN_TASK": "Tarea",
+			"COLUMN_PROJECT": "Proyecto",
+			"COLUMN_DUE": "Fecha de vencimiento",
+			"COLUMN_STATUS": "Estado",
+			"NO_PROJECT": "Sin proyecto",
+			"OVERDUE": "Vencida",
+			"DUE_TODAY": "Vence hoy",
+			"TASKS_COUNT": "{{ count }} tareas en vista",
+			"NO_TASKS": "Aún no hay tareas",
+			"NO_TASKS_HINT": "Las tareas de la selección actual aparecerán aquí, primero las que vencen antes.",
+			"NO_PROJECTS_HINT": "Los proyectos aparecen aquí cuando las tareas listadas están vinculadas a ellos."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Entre {{ count }} empleados",
 			"OF_INCOME": "{{ value }}% de los ingresos",
