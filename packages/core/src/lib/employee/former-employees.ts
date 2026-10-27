@@ -192,17 +192,17 @@ export async function leaveOutFormerEmployees(response: unknown, lookup?: IWorki
  * sends them back; saving the stated list as it is would unlink them, and Back to Work could not restore them.
  *
  * @param stated - The members the edit states.
- * @param linked - The members linked now, as stored (with their status flags).
+ * @param linked - The members linked now, as stored (with their status flags), deleted employees included: a soft
+ *   delete keeps the flags, and recovering the employee restores the link.
  * @returns The stated members, and the linked former employees the edit did not state.
  */
-export function withFormerEmployeeLinks<T extends { id?: ID; isActive?: boolean; isArchived?: boolean }>(
-	stated: T[],
-	linked: T[] = []
-): T[] {
+export function withFormerEmployeeLinks<
+	T extends { id?: ID; isActive?: boolean; isArchived?: boolean; deletedAt?: Date | string | null }
+>(stated: T[], linked: T[] = []): T[] {
 	const former = (linked ?? []).filter(
 		(employee) =>
 			employee &&
-			(employee.isActive === false || employee.isArchived === true) &&
+			(employee.isActive === false || employee.isArchived === true || !!employee.deletedAt) &&
 			!stated.some((it) => it?.id === employee.id)
 	);
 	return [...stated, ...former];

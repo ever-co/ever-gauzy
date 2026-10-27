@@ -93,8 +93,51 @@ describe('editing the members of a department or a client (many-to-many)', () =>
 			} as never)
 		);
 
-		expect(service.findOneByIdString).toHaveBeenCalledWith('department-1', { relations: { members: true } });
+		// The department is read live first; its links are read with the deleted employees too
+		expect(service.findOneByIdString).toHaveBeenNthCalledWith(1, 'department-1');
+		expect(service.findOneByIdString).toHaveBeenNthCalledWith(2, 'department-1', {
+			relations: { members: true },
+			withDeleted: true
+		});
 		expect(service.create.mock.calls[0][0].members.map(({ id }) => id)).toEqual(['employee-new', 'employee-ended']);
+	});
+
+	it('keeps a link to a soft-deleted employee, whose flags a soft delete keeps', async () => {
+		const service = {
+			findOneByIdString: jest.fn().mockResolvedValue({
+				id: 'department-1',
+				members: [
+					...linked,
+					{ id: 'employee-deleted', isActive: true, isArchived: false, deletedAt: '2026-10-01T00:00:00Z' }
+				]
+			}),
+			create: jest.fn(async (entity) => entity)
+		};
+		const handler = new OrganizationDepartmentUpdateHandler(service as never);
+
+		await handler.execute(
+			new OrganizationDepartmentUpdateCommand('department-1', { members: [{ id: 'employee-working' }] } as never)
+		);
+
+		expect(service.create.mock.calls[0][0].members.map(({ id }) => id)).toEqual([
+			'employee-working',
+			'employee-ended',
+			'employee-deleted'
+		]);
+	});
+
+	it('refuses to edit the members of a deleted department, reading its links only once it is found live', async () => {
+		const service = {
+			findOneByIdString: jest.fn().mockRejectedValueOnce(new Error('not found')),
+			create: jest.fn()
+		};
+		const handler = new OrganizationDepartmentUpdateHandler(service as never);
+
+		await expect(
+			handler.execute(new OrganizationDepartmentUpdateCommand('department-1', { members: [] } as never))
+		).rejects.toThrow('not found');
+		expect(service.findOneByIdString).toHaveBeenCalledTimes(1);
+		expect(service.create).not.toHaveBeenCalled();
 	});
 
 	it('leaves a department’s members alone when the edit does not state them', async () => {

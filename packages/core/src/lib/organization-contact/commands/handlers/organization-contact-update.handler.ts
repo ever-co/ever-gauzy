@@ -43,8 +43,11 @@ export class OrganizationContactUpdateHandler implements ICommandHandler<Organiz
 			// The members whose work ended are never listed (`former-employees.ts`), so an edit of the members never
 			// sends them back: they stay linked, and Back to Work restores them
 			if (Array.isArray(input.members)) {
+				// The client itself must be live; its links are read with the deleted employees too
+				await this._organizationContactService.findOneByIdString(id);
 				const { members: linked = [] } = await this._organizationContactService.findOneByIdString(id, {
-					relations: { members: true }
+					relations: { members: true },
+					withDeleted: true
 				});
 				input.members = withFormerEmployeeLinks(input.members, linked);
 			}
