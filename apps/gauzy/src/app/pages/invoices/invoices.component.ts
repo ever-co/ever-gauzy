@@ -8,7 +8,8 @@ import {
 	ViewChildren,
 	TemplateRef,
 	AfterViewInit,
-	ChangeDetectionStrategy
+	ChangeDetectionStrategy,
+	HostListener
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -169,6 +170,14 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	 */
 	@ViewChild('actionButtons', { static: true })
 	actionButtons: TemplateRef<any>;
+
+	/**
+	 * The ⋮ "more actions" popover, queried on its own: `popups.last` is only
+	 * this one while the settings popover renders too, and it is absent for a
+	 * user without INVOICES_EDIT.
+	 */
+	@ViewChild('moreActionsTrigger', { read: NbPopoverDirective })
+	moreActionsPopover: NbPopoverDirective;
 
 	constructor(
 		private readonly fb: UntypedFormBuilder,
@@ -1267,7 +1276,7 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 		// Same guard as toggleTableSettingsPopover: when the page renders a single
 		// NbPopoverDirective, `first` and `last` are the SAME instance, so hiding
 		// `first` unconditionally would undo the toggle above and the actions
-		// popover would never open. onClickOutside routes through here too.
+		// popover would never open.
 		if (this.popups.length > 1) {
 			this.popups.first.hide();
 		}
@@ -1362,12 +1371,40 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	}
 
 	/**
-	 * Handle event when user click outside tag
-	 * @param event is a boolean
+	 * Closes the actions menu once one of its enabled buttons — an action or the
+	 * header's close button — is clicked. Clicks on the header text or the gaps
+	 * between items leave it open. A disabled button fires no click, so the event
+	 * target is then the menu itself and nothing closes.
+	 *
+	 * Hides rather than toggles, so it can never reopen a menu that is already
+	 * shut.
+	 *
+	 * @param event - The click that bubbled up to the menu container.
 	 */
-	onClickOutside(event: boolean) {
-		// Close popover after click any button inside
-		if (event) this.toggleActionsPopover();
+	onActionsMenuClick(event: MouseEvent) {
+		const target = event.target as HTMLElement | null;
+		if (target?.closest('button:not([disabled])')) {
+			this.moreActionsPopover?.hide();
+		}
+	}
+
+	/**
+	 * Closes the actions menu on a click anywhere outside it. Clicks on the ⋮
+	 * trigger are left to its own toggle — closing here as well would shut the
+	 * menu and the toggle would reopen it, or the reverse on the opening click.
+	 *
+	 * @param event - Any click on the document.
+	 */
+	@HostListener('document:click', ['$event'])
+	onDocumentClick(event: MouseEvent) {
+		if (!this.moreActionsPopover?.isShown) {
+			return;
+		}
+		const target = event.target as HTMLElement | null;
+		if (target?.closest('.popover-container-action, .more-actions')) {
+			return;
+		}
+		this.moreActionsPopover.hide();
 	}
 
 	ngOnDestroy() {}
