@@ -171,6 +171,10 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 	@ViewChild('actionButtons', { static: true })
 	actionButtons: TemplateRef<any>;
 
+	/** The ⚙ table-settings popover in the card header. */
+	@ViewChild('settingsTrigger', { read: NbPopoverDirective })
+	settingsPopover: NbPopoverDirective;
+
 	/**
 	 * The ⋮ "more actions" popover, queried on its own: `popups.last` is only
 	 * this one while the settings popover renders too, and it is absent for a
@@ -1405,6 +1409,26 @@ export class InvoicesComponent extends PaginationFilterBaseComponent implements 
 			return;
 		}
 		this.moreActionsPopover.hide();
+	}
+
+	/**
+	 * Closes the settings popover on a click anywhere outside it. Clicks on the ⚙
+	 * trigger are left to its own toggle, and clicks in the "Show columns"
+	 * option list are treated as inside: Nebular renders that list in its own
+	 * overlay, outside the popover.
+	 *
+	 * @param event - Any click on the document.
+	 */
+	@HostListener('document:click', ['$event'])
+	closeSettingsOnOutsideClick(event: MouseEvent) {
+		if (!this.settingsPopover?.isShown) {
+			return;
+		}
+		const target = event.target as HTMLElement | null;
+		if (target?.closest('.popover-container, .settings-trigger, nb-option-list')) {
+			return;
+		}
+		this.settingsPopover.hide();
 	}
 
 	ngOnDestroy() {}
