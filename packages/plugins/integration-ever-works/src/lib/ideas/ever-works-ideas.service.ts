@@ -397,6 +397,11 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 		if (link?.state === EverWorksLinkState.UNLINKED)
 			return { status: 'skipped', message: 'the idea is no longer synced' };
 		const task = await this.task(context, change.gauzyId as ID, true);
+		// A task kept out of every integration (sync scope `none`) sends nothing more, its archive or deletion included;
+		// an idea already linked stays as it is in Ever Works.
+		if (task && !isTaskSyncAllowed(task, 'ever-platform')) {
+			return { status: 'skipped', message: 'the task is kept out of every integration (its sync scope is none)' };
+		}
 		const client = this.client(context);
 		const gone =
 			change.op === 'delete' || !task || !!(task as { deletedAt?: Date | null }).deletedAt || !!task.isArchived;
@@ -407,10 +412,6 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 				return { status: 'skipped', message: 'only a pending idea is dismissed when its task goes' };
 			await this.move(context, client, link, 'dismiss');
 			return { status: 'pushed', message: 'the task was removed; the idea is dismissed' };
-		}
-		// A task kept out of every integration (sync scope `none`) is not pushed; an idea already linked stays as it is.
-		if (!isTaskSyncAllowed(task, 'ever-platform')) {
-			return { status: 'skipped', message: 'the task is kept out of every integration (its sync scope is none)' };
 		}
 		if (!isIdeaTask(task, this.setting(context, EverWorksSettingName.IDEA_ISSUE_TYPE_ID))) {
 			if (!link) return { status: 'skipped', message: 'not an idea' };

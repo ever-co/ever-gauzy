@@ -62,7 +62,7 @@ export interface IBaseTaskProperties extends IBasePerTenantAndOrganizationEntity
 	title: string;
 	number?: number;
 	public?: boolean;
-	syncScope?: TaskSyncScopeEnum; // Which integrations may sync the task out of Gauzy (null = `all`)
+	syncScope?: TaskSyncScopeEnum | null; // Which integrations may sync the task out of Gauzy (null = `all`)
 	prefix?: string;
 	description?: string;
 	status?: TaskStatusEnum;

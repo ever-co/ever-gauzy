@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { ActorTypeEnum, ID, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
+import { ActorTypeEnum, ID, isTaskSyncAllowed, ITaskCreateInput, ITaskUpdateInput } from '@gauzy/contracts';
 import type { Task } from '@gauzy/core';
 import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client';
 import type { EverWorksEventEnvelope, EverWorksListPage } from '../client/ever-works-client.types';
@@ -1059,6 +1059,8 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the task is no longer synced' };
 		const task = await this.store.load(context.tenantId, change.gauzyId as ID);
 		try {
+			// A task kept out of every integration sends nothing more, its deletion included (the soft-deleted row is read).
+			if (task && !isTaskSyncAllowed(task, 'ever-platform')) return { status: 'skipped', message: 'the task is kept out of every integration (its sync scope is none)' };
 			if (change.op === 'delete' || !task || (task as { deletedAt?: Date | null }).deletedAt) return await this.pushDelete(context, link, change);
 			if (task.organizationId !== context.organizationId) return { status: 'skipped', message: 'the task belongs to another organization now' };
 			const excluded = await this.excluded(context, task);
