@@ -237,10 +237,10 @@ export class AccountDeletionService {
 		}
 
 		// The audit record: from here on the row carries no clear address, only its hash and the counts.
-		await this.typeOrmAccountDeletionRequestRepository.update(
-			{ id: request.id },
-			{ email: null, result: JSON.stringify({ accounts, workspacesDeleted, completedAt: now.toISOString() }) }
-		);
+		await this.completeAuditRow(request.id, {
+			email: null,
+			result: JSON.stringify({ accounts, workspacesDeleted, completedAt: now.toISOString() })
+		});
 		this.logger.log(
 			`Account deletion ${request.id} completed: ${accounts} account(s), ${workspacesDeleted} workspace(s) (email ${short(
 				request.emailHash
@@ -304,17 +304,14 @@ export class AccountDeletionService {
 			}
 		}
 
-		await this.typeOrmAccountDeletionRequestRepository.update(
-			{ id: audit.id },
-			{
-				result: JSON.stringify({
-					accounts: planned.length,
-					workspacesDeleted,
-					completedAt: now.toISOString(),
-					via: 'session'
-				})
-			}
-		);
+		await this.completeAuditRow(audit.id, {
+			result: JSON.stringify({
+				accounts: planned.length,
+				workspacesDeleted,
+				completedAt: now.toISOString(),
+				via: 'session'
+			})
+		});
 		this.logger.log(
 			`Account deletion ${audit.id} completed from a session: ${planned.length} account(s), ${workspacesDeleted} workspace(s).`
 		);
@@ -344,6 +341,21 @@ export class AccountDeletionService {
 			throw new ForbiddenException('You are not allowed to delete this account.');
 		}
 		return { user, planned };
+	}
+
+	/**
+	 * Writes the outcome to the audit row, without entity listeners: the base subscriber would stamp
+	 * `updatedByUserId` with the signed-in user, who no longer exists by now (a foreign key error that
+	 * turned a finished deletion into a 500 and skipped the confirmation email).
+	 */
+	private async completeAuditRow(id: ID, values: Partial<AccountDeletionRequest>): Promise<void> {
+		await this.typeOrmAccountDeletionRequestRepository
+			.createQueryBuilder()
+			.update(AccountDeletionRequest)
+			.set(values)
+			.where({ id })
+			.callListeners(false)
+			.execute();
 	}
 
 	/**

@@ -33,6 +33,7 @@ function setup() {
 		set: jest.fn().mockReturnThis(),
 		where: jest.fn().mockReturnThis(),
 		andWhere: jest.fn().mockReturnThis(),
+		callListeners: jest.fn().mockReturnThis(),
 		execute
 	};
 	const repository = {
@@ -58,7 +59,7 @@ function setup() {
 	const plan = jest.spyOn(service as any, 'plan');
 	jest.spyOn(service as any, 'collectStoredFiles').mockResolvedValue([]);
 	jest.spyOn(service as any, 'scrubStaleAddresses').mockResolvedValue(undefined);
-	return { service, repository, execute, dataSource, transactionManager, emailService, cache, findUsers, plan };
+	return { service, repository, execute, queryBuilder, dataSource, transactionManager, emailService, cache, findUsers, plan };
 }
 
 const user = { id: 'u1', tenantId: 't1', preferredLanguage: 'en' };
@@ -142,7 +143,7 @@ describe('AccountDeletionService', () => {
 		});
 
 		it('deletes every account, clears the address from the audit row and emails a confirmation', async () => {
-			const { service, repository, plan, transactionManager, emailService, cache } = setup();
+			const { service, repository, plan, transactionManager, emailService, cache, queryBuilder } = setup();
 			repository.findOneBy.mockResolvedValue({ id: 'r1', email: 'jane@ever.co', emailHash: 'h', locale: 'en' });
 			plan.mockResolvedValue([
 				{ user: { id: 'u1', tenantId: 't1' }, account: { outcome: AccountDeletionOutcomeEnum.WORKSPACE_DELETED } },
@@ -153,7 +154,8 @@ describe('AccountDeletionService', () => {
 
 			expect(result).toEqual({ deleted: true, accounts: 2, workspacesDeleted: 1 });
 			expect(transactionManager.delete).toHaveBeenCalledTimes(3); // tenant t1, user u1, user u2
-			expect(repository.update).toHaveBeenCalledWith({ id: 'r1' }, expect.objectContaining({ email: null }));
+			expect(queryBuilder.set).toHaveBeenCalledWith(expect.objectContaining({ email: null }));
+			expect(queryBuilder.callListeners).toHaveBeenCalledWith(false);
 			expect(emailService.sendAccountDeletionCompleted).toHaveBeenCalledWith(
 				expect.objectContaining({ email: 'jane@ever.co', accounts: 2, workspacesDeleted: 1 })
 			);
