@@ -584,6 +584,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		// controller mounts `SensitiveRelationsInterceptor`.
 		this.assertRelationsPermitted(options);
 
+		// This read narrows the teams of a caller who may not act for every employee by setting `where.id`, which an
+		// OR list of `where` objects (`where[0][...]` in a query string) would not carry into its branches: the list
+		// form is refused rather than read wider.
+		if (Array.isArray(options?.where)) {
+			throw new BadRequestException('A list of `where` conditions is not supported for teams.');
+		}
+
 		// The teams that are not archived, unless the caller states `isArchived` (the Teams page's "Include
 		// Archived" states both): an archived team is one the organization finished with, offered by no list.
 		options = { ...options, where: withArchivedScope(options?.where) as FindOptionsWhere<OrganizationTeam> };

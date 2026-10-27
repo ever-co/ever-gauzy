@@ -4,6 +4,7 @@ import { DataSource, EntitySchema, Repository } from 'typeorm';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { Entity, MikroORM, PrimaryKey, Property } from '@mikro-orm/core';
 import { SoftDeletable, SoftDeleteHandler } from 'mikro-orm-soft-delete';
+import { BadRequestException } from '@nestjs/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { RequestContext } from '../core/context';
@@ -262,6 +263,12 @@ describe.each([
 	it('answers both with "Include Archived", and never another tenant’s archived team', async () => {
 		expect(await read({ isArchived: [false, true] })).toEqual(['archived', 'live']);
 		expect(await read({ isArchived: ['false', 'true'] })).toEqual(['archived', 'live']);
+	});
+
+	it('refuses an OR list of `where` conditions, which the employee restriction would not reach', async () => {
+		await expect(
+			harness.service().findAll({ where: [{ organizationId: ORGANIZATION_A }, { name: 'archived' }] } as any)
+		).rejects.toBeInstanceOf(BadRequestException);
 	});
 
 	it('answers no archived team when the options carry no `where` at all', async () => {
