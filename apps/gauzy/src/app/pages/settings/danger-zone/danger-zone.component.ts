@@ -4,7 +4,7 @@ import { NbDialogService } from '@nebular/theme';
 import { Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs/operators';
-import { IUser } from '@gauzy/contracts';
+import { AccountDeletionOutcomeEnum, IUser } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { Environment, environment } from '@gauzy/ui-config';
 import { Store, ToastrService, UsersService } from '@gauzy/ui-core/core';
@@ -36,11 +36,33 @@ export class DangerZoneComponent extends TranslationBaseComponent implements OnI
 	}
 
 	async deleteAccount() {
+		// What the API will do, so the dialog can say it: the whole workspace when the user is its only member.
+		let consequence = '';
+		try {
+			const preview = await this.userService.previewMyAccountDeletion();
+			const account = preview.accounts?.[0];
+			if (account) {
+				consequence =
+					account.outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED
+						? this.getTranslation('DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_WORKSPACE')
+						: this.getTranslation('DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_ACCOUNT', {
+								members: account.otherMembers
+						  });
+				if (account.soleAdmin) {
+					consequence += ' ' + this.getTranslation('DELETE_ACCOUNT_PAGE.CONFIRM.SOLE_ADMIN');
+				}
+			}
+		} catch {
+			// The dialog still opens; the API decides when the user confirms.
+		}
+
 		this.dialogService
 			.open(DangerZoneMutationComponent, {
 				context: {
 					recordType: this.getTranslation('NOTES.DANGER_ZONE.TITLES.ACCOUNT'),
-					title: this.getTranslation('FORM.DELETE_CONFIRMATION.DELETE_ACCOUNT')
+					title: [this.getTranslation('FORM.DELETE_CONFIRMATION.DELETE_ACCOUNT'), consequence]
+						.filter(Boolean)
+						.join(' ')
 				}
 			})
 			.onClose.pipe(untilDestroyed(this))
@@ -50,8 +72,10 @@ export class DangerZoneComponent extends TranslationBaseComponent implements OnI
 				}
 				try {
 					const user = await this.userService.getUserById(this.store.userId);
-					// Awaited: the success message and the sign-out used to run even when the API refused.
-					await this.userService.delete(this.store.userId, data.user);
+					// `/account-deletion/me`, not `DELETE /user/:id`: it also deletes a workspace nobody else uses
+					// (and its files) instead of leaving it behind, and emails a confirmation. Awaited: the success
+					// message and the sign-out used to run even when the API refused.
+					await this.userService.deleteMyAccount();
 
 					this.toastrService.success(
 						this.getTranslation('NOTES.DANGER_ZONE.ACCOUNT_DELETED', {

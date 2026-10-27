@@ -6512,7 +6512,7 @@
 			"FINISH": "Done"
 		},
 		"DANGER_ZONE_HELP": {
-			"DELETE_ACCOUNT": "Delete account: permanently deletes your account in this workspace, your profile, sign-in data and your own records (time logs, screenshots, activity). Content you created for the workspace stays with it, without your name. If you are the only member, use Delete all data first.",
+			"DELETE_ACCOUNT": "Delete account: permanently deletes your account in this workspace, your profile, sign-in data and your own records (time logs, screenshots, activity). Content you created for the workspace stays with it, without your name. If you are its only member, the whole workspace and all its data are deleted too. A confirmation email follows.",
 			"DELETE_ALL_DATA": "Delete all data: deletes all the data of the organizations in this workspace (employees, projects, tasks, time tracking, invoices, ...) and keeps your account.",
 			"BY_EMAIL": "Have accounts in several workspaces, or cannot sign in?",
 			"BY_EMAIL_LINK": "Delete them all by email link"
