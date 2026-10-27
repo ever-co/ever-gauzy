@@ -148,10 +148,15 @@ describe('Gauzy Inbox Cloudflare Email Worker', () => {
 		const page = async () =>
 			new Response('<html>ok</html>', { status: 202, headers: { 'content-type': 'text/html' } });
 		await assert.rejects(deliver(html, ENV, page), /without a delivery result/);
-		// And never follows a redirect with the signed message.
+		// And never follows a redirect with the signed message: `manual` (Workers refuse `error`), and a 3xx is a retry.
 		const { calls, fetcher } = api(202);
 		await deliver(message(), ENV, fetcher);
-		assert.equal(calls[0].init.redirect, 'error');
+		assert.equal(calls[0].init.redirect, 'manual');
+		const moved = message();
+		const redirect = async () =>
+			new Response(null, { status: 301, headers: { location: 'https://elsewhere.test/' } });
+		await assert.rejects(deliver(moved, ENV, redirect), /answered 301/);
+		assert.deepEqual(moved.rejected, []);
 	});
 
 	it('rejects an oversized message before reading it, and a delivery no mailbox took', async () => {
