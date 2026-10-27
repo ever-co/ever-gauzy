@@ -2308,6 +2308,20 @@
 		"TIME_TRACKING": "Time Tracking",
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "Employee Statistics",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} of {{ total }}",
+			"COLUMN_TASK": "Task",
+			"COLUMN_PROJECT": "Project",
+			"COLUMN_DUE": "Due date",
+			"COLUMN_STATUS": "Status",
+			"NO_PROJECT": "No project",
+			"OVERDUE": "Overdue",
+			"DUE_TODAY": "Due today",
+			"TASKS_COUNT": "{{ count }} tasks in view",
+			"NO_TASKS": "No tasks yet",
+			"NO_TASKS_HINT": "Tasks for the current selection will show up here, soonest due first.",
+			"NO_PROJECTS_HINT": "Projects appear here once the listed tasks are linked to them."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Across {{ count }} employees",
 			"OF_INCOME": "{{ value }}% of income",
