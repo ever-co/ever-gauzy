@@ -245,6 +245,15 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// or title, so fall back to the stored task for the subscriptions and the activity log.
 			const organizationId = updatedTask.organizationId ?? task.organizationId;
 
+			// Same for the sync scope: the integrations read it from the updated-task event, so a partial update of a
+			// private task must not look like an `all` task to them. The scope is read back from the row after the save
+			// (not from the copy read before it), so a concurrent edit of the scope is not overwritten in the event. A
+			// failed read-back fails the update (no UPDATED event) rather than publish a possibly stale scope.
+			if (updatedTask.syncScope === undefined) {
+				const saved = await this.findOneByIdString(id, { select: { id: true, syncScope: true } });
+				updatedTask.syncScope = saved.syncScope ?? null;
+			}
+
 			// Unsubscribe members who were unassigned from task
 			await this.unsubscribeRemovedMembers(removedMembers, updatedTask.id, organizationId, tenantId);
 

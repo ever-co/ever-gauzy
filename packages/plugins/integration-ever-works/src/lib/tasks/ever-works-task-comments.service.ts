@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { ActorTypeEnum, BaseEntityEnum, ID, IntegrationEntity } from '@gauzy/contracts';
+import { ActorTypeEnum, BaseEntityEnum, ID, IntegrationEntity, isTaskSyncAllowed } from '@gauzy/contracts';
 import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client';
 import type { EverWorksEventEnvelope } from '../client/ever-works-client.types';
 import type { EverWorksConnection } from '../connection/ever-works-connection.entity';
@@ -237,6 +237,12 @@ export class EverWorksTaskCommentsService implements EverWorksOutboundHandler, E
 		if (link?.state === EverWorksLinkState.UNLINKED) return { status: 'skipped', message: 'the comment is no longer synced' };
 		const row = await this.store.loadComment(context.tenantId, change.gauzyId as ID);
 		try {
+			// The comments of a task kept out of every integration send nothing more — created, edited or deleted, and
+			// also when the task synced before its scope became `none`.
+			if (row?.entity === BaseEntityEnum.Task) {
+				const parent = await this.store.load(context.tenantId, row.entityId as ID);
+				if (parent && !isTaskSyncAllowed(parent, 'ever-platform')) return { status: 'skipped', message: 'the task is kept out of every integration (its sync scope is none)' };
+			}
 			// Who made the change being sent: the captured actor and the row's own audit column must both be the author
 			// (a retried change keeps its first actor while the row may carry someone else's later edit or delete).
 			if (change.op === 'delete' || !row || row.deletedAt) return await this.pushDelete(context, link, [change.actorUserId, row?.deletedByUserId]);

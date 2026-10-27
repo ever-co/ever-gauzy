@@ -3,7 +3,7 @@ import { JoinColumn, JoinTable, RelationId } from 'typeorm';
 import { EntityRepositoryType } from '@mikro-orm/core';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	IActivity,
 	ID,
@@ -25,6 +25,7 @@ import {
 	TaskPriorityEnum,
 	TaskSizeEnum,
 	TaskStatusEnum,
+	TaskSyncScopeEnum,
 	TaskTypeEnum
 } from '@gauzy/contracts';
 import { isMySQL } from '@gauzy/config';
@@ -168,6 +169,17 @@ export class Task extends TenantOrganizationBaseEntity implements ITask {
 	@IsBoolean()
 	@MultiORMColumn({ nullable: true, default: true })
 	public?: boolean;
+
+	/**
+	 * Which integrations may sync the task out of Gauzy: `all` (every enabled integration, by its own rules),
+	 * `ever-platform` (only Ever Works and the other first-party Ever integrations; never GitHub, Sim, …) or `none`.
+	 * A task without a value is `all`, so existing tasks keep syncing as before.
+	 */
+	@ApiPropertyOptional({ type: () => String, enum: TaskSyncScopeEnum })
+	@IsOptional()
+	@IsEnum(TaskSyncScopeEnum)
+	@MultiORMColumn({ nullable: true })
+	syncScope?: TaskSyncScopeEnum;
 
 	/**
 	 * The date when work on the task is scheduled to begin.
