@@ -1558,6 +1558,8 @@ export class EverWorksTasksService implements EverWorksInboundHandler, EverWorks
 				const freshLink = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.TASK, row.id as ID);
 				const freshTask = await this.store.load(context.tenantId, row.id as ID);
 				if (!freshLink || freshLink.state === EverWorksLinkState.UNLINKED || !freshTask) return { status: 'skipped', message: 'the task changed during the push' };
+				// The scope may have become `none` while the push waited on Ever Works: no further write.
+				if (!isTaskSyncAllowed(freshTask, 'ever-platform')) return { status: 'skipped', message: 'the task is kept out of every integration (its sync scope is none)' };
 				pair = freshLink;
 				row = freshTask;
 			}

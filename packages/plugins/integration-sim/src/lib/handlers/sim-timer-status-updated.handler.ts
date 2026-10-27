@@ -3,6 +3,7 @@ import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { TimerStatusUpdatedEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
 import { SimEventName } from '../dto/event-mapping.dto';
+import { taskForSim, withTaskForSim } from './sim-task-scope';
 
 @Injectable()
 @EventsHandler(TimerStatusUpdatedEvent)
@@ -31,8 +32,9 @@ export class SimTimerStatusUpdatedHandler implements IEventHandler<TimerStatusUp
 					duration: status.duration,
 					running: status.running,
 					timerStatus: status.timerStatus,
-					lastLog,
-					lastWorkedTask: status.lastWorkedTask
+					// A task private to the Ever platform reaches Sim as its id only.
+					lastLog: withTaskForSim(lastLog),
+					lastWorkedTask: taskForSim(status.lastWorkedTask)
 				},
 				tenantId: lastLog.tenantId,
 				organizationId: lastLog.organizationId

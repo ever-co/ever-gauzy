@@ -608,6 +608,10 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 				);
 				const freshTask = await this.task(context, task.id as ID, true);
 				if (!fresh || !freshTask) return { status: 'skipped', message: 'the idea changed during the push' };
+				// The scope may have become `none` while the push waited on Ever Works: no further write.
+				if (!isTaskSyncAllowed(freshTask, 'ever-platform')) {
+					return { status: 'skipped', message: 'the task is kept out of every integration (its sync scope is none)' };
+				}
 				pair = fresh;
 				task = freshTask;
 				const teams = ((freshTask as { teams?: Array<{ id: ID }> }).teams ?? []).map((team) => team.id);
