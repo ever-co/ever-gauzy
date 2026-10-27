@@ -16,10 +16,28 @@ import {
 	PermissionsEnum,
 	TaskStatusEnum
 } from '@gauzy/contracts';
-import { ErrorHandlingService, ServerDataSource, Store, TasksService } from '@gauzy/ui-core/core';
+import {
+	DateRangePickerBuilderService,
+	ErrorHandlingService,
+	ServerDataSource,
+	Store,
+	TasksService
+} from '@gauzy/ui-core/core';
 import { API_PREFIX, distinctUntilChange } from '@gauzy/ui-core/common';
-import { AddTaskDialogComponent, PaginationFilterBaseComponent } from '@gauzy/ui-core/shared';
+import {
+	AddTaskDialogComponent,
+	HashNumberPipe,
+	IRecordViewSection,
+	IRecordViewStatus,
+	PaginationFilterBaseComponent
+} from '@gauzy/ui-core/shared';
 import { MyTaskDialogComponent } from '../../../tasks/components/my-task-dialog/my-task-dialog.component';
+import {
+	buildTaskViewSections,
+	taskStatusOf,
+	TASK_VIEW_RELATIONS
+} from '../../../tasks/components/task-view/task-view-sections';
+import { IProjectQuickLookCard } from '../../../projects/components/project-quick-look/project-quick-look.component';
 
 /** Colour family of a status pill; each maps to one of the gauzy action accents in the stylesheet. */
 export type TaskStatusTone = 'success' | 'info' | 'warning' | 'danger' | 'muted' | 'neutral';
@@ -53,6 +71,18 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 	public totalTasks = 0;
 	public tasksLoading = false;
 
+	// Quick looks: the same task and project drawers as the employee page.
+	public viewedTask: ITask | null = null;
+	public viewSections: IRecordViewSection[] = [];
+	public viewStatus: IRecordViewStatus | null = null;
+	public viewedProject: IProjectQuickLookCard | null = null;
+	// The dashboard's date range as ISO dates, for the project drawer's period figures.
+	public rangeStart: string;
+	public rangeEnd: string;
+	// Bumped on every task open or close, so a slow detail load never replaces a newer drawer.
+	private _viewSequence = 0;
+	private readonly _hashPipe = new HashNumberPipe();
+
 	constructor(
 		readonly translateService: TranslateService,
 		private readonly _httpClient: HttpClient,
@@ -60,12 +90,23 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _dialogService: NbDialogService,
 		private readonly _tasksService: TasksService,
-		private readonly _router: Router
+		private readonly _router: Router,
+		private readonly _dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
 		super(translateService);
 	}
 
 	ngOnInit(): void {
+		this._dateRangePickerBuilderService.selectedDateRange$
+			.pipe(
+				filter((range) => !!range?.startDate && !!range?.endDate),
+				tap(({ startDate, endDate }) => {
+					this.rangeStart = new Date(startDate).toISOString();
+					this.rangeEnd = new Date(endDate).toISOString();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
 		const storeOrganization$ = this._store.selectedOrganization$;
 		const storeEmployee$ = this._store.selectedEmployee$;
 		const storeProject$ = this._store.selectedProject$;
@@ -79,6 +120,11 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 					this._selectedEmployee = employee;
 					this.selectedEmployeeId = employee ? employee.id : null;
 					this.selectedProjectId = project ? project.id : null;
+				}),
+				// A drawer opened for the previous selection would describe a task or project no longer listed.
+				tap(() => {
+					this.closeTask();
+					this.closeProject();
 				}),
 				tap(() => this._reload()),
 				untilDestroyed(this)
@@ -331,6 +377,77 @@ export class ProjectManagementDetailsComponent extends PaginationFilterBaseCompo
 					.subscribe();
 			}
 		}
+	}
+
+	public get organizationId(): ID | null {
+		return this._organization?.id ?? null;
+	}
+
+	public get tenantId(): ID | null {
+		return this._organization?.tenantId ?? null;
+	}
+
+	/** Heading of the task drawer, as on the Tasks pages. */
+	public get taskDrawerHeading(): string {
+		return this.isMyTask ? 'TASKS_PAGE.MY_TASK_HEADER' : 'TASKS_PAGE.HEADER';
+	}
+
+	/**
+	 * Opens the task's quick look straight away from the row's data, then swaps in the full
+	 * record (description, members, sprints…) once it has loaded.
+	 */
+	public async openTask(task: ITask): Promise<void> {
+		this.closeProject();
+		const sequence = ++this._viewSequence;
+		this._showTask(task);
+		try {
+			const full = await this._tasksService.getById(task.id, TASK_VIEW_RELATIONS);
+			if (sequence === this._viewSequence && this.viewedTask?.id === task.id && full) {
+				this._showTask(full);
+			}
+		} catch {
+			// The row's own data stays on screen.
+		}
+	}
+
+	public closeTask(): void {
+		this._viewSequence++;
+		this.viewedTask = null;
+	}
+
+	private _showTask(task: ITask): void {
+		this.viewStatus = taskStatusOf(task);
+		this.viewSections = buildTaskViewSections(task, {
+			translate: (key) => this.getTranslation(key),
+			hash: (value) => this._hashPipe.transform(value)
+		});
+		this.viewedTask = task;
+	}
+
+	public openProject(project: IOrganizationProject): void {
+		if (!project?.id) {
+			return;
+		}
+		this.closeTask();
+		this.viewedProject = {
+			id: project.id,
+			name: project.name,
+			imageUrl: project.imageUrl,
+			initials: this._initials(project.name)
+		};
+	}
+
+	public closeProject(): void {
+		this.viewedProject = null;
+	}
+
+	/** "Gauzy Web App" → "GW". */
+	private _initials(name: string): string {
+		const words = (name || '').trim().split(/\s+/).filter(Boolean);
+		return words
+			.slice(0, 2)
+			.map((word) => word.charAt(0).toUpperCase())
+			.join('');
 	}
 
 	public redirectToProjects(): void {
