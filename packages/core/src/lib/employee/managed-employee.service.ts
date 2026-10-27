@@ -44,6 +44,12 @@ const activeMembershipWhere = () => ({
 	isArchived: Or(IsNull(), Equal(false))
 });
 
+/**
+ * Where clause for the team or project a membership belongs to, which must itself still be in effect:
+ * deleting, archiving or deactivating a team or project leaves its membership rows untouched.
+ */
+const activeGroupWhere = () => ({ ...activeMembershipWhere(), deletedAt: IsNull() });
+
 @Injectable()
 export class ManagedEmployeeService {
 	constructor(
@@ -214,7 +220,7 @@ export class ManagedEmployeeService {
 	 *
 	 * @param employeeId - The employee to look for
 	 * @param organizationProjectId - The project to check
-	 * @returns true if the employee belongs to the project in the current tenant
+	 * @returns true if the employee belongs to the project, and the project is in effect, in the current tenant
 	 */
 	async isMemberOfProject(employeeId: ID, organizationProjectId: ID): Promise<boolean> {
 		const tenantId = RequestContext.currentTenantId();
@@ -228,12 +234,14 @@ export class ManagedEmployeeService {
 			employeeId,
 			organizationProjectId,
 			tenantId,
-			...activeMembershipWhere()
+			...activeMembershipWhere(),
+			organizationProject: activeGroupWhere()
 		});
 	}
 
 	/**
-	 * The employees who share an active team or project with an employee, the employee included.
+	 * The employees who share a team or project with an employee, the employee included. Only memberships
+	 * in effect count, in teams and projects that are themselves in effect.
 	 *
 	 * @param employeeId - The employee whose colleagues to find
 	 * @returns Their ids, or only NO_ACCESSIBLE_EMPLOYEE_ID when the tenant or employee is unknown
@@ -249,16 +257,34 @@ export class ManagedEmployeeService {
 		const [teams, projects] = await Promise.all([
 			this.typeOrmTeamEmployeeRepository.find({
 				select: { organizationTeamId: true },
-				where: { employeeId, tenantId, ...activeMembershipWhere() }
+				where: { employeeId, tenantId, ...activeMembershipWhere(), organizationTeam: activeGroupWhere() }
 			}),
 			this.typeOrmProjectEmployeeRepository.find({
 				select: { organizationProjectId: true },
-				where: { employeeId, tenantId, ...activeMembershipWhere() }
+				where: { employeeId, tenantId, ...activeMembershipWhere(), organizationProject: activeGroupWhere() }
 			})
 		]);
 
-		const teamIds = [...new Set(teams.map(({ organizationTeamId }) => organizationTeamId))];
-		const projectIds = [...new Set(projects.map(({ organizationProjectId }) => organizationProjectId))];
+		return await this.withMembersOf(
+			employeeId,
+			tenantId,
+			teams.map(({ organizationTeamId }) => organizationTeamId),
+			projects.map(({ organizationProjectId }) => organizationProjectId)
+		);
+	}
+
+	/**
+	 * An employee plus the members, by memberships in effect, of the given teams and projects.
+	 *
+	 * @param employeeId - The employee, always included
+	 * @param tenantId - The current tenant
+	 * @param teamIds - Teams already known to be in effect
+	 * @param projectIds - Projects already known to be in effect
+	 * @returns The distinct employee ids
+	 */
+	private async withMembersOf(employeeId: ID, tenantId: ID, teamIds: ID[], projectIds: ID[]): Promise<ID[]> {
+		teamIds = [...new Set(teamIds)];
+		projectIds = [...new Set(projectIds)];
 
 		const [teamMates, projectMates] = await Promise.all([
 			isNotEmpty(teamIds)
@@ -286,13 +312,14 @@ export class ManagedEmployeeService {
 	 * ORG_MEMBERS_VIEW, which the EMPLOYEE role holds, covers the people the caller works with, never the
 	 * whole organization:
 	 * - a named team: its members, if the caller belongs to it;
-	 * - a named project (and no team): its members, if the caller belongs to it;
-	 * - neither: everyone the caller shares an active team or project with, the caller included.
+	 * - a named project (and no team): its members by memberships in effect, if the caller belongs to it
+	 *   and the project is in effect;
+	 * - neither: everyone the caller shares a team or project with, the caller included.
 	 *
 	 * @param employeeId - The caller's employee id; a caller without one is refused
 	 * @param organizationTeamId - The team the read names, if any
 	 * @param organizationProjectId - The project the read names, if any
-	 * @returns Whether the read is allowed and, when it names neither, the employee ids to narrow it to
+	 * @returns Whether the read is allowed and, unless it names a team, the employee ids to narrow it to
 	 */
 	async scopeMembersRead(
 		employeeId: ID,
@@ -306,9 +333,17 @@ export class ManagedEmployeeService {
 			return (await this.isMemberOfTeam(employeeId, organizationTeamId)) ? { allowed: true } : { allowed: false };
 		}
 		if (organizationProjectId) {
-			return (await this.isMemberOfProject(employeeId, organizationProjectId))
-				? { allowed: true }
-				: { allowed: false };
+			if (!(await this.isMemberOfProject(employeeId, organizationProjectId))) {
+				return { allowed: false };
+			}
+			// findMembers joins the project's memberships by project alone, archived ones included.
+			const employeeIds = await this.withMembersOf(
+				employeeId,
+				RequestContext.currentTenantId(),
+				[],
+				[organizationProjectId]
+			);
+			return { allowed: true, employeeIds };
 		}
 		return { allowed: true, employeeIds: await this.findColleagueEmployeeIds(employeeId) };
 	}

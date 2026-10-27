@@ -12,6 +12,8 @@ const TEAM = '66ba5d6e-a3c6-4be8-b74d-fb8aece4bd58';
 const PROJECT = 'c5fc5345-c47b-4b08-b63c-f17c88679aca';
 
 const active = () => ({ isActive: Or(IsNull(), Equal(true)), isArchived: Or(IsNull(), Equal(false)) });
+/** A team or project in effect: deleting, archiving or deactivating one leaves its membership rows. */
+const activeGroup = () => ({ ...active(), deletedAt: IsNull() });
 
 /**
  * `GET /employee/members` (and the `employeeMembers` field) refused an employee who named no team, so the
@@ -53,7 +55,10 @@ describe('ManagedEmployeeService.scopeMembersRead', () => {
 		// The full predicates are asserted on purpose: dropping the tenant or the active flags would widen
 		// the list, and objectContaining would not notice.
 		expect(teams.find.mock.calls.map(([options]) => options)).toEqual([
-			{ select: { organizationTeamId: true }, where: { employeeId: CALLER, tenantId: TENANT_ID, ...active() } },
+			{
+				select: { organizationTeamId: true },
+				where: { employeeId: CALLER, tenantId: TENANT_ID, ...active(), organizationTeam: activeGroup() }
+			},
 			{
 				select: { employeeId: true },
 				where: { organizationTeamId: In([TEAM]), tenantId: TENANT_ID, ...active() }
@@ -62,7 +67,7 @@ describe('ManagedEmployeeService.scopeMembersRead', () => {
 		expect(projects.find.mock.calls.map(([options]) => options)).toEqual([
 			{
 				select: { organizationProjectId: true },
-				where: { employeeId: CALLER, tenantId: TENANT_ID, ...active() }
+				where: { employeeId: CALLER, tenantId: TENANT_ID, ...active(), organizationProject: activeGroup() }
 			},
 			{
 				select: { employeeId: true },
@@ -81,23 +86,40 @@ describe('ManagedEmployeeService.scopeMembersRead', () => {
 		expect(projects.find).toHaveBeenCalledTimes(1);
 	});
 
-	it('allows a named team or project only when the caller belongs to it', async () => {
+	it('allows a named team only when the caller belongs to it, without narrowing it', async () => {
 		await expect(service.scopeMembersRead(CALLER, TEAM)).resolves.toEqual({ allowed: true });
 		await expect(service.scopeMembersRead(CALLER, 'another-team')).resolves.toEqual({ allowed: false });
-		await expect(service.scopeMembersRead(CALLER, undefined, PROJECT)).resolves.toEqual({ allowed: true });
+		expect(teams.find).not.toHaveBeenCalled();
+	});
+
+	it('allows a named project only when the caller belongs to it and it is in effect', async () => {
 		await expect(service.scopeMembersRead(CALLER, undefined, 'another-project')).resolves.toEqual({
 			allowed: false
 		});
-
 		expect(projects.existsBy).toHaveBeenLastCalledWith({
 			employeeId: CALLER,
 			organizationProjectId: 'another-project',
 			tenantId: TENANT_ID,
-			...active()
+			...active(),
+			organizationProject: activeGroup()
 		});
-		// A named team or project is never widened to the caller's colleagues.
-		expect(teams.find).not.toHaveBeenCalled();
 		expect(projects.find).not.toHaveBeenCalled();
+	});
+
+	it("narrows a named project to its memberships in effect, never the caller's other colleagues", async () => {
+		await expect(service.scopeMembersRead(CALLER, undefined, PROJECT)).resolves.toEqual({
+			allowed: true,
+			employeeIds: [CALLER, PROJECT_MATE, TEAM_MATE]
+		});
+		// findMembers joins a project's memberships by project alone, archived ones included, so the ids are
+		// read here with the membership flags; the caller's teams are not looked at.
+		expect(projects.find.mock.calls.map(([options]) => options)).toEqual([
+			{
+				select: { employeeId: true },
+				where: { organizationProjectId: In([PROJECT]), tenantId: TENANT_ID, ...active() }
+			}
+		]);
+		expect(teams.find).not.toHaveBeenCalled();
 	});
 
 	it('checks the team, not the project, when a read names both', async () => {
