@@ -475,6 +475,8 @@ jobs:
             echo "API_BASE_URL=$API_BASE_URL"
             echo "DEMO=$DEMO"
             echo "DB_TYPE=$DB_TYPE"
+            echo "MAIL_HOST=$MAIL_HOST"
+            echo "MAIL_PORT=$MAIL_PORT"
           } >> .env.local
           forever start dist/apps/api/main.js
         env:
@@ -499,6 +501,14 @@ jobs:
           # so run the e2e API on :3001 to avoid the port clash. The web bundle is repointed to match.
           API_PORT: '3001'
           API_BASE_URL: 'http://localhost:3001'
+          # Mail goes to a closed local port, so every send fails at once (ECONNREFUSED) and the API
+          # answers. The committed .env.local points at smtp.gmail.com:465; from the runner that connect
+          # can hang until nodemailer's 2-minute connection timeout, and the invoice/estimate "send by
+          # email" dialogs wait for that answer before they close (run 40421871684: PUT
+          # /api/invoices/email/<address> still pending after 75 s, three times in a row). The suite
+          # checks the UI flow, never delivery, and must not mail faker addresses through a real server.
+          MAIL_HOST: '127.0.0.1'
+          MAIL_PORT: '2525'
 
       - name: Serve Web (static) in background
         run: forever start apps/gauzy-e2e/tools/serve-web.js dist/apps/gauzy 4200

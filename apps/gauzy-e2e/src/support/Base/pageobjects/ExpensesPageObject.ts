@@ -2,7 +2,9 @@ export const ExpensesPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addExpenseButtonCss: 'div.actions-container button[status="success"]',
 	selectEmployeeDropdownCss: 'ga-employee-selector.employees',
-	selectEmployeeDropdownOptionCss: 'div.ng-option',
+	// The selector's ng-select carries the static class `employee`, which ng-select copies onto its
+	// body-appended panel — scopes the options to THIS panel.
+	selectEmployeeDropdownOptionCss: 'ng-dropdown-panel.employee div.ng-option',
 	categoryInputCss: 'ga-expenses-mutation ga-expense-category-select ng-select',
 	categorySearchInputCss: 'ga-expenses-mutation ga-expense-category-select ng-select input[type="text"]',
 	dateInputCss: 'ga-expenses-mutation [formcontrolname="valueDate"]',

@@ -11,9 +11,16 @@ export const AddUserPage = {
 	selectRoleDropdownCss: 'nb-select#role>button',
 	selectRoleDropdownOptionCss: '.option-list nb-option',
 	passwordInputCss: 'input#password',
-	imageInputUrlCss: '[placeholder="Image"]',
-	confirmAddUserButtonCss:
-		'button.green.appearance-outline',
+	// The Add User dialog host (user-mutation.component, opened by users.component add() as an nb-dialog
+	// in the cdk overlay). Scope for everything that must hit THIS dialog.
+	userMutationDialogCss: 'ga-user-mutation',
+	// The image-URL text input ([placeholder="Image"]) is gone: #10336 (a73de1d121) replaced it in the
+	// shared ga-user-basic-info-form with an avatar uploader — a transparent `<input type="file">`
+	// (ngx-image-uploader) laid over the avatar that uploads the picked file to
+	// /api/image-assets/upload/profile_pictures (basic-info-form.component.html, Profile section).
+	imageUploaderInputCss: 'ga-user-mutation ngx-image-uploader input[type="file"]',
+	// "Add User" submit in the dialog footer (`class="green" outline`, [disabled]="userBasicInfo.form.invalid").
+	confirmAddUserButtonCss: 'ga-user-mutation nb-card-footer > button.green',
 	verifyUserCss: 'div.names-wrapper',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	endOfUserListCss: 'ul > li:nth-of-type(9)'

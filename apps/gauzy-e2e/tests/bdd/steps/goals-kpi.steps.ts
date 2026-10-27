@@ -18,6 +18,9 @@ let username = ' ';
 let password = ' ';
 let employeeEmail = ' ';
 let imgUrl = ' ';
+// Unique per attempt: the shard's DB survives a failed attempt, so with the fixed pagedata name a retry
+// would see two "Maintain page views" rows and could edit/delete the earlier attempt's KPI instead.
+let kpiName = ' ';
 
 When('I add a new KPI', async () => {
 	firstName = faker.person.firstName();
@@ -26,6 +29,7 @@ When('I add a new KPI', async () => {
 	password = faker.internet.password();
 	employeeEmail = faker.internet.exampleEmail();
 	imgUrl = faker.image.avatar();
+	kpiName = `${GoalsKPIPageData.name} ${faker.string.alphanumeric(6)}`;
 
 	await CustomCommands.addEmployee(
 		manageEmployeesPage,
@@ -37,12 +41,17 @@ When('I add a new KPI', async () => {
 		imgUrl
 	);
 	await getPage().goto('/#/pages/goals/settings');
+	// A hash-only goto right after addEmployee (which ends on /#/pages/employees) can be a same-document
+	// no-op; force the hash so the goal settings page actually renders.
+	await getPage().evaluate(() => {
+		if (!location.hash.includes('/pages/goals/settings')) location.hash = '#/pages/goals/settings';
+	});
 	await goalsKPIPage.tabButtonVisible();
 	await goalsKPIPage.clickTabButton(2);
 	await goalsKPIPage.addKPIButtonVisible();
 	await goalsKPIPage.clickAddKPIButton();
 	await goalsKPIPage.nameInputVisible();
-	await goalsKPIPage.enterNameInputData(GoalsKPIPageData.name);
+	await goalsKPIPage.enterNameInputData(kpiName);
 	await goalsKPIPage.descriptionInputVisible();
 	await goalsKPIPage.enterDescriptionInputData(GoalsKPIPageData.description);
 	await goalsKPIPage.employeeMultiSelectVisible();
@@ -57,13 +66,13 @@ When('I add a new KPI', async () => {
 
 When('I edit the KPI', async () => {
 	await goalsKPIPage.waitMessageToHide();
-	await goalsKPIPage.verifyKPIExists(GoalsKPIPageData.name);
+	await goalsKPIPage.verifyKPIExists(kpiName);
 	await goalsKPIPage.tableRowVisible();
-	await goalsKPIPage.selectTableRow(0);
+	await goalsKPIPage.selectTableRowByName(kpiName);
 	await goalsKPIPage.editKPIButtonVisible();
 	await goalsKPIPage.clickEditKPIButton();
 	await goalsKPIPage.nameInputVisible();
-	await goalsKPIPage.enterNameInputData(GoalsKPIPageData.name);
+	await goalsKPIPage.enterNameInputData(kpiName);
 	await goalsKPIPage.descriptionInputVisible();
 	await goalsKPIPage.enterDescriptionInputData(GoalsKPIPageData.description);
 	await goalsKPIPage.employeeMultiSelectVisible();
@@ -78,9 +87,9 @@ When('I edit the KPI', async () => {
 
 When('I delete the KPI', async () => {
 	await goalsKPIPage.waitMessageToHide();
-	await goalsKPIPage.verifyKPIExists(GoalsKPIPageData.name);
+	await goalsKPIPage.verifyKPIExists(kpiName);
 	await goalsKPIPage.tableRowVisible();
-	await goalsKPIPage.selectTableRow(0);
+	await goalsKPIPage.selectTableRowByName(kpiName);
 	await goalsKPIPage.deleteKPIButtonVisible();
 	await goalsKPIPage.clickDeleteKPIButton();
 	await goalsKPIPage.confirmDeleteButtonVisible();
@@ -88,5 +97,5 @@ When('I delete the KPI', async () => {
 	// Verify by KPI name (the row is gone), not the empty-table string: the app's KPI no-data
 	// message changed and the shared grid may still hold other KPIs.
 	await goalsKPIPage.waitMessageToHide();
-	await goalsKPIPage.verifyElementDeleted(GoalsKPIPageData.name);
+	await goalsKPIPage.verifyElementDeleted(kpiName);
 });

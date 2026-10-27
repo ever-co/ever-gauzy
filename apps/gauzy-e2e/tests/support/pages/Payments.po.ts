@@ -315,3 +315,27 @@ export const selectOptionFromDropdown = async (text: string) => {
 export const selectTableRowByNote = async (text: string) => {
 	await clickElementByText(PaymentsPage.selectTableRowCss, text);
 };
+
+// Select the grid row whose Note cell carries `text` (enables Edit/Delete), with the same settle +
+// click-once-then-poll handling as selectTableRow (the row click TOGGLES selection). By note, not row 0:
+// the grid also lists every other payment dated in the header's range (seeded ones, a retry's leftovers),
+// so row 0 is not necessarily the payment this scenario recorded.
+export const selectTableRowByText = async (text: string) => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+	const row = page.locator(PaymentsPage.selectTableRowCss).filter({ hasText: text }).first();
+	await row.waitFor({ state: 'visible', timeout: 24000 });
+	// Click the plain-text Note cell itself, not the row's centre: the Contact column renders a link, and a
+	// click landing on it would navigate away instead of selecting the row (the click bubbles to the tr).
+	const cell = row.locator('td').filter({ hasText: text }).first();
+	const editBtn = page.locator(PaymentsPage.editPaymentButtonCss).first();
+	await cell.click({ force: true });
+	for (let i = 0; i < 6; i++) {
+		const disabled = await editBtn.getAttribute('disabled').catch(() => null);
+		if (disabled === null) return; // enabled -> row is selected
+		await page.waitForTimeout(700);
+		if (i === 2) await cell.click({ force: true }); // single retry mid-way if selection didn't take
+	}
+};

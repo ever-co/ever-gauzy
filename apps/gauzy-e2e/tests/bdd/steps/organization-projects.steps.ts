@@ -22,23 +22,24 @@ When('I add a new project', async () => {
 	await organizationProjectsPage.clickSelectEmployeeDropdown();
 	await organizationProjectsPage.selectEmployeeDropdownOption(0);
 	await organizationProjectsPage.clickKeyboardButtonByKeyCode(9);
-	await organizationProjectsPage.clickTabButton(1);
+	await organizationProjectsPage.clickTabButton('description');
 	await organizationProjectsPage.tagsMultiSelectVisible();
 	await organizationProjectsPage.clickTagsMultiSelect();
 	await organizationProjectsPage.selectTagsFromDropdown(0);
 	await organizationProjectsPage.clickCardBody();
-	await organizationProjectsPage.clickTabButton(3);
+	await organizationProjectsPage.clickTabButton('budget');
 	await organizationProjectsPage.budgetHoursInputVisible();
 	await organizationProjectsPage.enterBudgetHoursInputData(
 		OrganizationProjectsPageData.hours
 	);
-	await organizationProjectsPage.clickTabButton(5);
+	await organizationProjectsPage.clickTabButton('settings');
 	await organizationProjectsPage.colorInputVisible();
 	await organizationProjectsPage.enterColorInputData(
 		OrganizationProjectsPageData.color
 	);
 	await organizationProjectsPage.saveProjectButtonVisible();
 	await organizationProjectsPage.clickSaveProjectButton();
+	await organizationProjectsPage.verifyProjectFormClosed();
 	await organizationProjectsPage.waitMessageToHide();
 	await organizationProjectsPage.verifyProjectExists(
 		OrganizationProjectsPageData.name
@@ -54,18 +55,19 @@ When('I edit the project', async () => {
 	await organizationProjectsPage.enterNameInputData(
 		OrganizationProjectsPageData.editName
 	);
-	await organizationProjectsPage.clickTabButton(3);
+	await organizationProjectsPage.clickTabButton('budget');
 	await organizationProjectsPage.budgetHoursInputVisible();
 	await organizationProjectsPage.enterBudgetHoursInputData(
 		OrganizationProjectsPageData.hours
 	);
-	await organizationProjectsPage.clickTabButton(5);
+	await organizationProjectsPage.clickTabButton('settings');
 	await organizationProjectsPage.colorInputVisible();
 	await organizationProjectsPage.enterColorInputData(
 		OrganizationProjectsPageData.color
 	);
 	await organizationProjectsPage.saveProjectButtonVisible();
 	await organizationProjectsPage.clickSaveProjectButton();
+	await organizationProjectsPage.verifyProjectFormClosed();
 });
 
 When('I delete the project', async () => {

@@ -491,3 +491,38 @@ export const fillRichTextEditor = async (scopeSelector: string, text: string, in
 	// Assert the typed content actually landed in the editor document (and therefore the CVA value).
 	await expect(editable).toContainText(String(text), { timeout: defaultCommandTimeout });
 };
+
+// A valid 1x1 PNG (IHDR/IDAT/IEND CRCs check out). Raster on purpose: the API's image-asset upload
+// rejects SVG and other markup (GHSA-p334-cm7f-php5).
+const E2E_PNG = Buffer.from(
+	'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+	'base64'
+);
+
+/**
+ * Set an image through the shared `<ngx-image-uploader>` avatar/logo picker.
+ *
+ * The user, employee and candidate forms used to take the picture as an image-URL text input
+ * (`#inputImageUrl`, placeholder "Image") that the specs filled with a URL. Those forms now upload
+ * the picture instead (the avatar uploader replaced the URL field in #10336): a transparent
+ * `<input type="file">` laid over the avatar posts the file to `/api/image-assets/upload/<folder>`
+ * as soon as it is chosen, and the returned asset fills the form's `imageUrl`. So the step that used
+ * to type a URL now picks a file — the same "the user sets a picture" behaviour through the control
+ * that exists today.
+ *
+ * Waits for the upload request the pick triggers, so a picker that never reacted fails HERE instead
+ * of several steps later. It returns whether the upload succeeded rather than asserting it: the
+ * picture is optional on every one of these forms, and the file-storage scenario switches the
+ * tenant's provider to an S3 bucket with placeholder credentials, so uploads made later in the same
+ * shard are rejected by the storage backend for reasons that have nothing to do with the form.
+ */
+export const uploadImageThroughUploader = async (scopeSelector: string, fileName = 'e2e-image.png'): Promise<boolean> => {
+	const input = loc(`${scopeSelector} ngx-image-uploader input[type="file"]`).first();
+	await input.waitFor({ state: 'attached', timeout: defaultCommandTimeout });
+	const upload = getPage().waitForResponse(
+		(res) => res.request().method() === 'POST' && res.url().includes('/image-assets/upload/'),
+		{ timeout: taskTimeout }
+	);
+	await input.setInputFiles({ name: fileName, mimeType: 'image/png', buffer: E2E_PNG });
+	return (await upload).ok();
+};
