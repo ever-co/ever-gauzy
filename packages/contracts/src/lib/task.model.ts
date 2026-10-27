@@ -21,10 +21,48 @@ export enum TaskParticipantEnum {
 	TEAMS = 'teams'
 }
 
+/**
+ * Which integrations may sync a task out of Gauzy.
+ *
+ * - `all`: every enabled integration may sync it, each by its own rules (the default; a task without a value is `all`).
+ * - `ever-platform`: only the first-party Ever platform integrations (Ever Works) may sync it; third-party
+ *   integrations (GitHub, Sim, …) never do. For tasks that must stay private to the Ever platform.
+ * - `none`: no integration syncs it.
+ */
+export enum TaskSyncScopeEnum {
+	ALL = 'all',
+	EVER_PLATFORM = 'ever-platform',
+	NONE = 'none'
+}
+
+/** Who is about to sync a task out of Gauzy: a third-party integration, or a first-party Ever platform one. */
+export type TaskSyncAudience = 'third-party' | 'ever-platform';
+
+/**
+ * Whether a task's sync scope lets an integration of the given audience sync it out of Gauzy.
+ *
+ * A task without a scope (every task created before the column) is `all`. A value this build does not know is read
+ * as the narrowest scope, `none`, so a newer scope never leaks a task through an older integration.
+ */
+export function isTaskSyncAllowed(
+	task: { syncScope?: TaskSyncScopeEnum | string | null } | null | undefined,
+	audience: TaskSyncAudience
+): boolean {
+	switch (task?.syncScope ?? TaskSyncScopeEnum.ALL) {
+		case TaskSyncScopeEnum.ALL:
+			return true;
+		case TaskSyncScopeEnum.EVER_PLATFORM:
+			return audience === 'ever-platform';
+		default:
+			return false;
+	}
+}
+
 export interface IBaseTaskProperties extends IBasePerTenantAndOrganizationEntityModel {
 	title: string;
 	number?: number;
 	public?: boolean;
+	syncScope?: TaskSyncScopeEnum; // Which integrations may sync the task out of Gauzy (null = `all`)
 	prefix?: string;
 	description?: string;
 	status?: TaskStatusEnum;

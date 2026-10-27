@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { createHash, randomUUID } from 'node:crypto';
 import { DataSource, IsNull } from 'typeorm';
-import { ActorTypeEnum, BaseEntityEnum, ID } from '@gauzy/contracts';
+import { ActorTypeEnum, BaseEntityEnum, ID, isTaskSyncAllowed } from '@gauzy/contracts';
 import {
 	Comment,
 	IntegrationSetting,
@@ -407,6 +407,10 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 				return { status: 'skipped', message: 'only a pending idea is dismissed when its task goes' };
 			await this.move(context, client, link, 'dismiss');
 			return { status: 'pushed', message: 'the task was removed; the idea is dismissed' };
+		}
+		// A task kept out of every integration (sync scope `none`) is not pushed; an idea already linked stays as it is.
+		if (!isTaskSyncAllowed(task, 'ever-platform')) {
+			return { status: 'skipped', message: 'the task is kept out of every integration (its sync scope is none)' };
 		}
 		if (!isIdeaTask(task, this.setting(context, EverWorksSettingName.IDEA_ISSUE_TYPE_ID))) {
 			if (!link) return { status: 'skipped', message: 'not an idea' };
