@@ -28,7 +28,13 @@ import { generateAccountDeletionToken, hashAccountDeletionToken } from './accoun
 
 function setup() {
 	const execute = jest.fn().mockResolvedValue({ affected: 1 });
-	const queryBuilder = { update: jest.fn().mockReturnThis(), set: jest.fn().mockReturnThis(), where: jest.fn().mockReturnThis(), execute };
+	const queryBuilder = {
+		update: jest.fn().mockReturnThis(),
+		set: jest.fn().mockReturnThis(),
+		where: jest.fn().mockReturnThis(),
+		andWhere: jest.fn().mockReturnThis(),
+		execute
+	};
 	const repository = {
 		count: jest.fn().mockResolvedValue(0),
 		update: jest.fn().mockResolvedValue({ affected: 1 }),
@@ -51,6 +57,7 @@ function setup() {
 	const findUsers = jest.spyOn(service as any, 'findUsersByEmail');
 	const plan = jest.spyOn(service as any, 'plan');
 	jest.spyOn(service as any, 'collectStoredFiles').mockResolvedValue([]);
+	jest.spyOn(service as any, 'scrubStaleAddresses').mockResolvedValue(undefined);
 	return { service, repository, execute, dataSource, transactionManager, emailService, cache, findUsers, plan };
 }
 

@@ -1,6 +1,6 @@
 import { ForbiddenException, GoneException, Injectable, Logger, Optional } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, EntityManager, IsNull, MoreThan, Not } from 'typeorm';
+import { DataSource, EntityManager, IsNull, LessThan, MoreThan, Not } from 'typeorm';
 import { pick } from 'underscore';
 import { environment } from '@gauzy/config';
 import { deepMerge } from '@gauzy/utils';
@@ -104,6 +104,7 @@ export class AccountDeletionService {
 		const email = normalizeAccountDeletionEmail(input.email);
 		const emailHash = hashAccountDeletionEmail(email);
 		try {
+			await this.scrubStaleAddresses();
 			if (environment.demo && isDefaultProtectedUser(email)) {
 				return;
 			}
@@ -343,6 +344,22 @@ export class AccountDeletionService {
 			throw new ForbiddenException('You are not allowed to delete this account.');
 		}
 		return { user, planned };
+	}
+
+	/**
+	 * Clears the clear address from requests whose link can no longer be used (expired or replaced by a newer
+	 * request), so a request that was never confirmed keeps only its hash. Done on every new request: cheap
+	 * (the table only ever holds a handful of live rows), and no scheduler is needed.
+	 */
+	private async scrubStaleAddresses(): Promise<void> {
+		const now = new Date();
+		await this.typeOrmAccountDeletionRequestRepository
+			.createQueryBuilder()
+			.update(AccountDeletionRequest)
+			.set({ email: null })
+			.where({ email: Not(IsNull()), usedAt: IsNull() })
+			.andWhere([{ expiresAt: LessThan(now) }, { revokedAt: Not(IsNull()) }])
+			.execute();
 	}
 
 	/**
