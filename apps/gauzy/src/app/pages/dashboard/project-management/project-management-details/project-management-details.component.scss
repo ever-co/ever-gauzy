@@ -187,6 +187,20 @@ $weight-normal: 400; // labels, captions, chips
 		text-decoration: line-through;
 	}
 
+	// A row that opens the task's quick look; the open one stays marked while its drawer is up.
+	&--interactive {
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 2px solid var(--gauzy-action-info-text);
+			outline-offset: -2px;
+		}
+
+		&.is-viewed {
+			background-color: var(--gauzy-active-tint);
+		}
+	}
+
 	&--head {
 		padding-block: 0.375rem;
 		background-color: var(--gauzy-card-2);
@@ -296,12 +310,36 @@ $weight-normal: 400; // labels, captions, chips
 	text-overflow: ellipsis;
 }
 
+// A button: it opens the project's quick look without opening the row's task.
 .project-chip {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.375rem;
 	min-width: 0;
 	max-width: 100%;
+	padding: 0.0625rem 0.375rem;
+	margin-inline-start: -0.375rem;
+	border: 0;
+	border-radius: var(--gauzy-radius-sm);
+	background: transparent;
+	font: inherit;
+	color: inherit;
+	text-align: start;
+	cursor: pointer;
+	transition: background-color 0.12s ease-in-out;
+
+	&:hover {
+		background-color: var(--gauzy-hover-tint);
+
+		.project-chip-name {
+			text-decoration: underline;
+		}
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: 1px;
+	}
 }
 
 .project-swatch {
@@ -362,16 +400,16 @@ $weight-normal: 400; // labels, captions, chips
 	overflow-y: auto;
 }
 
+.side-list > li + li {
+	border-top: 1px solid var(--gauzy-border-default-color);
+}
+
 .side-item {
 	display: flex;
 	align-items: center;
 	gap: $gap-sm;
 	padding: $gap-sm $gap-md;
 	transition: background-color 0.12s ease-in-out;
-
-	& + & {
-		border-top: 1px solid var(--gauzy-border-default-color);
-	}
 
 	&:hover {
 		background-color: var(--gauzy-hover-tint);
@@ -381,6 +419,26 @@ $weight-normal: 400; // labels, captions, chips
 		flex-direction: column;
 		align-items: stretch;
 		gap: $gap-xs;
+	}
+}
+
+/* A side-list entry as a button: opens the task's or project's quick look. */
+.side-open {
+	width: 100%;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	color: inherit;
+	text-align: start;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--gauzy-action-info-text);
+		outline-offset: -2px;
+	}
+
+	&.is-viewed {
+		background-color: var(--gauzy-active-tint);
 	}
 }
 
@@ -487,6 +545,7 @@ $weight-normal: 400; // labels, captions, chips
 @media (prefers-reduced-motion: reduce) {
 	.task-row,
 	.side-item,
+	.project-chip,
 	.add-todo {
 		transition: none;
 	}
