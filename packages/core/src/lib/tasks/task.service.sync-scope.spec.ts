@@ -64,11 +64,9 @@ describe('TaskService.update — the returned task carries the persisted sync sc
 		expect(updated.syncScope).toBeNull();
 	});
 
-	it('falls back to the scope read before the save when the read-back fails', async () => {
+	it('fails the update when the read-back fails, rather than return a possibly stale scope', async () => {
 		readBack.mockRejectedValueOnce(new Error('gone'));
 
-		const updated = await service.update('task-1', { estimate: 3 });
-
-		expect(updated.syncScope).toBe(TaskSyncScopeEnum.ALL);
+		await expect(service.update('task-1', { estimate: 3 })).rejects.toThrow();
 	});
 });

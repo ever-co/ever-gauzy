@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { TimerStoppedEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
-import { withTaskForSim } from './sim-task-scope';
+import { redactForSim } from './sim-task-scope';
 
 @Injectable()
 @EventsHandler(TimerStoppedEvent)
@@ -25,7 +25,7 @@ export class SimTimerStoppedHandler implements IEventHandler<TimerStoppedEvent> 
 
 			await this.simService.triggerEventWorkflow({
 				event: 'timer.stopped',
-				data: withTaskForSim(timeLog), // a task private to the Ever platform reaches Sim as its id only
+				data: redactForSim(timeLog), // a task private to the Ever platform reaches Sim as its id only
 				tenantId: timeLog.tenantId,
 				organizationId: timeLog.organizationId
 			});
