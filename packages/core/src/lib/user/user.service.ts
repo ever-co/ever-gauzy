@@ -73,6 +73,7 @@ import {
 	magicCodeClaimWhere
 } from '../shared/single-use/claim-criteria';
 import { assertFirstPartyRequest } from '../auth/oauth-app-first-party';
+import { detachUserAuthorship } from './user-authorship';
 
 /**
  * The account-status predicate every authentication path applies.
@@ -1522,6 +1523,10 @@ export class UserService extends TenantAwareCrudService<User> {
 			if (employee) {
 				await this._taskService.unassignEmployeeFromTeamTasks(employee.id);
 			}
+
+			// Keep what the user created or edited in the workspace: without this, the `ON DELETE CASCADE` on
+			// every table's createdBy/updatedBy/deletedBy column deleted those rows for every member.
+			await detachUserAuthorship(this.typeOrmRepository.manager, user.id);
 
 			return await super.delete(userId);
 		} catch (error) {

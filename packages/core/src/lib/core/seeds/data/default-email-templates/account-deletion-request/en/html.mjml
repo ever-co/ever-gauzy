@@ -1,0 +1,53 @@
+<mjml>
+  	<mj-body background-color="#fff">
+    	<mj-section>
+			<mj-column>
+				<mj-image
+					width="100px"
+					src="{{appLogo}}"
+				></mj-image>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text font-family="Helvetica">
+					<p>Hello,</p>
+					<p>We received a request to delete the {{appName}} account(s) registered with <strong>{{email}}</strong>.</p>
+					<p>To review what will be deleted and confirm, open the link below. Nothing is deleted until you press the confirmation button on that page.</p>
+				</mj-text>
+				<mj-button
+					href="{{deletionLink}}"
+					font-family="Helvetica"
+					background-color="#d32f2f"
+					color="white"
+					target="_blank"
+				>
+					Review and delete my account
+				</mj-button>
+				<mj-text font-family="Helvetica">
+					<p>The link works once and expires in {{expiresInMinutes}} minutes. It cannot be used to sign in.</p>
+					<p>If you did not ask for this, ignore this email: your account stays as it is.</p>
+				</mj-text>
+				<mj-text font-family="Helvetica">
+					<p>Best regards,</p>
+					<p>{{appSignature}}</p>
+				</mj-text>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text
+					align="center"
+					font-size="12px"
+					font-family="helvetica"
+				>
+					© 2019,
+					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
+					by
+					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
+					All rights reserved.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+  	</mj-body>
+</mjml>

@@ -6,6 +6,7 @@ export * from './translate-base';
 export * from './entity-type-base.entity';
 
 //core entities
+export * from '../../account-deletion/account-deletion-request.entity';
 export * from '../../accounting-template/accounting-template.entity';
 export * from '../../activity-log/activity-log.entity';
 export * from '../../adjustment/adjustment-reason.entity';

@@ -1,0 +1,41 @@
+<mjml>
+  	<mj-body background-color="#fff">
+    	<mj-section>
+			<mj-column>
+				<mj-image
+					width="100px"
+					src="{{appLogo}}"
+				></mj-image>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text font-family="Helvetica">
+					<p>Hello,</p>
+					<p>The {{appName}} account(s) registered with <strong>{{email}}</strong> have been deleted ({{accounts}} account(s), {{workspacesDeleted}} workspace(s) removed entirely).</p>
+					<p>Your profile, sign-in details and memberships are gone and you can no longer sign in with this address. Content you created in workspaces shared with other people stays with those workspaces, without your name. Encrypted backups are overwritten within 14 days.</p>
+					<p>If you did not request this, reply to this email straight away.</p>
+				</mj-text>
+				<mj-text font-family="Helvetica">
+					<p>Best regards,</p>
+					<p>{{appSignature}}</p>
+				</mj-text>
+				<mj-divider
+					border-color="#1B005D"
+					border-width="1px"
+				></mj-divider>
+				<mj-text
+					align="center"
+					font-size="12px"
+					font-family="helvetica"
+				>
+					© 2019,
+					<a href="{{appLink}}" style="color: #598bff">{{appName}}</a>
+					by
+					<a href="{{companyLink}}" style="color: #598bff">{{companyName}}</a>
+					All rights reserved.
+				</mj-text>
+			</mj-column>
+		</mj-section>
+  	</mj-body>
+</mjml>

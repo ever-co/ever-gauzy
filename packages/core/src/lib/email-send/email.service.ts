@@ -1380,4 +1380,95 @@ export class EmailService {
 		console.log('Message sent: %s', info.messageId);
 		console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
 	}
+
+	/**
+	 * Sends the "confirm the deletion of your account" email.
+	 *
+	 * The link carries a single-use deletion token in its fragment, so the email is sent with link tracking
+	 * off and, unlike the other emails, is NOT copied into `email_history`: that table keeps the rendered
+	 * message, which would put a live deletion token in the database.
+	 *
+	 * @param input.email The address the request was made for.
+	 * @param input.deletionLink The confirmation page with the token in its fragment.
+	 * @param input.expiresInMinutes How long the link stays valid, for the email text.
+	 * @param input.locale The recipient's language.
+	 * @param input.integration The branding the email is rendered with (links already checked by the caller).
+	 */
+	async sendAccountDeletionLink({
+		email,
+		deletionLink,
+		expiresInMinutes,
+		locale,
+		integration
+	}: {
+		email: string;
+		deletionLink: string;
+		expiresInMinutes: number;
+		locale: LanguagesEnum;
+		integration: IAppIntegrationConfig;
+	}): Promise<void> {
+		await this.sendAccountDeletionEmail(EmailTemplateEnum.ACCOUNT_DELETION_REQUEST, email, {
+			locale,
+			email,
+			deletionLink,
+			expiresInMinutes,
+			...this.withAllowedLinks(integration, EmailTemplateEnum.ACCOUNT_DELETION_REQUEST)
+		});
+	}
+
+	/**
+	 * Sends the "your account has been deleted" email once a deletion went through.
+	 *
+	 * @param input.email The address whose accounts were deleted.
+	 * @param input.accounts How many accounts (one per workspace) were deleted.
+	 * @param input.workspacesDeleted How many of those workspaces were deleted entirely.
+	 * @param input.locale The recipient's language.
+	 * @param input.integration The branding the email is rendered with.
+	 */
+	async sendAccountDeletionCompleted({
+		email,
+		accounts,
+		workspacesDeleted,
+		locale,
+		integration
+	}: {
+		email: string;
+		accounts: number;
+		workspacesDeleted: number;
+		locale: LanguagesEnum;
+		integration: IAppIntegrationConfig;
+	}): Promise<void> {
+		await this.sendAccountDeletionEmail(EmailTemplateEnum.ACCOUNT_DELETION_COMPLETED, email, {
+			locale,
+			email,
+			accounts,
+			workspacesDeleted,
+			...this.withAllowedLinks(integration, EmailTemplateEnum.ACCOUNT_DELETION_COMPLETED)
+		});
+	}
+
+	/**
+	 * Sends one of the account deletion emails through the deployment's default transporter (the
+	 * accounts may belong to several tenants, or none any more, so no tenant SMTP applies). Never
+	 * throws and never records the message in `email_history`; failures are logged without the address.
+	 */
+	private async sendAccountDeletionEmail(
+		template: EmailTemplateEnum,
+		email: string,
+		locals: Record<string, unknown>
+	): Promise<void> {
+		if (DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => email.includes(server))) {
+			return;
+		}
+		try {
+			const instance = await this.emailSendService.getEmailInstance({ tenantId: null });
+			await instance.send({
+				template,
+				message: { to: email, headers: NO_LINK_TRACKING_HEADERS },
+				locals
+			});
+		} catch (error) {
+			this.logger.error(`The "${template}" email could not be sent: ${describeEmailSendError(error)}`);
+		}
+	}
 }

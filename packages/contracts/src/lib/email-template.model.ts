@@ -47,7 +47,9 @@ export enum EmailTemplateEnum {
 	EMAIL_RESET = 'email-reset',
 	ORGANIZATION_TEAM_JOIN_REQUEST = 'organization-team-join-request',
 	PAYMENT_RECEIPT = 'payment-receipt',
-	REJECT_CANDIDATE = 'reject-candidate'
+	REJECT_CANDIDATE = 'reject-candidate',
+	ACCOUNT_DELETION_REQUEST = 'account-deletion-request',
+	ACCOUNT_DELETION_COMPLETED = 'account-deletion-completed'
 }
 
 export interface ICustomizeEmailTemplateFindInput extends IBasePerTenantAndOrganizationEntityModel {
