@@ -1,5 +1,4 @@
 import { When } from '../../support/bdd';
-import { getPage } from '../../support/page-context';
 import { ManageInterviewsPageData } from '../../../src/support/Base/pagedata/ManageInterviewsPageData';
 import * as manageInterviewsPage from '../../support/pages/ManageInterviews.po';
 import { CustomCommands } from '../../support/commands';
@@ -19,6 +18,7 @@ let lastName = ' ';
 let username = ' ';
 let password = ' ';
 let imgUrl = ' ';
+let interviewTitle = ' ';
 
 When('I add an interview for a candidate', async () => {
 	email = faker.internet.exampleEmail();
@@ -27,6 +27,10 @@ When('I add an interview for a candidate', async () => {
 	username = faker.internet.username();
 	password = faker.internet.password();
 	imgUrl = faker.image.avatar();
+	// The Schedule Interview form disables Next while the title equals an existing interview's title
+	// (candidate-interview-form.component.ts isTitleExisted). A fixed title collides with the interview a
+	// failed earlier attempt (CI retries) already created, so make it unique per run.
+	interviewTitle = `${ManageInterviewsPageData.title}${faker.number.int({ min: 10000, max: 99999 })}`;
 
 	await CustomCommands.addCandidate(
 		inviteCandidatePage,
@@ -37,7 +41,7 @@ When('I add an interview for a candidate', async () => {
 		password,
 		imgUrl
 	);
-	await getPage().goto('/#/pages/employees/candidates/interviews/calendar');
+	await manageInterviewsPage.openInterviewsTab('calendar');
 	await manageInterviewsPage.addInterviewButtonVisible();
 	await manageInterviewsPage.clickAddInterviewButton();
 	await manageInterviewsPage.candidateDropdownVisible();
@@ -48,9 +52,7 @@ When('I add an interview for a candidate', async () => {
 	// final verify (which looks for THIS candidate's name in the grid) then fails.
 	await manageInterviewsPage.selectCandidateFromDropdown(`${firstName} ${lastName}`);
 	await manageInterviewsPage.titleInputVisible();
-	await manageInterviewsPage.enterTitleInputData(
-		ManageInterviewsPageData.title
-	);
+	await manageInterviewsPage.enterTitleInputData(interviewTitle);
 	await manageInterviewsPage.dateInputVisible();
 	await manageInterviewsPage.enterDateInputData();
 	await manageInterviewsPage.clickKeyboardButtonByKeyCode(9);
@@ -77,6 +79,6 @@ When('I add an interview for a candidate', async () => {
 	await manageInterviewsPage.saveButtonVisible();
 	await manageInterviewsPage.clickSaveButton();
 	await manageInterviewsPage.waitMessageToHide();
-	await getPage().goto('/#/pages/employees/candidates/interviews/interview_panel');
+	await manageInterviewsPage.openInterviewsTab('interview_panel');
 	await manageInterviewsPage.verifyScheduleExist(`${firstName} ${lastName}`);
 });

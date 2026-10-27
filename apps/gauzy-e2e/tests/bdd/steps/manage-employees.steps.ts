@@ -93,14 +93,13 @@ When('I add a new employee', async () => {
 	await manageEmployeesPage.tagsDropdownVisible();
 	await manageEmployeesPage.clickTagsDropdown();
 	await manageEmployeesPage.selectTagFromDropdown(0);
-	await manageEmployeesPage.clickCardBody();
-	// NOTE: deliberately NOT setting an image URL. imageUrl is OPTIONAL (its validator only errors
-	// on a NON-null value that fails patterns.imageUrl), and the basic-info form's image preview
-	// runs an onerror handler that sets imageUrl invalid when the URL can't actually load — which
-	// is exactly what happens for an external image in the offline/sandboxed e2e env. That flipped
-	// the whole step-1 form invalid, so add()'s addEmployee() skipped the push and createBulk([])
-	// persisted nothing (grid stayed "You have not created any employees" -> verifyEmployeeExists
-	// failed). Leaving imageUrl null keeps the form valid and the employee is created.
+	// Close the tags panel with an inert in-dialog click (the dialog title): the old card-body centre
+	// click lands on a form control of the redesigned, much taller dialog (#10336).
+	await manageEmployeesPage.closeEmployeeDialogDropdowns();
+	// The picture: the image-URL field is gone (#10336) — the avatar is uploaded as a file now. That
+	// also removes the old reason this step skipped the picture (an unloadable external URL flipped the
+	// form invalid): an uploaded asset's imageUrl control is disabled, so it can't invalidate the form.
+	await manageEmployeesPage.uploadEmployeeImage();
 	// Re-fill the required step-1 fields (firstName/email/password) as the LAST step-1 action so
 	// the form is reliably valid before advancing. If the password fill earlier landed on the
 	// date-picker overlay (or an earlier valueChanges re-rendered an input), the form would stay
@@ -199,5 +198,7 @@ When('I delete the employee invite', async () => {
 	await manageEmployeesPage.deleteInviteButtonVisible();
 	await manageEmployeesPage.clickDeleteInviteButton();
 	await manageEmployeesPage.confirmDeleteInviteButtonVisible();
+	// Type-to-confirm (#10761): the dialog's Delete is enabled only once the invitee's email is typed.
+	await manageEmployeesPage.enterDeleteInviteConfirmation(email);
 	await manageEmployeesPage.clickConfirmDeleteInviteButton();
 });

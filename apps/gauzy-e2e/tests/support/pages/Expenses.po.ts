@@ -80,18 +80,24 @@ export const selectEmployeeFromDropdown = async (index) => {
 	// an option if one shows within ~8s; otherwise dismiss the dropdown and continue — the employee is
 	// optional for an expense (addExpense sends employeeId: null) so the record still saves. A hard
 	// option[0] click with the 60s task timeout would otherwise hang the whole test on an empty list.
-	const page = getPage();
-	const option = page.locator(ExpensesPage.selectEmployeeDropdownOptionCss);
-	try {
-		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await option.nth(index).click({ force: true });
-	} catch {
+	//
+	// Through the shared ng-select driver: a bare `div.ng-option` also matched ng-select's own
+	// "Loading…/No items found" row (clicking it is a silent no-op that leaves the panel OPEN, whose
+	// options the later tag pick could then take for its own), and options of any other open panel.
+	// The driver counts only real options of THIS selector's panel (scoped by its `employee` class) and
+	// confirms the pick on `div.ng-value`. Still best-effort, as before.
+	const picked = await selectNgOption(
+		ExpensesPage.selectEmployeeDropdownCss,
+		ExpensesPage.selectEmployeeDropdownOptionCss,
+		index
+	);
+	if (!picked) {
 		// Dismiss an empty/open ng-select dropdown by clicking the dialog TITLE (an inert <h4>), NOT by
 		// pressing Escape: the add-expense ExpensesMutationComponent is an NbDialog opened with default
 		// options, so closeOnEsc is true — a document-level Escape would close the whole dialog (the
 		// confirmed round-4 root cause: by saveExpenseButtonVisible() the dialog was gone and the grid
 		// was showing). An in-dialog outside-click closes only the ng-select overlay, leaving the form.
-		await page.locator(ExpensesPage.cardBodyCss).first().click({ force: true }).catch(() => {});
+		await getPage().locator(ExpensesPage.cardBodyCss).first().click({ force: true }).catch(() => {});
 	}
 };
 

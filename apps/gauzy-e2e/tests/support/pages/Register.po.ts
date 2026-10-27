@@ -14,6 +14,7 @@ import {
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { RegisterPage } from '../../../src/support/Base/pageobjects/RegisterPageObject';
+import { advanceStepForm } from './AddOrganization.po';
 
 // The first-organization onboarding screen renders the organizations-step-form component, wrapped in
 // `<nb-card [nbSpinner]="loading">`. On a slow/seeded stack the spinner overlay (pointer-events:auto)
@@ -86,38 +87,6 @@ const clickOptionByText = async (text: string) => {
 	// committed, so the spec died later somewhere unrelated — the same swallowed
 	// failure this file is meant to remove.
 	throw new Error(`No selectable option matching "${text}" appeared (placeholders such as "No items found" are excluded by design)`);
-};
-
-// Stepper forward/confirm buttons are subject to the same overlay; click the currently-visible matching
-// button via a DOM dispatch. nb-stepper renders only the selected step's content, but we still scope to
-// the stepper and only match visible (offsetParent != null), enabled buttons. Case-insensitive label match.
-const clickFormButtonByText = async (texts: string[]) => {
-	await waitForSpinnerGone();
-	await getPage().waitForTimeout(400);
-	for (let attempt = 0; attempt < 6; attempt++) {
-		const clicked = await getPage().evaluate((labels: string[]) => {
-			const wanted = labels.map((l) => l.toLowerCase());
-			const root = document.querySelector('nb-stepper') ?? document;
-			const buttons = Array.from(root.querySelectorAll('button')) as HTMLButtonElement[];
-			const match = buttons.find((b) => {
-				if (b.disabled || b.offsetParent === null) return false;
-				const t = (b.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
-				return wanted.some((w) => t === w || t.includes(w));
-			});
-			if (!match) return false;
-			match.scrollIntoView({ block: 'center' });
-			for (const type of ['mousedown', 'mouseup', 'click']) {
-				match.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
-			}
-			return true;
-		}, texts);
-		if (clicked) return true;
-		await getPage().waitForTimeout(500);
-	}
-	// Deliberately returns a boolean rather than throwing: unlike a dropdown value that
-	// never committed, an absent form button is a legitimate branch for the callers here
-	// (they fall back to another submit path).
-	return false;
 };
 
 export const registerLinkVisible = async () => {
@@ -196,17 +165,19 @@ export const enterTaxId = async (data) => {
 	await enterInput(RegisterPage.taxFieldCss, data);
 };
 
-// Advances the onboarding stepper. Steps 1-4 expose a localized "Next" button (settle the loading
-// spinner first, then DOM-dispatch the click so an overlay/backdrop can't intercept it).
+// The onboarding page renders the same ga-organizations-step-form as the Add Organization dialog, with a
+// 5th "Employee" step (isOnboarding). Since #10608 (ffc762ee8a) its actions sit in the card footer: the
+// primary "Continue" on steps 1-4 and "Create organization" on step 5. advanceStepForm presses that button
+// and proves the stepper moved (or, on the last step, that onboarding submitted) — see AddOrganization.po.
 export const clickOnNextButton = async () => {
-	await clickFormButtonByText(['Next', 'Continue']);
+	await advanceStepForm('continue');
 };
 
-// Step 5 (Register as Employee) confirm — its status="success" "Add" button submits the onboarding
-// form (submitEmployeeFeature -> createOrganization), which the app now requires before the
-// complete page renders. The original 4-step Cypress flow predates this extra step.
+// Step 5 (Register as employee) — its "Create organization" submits the onboarding form
+// (submitEmployeeFeature -> createOrganization -> /onboarding/complete). The original 4-step Cypress flow
+// predates this extra step.
 export const clickFinishButton = async () => {
-	await clickFormButtonByText(['Add', 'Finish', 'Save']);
+	await advanceStepForm('create');
 };
 
 export const verifyOrganizationExists = async (text) => {

@@ -34,7 +34,10 @@ export const TimeOffPage = {
 	// renders the second group containing Approve (success) / Deny (warning) / Archive.
 	showActionsButtonCss: 'div.btn-group.actions button:has(nb-icon[icon="more-horizontal-outline"])',
 	timeOffSettingsButtonCss: 'nb-card-header button.action.p-2',
-	addNewPolicyButtonCss: 'div.actions-container button[status="success"]',
+	// The settings page's "+ Add" (plus-outline). The bare 'div.actions-container button[status="success"]'
+	// ALSO matches the time-off page's request "Add" (calendar-outline), which is still mounted for a beat
+	// after the settings cog is clicked — so the policy step could re-open the REQUEST dialog instead.
+	addNewPolicyButtonCss: 'div.actions-container button[status="success"]:has(nb-icon[icon="plus-outline"])',
 	editPolicyButtonCss: 'div.btn-group.actions button.action.primary',
 	deletePolicyButtonCss: 'div.btn-group.actions button:has(nb-icon[icon="trash-2-outline"])',
 	addNewPolicyInputCss: '[placeholder="Policy Name"]',

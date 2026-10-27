@@ -52,6 +52,9 @@ When('I delete an organization', async () => {
 	await deleteOrganizationPage.deleteBtnExists();
 	await deleteOrganizationPage.deleteBtnClick();
 	await deleteOrganizationPage.confirmBtnExists();
+	// The confirmation is type-to-confirm since #10616: its Delete button unlocks only once the
+	// organization's name is typed back.
+	await deleteOrganizationPage.enterConfirmationName(organizationName);
 	await deleteOrganizationPage.confirmBtnClick();
 	await deleteOrganizationPage.verifyOrganizationDeleted(organizationName);
 });

@@ -291,7 +291,20 @@ export const languageSelectVisible = async () => {
 };
 
 export const chooseLanguage = async (data: string) => {
-	await clickButton(EditUserPage.preferredLanguageCss);
+	// Same ngx-language-selector ng-select (appendTo="body", opens on mousedown) inside the same
+	// ngx-profile form as the Edit Profile page, where opening it from the keyboard (focus + ArrowDown)
+	// is what demonstrably worked on stage run 40364004456. Open it that way first; if the option list
+	// does not render, fall back to the original click-open path, which still fails the step if the
+	// language cannot be picked.
+	const option = getPage().locator(EditUserPage.preferredLanguageOptionCss).filter({ hasText: data }).first();
+	try {
+		const input = getPage().locator(EditUserPage.preferredLanguageCss).locator('input').first();
+		await input.focus();
+		await getPage().keyboard.press('ArrowDown');
+		await option.waitFor({ state: 'visible', timeout: 8_000 });
+	} catch {
+		await clickButton(EditUserPage.preferredLanguageCss);
+	}
 	await clickElementByText(EditUserPage.preferredLanguageOptionCss, data);
 };
 

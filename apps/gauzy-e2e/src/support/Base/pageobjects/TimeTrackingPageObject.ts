@@ -11,7 +11,9 @@ export const TimeTrackingPage = {
 	startTimerBtnCss: 'div.actions div.toggle button[status="success"]',
 	stopTimerBtnCss: 'div.actions div.toggle button[status="danger"]',
 	clientSelectCss: 'ga-contact-selector ng-select',
-	projectSelectCss: 'ga-project-selector ng-select',
+	// Scoped to the timer window (<ngx-web-time-tracker>): once a project exists the app header renders its
+	// own <ga-project-selector> first in DOM order (header.component.html, showProjectsSelector).
+	projectSelectCss: 'ngx-web-time-tracker ga-project-selector ng-select',
 	taskSelectCss: 'ga-task-selector ng-select',
 	descriptionInputCss: 'textarea[name="description"]',
 	dropdownOptionCss: 'div.ng-option',

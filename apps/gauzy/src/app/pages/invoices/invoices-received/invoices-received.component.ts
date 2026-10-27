@@ -255,14 +255,20 @@ export class InvoicesReceivedComponent extends PaginationFilterBaseComponent imp
 				isSelected: true,
 				data: selectedItem
 			});
-
-			const { id } = this.selectedInvoice;
-			const routePath = this.isEstimate
-				? '/pages/accounting/invoices/estimates/view'
-				: '/pages/accounting/invoices/view';
-
-			this.router.navigate([routePath, id]);
 		}
+
+		// The header toolbar renders the action buttons without a `selectedItem`,
+		// so fall back to the row picked in the table, as edit() and download() do.
+		if (!this.selectedInvoice?.id) {
+			return;
+		}
+
+		const { id } = this.selectedInvoice;
+		const routePath = this.isEstimate
+			? '/pages/accounting/invoices/estimates/view'
+			: '/pages/accounting/invoices/view';
+
+		this.router.navigate([routePath, id]);
 	}
 
 	/**

@@ -62,6 +62,9 @@ When('I edit the employee account data', async () => {
 	contactCity = faker.location.city();
 	contactPostcode = faker.location.zipCode();
 	contactStreet = faker.location.streetAddress();
+	// The contact's website was never initialised here (it stayed the ' ' placeholder): give the contact a
+	// real URL like every other addContact caller does.
+	website = faker.internet.url();
 
 	await CustomCommands.addEmployee(
 		manageEmployeesPage,
@@ -106,7 +109,7 @@ When('I edit the employee account data', async () => {
 	await editEmployeePage.languageSelectVisible();
 	await editEmployeePage.chooseLanguage(EditEmployeePageData.preferredLanguage);
 	await editEmployeePage.tabButtonVisible();
-	await editEmployeePage.clickTabButton(1);
+	await editEmployeePage.clickTabButton('networks');
 });
 
 When('I edit the employee network data', async () => {
@@ -117,7 +120,7 @@ When('I edit the employee network data', async () => {
 	await editEmployeePage.upworkInputVisible();
 	await editEmployeePage.enterUpworkInputData(EditEmployeePageData.upwork);
 	await editEmployeePage.tabButtonVisible();
-	await editEmployeePage.clickTabButton(2);
+	await editEmployeePage.clickTabButton('employment');
 });
 
 When('I edit the employee employment data', async () => {
@@ -125,7 +128,7 @@ When('I edit the employee employment data', async () => {
 	await editEmployeePage.enterDescriptionInputData(
 		EditEmployeePageData.description
 	);
-	await editEmployeePage.clickTabButton(3);
+	await editEmployeePage.clickTabButton('hiring');
 });
 
 When('I edit the employee hiring data', async () => {
@@ -133,7 +136,7 @@ When('I edit the employee hiring data', async () => {
 	await editEmployeePage.enterOfferDateData();
 	await editEmployeePage.acceptDateInputVisible();
 	await editEmployeePage.enterAcceptDateData();
-	await editEmployeePage.clickTabButton(4);
+	await editEmployeePage.clickTabButton('location');
 });
 
 When('I edit the employee location data', async () => {
@@ -148,7 +151,7 @@ When('I edit the employee location data', async () => {
 	await editEmployeePage.enterPostcodeInputData(postcode);
 	await editEmployeePage.streetInputVisible();
 	await editEmployeePage.enterStreetInputData(street);
-	await editEmployeePage.clickTabButton(5);
+	await editEmployeePage.clickTabButton('rates');
 });
 
 When('I edit the employee rates data', async () => {
@@ -161,7 +164,7 @@ When('I edit the employee rates data', async () => {
 	);
 	await editEmployeePage.billRateInputVisible();
 	await editEmployeePage.enterBillRateInputData(EditEmployeePageData.billRate);
-	await editEmployeePage.clickTabButton(6);
+	await editEmployeePage.clickTabButton('projects');
 });
 
 When('I edit the employee projects data', async () => {
@@ -173,7 +176,7 @@ When('I edit the employee projects data', async () => {
 	await editEmployeePage.saveProjectOrContactButtonVisible();
 	await editEmployeePage.clickSaveProjectOrContactButton();
 	await editEmployeePage.verifyProjectOrContactExist();
-	await editEmployeePage.clickTabButton(7);
+	await editEmployeePage.clickTabButton('contacts');
 });
 
 When('I edit the employee contacts data', async () => {
@@ -185,14 +188,14 @@ When('I edit the employee contacts data', async () => {
 	await editEmployeePage.saveProjectOrContactButtonVisible();
 	await editEmployeePage.clickSaveProjectOrContactButton();
 	await editEmployeePage.verifyProjectOrContactExist();
-	await editEmployeePage.clickTabButton(0);
+	await editEmployeePage.clickTabButton('account');
 	await editEmployeePage.saveBtnExists();
 	await editEmployeePage.saveBtnClick();
 	await editEmployeePage.waitMessageToHide();
 	// Verify the ORIGINAL name (matches the legacy Cypress assertion). Each profile tab is a
 	// SEPARATE lazy route component with its own form + Save: the Account-step edits to
-	// firstName/lastName were typed but the step navigated away (clickTabButton(1)) WITHOUT
-	// clicking Account's Save, so those edits were discarded. Returning here via clickTabButton(0)
+	// firstName/lastName were typed but the step navigated away (clickTabButton('networks')) WITHOUT
+	// clicking Account's Save, so those edits were discarded. Returning here via clickTabButton('account')
 	// re-creates the Account component and re-binds its form from the unchanged selectedEmployee,
 	// so saveBtnClick persists the ORIGINAL name and span.employee-name (bound to
 	// selectedEmployee.user.name) re-renders with it. Asserting the edited name would never match

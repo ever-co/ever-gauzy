@@ -37,3 +37,204 @@ describe('ProjectManagementDetailsComponent task source', () => {
 		expect(conf.where).not.toHaveProperty('members');
 	});
 });
+
+/**
+ * The filter bar is applied by the server — the list is paged, so hiding loaded rows would miss the
+ * matches further down. Search goes in `where.title`; status, priority and due date go out as the
+ * API's advanced filters.
+ */
+describe('ProjectManagementDetailsComponent filter bar', () => {
+	// A Wednesday at noon, local time.
+	const NOW = new Date(2026, 9, 28, 12, 0, 0);
+
+	const withFilters = (state: object) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const component: any = Object.create(ProjectManagementDetailsComponent.prototype);
+		Object.assign(
+			component,
+			{
+				_organization: { id: 'org-1', tenantId: 'tenant-1' },
+				_httpClient: {},
+				selectedEmployeeId: null,
+				selectedProjectId: null,
+				filters: {},
+				statusFilter: 'all',
+				priorityFilter: 'all',
+				dueFilter: 'any',
+				searchTerm: ''
+			},
+			state
+		);
+		return component;
+	};
+	const params = (state: object) =>
+		Object.fromEntries(withFilters(state).advancedFilters(NOW).map(({ field, search }) => [field, search]));
+
+	it('sends no advanced filters by default', () => {
+		expect(params({})).toEqual({});
+	});
+
+	it('sends every status a tab stands for', () => {
+		expect(params({ statusFilter: 'done' })).toEqual({ statuses: ['done', 'completed'] });
+		expect(params({ statusFilter: 'review' })).toEqual({ statuses: ['ready-for-review', 'in-review'] });
+	});
+
+	it('sends the picked priority', () => {
+		expect(params({ priorityFilter: 'urgent' })).toEqual({ priorities: ['urgent'] });
+	});
+
+	it('treats overdue as due before today and not closed, unless a status tab is picked', () => {
+		const overdue = params({ dueFilter: 'overdue' });
+		expect(new Date(overdue.dueDateTo as string)).toEqual(new Date(2026, 9, 27, 23, 59, 59, 999));
+		expect(overdue.statuses).not.toEqual(expect.arrayContaining(['done']));
+		expect(overdue.statuses).not.toEqual(expect.arrayContaining(['completed']));
+		expect(overdue.statuses).not.toEqual(expect.arrayContaining(['cancelled']));
+		expect(overdue.statuses).toEqual(expect.arrayContaining(['open', 'in-progress', 'blocked']));
+
+		expect(params({ dueFilter: 'overdue', statusFilter: 'open' }).statuses).toEqual(['open']);
+	});
+
+	it('covers the whole of today for "Due today"', () => {
+		const today = params({ dueFilter: 'today' });
+		expect(new Date(today.dueDateFrom as string)).toEqual(new Date(2026, 9, 28, 0, 0, 0, 0));
+		expect(new Date(today.dueDateTo as string)).toEqual(new Date(2026, 9, 28, 23, 59, 59, 999));
+	});
+
+	it('runs "Due this week" from today, not from the start of the week', () => {
+		const week = params({ dueFilter: 'week' });
+		expect(new Date(week.dueDateFrom as string)).toEqual(new Date(2026, 9, 28, 0, 0, 0, 0));
+		expect(new Date(week.dueDateTo as string).getTime()).toBeGreaterThan(new Date(2026, 9, 28, 23, 59).getTime());
+	});
+
+	it('asks for tasks without a due date', () => {
+		expect(params({ dueFilter: 'none' })).toEqual({ withoutDueDate: true });
+	});
+
+	it('puts the search term in where.title and the rest on the data source', () => {
+		const component = withFilters({ searchTerm: 'invoice', statusFilter: 'open' });
+		component._setSmartTableSource();
+
+		expect(component._smartTableSource.conf.where).toMatchObject({ title: 'invoice' });
+		expect(component._smartTableSource.filterConf).toEqual([{ field: 'statuses', search: ['open'] }]);
+	});
+
+	it('restarts the search debounce with an empty term when clearing, so a pending term is dropped', () => {
+		const component = withFilters({ searchTerm: 'invoice', statusFilter: 'open' });
+		const searchNext = jest.fn();
+		Object.assign(component, { _search$: { next: searchNext }, _reload: jest.fn() });
+		const input = { value: 'invoice' } as HTMLInputElement;
+
+		component.clearFilters(input);
+
+		expect(searchNext).toHaveBeenCalledWith('');
+		expect(input.value).toBe('');
+		expect(component.searchTerm).toBe('');
+		expect(component.hasActiveFilters).toBe(false);
+	});
+
+	it('reports whether any filter is active', () => {
+		expect(withFilters({}).hasActiveFilters).toBe(false);
+		expect(withFilters({ searchTerm: 'x' }).hasActiveFilters).toBe(true);
+		expect(withFilters({ dueFilter: 'none' }).hasActiveFilters).toBe(true);
+	});
+});
+
+/**
+ * A reload empties the list at once, but the next fetch waits out a debounce: a request still in
+ * flight from the previous filters must not refill the list, nor end the newer fetch's spinner.
+ */
+describe('ProjectManagementDetailsComponent task fetches', () => {
+	const fakeSource = (rows: object[], total: number) => {
+		let resolve: () => void;
+		const done = new Promise<void>((r) => (resolve = r));
+		return {
+			source: {
+				setPaging: jest.fn(),
+				setSort: jest.fn(),
+				getElements: jest.fn(() => done),
+				getData: () => rows,
+				count: () => total
+			},
+			resolve: () => resolve()
+		};
+	};
+
+	const build = () => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const component: any = Object.create(ProjectManagementDetailsComponent.prototype);
+		Object.assign(component, {
+			_organization: { id: 'org-1', tenantId: 'tenant-1' },
+			_tasks: [],
+			_projects: [],
+			_projectTaskCount: {},
+			_taskRequest: 0,
+			totalTasks: 0,
+			tasksLoading: false,
+			_errorHandlingService: { handleError: jest.fn() },
+			getPagination: () => ({ activePage: 1, itemsPerPage: 10 }),
+			refreshPagination: jest.fn(),
+			_task$: { next: jest.fn() }
+		});
+		return component;
+	};
+
+	it('drops a response that lands after a reload', async () => {
+		const component = build();
+		const stale = fakeSource([{ id: 'old' }], 1);
+		component._setSmartTableSource = () => stale.source;
+
+		const fetch = component._getTasks();
+		component._reload();
+		stale.resolve();
+		await fetch;
+
+		expect(component.tasks).toEqual([]);
+		expect(component.totalTasks).toBe(0);
+	});
+
+	it('leaves the loading state to the newest fetch', async () => {
+		const component = build();
+		const older = fakeSource([{ id: 'old' }], 1);
+		const newer = fakeSource([{ id: 'new' }], 1);
+		component._setSmartTableSource = jest.fn().mockReturnValueOnce(older.source).mockReturnValueOnce(newer.source);
+
+		const first = component._getTasks();
+		const second = component._getTasks();
+		older.resolve();
+		await first;
+		expect(component.tasksLoading).toBe(true);
+
+		newer.resolve();
+		await second;
+		expect(component.tasksLoading).toBe(false);
+		expect(component.tasks).toEqual([{ id: 'new' }]);
+	});
+
+	it('accepts one page advance at a time, until that page has loaded', () => {
+		const component = build();
+		const setPagination = jest.fn((value) => (component.pagination = value));
+		Object.assign(component, {
+			_tasks: new Array(10).fill({}),
+			totalTasks: 30,
+			pagination: { activePage: 1, itemsPerPage: 10 },
+			setPagination,
+			getPagination: () => component.pagination
+		});
+
+		component.onScrollTasks();
+		component.onScrollTasks();
+
+		expect(setPagination).toHaveBeenCalledTimes(1);
+		expect(component.pagination.activePage).toBe(2);
+		expect(component.tasksLoading).toBe(true);
+	});
+
+	it('offers more tasks only while the server holds more than the list', () => {
+		const component = build();
+		Object.assign(component, { _tasks: new Array(10).fill({}), totalTasks: 25 });
+		expect(component.hasMoreTasks).toBe(true);
+
+		component.totalTasks = 10;
+		expect(component.hasMoreTasks).toBe(false);
+	});
+});
