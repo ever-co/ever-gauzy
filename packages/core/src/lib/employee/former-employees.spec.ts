@@ -49,6 +49,27 @@ describe('leaveOutFormerEmployees', () => {
 		expect(idsOf(team.projects[0].members)).toEqual(['p2']);
 	});
 
+	it('keeps the former employees of historical records: a task’s assignees, a comment’s mentions', async () => {
+		// A team read with `relations: ['tasks.members']`: the task's members are who was assigned the work
+		const team = {
+			id: 'team-1',
+			members: [row('m1', 'employee-a'), row('m2', 'employee-ended')],
+			tasks: [
+				{
+					id: 'task-1',
+					members: [{ id: 'employee-ended', userId: 'u2', isActive: false, isArchived: true }],
+					comments: [{ id: 'comment-1', members: [{ id: 'employee-ended', userId: 'u2' }] }]
+				}
+			]
+		};
+
+		await leaveOutFormerEmployees(team, lookup());
+
+		expect(idsOf(team.members)).toEqual(['m1']);
+		expect(idsOf(team.tasks[0].members)).toEqual(['employee-ended']);
+		expect(idsOf(team.tasks[0].comments[0].members)).toEqual(['employee-ended']);
+	});
+
 	it('filters a GraphQL connection once, whose nodes and edges share the rows', async () => {
 		const node = { id: 'sprint-1', members: [row('m1', 'employee-a'), row('m2', 'employee-ended')] };
 		const connection = { nodes: [node], edges: [{ cursor: 'c', node }], totalCount: 1 };

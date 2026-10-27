@@ -14,6 +14,30 @@ export interface IWorkingEmployeeLookup {
 /** The key under which every member list of the API is answered. */
 const MEMBER_LIST_KEY = 'members';
 
+/**
+ * The keys a response carries its records under: a page (`items`), a GraphQL connection (`nodes`, `edges[].node`).
+ */
+const RECORD_KEYS = new Set(['items', 'nodes', 'edges', 'node']);
+
+/**
+ * The relations whose records are organizational member lists too: a team's projects, a project's teams and
+ * modules, a module's sprints... A relation not named here is not searched: a task's `members` are its assignees
+ * and a comment's its mentions, records of who did the work, which keep every employee they name.
+ */
+const MEMBERSHIP_HOLDER_KEYS = new Set([
+	'teams',
+	'organizationTeams',
+	'projects',
+	'organizationProjects',
+	'modules',
+	'organizationProjectModules',
+	'sprints',
+	'organizationSprints',
+	'departments',
+	'organizationDepartments',
+	'organizationContacts'
+]);
+
 /** How deep a response is searched for member lists: a page of records, their relations, and theirs. */
 const MAX_DEPTH = 8;
 
@@ -56,7 +80,10 @@ function statesItsStatus(member: Member): boolean {
 	return typeof member.isActive === 'boolean' && typeof member.isArchived === 'boolean';
 }
 
-/** Collects the member lists of a response, at any depth up to {@link MAX_DEPTH}. */
+/**
+ * Collects the member lists of the records of a response: the records it answers (itself, a page's `items`, a
+ * connection's nodes) and the organizational records related to them ({@link MEMBERSHIP_HOLDER_KEYS}).
+ */
 function collectMemberLists(value: unknown, found: IMemberList[], seen: WeakSet<object>, depth = 0): void {
 	if (!value || typeof value !== 'object' || depth > MAX_DEPTH || seen.has(value) || value instanceof Date) {
 		return;
@@ -70,11 +97,14 @@ function collectMemberLists(value: unknown, found: IMemberList[], seen: WeakSet<
 		return;
 	}
 
-	for (const [key, item] of Object.entries(value)) {
-		if (key === MEMBER_LIST_KEY && Array.isArray(item)) {
-			found.push({ holder: value as Record<string, unknown>, list: item });
+	const record = value as Record<string, unknown>;
+	if (Array.isArray(record[MEMBER_LIST_KEY])) {
+		found.push({ holder: record, list: record[MEMBER_LIST_KEY] as unknown[] });
+	}
+	for (const [key, item] of Object.entries(record)) {
+		if (RECORD_KEYS.has(key) || MEMBERSHIP_HOLDER_KEYS.has(key)) {
+			collectMemberLists(item, found, seen, depth + 1);
 		}
-		collectMemberLists(item, found, seen, depth + 1);
 	}
 }
 
