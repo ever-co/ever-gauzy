@@ -1,11 +1,11 @@
 import {
 	verifyElementIsVisible,
-	clickButton,
 	verifyText,
 	clickOutsideElement,
 	dispatchClick,
 	waitForSpinnerGone
 } from '../util';
+import { expect } from '@playwright/test';
 import { getPage } from '../page-context';
 // Selectors + data are framework-agnostic — reused from the Cypress tree during migration.
 import { HumanResourcesPage } from '../../../src/support/Base/pageobjects/HumanResourcesPageObject';
@@ -65,7 +65,24 @@ export const verifyPopupProfitHeaderText = async (text: string) => {
 };
 
 export const clickChartDropdown = async () => {
-	await clickButton(HumanResourcesPage.chartDropdownCss);
+	// The Employee Statistics panel moves down while the KPI tiles above it finish rendering, so the forced
+	// coordinate click clickButton() makes (force skips Playwright's "stable" check) landed on the panel
+	// header above the select on CI (run 40421871684: clicked at y=416.5, the select settled at ~433) and
+	// the option list never opened. Click the select's own button WITHOUT force, so Playwright waits for it
+	// to stop moving, and confirm the list opened; re-click only when it did not.
+	const page = getPage();
+	const trigger = page.locator(`${HumanResourcesPage.chartDropdownCss} button.select-button`).first();
+	const firstOption = page.locator(HumanResourcesPage.dropdownOptionCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await trigger.click({ timeout: 24_000 });
+		try {
+			await firstOption.waitFor({ state: 'visible', timeout: 5_000 });
+			return;
+		} catch {
+			/* the list did not open — click again */
+		}
+	}
+	await expect(firstOption).toBeVisible({ timeout: 5_000 });
 };
 
 export const verifyChartOptionText = async (text: string) => {

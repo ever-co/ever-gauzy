@@ -435,14 +435,26 @@ export const clickConfirmButton = async () => {
 	for (let attempt = 0; attempt < 3; attempt++) {
 		if ((await dialog.count().catch(() => 0)) === 0) break;
 		await expect(confirm).toBeEnabled({ timeout: 10000 }).catch(() => {});
+		// Armed before the click: send() PUTs /invoices/:id/action, sendEmail() PUTs /invoices/email/:address.
+		const requested = page
+			.waitForRequest((req) => req.method() === 'PUT' && /\/api\/invoices\//.test(req.url()), { timeout: 8000 })
+			.then(() => true)
+			.catch(() => false);
 		await confirm.click({ timeout: 6000 }).catch(async () => {
 			await confirm.dispatchEvent('click').catch(() => {});
 		});
+		if (await requested) {
+			// The click landed and its request is in flight. sendEmail() renders the PDF and hands it to the
+			// mail transport before it closes the dialog, which took longer than 25 s on CI (run 40421871684);
+			// clicking again then only queued a second and third email. Wait for THIS request's close instead.
+			await dialog.waitFor({ state: 'detached', timeout: 90000 }).catch(() => {});
+			break;
+		}
 		try {
-			await dialog.waitFor({ state: 'detached', timeout: 25000 });
+			await dialog.waitFor({ state: 'detached', timeout: 5000 });
 			break;
 		} catch {
-			/* still open — click again */
+			/* no request went out and the dialog is still open: the click was lost — click again */
 		}
 	}
 	if ((await page.locator(EstimatesPage.mutationDialogCss).count().catch(() => 0)) > 0) {
