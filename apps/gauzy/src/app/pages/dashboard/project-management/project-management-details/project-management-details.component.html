@@ -1,103 +1,214 @@
-<div class="main">
-	<nb-card class="inbox">
-		<nb-card-header>
-			{{ 'DASHBOARD_PAGE.INBOX' | translate }}
-		</nb-card-header>
-		<nb-card-body>
-			<div class="soon">
-				<ga-wip></ga-wip>
-			</div>
-		</nb-card-body>
-	</nb-card>
-	<nb-card class="today">
-		<nb-card-header>
-			{{ 'TIMESHEET.TODAY' | translate }}
-		</nb-card-header>
-		<nb-card-body>
-			<button underConstruction status="primary" size="small" outline nbButton>
-				{{ 'DASHBOARD_PAGE.PLAN_MY_DAY' | translate }}
-			</button>
-			<div
-				infiniteScroll
-				(scrolled)="onScrollTasks()"
-				[scrollWindow]="false"
-				class="card-body-content"
-				[style.height]="!tasks?.length ? '100%' : null"
-			>
-				@for (task of tasks; track task.id) {
-				<div class="card todo">
-					<div [class.checked]="status.COMPLETED === task?.status" class="dot"></div>
-					<div>
-						<div class="status">{{ task?.status }}:</div>
-						<div class="title">{{ task?.title }}</div>
-					</div>
-				</div>
-				} @if (!tasks?.length) {
-				<ngx-no-data-message [message]="'REPORT_PAGE.NO_TASK' | translate"></ngx-no-data-message>
-				}
-			</div>
-			<div *ngxPermissionsOnly="[permissions.ORG_TASK_ADD]" (click)="addTodo()" class="more">
-				<i class="fas fa-plus"></i>
-				{{ 'DASHBOARD_PAGE.ADD_TODO' | translate }}
-			</div>
-		</nb-card-body>
-	</nb-card>
-	<div class="last-column">
-		<nb-card [style.height]="!selectedEmployeeId ? '100%' : null" class="projects">
-			<nb-card-header>
-				{{ 'DASHBOARD_PAGE.MOST_VIEW_PROJECTS' | translate }}
-			</nb-card-header>
-			<nb-card-body>
+<div class="pm-grid">
+	<!-- Today: tasks, soonest due first; scrolling the list loads the next page. -->
+	<section class="panel panel--tasks">
+		<header class="panel-header">
+			<h5 class="panel-title">{{ 'TIMESHEET.TODAY' | translate }}</h5>
+			@if (totalTasks) {
+			<span class="panel-count">
+				{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.SHOWING' | translate : { shown: tasks.length, total: totalTasks } }}
+			</span>
+			}
+			<div class="panel-actions">
+				<button underConstruction nbButton outline size="tiny" status="primary" type="button">
+					{{ 'DASHBOARD_PAGE.PLAN_MY_DAY' | translate }}
+				</button>
+				@if (isMyTask) {
+				<button nbButton ghost size="tiny" status="basic" type="button" (click)="redirectToMyTasks()">
+					{{ 'BUTTONS.VIEW_ALL' | translate }}
+				</button>
+				} @else {
 				<button
 					*ngxPermissionsOnly="'ALL_ORG_VIEW'"
-					(click)="redirectToProjects()"
-					status="primary"
-					size="small"
-					outline
 					nbButton
+					ghost
+					size="tiny"
+					status="basic"
+					type="button"
+					(click)="redirectToTasks()"
 				>
 					{{ 'BUTTONS.VIEW_ALL' | translate }}
 				</button>
-				<div class="card-body-content">
-					@for (project of projects; track project.id) {
-					<div class="card project">
-						<ngx-project [rowData]="{ project: project }"></ngx-project>
-					</div>
-					} @if (!projects?.length) {
-					<ngx-no-data-message [message]="'TIMESHEET.NO_PROJECT' | translate"></ngx-no-data-message>
-					}
-				</div>
-			</nb-card-body>
-		</nb-card>
-		@if (selectedEmployeeId) {
-		<nb-card class="recently">
-			<nb-card-header>
-				{{ 'DASHBOARD_PAGE.RECENTLY_ASSIGNED' | translate }}
-			</nb-card-header>
-			<nb-card-body>
-				@if (isMyTask) {
-				<button (click)="redirectToMyTasks()" status="primary" size="small" outline nbButton>
-					{{ 'BUTTONS.VIEW_ALL' | translate }}
-				</button>
 				}
-				<div [style.max-height]="!isMyTask ? 'calc(100% - 28px)' : null" class="card-body-content">
-					@for (task of assigned; track task.id) {
-					<div class="card assigned">
-						<div class="">
-							<div class="title">
-								{{ task?.title }}
-							</div>
-							<ga-only-tags [rowData]="task"></ga-only-tags>
-						</div>
+			</div>
+		</header>
+
+		<div class="task-table" role="table">
+			<div class="task-row task-row--head" role="row">
+				<div class="task-cell" role="columnheader">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.COLUMN_TASK' | translate }}</div>
+				<div class="task-cell" role="columnheader">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.COLUMN_PROJECT' | translate }}</div>
+				<div class="task-cell" role="columnheader">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.COLUMN_DUE' | translate }}</div>
+				<div class="task-cell" role="columnheader">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.COLUMN_STATUS' | translate }}</div>
+			</div>
+
+			<div
+				class="task-body"
+				role="rowgroup"
+				infiniteScroll
+				[scrollWindow]="false"
+				(scrolled)="onScrollTasks()"
+				[nbSpinner]="tasksLoading && !tasks.length"
+				nbSpinnerStatus="primary"
+				nbSpinnerSize="small"
+			>
+				@for (task of tasks; track task.id) {
+				@let due = dueState(task);
+				<div class="task-row" role="row" [class.is-closed]="isClosed(task)">
+					<div class="task-cell task-main" role="cell">
+						<span class="status-dot" [attr.data-tone]="statusTone(task.status)" aria-hidden="true"></span>
+						<span class="task-text">
+							<span class="task-title" [title]="task.title">{{ task.title }}</span>
+							@if (taskReference(task); as reference) {
+							<span class="task-ref">{{ reference }}</span>
+							}
+						</span>
 					</div>
-					} @if (!assigned?.length) {
-					<ngx-no-data-message
-						[message]="'DASHBOARD_PAGE.NO_TODO_ASSIGNED' | translate"
-					></ngx-no-data-message>
-					}
+					<div class="task-cell" role="cell">
+						@if (task.project) {
+						<span class="project-chip" [title]="task.project.name">
+							<span
+								class="project-swatch"
+								[style.background-color]="task.project.color || null"
+								aria-hidden="true"
+							></span>
+							<span class="project-chip-name">{{ task.project.name }}</span>
+						</span>
+						} @else {
+						<span class="is-muted">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.NO_PROJECT' | translate }}</span>
+						}
+					</div>
+					<div class="task-cell" role="cell">
+						@if (task.dueDate) {
+						<span class="due" [attr.data-state]="due">
+							@if (due === 'overdue') {
+							<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+							} @else {
+							<nb-icon icon="calendar-outline" aria-hidden="true"></nb-icon>
+							}
+							{{ task.dueDate | date : 'MMM d, y' }}
+							@if (due === 'overdue') {
+							<span class="visually-hidden">({{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.OVERDUE' | translate }})</span>
+							} @else if (due === 'today') {
+							<span class="visually-hidden">({{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.DUE_TODAY' | translate }})</span>
+							}
+						</span>
+						} @else {
+						<span class="is-muted">—</span>
+						}
+					</div>
+					<div class="task-cell" role="cell">
+						@if (task.status) {
+						<span class="status-pill" [attr.data-tone]="statusTone(task.status)">
+							{{ statusLabel(task.status) }}
+						</span>
+						}
+					</div>
 				</div>
-			</nb-card-body>
-		</nb-card>
+				} @empty { @if (!tasksLoading) {
+				<div class="pm-state" role="row">
+					<nb-icon icon="clipboard-outline" aria-hidden="true"></nb-icon>
+					<p class="state-title" role="cell">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.NO_TASKS' | translate }}</p>
+					<p class="state-hint">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.NO_TASKS_HINT' | translate }}</p>
+				</div>
+				} }
+			</div>
+		</div>
+
+		<button
+			*ngxPermissionsOnly="[permissions.ORG_TASK_ADD]"
+			type="button"
+			class="add-todo"
+			(click)="addTodo()"
+		>
+			<nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
+			{{ 'DASHBOARD_PAGE.ADD_TODO' | translate }}
+		</button>
+	</section>
+
+	<div class="pm-side">
+		<!-- Inbox: placeholder until the task inbox ships. -->
+		<section class="panel">
+			<header class="panel-header">
+				<h5 class="panel-title">{{ 'DASHBOARD_PAGE.INBOX' | translate }}</h5>
+			</header>
+			<div class="inbox-body">
+				<ga-wip></ga-wip>
+			</div>
+		</section>
+
+		<!-- Projects the listed tasks belong to, busiest first. -->
+		<section class="panel">
+			<header class="panel-header">
+				<h5 class="panel-title">{{ 'DASHBOARD_PAGE.MOST_VIEW_PROJECTS' | translate }}</h5>
+				@if (projects.length) {
+				<span class="panel-count">{{ projects.length }}</span>
+				}
+				<div class="panel-actions">
+					<button
+						*ngxPermissionsOnly="'ALL_ORG_VIEW'"
+						nbButton
+						ghost
+						size="tiny"
+						status="basic"
+						type="button"
+						(click)="redirectToProjects()"
+					>
+						{{ 'BUTTONS.VIEW_ALL' | translate }}
+					</button>
+				</div>
+			</header>
+			<ul class="side-list">
+				@for (project of projects; track project.id) {
+				<li class="side-item side-item--project">
+					<ngx-project [rowData]="{ project: project }"></ngx-project>
+					<span class="panel-count">
+						{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.TASKS_COUNT' | translate : { count: projectTaskCount(project) } }}
+					</span>
+				</li>
+				} @empty {
+				<li class="pm-state pm-state--compact">
+					<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
+					<p class="state-title">{{ 'TIMESHEET.NO_PROJECT' | translate }}</p>
+					<p class="state-hint">{{ 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.NO_PROJECTS_HINT' | translate }}</p>
+				</li>
+				}
+			</ul>
+		</section>
+
+		@if (selectedEmployeeId) {
+		<!-- Open tasks for the selected employee, most recently assigned first. -->
+		<section class="panel">
+			<header class="panel-header">
+				<h5 class="panel-title">{{ 'DASHBOARD_PAGE.RECENTLY_ASSIGNED' | translate }}</h5>
+				@if (assigned.length) {
+				<span class="panel-count">{{ assigned.length }}</span>
+				}
+				@if (isMyTask) {
+				<div class="panel-actions">
+					<button nbButton ghost size="tiny" status="basic" type="button" (click)="redirectToMyTasks()">
+						{{ 'BUTTONS.VIEW_ALL' | translate }}
+					</button>
+				</div>
+				}
+			</header>
+			<ul class="side-list">
+				@for (task of assigned; track task.id) {
+				<li class="side-item side-item--stacked">
+					<span class="side-text">
+						<span class="side-title" [title]="task.title">{{ task.title }}</span>
+						@if (task.project?.name) {
+						<span class="side-meta">{{ task.project.name }}</span>
+						}
+					</span>
+					<ga-only-tags [rowData]="task"></ga-only-tags>
+				</li>
+				} @empty {
+				<li class="pm-state pm-state--compact">
+					<nb-icon icon="inbox-outline" aria-hidden="true"></nb-icon>
+					<p class="state-title">{{ 'DASHBOARD_PAGE.NO_TODO_ASSIGNED' | translate }}</p>
+				</li>
+				}
+			</ul>
+		</section>
 		}
 	</div>
 </div>
