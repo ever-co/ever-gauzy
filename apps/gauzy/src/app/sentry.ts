@@ -9,6 +9,13 @@ import { version } from '../../version';
  * @returns The configured Sentry instance.
  */
 export function initializeSentry(): Client<ClientOptions<BaseTransportOptions>> {
+	// Session Replay records the page's initial URL, fragment included, and that recording goes through neither
+	// `beforeSend` nor `beforeBreadcrumb`. An emailed link (account deletion, password reset, invitation) carries its
+	// single-use token there (`#/auth/delete-account/confirm?token=…`), so a page load that starts on such a URL
+	// gets no Replay at all (the same test as `redactUrlSecrets`). The next page load records again as usual.
+	const loadedWithUrlSecret =
+		typeof window !== 'undefined' && /[?&#](token|code)=/i.test(window.location?.href ?? '');
+
 	return Sentry.init({
 		// Sentry 11 replaced `sendDefaultPii` with `dataCollection`, whose defaults now send cookies, request and
 		// response bodies, user info and more. This is the migration guide's "keep the v10 default" baseline, so the
@@ -55,8 +62,8 @@ export function initializeSentry(): Client<ClientOptions<BaseTransportOptions>> 
 			// performance, including custom Angular routing instrumentation
 			Sentry.browserTracingIntegration(),
 			// Registers the Replay integration,
-			// which automatically captures Session Replays
-			Sentry.replayIntegration()
+			// which automatically captures Session Replays (not when the page loaded with a token in its URL, above)
+			...(loadedWithUrlSecret ? [] : [Sentry.replayIntegration()])
 		],
 
 		// Set `tracePropagationTargets` to control for which URLs distributed tracing should be enabled

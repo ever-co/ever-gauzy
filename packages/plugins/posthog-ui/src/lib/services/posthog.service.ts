@@ -16,8 +16,20 @@ import posthog, { PostHogConfig, Properties } from 'posthog-js';
  * - Error monitoring
  * - Page views
  */
-/** Event properties PostHog fills with a URL. */
-const URL_PROPERTIES = ['$current_url', 'current_url', '$referrer', '$initial_referrer', '$pathname', 'url'];
+/**
+ * Event properties that hold a URL: PostHog's own, plus `route` (the router's `urlAfterRedirects`, query included)
+ * and `referrer` (`document.referrer`) that {@link PostHogService.setupRouteTracking} adds to every pageview.
+ */
+const URL_PROPERTIES = [
+	'$current_url',
+	'current_url',
+	'$referrer',
+	'$initial_referrer',
+	'$pathname',
+	'url',
+	'route',
+	'referrer'
+];
 
 @Injectable({
 	providedIn: 'root'
