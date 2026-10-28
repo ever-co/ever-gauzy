@@ -6540,7 +6540,7 @@
 			"UNNAMED": "Werkruimte",
 			"OUTCOME_WORKSPACE": "U bent het enige lid: de hele werkruimte en al haar gegevens worden verwijderd.",
 			"OUTCOME_ACCOUNT": "Gedeeld met andere leden ({{ members }}): uw account, profiel en uw eigen gegevens (tijdregistraties, schermafbeeldingen, activiteit) worden verwijderd. Inhoud die u voor de werkruimte hebt gemaakt, blijft daar, zonder uw naam.",
-			"OUTCOME_ACCOUNT_LAST": "You are its only member but not an administrator: your account, profile and your own records (time logs, screenshots, activity) will be deleted. The workspace and its other data stay.",
+			"OUTCOME_ACCOUNT_LAST": "U bent het enige lid, maar geen beheerder: uw account, profiel en uw eigen gegevens (tijdregistraties, schermafbeeldingen, activiteit) worden verwijderd. De werkruimte en haar overige gegevens blijven behouden.",
 			"SOLE_ADMIN": "U bent de enige beheerder van deze werkruimte. De overige leden hebben geen beheerder meer nadat u vertrekt.",
 			"KEPT": "Bewaard blijven: een auditregistratie van dit verzoek (zonder naam, met een gehasht adres), factuurgegevens die we wettelijk moeten bewaren en versleutelde back-ups totdat ze worden overschreven (14 dagen).",
 			"UNDERSTAND": "Ik begrijp dat dit niet ongedaan kan worden gemaakt.",

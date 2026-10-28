@@ -252,10 +252,11 @@ function scopeCondition(
 	if (scope.kind === 'reset' || scope.kind === 'organizations') {
 		if (!has('tenantId') || !has('organizationId') || !scope.organizationIds.length) return null;
 		const list = scope.organizationIds.map((_, index) => p(index + 2)).join(', ');
-		// A reset deletes the organizations' time slots, and only the captures attached to one go with them (the
-		// cascade); a capture without a time slot stays, and so must its file.
+		// A reset deletes the organizations' screenshots itself, every one of them; the other captures (camshots,
+		// soundshots, videos) only go through the cascade from the time slots it deletes, so one without a time
+		// slot stays, and so must its file.
 		const attached =
-			scope.kind === 'reset' && owner.timeSlot && has('timeSlotId')
+			scope.kind === 'reset' && owner.timeSlot && owner.table !== 'screenshot' && has('timeSlotId')
 				? ` AND ${driver.escape('timeSlotId')} IS NOT NULL`
 				: '';
 		return {

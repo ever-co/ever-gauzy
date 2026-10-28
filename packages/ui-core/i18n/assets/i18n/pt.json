@@ -6540,7 +6540,7 @@
 			"UNNAMED": "Espaço de trabalho",
 			"OUTCOME_WORKSPACE": "Você é o único membro: todo o espaço de trabalho e todos os seus dados serão excluídos.",
 			"OUTCOME_ACCOUNT": "Compartilhado com outros membros ({{ members }}): sua conta, seu perfil e seus próprios registros (registros de horas, capturas de tela, atividade) serão excluídos. O conteúdo que você criou para o espaço de trabalho permanece nele, sem o seu nome.",
-			"OUTCOME_ACCOUNT_LAST": "You are its only member but not an administrator: your account, profile and your own records (time logs, screenshots, activity) will be deleted. The workspace and its other data stay.",
+			"OUTCOME_ACCOUNT_LAST": "Você é o único membro, mas não um administrador: sua conta, seu perfil e seus próprios registros (registros de horas, capturas de tela, atividade) serão excluídos. O espaço de trabalho e seus demais dados permanecem.",
 			"SOLE_ADMIN": "Você é o único administrador deste espaço de trabalho. Os demais membros ficarão sem administrador depois que você sair.",
 			"KEPT": "Mantidos: um registro de auditoria desta solicitação (sem nome, com o endereço em hash), os registros de cobrança que somos obrigados por lei a manter e os backups criptografados até serem sobrescritos (14 dias).",
 			"UNDERSTAND": "Entendo que isso não pode ser desfeito.",

@@ -178,6 +178,30 @@ describe('queryUnlessSchemaLacks: a table or column the database lacks does not 
 		expect(sql.some((statement) => statement.includes('SAVEPOINT'))).toBe(false);
 	});
 
+	it('does not remember a failed read of the columns: that deletion fails, the next one reads again', async () => {
+		const timeout = new Error('Connection terminated due to connection timeout');
+		let reads = 0;
+		const query = jest.fn(async (sql: string) => {
+			if (sql.includes('information_schema')) {
+				reads++;
+				if (reads === 1) throw timeout;
+				return [{ t: 'task', c: 'createdByUserId' }];
+			}
+			return [[], 1];
+		});
+		const manager = {
+			query,
+			connection: {
+				entityMetadatas: [table('task', [fk('createdByUserId')], [col('createdByUserId')])],
+				driver: { options: { type: 'postgres' }, escape: (name: string) => `"${name}"` }
+			}
+		} as any;
+
+		await expect(detachUserReferences(manager, 'u1')).rejects.toBe(timeout);
+		await expect(detachUserReferences(manager, 'u1')).resolves.toBe(1);
+		expect(reads).toBe(2);
+	});
+
 	it('where the columns cannot be read (SQLite), skips a missing column and fails on anything else', async () => {
 		const missing = Object.assign(new Error('SQLITE_ERROR: no such column: deletedByUserId'), {
 			code: 'SQLITE_ERROR'

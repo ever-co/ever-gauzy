@@ -143,8 +143,12 @@ async function databaseColumns(manager: EntityManager): Promise<Map<string, Set<
 	const key = manager.connection;
 	let columns = databaseColumnsCache.get(key);
 	if (!columns) {
-		columns = readDatabaseColumns(manager).catch(() => null);
+		columns = readDatabaseColumns(manager);
 		databaseColumnsCache.set(key, columns);
+		// A failed read (a dropped connection, a timeout) is not remembered: it fails this deletion, and the next
+		// one reads again. Going on without the columns would run statements on a PostgreSQL transaction that the
+		// first missing table aborts.
+		columns.catch(() => databaseColumnsCache.delete(key));
 	}
 	return await columns;
 }

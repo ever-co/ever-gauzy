@@ -28,6 +28,18 @@ export function initializeSentry(): Client<ClientOptions<BaseTransportOptions>> 
 		};
 		window.addEventListener('hashchange', stopOnSecret);
 		window.addEventListener('popstate', stopOnSecret);
+		// The app's own navigations (`router.navigate` to `auth/magic-sign-in?code=…`, say) go through
+		// `history.pushState` / `replaceState` and fire neither event: stop Replay before such a URL is set.
+		for (const method of ['pushState', 'replaceState'] as const) {
+			const original = window.history[method];
+			window.history[method] = function (this: History, ...args: Parameters<History['pushState']>) {
+				const url = args[2];
+				if (url != null && /[?&#](token|code)=/i.test(String(url))) {
+					void replay.stop({ flush: false });
+				}
+				return original.apply(this, args);
+			} as History['pushState'];
+		}
 	}
 
 	return Sentry.init({

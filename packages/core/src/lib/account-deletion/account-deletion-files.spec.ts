@@ -1,7 +1,7 @@
 jest.mock('../core/context', () => ({ RequestContext: { currentRequest: () => null } }));
 jest.mock('../core/file-storage', () => ({ FileStorage: class {} }));
 
-import { deleteUnusedRows, isKeyOfTenant, onlyFilesOfTenant } from './account-deletion-files';
+import { collectStoredFiles, deleteUnusedRows, isKeyOfTenant, onlyFilesOfTenant } from './account-deletion-files';
 
 const TENANT = '11111111-1111-4111-8111-111111111111';
 const OTHER = '22222222-2222-4222-8222-222222222222';
@@ -79,5 +79,37 @@ describe('deleteUnusedRows with a referencing table the database lacks', () => {
 		await expect(deleteUnusedRows(manager, 'contact', ['c1'])).resolves.toBe(1);
 		expect(query).toHaveBeenCalledWith('DELETE FROM "contact" WHERE "id" = $1', ['c1']);
 		expect(query.mock.calls.some(([sql]) => String(sql).includes('plugin_table'))).toBe(false);
+	});
+});
+
+describe('collectStoredFiles for a factory reset', () => {
+	it('takes every screenshot of the organizations (the reset deletes them itself), other captures only with a time slot', async () => {
+		const capture = (tablePath: string, keys: string[]) => ({
+			tablePath,
+			tableType: 'regular',
+			foreignKeys: [],
+			columns: ['tenantId', 'organizationId', 'timeSlotId', 'storageProvider', ...keys].map((databaseName) => ({
+				databaseName
+			}))
+		});
+		const metadata = [capture('screenshot', ['file', 'thumb']), capture('camshots', ['fileKey', 'thumbKey'])];
+		const query = jest.fn(async (sql: string) =>
+			sql.includes('information_schema')
+				? metadata.flatMap((m) => m.columns.map((c) => ({ t: m.tablePath, c: c.databaseName })))
+				: []
+		);
+		const manager = {
+			query,
+			connection: {
+				entityMetadatas: metadata,
+				driver: { options: { type: 'postgres' }, escape: (name: string) => `"${name}"` }
+			}
+		} as any;
+
+		await collectStoredFiles(manager, { kind: 'reset', tenantId: 't1', organizationIds: ['o1'] });
+
+		const selects = query.mock.calls.map(([sql]) => String(sql)).filter((sql) => sql.startsWith('SELECT "'));
+		expect(selects.find((sql) => sql.includes('FROM "screenshot"'))).not.toContain('IS NOT NULL');
+		expect(selects.find((sql) => sql.includes('FROM "camshots"'))).toContain('"timeSlotId" IS NOT NULL');
 	});
 });

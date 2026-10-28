@@ -6537,7 +6537,7 @@
 			"UNNAMED": "Espace de travail",
 			"OUTCOME_WORKSPACE": "Vous êtes le seul membre : tout l'espace de travail et toutes ses données seront supprimés.",
 			"OUTCOME_ACCOUNT": "Partagé avec d'autres membres ({{ members }}) : votre compte, votre profil et vos propres données (feuilles de temps, captures d'écran, activité) seront supprimés. Le contenu que vous avez créé pour l'espace de travail y reste, sans votre nom.",
-			"OUTCOME_ACCOUNT_LAST": "You are its only member but not an administrator: your account, profile and your own records (time logs, screenshots, activity) will be deleted. The workspace and its other data stay.",
+			"OUTCOME_ACCOUNT_LAST": "Vous en êtes le seul membre, mais pas un administrateur : votre compte, votre profil et vos propres données (feuilles de temps, captures d'écran, activité) seront supprimés. L'espace de travail et ses autres données sont conservés.",
 			"SOLE_ADMIN": "Vous êtes le seul administrateur de cet espace de travail. Ses autres membres n'auront plus d'administrateur après votre départ.",
 			"KEPT": "Conservés : un enregistrement d'audit de cette demande (sans nom, avec une adresse hachée), les données de facturation que la loi nous oblige à conserver, et les sauvegardes chiffrées jusqu'à ce qu'elles soient écrasées (14 jours).",
 			"UNDERSTAND": "Je comprends que cette action est irréversible.",

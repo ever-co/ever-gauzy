@@ -6536,7 +6536,7 @@
 			"UNNAMED": "Arbeitsbereich",
 			"OUTCOME_WORKSPACE": "Sie sind das einzige Mitglied: Der gesamte Arbeitsbereich und alle seine Daten werden gelöscht.",
 			"OUTCOME_ACCOUNT": "Mit anderen Mitgliedern geteilt ({{ members }}): Ihr Konto, Ihr Profil und Ihre eigenen Einträge (Zeiterfassungen, Screenshots, Aktivität) werden gelöscht. Inhalte, die Sie für den Arbeitsbereich erstellt haben, bleiben dort erhalten, ohne Ihren Namen.",
-			"OUTCOME_ACCOUNT_LAST": "You are its only member but not an administrator: your account, profile and your own records (time logs, screenshots, activity) will be deleted. The workspace and its other data stay.",
+			"OUTCOME_ACCOUNT_LAST": "Sie sind das einzige Mitglied, aber kein Administrator: Ihr Konto, Ihr Profil und Ihre eigenen Einträge (Zeiterfassungen, Screenshots, Aktivität) werden gelöscht. Der Arbeitsbereich und seine übrigen Daten bleiben erhalten.",
 			"SOLE_ADMIN": "Sie sind der einzige Administrator dieses Arbeitsbereichs. Nach Ihrem Weggang haben die übrigen Mitglieder keinen Administrator mehr.",
 			"KEPT": "Aufbewahrt werden: ein Prüfprotokoll dieser Anfrage (ohne Namen, mit gehashter Adresse), Abrechnungsunterlagen, die wir gesetzlich aufbewahren müssen, und verschlüsselte Backups, bis sie überschrieben werden (14 Tage).",
 			"UNDERSTAND": "Ich verstehe, dass dies nicht rückgängig gemacht werden kann.",
