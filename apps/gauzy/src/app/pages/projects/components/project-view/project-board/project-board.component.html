@@ -1,14 +1,6 @@
-<!-- The project's tasks as a board: one column per status, each card opening its task. -->
+<!-- The project's tasks as a board: one column per status, each card opening its task. No title of its own: the
+     host's Board tab names it. -->
 <section class="panel project-view-panel board-panel" [nbSpinner]="board.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
-	<header class="panel-header">
-		<h5 class="panel-title panel-title--icon">
-			<nb-icon icon="grid-outline" aria-hidden="true"></nb-icon>
-			{{ 'PROJECT_VIEW.BOARD' | translate }}
-			@if (total) {
-			<span class="title-count">{{ total }}</span>
-			}
-		</h5>
-	</header>
 	<div class="panel-body">
 		@if (board.failed) {
 		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
