@@ -390,6 +390,7 @@ $default-box-shadow: $control-hairline;
   @include nb-stepper;
   @include full-calendar();
   @include rich-text-editor();
+  @include rich-text-content();
   @include input-appearance($default-height, var(--gauzy-card-1));
   @include nb-tabset-overrides;
   @include ng-select-text-alignment();
