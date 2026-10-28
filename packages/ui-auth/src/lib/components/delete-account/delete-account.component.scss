@@ -7,8 +7,8 @@
   justify-content: space-between;
 }
 .delete-account-wrapper {
-  background: nb-theme(gauzy-card-2);
-  border-radius: nb-theme(border-radius);
+  background: var(--gauzy-card-2);
+  border-radius: var(--border-radius);
   padding: 30px;
   width: 476px;
   & > *:not(nb-alert) {
@@ -65,14 +65,14 @@
       display: flex;
       align-items: center;
       letter-spacing: -0.01em;
-      color: nb-theme(text-basic-color); // Theme aware
+      color: var(--text-basic-color); // Theme aware
       margin-bottom: 0.5rem;
     }
 
     ::ng-deep input {
       border: 1px solid rgba(98, 54, 255, 0.5) !important;
       background-color: transparent !important;
-      color: nb-theme(text-basic-color) !important;
+      color: var(--text-basic-color) !important;
     }
   }
   & .submit-btn-wrapper {
@@ -97,9 +97,9 @@
         }
         // Dark theme: Original subtle style
         @include nb-for-theme(dark) {
-          background-color: nb-theme(background-basic-color-3) !important;
+          background-color: var(--background-basic-color-3) !important;
           border-color: transparent !important;
-          color: nb-theme(text-hint-color) !important;
+          color: var(--text-hint-color) !important;
         }
         &:hover,
         &:active,
@@ -110,22 +110,22 @@
             color: #8f9bb3 !important;
           }
           @include nb-for-theme(dark) {
-            background-color: nb-theme(background-basic-color-3) !important;
+            background-color: var(--background-basic-color-3) !important;
             border-color: transparent !important;
-            color: nb-theme(text-hint-color) !important;
+            color: var(--text-hint-color) !important;
           }
         }
       }
       // Enabled state
       &:not([disabled]):not(.btn-pulse) {
-        background-color: nb-theme(color-primary-default) !important;
-        border-color: nb-theme(color-primary-default) !important;
+        background-color: var(--color-primary-default) !important;
+        border-color: var(--color-primary-default) !important;
         color: white !important;
         &:hover,
         &:active,
         &:focus {
-          background-color: nb-theme(color-primary-hover) !important;
-          border-color: nb-theme(color-primary-hover) !important;
+          background-color: var(--color-primary-hover) !important;
+          border-color: var(--color-primary-hover) !important;
           color: white !important;
         }
       }
@@ -142,7 +142,7 @@
   font-weight: 400;
   font-size: 14px;
   line-height: 17px;
-  color: nb-theme(text-hint-color); // Theme aware
+  color: var(--text-hint-color); // Theme aware
   margin-bottom: 0;
   & .text-link {
     font-family: Inter;
@@ -151,7 +151,7 @@
     font-weight: 600;
     line-height: 17px;
     letter-spacing: 0em;
-    color: nb-theme(color-primary-default);
+    color: var(--color-primary-default);
     text-decoration: none;
     &:hover {
       text-decoration: underline;
@@ -214,8 +214,8 @@
     padding: 0;
     margin: 12px 0;
     li {
-      border: 1px solid nb-theme(border-basic-color-3);
-      border-radius: nb-theme(border-radius);
+      border: 1px solid var(--border-basic-color-3);
+      border-radius: var(--border-radius);
       padding: 10px 12px;
       margin-bottom: 8px;
       font-size: 13px;
