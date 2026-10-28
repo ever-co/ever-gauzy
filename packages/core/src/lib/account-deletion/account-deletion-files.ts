@@ -236,6 +236,44 @@ export async function isImageAssetShared(manager: EntityManager, imageId: ID, us
 	return false;
 }
 
+/**
+ * Deletes the rows of `table` among `ids` that no other row references any more (checked through every
+ * foreign key that points at `table`). For the separate rows a deleted member leaves behind, such as its
+ * contact (address, fiscal details), which a shared organization may also use.
+ *
+ * @returns How many rows were deleted.
+ */
+export async function deleteUnusedRows(manager: EntityManager, table: string, ids: ID[]): Promise<number> {
+	const driver = manager.connection.driver;
+	const p = (n: number) => sqlPlaceholder(manager, n);
+	const references = manager.connection.entityMetadatas.flatMap((metadata) =>
+		metadata.tableType === 'view'
+			? []
+			: metadata.foreignKeys
+					.filter((foreignKey) => foreignKey.referencedTablePath === table && foreignKey.columnNames.length === 1)
+					.map((foreignKey) => ({ table: metadata.tablePath, column: foreignKey.columnNames[0] }))
+	);
+	let deleted = 0;
+	for (const id of ids) {
+		let used = false;
+		for (const reference of references) {
+			const rows = await manager.query(
+				`SELECT 1 FROM ${driver.escape(reference.table)} WHERE ${driver.escape(reference.column)} = ${p(1)}`,
+				[id]
+			);
+			if (rows.length) {
+				used = true;
+				break;
+			}
+		}
+		if (!used) {
+			await manager.query(`DELETE FROM ${driver.escape(table)} WHERE ${driver.escape('id')} = ${p(1)}`, [id]);
+			deleted++;
+		}
+	}
+	return deleted;
+}
+
 function unique(files: StoredFile[]): StoredFile[] {
 	const seen = new Set<string>();
 	return files.filter((file) => {

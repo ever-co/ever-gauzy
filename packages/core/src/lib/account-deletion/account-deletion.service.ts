@@ -40,6 +40,7 @@ import {
 import {
 	collectStoredFiles,
 	deleteStoredFiles,
+	deleteUnusedRows,
 	isImageAssetShared,
 	loadTenantSettings,
 	StoredFile
@@ -464,6 +465,10 @@ export class AccountDeletionService {
 			}
 			const tenantSettings = user.tenantId ? await loadTenantSettings(manager, user.tenantId) : null;
 
+			// The member records' contact rows (postal address, fiscal details) are separate rows: read them now,
+			// delete the ones nothing else uses once the members are gone.
+			const contactIds = wholeWorkspace ? [] : await this.contactIdsOf(manager, user.id);
+
 			await detachUserReferences(manager, user.id);
 			await detachEmployeeReferences(manager, await this.employeeIdsOf(manager, user.id));
 
@@ -477,6 +482,7 @@ export class AccountDeletionService {
 			if (avatarGoes) {
 				await manager.delete(ImageAsset, { id: avatarId });
 			}
+			await deleteUnusedRows(manager, 'contact', contactIds);
 
 			return {
 				accounts: 1,
@@ -542,6 +548,24 @@ export class AccountDeletionService {
 			}
 		}
 		return files;
+	}
+
+	/** The contacts of the user's member and candidate records (address, fiscal details), soft-deleted included. */
+	private async contactIdsOf(manager: EntityManager, userId: ID): Promise<ID[]> {
+		const driver = manager.connection.driver;
+		const ids: ID[] = [];
+		for (const table of ['employee', 'candidate']) {
+			const metadata = manager.connection.entityMetadatas.find((candidate) => candidate.tablePath === table);
+			if (!metadata?.columns.some((column) => column.databaseName === 'contactId')) continue;
+			const rows: Array<{ contactId: ID }> = await manager.query(
+				`SELECT ${driver.escape('contactId')} AS ${driver.escape('contactId')} FROM ${driver.escape(table)} WHERE ${driver.escape(
+					'userId'
+				)} = ${sqlPlaceholder(manager, 1)} AND ${driver.escape('contactId')} IS NOT NULL`,
+				[userId]
+			);
+			ids.push(...rows.map((row) => row.contactId));
+		}
+		return [...new Set(ids)];
 	}
 
 	/** The ids of the user's member (employee) records, soft-deleted ones included. */

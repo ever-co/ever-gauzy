@@ -23,6 +23,7 @@ jest.mock('../user/user-authorship', () => ({
 jest.mock('./account-deletion-files', () => ({
 	collectStoredFiles: jest.fn().mockResolvedValue([]),
 	deleteStoredFiles: jest.fn().mockResolvedValue({ deleted: 0, failed: 0 }),
+	deleteUnusedRows: jest.fn().mockResolvedValue(0),
 	isImageAssetShared: jest.fn().mockResolvedValue(false),
 	loadTenantSettings: jest.fn().mockResolvedValue({})
 }));
