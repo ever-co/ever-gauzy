@@ -7090,6 +7090,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} a commenté",
 		"ACTIVITY_REPLIED": "{{ actor }} a répondu à un commentaire sur",
 		"ACTIVITY_FIELDS": "Modifié : {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} a changé le statut de",
+		"ACTIVITY_STATUS_FROM_TO": "Statut changé de {{ from }} à {{ to }}",
 		"SOMEONE": "Quelqu'un",
 		"TODAY": "Aujourd'hui",
 		"YESTERDAY": "Hier",
@@ -7110,6 +7112,7 @@
 		"COMMENT_IMAGE_FAILED": "Impossible de téléverser {{ name }}."
 	},
 	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Changements récents de la tâche et de ses sous-tâches",
 		"CHANGE_STATUS": "Changer le statut",
 		"LINK_COPIED": "Lien copié",
 		"SUBTASKS": "Sous-tâches",

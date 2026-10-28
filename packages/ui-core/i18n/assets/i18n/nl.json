@@ -7094,6 +7094,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} reageerde op",
 		"ACTIVITY_REPLIED": "{{ actor }} beantwoordde een opmerking op",
 		"ACTIVITY_FIELDS": "Gewijzigd: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} wijzigde de status van",
+		"ACTIVITY_STATUS_FROM_TO": "Status gewijzigd van {{ from }} naar {{ to }}",
 		"SOMEONE": "Iemand",
 		"TODAY": "Vandaag",
 		"YESTERDAY": "Gisteren",
@@ -7114,6 +7116,7 @@
 		"COMMENT_IMAGE_FAILED": "{{ name }} kon niet worden geüpload."
 	},
 	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Recente wijzigingen in de taak en de subtaken",
 		"CHANGE_STATUS": "Status wijzigen",
 		"LINK_COPIED": "Link gekopieerd",
 		"SUBTASKS": "Subtaken",

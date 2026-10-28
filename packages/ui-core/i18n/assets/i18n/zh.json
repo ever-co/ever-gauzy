@@ -7094,6 +7094,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} 评论了",
 		"ACTIVITY_REPLIED": "{{ actor }} 回复了评论：",
 		"ACTIVITY_FIELDS": "已更改：{{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} 更改了状态：",
+		"ACTIVITY_STATUS_FROM_TO": "状态已从 {{ from }} 更改为 {{ to }}",
 		"SOMEONE": "某人",
 		"TODAY": "今天",
 		"YESTERDAY": "昨天",
@@ -7114,6 +7116,7 @@
 		"COMMENT_IMAGE_FAILED": "无法上传 {{ name }}。"
 	},
 	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "任务及其子任务的最近更改",
 		"CHANGE_STATUS": "更改状态",
 		"LINK_COPIED": "链接已复制",
 		"SUBTASKS": "子任务",

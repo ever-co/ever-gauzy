@@ -7086,6 +7086,8 @@
 		"ACTIVITY_COMMENTED": "علّق {{ actor }} على",
 		"ACTIVITY_REPLIED": "ردّ {{ actor }} على تعليق في",
 		"ACTIVITY_FIELDS": "تم تغيير: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "غيّر {{ actor }} حالة",
+		"ACTIVITY_STATUS_FROM_TO": "تغيّرت الحالة من {{ from }} إلى {{ to }}",
 		"SOMEONE": "شخص ما",
 		"TODAY": "اليوم",
 		"YESTERDAY": "أمس",
@@ -7106,6 +7108,7 @@
 		"COMMENT_IMAGE_FAILED": "تعذّر رفع {{ name }}."
 	},
 	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "التغييرات الأخيرة على المهمة ومهامها الفرعية",
 		"CHANGE_STATUS": "تغيير الحالة",
 		"LINK_COPIED": "تم نسخ الرابط",
 		"SUBTASKS": "المهام الفرعية",

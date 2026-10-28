@@ -7094,6 +7094,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} ha commentato",
 		"ACTIVITY_REPLIED": "{{ actor }} ha risposto a un commento su",
 		"ACTIVITY_FIELDS": "Modificato: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} ha cambiato lo stato di",
+		"ACTIVITY_STATUS_FROM_TO": "Stato cambiato da {{ from }} a {{ to }}",
 		"SOMEONE": "Qualcuno",
 		"TODAY": "Oggi",
 		"YESTERDAY": "Ieri",
@@ -7114,6 +7116,7 @@
 		"COMMENT_IMAGE_FAILED": "Impossibile caricare {{ name }}."
 	},
 	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Modifiche recenti all'attività e alle sue sottoattività",
 		"CHANGE_STATUS": "Cambia stato",
 		"LINK_COPIED": "Link copiato",
 		"SUBTASKS": "Sottoattività",

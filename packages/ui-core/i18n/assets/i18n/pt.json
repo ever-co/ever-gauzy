@@ -7094,6 +7094,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} comentou em",
 		"ACTIVITY_REPLIED": "{{ actor }} respondeu a um comentário em",
 		"ACTIVITY_FIELDS": "Alterado: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} alterou o status de",
+		"ACTIVITY_STATUS_FROM_TO": "Status alterado de {{ from }} para {{ to }}",
 		"SOMEONE": "Alguém",
 		"TODAY": "Hoje",
 		"YESTERDAY": "Ontem",
@@ -7114,6 +7116,7 @@
 		"COMMENT_IMAGE_FAILED": "Não foi possível enviar {{ name }}."
 	},
 	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Alterações recentes na tarefa e nas suas subtarefas",
 		"CHANGE_STATUS": "Alterar status",
 		"LINK_COPIED": "Link copiado",
 		"SUBTASKS": "Subtarefas",

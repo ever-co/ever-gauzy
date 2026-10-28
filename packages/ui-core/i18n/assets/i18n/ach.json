@@ -6108,6 +6108,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} commented on",
 		"ACTIVITY_REPLIED": "{{ actor }} replied to a comment on",
 		"ACTIVITY_FIELDS": "Changed: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} changed the status of",
+		"ACTIVITY_STATUS_FROM_TO": "Status changed from {{ from }} to {{ to }}",
 		"SOMEONE": "Someone",
 		"TODAY": "Today",
 		"YESTERDAY": "Yesterday",
@@ -6128,6 +6130,7 @@
 		"COMMENT_IMAGE_FAILED": "Couldn’t upload {{ name }}."
 	},
 	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Recent changes to the task and its subtasks",
 		"CHANGE_STATUS": "Change status",
 		"LINK_COPIED": "Link copied",
 		"SUBTASKS": "Subtasks",

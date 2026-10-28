@@ -7096,6 +7096,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} comentó en",
 		"ACTIVITY_REPLIED": "{{ actor }} respondió a un comentario en",
 		"ACTIVITY_FIELDS": "Cambios: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} cambió el estado de",
+		"ACTIVITY_STATUS_FROM_TO": "Estado cambiado de {{ from }} a {{ to }}",
 		"SOMEONE": "Alguien",
 		"TODAY": "Hoy",
 		"YESTERDAY": "Ayer",
@@ -7116,6 +7118,7 @@
 		"COMMENT_IMAGE_FAILED": "No se pudo subir {{ name }}."
 	},
 	"TASK_VIEW": {
+		"ACTIVITY_CAPTION": "Cambios recientes en la tarea y sus subtareas",
 		"CHANGE_STATUS": "Cambiar estado",
 		"LINK_COPIED": "Enlace copiado",
 		"SUBTASKS": "Subtareas",
