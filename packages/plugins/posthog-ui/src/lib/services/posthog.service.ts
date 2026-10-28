@@ -1,7 +1,7 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router, NavigationEnd, NavigationStart } from '@angular/router';
-import posthog, { PostHogConfig, Properties } from 'posthog-js';
+import posthog, { BeforeSendFn, PostHogConfig, Properties } from 'posthog-js';
 
 /**
  * Complete PostHog service for Angular applications
@@ -37,6 +37,19 @@ const URL_PROPERTIES = [
 	'referrer'
 ];
 
+/** Every `token` / `code` parameter value in a URL. */
+const URL_SECRET_VALUE = /([?&#])(token|code)=[^&#]*/gi;
+
+/** Redacts, in place, the `token` / `code` values in the URL-valued entries of `properties`. */
+function redactUrlProperties(properties: Properties | undefined): void {
+	if (!properties) return;
+	for (const key of URL_PROPERTIES) {
+		if (typeof properties[key] === 'string') {
+			properties[key] = properties[key].replace(URL_SECRET_VALUE, '$1$2=[redacted]');
+		}
+	}
+}
+
 @Injectable({
 	providedIn: 'root'
 })
@@ -66,13 +79,24 @@ export class PostHogService {
 			const sanitize = this.config.sanitize_properties;
 			this.config.sanitize_properties = (properties, eventName) => {
 				const cleaned = sanitize ? sanitize(properties, eventName) : properties;
-				for (const key of URL_PROPERTIES) {
-					if (typeof cleaned?.[key] === 'string') {
-						cleaned[key] = cleaned[key].replace(/([?&#])(token|code)=[^&#]*/gi, '$1$2=[redacted]');
-					}
-				}
+				redactUrlProperties(cleaned);
 				return cleaned;
 			};
+			// The person properties ride outside the event properties, in `$set` / `$set_once` (for example the
+			// first URL ever seen, `$initial_current_url`), where `sanitize_properties` does not reach. Redact them
+			// last, after any `before_send` the app configured.
+			const redactPersonProperties: BeforeSendFn = (event) => {
+				if (event) {
+					redactUrlProperties(event.$set);
+					redactUrlProperties(event.$set_once);
+				}
+				return event;
+			};
+			const beforeSend = this.config.before_send;
+			this.config.before_send = [
+				...(Array.isArray(beforeSend) ? beforeSend : beforeSend ? [beforeSend] : []),
+				redactPersonProperties
+			];
 			// Session recording captures the page's initial URL in its snapshots, which `sanitize_properties` never
 			// sees. A page load that starts on such a link (the token is still in the address bar until the page
 			// removes it) records no session at all; the next page load records as configured.
