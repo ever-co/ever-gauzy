@@ -13,7 +13,7 @@
 		@if (board.failed) {
 		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
 		} @else if (!board.loading && !total) {
-		<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_QUICK_LOOK.NO_TASKS', icon: 'checkmark-square-2-outline' }"></ng-container>
+		<ng-container *ngTemplateOutlet="empty; context: { $implicit: emptyKey, icon: 'checkmark-square-2-outline' }"></ng-container>
 		} @else {
 		<div class="board" role="list" cdkDropListGroup>
 			@for (column of board.value; track column.id) {
@@ -40,9 +40,9 @@
 							[class.is-saving]="card.saving"
 							[class.is-draggable]="canMove"
 							[attr.aria-busy]="card.saving || null"
-							[routerLink]="[]"
-							[queryParams]="{ task: card.id }"
-							queryParamsHandling="merge"
+							[routerLink]="openTaskPage ? ['/pages/tasks/view', card.id] : []"
+							[queryParams]="openTaskPage ? null : { task: card.id }"
+							[queryParamsHandling]="openTaskPage ? null : 'merge'"
 						>
 							<span class="board-card-title">{{ card.title }}</span>
 							<span class="board-card-meta">
