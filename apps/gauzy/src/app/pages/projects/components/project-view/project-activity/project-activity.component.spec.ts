@@ -1,7 +1,7 @@
 import { SimpleChange } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ActionTypeEnum, BaseEntityEnum, IActivityLog } from '@gauzy/contracts';
 import { CommentService } from '@gauzy/ui-core/core';
 import { ProjectActivityComponent } from './project-activity.component';
@@ -27,13 +27,16 @@ const log = (overrides: Partial<IActivityLog>): IActivityLog =>
  */
 describe('ProjectActivityComponent', () => {
 	let logsByEntity: Record<string, IActivityLog[]>;
+	let statuses: any[];
 	let http: { get: jest.Mock };
 	let comments: { getLatest: jest.Mock };
 
 	beforeEach(() => {
 		logsByEntity = {};
+		statuses = [];
 		http = {
-			get: jest.fn((_url: string, options: { params: HttpParams }) => {
+			get: jest.fn((url: string, options: { params: HttpParams }) => {
+				if (url.endsWith('/task-statuses')) return of({ items: statuses });
 				const entityId = options.params.get('entityId');
 				return of({ items: logsByEntity[entityId] || [], total: (logsByEntity[entityId] || []).length });
 			})
@@ -67,7 +70,9 @@ describe('ProjectActivityComponent', () => {
 		logsByEntity[SUBTASK_ID] = [log({ entityId: SUBTASK_ID, action: ActionTypeEnum.Created })];
 		const component = await taskFeed([{ id: SUBTASK_ID, title: 'Wire the endpoint' }]);
 
-		const ids = http.get.mock.calls.map(([, options]) => options.params.get('entityId'));
+		const ids = http.get.mock.calls
+			.filter(([url]) => url.endsWith('/activity-log'))
+			.map(([, options]) => options.params.get('entityId'));
 		expect(ids).toEqual([TASK_ID, SUBTASK_ID]);
 		expect(comments.getLatest).toHaveBeenCalledWith(
 			BaseEntityEnum.Task,
@@ -96,9 +101,45 @@ describe('ProjectActivityComponent', () => {
 		const [entry] = (await taskFeed()).feed.value as any[];
 
 		expect(entry.sentence).toBe('PROJECT_VIEW.ACTIVITY_STATUS_CHANGED');
-		expect(entry.status).toEqual({ from: 'Open', to: 'In progress' });
+		expect(entry.status).toEqual({ from: { name: 'Open' }, to: { name: 'In progress' } });
 		expect(entry.fields).toBe('');
 		expect(entry.tone).toBe('status');
+	});
+
+	it("colours each side of a move as its status: by the status row's id, else by its value", async () => {
+		statuses = [
+			{ id: 'one', value: 'open', name: 'Open', color: '#D6E4F9', isSystem: true },
+			{ id: 'two', value: 'in-review', name: 'In Review', color: '#F3D8B0', isSystem: true }
+		];
+		logsByEntity[TASK_ID] = [
+			log({
+				updatedFields: ['status', 'taskStatusId'],
+				// The id names the status row; the value alone ("open") finds the other one.
+				previousValues: [{ status: 'open' }],
+				updatedValues: [{ status: 'something-else' }, { taskStatusId: 'two' }]
+			} as any)
+		];
+		const [entry] = (await taskFeed()).feed.value as any[];
+
+		expect(entry.status.from).toEqual({ name: 'Open', color: '#D6E4F9' });
+		expect(entry.status.to.color).toBe('#F3D8B0');
+	});
+
+	it('leaves a move uncoloured when the statuses cannot be read', async () => {
+		http.get.mockImplementation((url: string, options: { params: HttpParams }) => {
+			if (url.endsWith('/task-statuses')) return throwError(() => new Error('403'));
+			return of({ items: logsByEntity[options.params.get('entityId')] || [] });
+		});
+		logsByEntity[TASK_ID] = [
+			log({
+				updatedFields: ['status'],
+				previousValues: [{ status: 'open' }],
+				updatedValues: [{ status: 'done' }]
+			} as any)
+		];
+		const [entry] = (await taskFeed()).feed.value as any[];
+
+		expect(entry.status).toEqual({ from: { name: 'Open' }, to: { name: 'Done' } });
 	});
 
 	it("names a status by its row when the update logged one, and keeps the edit's other fields", async () => {
@@ -111,7 +152,7 @@ describe('ProjectActivityComponent', () => {
 		];
 		const [entry] = (await taskFeed()).feed.value as any[];
 
-		expect(entry.status).toEqual({ from: 'To do', to: 'Shipped' });
+		expect(entry.status).toEqual({ from: { name: 'To do' }, to: { name: 'Shipped' } });
 		expect(entry.fields).toBe('title');
 	});
 
