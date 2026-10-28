@@ -6508,6 +6508,60 @@
 			}
 		}
 	},
+	"DELETE_ACCOUNT_PAGE": {
+		"LOGIN_LINK": "Elimina il mio account",
+		"BACK_TO_LOGIN": "Torna all'accesso",
+		"REQUEST": {
+			"TITLE": "Elimina il tuo account",
+			"SUB_TITLE": "Inserisci l'indirizzo email del tuo account. Ti invieremo via email un link per rivedere e confermare l'eliminazione di tutti gli account registrati con esso. Nessuna password richiesta.",
+			"EMAIL": "Indirizzo email",
+			"EMAIL_PLACEHOLDER": "you@company.com",
+			"STEP_1": "Apri il link nell'email entro 30 minuti. Funziona una sola volta.",
+			"STEP_2": "Rivedi gli account e gli spazi di lavoro che verranno eliminati.",
+			"STEP_3": "Conferma. Non viene eliminato nulla finché non lo fai.",
+			"SUBMIT": "Inviami un link di eliminazione",
+			"SENT_TITLE": "Controlla la tua casella di posta",
+			"SENT": "Se esiste un account per quell'indirizzo, gli abbiamo inviato un link per eliminarlo. Il link scade tra 30 minuti. Non è stato ancora eliminato nulla.",
+			"TOO_MANY": "Troppe richieste. Attendi un minuto e riprova.",
+			"FAILED": "Si è verificato un errore. Riprova."
+		},
+		"CONFIRM": {
+			"TITLE": "Conferma l'eliminazione dell'account",
+			"LOADING": "Verifica del link in corso...",
+			"INVALID_TITLE": "Questo link non può essere usato",
+			"INVALID": "Non è valido, è scaduto, è stato sostituito da uno più recente oppure è già stato usato. Richiedi un nuovo link per continuare.",
+			"REQUEST_NEW": "Richiedi un nuovo link",
+			"UNAVAILABLE_TITLE": "Non è stato possibile verificare il tuo link",
+			"UNAVAILABLE": "Di solito è un problema temporaneo (di connessione o del server, oppure troppi tentativi). Il tuo link non è stato usato: riprova tra un momento.",
+			"TRY_AGAIN": "Riprova",
+			"PLAN_CHANGED": "Ciò che verrà eliminato è cambiato da quando hai aperto questa pagina, quindi non è stato eliminato nulla. Rivedilo e poi conferma.",
+			"PLAN_CHANGED_PARTIAL": "Alcuni dei tuoi account sono stati eliminati, ma nel frattempo è cambiato ciò che verrebbe eliminato per gli altri, quindi sono stati mantenuti. Rivedi ciò che resta e conferma di nuovo.",
+			"INTRO": "Questi account sono registrati con {{ email }} e verranno eliminati:",
+			"UNNAMED": "Spazio di lavoro",
+			"OUTCOME_WORKSPACE": "Sei l'unico membro: verranno eliminati l'intero spazio di lavoro e tutti i suoi dati.",
+			"OUTCOME_ACCOUNT": "Condiviso con altri membri ({{ members }}): verranno eliminati il tuo account, il tuo profilo e i tuoi dati personali (registrazioni del tempo, screenshot, attività). I contenuti che hai creato per lo spazio di lavoro restano lì, senza il tuo nome.",
+			"OUTCOME_ACCOUNT_LAST": "Sei l'unico membro, ma non un amministratore: il tuo account, il tuo profilo e i tuoi dati personali (registrazioni del tempo, screenshot, attività) verranno eliminati. Lo spazio di lavoro e gli altri suoi dati restano.",
+			"SOLE_ADMIN": "Sei l'unico amministratore di questo spazio di lavoro. Dopo la tua uscita gli altri membri non avranno più un amministratore.",
+			"KEPT": "Conservati: un registro di controllo di questa richiesta (senza nome, con l'indirizzo in forma di hash), i dati di fatturazione che la legge ci impone di conservare e i backup crittografati fino alla loro sovrascrittura (14 giorni).",
+			"UNDERSTAND": "Ho capito che questa operazione non può essere annullata.",
+			"TYPE_WORD": "Digita {{ word }} per confermare",
+			"SUBMIT": "Elimina definitivamente",
+			"FAILED": "L'eliminazione non è stata completata. Il tuo link funziona ancora fino alla scadenza: riprova.",
+			"DONE_TITLE": "Il tuo account è stato eliminato",
+			"DONE": "Account eliminati: {{ accounts }}, di cui spazi di lavoro interi: {{ workspaces }}. Riceverai a breve un'email di conferma.",
+			"FINISH": "Fine"
+		},
+		"DANGER_ZONE_HELP": {
+			"DELETE_ACCOUNT": "Elimina account: elimina definitivamente il tuo account in questo spazio di lavoro, il tuo profilo, i dati di accesso e i tuoi dati personali (registrazioni del tempo, screenshot, attività). I contenuti che hai creato per lo spazio di lavoro restano lì, senza il tuo nome. Se ne sei l'unico membro e un amministratore, vengono eliminati anche l'intero spazio di lavoro e tutti i suoi dati. Riceverai poi un'email di conferma.",
+			"DELETE_ALL_DATA": "Elimina tutti i dati: elimina tutti i dati delle organizzazioni a cui appartieni in questo spazio di lavoro (dipendenti, progetti, attività, monitoraggio del tempo, fatture, ...) e mantiene il tuo account.",
+			"BY_EMAIL": "Hai account in più spazi di lavoro o non riesci ad accedere?",
+			"BY_EMAIL_LINK": "Eliminali tutti tramite un link via email"
+		},
+		"DANGER_ZONE": {
+			"PREVIEW_FAILED": "Non è stato possibile verificare cosa verrebbe eliminato insieme al tuo account, quindi non è stato modificato nulla. Riprova.",
+			"PLAN_CHANGED": "Il tuo spazio di lavoro è cambiato da quando hai aperto questa finestra, quindi non è stato eliminato nulla. Riprova per vedere cosa verrebbe eliminato ora."
+		}
+	},
 	"FORGOT_PASSWORD_PAGE": {
 		"TITLE": "Password dimenticata",
 		"SUB_TITLE": "Inserisci il tuo indirizzo email e ti invieremo un link per ripristinare la tua password",

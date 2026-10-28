@@ -6507,6 +6507,60 @@
 			}
 		}
 	},
+	"DELETE_ACCOUNT_PAGE": {
+		"LOGIN_LINK": "Usuń moje konto",
+		"BACK_TO_LOGIN": "Wróć do logowania",
+		"REQUEST": {
+			"TITLE": "Usuń swoje konto",
+			"SUB_TITLE": "Wpisz adres e-mail swojego konta. Wyślemy Ci link, dzięki któremu przejrzysz i potwierdzisz usunięcie wszystkich kont zarejestrowanych na ten adres. Hasło nie jest potrzebne.",
+			"EMAIL": "Adres e-mail",
+			"EMAIL_PLACEHOLDER": "you@company.com",
+			"STEP_1": "Otwórz link z wiadomości w ciągu 30 minut. Działa tylko raz.",
+			"STEP_2": "Przejrzyj konta i przestrzenie robocze, które zostaną usunięte.",
+			"STEP_3": "Potwierdź. Nic nie zostanie usunięte, dopóki tego nie zrobisz.",
+			"SUBMIT": "Wyślij mi link do usunięcia",
+			"SENT_TITLE": "Sprawdź skrzynkę odbiorczą",
+			"SENT": "Jeśli istnieje konto dla tego adresu, wysłaliśmy na nie link do jego usunięcia. Link wygaśnie za 30 minut. Nic jeszcze nie zostało usunięte.",
+			"TOO_MANY": "Zbyt wiele żądań. Odczekaj minutę i spróbuj ponownie.",
+			"FAILED": "Coś poszło nie tak. Spróbuj ponownie."
+		},
+		"CONFIRM": {
+			"TITLE": "Potwierdź usunięcie konta",
+			"LOADING": "Sprawdzanie linku...",
+			"INVALID_TITLE": "Tego linku nie można użyć",
+			"INVALID": "Jest nieprawidłowy, wygasł, został zastąpiony nowszym lub został już użyty. Poproś o nowy link, aby kontynuować.",
+			"REQUEST_NEW": "Poproś o nowy link",
+			"UNAVAILABLE_TITLE": "Nie udało się sprawdzić linku",
+			"UNAVAILABLE": "Zwykle jest to chwilowe (problem z połączeniem lub serwerem albo zbyt wiele prób). Twój link nie został użyty: spróbuj ponownie za chwilę.",
+			"TRY_AGAIN": "Spróbuj ponownie",
+			"PLAN_CHANGED": "To, co zostanie usunięte, zmieniło się od otwarcia tej strony, więc nic nie zostało usunięte. Przejrzyj to ponownie, a następnie potwierdź.",
+			"PLAN_CHANGED_PARTIAL": "Część Twoich kont została usunięta, ale w międzyczasie zmieniło się to, co zostałoby usunięte w przypadku pozostałych, więc zostały zachowane. Przejrzyj, co pozostało, i potwierdź ponownie.",
+			"INTRO": "Te konta są zarejestrowane na adres {{ email }} i zostaną usunięte:",
+			"UNNAMED": "Przestrzeń robocza",
+			"OUTCOME_WORKSPACE": "Jesteś jedynym członkiem: cała przestrzeń robocza i wszystkie jej dane zostaną usunięte.",
+			"OUTCOME_ACCOUNT": "Współdzielona z innymi członkami ({{ members }}): Twoje konto, profil i Twoje własne dane (wpisy czasu pracy, zrzuty ekranu, aktywność) zostaną usunięte. Treści utworzone przez Ciebie dla przestrzeni roboczej pozostaną w niej, bez Twojego nazwiska.",
+			"OUTCOME_ACCOUNT_LAST": "Jesteś jej jedynym członkiem, ale nie administratorem: Twoje konto, profil i Twoje własne dane (wpisy czasu pracy, zrzuty ekranu, aktywność) zostaną usunięte. Przestrzeń robocza i jej pozostałe dane zostaną zachowane.",
+			"SOLE_ADMIN": "Jesteś jedynym administratorem tej przestrzeni roboczej. Po Twoim odejściu pozostali członkowie nie będą mieli administratora.",
+			"KEPT": "Zachowujemy: zapis audytowy tego żądania (bez nazwiska, z zahaszowanym adresem), dokumenty rozliczeniowe, które musimy przechowywać zgodnie z prawem, oraz zaszyfrowane kopie zapasowe do czasu ich nadpisania (14 dni).",
+			"UNDERSTAND": "Rozumiem, że tej operacji nie można cofnąć.",
+			"TYPE_WORD": "Wpisz {{ word }}, aby potwierdzić",
+			"SUBMIT": "Usuń trwale",
+			"FAILED": "Usuwanie nie zostało ukończone. Twój link działa do momentu wygaśnięcia: spróbuj ponownie.",
+			"DONE_TITLE": "Twoje konto zostało usunięte",
+			"DONE": "Usunięte konta: {{ accounts }}, w tym całe przestrzenie robocze: {{ workspaces }}. Wiadomość z potwierdzeniem jest już w drodze.",
+			"FINISH": "Gotowe"
+		},
+		"DANGER_ZONE_HELP": {
+			"DELETE_ACCOUNT": "Usuń konto: trwale usuwa Twoje konto w tej przestrzeni roboczej, Twój profil, dane logowania i Twoje własne dane (wpisy czasu pracy, zrzuty ekranu, aktywność). Treści utworzone przez Ciebie dla przestrzeni roboczej pozostaną w niej, bez Twojego nazwiska. Jeśli jesteś jej jedynym członkiem i administratorem, usuwana jest również cała przestrzeń robocza i wszystkie jej dane. Następnie otrzymasz wiadomość e-mail z potwierdzeniem.",
+			"DELETE_ALL_DATA": "Usuń wszystkie dane: usuwa wszystkie dane organizacji w tej przestrzeni roboczej, do których należysz (pracownicy, projekty, zadania, śledzenie czasu, faktury, ...), i zachowuje Twoje konto.",
+			"BY_EMAIL": "Masz konta w kilku przestrzeniach roboczych lub nie możesz się zalogować?",
+			"BY_EMAIL_LINK": "Usuń je wszystkie przez link e-mail"
+		},
+		"DANGER_ZONE": {
+			"PREVIEW_FAILED": "Nie udało się sprawdzić, co zostałoby usunięte wraz z Twoim kontem, więc nic nie zostało zmienione. Spróbuj ponownie.",
+			"PLAN_CHANGED": "Twoja przestrzeń robocza zmieniła się od otwarcia tego okna, więc nic nie zostało usunięte. Spróbuj ponownie, aby zobaczyć, co zostałoby teraz usunięte."
+		}
+	},
 	"FORGOT_PASSWORD_PAGE": {
 		"TITLE": "Zapomniałem hasła",
 		"SUB_TITLE": "Wprowadź swój adres e-mail, a wyślemy Ci link do zresetowania hasła",

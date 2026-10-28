@@ -7,6 +7,16 @@
 		</h4>
 	</nb-card-header>
 	<nb-card-body>
+		<div class="danger-zone-help mb-4">
+			<p>{{ 'DELETE_ACCOUNT_PAGE.DANGER_ZONE_HELP.DELETE_ACCOUNT' | translate }}</p>
+			<p>{{ 'DELETE_ACCOUNT_PAGE.DANGER_ZONE_HELP.DELETE_ALL_DATA' | translate }}</p>
+			<p>
+				{{ 'DELETE_ACCOUNT_PAGE.DANGER_ZONE_HELP.BY_EMAIL' | translate }}
+				<a routerLink="/auth/delete-account" class="text-link">{{
+					'DELETE_ACCOUNT_PAGE.DANGER_ZONE_HELP.BY_EMAIL_LINK' | translate
+				}}</a>
+			</p>
+		</div>
 		@if (!environment.DEMO) {
 		<!--
 			These two used to be Bootstrap `.btn.btn-danger`. bootstrap.css is loaded

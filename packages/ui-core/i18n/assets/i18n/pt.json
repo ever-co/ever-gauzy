@@ -6508,6 +6508,60 @@
 			}
 		}
 	},
+	"DELETE_ACCOUNT_PAGE": {
+		"LOGIN_LINK": "Excluir minha conta",
+		"BACK_TO_LOGIN": "Voltar para o login",
+		"REQUEST": {
+			"TITLE": "Excluir sua conta",
+			"SUB_TITLE": "Digite o endereço de email da sua conta. Enviaremos por email um link para você revisar e confirmar a exclusão de todas as contas registradas com ele. Nenhuma senha é necessária.",
+			"EMAIL": "Endereço de email",
+			"EMAIL_PLACEHOLDER": "you@company.com",
+			"STEP_1": "Abra o link do email em até 30 minutos. Ele funciona uma única vez.",
+			"STEP_2": "Revise as contas e os espaços de trabalho que serão excluídos.",
+			"STEP_3": "Confirme. Nada é excluído até que você confirme.",
+			"SUBMIT": "Enviar um link de exclusão",
+			"SENT_TITLE": "Verifique sua caixa de entrada",
+			"SENT": "Se existir uma conta para esse endereço, enviamos a ele um link para excluí-la. O link expira em 30 minutos. Nada foi excluído ainda.",
+			"TOO_MANY": "Muitas solicitações. Aguarde um minuto e tente novamente.",
+			"FAILED": "Algo deu errado. Tente novamente."
+		},
+		"CONFIRM": {
+			"TITLE": "Confirmar a exclusão da conta",
+			"LOADING": "Verificando seu link...",
+			"INVALID_TITLE": "Este link não pode ser usado",
+			"INVALID": "Ele é inválido, expirou, foi substituído por um mais recente ou já foi usado. Solicite um novo link para continuar.",
+			"REQUEST_NEW": "Solicitar um novo link",
+			"UNAVAILABLE_TITLE": "Não foi possível verificar seu link",
+			"UNAVAILABLE": "Isso costuma ser temporário (um problema de conexão ou do servidor, ou tentativas demais). Seu link não foi usado: tente novamente em instantes.",
+			"TRY_AGAIN": "Tentar novamente",
+			"PLAN_CHANGED": "O que será excluído mudou desde que você abriu esta página, então nada foi excluído. Revise novamente e depois confirme.",
+			"PLAN_CHANGED_PARTIAL": "Algumas das suas contas foram excluídas, mas o que seria excluído das demais mudou nesse meio-tempo, então elas foram mantidas. Revise o que resta e confirme novamente.",
+			"INTRO": "Estas contas estão registradas com {{ email }} e serão excluídas:",
+			"UNNAMED": "Espaço de trabalho",
+			"OUTCOME_WORKSPACE": "Você é o único membro: todo o espaço de trabalho e todos os seus dados serão excluídos.",
+			"OUTCOME_ACCOUNT": "Compartilhado com outros membros ({{ members }}): sua conta, seu perfil e seus próprios registros (registros de horas, capturas de tela, atividade) serão excluídos. O conteúdo que você criou para o espaço de trabalho permanece nele, sem o seu nome.",
+			"OUTCOME_ACCOUNT_LAST": "Você é o único membro, mas não um administrador: sua conta, seu perfil e seus próprios registros (registros de horas, capturas de tela, atividade) serão excluídos. O espaço de trabalho e seus demais dados permanecem.",
+			"SOLE_ADMIN": "Você é o único administrador deste espaço de trabalho. Os demais membros ficarão sem administrador depois que você sair.",
+			"KEPT": "Mantidos: um registro de auditoria desta solicitação (sem nome, com o endereço em hash), os registros de cobrança que somos obrigados por lei a manter e os backups criptografados até serem sobrescritos (14 dias).",
+			"UNDERSTAND": "Entendo que isso não pode ser desfeito.",
+			"TYPE_WORD": "Digite {{ word }} para confirmar",
+			"SUBMIT": "Excluir permanentemente",
+			"FAILED": "A exclusão não foi concluída. Seu link continua funcionando até expirar: tente novamente.",
+			"DONE_TITLE": "Sua conta foi excluída",
+			"DONE": "Contas excluídas: {{ accounts }}, incluindo espaços de trabalho inteiros: {{ workspaces }}. Um email de confirmação está a caminho.",
+			"FINISH": "Concluir"
+		},
+		"DANGER_ZONE_HELP": {
+			"DELETE_ACCOUNT": "Excluir conta: exclui permanentemente sua conta neste espaço de trabalho, seu perfil, seus dados de login e seus próprios registros (registros de horas, capturas de tela, atividade). O conteúdo que você criou para o espaço de trabalho permanece nele, sem o seu nome. Se você for o único membro e um administrador, todo o espaço de trabalho e todos os seus dados também serão excluídos. Em seguida, você receberá um email de confirmação.",
+			"DELETE_ALL_DATA": "Excluir todos os dados: exclui todos os dados das organizações às quais você pertence neste espaço de trabalho (funcionários, projetos, tarefas, controle de horas, faturas, ...) e mantém sua conta.",
+			"BY_EMAIL": "Tem contas em vários espaços de trabalho ou não consegue fazer login?",
+			"BY_EMAIL_LINK": "Exclua todas por um link enviado por email"
+		},
+		"DANGER_ZONE": {
+			"PREVIEW_FAILED": "Não foi possível verificar o que seria excluído junto com a sua conta, então nada foi alterado. Tente novamente.",
+			"PLAN_CHANGED": "Seu espaço de trabalho mudou desde que você abriu esta janela, então nada foi excluído. Tente novamente para ver o que seria excluído agora."
+		}
+	},
 	"FORGOT_PASSWORD_PAGE": {
 		"TITLE": "Esqueceu a senha",
 		"SUB_TITLE": "Digite o seu endereço de email e enviaremos um link para redefinir a sua senha.",

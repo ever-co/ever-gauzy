@@ -1,4 +1,5 @@
 import {
+	AccountDeletionRequest,
 	AccountingTemplate,
 	Activity,
 	ActivityLog,
@@ -207,6 +208,7 @@ import {
 } from './internal';
 
 export const coreEntities = [
+	AccountDeletionRequest,
 	AccountingTemplate,
 	Activity,
 	ActivityLog,

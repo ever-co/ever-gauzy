@@ -151,7 +151,9 @@ describe('EmailService.emailVerification', () => {
 		await service.emailVerification(USER, 'https://app/link?token=SECRET', 'CODE12', {});
 
 		const [options] = send.mock.calls[0] as unknown as [{ message: { headers?: Record<string, string> } }];
-		expect(options.message.headers).toEqual({ 'X-PM-TrackLinks': 'None' });
+		expect(options.message.headers).toEqual(
+			expect.objectContaining({ 'X-PM-TrackLinks': 'None', 'X-Mailgun-Track-Clicks': 'no' })
+		);
 	});
 });
 

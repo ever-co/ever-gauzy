@@ -6505,6 +6505,60 @@
 			}
 		}
 	},
+	"DELETE_ACCOUNT_PAGE": {
+		"LOGIN_LINK": "Supprimer mon compte",
+		"BACK_TO_LOGIN": "Retour à la connexion",
+		"REQUEST": {
+			"TITLE": "Supprimer votre compte",
+			"SUB_TITLE": "Saisissez l'adresse e-mail de votre compte. Nous vous enverrons un lien pour vérifier et confirmer la suppression de tous les comptes enregistrés avec cette adresse. Aucun mot de passe n'est nécessaire.",
+			"EMAIL": "Adresse e-mail",
+			"EMAIL_PLACEHOLDER": "you@company.com",
+			"STEP_1": "Ouvrez le lien de l'e-mail dans les 30 minutes. Il ne fonctionne qu'une fois.",
+			"STEP_2": "Vérifiez les comptes et les espaces de travail qui seront supprimés.",
+			"STEP_3": "Confirmez. Rien n'est supprimé tant que vous ne l'avez pas fait.",
+			"SUBMIT": "M'envoyer un lien de suppression",
+			"SENT_TITLE": "Consultez votre boîte de réception",
+			"SENT": "Si un compte existe pour cette adresse, nous lui avons envoyé un lien pour le supprimer. Le lien expire dans 30 minutes. Rien n'a encore été supprimé.",
+			"TOO_MANY": "Trop de demandes. Veuillez patienter une minute et réessayer.",
+			"FAILED": "Une erreur s'est produite. Veuillez réessayer."
+		},
+		"CONFIRM": {
+			"TITLE": "Confirmer la suppression du compte",
+			"LOADING": "Vérification de votre lien...",
+			"INVALID_TITLE": "Ce lien ne peut pas être utilisé",
+			"INVALID": "Il est invalide, a expiré, a été remplacé par un lien plus récent ou a déjà été utilisé. Demandez un nouveau lien pour continuer.",
+			"REQUEST_NEW": "Demander un nouveau lien",
+			"UNAVAILABLE_TITLE": "Nous n'avons pas pu vérifier votre lien",
+			"UNAVAILABLE": "C'est généralement temporaire (un problème de connexion ou de serveur, ou trop de tentatives). Votre lien n'a pas été utilisé : réessayez dans un instant.",
+			"TRY_AGAIN": "Réessayer",
+			"PLAN_CHANGED": "Ce qui sera supprimé a changé depuis l'ouverture de cette page, donc rien n'a été supprimé. Vérifiez-le à nouveau, puis confirmez.",
+			"PLAN_CHANGED_PARTIAL": "Certains de vos comptes ont été supprimés, mais ce qui serait supprimé pour les autres a changé entre-temps, ils ont donc été conservés. Vérifiez ce qui reste, puis confirmez à nouveau.",
+			"INTRO": "Ces comptes sont enregistrés avec {{ email }} et seront supprimés :",
+			"UNNAMED": "Espace de travail",
+			"OUTCOME_WORKSPACE": "Vous êtes le seul membre : tout l'espace de travail et toutes ses données seront supprimés.",
+			"OUTCOME_ACCOUNT": "Partagé avec d'autres membres ({{ members }}) : votre compte, votre profil et vos propres données (feuilles de temps, captures d'écran, activité) seront supprimés. Le contenu que vous avez créé pour l'espace de travail y reste, sans votre nom.",
+			"OUTCOME_ACCOUNT_LAST": "Vous en êtes le seul membre, mais pas un administrateur : votre compte, votre profil et vos propres données (feuilles de temps, captures d'écran, activité) seront supprimés. L'espace de travail et ses autres données sont conservés.",
+			"SOLE_ADMIN": "Vous êtes le seul administrateur de cet espace de travail. Ses autres membres n'auront plus d'administrateur après votre départ.",
+			"KEPT": "Conservés : un enregistrement d'audit de cette demande (sans nom, avec une adresse hachée), les données de facturation que la loi nous oblige à conserver, et les sauvegardes chiffrées jusqu'à ce qu'elles soient écrasées (14 jours).",
+			"UNDERSTAND": "Je comprends que cette action est irréversible.",
+			"TYPE_WORD": "Saisissez {{ word }} pour confirmer",
+			"SUBMIT": "Supprimer définitivement",
+			"FAILED": "La suppression n'a pas abouti. Votre lien reste valable jusqu'à son expiration : veuillez réessayer.",
+			"DONE_TITLE": "Votre compte a été supprimé",
+			"DONE": "Comptes supprimés : {{ accounts }}, dont espaces de travail entiers : {{ workspaces }}. Un e-mail de confirmation est en route.",
+			"FINISH": "Terminé"
+		},
+		"DANGER_ZONE_HELP": {
+			"DELETE_ACCOUNT": "Supprimer le compte : supprime définitivement votre compte dans cet espace de travail, votre profil, vos données de connexion et vos propres données (feuilles de temps, captures d'écran, activité). Le contenu que vous avez créé pour l'espace de travail y reste, sans votre nom. Si vous en êtes le seul membre et un administrateur, tout l'espace de travail et toutes ses données sont également supprimés. Un e-mail de confirmation suit.",
+			"DELETE_ALL_DATA": "Supprimer toutes les données : supprime toutes les données des organisations dont vous êtes membre dans cet espace de travail (employés, projets, tâches, suivi du temps, factures, ...) et conserve votre compte.",
+			"BY_EMAIL": "Vous avez des comptes dans plusieurs espaces de travail ou vous ne pouvez pas vous connecter ?",
+			"BY_EMAIL_LINK": "Tous les supprimer par un lien envoyé par e-mail"
+		},
+		"DANGER_ZONE": {
+			"PREVIEW_FAILED": "Impossible de vérifier ce que la suppression de votre compte supprimerait, donc rien n'a été modifié. Veuillez réessayer.",
+			"PLAN_CHANGED": "Votre espace de travail a changé depuis l'ouverture de cette fenêtre, donc rien n'a été supprimé. Veuillez réessayer pour voir ce qui serait supprimé maintenant."
+		}
+	},
 	"FORGOT_PASSWORD_PAGE": {
 		"TITLE": "Mot de passe oublié",
 		"SUB_TITLE": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",

@@ -6504,6 +6504,60 @@
 			}
 		}
 	},
+	"DELETE_ACCOUNT_PAGE": {
+		"LOGIN_LINK": "Mein Konto löschen",
+		"BACK_TO_LOGIN": "Zurück zur Anmeldung",
+		"REQUEST": {
+			"TITLE": "Konto löschen",
+			"SUB_TITLE": "Geben Sie die E-Mail-Adresse Ihres Kontos ein. Wir senden Ihnen einen Link, über den Sie die Löschung aller damit registrierten Konten prüfen und bestätigen können. Kein Passwort erforderlich.",
+			"EMAIL": "E-Mail-Adresse",
+			"EMAIL_PLACEHOLDER": "you@company.com",
+			"STEP_1": "Öffnen Sie den Link in der E-Mail innerhalb von 30 Minuten. Er funktioniert nur einmal.",
+			"STEP_2": "Prüfen Sie die Konten und Arbeitsbereiche, die gelöscht werden.",
+			"STEP_3": "Bestätigen Sie. Bis dahin wird nichts gelöscht.",
+			"SUBMIT": "Löschlink per E-Mail senden",
+			"SENT_TITLE": "Prüfen Sie Ihren Posteingang",
+			"SENT": "Falls für diese Adresse ein Konto existiert, haben wir einen Link zum Löschen an sie gesendet. Der Link läuft in 30 Minuten ab. Es wurde noch nichts gelöscht.",
+			"TOO_MANY": "Zu viele Anfragen. Bitte warten Sie eine Minute und versuchen Sie es erneut.",
+			"FAILED": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+		},
+		"CONFIRM": {
+			"TITLE": "Kontolöschung bestätigen",
+			"LOADING": "Ihr Link wird geprüft...",
+			"INVALID_TITLE": "Dieser Link kann nicht verwendet werden",
+			"INVALID": "Er ist ungültig, abgelaufen, wurde durch einen neueren ersetzt oder wurde bereits verwendet. Fordern Sie einen neuen Link an, um fortzufahren.",
+			"REQUEST_NEW": "Neuen Link anfordern",
+			"UNAVAILABLE_TITLE": "Ihr Link konnte nicht geprüft werden",
+			"UNAVAILABLE": "Das ist meist nur vorübergehend (ein Verbindungs- oder Serverproblem oder zu viele Versuche). Ihr Link wurde nicht verwendet: Versuchen Sie es gleich noch einmal.",
+			"TRY_AGAIN": "Erneut versuchen",
+			"PLAN_CHANGED": "Was gelöscht wird, hat sich geändert, seit Sie diese Seite geöffnet haben, daher wurde nichts gelöscht. Prüfen Sie es erneut und bestätigen Sie dann.",
+			"PLAN_CHANGED_PARTIAL": "Einige Ihrer Konten wurden gelöscht, aber bei den übrigen hat sich in der Zwischenzeit geändert, was gelöscht würde, daher wurden sie behalten. Prüfen Sie, was übrig ist, und bestätigen Sie erneut.",
+			"INTRO": "Diese Konten sind mit {{ email }} registriert und werden gelöscht:",
+			"UNNAMED": "Arbeitsbereich",
+			"OUTCOME_WORKSPACE": "Sie sind das einzige Mitglied: Der gesamte Arbeitsbereich und alle seine Daten werden gelöscht.",
+			"OUTCOME_ACCOUNT": "Mit anderen Mitgliedern geteilt ({{ members }}): Ihr Konto, Ihr Profil und Ihre eigenen Einträge (Zeiterfassungen, Screenshots, Aktivität) werden gelöscht. Inhalte, die Sie für den Arbeitsbereich erstellt haben, bleiben dort erhalten, ohne Ihren Namen.",
+			"OUTCOME_ACCOUNT_LAST": "Sie sind das einzige Mitglied, aber kein Administrator: Ihr Konto, Ihr Profil und Ihre eigenen Einträge (Zeiterfassungen, Screenshots, Aktivität) werden gelöscht. Der Arbeitsbereich und seine übrigen Daten bleiben erhalten.",
+			"SOLE_ADMIN": "Sie sind der einzige Administrator dieses Arbeitsbereichs. Nach Ihrem Weggang haben die übrigen Mitglieder keinen Administrator mehr.",
+			"KEPT": "Aufbewahrt werden: ein Prüfprotokoll dieser Anfrage (ohne Namen, mit gehashter Adresse), Abrechnungsunterlagen, die wir gesetzlich aufbewahren müssen, und verschlüsselte Backups, bis sie überschrieben werden (14 Tage).",
+			"UNDERSTAND": "Ich verstehe, dass dies nicht rückgängig gemacht werden kann.",
+			"TYPE_WORD": "Geben Sie zur Bestätigung {{ word }} ein",
+			"SUBMIT": "Endgültig löschen",
+			"FAILED": "Die Löschung wurde nicht abgeschlossen. Ihr Link funktioniert weiterhin, bis er abläuft: Bitte versuchen Sie es erneut.",
+			"DONE_TITLE": "Ihr Konto wurde gelöscht",
+			"DONE": "Gelöschte Konten: {{ accounts }}, davon vollständige Arbeitsbereiche: {{ workspaces }}. Eine Bestätigungs-E-Mail ist unterwegs.",
+			"FINISH": "Fertig"
+		},
+		"DANGER_ZONE_HELP": {
+			"DELETE_ACCOUNT": "Konto löschen: Löscht endgültig Ihr Konto in diesem Arbeitsbereich, Ihr Profil, Ihre Anmeldedaten und Ihre eigenen Einträge (Zeiterfassungen, Screenshots, Aktivität). Inhalte, die Sie für den Arbeitsbereich erstellt haben, bleiben dort erhalten, ohne Ihren Namen. Wenn Sie das einzige Mitglied und ein Administrator sind, werden auch der gesamte Arbeitsbereich und alle seine Daten gelöscht. Anschließend erhalten Sie eine Bestätigungs-E-Mail.",
+			"DELETE_ALL_DATA": "Alle Daten löschen: Löscht alle Daten der Organisationen in diesem Arbeitsbereich, denen Sie angehören (Mitarbeiter, Projekte, Aufgaben, Zeiterfassung, Rechnungen, ...), und behält Ihr Konto.",
+			"BY_EMAIL": "Sie haben Konten in mehreren Arbeitsbereichen oder können sich nicht anmelden?",
+			"BY_EMAIL_LINK": "Alle per E-Mail-Link löschen"
+		},
+		"DANGER_ZONE": {
+			"PREVIEW_FAILED": "Es konnte nicht geprüft werden, was das Löschen Ihres Kontos löschen würde, daher wurde nichts geändert. Bitte versuchen Sie es erneut.",
+			"PLAN_CHANGED": "Ihr Arbeitsbereich hat sich geändert, seit Sie diesen Dialog geöffnet haben, daher wurde nichts gelöscht. Bitte versuchen Sie es erneut, um zu sehen, was jetzt gelöscht würde."
+		}
+	},
 	"FORGOT_PASSWORD_PAGE": {
 		"TITLE": "Passwort vergessen",
 		"SUB_TITLE": "Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.",

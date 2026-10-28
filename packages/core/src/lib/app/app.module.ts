@@ -25,6 +25,7 @@ import { AdjustmentModule } from '../adjustment/adjustment.module';
 import { ApiCallLogModule } from '../api-call-log/api-call-log.module'; // Global Api Call Log Module
 import { AppointmentEmployeesModule } from '../appointment-employees/appointment-employees.module';
 import { ApprovalPolicyModule } from '../approval-policy/approval-policy.module';
+import { AccountDeletionModule } from '../account-deletion/account-deletion.module';
 import { AuthModule } from '../auth/auth.module';
 import { SocialAccountModule } from '../auth/social-account/social-account.module';
 import { AvailabilitySlotsModule } from '../availability-slots/availability-slots.module';
@@ -439,6 +440,7 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		CoreModule,
 		ValidatorModule,
 		AuthModule,
+		AccountDeletionModule,
 		EmailCheckModule,
 		UserModule,
 		SocialAccountModule,

@@ -1,0 +1,234 @@
+@use 'themes' as *;
+@use '@shared/reusable' as *;
+
+.section-wrapper {
+  width: 765px;
+  display: flex;
+  justify-content: space-between;
+}
+.delete-account-wrapper {
+  background: var(--gauzy-card-2);
+  border-radius: var(--border-radius);
+  padding: 30px;
+  width: 476px;
+  & > *:not(nb-alert) {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  @include auth-alert;
+  & .svg-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 57px;
+  }
+  & .title {
+    font-family: Inter;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 30px;
+    letter-spacing: 0em;
+    text-align: left;
+  }
+  & .sub-title {
+    width: 358px;
+    max-width: 100%;
+    // Was a fixed `height: 34px` on a flex box that centres its text. Two lines
+    // of copy — which is what the longer locales produce for this instruction —
+    // overflowed the box in both directions and crossed the divider under it.
+    // As a minimum, the single-line English case renders identically.
+    min-height: 34px;
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 17px;
+    display: flex;
+    align-items: center;
+    text-align: start;
+    margin-bottom: 15px;
+  }
+  & .hr-div-strong {
+    @include hr-div-strong;
+  }
+}
+.form {
+  & .form-control-group {
+    margin-bottom: 24px;
+    & .label {
+      font-family: 'Inter';
+      font-style: normal;
+      font-weight: 600;
+      font-size: 11px;
+      line-height: 13px;
+      display: flex;
+      align-items: center;
+      letter-spacing: -0.01em;
+      color: var(--text-basic-color); // Theme aware
+      margin-bottom: 0.5rem;
+    }
+
+    ::ng-deep input {
+      border: 1px solid rgba(98, 54, 255, 0.5) !important;
+      background-color: transparent !important;
+      color: var(--text-basic-color) !important;
+    }
+  }
+  & .submit-btn-wrapper {
+    display: flex;
+    justify-content: flex-end;
+    & .submit-btn {
+      @include submit-btn;
+      margin-bottom: 46px;
+      border-radius: 8px;
+      font-weight: 700;
+      padding: 13px 20px;
+      transition: background-color 0.2s, border-color 0.2s;
+      // Disabled/Submitting state (MUST BE FIRST)
+      &[disabled],
+      &.btn-pulse {
+        cursor: not-allowed !important;
+        // Light theme: Visible grey with purple tint
+        @include nb-for-theme(default) {
+          background-color: rgba(98, 54, 255, 0.08) !important;
+          border-color: rgba(98, 54, 255, 0.25) !important;
+          color: rgba(98, 54, 255, 0.65) !important;
+        }
+        // Dark theme: Original subtle style
+        @include nb-for-theme(dark) {
+          background-color: var(--background-basic-color-3) !important;
+          border-color: transparent !important;
+          color: var(--text-hint-color) !important;
+        }
+        &:hover,
+        &:active,
+        &:focus {
+          @include nb-for-theme(default) {
+            background-color: #e4e9f2 !important;
+            border-color: #c5cee0 !important;
+            color: #8f9bb3 !important;
+          }
+          @include nb-for-theme(dark) {
+            background-color: var(--background-basic-color-3) !important;
+            border-color: transparent !important;
+            color: var(--text-hint-color) !important;
+          }
+        }
+      }
+      // Enabled state
+      &:not([disabled]):not(.btn-pulse) {
+        background-color: var(--color-primary-default) !important;
+        border-color: var(--color-primary-default) !important;
+        color: white !important;
+        &:hover,
+        &:active,
+        &:focus {
+          background-color: var(--color-primary-hover) !important;
+          border-color: var(--color-primary-hover) !important;
+          color: white !important;
+        }
+      }
+    }
+  }
+}
+
+.hr-div-soft {
+  @include hr-div-soft;
+}
+.redirect-link-p {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 17px;
+  color: var(--text-hint-color); // Theme aware
+  margin-bottom: 0;
+  & .text-link {
+    font-family: Inter;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 17px;
+    letter-spacing: 0em;
+    color: var(--color-primary-default);
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.theme-switch {
+  @include not-mobile-screen {
+    display: none;
+  }
+}
+// media queries
+@include tablet-screen {
+  .section-wrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+@include mobile-screen {
+  .section-wrapper,
+  .delete-account-wrapper {
+    width: 100%;
+  }
+  .delete-account-wrapper {
+    padding: 12px 18px;
+    & > *:not(nb-alert) {
+      padding-left: 0px;
+      padding-right: 0px;
+    }
+    & .title,
+    .sub-title {
+      width: 100%;
+      text-align: center;
+    }
+  }
+  .form {
+    & .submit-btn-wrapper {
+      justify-content: center;
+    }
+  }
+}
+@include input-fields-color;
+
+.delete-account-wrapper {
+  .steps {
+    margin: 16px 0;
+    padding-left: 18px;
+    font-size: 13px;
+    line-height: 18px;
+    li {
+      margin-bottom: 6px;
+    }
+  }
+  .result-alert p {
+    margin-bottom: 4px;
+  }
+  .accounts {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+    li {
+      border: 1px solid var(--border-basic-color-3);
+      border-radius: var(--border-radius);
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .workspace {
+      font-weight: 600;
+    }
+    .outcome {
+      display: block;
+      margin-top: 4px;
+    }
+  }
+  .confirm-input {
+    margin-top: 8px;
+  }
+}
