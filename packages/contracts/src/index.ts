@@ -1,6 +1,7 @@
 /**
  * Public API Surface of @gauzy/contracts
  */
+export * from './lib/account-deletion.model';
 export * from './lib/accounting-template.model';
 export * from './lib/activepieces-integration-config.model';
 export * from './lib/ai-chat.model';

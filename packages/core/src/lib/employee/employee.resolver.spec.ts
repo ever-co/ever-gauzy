@@ -119,9 +119,14 @@ function surfaces() {
 		softRecoverById: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: null })
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(ROWS[0]) };
-	// The caller belongs to `MY_TEAM` only.
+	// The caller belongs to `MY_TEAM` only, and shares a team or project with `COLLEAGUES`.
 	const managedEmployeeService = {
-		isMemberOfTeam: jest.fn(async (employeeId?: string, teamId?: string) => !!employeeId && teamId === MY_TEAM)
+		isMemberOfTeam: jest.fn(async (employeeId?: string, teamId?: string) => !!employeeId && teamId === MY_TEAM),
+		scopeMembersRead: jest.fn(async (employeeId?: string, teamId?: string) => {
+			if (!employeeId) return { allowed: false };
+			if (teamId) return teamId === MY_TEAM ? { allowed: true } : { allowed: false };
+			return { allowed: true, employeeIds: COLLEAGUES };
+		})
 	};
 
 	return {
@@ -135,6 +140,7 @@ function surfaces() {
 /** The team the caller belongs to, and one it does not. */
 const MY_TEAM = '00000000-0000-4000-8000-0000000000c1';
 const OTHER_TEAM = '00000000-0000-4000-8000-0000000000c2';
+const COLLEAGUES = ['caller-employee', '00000000-0000-4000-8000-0000000000e1'];
 
 /**
  * The caller's own engagement, and whether it may change the selected employee.
@@ -803,11 +809,14 @@ describe('EmployeeResolver — the connection contract', () => {
 
 		const connection = await resolver.employeeMembers(ORGANIZATION, undefined, undefined, undefined, undefined, undefined, 20);
 
-		expect(employeeService.findMembers).toHaveBeenCalledWith({
-			organizationId: ORGANIZATION,
-			organizationTeamId: undefined,
-			organizationProjectId: undefined
-		});
+		expect(employeeService.findMembers).toHaveBeenCalledWith(
+			{
+				organizationId: ORGANIZATION,
+				organizationTeamId: undefined,
+				organizationProjectId: undefined
+			},
+			undefined
+		);
 		expect(connection.nodes.map((node) => node.id)).toEqual([FIRST, SECOND]);
 	});
 
@@ -1104,9 +1113,9 @@ describe('EmployeeResolver — the guard stack and the permission are the route�
 	});
 });
 
-describe('EmployeeResolver — employeeMembers keeps the route’s team check', () => {
-	// ORG_MEMBERS_VIEW, which the EMPLOYEE role holds, covers only the caller's own teams. `GET /employee/members`
-	// refuses any other read; the field used to answer the whole organization's roster, or any team's.
+describe('EmployeeResolver — employeeMembers keeps the route’s scope', () => {
+	// ORG_MEMBERS_VIEW, which the EMPLOYEE role holds, covers only the people the caller works with, as on
+	// `GET /employee/members`: a named team must be the caller's, and naming none answers its colleagues.
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'hasAnyPermission').mockReturnValue(false);
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue('caller-employee');
@@ -1114,29 +1123,42 @@ describe('EmployeeResolver — employeeMembers keeps the route’s team check', 
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('refuses an employee the whole roster, or a team it does not belong to, and reads nothing', async () => {
+	it('refuses an employee a team it does not belong to, and reads nothing', async () => {
 		const { resolver, employeeService } = surfaces();
 
-		await expect(resolver.employeeMembers(ORGANIZATION)).rejects.toBeInstanceOf(ForbiddenException);
 		await expect(resolver.employeeMembers(ORGANIZATION, OTHER_TEAM)).rejects.toBeInstanceOf(ForbiddenException);
 		expect(employeeService.findMembers).not.toHaveBeenCalled();
 	});
 
-	it('answers an employee its own team, and an organization-wide viewer any read (control)', async () => {
+	it('answers an employee who names no team its colleagues, never the whole roster', async () => {
+		const { resolver, employeeService, managedEmployeeService } = surfaces();
+
+		await expect(resolver.employeeMembers(ORGANIZATION)).resolves.toBeDefined();
+		expect(managedEmployeeService.scopeMembersRead).toHaveBeenCalledWith('caller-employee', undefined, undefined);
+		expect(employeeService.findMembers).toHaveBeenLastCalledWith(
+			{ organizationId: ORGANIZATION, organizationTeamId: undefined, organizationProjectId: undefined },
+			COLLEAGUES
+		);
+	});
+
+	it('answers an employee its own team, and an organization-wide viewer any read unscoped (control)', async () => {
 		const { resolver, employeeService, managedEmployeeService } = surfaces();
 
 		await expect(resolver.employeeMembers(ORGANIZATION, MY_TEAM)).resolves.toBeDefined();
-		expect(managedEmployeeService.isMemberOfTeam).toHaveBeenCalledWith('caller-employee', MY_TEAM);
-		expect(employeeService.findMembers).toHaveBeenLastCalledWith({
-			organizationId: ORGANIZATION,
-			organizationTeamId: MY_TEAM,
-			organizationProjectId: undefined
-		});
+		expect(managedEmployeeService.scopeMembersRead).toHaveBeenCalledWith('caller-employee', MY_TEAM, undefined);
+		expect(employeeService.findMembers).toHaveBeenLastCalledWith(
+			{ organizationId: ORGANIZATION, organizationTeamId: MY_TEAM, organizationProjectId: undefined },
+			undefined
+		);
 
 		jest.spyOn(RequestContext, 'hasAnyPermission').mockReturnValue(true);
 
 		await expect(resolver.employeeMembers(ORGANIZATION)).resolves.toBeDefined();
 		await expect(resolver.employeeMembers(ORGANIZATION, OTHER_TEAM)).resolves.toBeDefined();
+		expect(employeeService.findMembers).toHaveBeenLastCalledWith(
+			{ organizationId: ORGANIZATION, organizationTeamId: OTHER_TEAM, organizationProjectId: undefined },
+			undefined
+		);
 	});
 });
 

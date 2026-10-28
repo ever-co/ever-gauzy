@@ -702,6 +702,24 @@ describe('OrganizationPermissionGuard', () => {
 
 				await expect(guard.canActivate(context)).resolves.toBe(false);
 			});
+
+			it.each([
+				[['log-in-deny'], true],
+				[['log-foreign'], false],
+				[[], false]
+			])('checks query target ids %j within the super admin tenant', async (logIds, allowed) => {
+				const { guard, createQueryBuilder } = createGuard();
+				asExemptSuperAdmin();
+
+				const context = createContext(
+					[PermissionsEnum.ALLOW_DELETE_TIME],
+					{ query: { organizationId: 'org-deny', logIds } },
+					{ entity: TimeLogStub, param: 'logIds', source: 'query' }
+				);
+
+				await expect(guard.canActivate(context)).resolves.toBe(allowed);
+				expect(createQueryBuilder).not.toHaveBeenCalled();
+			});
 		});
 
 		it('enforces the policy for SUPER_ADMIN when allowSuperAdminRole is off', async () => {

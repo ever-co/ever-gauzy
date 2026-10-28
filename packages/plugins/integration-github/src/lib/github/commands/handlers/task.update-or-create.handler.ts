@@ -7,7 +7,8 @@ import {
 	IntegrationEntity,
 	IntegrationEnum,
 	IOrganizationProject,
-	IIntegrationTenant
+	IIntegrationTenant,
+	isTaskSyncAllowed
 } from '@gauzy/contracts';
 import {
 	IntegrationMapService,
@@ -40,6 +41,12 @@ export class GithubTaskUpdateOrCreateCommandHandler implements ICommandHandler<G
 	async execute(command: GithubTaskUpdateOrCreateCommand) {
 		try {
 			const { task, options } = command;
+
+			// A task private to the Ever platform (or kept out of every integration) never becomes a GitHub issue.
+			if (!isTaskSyncAllowed(task, 'third-party')) {
+				return;
+			}
+
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 			const { organizationId, projectId } = options;
 

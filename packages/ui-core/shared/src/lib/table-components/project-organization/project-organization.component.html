@@ -27,6 +27,11 @@
           ></nb-badge>
         </div>
       }
+      @if (rowData?.isArchived) {
+        <div>
+          <nb-badge status="basic" [text]="'ORGANIZATIONS_PAGE.ARCHIVED' | translate"></nb-badge>
+        </div>
+      }
     </span>
   </div>
 }

@@ -53,6 +53,7 @@
 		"VIEW": "Bekijken",
 		"SEND": "Verstuur",
 		"ARCHIVE": "Archiveren",
+		"UNARCHIVE": "Dearchiveren",
 		"HIRE": "Inhuren",
 		"MANAGE_CATEGORIES": "Beheren van categorieën",
 		"REJECT": "Afwijzen",
@@ -1840,6 +1841,39 @@
 		"TIME_TRACKING": "Tijdregistratie",
 		"PROJECT_MANAGEMENT": "Projectmanagement",
 		"EMPLOYEE_STATISTICS": "Werknemersstatistieken",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} van {{ total }}",
+			"COLUMN_TASK": "Taak",
+			"COLUMN_PROJECT": "Project",
+			"COLUMN_DUE": "Vervaldatum",
+			"COLUMN_STATUS": "Status",
+			"NO_PROJECT": "Geen project",
+			"OVERDUE": "Achterstallig",
+			"DUE_TODAY": "Vervalt vandaag",
+			"TASKS_COUNT": "{{ count }} taken in beeld",
+			"NO_TASKS": "Nog geen taken",
+			"NO_TASKS_HINT": "Taken voor de huidige selectie verschijnen hier, de eerst vervallende bovenaan.",
+			"NO_PROJECTS_HINT": "Projecten verschijnen hier zodra de vermelde taken eraan gekoppeld zijn.",
+			"FILTERS": "Taakfilters",
+			"SEARCH_PLACEHOLDER": "Taken zoeken",
+			"FILTER_ALL": "Alle",
+			"FILTER_OPEN": "Open",
+			"FILTER_IN_PROGRESS": "In uitvoering",
+			"FILTER_IN_REVIEW": "In review",
+			"FILTER_DONE": "Klaar",
+			"PRIORITY": "Prioriteit",
+			"ANY_PRIORITY": "Elke prioriteit",
+			"PRIORITY_URGENT": "Urgent",
+			"PRIORITY_HIGH": "Hoog",
+			"PRIORITY_MEDIUM": "Gemiddeld",
+			"PRIORITY_LOW": "Laag",
+			"ANY_DUE_DATE": "Elke vervaldatum",
+			"DUE_THIS_WEEK": "Vervalt deze week",
+			"NO_DUE_DATE": "Geen vervaldatum",
+			"CLEAR_FILTERS": "Filters wissen",
+			"NO_MATCHES": "Geen taken komen overeen met deze filters",
+			"NO_MATCHES_HINT": "Probeer een andere status, prioriteit of vervaldatum, of wis de filters."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Over {{ count }} werknemers",
 			"OF_INCOME": "{{ value }}% van de inkomsten",
@@ -5197,6 +5231,8 @@
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "Project '{{ name }}' is opgeslagen",
 				"REMOVE_PROJECT": "Project '{{ name }}' is verwijderd",
+				"ARCHIVE_PROJECT": "Project '{{ name }}' is gearchiveerd",
+				"UNARCHIVE_PROJECT": "Project '{{ name }}' is gedearchiveerd",
 				"INVALID_PROJECT_NAME": "Vul alstublieft de naam van uw project in",
 				"VISIBILITY": "Nu is het project {{ name }}."
 			},
@@ -5204,7 +5240,9 @@
 				"ADD_NEW_TEAM": "Team '{{ name }}' is toegevoegd",
 				"EDIT_EXISTING_TEAM": "Team '{{ name }}' is gewijzigd",
 				"INVALID_TEAM_NAME": "Voeg alstublieft een teamnaam toe en ten minste één lid.",
-				"REMOVE_TEAM": "Team '{{ name }}' is verwijderd"
+				"REMOVE_TEAM": "Team '{{ name }}' is verwijderd",
+				"ARCHIVE_TEAM": "Team '{{ name }}' is gearchiveerd",
+				"UNARCHIVE_TEAM": "Team '{{ name }}' is gedearchiveerd"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Werknemersniveau '{{ name }}' is toegevoegd",
@@ -6470,6 +6508,60 @@
 			}
 		}
 	},
+	"DELETE_ACCOUNT_PAGE": {
+		"LOGIN_LINK": "Mijn account verwijderen",
+		"BACK_TO_LOGIN": "Terug naar inloggen",
+		"REQUEST": {
+			"TITLE": "Uw account verwijderen",
+			"SUB_TITLE": "Voer het e-mailadres van uw account in. We sturen u een link waarmee u de verwijdering van alle accounts die ermee zijn geregistreerd kunt bekijken en bevestigen. Geen wachtwoord nodig.",
+			"EMAIL": "E-mailadres",
+			"EMAIL_PLACEHOLDER": "you@company.com",
+			"STEP_1": "Open de link in de e-mail binnen 30 minuten. Hij werkt één keer.",
+			"STEP_2": "Bekijk de accounts en werkruimten die worden verwijderd.",
+			"STEP_3": "Bevestig. Er wordt niets verwijderd totdat u dat doet.",
+			"SUBMIT": "Stuur mij een verwijderlink",
+			"SENT_TITLE": "Controleer uw inbox",
+			"SENT": "Als er een account voor dat adres bestaat, hebben we er een link naartoe gestuurd om het te verwijderen. De link verloopt over 30 minuten. Er is nog niets verwijderd.",
+			"TOO_MANY": "Te veel verzoeken. Wacht een minuut en probeer het opnieuw.",
+			"FAILED": "Er is iets misgegaan. Probeer het opnieuw."
+		},
+		"CONFIRM": {
+			"TITLE": "Accountverwijdering bevestigen",
+			"LOADING": "Uw link wordt gecontroleerd...",
+			"INVALID_TITLE": "Deze link kan niet worden gebruikt",
+			"INVALID": "Hij is ongeldig, verlopen, vervangen door een nieuwere of al gebruikt. Vraag een nieuwe link aan om verder te gaan.",
+			"REQUEST_NEW": "Nieuwe link aanvragen",
+			"UNAVAILABLE_TITLE": "We konden uw link niet controleren",
+			"UNAVAILABLE": "Dit is meestal tijdelijk (een verbindings- of serverprobleem, of te veel pogingen). Uw link is niet gebruikt: probeer het zo opnieuw.",
+			"TRY_AGAIN": "Opnieuw proberen",
+			"PLAN_CHANGED": "Wat er wordt verwijderd, is gewijzigd sinds u deze pagina opende, dus er is niets verwijderd. Bekijk het opnieuw en bevestig daarna.",
+			"PLAN_CHANGED_PARTIAL": "Sommige van uw accounts zijn verwijderd, maar wat er voor de andere zou worden verwijderd, is intussen gewijzigd, dus die zijn behouden. Bekijk wat er over is en bevestig opnieuw.",
+			"INTRO": "Deze accounts zijn geregistreerd met {{ email }} en worden verwijderd:",
+			"UNNAMED": "Werkruimte",
+			"OUTCOME_WORKSPACE": "U bent het enige lid: de hele werkruimte en al haar gegevens worden verwijderd.",
+			"OUTCOME_ACCOUNT": "Gedeeld met andere leden ({{ members }}): uw account, profiel en uw eigen gegevens (tijdregistraties, schermafbeeldingen, activiteit) worden verwijderd. Inhoud die u voor de werkruimte hebt gemaakt, blijft daar, zonder uw naam.",
+			"OUTCOME_ACCOUNT_LAST": "U bent het enige lid, maar geen beheerder: uw account, profiel en uw eigen gegevens (tijdregistraties, schermafbeeldingen, activiteit) worden verwijderd. De werkruimte en haar overige gegevens blijven behouden.",
+			"SOLE_ADMIN": "U bent de enige beheerder van deze werkruimte. De overige leden hebben geen beheerder meer nadat u vertrekt.",
+			"KEPT": "Bewaard blijven: een auditregistratie van dit verzoek (zonder naam, met een gehasht adres), factuurgegevens die we wettelijk moeten bewaren en versleutelde back-ups totdat ze worden overschreven (14 dagen).",
+			"UNDERSTAND": "Ik begrijp dat dit niet ongedaan kan worden gemaakt.",
+			"TYPE_WORD": "Typ {{ word }} om te bevestigen",
+			"SUBMIT": "Definitief verwijderen",
+			"FAILED": "De verwijdering is niet voltooid. Uw link blijft werken totdat hij verloopt: probeer het opnieuw.",
+			"DONE_TITLE": "Uw account is verwijderd",
+			"DONE": "Verwijderde accounts: {{ accounts }}, waarvan volledige werkruimten: {{ workspaces }}. Er is een bevestigingsmail onderweg.",
+			"FINISH": "Klaar"
+		},
+		"DANGER_ZONE_HELP": {
+			"DELETE_ACCOUNT": "Account verwijderen: verwijdert definitief uw account in deze werkruimte, uw profiel, inloggegevens en uw eigen gegevens (tijdregistraties, schermafbeeldingen, activiteit). Inhoud die u voor de werkruimte hebt gemaakt, blijft daar, zonder uw naam. Als u het enige lid en een beheerder bent, worden ook de hele werkruimte en al haar gegevens verwijderd. U ontvangt daarna een bevestigingsmail.",
+			"DELETE_ALL_DATA": "Alle gegevens verwijderen: verwijdert alle gegevens van de organisaties in deze werkruimte waartoe u behoort (medewerkers, projecten, taken, tijdregistratie, facturen, ...) en behoudt uw account.",
+			"BY_EMAIL": "Hebt u accounts in meerdere werkruimten of kunt u niet inloggen?",
+			"BY_EMAIL_LINK": "Verwijder ze allemaal via een e-maillink"
+		},
+		"DANGER_ZONE": {
+			"PREVIEW_FAILED": "We konden niet controleren wat het verwijderen van uw account zou verwijderen, dus er is niets gewijzigd. Probeer het opnieuw.",
+			"PLAN_CHANGED": "Uw werkruimte is gewijzigd sinds u dit venster opende, dus er is niets verwijderd. Probeer het opnieuw om te zien wat er nu zou worden verwijderd."
+		}
+	},
 	"FORGOT_PASSWORD_PAGE": {
 		"TITLE": "Wachtwoord vergeten",
 		"SUB_TITLE": "Voer uw e-mailadres in en we sturen u een link om uw wachtwoord opnieuw in te stellen",
@@ -7020,5 +7112,34 @@
 		"COMMENT_IMAGE_TYPES": "Alleen PNG-, JPEG-, GIF-, WebP- en BMP-afbeeldingen kunnen worden bijgevoegd.",
 		"COMMENT_IMAGE_LIMIT": "Een opmerking kan maximaal {{ count }} afbeeldingen bevatten.",
 		"COMMENT_IMAGE_FAILED": "{{ name }} kon niet worden geüpload."
+	},
+	"TASK_VIEW": {
+		"CHANGE_STATUS": "Status wijzigen",
+		"LINK_COPIED": "Link gekopieerd",
+		"SUBTASKS": "Subtaken",
+		"SUBTASKS_DONE": "{{ done }} van {{ total }} klaar",
+		"NO_SUBTASKS": "Geen subtaken",
+		"LINKED_ISSUES": "Gekoppelde taken",
+		"NO_LINKED_ISSUES": "Geen gekoppelde taken",
+		"LINKS": {
+			"BLOCKS": "Blokkeert",
+			"IS_BLOCKED_BY": "Wordt geblokkeerd door",
+			"CLONES": "Kloont",
+			"IS_CLONED_BY": "Wordt gekloond door",
+			"DUPLICATES": "Dupliceert",
+			"IS_DUPLICATED_BY": "Wordt gedupliceerd door",
+			"RELATES_TO": "Hangt samen met"
+		},
+		"TIME_TRACKING": "Tijdregistratie",
+		"LOGGED": "geregistreerd",
+		"REMAINING": "resterend",
+		"OVER_ESTIMATE": "{{ value }} boven de schatting",
+		"HOURS_PER_DAY": "Uren per dag",
+		"LAST_DAYS": "Laatste {{ count }} dagen",
+		"NO_HOURS": "De laatste tijd geen tijd geregistreerd op deze taak",
+		"TIME_ENTRIES": "Recente tijdregistraties",
+		"NO_TIME_ENTRIES": "De laatste tijd geen tijdregistraties",
+		"RUNNING": "Loopt",
+		"ACTIVITY_LEVEL": "Activiteit: toetsenbord- en muisgebruik tijdens het registreren"
 	}
 }

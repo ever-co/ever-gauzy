@@ -1,7 +1,12 @@
 export const AddTaskPage = {
 	gridButtonCss: 'div.layout-switch > button',
 	addTaskButtonCss: 'button[status="success"]',
-	selectProjectDropdownCss: 'ga-project-selector ng-select',
+	// Scoped to the Add/Edit Task dialog: once any project exists the app HEADER renders its own
+	// <ga-project-selector class="header-selector project-selector"> on the tasks route (header.component.html,
+	// showProjectsSelector = project count > 0), and it precedes the dialog in DOM order — a bare
+	// 'ga-project-selector ng-select' then drives the GLOBAL project filter instead of the task's project.
+	selectProjectDropdownCss: 'ngx-add-task-dialog ga-project-selector ng-select',
+	addTaskDialogCss: 'ngx-add-task-dialog',
 	selectProjectDropdownOptionCss: '.ng-dropdown-panel .ng-option',
 	// Edit and Duplicate are BOTH rendered as `button.action.primary` in the tasks toolbar, so a bare
 	// index (nth 0/1) is ambiguous and brittle across grid re-renders + the show/hide transition

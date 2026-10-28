@@ -10,6 +10,7 @@ import {
 } from '../core/entities/subscribers/entity-event-subscriber.types';
 import { prepareSQLQuery as p } from '../database/database.helper';
 import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
+import { WORKING_EMPLOYEE_SQL_CONDITION } from './organization-project-members-count';
 
 @EventSubscriber()
 export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<OrganizationProject> {
@@ -125,14 +126,19 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
 			const dbType = getConfig().dbConnectionOptions.type as DatabaseTypeEnum;
 			const { organizationId, tenantId, id: projectId } = entity;
 
+			// Only the members who still work in the organization: an employee whose work ended keeps the
+			// membership (Back to Work restores it) but is not counted.
 			let query = p(`
                 SELECT COUNT(*) AS count FROM organization_project_employee
                 INNER JOIN organization_project
                     ON "organization_project"."id" = "organization_project_employee"."organizationProjectId"
+                INNER JOIN employee
+                    ON "employee"."id" = "organization_project_employee"."employeeId"
                 WHERE
                     "organization_project_employee"."organizationProjectId" = $1 AND
                     "organization_project"."organizationId" = $2 AND
-                    "organization_project"."tenantId" = $3
+                    "organization_project"."tenantId" = $3 AND
+                    ${WORKING_EMPLOYEE_SQL_CONDITION}
             `);
 			let updateQuery = p(
 				`UPDATE "organization_project" SET "membersCount" = $1 WHERE "id" = $2 AND "organizationId" = $3 AND "tenantId" = $4`

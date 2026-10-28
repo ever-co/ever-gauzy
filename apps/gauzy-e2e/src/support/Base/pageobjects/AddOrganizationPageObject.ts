@@ -14,17 +14,26 @@ export const AddOrganizationPage = {
 	nbOptionCss: '.option-list nb-option',
 	officialNameFieldCss: 'input[id="officialNameInput"]',
 	taxFieldCss: 'input[id="taxIdInput"]',
-	// Stepper Next buttons (nbStepperNext) carry the localized "Next" label; the final step's
-	// confirm is a status="success" "Add" button. Both are driven by clickFormButtonByText in the .po.
-	nextButtonCss: 'button:has-text("Next")',
-	addOrgButtonCss: 'button[status="success"]:has-text("Add")',
+	// ga-organizations-step-form — the Add Organization dialog AND the onboarding page (Register) render it.
+	// Since #10608 (ffc762ee8a) the step actions are no longer inside nb-stepper: the card footer
+	// (nb-card-footer.dialog-footer) holds Back / Cancel (ghost, status="basic") and ONE primary action —
+	// "Continue" (or "Skip" on a blank location step) and "Create organization" on the last step — gated by
+	// [disabled]="!canContinue(stepper.selectedIndex)".
+	stepFormCss: 'ga-organizations-step-form',
+	stepFormPrimaryButtonCss: 'ga-organizations-step-form nb-card-footer.dialog-footer button[status="primary"]',
+	// The step indicator in the card header: one div.step per step (4 in the dialog, 5 when onboarding), each
+	// step before the current one marked `.done` — so the number of `.done` steps IS stepper.selectedIndex.
+	stepIndicatorCss: 'ga-organizations-step-form nav.steps div.step',
+	stepIndicatorDoneCss: 'ga-organizations-step-form nav.steps div.step.done',
 	verifyOrganizationCss: 'angular2-smart-table',
+	// Name-column filter of the organizations grid (column key `name`, organizations.component.ts).
+	nameFilterInputCss: 'th.angular2-smart-th.name input',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	// Step-2 location form (ga-location-form) text inputs.
 	cityInputCss: 'input[id="cityInput"]',
 	postCodeInputCss: 'input[id="postcodeInput"]',
 	streetInputCss: 'input[id="addressInput"]',
-	// Step-3 bonus form: nb-select + number input (scoped by formcontrolname).
+	// Step-3 bonus form: nb-select (id="bonusTypeSelect") + number input (scoped by formcontrolname).
 	bonusTypeDropdownCss: 'nb-select[formcontrolname="bonusType"], [formcontrolname="bonusType"]',
 	bonusPercentageCss: 'input[formcontrolname="bonusPercentage"]',
 	// Step-4 settings form.

@@ -12,6 +12,7 @@ import {
 	Delete,
 	UseInterceptors
 } from '@nestjs/common';
+import { FormerEmployeesInterceptor } from '../employee/former-employees.interceptor';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { DeleteResult } from 'typeorm';
@@ -38,7 +39,7 @@ import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sens
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
-@UseInterceptors(SensitiveRelationsInterceptor)
+@UseInterceptors(SensitiveRelationsInterceptor, FormerEmployeesInterceptor)
 @SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/organization-team')
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {
@@ -195,6 +196,40 @@ export class OrganizationTeamController extends CrudController<OrganizationTeam>
 		@Body() entity: UpdateOrganizationTeamDTO
 	): Promise<IOrganizationTeam> {
 		return await this._organizationTeamService.update(id, entity);
+	}
+
+	/**
+	 * Archive an organization team: a team the organization finished with. No list offers it any more unless the
+	 * caller asks for archived teams (`where[isArchived]`); it stays readable by its id. Without
+	 * CHANGE_SELECTED_EMPLOYEE, only a manager of the team may archive it, as for editing it.
+	 *
+	 * @param id - UUID of the organization team.
+	 * @returns The archived team.
+	 */
+	@ApiOperation({ summary: 'Archive an organization team' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The team was archived', type: OrganizationTeam })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The caller may not edit this team.' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
+	@Put('/:id/archive')
+	async archive(@Param('id', UUIDValidationPipe) id: ID): Promise<IOrganizationTeam> {
+		return await this._organizationTeamService.setArchived(id, true);
+	}
+
+	/**
+	 * Bring an archived organization team back: the lists offer it again.
+	 *
+	 * @param id - UUID of the organization team.
+	 * @returns The team, no longer archived.
+	 */
+	@ApiOperation({ summary: 'Unarchive an organization team' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The team was unarchived', type: OrganizationTeam })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'The caller may not edit this team.' })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
+	@Put('/:id/unarchive')
+	async unarchive(@Param('id', UUIDValidationPipe) id: ID): Promise<IOrganizationTeam> {
+		return await this._organizationTeamService.setArchived(id, false);
 	}
 
 	/**

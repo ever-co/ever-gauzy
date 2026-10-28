@@ -10,7 +10,8 @@ import {
 	NbSelectModule,
 	NbBadgeModule,
 	NbTooltipModule,
-	NbPopoverModule
+	NbPopoverModule,
+	NbToggleModule
 } from '@nebular/theme';
 import { NgxPermissionsModule } from 'ngx-permissions';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -51,6 +52,7 @@ import { EmployeeHoursChartComponent } from '../employees/view-employee/employee
 		FavoriteToggleModule,
 		NbTooltipModule,
 		NbPopoverModule,
+		NbToggleModule,
 		TeamsRoutingModule,
 		NbDialogModule.forChild(),
 		TranslatePipe,

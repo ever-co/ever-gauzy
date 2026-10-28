@@ -13,7 +13,8 @@ import {
 	IOrganizationProject,
 	PermissionsEnum,
 	IFavorite,
-	BaseEntityEnum
+	BaseEntityEnum,
+	CrudActionEnum
 } from '@gauzy/contracts';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,6 +26,7 @@ import {
 	EmployeesService,
 	OrganizationProjectsService,
 	OrganizationTeamsService,
+	OrganizationTeamStore,
 	ServerDataSource,
 	Store,
 	ToastrService,
@@ -37,6 +39,7 @@ import {
 	EmployeeWithLinksComponent,
 	TagsOnlyComponent,
 	DeleteConfirmationComponent,
+	ArchiveConfirmationComponent,
 	InputFilterComponent,
 	TagsColorFilterComponent
 } from '@gauzy/ui-core/shared';
@@ -82,6 +85,8 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 	private _refresh$: Subject<any> = new Subject();
 
 	public favoriteTeams: IFavorite[] = [];
+	/** Whether the list shows archived teams too ("Include Archived"); by default the API leaves them out. */
+	public includeArchived: boolean = false;
 
 	constructor(
 		private readonly organizationTeamsService: OrganizationTeamsService,
@@ -94,7 +99,8 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 		private readonly route: ActivatedRoute,
 		private readonly router: Router,
 		private readonly httpClient: HttpClient,
-		private readonly genericFavoriteService: GenericFavoriteService
+		private readonly genericFavoriteService: GenericFavoriteService,
+		private readonly organizationTeamStore: OrganizationTeamStore
 	) {
 		super(translateService);
 		this.setView();
@@ -268,6 +274,85 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 				this._refresh$.next(true);
 				this.teams$.next(true);
 			}
+		}
+	}
+
+	/**
+	 * Shows archived teams too, or hides them again. No list but this one offers an archived team, and it does
+	 * only on request: the API leaves them out unless `isArchived` is stated.
+	 *
+	 * @param includeArchived Whether to show archived teams too.
+	 */
+	changeIncludeArchived(includeArchived: boolean): void {
+		this.includeArchived = includeArchived;
+		this.clearItem();
+		this._refresh$.next(true);
+		this.setFilter({ field: 'isArchived', search: includeArchived ? [false, true] : null });
+	}
+
+	/**
+	 * Archives a team after confirmation: a team the organization finished with. It keeps its members and
+	 * history, but no list or picker offers it any more; "Include Archived" shows it here, to unarchive it.
+	 *
+	 * @param team The team to archive.
+	 */
+	async archiveTeam(team: IOrganizationTeam): Promise<void> {
+		if (!team) {
+			return;
+		}
+
+		const result = await firstValueFrom(
+			this.dialogService.open(ArchiveConfirmationComponent, {
+				context: { recordType: team.name }
+			}).onClose
+		);
+		if (!result) {
+			return;
+		}
+
+		try {
+			const archived = await this.organizationTeamsService.archive(team.id);
+
+			// The team pickers drop it, as they drop a deleted team
+			this.organizationTeamStore.organizationTeamAction = {
+				team: { ...team, ...archived },
+				action: CrudActionEnum.DELETED
+			};
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.ARCHIVE_TEAM', { name: team.name });
+		} catch (error) {
+			this.toastrService.danger(error);
+		} finally {
+			this._refresh$.next(true);
+			this.teams$.next(true);
+		}
+	}
+
+	/**
+	 * Brings an archived team back: the lists and pickers offer it again.
+	 *
+	 * @param team The archived team.
+	 */
+	async unarchiveTeam(team: IOrganizationTeam): Promise<void> {
+		if (!team) {
+			return;
+		}
+
+		try {
+			const unarchived = await this.organizationTeamsService.unarchive(team.id);
+
+			// The team pickers offer it again, as they offer a new team
+			this.organizationTeamStore.organizationTeamAction = {
+				team: { ...team, ...unarchived },
+				action: CrudActionEnum.CREATED
+			};
+			this.toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_TEAM.UNARCHIVE_TEAM', {
+				name: team.name
+			});
+		} catch (error) {
+			this.toastrService.danger(error);
+		} finally {
+			this._refresh$.next(true);
+			this.teams$.next(true);
 		}
 	}
 
@@ -454,6 +539,13 @@ export class TeamsComponent extends PaginationFilterBaseComponent implements OnI
 					title: this.getTranslation('SM_TABLE.NAME'),
 					type: 'string',
 					width: '20%',
+					// An archived team is listed only with "Include Archived", and says so. The table hands the
+					// cell, the card grid the row itself.
+					valuePrepareFunction: (name: string, cell: Cell | IOrganizationTeam) => {
+						const isCell = !!cell && typeof (cell as Cell).getRow === 'function';
+						const team = isCell ? (cell as Cell).getRow().getData() : (cell as IOrganizationTeam);
+						return team?.isArchived ? `${name} (${this.getTranslation('ORGANIZATIONS_PAGE.ARCHIVED')})` : name;
+					},
 					filter: {
 						type: 'custom',
 						component: InputFilterComponent

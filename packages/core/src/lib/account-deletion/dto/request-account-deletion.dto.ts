@@ -1,0 +1,70 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Transform, TransformFnParams } from 'class-transformer';
+import { IAccountDeletionRequestInput, LanguagesEnum } from '@gauzy/contracts';
+
+/**
+ * Body of `POST /account-deletion/request`. Only `email` is required; the other fields brand the email
+ * (the same ones the sign-in code request takes), and `callbackUrl` names the front end's confirmation
+ * page. Every link is checked against the origins this deployment serves before it is used.
+ */
+export class RequestAccountDeletionDTO implements IAccountDeletionRequestInput {
+	@ApiProperty({ type: () => String, example: 'jane@example.com' })
+	@IsNotEmpty()
+	@IsEmail()
+	@MaxLength(254)
+	@Transform((params: TransformFnParams) => (typeof params.value === 'string' ? params.value.trim() : params.value))
+	readonly email: string;
+
+	@ApiPropertyOptional({ type: () => String, example: 'https://app.example.com/delete-account/confirm' })
+	@IsOptional()
+	@IsString()
+	@MaxLength(2048)
+	readonly callbackUrl?: string;
+
+	/**
+	 * The language of the emails. Any short string is accepted and an unknown one is ignored (English is used):
+	 * a request forwarded by another site (a product website) must not fail validation over a locale Gauzy lacks.
+	 */
+	@ApiPropertyOptional({ enum: LanguagesEnum })
+	@IsOptional()
+	@IsString()
+	@MaxLength(16)
+	readonly locale?: LanguagesEnum;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MaxLength(255)
+	readonly appName?: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MaxLength(2048)
+	readonly appLogo?: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MaxLength(255)
+	readonly appSignature?: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MaxLength(2048)
+	readonly appLink?: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MaxLength(2048)
+	readonly companyLink?: string;
+
+	@ApiPropertyOptional({ type: () => String })
+	@IsOptional()
+	@IsString()
+	@MaxLength(255)
+	readonly companyName?: string;
+}

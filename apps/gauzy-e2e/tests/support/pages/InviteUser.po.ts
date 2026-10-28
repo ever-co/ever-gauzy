@@ -7,7 +7,9 @@ import {
 	enterInputConditionally,
 	clearField,
 	clickKeyboardBtnByKeycode,
-	dispatchClickWhenSettled
+	dispatchClickWhenSettled,
+	clickWhenEnabled,
+	verifyElementNotExist
 } from '../util';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { InviteUserPage } from '../../../src/support/Base/pageobjects/InviteUserPageObject';
@@ -48,4 +50,13 @@ export const chooseRoleSelectData = async (data: string) => {
 
 export const sendInviteButtonVisible = async () => verifyElementIsVisible(InviteUserPage.sendInviteButtonCss);
 
-export const clickSendInviteButton = async () => clickButton(InviteUserPage.sendInviteButtonCss);
+export const clickSendInviteButton = async () => {
+	// The send button is [disabled]="emailInviteForm.form.invalid" (emails + role required for a USER
+	// invite); a forced click on a still-disabled button is dropped silently, so gate on enabled first.
+	await clickWhenEnabled(InviteUserPage.sendInviteButtonCss, { force: true });
+	// invite-mutation add() closes the dialog only after the invites were created (on an API error it
+	// shows a danger toast and stays open). Waiting for it to close proves the invitations were sent AND
+	// keeps the scenario from ending while the create request is still in flight (closing the page then
+	// would abort it).
+	await verifyElementNotExist(InviteUserPage.inviteDialogCss);
+};

@@ -19,6 +19,8 @@ import {
 	FindManyOptions,
 	Between,
 	FindOptionsRelations,
+	LessThanOrEqual,
+	MoreThanOrEqual,
 	Raw,
 	SaveOptions
 } from 'typeorm';
@@ -244,6 +246,15 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// The save returns what was written: a partial update (e.g. only the estimate) carries no organization
 			// or title, so fall back to the stored task for the subscriptions and the activity log.
 			const organizationId = updatedTask.organizationId ?? task.organizationId;
+
+			// Same for the sync scope: the integrations read it from the updated-task event, so a partial update of a
+			// private task must not look like an `all` task to them. The scope is read back from the row after the save
+			// (not from the copy read before it), so a concurrent edit of the scope is not overwritten in the event. A
+			// failed read-back fails the update (no UPDATED event) rather than publish a possibly stale scope.
+			if (updatedTask.syncScope === undefined) {
+				const saved = await this.findOneByIdString(id, { select: { id: true, syncScope: true } });
+				updatedTask.syncScope = saved.syncScope ?? null;
+			}
 
 			// Unsubscribe members who were unassigned from task
 			await this.unsubscribeRemovedMembers(removedMembers, updatedTask.id, organizationId, tenantId);
@@ -705,6 +716,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
+					}
+					// The column filters of the advanced filters; the relation ones are TypeORM-only here.
+					if (filters) {
+						Object.assign(mikroWhere, this.mikroOrmColumnFilters(filters, mikroWhere));
 					}
 
 					const employeeId = await this.resolveMemberFilter(where);
@@ -1958,7 +1973,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			sizeIds = [],
 			parentIds = [],
 			createdByUserIds = [],
-			dailyPlans = []
+			dailyPlans = [],
+			statuses = [],
+			priorities = []
 		} = filters;
 
 		// Build the 'where' condition
@@ -1975,7 +1992,70 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			...(sizeIds.length && !where.taskSizeId ? { taskSizeId: In(sizeIds) } : {}),
 			...(parentIds.length && !where.parentId ? { parentId: In(parentIds) } : {}),
 			...(createdByUserIds.length && !where.createdByUserId ? { createdByUserId: In(createdByUserIds) } : {}),
-			...(dailyPlans.length && !where.dailyPlans ? { dailyPlans: { id: In(dailyPlans) } } : {})
+			...(dailyPlans.length && !where.dailyPlans ? { dailyPlans: { id: In(dailyPlans) } } : {}),
+			...(statuses.length && !where.status ? { status: In(statuses) } : {}),
+			...(priorities.length && !where.priority ? { priority: In(priorities) } : {}),
+			...(!where.dueDate ? this.dueDateCondition(filters) : {})
 		};
+	}
+
+	/**
+	 * The `dueDate` condition of the advanced filters: none, a range (either end may be open), or
+	 * "no due date", which wins over a range sent with it.
+	 */
+	private dueDateCondition(filters: ITaskAdvancedFilter): FindOptionsWhere<Task> {
+		const { dueDateFrom, dueDateTo, withoutDueDate } = filters;
+		if (withoutDueDate === true) {
+			return { dueDate: IsNull() };
+		}
+		const from = this.validDate(dueDateFrom);
+		const to = this.validDate(dueDateTo);
+		if (from && to) {
+			return { dueDate: Between(from, to) };
+		}
+		if (from) {
+			return { dueDate: MoreThanOrEqual(from) };
+		}
+		if (to) {
+			return { dueDate: LessThanOrEqual(to) };
+		}
+		return {};
+	}
+
+	/**
+	 * The column filters of the advanced filters (status, priority, due date) in the MikroORM query
+	 * syntax, for the hand-built employee task query. Keys already in `where` win.
+	 */
+	private mikroOrmColumnFilters(
+		filters: ITaskAdvancedFilter,
+		where: Record<string, unknown>
+	): Record<string, unknown> {
+		const { statuses = [], priorities = [], dueDateFrom, dueDateTo, withoutDueDate } = filters;
+		const condition: Record<string, unknown> = {};
+		if (statuses.length && !where.status) {
+			condition.status = { $in: statuses };
+		}
+		if (priorities.length && !where.priority) {
+			condition.priority = { $in: priorities };
+		}
+		if (!where.dueDate) {
+			const from = this.validDate(dueDateFrom);
+			const to = this.validDate(dueDateTo);
+			if (withoutDueDate === true) {
+				condition.dueDate = null;
+			} else if (from || to) {
+				condition.dueDate = { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) };
+			}
+		}
+		return condition;
+	}
+
+	/** A date from a filter, or `null` when it is missing or not a valid date. */
+	private validDate(value: Date | string | undefined | null): Date | null {
+		if (value === undefined || value === null || value === '') {
+			return null;
+		}
+		const date = new Date(value);
+		return Number.isNaN(date.getTime()) ? null : date;
 	}
 }

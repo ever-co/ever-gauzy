@@ -1,0 +1,117 @@
+<section class="section-wrapper">
+	<div class="delete-account-wrapper">
+		<div class="svg-wrapper">
+			<ngx-gauzy-logo [isAccordion]="false" class="ever-logo-svg"></ngx-gauzy-logo>
+			<gauzy-switch-theme class="theme-switch" [hasText]="false"></gauzy-switch-theme>
+		</div>
+		<h1 id="title" class="title">{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.TITLE' | translate }}</h1>
+		<div class="hr-div-strong"></div>
+
+		@switch (state) {
+		@case ('loading') {
+		<p class="sub-title">{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.LOADING' | translate }}</p>
+		}
+		@case ('invalid') {
+		<nb-alert outline="danger" role="alert" class="result-alert">
+			<p class="alert-title"><b>{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.INVALID_TITLE' | translate }}</b></p>
+			<p>{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.INVALID' | translate }}</p>
+		</nb-alert>
+		<a class="text-link" routerLink="/auth/delete-account">{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.REQUEST_NEW' | translate }}</a>
+		}
+		@case ('unavailable') {
+		<nb-alert outline="warning" role="alert" class="result-alert">
+			<p class="alert-title"><b>{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.UNAVAILABLE_TITLE' | translate }}</b></p>
+			<p>{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.UNAVAILABLE' | translate }}</p>
+		</nb-alert>
+		<button nbButton size="small" status="basic" type="button" (click)="retryVerify()">
+			{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.TRY_AGAIN' | translate }}
+		</button>
+		}
+		@case ('failed') {
+		<nb-alert outline="danger" role="alert" class="result-alert">
+			<p>{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.FAILED' | translate }}</p>
+		</nb-alert>
+		<button nbButton size="small" status="basic" type="button" (click)="retryConfirm()">
+			{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.TRY_AGAIN' | translate }}
+		</button>
+		}
+		@case ('done') {
+		<nb-alert outline="success" role="status" class="result-alert">
+			<p class="alert-title"><b>{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.DONE_TITLE' | translate }}</b></p>
+			<p>
+				{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.DONE' | translate: { accounts: result?.accounts, workspaces: result?.workspacesDeleted } }}
+			</p>
+		</nb-alert>
+		<button nbButton size="small" status="basic" type="button" (click)="finish()">
+			{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.FINISH' | translate }}
+		</button>
+		}
+		@default {
+		@if (planChanged === 'partly-deleted') {
+		<nb-alert outline="warning" role="status" class="result-alert">
+			<p>{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.PLAN_CHANGED_PARTIAL' | translate }}</p>
+		</nb-alert>
+		} @else if (planChanged) {
+		<nb-alert outline="warning" role="status" class="result-alert">
+			<p>{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.PLAN_CHANGED' | translate }}</p>
+		</nb-alert>
+		}
+		<p class="sub-title">
+			{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.INTRO' | translate: { email: preview?.email } }}
+		</p>
+		<ul class="accounts">
+			@for (account of preview?.accounts; track $index) {
+			<li>
+				<span class="workspace">{{ account.workspace || ('DELETE_ACCOUNT_PAGE.CONFIRM.UNNAMED' | translate) }}</span>
+				@if (account.organizations?.length) {
+				<span> · {{ account.organizations.join(', ') }}</span>
+				}
+				@if (account.outcome === outcomes.WORKSPACE_DELETED) {
+				<span class="outcome status-danger">{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_WORKSPACE' | translate }}</span>
+				} @else if (account.otherMembers === 0) {
+				<span class="outcome">{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_ACCOUNT_LAST' | translate }}</span>
+				} @else {
+				<span class="outcome">
+					{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_ACCOUNT' | translate: { members: account.otherMembers } }}
+				</span>
+				}
+				@if (account.soleAdmin) {
+				<span class="outcome status-warning">{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.SOLE_ADMIN' | translate }}</span>
+				}
+			</li>
+			}
+		</ul>
+		<p class="caption">{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.KEPT' | translate }}</p>
+		<nb-checkbox [(ngModel)]="understood" name="understood" status="danger">
+			{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.UNDERSTAND' | translate }}
+		</nb-checkbox>
+		<div class="form-control-group confirm-input">
+			<label class="label" for="input-confirm">
+				{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.TYPE_WORD' | translate: { word: confirmationWord } }}
+			</label>
+			<input nbInput fullWidth id="input-confirm" name="typed" autocomplete="off" [(ngModel)]="typed" />
+		</div>
+		<div class="submit-btn-wrapper">
+			<button
+				nbButton
+				status="danger"
+				size="small"
+				type="button"
+				class="submit-btn"
+				[disabled]="!canConfirm"
+				[class.btn-pulse]="state === 'deleting'"
+				(click)="confirm()"
+			>
+				{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.SUBMIT' | translate }}
+			</button>
+		</div>
+		}
+		}
+		<div class="hr-div-soft"></div>
+		<section class="sign-in-or-up">
+			<p class="redirect-link-p">
+				<a class="text-link" routerLink="/auth/login">{{ 'DELETE_ACCOUNT_PAGE.BACK_TO_LOGIN' | translate }}</a>
+			</p>
+		</section>
+	</div>
+</section>

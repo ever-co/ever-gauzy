@@ -7,7 +7,15 @@
 				</ngx-header-title>
 			</h4>
 		</div>
-		<div class="gauzy-button-container">
+		<div class="gauzy-button-container align-items-center">
+			<nb-toggle
+				status="primary"
+				class="include-archived mr-3"
+				[checked]="includeArchived"
+				(checkedChange)="changeIncludeArchived($event)"
+			>
+				{{ 'FORM.CHECKBOXES.INCLUDE_ARCHIVED' | translate }}
+			</nb-toggle>
 			<ngx-gauzy-button-action
 				[isDisable]="disableButton"
 				[buttonTemplate]="actionButtons"
@@ -94,6 +102,33 @@
 				<nb-icon icon="edit-outline"></nb-icon>
 				{{ 'BUTTONS.EDIT' | translate }}
 			</button>
+		</ng-template>
+		<ng-template [ngxPermissionsOnly]="['ORG_TEAM_EDIT', 'ALL_ORG_EDIT']">
+			@if (selectedTeam?.isArchived) {
+			<button
+				nbButton
+				status="basic"
+				class="action info"
+				[disabled]="disableButton"
+				(click)="unarchiveTeam(selectedTeam)"
+				size="small"
+			>
+				<nb-icon icon="undo-outline"></nb-icon>
+				{{ 'BUTTONS.UNARCHIVE' | translate }}
+			</button>
+			} @else {
+			<button
+				nbButton
+				status="basic"
+				class="action warning"
+				[disabled]="disableButton"
+				(click)="archiveTeam(selectedTeam)"
+				size="small"
+			>
+				<nb-icon icon="archive-outline"></nb-icon>
+				{{ 'BUTTONS.ARCHIVE' | translate }}
+			</button>
+			}
 		</ng-template>
 		<ng-template [ngxPermissionsOnly]="['ORG_TEAM_DELETE', 'ALL_ORG_EDIT']">
 			<button

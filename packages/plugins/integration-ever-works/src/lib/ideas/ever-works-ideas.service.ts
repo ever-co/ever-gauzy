@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { createHash, randomUUID } from 'node:crypto';
 import { DataSource, IsNull } from 'typeorm';
-import { ActorTypeEnum, BaseEntityEnum, ID } from '@gauzy/contracts';
+import { ActorTypeEnum, BaseEntityEnum, ID, isTaskSyncAllowed } from '@gauzy/contracts';
 import {
 	Comment,
 	IntegrationSetting,
@@ -397,6 +397,11 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 		if (link?.state === EverWorksLinkState.UNLINKED)
 			return { status: 'skipped', message: 'the idea is no longer synced' };
 		const task = await this.task(context, change.gauzyId as ID, true);
+		// A task kept out of every integration (sync scope `none`) sends nothing more, its archive or deletion included;
+		// an idea already linked stays as it is in Ever Works.
+		if (task && !isTaskSyncAllowed(task, 'ever-platform')) {
+			return { status: 'skipped', message: 'the task is kept out of every integration (its sync scope is none)' };
+		}
 		const client = this.client(context);
 		const gone =
 			change.op === 'delete' || !task || !!(task as { deletedAt?: Date | null }).deletedAt || !!task.isArchived;
@@ -603,6 +608,10 @@ export class EverWorksIdeasService implements EverWorksInboundHandler, EverWorks
 				);
 				const freshTask = await this.task(context, task.id as ID, true);
 				if (!fresh || !freshTask) return { status: 'skipped', message: 'the idea changed during the push' };
+				// The scope may have become `none` while the push waited on Ever Works: no further write.
+				if (!isTaskSyncAllowed(freshTask, 'ever-platform')) {
+					return { status: 'skipped', message: 'the task is kept out of every integration (its sync scope is none)' };
+				}
 				pair = fresh;
 				task = freshTask;
 				const teams = ((freshTask as { teams?: Array<{ id: ID }> }).teams ?? []).map((team) => team.id);

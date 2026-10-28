@@ -484,6 +484,14 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 
 		// Filter out the project with the matching ID
 		this.projects = (this.projects ?? []).filter((item) => item.id !== project.id).filter(isNotEmpty);
+
+		// A deleted or archived project no longer narrows the pages it was selected for. The selection is read from
+		// both the selected project and the bound ID, which `writeValue` sets alone.
+		const selectedIds = ([] as ID[]).concat(this.projectId ?? []);
+		const wasSelected = this.selectedProject?.id === project.id || selectedIds.includes(project.id);
+		if (!this.skipGlobalChange && wasSelected) {
+			this.selectProject(ALL_PROJECT_SELECTED);
+		}
 	}
 
 	/**
