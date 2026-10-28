@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { expect } from '@playwright/test';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -6,7 +7,8 @@ import {
 	waitElementToHide,
 	clearField,
 	getLastElement,
-	dispatchClick
+	dispatchClick,
+	scopeGridTo
 } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
@@ -85,39 +87,88 @@ const clickOptionByText = async (text: string) => {
 	throw new Error(`No selectable option matching "${text}" appeared (placeholders such as "No items found" are excluded by design)`);
 };
 
-// Stepper Next/Add buttons are subject to the same overlay; click the currently-visible
-// matching button via a DOM dispatch. nb-stepper keeps inactive step buttons in the DOM but
-// hidden, so we only match visible (offsetParent != null), enabled buttons. Matched
-// case-insensitively against the trimmed label (suite runs in English).
-const clickFormButtonByText = async (texts: string[]) => {
-	await getPage().waitForTimeout(400);
-	for (let attempt = 0; attempt < 5; attempt++) {
-		const clicked = await getPage().evaluate((labels: string[]) => {
-			const wanted = labels.map((l) => l.toLowerCase());
-			// Scope to the stepper only — the organizations list behind the dialog also has a
-			// status="success" "Add" toolbar button which (being earlier in document order) would
-			// otherwise be matched first on the final step. nb-stepper holds all four step buttons.
-			const root = document.querySelector('nb-stepper') ?? document;
-			const buttons = Array.from(root.querySelectorAll('button')) as HTMLButtonElement[];
-			const match = buttons.find((b) => {
-				if (b.disabled || b.offsetParent === null) return false;
-				const t = (b.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
-				return wanted.some((w) => t === w || t.includes(w));
-			});
-			if (!match) return false;
-			match.scrollIntoView({ block: 'center' });
-			for (const type of ['mousedown', 'mouseup', 'click']) {
-				match.dispatchEvent(new MouseEvent(type, { bubbles: true, cancelable: true, view: window }));
-			}
-			return true;
-		}, texts);
-		if (clicked) return true;
-		await getPage().waitForTimeout(500);
+/** Steps the stepper has moved past: the header indicator marks each one `.done`, so this IS selectedIndex. */
+const completedSteps = async (): Promise<number> =>
+	getPage()
+		.locator(AddOrganizationPage.stepIndicatorDoneCss)
+		.count()
+		.catch(() => 0);
+
+const visibleToastText = async (): Promise<string> =>
+	((await getPage()
+		.locator('nb-toast')
+		.allInnerTexts()
+		.catch(() => [] as string[])) as string[])
+		.join(' | ')
+		.replace(/\s+/g, ' ')
+		.trim();
+
+/**
+ * Press the organization step form's primary footer action and PROVE it took effect.
+ *
+ * Shared by every flow that drives ga-organizations-step-form: the Add Organization dialog
+ * (add/delete/manage-organization, organization-public-page) and the first-organization onboarding page
+ * (register). Since #10608 (ffc762ee8a) the actions are no longer inside nb-stepper: the card footer holds
+ * Back / Cancel and ONE primary button — "Continue" ("Skip" on a blank location step) on every step but
+ * the last, "Create organization" on the last (step 4 in the dialog, step 5 "Employee" when onboarding).
+ * The old helper searched `nb-stepper` for a "Next"/"Add" label, found nothing and returned false
+ * SILENTLY, so the stepper never moved and the spec died a step later on `ga-country`.
+ *
+ * - The button is matched structurally (footer + status="primary"), not by label.
+ * - `[disabled]="!canContinue(stepper.selectedIndex)"` reflects the step's form validity, so waiting for
+ *   it to be enabled turns an invalid step (a value that never committed) into an error naming the step.
+ * - The click is dispatched at the element: the card is `[nbSpinner]="loading"` (onboarding starts loading),
+ *   whose overlay would take a coordinate click.
+ * - Not the last step: the indicator must advance by one, else this fails here.
+ * - Last step: the form must go away (the dialog closes with the values / onboarding routes to
+ *   /onboarding/complete), else this fails here with any toast the app raised.
+ *
+ * @param expected Optional guard for callers that know which action they mean to press.
+ */
+export const advanceStepForm = async (expected?: 'continue' | 'create'): Promise<void> => {
+	const page = getPage();
+	const button = page.locator(AddOrganizationPage.stepFormPrimaryButtonCss).first();
+	await button.waitFor({ state: 'visible', timeout: 24_000 });
+
+	const total = await page.locator(AddOrganizationPage.stepIndicatorCss).count();
+	const current = await completedSteps();
+	const isLast = current >= total - 1;
+	const label = ((await button.textContent().catch(() => '')) || '').replace(/\s+/g, ' ').trim();
+	if (expected && (expected === 'create') !== isLast) {
+		throw new Error(
+			`Expected the organization form's "${expected}" action but it is on step ${current + 1} of ${total} ` +
+				`(primary button: "${label}").`
+		);
 	}
-	// Deliberately returns a boolean rather than throwing: unlike a dropdown value that
-	// never committed, an absent form button is a legitimate branch for the callers here
-	// (they fall back to another submit path).
-	return false;
+
+	await expect(
+		button,
+		`"${label}" on organization step ${current + 1}/${total} stayed disabled — that step's form is invalid`
+	).toBeEnabled({ timeout: 24_000 });
+
+	if (!isLast) {
+		for (let attempt = 0; attempt < 3; attempt++) {
+			if ((await completedSteps()) > current) return;
+			await button.dispatchEvent('click');
+			try {
+				await expect.poll(completedSteps, { timeout: 8_000 }).toBeGreaterThan(current);
+				return;
+			} catch {
+				/* goNext() returned early (the onboarding card was still loading) — press again */
+			}
+		}
+		throw new Error(`"${label}" on organization step ${current + 1}/${total} did not advance the stepper.`);
+	}
+
+	await button.dispatchEvent('click');
+	try {
+		await page.locator(AddOrganizationPage.stepFormCss).first().waitFor({ state: 'detached', timeout: 60_000 });
+	} catch {
+		throw new Error(
+			`"${label}" on the last organization step (${total}/${total}) did not submit — the form is still open. ` +
+				`Toasts: ${(await visibleToastText()) || 'none'}`
+		);
+	}
 };
 
 export const gridBtnExists = async () => {
@@ -166,17 +217,16 @@ export const enterTaxId = async (data: string) => {
 	await enterInput(AddOrganizationPage.taxFieldCss, data);
 };
 
-// Advances the stepper. Steps 1-3 expose a "Next" button; the final settings step exposes
-// the status="success" "Add" button — match either so the single spec helper covers all four
-// calls without the caller needing to know which step it's on.
+// Advances the stepper: "Continue" on steps 1-3, "Create organization" on the final settings step — the
+// single spec helper covers all four calls without the caller needing to know which step it's on.
 export const clickOnNextButton = async () => {
-	// Steps 1-3 forward button is "Next"; the location step shows "Skip ... and Continue" when
-	// the address is blank (we fill it, so normally "Next") — include "Continue" as a safety net;
-	// the final settings step's confirm is the "Add" button.
-	await clickFormButtonByText(['Next', 'Continue', 'Add']);
+	await advanceStepForm();
 };
 
 export const verifyOrganizationExists = async (text: string) => {
+	// The grid pages at 10 rows over an organization list that grows as the shard runs, so narrow it to the
+	// name first (best-effort: a missing filter row leaves the assertion exactly as it was).
+	await scopeGridTo(AddOrganizationPage.nameFilterInputCss, text);
 	await verifyText(AddOrganizationPage.verifyOrganizationCss, text);
 };
 

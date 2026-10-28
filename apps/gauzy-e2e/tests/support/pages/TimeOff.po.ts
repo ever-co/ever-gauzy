@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { expect } from '@playwright/test';
 import {
 	verifyElementIsVisible,
 	clickButton,
@@ -242,8 +243,13 @@ export const startDateInputVisible = async () => verifyElementIsVisible(TimeOffP
 
 export const enterStartDateData = async () => {
 	await clearField(TimeOffPage.startDateInputCss);
-	const date = dayjs().add(1, 'days').format('MMM D, YYYY');
-	await enterInput(TimeOffPage.startDateInputCss, date);
+	// Tomorrow — unless tomorrow is already next month: the time-off grid lists requests overlapping the
+	// route's date range (time-off.routes.ts: datePicker unitOfTime 'month'), so a request starting next
+	// month would never appear in the grid the following steps act on. Today is still a valid start
+	// (the picker's [min] is today).
+	const tomorrow = dayjs().add(1, 'days');
+	const start = tomorrow.month() === dayjs().month() ? tomorrow : dayjs();
+	await enterInput(TimeOffPage.startDateInputCss, start.format('MMM D, YYYY'));
 };
 
 export const endDateInputVisible = async () => verifyElementIsVisible(TimeOffPage.startDateInputCss);
@@ -263,12 +269,32 @@ export const enterDescriptionInputData = async (data: string) => {
 
 export const saveRequestButtonVisible = async () => verifyElementIsVisible(TimeOffPage.saveRequestButtonCss);
 
+// Wait until a time-off dialog (request / holiday / policy) has closed after its Save. Every one of them
+// closes ONLY when its save handler accepted the form (saveRequest -> _createNewRecord, saveHoliday,
+// addOrEditPolicy); an invalid form leaves it open and nothing is created. Fail here with that cause
+// instead of several steps later on a grid row that never appears.
+const expectDialogClosed = async (hostSelector: string, what: string) => {
+	const closed = await getPage()
+		.locator(hostSelector)
+		.first()
+		.waitFor({ state: 'detached', timeout: 15_000 })
+		.then(() => true)
+		.catch(() => false);
+	if (!closed) {
+		throw new Error(`The ${what} dialog stayed open after Save: its form was not accepted, nothing was created.`);
+	}
+};
+
 export const clickSaveRequestButton = async () => {
 	// dispatchClick after settling: the date pickers / leftover backdrops in the request dialog can sit
 	// over the footer Save and swallow a coordinate click, leaving the dialog open. Dispatch fires
-	// saveRequest() straight on the button (it still gates on form validity via [disabled]).
+	// saveRequest() straight on the button. The button is
+	// [disabled]="form.invalid || !employeeSelector?.selectedEmployee?.id" (NbButton swallows clicks while
+	// disabled), so wait for it to be enabled first, then require the dialog to close.
 	await waitForSpinnerGone();
+	await expect(getPage().locator(TimeOffPage.saveRequestButtonCss).first()).toBeEnabled({ timeout: 24_000 });
 	await dispatchClick(TimeOffPage.saveRequestButtonCss);
+	await expectDialogClosed('ngx-time-off-request-mutation', 'Request Time Off');
 };
 
 export const addHolidayButtonVisible = async () => verifyElementIsVisible(TimeOffPage.addHolidayButtonCss);
@@ -421,10 +447,18 @@ export const saveButtonVisible = async () => verifyElementIsVisible(TimeOffPage.
 
 export const clickSaveButton = async () => {
 	// dispatchClick after settling: the holiday/policy dialog's date pickers and async employee load
-	// leave overlays/backdrops over the footer Save; dispatch fires the save handler directly (it still
-	// gates on form validity via [disabled]).
+	// leave overlays/backdrops over the footer Save; dispatch fires the save handler directly. The holiday
+	// Save is [disabled]="form.invalid" (NbButton swallows clicks while disabled), so wait for it to be
+	// enabled, then require the dialog to close (the holiday / policy was accepted).
+	const page = getPage();
 	await waitForSpinnerGone();
+	const isHoliday = (await page.locator('ngx-time-off-holiday-mutation').count().catch(() => 0)) > 0;
+	await expect(page.locator(TimeOffPage.saveButtonCss).first()).toBeEnabled({ timeout: 24_000 });
 	await dispatchClick(TimeOffPage.saveButtonCss);
+	await expectDialogClosed(
+		isHoliday ? 'ngx-time-off-holiday-mutation' : 'ngx-time-off-settings-mutation',
+		isHoliday ? 'Add Holidays' : 'Add Policy'
+	);
 };
 
 export const timeOffTableRowVisible = async () => verifyElementIsVisible(TimeOffPage.selectTableRowCss);
@@ -525,6 +559,8 @@ export const clickTimeOffSettingsButton = async (_index: number) => {
 	// doesn't swallow a coordinate click.
 	await waitForSpinnerGone();
 	await dispatchClick(TimeOffPage.timeOffSettingsButtonCss);
+	// Don't let the next step act on the still-mounted time-off page: wait for the settings route.
+	await expect(getPage()).toHaveURL(/\/time-off\/settings/, { timeout: 24_000 });
 };
 
 export const addNewPolicyButtonVisible = async () => verifyElementIsVisible(TimeOffPage.addNewPolicyButtonCss);

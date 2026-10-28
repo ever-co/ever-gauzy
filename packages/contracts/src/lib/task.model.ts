@@ -159,6 +159,16 @@ export interface ITaskAdvancedFilter extends IBaseRelationsEntityModel {
 	parentIds?: ID[];
 	createdByUserIds?: ID[];
 	dailyPlans?: ID[];
+	/** Task `status` values, matched against the column itself (not `taskStatusId`). */
+	statuses?: TaskStatusEnum[];
+	/** Task `priority` values, matched against the column itself (not `taskPriorityId`). */
+	priorities?: TaskPriorityEnum[];
+	/** Due on or after this instant. */
+	dueDateFrom?: Date;
+	/** Due on or before this instant. */
+	dueDateTo?: Date;
+	/** Only tasks without a due date; takes precedence over `dueDateFrom` / `dueDateTo`. */
+	withoutDueDate?: boolean;
 }
 
 export interface IAdvancedTaskFiltering {

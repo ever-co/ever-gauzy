@@ -47,6 +47,8 @@ const newOrgProfileLink = faker.company
 	.trim();
 const taxId = faker.string.alphanumeric();
 const street = faker.location.streetAddress();
+// Read from the edit page URL in the profile-link step; the public page route needs it (see below).
+let organizationId = '';
 
 const firstName = faker.person.firstName();
 const lastName = faker.person.lastName();
@@ -203,6 +205,7 @@ When('I add a public profile link to the organization', async () => {
 		await organizationPublicPage.selectOrganizationTableRow();
 		await organizationPublicPage.manageBtnExists();
 		await organizationPublicPage.manageBtnClick();
+		organizationId = await organizationPublicPage.getEditedOrganizationId();
 		await organizationPublicPage.profileLinkInputVisible();
 		await organizationPublicPage.enterProfileLinkInputData(newOrgProfileLink);
 		await organizationPublicPage.saveButtonVisible();
@@ -215,13 +218,17 @@ When('I add a public profile link to the organization', async () => {
 
 When('I edit the organization public page', async () => {
 	try {
-		// User can navigate to organization public page (public share route).
-		await getPage().goto(`/#/share/organization/${newOrgProfileLink}`);
-		await getPage().evaluate((link) => {
-			if (!location.hash.includes(`/share/organization/${link}`)) {
-				location.hash = `#/share/organization/${link}`;
+		// User can navigate to organization public page (public share route). The route is
+		// /share/organization/:profileLink/:organizationId (public-layout.routes.ts); the Cypress-era
+		// /share/organization/:profileLink renders NotFound. The app's own "Edit public page" button opens
+		// this exact URL in a new tab, so navigate to it in this page instead.
+		const publicPagePath = `/share/organization/${newOrgProfileLink}/${organizationId}`;
+		await getPage().goto(`/#${publicPagePath}`);
+		await getPage().evaluate((path) => {
+			if (!location.hash.includes(path)) {
+				location.hash = `#${path}`;
 			}
-		}, newOrgProfileLink);
+		}, publicPagePath);
 		await getPage().waitForTimeout(1500);
 
 		await organizationPublicPage.editPageButtonVisible();

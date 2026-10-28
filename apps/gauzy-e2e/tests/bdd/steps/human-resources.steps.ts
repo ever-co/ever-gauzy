@@ -42,11 +42,16 @@ When('I verify the employee chart options', async () => {
 	);
 
 	await getPage().goto('/#/pages/dashboard/accounting');
-	// The accounting list shows only employees with `startedWorkOn` in range; the quick-add
-	// addEmployee command doesn't set that, so the new faker employee never appears here.
-	// Drive the flow with whichever employee IS present and verify that same name on the HR side.
+	// A hash-only goto right after addEmployee (which ends on /#/pages/employees) can be a same-document
+	// no-op; force the hash so the accounting dashboard actually renders.
+	await getPage().evaluate(() => {
+		if (!location.hash.includes('/pages/dashboard/accounting')) location.hash = '#/pages/dashboard/accounting';
+	});
+	// The accounting Breakdown lists the organization's working employees for the selected week, in the
+	// order of its sort control. Drive the flow with whichever employee it lists first and verify that
+	// same name on the HR side (the row is re-found by that name before it is clicked).
 	const employeeName = await humanResourcesPage.getFirstEmployeeName();
-	await humanResourcesPage.selectFirstEmployee();
+	await humanResourcesPage.selectFirstEmployee(employeeName);
 	await humanResourcesPage.verifyEmployeeName(employeeName);
 	await humanResourcesPage.verifyChartDropdownVisible();
 	await humanResourcesPage.clickChartDropdown();

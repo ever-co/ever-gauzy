@@ -15,6 +15,12 @@ export const ProposalsPage = {
 	tagsDropdownOption: 'div.ng-option',
 	saveProposalButtonCss: 'nb-card-footer > button[status="success"]',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
+	// "Job Title" column filter (custom InputFilterComponent -> setFilter({ field: 'jobPostContent' }),
+	// a server-side LIKE on the job post content). The default seed (job-proposal plugin,
+	// createDefaultProposals) adds 30 proposals per organization dated `startOf('day')` of the seed run —
+	// the same valueDate as the one this spec registers — and the list is sorted by valueDate only and
+	// paged by 10, so neither "our proposal is on page 1" nor "our proposal is row 0" holds without it.
+	jobTitleFilterInputCss: 'th.angular2-smart-th.jobTitle input',
 	// #9975 removed the toolbar's duplicate "Details" button: the View button — previously an
 	// `underConstruction` placeholder — took over `(click)="details(selectedItem)"` and is now the only
 	// way into the proposal details page. It is `class="action secondary"` and sits under
@@ -37,7 +43,9 @@ export const ProposalsPage = {
 	backButtonCss: 'div.main > button[status="primary"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyProposalCss: 'angular2-smart-table',
-	acceptedProposalCss: 'div.badge-success',
+	// Status cell of a grid row (ga-status-badge renders `<div class="badge badge-success">` for
+	// ACCEPTED). Scoped to the data rows so only the (filtered) proposal's own badge can satisfy it.
+	acceptedProposalCss: 'table > tbody > tr.angular2-smart-row div.badge-success',
 	manageTemplatesBtnCss: 'button.action[status="info"]:has-text("Templates")',
 	addProposalTemplateBtnCss: '.gauzy-button-container button[status="success"]',
 	editProposalTemplateBtnCss: '.gauzy-button-container button.action.primary:has-text("Edit")',

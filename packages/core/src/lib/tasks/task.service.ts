@@ -19,6 +19,8 @@ import {
 	FindManyOptions,
 	Between,
 	FindOptionsRelations,
+	LessThanOrEqual,
+	MoreThanOrEqual,
 	Raw,
 	SaveOptions
 } from 'typeorm';
@@ -714,6 +716,10 @@ export class TaskService extends TenantAwareCrudService<Task> {
 					Object.assign(mikroWhere, this.mikroOrmTitlePrefixFilters(title as string, prefix as string));
 					if (isNotEmpty(organizationSprintId) && !isUUID(organizationSprintId)) {
 						mikroWhere.organizationSprintId = null;
+					}
+					// The column filters of the advanced filters; the relation ones are TypeORM-only here.
+					if (filters) {
+						Object.assign(mikroWhere, this.mikroOrmColumnFilters(filters, mikroWhere));
 					}
 
 					const employeeId = await this.resolveMemberFilter(where);
@@ -1967,7 +1973,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			sizeIds = [],
 			parentIds = [],
 			createdByUserIds = [],
-			dailyPlans = []
+			dailyPlans = [],
+			statuses = [],
+			priorities = []
 		} = filters;
 
 		// Build the 'where' condition
@@ -1984,7 +1992,70 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			...(sizeIds.length && !where.taskSizeId ? { taskSizeId: In(sizeIds) } : {}),
 			...(parentIds.length && !where.parentId ? { parentId: In(parentIds) } : {}),
 			...(createdByUserIds.length && !where.createdByUserId ? { createdByUserId: In(createdByUserIds) } : {}),
-			...(dailyPlans.length && !where.dailyPlans ? { dailyPlans: { id: In(dailyPlans) } } : {})
+			...(dailyPlans.length && !where.dailyPlans ? { dailyPlans: { id: In(dailyPlans) } } : {}),
+			...(statuses.length && !where.status ? { status: In(statuses) } : {}),
+			...(priorities.length && !where.priority ? { priority: In(priorities) } : {}),
+			...(!where.dueDate ? this.dueDateCondition(filters) : {})
 		};
+	}
+
+	/**
+	 * The `dueDate` condition of the advanced filters: none, a range (either end may be open), or
+	 * "no due date", which wins over a range sent with it.
+	 */
+	private dueDateCondition(filters: ITaskAdvancedFilter): FindOptionsWhere<Task> {
+		const { dueDateFrom, dueDateTo, withoutDueDate } = filters;
+		if (withoutDueDate === true) {
+			return { dueDate: IsNull() };
+		}
+		const from = this.validDate(dueDateFrom);
+		const to = this.validDate(dueDateTo);
+		if (from && to) {
+			return { dueDate: Between(from, to) };
+		}
+		if (from) {
+			return { dueDate: MoreThanOrEqual(from) };
+		}
+		if (to) {
+			return { dueDate: LessThanOrEqual(to) };
+		}
+		return {};
+	}
+
+	/**
+	 * The column filters of the advanced filters (status, priority, due date) in the MikroORM query
+	 * syntax, for the hand-built employee task query. Keys already in `where` win.
+	 */
+	private mikroOrmColumnFilters(
+		filters: ITaskAdvancedFilter,
+		where: Record<string, unknown>
+	): Record<string, unknown> {
+		const { statuses = [], priorities = [], dueDateFrom, dueDateTo, withoutDueDate } = filters;
+		const condition: Record<string, unknown> = {};
+		if (statuses.length && !where.status) {
+			condition.status = { $in: statuses };
+		}
+		if (priorities.length && !where.priority) {
+			condition.priority = { $in: priorities };
+		}
+		if (!where.dueDate) {
+			const from = this.validDate(dueDateFrom);
+			const to = this.validDate(dueDateTo);
+			if (withoutDueDate === true) {
+				condition.dueDate = null;
+			} else if (from || to) {
+				condition.dueDate = { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) };
+			}
+		}
+		return condition;
+	}
+
+	/** A date from a filter, or `null` when it is missing or not a valid date. */
+	private validDate(value: Date | string | undefined | null): Date | null {
+		if (value === undefined || value === null || value === '') {
+			return null;
+		}
+		const date = new Date(value);
+		return Number.isNaN(date.getTime()) ? null : date;
 	}
 }
