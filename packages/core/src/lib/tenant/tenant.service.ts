@@ -83,7 +83,9 @@ export class TenantService extends CrudService<Tenant> {
 		const unfinished = await this.findUnfinishedTenant(user);
 
 		// Creates and saves a tenant entity from the given details.
-		const tenant = unfinished ? await this.resumeUnfinishedTenant(unfinished, tenantInput) : await this.create(tenantInput);
+		const tenant = unfinished
+			? await this.resumeUnfinishedTenant(unfinished, tenantInput)
+			: await this.create(tenantInput);
 
 		// Create Role/Permissions to relative tenants. An unfinished tenant keeps the roles it already has.
 		if (!unfinished || !(await this.tenantHasRows(Role, tenant.id))) {
@@ -208,8 +210,12 @@ export class TenantService extends CrudService<Tenant> {
 	private async tenantHasRows(entity: new (...args: any[]) => unknown, tenantId: ID): Promise<boolean> {
 		const where = { tenantId };
 		return this.ormType === MultiORMEnum.MikroORM
-			? (await this.mikroOrmRepository.getEntityManager().count(entity as any, where as any, { filters: false })) > 0
-			: await this.typeOrmRepository.manager.getRepository(entity).exists({ where: where as any, withDeleted: true });
+			? (await this.mikroOrmRepository
+					.getEntityManager()
+					.count(entity as any, where as any, { filters: false })) > 0
+			: await this.typeOrmRepository.manager
+					.getRepository(entity)
+					.exists({ where: where as any, withDeleted: true });
 	}
 
 	/**

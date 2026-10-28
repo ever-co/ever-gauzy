@@ -59,7 +59,12 @@ describe('BoundedEventQueue', () => {
 	it('drops what does not fit, without building it, and reports the count at most once per interval', async () => {
 		const { send } = heldSender();
 		const onDropped = jest.fn();
-		const queue = new BoundedEventQueue(send, { concurrency: 2, maxQueued: 3, onDropped, reportIntervalMs: 60_000 });
+		const queue = new BoundedEventQueue(send, {
+			concurrency: 2,
+			maxQueued: 3,
+			onDropped,
+			reportIntervalMs: 60_000
+		});
 		const build = jest.fn((i: number) => i);
 
 		const kept = Array.from({ length: 10 }, (_, i) => queue.offer(() => build(i)));

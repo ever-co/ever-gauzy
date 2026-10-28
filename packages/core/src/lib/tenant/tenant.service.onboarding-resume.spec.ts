@@ -29,7 +29,9 @@ function buildService({ candidates = [] as Array<{ id: string; name: string }>, 
 		(rows[options.where.tenantId] ?? []).includes(entity.name)
 	);
 	service.typeOrmRepository = {
-		manager: { getRepository: (entity: { name: string }) => ({ exists: (options: any) => exists(entity, options) }) }
+		manager: {
+			getRepository: (entity: { name: string }) => ({ exists: (options: any) => exists(entity, options) })
+		}
 	};
 	service.find = jest.fn(async () => candidates.map((candidate) => ({ ...candidate })));
 	service.create = jest.fn(async (input: any) => ({ id: NEW_TENANT, ...input }));
@@ -45,7 +47,8 @@ function buildService({ candidates = [] as Array<{ id: string; name: string }>, 
 }
 
 const user = () => ({ id: USER_ID, email: 'founder@newco.test' }) as any;
-const commands = (service: any) => service.commandBus.execute.mock.calls.map(([command]: any) => command.constructor.name);
+const commands = (service: any) =>
+	service.commandBus.execute.mock.calls.map(([command]: any) => command.constructor.name);
 
 /** A tenant whose roles and permissions were created before the attempt failed. */
 const COMPLETE_ROLES = ['Role', 'RolePermission', 'FeatureOrganization'];
@@ -148,7 +151,9 @@ describe('TenantService.findUnfinishedTenant', () => {
 			rows: { [OLD_TENANT]: ['User', ...COMPLETE_ROLES], [OLDER_TENANT]: COMPLETE_ROLES }
 		});
 
-		await expect(service.findUnfinishedTenant(user())).resolves.toEqual(expect.objectContaining({ id: OLDER_TENANT }));
+		await expect(service.findUnfinishedTenant(user())).resolves.toEqual(
+			expect.objectContaining({ id: OLDER_TENANT })
+		);
 	});
 
 	it('counts soft-deleted rows, so a tenant someone was removed from is never taken over', async () => {
@@ -201,7 +206,14 @@ describe('TenantService.executeTenantUpdateTasks', () => {
 	it('runs nothing for a tenant that already has every row', async () => {
 		const { service } = buildService({
 			rows: {
-				[OLD_TENANT]: [...COMPLETE_ROLES, 'TaskStatus', 'TaskSize', 'TaskPriority', 'IssueType', 'TenantSetting']
+				[OLD_TENANT]: [
+					...COMPLETE_ROLES,
+					'TaskStatus',
+					'TaskSize',
+					'TaskPriority',
+					'IssueType',
+					'TenantSetting'
+				]
 			}
 		});
 

@@ -107,7 +107,10 @@ export class BoundedEventQueue<T> {
 
 	private reportDropped(): void {
 		const now = Date.now();
-		if (!this.options.onDropped || now - this.lastReport < (this.options.reportIntervalMs ?? JITSU_DROP_REPORT_INTERVAL_MS)) {
+		if (
+			!this.options.onDropped ||
+			now - this.lastReport < (this.options.reportIntervalMs ?? JITSU_DROP_REPORT_INTERVAL_MS)
+		) {
 			return;
 		}
 		this.lastReport = now;
