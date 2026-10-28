@@ -125,6 +125,46 @@ describe('ProjectActivityComponent', () => {
 		expect(entry.status.to.color).toBe('#F3D8B0');
 	});
 
+	it('names a move that logged only the status rows by their statuses', async () => {
+		statuses = [
+			{ id: 'one', value: 'open', name: 'Open', color: '#D6E4F9', isSystem: true },
+			{ id: 'two', value: 'in-review', name: 'In Review', color: '#F3D8B0', isSystem: true }
+		];
+		// An update that sends `taskStatusId` without `status` (the GraphQL input allows it).
+		logsByEntity[TASK_ID] = [
+			log({
+				updatedFields: ['taskStatusId'],
+				previousValues: [{ taskStatusId: 'one' }],
+				updatedValues: [{ taskStatusId: 'two' }]
+			} as any)
+		];
+		const [entry] = (await taskFeed()).feed.value as any[];
+
+		expect(entry.sentence).toBe('PROJECT_VIEW.ACTIVITY_STATUS_CHANGED');
+		expect(entry.status).toEqual({
+			from: { name: 'Open', color: '#D6E4F9' },
+			to: { name: 'In Review', color: '#F3D8B0' }
+		});
+	});
+
+	it('names and colours a side by the same status when its value disagrees with its row', async () => {
+		statuses = [
+			{ id: 'one', value: 'open', name: 'Open', color: '#D6E4F9', isSystem: true },
+			{ id: 'two', value: 'in-review', name: 'In Review', color: '#F3D8B0', isSystem: true }
+		];
+		logsByEntity[TASK_ID] = [
+			log({
+				updatedFields: ['status', 'taskStatusId'],
+				previousValues: [{ status: 'open' }, { taskStatusId: 'one' }],
+				// The value says "done", the row it names is In Review: the row wins, for the name as for the colour.
+				updatedValues: [{ status: 'done' }, { taskStatusId: 'two' }]
+			} as any)
+		];
+		const [entry] = (await taskFeed()).feed.value as any[];
+
+		expect(entry.status.to).toEqual({ name: 'In Review', color: '#F3D8B0' });
+	});
+
 	it('leaves a move uncoloured when the statuses cannot be read', async () => {
 		http.get.mockImplementation((url: string, options: { params: HttpParams }) => {
 			if (url.endsWith('/task-statuses')) return throwError(() => new Error('403'));

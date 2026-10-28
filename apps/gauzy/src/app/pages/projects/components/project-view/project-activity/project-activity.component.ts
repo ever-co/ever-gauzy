@@ -429,7 +429,7 @@ export class ProjectActivityComponent implements OnChanges {
 
 	/**
 	 * The status an update moved a task from and to, from the values it logged; `null` for an update that left
-	 * the status alone, or that logged no name for either side.
+	 * the status alone, or whose new status has no name.
 	 */
 	private statusMoveOf(log: IActivityLog): { from: IStatusSide; to: IStatusSide } | null {
 		const changed = (log.updatedFields || []).some((field) => STATUS_FIELDS.has(field));
@@ -441,8 +441,9 @@ export class ProjectActivityComponent implements OnChanges {
 	}
 
 	/**
-	 * One side of a status move, from the values an update logged: its name, and the colour of its status — the
-	 * status row the update logged, else the one it names by id, else by its value or name.
+	 * One side of a status move, from the values an update logged, by its status — the status row the update
+	 * logged, else the one it names by id, else by its value or name. Its name is the logged row's, else the matched
+	 * status's (an update may log only `taskStatusId`, or a `status` value that disagrees with it), else the value.
 	 */
 	private statusSideOf(values: unknown): IStatusSide {
 		const value = loggedValue(values, 'status');
@@ -452,7 +453,10 @@ export class ProjectActivityComponent implements OnChanges {
 		const status =
 			(id && this._statuses.find((item) => item.id === id)) ||
 			this._statuses.find((item) => keys.includes(statusKeyOf(item.value)) || keys.includes(statusKeyOf(item.name)));
-		return { name: statusNameOf(value, row), color: row?.color || status?.color || undefined };
+		return {
+			name: row?.name || statusNameOf(value, status),
+			color: row?.color || status?.color || undefined
+		};
 	}
 
 	/** The statuses the tasks take: the project's own, else the organization's, else the system defaults. */
