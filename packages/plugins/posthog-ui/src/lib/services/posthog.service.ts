@@ -16,6 +16,9 @@ import posthog, { PostHogConfig, Properties } from 'posthog-js';
  * - Error monitoring
  * - Page views
  */
+/** A `token` / `code` parameter in a URL: the single-use secret of an emailed link (see the sanitizer below). */
+const URL_SECRET = /[?&#](token|code)=/i;
+
 /**
  * Event properties that hold a URL: PostHog's own, plus `route` (the router's `urlAfterRedirects`, query included)
  * and `referrer` (`document.referrer`) that {@link PostHogService.setupRouteTracking} adds to every pageview.
@@ -37,6 +40,8 @@ const URL_PROPERTIES = [
 export class PostHogService {
 	private initialized = false;
 	private config: Partial<PostHogConfig> = {};
+	/** The page loaded with an emailed link's secret in its URL: no session recording for this page load. */
+	private loadedWithUrlSecret = false;
 
 	constructor(private router: Router, @Inject(PLATFORM_ID) private platformId: object) {}
 
@@ -65,6 +70,13 @@ export class PostHogService {
 				}
 				return cleaned;
 			};
+			// Session recording captures the page's initial URL in its snapshots, which `sanitize_properties` never
+			// sees. A page load that starts on such a link (the token is still in the address bar until the page
+			// removes it) records no session at all; the next page load records as configured.
+			this.loadedWithUrlSecret = URL_SECRET.test(window.location?.href ?? '');
+			if (this.loadedWithUrlSecret) {
+				this.config.disable_session_recording = true;
+			}
 
 			// Initialize PostHog with API key and configuration
 			posthog.init(apiKey, this.config);
@@ -298,10 +310,10 @@ export class PostHogService {
 	}
 
 	/**
-	 * Manually starts session recording
+	 * Manually starts session recording (never on a page load that started with an emailed link's secret in the URL)
 	 */
 	startSessionRecording(): void {
-		if (!this.initialized) return;
+		if (!this.initialized || this.loadedWithUrlSecret) return;
 
 		posthog.startSessionRecording();
 	}

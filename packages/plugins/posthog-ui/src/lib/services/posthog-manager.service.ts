@@ -199,11 +199,12 @@ export class PostHogServiceManager {
 	}
 
 	/**
-	 * Start session recording
+	 * Start session recording. Through {@link PostHogService.startSessionRecording}, which refuses on a page load
+	 * whose URL carried an emailed link's token: the recording would capture that URL.
 	 */
 	startSessionRecording(): void {
 		if (!this.posthogService.isInitialized()) return;
-		this.posthogService.getInstance().startSessionRecording();
+		this.posthogService.startSessionRecording();
 	}
 
 	/**
