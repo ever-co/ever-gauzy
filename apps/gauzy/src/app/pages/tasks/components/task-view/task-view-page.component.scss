@@ -60,6 +60,30 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   vertical-align: middle;
 }
 
+/* ── Tabs: Overview and Board ── */
+
+// The tabs between the headline and the columns; the Board spans both columns.
+:host(.is-page) .project-view-top {
+  grid-template-areas:
+    'headline  headline'
+    'tabs      tabs'
+    'main      side';
+}
+
+.task-page-tabs {
+  grid-area: tabs;
+}
+
+.task-page-board {
+  grid-row: 3;
+  grid-column: 1 / -1;
+}
+
+// The page layout draws the columns as flex boxes, which would outrank the `hidden` attribute.
+:host(.is-page) .project-view-col[hidden] {
+  display: none;
+}
+
 /* ── Rows: subtasks and linked issues ── */
 
 .task-rows {
@@ -309,6 +333,17 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 }
 
 /* ── Narrow pages ── */
+
+// The project page's one column, under the tabs.
+@media screen and (max-width: 60rem) {
+  :host(.is-page) .project-view-top {
+    grid-template-areas:
+      'headline'
+      'tabs'
+      'side'
+      'main';
+  }
+}
 
 @media screen and (max-width: 40rem) {
   .task-page-header {
