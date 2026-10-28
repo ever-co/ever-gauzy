@@ -5821,6 +5821,10 @@
 			"INVALID_TITLE": "This link cannot be used",
 			"INVALID": "It is invalid, has expired, was replaced by a newer one, or has already been used. Request a new link to continue.",
 			"REQUEST_NEW": "Request a new link",
+			"UNAVAILABLE_TITLE": "We could not check your link",
+			"UNAVAILABLE": "This is usually temporary (a connection or server problem, or too many attempts). Your link has not been used: try again in a moment.",
+			"TRY_AGAIN": "Try again",
+			"PLAN_CHANGED": "What will be deleted has changed since you opened this page, so nothing was deleted. Review it again, then confirm.",
 			"INTRO": "These accounts are registered with {{ email }} and will be deleted:",
 			"UNNAMED": "Workspace",
 			"OUTCOME_WORKSPACE": "You are the only member: the whole workspace and all of its data will be deleted.",
@@ -5840,6 +5844,10 @@
 			"DELETE_ALL_DATA": "Delete all data: deletes all the data of the organizations in this workspace (employees, projects, tasks, time tracking, invoices, ...) and keeps your account.",
 			"BY_EMAIL": "Have accounts in several workspaces, or cannot sign in?",
 			"BY_EMAIL_LINK": "Delete them all by email link"
+		},
+		"DANGER_ZONE": {
+			"PREVIEW_FAILED": "We could not check what deleting your account would delete, so nothing was changed. Please try again.",
+			"PLAN_CHANGED": "Your workspace changed since you opened this dialog, so nothing was deleted. Please try again to see what will be deleted now."
 		}
 	},
 	"FORGOT_PASSWORD_PAGE": {
