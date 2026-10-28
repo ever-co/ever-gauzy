@@ -790,11 +790,19 @@ export class FactoryResetService {
 
 		// The time-tracking captures (screenshots, camshots, ...) go with their time slots through the database
 		// cascade, which runs no entity subscriber: read their storage keys first and remove the files after.
-		const capturedFiles = await collectStoredFiles(this.typeOrmUserRepository.manager, {
-			kind: 'reset',
-			tenantId: user.tenantId,
-			organizationIds: allOrganizationsIds
-		});
+		// The organizations deleted outright (all but the first) take every file-owning row with them.
+		const capturedFiles = [
+			...(await collectStoredFiles(this.typeOrmUserRepository.manager, {
+				kind: 'reset',
+				tenantId: user.tenantId,
+				organizationIds: allOrganizationsIds
+			})),
+			...(await collectStoredFiles(this.typeOrmUserRepository.manager, {
+				kind: 'organizations',
+				tenantId: user.tenantId,
+				organizationIds: deleteOrganizationIds || []
+			}))
+		];
 
 		await this.deleteSpecificTables(findInput);
 		await deleteStoredFiles(capturedFiles);

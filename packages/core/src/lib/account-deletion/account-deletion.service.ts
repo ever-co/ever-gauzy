@@ -8,7 +8,7 @@ import {
 	ServiceUnavailableException
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { DataSource, EntityManager, IsNull, LessThan, MoreThan, Not } from 'typeorm';
 import { pick } from 'underscore';
 import { environment } from '@gauzy/config';
@@ -220,13 +220,14 @@ export class AccountDeletionService {
 		}
 
 		const now = new Date();
-		// One live link per address: a newer request replaces any earlier one not yet claimed, and the replaced
-		// row keeps only the hash of the address.
+		// One live link per address: a newer request replaces every earlier one that has not completed - claimed
+		// ones too, so a confirm of the old link that fails later cannot make it usable again - and the replaced
+		// row keeps only the hash of the address (a confirm already running holds it in memory and finishes).
 		await repository
 			.createQueryBuilder()
 			.update(AccountDeletionRequest)
 			.set({ revokedAt: now, email: null })
-			.where({ emailHash, usedAt: IsNull(), completedAt: IsNull(), revokedAt: IsNull() })
+			.where({ emailHash, completedAt: IsNull(), revokedAt: IsNull() })
 			.callListeners(false)
 			.execute();
 		return await repository.save(
@@ -283,10 +284,11 @@ export class AccountDeletionService {
 		}
 
 		const now = new Date();
+		const claim = randomUUID();
 		const claimed = await this.typeOrmAccountDeletionRequestRepository
 			.createQueryBuilder()
 			.update(AccountDeletionRequest)
-			.set({ usedAt: now })
+			.set({ usedAt: now, claimId: claim })
 			.where({ id: request.id, revokedAt: IsNull(), completedAt: IsNull(), expiresAt: MoreThan(now) })
 			.andWhere([{ usedAt: IsNull() }, { usedAt: LessThan(new Date(now.getTime() - ACCOUNT_DELETION_CLAIM_LEASE_MS)) }])
 			.callListeners(false)
@@ -296,7 +298,6 @@ export class AccountDeletionService {
 		}
 
 		const counts: ErasureCounts = { ...NO_ERASURE, ...parseCounts(request.result) };
-		let claim = now;
 		let deletedNow = 0;
 		try {
 			for (const item of planned) {
@@ -304,7 +305,7 @@ export class AccountDeletionService {
 				deletedNow++;
 				// Progress survives a crash (a retry adds to these counts), and renews the claim: only while this
 				// confirm still holds it, so a confirm that lost it stops instead of racing the one that took over.
-				claim = await this.renewClaim(request.id, claim, { result: JSON.stringify(counts) });
+				await this.renewClaim(request.id, claim, { result: JSON.stringify(counts) });
 			}
 		} catch (error) {
 			this.logger.error(
@@ -448,8 +449,12 @@ export class AccountDeletionService {
 	 * and a retry finishes the deletion; the other order would lose the keys of files left in the bucket.
 	 */
 	private async eraseAccount({ user, account }: PlannedAccount, auditId: ID, email: string): Promise<ErasureCounts> {
+		const wholeWorkspace = account.outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED;
+		let removeAfterCommit: { files: StoredFile[]; tenantSettings: Record<string, unknown> | null } | null = null;
 		const result = await this.dataSource.transaction(async (manager): Promise<ErasureCounts> => {
-			if (user.tenantId) {
+			// Locking the workspace row makes a joining member wait. Only when the whole workspace goes: in a shared
+			// workspace the lock would hold up every member's writes for as long as this account takes.
+			if (wholeWorkspace && user.tenantId) {
 				await lockRowForUpdate(manager, 'tenant', user.tenantId);
 			}
 			if (!(await lockRowForUpdate(manager, 'user', user.id))) {
@@ -466,7 +471,6 @@ export class AccountDeletionService {
 			const employeeIds = await employeeIdsOfUser(manager, user.id);
 			// Nothing may start pointing at these members between the scan of their references and the delete.
 			await lockRowsForUpdate(manager, 'employee', employeeIds);
-			const wholeWorkspace = account.outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED;
 
 			let subscriptionsCancelled = 0;
 			if (wholeWorkspace) {
@@ -491,7 +495,13 @@ export class AccountDeletionService {
 			await detachUserReferences(manager, user.id);
 			await detachEmployeeReferences(manager, employeeIds);
 
-			const removed = await deleteStoredFiles(files, tenantSettings);
+			// A whole workspace: its files go now, before its rows (nobody else is held up by this transaction).
+			// One account in a shared workspace: after the commit, so the members' locks are released quickly; the
+			// keys are already read.
+			const removed = wholeWorkspace ? await deleteStoredFiles(files, tenantSettings) : { deleted: 0, failed: 0 };
+			if (!wholeWorkspace) {
+				removeAfterCommit = { files, tenantSettings };
+			}
 
 			if (wholeWorkspace) {
 				await manager.delete(Tenant, { id: user.tenantId });
@@ -512,6 +522,11 @@ export class AccountDeletionService {
 			};
 		});
 		this.authenticatedUserCache?.forget(user.id);
+		if (removeAfterCommit) {
+			const removed = await deleteStoredFiles(removeAfterCommit.files, removeAfterCommit.tenantSettings);
+			result.filesDeleted += removed.deleted;
+			result.filesFailed += removed.failed;
+		}
 		if (result.filesFailed) {
 			this.logger.warn(`Account deletion ${auditId}: ${result.filesFailed} stored file(s) could not be removed.`);
 		}
@@ -600,35 +615,32 @@ export class AccountDeletionService {
 	}
 
 	/**
-	 * Writes to a claimed request's row and renews the claim, only while this confirm still holds it (its
-	 * `usedAt` is unchanged). Without listeners, like {@link saveAuditRow}.
+	 * Writes to a claimed request's row and renews the claim (`usedAt` = now), only while this confirm still
+	 * holds it (`claimId`). Without listeners, like {@link saveAuditRow}.
 	 *
-	 * @returns The renewed claim.
 	 * @throws GoneException when another confirm took the claim over (this one stalled past the lease).
 	 */
-	private async renewClaim(id: ID, claim: Date, values: Partial<AccountDeletionRequest>): Promise<Date> {
-		const renewed = new Date();
+	private async renewClaim(id: ID, claim: string, values: Partial<AccountDeletionRequest>): Promise<void> {
 		const result = await this.typeOrmAccountDeletionRequestRepository
 			.createQueryBuilder()
 			.update(AccountDeletionRequest)
-			.set({ ...values, usedAt: renewed })
-			.where({ id, usedAt: claim })
+			.set({ ...values, usedAt: new Date() })
+			.where({ id, claimId: claim })
 			.callListeners(false)
 			.execute();
 		if (result.affected !== 1) {
 			throw new GoneException(ACCOUNT_DELETION_INVALID_LINK_MESSAGE);
 		}
-		return renewed;
 	}
 
 	/** Gives the claim back (after a failure), only if this confirm still holds it. */
-	private async releaseClaim(id: ID, claim: Date): Promise<void> {
+	private async releaseClaim(id: ID, claim: string): Promise<void> {
 		try {
 			await this.typeOrmAccountDeletionRequestRepository
 				.createQueryBuilder()
 				.update(AccountDeletionRequest)
-				.set({ usedAt: null })
-				.where({ id, usedAt: claim, completedAt: IsNull() })
+				.set({ usedAt: null, claimId: null })
+				.where({ id, claimId: claim, completedAt: IsNull() })
 				.callListeners(false)
 				.execute();
 		} catch (error) {

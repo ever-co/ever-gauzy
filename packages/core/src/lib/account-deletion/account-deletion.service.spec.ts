@@ -274,7 +274,7 @@ describe('AccountDeletionService', () => {
 			await expect(service.confirm(generateAccountDeletionToken(), planHashOf(planned as any))).rejects.toBeInstanceOf(
 				ConflictException
 			);
-			expect(builder.set).toHaveBeenLastCalledWith({ usedAt: null });
+			expect(builder.set).toHaveBeenLastCalledWith({ usedAt: null, claimId: null });
 		});
 	});
 });

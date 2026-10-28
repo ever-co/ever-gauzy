@@ -549,9 +549,17 @@ export class StripeSubscriptionService {
 	 * @returns How many subscriptions were cancelled.
 	 */
 	async cancelCustomerSubscriptions(customerId: string): Promise<number> {
+		if (!customerId) {
+			return 0;
+		}
 		const key = this.secretKey;
 		const product = this.billingProduct;
-		if (!key || !product || !customerId) {
+		if (!key || !product) {
+			// No Stripe here at all (self-hosted, demo): nothing can be billing. A key that is set but unusable
+			// (bad BILLING_PRODUCT, live key without opt-in) cannot prove the subscription is gone: refuse.
+			if (process.env.STRIPE_SECRET_KEY?.trim() && process.env.DEMO !== 'true') {
+				throw new Error('Stripe is configured but unusable here, so the subscription cannot be cancelled.');
+			}
 			return 0;
 		}
 

@@ -49,6 +49,15 @@ export class AccountDeletionRequest extends BaseEntity implements IAccountDeleti
 	@MultiORMColumn({ nullable: true })
 	usedAt?: Date | null;
 
+	/**
+	 * Which confirm holds the claim (a random id): renewing, completing and releasing a claim check it, so a
+	 * confirm that lost its claim can no longer write. An id, not the `usedAt` timestamp, because MySQL drops
+	 * the milliseconds of a `datetime` and an equality on it would never match.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@MultiORMColumn({ nullable: true, length: 36 })
+	claimId?: string | null;
+
 	/** When the deletion finished. A completed link never works again. */
 	@ApiPropertyOptional({ type: () => Date })
 	@MultiORMColumn({ nullable: true })

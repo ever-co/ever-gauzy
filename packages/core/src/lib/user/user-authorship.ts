@@ -10,10 +10,14 @@ export const USER_AUTHORSHIP_COLUMNS: ReadonlyArray<string> = ['createdByUserId'
 const OWNER_COLUMNS: Record<'user' | 'employee', string> = { user: 'userId', employee: 'employeeId' };
 
 /**
- * Tables where that same column only names the author of shared content, so it is cleared like any other
- * reference: a departing member's comments stay on the tasks of the workspace.
+ * Tables where that same column only names the author (or uploader) of a row that is someone else's or the
+ * workspace's, so it is cleared like any other reference: a departing member's comments and resource links stay
+ * on the workspace's tasks, and captures an admin uploaded for another member stay with that member.
  */
-const AUTHOR_NOT_OWNER: Record<string, ReadonlyArray<string>> = { comment: ['employeeId'] };
+const AUTHOR_NOT_OWNER: Record<'user' | 'employee', Record<string, ReadonlyArray<string>>> = {
+	user: { camshots: ['userId'], soundshots: ['userId'] },
+	employee: { comment: ['employeeId'], resource_link: ['employeeId'] }
+};
 
 /**
  * Tables whose rows are personal to the member (employee) they point at, under any column name: they go with
@@ -140,7 +144,7 @@ async function detachReferences(manager: EntityManager, target: 'user' | 'employ
 			if (
 				foreignKey.columnNames.length !== 1 ||
 				foreignKey.referencedTablePath !== target ||
-				(column === OWNER_COLUMNS[target] && !AUTHOR_NOT_OWNER[metadata.tablePath]?.includes(column))
+				(column === OWNER_COLUMNS[target] && !AUTHOR_NOT_OWNER[target][metadata.tablePath]?.includes(column))
 			) {
 				continue;
 			}

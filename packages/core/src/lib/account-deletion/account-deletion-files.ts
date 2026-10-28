@@ -17,6 +17,8 @@ interface FileOwningTable {
 	keys: string[];
 	/** Columns that make a row one user's own (their captures), for an account deleted from a shared workspace. */
 	ownedBy: string[];
+	/** Columns naming the member (employee) a row belongs to, e.g. the member a capture was recorded for. */
+	ownedByEmployee: string[];
 	/** Rows tied to a time slot: the user's captures are also found through their members' time slots. */
 	timeSlot: boolean;
 	/** Whether a factory reset ("Delete all data") deletes these rows (time-tracking captures). */
@@ -24,13 +26,15 @@ interface FileOwningTable {
 }
 
 export const FILE_OWNING_TABLES: ReadonlyArray<FileOwningTable> = [
-	{ table: 'screenshot', keys: ['file', 'thumb'], ownedBy: ['userId'], timeSlot: true, reset: true },
-	{ table: 'camshots', keys: ['fileKey', 'thumbKey'], ownedBy: ['userId'], timeSlot: true, reset: true },
-	{ table: 'soundshots', keys: ['fileKey'], ownedBy: ['userId'], timeSlot: true, reset: true },
-	{ table: 'video', keys: ['file'], ownedBy: [], timeSlot: true, reset: true },
-	{ table: 'document', keys: ['storageKey', 'thumbKey'], ownedBy: [], timeSlot: false, reset: false },
-	{ table: 'inbox_email_attachment', keys: ['storageKey'], ownedBy: [], timeSlot: false, reset: false },
-	{ table: 'image_asset', keys: ['url', 'thumb'], ownedBy: [], timeSlot: false, reset: false }
+	{ table: 'screenshot', keys: ['file', 'thumb'], ownedBy: ['userId'], ownedByEmployee: [], timeSlot: true, reset: true },
+	// `userId` on camshots / soundshots is the uploader (an admin may upload for someone else); `uploadedById` is
+	// the member they belong to.
+	{ table: 'camshots', keys: ['fileKey', 'thumbKey'], ownedBy: [], ownedByEmployee: ['uploadedById'], timeSlot: true, reset: true },
+	{ table: 'soundshots', keys: ['fileKey'], ownedBy: [], ownedByEmployee: ['uploadedById'], timeSlot: true, reset: true },
+	{ table: 'video', keys: ['file'], ownedBy: [], ownedByEmployee: ['uploadedById'], timeSlot: true, reset: true },
+	{ table: 'document', keys: ['storageKey', 'thumbKey'], ownedBy: [], ownedByEmployee: [], timeSlot: false, reset: false },
+	{ table: 'inbox_email_attachment', keys: ['storageKey'], ownedBy: [], ownedByEmployee: [], timeSlot: false, reset: false },
+	{ table: 'image_asset', keys: ['url', 'thumb'], ownedBy: [], ownedByEmployee: [], timeSlot: false, reset: false }
 ];
 
 /** A file in storage that goes with a deleted row. */
@@ -40,11 +44,15 @@ export interface StoredFile {
 	key: string;
 }
 
-/** Whose files: a whole workspace, one user's own (in a workspace that stays), or a reset's organizations. */
+/**
+ * Whose files: a whole workspace, one user's own (in a workspace that stays), the captures of a reset's
+ * organizations, or everything of organizations that are deleted outright.
+ */
 export type StoredFileScope =
 	| { kind: 'workspace'; tenantId: ID }
 	| { kind: 'user'; userId: ID }
-	| { kind: 'reset'; tenantId: ID; organizationIds: ID[] };
+	| { kind: 'reset'; tenantId: ID; organizationIds: ID[] }
+	| { kind: 'organizations'; tenantId: ID; organizationIds: ID[] };
 
 /**
  * The stored files of a scope, read raw (no entity hooks, soft-deleted rows included). Absolute URLs (an
@@ -57,7 +65,7 @@ export async function collectStoredFiles(manager: EntityManager, scope: StoredFi
 
 	for (const owner of FILE_OWNING_TABLES) {
 		if (scope.kind === 'reset' && !owner.reset) continue;
-		if (scope.kind === 'user' && !owner.ownedBy.length && !owner.timeSlot) continue;
+		if (scope.kind === 'user' && !owner.ownedBy.length && !owner.ownedByEmployee.length && !owner.timeSlot) continue;
 
 		const metadata = manager.connection.entityMetadatas.find((candidate) => candidate.tablePath === owner.table);
 		if (!metadata) continue;
@@ -153,7 +161,7 @@ function scopeCondition(
 	if (scope.kind === 'workspace') {
 		return has('tenantId') ? { sql: `${driver.escape('tenantId')} = ${p(1)}`, parameters: [scope.tenantId] } : null;
 	}
-	if (scope.kind === 'reset') {
+	if (scope.kind === 'reset' || scope.kind === 'organizations') {
 		if (!has('tenantId') || !has('organizationId') || !scope.organizationIds.length) return null;
 		const list = scope.organizationIds.map((_, index) => p(index + 2)).join(', ');
 		return {
@@ -167,6 +175,14 @@ function scopeCondition(
 	for (const column of owner.ownedBy.filter(has)) {
 		parameters.push(scope.userId);
 		conditions.push(`${driver.escape(column)} = ${p(parameters.length)}`);
+	}
+	for (const column of owner.ownedByEmployee.filter(has)) {
+		parameters.push(scope.userId);
+		conditions.push(
+			`${driver.escape(column)} IN (SELECT e.${driver.escape('id')} FROM ${driver.escape('employee')} e WHERE e.${driver.escape(
+				'userId'
+			)} = ${p(parameters.length)})`
+		);
 	}
 	if (owner.timeSlot && has('timeSlotId')) {
 		// Captures are created against a time slot, often without `userId`: find them through the user's members.

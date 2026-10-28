@@ -14,6 +14,8 @@ export interface IAccountDeletionRequest extends IBaseEntityModel {
 	expiresAt: Date;
 	/** When the link was claimed by a confirm (a lease: a claim older than a few minutes that never completed can be taken again). */
 	usedAt?: Date | null;
+	/** Which confirm holds the claim (a random id). */
+	claimId?: string | null;
 	/** When the deletion finished. A completed request never works again. */
 	completedAt?: Date | null;
 	revokedAt?: Date | null;

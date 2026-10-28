@@ -81,13 +81,14 @@ describe('detachEmployeeReferences', () => {
 			table('mention', [fk('mentionedEmployeeId', 'employee')], [col('mentionedEmployeeId', false)]),
 			table('employee_notification', [fk('receiverEmployeeId', 'employee')], [col('receiverEmployeeId')]),
 			table('time_log', [fk('employeeId', 'employee')], [col('employeeId', false)]),
-			table('comment', [fk('employeeId', 'employee')], [col('employeeId')])
+			table('comment', [fk('employeeId', 'employee')], [col('employeeId')]),
+			table('resource_link', [fk('employeeId', 'employee')], [col('employeeId')])
 		]);
 
 		await detachEmployeeReferences(manager, ['e1', 'e2']);
 
-		expect(query).toHaveBeenCalledTimes(3);
-		// A comment's employeeId is its author, not its owner: the comment stays on the shared task.
+		expect(query).toHaveBeenCalledTimes(4);
+		// A comment's (or resource link's) employeeId is its author, not its owner: it stays on the shared task.
 		expect(query).toHaveBeenCalledWith('UPDATE "comment" SET "employeeId" = NULL WHERE "employeeId" IN ($1, $2)', [
 			'e1',
 			'e2'
