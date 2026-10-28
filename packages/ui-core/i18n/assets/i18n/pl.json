@@ -6539,6 +6539,7 @@
 			"UNNAMED": "Przestrzeń robocza",
 			"OUTCOME_WORKSPACE": "Jesteś jedynym członkiem: cała przestrzeń robocza i wszystkie jej dane zostaną usunięte.",
 			"OUTCOME_ACCOUNT": "Współdzielona z innymi członkami ({{ members }}): Twoje konto, profil i Twoje własne dane (wpisy czasu pracy, zrzuty ekranu, aktywność) zostaną usunięte. Treści utworzone przez Ciebie dla przestrzeni roboczej pozostaną w niej, bez Twojego nazwiska.",
+			"OUTCOME_ACCOUNT_LAST": "You are its only member but not an administrator: your account, profile and your own records (time logs, screenshots, activity) will be deleted. The workspace and its other data stay.",
 			"SOLE_ADMIN": "Jesteś jedynym administratorem tej przestrzeni roboczej. Po Twoim odejściu pozostali członkowie nie będą mieli administratora.",
 			"KEPT": "Zachowujemy: zapis audytowy tego żądania (bez nazwiska, z zahaszowanym adresem), dokumenty rozliczeniowe, które musimy przechowywać zgodnie z prawem, oraz zaszyfrowane kopie zapasowe do czasu ich nadpisania (14 dni).",
 			"UNDERSTAND": "Rozumiem, że tej operacji nie można cofnąć.",
@@ -6550,7 +6551,7 @@
 			"FINISH": "Gotowe"
 		},
 		"DANGER_ZONE_HELP": {
-			"DELETE_ACCOUNT": "Usuń konto: trwale usuwa Twoje konto w tej przestrzeni roboczej, Twój profil, dane logowania i Twoje własne dane (wpisy czasu pracy, zrzuty ekranu, aktywność). Treści utworzone przez Ciebie dla przestrzeni roboczej pozostaną w niej, bez Twojego nazwiska. Jeśli jesteś jej jedynym członkiem, usuwana jest również cała przestrzeń robocza i wszystkie jej dane. Następnie otrzymasz wiadomość e-mail z potwierdzeniem.",
+			"DELETE_ACCOUNT": "Usuń konto: trwale usuwa Twoje konto w tej przestrzeni roboczej, Twój profil, dane logowania i Twoje własne dane (wpisy czasu pracy, zrzuty ekranu, aktywność). Treści utworzone przez Ciebie dla przestrzeni roboczej pozostaną w niej, bez Twojego nazwiska. Jeśli jesteś jej jedynym członkiem i administratorem, usuwana jest również cała przestrzeń robocza i wszystkie jej dane. Następnie otrzymasz wiadomość e-mail z potwierdzeniem.",
 			"DELETE_ALL_DATA": "Usuń wszystkie dane: usuwa wszystkie dane organizacji w tej przestrzeni roboczej, do których należysz (pracownicy, projekty, zadania, śledzenie czasu, faktury, ...), i zachowuje Twoje konto.",
 			"BY_EMAIL": "Masz konta w kilku przestrzeniach roboczych lub nie możesz się zalogować?",
 			"BY_EMAIL_LINK": "Usuń je wszystkie przez link e-mail"

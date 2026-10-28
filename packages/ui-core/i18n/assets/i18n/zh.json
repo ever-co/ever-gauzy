@@ -6540,6 +6540,7 @@
 			"UNNAMED": "工作区",
 			"OUTCOME_WORKSPACE": "您是唯一的成员：整个工作区及其所有数据都将被删除。",
 			"OUTCOME_ACCOUNT": "与其他 {{ members }} 名成员共享：您的账户、个人资料以及您自己的记录（工时记录、屏幕截图、活动）将被删除。您为工作区创建的内容将保留在其中，但不再显示您的姓名。",
+			"OUTCOME_ACCOUNT_LAST": "You are its only member but not an administrator: your account, profile and your own records (time logs, screenshots, activity) will be deleted. The workspace and its other data stay.",
 			"SOLE_ADMIN": "您是此工作区唯一的管理员。您离开后，其他成员将没有管理员。",
 			"KEPT": "保留的内容：此请求的审计记录（不含姓名，地址经过哈希处理）、依法必须保留的账单记录，以及在被覆盖之前（14 天）保留的加密备份。",
 			"UNDERSTAND": "我了解此操作无法撤销。",
@@ -6551,7 +6552,7 @@
 			"FINISH": "完成"
 		},
 		"DANGER_ZONE_HELP": {
-			"DELETE_ACCOUNT": "删除账户：永久删除您在此工作区中的账户、个人资料、登录数据以及您自己的记录（工时记录、屏幕截图、活动）。您为工作区创建的内容将保留在其中，但不再显示您的姓名。如果您是唯一的成员，整个工作区及其所有数据也会被删除。随后您将收到一封确认邮件。",
+			"DELETE_ACCOUNT": "删除账户：永久删除您在此工作区中的账户、个人资料、登录数据以及您自己的记录（工时记录、屏幕截图、活动）。您为工作区创建的内容将保留在其中，但不再显示您的姓名。如果您是唯一的成员且是管理员，整个工作区及其所有数据也会被删除。随后您将收到一封确认邮件。",
 			"DELETE_ALL_DATA": "删除所有数据：删除您在此工作区中所属组织的所有数据（员工、项目、任务、时间跟踪、发票等），并保留您的账户。",
 			"BY_EMAIL": "在多个工作区中有账户，或无法登录？",
 			"BY_EMAIL_LINK": "通过电子邮件链接全部删除"

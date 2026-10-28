@@ -92,7 +92,9 @@ export async function lockRowForUpdate(manager: EntityManager, table: string, id
 	const driver = manager.connection.driver;
 	const type = driver.options.type;
 	if (type !== 'postgres' && type !== 'mysql') {
-		const rows = await manager.query(`SELECT 1 FROM ${driver.escape(table)} WHERE ${driver.escape('id')} = ?`, [id]);
+		const rows = await manager.query(`SELECT 1 FROM ${driver.escape(table)} WHERE ${driver.escape('id')} = ?`, [
+			id
+		]);
 		return rows.length > 0;
 	}
 	const placeholder = type === 'postgres' ? '$1' : '?';
@@ -133,38 +135,100 @@ export function sqlPlaceholder(manager: EntityManager, n: number): string {
 	return manager.connection.driver.options.type === 'postgres' ? `$${n}` : '?';
 }
 
+/** The columns of every table in the connected database, read once per data source (null where unknown). */
+const databaseColumnsCache = new WeakMap<object, Promise<Map<string, Set<string>> | null>>();
+const warnedMissing = new Set<string>();
+
+async function databaseColumns(manager: EntityManager): Promise<Map<string, Set<string>> | null> {
+	const key = manager.connection;
+	let columns = databaseColumnsCache.get(key);
+	if (!columns) {
+		columns = readDatabaseColumns(manager).catch(() => null);
+		databaseColumnsCache.set(key, columns);
+	}
+	return await columns;
+}
+
+async function readDatabaseColumns(manager: EntityManager): Promise<Map<string, Set<string>> | null> {
+	const type = manager.connection.driver.options.type;
+	const schema =
+		type === 'postgres' ? 'current_schema()' : type === 'mysql' || type === 'mariadb' ? 'DATABASE()' : null;
+	if (!schema) {
+		return null; // SQLite: a failed statement does not abort its transaction, see queryUnlessSchemaLacks.
+	}
+	const rows: Array<Record<string, string>> = await manager.query(
+		`SELECT table_name AS t, column_name AS c FROM information_schema.columns WHERE table_schema = ${schema}`
+	);
+	const columns = new Map<string, Set<string>>();
+	for (const row of rows) {
+		const table = row['t'] ?? row['T'];
+		const column = row['c'] ?? row['C'];
+		if (!columns.has(table)) columns.set(table, new Set());
+		columns.get(table).add(column);
+	}
+	return columns;
+}
+
 /**
  * Runs one statement of a sweep over every entity's table, or skips it (returning null) when the database has
  * no such table or column. The sweeps are built from the entity metadata, plugins included, and a deployment's
  * schema can lag behind it (a plugin table never migrated, an entity column no migration added): without this,
- * one missing column would fail every user deletion, the admin's `DELETE /user/:id` included. Any other error
- * still fails. On PostgreSQL a failed statement aborts the whole transaction, so inside one the statement runs
- * under a savepoint.
+ * one missing column would fail every user deletion, the admin's `DELETE /user/:id` included.
+ *
+ * The database's columns are read once (PostgreSQL / MySQL `information_schema`), so a statement on columns that
+ * exist runs as it is, with no savepoint per statement. Where they cannot be read (SQLite), a "no such table /
+ * column" failure is skipped instead; SQLite does not abort the transaction on it. Any other error still fails.
+ *
+ * @param target The table and the columns the statement reads or writes.
  */
 export async function queryUnlessSchemaLacks<T = any>(
 	manager: EntityManager,
 	sql: string,
-	parameters: unknown[]
+	parameters: unknown[],
+	target: { table: string; columns: string[] }
 ): Promise<T | null> {
-	const savepoint = manager.connection.driver.options.type === 'postgres' && !!manager.queryRunner?.isTransactionActive;
-	if (savepoint) await manager.query('SAVEPOINT user_deletion_statement');
+	const columns = await databaseColumns(manager);
+	if (columns) {
+		const table = columns.get(target.table);
+		const missing = !table ? null : target.columns.find((column) => !table.has(column));
+		if (!table || missing) {
+			warnMissingOnce(target.table, missing ?? null);
+			return null;
+		}
+		return await manager.query(sql, parameters);
+	}
 	try {
-		const result = await manager.query(sql, parameters);
-		if (savepoint) await manager.query('RELEASE SAVEPOINT user_deletion_statement');
-		return result;
+		return await manager.query(sql, parameters);
 	} catch (error) {
 		if (!isMissingTableOrColumn(error)) {
 			throw error;
 		}
-		if (savepoint) await manager.query('ROLLBACK TO SAVEPOINT user_deletion_statement');
-		schemaDriftLogger.warn(`Skipped a statement on a table or column this database does not have: ${(error as Error)?.message}`);
+		warnMissingOnce(target.table, null);
 		return null;
 	}
 }
 
+function warnMissingOnce(table: string, column: string | null): void {
+	const name = column ? `${table}.${column}` : table;
+	if (!warnedMissing.has(name)) {
+		warnedMissing.add(name);
+		schemaDriftLogger.warn(`The database has no ${column ? 'column' : 'table'} ${name}; user deletion skips it.`);
+	}
+}
+
+/** Forgets the columns read for a data source (tests; a schema changed at runtime). */
+export function forgetDatabaseColumns(manager: EntityManager): void {
+	databaseColumnsCache.delete(manager.connection);
+}
+
 /** PostgreSQL `undefined_table` / `undefined_column`, MySQL `ER_NO_SUCH_TABLE` / `ER_BAD_FIELD_ERROR`, SQLite's. */
 export function isMissingTableOrColumn(error: unknown): boolean {
-	const failure = error as { code?: unknown; errno?: unknown; message?: unknown; driverError?: { code?: unknown; errno?: unknown } };
+	const failure = error as {
+		code?: unknown;
+		errno?: unknown;
+		message?: unknown;
+		driverError?: { code?: unknown; errno?: unknown };
+	};
 	const code = failure?.driverError?.code ?? failure?.code;
 	const errno = failure?.driverError?.errno ?? failure?.errno;
 	return (
@@ -203,13 +267,63 @@ async function detachReferences(manager: EntityManager, target: 'user' | 'employ
 			}
 			const table = driver.escape(metadata.tablePath);
 			const name = driver.escape(column);
-			const sql = nullable
-				? `UPDATE ${table} SET ${name} = NULL WHERE ${name} IN (${inList})`
-				: `DELETE FROM ${table} WHERE ${name} IN (${inList})`;
-			changed += affectedRows(await queryUnlessSchemaLacks(manager, sql, ids));
+			const columnTarget = { table: metadata.tablePath, columns: [column] };
+			if (nullable) {
+				const sql = `UPDATE ${table} SET ${name} = NULL WHERE ${name} IN (${inList})`;
+				changed += affectedRows(await queryUnlessSchemaLacks(manager, sql, ids, columnTarget));
+				continue;
+			}
+			// A required reference that blocks the delete (`key_result.ownerId`): these rows go, and so must
+			// anything else's optional, non-cascading reference to them first (`goal.alignedKeyResultId`), or the
+			// DELETE fails and the whole deletion rolls back.
+			const rows: Array<{ id: ID }> =
+				(await queryUnlessSchemaLacks(
+					manager,
+					`SELECT ${driver.escape('id')} AS ${driver.escape('id')} FROM ${table} WHERE ${name} IN (${inList})`,
+					ids,
+					{ table: metadata.tablePath, columns: ['id', column] }
+				)) ?? [];
+			if (!rows.length) {
+				continue;
+			}
+			await clearBlockingReferences(
+				manager,
+				metadata.tablePath,
+				rows.map((row) => row.id)
+			);
+			changed += affectedRows(
+				await queryUnlessSchemaLacks(
+					manager,
+					`DELETE FROM ${table} WHERE ${name} IN (${inList})`,
+					ids,
+					columnTarget
+				)
+			);
 		}
 	}
 	return changed;
+}
+
+/** Clears the optional, non-cascading references other tables hold to rows of `table` that are about to go. */
+async function clearBlockingReferences(manager: EntityManager, table: string, ids: ID[]): Promise<void> {
+	const driver = manager.connection.driver;
+	const inList = ids.map((_, index) => sqlPlaceholder(manager, index + 1)).join(', ');
+	for (const metadata of manager.connection.entityMetadatas) {
+		if (metadata.tableType === 'view') continue;
+		for (const foreignKey of metadata.foreignKeys) {
+			const [column] = foreignKey.columnNames;
+			if (foreignKey.columnNames.length !== 1 || foreignKey.referencedTablePath !== table) continue;
+			if (foreignKey.onDelete !== 'NO ACTION' && foreignKey.onDelete !== 'RESTRICT') continue;
+			if (!metadata.columns.find((candidate) => candidate.databaseName === column)?.isNullable) continue;
+			const name = driver.escape(column);
+			await queryUnlessSchemaLacks(
+				manager,
+				`UPDATE ${driver.escape(metadata.tablePath)} SET ${name} = NULL WHERE ${name} IN (${inList})`,
+				ids,
+				{ table: metadata.tablePath, columns: [column] }
+			);
+		}
+	}
 }
 
 /** Rows changed by a raw UPDATE / DELETE, as each driver reports it (0 when it does not). */

@@ -6540,6 +6540,7 @@
 			"UNNAMED": "Spazio di lavoro",
 			"OUTCOME_WORKSPACE": "Sei l'unico membro: verranno eliminati l'intero spazio di lavoro e tutti i suoi dati.",
 			"OUTCOME_ACCOUNT": "Condiviso con altri membri ({{ members }}): verranno eliminati il tuo account, il tuo profilo e i tuoi dati personali (registrazioni del tempo, screenshot, attività). I contenuti che hai creato per lo spazio di lavoro restano lì, senza il tuo nome.",
+			"OUTCOME_ACCOUNT_LAST": "You are its only member but not an administrator: your account, profile and your own records (time logs, screenshots, activity) will be deleted. The workspace and its other data stay.",
 			"SOLE_ADMIN": "Sei l'unico amministratore di questo spazio di lavoro. Dopo la tua uscita gli altri membri non avranno più un amministratore.",
 			"KEPT": "Conservati: un registro di controllo di questa richiesta (senza nome, con l'indirizzo in forma di hash), i dati di fatturazione che la legge ci impone di conservare e i backup crittografati fino alla loro sovrascrittura (14 giorni).",
 			"UNDERSTAND": "Ho capito che questa operazione non può essere annullata.",
@@ -6551,7 +6552,7 @@
 			"FINISH": "Fine"
 		},
 		"DANGER_ZONE_HELP": {
-			"DELETE_ACCOUNT": "Elimina account: elimina definitivamente il tuo account in questo spazio di lavoro, il tuo profilo, i dati di accesso e i tuoi dati personali (registrazioni del tempo, screenshot, attività). I contenuti che hai creato per lo spazio di lavoro restano lì, senza il tuo nome. Se ne sei l'unico membro, vengono eliminati anche l'intero spazio di lavoro e tutti i suoi dati. Riceverai poi un'email di conferma.",
+			"DELETE_ACCOUNT": "Elimina account: elimina definitivamente il tuo account in questo spazio di lavoro, il tuo profilo, i dati di accesso e i tuoi dati personali (registrazioni del tempo, screenshot, attività). I contenuti che hai creato per lo spazio di lavoro restano lì, senza il tuo nome. Se ne sei l'unico membro e un amministratore, vengono eliminati anche l'intero spazio di lavoro e tutti i suoi dati. Riceverai poi un'email di conferma.",
 			"DELETE_ALL_DATA": "Elimina tutti i dati: elimina tutti i dati delle organizzazioni a cui appartieni in questo spazio di lavoro (dipendenti, progetti, attività, monitoraggio del tempo, fatture, ...) e mantiene il tuo account.",
 			"BY_EMAIL": "Hai account in più spazi di lavoro o non riesci ad accedere?",
 			"BY_EMAIL_LINK": "Eliminali tutti tramite un link via email"

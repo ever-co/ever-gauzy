@@ -142,6 +142,13 @@ export class PostHogService {
 		router.events.subscribe((event) => {
 			if (event instanceof NavigationStart) {
 				routeStartTime = Date.now();
+				// An emailed link opened in a tab already running the app is a same-document navigation: no page
+				// load, so the check made at initialization never sees it. Stop recording for good before the
+				// token-bearing page renders (`startSessionRecording` then refuses too).
+				if (URL_SECRET.test(event.url) || URL_SECRET.test(window.location?.href ?? '')) {
+					this.loadedWithUrlSecret = true;
+					posthog.stopSessionRecording();
+				}
 			}
 			if (event instanceof NavigationEnd) {
 				const loadTime = Date.now() - routeStartTime;

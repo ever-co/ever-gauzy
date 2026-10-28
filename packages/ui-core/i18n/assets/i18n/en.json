@@ -7214,6 +7214,7 @@
 			"UNNAMED": "Workspace",
 			"OUTCOME_WORKSPACE": "You are the only member: the whole workspace and all of its data will be deleted.",
 			"OUTCOME_ACCOUNT": "Shared with {{ members }} other member(s): your account, profile and your own records (time logs, screenshots, activity) will be deleted. Content you created for the workspace stays with it, without your name.",
+			"OUTCOME_ACCOUNT_LAST": "You are its only member but not an administrator: your account, profile and your own records (time logs, screenshots, activity) will be deleted. The workspace and its other data stay.",
 			"SOLE_ADMIN": "You are this workspace's only admin. Its other members will have no admin after you leave.",
 			"KEPT": "Kept: an audit record of this request (no name, a hashed address), billing records we must keep by law, and encrypted backups until they are overwritten (14 days).",
 			"UNDERSTAND": "I understand this cannot be undone.",

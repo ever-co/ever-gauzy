@@ -6540,6 +6540,7 @@
 			"UNNAMED": "Espaço de trabalho",
 			"OUTCOME_WORKSPACE": "Você é o único membro: todo o espaço de trabalho e todos os seus dados serão excluídos.",
 			"OUTCOME_ACCOUNT": "Compartilhado com outros membros ({{ members }}): sua conta, seu perfil e seus próprios registros (registros de horas, capturas de tela, atividade) serão excluídos. O conteúdo que você criou para o espaço de trabalho permanece nele, sem o seu nome.",
+			"OUTCOME_ACCOUNT_LAST": "You are its only member but not an administrator: your account, profile and your own records (time logs, screenshots, activity) will be deleted. The workspace and its other data stay.",
 			"SOLE_ADMIN": "Você é o único administrador deste espaço de trabalho. Os demais membros ficarão sem administrador depois que você sair.",
 			"KEPT": "Mantidos: um registro de auditoria desta solicitação (sem nome, com o endereço em hash), os registros de cobrança que somos obrigados por lei a manter e os backups criptografados até serem sobrescritos (14 dias).",
 			"UNDERSTAND": "Entendo que isso não pode ser desfeito.",
@@ -6551,7 +6552,7 @@
 			"FINISH": "Concluir"
 		},
 		"DANGER_ZONE_HELP": {
-			"DELETE_ACCOUNT": "Excluir conta: exclui permanentemente sua conta neste espaço de trabalho, seu perfil, seus dados de login e seus próprios registros (registros de horas, capturas de tela, atividade). O conteúdo que você criou para o espaço de trabalho permanece nele, sem o seu nome. Se você for o único membro, todo o espaço de trabalho e todos os seus dados também serão excluídos. Em seguida, você receberá um email de confirmação.",
+			"DELETE_ACCOUNT": "Excluir conta: exclui permanentemente sua conta neste espaço de trabalho, seu perfil, seus dados de login e seus próprios registros (registros de horas, capturas de tela, atividade). O conteúdo que você criou para o espaço de trabalho permanece nele, sem o seu nome. Se você for o único membro e um administrador, todo o espaço de trabalho e todos os seus dados também serão excluídos. Em seguida, você receberá um email de confirmação.",
 			"DELETE_ALL_DATA": "Excluir todos os dados: exclui todos os dados das organizações às quais você pertence neste espaço de trabalho (funcionários, projetos, tarefas, controle de horas, faturas, ...) e mantém sua conta.",
 			"BY_EMAIL": "Tem contas em vários espaços de trabalho ou não consegue fazer login?",
 			"BY_EMAIL_LINK": "Exclua todas por um link enviado por email"

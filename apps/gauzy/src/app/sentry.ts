@@ -16,6 +16,20 @@ export function initializeSentry(): Client<ClientOptions<BaseTransportOptions>> 
 	const loadedWithUrlSecret =
 		typeof window !== 'undefined' && /[?&#](token|code)=/i.test(window.location?.href ?? '');
 
+	const replay = loadedWithUrlSecret ? null : Sentry.replayIntegration();
+	// An emailed link opened in a tab already running the app is a same-document navigation (hash routing): no page
+	// load, so the check above never sees it. Stop Replay for good the moment the URL carries a secret.
+	if (replay && typeof window !== 'undefined') {
+		const stopOnSecret = () => {
+			if (/[?&#](token|code)=/i.test(window.location?.href ?? '')) {
+				// `flush: false`: the pending segment may already hold the new URL, so it must not be sent either.
+				void replay.stop({ flush: false });
+			}
+		};
+		window.addEventListener('hashchange', stopOnSecret);
+		window.addEventListener('popstate', stopOnSecret);
+	}
+
 	return Sentry.init({
 		// Sentry 11 replaced `sendDefaultPii` with `dataCollection`, whose defaults now send cookies, request and
 		// response bodies, user info and more. This is the migration guide's "keep the v10 default" baseline, so the
@@ -63,7 +77,7 @@ export function initializeSentry(): Client<ClientOptions<BaseTransportOptions>> 
 			Sentry.browserTracingIntegration(),
 			// Registers the Replay integration,
 			// which automatically captures Session Replays (not when the page loaded with a token in its URL, above)
-			...(loadedWithUrlSecret ? [] : [Sentry.replayIntegration()])
+			...(replay ? [replay] : [])
 		],
 
 		// Set `tracePropagationTargets` to control for which URLs distributed tracing should be enabled

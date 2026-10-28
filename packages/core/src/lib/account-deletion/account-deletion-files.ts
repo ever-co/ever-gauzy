@@ -23,17 +23,64 @@ interface FileOwningTable {
 	timeSlot: boolean;
 	/** Whether a factory reset ("Delete all data") deletes these rows (time-tracking captures). */
 	reset: boolean;
+	/** The column naming the storage provider of the keys, when it is not `storageProvider`. */
+	providerColumn?: string;
 }
 
 export const FILE_OWNING_TABLES: ReadonlyArray<FileOwningTable> = [
-	{ table: 'screenshot', keys: ['file', 'thumb'], ownedBy: ['userId'], ownedByEmployee: [], timeSlot: true, reset: true },
+	{
+		table: 'screenshot',
+		keys: ['file', 'thumb'],
+		ownedBy: ['userId'],
+		ownedByEmployee: [],
+		timeSlot: true,
+		reset: true
+	},
 	// `userId` on camshots / soundshots is the uploader (an admin may upload for someone else); `uploadedById` is
 	// the member they belong to.
-	{ table: 'camshots', keys: ['fileKey', 'thumbKey'], ownedBy: [], ownedByEmployee: ['uploadedById'], timeSlot: true, reset: true },
-	{ table: 'soundshots', keys: ['fileKey'], ownedBy: [], ownedByEmployee: ['uploadedById'], timeSlot: true, reset: true },
+	{
+		table: 'camshots',
+		keys: ['fileKey', 'thumbKey'],
+		ownedBy: [],
+		ownedByEmployee: ['uploadedById'],
+		timeSlot: true,
+		reset: true
+	},
+	{
+		table: 'soundshots',
+		keys: ['fileKey'],
+		ownedBy: [],
+		ownedByEmployee: ['uploadedById'],
+		timeSlot: true,
+		reset: true
+	},
 	{ table: 'video', keys: ['file'], ownedBy: [], ownedByEmployee: ['uploadedById'], timeSlot: true, reset: true },
-	{ table: 'document', keys: ['storageKey', 'thumbKey'], ownedBy: [], ownedByEmployee: [], timeSlot: false, reset: false },
-	{ table: 'inbox_email_attachment', keys: ['storageKey'], ownedBy: [], ownedByEmployee: [], timeSlot: false, reset: false },
+	{
+		table: 'document',
+		keys: ['storageKey', 'thumbKey'],
+		ownedBy: [],
+		ownedByEmployee: [],
+		timeSlot: false,
+		reset: false
+	},
+	{
+		table: 'inbox_email_attachment',
+		keys: ['storageKey'],
+		ownedBy: [],
+		ownedByEmployee: [],
+		timeSlot: false,
+		reset: false
+	},
+	// The raw message (full MIME / JSON) of every received email; keys are per tenant (`inbox/<tenant>/messages/…`).
+	{
+		table: 'inbox_email',
+		keys: ['rawStorageKey'],
+		ownedBy: [],
+		ownedByEmployee: [],
+		timeSlot: false,
+		reset: false,
+		providerColumn: 'rawStorageProvider'
+	},
 	{ table: 'image_asset', keys: ['url', 'thumb'], ownedBy: [], ownedByEmployee: [], timeSlot: false, reset: false }
 ];
 
@@ -45,8 +92,25 @@ export const FILE_OWNING_TABLES: ReadonlyArray<FileOwningTable> = [
  * from removing another tenant's file; a key outside it is left in storage.
  */
 export function isKeyOfTenant(key: string, tenantId: ID | null | undefined): boolean {
-	return !!key && !!tenantId && key.split(/[\\/]/).includes(tenantId);
+	if (!key || !tenantId) return false;
+	const segments = key.split(/[\\/]/);
+	// `..` / `.` / empty segments: the local provider normalizes the path, so `uploads/x/<own>/../../<other>/…`
+	// would name another tenant's file.
+	if (segments.some((segment) => segment === '' || segment === '.' || segment === '..')) return false;
+	const position = TENANT_SEGMENT[segments[0]];
+	return position !== undefined && segments[position] === tenantId;
 }
+
+/** Where each upload path puts the tenant id, by its first segment. */
+const TENANT_SEGMENT: Readonly<Record<string, number>> = {
+	uploads: 2, // uploads/<folder>/<tenant>/…
+	documents: 1, // documents/<tenant>/<organization>/…
+	inbox: 1, // inbox/<tenant>/…
+	screenshots: 4, // screenshots/YYYY/MM/DD/<tenant>/<member>/…
+	camshots: 4,
+	soundshots: 4,
+	videos: 4
+};
 
 /** The files whose keys lie under the tenant's directory (see {@link isKeyOfTenant}). */
 export function onlyFilesOfTenant(files: StoredFile[], tenantId: ID | null | undefined): StoredFile[] {
@@ -81,7 +145,8 @@ export async function collectStoredFiles(manager: EntityManager, scope: StoredFi
 
 	for (const owner of FILE_OWNING_TABLES) {
 		if (scope.kind === 'reset' && !owner.reset) continue;
-		if (scope.kind === 'user' && !owner.ownedBy.length && !owner.ownedByEmployee.length && !owner.timeSlot) continue;
+		if (scope.kind === 'user' && !owner.ownedBy.length && !owner.ownedByEmployee.length && !owner.timeSlot)
+			continue;
 
 		const metadata = manager.connection.entityMetadatas.find((candidate) => candidate.tablePath === owner.table);
 		if (!metadata) continue;
@@ -92,14 +157,19 @@ export async function collectStoredFiles(manager: EntityManager, scope: StoredFi
 		const where = scopeCondition(manager, owner, scope, has);
 		if (!where) continue;
 
-		const select = [...keys.map((key) => driver.escape(key)), has('storageProvider') ? driver.escape('storageProvider') : 'NULL'];
+		const providerColumn = owner.providerColumn ?? 'storageProvider';
+		const select = [
+			...keys.map((key) => driver.escape(key)),
+			has(providerColumn) ? driver.escape(providerColumn) : 'NULL'
+		];
 		const rows: Array<Record<string, string>> =
 			(await queryUnlessSchemaLacks(
 				manager,
 				`SELECT ${select.map((column, index) => `${column} AS ${driver.escape(`c${index}`)}`).join(', ')} FROM ${driver.escape(
 					owner.table
 				)} WHERE ${where.sql}`,
-				where.parameters
+				where.parameters,
+				{ table: owner.table, columns: [...keys, ...(has(providerColumn) ? [providerColumn] : [])] }
 			)) ?? [];
 		for (const row of rows) {
 			const provider = row[`c${keys.length}`] as FileStorageProvider;
@@ -182,8 +252,14 @@ function scopeCondition(
 	if (scope.kind === 'reset' || scope.kind === 'organizations') {
 		if (!has('tenantId') || !has('organizationId') || !scope.organizationIds.length) return null;
 		const list = scope.organizationIds.map((_, index) => p(index + 2)).join(', ');
+		// A reset deletes the organizations' time slots, and only the captures attached to one go with them (the
+		// cascade); a capture without a time slot stays, and so must its file.
+		const attached =
+			scope.kind === 'reset' && owner.timeSlot && has('timeSlotId')
+				? ` AND ${driver.escape('timeSlotId')} IS NOT NULL`
+				: '';
 		return {
-			sql: `${driver.escape('tenantId')} = ${p(1)} AND ${driver.escape('organizationId')} IN (${list})`,
+			sql: `${driver.escape('tenantId')} = ${p(1)} AND ${driver.escape('organizationId')} IN (${list})${attached}`,
 			parameters: [scope.tenantId, ...scope.organizationIds]
 		};
 	}
@@ -220,7 +296,11 @@ function scopeCondition(
  * Drops keys that an `image_asset` row outside the scope still uses: seeded avatars, for one, are separate
  * rows over the same file. Other tables' keys are unique per upload.
  */
-async function withoutSharedKeys(manager: EntityManager, files: StoredFile[], scope: StoredFileScope): Promise<StoredFile[]> {
+async function withoutSharedKeys(
+	manager: EntityManager,
+	files: StoredFile[],
+	scope: StoredFileScope
+): Promise<StoredFile[]> {
 	const images = files.filter((file) => file.table === 'image_asset');
 	if (!images.length) return files;
 
@@ -228,12 +308,20 @@ async function withoutSharedKeys(manager: EntityManager, files: StoredFile[], sc
 	const p = (n: number) => sqlPlaceholder(manager, n);
 	const shared = new Set<string>();
 	for (const { key } of unique(images)) {
-		const outside =
-			scope.kind === 'user'
-				? '' // A user's avatar is checked separately (isImageAssetShared); here any other row counts.
-				: ` AND (${driver.escape('tenantId')} IS NULL OR ${driver.escape('tenantId')} <> ${p(3)})`;
 		const parameters: unknown[] = [key, key];
-		if (scope.kind !== 'user') parameters.push(scope.tenantId);
+		let outside = ''; // A user's avatar is checked separately (isImageAssetShared); here any other row counts.
+		if (scope.kind !== 'user') {
+			parameters.push(scope.tenantId);
+			outside = ` AND (${driver.escape('tenantId')} IS NULL OR ${driver.escape('tenantId')} <> ${p(3)}`;
+			if (scope.kind === 'reset' || scope.kind === 'organizations') {
+				// Deleting some organizations: a row of another organization of the tenant, or a tenant-wide one
+				// (no organization), still uses the file too.
+				const list = scope.organizationIds.map((_, index) => p(index + 4)).join(', ');
+				parameters.push(...scope.organizationIds);
+				outside += ` OR ${driver.escape('organizationId')} IS NULL OR ${driver.escape('organizationId')} NOT IN (${list})`;
+			}
+			outside += ')';
+		}
 		const rows = await manager.query(
 			`SELECT 1 FROM ${driver.escape('image_asset')} WHERE (${driver.escape('url')} = ${p(1)} OR ${driver.escape(
 				'thumb'
@@ -261,13 +349,17 @@ export async function isImageAssetShared(manager: EntityManager, imageId: ID, us
 				metadata.tablePath === 'user'
 					? ` AND ${driver.escape('id')} <> ${p(2)}`
 					: metadata.tablePath === 'employee'
-					? ` AND (${driver.escape('userId')} IS NULL OR ${driver.escape('userId')} <> ${p(2)})`
-					: '';
+						? ` AND (${driver.escape('userId')} IS NULL OR ${driver.escape('userId')} <> ${p(2)})`
+						: '';
 			const parameters = own ? [imageId, userId] : [imageId];
 			const rows = await queryUnlessSchemaLacks(
 				manager,
 				`SELECT 1 FROM ${driver.escape(metadata.tablePath)} WHERE ${column} = ${p(1)}${own}`,
-				parameters
+				parameters,
+				{
+					table: metadata.tablePath,
+					columns: [foreignKey.columnNames[0], ...(metadata.tablePath === 'employee' ? ['userId'] : [])]
+				}
 			);
 			if (rows?.length) return true;
 		}
@@ -289,7 +381,9 @@ export async function deleteUnusedRows(manager: EntityManager, table: string, id
 		metadata.tableType === 'view'
 			? []
 			: metadata.foreignKeys
-					.filter((foreignKey) => foreignKey.referencedTablePath === table && foreignKey.columnNames.length === 1)
+					.filter(
+						(foreignKey) => foreignKey.referencedTablePath === table && foreignKey.columnNames.length === 1
+					)
 					.map((foreignKey) => ({ table: metadata.tablePath, column: foreignKey.columnNames[0] }))
 	);
 	let deleted = 0;
@@ -299,9 +393,10 @@ export async function deleteUnusedRows(manager: EntityManager, table: string, id
 			const rows = await queryUnlessSchemaLacks(
 				manager,
 				`SELECT 1 FROM ${driver.escape(reference.table)} WHERE ${driver.escape(reference.column)} = ${p(1)}`,
-				[id]
+				[id],
+				{ table: reference.table, columns: [reference.column] }
 			);
-			if (rows.length) {
+			if (rows?.length) {
 				used = true;
 				break;
 			}

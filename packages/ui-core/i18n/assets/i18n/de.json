@@ -6536,6 +6536,7 @@
 			"UNNAMED": "Arbeitsbereich",
 			"OUTCOME_WORKSPACE": "Sie sind das einzige Mitglied: Der gesamte Arbeitsbereich und alle seine Daten werden gelöscht.",
 			"OUTCOME_ACCOUNT": "Mit anderen Mitgliedern geteilt ({{ members }}): Ihr Konto, Ihr Profil und Ihre eigenen Einträge (Zeiterfassungen, Screenshots, Aktivität) werden gelöscht. Inhalte, die Sie für den Arbeitsbereich erstellt haben, bleiben dort erhalten, ohne Ihren Namen.",
+			"OUTCOME_ACCOUNT_LAST": "You are its only member but not an administrator: your account, profile and your own records (time logs, screenshots, activity) will be deleted. The workspace and its other data stay.",
 			"SOLE_ADMIN": "Sie sind der einzige Administrator dieses Arbeitsbereichs. Nach Ihrem Weggang haben die übrigen Mitglieder keinen Administrator mehr.",
 			"KEPT": "Aufbewahrt werden: ein Prüfprotokoll dieser Anfrage (ohne Namen, mit gehashter Adresse), Abrechnungsunterlagen, die wir gesetzlich aufbewahren müssen, und verschlüsselte Backups, bis sie überschrieben werden (14 Tage).",
 			"UNDERSTAND": "Ich verstehe, dass dies nicht rückgängig gemacht werden kann.",
@@ -6547,7 +6548,7 @@
 			"FINISH": "Fertig"
 		},
 		"DANGER_ZONE_HELP": {
-			"DELETE_ACCOUNT": "Konto löschen: Löscht endgültig Ihr Konto in diesem Arbeitsbereich, Ihr Profil, Ihre Anmeldedaten und Ihre eigenen Einträge (Zeiterfassungen, Screenshots, Aktivität). Inhalte, die Sie für den Arbeitsbereich erstellt haben, bleiben dort erhalten, ohne Ihren Namen. Wenn Sie das einzige Mitglied sind, werden auch der gesamte Arbeitsbereich und alle seine Daten gelöscht. Anschließend erhalten Sie eine Bestätigungs-E-Mail.",
+			"DELETE_ACCOUNT": "Konto löschen: Löscht endgültig Ihr Konto in diesem Arbeitsbereich, Ihr Profil, Ihre Anmeldedaten und Ihre eigenen Einträge (Zeiterfassungen, Screenshots, Aktivität). Inhalte, die Sie für den Arbeitsbereich erstellt haben, bleiben dort erhalten, ohne Ihren Namen. Wenn Sie das einzige Mitglied und ein Administrator sind, werden auch der gesamte Arbeitsbereich und alle seine Daten gelöscht. Anschließend erhalten Sie eine Bestätigungs-E-Mail.",
 			"DELETE_ALL_DATA": "Alle Daten löschen: Löscht alle Daten der Organisationen in diesem Arbeitsbereich, denen Sie angehören (Mitarbeiter, Projekte, Aufgaben, Zeiterfassung, Rechnungen, ...), und behält Ihr Konto.",
 			"BY_EMAIL": "Sie haben Konten in mehreren Arbeitsbereichen oder können sich nicht anmelden?",
 			"BY_EMAIL_LINK": "Alle per E-Mail-Link löschen"

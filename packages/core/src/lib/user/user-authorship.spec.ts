@@ -5,9 +5,24 @@ import {
 	queryUnlessSchemaLacks
 } from './user-authorship';
 
-/** A minimal stand-in for the parts of TypeORM's EntityManager the helpers read. */
-function managerWith(entityMetadatas: any[], type = 'postgres') {
-	const query = jest.fn().mockResolvedValue([[], 2]);
+/**
+ * A minimal stand-in for the parts of TypeORM's EntityManager the helpers read. The database has every table and
+ * column of the metadata (plus `id`), except the `missing` ones (`table` or `table.column`).
+ */
+function managerWith(entityMetadatas: any[], type = 'postgres', missing: string[] = []) {
+	const schema = entityMetadatas
+		.flatMap((metadata) =>
+			['id', ...metadata.columns.map((column: any) => column.databaseName)].map((c) => ({
+				t: metadata.tablePath,
+				c
+			}))
+		)
+		.filter((row) => !missing.includes(row.t) && !missing.includes(`${row.t}.${row.c}`));
+	const query = jest.fn(async (sql: string) => {
+		if (sql.includes('information_schema')) return schema;
+		if (sql.startsWith('SELECT "id"')) return [{ id: 'row-1' }];
+		return [[], 2];
+	});
 	const manager = {
 		query,
 		connection: {
@@ -15,7 +30,9 @@ function managerWith(entityMetadatas: any[], type = 'postgres') {
 			driver: { options: { type }, escape: (name: string) => `"${name}"` }
 		}
 	};
-	return { manager: manager as any, query };
+	/** The statements the helpers ran, without the one read of the database's columns. */
+	const statements = () => query.mock.calls.filter(([sql]) => !String(sql).includes('information_schema'));
+	return { manager: manager as any, query, statements };
 }
 
 const fk = (column: string, referencedTablePath = 'user', onDelete = 'CASCADE') => ({
@@ -33,7 +50,7 @@ const table = (tablePath: string, foreignKeys: any[], columns: any[], tableType 
 
 describe('detachUserReferences', () => {
 	it('clears every nullable reference to the user except userId, whatever its delete rule', async () => {
-		const { manager, query } = managerWith([
+		const { manager, query, statements } = managerWith([
 			table(
 				'task',
 				[fk('createdByUserId'), fk('updatedByUserId'), fk('deletedByUserId', 'user', 'NO ACTION')],
@@ -44,20 +61,26 @@ describe('detachUserReferences', () => {
 
 		const changed = await detachUserReferences(manager, 'u1');
 
-		expect(query).toHaveBeenCalledTimes(4);
-		expect(query).toHaveBeenCalledWith('UPDATE "task" SET "createdByUserId" = NULL WHERE "createdByUserId" IN ($1)', [
-			'u1'
-		]);
-		expect(query).toHaveBeenCalledWith('UPDATE "timesheet" SET "approvedById" = NULL WHERE "approvedById" IN ($1)', [
-			'u1'
-		]);
+		expect(statements()).toHaveLength(4);
+		expect(query).toHaveBeenCalledWith(
+			'UPDATE "task" SET "createdByUserId" = NULL WHERE "createdByUserId" IN ($1)',
+			['u1']
+		);
+		expect(query).toHaveBeenCalledWith(
+			'UPDATE "timesheet" SET "approvedById" = NULL WHERE "approvedById" IN ($1)',
+			['u1']
+		);
 		expect(changed).toBe(8);
 	});
 
 	it('leaves the user’s own rows (userId) and other tables’ keys to the cascade', async () => {
 		const { manager, query } = managerWith([
 			table('user_organization', [fk('userId')], [col('userId', false)]),
-			table('task', [fk('tenantId', 'tenant'), fk('createdByUserId', 'role')], [col('tenantId'), col('createdByUserId')]),
+			table(
+				'task',
+				[fk('tenantId', 'tenant'), fk('createdByUserId', 'role')],
+				[col('tenantId'), col('createdByUserId')]
+			),
 			table('some_view', [fk('createdByUserId')], [col('createdByUserId')], 'view')
 		]);
 
@@ -74,7 +97,10 @@ describe('detachUserReferences', () => {
 
 		await detachUserReferences(manager, 'u1');
 
-		expect(query).toHaveBeenCalledWith('UPDATE "task" SET "createdByUserId" = NULL WHERE "createdByUserId" IN (?)', ['u1']);
+		expect(query).toHaveBeenCalledWith(
+			'UPDATE "task" SET "createdByUserId" = NULL WHERE "createdByUserId" IN (?)',
+			['u1']
+		);
 	});
 });
 
@@ -92,7 +118,8 @@ describe('detachEmployeeReferences', () => {
 
 		await detachEmployeeReferences(manager, ['e1', 'e2']);
 
-		expect(query).toHaveBeenCalledTimes(4);
+		// comment, resource_link, organization_project, and key_result (its rows read, then deleted).
+		expect(query.mock.calls.filter(([sql]) => !String(sql).includes('information_schema'))).toHaveLength(5);
 		// A comment's (or resource link's) employeeId is its author, not its owner: it stays on the shared task.
 		expect(query).toHaveBeenCalledWith('UPDATE "comment" SET "employeeId" = NULL WHERE "employeeId" IN ($1, $2)', [
 			'e1',
@@ -114,52 +141,74 @@ describe('detachEmployeeReferences', () => {
 });
 
 describe('queryUnlessSchemaLacks: a table or column the database lacks does not fail a deletion', () => {
-	const missingColumn = Object.assign(new Error('column "deletedByUserId" does not exist'), { code: '42703' });
+	it('skips the statements on a column the database does not have, and runs the others as they are', async () => {
+		const { manager, statements } = managerWith(
+			[
+				table(
+					'task',
+					[fk('createdByUserId'), fk('deletedByUserId')],
+					[col('createdByUserId'), col('deletedByUserId')]
+				),
+				table('plugin_table', [fk('createdByUserId')], [col('createdByUserId')])
+			],
+			'postgres',
+			['task.deletedByUserId', 'plugin_table']
+		);
 
-	function postgresTransaction(failWith?: Error) {
-		const query = jest.fn(async (sql: string) => {
-			if (failWith && sql.startsWith('UPDATE')) throw failWith;
-			return [[], 1];
+		await detachUserReferences(manager, 'u1');
+
+		expect(statements().map(([sql]) => sql)).toEqual([
+			'UPDATE "task" SET "createdByUserId" = NULL WHERE "createdByUserId" IN ($1)'
+		]);
+	});
+
+	it('reads the database columns once, and uses no savepoint per statement', async () => {
+		const { manager, query } = managerWith([
+			table(
+				'task',
+				[fk('createdByUserId'), fk('updatedByUserId')],
+				[col('createdByUserId'), col('updatedByUserId')]
+			)
+		]);
+
+		await detachUserReferences(manager, 'u1');
+
+		const sql = query.mock.calls.map(([statement]) => String(statement));
+		expect(sql.filter((statement) => statement.includes('information_schema'))).toHaveLength(1);
+		expect(sql.some((statement) => statement.includes('SAVEPOINT'))).toBe(false);
+	});
+
+	it('where the columns cannot be read (SQLite), skips a missing column and fails on anything else', async () => {
+		const missing = Object.assign(new Error('SQLITE_ERROR: no such column: deletedByUserId'), {
+			code: 'SQLITE_ERROR'
 		});
-		const manager = {
-			query,
-			queryRunner: { isTransactionActive: true },
-			connection: { driver: { options: { type: 'postgres' } } }
-		};
-		return { manager: manager as any, statements: () => query.mock.calls.map(([sql]) => sql) };
-	}
+		const other = Object.assign(new Error('SQLITE_CONSTRAINT: FOREIGN KEY constraint failed'), {
+			code: 'SQLITE_CONSTRAINT'
+		});
+		const sqlite = (error: Error) =>
+			({
+				query: jest.fn().mockRejectedValue(error),
+				connection: { driver: { options: { type: 'better-sqlite3' } } }
+			}) as any;
+		const target = { table: 'task', columns: ['deletedByUserId'] };
 
-	it('runs the statement under a savepoint inside a PostgreSQL transaction', async () => {
-		const { manager, statements } = postgresTransaction();
-		await expect(queryUnlessSchemaLacks(manager, 'UPDATE "x" SET "y" = NULL', [])).resolves.toEqual([[], 1]);
-		expect(statements()).toEqual([
-			'SAVEPOINT user_deletion_statement',
-			'UPDATE "x" SET "y" = NULL',
-			'RELEASE SAVEPOINT user_deletion_statement'
+		await expect(queryUnlessSchemaLacks(sqlite(missing), 'UPDATE ...', [], target)).resolves.toBeNull();
+		await expect(queryUnlessSchemaLacks(sqlite(other), 'UPDATE ...', [], target)).rejects.toBe(other);
+	});
+
+	it('clears another table’s optional reference to rows a required reference makes it delete (goal → key result)', async () => {
+		const { manager, statements } = managerWith([
+			table('key_result', [fk('ownerId', 'employee', 'NO ACTION')], [col('ownerId', false)]),
+			table('goal', [fk('alignedKeyResultId', 'key_result', 'NO ACTION')], [col('alignedKeyResultId')])
 		]);
-	});
 
-	it('skips a statement on a missing column and rolls back to the savepoint, so the transaction goes on', async () => {
-		const { manager, statements } = postgresTransaction(missingColumn);
-		await expect(queryUnlessSchemaLacks(manager, 'UPDATE "x" SET "y" = NULL', [])).resolves.toBeNull();
+		await detachEmployeeReferences(manager, ['e1']);
+
 		expect(statements()).toEqual([
-			'SAVEPOINT user_deletion_statement',
-			'UPDATE "x" SET "y" = NULL',
-			'ROLLBACK TO SAVEPOINT user_deletion_statement'
+			['SELECT "id" AS "id" FROM "key_result" WHERE "ownerId" IN ($1)', ['e1']],
+			['UPDATE "goal" SET "alignedKeyResultId" = NULL WHERE "alignedKeyResultId" IN ($1)', ['row-1']],
+			['DELETE FROM "key_result" WHERE "ownerId" IN ($1)', ['e1']]
 		]);
-	});
-
-	it('still fails on any other error', async () => {
-		const deadlock = Object.assign(new Error('deadlock detected'), { code: '40P01' });
-		const { manager } = postgresTransaction(deadlock);
-		await expect(queryUnlessSchemaLacks(manager, 'UPDATE "x" SET "y" = NULL', [])).rejects.toBe(deadlock);
-	});
-
-	it('uses no savepoint outside a transaction', async () => {
-		const query = jest.fn().mockResolvedValue([]);
-		const manager = { query, queryRunner: undefined, connection: { driver: { options: { type: 'postgres' } } } } as any;
-		await queryUnlessSchemaLacks(manager, 'SELECT 1', []);
-		expect(query.mock.calls.map(([sql]) => sql)).toEqual(['SELECT 1']);
 	});
 
 	it.each([

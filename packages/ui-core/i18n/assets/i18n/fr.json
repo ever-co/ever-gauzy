@@ -6537,6 +6537,7 @@
 			"UNNAMED": "Espace de travail",
 			"OUTCOME_WORKSPACE": "Vous êtes le seul membre : tout l'espace de travail et toutes ses données seront supprimés.",
 			"OUTCOME_ACCOUNT": "Partagé avec d'autres membres ({{ members }}) : votre compte, votre profil et vos propres données (feuilles de temps, captures d'écran, activité) seront supprimés. Le contenu que vous avez créé pour l'espace de travail y reste, sans votre nom.",
+			"OUTCOME_ACCOUNT_LAST": "You are its only member but not an administrator: your account, profile and your own records (time logs, screenshots, activity) will be deleted. The workspace and its other data stay.",
 			"SOLE_ADMIN": "Vous êtes le seul administrateur de cet espace de travail. Ses autres membres n'auront plus d'administrateur après votre départ.",
 			"KEPT": "Conservés : un enregistrement d'audit de cette demande (sans nom, avec une adresse hachée), les données de facturation que la loi nous oblige à conserver, et les sauvegardes chiffrées jusqu'à ce qu'elles soient écrasées (14 jours).",
 			"UNDERSTAND": "Je comprends que cette action est irréversible.",
@@ -6548,7 +6549,7 @@
 			"FINISH": "Terminé"
 		},
 		"DANGER_ZONE_HELP": {
-			"DELETE_ACCOUNT": "Supprimer le compte : supprime définitivement votre compte dans cet espace de travail, votre profil, vos données de connexion et vos propres données (feuilles de temps, captures d'écran, activité). Le contenu que vous avez créé pour l'espace de travail y reste, sans votre nom. Si vous en êtes le seul membre, tout l'espace de travail et toutes ses données sont également supprimés. Un e-mail de confirmation suit.",
+			"DELETE_ACCOUNT": "Supprimer le compte : supprime définitivement votre compte dans cet espace de travail, votre profil, vos données de connexion et vos propres données (feuilles de temps, captures d'écran, activité). Le contenu que vous avez créé pour l'espace de travail y reste, sans votre nom. Si vous en êtes le seul membre et un administrateur, tout l'espace de travail et toutes ses données sont également supprimés. Un e-mail de confirmation suit.",
 			"DELETE_ALL_DATA": "Supprimer toutes les données : supprime toutes les données des organisations dont vous êtes membre dans cet espace de travail (employés, projets, tâches, suivi du temps, factures, ...) et conserve votre compte.",
 			"BY_EMAIL": "Vous avez des comptes dans plusieurs espaces de travail ou vous ne pouvez pas vous connecter ?",
 			"BY_EMAIL_LINK": "Tous les supprimer par un lien envoyé par e-mail"

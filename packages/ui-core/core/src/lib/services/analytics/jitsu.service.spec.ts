@@ -31,4 +31,14 @@ describe('JitsuService page views', () => {
 	])('does not send %s', (path) => {
 		expect(track(path)).not.toHaveBeenCalled();
 	});
+
+	it('does not send a page view while the browser URL carries a token, even when the router path does not', () => {
+		const before = window.location.href;
+		window.history.pushState({}, '', '/#/auth/delete-account/confirm?token=abc123');
+		try {
+			expect(track('/pages/dashboard')).not.toHaveBeenCalled();
+		} finally {
+			window.history.pushState({}, '', before);
+		}
+	});
 });

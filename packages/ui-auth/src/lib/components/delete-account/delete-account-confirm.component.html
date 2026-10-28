@@ -68,6 +68,8 @@
 				}
 				@if (account.outcome === outcomes.WORKSPACE_DELETED) {
 				<span class="outcome status-danger">{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_WORKSPACE' | translate }}</span>
+				} @else if (account.otherMembers === 0) {
+				<span class="outcome">{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_ACCOUNT_LAST' | translate }}</span>
 				} @else {
 				<span class="outcome">
 					{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_ACCOUNT' | translate: { members: account.otherMembers } }}
