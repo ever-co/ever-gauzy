@@ -8,7 +8,28 @@ const settle = async () => {
 	for (let turn = 0; turn < 5; turn++) await new Promise((resolve) => setImmediate(resolve));
 };
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * A clock the test moves by hand, for the queue's interval arithmetic, while Jest's fake timers run its report
+ * timer. The drains still use the real `setImmediate`.
+ */
+function manualClock(start = 1_000) {
+	let time = start;
+	jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick', 'queueMicrotask'] });
+	return {
+		now: () => time,
+		/** Moves the queue's clock and Jest's timers together. */
+		advance(ms: number) {
+			time += ms;
+			jest.advanceTimersByTime(ms);
+		},
+		/** Moves only the queue's clock: a timer that is due has not run yet, as when the event loop is busy. */
+		skip(ms: number) {
+			time += ms;
+		}
+	};
+}
+
+afterEach(() => jest.useRealTimers());
 
 /** A sender whose calls stay open until released, so the test can count what is in flight. */
 function heldSender() {
@@ -66,11 +87,13 @@ describe('BoundedEventQueue', () => {
 	it('drops what does not fit, without building it, and reports the count at most once per interval', async () => {
 		const { send } = heldSender();
 		const onDropped = jest.fn();
+		const clock = manualClock();
 		const queue = new BoundedEventQueue(send, {
 			concurrency: 2,
 			maxQueued: 3,
 			onDropped,
-			reportIntervalMs: 60_000
+			reportIntervalMs: 60_000,
+			now: clock.now
 		});
 		const build = jest.fn((i: number) => i);
 
@@ -82,6 +105,7 @@ describe('BoundedEventQueue', () => {
 		expect(onDropped).toHaveBeenCalledWith(1);
 
 		// Within the interval, further drops are counted, not reported.
+		clock.advance(59_999);
 		queue.offer(() => build(99));
 		expect(onDropped).toHaveBeenCalledTimes(1);
 	});
@@ -89,15 +113,54 @@ describe('BoundedEventQueue', () => {
 	it('reports the rest of a burst when the interval ends, without waiting for another drop', async () => {
 		const { send } = heldSender();
 		const onDropped = jest.fn();
-		const queue = new BoundedEventQueue(send, { concurrency: 2, maxQueued: 3, onDropped, reportIntervalMs: 30 });
+		const clock = manualClock();
+		const queue = new BoundedEventQueue(send, {
+			concurrency: 2,
+			maxQueued: 3,
+			onDropped,
+			reportIntervalMs: 30,
+			now: clock.now
+		});
 
 		for (let i = 0; i < 10; i++) queue.offer(() => i);
 		expect(onDropped.mock.calls).toEqual([[1]]);
 
-		await sleep(80);
+		clock.advance(29);
+		expect(onDropped.mock.calls).toEqual([[1]]);
+		clock.advance(1);
 
 		// 7 dropped in all: the first one at once, the other 6 when the interval ended.
 		expect(onDropped.mock.calls).toEqual([[1], [6]]);
+	});
+
+	it('cancels a due report timer that has not run when a drop reports first, so no interval reports twice', () => {
+		const { send } = heldSender();
+		const onDropped = jest.fn();
+		const clock = manualClock();
+		const queue = new BoundedEventQueue(send, {
+			concurrency: 2,
+			maxQueued: 3,
+			onDropped,
+			reportIntervalMs: 30,
+			now: clock.now
+		});
+
+		// A burst: the first drop is reported, the other 6 wait for the timer (due 30 ms later).
+		for (let i = 0; i < 10; i++) queue.offer(() => i);
+		clock.advance(20);
+
+		// The interval is over, but the busy event loop has not run the timer yet: this drop reports all 7.
+		clock.skip(20);
+		queue.offer(() => 99);
+		expect(onDropped.mock.calls).toEqual([[1], [7]]);
+
+		// A drop in the new interval waits for ITS end; the stale timer must not report it 10 ms later.
+		queue.offer(() => 100);
+		clock.advance(10);
+		expect(onDropped.mock.calls).toEqual([[1], [7]]);
+
+		clock.advance(20);
+		expect(onDropped.mock.calls).toEqual([[1], [7], [1]]);
 	});
 
 	it('takes as many events as there are free slots even with no backlog allowed', () => {

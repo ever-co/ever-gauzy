@@ -36,6 +36,8 @@ export interface BoundedEventQueueOptions {
 	/** Told how many events were dropped since the last report, at most once per `reportIntervalMs`. */
 	onDropped?: (dropped: number) => void;
 	reportIntervalMs?: number;
+	/** The clock the reporting interval is measured with; `Date.now` unless a test controls it. */
+	now?: () => number;
 }
 
 /**
@@ -49,7 +51,8 @@ export class BoundedEventQueue<T> {
 	private active = 0;
 	private scheduled = false;
 	private dropped = 0;
-	private lastReport = 0;
+	// Never reported yet: the first drop is reported at once, whatever the clock reads.
+	private lastReport = Number.NEGATIVE_INFINITY;
 	private reportTimer: ReturnType<typeof setTimeout> | null = null;
 	private readonly concurrency: number;
 
@@ -109,8 +112,11 @@ export class BoundedEventQueue<T> {
 	private reportDropped(): void {
 		if (!this.options.onDropped) return;
 		const interval = this.options.reportIntervalMs ?? JITSU_DROP_REPORT_INTERVAL_MS;
-		const wait = this.lastReport + interval - Date.now();
+		const wait = this.lastReport + interval - this.now();
 		if (wait <= 0) {
+			// A timer that is due but has not run yet (the event loop is busy with the burst) would report
+			// again right after this flush, inside the next interval.
+			this.cancelReportTimer();
 			this.flushDropped();
 		} else if (!this.reportTimer) {
 			// The rest of a burst is reported when the interval ends, even if nothing is dropped after it.
@@ -122,9 +128,20 @@ export class BoundedEventQueue<T> {
 		}
 	}
 
+	private cancelReportTimer(): void {
+		if (this.reportTimer) {
+			clearTimeout(this.reportTimer);
+			this.reportTimer = null;
+		}
+	}
+
+	private now(): number {
+		return (this.options.now ?? Date.now)();
+	}
+
 	private flushDropped(): void {
 		if (this.dropped === 0) return;
-		this.lastReport = Date.now();
+		this.lastReport = this.now();
 		const dropped = this.dropped;
 		this.dropped = 0;
 		this.options.onDropped?.(dropped);
