@@ -1,4 +1,5 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { Router } from '@angular/router';
@@ -37,23 +38,24 @@ export class DangerZoneComponent extends TranslationBaseComponent implements OnI
 
 	async deleteAccount() {
 		// What the API will do, so the dialog can say it: the whole workspace when the user is its only member.
+		// Without it the dialog could not say whether the workspace goes too, so it does not open.
+		const preview = await this.userService.previewMyAccountDeletion().catch(() => null);
+		if (!preview) {
+			this.toastrService.danger('DELETE_ACCOUNT_PAGE.DANGER_ZONE.PREVIEW_FAILED');
+			return;
+		}
 		let consequence = '';
-		try {
-			const preview = await this.userService.previewMyAccountDeletion();
-			const account = preview.accounts?.[0];
-			if (account) {
-				consequence =
-					account.outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED
-						? this.getTranslation('DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_WORKSPACE')
-						: this.getTranslation('DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_ACCOUNT', {
-								members: account.otherMembers
-						  });
-				if (account.soleAdmin) {
-					consequence += ' ' + this.getTranslation('DELETE_ACCOUNT_PAGE.CONFIRM.SOLE_ADMIN');
-				}
+		const account = preview.accounts?.[0];
+		if (account) {
+			consequence =
+				account.outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED
+					? this.getTranslation('DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_WORKSPACE')
+					: this.getTranslation('DELETE_ACCOUNT_PAGE.CONFIRM.OUTCOME_ACCOUNT', {
+							members: account.otherMembers
+					  });
+			if (account.soleAdmin) {
+				consequence += ' ' + this.getTranslation('DELETE_ACCOUNT_PAGE.CONFIRM.SOLE_ADMIN');
 			}
-		} catch {
-			// The dialog still opens; the API decides when the user confirms.
 		}
 
 		this.dialogService
@@ -75,7 +77,8 @@ export class DangerZoneComponent extends TranslationBaseComponent implements OnI
 					// `/account-deletion/me`, not `DELETE /user/:id`: it also deletes a workspace nobody else uses
 					// (and its files) instead of leaving it behind, and emails a confirmation. Awaited: the success
 					// message and the sign-out used to run even when the API refused.
-					await this.userService.deleteMyAccount();
+					// The preview's planHash: the API deletes only what the dialog described, else answers 409.
+					await this.userService.deleteMyAccount(preview.planHash);
 
 					this.toastrService.success(
 						this.getTranslation('NOTES.DANGER_ZONE.ACCOUNT_DELETED', {
@@ -87,6 +90,11 @@ export class DangerZoneComponent extends TranslationBaseComponent implements OnI
 						this.router.navigate(['/auth/logout']);
 					}, 2500);
 				} catch (error) {
+					if (error instanceof HttpErrorResponse && error.status === 409) {
+						// The workspace changed since the preview (a member joined or left): nothing was deleted.
+						this.toastrService.warning('DELETE_ACCOUNT_PAGE.DANGER_ZONE.PLAN_CHANGED');
+						return;
+					}
 					this.toastrService.danger(
 						this.getTranslation('NOTES.ORGANIZATIONS.DATA_ERROR', {
 							error: error?.error?.message || error?.message

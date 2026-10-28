@@ -127,17 +127,24 @@ export class UsersService {
 	 * What deleting the signed-in user's account in the current workspace would do: the whole workspace
 	 * when they are its only member, otherwise only their account.
 	 */
-	async previewMyAccountDeletion(): Promise<IAccountDeletionPreview> {
-		return firstValueFrom(this.http.get<IAccountDeletionPreview>(`${API_PREFIX}/account-deletion/me`));
+	async previewMyAccountDeletion(): Promise<IAccountDeletionPreview & { planHash?: string }> {
+		return firstValueFrom(
+			this.http.get<IAccountDeletionPreview & { planHash?: string }>(`${API_PREFIX}/account-deletion/me`)
+		);
 	}
 
 	/**
 	 * Deletes the signed-in user's account in the current workspace (see {@link previewMyAccountDeletion}).
 	 * Shared content stays with the workspace, without their name; a confirmation email is sent.
+	 *
+	 * @param planHash The `planHash` of the preview the user saw: the API deletes only if the account and its
+	 * outcome are still what that preview said, and answers 409 otherwise (nothing deleted).
 	 */
-	async deleteMyAccount(): Promise<IAccountDeletionResult> {
+	async deleteMyAccount(planHash?: string): Promise<IAccountDeletionResult> {
 		return this.write(() =>
-			firstValueFrom(this.http.post<IAccountDeletionResult>(`${API_PREFIX}/account-deletion/me`, { confirm: true }))
+			firstValueFrom(
+				this.http.post<IAccountDeletionResult>(`${API_PREFIX}/account-deletion/me`, { confirm: true, planHash })
+			)
 		);
 	}
 
