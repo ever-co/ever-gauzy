@@ -7112,7 +7112,6 @@
 		"COMMENT_IMAGE_FAILED": "Impossible de téléverser {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Changements récents de la tâche et de ses sous-tâches",
 		"CHANGE_STATUS": "Changer le statut",
 		"LINK_COPIED": "Lien copié",
 		"SUBTASKS": "Sous-tâches",

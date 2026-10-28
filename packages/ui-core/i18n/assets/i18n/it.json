@@ -7116,7 +7116,6 @@
 		"COMMENT_IMAGE_FAILED": "Impossibile caricare {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Modifiche recenti all'attività e alle sue sottoattività",
 		"CHANGE_STATUS": "Cambia stato",
 		"LINK_COPIED": "Link copiato",
 		"SUBTASKS": "Sottoattività",

@@ -7126,7 +7126,6 @@
 		"COMMENT_IMAGE_FAILED": "לא ניתן היה להעלות את {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "שינויים אחרונים במשימה ובתתי־המשימות שלה",
 		"CHANGE_STATUS": "שינוי סטטוס",
 		"LINK_COPIED": "הקישור הועתק",
 		"SUBTASKS": "תתי־משימות",

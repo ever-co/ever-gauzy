@@ -7116,7 +7116,6 @@
 		"COMMENT_IMAGE_FAILED": "Não foi possível enviar {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Alterações recentes na tarefa e nas suas subtarefas",
 		"CHANGE_STATUS": "Alterar status",
 		"LINK_COPIED": "Link copiado",
 		"SUBTASKS": "Subtarefas",

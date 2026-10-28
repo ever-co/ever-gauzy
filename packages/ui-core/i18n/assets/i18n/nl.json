@@ -7116,7 +7116,6 @@
 		"COMMENT_IMAGE_FAILED": "{{ name }} kon niet worden geüpload."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Recente wijzigingen in de taak en de subtaken",
 		"CHANGE_STATUS": "Status wijzigen",
 		"LINK_COPIED": "Link gekopieerd",
 		"SUBTASKS": "Subtaken",

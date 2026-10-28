@@ -8315,7 +8315,6 @@
 		"COMMENT_IMAGE_FAILED": "Couldn’t upload {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Recent changes to the task and its subtasks",
 		"CHANGE_STATUS": "Change status",
 		"LINK_COPIED": "Link copied",
 		"SUBTASKS": "Subtasks",

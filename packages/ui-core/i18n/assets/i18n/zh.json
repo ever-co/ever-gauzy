@@ -7116,7 +7116,6 @@
 		"COMMENT_IMAGE_FAILED": "无法上传 {{ name }}。"
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "任务及其子任务的最近更改",
 		"CHANGE_STATUS": "更改状态",
 		"LINK_COPIED": "链接已复制",
 		"SUBTASKS": "子任务",

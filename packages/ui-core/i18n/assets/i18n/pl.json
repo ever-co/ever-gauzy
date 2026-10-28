@@ -7115,7 +7115,6 @@
 		"COMMENT_IMAGE_FAILED": "Nie udało się przesłać {{ name }}."
 	},
 	"TASK_VIEW": {
-		"ACTIVITY_CAPTION": "Ostatnie zmiany w zadaniu i jego podzadaniach",
 		"CHANGE_STATUS": "Zmień status",
 		"LINK_COPIED": "Link skopiowany",
 		"SUBTASKS": "Podzadania",
