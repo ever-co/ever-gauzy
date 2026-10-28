@@ -10,7 +10,8 @@ import { readCountEnv } from './jitsu-event-queue';
  * @returns A record containing parsed Jitsu module options.
  */
 /** Whether the server-wide Jitsu destination (JITSU_SERVER_URL + JITSU_SERVER_WRITE_KEY) is configured. */
-export const isJitsuServerConfigured = (): boolean => !!(environment.jitsu?.serverHost && environment.jitsu?.serverWriteKey);
+export const isJitsuServerConfigured = (): boolean =>
+	!!(environment.jitsu?.serverHost && environment.jitsu?.serverWriteKey);
 
 export const parseOptions = (options: JitsuModuleOptions): JitsuModuleOptions => ({
 	// If the 'isGlobal' property is defined in the input options, use its value; otherwise, default to true.
@@ -112,7 +113,16 @@ export function recyclingJitsu(factory: () => AnalyticsInterface, every: number)
  */
 export const JITSU_REQUEST_TIMEOUT_MS = 30_000;
 
-/** `node-fetch` with {@link JITSU_REQUEST_TIMEOUT_MS} applied, on top of any signal the caller passes. */
+/** `JITSU_REQUEST_TIMEOUT_MS` from the environment when it is a positive whole number, else the default. */
+export function jitsuRequestTimeoutMs(env: NodeJS.ProcessEnv = process.env): number {
+	const timeoutMs = readCountEnv('JITSU_REQUEST_TIMEOUT_MS', JITSU_REQUEST_TIMEOUT_MS, env);
+	return timeoutMs > 0 ? timeoutMs : JITSU_REQUEST_TIMEOUT_MS;
+}
+
+/**
+ * `node-fetch` with a deadline, on top of any signal the caller passes. `@jitsu/js` has a `fetchTimeoutMs` of its
+ * own, but it clears it once the headers arrive, and the client then awaits the body as well.
+ */
 export function fetchWithTimeout(url: any, init: any = {}, timeoutMs = JITSU_REQUEST_TIMEOUT_MS): Promise<any> {
 	const timeout = AbortSignal.timeout(timeoutMs);
 	const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
@@ -127,7 +137,8 @@ export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
 		return;
 	}
 
-	config.fetch = fetchWithTimeout;
+	const timeoutMs = jitsuRequestTimeoutMs();
+	config.fetch = (url: any, init?: any) => fetchWithTimeout(url, init, timeoutMs);
 
 	// Create and return a Jitsu Analytics instance with the parsed configuration properties, replaced after a
 	// bounded number of events (see DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS).
