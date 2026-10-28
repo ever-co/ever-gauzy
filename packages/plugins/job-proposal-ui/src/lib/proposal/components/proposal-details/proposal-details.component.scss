@@ -65,20 +65,6 @@
   font-size: 14px;
   line-height: 1.5rem;
   color: var(--gauzy-text-color-1);
-  overflow-wrap: anywhere;
-
-  ::ng-deep {
-    p {
-      margin: 0 0 0.5rem;
-    }
-    p:last-child {
-      margin-bottom: 0;
-    }
-    ul,
-    ol {
-      padding-left: 1.25rem;
-    }
-  }
 }
 
 .empty {

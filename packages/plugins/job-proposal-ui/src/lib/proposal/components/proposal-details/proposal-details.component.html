@@ -35,7 +35,7 @@
             {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.PROPOSAL_CONTENT' | translate }}
           </h6>
           @if (proposal?.proposalContent) {
-            <div class="rich-text" [innerHTML]="proposalContent"></div>
+            <div class="rich-text rich-text-content" [innerHTML]="proposalContent"></div>
           } @else {
             <span class="empty">—</span>
           }
@@ -45,7 +45,7 @@
             {{ 'PROPOSALS_PAGE.PROPOSAL_DETAILS.JOB_POST_CONTENT' | translate }}
           </h6>
           @if (proposal?.jobPostContent) {
-            <div class="rich-text" [innerHTML]="jobPostContent"></div>
+            <div class="rich-text rich-text-content" [innerHTML]="jobPostContent"></div>
           } @else {
             <span class="empty">—</span>
           }
