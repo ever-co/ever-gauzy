@@ -28,18 +28,6 @@ import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.reposi
 import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
 import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 import { ImageAsset } from '../image-asset/image-asset.entity';
-import {
-	FeatureOrganization,
-	IssueType,
-	Organization,
-	Role,
-	RolePermission,
-	TaskPriority,
-	TaskSize,
-	TaskStatus,
-	TenantSetting,
-	User
-} from '../core/entities/internal';
 import { Tenant } from './tenant.entity';
 import { StripeSubscriptionService, describeError } from '../shared/billing/stripe-subscription.service';
 
@@ -77,23 +65,14 @@ export class TenantService extends CrudService<Tenant> {
 		// holds the tenant's SUPER_ADMIN role.
 		const { stripeCheckoutSessionId, ...tenantInput } = entity;
 
-		// A failed attempt can leave behind a tenant that was created but never linked to its creator, and
-		// the creator, still without a tenant, is sent back here. Finish that tenant instead of creating
-		// another one: every retry used to leave one more empty tenant behind (see findUnfinishedTenant).
-		const unfinished = await this.findUnfinishedTenant(user);
-
 		// Creates and saves a tenant entity from the given details.
-		const tenant = unfinished
-			? await this.resumeUnfinishedTenant(unfinished, tenantInput)
-			: await this.create(tenantInput);
+		const tenant = await this.create(tenantInput);
 
-		// Create Role/Permissions to relative tenants. An unfinished tenant keeps the roles it already has.
-		if (!unfinished || !(await this.tenantHasRows(Role, tenant.id))) {
-			await this.commandBus.execute(new TenantRoleBulkCreateCommand([tenant]));
-		}
+		// Create Role/Permissions to relative tenants.
+		await this.commandBus.execute(new TenantRoleBulkCreateCommand([tenant]));
 
 		// Executes Runs update tasks for the newly created tenant.
-		this.executeTenantUpdateTasks(tenant, { onlyMissing: !!unfinished });
+		this.executeTenantUpdateTasks(tenant);
 
 		// Store the unique identifier of the tenant for easy access in subsequent operations.
 		const tenantId = tenant.id;
@@ -145,77 +124,6 @@ export class TenantService extends CrudService<Tenant> {
 
 		console.timeEnd('On Boarding Tenant');
 		return tenant;
-	}
-
-	/**
-	 * The newest tenant this user created whose onboarding never finished, or null.
-	 *
-	 * Onboarding creates the tenant, then its roles, then links the creator to it as SUPER_ADMIN. When a
-	 * step after the first one fails (production 2026-10-27: every signup timed out connecting to the
-	 * database, see the Jitsu plugin's BoundedEventQueue), the tenant stays behind with nobody in it and the
-	 * creator, still without a tenant, is sent back to onboarding. Only the user who created such a tenant
-	 * can finish it, and finishing it is safe because nobody else can have used it.
-	 *
-	 * A tenant counts as unfinished when the user created it, no user (deleted ones included) and no
-	 * organization belongs to it, and its roles are either complete (they come with their permissions)
-	 * or absent. Roles without permissions cannot be repaired by re-running the role step, so such a
-	 * tenant is left alone and a new one is created, as before.
-	 *
-	 * @param user - The user being onboarded.
-	 */
-	async findUnfinishedTenant(user: IUser): Promise<Tenant | null> {
-		if (!user?.id) return null;
-
-		const candidates = await this.find({
-			where: { createdByUserId: user.id },
-			order: { createdAt: 'DESC' },
-			take: 5
-		});
-
-		for (const candidate of candidates ?? []) {
-			const tenantId = candidate.id;
-			if (await this.tenantHasRows(User, tenantId)) continue;
-			if (await this.tenantHasRows(Organization, tenantId)) continue;
-			if ((await this.tenantHasRows(Role, tenantId)) && !(await this.tenantHasRows(RolePermission, tenantId))) {
-				continue;
-			}
-			return candidate;
-		}
-		return null;
-	}
-
-	/**
-	 * Gives an unfinished tenant the name (and logo) of the attempt that finishes it.
-	 *
-	 * @param tenant - A tenant returned by {@link findUnfinishedTenant}.
-	 * @param input - The tenant details of this attempt.
-	 */
-	private async resumeUnfinishedTenant(tenant: Tenant, input: ITenantCreateInput): Promise<Tenant> {
-		const changes: Partial<Tenant> = {};
-		if (input.name !== undefined) changes.name = input.name;
-		if (input.logo !== undefined) changes.logo = input.logo;
-
-		if (Object.keys(changes).length > 0) {
-			await this.update(tenant.id, changes);
-		}
-		return Object.assign(tenant, changes);
-	}
-
-	/**
-	 * Whether any row of `entity` belongs to the tenant, soft-deleted rows included.
-	 *
-	 * @param entity - An entity with a `tenantId` column.
-	 * @param tenantId - The tenant.
-	 */
-	private async tenantHasRows(entity: new (...args: any[]) => unknown, tenantId: ID): Promise<boolean> {
-		const where = { tenantId };
-		return this.ormType === MultiORMEnum.MikroORM
-			? (await this.mikroOrmRepository
-					.getEntityManager()
-					.count(entity as any, where as any, { filters: false })) > 0
-			: await this.typeOrmRepository.manager
-					.getRepository(entity)
-					.exists({ where: where as any, withDeleted: true });
 	}
 
 	/**
@@ -463,39 +371,29 @@ export class TenantService extends CrudService<Tenant> {
 	 * Executes a set of update tasks for a given tenant in parallel.
 	 *
 	 * @param tenant An instance of the Tenant class.
-	 * @param options.onlyMissing - Run only the tasks whose rows the tenant does not have yet: for a tenant an
-	 * earlier, failed onboarding already created, where some of them may have run. Each task writes its rows
-	 * in one save, so a tenant either has all of a task's rows or none of them.
 	 * @returns Promise<void>
 	 */
-	public async executeTenantUpdateTasks(tenant: Tenant, options: { onlyMissing?: boolean } = {}): Promise<void> {
+	public async executeTenantUpdateTasks(tenant: Tenant): Promise<void> {
 		try {
-			const needs = async (entity: new (...args: any[]) => unknown) =>
-				!options.onlyMissing || !(await this.tenantHasRows(entity, tenant.id));
-
 			await Promise.all([
 				// 1. Create Enabled/Disabled features for relative tenants.
-				(await needs(FeatureOrganization)) &&
-					this.commandBus.execute(new TenantFeatureOrganizationCreateCommand([tenant])),
+				this.commandBus.execute(new TenantFeatureOrganizationCreateCommand([tenant])),
 
 				// 2. Create Default task statuses for relative tenants.
-				(await needs(TaskStatus)) && this.commandBus.execute(new TenantStatusBulkCreateCommand([tenant])),
+				this.commandBus.execute(new TenantStatusBulkCreateCommand([tenant])),
 
 				// 3. Create default task sizes for relative tenants.
-				(await needs(TaskSize)) && this.commandBus.execute(new TenantTaskSizeBulkCreateCommand([tenant])),
+				this.commandBus.execute(new TenantTaskSizeBulkCreateCommand([tenant])),
 
 				// 4. Create default task priorities for relative tenants.
-				(await needs(TaskPriority)) &&
-					this.commandBus.execute(new TenantTaskPriorityBulkCreateCommand([tenant])),
+				this.commandBus.execute(new TenantTaskPriorityBulkCreateCommand([tenant])),
 
 				// 5. Create default issue types for relative tenants.
-				(await needs(IssueType)) && this.commandBus.execute(new TenantIssueTypeBulkCreateCommand([tenant]))
+				this.commandBus.execute(new TenantIssueTypeBulkCreateCommand([tenant]))
 			]);
 
 			// 6. Initialize default settings for the new tenant, including file storage provider.
-			if (await needs(TenantSetting)) {
-				await this.initializeTenantSettings(tenant);
-			}
+			await this.initializeTenantSettings(tenant);
 		} catch (error) {
 			console.log(error, 'Error occurred while executing tenant create tasks:', error.message);
 		}
