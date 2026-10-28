@@ -111,12 +111,15 @@
   font-size: 11px;
   font-weight: 600;
   line-height: 1.125rem;
-  color: var(--color-warning-default);
-  background: rgba(255, 170, 0, 0.14);
+  // Mixing the status color with the theme's text color darkens it on the light
+  // theme and lightens it on the dark one, so the 11px label stays readable
+  // (about 5:1 on light) over its own faint tint.
+  --status-color: var(--color-warning-default);
+  color: color-mix(in srgb, var(--status-color) 45%, var(--text-basic-color));
+  background: color-mix(in srgb, var(--status-color) 16%, transparent);
 
   &.accepted {
-    color: var(--color-success-default);
-    background: rgba(0, 214, 143, 0.14);
+    --status-color: var(--color-success-default);
   }
 }
 
