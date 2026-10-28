@@ -20,14 +20,17 @@ import posthog, { PostHogConfig, Properties } from 'posthog-js';
 const URL_SECRET = /[?&#](token|code)=/i;
 
 /**
- * Event properties that hold a URL: PostHog's own, plus `route` (the router's `urlAfterRedirects`, query included)
- * and `referrer` (`document.referrer`) that {@link PostHogService.setupRouteTracking} adds to every pageview.
+ * Event properties that hold a URL: PostHog's own (including the first URL of the person and of the session,
+ * which PostHog keeps and re-sends on later events), plus `route` (the router's `urlAfterRedirects`, query
+ * included) and `referrer` (`document.referrer`) that {@link PostHogService.setupRouteTracking} adds to every pageview.
  */
 const URL_PROPERTIES = [
 	'$current_url',
 	'current_url',
 	'$referrer',
 	'$initial_referrer',
+	'$initial_current_url',
+	'$session_entry_url',
 	'$pathname',
 	'url',
 	'route',
