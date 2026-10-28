@@ -28,6 +28,9 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		return this.proposal?.status === ProposalStatusEnum.ACCEPTED;
 	}
 
+	/** Text color per tag background, so each color is parsed once. */
+	private readonly tagTextColors = new Map<string, string>();
+
 	/**
 	 * Picks dark or light text for a tag so its name stays readable on any
 	 * background, unless the tag sets its own text color.
@@ -36,11 +39,42 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		if (tag.textColor) {
 			return tag.textColor;
 		}
-		const hex = (tag.color || '').replace('#', '');
-		if (!/^[0-9a-f]{6}$/i.test(hex)) {
-			return '#fff';
+		const color = tag.color || '';
+		if (!this.tagTextColors.has(color)) {
+			this.tagTextColors.set(color, this.contrastTextColor(color));
 		}
-		const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+		return this.tagTextColors.get(color);
+	}
+
+	/**
+	 * Lets the browser parse any CSS color (#fff, #ffffff80, rgb(), hsl(), names)
+	 * into `#rrggbb` or `rgba(r, g, b, a)`, then measures its brightness. An empty
+	 * result keeps the theme's text color, for colors that can't be read or are
+	 * mostly transparent and so show the card behind them.
+	 */
+	private contrastTextColor(color: string): string {
+		const context = document.createElement('canvas').getContext('2d');
+		if (!color || !context) {
+			return '';
+		}
+		// An unparseable value leaves fillStyle unchanged, so start from a sentinel.
+		context.fillStyle = '#010203';
+		context.fillStyle = color;
+		const parsed = String(context.fillStyle);
+		if (parsed === '#010203' && !/^#010203$/i.test(color.trim())) {
+			return '';
+		}
+
+		let r: number, g: number, b: number;
+		let alpha = 1;
+		if (parsed.startsWith('#')) {
+			[r, g, b] = [1, 3, 5].map((i) => parseInt(parsed.slice(i, i + 2), 16));
+		} else {
+			[r, g, b, alpha = 1] = (parsed.match(/[\d.]+/g) || []).map(Number);
+		}
+		if ([r, g, b].some((value) => !Number.isFinite(value)) || alpha < 0.5) {
+			return '';
+		}
 		return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? '#1a1a1a' : '#fff';
 	}
 
