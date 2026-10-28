@@ -72,8 +72,10 @@ export class DangerZoneComponent extends TranslationBaseComponent implements OnI
 				if (!data) {
 					return;
 				}
+				// The signed-in user as the app already holds it: `GET /user/:id` needs ORG_USERS_VIEW, which a user
+				// allowed to delete their own account (ACCESS_DELETE_ACCOUNT) may not have.
+				const user = this.user ?? this.store.user;
 				try {
-					const user = await this.userService.getUserById(this.store.userId);
 					// `/account-deletion/me`, not `DELETE /user/:id`: it also deletes a workspace nobody else uses
 					// (and its files) instead of leaving it behind, and emails a confirmation. Awaited: the success
 					// message and the sign-out used to run even when the API refused.
@@ -82,7 +84,7 @@ export class DangerZoneComponent extends TranslationBaseComponent implements OnI
 
 					this.toastrService.success(
 						this.getTranslation('NOTES.DANGER_ZONE.ACCOUNT_DELETED', {
-							username: user.firstName + ' ' + user.lastName
+							username: [user?.firstName, user?.lastName].filter(Boolean).join(' ')
 						})
 					);
 					// The account is gone: drop the session this browser still holds, then leave the app.
