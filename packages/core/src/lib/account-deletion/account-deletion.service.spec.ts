@@ -7,44 +7,58 @@ jest.mock('@gauzy/config', () => ({
 }));
 jest.mock('../core/entities/internal', () => ({
 	ImageAsset: class ImageAsset {},
-	Screenshot: class Screenshot {},
 	Tenant: class Tenant {},
 	User: class User {},
 	UserOrganization: class {}
 }));
-jest.mock('../core/file-storage', () => ({ FileStorage: class {} }));
 jest.mock('../email-send/email.service', () => ({ EmailService: class EmailService {} }));
 jest.mock('../auth/strategies/authenticated-user-cache', () => ({ AuthenticatedUserCache: class {} }));
-jest.mock('../user/user-authorship', () => ({ detachUserAuthorship: jest.fn().mockResolvedValue(0) }));
+jest.mock('../shared/billing/stripe-subscription.service', () => ({ StripeSubscriptionService: class {} }));
+jest.mock('../user/user-authorship', () => ({
+	detachUserReferences: jest.fn().mockResolvedValue(0),
+	detachEmployeeReferences: jest.fn().mockResolvedValue(0),
+	lockRowForUpdate: jest.fn().mockResolvedValue(true),
+	sqlPlaceholder: () => '$1'
+}));
+jest.mock('./account-deletion-files', () => ({
+	collectStoredFiles: jest.fn().mockResolvedValue([]),
+	deleteStoredFiles: jest.fn().mockResolvedValue({ deleted: 0, failed: 0 }),
+	isImageAssetShared: jest.fn().mockResolvedValue(false),
+	loadTenantSettings: jest.fn().mockResolvedValue({})
+}));
 jest.mock('./account-deletion-request.entity', () => ({ AccountDeletionRequest: class AccountDeletionRequest {} }));
 jest.mock('./repository/type-orm-account-deletion-request.repository', () => ({
 	TypeOrmAccountDeletionRequestRepository: class {}
 }));
 
-import { GoneException } from '@nestjs/common';
+import { ConflictException, GoneException } from '@nestjs/common';
 import { AccountDeletionOutcomeEnum } from '@gauzy/contracts';
-import { ACCOUNT_DELETION_INVALID_LINK_MESSAGE, AccountDeletionService } from './account-deletion.service';
+import { ACCOUNT_DELETION_INVALID_LINK_MESSAGE, AccountDeletionService, planHashOf } from './account-deletion.service';
 import { generateAccountDeletionToken, hashAccountDeletionToken } from './account-deletion-token';
 
+function queryBuilder() {
+	const builder: any = {};
+	for (const method of ['update', 'insert', 'into', 'values', 'set', 'where', 'andWhere', 'callListeners']) {
+		builder[method] = jest.fn().mockReturnValue(builder);
+	}
+	builder.execute = jest.fn().mockResolvedValue({ affected: 1, identifiers: [{ id: 'audit-1' }] });
+	return builder;
+}
+
 function setup() {
-	const execute = jest.fn().mockResolvedValue({ affected: 1 });
-	const queryBuilder = {
-		update: jest.fn().mockReturnThis(),
-		set: jest.fn().mockReturnThis(),
-		where: jest.fn().mockReturnThis(),
-		andWhere: jest.fn().mockReturnThis(),
-		callListeners: jest.fn().mockReturnThis(),
-		execute
-	};
+	const builder = queryBuilder();
 	const repository = {
 		count: jest.fn().mockResolvedValue(0),
-		update: jest.fn().mockResolvedValue({ affected: 1 }),
 		create: jest.fn((value) => value),
 		save: jest.fn(async (value) => ({ id: 'r1', ...value })),
 		findOneBy: jest.fn(),
-		createQueryBuilder: jest.fn(() => queryBuilder)
+		createQueryBuilder: jest.fn(() => builder)
 	};
-	const transactionManager = { delete: jest.fn().mockResolvedValue({ affected: 1 }) };
+	const transactionManager = {
+		getRepository: jest.fn(() => repository),
+		query: jest.fn().mockResolvedValue([]),
+		connection: { driver: { options: { type: 'postgres' } } }
+	};
 	const dataSource = {
 		manager: {},
 		transaction: jest.fn(async (work) => work(transactionManager))
@@ -57,14 +71,36 @@ function setup() {
 	const service = new AccountDeletionService(repository as any, dataSource as any, emailService as any, cache as any);
 	const findUsers = jest.spyOn(service as any, 'findUsersByEmail');
 	const plan = jest.spyOn(service as any, 'plan');
-	jest.spyOn(service as any, 'collectStoredFiles').mockResolvedValue([]);
+	const erase = jest.spyOn(service as any, 'eraseAccount');
 	jest.spyOn(service as any, 'scrubStaleAddresses').mockResolvedValue(undefined);
-	return { service, repository, execute, queryBuilder, dataSource, transactionManager, emailService, cache, findUsers, plan };
+	return { service, repository, builder, transactionManager, emailService, findUsers, plan, erase };
 }
 
 const user = { id: 'u1', tenantId: 't1', preferredLanguage: 'en' };
+const planned = [
+	{ user: { id: 'u1', tenantId: 't1' }, account: { outcome: AccountDeletionOutcomeEnum.WORKSPACE_DELETED } },
+	{ user: { id: 'u2', tenantId: 't2' }, account: { outcome: AccountDeletionOutcomeEnum.ACCOUNT_REMOVED } }
+];
+const erased = (workspacesDeleted: number) => ({
+	accounts: 1,
+	workspacesDeleted,
+	filesDeleted: 2,
+	filesFailed: 0,
+	subscriptionsCancelled: 0
+});
 
 describe('AccountDeletionService', () => {
+	describe('planHashOf', () => {
+		it('depends on the accounts and outcomes, not on their order, and reveals no id', () => {
+			const hash = planHashOf(planned as any);
+			expect(planHashOf([...planned].reverse() as any)).toBe(hash);
+			expect(hash).toMatch(/^[0-9a-f]{32}$/);
+			expect(hash).not.toContain('u1');
+			const changed = [planned[0], { ...planned[1], account: { outcome: AccountDeletionOutcomeEnum.WORKSPACE_DELETED } }];
+			expect(planHashOf(changed as any)).not.toBe(hash);
+		});
+	});
+
 	describe('request', () => {
 		it('does nothing visible for an address without accounts', async () => {
 			const { service, findUsers, repository, emailService } = setup();
@@ -76,101 +112,134 @@ describe('AccountDeletionService', () => {
 			expect(emailService.sendAccountDeletionLink).not.toHaveBeenCalled();
 		});
 
-		it('stores only the token hash, revokes earlier links and emails a fragment link', async () => {
-			const { service, findUsers, repository, emailService } = setup();
+		it('locks the address, revokes the live link (clearing its address), stores only the token hash', async () => {
+			const { service, findUsers, repository, builder, transactionManager, emailService } = setup();
 			findUsers.mockResolvedValue([user]);
 
-			await service.request(
-				{ email: ' Jane@Ever.co ', callbackUrl: 'https://evil.example/steal' },
-				{ ip: '1.2.3.4', userAgent: 'test' }
-			);
+			await service.request({ email: ' Jane@Ever.co ', callbackUrl: 'https://evil.example/steal' }, { ip: '1.2.3.4' });
 
-			expect(repository.update).toHaveBeenCalledWith(
-				expect.objectContaining({ emailHash: expect.any(String) }),
-				{ revokedAt: expect.any(Date) }
-			);
+			expect(transactionManager.query).toHaveBeenCalledWith(expect.stringContaining('pg_advisory_xact_lock'), [
+				expect.stringContaining('account-deletion:')
+			]);
+			expect(builder.set).toHaveBeenCalledWith({ revokedAt: expect.any(Date), email: null });
 			const stored = repository.save.mock.calls[0][0];
 			expect(stored.email).toBe('jane@ever.co');
 			expect(stored.tokenHash).toMatch(/^[0-9a-f]{64}$/);
 			expect(stored.requestIpHash).not.toContain('1.2.3.4');
 
-			const { deletionLink, email } = emailService.sendAccountDeletionLink.mock.calls[0][0];
-			expect(email).toBe('jane@ever.co');
+			const { deletionLink } = emailService.sendAccountDeletionLink.mock.calls[0][0];
 			// The caller's link points at a foreign origin, so the deployment's own page is used.
 			expect(deletionLink).toMatch(/^https:\/\/app\.gauzy\.co\/#\/auth\/delete-account\/confirm\?token=[A-Za-z0-9_-]{43}$/);
-			const token = decodeURIComponent(deletionLink.split('token=')[1]);
-			expect(hashAccountDeletionToken(token)).toBe(stored.tokenHash);
+			expect(hashAccountDeletionToken(decodeURIComponent(deletionLink.split('token=')[1]))).toBe(stored.tokenHash);
 		});
 
-		it('drops requests past the per-address limit', async () => {
+		it('drops requests past the per-address limit (counted under the lock)', async () => {
 			const { service, findUsers, repository, emailService } = setup();
 			repository.count.mockResolvedValue(3);
 			findUsers.mockResolvedValue([user]);
 
 			await service.request({ email: 'jane@ever.co' });
 
-			expect(findUsers).not.toHaveBeenCalled();
+			expect(repository.save).not.toHaveBeenCalled();
 			expect(emailService.sendAccountDeletionLink).not.toHaveBeenCalled();
 		});
 
 		it('never throws, whatever fails', async () => {
-			const { service, repository } = setup();
-			repository.count.mockRejectedValue(new Error('db down'));
+			const { service, findUsers } = setup();
+			findUsers.mockRejectedValue(new Error('db down'));
 
 			await expect(service.request({ email: 'jane@ever.co' })).resolves.toBeUndefined();
 		});
 	});
 
 	describe('preview', () => {
-		it('answers the same 410 for malformed and unknown tokens', async () => {
+		it('answers the same 410 for malformed, unknown and still-claimed tokens', async () => {
 			const { service, repository } = setup();
-			repository.findOneBy.mockResolvedValue(null);
+			const gone = new GoneException(ACCOUNT_DELETION_INVALID_LINK_MESSAGE);
 
-			await expect(service.preview('nope')).rejects.toThrow(new GoneException(ACCOUNT_DELETION_INVALID_LINK_MESSAGE));
-			await expect(service.preview(generateAccountDeletionToken())).rejects.toThrow(
-				new GoneException(ACCOUNT_DELETION_INVALID_LINK_MESSAGE)
-			);
+			await expect(service.preview('nope')).rejects.toThrow(gone);
+			repository.findOneBy.mockResolvedValueOnce(null);
+			await expect(service.preview(generateAccountDeletionToken())).rejects.toThrow(gone);
+			repository.findOneBy.mockResolvedValueOnce({ id: 'r1', email: 'jane@ever.co', usedAt: new Date() });
+			await expect(service.preview(generateAccountDeletionToken())).rejects.toThrow(gone);
+		});
+
+		it('returns the planHash the confirm must send back', async () => {
+			const { service, repository, plan } = setup();
+			repository.findOneBy.mockResolvedValue({ id: 'r1', email: 'jane@ever.co', expiresAt: new Date() });
+			plan.mockResolvedValue(planned);
+
+			const preview = await service.preview(generateAccountDeletionToken());
+
+			expect(preview.planHash).toBe(planHashOf(planned as any));
+			expect(preview.email).toBe('j***@ever.co');
 		});
 	});
 
 	describe('confirm', () => {
-		it('refuses a token that is already used, revoked or expired (conditional update hit nothing)', async () => {
-			const { service, execute, plan } = setup();
-			execute.mockResolvedValue({ affected: 0 });
+		const live = { id: 'r1', email: 'jane@ever.co', emailHash: 'h', locale: 'en', expiresAt: new Date() };
 
-			await expect(service.confirm(generateAccountDeletionToken())).rejects.toBeInstanceOf(GoneException);
-			expect(plan).not.toHaveBeenCalled();
+		it('refuses with 409 and claims nothing when what would be deleted changed since the preview', async () => {
+			const { service, repository, plan, builder, erase } = setup();
+			repository.findOneBy.mockResolvedValue(live);
+			plan.mockResolvedValue(planned);
+
+			await expect(service.confirm(generateAccountDeletionToken(), 'stale-hash')).rejects.toBeInstanceOf(
+				ConflictException
+			);
+			expect(builder.execute).not.toHaveBeenCalled();
+			expect(erase).not.toHaveBeenCalled();
 		});
 
-		it('deletes every account, clears the address from the audit row and emails a confirmation', async () => {
-			const { service, repository, plan, transactionManager, emailService, cache, queryBuilder } = setup();
-			repository.findOneBy.mockResolvedValue({ id: 'r1', email: 'jane@ever.co', emailHash: 'h', locale: 'en' });
-			plan.mockResolvedValue([
-				{ user: { id: 'u1', tenantId: 't1' }, account: { outcome: AccountDeletionOutcomeEnum.WORKSPACE_DELETED } },
-				{ user: { id: 'u2', tenantId: 't2' }, account: { outcome: AccountDeletionOutcomeEnum.ACCOUNT_REMOVED } }
-			]);
+		it('answers 410 when another confirm holds the claim', async () => {
+			const { service, repository, plan, builder, erase } = setup();
+			repository.findOneBy.mockResolvedValue(live);
+			plan.mockResolvedValue(planned);
+			builder.execute.mockResolvedValueOnce({ affected: 0 });
 
-			const result = await service.confirm(generateAccountDeletionToken());
+			await expect(service.confirm(generateAccountDeletionToken(), planHashOf(planned as any))).rejects.toBeInstanceOf(
+				GoneException
+			);
+			expect(erase).not.toHaveBeenCalled();
+		});
+
+		it('deletes every account, completes the audit row without the address, and emails a confirmation', async () => {
+			const { service, repository, plan, erase, builder, emailService } = setup();
+			repository.findOneBy.mockResolvedValue(live);
+			plan.mockResolvedValue(planned);
+			erase.mockResolvedValueOnce(erased(1)).mockResolvedValueOnce(erased(0));
+
+			const result = await service.confirm(generateAccountDeletionToken(), planHashOf(planned as any));
 
 			expect(result).toEqual({ deleted: true, accounts: 2, workspacesDeleted: 1 });
-			expect(transactionManager.delete).toHaveBeenCalledTimes(3); // tenant t1, user u1, user u2
-			expect(queryBuilder.set).toHaveBeenCalledWith(expect.objectContaining({ email: null }));
-			expect(queryBuilder.callListeners).toHaveBeenCalledWith(false);
+			expect(builder.set).toHaveBeenCalledWith(expect.objectContaining({ email: null, completedAt: expect.any(Date) }));
+			expect(builder.callListeners).toHaveBeenCalledWith(false);
 			expect(emailService.sendAccountDeletionCompleted).toHaveBeenCalledWith(
-				expect.objectContaining({ email: 'jane@ever.co', accounts: 2, workspacesDeleted: 1 })
+				expect.objectContaining({ email: 'jane@ever.co', accounts: 2, workspacesDeleted: 1, allAccounts: true })
 			);
-			expect(cache.forget).toHaveBeenCalledWith('u1');
-			expect(cache.forget).toHaveBeenCalledWith('u2');
 		});
 
-		it('releases the link when the deletion fails, so the user can retry', async () => {
-			const { service, repository, plan, dataSource } = setup();
-			repository.findOneBy.mockResolvedValue({ id: 'r1', email: 'jane@ever.co', emailHash: 'h' });
-			plan.mockResolvedValue([{ user: { id: 'u1' }, account: { outcome: AccountDeletionOutcomeEnum.ACCOUNT_REMOVED } }]);
-			dataSource.transaction.mockRejectedValue(new Error('fk violation'));
+		it('adds to the counts of an earlier, interrupted attempt', async () => {
+			const { service, repository, plan, erase } = setup();
+			repository.findOneBy.mockResolvedValue({ ...live, result: JSON.stringify({ accounts: 1, workspacesDeleted: 1 }) });
+			plan.mockResolvedValue([planned[1]]);
+			erase.mockResolvedValueOnce(erased(0));
 
-			await expect(service.confirm(generateAccountDeletionToken())).rejects.toThrow('fk violation');
-			expect(repository.update).toHaveBeenCalledWith({ id: 'r1' }, { usedAt: null });
+			const result = await service.confirm(generateAccountDeletionToken(), planHashOf([planned[1]] as any));
+
+			expect(result).toEqual({ deleted: true, accounts: 2, workspacesDeleted: 1 });
+		});
+
+		it('releases the claim when an account fails, so the user can retry', async () => {
+			const { service, repository, plan, erase, builder } = setup();
+			repository.findOneBy.mockResolvedValue(live);
+			plan.mockResolvedValue(planned);
+			erase.mockRejectedValueOnce(new ConflictException('changed'));
+
+			await expect(service.confirm(generateAccountDeletionToken(), planHashOf(planned as any))).rejects.toBeInstanceOf(
+				ConflictException
+			);
+			expect(builder.set).toHaveBeenLastCalledWith({ usedAt: null });
 		});
 	});
 });

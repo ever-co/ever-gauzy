@@ -73,7 +73,7 @@ import {
 	magicCodeClaimWhere
 } from '../shared/single-use/claim-criteria';
 import { assertFirstPartyRequest } from '../auth/oauth-app-first-party';
-import { detachUserAuthorship } from './user-authorship';
+import { detachEmployeeReferences, detachUserReferences, lockRowForUpdate } from './user-authorship';
 
 /**
  * The account-status predicate every authentication path applies.
@@ -1524,11 +1524,22 @@ export class UserService extends TenantAwareCrudService<User> {
 				await this._taskService.unassignEmployeeFromTeamTasks(employee.id);
 			}
 
-			// Keep what the user created or edited in the workspace: without this, the `ON DELETE CASCADE` on
-			// every table's createdBy/updatedBy/deletedBy column deleted those rows for every member.
-			await detachUserAuthorship(this.typeOrmRepository.manager, user.id);
-
-			return await super.delete(userId);
+			// One transaction, with the user row locked (new references wait): first keep what the user created,
+			// edited or approved in the workspace, and the shared rows that point at their member record - the
+			// `ON DELETE CASCADE` on those columns deleted them for every member - then delete the user. A failure
+			// rolls the detaching back with it.
+			return await this.typeOrmRepository.manager.transaction(async (manager) => {
+				if (!(await lockRowForUpdate(manager, 'user', user.id))) {
+					throw new ForbiddenException('User not found for this ID!');
+				}
+				await detachUserReferences(manager, user.id);
+				await detachEmployeeReferences(manager, employee ? [employee.id] : []);
+				const result = await manager.delete(User, { id: user.id });
+				if (!result.affected) {
+					throw new ForbiddenException('User not found for this ID!');
+				}
+				return result;
+			});
 		} catch (error) {
 			throw new ForbiddenException(error?.message);
 		}

@@ -12,8 +12,14 @@
 				></mj-divider>
 				<mj-text font-family="Helvetica">
 					<p>Hello,</p>
-					<p>The {{appName}} account(s) registered with <strong>{{email}}</strong> have been deleted ({{accounts}} account(s), {{workspacesDeleted}} workspace(s) removed entirely).</p>
-					<p>Your profile, sign-in details and memberships are gone and you can no longer sign in with this address. Content you created in workspaces shared with other people stays with those workspaces, without your name. Encrypted backups are overwritten within 14 days.</p>
+					{{#if allAccounts}}
+					<p>Every {{appName}} account registered with <strong>{{email}}</strong> has been deleted ({{accounts}} account(s), {{workspacesDeleted}} workspace(s) removed entirely).</p>
+					<p>Your profiles, sign-in details and memberships are gone and you can no longer sign in with this address.</p>
+					{{else}}
+					<p>Your {{appName}} account in the workspace <strong>{{workspace}}</strong> has been deleted{{#if workspacesDeleted}}, together with the workspace and all of its data{{/if}}.</p>
+					<p>Accounts registered with <strong>{{email}}</strong> in other workspaces, if any, are not affected and still work. To delete them too, use "Delete my account" on the sign-in page.</p>
+					{{/if}}
+					<p>Content you created in workspaces shared with other people stays with those workspaces, without your name. Encrypted backups are overwritten within 14 days.</p>
 					<p>If you did not request this, reply to this email straight away.</p>
 				</mj-text>
 				<mj-text font-family="Helvetica">

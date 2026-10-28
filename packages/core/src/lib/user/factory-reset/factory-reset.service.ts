@@ -267,6 +267,7 @@ import { MikroOrmUserOrganizationRepository } from '../../user-organization/repo
 import { TypeOrmUserOrganizationRepository } from '../../user-organization/repository/type-orm-user-organization.repository';
 import { MikroOrmUserRepository } from '../../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../../user/repository/type-orm-user.repository';
+import { collectStoredFiles, deleteStoredFiles } from '../../account-deletion/account-deletion-files';
 
 @Injectable()
 export class FactoryResetService {
@@ -787,7 +788,16 @@ export class FactoryResetService {
 			tenantId: user.tenantId
 		};
 
+		// The time-tracking captures (screenshots, camshots, ...) go with their time slots through the database
+		// cascade, which runs no entity subscriber: read their storage keys first and remove the files after.
+		const capturedFiles = await collectStoredFiles(this.typeOrmUserRepository.manager, {
+			kind: 'reset',
+			tenantId: user.tenantId,
+			organizationIds: allOrganizationsIds
+		});
+
 		await this.deleteSpecificTables(findInput);
+		await deleteStoredFiles(capturedFiles);
 		if (deleteOrganizationIds?.length > 0) {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:

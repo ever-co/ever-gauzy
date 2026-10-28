@@ -1,6 +1,6 @@
-import { detachUserAuthorship } from './user-authorship';
+import { detachEmployeeReferences, detachUserReferences } from './user-authorship';
 
-/** A minimal stand-in for the parts of TypeORM's EntityManager the helper reads. */
+/** A minimal stand-in for the parts of TypeORM's EntityManager the helpers read. */
 function managerWith(entityMetadatas: any[], type = 'postgres') {
 	const query = jest.fn().mockResolvedValue([[], 2]);
 	const manager = {
@@ -18,44 +18,85 @@ const fk = (column: string, referencedTablePath = 'user', onDelete = 'CASCADE') 
 	referencedTablePath,
 	onDelete
 });
+const col = (databaseName: string, isNullable = true) => ({ databaseName, isNullable });
+const table = (tablePath: string, foreignKeys: any[], columns: any[], tableType = 'regular') => ({
+	tablePath,
+	tableType,
+	foreignKeys,
+	columns
+});
 
-describe('detachUserAuthorship', () => {
-	it('clears createdBy/updatedBy/deletedBy pointing at the user, whatever their delete rule', async () => {
+describe('detachUserReferences', () => {
+	it('clears every nullable reference to the user except userId, whatever its delete rule', async () => {
 		const { manager, query } = managerWith([
-			{
-				tablePath: 'task',
-				tableType: 'regular',
-				foreignKeys: [fk('createdByUserId'), fk('updatedByUserId'), fk('deletedByUserId', 'user', 'NO ACTION')]
-			}
+			table(
+				'task',
+				[fk('createdByUserId'), fk('updatedByUserId'), fk('deletedByUserId', 'user', 'NO ACTION')],
+				[col('createdByUserId'), col('updatedByUserId'), col('deletedByUserId')]
+			),
+			table('timesheet', [fk('approvedById', 'user', 'NO ACTION')], [col('approvedById')])
 		]);
 
-		const changed = await detachUserAuthorship(manager, 'u1');
+		const changed = await detachUserReferences(manager, 'u1');
 
-		expect(query).toHaveBeenCalledTimes(3);
-		expect(query).toHaveBeenCalledWith('UPDATE "task" SET "createdByUserId" = NULL WHERE "createdByUserId" = $1', ['u1']);
-		expect(changed).toBe(6);
+		expect(query).toHaveBeenCalledTimes(4);
+		expect(query).toHaveBeenCalledWith('UPDATE "task" SET "createdByUserId" = NULL WHERE "createdByUserId" IN ($1)', [
+			'u1'
+		]);
+		expect(query).toHaveBeenCalledWith('UPDATE "timesheet" SET "approvedById" = NULL WHERE "approvedById" IN ($1)', [
+			'u1'
+		]);
+		expect(changed).toBe(8);
 	});
 
-	it('leaves the user’s own rows (userId, employeeId, ...) and other tables’ keys to the cascade', async () => {
+	it('leaves the user’s own rows (userId) and other tables’ keys to the cascade', async () => {
 		const { manager, query } = managerWith([
-			{ tablePath: 'user_organization', tableType: 'regular', foreignKeys: [fk('userId')] },
-			{ tablePath: 'task', tableType: 'regular', foreignKeys: [fk('tenantId', 'tenant'), fk('createdByUserId', 'role')] },
-			{ tablePath: 'some_view', tableType: 'view', foreignKeys: [fk('createdByUserId')] }
+			table('user_organization', [fk('userId')], [col('userId', false)]),
+			table('task', [fk('tenantId', 'tenant'), fk('createdByUserId', 'role')], [col('tenantId'), col('createdByUserId')]),
+			table('some_view', [fk('createdByUserId')], [col('createdByUserId')], 'view')
 		]);
 
-		await detachUserAuthorship(manager, 'u1');
+		await detachUserReferences(manager, 'u1');
 
 		expect(query).not.toHaveBeenCalled();
 	});
 
 	it('uses ? placeholders outside Postgres', async () => {
 		const { manager, query } = managerWith(
-			[{ tablePath: 'task', tableType: 'regular', foreignKeys: [fk('createdByUserId')] }],
+			[table('task', [fk('createdByUserId')], [col('createdByUserId')])],
 			'better-sqlite3'
 		);
 
-		await detachUserAuthorship(manager, 'u1');
+		await detachUserReferences(manager, 'u1');
 
-		expect(query).toHaveBeenCalledWith('UPDATE "task" SET "createdByUserId" = NULL WHERE "createdByUserId" = ?', ['u1']);
+		expect(query).toHaveBeenCalledWith('UPDATE "task" SET "createdByUserId" = NULL WHERE "createdByUserId" IN (?)', ['u1']);
+	});
+});
+
+describe('detachEmployeeReferences', () => {
+	it('clears shared references, deletes rows a required blocking reference would keep, skips personal tables', async () => {
+		const { manager, query } = managerWith([
+			table('organization_project', [fk('defaultAssigneeId', 'employee')], [col('defaultAssigneeId')]),
+			table('key_result', [fk('ownerId', 'employee', 'NO ACTION')], [col('ownerId', false)]),
+			table('mention', [fk('mentionedEmployeeId', 'employee')], [col('mentionedEmployeeId', false)]),
+			table('employee_notification', [fk('receiverEmployeeId', 'employee')], [col('receiverEmployeeId')]),
+			table('time_log', [fk('employeeId', 'employee')], [col('employeeId', false)])
+		]);
+
+		await detachEmployeeReferences(manager, ['e1', 'e2']);
+
+		expect(query).toHaveBeenCalledTimes(2);
+		expect(query).toHaveBeenCalledWith(
+			'UPDATE "organization_project" SET "defaultAssigneeId" = NULL WHERE "defaultAssigneeId" IN ($1, $2)',
+			['e1', 'e2']
+		);
+		expect(query).toHaveBeenCalledWith('DELETE FROM "key_result" WHERE "ownerId" IN ($1, $2)', ['e1', 'e2']);
+	});
+
+	it('does nothing without members', async () => {
+		const { manager, query } = managerWith([table('goal', [fk('leadId', 'employee')], [col('leadId')])]);
+
+		expect(await detachEmployeeReferences(manager, [])).toBe(0);
+		expect(query).not.toHaveBeenCalled();
 	});
 });

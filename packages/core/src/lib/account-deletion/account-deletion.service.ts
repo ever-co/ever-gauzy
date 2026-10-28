@@ -1,12 +1,20 @@
-import { ForbiddenException, GoneException, Injectable, Logger, Optional } from '@nestjs/common';
+import {
+	ConflictException,
+	ForbiddenException,
+	GoneException,
+	Injectable,
+	Logger,
+	Optional,
+	ServiceUnavailableException
+} from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { createHash } from 'node:crypto';
 import { DataSource, EntityManager, IsNull, LessThan, MoreThan, Not } from 'typeorm';
 import { pick } from 'underscore';
 import { environment } from '@gauzy/config';
 import { deepMerge } from '@gauzy/utils';
 import {
 	AccountDeletionOutcomeEnum,
-	FileStorageProvider,
 	IAccountDeletionAccount,
 	IAccountDeletionPreview,
 	IAccountDeletionRequestInput,
@@ -19,11 +27,23 @@ import { allowedEmailLink, emailLinkOrigin, warnRejectedEmailLink, withAllowedEm
 import { assertFirstPartyRequest } from '../auth/oauth-app-first-party';
 import { AuthenticatedUserCache } from '../auth/strategies/authenticated-user-cache';
 import { RequestContext } from '../core/context';
-import { FileStorage } from '../core/file-storage';
-import { ImageAsset, Screenshot, Tenant, User, UserOrganization } from '../core/entities/internal';
+import { ImageAsset, Tenant, User, UserOrganization } from '../core/entities/internal';
 import { EmailService } from '../email-send/email.service';
+import { StripeSubscriptionService } from '../shared/billing/stripe-subscription.service';
 import { isDefaultProtectedUser } from '../user/default-protected-users';
-import { detachUserAuthorship } from '../user/user-authorship';
+import {
+	detachEmployeeReferences,
+	detachUserReferences,
+	lockRowForUpdate,
+	sqlPlaceholder
+} from '../user/user-authorship';
+import {
+	collectStoredFiles,
+	deleteStoredFiles,
+	isImageAssetShared,
+	loadTenantSettings,
+	StoredFile
+} from './account-deletion-files';
 import { AccountDeletionRequest } from './account-deletion-request.entity';
 import {
 	ACCOUNT_DELETION_EMAIL_WINDOW_MS,
@@ -43,6 +63,16 @@ import { TypeOrmAccountDeletionRequestRepository } from './repository/type-orm-a
 /** The one answer every bad, used, revoked or expired link gets, so a caller learns nothing from it. */
 export const ACCOUNT_DELETION_INVALID_LINK_MESSAGE = 'This link is invalid or has expired. Request a new one.';
 
+/** The answer when what would be deleted changed since the preview (409): nothing was deleted. */
+export const ACCOUNT_DELETION_PLAN_CHANGED_MESSAGE =
+	'What would be deleted has changed since you reviewed it (for example, a member joined or left). Nothing was deleted: review it again.';
+
+/**
+ * How long a confirm holds its claim on a link. A claim that never completed (the process died mid-way) can be
+ * taken again once it is older than this, while the link has not expired; the deletion then carries on.
+ */
+export const ACCOUNT_DELETION_CLAIM_LEASE_MS = 10 * 60 * 1000;
+
 /** The integration fields a request may brand the emails with (same set as the sign-in code request). */
 const INTEGRATION_FIELDS = ['appName', 'appLogo', 'appSignature', 'appLink', 'companyLink', 'companyName'];
 
@@ -55,30 +85,42 @@ export interface AccountDeletionRequestMeta {
 	userAgent?: string | null;
 }
 
-/** A file in storage that goes with a deleted row (a screenshot, an avatar, an uploaded image). */
-export interface StoredFile {
-	provider?: FileStorageProvider | null;
-	key: string;
-}
-
 /** One account of the address, with what confirming would do to it. */
 interface PlannedAccount {
 	user: User;
 	account: IAccountDeletionAccount;
 }
 
+/** What a deletion removed, kept in the audit row (counts only). Cumulative across retries of one link. */
+interface ErasureCounts {
+	accounts: number;
+	workspacesDeleted: number;
+	filesDeleted: number;
+	filesFailed: number;
+	subscriptionsCancelled: number;
+}
+
+const NO_ERASURE: ErasureCounts = {
+	accounts: 0,
+	workspacesDeleted: 0,
+	filesDeleted: 0,
+	filesFailed: 0,
+	subscriptionsCancelled: 0
+};
+
 /**
- * Deleting your account(s) from a link sent to your email address, without signing in.
+ * Deleting your account(s), from a link sent to your email address (without signing in), or from a session.
  *
  * 1. `request(email)`: when accounts exist for the address, a single-use token is emailed inside a link to
  *    the front end's confirmation page. The caller always gets the same answer (the controller does not
  *    even wait for this method), so the endpoint never tells whether an address has an account.
- * 2. `preview(token)`: what confirming would delete, for the confirmation page. Does not use the token up.
- * 3. `confirm(token)`: uses the token up (atomically), deletes every account of the address, emails a
- *    confirmation, and keeps the request row as the audit record without the clear address.
+ * 2. `preview(token)`: what confirming would delete, and its `planHash`. Does not use the token up.
+ * 3. `confirm(token, planHash)`: claims the token, deletes every account of the address with exactly the
+ *    outcomes the user reviewed (else 409, nothing deleted), emails a confirmation, and keeps the request row
+ *    as the audit record without the clear address.
  *
- * The token only ever reaches these three routes: it is not a JWT, carries no session and cannot sign
- * anybody in. Only its SHA-256 is stored.
+ * The token only ever reaches these routes: it is not a JWT, carries no session and cannot sign anybody in.
+ * Only its SHA-256 is stored.
  *
  * Runs on the TypeORM DataSource, which is up under every `DB_ORM` (see `MultiORMColumn`).
  */
@@ -90,12 +132,17 @@ export class AccountDeletionService {
 		private readonly typeOrmAccountDeletionRequestRepository: TypeOrmAccountDeletionRequestRepository,
 		@InjectDataSource() private readonly dataSource: DataSource,
 		private readonly emailService: EmailService,
-		@Optional() private readonly authenticatedUserCache?: AuthenticatedUserCache
+		@Optional() private readonly authenticatedUserCache?: AuthenticatedUserCache,
+		@Optional() private readonly stripeSubscriptionService?: StripeSubscriptionService
 	) {}
 
 	/**
 	 * Emails a deletion link when the address has accounts. Never throws and never reveals anything: the
 	 * controller answers before this runs.
+	 *
+	 * Counting the recent requests, revoking the previous link and saving the new one happen under a lock per
+	 * address (one transaction), so concurrent requests on several API instances cannot exceed the limit or
+	 * leave two live links.
 	 *
 	 * @param input The request body.
 	 * @param meta Client address and browser, for the audit record.
@@ -109,40 +156,27 @@ export class AccountDeletionService {
 				return;
 			}
 
-			const recent = await this.typeOrmAccountDeletionRequestRepository.count({
-				where: { emailHash, createdAt: MoreThan(new Date(Date.now() - ACCOUNT_DELETION_EMAIL_WINDOW_MS)) }
-			});
-			if (recent >= ACCOUNT_DELETION_MAX_REQUESTS_PER_EMAIL) {
-				this.logger.warn(`Account deletion request dropped: address limit reached (email ${short(emailHash)}).`);
-				return;
-			}
-
 			const users = await this.findUsersByEmail(this.dataSource.manager, email);
 			if (!users.length) {
 				this.logger.debug(`Account deletion request for an address without accounts (email ${short(emailHash)}).`);
 				return;
 			}
 
-			const now = new Date();
 			const ttlMinutes = accountDeletionTtlMinutes();
 			const token = generateAccountDeletionToken();
 
-			// One live link per address: a newer request replaces any earlier one that was not used.
-			await this.typeOrmAccountDeletionRequestRepository.update(
-				{ emailHash, usedAt: IsNull(), revokedAt: IsNull() },
-				{ revokedAt: now }
-			);
-			const created = await this.typeOrmAccountDeletionRequestRepository.save(
-				this.typeOrmAccountDeletionRequestRepository.create({
-					email,
-					emailHash,
-					tokenHash: hashAccountDeletionToken(token),
-					expiresAt: new Date(now.getTime() + ttlMinutes * 60 * 1000),
-					requestIpHash: hashAccountDeletionIp(meta.ip),
-					userAgent: meta.userAgent ? meta.userAgent.slice(0, 255) : null,
-					locale: supportedLanguage(input.locale) || users[0].preferredLanguage || LanguagesEnum.ENGLISH
-				})
-			);
+			const created = await this.dataSource.transaction(async (manager) => {
+				const release = await this.lockAddress(manager, emailHash);
+				try {
+					return await this.issueLink(manager, emailHash, email, token, ttlMinutes, input, meta, users[0]);
+				} finally {
+					await release();
+				}
+			});
+			if (!created) {
+				this.logger.warn(`Account deletion request dropped: address limit reached (email ${short(emailHash)}).`);
+				return;
+			}
 
 			await this.emailService.sendAccountDeletionLink({
 				email,
@@ -160,7 +194,53 @@ export class AccountDeletionService {
 	}
 
 	/**
-	 * What confirming the link would delete.
+	 * Counts the address's recent requests, revokes its live link and saves the new one; under the caller's lock.
+	 *
+	 * @returns The new request, or null when the address reached its hourly limit.
+	 */
+	private async issueLink(
+		manager: EntityManager,
+		emailHash: string,
+		email: string,
+		token: string,
+		ttlMinutes: number,
+		input: IAccountDeletionRequestInput,
+		meta: AccountDeletionRequestMeta,
+		firstUser: User
+	): Promise<AccountDeletionRequest | null> {
+		const repository = manager.getRepository(AccountDeletionRequest);
+		const recent = await repository.count({
+			where: { emailHash, createdAt: MoreThan(new Date(Date.now() - ACCOUNT_DELETION_EMAIL_WINDOW_MS)) }
+		});
+		if (recent >= ACCOUNT_DELETION_MAX_REQUESTS_PER_EMAIL) {
+			return null;
+		}
+
+		const now = new Date();
+		// One live link per address: a newer request replaces any earlier one not yet claimed, and the replaced
+		// row keeps only the hash of the address.
+		await repository
+			.createQueryBuilder()
+			.update(AccountDeletionRequest)
+			.set({ revokedAt: now, email: null })
+			.where({ emailHash, usedAt: IsNull(), completedAt: IsNull(), revokedAt: IsNull() })
+			.callListeners(false)
+			.execute();
+		return await repository.save(
+			repository.create({
+				email,
+				emailHash,
+				tokenHash: hashAccountDeletionToken(token),
+				expiresAt: new Date(now.getTime() + ttlMinutes * 60 * 1000),
+				requestIpHash: hashAccountDeletionIp(meta.ip),
+				userAgent: meta.userAgent ? meta.userAgent.slice(0, 255) : null,
+				locale: supportedLanguage(input.locale) || firstUser.preferredLanguage || LanguagesEnum.ENGLISH
+			})
+		);
+	}
+
+	/**
+	 * What confirming the link would delete, with the `planHash` the confirm must send back.
 	 *
 	 * @param token The token from the link.
 	 * @throws GoneException when the link is not (or no longer) valid.
@@ -171,91 +251,82 @@ export class AccountDeletionService {
 		return {
 			email: maskAccountDeletionEmail(request.email),
 			expiresAt: request.expiresAt,
-			accounts: planned.map((item) => item.account)
+			accounts: planned.map((item) => item.account),
+			planHash: planHashOf(planned)
 		};
 	}
 
 	/**
-	 * Uses the token up and deletes every account of its address.
+	 * Deletes every account of the link's address, exactly as previewed.
 	 *
-	 * The token is consumed by one conditional UPDATE, so two concurrent confirms cannot both run. When the
-	 * deletion itself fails the token is released again (until it expires), so the user can retry; accounts
-	 * already deleted are simply not found the second time.
+	 * - `planHash` must match what the accounts and outcomes are now; otherwise 409 and nothing happens (the
+	 *   link stays usable).
+	 * - The link is claimed by one conditional UPDATE, so two concurrent confirms cannot both run. The claim is
+	 *   a lease: should the process die mid-way, the link works again after {@link ACCOUNT_DELETION_CLAIM_LEASE_MS}
+	 *   (while it has not expired) and the deletion carries on; the counts are cumulative.
+	 * - Each account goes in its own transaction, which locks the workspace and re-checks its outcome first
+	 *   (a member joining in between makes it a 409, not a deleted member). When an account fails, the claim
+	 *   is released so the user can retry; accounts already deleted are simply not found again.
 	 *
-	 * @param token The token from the link.
 	 * @throws GoneException when the link is not (or no longer) valid.
+	 * @throws ConflictException when what would be deleted changed since the preview.
 	 */
-	async confirm(token: string): Promise<IAccountDeletionResult> {
-		if (!isWellFormedAccountDeletionToken(token)) {
-			throw new GoneException(ACCOUNT_DELETION_INVALID_LINK_MESSAGE);
+	async confirm(token: string, planHash: string): Promise<IAccountDeletionResult> {
+		const request = await this.findLiveRequest(token);
+		const planned = await this.plan(this.dataSource.manager, request.email);
+		if (planHashOf(planned) !== planHash) {
+			throw new ConflictException(ACCOUNT_DELETION_PLAN_CHANGED_MESSAGE);
 		}
-		const tokenHash = hashAccountDeletionToken(token);
-		const now = new Date();
 
-		const consumed = await this.typeOrmAccountDeletionRequestRepository
+		const now = new Date();
+		const claimed = await this.typeOrmAccountDeletionRequestRepository
 			.createQueryBuilder()
 			.update(AccountDeletionRequest)
 			.set({ usedAt: now })
-			.where({ tokenHash, usedAt: IsNull(), revokedAt: IsNull(), expiresAt: MoreThan(now), email: Not(IsNull()) })
+			.where({ id: request.id, revokedAt: IsNull(), completedAt: IsNull(), expiresAt: MoreThan(now) })
+			.andWhere([{ usedAt: IsNull() }, { usedAt: LessThan(new Date(now.getTime() - ACCOUNT_DELETION_CLAIM_LEASE_MS)) }])
+			.callListeners(false)
 			.execute();
-		if (consumed.affected !== 1) {
+		if (claimed.affected !== 1) {
 			throw new GoneException(ACCOUNT_DELETION_INVALID_LINK_MESSAGE);
 		}
 
-		const request = await this.typeOrmAccountDeletionRequestRepository.findOneBy({ tokenHash });
-		const email = request.email;
-
-		let accounts = 0;
-		let workspacesDeleted = 0;
-		const deletedUserIds: ID[] = [];
+		const counts: ErasureCounts = { ...NO_ERASURE, ...parseCounts(request.result) };
 		try {
-			const planned = await this.plan(this.dataSource.manager, email);
-			for (const { user, account } of planned) {
-				const files = await this.collectStoredFiles(this.dataSource.manager, user, account.outcome);
-				await this.dataSource.transaction(async (manager) => {
-					await this.eraseAccount(manager, user, account.outcome);
-				});
-				// Only once the rows are gone for good: the database cascade runs no entity subscriber, so the
-				// files those subscribers would have removed are removed here. Not awaited (can be many).
-				void this.deleteStoredFiles(request.id, files);
-				deletedUserIds.push(user.id);
-				accounts++;
-				if (account.outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED) {
-					workspacesDeleted++;
-				}
+			for (const item of planned) {
+				add(counts, await this.eraseAccount(item, request.id));
+				// Progress survives a crash: a retry adds to these counts instead of starting from zero.
+				await this.saveAuditRow(request.id, { result: JSON.stringify(counts) });
 			}
 		} catch (error) {
 			this.logger.error(
-				`Account deletion ${request.id} failed after ${accounts} account(s): ${error?.message}. Link released for a retry.`
+				`Account deletion ${request.id} stopped after ${counts.accounts} account(s): ${error?.message}. Link released for a retry.`
 			);
-			await this.typeOrmAccountDeletionRequestRepository.update({ id: request.id }, { usedAt: null });
+			await this.saveAuditRow(request.id, { usedAt: null });
 			throw error;
-		} finally {
-			for (const userId of deletedUserIds) {
-				this.authenticatedUserCache?.forget(userId);
-			}
 		}
 
 		// The audit record: from here on the row carries no clear address, only its hash and the counts.
-		await this.completeAuditRow(request.id, {
+		await this.saveAuditRow(request.id, {
 			email: null,
-			result: JSON.stringify({ accounts, workspacesDeleted, completedAt: now.toISOString() })
+			completedAt: new Date(),
+			result: JSON.stringify({ ...counts, completedAt: new Date().toISOString() })
 		});
 		this.logger.log(
-			`Account deletion ${request.id} completed: ${accounts} account(s), ${workspacesDeleted} workspace(s) (email ${short(
-				request.emailHash
-			)}).`
+			`Account deletion ${request.id} completed: ${counts.accounts} account(s), ${counts.workspacesDeleted} workspace(s), ` +
+				`${counts.filesDeleted} file(s) removed, ${counts.filesFailed} not (email ${short(request.emailHash)}).`
 		);
 
 		await this.emailService.sendAccountDeletionCompleted({
-			email,
-			accounts,
-			workspacesDeleted,
+			email: request.email,
+			accounts: counts.accounts,
+			workspacesDeleted: counts.workspacesDeleted,
+			allAccounts: true,
 			locale: (request.locale as LanguagesEnum) || LanguagesEnum.ENGLISH,
 			integration: environment.appIntegrationConfig
 		});
 
-		return { deleted: true, accounts, workspacesDeleted };
+		return { deleted: true, accounts: counts.accounts, workspacesDeleted: counts.workspacesDeleted };
 	}
 
 	/**
@@ -266,63 +337,67 @@ export class AccountDeletionService {
 		return {
 			email: maskAccountDeletionEmail(user.email),
 			expiresAt: null,
-			accounts: planned.map((item) => item.account)
+			accounts: planned.map((item) => item.account),
+			planHash: planHashOf(planned)
 		};
 	}
 
 	/**
 	 * Deletes the signed-in user's account in the current workspace, with the same rules as the emailed link
-	 * (the whole workspace when nobody else uses it, otherwise the account only). The session is the proof:
-	 * accounts with the same address in other workspaces are left alone (the emailed link covers those).
-	 * Writes the same audit row and sends the same confirmation email.
+	 * (the whole workspace when nobody else uses it, otherwise the account only) and the same `planHash` check.
+	 * The session is the proof: accounts with the same address in other workspaces are left alone (the emailed
+	 * link covers those). Writes the same audit row and sends a confirmation email that says so.
+	 *
+	 * @throws ConflictException when what would be deleted changed since the preview.
 	 */
-	async deleteCurrentUser(): Promise<IAccountDeletionResult> {
+	async deleteCurrentUser(planHash: string): Promise<IAccountDeletionResult> {
 		assertFirstPartyRequest('Deleting a user account');
 		const { planned, user } = await this.planCurrentUser();
+		if (planHashOf(planned) !== planHash) {
+			throw new ConflictException(ACCOUNT_DELETION_PLAN_CHANGED_MESSAGE);
+		}
+
 		const now = new Date();
-		const audit = await this.typeOrmAccountDeletionRequestRepository.save(
-			this.typeOrmAccountDeletionRequestRepository.create({
-				emailHash: hashAccountDeletionEmail(user.email),
+		const email = normalizeAccountDeletionEmail(user.email);
+		// Inserted without listeners: the base subscriber would stamp the session's user, deleted a moment later.
+		const inserted = await this.typeOrmAccountDeletionRequestRepository
+			.createQueryBuilder()
+			.insert()
+			.into(AccountDeletionRequest)
+			.values({
+				emailHash: hashAccountDeletionEmail(email),
 				// No link was emailed: a random, never-revealed value keeps the column unique and unusable.
 				tokenHash: hashAccountDeletionToken(generateAccountDeletionToken()),
 				expiresAt: now,
 				usedAt: now,
 				locale: user.preferredLanguage || LanguagesEnum.ENGLISH
 			})
-		);
+			.callListeners(false)
+			.execute();
+		const auditId: ID = inserted.identifiers?.[0]?.id;
 
-		let workspacesDeleted = 0;
-		for (const { user: account, account: summary } of planned) {
-			const files = await this.collectStoredFiles(this.dataSource.manager, account, summary.outcome);
-			await this.dataSource.transaction(async (manager) => {
-				await this.eraseAccount(manager, account, summary.outcome);
-			});
-			void this.deleteStoredFiles(audit.id, files);
-			this.authenticatedUserCache?.forget(account.id);
-			if (summary.outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED) {
-				workspacesDeleted++;
-			}
+		const counts: ErasureCounts = { ...NO_ERASURE };
+		for (const item of planned) {
+			add(counts, await this.eraseAccount(item, auditId));
 		}
 
-		await this.completeAuditRow(audit.id, {
-			result: JSON.stringify({
-				accounts: planned.length,
-				workspacesDeleted,
-				completedAt: now.toISOString(),
-				via: 'session'
-			})
+		await this.saveAuditRow(auditId, {
+			completedAt: new Date(),
+			result: JSON.stringify({ ...counts, completedAt: new Date().toISOString(), via: 'session' })
 		});
 		this.logger.log(
-			`Account deletion ${audit.id} completed from a session: ${planned.length} account(s), ${workspacesDeleted} workspace(s).`
+			`Account deletion ${auditId} completed from a session: ${counts.accounts} account(s), ${counts.workspacesDeleted} workspace(s).`
 		);
 		await this.emailService.sendAccountDeletionCompleted({
-			email: normalizeAccountDeletionEmail(user.email),
-			accounts: planned.length,
-			workspacesDeleted,
+			email,
+			accounts: counts.accounts,
+			workspacesDeleted: counts.workspacesDeleted,
+			allAccounts: false,
+			workspace: planned[0]?.account.workspace,
 			locale: (user.preferredLanguage as LanguagesEnum) || LanguagesEnum.ENGLISH,
 			integration: environment.appIntegrationConfig
 		});
-		return { deleted: true, accounts: planned.length, workspacesDeleted };
+		return { deleted: true, accounts: counts.accounts, workspacesDeleted: counts.workspacesDeleted };
 	}
 
 	/** The signed-in user's account in the current workspace, planned like the emailed link's. */
@@ -336,7 +411,9 @@ export class AccountDeletionService {
 		if (environment.demo && isDefaultProtectedUser(user.email)) {
 			throw new ForbiddenException('This demo account cannot be deleted.');
 		}
-		const planned = (await this.plan(this.dataSource.manager, user.email)).filter((item) => item.user.id === user.id);
+		const planned = (
+			await this.plan(this.dataSource.manager, normalizeAccountDeletionEmail(user.email))
+		).filter((item) => item.user.id === user.id);
 		if (!planned.length) {
 			throw new ForbiddenException('You are not allowed to delete this account.');
 		}
@@ -344,38 +421,201 @@ export class AccountDeletionService {
 	}
 
 	/**
-	 * Writes the outcome to the audit row, without entity listeners: the base subscriber would stamp
-	 * `updatedByUserId` with the signed-in user, who no longer exists by now (a foreign key error that
-	 * turned a finished deletion into a 500 and skipped the confirmation email).
+	 * Deletes one account in its own transaction:
+	 *
+	 * 1. locks the workspace (rows that would reference it, a joining member's included, wait) and the user,
+	 *    and re-checks the outcome the user reviewed: a change is a 409 and nothing is deleted;
+	 * 2. when the whole workspace goes, cancels its billing subscription first (a failure stops here: a deleted
+	 *    workspace must not go on being charged);
+	 * 3. clears the user's and their members' references from rows that are not theirs (shared content stays);
+	 * 4. removes the stored files that go with the rows (with the owning tenant's storage settings);
+	 * 5. deletes the workspace (everything cascades from `tenant`) or the account, and a profile picture
+	 *    nothing else uses.
+	 *
+	 * Files are removed before the rows: if the transaction then fails, the rows remain without their files,
+	 * and a retry finishes the deletion; the other order would lose the keys of files left in the bucket.
 	 */
-	private async completeAuditRow(id: ID, values: Partial<AccountDeletionRequest>): Promise<void> {
+	private async eraseAccount({ user, account }: PlannedAccount, auditId: ID): Promise<ErasureCounts> {
+		const result = await this.dataSource.transaction(async (manager): Promise<ErasureCounts> => {
+			if (user.tenantId) {
+				await lockRowForUpdate(manager, 'tenant', user.tenantId);
+			}
+			if (!(await lockRowForUpdate(manager, 'user', user.id))) {
+				return { ...NO_ERASURE }; // Already deleted by an earlier attempt.
+			}
+			if ((await this.outcomeOf(manager, user)) !== account.outcome) {
+				throw new ConflictException(ACCOUNT_DELETION_PLAN_CHANGED_MESSAGE);
+			}
+			const wholeWorkspace = account.outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED;
+
+			let subscriptionsCancelled = 0;
+			if (wholeWorkspace) {
+				subscriptionsCancelled = await this.cancelBilling(manager, user.tenantId);
+			}
+
+			const files = await collectStoredFiles(
+				manager,
+				wholeWorkspace ? { kind: 'workspace', tenantId: user.tenantId } : { kind: 'user', userId: user.id }
+			);
+			const avatarId = !wholeWorkspace && user.imageId ? user.imageId : null;
+			const avatarGoes = !!avatarId && !(await isImageAssetShared(manager, avatarId, user.id));
+			if (avatarGoes) {
+				files.push(...(await this.avatarFiles(manager, avatarId)));
+			}
+			const tenantSettings = user.tenantId ? await loadTenantSettings(manager, user.tenantId) : null;
+
+			await detachUserReferences(manager, user.id);
+			await detachEmployeeReferences(manager, await this.employeeIdsOf(manager, user.id));
+
+			const removed = await deleteStoredFiles(files, tenantSettings);
+
+			if (wholeWorkspace) {
+				await manager.delete(Tenant, { id: user.tenantId });
+			}
+			// Also when the tenant went: a no-op then, and it covers a user row the tenant did not cascade to.
+			await manager.delete(User, { id: user.id });
+			if (avatarGoes) {
+				await manager.delete(ImageAsset, { id: avatarId });
+			}
+
+			return {
+				accounts: 1,
+				workspacesDeleted: wholeWorkspace ? 1 : 0,
+				filesDeleted: removed.deleted,
+				filesFailed: removed.failed,
+				subscriptionsCancelled
+			};
+		});
+		this.authenticatedUserCache?.forget(user.id);
+		if (result.filesFailed) {
+			this.logger.warn(`Account deletion ${auditId}: ${result.filesFailed} stored file(s) could not be removed.`);
+		}
+		return result;
+	}
+
+	/**
+	 * Cancels the billing subscription of a workspace that is about to be deleted.
+	 *
+	 * @throws ServiceUnavailableException when it could not be cancelled: nothing is deleted then.
+	 */
+	private async cancelBilling(manager: EntityManager, tenantId: ID): Promise<number> {
+		if (!this.stripeSubscriptionService) {
+			return 0;
+		}
+		const tenant = await manager.findOne(Tenant, { where: { id: tenantId }, select: { id: true, stripeCustomerId: true } });
+		if (!tenant?.stripeCustomerId) {
+			return 0;
+		}
+		try {
+			return await this.stripeSubscriptionService.cancelCustomerSubscriptions(tenant.stripeCustomerId);
+		} catch (error) {
+			this.logger.error(`Billing of workspace ${tenantId} could not be cancelled: ${error?.message}`);
+			throw new ServiceUnavailableException(
+				'The subscription of this workspace could not be cancelled, so nothing was deleted. Please try again later.'
+			);
+		}
+	}
+
+	/** The profile picture's own files, unless another image row uses the same file. */
+	private async avatarFiles(manager: EntityManager, imageId: ID): Promise<StoredFile[]> {
+		const driver = manager.connection.driver;
+		const p = (n: number) => sqlPlaceholder(manager, n);
+		const [image] = await manager.query(
+			`SELECT ${driver.escape('url')} AS ${driver.escape('url')}, ${driver.escape('thumb')} AS ${driver.escape(
+				'thumb'
+			)}, ${driver.escape('storageProvider')} AS ${driver.escape('provider')} FROM ${driver.escape(
+				'image_asset'
+			)} WHERE ${driver.escape('id')} = ${p(1)}`,
+			[imageId]
+		);
+		const files: StoredFile[] = [];
+		for (const key of [image?.url, image?.thumb]) {
+			if (!key || /^https?:\/\//i.test(key)) continue;
+			const others = await manager.query(
+				`SELECT 1 FROM ${driver.escape('image_asset')} WHERE (${driver.escape('url')} = ${p(1)} OR ${driver.escape(
+					'thumb'
+				)} = ${p(2)}) AND ${driver.escape('id')} <> ${p(3)}`,
+				[key, key, imageId]
+			);
+			if (!others.length) {
+				files.push({ table: 'image_asset', provider: image.provider, key });
+			}
+		}
+		return files;
+	}
+
+	/** The ids of the user's member (employee) records, soft-deleted ones included. */
+	private async employeeIdsOf(manager: EntityManager, userId: ID): Promise<ID[]> {
+		const driver = manager.connection.driver;
+		const rows: Array<{ id: ID }> = await manager.query(
+			`SELECT ${driver.escape('id')} AS ${driver.escape('id')} FROM ${driver.escape('employee')} WHERE ${driver.escape(
+				'userId'
+			)} = ${sqlPlaceholder(manager, 1)}`,
+			[userId]
+		);
+		return rows.map((row) => row.id);
+	}
+
+	/**
+	 * Writes to the audit row without entity listeners: the base subscriber would stamp `updatedByUserId` with
+	 * the signed-in user, who may no longer exist (a foreign key error that turned a finished deletion into a
+	 * 500). A failure here is logged and swallowed: the deletion itself is done (or already being reported).
+	 */
+	private async saveAuditRow(id: ID, values: Partial<AccountDeletionRequest>): Promise<void> {
+		if (!id) return;
+		try {
+			await this.typeOrmAccountDeletionRequestRepository
+				.createQueryBuilder()
+				.update(AccountDeletionRequest)
+				.set(values)
+				.where({ id })
+				.callListeners(false)
+				.execute();
+		} catch (error) {
+			this.logger.error(`Account deletion ${id}: the audit row could not be updated: ${error?.message}`);
+		}
+	}
+
+	/**
+	 * Serializes link issuing per address for the rest of the transaction: a Postgres advisory transaction
+	 * lock on the address hash (released by the commit), a named lock on MySQL (released by the returned
+	 * function, still inside the transaction). SQLite serializes writers anyway.
+	 *
+	 * @returns A function that releases the lock where the database needs it.
+	 */
+	private async lockAddress(manager: EntityManager, emailHash: string): Promise<() => Promise<void>> {
+		const type = manager.connection.driver.options.type;
+		if (type === 'postgres') {
+			await manager.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`account-deletion:${emailHash}`]);
+		} else if (type === 'mysql') {
+			const name = `gauzy:account-deletion:${emailHash.slice(0, 32)}`;
+			await manager.query(`SELECT GET_LOCK(?, 10)`, [name]);
+			return async () => {
+				await manager.query(`SELECT RELEASE_LOCK(?)`, [name]);
+			};
+		}
+		return async () => undefined;
+	}
+
+	/**
+	 * Clears the clear address from requests that can no longer complete (expired or replaced by a newer
+	 * request), so an unconfirmed request keeps only its hash. Done on every new request: the table only ever
+	 * holds a handful of live rows, and no scheduler is needed.
+	 */
+	private async scrubStaleAddresses(): Promise<void> {
 		await this.typeOrmAccountDeletionRequestRepository
 			.createQueryBuilder()
 			.update(AccountDeletionRequest)
-			.set(values)
-			.where({ id })
+			.set({ email: null })
+			.where({ email: Not(IsNull()), completedAt: IsNull() })
+			.andWhere([{ expiresAt: LessThan(new Date()) }, { revokedAt: Not(IsNull()) }])
 			.callListeners(false)
 			.execute();
 	}
 
 	/**
-	 * Clears the clear address from requests whose link can no longer be used (expired or replaced by a newer
-	 * request), so a request that was never confirmed keeps only its hash. Done on every new request: cheap
-	 * (the table only ever holds a handful of live rows), and no scheduler is needed.
-	 */
-	private async scrubStaleAddresses(): Promise<void> {
-		const now = new Date();
-		await this.typeOrmAccountDeletionRequestRepository
-			.createQueryBuilder()
-			.update(AccountDeletionRequest)
-			.set({ email: null })
-			.where({ email: Not(IsNull()), usedAt: IsNull() })
-			.andWhere([{ expiresAt: LessThan(now) }, { revokedAt: Not(IsNull()) }])
-			.execute();
-	}
-
-	/**
-	 * The request a token belongs to, when it can still be used.
+	 * The request a token belongs to, when it can still be used: not revoked, not completed, not expired, and
+	 * not claimed by a confirm that is still running (a claim older than the lease is fair game).
 	 *
 	 * @throws GoneException otherwise (one message for every reason).
 	 */
@@ -383,13 +623,15 @@ export class AccountDeletionService {
 		if (!isWellFormedAccountDeletionToken(token)) {
 			throw new GoneException(ACCOUNT_DELETION_INVALID_LINK_MESSAGE);
 		}
+		const now = Date.now();
 		const request = await this.typeOrmAccountDeletionRequestRepository.findOneBy({
 			tokenHash: hashAccountDeletionToken(token),
-			usedAt: IsNull(),
 			revokedAt: IsNull(),
-			expiresAt: MoreThan(new Date())
+			completedAt: IsNull(),
+			expiresAt: MoreThan(new Date(now))
 		});
-		if (!request || !request.email) {
+		const claimed = request?.usedAt && new Date(request.usedAt).getTime() > now - ACCOUNT_DELETION_CLAIM_LEASE_MS;
+		if (!request || !request.email || claimed) {
 			throw new GoneException(ACCOUNT_DELETION_INVALID_LINK_MESSAGE);
 		}
 		return request;
@@ -400,15 +642,15 @@ export class AccountDeletionService {
 	 *
 	 * One Gauzy user exists per tenant ("workspace"). When nobody else uses the workspace, it goes as a
 	 * whole; otherwise only the user's own account does, and `soleAdmin` warns when they are its last admin.
+	 * Soft-deleted accounts count on both sides: one with this address is deleted too, and another member's
+	 * soft-deleted (restorable) account keeps the workspace from being deleted whole.
 	 */
 	private async plan(manager: EntityManager, email: string): Promise<PlannedAccount[]> {
 		const users = await this.findUsersByEmail(manager, email);
 		const planned: PlannedAccount[] = [];
 
 		for (const user of users) {
-			const otherMembers = user.tenantId
-				? await manager.count(User, { where: { tenantId: user.tenantId, id: Not(user.id) } })
-				: 0;
+			const otherMembers = await this.otherMembersOf(manager, user);
 			const isAdmin = ADMIN_ROLES.includes(user.role?.name);
 			const otherAdmins =
 				otherMembers > 0 && isAdmin
@@ -434,108 +676,36 @@ export class AccountDeletionService {
 					organizations: memberships.map((membership) => membership.organization?.name).filter(Boolean),
 					otherMembers,
 					soleAdmin: isAdmin && otherMembers > 0 && otherAdmins === 0,
-					outcome:
-						user.tenantId && otherMembers === 0
-							? AccountDeletionOutcomeEnum.WORKSPACE_DELETED
-							: AccountDeletionOutcomeEnum.ACCOUNT_REMOVED
+					outcome: outcomeFor(user, otherMembers)
 				}
 			});
 		}
 		return planned;
 	}
 
-	/**
-	 * Deletes one account, inside the caller's transaction.
-	 *
-	 * Authorship (`createdBy`/`updatedBy`/`deletedBy`) is cleared first so the cascade from `user` only
-	 * takes the user's own rows (see {@link detachUserAuthorship}). A workspace nobody else uses is then
-	 * deleted as a whole: every tenant-scoped row cascades from `tenant`, the user's included.
-	 */
-	private async eraseAccount(manager: EntityManager, user: User, outcome: AccountDeletionOutcomeEnum): Promise<void> {
-		await detachUserAuthorship(manager, user.id);
-
-		if (outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED) {
-			await manager.delete(Tenant, { id: user.tenantId });
-		}
-		// Also when the tenant went: a no-op then, and it covers a user row the tenant did not cascade to.
-		await manager.delete(User, { id: user.id });
-
-		// The profile picture is a row of the workspace (`user.imageId` only clears on delete): remove it too.
-		if (user.imageId) {
-			await manager.delete(ImageAsset, { id: user.imageId });
-		}
+	/** The outcome for one account, counted again (inside the erasing transaction, under its lock). */
+	private async outcomeOf(manager: EntityManager, user: User): Promise<AccountDeletionOutcomeEnum> {
+		return outcomeFor(user, await this.otherMembersOf(manager, user));
 	}
 
-	/**
-	 * The stored files that go with an account: its screenshots and profile picture, or every screenshot and
-	 * image of the workspace when the workspace goes. Read before the delete, raw (no entity hooks).
-	 */
-	private async collectStoredFiles(
-		manager: EntityManager,
-		user: User,
-		outcome: AccountDeletionOutcomeEnum
-	): Promise<StoredFile[]> {
-		const wholeWorkspace = outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED && !!user.tenantId;
-		const screenshots = manager
-			.getRepository(Screenshot)
-			.createQueryBuilder('screenshot')
-			.withDeleted()
-			.select(['screenshot.file AS file', 'screenshot.thumb AS thumb', 'screenshot.storageProvider AS provider']);
-		const images = manager
-			.getRepository(ImageAsset)
-			.createQueryBuilder('image')
-			.withDeleted()
-			.select(['image.url AS file', 'image.thumb AS thumb', 'image.storageProvider AS provider']);
-
-		if (wholeWorkspace) {
-			screenshots.where('screenshot.tenantId = :tenantId', { tenantId: user.tenantId });
-			images.where('image.tenantId = :tenantId', { tenantId: user.tenantId });
-		} else {
-			screenshots.where('screenshot.userId = :userId', { userId: user.id });
-			images.where('image.id = :imageId', { imageId: user.imageId || null });
+	/** The other users of the account's workspace, soft-deleted ones included. */
+	private async otherMembersOf(manager: EntityManager, user: User): Promise<number> {
+		if (!user.tenantId) {
+			return 0;
 		}
-
-		const rows: Array<{ file?: string; thumb?: string; provider?: FileStorageProvider }> = [
-			...(await screenshots.getRawMany()),
-			...(user.imageId || wholeWorkspace ? await images.getRawMany() : [])
-		];
-		const files: StoredFile[] = [];
-		for (const row of rows) {
-			for (const key of [row.file, row.thumb]) {
-				// Only storage keys: an image can also be an absolute URL to somewhere else (e.g. a Gravatar).
-				if (key && !/^https?:\/\//i.test(key)) {
-					files.push({ provider: row.provider, key });
-				}
-			}
-		}
-		return files;
+		return await manager.count(User, { where: { tenantId: user.tenantId, id: Not(user.id) }, withDeleted: true });
 	}
 
-	/** Removes stored files, best effort; logs counts only. */
-	private async deleteStoredFiles(requestId: ID, files: StoredFile[]): Promise<void> {
-		let failed = 0;
-		for (const { provider, key } of files) {
-			try {
-				await new FileStorage().getProvider(provider || undefined).deleteFile(key);
-			} catch {
-				failed++;
-			}
-		}
-		if (files.length) {
-			this.logger.log(
-				`Account deletion ${requestId}: removed ${files.length - failed} of ${files.length} stored file(s).`
-			);
-		}
-	}
-
-	/** The active (not soft-deleted) users with this address, in every tenant, with their role and tenant. */
+	/** The users with this address in every tenant, soft-deleted ones included, with their role and tenant. */
 	private async findUsersByEmail(manager: EntityManager, email: string): Promise<User[]> {
 		return await manager
 			.getRepository(User)
 			.createQueryBuilder('user')
+			.withDeleted()
 			.leftJoinAndSelect('user.role', 'role')
 			.leftJoinAndSelect('user.tenant', 'tenant')
-			.where('LOWER(user.email) = :email', { email })
+			.where('LOWER(TRIM(user.email)) = :email', { email })
+			.orderBy('user.id', 'ASC')
 			.getMany();
 	}
 
@@ -562,6 +732,43 @@ export class AccountDeletionService {
 			environment.appIntegrationConfig,
 			withAllowedEmailLinks(overrides, warnRejectedEmailLink(this.logger, 'the account deletion email'))
 		);
+	}
+}
+
+/** The whole workspace when nobody else (not even a soft-deleted member) is in it, otherwise the account only. */
+function outcomeFor(user: User, otherMembers: number): AccountDeletionOutcomeEnum {
+	return user.tenantId && otherMembers === 0
+		? AccountDeletionOutcomeEnum.WORKSPACE_DELETED
+		: AccountDeletionOutcomeEnum.ACCOUNT_REMOVED;
+}
+
+/**
+ * Fingerprint of what a confirm would delete: which accounts, in which workspaces, with which outcome. Holds
+ * no readable data (ids are hashed together), so it can travel through the browser.
+ */
+export function planHashOf(planned: Array<{ user: Pick<User, 'id' | 'tenantId'>; account: Pick<IAccountDeletionAccount, 'outcome'> }>): string {
+	const parts = planned.map(({ user, account }) => `${user.id}|${user.tenantId || ''}|${account.outcome}`).sort();
+	return createHash('sha256').update(parts.join('\n'), 'utf8').digest('hex').slice(0, 32);
+}
+
+/** The counts kept in an audit row from an earlier, incomplete attempt. */
+function parseCounts(result?: string | null): Partial<ErasureCounts> {
+	if (!result) return {};
+	try {
+		const parsed = JSON.parse(result);
+		const counts: Partial<ErasureCounts> = {};
+		for (const key of Object.keys(NO_ERASURE) as Array<keyof ErasureCounts>) {
+			if (Number.isFinite(parsed?.[key])) counts[key] = parsed[key];
+		}
+		return counts;
+	} catch {
+		return {};
+	}
+}
+
+function add(total: ErasureCounts, more: ErasureCounts): void {
+	for (const key of Object.keys(NO_ERASURE) as Array<keyof ErasureCounts>) {
+		total[key] += more[key];
 	}
 }
 

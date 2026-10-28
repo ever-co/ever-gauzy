@@ -12,7 +12,10 @@ export interface IAccountDeletionRequest extends IBaseEntityModel {
 	emailHash: string;
 	tokenHash: string;
 	expiresAt: Date;
+	/** When the link was claimed by a confirm (a lease: a claim older than a few minutes that never completed can be taken again). */
 	usedAt?: Date | null;
+	/** When the deletion finished. A completed request never works again. */
+	completedAt?: Date | null;
 	revokedAt?: Date | null;
 	requestIpHash?: string | null;
 	userAgent?: string | null;
@@ -59,6 +62,24 @@ export interface IAccountDeletionPreview {
 	/** When the link stops working; null for the signed-in preview (`GET /account-deletion/me`). */
 	expiresAt: Date | null;
 	accounts: IAccountDeletionAccount[];
+	/**
+	 * Fingerprint of the accounts and outcomes shown. The confirm sends it back; when what would be deleted has
+	 * changed since (a member joined or left), the API answers 409 and deletes nothing.
+	 */
+	planHash: string;
+}
+
+/** Body of `POST /account-deletion/confirm`. */
+export interface IAccountDeletionConfirmInput {
+	token: string;
+	confirm: true;
+	planHash: string;
+}
+
+/** Body of `POST /account-deletion/me`. */
+export interface IAccountDeletionConfirmMeInput {
+	confirm: true;
+	planHash: string;
 }
 
 /** Response of `POST /account-deletion/confirm` and `POST /account-deletion/me`. */

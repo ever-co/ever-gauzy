@@ -1422,6 +1422,8 @@ export class EmailService {
 	 * @param input.email The address whose accounts were deleted.
 	 * @param input.accounts How many accounts (one per workspace) were deleted.
 	 * @param input.workspacesDeleted How many of those workspaces were deleted entirely.
+	 * @param input.allAccounts Whether every account of the address went (emailed link) or one (in the app).
+	 * @param input.workspace The workspace of that one account.
 	 * @param input.locale The recipient's language.
 	 * @param input.integration The branding the email is rendered with.
 	 */
@@ -1429,12 +1431,18 @@ export class EmailService {
 		email,
 		accounts,
 		workspacesDeleted,
+		allAccounts,
+		workspace,
 		locale,
 		integration
 	}: {
 		email: string;
 		accounts: number;
 		workspacesDeleted: number;
+		/** True for the emailed link (every account of the address); false for one account deleted in the app. */
+		allAccounts: boolean;
+		/** The workspace of that one account. */
+		workspace?: string;
 		locale: LanguagesEnum;
 		integration: IAppIntegrationConfig;
 	}): Promise<void> {
@@ -1443,6 +1451,8 @@ export class EmailService {
 			email,
 			accounts,
 			workspacesDeleted,
+			allAccounts,
+			workspace,
 			...this.withAllowedLinks(integration, EmailTemplateEnum.ACCOUNT_DELETION_COMPLETED)
 		});
 	}

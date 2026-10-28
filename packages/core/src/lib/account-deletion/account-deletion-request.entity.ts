@@ -41,10 +41,18 @@ export class AccountDeletionRequest extends BaseEntity implements IAccountDeleti
 	@MultiORMColumn()
 	expiresAt: Date;
 
-	/** When the link was used to delete the account(s). A used link never works again. */
+	/**
+	 * When a confirm claimed the link. A lease: a claim that never completed (the process died mid-way) can be
+	 * taken again after a few minutes, while the link has not expired.
+	 */
 	@ApiPropertyOptional({ type: () => Date })
 	@MultiORMColumn({ nullable: true })
 	usedAt?: Date | null;
+
+	/** When the deletion finished. A completed link never works again. */
+	@ApiPropertyOptional({ type: () => Date })
+	@MultiORMColumn({ nullable: true })
+	completedAt?: Date | null;
 
 	/** When a newer request for the same address replaced this one before it was used. */
 	@ApiPropertyOptional({ type: () => Date })

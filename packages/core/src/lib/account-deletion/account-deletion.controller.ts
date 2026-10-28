@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Header, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiGoneResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiConflictResponse, ApiGoneResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from '@gauzy/common';
 import { IAccountDeletionPreview, IAccountDeletionResult, PermissionsEnum } from '@gauzy/contracts';
@@ -70,6 +70,7 @@ export class AccountDeletionController {
 	 */
 	@ApiOperation({ summary: 'Delete the accounts a deletion link was sent for' })
 	@ApiGoneResponse({ description: 'The link is invalid, used, replaced or expired.' })
+	@ApiConflictResponse({ description: 'What would be deleted changed since the preview; nothing was deleted.' })
 	@Public()
 	@Post('/confirm')
 	@HttpCode(HttpStatus.OK)
@@ -77,7 +78,7 @@ export class AccountDeletionController {
 	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@UseValidationPipe({ whitelist: true })
 	async confirm(@Body() body: ConfirmAccountDeletionDTO): Promise<IAccountDeletionResult> {
-		return await this.accountDeletionService.confirm(body.token);
+		return await this.accountDeletionService.confirm(body.token, body.planHash);
 	}
 
 	/**
@@ -104,7 +105,7 @@ export class AccountDeletionController {
 	@Header('Cache-Control', 'no-store')
 	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@UseValidationPipe({ whitelist: true })
-	async deleteMe(@Body() _body: ConfirmCurrentAccountDeletionDTO): Promise<IAccountDeletionResult> {
-		return await this.accountDeletionService.deleteCurrentUser();
+	async deleteMe(@Body() body: ConfirmCurrentAccountDeletionDTO): Promise<IAccountDeletionResult> {
+		return await this.accountDeletionService.deleteCurrentUser(body.planHash);
 	}
 }
