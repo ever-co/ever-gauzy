@@ -9,7 +9,7 @@
 				<span class="title-count">{{ count }}</span>
 				}
 			</h5>
-			<span class="panel-caption">{{ 'PROJECT_VIEW.ACTIVITY_CAPTION' | translate }}</span>
+			<span class="panel-caption">{{ captionKey | translate }}</span>
 		</div>
 	</header>
 	<div class="panel-body">
@@ -51,14 +51,33 @@
 						<span>
 							{{ entry.sentence | translate : { actor: entry.actor?.name || ('PROJECT_VIEW.SOMEONE' | translate) } }}
 							@if (entry.taskId) {
-							<a class="feed-target" [routerLink]="[]" [queryParams]="{ task: entry.taskId }" queryParamsHandling="merge">{{ entry.target }}</a>
-							} @else if (entry.isComment) {
+							<a
+								class="feed-target"
+								[routerLink]="openTaskPage ? ['/pages/tasks/view', entry.taskId] : []"
+								[queryParams]="openTaskPage ? null : { task: entry.taskId }"
+								[queryParamsHandling]="openTaskPage ? null : 'merge'"
+								>{{ entry.target }}</a
+							>
+							} @else if (entry.isComment && !taskId) {
 							<a class="feed-target" [routerLink]="[]" [queryParams]="{ tab: 'comments' }" queryParamsHandling="merge">{{ entry.target }}</a>
 							} @else {
 							<strong class="feed-target">{{ entry.target }}</strong>
 							}
 						</span>
 					</span>
+					@if (entry.status; as status) {
+					<span
+						class="feed-status"
+						role="img"
+						[attr.aria-label]="'PROJECT_VIEW.ACTIVITY_STATUS_FROM_TO' | translate : { from: status.from || '—', to: status.to }"
+					>
+						@if (status.from) {
+						<span class="feed-status-pill is-from" aria-hidden="true">{{ status.from }}</span>
+						<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+						}
+						<span class="feed-status-pill is-to" aria-hidden="true">{{ status.to }}</span>
+					</span>
+					}
 					@if (entry.fields) {
 					<span class="feed-fields">{{ 'PROJECT_VIEW.ACTIVITY_FIELDS' | translate : { fields: entry.fields } }}</span>
 					}
