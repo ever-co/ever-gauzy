@@ -6504,6 +6504,7 @@
 			"UNAVAILABLE": "Suele ser algo temporal (un problema de conexión o del servidor, o demasiados intentos). Tu enlace no se ha usado: vuelve a intentarlo en un momento.",
 			"TRY_AGAIN": "Reintentar",
 			"PLAN_CHANGED": "Lo que se eliminará ha cambiado desde que abriste esta página, así que no se ha eliminado nada. Revísalo de nuevo y luego confirma.",
+			"PLAN_CHANGED_PARTIAL": "Se eliminaron algunas de tus cuentas, pero lo que se eliminaría de las demás cambió mientras tanto, así que se han conservado. Revisa lo que queda y vuelve a confirmar.",
 			"INTRO": "Estas cuentas están registradas con {{ email }} y se eliminarán:",
 			"UNNAMED": "Espacio de trabajo",
 			"OUTCOME_WORKSPACE": "Eres el único miembro: se eliminarán todo el espacio de trabajo y todos sus datos.",

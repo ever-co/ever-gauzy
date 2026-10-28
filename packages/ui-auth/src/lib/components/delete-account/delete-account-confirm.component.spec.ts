@@ -170,7 +170,7 @@ describe('NgxDeleteAccountConfirmComponent', () => {
 
 		expect(service.verify).toHaveBeenCalledTimes(2);
 		expect(component.state).toBe('ready');
-		expect(component.planChanged).toBe(true);
+		expect(component.planChanged).toBe('nothing-deleted');
 		expect(component.preview?.accounts[0].outcome).toBe(AccountDeletionOutcomeEnum.ACCOUNT_REMOVED);
 		expect(component.understood).toBe(false);
 		expect(component.typed).toBe('');
@@ -182,5 +182,30 @@ describe('NgxDeleteAccountConfirmComponent', () => {
 
 		expect(service.confirm).toHaveBeenLastCalledWith(TOKEN, 'plan-2');
 		expect(component.state).toBe('done');
+	});
+
+	it('says some accounts were deleted when the 409 reports a partial deletion', async () => {
+		const { component, service } = setup();
+		await component.ngOnInit();
+		component.understood = true;
+		component.typed = 'DELETE';
+		service.confirm.mockRejectedValueOnce(
+			new HttpErrorResponse({
+				status: 409,
+				error: {
+					statusCode: 409,
+					message:
+						'Some of your accounts were deleted, but what would be deleted for the others changed while we worked. Review what remains and confirm again.'
+				}
+			})
+		);
+
+		await component.confirm();
+
+		expect(service.verify).toHaveBeenCalledTimes(2);
+		expect(component.state).toBe('ready');
+		expect(component.planChanged).toBe('partly-deleted');
+		expect(component.understood).toBe(false);
+		expect(component.typed).toBe('');
 	});
 });

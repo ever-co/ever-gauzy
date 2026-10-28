@@ -6502,6 +6502,7 @@
 			"UNAVAILABLE": "Dit is meestal tijdelijk (een verbindings- of serverprobleem, of te veel pogingen). Uw link is niet gebruikt: probeer het zo opnieuw.",
 			"TRY_AGAIN": "Opnieuw proberen",
 			"PLAN_CHANGED": "Wat er wordt verwijderd, is gewijzigd sinds u deze pagina opende, dus er is niets verwijderd. Bekijk het opnieuw en bevestig daarna.",
+			"PLAN_CHANGED_PARTIAL": "Sommige van uw accounts zijn verwijderd, maar wat er voor de andere zou worden verwijderd, is intussen gewijzigd, dus die zijn behouden. Bekijk wat er over is en bevestig opnieuw.",
 			"INTRO": "Deze accounts zijn geregistreerd met {{ email }} en worden verwijderd:",
 			"UNNAMED": "Werkruimte",
 			"OUTCOME_WORKSPACE": "U bent het enige lid: de hele werkruimte en al haar gegevens worden verwijderd.",

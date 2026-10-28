@@ -6499,6 +6499,7 @@
 			"UNAVAILABLE": "C'est généralement temporaire (un problème de connexion ou de serveur, ou trop de tentatives). Votre lien n'a pas été utilisé : réessayez dans un instant.",
 			"TRY_AGAIN": "Réessayer",
 			"PLAN_CHANGED": "Ce qui sera supprimé a changé depuis l'ouverture de cette page, donc rien n'a été supprimé. Vérifiez-le à nouveau, puis confirmez.",
+			"PLAN_CHANGED_PARTIAL": "Certains de vos comptes ont été supprimés, mais ce qui serait supprimé pour les autres a changé entre-temps, ils ont donc été conservés. Vérifiez ce qui reste, puis confirmez à nouveau.",
 			"INTRO": "Ces comptes sont enregistrés avec {{ email }} et seront supprimés :",
 			"UNNAMED": "Espace de travail",
 			"OUTCOME_WORKSPACE": "Vous êtes le seul membre : tout l'espace de travail et toutes ses données seront supprimés.",

@@ -6498,6 +6498,7 @@
 			"UNAVAILABLE": "Das ist meist nur vorübergehend (ein Verbindungs- oder Serverproblem oder zu viele Versuche). Ihr Link wurde nicht verwendet: Versuchen Sie es gleich noch einmal.",
 			"TRY_AGAIN": "Erneut versuchen",
 			"PLAN_CHANGED": "Was gelöscht wird, hat sich geändert, seit Sie diese Seite geöffnet haben, daher wurde nichts gelöscht. Prüfen Sie es erneut und bestätigen Sie dann.",
+			"PLAN_CHANGED_PARTIAL": "Einige Ihrer Konten wurden gelöscht, aber bei den übrigen hat sich in der Zwischenzeit geändert, was gelöscht würde, daher wurden sie behalten. Prüfen Sie, was übrig ist, und bestätigen Sie erneut.",
 			"INTRO": "Diese Konten sind mit {{ email }} registriert und werden gelöscht:",
 			"UNNAMED": "Arbeitsbereich",
 			"OUTCOME_WORKSPACE": "Sie sind das einzige Mitglied: Der gesamte Arbeitsbereich und alle seine Daten werden gelöscht.",

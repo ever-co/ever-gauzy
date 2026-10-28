@@ -6502,6 +6502,7 @@
 			"UNAVAILABLE": "Isso costuma ser temporário (um problema de conexão ou do servidor, ou tentativas demais). Seu link não foi usado: tente novamente em instantes.",
 			"TRY_AGAIN": "Tentar novamente",
 			"PLAN_CHANGED": "O que será excluído mudou desde que você abriu esta página, então nada foi excluído. Revise novamente e depois confirme.",
+			"PLAN_CHANGED_PARTIAL": "Algumas das suas contas foram excluídas, mas o que seria excluído das demais mudou nesse meio-tempo, então elas foram mantidas. Revise o que resta e confirme novamente.",
 			"INTRO": "Estas contas estão registradas com {{ email }} e serão excluídas:",
 			"UNNAMED": "Espaço de trabalho",
 			"OUTCOME_WORKSPACE": "Você é o único membro: todo o espaço de trabalho e todos os seus dados serão excluídos.",

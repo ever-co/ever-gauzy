@@ -10,6 +10,12 @@ import { useNoReferrer } from './referrer-policy';
 export const DELETE_CONFIRMATION_WORD = 'DELETE';
 
 /**
+ * Start of the API's 409 message when the accounts before the changed one were deleted already
+ * (`ACCOUNT_DELETION_PARTIAL_MESSAGE`); every other 409 deleted nothing.
+ */
+const PARTLY_DELETED_MESSAGE = 'Some of your accounts were deleted';
+
+/**
  * - `invalid`: the API answered 410 (or there is no token): the link can never be used again.
  * - `unavailable`: the link could not be checked (offline, 5xx, 429): it may still work, "Try again" re-checks it.
  * - `failed`: the deletion did not complete for a reason other than 410/409: the API released the link, "Try again"
@@ -40,8 +46,11 @@ export class NgxDeleteAccountConfirmComponent implements OnInit, OnDestroy {
 	result: IAccountDeletionResult | null = null;
 	understood = false;
 	typed = '';
-	/** The API refused a confirmation because what the link deletes changed since the preview the user reviewed. */
-	planChanged = false;
+	/**
+	 * Set when the API refused a confirmation because what the link deletes changed since the preview the user
+	 * reviewed: nothing was deleted, or (`partly-deleted`) the accounts before the changed one were.
+	 */
+	planChanged: 'nothing-deleted' | 'partly-deleted' | null = null;
 
 	private token: string | null = null;
 	private readonly restoreReferrer: () => void;
@@ -88,16 +97,21 @@ export class NgxDeleteAccountConfirmComponent implements OnInit, OnDestroy {
 		try {
 			this.result = await this.accountDeletionService.confirm(this.token, this.preview?.planHash);
 			this.token = null;
-			this.planChanged = false;
+			this.planChanged = null;
 			this.setState('done');
 		} catch (error) {
 			const status = error instanceof HttpErrorResponse ? error.status : undefined;
 			if (status === 410) {
 				this.setState('invalid');
 			} else if (status === 409) {
-				// The accounts or their outcomes changed since the preview (say, a member joined or left): nothing was
-				// deleted. Show what the link deletes now and ask for the box and the word again.
-				this.planChanged = true;
+				// The accounts or their outcomes changed since the preview (say, a member joined or left): show what the
+				// link deletes now and ask for the box and the word again. Usually nothing was deleted; when the change
+				// came half-way, the accounts before it were, and the notice must not say otherwise.
+				const message = (error as HttpErrorResponse).error?.message;
+				this.planChanged =
+					typeof message === 'string' && message.includes(PARTLY_DELETED_MESSAGE)
+						? 'partly-deleted'
+						: 'nothing-deleted';
 				this.understood = false;
 				this.typed = '';
 				await this.loadPreview();

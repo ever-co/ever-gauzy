@@ -6501,6 +6501,7 @@
 			"UNAVAILABLE": "Zwykle jest to chwilowe (problem z połączeniem lub serwerem albo zbyt wiele prób). Twój link nie został użyty: spróbuj ponownie za chwilę.",
 			"TRY_AGAIN": "Spróbuj ponownie",
 			"PLAN_CHANGED": "To, co zostanie usunięte, zmieniło się od otwarcia tej strony, więc nic nie zostało usunięte. Przejrzyj to ponownie, a następnie potwierdź.",
+			"PLAN_CHANGED_PARTIAL": "Część Twoich kont została usunięta, ale w międzyczasie zmieniło się to, co zostałoby usunięte w przypadku pozostałych, więc zostały zachowane. Przejrzyj, co pozostało, i potwierdź ponownie.",
 			"INTRO": "Te konta są zarejestrowane na adres {{ email }} i zostaną usunięte:",
 			"UNNAMED": "Przestrzeń robocza",
 			"OUTCOME_WORKSPACE": "Jesteś jedynym członkiem: cała przestrzeń robocza i wszystkie jej dane zostaną usunięte.",

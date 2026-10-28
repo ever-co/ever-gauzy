@@ -47,7 +47,11 @@
 		</button>
 		}
 		@default {
-		@if (planChanged) {
+		@if (planChanged === 'partly-deleted') {
+		<nb-alert outline="warning" role="status" class="result-alert">
+			<p>{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.PLAN_CHANGED_PARTIAL' | translate }}</p>
+		</nb-alert>
+		} @else if (planChanged) {
 		<nb-alert outline="warning" role="status" class="result-alert">
 			<p>{{ 'DELETE_ACCOUNT_PAGE.CONFIRM.PLAN_CHANGED' | translate }}</p>
 		</nb-alert>

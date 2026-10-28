@@ -5825,6 +5825,7 @@
 			"UNAVAILABLE": "This is usually temporary (a connection or server problem, or too many attempts). Your link has not been used: try again in a moment.",
 			"TRY_AGAIN": "Try again",
 			"PLAN_CHANGED": "What will be deleted has changed since you opened this page, so nothing was deleted. Review it again, then confirm.",
+			"PLAN_CHANGED_PARTIAL": "Some of your accounts were deleted, but what would be deleted for the others changed in the meantime, so they were kept. Review what remains, then confirm again.",
 			"INTRO": "These accounts are registered with {{ email }} and will be deleted:",
 			"UNNAMED": "Workspace",
 			"OUTCOME_WORKSPACE": "You are the only member: the whole workspace and all of its data will be deleted.",
