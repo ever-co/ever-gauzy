@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -28,8 +28,10 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		return this.proposal?.status === ProposalStatusEnum.ACCEPTED;
 	}
 
-	/** Text color per tag background, so each color is parsed once. */
+	/** Text color per card + tag background, so each pair is measured once. */
 	private readonly tagTextColors = new Map<string, string>();
+	/** 1×1 canvas the tag colors are painted on to read them back as sRGB. */
+	private colorContext?: CanvasRenderingContext2D | null;
 
 	/**
 	 * Picks dark or light text for a tag so its name stays readable on any
@@ -39,43 +41,45 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		if (tag.textColor) {
 			return tag.textColor;
 		}
+		// Translucent tags show the card behind them, so the card color is part of
+		// the key: a theme switch changes it and the text color is measured again.
+		const card =
+			getComputedStyle(this.elementRef.nativeElement).getPropertyValue('--gauzy-card-1').trim() || '#fff';
 		const color = tag.color || '';
-		if (!this.tagTextColors.has(color)) {
-			this.tagTextColors.set(color, this.contrastTextColor(color));
+		const key = `${card}|${color}`;
+		if (!this.tagTextColors.has(key)) {
+			this.tagTextColors.set(key, this.contrastTextColor(color, card));
 		}
-		return this.tagTextColors.get(color);
+		return this.tagTextColors.get(key);
 	}
 
 	/**
-	 * Lets the browser parse any CSS color (#fff, #ffffff80, rgb(), hsl(), names)
-	 * into `#rrggbb` or `rgba(r, g, b, a)`, then picks whichever of dark or white
-	 * text has the higher WCAG contrast ratio against it. An empty
-	 * result keeps the theme's text color, for colors that can't be read or are
-	 * mostly transparent and so show the card behind them.
+	 * Paints the card color, then the tag color over it, and reads the pixel back.
+	 * The browser converts any CSS color (#fff, hsl(), lab(), names…) to sRGB and
+	 * blends a translucent one with the card, so the result is the color the tag
+	 * actually shows. An unreadable tag color leaves the card color. Returns
+	 * whichever of dark or white text has the higher WCAG contrast ratio against it.
 	 */
-	private contrastTextColor(color: string): string {
-		const context = document.createElement('canvas').getContext('2d');
-		if (!color || !context) {
+	private contrastTextColor(color: string, card: string): string {
+		if (this.colorContext === undefined) {
+			const canvas = document.createElement('canvas');
+			canvas.width = canvas.height = 1;
+			this.colorContext = canvas.getContext('2d', { willReadFrequently: true });
+		}
+		const context = this.colorContext;
+		if (!context) {
 			return '';
 		}
-		// An unparseable value leaves fillStyle unchanged, so start from a sentinel.
-		context.fillStyle = '#010203';
-		context.fillStyle = color;
-		const parsed = String(context.fillStyle);
-		if (parsed === '#010203' && !/^#010203$/i.test(color.trim())) {
-			return '';
+		context.clearRect(0, 0, 1, 1);
+		context.fillStyle = '#fff';
+		context.fillStyle = card;
+		context.fillRect(0, 0, 1, 1);
+		if (color) {
+			context.fillStyle = color;
+			context.fillRect(0, 0, 1, 1);
 		}
+		const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
 
-		let r: number, g: number, b: number;
-		let alpha = 1;
-		if (parsed.startsWith('#')) {
-			[r, g, b] = [1, 3, 5].map((i) => parseInt(parsed.slice(i, i + 2), 16));
-		} else {
-			[r, g, b, alpha = 1] = (parsed.match(/[\d.]+/g) || []).map(Number);
-		}
-		if ([r, g, b].some((value) => !Number.isFinite(value)) || alpha < 0.5) {
-			return '';
-		}
 		const background = this.relativeLuminance(r, g, b);
 		const dark = this.relativeLuminance(0x1a, 0x1a, 0x1a);
 		const darkContrast = (background + 0.05) / (dark + 0.05);
@@ -96,7 +100,8 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		private readonly route: ActivatedRoute,
 		private readonly store: Store,
 		private readonly sanitizer: DomSanitizer,
-		private readonly router: Router
+		private readonly router: Router,
+		private readonly elementRef: ElementRef<HTMLElement>
 	) {}
 
 	ngOnInit(): void {
