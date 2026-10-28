@@ -267,7 +267,7 @@ import { MikroOrmUserOrganizationRepository } from '../../user-organization/repo
 import { TypeOrmUserOrganizationRepository } from '../../user-organization/repository/type-orm-user-organization.repository';
 import { MikroOrmUserRepository } from '../../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../../user/repository/type-orm-user.repository';
-import { collectStoredFiles, deleteStoredFiles } from '../../account-deletion/account-deletion-files';
+import { collectStoredFiles, deleteStoredFiles, onlyFilesOfTenant } from '../../account-deletion/account-deletion-files';
 
 @Injectable()
 export class FactoryResetService {
@@ -834,7 +834,8 @@ export class FactoryResetService {
 		}
 
 		// Only now that every row the files belonged to is gone: a failure above leaves rows and files together.
-		await deleteStoredFiles(capturedFiles);
+		// And only keys under this tenant: a key is a string a client could have written (see isKeyOfTenant).
+		await deleteStoredFiles(onlyFilesOfTenant(capturedFiles, user.tenantId));
 
 		let firstOrganization;
 		switch (this.ormType) {

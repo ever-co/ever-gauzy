@@ -1,5 +1,8 @@
+import { Logger } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { ID } from '@gauzy/contracts';
+
+const schemaDriftLogger = new Logger('UserDeletion');
 
 /**
  * The "who did it" columns every `BaseEntity` table carries (`BaseEntityActionByUser`).
@@ -130,6 +133,51 @@ export function sqlPlaceholder(manager: EntityManager, n: number): string {
 	return manager.connection.driver.options.type === 'postgres' ? `$${n}` : '?';
 }
 
+/**
+ * Runs one statement of a sweep over every entity's table, or skips it (returning null) when the database has
+ * no such table or column. The sweeps are built from the entity metadata, plugins included, and a deployment's
+ * schema can lag behind it (a plugin table never migrated, an entity column no migration added): without this,
+ * one missing column would fail every user deletion, the admin's `DELETE /user/:id` included. Any other error
+ * still fails. On PostgreSQL a failed statement aborts the whole transaction, so inside one the statement runs
+ * under a savepoint.
+ */
+export async function queryUnlessSchemaLacks<T = any>(
+	manager: EntityManager,
+	sql: string,
+	parameters: unknown[]
+): Promise<T | null> {
+	const savepoint = manager.connection.driver.options.type === 'postgres' && !!manager.queryRunner?.isTransactionActive;
+	if (savepoint) await manager.query('SAVEPOINT user_deletion_statement');
+	try {
+		const result = await manager.query(sql, parameters);
+		if (savepoint) await manager.query('RELEASE SAVEPOINT user_deletion_statement');
+		return result;
+	} catch (error) {
+		if (!isMissingTableOrColumn(error)) {
+			throw error;
+		}
+		if (savepoint) await manager.query('ROLLBACK TO SAVEPOINT user_deletion_statement');
+		schemaDriftLogger.warn(`Skipped a statement on a table or column this database does not have: ${(error as Error)?.message}`);
+		return null;
+	}
+}
+
+/** PostgreSQL `undefined_table` / `undefined_column`, MySQL `ER_NO_SUCH_TABLE` / `ER_BAD_FIELD_ERROR`, SQLite's. */
+export function isMissingTableOrColumn(error: unknown): boolean {
+	const failure = error as { code?: unknown; errno?: unknown; message?: unknown; driverError?: { code?: unknown; errno?: unknown } };
+	const code = failure?.driverError?.code ?? failure?.code;
+	const errno = failure?.driverError?.errno ?? failure?.errno;
+	return (
+		code === '42P01' ||
+		code === '42703' ||
+		code === 'ER_NO_SUCH_TABLE' ||
+		code === 'ER_BAD_FIELD_ERROR' ||
+		errno === 1146 ||
+		errno === 1054 ||
+		/no such (table|column)/i.test(String(failure?.message ?? ''))
+	);
+}
+
 async function detachReferences(manager: EntityManager, target: 'user' | 'employee', ids: ID[]): Promise<number> {
 	const driver = manager.connection.driver;
 	const inList = ids.map((_, index) => sqlPlaceholder(manager, index + 1)).join(', ');
@@ -158,7 +206,7 @@ async function detachReferences(manager: EntityManager, target: 'user' | 'employ
 			const sql = nullable
 				? `UPDATE ${table} SET ${name} = NULL WHERE ${name} IN (${inList})`
 				: `DELETE FROM ${table} WHERE ${name} IN (${inList})`;
-			changed += affectedRows(await manager.query(sql, ids));
+			changed += affectedRows(await queryUnlessSchemaLacks(manager, sql, ids));
 		}
 	}
 	return changed;

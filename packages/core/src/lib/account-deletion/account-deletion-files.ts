@@ -2,7 +2,7 @@ import { EntityManager } from 'typeorm';
 import { FileStorageProvider, ID } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { FileStorage } from '../core/file-storage';
-import { sqlPlaceholder } from '../user/user-authorship';
+import { queryUnlessSchemaLacks, sqlPlaceholder } from '../user/user-authorship';
 
 /**
  * A table whose rows own files in storage, with the columns that hold the storage keys.
@@ -36,6 +36,22 @@ export const FILE_OWNING_TABLES: ReadonlyArray<FileOwningTable> = [
 	{ table: 'inbox_email_attachment', keys: ['storageKey'], ownedBy: [], ownedByEmployee: [], timeSlot: false, reset: false },
 	{ table: 'image_asset', keys: ['url', 'thumb'], ownedBy: [], ownedByEmployee: [], timeSlot: false, reset: false }
 ];
+
+/**
+ * Whether a storage key lies under the tenant's own directory. Every upload path puts the tenant id in the key
+ * (`screenshots|camshots|soundshots|videos/…/<tenant>/<member>/…`, `uploads/<folder>/<tenant>/…`,
+ * `documents/<tenant>/…`, `inbox/<tenant>/…`), while the key column itself is only a string, and one a client can
+ * write (`POST /image-assets` stores any `url`). Deleting only keys under the owning tenant keeps a forged key
+ * from removing another tenant's file; a key outside it is left in storage.
+ */
+export function isKeyOfTenant(key: string, tenantId: ID | null | undefined): boolean {
+	return !!key && !!tenantId && key.split(/[\\/]/).includes(tenantId);
+}
+
+/** The files whose keys lie under the tenant's directory (see {@link isKeyOfTenant}). */
+export function onlyFilesOfTenant(files: StoredFile[], tenantId: ID | null | undefined): StoredFile[] {
+	return files.filter((file) => isKeyOfTenant(file.key, tenantId));
+}
 
 /** A file in storage that goes with a deleted row. */
 export interface StoredFile {
@@ -77,12 +93,14 @@ export async function collectStoredFiles(manager: EntityManager, scope: StoredFi
 		if (!where) continue;
 
 		const select = [...keys.map((key) => driver.escape(key)), has('storageProvider') ? driver.escape('storageProvider') : 'NULL'];
-		const rows: Array<Record<string, string>> = await manager.query(
-			`SELECT ${select.map((column, index) => `${column} AS ${driver.escape(`c${index}`)}`).join(', ')} FROM ${driver.escape(
-				owner.table
-			)} WHERE ${where.sql}`,
-			where.parameters
-		);
+		const rows: Array<Record<string, string>> =
+			(await queryUnlessSchemaLacks(
+				manager,
+				`SELECT ${select.map((column, index) => `${column} AS ${driver.escape(`c${index}`)}`).join(', ')} FROM ${driver.escape(
+					owner.table
+				)} WHERE ${where.sql}`,
+				where.parameters
+			)) ?? [];
 		for (const row of rows) {
 			const provider = row[`c${keys.length}`] as FileStorageProvider;
 			for (let index = 0; index < keys.length; index++) {
@@ -246,11 +264,12 @@ export async function isImageAssetShared(manager: EntityManager, imageId: ID, us
 					? ` AND (${driver.escape('userId')} IS NULL OR ${driver.escape('userId')} <> ${p(2)})`
 					: '';
 			const parameters = own ? [imageId, userId] : [imageId];
-			const rows = await manager.query(
+			const rows = await queryUnlessSchemaLacks(
+				manager,
 				`SELECT 1 FROM ${driver.escape(metadata.tablePath)} WHERE ${column} = ${p(1)}${own}`,
 				parameters
 			);
-			if (rows.length) return true;
+			if (rows?.length) return true;
 		}
 	}
 	return false;
@@ -277,7 +296,8 @@ export async function deleteUnusedRows(manager: EntityManager, table: string, id
 	for (const id of ids) {
 		let used = false;
 		for (const reference of references) {
-			const rows = await manager.query(
+			const rows = await queryUnlessSchemaLacks(
+				manager,
 				`SELECT 1 FROM ${driver.escape(reference.table)} WHERE ${driver.escape(reference.column)} = ${p(1)}`,
 				[id]
 			);

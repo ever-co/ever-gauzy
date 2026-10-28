@@ -1,4 +1,9 @@
-import { detachEmployeeReferences, detachUserReferences } from './user-authorship';
+import {
+	detachEmployeeReferences,
+	detachUserReferences,
+	isMissingTableOrColumn,
+	queryUnlessSchemaLacks
+} from './user-authorship';
 
 /** A minimal stand-in for the parts of TypeORM's EntityManager the helpers read. */
 function managerWith(entityMetadatas: any[], type = 'postgres') {
@@ -105,5 +110,68 @@ describe('detachEmployeeReferences', () => {
 
 		expect(await detachEmployeeReferences(manager, [])).toBe(0);
 		expect(query).not.toHaveBeenCalled();
+	});
+});
+
+describe('queryUnlessSchemaLacks: a table or column the database lacks does not fail a deletion', () => {
+	const missingColumn = Object.assign(new Error('column "deletedByUserId" does not exist'), { code: '42703' });
+
+	function postgresTransaction(failWith?: Error) {
+		const query = jest.fn(async (sql: string) => {
+			if (failWith && sql.startsWith('UPDATE')) throw failWith;
+			return [[], 1];
+		});
+		const manager = {
+			query,
+			queryRunner: { isTransactionActive: true },
+			connection: { driver: { options: { type: 'postgres' } } }
+		};
+		return { manager: manager as any, statements: () => query.mock.calls.map(([sql]) => sql) };
+	}
+
+	it('runs the statement under a savepoint inside a PostgreSQL transaction', async () => {
+		const { manager, statements } = postgresTransaction();
+		await expect(queryUnlessSchemaLacks(manager, 'UPDATE "x" SET "y" = NULL', [])).resolves.toEqual([[], 1]);
+		expect(statements()).toEqual([
+			'SAVEPOINT user_deletion_statement',
+			'UPDATE "x" SET "y" = NULL',
+			'RELEASE SAVEPOINT user_deletion_statement'
+		]);
+	});
+
+	it('skips a statement on a missing column and rolls back to the savepoint, so the transaction goes on', async () => {
+		const { manager, statements } = postgresTransaction(missingColumn);
+		await expect(queryUnlessSchemaLacks(manager, 'UPDATE "x" SET "y" = NULL', [])).resolves.toBeNull();
+		expect(statements()).toEqual([
+			'SAVEPOINT user_deletion_statement',
+			'UPDATE "x" SET "y" = NULL',
+			'ROLLBACK TO SAVEPOINT user_deletion_statement'
+		]);
+	});
+
+	it('still fails on any other error', async () => {
+		const deadlock = Object.assign(new Error('deadlock detected'), { code: '40P01' });
+		const { manager } = postgresTransaction(deadlock);
+		await expect(queryUnlessSchemaLacks(manager, 'UPDATE "x" SET "y" = NULL', [])).rejects.toBe(deadlock);
+	});
+
+	it('uses no savepoint outside a transaction', async () => {
+		const query = jest.fn().mockResolvedValue([]);
+		const manager = { query, queryRunner: undefined, connection: { driver: { options: { type: 'postgres' } } } } as any;
+		await queryUnlessSchemaLacks(manager, 'SELECT 1', []);
+		expect(query.mock.calls.map(([sql]) => sql)).toEqual(['SELECT 1']);
+	});
+
+	it.each([
+		[{ code: '42P01' }, true],
+		[{ code: '42703' }, true],
+		[{ driverError: { code: '42703' } }, true],
+		[{ code: 'ER_NO_SUCH_TABLE', errno: 1146 }, true],
+		[{ errno: 1054 }, true],
+		[{ message: 'SQLITE_ERROR: no such column: deletedByUserId' }, true],
+		[{ code: '23503', message: 'violates foreign key constraint' }, false],
+		[{ code: '40P01' }, false]
+	])('recognises %p as a missing table or column: %p', (error, expected) => {
+		expect(isMissingTableOrColumn(error)).toBe(expected);
 	});
 });

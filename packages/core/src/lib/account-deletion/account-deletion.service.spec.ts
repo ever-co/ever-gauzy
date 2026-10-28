@@ -25,7 +25,8 @@ jest.mock('./account-deletion-files', () => ({
 	deleteStoredFiles: jest.fn().mockResolvedValue({ deleted: 0, failed: 0 }),
 	deleteUnusedRows: jest.fn().mockResolvedValue(0),
 	isImageAssetShared: jest.fn().mockResolvedValue(false),
-	loadTenantSettings: jest.fn().mockResolvedValue({})
+	loadTenantSettings: jest.fn().mockResolvedValue({}),
+	onlyFilesOfTenant: jest.fn((files) => files)
 }));
 jest.mock('./account-deletion-request.entity', () => ({ AccountDeletionRequest: class AccountDeletionRequest {} }));
 jest.mock('./repository/type-orm-account-deletion-request.repository', () => ({
@@ -38,6 +39,7 @@ import {
 	ACCOUNT_DELETION_INVALID_LINK_MESSAGE,
 	ACCOUNT_DELETION_PARTIAL_MESSAGE,
 	AccountDeletionService,
+	outcomeFor,
 	planHashOf
 } from './account-deletion.service';
 import { generateAccountDeletionToken, hashAccountDeletionToken } from './account-deletion-token';
@@ -276,5 +278,47 @@ describe('AccountDeletionService', () => {
 			);
 			expect(builder.set).toHaveBeenLastCalledWith({ usedAt: null, claimId: null });
 		});
+	});
+});
+
+describe('outcomeFor: who may delete a whole workspace', () => {
+	const account = (role: string | null, tenantId: string | null = 't1') => ({ tenantId, role: role ? { name: role } : null });
+
+	it.each(['SUPER_ADMIN', 'ADMIN'])('deletes the whole workspace of its last member when they are %s', (role) => {
+		expect(outcomeFor(account(role), 0)).toBe(AccountDeletionOutcomeEnum.WORKSPACE_DELETED);
+	});
+
+	it.each(['EMPLOYEE', 'MANAGER', 'VIEWER', 'DATA_ENTRY', 'CANDIDATE', null])(
+		'removes only the account of a last member who is %s: the company keeps its workspace and records',
+		(role) => {
+			expect(outcomeFor(account(role), 0)).toBe(AccountDeletionOutcomeEnum.ACCOUNT_REMOVED);
+		}
+	);
+
+	it('removes only the account while anyone else (a soft-deleted member included) is in the workspace', () => {
+		expect(outcomeFor(account('SUPER_ADMIN'), 1)).toBe(AccountDeletionOutcomeEnum.ACCOUNT_REMOVED);
+	});
+
+	it('removes only the account of a user without a workspace', () => {
+		expect(outcomeFor(account('SUPER_ADMIN', null), 0)).toBe(AccountDeletionOutcomeEnum.ACCOUNT_REMOVED);
+	});
+});
+
+describe('the confirmation link in the deletion email', () => {
+	const saved = process.env['EMAIL_LINK_ALLOWED_ORIGINS'];
+	afterEach(() => {
+		if (saved === undefined) delete process.env['EMAIL_LINK_ALLOWED_ORIGINS'];
+		else process.env['EMAIL_LINK_ALLOWED_ORIGINS'] = saved;
+	});
+	const confirmUrl = (callbackUrl?: string) => (setup().service as any).confirmUrl(callbackUrl);
+
+	it('follows a callbackUrl on an origin the deployment lists', () => {
+		process.env['EMAIL_LINK_ALLOWED_ORIGINS'] = 'https://app.ever.team';
+		expect(confirmUrl('https://app.ever.team/delete/confirm')).toBe('https://app.ever.team/delete/confirm');
+	});
+
+	it('ignores EMAIL_LINK_ALLOWED_ORIGINS=*: the token must not go to whatever site the caller names', () => {
+		process.env['EMAIL_LINK_ALLOWED_ORIGINS'] = '*';
+		expect(confirmUrl('https://attacker.example/steal')).toBe('https://app.gauzy.co/#/auth/delete-account/confirm');
 	});
 });

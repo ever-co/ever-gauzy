@@ -23,7 +23,14 @@ import {
 	LanguagesEnum,
 	RolesEnum
 } from '@gauzy/contracts';
-import { allowedEmailLink, emailLinkOrigin, warnRejectedEmailLink, withAllowedEmailLinks } from '../auth/email-link-origin';
+import {
+	allowedEmailLink,
+	allowedEmailLinkOrigins,
+	emailLinkOrigin,
+	isAllowedEmailLink,
+	warnRejectedEmailLink,
+	withAllowedEmailLinks
+} from '../auth/email-link-origin';
 import { assertFirstPartyRequest } from '../auth/oauth-app-first-party';
 import { AuthenticatedUserCache } from '../auth/strategies/authenticated-user-cache';
 import { RequestContext } from '../core/context';
@@ -45,6 +52,7 @@ import {
 	deleteUnusedRows,
 	isImageAssetShared,
 	loadTenantSettings,
+	onlyFilesOfTenant,
 	StoredFile
 } from './account-deletion-files';
 import { AccountDeletionRequest } from './account-deletion-request.entity';
@@ -477,15 +485,17 @@ export class AccountDeletionService {
 				subscriptionsCancelled = await this.cancelBilling(manager, user.tenantId);
 			}
 
-			const files = await collectStoredFiles(
+			const collected = await collectStoredFiles(
 				manager,
 				wholeWorkspace ? { kind: 'workspace', tenantId: user.tenantId } : { kind: 'user', userId: user.id }
 			);
 			const avatarId = !wholeWorkspace && user.imageId ? user.imageId : null;
 			const avatarGoes = !!avatarId && !(await isImageAssetShared(manager, avatarId, user.id));
 			if (avatarGoes) {
-				files.push(...(await this.avatarFiles(manager, avatarId)));
+				collected.push(...(await this.avatarFiles(manager, avatarId)));
 			}
+			// Only keys under the account's own tenant: a key is a string a client could have written (see isKeyOfTenant).
+			const files = onlyFilesOfTenant(collected, user.tenantId);
 			const tenantSettings = user.tenantId ? await loadTenantSettings(manager, user.tenantId) : null;
 
 			// The member records' contact rows (postal address, fiscal details) are separate rows: read them now,
@@ -570,7 +580,9 @@ export class AccountDeletionService {
 		);
 		const files: StoredFile[] = [];
 		for (const key of [image?.url, image?.thumb]) {
-			if (!key || /^https?:\/\//i.test(key)) continue;
+			// A profile picture is an upload (`uploads/<folder>/<tenant>/…`). Any other key would be a member's
+			// capture or document the departing user pointed their avatar at, which is not theirs to delete.
+			if (!key || /^https?:\/\//i.test(key) || !/^uploads[\\/]/.test(key)) continue;
 			const others = await manager.query(
 				`SELECT 1 FROM ${driver.escape('image_asset')} WHERE (${driver.escape('url')} = ${p(1)} OR ${driver.escape(
 					'thumb'
@@ -799,9 +811,19 @@ export class AccountDeletionService {
 		return planned;
 	}
 
-	/** The outcome for one account, counted again (inside the erasing transaction, under its lock). */
+	/**
+	 * The outcome for one account, counted again (inside the erasing transaction, under its lock), with the
+	 * account's role as it is now: a demotion since the preview changes the outcome too.
+	 */
 	private async outcomeOf(manager: EntityManager, user: User): Promise<AccountDeletionOutcomeEnum> {
-		return outcomeFor(user, await this.otherMembersOf(manager, user));
+		const current = await manager
+			.getRepository(User)
+			.createQueryBuilder('user')
+			.withDeleted()
+			.leftJoinAndSelect('user.role', 'role')
+			.where('user.id = :id', { id: user.id })
+			.getOne();
+		return outcomeFor(current ?? user, await this.otherMembersOf(manager, user));
 	}
 
 	/** The other users of the account's workspace, soft-deleted ones included. */
@@ -828,9 +850,14 @@ export class AccountDeletionService {
 	/**
 	 * The confirmation page the link points at: the caller's `callbackUrl` when its origin is one this
 	 * deployment serves, otherwise `ACCOUNT_DELETION_CONFIRM_URL`, otherwise the Angular app's own page.
+	 *
+	 * Unlike the other emailed links, this one ignores `EMAIL_LINK_ALLOWED_ORIGINS=*`: its token deletes every
+	 * account of the address, so with the check switched off anyone could have the victim's genuine email carry
+	 * it to their own site. Only an origin the deployment lists explicitly may receive it.
 	 */
 	private confirmUrl(callbackUrl?: string): string {
-		const allowed = callbackUrl ? allowedEmailLink(callbackUrl) : null;
+		const allowed =
+			callbackUrl && isAllowedEmailLink(callbackUrl, allowedEmailLinkOrigins()) ? allowedEmailLink(callbackUrl) : null;
 		if (callbackUrl && !allowed) {
 			warnRejectedEmailLink(this.logger, 'the account deletion email')('callbackUrl', emailLinkOrigin(callbackUrl));
 		}
@@ -855,9 +882,16 @@ export class AccountDeletionService {
 	}
 }
 
-/** The whole workspace when nobody else (not even a soft-deleted member) is in it, otherwise the account only. */
-function outcomeFor(user: User, otherMembers: number): AccountDeletionOutcomeEnum {
-	return user.tenantId && otherMembers === 0
+/**
+ * The whole workspace when nobody else (not even a soft-deleted member) is in it and the user administers it
+ * (SUPER_ADMIN / ADMIN), otherwise the account only. A member without those roles cannot delete their company's
+ * workspace, even as its last remaining user: the workspace, its records and its billing stay.
+ */
+export function outcomeFor(
+	user: Pick<User, 'tenantId'> & { role?: { name?: string } | null },
+	otherMembers: number
+): AccountDeletionOutcomeEnum {
+	return user.tenantId && otherMembers === 0 && ADMIN_ROLES.includes(user.role?.name)
 		? AccountDeletionOutcomeEnum.WORKSPACE_DELETED
 		: AccountDeletionOutcomeEnum.ACCOUNT_REMOVED;
 }
