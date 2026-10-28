@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnDestro
 import { DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AccountDeletionOutcomeEnum, IAccountDeletionResult } from '@gauzy/contracts';
-import { AccountDeletionPreview, AccountDeletionService } from './account-deletion.service';
+import { AccountDeletionOutcomeEnum, IAccountDeletionPreview, IAccountDeletionResult } from '@gauzy/contracts';
+import { AccountDeletionService } from './account-deletion.service';
 import { useNoReferrer } from './referrer-policy';
 
 /** The word the user types to confirm. */
@@ -36,7 +36,7 @@ export class NgxDeleteAccountConfirmComponent implements OnInit, OnDestroy {
 	readonly outcomes = AccountDeletionOutcomeEnum;
 
 	state: ConfirmState = 'loading';
-	preview: AccountDeletionPreview | null = null;
+	preview: IAccountDeletionPreview | null = null;
 	result: IAccountDeletionResult | null = null;
 	understood = false;
 	typed = '';
