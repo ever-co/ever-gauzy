@@ -4657,10 +4657,10 @@
   resolved "https://registry.npmjs.org/@ever-co/legal/-/legal-0.5.1.tgz#88fc23e7619c45f5a13a44282ac7eb65df139f2f"
   integrity sha512-JVGdDuCz6NiP4AFURJmnC99XxfY1GQymJRYX1Sj9T2p3+iy3dnrcjnATetyf9MvrNTcM/NqiijYLmmqhE15YIQ==
 
-"@ever-gauzy/plugin-integration-plane-api@^0.1.12":
-  version "0.1.12"
-  resolved "https://registry.npmjs.org/@ever-gauzy/plugin-integration-plane-api/-/plugin-integration-plane-api-0.1.12.tgz#1b429979f43efcd97d86b932d1ce59ca8dd8b06c"
-  integrity sha512-YILx6eXZ10y+/fXtKQtsvx6IfeNEq7av0bfeokoenG1BisA8ABitg+G6kk77hQe99wqeBhkrmrvaMj0qL9JsNQ==
+"@ever-gauzy/plugin-integration-plane-api@^0.1.13":
+  version "0.1.13"
+  resolved "https://registry.npmjs.org/@ever-gauzy/plugin-integration-plane-api/-/plugin-integration-plane-api-0.1.13.tgz#bb056802524e6d40093a7023ca198a15f8e30d83"
+  integrity sha512-OEOxYxynih3ZCM5uRsBFExk3KFEhBC27g0inXXUz+WE6mZEcmR4D9ak6Cc4Y/y2xS7UDhRVRwejEDymYy+kNyw==
   dependencies:
     "@ever-gauzy/plugin-integration-plane-models" "^0.1.11"
     "@nestjs/axios" "^4.0.1"
@@ -4683,10 +4683,10 @@
     slugify "^1.6.6"
     uuid "^14.0.0"
 
-"@ever-gauzy/plugin-integration-plane-models@^0.1.11", "@ever-gauzy/plugin-integration-plane-models@^0.1.12":
-  version "0.1.12"
-  resolved "https://registry.npmjs.org/@ever-gauzy/plugin-integration-plane-models/-/plugin-integration-plane-models-0.1.12.tgz#b9fd34f578aee3c3ea19d38a5cf4352e19315db2"
-  integrity sha512-dbH3JKXhj7n9bf7xoWEzyjUKoCVd5p2bqiGCXDj0cTQn08Z/ezn+BmSGlc2ZO+8s9a875w3R0VloxyN3sIqFyw==
+"@ever-gauzy/plugin-integration-plane-models@^0.1.11", "@ever-gauzy/plugin-integration-plane-models@^0.1.13":
+  version "0.1.13"
+  resolved "https://registry.npmjs.org/@ever-gauzy/plugin-integration-plane-models/-/plugin-integration-plane-models-0.1.13.tgz#9053052dc202d6d98aa271160095ecf922f39a2d"
+  integrity sha512-Mo3XrwkYpPrzcZWbOI9wsUDzrmDAabvoZ8gY3QWH1n2PIl8qAbzXJQVISM31PwIWwEE6Pa9EuioheIOg4ZMGlw==
 
 "@exodus/bytes@^1.15.1", "@exodus/bytes@^1.16.0":
   version "1.16.0"
