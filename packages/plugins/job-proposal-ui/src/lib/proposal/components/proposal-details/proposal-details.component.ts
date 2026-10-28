@@ -48,7 +48,8 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 
 	/**
 	 * Lets the browser parse any CSS color (#fff, #ffffff80, rgb(), hsl(), names)
-	 * into `#rrggbb` or `rgba(r, g, b, a)`, then measures its brightness. An empty
+	 * into `#rrggbb` or `rgba(r, g, b, a)`, then picks whichever of dark or white
+	 * text has the higher WCAG contrast ratio against it. An empty
 	 * result keeps the theme's text color, for colors that can't be read or are
 	 * mostly transparent and so show the card behind them.
 	 */
@@ -75,7 +76,20 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		if ([r, g, b].some((value) => !Number.isFinite(value)) || alpha < 0.5) {
 			return '';
 		}
-		return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? '#1a1a1a' : '#fff';
+		const background = this.relativeLuminance(r, g, b);
+		const dark = this.relativeLuminance(0x1a, 0x1a, 0x1a);
+		const darkContrast = (background + 0.05) / (dark + 0.05);
+		const whiteContrast = 1.05 / (background + 0.05);
+		return darkContrast >= whiteContrast ? '#1a1a1a' : '#fff';
+	}
+
+	/** WCAG 2 relative luminance of an sRGB color with 0–255 channels. */
+	private relativeLuminance(r: number, g: number, b: number): number {
+		const [lr, lg, lb] = [r, g, b].map((channel) => {
+			const c = channel / 255;
+			return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+		});
+		return 0.2126 * lr + 0.7152 * lg + 0.0722 * lb;
 	}
 
 	constructor(
