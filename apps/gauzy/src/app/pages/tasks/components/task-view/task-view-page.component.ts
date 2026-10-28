@@ -70,6 +70,11 @@ export const HOURS_DAYS = 14;
 /** Days the recent time entries are read over. */
 export const ENTRIES_DAYS = 30;
 
+/** The page's tabs, as the project page's; the open one is in the URL (`?tab=`). */
+export type TaskViewTab = 'overview' | 'board';
+
+const TABS: TaskViewTab[] = ['overview', 'board'];
+
 /** One subtask, as the Subtasks panel lists it. */
 export interface ISubtaskRow {
 	id: string;
@@ -123,6 +128,16 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	readonly entriesDays = ENTRIES_DAYS;
 	/** The list a task belongs to, for the page's back button. */
 	readonly backLink = '/pages/tasks/dashboard';
+	readonly tabs: { id: TaskViewTab; label: string; icon: string }[] = [
+		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
+		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' }
+	];
+	tab: TaskViewTab = 'overview';
+	/**
+	 * The Board — the subtasks as the project board — loads when first opened, then stays mounted behind the
+	 * Overview: a move still saving when the user leaves it must still reach the Subtasks panel when it lands.
+	 */
+	boardOpened = false;
 
 	task: ITask = null;
 	status: IRecordViewStatus = null;
@@ -195,6 +210,14 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				this.organization = organization;
 				void this.load();
 			});
+		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back.
+		this.route.queryParamMap
+			.pipe(
+				map((params) => params.get('tab') as TaskViewTab),
+				distinctUntilChanged(),
+				untilDestroyed(this)
+			)
+			.subscribe((tab) => this.openTab(TABS.includes(tab) ? tab : 'overview'));
 		// The estimate is spelled out in the viewer's language.
 		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => this.show());
 	}
@@ -210,6 +233,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		// Nothing of the previous task (or organization) stays on screen — nor reachable by the star. Its figures
 		// and its project's statuses go too: the menu stays hidden until this task's own statuses arrive.
 		this.task = null;
+		// Another task's board is not read behind the Overview until its own tab is opened.
+		this.boardOpened = this.tab === 'board';
 		this.tracking = loading(null);
 		this.workers = [];
 		this.statuses = [];
@@ -265,6 +290,27 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	}
 
 	/* ── Actions ── */
+
+	/** Opens a tab, keeping it in the URL without a new history entry per click. */
+	selectTab(tab: TaskViewTab): void {
+		this.openTab(tab);
+		void this.router.navigate([], {
+			relativeTo: this.route,
+			queryParams: { tab: tab === 'overview' ? null : tab },
+			queryParamsHandling: 'merge',
+			replaceUrl: true
+		});
+	}
+
+	private openTab(tab: TaskViewTab): void {
+		this.tab = tab;
+		if (tab === 'board') this.boardOpened = true;
+	}
+
+	/** A subtask moved on the Board: the task is read again, so the Subtasks panel shows its new status. */
+	onSubtaskMoved(): void {
+		if (this.task) void this.refresh(this.task.id);
+	}
 
 	/**
 	 * Moves the task to another status — the status alone, as the project board does, so nothing else read
