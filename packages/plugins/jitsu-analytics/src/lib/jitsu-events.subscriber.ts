@@ -176,7 +176,10 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 	 * @returns whether the event was queued.
 	 */
 	enqueueTrack(event: string, properties: () => Record<string, any>): boolean {
-		return this.events.offer(() => ({ event, properties: properties() }));
+		// A JSON copy, as the analytics core used to take the moment `track` was called: the event now waits
+		// in the queue, and the redacted copy still shares nested values (JSON columns, arrays) with the row,
+		// so a later write to the row would otherwise change what is sent for this one.
+		return this.events.offer(() => ({ event, properties: JSON.parse(JSON.stringify(properties())) }));
 	}
 
 	/**

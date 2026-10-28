@@ -105,6 +105,20 @@ export function recyclingJitsu(factory: () => AnalyticsInterface, every: number)
 	});
 }
 
+/**
+ * How long one request to the Jitsu server may take, response body included, before it is aborted. The
+ * entity-event queue sends a few events at a time and frees a slot only when a send settles; `node-fetch`
+ * has no timeout of its own, so a server that stops answering would otherwise hold every slot for good.
+ */
+export const JITSU_REQUEST_TIMEOUT_MS = 30_000;
+
+/** `node-fetch` with {@link JITSU_REQUEST_TIMEOUT_MS} applied, on top of any signal the caller passes. */
+export function fetchWithTimeout(url: any, init: any = {}, timeoutMs = JITSU_REQUEST_TIMEOUT_MS): Promise<any> {
+	const timeout = AbortSignal.timeout(timeoutMs);
+	const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+	return fetch(url, { ...init, signal });
+}
+
 export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
 	// Parse the configuration options
 	const config = parseConfig(opts);
@@ -113,7 +127,7 @@ export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
 		return;
 	}
 
-	config.fetch = fetch; // Assign the 'fetch' function to 'fetch'
+	config.fetch = fetchWithTimeout;
 
 	// Create and return a Jitsu Analytics instance with the parsed configuration properties, replaced after a
 	// bounded number of events (see DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS).
