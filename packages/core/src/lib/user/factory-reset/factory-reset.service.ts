@@ -805,7 +805,6 @@ export class FactoryResetService {
 		];
 
 		await this.deleteSpecificTables(findInput);
-		await deleteStoredFiles(capturedFiles);
 		if (deleteOrganizationIds?.length > 0) {
 			switch (this.ormType) {
 				case MultiORMEnum.MikroORM:
@@ -833,6 +832,9 @@ export class FactoryResetService {
 					break;
 			}
 		}
+
+		// Only now that every row the files belonged to is gone: a failure above leaves rows and files together.
+		await deleteStoredFiles(capturedFiles);
 
 		let firstOrganization;
 		switch (this.ormType) {
