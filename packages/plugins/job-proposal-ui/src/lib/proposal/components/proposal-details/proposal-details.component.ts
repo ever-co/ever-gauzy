@@ -3,7 +3,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime, filter, tap } from 'rxjs/operators';
-import { BaseEntityEnum, IEmployee, IProposal, IUser } from '@gauzy/contracts';
+import { BaseEntityEnum, IEmployee, IProposal, ITag, IUser, ProposalStatusEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -23,6 +23,26 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	public jobPostLink: SafeHtml;
 	public jobPostContent: SafeHtml;
 	public proposalContent: SafeHtml;
+
+	get isAccepted(): boolean {
+		return this.proposal?.status === ProposalStatusEnum.ACCEPTED;
+	}
+
+	/**
+	 * Picks dark or light text for a tag so its name stays readable on any
+	 * background, unless the tag sets its own text color.
+	 */
+	tagTextColor(tag: ITag): string {
+		if (tag.textColor) {
+			return tag.textColor;
+		}
+		const hex = (tag.color || '').replace('#', '');
+		if (!/^[0-9a-f]{6}$/i.test(hex)) {
+			return '#fff';
+		}
+		const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+		return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? '#1a1a1a' : '#fff';
+	}
 
 	constructor(
 		private readonly route: ActivatedRoute,
