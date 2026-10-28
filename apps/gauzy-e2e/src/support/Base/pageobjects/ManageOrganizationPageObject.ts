@@ -10,6 +10,8 @@ export const ManageOrganizationPage = {
 	nameInputCss: '#nameInput',
 	codeInputCss: '#codeInput',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
+	// Name-column filter of the organizations grid (column key `name`, organizations.component.ts).
+	nameFilterInputCss: 'th.angular2-smart-th.name input',
 	// Save button on each settings tab: `div.actions > button[status="success"]`.
 	saveButtonCss: 'div.actions > button[status="success"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',

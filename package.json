@@ -692,7 +692,7 @@
 		"camelcase": "^10.0.0",
 		"caniuse-lite": "^1.0.30001815",
 		"browserslist": "^4.29.3",
-		"@ever-gauzy/plugin-integration-plane-models": "^0.1.11",
+		"@ever-gauzy/plugin-integration-plane-models": "^0.1.12",
 		"@jridgewell/sourcemap-codec": "^1.6.0",
 		"moment": "^2.31.0",
 		"graphql": "^16.14.2",

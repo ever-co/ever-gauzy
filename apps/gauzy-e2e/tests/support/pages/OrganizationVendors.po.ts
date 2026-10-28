@@ -1,8 +1,8 @@
 import {
 	verifyElementIsVisible,
 	clickButton,
-	clickButtonByIndex,
 	clearField,
+	dispatchClickWhenSettled,
 	enterInput,
 	clickKeyboardBtnByKeycode,
 	verifyText,
@@ -58,6 +58,23 @@ export const selectFirstItem = async () => {
 	const page = getPage();
 	await dismissOpenDialog();
 	const item = page.locator(OrganizationVendorsPage.selectItemCss).first();
+	await item.waitFor({ state: 'visible', timeout: 24000 });
+	const editBtn = page.locator(OrganizationVendorsPage.editVendorButtonCss).first();
+	for (let i = 0; i < 3; i++) {
+		if (await editBtn.isEnabled().catch(() => false)) return;
+		await item.click({ force: true });
+		await page.waitForTimeout(800);
+	}
+};
+
+// Select the vendor row carrying `name` (enables Edit/Delete). By name, not "first row": the list also
+// holds every other vendor created in this shard (e.g. the expenses scenario's "Domminos Pizza", and a
+// retry's leftovers), so the first row is not necessarily the one this scenario added. The row click
+// TOGGLES selection, so only re-click while Edit is still disabled.
+export const selectItemByName = async (name: string) => {
+	const page = getPage();
+	await dismissOpenDialog();
+	const item = page.locator(OrganizationVendorsPage.vendorRowCss).filter({ hasText: name }).first();
 	await item.waitFor({ state: 'visible', timeout: 24000 });
 	const editBtn = page.locator(OrganizationVendorsPage.editVendorButtonCss).first();
 	for (let i = 0; i < 3; i++) {
@@ -135,16 +152,22 @@ export const editVendorButtonVisible = async () => {
 	await verifyElementIsVisible(OrganizationVendorsPage.editVendorButtonCss);
 };
 
-export const clickEditVendorButton = async (index: number) => {
-	await clickButtonByIndex(OrganizationVendorsPage.editVendorButtonCss, index);
+export const clickEditVendorButton = async (_index: number) => {
+	// The selection actions slide in (~0.2 s) after the row click, so a coordinate click can land
+	// mid-transition on the wrong button: dispatch it, and confirm the edit dialog's Name field opened.
+	await dispatchClickWhenSettled(OrganizationVendorsPage.editVendorButtonCss, OrganizationVendorsPage.nameInputCss);
 };
 
 export const deleteVendorButtonVisible = async () => {
 	await verifyElementIsVisible(OrganizationVendorsPage.deleteVendorButtonCss);
 };
 
-export const clickDeleteVendorButton = async (index: number) => {
-	await clickButtonByIndex(OrganizationVendorsPage.deleteVendorButtonCss, index);
+export const clickDeleteVendorButton = async (_index: number) => {
+	// Same slide-in hazard as Edit: dispatch, and confirm the delete-confirmation dialog opened.
+	await dispatchClickWhenSettled(
+		OrganizationVendorsPage.deleteVendorButtonCss,
+		OrganizationVendorsPage.confirmDeleteButtonCss
+	);
 };
 
 export const confirmDeleteButtonVisible = async () => {
@@ -164,8 +187,8 @@ export const waitMessageToHide = async () => {
 };
 
 export const verifyVendorExists = async (text: string) => {
-	// The vendor list renders many text-truncate cells (one per column per vendor); target the
-	// specific cell holding our vendor name rather than asserting on the whole (multi-element) set.
+	// Target the NAME cell (div.ga-name-cell) of the row holding our vendor, rather than asserting on the
+	// whole (multi-element) set of cells.
 	await getPage()
 		.locator(OrganizationVendorsPage.verifyVendorCss, { hasText: text })
 		.first()

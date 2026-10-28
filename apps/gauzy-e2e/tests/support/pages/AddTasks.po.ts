@@ -15,6 +15,7 @@ import {
 	waitForSpinnerGone,
 	wait
 } from '../util';
+import { expect } from '@playwright/test';
 import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
@@ -323,6 +324,33 @@ export const clickSaveTaskButton = async () => {
 	// to the element so the (click) handler fires through the overlay. (Playbook pattern 2.)
 	await waitForSpinnerGone();
 	await dispatchClick(AddTaskPage.saveNewTaskButtonCss);
+};
+
+/**
+ * Save a NEW task and prove it was created.
+ *
+ * The Add Task dialog only closes with its form value; the tasks page then POSTs /api/tasks
+ * (task.component.ts createTaskDialog -> TasksStoreService.createTask) under `untilDestroyed(this)`.
+ * A caller that navigates away straight after the click (CustomCommands.addTask is followed by a hash
+ * change + reload in the timesheets flow) destroys the page and cancels that request, so the task may
+ * never exist. Wait for the dialog to close and for the create request to succeed before returning.
+ */
+export const clickSaveTaskButtonAndWaitForCreate = async () => {
+	const page = getPage();
+	const created = page
+		.waitForResponse(
+			(res) => res.request().method() === 'POST' && /\/api\/tasks\/?$/.test(new URL(res.url()).pathname),
+			{ timeout: 30_000 }
+		)
+		.catch(() => null);
+	await clickSaveTaskButton();
+	await expect(page.locator(AddTaskPage.addTaskDialogCss)).toHaveCount(0, { timeout: 24_000 });
+	const response = await created;
+	if (!response || !response.ok()) {
+		throw new Error(
+			`Add Task: POST /api/tasks ${response ? `failed with HTTP ${response.status()}` : 'was never sent'} — the task was not created`
+		);
+	}
 };
 
 export const tasksTableVisible = async () => {

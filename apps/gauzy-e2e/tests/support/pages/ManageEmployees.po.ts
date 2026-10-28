@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
+import { expect } from '@playwright/test';
 import {
 	enterInput,
 	verifyElementIsVisible,
-	clickButton,
 	clickElementByText,
 	enterInputConditionally,
 	clearField,
@@ -11,7 +11,8 @@ import {
 	verifyText,
 	verifyTextNotExisting,
 	dispatchClick,
-	waitForSpinnerGone
+	waitForSpinnerGone,
+	uploadImageThroughUploader
 } from '../util';
 import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
@@ -120,18 +121,34 @@ export const clickSendInviteButton = async () => {
 	// #firstName form then never opens). Dispatch the click to the element so (click)="add()" fires
 	// regardless of any overlay, then confirm the dialog actually detached — retry once if a transient
 	// overlay swallowed the first dispatch.
+	// The redesigned footer button is [disabled]="emailInviteForm.form.invalid" and NbButton swallows clicks
+	// on a disabled host, so gate on it being enabled (both emails registered as tags) before dispatching.
 	await waitForSpinnerGone();
-	const dialog = getPage().locator('ga-invite-mutation').first();
+	const page = getPage();
+	const dialog = page.locator('ga-invite-mutation').first();
+	const send = page.locator(ManageEmployeesPage.sendInviteButtonCss).first();
 	for (let attempt = 0; attempt < 2; attempt++) {
-		await dispatchClick(ManageEmployeesPage.sendInviteButtonCss);
+		if (!(await send.isVisible().catch(() => false))) break; // dialog already closed
+		await expect(send).toBeEnabled({ timeout: 24_000 });
+		await send.dispatchEvent('click');
 		try {
 			await dialog.waitFor({ state: 'detached', timeout: 8000 });
 			return;
 		} catch {
 			// dialog still open (POST in flight or first dispatch lost) — settle and retry once
 			await waitForSpinnerGone();
-			await getPage().waitForTimeout(500);
+			await page.waitForTimeout(500);
 		}
+	}
+	// add() closes the dialog only once the invites were saved; a dialog that is still open means the
+	// invite was not sent — report it here (with the toast) instead of in the next step's Add dialog.
+	const closed = await dialog
+		.waitFor({ state: 'detached', timeout: 8000 })
+		.then(() => true)
+		.catch(() => false);
+	if (!closed) {
+		const toast = (await page.locator('nb-toast').allInnerTexts().catch(() => [] as string[])).join(' | ');
+		throw new Error(`Invite dialog did not close after "Send": the invites were not sent.${toast ? ` Toast: ${toast}` : ''}`);
 	}
 };
 
@@ -214,17 +231,32 @@ export const selectTagFromDropdown = async (index) => {
 	await selectNgOption(ManageEmployeesPage.addTagsDropdownCss, ManageEmployeesPage.tagsDropdownOption, index);
 };
 
-export const clickCardBody = async () => {
-	await clickButton(ManageEmployeesPage.cardBodyCss);
+// Close the body-appended tags ng-select panel (closeOnSelect=false leaves it open after the pick).
+// ng-select closes on a document-level "click" whose press did not start inside the select/panel, so
+// a mousedown+click dispatched on the dialog's own header title closes it — no coordinate click that
+// could land on a form control in the middle of the (now much taller) dialog body, a datepicker, or
+// the nb-dialog backdrop (closeOnBackdropClick would dismiss the whole form).
+export const closeEmployeeDialogDropdowns = async () => {
+	const page = getPage();
+	const title = page.locator(ManageEmployeesPage.employeeDialogTitleCss).first();
+	await title.dispatchEvent('mousedown').catch(() => undefined);
+	await title.dispatchEvent('click').catch(() => undefined);
+	await page
+		.locator('ng-dropdown-panel')
+		.first()
+		.waitFor({ state: 'detached', timeout: 3000 })
+		.catch(() => undefined);
 };
 
-export const imageInputVisible = async () => {
-	await verifyElementIsVisible(ManageEmployeesPage.imgInputCss);
-};
-
-export const enterImageDataUrl = async (url) => {
-	await enterInput(ManageEmployeesPage.imgInputCss, url);
-};
+// The user sets the new employee's picture. The image-URL text input this step used to fill is gone:
+// #10336 (a73de1d121) turned the basic-info form's picture into an <ngx-image-uploader> avatar, so the
+// picture is now chosen as a FILE and uploaded straight away (see util.uploadImageThroughUploader, which
+// fails here if the picker never fires its upload). The upload result is deliberately not asserted: the
+// picture is optional for the employee, and a later file-storage scenario can point the tenant at an
+// unreachable S3 bucket. Either way the form stays valid — on success imageUrl gets the asset's URL
+// (and is disabled, so its onerror hook can't flip the form invalid), on failure it stays null.
+export const uploadEmployeeImage = async (): Promise<boolean> =>
+	uploadImageThroughUploader(ManageEmployeesPage.employeeImageUploaderScopeCss);
 
 // Re-fill the THREE controls that gate step-1 validity (firstName, email, password) right before we
 // advance. The basic-info form is [disabled]="userBasicInfo.form.invalid"; if any one of these didn't
@@ -242,80 +274,96 @@ export const reEnterRequiredStep1Fields = async (firstName, email, password) => 
 	await pwd.blur().catch(() => {});
 };
 
+// ---- Add-Employee stepper (redesigned dialog, #10336 / a73de1d121) ---------------------------------
+// The stepper's own header and the per-step nbStepperNext buttons are gone: the step bar lives in the
+// card header (the active `div.step` carries aria-current="step") and every action button sits in
+// `nb-card-footer.dialog-footer`. See ManageEmployeesPage.nextButtonCss for the footer per step.
+
+const employeeStep = (index: number) =>
+	getPage().locator(ManageEmployeesPage.employeeStepIndicatorCss).nth(index);
+
+const isEmployeeStepActive = async (index: number): Promise<boolean> =>
+	(await employeeStep(index)
+		.getAttribute('aria-current', { timeout: 2000 })
+		.catch(() => null)) === 'step';
+
+// Click the footer's primary "Continue" of the CURRENT step and prove the step bar moved to `toIndex`.
+// The button is gated on `toBeEnabled` first: on step 0 it is [disabled] while the basic-info form is
+// invalid, and NbButton swallows clicks on a disabled host, so clicking early would be a silent no-op.
+// Waiting for it to be enabled makes a genuinely invalid form fail HERE (with the reason visible in the
+// form) instead of as an empty employees grid much later. Dispatched (not coordinate-clicked) because a
+// toast or the body-appended tags panel can sit over the footer.
+const continueEmployeeStepper = async (buttonCss: string, toIndex: number) => {
+	await waitForSpinnerGone();
+	const button = getPage().locator(buttonCss).first();
+	for (let attempt = 0; attempt < 3; attempt++) {
+		if (await isEmployeeStepActive(toIndex)) return;
+		await expect(button).toBeEnabled({ timeout: 24_000 });
+		await button.dispatchEvent('click');
+		const reached = await expect(employeeStep(toIndex))
+			.toHaveAttribute('aria-current', 'step', { timeout: 6000 })
+			.then(() => true)
+			.catch(() => false);
+		if (reached) return;
+		await waitForSpinnerGone();
+	}
+	await expect(employeeStep(toIndex)).toHaveAttribute('aria-current', 'step', { timeout: 6000 });
+};
+
 export const nextButtonVisible = async () => {
 	await verifyElementIsVisible(ManageEmployeesPage.nextButtonCss);
 };
 
+// Step 0 "Details" -> step 1 "Add more".
 export const clickNextButton = async () => {
-	// Stepper step-1 -> step-2 (nbStepperNext). The tags ng-select we just opened (appendTo body)
-	// leaves a fading overlay over the footer; dispatch straight on the button.
-	// IMPORTANT: this button is [disabled]="userBasicInfo.form.invalid". A dispatchEvent('click') fires
-	// the nbStepperNext host listener even on a DISABLED button, so a still-invalid step-1 form would be
-	// silently force-advanced to step-3, where add()'s addEmployee() skips the push (form invalid) and
-	// createBulk([]) persists nothing — the exact empty-grid failure. Wait for the button to actually be
-	// ENABLED (form valid) before advancing so a real validity problem surfaces here instead of as a
-	// mysterious empty grid downstream.
-	await waitForSpinnerGone();
-	const next = getPage().locator(ManageEmployeesPage.nextButtonCss).first();
-	await next
-		.waitFor({ state: 'visible', timeout: 8000 })
-		.catch(() => {});
-	// Poll until the form is valid (Next no longer disabled). The spec re-fills the required fields
-	// (reEnterRequiredStep1Fields) right before this, so validity should be reached quickly; only after
-	// it's genuinely enabled do we advance, so we never force-advance an invalid form into an empty
-	// createBulk([]).
-	for (let i = 0; i < 30; i++) {
-		if (!(await next.isDisabled().catch(() => true))) break;
-		await getPage().waitForTimeout(500);
-	}
-	await dispatchClick(ManageEmployeesPage.nextButtonCss);
+	await continueEmployeeStepper(ManageEmployeesPage.nextButtonCss, 1);
 };
 
 export const nextStepButtonVisible = async () => {
 	await verifyElementIsVisible(ManageEmployeesPage.nextStepButtonCss);
 };
 
+// Step 1 "Add more" -> step 2 "Review". Deliberately the primary Continue, never step 1's
+// "Add Another Employee" (addEmployee(): queues the entry and resets the form/stepper, persists nothing).
 export const clickNextStepButton = async () => {
-	// Stepper step-2 -> step-3 (nbStepperNext); same backdrop hazard as step-1's Next.
-	// IMPORTANT: step 2 has BOTH a green "Next" (nbStepperNext) AND a status="success" "Add Another
-	// Employee" (addEmployee(), which pushes then RESETS the form/stepper and NEVER persists). We must
-	// actually reach step 3 before clicking the persist button — otherwise the later status="success"
-	// click hits "Add Another Employee" and the employee is silently never created (empty grid). Dispatch
-	// step-2's Next, then confirm the step-3 finish button ("Added All Current Employees") appears; retry
-	// the dispatch if the first didn't take.
-	await waitForSpinnerGone();
-	const finish = getPage().locator(ManageEmployeesPage.lastStepButtonCss).first();
-	for (let attempt = 0; attempt < 3; attempt++) {
-		await dispatchClick(ManageEmployeesPage.nextStepButtonCss);
-		const reached = await finish
-			.waitFor({ state: 'visible', timeout: 6000 })
-			.then(() => true)
-			.catch(() => false);
-		if (reached) return;
-		await waitForSpinnerGone();
-	}
+	await continueEmployeeStepper(ManageEmployeesPage.nextStepButtonCss, 2);
 };
 
 export const lastStepButtonVisible = async () => {
 	await verifyElementIsVisible(ManageEmployeesPage.lastStepButtonCss);
 };
 
+// Step 2 "Review": "Create employees (n)" -> (click)="add()" -> createBulk(), then closeDialog(employees)
+// — the ONLY path that persists the employee. It is [disabled]="loading || pendingCount === 0", so wait
+// for it to be enabled (pendingCount 0 would mean the form went invalid), dispatch, and require the dialog
+// to detach: a createBulk failure (duplicate email/username, API error) keeps the dialog open — add() has
+// already reset the stepper to step 0 by then — and shows an error toast, which is reported here instead
+// of surfacing later as a missing employee.
 export const clickLastStepButton = async () => {
-	// Stepper step-3 "I've Added All Current Employees" -> (click)="add()" calls createBulk() and closes
-	// the dialog — the ONLY path that persists the employee. Dispatch through any lingering stepper/overlay
-	// backdrop, then confirm the mutation dialog actually detached (createBulk resolved). Retry once if a
-	// transient overlay swallowed the first dispatch, so we never leave with nothing persisted.
+	const page = getPage();
 	await waitForSpinnerGone();
-	const dialog = getPage().locator('ga-employee-mutation').first();
+	const create = page.locator(ManageEmployeesPage.lastStepButtonCss).first();
+	const dialog = page.locator('ga-employee-mutation').first();
 	for (let attempt = 0; attempt < 2; attempt++) {
-		await dispatchClick(ManageEmployeesPage.lastStepButtonCss);
+		if (!(await create.isVisible().catch(() => false))) break; // add() already ran (dialog reset or closed)
+		await expect(create).toBeEnabled({ timeout: 24_000 });
+		await create.dispatchEvent('click');
 		const closed = await dialog
-			.waitFor({ state: 'detached', timeout: 12000 })
+			.waitFor({ state: 'detached', timeout: 30_000 })
 			.then(() => true)
 			.catch(() => false);
 		if (closed) return;
 		await waitForSpinnerGone();
-		await getPage().waitForTimeout(500);
+	}
+	const closed = await dialog
+		.waitFor({ state: 'detached', timeout: 5000 })
+		.then(() => true)
+		.catch(() => false);
+	if (!closed) {
+		const toast = (await page.locator('nb-toast').allInnerTexts().catch(() => [] as string[])).join(' | ');
+		throw new Error(
+			`Add Employee dialog did not close after "Create employees": the employee was not created.${toast ? ` Toast: ${toast}` : ''}`
+		);
 	}
 };
 
@@ -505,8 +553,11 @@ export const saveEditButtonVisible = async () => {
 
 export const clickSaveEditButton = async () => {
 	// Edit-page Save (disabled while form invalid). Settle, then dispatch so (click)="submitForm()"
-	// fires even with a transient overlay/spinner from the language ng-select we just closed.
+	// fires even with a transient overlay/spinner from the language ng-select we just closed. It is
+	// [disabled]="form.invalid" and NbButton swallows clicks while disabled, so wait for it to be enabled
+	// first — an invalid account form then fails here instead of silently skipping the save.
 	await waitForSpinnerGone();
+	await expect(getPage().locator(ManageEmployeesPage.saveEditButtonCss).first()).toBeEnabled({ timeout: 24_000 });
 	await dispatchClick(ManageEmployeesPage.saveEditButtonCss);
 };
 
@@ -620,9 +671,23 @@ export const confirmDeleteInviteButtonVisible = async () => {
 	await verifyElementIsVisible(ManageEmployeesPage.confirmDeleteInviteButtonCss);
 };
 
+// The invite delete dialog is type-to-confirm since #10761 (699b3c7187): its Delete stays [disabled] until
+// the invitee's email (case-insensitive) is typed into #invite-delete-email. Typing it is how a user now
+// confirms the deletion, so the step does the same.
+export const enterDeleteInviteConfirmation = async (email) => {
+	const input = getPage().locator(ManageEmployeesPage.deleteInviteConfirmInputCss).first();
+	await input.waitFor({ state: 'visible', timeout: 24_000 });
+	await input.fill(String(email).trim());
+};
+
 export const clickConfirmDeleteInviteButton = async () => {
-	// OK on the freshly-opened delete dialog; dispatch so its own backdrop can't intercept.
-	await dispatchClick(ManageEmployeesPage.confirmDeleteInviteButtonCss);
+	// Delete on the freshly-opened dialog: wait until the typed confirmation enabled it (NbButton swallows
+	// clicks while disabled), dispatch so its own backdrop can't intercept, then require the dialog to close.
+	const page = getPage();
+	const confirm = page.locator(ManageEmployeesPage.confirmDeleteInviteButtonCss).first();
+	await expect(confirm).toBeEnabled({ timeout: 24_000 });
+	await confirm.dispatchEvent('click');
+	await page.locator('ga-invite-delete-confirmation').first().waitFor({ state: 'detached', timeout: 24_000 });
 };
 
 export const waitMessageToHide = async () => {

@@ -14,11 +14,33 @@ import {
 	scrollDown,
 	clickElementByText,
 	dispatchClick,
-	waitForSpinnerGone
+	waitForSpinnerGone,
+	scopeGridTo
 } from '../util';
+import { expect } from '@playwright/test';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ManageInterviewsPage } from '../../../src/support/Base/pageobjects/ManageInterviewsPageObject';
+
+// Open a Manage Interviews tab (calendar / interview_panel / criterion). The scenario arrives here from
+// another hash route of the same document (the candidates grid, or the calendar tab), and a bare goto() of
+// a hash-only change can be a same-document no-op for the Angular hash router. Force the hash when the
+// route did not change, then wait for the tab's host to render before acting.
+export const openInterviewsTab = async (tab: 'calendar' | 'interview_panel' | 'criterion') => {
+	const page = getPage();
+	const hash = `#/pages/employees/candidates/interviews/${tab}`;
+	await page.goto(`/${hash}`);
+	await page.evaluate((h) => {
+		if (location.hash.split('?')[0] !== h) location.hash = h;
+	}, hash);
+	const host = {
+		calendar: 'ga-interview-calendar',
+		interview_panel: ManageInterviewsPage.interviewPanelCss,
+		criterion: 'ga-interview-criterions'
+	}[tab];
+	await page.locator(host).first().waitFor({ state: 'attached', timeout: 30000 });
+	await waitForSpinnerGone();
+};
 
 export const addInterviewButtonVisible = async () => {
 	await verifyElementIsVisible(ManageInterviewsPage.addInterviewButtonCss);
@@ -100,28 +122,34 @@ export const clickEmployeeDropdown = async () => {
 };
 
 export const employeeDropdownOptionVisible = async () => {
-	// Best-effort: the option list is the org's employees "working" in the header date range
-	// (EmployeeSelectComponent.getWorkingEmployees), loaded async and frequently EMPTY on the test DB.
-	// Don't hard-assert visibility (that hangs 24s on an empty list) — clickEmployeeDropdownOption
-	// handles present-or-empty. Interviewers are optional; the interview saves without them.
-	const option = getPage().locator(
-		ManageInterviewsPage.employeeMultiselectDropdownOptionCss
-	);
-	await option.first().waitFor({ state: 'visible', timeout: 8000 }).catch(() => {});
+	// The interview form's interviewer select is fed the org's employees directly
+	// (CandidateInterviewFormComponent.loadEmployees -> [allEmployees]), not the date-range "working
+	// employees", so on the seeded org it is populated. Picking one is REQUIRED now: the form's hidden
+	// `valid` control (Validators.required) is only set by onMembersSelected, and step 1's Next is
+	// [disabled] while the form is invalid (candidate-interview-form.component.ts loadFormData()).
+	await verifyElementIsVisible(ManageInterviewsPage.employeeMultiselectDropdownOptionCss);
 };
 
 export const clickEmployeeDropdownOption = async (index) => {
-	// Best-effort employee pick: the option list loads async and can legitimately be empty (no
-	// employee working in the selected date range). Select one if it shows; otherwise press Escape to
-	// close the dropdown and continue — interviewers are optional so the interview still saves. This
-	// mirrors ContactsLeads.selectEmployeeDropdownOption and avoids a 60s hard timeout on an empty list.
+	// Mandatory pick (see employeeDropdownOptionVisible): select the interviewer. No Escape fallback any
+	// more — Escape is a keyup on document, which the nb-dialog (closeOnEsc) treats as "close the whole
+	// Schedule Interview dialog", and without an interviewer the step cannot advance anyway.
+	await clickButtonByIndex(ManageInterviewsPage.employeeMultiselectDropdownOptionCss, index);
+};
+
+// The multi nb-select keeps its option list open after a pick; it overlays the rows below it (the
+// interview-type radios). It normally closes on the Tab the scenario sends; if it is still open, close it
+// with a click on the dialog title (nb-select hides on any click outside itself), never with Escape.
+const closeEmployeeDropdownIfOpen = async () => {
 	const page = getPage();
-	const option = page.locator(ManageInterviewsPage.employeeMultiselectDropdownOptionCss);
-	try {
-		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await option.nth(index).click({ force: true });
-	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
+	const list = page.locator('nb-option-list').first();
+	if (await list.isVisible().catch(() => false)) {
+		await page
+			.locator(`${ManageInterviewsPage.interviewDialogCss} nb-card-header h5.dialog-title`)
+			.first()
+			.click({ force: true })
+			.catch(() => {});
+		await list.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
 	}
 };
 
@@ -130,6 +158,7 @@ export const interviewTypeButtonVisible = async () => {
 };
 
 export const clickInterviewTypeButton = async (index) => {
+	await closeEmployeeDropdownIfOpen();
 	await clickButtonByIndex(ManageInterviewsPage.radioButtonCss, index);
 };
 
@@ -155,13 +184,31 @@ export const nextButtonVisible = async () => {
 	await verifyElementIsVisible(ManageInterviewsPage.nextButtonCss);
 };
 
+// Dispatch a footer step button once it is genuinely enabled, then confirm the stepper reached the step
+// whose content `reachedCss` belongs to (nb-stepper renders only the selected step's content). One retry
+// if the dispatch was swallowed by a transient overlay.
+const advanceStep = async (buttonCss: string, reachedCss: string) => {
+	const page = getPage();
+	const reached = page.locator(reachedCss).first();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		await waitForSpinnerGone();
+		const button = page.locator(buttonCss).first();
+		await expect(button).toBeEnabled({ timeout: 24000 });
+		await button.dispatchEvent('click');
+		if (await reached.waitFor({ state: 'attached', timeout: 8000 }).then(() => true).catch(() => false)) {
+			return;
+		}
+	}
+	await expect(reached).toBeAttached({ timeout: 4000 });
+};
+
 export const clickNextButton = async () => {
-	// nbStepperNext only advances on a real click event and only when step-1's form is valid; a
-	// full-card nb-spinner / fading dialog backdrop can overlay the footer so a coordinate click lands
-	// on the overlay. Wait it out, then dispatch the click straight to the button. nb-stepper renders
-	// only the active step's content, so the .first() in dispatchClick still targets this step's button.
-	await waitForSpinnerGone();
-	await dispatchClick(ManageInterviewsPage.nextButtonCss);
+	// Step 1 -> step 2. The footer Next is [disabled]="candidateInterviewForm?.form?.invalid || isTitleExist"
+	// and runs (click)="next(); stepper.next()". A fading select/datepicker overlay can sit over the footer,
+	// so the click is dispatched straight to the button, but only once it is enabled (a click on a disabled
+	// button is dropped), and the move to the criterions step is confirmed.
+	await closeEmployeeDropdownIfOpen();
+	await advanceStep(ManageInterviewsPage.nextButtonCss, ManageInterviewsPage.criterionsStepCss);
 };
 
 export const nextStepButtonVisible = async () => {
@@ -169,9 +216,8 @@ export const nextStepButtonVisible = async () => {
 };
 
 export const clickNextStepButton = async () => {
-	// see clickNextButton: wait out the spinner/backdrop then dispatch to advance step-2 -> step-3.
-	await waitForSpinnerGone();
-	await dispatchClick(ManageInterviewsPage.nextStepButtonCss);
+	// Step 2 (criterions) -> step 3 (summary + email notification); see clickNextButton.
+	await advanceStep(ManageInterviewsPage.nextStepButtonCss, ManageInterviewsPage.notificationStepCss);
 };
 
 export const notifyCandidateCheckboxVisible = async () => {
@@ -191,13 +237,24 @@ export const saveButtonVisible = async () => {
 };
 
 export const clickSaveButton = async () => {
-	// Final step Save (nbStepperSave): wait out the full-card spinner shown while the notification step
-	// loads, then dispatch the click straight to the button so a lingering overlay can't swallow it.
+	// Final step Save ((click)="save()": creates the interview, its interviewers and criterions, then
+	// closes the dialog). Dispatched straight to the button so a lingering overlay can't swallow it, then
+	// wait for the dialog to close (save() awaits the API calls first). Not re-dispatched: a second save()
+	// would create a second interview. Whether it persisted is asserted on the interviews panel.
 	await waitForSpinnerGone();
+	await expect(getPage().locator(ManageInterviewsPage.saveButtonCss).first()).toBeEnabled({ timeout: 24000 });
 	await dispatchClick(ManageInterviewsPage.saveButtonCss);
+	await getPage()
+		.locator(ManageInterviewsPage.interviewDialogCss)
+		.first()
+		.waitFor({ state: 'detached', timeout: 30000 })
+		.catch(() => {});
 };
 
 export const verifyScheduleExist = async (text) => {
+	// The panel's table is a 10-row-per-page LocalDataSource over every interview of the org; narrow it to
+	// this candidate first (best-effort Candidate-column filter) so the new interview is on the rendered page.
+	await scopeGridTo(ManageInterviewsPage.interviewPanelNameFilterCss, text);
 	await verifyText(ManageInterviewsPage.verifyCandidateCss, text);
 };
 

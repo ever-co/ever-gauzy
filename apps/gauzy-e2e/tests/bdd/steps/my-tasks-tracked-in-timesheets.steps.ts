@@ -135,6 +135,6 @@ When('I stop the timer and view the My Tasks timesheet', async () => {
 	await myTasks.clickStopTimerBtn();
 	await myTasks.viewTimesheetBtnVisible();
 	await myTasks.clickViewTimesheetBtn();
-	// Best-effort: verify the recorded task title surfaces on the timesheet daily view.
+	// The recorded log must surface on the timesheet daily view under the task's title.
 	await myTasks.verifyProjectText(taskTitle);
 });

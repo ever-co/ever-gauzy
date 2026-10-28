@@ -1,10 +1,5 @@
-import { expect } from '@playwright/test';
-import {
-	verifyText,
-	verifyStateByIndex,
-	verifyElementIsVisibleByIndex,
-	clickButtonByIndex
-} from '../util';
+import { expect, Locator } from '@playwright/test';
+import { verifyText, verifyElementIsVisibleByIndex, clickButtonByIndex } from '../util';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { SettingsFeaturesPage } from '../../../src/support/Base/pageobjects/SettingsFeaturesPageObject';
@@ -74,8 +69,46 @@ export const verifyMainTextExist = async (text: string) => {
 	).toContainText(text, { timeout: defaultCommandTimeout });
 };
 
-export const verifyCheckboxState = async (index: number, state: string) => {
-	// Index 0 is the page-level "select all" master toggle (left unchecked);
-	// the individual feature checkboxes start at index 1, so shift by one.
-	await verifyStateByIndex(SettingsFeaturesPage.checkboxCss, index + 1, state);
+// Whole-string match (surrounding whitespace allowed) so e.g. "Employee Approval" does not also
+// match "Employee Approval Policy", nor "Task Dashboard" the "Team Task Dashboard" row.
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const exactText = (text: string) => new RegExp(`^\\s*${escapeRegExp(text)}\\s*$`);
+
+// The feature's `section.settings-group`, found by its description line (the same text
+// verifyMainTextExist asserts), so a check is bound to a named feature and not to a page index.
+const featureGroup = (description: string) => {
+	const page = getPage();
+	return page
+		.locator(SettingsFeaturesPage.featureGroupCss)
+		.filter({ has: page.locator('p.group-description', { hasText: exactText(description) }) });
+};
+
+// `state` keeps the Cypress-style vocabulary the steps use ('be.checked' / 'not.checked').
+const expectCheckedState = async (input: Locator, state: string) => {
+	await expect(input).toHaveCount(1, { timeout: defaultCommandTimeout });
+	if (state.includes('not')) {
+		await expect(input).not.toBeChecked({ timeout: defaultCommandTimeout });
+	} else {
+		await expect(input).toBeChecked({ timeout: defaultCommandTimeout });
+	}
+};
+
+// The feature's own master toggle (in its group header).
+export const verifyFeatureState = async (description: string, state: string) => {
+	await expectCheckedState(
+		featureGroup(description).locator(SettingsFeaturesPage.featureToggleInputCss),
+		state
+	);
+};
+
+// One sub-feature checkbox of that feature, found by its label.
+export const verifySubFeatureState = async (description: string, subFeature: string, state: string) => {
+	const page = getPage();
+	await expectCheckedState(
+		featureGroup(description)
+			.locator(SettingsFeaturesPage.subFeatureCss)
+			.filter({ has: page.locator('span.text', { hasText: exactText(subFeature) }) })
+			.locator('input.native-input'),
+		state
+	);
 };

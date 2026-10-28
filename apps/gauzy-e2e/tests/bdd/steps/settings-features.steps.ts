@@ -10,7 +10,16 @@ import { SettingsFeaturesPageData } from '../../../src/support/Base/pagedata/Set
 // `ensureEnglishLanguage()` pre-normalisation (which ran between login and the first test.step) are
 // preserved here at module scope / the start of the first step respectively.
 
-let checked = 'be.checked';
+// Every feature's master toggle and each of its sub-feature checkboxes is asserted by NAME: the
+// feature group is located by its description line and the sub-feature by its label. The checks
+// used to be global indexes into every `input.native-input` on the page (shifted by one for the
+// Quick Settings theme switch), which silently depended on the order the API returns the catalogue
+// in (FeatureService.getParentFeatures orders by createdAt, and the seed inserts the whole catalogue
+// in one batch). On stage d365fbe9e6 the page lists Dashboard, Time Tracking, Estimate, ... first,
+// then Documents and the commerce flags, so every old index pointed at a different feature than the
+// step names. Same 57 toggles as before (32 features + 25 sub-features), each one now bound to the
+// feature the step names.
+const checked = 'be.checked';
 
 When('I verify the Task Dashboard feature', async () => {
 	// A prior test may have left the (DB-persisted) UI language non-English;
@@ -33,16 +42,24 @@ When('I verify the Task Dashboard feature', async () => {
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.myTaskDashboard
 	);
-	await settingsFeaturesPage.verifyCheckboxState(0, checked);
-	await settingsFeaturesPage.verifyCheckboxState(1, checked);
-	await settingsFeaturesPage.verifyCheckboxState(2, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.taskDashboard, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.taskDashboard,
+		SettingsFeaturesPageData.teamTaskDashboard,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.taskDashboard,
+		SettingsFeaturesPageData.myTaskDashboard,
+		checked
+	);
 });
 
 When('I verify the Manage Payment and Create First Payment features', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.managePayment
 	);
-	await settingsFeaturesPage.verifyCheckboxState(3, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.managePayment, checked);
 });
 
 When('I verify the Manage Proposal and Register First Proposal features', async () => {
@@ -52,8 +69,12 @@ When('I verify the Manage Proposal and Register First Proposal features', async 
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.proposalTemplate
 	);
-	await settingsFeaturesPage.verifyCheckboxState(4, checked);
-	await settingsFeaturesPage.verifyCheckboxState(5, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageProposal, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageProposal,
+		SettingsFeaturesPageData.proposalTemplate,
+		checked
+	);
 });
 
 When('I verify the Create First Expense feature', async () => {
@@ -66,9 +87,17 @@ When('I verify the Create First Expense feature', async () => {
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.organizationRecurringExpenses
 	);
-	await settingsFeaturesPage.verifyCheckboxState(6, checked);
-	await settingsFeaturesPage.verifyCheckboxState(7, checked);
-	await settingsFeaturesPage.verifyCheckboxState(8, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.createFirstExpense, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.createFirstExpense,
+		SettingsFeaturesPageData.employeeRecurringExpense,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.createFirstExpense,
+		SettingsFeaturesPageData.organizationRecurringExpenses,
+		checked
+	);
 });
 
 When('I verify the Manage Invoice and Create First Invoice features', async () => {
@@ -78,29 +107,33 @@ When('I verify the Manage Invoice and Create First Invoice features', async () =
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.invoiceReceived
 	);
-	await settingsFeaturesPage.verifyCheckboxState(9, checked);
-	await settingsFeaturesPage.verifyCheckboxState(10, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageInvoice, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageInvoice,
+		SettingsFeaturesPageData.invoiceReceived,
+		checked
+	);
 });
 
 When('I verify the Job Search and Jobs Matching feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.jobSearch
 	);
-	await settingsFeaturesPage.verifyCheckboxState(11, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.jobSearch, checked);
 });
 
 When('I verify the Manage Time Activity, Screenshots, App, Visited Sites and Activities feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageTimeActivity
 	);
-	await settingsFeaturesPage.verifyCheckboxState(12, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageTimeActivity, checked);
 });
 
 When('I verify the Employee Appointment, Schedules and Book Public Appointment feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.employeeAppointment
 	);
-	await settingsFeaturesPage.verifyCheckboxState(13, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.employeeAppointment, checked);
 });
 
 When('I verify the Manage Organization Details, Location and Settings features', async () => {
@@ -125,27 +158,51 @@ When('I verify the Manage Organization Details, Location and Settings features',
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.organizationTag
 	);
-	await settingsFeaturesPage.verifyCheckboxState(14, checked);
-	await settingsFeaturesPage.verifyCheckboxState(15, checked);
-	await settingsFeaturesPage.verifyCheckboxState(16, checked);
-	await settingsFeaturesPage.verifyCheckboxState(17, checked);
-	await settingsFeaturesPage.verifyCheckboxState(18, checked);
-	await settingsFeaturesPage.verifyCheckboxState(19, checked);
-	await settingsFeaturesPage.verifyCheckboxState(20, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageOrganizationDetails, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageOrganizationDetails,
+		SettingsFeaturesPageData.helpCenter,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageOrganizationDetails,
+		SettingsFeaturesPageData.organizationEmploymentType,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageOrganizationDetails,
+		SettingsFeaturesPageData.organizationDepartment,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageOrganizationDetails,
+		SettingsFeaturesPageData.organizationVendor,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageOrganizationDetails,
+		SettingsFeaturesPageData.organizationEquipment,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageOrganizationDetails,
+		SettingsFeaturesPageData.organizationTag,
+		checked
+	);
 });
 
 When('I verify the Manage Project and Create First Project features', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageProject
 	);
-	await settingsFeaturesPage.verifyCheckboxState(21, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageProject, checked);
 });
 
 When('I verify the Manage Organization Document and Create First Document features', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageOrganizationDocument
 	);
-	await settingsFeaturesPage.verifyCheckboxState(22, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageOrganizationDocument, checked);
 });
 
 When('I verify the Manage Goals and Objectives feature', async () => {
@@ -155,22 +212,26 @@ When('I verify the Manage Goals and Objectives feature', async () => {
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.goalTimeFrame
 	);
-	await settingsFeaturesPage.verifyCheckboxState(23, checked);
-	await settingsFeaturesPage.verifyCheckboxState(24, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageGoals, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageGoals,
+		SettingsFeaturesPageData.goalTimeFrame,
+		checked
+	);
 });
 
 When('I verify the Manage Tenant Users feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageTenantUsers
 	);
-	await settingsFeaturesPage.verifyCheckboxState(25, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageTenantUsers, checked);
 });
 
 When('I verify the Manage Available Apps and Integrations feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageAvailableApps
 	);
-	await settingsFeaturesPage.verifyCheckboxState(26, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageAvailableApps, checked);
 });
 
 When('I verify the Manage Setting feature', async () => {
@@ -183,23 +244,31 @@ When('I verify the Manage Setting feature', async () => {
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.SMSGateway
 	);
-	await settingsFeaturesPage.verifyCheckboxState(27, checked);
-	await settingsFeaturesPage.verifyCheckboxState(28, checked);
-	await settingsFeaturesPage.verifyCheckboxState(29, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageSetting, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageSetting,
+		SettingsFeaturesPageData.fileStorage,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageSetting,
+		SettingsFeaturesPageData.SMSGateway,
+		checked
+	);
 });
 
 When('I verify the Manage Tenant and Organization Custom SMTP feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageTenant
 	);
-	await settingsFeaturesPage.verifyCheckboxState(30, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageTenant, checked);
 });
 
 When('I verify the Download Desktop App and Create First Timesheet feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.downloadDesktopApp
 	);
-	await settingsFeaturesPage.verifyCheckboxState(31, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.downloadDesktopApp, checked);
 });
 
 When('I verify the Manage Estimate and Create First Estimate features', async () => {
@@ -209,22 +278,26 @@ When('I verify the Manage Estimate and Create First Estimate features', async ()
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.estimateReceived
 	);
-	await settingsFeaturesPage.verifyCheckboxState(32, checked);
-	await settingsFeaturesPage.verifyCheckboxState(33, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageEstimate, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageEstimate,
+		SettingsFeaturesPageData.estimateReceived,
+		checked
+	);
 });
 
 When('I verify the Create First Income feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.createFirstIncome
 	);
-	await settingsFeaturesPage.verifyCheckboxState(34, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.createFirstIncome, checked);
 });
 
 When('I verify the Manage Employee Statistics and Time Tracking Dashboard feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.goToDashboard
 	);
-	await settingsFeaturesPage.verifyCheckboxState(35, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.goToDashboard, checked);
 });
 
 When('I verify the Create Sales Pipeline feature', async () => {
@@ -234,8 +307,12 @@ When('I verify the Create Sales Pipeline feature', async () => {
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.salesPipelineDeal
 	);
-	await settingsFeaturesPage.verifyCheckboxState(36, checked);
-	await settingsFeaturesPage.verifyCheckboxState(37, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.createSalesPipeline, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.createSalesPipeline,
+		SettingsFeaturesPageData.salesPipelineDeal,
+		checked
+	);
 });
 
 When('I verify the Manage Employees and Add or Invite Employees features', async () => {
@@ -257,19 +334,39 @@ When('I verify the Manage Employees and Add or Invite Employees features', async
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.employeeApprovalPolicy
 	);
-	await settingsFeaturesPage.verifyCheckboxState(38, checked);
-	await settingsFeaturesPage.verifyCheckboxState(39, checked);
-	await settingsFeaturesPage.verifyCheckboxState(40, checked);
-	await settingsFeaturesPage.verifyCheckboxState(41, checked);
-	await settingsFeaturesPage.verifyCheckboxState(42, checked);
-	await settingsFeaturesPage.verifyCheckboxState(43, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageEmployees, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageEmployees,
+		SettingsFeaturesPageData.employeeApproval,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageEmployees,
+		SettingsFeaturesPageData.employeeLevel,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageEmployees,
+		SettingsFeaturesPageData.employeePosition,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageEmployees,
+		SettingsFeaturesPageData.employeeTimeOff,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageEmployees,
+		SettingsFeaturesPageData.employeeApprovalPolicy,
+		checked
+	);
 });
 
 When('I verify the Manage Employee Timesheet feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageEmployeeTimesheetDaily
 	);
-	await settingsFeaturesPage.verifyCheckboxState(44, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageEmployeeTimesheetDaily, checked);
 });
 
 When('I verify the Manage Candidates, Interviews and Invites features', async () => {
@@ -282,44 +379,52 @@ When('I verify the Manage Candidates, Interviews and Invites features', async ()
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.manageInterview
 	);
-	await settingsFeaturesPage.verifyCheckboxState(45, checked);
-	await settingsFeaturesPage.verifyCheckboxState(46, checked);
-	await settingsFeaturesPage.verifyCheckboxState(47, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageCandidates, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageCandidates,
+		SettingsFeaturesPageData.manageInvite,
+		checked
+	);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageCandidates,
+		SettingsFeaturesPageData.manageInterview,
+		checked
+	);
 });
 
 When('I verify the Manage Product Inventory and Create First Product features', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageProductInventory
 	);
-	await settingsFeaturesPage.verifyCheckboxState(48, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageProductInventory, checked);
 });
 
 When('I verify the Manage Organization Team and Create First Team features', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageOrganizationTeam
 	);
-	await settingsFeaturesPage.verifyCheckboxState(49, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageOrganizationTeam, checked);
 });
 
 When('I verify the Manage Leads, Customers and Clients feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageLeads
 	);
-	await settingsFeaturesPage.verifyCheckboxState(50, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageLeads, checked);
 });
 
 When('I verify the Manage Expense and Reports feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageExpense
 	);
-	await settingsFeaturesPage.verifyCheckboxState(51, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageExpense, checked);
 });
 
 When('I verify the Manage Tenant Organizations feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageTenantOrganizations
 	);
-	await settingsFeaturesPage.verifyCheckboxState(52, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageTenantOrganizations, checked);
 });
 
 When('I verify the Manage Email History feature', async () => {
@@ -329,20 +434,24 @@ When('I verify the Manage Email History feature', async () => {
 	await settingsFeaturesPage.verifyTextExist(
 		SettingsFeaturesPageData.customEmailTemplate
 	);
-	await settingsFeaturesPage.verifyCheckboxState(53, checked);
-	await settingsFeaturesPage.verifyCheckboxState(54, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageEmailHistory, checked);
+	await settingsFeaturesPage.verifySubFeatureState(
+		SettingsFeaturesPageData.manageEmailHistory,
+		SettingsFeaturesPageData.customEmailTemplate,
+		checked
+	);
 });
 
 When('I verify the Manage Entity Import and Export feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageEntity
 	);
-	await settingsFeaturesPage.verifyCheckboxState(55, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageEntity, checked);
 });
 
 When('I verify the Manage Roles and Permissions feature', async () => {
 	await settingsFeaturesPage.verifyMainTextExist(
 		SettingsFeaturesPageData.manageRoles
 	);
-	await settingsFeaturesPage.verifyCheckboxState(56, checked);
+	await settingsFeaturesPage.verifyFeatureState(SettingsFeaturesPageData.manageRoles, checked);
 });

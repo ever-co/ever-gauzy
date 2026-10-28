@@ -1,5 +1,6 @@
 import { When } from '../../support/bdd';
 import { getPage } from '../../support/page-context';
+import { faker } from '@faker-js/faker';
 import * as paymentsPage from '../../support/pages/Payments.po';
 import { PaymentsPageData } from '../../../src/support/Base/pagedata/PaymentsPageData';
 import * as organizationTagsUserPage from '../../support/pages/OrganizationTags.po';
@@ -13,7 +14,16 @@ import { CustomCommands } from '../../support/commands';
 // so runtime behaviour is identical to the already-CI-tested spec. The `Given I am logged in as the
 // default user` Background step is defined once in common.steps.ts.
 
+// RUN-UNIQUE payment note. The note is how this scenario recognises ITS payment: the grid lists every
+// payment dated in the header's range of the shard's one accumulating database (seeded payments, and
+// the rows a failed attempt leaves before its retry). With the fixed 'Billable', "exists" passes on a
+// leftover and the final "deleted" check fails on it; with row 0 the edit/delete can act on another
+// payment. So the note is unique per run and the edit/delete select the row by it. Initialised at the
+// start of the first step.
+let note = '';
+
 When('I add a new payment', async () => {
+	note = `${PaymentsPageData.defaultNote} ${faker.string.alphanumeric(6)}`;
 	await CustomCommands.addProject(
 		organizationProjectsPage,
 		OrganizationProjectsPageData
@@ -53,16 +63,16 @@ When('I add a new payment', async () => {
 	await paymentsPage.amountInputVisible();
 	await paymentsPage.enterAmountInputData(String(PaymentsPageData.defaultAmount));
 	await paymentsPage.noteTextareaVisible();
-	await paymentsPage.enterNoteInputData(PaymentsPageData.defaultNote);
+	await paymentsPage.enterNoteInputData(note);
 	await paymentsPage.savePaymentButtonVisible();
 	await paymentsPage.clickSavePaymentButton();
 	await paymentsPage.waitMessageToHide();
-	await paymentsPage.verifyPaymentExists(PaymentsPageData.defaultNote);
+	await paymentsPage.verifyPaymentExists(note);
 });
 
 When('I edit the payment', async () => {
 	await paymentsPage.tableRowVisible();
-	await paymentsPage.selectTableRow(0);
+	await paymentsPage.selectTableRowByText(note);
 	await paymentsPage.editPaymentButtonVisible();
 	await paymentsPage.clickEditPaymentButton();
 	await paymentsPage.tagsDropdownVisible();
@@ -80,7 +90,7 @@ When('I edit the payment', async () => {
 	await paymentsPage.amountInputVisible();
 	await paymentsPage.enterAmountInputData(String(PaymentsPageData.defaultAmount));
 	await paymentsPage.noteTextareaVisible();
-	await paymentsPage.enterNoteInputData(PaymentsPageData.defaultNote);
+	await paymentsPage.enterNoteInputData(note);
 	await paymentsPage.savePaymentButtonVisible();
 	await paymentsPage.clickSavePaymentButton();
 	await paymentsPage.waitMessageToHide();
@@ -88,10 +98,10 @@ When('I edit the payment', async () => {
 
 When('I delete the payment', async () => {
 	await paymentsPage.tableRowVisible();
-	await paymentsPage.selectTableRow(0);
+	await paymentsPage.selectTableRowByText(note);
 	await paymentsPage.clickDeletePaymentButton();
 	await paymentsPage.confirmDeleteButtonVisible();
 	await paymentsPage.clickConfirmDeleteButton();
 	await paymentsPage.waitMessageToHide();
-	await paymentsPage.verifyElementIsDeleted(PaymentsPageData.defaultNote);
+	await paymentsPage.verifyElementIsDeleted(note);
 });
