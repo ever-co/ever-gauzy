@@ -12,6 +12,7 @@ function setup(token: string | null = TOKEN) {
 			return {
 				email: 'j***@ever.co',
 				expiresAt: new Date(),
+				planHash: 'plan-1',
 				accounts: [
 					{
 						workspace: 'Acme',
@@ -77,6 +78,22 @@ describe('NgxDeleteAccountConfirmComponent', () => {
 		expect(refused.component.state).toBe('invalid');
 	});
 
+	it('offers a retry, not the invalid state, when verify fails for another reason than 410', async () => {
+		for (const status of [0, 429, 500, 503]) {
+			const { component, service } = setup();
+			service.verify.mockRejectedValueOnce(new HttpErrorResponse({ status }));
+
+			await component.ngOnInit();
+			expect(component.state).toBe('unavailable');
+
+			await component.retryVerify();
+
+			expect(service.verify).toHaveBeenCalledTimes(2);
+			expect(service.verify).toHaveBeenLastCalledWith(TOKEN);
+			expect(component.state).toBe('ready');
+		}
+	});
+
 	it('deletes only after the box is ticked and the word is typed', async () => {
 		const { component, service } = setup();
 		await component.ngOnInit();
@@ -91,7 +108,7 @@ describe('NgxDeleteAccountConfirmComponent', () => {
 		component.typed = 'DELETE';
 		await component.confirm();
 
-		expect(service.confirm).toHaveBeenCalledWith(TOKEN);
+		expect(service.confirm).toHaveBeenCalledWith(TOKEN, 'plan-1');
 		expect(component.state).toBe('done');
 		expect(component.result).toEqual({ deleted: true, accounts: 1, workspacesDeleted: 1 });
 	});
@@ -106,5 +123,64 @@ describe('NgxDeleteAccountConfirmComponent', () => {
 		await component.confirm();
 
 		expect(component.state).toBe('invalid');
+	});
+
+	it('returns to the form after a failed deletion and retries with the same token', async () => {
+		const { component, service } = setup();
+		await component.ngOnInit();
+		component.understood = true;
+		component.typed = 'DELETE';
+		service.confirm.mockRejectedValueOnce(new HttpErrorResponse({ status: 500 }));
+
+		await component.confirm();
+		expect(component.state).toBe('failed');
+
+		component.retryConfirm();
+		expect(component.state).toBe('ready');
+
+		await component.confirm();
+
+		expect(service.confirm).toHaveBeenCalledTimes(2);
+		expect(service.confirm).toHaveBeenLastCalledWith(TOKEN, 'plan-1');
+		expect(component.state).toBe('done');
+	});
+
+	it('shows the new preview and asks again when what will be deleted changed (409)', async () => {
+		const { component, service } = setup();
+		await component.ngOnInit();
+		component.understood = true;
+		component.typed = 'DELETE';
+		service.confirm.mockRejectedValueOnce(new HttpErrorResponse({ status: 409 }));
+		service.verify.mockResolvedValueOnce({
+			email: 'j***@ever.co',
+			expiresAt: new Date(),
+			planHash: 'plan-2',
+			accounts: [
+				{
+					workspace: 'Acme',
+					organizations: ['Acme'],
+					otherMembers: 1,
+					soleAdmin: true,
+					outcome: AccountDeletionOutcomeEnum.ACCOUNT_REMOVED
+				}
+			]
+		});
+
+		await component.confirm();
+
+		expect(service.verify).toHaveBeenCalledTimes(2);
+		expect(component.state).toBe('ready');
+		expect(component.planChanged).toBe(true);
+		expect(component.preview?.accounts[0].outcome).toBe(AccountDeletionOutcomeEnum.ACCOUNT_REMOVED);
+		expect(component.understood).toBe(false);
+		expect(component.typed).toBe('');
+		expect(component.canConfirm).toBe(false);
+
+		component.understood = true;
+		component.typed = 'DELETE';
+		await component.confirm();
+
+		expect(service.confirm).toHaveBeenLastCalledWith(TOKEN, 'plan-2');
+		expect(component.state).toBe('done');
 	});
 });
