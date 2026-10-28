@@ -1,10 +1,17 @@
 jest.mock('@gauzy/config', () => ({
 	environment: { jitsu: { serverHost: '', serverWriteKey: '' } }
 }));
-jest.mock('node-fetch', () => jest.fn());
+jest.mock('node-fetch', () => ({ __esModule: true, default: jest.fn(async () => ({ ok: true })) }));
 jest.mock('@jitsu/js', () => ({ jitsuAnalytics: jest.fn() }));
 
-import { jitsuClientRecycleEvents, recyclingJitsu, DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS } from './jitsu-helper';
+import fetch from 'node-fetch';
+import {
+	jitsuClientRecycleEvents,
+	recyclingJitsu,
+	DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS,
+	fetchWithTimeout,
+	JITSU_REQUEST_TIMEOUT_MS
+} from './jitsu-helper';
 
 /**
  * A stand-in for a Jitsu client: it remembers every event like the analytics core's `history` does.
@@ -72,8 +79,42 @@ describe('recyclingJitsu', () => {
 		expect(jitsuClientRecycleEvents({})).toBe(DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS);
 		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: '0' })).toBe(0);
 		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: '42' })).toBe(42);
-		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: 'x' })).toBe(DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS);
-		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: '10abc' })).toBe(DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS);
-		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: '1e3' })).toBe(DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS);
+		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: 'x' })).toBe(
+			DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS
+		);
+		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: '10abc' })).toBe(
+			DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS
+		);
+		expect(jitsuClientRecycleEvents({ JITSU_CLIENT_RECYCLE_EVENTS: '1e3' })).toBe(
+			DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS
+		);
+	});
+});
+
+describe('fetchWithTimeout', () => {
+	const sent = () => (fetch as unknown as jest.Mock).mock.calls.at(-1);
+
+	it('gives every request to the Jitsu server a deadline, so a stalled one cannot hold a queue slot for good', async () => {
+		expect(JITSU_REQUEST_TIMEOUT_MS).toBe(30_000);
+
+		await fetchWithTimeout('https://jitsu.example.test/api/s/track', { method: 'POST', body: '{}' }, 10);
+		const [url, init] = sent();
+
+		expect(url).toBe('https://jitsu.example.test/api/s/track');
+		expect(init).toEqual(expect.objectContaining({ method: 'POST', body: '{}' }));
+		expect(init.signal.aborted).toBe(false);
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		expect(init.signal.aborted).toBe(true);
+	});
+
+	it('still honours a signal the caller passes', async () => {
+		const caller = new AbortController();
+
+		await fetchWithTimeout('https://jitsu.example.test/api/s/track', { signal: caller.signal });
+		const [, init] = sent();
+
+		expect(init.signal.aborted).toBe(false);
+		caller.abort();
+		expect(init.signal.aborted).toBe(true);
 	});
 });
