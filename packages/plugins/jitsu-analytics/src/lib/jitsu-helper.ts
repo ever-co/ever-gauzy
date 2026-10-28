@@ -113,10 +113,13 @@ export function recyclingJitsu(factory: () => AnalyticsInterface, every: number)
  */
 export const JITSU_REQUEST_TIMEOUT_MS = 30_000;
 
-/** `JITSU_REQUEST_TIMEOUT_MS` from the environment when it is a positive whole number, else the default. */
+/** The longest delay Node schedules as given; a longer one fires after 1 ms (or throws, from 2^32). */
+const MAX_TIMER_DELAY_MS = 2_147_483_647;
+
+/** `JITSU_REQUEST_TIMEOUT_MS` from the environment when Node can schedule it (1 ms to ~24.8 days), else the default. */
 export function jitsuRequestTimeoutMs(env: NodeJS.ProcessEnv = process.env): number {
 	const timeoutMs = readCountEnv('JITSU_REQUEST_TIMEOUT_MS', JITSU_REQUEST_TIMEOUT_MS, env);
-	return timeoutMs > 0 ? timeoutMs : JITSU_REQUEST_TIMEOUT_MS;
+	return timeoutMs >= 1 && timeoutMs <= MAX_TIMER_DELAY_MS ? timeoutMs : JITSU_REQUEST_TIMEOUT_MS;
 }
 
 /**

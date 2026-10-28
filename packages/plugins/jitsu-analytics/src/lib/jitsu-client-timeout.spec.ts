@@ -86,6 +86,9 @@ describe('jitsuRequestTimeoutMs', () => {
 		['5000', 5000],
 		['0', JITSU_REQUEST_TIMEOUT_MS],
 		['-1', JITSU_REQUEST_TIMEOUT_MS],
+		['2147483647', 2147483647],
+		['2147483648', JITSU_REQUEST_TIMEOUT_MS],
+		['4294967296', JITSU_REQUEST_TIMEOUT_MS],
 		['abc', JITSU_REQUEST_TIMEOUT_MS]
 	])('reads %p as %p', (value, expected) => {
 		const env = value === undefined ? {} : { JITSU_REQUEST_TIMEOUT_MS: value };
