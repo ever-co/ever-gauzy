@@ -73,8 +73,8 @@ export function accountDeletionTtlMinutes(env: NodeJS.ProcessEnv = process.env):
  * The link the email carries: the confirmation page with the token in the URL fragment, so it never
  * reaches a server log, a proxy or a `Referer` header.
  *
- * - `https://app.ever.team/delete-account/confirm` → `…/confirm#token=<token>`
- * - `https://app.gauzy.co/#/auth/delete-account/confirm` (hash routing, the route already lives in the
+ * - `https://app.example.com/delete-account/confirm` → `…/confirm#token=<token>`
+ * - `https://gauzy.example.com/#/auth/delete-account/confirm` (hash routing, the route already lives in the
  *   fragment) → `…/confirm?token=<token>`, still inside the fragment.
  *
  * Any fragment query the page URL already had is kept.

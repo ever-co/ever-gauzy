@@ -16,7 +16,7 @@ export class RequestAccountDeletionDTO implements IAccountDeletionRequestInput {
 	@Transform((params: TransformFnParams) => (typeof params.value === 'string' ? params.value.trim() : params.value))
 	readonly email: string;
 
-	@ApiPropertyOptional({ type: () => String, example: 'https://app.ever.team/delete-account/confirm' })
+	@ApiPropertyOptional({ type: () => String, example: 'https://app.example.com/delete-account/confirm' })
 	@IsOptional()
 	@IsString()
 	@MaxLength(2048)
@@ -24,7 +24,7 @@ export class RequestAccountDeletionDTO implements IAccountDeletionRequestInput {
 
 	/**
 	 * The language of the emails. Any short string is accepted and an unknown one is ignored (English is used):
-	 * a request forwarded by another site (ever.co) must not fail validation over a locale Gauzy lacks.
+	 * a request forwarded by another site (a product website) must not fail validation over a locale Gauzy lacks.
 	 */
 	@ApiPropertyOptional({ enum: LanguagesEnum })
 	@IsOptional()
