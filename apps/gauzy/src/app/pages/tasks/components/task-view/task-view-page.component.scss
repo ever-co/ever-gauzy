@@ -60,9 +60,9 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   vertical-align: middle;
 }
 
-/* ── Tabs: Overview and Board ── */
+/* ── Tabs: Overview, Board and Activity ── */
 
-// The tabs between the headline and the columns; the Board spans both columns.
+// The tabs between the headline and the columns; the Board and the Activity span both columns.
 :host(.is-page) .project-view-top {
   grid-template-areas:
     'headline  headline'
@@ -74,7 +74,7 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   grid-area: tabs;
 }
 
-.task-page-board {
+.task-page-wide {
   grid-row: 3;
   grid-column: 1 / -1;
 }
