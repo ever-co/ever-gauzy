@@ -140,10 +140,13 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	 */
 	boardOpened = false;
 	/**
-	 * Bumped after a change made from the header — a status move, an edit — so the Board (which shows the task's own
-	 * card) and an open Activity tab read again.
+	 * Bumped after a change made from the header — a status move, an edit — so the Board, which shows the task's own
+	 * card, reads again. A move made on the Board itself does not bump it: reading the board again would drop the
+	 * other cards still saving.
 	 */
-	panelsReloadKey = 0;
+	boardReloadKey = 0;
+	/** Bumped after any change made here — from the header or on the Board — so an open Activity tab reads again. */
+	activityReloadKey = 0;
 
 	task: ITask = null;
 	status: IRecordViewStatus = null;
@@ -315,10 +318,20 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	/**
 	 * A card moved on the Board — the task's own or a subtask's: the task is read again, so the header's status and
-	 * the Subtasks panel show the new one.
+	 * the Subtasks panel show the new one, then an open Activity tab reads again — it may have been opened while the
+	 * move was still saving.
 	 */
-	onBoardTaskMoved(): void {
-		if (this.task) void this.refresh(this.task.id);
+	async onBoardTaskMoved(): Promise<void> {
+		if (!this.task) return;
+		const taskId = this.task.id;
+		await this.refresh(taskId);
+		if (this.task?.id === taskId) this.activityReloadKey++;
+	}
+
+	/** After a change made from the header: the Board and the Activity read again. */
+	private reloadPanes(): void {
+		this.boardReloadKey++;
+		this.activityReloadKey++;
 	}
 
 	/**
@@ -340,7 +353,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			);
 			await this.refresh(taskId);
 			// After the read: the server writes the move's log entry as the update lands.
-			this.panelsReloadKey++;
+			this.reloadPanes();
 		} catch (error) {
 			this.toastrService.danger(error);
 		} finally {
@@ -381,16 +394,20 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				})
 			);
 			await this.refresh(taskId);
-			this.panelsReloadKey++;
+			this.reloadPanes();
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
 	}
 
-	/** Copies the page's address, to paste in a chat or a ticket. */
+	/** Copies the page's address, with the open tab, to paste in a chat or a ticket. */
 	async copyLink(): Promise<void> {
 		if (!this.task) return;
-		const path = this.router.serializeUrl(this.router.createUrlTree(['/pages/tasks/view', this.task.id]));
+		const path = this.router.serializeUrl(
+			this.router.createUrlTree(['/pages/tasks/view', this.task.id], {
+				queryParams: this.tab === 'overview' ? {} : { tab: this.tab }
+			})
+		);
 		const { origin, pathname, hash } = window.location;
 		// The app routes by the hash (`/#/pages/…`); the link keeps to it.
 		const url = hash.startsWith('#/') ? `${origin}${pathname}#${path}` : `${origin}${path}`;

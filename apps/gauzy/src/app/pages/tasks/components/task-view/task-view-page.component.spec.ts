@@ -48,7 +48,7 @@ describe('TaskViewPageComponent', () => {
 	let http: { get: jest.Mock; put: jest.Mock };
 	let toastr: { success: jest.Mock; danger: jest.Mock };
 	let dialogService: { open: jest.Mock };
-	let router: { navigate: jest.Mock; createUrlTree: jest.Mock; serializeUrl: jest.Mock };
+	let router: { navigate: jest.Mock; createUrlTree: jest.Mock; serializeUrl: jest.Mock<string, [any]> };
 	let permissions: PermissionsEnum[];
 
 	/** The HTTP reads the page makes itself: task statuses and linked issues. */
@@ -87,8 +87,14 @@ describe('TaskViewPageComponent', () => {
 		dialogService = { open: jest.fn(() => ({ onClose: of(null) })) };
 		router = {
 			navigate: jest.fn(async () => true),
-			createUrlTree: jest.fn((commands: string[]) => commands),
-			serializeUrl: jest.fn((commands: string[]) => commands.join('/'))
+			createUrlTree: jest.fn((commands: string[], extras?: { queryParams?: Record<string, string> }) => ({
+				commands,
+				queryParams: extras?.queryParams || {}
+			})),
+			serializeUrl: jest.fn(({ commands, queryParams }: { commands: string[]; queryParams: Record<string, string> }) => {
+				const query = new URLSearchParams(queryParams).toString();
+				return commands.join('/') + (query ? `?${query}` : '');
+			})
 		};
 		permissions = [];
 		await TestBed.configureTestingModule({
@@ -541,6 +547,52 @@ describe('TaskViewPageComponent', () => {
 		await page.copyLink();
 
 		expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`#/pages/tasks/view/${TASK_ID}`));
+		expect(writeText).not.toHaveBeenCalledWith(expect.stringContaining('tab='));
 		expect(toastr.success).toHaveBeenCalledWith('TASK_VIEW.LINK_COPIED');
+	});
+
+	it('copies the open tab with the address, so the link opens on it', async () => {
+		const writeText = jest.fn(async () => undefined);
+		Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+		window.location.hash = '#/pages/tasks/view/x';
+		queryParams$.next(convertToParamMap({ tab: 'board' }));
+		const page = create();
+		await settle();
+
+		await page.copyLink();
+
+		expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`#/pages/tasks/view/${TASK_ID}?tab=board`));
+	});
+
+	describe('reloading the Board and the Activity', () => {
+		it('reads the Activity again once a board move has saved, but not the Board', async () => {
+			const page = create();
+			await settle();
+			const { boardReloadKey, activityReloadKey } = page;
+
+			await page.onBoardTaskMoved();
+
+			// The Board's own moves still saving would be dropped by a reload of the board.
+			expect(page.boardReloadKey).toBe(boardReloadKey);
+			expect(page.activityReloadKey).toBe(activityReloadKey + 1);
+		});
+
+		it('reads both again after a status move from the header', async () => {
+			permissions = [PermissionsEnum.ORG_TASK_EDIT];
+			statuses = [
+				{ id: 'st-1', name: 'In Progress', value: 'in-progress', order: 1, organizationId: ORGANIZATION },
+				{ id: 'st-2', name: 'Done', value: 'done', order: 2, organizationId: ORGANIZATION }
+			];
+			const page = create();
+			await settle();
+			// The status menu reads its statuses once the task has loaded.
+			await flush();
+			const { boardReloadKey, activityReloadKey } = page;
+
+			await page.changeStatus('st-2');
+
+			expect(page.boardReloadKey).toBe(boardReloadKey + 1);
+			expect(page.activityReloadKey).toBe(activityReloadKey + 1);
+		});
 	});
 });

@@ -117,7 +117,7 @@
 						[tenantId]="organization?.tenantId"
 						[openTaskPage]="true"
 						emptyKey="TASK_VIEW.NO_SUBTASKS"
-						[reloadKey]="panelsReloadKey"
+						[reloadKey]="boardReloadKey"
 						(taskMoved)="onBoardTaskMoved()"
 					></ga-project-board>
 				</div>
@@ -139,7 +139,7 @@
 						[organizationId]="organization?.id"
 						[tenantId]="organization?.tenantId"
 						[openTaskPage]="true"
-						[reloadKey]="panelsReloadKey"
+						[reloadKey]="activityReloadKey"
 					></ga-project-activity>
 				</div>
 			}
