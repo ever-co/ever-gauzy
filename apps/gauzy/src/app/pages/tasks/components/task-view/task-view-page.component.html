@@ -102,7 +102,7 @@
 			     still reaches its Subtasks panel. -->
 			@if (boardOpened) {
 				<div
-					class="project-page-pane task-page-board"
+					class="project-page-pane task-page-wide"
 					role="tabpanel"
 					id="task-view-pane-board"
 					aria-labelledby="task-view-tab-board"
@@ -118,6 +118,27 @@
 						emptyKey="TASK_VIEW.NO_SUBTASKS"
 						(taskMoved)="onSubtaskMoved()"
 					></ga-project-board>
+				</div>
+			}
+
+			<!-- Activity loads each time it is opened: what changed on the task and its subtasks, and its comments. -->
+			@if (tab === 'activity') {
+				<div
+					class="project-page-pane task-page-wide"
+					role="tabpanel"
+					id="task-view-pane-activity"
+					aria-labelledby="task-view-tab-activity"
+				>
+					<ga-project-activity
+						[taskId]="task.id"
+						[taskTitle]="task.title"
+						[subtasks]="subtasks"
+						[organizationId]="organization?.id"
+						[tenantId]="organization?.tenantId"
+						[openTaskPage]="true"
+						captionKey="TASK_VIEW.ACTIVITY_CAPTION"
+						[reloadKey]="activityReloadKey"
+					></ga-project-activity>
 				</div>
 			}
 
