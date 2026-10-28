@@ -69,7 +69,8 @@ describe('a stalled Jitsu server does not block the entity-event queue', () => {
 		queue.offer(() => ({ data: { id: 'second' } }));
 
 		const started = Date.now();
-		while (queue.pending > 0 && Date.now() - started < 5_000) {
+		// Well inside Jest's 5 s test timeout, so a regression fails on the assertions below, not on the timeout.
+		while (queue.pending > 0 && Date.now() - started < 3_000) {
 			await new Promise((resolve) => setTimeout(resolve, 20));
 		}
 
