@@ -256,29 +256,35 @@ export class EmployeeController extends CrudController<Employee> {
 	})
 	@ApiResponse({
 		status: HttpStatus.FORBIDDEN,
-		description: 'Without an organization-wide view, organizationTeamId must be a team the caller belongs to.'
+		description:
+			'Without an organization-wide view, a named team or project must be one the caller belongs to, ' +
+			'and the caller must have an employee record. Naming neither lists the people the caller shares ' +
+			'an active team or project with.'
 	})
 	@Permissions(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_MEMBERS_VIEW)
 	@Get('/members')
 	@UseValidationPipe()
 	async getMembers(@Query() options: FindMembersInputDTO): Promise<IPagination<IEmployee>> {
-		// ORG_MEMBERS_VIEW, which the EMPLOYEE role holds, only covers the caller's own teams: findMembers
-		// filters by team only when one is given, so without this check it returns the whole organization.
-		// isMemberOfTeam fails closed on a missing team id or a caller without an employee record.
+		// ORG_MEMBERS_VIEW, which the EMPLOYEE role holds, only covers the people the caller works with:
+		// findMembers filters by team or project only when one is given, so without this scope it returns
+		// the whole organization. scopeMembersRead fails closed on a caller without an employee record.
 		const hasOrganizationWideView = RequestContext.hasAnyPermission([
 			PermissionsEnum.ALL_ORG_VIEW,
 			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 		]);
-		if (
-			!hasOrganizationWideView &&
-			!(await this._managedEmployeeService.isMemberOfTeam(
-				RequestContext.currentEmployeeId(),
-				options.organizationTeamId
-			))
-		) {
-			throw new ForbiddenException('You can only list the members of a team you belong to.');
+		if (hasOrganizationWideView) {
+			return await this._employeeService.findMembers(options);
 		}
-		return await this._employeeService.findMembers(options);
+
+		const scope = await this._managedEmployeeService.scopeMembersRead(
+			RequestContext.currentEmployeeId(),
+			options.organizationTeamId,
+			options.organizationProjectId
+		);
+		if (!scope.allowed) {
+			throw new ForbiddenException('You can only list the members of a team or project you belong to.');
+		}
+		return await this._employeeService.findMembers(options, scope.employeeIds);
 	}
 
 	/**

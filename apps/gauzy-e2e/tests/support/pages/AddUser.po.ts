@@ -8,7 +8,10 @@ import {
 	waitElementToHide,
 	waitUntil,
 	dispatchClickWhenSettled,
-	applySmartTableFilter
+	applySmartTableFilter,
+	clickWhenEnabled,
+	verifyElementNotExist,
+	uploadImageThroughUploader
 } from '../util';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { AddUserPage } from '../../../src/support/Base/pageobjects/AddUserPageObject';
@@ -84,13 +87,19 @@ export const enterPasswordInputData = async (data) => {
 	await enterInput(AddUserPage.passwordInputCss, data);
 };
 
-export const imageInputVisible = async () => {
-	await verifyElementIsVisible(AddUserPage.imageInputUrlCss);
+// The picture used to be an image-URL text input that the spec typed a URL into. #10336 replaced it with
+// the avatar uploader (see AddUserPageObject.imageUploaderInputCss), so "the user is given a picture" is
+// now exercised by picking a file in that uploader. The file input is transparent (opacity 0) but laid
+// over the 72x72 avatar, so it has a box and counts as visible.
+export const imageUploaderVisible = async () => {
+	await verifyElementIsVisible(AddUserPage.imageUploaderInputCss);
 };
 
-export const enterImageDataUrl = async (url) => {
-	await clearField(AddUserPage.imageInputUrlCss);
-	await enterInput(AddUserPage.imageInputUrlCss, url);
+// Picks a PNG in the dialog's avatar uploader and waits for the upload request it triggers (see
+// util.uploadImageThroughUploader for why the upload's success is reported, not asserted: the picture is
+// optional and the shard's tenant file storage may have been switched to an unreachable S3 bucket).
+export const uploadImage = async () => {
+	await uploadImageThroughUploader(AddUserPage.userMutationDialogCss);
 };
 
 export const confirmAddButtonVisible = async () => {
@@ -98,7 +107,13 @@ export const confirmAddButtonVisible = async () => {
 };
 
 export const clickConfirmAddButton = async () => {
-	await clickButton(AddUserPage.confirmAddUserButtonCss);
+	// [disabled]="userBasicInfo.form.invalid": a forced click on a still-disabled button is dropped
+	// silently, so gate on enabled first (force kept for the dialog's own overlay).
+	await clickWhenEnabled(AddUserPage.confirmAddUserButtonCss, { force: true });
+	// user-mutation.add() closes the dialog only once the user was registered (on failure it shows a
+	// danger toast and stays open), so the dialog detaching is the proof the submit took. Failing here
+	// names the real problem instead of a later "user not in grid".
+	await verifyElementNotExist(AddUserPage.userMutationDialogCss);
 };
 
 export const verifyUserExists = async (text) => {

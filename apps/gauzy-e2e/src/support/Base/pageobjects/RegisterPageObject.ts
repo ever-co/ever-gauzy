@@ -24,11 +24,11 @@ export const RegisterPage = {
 	dropdownOptionCss: 'ng-dropdown-panel .ng-option, div.ng-option, .option-list nb-option, .cdk-overlay-container nb-option',
 	officialNameFieldCss: 'input[id="officialNameInput"]',
 	taxFieldCss: 'input[id="taxIdInput"]',
-	// Stepper forward button (nbStepperNext) carries the localized "Next" label; the final employee
-	// step's confirm is a status="success" "Add" button — both driven by text in the .po.
-	nextButtonCss: 'button:has-text("Next")',
-	// Employee (step 5) submit button — completes onboarding in isOnboarding mode.
-	finishButtonCss: 'button[status="success"]:has-text("Add")',
+	// Since #10608 (ffc762ee8a) the step actions live in the card footer, not in nb-stepper: ONE primary
+	// button — "Continue" on steps 1-4, "Create organization" on the 5th (Employee) step, which completes
+	// onboarding. Driven by AddOrganization.po advanceStepForm (shared with the Add Organization dialog).
+	nextButtonCss: 'ga-organizations-step-form nb-card-footer.dialog-footer button[status="primary"]',
+	finishButtonCss: 'ga-organizations-step-form nb-card-footer.dialog-footer button[status="primary"]',
 	verifyOrganizationCss: 'div.d-block',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	// country is a <ng-select> inside ga-country (location form, step 2).

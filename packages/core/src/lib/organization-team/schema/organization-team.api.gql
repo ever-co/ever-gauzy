@@ -160,4 +160,16 @@ extend type Mutation {
 	Puts a withdrawn team back, clearing the marker the withdrawal set.
 	"""
 	recoverOrganizationTeam(id: ID!): OrganizationTeam!
+
+	"""
+	Archives a team the organization finished with: it keeps its members, projects and history, and stays
+	readable by its identifier, but no list answers it unless the caller asks for archived teams. A caller
+	who may not act for every employee must manage the team, as for editing it.
+	"""
+	archiveOrganizationTeam(id: ID!): OrganizationTeam!
+
+	"""
+	Brings an archived team back: the lists answer it again.
+	"""
+	unarchiveOrganizationTeam(id: ID!): OrganizationTeam!
 }

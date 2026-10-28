@@ -520,13 +520,27 @@ describe('OrganizationProjectResolver — the SDL declares the capabilities the 
 });
 
 describe('OrganizationProjectResolver — the connection contract', () => {
+	it('reads archived projects too when the filter names `isArchived`, which then narrows them', async () => {
+		// The service reads no archived project unless asked, and the filter is applied to what it read: without
+		// the archive scope, `filter: { isArchived: { eq: true } }` answered nothing.
+		const { resolver, organizationProjectService } = surfaces();
+
+		await resolver.organizationProjects({ isArchived: { eq: true } });
+		await resolver.organizationProjects({ and: [{ name: { like: 'A%' } }, { isArchived: { eq: false } }] });
+		await resolver.organizationProjects({ name: { like: 'A%' } });
+
+		expect(organizationProjectService.findAll).toHaveBeenNthCalledWith(1, { where: { isArchived: [false, true] } });
+		expect(organizationProjectService.findAll).toHaveBeenNthCalledWith(2, { where: { isArchived: [false, true] } });
+		expect(organizationProjectService.findAll).toHaveBeenNthCalledWith(3, { where: {} });
+	});
+
 	it('answers the list with nodes, edges, a total and the boundary cursors', async () => {
 		const { resolver, organizationProjectService } = surfaces();
 
 		const connection = await resolver.organizationProjects(undefined, undefined, undefined, 20);
 
 		// The read is the one the REST list route performs when its query string states nothing.
-		expect(organizationProjectService.findAll).toHaveBeenCalledWith({});
+		expect(organizationProjectService.findAll).toHaveBeenCalledWith({ where: {} });
 		expect(connection.nodes).toHaveLength(2);
 		expect(connection.totalCount).toBe(2);
 		expect(connection.pageInfo.startCursor).toBe(connection.edges[0].cursor);

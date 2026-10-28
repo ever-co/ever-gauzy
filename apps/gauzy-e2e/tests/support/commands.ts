@@ -146,8 +146,8 @@ export const CustomCommands = {
 		// The contact-mutation form resets the Name control whenever an earlier field is
 		// cleared-then-filled (an Angular re-render on valueChanges), leaving step 1 invalid and the
 		// stepper's Next disabled. Re-set Name as the last action before advancing — raw fill, no
-		// clearField, so it doesn't re-trigger the reset.
-		await getPage().locator('[formcontrolname="name"]').first().fill(fullName);
+		// clearField, so it doesn't re-trigger the reset (scoped to the wizard's nb-stepper).
+		await contactsLeadsPage.reenterNameInputData(fullName);
 		await contactsLeadsPage.saveButtonVisible();
 		await contactsLeadsPage.clickSaveButton();
 		await contactsLeadsPage.countryDropdownVisible();
@@ -165,12 +165,16 @@ export const CustomCommands = {
 		await contactsLeadsPage.enterBudgetData(ContactsLeadsPageData.hours);
 		await contactsLeadsPage.lastStepBtnVisible();
 		await contactsLeadsPage.clickLastStepBtn();
+		// Step 4 (Members) is an ng-select.members-select since #10308 (was ga-employee-multi-select).
 		await contactsLeadsPage.selectEmployeeDropdownVisible();
 		await contactsLeadsPage.clickSelectEmployeeDropdown();
 		await contactsLeadsPage.selectEmployeeDropdownOption(0);
 		await contactsLeadsPage.clickKeyboardButtonByKeyCode(9);
 		await contactsLeadsPage.verifyFinishButtonVisible();
 		await contactsLeadsPage.clickFinishButton();
+		// Every caller (estimates, invoices, sales-*, edit-employee, leads) picks this contact next, so
+		// prove it was saved HERE: the wizard only gives way to the grid once the API accepted it.
+		await contactsLeadsPage.verifyContactFormClosed();
 	},
 	addTeam: async (organizationTeamsPage: any, OrganizationTeamsPageData: any) => {
 		await gotoRoute('/#/pages/organization/teams');
@@ -213,14 +217,18 @@ export const CustomCommands = {
 			await organizationProjectsPage.selectEmployeeFromDropdownByName(employeeFullName);
 		}
 		await organizationProjectsPage.clickKeyboardButtonByKeyCode(9);
-		await organizationProjectsPage.clickTabButton(3);
+		// The project form's sections are its own tablist since #11177 (no nb-tabset): open them by id.
+		await organizationProjectsPage.clickTabButton('budget');
 		await organizationProjectsPage.budgetHoursInputVisible();
 		await organizationProjectsPage.enterBudgetHoursInputData(OrganizationProjectsPageData.hours);
-		await organizationProjectsPage.clickTabButton(5);
+		await organizationProjectsPage.clickTabButton('settings');
 		await organizationProjectsPage.colorInputVisible();
 		await organizationProjectsPage.enterColorInputData(OrganizationProjectsPageData.color);
 		await organizationProjectsPage.saveProjectButtonVisible();
 		await organizationProjectsPage.clickSaveProjectButton();
+		// The create page only navigates back to the list once the API accepted the project, so this
+		// proves the project persisted — and fails HERE, not in a later project dropdown, if it didn't.
+		await organizationProjectsPage.verifyProjectFormClosed();
 	},
 	addTask: async (addTaskPage: any, AddTasksPageData: any, employeeFullName?: string) => {
 		await gotoRoute('/#/pages/tasks/dashboard');
@@ -253,7 +261,9 @@ export const CustomCommands = {
 		await addTaskPage.taskDescriptionTextareaVisible();
 		await addTaskPage.enterTaskDescriptionTextareaData(AddTasksPageData.defaultTaskDescription);
 		await addTaskPage.saveTaskButtonVisible();
-		await addTaskPage.clickSaveTaskButton();
+		// Save, then wait for the dialog to close AND for the page's POST /api/tasks to succeed: callers navigate
+		// away right after this command, which would otherwise cancel the in-flight create.
+		await addTaskPage.clickSaveTaskButtonAndWaitForCreate();
 	},
 	addEmployee: async (
 		manageEmployeesPage: any,
@@ -264,17 +274,17 @@ export const CustomCommands = {
 		password: string,
 		imgUrl: string
 	) => {
-		// The employee add is a 3-step ga-employee-mutation stepper (basic info -> image -> confirm),
-		// NOT a quick-add. Mirror the proven ManageEmployeesTest "add new employee" flow, reusing the
-		// already-hardened manageEmployeesPage methods. Two correctness details:
-		//  - the image URL is validated against patterns.imageUrl (must end .png/.jpg/.jpeg/.gif/.svg);
-		//    an extensionless URL (faker.image.avatar()) leaves step 1 invalid -> Next stays disabled
-		//    -> the employee never persists. Fall back to a valid URL when the caller's doesn't match.
+		// The employee add is the 3-step ga-employee-mutation dialog (Details -> Add more -> Review),
+		// redesigned in #10336 (a73de1d121): a step bar in the header, every action button in the footer
+		// (primary "Continue" on steps 0 and 1, primary "Create employees (n)" on step 2), and the
+		// picture is an <ngx-image-uploader> avatar instead of an image-URL text input. Correctness details:
+		//  - the picture is now picked as a FILE and uploaded (uploadEmployeeImage). `imgUrl` stays in the
+		//    signature for the ~12 callers, but there is no URL field left to type it into.
 		//  - startedWorkOn is set to today so the new employee counts as "working" now and therefore
 		//    appears in the downstream "working employees" multi-selects these specs depend on.
-		const validImg = /\.(png|jpe?g|gif|svg)(\?|$)/i.test(imgUrl || '')
-			? imgUrl
-			: 'https://dummyimage.com/200x200/cccccc/000000.png';
+		//  - every stepper move is confirmed on the step bar, and "Create" must close the dialog
+		//    (createBulk resolved) or the command fails here with the error toast.
+		void imgUrl;
 		await gotoRoute('/#/pages/employees');
 		await manageEmployeesPage.addEmployeeButtonVisible();
 		await manageEmployeesPage.clickAddEmployeeButton();
@@ -293,8 +303,8 @@ export const CustomCommands = {
 		await manageEmployeesPage.clickKeyboardButtonByKeyCode(9);
 		await manageEmployeesPage.passwordInputVisible();
 		await manageEmployeesPage.enterPasswordInputData(password);
-		// Tags are optional; pick one only if the caller seeded a tag. Always click the card body
-		// afterwards to close the ng-select panel so it can't overlay the stepper's Next button.
+		// Tags are optional; pick one only if the caller seeded a tag. Always close the (body-appended,
+		// closeOnSelect=false) tags panel afterwards so it can't sit over the dialog footer.
 		try {
 			await manageEmployeesPage.tagsDropdownVisible();
 			await manageEmployeesPage.clickTagsDropdown();
@@ -305,13 +315,16 @@ export const CustomCommands = {
 		// The tag itself is optional, but the DIALOG is not: driving an ng-select that turns out to sit
 		// BEHIND the modal delivers its coordinate clicks onto the cdk-overlay-backdrop, and NbDialog's
 		// closeOnBackdropClick (default true) then dismisses the whole form. Assert the dialog survived
-		// so that failure is reported HERE, with its real cause, instead of being swallowed by the
-		// clickCardBody() catch below and resurfacing 60s later as "#inputImageUrl not found". This can
-		// only ever fire on a run that was already doomed — every line after it needs this same dialog.
+		// so that failure is reported HERE, with its real cause. This can only ever fire on a run that
+		// was already doomed — every line after it needs this same dialog.
 		await getPage().locator('ga-employee-mutation').first().waitFor({ state: 'visible', timeout: 10_000 });
-		await manageEmployeesPage.clickCardBody().catch(() => undefined);
-		await manageEmployeesPage.imageInputVisible();
-		await manageEmployeesPage.enterImageDataUrl(validImg);
+		await manageEmployeesPage.closeEmployeeDialogDropdowns();
+		// The user sets the employee's picture: an upload through the avatar picker now (was: type an
+		// image URL into #inputImageUrl, removed by #10336).
+		await manageEmployeesPage.uploadEmployeeImage();
+		// Re-assert the three controls that gate step-0 validity right before Continue (a fill that landed
+		// while the datepicker overlay was closing would otherwise leave Continue disabled).
+		await manageEmployeesPage.reEnterRequiredStep1Fields(firstName, employeeEmail, password);
 		await manageEmployeesPage.nextButtonVisible();
 		await manageEmployeesPage.clickNextButton();
 		await manageEmployeesPage.nextStepButtonVisible();
@@ -354,8 +367,9 @@ export const CustomCommands = {
 		await clientsPage.clickCardBody();
 		await clientsPage.websiteInputVisible();
 		await clientsPage.enterWebsiteInputData(website);
-		// Same contact-mutation Name-reset quirk as addContact: re-set Name (raw fill) before advancing.
-		await getPage().locator('[formcontrolname="name"]').first().fill(fullName);
+		// Same contact-mutation Name-reset quirk as addContact: re-set Name (raw fill, scoped to the
+		// wizard's nb-stepper) before advancing.
+		await clientsPage.reenterNameInputData(fullName);
 		await clientsPage.saveButtonVisible();
 		await clientsPage.clickSaveButton();
 		await clientsPage.countryDropdownVisible();
@@ -381,8 +395,11 @@ export const CustomCommands = {
 			await clientsPage.selectEmployeeFromDropdownByName(employeeFullName);
 		}
 		await clientsPage.clickKeyboardButtonByKeyCode(9);
+		// Step 4's forward button is the wizard's "Save" (ng-select.members-select step since #10308).
 		await clientsPage.nextButtonVisible();
 		await clientsPage.clickNextButton();
+		// The wizard gives way to the grid only once the API accepted the client: fail HERE if it did not.
+		await clientsPage.verifyContactFormClosed();
 		await clientsPage.waitMessageToHide();
 		await clientsPage.verifyNameInput();
 		await clientsPage.searchClientName(fullName);
@@ -443,7 +460,9 @@ export const CustomCommands = {
 		await addOrganizationPage.enterExpiryPeriodInputData(AddOrganizationPageData.expiryPeriod);
 		await addOrganizationPage.clickOnNextButton();
 		await addOrganizationPage.waitMessageToHide();
-		// addOrganizationPage.verifyOrganizationExists(organizationName);
+		// The callers (delete/manage-organization) act on this organization next, so prove it was created
+		// HERE (the check filters the grid to the name, which also leaves the new row on screen).
+		await addOrganizationPage.verifyOrganizationExists(organizationName);
 	},
 	addCandidate: async (
 		inviteCandidatePage: any,
@@ -474,6 +493,9 @@ export const CustomCommands = {
 		await inviteCandidatePage.clickAddTagsDropdown();
 		await inviteCandidatePage.selectTagsFromDropdown(0);
 		await inviteCandidatePage.clickKeyboardButtonByKeyCode(9);
+		// The candidate picture: #10336 (a73de1d121) replaced the basic-info image-URL input with the
+		// <ngx-image-uploader> avatar, so Candidates.enterImageInputData now uploads a PNG through it (the
+		// equivalent "set a picture" action); `imgUrl` stays in the signature but is no longer typed anywhere.
 		await inviteCandidatePage.imageInputVisible();
 		await inviteCandidatePage.enterImageInputData(imgUrl);
 		await inviteCandidatePage.nextButtonVisible();

@@ -1,10 +1,17 @@
 export const DeleteOrganizationPage = {
 	gridButtonCss: 'div.layout-switch > button',
-	confirmDeleteCss: 'nb-card.center > nb-card-footer > button[status="danger"]',
+	// The organization delete confirmation (#10616, organization-delete-confirmation.component.html) is a
+	// type-to-confirm dialog: `ga-organization-delete-confirmation nb-card.dialog` whose danger "Delete"
+	// button stays [disabled]="!isConfirmed" until the organization's name is typed into #org-delete-name.
+	// It replaced the shared DeleteConfirmationComponent (`nb-card.center` + an always-enabled OK button).
+	confirmDialogCss: 'ga-organization-delete-confirmation',
+	confirmNameInputCss: 'ga-organization-delete-confirmation input#org-delete-name',
+	confirmDeleteCss: 'ga-organization-delete-confirmation nb-card-footer button[status="danger"]',
 	// Toolbar Delete (trash icon). It is [disabled] until a grid row is selected
 	// (`[disabled]="!selectedItem && disableButton"` in organizations.component.html), so the row
 	// must be selected first or the (click)->deleteOrganization() handler never fires.
-	deleteButtonCss: 'button:has(nb-icon[icon="trash-2-outline"])',
+	// Scoped to the toolbar so the confirmation dialog's own trash-icon button can never match.
+	deleteButtonCss: 'ngx-gauzy-button-action button:has(nb-icon[icon="trash-2-outline"])',
 	// Data row in the smart-table (NOT the tr.angular2-smart-filters filter row); selecting it enables
 	// the toolbar Edit/Manage/Delete buttons.
 	selectOrganization: 'table > tbody > tr.angular2-smart-row',

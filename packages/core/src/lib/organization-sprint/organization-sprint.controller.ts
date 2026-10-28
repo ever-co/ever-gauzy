@@ -9,8 +9,10 @@ import {
 	Query,
 	UseGuards,
 	Post,
-	Delete
+	Delete,
+	UseInterceptors
 } from '@nestjs/common';
+import { FormerEmployeesInterceptor } from '../employee/former-employees.interceptor';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DeleteResult } from 'typeorm';
@@ -27,6 +29,7 @@ import { CreateOrganizationSprintDTO, UpdateOrganizationSprintDTO } from './dto'
 @ApiTags('OrganizationSprint')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)
+@UseInterceptors(FormerEmployeesInterceptor)
 @Controller('/organization-sprint')
 export class OrganizationSprintController extends CrudController<OrganizationSprint> {
 	constructor(

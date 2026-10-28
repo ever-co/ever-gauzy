@@ -10,8 +10,10 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	UsePipes
+	UsePipes,
+	UseInterceptors
 } from '@nestjs/common';
+import { FormerEmployeesInterceptor } from '../employee/former-employees.interceptor';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
@@ -39,6 +41,7 @@ import { CreateOrganizationContactDTO, UpdateOrganizationContactDTO } from './dt
 
 @ApiTags('OrganizationContact')
 @UseGuards(TenantPermissionGuard)
+@UseInterceptors(FormerEmployeesInterceptor)
 @Controller('/organization-contact')
 export class OrganizationContactController extends CrudController<OrganizationContact> {
 	constructor(

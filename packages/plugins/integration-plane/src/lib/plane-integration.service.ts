@@ -427,7 +427,8 @@ export class PlaneIntegrationService {
 		const apiKey = settingsMap[PlaneSettingName.PLANE_API_KEY_VALUE] || '';
 		const apiSecret = settingsMap[PlaneSettingName.PLANE_API_SECRET_VALUE] || '';
 
-		// The externalBaseApiUrl is the Gauzy API URL including the /api prefix
+		// The externalBaseApiUrl is the Gauzy API URL including the /api prefix. The in-process proxy does
+		// not use it: it calls this API over loopback (PlaneProxyService.getUpstreamUrl).
 		const gauzyApiBaseUrl = this.configService.get('baseUrl') || 'http://localhost:3000';
 
 		return {

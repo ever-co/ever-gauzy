@@ -10,10 +10,14 @@ import {
 	verifyText,
 	verifyTextNotExisting,
 	waitForSpinnerGone,
-	dispatchClick
+	dispatchClick,
+	dispatchClickWhenSettled
 } from '../util';
 import { getPage } from '../page-context';
 import { expect } from '@playwright/test';
+// Clients, Leads and Customers all render the same ga-contact-mutation wizard: its Members-step driver
+// lives once, in ContactsLeads.po.
+import { pickContactMember } from './ContactsLeads.po';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { CustomersPage } from '../../../src/support/Base/pageobjects/CustomersPageObject';
 
@@ -168,8 +172,10 @@ export const addButtonVisible = async () => {
 	await verifyElementIsVisible(CustomersPage.addButtonCss);
 };
 
-export const clickAddButton = async (index: number = 0) => {
-	await clickButtonByIndex(CustomersPage.addButtonCss, index);
+export const clickAddButton = async (_index: number = 0) => {
+	// Dispatched after the post-navigation card spinner settles (a coordinate click can land on that
+	// overlay), and confirmed on the wizard's Name field — re-dispatched once if the click was swallowed.
+	await dispatchClickWhenSettled(CustomersPage.addButtonCss, CustomersPage.nameInputCss);
 	// The contact-mutation form rebuilds itself ~1s after it first renders (a background
 	// contacts$/loading subscription re-creates the FormGroup), which wipes any value
 	// entered too early. Wait for that rebuild to settle before the caller starts filling.
@@ -279,7 +285,13 @@ export const clickSelectEmployeeDropdown = async () => {
 };
 
 export const selectEmployeeDropdownOption = async (index: number) => {
-	await clickOptionByIndex(index);
+	// The Members step is an ng-select.members-select since #10308 (was ga-employee-multi-select). Its
+	// options are scoped to its own panel and the pick is confirmed on the option (see ContactsLeads.po
+	// pickContactMember) — the generic index pick above would take the first option of ANY open panel
+	// and could toggle an already-selected member off. Strict, like clickOptionByIndex it replaces.
+	if (!(await pickContactMember(CustomersPage.usersMultiSelectCss, CustomersPage.membersOptionCss, index))) {
+		throw new Error(`No employee could be added on the contact wizard's Members step (option ${index})`);
+	}
 };
 
 export const tagsMultiSelectVisible = async () => {

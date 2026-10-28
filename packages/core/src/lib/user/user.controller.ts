@@ -363,6 +363,31 @@ export class UserController extends CrudController<User> {
 	}
 
 	/**
+	 * DELETE all user data from all tables
+	 *
+	 * Declared before `DELETE /:id`: routes match in declaration order, and `/:id` (with its UUID pipe)
+	 * used to catch `DELETE /user/reset` and answer 400, so "Delete all data" never ran.
+	 *
+	 * @returns
+	 */
+	@ApiOperation({ summary: 'Delete all user data.' })
+	@ApiResponse({
+		status: HttpStatus.OK,
+		description: 'Deleted all user data.',
+		type: User
+	})
+	@ApiResponse({
+		status: HttpStatus.NOT_FOUND,
+		description: 'Record not found'
+	})
+	@UseGuards(TenantPermissionGuard, PermissionGuard)
+	@Permissions(PermissionsEnum.ACCESS_DELETE_ALL_DATA)
+	@Delete('/reset')
+	async factoryReset() {
+		return await this._factoryResetService.reset();
+	}
+
+	/**
 	 * To permanently delete your account from your Gauzy app:
 	 *
 	 * @param id
@@ -384,28 +409,6 @@ export class UserController extends CrudController<User> {
 	@Delete('/:id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return await this._commandBus.execute(new UserDeleteCommand(id));
-	}
-
-	/**
-	 * DELETE all user data from all tables
-	 *
-	 * @returns
-	 */
-	@ApiOperation({ summary: 'Delete all user data.' })
-	@ApiResponse({
-		status: HttpStatus.OK,
-		description: 'Deleted all user data.',
-		type: User
-	})
-	@ApiResponse({
-		status: HttpStatus.NOT_FOUND,
-		description: 'Record not found'
-	})
-	@UseGuards(TenantPermissionGuard, PermissionGuard)
-	@Permissions(PermissionsEnum.ACCESS_DELETE_ALL_DATA)
-	@Delete('/reset')
-	async factoryReset() {
-		return await this._factoryResetService.reset();
 	}
 
 	/**

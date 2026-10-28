@@ -65,6 +65,12 @@ const LIVE_KEY_PREFIX = /^(sk|rk)_live_/;
 /** Subscription statuses that entitle the holder to finish registering. */
 const ENTITLING_STATUSES = new Set(['active', 'trialing', 'past_due']);
 
+/**
+ * Every subscription status that can still bill (all but `canceled` and `incomplete_expired`): what a deleted
+ * workspace must not leave behind, wider than what entitles someone to sign up.
+ */
+const BILLABLE_STATUSES = new Set(['active', 'trialing', 'past_due', 'unpaid', 'incomplete', 'paused']);
+
 const STRIPE_API = 'https://api.stripe.com/v1';
 
 /** Stripe's maximum page size; fewer pages means fewer round trips on a request thread. */
@@ -532,6 +538,49 @@ export class StripeSubscriptionService {
 	}
 
 	/**
+	 * Cancels, at once, every subscription of `customerId` for this deployment's product that can still bill
+	 * (see {@link BILLABLE_STATUSES}), for a workspace that is being deleted: a deleted workspace must not go on
+	 * being charged. The customer and its invoices stay in Stripe (billing records are kept by law).
+	 *
+	 * Does nothing when this deployment does not bill. Throws when the list or a cancellation fails, so the
+	 * caller can refuse to delete a workspace that would keep being charged.
+	 *
+	 * @param customerId The tenant's `stripeCustomerId`.
+	 * @returns How many subscriptions were cancelled.
+	 */
+	async cancelCustomerSubscriptions(customerId: string): Promise<number> {
+		if (!customerId) {
+			return 0;
+		}
+		const key = this.secretKey;
+		const product = this.billingProduct;
+		if (!key || !product) {
+			// No Stripe here at all (self-hosted, demo): nothing can be billing. A key that is set but unusable
+			// (bad BILLING_PRODUCT, live key without opt-in) cannot prove the subscription is gone: refuse.
+			if (process.env.STRIPE_SECRET_KEY?.trim() && process.env.DEMO !== 'true') {
+				throw new Error('Stripe is configured but unusable here, so the subscription cannot be cancelled.');
+			}
+			return 0;
+		}
+
+		const deadline = Date.now() + 4 * REQUEST_TIMEOUT_MS;
+		const billing: string[] = [];
+		for await (const subscription of this.paginate<StripeSubscriptionListItem>(
+			key,
+			`/subscriptions?customer=${encodeURIComponent(customerId)}&status=all`,
+			deadline
+		)) {
+			if (BILLABLE_STATUSES.has(subscription.status) && subscriptionIsForProduct(subscription, product)) {
+				billing.push(subscription.id);
+			}
+		}
+		for (const id of billing) {
+			await this.request(key, `/subscriptions/${encodeURIComponent(id)}`, REQUEST_TIMEOUT_MS, 'DELETE');
+		}
+		return billing.length;
+	}
+
+	/**
 	 * Walk every page of a Stripe list endpoint.
 	 *
 	 * Reading only the first page is the failure that matters here: it turns "your subscription is on
@@ -572,13 +621,20 @@ export class StripeSubscriptionService {
 	}
 
 	/**
-	 * GET a Stripe endpoint, with a short timeout so a hanging call cannot stall registration.
+	 * Call a Stripe endpoint (GET, or DELETE to cancel a subscription), with a short timeout so a hanging call
+	 * cannot stall registration.
 	 */
-	private async request<T>(key: string, path: string, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
+	private async request<T>(
+		key: string,
+		path: string,
+		timeoutMs = REQUEST_TIMEOUT_MS,
+		method: 'GET' | 'DELETE' = 'GET'
+	): Promise<T> {
 		const controller = new AbortController();
 		const timer = setTimeout(() => controller.abort(), timeoutMs);
 		try {
 			const response = await fetch(`${STRIPE_API}${path}`, {
+				method,
 				headers: {
 					Authorization: `Bearer ${key}`,
 					'Stripe-Version': '2025-02-24.acacia'
@@ -591,7 +647,7 @@ export class StripeSubscriptionService {
 				// `?email=<registrant>`, and Stripe echoes the offending parameters back in its error
 				// message. Logging either would put an address someone typed into a signup form into
 				// the application log. The endpoint and status are enough to debug with.
-				throw new StripeHttpError(`Stripe GET ${redactPath(path)} -> ${response.status}`, response.status);
+				throw new StripeHttpError(`Stripe ${method} ${redactPath(path)} -> ${response.status}`, response.status);
 			}
 
 			return (await response.json()) as T;

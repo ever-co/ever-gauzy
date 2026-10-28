@@ -96,6 +96,9 @@ When('I add a new candidate', async () => {
 	await inviteCandidatePage.allCurrentCandidatesButtonVisible();
 	await inviteCandidatePage.clickAllCurrentCandidatesButton();
 	await inviteCandidatePage.waitMessageToHide();
+	// The grid is server-paginated (10/page) on a shared, accumulating DB: filter it to our candidate so
+	// the new row is on the rendered page (best-effort; no-op if the filter row is absent).
+	await inviteCandidatePage.scopeGridToCandidate(`${firstName} ${lastName}`);
 	await inviteCandidatePage.verifyCandidateExists(`${firstName} ${lastName}`);
 });
 
@@ -124,6 +127,8 @@ When('I edit the candidate', async () => {
 
 When('I archive the candidate', async () => {
 	await inviteCandidatePage.waitMessageToHide();
+	// Back from the edit page the candidates screen is re-created with an empty filter; scope it again.
+	await inviteCandidatePage.scopeGridToCandidate(`${firstName} ${lastName}`);
 	await inviteCandidatePage.selectTableRow(`${firstName} ${lastName}`);
 	await inviteCandidatePage.archiveButtonVisible();
 	await inviteCandidatePage.clickArchiveButton();

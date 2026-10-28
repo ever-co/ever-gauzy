@@ -267,6 +267,7 @@ import { MikroOrmUserOrganizationRepository } from '../../user-organization/repo
 import { TypeOrmUserOrganizationRepository } from '../../user-organization/repository/type-orm-user-organization.repository';
 import { MikroOrmUserRepository } from '../../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../../user/repository/type-orm-user.repository';
+import { collectStoredFiles, deleteStoredFiles, onlyFilesOfTenant } from '../../account-deletion/account-deletion-files';
 
 @Injectable()
 export class FactoryResetService {
@@ -787,6 +788,22 @@ export class FactoryResetService {
 			tenantId: user.tenantId
 		};
 
+		// The time-tracking captures (screenshots, camshots, ...) go with their time slots through the database
+		// cascade, which runs no entity subscriber: read their storage keys first and remove the files after.
+		// The organizations deleted outright (all but the first) take every file-owning row with them.
+		const capturedFiles = [
+			...(await collectStoredFiles(this.typeOrmUserRepository.manager, {
+				kind: 'reset',
+				tenantId: user.tenantId,
+				organizationIds: allOrganizationsIds
+			})),
+			...(await collectStoredFiles(this.typeOrmUserRepository.manager, {
+				kind: 'organizations',
+				tenantId: user.tenantId,
+				organizationIds: deleteOrganizationIds || []
+			}))
+		];
+
 		await this.deleteSpecificTables(findInput);
 		if (deleteOrganizationIds?.length > 0) {
 			switch (this.ormType) {
@@ -815,6 +832,10 @@ export class FactoryResetService {
 					break;
 			}
 		}
+
+		// Only now that every row the files belonged to is gone: a failure above leaves rows and files together.
+		// And only keys under this tenant: a key is a string a client could have written (see isKeyOfTenant).
+		await deleteStoredFiles(onlyFilesOfTenant(capturedFiles, user.tenantId));
 
 		let firstOrganization;
 		switch (this.ormType) {

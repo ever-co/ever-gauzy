@@ -12,14 +12,14 @@ import {
 } from '../util';
 import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
-import type { Response } from '@playwright/test';
+import { expect, type Response } from '@playwright/test';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { MyTasksTrackedInTimesheets } from '../../../src/support/Base/pageobjects/MyTasksTrackedInTimesheetsPageObject';
 import dayjs from 'dayjs';
 
 // The my-task-dialog card header ("Add Tasks") — a POSITIVE anchor that the MyTaskDialogComponent actually
 // mounted before we scope fields to it, so a lingering closed-dialog overlay can't win a strict-mode match.
-const dialogHostCss = 'ga-my-task-dialog, my-task-dialog, nb-card.main';
+const dialogHostCss = 'ngx-my-task-dialog, nb-card.main';
 
 // Mirrors the Cypress intercept/alias: clickTaskSelect arms the /tasks/employee wait, selectOptionFromDropdown
 // consumes it so the async task list has actually loaded before we pick an option.
@@ -237,10 +237,13 @@ export const timerBtnVisible = async () => verifyElementIsVisible(MyTasksTracked
 export const taskSelectVisible = async () => verifyElementIsVisible(MyTasksTrackedInTimesheets.taskSelectCss);
 
 export const clickTaskSelect = async () => {
-	// Arm the wait for the employee-scoped task list, then open the ng-select via keyboard (mousedown-open +
-	// backdrop-blocked, same as the form's selects).
+	// Open the timer's ga-task-selector ng-select via keyboard (mousedown-open + backdrop-blocked, same as the
+	// form's selects). Its employee-scoped task list (GET /tasks/employee/:id) is requested when the selector
+	// is CREATED — i.e. when the timer window opened, before this runs — so arming a response wait here only
+	// ever timed out (a fixed 20 s on a scenario that already runs close to the 240 s test budget). The pick
+	// below waits for real options instead. Arm a SHORT wait anyway in case the list is (re)fetched now.
 	waitTasksXhr = getPage()
-		.waitForResponse((res) => /\/tasks\/employee\//.test(res.url()), { timeout: 20000 })
+		.waitForResponse((res) => /\/tasks\/employee\//.test(res.url()), { timeout: 3000 })
 		.catch(() => undefined as unknown as Response);
 	const input = getPage().locator(MyTasksTrackedInTimesheets.taskSelectCss).locator('input').first();
 	await input.focus();
@@ -248,17 +251,28 @@ export const clickTaskSelect = async () => {
 };
 
 export const selectOptionFromDropdown = async (index: number) => {
-	// Consume the armed task-list XHR so options have loaded, then pick the task. Best-effort: the list can be
-	// slow/empty; if no option shows, escape and continue (the timer can still start without a task unless the
-	// org requires one — this DB does not by default).
+	// Pick the task once the list has REAL options. `.ng-option` alone also matches ng-select's disabled
+	// "No items found" / "Loading…" row, which a click silently ignores, so wait for a non-disabled option
+	// (re-opening the panel once if it closed). Best-effort as before: if the list stays empty, escape and
+	// continue (the timer can still start without a task unless the org requires one — the default does not).
 	if (waitTasksXhr) {
 		await waitTasksXhr;
 		waitTasksXhr = undefined;
 	}
 	const page = getPage();
-	const options = page.locator(MyTasksTrackedInTimesheets.dropdownOptionCss);
+	const options = page.locator(`${MyTasksTrackedInTimesheets.dropdownOptionCss}:not(.ng-option-disabled)`);
 	try {
-		await options.first().waitFor({ state: 'visible', timeout: 10000 });
+		const appeared = await options
+			.first()
+			.waitFor({ state: 'visible', timeout: 8000 })
+			.then(() => true)
+			.catch(() => false);
+		if (!appeared) {
+			const input = page.locator(MyTasksTrackedInTimesheets.taskSelectCss).locator('input').first();
+			await input.focus().catch(() => undefined);
+			await page.keyboard.press('ArrowDown').catch(() => undefined);
+			await options.first().waitFor({ state: 'visible', timeout: 8000 });
+		}
 		await options.nth(index).click({ force: true });
 	} catch {
 		await page.keyboard.press('Escape').catch(() => undefined);
@@ -290,14 +304,24 @@ export const clickViewTimesheetBtn = async () => {
 };
 
 export const verifyProjectText = async (text: string) => {
-	// Best-effort verification: after View Timesheet the daily view lists the recorded log with the task title
-	// under div.mt-2.small ("To-do: <title>", truncated to 40 chars). The log only appears if the 5s timer
-	// session persisted, and the title is truncated, so match a truncated prefix and don't fail the whole port
-	// if the log is slow to surface — the create + record flow above is the substance of this test.
+	// After View Timesheet the daily view (/pages/employees/timesheets -> daily) lists the recorded log with
+	// the task under `div.mt-2.small` as "To-do: {{ task.title | truncate: 40 }}" (daily.component.html; the
+	// truncate pipe cuts at exactly 40 characters and appends "..."), so match the 40-character prefix. This
+	// is the scenario's outcome ("sees it on the timesheet"), so it is asserted, as the Cypress original did —
+	// the port had made it a swallowed best-effort check that could never fail. The daily grid queries once
+	// on load and the stop request can still be in flight when the link is followed, so re-query by
+	// reloading before concluding the log is missing.
+	const page = getPage();
 	const prefix = String(text).slice(0, 40);
-	try {
-		await compareTwoTexts(MyTasksTrackedInTimesheets.projectNameCss, prefix);
-	} catch {
-		// Timesheet log not yet rendered / title truncated differently — non-fatal for this migrated port.
+	const row = page.locator(MyTasksTrackedInTimesheets.projectNameCss).filter({ hasText: prefix }).first();
+	for (let attempt = 0; attempt < 2; attempt++) {
+		const shown = await row
+			.waitFor({ state: 'visible', timeout: 12_000 })
+			.then(() => true)
+			.catch(() => false);
+		if (shown) return;
+		await page.reload({ timeout: 20_000 }).catch(() => undefined);
+		await waitForSpinnerGone();
 	}
+	await expect(row).toBeVisible({ timeout: 12_000 });
 };

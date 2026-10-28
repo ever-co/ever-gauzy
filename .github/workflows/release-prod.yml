@@ -73,15 +73,59 @@ jobs:
           commit_analyzer_preset: angular
           force_bump: patch
 
+      # GitHub refuses a release body over 125 000 characters (422 "body is too long"). With
+      # `generateReleaseNotes` the action appended GitHub's list of every PR since the previous full
+      # release, and the first production release after the 2026-10 stage-only period (v111.138.2,
+      # ~3 700 commits since v111.48.2) failed on exactly that. The same notes are built here instead:
+      # the changelog, then GitHub's generated list, cut at a line boundary below the limit, with a
+      # link to the full comparison. actions/github-script rather than the gh CLI, which the ARC
+      # runner image this job may run on does not ship.
+      - name: Release notes within GitHub's 125 000-character limit
+        uses: actions/github-script@v8
+        env:
+          NEW_TAG: ${{ steps.tag_version.outputs.new_tag || steps.tag_version_fallback.outputs.new_tag }}
+          CHANGELOG: ${{ steps.tag_version.outputs.changelog || steps.tag_version_fallback.outputs.changelog }}
+        with:
+          script: |
+            const fs = require('fs');
+            const limit = 120000;
+            const newTag = process.env.NEW_TAG;
+            let previous = '';
+            try {
+              previous = (await github.rest.repos.getLatestRelease(context.repo)).data.tag_name;
+            } catch (error) {
+              core.warning(`No previous release found (${error.message}); generating notes without a base.`);
+            }
+            let generated = '';
+            try {
+              const params = { ...context.repo, tag_name: newTag, target_commitish: context.sha };
+              if (previous && previous !== newTag) params.previous_tag_name = previous;
+              generated = (await github.rest.repos.generateReleaseNotes(params)).data.body;
+            } catch (error) {
+              core.warning(`Could not generate the list of changes (${error.message}); the release carries the changelog only.`);
+            }
+            let body = `${process.env.CHANGELOG || ''}\n\n${generated}\n`;
+            if (body.length > limit) {
+              const compare = previous
+                ? ` Full comparison: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/compare/${previous}...${newTag}`
+                : '';
+              const footer = `\n(List truncated to fit the GitHub release-notes limit.)${compare}\n`;
+              const cut = body.slice(0, limit - footer.length);
+              body = cut.slice(0, cut.lastIndexOf('\n')) + footer;
+              core.notice(`Release notes truncated to ${body.length} characters (the generated list was longer).`);
+            }
+            fs.writeFileSync('release-body.md', body);
+
       - name: Create the tag and the GitHub release (one call)
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          generateReleaseNotes: true
+          # The notes are built, and kept under the size limit, by the step above.
+          generateReleaseNotes: false
           prerelease: false
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ steps.tag_version.outputs.new_tag || steps.tag_version_fallback.outputs.new_tag }}
           # Create the tag as part of this call, pinned to the commit that was built.
           commit: ${{ github.sha }}
           name: ${{ steps.tag_version.outputs.new_tag || steps.tag_version_fallback.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog || steps.tag_version_fallback.outputs.changelog }}
+          bodyFile: release-body.md

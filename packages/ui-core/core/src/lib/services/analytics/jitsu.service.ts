@@ -4,6 +4,7 @@ import { Location } from '@angular/common';
 import { filter } from 'rxjs/operators';
 import { jitsuAnalytics, emptyAnalytics, AnalyticsInterface } from '@jitsu/js';
 import { environment } from '@gauzy/ui-config';
+import { redactUrlSecrets } from '@gauzy/ui-core/common';
 import { JitsuAnalyticsEvents, JitsuAnalyticsEventsEnum } from './event.type';
 
 @Injectable({
@@ -30,7 +31,14 @@ export class JitsuService {
 
 	trackPageViews() {
 		this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-			this.page(JitsuAnalyticsEventsEnum.PAGE_VIEW, this.location.path());
+			const path = this.location.path();
+			// An emailed link's token (account deletion, password reset, invitation) must never reach analytics.
+			// Such a page view is not sent at all: the Jitsu client also builds its own page context from
+			// `window.location`, so redacting the path passed here would not be enough.
+			if (carriesUrlSecret(path) || carriesUrlSecret(window.location.href)) {
+				return;
+			}
+			this.page(JitsuAnalyticsEventsEnum.PAGE_VIEW, path);
 		});
 	}
 
@@ -59,4 +67,9 @@ export class JitsuService {
 	async group(id: string | object, traits?: Record<string, any> | null): Promise<any> {
 		return await this.jitsuClient.group(id, traits);
 	}
+}
+
+/** Whether a URL carries a `token` / `code` parameter (what {@link redactUrlSecrets} would redact). */
+function carriesUrlSecret(url: string): boolean {
+	return !!url && redactUrlSecrets(url) !== url;
 }

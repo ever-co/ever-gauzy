@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUrl, Length, Matches } from 'class-validator';
 import { IAiProviderCredentialCreateInput } from '@gauzy/contracts';
 import { TenantOrganizationBaseDTO } from '@gauzy/core';
@@ -12,8 +12,17 @@ import { IsSafeAiProviderBaseUrl } from '../base-url.validator';
  * `apiKey` is OPTIONAL at the DTO level: providers that advertise `requiresApiKey: false` (local
  * speech servers, self-hosted OpenAI-compatible endpoints) may be saved with only a base URL. The
  * service enforces "key required" per provider definition, so a cloud provider still gets a 400.
+ *
+ * The organization is OPTIONAL too: a credential is the tenant's (one per tenant and provider, see
+ * `AiProviderCredentialService.appliesOrganizationBoundary`), and the AI Providers page hides the
+ * organization selector, so a tenant admin with no organization selected sends none. The required
+ * base made that first save fail with "organization must be an object; organizationId must be a UUID".
+ * The partial base keeps the membership check on an organization that IS sent.
  */
-export class CreateAiProviderCredentialDTO extends TenantOrganizationBaseDTO implements IAiProviderCredentialCreateInput {
+export class CreateAiProviderCredentialDTO
+	extends PartialType(TenantOrganizationBaseDTO)
+	implements IAiProviderCredentialCreateInput
+{
 	@ApiProperty({ type: () => String, description: 'AI provider identifier (e.g. anthropic, openai)' })
 	@IsNotEmpty({ message: 'Provider id is required' })
 	@IsString({ message: 'Provider id must be a string' })

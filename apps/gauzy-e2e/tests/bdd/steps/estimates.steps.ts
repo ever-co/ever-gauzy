@@ -178,9 +178,7 @@ When('I duplicate the estimate', async () => {
 	await estimatesPage.moreButtonVisible();
 	await estimatesPage.clickMoreButton();
 	await estimatesPage.actionButtonVisible();
-	await estimatesPage.clickActionButtonByText(
-		EstimatesPageData.duplicateButton
-	);
+	await estimatesPage.clickActionButtonByText(EstimatesPageData.duplicateButton, fullName);
 	await estimatesPage.waitMessageToHide();
 	await estimatesPage.backButtonVisible();
 	await estimatesPage.clickBackButton();
@@ -191,7 +189,7 @@ When('I send the estimate', async () => {
 	await estimatesPage.moreButtonVisible();
 	await estimatesPage.clickMoreButton();
 	await estimatesPage.actionButtonVisible();
-	await estimatesPage.clickActionButtonByText(EstimatesPageData.sendButton);
+	await estimatesPage.clickActionButtonByText(EstimatesPageData.sendButton, fullName);
 	await estimatesPage.confirmButtonVisible();
 	await estimatesPage.clickConfirmButton();
 	await estimatesPage.waitMessageToHide();
@@ -212,7 +210,7 @@ When('I send the estimate by email', async () => {
 	await estimatesPage.moreButtonVisible();
 	await estimatesPage.clickMoreButton();
 	await estimatesPage.actionButtonVisible();
-	await estimatesPage.clickActionButtonByText(EstimatesPageData.emailButton);
+	await estimatesPage.clickActionButtonByText(EstimatesPageData.emailButton, fullName);
 	await estimatesPage.scrollEmailInviteTemplate();
 	await estimatesPage.emailInputVisible();
 	await estimatesPage.enterEmailData(sendEmail);
@@ -225,11 +223,9 @@ When('I send the estimate by email', async () => {
 
 When('I convert the estimate to an invoice', async () => {
 	await estimatesPage.selectTableRow(fullName);
-	// NOTE: no actionButtonVisible() here — "To invoice" is a TOOLBAR button (button.action.info),
-	// not a popover action. selectTableRow clicks the grid row, which fires the popover's
-	// (clickOutside) and CLOSES it, so asserting the popover action button (div.popover-container-action
-	// button.action) would time out. Only the toolbar convert button is needed (enabled by the row
-	// selection above).
+	// NOTE: no actionButtonVisible() here — "To invoice" is a TOOLBAR button (button.action.info), not a
+	// popover action; selectTableRow closes the actions popover before it selects the row. Only the
+	// toolbar convert button is needed (enabled by the row selection above).
 	await estimatesPage.convertToInvoiceButtonVisible();
 	await estimatesPage.clickConvertToInvoiceButton(0);
 });
@@ -277,7 +273,7 @@ When('I delete the estimate', async () => {
 	await estimatesPage.moreButtonVisible();
 	await estimatesPage.clickMoreButton();
 	await estimatesPage.deleteButtonVisible();
-	await estimatesPage.clickDeleteButton();
+	await estimatesPage.clickDeleteButton(fullName);
 	await estimatesPage.confirmDeleteButtonVisible();
 	await estimatesPage.clickConfirmDeleteButton();
 	await estimatesPage.verifyElementIsDeleted(EstimatesPageData.discountValue);

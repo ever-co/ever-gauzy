@@ -207,7 +207,7 @@ export class OrganizationPermissionGuard implements CanActivate {
 			return true;
 		}
 
-		if (target.source === 'args') {
+		if (target.source === 'args' || target.source === 'query') {
 			const organizationIds = await this.findTargetOrganizationIds(context, tenantId, target);
 			if (!organizationIds || organizationIds.length === 0) {
 				console.log('OrganizationPermissionGuard: the target record is not in the caller tenant, access denied');

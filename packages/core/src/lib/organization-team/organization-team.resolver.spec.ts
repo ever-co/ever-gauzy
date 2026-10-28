@@ -468,6 +468,18 @@ describe('OrganizationTeamResolver — the SDL declares the capabilities the RES
 });
 
 describe('OrganizationTeamResolver — the connection contract', () => {
+	it('reads archived teams too when the filter names `isArchived`, on both list fields', async () => {
+		// The service reads no archived team unless asked, and the filter is applied to what it read: without the
+		// archive scope, `filter: { isArchived: { eq: true } }` answered nothing.
+		const { resolver, organizationTeamService } = surfaces();
+
+		await resolver.organizationTeams({ isArchived: { eq: true } });
+		await resolver.myOrganizationTeams({ isArchived: { eq: true } });
+
+		expect(organizationTeamService.findAll).toHaveBeenCalledWith({ where: { isArchived: [false, true] } });
+		expect(organizationTeamService.findMyTeams).toHaveBeenCalledWith({ where: { isArchived: [false, true] } });
+	});
+
 	it('answers the list with nodes, edges, a total and the boundary cursors', async () => {
 		const { resolver, organizationTeamService } = surfaces();
 

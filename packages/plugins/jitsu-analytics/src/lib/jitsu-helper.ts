@@ -2,6 +2,7 @@ import { environment } from '@gauzy/config';
 import { AnalyticsInterface, JitsuOptions, jitsuAnalytics } from '@jitsu/js';
 import fetch from 'node-fetch';
 import { JitsuModuleOptions } from './jitsu.types';
+import { readCountEnv } from './jitsu-event-queue';
 
 /**
  * Parses the options for Jitsu Analytics.
@@ -9,7 +10,8 @@ import { JitsuModuleOptions } from './jitsu.types';
  * @returns A record containing parsed Jitsu module options.
  */
 /** Whether the server-wide Jitsu destination (JITSU_SERVER_URL + JITSU_SERVER_WRITE_KEY) is configured. */
-export const isJitsuServerConfigured = (): boolean => !!(environment.jitsu?.serverHost && environment.jitsu?.serverWriteKey);
+export const isJitsuServerConfigured = (): boolean =>
+	!!(environment.jitsu?.serverHost && environment.jitsu?.serverWriteKey);
 
 export const parseOptions = (options: JitsuModuleOptions): JitsuModuleOptions => ({
 	// If the 'isGlobal' property is defined in the input options, use its value; otherwise, default to true.
@@ -51,10 +53,7 @@ export const parseConfig = (config: JitsuOptions): Record<string, any> => ({
 export const DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS = 500;
 
 export function jitsuClientRecycleEvents(env: NodeJS.ProcessEnv = process.env): number {
-	// Strict: a whole number only (`10abc` or `1e3` is not silently read as 10 or 1).
-	const raw = String(env.JITSU_CLIENT_RECYCLE_EVENTS ?? '').trim();
-	const parsed = /^\d+$/.test(raw) ? Number(raw) : NaN;
-	return Number.isSafeInteger(parsed) ? parsed : DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS;
+	return readCountEnv('JITSU_CLIENT_RECYCLE_EVENTS', DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS, env);
 }
 
 /** The calls that add to the analytics core's state. */
@@ -107,6 +106,32 @@ export function recyclingJitsu(factory: () => AnalyticsInterface, every: number)
 	});
 }
 
+/**
+ * How long one request to the Jitsu server may take, response body included, before it is aborted. The
+ * entity-event queue sends a few events at a time and frees a slot only when a send settles; `node-fetch`
+ * has no timeout of its own, so a server that stops answering would otherwise hold every slot for good.
+ */
+export const JITSU_REQUEST_TIMEOUT_MS = 30_000;
+
+/** The longest delay Node schedules as given; a longer one fires after 1 ms (or throws, from 2^32). */
+const MAX_TIMER_DELAY_MS = 2_147_483_647;
+
+/** `JITSU_REQUEST_TIMEOUT_MS` from the environment when Node can schedule it (1 ms to ~24.8 days), else the default. */
+export function jitsuRequestTimeoutMs(env: NodeJS.ProcessEnv = process.env): number {
+	const timeoutMs = readCountEnv('JITSU_REQUEST_TIMEOUT_MS', JITSU_REQUEST_TIMEOUT_MS, env);
+	return timeoutMs >= 1 && timeoutMs <= MAX_TIMER_DELAY_MS ? timeoutMs : JITSU_REQUEST_TIMEOUT_MS;
+}
+
+/**
+ * `node-fetch` with a deadline, on top of any signal the caller passes. `@jitsu/js` has a `fetchTimeoutMs` of its
+ * own, but it clears it once the headers arrive, and the client then awaits the body as well.
+ */
+export function fetchWithTimeout(url: any, init: any = {}, timeoutMs = JITSU_REQUEST_TIMEOUT_MS): Promise<any> {
+	const timeout = AbortSignal.timeout(timeoutMs);
+	const signal = init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout;
+	return fetch(url, { ...init, signal });
+}
+
 export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
 	// Parse the configuration options
 	const config = parseConfig(opts);
@@ -115,7 +140,8 @@ export const createJitsu = (opts: JitsuOptions): AnalyticsInterface => {
 		return;
 	}
 
-	config.fetch = fetch; // Assign the 'fetch' function to 'fetch'
+	const timeoutMs = jitsuRequestTimeoutMs();
+	config.fetch = (url: any, init?: any) => fetchWithTimeout(url, init, timeoutMs);
 
 	// Create and return a Jitsu Analytics instance with the parsed configuration properties, replaced after a
 	// bounded number of events (see DEFAULT_JITSU_CLIENT_RECYCLE_EVENTS).

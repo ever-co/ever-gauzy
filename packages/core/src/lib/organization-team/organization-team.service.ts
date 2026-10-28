@@ -6,7 +6,16 @@ import {
 	ForbiddenException,
 	NotFoundException
 } from '@nestjs/common';
-import { In, ILike, SelectQueryBuilder, DeleteResult, IsNull, FindManyOptions, SaveOptions } from 'typeorm';
+import {
+	In,
+	ILike,
+	SelectQueryBuilder,
+	DeleteResult,
+	IsNull,
+	FindManyOptions,
+	FindOptionsWhere,
+	SaveOptions
+} from 'typeorm';
 import {
 	IOrganizationTeamCreateInput,
 	IOrganizationTeam,
@@ -35,6 +44,7 @@ import {
 	parseFindOptionsSelect
 } from '../core/utils';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
+import { withArchivedLinks, withArchivedScope } from '../core/crud/archived-scope';
 import { IFindOneOptions } from '../core/crud/icrud.service';
 import { RequestContext } from '../core/context';
 import { RoleService } from '../role/role.service';
@@ -437,11 +447,22 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					employees,
 					role,
 					managerIds,
-					memberIds
+					memberIds,
+					this.employeeService
 				);
 			}
 
 			const { id: organizationTeamId } = organizationTeam;
+
+			// A client edits the projects from a list that offers no archived project: the archived projects the
+			// team is linked to are kept, or the save would unlink them
+			if (Array.isArray(input.projects)) {
+				const { projects: linked = [] } = await super.findOneByIdString(organizationTeamId, {
+					where: { organizationId, tenantId },
+					relations: { projects: true }
+				});
+				input = { ...input, projects: withArchivedLinks(input.projects, linked) };
+			}
 
 			// Update the organization team with the prepared members
 			return await super.create({
@@ -563,6 +584,17 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		// `relations` reaches the protected rows from any entity, not only from the ones whose
 		// controller mounts `SensitiveRelationsInterceptor`.
 		this.assertRelationsPermitted(options);
+
+		// This read narrows the teams of a caller who may not act for every employee by setting `where.id`, which an
+		// OR list of `where` objects (`where[0][...]` in a query string) would not carry into its branches: the list
+		// form is refused rather than read wider.
+		if (Array.isArray(options?.where)) {
+			throw new BadRequestException('A list of `where` conditions is not supported for teams.');
+		}
+
+		// The teams that are not archived, unless the caller states `isArchived` (the Teams page's "Include
+		// Archived" states both): an archived team is one the organization finished with, offered by no list.
+		options = { ...options, where: withArchivedScope(options?.where) as FindOptionsWhere<OrganizationTeam> };
 
 		// Retrieve tenantId from RequestContext or options
 		const tenantId = RequestContext.currentTenantId() || options?.where?.tenantId;
@@ -742,6 +774,44 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 
 		return { items, total };
+	}
+
+	/**
+	 * Counts the teams that are not archived, unless the caller states `isArchived`: an archived team is counted
+	 * nowhere it is not listed.
+	 *
+	 * @param options - The caller's `where`.
+	 * @returns The number of teams.
+	 */
+	public async countBy(options?: FindOptionsWhere<OrganizationTeam>): Promise<number> {
+		return super.countBy(withArchivedScope(options) as FindOptionsWhere<OrganizationTeam>);
+	}
+
+	/**
+	 * Archives a team, or brings an archived one back, for a caller who may edit it (see
+	 * {@link assertMayManageTeam}).
+	 *
+	 * An archived team is one the organization finished with. It keeps its members, projects and history and
+	 * stays readable by its id, but no list offers it unless the caller asks for archived teams: not the team
+	 * pickers, the timers, nor the apps built on the API (`GET /organization-team/me`). Deleting a team is still
+	 * there, for one created by mistake.
+	 *
+	 * @param id - The team.
+	 * @param isArchived - `true` to archive it, `false` to bring it back.
+	 * @returns The team, in its new state.
+	 * @throws {ForbiddenException} When the caller does not manage the team.
+	 */
+	async setArchived(id: ID, isArchived: boolean): Promise<IOrganizationTeam> {
+		await this.assertMayManageTeam(id, false);
+
+		const team = await this.findOneByIdString(id);
+
+		// The two archive columns alone: a save of the whole row runs the team's update hook, which under MikroORM
+		// (the entity is the whole stored row, name included) rewrote a custom `profile_link` from the name
+		const archive = { isArchived, archivedAt: isArchived ? new Date() : null };
+		await super.update(team.id, archive);
+
+		return { ...team, ...archive };
 	}
 
 	/**

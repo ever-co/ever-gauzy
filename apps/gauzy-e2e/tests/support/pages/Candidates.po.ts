@@ -12,7 +12,10 @@ import {
 	verifyText,
 	verifyTextNotExisting,
 	dispatchClick,
-	waitForSpinnerGone
+	waitForSpinnerGone,
+	waitElementToLoad,
+	uploadImageThroughUploader,
+	scopeGridTo
 } from '../util';
 import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
@@ -115,6 +118,14 @@ export const sendInviteButtonVisible = async () => {
 };
 
 export const clickSendInviteButton = async () => {
+	// The redesigned send button is [disabled]="emailInviteForm.form.invalid" (invite-mutation.component.html).
+	// Wait until the form has registered the typed emails and the button is genuinely enabled: a click on
+	// a still-disabled button is dropped, so the invite would silently never be sent.
+	const send = getPage().locator(CandidatesPage.sendInviteButtonCss).first();
+	for (let i = 0; i < 30; i++) {
+		if (await send.isEnabled().catch(() => false)) break;
+		await getPage().waitForTimeout(500);
+	}
 	// Invite is submitted right after the appliedDate nb-datepicker mutation; its fading
 	// cdk-overlay-backdrop sits over the footer and swallows a coordinate (force) click, so the
 	// dialog never closes. dispatchClick fires (click)="add()" straight on the element.
@@ -141,8 +152,9 @@ export const clickSendInviteButton = async () => {
 		// dispatchEvent('click') fires the (click)="closeDialog()" handler straight on the node, bypassing
 		// all coordinate hit-testing. Try Cancel, then the header X-icon, then Escape, re-checking detach
 		// after each and looping a few times until the dialog is genuinely gone.
-		const cancelBtn = page.locator('ga-invite-mutation nb-card-footer button[status="basic"]').first();
-		const closeIcon = page.locator('ga-invite-mutation span.cancel i').first();
+		// (The redesigned dialog's header close is `button.close-button`; the old `span.cancel i` is gone.)
+		const cancelBtn = page.locator(CandidatesPage.inviteDialogCancelButtonCss).first();
+		const closeIcon = page.locator(CandidatesPage.inviteDialogCloseButtonCss).first();
 		for (let attempt = 0; attempt < 4 && (await inviteDialog.count()); attempt++) {
 			await cancelBtn.dispatchEvent('click').catch(() => undefined);
 			if (!(await inviteDialog.waitFor({ state: 'detached', timeout: 2500 }).then(() => true).catch(() => false))) {
@@ -284,12 +296,27 @@ export const selectTagsFromDropdown = async (index) => {
 	await selectNgOption(CandidatesPage.addTagsDropdownCss, CandidatesPage.tagsDropdownOption, index);
 };
 
+// The candidate's picture used to be an image-URL text input; since a73de1d121 (#10336) the shared
+// basic-info form takes it through the <ngx-image-uploader> avatar instead (a transparent file input over
+// the avatar circle). "The picture control is there" = the avatar is visible and its file input attached.
 export const imageInputVisible = async () => {
-	await verifyElementIsVisible(CandidatesPage.imageInputCss);
+	await verifyElementIsVisible(CandidatesPage.imageUploaderCss);
+	await waitElementToLoad(CandidatesPage.imageInputCss);
 };
 
-export const enterImageInputData = async (data) => {
-	await enterInput(CandidatesPage.imageInputCss, data);
+// Set the candidate's picture through the avatar uploader (the equivalent of the old "type an image URL"
+// step): picks a PNG, which is uploaded to /api/image-assets/upload/profile_pictures and fills the form's
+// imageUrl/imageId. The uploader takes a file, not a URL, so the legacy `data` (URL) argument is unused.
+// The upload outcome is returned rather than asserted: the picture is optional and a later file-storage
+// scenario can leave the tenant on an unusable storage provider (see util.uploadImageThroughUploader).
+export const enterImageInputData = async (_data?: string): Promise<boolean> =>
+	uploadImageThroughUploader('ga-candidate-mutation ga-user-basic-info-form');
+
+// Narrow the server-paginated candidates grid to the candidate this scenario created (best-effort: a grid
+// without the filter row is left as is). The suite runs serially on one database, so a new candidate is
+// not guaranteed to land on page 1; filtering by name keeps "our row" findable/selectable.
+export const scopeGridToCandidate = async (fullName: string) => {
+	await scopeGridTo(CandidatesPage.nameFilterInputCss, fullName);
 };
 
 export const nextButtonVisible = async () => {

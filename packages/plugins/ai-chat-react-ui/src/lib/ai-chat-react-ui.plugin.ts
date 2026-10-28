@@ -1,7 +1,7 @@
 import { PermissionsEnum } from '@gauzy/contracts';
 import { defineDeclarativePlugin, PluginRouteInput } from '@gauzy/plugin-ui';
 import { PLAYGROUND_ROUTE } from './playground.routes';
-import { AI_CHAT_SETTINGS_ROUTE } from './settings';
+import { AI_CHAT_SETTINGS_ROUTE, provideAiProviderConnectCallback } from './settings';
 import { AI_CHAT_REACT_UI_PLUGIN_ID, provideAiChatSidebar } from './provide-ai-chat-sidebar';
 import en from '../i18n/en.json';
 
@@ -73,5 +73,7 @@ export const AiChatReactUiPlugin = defineDeclarativePlugin(AI_CHAT_REACT_UI_PLUG
 	},
 
 	// ── Providers ────────────────────────────────────────────────
-	providers: [provideAiChatSidebar()]
+	// `provideAiProviderConnectCallback` picks up the OpenRouter Connect `?code=` from the app's
+	// root URL at start-up and hands it to the AI Providers page.
+	providers: [provideAiChatSidebar(), provideAiProviderConnectCallback()]
 });

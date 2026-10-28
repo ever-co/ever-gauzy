@@ -53,6 +53,7 @@
 		"VIEW": "View",
 		"SEND": "Send",
 		"ARCHIVE": "Archive",
+		"UNARCHIVE": "הוצאה מהארכיון",
 		"HIRE": "Hire",
 		"MANAGE_CATEGORIES": "Manage Categories",
 		"REJECT": "Reject",
@@ -1884,6 +1885,39 @@
 		"TIME_TRACKING": "Time Tracking",
 		"PROJECT_MANAGEMENT": "Project Management",
 		"EMPLOYEE_STATISTICS": "סטטיסטיקת עובדים",
+		"PROJECT_MANAGEMENT_VIEW": {
+			"SHOWING": "{{ shown }} מתוך {{ total }}",
+			"COLUMN_TASK": "משימה",
+			"COLUMN_PROJECT": "פרויקט",
+			"COLUMN_DUE": "תאריך יעד",
+			"COLUMN_STATUS": "סטטוס",
+			"NO_PROJECT": "ללא פרויקט",
+			"OVERDUE": "באיחור",
+			"DUE_TODAY": "לביצוע היום",
+			"TASKS_COUNT": "{{ count }} משימות בתצוגה",
+			"NO_TASKS": "אין משימות עדיין",
+			"NO_TASKS_HINT": "משימות עבור הבחירה הנוכחית יופיעו כאן, הדחופות ביותר תחילה.",
+			"NO_PROJECTS_HINT": "פרויקטים יופיעו כאן לאחר שהמשימות המוצגות יקושרו אליהם.",
+			"FILTERS": "מסנני משימות",
+			"SEARCH_PLACEHOLDER": "חיפוש משימות",
+			"FILTER_ALL": "הכול",
+			"FILTER_OPEN": "פתוחות",
+			"FILTER_IN_PROGRESS": "בתהליך",
+			"FILTER_IN_REVIEW": "בבדיקה",
+			"FILTER_DONE": "בוצעו",
+			"PRIORITY": "עדיפות",
+			"ANY_PRIORITY": "כל עדיפות",
+			"PRIORITY_URGENT": "דחופה",
+			"PRIORITY_HIGH": "גבוהה",
+			"PRIORITY_MEDIUM": "בינונית",
+			"PRIORITY_LOW": "נמוכה",
+			"ANY_DUE_DATE": "כל תאריך יעד",
+			"DUE_THIS_WEEK": "לביצוע השבוע",
+			"NO_DUE_DATE": "ללא תאריך יעד",
+			"CLEAR_FILTERS": "נקה מסננים",
+			"NO_MATCHES": "אין משימות שתואמות למסננים אלה",
+			"NO_MATCHES_HINT": "נסו סטטוס, עדיפות או תאריך יעד אחרים, או נקו את המסננים."
+		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "על פני {{ count }} עובדים",
 			"OF_INCOME": "{{ value }}% מההכנסה",
@@ -5213,6 +5247,8 @@
 			"EDIT_ORGANIZATIONS_PROJECTS": {
 				"ADD_PROJECT": "Project '{{ name }}' was saved",
 				"REMOVE_PROJECT": "Project '{{ name }}' was removed",
+				"ARCHIVE_PROJECT": "הפרויקט '{{ name }}' הועבר לארכיון",
+				"UNARCHIVE_PROJECT": "הפרויקט '{{ name }}' הוצא מהארכיון",
 				"INVALID_PROJECT_NAME": "Please fill in the name of your project",
 				"VISIBILITY": "Now project is {{ name }} "
 			},
@@ -5220,7 +5256,9 @@
 				"ADD_NEW_TEAM": "Team '{{ name }}' was added",
 				"EDIT_EXISTING_TEAM": "Team '{{ name }}' was changed",
 				"INVALID_TEAM_NAME": "Please add a Team name and at least one member",
-				"REMOVE_TEAM": "Team '{{ name }}' was removed"
+				"REMOVE_TEAM": "Team '{{ name }}' was removed",
+				"ARCHIVE_TEAM": "הצוות '{{ name }}' הועבר לארכיון",
+				"UNARCHIVE_TEAM": "הצוות '{{ name }}' הוצא מהארכיון"
 			},
 			"EDIT_ORGANIZATIONS_EMPLOYEE_LEVELS": {
 				"ADD_EMPLOYEE_LEVEL": "Employee Level '{{ name }}' was added",
@@ -6481,6 +6519,60 @@
 			}
 		}
 	},
+	"DELETE_ACCOUNT_PAGE": {
+		"LOGIN_LINK": "מחיקת החשבון שלי",
+		"BACK_TO_LOGIN": "חזרה להתחברות",
+		"REQUEST": {
+			"TITLE": "מחיקת החשבון שלך",
+			"SUB_TITLE": "יש להזין את כתובת האימייל של החשבון. נשלח אליך קישור לבדיקה ולאישור של מחיקת כל החשבונות הרשומים בכתובת זו. אין צורך בסיסמה.",
+			"EMAIL": "כתובת אימייל",
+			"EMAIL_PLACEHOLDER": "you@company.com",
+			"STEP_1": "יש לפתוח את הקישור שבאימייל תוך 30 דקות. הוא פועל פעם אחת בלבד.",
+			"STEP_2": "יש לבדוק את החשבונות ואת סביבות העבודה שיימחקו.",
+			"STEP_3": "יש לאשר. שום דבר לא נמחק לפני האישור.",
+			"SUBMIT": "שליחת קישור מחיקה באימייל",
+			"SENT_TITLE": "כדאי לבדוק את תיבת הדואר הנכנס",
+			"SENT": "אם קיים חשבון עבור כתובת זו, שלחנו אליה קישור למחיקתו. תוקף הקישור יפוג בעוד 30 דקות. שום דבר עדיין לא נמחק.",
+			"TOO_MANY": "יותר מדי בקשות. יש להמתין דקה ולנסות שוב.",
+			"FAILED": "משהו השתבש. יש לנסות שוב."
+		},
+		"CONFIRM": {
+			"TITLE": "אישור מחיקת החשבון",
+			"LOADING": "הקישור נבדק...",
+			"INVALID_TITLE": "לא ניתן להשתמש בקישור הזה",
+			"INVALID": "הקישור אינו תקף, פג תוקפו, הוחלף בקישור חדש יותר או שכבר נעשה בו שימוש. כדי להמשיך יש לבקש קישור חדש.",
+			"REQUEST_NEW": "בקשת קישור חדש",
+			"UNAVAILABLE_TITLE": "לא הצלחנו לבדוק את הקישור",
+			"UNAVAILABLE": "בדרך כלל מדובר בבעיה זמנית (בעיית חיבור או שרת, או יותר מדי ניסיונות). לא נעשה שימוש בקישור: אפשר לנסות שוב בעוד רגע.",
+			"TRY_AGAIN": "ניסיון חוזר",
+			"PLAN_CHANGED": "מה שיימחק השתנה מאז שהדף נפתח, ולכן שום דבר לא נמחק. יש לבדוק שוב ואז לאשר.",
+			"PLAN_CHANGED_PARTIAL": "חלק מהחשבונות שלך נמחקו, אבל מה שיימחק בשאר החשבונות השתנה בינתיים, ולכן הם נשמרו. יש לבדוק את מה שנותר ולאשר שוב.",
+			"INTRO": "החשבונות האלה רשומים בכתובת {{ email }} ויימחקו:",
+			"UNNAMED": "סביבת עבודה",
+			"OUTCOME_WORKSPACE": "אין חברים נוספים: סביבת העבודה כולה וכל הנתונים שלה יימחקו.",
+			"OUTCOME_ACCOUNT": "משותפת עם חברים נוספים ({{ members }}): החשבון שלך, הפרופיל והרשומות שלך (רישומי זמן, צילומי מסך, פעילות) יימחקו. תוכן שיצרת עבור סביבת העבודה יישאר בה, ללא שמך.",
+			"OUTCOME_ACCOUNT_LAST": "אתה החבר היחיד בה אך אינך מנהל: החשבון, הפרופיל והרשומות שלך (רישומי זמן, צילומי מסך, פעילות) יימחקו. סביבת העבודה ושאר הנתונים שלה נשארים.",
+			"SOLE_ADMIN": "אין בסביבת העבודה הזו מנהל אחר מלבדך. לאחר עזיבתך לא יהיה לשאר החברים מנהל.",
+			"KEPT": "נשמרים: רשומת ביקורת של בקשה זו (ללא שם, עם גיבוב של הכתובת), רשומות חיוב שעלינו לשמור על פי חוק, וגיבויים מוצפנים עד שיידרסו (14 יום).",
+			"UNDERSTAND": "ידוע לי שלא ניתן לבטל פעולה זו.",
+			"TYPE_WORD": "יש להקליד {{ word }} לאישור",
+			"SUBMIT": "מחיקה לצמיתות",
+			"FAILED": "המחיקה לא הושלמה. הקישור ממשיך לפעול עד שיפוג תוקפו: יש לנסות שוב.",
+			"DONE_TITLE": "החשבון שלך נמחק",
+			"DONE": "חשבונות שנמחקו: {{ accounts }}, מהם סביבות עבודה שלמות: {{ workspaces }}. אימייל אישור בדרך אליך.",
+			"FINISH": "סיום"
+		},
+		"DANGER_ZONE_HELP": {
+			"DELETE_ACCOUNT": "מחיקת חשבון: מוחקת לצמיתות את החשבון שלך בסביבת העבודה הזו, את הפרופיל, את נתוני ההתחברות ואת הרשומות שלך (רישומי זמן, צילומי מסך, פעילות). תוכן שיצרת עבור סביבת העבודה יישאר בה, ללא שמך. אם אין בה חברים נוספים ואתה מנהל שלה, גם סביבת העבודה כולה וכל הנתונים שלה נמחקים. לאחר מכן יישלח אימייל אישור.",
+			"DELETE_ALL_DATA": "מחיקת כל הנתונים: מוחקת את כל הנתונים של הארגונים שאליהם משתייך החשבון שלך בסביבת העבודה הזו (עובדים, פרויקטים, משימות, מעקב זמן, חשבוניות, ...) ושומרת את החשבון שלך.",
+			"BY_EMAIL": "יש לך חשבונות בכמה סביבות עבודה, או שאין לך אפשרות להתחבר?",
+			"BY_EMAIL_LINK": "מחיקת כולם באמצעות קישור באימייל"
+		},
+		"DANGER_ZONE": {
+			"PREVIEW_FAILED": "לא הצלחנו לבדוק מה יימחק יחד עם החשבון שלך, ולכן שום דבר לא שונה. יש לנסות שוב.",
+			"PLAN_CHANGED": "סביבת העבודה השתנתה מאז שחלון הדו-שיח נפתח, ולכן שום דבר לא נמחק. יש לנסות שוב כדי לראות מה יימחק כעת."
+		}
+	},
 	"FORGOT_PASSWORD_PAGE": {
 		"TITLE": "Forgot Password",
 		"SUB_TITLE": "Enter your email address and we’ll send a link to reset your password",
@@ -7030,5 +7122,34 @@
 		"COMMENT_IMAGE_TYPES": "ניתן לצרף רק תמונות PNG, JPEG, GIF, WebP ו-BMP.",
 		"COMMENT_IMAGE_LIMIT": "תגובה יכולה לכלול עד {{ count }} תמונות.",
 		"COMMENT_IMAGE_FAILED": "לא ניתן היה להעלות את {{ name }}."
+	},
+	"TASK_VIEW": {
+		"CHANGE_STATUS": "שינוי סטטוס",
+		"LINK_COPIED": "הקישור הועתק",
+		"SUBTASKS": "תתי־משימות",
+		"SUBTASKS_DONE": "{{ done }} מתוך {{ total }} הושלמו",
+		"NO_SUBTASKS": "אין תתי־משימות",
+		"LINKED_ISSUES": "משימות מקושרות",
+		"NO_LINKED_ISSUES": "אין משימות מקושרות",
+		"LINKS": {
+			"BLOCKS": "חוסמת את",
+			"IS_BLOCKED_BY": "חסומה על ידי",
+			"CLONES": "משכפלת את",
+			"IS_CLONED_BY": "משוכפלת על ידי",
+			"DUPLICATES": "כפילות של",
+			"IS_DUPLICATED_BY": "כפולה על ידי",
+			"RELATES_TO": "קשורה ל"
+		},
+		"TIME_TRACKING": "מעקב זמן",
+		"LOGGED": "נרשם",
+		"REMAINING": "נותר",
+		"OVER_ESTIMATE": "{{ value }} מעל ההערכה",
+		"HOURS_PER_DAY": "שעות ליום",
+		"LAST_DAYS": "{{ count }} הימים האחרונים",
+		"NO_HOURS": "לא נרשם זמן במשימה זו לאחרונה",
+		"TIME_ENTRIES": "רשומות זמן אחרונות",
+		"NO_TIME_ENTRIES": "אין רשומות זמן לאחרונה",
+		"RUNNING": "פועל",
+		"ACTIVITY_LEVEL": "פעילות: שימוש במקלדת ובעכבר בזמן המעקב"
 	}
 }

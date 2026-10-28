@@ -1,4 +1,5 @@
-import { NotFoundException, UseGuards } from '@nestjs/common';
+import { NotFoundException, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FormerEmployeesInterceptor } from '../employee/former-employees.interceptor';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
@@ -134,6 +135,7 @@ const ORGANIZATION_DEPARTMENT_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * part of it.
  */
 @Resolver('OrganizationDepartment')
+@UseInterceptors(FormerEmployeesInterceptor)
 @UseGuards(TenantPermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 export class OrganizationDepartmentResolver {

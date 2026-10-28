@@ -1,7 +1,7 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router, NavigationEnd, NavigationStart } from '@angular/router';
-import posthog, { PostHogConfig, Properties } from 'posthog-js';
+import posthog, { BeforeSendFn, PostHogConfig, Properties } from 'posthog-js';
 
 /**
  * Complete PostHog service for Angular applications
@@ -16,12 +16,48 @@ import posthog, { PostHogConfig, Properties } from 'posthog-js';
  * - Error monitoring
  * - Page views
  */
+/** A `token` / `code` parameter in a URL: the single-use secret of an emailed link (see the sanitizer below). */
+const URL_SECRET = /[?&#](token|code)=/i;
+
+/**
+ * Event properties that hold a URL: PostHog's own (including the first URL of the person and of the session,
+ * which PostHog keeps and re-sends on later events), plus `route` (the router's `urlAfterRedirects`, query
+ * included) and `referrer` (`document.referrer`) that {@link PostHogService.setupRouteTracking} adds to every pageview.
+ */
+const URL_PROPERTIES = [
+	'$current_url',
+	'current_url',
+	'$referrer',
+	'$initial_referrer',
+	'$initial_current_url',
+	'$session_entry_url',
+	'$pathname',
+	'url',
+	'route',
+	'referrer'
+];
+
+/** Every `token` / `code` parameter value in a URL. */
+const URL_SECRET_VALUE = /([?&#])(token|code)=[^&#]*/gi;
+
+/** Redacts, in place, the `token` / `code` values in the URL-valued entries of `properties`. */
+function redactUrlProperties(properties: Properties | undefined): void {
+	if (!properties) return;
+	for (const key of URL_PROPERTIES) {
+		if (typeof properties[key] === 'string') {
+			properties[key] = properties[key].replace(URL_SECRET_VALUE, '$1$2=[redacted]');
+		}
+	}
+}
+
 @Injectable({
 	providedIn: 'root'
 })
 export class PostHogService {
 	private initialized = false;
 	private config: Partial<PostHogConfig> = {};
+	/** The page loaded with an emailed link's secret in its URL: no session recording for this page load. */
+	private loadedWithUrlSecret = false;
 
 	constructor(private router: Router, @Inject(PLATFORM_ID) private platformId: object) {}
 
@@ -38,6 +74,36 @@ export class PostHogService {
 				capture_pageview: false, // We'll handle page views manually for more control
 				...config
 			};
+			// Emailed links (account deletion, password reset, invitations) carry a single-use token in the URL,
+			// in the fragment under hash routing; every PostHog event records the full URL. Redact it first.
+			const sanitize = this.config.sanitize_properties;
+			this.config.sanitize_properties = (properties, eventName) => {
+				const cleaned = sanitize ? sanitize(properties, eventName) : properties;
+				redactUrlProperties(cleaned);
+				return cleaned;
+			};
+			// The person properties ride outside the event properties, in `$set` / `$set_once` (for example the
+			// first URL ever seen, `$initial_current_url`), where `sanitize_properties` does not reach. Redact them
+			// last, after any `before_send` the app configured.
+			const redactPersonProperties: BeforeSendFn = (event) => {
+				if (event) {
+					redactUrlProperties(event.$set);
+					redactUrlProperties(event.$set_once);
+				}
+				return event;
+			};
+			const beforeSend = this.config.before_send;
+			this.config.before_send = [
+				...(Array.isArray(beforeSend) ? beforeSend : beforeSend ? [beforeSend] : []),
+				redactPersonProperties
+			];
+			// Session recording captures the page's initial URL in its snapshots, which `sanitize_properties` never
+			// sees. A page load that starts on such a link (the token is still in the address bar until the page
+			// removes it) records no session at all; the next page load records as configured.
+			this.loadedWithUrlSecret = URL_SECRET.test(window.location?.href ?? '');
+			if (this.loadedWithUrlSecret) {
+				this.config.disable_session_recording = true;
+			}
 
 			// Initialize PostHog with API key and configuration
 			posthog.init(apiKey, this.config);
@@ -76,6 +142,13 @@ export class PostHogService {
 		router.events.subscribe((event) => {
 			if (event instanceof NavigationStart) {
 				routeStartTime = Date.now();
+				// An emailed link opened in a tab already running the app is a same-document navigation: no page
+				// load, so the check made at initialization never sees it. Stop recording for good before the
+				// token-bearing page renders (`startSessionRecording` then refuses too).
+				if (URL_SECRET.test(event.url) || URL_SECRET.test(window.location?.href ?? '')) {
+					this.loadedWithUrlSecret = true;
+					posthog.stopSessionRecording();
+				}
 			}
 			if (event instanceof NavigationEnd) {
 				const loadTime = Date.now() - routeStartTime;
@@ -271,10 +344,10 @@ export class PostHogService {
 	}
 
 	/**
-	 * Manually starts session recording
+	 * Manually starts session recording (never on a page load that started with an emailed link's secret in the URL)
 	 */
 	startSessionRecording(): void {
-		if (!this.initialized) return;
+		if (!this.initialized || this.loadedWithUrlSecret) return;
 
 		posthog.startSessionRecording();
 	}

@@ -5,5 +5,6 @@ export * from './lib/common.module';
 export * from './lib/constants';
 export * from './lib/http-params';
 export * from './lib/interfaces';
+export * from './lib/utils/redact-url-secrets';
 export * from './lib/utils/shared-utils';
 export * from './lib/utils/version-conflict';

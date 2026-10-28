@@ -8,7 +8,9 @@ export const RemoveUserPage = {
 	// one record so it is on page 1 and is the only data row. Column key is `fullName` (see users.component).
 	nameFilterInputCss: 'th.angular2-smart-th.fullName input',
 	removeButtonCss: 'div.actions button:has(nb-icon[icon="trash-2-outline"])',
-	confirmRemoveUserButtonCss: 'nb-card-footer > button[status="danger"]',
+	// OK in the DeleteConfirmationComponent (ga-delete-confirmation) that removeUserFromOrganization()
+	// opens; scoped to that dialog so no other card footer on the page can match first.
+	confirmRemoveUserButtonCss: 'ga-delete-confirmation nb-card-footer > button[status="danger"]',
 	toastrMessageCss: 'nb-toast.ng-trigger',
 	verifyUserCss: 'ga-picture-name-tags a.link-text'
 };
