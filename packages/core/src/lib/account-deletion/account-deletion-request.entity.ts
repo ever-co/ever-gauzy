@@ -74,6 +74,14 @@ export class AccountDeletionRequest extends BaseEntity implements IAccountDeleti
 	@MultiORMColumn({ nullable: true, length: 20 })
 	locale?: string | null;
 
+	/**
+	 * JSON of the branding the request asked for (app name, logo, links already checked against the origins
+	 * this deployment serves), so the "deleted" email speaks for the same app as the link email.
+	 */
+	@ApiPropertyOptional({ type: () => String })
+	@MultiORMColumn({ type: 'text', nullable: true })
+	branding?: string | null;
+
 	/** JSON summary of what the deletion removed (counts only). */
 	@ApiPropertyOptional({ type: () => String })
 	@MultiORMColumn({ type: 'text', nullable: true })

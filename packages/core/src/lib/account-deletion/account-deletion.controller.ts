@@ -106,6 +106,7 @@ export class AccountDeletionController {
 	@Throttle({ default: { limit: 5, ttl: 60000 } })
 	@UseValidationPipe({ whitelist: true })
 	async deleteMe(@Body() body: ConfirmCurrentAccountDeletionDTO): Promise<IAccountDeletionResult> {
-		return await this.accountDeletionService.deleteCurrentUser(body.planHash);
+		const { confirm, planHash, ...branding } = body;
+		return await this.accountDeletionService.deleteCurrentUser(planHash, branding);
 	}
 }

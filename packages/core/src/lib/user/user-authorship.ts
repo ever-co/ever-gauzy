@@ -10,6 +10,12 @@ export const USER_AUTHORSHIP_COLUMNS: ReadonlyArray<string> = ['createdByUserId'
 const OWNER_COLUMNS: Record<'user' | 'employee', string> = { user: 'userId', employee: 'employeeId' };
 
 /**
+ * Tables where that same column only names the author of shared content, so it is cleared like any other
+ * reference: a departing member's comments stay on the tasks of the workspace.
+ */
+const AUTHOR_NOT_OWNER: Record<string, ReadonlyArray<string>> = { comment: ['employeeId'] };
+
+/**
  * Tables whose rows are personal to the member (employee) they point at, under any column name: they go with
  * the member (the database cascade) instead of being kept with the reference cleared. References to the
  * *user* are always cleared, wherever they are: an admin who created someone else's row must not take it along.
@@ -90,6 +96,31 @@ export async function lockRowForUpdate(manager: EntityManager, table: string, id
 	return rows.length > 0;
 }
 
+/**
+ * The ids of every member (employee) record of a user, in every organization, soft-deleted ones included:
+ * all of them go with the user (`employee.userId` cascades).
+ */
+export async function employeeIdsOfUser(manager: EntityManager, userId: ID): Promise<ID[]> {
+	const driver = manager.connection.driver;
+	const rows: Array<{ id: ID }> = await manager.query(
+		`SELECT ${driver.escape('id')} AS ${driver.escape('id')} FROM ${driver.escape('employee')} WHERE ${driver.escape(
+			'userId'
+		)} = ${sqlPlaceholder(manager, 1)}`,
+		[userId]
+	);
+	return rows.map((row) => row.id);
+}
+
+/**
+ * Locks rows for the rest of the transaction, so nothing can start referencing them (or change them) between
+ * the scan of their references and their deletion.
+ */
+export async function lockRowsForUpdate(manager: EntityManager, table: string, ids: ID[]): Promise<void> {
+	for (const id of ids) {
+		await lockRowForUpdate(manager, table, id);
+	}
+}
+
 /** The SQL placeholder for the n-th parameter (1-based) of the manager's driver. */
 export function sqlPlaceholder(manager: EntityManager, n: number): string {
 	return manager.connection.driver.options.type === 'postgres' ? `$${n}` : '?';
@@ -109,7 +140,7 @@ async function detachReferences(manager: EntityManager, target: 'user' | 'employ
 			if (
 				foreignKey.columnNames.length !== 1 ||
 				foreignKey.referencedTablePath !== target ||
-				column === OWNER_COLUMNS[target]
+				(column === OWNER_COLUMNS[target] && !AUTHOR_NOT_OWNER[metadata.tablePath]?.includes(column))
 			) {
 				continue;
 			}

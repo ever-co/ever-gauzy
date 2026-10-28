@@ -13,8 +13,12 @@
 				<mj-text font-family="Helvetica">
 					<p>Hello,</p>
 					{{#if allAccounts}}
-					<p>Every {{appName}} account registered with <strong>{{email}}</strong> has been deleted ({{accounts}} account(s), {{workspacesDeleted}} workspace(s) removed entirely).</p>
-					<p>Your profiles, sign-in details and memberships are gone and you can no longer sign in with this address.</p>
+					{{#if multipleAccounts}}
+					<p>Every {{appName}} account registered with <strong>{{email}}</strong> has been deleted: {{accounts}} accounts, {{workspacesDeleted}} of their workspaces removed entirely.</p>
+					{{else}}
+					<p>The {{appName}} account registered with <strong>{{email}}</strong> has been deleted{{#if workspacesDeleted}}, together with its workspace and all of its data{{/if}}.</p>
+					{{/if}}
+					<p>Your profile, sign-in details and memberships are gone and you can no longer sign in with this address.</p>
 					{{else}}
 					<p>Your {{appName}} account in the workspace <strong>{{workspace}}</strong> has been deleted{{#if workspacesDeleted}}, together with the workspace and all of its data{{/if}}.</p>
 					<p>Accounts registered with <strong>{{email}}</strong> in other workspaces, if any, are not affected and still work. To delete them too, use "Delete my account" on the sign-in page.</p>

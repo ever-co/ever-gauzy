@@ -34,7 +34,9 @@ import { isDefaultProtectedUser } from '../user/default-protected-users';
 import {
 	detachEmployeeReferences,
 	detachUserReferences,
+	employeeIdsOfUser,
 	lockRowForUpdate,
+	lockRowsForUpdate,
 	sqlPlaceholder
 } from '../user/user-authorship';
 import {
@@ -68,9 +70,14 @@ export const ACCOUNT_DELETION_INVALID_LINK_MESSAGE = 'This link is invalid or ha
 export const ACCOUNT_DELETION_PLAN_CHANGED_MESSAGE =
 	'What would be deleted has changed since you reviewed it (for example, a member joined or left). Nothing was deleted: review it again.';
 
+/** The answer when an account changed half-way: the ones before it were deleted, the rest were not. */
+export const ACCOUNT_DELETION_PARTIAL_MESSAGE =
+	'Some of your accounts were deleted, but what would be deleted for the others changed while we worked. Review what remains and confirm again.';
+
 /**
- * How long a confirm holds its claim on a link. A claim that never completed (the process died mid-way) can be
- * taken again once it is older than this, while the link has not expired; the deletion then carries on.
+ * How long a confirm holds its claim on a link without renewing it. The claim is renewed after every account,
+ * and only by the confirm that holds it; a claim left alone longer (the process died mid-way) can be taken
+ * again while the link has not expired, and the deletion then carries on.
  */
 export const ACCOUNT_DELETION_CLAIM_LEASE_MS = 10 * 60 * 1000;
 
@@ -166,14 +173,9 @@ export class AccountDeletionService {
 			const ttlMinutes = accountDeletionTtlMinutes();
 			const token = generateAccountDeletionToken();
 
-			const created = await this.dataSource.transaction(async (manager) => {
-				const release = await this.lockAddress(manager, emailHash);
-				try {
-					return await this.issueLink(manager, emailHash, email, token, ttlMinutes, input, meta, users[0]);
-				} finally {
-					await release();
-				}
-			});
+			const created = await this.withAddressLock(emailHash, (manager) =>
+				this.issueLink(manager, emailHash, email, token, ttlMinutes, input, meta, users[0])
+			);
 			if (!created) {
 				this.logger.warn(`Account deletion request dropped: address limit reached (email ${short(emailHash)}).`);
 				return;
@@ -235,7 +237,8 @@ export class AccountDeletionService {
 				expiresAt: new Date(now.getTime() + ttlMinutes * 60 * 1000),
 				requestIpHash: hashAccountDeletionIp(meta.ip),
 				userAgent: meta.userAgent ? meta.userAgent.slice(0, 255) : null,
-				locale: supportedLanguage(input.locale) || firstUser.preferredLanguage || LanguagesEnum.ENGLISH
+				locale: supportedLanguage(input.locale) || firstUser.preferredLanguage || LanguagesEnum.ENGLISH,
+				branding: JSON.stringify(this.brandingOf(input))
 			})
 		);
 	}
@@ -293,22 +296,30 @@ export class AccountDeletionService {
 		}
 
 		const counts: ErasureCounts = { ...NO_ERASURE, ...parseCounts(request.result) };
+		let claim = now;
+		let deletedNow = 0;
 		try {
 			for (const item of planned) {
-				add(counts, await this.eraseAccount(item, request.id));
-				// Progress survives a crash: a retry adds to these counts instead of starting from zero.
-				await this.saveAuditRow(request.id, { result: JSON.stringify(counts) });
+				add(counts, await this.eraseAccount(item, request.id, request.email));
+				deletedNow++;
+				// Progress survives a crash (a retry adds to these counts), and renews the claim: only while this
+				// confirm still holds it, so a confirm that lost it stops instead of racing the one that took over.
+				claim = await this.renewClaim(request.id, claim, { result: JSON.stringify(counts) });
 			}
 		} catch (error) {
 			this.logger.error(
 				`Account deletion ${request.id} stopped after ${counts.accounts} account(s): ${error?.message}. Link released for a retry.`
 			);
-			await this.saveAuditRow(request.id, { usedAt: null });
+			await this.releaseClaim(request.id, claim);
+			if (deletedNow > 0 && error instanceof ConflictException) {
+				throw new ConflictException(ACCOUNT_DELETION_PARTIAL_MESSAGE);
+			}
 			throw error;
 		}
 
-		// The audit record: from here on the row carries no clear address, only its hash and the counts.
-		await this.saveAuditRow(request.id, {
+		// The audit record: from here on the row carries no clear address, only its hash and the counts. Not
+		// swallowed: a link that stayed incomplete could be taken again once its lease ran out.
+		await this.renewClaim(request.id, claim, {
 			email: null,
 			completedAt: new Date(),
 			result: JSON.stringify({ ...counts, completedAt: new Date().toISOString() })
@@ -324,7 +335,7 @@ export class AccountDeletionService {
 			workspacesDeleted: counts.workspacesDeleted,
 			allAccounts: true,
 			locale: (request.locale as LanguagesEnum) || LanguagesEnum.ENGLISH,
-			integration: environment.appIntegrationConfig
+			integration: deepMerge(environment.appIntegrationConfig, parseBranding(request.branding))
 		});
 
 		return { deleted: true, accounts: counts.accounts, workspacesDeleted: counts.workspacesDeleted };
@@ -351,7 +362,7 @@ export class AccountDeletionService {
 	 *
 	 * @throws ConflictException when what would be deleted changed since the preview.
 	 */
-	async deleteCurrentUser(planHash: string): Promise<IAccountDeletionResult> {
+	async deleteCurrentUser(planHash: string, branding: Partial<IAccountDeletionRequestInput> = {}): Promise<IAccountDeletionResult> {
 		assertFirstPartyRequest('Deleting a user account');
 		const { planned, user } = await this.planCurrentUser();
 		if (planHashOf(planned) !== planHash) {
@@ -379,7 +390,7 @@ export class AccountDeletionService {
 
 		const counts: ErasureCounts = { ...NO_ERASURE };
 		for (const item of planned) {
-			add(counts, await this.eraseAccount(item, auditId));
+			add(counts, await this.eraseAccount(item, auditId, email));
 		}
 
 		await this.saveAuditRow(auditId, {
@@ -396,7 +407,7 @@ export class AccountDeletionService {
 			allAccounts: false,
 			workspace: planned[0]?.account.workspace,
 			locale: (user.preferredLanguage as LanguagesEnum) || LanguagesEnum.ENGLISH,
-			integration: environment.appIntegrationConfig
+			integration: this.integration(branding)
 		});
 		return { deleted: true, accounts: counts.accounts, workspacesDeleted: counts.workspacesDeleted };
 	}
@@ -436,7 +447,7 @@ export class AccountDeletionService {
 	 * Files are removed before the rows: if the transaction then fails, the rows remain without their files,
 	 * and a retry finishes the deletion; the other order would lose the keys of files left in the bucket.
 	 */
-	private async eraseAccount({ user, account }: PlannedAccount, auditId: ID): Promise<ErasureCounts> {
+	private async eraseAccount({ user, account }: PlannedAccount, auditId: ID, email: string): Promise<ErasureCounts> {
 		const result = await this.dataSource.transaction(async (manager): Promise<ErasureCounts> => {
 			if (user.tenantId) {
 				await lockRowForUpdate(manager, 'tenant', user.tenantId);
@@ -444,9 +455,17 @@ export class AccountDeletionService {
 			if (!(await lockRowForUpdate(manager, 'user', user.id))) {
 				return { ...NO_ERASURE }; // Already deleted by an earlier attempt.
 			}
-			if ((await this.outcomeOf(manager, user)) !== account.outcome) {
+			// The account must still be the one planned: same address (it may have been changed meanwhile, and the
+			// link only proves the old one) and same outcome.
+			if (
+				normalizeAccountDeletionEmail(await this.emailOf(manager, user.id)) !== normalizeAccountDeletionEmail(email) ||
+				(await this.outcomeOf(manager, user)) !== account.outcome
+			) {
 				throw new ConflictException(ACCOUNT_DELETION_PLAN_CHANGED_MESSAGE);
 			}
+			const employeeIds = await employeeIdsOfUser(manager, user.id);
+			// Nothing may start pointing at these members between the scan of their references and the delete.
+			await lockRowsForUpdate(manager, 'employee', employeeIds);
 			const wholeWorkspace = account.outcome === AccountDeletionOutcomeEnum.WORKSPACE_DELETED;
 
 			let subscriptionsCancelled = 0;
@@ -470,7 +489,7 @@ export class AccountDeletionService {
 			const contactIds = wholeWorkspace ? [] : await this.contactIdsOf(manager, user.id);
 
 			await detachUserReferences(manager, user.id);
-			await detachEmployeeReferences(manager, await this.employeeIdsOf(manager, user.id));
+			await detachEmployeeReferences(manager, employeeIds);
 
 			const removed = await deleteStoredFiles(files, tenantSettings);
 
@@ -568,16 +587,53 @@ export class AccountDeletionService {
 		return [...new Set(ids)];
 	}
 
-	/** The ids of the user's member (employee) records, soft-deleted ones included. */
-	private async employeeIdsOf(manager: EntityManager, userId: ID): Promise<ID[]> {
+	/** The user's address as stored now (read under the row lock). */
+	private async emailOf(manager: EntityManager, userId: ID): Promise<string> {
 		const driver = manager.connection.driver;
-		const rows: Array<{ id: ID }> = await manager.query(
-			`SELECT ${driver.escape('id')} AS ${driver.escape('id')} FROM ${driver.escape('employee')} WHERE ${driver.escape(
-				'userId'
+		const [row] = await manager.query(
+			`SELECT ${driver.escape('email')} AS ${driver.escape('email')} FROM ${driver.escape('user')} WHERE ${driver.escape(
+				'id'
 			)} = ${sqlPlaceholder(manager, 1)}`,
 			[userId]
 		);
-		return rows.map((row) => row.id);
+		return row?.email || '';
+	}
+
+	/**
+	 * Writes to a claimed request's row and renews the claim, only while this confirm still holds it (its
+	 * `usedAt` is unchanged). Without listeners, like {@link saveAuditRow}.
+	 *
+	 * @returns The renewed claim.
+	 * @throws GoneException when another confirm took the claim over (this one stalled past the lease).
+	 */
+	private async renewClaim(id: ID, claim: Date, values: Partial<AccountDeletionRequest>): Promise<Date> {
+		const renewed = new Date();
+		const result = await this.typeOrmAccountDeletionRequestRepository
+			.createQueryBuilder()
+			.update(AccountDeletionRequest)
+			.set({ ...values, usedAt: renewed })
+			.where({ id, usedAt: claim })
+			.callListeners(false)
+			.execute();
+		if (result.affected !== 1) {
+			throw new GoneException(ACCOUNT_DELETION_INVALID_LINK_MESSAGE);
+		}
+		return renewed;
+	}
+
+	/** Gives the claim back (after a failure), only if this confirm still holds it. */
+	private async releaseClaim(id: ID, claim: Date): Promise<void> {
+		try {
+			await this.typeOrmAccountDeletionRequestRepository
+				.createQueryBuilder()
+				.update(AccountDeletionRequest)
+				.set({ usedAt: null })
+				.where({ id, usedAt: claim, completedAt: IsNull() })
+				.callListeners(false)
+				.execute();
+		} catch (error) {
+			this.logger.error(`Account deletion ${id}: the claim could not be released: ${error?.message}`);
+		}
 	}
 
 	/**
@@ -601,24 +657,48 @@ export class AccountDeletionService {
 	}
 
 	/**
-	 * Serializes link issuing per address for the rest of the transaction: a Postgres advisory transaction
-	 * lock on the address hash (released by the commit), a named lock on MySQL (released by the returned
-	 * function, still inside the transaction). SQLite serializes writers anyway.
-	 *
-	 * @returns A function that releases the lock where the database needs it.
+	 * Runs `work` in a transaction that holds a per-address lock until it commits or rolls back: a Postgres
+	 * advisory transaction lock on the address hash; on MySQL a named lock taken on the transaction's own
+	 * connection before it starts and released after it ends (failing closed when it cannot be taken). SQLite
+	 * serializes writers anyway.
 	 */
-	private async lockAddress(manager: EntityManager, emailHash: string): Promise<() => Promise<void>> {
-		const type = manager.connection.driver.options.type;
-		if (type === 'postgres') {
-			await manager.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`account-deletion:${emailHash}`]);
-		} else if (type === 'mysql') {
-			const name = `gauzy:account-deletion:${emailHash.slice(0, 32)}`;
-			await manager.query(`SELECT GET_LOCK(?, 10)`, [name]);
-			return async () => {
-				await manager.query(`SELECT RELEASE_LOCK(?)`, [name]);
-			};
+	private async withAddressLock<T>(emailHash: string, work: (manager: EntityManager) => Promise<T>): Promise<T> {
+		const type = this.dataSource.driver.options.type;
+		if (type !== 'mysql') {
+			return await this.dataSource.transaction(async (manager) => {
+				if (type === 'postgres') {
+					await manager.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
+						`account-deletion:${emailHash}`
+					]);
+				}
+				return await work(manager);
+			});
 		}
-		return async () => undefined;
+
+		const name = `gauzy:account-deletion:${emailHash.slice(0, 32)}`;
+		const runner = this.dataSource.createQueryRunner();
+		await runner.connect();
+		try {
+			const [row] = await runner.query('SELECT GET_LOCK(?, 10) AS `acquired`', [name]);
+			if (Number(row?.acquired) !== 1) {
+				throw new Error('the per-address lock could not be taken');
+			}
+			try {
+				await runner.startTransaction();
+				try {
+					const result = await work(runner.manager);
+					await runner.commitTransaction();
+					return result;
+				} catch (error) {
+					await runner.rollbackTransaction();
+					throw error;
+				}
+			} finally {
+				await runner.query('SELECT RELEASE_LOCK(?)', [name]);
+			}
+		} finally {
+			await runner.release();
+		}
 	}
 
 	/**
@@ -750,11 +830,15 @@ export class AccountDeletionService {
 	}
 
 	/** The branding of the emails: the deployment's, overridden by the caller's where its links are allowed. */
-	private integration(input: IAccountDeletionRequestInput) {
-		const overrides = pick(input, ...INTEGRATION_FIELDS);
-		return deepMerge(
-			environment.appIntegrationConfig,
-			withAllowedEmailLinks(overrides, warnRejectedEmailLink(this.logger, 'the account deletion email'))
+	private integration(input: Partial<IAccountDeletionRequestInput>) {
+		return deepMerge(environment.appIntegrationConfig, this.brandingOf(input));
+	}
+
+	/** The caller's branding fields, with every link not on an origin this deployment serves dropped. */
+	private brandingOf(input: Partial<IAccountDeletionRequestInput>): Record<string, unknown> {
+		return withAllowedEmailLinks(
+			pick(input, ...INTEGRATION_FIELDS),
+			warnRejectedEmailLink(this.logger, 'the account deletion email')
 		);
 	}
 }
@@ -767,12 +851,28 @@ function outcomeFor(user: User, otherMembers: number): AccountDeletionOutcomeEnu
 }
 
 /**
- * Fingerprint of what a confirm would delete: which accounts, in which workspaces, with which outcome. Holds
+ * Fingerprint of what a confirm would delete: which accounts, in which workspaces, with which outcome, and
+ * whether the user is a workspace's last admin (the warning they were shown). Holds
  * no readable data (ids are hashed together), so it can travel through the browser.
  */
-export function planHashOf(planned: Array<{ user: Pick<User, 'id' | 'tenantId'>; account: Pick<IAccountDeletionAccount, 'outcome'> }>): string {
-	const parts = planned.map(({ user, account }) => `${user.id}|${user.tenantId || ''}|${account.outcome}`).sort();
+export function planHashOf(
+	planned: Array<{ user: Pick<User, 'id' | 'tenantId'>; account: Pick<IAccountDeletionAccount, 'outcome' | 'soleAdmin'> }>
+): string {
+	const parts = planned
+		.map(({ user, account }) => `${user.id}|${user.tenantId || ''}|${account.outcome}|${account.soleAdmin ? 1 : 0}`)
+		.sort();
 	return createHash('sha256').update(parts.join('\n'), 'utf8').digest('hex').slice(0, 32);
+}
+
+/** The branding stored with a request, or nothing when it is missing or unreadable. */
+function parseBranding(branding?: string | null): Record<string, unknown> {
+	if (!branding) return {};
+	try {
+		const parsed = JSON.parse(branding);
+		return parsed && typeof parsed === 'object' ? pick(parsed, ...INTEGRATION_FIELDS) : {};
+	} catch {
+		return {};
+	}
 }
 
 /** The counts kept in an audit row from an earlier, incomplete attempt. */

@@ -19,6 +19,8 @@ export interface IAccountDeletionRequest extends IBaseEntityModel {
 	revokedAt?: Date | null;
 	requestIpHash?: string | null;
 	userAgent?: string | null;
+	/** JSON of the app branding the link was requested with, reused for the "deleted" email. */
+	branding?: string | null;
 	/** JSON summary written when the deletion ran: counts only, no names or addresses. */
 	result?: string | null;
 }
@@ -76,8 +78,12 @@ export interface IAccountDeletionConfirmInput {
 	planHash: string;
 }
 
-/** Body of `POST /account-deletion/me`. */
-export interface IAccountDeletionConfirmMeInput {
+/** Body of `POST /account-deletion/me` (the branding fields brand the "deleted" email). */
+export interface IAccountDeletionConfirmMeInput
+	extends Pick<
+		IAccountDeletionRequestInput,
+		'appName' | 'appLogo' | 'appSignature' | 'appLink' | 'companyLink' | 'companyName'
+	> {
 	confirm: true;
 	planHash: string;
 }

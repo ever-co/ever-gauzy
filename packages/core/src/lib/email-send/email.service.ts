@@ -42,7 +42,13 @@ const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
  * and stores the original URL - token, address and all - as the click's OriginalLink. `X-PM-TrackLinks:
  * None` turns that off for one message. Other providers ignore the header.
  */
-const NO_LINK_TRACKING_HEADERS = { 'X-PM-TrackLinks': 'None' };
+const NO_LINK_TRACKING_HEADERS = {
+	'X-PM-TrackLinks': 'None',
+	// The same for the other providers an SMTP relay is commonly backed by (each ignores the others').
+	'X-Mailgun-Track': 'no',
+	'X-Mailgun-Track-Clicks': 'no',
+	'X-SMTPAPI': JSON.stringify({ filters: { clicktrack: { settings: { enable: 0 } } } })
+};
 
 @Injectable()
 export class EmailService {
@@ -1452,6 +1458,7 @@ export class EmailService {
 			accounts,
 			workspacesDeleted,
 			allAccounts,
+			multipleAccounts: accounts > 1,
 			workspace,
 			...this.withAllowedLinks(integration, EmailTemplateEnum.ACCOUNT_DELETION_COMPLETED)
 		});

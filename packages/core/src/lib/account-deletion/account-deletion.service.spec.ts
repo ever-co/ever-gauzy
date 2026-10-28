@@ -34,7 +34,12 @@ jest.mock('./repository/type-orm-account-deletion-request.repository', () => ({
 
 import { ConflictException, GoneException } from '@nestjs/common';
 import { AccountDeletionOutcomeEnum } from '@gauzy/contracts';
-import { ACCOUNT_DELETION_INVALID_LINK_MESSAGE, AccountDeletionService, planHashOf } from './account-deletion.service';
+import {
+	ACCOUNT_DELETION_INVALID_LINK_MESSAGE,
+	ACCOUNT_DELETION_PARTIAL_MESSAGE,
+	AccountDeletionService,
+	planHashOf
+} from './account-deletion.service';
 import { generateAccountDeletionToken, hashAccountDeletionToken } from './account-deletion-token';
 
 function queryBuilder() {
@@ -62,6 +67,7 @@ function setup() {
 	};
 	const dataSource = {
 		manager: {},
+		driver: { options: { type: 'postgres' } },
 		transaction: jest.fn(async (work) => work(transactionManager))
 	};
 	const emailService = {
@@ -99,6 +105,8 @@ describe('AccountDeletionService', () => {
 			expect(hash).not.toContain('u1');
 			const changed = [planned[0], { ...planned[1], account: { outcome: AccountDeletionOutcomeEnum.WORKSPACE_DELETED } }];
 			expect(planHashOf(changed as any)).not.toBe(hash);
+			const lastAdmin = [planned[0], { ...planned[1], account: { ...planned[1].account, soleAdmin: true } }];
+			expect(planHashOf(lastAdmin as any)).not.toBe(hash);
 		});
 	});
 
@@ -229,6 +237,32 @@ describe('AccountDeletionService', () => {
 			const result = await service.confirm(generateAccountDeletionToken(), planHashOf([planned[1]] as any));
 
 			expect(result).toEqual({ deleted: true, accounts: 2, workspacesDeleted: 1 });
+		});
+
+		it('says so when an account changed after others were already deleted', async () => {
+			const { service, repository, plan, erase } = setup();
+			repository.findOneBy.mockResolvedValue(live);
+			plan.mockResolvedValue(planned);
+			erase.mockResolvedValueOnce(erased(1)).mockRejectedValueOnce(new ConflictException('changed'));
+
+			await expect(service.confirm(generateAccountDeletionToken(), planHashOf(planned as any))).rejects.toThrow(
+				ACCOUNT_DELETION_PARTIAL_MESSAGE
+			);
+		});
+
+		it('stops when another confirm took the claim over (renewal hits nothing)', async () => {
+			const { service, repository, plan, erase, builder, emailService } = setup();
+			repository.findOneBy.mockResolvedValue(live);
+			plan.mockResolvedValue([planned[0]]);
+			erase.mockResolvedValueOnce(erased(1));
+			builder.execute
+				.mockResolvedValueOnce({ affected: 1 }) // the claim
+				.mockResolvedValueOnce({ affected: 0 }); // the renewal: lost
+
+			await expect(service.confirm(generateAccountDeletionToken(), planHashOf([planned[0]] as any))).rejects.toBeInstanceOf(
+				GoneException
+			);
+			expect(emailService.sendAccountDeletionCompleted).not.toHaveBeenCalled();
 		});
 
 		it('releases the claim when an account fails, so the user can retry', async () => {

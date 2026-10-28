@@ -124,14 +124,18 @@ export async function deleteStoredFiles(
 }
 
 /**
- * A tenant's own settings (name → value), for {@link deleteStoredFiles}. Read before the tenant is deleted.
+ * A tenant's own settings (name → value), for {@link deleteStoredFiles}, soft-deleted ones excluded (as the
+ * settings middleware reads them). Read before the tenant is deleted.
  */
 export async function loadTenantSettings(manager: EntityManager, tenantId: ID): Promise<Record<string, unknown>> {
 	const driver = manager.connection.driver;
 	const rows: Array<{ name: string; value: string }> = await manager.query(
 		`SELECT ${driver.escape('name')} AS ${driver.escape('name')}, ${driver.escape('value')} AS ${driver.escape(
 			'value'
-		)} FROM ${driver.escape('tenant_setting')} WHERE ${driver.escape('tenantId')} = ${sqlPlaceholder(manager, 1)}`,
+		)} FROM ${driver.escape('tenant_setting')} WHERE ${driver.escape('tenantId')} = ${sqlPlaceholder(
+			manager,
+			1
+		)} AND ${driver.escape('deletedAt')} IS NULL`,
 		[tenantId]
 	);
 	return Object.fromEntries(rows.map((row) => [row.name, row.value]));

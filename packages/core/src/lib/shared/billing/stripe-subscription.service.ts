@@ -65,6 +65,12 @@ const LIVE_KEY_PREFIX = /^(sk|rk)_live_/;
 /** Subscription statuses that entitle the holder to finish registering. */
 const ENTITLING_STATUSES = new Set(['active', 'trialing', 'past_due']);
 
+/**
+ * Every subscription status that can still bill (all but `canceled` and `incomplete_expired`): what a deleted
+ * workspace must not leave behind, wider than what entitles someone to sign up.
+ */
+const BILLABLE_STATUSES = new Set(['active', 'trialing', 'past_due', 'unpaid', 'incomplete', 'paused']);
+
 const STRIPE_API = 'https://api.stripe.com/v1';
 
 /** Stripe's maximum page size; fewer pages means fewer round trips on a request thread. */
@@ -532,8 +538,8 @@ export class StripeSubscriptionService {
 	}
 
 	/**
-	 * Cancels, at once, every subscription of `customerId` for this deployment's product that still bills
-	 * (active, trialing, past due), for a workspace that is being deleted: a deleted workspace must not go on
+	 * Cancels, at once, every subscription of `customerId` for this deployment's product that can still bill
+	 * (see {@link BILLABLE_STATUSES}), for a workspace that is being deleted: a deleted workspace must not go on
 	 * being charged. The customer and its invoices stay in Stripe (billing records are kept by law).
 	 *
 	 * Does nothing when this deployment does not bill. Throws when the list or a cancellation fails, so the
@@ -556,7 +562,7 @@ export class StripeSubscriptionService {
 			`/subscriptions?customer=${encodeURIComponent(customerId)}&status=all`,
 			deadline
 		)) {
-			if (ENTITLING_STATUSES.has(subscription.status) && subscriptionIsForProduct(subscription, product)) {
+			if (BILLABLE_STATUSES.has(subscription.status) && subscriptionIsForProduct(subscription, product)) {
 				billing.push(subscription.id);
 			}
 		}

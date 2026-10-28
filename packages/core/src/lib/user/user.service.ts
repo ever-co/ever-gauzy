@@ -73,7 +73,13 @@ import {
 	magicCodeClaimWhere
 } from '../shared/single-use/claim-criteria';
 import { assertFirstPartyRequest } from '../auth/oauth-app-first-party';
-import { detachEmployeeReferences, detachUserReferences, lockRowForUpdate } from './user-authorship';
+import {
+	detachEmployeeReferences,
+	detachUserReferences,
+	employeeIdsOfUser,
+	lockRowForUpdate,
+	lockRowsForUpdate
+} from './user-authorship';
 
 /**
  * The account-status predicate every authentication path applies.
@@ -1532,8 +1538,11 @@ export class UserService extends TenantAwareCrudService<User> {
 				if (!(await lockRowForUpdate(manager, 'user', user.id))) {
 					throw new ForbiddenException('User not found for this ID!');
 				}
+				// Every member record of the user (all organizations, soft-deleted included) goes with it.
+				const employeeIds = await employeeIdsOfUser(manager, user.id);
+				await lockRowsForUpdate(manager, 'employee', employeeIds);
 				await detachUserReferences(manager, user.id);
-				await detachEmployeeReferences(manager, employee ? [employee.id] : []);
+				await detachEmployeeReferences(manager, employeeIds);
 				const result = await manager.delete(User, { id: user.id });
 				if (!result.affected) {
 					throw new ForbiddenException('User not found for this ID!');
