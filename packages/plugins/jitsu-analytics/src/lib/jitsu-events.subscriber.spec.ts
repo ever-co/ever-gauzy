@@ -26,12 +26,25 @@ const settle = async () => {
 	for (let turn = 0; turn < 5; turn++) await new Promise((resolve) => setImmediate(resolve));
 };
 
+// The subscriber reads these when it is constructed; the expectations below assume the defaults.
+const ENV_KEYS = ['JITSU_MAX_CONCURRENT_EVENTS', 'JITSU_MAX_QUEUED_EVENTS'];
+const savedEnv: Record<string, string | undefined> = {};
+
 beforeEach(() => {
+	for (const key of ENV_KEYS) savedEnv[key] = process.env[key];
+	process.env.JITSU_MAX_CONCURRENT_EVENTS = '4';
+	process.env.JITSU_MAX_QUEUED_EVENTS = '1000';
 	track.mockReset();
 	jest.spyOn(console, 'error').mockImplementation(() => undefined);
 });
 
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => {
+	for (const key of ENV_KEYS) {
+		if (savedEnv[key] === undefined) delete process.env[key];
+		else process.env[key] = savedEnv[key];
+	}
+	jest.restoreAllMocks();
+});
 
 describe('JitsuEventsSubscriber', () => {
 	it('sends a burst of inserts a few at a time, none on the writer stack (the tenant-onboarding case)', async () => {
