@@ -9,7 +9,13 @@
 		} @else {
 		<div class="board" role="list" cdkDropListGroup>
 			@for (column of board.value; track column.id) {
-			<section class="board-column" role="listitem" [attr.aria-label]="column.name" [attr.data-column-id]="column.id" [class.is-refusing]="refusingColumnId === column.id">
+			<section
+				class="board-column"
+				role="listitem"
+				[attr.aria-label]="column.name"
+				[attr.data-column-id]="column.id"
+				[class.is-refusing]="refusingColumnId === column.id"
+			>
 				<header class="board-column-header">
 					<span class="board-column-dot" [class]="'board-column-dot group-' + column.group" [style.background-color]="column.color || null"></span>
 					<span class="board-column-name" [nbTooltip]="column.name" nbTooltipPlacement="top">{{ column.name }}</span>
@@ -28,6 +34,7 @@
 					<li class="board-card-item" cdkDrag [cdkDragData]="card" [cdkDragDisabled]="card.saving" [cdkDragStartDelay]="{ touch: 250, mouse: 0 }" (cdkDragMoved)="onDragMoved($event)">
 						<a
 							class="board-card"
+							[class.is-parent]="card.isParent"
 							[class.is-done]="card.done"
 							[class.is-saving]="card.saving"
 							[class.is-draggable]="canMove"
@@ -36,6 +43,12 @@
 							[queryParams]="openTaskPage ? null : { task: card.id }"
 							[queryParamsHandling]="openTaskPage ? null : 'merge'"
 						>
+							@if (card.isParent) {
+							<span class="board-card-parent">
+								<nb-icon icon="layers-outline" aria-hidden="true"></nb-icon>
+								{{ 'TASKS_PAGE.PARENT_TASK' | translate }}
+							</span>
+							}
 							<span class="board-card-title">{{ card.title }}</span>
 							<span class="board-card-meta">
 								@if (card.key) {
