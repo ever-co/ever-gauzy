@@ -176,6 +176,8 @@ describe('TenantService.onboardTenant — the session id is proof, not a tenant 
 			order.push('create');
 			return { id: TENANT_ID, ...input };
 		});
+		// The creator left no unfinished tenant behind (see tenant.service.onboarding-resume.spec.ts).
+		service.find = jest.fn(async () => []);
 		service.commandBus = { execute: jest.fn(async () => undefined) };
 		service.executeTenantUpdateTasks = jest.fn();
 		service.typeOrmRoleRepository = { findOneBy: jest.fn(async () => ({ id: 'role-super-admin' })) };

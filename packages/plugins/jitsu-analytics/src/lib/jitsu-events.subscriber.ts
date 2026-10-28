@@ -12,6 +12,12 @@ import * as chalk from 'chalk';
 import { BaseEntityEventSubscriber, ExportEntityClass, redactForExport } from '@gauzy/core';
 import { environment } from '@gauzy/config';
 import { createJitsu } from './jitsu-helper';
+import {
+	BoundedEventQueue,
+	DEFAULT_JITSU_MAX_CONCURRENT_EVENTS,
+	DEFAULT_JITSU_MAX_QUEUED_EVENTS,
+	readCountEnv
+} from './jitsu-event-queue';
 
 // Extract configuration values from environment
 const { jitsu } = environment;
@@ -24,6 +30,20 @@ type AfterUpdateEvent = Parameters<BaseEntityEventSubscriber['afterUpdate']>[0];
 export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 	private readonly logger = new Logger(JitsuEventsSubscriber.name);
 	private readonly jitsuAnalytics: AnalyticsInterface;
+
+	/**
+	 * Entity events on their way to Jitsu, sent a few at a time (`JITSU_MAX_CONCURRENT_EVENTS`, default 4)
+	 * with a bounded backlog (`JITSU_MAX_QUEUED_EVENTS`, default 1000). See {@link BoundedEventQueue}.
+	 */
+	private readonly events = new BoundedEventQueue<{ event: string; properties: Record<string, any> }>(
+		({ event, properties }) => this.analyticsTrack(event, properties),
+		{
+			concurrency: readCountEnv('JITSU_MAX_CONCURRENT_EVENTS', DEFAULT_JITSU_MAX_CONCURRENT_EVENTS),
+			maxQueued: readCountEnv('JITSU_MAX_QUEUED_EVENTS', DEFAULT_JITSU_MAX_QUEUED_EVENTS),
+			onDropped: (dropped) =>
+				this.logger.warn(`Dropped ${dropped} entity event(s): more were written than Jitsu could be sent.`)
+		}
+	);
 
 	// We disable by default additional logging for each event to avoid cluttering the logs
 	private logEnabled = false;
@@ -91,10 +111,9 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 				this.logger.log(`AFTER ENTITY INSERTED: `, JSON.stringify(entity));
 			}
 
-			// Track an event with Jitsu Analytics
-			// NOTE: we do not await before we want to track events asynchronously
+			// Queued, not sent here: see `events`.
 			if (this.jitsuAnalytics) {
-				this.analyticsTrack('afterEntityCreate', { data: { ...this.redactRow(entity, true) } });
+				this.enqueueTrack('afterEntityCreate', () => ({ data: { ...this.redactRow(entity, true) } }));
 			}
 		} catch (error) {
 			// Error handling logic
@@ -116,9 +135,9 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 				this.logger.log(`AFTER ENTITY UPDATED: `, JSON.stringify(entity));
 			}
 
-			// Track the update event with Jitsu Analytics asynchronously
+			// Queued, not sent here: see `events`.
 			if (this.jitsuAnalytics) {
-				this.analyticsTrack('afterEntityUpdate', { data: { entity: this.redactRow(entity) } });
+				this.enqueueTrack('afterEntityUpdate', () => ({ data: { entity: this.redactRow(entity) } }));
 			}
 		} catch (error) {
 			// Error handling logic
@@ -141,13 +160,23 @@ export class JitsuEventsSubscriber extends BaseEntityEventSubscriber {
 				this.logger.log('AFTER ENTITY REMOVED:', JSON.stringify(entity));
 			}
 
-			// Track the deletion event with Jitsu Analytics asynchronously
+			// Queued, not sent here: see `events`.
 			if (this.jitsuAnalytics) {
-				this.analyticsTrack('afterEntityDelete', { data: { entity: this.redactRow(entity) } });
+				this.enqueueTrack('afterEntityDelete', () => ({ data: { entity: this.redactRow(entity) } }));
 			}
 		} catch (error) {
 			console.error('JitsuEventsSubscriber: Error during the afterEntityDelete process:', error);
 		}
+	}
+
+	/**
+	 * Queues an entity event for Jitsu. `properties` runs only when the event is kept, and runs at once, so
+	 * the row is copied (and redacted) as it is now and not at all when the queue is full.
+	 *
+	 * @returns whether the event was queued.
+	 */
+	enqueueTrack(event: string, properties: () => Record<string, any>): boolean {
+		return this.events.offer(() => ({ event, properties: properties() }));
 	}
 
 	/**
