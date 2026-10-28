@@ -50,6 +50,7 @@ export class BoundedEventQueue<T> {
 	private scheduled = false;
 	private dropped = 0;
 	private lastReport = 0;
+	private reportTimer: ReturnType<typeof setTimeout> | null = null;
 	private readonly concurrency: number;
 
 	constructor(
@@ -106,16 +107,26 @@ export class BoundedEventQueue<T> {
 	}
 
 	private reportDropped(): void {
-		const now = Date.now();
-		if (
-			!this.options.onDropped ||
-			now - this.lastReport < (this.options.reportIntervalMs ?? JITSU_DROP_REPORT_INTERVAL_MS)
-		) {
-			return;
+		if (!this.options.onDropped) return;
+		const interval = this.options.reportIntervalMs ?? JITSU_DROP_REPORT_INTERVAL_MS;
+		const wait = this.lastReport + interval - Date.now();
+		if (wait <= 0) {
+			this.flushDropped();
+		} else if (!this.reportTimer) {
+			// The rest of a burst is reported when the interval ends, even if nothing is dropped after it.
+			this.reportTimer = setTimeout(() => {
+				this.reportTimer = null;
+				this.flushDropped();
+			}, wait);
+			this.reportTimer.unref?.();
 		}
-		this.lastReport = now;
+	}
+
+	private flushDropped(): void {
+		if (this.dropped === 0) return;
+		this.lastReport = Date.now();
 		const dropped = this.dropped;
 		this.dropped = 0;
-		this.options.onDropped(dropped);
+		this.options.onDropped?.(dropped);
 	}
 }

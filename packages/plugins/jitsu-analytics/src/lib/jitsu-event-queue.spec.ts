@@ -1,7 +1,14 @@
 import { BoundedEventQueue, readCountEnv } from './jitsu-event-queue';
 
-/** Lets every queued `setImmediate` and promise callback run. */
-const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+/**
+ * Lets the queue's `setImmediate` drains and the promise callbacks they start run. A zero-delay timer is not
+ * enough: the timers phase can come before the check phase, so it may resolve before the drain has run.
+ */
+const settle = async () => {
+	for (let turn = 0; turn < 5; turn++) await new Promise((resolve) => setImmediate(resolve));
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** A sender whose calls stay open until released, so the test can count what is in flight. */
 function heldSender() {
@@ -77,6 +84,20 @@ describe('BoundedEventQueue', () => {
 		// Within the interval, further drops are counted, not reported.
 		queue.offer(() => build(99));
 		expect(onDropped).toHaveBeenCalledTimes(1);
+	});
+
+	it('reports the rest of a burst when the interval ends, without waiting for another drop', async () => {
+		const { send } = heldSender();
+		const onDropped = jest.fn();
+		const queue = new BoundedEventQueue(send, { concurrency: 2, maxQueued: 3, onDropped, reportIntervalMs: 30 });
+
+		for (let i = 0; i < 10; i++) queue.offer(() => i);
+		expect(onDropped.mock.calls).toEqual([[1]]);
+
+		await sleep(80);
+
+		// 7 dropped in all: the first one at once, the other 6 when the interval ended.
+		expect(onDropped.mock.calls).toEqual([[1], [6]]);
 	});
 
 	it('takes as many events as there are free slots even with no backlog allowed', () => {
