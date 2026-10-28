@@ -46,7 +46,7 @@ export class NgxDeleteAccountComponent implements OnDestroy {
 			await this.accountDeletionService.request({
 				email: this.email.trim(),
 				callbackUrl: this.confirmPageUrl(),
-				locale: (this.translate.currentLang as LanguagesEnum) || undefined
+				locale: (this.translate.getCurrentLang() as LanguagesEnum) || undefined
 			});
 			this.sent = true;
 		} catch (error) {
