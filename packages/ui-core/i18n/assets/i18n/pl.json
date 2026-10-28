@@ -6517,7 +6517,7 @@
 		},
 		"DANGER_ZONE_HELP": {
 			"DELETE_ACCOUNT": "Usuń konto: trwale usuwa Twoje konto w tej przestrzeni roboczej, Twój profil, dane logowania i Twoje własne dane (wpisy czasu pracy, zrzuty ekranu, aktywność). Treści utworzone przez Ciebie dla przestrzeni roboczej pozostaną w niej, bez Twojego nazwiska. Jeśli jesteś jej jedynym członkiem, usuwana jest również cała przestrzeń robocza i wszystkie jej dane. Następnie otrzymasz wiadomość e-mail z potwierdzeniem.",
-			"DELETE_ALL_DATA": "Usuń wszystkie dane: usuwa wszystkie dane organizacji w tej przestrzeni roboczej (pracownicy, projekty, zadania, śledzenie czasu, faktury, ...) i zachowuje Twoje konto.",
+			"DELETE_ALL_DATA": "Usuń wszystkie dane: usuwa wszystkie dane organizacji w tej przestrzeni roboczej, do których należysz (pracownicy, projekty, zadania, śledzenie czasu, faktury, ...), i zachowuje Twoje konto.",
 			"BY_EMAIL": "Masz konta w kilku przestrzeniach roboczych lub nie możesz się zalogować?",
 			"BY_EMAIL_LINK": "Usuń je wszystkie przez link e-mail"
 		},

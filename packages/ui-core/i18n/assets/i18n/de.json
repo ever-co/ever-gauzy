@@ -6514,7 +6514,7 @@
 		},
 		"DANGER_ZONE_HELP": {
 			"DELETE_ACCOUNT": "Konto löschen: Löscht endgültig Ihr Konto in diesem Arbeitsbereich, Ihr Profil, Ihre Anmeldedaten und Ihre eigenen Einträge (Zeiterfassungen, Screenshots, Aktivität). Inhalte, die Sie für den Arbeitsbereich erstellt haben, bleiben dort erhalten, ohne Ihren Namen. Wenn Sie das einzige Mitglied sind, werden auch der gesamte Arbeitsbereich und alle seine Daten gelöscht. Anschließend erhalten Sie eine Bestätigungs-E-Mail.",
-			"DELETE_ALL_DATA": "Alle Daten löschen: Löscht alle Daten der Organisationen in diesem Arbeitsbereich (Mitarbeiter, Projekte, Aufgaben, Zeiterfassung, Rechnungen, ...) und behält Ihr Konto.",
+			"DELETE_ALL_DATA": "Alle Daten löschen: Löscht alle Daten der Organisationen in diesem Arbeitsbereich, denen Sie angehören (Mitarbeiter, Projekte, Aufgaben, Zeiterfassung, Rechnungen, ...), und behält Ihr Konto.",
 			"BY_EMAIL": "Sie haben Konten in mehreren Arbeitsbereichen oder können sich nicht anmelden?",
 			"BY_EMAIL_LINK": "Alle per E-Mail-Link löschen"
 		},

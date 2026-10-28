@@ -6518,7 +6518,7 @@
 		},
 		"DANGER_ZONE_HELP": {
 			"DELETE_ACCOUNT": "Account verwijderen: verwijdert definitief uw account in deze werkruimte, uw profiel, inloggegevens en uw eigen gegevens (tijdregistraties, schermafbeeldingen, activiteit). Inhoud die u voor de werkruimte hebt gemaakt, blijft daar, zonder uw naam. Als u het enige lid bent, worden ook de hele werkruimte en al haar gegevens verwijderd. U ontvangt daarna een bevestigingsmail.",
-			"DELETE_ALL_DATA": "Alle gegevens verwijderen: verwijdert alle gegevens van de organisaties in deze werkruimte (medewerkers, projecten, taken, tijdregistratie, facturen, ...) en behoudt uw account.",
+			"DELETE_ALL_DATA": "Alle gegevens verwijderen: verwijdert alle gegevens van de organisaties in deze werkruimte waartoe u behoort (medewerkers, projecten, taken, tijdregistratie, facturen, ...) en behoudt uw account.",
 			"BY_EMAIL": "Hebt u accounts in meerdere werkruimten of kunt u niet inloggen?",
 			"BY_EMAIL_LINK": "Verwijder ze allemaal via een e-maillink"
 		},

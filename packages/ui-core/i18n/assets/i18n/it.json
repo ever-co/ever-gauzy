@@ -6518,7 +6518,7 @@
 		},
 		"DANGER_ZONE_HELP": {
 			"DELETE_ACCOUNT": "Elimina account: elimina definitivamente il tuo account in questo spazio di lavoro, il tuo profilo, i dati di accesso e i tuoi dati personali (registrazioni del tempo, screenshot, attività). I contenuti che hai creato per lo spazio di lavoro restano lì, senza il tuo nome. Se ne sei l'unico membro, vengono eliminati anche l'intero spazio di lavoro e tutti i suoi dati. Riceverai poi un'email di conferma.",
-			"DELETE_ALL_DATA": "Elimina tutti i dati: elimina tutti i dati delle organizzazioni di questo spazio di lavoro (dipendenti, progetti, attività, monitoraggio del tempo, fatture, ...) e mantiene il tuo account.",
+			"DELETE_ALL_DATA": "Elimina tutti i dati: elimina tutti i dati delle organizzazioni a cui appartieni in questo spazio di lavoro (dipendenti, progetti, attività, monitoraggio del tempo, fatture, ...) e mantiene il tuo account.",
 			"BY_EMAIL": "Hai account in più spazi di lavoro o non riesci ad accedere?",
 			"BY_EMAIL_LINK": "Eliminali tutti tramite un link via email"
 		},
