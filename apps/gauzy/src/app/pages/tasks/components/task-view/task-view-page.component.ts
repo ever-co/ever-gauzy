@@ -71,9 +71,9 @@ export const HOURS_DAYS = 14;
 export const ENTRIES_DAYS = 30;
 
 /** The page's tabs, as the project page's; the open one is in the URL (`?tab=`). */
-export type TaskViewTab = 'overview' | 'board';
+export type TaskViewTab = 'overview' | 'board' | 'activity';
 
-const TABS: TaskViewTab[] = ['overview', 'board'];
+const TABS: TaskViewTab[] = ['overview', 'board', 'activity'];
 
 /** One subtask, as the Subtasks panel lists it. */
 export interface ISubtaskRow {
@@ -130,7 +130,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	readonly backLink = '/pages/tasks/dashboard';
 	readonly tabs: { id: TaskViewTab; label: string; icon: string }[] = [
 		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
-		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' }
+		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
+		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' }
 	];
 	tab: TaskViewTab = 'overview';
 	/**
@@ -138,6 +139,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	 * Overview: a move still saving when the user leaves it must still reach the Subtasks panel when it lands.
 	 */
 	boardOpened = false;
+	/** Bumped after a change made here — a status move, an edit — so an open Activity tab reads its feed again. */
+	activityReloadKey = 0;
 
 	task: ITask = null;
 	status: IRecordViewStatus = null;
@@ -330,6 +333,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				})
 			);
 			await this.refresh(taskId);
+			// After the read: the server writes the move's log entry as the update lands.
+			this.activityReloadKey++;
 		} catch (error) {
 			this.toastrService.danger(error);
 		} finally {
@@ -370,6 +375,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				})
 			);
 			await this.refresh(taskId);
+			this.activityReloadKey++;
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
