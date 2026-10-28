@@ -48,6 +48,8 @@ import {
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 // The employee page's hours chart, which the task page draws for the task. Standalone.
 import { EmployeeHoursChartComponent } from '../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
+// The project page's board, which the task page draws for the task's subtasks. Standalone.
+import { ProjectBoardComponent } from '../projects/components/project-view/project-board/project-board.component';
 import { TaskComponent } from './components/task/task.component';
 import { TaskViewHeaderComponent } from './components/task-view/task-view-header.component';
 import { TaskViewPageComponent } from './components/task-view/task-view-page.component';
@@ -114,7 +116,8 @@ import { SprintTaskComponent } from './components/task/tasks-layouts/tasks-sprin
 		TaskStatusSelectModule,
 		TaskNumberFieldModule,
 		DocumentLinksPanelComponent,
-		EmployeeHoursChartComponent
+		EmployeeHoursChartComponent,
+		ProjectBoardComponent
 	]
 })
 export class TasksModule {}
