@@ -108,7 +108,8 @@
 					aria-labelledby="task-view-tab-board"
 					[hidden]="tab !== 'board'"
 				>
-					<!-- A card moved on the board changes its subtask's status: the page reads the task again. -->
+					<!-- The task and its subtasks on one board, as Jira's. A card moved on it changes its task's status:
+					     the page reads the task again. -->
 					<ga-project-board
 						[parentId]="task.id"
 						[projectId]="task.projectId"
@@ -116,7 +117,8 @@
 						[tenantId]="organization?.tenantId"
 						[openTaskPage]="true"
 						emptyKey="TASK_VIEW.NO_SUBTASKS"
-						(taskMoved)="onSubtaskMoved()"
+						[reloadKey]="panelsReloadKey"
+						(taskMoved)="onBoardTaskMoved()"
 					></ga-project-board>
 				</div>
 			}
@@ -137,7 +139,7 @@
 						[organizationId]="organization?.id"
 						[tenantId]="organization?.tenantId"
 						[openTaskPage]="true"
-						[reloadKey]="activityReloadKey"
+						[reloadKey]="panelsReloadKey"
 					></ga-project-activity>
 				</div>
 			}

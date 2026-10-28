@@ -139,8 +139,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	 * Overview: a move still saving when the user leaves it must still reach the Subtasks panel when it lands.
 	 */
 	boardOpened = false;
-	/** Bumped after a change made here — a status move, an edit — so an open Activity tab reads its feed again. */
-	activityReloadKey = 0;
+	/**
+	 * Bumped after a change made from the header — a status move, an edit — so the Board (which shows the task's own
+	 * card) and an open Activity tab read again.
+	 */
+	panelsReloadKey = 0;
 
 	task: ITask = null;
 	status: IRecordViewStatus = null;
@@ -310,8 +313,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		if (tab === 'board') this.boardOpened = true;
 	}
 
-	/** A subtask moved on the Board: the task is read again, so the Subtasks panel shows its new status. */
-	onSubtaskMoved(): void {
+	/**
+	 * A card moved on the Board — the task's own or a subtask's: the task is read again, so the header's status and
+	 * the Subtasks panel show the new one.
+	 */
+	onBoardTaskMoved(): void {
 		if (this.task) void this.refresh(this.task.id);
 	}
 
@@ -334,7 +340,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			);
 			await this.refresh(taskId);
 			// After the read: the server writes the move's log entry as the update lands.
-			this.activityReloadKey++;
+			this.panelsReloadKey++;
 		} catch (error) {
 			this.toastrService.danger(error);
 		} finally {
@@ -375,7 +381,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				})
 			);
 			await this.refresh(taskId);
-			this.activityReloadKey++;
+			this.panelsReloadKey++;
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
