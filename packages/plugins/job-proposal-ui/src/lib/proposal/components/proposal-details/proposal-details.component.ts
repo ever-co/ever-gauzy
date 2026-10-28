@@ -58,7 +58,8 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	 * The browser converts any CSS color (#fff, hsl(), lab(), names…) to sRGB and
 	 * blends a translucent one with the card, so the result is the color the tag
 	 * actually shows. An unreadable tag color leaves the card color. Returns
-	 * whichever of dark or white text has the higher WCAG contrast ratio against it.
+	 * whichever of black or white text has the higher WCAG contrast ratio against it:
+	 * pure black, as a softer dark can leave a mid-grey tag under 4.5:1 either way.
 	 */
 	private contrastTextColor(color: string, card: string): string {
 		if (this.colorContext === undefined) {
@@ -81,10 +82,10 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 		const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
 
 		const background = this.relativeLuminance(r, g, b);
-		const dark = this.relativeLuminance(0x1a, 0x1a, 0x1a);
-		const darkContrast = (background + 0.05) / (dark + 0.05);
+		// Black's relative luminance is 0.
+		const blackContrast = (background + 0.05) / 0.05;
 		const whiteContrast = 1.05 / (background + 0.05);
-		return darkContrast >= whiteContrast ? '#1a1a1a' : '#fff';
+		return blackContrast >= whiteContrast ? '#000' : '#fff';
 	}
 
 	/** WCAG 2 relative luminance of an sRGB color with 0–255 channels. */
