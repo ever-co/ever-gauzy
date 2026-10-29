@@ -1,16 +1,40 @@
 <ng-select
+	class="ga-status-select"
 	(change)="selectStatus($event)"
 	[(ngModel)]="status"
 	[addTag]="canCreate ? createNew : null"
 	[items]="statuses$ | async"
 	[placeholder]="placeholder || 'TASKS_PAGE.TASKS_STATUS' | translate"
+	[groupBy]="groupBy"
+	[groupValue]="groupValue"
+	[searchFn]="searchFn"
 	appendTo="body"
 	bindLabel="name"
 >
-	<ng-template let-index="index" let-item="item" ng-option-tmp>
-		<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
-	</ng-template>
+	<!-- The current status, Jira-style: a compact lozenge tinted with the status colour -->
 	<ng-template let-item="item" ng-label-tmp>
-		<gauzy-task-badge-view [taskBadge]="item"></gauzy-task-badge-view>
+		<span class="status-lozenge" [style.--status-color]="colorOf(item)" [title]="labelOf(item)">
+			{{ labelOf(item) }}
+		</span>
+	</ng-template>
+
+	<!-- Workflow category caption: To do / In progress / Done -->
+	<ng-template let-item="item" ng-optgroup-tmp>
+		{{ 'TASKS_PAGE.STATUS_CATEGORY.' + item.key | translate }}
+	</ng-template>
+
+	<ng-template let-item="item" ng-option-tmp>
+		<div class="status-option">
+			<span class="status-lozenge" [style.--status-color]="colorOf(item)">{{ labelOf(item) }}</span>
+			<nb-icon *ngIf="isSelected(item)" class="status-option__check" icon="checkmark-outline"></nb-icon>
+		</div>
+	</ng-template>
+
+	<ng-template let-search="searchTerm" ng-tag-tmp>
+		<div class="status-option status-option--create">
+			<nb-icon class="status-option__plus" icon="plus-outline"></nb-icon>
+			<span>{{ 'TASKS_PAGE.CREATE_STATUS' | translate }}</span>
+			<span class="status-lozenge" [style.--status-color]="colorOf(null)">{{ search }}</span>
+		</div>
 	</ng-template>
 </ng-select>
