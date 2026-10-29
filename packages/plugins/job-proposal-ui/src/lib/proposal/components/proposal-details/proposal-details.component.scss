@@ -1,180 +1,183 @@
 @use 'gauzy/_gauzy-cards' as *;
-@use 'gauzy/_gauzy-table' as *;
-
-.tags {
-  padding-top: 0.25rem !important;
-  padding-bottom: 2rem !important;
-}
-
-nb-badge {
-  position: relative !important;
-  &:not(:first-child) {
-    margin-left: 0.3rem !important;
-  }
-}
-
-.card-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.wrapper-top {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-gap: 2em;
-  text-align: center;
-
-  .prop-card {
-    align-items: center;
-  }
-
-  @media (max-width: 1120px) {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  @media (max-width: 600px) {
-    display: block;
-  }
-}
-
-.wrapper-bottom {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-gap: 2em;
-  text-align: left;
-  height: fit-content;
-
-  h6 {
-    text-align: center;
-    padding: 1em;
-  }
-
-  p {
-    padding: 0 2em;
-  }
-
-  @media (max-width: 900px) {
-    display: block;
-  }
-}
 
 :host {
-  @include nb-card-overrides(
-    auto,
-    calc($default-card-height + 7.5rem),
-    $default-radius
-  );
+  @include nb-card-overrides(auto, calc($default-card-height + 7.5rem), $default-radius);
+
   nb-card {
     background: var(--gauzy-card-2);
+  }
+
+  .card-header-title {
+    gap: 0.75rem;
   }
 }
 
 .main-content {
   background: var(--gauzy-card-2);
+  font-size: 13px;
+  line-height: 1.25rem;
 }
-.image-container {
-  object-fit: cover;
-  img {
-    width: 48px;
-    height: 48px;
-    border-radius: 32px;
-  }
-}
-.custom {
-  align-items: center;
-  background-color: nb-theme(gauzy-card-2);
-  margin-bottom: 1rem;
-  .role {
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 17px;
-    letter-spacing: 0em;
-    text-align: left;
-  }
 
-  &.author {
-    height: 84px;
-    .identity {
-      align-items: center;
-      margin: 0 10px;
-      .name {
-        font-size: 12px;
-        font-weight: 400;
-        line-height: 15px;
-        letter-spacing: 0em;
-        text-align: left;
-        color: nb-theme(text-primary-color);
-      }
+// Content on the left, a summary of the proposal's facts on the right; the
+// summary drops under the content on narrow screens.
+.details-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 1rem;
+  align-items: start;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: minmax(0, 1fr);
+
+    .summary {
+      order: -1;
     }
   }
-
-  &.status {
-    height: 48px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 10px;
-    ::ng-deep ga-proposal-status {
-      div > div {
-        margin-top: 5px;
-        font-size: 12px;
-        font-weight: 600;
-        line-height: 11px;
-        letter-spacing: 0em;
-        text-align: left;
-        padding: 7px 14px;
-        border-radius: 4px;
-      }
-    }
-  }
-
-  &.job {
-    height: 84px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 10px;
-  }
-
-  &.cont {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 10px;
-  }
 }
 
-// ── Type scale ───────────────────────────────────────────────────────────────
-// The detail cards were titled with `h6` at the theme's heading size over 1rem
-// body copy, so "Job Post URL" read as loud as the page title and each card was
-// mostly padding. The same 12px set the rest of the app's records use.
-:host {
-  .main-content {
-    font-size: 12px;
-    line-height: 1rem;
-  }
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
 
-  h6.role {
-    margin: 0 0 0.5rem;
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1rem;
-    color: var(--gauzy-text-color-2, rgba(126, 126, 143, 1));
-  }
+.panel {
+  background: var(--gauzy-card-1);
+  border: 1px solid var(--gauzy-border-default-color);
+  border-radius: var(--border-radius);
+  padding: 1rem 1.25rem;
+}
 
-  nb-card.custom {
+.panel-title {
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--gauzy-border-default-color);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gauzy-text-color-2);
+}
+
+.rich-text {
+  font-size: 14px;
+  line-height: 1.5rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.empty {
+  color: var(--text-hint-color);
+}
+
+.summary {
+  dl {
     margin: 0;
+  }
 
-    // The cards sat in a `row` of bootstrap columns with their own margins; the
-    // grid gap is what spaces them now.
-    & + nb-card.custom {
-      margin-top: 0.75rem;
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem 0;
+
+    & + .field {
+      border-top: 1px dashed var(--gauzy-border-default-color);
     }
   }
 
-  .name,
-  .identity {
+  dt {
     font-size: 12px;
+    font-weight: 500;
+    color: var(--gauzy-text-color-2);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.25rem;
+    color: var(--gauzy-text-color-1);
+    overflow-wrap: anywhere;
+  }
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.625rem;
+  border-radius: 1rem;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.125rem;
+  // Mixing the status color with the theme's text color darkens it on the light
+  // theme and lightens it on the dark one, so the 11px label stays readable
+  // (about 5:1 on light) over its own faint tint.
+  --status-color: var(--color-warning-default);
+  color: color-mix(in srgb, var(--status-color) 45%, var(--text-basic-color));
+  background: color-mix(in srgb, var(--status-color) 16%, transparent);
+
+  &.accepted {
+    --status-color: var(--color-success-default);
+  }
+}
+
+.person {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  img,
+  .initial {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  img {
+    object-fit: cover;
+  }
+
+  .initial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-primary-default);
+    background: var(--gauzy-hover-tint);
+  }
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--color-primary-default);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  nb-icon {
+    font-size: 14px;
+  }
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+
+  .tag {
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 11px;
+    font-weight: 600;
     line-height: 1rem;
   }
 }

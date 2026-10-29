@@ -121,5 +121,29 @@
 }
 
 /*
+ * Read-only rich text — HTML saved by the editor and shown with [innerHTML]
+ * (e.g. the proposal details page). Bound HTML isn't reached by a component's
+ * emulated styles, so its spacing lives here, scoped to `.rich-text-content`.
+ */
+@mixin rich-text-content() {
+  .rich-text-content {
+    overflow-wrap: anywhere;
+
+    p {
+      margin: 0 0 0.5rem;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    ul,
+    ol {
+      padding-left: 1.25rem;
+    }
+  }
+}
+
+/*
 * End
 */
