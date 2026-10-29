@@ -334,7 +334,9 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	 * every read is applied only to a non-empty list, so a caller who may not pick employees and has no
 	 * employee record of their own — after switching to an organization they are not an employee of, or once
 	 * their employee record is gone — would read the whole organization, or any colleague they name. They get
-	 * an id that matches nothing instead, unless their role lets them view the whole organization.
+	 * an id that matches nothing instead, unless their role lets them view the whole organization. "Only me"
+	 * from a caller with no employee record matches nothing as well, whatever their role: they have no
+	 * expenses of their own.
 	 *
 	 * @param request The report's own selectors.
 	 * @returns The employeeIds to filter on.
@@ -347,7 +349,7 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		if (employeeId && (onlyMe || !canChangeEmployee)) {
 			return [employeeId];
 		}
-		if (canChangeEmployee || RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+		if (!onlyMe && (canChangeEmployee || RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW))) {
 			return employeeIds;
 		}
 		return [NO_ACCESSIBLE_EMPLOYEE_ID];

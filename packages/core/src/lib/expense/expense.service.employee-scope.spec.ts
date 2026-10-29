@@ -221,6 +221,24 @@ describe('ExpenseService — the employees a caller reads the expenses of', () =
 		expect(everyone.mikroOrm).toEqual([undefined, undefined, undefined]);
 	});
 
+	it('reads nothing on "only me" for a caller with no employee record, whatever their role', async () => {
+		for (const caller of [EMPLOYEE_PICKER, ORGANIZATION_VIEWER]) {
+			jest.restoreAllMocks();
+			const reads = await readsAs(caller, { ...REQUEST, employeeIds: [COLLEAGUE_EMPLOYEE_ID], onlyMe: true });
+
+			expect(reads.typeOrm).toEqual([
+				[NO_ACCESSIBLE_EMPLOYEE_ID],
+				[NO_ACCESSIBLE_EMPLOYEE_ID],
+				[NO_ACCESSIBLE_EMPLOYEE_ID]
+			]);
+			expect(reads.mikroOrm).toEqual([
+				{ $in: [NO_ACCESSIBLE_EMPLOYEE_ID] },
+				{ $in: [NO_ACCESSIBLE_EMPLOYEE_ID] },
+				{ $in: [NO_ACCESSIBLE_EMPLOYEE_ID] }
+			]);
+		}
+	});
+
 	it('reads their own expenses when a CHANGE_SELECTED_EMPLOYEE holder with an employee record asks for "only me"', async () => {
 		const reads = await readsAs(EMPLOYEE_PICKER_WITH_RECORD, {
 			...REQUEST,
