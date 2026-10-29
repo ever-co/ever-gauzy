@@ -50,6 +50,8 @@ describe('TaskViewPageComponent', () => {
 	let dialogService: { open: jest.Mock };
 	let router: { navigate: jest.Mock; createUrlTree: jest.Mock; serializeUrl: jest.Mock };
 	let permissions: PermissionsEnum[];
+	/** Emits when the test loads permissions, as the store does once they arrive. */
+	let permissions$: BehaviorSubject<PermissionsEnum[]>;
 
 	/** The HTTP reads the page makes itself: task statuses and linked issues. */
 	let statuses: any[];
@@ -91,6 +93,7 @@ describe('TaskViewPageComponent', () => {
 			serializeUrl: jest.fn((commands: string[]) => commands.join('/'))
 		};
 		permissions = [];
+		permissions$ = new BehaviorSubject<PermissionsEnum[]>([]);
 		await TestBed.configureTestingModule({
 			declarations: [TaskViewPageComponent],
 			providers: [
@@ -110,6 +113,7 @@ describe('TaskViewPageComponent', () => {
 					provide: Store,
 					useValue: {
 						selectedOrganization$: organization$.asObservable(),
+						userRolePermissions$: permissions$.asObservable(),
 						hasAnyPermission: (...wanted: PermissionsEnum[]) => wanted.some((p) => permissions.includes(p))
 					}
 				}
@@ -177,6 +181,61 @@ describe('TaskViewPageComponent', () => {
 
 		const labels = page.detailsSections.flatMap((section) => section.fields.map((field) => field.label));
 		expect(labels).not.toContain('TASKS_PAGE.TASKS_PROJECT');
+	});
+
+	describe('project panel', () => {
+		const PROJECT = { id: PROJECT_ID, name: 'Gauzy Platform' };
+		const panel = (): HTMLElement => fixture.nativeElement.querySelector('.task-project');
+
+		beforeEach(() => {
+			tasksService.getById.mockImplementation(async (id: string) =>
+				task({ id, projectId: PROJECT_ID, project: PROJECT as any })
+			);
+		});
+
+		it("links the task's project to the project's own page for those who may view projects", async () => {
+			permissions = [PermissionsEnum.ORG_PROJECT_VIEW];
+			create();
+			await settle();
+
+			const row = panel();
+			expect(row.tagName).toBe('A');
+			expect(row.querySelector('.task-project-name').textContent.trim()).toBe(PROJECT.name);
+			expect((row as any).routerLink).toEqual(['/pages/organization/projects/view', PROJECT_ID]);
+		});
+
+		it('names the project without a link for those who may not view projects', async () => {
+			create();
+			await settle();
+
+			const row = panel();
+			expect(row.tagName).toBe('SPAN');
+			expect(row.querySelector('.task-project-name').textContent.trim()).toBe(PROJECT.name);
+			expect(fixture.nativeElement.querySelector('a.task-project')).toBeNull();
+		});
+
+		it('links the project once the permission loads after the page is built', async () => {
+			const page = create();
+			await settle();
+			expect(panel().tagName).toBe('SPAN');
+
+			permissions = [PermissionsEnum.ALL_ORG_VIEW];
+			permissions$.next(permissions);
+			fixture.detectChanges();
+
+			expect(page.canViewProject).toBe(true);
+			expect(panel().tagName).toBe('A');
+			expect((panel() as any).routerLink).toEqual(['/pages/organization/projects/view', PROJECT_ID]);
+		});
+
+		it('says so when the task has no project', async () => {
+			tasksService.getById.mockImplementation(async (id: string) => task({ id }));
+			create();
+			await settle();
+
+			expect(panel()).toBeNull();
+			expect(fixture.nativeElement.textContent).toContain('TASK_VIEW.NO_PROJECT');
+		});
 	});
 
 	it('follows the URL to the next task when the page is reused', async () => {

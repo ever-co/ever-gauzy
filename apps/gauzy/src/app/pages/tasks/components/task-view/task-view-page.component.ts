@@ -153,8 +153,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	savingStatus = false;
 
 	readonly canEdit: boolean;
-	/** Whether the project panel links to the project's own page, which has its own guard. */
-	readonly canViewProject: boolean;
+	/**
+	 * Whether the project panel links to the project's own page, which has its own guard. Follows the
+	 * permissions, which may load after the page is built.
+	 */
+	canViewProject = false;
 
 	private taskId: string = null;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
@@ -176,7 +179,6 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	) {
 		super(translateService);
 		this.canEdit = this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT);
-		this.canViewProject = this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW);
 	}
 
 	ngOnInit(): void {
@@ -198,6 +200,13 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				this.organization = organization;
 				void this.load();
 			});
+		this.store.userRolePermissions$
+			.pipe(
+				map(() => this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)),
+				distinctUntilChanged(),
+				untilDestroyed(this)
+			)
+			.subscribe((canViewProject) => (this.canViewProject = canViewProject));
 		// The estimate is spelled out in the viewer's language.
 		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => this.show());
 	}
