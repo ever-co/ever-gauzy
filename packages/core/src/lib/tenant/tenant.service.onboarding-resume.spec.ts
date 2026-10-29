@@ -5,6 +5,7 @@
 import '../core/entities/internal';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { RolesEnum } from '@gauzy/contracts';
+import { IsNull, Not } from 'typeorm';
 import { MultiORMEnum } from '../core/utils';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantService } from './tenant.service';
@@ -45,12 +46,13 @@ function buildService({
 	service.find = jest.fn(async () => candidates.map((candidate) => ({ ...candidate })));
 	service.create = jest.fn(async (input: any) => ({ id: NEW_TENANT, ...input }));
 	service.update = jest.fn(async () => ({ affected: 1 }));
+	service.findOneByIdString = jest.fn(async () => undefined);
 	service.commandBus = { execute: jest.fn(async () => []) };
 	service.typeOrmRoleRepository = {
 		findOneBy: jest.fn(async ({ tenantId, name }: any) => ({ id: `role-${tenantId}`, tenantId, name }))
 	};
 	service.typeOrmUserRepository = {
-		findOne: jest.fn(async () => ({ id: USER_ID, tenantId: userTenantId })),
+		exists: jest.fn(async () => !!userTenantId),
 		update: jest.fn(async () => ({ affected: 1 }))
 	};
 	service.linkStripeCustomerAtOnboarding = jest.fn(async () => null);
@@ -83,7 +85,7 @@ describe('TenantService.onboardTenant', () => {
 		const tenant = await service.onboardTenant({ name: 'NewCo' }, user());
 
 		expect(tenant.id).toBe(NEW_TENANT);
-		expect(service.create).toHaveBeenCalledWith({ name: 'NewCo' });
+		expect(service.create).toHaveBeenCalledWith({ name: 'NewCo', createdByUserId: USER_ID });
 		expect(commands(service)).toEqual(['TenantRoleBulkCreateCommand']);
 		expect(command(service, 'TenantRoleBulkCreateCommand').options).toEqual({ onlyMissing: false });
 		expect(update).toHaveBeenCalledWith(expect.objectContaining({ id: NEW_TENANT }), {
@@ -140,6 +142,19 @@ describe('TenantService.onboardTenant', () => {
 		expect(tenant).toEqual(expect.objectContaining({ id: OLD_TENANT, imageId }));
 	});
 
+	it('answers with the resumed tenant as stored, its new image included', async () => {
+		const { service } = buildService({ candidates: [{ id: OLD_TENANT, name: 'First try' }] });
+		jest.spyOn(service, 'executeTenantUpdateTasks').mockResolvedValue(undefined);
+		jest.spyOn(service, 'updateProfile').mockResolvedValue({ affected: 1 } as any);
+		const stored = { id: OLD_TENANT, name: 'Second try', imageId: IMAGE_ID, image: { id: IMAGE_ID } };
+		service.findOneByIdString = jest.fn(async () => stored);
+
+		const tenant = await service.onboardTenant({ name: 'Second try', imageId: IMAGE_ID }, user());
+
+		expect(service.findOneByIdString).toHaveBeenCalledWith(OLD_TENANT);
+		expect(tenant).toBe(stored);
+	});
+
 	it('refuses resuming with an image of another tenant, as any profile update does', async () => {
 		const { service } = buildService({ candidates: [{ id: OLD_TENANT, name: 'First try' }] });
 		const update = jest.spyOn(service, 'executeTenantUpdateTasks').mockResolvedValue(undefined);
@@ -162,6 +177,10 @@ describe('TenantService.onboardTenant', () => {
 
 		await expect(service.onboardTenant({ name: 'NewCo' }, user())).rejects.toThrow('Tenant already exists');
 
+		expect(service.typeOrmUserRepository.exists).toHaveBeenCalledWith({
+			where: { id: USER_ID, tenantId: Not(IsNull()) },
+			withDeleted: true
+		});
 		expect(service.find).not.toHaveBeenCalled();
 		expect(service.create).not.toHaveBeenCalled();
 		expect(service.commandBus.execute).not.toHaveBeenCalled();
@@ -190,10 +209,56 @@ describe('TenantService onboarding lock', () => {
 		return runner;
 	}
 
-	function withDataSource(service: any, type: string, runner: any) {
+	function withDataSource(service: any, type: string, runner: any, options: Record<string, unknown> = {}) {
 		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
-		service.typeOrmRepository.manager.dataSource = { options: { type }, createQueryRunner: () => runner };
+		const createQueryRunner = jest.fn(() => runner);
+		service.typeOrmRepository.manager.dataSource = { options: { type, ...options }, createQueryRunner };
+		return createQueryRunner;
 	}
+
+	it('lets only half the pool (at most 4) hold a lock connection; the others wait holding none', async () => {
+		// A pool of 2 connections spares one for a lock. Without the bound, simultaneous signups could each hold
+		// a lock connection while waiting for a connection to work with, and none could finish.
+		const { service } = buildService();
+		const createQueryRunner = withDataSource(service, 'postgres', postgresRunner(true), { poolSize: 2 });
+		const finishers: Array<() => void> = [];
+		jest.spyOn(service, 'executeTenantUpdateTasks').mockImplementation(
+			() => new Promise<void>((resolve) => finishers.push(resolve))
+		);
+		const other = { id: '66666666-6666-4666-8666-666666666666', email: 'other@newco.test' } as any;
+
+		const until = async (condition: () => boolean) => {
+			for (let tick = 0; tick < 200 && !condition(); tick++)
+				await new Promise((resolve) => setImmediate(resolve));
+			expect(condition()).toBe(true);
+		};
+
+		const first = service.onboardTenant({ name: 'NewCo' }, user());
+		const second = service.onboardTenant({ name: 'OtherCo' }, other);
+		await until(() => finishers.length === 1);
+
+		// The second onboarding waits for the slot without taking a connection.
+		expect(createQueryRunner).toHaveBeenCalledTimes(1);
+
+		finishers.shift()();
+		await first;
+		await until(() => finishers.length === 1);
+
+		expect(createQueryRunner).toHaveBeenCalledTimes(2);
+		finishers.shift()();
+		await second;
+	});
+
+	it('uses the in-process guard when the pool cannot spare a connection for the lock', async () => {
+		const { service } = buildService();
+		const createQueryRunner = withDataSource(service, 'postgres', postgresRunner(true), { poolSize: 1 });
+		jest.spyOn(service, 'executeTenantUpdateTasks').mockResolvedValue(undefined);
+
+		await service.onboardTenant({ name: 'NewCo' }, user());
+
+		expect(createQueryRunner).not.toHaveBeenCalled();
+		expect(service.typeOrmUserRepository.update).toHaveBeenCalled();
+	});
 
 	it('takes a transaction-scoped advisory lock keyed by the creator on Postgres, and ends it afterwards', async () => {
 		const { service } = buildService();
@@ -204,6 +269,8 @@ describe('TenantService onboarding lock', () => {
 		await service.onboardTenant({ name: 'NewCo' }, user());
 
 		expect(runner.startTransaction).toHaveBeenCalled();
+		// The idle lock transaction must outlive a server-side idle-in-transaction timeout.
+		expect(runner.query).toHaveBeenNthCalledWith(1, 'SET LOCAL idle_in_transaction_session_timeout = 0');
 		expect(runner.query).toHaveBeenCalledWith(expect.stringContaining('pg_try_advisory_xact_lock'), [
 			`tenant-onboarding:${USER_ID}`
 		]);
@@ -284,7 +351,7 @@ describe('TenantService onboarding lock', () => {
 		await first;
 
 		// Released: the next attempt runs (and is refused only because the creator now has a tenant).
-		service.typeOrmUserRepository.findOne = jest.fn(async () => ({ id: USER_ID, tenantId: NEW_TENANT }));
+		service.typeOrmUserRepository.exists = jest.fn(async () => true);
 		await expect(service.onboardTenant({ name: 'NewCo' }, user())).rejects.toThrow('Tenant already exists');
 	});
 });
@@ -351,6 +418,14 @@ describe('TenantService.findUnfinishedTenant', () => {
 		for (const [, options] of exists.mock.calls) {
 			expect(options).toEqual({ where: { tenantId: OLD_TENANT }, withDeleted: true });
 		}
+	});
+
+	it('resumes nothing under MikroORM, whose seeds are not written in one transaction', async () => {
+		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.MikroORM);
+		const { service } = buildService({ candidates: [{ id: OLD_TENANT, name: 'x' }] });
+
+		await expect(service.findUnfinishedTenant(user())).resolves.toBeNull();
+		expect(service.find).not.toHaveBeenCalled();
 	});
 
 	it('returns null without a user', async () => {

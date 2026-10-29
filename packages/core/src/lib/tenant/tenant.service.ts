@@ -9,7 +9,7 @@ import {
 	IUser,
 	RolesEnum
 } from '@gauzy/contracts';
-import { UpdateResult } from 'typeorm';
+import { DataSource, IsNull, Not, UpdateResult } from 'typeorm';
 import { ConfigService } from '@gauzy/config';
 import { MultiORMEnum } from '../core/utils';
 import { CrudService } from '../core/crud/crud.service';
@@ -47,6 +47,10 @@ export class TenantService extends CrudService<Tenant> {
 
 	/** Creators onboarding in this process right now: the onboarding lock where the database offers none. */
 	private static readonly onboardingInProgress = new Set<ID>();
+
+	/** Onboardings of this process holding a lock connection, and those waiting for one (see `withOnboardingLock`). */
+	private static lockConnectionsInUse = 0;
+	private static readonly lockConnectionWaiters: Array<() => void> = [];
 
 	private readonly logger = new Logger(TenantService.name);
 	private readonly billingLogger = new Logger('TenantBillingLink');
@@ -122,8 +126,12 @@ export class TenantService extends CrudService<Tenant> {
 		const unfinished = await this.findUnfinishedTenant(user);
 		const onlyMissing = !!unfinished;
 
-		// Creates and saves a tenant entity from the given details.
-		const tenant = unfinished ? await this.resumeUnfinishedTenant(unfinished, input) : await this.create(input);
+		// Creates and saves a tenant entity from the given details. The creator is stated here, not left to the base
+		// subscriber alone: under MikroORM `createdByUserId` is a mirror (`persist: false`) that is stored only through
+		// the `createdByUser` relation `create` derives from the input, so the creator would otherwise not be recorded.
+		const tenant = unfinished
+			? await this.resumeUnfinishedTenant(unfinished, input)
+			: await this.create({ ...input, createdByUserId: user.id } as Partial<Tenant>);
 
 		// Create Role/Permissions to relative tenants. An unfinished tenant gets only the ones it is missing.
 		await this.commandBus.execute(new TenantRoleBulkCreateCommand([tenant], { onlyMissing }));
@@ -182,6 +190,11 @@ export class TenantService extends CrudService<Tenant> {
 	 * - MySQL: a named lock (`GET_LOCK`) on a connection of its own, released when `work` settles.
 	 * - SQLite and MikroORM: an in-process guard. These setups run a single API process.
 	 *
+	 * The lock's connection comes from the pool `work` draws on, so a process lets only a few onboardings hold one
+	 * at a time (see {@link lockConnectionSlots}); the others wait for a slot, holding no connection meanwhile.
+	 * Without that bound, enough simultaneous signups would each hold a lock connection while waiting for a
+	 * connection to work with, and none could finish. A pool too small to spare one uses the in-process guard.
+	 *
 	 * @param user - The creator.
 	 * @param work - Everything from choosing the tenant to linking the creator.
 	 * @throws ConflictException when another onboarding of the same user holds the lock.
@@ -190,44 +203,14 @@ export class TenantService extends CrudService<Tenant> {
 		const key = `tenant-onboarding:${user.id}`;
 		const dataSource = this.ormType === MultiORMEnum.TypeORM ? this.typeOrmRepository?.manager?.dataSource : null;
 		const type = dataSource?.options.type;
+		const slots = TenantService.lockConnectionSlots(dataSource?.options);
 
-		if (type === 'postgres' || type === 'mysql') {
-			const runner = dataSource.createQueryRunner();
-			await runner.connect();
+		if ((type === 'postgres' || type === 'mysql') && slots > 0) {
+			await TenantService.takeLockConnectionSlot(slots);
 			try {
-				if (type === 'postgres') {
-					await runner.startTransaction();
-					try {
-						const [row] = await runner.query(
-							`SELECT pg_try_advisory_xact_lock(hashtextextended($1, 0)) AS "acquired"`,
-							[key]
-						);
-						if (!row?.acquired) {
-							throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
-						}
-						return await work();
-					} finally {
-						// The transaction wrote nothing: ending it only releases the lock. If it cannot be ended
-						// the connection is gone, and the lock went with its session.
-						await runner.rollbackTransaction().catch((error) => {
-							this.logger.warn(`The onboarding lock's transaction could not be ended: ${error?.message}`);
-						});
-					}
-				}
-
-				// GET_LOCK names are at most 64 characters: `gauzy:tenant-onboarding:<uuid>` is 60.
-				const name = `gauzy:${key}`;
-				const [row] = await runner.query('SELECT GET_LOCK(?, 0) AS `acquired`', [name]);
-				if (Number(row?.acquired) !== 1) {
-					throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
-				}
-				try {
-					return await work();
-				} finally {
-					await runner.query('SELECT RELEASE_LOCK(?)', [name]);
-				}
+				return await this.withDatabaseLock(dataSource, type, key, work);
 			} finally {
-				await runner.release();
+				TenantService.releaseLockConnectionSlot();
 			}
 		}
 
@@ -243,17 +226,102 @@ export class TenantService extends CrudService<Tenant> {
 	}
 
 	/**
+	 * How many onboardings of this process may hold a lock connection at once: half the pool, at most 4, so the
+	 * lock connections never take the connections their own work needs (nor most of the pool from the rest of the
+	 * API). 0 for a pool of one connection.
+	 *
+	 * @param options - The data source's options (`poolSize`, or the driver's own `extra.max`).
+	 */
+	private static lockConnectionSlots(options?: { poolSize?: number; extra?: { max?: number } }): number {
+		const poolSize = Number(options?.poolSize ?? options?.extra?.max ?? 10);
+		return Number.isFinite(poolSize) ? Math.max(0, Math.min(4, Math.floor(poolSize / 2))) : 0;
+	}
+
+	/** Waits until fewer than `slots` onboardings of this process hold a lock connection, then takes a slot. */
+	private static async takeLockConnectionSlot(slots: number): Promise<void> {
+		while (TenantService.lockConnectionsInUse >= slots) {
+			await new Promise<void>((resolve) => TenantService.lockConnectionWaiters.push(resolve));
+		}
+		TenantService.lockConnectionsInUse++;
+	}
+
+	/** Gives a slot back and wakes the next onboarding waiting for one. */
+	private static releaseLockConnectionSlot(): void {
+		TenantService.lockConnectionsInUse--;
+		TenantService.lockConnectionWaiters.shift()?.();
+	}
+
+	/**
+	 * Runs `work` holding the database lock named `key` on a connection of its own (see {@link withOnboardingLock}).
+	 *
+	 * @throws ConflictException when the lock is held.
+	 */
+	private async withDatabaseLock<T>(
+		dataSource: DataSource,
+		type: 'postgres' | 'mysql',
+		key: string,
+		work: () => Promise<T>
+	): Promise<T> {
+		const runner = dataSource.createQueryRunner();
+		await runner.connect();
+		try {
+			if (type === 'postgres') {
+				await runner.startTransaction();
+				try {
+					// The transaction sits idle while `work` runs on other connections: a server-side
+					// `idle_in_transaction_session_timeout` would end the session, and the lock with it, mid-onboarding.
+					await runner.query('SET LOCAL idle_in_transaction_session_timeout = 0');
+					const [row] = await runner.query(
+						`SELECT pg_try_advisory_xact_lock(hashtextextended($1, 0)) AS "acquired"`,
+						[key]
+					);
+					if (!row?.acquired) {
+						throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
+					}
+					return await work();
+				} finally {
+					// The transaction wrote nothing: ending it only releases the lock. If it cannot be ended
+					// the connection is gone, and the lock went with its session.
+					await runner.rollbackTransaction().catch((error) => {
+						this.logger.warn(`The onboarding lock's transaction could not be ended: ${error?.message}`);
+					});
+				}
+			}
+
+			// GET_LOCK names are at most 64 characters: `gauzy:tenant-onboarding:<uuid>` is 60.
+			const name = `gauzy:${key}`;
+			const [row] = await runner.query('SELECT GET_LOCK(?, 0) AS `acquired`', [name]);
+			if (Number(row?.acquired) !== 1) {
+				throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
+			}
+			try {
+				return await work();
+			} finally {
+				await runner.query('SELECT RELEASE_LOCK(?)', [name]);
+			}
+		} finally {
+			await runner.release();
+		}
+	}
+
+	/**
 	 * Whether the user belongs to a tenant now, read from the database rather than from the request: the
 	 * request's copy was loaded before any onboarding running alongside it could link the user.
 	 *
 	 * @param user - The creator.
 	 */
 	private async userHasTenant(user: IUser): Promise<boolean> {
-		const row: any =
-			this.ormType === MultiORMEnum.MikroORM
-				? await this.mikroOrmUserRepository.findOne({ id: user.id } as any, { filters: false } as any)
-				: await this.typeOrmUserRepository.findOne({ where: { id: user.id }, withDeleted: true });
-		return !!(row?.tenantId ?? row?.tenant?.id);
+		// A count is always answered by the database: MikroORM's `findOne` could hand back the user its identity map
+		// cached when the request was authenticated.
+		return this.ormType === MultiORMEnum.MikroORM
+			? (await this.mikroOrmUserRepository.count(
+					{ id: user.id, tenant: { $ne: null } } as any,
+					{ filters: false } as any
+				)) > 0
+			: await this.typeOrmUserRepository.exists({
+					where: { id: user.id, tenantId: Not(IsNull()) },
+					withDeleted: true
+				});
 	}
 
 	/**
@@ -275,7 +343,9 @@ export class TenantService extends CrudService<Tenant> {
 	 * @param user - The user being onboarded.
 	 */
 	async findUnfinishedTenant(user: IUser): Promise<Tenant | null> {
-		if (!user?.id) return null;
+		// Under MikroORM nothing is resumed and a retry creates a new tenant, as before: MikroORM writes a seed's rows
+		// one by one, outside a common transaction, so a row the seed left behind does not prove the seed completed.
+		if (!user?.id || this.ormType === MultiORMEnum.MikroORM) return null;
 
 		const candidates = await this.find({
 			where: { createdByUserId: user.id },
@@ -304,7 +374,10 @@ export class TenantService extends CrudService<Tenant> {
 		if (input.imageId !== undefined) changes.imageId = input.imageId;
 
 		await this.updateProfile(tenant.id, changes);
-		return Object.assign(tenant, changes);
+
+		// Read back, so the image relation and the logo derived from it are the ones now stored, not the earlier
+		// attempt's.
+		return (await this.findOneByIdString(tenant.id)) ?? Object.assign(tenant, changes);
 	}
 
 	/**
