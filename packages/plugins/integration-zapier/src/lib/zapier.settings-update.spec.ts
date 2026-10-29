@@ -390,6 +390,84 @@ describe('Zapier settings update and OAuth configuration', () => {
 		});
 	});
 
+	describe('GET /settings, scoped to an organization the caller belongs to', () => {
+		it('passes the organization of the query, else of the header, and refuses a malformed one', async () => {
+			const getIntegrationSettingsForCurrentUser = jest.fn().mockResolvedValue({});
+			const controller = new ZapierController({ getIntegrationSettingsForCurrentUser } as any);
+
+			await controller.getSettings(ORGANIZATION_A, ORGANIZATION_B);
+			await controller.getSettings(undefined, ORGANIZATION_B);
+			await controller.getSettings();
+			await expect(controller.getSettings([ORGANIZATION_A, ORGANIZATION_B])).rejects.toBeInstanceOf(
+				BadRequestException
+			);
+
+			expect(getIntegrationSettingsForCurrentUser.mock.calls).toEqual([
+				[ORGANIZATION_A],
+				[ORGANIZATION_B],
+				[undefined]
+			]);
+		});
+
+		it('reads the named organization’s integration, after checking the caller belongs to it', async () => {
+			const { service, integrationTenantService, manager } = build({
+				found: integration([
+					{ settingsName: 'is_enabled', settingsValue: 'true' },
+					{ settingsName: 'zapier_webhook_url', settingsValue: 'https://hooks.example.com/catch/1/abc' }
+				])
+			});
+
+			await expect(service.getIntegrationSettingsForCurrentUser(ORGANIZATION_A)).resolves.toEqual(
+				expect.objectContaining({ isEnabled: true, webhookUrl: 'https://hooks.example.com/catch/1/abc' })
+			);
+			expect(mockAssertMembership).toHaveBeenCalledWith(manager, ORGANIZATION_A);
+			expect(integrationTenantService.findOneByOptions.mock.calls[0][0].where).toEqual(
+				expect.objectContaining({ tenantId: 'tenant-1', organizationId: ORGANIZATION_A })
+			);
+		});
+
+		it('refuses a caller outside the named organization, before reading anything', async () => {
+			mockAssertMembership.mockRejectedValue(new ForbiddenException());
+			const { service, integrationTenantService } = build();
+
+			await expect(service.getIntegrationSettingsForCurrentUser(ORGANIZATION_A)).rejects.toBeInstanceOf(
+				ForbiddenException
+			);
+			expect(integrationTenantService.findOneByOptions).not.toHaveBeenCalled();
+		});
+
+		it("without an organization, answers the tenant's only integration for a member of its organization", async () => {
+			const { service, manager } = build();
+
+			await service.getIntegrationSettingsForCurrentUser();
+			expect(mockAssertMembership).toHaveBeenCalledWith(manager, 'organization-1');
+
+			// The only integration belongs to an organization the caller is not in: its webhook URL is not answered
+			mockAssertMembership.mockRejectedValue(new ForbiddenException());
+			await expect(service.getIntegrationSettingsForCurrentUser()).rejects.toBeInstanceOf(ForbiddenException);
+		});
+
+		it('refuses several integrations without an organization, and answers the default without one', async () => {
+			const several = build();
+			several.integrationTenantService.findAll.mockResolvedValue({
+				items: [integration(), integration()],
+				total: 2
+			});
+			await expect(several.service.getIntegrationSettingsForCurrentUser()).rejects.toBeInstanceOf(
+				BadRequestException
+			);
+
+			const none = build({ found: null });
+			await expect(none.service.getIntegrationSettingsForCurrentUser()).resolves.toEqual({
+				isEnabled: false,
+				hasClientCredentials: false,
+				hasAccessToken: false,
+				hasRefreshToken: false,
+				webhookUrl: null
+			});
+		});
+	});
+
 	describe('GET /oauth/config', () => {
 		it('is served', () => {
 			const handler = ZapierController.prototype.getOAuthConfig;

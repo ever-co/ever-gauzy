@@ -1367,45 +1367,92 @@ export class ZapierService {
 			}
 
 			if (!integrationTenant) {
-				return {
-					isEnabled: false,
-					hasClientCredentials: false,
-					hasAccessToken: false,
-					hasRefreshToken: false,
-					webhookUrl: null
-				};
+				return this.settingsNotConfigured();
 			}
 
-			// Extract settings from integration settings
-			const enabledSetting = integrationTenant.settings?.find(
-				(setting: IIntegrationSetting) => setting.settingsName === 'is_enabled'
-			);
-			const accessTokenSetting = integrationTenant.settings?.find(
-				(setting: IIntegrationSetting) => setting.settingsName === 'zapier_access_token'
-			);
-			const refreshTokenSetting = integrationTenant.settings?.find(
-				(setting: IIntegrationSetting) => setting.settingsName === 'zapier_refresh_token'
-			);
-			const webhookUrlSetting = integrationTenant.settings?.find(
-				(setting: IIntegrationSetting) => setting.settingsName === ZapierSettingName.WEBHOOK_URL
-			);
-
-			// Client credentials are server-side config, not tenant-specific
-			const zapierConfig = this.config.get('zapier');
-			const hasClientCredentials = !!(zapierConfig?.clientId && zapierConfig?.clientSecret);
-
-			// Map to sanitized DTO
-			return {
-				isEnabled: enabledSetting ? enabledSetting.settingsValue === 'true' : false,
-				hasClientCredentials,
-				hasAccessToken: !!accessTokenSetting?.settingsValue,
-				hasRefreshToken: !!refreshTokenSetting?.settingsValue,
-				webhookUrl: webhookUrlSetting?.settingsValue || null
-			};
+			return this.settingsOf(integrationTenant);
 		} catch (error) {
 			this.logger.error('Error retrieving Zapier integration settings:', error);
 			throw error;
 		}
+	}
+
+	/**
+	 * The settings `GET /integration/zapier/settings` answers, for a member of the integration's organization: the
+	 * integration of the organization named (the controller passes the query, else the `Organization-Id` header the web
+	 * app sends), else the tenant's only one (400 when there are several, as `findIntegrationByTenantId` answers). The
+	 * answer carries the webhook URL, so the lookup alone (scoped to the tenant) is not enough: it read the tenant's first
+	 * integration, whichever organization it belongs to.
+	 *
+	 * @param organizationId - The organization of the integration, if the caller names one.
+	 * @returns The settings, or the "not configured" default when there is no integration.
+	 * @throws ForbiddenException - If the caller is not a member of the organization named, or of the integration's.
+	 * @throws BadRequestException - If no organization is named and the tenant has several Zapier integrations.
+	 */
+	async getIntegrationSettingsForCurrentUser(organizationId?: ID): Promise<IZapierIntegrationSettings> {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new NotFoundException('Tenant ID not found in request context');
+		}
+		if (organizationId) {
+			await assertCurrentUserBelongsToOrganization(this._dataSource.manager, organizationId);
+		}
+
+		let integration: IIntegrationTenant;
+		try {
+			integration = await this.findIntegrationByTenantId(tenantId, organizationId);
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				return this.settingsNotConfigured();
+			}
+			throw error;
+		}
+
+		if (!organizationId) {
+			await assertCurrentUserBelongsToOrganization(this._dataSource.manager, integration.organizationId);
+		}
+		return this.settingsOf(integration);
+	}
+
+	/** The settings of a tenant (or organization) without a Zapier integration. */
+	private settingsNotConfigured(): IZapierIntegrationSettings {
+		return {
+			isEnabled: false,
+			hasClientCredentials: false,
+			hasAccessToken: false,
+			hasRefreshToken: false,
+			webhookUrl: null
+		};
+	}
+
+	/** The settings of an integration, read from its setting rows: never a token itself. */
+	private settingsOf(integrationTenant: IIntegrationTenant): IZapierIntegrationSettings {
+		// Extract settings from integration settings
+		const enabledSetting = integrationTenant.settings?.find(
+			(setting: IIntegrationSetting) => setting.settingsName === 'is_enabled'
+		);
+		const accessTokenSetting = integrationTenant.settings?.find(
+			(setting: IIntegrationSetting) => setting.settingsName === 'zapier_access_token'
+		);
+		const refreshTokenSetting = integrationTenant.settings?.find(
+			(setting: IIntegrationSetting) => setting.settingsName === 'zapier_refresh_token'
+		);
+		const webhookUrlSetting = integrationTenant.settings?.find(
+			(setting: IIntegrationSetting) => setting.settingsName === ZapierSettingName.WEBHOOK_URL
+		);
+
+		// Client credentials are server-side config, not tenant-specific
+		const zapierConfig = this.config.get('zapier');
+		const hasClientCredentials = !!(zapierConfig?.clientId && zapierConfig?.clientSecret);
+
+		// Map to sanitized DTO
+		return {
+			isEnabled: enabledSetting ? enabledSetting.settingsValue === 'true' : false,
+			hasClientCredentials,
+			hasAccessToken: !!accessTokenSetting?.settingsValue,
+			hasRefreshToken: !!refreshTokenSetting?.settingsValue,
+			webhookUrl: webhookUrlSetting?.settingsValue || null
+		};
 	}
 
 	/**

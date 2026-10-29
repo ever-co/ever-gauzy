@@ -292,22 +292,44 @@ export class ZapierController {
 	}
 
 	/**
-	 * Retrieves the Zapier integration settings for the current tenant.
+	 * Retrieves the Zapier integration settings of an organization of the current tenant, for a member of it: the
+	 * organization named (the query, else the `Organization-Id` header), else the one of the tenant's only integration.
 	 *
-	 * @returns {Promise<IZapierIntegrationSettings>} A promise that resolves with the tenant's Zapier integration settings.
+	 * @param organizationId - The organization of the integration.
+	 * @param organizationHeader - The `Organization-Id` header the web app sends.
+	 * @returns {Promise<IZapierIntegrationSettings>} A promise that resolves with the integration's Zapier settings.
 	 */
 	@ApiOperation({ summary: 'Get Zapier integration settings for tenant' })
+	@ApiQuery({
+		name: 'organizationId',
+		required: false,
+		type: String,
+		description: "The organization of the integration (else the Organization-Id header, else the tenant's only one)"
+	})
 	@ApiResponse({
 		status: 200,
-		description: 'Retrieved tenant Zapier settings'
+		description: 'Retrieved Zapier settings (the "not configured" default when there is no integration)'
+	})
+	@ApiResponse({
+		status: 400,
+		description: 'Bad Request - A malformed organization, or several integrations and no organization'
+	})
+	@ApiResponse({
+		status: 403,
+		description: "Forbidden - Not a member of the integration's organization"
 	})
 	@ApiResponse({
 		status: 404,
 		description: 'Tenant not found in request context'
 	})
 	@Get('/settings')
-	async getSettings(): Promise<IZapierIntegrationSettings> {
-		return this.zapierService.getIntegrationSettings();
+	async getSettings(
+		@Query('organizationId') organizationId?: string | string[],
+		@Headers('organization-id') organizationHeader?: string | string[]
+	): Promise<IZapierIntegrationSettings> {
+		return this.zapierService.getIntegrationSettingsForCurrentUser(
+			this.organizationOf(organizationId, organizationHeader)
+		);
 	}
 
 	/**

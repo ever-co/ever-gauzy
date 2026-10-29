@@ -202,8 +202,9 @@ export class ZapierWebhookService {
 	 *
 	 * Retrieves subscriptions for the `timer.status.changed` event matching the provided
 	 * tenant and organization IDs, then concurrently posts the event payload to each
-	 * subscriber’s callback URL. Individual delivery failures are logged but do not
-	 * interrupt other notifications.
+	 * subscriber’s callback URL, except the subscriptions of an integration switched off
+	 * (`is_enabled = 'false'`, see `disabledIntegrations`). Individual delivery failures are
+	 * logged but do not interrupt other notifications.
 	 *
 	 * @param timerData - The payload containing timer details, including `tenantId`, `organizationId`, and other relevant fields.
 	 */
@@ -230,9 +231,20 @@ export class ZapierWebhookService {
 			return;
 		}
 
-		// 3) Send notifications in parallel
+		// 3) Skip the subscriptions of an integration switched off with `PUT /integration/zapier/settings`
+		const disabled = await this.disabledIntegrations(
+			tenantId,
+			subscriptions.map((sub) => sub.integrationId).filter((id): id is ID => !!id)
+		);
+
+		// 4) Send notifications in parallel
 		await Promise.all(
 			subscriptions.map(async (sub) => {
+				if (sub.integrationId && disabled.has(sub.integrationId)) {
+					this.logger.debug(`Skipping Zapier webhook ${sub.id} — its integration is disabled.`);
+					return null;
+				}
+
 				// Re-validate at delivery time: rows stored before the egress guard existed have never
 				// been checked, and a literal-host check alone cannot catch a public hostname that
 				// resolves to an internal IP (GHSA-6gg6-vv4f-2x74).
@@ -329,6 +341,32 @@ export class ZapierWebhookService {
 	 * `null` when the event carries no timeLog id — every such event would otherwise share one key
 	 * per subscriber and action, and a genuinely different event would be suppressed for the window.
 	 */
+	/**
+	 * The integrations among `integrationIds` that are switched off: `is_enabled` stored as `'false'` (what
+	 * `PUT /integration/zapier/settings` writes for a disabled integration). A missing flag counts as on: an integration
+	 * is created with `is_enabled = 'true'`, and nothing could switch one off before that route, so no subscription that
+	 * received events stops receiving them unless its integration is switched off.
+	 *
+	 * @param tenantId - The tenant of the event.
+	 * @param integrationIds - The integrations of the event's subscriptions.
+	 */
+	private async disabledIntegrations(tenantId: ID, integrationIds: ID[]): Promise<Set<string>> {
+		const ids = [...new Set(integrationIds)];
+		if (ids.length === 0) {
+			return new Set();
+		}
+		const rows: Array<{ integrationId: string }> = await this.zapierWebhookSubscriptionRepository.manager
+			.createQueryBuilder()
+			.select('setting.integrationId', 'integrationId')
+			.from('integration_setting', 'setting')
+			.where('setting.tenantId = :tenantId', { tenantId })
+			.andWhere('setting.integrationId IN (:...ids)', { ids })
+			.andWhere('setting.settingsName = :settingsName', { settingsName: 'is_enabled' })
+			.andWhere('setting.settingsValue = :settingsValue', { settingsValue: 'false' })
+			.getRawMany();
+		return new Set(rows.map((row) => row.integrationId));
+	}
+
 	private deliveryDedupKey(subscriptionId: ID, timerData: ITimerZapierWebhookData): string | null {
 		const sourceId = timerData.data?.id;
 		return sourceId ? [subscriptionId, timerData.action, sourceId].join(':') : null;
