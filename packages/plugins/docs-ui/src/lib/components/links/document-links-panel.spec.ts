@@ -19,6 +19,7 @@ import { HttpEventType, HttpResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { BaseEntityEnum, DocumentKindEnum, ID, IDocument, IDocumentLink, PermissionsEnum } from '@gauzy/contracts';
 import { DocumentLinksPanelComponent } from './document-links-panel.component';
+import { DocumentImagePreviewDialogComponent } from './document-image-preview-dialog.component';
 
 const ENTITY_ID = 'cccccccc-1111-4111-8111-111111111111' as ID;
 const OTHER_ENTITY_ID = 'cccccccc-1111-4111-8111-222222222222' as ID;
@@ -76,7 +77,8 @@ function createPanel(
 		createLink: jest.fn(() => of({ id: LINK_ID } as IDocumentLink)),
 		deleteLink: jest.fn(() => of(undefined)),
 		getDownloadUrl: jest.fn(() => of('https://files.example/signed/invoice.pdf')),
-		upload: jest.fn(() => overrides.upload ?? of())
+		upload: jest.fn(() => overrides.upload ?? of()),
+		getRawBlob: jest.fn(() => of(new Blob(['png'], { type: 'image/png' })))
 	};
 	const dialogService = { open: jest.fn(() => ({ onClose: of(null) })) };
 	const toastrService = { success: jest.fn(), danger: jest.fn() };
@@ -478,5 +480,90 @@ describe('DocumentLinksPanelComponent â€” record-side Documents panel (spec 00 Â
 
 			expect(documentsService.upload).not.toHaveBeenCalled();
 		});
+	});
+
+	describe('grid view and image preview', () => {
+		const IMAGE_ID = 'cccccccc-2222-4222-8222-333333333333' as ID;
+		const imageLink = () =>
+			fileLink({
+				id: 'cccccccc-3333-4333-8333-222222222222' as ID,
+				documentId: IMAGE_ID,
+				document: { id: IMAGE_ID, name: 'site.png', kind: DocumentKindEnum.FILE, mimeType: 'image/png', fileSize: 4096 } as IDocument
+			});
+		let createObjectURL: jest.Mock;
+
+		beforeEach(() => {
+			localStorage.clear();
+			createObjectURL = jest.fn((source: Blob) => `blob:${source instanceof File ? source.name : 'raw'}`);
+			Object.assign(URL, { createObjectURL, revokeObjectURL: jest.fn() });
+		});
+
+		it('switches between list and grid, and remembers the choice in this browser', () => {
+			const { panel } = createPanel();
+			expect(panel.view).toBe('list');
+
+			panel.toggleView();
+
+			expect(panel.view).toBe('grid');
+			expect(createPanel().panel.view).toBe('grid');
+			panel.toggleView();
+			expect(localStorage.getItem('gauzy-docs-links-view')).toBe('list');
+		});
+
+		it('fetches each saved image once for its grid tile, and nothing else', async () => {
+			const { panel, documentsService } = createPanel({ links: of([fileLink(), imageLink()]) });
+			panel.toggleView();
+
+			await panel.load();
+			await panel.load();
+			await new Promise((resolve) => setTimeout(resolve));
+
+			expect(documentsService.getRawBlob).toHaveBeenCalledTimes(1);
+			expect(documentsService.getRawBlob).toHaveBeenCalledWith(IMAGE_ID);
+			expect(panel.thumbOf(imageLink())).toBe('blob:raw');
+			expect(panel.thumbOf(fileLink())).toBeNull();
+		});
+
+		it('offers the popup for images only', () => {
+			const { panel } = createPanel();
+
+			expect(panel.isImage(imageLink())).toBe(true);
+			expect(panel.isImage(fileLink())).toBe(false);
+		});
+
+		it('opens a saved image in the popup, fetched through the authenticated client', async () => {
+			const { panel, dialogService, documentsService } = createPanel();
+
+			panel.previewLink(imageLink());
+
+			const [component, config] = dialogService.open.mock.calls[0] as unknown as [unknown, { context: any }];
+			expect(component).toBe(DocumentImagePreviewDialogComponent);
+			expect(config.context.name).toBe('site.png');
+			await expect(config.context.resolveSrc()).resolves.toBe('blob:raw');
+			expect(documentsService.getRawBlob).toHaveBeenCalledWith(IMAGE_ID);
+		});
+
+		it('opens a held image in the popup from the machine, not a new tab', async () => {
+			const { panel, dialogService, documentsService } = createDeferredPanelForGrid();
+			const file = new File(['png'], 'logo.png', { type: 'image/png' });
+			const open = jest.spyOn(window, 'open').mockReturnValue(null);
+			await panel.uploadFiles([file]);
+
+			panel.previewPending(file);
+
+			const [, config] = dialogService.open.mock.calls[0] as unknown as [unknown, { context: any }];
+			await expect(config.context.resolveSrc()).resolves.toBe('blob:logo.png');
+			expect(panel.pendingThumbOf(file)).toBe('blob:logo.png');
+			expect(open).not.toHaveBeenCalled();
+			expect(documentsService.getRawBlob).not.toHaveBeenCalled();
+			open.mockRestore();
+		});
+
+		function createDeferredPanelForGrid() {
+			const context = createPanel();
+			context.panel.deferred = true;
+			context.panel.entityId = undefined as never;
+			return context;
+		}
 	});
 });
