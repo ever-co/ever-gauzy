@@ -24,7 +24,7 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	public jobPostContent: SafeHtml;
 	public proposalContent: SafeHtml;
 
-	get isAccepted(): boolean {
+	protected get isAccepted(): boolean {
 		return this.proposal?.status === ProposalStatusEnum.ACCEPTED;
 	}
 
@@ -37,7 +37,7 @@ export class ProposalDetailsComponent implements AfterViewInit, OnInit, OnDestro
 	 * Picks dark or light text for a tag so its name stays readable on any
 	 * background, unless the tag sets its own text color.
 	 */
-	tagTextColor(tag: ITag): string {
+	protected tagTextColor(tag: ITag): string {
 		if (tag.textColor) {
 			return tag.textColor;
 		}
