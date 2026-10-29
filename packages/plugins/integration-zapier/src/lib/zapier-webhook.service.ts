@@ -15,6 +15,12 @@ import { TypeOrmZapierWebhookSubscriptionRepository } from './repository/type-or
 import { ITimerZapierWebhookData } from './zapier.types';
 import { assertSafeZapierWebhookUrl, createSsrfSafeHttpsAgent } from './webhook-url.validator';
 
+/**
+ * The most subscriptions `GET /integration/zapier/webhooks` answers. Zapier subscribes one REST hook per Zap and event,
+ * so an integration holds a handful; the cap only keeps a runaway subscriber from loading an unbounded list.
+ */
+export const WEBHOOK_SUBSCRIPTION_LIST_LIMIT = 500;
+
 /** Delivery timeout for a single webhook POST, in milliseconds. */
 const WEBHOOK_DELIVERY_TIMEOUT_MS = 10000;
 
@@ -120,6 +126,31 @@ export class ZapierWebhookService {
 	}
 
 	/**
+	 * The webhook subscriptions of one Zapier integration, newest first, at most `WEBHOOK_SUBSCRIPTION_LIST_LIMIT` of them.
+	 * Every bound is required: an unbounded read would list the subscriptions of every tenant.
+	 *
+	 * @param scope - The integration, with its tenant and organization.
+	 * @throws BadRequestException if a bound is missing.
+	 */
+	async findSubscriptions(scope: {
+		integrationId?: ID;
+		tenantId?: ID;
+		organizationId?: ID;
+	}): Promise<ZapierWebhookSubscription[]> {
+		const { integrationId, tenantId, organizationId } = scope ?? {};
+		if (!integrationId || !tenantId || !organizationId) {
+			throw new BadRequestException(
+				'Integration, tenant and organization are required to list webhook subscriptions'
+			);
+		}
+		return this.zapierWebhookSubscriptionRepository.find({
+			where: { integrationId, tenantId, organizationId },
+			order: { createdAt: 'DESC' },
+			take: WEBHOOK_SUBSCRIPTION_LIST_LIMIT
+		});
+	}
+
+	/**
 	 * Deletes a Zapier webhook subscription after verifying tenant and organization ownership.
 	 *
 	 * @param id - The unique identifier of the subscription to delete.
@@ -171,8 +202,9 @@ export class ZapierWebhookService {
 	 *
 	 * Retrieves subscriptions for the `timer.status.changed` event matching the provided
 	 * tenant and organization IDs, then concurrently posts the event payload to each
-	 * subscriber’s callback URL. Individual delivery failures are logged but do not
-	 * interrupt other notifications.
+	 * subscriber’s callback URL, except the subscriptions of an integration switched off
+	 * (`is_enabled = 'false'`, see `disabledIntegrations`). Individual delivery failures are
+	 * logged but do not interrupt other notifications.
 	 *
 	 * @param timerData - The payload containing timer details, including `tenantId`, `organizationId`, and other relevant fields.
 	 */
@@ -199,9 +231,20 @@ export class ZapierWebhookService {
 			return;
 		}
 
-		// 3) Send notifications in parallel
+		// 3) Skip the subscriptions of an integration switched off with `PUT /integration/zapier/settings`
+		const disabled = await this.disabledIntegrations(
+			tenantId,
+			subscriptions.map((sub) => sub.integrationId).filter((id): id is ID => !!id)
+		);
+
+		// 4) Send notifications in parallel
 		await Promise.all(
 			subscriptions.map(async (sub) => {
+				if (sub.integrationId && disabled.has(sub.integrationId)) {
+					this.logger.debug(`Skipping Zapier webhook ${sub.id} — its integration is disabled.`);
+					return null;
+				}
+
 				// Re-validate at delivery time: rows stored before the egress guard existed have never
 				// been checked, and a literal-host check alone cannot catch a public hostname that
 				// resolves to an internal IP (GHSA-6gg6-vv4f-2x74).
@@ -298,6 +341,32 @@ export class ZapierWebhookService {
 	 * `null` when the event carries no timeLog id — every such event would otherwise share one key
 	 * per subscriber and action, and a genuinely different event would be suppressed for the window.
 	 */
+	/**
+	 * The integrations among `integrationIds` that are switched off: `is_enabled` stored as `'false'` (what
+	 * `PUT /integration/zapier/settings` writes for a disabled integration). A missing flag counts as on: an integration
+	 * is created with `is_enabled = 'true'`, and nothing could switch one off before that route, so no subscription that
+	 * received events stops receiving them unless its integration is switched off.
+	 *
+	 * @param tenantId - The tenant of the event.
+	 * @param integrationIds - The integrations of the event's subscriptions.
+	 */
+	private async disabledIntegrations(tenantId: ID, integrationIds: ID[]): Promise<Set<string>> {
+		const ids = [...new Set(integrationIds)];
+		if (ids.length === 0) {
+			return new Set();
+		}
+		const rows: Array<{ integrationId: string }> = await this.zapierWebhookSubscriptionRepository.manager
+			.createQueryBuilder()
+			.select('setting.integrationId', 'integrationId')
+			.from('integration_setting', 'setting')
+			.where('setting.tenantId = :tenantId', { tenantId })
+			.andWhere('setting.integrationId IN (:...ids)', { ids })
+			.andWhere('setting.settingsName = :settingsName', { settingsName: 'is_enabled' })
+			.andWhere('setting.settingsValue = :settingsValue', { settingsValue: 'false' })
+			.getRawMany();
+		return new Set(rows.map((row) => row.integrationId));
+	}
+
 	private deliveryDedupKey(subscriptionId: ID, timerData: ITimerZapierWebhookData): string | null {
 		const sourceId = timerData.data?.id;
 		return sourceId ? [subscriptionId, timerData.action, sourceId].join(':') : null;

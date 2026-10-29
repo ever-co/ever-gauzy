@@ -42,5 +42,11 @@ export const ZAPIER_CALLBACK_URL = `${process.env['API_BASE_URL']}/api/integrati
 /** URL for obtaining OAuth access tokens from Gauzy */
 export const ZAPIER_TOKEN_URL = `${process.env['API_BASE_URL']}/api/integration/zapier/oauth/token`;
 
+/**
+ * The longest webhook URL `PUT /integration/zapier/settings` stores: an integration setting's value is a `varchar(255)`
+ * on MySQL, which would refuse (or, outside strict mode, cut) a longer one.
+ */
+export const ZAPIER_WEBHOOK_URL_MAX_LENGTH = 255;
+
 /** URL for redirecting users after OAuth authorization */
 export const ZAPIER_REDIRECT_URI = 'https://zapier.com/dashboard/auth/oauth/return/App221848CLIAPI/';
