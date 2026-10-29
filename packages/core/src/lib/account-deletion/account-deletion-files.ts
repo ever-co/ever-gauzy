@@ -445,12 +445,36 @@ export async function deleteRowsAddressedTo(manager: EntityManager, tenantId: ID
 	}
 	const driver = manager.connection.driver;
 	const p = (n: number) => sqlPlaceholder(manager, n);
+	// SQLite's LOWER folds ASCII letters only, so an address with others (`É@…`) is matched here instead, the way
+	// the address itself was lowercased. Postgres and MySQL fold them in SQL.
+	const sqlite = ['sqlite', 'better-sqlite3'].includes(String(driver.options.type));
+	const matchInCode = sqlite && /[^ -]/.test(address);
 	for (const table of ADDRESSED_ROW_TABLES) {
-		await queryUnlessSchemaLacks(
+		const target = { table, columns: ['id', 'tenantId', 'email'] };
+		if (!matchInCode) {
+			await queryUnlessSchemaLacks(
+				manager,
+				`DELETE FROM ${driver.escape(table)} WHERE ${driver.escape('tenantId')} = ${p(1)} AND LOWER(TRIM(${driver.escape('email')})) = ${p(2)}`,
+				[tenantId, address],
+				target
+			);
+			continue;
+		}
+		const rows: Array<{ id: ID; email: string | null }> | null = await queryUnlessSchemaLacks(
 			manager,
-			`DELETE FROM ${driver.escape(table)} WHERE ${driver.escape('tenantId')} = ${p(1)} AND LOWER(TRIM(${driver.escape('email')})) = ${p(2)}`,
-			[tenantId, address],
-			{ table, columns: ['tenantId', 'email'] }
+			`SELECT ${driver.escape('id')}, ${driver.escape('email')} FROM ${driver.escape(table)} WHERE ${driver.escape('tenantId')} = ${p(1)}`,
+			[tenantId],
+			target
 		);
+		const ids = (rows ?? [])
+			.filter((row) => (row.email || '').trim().toLowerCase() === address)
+			.map((row) => row.id);
+		for (let offset = 0; offset < ids.length; offset += 500) {
+			const chunk = ids.slice(offset, offset + 500);
+			await manager.query(
+				`DELETE FROM ${driver.escape(table)} WHERE ${driver.escape('id')} IN (${chunk.map((_, i) => p(i + 1)).join(', ')})`,
+				chunk
+			);
+		}
 	}
 }

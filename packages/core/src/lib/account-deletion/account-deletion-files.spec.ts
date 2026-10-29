@@ -163,6 +163,17 @@ describe('deleteRowsAddressedTo: the workspace a person leaves keeps no row addr
 		}
 	});
 
+	it('matches an address with non-ASCII letters whatever their case, which SQLite LOWER does not fold', async () => {
+		await dataSource.query(
+			`INSERT INTO "email_sent" ("id", "tenantId", "email") VALUES ('accented', '${TENANT}', 'Élodie@Example.test')`
+		);
+
+		await deleteRowsAddressedTo(dataSource.manager, TENANT, 'élodie@example.test');
+
+		expect(await ids('email_sent')).not.toContain('accented');
+		expect(await ids('email_sent')).toHaveLength(3);
+	});
+
 	it('deletes nothing without a workspace or an address', async () => {
 		await deleteRowsAddressedTo(dataSource.manager, '', 'leaver@example.test');
 		await deleteRowsAddressedTo(dataSource.manager, TENANT, '  ');
