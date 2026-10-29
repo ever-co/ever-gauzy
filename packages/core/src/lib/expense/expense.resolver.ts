@@ -351,7 +351,8 @@ export class ExpenseResolver {
 	 * The read `GET /expense/statistics` performs, through the same service method and under the same view
 	 * grant. That method reads the rows the report route reads — the same reader, so the same window (the
 	 * current week when none is stated), the same narrowing and the same rule that a caller without
-	 * `CHANGE_SELECTED_EMPLOYEE` reads only their own expenses — and sums them as exact decimals per currency.
+	 * `CHANGE_SELECTED_EMPLOYEE` reads only their own expenses, and none when they have no employee record unless
+	 * their role views the whole organization — and sums them as exact decimals per currency.
 	 * The organization is the credential's, as on every read of this resolver; the route takes it from its
 	 * validated query string.
 	 */
