@@ -180,11 +180,14 @@ describe('TenantService.onboardTenant — the session id is proof, not a tenant 
 		service.executeTenantUpdateTasks = jest.fn();
 		service.typeOrmRoleRepository = { findOneBy: jest.fn(async () => ({ id: 'role-super-admin' })) };
 		service.typeOrmUserRepository = {
+			exists: jest.fn(async () => false),
 			update: jest.fn(async () => {
 				order.push('assign-super-admin');
 				return { affected: 1 };
 			})
 		};
+		// No tenant left behind by an earlier attempt.
+		service.find = jest.fn(async () => []);
 		service.importRecords = jest.fn(async () => undefined);
 		service.linkStripeCustomerAtOnboarding = jest.fn(async () => {
 			order.push('link');
@@ -195,7 +198,7 @@ describe('TenantService.onboardTenant — the session id is proof, not a tenant 
 
 		await service.onboardTenant({ name: 'NewCo', stripeCheckoutSessionId: SESSION }, creator());
 
-		expect(service.create).toHaveBeenCalledWith({ name: 'NewCo' });
+		expect(service.create).toHaveBeenCalledWith({ name: 'NewCo', createdByUserId: USER_ID });
 		expect(service.linkStripeCustomerAtOnboarding).toHaveBeenCalledWith(
 			expect.objectContaining({ id: TENANT_ID }),
 			expect.objectContaining({ id: USER_ID }),
