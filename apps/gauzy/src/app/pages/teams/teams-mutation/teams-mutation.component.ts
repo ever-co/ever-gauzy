@@ -11,7 +11,8 @@ import {
 	ITag,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { DUMMY_PROFILE_IMAGE, distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { distinctUntilChange, getPlaceholderProfileImageUrl, isNotEmpty } from '@gauzy/ui-core/common';
+import { environment } from '@gauzy/ui-config';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -218,7 +219,7 @@ export class TeamsMutationComponent implements OnInit {
 				this.form.get('imageId').setValue(image.id);
 				this.form.get('imageUrl').setValue(image.fullUrl);
 			} else {
-				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
+				this.form.get('imageUrl').setValue(getPlaceholderProfileImageUrl(environment.API_BASE_URL));
 			}
 			this.form.updateValueAndValidity();
 		} catch (error) {

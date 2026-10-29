@@ -28,6 +28,7 @@ import { IDBConnectionOptions } from '@gauzy/common';
 import { parseToBoolean } from '@gauzy/utils';
 import { getConfig, DatabaseTypeEnum } from '@gauzy/config';
 import { moment } from './../core/moment-extend';
+import { getPlaceholderImageUrl } from '../placeholder-image/placeholder-image-url';
 
 namespace Utils {
 	export function generatedLogoColor() {
@@ -35,8 +36,19 @@ namespace Utils {
 	}
 }
 
+/**
+ * A placeholder image (a letter or two in white on one of the generated logo colors) for a user, organization, team,
+ * project, contact or tenant that has no image of its own: a short URL of the API's own placeholder route.
+ *
+ * It used to be a `https://dummyimage.com` URL, which made every browser and app showing the record call a third party
+ * that has no legal entity, privacy policy or contract (legal audit item 7). See `placeholder-image-url.ts`.
+ *
+ * @param width - The width, in pixels.
+ * @param height - The height, in pixels.
+ * @param letter - The text: usually one or two initials.
+ */
 export const getDummyImage = (width: number, height: number, letter: string) => {
-	return `https://dummyimage.com/${width}x${height}/${Utils.generatedLogoColor()}/ffffff.jpg&text=${letter}`;
+	return getPlaceholderImageUrl(width, height, Utils.generatedLogoColor(), letter);
 };
 
 export const getUserDummyImage = (user: IUser) => {
