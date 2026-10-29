@@ -7106,6 +7106,9 @@
 		"COMMENT_IMAGE_FAILED": "تعذّر رفع {{ name }}."
 	},
 	"TASK_VIEW": {
+		"PROJECT": "المشروع",
+		"NO_PROJECT": "لا يوجد مشروع",
+		"OPEN_PROJECT": "فتح المشروع",
 		"CHANGE_STATUS": "تغيير الحالة",
 		"LINK_COPIED": "تم نسخ الرابط",
 		"SUBTASKS": "المهام الفرعية",

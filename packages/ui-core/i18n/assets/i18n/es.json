@@ -7116,6 +7116,9 @@
 		"COMMENT_IMAGE_FAILED": "No se pudo subir {{ name }}."
 	},
 	"TASK_VIEW": {
+		"PROJECT": "Proyecto",
+		"NO_PROJECT": "Sin proyecto",
+		"OPEN_PROJECT": "Abrir proyecto",
 		"CHANGE_STATUS": "Cambiar estado",
 		"LINK_COPIED": "Enlace copiado",
 		"SUBTASKS": "Subtareas",

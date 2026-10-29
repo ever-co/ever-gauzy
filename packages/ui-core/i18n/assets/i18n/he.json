@@ -7124,6 +7124,9 @@
 		"COMMENT_IMAGE_FAILED": "לא ניתן היה להעלות את {{ name }}."
 	},
 	"TASK_VIEW": {
+		"PROJECT": "פרויקט",
+		"NO_PROJECT": "אין פרויקט",
+		"OPEN_PROJECT": "פתח פרויקט",
 		"CHANGE_STATUS": "שינוי סטטוס",
 		"LINK_COPIED": "הקישור הועתק",
 		"SUBTASKS": "תתי־משימות",

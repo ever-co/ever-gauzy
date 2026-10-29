@@ -7110,6 +7110,9 @@
 		"COMMENT_IMAGE_FAILED": "Impossible de téléverser {{ name }}."
 	},
 	"TASK_VIEW": {
+		"PROJECT": "Projet",
+		"NO_PROJECT": "Aucun projet",
+		"OPEN_PROJECT": "Ouvrir le projet",
 		"CHANGE_STATUS": "Changer le statut",
 		"LINK_COPIED": "Lien copié",
 		"SUBTASKS": "Sous-tâches",

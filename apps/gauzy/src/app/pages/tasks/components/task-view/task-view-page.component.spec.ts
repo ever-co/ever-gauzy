@@ -171,6 +171,14 @@ describe('TaskViewPageComponent', () => {
 		expect(labels).toContain('TASKS_PAGE.TASK_PRIORITY');
 	});
 
+	it('leaves the project out of the details: it has a panel of its own', async () => {
+		const page = create();
+		await settle();
+
+		const labels = page.detailsSections.flatMap((section) => section.fields.map((field) => field.label));
+		expect(labels).not.toContain('TASKS_PAGE.TASKS_PROJECT');
+	});
+
 	it('follows the URL to the next task when the page is reused', async () => {
 		const page = create();
 		await settle();

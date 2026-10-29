@@ -7114,6 +7114,9 @@
 		"COMMENT_IMAGE_FAILED": "无法上传 {{ name }}。"
 	},
 	"TASK_VIEW": {
+		"PROJECT": "项目",
+		"NO_PROJECT": "无项目",
+		"OPEN_PROJECT": "打开项目",
 		"CHANGE_STATUS": "更改状态",
 		"LINK_COPIED": "链接已复制",
 		"SUBTASKS": "子任务",

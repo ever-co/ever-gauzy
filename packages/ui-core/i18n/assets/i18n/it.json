@@ -7114,6 +7114,9 @@
 		"COMMENT_IMAGE_FAILED": "Impossibile caricare {{ name }}."
 	},
 	"TASK_VIEW": {
+		"PROJECT": "Progetto",
+		"NO_PROJECT": "Nessun progetto",
+		"OPEN_PROJECT": "Apri progetto",
 		"CHANGE_STATUS": "Cambia stato",
 		"LINK_COPIED": "Link copiato",
 		"SUBTASKS": "Sottoattività",

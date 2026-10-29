@@ -7110,6 +7110,9 @@
 		"COMMENT_IMAGE_FAILED": "{{ name }} konnte nicht hochgeladen werden."
 	},
 	"TASK_VIEW": {
+		"PROJECT": "Projekt",
+		"NO_PROJECT": "Kein Projekt",
+		"OPEN_PROJECT": "Projekt öffnen",
 		"CHANGE_STATUS": "Status ändern",
 		"LINK_COPIED": "Link kopiert",
 		"SUBTASKS": "Unteraufgaben",
