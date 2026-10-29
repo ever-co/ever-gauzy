@@ -512,6 +512,21 @@ describe('DocumentLinksPanelComponent â€” record-side Documents panel (spec 00 Â
 			expect(panel.pending).toEqual([]);
 		});
 
+		it('retries only the link when the upload went through, never uploading the bytes again', async () => {
+			const uploaded = { id: FILE_ID, name: 'brief.pdf' } as IDocument;
+			const { panel, documentsService } = createDeferredPanel({ upload: of(new HttpResponse({ body: uploaded })) });
+			await panel.uploadFiles([new File(['x'], 'brief.pdf')]);
+			documentsService.createLink.mockReturnValueOnce(throwError(() => new Error('link lost')));
+
+			await expect(panel.attachPending(ENTITY_ID, 'Website')).resolves.toBe(false);
+			await expect(panel.attachPending(ENTITY_ID, 'Website')).resolves.toBe(true);
+
+			expect(documentsService.upload).toHaveBeenCalledTimes(1);
+			expect(documentsService.createLink).toHaveBeenCalledTimes(2);
+			expect(documentsService.createLink).toHaveBeenLastCalledWith(expect.objectContaining({ documentId: FILE_ID }));
+			expect(panel.pending).toEqual([]);
+		});
+
 		it('attaches nothing when no file was held', async () => {
 			const { panel, documentsService } = createDeferredPanel();
 
