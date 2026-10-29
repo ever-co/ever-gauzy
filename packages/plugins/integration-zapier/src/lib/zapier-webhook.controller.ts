@@ -180,16 +180,17 @@ export class ZapierWebhookController {
 	})
 	@Get('/webhooks')
 	async getWebhooks(
-		@Query('integrationId') integrationId: string,
+		@Query('integrationId') integrationId: string | string[],
 		@Headers('Authorization') authorization: string
 	): Promise<ZapierWebhookSubscription[]> {
 		try {
-			const named = await this.resolveIntegration(integrationId, authorization);
+			const integrationIdNamed = this.integrationIdOf(integrationId);
+			const named = await this.resolveIntegration(integrationIdNamed, authorization);
 			if (!named.id) {
 				throw new NotFoundException('Zapier integration not found');
 			}
 			// The bearer path resolves without a membership check: list only for a member of the organization
-			const integration = integrationId?.trim()
+			const integration = integrationIdNamed
 				? named
 				: await this.zapierService.findIntegrationForCurrentUser(named.id);
 
@@ -215,8 +216,8 @@ export class ZapierWebhookController {
 		integrationId: string | undefined,
 		authorization: string
 	): Promise<IIntegrationTenant & { tenantId: ID }> {
-		const integration = integrationId?.trim()
-			? await this.zapierService.findIntegrationForCurrentUser(integrationId.trim())
+		const integration = integrationId
+			? await this.zapierService.findIntegrationForCurrentUser(integrationId)
 			: await this.resolveBearerIntegration(authorization);
 
 		if (!integration.tenantId) {
@@ -224,6 +225,23 @@ export class ZapierWebhookController {
 		}
 
 		return integration as IIntegrationTenant & { tenantId: ID };
+	}
+
+	/**
+	 * The `integrationId` a request names: one value, trimmed, or none when it is unset or empty. `ValidationPipe` is not
+	 * run on these routes, and a repeated query parameter arrives as an array: refused (400) rather than failing on
+	 * `trim` (500). A malformed ID is answered 404 by the lookup (`findIntegrationForCurrentUser`).
+	 *
+	 * @throws BadRequestException for a value that is not one string.
+	 */
+	private integrationIdOf(value: unknown): string | undefined {
+		if (value === undefined || value === null) {
+			return undefined;
+		}
+		if (typeof value !== 'string') {
+			throw new BadRequestException('integrationId must be a single value');
+		}
+		return value.trim() || undefined;
 	}
 
 	/**
@@ -321,11 +339,11 @@ export class ZapierWebhookController {
 	async deleteWebhook(
 		@Param('id') id: string,
 		@Headers('Authorization') authorization: string,
-		@Query('integrationId') integrationId?: string
+		@Query('integrationId') integrationId?: string | string[]
 	): Promise<void> {
 		try {
 			// The integration the web app names, else the one the opaque token or JWT (multi-app OAuth) resolves to
-			const integration = await this.resolveIntegration(integrationId, authorization);
+			const integration = await this.resolveIntegration(this.integrationIdOf(integrationId), authorization);
 
 			await this.zapierWebhookService.deleteSubscription(id, integration.tenantId, integration.organizationId);
 		} catch (error) {

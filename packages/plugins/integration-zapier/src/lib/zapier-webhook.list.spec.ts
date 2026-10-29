@@ -137,6 +137,20 @@ describe('GET /integration/zapier/webhooks', () => {
 		);
 	});
 
+	it('answers 400 for a repeated integrationId, on the list and the unsubscribe route, before any lookup', async () => {
+		const { controller, repository, zapierService } = build();
+		const repeated = ['integration-1', 'integration-2'];
+
+		await expect(controller.getWebhooks(repeated, 'Bearer x')).rejects.toBeInstanceOf(BadRequestException);
+		await expect(controller.deleteWebhook('subscription-1', 'Bearer x', repeated)).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(zapierService.findIntegrationForCurrentUser).not.toHaveBeenCalled();
+		expect(zapierService.resolveIntegrationFromBearerToken).not.toHaveBeenCalled();
+		expect(repository.find).not.toHaveBeenCalled();
+		expect(repository.delete).not.toHaveBeenCalled();
+	});
+
 	it('never lists without every bound', async () => {
 		const { service, repository } = build();
 
