@@ -16,7 +16,7 @@ jest.mock('@gauzy/ui-core/i18n', () => ({
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: class ToastrService {} }));
 
 import { HttpEventType, HttpResponse } from '@angular/common/http';
-import { NEVER, Observable, of, throwError } from 'rxjs';
+import { NEVER, Observable, of, Subject, throwError } from 'rxjs';
 import { BaseEntityEnum, DocumentKindEnum, ID, IDocument, IDocumentLink, PermissionsEnum } from '@gauzy/contracts';
 import { DocumentLinksPanelComponent } from './document-links-panel.component';
 import { DocumentImagePreviewDialogComponent } from './document-image-preview-dialog.component';
@@ -594,6 +594,25 @@ describe('DocumentLinksPanelComponent â€” record-side Documents panel (spec 00 Â
 
 			expect(documentsService.getRawBlob).toHaveBeenCalledTimes(1);
 			expect(createObjectURL).not.toHaveBeenCalled();
+		});
+
+		it('shares one read and one URL when a preview opens while the grid fetches the same image', async () => {
+			const { panel, documentsService, dialogService } = createPanel({ links: of([imageLink()]) });
+			const blob$ = new Subject<Blob>();
+			documentsService.getRawBlob.mockReturnValue(blob$);
+			panel.toggleView();
+			await panel.load();
+
+			panel.previewLink(imageLink());
+			const [, config] = dialogService.open.mock.calls[0] as unknown as [unknown, { context: any }];
+			const preview = config.context.resolveSrc();
+			blob$.next(new Blob(['png'], { type: 'image/png' }));
+			blob$.complete();
+
+			await expect(preview).resolves.toBe('blob:raw');
+			expect(documentsService.getRawBlob).toHaveBeenCalledTimes(1);
+			expect(createObjectURL).toHaveBeenCalledTimes(1);
+			expect(panel.thumbOf(imageLink())).toBe('blob:raw');
 		});
 
 		it('offers the popup for images only', () => {
