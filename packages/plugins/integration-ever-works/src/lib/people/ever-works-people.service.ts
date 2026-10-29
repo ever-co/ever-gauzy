@@ -7,6 +7,7 @@ import {
 	HttpException,
 	Injectable,
 	Logger,
+	Optional,
 	ServiceUnavailableException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
@@ -28,6 +29,7 @@ import { EverWorksConnectionService } from '../connection/ever-works-connection.
 import { EverWorksSettingName } from '../ever-works-setting.enum';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
 import { EVER_WORKS_INBOX_AGGREGATE } from '../inbox/ever-works-inbox.service';
+import { EverWorksInboxPreferenceSummary, EverWorksInboxPreferencesService } from '../inbox/ever-works-inbox-preferences.service';
 import { EverWorksEntityLink, EverWorksInboundEvent, EverWorksInboundStatus, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { everWorksUserOfGauzyUser } from '../sync/ever-works-actor';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
@@ -70,6 +72,11 @@ export interface EverWorksPersonRow {
 	suggestion: { employeeId: ID; reason: 'ever_id' | 'verified_email' } | null;
 	/** A Gauzy invitation still pending for the member's e-mail ("invite to Gauzy"), or `null`. */
 	gauzyInvite: { inviteId: ID; expireDate: Date | null } | null;
+	/**
+	 * What the paired person sends of their Gauzy Inbox to Ever Works (their own choice, every kind by default), or
+	 * `null` while unpaired.
+	 */
+	inboxToEverWorks?: EverWorksInboxPreferenceSummary | null;
 }
 
 export interface EverWorksPeopleView {
@@ -163,7 +170,9 @@ export class EverWorksPeopleService {
 		private readonly contexts: EverWorksMappingContextService,
 		private readonly connections: EverWorksConnectionService,
 		private readonly links: EverWorksLinkService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		/** Each person's choice of what of their Gauzy Inbox goes to Ever Works; absent in bare test wiring. */
+		@Optional() private readonly inboxPreferences?: EverWorksInboxPreferencesService | null
 	) {}
 
 	private readonly logger = new Logger(EverWorksPeopleService.name);
@@ -757,6 +766,18 @@ export class EverWorksPeopleService {
 				gauzyInvite: invite ? { inviteId: invite.id as ID, expireDate: invite.expireDate ?? null } : null
 			};
 		});
+		if (this.inboxPreferences) {
+			// The admin sees each paired person's effective choice (read-only: only the person changes it).
+			const userOf = (row: EverWorksPersonRow) => (row.linkedEmployeeId ? (people.get(row.linkedEmployeeId)?.userId as ID | null | undefined) : null) ?? null;
+			const summaries = await this.inboxPreferences.summaries(
+				context.tenantId,
+				rows.map(userOf).filter((userId): userId is ID => !!userId)
+			);
+			for (const row of rows) {
+				const userId = userOf(row);
+				row.inboxToEverWorks = userId ? (summaries.get(userId) ?? null) : null;
+			}
+		}
 		return {
 			members: rows,
 			// A suggestion is not a pairing: a suggested person stays unmatched until the admin confirms it.

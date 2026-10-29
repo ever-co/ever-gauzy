@@ -1,4 +1,4 @@
-import { BadGatewayException, BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadGatewayException, BadRequestException, ConflictException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DataSource, EntityManager, In, MoreThan, Not } from 'typeorm';
 import { ID } from '@gauzy/contracts';
@@ -9,6 +9,7 @@ import { EverWorksConnection, EverWorksConnectionStatus } from '../../connection
 import { EverWorksConnectionService } from '../../connection/ever-works-connection.service';
 import { EVER_WORKS_INTEGRATION_NAME } from '../../ever-works.constants';
 import { EverWorksSettingName } from '../../ever-works-setting.enum';
+import { EverWorksInboxPushService } from '../../inbox/ever-works-inbox-push.service';
 import { isIdeaTask } from '../../tasks/ever-works-task-exclusion';
 import { entitySynced, type EverWorksDirection, type EverWorksDomain } from '../../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../../mapping/ever-works-mapping-context.service';
@@ -171,7 +172,9 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		private readonly applier: EverWorksInboundApplier,
 		private readonly pusher: EverWorksOutboundPusher,
 		private readonly queue: EverWorksOutboundQueue,
-		private readonly log: EverWorksSyncLogService
+		private readonly log: EverWorksSyncLogService,
+		/** The Gauzy Inbox → Ever Works mirror (the inbox phase's backfill); absent in bare test wiring. */
+		@Optional() private readonly inboxPush?: EverWorksInboxPushService | null
 	) {}
 
 	// ── Routes ─────────────────────────────────────────────────────────────────────────────────────
@@ -474,9 +477,20 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		// Works are link only: the import refreshes paired projects from Ever Works.
 		const reads = fromEverWorks(direction) || direction === 'link_only';
 		const canImport = reads && !!spec.aggregateType && this.applier.hasHandler(spec.aggregateType);
-		const canExport = toEverWorks(direction) && !!spec.linkType && this.pusher.hasHandler(spec.linkType) && EXPORTED_PHASES.has(spec.name);
-		if (!canImport && !canExport) return { import: false, export: false, note: 'not synced by this version yet; a later resync picks it up' };
-		const note = spec.name === 'teams' || spec.name === 'works' ? 'unpaired records wait for their tab; only pairs are refreshed' : null;
+		const exportType = spec.exportLinkType ?? spec.linkType;
+		let canExport = toEverWorks(direction) && !!exportType && this.pusher.hasHandler(exportType) && EXPORTED_PHASES.has(spec.name);
+		// The Gauzy Inbox's own items are sent as they are written; a run sends the open ones only when the mapping asks.
+		let inboxNote: string | null = null;
+		if (canExport && spec.name === 'inbox') {
+			if (!this.inboxPush?.canBackfill) inboxNote = 'the Gauzy Inbox is not loaded in this process; its items are sent as they are written';
+			else if (this.setting(context.mapping, EverWorksSettingName.BACKFILL_GAUZY_INBOX) !== 'true') inboxNote = 'Gauzy Inbox items are sent as they are written; the backfill of open items is off';
+			if (inboxNote) canExport = false;
+		}
+		if (!canImport && !canExport) {
+			if (inboxNote) return { import: false, export: false, done: true, note: inboxNote };
+			return { import: false, export: false, note: 'not synced by this version yet; a later resync picks it up' };
+		}
+		const note = spec.name === 'teams' || spec.name === 'works' ? 'unpaired records wait for their tab; only pairs are refreshed' : inboxNote;
 		return { import: canImport, export: canExport, note };
 	}
 
@@ -699,7 +713,8 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		deadline: number,
 		stillOwner?: () => Promise<boolean>
 	): Promise<boolean> {
-		const entityType = spec.linkType as EverWorksLinkType;
+		const entityType = (spec.exportLinkType ?? spec.linkType) as EverWorksLinkType;
+		if (spec.name === 'inbox') return this.exportGauzyInbox(context, state, deadline, stillOwner);
 		for (;;) {
 			const after = state.exportCursor ?? null;
 			const ids = spec.name === 'teams' ? await this.pairedTeams(context, after) : spec.name === 'tasks' ? await this.tasksInScope(context, after) : [];
@@ -709,6 +724,37 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 				if (await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType, gauzyId, op: 'upsert' })) state.exported++;
 				state.exportCursor = gauzyId;
 			}
+		}
+	}
+
+	/**
+	 * The inbox phase's backfill (the mapping's `BACKFILL_GAUZY_INBOX`): the open Gauzy Inbox items of paired people,
+	 * as their preferences allow, one change per recipient row, from `state.exportCursor`; true once every page is queued.
+	 */
+	private async exportGauzyInbox(
+		context: EverWorksMappingContext,
+		state: EverWorksSyncPhaseState,
+		deadline: number,
+		stillOwner?: () => Promise<boolean>
+	): Promise<boolean> {
+		if (!this.inboxPush) return true;
+		if (state.exportCursor === INBOX_EXPORT_DONE) return true;
+		for (;;) {
+			if (isOver(deadline) || (stillOwner && !(await stillOwner()))) return false;
+			const page = await this.inboxPush.backfillPage(context, state.exportCursor ?? null);
+			for (const gauzyId of page.ids) {
+				const queued = await this.queue.enqueue({
+					tenantId: context.tenantId,
+					organizationId: context.organizationId,
+					entityType: EverWorksLinkType.GAUZY_INBOX_ITEM,
+					gauzyId,
+					op: 'upsert',
+					changedFields: ['backfill']
+				});
+				if (queued) state.exported++;
+			}
+			state.exportCursor = page.next ?? INBOX_EXPORT_DONE;
+			if (!page.next) return true;
 		}
 	}
 
@@ -968,6 +1014,12 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			creates: { inGauzy: 0, inEverWorks: 0 },
 			toPair: null
 		};
+		if (spec.name === 'inbox' && toEverWorks(direction) && this.inboxPush?.canBackfill) {
+			// The Gauzy side: the open items of paired people a backfill would send (their preferences applied).
+			const counts = await this.inboxPush.backfillCounts(context);
+			preview.gauzy = counts;
+			if (plan.export) preview.creates.inEverWorks = Math.max(0, counts.total - counts.linked);
+		}
 		if (direction === 'off' || spec.kind === 'included' || spec.kind === 'children' || !spec.list) {
 			if (spec.kind === 'children') preview.note = plan.import ? `the last ${COMMENTS_PER_TASK} comments of each synced task` : plan.note;
 			return preview;
@@ -1121,4 +1173,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 }
 
 /** Phases that queue Gauzy records for Ever Works (the others are one way, link only, or wait for their items). */
-const EXPORTED_PHASES = new Set<EverWorksSyncPhaseName>(['teams', 'tasks']);
+const EXPORTED_PHASES = new Set<EverWorksSyncPhaseName>(['teams', 'tasks', 'inbox']);
+
+/** The export checkpoint of a finished inbox backfill (the feed's own cursors are recipient ids). */
+const INBOX_EXPORT_DONE = 'done';

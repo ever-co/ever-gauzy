@@ -56,6 +56,8 @@ export interface EverWorksMappingView {
 	includeTriageTasks: boolean;
 	includeGoalIterationKeyResults: boolean;
 	syncUnlinkedProjectTasks: boolean;
+	/** An initial sync or resync also sends the open Gauzy Inbox items of paired people (off by default). */
+	backfillGauzyInbox: boolean;
 	ideaIssueTypeId: ID | null;
 	ideasTaskViewId: ID | null;
 	entitySettings: Array<{ entity: IntegrationEntity; sync: boolean }>;
@@ -210,6 +212,7 @@ export class EverWorksMappingService {
 				['includeTriageTasks', S.INCLUDE_TRIAGE_TASKS],
 				['includeGoalIterationKeyResults', S.INCLUDE_GOAL_ITERATION_KEY_RESULTS],
 				['syncUnlinkedProjectTasks', S.SYNC_UNLINKED_PROJECT_TASKS],
+				['backfillGauzyInbox', S.BACKFILL_GAUZY_INBOX],
 				['isEnabled', S.IS_ENABLED]
 			] as const) {
 				if (dto[field] !== undefined) values[name] = String(dto[field]);
@@ -539,6 +542,7 @@ export class EverWorksMappingService {
 			includeTriageTasks: bool(S.INCLUDE_TRIAGE_TASKS, false),
 			includeGoalIterationKeyResults: bool(S.INCLUDE_GOAL_ITERATION_KEY_RESULTS, false),
 			syncUnlinkedProjectTasks: bool(S.SYNC_UNLINKED_PROJECT_TASKS, true),
+			backfillGauzyInbox: bool(S.BACKFILL_GAUZY_INBOX, false),
 			ideaIssueTypeId: id(S.IDEA_ISSUE_TYPE_ID),
 			ideasTaskViewId: id(S.IDEAS_TASK_VIEW_ID),
 			entitySettings: EVER_WORKS_SYNCED_ENTITIES.map((entity) => ({

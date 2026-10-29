@@ -44,6 +44,7 @@ import {
 } from '@nestjs/common';
 import { DataSource, EntitySchema } from 'typeorm';
 import {
+	IInboxItemChange,
 	IInboxSourceHandler,
 	InboxItemKindEnum,
 	InboxItemSourceEnum,
@@ -56,6 +57,7 @@ import { InboxItem } from './entities/inbox-item.entity';
 import { InboxItemRecipient } from './entities/inbox-item-recipient.entity';
 import { INBOX_MIGRATIONS } from './database/inbox-migrations';
 import { InboxService } from './inbox.service';
+import { InboxItemFeed } from './inbox-item-feed';
 import { InboxSourceHandlerRegistry } from './inbox-source-handler.registry';
 
 jest.setTimeout(60_000);
@@ -995,6 +997,112 @@ describe('Inbox on SQLite', () => {
 					recipients: []
 				})
 			).rejects.toBeInstanceOf(BadRequestException);
+		});
+	});
+
+	describe('observers (INBOX_ITEM_FEED)', () => {
+		let feed: InboxItemFeed;
+		let changes: IInboxItemChange[];
+
+		beforeEach(() => {
+			feed = new InboxItemFeed(dataSource);
+			changes = [];
+			feed.register({ id: 'test', changed: (change) => void changes.push(change) });
+			service = new InboxService(dataSource, registry, undefined, feed);
+		});
+
+		it('are told about a new item, a re-delivery, a reply and a recipient state, naming the recipient rows', async () => {
+			const { item } = await question({ recipients: [{ userId: ADA }, { userId: BOB }] });
+			const rows: Array<{ id: string; userId: string }> = await dataSource.query(
+				`SELECT "id", "userId" FROM "inbox_item_recipient" WHERE "inboxItemId" = ?`,
+				[item.id as string]
+			);
+			expect(changes).toHaveLength(1);
+			expect(changes[0]).toMatchObject({
+				tenantId: TENANT,
+				organizationId: ORG,
+				inboxItemId: item.id,
+				kind: InboxItemKindEnum.QUESTION,
+				source: InboxItemSourceEnum.GAUZY,
+				scope: 'item',
+				type: 'created'
+			});
+			expect(changes[0].recipients).toEqual(expect.arrayContaining(rows.map((row) => ({ id: row.id, userId: row.userId }))));
+
+			await service.reply(item.id as never, { optionId: 'yes' });
+			expect(changes[1]).toMatchObject({ scope: 'item', type: 'answered', actorUserId: ADA });
+
+			await service.setState(item.id as never, { isArchived: true });
+			const ada = rows.find((row) => row.userId === ADA) as { id: string };
+			expect(changes[2]).toMatchObject({ scope: 'recipient', recipients: [{ id: ada.id, userId: ADA }], stated: ['isArchived'] });
+
+			await service.upsertExternal({
+				tenantId: TENANT,
+				kind: InboxItemKindEnum.NOTICE,
+				source: 'SYSTEM',
+				externalSource: 'test',
+				externalId: 'n-1',
+				title: 'Hello',
+				recipients: [{ userId: ADA }]
+			});
+			await service.upsertExternal({
+				tenantId: TENANT,
+				kind: InboxItemKindEnum.NOTICE,
+				source: 'SYSTEM',
+				externalSource: 'test',
+				externalId: 'n-1',
+				title: 'Hello again',
+				recipients: [{ userId: ADA }]
+			});
+			expect(changes.slice(3).map((change) => change.type)).toEqual(['created', 'updated']);
+		});
+
+		it('never fail or undo a write when an observer throws', async () => {
+			feed.register({
+				id: 'broken',
+				changed: () => {
+					throw new Error('observer down');
+				}
+			});
+			const { item } = await question();
+			expect(item.id).toBeTruthy();
+			expect(changes).toHaveLength(1);
+			await expect(service.setState(item.id as never, { isRead: true })).resolves.toMatchObject({
+				recipient: expect.objectContaining({ isRead: true })
+			});
+		});
+
+		it('read one recipient copy, the open items of some users, and the rows changed since a time', async () => {
+			const open = await question({ recipients: [{ userId: ADA }, { userId: BOB }] });
+			const answered = await question({ title: 'Answered one' });
+			as(ADA);
+			await service.reply(answered.item.id as never, { optionId: 'no' });
+			const archived = await question({ title: 'Archived one' });
+			await service.setState(archived.item.id as never, { isArchived: true });
+			const [adaRow] = await dataSource.query(
+				`SELECT "id" FROM "inbox_item_recipient" WHERE "inboxItemId" = ? AND "userId" = ?`,
+				[open.item.id as string, ADA]
+			);
+
+			const copy = await feed.readRecipient(TENANT, adaRow.id);
+			expect(copy?.item).toMatchObject({ id: open.item.id, options: expect.any(Array) });
+			expect(copy?.recipient).toMatchObject({ userId: ADA });
+			expect(await feed.readRecipient(OTHER_TENANT, adaRow.id)).toBeNull();
+
+			const page = await feed.openRecipientsOf(TENANT, ORG, [ADA]);
+			expect(page.recipients.map((row) => row.inboxItemId)).toEqual([open.item.id]);
+			expect(page.next).toBeNull();
+			const both = await feed.openRecipientsOf(TENANT, ORG, [ADA, BOB], { limit: 1 });
+			expect(both.recipients).toHaveLength(1);
+			expect(both.next).toBe(both.recipients[0].id);
+			const rest = await feed.openRecipientsOf(TENANT, ORG, [ADA, BOB], { after: both.next, limit: 1 });
+			expect(rest.recipients).toHaveLength(1);
+			expect(rest.recipients[0].id > (both.next as string)).toBe(true);
+
+			const changed = await feed.recipientsChangedSince(TENANT, new Date(Date.now() - 60_000));
+			expect(changed.recipients.length).toBe(4);
+			expect(changed.recipients.every((row) => row.changedAt !== null)).toBe(true);
+			expect((await feed.recipientsChangedSince(TENANT, new Date(Date.now() + 60_000))).recipients).toEqual([]);
 		});
 	});
 });

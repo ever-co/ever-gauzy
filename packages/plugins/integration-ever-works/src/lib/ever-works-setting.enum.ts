@@ -30,6 +30,11 @@ export enum EverWorksSettingName {
 	INCLUDE_GOAL_ITERATION_KEY_RESULTS = 'INCLUDE_GOAL_ITERATION_KEY_RESULTS',
 	/** Sync tasks of projects that are not linked to a Work (default on, plan 03 §C.2). */
 	SYNC_UNLINKED_PROJECT_TASKS = 'SYNC_UNLINKED_PROJECT_TASKS',
+	/**
+	 * `true`: an initial sync or resync also sends the open Gauzy Inbox items of paired people to Ever Works (as each
+	 * person's preference allows). Off by default: without it, only the items written from then on are sent.
+	 */
+	BACKFILL_GAUZY_INBOX = 'BACKFILL_GAUZY_INBOX',
 	/** The seeded "Idea" issue type and "Ideas" task view of the organization. */
 	IDEA_ISSUE_TYPE_ID = 'IDEA_ISSUE_TYPE_ID',
 	IDEAS_TASK_VIEW_ID = 'IDEAS_TASK_VIEW_ID',

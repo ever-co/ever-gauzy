@@ -44,7 +44,9 @@ import {
 	EverWorksApplyOutcome,
 	EverWorksInboundHandler
 } from '../sync/inbound/ever-works-inbound.applier';
+import { fromEverWorks } from '../sync/initial/ever-works-sync-phases';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
+import { EverWorksInboxPushService } from './ever-works-inbox-push.service';
 import {
 	EVER_WORKS_INBOX_EXTERNAL_SOURCE,
 	EverWorksInboxLinks,
@@ -67,6 +69,9 @@ export const EVER_WORKS_INBOX_AGGREGATE = 'inbox_item';
  *   go to `PATCH /inbox/items/:id/state`. Snoozing stays in Gauzy.
  *
  * Both are optional: where the Gauzy Inbox is off (the default) nothing registers and the events are skipped.
+ *
+ * The events of the copies of Gauzy's own Inbox items (filed in Ever Works by `EverWorksInboxPushService`) go to that
+ * service instead: they change the Gauzy item they came from.
  */
 @Injectable()
 export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleInit, OnModuleDestroy {
@@ -88,7 +93,9 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 		@Optional() @Inject(INBOX_ITEM_WRITER) private readonly inbox?: IInboxItemWriter | null,
 		@Optional()
 		@Inject(INBOX_SOURCE_HANDLER_REGISTRY)
-		private readonly registry?: IInboxSourceHandlerRegistry | null
+		private readonly registry?: IInboxSourceHandlerRegistry | null,
+		/** The Gauzy → Ever Works mirror, whose copies' events are its own; absent in bare test wiring. */
+		@Optional() private readonly push?: EverWorksInboxPushService | null
 	) {}
 
 	onModuleInit(): void {
@@ -125,6 +132,15 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 		if (!context) return { status: 'skipped', message: 'no mapping for the Ever Works organization' };
 		if (!context.isEnabled) return { status: 'skipped', message: 'the mapping is disabled' };
 		if (context.directions.inbox === 'off') return { status: 'skipped', message: 'the inbox is not synced' };
+
+		// A copy of a Gauzy Inbox item this plugin filed in Ever Works: what the Ever Works user did there goes back to
+		// the Gauzy item (never a second, Ever Works item in the Gauzy Inbox).
+		const copy = this.push ? await this.push.copyOf(context, envelope.aggregate.id, (envelope.data ?? {}) as Record<string, unknown>) : null;
+		if (copy === 'pending') {
+			return { status: 'deferred', message: 'a copy of a Gauzy Inbox item whose push is still being recorded' };
+		}
+		if (copy) return (this.push as EverWorksInboxPushService).applyFromEverWorks(context, copy, envelope);
+		if (!fromEverWorks(context.directions.inbox)) return { status: 'skipped', message: 'Ever Works inbox items are not brought into Gauzy (inbox direction)' };
 
 		const item = { ...((envelope.data ?? {}) as unknown as EverWorksInboxItem), id: envelope.aggregate.id };
 		if (!item.recipientUserId) return { status: 'skipped', message: 'the inbox item names no recipient' };
