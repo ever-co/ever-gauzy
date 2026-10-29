@@ -1,12 +1,11 @@
 import { ID, PluginSubscriptionType } from '@gauzy/contracts';
-import { RequestContext } from '@gauzy/core';
 import { BadRequestException, HttpException, HttpStatus, NotFoundException } from '@nestjs/common';
-import { PluginService, PluginSubscriptionPlanService } from '../../../../domain';
+import { PluginSubscriptionPlanService } from '../../../../domain';
 import { IPluginSubscription, IPluginSubscriptionPlan } from '../../../../shared';
 
 /** Answered when a plan change would raise what the subscriber pays without a payment. */
 export const PLAN_CHANGE_NEEDS_PAYMENT =
-	'This plan costs more than your current one. A plan change that costs more is not available yet: ask the plugin publisher.';
+	'This plan costs more than your current one, and a plan change that costs more is not available yet.';
 
 /**
  * Checks a plan change (`POST :id/upgrade` / `POST :id/downgrade`) before it is applied.
@@ -16,22 +15,22 @@ export const PLAN_CHANGE_NEEDS_PAYMENT =
  *   move onto any plan of any plugin, a paid one included.
  * - The change must not raise what the subscriber pays, because the plugin registry takes no payment for a plan
  *   change (its payment gateway is not integrated): a subscriber may move to a free plan, or to a plan that costs no
- *   more than the current one in the same currency and billing period. The plugin's publisher, who may already set a
- *   subscription's status and dates to grant trials or comps, may move a subscriber to any plan of the plugin.
+ *   more than the current one in the same currency and billing period.
+ *
+ * These routes act on the caller's own subscription only; a publisher grants trials or comps through the status and
+ * dates they may already set (`subscription-write-access.ts`).
  *
  * @param planService - Reads the plans.
- * @param pluginService - Answers who published a plugin.
  * @param subscription - The subscription, with its current `plan`.
  * @param newPlanId - The plan to move to.
  * @param pluginId - The plugin the route names, if any.
  * @returns The new plan.
  * @throws NotFoundException when the subscription belongs to another plugin than the route's.
  * @throws BadRequestException when the plan is missing, inactive or another plugin's.
- * @throws HttpException 402 when the change would cost more and the caller is not the publisher.
+ * @throws HttpException 402 when the change would cost more.
  */
 export async function assertPlanChangeAllowed(
 	planService: PluginSubscriptionPlanService,
-	pluginService: PluginService,
 	subscription: IPluginSubscription,
 	newPlanId: ID,
 	pluginId?: ID
@@ -51,11 +50,6 @@ export async function assertPlanChangeAllowed(
 	}
 
 	if (isFreePlan(plan) || costsNoMore(plan, subscription.plan)) {
-		return plan;
-	}
-
-	const userId = RequestContext.currentUserId();
-	if (userId && (await pluginService.validatePluginOwnership(subscription.pluginId, userId))) {
 		return plan;
 	}
 

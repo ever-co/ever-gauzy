@@ -1,6 +1,6 @@
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PluginService, PluginSubscriptionPlanService, PluginSubscriptionService } from '../../../../domain';
+import { PluginSubscriptionPlanService, PluginSubscriptionService } from '../../../../domain';
 import { PluginSubscription } from '../../../../domain/entities';
 import { IPluginSubscription } from '../../../../shared';
 import { DowngradePluginSubscriptionCommand } from '../downgrade-plugin-subscription.command';
@@ -12,8 +12,7 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 
 	constructor(
 		private readonly pluginSubscriptionService: PluginSubscriptionService,
-		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService,
-		private readonly pluginService: PluginService
+		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService
 	) {}
 
 	/**
@@ -22,8 +21,8 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 	 * Business Rules:
 	 * 1. Subscription must exist and be accessible by the requesting user
 	 * 2. Subscription must be in ACTIVE status to be downgraded
-	 * 3. New plan must be different from current plan, active, of the subscription's plugin, and cost no more unless
-	 *    the plugin's publisher makes the change ({@link assertPlanChangeAllowed}): a "downgrade" to a pricier plan is
+	 * 3. New plan must be different from current plan, active, of the subscription's plugin, and cost no more
+	 *    ({@link assertPlanChangeAllowed}): a "downgrade" to a pricier plan is
 	 *    an upgrade without a payment
 	 * 4. Downgrade sets metadata tracking previous plan and downgrade timestamp
 	 * 5. Updates subscription's planId and updatedAt timestamp
@@ -63,13 +62,7 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 			throw new BadRequestException('Cannot downgrade to the same plan. Please select a different plan.');
 		}
 
-		await assertPlanChangeAllowed(
-			this.pluginSubscriptionPlanService,
-			this.pluginService,
-			subscription,
-			newPlanId,
-			pluginId
-		);
+		await assertPlanChangeAllowed(this.pluginSubscriptionPlanService, subscription, newPlanId, pluginId);
 
 		if (!subscription.canBeDowngraded()) {
 			throw new BadRequestException('This subscription cannot be downgraded due to plan restrictions.');

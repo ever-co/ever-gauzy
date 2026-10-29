@@ -30,8 +30,7 @@ import { UpgradePluginSubscriptionCommandHandler } from './upgrade-plugin-subscr
 /**
  * `POST /plugins/:pluginId/subscriptions/:id/upgrade|downgrade` set any plan id: another plugin's plan, an inactive
  * one, or a paid one, with no payment step (the registry's payment gateway is not integrated). A plan change now
- * needs a plan of the subscription's plugin that is active, and may not raise what the subscriber pays unless the
- * plugin's publisher makes it.
+ * needs a plan of the subscription's plugin that is active, and may not raise what the subscriber pays.
  */
 
 const PLUGIN = 'plugin-1';
@@ -62,9 +61,6 @@ function build(currentPlanId = 'basic') {
 			PLANS[id] ? { success: true, record: PLANS[id] } : { success: false }
 		)
 	};
-	const pluginService = {
-		validatePluginOwnership: jest.fn(async (pluginId: string, userId: string) => userId === 'publisher-1')
-	};
 	const subscription: any = {
 		id: 'subscription-1',
 		pluginId: PLUGIN,
@@ -84,7 +80,7 @@ function build(currentPlanId = 'basic') {
 			return this;
 		}
 	};
-	return { planService, pluginService, subscription };
+	return { planService, subscription };
 }
 
 const status = async (promise: Promise<unknown>) => {
@@ -105,11 +101,11 @@ describe('assertPlanChangeAllowed', () => {
 		['to a free plan', 'free'],
 		['to a cheaper plan in the same currency and billing period', 'cheaper']
 	])('lets the subscriber move %s', async (_case, planId) => {
-		const { planService, pluginService, subscription } = build();
+		const { planService, subscription } = build();
 
-		await expect(
-			assertPlanChangeAllowed(planService as any, pluginService as any, subscription, planId, PLUGIN)
-		).resolves.toEqual(PLANS[planId]);
+		await expect(assertPlanChangeAllowed(planService as any, subscription, planId, PLUGIN)).resolves.toEqual(
+			PLANS[planId]
+		);
 	});
 
 	it.each([
@@ -117,73 +113,54 @@ describe('assertPlanChangeAllowed', () => {
 		['to a plan of another billing period, which is not comparable', 'yearly'],
 		['to a plan in another currency, which is not comparable', 'euro']
 	])('asks for a payment (402) for a move %s', async (_case, planId) => {
-		const { planService, pluginService, subscription } = build();
+		const { planService, subscription } = build();
 
-		const refusal = assertPlanChangeAllowed(planService as any, pluginService as any, subscription, planId, PLUGIN);
+		const refusal = assertPlanChangeAllowed(planService as any, subscription, planId, PLUGIN);
 
 		await expect(refusal).rejects.toThrow(PLAN_CHANGE_NEEDS_PAYMENT);
 		expect(await status(refusal)).toBe(HttpStatus.PAYMENT_REQUIRED);
 	});
 
 	it('asks for a payment for any paid plan when the current plan is free', async () => {
-		const { planService, pluginService, subscription } = build('free');
+		const { planService, subscription } = build('free');
 
-		expect(
-			await status(assertPlanChangeAllowed(planService as any, pluginService as any, subscription, 'cheaper'))
-		).toBe(HttpStatus.PAYMENT_REQUIRED);
-	});
-
-	it('lets the plugin’s publisher move a subscriber to any plan of the plugin', async () => {
-		mockCaller.userId = 'publisher-1';
-		const { planService, pluginService, subscription } = build('free');
-
-		await expect(
-			assertPlanChangeAllowed(planService as any, pluginService as any, subscription, 'premium', PLUGIN)
-		).resolves.toEqual(PLANS.premium);
-		expect(pluginService.validatePluginOwnership).toHaveBeenCalledWith(PLUGIN, 'publisher-1');
+		expect(await status(assertPlanChangeAllowed(planService as any, subscription, 'cheaper'))).toBe(
+			HttpStatus.PAYMENT_REQUIRED
+		);
 	});
 
 	it.each([
 		['another plugin’s plan, even a free one', 'foreign'],
 		['an inactive plan', 'inactive'],
 		['a plan that does not exist', 'missing']
-	])('refuses %s, even to the publisher', async (_case, planId) => {
-		mockCaller.userId = 'publisher-1';
-		const { planService, pluginService, subscription } = build();
+	])('refuses %s', async (_case, planId) => {
+		const { planService, subscription } = build();
 
-		await expect(
-			assertPlanChangeAllowed(planService as any, pluginService as any, subscription, planId, PLUGIN)
-		).rejects.toThrow(BadRequestException);
+		await expect(assertPlanChangeAllowed(planService as any, subscription, planId, PLUGIN)).rejects.toThrow(
+			BadRequestException
+		);
 	});
 
 	it('does not find a subscription of another plugin than the route names', async () => {
-		const { planService, pluginService, subscription } = build();
+		const { planService, subscription } = build();
 
-		await expect(
-			assertPlanChangeAllowed(planService as any, pluginService as any, subscription, 'free', 'plugin-2')
-		).rejects.toThrow(NotFoundException);
+		await expect(assertPlanChangeAllowed(planService as any, subscription, 'free', 'plugin-2')).rejects.toThrow(
+			NotFoundException
+		);
 		expect(planService.findOneOrFailByIdString).not.toHaveBeenCalled();
 	});
 });
 
 describe('upgrade and downgrade handlers', () => {
 	function handlers(currentPlanId = 'basic') {
-		const { planService, pluginService, subscription } = build(currentPlanId);
+		const { planService, subscription } = build(currentPlanId);
 		const subscriptionService = {
 			findOneOrFailByIdString: jest.fn(async () => ({ success: true, record: subscription })),
 			findOneByIdString: jest.fn(async () => subscription),
 			save: jest.fn(async (entity: unknown) => entity)
 		};
-		const upgrade = new UpgradePluginSubscriptionCommandHandler(
-			subscriptionService as any,
-			planService as any,
-			pluginService as any
-		);
-		const downgrade = new DowngradePluginSubscriptionCommandHandler(
-			subscriptionService as any,
-			planService as any,
-			pluginService as any
-		);
+		const upgrade = new UpgradePluginSubscriptionCommandHandler(subscriptionService as any, planService as any);
+		const downgrade = new DowngradePluginSubscriptionCommandHandler(subscriptionService as any, planService as any);
 		return { upgrade, downgrade, subscriptionService, subscription };
 	}
 
@@ -235,15 +212,6 @@ describe('upgrade and downgrade handlers', () => {
 		await downgrade.execute(downgradeTo('cheaper'));
 
 		expect(subscriptionService.save).toHaveBeenCalledWith(expect.objectContaining({ planId: 'cheaper' }));
-	});
-
-	it('still lets the publisher upgrade a subscriber to a paid plan (a comp)', async () => {
-		mockCaller.userId = 'publisher-1';
-		const { upgrade, subscriptionService } = handlers();
-
-		await upgrade.execute(upgradeTo('premium'));
-
-		expect(subscriptionService.save).toHaveBeenCalledWith(expect.objectContaining({ planId: 'premium' }));
 	});
 
 	it('does not find the subscription under another plugin’s route', async () => {

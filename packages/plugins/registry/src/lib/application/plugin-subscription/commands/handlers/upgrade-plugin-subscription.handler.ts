@@ -1,6 +1,6 @@
 import { BadRequestException, HttpException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PluginService, PluginSubscriptionPlanService, PluginSubscriptionService } from '../../../../domain';
+import { PluginSubscriptionPlanService, PluginSubscriptionService } from '../../../../domain';
 import { IPluginSubscription } from '../../../../shared';
 import { UpgradePluginSubscriptionCommand } from '../upgrade-plugin-subscription.command';
 import { assertPlanChangeAllowed } from './plan-change';
@@ -11,8 +11,7 @@ export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<
 
 	constructor(
 		private readonly pluginSubscriptionService: PluginSubscriptionService,
-		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService,
-		private readonly pluginService: PluginService
+		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService
 	) {}
 
 	/**
@@ -21,8 +20,8 @@ export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<
 	 * Business Rules:
 	 * 1. Subscription must exist and be accessible by the requesting user
 	 * 2. Subscription must be in ACTIVE status to be upgraded
-	 * 3. New plan must be different from current plan, active, of the subscription's plugin, and cost no more unless
-	 *    the plugin's publisher makes the change ({@link assertPlanChangeAllowed})
+	 * 3. New plan must be different from current plan, active, of the subscription's plugin, and cost no more
+	 *    ({@link assertPlanChangeAllowed})
 	 * 4. Upgrade sets metadata tracking previous plan and upgrade timestamp
 	 * 5. Updates subscription's planId and updatedAt timestamp
 	 * 6. Parent subscription upgrade cascades plan change to all active child subscriptions
@@ -63,13 +62,7 @@ export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<
 				throw new BadRequestException('Cannot upgrade to the same plan. Please select a different plan.');
 			}
 
-			await assertPlanChangeAllowed(
-				this.pluginSubscriptionPlanService,
-				this.pluginService,
-				subscription,
-				newPlanId,
-				pluginId
-			);
+			await assertPlanChangeAllowed(this.pluginSubscriptionPlanService, subscription, newPlanId, pluginId);
 
 			// Use domain method to upgrade subscription (includes validation and business logic)
 			const upgradedSubscription = subscription.upgradeToPlan(newPlanId);
