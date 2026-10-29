@@ -16,7 +16,7 @@ jest.mock('@gauzy/ui-core/i18n', () => ({
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: class ToastrService {} }));
 
 import { HttpEventType, HttpResponse } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 import { BaseEntityEnum, DocumentKindEnum, ID, IDocument, IDocumentLink, PermissionsEnum } from '@gauzy/contracts';
 import { DocumentLinksPanelComponent } from './document-links-panel.component';
 import { DocumentImagePreviewDialogComponent } from './document-image-preview-dialog.component';
@@ -444,19 +444,39 @@ describe('DocumentLinksPanelComponent â€” record-side Documents panel (spec 00 Â
 			expect(panel.pending).toEqual([]);
 		});
 
-		it('previews a held file from the machine in a new tab, without uploading it', () => {
+		it('opens a held PDF from the machine in a new tab, typed as a PDF, without uploading it', () => {
 			const { panel, documentsService } = createDeferredPanel();
 			const file = new File(['x'], 'brief.pdf');
 			const createObjectURL = jest.fn().mockReturnValue('blob:brief');
-			(URL as unknown as { createObjectURL: unknown }).createObjectURL = createObjectURL;
+			Object.assign(URL, { createObjectURL, revokeObjectURL: jest.fn() });
 			const open = jest.spyOn(window, 'open').mockReturnValue(null);
 
 			panel.previewPending(file);
 
-			expect(createObjectURL).toHaveBeenCalledWith(file);
+			expect((createObjectURL.mock.calls[0][0] as Blob).type).toBe('application/pdf');
 			expect(open).toHaveBeenCalledWith('blob:brief', '_blank', 'noopener');
 			expect(documentsService.upload).not.toHaveBeenCalled();
+			expect(panel.canPreviewPending(file)).toBe(true);
 			open.mockRestore();
+		});
+
+		it('downloads a held HTML file instead of opening it as a page', () => {
+			const { panel } = createDeferredPanel();
+			const file = new File(['<script></script>'], 'page.html', { type: 'text/html' });
+			Object.assign(URL, { createObjectURL: jest.fn().mockReturnValue('blob:page'), revokeObjectURL: jest.fn() });
+			const open = jest.spyOn(window, 'open').mockReturnValue(null);
+			const click = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+				expect(this.download).toBe('page.html');
+				expect(this.href).toBe('blob:page');
+			});
+
+			panel.previewPending(file);
+
+			expect(click).toHaveBeenCalledTimes(1);
+			expect(open).not.toHaveBeenCalled();
+			expect(panel.canPreviewPending(file)).toBe(false);
+			open.mockRestore();
+			click.mockRestore();
 		});
 
 		it('uploads and links the held files to the saved record', async () => {
@@ -464,12 +484,31 @@ describe('DocumentLinksPanelComponent â€” record-side Documents panel (spec 00 Â
 			const { panel, documentsService } = createDeferredPanel({ upload: of(new HttpResponse({ body: uploaded })) });
 			await panel.uploadFiles([new File(['x'], 'brief.pdf')]);
 
-			await panel.attachPending(ENTITY_ID, 'Website');
+			await expect(panel.attachPending(ENTITY_ID, 'Website')).resolves.toBe(true);
 
 			expect(documentsService.upload).toHaveBeenCalledTimes(1);
 			expect(documentsService.createLink).toHaveBeenCalledWith(
 				expect.objectContaining({ documentId: FILE_ID, entityId: ENTITY_ID, metadata: { label: 'Website' } })
 			);
+			expect(panel.pending).toEqual([]);
+		});
+
+		it('keeps a file that failed to attach, and retries only it', async () => {
+			const uploaded = { id: FILE_ID, name: 'brief.pdf' } as IDocument;
+			const { panel, documentsService } = createDeferredPanel({ upload: of(new HttpResponse({ body: uploaded })) });
+			const failing = new File(['y'], 'plan.xlsx');
+			await panel.uploadFiles([new File(['x'], 'brief.pdf'), failing]);
+			documentsService.upload
+				.mockReturnValueOnce(of(new HttpResponse({ body: uploaded })))
+				.mockReturnValueOnce(throwError(() => new Error('rejected')));
+
+			await expect(panel.attachPending(ENTITY_ID, 'Website')).resolves.toBe(false);
+
+			expect(panel.pending.map(({ file }) => file)).toEqual([failing]);
+
+			await expect(panel.attachPending(ENTITY_ID, 'Website')).resolves.toBe(true);
+			expect(documentsService.upload).toHaveBeenCalledTimes(3);
+			expect(documentsService.upload).toHaveBeenLastCalledWith(failing, expect.anything());
 			expect(panel.pending).toEqual([]);
 		});
 
@@ -522,6 +561,24 @@ describe('DocumentLinksPanelComponent â€” record-side Documents panel (spec 00 Â
 			expect(documentsService.getRawBlob).toHaveBeenCalledWith(IMAGE_ID);
 			expect(panel.thumbOf(imageLink())).toBe('blob:raw');
 			expect(panel.thumbOf(fileLink())).toBeNull();
+		});
+
+		it('cancels the image reads when the panel closes, and creates no URL after', async () => {
+			const second = 'cccccccc-2222-4222-8222-444444444444' as ID;
+			const links = [
+				imageLink(),
+				fileLink({ id: 'cccccccc-3333-4333-8333-333333333333' as ID, documentId: second, document: { id: second, name: 'b.png', kind: DocumentKindEnum.FILE, mimeType: 'image/png' } as IDocument })
+			];
+			const { panel, documentsService } = createPanel({ links: of(links) });
+			documentsService.getRawBlob.mockReturnValue(NEVER);
+			panel.toggleView();
+			await panel.load();
+
+			panel.ngOnDestroy();
+			await new Promise((resolve) => setTimeout(resolve));
+
+			expect(documentsService.getRawBlob).toHaveBeenCalledTimes(1);
+			expect(createObjectURL).not.toHaveBeenCalled();
 		});
 
 		it('offers the popup for images only', () => {
