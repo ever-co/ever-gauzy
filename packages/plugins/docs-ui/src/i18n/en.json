@@ -321,6 +321,7 @@
 		"UPLOAD_NEW": "Upload new",
 		"UPLOAD_HINT": "Upload files or drop them here",
 		"PENDING_HINT": "Files are attached when you save",
+		"PREVIEW_PENDING": "Preview",
 		"REMOVE_PENDING": "Remove file",
 		"DROP_HERE": "Drop files to attach them",
 		"UPLOADING": "Uploading {{ current }} of {{ total }}…",

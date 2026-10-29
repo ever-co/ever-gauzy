@@ -474,6 +474,16 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		this.countChanged.emit(this.pending.length);
 	}
 
+	/**
+	 * Opens a held file from the user's own machine in a new tab — nothing is uploaded.
+	 * The object URL is released a minute later, once the tab has had time to load it.
+	 */
+	previewPending(file: File): void {
+		const url = URL.createObjectURL(file);
+		window.open(url, '_blank', 'noopener');
+		setTimeout(() => URL.revokeObjectURL(url), 60_000);
+	}
+
 	/** Drops a held file before it is ever uploaded. */
 	removePending(file: File): void {
 		this.pending = this.pending.filter((item) => item.file !== file);

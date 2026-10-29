@@ -213,6 +213,18 @@
 							ghost
 							status="basic"
 							size="tiny"
+							[attr.aria-label]="'DOCS.LINKS.PREVIEW_PENDING' | translate"
+							[nbTooltip]="'DOCS.LINKS.PREVIEW_PENDING' | translate"
+							(click)="previewPending(item.file)"
+						>
+							<nb-icon icon="eye-outline"></nb-icon>
+						</button>
+						<button
+							type="button"
+							nbButton
+							ghost
+							status="basic"
+							size="tiny"
 							class="docs-links-row-remove"
 							[attr.aria-label]="'DOCS.LINKS.REMOVE_PENDING' | translate"
 							[nbTooltip]="'DOCS.LINKS.REMOVE_PENDING' | translate"
