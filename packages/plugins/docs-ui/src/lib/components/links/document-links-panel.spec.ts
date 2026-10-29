@@ -402,4 +402,66 @@ describe('DocumentLinksPanelComponent â€” record-side Documents panel (spec 00 Â
 			expect(panel.dragActive).toBe(false);
 		});
 	});
+
+	describe('deferred hosting (a create page: the record has no id yet)', () => {
+		function createDeferredPanel(overrides: Parameters<typeof createPanel>[0] = {}) {
+			const context = createPanel(overrides);
+			context.panel.deferred = true;
+			context.panel.entityId = undefined as never;
+			return context;
+		}
+
+		it('is shown without a record id, but only to someone who can upload', () => {
+			expect(createDeferredPanel().panel.visible).toBe(true);
+			expect(
+				createDeferredPanel({ permissions: [PermissionsEnum.DOCS_READ, PermissionsEnum.DOCS_CREATE] }).panel.visible
+			).toBe(false);
+		});
+
+		it('holds picked files without uploading or asking for links, once per file', async () => {
+			const { panel, documentsService } = createDeferredPanel();
+			const file = new File(['x'], 'brief.pdf');
+
+			await panel.load();
+			await panel.uploadFiles([file]);
+			await panel.uploadFiles([file, new File(['y'], 'plan.xlsx')]);
+
+			expect(documentsService.findLinks).not.toHaveBeenCalled();
+			expect(documentsService.upload).not.toHaveBeenCalled();
+			expect(panel.pending.map(({ file }) => file.name)).toEqual(['brief.pdf', 'plan.xlsx']);
+			expect(panel.familyOf(panel.pending[1].row)).toBe('sheet');
+		});
+
+		it('drops a held file on remove', async () => {
+			const { panel } = createDeferredPanel();
+			const file = new File(['x'], 'brief.pdf');
+			await panel.uploadFiles([file]);
+
+			panel.removePending(file);
+
+			expect(panel.pending).toEqual([]);
+		});
+
+		it('uploads and links the held files to the saved record', async () => {
+			const uploaded = { id: FILE_ID, name: 'brief.pdf' } as IDocument;
+			const { panel, documentsService } = createDeferredPanel({ upload: of(new HttpResponse({ body: uploaded })) });
+			await panel.uploadFiles([new File(['x'], 'brief.pdf')]);
+
+			await panel.attachPending(ENTITY_ID, 'Website');
+
+			expect(documentsService.upload).toHaveBeenCalledTimes(1);
+			expect(documentsService.createLink).toHaveBeenCalledWith(
+				expect.objectContaining({ documentId: FILE_ID, entityId: ENTITY_ID, metadata: { label: 'Website' } })
+			);
+			expect(panel.pending).toEqual([]);
+		});
+
+		it('attaches nothing when no file was held', async () => {
+			const { panel, documentsService } = createDeferredPanel();
+
+			await panel.attachPending(ENTITY_ID, 'Website');
+
+			expect(documentsService.upload).not.toHaveBeenCalled();
+		});
+	});
 });
