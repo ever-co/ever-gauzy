@@ -193,7 +193,9 @@ export class TenantService extends CrudService<Tenant> {
 	 * The lock's connection comes from the pool `work` draws on, so a process lets only a few onboardings hold one
 	 * at a time (see {@link lockConnectionSlots}); the others wait for a slot, holding no connection meanwhile.
 	 * Without that bound, enough simultaneous signups would each hold a lock connection while waiting for a
-	 * connection to work with, and none could finish. A pool too small to spare one uses the in-process guard.
+	 * connection to work with, and none could finish. A pool of a single connection cannot spare one and uses the
+	 * in-process guard alone: such a deployment serializes every query through one connection, and across pods it keeps
+	 * the behaviour from before this lock (a duplicate tenant, never a half-seeded one).
 	 *
 	 * @param user - The creator.
 	 * @param work - Everything from choosing the tenant to linking the creator.
@@ -205,20 +207,21 @@ export class TenantService extends CrudService<Tenant> {
 		const type = dataSource?.options.type;
 		const slots = TenantService.lockConnectionSlots(dataSource?.options);
 
-		if ((type === 'postgres' || type === 'mysql') && slots > 0) {
-			await TenantService.takeLockConnectionSlot(slots);
-			try {
-				return await this.withDatabaseLock(dataSource, type, key, work);
-			} finally {
-				TenantService.releaseLockConnectionSlot();
-			}
-		}
-
+		// A second onboarding of the same creator in this process is refused at once, before it could wait for a
+		// lock-connection slot; the database lock then keeps out the ones on other pods.
 		if (TenantService.onboardingInProgress.has(user.id)) {
 			throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
 		}
 		TenantService.onboardingInProgress.add(user.id);
 		try {
+			if ((type === 'postgres' || type === 'mysql') && slots > 0) {
+				await TenantService.takeLockConnectionSlot(slots);
+				try {
+					return await this.withDatabaseLock(dataSource, type, key, work);
+				} finally {
+					TenantService.releaseLockConnectionSlot();
+				}
+			}
 			return await work();
 		} finally {
 			TenantService.onboardingInProgress.delete(user.id);
@@ -228,13 +231,16 @@ export class TenantService extends CrudService<Tenant> {
 	/**
 	 * How many onboardings of this process may hold a lock connection at once: half the pool, at most 4, so the
 	 * lock connections never take the connections their own work needs (nor most of the pool from the rest of the
-	 * API). 0 for a pool of one connection.
+	 * API). 0 for a pool of one connection; a stated size of 0 is the driver's default.
 	 *
 	 * @param options - The data source's options (`poolSize`, or the driver's own `extra.max`).
 	 */
 	private static lockConnectionSlots(options?: { poolSize?: number; extra?: { max?: number } }): number {
-		const poolSize = Number(options?.poolSize ?? options?.extra?.max ?? 10);
-		return Number.isFinite(poolSize) ? Math.max(0, Math.min(4, Math.floor(poolSize / 2))) : 0;
+		const stated = Number(options?.poolSize ?? options?.extra?.max ?? 0);
+		// 0 (or nothing) is the drivers' default rather than "no connection": pg-pool then opens up to 10, mysql2 any
+		// number (`DB_POOL_SIZE=0` is accepted for both). 10 is the smaller of the two.
+		const poolSize = Number.isFinite(stated) && stated > 0 ? stated : 10;
+		return Math.min(4, Math.floor(poolSize / 2));
 	}
 
 	/** Waits until fewer than `slots` onboardings of this process hold a lock connection, then takes a slot. */
@@ -297,10 +303,16 @@ export class TenantService extends CrudService<Tenant> {
 			try {
 				return await work();
 			} finally {
-				await runner.query('SELECT RELEASE_LOCK(?)', [name]);
+				// Best effort, so a failure here never replaces the onboarding's result or error: a named lock the
+				// server could not release is gone with the session anyway.
+				await runner.query('SELECT RELEASE_LOCK(?)', [name]).catch((error) => {
+					this.logger.warn(`The onboarding lock could not be released: ${error?.message}`);
+				});
 			}
 		} finally {
-			await runner.release();
+			await runner.release().catch((error) => {
+				this.logger.warn(`The onboarding lock's connection could not be released: ${error?.message}`);
+			});
 		}
 	}
 

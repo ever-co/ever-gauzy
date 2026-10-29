@@ -249,6 +249,56 @@ describe('TenantService onboarding lock', () => {
 		await second;
 	});
 
+	it('reads a pool size of 0 as the driver default, and still takes the database lock', async () => {
+		const { service } = buildService();
+		const createQueryRunner = withDataSource(service, 'postgres', postgresRunner(true), { poolSize: 0 });
+		jest.spyOn(service, 'executeTenantUpdateTasks').mockResolvedValue(undefined);
+
+		await service.onboardTenant({ name: 'NewCo' }, user());
+
+		expect(createQueryRunner).toHaveBeenCalledTimes(1);
+	});
+
+	it('refuses a second onboarding of the same creator in this process at once, without waiting for a slot', async () => {
+		const { service } = buildService();
+		const createQueryRunner = withDataSource(service, 'postgres', postgresRunner(true), { poolSize: 2 });
+		let finish: () => void = () => undefined;
+		jest.spyOn(service, 'executeTenantUpdateTasks').mockImplementationOnce(
+			() => new Promise<void>((resolve) => (finish = resolve))
+		);
+
+		const first = service.onboardTenant({ name: 'NewCo' }, user());
+		for (let tick = 0; tick < 200 && createQueryRunner.mock.calls.length === 0; tick++) {
+			await new Promise((resolve) => setImmediate(resolve));
+		}
+
+		await expect(service.onboardTenant({ name: 'NewCo' }, user())).rejects.toThrow(ConflictException);
+		expect(createQueryRunner).toHaveBeenCalledTimes(1);
+
+		finish();
+		await first;
+	});
+
+	it('keeps the onboarding result when MySQL cannot release the lock or its connection', async () => {
+		const { service } = buildService();
+		const runner = postgresRunner(true);
+		runner.query = jest.fn(async (sql: string): Promise<any[]> => {
+			if (sql.startsWith('SELECT RELEASE_LOCK')) throw new Error('connection lost');
+			return [{ acquired: 1 }];
+		});
+		runner.release = jest.fn(async () => {
+			throw new Error('already released');
+		});
+		withDataSource(service, 'mysql', runner);
+		service.logger = { warn: jest.fn() };
+		jest.spyOn(service, 'executeTenantUpdateTasks').mockResolvedValue(undefined);
+
+		await expect(service.onboardTenant({ name: 'NewCo' }, user())).resolves.toEqual(
+			expect.objectContaining({ id: NEW_TENANT })
+		);
+		expect(service.logger.warn).toHaveBeenCalledTimes(2);
+	});
+
 	it('uses the in-process guard when the pool cannot spare a connection for the lock', async () => {
 		const { service } = buildService();
 		const createQueryRunner = withDataSource(service, 'postgres', postgresRunner(true), { poolSize: 1 });
