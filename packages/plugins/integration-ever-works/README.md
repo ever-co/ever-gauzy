@@ -409,8 +409,11 @@ and answered `202`.
     with the answer, and `archived` when the person archives it (or its source
     cancels it); read and snooze stay in Gauzy. Only the fields Gauzy changed
     since its last push are sent, so what the person did in Ever Works is never
-    undone; a `412` is retried once on the current version. An item archived
-    before it went out is not filed. An email goes with its sender, mailbox
+    undone, and Gauzy's answer never goes over one the person gave there. A
+    `412` (the person changed the copy meanwhile) reads it again, applies what
+    the person did to Gauzy, then sends Gauzy's change once on the current
+    version (contract v1-draft.17, CR-15). An item archived before it went out
+    is not filed. An email goes with its sender, mailbox
     address, subject and time (`email`), and its body as plain text.
   - **What the person does in Ever Works** on such a copy (`inbox.item.*`: a
     reply or decision, read / unread, archive) comes back to the Gauzy item
@@ -421,8 +424,11 @@ and answered `202`.
     only go up: an event at or below the link's version is skipped (an answer
     a push's `412` retry already brought over among them), and a reply to an
     item already answered in Gauzy keeps Gauzy's answer. A copy deleted in Ever
-    Works is unlinked; the Gauzy item stays. A copy filed for a member the
-    person is no longer paired with gets nothing more.
+    Works is unlinked and kept as a tombstone (Ever Works deletes for good, so
+    the copy is never filed again); the Gauzy item stays. A copy filed for a
+    member the person is no longer paired with gets nothing more. An item this
+    connection's key filed (`integrationKeyId`) is never brought into the
+    Gauzy Inbox as an Ever Works item.
   - **Each person decides what goes.** Every kind is sent by default, emails
     included. On **Settings → Ever Works inbox** (`GET`/`PUT
     /me/inbox-preferences`, stored per user and tenant in
