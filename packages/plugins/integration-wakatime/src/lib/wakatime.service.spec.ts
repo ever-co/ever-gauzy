@@ -104,7 +104,7 @@ describe('WakatimeService.getSummaries', () => {
 		await dataSource.initialize();
 		try {
 			await dataSource.query(
-				'CREATE TABLE "heartbeats" ("id" integer PRIMARY KEY AUTOINCREMENT, "employeeId" varchar, "time" integer, "entities" varchar)'
+				'CREATE TABLE "heartbeats" ("id" integer PRIMARY KEY, "employeeId" varchar, "time" integer, "entities" varchar)'
 			);
 			const now = Math.floor(Date.now() / 1000);
 			// Today: two heartbeats of mine on two files, three of a coworker's on three files.
