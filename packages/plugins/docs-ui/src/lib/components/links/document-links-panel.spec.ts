@@ -442,6 +442,21 @@ describe('DocumentLinksPanelComponent â€” record-side Documents panel (spec 00 Â
 			expect(panel.pending).toEqual([]);
 		});
 
+		it('previews a held file from the machine in a new tab, without uploading it', () => {
+			const { panel, documentsService } = createDeferredPanel();
+			const file = new File(['x'], 'brief.pdf');
+			const createObjectURL = jest.fn().mockReturnValue('blob:brief');
+			(URL as unknown as { createObjectURL: unknown }).createObjectURL = createObjectURL;
+			const open = jest.spyOn(window, 'open').mockReturnValue(null);
+
+			panel.previewPending(file);
+
+			expect(createObjectURL).toHaveBeenCalledWith(file);
+			expect(open).toHaveBeenCalledWith('blob:brief', '_blank', 'noopener');
+			expect(documentsService.upload).not.toHaveBeenCalled();
+			open.mockRestore();
+		});
+
 		it('uploads and links the held files to the saved record', async () => {
 			const uploaded = { id: FILE_ID, name: 'brief.pdf' } as IDocument;
 			const { panel, documentsService } = createDeferredPanel({ upload: of(new HttpResponse({ body: uploaded })) });
