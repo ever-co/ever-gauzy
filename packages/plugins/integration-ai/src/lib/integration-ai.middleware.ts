@@ -31,6 +31,9 @@ export function bearerTenantId(authorization: string | undefined): string | unde
 	}
 }
 
+/** How long the absence of a Gauzy AI integration is remembered for an organization (milliseconds). */
+export const INTEGRATION_ABSENCE_TTL_MS = 60 * 1000;
+
 @Injectable()
 export class IntegrationAIMiddleware implements NestMiddleware {
 	private logging = false;
@@ -89,8 +92,9 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 						);
 					}
 
-					// Fetch integration settings from database if not in cache
-					const fromDb = await this._integrationTenantService.getIntegrationTenantSettings({
+					// Fetch integration settings from database if not in cache. A failed lookup throws (and is not
+					// remembered below); null means the organization has no Gauzy AI integration.
+					const fromDb = await this._integrationTenantService.findIntegrationTenantSettings({
 						tenantId,
 						organizationId,
 						name: IntegrationEnum.GAUZY_AI
@@ -107,6 +111,13 @@ export class IntegrationAIMiddleware implements NestMiddleware {
 								`Gauzy AI integration settings loaded from DB and stored in Cache for tenantId: ${tenantId}, organizationId: ${organizationId}`
 							);
 						}
+					} else {
+						// Most organizations have no Gauzy AI integration: remember that too (an empty list), for a
+						// shorter while, or every request of theirs reads the database again (and logs "record not
+						// found"). A newly connected integration is picked up within the minute. Only a confirmed
+						// absence gets here: a lookup that failed has thrown, so it is retried on the next request.
+						integrationTenantSettings = [];
+						await this.cacheManager.set(cacheKey, integrationTenantSettings, INTEGRATION_ABSENCE_TTL_MS);
 					}
 				} else {
 					if (this.logging) {
