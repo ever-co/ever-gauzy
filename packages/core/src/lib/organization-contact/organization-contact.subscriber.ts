@@ -3,7 +3,7 @@ import { EventSubscriber } from 'typeorm';
 import { OrganizationContact } from './organization-contact.entity';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
-import { getDummyImage, withoutDummyImageHost} from './../core/utils';
+import { getDummyImage, withoutDummyImageHost } from './../core/utils';
 import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
 
 /**
