@@ -180,11 +180,14 @@ describe('TenantService.onboardTenant — the session id is proof, not a tenant 
 		service.executeTenantUpdateTasks = jest.fn();
 		service.typeOrmRoleRepository = { findOneBy: jest.fn(async () => ({ id: 'role-super-admin' })) };
 		service.typeOrmUserRepository = {
+			findOne: jest.fn(async () => ({ id: USER_ID, tenantId: null })),
 			update: jest.fn(async () => {
 				order.push('assign-super-admin');
 				return { affected: 1 };
 			})
 		};
+		// No tenant left behind by an earlier attempt.
+		service.find = jest.fn(async () => []);
 		service.importRecords = jest.fn(async () => undefined);
 		service.linkStripeCustomerAtOnboarding = jest.fn(async () => {
 			order.push('link');

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
 	FileStorageProviderEnum,
@@ -28,11 +28,27 @@ import { MikroOrmUserRepository } from '../user/repository/mikro-orm-user.reposi
 import { TypeOrmTenantRepository } from './repository/type-orm-tenant.repository';
 import { MikroOrmTenantRepository } from './repository/mikro-orm-tenant.repository';
 import { ImageAsset } from '../image-asset/image-asset.entity';
+import {
+	IssueType,
+	Organization,
+	TaskPriority,
+	TaskSize,
+	TaskStatus,
+	TenantSetting,
+	User
+} from '../core/entities/internal';
 import { Tenant } from './tenant.entity';
 import { StripeSubscriptionService, describeError } from '../shared/billing/stripe-subscription.service';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
+	static readonly ONBOARDING_IN_PROGRESS =
+		'Your workspace is already being set up. Please wait a moment and try again.';
+
+	/** Creators onboarding in this process right now: the onboarding lock where the database offers none. */
+	private static readonly onboardingInProgress = new Set<ID>();
+
+	private readonly logger = new Logger(TenantService.name);
 	private readonly billingLogger = new Logger('TenantBillingLink');
 
 	constructor(
@@ -65,14 +81,55 @@ export class TenantService extends CrudService<Tenant> {
 		// holds the tenant's SUPER_ADMIN role.
 		const { stripeCheckoutSessionId, ...tenantInput } = entity;
 
-		// Creates and saves a tenant entity from the given details.
-		const tenant = await this.create(tenantInput);
+		// Everything from choosing the tenant to linking its creator runs under the creator's onboarding lock.
+		const tenant = await this.withOnboardingLock(user, () => this.createOrResumeTenant(tenantInput, user));
 
-		// Create Role/Permissions to relative tenants.
-		await this.commandBus.execute(new TenantRoleBulkCreateCommand([tenant]));
+		// Record which Stripe customer this tenant bills through, if that can be established safely now.
+		// A buyer arriving from the shared checkout brings their Checkout Session, which proves the
+		// purchase outright; anyone else is linked by verified email, which at this moment usually does
+		// nothing (the confirmation mail has only just gone out) and is completed on their first visit to
+		// the billing page instead. Best-effort: never fails the onboarding around it.
+		await this.linkStripeCustomerAtOnboarding(tenant, user, stripeCheckoutSessionId);
+
+		// Create Import Records while migrating for relative tenant.
+		await this.importRecords(entity, tenant, user);
+
+		console.timeEnd('On Boarding Tenant');
+		return tenant;
+	}
+
+	/**
+	 * Creates the creator's tenant, or finishes the one an earlier, failed attempt left behind, seeds it and
+	 * links the creator to it as SUPER_ADMIN. Runs under the creator's onboarding lock.
+	 *
+	 * Every seed is awaited and its failure propagates before the creator is linked: a tenant whose seeding
+	 * failed stays unlinked, so the creator's retry finds it with {@link findUnfinishedTenant} and completes it.
+	 *
+	 * @param input - The tenant details, without the Checkout Session id.
+	 * @param user - The creator.
+	 * @throws BadRequestException when the creator already has a tenant: a second request (a double submit, a
+	 * retry while the first attempt was still running) that passed the route's check before the first one linked
+	 * the creator.
+	 */
+	private async createOrResumeTenant(input: ITenantCreateInput, user: IUser): Promise<Tenant> {
+		if (await this.userHasTenant(user)) {
+			throw new BadRequestException('Tenant already exists');
+		}
+
+		// A failed attempt can leave behind a tenant that was created but never linked to its creator, and
+		// the creator, still without a tenant, is sent back here. Finish that tenant instead of creating
+		// another one: every retry used to leave one more empty tenant behind.
+		const unfinished = await this.findUnfinishedTenant(user);
+		const onlyMissing = !!unfinished;
+
+		// Creates and saves a tenant entity from the given details.
+		const tenant = unfinished ? await this.resumeUnfinishedTenant(unfinished, input) : await this.create(input);
+
+		// Create Role/Permissions to relative tenants. An unfinished tenant gets only the ones it is missing.
+		await this.commandBus.execute(new TenantRoleBulkCreateCommand([tenant], { onlyMissing }));
 
 		// Executes Runs update tasks for the newly created tenant.
-		this.executeTenantUpdateTasks(tenant);
+		await this.executeTenantUpdateTasks(tenant, { onlyMissing, throwOnError: true });
 
 		// Store the unique identifier of the tenant for easy access in subsequent operations.
 		const tenantId = tenant.id;
@@ -112,18 +169,159 @@ export class TenantService extends CrudService<Tenant> {
 				break;
 		}
 
-		// Record which Stripe customer this tenant bills through, if that can be established safely now.
-		// A buyer arriving from the shared checkout brings their Checkout Session, which proves the
-		// purchase outright; anyone else is linked by verified email, which at this moment usually does
-		// nothing (the confirmation mail has only just gone out) and is completed on their first visit to
-		// the billing page instead. Best-effort: never fails the onboarding around it.
-		await this.linkStripeCustomerAtOnboarding(tenant, user, stripeCheckoutSessionId);
-
-		// Create Import Records while migrating for relative tenant.
-		await this.importRecords(entity, tenant, user);
-
-		console.timeEnd('On Boarding Tenant');
 		return tenant;
+	}
+
+	/**
+	 * Runs `work` while holding the creator's onboarding lock, so that two onboardings of one user (a double
+	 * submit, a retry while the first attempt is still running), on any API pod, never both choose or create
+	 * a tenant. The lock is not waited for: the second request is refused at once.
+	 *
+	 * - Postgres: a transaction-scoped advisory lock, taken on a connection of its own whose transaction
+	 *   writes nothing and ends (releasing the lock) when `work` settles or the connection drops.
+	 * - MySQL: a named lock (`GET_LOCK`) on a connection of its own, released when `work` settles.
+	 * - SQLite and MikroORM: an in-process guard. These setups run a single API process.
+	 *
+	 * @param user - The creator.
+	 * @param work - Everything from choosing the tenant to linking the creator.
+	 * @throws ConflictException when another onboarding of the same user holds the lock.
+	 */
+	private async withOnboardingLock<T>(user: IUser, work: () => Promise<T>): Promise<T> {
+		const key = `tenant-onboarding:${user.id}`;
+		const dataSource = this.ormType === MultiORMEnum.TypeORM ? this.typeOrmRepository?.manager?.dataSource : null;
+		const type = dataSource?.options.type;
+
+		if (type === 'postgres' || type === 'mysql') {
+			const runner = dataSource.createQueryRunner();
+			await runner.connect();
+			try {
+				if (type === 'postgres') {
+					await runner.startTransaction();
+					try {
+						const [row] = await runner.query(
+							`SELECT pg_try_advisory_xact_lock(hashtextextended($1, 0)) AS "acquired"`,
+							[key]
+						);
+						if (!row?.acquired) {
+							throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
+						}
+						return await work();
+					} finally {
+						// The transaction wrote nothing: ending it only releases the lock. If it cannot be ended
+						// the connection is gone, and the lock went with its session.
+						await runner.rollbackTransaction().catch((error) => {
+							this.logger.warn(`The onboarding lock's transaction could not be ended: ${error?.message}`);
+						});
+					}
+				}
+
+				// GET_LOCK names are at most 64 characters: `gauzy:tenant-onboarding:<uuid>` is 60.
+				const name = `gauzy:${key}`;
+				const [row] = await runner.query('SELECT GET_LOCK(?, 0) AS `acquired`', [name]);
+				if (Number(row?.acquired) !== 1) {
+					throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
+				}
+				try {
+					return await work();
+				} finally {
+					await runner.query('SELECT RELEASE_LOCK(?)', [name]);
+				}
+			} finally {
+				await runner.release();
+			}
+		}
+
+		if (TenantService.onboardingInProgress.has(user.id)) {
+			throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
+		}
+		TenantService.onboardingInProgress.add(user.id);
+		try {
+			return await work();
+		} finally {
+			TenantService.onboardingInProgress.delete(user.id);
+		}
+	}
+
+	/**
+	 * Whether the user belongs to a tenant now, read from the database rather than from the request: the
+	 * request's copy was loaded before any onboarding running alongside it could link the user.
+	 *
+	 * @param user - The creator.
+	 */
+	private async userHasTenant(user: IUser): Promise<boolean> {
+		const row: any =
+			this.ormType === MultiORMEnum.MikroORM
+				? await this.mikroOrmUserRepository.findOne({ id: user.id } as any, { filters: false } as any)
+				: await this.typeOrmUserRepository.findOne({ where: { id: user.id }, withDeleted: true });
+		return !!(row?.tenantId ?? row?.tenant?.id);
+	}
+
+	/**
+	 * The newest tenant this user created whose onboarding never finished, or null.
+	 *
+	 * Onboarding creates the tenant, then its roles and default rows, then links the creator to it as
+	 * SUPER_ADMIN. When a step after the first one fails (production 2026-10-27: every signup timed out
+	 * connecting to the database, see the Jitsu plugin's BoundedEventQueue), the tenant stays behind with
+	 * nobody in it and the creator, still without a tenant, is sent back to onboarding. Only the user who
+	 * created such a tenant can finish it, and finishing it is safe because nobody else can have used it.
+	 *
+	 * A tenant counts as unfinished when the user created it and no user and no organization (deleted ones
+	 * included) belong to it. Whatever roles, permissions and default rows it holds are completed by the
+	 * seeding steps, which add only what is missing.
+	 *
+	 * Every tenant the user created is considered, newest first: a cap taken before qualifying them could
+	 * hide the one that qualifies behind newer tenants that do not.
+	 *
+	 * @param user - The user being onboarded.
+	 */
+	async findUnfinishedTenant(user: IUser): Promise<Tenant | null> {
+		if (!user?.id) return null;
+
+		const candidates = await this.find({
+			where: { createdByUserId: user.id },
+			order: { createdAt: 'DESC' }
+		});
+
+		for (const candidate of candidates ?? []) {
+			if (await this.tenantHasRows(User, candidate.id)) continue;
+			if (await this.tenantHasRows(Organization, candidate.id)) continue;
+			return candidate;
+		}
+		return null;
+	}
+
+	/**
+	 * Gives an unfinished tenant the name, logo and image of the attempt that finishes it, through
+	 * {@link updateProfile} like any other change to a tenant's profile: an `imageId` must name an image of
+	 * this tenant, and an explicit null clears the image. An omitted logo or image leaves it as it is.
+	 *
+	 * @param tenant - A tenant returned by {@link findUnfinishedTenant}.
+	 * @param input - The tenant details of this attempt.
+	 */
+	private async resumeUnfinishedTenant(tenant: Tenant, input: ITenantCreateInput): Promise<Tenant> {
+		const changes: ITenantUpdateInput = { name: input.name };
+		if (input.logo !== undefined) changes.logo = input.logo;
+		if (input.imageId !== undefined) changes.imageId = input.imageId;
+
+		await this.updateProfile(tenant.id, changes);
+		return Object.assign(tenant, changes);
+	}
+
+	/**
+	 * Whether any row of `entity` belongs to the tenant, soft-deleted rows included.
+	 *
+	 * @param entity - An entity with a `tenantId` column.
+	 * @param tenantId - The tenant.
+	 */
+	private async tenantHasRows(entity: new (...args: any[]) => unknown, tenantId: ID): Promise<boolean> {
+		const where = { tenantId };
+		return this.ormType === MultiORMEnum.MikroORM
+			? (await this.mikroOrmRepository
+					.getEntityManager()
+					.count(entity as any, where as any, { filters: false })) > 0
+			: await this.typeOrmRepository.manager
+					.getRepository(entity)
+					.exists({ where: where as any, withDeleted: true });
 	}
 
 	/**
@@ -371,30 +569,55 @@ export class TenantService extends CrudService<Tenant> {
 	 * Executes a set of update tasks for a given tenant in parallel.
 	 *
 	 * @param tenant An instance of the Tenant class.
+	 * @param options.onlyMissing - Create only the rows the tenant does not have yet: for a tenant an earlier,
+	 * failed onboarding already created, where some of the tasks may have run. Each task below writes its rows in
+	 * one save, so a tenant has all of a task's rows or none of them; feature toggles are completed pair by pair
+	 * instead, because a migration gives every tenant some of them.
+	 * @param options.throwOnError - Throw the first failure (once every task has settled) instead of logging it.
 	 * @returns Promise<void>
 	 */
-	public async executeTenantUpdateTasks(tenant: Tenant): Promise<void> {
+	public async executeTenantUpdateTasks(
+		tenant: Tenant,
+		options: { onlyMissing?: boolean; throwOnError?: boolean } = {}
+	): Promise<void> {
+		const onlyMissing = !!options.onlyMissing;
+
+		// Each check and its seed run as one task, so a seed that fails is always awaited by someone.
+		const seed = async (entity: new (...args: any[]) => unknown, run: () => Promise<unknown>) => {
+			if (onlyMissing && (await this.tenantHasRows(entity, tenant.id))) return;
+			await run();
+		};
+
 		try {
-			await Promise.all([
+			// Every task is started at once and all of them settle before this goes on, so none is still writing
+			// when a failure is reported (and the creator retries).
+			const results = await Promise.allSettled([
 				// 1. Create Enabled/Disabled features for relative tenants.
-				this.commandBus.execute(new TenantFeatureOrganizationCreateCommand([tenant])),
+				this.commandBus.execute(new TenantFeatureOrganizationCreateCommand([tenant], { onlyMissing })),
 
 				// 2. Create Default task statuses for relative tenants.
-				this.commandBus.execute(new TenantStatusBulkCreateCommand([tenant])),
+				seed(TaskStatus, () => this.commandBus.execute(new TenantStatusBulkCreateCommand([tenant]))),
 
 				// 3. Create default task sizes for relative tenants.
-				this.commandBus.execute(new TenantTaskSizeBulkCreateCommand([tenant])),
+				seed(TaskSize, () => this.commandBus.execute(new TenantTaskSizeBulkCreateCommand([tenant]))),
 
 				// 4. Create default task priorities for relative tenants.
-				this.commandBus.execute(new TenantTaskPriorityBulkCreateCommand([tenant])),
+				seed(TaskPriority, () => this.commandBus.execute(new TenantTaskPriorityBulkCreateCommand([tenant]))),
 
 				// 5. Create default issue types for relative tenants.
-				this.commandBus.execute(new TenantIssueTypeBulkCreateCommand([tenant]))
+				seed(IssueType, () => this.commandBus.execute(new TenantIssueTypeBulkCreateCommand([tenant])))
 			]);
+			const failure = results.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+			if (failure) {
+				throw failure.reason;
+			}
 
 			// 6. Initialize default settings for the new tenant, including file storage provider.
-			await this.initializeTenantSettings(tenant);
+			await seed(TenantSetting, () => this.initializeTenantSettings(tenant));
 		} catch (error) {
+			if (options.throwOnError) {
+				throw error;
+			}
 			console.log(error, 'Error occurred while executing tenant create tasks:', error.message);
 		}
 	}
