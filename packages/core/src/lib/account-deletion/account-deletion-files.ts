@@ -420,8 +420,11 @@ function unique(files: StoredFile[]): StoredFile[] {
 	});
 }
 
-/** The rows of a workspace that are addressed to a person by their email: invitations, and the history of emails sent. */
-export const ADDRESSED_ROW_TABLES: ReadonlyArray<string> = ['invite', 'email_history'];
+/**
+ * The tables of the rows a workspace keeps addressed to a person by their email: invitations (`invite`) and the
+ * history of the emails sent (`email_sent`, the `EmailHistory` entity).
+ */
+export const ADDRESSED_ROW_TABLES: ReadonlyArray<string> = ['invite', 'email_sent'];
 
 /**
  * Deletes the rows of a workspace that are addressed to the deleted person: the invitations sent to their address

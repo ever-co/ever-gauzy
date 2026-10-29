@@ -132,7 +132,7 @@ describe('deleteRowsAddressedTo: the workspace a person leaves keeps no row addr
 		dbPath = path.join(os.tmpdir(), `gauzy-addressed-rows-${process.pid}-${Date.now()}-${Math.random()}.sqlite3`);
 		dataSource = new DataSource({ type: 'better-sqlite3', database: dbPath, synchronize: false, logging: false });
 		await dataSource.initialize();
-		for (const table of ['invite', 'email_history']) {
+		for (const table of ['invite', 'email_sent']) {
 			await dataSource.query(
 				`CREATE TABLE "${table}" ("id" varchar PRIMARY KEY, "tenantId" varchar, "email" varchar)`
 			);
@@ -143,7 +143,7 @@ describe('deleteRowsAddressedTo: the workspace a person leaves keeps no row addr
 					('${table}-other-workspace', '${OTHER}', 'leaver@example.test')`
 			);
 		}
-	});
+	}, 30_000); // The first SQLite connection loads the native driver, slow on a busy machine.
 
 	afterEach(async () => {
 		if (dataSource?.isInitialized) await dataSource.destroy();
@@ -158,7 +158,7 @@ describe('deleteRowsAddressedTo: the workspace a person leaves keeps no row addr
 	it('deletes the invitations and sent-email history of the address, in that workspace only, whatever the case', async () => {
 		await deleteRowsAddressedTo(dataSource.manager, TENANT, ' LEAVER@example.test');
 
-		for (const table of ['invite', 'email_history']) {
+		for (const table of ['invite', 'email_sent']) {
 			expect(await ids(table)).toEqual([`${table}-coworker`, `${table}-other-workspace`]);
 		}
 	});
@@ -168,11 +168,11 @@ describe('deleteRowsAddressedTo: the workspace a person leaves keeps no row addr
 		await deleteRowsAddressedTo(dataSource.manager, TENANT, '  ');
 
 		expect(await ids('invite')).toHaveLength(3);
-		expect(await ids('email_history')).toHaveLength(3);
+		expect(await ids('email_sent')).toHaveLength(3);
 	});
 
 	it('skips a table the schema lacks', async () => {
-		await dataSource.query('DROP TABLE "email_history"');
+		await dataSource.query('DROP TABLE "email_sent"');
 
 		await expect(deleteRowsAddressedTo(dataSource.manager, TENANT, 'leaver@example.test')).resolves.toBeUndefined();
 		expect(await ids('invite')).toEqual(['invite-coworker', 'invite-other-workspace']);
