@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Inject, Injectable, Logger } from '@nest
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Reflector } from '@nestjs/core';
+import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
 import { RequestContext } from '../../core/context';
 import { PermissionGuard } from '../../shared/guards';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
@@ -27,12 +28,7 @@ export class ProjectManagerOrPermissionGuard extends PermissionGuard implements 
 	 * @returns A boolean indicating whether the user can proceed.
 	 */
 	async canActivate(context: ExecutionContext): Promise<boolean> {
-		// Extract request and projectId from params
-		const request = super.getRequest(context);
-		const projectIdParam = request.params?.id;
-
-		// Handle case where projectId could be string or string[]
-		const projectId = Array.isArray(projectIdParam) ? projectIdParam[0] : projectIdParam;
+		const projectId = this.projectIdOf(context);
 
 		// Get employeeId from RequestContext
 		const employeeId = RequestContext.currentEmployeeId();
@@ -58,5 +54,31 @@ export class ProjectManagerOrPermissionGuard extends PermissionGuard implements 
 
 		// If the user is not a manager, delegate the check to PermissionGuard
 		return super.canActivate(context);
+	}
+
+	/**
+	 * The project the request acts on, as the REST route and the GraphQL field name it:
+	 *
+	 * - REST: the `:id` of the path (`GET /:id`, `PUT /:id`, `PUT /:id/archive`, `PUT /setting/:id`, `DELETE /:id`…).
+	 * - GraphQL: the field's `id` argument (`organizationProject`, `deleteOrganizationProject`,
+	 *   `archiveOrganizationProject`, `updateOrganizationProjectSetting`…), or the `id` of its `input` for
+	 *   `updateOrganizationProject`, whose input is the one input type that names a project. A field that names no
+	 *   project (`createOrganizationProject`, the lists, `isOrganizationProjectManager`'s `projectId`) gets none, as
+	 *   its route does.
+	 *
+	 * @param context - The execution context of the request.
+	 * @returns The project id, or undefined when the request names none.
+	 */
+	private projectIdOf(context: ExecutionContext): string | undefined {
+		if (typeof context.getType === 'function' && context.getType<GqlContextType>() === 'graphql') {
+			const args = (GqlExecutionContext.create(context).getArgs() ?? {}) as Record<string, unknown>;
+			const input = args.input as Record<string, unknown> | undefined;
+			const id = args.id ?? input?.id;
+			return typeof id === 'string' && id ? id : undefined;
+		}
+
+		// The id could be string or string[]
+		const param = super.getRequest(context)?.params?.id;
+		return Array.isArray(param) ? param[0] : param;
 	}
 }
