@@ -125,6 +125,8 @@ function surfaces() {
 
 	jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 	jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+	// A caller who may choose any employee: the own-employee rule has its own spec (employee-statistics.own-employee.spec.ts).
+	jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(true);
 	// The caller's token names `ORGANIZATION`: under the organization boundary (ever-co/ever-gauzy#11316) the
 	// membership check also requires the organization to be the token's.
 	jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
