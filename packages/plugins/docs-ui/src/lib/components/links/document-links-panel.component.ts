@@ -20,7 +20,7 @@ import {
 } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
-import { filter, firstValueFrom, map } from 'rxjs';
+import { filter, firstValueFrom, map, Subject, takeUntil } from 'rxjs';
 import {
 	BaseEntityEnum,
 	DocumentKindEnum,
@@ -169,6 +169,10 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	private readonly requestedImages = new Set<string>();
 	/** `blob:` URLs of held images, straight from the user's machine. */
 	private readonly pendingUrls = new Map<File, string>();
+	/** Fires when the panel goes, cancelling its image reads. */
+	private readonly destroy$ = new Subject<void>();
+	/** Set once the panel is gone: the thumbnail loop stops and no further URL is created. */
+	private destroyed = false;
 
 	public readonly permissions = PermissionsEnum;
 	/** Accept list for the file input (UX only — the server sniffs and re-validates). */
@@ -198,6 +202,10 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	}
 
 	ngOnDestroy(): void {
+		// Cuts the image reads in flight, so none resolves into a URL nobody would revoke.
+		this.destroyed = true;
+		this.destroy$.next();
+		this.destroy$.complete();
 		this.imageUrls.forEach((url) => URL.revokeObjectURL(url));
 		this.pendingUrls.forEach((url) => URL.revokeObjectURL(url));
 	}
@@ -369,6 +377,7 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	 */
 	private async loadThumbnails(): Promise<void> {
 		for (const link of this.links) {
+			if (this.destroyed) return;
 			const documentId = String(link?.documentId ?? link?.document?.id ?? '');
 			if (!documentId || !this.isImage(link) || this.requestedImages.has(documentId)) continue;
 			if ((link.document?.fileSize ?? 0) > GRID_THUMBNAIL_MAX_BYTES) continue;
@@ -381,11 +390,17 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		}
 	}
 
-	/** A saved image's `blob:` URL, fetched through the authenticated client on first use. */
+	/**
+	 * A saved image's `blob:` URL, fetched through the authenticated client on first use.
+	 * Rejects once the panel is gone: the read is cancelled and no URL is created.
+	 */
 	private async imageUrlOf(documentId: string): Promise<string> {
 		const cached = this.imageUrls.get(documentId);
 		if (cached) return cached;
-		const blob = await firstValueFrom(this.documentsService.getRawBlob(documentId as ID));
+		const blob = await firstValueFrom(
+			this.documentsService.getRawBlob(documentId as ID).pipe(takeUntil(this.destroy$))
+		);
+		if (this.destroyed) throw new Error('The Documents panel was closed');
 		const url = URL.createObjectURL(blob);
 		this.imageUrls.set(documentId, url);
 		return url;
@@ -501,17 +516,21 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	 * large files in parallel would compete for the same connection and finish no
 	 * sooner. One file failing does not stop the rest; the batch ends with a single
 	 * summary instead of a toast per file.
+	 *
+	 * @returns The files that were not attached — none when a pending panel only held them.
 	 */
-	async uploadFiles(files: File[]): Promise<void> {
-		if (!files.length || this.uploading) return;
+	async uploadFiles(files: File[]): Promise<File[]> {
+		if (!files.length) return [];
+		// A batch already in flight owns the panel: nothing of this one was attached.
+		if (this.uploading) return files;
 		if (this.isPending) {
 			this.holdFiles(files);
-			return;
+			return [];
 		}
 
 		const organization = this.store.selectedOrganization;
 		const total = files.length;
-		const failed: string[] = [];
+		const failed: File[] = [];
 		let lastError: unknown = null;
 
 		this.uploading = true;
@@ -521,7 +540,7 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 				try {
 					await this.uploadAndLink(file, organization);
 				} catch (error) {
-					failed.push(file.name);
+					failed.push(file);
 					lastError = error;
 				}
 				this.uploadProgress = { done: this.uploadProgress.done + 1, total };
@@ -544,10 +563,11 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 						: this.getTranslation('DOCS.LINKS.TOAST_FAILED_SOME', {
 								failed: failed.length,
 								total,
-								names: failed.join(', ')
+								names: failed.map(({ name }) => name).join(', ')
 						  })
 				);
 			}
+			return failed;
 		} finally {
 			this.uploading = false;
 			this.uploadProgress = null;
@@ -583,10 +603,18 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		this.countChanged.emit(this.pending.length);
 	}
 
+	/** A held file the eye button can show: an image in the popup, or a PDF in the browser's viewer. */
+	canPreviewPending(file: File): boolean {
+		return this.pendingUrls.has(file) || isPdf(file);
+	}
+
 	/**
-	 * Previews a held file from the user's own machine — nothing is uploaded. An image
-	 * opens in the popup; anything else in a new tab, whose object URL is released a
-	 * minute later, once the tab has had time to load it.
+	 * Shows a held file from the user's own machine — nothing is uploaded. An image opens
+	 * in the popup and a PDF in a new tab; anything else is downloaded under its own name.
+	 *
+	 * 🛑 Never open any other held file as a page: a `blob:` document shares the app's
+	 * origin, so a picked HTML file's scripts could read the session tokens in
+	 * `localStorage`, and `noopener` does not sandbox it.
 	 */
 	previewPending(file: File): void {
 		const imageUrl = this.pendingUrls.get(file);
@@ -594,8 +622,17 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 			this.openImagePreview(file.name, async () => imageUrl);
 			return;
 		}
-		const url = URL.createObjectURL(file);
-		window.open(url, '_blank', 'noopener');
+		// A PDF's bytes are typed as a PDF whatever the file claims, so a renamed page can never render as HTML.
+		const url = URL.createObjectURL(isPdf(file) ? new Blob([file], { type: 'application/pdf' }) : file);
+		if (isPdf(file)) {
+			window.open(url, '_blank', 'noopener');
+		} else {
+			const anchor = document.createElement('a');
+			anchor.href = url;
+			anchor.download = file.name;
+			anchor.click();
+		}
+		// Released once the tab or the download has had time to read it.
 		setTimeout(() => URL.revokeObjectURL(url), 60_000);
 	}
 
@@ -616,18 +653,22 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	/**
 	 * Uploads the held files and attaches them to the record the host just saved. The
 	 * usual summary toasts report the outcome; a file that fails does not undo the save.
+	 * Failed files stay listed, so calling this again retries only them.
 	 *
 	 * @param entityId The saved record's id.
 	 * @param entityLabel Its display name, stored on each link.
+	 * @returns `true` once every held file is attached — a host should not leave the page otherwise.
 	 */
-	async attachPending(entityId: ID, entityLabel?: string): Promise<void> {
-		if (!entityId) return;
+	async attachPending(entityId: ID, entityLabel?: string): Promise<boolean> {
+		if (!entityId) return false;
 		this.entityId = entityId;
 		if (entityLabel) this.entityLabel = entityLabel;
 		const files = this.pending.map(({ file }) => file);
-		this.pending = [];
-		files.forEach((file) => this.releasePending(file));
-		await this.uploadFiles(files);
+		const failed = new Set(await this.uploadFiles(files));
+		files.filter((file) => !failed.has(file)).forEach((file) => this.releasePending(file));
+		this.pending = this.pending.filter(({ file }) => failed.has(file));
+		if (failed.size) this.countChanged.emit(this.links.length + this.pending.length);
+		return failed.size === 0;
 	}
 
 	trackByPending(_: number, item: { file: File }): string {
@@ -707,6 +748,11 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		this.dragActive = false;
 		void this.uploadFiles(Array.from(event.dataTransfer?.files ?? []));
 	}
+}
+
+/** A PDF, by type or extension — the one non-image held file safe to open in a tab. */
+function isPdf(file: File): boolean {
+	return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 }
 
 /** The view this browser last chose; the list when none was kept or storage is blocked. */

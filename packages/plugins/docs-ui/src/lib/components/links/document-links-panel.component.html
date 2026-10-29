@@ -250,11 +250,12 @@
 							ghost
 							status="basic"
 							size="tiny"
-							[attr.aria-label]="'DOCS.PREVIEW.TITLE' | translate"
-							[nbTooltip]="'DOCS.PREVIEW.TITLE' | translate"
+							[attr.aria-label]="(canPreviewPending(item.file) ? 'DOCS.PREVIEW.TITLE' : 'DOCS.PREVIEW.DOWNLOAD') | translate"
+							[nbTooltip]="(canPreviewPending(item.file) ? 'DOCS.PREVIEW.TITLE' : 'DOCS.PREVIEW.DOWNLOAD') | translate"
 							(click)="previewPending(item.file)"
 						>
-							<nb-icon icon="eye-outline"></nb-icon>
+							<!-- Images and PDFs are shown; any other held file is downloaded, never opened as a page. -->
+							<nb-icon [icon]="canPreviewPending(item.file) ? 'eye-outline' : 'download-outline'"></nb-icon>
 						</button>
 						<button
 							type="button"
