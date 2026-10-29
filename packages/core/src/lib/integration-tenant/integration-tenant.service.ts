@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindManyOptions, IsNull, Not } from 'typeorm';
 import {
 	ID,
@@ -116,9 +116,30 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 	 */
 	async getIntegrationTenantSettings(input: IIntegrationTenantFindInput): Promise<IIntegrationTenant | null> {
 		try {
-			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
-			const { organizationId, name } = input;
+			return await this.findIntegrationTenantSettings(input, { orFail: true });
+		} catch (error) {
+			console.error('Error occurred while retrieving integration tenant settings:', error?.message);
+			return null;
+		}
+	}
 
+	/**
+	 * The active integration tenant (with its settings) of an organization for one integration, telling a missing one
+	 * from a failed lookup: null when there is none, while any other error (a database failure) is thrown. A caller
+	 * that remembers "no integration" (`IntegrationAIMiddleware`) must not remember a lookup that merely failed.
+	 *
+	 * @param input - The tenant, organization and integration name.
+	 * @param options.orFail - Throw `NotFoundException` instead of answering null when there is none.
+	 * @returns The integration tenant, or null when the organization has none.
+	 */
+	async findIntegrationTenantSettings(
+		input: IIntegrationTenantFindInput,
+		options: { orFail?: boolean } = {}
+	): Promise<IIntegrationTenant | null> {
+		const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
+		const { organizationId, name } = input;
+
+		try {
 			return await super.findOneByOptions({
 				where: {
 					tenantId,
@@ -137,8 +158,10 @@ export class IntegrationTenantService extends TenantAwareCrudService<Integration
 				}
 			});
 		} catch (error) {
-			console.error('Error occurred while retrieving integration tenant settings:', error?.message);
-			return null;
+			if (error instanceof NotFoundException && !options.orFail) {
+				return null;
+			}
+			throw error;
 		}
 	}
 

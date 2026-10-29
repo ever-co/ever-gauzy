@@ -32,7 +32,7 @@ describe('bearerTenantId', () => {
 
 describe('IntegrationAIMiddleware', () => {
 	const build = () => {
-		const integrationTenantService = { getIntegrationTenantSettings: jest.fn().mockResolvedValue(null) };
+		const integrationTenantService = { findIntegrationTenantSettings: jest.fn().mockResolvedValue(null) };
 		const cache = { get: jest.fn().mockResolvedValue(undefined), set: jest.fn() };
 		const config = { resetConfig: jest.fn(), setConfig: jest.fn() };
 		const middleware = new IntegrationAIMiddleware(cache as any, integrationTenantService as any, config as any);
@@ -65,7 +65,7 @@ describe('IntegrationAIMiddleware', () => {
 			next
 		);
 
-		expect(integrationTenantService.getIntegrationTenantSettings).toHaveBeenCalledWith(
+		expect(integrationTenantService.findIntegrationTenantSettings).toHaveBeenCalledWith(
 			expect.objectContaining({ tenantId: 'tenant-1', organizationId: 'organization-1' })
 		);
 		expect(next).toHaveBeenCalled();
@@ -81,7 +81,7 @@ describe('IntegrationAIMiddleware', () => {
 			next
 		);
 
-		expect(integrationTenantService.getIntegrationTenantSettings).not.toHaveBeenCalled();
+		expect(integrationTenantService.findIntegrationTenantSettings).not.toHaveBeenCalled();
 		expect(next).toHaveBeenCalled();
 	});
 });
@@ -105,19 +105,45 @@ describe('IntegrationAIMiddleware: an organization without a Gauzy AI integratio
 			get: jest.fn(async (key: string) => store.get(key)),
 			set: jest.fn(async (key: string, value: unknown) => void store.set(key, value))
 		};
-		const integrationTenantService = { getIntegrationTenantSettings: jest.fn().mockResolvedValue(null) };
+		const integrationTenantService = { findIntegrationTenantSettings: jest.fn().mockResolvedValue(null) };
 		const config = { resetConfig: jest.fn(), setConfig: jest.fn() };
 		const middleware = new IntegrationAIMiddleware(cache as any, integrationTenantService as any, config as any);
 
 		await middleware.use(request(), {} as any, jest.fn());
 		await middleware.use(request(), {} as any, jest.fn());
 
-		expect(integrationTenantService.getIntegrationTenantSettings).toHaveBeenCalledTimes(1);
+		expect(integrationTenantService.findIntegrationTenantSettings).toHaveBeenCalledTimes(1);
 		expect(cache.set).toHaveBeenCalledWith(
 			expect.stringContaining('tenant-1_organization-1'),
 			[],
 			INTEGRATION_ABSENCE_TTL_MS
 		);
 		expect(config.setConfig).not.toHaveBeenCalled();
+	});
+
+	it('is not concluded from a lookup that failed: nothing is remembered and the next request reads again', async () => {
+		const store = new Map<string, unknown>();
+		const cache = {
+			get: jest.fn(async (key: string) => store.get(key)),
+			set: jest.fn(async (key: string, value: unknown) => void store.set(key, value))
+		};
+		const integrationTenantService = {
+			findIntegrationTenantSettings: jest
+				.fn()
+				.mockRejectedValueOnce(new Error('connection terminated'))
+				.mockResolvedValueOnce({ settings: [] })
+		};
+		const config = { resetConfig: jest.fn(), setConfig: jest.fn() };
+		const middleware = new IntegrationAIMiddleware(cache as any, integrationTenantService as any, config as any);
+		const next = jest.fn();
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+		await middleware.use(request(), {} as any, next);
+		expect(cache.set).not.toHaveBeenCalled();
+		expect(next).toHaveBeenCalledTimes(1);
+
+		await middleware.use(request(), {} as any, next);
+		expect(integrationTenantService.findIntegrationTenantSettings).toHaveBeenCalledTimes(2);
+		(console.log as jest.Mock).mockRestore();
 	});
 });
