@@ -92,11 +92,11 @@ import {
 } from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import { MockEverWorksInboxWrite } from '../testing/mock-ever-works.inbox-write';
-import { MockEverWorksServer } from '../testing/mock-ever-works.server';
+import { MOCK_PRESET_SCOPES, MockEverWorksServer } from '../testing/mock-ever-works.server';
 import { everWorksKindOf } from './ever-works-inbox-kinds';
 import { EverWorksInboxPreference } from './ever-works-inbox-preference.entity';
 import { EverWorksInboxPreferencesService } from './ever-works-inbox-preferences.service';
-import { parseGauzyInboxExternalId, plainTextAsMarkdown } from './ever-works-inbox-push.mapper';
+import { parseGauzyInboxExternalId, plainTextAsMarkdown, sharedOf } from './ever-works-inbox-push.mapper';
 import { EverWorksInboxPushService } from './ever-works-inbox-push.service';
 import { EverWorksInboxService } from './ever-works-inbox.service';
 import { EverWorksPeopleService } from '../people/ever-works-people.service';
@@ -152,7 +152,14 @@ function setup(
 	const ewOrg = { id: 'ew-org-1', slug: 'acme', displayName: 'Acme' };
 	const key = mock.addKey({ organizations: [ewOrg] });
 	const inboxWrite = new MockEverWorksInboxWrite(mock);
-	const connection = { id: 'conn-1', tenantId: TENANT, status: EverWorksConnectionStatus.ACTIVE, scopes: '[]' };
+	const connection = {
+		id: 'conn-1',
+		tenantId: TENANT,
+		status: EverWorksConnectionStatus.ACTIVE,
+		// The "Ever Gauzy" preset (inbox:write, and the read scopes a related id needs) and the key's id (whoami).
+		scopes: JSON.stringify(MOCK_PRESET_SCOPES),
+		keyId: (mock.keys.get(key) as { keyId: string }).keyId
+	};
 	const context = {
 		tenantId: TENANT,
 		organizationId: ORG,
@@ -1080,16 +1087,81 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 		expect(writer.upsertExternal).not.toHaveBeenCalled();
 	});
 
-	it('a copy deleted in Ever Works is unlinked; the Gauzy item stays', async () => {
-		const { addItem, push, apply, mock, linkOf, items } = setup();
+	it('a copy deleted in Ever Works is unlinked and kept as a tombstone: the Gauzy item stays and is never filed again', async () => {
+		const { addItem, push, apply, mock, linkOf, items, inboxWrite } = setup();
 		const { item, ada } = addItem();
 		await push(ada);
 		const link = linkOf(ada) as Row;
 		const filed = mock.inboxItems.get(link['ewId']) as Row;
+		// A hard delete in Ever Works frees the externalId there (CR-15): only the tombstone keeps Gauzy from filing it again.
+		mock.inboxItems.delete(link['ewId']);
 		const envelope = await mock.emitInbox('inbox.item.deleted', { ...filed, version: 5, deleted: true });
 		await expect(apply(envelope)).resolves.toMatchObject({ status: 'applied' });
 		expect(link['state']).toBe('unlinked');
 		expect(items.has(item.id as string)).toBe(true);
+		Object.assign(items.get(item.id as string) as IInboxItem, { title: 'Edited after the delete' });
+		await expect(push(ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('no longer synced')
+		});
+		expect(inboxWrite.created).toHaveLength(1);
+	});
+
+	it('never brings back an item its own key filed (integrationKeyId), even for no Gauzy item known here', async () => {
+		const { mock, apply, writer, context } = setup();
+		const ours = mock.addInboxItem('ew-org-1', {
+			recipientUserId: ADA.ew,
+			kind: 'notice',
+			integrationKeyId: (context.connection as { keyId: string }).keyId,
+			externalId: 'not-a-gauzy-copy',
+			version: 2
+		});
+		await expect(apply(await mock.emitInbox('inbox.item.updated', ours))).resolves.toMatchObject({
+			status: 'skipped'
+		});
+		expect(writer.upsertExternal).not.toHaveBeenCalled();
+	});
+
+	it('an item another integration filed is an Ever Works item like any other (brought into the Gauzy Inbox)', async () => {
+		const { mock, apply, writer } = setup();
+		writer.upsertExternal.mockResolvedValue({
+			item: { id: randomUUID() },
+			created: true,
+			recipientUserIds: [ADA.user],
+			skippedUserIds: []
+		});
+		const theirs = mock.addInboxItem('ew-org-1', {
+			recipientUserId: ADA.ew,
+			kind: 'notice',
+			integrationKeyId: 'another-integration-key',
+			externalId: 'jira-123',
+			version: 1
+		});
+		await expect(apply(await mock.emitInbox('inbox.item.created', theirs))).resolves.toMatchObject({
+			status: 'applied'
+		});
+		expect(writer.upsertExternal).toHaveBeenCalledTimes(1);
+	});
+
+	it('never sends Gauzy’s answer over the one the member gave in Ever Works', async () => {
+		const { addItem, push, inboxWrite, apply, actions, items, linkOf } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		const ewId = linkOf(ada)?.['ewId'] as string;
+		// Answered in Gauzy first (its push not out yet), then the member answers in Ever Works.
+		Object.assign(items.get(item.id as string) as IInboxItem, {
+			status: InboxItemStatusEnum.ANSWERED,
+			response: { optionId: 'yes', answeredByUserId: ADA.user, answeredAt: new Date().toISOString() }
+		});
+		await apply(await inboxWrite.answer(ewId, { choiceId: 'no' }));
+		expect(actions.reply).not.toHaveBeenCalled();
+		Object.assign(items.get(item.id as string) as IInboxItem, { title: 'Ship the release today?' });
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(inboxWrite.patched[inboxWrite.patched.length - 1].body).toEqual({ title: 'Ship the release today?' });
+		expect(inboxWrite.byExternalId(`${item.id}:${ada}`)).toMatchObject({
+			answerOptionId: 'no',
+			status: 'answered'
+		});
 	});
 });
 
@@ -1245,6 +1317,29 @@ describe('EverWorksInboxPreferencesService', () => {
 });
 
 describe('the kind mapping and the text', () => {
+	it('sends an answer outside the copy’s choices (past the tenth option) as text', () => {
+		const options = Array.from({ length: 12 }, (_, index) => ({ id: `o${index}`, label: `Option ${index}` }));
+		const shared = sharedOf(
+			{
+				title: 'Pick one',
+				body: '',
+				kind: InboxItemKindEnum.QUESTION,
+				options,
+				status: InboxItemStatusEnum.ANSWERED,
+				response: {
+					optionId: 'o11',
+					text: 'Late pick',
+					answeredByUserId: ADA.user,
+					answeredAt: new Date().toISOString()
+				}
+			} as never,
+			{ isArchived: false },
+			'question'
+		);
+		expect(shared.choices).toHaveLength(10);
+		expect(shared.resolution).toEqual({ text: 'Option 11 — Late pick' });
+	});
+
 	it('maps Gauzy kinds onto the Ever Works kinds', () => {
 		expect(everWorksKindOf(InboxItemKindEnum.QUESTION)).toBe('question');
 		expect(everWorksKindOf(InboxItemKindEnum.ESCALATION)).toBe('question');

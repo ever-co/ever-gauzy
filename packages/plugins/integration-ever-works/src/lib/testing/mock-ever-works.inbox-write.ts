@@ -13,8 +13,11 @@ const STATES = ['open', 'resolved', 'archived'];
  * - `POST /inbox/items` (`inbox:write`): `{ externalId, recipientUserId, kind, title, body, sourceUrl?, sourceLabel?,
  *   related?, email?, choices?, occurredAt? }` → `201` with the item; the same `externalId` from the same key again
  *   answers `200` with the item filed before (nothing changes).
- * - `PATCH /inbox/items/:id` (`inbox:write`, `If-Match`): only an item the key filed (`404` otherwise); `{ title?, body?,
- *   choices?, state?, resolution? }`; a stale `If-Match` is `412 version_mismatch` with `details.current`.
+ * - `PATCH /inbox/items/:id` (`inbox:write`, `If-Match` required: `400` without): only an item the key filed (`404`
+ *   otherwise); `{ title?, body?, choices?, state?, resolution? }`; a stale `If-Match` is `412 version_mismatch` with
+ *   `details.current`; `state: 'resolved'` is stored as status `answered`, choices come back as `options` (CR-15).
+ * - The same `externalId` from the key in another organization is `409 duplicate_external_ref`; every filed item
+ *   carries `origin: 'integration'` and the `integrationKeyId` that filed it.
  *
  * Writes record `inbox.item.created` / `inbox.item.updated` with the key's origin; the helpers below play an Ever
  * Works user (an answer, read, archive), whose `inbox.item.updated` carries no origin. `new MockEverWorksInboxWrite(mock)`
@@ -102,6 +105,14 @@ export class MockEverWorksInboxWrite {
 		const replay = [...this.mock.inboxItems.values()].find(
 			(row) => row['filedByKeyId'] === context.key.keyId && row['externalId'] === body['externalId']
 		);
+		// The same externalId in another of the key's organizations is refused (CR-15): it would hand back that item.
+		if (replay && replay['organizationId'] !== context.org?.id) {
+			return MockEverWorksServer.error(
+				409,
+				'duplicate_external_ref',
+				'The externalId is used in another organization.'
+			);
+		}
 		if (replay) return context.ok(this.dto(replay), 200);
 		const now = new Date().toISOString();
 		const choices = (body['choices'] as Array<{ id: string; label: string }> | undefined) ?? null;
@@ -131,6 +142,8 @@ export class MockEverWorksInboxWrite {
 			workId: (body['related'] as { workId?: string } | undefined)?.workId ?? null,
 			escalationId: null,
 			proposalId: null,
+			origin: 'integration',
+			integrationKeyId: context.key.keyId,
 			externalId: body['externalId'],
 			sourceUrl: body['sourceUrl'] ?? null,
 			sourceLabel: body['sourceLabel'] ?? null,
@@ -156,16 +169,18 @@ export class MockEverWorksInboxWrite {
 		const body = (context.body ?? {}) as Record<string, unknown>;
 		const raw = context.headers['if-match'] ?? null;
 		this.patched.push({ id, ifMatch: raw, body });
-		if (raw !== null) {
-			const expected = Number(String(raw).replace(/"/g, ''));
-			if (expected !== Number(item['version'])) {
-				return MockEverWorksServer.error(
-					412,
-					'version_mismatch',
-					`If-Match "${expected}" does not match the current version "${item['version']}".`,
-					{ expected, current: item['version'] }
-				);
-			}
+		// If-Match is required (CR-15): a PATCH without it (or with `*`) is refused.
+		if (raw === null || raw === '*') {
+			return MockEverWorksServer.error(400, 'validation_failed', 'If-Match is required.', { path: 'If-Match' });
+		}
+		const expected = Number(String(raw).replace(/"/g, ''));
+		if (expected !== Number(item['version'])) {
+			return MockEverWorksServer.error(
+				412,
+				'version_mismatch',
+				`If-Match "${expected}" does not match the current version "${item['version']}".`,
+				{ expected, current: item['version'] }
+			);
 		}
 		const invalid = this.invalid(body, false);
 		if (invalid) return MockEverWorksServer.error(400, 'validation_failed', invalid);

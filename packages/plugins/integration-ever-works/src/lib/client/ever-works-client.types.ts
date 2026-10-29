@@ -224,6 +224,9 @@ export interface EverWorksInboxItemPatch {
 export interface EverWorksFiledInboxItem extends Partial<Omit<EverWorksInboxItem, 'id' | 'version'>> {
 	id: string;
 	version: number;
+	/** `integration` for an item a key filed (`platform` for Ever Works' own), and the key that filed it (CR-15). */
+	origin?: 'integration' | 'platform' | string | null;
+	integrationKeyId?: string | null;
 	externalId?: string | null;
 	state?: EverWorksInboxWriteState | string | null;
 	resolution?: { choiceId?: string | null; text?: string | null } | null;

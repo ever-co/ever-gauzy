@@ -138,6 +138,11 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 		const copy = this.push
 			? await this.push.copyOf(context, envelope.aggregate.id, (envelope.data ?? {}) as Record<string, unknown>)
 			: null;
+		if (copy === 'foreign') {
+			// Filed by this connection's own key, but for no Gauzy item this plugin knows: never brought back as an Ever
+			// Works item (loop guard on the item's `integrationKeyId`).
+			return { status: 'skipped', message: "an item this connection's key filed, for no Gauzy item known here" };
+		}
 		if (copy === 'pending') {
 			return { status: 'deferred', message: 'a copy of a Gauzy Inbox item whose push is still being recorded' };
 		}

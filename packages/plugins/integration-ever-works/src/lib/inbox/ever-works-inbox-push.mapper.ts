@@ -149,12 +149,20 @@ export function sharedOf(
 	kind: EverWorksInboxKind
 ): GauzyInboxShared {
 	const state = stateOf(item, recipient);
+	const choices = choicesOf(item, kind);
+	let resolution = resolutionOf(item);
+	// Ever Works takes a `choiceId` only of the copy's own choices: an option left out of them (past the tenth) goes as text.
+	if (resolution?.choiceId && !(choices ?? []).some((choice) => choice.id === resolution?.choiceId)) {
+		const label =
+			(item.options ?? []).find((option) => option.id === resolution?.choiceId)?.label ?? resolution.choiceId;
+		resolution = { text: cut([label, resolution.text].filter(Boolean).join(' — '), EVER_WORKS_INBOX_REPLY_MAX) };
+	}
 	return {
 		title: titleOf(item),
 		body: bodyOf(item),
-		choices: choicesOf(item, kind),
+		choices,
 		state,
-		resolution: resolutionOf(item)
+		resolution
 	};
 }
 
