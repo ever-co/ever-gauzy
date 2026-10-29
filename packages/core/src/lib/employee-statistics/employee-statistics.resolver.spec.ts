@@ -696,3 +696,42 @@ describe('EmployeeStatisticsResolver — a capability that is switched off is no
 		await expect(guard.canActivate(graphqlContext('employeeStatisticsAggregate'))).resolves.toBe(true);
 	});
 });
+
+describe('EmployeeStatisticsResolver — a caller without CHANGE_SELECTED_EMPLOYEE', () => {
+	// A coworker in the caller's own organization: the organization check alone let them through.
+	const COWORKER = '00000000-0000-4000-8000-000000000064';
+
+	afterEach(() => jest.restoreAllMocks());
+
+	function asEmployee() {
+		const built = surfaces();
+		(built.employeeService.findOneByIdString as jest.Mock).mockImplementation(async (id: string) => ({
+			id,
+			organizationId: ORGANIZATION
+		}));
+		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
+		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(EMPLOYEE);
+		return built;
+	}
+
+	it.each([
+		['employeeStatisticsSeries', (resolver: any) => resolver.employeeStatisticsSeries(COWORKER)],
+		['employeeMonthlyStatistics', (resolver: any) => resolver.employeeMonthlyStatistics(COWORKER, undefined, undefined, ORGANIZATION)],
+		['employeeStatisticsHistory', (resolver: any) => resolver.employeeStatisticsHistory(COWORKER, 'INCOME', undefined, undefined, ORGANIZATION)]
+	])('%s refuses a coworker’s figures, before reading', async (_field, read) => {
+		const { resolver, queryBus, employeeStatisticsService } = asEmployee();
+
+		await expect(read(resolver)).rejects.toBeInstanceOf(ForbiddenException);
+
+		expect(queryBus.execute).not.toHaveBeenCalled();
+		expect(employeeStatisticsService.getStatisticsByEmployeeId).not.toHaveBeenCalled();
+	});
+
+	it('still answers the caller’s own figures', async () => {
+		const { resolver, employeeStatisticsService } = asEmployee();
+
+		await resolver.employeeStatisticsSeries(EMPLOYEE);
+
+		expect(employeeStatisticsService.getStatisticsByEmployeeId).toHaveBeenCalled();
+	});
+});
