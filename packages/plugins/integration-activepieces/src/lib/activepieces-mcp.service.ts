@@ -18,7 +18,7 @@ import {
 	IActivepiecesMcpServersListResponse,
 	IActivepiecesMcpServersListParams
 } from '@gauzy/contracts';
-import { ActivepiecesMcpUpdateDto } from './dto';
+import { ActivepiecesMcpCreateDto, ActivepiecesMcpUpdateDto } from './dto';
 import {
 	ACTIVEPIECES_MCP_SERVERS_URL,
 	ACTIVEPIECES_PROJECT_MCP_SERVER_PATH,
@@ -41,6 +41,9 @@ export type ActivepiecesMcpServersListInput = Omit<IActivepiecesMcpServersListPa
 /** The first words of every refusal of a credential Activepieces does not accept on its MCP routes. */
 export const MCP_NEEDS_USER_TOKEN =
 	'Activepieces accepts only a user token on its MCP routes, never an API key, so MCP is not available here.';
+
+/** The first words of the refusal to create or delete a server under MCP 2.0. */
+export const MCP_ONE_SERVER_PER_PROJECT = 'An Activepieces MCP 2.0 project has exactly one MCP server.';
 
 /**
  * The Activepieces URL of one MCP server of the legacy API (`GAUZY_ACTIVEPIECES_MCP_API=legacy`). The id is the
@@ -106,9 +109,12 @@ export function isActivepiecesApiKey(token: string | null | undefined): boolean 
  * refused here with 400 and an explanation, before anything is sent; Activepieces' own refusal of a credential is
  * answered 502, never passed on as a 401/403 of this API.
  *
- * The routes the controller keeps still name a server: `GET|PATCH /:serverId` and `POST /:serverId/rotate`. Under MCP
- * 2.0 the server is the project's one: it is read first, and answered as missing (404) unless its id is the one named
- * and, in the modes that pin the tenant's own project, it is in that project.
+ * The routes the controller keeps still name a server: `GET|PATCH|DELETE /:serverId` and `POST /:serverId/rotate`. Under
+ * MCP 2.0 the server is the project's one: it is read first, and answered as missing (404) unless its id is the one
+ * named and, in the modes that pin the tenant's own project, it is in that project.
+ *
+ * Creating (`POST /`) and deleting (`DELETE /:serverId`) a server are legacy routes only: under MCP 2.0 a project's one
+ * server comes and goes with the project, so both are refused there (400, nothing sent).
  */
 @Injectable()
 export class ActivepiecesMcpService {
@@ -307,6 +313,87 @@ export class ActivepiecesMcpService {
 			}
 			this.logger.error('Failed to rotate ActivePieces MCP server token:', error);
 			throw new BadRequestException(`Failed to rotate MCP server token: ${error.message}`);
+		}
+	}
+
+	/**
+	 * Create an MCP server (legacy API: `POST /v1/mcp-servers`, from a name, in a project).
+	 *
+	 * The project is the tenant's own in the modes that pin one (another named is refused, 403), else the one the client
+	 * names; a server Activepieces answers in another project is refused as missing. Under MCP 2.0 a project has exactly
+	 * one server, created with it, so the call is refused (400) before anything is sent.
+	 *
+	 * @param data - The server's name; an agent is refused, since Activepieces creates a server from its name alone.
+	 * @param projectId - The project, with the tenant's own key (the pinned project otherwise).
+	 */
+	async createMcpServer(data: ActivepiecesMcpCreateDto, projectId?: string): Promise<IActivepiecesMcpServer> {
+		try {
+			if (this.mcpApi() === 'v2') {
+				throw new BadRequestException(
+					`${MCP_ONE_SERVER_PER_PROJECT} It is created with the project: read it with GET /integration/activepieces/mcp/tenant.`
+				);
+			}
+			const name = typeof data?.name === 'string' ? data.name.trim() : '';
+			if (!name) {
+				throw new BadRequestException('name is required');
+			}
+			if (data?.agentId !== undefined) {
+				throw new BadRequestException(
+					'Activepieces creates an MCP server from its name alone: link the agent in Activepieces instead.'
+				);
+			}
+
+			const credential = await this.getMcpCredential();
+			const project = this.credentials.projectFor(credential, projectId);
+			const result = await this.request<IActivepiecesMcpServer>(
+				'post',
+				ACTIVEPIECES_MCP_SERVERS_URL,
+				{ name, projectId: project },
+				undefined,
+				credential
+			);
+			this.credentials.assertInProject(credential, result?.projectId ?? project, 'MCP server');
+
+			this.logger.log(`Successfully created ActivePieces MCP server: ${result?.id}`);
+			return { ...result, projectId: result?.projectId ?? project };
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			this.logger.error('Failed to create ActivePieces MCP server:', error);
+			throw new BadRequestException(`Failed to create MCP server: ${error.message}`);
+		}
+	}
+
+	/**
+	 * Delete an MCP server (legacy API: `DELETE /v1/mcp-servers/:id`).
+	 *
+	 * In the modes that pin the tenant's own project, the server is first checked to be in it. Under MCP 2.0 a project's
+	 * one server cannot be deleted, so the call is refused (400) before anything is sent.
+	 *
+	 * @param serverId - The server.
+	 */
+	async deleteMcpServer(serverId: string): Promise<void> {
+		try {
+			if (this.mcpApi() === 'v2') {
+				throw new BadRequestException(
+					`${MCP_ONE_SERVER_PER_PROJECT} It cannot be deleted: disable its tools (PATCH /integration/activepieces/mcp/:serverId) or rotate its token instead.`
+				);
+			}
+
+			const url = mcpServerUrl(serverId);
+			const credential = await this.getMcpCredential();
+			await this.assertServerInProject(url, credential);
+
+			await this.request<void>('delete', url, undefined, undefined, credential);
+
+			this.logger.log(`Successfully deleted ActivePieces MCP server: ${serverId}`);
+		} catch (error: any) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			this.logger.error('Failed to delete ActivePieces MCP server:', error);
+			throw new BadRequestException(`Failed to delete MCP server: ${error.message}`);
 		}
 	}
 

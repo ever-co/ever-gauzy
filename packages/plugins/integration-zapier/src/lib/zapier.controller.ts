@@ -11,13 +11,17 @@ import {
 	ForbiddenException,
 	Body,
 	Post,
-	Param
+	Put,
+	Param,
+	UsePipes,
+	ValidationPipe
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { IZapierCreateZapInput, IZapierZap, IZapierZapTemplate, PermissionsEnum } from '@gauzy/contracts';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ID, IZapierCreateZapInput, IZapierZap, IZapierZapTemplate, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
 import { ZapierService } from './zapier.service';
-import { IZapierEndpoint, IZapierIntegrationSettings } from './zapier.types';
+import { IZapierEndpoint, IZapierIntegrationSettings, IZapierOAuthPublicConfig } from './zapier.types';
+import { UpdateZapierSettingsDto } from './dto/update-zapier-settings.dto';
 import { randomBytes } from 'node:crypto';
 
 @ApiTags('Zapier Integrations')
@@ -302,5 +306,58 @@ export class ZapierController {
 	@Get('/settings')
 	async getSettings(): Promise<IZapierIntegrationSettings> {
 		return this.zapierService.getIntegrationSettings();
+	}
+
+	/**
+	 * Updates the Zapier integration settings of an organization of the current tenant (whether it is enabled, and its
+	 * webhook URL). `POST /settings` starts a new integration; this changes the one that exists.
+	 *
+	 * @param body - The settings to store.
+	 * @param organizationId - The organization of the integration; else the `Organization-Id` header, else the tenant's only one.
+	 */
+	@ApiOperation({ summary: 'Update Zapier integration settings' })
+	@ApiQuery({
+		name: 'organizationId',
+		required: false,
+		type: String,
+		description: "The organization of the integration (else the Organization-Id header, else the tenant's only one)"
+	})
+	@ApiResponse({
+		status: 200,
+		description: 'The stored Zapier settings'
+	})
+	@ApiResponse({
+		status: 400,
+		description: 'Bad Request - Invalid body or webhook URL, or several integrations and no organization'
+	})
+	@ApiResponse({
+		status: 403,
+		description: "Forbidden - Not a member of the integration's organization"
+	})
+	@ApiResponse({
+		status: 404,
+		description: 'No Zapier integration for the organization'
+	})
+	@Put('/settings')
+	@UsePipes(new ValidationPipe({ whitelist: true }))
+	async updateSettings(
+		@Body() body: UpdateZapierSettingsDto,
+		@Query('organizationId') organizationId?: ID
+	): Promise<IZapierIntegrationSettings> {
+		return this.zapierService.updateIntegrationSettings(body, organizationId);
+	}
+
+	/**
+	 * The Zapier OAuth configuration the web app may see: client ID, redirect URI, post-install URL and scopes. Never the
+	 * client secret, which stays in the server's environment.
+	 */
+	@ApiOperation({ summary: 'Get the Zapier OAuth configuration (no secrets)' })
+	@ApiResponse({
+		status: 200,
+		description: 'Client ID, redirect URI, post-install URL and scopes (null when not configured)'
+	})
+	@Get('/oauth/config')
+	getOAuthConfig(): IZapierOAuthPublicConfig {
+		return this.zapierService.getOAuthConfig();
 	}
 }

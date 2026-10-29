@@ -89,7 +89,7 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 		this._zapierService
 			.getAccessToken(this.integrationId)
 			.pipe(
-				switchMap((accessToken: string) => this._zapierService.getWebhooks(accessToken)),
+				switchMap((accessToken: string) => this._zapierService.getWebhooks(accessToken, this.integrationId)),
 				// Store the retrieved webhooks
 				tap((webhooks: IZapierWebhook[]) => {
 					this.webhooks = webhooks;
@@ -139,7 +139,9 @@ export class ZapierWebhooksComponent extends TranslationBaseComponent implements
 		this._zapierService
 			.getAccessToken(this.integrationId)
 			.pipe(
-				switchMap((accessToken: string) => this._zapierService.deleteWebhook(webhookId, accessToken)),
+				switchMap((accessToken: string) =>
+					this._zapierService.deleteWebhook(webhookId, accessToken, this.integrationId)
+				),
 
 				tap(() => {
 					this._toastrService.success(

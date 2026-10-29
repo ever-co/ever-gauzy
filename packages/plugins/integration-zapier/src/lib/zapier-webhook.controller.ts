@@ -1,9 +1,11 @@
 import {
 	Controller,
+	Get,
 	Post,
 	Body,
 	Headers,
 	Param,
+	Query,
 	Delete,
 	ForbiddenException,
 	Logger,
@@ -13,8 +15,8 @@ import {
 	HttpException,
 	UseGuards
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
+import { IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions } from '@gauzy/core';
 import { getUnsafeOutboundUrlReason } from '@gauzy/utils';
 import { IZapierCreateWebhookInput } from './zapier.types';
@@ -31,6 +33,10 @@ import { ZapierWebhookSubscription } from './zapier-webhook-subscription.entity'
  *
  * `PermissionGuard` alone, not `TenantPermissionGuard`: Zapier sends no `Tenant-Id` header and no tenant in the body,
  * and the tenant is the one of the integration the bearer token resolves to, never one the request names.
+ *
+ * The web app lists (`GET /webhooks`) and removes a subscription naming the integration (`integrationId`) instead: its
+ * `Authorization` header is the user's session, and the integration is read in the user's own tenant, for a member of
+ * its organization.
  */
 @UseGuards(PermissionGuard)
 @Permissions(PermissionsEnum.INTEGRATION_ADD, PermissionsEnum.INTEGRATION_EDIT)
@@ -136,6 +142,98 @@ export class ZapierWebhookController {
 	}
 
 	/**
+	 * Lists the webhook subscriptions of a Zapier integration.
+	 *
+	 * The web app names the integration (`integrationId`): its own `Authorization` header always carries the signed-in
+	 * user's session, never a Zapier token, so the integration is read in the caller's tenant for a member of its
+	 * organization. Without `integrationId` the integration is the one the bearer token resolves to, as on the
+	 * subscribe and unsubscribe routes, and the caller must be a member of its organization too.
+	 *
+	 * @param integrationId - The integration, as the web app names it.
+	 * @param authorization - The Bearer token, when no integration is named.
+	 */
+	@ApiOperation({ summary: 'List the webhook subscriptions of a Zapier integration' })
+	@ApiQuery({
+		name: 'integrationId',
+		required: false,
+		type: String,
+		description: 'The integration (the web app); without it, the integration the Bearer token resolves to'
+	})
+	@ApiResponse({
+		status: 200,
+		description: 'The webhook subscriptions, newest first',
+		type: ZapierWebhookSubscription,
+		isArray: true
+	})
+	@ApiResponse({
+		status: 401,
+		description: 'Unauthorized - No integration named and an invalid or missing authorization token'
+	})
+	@ApiResponse({
+		status: 403,
+		description: "Forbidden - Not a member of the integration's organization"
+	})
+	@ApiResponse({
+		status: 404,
+		description: 'No such Zapier integration in the tenant'
+	})
+	@Get('/webhooks')
+	async getWebhooks(
+		@Query('integrationId') integrationId: string,
+		@Headers('Authorization') authorization: string
+	): Promise<ZapierWebhookSubscription[]> {
+		try {
+			const named = await this.resolveIntegration(integrationId, authorization);
+			// The bearer path resolves without a membership check: list only for a member of the organization
+			const integration = integrationId?.trim()
+				? named
+				: await this.zapierService.findIntegrationForCurrentUser(named.id);
+
+			return await this.zapierWebhookService.findSubscriptions({
+				integrationId: integration.id,
+				tenantId: integration.tenantId,
+				organizationId: integration.organizationId
+			});
+		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			this.logger.error('Failed to list webhook subscriptions', error);
+			throw new InternalServerErrorException('Failed to list webhook subscriptions.');
+		}
+	}
+
+	/**
+	 * The integration a request acts on: the one the web app names (`integrationId`), for a member of its organization;
+	 * otherwise the one the Bearer token resolves to (opaque token or multi-app OAuth JWT), as Zapier calls.
+	 */
+	private async resolveIntegration(integrationId: string | undefined, authorization: string): Promise<IIntegrationTenant> {
+		if (integrationId?.trim()) {
+			return this.zapierService.findIntegrationForCurrentUser(integrationId.trim());
+		}
+
+		if (!authorization) {
+			throw new UnauthorizedException('Authorization header is required');
+		}
+
+		if (!authorization.startsWith('Bearer ')) {
+			throw new UnauthorizedException('Authorization header must start with Bearer');
+		}
+
+		const integration = await this.zapierService.resolveIntegrationFromBearerToken(authorization.split(' ')[1]);
+
+		if (!integration) {
+			throw new ForbiddenException('Invalid token');
+		}
+
+		if (!integration.tenantId) {
+			throw new BadRequestException('Integration tenant ID is required.');
+		}
+
+		return integration;
+	}
+
+	/**
 	 * Validate webhook URL for security
 	 */
 	private validateWebhookUrl(url: string): void {
@@ -171,10 +269,20 @@ export class ZapierWebhookController {
 	/**
 	 * Deletes an existing Zapier webhook subscription.
 	 *
+	 * The integration is the one the web app names (`integrationId`, for a member of its organization), else the one the
+	 * Bearer token resolves to, as Zapier unsubscribes; see `getWebhooks` for why the web app names it.
+	 *
 	 * @param id - The unique identifier of the webhook subscription to delete.
 	 * @param authorization - The Bearer token for authenticating the request.
+	 * @param integrationId - The integration, as the web app names it.
 	 */
 	@ApiOperation({ summary: 'Delete an existing Zapier webhook subscription' })
+	@ApiQuery({
+		name: 'integrationId',
+		required: false,
+		type: String,
+		description: 'The integration (the web app); without it, the integration the Bearer token resolves to'
+	})
 	@ApiResponse({
 		status: 200,
 		description: 'Webhook subscription deleted successfully'
@@ -196,28 +304,14 @@ export class ZapierWebhookController {
 		description: 'Internal Server Error'
 	})
 	@Delete('/webhooks/:id')
-	async deleteWebhook(@Param('id') id: string, @Headers('Authorization') authorization: string): Promise<void> {
-		if (!authorization) {
-			throw new UnauthorizedException('Authorization header is required');
-		}
-
-		if (!authorization.startsWith('Bearer ')) {
-			throw new UnauthorizedException('Authorization header must start with Bearer');
-		}
-
-		const token = authorization.split(' ')[1];
-
+	async deleteWebhook(
+		@Param('id') id: string,
+		@Headers('Authorization') authorization: string,
+		@Query('integrationId') integrationId?: string
+	): Promise<void> {
 		try {
-			// Resolve integration from opaque token or JWT (multi-app OAuth)
-			const integration = await this.zapierService.resolveIntegrationFromBearerToken(token);
-
-			if (!integration) {
-				throw new ForbiddenException('Invalid token');
-			}
-
-			if (!integration.tenantId) {
-				throw new BadRequestException('Integration tenant ID is required.');
-			}
+			// The integration the web app names, else the one the opaque token or JWT (multi-app OAuth) resolves to
+			const integration = await this.resolveIntegration(integrationId, authorization);
 
 			await this.zapierWebhookService.deleteSubscription(id, integration.tenantId, integration.organizationId);
 		} catch (error) {

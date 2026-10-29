@@ -120,6 +120,30 @@ export class ZapierWebhookService {
 	}
 
 	/**
+	 * The webhook subscriptions of one Zapier integration, newest first. Every bound is required: an unbounded read would
+	 * list the subscriptions of every tenant.
+	 *
+	 * @param scope - The integration, with its tenant and organization.
+	 * @throws BadRequestException if a bound is missing.
+	 */
+	async findSubscriptions(scope: {
+		integrationId: ID;
+		tenantId: ID;
+		organizationId: ID;
+	}): Promise<ZapierWebhookSubscription[]> {
+		const { integrationId, tenantId, organizationId } = scope ?? ({} as typeof scope);
+		if (!integrationId || !tenantId || !organizationId) {
+			throw new BadRequestException(
+				'Integration, tenant and organization are required to list webhook subscriptions'
+			);
+		}
+		return this.zapierWebhookSubscriptionRepository.find({
+			where: { integrationId, tenantId, organizationId },
+			order: { createdAt: 'DESC' }
+		});
+	}
+
+	/**
 	 * Deletes a Zapier webhook subscription after verifying tenant and organization ownership.
 	 *
 	 * @param id - The unique identifier of the subscription to delete.

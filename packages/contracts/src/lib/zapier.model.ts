@@ -21,6 +21,10 @@ export enum ZapierSettingName {
 export interface IZapierIntegrationSettings {
 	isEnabled: boolean;
 	webhookUrl: string | null;
+	/** Read-only, as `GET /integration/zapier/settings` answers them: whether the server and the integration hold credentials. */
+	hasClientCredentials?: boolean;
+	hasAccessToken?: boolean;
+	hasRefreshToken?: boolean;
 }
 
 /**
@@ -38,11 +42,20 @@ export interface IZapierOAuthTokenDTO {
  */
 export interface IZapierOAuthTokens extends IBasePerTenantAndOrganizationEntityModel, IZapierOAuthTokenDTO {}
 
+/**
+ * The Zapier OAuth configuration `GET /integration/zapier/oauth/config` answers. A value the server does not configure
+ * is null.
+ */
 export interface IZapierAuthConfig {
-	clientId: string;
-	clientSecret: string;
-	redirectUri: string;
-	postInstallUrl: string;
+	clientId: string | null;
+	/**
+	 * @deprecated Never sent to a client: the secret stays in the server's environment (`GAUZY_ZAPIER_CLIENT_SECRET`).
+	 */
+	clientSecret?: string;
+	redirectUri: string | null;
+	postInstallUrl: string | null;
+	/** The OAuth scopes the server asks Zapier for. */
+	scopes?: string[];
 }
 
 export interface IZapierCreateIntegration extends IBasePerTenantAndOrganizationEntityModel {
