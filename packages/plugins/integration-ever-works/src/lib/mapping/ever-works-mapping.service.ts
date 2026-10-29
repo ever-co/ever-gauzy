@@ -166,8 +166,9 @@ export class EverWorksMappingService {
 				[S.INCLUDE_TRIAGE_TASKS]: 'false',
 				[S.INCLUDE_GOAL_ITERATION_KEY_RESULTS]: 'false',
 				[S.SYNC_UNLINKED_PROJECT_TASKS]: 'true',
-				// The default inbox direction writes to Ever Works from now on (only the backfill sends what is older).
-				[S.INBOX_PUSH_SINCE]: toEverWorks(DEFAULT_EVER_WORKS_DIRECTIONS.inbox) ? new Date().toISOString() : ''
+				// When the inbox starts going to Ever Works (the default direction writes there): only the backfill sends older
+				// items. A later switch to a writing direction records its own time.
+				[S.INBOX_PUSH_SINCE]: new Date().toISOString()
 			};
 			this.set(row, defaults, manager, true);
 			this.set(row, firstTime, manager, false);

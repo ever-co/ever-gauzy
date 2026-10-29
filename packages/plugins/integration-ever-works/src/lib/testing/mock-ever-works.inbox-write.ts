@@ -80,8 +80,7 @@ export class MockEverWorksInboxWrite {
 
 	/** The item as the API answers it (the mock's own bookkeeping left out). */
 	dto(item: Record<string, unknown>): Record<string, unknown> {
-		const { filedByKeyId: _key, ...rest } = item;
-		return { ...rest };
+		return Object.fromEntries(Object.entries(item).filter(([field]) => field !== 'filedByKeyId'));
 	}
 
 	private readonly route: MockEverWorksExtension = (
