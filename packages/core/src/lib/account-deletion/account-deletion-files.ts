@@ -445,10 +445,9 @@ export async function deleteRowsAddressedTo(manager: EntityManager, tenantId: ID
 	}
 	const driver = manager.connection.driver;
 	const p = (n: number) => sqlPlaceholder(manager, n);
-	// SQLite's LOWER folds ASCII letters only, so an address with others (`É@…`) is matched here instead, the way
-	// the address itself was lowercased. Postgres and MySQL fold them in SQL.
-	const sqlite = ['sqlite', 'better-sqlite3'].includes(String(driver.options.type));
-	const matchInCode = sqlite && /[^ -]/.test(address);
+	// SQL LOWER folds non-ASCII letters (`É@…`) on some databases only: not on SQLite, nor on Postgres under the C
+	// collation. An address with such letters is therefore matched here, the way the address itself was lowercased.
+	const matchInCode = /[^\x00-\x7f]/.test(address);
 	for (const table of ADDRESSED_ROW_TABLES) {
 		const target = { table, columns: ['id', 'tenantId', 'email'] };
 		if (!matchInCode) {
