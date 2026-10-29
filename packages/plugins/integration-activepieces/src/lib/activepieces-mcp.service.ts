@@ -142,39 +142,7 @@ export class ActivepiecesMcpService {
 	async listMcpServers(params: ActivepiecesMcpServersListInput): Promise<IActivepiecesMcpServersListResponse> {
 		try {
 			const credential = await this.getMcpCredential();
-			const projectId = this.credentials.projectFor(credential, params.projectId);
-
-			if (this.mcpApi() === 'v2') {
-				const server = await this.readProjectServer(projectId, credential);
-				return { data: server ? [server] : [], next: null, previous: null };
-			}
-
-			// Build query parameters
-			const queryParams: Record<string, unknown> = {
-				projectId
-			};
-
-			if (params.limit) queryParams['limit'] = params.limit.toString();
-			if (params.cursor) queryParams['cursor'] = params.cursor;
-			if (params.name) queryParams['name'] = params.name;
-
-			const result = await this.request<IActivepiecesMcpServersListResponse>(
-				'get',
-				ACTIVEPIECES_MCP_SERVERS_URL,
-				undefined,
-				queryParams,
-				credential
-			);
-
-			if (credential.enforceProject) {
-				return {
-					...result,
-					data: (result?.data ?? []).filter((server) =>
-						this.credentials.isInProject(credential, server?.projectId)
-					)
-				};
-			}
-			return result;
+			return await this.listMcpServersWith(credential, params);
 		} catch (error: any) {
 			this.logger.error('Failed to list ActivePieces MCP servers:', error);
 			throw new HttpException(
@@ -182,6 +150,48 @@ export class ActivepiecesMcpService {
 				error.status || HttpStatus.INTERNAL_SERVER_ERROR
 			);
 		}
+	}
+
+	/**
+	 * Lists the MCP servers of a project under a resolved credential (see `listMcpServers`).
+	 */
+	private async listMcpServersWith(
+		credential: IActivepiecesCredential,
+		params: ActivepiecesMcpServersListInput
+	): Promise<IActivepiecesMcpServersListResponse> {
+		const projectId = this.credentials.projectFor(credential, params.projectId);
+
+		if (this.mcpApi() === 'v2') {
+			const server = await this.readProjectServer(projectId, credential);
+			return { data: server ? [server] : [], next: null, previous: null };
+		}
+
+		// Build query parameters
+		const queryParams: Record<string, unknown> = {
+			projectId
+		};
+
+		if (params.limit) queryParams['limit'] = params.limit.toString();
+		if (params.cursor) queryParams['cursor'] = params.cursor;
+		if (params.name) queryParams['name'] = params.name;
+
+		const result = await this.request<IActivepiecesMcpServersListResponse>(
+			'get',
+			ACTIVEPIECES_MCP_SERVERS_URL,
+			undefined,
+			queryParams,
+			credential
+		);
+
+		if (credential.enforceProject) {
+			return {
+				...result,
+				data: (result?.data ?? []).filter((server) =>
+					this.credentials.isInProject(credential, server?.projectId)
+				)
+			};
+		}
+		return result;
 	}
 
 	/**
@@ -401,7 +411,9 @@ export class ActivepiecesMcpService {
 	 * Get MCP servers for current tenant
 	 *
 	 * Under MCP 2.0 that is the server of the tenant's project (its own, pinned, or the one named with the tenant's own
-	 * key). The legacy servers carried names, and only those naming the tenant (or `gauzy`) are kept.
+	 * key). On the legacy API, every server of a pinned project is the tenant's (the project is), whatever its name, so
+	 * a server created here is listed; with the tenant's own key (no project pinned), only the servers naming the tenant
+	 * (or `gauzy`) are kept.
 	 */
 	async getTenantMcpServers(projectId?: string): Promise<IActivepiecesMcpServer[]> {
 		try {
@@ -410,11 +422,10 @@ export class ActivepiecesMcpService {
 				throw new BadRequestException('Tenant ID not found in request context');
 			}
 
-			const response = await this.listMcpServers({
-				projectId
-			});
+			const credential = await this.getMcpCredential();
+			const response = await this.listMcpServersWith(credential, { projectId });
 
-			if (this.mcpApi() === 'v2') {
+			if (this.mcpApi() === 'v2' || credential.enforceProject) {
 				return response.data;
 			}
 

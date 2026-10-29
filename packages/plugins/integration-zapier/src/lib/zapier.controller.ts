@@ -20,6 +20,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { ID, IZapierCreateZapInput, IZapierZap, IZapierZapTemplate, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, RequestContext, TenantPermissionGuard } from '@gauzy/core';
+import { isUUID } from 'class-validator';
 import { ZapierService } from './zapier.service';
 import { IZapierEndpoint, IZapierIntegrationSettings, IZapierOAuthPublicConfig } from './zapier.types';
 import { UpdateZapierSettingsDto } from './dto/update-zapier-settings.dto';
@@ -345,13 +346,34 @@ export class ZapierController {
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async updateSettings(
 		@Body() body: UpdateZapierSettingsDto,
-		@Query('organizationId') organizationId?: ID,
-		@Headers('organization-id') organizationHeader?: ID
+		@Query('organizationId') organizationId?: string | string[],
+		@Headers('organization-id') organizationHeader?: string | string[]
 	): Promise<IZapierIntegrationSettings> {
 		return this.zapierService.updateIntegrationSettings(
 			body,
-			organizationId?.trim() || organizationHeader?.trim() || undefined
+			this.organizationOf(organizationId, organizationHeader)
 		);
+	}
+
+	/**
+	 * The organization a request names: the first of the values given (the query, then the header) that is set, which
+	 * must be one UUID. `ValidationPipe` skips a primitive parameter, and a repeated query parameter arrives as an
+	 * array: unchecked, either answered 500 (a `trim` of an array, or a malformed uuid reaching PostgreSQL).
+	 *
+	 * @throws BadRequestException for a value that is not one UUID.
+	 */
+	private organizationOf(...candidates: Array<string | string[] | undefined>): ID | undefined {
+		for (const candidate of candidates) {
+			const value = typeof candidate === 'string' ? candidate.trim() : candidate;
+			if (value === undefined || value === null || value === '') {
+				continue;
+			}
+			if (typeof value !== 'string' || !isUUID(value)) {
+				throw new BadRequestException('organizationId must be a single UUID');
+			}
+			return value;
+		}
+		return undefined;
 	}
 
 	/**

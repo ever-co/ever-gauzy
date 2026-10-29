@@ -15,6 +15,12 @@ import { TypeOrmZapierWebhookSubscriptionRepository } from './repository/type-or
 import { ITimerZapierWebhookData } from './zapier.types';
 import { assertSafeZapierWebhookUrl, createSsrfSafeHttpsAgent } from './webhook-url.validator';
 
+/**
+ * The most subscriptions `GET /integration/zapier/webhooks` answers. Zapier subscribes one REST hook per Zap and event,
+ * so an integration holds a handful; the cap only keeps a runaway subscriber from loading an unbounded list.
+ */
+export const WEBHOOK_SUBSCRIPTION_LIST_LIMIT = 500;
+
 /** Delivery timeout for a single webhook POST, in milliseconds. */
 const WEBHOOK_DELIVERY_TIMEOUT_MS = 10000;
 
@@ -120,8 +126,8 @@ export class ZapierWebhookService {
 	}
 
 	/**
-	 * The webhook subscriptions of one Zapier integration, newest first. Every bound is required: an unbounded read would
-	 * list the subscriptions of every tenant.
+	 * The webhook subscriptions of one Zapier integration, newest first, at most `WEBHOOK_SUBSCRIPTION_LIST_LIMIT` of them.
+	 * Every bound is required: an unbounded read would list the subscriptions of every tenant.
 	 *
 	 * @param scope - The integration, with its tenant and organization.
 	 * @throws BadRequestException if a bound is missing.
@@ -139,7 +145,8 @@ export class ZapierWebhookService {
 		}
 		return this.zapierWebhookSubscriptionRepository.find({
 			where: { integrationId, tenantId, organizationId },
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			take: WEBHOOK_SUBSCRIPTION_LIST_LIMIT
 		});
 	}
 

@@ -30,15 +30,24 @@ jest.mock('@gauzy/core', () => {
 		}
 	);
 });
+// The dialect decides how the settings writes are serialized: a row lock, or this process's queue
+const mockRowLockDialect = jest.fn(() => false);
+jest.mock('@gauzy/config', () => ({
+	...jest.requireActual('@gauzy/config'),
+	isPostgres: () => mockRowLockDialect(),
+	isMySQL: () => false
+}));
 
 import { BadRequestException, ForbiddenException, NotFoundException, RequestMethod } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { IntegrationEnum } from '@gauzy/contracts';
 import { ZapierService } from './zapier.service';
 import { ZapierController } from './zapier.controller';
-import { ZAPIER_OAUTH_SCOPES } from './zapier.config';
+import { ZAPIER_OAUTH_SCOPES, ZAPIER_WEBHOOK_URL_MAX_LENGTH } from './zapier.config';
 
 const INTEGRATION_ID = '7c5d1f3e-1d6a-4c55-9a0e-0f3e2a1b4c5d';
+const ORGANIZATION_A = '2f1b6a0e-5c4d-4e3f-8a9b-0c1d2e3f4a5b';
+const ORGANIZATION_B = '9e8d7c6b-5a4f-4e3d-9c2b-1a0f9e8d7c6b';
 
 describe('Zapier settings update and OAuth configuration', () => {
 	const integration = (settings: Record<string, unknown>[] = []) => ({
@@ -48,13 +57,46 @@ describe('Zapier settings update and OAuth configuration', () => {
 		settings
 	});
 
+	type Row = Record<string, any>;
+
 	const build = ({
 		found = integration() as unknown,
+		stored = [] as Row[],
 		zapierConfig = {} as Record<string, string>
-	}: { found?: unknown; zapierConfig?: Record<string, string> } = {}) => {
+	}: { found?: unknown; stored?: Row[]; zapierConfig?: Record<string, string> } = {}) => {
+		// The integration's settings rows, as the transaction reads and writes them
+		const rows: Row[] = stored.map((row) => ({ integrationId: INTEGRATION_ID, tenantId: 'tenant-1', ...row }));
+		const bounded = (row: Row, where: Row) =>
+			row['integrationId'] === where['integrationId'] && row['tenantId'] === where['tenantId'];
 		const repository = {
-			update: jest.fn().mockResolvedValue({ affected: 1 }),
-			save: jest.fn(async (row: unknown) => row)
+			find: jest.fn(async ({ where }: { where: Row }) => {
+				// Yields, as a database round trip does: two unserialized saves would both read before either writes
+				await new Promise((resolve) => setImmediate(resolve));
+				return rows.filter(
+					(row) => bounded(row, where) && where['settingsName'].value.includes(row['settingsName'])
+				);
+			}),
+			update: jest.fn(async (where: Row, patch: Row) => {
+				const hit = rows.filter((row) => bounded(row, where) && row['settingsName'] === where['settingsName']);
+				hit.forEach((row) => Object.assign(row, patch));
+				return { affected: hit.length };
+			}),
+			save: jest.fn(async (row: Row) => {
+				rows.push({ ...row });
+				return row;
+			})
+		};
+		const lock: Record<string, jest.Mock> = {
+			select: jest.fn(),
+			from: jest.fn(),
+			where: jest.fn(),
+			setLock: jest.fn(),
+			getRawOne: jest.fn().mockResolvedValue({ id: INTEGRATION_ID })
+		};
+		['select', 'from', 'where', 'setLock'].forEach((step) => lock[step].mockReturnValue(lock));
+		const transactionManager = {
+			createQueryBuilder: jest.fn(() => lock),
+			getRepository: jest.fn(() => repository)
 		};
 		const integrationTenantService = {
 			// Both the update's lookup and the read after it go through `findOneByOptions`
@@ -68,23 +110,28 @@ describe('Zapier settings update and OAuth configuration', () => {
 		};
 		const config = { get: jest.fn().mockReturnValue(zapierConfig) };
 		const manager = {};
+		const dataSource = {
+			manager,
+			transaction: jest.fn(async (work: (manager: unknown) => Promise<unknown>) => work(transactionManager))
+		};
 		const service = new ZapierService(
 			{} as any,
 			{} as any,
-			{ typeOrmIntegrationSettingRepository: repository } as any,
+			{ typeOrmIntegrationSettingRepository: { target: 'IntegrationSetting' } } as any,
 			{} as any,
 			integrationTenantService as any,
 			config as any,
-			{ manager } as any
+			dataSource as any
 		);
 		jest.spyOn((service as any).logger, 'error').mockImplementation(() => undefined);
-		return { service, repository, integrationTenantService, manager };
+		return { service, rows, repository, lock, dataSource, integrationTenantService, manager };
 	};
 
 	beforeEach(() => {
 		mockCurrentTenantId.mockReturnValue('tenant-1');
 		mockCurrentOrganizationId.mockReturnValue('organization-1');
 		mockAssertMembership.mockResolvedValue(undefined);
+		mockRowLockDialect.mockReturnValue(false);
 	});
 
 	afterEach(() => {
@@ -103,15 +150,15 @@ describe('Zapier settings update and OAuth configuration', () => {
 		});
 
 		it('updates the stored settings of the organization’s integration and answers them', async () => {
-			const { service, repository, integrationTenantService, manager } = build({
-				found: integration([
+			const { service, rows, repository, integrationTenantService, manager } = build({
+				stored: [
 					{ id: 'setting-enabled', settingsName: 'is_enabled', settingsValue: 'false' },
 					{ id: 'setting-url', settingsName: 'zapier_webhook_url', settingsValue: 'https://old.example.com' }
-				])
+				]
 			});
 
 			await service.updateIntegrationSettings(
-				{ isEnabled: true, webhookUrl: ' https://hooks.zapier.com/hooks/catch/1/abc ' },
+				{ isEnabled: true, webhookUrl: ' https://hooks.example.com/catch/1/abc ' },
 				'organization-1'
 			);
 
@@ -122,14 +169,97 @@ describe('Zapier settings update and OAuth configuration', () => {
 			);
 			expect(mockAssertMembership).toHaveBeenCalledWith(manager, 'organization-1');
 			expect(repository.update).toHaveBeenCalledWith(
-				{ id: 'setting-enabled', integrationId: INTEGRATION_ID, tenantId: 'tenant-1' },
+				{ integrationId: INTEGRATION_ID, tenantId: 'tenant-1', settingsName: 'is_enabled' },
 				{ settingsValue: 'true' }
 			);
 			expect(repository.update).toHaveBeenCalledWith(
-				{ id: 'setting-url', integrationId: INTEGRATION_ID, tenantId: 'tenant-1' },
-				{ settingsValue: 'https://hooks.zapier.com/hooks/catch/1/abc' }
+				{ integrationId: INTEGRATION_ID, tenantId: 'tenant-1', settingsName: 'zapier_webhook_url' },
+				{ settingsValue: 'https://hooks.example.com/catch/1/abc' }
 			);
 			expect(repository.save).not.toHaveBeenCalled();
+			expect(rows.map((row) => row['settingsValue'])).toEqual(['true', 'https://hooks.example.com/catch/1/abc']);
+		});
+
+		it('keeps the stored webhook URL when the body leaves it out', async () => {
+			const { service, rows, repository } = build({
+				stored: [
+					{ settingsName: 'is_enabled', settingsValue: 'true' },
+					{ settingsName: 'zapier_webhook_url', settingsValue: 'https://hooks.example.com/catch/1/abc' }
+				]
+			});
+
+			await service.updateIntegrationSettings({ isEnabled: false });
+
+			expect(repository.update).toHaveBeenCalledTimes(1);
+			expect(rows).toEqual([
+				expect.objectContaining({ settingsName: 'is_enabled', settingsValue: 'false' }),
+				expect.objectContaining({
+					settingsName: 'zapier_webhook_url',
+					settingsValue: 'https://hooks.example.com/catch/1/abc'
+				})
+			]);
+		});
+
+		it('gives every stored row of a name the value, an earlier duplicate included', async () => {
+			const { service, rows, repository } = build({
+				stored: [
+					{ settingsName: 'is_enabled', settingsValue: 'false' },
+					{ settingsName: 'is_enabled', settingsValue: 'false' }
+				]
+			});
+
+			await service.updateIntegrationSettings({ isEnabled: true });
+
+			expect(repository.save).not.toHaveBeenCalled();
+			expect(rows.map((row) => row['settingsValue'])).toEqual(['true', 'true']);
+		});
+
+		it('on Postgres and MySQL, locks the integration’s row before it reads the settings, in one transaction', async () => {
+			mockRowLockDialect.mockReturnValue(true);
+			const { service, repository, lock, dataSource } = build();
+
+			await service.updateIntegrationSettings({ isEnabled: true, webhookUrl: '' });
+
+			expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+			expect(lock['from']).toHaveBeenCalledWith('integration_tenant', 'integration');
+			expect(lock['where']).toHaveBeenCalledWith('integration.id = :integrationId', {
+				integrationId: INTEGRATION_ID
+			});
+			expect(lock['setLock']).toHaveBeenCalledWith('pessimistic_write');
+			expect(lock['getRawOne'].mock.invocationCallOrder[0]).toBeLessThan(
+				repository.find.mock.invocationCallOrder[0]
+			);
+		});
+
+		it('on the embedded dialect, two simultaneous first saves insert each setting once', async () => {
+			const { service, rows, lock } = build();
+
+			await Promise.all([
+				service.updateIntegrationSettings({
+					isEnabled: true,
+					webhookUrl: 'https://hooks.example.com/catch/1/a'
+				}),
+				service.updateIntegrationSettings({
+					isEnabled: false,
+					webhookUrl: 'https://hooks.example.com/catch/1/b'
+				})
+			]);
+
+			expect(lock['setLock']).not.toHaveBeenCalled();
+			expect(rows.map((row) => [row['settingsName'], row['settingsValue']])).toEqual([
+				['is_enabled', 'false'],
+				['zapier_webhook_url', 'https://hooks.example.com/catch/1/b']
+			]);
+		});
+
+		it('refuses a webhook URL longer than the MySQL column holds, before any write', async () => {
+			const { service, dataSource } = build();
+			const webhookUrl = `https://hooks.example.com/${'a'.repeat(ZAPIER_WEBHOOK_URL_MAX_LENGTH)}`;
+
+			await expect(service.updateIntegrationSettings({ isEnabled: true, webhookUrl })).rejects.toBeInstanceOf(
+				BadRequestException
+			);
+			expect(dataSource.transaction).not.toHaveBeenCalled();
 		});
 
 		it('creates the settings the integration does not hold yet, in its tenant and organization', async () => {
@@ -154,15 +284,29 @@ describe('Zapier settings update and OAuth configuration', () => {
 			const controller = new ZapierController({ updateIntegrationSettings } as any);
 			const body = { isEnabled: true, webhookUrl: null };
 
-			await controller.updateSettings(body, 'organization-1', 'organization-9');
-			await controller.updateSettings(body, undefined, ' organization-9 ');
-			await controller.updateSettings(body, undefined, undefined);
+			await controller.updateSettings(body, ORGANIZATION_A, ORGANIZATION_B);
+			await controller.updateSettings(body, undefined, ` ${ORGANIZATION_B} `);
+			await controller.updateSettings(body, '', undefined);
 
 			expect(updateIntegrationSettings.mock.calls).toEqual([
-				[body, 'organization-1'],
-				[body, 'organization-9'],
+				[body, ORGANIZATION_A],
+				[body, ORGANIZATION_B],
 				[body, undefined]
 			]);
+		});
+
+		it.each([
+			['a repeated query parameter', [ORGANIZATION_A, ORGANIZATION_B], undefined],
+			['a malformed query value', 'organization-1', undefined],
+			['a malformed header', undefined, 'not-a-uuid']
+		])('answers 400 for %s, before any lookup', async (_label, query, header) => {
+			const updateIntegrationSettings = jest.fn();
+			const controller = new ZapierController({ updateIntegrationSettings } as any);
+
+			await expect(controller.updateSettings({ isEnabled: true }, query as any, header)).rejects.toBeInstanceOf(
+				BadRequestException
+			);
+			expect(updateIntegrationSettings).not.toHaveBeenCalled();
 		});
 
 		it('looks the integration up in the named organization, never in the user’s last one', async () => {
@@ -236,12 +380,12 @@ describe('Zapier settings update and OAuth configuration', () => {
 			const { service } = build({
 				found: integration([
 					{ settingsName: 'is_enabled', settingsValue: 'true' },
-					{ settingsName: 'zapier_webhook_url', settingsValue: 'https://hooks.zapier.com/hooks/catch/1/abc' }
+					{ settingsName: 'zapier_webhook_url', settingsValue: 'https://hooks.example.com/catch/1/abc' }
 				])
 			});
 
 			await expect(service.getIntegrationSettings()).resolves.toEqual(
-				expect.objectContaining({ isEnabled: true, webhookUrl: 'https://hooks.zapier.com/hooks/catch/1/abc' })
+				expect.objectContaining({ isEnabled: true, webhookUrl: 'https://hooks.example.com/catch/1/abc' })
 			);
 		});
 	});

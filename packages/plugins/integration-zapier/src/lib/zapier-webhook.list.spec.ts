@@ -28,7 +28,7 @@ import {
 } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { ZapierWebhookController } from './zapier-webhook.controller';
-import { ZapierWebhookService } from './zapier-webhook.service';
+import { WEBHOOK_SUBSCRIPTION_LIST_LIMIT, ZapierWebhookService } from './zapier-webhook.service';
 
 const INTEGRATION = { id: 'integration-1', tenantId: 'tenant-1', organizationId: 'organization-1' };
 
@@ -73,7 +73,8 @@ describe('GET /integration/zapier/webhooks', () => {
 		expect(zapierService.resolveIntegrationFromBearerToken).not.toHaveBeenCalled();
 		expect(repository.find).toHaveBeenCalledWith({
 			where: { integrationId: 'integration-1', tenantId: 'tenant-1', organizationId: 'organization-1' },
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			take: WEBHOOK_SUBSCRIPTION_LIST_LIMIT
 		});
 	});
 

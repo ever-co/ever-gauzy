@@ -52,7 +52,7 @@ export interface IZapierIntegrationSettings {
 /** The body of `PUT /integration/zapier/settings`. */
 export interface IZapierUpdateSettingsInput {
 	isEnabled: boolean;
-	/** An empty string or null clears it. */
+	/** An empty string or null clears it; leaving it out keeps the stored one. */
 	webhookUrl?: string | null;
 }
 

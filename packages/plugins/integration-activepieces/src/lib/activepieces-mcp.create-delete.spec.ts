@@ -174,6 +174,23 @@ describe('Activepieces MCP server create and delete', () => {
 			]);
 		});
 
+		it("lists a server it created in the tenant's pinned project, whatever its name", async () => {
+			const { service, http } = system(PROJECT_TOKEN);
+			const created = await service.createMcpServer({ name: 'Team tools' });
+			http.request.mockImplementation((config: any) =>
+				of({
+					data:
+						config.url === ACTIVEPIECES_MCP_SERVERS_URL
+							? { data: [created, legacyServer({ id: 'mcp-other', projectId: 'proj-b' })], next: null }
+							: created
+				})
+			);
+
+			expect((await service.getTenantMcpServers()).map(({ id, name }) => [id, name])).toEqual([
+				['mcp-1', 'Team tools']
+			]);
+		});
+
 		it('refuses another project than the pinned one, sending nothing', async () => {
 			const { service, http } = system(PROJECT_TOKEN);
 

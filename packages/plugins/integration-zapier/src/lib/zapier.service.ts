@@ -5,7 +5,7 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { DataSource, In, Like } from 'typeorm';
 import { isUUID } from 'class-validator';
 import { catchError, firstValueFrom, map } from 'rxjs';
-import { ConfigService, environment } from '@gauzy/config';
+import { ConfigService, environment, isMySQL, isPostgres } from '@gauzy/config';
 import {
 	IIntegrationTenant,
 	IntegrationEnum,
@@ -27,7 +27,13 @@ import {
 	JWT_ALGORITHMS,
 	assertCurrentUserBelongsToOrganization
 } from '@gauzy/core';
-import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME, ZAPIER_OAUTH_SCOPES } from './zapier.config';
+import {
+	ZAPIER_API_URL,
+	ZAPIER_BASE_URL,
+	ZAPIER_TOKEN_EXPIRATION_TIME,
+	ZAPIER_OAUTH_SCOPES,
+	ZAPIER_WEBHOOK_URL_MAX_LENGTH
+} from './zapier.config';
 import {
 	IIntegrationFilter,
 	IZapierAccessTokens,
@@ -1404,8 +1410,8 @@ export class ZapierService {
 
 	/**
 	 * Updates the Zapier integration settings of the current tenant: whether the integration is enabled, and its webhook
-	 * URL (an empty string or null clears it). `POST /settings` starts a new integration with a new OAuth state; this
-	 * changes the one that exists.
+	 * URL (an empty string or null clears it; left out, the stored one stays). `POST /settings` starts a new integration
+	 * with a new OAuth state; this changes the one that exists.
 	 *
 	 * The integration is the organization's when one is named (the controller passes the query, else the
 	 * `Organization-Id` header the web app sends), else the tenant's only one (400 when there are several, as
@@ -1436,6 +1442,9 @@ export class ZapierService {
 
 		// The URL is where the organization's events are meant to go: hold it to the egress guard the REST hooks use
 		const webhookUrl = input.webhookUrl?.trim() ?? '';
+		if (webhookUrl.length > ZAPIER_WEBHOOK_URL_MAX_LENGTH) {
+			throw new BadRequestException(`webhookUrl must be at most ${ZAPIER_WEBHOOK_URL_MAX_LENGTH} characters`);
+		}
 		if (webhookUrl) {
 			const reason = getUnsafeOutboundUrlReason(webhookUrl);
 			if (reason) {
@@ -1446,30 +1455,76 @@ export class ZapierService {
 		const integration = await this.findIntegrationByTenantId(tenantId, organizationId || undefined);
 		await assertCurrentUserBelongsToOrganization(this._dataSource.manager, integration.organizationId);
 
-		const values: Record<string, string> = {
-			is_enabled: String(input.isEnabled),
-			[ZapierSettingName.WEBHOOK_URL]: webhookUrl
-		};
-		const repository = this._integrationSettingService.typeOrmIntegrationSettingRepository;
-		for (const [settingsName, settingsValue] of Object.entries(values)) {
-			const existing = integration.settings?.find(
-				(setting: IIntegrationSetting) => setting.settingsName === settingsName
-			);
-			if (existing?.id) {
-				// Bounded by the integration and the tenant, as the token writes above are
-				await repository.update({ id: existing.id, integrationId: integration.id, tenantId }, { settingsValue });
-			} else {
-				await repository.save({
-					settingsName,
-					settingsValue,
-					tenantId,
-					organizationId: integration.organizationId,
-					integrationId: integration.id
-				});
-			}
+		const values: Record<string, string> = { is_enabled: String(input.isEnabled) };
+		// Left out, the stored URL stays: only an empty string or null clears it
+		if (input.webhookUrl !== undefined) {
+			values[ZapierSettingName.WEBHOOK_URL] = webhookUrl;
 		}
+		await this.writeIntegrationSettings({ ...integration, tenantId }, values);
 
 		return this.getIntegrationSettings(integration.organizationId);
+	}
+
+	/**
+	 * The settings writes of this process on the embedded dialect, in the order they came (see `writeIntegrationSettings`).
+	 */
+	private static embeddedSettingsWrites: Promise<unknown> = Promise.resolve();
+
+	/**
+	 * Writes settings of one integration, one value per name: every stored row of a name gets it, and a name without a
+	 * row gets one. The settings are read and written in one transaction. On Postgres and MySQL it first locks the
+	 * integration's row, so two first saves cannot both find a name missing and both insert it (no unique key guards the
+	 * integration and setting name); on the embedded dialect (a single-process database, e.g. the demo) a process-local
+	 * queue runs the writes one after the other instead.
+	 *
+	 * @param integration - The integration, with its tenant.
+	 * @param values - The value to store, by setting name.
+	 */
+	private async writeIntegrationSettings(
+		integration: IIntegrationTenant & { tenantId: ID },
+		values: Record<string, string>
+	): Promise<void> {
+		const { id: integrationId, tenantId, organizationId } = integration;
+		if (!integrationId) {
+			throw new BadRequestException('Integration ID is required');
+		}
+		const target = this._integrationSettingService.typeOrmIntegrationSettingRepository.target;
+		const rowLock = isPostgres() || isMySQL();
+
+		const write = () =>
+			this._dataSource.transaction(async (manager) => {
+				if (rowLock) {
+					// `pessimistic_write` maps to FOR UPDATE on both dialects
+					await manager
+						.createQueryBuilder()
+						.select('integration.id')
+						.from('integration_tenant', 'integration')
+						.where('integration.id = :integrationId', { integrationId })
+						.setLock('pessimistic_write')
+						.getRawOne();
+				}
+
+				const settings = manager.getRepository(target);
+				const names = Object.keys(values);
+				const stored = await settings.find({ where: { integrationId, tenantId, settingsName: In(names) } });
+				for (const settingsName of names) {
+					const settingsValue = values[settingsName];
+					if (stored.some((setting) => setting.settingsName === settingsName)) {
+						// Every row of the name, bounded by the integration and the tenant as the token writes above are
+						await settings.update({ integrationId, tenantId, settingsName }, { settingsValue });
+					} else {
+						await settings.save({ settingsName, settingsValue, tenantId, organizationId, integrationId });
+					}
+				}
+			});
+
+		if (rowLock) {
+			await write();
+			return;
+		}
+		const run = ZapierService.embeddedSettingsWrites.catch(() => undefined).then(write);
+		ZapierService.embeddedSettingsWrites = run.catch(() => undefined);
+		await run;
 	}
 
 	/**
