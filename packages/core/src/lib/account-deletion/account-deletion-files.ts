@@ -419,3 +419,35 @@ function unique(files: StoredFile[]): StoredFile[] {
 		return true;
 	});
 }
+
+/** The rows of a workspace that are addressed to a person by their email: invitations, and the history of emails sent. */
+export const ADDRESSED_ROW_TABLES: ReadonlyArray<string> = ['invite', 'email_history'];
+
+/**
+ * Deletes the rows of a workspace that are addressed to the deleted person: the invitations sent to their address
+ * and the history of the emails sent to it ({@link ADDRESSED_ROW_TABLES}). Deleting the account removed the user, but
+ * these rows kept the address in the workspace the person left (a deleted whole workspace takes them with it).
+ *
+ * Matched on the address case-insensitively, in the account's own workspace only: another workspace that invited or
+ * emailed the same address keeps its own rows. A table or column the deployment's schema lacks is skipped.
+ *
+ * @param manager The transaction's entity manager.
+ * @param tenantId The account's workspace.
+ * @param email The account's address.
+ */
+export async function deleteRowsAddressedTo(manager: EntityManager, tenantId: ID, email: string): Promise<void> {
+	const address = (email || '').trim().toLowerCase();
+	if (!tenantId || !address) {
+		return;
+	}
+	const driver = manager.connection.driver;
+	const p = (n: number) => sqlPlaceholder(manager, n);
+	for (const table of ADDRESSED_ROW_TABLES) {
+		await queryUnlessSchemaLacks(
+			manager,
+			`DELETE FROM ${driver.escape(table)} WHERE ${driver.escape('tenantId')} = ${p(1)} AND LOWER(TRIM(${driver.escape('email')})) = ${p(2)}`,
+			[tenantId, address],
+			{ table, columns: ['tenantId', 'email'] }
+		);
+	}
+}
