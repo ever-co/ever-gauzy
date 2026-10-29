@@ -195,6 +195,18 @@ describe('WakatimeService under MikroORM', () => {
 		return { knex, insert };
 	};
 
+	it('getSummaries counts only the caller’s heartbeats through knex', async () => {
+		const Service = loadMikroOrmService();
+		const raw = jest.fn().mockResolvedValue([{ seconds: 1 }]);
+		const query = jest.fn();
+		const service = new Service({ query } as any, { getKnex: () => ({ raw }) } as any);
+
+		await service.getSummaries({});
+
+		expect(query).not.toHaveBeenCalled();
+		expect(raw).toHaveBeenCalledWith(expect.stringContaining('"employeeId" = ?'), ['employee-1']);
+	});
+
 	it('bulkSave reports one identifier per heartbeat, like TypeORM', async () => {
 		const Service = loadMikroOrmService();
 		const { knex, insert } = knexStub();
