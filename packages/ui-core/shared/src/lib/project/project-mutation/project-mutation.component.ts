@@ -51,7 +51,7 @@ interface IProjectFormTab {
 	icon: string;
 }
 import { environment } from '@gauzy/ui-config';
-import { DUMMY_PROFILE_IMAGE, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange, getPlaceholderProfileImageUrl } from '@gauzy/ui-core/common';
 import {
 	GithubService,
 	OrganizationContactService,
@@ -695,7 +695,7 @@ export class ProjectMutationComponent extends TranslationBaseComponent implement
 				this.form.get('imageId').setValue(image.id);
 				this.form.get('imageUrl').setValue(image.fullUrl);
 			} else {
-				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
+				this.form.get('imageUrl').setValue(getPlaceholderProfileImageUrl(environment.API_BASE_URL));
 			}
 			this.form.updateValueAndValidity();
 		} catch (error) {

@@ -7,7 +7,8 @@ import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { debounceTime } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { DUMMY_PROFILE_IMAGE, distinctUntilChange } from '@gauzy/ui-core/common';
+import { distinctUntilChange, getPlaceholderProfileImageUrl } from '@gauzy/ui-core/common';
+import { environment } from '@gauzy/ui-config';
 import {
 	ErrorHandlingService,
 	OrganizationEditStore,
@@ -116,7 +117,7 @@ export class EditOrganizationMainComponent
 				this.form.get('imageId').setValue(image.id);
 				this.form.get('imageUrl').setValue(image.fullUrl);
 			} else {
-				this.form.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
+				this.form.get('imageUrl').setValue(getPlaceholderProfileImageUrl(environment.API_BASE_URL));
 			}
 			// Persist, but stay put. This used to call `updateOrganizationSettings()`,
 			// which ends by navigating to the organizations list — so picking a logo

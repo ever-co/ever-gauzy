@@ -134,6 +134,7 @@ import { PaymentModule } from '../payment/payment.module';
 import { PayrollRunModule } from '../payroll-run/payroll-run.module';
 import { StageModule } from '../pipeline-stage/pipeline-stage.module';
 import { PipelineModule } from '../pipeline/pipeline.module';
+import { PlaceholderImageModule } from '../placeholder-image/placeholder-image.module';
 import { ProductCategoryModule } from '../product-category/product-category.module';
 import { ProductVariantSettingModule } from '../product-setting/product-setting.module';
 import { ProductTypeModule } from '../product-type/product-type.module';
@@ -437,6 +438,7 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 			  ]
 			: []),
 		HealthModule,
+		PlaceholderImageModule,
 		CoreModule,
 		ValidatorModule,
 		AuthModule,

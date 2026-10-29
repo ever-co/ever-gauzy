@@ -5,6 +5,7 @@ import { Organization } from './organization.entity';
 import { getOrganizationDummyImage } from '../core/utils';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
+import { replaceDummyImageUrl } from '../placeholder-image/placeholder-image-url';
 
 @EventSubscriber()
 export class OrganizationSubscriber extends BaseEntityEventSubscriber<Organization> {
@@ -31,6 +32,9 @@ export class OrganizationSubscriber extends BaseEntityEventSubscriber<Organizati
 				// If imageUrl is not set and there's a name or officialName, generate a dummy image URL
 				entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
 			}
+
+			// A stored dummyimage.com placeholder (older rows) is shown as the API's own, never fetched from that third party.
+			replaceDummyImageUrl(entity, 'imageUrl');
 		} catch (error) {
 			console.error('OrganizationSubscriber: An error occurred during the afterEntityLoad process:', error);
 		}
@@ -55,6 +59,8 @@ export class OrganizationSubscriber extends BaseEntityEventSubscriber<Organizati
 				if (!entity.imageUrl) {
 					entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
 				}
+				// A dummyimage.com placeholder sent by a client is stored as the API's own (a first-party URL).
+				replaceDummyImageUrl(entity, 'imageUrl');
 
 				// Assign a random color for brandColor if it's not provided
 				if (!entity.brandColor) {
@@ -63,6 +69,21 @@ export class OrganizationSubscriber extends BaseEntityEventSubscriber<Organizati
 			}
 		} catch (error) {
 			console.error('OrganizationSubscriber: An error occurred during the beforeEntityCreate process:', error);
+		}
+	}
+
+	/**
+	 * Called before an Organization entity is updated in the database.
+	 *
+	 * @param entity The Organization entity about to be updated.
+	 * @returns {Promise<void>} A promise that resolves when the pre-update processing is complete.
+	 */
+	async beforeEntityUpdate(entity: Organization): Promise<void> {
+		try {
+			// A dummyimage.com placeholder sent by a client is stored as the API's own (a first-party URL).
+			replaceDummyImageUrl(entity, 'imageUrl');
+		} catch (error) {
+			console.error('OrganizationSubscriber: An error occurred during the beforeEntityUpdate process:', error);
 		}
 	}
 

@@ -391,6 +391,12 @@ export * from './lib/webhook';
 export * from './lib/job-execution';
 export * from './lib/job-dead-letter';
 export * from './lib/auth/purpose-token';
+export {
+	getPlaceholderImageUrl,
+	isDummyImageUrl,
+	replaceDummyImageUrl,
+	withoutDummyImageHost
+} from './lib/placeholder-image/placeholder-image-url';
 // The authentication module and service as DI tokens, for sign-in plugins that hand a verified
 // identity to Gauzy's own e-mail code, register path and social sign-in instead of re-implementing
 // them (the Keycloak and Ever ID sign-in plugins), and the terms acceptance module and service, so a

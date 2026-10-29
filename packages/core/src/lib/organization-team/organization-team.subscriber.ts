@@ -4,6 +4,7 @@ import { getDummyImage } from '../core/utils';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { OrganizationTeam } from './organization-team.entity';
 import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
+import { replaceDummyImageUrl } from '../placeholder-image/placeholder-image-url';
 
 @EventSubscriber()
 export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<OrganizationTeam> {
@@ -30,6 +31,9 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
 				await this.setImageUrl(entity);
 			}
+
+			// A stored dummyimage.com placeholder (older rows) is shown as the API's own, never fetched from that third party.
+			replaceDummyImageUrl(entity, 'logo');
 		} catch (error) {
 			console.error('OrganizationTeamSubscriber: An error occurred during the afterEntityLoad process:', error);
 		}
@@ -53,6 +57,9 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 			if (!entity.logo && entity.name) {
 				entity.logo = getDummyImage(330, 300, entity.name.charAt(0).toUpperCase());
 			}
+
+			// A dummyimage.com placeholder sent by a client is stored as the API's own (a first-party URL).
+			replaceDummyImageUrl(entity, 'logo');
 		} catch (error) {
 			console.error(
 				'OrganizationTeamSubscriber: An error occurred during the beforeEntityCreate process:',
@@ -74,6 +81,9 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 			if (entity.name) {
 				entity.profile_link = sluggable(entity.name);
 			}
+
+			// A dummyimage.com placeholder sent by a client is stored as the API's own (a first-party URL).
+			replaceDummyImageUrl(entity, 'logo');
 		} catch (error) {
 			console.error(
 				'OrganizationTeamSubscriber: An error occurred during the beforeEntityUpdate process:',

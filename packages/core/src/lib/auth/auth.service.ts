@@ -81,6 +81,7 @@ import { runOutsideOrganizationBoundary } from './../core/crud/organization-boun
 import { OrganizationTeam, Tenant, User } from './../core/entities/internal';
 import { Employee } from '../employee/employee.entity';
 import { freshTimestamp, getORMType, MultiORM, MultiORMEnum, parseTypeORMFindToMikroOrm } from './../core/utils';
+import { withoutDummyImageHost } from '../placeholder-image/placeholder-image-url';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { EmailService } from './../email-send/email.service';
 import { ImportRecordUpdateOrCreateCommand } from './../export-import/import-record';
@@ -2861,7 +2862,11 @@ export class AuthService extends SocialAuthService {
 		if (includeTeams) {
 			try {
 				const teams = await this.getTeamsForUser(tenantId, user.id, employeeId);
-				workspace['current_teams'] = teams;
+				// Raw rows skip the subscribers: a stored dummyimage.com logo is replaced by the API's own placeholder here.
+				workspace['current_teams'] = teams.map((team) => ({
+					...team,
+					team_logo: withoutDummyImageHost(team['team_logo'])
+				}));
 			} catch (error) {
 				this.logger.error(`Error while getting specific teams for specific tenant: ${error?.message}`);
 				// Optionally, you might want to handle the error more explicitly here.

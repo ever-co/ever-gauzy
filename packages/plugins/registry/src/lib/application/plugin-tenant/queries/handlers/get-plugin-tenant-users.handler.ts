@@ -1,4 +1,4 @@
-import { RequestContext } from '@gauzy/core';
+import { RequestContext, withoutDummyImageHost } from '@gauzy/core';
 import { Injectable, Logger } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
@@ -124,7 +124,9 @@ export class GetPluginTenantUsersHandler implements IQueryHandler<GetPluginTenan
 			OFFSET $${params.length}
 		`;
 
-		const items: PluginTenantUser[] = await this.dataSource.query(dataSql, params);
+		const rows: PluginTenantUser[] = await this.dataSource.query(dataSql, params);
+		// Raw rows skip the user subscriber: a stored dummyimage.com avatar is replaced by the API's own placeholder here.
+		const items = rows.map((row) => ({ ...row, imageUrl: withoutDummyImageHost(row.imageUrl) }));
 
 		return {
 			items,

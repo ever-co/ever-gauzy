@@ -33,7 +33,7 @@ import {
 	IImageAsset
 } from '@gauzy/contracts';
 import { environment as ENV } from '@gauzy/ui-config';
-import { DUMMY_PROFILE_IMAGE, retrieveNameFromEmail } from '@gauzy/ui-core/common';
+import { getPlaceholderProfileImageUrl, retrieveNameFromEmail } from '@gauzy/ui-core/common';
 import { Store, ToastrService } from '@gauzy/ui-core/core';
 import { FormHelpers, LeafletMapComponent, LocationFormComponent } from '../../forms';
 
@@ -320,7 +320,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy, AfterV
 				this.orgMainForm.get('imageId').setValue(image.id);
 				this.orgMainForm.get('imageUrl').setValue(image.fullUrl);
 			} else {
-				this.orgMainForm.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
+				this.orgMainForm.get('imageUrl').setValue(getPlaceholderProfileImageUrl(ENV.API_BASE_URL));
 			}
 			this.orgMainForm.updateValueAndValidity();
 		} catch (error) {
@@ -331,7 +331,7 @@ export class OrganizationsStepFormComponent implements OnInit, OnDestroy, AfterV
 
 	handleImageUploadError(error: any) {
 		try {
-			this.orgMainForm.get('imageUrl').setValue(DUMMY_PROFILE_IMAGE);
+			this.orgMainForm.get('imageUrl').setValue(getPlaceholderProfileImageUrl(ENV.API_BASE_URL));
 			this.orgMainForm.updateValueAndValidity();
 		} catch (error) {
 			this.toastrService.danger(error);
