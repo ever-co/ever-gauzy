@@ -1,6 +1,6 @@
 import { EventSubscriber } from 'typeorm';
 import { DatabaseTypeEnum, getConfig } from '@gauzy/config';
-import { getDummyImage, getORMType, MultiORMEnum, replacePlaceholders } from './../core/utils';
+import { getDummyImage, getORMType, MultiORMEnum, replacePlaceholders, withoutDummyImageHost } from './../core/utils';
 import { OrganizationProject } from './organization-project.entity';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import {
@@ -34,6 +34,9 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
 				await this.setImageUrl(entity);
 			}
+
+			// A stored dummyimage.com placeholder (older rows) is shown drawn in place, never fetched from that third party.
+			entity.imageUrl = withoutDummyImageHost(entity.imageUrl);
 		} catch (error) {
 			console.error(
 				'OrganizationProjectSubscriber: An error occurred during the afterEntityLoad process:',

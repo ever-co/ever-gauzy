@@ -1,6 +1,6 @@
 import { EventSubscriber } from 'typeorm';
 import { sluggable } from '@gauzy/utils';
-import { getDummyImage } from '../core/utils';
+import { getDummyImage, withoutDummyImageHost } from '../core/utils';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { OrganizationTeam } from './organization-team.entity';
 import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
@@ -30,6 +30,9 @@ export class OrganizationTeamSubscriber extends BaseEntityEventSubscriber<Organi
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
 				await this.setImageUrl(entity);
 			}
+
+			// A stored dummyimage.com placeholder (older rows) is shown drawn in place, never fetched from that third party.
+			entity.logo = withoutDummyImageHost(entity.logo);
 		} catch (error) {
 			console.error('OrganizationTeamSubscriber: An error occurred during the afterEntityLoad process:', error);
 		}

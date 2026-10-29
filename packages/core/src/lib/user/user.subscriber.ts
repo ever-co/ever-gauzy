@@ -1,6 +1,6 @@
 import { EventSubscriber } from 'typeorm';
 import { isBetterSqlite3, isSqlite } from '@gauzy/config';
-import { getUserDummyImage } from '../core/utils';
+import { getUserDummyImage, withoutDummyImageHost } from '../core/utils';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { MultiOrmEntityManager } from '../core/entities/subscribers/entity-event-subscriber.types';
 import { User } from './user.entity';
@@ -84,6 +84,9 @@ export class UserSubscriber extends BaseEntityEventSubscriber<User> {
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
 				await this.setImageUrl(entity);
 			}
+
+			// A stored dummyimage.com placeholder (older rows) is shown drawn in place, never fetched from that third party.
+			entity.imageUrl = withoutDummyImageHost(entity.imageUrl);
 		} catch (error) {
 			// Log any errors encountered during the execution of the function.
 			console.error('Error in UserSubscriber afterEntityLoad hook:', error);

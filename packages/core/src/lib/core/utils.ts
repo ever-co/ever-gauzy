@@ -35,9 +35,71 @@ namespace Utils {
 	}
 }
 
+/**
+ * A generated placeholder image (a letter or two on a colored background) for a user, organization, team, project,
+ * contact or tenant that has no image of its own.
+ *
+ * It is drawn in place, as an SVG data URI: it used to be a `https://dummyimage.com` URL, which made every browser
+ * showing the record call a third party that has no legal entity, privacy policy or contract (legal audit item 7).
+ *
+ * @param width - The width, in pixels.
+ * @param height - The height, in pixels.
+ * @param letter - The text: one to three letters, usually initials.
+ */
 export const getDummyImage = (width: number, height: number, letter: string) => {
-	return `https://dummyimage.com/${width}x${height}/${Utils.generatedLogoColor()}/ffffff.jpg&text=${letter}`;
+	return getPlaceholderImage(width, height, Utils.generatedLogoColor(), letter);
 };
+
+/** A placeholder URL of the former generator: `https://dummyimage.com/{w}x{h}/{background}/{foreground}…&text={text}`. */
+const DUMMY_IMAGE_URL = /^https?:\/\/dummyimage\.com\/(\d{1,4})x(\d{1,4})\/([0-9a-f]{3}|[0-9a-f]{6})\/[^&]*&text=([^&]*)$/i;
+
+/**
+ * Draws a placeholder image as an SVG data URI: `text` in white on `color`.
+ *
+ * Only letters and digits are kept (at most three), so nothing in the text can reach the SVG markup. For three ASCII
+ * letters the URI stays under 255 characters, the MySQL length of the `varchar` columns some placeholders are written
+ * to (`organization_team.logo`, `tenant.logo`).
+ *
+ * @param width - The width, in pixels.
+ * @param height - The height, in pixels.
+ * @param color - The background, as 3 or 6 hex digits without `#`.
+ * @param text - The text.
+ */
+export function getPlaceholderImage(width: number, height: number, color: string, text: string): string {
+	const label = Array.from(String(text ?? '').replace(/[^\p{L}\p{N}]/gu, ''))
+		.slice(0, 3)
+		.join('');
+	const background = /^([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color) ? color : '269aff';
+	const size = Math.round(Math.min(width, height) * 0.4);
+	const svg =
+		`<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}'>` +
+		`<rect width='100%' height='100%' fill='#${background}'/>` +
+		`<text x='50%' y='50%' dy='.35em' text-anchor='middle' font-family='sans-serif' font-size='${size}' fill='#fff'>` +
+		`${encodeURIComponent(label)}</text></svg>`;
+	return `data:image/svg+xml,${svg.replace(/</g, '%3C').replace(/>/g, '%3E').replace(/#/g, '%23')}`;
+}
+
+/**
+ * Replaces a placeholder URL of the former generator (`https://dummyimage.com/…`, stored in many existing rows) by the
+ * same placeholder drawn in place, so that showing an old record no longer calls that third party. Any other value is
+ * returned as it is.
+ *
+ * @param value - An image URL as stored.
+ */
+export function withoutDummyImageHost<T>(value: T): T | string {
+	const match = typeof value === 'string' ? DUMMY_IMAGE_URL.exec(value.trim()) : null;
+	if (!match) {
+		return value;
+	}
+	const [, width, height, color, text] = match;
+	let label = text;
+	try {
+		label = decodeURIComponent(text);
+	} catch {
+		// A malformed escape: the letters that can be read are kept.
+	}
+	return getPlaceholderImage(Number(width), Number(height), color, label);
+}
 
 export const getUserDummyImage = (user: IUser) => {
 	const firstNameLetter = user.firstName ? user.firstName.charAt(0).toUpperCase() : '';

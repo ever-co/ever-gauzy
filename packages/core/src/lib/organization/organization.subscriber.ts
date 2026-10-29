@@ -2,7 +2,7 @@ import { EventSubscriber } from 'typeorm';
 import { faker } from '@faker-js/faker';
 import { sluggable } from '@gauzy/utils';
 import { Organization } from './organization.entity';
-import { getOrganizationDummyImage } from '../core/utils';
+import { getOrganizationDummyImage, withoutDummyImageHost } from '../core/utils';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
 
@@ -31,6 +31,9 @@ export class OrganizationSubscriber extends BaseEntityEventSubscriber<Organizati
 				// If imageUrl is not set and there's a name or officialName, generate a dummy image URL
 				entity.imageUrl = getOrganizationDummyImage(entity.name || entity.officialName);
 			}
+
+			// A stored dummyimage.com placeholder (older rows) is shown drawn in place, never fetched from that third party.
+			entity.imageUrl = withoutDummyImageHost(entity.imageUrl);
 		} catch (error) {
 			console.error('OrganizationSubscriber: An error occurred during the afterEntityLoad process:', error);
 		}

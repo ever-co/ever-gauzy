@@ -1,5 +1,5 @@
 import { EventSubscriber } from 'typeorm';
-import { getTenantLogo } from '../core/utils';
+import { getTenantLogo, withoutDummyImageHost } from '../core/utils';
 import { Tenant } from './tenant.entity';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
@@ -23,6 +23,9 @@ export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
 	async afterEntityLoad(entity: Tenant): Promise<void> {
 		try {
 			await this.updateTenantLogo(entity);
+
+			// A stored dummyimage.com placeholder (older rows) is shown drawn in place, never fetched from that third party.
+			entity.logo = withoutDummyImageHost(entity.logo);
 		} catch (error) {
 			console.error('TenantSubscriber: An error occurred during the afterEntityLoad process:', error);
 		}

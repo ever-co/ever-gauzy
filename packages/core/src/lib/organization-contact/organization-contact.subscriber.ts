@@ -3,7 +3,7 @@ import { EventSubscriber } from 'typeorm';
 import { OrganizationContact } from './organization-contact.entity';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
-import { getDummyImage } from './../core/utils';
+import { getDummyImage, withoutDummyImageHost} from './../core/utils';
 import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
 
 /**
@@ -52,6 +52,9 @@ export class OrganizationContactSubscriber extends BaseEntityEventSubscriber<Org
 				// Otherwise, generate a dummy image URL based on the first character of the name
 				entity.imageUrl = getDummyImage(330, 300, entity.name.charAt(0).toUpperCase());
 			}
+
+			// A stored dummyimage.com placeholder (older rows) is shown drawn in place, never fetched from that third party.
+			entity.imageUrl = withoutDummyImageHost(entity.imageUrl);
 		} catch (error) {
 			console.error(
 				'OrganizationContactSubscriber: An error occurred during the afterEntityLoad process:',
