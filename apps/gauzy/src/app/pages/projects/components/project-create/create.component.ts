@@ -2,10 +2,11 @@ import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/
 import { Router } from '@angular/router';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { IOrganization, IOrganizationProject, IOrganizationProjectCreateInput } from '@gauzy/contracts';
+import { BaseEntityEnum, IOrganization, IOrganizationProject, IOrganizationProjectCreateInput } from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { ProjectMutationComponent } from '@gauzy/ui-core/shared';
+import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -18,9 +19,14 @@ import { ProjectMutationComponent } from '@gauzy/ui-core/shared';
 export class ProjectCreateMutationComponent extends TranslationBaseComponent implements OnInit {
 	/** Project Mutation Component*/
 	@ViewChild(ProjectMutationComponent, { static: false }) public _component: ProjectMutationComponent;
+	/** The Documents panel holding the files to attach once the project is saved. */
+	@ViewChild(DocumentLinksPanelComponent, { static: false }) private _documentsPanel: DocumentLinksPanelComponent;
 
 	public loading: boolean;
 	public organization: IOrganization = this._store.selectedOrganization;
+
+	/** Entity type the record-side Documents panel attaches its links to. */
+	public readonly documentEntity = BaseEntityEnum.OrganizationProject;
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -58,6 +64,9 @@ export class ProjectCreateMutationComponent extends TranslationBaseComponent imp
 			this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', {
 				name: project.name
 			});
+
+			// The project exists now: attach the files picked while it was being filled in.
+			await this._documentsPanel?.attachPending(project.id, project.name);
 
 			this.navigateToProjects();
 		} catch (error) {
