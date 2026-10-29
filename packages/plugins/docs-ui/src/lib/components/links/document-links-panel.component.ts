@@ -167,6 +167,8 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	private readonly imageUrls = new Map<string, string>();
 	/** Document ids whose bytes were already asked for, so a reload never fetches twice. */
 	private readonly requestedImages = new Set<string>();
+	/** Image reads in flight, by document id — a second ask for the same picture waits on the first. */
+	private readonly imageReads = new Map<string, Promise<string>>();
 	/** `blob:` URLs of held images, straight from the user's machine. */
 	private readonly pendingUrls = new Map<File, string>();
 	/**
@@ -398,15 +400,29 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 
 	/**
 	 * A saved image's `blob:` URL, fetched through the authenticated client on first use.
-	 * Rejects once the panel is gone: the read is cancelled and no URL is created.
+	 * Calls that overlap — a preview opened while the grid is fetching the same picture —
+	 * share one read, so a picture is fetched once and gets one URL. Rejects once the
+	 * panel is gone: the read is cancelled and no URL is created.
 	 */
-	private async imageUrlOf(documentId: string): Promise<string> {
+	private imageUrlOf(documentId: string): Promise<string> {
 		const cached = this.imageUrls.get(documentId);
-		if (cached) return cached;
+		if (cached) return Promise.resolve(cached);
+		let read = this.imageReads.get(documentId);
+		if (!read) {
+			read = this.readImageUrl(documentId).finally(() => this.imageReads.delete(documentId));
+			this.imageReads.set(documentId, read);
+		}
+		return read;
+	}
+
+	private async readImageUrl(documentId: string): Promise<string> {
 		const blob = await firstValueFrom(
 			this.documentsService.getRawBlob(documentId as ID).pipe(takeUntil(this.destroy$))
 		);
 		if (this.destroyed) throw new Error('The Documents panel was closed');
+		// Never two URLs for one picture: one already cached wins, and nothing is left to revoke.
+		const cached = this.imageUrls.get(documentId);
+		if (cached) return cached;
 		const url = URL.createObjectURL(blob);
 		this.imageUrls.set(documentId, url);
 		return url;
