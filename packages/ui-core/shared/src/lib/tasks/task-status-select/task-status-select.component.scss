@@ -6,10 +6,10 @@
 
 // ── The status lozenge ─────────────────────────────────────────────────────────
 // Jira's status chip: small, uppercase, bold, on a light wash of the status
-// colour. The colour is user-chosen and often very pale or very saturated, so
-// the text is mixed from it toward the theme's text colour (lighter on dark
-// themes, darker on light ones) instead of a solid fill with black/white text —
-// every status reads with the same weight on either theme. `--status-color` is
+// colour. The colour is user-chosen and often very pale or very saturated, so it
+// only tints the fill and the hairline; the text is the theme's own text colour,
+// which keeps the label readable whatever the status colour is (a white or pale
+// yellow status would otherwise sit at ~2:1 on the light panel). `--status-color` is
 // set per lozenge from the status, or from its workflow category when it has no
 // colour of its own.
 //
@@ -31,7 +31,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   vertical-align: middle;
-  color: color-mix(in srgb, var(--status-color) 60%, nb-theme(text-basic-color));
+  color: nb-theme(text-basic-color);
   background-color: color-mix(in srgb, var(--status-color) 18%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--status-color) 30%, transparent);
 }
