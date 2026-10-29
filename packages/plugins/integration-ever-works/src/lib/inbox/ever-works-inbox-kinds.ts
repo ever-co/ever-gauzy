@@ -4,7 +4,15 @@ import { InboxItemKindEnum } from '@gauzy/contracts';
  * The kinds of an Ever Works inbox item made from a Gauzy Inbox item (`POST /inbox/items`, contract `kind`), in the
  * order the person's preference lists them. Each person chooses which of them go to Ever Works; all are on by default.
  */
-export const EVER_WORKS_INBOX_KINDS = ['notice', 'question', 'approval', 'mention', 'assignment', 'email', 'other'] as const;
+export const EVER_WORKS_INBOX_KINDS = [
+	'notice',
+	'question',
+	'approval',
+	'mention',
+	'assignment',
+	'email',
+	'other'
+] as const;
 
 export type EverWorksInboxKind = (typeof EVER_WORKS_INBOX_KINDS)[number];
 
@@ -34,7 +42,10 @@ const NOTICE_KINDS: Readonly<Record<string, EverWorksInboxKind>> = {
  * | `EMAIL` | `email` |
  * | any other | `other` |
  */
-export function everWorksKindOf(kind: InboxItemKindEnum | string, metadata?: Record<string, unknown> | null): EverWorksInboxKind {
+export function everWorksKindOf(
+	kind: InboxItemKindEnum | string,
+	metadata?: Record<string, unknown> | null
+): EverWorksInboxKind {
 	switch (kind) {
 		case InboxItemKindEnum.QUESTION:
 		case InboxItemKindEnum.ESCALATION:
@@ -54,5 +65,8 @@ export function everWorksKindOf(kind: InboxItemKindEnum | string, metadata?: Rec
 
 /** Every kind on, the default. */
 export function allEverWorksInboxKinds(): Record<EverWorksInboxKind, boolean> {
-	return Object.fromEntries(EVER_WORKS_INBOX_KINDS.map((kind) => [kind, true])) as Record<EverWorksInboxKind, boolean>;
+	return Object.fromEntries(EVER_WORKS_INBOX_KINDS.map((kind) => [kind, true])) as Record<
+		EverWorksInboxKind,
+		boolean
+	>;
 }

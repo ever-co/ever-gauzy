@@ -16,7 +16,8 @@ import {
 
 type Column = [name: string, type: (d: EverWorksDialect) => string, notNull?: boolean];
 
-const varchar = (n: number) => (d: EverWorksDialect) => (d === 'postgres' ? `character varying(${n})` : `varchar(${n})`);
+const varchar = (n: number) => (d: EverWorksDialect) =>
+	d === 'postgres' ? `character varying(${n})` : `varchar(${n})`;
 const text = () => 'text';
 
 const TABLE = 'ever_works_inbox_preference';

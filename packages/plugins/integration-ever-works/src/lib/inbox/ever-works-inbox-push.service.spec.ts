@@ -85,7 +85,11 @@ import { TestEverWorksClientFactory } from '../client/ever-works-client.factory'
 import type { EverWorksEventEnvelope } from '../client/ever-works-client.types';
 import { EverWorksConnectionStatus } from '../connection/ever-works-connection.entity';
 import { DEFAULT_EVER_WORKS_DIRECTIONS } from '../mapping/ever-works-mapping.defaults';
-import { EverWorksEntityLink, EverWorksLinkType, EverWorksOutboundChange } from '../sync/entities/ever-works-sync.entities';
+import {
+	EverWorksEntityLink,
+	EverWorksLinkType,
+	EverWorksOutboundChange
+} from '../sync/entities/ever-works-sync.entities';
 import { EverWorksSyncContext } from '../sync/ever-works-sync.context';
 import { MockEverWorksInboxWrite } from '../testing/mock-ever-works.inbox-write';
 import { MockEverWorksServer } from '../testing/mock-ever-works.server';
@@ -134,7 +138,9 @@ function repository(rows: Row[], unique?: (a: Row, b: Row) => boolean) {
 	};
 }
 
-function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTIONS>; entitySync?: Row; inbox?: boolean } = {}) {
+function setup(
+	options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTIONS>; entitySync?: Row; inbox?: boolean } = {}
+) {
 	const mock = new MockEverWorksServer();
 	const ewOrg = { id: 'ew-org-1', slug: 'acme', displayName: 'Acme' };
 	const key = mock.addKey({ organizations: [ewOrg] });
@@ -153,20 +159,58 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 		isEnabled: true
 	};
 	const contexts = {
-		forOrganization: async (tenantId: string, organizationId: string) => (tenantId === TENANT && organizationId === ORG ? context : null),
+		forOrganization: async (tenantId: string, organizationId: string) =>
+			tenantId === TENANT && organizationId === ORG ? context : null,
 		forEverWorksOrganization: async (_c: unknown, ewOrgId: string) => (ewOrgId === ewOrg.id ? context : null),
 		forConnection: async () => [context]
 	};
 
 	// The tables the services read (in memory).
 	const employees: Row[] = [
-		{ id: ADA.employee, userId: ADA.user, tenantId: TENANT, organizationId: ORG, isActive: true, isArchived: false },
-		{ id: BOB.employee, userId: BOB.user, tenantId: TENANT, organizationId: ORG, isActive: true, isArchived: false },
-		{ id: CAROL.employee, userId: CAROL.user, tenantId: TENANT, organizationId: ORG, isActive: true, isArchived: false }
+		{
+			id: ADA.employee,
+			userId: ADA.user,
+			tenantId: TENANT,
+			organizationId: ORG,
+			isActive: true,
+			isArchived: false
+		},
+		{
+			id: BOB.employee,
+			userId: BOB.user,
+			tenantId: TENANT,
+			organizationId: ORG,
+			isActive: true,
+			isArchived: false
+		},
+		{
+			id: CAROL.employee,
+			userId: CAROL.user,
+			tenantId: TENANT,
+			organizationId: ORG,
+			isActive: true,
+			isArchived: false
+		}
 	];
 	const links: Row[] = [
-		{ id: randomUUID(), integrationTenantId: MAPPING, entityType: EverWorksLinkType.MEMBER, gauzyId: ADA.employee, ewId: ADA.ew, ewVersion: null, state: 'ok' },
-		{ id: randomUUID(), integrationTenantId: MAPPING, entityType: EverWorksLinkType.MEMBER, gauzyId: CAROL.employee, ewId: CAROL.ew, ewVersion: null, state: 'ok' }
+		{
+			id: randomUUID(),
+			integrationTenantId: MAPPING,
+			entityType: EverWorksLinkType.MEMBER,
+			gauzyId: ADA.employee,
+			ewId: ADA.ew,
+			ewVersion: null,
+			state: 'ok'
+		},
+		{
+			id: randomUUID(),
+			integrationTenantId: MAPPING,
+			entityType: EverWorksLinkType.MEMBER,
+			gauzyId: CAROL.employee,
+			ewId: CAROL.ew,
+			ewVersion: null,
+			state: 'ok'
+		}
 	];
 	const changes: Row[] = [];
 	const tasks: Row[] = [];
@@ -178,7 +222,10 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 		[EverWorksOutboundChange, repository(changes)],
 		[Task, repository(tasks)],
 		[Organization, repository(organizations)],
-		[EverWorksInboxPreference, repository(preferences, (a, b) => a['tenantId'] === b['tenantId'] && a['userId'] === b['userId'])]
+		[
+			EverWorksInboxPreference,
+			repository(preferences, (a, b) => a['tenantId'] === b['tenantId'] && a['userId'] === b['userId'])
+		]
 	]);
 	const dataSource = {
 		getRepository: (target: unknown) => {
@@ -190,16 +237,27 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 
 	// The identity map, with its monotonic version (a write never lowers it).
 	const linkService = {
-		byEw: async (m: string, type: string, ewId: string) => links.find((l) => l['integrationTenantId'] === m && l['entityType'] === type && l['ewId'] === ewId) ?? null,
+		byEw: async (m: string, type: string, ewId: string) =>
+			links.find((l) => l['integrationTenantId'] === m && l['entityType'] === type && l['ewId'] === ewId) ?? null,
 		byGauzy: async (m: string, type: string, gauzyId: string) =>
-			links.find((l) => l['integrationTenantId'] === m && l['entityType'] === type && l['gauzyId'] === gauzyId) ?? null,
-		list: async (m: string, type: string) => links.filter((l) => l['integrationTenantId'] === m && l['entityType'] === type),
+			links.find((l) => l['integrationTenantId'] === m && l['entityType'] === type && l['gauzyId'] === gauzyId) ??
+			null,
+		list: async (m: string, type: string) =>
+			links.filter((l) => l['integrationTenantId'] === m && l['entityType'] === type),
 		snapshot: (link: Row | null) => (link?.['snapshot'] ? JSON.parse(link['snapshot']) : {}),
 		record: async (input: Row) => {
 			const existing = links.find(
-				(l) => l['integrationTenantId'] === input['integrationTenantId'] && l['entityType'] === input['entityType'] && (l['ewId'] === input['ewId'] || l['gauzyId'] === input['gauzyId'])
+				(l) =>
+					l['integrationTenantId'] === input['integrationTenantId'] &&
+					l['entityType'] === input['entityType'] &&
+					(l['ewId'] === input['ewId'] || l['gauzyId'] === input['gauzyId'])
 			);
-			if (existing && existing['ewVersion'] != null && typeof input['ewVersion'] === 'number' && input['ewVersion'] < existing['ewVersion']) {
+			if (
+				existing &&
+				existing['ewVersion'] != null &&
+				typeof input['ewVersion'] === 'number' &&
+				input['ewVersion'] < existing['ewVersion']
+			) {
 				throw new Error('stale link write');
 			}
 			const values = {
@@ -213,7 +271,12 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 				state: 'ok'
 			};
 			if (existing) return Object.assign(existing, values);
-			const row = { id: randomUUID(), integrationTenantId: input['integrationTenantId'], entityType: input['entityType'], ...values };
+			const row = {
+				id: randomUUID(),
+				integrationTenantId: input['integrationTenantId'],
+				entityType: input['entityType'],
+				...values
+			};
 			links.push(row);
 			return row;
 		},
@@ -225,20 +288,29 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 	// The Gauzy Inbox (in memory): the observer seam and the recipient actions, as InboxService acts.
 	const items = new Map<string, IInboxItem>();
 	const recipients = new Map<string, IInboxItemRecipient & Row>();
-	const recipientOf = (itemId: string, userId: string) => [...recipients.values()].find((row) => row.inboxItemId === itemId && row.userId === userId);
+	const recipientOf = (itemId: string, userId: string) =>
+		[...recipients.values()].find((row) => row.inboxItemId === itemId && row.userId === userId);
 	const feed: IInboxItemFeed & { register: jest.Mock } = {
 		register: jest.fn(),
 		unregister: jest.fn(),
 		readRecipient: async (tenantId, recipientId) => {
 			const recipient = recipients.get(recipientId);
 			const item = recipient ? items.get(recipient.inboxItemId as string) : undefined;
-			return recipient && item && recipient.tenantId === tenantId ? { item: { ...item }, recipient: { ...recipient } } : null;
+			return recipient && item && recipient.tenantId === tenantId
+				? { item: { ...item }, recipient: { ...recipient } }
+				: null;
 		},
 		openRecipientsOf: async (tenantId, organizationId, userIds, opts = {}) => {
 			const rows = [...recipients.values()]
 				.filter((row) => {
 					const item = items.get(row.inboxItemId as string) as IInboxItem;
-					return row.tenantId === tenantId && item.organizationId === organizationId && userIds.includes(row.userId) && item.status === InboxItemStatusEnum.OPEN && !row.isArchived;
+					return (
+						row.tenantId === tenantId &&
+						item.organizationId === organizationId &&
+						userIds.includes(row.userId) &&
+						item.status === InboxItemStatusEnum.OPEN &&
+						!row.isArchived
+					);
 				})
 				.filter((row) => !opts.after || (row.id as string) > opts.after)
 				.sort((a, b) => String(a.id).localeCompare(String(b.id)));
@@ -247,7 +319,16 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 			return {
 				recipients: page.map((row) => {
 					const item = items.get(row.inboxItemId as string) as IInboxItem;
-					return { id: row.id as string, userId: row.userId, inboxItemId: item.id as string, organizationId: ORG, source: item.source, kind: item.kind, changedAt: new Date(), itemUpdatedAt: new Date() };
+					return {
+						id: row.id as string,
+						userId: row.userId,
+						inboxItemId: item.id as string,
+						organizationId: ORG,
+						source: item.source,
+						kind: item.kind,
+						changedAt: new Date(),
+						itemUpdatedAt: new Date()
+					};
 				}),
 				next: rows.length > limit ? (page[page.length - 1].id as string) : null
 			};
@@ -257,10 +338,17 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 	const actions: IInboxRecipientActions & { reply: jest.Mock; setState: jest.Mock } = {
 		reply: jest.fn(async (id: string, input: { text?: string; optionId?: string }) => {
 			const item = items.get(id) as IInboxItem;
-			if (item.status !== InboxItemStatusEnum.OPEN) throw new ConflictException('This item was already answered.');
+			if (item.status !== InboxItemStatusEnum.OPEN)
+				throw new ConflictException('This item was already answered.');
 			Object.assign(item, {
 				status: InboxItemStatusEnum.ANSWERED,
-				response: { text: input.text ?? null, optionId: input.optionId ?? null, answeredByUserId: mockCaller.userId, answeredAt: new Date().toISOString(), routed: 'local' },
+				response: {
+					text: input.text ?? null,
+					optionId: input.optionId ?? null,
+					answeredByUserId: mockCaller.userId,
+					answeredAt: new Date().toISOString(),
+					routed: 'local'
+				},
 				updatedAt: new Date()
 			});
 			const recipient = recipientOf(id, mockCaller.userId as string);
@@ -298,7 +386,15 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 		const ids: Record<string, string> = {};
 		for (const userId of users) {
 			const id = randomUUID();
-			recipients.set(id, { id, tenantId: TENANT, organizationId: ORG, inboxItemId: item.id as string, userId, isRead: false, isArchived: false } as never);
+			recipients.set(id, {
+				id,
+				tenantId: TENANT,
+				organizationId: ORG,
+				inboxItemId: item.id as string,
+				userId,
+				isRead: false,
+				isArchived: false
+			} as never);
 			ids[userId] = id;
 		}
 		return { item, ids, ada: ids[ADA.user] };
@@ -307,7 +403,12 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 	const factory = new TestEverWorksClientFactory(mock.transport(), { allowInsecure: true });
 	const connections = {
 		client: (_connection: unknown, scopeSlug?: string | null) =>
-			factory.create({ apiBaseUrl: 'http://ever-works.test/api', apiKey: key, connectionId: 'conn-1', scopeSlug: scopeSlug ?? null })
+			factory.create({
+				apiBaseUrl: 'http://ever-works.test/api',
+				apiKey: key,
+				connectionId: 'conn-1',
+				scopeSlug: scopeSlug ?? null
+			})
 	};
 	const queued: Row[] = [];
 	const queue = {
@@ -317,7 +418,11 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 		})
 	};
 	const log = { write: jest.fn(async () => undefined) };
-	const preferenceService = new EverWorksInboxPreferencesService(dataSource as never, contexts as never, linkService as never);
+	const preferenceService = new EverWorksInboxPreferencesService(
+		dataSource as never,
+		contexts as never,
+		linkService as never
+	);
 	const service = new EverWorksInboxPushService(
 		dataSource as never,
 		contexts as never,
@@ -333,13 +438,29 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 	);
 	service.onModuleInit();
 	const writer = { create: jest.fn(), upsertExternal: jest.fn() };
-	const inboxService = new EverWorksInboxService(dataSource as never, contexts as never, linkService as never, connections as never, writer as never, null, service);
+	const inboxService = new EverWorksInboxService(
+		dataSource as never,
+		contexts as never,
+		linkService as never,
+		connections as never,
+		writer as never,
+		null,
+		service
+	);
 	const push = (recipientId: string) =>
 		service.push(
-			{ tenantId: TENANT, organizationId: ORG, integrationTenantId: MAPPING, entityType: EverWorksLinkType.GAUZY_INBOX_ITEM, gauzyId: recipientId, op: 'upsert' } as never,
+			{
+				tenantId: TENANT,
+				organizationId: ORG,
+				integrationTenantId: MAPPING,
+				entityType: EverWorksLinkType.GAUZY_INBOX_ITEM,
+				gauzyId: recipientId,
+				op: 'upsert'
+			} as never,
 			{ connection: connection as never, mapping: { id: MAPPING } as never }
 		);
-	const apply = (envelope: EverWorksEventEnvelope) => inboxService.apply(envelope, { connection: connection as never, event: {} as never, organizationId: ORG });
+	const apply = (envelope: EverWorksEventEnvelope) =>
+		inboxService.apply(envelope, { connection: connection as never, event: {} as never, organizationId: ORG });
 	const change = (item: IInboxItem, over: Partial<IInboxItemChange> = {}): IInboxItemChange => ({
 		tenantId: TENANT,
 		organizationId: ORG,
@@ -349,11 +470,34 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 		externalSource: item.externalSource ?? null,
 		scope: 'item',
 		type: 'created',
-		recipients: [...recipients.values()].filter((row) => row.inboxItemId === item.id).map((row) => ({ id: row.id as string, userId: row.userId })),
+		recipients: [...recipients.values()]
+			.filter((row) => row.inboxItemId === item.id)
+			.map((row) => ({ id: row.id as string, userId: row.userId })),
 		...over
 	});
-	const linkOf = (recipientId: string) => links.find((l) => l['entityType'] === EverWorksLinkType.GAUZY_INBOX_ITEM && l['gauzyId'] === recipientId);
-	return { mock, inboxWrite, service, preferenceService, feed, actions, writer, items, recipients, links, tasks, queued, queue, context, addItem, push, apply, change, linkOf };
+	const linkOf = (recipientId: string) =>
+		links.find((l) => l['entityType'] === EverWorksLinkType.GAUZY_INBOX_ITEM && l['gauzyId'] === recipientId);
+	return {
+		mock,
+		inboxWrite,
+		service,
+		preferenceService,
+		feed,
+		actions,
+		writer,
+		items,
+		recipients,
+		links,
+		tasks,
+		queued,
+		queue,
+		context,
+		addItem,
+		push,
+		apply,
+		change,
+		linkOf
+	};
 }
 
 /** Lets detached capture work finish. */
@@ -376,14 +520,28 @@ describe('EverWorksInboxPushService — capture', () => {
 		const { item, ids } = addItem({}, [ADA.user, BOB.user]);
 		service.changed(change(item));
 		await settle();
-		expect(queued).toEqual([expect.objectContaining({ entityType: EverWorksLinkType.GAUZY_INBOX_ITEM, gauzyId: ids[ADA.user], changedFields: ['item'] })]);
+		expect(queued).toEqual([
+			expect.objectContaining({
+				entityType: EverWorksLinkType.GAUZY_INBOX_ITEM,
+				gauzyId: ids[ADA.user],
+				changedFields: ['item']
+			})
+		]);
 	});
 
 	it('never queues an Ever Works item (loop guard), the integration’s own notices, or what the sync itself writes', async () => {
 		const { addItem, service, change, queued } = setup();
-		const fromEverWorks = addItem({ source: InboxItemSourceEnum.EVER_WORKS, externalSource: 'ever_works', externalId: 'ew-1' });
+		const fromEverWorks = addItem({
+			source: InboxItemSourceEnum.EVER_WORKS,
+			externalSource: 'ever_works',
+			externalId: 'ew-1'
+		});
 		service.changed(change(fromEverWorks.item));
-		const notice = addItem({ kind: InboxItemKindEnum.NOTICE, source: InboxItemSourceEnum.SYSTEM, externalSource: 'ever_works_notice' });
+		const notice = addItem({
+			kind: InboxItemKindEnum.NOTICE,
+			source: InboxItemSourceEnum.SYSTEM,
+			externalSource: 'ever_works_notice'
+		});
 		service.changed(change(notice.item));
 		const plain = addItem();
 		EverWorksSyncContext.run({ connectionId: 'conn-1' }, () => service.changed(change(plain.item)));
@@ -395,34 +553,53 @@ describe('EverWorksInboxPushService — capture', () => {
 		const { addItem, service, change, queued } = setup();
 		const { item, ada } = addItem();
 		const recipient = [{ id: ada, userId: ADA.user }];
-		service.changed(change(item, { scope: 'recipient', type: 'updated', recipients: recipient, stated: ['isRead'] }));
-		service.changed(change(item, { scope: 'recipient', type: 'updated', recipients: recipient, stated: ['snoozedUntil'] }));
+		service.changed(
+			change(item, { scope: 'recipient', type: 'updated', recipients: recipient, stated: ['isRead'] })
+		);
+		service.changed(
+			change(item, { scope: 'recipient', type: 'updated', recipients: recipient, stated: ['snoozedUntil'] })
+		);
 		await settle();
 		expect(queued).toEqual([]);
-		service.changed(change(item, { scope: 'recipient', type: 'updated', recipients: recipient, stated: ['isArchived'] }));
+		service.changed(
+			change(item, { scope: 'recipient', type: 'updated', recipients: recipient, stated: ['isArchived'] })
+		);
 		await settle();
 		expect(queued).toHaveLength(1);
 	});
 
-	it.each([['ew_to_gauzy'], ['off']] as const)('queues nothing while the inbox direction is %s', async (direction) => {
-		const { addItem, service, change, queued } = setup({ directions: { inbox: direction } });
-		expect(await service.capture(change(addItem().item))).toBe(0);
-		expect(queued).toEqual([]);
-	});
+	it.each([['ew_to_gauzy'], ['off']] as const)(
+		'queues nothing while the inbox direction is %s',
+		async (direction) => {
+			const { addItem, service, change, queued } = setup({ directions: { inbox: direction } });
+			expect(await service.capture(change(addItem().item))).toBe(0);
+			expect(queued).toEqual([]);
+		}
+	);
 });
 
 describe('EverWorksInboxPushService — the guards of a push', () => {
 	it('never sends an Ever Works item back to Ever Works (loop guard)', async () => {
 		const { addItem, push, inboxWrite } = setup();
-		const { ada } = addItem({ source: InboxItemSourceEnum.EVER_WORKS, externalSource: 'ever_works', externalId: 'ew-7' });
-		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('Ever Works item') });
+		const { ada } = addItem({
+			source: InboxItemSourceEnum.EVER_WORKS,
+			externalSource: 'ever_works',
+			externalId: 'ew-7'
+		});
+		await expect(push(ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('Ever Works item')
+		});
 		expect(inboxWrite.created).toHaveLength(0);
 	});
 
 	it('sends nothing for a recipient who is not paired', async () => {
 		const { addItem, push, inboxWrite } = setup();
 		const { ids } = addItem({}, [BOB.user]);
-		await expect(push(ids[BOB.user])).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('not paired') });
+		await expect(push(ids[BOB.user])).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('not paired')
+		});
 		expect(inboxWrite.created).toHaveLength(0);
 	});
 
@@ -434,8 +611,17 @@ describe('EverWorksInboxPushService — the guards of a push', () => {
 		expect(view.kinds).toMatchObject({ email: false, question: true, notice: true });
 		mockCaller.userId = null;
 
-		const email = addItem({ kind: InboxItemKindEnum.EMAIL, source: InboxItemSourceEnum.EMAIL, externalSource: 'inbox_email', options: null, title: 'Invoice 1042' });
-		await expect(push(email.ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('email') });
+		const email = addItem({
+			kind: InboxItemKindEnum.EMAIL,
+			source: InboxItemSourceEnum.EMAIL,
+			externalSource: 'inbox_email',
+			options: null,
+			title: 'Invoice 1042'
+		});
+		await expect(push(email.ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('email')
+		});
 		expect(inboxWrite.created).toHaveLength(0);
 
 		const question = addItem();
@@ -457,7 +643,10 @@ describe('EverWorksInboxPushService — the guards of a push', () => {
 
 	it('sends nothing while the mapping’s InboxItem sync setting is off', async () => {
 		const { addItem, push, inboxWrite } = setup({ entitySync: { [IntegrationEntity.INBOX_ITEM]: false } });
-		await expect(push(addItem().ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('InboxItem') });
+		await expect(push(addItem().ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('InboxItem')
+		});
 		expect(inboxWrite.created).toHaveLength(0);
 	});
 
@@ -465,11 +654,26 @@ describe('EverWorksInboxPushService — the guards of a push', () => {
 		const { addItem, push, inboxWrite, tasks, links } = setup();
 		const hidden = randomUUID();
 		const platform = randomUUID();
-		tasks.push({ id: hidden, tenantId: TENANT, syncScope: TaskSyncScopeEnum.NONE }, { id: platform, tenantId: TENANT, syncScope: TaskSyncScopeEnum.EVER_PLATFORM });
-		links.push({ id: randomUUID(), integrationTenantId: MAPPING, entityType: EverWorksLinkType.TASK, gauzyId: platform, ewId: 'ew-task-9', state: 'ok' });
+		tasks.push(
+			{ id: hidden, tenantId: TENANT, syncScope: TaskSyncScopeEnum.NONE },
+			{ id: platform, tenantId: TENANT, syncScope: TaskSyncScopeEnum.EVER_PLATFORM }
+		);
+		links.push({
+			id: randomUUID(),
+			integrationTenantId: MAPPING,
+			entityType: EverWorksLinkType.TASK,
+			gauzyId: platform,
+			ewId: 'ew-task-9',
+			state: 'ok'
+		});
 
-		await expect(push(addItem({ taskId: hidden }).ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('sync scope') });
-		await expect(push(addItem({ entity: BaseEntityEnum.Task, entityId: hidden }).ada)).resolves.toMatchObject({ status: 'skipped' });
+		await expect(push(addItem({ taskId: hidden }).ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('sync scope')
+		});
+		await expect(push(addItem({ entity: BaseEntityEnum.Task, entityId: hidden }).ada)).resolves.toMatchObject({
+			status: 'skipped'
+		});
 		expect(inboxWrite.created).toHaveLength(0);
 
 		await expect(push(addItem({ taskId: platform }).ada)).resolves.toMatchObject({ status: 'pushed' });
@@ -478,7 +682,10 @@ describe('EverWorksInboxPushService — the guards of a push', () => {
 
 	it('leaves items for a process that hosts the Gauzy Inbox (or skips them where it is off)', async () => {
 		const { addItem, push } = setup({ inbox: false });
-		await expect(push(addItem().ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('GAUZY_INBOX_ENABLED') });
+		await expect(push(addItem().ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('GAUZY_INBOX_ENABLED')
+		});
 	});
 });
 
@@ -523,7 +730,10 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 			[`${item.id}:${ids[ADA.user]}`, ADA.ew],
 			[`${item.id}:${ids[CAROL.user]}`, CAROL.ew]
 		]);
-		expect(parseGauzyInboxExternalId(inboxWrite.created[1]['externalId'])).toEqual({ inboxItemId: item.id, recipientId: ids[CAROL.user] });
+		expect(parseGauzyInboxExternalId(inboxWrite.created[1]['externalId'])).toEqual({
+			inboxItemId: item.id,
+			recipientId: ids[CAROL.user]
+		});
 		expect(inboxWrite.filed()).toHaveLength(2);
 		expect(links.filter((l) => l['entityType'] === EverWorksLinkType.GAUZY_INBOX_ITEM)).toHaveLength(2);
 	});
@@ -544,7 +754,12 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 			kind: 'email',
 			title: 'Invoice #1042',
 			body: '\\# Not a heading  \n\\> not a quote  \n\\<b\\>not bold\\</b\\>',
-			email: { from: 'Ada <ada@example.com>', to: ['billing@inbox.example.test'], subject: 'Invoice #1042', receivedAt: '2026-10-29T08:00:00.000Z' }
+			email: {
+				from: 'Ada <ada@example.com>',
+				to: ['billing@inbox.example.test'],
+				subject: 'Invoice #1042',
+				receivedAt: '2026-10-29T08:00:00.000Z'
+			}
 		});
 		expect(inboxWrite.created[0]).not.toHaveProperty('choices');
 	});
@@ -561,12 +776,17 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 		expect(linkOf(ada)).toMatchObject({ ewVersion: 2 });
 
 		// Nothing changed since: nothing is sent (loop guard 2).
-		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('nothing changed') });
+		await expect(push(ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('nothing changed')
+		});
 		expect(inboxWrite.patched).toHaveLength(1);
 
 		// The person read it in Ever Works (version 3) before Gauzy's next edit went out.
 		await inboxWrite.read(ewId);
-		Object.assign(items.get(item.id as string) as IInboxItem, { body: 'The build is green; the changelog is ready.' });
+		Object.assign(items.get(item.id as string) as IInboxItem, {
+			body: 'The build is green; the changelog is ready.'
+		});
 		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
 		expect(inboxWrite.patched.slice(1).map((patch) => patch.ifMatch)).toEqual(['"2"', '"3"']);
 		expect(inboxWrite.patched[2].body).toEqual({ body: 'The build is green; the changelog is ready.' });
@@ -629,12 +849,18 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
 		expect(inboxWrite.patched.map((patch) => patch.ifMatch)).toEqual(['"1"', '"2"']);
 		expect(actions.reply).toHaveBeenCalledTimes(1);
-		expect(items.get(item.id as string)).toMatchObject({ status: InboxItemStatusEnum.ANSWERED, response: expect.objectContaining({ optionId: 'yes' }) });
+		expect(items.get(item.id as string)).toMatchObject({
+			status: InboxItemStatusEnum.ANSWERED,
+			response: expect.objectContaining({ optionId: 'yes' })
+		});
 		// The answer's own event is below the recorded version now: skipped, and never applied twice.
 		await expect(apply(answered)).resolves.toMatchObject({ status: 'skipped' });
 		expect(actions.reply).toHaveBeenCalledTimes(1);
 		// And nothing is sent back: Gauzy holds what Ever Works holds.
-		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('nothing changed') });
+		await expect(push(ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('nothing changed')
+		});
 	});
 
 	it('a replay that answers a copy the person archived since applies the archive to Gauzy and never reopens it', async () => {
@@ -655,10 +881,15 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 		const { addItem, push, inboxWrite, items, links } = setup();
 		const { item, ada } = addItem();
 		await push(ada);
-		const pairing = links.find((l) => l['entityType'] === EverWorksLinkType.MEMBER && l['gauzyId'] === ADA.employee) as Row;
+		const pairing = links.find(
+			(l) => l['entityType'] === EverWorksLinkType.MEMBER && l['gauzyId'] === ADA.employee
+		) as Row;
 		pairing['ewId'] = 'ew-user-ada-new';
 		Object.assign(items.get(item.id as string) as IInboxItem, { title: 'Renamed' });
-		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('another Ever Works member') });
+		await expect(push(ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('another Ever Works member')
+		});
 		expect(inboxWrite.patched).toHaveLength(0);
 	});
 
@@ -666,7 +897,10 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 		const { addItem, push, inboxWrite, recipients } = setup();
 		const { ada } = addItem();
 		(recipients.get(ada) as Row)['isArchived'] = true;
-		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('archived') });
+		await expect(push(ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('archived')
+		});
 		expect(inboxWrite.created).toHaveLength(0);
 	});
 });
@@ -683,26 +917,43 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 		expect(actions.reply).toHaveBeenCalledTimes(1);
 		expect(actions.reply).toHaveBeenCalledWith(item.id, { optionId: 'no', text: 'Wait for QA' });
 		expect(mockActingAs).toEqual([ADA.user]);
-		expect(items.get(item.id as string)).toMatchObject({ status: InboxItemStatusEnum.ANSWERED, response: expect.objectContaining({ optionId: 'no', answeredByUserId: ADA.user }) });
+		expect(items.get(item.id as string)).toMatchObject({
+			status: InboxItemStatusEnum.ANSWERED,
+			response: expect.objectContaining({ optionId: 'no', answeredByUserId: ADA.user })
+		});
 		expect(writer.upsertExternal).not.toHaveBeenCalled(); // never a second (Ever Works) item in the Gauzy Inbox
 
 		// The same event again (a webhook and the feed): at or below the link's version, skipped.
-		await expect(apply(answered)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('version') });
+		await expect(apply(answered)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('version')
+		});
 		// A later event of the item (the person reads it again): no second reply.
-		await expect(apply(await inboxWrite.read(ewId, false))).resolves.toMatchObject({ status: 'applied', message: 'unread' });
+		await expect(apply(await inboxWrite.read(ewId, false))).resolves.toMatchObject({
+			status: 'applied',
+			message: 'unread'
+		});
 		expect(actions.reply).toHaveBeenCalledTimes(1);
 
 		// Gauzy now holds the answer Ever Works holds: the next push sends nothing back.
-		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('nothing changed') });
+		await expect(push(ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('nothing changed')
+		});
 	});
 
 	it('an item answered in Gauzy first keeps Gauzy’s answer', async () => {
 		const { addItem, push, inboxWrite, apply, actions, items, linkOf } = setup();
 		const { item, ada } = addItem();
 		await push(ada);
-		Object.assign(items.get(item.id as string) as IInboxItem, { status: InboxItemStatusEnum.ANSWERED, response: { optionId: 'yes', answeredByUserId: ADA.user, answeredAt: new Date().toISOString() } });
+		Object.assign(items.get(item.id as string) as IInboxItem, {
+			status: InboxItemStatusEnum.ANSWERED,
+			response: { optionId: 'yes', answeredByUserId: ADA.user, answeredAt: new Date().toISOString() }
+		});
 		// Only the read state of the Ever Works answer comes over; Gauzy's answer stays.
-		await expect(apply(await inboxWrite.answer(linkOf(ada)?.['ewId'] as string, { choiceId: 'no' }))).resolves.toMatchObject({ status: 'applied', message: 'read' });
+		await expect(
+			apply(await inboxWrite.answer(linkOf(ada)?.['ewId'] as string, { choiceId: 'no' }))
+		).resolves.toMatchObject({ status: 'applied', message: 'read' });
 		expect(actions.reply).not.toHaveBeenCalled();
 		expect(items.get(item.id as string)?.response).toMatchObject({ optionId: 'yes' });
 	});
@@ -711,7 +962,10 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 		const { addItem, push, inboxWrite, apply, actions, recipients, linkOf } = setup();
 		const { item, ada } = addItem({ kind: InboxItemKindEnum.NOTICE, options: null });
 		await push(ada);
-		await expect(apply(await inboxWrite.archive(linkOf(ada)?.['ewId'] as string))).resolves.toMatchObject({ status: 'applied', message: 'archive' });
+		await expect(apply(await inboxWrite.archive(linkOf(ada)?.['ewId'] as string))).resolves.toMatchObject({
+			status: 'applied',
+			message: 'archive'
+		});
 		expect(actions.setState).toHaveBeenCalledWith(item.id, { isArchived: true });
 		expect(recipients.get(ada)).toMatchObject({ isArchived: true });
 		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped' });
@@ -723,7 +977,10 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 		const { ada } = addItem({ kind: InboxItemKindEnum.NOTICE, options: null });
 		await push(ada);
 		(recipients.get(ada) as Row)['isArchived'] = true; // archived in Gauzy; its push has not gone out yet
-		await expect(apply(await inboxWrite.read(linkOf(ada)?.['ewId'] as string))).resolves.toMatchObject({ status: 'applied', message: 'read' });
+		await expect(apply(await inboxWrite.read(linkOf(ada)?.['ewId'] as string))).resolves.toMatchObject({
+			status: 'applied',
+			message: 'read'
+		});
 		expect(actions.setState).toHaveBeenCalledTimes(1);
 		expect(recipients.get(ada)).toMatchObject({ isArchived: true, isRead: true });
 		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
@@ -733,7 +990,11 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 	it('an event of a copy whose link is not recorded yet waits for it (never becomes an Ever Works item in Gauzy)', async () => {
 		const { addItem, mock, apply, writer, inboxWrite } = setup();
 		const { item, ada } = addItem();
-		const orphan = mock.addInboxItem('ew-org-1', { recipientUserId: ADA.ew, externalId: `${item.id}:${ada}`, version: 2 });
+		const orphan = mock.addInboxItem('ew-org-1', {
+			recipientUserId: ADA.ew,
+			externalId: `${item.id}:${ada}`,
+			version: 2
+		});
 		void inboxWrite;
 		const envelope = await mock.emitInbox('inbox.item.updated', orphan);
 		await expect(apply(envelope)).resolves.toMatchObject({ status: 'deferred' });
@@ -756,7 +1017,11 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 describe('EverWorksInboxPushService — backfill', () => {
 	it('keeps a notice while mentions or assignments are sent, even with notices off (the push checks the exact kind)', async () => {
 		const { addItem, service, context, preferenceService } = setup();
-		const mention = addItem({ kind: InboxItemKindEnum.NOTICE, options: null, metadata: { notificationType: 'Mention' } });
+		const mention = addItem({
+			kind: InboxItemKindEnum.NOTICE,
+			options: null,
+			metadata: { notificationType: 'Mention' }
+		});
 		mockCaller.tenantId = TENANT;
 		mockCaller.userId = ADA.user;
 		await preferenceService.updateMine({ notice: false });
@@ -790,18 +1055,33 @@ describe('EverWorksInboxPreferencesService', () => {
 		const initial = await preferenceService.mine();
 		expect(initial).toMatchObject({
 			available: ['notice', 'question', 'approval', 'mention', 'assignment', 'email', 'other'],
-			kinds: { notice: true, question: true, approval: true, mention: true, assignment: true, email: true, other: true },
+			kinds: {
+				notice: true,
+				question: true,
+				approval: true,
+				mention: true,
+				assignment: true,
+				email: true,
+				other: true
+			},
 			updatedAt: null,
-			organizations: [{ organizationId: ORG, organizationName: 'Acme', paired: true, sending: true, reason: null }]
+			organizations: [
+				{ organizationId: ORG, organizationName: 'Acme', paired: true, sending: true, reason: null }
+			]
 		});
 		await preferenceService.updateMine({ email: false, other: false });
 		const updated = await preferenceService.updateMine({ other: true });
 		expect(updated.kinds).toMatchObject({ email: false, other: true, notice: true });
 
 		mockCaller.userId = BOB.user;
-		expect((await preferenceService.mine()).organizations).toEqual([expect.objectContaining({ paired: false, sending: false, reason: 'not_paired' })]);
+		expect((await preferenceService.mine()).organizations).toEqual([
+			expect.objectContaining({ paired: false, sending: false, reason: 'not_paired' })
+		]);
 		const summaries = await preferenceService.summaries(TENANT, [ADA.user, BOB.user]);
-		expect(summaries.get(ADA.user)).toMatchObject({ customized: true, kinds: expect.objectContaining({ email: false }) });
+		expect(summaries.get(ADA.user)).toMatchObject({
+			customized: true,
+			kinds: expect.objectContaining({ email: false })
+		});
 		expect(summaries.get(BOB.user)).toMatchObject({ customized: false });
 	});
 
@@ -809,7 +1089,10 @@ describe('EverWorksInboxPreferencesService', () => {
 		const { preferenceService } = setup();
 		mockCaller.tenantId = TENANT;
 		mockCaller.userId = ADA.user;
-		await Promise.all([preferenceService.updateMine({ email: false }), preferenceService.updateMine({ notice: false })]);
+		await Promise.all([
+			preferenceService.updateMine({ email: false }),
+			preferenceService.updateMine({ notice: false })
+		]);
 		expect((await preferenceService.mine()).kinds).toMatchObject({ email: false, notice: false, question: true });
 	});
 
@@ -817,7 +1100,11 @@ describe('EverWorksInboxPreferencesService', () => {
 		const { preferenceService } = setup({ directions: { inbox: 'ew_to_gauzy' } });
 		mockCaller.tenantId = TENANT;
 		mockCaller.userId = ADA.user;
-		expect((await preferenceService.mine()).organizations[0]).toMatchObject({ paired: true, sending: false, reason: 'direction' });
+		expect((await preferenceService.mine()).organizations[0]).toMatchObject({
+			paired: true,
+			sending: false,
+			reason: 'direction'
+		});
 	});
 });
 

@@ -132,10 +132,13 @@ export function stateOf(
 /** The answer of an answered item, as the copy's resolution (the chosen option, the text). */
 export function resolutionOf(item: Pick<IInboxItem, 'status' | 'response'>): GauzyInboxShared['resolution'] {
 	const response = item.response;
-	if (!response || (item.status !== InboxItemStatusEnum.ANSWERED && item.status !== InboxItemStatusEnum.RESOLVED)) return null;
+	if (!response || (item.status !== InboxItemStatusEnum.ANSWERED && item.status !== InboxItemStatusEnum.RESOLVED))
+		return null;
 	const resolution: { choiceId?: string; text?: string } = {};
-	if (typeof response.optionId === 'string' && response.optionId) resolution.choiceId = response.optionId.slice(0, CHOICE_ID_MAX);
-	if (typeof response.text === 'string' && response.text.trim()) resolution.text = cut(response.text.trim(), EVER_WORKS_INBOX_REPLY_MAX);
+	if (typeof response.optionId === 'string' && response.optionId)
+		resolution.choiceId = response.optionId.slice(0, CHOICE_ID_MAX);
+	if (typeof response.text === 'string' && response.text.trim())
+		resolution.text = cut(response.text.trim(), EVER_WORKS_INBOX_REPLY_MAX);
 	return Object.keys(resolution).length ? resolution : null;
 }
 
@@ -173,10 +176,12 @@ export function patchOf(now: GauzyInboxShared, before: Partial<GauzyInboxShared>
 	if (!sameChoices(now.choices, before.choices ?? null) && (now.choices?.length || before.choices?.length)) {
 		patch.choices = now.choices ?? [];
 	}
-	const resolutionMoved = now.state === 'resolved' && !!now.resolution && !sameResolution(now.resolution, before.resolution ?? null);
+	const resolutionMoved =
+		now.state === 'resolved' && !!now.resolution && !sameResolution(now.resolution, before.resolution ?? null);
 	// A resolution always goes with the state it belongs to (a corrected answer of a resolved item states it again).
 	if (before.state !== now.state || resolutionMoved) patch.state = now.state;
-	if (now.state === 'resolved' && now.resolution && (before.state !== now.state || resolutionMoved)) patch.resolution = now.resolution;
+	if (now.state === 'resolved' && now.resolution && (before.state !== now.state || resolutionMoved))
+		patch.resolution = now.resolution;
 	return Object.keys(patch).length ? patch : null;
 }
 
@@ -212,7 +217,12 @@ export function filedAsShared(item: Partial<EverWorksFiledInboxItem>, sent: Gauz
 		body: typeof item.body === 'string' ? item.body : sent.body,
 		choices: choices && choices.length ? choices : sent.choices,
 		state: filedStateOf(item) ?? 'open',
-		resolution: answer ? { ...(answer.optionId ? { choiceId: answer.optionId } : {}), ...(answer.text ? { text: answer.text } : {}) } : null
+		resolution: answer
+			? {
+					...(answer.optionId ? { choiceId: answer.optionId } : {}),
+					...(answer.text ? { text: answer.text } : {})
+				}
+			: null
 	};
 }
 
@@ -235,5 +245,9 @@ export function goalOfItem(item: Pick<IInboxItem, 'entity' | 'entityId'>): strin
 
 /** Whether a kind of Gauzy item takes a reply (a decision the Ever Works user can make). */
 export function takesDecision(kind: InboxItemKindEnum | string): boolean {
-	return kind === InboxItemKindEnum.QUESTION || kind === InboxItemKindEnum.APPROVAL || kind === InboxItemKindEnum.ESCALATION;
+	return (
+		kind === InboxItemKindEnum.QUESTION ||
+		kind === InboxItemKindEnum.APPROVAL ||
+		kind === InboxItemKindEnum.ESCALATION
+	);
 }

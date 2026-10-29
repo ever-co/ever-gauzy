@@ -135,12 +135,18 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 
 		// A copy of a Gauzy Inbox item this plugin filed in Ever Works: what the Ever Works user did there goes back to
 		// the Gauzy item (never a second, Ever Works item in the Gauzy Inbox).
-		const copy = this.push ? await this.push.copyOf(context, envelope.aggregate.id, (envelope.data ?? {}) as Record<string, unknown>) : null;
+		const copy = this.push
+			? await this.push.copyOf(context, envelope.aggregate.id, (envelope.data ?? {}) as Record<string, unknown>)
+			: null;
 		if (copy === 'pending') {
 			return { status: 'deferred', message: 'a copy of a Gauzy Inbox item whose push is still being recorded' };
 		}
 		if (copy) return (this.push as EverWorksInboxPushService).applyFromEverWorks(context, copy, envelope);
-		if (!fromEverWorks(context.directions.inbox)) return { status: 'skipped', message: 'Ever Works inbox items are not brought into Gauzy (inbox direction)' };
+		if (!fromEverWorks(context.directions.inbox))
+			return {
+				status: 'skipped',
+				message: 'Ever Works inbox items are not brought into Gauzy (inbox direction)'
+			};
 
 		const item = { ...((envelope.data ?? {}) as unknown as EverWorksInboxItem), id: envelope.aggregate.id };
 		if (!item.recipientUserId) return { status: 'skipped', message: 'the inbox item names no recipient' };

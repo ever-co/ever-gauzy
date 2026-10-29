@@ -1027,14 +1027,20 @@ describe('Inbox on SQLite', () => {
 				scope: 'item',
 				type: 'created'
 			});
-			expect(changes[0].recipients).toEqual(expect.arrayContaining(rows.map((row) => ({ id: row.id, userId: row.userId }))));
+			expect(changes[0].recipients).toEqual(
+				expect.arrayContaining(rows.map((row) => ({ id: row.id, userId: row.userId })))
+			);
 
 			await service.reply(item.id as never, { optionId: 'yes' });
 			expect(changes[1]).toMatchObject({ scope: 'item', type: 'answered', actorUserId: ADA });
 
 			await service.setState(item.id as never, { isArchived: true });
 			const ada = rows.find((row) => row.userId === ADA) as { id: string };
-			expect(changes[2]).toMatchObject({ scope: 'recipient', recipients: [{ id: ada.id, userId: ADA }], stated: ['isArchived'] });
+			expect(changes[2]).toMatchObject({
+				scope: 'recipient',
+				recipients: [{ id: ada.id, userId: ADA }],
+				stated: ['isArchived']
+			});
 
 			await service.upsertExternal({
 				tenantId: TENANT,
@@ -1086,7 +1092,9 @@ describe('Inbox on SQLite', () => {
 				recipients: [{ userId: ADA }]
 			};
 			await service.upsertExternal(input);
-			const [adaRow] = await dataSource.query(`SELECT "id" FROM "inbox_item_recipient" WHERE "userId" = ?`, [ADA]);
+			const [adaRow] = await dataSource.query(`SELECT "id" FROM "inbox_item_recipient" WHERE "userId" = ?`, [
+				ADA
+			]);
 			await service.upsertExternal({ ...input, recipients: [{ userId: BOB }], replaceRecipients: true });
 			expect(changes[1]).toMatchObject({
 				type: 'updated',

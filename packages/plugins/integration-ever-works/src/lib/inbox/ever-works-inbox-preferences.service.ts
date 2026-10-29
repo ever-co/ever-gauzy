@@ -19,11 +19,7 @@ import {
 
 /** Why a person's items of an organization are not sent to Ever Works (`null` while they are). */
 export type EverWorksInboxSendReason =
-	| 'mapping_disabled'
-	| 'connection_inactive'
-	| 'sync_setting_off'
-	| 'direction'
-	| 'not_paired';
+	'mapping_disabled' | 'connection_inactive' | 'sync_setting_off' | 'direction' | 'not_paired';
 
 /** `GET /me/inbox-preferences`: what the signed-in person sends to Ever Works, and where it goes. */
 export interface EverWorksInboxPreferencesView {
@@ -150,7 +146,13 @@ export class EverWorksInboxPreferencesService {
 				continue;
 			}
 			try {
-				await this.repository().insert({ id: randomUUID(), tenantId, organizationId: null, userId, excludedKinds } as never);
+				await this.repository().insert({
+					id: randomUUID(),
+					tenantId,
+					organizationId: null,
+					userId,
+					excludedKinds
+				} as never);
 				break;
 			} catch {
 				// Another save inserted the row meanwhile: the next attempt merges into it.
@@ -181,7 +183,11 @@ export class EverWorksInboxPreferencesService {
 			if (!employee.organizationId) continue;
 			const context = await this.contexts.forOrganization(tenantId, employee.organizationId as ID);
 			if (!context) continue;
-			const link = await this.links.byGauzy(context.integrationTenantId, EverWorksLinkType.MEMBER, employee.id as ID);
+			const link = await this.links.byGauzy(
+				context.integrationTenantId,
+				EverWorksLinkType.MEMBER,
+				employee.id as ID
+			);
 			const paired = !!link && link.state !== EverWorksLinkState.UNLINKED;
 			const reason = sendReason(context, paired);
 			const organization = await this.dataSource.getRepository(Organization).findOne({

@@ -105,7 +105,9 @@ export class InboxItemFeed implements IInboxItemFeed {
 				actorUserId: currentUserId()
 			});
 		} catch (error) {
-			this.logger.warn(`Inbox item ${item.id}: its observers were not told (${(error as Error)?.message ?? error}).`);
+			this.logger.warn(
+				`Inbox item ${item.id}: its observers were not told (${(error as Error)?.message ?? error}).`
+			);
 		}
 	}
 
@@ -159,7 +161,8 @@ export class InboxItemFeed implements IInboxItemFeed {
 				);
 			try {
 				const result = observer.changed(change);
-				if (result && typeof (result as Promise<void>).then === 'function') (result as Promise<void>).catch(failed);
+				if (result && typeof (result as Promise<void>).then === 'function')
+					(result as Promise<void>).catch(failed);
 			} catch (error) {
 				failed(error);
 			}

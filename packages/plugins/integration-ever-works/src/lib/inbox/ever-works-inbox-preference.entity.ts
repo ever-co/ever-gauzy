@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ID } from '@gauzy/contracts';
-import { ColumnIndex, MikroOrmBaseEntityRepository, MultiORMColumn, MultiORMEntity, TenantOrganizationBaseEntity } from '@gauzy/core';
+import {
+	ColumnIndex,
+	MikroOrmBaseEntityRepository,
+	MultiORMColumn,
+	MultiORMEntity,
+	TenantOrganizationBaseEntity
+} from '@gauzy/core';
 
 /**
  * One person's choice of what of their Gauzy Inbox goes to Ever Works (owner decision 2026-10-29): per user and

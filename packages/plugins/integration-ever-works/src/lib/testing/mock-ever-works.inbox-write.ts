@@ -77,7 +77,9 @@ export class MockEverWorksInboxWrite {
 		return { ...rest };
 	}
 
-	private readonly route: MockEverWorksExtension = (context: MockEverWorksRouteContext): EverWorksHttpResponse | null => {
+	private readonly route: MockEverWorksExtension = (
+		context: MockEverWorksRouteContext
+	): EverWorksHttpResponse | null => {
 		if (context.path === '/inbox/items' && context.method === 'POST') return this.create(context);
 		const match = /^\/inbox\/items\/([^/]+)$/.exec(context.path);
 		if (match && context.method === 'PATCH') return this.patch(context, decodeURIComponent(match[1]));
@@ -132,7 +134,9 @@ export class MockEverWorksInboxWrite {
 			filedByKeyId: context.key.keyId
 		};
 		this.mock.inboxItems.set(item['id'] as string, item);
-		void this.mock.emitInbox('inbox.item.created', this.dto(item), { tag: context.headers['x-sync-origin'] ?? null });
+		void this.mock.emitInbox('inbox.item.created', this.dto(item), {
+			tag: context.headers['x-sync-origin'] ?? null
+		});
 		return context.ok(this.dto(item), 201);
 	}
 
@@ -175,7 +179,9 @@ export class MockEverWorksInboxWrite {
 			}
 		}
 		Object.assign(item, { version: Number(item['version']) + 1, updatedAt: new Date().toISOString() });
-		void this.mock.emitInbox('inbox.item.updated', this.dto(item), { tag: context.headers['x-sync-origin'] ?? null });
+		void this.mock.emitInbox('inbox.item.updated', this.dto(item), {
+			tag: context.headers['x-sync-origin'] ?? null
+		});
 		return context.ok(this.dto(item));
 	}
 
@@ -184,7 +190,9 @@ export class MockEverWorksInboxWrite {
 		const text = (field: string, max: number, required: boolean) => {
 			const value = body[field];
 			if (value === undefined) return required ? `${field} is required.` : null;
-			return typeof value === 'string' && value.length <= max ? null : `${field} must be a string of at most ${max}.`;
+			return typeof value === 'string' && value.length <= max
+				? null
+				: `${field} must be a string of at most ${max}.`;
 		};
 		const errors = create
 			? [
@@ -194,15 +202,20 @@ export class MockEverWorksInboxWrite {
 					text('title', 300, true),
 					text('body', 20_000, true),
 					body['email'] !== undefined && body['kind'] !== 'email' ? 'email is only for kind email.' : null,
-					body['choices'] !== undefined && !['question', 'approval'].includes(String(body['kind'])) ? 'choices are only for questions and approvals.' : null
+					body['choices'] !== undefined && !['question', 'approval'].includes(String(body['kind']))
+						? 'choices are only for questions and approvals.'
+						: null
 				]
 			: [
 					text('title', 300, false),
 					text('body', 20_000, false),
-					body['state'] !== undefined && !STATES.includes(String(body['state'])) ? 'state is not one of open, resolved, archived.' : null
+					body['state'] !== undefined && !STATES.includes(String(body['state']))
+						? 'state is not one of open, resolved, archived.'
+						: null
 				];
 		const choices = body['choices'];
-		if (choices !== undefined && (!Array.isArray(choices) || choices.length > 10)) errors.push('choices are at most 10.');
+		if (choices !== undefined && (!Array.isArray(choices) || choices.length > 10))
+			errors.push('choices are at most 10.');
 		return errors.find((error) => error !== null) ?? null;
 	}
 }

@@ -29,14 +29,13 @@ describe('ever_works_inbox_preference migration', () => {
 
 	const query = (sql: string, parameters?: unknown[]) => dataSource.query(sql, parameters);
 	const hasTable = async () =>
-		(await query(`SELECT 1 FROM "sqlite_master" WHERE "type" = 'table' AND "name" = 'ever_works_inbox_preference'`)).length > 0;
+		(await query(`SELECT 1 FROM "sqlite_master" WHERE "type" = 'table' AND "name" = 'ever_works_inbox_preference'`))
+			.length > 0;
 	const insert = (tenant: string, user: string) =>
-		query(`INSERT INTO "ever_works_inbox_preference" ("id", "tenantId", "userId", "excludedKinds") VALUES (?, ?, ?, ?)`, [
-			randomUUID(),
-			tenant,
-			user,
-			'["email"]'
-		]);
+		query(
+			`INSERT INTO "ever_works_inbox_preference" ("id", "tenantId", "userId", "excludedKinds") VALUES (?, ?, ?, ?)`,
+			[randomUUID(), tenant, user, '["email"]']
+		);
 
 	beforeAll(async () => {
 		dir = mkdtempSync(join(tmpdir(), 'ever-works-inbox-preference-'));
@@ -45,7 +44,11 @@ describe('ever_works_inbox_preference migration', () => {
 	afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
 	beforeEach(async () => {
-		dataSource = new DataSource({ type: 'better-sqlite3', database: join(dir, `${randomUUID()}.sqlite3`), logging: false });
+		dataSource = new DataSource({
+			type: 'better-sqlite3',
+			database: join(dir, `${randomUUID()}.sqlite3`),
+			logging: false
+		});
 		await dataSource.initialize();
 		await query(`CREATE TABLE "tenant" ("id" varchar PRIMARY KEY NOT NULL)`);
 		await query(`CREATE TABLE "organization" ("id" varchar PRIMARY KEY NOT NULL, "tenantId" varchar)`);
@@ -57,7 +60,9 @@ describe('ever_works_inbox_preference migration', () => {
 	});
 
 	it('is the last of the plugin migrations (only registered where the plugin is on)', () => {
-		expect(EVER_WORKS_MIGRATIONS[EVER_WORKS_MIGRATIONS.length - 1]).toBe(CreateEverWorksInboxPreference1791000003510);
+		expect(EVER_WORKS_MIGRATIONS[EVER_WORKS_MIGRATIONS.length - 1]).toBe(
+			CreateEverWorksInboxPreference1791000003510
+		);
 	});
 
 	it('creates the table once (a second run issues no failing DDL), keeps one row per person and tenant, and cascades with the tenant', async () => {
@@ -66,10 +71,15 @@ describe('ever_works_inbox_preference migration', () => {
 			await new CreateEverWorksInboxPreference1791000003510().up(runner);
 			await new CreateEverWorksInboxPreference1791000003510().up(runner);
 			expect(await hasTable()).toBe(true);
-			const columns = ((await query(`PRAGMA table_info("ever_works_inbox_preference")`)) as Array<{ name: string; notnull: number }>).map(
-				(column) => `${column.name}:${column.notnull}`
+			const columns = (
+				(await query(`PRAGMA table_info("ever_works_inbox_preference")`)) as Array<{
+					name: string;
+					notnull: number;
+				}>
+			).map((column) => `${column.name}:${column.notnull}`);
+			expect(columns).toEqual(
+				expect.arrayContaining(['userId:1', 'excludedKinds:0', 'tenantId:0', 'organizationId:0'])
 			);
-			expect(columns).toEqual(expect.arrayContaining(['userId:1', 'excludedKinds:0', 'tenantId:0', 'organizationId:0']));
 
 			await insert(tenantId, userId);
 			await expect(insert(tenantId, userId)).rejects.toThrow(/UNIQUE/);

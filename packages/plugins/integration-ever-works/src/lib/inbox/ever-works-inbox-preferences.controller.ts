@@ -5,7 +5,10 @@ import { IsBoolean, IsObject, ValidateIf, ValidateNested } from 'class-validator
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions, TenantPermissionGuard, UseValidationPipe } from '@gauzy/core';
 import { EVER_WORKS_ROUTE_PREFIX } from '../ever-works.constants';
-import { EverWorksInboxPreferencesService, EverWorksInboxPreferencesView } from './ever-works-inbox-preferences.service';
+import {
+	EverWorksInboxPreferencesService,
+	EverWorksInboxPreferencesView
+} from './ever-works-inbox-preferences.service';
 
 /** One flag per Ever Works inbox kind (`true`: sent to Ever Works); a kind left out keeps its value. */
 export class EverWorksInboxKindsDto {
@@ -77,7 +80,9 @@ export class EverWorksInboxPreferencesController {
 	@Permissions(PermissionsEnum.INBOX_VIEW)
 	@Header('Cache-Control', 'no-store')
 	@UseValidationPipe({ whitelist: true, forbidNonWhitelisted: true })
-	@ApiOperation({ summary: 'Choose which kinds of my Gauzy Inbox items go to Ever Works (every kind is on by default).' })
+	@ApiOperation({
+		summary: 'Choose which kinds of my Gauzy Inbox items go to Ever Works (every kind is on by default).'
+	})
 	update(@Body() dto: EverWorksInboxPreferencesDto): Promise<EverWorksInboxPreferencesView> {
 		return this.preferences.updateMine({ ...dto.kinds });
 	}
