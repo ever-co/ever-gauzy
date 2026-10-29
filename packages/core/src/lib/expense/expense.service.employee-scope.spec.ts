@@ -169,6 +169,11 @@ describe('ExpenseService — the employees a caller reads the expenses of', () =
 			[NO_ACCESSIBLE_EMPLOYEE_ID],
 			[NO_ACCESSIBLE_EMPLOYEE_ID]
 		]);
+		expect(onlyMe.mikroOrm).toEqual([
+			{ $in: [NO_ACCESSIBLE_EMPLOYEE_ID] },
+			{ $in: [NO_ACCESSIBLE_EMPLOYEE_ID] },
+			{ $in: [NO_ACCESSIBLE_EMPLOYEE_ID] }
+		]);
 	});
 
 	it('reads only their own expenses for an employee who may not pick employees', async () => {
@@ -192,6 +197,11 @@ describe('ExpenseService — the employees a caller reads the expenses of', () =
 		const named = await readsAs(ORGANIZATION_VIEWER, { ...REQUEST, employeeIds: [COLLEAGUE_EMPLOYEE_ID] });
 
 		expect(named.typeOrm).toEqual([[COLLEAGUE_EMPLOYEE_ID], [COLLEAGUE_EMPLOYEE_ID], [COLLEAGUE_EMPLOYEE_ID]]);
+		expect(named.mikroOrm).toEqual([
+			{ $in: [COLLEAGUE_EMPLOYEE_ID] },
+			{ $in: [COLLEAGUE_EMPLOYEE_ID] },
+			{ $in: [COLLEAGUE_EMPLOYEE_ID] }
+		]);
 	});
 
 	it('reads the employees a CHANGE_SELECTED_EMPLOYEE holder picks, and everyone when they pick none', async () => {
