@@ -24,6 +24,8 @@ export class ProjectCreateMutationComponent extends TranslationBaseComponent imp
 
 	public loading: boolean;
 	public organization: IOrganization = this._store.selectedOrganization;
+	/** The project a first save created, kept while its files still have to be attached. */
+	private _createdProject: IOrganizationProject | null = null;
 
 	/** Entity type the record-side Documents panel attaches its links to. */
 	public readonly documentEntity = BaseEntityEnum.OrganizationProject;
@@ -53,20 +55,26 @@ export class ProjectCreateMutationComponent extends TranslationBaseComponent imp
 		try {
 			this.loading = true;
 
-			const { id: organizationId, tenantId } = this.organization;
-			const input: IOrganizationProjectCreateInput = {
-				...value,
-				organizationId,
-				tenantId
-			};
-			const project: IOrganizationProject = await this._organizationProjectsService.create(input);
+			// A save whose files did not all attach left the project created: saving again only retries the files.
+			if (!this._createdProject) {
+				const { id: organizationId, tenantId } = this.organization;
+				const input: IOrganizationProjectCreateInput = {
+					...value,
+					organizationId,
+					tenantId
+				};
+				this._createdProject = await this._organizationProjectsService.create(input);
 
-			this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', {
-				name: project.name
-			});
+				this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', {
+					name: this._createdProject.name
+				});
+			}
+			const project = this._createdProject;
 
-			// The project exists now: attach the files picked while it was being filled in.
-			await this._documentsPanel?.attachPending(project.id, project.name);
+			// The project exists now: attach the files picked while it was being filled in. A file that
+			// failed stays listed in the panel, which has already said why, and the page stays for a retry.
+			const attached = this._documentsPanel ? await this._documentsPanel.attachPending(project.id, project.name) : true;
+			if (!attached) return;
 
 			this.navigateToProjects();
 		} catch (error) {
