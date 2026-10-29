@@ -55,11 +55,18 @@ export class WakatimeService {
 	) {}
 
 	/**
+	 * Today's coding time of the caller, as WakaTime clients ask for it (`GET /summaries`).
+	 *
+	 * Only the caller's own heartbeats are counted: the sum used to run over every heartbeat in the table, so every
+	 * caller was shown the total of everyone's coding time (heartbeats are filed per employee since owner decision 2,
+	 * 2026-10-22, see {@link parameterSanitize}).
 	 *
 	 * @param params
 	 * @returns
+	 * @throws ForbiddenException when the caller has no employee record.
 	 */
 	async getSummaries(params: any): Promise<any> {
+		const employeeId = this.callerEmployeeId();
 		let result: any[];
 
 		switch (ormType) {
@@ -72,25 +79,29 @@ export class WakatimeService {
 					FROM (
 						SELECT COUNT(*) AS seconds
 						FROM heartbeats
-						WHERE DATE(time, 'unixepoch') = date('now')
+						WHERE "employeeId" = ? AND DATE(time, 'unixepoch') = date('now')
 						GROUP BY entities
 					) t;
-				`
+				`,
+						[employeeId]
 					)
 					.then((res: any) => (Array.isArray(res) ? res : res.rows || [res]));
 				break;
 			}
 			case MultiORMEnum.TypeORM:
 			default:
-				result = await this.typeOrmWakatimeRepository.query(`
+				result = await this.typeOrmWakatimeRepository.query(
+					`
 					SELECT SUM(seconds) AS seconds
 					FROM (
 						SELECT COUNT(*) AS seconds
 						FROM heartbeats
-						WHERE DATE(time, 'unixepoch') = date('now')
+						WHERE "employeeId" = ? AND DATE(time, 'unixepoch') = date('now')
 						GROUP BY entities
 					) t;
-				`);
+				`,
+					[employeeId]
+				);
 				break;
 		}
 
