@@ -34,12 +34,36 @@ export const WORKING_MEMBERS_COUNT_SUBQUERY = `
 `;
 
 /**
+ * The employee's projects, locked in id order (Postgres and MySQL).
+ *
+ * Two members of one project whose work ends at the same instant are recounted by two transactions. Under READ
+ * COMMITTED the second `UPDATE … SET "membersCount" = (subquery)` waits for the first transaction's lock on the
+ * project row, then re-checks the row but evaluates the subquery on the snapshot it took before the first one
+ * committed, so it still counts the first member: the count ends one too high. Taking the row locks in a statement
+ * of their own first means the `UPDATE` that follows starts after the other transaction committed, and sees it. The
+ * id order keeps two employees who share several projects from locking them in opposite orders (a deadlock).
+ */
+const LOCK_EMPLOYEE_PROJECTS = `
+	SELECT "organization_project"."id" FROM "organization_project"
+	WHERE "organization_project"."id" IN (
+		SELECT "organizationProjectId" FROM "organization_project_employee"
+		WHERE "organization_project_employee"."employeeId" = $1
+	)
+	ORDER BY "organization_project"."id"
+	FOR UPDATE
+`;
+
+/**
  * Recounts `membersCount` of every project the employee is a member of.
  *
  * Called when the employee's working status changes (End Work, Back to Work, a new start date, an edit of
  * `isActive` / `isArchived`, a soft delete or its recovery): the count of each of their projects includes them or
  * not from then on, without waiting for the project to be saved. The
  * projects are the ones the employee's own membership rows name, so the statement never reaches another tenant.
+ *
+ * On Postgres and MySQL the projects are locked first ({@link LOCK_EMPLOYEE_PROJECTS}) and the locks last until the
+ * transaction ends: the write's own when there is one, otherwise one opened for the recount. SQLite has a single
+ * writer, so recounts never interleave there, and no `FOR UPDATE`.
  *
  * @param em - The entity manager of the write, so the recount reads the employee row it has just updated.
  * @param employeeId - The employee whose projects are recounted.
@@ -64,13 +88,35 @@ export async function recountMembersOfEmployeeProjects(
 		`),
 		dbType
 	);
+	const lock =
+		dbType === DatabaseTypeEnum.postgres || dbType === DatabaseTypeEnum.mysql
+			? replacePlaceholders(p(LOCK_EMPLOYEE_PROJECTS), dbType)
+			: null;
 
 	const ormType = getORMType();
 	if (ormType === MultiORMEnum.TypeORM && em instanceof TypeOrmEntityManager) {
-		await em.query(query, [employeeId]);
+		const recount = async (manager: TypeOrmEntityManager) => {
+			if (lock) await manager.query(lock, [employeeId]);
+			await manager.query(query, [employeeId]);
+		};
+		if (lock && !em.queryRunner?.isTransactionActive) {
+			await em.transaction(recount);
+		} else {
+			await recount(em);
+		}
 	} else if (ormType === MultiORMEnum.MikroORM && em instanceof MikroOrmEntityManager) {
 		// In the write's transaction, if there is one: on its own connection the recount would read the employee
 		// row as it was before the write, or wait for the transaction that is waiting for this hook.
-		await em.getConnection().execute(query.replace(/\$\d/g, '?'), [employeeId], 'run', em.getTransactionContext());
+		const recount = async (manager: MikroOrmEntityManager) => {
+			const connection = manager.getConnection();
+			const context = manager.getTransactionContext();
+			if (lock) await connection.execute(lock.replace(/\$\d/g, '?'), [employeeId], 'all', context);
+			await connection.execute(query.replace(/\$\d/g, '?'), [employeeId], 'run', context);
+		};
+		if (lock && !em.getTransactionContext()) {
+			await em.transactional(recount);
+		} else {
+			await recount(em);
+		}
 	}
 }
