@@ -1,5 +1,5 @@
-import { Jimp, loadFont } from 'jimp';
-import { SANS_8_WHITE, SANS_16_WHITE, SANS_32_WHITE, SANS_64_WHITE, SANS_128_WHITE } from 'jimp/fonts';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as sharpModule from 'sharp';
 import { PlaceholderImage } from './placeholder-image-url';
 
@@ -8,117 +8,217 @@ import { PlaceholderImage } from './placeholder-image-url';
 const sharp = ((sharpModule as unknown as { default?: typeof sharpModule.default }).default ??
 	sharpModule) as unknown as typeof sharpModule.default;
 
-type BitmapFont = Awaited<ReturnType<typeof loadFont>>;
-
 /**
- * The fonts the text is drawn in, largest first: the Open Sans bitmap fonts Jimp ships (white, ASCII and Latin-1).
+ * The font the text is drawn in: the 128-pixel white Open Sans bitmap font (BMFont: a `.fnt` file describing glyphs
+ * on a PNG page) that Jimp ships, ASCII and Latin-1. A character it lacks (Cyrillic, CJK, ...) is left out.
  *
- * Bitmap fonts, not system ones: the API's production image (Alpine) has no fonts installed, so an SVG rasterized by
- * sharp would draw no text at all. A character these fonts lack (Cyrillic, CJK, ...) is left out of the image.
+ * A bitmap font, not a system one: the API's production image (Alpine) has no fonts installed, so text in an SVG
+ * rasterized by sharp would not be drawn at all. And not through Jimp's own `loadFont`, which cuts every glyph out of
+ * the page in JavaScript: about 8 seconds of the API's event loop for this font.
+ *
+ * `jimp/fonts` exists only in the package's `exports` map, which the workspace's `moduleResolution: node` does not
+ * read: Node resolves it at runtime, TypeScript is told its shape.
  */
-const FONTS: ReadonlyArray<{ size: number; file: string }> = [
-	{ size: 128, file: SANS_128_WHITE },
-	{ size: 64, file: SANS_64_WHITE },
-	{ size: 32, file: SANS_32_WHITE },
-	{ size: 16, file: SANS_16_WHITE },
-	{ size: 8, file: SANS_8_WHITE }
-];
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const FONT_FILE = (require('jimp/fonts') as { SANS_128_WHITE: string }).SANS_128_WHITE;
 
 /** How many drawn images are kept in memory (a 330x300 placeholder is about 3 KB). */
 const MAX_CACHED_IMAGES = 256;
 
-/** Each font is read once per process (the 128-pixel one is a 4096x431 PNG). */
-const loadedFonts = new Map<string, Promise<BitmapFont>>();
+/** At most this share of the image's shorter side is text height, and this share of its width text width. */
+const TEXT_HEIGHT_SHARE = 0.4;
+const TEXT_WIDTH_SHARE = 0.8;
+
+/** A glyph of the font: where it is on the page, and how it is placed on a line. */
+interface Glyph {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+	xoffset: number;
+	yoffset: number;
+	xadvance: number;
+}
+
+/** The font, read: its glyphs, its kerning pairs and its page decoded to RGBA. */
+interface BitmapFont {
+	glyphs: Map<string, Glyph>;
+	/** The kerning between two characters, keyed by the two characters. */
+	kernings: Map<string, number>;
+	page: { data: Buffer; width: number };
+}
+
+/** An RGBA bitmap. */
+interface Bitmap {
+	data: Buffer;
+	width: number;
+	height: number;
+}
+
+let font: Promise<BitmapFont> | undefined;
 
 /** The drawn images, least recently used first. */
 const drawnImages = new Map<string, Promise<Buffer>>();
 
 /**
- * A font, read on first use.
+ * The attributes of a BMFont XML tag.
  *
- * @param file - The font's `.fnt` file.
+ * @param tag - The tag, e.g. `<char id="65" x="2" ... />`.
  */
-function getFont(file: string): Promise<BitmapFont> {
-	let font = loadedFonts.get(file);
+function attributesOf(tag: string): Record<string, string> {
+	return Object.fromEntries(Array.from(tag.matchAll(/(\w+)="([^"]*)"/g), ([, name, value]) => [name, value]));
+}
+
+/**
+ * Reads the font: its description, and its page decoded by sharp (on libvips' thread pool).
+ *
+ * @param file - The font's `.fnt` file (BMFont, XML format, one page).
+ */
+async function readBitmapFont(file: string): Promise<BitmapFont> {
+	const description = await fs.promises.readFile(file, 'utf8');
+	const pageFile = attributesOf(/<page\b[^>]*>/.exec(description)?.[0] ?? '').file;
+	if (!pageFile) {
+		throw new Error(`The bitmap font ${file} names no page.`);
+	}
+
+	const glyphs = new Map<string, Glyph>();
+	for (const [tag] of description.matchAll(/<char\b[^>]*>/g)) {
+		const { id, page, ...metrics } = attributesOf(tag);
+		if (Number(page ?? 0) !== 0) {
+			continue;
+		}
+		glyphs.set(String.fromCodePoint(Number(id)), {
+			x: Number(metrics.x),
+			y: Number(metrics.y),
+			width: Number(metrics.width),
+			height: Number(metrics.height),
+			xoffset: Number(metrics.xoffset),
+			yoffset: Number(metrics.yoffset),
+			xadvance: Number(metrics.xadvance)
+		});
+	}
+
+	const kernings = new Map<string, number>();
+	for (const [tag] of description.matchAll(/<kerning\b[^>]*>/g)) {
+		const { first, second, amount } = attributesOf(tag);
+		kernings.set(String.fromCodePoint(Number(first)) + String.fromCodePoint(Number(second)), Number(amount));
+	}
+
+	// Read through Node's `fs`, which the desktop apps' Electron extends to files inside `app.asar`; libvips reading the
+	// path itself would not find them there.
+	const { data, info } = await sharp(await fs.promises.readFile(path.join(path.dirname(file), pageFile)))
+		.ensureAlpha()
+		.raw()
+		.toBuffer({ resolveWithObject: true });
+	return { glyphs, kernings, page: { data, width: info.width } };
+}
+
+/** The font, read on first use (once per process). */
+function getFont(): Promise<BitmapFont> {
 	if (!font) {
-		font = loadFont(file);
-		loadedFonts.set(file, font);
-		font.catch(() => loadedFonts.delete(file));
+		font = readBitmapFont(FONT_FILE);
+		font.catch(() => (font = undefined));
 	}
 	return font;
 }
 
 /**
- * Where the characters of `text` draw, relative to a line of `font` starting at 0.
+ * The text drawn in white on a transparent background, at the font's own size, cropped to the glyphs. `undefined`
+ * when the font has none of its characters.
  *
- * @param font - The font.
- * @param text - Characters the font has.
+ * Only the glyphs are copied in JavaScript (a few thousand pixels each).
+ *
+ * @param bitmapFont - The font.
+ * @param text - The text.
  */
-function measure(font: BitmapFont, text: string): { width: number; top: number; bottom: number } {
-	const characters = Array.from(text);
-	let x = 0;
-	let width = 0;
-	let top = font.common.lineHeight;
-	let bottom = 0;
-	characters.forEach((character, index) => {
-		const glyph = font.chars[character];
-		width = Math.max(width, x + glyph.xoffset + glyph.width, x + glyph.xadvance);
-		top = Math.min(top, glyph.yoffset);
-		bottom = Math.max(bottom, glyph.yoffset + glyph.height);
-		// The kerning Jimp's `print` applies before the next character.
-		x += glyph.xadvance + (font.kernings[character]?.[characters[index + 1]] || 0);
+function drawGlyphs(bitmapFont: BitmapFont, text: string): Bitmap | undefined {
+	const characters = Array.from(text).filter((character) => bitmapFont.glyphs.has(character));
+
+	// Lay the glyphs out on a line, as Jimp's `print` does: advance, plus the kerning before the next character.
+	let pen = 0;
+	const placed = characters.map((character, index) => {
+		const glyph = bitmapFont.glyphs.get(character);
+		const placement = { glyph, x: pen + glyph.xoffset, y: glyph.yoffset };
+		pen += glyph.xadvance + (bitmapFont.kernings.get(character + characters[index + 1]) ?? 0);
+		return placement;
 	});
-	return { width, top: Math.min(top, bottom), bottom };
+	const drawn = placed.filter(({ glyph }) => glyph.width > 0 && glyph.height > 0);
+	if (!drawn.length) {
+		return undefined;
+	}
+
+	const left = Math.min(...drawn.map(({ x }) => x));
+	const top = Math.min(...drawn.map(({ y }) => y));
+	const width = Math.max(...drawn.map(({ x, glyph }) => x + glyph.width)) - left;
+	const height = Math.max(...drawn.map(({ y, glyph }) => y + glyph.height)) - top;
+
+	const data = Buffer.alloc(width * height * 4);
+	const { page } = bitmapFont;
+	for (const { glyph, x, y } of drawn) {
+		for (let row = 0; row < glyph.height; row++) {
+			for (let column = 0; column < glyph.width; column++) {
+				const alpha = page.data[((glyph.y + row) * page.width + glyph.x + column) * 4 + 3];
+				if (!alpha) {
+					continue;
+				}
+				const offset = ((y - top + row) * width + (x - left + column)) * 4;
+				data[offset] = data[offset + 1] = data[offset + 2] = 255;
+				// Glyphs that overlap (kerning) keep the more opaque pixel.
+				data[offset + 3] = Math.max(data[offset + 3], alpha);
+			}
+		}
+	}
+	return { data, width, height };
 }
 
 /**
- * The text drawn in white on a transparent background, cropped to the glyphs, in the largest font whose size is at
- * most half the image's shorter side and whose text fits 90% of its width. `undefined` when there is nothing to draw.
+ * The text of a placeholder, sized for it: at most {@link TEXT_HEIGHT_SHARE} of its shorter side high and
+ * {@link TEXT_WIDTH_SHARE} of its width wide, and never larger than the font draws it. `undefined` when there is no
+ * text to draw.
  *
  * @param image - The placeholder.
  */
-async function drawText(image: PlaceholderImage): Promise<{ data: Buffer; width: number; height: number } | undefined> {
-	for (const [index, { size, file }] of FONTS.entries()) {
-		// The smallest font is the last resort: an image too small for it gets its text cropped.
-		const smallest = index === FONTS.length - 1;
-		if (size > Math.min(image.width, image.height) / 2 && !smallest) {
-			continue;
-		}
-		const font = await getFont(file);
-		const text = Array.from(image.text)
-			.filter((character) => font.chars[character])
-			.join('');
-		if (!text) {
-			return undefined;
-		}
-		const { width, top, bottom } = measure(font, text);
-		if (width > image.width * 0.9 && !smallest) {
-			continue;
-		}
-
-		const canvas = new Jimp({ width: Math.max(1, width), height: font.common.lineHeight, color: 0x00000000 });
-		canvas.print({ font, x: 0, y: 0, text });
-		canvas.crop({
-			x: 0,
-			y: top,
-			w: Math.min(canvas.bitmap.width, image.width),
-			h: Math.max(1, Math.min(bottom - top, image.height))
-		});
-		return { data: canvas.bitmap.data, width: canvas.bitmap.width, height: canvas.bitmap.height };
+async function drawText(image: PlaceholderImage): Promise<Bitmap | undefined> {
+	if (!image.text) {
+		return undefined;
 	}
-	return undefined;
+	const text = drawGlyphs(await getFont(), image.text);
+	if (!text) {
+		return undefined;
+	}
+
+	const scale = Math.min(
+		1,
+		(TEXT_HEIGHT_SHARE * Math.min(image.width, image.height)) / text.height,
+		(TEXT_WIDTH_SHARE * image.width) / text.width
+	);
+	if (scale === 1) {
+		return text;
+	}
+	const width = Math.max(1, Math.round(text.width * scale));
+	const height = Math.max(1, Math.round(text.height * scale));
+	const data = await sharp(text.data, { raw: { width: text.width, height: text.height, channels: 4 } })
+		.resize(width, height, { fit: 'fill' })
+		.raw()
+		.toBuffer();
+	return { data, width, height };
 }
 
 /**
  * Draws a placeholder as a PNG.
  *
- * The background and the encoding run in sharp (libvips, on its own thread pool); only the few glyphs are drawn in
- * JavaScript, so a request does not hold the API's event loop for the whole image.
+ * The page of the font is decoded, and the text scaled, the background drawn and the image encoded, by sharp (libvips,
+ * on its own thread pool): a request holds the API's event loop only to copy a few glyphs.
  *
  * @param image - The placeholder.
  */
 async function draw(image: PlaceholderImage): Promise<Buffer> {
-	const text = await drawText(image);
+	// A font that cannot be read leaves the placeholder without its text rather than without an image; the font is
+	// read again for the next placeholder.
+	const text = await drawText(image).catch((error) => {
+		console.error('PlaceholderImage: the text could not be drawn:', error);
+		return undefined;
+	});
 	const background = sharp({
 		create: { width: image.width, height: image.height, channels: 4, background: `#${image.background}` }
 	});
