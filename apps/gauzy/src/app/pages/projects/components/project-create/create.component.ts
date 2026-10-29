@@ -2,7 +2,13 @@ import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/
 import { Router } from '@angular/router';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { BaseEntityEnum, IOrganization, IOrganizationProject, IOrganizationProjectCreateInput } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	IOrganization,
+	IOrganizationProject,
+	IOrganizationProjectCreateInput,
+	IOrganizationProjectUpdateInput
+} from '@gauzy/contracts';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { ErrorHandlingService, OrganizationProjectsService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { ProjectMutationComponent } from '@gauzy/ui-core/shared';
@@ -55,9 +61,18 @@ export class ProjectCreateMutationComponent extends TranslationBaseComponent imp
 		try {
 			this.loading = true;
 
-			// A save whose files did not all attach left the project created: saving again only retries the files.
-			if (!this._createdProject) {
-				const { id: organizationId, tenantId } = this.organization;
+			const { id: organizationId, tenantId } = this.organization;
+			if (this._createdProject) {
+				// A save whose files did not all attach left the project created: saving again updates it with the
+				// form as it is now — never a second project — and then retries the files.
+				const input: IOrganizationProjectUpdateInput = {
+					...value,
+					organizationId,
+					tenantId,
+					id: this._createdProject.id
+				};
+				this._createdProject = await this._organizationProjectsService.edit(input);
+			} else {
 				const input: IOrganizationProjectCreateInput = {
 					...value,
 					organizationId,
