@@ -218,6 +218,8 @@ describe('upgrade and downgrade handlers', () => {
 		const { upgrade, subscriptionService } = handlers();
 
 		expect(await status(upgrade.execute(upgradeTo('free', 'plugin-2')))).toBe(HttpStatus.NOT_FOUND);
+		// Even with the subscription's current plan, which the same-plan check would otherwise answer with a 400
+		expect(await status(upgrade.execute(upgradeTo('basic', 'plugin-2')))).toBe(HttpStatus.NOT_FOUND);
 		expect(subscriptionService.save).not.toHaveBeenCalled();
 	});
 });

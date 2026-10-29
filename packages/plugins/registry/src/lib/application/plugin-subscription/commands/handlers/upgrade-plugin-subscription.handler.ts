@@ -57,12 +57,13 @@ export class UpgradePluginSubscriptionCommandHandler implements ICommandHandler<
 				throw new BadRequestException('You can only upgrade your own subscriptions');
 			}
 
+			// The route's plugin first, so a subscription under another plugin's route is not found, whatever the plan
+			await assertPlanChangeAllowed(this.pluginSubscriptionPlanService, subscription, newPlanId, pluginId);
+
 			// Validate that the new plan is different from current plan
 			if (subscription.planId === newPlanId) {
 				throw new BadRequestException('Cannot upgrade to the same plan. Please select a different plan.');
 			}
-
-			await assertPlanChangeAllowed(this.pluginSubscriptionPlanService, subscription, newPlanId, pluginId);
 
 			// Use domain method to upgrade subscription (includes validation and business logic)
 			const upgradedSubscription = subscription.upgradeToPlan(newPlanId);

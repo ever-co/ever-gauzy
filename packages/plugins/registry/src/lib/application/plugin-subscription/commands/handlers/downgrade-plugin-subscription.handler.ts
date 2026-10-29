@@ -57,12 +57,13 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 			throw new BadRequestException('You can only downgrade your own subscriptions');
 		}
 
+		// The route's plugin first, so a subscription under another plugin's route is not found, whatever the plan
+		await assertPlanChangeAllowed(this.pluginSubscriptionPlanService, subscription, newPlanId, pluginId);
+
 		// Validate that the new plan is different from current plan
 		if (subscription.planId === newPlanId) {
 			throw new BadRequestException('Cannot downgrade to the same plan. Please select a different plan.');
 		}
-
-		await assertPlanChangeAllowed(this.pluginSubscriptionPlanService, subscription, newPlanId, pluginId);
 
 		if (!subscription.canBeDowngraded()) {
 			throw new BadRequestException('This subscription cannot be downgraded due to plan restrictions.');
