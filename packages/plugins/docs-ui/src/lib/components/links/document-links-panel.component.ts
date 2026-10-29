@@ -5,6 +5,7 @@ import {
 	EventEmitter,
 	Input,
 	OnChanges,
+	OnDestroy,
 	Output,
 	type SimpleChanges,
 	ChangeDetectionStrategy
@@ -34,6 +35,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DOCS_PAGE_LINK, DOCS_UPLOAD_ACCEPT } from '../../docs.constants';
 import { DocumentsService } from '../../services/documents.service';
 import { DocumentAttachDialogComponent } from './document-attach-dialog.component';
+import { DocumentImagePreviewDialogComponent } from './document-image-preview-dialog.component';
 
 /** The broad family of an attached document, for its icon and tint. */
 export type DocumentLinkFamily = 'page' | 'pdf' | 'image' | 'video' | 'audio' | 'sheet' | 'file';
@@ -47,6 +49,17 @@ const DOCUMENT_LINK_ICONS: Record<DocumentLinkFamily, string> = {
 	sheet: 'grid-outline',
 	file: 'attach-outline'
 };
+
+/** How the panel lays its documents out; remembered per browser. */
+export type DocumentLinksView = 'list' | 'grid';
+
+const DOCUMENT_LINKS_VIEW_KEY = 'gauzy-docs-links-view';
+
+/**
+ * The grid fetches a saved image's bytes to draw its tile; past this size it keeps the
+ * family icon instead, and only the preview pulls the file.
+ */
+const GRID_THUMBNAIL_MAX_BYTES = 10 * 1024 * 1024;
 
 /**
  * The record-side **Documents** panel (`00-product-spec.md` §6.14 R-LNK-02,
@@ -87,7 +100,7 @@ const DOCUMENT_LINK_ICONS: Record<DocumentLinkFamily, string> = {
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrls: ['./document-links-panel.component.scss']
 })
-export class DocumentLinksPanelComponent extends TranslationBaseComponent implements OnChanges {
+export class DocumentLinksPanelComponent extends TranslationBaseComponent implements OnChanges, OnDestroy {
 	/** The business-record type this panel hangs off (e.g. `BaseEntityEnum.Invoice`). */
 	@Input() entity!: BaseEntityEnum;
 
@@ -145,6 +158,17 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	public dragActive = false;
 	/** `dragenter`/`dragleave` fire for every child crossed; the depth tells a real leave from those. */
 	private dragDepth = 0;
+	/** List rows or grid tiles; the choice is the viewer's, kept in this browser. */
+	public view: DocumentLinksView = readStoredView();
+	/**
+	 * `blob:` URLs of saved images, by document id — the grid's tiles and the preview
+	 * share them, so a picture is fetched once. Revoked when the panel goes.
+	 */
+	private readonly imageUrls = new Map<string, string>();
+	/** Document ids whose bytes were already asked for, so a reload never fetches twice. */
+	private readonly requestedImages = new Set<string>();
+	/** `blob:` URLs of held images, straight from the user's machine. */
+	private readonly pendingUrls = new Map<File, string>();
 
 	public readonly permissions = PermissionsEnum;
 	/** Accept list for the file input (UX only — the server sniffs and re-validates). */
@@ -171,6 +195,11 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		if (changes['entity'] || changes['entityId']) {
 			void this.load();
 		}
+	}
+
+	ngOnDestroy(): void {
+		this.imageUrls.forEach((url) => URL.revokeObjectURL(url));
+		this.pendingUrls.forEach((url) => URL.revokeObjectURL(url));
 	}
 
 	// ─── Visibility ──────────────────────────────────────────────
@@ -230,6 +259,7 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		try {
 			this.links = await firstValueFrom(this.documentsService.findLinks(this.entity, this.entityId));
 			this.countChanged.emit(this.links.length);
+			if (this.view === 'grid') void this.loadThumbnails();
 		} catch {
 			// Fault-isolated: an attachments panel that fails must not take the host
 			// record page down with it.
@@ -300,11 +330,79 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		return link?.document?.kind === DocumentKindEnum.FILE;
 	}
 
+	/** A picture the popup can show: a saved image file, or a held one. */
+	isImage(link: IDocumentLink): boolean {
+		return this.familyOf(link) === 'image' && this.isFile(link);
+	}
+
+	/** A saved image's tile picture, once fetched; the tile shows its family icon until then. */
+	thumbOf(link: IDocumentLink): string | null {
+		const documentId = link?.documentId ?? link?.document?.id;
+		return documentId ? this.imageUrls.get(String(documentId)) ?? null : null;
+	}
+
+	/** A held image's tile picture, read from the user's machine. */
+	pendingThumbOf(file: File): string | null {
+		return this.pendingUrls.get(file) ?? null;
+	}
+
 	trackByLink(_: number, link: IDocumentLink): string {
 		return String(link?.id ?? link?.documentId);
 	}
 
+	// ─── View ────────────────────────────────────────────────────
+
+	/** Switches between list rows and grid tiles, and remembers the choice in this browser. */
+	toggleView(): void {
+		this.view = this.view === 'grid' ? 'list' : 'grid';
+		try {
+			localStorage.setItem(DOCUMENT_LINKS_VIEW_KEY, this.view);
+		} catch {
+			// Storage blocked (a private window): the choice lasts for this visit only.
+		}
+		if (this.view === 'grid') void this.loadThumbnails();
+	}
+
+	/**
+	 * Fetches the saved images the grid draws, one at a time. A picture that fails, or is
+	 * too large to fetch for a tile, keeps its family icon.
+	 */
+	private async loadThumbnails(): Promise<void> {
+		for (const link of this.links) {
+			const documentId = String(link?.documentId ?? link?.document?.id ?? '');
+			if (!documentId || !this.isImage(link) || this.requestedImages.has(documentId)) continue;
+			if ((link.document?.fileSize ?? 0) > GRID_THUMBNAIL_MAX_BYTES) continue;
+			this.requestedImages.add(documentId);
+			try {
+				await this.imageUrlOf(documentId);
+			} catch {
+				// The tile keeps its icon.
+			}
+		}
+	}
+
+	/** A saved image's `blob:` URL, fetched through the authenticated client on first use. */
+	private async imageUrlOf(documentId: string): Promise<string> {
+		const cached = this.imageUrls.get(documentId);
+		if (cached) return cached;
+		const blob = await firstValueFrom(this.documentsService.getRawBlob(documentId as ID));
+		const url = URL.createObjectURL(blob);
+		this.imageUrls.set(documentId, url);
+		return url;
+	}
+
 	// ─── Actions ─────────────────────────────────────────────────
+
+	/** Opens a saved image in the popup. */
+	previewLink(link: IDocumentLink): void {
+		const documentId = link?.documentId ?? link?.document?.id;
+		if (!documentId) return;
+		this.openImagePreview(this.labelOf(link), () => this.imageUrlOf(String(documentId)));
+	}
+
+	private openImagePreview(name: string, resolveSrc: () => Promise<string | null>): void {
+		this.dialogService.open(DocumentImagePreviewDialogComponent, { context: { name, resolveSrc } });
+	}
 
 	/**
 	 * Opens the document in the hub: a PAGE goes straight to its editor route, a FILE
@@ -349,11 +447,21 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		try {
 			await firstValueFrom(this.documentsService.deleteLink(link.id as ID));
 			this.links = this.links.filter((row) => String(row.id) !== String(link.id));
+			this.releaseImage(String(link.documentId ?? link.document?.id ?? ''));
 			this.countChanged.emit(this.links.length);
 			this.toastrService.success(this.getTranslation('DOCS.LINKS.TOAST_REMOVED'));
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
+	}
+
+	/** Frees a saved image's `blob:` URL once nothing on the panel shows it. */
+	private releaseImage(documentId: string): void {
+		const url = this.imageUrls.get(documentId);
+		if (!url) return;
+		URL.revokeObjectURL(url);
+		this.imageUrls.delete(documentId);
+		this.requestedImages.delete(documentId);
 	}
 
 	/** Picks one or more existing documents and attaches them to this record. */
@@ -455,6 +563,7 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		for (const file of files) {
 			if (held.has(keyOf(file))) continue;
 			held.add(keyOf(file));
+			if (file.type.startsWith('image/')) this.pendingUrls.set(file, URL.createObjectURL(file));
 			this.pending = [
 				...this.pending,
 				{
@@ -475,10 +584,16 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	}
 
 	/**
-	 * Opens a held file from the user's own machine in a new tab — nothing is uploaded.
-	 * The object URL is released a minute later, once the tab has had time to load it.
+	 * Previews a held file from the user's own machine — nothing is uploaded. An image
+	 * opens in the popup; anything else in a new tab, whose object URL is released a
+	 * minute later, once the tab has had time to load it.
 	 */
 	previewPending(file: File): void {
+		const imageUrl = this.pendingUrls.get(file);
+		if (imageUrl) {
+			this.openImagePreview(file.name, async () => imageUrl);
+			return;
+		}
 		const url = URL.createObjectURL(file);
 		window.open(url, '_blank', 'noopener');
 		setTimeout(() => URL.revokeObjectURL(url), 60_000);
@@ -487,7 +602,15 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	/** Drops a held file before it is ever uploaded. */
 	removePending(file: File): void {
 		this.pending = this.pending.filter((item) => item.file !== file);
+		this.releasePending(file);
 		this.countChanged.emit(this.pending.length);
+	}
+
+	private releasePending(file: File): void {
+		const url = this.pendingUrls.get(file);
+		if (!url) return;
+		URL.revokeObjectURL(url);
+		this.pendingUrls.delete(file);
 	}
 
 	/**
@@ -503,6 +626,7 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		if (entityLabel) this.entityLabel = entityLabel;
 		const files = this.pending.map(({ file }) => file);
 		this.pending = [];
+		files.forEach((file) => this.releasePending(file));
 		await this.uploadFiles(files);
 	}
 
@@ -582,5 +706,14 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 		this.dragDepth = 0;
 		this.dragActive = false;
 		void this.uploadFiles(Array.from(event.dataTransfer?.files ?? []));
+	}
+}
+
+/** The view this browser last chose; the list when none was kept or storage is blocked. */
+function readStoredView(): DocumentLinksView {
+	try {
+		return localStorage.getItem(DOCUMENT_LINKS_VIEW_KEY) === 'grid' ? 'grid' : 'list';
+	} catch {
+		return 'list';
 	}
 }

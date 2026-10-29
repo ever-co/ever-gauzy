@@ -30,6 +30,22 @@
 
 		<!-- Icon buttons with tooltips: the panel often sits in a narrow column. -->
 		<div class="docs-links-panel-actions">
+			<!-- List rows or grid tiles; offered once there is something to lay out. -->
+			<button
+				*ngIf="links.length || pending.length"
+				type="button"
+				nbButton
+				ghost
+				status="basic"
+				size="small"
+				class="docs-links-icon-button"
+				[attr.aria-label]="(view === 'grid' ? 'DOCS.LINKS.LIST_VIEW' : 'DOCS.LINKS.GRID_VIEW') | translate"
+				[nbTooltip]="(view === 'grid' ? 'DOCS.LINKS.LIST_VIEW' : 'DOCS.LINKS.GRID_VIEW') | translate"
+				(click)="toggleView()"
+			>
+				<nb-icon [icon]="view === 'grid' ? 'list-outline' : 'grid-outline'"></nb-icon>
+			</button>
+
 			<button
 				*ngIf="!readonly && canLink && !isPending"
 				type="button"
@@ -130,14 +146,16 @@
 			</ng-template>
 		</ng-container>
 
-		<ul class="docs-links-list" *ngIf="links.length">
+		<ul class="docs-links-list" [class.is-grid]="view === 'grid'" *ngIf="links.length">
 			<li
 				class="docs-links-row"
 				*ngFor="let link of links; trackBy: trackByLink"
 				[attr.data-family]="familyOf(link)"
 			>
+				<!-- On a grid tile an image shows itself, once fetched; everything else keeps its icon. -->
 				<span class="docs-links-icon" aria-hidden="true">
-					<nb-icon [icon]="iconOf(link)"></nb-icon>
+					<img *ngIf="view === 'grid' && thumbOf(link) as thumb; else linkIcon" class="docs-links-thumb" [src]="thumb" alt="" />
+					<ng-template #linkIcon><nb-icon [icon]="iconOf(link)"></nb-icon></ng-template>
 				</span>
 
 				<!-- Its hit area covers the whole row; the row's own buttons sit above it. -->
@@ -156,6 +174,19 @@
 				</button>
 
 				<span class="docs-links-row-actions">
+					<button
+						*ngIf="isImage(link)"
+						type="button"
+						nbButton
+						ghost
+						status="basic"
+						size="tiny"
+						[attr.aria-label]="'DOCS.PREVIEW.TITLE' | translate"
+						[nbTooltip]="'DOCS.PREVIEW.TITLE' | translate"
+						(click)="previewLink(link)"
+					>
+						<nb-icon icon="eye-outline"></nb-icon>
+					</button>
 					<button
 						*ngIf="isFile(link)"
 						type="button"
@@ -189,14 +220,20 @@
 
 		<!-- A deferred panel's held files: uploaded and attached once the record is saved. -->
 		<ng-container *ngIf="pending.length">
-			<ul class="docs-links-list">
+			<ul class="docs-links-list" [class.is-grid]="view === 'grid'">
 				<li
 					class="docs-links-row"
 					*ngFor="let item of pending; trackBy: trackByPending"
 					[attr.data-family]="familyOf(item.row)"
 				>
 					<span class="docs-links-icon" aria-hidden="true">
-						<nb-icon [icon]="iconOf(item.row)"></nb-icon>
+						<img
+							*ngIf="view === 'grid' && pendingThumbOf(item.file) as thumb; else pendingIcon"
+							class="docs-links-thumb"
+							[src]="thumb"
+							alt=""
+						/>
+						<ng-template #pendingIcon><nb-icon [icon]="iconOf(item.row)"></nb-icon></ng-template>
 					</span>
 					<span class="docs-links-row-file" [title]="item.file.name">
 						<span class="docs-links-row-name">{{ item.file.name }}</span>
@@ -213,8 +250,8 @@
 							ghost
 							status="basic"
 							size="tiny"
-							[attr.aria-label]="'DOCS.LINKS.PREVIEW_PENDING' | translate"
-							[nbTooltip]="'DOCS.LINKS.PREVIEW_PENDING' | translate"
+							[attr.aria-label]="'DOCS.PREVIEW.TITLE' | translate"
+							[nbTooltip]="'DOCS.PREVIEW.TITLE' | translate"
 							(click)="previewPending(item.file)"
 						>
 							<nb-icon icon="eye-outline"></nb-icon>
