@@ -387,6 +387,21 @@ $pad-x: 1rem;
 	transition: color 0.12s ease-in-out;
 }
 
+// A held file's name and meta: not a link yet, so nothing to open.
+.docs-links-row-file {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.docs-links-panel-pending-note {
+	margin: 0.5rem 0.5rem 0;
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	color: nb-theme(text-hint-color);
+}
+
 .docs-links-row-meta {
 	display: flex;
 	gap: 0.25rem;

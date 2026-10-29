@@ -118,10 +118,23 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	 */
 	@Input() hideWhenEmpty = false;
 
+	/**
+	 * For a record that is not saved yet (a create page): picked and dropped files are
+	 * held here and listed, and the host attaches them with {@link attachPending} once
+	 * the record exists. Only uploading is offered — there is nothing to link an
+	 * existing document to yet.
+	 */
+	@Input() deferred = false;
+
 	/** Emits the current link count after every load/mutation (host badge counters). */
 	@Output() countChanged = new EventEmitter<number>();
 
 	public links: IDocumentLink[] = [];
+	/**
+	 * Files a `deferred` panel holds until the host calls {@link attachPending}, each
+	 * with a document-shaped row so it is listed like an attached one.
+	 */
+	public pending: { file: File; row: IDocumentLink }[] = [];
 	public loading = false;
 	public loadError = false;
 	/** Set while an upload batch is in flight — the upload targets are disabled until it ends. */
@@ -168,12 +181,17 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	 * feature-disabled organization (`FeatureFlagGuard` fronts all docs routes).
 	 */
 	get visible(): boolean {
-		return (
+		const allowed =
 			!!this.entity &&
-			!!this.entityId &&
 			this.store.hasPermission(PermissionsEnum.DOCS_READ) &&
-			this.store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS)
-		);
+			this.store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS);
+		// A deferred panel can only collect uploads, so without upload rights it has nothing to offer.
+		return allowed && (this.isPending ? this.canUpload : !!this.entityId);
+	}
+
+	/** A `deferred` panel whose record is not saved yet: files are held, not uploaded. */
+	get isPending(): boolean {
+		return this.deferred && !this.entityId;
 	}
 
 	/**
@@ -203,7 +221,7 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	// ─── Loading ─────────────────────────────────────────────────
 
 	async load(): Promise<void> {
-		if (!this.visible) {
+		if (!this.visible || this.isPending) {
 			this.links = [];
 			return;
 		}
@@ -378,6 +396,10 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	 */
 	async uploadFiles(files: File[]): Promise<void> {
 		if (!files.length || this.uploading) return;
+		if (this.isPending) {
+			this.holdFiles(files);
+			return;
+		}
 
 		const organization = this.store.selectedOrganization;
 		const total = files.length;
@@ -422,6 +444,60 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 			this.uploading = false;
 			this.uploadProgress = null;
 		}
+	}
+
+	// ─── Deferred: files held until the record exists ────────────
+
+	/** Holds files for later; picking the same file twice keeps one copy. */
+	private holdFiles(files: File[]): void {
+		const keyOf = (file: File) => `${file.name}|${file.size}|${file.lastModified}`;
+		const held = new Set(this.pending.map(({ file }) => keyOf(file)));
+		for (const file of files) {
+			if (held.has(keyOf(file))) continue;
+			held.add(keyOf(file));
+			this.pending = [
+				...this.pending,
+				{
+					file,
+					row: {
+						document: {
+							name: file.name,
+							originalFilename: file.name,
+							mimeType: file.type,
+							fileSize: file.size,
+							kind: DocumentKindEnum.FILE
+						}
+					} as IDocumentLink
+				}
+			];
+		}
+		this.countChanged.emit(this.pending.length);
+	}
+
+	/** Drops a held file before it is ever uploaded. */
+	removePending(file: File): void {
+		this.pending = this.pending.filter((item) => item.file !== file);
+		this.countChanged.emit(this.pending.length);
+	}
+
+	/**
+	 * Uploads the held files and attaches them to the record the host just saved. The
+	 * usual summary toasts report the outcome; a file that fails does not undo the save.
+	 *
+	 * @param entityId The saved record's id.
+	 * @param entityLabel Its display name, stored on each link.
+	 */
+	async attachPending(entityId: ID, entityLabel?: string): Promise<void> {
+		if (!entityId) return;
+		this.entityId = entityId;
+		if (entityLabel) this.entityLabel = entityLabel;
+		const files = this.pending.map(({ file }) => file);
+		this.pending = [];
+		await this.uploadFiles(files);
+	}
+
+	trackByPending(_: number, item: { file: File }): string {
+		return `${item.file.name}|${item.file.size}|${item.file.lastModified}`;
 	}
 
 	/**
