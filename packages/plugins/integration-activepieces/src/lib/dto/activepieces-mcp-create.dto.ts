@@ -16,7 +16,7 @@ export class ActivepiecesMcpCreateDto {
 	@IsNotEmpty()
 	@MaxLength(255)
 	@Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
-	readonly name: string;
+	readonly name!: string;
 
 	@ApiPropertyOptional({
 		description:

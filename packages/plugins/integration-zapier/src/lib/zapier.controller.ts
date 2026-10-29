@@ -13,6 +13,7 @@ import {
 	Post,
 	Put,
 	Param,
+	Headers,
 	UsePipes,
 	ValidationPipe
 } from '@nestjs/common';
@@ -313,7 +314,9 @@ export class ZapierController {
 	 * webhook URL). `POST /settings` starts a new integration; this changes the one that exists.
 	 *
 	 * @param body - The settings to store.
-	 * @param organizationId - The organization of the integration; else the `Organization-Id` header, else the tenant's only one.
+	 * @param organizationId - The organization of the integration.
+	 * @param organizationHeader - The `Organization-Id` header the web app sends: the organization when the query names none
+	 * (with neither, the tenant's only integration).
 	 */
 	@ApiOperation({ summary: 'Update Zapier integration settings' })
 	@ApiQuery({
@@ -342,9 +345,13 @@ export class ZapierController {
 	@UsePipes(new ValidationPipe({ whitelist: true }))
 	async updateSettings(
 		@Body() body: UpdateZapierSettingsDto,
-		@Query('organizationId') organizationId?: ID
+		@Query('organizationId') organizationId?: ID,
+		@Headers('organization-id') organizationHeader?: ID
 	): Promise<IZapierIntegrationSettings> {
-		return this.zapierService.updateIntegrationSettings(body, organizationId);
+		return this.zapierService.updateIntegrationSettings(
+			body,
+			organizationId?.trim() || organizationHeader?.trim() || undefined
+		);
 	}
 
 	/**

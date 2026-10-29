@@ -127,11 +127,11 @@ export class ZapierWebhookService {
 	 * @throws BadRequestException if a bound is missing.
 	 */
 	async findSubscriptions(scope: {
-		integrationId: ID;
-		tenantId: ID;
-		organizationId: ID;
+		integrationId?: ID;
+		tenantId?: ID;
+		organizationId?: ID;
 	}): Promise<ZapierWebhookSubscription[]> {
-		const { integrationId, tenantId, organizationId } = scope ?? ({} as typeof scope);
+		const { integrationId, tenantId, organizationId } = scope ?? {};
 		if (!integrationId || !tenantId || !organizationId) {
 			throw new BadRequestException(
 				'Integration, tenant and organization are required to list webhook subscriptions'

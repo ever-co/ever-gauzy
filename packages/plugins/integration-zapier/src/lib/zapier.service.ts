@@ -1407,9 +1407,10 @@ export class ZapierService {
 	 * URL (an empty string or null clears it). `POST /settings` starts a new integration with a new OAuth state; this
 	 * changes the one that exists.
 	 *
-	 * The integration is the organization's when one is named (the argument, else the `Organization-Id` header the web
-	 * app sends), else the tenant's only one (400 when there are several, as `findIntegrationByTenantId` answers), and the
-	 * caller must be a member of its organization: the settings lookup alone is scoped to the tenant.
+	 * The integration is the organization's when one is named (the controller passes the query, else the
+	 * `Organization-Id` header the web app sends), else the tenant's only one (400 when there are several, as
+	 * `findIntegrationByTenantId` answers), and the caller must be a member of its organization: the settings lookup
+	 * alone is scoped to the tenant.
 	 *
 	 * @param input - The settings to store.
 	 * @param organizationId - The organization of the integration, if the caller names one.
@@ -1442,10 +1443,7 @@ export class ZapierService {
 			}
 		}
 
-		const integration = await this.findIntegrationByTenantId(
-			tenantId,
-			organizationId || RequestContext.currentOrganizationId() || undefined
-		);
+		const integration = await this.findIntegrationByTenantId(tenantId, organizationId || undefined);
 		await assertCurrentUserBelongsToOrganization(this._dataSource.manager, integration.organizationId);
 
 		const values: Record<string, string> = {

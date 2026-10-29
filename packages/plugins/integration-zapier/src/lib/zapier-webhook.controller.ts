@@ -9,6 +9,7 @@ import {
 	Delete,
 	ForbiddenException,
 	Logger,
+	NotFoundException,
 	UnauthorizedException,
 	BadRequestException,
 	InternalServerErrorException,
@@ -16,7 +17,7 @@ import {
 	UseGuards
 } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
-import { IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
+import { ID, IIntegrationTenant, PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, Permissions } from '@gauzy/core';
 import { getUnsafeOutboundUrlReason } from '@gauzy/utils';
 import { IZapierCreateWebhookInput } from './zapier.types';
@@ -184,6 +185,9 @@ export class ZapierWebhookController {
 	): Promise<ZapierWebhookSubscription[]> {
 		try {
 			const named = await this.resolveIntegration(integrationId, authorization);
+			if (!named.id) {
+				throw new NotFoundException('Zapier integration not found');
+			}
 			// The bearer path resolves without a membership check: list only for a member of the organization
 			const integration = integrationId?.trim()
 				? named
@@ -207,11 +211,25 @@ export class ZapierWebhookController {
 	 * The integration a request acts on: the one the web app names (`integrationId`), for a member of its organization;
 	 * otherwise the one the Bearer token resolves to (opaque token or multi-app OAuth JWT), as Zapier calls.
 	 */
-	private async resolveIntegration(integrationId: string | undefined, authorization: string): Promise<IIntegrationTenant> {
-		if (integrationId?.trim()) {
-			return this.zapierService.findIntegrationForCurrentUser(integrationId.trim());
+	private async resolveIntegration(
+		integrationId: string | undefined,
+		authorization: string
+	): Promise<IIntegrationTenant & { tenantId: ID }> {
+		const integration = integrationId?.trim()
+			? await this.zapierService.findIntegrationForCurrentUser(integrationId.trim())
+			: await this.resolveBearerIntegration(authorization);
+
+		if (!integration.tenantId) {
+			throw new BadRequestException('Integration tenant ID is required.');
 		}
 
+		return integration as IIntegrationTenant & { tenantId: ID };
+	}
+
+	/**
+	 * The integration the Bearer token resolves to (opaque token or multi-app OAuth JWT).
+	 */
+	private async resolveBearerIntegration(authorization: string): Promise<IIntegrationTenant> {
 		if (!authorization) {
 			throw new UnauthorizedException('Authorization header is required');
 		}
@@ -224,10 +242,6 @@ export class ZapierWebhookController {
 
 		if (!integration) {
 			throw new ForbiddenException('Invalid token');
-		}
-
-		if (!integration.tenantId) {
-			throw new BadRequestException('Integration tenant ID is required.');
 		}
 
 		return integration;

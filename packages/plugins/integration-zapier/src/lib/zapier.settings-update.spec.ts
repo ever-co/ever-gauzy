@@ -149,14 +149,35 @@ describe('Zapier settings update and OAuth configuration', () => {
 			);
 		});
 
-		it('reads the organization from the Organization-Id header when the query names none', async () => {
-			mockCurrentOrganizationId.mockReturnValue('organization-9');
+		it('takes the organization from the query, else from the Organization-Id header the web app sends', async () => {
+			const updateIntegrationSettings = jest.fn().mockResolvedValue({});
+			const controller = new ZapierController({ updateIntegrationSettings } as any);
+			const body = { isEnabled: true, webhookUrl: null };
+
+			await controller.updateSettings(body, 'organization-1', 'organization-9');
+			await controller.updateSettings(body, undefined, ' organization-9 ');
+			await controller.updateSettings(body, undefined, undefined);
+
+			expect(updateIntegrationSettings.mock.calls).toEqual([
+				[body, 'organization-1'],
+				[body, 'organization-9'],
+				[body, undefined]
+			]);
+		});
+
+		it('looks the integration up in the named organization, never in the user’s last one', async () => {
+			mockCurrentOrganizationId.mockReturnValue('organization-last');
 			const { service, integrationTenantService } = build();
 
+			await service.updateIntegrationSettings({ isEnabled: true }, 'organization-9');
 			await service.updateIntegrationSettings({ isEnabled: true });
 
 			expect(integrationTenantService.findOneByOptions.mock.calls[0][0].where).toEqual(
 				expect.objectContaining({ organizationId: 'organization-9' })
+			);
+			// Without an organization: the tenant's only integration, through `findAll`
+			expect(integrationTenantService.findAll).toHaveBeenCalledWith(
+				expect.objectContaining({ where: expect.not.objectContaining({ organizationId: expect.anything() }) })
 			);
 		});
 
@@ -174,14 +195,13 @@ describe('Zapier settings update and OAuth configuration', () => {
 		it('answers 404 when the organization has no Zapier integration', async () => {
 			const { service, repository } = build({ found: new NotFoundException() });
 
-			await expect(service.updateIntegrationSettings({ isEnabled: true })).rejects.toBeInstanceOf(
-				NotFoundException
-			);
+			await expect(
+				service.updateIntegrationSettings({ isEnabled: true }, 'organization-1')
+			).rejects.toBeInstanceOf(NotFoundException);
 			expect(repository.save).not.toHaveBeenCalled();
 		});
 
 		it('refuses several integrations when no organization is known', async () => {
-			mockCurrentOrganizationId.mockReturnValue(undefined);
 			const { service, integrationTenantService } = build();
 			integrationTenantService.findAll.mockResolvedValue({ items: [integration(), integration()], total: 2 });
 
