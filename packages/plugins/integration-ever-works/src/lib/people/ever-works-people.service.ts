@@ -172,7 +172,7 @@ export class EverWorksPeopleService {
 		private readonly links: EverWorksLinkService,
 		private readonly commandBus: CommandBus,
 		/** Each person's choice of what of their Gauzy Inbox goes to Ever Works; absent in bare test wiring. */
-		@Optional() private readonly inboxPreferences?: EverWorksInboxPreferencesService | null
+		@Optional() private readonly inboxPreferences?: EverWorksInboxPreferencesService
 	) {}
 
 	private readonly logger = new Logger(EverWorksPeopleService.name);

@@ -35,6 +35,11 @@ export enum EverWorksSettingName {
 	 * person's preference allows). Off by default: without it, only the items written from then on are sent.
 	 */
 	BACKFILL_GAUZY_INBOX = 'BACKFILL_GAUZY_INBOX',
+	/**
+	 * When the mapping's inbox direction last started writing to Ever Works (ISO time): the recovery sweep files an item
+	 * never sent only when the item changed after it, so an older, untouched item goes only with the backfill.
+	 */
+	INBOX_PUSH_SINCE = 'INBOX_PUSH_SINCE',
 	/** The seeded "Idea" issue type and "Ideas" task view of the organization. */
 	IDEA_ISSUE_TYPE_ID = 'IDEA_ISSUE_TYPE_ID',
 	IDEAS_TASK_VIEW_ID = 'IDEAS_TASK_VIEW_ID',

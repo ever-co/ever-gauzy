@@ -398,9 +398,13 @@ and answered `202`.
     `GAUZY_INBOX_ITEM`. The Inbox tells the integration about every write
     (`INBOX_ITEM_FEED`, see the Inbox README), which queues one outbound change
     per paired recipient (coalesced, retried, dead-lettered, fenced on the
-    lease like every push); a 10-minute sweep queues a change whose notice was
-    missed in the last hour. A replay of the same `externalId` answers the copy
-    filed before, so a retry never files twice. Later changes are patched with
+    lease like every push). A 10-minute sweep queues a change whose notice was
+    missed in the last hour (an item never sent only when it changed after the
+    inbox started going to Ever Works: older ones go only with the backfill)
+    and archives the copy of a recipient row that is gone. A replay of the same
+    `externalId` answers the copy filed before, so a retry never files twice;
+    what its person did to it meanwhile is applied to Gauzy first. Later
+    changes are patched with
     `If-Match` (`PATCH /inbox/items/:id`): title, body, choices, `resolved`
     with the answer, and `archived` when the person archives it (or its source
     cancels it); read and snooze stay in Gauzy. Only the fields Gauzy changed
@@ -412,9 +416,13 @@ and answered `202`.
     reply or decision, read / unread, archive) comes back to the Gauzy item
     through the Inbox's own reply and state actions, signed in as the
     recipient, so the reply reaches the item's source like a reply made in
-    Gauzy. Versions only go up: an event at or below the link's version is
-    skipped, and a reply to an item already answered in Gauzy keeps Gauzy's
-    answer. A copy deleted in Ever Works is unlinked; the Gauzy item stays.
+    Gauzy. Only what moved in Ever Works since it was last seen is applied, so
+    an event never undoes a Gauzy change still waiting to be pushed. Versions
+    only go up: an event at or below the link's version is skipped (an answer
+    a push's `412` retry already brought over among them), and a reply to an
+    item already answered in Gauzy keeps Gauzy's answer. A copy deleted in Ever
+    Works is unlinked; the Gauzy item stays. A copy filed for a member the
+    person is no longer paired with gets nothing more.
   - **Each person decides what goes.** Every kind is sent by default, emails
     included. On **Settings → Ever Works inbox** (`GET`/`PUT
     /me/inbox-preferences`, stored per user and tenant in

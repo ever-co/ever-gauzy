@@ -59,6 +59,13 @@ export class MockEverWorksInboxWrite {
 		return this.userChange(id, { unread: !read });
 	}
 
+	/** An Ever Works user unarchives a filed item (answered again when it holds an answer, else open). */
+	unarchive(id: string): Promise<EverWorksEventEnvelope> {
+		const item = this.mock.inboxItems.get(id);
+		const state = item?.['answeredAt'] ? 'resolved' : 'open';
+		return this.userChange(id, { status: state === 'resolved' ? 'answered' : 'open', state });
+	}
+
 	/** An Ever Works user archives a filed item. */
 	archive(id: string): Promise<EverWorksEventEnvelope> {
 		return this.userChange(id, { status: 'archived', state: 'archived' });

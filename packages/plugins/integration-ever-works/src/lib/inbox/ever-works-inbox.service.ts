@@ -95,7 +95,7 @@ export class EverWorksInboxService implements EverWorksInboundHandler, OnModuleI
 		@Inject(INBOX_SOURCE_HANDLER_REGISTRY)
 		private readonly registry?: IInboxSourceHandlerRegistry | null,
 		/** The Gauzy → Ever Works mirror, whose copies' events are its own; absent in bare test wiring. */
-		@Optional() private readonly push?: EverWorksInboxPushService | null
+		@Optional() private readonly push?: EverWorksInboxPushService
 	) {}
 
 	onModuleInit(): void {

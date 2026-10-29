@@ -342,6 +342,26 @@ describe('Ever Works organization mapping on SQLite', () => {
 		refresh.mockRestore();
 	});
 
+	it('the inbox goes both ways for a new mapping, records when it started going to Ever Works, and keeps the backfill off', async () => {
+		const pushSince = async (id: string) => {
+			const row = await dataSource
+				.getRepository(IntegrationTenant)
+				.findOneOrFail({ where: { id }, relations: { settings: true } } as never);
+			return (row as { settings: Array<{ settingsName: string; settingsValue: string }> }).settings.find((s) => s.settingsName === 'INBOX_PUSH_SINCE')?.settingsValue ?? '';
+		};
+		const view = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
+		expect(view).toMatchObject({ directions: expect.objectContaining({ inbox: 'both' }), backfillGauzyInbox: false });
+		const first = await pushSince(view.integrationTenantId);
+		expect(Number.isFinite(Date.parse(first))).toBe(true);
+		// One way from Ever Works, then back to both: the start of the push moves to the switch back.
+		await mappings.update(view.integrationTenantId, { directions: { inbox: 'ew_to_gauzy' } });
+		expect(await pushSince(view.integrationTenantId)).toBe(first);
+		await new Promise((resolve) => setTimeout(resolve, 5));
+		const updated = await mappings.update(view.integrationTenantId, { directions: { inbox: 'gauzy_to_ew' }, backfillGauzyInbox: true });
+		expect(updated).toMatchObject({ directions: expect.objectContaining({ inbox: 'gauzy_to_ew' }), backfillGauzyInbox: true });
+		expect(Date.parse(await pushSince(view.integrationTenantId))).toBeGreaterThan(Date.parse(first));
+	});
+
 	it('updates directions, flags, projects and toggles; refuses an unknown domain, a disallowed direction and a foreign project', async () => {
 		const view = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
 		const project = await dataSource.getRepository(OrganizationProject).save({ id: randomUUID(), tenantId: A.tenantId, organizationId: A.organizationId, name: 'P' });

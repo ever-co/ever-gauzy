@@ -1119,6 +1119,9 @@ describe('Inbox on SQLite', () => {
 			expect(copy?.item).toMatchObject({ id: open.item.id, options: expect.any(Array) });
 			expect(copy?.recipient).toMatchObject({ userId: ADA });
 			expect(await feed.readRecipient(OTHER_TENANT, adaRow.id)).toBeNull();
+			const unknown = randomUUID();
+			expect(await feed.missingRecipients(TENANT, [adaRow.id, unknown])).toEqual([unknown]);
+			expect(await feed.missingRecipients(OTHER_TENANT, [adaRow.id])).toEqual([adaRow.id]);
 
 			const page = await feed.openRecipientsOf(TENANT, ORG, [ADA]);
 			expect(page.recipients.map((row) => row.inboxItemId)).toEqual([open.item.id]);

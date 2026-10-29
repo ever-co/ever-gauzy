@@ -13,7 +13,7 @@ import {
 import { RequestContext } from '@gauzy/core';
 import { InboxItem } from './entities/inbox-item.entity';
 import { InboxItemRecipient } from './entities/inbox-item-recipient.entity';
-import { toInboxItem } from './inbox-item.mapper';
+import { parseJson, toInboxItem } from './inbox-item.mapper';
 
 /** The most rows one page of the feed's reads returns. */
 export const INBOX_FEED_MAX_PAGE = 1000;
@@ -29,6 +29,11 @@ type RawRecipientRow = {
 	kind: string;
 	itemUpdatedAt: Date | string | null;
 	recipientUpdatedAt: Date | string | null;
+	externalSource: string | null;
+	taskId: ID | null;
+	entity: string | null;
+	entityId: ID | null;
+	metadata: string | null;
 };
 
 /** The later of two times read from the database (a driver answers a `Date` or a string). */
@@ -196,6 +201,18 @@ export class InboxItemFeed implements IInboxItemFeed {
 		return { item: toInboxItem(item), recipient: recipient as never };
 	}
 
+	async missingRecipients(tenantId: ID, recipientIds: ID[]): Promise<ID[]> {
+		const ids = [...new Set(recipientIds.filter(Boolean))];
+		const present = new Set<ID>();
+		for (let start = 0; start < ids.length; start += IN_CHUNK) {
+			const rows = await this.recipientRows(tenantId)
+				.andWhere('recipient.id IN (:...ids)', { ids: ids.slice(start, start + IN_CHUNK) })
+				.getRawMany<RawRecipientRow>();
+			for (const row of rows) present.add(row.id);
+		}
+		return ids.filter((id) => !present.has(id));
+	}
+
 	async recipientsChangedSince(
 		tenantId: ID,
 		since: Date,
@@ -262,6 +279,11 @@ export class InboxItemFeed implements IInboxItemFeed {
 			.addSelect('item.kind', 'kind')
 			.addSelect('item.updatedAt', 'itemUpdatedAt')
 			.addSelect('recipient.updatedAt', 'recipientUpdatedAt')
+			.addSelect('item.externalSource', 'externalSource')
+			.addSelect('item.taskId', 'taskId')
+			.addSelect('item.entity', 'entity')
+			.addSelect('item.entityId', 'entityId')
+			.addSelect('item.metadata', 'metadata')
 			.where('recipient.tenantId = :tenantId', { tenantId })
 			.andWhere('item.deletedAt IS NULL')
 			.andWhere('recipient.deletedAt IS NULL');
@@ -278,7 +300,12 @@ export class InboxItemFeed implements IInboxItemFeed {
 				source: row.source,
 				kind: row.kind as never,
 				changedAt: laterOf(row.itemUpdatedAt, row.recipientUpdatedAt),
-				itemUpdatedAt: row.itemUpdatedAt ?? null
+				itemUpdatedAt: row.itemUpdatedAt ?? null,
+				externalSource: row.externalSource ?? null,
+				taskId: row.taskId ?? null,
+				entity: row.entity ?? null,
+				entityId: row.entityId ?? null,
+				metadata: parseJson<Record<string, unknown>>(row.metadata)
 			})),
 			next: rows.length > limit && page.length ? String(page[page.length - 1].id) : null
 		};

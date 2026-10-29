@@ -334,6 +334,12 @@ export interface IInboxRecipientPage {
 		changedAt: Date | string | null;
 		/** The item's own update time (a change of the item, not only of the recipient's state). */
 		itemUpdatedAt: Date | string | null;
+		/** The item's identity in its source, its links and its metadata (parsed), for an observer's own filters. */
+		externalSource: string | null;
+		taskId: ID | null;
+		entity: string | null;
+		entityId: ID | null;
+		metadata: Record<string, unknown> | null;
 	}>;
 	/** Pass back as `after` for the next page; `null` on the last page. */
 	next: string | null;
@@ -350,6 +356,8 @@ export interface IInboxItemFeed {
 	unregister(id: string): void;
 	/** One recipient row of a tenant with its item (`null` when either is gone). */
 	readRecipient(tenantId: ID, recipientId: ID): Promise<IInboxObservedItem | null>;
+	/** Of the recipient rows named, the ones that are gone (or whose item is): an observer ends their copies. */
+	missingRecipients(tenantId: ID, recipientIds: ID[]): Promise<ID[]>;
 	/**
 	 * The recipient rows of a tenant whose item or own state changed since a time, in recipient id order (not change
 	 * time), at most `limit` per page: a recovery sweep for a notice an observer missed. Page with `after` = `next`

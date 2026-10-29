@@ -174,7 +174,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		private readonly queue: EverWorksOutboundQueue,
 		private readonly log: EverWorksSyncLogService,
 		/** The Gauzy Inbox → Ever Works mirror (the inbox phase's backfill); absent in bare test wiring. */
-		@Optional() private readonly inboxPush?: EverWorksInboxPushService | null
+		@Optional() private readonly inboxPush?: EverWorksInboxPushService
 	) {}
 
 	// ── Routes ─────────────────────────────────────────────────────────────────────────────────────
@@ -472,13 +472,20 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		if (direction === 'off') return { import: false, export: false, note: `${spec.domain} are not synced for this mapping` };
 		if (spec.kind === 'mapping_only') return { import: false, export: false, done: true, note: 'people are paired on the People tab; nobody is created' };
 		if (spec.kind === 'included') return { import: false, export: false, done: true, note: 'carried by the task records' };
-		const missingScope = spec.scope && !this.scopesOf(context.connection).includes(spec.scope);
-		if (missingScope) return { import: false, export: false, note: `the Ever Works key lacks ${spec.scope}` };
+		const scopes = this.scopesOf(context.connection);
+		const missingScope = spec.scope && !scopes.includes(spec.scope);
+		// The inbox phase reads with inbox:read and sends with inbox:write: a key with one of them runs that half.
+		if (missingScope && spec.name !== 'inbox') return { import: false, export: false, note: `the Ever Works key lacks ${spec.scope}` };
 		// Works are link only: the import refreshes paired projects from Ever Works.
-		const reads = fromEverWorks(direction) || direction === 'link_only';
+		const reads = (fromEverWorks(direction) || direction === 'link_only') && !missingScope;
 		const canImport = reads && !!spec.aggregateType && this.applier.hasHandler(spec.aggregateType);
 		const exportType = spec.exportLinkType ?? spec.linkType;
-		let canExport = toEverWorks(direction) && !!exportType && this.pusher.hasHandler(exportType) && EXPORTED_PHASES.has(spec.name);
+		let canExport =
+			toEverWorks(direction) &&
+			!!exportType &&
+			this.pusher.hasHandler(exportType) &&
+			EXPORTED_PHASES.has(spec.name) &&
+			(spec.name !== 'inbox' || scopes.includes('inbox:write'));
 		// The Gauzy Inbox's own items are sent as they are written; a run sends the open ones only when the mapping asks.
 		let inboxNote: string | null = null;
 		if (canExport && spec.name === 'inbox') {
@@ -488,6 +495,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		}
 		if (!canImport && !canExport) {
 			if (inboxNote) return { import: false, export: false, done: true, note: inboxNote };
+			if (missingScope) return { import: false, export: false, note: `the Ever Works key lacks ${spec.scope}` };
 			return { import: false, export: false, note: 'not synced by this version yet; a later resync picks it up' };
 		}
 		const note = spec.name === 'teams' || spec.name === 'works' ? 'unpaired records wait for their tab; only pairs are refreshed' : inboxNote;
@@ -1034,7 +1042,11 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		}
 		const records = listed.records.filter((record) => record['deleted'] !== true && record['visibility'] !== 'private');
 		const idOf = (record: Record<string, unknown>) => String(spec.name === 'members' ? (record['userId'] ?? record['id']) : record['id']);
-		const links = spec.linkType ? await this.links(context, spec.linkType) : [];
+		const links = [
+			...(spec.linkType ? await this.links(context, spec.linkType) : []),
+			// The inbox list also holds the copies of Gauzy items this plugin filed: they are Gauzy's, never created there.
+			...(spec.name === 'inbox' ? await this.links(context, EverWorksLinkType.GAUZY_INBOX_ITEM) : [])
+		];
 		const linkedEw = new Set(links.map((link) => link.ewId));
 		const linkedCount = records.filter((record) => linkedEw.has(idOf(record))).length;
 		const unlinked = records.length - linkedCount;
@@ -1055,7 +1067,11 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		}
 		// What a run would create is what has no link at all: a record whose link stopped syncing (deleted on the
 		// other side, turned private) is known and is not created again (local e2e: a resync created nothing).
-		const known = new Set([...linkedEw, ...(spec.linkType ? await this.stoppedLinks(context, spec.linkType) : []).map((link) => link.ewId)]);
+		const known = new Set([
+			...linkedEw,
+			...(spec.linkType ? await this.stoppedLinks(context, spec.linkType) : []).map((link) => link.ewId),
+			...(spec.name === 'inbox' ? await this.stoppedLinks(context, EverWorksLinkType.GAUZY_INBOX_ITEM) : []).map((link) => link.ewId)
+		]);
 		const neverLinked = records.filter((record) => !known.has(idOf(record))).length;
 		if (spec.name === 'missions') {
 			// Missions that predate the mapping wait for the Initiatives tab; the run creates none of them.

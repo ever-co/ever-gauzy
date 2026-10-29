@@ -99,6 +99,8 @@ import { EverWorksInboxPreferencesService } from './ever-works-inbox-preferences
 import { parseGauzyInboxExternalId, plainTextAsMarkdown } from './ever-works-inbox-push.mapper';
 import { EverWorksInboxPushService } from './ever-works-inbox-push.service';
 import { EverWorksInboxService } from './ever-works-inbox.service';
+import { EverWorksPeopleService } from '../people/ever-works-people.service';
+import { EverWorksInitialSyncService } from '../sync/initial/ever-works-initial-sync.service';
 
 type Row = Record<string, any>;
 
@@ -139,7 +141,12 @@ function repository(rows: Row[], unique?: (a: Row, b: Row) => boolean) {
 }
 
 function setup(
-	options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTIONS>; entitySync?: Row; inbox?: boolean } = {}
+	options: {
+		directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTIONS>;
+		entitySync?: Row;
+		inbox?: boolean;
+		pushSince?: string;
+	} = {}
 ) {
 	const mock = new MockEverWorksServer();
 	const ewOrg = { id: 'ew-org-1', slug: 'acme', displayName: 'Acme' };
@@ -150,7 +157,10 @@ function setup(
 		tenantId: TENANT,
 		organizationId: ORG,
 		integrationTenantId: MAPPING,
-		mapping: { id: MAPPING, settings: [] },
+		mapping: {
+			id: MAPPING,
+			settings: options.pushSince ? [{ settingsName: 'INBOX_PUSH_SINCE', settingsValue: options.pushSince }] : []
+		},
 		connection,
 		everWorksOrganizationId: ewOrg.id,
 		everWorksOrganizationSlug: ewOrg.slug,
@@ -327,13 +337,43 @@ function setup(
 						source: item.source,
 						kind: item.kind,
 						changedAt: new Date(),
-						itemUpdatedAt: new Date()
+						itemUpdatedAt: new Date(),
+						externalSource: item.externalSource ?? null,
+						taskId: (item.taskId as string) ?? null,
+						entity: (item.entity as string) ?? null,
+						entityId: (item.entityId as string) ?? null,
+						metadata: (item.metadata as Record<string, unknown>) ?? null
 					};
 				}),
 				next: rows.length > limit ? (page[page.length - 1].id as string) : null
 			};
 		},
-		recipientsChangedSince: async () => ({ recipients: [], next: null })
+		recipientsChangedSince: async (tenantId, since) => ({
+			recipients: [...recipients.values()]
+				.filter((row) => row.tenantId === tenantId)
+				.map((row) => {
+					const item = items.get(row.inboxItemId as string) as IInboxItem;
+					return {
+						id: row.id as string,
+						userId: row.userId,
+						inboxItemId: item.id as string,
+						organizationId: ORG,
+						source: item.source,
+						kind: item.kind,
+						changedAt: item.updatedAt as Date,
+						itemUpdatedAt: item.updatedAt as Date,
+						externalSource: item.externalSource ?? null,
+						taskId: (item.taskId as string) ?? null,
+						entity: (item.entity as string) ?? null,
+						entityId: (item.entityId as string) ?? null,
+						metadata: (item.metadata as Record<string, unknown>) ?? null
+					};
+				})
+				.filter((row) => new Date(row.changedAt).getTime() >= since.getTime()),
+			next: null
+		}),
+		missingRecipients: async (tenantId, ids) =>
+			ids.filter((id) => !recipients.has(id) || (recipients.get(id) as Row)['tenantId'] !== tenantId)
 	};
 	const actions: IInboxRecipientActions & { reply: jest.Mock; setState: jest.Mock } = {
 		reply: jest.fn(async (id: string, input: { text?: string; optionId?: string }) => {
@@ -972,6 +1012,45 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 		expect(inboxWrite.patched).toHaveLength(0);
 	});
 
+	it('an Ever Works answer never unarchives what the person archived in Gauzy meanwhile', async () => {
+		const { addItem, push, inboxWrite, apply, actions, recipients, items, linkOf } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		(recipients.get(ada) as Row)['isArchived'] = true; // archived in Gauzy; its push has not gone out yet
+		await expect(
+			apply(await inboxWrite.answer(linkOf(ada)?.['ewId'] as string, { choiceId: 'yes' }))
+		).resolves.toMatchObject({
+			status: 'applied',
+			message: 'reply'
+		});
+		expect(actions.setState).not.toHaveBeenCalled();
+		expect(recipients.get(ada)).toMatchObject({ isArchived: true });
+		expect(items.get(item.id as string)).toMatchObject({ status: InboxItemStatusEnum.ANSWERED });
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(inboxWrite.patched[inboxWrite.patched.length - 1].body).toEqual({ state: 'archived' });
+	});
+
+	it('an unarchive in Ever Works does not acknowledge a Gauzy answer that has not gone out', async () => {
+		const { addItem, push, inboxWrite, apply, recipients, items, linkOf } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		const ewId = linkOf(ada)?.['ewId'] as string;
+		(recipients.get(ada) as Row)['isArchived'] = true;
+		await push(ada); // the copy is archived in Ever Works
+		// Answered in Gauzy (its push still waiting) while the person unarchives the copy in Ever Works.
+		Object.assign(items.get(item.id as string) as IInboxItem, {
+			status: InboxItemStatusEnum.ANSWERED,
+			response: { optionId: 'yes', answeredByUserId: ADA.user, answeredAt: new Date().toISOString() }
+		});
+		const unarchived = inboxWrite.unarchive(ewId);
+		await expect(apply(await unarchived)).resolves.toMatchObject({ status: 'applied', message: 'unarchive' });
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(inboxWrite.patched[inboxWrite.patched.length - 1].body).toEqual({
+			state: 'resolved',
+			resolution: { choiceId: 'yes' }
+		});
+	});
+
 	it('applies only what moved in Ever Works: a Gauzy archive still waiting to be pushed survives an Ever Works read', async () => {
 		const { addItem, push, inboxWrite, apply, actions, recipients, linkOf } = setup();
 		const { ada } = addItem({ kind: InboxItemKindEnum.NOTICE, options: null });
@@ -1015,19 +1094,36 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 });
 
 describe('EverWorksInboxPushService — backfill', () => {
-	it('keeps a notice while mentions or assignments are sent, even with notices off (the push checks the exact kind)', async () => {
+	it('reads the exact kind of a notice: a mention still goes with notices off, a plain notice does not', async () => {
 		const { addItem, service, context, preferenceService } = setup();
 		const mention = addItem({
 			kind: InboxItemKindEnum.NOTICE,
 			options: null,
 			metadata: { notificationType: 'Mention' }
 		});
+		addItem({ kind: InboxItemKindEnum.NOTICE, options: null });
 		mockCaller.tenantId = TENANT;
 		mockCaller.userId = ADA.user;
 		await preferenceService.updateMine({ notice: false });
 		expect((await service.backfillPage(context as never, null)).ids).toEqual([mention.ada]);
 		await preferenceService.updateMine({ mention: false, assignment: false });
 		expect((await service.backfillPage(context as never, null)).ids).toEqual([]);
+	});
+
+	it('leaves out what the push refuses: the integration’s own notices and items of a task kept out of every integration', async () => {
+		const { addItem, service, context, tasks } = setup();
+		const hidden = randomUUID();
+		tasks.push({ id: hidden, tenantId: TENANT, syncScope: TaskSyncScopeEnum.NONE });
+		const kept = addItem();
+		addItem({
+			kind: InboxItemKindEnum.NOTICE,
+			source: InboxItemSourceEnum.SYSTEM,
+			externalSource: 'ever_works_notice',
+			options: null
+		});
+		addItem({ taskId: hidden });
+		expect((await service.backfillPage(context as never, null)).ids).toEqual([kept.ada]);
+		await expect(service.backfillCounts(context as never)).resolves.toEqual({ total: 1, linked: 0 });
 	});
 
 	it('lists the open Gauzy-origin items of paired people, as their preferences allow', async () => {
@@ -1044,6 +1140,46 @@ describe('EverWorksInboxPushService — backfill', () => {
 		await preferenceService.updateMine({ email: false });
 		expect((await service.backfillPage(context as never, null)).ids).toEqual([open.ada]);
 		await expect(service.backfillCounts(context as never)).resolves.toEqual({ total: 1, linked: 0 });
+	});
+});
+
+describe('EverWorksInboxPushService — recovery sweep', () => {
+	const connection = { id: 'conn-1' } as never;
+
+	it('files a never-sent item only for a change after the inbox started going to Ever Works (no quiet backfill)', async () => {
+		const pushSince = new Date(Date.now() - 10 * 60_000);
+		const { addItem, service, queued } = setup({ pushSince: pushSince.toISOString() });
+		addItem({ title: 'Untouched since before', updatedAt: new Date(pushSince.getTime() - 20 * 60_000) });
+		const fresh = addItem({ title: 'Written after', updatedAt: new Date() });
+		await service.sweep(connection);
+		expect(queued.map((trigger) => trigger['gauzyId'])).toEqual([fresh.ada]);
+	});
+
+	it('files no never-sent item while the mapping has no start time of the push (only the live capture does)', async () => {
+		const { addItem, service, queued } = setup();
+		addItem({ updatedAt: new Date() });
+		await service.sweep(connection);
+		expect(queued).toEqual([]);
+	});
+
+	it('archives the copy of a recipient row that is gone without a notice', async () => {
+		const { addItem, push, service, queued, recipients, inboxWrite } = setup();
+		const { ada } = addItem({ updatedAt: new Date(Date.now() - 2 * 60 * 60_000) });
+		await push(ada);
+		recipients.delete(ada); // a replacing re-delivery removed the row; its notice was lost
+		await service.sweep(connection);
+		expect(queued).toEqual([expect.objectContaining({ gauzyId: ada, changedFields: ['gone'] })]);
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(inboxWrite.patched[inboxWrite.patched.length - 1].body).toEqual({ state: 'archived' });
+	});
+});
+
+describe('dependency injection', () => {
+	it('injects the mirror and the preferences by class (a `| null` type would emit Object and inject nothing)', () => {
+		const types = (target: unknown) => Reflect.getMetadata('design:paramtypes', target as object) as unknown[];
+		expect(types(EverWorksInboxService)).toContain(EverWorksInboxPushService);
+		expect(types(EverWorksInitialSyncService)).toContain(EverWorksInboxPushService);
+		expect(types(EverWorksPeopleService)).toContain(EverWorksInboxPreferencesService);
 	});
 });
 

@@ -17,6 +17,7 @@ import {
 } from '@gauzy/core';
 import { EverWorksCatalogService } from '../ever-works-catalog.service';
 import { EVER_WORKS_INTEGRATION_NAME } from '../ever-works.constants';
+import { toEverWorks } from '../sync/initial/ever-works-sync-phases';
 import { EverWorksSettingName as S } from '../ever-works-setting.enum';
 import { EverWorksScope, EverWorksScopeService } from '../ever-works-scope.service';
 import { EverWorksConnection, EverWorksConnectionStatus } from '../connection/ever-works-connection.entity';
@@ -164,7 +165,9 @@ export class EverWorksMappingService {
 				[S.INCLUDE_HIDDEN_TASKS]: 'false',
 				[S.INCLUDE_TRIAGE_TASKS]: 'false',
 				[S.INCLUDE_GOAL_ITERATION_KEY_RESULTS]: 'false',
-				[S.SYNC_UNLINKED_PROJECT_TASKS]: 'true'
+				[S.SYNC_UNLINKED_PROJECT_TASKS]: 'true',
+				// The default inbox direction writes to Ever Works from now on (only the backfill sends what is older).
+				[S.INBOX_PUSH_SINCE]: toEverWorks(DEFAULT_EVER_WORKS_DIRECTIONS.inbox) ? new Date().toISOString() : ''
 			};
 			this.set(row, defaults, manager, true);
 			this.set(row, firstTime, manager, false);
@@ -194,8 +197,11 @@ export class EverWorksMappingService {
 			const mapping = await this.require(manager, scope, integrationTenantId);
 			const values: Record<string, string> = {};
 			if (dto.directions !== undefined) {
-				const merged = { ...this.directions(mapping), ...this.validDirections(dto.directions) };
+				const current = this.directions(mapping);
+				const merged = { ...current, ...this.validDirections(dto.directions) };
 				values[S.ENTITY_DIRECTIONS] = JSON.stringify(merged);
+				// The Gauzy Inbox starts going to Ever Works now: older items only with the backfill.
+				if (toEverWorks(merged.inbox) && !toEverWorks(current.inbox)) values[S.INBOX_PUSH_SINCE] = new Date().toISOString();
 			}
 			for (const [field, name] of [
 				['defaultProjectId', S.DEFAULT_PROJECT_ID],
