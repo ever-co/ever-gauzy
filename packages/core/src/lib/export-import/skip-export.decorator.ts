@@ -20,6 +20,10 @@ export const SKIP_EXPORT_METADATA = 'skipExport';
  * repository graph. After an import the knowledge tables are rebuilt by re-indexing the imported
  * documents, which is also what keeps embeddings consistent with the current model version.
  *
+ * It applies to core entities too, for platform records that are not a tenant's to carry — the
+ * account deletion requests. Core tables are exported only when `RepositoriesService` registers
+ * them; a marked one stays out of the graph even then.
+ *
  * @example
  * ```ts
  * @SkipExport()

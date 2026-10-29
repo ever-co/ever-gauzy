@@ -1276,13 +1276,19 @@ export class RepositoriesService implements OnModuleInit {
 	/**
 	 *
 	 * A helper function that builds dynamically a dependencies / relations
-	 * graph for each repository registered
+	 * graph for each repository registered, minus the entities marked with `SkipExport`
 	 *
 	 */
 	async buildRepositoriesRelationsGraph() {
 		const result: IRepositoryModel[] = [];
 		for await (const item of this.repositories) {
 			const { repository, isStatic, substitute, excludeGlobalDefaults } = item;
+
+			// A core entity marked with `SkipExport` stays out exactly like a plugin one: registering its repository
+			// above must not be enough to put its rows in an archive, or to let an import write them.
+			if (isExportSkipped(repository.metadata.target as Function)) {
+				continue;
+			}
 
 			const repositoryRelationsGraph = await this.getRepositoryRelationsGraph(repository);
 
