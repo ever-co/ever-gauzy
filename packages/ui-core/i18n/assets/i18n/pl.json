@@ -3821,6 +3821,12 @@
 		"ESTIMATE_HOURS": "Godziny",
 		"ESTIMATE_MINUTES": "Minuty",
 		"TASKS_STATUS": "Status",
+		"STATUS_CATEGORY": {
+			"TODO": "Do zrobienia",
+			"IN_PROGRESS": "W trakcie",
+			"DONE": "Gotowe"
+		},
+		"CREATE_STATUS": "Utwórz status",
 		"TASK_PRIORITY": "Priorytet",
 		"TASK_SIZE": "Rozmiar",
 		"PARENT_TASK": "Zadanie nadrzędne",
