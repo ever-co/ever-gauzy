@@ -25,6 +25,29 @@ const FONT_FILE = (require('jimp/fonts') as { SANS_128_WHITE: string }).SANS_128
 /** How many drawn images are kept in memory (a 330x300 placeholder is about 3 KB). */
 const MAX_CACHED_IMAGES = 256;
 
+/** How many placeholders are drawn at a time, and how many more may wait for a slot before requests are refused. */
+const MAX_ACTIVE_DRAWS = 4;
+const MAX_WAITING_DRAWS = 64;
+
+/** Too many placeholders are being drawn: the route answers 503, and the client tries again later. */
+export class PlaceholderImageBusyError extends Error {
+	constructor() {
+		super('Too many placeholder images are being drawn; try again shortly.');
+		this.name = 'PlaceholderImageBusyError';
+	}
+}
+
+/** A drawn placeholder. */
+export interface RenderedPlaceholderImage {
+	/** The PNG bytes. */
+	png: Buffer;
+	/**
+	 * Whether it was drawn as asked. `false` when its text could not be drawn (the font could not be read): the image
+	 * is then the background alone and must not be cached.
+	 */
+	complete: boolean;
+}
+
 /** At most this share of the image's shorter side is text height, and this share of its width text width. */
 const TEXT_HEIGHT_SHARE = 0.4;
 const TEXT_WIDTH_SHARE = 0.8;
@@ -57,8 +80,12 @@ interface Bitmap {
 
 let font: Promise<BitmapFont> | undefined;
 
-/** The drawn images, least recently used first. */
-const drawnImages = new Map<string, Promise<Buffer>>();
+/** The drawn images (and those being drawn), least recently used first. */
+const drawnImages = new Map<string, Promise<RenderedPlaceholderImage>>();
+
+/** The draws running, and the starts of those waiting for a slot. */
+let activeDraws = 0;
+const waitingDraws: Array<() => void> = [];
 
 /**
  * The attributes of a BMFont XML tag.
@@ -212,11 +239,14 @@ async function drawText(image: PlaceholderImage): Promise<Bitmap | undefined> {
  *
  * @param image - The placeholder.
  */
-async function draw(image: PlaceholderImage): Promise<Buffer> {
-	// A font that cannot be read leaves the placeholder without its text rather than without an image; the font is
-	// read again for the next placeholder.
+async function draw(image: PlaceholderImage): Promise<RenderedPlaceholderImage> {
+	// A font that cannot be read, or text that cannot be scaled, leaves the placeholder without its text rather than
+	// without an image. Such an image is not complete: it is neither kept nor cached by clients, and the next request
+	// for it reads the font again.
+	let complete = true;
 	const text = await drawText(image).catch((error) => {
 		console.error('PlaceholderImage: the text could not be drawn:', error);
+		complete = false;
 		return undefined;
 	});
 	const background = sharp({
@@ -227,28 +257,61 @@ async function draw(image: PlaceholderImage): Promise<Buffer> {
 			{ input: text.data, raw: { width: text.width, height: text.height, channels: 4 }, gravity: 'centre' }
 		]);
 	}
-	return background.png().toBuffer();
+	return { png: await background.png().toBuffer(), complete };
 }
 
 /**
- * A placeholder image as PNG bytes. The latest {@link MAX_CACHED_IMAGES} images drawn are kept, so a page of records
- * that share a placeholder draws it once.
+ * Runs a draw once one of the {@link MAX_ACTIVE_DRAWS} slots is free. The cache bounds the images kept, not the work:
+ * without this, a burst of distinct placeholder URLs (the route is public) would start as many draws at once, each
+ * holding its pixels and a libuv thread that file and crypto work also wait for.
+ *
+ * @param work - The draw.
+ * @throws PlaceholderImageBusyError when {@link MAX_WAITING_DRAWS} draws already wait.
+ */
+async function withDrawSlot<T>(work: () => Promise<T>): Promise<T> {
+	if (activeDraws < MAX_ACTIVE_DRAWS) {
+		activeDraws++;
+	} else if (waitingDraws.length < MAX_WAITING_DRAWS) {
+		// The draw that ends hands its slot over (see below), so `activeDraws` stays as it is.
+		await new Promise<void>((resolve) => waitingDraws.push(resolve));
+	} else {
+		throw new PlaceholderImageBusyError();
+	}
+	try {
+		return await work();
+	} finally {
+		const next = waitingDraws.shift();
+		if (next) {
+			next();
+		} else {
+			activeDraws--;
+		}
+	}
+}
+
+/**
+ * A placeholder image as PNG bytes. The latest {@link MAX_CACHED_IMAGES} complete images drawn are kept, so a page of
+ * records that share a placeholder draws it once; at most {@link MAX_ACTIVE_DRAWS} are drawn at a time.
  *
  * @param image - The placeholder (see `parsePlaceholderImage`).
+ * @throws PlaceholderImageBusyError (rejected) when too many draws already wait.
  */
-export function renderPlaceholderImage(image: PlaceholderImage): Promise<Buffer> {
+export function renderPlaceholderImage(image: PlaceholderImage): Promise<RenderedPlaceholderImage> {
 	const key = `${image.width}x${image.height}/${image.background}/${image.text}`;
-	let png = drawnImages.get(key);
-	if (png) {
+	let rendered = drawnImages.get(key);
+	if (rendered) {
 		// Most recently used last.
 		drawnImages.delete(key);
 	} else {
-		png = draw(image);
-		png.catch(() => drawnImages.delete(key));
+		const drawing = withDrawSlot(() => draw(image));
+		rendered = drawing;
+		// Only a complete image stays: a failed draw, or one drawn without its text, is drawn again next time.
+		const forget = () => drawnImages.get(key) === drawing && drawnImages.delete(key);
+		drawing.then(({ complete }) => complete || forget(), forget);
 	}
-	drawnImages.set(key, png);
+	drawnImages.set(key, rendered);
 	if (drawnImages.size > MAX_CACHED_IMAGES) {
 		drawnImages.delete(drawnImages.keys().next().value);
 	}
-	return png;
+	return rendered;
 }

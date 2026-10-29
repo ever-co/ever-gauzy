@@ -4,6 +4,7 @@ import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 import { PlaceholderImageController } from './placeholder-image.controller';
+import * as renderer from './placeholder-image.renderer';
 
 /**
  * The route that draws placeholder images in place of the third-party dummyimage.com (Ever Gauzy #618). It is called
@@ -24,6 +25,8 @@ describe('PlaceholderImageController', () => {
 	});
 
 	afterAll(() => app?.close());
+
+	afterEach(() => jest.restoreAllMocks());
 
 	it('is public', () => {
 		const reflector = new Reflector();
@@ -67,5 +70,22 @@ describe('PlaceholderImageController', () => {
 			const response = await request(app.getHttpServer()).get(path).expect(400);
 			expect(response.headers['cache-control']).not.toBe('public, max-age=31536000, immutable');
 		}
+	});
+
+	it('serves an image drawn without its text, but lets no one keep it', async () => {
+		jest.spyOn(renderer, 'renderPlaceholderImage').mockResolvedValueOnce({
+			png: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+			complete: false
+		});
+		const response = await request(app.getHttpServer()).get('/api/placeholder/330x300/269aff?text=Z').expect(200);
+		expect(response.headers['content-type']).toBe('image/png');
+		expect(response.headers['cache-control']).toBe('no-store');
+	});
+
+	it('answers 503 with Retry-After when too many placeholders are being drawn', async () => {
+		jest.spyOn(renderer, 'renderPlaceholderImage').mockRejectedValueOnce(new renderer.PlaceholderImageBusyError());
+		const response = await request(app.getHttpServer()).get('/api/placeholder/330x300/269aff?text=Y').expect(503);
+		expect(response.headers['retry-after']).toBe('1');
+		expect(response.headers['cache-control']).not.toBe('public, max-age=31536000, immutable');
 	});
 });

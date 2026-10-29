@@ -1,9 +1,22 @@
-import { BadRequestException, Controller, Get, Param, Query, Res, StreamableFile } from '@nestjs/common';
+import {
+	BadRequestException,
+	Controller,
+	Get,
+	Param,
+	Query,
+	Res,
+	ServiceUnavailableException,
+	StreamableFile
+} from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { Public } from '@gauzy/common';
 import { parsePlaceholderImage, PLACEHOLDER_IMAGE_MAX_SIZE } from './placeholder-image-url';
-import { renderPlaceholderImage } from './placeholder-image.renderer';
+import {
+	PlaceholderImageBusyError,
+	RenderedPlaceholderImage,
+	renderPlaceholderImage
+} from './placeholder-image.renderer';
 
 /**
  * Draws the placeholder images of records that have no image of their own (see `getPlaceholderImageUrl`), in place of
@@ -30,6 +43,10 @@ export class PlaceholderImageController {
 	@ApiOperation({ summary: 'Get a generated placeholder image (PNG).' })
 	@ApiResponse({ status: 200, description: 'The placeholder image, as a PNG.' })
 	@ApiResponse({ status: 400, description: 'The size or the background is not one that can be drawn.' })
+	@ApiResponse({
+		status: 503,
+		description: 'Too many placeholders are being drawn; retry after `Retry-After` seconds.'
+	})
 	@Public()
 	@Get('/:size/:background')
 	async getPlaceholderImage(
@@ -44,8 +61,19 @@ export class PlaceholderImageController {
 				`A placeholder is <width>x<height>/<background>: sizes from 1 to ${PLACEHOLDER_IMAGE_MAX_SIZE} pixels, the background as 3 or 6 hex digits.`
 			);
 		}
-		const png = await renderPlaceholderImage(image);
-		response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+		let rendered: RenderedPlaceholderImage;
+		try {
+			rendered = await renderPlaceholderImage(image);
+		} catch (error) {
+			if (error instanceof PlaceholderImageBusyError) {
+				response.setHeader('Retry-After', '1');
+				throw new ServiceUnavailableException(error.message);
+			}
+			throw error;
+		}
+		const { png, complete } = rendered;
+		// An image drawn without its text (the font could not be read) is served, but kept by no one.
+		response.setHeader('Cache-Control', complete ? 'public, max-age=31536000, immutable' : 'no-store');
 		response.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 		return new StreamableFile(png, { type: 'image/png', length: png.length });
 	}
