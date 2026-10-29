@@ -134,10 +134,7 @@ env:
   # One exception stands without a switch: an entry for a link a legal document vendored from the
   # @ever-co/legal corpus writes, on the legal page that renders it (a re-sync of the corpus can add
   # one; tools/egress-audit/check-baseline-legal.mjs).
-  # 'true' for the account deletion pages (#11519): /auth/delete-account and /auth/delete-account/confirm are new
-  # routes that show the signed-out layout's links, already excused on /auth/login. Set back to 'false' once this
-  # has reached master (the promotions compare with a base that lacks these entries).
-  BASELINE_REWALK: 'true'
+  BASELINE_REWALK: 'false'
 
 jobs:
   inputs:
