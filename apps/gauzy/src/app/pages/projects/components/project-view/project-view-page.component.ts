@@ -168,14 +168,19 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 				this.organization = organization;
 				void this.load();
 			});
-		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back.
-		this.route.queryParamMap
-			.pipe(
+		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back. It is checked
+		// again when the feature flags land: they arrive after the page, and gate the Documents tab.
+		combineLatest([
+			this.route.queryParamMap.pipe(
 				map((params) => params.get('tab') as ProjectViewTab),
-				distinctUntilChanged(),
-				untilDestroyed(this)
-			)
-			.subscribe((tab) => this.openTab(TABS.includes(tab) && this.canOpenTab(tab) ? tab : 'overview'));
+				distinctUntilChanged()
+			),
+			this.store.featureOrganizations$,
+			this.store.featureTenant$,
+			this.store.featureToggles$
+		])
+			.pipe(untilDestroyed(this))
+			.subscribe(([tab]) => this.openTab(TABS.includes(tab) && this.canOpenTab(tab) ? tab : 'overview'));
 		// The task drawer follows the URL too, and reloads with the organization.
 		combineLatest([this.route.queryParamMap.pipe(map((params) => params.get('task'))), organization$])
 			.pipe(
