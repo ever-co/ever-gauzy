@@ -3850,11 +3850,6 @@
 		"ESTIMATE_HOURS": "Hours",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "עבודה",
-		"STATUS_CATEGORY": {
-			"TODO": "לביצוע",
-			"IN_PROGRESS": "בתהליך",
-			"DONE": "הושלם"
-		},
 		"CREATE_STATUS": "יצירת סטטוס",
 		"TASK_PRIORITY": "עדיפות",
 		"TASK_SIZE": "גודל",

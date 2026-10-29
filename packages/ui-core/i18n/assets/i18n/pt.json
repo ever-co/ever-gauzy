@@ -3822,11 +3822,6 @@
 		"ESTIMATE_HOURS": "Horas",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Estado",
-		"STATUS_CATEGORY": {
-			"TODO": "A fazer",
-			"IN_PROGRESS": "Em andamento",
-			"DONE": "Concluído"
-		},
 		"CREATE_STATUS": "Criar estado",
 		"TASK_PRIORITY": "Prioridade",
 		"TASK_SIZE": "Tamanho",

@@ -3820,11 +3820,6 @@
 		"ESTIMATE_HOURS": "الساعات",
 		"ESTIMATE_MINUTES": "الدقائق",
 		"TASKS_STATUS": "الحالة",
-		"STATUS_CATEGORY": {
-			"TODO": "للتنفيذ",
-			"IN_PROGRESS": "قيد التنفيذ",
-			"DONE": "تم"
-		},
 		"CREATE_STATUS": "إنشاء حالة",
 		"TASK_PRIORITY": "الأولوية",
 		"TASK_SIZE": "حجم",

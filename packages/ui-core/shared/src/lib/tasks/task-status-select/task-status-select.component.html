@@ -5,9 +5,6 @@
 	[addTag]="canCreate ? createNew : null"
 	[items]="statuses$ | async"
 	[placeholder]="placeholder || 'TASKS_PAGE.TASKS_STATUS' | translate"
-	[groupBy]="groupBy"
-	[groupValue]="groupValue"
-	[searchFn]="searchFn"
 	appendTo="body"
 	bindLabel="name"
 >
@@ -16,11 +13,6 @@
 		<span class="status-lozenge" [style.--status-color]="colorOf(item)" [title]="labelOf(item)">
 			{{ labelOf(item) }}
 		</span>
-	</ng-template>
-
-	<!-- Workflow category caption: To do / In progress / Done -->
-	<ng-template let-item="item" ng-optgroup-tmp>
-		{{ 'TASKS_PAGE.STATUS_CATEGORY.' + item.key | translate }}
 	</ng-template>
 
 	<ng-template let-item="item" ng-option-tmp>

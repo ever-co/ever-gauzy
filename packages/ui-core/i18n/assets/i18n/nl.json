@@ -3822,11 +3822,6 @@
 		"ESTIMATE_HOURS": "Uren",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Status",
-		"STATUS_CATEGORY": {
-			"TODO": "Te doen",
-			"IN_PROGRESS": "Bezig",
-			"DONE": "Klaar"
-		},
 		"CREATE_STATUS": "Status aanmaken",
 		"TASK_PRIORITY": "Prioriteit",
 		"TASK_SIZE": "Grootte",

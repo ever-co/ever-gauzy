@@ -3822,11 +3822,6 @@
 		"ESTIMATE_HOURS": "时",
 		"ESTIMATE_MINUTES": "Mins - 分钟",
 		"TASKS_STATUS": "状态",
-		"STATUS_CATEGORY": {
-			"TODO": "待办",
-			"IN_PROGRESS": "进行中",
-			"DONE": "已完成"
-		},
 		"CREATE_STATUS": "创建状态",
 		"TASK_PRIORITY": "优先",
 		"TASK_SIZE": "大小",

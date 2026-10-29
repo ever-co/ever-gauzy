@@ -3823,11 +3823,6 @@
 		"ESTIMATE_HOURS": "Heures",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Statut",
-		"STATUS_CATEGORY": {
-			"TODO": "À faire",
-			"IN_PROGRESS": "En cours",
-			"DONE": "Terminé"
-		},
 		"CREATE_STATUS": "Créer un statut",
 		"TASK_PRIORITY": "Priorité",
 		"TASK_SIZE": "Taille",

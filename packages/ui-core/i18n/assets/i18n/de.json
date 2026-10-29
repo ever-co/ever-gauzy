@@ -3818,11 +3818,6 @@
 		"ESTIMATE_HOURS": "Stunden",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Status",
-		"STATUS_CATEGORY": {
-			"TODO": "Zu erledigen",
-			"IN_PROGRESS": "In Bearbeitung",
-			"DONE": "Erledigt"
-		},
 		"CREATE_STATUS": "Status erstellen",
 		"TASK_PRIORITY": "Priorität",
 		"TASK_SIZE": "Größe",

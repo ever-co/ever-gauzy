@@ -27,13 +27,10 @@ import { ErrorHandlingService, Store, TaskStatusesService } from '@gauzy/ui-core
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
 /**
- * The workflow category a status belongs to, the way Jira groups statuses: every status is
- * "to do", "in progress" or "done". The values are also the i18n keys under `TASKS_PAGE.STATUS_CATEGORY`.
+ * The workflow category a status belongs to, the way Jira colours statuses: every status is
+ * "to do", "in progress" or "done".
  */
 type StatusCategory = 'TODO' | 'IN_PROGRESS' | 'DONE';
-
-/** Display order of the categories in the dropdown. */
-const CATEGORY_ORDER: StatusCategory[] = ['TODO', 'IN_PROGRESS', 'DONE'];
 
 /** Lozenge colour for a status that has no valid colour of its own. */
 const CATEGORY_COLORS: Record<StatusCategory, string> = {
@@ -255,8 +252,6 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 			.pipe(
 				// Map the response to either the fetched statuses or a default set
 				map(({ items, total }: IPagination<ITaskStatus>) => (total > 0 ? items : this._statuses)),
-				// ng-select lists groups in order of first appearance, so sort by category first
-				map((statuses: ITaskStatus[]) => this.sortByCategory(statuses)),
 				// Update the observable with the fetched statuses
 				tap((statuses: ITaskStatus[]) => {
 					this.statuses$.next(statuses);
@@ -323,37 +318,6 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 		if (!this.status || !status) return false;
 		if (this.status.id && status.id) return this.status.id === status.id;
 		return this.status.value === status.value;
-	}
-
-	/** ng-select `groupBy`: the category key of each status. */
-	groupBy = (status: ITaskStatus): StatusCategory => this.categoryOf(status);
-
-	/** ng-select `groupValue`: what the category caption template receives as `item`. */
-	groupValue = (key: StatusCategory): { key: StatusCategory } => ({ key });
-
-	/** ng-select `searchFn`: match the displayed label, so "in prog" finds `in-progress`. */
-	searchFn = (term: string, status: ITaskStatus): boolean =>
-		this.labelOf(status)
-			.toLowerCase()
-			.includes((term ?? '').trim().toLowerCase());
-
-	/**
-	 * Orders statuses by workflow category, then by their configured order within a category.
-	 *
-	 * @param statuses - The statuses to sort.
-	 * @returns A new, sorted array.
-	 */
-	private sortByCategory(statuses: ITaskStatus[]): ITaskStatus[] {
-		return statuses
-			.map((status, index) => ({ status, index }))
-			.sort(
-				(a, b) =>
-					CATEGORY_ORDER.indexOf(this.categoryOf(a.status)) -
-						CATEGORY_ORDER.indexOf(this.categoryOf(b.status)) ||
-					(a.status.order ?? Number.MAX_SAFE_INTEGER) - (b.status.order ?? Number.MAX_SAFE_INTEGER) ||
-					a.index - b.index
-			)
-			.map(({ status }) => status);
 	}
 
 	/**
