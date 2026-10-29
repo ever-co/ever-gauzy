@@ -1,7 +1,17 @@
 jest.mock('../core/context', () => ({ RequestContext: { currentRequest: () => null } }));
 jest.mock('../core/file-storage', () => ({ FileStorage: class {} }));
 
-import { collectStoredFiles, deleteUnusedRows, isKeyOfTenant, onlyFilesOfTenant } from './account-deletion-files';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { DataSource } from 'typeorm';
+import {
+	collectStoredFiles,
+	deleteRowsAddressedTo,
+	deleteUnusedRows,
+	isKeyOfTenant,
+	onlyFilesOfTenant
+} from './account-deletion-files';
 
 const TENANT = '11111111-1111-4111-8111-111111111111';
 const OTHER = '22222222-2222-4222-8222-222222222222';
@@ -111,5 +121,71 @@ describe('collectStoredFiles for a factory reset', () => {
 		const selects = query.mock.calls.map(([sql]) => String(sql)).filter((sql) => sql.startsWith('SELECT "'));
 		expect(selects.find((sql) => sql.includes('FROM "screenshot"'))).not.toContain('IS NOT NULL');
 		expect(selects.find((sql) => sql.includes('FROM "camshots"'))).toContain('"timeSlotId" IS NOT NULL');
+	});
+});
+
+describe('deleteRowsAddressedTo: the workspace a person leaves keeps no row addressed to them (SQLite)', () => {
+	let dataSource: DataSource;
+	let dbPath: string;
+
+	beforeEach(async () => {
+		dbPath = path.join(os.tmpdir(), `gauzy-addressed-rows-${process.pid}-${Date.now()}-${Math.random()}.sqlite3`);
+		dataSource = new DataSource({ type: 'better-sqlite3', database: dbPath, synchronize: false, logging: false });
+		await dataSource.initialize();
+		for (const table of ['invite', 'email_sent']) {
+			await dataSource.query(
+				`CREATE TABLE "${table}" ("id" varchar PRIMARY KEY, "tenantId" varchar, "email" varchar)`
+			);
+			await dataSource.query(
+				`INSERT INTO "${table}" ("id", "tenantId", "email") VALUES
+					('${table}-mine', '${TENANT}', 'Leaver@Example.test '),
+					('${table}-coworker', '${TENANT}', 'stayer@example.test'),
+					('${table}-other-workspace', '${OTHER}', 'leaver@example.test')`
+			);
+		}
+	}, 30_000); // The first SQLite connection loads the native driver, slow on a busy machine.
+
+	afterEach(async () => {
+		if (dataSource?.isInitialized) await dataSource.destroy();
+		fs.rmSync(dbPath, { force: true });
+	});
+
+	const ids = async (table: string) =>
+		((await dataSource.query(`SELECT "id" FROM "${table}" ORDER BY "id"`)) as Array<{ id: string }>).map(
+			({ id }) => id
+		);
+
+	it('deletes the invitations and sent-email history of the address, in that workspace only, whatever the case', async () => {
+		await deleteRowsAddressedTo(dataSource.manager, TENANT, ' LEAVER@example.test');
+
+		for (const table of ['invite', 'email_sent']) {
+			expect(await ids(table)).toEqual([`${table}-coworker`, `${table}-other-workspace`]);
+		}
+	});
+
+	it('matches an address with non-ASCII letters whatever their case, which SQLite LOWER does not fold', async () => {
+		await dataSource.query(
+			`INSERT INTO "email_sent" ("id", "tenantId", "email") VALUES ('accented', '${TENANT}', 'Élodie@Example.test')`
+		);
+
+		await deleteRowsAddressedTo(dataSource.manager, TENANT, 'élodie@example.test');
+
+		expect(await ids('email_sent')).not.toContain('accented');
+		expect(await ids('email_sent')).toHaveLength(3);
+	});
+
+	it('deletes nothing without a workspace or an address', async () => {
+		await deleteRowsAddressedTo(dataSource.manager, '', 'leaver@example.test');
+		await deleteRowsAddressedTo(dataSource.manager, TENANT, '  ');
+
+		expect(await ids('invite')).toHaveLength(3);
+		expect(await ids('email_sent')).toHaveLength(3);
+	});
+
+	it('skips a table the schema lacks', async () => {
+		await dataSource.query('DROP TABLE "email_sent"');
+
+		await expect(deleteRowsAddressedTo(dataSource.manager, TENANT, 'leaver@example.test')).resolves.toBeUndefined();
+		expect(await ids('invite')).toEqual(['invite-coworker', 'invite-other-workspace']);
 	});
 });

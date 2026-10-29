@@ -48,6 +48,7 @@ import {
 } from '../user/user-authorship';
 import {
 	collectStoredFiles,
+	deleteRowsAddressedTo,
 	deleteStoredFiles,
 	deleteUnusedRows,
 	isImageAssetShared,
@@ -515,6 +516,9 @@ export class AccountDeletionService {
 
 			if (wholeWorkspace) {
 				await manager.delete(Tenant, { id: user.tenantId });
+			} else {
+				// The workspace the person leaves keeps no row addressed to them: invitations, sent-email history.
+				await deleteRowsAddressedTo(manager, user.tenantId, email);
 			}
 			// Also when the tenant went: a no-op then, and it covers a user row the tenant did not cascade to.
 			await manager.delete(User, { id: user.id });
