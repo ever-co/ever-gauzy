@@ -4,6 +4,7 @@ import { IAccountDeletionRequest } from '@gauzy/contracts';
 import { BaseEntity } from '../core/entities/base.entity';
 import { ColumnIndex, MultiORMColumn, MultiORMEntity } from '../core/decorators/entity';
 import { ExportRedacted } from '../export-import/export-redact.decorator';
+import { SkipExport } from '../export-import/skip-export.decorator';
 import { MikroOrmAccountDeletionRequestRepository } from './repository/mikro-orm-account-deletion-request.repository';
 
 /**
@@ -12,7 +13,12 @@ import { MikroOrmAccountDeletionRequestRepository } from './repository/mikro-orm
  * Not tenant scoped: one address can own accounts in several tenants, and the request covers them all.
  * The emailed token is never stored, only its SHA-256. Once the deletion has run, `email` is cleared
  * and the row stays as the audit record of the request (`emailHash`, timestamps, `result` counts).
+ *
+ * Never exported: the rows are the platform's record of who asked to be deleted, not data a tenant authored, and
+ * an import must not recreate a request on another server. `RepositoriesService` does not register the table for
+ * export either; the marks on the hashes below keep them out of an archive should that ever change.
  */
+@SkipExport()
 @MultiORMEntity('account_deletion_request', { mikroOrmRepository: () => MikroOrmAccountDeletionRequestRepository })
 export class AccountDeletionRequest extends BaseEntity implements IAccountDeletionRequest {
 	/** The address the request was made for; cleared once the deletion ran or the link expired unused. */
@@ -22,8 +28,12 @@ export class AccountDeletionRequest extends BaseEntity implements IAccountDeleti
 	@MultiORMColumn({ nullable: true })
 	email?: string | null;
 
-	/** SHA-256 (hex) of the lower-cased address: what the per-address limit counts, and the audit trail. */
+	/**
+	 * SHA-256 (hex) of the lower-cased address: what the per-address limit counts, and the audit trail. Unsalted,
+	 * so anyone holding a candidate address can confirm it: opaque on export (NOT NULL, so not blank).
+	 */
 	@ApiProperty({ type: () => String })
+	@ExportRedacted({ opaque: true })
 	@ColumnIndex()
 	@MultiORMColumn({ length: 64 })
 	emailHash: string;
@@ -68,8 +78,9 @@ export class AccountDeletionRequest extends BaseEntity implements IAccountDeleti
 	@MultiORMColumn({ nullable: true })
 	revokedAt?: Date | null;
 
-	/** SHA-256 (hex) of the client address the request came from. */
+	/** SHA-256 (hex) of the client address the request came from. Unsalted, and IPv4 is small enough to enumerate. */
 	@ApiPropertyOptional({ type: () => String })
+	@ExportRedacted({ blank: true })
 	@MultiORMColumn({ nullable: true, length: 64 })
 	requestIpHash?: string | null;
 
