@@ -1,5 +1,8 @@
 import '../../core/entities/internal';
 import { ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { PERMISSIONS_METADATA } from '@gauzy/constants';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { PermissionGuard } from '../../shared/guards';
 import { ProjectManagerOrPermissionGuard } from './project-manager-or-permission.guard';
@@ -15,7 +18,7 @@ import { ProjectManagerOrPermissionGuard } from './project-manager-or-permission
  */
 
 const EMPLOYEE = 'employee-1';
-const PROJECT = 'project-1';
+const PROJECT = '11111111-1111-4111-8111-111111111111';
 
 class OrganizationProjectResolver {}
 function handler() {}
@@ -34,11 +37,15 @@ function httpContext(params: Record<string, unknown>): ExecutionContext {
 }
 
 /** The four positions `GqlExecutionContext` reads: root, the field's arguments, the context, the field info. */
-function graphqlContext(args: Record<string, unknown>): ExecutionContext {
-	const positions = [{}, args, { req: { params: {} } }, undefined];
+function graphqlContext(
+	args: Record<string, unknown>,
+	info: unknown = undefined,
+	target: Function = OrganizationProjectResolver
+): ExecutionContext {
+	const positions = [{}, args, { req: { params: {} } }, info];
 	return {
 		getType: () => 'graphql',
-		getClass: () => OrganizationProjectResolver,
+		getClass: () => target,
 		getHandler: () => handler,
 		getArgs: () => positions,
 		getArgByIndex: (index: number) => positions[index],
@@ -97,11 +104,21 @@ describe('ProjectManagerOrPermissionGuard', () => {
 		['createOrganizationProject (its input names no project)', { input: { name: 'New' } }],
 		['the lists', { filter: { id: { eq: PROJECT } }, first: 10 }],
 		['isOrganizationProjectManager, whose project is a projectId', { projectId: PROJECT, employeeId: EMPLOYEE }],
-		['an id that is not a string', { id: ['project-1'] }]
+		['an id that is not a string', { id: [PROJECT] }],
+		['an id that is not a UUID, which the manager lookup would answer with a database error', { id: 'not-a-uuid' }]
 	])('takes no manager short-circuit for %s', async (_case, args) => {
 		const { guard, projectService, permission } = buildGuard();
 
 		await expect(guard.canActivate(graphqlContext(args))).resolves.toBe(false);
+
+		expect(projectService.isManagerOfProject).not.toHaveBeenCalled();
+		expect(permission).toHaveBeenCalledTimes(1);
+	});
+
+	it('takes no manager short-circuit for a REST :id that is not a UUID', async () => {
+		const { guard, projectService, permission } = buildGuard();
+
+		await expect(guard.canActivate(httpContext({ id: 'not-a-uuid' }))).resolves.toBe(false);
 
 		expect(projectService.isManagerOfProject).not.toHaveBeenCalled();
 		expect(permission).toHaveBeenCalledTimes(1);
@@ -124,5 +141,54 @@ describe('ProjectManagerOrPermissionGuard', () => {
 
 		expect(projectService.isManagerOfProject).not.toHaveBeenCalled();
 		expect(permission).toHaveBeenCalledTimes(1);
+	});
+	describe('with the real OAuth-app scope check', () => {
+		/** The resolver's class-level edit pair, as `OrganizationProjectResolver` states it. */
+		class ProjectResolver {}
+		Reflect.defineMetadata(
+			PERMISSIONS_METADATA,
+			[PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT],
+			ProjectResolver
+		);
+		const MUTATION = { operation: { operation: 'mutation' } };
+
+		function buildGuardWithRealScopes() {
+			const projectService = { isManagerOfProject: jest.fn(async () => true) };
+			const guard = new ProjectManagerOrPermissionGuard(
+				{} as any,
+				new Reflector(),
+				{} as any,
+				projectService as any
+			);
+			const permission = jest.spyOn(PermissionGuard.prototype, 'canActivate').mockResolvedValue(false);
+			return { guard, projectService, permission };
+		}
+
+		it('admits a first-party manager on a GraphQL mutation', async () => {
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-1' } as any);
+			const { guard, projectService, permission } = buildGuardWithRealScopes();
+
+			await expect(guard.canActivate(graphqlContext({ id: PROJECT }, MUTATION, ProjectResolver))).resolves.toBe(
+				true
+			);
+
+			expect(projectService.isManagerOfProject).toHaveBeenCalledWith(PROJECT, EMPLOYEE);
+			expect(permission).not.toHaveBeenCalled();
+		});
+
+		it('never hands a GraphQL mutation to a read-only third-party app through its user’s management', async () => {
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+				id: 'user-1',
+				oauthApp: { scopes: ['zap'] }
+			} as any);
+			const { guard, projectService, permission } = buildGuardWithRealScopes();
+
+			await expect(guard.canActivate(graphqlContext({ id: PROJECT }, MUTATION, ProjectResolver))).resolves.toBe(
+				false
+			);
+
+			expect(projectService.isManagerOfProject).not.toHaveBeenCalled();
+			expect(permission).toHaveBeenCalledTimes(1);
+		});
 	});
 });

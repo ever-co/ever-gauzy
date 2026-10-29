@@ -3,6 +3,7 @@ import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Reflector } from '@nestjs/core';
 import { GqlContextType, GqlExecutionContext } from '@nestjs/graphql';
+import { isUUID } from 'class-validator';
 import { RequestContext } from '../../core/context';
 import { PermissionGuard } from '../../shared/guards';
 import { RolePermissionService } from '../../role-permission/role-permission.service';
@@ -66,19 +67,24 @@ export class ProjectManagerOrPermissionGuard extends PermissionGuard implements 
 	 *   project (`createOrganizationProject`, the lists, `isOrganizationProjectManager`'s `projectId`) gets none, as
 	 *   its route does.
 	 *
+	 * Only a UUID counts, as a project's primary key is one: anything else (a GraphQL `ID` may be any string) is left
+	 * to the permission guard and the route's own validation instead of reaching the manager lookup, where Postgres
+	 * would answer it with an invalid-UUID error.
+	 *
 	 * @param context - The execution context of the request.
 	 * @returns The project id, or undefined when the request names none.
 	 */
 	private projectIdOf(context: ExecutionContext): string | undefined {
+		let id: unknown;
 		if (typeof context.getType === 'function' && context.getType<GqlContextType>() === 'graphql') {
 			const args = (GqlExecutionContext.create(context).getArgs() ?? {}) as Record<string, unknown>;
 			const input = args.input as Record<string, unknown> | undefined;
-			const id = args.id ?? input?.id;
-			return typeof id === 'string' && id ? id : undefined;
+			id = args.id ?? input?.id;
+		} else {
+			// The id could be string or string[]
+			const param = super.getRequest(context)?.params?.id;
+			id = Array.isArray(param) ? param[0] : param;
 		}
-
-		// The id could be string or string[]
-		const param = super.getRequest(context)?.params?.id;
-		return Array.isArray(param) ? param[0] : param;
+		return typeof id === 'string' && isUUID(id) ? id : undefined;
 	}
 }
