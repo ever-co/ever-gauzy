@@ -429,9 +429,12 @@ and answered `202`.
   | `QUESTION` | `question` | the item's options |
   | `APPROVAL` | `approval` | the item's options, else Approve / Reject |
   | `ESCALATION` | `question` | the item's options |
-  | `NOTICE` | `notice`; `mention` / `assignment` when `metadata.notificationType` is `Mention` / `Assignment` | none |
+  | `NOTICE` | `notice`, `mention` or `assignment` (below) | none |
   | `EMAIL` | `email` | none |
   | any other | `other` | none |
+
+  A notice whose `metadata.notificationType` is `Mention` or `Assignment`
+  (the platform's notification types) goes as a `mention` or an `assignment`.
 
 - **Mailboxes routed to an agent (G-P4-6, where the Inbox email features
   run).** A Gauzy mailbox whose settings name an Ever Works agent
@@ -515,8 +518,9 @@ and answered `202`.
   of paired people (as their preferences allow) only when the mapping's
   `backfillGauzyInbox` is on (off by default: without it, only the items
   written from then on go); the dry run counts them either way (`gauzy` of the
-  inbox phase, and `creates.inEverWorks` once the backfill is on). Each sweep works within a time budget and saves
-  the phase's checkpoint after every page, so a run resumes where it stopped,
+  inbox phase, and `creates.inEverWorks` once the backfill is on). Each sweep
+  works within a time budget and saves the phase's checkpoint after every
+  page, so a run resumes where it stopped,
   in whichever process holds the connection; a cancelled run stops at its next
   checkpoint; a phase whose handler is
   not part of this version is skipped and picked up by a later resync. At the

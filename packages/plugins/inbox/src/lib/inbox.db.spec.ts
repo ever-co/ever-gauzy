@@ -1057,18 +1057,41 @@ describe('Inbox on SQLite', () => {
 			expect(changes.slice(3).map((change) => change.type)).toEqual(['created', 'updated']);
 		});
 
-		it('never fail or undo a write when an observer throws', async () => {
+		it('never fail, undo or wait for a write when an observer throws, rejects or never answers', async () => {
 			feed.register({
 				id: 'broken',
 				changed: () => {
 					throw new Error('observer down');
 				}
 			});
+			feed.register({ id: 'rejects', changed: () => Promise.reject(new Error('rejected')) });
+			feed.register({ id: 'pending', changed: () => new Promise<void>(() => undefined) });
 			const { item } = await question();
 			expect(item.id).toBeTruthy();
 			expect(changes).toHaveLength(1);
 			await expect(service.setState(item.id as never, { isRead: true })).resolves.toMatchObject({
 				recipient: expect.objectContaining({ isRead: true })
+			});
+		});
+
+		it('name the recipient rows a replacing re-delivery removed', async () => {
+			const input = {
+				tenantId: TENANT,
+				organizationId: ORG,
+				kind: InboxItemKindEnum.NOTICE,
+				source: 'SYSTEM',
+				externalSource: 'test',
+				externalId: 'n-2',
+				title: 'For Ada, then Bob',
+				recipients: [{ userId: ADA }]
+			};
+			await service.upsertExternal(input);
+			const [adaRow] = await dataSource.query(`SELECT "id" FROM "inbox_item_recipient" WHERE "userId" = ?`, [ADA]);
+			await service.upsertExternal({ ...input, recipients: [{ userId: BOB }], replaceRecipients: true });
+			expect(changes[1]).toMatchObject({
+				type: 'updated',
+				recipients: [expect.objectContaining({ userId: BOB })],
+				removedRecipients: [{ id: adaRow.id, userId: ADA }]
 			});
 		});
 

@@ -296,13 +296,19 @@ export interface IInboxItemChange {
 	type: 'created' | 'updated' | 'answered';
 	/** The recipient rows the change concerns: every recipient of the item for an item change. */
 	recipients: Array<{ id: ID; userId: ID }>;
+	/** Recipient rows the write removed (a source that replaced its recipients): their copies elsewhere end. */
+	removedRecipients?: Array<{ id: ID; userId: ID }>;
 	/** For a recipient change, the state fields it stated. */
 	stated?: IInboxRecipientStateField[];
 	/** The signed-in user who made the change, when there was one. */
 	actorUserId?: ID | null;
 }
 
-/** A plugin told about every Inbox change (best effort: an observer never fails or delays the write). */
+/**
+ * A plugin told about every Inbox change (best effort: an observer never fails or delays the write). `changed` is
+ * called synchronously in the writer's context and never awaited: an observer that must not lose a change queues it
+ * durably itself.
+ */
 export interface IInboxItemObserver {
 	/** Unique per observer (a second registration under the same id replaces the first). */
 	readonly id: string;
@@ -345,8 +351,9 @@ export interface IInboxItemFeed {
 	/** One recipient row of a tenant with its item (`null` when either is gone). */
 	readRecipient(tenantId: ID, recipientId: ID): Promise<IInboxObservedItem | null>;
 	/**
-	 * The recipient rows of a tenant whose item or own state changed since a time, oldest first (at most `limit`,
-	 * then `next`): a recovery sweep for a notice an observer missed.
+	 * The recipient rows of a tenant whose item or own state changed since a time, in recipient id order (not change
+	 * time), at most `limit` per page: a recovery sweep for a notice an observer missed. Page with `after` = `next`
+	 * until `next` is `null` before moving `since` on, or rows of the window are never read.
 	 */
 	recipientsChangedSince(
 		tenantId: ID,

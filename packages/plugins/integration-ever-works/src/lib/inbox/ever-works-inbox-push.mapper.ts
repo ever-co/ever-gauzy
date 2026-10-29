@@ -169,13 +169,14 @@ export function patchOf(now: GauzyInboxShared, before: Partial<GauzyInboxShared>
 	const patch: EverWorksInboxItemPatch = {};
 	if (before.title !== now.title) patch.title = now.title;
 	if (before.body !== now.body) patch.body = now.body;
-	if (now.choices && !sameChoices(now.choices, before.choices ?? null)) patch.choices = now.choices;
-	if (before.state !== now.state) {
-		patch.state = now.state;
-		if (now.state === 'resolved' && now.resolution) patch.resolution = now.resolution;
-	} else if (now.state === 'resolved' && now.resolution && !sameResolution(now.resolution, before.resolution ?? null)) {
-		patch.resolution = now.resolution;
+	// Choices removed in Gauzy are cleared there (`[]`), so nobody picks an option the item no longer offers.
+	if (!sameChoices(now.choices, before.choices ?? null) && (now.choices?.length || before.choices?.length)) {
+		patch.choices = now.choices ?? [];
 	}
+	const resolutionMoved = now.state === 'resolved' && !!now.resolution && !sameResolution(now.resolution, before.resolution ?? null);
+	// A resolution always goes with the state it belongs to (a corrected answer of a resolved item states it again).
+	if (before.state !== now.state || resolutionMoved) patch.state = now.state;
+	if (now.state === 'resolved' && now.resolution && (before.state !== now.state || resolutionMoved)) patch.resolution = now.resolution;
 	return Object.keys(patch).length ? patch : null;
 }
 

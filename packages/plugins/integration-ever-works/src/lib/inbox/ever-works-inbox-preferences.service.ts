@@ -1,6 +1,6 @@
-import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { DataSource, In } from 'typeorm';
+import { DataSource, In, IsNull } from 'typeorm';
 import { ID, IntegrationEntity } from '@gauzy/contracts';
 import { Employee, Organization, RequestContext } from '@gauzy/core';
 import { EverWorksConnectionStatus } from '../connection/ever-works-connection.entity';
@@ -52,6 +52,8 @@ export interface EverWorksInboxPreferenceSummary {
 
 /** User ids one `IN` list names at most. */
 const IN_CHUNK = 500;
+/** Attempts of one save against overlapping saves of the same person. */
+const SAVE_ATTEMPTS = 5;
 
 /** The stored excluded kinds (anything unreadable or unknown is ignored: that kind stays on). */
 function excludedOf(row: Pick<EverWorksInboxPreference, 'excludedKinds'> | null | undefined): Set<EverWorksInboxKind> {
@@ -127,7 +129,8 @@ export class EverWorksInboxPreferencesService {
 	 */
 	async updateMine(kinds: Partial<Record<EverWorksInboxKind, boolean>>): Promise<EverWorksInboxPreferencesView> {
 		const { tenantId, userId } = this.caller();
-		for (let attempt = 0; attempt < 2; attempt++) {
+		for (let attempt = 0; ; attempt++) {
+			if (attempt === SAVE_ATTEMPTS) throw new ConflictException('Your choice changed meanwhile; save it again.');
 			const row = await this.row(tenantId, userId);
 			const excluded = excludedOf(row);
 			for (const kind of EVER_WORKS_INBOX_KINDS) {
@@ -137,15 +140,20 @@ export class EverWorksInboxPreferencesService {
 			}
 			const excludedKinds = JSON.stringify(EVER_WORKS_INBOX_KINDS.filter((kind) => excluded.has(kind)));
 			if (row) {
-				await this.repository().update({ id: row.id } as never, { excludedKinds } as never);
-				break;
+				// Only over the value this save read (compare and set): an overlapping save of other kinds is merged by the
+				// next attempt instead of overwritten.
+				const result = await this.repository().update(
+					{ id: row.id, excludedKinds: row.excludedKinds ?? IsNull() } as never,
+					{ excludedKinds } as never
+				);
+				if ((result.affected ?? 0) > 0) break;
+				continue;
 			}
 			try {
 				await this.repository().insert({ id: randomUUID(), tenantId, organizationId: null, userId, excludedKinds } as never);
 				break;
-			} catch (error) {
-				// Another save inserted the row meanwhile: the next attempt updates it.
-				if (attempt === 1) throw error;
+			} catch {
+				// Another save inserted the row meanwhile: the next attempt merges into it.
 			}
 		}
 		this.logger.log(`User ${userId} changed what of their Gauzy Inbox goes to Ever Works.`);

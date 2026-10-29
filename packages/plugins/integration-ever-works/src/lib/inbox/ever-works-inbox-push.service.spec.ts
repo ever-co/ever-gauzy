@@ -111,7 +111,9 @@ function matches(row: Row, where: Row | undefined): boolean {
 		value instanceof FindOperator
 			? value.type === 'in'
 				? (value.value as unknown[]).includes(row[key])
-				: true
+				: value.type === 'isNull'
+					? row[key] === null || row[key] === undefined
+					: true
 			: row[key] === value
 	);
 }
@@ -308,7 +310,12 @@ function setup(options: { directions?: Partial<typeof DEFAULT_EVER_WORKS_DIRECTI
 			factory.create({ apiBaseUrl: 'http://ever-works.test/api', apiKey: key, connectionId: 'conn-1', scopeSlug: scopeSlug ?? null })
 	};
 	const queued: Row[] = [];
-	const queue = { enqueue: jest.fn(async (trigger: Row) => void queued.push(trigger) ?? true) };
+	const queue = {
+		enqueue: jest.fn(async (trigger: Row) => {
+			queued.push(trigger);
+			return true;
+		})
+	};
 	const log = { write: jest.fn(async () => undefined) };
 	const preferenceService = new EverWorksInboxPreferencesService(dataSource as never, contexts as never, linkService as never);
 	const service = new EverWorksInboxPushService(
@@ -592,6 +599,69 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
 	});
 
+	it('clears removed choices, and states the resolved state with a corrected answer', async () => {
+		const { addItem, push, inboxWrite, items } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		Object.assign(items.get(item.id as string) as IInboxItem, { options: null, kind: InboxItemKindEnum.QUESTION });
+		await push(ada);
+		expect(inboxWrite.patched[0].body).toEqual({ choices: [] });
+		Object.assign(items.get(item.id as string) as IInboxItem, {
+			status: InboxItemStatusEnum.ANSWERED,
+			response: { text: 'Go', answeredByUserId: ADA.user, answeredAt: new Date().toISOString() }
+		});
+		await push(ada);
+		Object.assign(items.get(item.id as string) as IInboxItem, {
+			response: { text: 'Go on Monday', answeredByUserId: ADA.user, answeredAt: new Date().toISOString() }
+		});
+		await push(ada);
+		expect(inboxWrite.patched[2].body).toEqual({ state: 'resolved', resolution: { text: 'Go on Monday' } });
+	});
+
+	it('an answer the person gave in Ever Works before a Gauzy edit went out reaches Gauzy (the 412 retry applies it)', async () => {
+		const { addItem, push, inboxWrite, items, apply, actions, linkOf } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		const ewId = linkOf(ada)?.['ewId'] as string;
+		// The person answers (version 2); its event has not been applied yet when Gauzy's edit goes out.
+		const answered = await inboxWrite.answer(ewId, { choiceId: 'yes' });
+		Object.assign(items.get(item.id as string) as IInboxItem, { title: 'Ship the release today?' });
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(inboxWrite.patched.map((patch) => patch.ifMatch)).toEqual(['"1"', '"2"']);
+		expect(actions.reply).toHaveBeenCalledTimes(1);
+		expect(items.get(item.id as string)).toMatchObject({ status: InboxItemStatusEnum.ANSWERED, response: expect.objectContaining({ optionId: 'yes' }) });
+		// The answer's own event is below the recorded version now: skipped, and never applied twice.
+		await expect(apply(answered)).resolves.toMatchObject({ status: 'skipped' });
+		expect(actions.reply).toHaveBeenCalledTimes(1);
+		// And nothing is sent back: Gauzy holds what Ever Works holds.
+		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('nothing changed') });
+	});
+
+	it('a replay that answers a copy the person archived since applies the archive to Gauzy and never reopens it', async () => {
+		const { addItem, push, inboxWrite, links, mock, recipients, linkOf } = setup();
+		const { ada } = addItem({ kind: InboxItemKindEnum.NOTICE, options: null });
+		await push(ada);
+		const first = linkOf(ada) as Row;
+		await inboxWrite.archive(first['ewId']);
+		// The link was lost after the first filing; the retry's POST replays the archived copy.
+		links.splice(links.indexOf(first), 1);
+		mock.expireIdempotencyKeys();
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(recipients.get(ada)).toMatchObject({ isArchived: true });
+		expect(inboxWrite.patched).toHaveLength(0);
+	});
+
+	it('sends nothing more to a copy filed for a member the person is no longer paired with', async () => {
+		const { addItem, push, inboxWrite, items, links } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		const pairing = links.find((l) => l['entityType'] === EverWorksLinkType.MEMBER && l['gauzyId'] === ADA.employee) as Row;
+		pairing['ewId'] = 'ew-user-ada-new';
+		Object.assign(items.get(item.id as string) as IInboxItem, { title: 'Renamed' });
+		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped', message: expect.stringContaining('another Ever Works member') });
+		expect(inboxWrite.patched).toHaveLength(0);
+	});
+
 	it('an item archived before it ever went out is not filed', async () => {
 		const { addItem, push, inboxWrite, recipients } = setup();
 		const { ada } = addItem();
@@ -648,6 +718,18 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 		expect(inboxWrite.patched).toHaveLength(0);
 	});
 
+	it('applies only what moved in Ever Works: a Gauzy archive still waiting to be pushed survives an Ever Works read', async () => {
+		const { addItem, push, inboxWrite, apply, actions, recipients, linkOf } = setup();
+		const { ada } = addItem({ kind: InboxItemKindEnum.NOTICE, options: null });
+		await push(ada);
+		(recipients.get(ada) as Row)['isArchived'] = true; // archived in Gauzy; its push has not gone out yet
+		await expect(apply(await inboxWrite.read(linkOf(ada)?.['ewId'] as string))).resolves.toMatchObject({ status: 'applied', message: 'read' });
+		expect(actions.setState).toHaveBeenCalledTimes(1);
+		expect(recipients.get(ada)).toMatchObject({ isArchived: true, isRead: true });
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(inboxWrite.patched[inboxWrite.patched.length - 1].body).toEqual({ state: 'archived' });
+	});
+
 	it('an event of a copy whose link is not recorded yet waits for it (never becomes an Ever Works item in Gauzy)', async () => {
 		const { addItem, mock, apply, writer, inboxWrite } = setup();
 		const { item, ada } = addItem();
@@ -672,6 +754,17 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 });
 
 describe('EverWorksInboxPushService — backfill', () => {
+	it('keeps a notice while mentions or assignments are sent, even with notices off (the push checks the exact kind)', async () => {
+		const { addItem, service, context, preferenceService } = setup();
+		const mention = addItem({ kind: InboxItemKindEnum.NOTICE, options: null, metadata: { notificationType: 'Mention' } });
+		mockCaller.tenantId = TENANT;
+		mockCaller.userId = ADA.user;
+		await preferenceService.updateMine({ notice: false });
+		expect((await service.backfillPage(context as never, null)).ids).toEqual([mention.ada]);
+		await preferenceService.updateMine({ mention: false, assignment: false });
+		expect((await service.backfillPage(context as never, null)).ids).toEqual([]);
+	});
+
 	it('lists the open Gauzy-origin items of paired people, as their preferences allow', async () => {
 		const { addItem, service, context, preferenceService } = setup();
 		const open = addItem();
@@ -710,6 +803,14 @@ describe('EverWorksInboxPreferencesService', () => {
 		const summaries = await preferenceService.summaries(TENANT, [ADA.user, BOB.user]);
 		expect(summaries.get(ADA.user)).toMatchObject({ customized: true, kinds: expect.objectContaining({ email: false }) });
 		expect(summaries.get(BOB.user)).toMatchObject({ customized: false });
+	});
+
+	it('two overlapping saves of different kinds keep both', async () => {
+		const { preferenceService } = setup();
+		mockCaller.tenantId = TENANT;
+		mockCaller.userId = ADA.user;
+		await Promise.all([preferenceService.updateMine({ email: false }), preferenceService.updateMine({ notice: false })]);
+		expect((await preferenceService.mine()).kinds).toMatchObject({ email: false, notice: false, question: true });
 	});
 
 	it('tells why nothing is sent while the direction does not write to Ever Works', async () => {

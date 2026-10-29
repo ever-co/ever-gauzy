@@ -575,13 +575,16 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 
 		/** The recipient rows this write inserted, also when a later one fails. */
 		const addedUserIds: ID[] = [];
+		/** The recipient rows a `replaceRecipients` write removed (the observers end their copies). */
+		const removedRows: Array<Pick<InboxItemRecipient, 'id' | 'userId'>> = [];
 		let written: { recipientUserIds: ID[]; skippedUserIds: ID[] };
 		try {
 			written = await this.writeRecipients(
 				item,
 				input.recipients ?? [],
 				input.replaceRecipients === true,
-				addedUserIds
+				addedUserIds,
+				removedRows
 			);
 		} catch (error) {
 			// The rows inserted before the failure stay; the source's retry finds them and adds only the rest, so they
@@ -596,7 +599,7 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 		// too, and one who already had the item is not told again (review F104).
 		if (addedUserIds.length) await this.realtime?.itemCreated(stored, addedUserIds);
 		// The observers (`INBOX_ITEM_FEED`): every write, also a re-delivery (best effort, never failing the write).
-		await this.feed?.itemChanged(stored, created ? 'created' : 'updated');
+		await this.feed?.itemChanged(stored, created ? 'created' : 'updated', removedRows);
 		return { item: toInboxItem(stored), created, recipientUserIds, skippedUserIds };
 	}
 
@@ -701,7 +704,9 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 		recipients: IInboxItemUpsertInput['recipients'],
 		replace = false,
 		/** Filled with the recipient rows this write inserts (an overlapping delivery that inserts one reports it). */
-		added: ID[] = []
+		added: ID[] = [],
+		/** Filled with the recipient rows a replacing write removes. */
+		removedRows: Array<Pick<InboxItemRecipient, 'id' | 'userId'>> = []
 	): Promise<{ recipientUserIds: ID[]; skippedUserIds: ID[] }> {
 		const stated = new Map<ID, IInboxItemUpsertInput['recipients'][number]>();
 		for (const recipient of recipients) {
@@ -772,6 +777,10 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 			replace && kept.size > 0 ? [...existing.keys()].filter((userId) => !kept.has(userId as ID)) : [];
 		if (removed.length > 0) {
 			await repository.delete({ inboxItemId: item.id, userId: In(removed) } as never);
+			for (const userId of removed) {
+				const row = existing.get(userId);
+				if (row) removedRows.push({ id: row.id, userId: row.userId });
+			}
 		}
 		return {
 			recipientUserIds: [

@@ -79,19 +79,29 @@ export class InboxItemFeed implements IInboxItemFeed {
 
 	// ---------------------------------------------------------------- notices (called by InboxService)
 
-	/** An item was written (created, re-delivered) or answered: every recipient of it is concerned. */
-	async itemChanged(item: InboxItem, type: IInboxItemChange['type']): Promise<void> {
+	/**
+	 * An item was written (created, re-delivered) or answered: every recipient of it is concerned, and so is every
+	 * recipient the write took it from (`removed`: a source that replaced its recipients), whose copy elsewhere ends.
+	 */
+	async itemChanged(
+		item: InboxItem,
+		type: IInboxItemChange['type'],
+		removed: Array<Pick<InboxItemRecipient, 'id' | 'userId'>> = []
+	): Promise<void> {
 		if (!this.observed) return;
 		try {
 			const recipients = await this.dataSource.getRepository(InboxItemRecipient).find({
 				where: { inboxItemId: item.id as ID, tenantId: item.tenantId as ID },
 				select: { id: true, userId: true }
 			});
-			await this.notify({
+			this.notify({
 				...this.identityOf(item),
 				scope: 'item',
 				type,
 				recipients: recipients.map((row) => ({ id: row.id as ID, userId: row.userId as ID })),
+				...(removed.length
+					? { removedRecipients: removed.map((row) => ({ id: row.id as ID, userId: row.userId as ID })) }
+					: {}),
 				actorUserId: currentUserId()
 			});
 		} catch (error) {
@@ -106,7 +116,7 @@ export class InboxItemFeed implements IInboxItemFeed {
 		stated: IInboxRecipientStateField[]
 	): Promise<void> {
 		if (!this.observed) return;
-		await this.notify({
+		this.notify({
 			...this.identityOf(item),
 			scope: 'recipient',
 			type: 'updated',
@@ -136,15 +146,22 @@ export class InboxItemFeed implements IInboxItemFeed {
 		}
 	}
 
-	/** Tells every observer (best effort, in registration order). */
-	private async notify(change: IInboxItemChange): Promise<void> {
+	/**
+	 * Tells every observer (best effort, in registration order). Each is called synchronously, in the writer's own
+	 * context (so it can tell who wrote), and never awaited: a slow or pending observer delays neither the write nor
+	 * the next observer; a rejection is logged like a throw.
+	 */
+	private notify(change: IInboxItemChange): void {
 		for (const observer of this.observers.values()) {
-			try {
-				await observer.changed(change);
-			} catch (error) {
+			const failed = (error: unknown) =>
 				this.logger.warn(
 					`Inbox item ${change.inboxItemId}: the observer ${observer.id} failed (${(error as Error)?.message ?? error}).`
 				);
+			try {
+				const result = observer.changed(change);
+				if (result && typeof (result as Promise<void>).then === 'function') (result as Promise<void>).catch(failed);
+			} catch (error) {
+				failed(error);
 			}
 		}
 	}

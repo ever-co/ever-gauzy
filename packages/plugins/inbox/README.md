@@ -229,7 +229,7 @@ node --experimental-vm-modules node_modules/jest/bin/jest.js \
   kept when only the bookkeeping failed; one dispatch for two overlapping
   replies; refused for a source that is not connected), recipient state,
   mark-all-read, the observers (told about every write, never failing it, and
-  the feed's reads), source writes (idempotent, a re-delivery changes only what it
-  states, overlapping deliveries create the item once, recipients limited to
+  the feed's reads), source writes (idempotent, a re-delivery changes only what
+  it states, overlapping deliveries create the item once, recipients limited to
   the tenant, the organization checked against the tenant), and the mailbox
   readers' scope.

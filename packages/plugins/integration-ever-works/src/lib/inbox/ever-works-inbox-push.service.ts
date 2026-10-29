@@ -13,6 +13,7 @@ import {
 	INBOX_EMAIL_HANDOFFS,
 	INBOX_ITEM_FEED,
 	INBOX_RECIPIENT_ACTIONS,
+	InboxItemKindEnum,
 	InboxItemSourceEnum,
 	InboxItemStatusEnum,
 	IntegrationEntity,
@@ -20,7 +21,7 @@ import {
 } from '@gauzy/contracts';
 import { Employee, Task } from '@gauzy/core';
 import { EverWorksApiError, EverWorksClient } from '../client/ever-works-client';
-import type { EverWorksEventEnvelope, EverWorksFiledInboxItem, EverWorksInboxItemCreate } from '../client/ever-works-client.types';
+import type { EverWorksEventEnvelope, EverWorksFiledInboxItem, EverWorksInboxItemCreate, EverWorksInboxWriteState } from '../client/ever-works-client.types';
 import { EverWorksConnection } from '../connection/ever-works-connection.entity';
 import { EverWorksConnectionService } from '../connection/ever-works-connection.service';
 import { EVER_WORKS_NOTICE_SOURCE } from '../connection/ever-works-notifier.service';
@@ -78,9 +79,16 @@ const BACKFILL_PAGE = 500;
 /** Ids one `IN` list names at most. */
 const IN_CHUNK = 500;
 
-/** The stored snapshot of a mirrored copy. */
+/** What Ever Works was last known to hold for a copy's own state (an event applies only what moved from it). */
+interface EverWorksCopySide {
+	state?: EverWorksInboxWriteState;
+	unread?: boolean;
+}
+
+/** The stored snapshot of a mirrored copy: what Gauzy last sent (`g`), and Ever Works' own state as last seen (`e`). */
 interface GauzyInboxSnapshot {
 	g?: Partial<GauzyInboxShared>;
+	e?: EverWorksCopySide;
 }
 
 /** What one person's copy is, read for a push or an inbound change. */
@@ -114,6 +122,9 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 	readonly entityTypes = [EverWorksLinkType.GAUZY_INBOX_ITEM];
 	readonly sweepIntervalMs = GAUZY_INBOX_SWEEP_MS;
 	private readonly logger = new Logger('EverWorksInboxPush');
+
+	/** Per mapping, where a sweep that read its limit stopped (its window and the last recipient row read). */
+	private readonly sweepCursors = new Map<string, { since: Date; after: string }>();
 
 	readonly observer: IInboxItemObserver = {
 		id: 'ever-works-inbox-push',
@@ -159,7 +170,7 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 		if (change.source === InboxItemSourceEnum.EVER_WORKS) return;
 		if (change.externalSource && OWN_EXTERNAL_SOURCES.includes(change.externalSource)) return;
 		if (change.scope === 'recipient' && !(change.stated ?? []).includes('isArchived')) return;
-		if (!change.organizationId || !change.recipients?.length) return;
+		if (!change.organizationId || !(change.recipients?.length || change.removedRecipients?.length)) return;
 		void runDetached(() => this.capture(change)).catch((error) =>
 			this.logger.warn(`Inbox item ${change.inboxItemId}: the change could not be queued (${error instanceof Error ? error.name : 'error'}).`)
 		);
@@ -169,9 +180,11 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 	async capture(change: IInboxItemChange): Promise<number> {
 		const context = await this.contexts.forOrganization(change.tenantId, change.organizationId as ID);
 		if (!context || !context.isEnabled || !toEverWorks(context.directions.inbox)) return 0;
-		const paired = await this.pairedUserIds(context, change.recipients.map((recipient) => recipient.userId));
+		// A recipient the write removed is queued too: its copy is archived in Ever Works (its row is gone in Gauzy).
+		const recipients = [...(change.recipients ?? []), ...(change.removedRecipients ?? [])];
+		const paired = await this.pairedUserIds(context, recipients.map((recipient) => recipient.userId));
 		let queued = 0;
-		for (const recipient of change.recipients) {
+		for (const recipient of recipients) {
 			if (!paired.has(recipient.userId)) continue;
 			const done = await this.queue.enqueue({
 				tenantId: context.tenantId,
@@ -197,9 +210,12 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 		const contexts = (await this.contexts.forConnection(connection)).filter(
 			(context) => context.isEnabled && toEverWorks(context.directions.inbox)
 		);
-		const since = new Date(Date.now() - GAUZY_INBOX_SWEEP_WINDOW_MS);
 		for (const context of contexts) {
-			let after: string | null = null;
+			// A window too big for one sweep is carried on by the next one from where this one stopped (same window), so
+			// every row of a burst is visited before it leaves the window.
+			const saved = this.sweepCursors.get(context.integrationTenantId);
+			const since = saved?.since ?? new Date(Date.now() - GAUZY_INBOX_SWEEP_WINDOW_MS);
+			let after: string | null = saved?.after ?? null;
 			let read = 0;
 			do {
 				if (stillOwner && !(await stillOwner())) return;
@@ -227,6 +243,8 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 				}
 				after = page.next;
 			} while (after && read < GAUZY_INBOX_SWEEP_LIMIT);
+			if (after) this.sweepCursors.set(context.integrationTenantId, { since, after });
+			else this.sweepCursors.delete(context.integrationTenantId);
 		}
 	}
 
@@ -264,6 +282,12 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 		if (!link) {
 			if (now.state === 'archived') return { status: 'skipped', message: 'archived before it reached Ever Works' };
 			return this.createCopy(context, copy, now, ewUserId);
+		}
+		// The person was paired with another Ever Works member since the copy was filed: the copy stays with the member it
+		// was filed for and gets nothing more (a new filing would replay the same externalId and answer that copy).
+		const filedFor = this.ewOnlyOf(link).recipientUserId;
+		if (filedFor && filedFor !== ewUserId) {
+			return { status: 'skipped', message: 'the recipient is paired with another Ever Works member than the one the copy was filed for' };
 		}
 		return this.patchCopy(context, link, now, copy);
 	}
@@ -325,9 +349,19 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 			throw error;
 		}
 		if (!filed?.id) throw new EverWorksApiError(502, 'invalid_response', 'Ever Works filed the inbox item without an id.');
-		// What Ever Works holds now (a replay may answer a copy filed before, with what was sent then).
+		// What Ever Works holds. A fresh copy is open and unread; a replay answers the copy filed before, which its person
+		// may have answered, archived or read since: those are applied to Gauzy first (never undone by the patch below).
 		const held = filedAsShared(filed, now);
-		const link = await this.record(context, copy, filed, held, ewUserId, externalId);
+		const filedAs: Partial<GauzyInboxShared> = { ...held, state: 'open', resolution: null };
+		let moves: { done: string[]; e: EverWorksCopySide };
+		try {
+			moves = await this.applyMoves(context, copy, filed, { state: 'open', unread: true }, `inbox-file:${filed.id}`);
+		} catch (error) {
+			if (error instanceof EverWorksNoRequestContextError) return { status: 'deferred', message: error.message, retryInMs: NO_REQUEST_CONTEXT_RETRY_MS };
+			throw error;
+		}
+		const g = await this.settled(context, copy, filedAs, moves.done);
+		const link = await this.record(context, copy, filed, g, moves.e, ewUserId, externalId);
 		await this.log.write({
 			tenantId: context.tenantId,
 			organizationId: context.organizationId,
@@ -341,15 +375,19 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 			status: 'ok',
 			message: `${copy.kind} "${now.title.slice(0, 80)}" filed in the Ever Works inbox of the paired member`
 		});
-		// An item answered or archived before it went out, or a replayed copy that is behind: brought up to date at once.
-		if (patchOf(now, held)) return this.patchCopy(context, link, now, copy);
+		// An item answered or archived in Gauzy before it went out, or a replayed copy behind Gauzy: brought up to date.
+		const current = moves.done.length ? await this.reread(context, copy) : copy;
+		const after = sharedOf(current.item, current.recipient, current.kind);
+		if (patchOf(after, g)) return this.patchCopy(context, link, after, current);
 		return { status: 'pushed', message: 'filed in Ever Works' };
 	}
 
 	/**
 	 * Patches a copy with what changed since Gauzy last sent it (`If-Match` the link's version). A `412` (an Ever Works
 	 * user acted on it meanwhile) is retried once on the current version: only Gauzy's own changes are sent, so what
-	 * the person did there stays.
+	 * the person did there stays; and what the answer shows they did that Gauzy has not applied yet (an answer, an
+	 * archive, a read) is applied to Gauzy before the newer version is recorded, so the event of that change, at or
+	 * below the recorded version, is not needed any more.
 	 */
 	private async patchCopy(context: EverWorksMappingContext, link: EverWorksEntityLink, now: GauzyInboxShared, copy: CopyOf | null): Promise<EverWorksPushOutcome> {
 		const before = this.snapshotOf(link);
@@ -374,7 +412,22 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 				version = typeof current === 'number' ? current : await this.currentVersion(client, link.ewId);
 			}
 		}
-		const sent: GauzyInboxShared = { ...(before as GauzyInboxShared), ...now };
+		const seen = this.everWorksSideOf(link);
+		// What this patch set itself is not a move of the person's.
+		const expected: EverWorksCopySide = { state: patch.state ?? seen.state, unread: seen.unread };
+		let moves: { done: string[]; e: EverWorksCopySide } = { done: [], e: expected };
+		if (updated && copy) {
+			try {
+				moves = await this.applyMoves(context, copy, updated, expected, `inbox-patch:${link.ewId}:${updated.version}`);
+			} catch (error) {
+				// Not recorded: the retry patches again and applies the person's change then.
+				if (error instanceof EverWorksNoRequestContextError) return { status: 'deferred', message: error.message, retryInMs: NO_REQUEST_CONTEXT_RETRY_MS };
+				throw error;
+			}
+		} else if (updated) {
+			moves = { done: [], e: { state: filedStateOf(updated) ?? expected.state, unread: typeof updated.unread === 'boolean' ? updated.unread : expected.unread } };
+		}
+		const sent = copy ? await this.settled(context, copy, { ...before, ...now }, moves.done) : { ...before, ...now };
 		await this.links.record({
 			tenantId: context.tenantId,
 			organizationId: context.organizationId,
@@ -385,10 +438,86 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 			ewVersion: typeof updated?.version === 'number' ? updated.version : (version ?? null),
 			ewUpdatedAt: updated?.updatedAt ?? null,
 			gauzyUpdatedAt: copy?.item.updatedAt ? new Date(copy.item.updatedAt) : undefined,
-			snapshot: { g: sent },
+			snapshot: { g: sent, e: moves.e },
 			direction: 'outbound'
 		});
 		return { status: 'pushed', message: `patched in Ever Works (${Object.keys(patch).join(', ')})` };
+	}
+
+	/**
+	 * Applies to the Gauzy item what Ever Works moved since `seen` — the person's answer, archive (or unarchive), read
+	 * (or unread) — through the Inbox's own actions, signed in as the recipient, as the sync (so it is not captured
+	 * back). An answer goes only to an open decision; one Gauzy answered first keeps Gauzy's answer. Returns what was
+	 * done and Ever Works' side as it is now.
+	 */
+	private async applyMoves(
+		context: EverWorksMappingContext,
+		observed: { item: IInboxItem; recipient: IInboxItemRecipient },
+		data: Partial<EverWorksFiledInboxItem>,
+		seen: EverWorksCopySide,
+		eventId: string
+	): Promise<{ done: string[]; e: EverWorksCopySide }> {
+		const { item, recipient } = observed;
+		const answer = filedAnswerOf(data);
+		const state = filedStateOf(data);
+		const stateMoved = state !== null && state !== seen.state;
+		const unreadMoved = typeof data.unread === 'boolean' && data.unread !== seen.unread;
+		const e: EverWorksCopySide = { state: state ?? seen.state, unread: typeof data.unread === 'boolean' ? data.unread : seen.unread };
+		const done: string[] = [];
+		const actions = this.actions;
+		const answers = !!answer && takesDecision(item.kind) && item.status === InboxItemStatusEnum.OPEN;
+		const archives = stateMoved && (state === 'archived') !== !!recipient.isArchived;
+		const reads = unreadMoved && data.unread === !!recipient.isRead;
+		if (!actions || !(answers || archives || reads)) return { done, e };
+		await EverWorksSyncContext.run({ connectionId: context.connection.id as string, integrationTenantId: context.integrationTenantId, eventId }, () =>
+			runAsGauzyUser(context, recipient.userId as ID, async () => {
+				if (answers) {
+					try {
+						await actions.reply(item.id as ID, answer as { optionId?: string; text?: string });
+						done.push('reply');
+					} catch (error) {
+						// Answered in Gauzy first, or an answer Gauzy cannot take (an option it does not list): Gauzy's stays.
+						if (!(error instanceof ConflictException || error instanceof BadRequestException)) throw error;
+						this.logger.warn(`Inbox item ${item.id}: the answer given in Ever Works was not applied (${error.message}).`);
+					}
+				}
+				if (archives) {
+					await actions.setState(item.id as ID, { isArchived: state === 'archived' });
+					done.push(state === 'archived' ? 'archive' : 'unarchive');
+				}
+				// A reply marks the item read already.
+				if (reads && !done.includes('reply')) {
+					await actions.setState(item.id as ID, { isRead: !data.unread });
+					done.push(data.unread ? 'unread' : 'read');
+				}
+			})
+		);
+		return { done, e };
+	}
+
+	/**
+	 * The snapshot after applying the person's moves: where an answer or an archive was applied, the copy's state is
+	 * what Gauzy holds after it (the next push sends nothing back); otherwise (a read, or a state Gauzy cannot hold,
+	 * such as a notice marked done) it stays what Gauzy last sent, so a Gauzy change still waiting to be pushed is not
+	 * lost. Title, body and choices are never touched here.
+	 */
+	private async settled(
+		context: EverWorksMappingContext,
+		copy: Pick<CopyOf, 'item' | 'recipient'>,
+		before: Partial<GauzyInboxShared>,
+		done: string[]
+	): Promise<Partial<GauzyInboxShared>> {
+		if (!done.some((step) => step === 'reply' || step === 'archive' || step === 'unarchive')) return before;
+		const after = await this.reread(context, copy);
+		const shared = sharedOf(after.item, after.recipient, after.kind);
+		return { ...before, state: shared.state, resolution: shared.resolution };
+	}
+
+	/** The recipient's copy as it is now (or as it was read, when it is gone meanwhile). */
+	private async reread(context: EverWorksMappingContext, copy: Pick<CopyOf, 'item' | 'recipient'>): Promise<CopyOf> {
+		const fresh = this.feed ? await this.feed.readRecipient(context.tenantId, copy.recipient.id as ID) : null;
+		const current = fresh ?? copy;
+		return { item: current.item, recipient: current.recipient, kind: this.kindOf(current.item) };
 	}
 
 	/** The current version of a copy (`GET /inbox/items/:id`), for a patch without a recorded one. */
@@ -401,7 +530,8 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 		context: EverWorksMappingContext,
 		copy: CopyOf,
 		filed: EverWorksFiledInboxItem,
-		held: GauzyInboxShared,
+		g: Partial<GauzyInboxShared>,
+		e: EverWorksCopySide,
 		ewUserId: string,
 		externalId: string
 	): Promise<EverWorksEntityLink> {
@@ -415,7 +545,7 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 			ewVersion: typeof filed.version === 'number' ? filed.version : null,
 			ewUpdatedAt: filed.updatedAt ?? null,
 			gauzyUpdatedAt: copy.item.updatedAt ? new Date(copy.item.updatedAt) : null,
-			snapshot: { g: held },
+			snapshot: { g, e },
 			ewOnly: { externalId, inboxItemId: copy.item.id, kind: copy.kind, recipientUserId: ewUserId },
 			direction: 'outbound'
 		});
@@ -495,45 +625,22 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 		}
 		const observed = await this.feed.readRecipient(context.tenantId, link.gauzyId as ID);
 		if (!observed) return { status: 'skipped', message: 'the Gauzy Inbox item is gone' };
-		const { item, recipient } = observed;
+		const { recipient } = observed;
 		const ewUserId = await everWorksUserOfGauzyUser(this.dataSource, this.links, context, recipient.userId as ID);
 		if (typeof data.recipientUserId === 'string' && ewUserId !== data.recipientUserId) {
 			return { status: 'skipped', message: 'the Gauzy recipient is no longer paired with the Ever Works recipient' };
 		}
-		const answer = filedAnswerOf(data);
-		const state = filedStateOf(data);
-		const done: string[] = [];
+		// Only what Ever Works moved since it was last seen is applied: an event carries the whole state, and its other
+		// fields must not undo a Gauzy change still waiting to be pushed (an archive made in Gauzy meanwhile).
+		let moves: { done: string[]; e: EverWorksCopySide };
 		try {
-			await runAsGauzyUser(context, recipient.userId as ID, async () => {
-				const actions = this.actions as IInboxRecipientActions;
-				if (answer && takesDecision(item.kind) && item.status === InboxItemStatusEnum.OPEN) {
-					try {
-						await actions.reply(item.id as ID, answer);
-						done.push('reply');
-					} catch (error) {
-						// Answered in Gauzy first, or an answer Gauzy cannot take (an option it does not list): Gauzy's stays.
-						if (!(error instanceof ConflictException || error instanceof BadRequestException)) throw error;
-						this.logger.warn(`Inbox item ${item.id}: the answer given in Ever Works was not applied (${error.message}).`);
-					}
-				}
-				if (state !== null && (state === 'archived') !== !!recipient.isArchived) {
-					await actions.setState(item.id as ID, { isArchived: state === 'archived' });
-					done.push(state === 'archived' ? 'archive' : 'unarchive');
-				}
-				if (typeof data.unread === 'boolean' && !done.includes('reply') && data.unread === !!recipient.isRead) {
-					await actions.setState(item.id as ID, { isRead: !data.unread });
-					done.push(data.unread ? 'unread' : 'read');
-				}
-			});
+			moves = await this.applyMoves(context, observed, data, this.everWorksSideOf(link), envelope.id ?? `inbox-event:${link.ewId}:${version}`);
 		} catch (error) {
 			if (error instanceof EverWorksNoRequestContextError) return { status: 'deferred', message: error.message, retryInMs: NO_REQUEST_CONTEXT_RETRY_MS };
 			throw error;
 		}
-		// What Gauzy holds now for the fields Ever Works moved (state, answer): the next push compares with these, so it
-		// sends nothing back for them; title, body and choices keep what Gauzy last sent.
-		const after = (await this.feed.readRecipient(context.tenantId, link.gauzyId as ID)) ?? observed;
-		const kind = this.kindOf(after.item);
-		const nowShared = sharedOf(after.item, after.recipient, kind);
+		const done = moves.done;
+		const g = await this.settled(context, observed, this.snapshotOf(link), done);
 		await this.links.record({
 			tenantId: context.tenantId,
 			organizationId: context.organizationId,
@@ -543,7 +650,7 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 			ewId: link.ewId,
 			ewVersion: version,
 			ewUpdatedAt: data.updatedAt ?? null,
-			snapshot: { g: { ...this.snapshotOf(link), state: nowShared.state, resolution: nowShared.resolution } },
+			snapshot: { g, e: moves.e },
 			direction: 'inbound'
 		});
 		return done.length ? { status: 'applied', message: done.join(', ') } : { status: 'skipped', message: 'nothing to apply' };
@@ -568,8 +675,14 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 		const summaries = await this.preferences.summaries(context.tenantId, page.recipients.map((row) => row.userId));
 		const ids = page.recipients
 			.filter((row) => row.source !== InboxItemSourceEnum.EVER_WORKS)
-			// The kind without the item's metadata (a mention notice reads as a notice here); the push checks it exactly.
-			.filter((row) => summaries.get(row.userId)?.kinds[everWorksKindOf(row.kind)] !== false)
+			.filter((row) => {
+				const kinds = summaries.get(row.userId)?.kinds;
+				if (!kinds) return true;
+				// A notice may be a mention or an assignment (its metadata says, which this page does not read): it is kept
+				// while any of the three is sent, and the push checks its exact kind.
+				if (row.kind === InboxItemKindEnum.NOTICE) return kinds.notice || kinds.mention || kinds.assignment;
+				return kinds[everWorksKindOf(row.kind)];
+			})
 			.map((row) => row.id);
 		return { ids, next: page.next };
 	}
@@ -592,6 +705,19 @@ export class EverWorksInboxPushService implements EverWorksOutboundHandler, Ever
 
 	private snapshotOf(link: EverWorksEntityLink): Partial<GauzyInboxShared> {
 		return this.links.snapshot<GauzyInboxSnapshot>(link).g ?? {};
+	}
+
+	private everWorksSideOf(link: EverWorksEntityLink): EverWorksCopySide {
+		return this.links.snapshot<GauzyInboxSnapshot>(link).e ?? {};
+	}
+
+	/** The Ever Works-only fields of a copy's link (whom it was filed for). */
+	private ewOnlyOf(link: EverWorksEntityLink): { recipientUserId?: string } {
+		try {
+			return link.ewOnly ? (JSON.parse(link.ewOnly) as { recipientUserId?: string }) : {};
+		} catch {
+			return {};
+		}
 	}
 
 	private client(context: EverWorksMappingContext): EverWorksClient {
