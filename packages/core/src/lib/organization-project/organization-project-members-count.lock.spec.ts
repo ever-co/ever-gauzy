@@ -38,9 +38,24 @@ function typeOrmManager(transactionActive: boolean) {
 	return { em, query, transactional };
 }
 
-describe.each(['postgres', 'mysql'])('recountMembersOfEmployeeProjects on %s, TypeORM', (type) => {
+describe.each([
+	// Postgres: the lock of an UPDATE of a non-key column, which foreign-key checks (KEY SHARE) do not wait for.
+	['postgres', 'FOR NO KEY UPDATE'],
+	['mysql', 'FOR UPDATE']
+])('recountMembersOfEmployeeProjects on %s, TypeORM', (type, lockClause) => {
+	const previous = process.env.DB_ORM;
+
 	beforeEach(() => {
 		mockDbType = type;
+		process.env.DB_ORM = MultiORMEnum.TypeORM;
+	});
+
+	afterEach(() => {
+		if (previous === undefined) {
+			delete process.env.DB_ORM;
+		} else {
+			process.env.DB_ORM = previous;
+		}
 	});
 
 	it("locks the employee's projects in id order before recounting them, in the write's transaction", async () => {
@@ -51,7 +66,7 @@ describe.each(['postgres', 'mysql'])('recountMembersOfEmployeeProjects on %s, Ty
 		expect(em.transaction).not.toHaveBeenCalled();
 		expect(query).toHaveBeenCalledTimes(2);
 		const [[lock, lockParams], [update, updateParams]] = query.mock.calls;
-		expect(lock).toMatch(/ORDER BY[\s\S]+\sFOR UPDATE\s*$/);
+		expect(lock).toMatch(new RegExp(`ORDER BY[\\s\\S]+\\s${lockClause}\\s*$`));
 		expect(lock).toContain('organization_project_employee');
 		expect(lockParams).toEqual([EMPLOYEE]);
 		expect(update).toContain('UPDATE');
@@ -113,7 +128,7 @@ describe('recountMembersOfEmployeeProjects on Postgres, MikroORM', () => {
 		expect(em.transactional).not.toHaveBeenCalled();
 		expect(execute).toHaveBeenCalledTimes(2);
 		const [[lock, , lockMethod, lockContext], [update, , updateMethod, updateContext]] = execute.mock.calls;
-		expect(lock).toContain('FOR UPDATE');
+		expect(lock).toContain('FOR NO KEY UPDATE');
 		expect(lock).not.toMatch(/\$\d/);
 		expect(lockMethod).toBe('all');
 		expect(lockContext).toBe(transaction);

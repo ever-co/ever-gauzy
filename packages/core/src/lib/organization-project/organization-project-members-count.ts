@@ -42,15 +42,22 @@ export const WORKING_MEMBERS_COUNT_SUBQUERY = `
  * committed, so it still counts the first member: the count ends one too high. Taking the row locks in a statement
  * of their own first means the `UPDATE` that follows starts after the other transaction committed, and sees it. The
  * id order keeps two employees who share several projects from locking them in opposite orders (a deadlock).
+ *
+ * Postgres takes `FOR NO KEY UPDATE`, the lock its own `UPDATE` of a non-key column takes: it serializes recounts
+ * without conflicting with the `KEY SHARE` locks that foreign-key checks hold on the project while memberships are
+ * inserted (`FOR UPDATE` would, and could deadlock with a transaction adding memberships to the same projects in
+ * another order). MySQL has only `FOR UPDATE`.
+ *
+ * @param lockClause - `FOR NO KEY UPDATE` (Postgres) or `FOR UPDATE` (MySQL).
  */
-const LOCK_EMPLOYEE_PROJECTS = `
+const lockEmployeeProjects = (lockClause: string) => `
 	SELECT "organization_project"."id" FROM "organization_project"
 	WHERE "organization_project"."id" IN (
 		SELECT "organizationProjectId" FROM "organization_project_employee"
 		WHERE "organization_project_employee"."employeeId" = $1
 	)
 	ORDER BY "organization_project"."id"
-	FOR UPDATE
+	${lockClause}
 `;
 
 /**
@@ -61,9 +68,9 @@ const LOCK_EMPLOYEE_PROJECTS = `
  * not from then on, without waiting for the project to be saved. The
  * projects are the ones the employee's own membership rows name, so the statement never reaches another tenant.
  *
- * On Postgres and MySQL the projects are locked first ({@link LOCK_EMPLOYEE_PROJECTS}) and the locks last until the
+ * On Postgres and MySQL the projects are locked first ({@link lockEmployeeProjects}) and the locks last until the
  * transaction ends: the write's own when there is one, otherwise one opened for the recount. SQLite has a single
- * writer, so recounts never interleave there, and no `FOR UPDATE`.
+ * writer, so recounts never interleave there, and no row locks.
  *
  * @param em - The entity manager of the write, so the recount reads the employee row it has just updated.
  * @param employeeId - The employee whose projects are recounted.
@@ -88,10 +95,13 @@ export async function recountMembersOfEmployeeProjects(
 		`),
 		dbType
 	);
-	const lock =
-		dbType === DatabaseTypeEnum.postgres || dbType === DatabaseTypeEnum.mysql
-			? replacePlaceholders(p(LOCK_EMPLOYEE_PROJECTS), dbType)
-			: null;
+	const lockClause =
+		dbType === DatabaseTypeEnum.postgres
+			? 'FOR NO KEY UPDATE'
+			: dbType === DatabaseTypeEnum.mysql
+				? 'FOR UPDATE'
+				: null;
+	const lock = lockClause ? replacePlaceholders(p(lockEmployeeProjects(lockClause)), dbType) : null;
 
 	const ormType = getORMType();
 	if (ormType === MultiORMEnum.TypeORM && em instanceof TypeOrmEntityManager) {
