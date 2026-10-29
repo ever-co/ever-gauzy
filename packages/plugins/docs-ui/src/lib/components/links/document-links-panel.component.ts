@@ -169,6 +169,12 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	private readonly requestedImages = new Set<string>();
 	/** `blob:` URLs of held images, straight from the user's machine. */
 	private readonly pendingUrls = new Map<File, string>();
+	/**
+	 * Files uploaded whose link has not been written yet, with their new document — a
+	 * retry links that document rather than uploading the bytes again. Weak, so a file
+	 * nobody retries is not held on to.
+	 */
+	private readonly uploadedDocuments = new WeakMap<File, ID>();
 	/** Fires when the panel goes, cancelling its image reads. */
 	private readonly destroy$ = new Subject<void>();
 	/** Set once the panel is gone: the thumbnail loop stops and no further URL is created. */
@@ -681,26 +687,34 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	 * Deliberately two calls, not one: the upload endpoint knows nothing about
 	 * `DocumentLink`, so the link is created from the accepted document. A failed link
 	 * write is surfaced but the document is kept — deleting a file the user just
-	 * uploaded because a follow-up call failed would be the worse outcome.
+	 * uploaded because a follow-up call failed would be the worse outcome. The kept
+	 * document is remembered, so a retry only links it instead of uploading a copy.
 	 */
 	private async uploadAndLink(file: File, organization: { id?: ID; tenantId?: ID } | undefined): Promise<void> {
-		// 🛑 `upload()` is a progress stream: the FIRST emission is the `Sent`
-		// event, not the result. Only the `Response` event carries the document.
-		const document = await firstValueFrom(
-			this.documentsService
-				.upload(file, { organizationId: organization?.id, tenantId: organization?.tenantId })
-				.pipe(
-					filter((event): event is HttpResponse<IDocument> => event.type === HttpEventType.Response),
-					map((event) => event.body)
-				)
-		);
-		if (!document?.id) {
-			throw new Error(this.getTranslation('DOCS.LINKS.TOAST_FAILED_SOME', { failed: 1, total: 1, names: file.name }));
+		let documentId = this.uploadedDocuments.get(file);
+		if (!documentId) {
+			// 🛑 `upload()` is a progress stream: the FIRST emission is the `Sent`
+			// event, not the result. Only the `Response` event carries the document.
+			const document = await firstValueFrom(
+				this.documentsService
+					.upload(file, { organizationId: organization?.id, tenantId: organization?.tenantId })
+					.pipe(
+						filter((event): event is HttpResponse<IDocument> => event.type === HttpEventType.Response),
+						map((event) => event.body)
+					)
+			);
+			if (!document?.id) {
+				throw new Error(this.getTranslation('DOCS.LINKS.TOAST_FAILED_SOME', { failed: 1, total: 1, names: file.name }));
+			}
+			documentId = document.id as ID;
+			this.uploadedDocuments.set(file, documentId);
 		}
 
+		// `POST /links` is idempotent on (document, record): a retry after a link whose
+		// answer was lost returns the existing link rather than attaching it twice.
 		await firstValueFrom(
 			this.documentsService.createLink({
-				documentId: document.id as ID,
+				documentId,
 				entity: this.entity,
 				entityId: this.entityId,
 				metadata: { label: this.entityLabel ?? '' },
@@ -708,6 +722,7 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 				tenantId: organization?.tenantId
 			})
 		);
+		this.uploadedDocuments.delete(file);
 	}
 
 	// ─── Drag and drop ───────────────────────────────────────────
