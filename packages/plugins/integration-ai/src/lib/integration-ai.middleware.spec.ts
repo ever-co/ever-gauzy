@@ -1,7 +1,7 @@
 // `@gauzy/core` drags in the whole entity graph: the middleware only needs the integration tenant service's type.
 jest.mock('@gauzy/core', () => ({ IntegrationTenantService: class IntegrationTenantService {} }));
 
-import { bearerTenantId, IntegrationAIMiddleware } from './integration-ai.middleware';
+import { bearerTenantId, INTEGRATION_ABSENCE_TTL_MS, IntegrationAIMiddleware } from './integration-ai.middleware';
 
 /**
  * The middleware loads a tenant's Gauzy AI and OpenAI keys for the job routes before authentication runs. It took
@@ -83,5 +83,41 @@ describe('IntegrationAIMiddleware', () => {
 
 		expect(integrationTenantService.getIntegrationTenantSettings).not.toHaveBeenCalled();
 		expect(next).toHaveBeenCalled();
+	});
+});
+
+describe('IntegrationAIMiddleware: an organization without a Gauzy AI integration', () => {
+	const request = () =>
+		({
+			headers: {},
+			body: {},
+			header: (name: string) =>
+				({ authorization: token({ tenantId: 'tenant-1' }), 'organization-id': 'organization-1' })[
+					name.toLowerCase()
+				],
+			path: '/job-preset',
+			url: '/job-preset'
+		}) as any;
+
+	it('is remembered for a minute, so its next requests do not read the database again', async () => {
+		const store = new Map<string, unknown>();
+		const cache = {
+			get: jest.fn(async (key: string) => store.get(key)),
+			set: jest.fn(async (key: string, value: unknown) => void store.set(key, value))
+		};
+		const integrationTenantService = { getIntegrationTenantSettings: jest.fn().mockResolvedValue(null) };
+		const config = { resetConfig: jest.fn(), setConfig: jest.fn() };
+		const middleware = new IntegrationAIMiddleware(cache as any, integrationTenantService as any, config as any);
+
+		await middleware.use(request(), {} as any, jest.fn());
+		await middleware.use(request(), {} as any, jest.fn());
+
+		expect(integrationTenantService.getIntegrationTenantSettings).toHaveBeenCalledTimes(1);
+		expect(cache.set).toHaveBeenCalledWith(
+			expect.stringContaining('tenant-1_organization-1'),
+			[],
+			INTEGRATION_ABSENCE_TTL_MS
+		);
+		expect(config.setConfig).not.toHaveBeenCalled();
 	});
 });
