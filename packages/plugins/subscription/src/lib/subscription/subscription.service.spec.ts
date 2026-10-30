@@ -1977,6 +1977,143 @@ describe('SubscriptionService — a change from the next period takes hold when 
 		});
 	});
 
+	it('charges nothing when the row a retry reprices was settled meanwhile', async () => {
+		// Copilot on #11565, round 3: the reprice matched no row once an operator had settled the cycle, and the cycle went
+		// on to raise an order for a period that was already settled.
+		const fixture = subscriptionFixture({
+			billings: [
+				{
+					id: 'billing-1',
+					tenantId: TENANT,
+					organizationId: ORG,
+					subscriptionId: SUBSCRIPTION,
+					periodStart: new Date(APRIL),
+					periodEnd: new Date('2026-05-01T00:00:00.000Z'),
+					amount: '100.000000',
+					currency: 'USD',
+					status: SubscriptionBillingStatus.FAILED,
+					attemptCount: 1,
+					metadata: { gross: '100.000000', discount: '0.000000' }
+				}
+			]
+		});
+		const findByPeriod = fixture.billingService.findByPeriod.bind(fixture.billingService);
+
+		jest.spyOn(fixture.billingService, 'findByPeriod').mockImplementationOnce(async (...args: [any, any]) => {
+			const read = structuredClone(await findByPeriod(...args));
+
+			// An operator records the payment once the cycle has read the row.
+			Object.assign(fixture.cycle(APRIL) as Row, { status: SubscriptionBillingStatus.PAID });
+
+			return read;
+		});
+
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true })).rejects.toThrow(
+			/SUBSCRIPTION_BILLING_CYCLE_SETTLED/
+		);
+		expect(fixture.orderCalls).toEqual([]);
+		expect(fixture.cycle(APRIL)).toMatchObject({ status: SubscriptionBillingStatus.PAID, amount: '100.000000' });
+	});
+
+	it('reverses the discount an earlier attempt granted when the retry is priced on another plan', async () => {
+		// Copilot on #11565, round 3: the promotion the first attempt recorded stayed on the cycle while its retry was priced
+		// (and its row restated) on the discount of the plan the change moved it to.
+		let attempts = 0;
+		const fixture = subscriptionFixture({
+			plans: [
+				planRow(PLAN, { discountPercentage: '0.1' }),
+				planRow(BETTER_PLAN, { discountPercentage: '0.2', billingPeriod: SubscriptionBillingPeriod.YEARLY })
+			],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' },
+			orders: () => {
+				attempts += 1;
+
+				if (attempts === 1) {
+					throw new Error('SUBSCRIPTION_CHARGE_DECLINED: attempt 1 was declined');
+				}
+
+				return { orderId: `order-${attempts}`, paid: true };
+			}
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+		fixture.idempotencyService.advanceBy(5 * 60 * 1000);
+
+		const paid = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true });
+		const promotions = fixture
+			.adjustmentsOf(fixture.cycle(APRIL)?.id)
+			.filter((row: Row) => row.type === AdjustmentType.PROMOTION)
+			.map((row: Row) => row.amount);
+
+		expect(paid).toMatchObject({ status: SubscriptionBillingStatus.PAID, amount: '240.000000' });
+		// Append-only: the month's 12.00 is reversed, and the year's 60.00 granted.
+		expect(promotions).toEqual(['-12.000000', '12.000000', '-60.000000']);
+	});
+
+	it('applies only what it recorded itself from an entry a caller’s metadata wrote before the key was reserved', async () => {
+		// Copilot on #11565, round 3: metadata could write the key before SEC-B-03 reserved it, so a row may still carry
+		// an entry no one checked. Its lines (zero-priced here) and its quantity are not applied; a plan is checked again.
+		const lines = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					metadata: {
+						scheduledPlanChange: {
+							items: [{ variantId: BETTER_VARIANT, quantity: '1', unitPrice: '0.000000', position: 0 }],
+							effectiveAt: APRIL
+						}
+					}
+				})
+			],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' }
+		});
+
+		await expect(lines.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).resolves.toMatchObject({
+			amount: '120.000000'
+		});
+		expect(lines.items().map((row) => row.variantId)).toEqual([VARIANT]);
+		expect(
+			lines.events.find((event) => event.name === 'subscription.scheduled-change-refused')?.data
+		).toMatchObject({ reason: expect.stringMatching(/SUBSCRIPTION_SCHEDULED_CHANGE_UNTRUSTED/) });
+
+		// The shape the service wrote before this change, a plan and its date, still takes hold, on its own plan's terms.
+		const plan = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					metadata: { scheduledPlanChange: { planId: BETTER_PLAN, quantity: '5', effectiveAt: APRIL } }
+				})
+			],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' }
+		});
+
+		await expect(plan.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).resolves.toMatchObject({
+			amount: '300.000000'
+		});
+		expect(plan.subscription(SUBSCRIPTION)?.planId).toBe(BETTER_PLAN);
+		expect(Number(plan.subscription(SUBSCRIPTION)?.quantity)).toBe(1);
+	});
+
+	it('composes two changes of lines recorded before the first cycle', async () => {
+		// Copilot on #11565, round 3: the second change was built on the lines the subscription had, so it replaced the
+		// first one, which was then missing from the first bill.
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { currentPeriodStart: null, currentPeriodEnd: null })],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '15.50', 'variant-c': '10.00' }
+		});
+
+		await expect(
+			fixture.service.addItem(SUBSCRIPTION, { variantId: BETTER_VARIANT, quantity: '2' })
+		).resolves.toMatchObject({ settlement: 'SCHEDULED' });
+		await expect(fixture.service.addItem(SUBSCRIPTION, { variantId: 'variant-c' })).resolves.toMatchObject({
+			settlement: 'SCHEDULED'
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({ amount: '161.000000' });
+		expect(fixture.items().map((row) => row.variantId)).toEqual([VARIANT, BETTER_VARIANT, 'variant-c']);
+	});
+
 	it('is the service’s own key: a caller’s metadata neither plants one nor erases one (SEC-B-03)', async () => {
 		// Planted, it would move the subscription to another plan at the next renewal with no plan change at all.
 		const planted = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });

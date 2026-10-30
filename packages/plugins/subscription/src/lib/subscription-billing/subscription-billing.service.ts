@@ -489,12 +489,13 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * scheduled for the period that took hold at that attempt. The row an earlier attempt wrote keeps the amount that
 	 * attempt priced unless it is restated here, and `markPaid` keeps whatever the row says, so a cycle settled on the
 	 * retry would record, return and announce another amount than the one its order charged. Predicated on the cycle
-	 * still being unsettled: a cycle settled meanwhile keeps its amount.
+	 * still being unsettled: a cycle settled meanwhile keeps its amount, and the retry stops before it charges it.
 	 *
 	 * @param billing The cycle as read.
 	 * @param amount What the retry charges.
 	 * @param pricing The gross amount and the discount the charge was priced from.
 	 * @returns The cycle as it stands.
+	 * @throws ConflictException when the cycle was settled meanwhile.
 	 */
 	public async repriceUnsettled(
 		billing: SubscriptionBilling,
@@ -515,7 +516,15 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		await this.writeIf(
 			billing.id,
 			{ status: In([SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED]) },
-			async () => null,
+			async () => {
+				const current = await this.findOneScoped(billing.id);
+
+				return [SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED].includes(current.status)
+					? null
+					: new ConflictException(
+							'SUBSCRIPTION_BILLING_CYCLE_SETTLED: the billing cycle was settled while its retry was being priced, so it is not charged again.'
+					  );
+			},
 			{ amount: restated, metadata: { ...metadata, ...pricing } }
 		);
 

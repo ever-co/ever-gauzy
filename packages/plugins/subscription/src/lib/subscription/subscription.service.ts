@@ -218,6 +218,13 @@ const EXPIRED_BY_CYCLE = 'expiredByCycle';
  */
 const SCHEDULED_PLAN_CHANGE = 'scheduledPlanChange';
 
+/**
+ * The stamp `applyChange` writes on a change it schedules. Before the key was reserved (SEC-B-03) a caller's metadata
+ * could write it, and the service itself recorded only a plan and its date, so the lines and the quantity of an
+ * entry without the stamp were written by no one the billing run may trust: they are not applied.
+ */
+const SCHEDULED_CHANGE_FORMAT = 2;
+
 /** A recurring line as `SubscriptionItemService.prepareItems` prices it, written nowhere yet. */
 type IPricedLine = {
 	variantId: ID;
@@ -229,6 +236,8 @@ type IPricedLine = {
 
 /** A change recorded under {@link SCHEDULED_PLAN_CHANGE}, as `applyChange` writes it. */
 interface IScheduledPlanChange {
+	/** {@link SCHEDULED_CHANGE_FORMAT} on a change this service recorded with its lines and quantity. */
+	format?: number;
 	/** The plan to move to; absent for a change of lines alone. */
 	planId?: ID;
 	/** The quantity the plan change states. */
@@ -1300,7 +1309,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		this.assertLive(subscription);
 
-		const before = await this.itemService.findForSubscription(id);
+		const before = await this.linesToEdit(subscription);
 		const prepared = await this.itemService.prepareItems(
 			[
 				...before.map((row) => ({
@@ -1346,7 +1355,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		this.assertLive(subscription);
 
-		const before = await this.itemService.findForSubscription(id);
+		const before = await this.linesToEdit(subscription);
 
 		if (!before.some((row) => row.variantId === variantId)) {
 			throw new NotFoundException(
@@ -1394,7 +1403,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		this.assertLive(subscription);
 
-		const before = await this.itemService.findForSubscription(id);
+		const before = await this.linesToEdit(subscription);
 
 		if (!before.some((row) => row.variantId === variantId)) {
 			throw new NotFoundException(
@@ -2132,9 +2141,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					metadata: pricing
 			  });
 
-		if (discount.isPositive()) {
-			await this.appendDiscount(billing, subscription, discount);
-		}
+		await this.appendDiscount(billing, subscription, discount);
 
 		const credit = await this.consumePendingCredit(subscription, billing);
 
@@ -2787,7 +2794,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			planId?: ID;
 			quantity?: DecimalString | number;
 			discountPercentage?: string;
-			before: SubscriptionItem[];
+			before: Array<Pick<IPricedLine, 'variantId' | 'quantity' | 'unitPrice'>>;
 			after: Array<{ variantId: ID; quantity: DecimalString; unitPrice: DecimalString; position: number; metadata?: Record<string, unknown> }>;
 			effective: 'IMMEDIATE' | 'NEXT_PERIOD';
 			description: string;
@@ -2809,6 +2816,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			// they are priced from the plan when the period opens, over the lines the subscription has then. The discount
 			// is restated there too; restated now, the cycles still billed on the old plan took the new plan's discount.
 			const recorded: IScheduledPlanChange = {
+				format: SCHEDULED_CHANGE_FORMAT,
 				...(change.planId ? { planId: change.planId } : {}),
 				...(change.planId && change.quantity !== undefined
 					? { quantity: normalizeDecimal(change.quantity, subscription.quantity) }
@@ -2948,6 +2956,40 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
+	 * The lines a change of lines builds on.
+	 *
+	 * The lines the subscription has, unless it has no current period and a change of lines is already recorded: with
+	 * no period a change of lines is recorded rather than made (`applyChange`), and a second one built on the lines the
+	 * subscription has replaced the first, which was then missing from the first bill. It builds on the recorded lines.
+	 *
+	 * @param subscription The subscription being changed.
+	 * @returns The lines, in position order.
+	 */
+	private async linesToEdit(
+		subscription: Subscription
+	): Promise<Array<Omit<IPricedLine, 'position'> & { position?: number }>> {
+		const pending = subscription.metadata?.[SCHEDULED_PLAN_CHANGE] as IScheduledPlanChange | undefined;
+		const recordsLines = !subscription.currentPeriodStart || !subscription.currentPeriodEnd;
+
+		if (
+			recordsLines &&
+			pending?.format === SCHEDULED_CHANGE_FORMAT &&
+			!pending.planId &&
+			Array.isArray(pending.items) &&
+			pending.items.length
+		) {
+			return pending.items.map((line) => ({ ...line }));
+		}
+
+		return (await this.itemService.findForSubscription(subscription.id)).map((row) => ({
+			variantId: row.variantId,
+			quantity: row.quantity,
+			unitPrice: row.unitPrice,
+			position: row.position
+		}));
+	}
+
+	/**
 	 * Restates the discount a plan change carries: the new plan's terms replace whatever the old one was sold with,
 	 * and a plan that grants none leaves none behind.
 	 *
@@ -2985,6 +3027,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		metadata: Record<string, unknown>;
 		refused?: string;
 		plan?: SubscriptionPlan;
+		quantity?: DecimalString;
 		items?: IPricedLine[];
 	} | null> {
 		const change = subscription.metadata?.[SCHEDULED_PLAN_CHANGE] as IScheduledPlanChange | undefined;
@@ -3001,11 +3044,45 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		delete metadata[SCHEDULED_PLAN_CHANGE];
 
+		// Only what this service recorded is applied (`SCHEDULED_CHANGE_FORMAT`): an entry a caller's metadata wrote
+		// before the key was reserved may still be on the row, and its lines or quantity were never checked by anything.
+		const stamped = change.format === SCHEDULED_CHANGE_FORMAT;
+
 		if (!change.planId) {
-			return Array.isArray(change.items) && change.items.length
-				? { change, metadata, items: change.items }
-				: { change, metadata, refused: 'The scheduled change names neither a plan nor recurring lines.' };
+			if (!stamped || !Array.isArray(change.items) || !change.items.length) {
+				return {
+					change,
+					metadata,
+					refused:
+						'SUBSCRIPTION_SCHEDULED_CHANGE_UNTRUSTED: the scheduled change names no plan and no recurring lines this service recorded.'
+				};
+			}
+
+			try {
+				// Checked again as a change of lines made now is checked: the variants still sellable and the set well formed.
+				const items = await this.itemService.prepareItems(
+					change.items.map((line) => ({
+						variantId: line.variantId,
+						quantity: line.quantity,
+						unitPrice: line.unitPrice,
+						position: line.position,
+						...(line.metadata ? { metadata: line.metadata } : {})
+					})),
+					subscription.currency,
+					subscription.customerId
+				);
+
+				return { change, metadata, items };
+			} catch (error) {
+				if (error instanceof BadRequestException || error instanceof NotFoundException) {
+					return { change, metadata, refused: error.message };
+				}
+
+				throw error;
+			}
 		}
+
+		const quantity = stamped ? change.quantity : undefined;
 
 		try {
 			const plan = await this.planService.assertSubscribable(change.planId);
@@ -3019,7 +3096,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			}
 
 			const existing = await this.itemService.findForSubscription(subscription.id);
-			const items = await this.planLines(subscription, plan, existing, change.quantity);
+			const items = await this.planLines(subscription, plan, existing, quantity);
 
 			this.restateDiscount(
 				metadata,
@@ -3028,7 +3105,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					: undefined
 			);
 
-			return { change, metadata, plan, items };
+			return { change, metadata, plan, quantity, items };
 		} catch (error) {
 			// The plan's own answer (inactive, gone, its target or a line no longer sellable) refuses the change; anything
 			// else fails the cycle, which is retried, rather than dropping a change the customer asked for.
@@ -3108,7 +3185,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 						patch: lines
 							? {
 									...(due.plan ? { planId: due.plan.id } : {}),
-									...(due.change.quantity !== undefined ? { quantity: due.change.quantity } : {}),
+									...(due.quantity !== undefined ? { quantity: due.quantity } : {}),
 									metadata: due.metadata
 							  }
 							: { metadata: due.metadata }
@@ -3291,22 +3368,48 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param discount The discount granted.
 	 */
 	private async appendDiscount(billing: SubscriptionBilling, subscription: Subscription, discount: Money): Promise<void> {
-		const existing = await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, billing.id);
+		const currency = subscription.currency;
+		const granted = (
+			await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, billing.id)
+		).filter((row) => row.type === AdjustmentType.PROMOTION);
+		const total = Money.sum(
+			granted.map((row) => Money.of(row.amount, currency)),
+			currency
+		).round();
+		const owed = discount.negate().round();
 
-		if (existing.some((row) => row.type === AdjustmentType.PROMOTION)) {
+		if (total.equals(owed)) {
 			return;
 		}
 
-		await this.adjustmentService.append({
-			ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
-			ownerId: billing.id,
-			type: AdjustmentType.PROMOTION,
-			amount: discount.negate().toStorageString(),
-			currency: subscription.currency,
-			referenceType: 'subscription-plan',
-			referenceId: subscription.planId,
-			description: 'Recurring plan discount.'
-		});
+		// The ledger is append-only: a retry priced on other terms (a change that took hold at this attempt, lines changed
+		// since the first) reverses what an earlier attempt granted and grants its own discount, so the cycle's promotions
+		// add up to the discount its order carries, and to nothing when it carries none.
+		if (!total.isZero()) {
+			await this.adjustmentService.append({
+				ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
+				ownerId: billing.id,
+				type: AdjustmentType.PROMOTION,
+				amount: total.negate().toStorageString(),
+				currency,
+				referenceType: 'subscription-plan',
+				referenceId: granted[granted.length - 1]?.referenceId ?? subscription.planId,
+				description: 'Recurring plan discount reversed: the retry is priced on other terms.'
+			});
+		}
+
+		if (discount.isPositive()) {
+			await this.adjustmentService.append({
+				ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
+				ownerId: billing.id,
+				type: AdjustmentType.PROMOTION,
+				amount: discount.negate().toStorageString(),
+				currency,
+				referenceType: 'subscription-plan',
+				referenceId: subscription.planId,
+				description: 'Recurring plan discount.'
+			});
+		}
 	}
 
 	/**
