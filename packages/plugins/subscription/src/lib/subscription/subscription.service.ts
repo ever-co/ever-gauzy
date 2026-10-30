@@ -60,6 +60,7 @@ import {
 	recurringAmount,
 	resumedNextBillingAt
 } from '../subscription.cycle';
+import { signScheduledChange, verifyScheduledChange } from '../subscription.schedule-signature';
 import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
 import { lockPlanRow } from '../subscription-plan/subscription-plan.lock';
@@ -219,11 +220,10 @@ const EXPIRED_BY_CYCLE = 'expiredByCycle';
 const SCHEDULED_PLAN_CHANGE = 'scheduledPlanChange';
 
 /**
- * The stamp `applyChange` writes on a change it schedules. Before the key was reserved (SEC-B-03) a caller's metadata
- * could write it, and the service itself recorded only a plan and its date, so the lines and the quantity of an
- * entry without the stamp were written by no one the billing run may trust: they are not applied.
+ * The adjustment reason a cycle's discount is lowered under when a retry is priced on a smaller one. A `PROMOTION`
+ * only ever lowers what is payable, so giving part of an earlier grant back is a governed `MANUAL` correction.
  */
-const SCHEDULED_CHANGE_FORMAT = 2;
+const DISCOUNT_RESTATED_REASON = 'SUBSCRIPTION_DISCOUNT_RESTATED';
 
 /** A recurring line as `SubscriptionItemService.prepareItems` prices it, written nowhere yet. */
 type IPricedLine = {
@@ -236,8 +236,8 @@ type IPricedLine = {
 
 /** A change recorded under {@link SCHEDULED_PLAN_CHANGE}, as `applyChange` writes it. */
 interface IScheduledPlanChange {
-	/** {@link SCHEDULED_CHANGE_FORMAT} on a change this service recorded with its lines and quantity. */
-	format?: number;
+	/** What `signScheduledChange` signed the change with when `applyChange` recorded it. */
+	signature?: string;
 	/** The plan to move to; absent for a change of lines alone. */
 	planId?: ID;
 	/** The quantity the plan change states. */
@@ -2816,7 +2816,6 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			// they are priced from the plan when the period opens, over the lines the subscription has then. The discount
 			// is restated there too; restated now, the cycles still billed on the old plan took the new plan's discount.
 			const recorded: IScheduledPlanChange = {
-				format: SCHEDULED_CHANGE_FORMAT,
 				...(change.planId ? { planId: change.planId } : {}),
 				...(change.planId && change.quantity !== undefined
 					? { quantity: normalizeDecimal(change.quantity, subscription.quantity) }
@@ -2831,12 +2830,16 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 								position: line.position,
 								...(line.metadata ? { metadata: line.metadata } : {})
 							}))
-					  }),
+						}),
 				effectiveAt: subscription.currentPeriodEnd ?? null,
 				description: change.description
 			};
 
-			metadata[SCHEDULED_PLAN_CHANGE] = recorded;
+			// Signed, so the billing run can tell it from an entry a caller's metadata wrote (`scheduledChangeAt`).
+			metadata[SCHEDULED_PLAN_CHANGE] = {
+				...recorded,
+				signature: signScheduledChange(subscription.id, recorded)
+			};
 
 			await commitVersionedUpdate<Subscription>(this, {
 				where: currentScope(),
@@ -2973,7 +2976,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		if (
 			recordsLines &&
-			pending?.format === SCHEDULED_CHANGE_FORMAT &&
+			!!pending &&
+			verifyScheduledChange(subscription.id, pending) &&
 			!pending.planId &&
 			Array.isArray(pending.items) &&
 			pending.items.length
@@ -3044,12 +3048,14 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		delete metadata[SCHEDULED_PLAN_CHANGE];
 
-		// Only what this service recorded is applied (`SCHEDULED_CHANGE_FORMAT`): an entry a caller's metadata wrote
-		// before the key was reserved may still be on the row, and its lines or quantity were never checked by anything.
-		const stamped = change.format === SCHEDULED_CHANGE_FORMAT;
+		// Only what this service recorded and signed is applied (`verifyScheduledChange`): an entry a caller's metadata
+		// wrote before the key was reserved, or through an instance that does not reserve it yet, may still be on the row,
+		// and its lines or quantity were never checked by anything. A plan alone, the shape the service wrote before it
+		// signed anything, still takes hold: the plan is checked again below and the lines are priced from it.
+		const trusted = verifyScheduledChange(subscription.id, change);
 
 		if (!change.planId) {
-			if (!stamped || !Array.isArray(change.items) || !change.items.length) {
+			if (!trusted || !Array.isArray(change.items) || !change.items.length) {
 				return {
 					change,
 					metadata,
@@ -3082,7 +3088,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			}
 		}
 
-		const quantity = stamped ? change.quantity : undefined;
+		const quantity = trusted ? change.quantity : undefined;
 
 		try {
 			const plan = await this.planService.assertSubscribable(change.planId);
@@ -3369,9 +3375,14 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 */
 	private async appendDiscount(billing: SubscriptionBilling, subscription: Subscription, discount: Money): Promise<void> {
 		const currency = subscription.currency;
+		// What the cycle's rows grant so far: its promotions, and the corrections that gave part of them back.
 		const granted = (
 			await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, billing.id)
-		).filter((row) => row.type === AdjustmentType.PROMOTION);
+		).filter(
+			(row) =>
+				row.type === AdjustmentType.PROMOTION ||
+				(row.type === AdjustmentType.MANUAL && row.reasonCode === DISCOUNT_RESTATED_REASON)
+		);
 		const total = Money.sum(
 			granted.map((row) => Money.of(row.amount, currency)),
 			currency
@@ -3382,34 +3393,43 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			return;
 		}
 
-		// The ledger is append-only: a retry priced on other terms (a change that took hold at this attempt, lines changed
-		// since the first) reverses what an earlier attempt granted and grants its own discount, so the cycle's promotions
-		// add up to the discount its order carries, and to nothing when it carries none.
-		if (!total.isZero()) {
-			await this.adjustmentService.append({
-				ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
-				ownerId: billing.id,
-				type: AdjustmentType.PROMOTION,
-				amount: total.negate().toStorageString(),
-				currency,
-				referenceType: 'subscription-plan',
-				referenceId: granted[granted.length - 1]?.referenceId ?? subscription.planId,
-				description: 'Recurring plan discount reversed: the retry is priced on other terms.'
-			});
-		}
+		// The ledger is append-only, and its rows add up to the discount the order carries: a retry priced on other terms
+		// (a change that took hold at this attempt, lines changed since the first) adds the difference. A larger discount
+		// is a further `PROMOTION`. A smaller one, or none, gives part of an earlier grant back, which a `PROMOTION` (only
+		// ever negative) cannot say: it is a governed `MANUAL` correction under the service's own reason.
+		const difference = owed.subtract(total).round();
 
-		if (discount.isPositive()) {
+		if (difference.isNegative()) {
 			await this.adjustmentService.append({
 				ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
 				ownerId: billing.id,
 				type: AdjustmentType.PROMOTION,
-				amount: discount.negate().toStorageString(),
+				amount: difference.toStorageString(),
 				currency,
 				referenceType: 'subscription-plan',
 				referenceId: subscription.planId,
-				description: 'Recurring plan discount.'
+				description: granted.length ? 'Recurring plan discount, raised on a retry.' : 'Recurring plan discount.'
 			});
+
+			return;
 		}
+
+		await this.adjustmentService.ensureReason({
+			code: DISCOUNT_RESTATED_REASON,
+			label: 'Subscription discount restated on a retry',
+			appliesTo: AdjustmentType.MANUAL
+		});
+		await this.adjustmentService.append({
+			ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
+			ownerId: billing.id,
+			type: AdjustmentType.MANUAL,
+			amount: difference.toStorageString(),
+			currency,
+			referenceType: 'subscription-plan',
+			referenceId: subscription.planId,
+			reasonCode: DISCOUNT_RESTATED_REASON,
+			description: 'Recurring plan discount lowered on a retry priced on other terms.'
+		});
 	}
 
 	/**
