@@ -105,6 +105,7 @@ describe('Ever ID accounts of a person (deletion and export requests)', () => {
 			find: jest.fn(async (options: { where: Record<string, unknown>; take: number }) => {
 				const where = options.where ?? {};
 				return rows
+					.filter((row) => !where['userId'] || row.userId === where['userId'])
 					.filter((row) => !where['id'] || row.id > String(value(where['id'])))
 					.filter((row) => !where['tenantId'] || (value(where['tenantId']) as string[]).includes(row.tenantId))
 					.sort((a, b) => (a.id < b.id ? -1 : 1))
@@ -187,6 +188,8 @@ describe('Ever ID accounts of a person (deletion and export requests)', () => {
 		expect(await listener.findLink('user-1', 'https://auth.ever.co', 'subject-1')).toMatchObject({ id: '000001', tenantName: 'Acme' });
 		expect(await listener.findLink('user-1', 'https://auth.ever.co', 'subject-2')).toBeNull();
 		expect(await listener.findLink('', 'https://auth.ever.co', 'subject-1')).toBeNull();
+		expect((await listener.linksOfUser('user-2')).map((link) => link.subject)).toEqual(['subject-2']);
+		expect(await listener.linksOfUser('')).toEqual([]);
 	});
 
 	it('links lists the links of the given tenants only, a page at a time, with the tenant name', async () => {

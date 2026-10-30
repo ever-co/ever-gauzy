@@ -292,6 +292,18 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		expect(h.platform.callsTo(POST)).toHaveLength(1);
 	});
 
+	it('an unlink (which removes every link of the user there) is followed by the user\'s other links again', async () => {
+		await clientReady();
+		hold({ subject: 'identity-a' });
+		hold({ subject: 'identity-b' });
+		accounts.remove('user-1', 'identity-a');
+		await reporter.unlinked(payload({ subject: 'identity-a' }) as never);
+		await reporter.sendDue();
+		await reporter.sendDue();
+		const sent = h.platform.calls.filter((c) => c.path.includes('person-links'));
+		expect(sent.map((c) => `${c.method} ${c.body?.['identity_subject'] ?? ''}`.trim())).toEqual(['DELETE', 'POST identity-b']);
+	});
+
 	it('a backfill that cannot run (no client yet) counts as nothing done', async () => {
 		expect(await reporter.backfill()).toBeNull();
 	});

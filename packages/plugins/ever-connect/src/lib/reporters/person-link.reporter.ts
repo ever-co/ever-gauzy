@@ -59,7 +59,8 @@ const stripTrailingSlashes = (value: string): string => value.replace(/\/+$/, ''
  * are sent in the order they were made: a newer one waits while an older one of the same user is
  * retried. Each report is reconciled with the Ever ID sign-in plugin's link as it is when it is sent:
  * a link that exists is reported as a link, one that does not as an unlink, whatever order the events
- * arrived in (on one API process or several). Ever Platform not knowing the subject yet (`422 subject_unknown`), or not answering, is
+ * arrived in (on one API process or several). An unlink removes every link of the user on Ever
+ * Platform, so the user's other Ever ID links are reported again right after it. Ever Platform not knowing the subject yet (`422 subject_unknown`), or not answering, is
  * retried with a back-off of up to a day, then given up (audited). Once the client is ready, the
  * links that existed before are reported too (for the linked tenants only), by the worker, until
  * that is done.
@@ -302,6 +303,7 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 				);
 			} else {
 				await client.instances.personLinks.remove(row.userId);
+				await this.reportOtherLinks(row);
 			}
 			await this.identity.updateReport(row.id, {
 				state: 'sent',
@@ -355,6 +357,33 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 			details: { op: row.op, state: 'failed', reason: code, attempts }
 		});
 		this.logger.warn(`An Ever ID ${row.op} could not be reported to Ever Platform (${code}); it is given up.`);
+	}
+
+	/**
+	 * After an unlink: Ever Platform removed every link of the user (it keys them by the user), so the
+	 * user's other links of Ever Platform's issuer are queued again; they go after the unlink.
+	 */
+	private async reportOtherLinks(row: PersonLinkReportRecord): Promise<void> {
+		const issuer = await this.platformIssuer();
+		if (!this.accounts || !issuer) {
+			return;
+		}
+		for (const link of await this.accounts.linksOfUser(row.userId)) {
+			const method = REPORTED_METHODS[link.linkMethod];
+			if (!method || stripTrailingSlashes(link.issuer) !== issuer || link.subject === row.subject) continue;
+			await this.identity.addReport({
+				id: randomUUID(),
+				op: 'link',
+				userId: link.userId,
+				tenantId: link.tenantId,
+				tenantName: tenantDisplayName(link.tenantName),
+				issuer: link.issuer,
+				subject: link.subject,
+				subjectHash: subjectHashOf(link.issuer, link.subject),
+				linkMethod: method
+			});
+			this.nudge();
+		}
 	}
 
 	/** Whether a link event is to be reported (see the class). */

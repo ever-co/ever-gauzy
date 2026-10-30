@@ -78,6 +78,14 @@ export class ZitadelPersonDataListener implements EverIdAccountsPort {
 		return row ? toLink(row) : null;
 	}
 
+	async linksOfUser(userId: string): Promise<EverIdAccountLink[]> {
+		if (!userId) {
+			return [];
+		}
+		const rows = await this.accounts.find({ where: { userId }, relations: { tenant: true }, order: { id: 'ASC' } });
+		return rows.map(toLink);
+	}
+
 	/** The links whose identity hash is one of `subjectHashes`. */
 	private async matching(subjectHashes: string[]): Promise<Array<Pick<ZitadelAccount, 'id' | 'userId'>>> {
 		const wanted = new Set(subjectHashes.filter((hash) => typeof hash === 'string' && HASH_SHAPE.test(hash)));
