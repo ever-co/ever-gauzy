@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BehaviorSubject, combineLatest, firstValueFrom } from 'rxjs';
@@ -26,7 +26,7 @@ import {
 	taskStatusOf,
 	TASK_VIEW_RELATIONS
 } from '../../../tasks/components/task-view/task-view-sections';
-import { IProjectQuickLookCard } from '../project-quick-look/project-quick-look.component';
+import { IProjectQuickLookCard, ProjectQuickLookComponent } from '../project-quick-look/project-quick-look.component';
 import {
 	initialsOf,
 	ITaskProgress,
@@ -94,6 +94,15 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	set period(value: ProjectViewPeriod) {
 		this.period$.next(value);
 	}
+
+	/** The Overview, once opened. */
+	@ViewChild(ProjectQuickLookComponent) quickLook?: ProjectQuickLookComponent;
+
+	/**
+	 * The Overview loads when first opened, then stays mounted behind the other tabs: it reads every task and
+	 * the project's time, which a page opened on another tab has no use for.
+	 */
+	overviewOpened = false;
 
 	/**
 	 * The Board loads when first opened, then stays mounted behind the other tabs: a move still saving
@@ -278,6 +287,7 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 
 	private openTab(tab: ProjectViewTab): void {
 		this.tab = tab;
+		if (tab === 'overview') this.overviewOpened = true;
 		if (tab === 'board') this.boardOpened = true;
 		if (tab === 'comments') this.commentsOpened = true;
 	}

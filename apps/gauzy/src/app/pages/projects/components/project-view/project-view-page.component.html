@@ -67,7 +67,8 @@
 			</div>
 		</div>
 
-		<!-- Overview stays loaded while another tab is open, so coming back to it does not reload it. -->
+		<!-- Overview loads when first opened, then stays loaded, so coming back to it does not reload it. -->
+		@if (overviewOpened) {
 		<div
 			class="project-page-pane"
 			role="tabpanel"
@@ -76,7 +77,6 @@
 			[hidden]="tab !== 'overview'"
 		>
 			<ngx-project-quick-look
-				#quickLook
 				mode="page"
 				[project]="card"
 				[organizationId]="organization?.id"
@@ -88,6 +88,7 @@
 				[tasksInDrawer]="true"
 			></ngx-project-quick-look>
 		</div>
+		}
 
 		<!-- The Board loads when first opened, then stays loaded: a move still saving when another tab opens
 		     still reaches the Overview. -->
@@ -99,12 +100,12 @@
 			aria-labelledby="project-view-tab-board"
 			[hidden]="tab !== 'board'"
 		>
-			<!-- A card moved on the board changes its task's status: the Overview's task panels read it again. -->
+			<!-- A card moved on the board changes its task's status: the Overview's task panels, once open, read it again. -->
 			<ga-project-board
 				[projectId]="card.id"
 				[organizationId]="organization?.id"
 				[tenantId]="organization?.tenantId"
-				(taskMoved)="quickLook.reloadTasks()"
+				(taskMoved)="quickLook?.reloadTasks()"
 			></ga-project-board>
 		</div>
 		}
