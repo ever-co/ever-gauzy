@@ -137,7 +137,7 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	private _sequence = 0;
 	/** The tasks asked of the server so far, where the next page starts. */
 	private _offset = 0;
-	/** The tasks on the board: a task created while paging pushes the last one read into the next page. */
+	/** The tasks on the board: tasks created or deleted while paging bring rows already read into the next page. */
 	private _placed = new Set<string>();
 	/** The columns by status row and by status value or name, built with the columns and kept for the next pages. */
 	private _columnsById = new Map<string, IBoardColumn>();
@@ -145,7 +145,9 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	/** Each task's time worked, once read; the cards of later pages take their bars from it. */
 	private _worked: Map<string, number> | null = null;
 	private _projectWorked: IProjectWorkedTime = { total: 0 };
-	private _dragging = false;
+	/** Settles when the drag under way ends, and is `null` without one. */
+	private _dragEnd: Promise<void> | null = null;
+	private _releaseDrag: (() => void) | null = null;
 	private _endObserver: IntersectionObserver | null = null;
 	private _end: HTMLElement | null = null;
 
@@ -197,11 +199,11 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 
 	/** No page lands during a drag: the drop lists measured themselves when it began. */
 	onDragStarted(): void {
-		this._dragging = true;
+		this._dragEnd = new Promise((resolve) => (this._releaseDrag = resolve));
 	}
 
 	onDragEnded(): void {
-		this._dragging = false;
+		this.endDrag();
 		this.watchEnd();
 	}
 
@@ -278,6 +280,8 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		this._changeDetectorRef.markForCheck();
 		try {
 			const page = await this.fetchPage(this._offset);
+			// A page asked for before the drag began waits for it to end.
+			await this._dragEnd;
 			if (sequence === this._sequence) this.addPage(this.board.value, page);
 		} catch {
 			if (sequence === this._sequence) this.loadMoreFailed = true;
@@ -303,7 +307,13 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	}
 
 	private onEndReached(): void {
-		if (!this.loadMoreFailed && !this._dragging) void this.loadMore();
+		if (!this.loadMoreFailed && !this._dragEnd) void this.loadMore();
+	}
+
+	private endDrag(): void {
+		this._releaseDrag?.();
+		this._releaseDrag = null;
+		this._dragEnd = null;
 	}
 
 	/**
@@ -318,6 +328,8 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 
 	private async load(): Promise<void> {
 		const sequence = ++this._sequence;
+		// The board is replaced, and a dragged card with it: no end of that drag will be reported.
+		this.endDrag();
 		this.board = loading([]);
 		this.total = 0;
 		this.loadingMore = false;
@@ -358,11 +370,18 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		);
 	}
 
-	/** Puts a page's tasks on the board. An empty page means the rest are gone: nothing more is asked. */
+	/**
+	 * Puts a page's tasks on the board. Tasks deleted since the last page moved the unread ones back by as many
+	 * rows, so the next page starts that much earlier; what it reads again is already placed. An empty page with
+	 * none deleted means the rest are gone: nothing more is asked.
+	 */
 	private addPage(columns: IBoardColumn[], page: IPagination<ITask>): void {
 		const items = page?.items || [];
-		this.total = page?.total || 0;
-		this._offset = items.length ? this._offset + items.length : this.total;
+		const total = page?.total || 0;
+		const deleted = this.total - total;
+		if (deleted > 0) this._offset = Math.max(0, this._offset - deleted);
+		else this._offset = items.length ? this._offset + items.length : total;
+		this.total = total;
 		this.place(
 			columns,
 			items.filter((task) => !this._placed.has(task.id))
