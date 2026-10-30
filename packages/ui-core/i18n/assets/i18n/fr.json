@@ -3823,6 +3823,7 @@
 		"ESTIMATE_HOURS": "Heures",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Statut",
+		"CREATE_STATUS": "Créer un statut",
 		"TASK_PRIORITY": "Priorité",
 		"TASK_SIZE": "Taille",
 		"PARENT_TASK": "Tâche parente",

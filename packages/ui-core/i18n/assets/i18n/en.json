@@ -4354,6 +4354,7 @@
 		"ESTIMATE_HOURS": "Hours",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Status",
+		"CREATE_STATUS": "Create status",
 		"TASK_PRIORITY": "Priority",
 		"TASK_SIZE": "Size",
 		"PARENT_TASK": "Parent Task",

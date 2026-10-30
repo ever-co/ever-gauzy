@@ -3818,6 +3818,7 @@
 		"ESTIMATE_HOURS": "Stunden",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Status",
+		"CREATE_STATUS": "Status erstellen",
 		"TASK_PRIORITY": "Priorität",
 		"TASK_SIZE": "Größe",
 		"PARENT_TASK": "Übergeordnete Aufgabe",

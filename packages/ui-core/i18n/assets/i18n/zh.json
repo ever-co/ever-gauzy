@@ -3822,6 +3822,7 @@
 		"ESTIMATE_HOURS": "时",
 		"ESTIMATE_MINUTES": "Mins - 分钟",
 		"TASKS_STATUS": "状态",
+		"CREATE_STATUS": "创建状态",
 		"TASK_PRIORITY": "优先",
 		"TASK_SIZE": "大小",
 		"PARENT_TASK": "父任务",

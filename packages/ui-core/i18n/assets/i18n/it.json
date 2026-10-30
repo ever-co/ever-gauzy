@@ -3822,6 +3822,7 @@
 		"ESTIMATE_HOURS": "Ore",
 		"ESTIMATE_MINUTES": "Minuti",
 		"TASKS_STATUS": "Stato",
+		"CREATE_STATUS": "Crea stato",
 		"TASK_PRIORITY": "Priorità",
 		"TASK_SIZE": "Taglia",
 		"PARENT_TASK": "Attività principale",

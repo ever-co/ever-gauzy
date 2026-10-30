@@ -3822,6 +3822,7 @@
 		"ESTIMATE_HOURS": "Uren",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Status",
+		"CREATE_STATUS": "Status aanmaken",
 		"TASK_PRIORITY": "Prioriteit",
 		"TASK_SIZE": "Grootte",
 		"PARENT_TASK": "Hoofdtaak",

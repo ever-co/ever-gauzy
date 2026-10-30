@@ -3882,6 +3882,7 @@
 		"ESTIMATE_HOURS": "Часове",
 		"ESTIMATE_MINUTES": "Минути",
 		"TASKS_STATUS": "Статус",
+		"CREATE_STATUS": "Създаване на статус",
 		"TASK_PRIORITY": "Приоритет",
 		"TASK_SIZE": "Размер",
 		"PARENT_TASK": "Основна задача",
