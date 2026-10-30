@@ -61,6 +61,11 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		await h.everIdLogin.enabled();
 		h.clock.t += OIDC_CLIENT_POLL_FIRST_MS;
 		await h.everIdLogin.pollDue();
+		// As the worker does once the client is ready.
+		if (await h.everIdLogin.backfillDue()) {
+			await reporter.backfill();
+			await h.everIdLogin.markBackfilled();
+		}
 	}
 
 	const payload = (overrides: Record<string, unknown> = {}) => ({
@@ -194,6 +199,46 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		]);
 		// Ready again (re-read): nothing reported twice.
 		expect(await reporter.backfill()).toBe(0);
+	});
+
+	it('one user\'s reports go in order: a newer one waits while an older one is retried', async () => {
+		await clientReady();
+		h.platform.offline = true;
+		await reporter.unlinked(payload({ subject: 'identity-a' }) as never);
+		await reporter.sendDue();
+		h.clock.t += 1;
+		h.platform.offline = false;
+		await reporter.linked(payload({ subject: 'identity-b' }) as never);
+		// The unlink of A waits for its retry; the link of B waits behind it.
+		expect(await reporter.sendDue()).toBe(0);
+		expect(h.platform.callsTo(POST)).toEqual([]);
+		h.clock.t += 60_000;
+		expect(await reporter.sendDue()).toBe(1);
+		expect(await reporter.sendDue()).toBe(1);
+		const order = h.platform.calls.filter((c) => c.path.includes('person-links')).map((c) => c.method);
+		expect(order).toEqual(['DELETE', 'DELETE', 'POST']);
+	});
+
+	it('the existing links are reported again when their latest report was an unlink', async () => {
+		await clientReady();
+		await reporter.linked(payload() as never);
+		await reporter.sendDue();
+		h.clock.t += 1;
+		await reporter.unlinked(payload() as never);
+		await reporter.sendDue();
+		accounts.add({ userId: 'user-1', tenantId: TENANT, tenantName: 'Acme', issuer: ISSUER, subject: payload().subject, linkMethod: 'explicit' });
+		h.clock.t += 1;
+		expect(await reporter.backfill()).toBe(1);
+		expect(await reporter.backfill()).toBe(0);
+	});
+
+	it('a report removed meanwhile (a person\'s deletion) is not sent', async () => {
+		await clientReady();
+		await reporter.linked(payload() as never);
+		const [row] = await h.dataSource.query('SELECT * FROM "ever_connect_person_link_report"');
+		await h.identity.purgeReports([row.subjectHash]);
+		expect(await reporter.sendDue()).toBe(0);
+		expect(h.platform.callsTo(POST)).toEqual([]);
 	});
 
 	it('the tenant name is sent only when it does not look like an e-mail address', () => {

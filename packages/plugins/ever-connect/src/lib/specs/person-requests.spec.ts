@@ -38,13 +38,15 @@ describe('A person\'s requests and /.well-known/ever-connect', () => {
 	});
 
 	function handler(participant?: PersonDataParticipantPort, withAccounts = true) {
+		const port = withAccounts ? accounts : undefined;
 		return new PersonRequestsHandler(
 			h.identity,
 			h.platformService as never,
-			new PersonDeletionHandler(withAccounts ? accounts : undefined, participant),
-			new PersonExportHandler(withAccounts ? accounts : undefined, participant),
+			new PersonDeletionHandler(h.identity, port, participant),
+			new PersonExportHandler(port, participant),
 			h.audit,
 			h.signals,
+			port,
 			{ ENCRYPTION_KEY: 'identity-spec-encryption-key-0123456789' },
 			h.clock
 		);
@@ -94,6 +96,49 @@ describe('A person\'s requests and /.well-known/ever-connect', () => {
 			// Another API process reading the same page.
 			await handler().handle(event);
 			expect(h.platform.callsTo(ACK)).toHaveLength(1);
+		});
+
+		it('removes the link reports of the identities (nothing more of them is sent or kept)', async () => {
+			linkPerson();
+			await h.identity.addReport({
+				id: 'report-1',
+				op: 'link',
+				userId: 'user-1',
+				tenantId: 't1',
+				tenantName: 'Acme',
+				issuer: ISSUER,
+				subject: SUBJECT,
+				subjectHash: HASH,
+				linkMethod: 'explicit'
+			});
+			await handler().handle(envelope('deletion', '01JJYMM5DB8395H7EH8359HC7H'));
+			expect(await h.dataSource.query('SELECT * FROM "ever_connect_person_link_report"')).toEqual([]);
+			expect(accounts.sessionsEnded).toEqual([['user-1']]);
+		});
+
+		it('a handling that stopped after the links were removed is taken up again for the same accounts, never no_account', async () => {
+			linkPerson();
+			const requests = handler();
+			const update = h.identity.updateRequest.bind(h.identity);
+			let failures = 0;
+			jest.spyOn(h.identity, 'updateRequest').mockImplementation(async (id, values) => {
+				if ('result' in values && failures++ === 0) throw new Error('database went away');
+				return update(id, values);
+			});
+			const event = envelope('deletion', '01JJYMM5DB8395H7EH8359HC7J');
+			await expect(requests.handle(event)).rejects.toThrow('database went away');
+			expect(accounts.links_).toEqual([]);
+			// Read again at once (another page): held by the first attempt, nothing is answered twice.
+			await requests.handle(event);
+			expect(h.platform.callsTo(ACK)).toEqual([]);
+			// Once the hold ran out, the worker takes it up: same accounts, honest answer.
+			h.clock.t += 3 * 60_000;
+			expect(await requests.resumeDue()).toBe(1);
+			expect(h.platform.callsTo(ACK).map((c) => c.body)).toEqual([
+				{ job_id: '01JSF0AY2MRHJXQBQWY8CW44MM', result: 'failed', detail: { reason_code: 'account_deletion_pending' } }
+			]);
+			expect(accounts.sessionsEnded.at(-1)).toEqual(['user-1']);
+			expect(await requests.resumeDue()).toBe(0);
 		});
 
 		it('answers no_account when nothing here is linked to the person', async () => {

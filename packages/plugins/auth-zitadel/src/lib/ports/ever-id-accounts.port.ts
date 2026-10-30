@@ -20,6 +20,8 @@ export interface EverIdAccountLink {
  * - `findUsers`: the Gauzy users linked to any of those identities;
  * - `erase`: removes those links and ends the Gauzy sessions the users opened through Ever ID;
  *   returns the users the links belonged to. Nothing else of the users is changed;
+ * - `endSessions`: ends the Gauzy sessions these users opened through Ever ID (again: a request
+ *   handled a second time, after its links were already removed);
  * - `links`: the existing links of the given tenants, a page at a time (after the link id `after`).
  *
  * Provided by this plugin under {@link EVER_ID_ACCOUNTS} when it is loaded.
@@ -27,6 +29,7 @@ export interface EverIdAccountLink {
 export interface EverIdAccountsPort {
 	findUsers(subjectHashes: string[]): Promise<string[]>;
 	erase(subjectHashes: string[]): Promise<string[]>;
+	endSessions(userIds: string[]): Promise<void>;
 	links(tenantIds: string[], after: string | null, limit: number): Promise<EverIdAccountLink[]>;
 }
 

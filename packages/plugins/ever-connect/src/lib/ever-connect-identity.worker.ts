@@ -12,9 +12,11 @@ import { PersonLinkReporter } from './reporters/person-link.reporter';
 /**
  * The background work of Sign in with Ever ID and of a person's requests, run by the API process that
  * holds the connection's lease, and only while the installation is connected: every 15 seconds (or
- * at once after a new link report), it reads the sign-in client while it is being made, sends the
- * link reports that are due, and sends again the answers that could not be sent. Before a connection
- * exists nothing is scheduled.
+ * at once after a new link report), it asks for the sign-in client when nothing was asked for yet,
+ * reads it while it is being made, queues the links that existed before it was ready, sends the link
+ * reports that are due, takes up a person's requests whose handling stopped, and sends again the
+ * answers that could not be sent. All of it is kept in the database, so a restart loses nothing.
+ * Before a connection exists nothing is scheduled.
  */
 @Injectable()
 export class EverConnectIdentityWorker implements OnModuleInit, OnModuleDestroy {
@@ -82,8 +84,10 @@ export class EverConnectIdentityWorker implements OnModuleInit, OnModuleDestroy 
 			return;
 		}
 		for (const [what, work] of [
-			['the sign-in client', () => this.everIdLogin.pollDue()],
+			['the sign-in client', async () => (await this.everIdLogin.ensureRequested()) || (await this.everIdLogin.pollDue())],
+			['the existing links', () => this.backfill()],
 			['the link reports', () => this.reporter.sendDue()],
+			["a person's requests", () => this.requests.resumeDue()],
 			['the answers', () => this.requests.sendDue()]
 		] as const) {
 			try {
@@ -91,6 +95,14 @@ export class EverConnectIdentityWorker implements OnModuleInit, OnModuleDestroy 
 			} catch (error) {
 				this.logger.warn(`Sign in with Ever ID: ${what} could not be handled now (${errorCode(error)}).`);
 			}
+		}
+	}
+
+	/** Once the client is ready: the links that existed before are queued, then marked done (retried until then). */
+	private async backfill(): Promise<void> {
+		if (await this.everIdLogin.backfillDue()) {
+			await this.reporter.backfill();
+			await this.everIdLogin.markBackfilled();
 		}
 	}
 

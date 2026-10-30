@@ -97,6 +97,7 @@ export function testSigner() {
 export class FakeAccounts implements EverIdAccountsPort {
 	links_: EverIdAccountLink[] = [];
 	readonly erased: string[][] = [];
+	readonly sessionsEnded: string[][] = [];
 
 	add(link: Omit<EverIdAccountLink, 'id'> & { id?: string }): EverIdAccountLink {
 		const row = { id: link.id ?? String(this.links_.length + 1).padStart(6, '0'), ...link } as EverIdAccountLink;
@@ -119,6 +120,10 @@ export class FakeAccounts implements EverIdAccountsPort {
 		this.erased.push(hashes);
 		this.links_ = this.links_.filter((link) => !rows.includes(link));
 		return [...new Set(rows.map((link) => link.userId))];
+	}
+
+	async endSessions(userIds: string[]): Promise<void> {
+		this.sessionsEnded.push(userIds);
 	}
 
 	async links(tenantIds: string[], after: string | null, limit: number): Promise<EverIdAccountLink[]> {

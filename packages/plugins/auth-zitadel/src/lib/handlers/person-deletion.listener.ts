@@ -21,9 +21,11 @@ export const subjectHashOf = (issuer: string, subject: string): string =>
  * export request ({@link EverIdAccountsPort}). The request names identities by their hash only, so
  * the links are read a page at a time and hashed here; nothing is read when no valid hash is given.
  *
- * `erase` removes the matching `zitadel_account` rows and ends the Gauzy sessions their users opened
- * through Ever ID (the `zitadel_session` rows, and the tokens they hold). The Gauzy users themselves
- * are not touched: deleting or anonymising an account is the account-deletion feature's decision.
+ * `erase` ends the Gauzy sessions the matching users opened through Ever ID (the `zitadel_session`
+ * rows, and the tokens they hold), removes the matching `zitadel_account` rows, then ends the sessions
+ * once more (one a sign-in opened meanwhile): when ending the sessions fails, the links are still
+ * there for the next attempt. The Gauzy users themselves are not touched: deleting or anonymising an
+ * account is the account-deletion feature's decision.
  */
 @Injectable()
 export class ZitadelPersonDataListener implements EverIdAccountsPort {
@@ -44,11 +46,15 @@ export class ZitadelPersonDataListener implements EverIdAccountsPort {
 			return [];
 		}
 		const userIds = unique(rows.map((row) => row.userId));
-		// The links go first, so no new sign-in can go through them while the sessions end.
+		await this.sessions.endSessionsOfUsers(userIds);
 		await this.accounts.delete({ id: In(rows.map((row) => row.id)) });
 		await this.sessions.endSessionsOfUsers(userIds);
 		this.logger.log(`Ever ID links removed for a person's deletion request (${rows.length} link(s)).`);
 		return userIds;
+	}
+
+	async endSessions(userIds: string[]): Promise<void> {
+		await this.sessions.endSessionsOfUsers(unique(userIds.filter((id) => typeof id === 'string' && id)));
 	}
 
 	async links(tenantIds: string[], after: string | null, limit: number): Promise<EverIdAccountLink[]> {

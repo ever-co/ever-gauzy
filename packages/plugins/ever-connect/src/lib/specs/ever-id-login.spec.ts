@@ -184,6 +184,52 @@ describe('Sign in with Ever ID: the sign-in client', () => {
 		expect(await h.everIdLogin.status()).toBe('none');
 	});
 
+	it('the worker asks again when the first request failed (a restart, another process), less often while it fails', async () => {
+		platformMakesTheClient(0);
+		await h.connectAndEnable();
+		h.platform.offline = true;
+		await expect(h.everIdLogin.enabled()).rejects.toThrow();
+		// A new process (the in-memory retry of the first one is gone): the worker asks.
+		const worker = new EverIdLoginHandler(h.store, h.platformService as never, h.audit, h.signals, h.config, { ENCRYPTION_KEY: 'identity-spec-encryption-key-0123456789', API_BASE_URL: 'https://gauzy.example.com' }, h.clock);
+		expect(await worker.ensureRequested()).toBe(true);
+		expect(await worker.status()).toBe('none');
+		// Backing off: not again at once.
+		expect(await worker.ensureRequested()).toBe(false);
+		h.platform.offline = false;
+		h.clock.t += 30_000;
+		expect(await worker.ensureRequested()).toBe(true);
+		expect(await worker.status()).toBe('pending');
+		// Asked for: nothing more to ask.
+		h.clock.t += 3_600_000;
+		expect(await worker.ensureRequested()).toBe(false);
+		// Two attempts while offline, then the one that went through.
+		expect(h.platform.callsTo(POST)).toHaveLength(3);
+	});
+
+	it('Ever Platform not holding the integration as enabled yet (403) is retried, never left without a client', async () => {
+		h.platform.on(POST, problem(403, 'integration_disabled'));
+		await h.connectAndEnable();
+		await expect(h.everIdLogin.enabled()).rejects.toThrow();
+		expect(await h.everIdLogin.status()).toBe('none');
+		h.platform.on(POST, { status: 202, body: { status: 'pending', job_id: null } });
+		expect(await h.everIdLogin.ensureRequested()).toBe(true);
+		expect(await h.everIdLogin.status()).toBe('pending');
+	});
+
+	it('the links that existed before stay due until they were queued, once the client is ready', async () => {
+		platformMakesTheClient(0);
+		await h.connectAndEnable();
+		await h.everIdLogin.enabled();
+		expect(await h.everIdLogin.backfillDue()).toBe(false);
+		h.clock.t += OIDC_CLIENT_POLL_FIRST_MS;
+		await h.everIdLogin.pollDue();
+		expect(await h.everIdLogin.backfillDue()).toBe(true);
+		await h.everIdLogin.markBackfilled();
+		expect(await h.everIdLogin.backfillDue()).toBe(false);
+		// Still the same client.
+		expect((await h.everIdLogin.getEverIdLoginConfig())?.clientSecret).toBe(SECRET);
+	});
+
 	it('reads less often while it stays pending (at most every 5 minutes) and keeps going when a read fails', async () => {
 		h.platform.on(POST, { status: 202, body: { status: 'pending', job_id: '01JD0000000000000000000J0B' } });
 		h.platform.on(GET, problem(503, 'unavailable'));

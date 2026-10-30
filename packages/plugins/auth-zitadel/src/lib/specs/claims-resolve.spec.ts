@@ -156,11 +156,26 @@ describe('Ever ID accounts of a person (deletion and export requests)', () => {
 		expect(await listener.erase([hash('https://auth.ever.co', 'subject-2')])).toEqual(['user-2']);
 		expect(repo.rows.map((row) => row.id)).toEqual(['000000', '000001', '000003']);
 		expect(repo.delete).toHaveBeenCalledWith({ id: In(['000002']) });
-		expect(ended.endSessionsOfUsers).toHaveBeenCalledWith(['user-2']);
+		// Before the links go (a failure leaves them for the next attempt), and once more after.
+		expect(ended.endSessionsOfUsers.mock.calls).toEqual([[['user-2']], [['user-2']]]);
+		expect(ended.endSessionsOfUsers.mock.invocationCallOrder[0]).toBeLessThan(repo.delete.mock.invocationCallOrder[0]);
 		// Nothing matching: nothing removed, no session ended.
 		ended.endSessionsOfUsers.mockClear();
 		expect(await listener.erase([hash('https://other.example', 'subject-1')])).toEqual([]);
 		expect(ended.endSessionsOfUsers).not.toHaveBeenCalled();
+	});
+
+	it('a failure to end the sessions leaves the links for the next attempt', async () => {
+		const repo = repository(many(3));
+		const ended = { endSessionsOfUsers: jest.fn().mockRejectedValueOnce(new Error('store down')).mockResolvedValue(1) };
+		const listener = new ZitadelPersonDataListener(repo as never, ended as never);
+		const target = [hash('https://auth.ever.co', 'subject-1')];
+		await expect(listener.erase(target)).rejects.toThrow('store down');
+		expect(repo.rows).toHaveLength(3);
+		expect(await listener.erase(target)).toEqual(['user-1']);
+		expect(repo.rows).toHaveLength(2);
+		await listener.endSessions(['user-1', 'user-1', '']);
+		expect(ended.endSessionsOfUsers).toHaveBeenLastCalledWith(['user-1']);
 	});
 
 	it('links lists the links of the given tenants only, a page at a time, with the tenant name', async () => {

@@ -31,6 +31,11 @@ export interface PersonRequestRecord {
 	kind: 'deletion' | 'export';
 	jobId: string;
 	respondBy: number | null;
+	/** The identities the request names. */
+	subjectHashes: string[];
+	/** The Gauzy users linked to them, kept before any link was removed (`null`: not looked up yet). */
+	userIds: string[] | null;
+	claimedUntil: number | null;
 	result: string | null;
 	reasonCode: string | null;
 	legalBasis: string | null;
@@ -69,6 +74,9 @@ function toRequest(row: Row): PersonRequestRecord {
 		kind: String(row['kind']) as PersonRequestRecord['kind'],
 		jobId: String(row['jobId']),
 		respondBy: num(row['respondBy']),
+		subjectHashes: jsonList(row['subjectHashes']) ?? [],
+		userIds: jsonList(row['userIds']),
+		claimedUntil: num(row['claimedUntil']),
 		result: str(row['result']),
 		reasonCode: str(row['reasonCode']),
 		legalBasis: str(row['legalBasis']),
@@ -80,6 +88,19 @@ function toRequest(row: Row): PersonRequestRecord {
 		answeredAt: num(row['answeredAt']),
 		createdAt: num(row['createdAt']) ?? 0
 	};
+}
+
+/** A JSON list of strings stored as text, or `null`. */
+function jsonList(value: unknown): string[] | null {
+	if (typeof value !== 'string' || !value) {
+		return null;
+	}
+	try {
+		const parsed = JSON.parse(value);
+		return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : null;
+	} catch {
+		return null;
+	}
 }
 
 /**
@@ -122,6 +143,26 @@ export class EverConnectIdentityStore {
 		return rows.map(toReport);
 	}
 
+	/** The pending reports of one user, oldest first (Ever Platform keys a link by the user). */
+	async pendingReportsOfUser(userId: string): Promise<PersonLinkReportRecord[]> {
+		const rows = await this.sql.select(REPORT, { userId, state: 'pending' }, { orderBy: [['createdAt', 'ASC']] });
+		return rows.map(toReport);
+	}
+
+	/**
+	 * Removes every report of the given identities (a person's deletion): nothing more of them is
+	 * sent, and their subjects are not kept here. Returns how many rows were removed.
+	 */
+	async purgeReports(subjectHashes: string[]): Promise<number> {
+		if (!subjectHashes.length) {
+			return 0;
+		}
+		const q = (c: string) => this.sql.q(c);
+		const marks = subjectHashes.map((_, i) => this.sql.ph(i + 1)).join(', ');
+		const { affected } = await this.sql.run(`DELETE FROM ${q(REPORT)} WHERE ${q('subjectHash')} IN (${marks})`, subjectHashes);
+		return affected;
+	}
+
 	/** Pending reports due at `at`, oldest first. */
 	async dueReports(at: number, limit: number): Promise<PersonLinkReportRecord[]> {
 		return (await this.due(REPORT, at, limit)).map(toReport);
@@ -139,10 +180,13 @@ export class EverConnectIdentityStore {
 	// ── A person's requests ───────────────────────────────────────────────────
 
 	/** Records a request the first time it is read. Returns whether it is new (a replay is not). */
-	async addRequest(values: Pick<PersonRequestRecord, 'id' | 'kind' | 'jobId' | 'respondBy'>): Promise<boolean> {
+	async addRequest(
+		values: Pick<PersonRequestRecord, 'id' | 'kind' | 'jobId' | 'respondBy' | 'subjectHashes'>
+	): Promise<boolean> {
 		const at = this.now();
 		return this.sql.insertIgnore(REQUEST, {
 			...values,
+			subjectHashes: JSON.stringify(values.subjectHashes),
 			state: 'pending',
 			attempts: 0,
 			nextAttemptAt: null,
@@ -162,7 +206,35 @@ export class EverConnectIdentityStore {
 	}
 
 	async updateRequest(id: string, values: Partial<Record<keyof PersonRequestRecord, unknown>>): Promise<void> {
-		await this.sql.update(REQUEST, { ...values, updatedAt: this.now() }, { id });
+		const row: Record<string, unknown> = { ...values, updatedAt: this.now() };
+		if (Array.isArray(values.userIds)) row['userIds'] = JSON.stringify(values.userIds);
+		if (Array.isArray(values.subjectHashes)) row['subjectHashes'] = JSON.stringify(values.subjectHashes);
+		await this.sql.update(REQUEST, row, { id });
+	}
+
+	/**
+	 * Claims a request without an answer yet for `until` (compare and set): only one API process
+	 * works on it at a time, and a claim that ran out (the process stopped) can be taken again.
+	 */
+	async claimRequest(id: string, until: number): Promise<boolean> {
+		const q = (c: string) => this.sql.q(c);
+		const { affected } = await this.sql.run(
+			`UPDATE ${q(REQUEST)} SET ${q('claimedUntil')} = ${this.sql.ph(1)}, ${q('updatedAt')} = ${this.sql.ph(2)} ` +
+				`WHERE ${q('id')} = ${this.sql.ph(3)} AND ${q('result')} IS NULL AND (${q('claimedUntil')} IS NULL OR ${q('claimedUntil')} <= ${this.sql.ph(4)})`,
+			[until, this.now(), id, this.now()]
+		);
+		return affected === 1;
+	}
+
+	/** Requests still without an answer, received before `before` and not claimed (a handling that stopped). */
+	async unansweredRequests(before: number, limit: number): Promise<PersonRequestRecord[]> {
+		const q = (c: string) => this.sql.q(c);
+		const { rows } = await this.sql.run(
+			`SELECT * FROM ${q(REQUEST)} WHERE ${q('result')} IS NULL AND ${q('createdAt')} <= ${this.sql.ph(1)} ` +
+				`AND (${q('claimedUntil')} IS NULL OR ${q('claimedUntil')} <= ${this.sql.ph(2)}) ORDER BY ${q('createdAt')} ASC LIMIT ${Math.max(1, Math.floor(limit))}`,
+			[before, this.now()]
+		);
+		return rows.map(toRequest);
 	}
 
 	/** `state = 'pending' AND nextAttemptAt <= at`, oldest first. */

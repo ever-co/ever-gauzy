@@ -55,9 +55,12 @@ const stripTrailingSlashes = (value: string): string => value.replace(/\/+$/, ''
  * the tenant and organization ids, the tenant link and the tenant's display name. Never an e-mail
  * address or a person's name.
  *
- * Ever Platform not knowing the subject yet (`422 subject_unknown`), or not answering, is retried
- * with a back-off of up to a day, then given up (audited). When the client first becomes ready, the
- * links that existed before are reported too, for the linked tenants only.
+ * Ever Platform keeps a link by the Gauzy user (`DELETE` names the user), so the reports of one user
+ * are sent in the order they were made: a newer one waits while an older one of the same user is
+ * retried. Ever Platform not knowing the subject yet (`422 subject_unknown`), or not answering, is
+ * retried with a back-off of up to a day, then given up (audited). Once the client is ready, the
+ * links that existed before are reported too (for the linked tenants only), by the worker, until
+ * that is done.
  */
 @Injectable()
 export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
@@ -88,9 +91,6 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 				this.eventBus.ofType(ZitadelAccountUnlinkedEvent).subscribe((event) => void this.safely(() => this.unlinked(event.payload)))
 			);
 		}
-		this.everIdLogin.onReady(async () => {
-			await this.backfill();
-		});
 	}
 
 	onModuleDestroy(): void {
@@ -144,9 +144,10 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * Reports the links that existed before Sign in with Ever ID's client became ready: those of the
-	 * tenants linked to an Ever organization only, read a page at a time. A link reported before is
-	 * not reported again. Returns how many reports were added.
+	 * Reports the links that exist now, for the tenants linked to an Ever organization only, read a
+	 * page at a time: a link whose latest report is a link (waiting or sent) is not reported again; one
+	 * whose latest report is an unlink (or that was never reported) is. Returns how many reports were
+	 * added; throws when the links cannot be read (the worker tries again).
 	 */
 	async backfill(): Promise<number> {
 		const issuer = await this.platformIssuer();
@@ -162,10 +163,12 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 				const method = REPORTED_METHODS[link.linkMethod];
 				if (!method || stripTrailingSlashes(link.issuer) !== issuer) continue;
 				const subjectHash = subjectHashOf(link.issuer, link.subject);
-				const known = (await this.identity.reportsOf(link.userId, subjectHash)).some(
-					(row) => row.op === 'link' && (row.state === 'pending' || row.state === 'sent')
-				);
-				if (known) continue;
+				const latest = (await this.identity.reportsOf(link.userId, subjectHash))
+					.filter((row) => row.state === 'pending' || row.state === 'sent')
+					.pop();
+				if (latest?.op === 'link') continue;
+				// An unlink not sent yet is superseded: the link exists now.
+				await this.supersede(link.userId, subjectHash, 'unlink');
 				await this.identity.addReport({
 					id: randomUUID(),
 					op: 'link',
@@ -207,11 +210,19 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 		}
 		const enabled = (await this.store.integration('instance', EVER_ID_LOGIN))?.enabled === true;
 		let sent = 0;
-		for (const row of due) {
+		for (const candidate of due) {
+			// Read again: a person's deletion may have removed it, or switching off dropped it, meanwhile.
+			const row = await this.identity.report(candidate.id);
+			if (!row || row.state !== 'pending') continue;
 			if (!enabled) {
 				await this.identity.updateReport(row.id, { state: 'dropped', nextAttemptAt: null, lastError: 'integration_off' });
 				continue;
 			}
+			// One user's reports go in order: this one waits while an older one of the same user is pending.
+			const older = (await this.identity.pendingReportsOfUser(row.userId)).find(
+				(other) => other.id !== row.id && other.createdAt < row.createdAt
+			);
+			if (older) continue;
 			if (await this.send(row)) sent++;
 		}
 		return sent;

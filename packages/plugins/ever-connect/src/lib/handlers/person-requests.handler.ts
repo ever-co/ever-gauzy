@@ -1,7 +1,8 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { EVER_ID_ACCOUNTS, EverIdAccountsPort } from '@gauzy/plugin-auth-zitadel';
 import { EverConnectAuditService } from '../ever-connect-audit.service';
 import { EverConnectIdentityStore, PersonRequestRecord } from '../ever-connect-identity.store';
-import { EVER_CONNECT_CLOCK, EVER_CONNECT_ENV, IDENTITY_BATCH, ULID_SHAPE } from '../ever-connect.constants';
+import { EVER_CONNECT_CLOCK, EVER_CONNECT_ENV, IDENTITY_BATCH, LEASE_MS, ULID_SHAPE } from '../ever-connect.constants';
 import { EverConnectPlatformService, errorCode, isCredentialRevoked, isUnreachable } from '../ever-connect-platform.service';
 import { EverConnectSecretStore } from '../ever-connect-secret-store';
 import { EverConnectSignals } from '../ever-connect-signals';
@@ -24,15 +25,21 @@ export function personRequestKind(type: string): 'deletion' | 'export' | null {
 /** A lower-case SHA-256 hex digest (`subject_hash`). */
 const HASH_SHAPE = /^[0-9a-f]{64}$/;
 
+/** How long one API process holds a request it works on (it is handled again after that). */
+export const REQUEST_CLAIM_MS = LEASE_MS;
+
 /**
  * A person's deletion and export requests from the event feed, and this installation's answers
  * (`POST /v1/instances/me/ack`).
  *
- * Each request is recorded by its event id before it is handled, so a request read twice (a replayed
- * page, two API processes) is answered once. The answer is sent at once; when Ever Platform cannot be
- * reached it is kept and sent again by the API process holding the connection's lease, with a
- * back-off of up to a day. Answers are not gated by any integration: a request already received stays
- * answerable after Sign in with Ever ID is switched off.
+ * Each request is recorded by its event id, with the identities it names, before it is handled, so a
+ * request read twice (a replayed page, two API processes) is answered once. One API process claims it
+ * at a time; the Gauzy users linked to its identities are looked up once and kept before any link is
+ * removed, so a handling that stopped half-way (an error, a restart) is taken up again by the worker
+ * and answers for the same accounts. The answer is sent at once; when Ever Platform cannot be reached
+ * it is kept and sent again by the API process holding the connection's lease, with a back-off of up
+ * to a day. Answers are not gated by any integration: a request already received stays answerable
+ * after Sign in with Ever ID is switched off.
  */
 @Injectable()
 export class PersonRequestsHandler {
@@ -47,6 +54,7 @@ export class PersonRequestsHandler {
 		private readonly exports: PersonExportHandler,
 		private readonly audit: EverConnectAuditService,
 		private readonly signals: EverConnectSignals,
+		@Optional() @Inject(EVER_ID_ACCOUNTS) private readonly accounts?: EverIdAccountsPort,
 		@Optional() @Inject(EVER_CONNECT_ENV) env?: Record<string, string | undefined>,
 		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number }
 	) {
@@ -62,44 +70,31 @@ export class PersonRequestsHandler {
 		const kind = personRequestKind(event.type);
 		const data = (event.data ?? {}) as Record<string, unknown>;
 		const jobId = typeof data['job_id'] === 'string' ? data['job_id'] : '';
-		const hashes = subjectHashes(data);
 		if (!kind || typeof event.id !== 'string' || !ULID_SHAPE.test(event.id) || !ULID_SHAPE.test(jobId)) {
 			return false;
 		}
 		const respondBy = Date.parse(String(data['respond_by'] ?? ''));
-		const fresh = await this.identity.addRequest({
+		await this.identity.addRequest({
 			id: event.id,
 			kind,
 			jobId,
-			respondBy: Number.isFinite(respondBy) ? respondBy : null
+			respondBy: Number.isFinite(respondBy) ? respondBy : null,
+			subjectHashes: subjectHashes(data)
 		});
-		let row = await this.identity.request(event.id);
-		if (!row) {
-			return false;
-		}
-		if (!fresh && row.result !== null) {
-			// Read before: answered, or its answer waits to be sent again.
-			return true;
-		}
-		const answer = await (kind === 'deletion' ? this.deletion : this.exports).answer(hashes, jobId);
-		await this.identity.updateRequest(row.id, {
-			result: answer.result,
-			reasonCode: answer.reasonCode ?? null,
-			legalBasis: answer.legalBasis ?? null,
-			exportUrlEncrypted: answer.exportUrl ? this.secrets.seal(answer.exportUrl, 'integration_config') : null,
-			state: 'pending',
-			nextAttemptAt: this.now()
-		});
-		await this.audit.record({
-			action: 'person_request.answer',
-			actorLabel: 'system',
-			details: { job_id: jobId, op: kind, result: answer.result, count: answer.accounts, ...(answer.reasonCode ? { reason: answer.reasonCode } : {}) }
-		});
-		row = await this.identity.request(row.id);
-		if (row) {
-			await this.send(row);
-		}
+		await this.process(event.id);
 		return true;
+	}
+
+	/**
+	 * Takes up the requests whose handling stopped before an answer (by the API process holding the
+	 * connection's lease). Returns how many were answered.
+	 */
+	async resumeDue(): Promise<number> {
+		let answered = 0;
+		for (const row of await this.identity.unansweredRequests(this.now() - REQUEST_CLAIM_MS, IDENTITY_BATCH)) {
+			if (await this.process(row.id)) answered++;
+		}
+		return answered;
 	}
 
 	/** Sends the answers that are due again (by the API process holding the connection's lease). */
@@ -109,6 +104,46 @@ export class PersonRequestsHandler {
 			if (await this.send(row)) sent++;
 		}
 		return sent;
+	}
+
+	/** Works out and sends the answer of one recorded request, unless it has one or another process holds it. */
+	private async process(id: string): Promise<boolean> {
+		let row = await this.identity.request(id);
+		if (!row || row.result !== null || !(await this.identity.claimRequest(id, this.now() + REQUEST_CLAIM_MS))) {
+			return false;
+		}
+		let userIds = row.userIds;
+		if (userIds === null) {
+			// Looked up once, before any link is removed, and kept: handled again, the answer is for the same accounts.
+			userIds = this.accounts ? await this.accounts.findUsers(row.subjectHashes) : [];
+			await this.identity.updateRequest(id, { userIds });
+		}
+		const subject = { subjectHashes: row.subjectHashes, userIds, jobId: row.jobId };
+		const answer: PersonRequestAnswer = await (row.kind === 'deletion' ? this.deletion : this.exports).answer(subject);
+		await this.identity.updateRequest(id, {
+			result: answer.result,
+			reasonCode: answer.reasonCode ?? null,
+			legalBasis: answer.legalBasis ?? null,
+			exportUrlEncrypted: answer.exportUrl ? this.secrets.seal(answer.exportUrl, 'integration_config') : null,
+			state: 'pending',
+			nextAttemptAt: this.now(),
+			claimedUntil: null
+		});
+		await this.audit
+			.record({
+				action: 'person_request.answer',
+				actorLabel: 'system',
+				details: {
+					job_id: row.jobId,
+					op: row.kind,
+					result: answer.result,
+					count: answer.accounts,
+					...(answer.reasonCode ? { reason: answer.reasonCode } : {})
+				}
+			})
+			.catch((error) => this.logger.warn(`An answer to a person's request could not be audited (${errorCode(error)}).`));
+		row = await this.identity.request(id);
+		return row ? this.send(row) : false;
 	}
 
 	/** Sends one answer; returns whether Ever Platform took it. */

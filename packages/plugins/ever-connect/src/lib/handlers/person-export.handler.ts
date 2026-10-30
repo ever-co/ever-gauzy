@@ -3,7 +3,7 @@ import { EVER_ID_ACCOUNTS, EverIdAccountsPort } from '@gauzy/plugin-auth-zitadel
 import { EVER_PERSON_DATA_PARTICIPANT } from '../ever-connect.constants';
 import { errorCode } from '../ever-connect-platform.service';
 import { PersonDataParticipantPort } from '../ports/person-data-participant.port';
-import { PersonRequestAnswer } from './person-deletion.handler';
+import { PersonRequestAnswer, PersonRequestSubject } from './person-deletion.handler';
 
 /** The longest export link Ever Platform takes. */
 const MAX_EXPORT_URL = 2048;
@@ -25,7 +25,8 @@ export function usableExportUrl(value: unknown): value is string {
  * A person's export request (`ever.registry.person.export_requested`): the personal-data participant
  * prepares an export of the accounts linked to the named identities and answers with its `https`
  * link (`exported`), which Ever Platform stores and links for the person, never fetching it. Without
- * a participant: `failed` with `export_not_available`. No linked account: `no_account`.
+ * a participant: `failed` with `export_not_available`. No linked account: `no_account`. Nothing is
+ * removed.
  */
 @Injectable()
 export class PersonExportHandler {
@@ -36,11 +37,11 @@ export class PersonExportHandler {
 		@Optional() @Inject(EVER_PERSON_DATA_PARTICIPANT) private readonly participant?: PersonDataParticipantPort
 	) {}
 
-	async answer(subjectHashes: string[], jobId: string): Promise<PersonRequestAnswer> {
+	async answer(subject: PersonRequestSubject): Promise<PersonRequestAnswer> {
 		if (!this.accounts) {
 			return { result: 'failed', reasonCode: 'export_not_available', accounts: 0 };
 		}
-		const userIds = await this.accounts.findUsers(subjectHashes);
+		const { userIds } = subject;
 		if (!userIds.length) {
 			return { result: 'no_account', accounts: 0 };
 		}
@@ -48,7 +49,7 @@ export class PersonExportHandler {
 			return { result: 'failed', reasonCode: 'export_not_available', accounts: userIds.length };
 		}
 		try {
-			const outcome = await this.participant.exportPersonData({ userIds, jobId });
+			const outcome = await this.participant.exportPersonData({ userIds, jobId: subject.jobId });
 			if (outcome?.result === 'exported' && usableExportUrl(outcome.exportUrl)) {
 				return { result: 'exported', exportUrl: outcome.exportUrl, accounts: userIds.length };
 			}

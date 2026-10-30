@@ -40,7 +40,7 @@ One row per Ever ID link (`op = 'link'`) or unlink (`op = 'unlink'`) of a Gauzy 
 
 ## `ever_connect_person_request`
 
-One row per deletion or export request of a person (`id` = the event id): `kind` (`deletion`, `export`), `jobId`, `respondBy`, `result`, `reasonCode`, `legalBasis`, `exportUrlEncrypted` (AES-256-GCM), `state` (`pending`, `answered`, `rejected`), `attempts`, `nextAttemptAt`, `lastError` (a code), `answeredAt`, `createdAt`, `updatedAt`. Indexes on (`state`, `nextAttemptAt`) and (`jobId`).
+One row per deletion or export request of a person (`id` = the event id): `kind` (`deletion`, `export`), `jobId`, `respondBy`, `subjectHashes` (JSON: the identities the request names), `userIds` (JSON: the Gauzy users linked to them, kept before any link is removed), `claimedUntil` (the API process working on it holds it until then), `result`, `reasonCode`, `legalBasis`, `exportUrlEncrypted` (AES-256-GCM), `state` (`pending`, `answered`, `rejected`), `attempts`, `nextAttemptAt`, `lastError` (a code), `answeredAt`, `createdAt`, `updatedAt`. Indexes on (`state`, `nextAttemptAt`) and (`jobId`).
 
 ## `ever_connect_lookup_cache`
 

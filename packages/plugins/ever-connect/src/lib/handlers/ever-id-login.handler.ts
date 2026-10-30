@@ -25,7 +25,8 @@ export const EVER_ID_LOGIN = 'ever_id_login';
  * client got, and the client once it was handed over.
  *
  * - `pending`: asked for; read again at `nextPollAt` (5 seconds, then less often, at most every 5 minutes);
- * - `ready`: the issuer, client id and secret, handed over once by Ever Platform;
+ * - `ready`: the issuer, client id and secret, handed over once by Ever Platform (`backfilledAt`:
+ *   when the links that existed before were queued for reporting);
  * - `failed`: Ever Platform could not make it, or this installation's sign-in endpoints cannot be
  *   registered (`code`); switching the integration off and on again asks again;
  * - `lost`: Ever Platform made it, but its secret did not reach this installation (it is handed over
@@ -40,6 +41,7 @@ interface SignInClientState {
 	polls?: number;
 	nextPollAt?: number | null;
 	code?: string | null;
+	backfilledAt?: number | null;
 }
 
 /** The state of the sign-in client as the Integrations & data tab shows it (never the secret). */
@@ -54,6 +56,10 @@ export interface SignInClientConfig {
 
 /** How long the configuration read for a sign-in is reused in this process. */
 const CONFIG_CACHE_MS = 10_000;
+
+/** After a failed request for the sign-in client, the worker asks again after this long (doubling, at most an hour). */
+const REQUEST_RETRY_MS = 30_000;
+const REQUEST_RETRY_MAX_MS = 3_600_000;
 
 const stripTrailingSlashes = (value: string): string => value.replace(/\/+$/, '');
 
@@ -78,8 +84,9 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 	private readonly now: () => number;
 	private readonly secrets: EverConnectSecretStore;
 	private cache: { at: number; enabled: boolean; config: SignInClientConfig | null } | null = null;
-	/** Called once the sign-in client is ready (the link reporter reports the existing links then). */
-	private readonly readyListeners: Array<() => Promise<void>> = [];
+	/** When the worker may ask for the sign-in client again after a failed request, and how often it failed. */
+	private nextRequestAt = 0;
+	private requestFailures = 0;
 
 	constructor(
 		private readonly store: EverConnectStore,
@@ -92,11 +99,6 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 	) {
 		this.now = clock?.now ?? (() => Date.now());
 		this.secrets = new EverConnectSecretStore(env ?? process.env);
-	}
-
-	/** Runs `listener` each time the sign-in client becomes ready. */
-	onReady(listener: () => Promise<void>): void {
-		this.readyListeners.push(listener);
 	}
 
 	// ── EVER_CONNECT_CONFIG (the Ever ID sign-in plugin asks) ─────────────────
@@ -157,7 +159,9 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 
 	/**
 	 * `ever_id_login` was enabled: asks for the sign-in client unless one is ready or asked for. Throws
-	 * when Ever Platform could not be reached (the integration then retries at the next heartbeat).
+	 * when Ever Platform could not be reached or does not hold the integration as enabled yet (the
+	 * integration then retries at the next heartbeat; the worker asks again too, see
+	 * {@link ensureRequested}).
 	 */
 	async enabled(): Promise<void> {
 		const connection = await this.store.connection();
@@ -195,14 +199,55 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 				next = { status: 'pending', jobId: null, polls: 0, nextPollAt: this.now() };
 			} else if (error instanceof ProblemError && error.status === 422) {
 				next = { status: 'failed', code: error.code };
-			} else if (error instanceof ProblemError && error.status === 403) {
-				// Not enabled on Ever Platform (yet): the next state read says so.
-				return;
 			} else {
 				throw error;
 			}
 		}
 		await this.write(blob, next);
+	}
+
+	/**
+	 * By the worker (the API process holding the connection's lease): asks for the sign-in client when
+	 * `ever_id_login` is enabled but nothing was asked for or stored (a request that failed before a
+	 * restart, or on another process), at most every 30 seconds, then less often (at most every hour)
+	 * while it keeps failing. Returns whether it asked.
+	 */
+	async ensureRequested(): Promise<boolean> {
+		if (this.now() < this.nextRequestAt) {
+			return false;
+		}
+		const row = await this.store.integration('instance', EVER_ID_LOGIN);
+		if (!row?.enabled || row.configEncrypted) {
+			return false;
+		}
+		try {
+			await this.enabled();
+			this.requestFailures = 0;
+			this.nextRequestAt = 0;
+		} catch (error) {
+			this.requestFailures++;
+			this.nextRequestAt = this.now() + Math.min(REQUEST_RETRY_MS * 2 ** (this.requestFailures - 1), REQUEST_RETRY_MAX_MS);
+			if (!isUnreachable(error)) {
+				this.logger.warn(`The Sign in with Ever ID client could not be asked for (${errorCode(error)}); asked again later.`);
+			}
+		}
+		return true;
+	}
+
+	/** Whether the client is ready and the links that existed before it still wait to be reported. */
+	async backfillDue(): Promise<boolean> {
+		const row = await this.store.integration('instance', EVER_ID_LOGIN);
+		const state = row?.enabled ? this.read(row.configEncrypted) : null;
+		return state?.status === 'ready' && !state.backfilledAt;
+	}
+
+	/** The links that existed before the client was ready were queued for reporting. */
+	async markBackfilled(): Promise<void> {
+		const row = await this.store.integration('instance', EVER_ID_LOGIN);
+		const state = this.read(row?.configEncrypted ?? null);
+		if (state?.status === 'ready') {
+			await this.write(row?.configEncrypted ?? null, { ...state, backfilledAt: this.now() }, false);
+		}
 	}
 
 	/** `ever_id_login` was switched off, revoked or the installation disconnected: the client is forgotten here. */
@@ -283,14 +328,7 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 				next = later();
 			}
 		}
-		const written = await this.write(blob, next, next.status !== 'pending');
-		if (written && next.status === 'ready') {
-			for (const listener of this.readyListeners) {
-				await listener().catch((error) =>
-					this.logger.warn(`A step after the Sign in with Ever ID client became ready failed (${errorCode(error)}).`)
-				);
-			}
-		}
+		await this.write(blob, next, next.status !== 'pending');
 		return true;
 	}
 
