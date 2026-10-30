@@ -537,7 +537,16 @@ function subscriptionFixture(
 				throw new Error('the in-memory double was handed an entity it does not know');
 			}
 
-			return repository(tables, table, table === 'subscription' ? () => commits.push('subscription') : undefined);
+			const transactional = repository(tables, table, table === 'subscription' ? () => commits.push('subscription') : undefined);
+
+			// A write of the subscription inside a transaction that the database refuses, for the case about how that is answered.
+			if (options.transactionalUpdateError && table === 'subscription') {
+				transactional.update = async () => {
+					throw options.transactionalUpdateError!();
+				};
+			}
+
+			return transactional;
 		},
 		create: (_entity: unknown, partial: Row) => ({ ...partial }),
 		save: async (entity: unknown, rowOrRows: any) => {
@@ -577,50 +586,10 @@ function subscriptionFixture(
 			);
 		}
 	};
-	/** The isolation level each transaction was opened with (`undefined` for the database's default). */
-	const isolations: Array<string | undefined> = [];
-	let transactionOpen = false;
-	/**
-	 * Every write, with the connection it ran on — the transaction's manager or a service's own repository — and
-	 * whether a transaction was open at the time: the in-memory tables cannot tell the two connections apart.
-	 */
-	const writes: Array<{ table: string; via: 'transaction' | 'repository'; duringTransaction: boolean; patch?: Row }> = [];
-	const logged = <R extends Record<string, any>>(target: R, table: string, via: 'transaction' | 'repository'): R => {
-		for (const method of ['save', 'update', 'softDelete']) {
-			const original = target[method];
-
-			(target as Record<string, unknown>)[method] = async (...args: any[]) => {
-				writes.push({ table, via, duringTransaction: transactionOpen, patch: method === 'update' ? args[1] : args[0] });
-
-				return original(...args);
-			};
-		}
-
-		return target;
-	};
-	logged(subscriptionRepository, 'subscription', 'repository');
-	const transactionalRepository = manager.getRepository;
-	manager.getRepository = (entity: unknown) => {
-		const table = String(entityToTable.get(entity));
-		const transactional = transactionalRepository(entity);
-
-		if (options.transactionalUpdateError && table === 'subscription') {
-			transactional.update = async () => {
-				throw options.transactionalUpdateError!();
-			};
-		}
-
-		return logged(transactional, table, 'transaction');
-	};
-	const transaction = async (...args: any[]) => {
-		// `transaction(run)` or `transaction(isolationLevel, run)`, as TypeORM's `EntityManager.transaction` takes.
-		const run: (transactional: any) => Promise<any> = args[args.length - 1];
+	const transaction = async (run: (transactional: any) => Promise<any>) => {
 		const copy = Object.fromEntries(
 			Object.entries(tables).map(([table, rows]) => [table, rows.map((row) => ({ ...row }))])
 		);
-
-		isolations.push(args.length > 1 ? args[0] : undefined);
-		transactionOpen = true;
 
 		try {
 			return await run(manager);
@@ -630,8 +599,6 @@ function subscriptionFixture(
 			}
 
 			throw error;
-		} finally {
-			transactionOpen = false;
 		}
 	};
 
@@ -661,7 +628,7 @@ function subscriptionFixture(
 		catalog as never
 	);
 	const itemService = new SubscriptionItemService(
-		logged(repository(tables, 'subscription_item'), 'subscription_item', 'repository') as never,
+		repository(tables, 'subscription_item') as never,
 		{} as never,
 		pricing as never,
 		catalog as never
@@ -826,8 +793,6 @@ function subscriptionFixture(
 		commits,
 		locks,
 		onLock,
-		isolations,
-		writes,
 		subscription: (id: string) => tables.subscription.find((row) => row.id === id),
 		items: (subscriptionId: string = SUBSCRIPTION) =>
 			tables.subscription_item.filter((row) => row.subscriptionId === subscriptionId && !row.deletedAt),
@@ -1656,113 +1621,32 @@ describe('SubscriptionService — plan changes and proration (doc 11 §10.8)', (
 		expect(fixture.prorationCalls).toHaveLength(0);
 		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(PLAN);
 	});
+});
 
-	it('settles first, outside any transaction, and then writes the move under the plan\'s share lock', async () => {
-		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
-		const chargedWhenLocked: number[] = [];
-
-		fixture.onLock.push(() => chargedWhenLocked.push(fixture.prorationCalls.length));
-
-		const outcome = await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
-
-		expect(fixture.locks).toEqual([expect.stringMatching(/FROM "subscription_plan" WHERE "id" = \$1 FOR SHARE$/)]);
-		// No pooled connection or plan lock is held while the order path (and a payment gateway behind it) answers.
-		expect(chargedWhenLocked).toEqual([1]);
-		expect(outcome.settlement).toBe('CHARGED');
-		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(BETTER_PLAN);
+describe('SubscriptionService — a write the database refuses inside a transaction', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
 	});
 
-	it('writes the move on the connection holding the plan lock, at READ COMMITTED, and the lines after it commits', async () => {
-		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
+	afterEach(() => jest.restoreAllMocks());
 
-		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
-
-		// The planId write runs in the transaction that holds the plan row in share mode: its foreign-key check on the
-		// plan then never queues behind a plan update waiting for that lock (MySQL queues a new S behind a waiting X).
-		const move = fixture.writes.filter((write) => write.table === 'subscription' && write.patch?.planId === BETTER_PLAN);
-
-		expect(move).toEqual([expect.objectContaining({ via: 'transaction', duringTransaction: true })]);
-		// Under REPEATABLE READ (MySQL's default) the versioned write would read the subscription from a snapshot
-		// taken before the settlement ran.
-		expect(fixture.isolations).toEqual(['READ COMMITTED']);
-
-		// The lines are rewritten once the move has committed, on their own connection.
-		const lines = fixture.writes.filter((write) => write.table === 'subscription_item');
-
-		expect(lines.length).toBeGreaterThan(0);
-		expect(lines.every((write) => write.via === 'repository' && !write.duringTransaction)).toBe(true);
-	});
-
-	it('refuses the move when the plan was deactivated before it was written, and tells the operator the charge stands', async () => {
-		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
-		const warn = jest.spyOn((fixture.service as any).logger, 'warn').mockImplementation(() => undefined);
-
-		// A plan update deactivates the plan and commits before the share lock is granted.
-		fixture.onLock.push(() => {
-			fixture.tables.subscription_plan.find((row) => row.id === BETTER_PLAN)!.isActive = false;
-		});
-
-		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow(
-			/SUBSCRIPTION_PLAN_INACTIVE/
-		);
-		// The subscription never runs on the deactivated plan; the proration raised before is the operator's to reverse.
-		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(PLAN);
-		expect(fixture.prorationCalls).toHaveLength(1);
-		expect(warn).toHaveBeenCalledWith(expect.stringMatching(/refused after its proration was charged.*needs reversing/));
-	});
-
-	it('refuses the move when the plan was re-priced in another currency while it waited for the lock', async () => {
-		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
-
-		fixture.onLock.push(() => {
-			fixture.tables.subscription_plan.find((row) => row.id === BETTER_PLAN)!.currency = 'EUR';
-		});
-
-		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow(
-			/SUBSCRIPTION_CURRENCY_MISMATCH/
-		);
-		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(PLAN);
-	});
-
-	it('refuses the move with 409 when the plan was attached to another variant since the lines were priced', async () => {
-		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
-
-		jest.spyOn((fixture.service as any).logger, 'warn').mockImplementation(() => undefined);
-		fixture.onLock.push(() => {
-			fixture.tables.subscription_plan.find((row) => row.id === BETTER_PLAN)!.variantId = 'variant-z';
-		});
-
-		const refused = await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN }).catch((error: unknown) => error);
-
-		expect(refused).toBeInstanceOf(ConflictException);
-		expect((refused as Error).message).toMatch(/^SUBSCRIPTION_PLAN_CHANGED/);
-		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(PLAN);
-	});
-
-	it('answers a failed write of the move with a 400 that carries no database internals', async () => {
+	it('is answered as CrudService.update answers it: a 400 that carries no database internals', async () => {
 		const fixture = subscriptionFixture({
-			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' },
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.PENDING })],
 			transactionalUpdateError: () =>
 				Object.assign(new Error('numeric field overflow on column "quantity" of relation "subscription"'), {
 					code: '22003',
-					query: 'UPDATE "subscription" SET "quantity" = $1 WHERE "id" = $2',
-					parameters: ['100000000000000.000000', SUBSCRIPTION]
+					query: 'UPDATE "subscription" SET "status" = $1 WHERE "id" = $2',
+					parameters: ['ACTIVE', SUBSCRIPTION]
 				})
 		});
 
-		const refused = await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN }).catch((error: unknown) => error);
+		const refused = await fixture.service.activate(SUBSCRIPTION).catch((error: unknown) => error);
 
 		expect(refused).toBeInstanceOf(BadRequestException);
 		expect(JSON.stringify((refused as BadRequestException).getResponse())).not.toMatch(/UPDATE|"subscription"|quantity/);
-		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(PLAN);
-	});
-
-	it('takes no plan lock for a change that stays on the plan', async () => {
-		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', 'variant-c': '30.00' } });
-
-		await fixture.service.addItem(SUBSCRIPTION, { variantId: 'variant-c', quantity: '1' } as any);
-
-		expect(fixture.locks).toEqual([]);
+		expect(fixture.subscription(SUBSCRIPTION).status).toBe(SubscriptionStatus.PENDING);
 	});
 });
 

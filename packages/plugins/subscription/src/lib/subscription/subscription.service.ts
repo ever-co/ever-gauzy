@@ -1184,8 +1184,6 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			subscription,
 			{
 				planId: plan.id,
-				// The plan's target as the lines were priced from it, which the move re-checks under the plan lock.
-				planTarget: { productId: plan.productId ?? null, variantId: plan.variantId ?? null },
 				quantity: input.quantity,
 				discountPercentage:
 					plan.discountPercentage !== undefined && plan.discountPercentage !== null
@@ -2664,7 +2662,6 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		subscription: Subscription,
 		change: {
 			planId?: ID;
-			planTarget?: { productId: ID | null; variantId: ID | null };
 			quantity?: DecimalString | number;
 			discountPercentage?: string;
 			before: SubscriptionItem[];
@@ -2727,32 +2724,54 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			currency
 		);
 
-		// The settlement runs first and outside any transaction, as it always has: the proration order and the carried
-		// credit are written by the order path and the adjustment service on connections of their own, and no lock or
-		// pooled connection is held while a payment gateway answers.
-		const settlement = await this.settleChange(subscription, change.description, metadata, net, minimum);
+		let settlement: ISubscriptionPlanChangeOutcome['settlement'] = 'DEFERRED';
 
-		// Then the subscription's write, in a short transaction holding the plan it moves to in share mode, as a
-		// subscription created on the plan is written (`writeUnderTargetPlanLock`).
-		await this.writeUnderTargetPlanLock(
-			change.planId ? { planId: change.planId, ...(change.planTarget ?? { productId: null, variantId: null }) } : undefined,
-			subscription,
-			settlement,
-			async (writer) =>
-				await commitVersionedUpdate<Subscription>(writer, {
-					where: currentScope(),
-					id: subscription.id,
-					expectation,
-					patch: {
-						...(change.planId ? { planId: change.planId } : {}),
-						...(change.quantity !== undefined ? { quantity: normalizeDecimal(change.quantity, subscription.quantity) } : {}),
-						metadata
-					}
-				})
-		);
+		if (net.isPositive() && net.greaterThan(minimum)) {
+			await this.chargeProration(subscription, net, change.description);
+			settlement = 'CHARGED';
+		} else if (net.isPositive()) {
+			// Below the cost of collecting it: charging would lose money and refunding would be theatre.
+			metadata['waivedProrations'] = [
+				...((metadata['waivedProrations'] as unknown[]) ?? []),
+				{ amount: net.toStorageString(), currency, at: new Date().toISOString(), description: change.description }
+			];
+			settlement = 'WAIVED';
+		} else if (net.isNegative()) {
+			// **The carried credit accumulates; it does not replace.** Assigning the new amount outright
+			// meant that two downgrades inside one period left only the second one's credit on the row and
+			// the first one simply stopped existing — the customer was owed 30.97 and 12.00 and was given
+			// 12.00. The money itself moves when the next cycle consumes what is carried here, which is
+			// what doc 11 §10.8 states: "no money moves now; a `CREDIT` adjustment is attached to the
+			// **next** billing order".
+			const carried = this.pendingCreditOf(metadata, currency);
+			const total = carried ? carried.add(net).round() : net;
 
-		// The lines are written once the move has committed: a line write that checked its subscription while this
-		// transaction held the subscription row would wait for it.
+			metadata[PENDING_CREDIT] = {
+				amount: total.toStorageString(),
+				currency,
+				at: new Date().toISOString(),
+				description: change.description
+			};
+			// And the adjustment written against the period the change happened in is the audit record of
+			// the decision rather than the money: that period's row has already settled, so nothing is
+			// collected or refunded by it. The pair is deliberate — one row says when the credit was
+			// decided, the next cycle's says when it was given.
+			await this.appendCredit(subscription, net, change.description);
+		} else {
+			settlement = 'WAIVED';
+		}
+
+		await commitVersionedUpdate<Subscription>(this, {
+			where: currentScope(),
+			id: subscription.id,
+			expectation,
+			patch: {
+				...(change.planId ? { planId: change.planId } : {}),
+				...(change.quantity !== undefined ? { quantity: normalizeDecimal(change.quantity, subscription.quantity) } : {}),
+				metadata
+			}
+		});
+
 		if (change.planId || change.after.length !== change.before.length) {
 			await this.itemService.replaceItems(
 				subscription.id,
@@ -2784,152 +2803,6 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			settlement,
 			currency
 		};
-	}
-
-	/**
-	 * Writes a plan change to the subscription with the plan it moves to held in share mode (`lockPlanRow`).
-	 *
-	 * On Postgres and MySQL the write runs in a short transaction that locks the target plan row in share mode, reads
-	 * the plan again and writes the subscription on that same connection, so nothing in it waits for another pooled
-	 * connection. A plan update that comes after waits for the move to commit and then counts the subscription among
-	 * the plan's live ones; one that committed first (the plan deactivated, re-priced in another currency, or attached
-	 * to another target than the lines were priced from) is seen here and the move is refused, so no subscription ever
-	 * runs on a plan it no longer matches. The settlement ran before this; a move refused after its proration was
-	 * charged is logged for the operator, and a retry of the same change replays that charge rather than raising it
-	 * again. A change that stays on its plan, and SQLite (a single writer, no row locks), write as before.
-	 *
-	 * @param target The plan the change moves to and the target the lines were priced from, if the plan changes.
-	 * @param subscription The subscription being changed.
-	 * @param settlement How the change was settled, for the operator's log when the move is refused after a charge.
-	 * @param write The subscription's versioned write, given the writer to use.
-	 * @throws BadRequestException when the plan is no longer active or no longer priced in the subscription's currency.
-	 * @throws ConflictException when the plan was attached to another target since the lines were priced.
-	 */
-	private async writeUnderTargetPlanLock(
-		target: { planId: ID; productId: ID | null; variantId: ID | null } | undefined,
-		subscription: Subscription,
-		settlement: ISubscriptionPlanChangeOutcome['settlement'],
-		write: (writer: IVersionedWriter<Subscription>) => Promise<unknown>
-	): Promise<void> {
-		const type = this.typeOrmSubscriptionRepository.manager.connection?.options?.type;
-
-		if (!target || (type !== 'postgres' && type !== 'mysql')) {
-			await write(this);
-			return;
-		}
-
-		// READ COMMITTED, which is Postgres's default but not MySQL's: under REPEATABLE READ the plan read below would fix
-		// the snapshot the versioned write then reads the subscription's version from.
-		await this.typeOrmSubscriptionRepository.manager.transaction('READ COMMITTED', async (manager) => {
-			await lockPlanRow(manager, target.planId, 'share');
-			const current = await manager.findOne(SubscriptionPlan, { where: { id: target.planId } });
-			const refusal = this.moveRefusal(current, target, subscription.currency);
-
-			if (refusal) {
-				if (settlement === 'CHARGED') {
-					this.logger.warn(
-						`Subscription ${subscription.id}: the move to plan ${target.planId} was refused after its proration was charged (${refusal.message}); the proration order needs reversing.`
-					);
-				}
-
-				throw refusal;
-			}
-
-			await write(this.transactionWriter(manager));
-		});
-	}
-
-	/**
-	 * @param plan The plan a change moves to, read under its lock.
-	 * @param target The plan and the target the change's lines were priced from.
-	 * @param currency The subscription's currency.
-	 * @returns Why the move may not be written, or null when it may.
-	 */
-	private moveRefusal(
-		plan: SubscriptionPlan | null,
-		target: { planId: ID; productId: ID | null; variantId: ID | null },
-		currency: string
-	): BadRequestException | ConflictException | null {
-		if (!plan || plan.isActive === false) {
-			return new BadRequestException(
-				`SUBSCRIPTION_PLAN_INACTIVE: the plan "${plan?.code ?? target.planId}" is not active, so no subscription may move to it.`
-			);
-		}
-
-		if (plan.currency && plan.currency !== currency) {
-			return new BadRequestException(
-				`SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in ${plan.currency} and the subscription is billed in ${currency}.`
-			);
-		}
-
-		if (
-			String(plan.productId ?? '') !== String(target.productId ?? '') ||
-			String(plan.variantId ?? '') !== String(target.variantId ?? '')
-		) {
-			return new ConflictException(
-				`SUBSCRIPTION_PLAN_CHANGED: the plan "${plan.code}" was attached to another product or variant while this change was made; read it again and retry.`
-			);
-		}
-
-		return null;
-	}
-
-	/**
-	 * Settles what a mid-cycle change is worth: charged now, waived, or carried as a credit to the next cycle.
-	 *
-	 * @param subscription The subscription being changed.
-	 * @param description What the change was.
-	 * @param metadata The subscription's metadata as the change writes it, updated with what is waived or carried.
-	 * @param net What the change is worth: positive is owed by the customer, negative is owed to them.
-	 * @param minimum The smallest amount worth charging.
-	 * @returns How the change was settled.
-	 */
-	private async settleChange(
-		subscription: Subscription,
-		description: string,
-		metadata: Record<string, unknown>,
-		net: Money,
-		minimum: Money
-	): Promise<ISubscriptionPlanChangeOutcome['settlement']> {
-		const currency = subscription.currency;
-		let settlement: ISubscriptionPlanChangeOutcome['settlement'] = 'DEFERRED';
-
-		if (net.isPositive() && net.greaterThan(minimum)) {
-			await this.chargeProration(subscription, net, description);
-			settlement = 'CHARGED';
-		} else if (net.isPositive()) {
-			// Below the cost of collecting it: charging would lose money and refunding would be theatre.
-			metadata['waivedProrations'] = [
-				...((metadata['waivedProrations'] as unknown[]) ?? []),
-				{ amount: net.toStorageString(), currency, at: new Date().toISOString(), description: description }
-			];
-			settlement = 'WAIVED';
-		} else if (net.isNegative()) {
-			// **The carried credit accumulates; it does not replace.** Assigning the new amount outright
-			// meant that two downgrades inside one period left only the second one's credit on the row and
-			// the first one simply stopped existing — the customer was owed 30.97 and 12.00 and was given
-			// 12.00. The money itself moves when the next cycle consumes what is carried here, which is
-			// what doc 11 §10.8 states: "no money moves now; a `CREDIT` adjustment is attached to the
-			// **next** billing order".
-			const carried = this.pendingCreditOf(metadata, currency);
-			const total = carried ? carried.add(net).round() : net;
-
-			metadata[PENDING_CREDIT] = {
-				amount: total.toStorageString(),
-				currency,
-				at: new Date().toISOString(),
-				description: description
-			};
-			// And the adjustment written against the period the change happened in is the audit record of
-			// the decision rather than the money: that period's row has already settled, so nothing is
-			// collected or refunded by it. The pair is deliberate — one row says when the credit was
-			// decided, the next cycle's says when it was given.
-			await this.appendCredit(subscription, net, description);
-		} else {
-			settlement = 'WAIVED';
-		}
-
-		return settlement;
 	}
 
 	/**
@@ -3396,7 +3269,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					return await subscriptions.update(criteria as never, partial as never);
 				} catch (error) {
 					// Answered as `CrudService.update` answers a failed write: a 400 that carries none of the database's
-					// internals (the statement, its parameters, the driver's detail).
+					// internals (the statement, its parameters, the driver's detail). A version conflict is not an error
+					// of this statement — `commitVersionedUpdate` raises it from the affected-row count — so it is unchanged.
 					throw new BadRequestException(toClientSafeError(error));
 				}
 			},
