@@ -114,7 +114,18 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 				? { ...stated, currency: canonicalPlanCurrency(stated.currency) as never }
 				: stated;
 		// Validated on the plan as it was read, so a malformed request is refused before any lock is taken.
-		this.normalize({ ...scoped, ...changes } as Partial<SubscriptionPlan>);
+		const checked = this.normalize({ ...scoped, ...changes } as Partial<SubscriptionPlan>);
+
+		// The checks `super.update` made before it wrote, made here because the write now runs in the plan row's
+		// transaction (a write through the repository would take another connection and wait for the lock held there):
+		// the plan inside the caller's organization boundary — a caller confined to an organization, or with none in
+		// the token, is answered 404 for another organization's plan — and nothing the patch names in another tenant
+		// (SEC-D-03). The write below is pinned to the organization established here.
+		await this.findOneByIdString(id);
+
+		if (RequestContext.currentUser()) {
+			await this.assertNestedGraphNotForeign([this.updatable(checked) as any], RequestContext.currentTenantId());
+		}
 
 		if (changes.code && changes.code !== scoped.code) {
 			await this.assertCodeIsFree(changes.code, id);
@@ -165,7 +176,7 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 			}
 
 			// Written by the transaction holding the lock (a write on another connection would wait for it), in the
-			// plan's own tenant and organization, which `findOneScoped` established above. A code another plan of the
+			// plan's own tenant and organization, which the reads above established. A code another plan of the
 			// organization took after `assertCodeIsFree` read it reaches the unique index here, and is answered as
 			// `create` answers it.
 			try {

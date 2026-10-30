@@ -44,6 +44,12 @@ async function settlesWithin(promise: Promise<unknown>, ms: number): Promise<boo
 	}
 }
 
+/**
+ * @param name The database.
+ * @param url Where it is.
+ * @returns A data source with a connection pool, so each transaction of a case gets a connection of its own; on
+ * Postgres inside the suite's own schema.
+ */
 async function openDataSource(name: Dialect, url: string): Promise<DataSource> {
 	if (name === 'postgres') {
 		const setup = await new DataSource({ type: 'postgres', url } as never).initialize();

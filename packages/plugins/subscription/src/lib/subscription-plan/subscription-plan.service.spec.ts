@@ -52,6 +52,11 @@ jest.mock('@gauzy/core', () => {
 			return record;
 		}
 
+		/** The platform's check that a patch names nothing of another tenant (SEC-D-03); a case about it replaces it. */
+		async assertNestedGraphNotForeign(_entities: any[], _tenantId: any): Promise<void> {
+			return undefined;
+		}
+
 		async create(entity: any): Promise<any> {
 			return this.typeOrmRepository.save(this.typeOrmRepository.create(entity));
 		}
@@ -109,7 +114,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { SubscriptionBillingPeriod, SubscriptionStatus } from '../subscription.types';
@@ -956,5 +961,34 @@ describe('SubscriptionPlanService.updatePlan under the plan row lock', () => {
 			'SUBSCRIPTION_PLAN_HAS_SUBSCRIBERS'
 		);
 		expect(fixture.plan('plan-1').isActive).not.toBe(false);
+	});
+
+	it("refuses a plan outside the caller's organization boundary before it takes the lock", async () => {
+		const fixture = planFixture();
+		const boundaryRead = jest
+			.spyOn(fixture.service as any, 'findOneByIdString')
+			.mockRejectedValue(new NotFoundException('The requested record was not found'));
+
+		await expect(fixture.service.updatePlan('plan-1', { isActive: false })).rejects.toBeInstanceOf(NotFoundException);
+		expect(boundaryRead).toHaveBeenCalledWith('plan-1');
+		expect(fixture.statements).toEqual([]);
+		expect(fixture.patches).toEqual([]);
+	});
+
+	it("checks what the patch points at against the signed-in caller's tenant, and writes nothing it refuses", async () => {
+		const fixture = planFixture();
+
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-1', tenantId: TENANT } as any);
+		jest.spyOn(fixture.service as any, 'findOneByIdString').mockResolvedValue(fixture.plan('plan-1'));
+		const graphCheck = jest
+			.spyOn(fixture.service as any, 'assertNestedGraphNotForeign')
+			.mockRejectedValue(new ForbiddenException('foreign variant'));
+
+		await expect(fixture.service.updatePlan('plan-1', { variantId: 'their-variant' } as any)).rejects.toBeInstanceOf(
+			ForbiddenException
+		);
+		expect(graphCheck).toHaveBeenCalledWith([expect.objectContaining({ variantId: 'their-variant' })], TENANT);
+		expect(fixture.statements).toEqual([]);
+		expect(fixture.patches).toEqual([]);
 	});
 });
