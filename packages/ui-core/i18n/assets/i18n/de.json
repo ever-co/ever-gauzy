@@ -7077,7 +7077,7 @@
 			"ACTIVITY": "Aktivität",
 			"COMMENTS": "Kommentare"
 		},
-		"BOARD": "Board",
+		"TASKS_BY_STATUS": "Aufgaben nach Status",
 		"COLUMN_EMPTY": "Keine Aufgaben",
 		"CANNOT_DROP": "Aufgaben können nicht nach „{{ column }}“ verschoben werden, da dies kein Status dieses Projekts ist.",
 		"ACTIVITY": "Aktivität",

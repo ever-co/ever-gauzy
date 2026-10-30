@@ -7081,7 +7081,7 @@
 			"ACTIVITY": "Attività",
 			"COMMENTS": "Commenti"
 		},
-		"BOARD": "Bacheca",
+		"TASKS_BY_STATUS": "Attività per stato",
 		"COLUMN_EMPTY": "Nessuna attività",
 		"CANNOT_DROP": "Le attività non possono essere spostate in «{{ column }}» perché non è uno stato di questo progetto.",
 		"ACTIVITY": "Attività",

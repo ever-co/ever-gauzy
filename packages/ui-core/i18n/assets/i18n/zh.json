@@ -7081,7 +7081,7 @@
 			"ACTIVITY": "动态",
 			"COMMENTS": "评论"
 		},
-		"BOARD": "看板",
+		"TASKS_BY_STATUS": "按状态查看任务",
 		"COLUMN_EMPTY": "暂无任务",
 		"CANNOT_DROP": "无法将任务移动到“{{ column }}”，因为它不是此项目的状态。",
 		"ACTIVITY": "动态",

@@ -8280,7 +8280,7 @@
 			"ACTIVITY": "Activity",
 			"COMMENTS": "Comments"
 		},
-		"BOARD": "Board",
+		"TASKS_BY_STATUS": "Tasks by status",
 		"COLUMN_EMPTY": "No tasks",
 		"CANNOT_DROP": "Tasks can’t be moved to “{{ column }}” because it isn’t a status of this project.",
 		"ACTIVITY": "Activity",

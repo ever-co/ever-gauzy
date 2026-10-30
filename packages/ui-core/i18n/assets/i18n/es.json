@@ -7083,7 +7083,7 @@
 			"ACTIVITY": "Actividad",
 			"COMMENTS": "Comentarios"
 		},
-		"BOARD": "Tablero",
+		"TASKS_BY_STATUS": "Tareas por estado",
 		"COLUMN_EMPTY": "Sin tareas",
 		"CANNOT_DROP": "Las tareas no se pueden mover a «{{ column }}» porque no es un estado de este proyecto.",
 		"ACTIVITY": "Actividad",

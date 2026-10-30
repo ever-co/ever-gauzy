@@ -7081,7 +7081,7 @@
 			"ACTIVITY": "Atividade",
 			"COMMENTS": "Comentários"
 		},
-		"BOARD": "Quadro",
+		"TASKS_BY_STATUS": "Tarefas por status",
 		"COLUMN_EMPTY": "Sem tarefas",
 		"CANNOT_DROP": "As tarefas não podem ser movidas para “{{ column }}” porque não é um status deste projeto.",
 		"ACTIVITY": "Atividade",

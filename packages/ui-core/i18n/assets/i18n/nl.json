@@ -7081,7 +7081,7 @@
 			"ACTIVITY": "Activiteit",
 			"COMMENTS": "Opmerkingen"
 		},
-		"BOARD": "Bord",
+		"TASKS_BY_STATUS": "Taken per status",
 		"COLUMN_EMPTY": "Geen taken",
 		"CANNOT_DROP": "Taken kunnen niet naar ‘{{ column }}’ worden verplaatst, omdat dit geen status van dit project is.",
 		"ACTIVITY": "Activiteit",

@@ -7077,7 +7077,7 @@
 			"ACTIVITY": "Activité",
 			"COMMENTS": "Commentaires"
 		},
-		"BOARD": "Tableau",
+		"TASKS_BY_STATUS": "Tâches par statut",
 		"COLUMN_EMPTY": "Aucune tâche",
 		"CANNOT_DROP": "Les tâches ne peuvent pas être déplacées vers « {{ column }} », car ce n’est pas un statut de ce projet.",
 		"ACTIVITY": "Activité",

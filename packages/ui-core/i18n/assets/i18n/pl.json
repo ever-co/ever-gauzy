@@ -7080,7 +7080,7 @@
 			"ACTIVITY": "Aktywność",
 			"COMMENTS": "Komentarze"
 		},
-		"BOARD": "Tablica",
+		"TASKS_BY_STATUS": "Zadania według statusu",
 		"COLUMN_EMPTY": "Brak zadań",
 		"CANNOT_DROP": "Zadań nie można przenieść do „{{ column }}”, ponieważ nie jest to status tego projektu.",
 		"ACTIVITY": "Aktywność",
