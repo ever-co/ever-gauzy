@@ -456,6 +456,15 @@ jobs:
           EVER_CONNECT_TEST_MYSQL_URL: mysql://migration_test:migration_test@127.0.0.1:${{ job.services.mysql.ports[3306] }}/migration_test
         run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/ever-connect/jest.config.ts --runInBand --testPathIgnorePatterns mock-platform
 
+      - name: Test the subscription plan row lock on PostgreSQL and MySQL
+        # Two connections on each database: a plan update and a subscription created on the plan wait for one another
+        # in either order (the plan row FOR UPDATE / FOR SHARE, MySQL LOCK IN SHARE MODE) until the holder commits or
+        # rolls back, and then see what it left; two subscriptions created on one plan do not wait. SQLite takes no lock.
+        env:
+          SUBSCRIPTION_TEST_POSTGRES_URL: postgres://migration_test:migration_test@127.0.0.1:${{ job.services.postgres.ports[5432] }}/migration_test
+          SUBSCRIPTION_TEST_MYSQL_URL: mysql://migration_test:migration_test@127.0.0.1:${{ job.services.mysql.ports[3306] }}/migration_test
+        run: node --experimental-vm-modules node_modules/jest/bin/jest.js -c packages/plugins/subscription/jest.config.ts --runInBand packages/plugins/subscription/src/lib/subscription-plan/subscription-plan.lock.db.spec.ts
+
       - name: Test the Ever Platform connection against the mock
         # The plugin against the mock platform of the SDK's dev tools (`@ever-co/connect-tools`, the
         # exact version in the plugin's package.json, installed with the workspace), which validates

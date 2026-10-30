@@ -205,6 +205,7 @@ import { SubscriptionItemService } from '../subscription-item/subscription-item.
 import { SubscriptionBillingService } from '../subscription-billing/subscription-billing.service';
 import { SubscriptionItem } from '../subscription-item/subscription-item.entity';
 import { SubscriptionBilling } from '../subscription-billing/subscription-billing.entity';
+import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { Subscription } from './subscription.entity';
 import { SubscriptionService } from './subscription.service';
 import { SUBSCRIPTION_REFERENCES } from '../subscription.references';
@@ -513,10 +514,19 @@ function subscriptionFixture(
 	const entityToTable = new Map<unknown, keyof ITables>([
 		[Subscription, 'subscription'],
 		[SubscriptionItem, 'subscription_item'],
-		[SubscriptionBilling, 'subscription_billing']
+		[SubscriptionBilling, 'subscription_billing'],
+		[SubscriptionPlan, 'subscription_plan']
 	]);
+	/** The row locks the service took (`lockPlanRow`), in order, and what "commits" while one is waited for. */
+	const locks: string[] = [];
+	const onLock: Array<() => void> = [];
 	const manager = {
 		connection: { options: { type: 'postgres' } },
+		query: async (sql: string) => {
+			locks.push(sql);
+			onLock.splice(0).forEach((committed) => committed());
+			return [];
+		},
 		// A transaction's repository writes the same store: the double's transaction restores it on a rollback.
 		getRepository: (entity: unknown) => {
 			const table = entityToTable.get(entity);
@@ -770,6 +780,8 @@ function subscriptionFixture(
 			adjustments.filter((row) => row.ownerType === AdjustmentOwnerType.SUBSCRIPTION_BILLING && row.ownerId === ownerId),
 		idempotencyService,
 		commits,
+		locks,
+		onLock,
 		subscription: (id: string) => tables.subscription.find((row) => row.id === id),
 		items: (subscriptionId: string = SUBSCRIPTION) =>
 			tables.subscription_item.filter((row) => row.subscriptionId === subscriptionId && !row.deletedAt),
@@ -957,6 +969,35 @@ describe('SubscriptionService — putting a customer on a plan (doc 11 §10.4)',
 			fixture.service.createSubscription({ planId: PLAN, items: [{ variantId: VARIANT }] } as never)
 		).rejects.toThrow(/must name the customer/);
 		expect(fixture.tables.subscription).toEqual([]);
+	});
+
+	it('holds the plan row in share mode while the subscription is created on it', async () => {
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+
+		await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			items: [{ variantId: VARIANT, quantity: '1', unitPrice: '120' }]
+		});
+
+		expect(fixture.locks).toEqual([expect.stringMatching(/FROM "subscription_plan" WHERE "id" = \$1 FOR SHARE$/)]);
+	});
+
+	it('sees a deactivation that committed while it waited for the plan row, and commits nothing', async () => {
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		// The plan passed the checks before the transaction; an update deactivates it before the lock is granted.
+		fixture.onLock.push(() => {
+			fixture.tables.subscription_plan.find((row) => row.id === PLAN).isActive = false;
+		});
+
+		await expect(
+			fixture.service.createSubscription({
+				planId: PLAN,
+				customerId: CUSTOMER,
+				items: [{ variantId: VARIANT, quantity: '1', unitPrice: '120' }]
+			})
+		).rejects.toThrow('SUBSCRIPTION_PLAN_INACTIVE');
+		expect(fixture.commits).toEqual([]);
 	});
 
 	it('refuses a currency that disagrees with the plan’s, and commits nothing', async () => {
