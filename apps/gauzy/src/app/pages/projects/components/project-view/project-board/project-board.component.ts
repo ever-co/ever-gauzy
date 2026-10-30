@@ -81,11 +81,8 @@ const PRIORITY_LEVELS = new Set<string>(['urgent', 'high', 'medium', 'low']);
 /** The tasks read at a time; the API takes at most 100. */
 const BOARD_PAGE_SIZE = 50;
 
-/**
- * How near the end of the board the next page starts loading. The sideways margin is what keeps the end in
- * reach of a user scrolled over to the last columns: the end is drawn under the first ones.
- */
-const BOARD_END_MARGIN = '400px 100000px';
+/** How near the end of the board the next page starts loading. */
+const BOARD_END_MARGIN = '400px 0px';
 
 /** A status value or name as columns are matched by it. */
 const normalizeStatus = (value?: string): string => (value || '').trim().toLowerCase().replace(/\s+/g, '-');
@@ -173,7 +170,9 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			(entries) => {
 				if (entries.some((entry) => entry.isIntersecting)) this.onEndReached();
 			},
-			{ root: this._end.parentElement, rootMargin: BOARD_END_MARGIN }
+			// The page scrolls in an element of the layout, not the window: the scroll margin carries the distance
+			// through it. A browser without one loads the next page when the end comes into view.
+			{ rootMargin: BOARD_END_MARGIN, scrollMargin: BOARD_END_MARGIN }
 		);
 		this._endObserver.observe(this._end);
 	}
