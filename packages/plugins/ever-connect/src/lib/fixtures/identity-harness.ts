@@ -153,12 +153,8 @@ export async function identityHarness(env: Record<string, string> = ENV): Promis
 	const dataSource = await openTestDataSource({ name: 'better-sqlite3' });
 	await createCoreTables(dataSource, 'better-sqlite3');
 	await migrateUp(dataSource);
-	const clock = {
-		t: Date.parse('2026-11-02T10:00:00.000Z'),
-		now() {
-			return this.t;
-		}
-	};
+	// `now` is read off the object by the services, so it never uses `this`.
+	const clock: { t: number; now(): number } = { t: Date.parse('2026-11-02T10:00:00.000Z'), now: () => clock.t };
 	const platform = new FakePlatform();
 	const signer = testSigner();
 	const client = createEverPlatformClient({
