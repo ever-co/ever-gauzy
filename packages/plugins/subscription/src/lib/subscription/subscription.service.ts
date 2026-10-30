@@ -23,7 +23,9 @@ import {
 	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	matchesExpectation,
-	parseEntityVersion
+	parseEntityVersion,
+	redactDatabaseError,
+	toClientSafeError
 } from '@gauzy/core';
 import {
 	IChangeSubscriptionPlanInput,
@@ -1157,6 +1159,16 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		this.assertLive(subscription);
 
 		const plan = await this.planService.assertSubscribable(input.planId);
+
+		// A subscription is billed in its plan's currency (`POST /subscriptions` refuses another, and a plan with live
+		// subscriptions may not change it): its lines, prorations and carried credits are priced in it, so it moves
+		// only to a plan priced in the same one.
+		if (plan.currency && plan.currency !== subscription.currency) {
+			throw new BadRequestException(
+				`SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in ${plan.currency} and the subscription is billed in ${subscription.currency}.`
+			);
+		}
+
 		const variantId = await this.planService.resolveVariantId(plan);
 		const existing = await this.itemService.findForSubscription(id);
 		const requested: ISubscriptionItemInput[] = variantId
@@ -3253,7 +3265,29 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		const subscriptions = manager.getRepository(Subscription);
 
 		return {
-			update: (criteria, partial) => subscriptions.update(criteria as never, partial as never),
+			update: async (criteria, partial) => {
+				try {
+					return await subscriptions.update(criteria as never, partial as never);
+				} catch (error) {
+					// Logged as the platform's database-error filter logs one (the driver's code, its masked message and
+					// the statement, without the bound values), because the answer below no longer carries any of it.
+					const redacted = redactDatabaseError(error);
+					let detail: string;
+					try {
+						detail = redacted instanceof Error ? redacted.message : JSON.stringify(redacted);
+					} catch {
+						detail = 'unserialisable database error';
+					}
+					this.logger.error(
+						`The database refused a write of subscription ${String((criteria as { id?: unknown })?.id ?? '')}: ${detail}`
+					);
+
+					// Answered as `CrudService.update` answers a failed write: a 400 that carries none of the database's
+					// internals (the statement, its parameters, the driver's detail). A version conflict is not an error
+					// of this statement — `commitVersionedUpdate` raises it from the affected-row count — so it is unchanged.
+					throw new BadRequestException(toClientSafeError(error));
+				}
+			},
 			findOneByIdString: async (id) => {
 				const subscription = await subscriptions.findOne({ where: { id, ...currentScope() } } as never);
 
