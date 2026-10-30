@@ -453,6 +453,36 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	}
 
 	/**
+	 * Moves the end of a cycle nothing has settled, for a plan change that takes hold as the cycle's period opens.
+	 *
+	 * A change scheduled from the next period is applied by the cycle that opens that period, and the retry of an
+	 * attempt that failed is such a cycle as well: the subscription stays `ACTIVE` through the dunning schedule, so a
+	 * change can be scheduled after the first attempt. The period then opens on the new plan's cadence, and its row has
+	 * to say so, or the order, the row and the calendar the cycle advances would describe three different periods.
+	 * Predicated on the cycle still being unsettled, so a cycle settled meanwhile keeps the period it was settled for.
+	 *
+	 * @param id The cycle.
+	 * @param end The end of its period on the new plan's cadence.
+	 * @param manager The caller's transaction, which a refusal rolls back.
+	 * @returns The cycle as it stands.
+	 * @throws ConflictException when the cycle was settled meanwhile.
+	 */
+	public async recutUnsettled(id: ID, end: Date, manager: EntityManager): Promise<SubscriptionBilling> {
+		await this.writeIf(
+			id,
+			{ status: In([SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED]) },
+			async () =>
+				new ConflictException(
+					'SUBSCRIPTION_BILLING_CYCLE_SETTLED: the billing cycle was settled while a scheduled plan change was being applied to it.'
+				),
+			{ periodEnd: end },
+			this.cyclesOn(manager)
+		);
+
+		return await this.findOneScoped(id, manager);
+	}
+
+	/**
 	 * Records that a paid cycle was refunded.
 	 *
 	 * @param id The cycle.

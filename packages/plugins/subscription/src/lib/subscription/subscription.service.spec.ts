@@ -1803,6 +1803,124 @@ describe('SubscriptionService — a change from the next period takes hold when 
 		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['scheduledPlanChange']).toBeUndefined();
 	});
 
+	it('keeps a refused change cleared when the cycle then consumes a deferred credit', async () => {
+		// Copilot, CodeRabbit and Greptile on #11565: the refusal cleared the change on the row, but the cycle went on with
+		// the subscription it had read before, so consuming the credit wrote that metadata back, change and all.
+		const fixture = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					metadata: { pendingCredit: { amount: '-30.000000', currency: 'USD' } }
+				})
+			],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' }
+		});
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+		Object.assign(fixture.tables.subscription_plan.find((row) => row.id === BETTER_PLAN) as Row, {
+			isActive: false
+		});
+
+		const findOneScoped = fixture.service.findOneScoped.bind(fixture.service);
+
+		// A database answers each read with rows of its own; the double's live row would hide a read gone stale.
+		jest.spyOn(fixture.service, 'findOneScoped').mockImplementation(async (id: string) =>
+			structuredClone(await findOneScoped(id))
+		);
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(fixture.orderCalls[0]).toMatchObject({ amount: '120.000000', creditAmount: '-30.000000' });
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['pendingCredit']).toBeUndefined();
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['scheduledPlanChange']).toBeUndefined();
+		expect(fixture.events.filter((event) => event.name === 'subscription.scheduled-change-refused')).toHaveLength(
+			1
+		);
+	});
+
+	it('writes no line when a change made meanwhile wins the claim on the subscription', async () => {
+		// Greptile, Copilot and CodeRabbit on #11565: the lines were written before the version-predicated write, so a plan
+		// change committed after the scheduled one was read kept its plan and lost its lines to the scheduled ones.
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN), planRow(BETTER_PLAN), planRow('plan-3', { variantId: 'variant-c' })],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00', 'variant-c': '60.00' }
+		});
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+
+		const read = (fixture.service as any).scheduledChangeAt.bind(fixture.service);
+
+		jest.spyOn(fixture.service as any, 'scheduledChangeAt').mockImplementationOnce(async (...args: unknown[]) => {
+			const due = await read(...args);
+			const index = fixture.tables.subscription.findIndex((subscription) => subscription.id === SUBSCRIPTION);
+			const line = fixture.tables.subscription_item.findIndex((item) => item.variantId === VARIANT);
+			const row = fixture.tables.subscription[index];
+
+			// What a plan change made now commits between the read and the claim: its lines, then its plan, which clears
+			// the scheduled change and moves the version. New rows, as a database answers a later read with, so the
+			// subscription the cycle read keeps the version it was read at.
+			fixture.tables.subscription_item[line] = {
+				...fixture.tables.subscription_item[line],
+				variantId: 'variant-c',
+				unitPrice: '60.000000'
+			};
+			fixture.tables.subscription[index] = { ...row, planId: 'plan-3', metadata: {}, version: row.version + 1 };
+
+			return due;
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.subscription(SUBSCRIPTION)?.planId).toBe('plan-3');
+		expect(fixture.items().map((row) => row.variantId)).toEqual(['variant-c']);
+	});
+
+	it('moves a failed attempt’s row onto the new cadence when the change takes hold at its retry', async () => {
+		// Greptile and Copilot on #11565: the subscription stays active through the dunning schedule, so a change can be
+		// scheduled after the first attempt failed and take hold at a retry. The row kept the month it was opened on while
+		// the next retry read a year from the plan, so the order and the calendar said a year and the row a month.
+		const MAY = new Date('2026-05-01T00:00:00.000Z');
+		let attempts = 0;
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN), planRow(BETTER_PLAN, { billingPeriod: SubscriptionBillingPeriod.YEARLY })],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' },
+			orders: () => {
+				attempts += 1;
+
+				if (attempts <= 2) {
+					throw new Error(`SUBSCRIPTION_CHARGE_DECLINED: attempt ${attempts} was declined`);
+				}
+
+				return { orderId: `order-${attempts}`, paid: true };
+			}
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+		expect(new Date(fixture.cycle(APRIL)?.periodEnd)).toEqual(MAY);
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+		fixture.idempotencyService.advanceBy(5 * 60 * 1000);
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true });
+		fixture.idempotencyService.advanceBy(5 * 60 * 1000);
+
+		const paid = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true });
+
+		expect(paid.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(new Date(paid.periodEnd as Date)).toEqual(APRIL_NEXT_YEAR);
+		// The first attempt was the month on the plan it was leaving; both retries are the year on the new plan.
+		expect(fixture.orderCalls.map((call) => [call.amount, new Date(call.periodEnd)])).toEqual([
+			['120.000000', MAY],
+			['300.000000', APRIL_NEXT_YEAR],
+			['300.000000', APRIL_NEXT_YEAR]
+		]);
+		expect(fixture.billings()).toHaveLength(1);
+		expect(new Date(fixture.cycle(APRIL)?.periodEnd)).toEqual(APRIL_NEXT_YEAR);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			planId: BETTER_PLAN,
+			currentPeriodEnd: APRIL_NEXT_YEAR
+		});
+	});
+
 	it('is the service’s own key: a caller’s metadata neither plants one nor erases one (SEC-B-03)', async () => {
 		// Planted, it would move the subscription to another plan at the next renewal with no plan change at all.
 		const planted = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });

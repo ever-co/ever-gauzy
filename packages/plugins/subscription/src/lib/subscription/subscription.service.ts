@@ -1690,7 +1690,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				? { items: scheduled.items, plan: scheduled.plan ?? plan, metadata: scheduled.metadata }
 				: { items, plan, metadata: subscription.metadata };
 		const periodEnd =
-			scheduled?.plan && !scheduled.refused && !existing
+			scheduled?.plan && !scheduled.refused
 				? periodFrom(period.start, this.planService.cadenceOf(scheduled.plan)).end
 				: period.end;
 
@@ -2016,7 +2016,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			);
 		}
 
-		const existing = await this.billingService.findByPeriod(subscription.id, period.start);
+		let existing = await this.billingService.findByPeriod(subscription.id, period.start);
 
 		if (existing && RAISED_CYCLE_STATUSES.includes(existing.status)) {
 			// The period is settled. Recomputing it would be a second answer to a question the row has
@@ -2055,16 +2055,22 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		// A change taken from the next period (`effective = 'NEXT_PERIOD'`) takes hold here, as the period it was
 		// scheduled for opens: the period is priced on the plan and lines it moved to. It used to be recorded and never
 		// read, so the subscription kept renewing on the plan it was leaving. The cycle holds the period's claim, so one
-		// pass applies it; a period a failed attempt already wrote keeps that row's end.
-		const opened = await this.applyScheduledChange(subscription.id, period.start, spend);
+		// pass applies it.
+		const opened = await this.applyScheduledChange(subscription.id, period.start, spend, existing);
 
 		if (opened) {
+			// Applied or refused, the cycle goes on with the subscription as the change left it: its later writes
+			// (`rememberSetupFee`, `clearPendingCredit`) write the metadata they were handed, and the one read before the
+			// change would put a cleared change back.
 			subscription = opened.subscription;
-			plan = opened.plan;
-			items = await this.itemService.findForSubscription(subscription.id);
 
-			if (!existing) {
+			if (opened.plan) {
+				plan = opened.plan;
+				items = await this.itemService.findForSubscription(subscription.id);
+				// The period opens on the new plan's cadence. A row an earlier attempt wrote for it moved its end with the
+				// change, so every later retry, which reads the period from the plan, finds the row on the same period.
 				period = periodFrom(period.start, this.planService.cadenceOf(plan));
+				existing = existing ? await this.billingService.findByPeriod(subscription.id, period.start) : existing;
 			}
 		}
 
@@ -2999,22 +3005,28 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	/**
 	 * Applies the change scheduled for the period a cycle opens, before the period is priced (`executeCycle`).
 	 *
-	 * The lines are written first, then the plan, the quantity, the restated discount and the cleared change in one
-	 * write predicated on the version the change was read at. A cycle interrupted between the two finds the change
-	 * still recorded and writes the same lines again; a change recorded again meanwhile moves the version, so it is
-	 * read again rather than overwritten. A refused change is cleared and told (`subscription.scheduled-change-refused`),
-	 * and the period opens on the plan the subscription is on.
+	 * One transaction, the claim first: the plan, the quantity, the restated discount and the cleared change are one
+	 * write predicated on the version the change was read at, and the lines follow it on the same transaction. A change
+	 * made meanwhile (a plan change made now, a change recorded again) moves the version, so the claim matches nothing
+	 * before any line is written and the change is read again rather than overwritten; a failure after the claim rolls
+	 * both back. A refused change is cleared and told (`subscription.scheduled-change-refused`) in one transaction too,
+	 * so a retry cannot find it cleared and its notice never written, and the period opens on the plan the subscription
+	 * is on. A cycle row an earlier attempt wrote for the period (a retry of a failed charge) moves its end to the new
+	 * plan's cadence on the same transaction (`recutUnsettled`).
 	 *
 	 * @param id The subscription being billed.
 	 * @param periodStart The start of the period the cycle bills.
 	 * @param spend The reader the cycle's subscription writes take their expectation from.
-	 * @returns The subscription and its plan as the period opens on them, or null when no change was applied.
+	 * @param cycle The row an earlier attempt wrote for the period, when there is one.
+	 * @returns Null when no change was due; otherwise the subscription as the change left it, with the plan the period
+	 * opens on when the change was applied, and without one when it was refused.
 	 */
 	private async applyScheduledChange(
 		id: ID,
 		periodStart: Date,
-		spend: () => IVersionExpectation
-	): Promise<{ subscription: Subscription; plan: SubscriptionPlan } | null> {
+		spend: () => IVersionExpectation,
+		cycle: SubscriptionBilling | null
+	): Promise<{ subscription: Subscription; plan?: SubscriptionPlan } | null> {
 		for (let attempt = 1; ; attempt += 1) {
 			const subscription = await this.findOneScoped(id);
 			const due = await this.scheduledChangeAt(subscription, periodStart);
@@ -3024,38 +3036,43 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			}
 
 			const stated = spend();
+			const lines = due.refused ? undefined : due.items;
 
 			try {
-				if (due.refused || !due.items) {
-					await commitVersionedUpdate<Subscription>(this, {
+				await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+					await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
 						where: currentScope(),
 						id,
 						expectation: this.readVersionPredicate(subscription, stated),
-						patch: { metadata: due.metadata }
+						patch: lines
+							? {
+									...(due.plan ? { planId: due.plan.id } : {}),
+									...(due.change.quantity !== undefined ? { quantity: due.change.quantity } : {}),
+									metadata: due.metadata
+							  }
+							: { metadata: due.metadata }
 					});
 
-					this.logger.warn(
-						`Subscription ${id}: the change scheduled for the period from ${periodStart.toISOString()} was refused: ${due.refused}`
-					);
-					await this.emit('subscription.scheduled-change-refused', id, {
-						subscriptionId: id,
-						planId: due.change.planId ?? null,
-						periodStart,
-						reason: due.refused ?? null
-					});
+					if (lines) {
+						await this.itemService.writePreparedItems(manager, id, lines);
 
-					return null;
-				}
+						const end = due.plan ? periodFrom(periodStart, this.planService.cadenceOf(due.plan)).end : null;
 
-				await this.itemService.replaceItems(id, due.items, subscription.currency, subscription.customerId);
-				await commitVersionedUpdate<Subscription>(this, {
-					where: currentScope(),
-					id,
-					expectation: this.readVersionPredicate(subscription, stated),
-					patch: {
-						...(due.plan ? { planId: due.plan.id } : {}),
-						...(due.change.quantity !== undefined ? { quantity: due.change.quantity } : {}),
-						metadata: due.metadata
+						if (cycle && end && new Date(cycle.periodEnd).getTime() !== end.getTime()) {
+							await this.billingService.recutUnsettled(cycle.id, end, manager);
+						}
+					} else {
+						await this.emit(
+							'subscription.scheduled-change-refused',
+							id,
+							{
+								subscriptionId: id,
+								planId: due.change.planId ?? null,
+								periodStart,
+								reason: due.refused ?? null
+							},
+							manager
+						);
 					}
 				});
 			} catch (error) {
@@ -3066,9 +3083,17 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				throw error;
 			}
 
-			const applied = await this.findOneScoped(id);
+			const opened = await this.findOneScoped(id);
 
-			return { subscription: applied, plan: await this.planService.findOneScoped(applied.planId) };
+			if (!lines) {
+				this.logger.warn(
+					`Subscription ${id}: the change scheduled for the period from ${periodStart.toISOString()} was refused: ${due.refused}`
+				);
+
+				return { subscription: opened };
+			}
+
+			return { subscription: opened, plan: await this.planService.findOneScoped(opened.planId) };
 		}
 	}
 
@@ -3587,9 +3612,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param name The event name.
 	 * @param subscriptionId The aggregate the event is about.
 	 * @param data The projection a consumer receives.
+	 * @param manager The transaction the event commits with, when the write it reports is made on one.
 	 */
-	private async emit(name: string, subscriptionId: ID, data: Record<string, unknown>): Promise<void> {
-		await this.outbox.append(this.typeOrmSubscriptionRepository.manager, {
+	private async emit(
+		name: string,
+		subscriptionId: ID,
+		data: Record<string, unknown>,
+		manager: EntityManager = this.typeOrmSubscriptionRepository.manager
+	): Promise<void> {
+		await this.outbox.append(manager, {
 			name,
 			aggregateType: 'SUBSCRIPTION',
 			aggregateId: subscriptionId,
