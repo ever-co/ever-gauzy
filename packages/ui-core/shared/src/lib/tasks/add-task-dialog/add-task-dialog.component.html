@@ -25,75 +25,40 @@
             {{ 'TASKS_PAGE.TASKS_TITLE' | translate }}
             <span class="required-mark" aria-hidden="true">*</span>
           </label>
-          <input
+          <!-- A textarea so a long title wraps instead of being cut off; a title is still one line of text. -->
+          <textarea
             id="taskTitle"
             class="title-input"
             formControlName="title"
-            type="text"
+            rows="2"
             nbInput
             fullWidth
             cdkFocusInitial
             [placeholder]="'FORM.PLACEHOLDERS.ADD_TITLE' | translate"
-            />
-          </div>
-          <div class="form-group">
-            <label class="label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
-            <ga-rich-text-editor
-              class="task-description"
-              formControlName="description"
-              preset="standard"
-              outputFormat="html"
-              minHeight="260px"
-              [placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
-            ></ga-rich-text-editor>
-          </div>
-        </section>
-        <aside class="task-side">
-          <h6 class="side-title">{{ 'BUTTONS.DETAILS' | translate }}</h6>
-          @if (!isEditing) {
-            <ngx-task-number-field
-              class="task-number"
-              formControlName="number"
-              [formControl]="form.get('number')"
-              [projectId]="getControlValue('projectId')"
-              [placeholder]="'TASKS_PAGE.TASK_NUMBER' | translate"
-            ></ngx-task-number-field>
-          }
-          <div class="field">
-            <label class="label">{{ 'CONTEXT_MENU.PROJECT' | translate }}</label>
-            <ga-project-selector
-              formControlName="projectId"
-              [placeholder]="'CONTEXT_MENU.PROJECT' | translate"
-              [skipGlobalChange]="true"
-              [defaultSelected]="false"
-              [showAllOption]="false"
-              (onChanged)="selectedProject($event)"
-            ></ga-project-selector>
-          </div>
-          <div class="field">
-            <label class="label">{{ 'TASKS_PAGE.TASKS_STATUS' | translate }}</label>
-            <ga-task-status-select
-              [projectId]="getControlValue('projectId')"
-              formControlName="taskStatus"
-              [placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
-            ></ga-task-status-select>
-          </div>
-          <div class="field">
-            <label class="label">{{ 'TASKS_PAGE.TASK_PRIORITY' | translate }}</label>
-            <ga-task-priority-select
-              [projectId]="form.get('projectId').value"
-              formControlName="taskPriority"
-              [placeholder]="'TASKS_PAGE.TASK_PRIORITY' | translate"
-            ></ga-task-priority-select>
-          </div>
-          <div class="field">
-            <label class="label">{{ 'TASKS_PAGE.TASK_SIZE' | translate }}</label>
-            <ga-task-size-select
-              [projectId]="form.get('projectId').value"
-              formControlName="taskSize"
-              [placeholder]="'TASKS_PAGE.TASK_SIZE' | translate"
-            ></ga-task-size-select>
-          </div>
+            (keydown.enter)="$event.preventDefault()"
+          ></textarea>
+        </div>
+        <div class="form-group">
+          <label class="label section-label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
+          <ga-rich-text-editor
+            class="task-description"
+            formControlName="description"
+            preset="standard"
+            outputFormat="html"
+            minHeight="260px"
+            [placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
+          ></ga-rich-text-editor>
+        </div>
+      </section>
+      <aside class="task-side">
+        <ga-task-status-select
+          class="task-status"
+          [projectId]="getControlValue('projectId')"
+          formControlName="taskStatus"
+          [placeholder]="'TASKS_PAGE.TASKS_STATUS' | translate"
+        ></ga-task-status-select>
+        <div class="task-details">
+          <h6 class="details-title">{{ 'BUTTONS.DETAILS' | translate }}</h6>
           <div class="field">
             <label class="label">{{ 'TASKS_PAGE.TASK_ASSIGNED_TO' | translate }}</label>
             <ga-employee-multi-select
@@ -121,9 +86,37 @@
             </nb-select>
           </div>
           <div class="field">
+            <label class="label">{{ 'CONTEXT_MENU.PROJECT' | translate }}</label>
+            <ga-project-selector
+              formControlName="projectId"
+              [placeholder]="'CONTEXT_MENU.PROJECT' | translate"
+              [skipGlobalChange]="true"
+              [defaultSelected]="false"
+              [showAllOption]="false"
+              (onChanged)="selectedProject($event)"
+            ></ga-project-selector>
+          </div>
+          <div class="field">
+            <label class="label">{{ 'TASKS_PAGE.TASK_PRIORITY' | translate }}</label>
+            <ga-task-priority-select
+              [projectId]="form.get('projectId').value"
+              formControlName="taskPriority"
+              [placeholder]="'TASKS_PAGE.TASK_PRIORITY' | translate"
+            ></ga-task-priority-select>
+          </div>
+          <div class="field">
+            <label class="label">{{ 'TASKS_PAGE.TASK_SIZE' | translate }}</label>
+            <ga-task-size-select
+              [projectId]="form.get('projectId').value"
+              formControlName="taskSize"
+              [placeholder]="'TASKS_PAGE.TASK_SIZE' | translate"
+            ></ga-task-size-select>
+          </div>
+          <div class="field">
             <label for="dueDate" class="label">{{ 'TASKS_PAGE.DUE_DATE' | translate }}</label>
             <div>
               <input
+                class="detail-input"
                 formControlName="dueDate"
                 type="text"
                 nbInput
@@ -132,88 +125,101 @@
                 id="dueDate"
                 fullWidth
                 />
-                <nb-datepicker #taskDueDatePicker></nb-datepicker>
-              </div>
+              <nb-datepicker #taskDueDatePicker></nb-datepicker>
             </div>
-            <div class="field">
-              <label class="label">{{ 'TASKS_PAGE.ESTIMATE' | translate }}</label>
-              <div class="estimate-inputs">
-                <input
-                  formControlName="estimateDays"
-                  type="number"
-                  [min]="0"
-                  nbInput
-                  [placeholder]="'TASKS_PAGE.ESTIMATE_DAYS' | translate"
-                  />
-                  <input
-                    formControlName="estimateHours"
-                    type="number"
-                    [min]="0"
-                    [status]="form.get('estimateHours').errors ? 'danger' : 'basic'"
-                    min="0"
-                    max="23"
-                    nbInput
-                    [placeholder]="'TASKS_PAGE.ESTIMATE_HOURS' | translate"
-                    />
-                    <input
-                      formControlName="estimateMinutes"
-                      type="number"
-                      [min]="0"
-                      [status]="form.get('estimateMinutes').errors ? 'danger' : 'basic'"
-                      min="0"
-                      max="59"
-                      nbInput
-                      [placeholder]="'TASKS_PAGE.ESTIMATE_MINUTES' | translate"
-                      />
-                    </div>
-                  </div>
-                  <div class="field">
-                    <label class="label">{{ 'TASKS_PAGE.MODULE' | translate }}</label>
-                    <nb-select
-                      formControlName="modules"
-                      [placeholder]="'TASKS_PAGE.SELECT_MODULE' | translate"
-                      [selected]="selectedModules"
-                      (selectedChange)="onModulesSelected($event)"
-                      fullWidth
-                      multiple
-                      >
-                      @for (module of availableModules; track module) {
-                        <nb-option [value]="module.id">
-                          {{ module.name }}
-                        </nb-option>
-                      }
-                    </nb-select>
-                  </div>
-                  <div class="field">
-                    <label class="label">{{ 'TASKS_PAGE.PARENT_TASK' | translate }}</label>
-                    <ga-task-selector
-                      name="parentId"
-                      [projectId]="getControlValue('projectId')"
-                      formControlName="parentId"
-                      [required]="$safeNavigationMigration(organization?.requireTask)"
-                    ></ga-task-selector>
-                  </div>
-                  <div class="field">
-                    <label class="label">{{ 'TAGS_PAGE.HEADER' | translate }}</label>
-                    <ga-tags-color-input
-                      [label]="false"
-                      [selectedTags]="form.get('tags').value"
-                      (selectedTagsEvent)="selectedTagsHandler($event)"
-                      [isOrgLevel]="true"
-                    ></ga-tags-color-input>
-                  </div>
-                </aside>
-              </form>
-            </nb-card-body>
-            <nb-card-footer class="task-footer">
-              <span class="required-note">{{ 'TASKS_PAGE.REQUIRED_FIELDS_NOTE' | translate }}</span>
-              <div class="task-actions">
-                <button (click)="dialogRef.close()" appearance="ghost" status="basic" type="button" nbButton>
-                  {{ 'BUTTONS.CANCEL' | translate }}
-                </button>
-                <button (click)="onSave()" [disabled]="form.invalid" status="primary" type="button" nbButton>
-                  {{ (isEditing ? 'BUTTONS.SAVE' : 'BUTTONS.CREATE') | translate }}
-                </button>
-              </div>
-            </nb-card-footer>
-          </nb-card>
+          </div>
+          <div class="field">
+            <label class="label">{{ 'TASKS_PAGE.ESTIMATE' | translate }}</label>
+            <div class="estimate-inputs">
+              <input
+                class="detail-input"
+                formControlName="estimateDays"
+                type="number"
+                [min]="0"
+                nbInput
+                [placeholder]="'TASKS_PAGE.ESTIMATE_DAYS' | translate"
+                />
+              <input
+                class="detail-input"
+                formControlName="estimateHours"
+                type="number"
+                [min]="0"
+                [status]="form.get('estimateHours').errors ? 'danger' : 'basic'"
+                min="0"
+                max="23"
+                nbInput
+                [placeholder]="'TASKS_PAGE.ESTIMATE_HOURS' | translate"
+                />
+              <input
+                class="detail-input"
+                formControlName="estimateMinutes"
+                type="number"
+                [min]="0"
+                [status]="form.get('estimateMinutes').errors ? 'danger' : 'basic'"
+                min="0"
+                max="59"
+                nbInput
+                [placeholder]="'TASKS_PAGE.ESTIMATE_MINUTES' | translate"
+                />
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">{{ 'TASKS_PAGE.MODULE' | translate }}</label>
+            <nb-select
+              formControlName="modules"
+              [placeholder]="'TASKS_PAGE.SELECT_MODULE' | translate"
+              [selected]="selectedModules"
+              (selectedChange)="onModulesSelected($event)"
+              fullWidth
+              multiple
+              >
+              @for (module of availableModules; track module) {
+                <nb-option [value]="module.id">
+                  {{ module.name }}
+                </nb-option>
+              }
+            </nb-select>
+          </div>
+          <div class="field">
+            <label class="label">{{ 'TASKS_PAGE.PARENT_TASK' | translate }}</label>
+            <ga-task-selector
+              name="parentId"
+              [projectId]="getControlValue('projectId')"
+              formControlName="parentId"
+              [required]="$safeNavigationMigration(organization?.requireTask)"
+            ></ga-task-selector>
+          </div>
+          <div class="field">
+            <label class="label">{{ 'TAGS_PAGE.HEADER' | translate }}</label>
+            <ga-tags-color-input
+              [label]="false"
+              [selectedTags]="form.get('tags').value"
+              (selectedTagsEvent)="selectedTagsHandler($event)"
+              [isOrgLevel]="true"
+            ></ga-tags-color-input>
+          </div>
+          @if (!isEditing) {
+            <ngx-task-number-field
+              class="task-number"
+              formControlName="number"
+              [formControl]="form.get('number')"
+              [projectId]="getControlValue('projectId')"
+              [placeholder]="'TASKS_PAGE.TASK_NUMBER' | translate"
+            ></ngx-task-number-field>
+          }
+        </div>
+      </aside>
+    </form>
+  </nb-card-body>
+  <nb-card-footer class="task-footer">
+    <span class="required-note">{{ 'TASKS_PAGE.REQUIRED_FIELDS_NOTE' | translate }}</span>
+    <div class="task-actions">
+      <button (click)="dialogRef.close()" appearance="ghost" status="basic" size="small" type="button" nbButton>
+        {{ 'BUTTONS.CANCEL' | translate }}
+      </button>
+      <button (click)="onSave()" [disabled]="form.invalid" status="primary" size="small" type="button" nbButton>
+        {{ (isEditing ? 'BUTTONS.SAVE' : 'BUTTONS.CREATE') | translate }}
+      </button>
+    </div>
+  </nb-card-footer>
+</nb-card>
