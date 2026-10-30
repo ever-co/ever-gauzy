@@ -3802,6 +3802,8 @@
 		"ADD_TASKS": "Aggiungi Attività",
 		"EDIT_TASKS": "Modifica attività",
 		"EDIT_TASK": "Modifica attività",
+		"CREATE_TASK": "Crea attività",
+		"REQUIRED_FIELDS_NOTE": "I campi contrassegnati con * sono obbligatori",
 		"DELETE_TASK": "Elimina attività",
 		"TASKS_TITLE": "Titolo",
 		"TASKS_DESCRIPTION": "Descrizione",

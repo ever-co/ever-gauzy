@@ -3800,6 +3800,8 @@
 		"ADD_TASKS": "أضف المهام",
 		"EDIT_TASKS": "تحرير المهام",
 		"EDIT_TASK": "تعديل المهمة",
+		"CREATE_TASK": "إنشاء مهمة",
+		"REQUIRED_FIELDS_NOTE": "الحقول المميزة بعلامة * مطلوبة",
 		"DELETE_TASK": "حذف المهمة",
 		"TASKS_TITLE": "العنوان",
 		"TASKS_DESCRIPTION": "الوصف",

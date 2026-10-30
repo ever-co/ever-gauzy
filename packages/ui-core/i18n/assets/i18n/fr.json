@@ -3803,6 +3803,8 @@
 		"ADD_TASKS": "Ajouter des tâches",
 		"EDIT_TASKS": "Modifier les tâches",
 		"EDIT_TASK": "Modifier la tâche",
+		"CREATE_TASK": "Créer une tâche",
+		"REQUIRED_FIELDS_NOTE": "Les champs marqués d'un * sont obligatoires",
 		"DELETE_TASK": "Supprimer la tâche",
 		"TASKS_TITLE": "Titre",
 		"TASKS_DESCRIPTION": "Description",

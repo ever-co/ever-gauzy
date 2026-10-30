@@ -3830,6 +3830,8 @@
 		"ADD_TASKS": "Add Tasks",
 		"EDIT_TASKS": "Edit Tasks",
 		"EDIT_TASK": "Edit Task",
+		"CREATE_TASK": "Create Task",
+		"REQUIRED_FIELDS_NOTE": "Fields marked with * are required",
 		"DELETE_TASK": "Delete Task",
 		"TASKS_TITLE": "Title",
 		"TASKS_DESCRIPTION": "Description",

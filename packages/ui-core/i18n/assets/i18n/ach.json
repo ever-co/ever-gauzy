@@ -3628,6 +3628,8 @@
 		"ADD_TASKS": "crwdns3031:0crwdne3031:0",
 		"EDIT_TASKS": "crwdns3033:0crwdne3033:0",
 		"EDIT_TASK": "crwdns8820:0crwdne8820:0",
+		"CREATE_TASK": "Create Task",
+		"REQUIRED_FIELDS_NOTE": "Fields marked with * are required",
 		"DELETE_TASK": "crwdns8822:0crwdne8822:0",
 		"TASKS_TITLE": "crwdns3035:0crwdne3035:0",
 		"TASKS_DESCRIPTION": "crwdns3037:0crwdne3037:0",
