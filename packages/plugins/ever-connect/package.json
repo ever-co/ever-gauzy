@@ -38,6 +38,7 @@
 		"@gauzy/contracts": "^0.1.0",
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
+		"@gauzy/plugin-auth-zitadel": "^0.1.0",
 		"@gauzy/plugin-ever-instance": "^0.1.0",
 		"@mikro-orm/core": "^6.6.17",
 		"@nestjs/swagger": "^12.0.2",

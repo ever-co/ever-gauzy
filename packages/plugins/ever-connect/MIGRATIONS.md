@@ -6,6 +6,7 @@ Plugins cannot carry their own migrations yet, so the tables of this plugin are 
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | `1790000021000-EverInstance.ts` | `ever_instance`                                                                                                                                                        | Owned by `@gauzy/plugin-ever-instance`; the connection key lives in its `connect*` columns. |
 | `1790000021200-EverConnect.ts`  | `ever_connect_connection`, `ever_connect_link`, `ever_connect_integration`, `ever_connect_policy`, `ever_connect_audit`, `ever_connect_lookup_cache` and their indexes | This plugin.                                                                                |
+| `1791000003500-EverConnectIdentity.ts` | `ever_connect_person_link_report`, `ever_connect_person_request` and their indexes; the column `ever_connect_connection.publicUrlCheckUntil` | This plugin (Sign in with Ever ID and a person's requests). `down` drops the two tables and the column. |
 
 It is hand-written for Postgres, MySQL and SQLite, uses `CREATE TABLE IF NOT EXISTS` / `CREATE INDEX IF NOT EXISTS` (MySQL: the indexes are part of the table), so running `up` twice is harmless, creates new empty tables only (no foreign key, no change to an existing table, no statement per tenant or per row), and takes a transaction-scoped advisory lock on Postgres so two API processes booting together run it one after the other. `down` drops the six tables. It runs whether or not the plugin is loaded; the tables stay empty when it is not.
 
@@ -14,6 +15,8 @@ Values are checked by the plugin, not by `CHECK` constraints, so a later state n
 ## `ever_connect_connection` (one row, `id = 'self'`)
 
 `platformInstanceId` (the Registry id, a ULID), `kid`, `ownerOrgId`, `ownerHandle`, `apiUrl`, `publicUrl`, `status` (`connected`, `pending_approval`, `revoked`, `disconnected`), `connectedAt`, `connectedByUserId`, `lastHeartbeatAt`, `nextHeartbeatAt`, `leasedBy` / `leaseUntil` (the API process that runs the heartbeat and the feed), `feedCursor`, `envCodeConsumedHash` / `envCodeAttempts` / `envCodeNextAttemptAt` (`EVER_CONNECT_CODE`), `lastError` (a code, never a value), `revokedAt`, `instanceEntitlementJwsEncrypted` (AES-256-GCM) and its `Seq`, `Iat`, `Exp`, `FetchedAt`, `createdAt`, `updatedAt`. No credential column.
+
+`publicUrlCheckUntil` (added by `EverConnectIdentity`): until when Ever Platform's check of `publicUrl` is pending; `/.well-known/ever-connect` answers only until then.
 
 ## `ever_connect_link`
 
@@ -30,6 +33,14 @@ The local state of an integration, installation-wide (`scope = 'instance'`) or p
 ## `ever_connect_audit`
 
 Append-only: `at`, `tenantId` / `organizationId` (empty for an action on the installation), `actorUserId`, `actorLabel`, `action`, `integration`, `details` (JSON of ids and states only). Indexes on (`tenantId`, `organizationId`, `at`) and (`at`).
+
+## `ever_connect_person_link_report`
+
+One row per Ever ID link (`op = 'link'`) or unlink (`op = 'unlink'`) of a Gauzy user to report to Ever Platform: `userId`, `tenantId`, `tenantName` (the tenant's display name, never a person's name), `issuer`, `subject`, `subjectHash` (`sha256(<issuer>#<subject>)`), `linkMethod` (`explicit`, `confirmed`), `state` (`pending`, `sent`, `failed`, `dropped`), `attempts`, `nextAttemptAt`, `lastError` (a code), `sentAt`, `createdAt`, `updatedAt`. Indexes on (`state`, `nextAttemptAt`), (`subjectHash`) and (`userId`). No e-mail address.
+
+## `ever_connect_person_request`
+
+One row per deletion or export request of a person (`id` = the event id): `kind` (`deletion`, `export`), `jobId`, `respondBy`, `result`, `reasonCode`, `legalBasis`, `exportUrlEncrypted` (AES-256-GCM), `state` (`pending`, `answered`, `rejected`), `attempts`, `nextAttemptAt`, `lastError` (a code), `answeredAt`, `createdAt`, `updatedAt`. Indexes on (`state`, `nextAttemptAt`) and (`jobId`).
 
 ## `ever_connect_lookup_cache`
 

@@ -45,10 +45,10 @@ describe('integration definitions', () => {
 		}
 	);
 
-	it('only instance_url and stats_link can be enabled in this release; lookup and discoverability are coming soon', () => {
+	it('only instance_url, stats_link and ever_id_login can be enabled in this release; lookup and discoverability are coming soon', () => {
 		expect(
 			GAUZY_INTEGRATIONS.filter((definition) => definition.available).map((definition) => definition.key)
-		).toEqual(['instance_url', 'stats_link']);
+		).toEqual(['instance_url', 'stats_link', 'ever_id_login']);
 		expect(gauzyIntegration('counterparty_lookup')?.available).toBe(false);
 		expect(gauzyIntegration('counterparty_discoverable')?.available).toBe(false);
 	});

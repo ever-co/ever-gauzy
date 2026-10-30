@@ -1,0 +1,351 @@
+import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
+import { createHash, randomUUID } from 'node:crypto';
+import { Subscription } from 'rxjs';
+import { EventBus } from '@gauzy/core';
+import {
+	EVER_ID_ACCOUNTS,
+	EverIdAccountsPort,
+	subjectHashOf,
+	ZitadelAccountEventPayload,
+	ZitadelAccountLinkedEvent,
+	ZitadelAccountUnlinkedEvent
+} from '@gauzy/plugin-auth-zitadel';
+import { EverConnectAuditService } from '../ever-connect-audit.service';
+import { EverConnectIdentityStore, PersonLinkReportRecord } from '../ever-connect-identity.store';
+import {
+	EVER_CONNECT_CLOCK,
+	IDENTITY_BATCH,
+	IDENTITY_RETRY_MAX_MS,
+	IDENTITY_RETRY_MS
+} from '../ever-connect.constants';
+import { EverConnectPlatformService, errorCode, isCredentialRevoked, isUnreachable } from '../ever-connect-platform.service';
+import { EverConnectSignals } from '../ever-connect-signals';
+import { EverConnectStore, LinkRecord } from '../ever-connect.store';
+import { EVER_ID_LOGIN, EverIdLoginHandler } from '../handlers/ever-id-login.handler';
+import { ProblemError, RequestRefusedError } from '../sdk';
+
+/** The link methods Ever Platform takes from an installation (`provisioned` is its own). */
+const REPORTED_METHODS: Record<string, 'explicit' | 'confirmed' | undefined> = {
+	explicit: 'explicit',
+	// A sign-up with Ever ID is the person's own explicit choice.
+	signup: 'explicit',
+	confirmed: 'confirmed'
+};
+
+/** How many existing links one read takes when they are reported at once. */
+const BACKFILL_PAGE = 200;
+
+/** The wait before the next attempt after `attempts` failed ones (30 seconds, doubling, at most a day). */
+export const retryDelay = (attempts: number): number =>
+	Math.min(IDENTITY_RETRY_MS * 2 ** Math.max(0, attempts - 1), IDENTITY_RETRY_MAX_MS);
+
+const stripTrailingSlashes = (value: string): string => value.replace(/\/+$/, '');
+
+/**
+ * Reports to Ever Platform which Gauzy users linked or unlinked an Ever ID (`POST` and
+ * `DELETE /v1/instances/me/person-links`), so that a person's deletion or export request later
+ * reaches exactly the installations that hold them.
+ *
+ * It listens to the Ever ID sign-in plugin's link events on Gauzy's event bus, and acts only while
+ * this installation is connected, Sign in with Ever ID is enabled with its client ready, the identity
+ * is one of Ever Platform's own issuer, and the user's tenant has a live link to an Ever
+ * organization. Each link or unlink becomes a row of `ever_connect_person_link_report`; the API
+ * process holding the connection's lease sends it within seconds, with `Idempotency-Key =
+ * sha256(row id)`. What is sent: the Gauzy user id, the issuer and subject, how the link was made,
+ * the tenant and organization ids, the tenant link and the tenant's display name. Never an e-mail
+ * address or a person's name.
+ *
+ * Ever Platform not knowing the subject yet (`422 subject_unknown`), or not answering, is retried
+ * with a back-off of up to a day, then given up (audited). When the client first becomes ready, the
+ * links that existed before are reported too, for the linked tenants only.
+ */
+@Injectable()
+export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
+	private readonly logger = new Logger('EverConnect');
+	private readonly now: () => number;
+	private readonly subscriptions: Subscription[] = [];
+	/** Asks the identity worker to run soon (set by the worker). */
+	nudge: () => void = () => undefined;
+
+	constructor(
+		private readonly store: EverConnectStore,
+		private readonly identity: EverConnectIdentityStore,
+		private readonly platform: EverConnectPlatformService,
+		private readonly everIdLogin: EverIdLoginHandler,
+		private readonly audit: EverConnectAuditService,
+		private readonly signals: EverConnectSignals,
+		@Optional() private readonly eventBus?: EventBus,
+		@Optional() @Inject(EVER_ID_ACCOUNTS) private readonly accounts?: EverIdAccountsPort,
+		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number }
+	) {
+		this.now = clock?.now ?? (() => Date.now());
+	}
+
+	onModuleInit(): void {
+		if (this.eventBus) {
+			this.subscriptions.push(
+				this.eventBus.ofType(ZitadelAccountLinkedEvent).subscribe((event) => void this.safely(() => this.linked(event.payload))),
+				this.eventBus.ofType(ZitadelAccountUnlinkedEvent).subscribe((event) => void this.safely(() => this.unlinked(event.payload)))
+			);
+		}
+		this.everIdLogin.onReady(() => this.backfill());
+	}
+
+	onModuleDestroy(): void {
+		for (const subscription of this.subscriptions) subscription.unsubscribe();
+	}
+
+	/** A Gauzy user linked an Ever ID: a link report, when it is to be reported. */
+	async linked(payload: ZitadelAccountEventPayload): Promise<boolean> {
+		const method = payload.linkMethod ? REPORTED_METHODS[payload.linkMethod] : undefined;
+		if (!method || !(await this.reportable(payload))) {
+			return false;
+		}
+		const subjectHash = subjectHashOf(payload.issuer, payload.subject);
+		// An unlink of the same identity not sent yet is superseded.
+		await this.supersede(payload.userId, subjectHash, 'unlink');
+		await this.identity.addReport({
+			id: randomUUID(),
+			op: 'link',
+			userId: payload.userId,
+			tenantId: payload.tenantId ?? null,
+			tenantName: tenantDisplayName(payload.tenantName),
+			issuer: payload.issuer,
+			subject: payload.subject,
+			subjectHash,
+			linkMethod: method
+		});
+		this.nudge();
+		return true;
+	}
+
+	/** A Gauzy user unlinked an Ever ID: an unlink report, when it is to be reported. */
+	async unlinked(payload: ZitadelAccountEventPayload): Promise<boolean> {
+		if (!(await this.reportable(payload))) {
+			return false;
+		}
+		const subjectHash = subjectHashOf(payload.issuer, payload.subject);
+		await this.supersede(payload.userId, subjectHash, 'link');
+		await this.identity.addReport({
+			id: randomUUID(),
+			op: 'unlink',
+			userId: payload.userId,
+			tenantId: payload.tenantId ?? null,
+			tenantName: null,
+			issuer: payload.issuer,
+			subject: payload.subject,
+			subjectHash,
+			linkMethod: null
+		});
+		this.nudge();
+		return true;
+	}
+
+	/**
+	 * Reports the links that existed before Sign in with Ever ID's client became ready: those of the
+	 * tenants linked to an Ever organization only, read a page at a time. A link reported before is
+	 * not reported again. Returns how many reports were added.
+	 */
+	async backfill(): Promise<number> {
+		const issuer = await this.platformIssuer();
+		const tenantIds = [...new Set((await this.store.liveLinks()).filter((l) => l.status === 'linked').map((l) => l.tenantId))];
+		if (!this.accounts || !issuer || !tenantIds.length || !(await this.connected())) {
+			return 0;
+		}
+		let added = 0;
+		let after: string | null = null;
+		for (;;) {
+			const page = await this.accounts.links(tenantIds, after, BACKFILL_PAGE);
+			for (const link of page) {
+				const method = REPORTED_METHODS[link.linkMethod];
+				if (!method || stripTrailingSlashes(link.issuer) !== issuer) continue;
+				const subjectHash = subjectHashOf(link.issuer, link.subject);
+				const known = (await this.identity.reportsOf(link.userId, subjectHash)).some(
+					(row) => row.op === 'link' && (row.state === 'pending' || row.state === 'sent')
+				);
+				if (known) continue;
+				await this.identity.addReport({
+					id: randomUUID(),
+					op: 'link',
+					userId: link.userId,
+					tenantId: link.tenantId,
+					tenantName: tenantDisplayName(link.tenantName),
+					issuer: link.issuer,
+					subject: link.subject,
+					subjectHash,
+					linkMethod: method
+				});
+				added++;
+			}
+			if (page.length < BACKFILL_PAGE) break;
+			after = page[page.length - 1].id;
+		}
+		if (added) {
+			await this.audit.record({
+				action: 'person_link.report',
+				actorLabel: 'system',
+				integration: EVER_ID_LOGIN,
+				details: { op: 'link', state: 'pending', count: added }
+			});
+			this.nudge();
+		}
+		return added;
+	}
+
+	/** Sign in with Ever ID was switched off: nothing more is reported. */
+	async stop(): Promise<void> {
+		await this.identity.dropPendingReports();
+	}
+
+	/** Sends the reports that are due (by the API process holding the connection's lease). */
+	async sendDue(): Promise<number> {
+		const due = await this.identity.dueReports(this.now(), IDENTITY_BATCH);
+		if (!due.length) {
+			return 0;
+		}
+		const enabled = (await this.store.integration('instance', EVER_ID_LOGIN))?.enabled === true;
+		let sent = 0;
+		for (const row of due) {
+			if (!enabled) {
+				await this.identity.updateReport(row.id, { state: 'dropped', nextAttemptAt: null, lastError: 'integration_off' });
+				continue;
+			}
+			if (await this.send(row)) sent++;
+		}
+		return sent;
+	}
+
+	/** Sends one report; returns whether Ever Platform took it. */
+	private async send(row: PersonLinkReportRecord): Promise<boolean> {
+		try {
+			const client = await this.platform.getClient();
+			if (row.op === 'link') {
+				const link = row.tenantId ? await this.tenantLink(row.tenantId) : null;
+				if (!link) {
+					await this.identity.updateReport(row.id, { state: 'dropped', nextAttemptAt: null, lastError: 'not_linked' });
+					return false;
+				}
+				await client.instances.personLinks.create(
+					{
+						product_user_ref: row.userId,
+						identity_issuer: row.issuer,
+						identity_subject: row.subject,
+						link_method: row.linkMethod as 'explicit' | 'confirmed',
+						product_tenant_id: link.tenantId,
+						product_org_id: link.organizationId,
+						tenant_link_id: link.linkId,
+						...(row.tenantName ? { display_name: row.tenantName } : {})
+					},
+					createHash('sha256').update(row.id).digest('hex')
+				);
+			} else {
+				await client.instances.personLinks.remove(row.userId);
+			}
+			await this.identity.updateReport(row.id, {
+				state: 'sent',
+				sentAt: this.now(),
+				nextAttemptAt: null,
+				attempts: row.attempts + 1,
+				lastError: null
+			});
+			await this.audit.record({
+				action: 'person_link.report',
+				actorLabel: 'system',
+				tenantId: row.tenantId,
+				integration: EVER_ID_LOGIN,
+				details: { op: row.op, state: 'sent' }
+			});
+			return true;
+		} catch (error) {
+			await this.failed(row, error);
+			return false;
+		}
+	}
+
+	/** A report that did not go through: retried, given up, or dropped, by what Ever Platform answered. */
+	private async failed(row: PersonLinkReportRecord, error: unknown): Promise<void> {
+		if (isCredentialRevoked(error)) {
+			this.signals.revoked$.next();
+			return;
+		}
+		const code = errorCode(error).replace(/\s+/g, '_').slice(0, 64);
+		const attempts = row.attempts + 1;
+		if (error instanceof ProblemError && error.status === 403) {
+			// Sign in with Ever ID is not enabled on Ever Platform (any more): nothing to report.
+			await this.identity.updateReport(row.id, { state: 'dropped', nextAttemptAt: null, attempts, lastError: code });
+			return;
+		}
+		const retryable =
+			isUnreachable(error) ||
+			(error instanceof ProblemError && error.status === 422 && error.code === 'subject_unknown') ||
+			!(error instanceof ProblemError || error instanceof RequestRefusedError);
+		// Retried until the wait before this attempt was already a day.
+		if (retryable && retryDelay(row.attempts) < IDENTITY_RETRY_MAX_MS) {
+			await this.identity.updateReport(row.id, { nextAttemptAt: this.now() + retryDelay(attempts), attempts, lastError: code });
+			return;
+		}
+		await this.identity.updateReport(row.id, { state: 'failed', nextAttemptAt: null, attempts, lastError: code });
+		await this.audit.record({
+			action: 'person_link.report',
+			actorLabel: 'system',
+			tenantId: row.tenantId,
+			integration: EVER_ID_LOGIN,
+			details: { op: row.op, state: 'failed', reason: code, attempts }
+		});
+		this.logger.warn(`An Ever ID ${row.op} could not be reported to Ever Platform (${code}); it is given up.`);
+	}
+
+	/** Whether a link event is to be reported (see the class). */
+	private async reportable(payload: ZitadelAccountEventPayload): Promise<boolean> {
+		if (!payload?.userId || !payload.issuer || !payload.subject || !payload.tenantId) {
+			return false;
+		}
+		const issuer = await this.platformIssuer();
+		if (!issuer || stripTrailingSlashes(payload.issuer) !== issuer || !(await this.connected())) {
+			return false;
+		}
+		return (await this.tenantLink(payload.tenantId)) !== null;
+	}
+
+	/** Ever Platform's issuer, once Sign in with Ever ID is enabled and its client ready. */
+	private async platformIssuer(): Promise<string | null> {
+		const config = (await this.everIdLogin.isEverIdLoginEnabled()) ? await this.everIdLogin.getEverIdLoginConfig() : null;
+		return config ? stripTrailingSlashes(config.issuer) : null;
+	}
+
+	private async connected(): Promise<boolean> {
+		const connection = await this.store.connection();
+		return connection.status === 'connected' && !!connection.platformInstanceId;
+	}
+
+	/** The tenant's oldest live link to an Ever organization, or `null`. */
+	private async tenantLink(tenantId: string): Promise<LinkRecord | null> {
+		const links = (await this.store.liveLinks())
+			.filter((link) => link.tenantId === tenantId && link.status === 'linked')
+			.sort((a, b) => a.createdAt - b.createdAt);
+		return links[0] ?? null;
+	}
+
+	/** Pending reports of the opposite operation for the same user and identity are not sent any more. */
+	private async supersede(userId: string, subjectHash: string, op: 'link' | 'unlink'): Promise<void> {
+		for (const row of await this.identity.reportsOf(userId, subjectHash)) {
+			if (row.op === op && row.state === 'pending') {
+				await this.identity.updateReport(row.id, { state: 'dropped', nextAttemptAt: null, lastError: 'superseded' });
+			}
+		}
+	}
+
+	private async safely(work: () => Promise<unknown>): Promise<void> {
+		try {
+			await work();
+		} catch (error) {
+			this.logger.warn(`An Ever ID link could not be queued for Ever Platform (${errorCode(error)}).`);
+		}
+	}
+}
+
+/** The tenant's display name as reported: at most 120 characters, never one that looks like an e-mail address. */
+export function tenantDisplayName(name: string | null | undefined): string | null {
+	const value = (name ?? '').trim().slice(0, 120);
+	return value && !value.includes('@') ? value : null;
+}

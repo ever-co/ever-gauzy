@@ -17,7 +17,10 @@ export const AUDIT_ACTIONS = Object.freeze([
 	'consent.grant',
 	'consent.revoke',
 	'entitlement.refresh',
-	'policy.change'
+	'policy.change',
+	'sign_in_client.change',
+	'person_link.report',
+	'person_request.answer'
 ] as const);
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
@@ -41,7 +44,12 @@ export const AUDIT_DETAIL_KEYS = Object.freeze([
 	'subject',
 	'allowed',
 	'event_id',
-	'remote'
+	'remote',
+	'job_id',
+	'result',
+	'op',
+	'count',
+	'attempts'
 ] as const);
 
 /** Who acted, without personal data. */
