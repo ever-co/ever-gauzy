@@ -74,6 +74,9 @@ interface IBoardColumn {
 
 const PRIORITY_LEVELS = new Set<string>(['urgent', 'high', 'medium', 'low']);
 
+/** A status value or name as columns are matched by it. */
+const normalizeStatus = (value?: string): string => (value || '').trim().toLowerCase().replace(/\s+/g, '-');
+
 /**
  * The project page's Board tab: the project's tasks as a Kanban board, one column per status in the
  * tenant's own order and colours (the project's statuses, else the organization's), each card naming
@@ -112,6 +115,9 @@ export class ProjectBoardComponent implements OnChanges {
 	/** The column under a dragged card that will not take it, marked so the user sees it before letting go. */
 	public refusingColumnId: string | null = null;
 	private _sequence = 0;
+	/** The columns by status row and by status value or name, built with the columns. */
+	private _columnsById = new Map<string, IBoardColumn>();
+	private _columnsByKey = new Map<string, IBoardColumn>();
 
 	constructor(
 		private readonly _http: HttpClient,
@@ -228,7 +234,9 @@ export class ProjectBoardComponent implements OnChanges {
 				)
 			]);
 			if (sequence !== this._sequence) return;
-			this.board = loaded(this.toColumns(statuses, tasks?.items || []));
+			const columns = this.toColumns(statuses);
+			this.place(columns, tasks?.items || []);
+			this.board = loaded(columns);
 			void this.loadProgress(sequence);
 		} catch {
 			if (sequence === this._sequence) this.board = failed([]);
@@ -278,12 +286,8 @@ export class ProjectBoardComponent implements OnChanges {
 		return scopedTaskStatusesOf(read, { organizationId, tenantId, projectId });
 	}
 
-	/**
-	 * Columns in the statuses' order, then any status a task carries that is not in the list.
-	 * A task finds its column by its status row, else by its status value or name.
-	 */
-	private toColumns(statuses: ITaskStatus[], tasks: ITask[]): IBoardColumn[] {
-		const normalize = (value?: string) => (value || '').trim().toLowerCase().replace(/\s+/g, '-');
+	/** The columns of the statuses, in their order, and the lookups a task finds its column by. */
+	private toColumns(statuses: ITaskStatus[]): IBoardColumn[] {
 		// One ordered list builds the columns and both lookups, so each status finds its own column.
 		const ordered = [...statuses].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 		const columns: IBoardColumn[] = ordered.map((status) => ({
@@ -295,21 +299,30 @@ export class ProjectBoardComponent implements OnChanges {
 			value: status.value || status.name,
 			cards: []
 		}));
-		const byId = new Map(ordered.map((status, index) => [status.id, columns[index]]));
-		const byKey = new Map<string, IBoardColumn>();
+		this._columnsById = new Map(ordered.map((status, index) => [status.id, columns[index]]));
+		this._columnsByKey = new Map<string, IBoardColumn>();
 		ordered.forEach((status, index) => {
-			byKey.set(normalize(status.value), columns[index]);
-			byKey.set(normalize(status.name), columns[index]);
+			this._columnsByKey.set(normalizeStatus(status.value), columns[index]);
+			this._columnsByKey.set(normalizeStatus(status.name), columns[index]);
 		});
+		return columns;
+	}
 
+	/**
+	 * Adds the tasks to their columns, opening one at the end for a status a task carries that is not in the
+	 * list. A task finds its column by its status row, else by its status value or name.
+	 */
+	private place(columns: IBoardColumn[], tasks: ITask[]): void {
+		const byId = this._columnsById;
+		const byKey = this._columnsByKey;
 		const today = moment().startOf('day');
 		for (const task of tasks) {
 			let column =
 				(task.taskStatusId && byId.get(task.taskStatusId)) ||
-				byKey.get(normalize(task.status)) ||
-				byKey.get(normalize(task.taskStatus?.name));
+				byKey.get(normalizeStatus(task.status)) ||
+				byKey.get(normalizeStatus(task.taskStatus?.name));
 			if (!column) {
-				const key = normalize(task.status) || 'no-status';
+				const key = normalizeStatus(task.status) || 'no-status';
 				column = byKey.get(key);
 				if (!column) {
 					column = {
@@ -329,7 +342,6 @@ export class ProjectBoardComponent implements OnChanges {
 		for (const column of columns) {
 			column.cards.sort((a, b) => Number(b.overdue) - Number(a.overdue));
 		}
-		return columns;
 	}
 
 	private toCard(task: ITask, today: moment.Moment): IBoardCard {
