@@ -4,7 +4,7 @@
 	<div class="panel-body">
 		@if (board.failed) {
 		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
-		} @else if (!board.loading && !total) {
+		} @else if (!board.loading && !total && !hasParent) {
 		<ng-container *ngTemplateOutlet="empty; context: { $implicit: emptyKey, icon: 'checkmark-square-2-outline' }"></ng-container>
 		} @else {
 		<div class="board" role="list" cdkDropListGroup>
@@ -19,7 +19,8 @@
 				<header class="board-column-header">
 					<span class="board-column-dot" [class]="'board-column-dot group-' + column.group" [style.background-color]="column.color || null"></span>
 					<span class="board-column-name" [nbTooltip]="column.name" nbTooltipPlacement="top">{{ column.name }}</span>
-					<span class="board-column-count">{{ column.cards.length }}</span>
+					<!-- With pages still to read, the column may hold more than it shows. -->
+					<span class="board-column-count">{{ column.cards.length }}{{ hasMore ? '+' : '' }}</span>
 				</header>
 				<ul
 					class="board-cards"
@@ -31,7 +32,16 @@
 					(cdkDropListDropped)="drop($event)"
 				>
 					@for (card of column.cards; track card.id) {
-					<li class="board-card-item" cdkDrag [cdkDragData]="card" [cdkDragDisabled]="card.saving" [cdkDragStartDelay]="{ touch: 250, mouse: 0 }" (cdkDragMoved)="onDragMoved($event)">
+					<li
+						class="board-card-item"
+						cdkDrag
+						[cdkDragData]="card"
+						[cdkDragDisabled]="card.saving"
+						[cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
+						(cdkDragStarted)="onDragStarted()"
+						(cdkDragMoved)="onDragMoved($event)"
+						(cdkDragEnded)="onDragEnded()"
+					>
 						<a
 							class="board-card"
 							[class.is-parent]="card.isParent"
@@ -102,7 +112,7 @@
 									@for (person of card.people.slice(0, 3); track $index) {
 									<span class="board-card-person" [nbTooltip]="person.name" nbTooltipPlacement="top">
 										@if (person.avatarUrl) {
-										<img [src]="person.avatarUrl" [alt]="person.name" />
+										<img loading="lazy" decoding="async" [src]="person.avatarUrl" [alt]="person.name" />
 										} @else {
 										<span aria-hidden="true">{{ person.initials }}</span>
 										}
@@ -118,12 +128,21 @@
 						</a>
 					</li>
 					} @empty {
+					@if (!hasMore) {
 					<li class="board-column-empty">{{ 'PROJECT_VIEW.COLUMN_EMPTY' | translate }}</li>
+					}
 					}
 				</ul>
 			</section>
 			}
 		</div>
+		@if (hasMore) {
+		<div #boardEnd class="board-end" [nbSpinner]="loadingMore" nbSpinnerSize="tiny" nbSpinnerStatus="basic">
+			@if (loadMoreFailed) {
+			<button type="button" nbButton ghost size="tiny" status="basic" (click)="loadMore()">{{ 'BUTTONS.RETRY' | translate }}</button>
+			}
+		</div>
+		}
 		}
 	</div>
 </section>

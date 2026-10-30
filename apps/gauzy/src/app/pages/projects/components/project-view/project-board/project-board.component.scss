@@ -1,3 +1,8 @@
+// The columns stop just short of the panel's bottom edge.
+.panel.board-panel .panel-body {
+  padding-bottom: 0.5rem;
+}
+
 // The board: columns side by side, scrolling sideways when they do not fit.
 .board {
   display: grid;
@@ -6,6 +11,15 @@
   gap: 0.75rem;
   overflow-x: auto;
   padding-bottom: 0.25rem;
+}
+
+// Where the next page is read from, below the columns.
+.board-end {
+  position: relative;
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .board-column {
@@ -63,7 +77,9 @@
   font-variant-numeric: tabular-nums;
 }
 
+// Fills its column, so a card can be dropped below the last one of a short column.
 .board-cards {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
