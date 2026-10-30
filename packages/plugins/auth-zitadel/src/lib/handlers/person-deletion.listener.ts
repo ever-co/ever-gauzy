@@ -67,15 +67,15 @@ export class ZitadelPersonDataListener implements EverIdAccountsPort {
 			order: { id: 'ASC' },
 			take: Math.max(1, Math.min(limit, PAGE))
 		});
-		return rows.map((row) => ({
-			id: row.id,
-			userId: row.userId,
-			tenantId: row.tenantId ?? null,
-			tenantName: row.tenant?.name ?? '',
-			issuer: row.issuer,
-			subject: row.subject,
-			linkMethod: row.linkMethod
-		}));
+		return rows.map(toLink);
+	}
+
+	async findLink(userId: string, issuer: string, subject: string): Promise<EverIdAccountLink | null> {
+		if (!userId || !issuer || !subject) {
+			return null;
+		}
+		const row = await this.accounts.findOne({ where: { userId, issuer, subject }, relations: { tenant: true } });
+		return row ? toLink(row) : null;
 	}
 
 	/** The links whose identity hash is one of `subjectHashes`. */
@@ -107,3 +107,13 @@ export class ZitadelPersonDataListener implements EverIdAccountsPort {
 }
 
 const unique = (values: string[]): string[] => [...new Set(values)];
+
+const toLink = (row: ZitadelAccount): EverIdAccountLink => ({
+	id: row.id,
+	userId: row.userId,
+	tenantId: row.tenantId ?? null,
+	tenantName: row.tenant?.name ?? '',
+	issuer: row.issuer,
+	subject: row.subject,
+	linkMethod: row.linkMethod
+});

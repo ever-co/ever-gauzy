@@ -110,6 +110,10 @@ describe('Ever ID accounts of a person (deletion and export requests)', () => {
 					.sort((a, b) => (a.id < b.id ? -1 : 1))
 					.slice(0, options.take);
 			}),
+			findOne: jest.fn(async (options: { where: Record<string, unknown> }) => {
+				const { userId, issuer, subject } = options.where;
+				return rows.find((row) => row.userId === userId && row.issuer === issuer && row.subject === subject) ?? null;
+			}),
 			delete: jest.fn(async (where: { id: unknown }) => {
 				const ids = value(where.id) as string[];
 				for (const id of ids) rows.splice(rows.findIndex((row) => row.id === id), 1);
@@ -176,6 +180,13 @@ describe('Ever ID accounts of a person (deletion and export requests)', () => {
 		expect(repo.rows).toHaveLength(2);
 		await listener.endSessions(['user-1', 'user-1', '']);
 		expect(ended.endSessionsOfUsers).toHaveBeenLastCalledWith(['user-1']);
+	});
+
+	it('findLink answers the link of one user to one identity as it is now', async () => {
+		const listener = new ZitadelPersonDataListener(repository(many(3)) as never, sessions() as never);
+		expect(await listener.findLink('user-1', 'https://auth.ever.co', 'subject-1')).toMatchObject({ id: '000001', tenantName: 'Acme' });
+		expect(await listener.findLink('user-1', 'https://auth.ever.co', 'subject-2')).toBeNull();
+		expect(await listener.findLink('', 'https://auth.ever.co', 'subject-1')).toBeNull();
 	});
 
 	it('links lists the links of the given tenants only, a page at a time, with the tenant name', async () => {

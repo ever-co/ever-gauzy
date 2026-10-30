@@ -57,7 +57,9 @@ const stripTrailingSlashes = (value: string): string => value.replace(/\/+$/, ''
  *
  * Ever Platform keeps a link by the Gauzy user (`DELETE` names the user), so the reports of one user
  * are sent in the order they were made: a newer one waits while an older one of the same user is
- * retried. Ever Platform not knowing the subject yet (`422 subject_unknown`), or not answering, is
+ * retried. Each report is reconciled with the Ever ID sign-in plugin's link as it is when it is sent:
+ * a link that exists is reported as a link, one that does not as an unlink, whatever order the events
+ * arrived in (on one API process or several). Ever Platform not knowing the subject yet (`422 subject_unknown`), or not answering, is
  * retried with a back-off of up to a day, then given up (audited). Once the client is ready, the
  * links that existed before are reported too (for the linked tenants only), by the worker, until
  * that is done.
@@ -259,9 +261,25 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 		return sent;
 	}
 
-	/** Sends one report; returns whether Ever Platform took it. */
-	private async send(row: PersonLinkReportRecord): Promise<boolean> {
+	/** Sends one report, as the link is now; returns whether Ever Platform took it. */
+	private async send(queued: PersonLinkReportRecord): Promise<boolean> {
+		let row = queued;
 		try {
+			// The link as it is now decides what is sent (an event of another process may have come later).
+			const current = this.accounts ? await this.accounts.findLink(row.userId, row.issuer, row.subject) : undefined;
+			if (current !== undefined) {
+				const op = current ? 'link' : 'unlink';
+				const linkMethod = current ? (REPORTED_METHODS[current.linkMethod] ?? null) : row.linkMethod;
+				if (op === 'link' && !linkMethod) {
+					await this.identity.updateReport(row.id, { state: 'dropped', nextAttemptAt: null, lastError: 'not_reported_method' });
+					return false;
+				}
+				if (op !== row.op || linkMethod !== row.linkMethod) {
+					const tenantName = current ? tenantDisplayName(current.tenantName) : row.tenantName;
+					await this.identity.updateReport(row.id, { op, linkMethod, tenantName });
+					row = { ...row, op, linkMethod, tenantName };
+				}
+			}
 			const client = await this.platform.getClient();
 			if (row.op === 'link') {
 				const link = row.tenantId ? await this.tenantLink(row.tenantId) : null;

@@ -79,12 +79,19 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		...overrides
 	});
 
+	/** The Ever ID sign-in plugin made the link (its table holds it). */
+	const hold = (overrides: Record<string, unknown> = {}) => {
+		const p = payload(overrides);
+		accounts.add({ userId: p.userId, tenantId: p.tenantId, tenantName: p.tenantName, issuer: p.issuer, subject: p.subject, linkMethod: p.linkMethod });
+		return p;
+	};
+
 	/** Lets the event bus subscribers run. */
 	const settle = () => reporter.settled();
 
 	it('a link on the event bus is reported once, with the SDK request body and no e-mail key', async () => {
 		await clientReady();
-		await bus.publish(new ZitadelAccountLinkedEvent(payload() as never));
+		await bus.publish(new ZitadelAccountLinkedEvent(hold() as never));
 		await settle();
 		expect(await reporter.sendDue()).toBe(1);
 		const [call] = h.platform.callsTo(POST);
@@ -141,7 +148,7 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 	it('422 subject_unknown backs off to a day, then the report is given up and audited', async () => {
 		await clientReady();
 		h.platform.on(POST, problem(422, 'subject_unknown'));
-		await reporter.linked(payload() as never);
+		await reporter.linked(hold() as never);
 		let sends = 0;
 		for (let i = 0; i < 40; i++) {
 			await reporter.sendDue();
@@ -163,7 +170,7 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 
 	it('Ever Platform not answering is retried; a 403 (not enabled there) drops the report', async () => {
 		await clientReady();
-		await reporter.linked(payload() as never);
+		await reporter.linked(hold() as never);
 		h.platform.offline = true;
 		await reporter.sendDue();
 		let [row] = await h.dataSource.query('SELECT * FROM "ever_connect_person_link_report"');
@@ -208,7 +215,7 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		await reporter.sendDue();
 		h.clock.t += 1;
 		h.platform.offline = false;
-		await reporter.linked(payload({ subject: 'identity-b' }) as never);
+		await reporter.linked(hold({ subject: 'identity-b' }) as never);
 		// The unlink of A waits for its retry; the link of B waits behind it.
 		expect(await reporter.sendDue()).toBe(0);
 		expect(h.platform.callsTo(POST)).toEqual([]);
@@ -248,9 +255,9 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		await reporter.sendDue();
 		h.platform.offline = false;
 		// Same time as the unlink: its order key still puts it after the unlink.
-		await reporter.linked(payload({ subject: 'identity-b' }) as never, h.clock.now());
+		await reporter.linked(hold({ subject: 'identity-b' }) as never, h.clock.now());
 		for (let i = 0; i < 60; i++) {
-			await reporter.linked(payload({ userId: `waiting-${i}`, subject: `s-${i}` }) as never);
+			await reporter.linked(hold({ userId: `waiting-${i}`, subject: `s-${i}` }) as never);
 		}
 		const [unlink] = await h.dataSource.query(`SELECT * FROM "ever_connect_person_link_report" WHERE "op" = 'unlink'`);
 		h.clock.t = Number(unlink.nextAttemptAt);
@@ -261,6 +268,28 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		expect(h.platform.callsTo(POST)).toHaveLength(61);
 		const userOne = h.platform.calls.filter((c) => c.path.endsWith('/user-1') || c.body?.['product_user_ref'] === 'user-1');
 		expect(userOne.map((c) => c.method)).toEqual(['DELETE', 'DELETE', 'POST']);
+	});
+
+	it('each report goes as the link is when it is sent, whatever order the events came in', async () => {
+		await clientReady();
+		// Another API process reported the unlink first; this one still queues the older link.
+		await reporter.linked(payload() as never);
+		await reporter.sendDue();
+		// The link does not exist (it was removed): Ever Platform is told so, not linked again.
+		expect(h.platform.callsTo(POST)).toEqual([]);
+		expect(h.platform.callsTo('DELETE /v1/instances/me/person-links/user-1')).toHaveLength(1);
+		// And the other way round: an unlink queued for a link that exists again is sent as a link.
+		h.clock.t += 1;
+		hold();
+		await reporter.unlinked(payload() as never);
+		await reporter.sendDue();
+		expect(h.platform.callsTo(POST)).toHaveLength(1);
+		// A provisioned link (Ever Platform's own) is never reported.
+		h.clock.t += 1;
+		accounts.links_[0].linkMethod = 'provisioned';
+		await reporter.unlinked(payload() as never);
+		await reporter.sendDue();
+		expect(h.platform.callsTo(POST)).toHaveLength(1);
 	});
 
 	it('a backfill that cannot run (no client yet) counts as nothing done', async () => {

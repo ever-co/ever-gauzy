@@ -126,6 +126,15 @@ export class FakeAccounts implements EverIdAccountsPort {
 		this.sessionsEnded.push(userIds);
 	}
 
+	async findLink(userId: string, issuer: string, subject: string): Promise<EverIdAccountLink | null> {
+		return this.links_.find((link) => link.userId === userId && link.issuer === issuer && link.subject === subject) ?? null;
+	}
+
+	/** Removes the link of one user to one identity (an unlink in the sign-in plugin). */
+	remove(userId: string, subject: string): void {
+		this.links_ = this.links_.filter((link) => !(link.userId === userId && link.subject === subject));
+	}
+
 	async links(tenantIds: string[], after: string | null, limit: number): Promise<EverIdAccountLink[]> {
 		return this.links_
 			.filter((link) => link.tenantId && tenantIds.includes(link.tenantId) && (!after || link.id > after))
