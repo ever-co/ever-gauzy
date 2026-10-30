@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { EntityManager, In } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { Money, RequestContext, isUniqueViolation } from '@gauzy/core';
+import { Money, RequestContext, isUniqueViolation, toClientSafeError } from '@gauzy/core';
 import {
 	ISubscriptionCatalogPort,
 	ISubscriptionPlan,
@@ -193,7 +193,9 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 					);
 				}
 
-				throw error;
+				// Any other failure of the write is answered as `CrudService.update` answers it: a 400 whose message
+				// carries none of the database's internals (the statement, its parameters, the driver's detail).
+				throw new BadRequestException(toClientSafeError(error));
 			}
 		});
 

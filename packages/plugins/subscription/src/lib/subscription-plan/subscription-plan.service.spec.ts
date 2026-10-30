@@ -102,6 +102,7 @@ jest.mock('@gauzy/core', () => {
 		// The plan's discount is range-checked on its digits (`normalizeDiscountFraction`), by the platform's own comparison.
 		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
+		toClientSafeError: jest.requireActual('@gauzy/core/src/lib/core/errors/database-error').toClientSafeError,
 		SequenceService: class SequenceService {},
 		RequestContext: {
 			currentUser: () => null,
@@ -114,7 +115,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { SubscriptionBillingPeriod, SubscriptionStatus } from '../subscription.types';
@@ -301,6 +302,7 @@ const subscriptionRow = (id: string, overrides: Row = {}): Row => ({
  * @param options.catalog The catalogue, or `false` for a tenant that has none.
  * @param options.uniqueViolationOnSave Whether the write loses a race against another writer's insert.
  * @param options.uniqueViolationOnUpdate Whether an update's write loses a race for the code it takes.
+ * @param options.updateError What an update's write fails with instead, when a case is about another failure.
  */
 function planFixture(
 	options: {
@@ -309,6 +311,7 @@ function planFixture(
 		catalog?: { subscribable?: Record<string, boolean>; defaultVariant?: Record<string, string | null> } | false;
 		uniqueViolationOnSave?: boolean;
 		uniqueViolationOnUpdate?: boolean;
+		updateError?: () => Error;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -376,6 +379,10 @@ function planFixture(
 				(error as Row).code = '23505';
 
 				throw error;
+			}
+
+			if (options.updateError) {
+				throw options.updateError();
 			}
 
 			return patchRecorder.update(criteria, partial);
@@ -973,6 +980,47 @@ describe('SubscriptionPlanService.updatePlan under the plan row lock', () => {
 		expect(boundaryRead).toHaveBeenCalledWith('plan-1');
 		expect(fixture.statements).toEqual([]);
 		expect(fixture.patches).toEqual([]);
+	});
+
+	it('checks a stated currency against the plan as it is once the lock is granted, not as it was read', async () => {
+		const fixture = planFixture({ subscriptions: [] });
+		const transaction = (fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction;
+		// While this update waits for the lock, another moves the plan to EUR and a EUR subscription commits on it.
+		(fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction = async (run: any) =>
+			transaction(async (manager: any) =>
+				run({
+					...manager,
+					query: async (sql: string) => {
+						fixture.statements.push(sql);
+						fixture.tables.subscription_plan[0] = { ...fixture.tables.subscription_plan[0], currency: 'EUR' };
+						fixture.tables.subscription.push(subscriptionRow('eur-subscription'));
+						return [];
+					}
+				})
+			);
+
+		// Read before the lock, the plan was USD, so stating USD looked like no change at all.
+		await expect(fixture.service.updatePlan('plan-1', { currency: 'USD' } as any)).rejects.toThrow(
+			'SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE'
+		);
+		expect(fixture.plan('plan-1').currency).toBe('EUR');
+		expect(fixture.patches).toEqual([]);
+	});
+
+	it('answers any other failure of the write with a 400 that carries no database internals', async () => {
+		const fixture = planFixture({
+			updateError: () =>
+				Object.assign(new Error('null value in column "name" of relation "subscription_plan" violates not-null constraint'), {
+					code: '23502',
+					query: 'UPDATE "subscription_plan" SET "name" = $1 WHERE "id" = $2',
+					parameters: [null, 'plan-1']
+				})
+		});
+
+		const refused = await fixture.service.updatePlan('plan-1', { name: 'Renamed' }).catch((error: unknown) => error);
+
+		expect(refused).toBeInstanceOf(BadRequestException);
+		expect(JSON.stringify((refused as BadRequestException).getResponse())).not.toMatch(/subscription_plan|UPDATE|plan-1/);
 	});
 
 	it('answers 404 for a plan outside the boundary before the patch is validated against that plan', async () => {
