@@ -218,6 +218,7 @@
         {{ 'BUTTONS.CANCEL' | translate }}
       </button>
       <button (click)="onSave()" [disabled]="form.invalid" status="primary" size="small" type="button" nbButton>
+        <nb-icon [icon]="isEditing ? 'save-outline' : 'plus-outline'"></nb-icon>
         {{ (isEditing ? 'BUTTONS.SAVE' : 'BUTTONS.CREATE') | translate }}
       </button>
     </div>

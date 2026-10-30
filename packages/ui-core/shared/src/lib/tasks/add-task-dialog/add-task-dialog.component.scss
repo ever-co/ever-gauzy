@@ -1,4 +1,5 @@
 @forward '@shared/add-task-dialog';
+@use 'gauzy/_gauzy-dialogs' as dialogs;
 
 $side-width: 24rem;
 $label-width: 6rem;
@@ -9,6 +10,10 @@ $hairline: 1px solid var(--gauzy-border-default-color);
 $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 
 :host {
+  // ng-select's theme loads after the app's and swaps a control's edge for this
+  // shadow on hover, which leaves the trigger with no visible border.
+  --ng-select-container-hover-shadow: #{dialogs.$control-hairline};
+
   display: block;
   width: 68rem;
   max-width: calc(100vw - 2rem);
@@ -178,13 +183,16 @@ $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 }
 
 .task-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
   padding: 0.75rem;
   border: $hairline;
   border-radius: 0.5rem;
 }
 
 .details-title {
-  margin: 0 0 0.5rem;
+  margin: 0;
   padding-bottom: 0.625rem;
   border-bottom: $hairline;
   color: var(--gauzy-text-color-1);
@@ -199,7 +207,6 @@ $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
   align-items: center;
   column-gap: 0.5rem;
   margin: 0;
-  padding: 0.125rem 0;
 
   .label {
     margin: 0;
@@ -240,8 +247,9 @@ $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 :host .task-side ::ng-deep {
   nb-select.appearance-outline.status-basic .select-button {
     min-height: $control-height !important;
-    padding-block: 0.25rem;
-    padding-inline-start: $control-inset;
+    // `!important` to get past the global `nb-select.size-medium button` padding.
+    padding-block: 0.25rem !important;
+    padding-inline: $control-inset 2.2rem !important;
   }
 
   .ng-select.ng-select-single .ng-select-container,
@@ -252,6 +260,10 @@ $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 
   .ng-select .ng-select-container .ng-value-container {
     padding-inline-start: $control-inset !important;
+  }
+
+  .ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder {
+    padding-inline-start: 0;
   }
 }
 
