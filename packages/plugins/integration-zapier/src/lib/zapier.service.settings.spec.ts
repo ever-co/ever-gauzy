@@ -49,7 +49,8 @@ describe('ZapierService.getIntegrationSettings', () => {
 			isEnabled: false,
 			hasClientCredentials: false,
 			hasAccessToken: false,
-			hasRefreshToken: false
+			hasRefreshToken: false,
+			webhookUrl: null
 		});
 	});
 
@@ -64,7 +65,8 @@ describe('ZapierService.getIntegrationSettings', () => {
 			isEnabled: true,
 			hasClientCredentials: true,
 			hasAccessToken: true,
-			hasRefreshToken: false
+			hasRefreshToken: false,
+			webhookUrl: null
 		});
 	});
 

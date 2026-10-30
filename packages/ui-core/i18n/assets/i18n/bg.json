@@ -3882,6 +3882,7 @@
 		"ESTIMATE_HOURS": "Часове",
 		"ESTIMATE_MINUTES": "Минути",
 		"TASKS_STATUS": "Статус",
+		"CREATE_STATUS": "Създаване на статус",
 		"TASK_PRIORITY": "Приоритет",
 		"TASK_SIZE": "Размер",
 		"PARENT_TASK": "Основна задача",
@@ -7124,7 +7125,8 @@
 			"OVERVIEW": "Общ преглед",
 			"BOARD": "Табло",
 			"ACTIVITY": "Активност",
-			"COMMENTS": "Коментари"
+			"COMMENTS": "Коментари",
+			"DOCUMENTS": "Документи"
 		},
 		"BOARD": "Табло",
 		"COLUMN_EMPTY": "Няма задачи",
@@ -7139,6 +7141,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} коментира",
 		"ACTIVITY_REPLIED": "{{ actor }} отговори на коментар в",
 		"ACTIVITY_FIELDS": "Променено: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} промени статуса на",
+		"ACTIVITY_STATUS_FROM_TO": "Статусът е променен от {{ from }} на {{ to }}",
 		"SOMEONE": "Някой",
 		"TODAY": "Днес",
 		"YESTERDAY": "Вчера",

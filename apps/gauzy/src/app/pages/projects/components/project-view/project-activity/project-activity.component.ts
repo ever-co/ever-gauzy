@@ -16,12 +16,29 @@ import { NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
 import { LocalDataSource } from 'angular2-smart-table';
-import { ActionTypeEnum, BaseEntityEnum, IActivityLog, IComment, IPagination, ITask } from '@gauzy/contracts';
+import {
+	ActionTypeEnum,
+	BaseEntityEnum,
+	IActivityLog,
+	IComment,
+	IPagination,
+	ITask,
+	ITaskStatus
+} from '@gauzy/contracts';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { CommentService } from '@gauzy/ui-core/core';
 import { SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
 import { parseCommentImages } from '../project-comments/comment-images.util';
-import { humanize, IPersonChip, Loadable, loaded, loading, failed, personOf } from '../project-view.utils';
+import {
+	humanize,
+	IPersonChip,
+	Loadable,
+	loaded,
+	loading,
+	failed,
+	personOf,
+	scopedTaskStatusesOf
+} from '../project-view.utils';
 
 /** One entry of the feed: who did what to which, and when. */
 interface IActivityEntry {
@@ -34,8 +51,10 @@ interface IActivityEntry {
 	target: string;
 	/** The task the target opens in the project page's task drawer, or none for the project itself. */
 	taskId: string | null;
-	/** "title, status, members": the fields an update changed. */
+	/** "title, status, members": the fields an update changed, the status aside when `status` names its move. */
 	fields: string;
+	/** A move to another status: the status before and after, by name and colour. */
+	status: { from: IStatusSide; to: IStatusSide } | null;
 	/** A comment's text, on one line, under the sentence; empty for the other entries. */
 	excerpt: string;
 	/** A comment of images only: "Image" stands in for its text. */
@@ -45,7 +64,13 @@ interface IActivityEntry {
 	time: string;
 	timeLong: string;
 	icon: string;
-	tone: 'success' | 'info' | 'danger' | 'comment';
+	tone: 'success' | 'info' | 'danger' | 'comment' | 'status';
+}
+
+/** One side of a status move: the status's name, and its colour when the status is known. */
+interface IStatusSide {
+	name: string;
+	color?: string;
 }
 
 /** The feed's entries under their day: Today, Yesterday, then dates. */
@@ -66,12 +91,36 @@ const LOG_PAGE_SIZE = 100;
  * time, so the project's task logs are found page by page among the organization's.
  */
 const TASK_LOG_PAGES = 10;
+/** Subtasks whose logs a task's feed reads, one request each. */
+const SUBTASK_LOGS = 20;
+/** The fields a status move writes: the status value, its row, and the row itself on a full update. */
+const STATUS_FIELDS = new Set(['status', 'taskStatusId', 'taskStatus']);
+
+/** A field's value among an update log's `{ field: value }` entries. */
+function loggedValue(values: unknown, field: string): unknown {
+	const entry = (Array.isArray(values) ? values : []).find(
+		(item) => item && typeof item === 'object' && field in item
+	);
+	return entry?.[field];
+}
+
+/** A status as the feed names it: the status row's name, else its value ("in-progress" -> "In progress"). */
+function statusNameOf(value: unknown, row?: unknown): string {
+	const name = (row as { name?: string } | null)?.name;
+	return name || (typeof value === 'string' ? humanize(value) : '');
+}
+
+/** "In Review" and "in-review" alike, to find a status by its value or name. */
+const statusKeyOf = (value?: unknown): string =>
+	typeof value === 'string' ? value.trim().toLowerCase().replace(/\s+/g, '-') : '';
 
 /**
  * The project page's Activity tab: a feed of what changed on the project and its tasks — created,
  * updated (and which fields), deleted — and of the comments posted on the project, by whom and when, newest
  * first, under each day. It reads the project's own log, the organization's task logs kept to the events that
  * happened in this project, and the project's newest comments (comments write no activity log of their own).
+ *
+ * Given a `taskId`, the feed is a task's: its own log, its subtasks' logs and its newest comments.
  */
 @Component({
 	selector: 'ga-project-activity',
@@ -98,6 +147,15 @@ export class ProjectActivityComponent implements OnChanges {
 	@Input() projectName: string;
 	@Input() organizationId: string;
 	@Input() tenantId: string;
+	/** The task whose feed this is, in place of the project's. */
+	@Input() taskId?: string;
+	@Input() taskTitle?: string;
+	/** The task's subtasks, whose changes the task's feed shows too. */
+	@Input() subtasks: { id: string; title: string }[] = [];
+	/** A task in the feed opens its own page, in place of the host's task drawer (`?task=`). */
+	@Input() openTaskPage = false;
+	/** Bumped by the host after a change it made (a status move, an edit): the feed reads again. */
+	@Input() reloadKey = 0;
 
 	public feed: Loadable<IActivityEntry[]> = loading([]);
 	/** The current page's entries under their day. */
@@ -109,6 +167,8 @@ export class ProjectActivityComponent implements OnChanges {
 	private readonly _http = inject(HttpClient);
 	private readonly _comments = inject(CommentService);
 	private _sequence = 0;
+	/** The statuses the feed's tasks take, for the colours of their status moves. */
+	private _statuses: ITaskStatus[] = [];
 
 	constructor() {
 		this.source.setPaging(1, FEED_PAGE_SIZE, false);
@@ -123,13 +183,34 @@ export class ProjectActivityComponent implements OnChanges {
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
-		if (this.projectId && (changes['projectId'] || changes['organizationId'])) {
+		if (
+			(this.projectId || this.taskId) &&
+			(changes['projectId'] || changes['taskId'] || changes['organizationId'] || changes['reloadKey'])
+		) {
 			void this.load();
 		}
 	}
 
 	get count(): number {
 		return (this.feed.value || []).length;
+	}
+
+	/** One page of the activity log for an entity, newest first, with who did it. */
+	private logs(entity: BaseEntityEnum, extra: Record<string, unknown>): Promise<IPagination<IActivityLog>> {
+		const { organizationId, tenantId } = this;
+		return firstValueFrom(
+			this._http.get<IPagination<IActivityLog>>(`${API_PREFIX}/activity-log`, {
+				params: toParams({
+					organizationId,
+					tenantId,
+					entity,
+					orderBy: 'createdAt',
+					order: 'DESC',
+					relations: ['employee', 'employee.user'],
+					...extra
+				})
+			})
+		);
 	}
 
 	private async load(): Promise<void> {
@@ -139,20 +220,12 @@ export class ProjectActivityComponent implements OnChanges {
 		this.days = [];
 		void this.source.load([]);
 		this.partial = false;
-		const logs = (entity: BaseEntityEnum, extra: Record<string, unknown>) =>
-			firstValueFrom(
-				this._http.get<IPagination<IActivityLog>>(`${API_PREFIX}/activity-log`, {
-					params: toParams({
-						organizationId,
-						tenantId,
-						entity,
-						orderBy: 'createdAt',
-						order: 'DESC',
-						relations: ['employee', 'employee.user'],
-						...extra
-					})
-				})
-			);
+		// The statuses the tasks take, as the board's columns, for the colours of the status moves; read beside the
+		// feed, and a failed read leaves the moves uncoloured.
+		this._statuses = [];
+		const statuses = this.fetchStatuses().catch((): ITaskStatus[] => []);
+		if (this.taskId) return this.loadTask(sequence, statuses);
+		const logs = (entity: BaseEntityEnum, extra: Record<string, unknown>) => this.logs(entity, extra);
 
 		// The project's tasks first (their titles, and the tasks a log that records no project belongs to), then the
 		// project's own log and its task logs — each on its own.
@@ -175,6 +248,7 @@ export class ProjectActivityComponent implements OnChanges {
 				FEED_LIMIT
 			)
 		]);
+		this._statuses = await statuses;
 		if (sequence !== this._sequence) return;
 
 		if (projectLogs.status === 'rejected' && taskLogs.status === 'rejected' && comments.status === 'rejected') {
@@ -196,6 +270,52 @@ export class ProjectActivityComponent implements OnChanges {
 			),
 			...(taskLogs.status === 'fulfilled' ? taskLogs.value.items : []).map((log) =>
 				this.toEntry(log, titles.get(log.entityId) || (log.data as any)?.title || '', log.entityId)
+			),
+			...(comments.status === 'fulfilled' ? comments.value || [] : []).map((comment) =>
+				this.toCommentEntry(comment)
+			)
+		]
+			.sort((a, b) => b.time.localeCompare(a.time))
+			.slice(0, FEED_LIMIT);
+		this.show(entries);
+	}
+
+	/**
+	 * A task's feed: its own log and each subtask's (the log filters by one entity id at a time), and the task's
+	 * newest comments, each read on its own.
+	 */
+	private async loadTask(sequence: number, statuses: Promise<ITaskStatus[]>): Promise<void> {
+		const { organizationId, tenantId, taskId } = this;
+		const subtasks = (this.subtasks || []).slice(0, SUBTASK_LOGS);
+		const ids = [taskId, ...subtasks.map((subtask) => subtask.id)];
+		const [[comments], logs] = await Promise.all([
+			Promise.allSettled([
+				this._comments.getLatest(BaseEntityEnum.Task, taskId, { organizationId, tenantId }, FEED_LIMIT)
+			]),
+			Promise.allSettled(ids.map((entityId) => this.logs(BaseEntityEnum.Task, { entityId, take: FEED_LIMIT })))
+		]);
+		this._statuses = await statuses;
+		if (sequence !== this._sequence) return;
+
+		const results: PromiseSettledResult<unknown>[] = [comments, ...logs];
+		if (results.every((result) => result.status === 'rejected')) {
+			this.feed = failed([]);
+			return;
+		}
+		this.partial = results.some((result) => result.status === 'rejected') || subtasks.length < this.subtasks.length;
+
+		const titles = new Map<string, string>([
+			[taskId, this.taskTitle],
+			...subtasks.map((subtask): [string, string] => [subtask.id, subtask.title])
+		]);
+		const entries = [
+			...logs.flatMap((result) => (result.status === 'fulfilled' ? result.value?.items || [] : [])).map((log) =>
+				// The task's own entries name it without a link: it is the page they are on.
+				this.toEntry(
+					log,
+					titles.get(log.entityId) || (log.data as any)?.title || '',
+					log.entityId === taskId ? null : log.entityId
+				)
 			),
 			...(comments.status === 'fulfilled' ? comments.value || [] : []).map((comment) =>
 				this.toCommentEntry(comment)
@@ -286,22 +406,69 @@ export class ProjectActivityComponent implements OnChanges {
 			[ActionTypeEnum.Deleted]: 'danger'
 		};
 		const time = moment(log.createdAt);
+		const status = action === ActionTypeEnum.Updated ? this.statusMoveOf(log) : null;
+		const fields = (log.updatedFields || []).filter((field) => !(status && STATUS_FIELDS.has(field)));
 		return {
 			id: log.id,
 			actor: log.employee ? personOf(log.employee) : null,
 			actorLink: log.employee?.id ? ['/pages/employees/view', log.employee.id] : null,
-			sentence: sentences[action] || 'PROJECT_VIEW.ACTIVITY_UPDATED',
+			sentence: status ? 'PROJECT_VIEW.ACTIVITY_STATUS_CHANGED' : sentences[action] || 'PROJECT_VIEW.ACTIVITY_UPDATED',
 			target: target || '—',
 			taskId: action === ActionTypeEnum.Deleted ? null : taskId,
-			fields: (log.updatedFields || []).map((field) => humanize(field).toLowerCase()).join(', '),
+			fields: fields.map((field) => humanize(field).toLowerCase()).join(', '),
+			status,
 			excerpt: '',
 			imageOnly: false,
 			isComment: false,
 			time: time.toISOString(),
 			timeLong: time.format('LLL'),
-			icon: icons[action] || 'edit-2-outline',
-			tone: tones[action] || 'info'
+			icon: status ? 'swap-outline' : icons[action] || 'edit-2-outline',
+			tone: status ? 'status' : tones[action] || 'info'
 		};
+	}
+
+	/**
+	 * The status an update moved a task from and to, from the values it logged; `null` for an update that left
+	 * the status alone, or whose new status has no name.
+	 */
+	private statusMoveOf(log: IActivityLog): { from: IStatusSide; to: IStatusSide } | null {
+		const changed = (log.updatedFields || []).some((field) => STATUS_FIELDS.has(field));
+		if (!changed) return null;
+		const from = this.statusSideOf(log.previousValues);
+		const to = this.statusSideOf(log.updatedValues);
+		if (!to.name || from.name === to.name) return null;
+		return { from, to };
+	}
+
+	/**
+	 * One side of a status move, from the values an update logged, by its status — the status row the update
+	 * logged, else the one it names by id, else by its value or name. Its name is the logged row's, else the matched
+	 * status's (an update may log only `taskStatusId`, or a `status` value that disagrees with it), else the value.
+	 */
+	private statusSideOf(values: unknown): IStatusSide {
+		const value = loggedValue(values, 'status');
+		const row = loggedValue(values, 'taskStatus') as Partial<ITaskStatus> | undefined;
+		const id = (loggedValue(values, 'taskStatusId') as string) || row?.id;
+		const keys = [statusKeyOf(value), statusKeyOf(row?.value), statusKeyOf(row?.name)].filter(Boolean);
+		const status =
+			(id && this._statuses.find((item) => item.id === id)) ||
+			this._statuses.find((item) => keys.includes(statusKeyOf(item.value)) || keys.includes(statusKeyOf(item.name)));
+		return {
+			name: row?.name || statusNameOf(value, status),
+			color: row?.color || status?.color || undefined
+		};
+	}
+
+	/** The statuses the tasks take: the project's own, else the organization's, else the system defaults. */
+	private async fetchStatuses(): Promise<ITaskStatus[]> {
+		const { organizationId, tenantId, projectId } = this;
+		const read = async (where: Record<string, string>) =>
+			(
+				await firstValueFrom(
+					this._http.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, { params: toParams(where) })
+				)
+			)?.items || [];
+		return scopedTaskStatusesOf(read, { organizationId, tenantId, projectId });
 	}
 
 	/**
@@ -316,9 +483,10 @@ export class ProjectActivityComponent implements OnChanges {
 			actor: personOf(comment.employee) ?? personOf(comment.createdByUser),
 			actorLink: comment.employee?.id ? ['/pages/employees/view', comment.employee.id] : null,
 			sentence: comment.parentId ? 'PROJECT_VIEW.ACTIVITY_REPLIED' : 'PROJECT_VIEW.ACTIVITY_COMMENTED',
-			target: this.projectName || '—',
+			target: (this.taskId ? this.taskTitle : this.projectName) || '—',
 			taskId: null,
 			fields: '',
+			status: null,
 			excerpt: text.replace(/\s+/g, ' '),
 			imageOnly: !text && images.length > 0,
 			isComment: true,

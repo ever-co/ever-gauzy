@@ -55,7 +55,11 @@ interface IBoardCard {
 	progress?: ITaskProgress | null;
 	/** True while a move to another column is being saved. */
 	saving?: boolean;
+	/** The task whose subtasks the board shows: on the board too, as Jira's boards keep a parent with its subtasks. */
+	isParent?: boolean;
 }
+
+const BOARD_RELATIONS = ['taskStatus', 'taskPriority', 'members', 'members.user'];
 
 /** One board column: a status, its colour, and its cards. */
 interface IBoardColumn {
@@ -77,6 +81,9 @@ const PRIORITY_LEVELS = new Set<string>(['urgent', 'high', 'medium', 'low']);
  * tenant's own order and colours (the project's statuses, else the organization's), each card naming
  * its key, title, priority, due date and assignees, and opening the task's page. A user who may edit
  * tasks drags a card to another column to change its status; a move that fails to save goes back.
+ *
+ * Given a `parentId`, the board is a task's: the task itself and its subtasks, in the columns of the task's
+ * project, the task's card marked as the parent and first in its column.
  */
 @Component({
 	selector: 'ga-project-board',
@@ -102,6 +109,14 @@ export class ProjectBoardComponent implements OnChanges {
 	@Input() projectId: string;
 	@Input() organizationId: string;
 	@Input() tenantId: string;
+	/** The task whose subtasks the board shows, in place of the project's tasks. */
+	@Input() parentId?: string;
+	/** A card opens its task's own page, in place of the host's task drawer (`?task=`). */
+	@Input() openTaskPage = false;
+	/** What an empty board says. */
+	@Input() emptyKey = 'PROJECT_QUICK_LOOK.NO_TASKS';
+	/** Bumped by the host after a change it made elsewhere (its status menu, an edit): the board reads again. */
+	@Input() reloadKey = 0;
 	/** A card's task saved with another status, so the host can bring what else shows the task up to date. */
 	@Output() readonly taskMoved = new EventEmitter<string>();
 
@@ -186,7 +201,10 @@ export class ProjectBoardComponent implements OnChanges {
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
-		if (this.projectId && (changes['projectId'] || changes['organizationId'])) {
+		if (
+			(this.projectId || this.parentId) &&
+			(changes['projectId'] || changes['parentId'] || changes['organizationId'] || changes['reloadKey'])
+		) {
 			void this.load();
 		}
 	}
@@ -208,22 +226,31 @@ export class ProjectBoardComponent implements OnChanges {
 
 	private async load(): Promise<void> {
 		const sequence = ++this._sequence;
-		const { organizationId, tenantId, projectId } = this;
+		const { organizationId, tenantId, projectId, parentId } = this;
 		this.board = loading([]);
 		try {
-			const [statuses, tasks] = await Promise.all([
+			const [statuses, tasks, parent] = await Promise.all([
 				this.fetchStatuses().catch((): ITaskStatus[] => []),
 				firstValueFrom(
 					this._http.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, {
 						params: toParams({
-							where: { organizationId, tenantId, projectId },
-							relations: ['taskStatus', 'taskPriority', 'members', 'members.user']
+							where: { organizationId, tenantId, ...(parentId ? { parentId } : { projectId }) },
+							relations: BOARD_RELATIONS
 						})
 					})
-				)
+				),
+				// The parent's own card; a failed read leaves the board with its subtasks only.
+				parentId
+					? firstValueFrom(
+							this._http.get<ITask>(`${API_PREFIX}/tasks/${parentId}`, {
+								params: toParams({ relations: BOARD_RELATIONS })
+							})
+					  ).catch((): ITask | null => null)
+					: Promise.resolve<ITask | null>(null)
 			]);
 			if (sequence !== this._sequence) return;
-			this.board = loaded(this.toColumns(statuses, tasks?.items || []));
+			const items = tasks?.items || [];
+			this.board = loaded(this.toColumns(statuses, parent?.id ? [parent, ...items] : items));
 			void this.loadProgress(sequence);
 		} catch {
 			if (sequence === this._sequence) this.board = failed([]);
@@ -233,19 +260,22 @@ export class ProjectBoardComponent implements OnChanges {
 	/**
 	 * The time worked on each of the project's tasks, all time, against its estimate — or, without one,
 	 * as its share of the project's time: the cards' progress bars. They come after the board, so a slow or
-	 * failed read (most often a 403) never holds it up.
+	 * failed read (most often a 403) never holds it up. Subtasks outside any project are read on their own,
+	 * and without a project's time to share, only those with an estimate show a bar.
 	 */
 	private async loadProgress(sequence: number): Promise<void> {
 		const { organizationId, tenantId, projectId } = this;
+		const taskIds = (this.board.value || []).flatMap((column) => column.cards.map((card) => card.id));
+		if (!projectId && !taskIds.length) return;
 		try {
 			const rows = await this._statisticsService.getTasksStatistics({
 				organizationId,
 				tenantId,
-				projectIds: [projectId]
+				...(projectId ? { projectIds: [projectId] } : { taskIds })
 			});
 			if (sequence !== this._sequence) return;
 			const worked = new Map((rows || []).map((row: ITasksStatistics) => [row.id, Number(row.duration) || 0]));
-			const project = projectWorkedTimeOf([...worked.values()]);
+			const project = projectId ? projectWorkedTimeOf([...worked.values()]) : undefined;
 			for (const column of this.board.value || []) {
 				for (const card of column.cards) {
 					card.progress = taskProgressOf(worked.get(card.id) || 0, card.estimate, project);
@@ -317,9 +347,11 @@ export class ProjectBoardComponent implements OnChanges {
 			}
 			column.cards.push(this.toCard(task, today));
 		}
-		// Each column: overdue cards first, the rest in the order the tasks came.
+		// Each column: the parent first, then overdue cards, the rest in the order the tasks came.
 		for (const column of columns) {
-			column.cards.sort((a, b) => Number(b.overdue) - Number(a.overdue));
+			column.cards.sort(
+				(a, b) => Number(!!b.isParent) - Number(!!a.isParent) || Number(b.overdue) - Number(a.overdue)
+			);
 		}
 		return columns;
 	}
@@ -338,7 +370,8 @@ export class ProjectBoardComponent implements OnChanges {
 			soon: false,
 			people: (task.members || []).map((member) => personOf(member)).filter(Boolean),
 			done: false,
-			estimate: Number(task.estimate) || 0
+			estimate: Number(task.estimate) || 0,
+			isParent: !!this.parentId && task.id === this.parentId
 		};
 		this.setDone(card, isTaskFinished(task));
 		return card;

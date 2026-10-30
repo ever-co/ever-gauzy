@@ -5,7 +5,7 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { DataSource, In, Like } from 'typeorm';
 import { isUUID } from 'class-validator';
 import { catchError, firstValueFrom, map } from 'rxjs';
-import { ConfigService, environment } from '@gauzy/config';
+import { ConfigService, environment, isMySQL, isPostgres } from '@gauzy/config';
 import {
 	IIntegrationTenant,
 	IntegrationEnum,
@@ -27,14 +27,23 @@ import {
 	JWT_ALGORITHMS,
 	assertCurrentUserBelongsToOrganization
 } from '@gauzy/core';
-import { ZAPIER_API_URL, ZAPIER_BASE_URL, ZAPIER_TOKEN_EXPIRATION_TIME, ZAPIER_OAUTH_SCOPES } from './zapier.config';
+import {
+	ZAPIER_API_URL,
+	ZAPIER_BASE_URL,
+	ZAPIER_TOKEN_EXPIRATION_TIME,
+	ZAPIER_OAUTH_SCOPES,
+	ZAPIER_WEBHOOK_URL_MAX_LENGTH
+} from './zapier.config';
 import {
 	IIntegrationFilter,
 	IZapierAccessTokens,
 	IZapierEndpoint,
-	IZapierIntegrationSettings
+	IZapierIntegrationSettings,
+	IZapierOAuthPublicConfig,
+	IZapierUpdateSettingsInput
 } from './zapier.types';
-import { IZapierCreateZapInput, IZapierZap, IZapierZapTemplate } from '@gauzy/contracts';
+import { IZapierCreateZapInput, IZapierZap, IZapierZapTemplate, ZapierSettingName } from '@gauzy/contracts';
+import { getUnsafeOutboundUrlReason } from '@gauzy/utils';
 import { randomBytes } from 'node:crypto';
 import { verify } from 'jsonwebtoken';
 
@@ -1358,39 +1367,253 @@ export class ZapierService {
 			}
 
 			if (!integrationTenant) {
-				return {
-					isEnabled: false,
-					hasClientCredentials: false,
-					hasAccessToken: false,
-					hasRefreshToken: false
-				};
+				return this.settingsNotConfigured();
 			}
 
-			// Extract settings from integration settings
-			const enabledSetting = integrationTenant.settings?.find(
-				(setting: IIntegrationSetting) => setting.settingsName === 'is_enabled'
-			);
-			const accessTokenSetting = integrationTenant.settings?.find(
-				(setting: IIntegrationSetting) => setting.settingsName === 'zapier_access_token'
-			);
-			const refreshTokenSetting = integrationTenant.settings?.find(
-				(setting: IIntegrationSetting) => setting.settingsName === 'zapier_refresh_token'
-			);
-
-			// Client credentials are server-side config, not tenant-specific
-			const zapierConfig = this.config.get('zapier');
-			const hasClientCredentials = !!(zapierConfig?.clientId && zapierConfig?.clientSecret);
-
-			// Map to sanitized DTO
-			return {
-				isEnabled: enabledSetting ? enabledSetting.settingsValue === 'true' : false,
-				hasClientCredentials,
-				hasAccessToken: !!accessTokenSetting?.settingsValue,
-				hasRefreshToken: !!refreshTokenSetting?.settingsValue
-			};
+			return this.settingsOf(integrationTenant);
 		} catch (error) {
 			this.logger.error('Error retrieving Zapier integration settings:', error);
 			throw error;
 		}
+	}
+
+	/**
+	 * The settings `GET /integration/zapier/settings` answers, for a member of the integration's organization: the
+	 * integration of the organization named (the controller passes the query, else the `Organization-Id` header the web
+	 * app sends), else the tenant's only one (400 when there are several, as `findIntegrationByTenantId` answers). The
+	 * answer carries the webhook URL, so the lookup alone (scoped to the tenant) is not enough: it read the tenant's first
+	 * integration, whichever organization it belongs to.
+	 *
+	 * @param organizationId - The organization of the integration, if the caller names one.
+	 * @returns The settings, or the "not configured" default when there is no integration.
+	 * @throws ForbiddenException - If the caller is not a member of the organization named, or of the integration's.
+	 * @throws BadRequestException - If no organization is named and the tenant has several Zapier integrations.
+	 */
+	async getIntegrationSettingsForCurrentUser(organizationId?: ID): Promise<IZapierIntegrationSettings> {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new NotFoundException('Tenant ID not found in request context');
+		}
+		if (organizationId) {
+			await assertCurrentUserBelongsToOrganization(this._dataSource.manager, organizationId);
+		}
+
+		let integration: IIntegrationTenant;
+		try {
+			integration = await this.findIntegrationByTenantId(tenantId, organizationId);
+		} catch (error) {
+			if (error instanceof NotFoundException) {
+				return this.settingsNotConfigured();
+			}
+			throw error;
+		}
+
+		if (!organizationId) {
+			await assertCurrentUserBelongsToOrganization(this._dataSource.manager, integration.organizationId);
+		}
+		return this.settingsOf(integration);
+	}
+
+	/** The settings of a tenant (or organization) without a Zapier integration. */
+	private settingsNotConfigured(): IZapierIntegrationSettings {
+		return {
+			isEnabled: false,
+			hasClientCredentials: false,
+			hasAccessToken: false,
+			hasRefreshToken: false,
+			webhookUrl: null
+		};
+	}
+
+	/** The settings of an integration, read from its setting rows: never a token itself. */
+	private settingsOf(integrationTenant: IIntegrationTenant): IZapierIntegrationSettings {
+		// Extract settings from integration settings
+		const enabledSetting = integrationTenant.settings?.find(
+			(setting: IIntegrationSetting) => setting.settingsName === 'is_enabled'
+		);
+		const accessTokenSetting = integrationTenant.settings?.find(
+			(setting: IIntegrationSetting) => setting.settingsName === 'zapier_access_token'
+		);
+		const refreshTokenSetting = integrationTenant.settings?.find(
+			(setting: IIntegrationSetting) => setting.settingsName === 'zapier_refresh_token'
+		);
+		const webhookUrlSetting = integrationTenant.settings?.find(
+			(setting: IIntegrationSetting) => setting.settingsName === ZapierSettingName.WEBHOOK_URL
+		);
+
+		// Client credentials are server-side config, not tenant-specific
+		const zapierConfig = this.config.get('zapier');
+		const hasClientCredentials = !!(zapierConfig?.clientId && zapierConfig?.clientSecret);
+
+		// Map to sanitized DTO
+		return {
+			isEnabled: enabledSetting ? enabledSetting.settingsValue === 'true' : false,
+			hasClientCredentials,
+			hasAccessToken: !!accessTokenSetting?.settingsValue,
+			hasRefreshToken: !!refreshTokenSetting?.settingsValue,
+			webhookUrl: webhookUrlSetting?.settingsValue || null
+		};
+	}
+
+	/**
+	 * Updates the Zapier integration settings of the current tenant: whether the integration is enabled, and its webhook
+	 * URL (an empty string or null clears it; left out, the stored one stays). `POST /settings` starts a new integration
+	 * with a new OAuth state; this changes the one that exists.
+	 *
+	 * The integration is the organization's when one is named (the controller passes the query, else the
+	 * `Organization-Id` header the web app sends), else the tenant's only one (400 when there are several, as
+	 * `findIntegrationByTenantId` answers), and the caller must be a member of its organization: the settings lookup
+	 * alone is scoped to the tenant.
+	 *
+	 * @param input - The settings to store.
+	 * @param organizationId - The organization of the integration, if the caller names one.
+	 * @returns The stored settings, as `getIntegrationSettings` reads them.
+	 * @throws BadRequestException - For an invalid body, an unsafe webhook URL, or several integrations and no organization.
+	 * @throws NotFoundException - If the organization (or the tenant) has no Zapier integration.
+	 * @throws ForbiddenException - If the caller is not a member of the integration's organization.
+	 */
+	async updateIntegrationSettings(
+		input: IZapierUpdateSettingsInput,
+		organizationId?: ID
+	): Promise<IZapierIntegrationSettings> {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			throw new BadRequestException('Tenant ID is required');
+		}
+		if (typeof input?.isEnabled !== 'boolean') {
+			throw new BadRequestException('isEnabled must be a boolean');
+		}
+		if (input.webhookUrl != null && typeof input.webhookUrl !== 'string') {
+			throw new BadRequestException('webhookUrl must be a string');
+		}
+
+		// The URL is where the organization's events are meant to go: hold it to the egress guard the REST hooks use
+		const webhookUrl = input.webhookUrl?.trim() ?? '';
+		if (webhookUrl.length > ZAPIER_WEBHOOK_URL_MAX_LENGTH) {
+			throw new BadRequestException(`webhookUrl must be at most ${ZAPIER_WEBHOOK_URL_MAX_LENGTH} characters`);
+		}
+		if (webhookUrl) {
+			const reason = getUnsafeOutboundUrlReason(webhookUrl);
+			if (reason) {
+				throw new BadRequestException(`Invalid webhook URL: ${reason}`);
+			}
+		}
+
+		const integration = await this.findIntegrationByTenantId(tenantId, organizationId || undefined);
+		await assertCurrentUserBelongsToOrganization(this._dataSource.manager, integration.organizationId);
+
+		const values: Record<string, string> = { is_enabled: String(input.isEnabled) };
+		// Left out, the stored URL stays: only an empty string or null clears it
+		if (input.webhookUrl !== undefined) {
+			values[ZapierSettingName.WEBHOOK_URL] = webhookUrl;
+		}
+		await this.writeIntegrationSettings({ ...integration, tenantId }, values);
+
+		return this.getIntegrationSettings(integration.organizationId);
+	}
+
+	/**
+	 * The settings writes of this process on the embedded dialect, in the order they came (see `writeIntegrationSettings`).
+	 */
+	private static embeddedSettingsWrites: Promise<unknown> = Promise.resolve();
+
+	/**
+	 * Writes settings of one integration, one value per name: every stored row of a name gets it, and a name without a
+	 * row gets one. The settings are read and written in one transaction. On Postgres and MySQL it first locks the
+	 * integration's row, so two first saves cannot both find a name missing and both insert it (no unique key guards the
+	 * integration and setting name); on the embedded dialect (a single-process database, e.g. the demo) a process-local
+	 * queue runs the writes one after the other instead.
+	 *
+	 * @param integration - The integration, with its tenant.
+	 * @param values - The value to store, by setting name.
+	 */
+	private async writeIntegrationSettings(
+		integration: IIntegrationTenant & { tenantId: ID },
+		values: Record<string, string>
+	): Promise<void> {
+		const { id: integrationId, tenantId, organizationId } = integration;
+		if (!integrationId) {
+			throw new BadRequestException('Integration ID is required');
+		}
+		const target = this._integrationSettingService.typeOrmIntegrationSettingRepository.target;
+		const rowLock = isPostgres() || isMySQL();
+
+		const write = () =>
+			this._dataSource.transaction(async (manager) => {
+				if (rowLock) {
+					// `pessimistic_write` maps to FOR UPDATE on both dialects
+					await manager
+						.createQueryBuilder()
+						.select('integration.id')
+						.from('integration_tenant', 'integration')
+						.where('integration.id = :integrationId', { integrationId })
+						.setLock('pessimistic_write')
+						.getRawOne();
+				}
+
+				const settings = manager.getRepository(target);
+				const names = Object.keys(values);
+				const stored = await settings.find({ where: { integrationId, tenantId, settingsName: In(names) } });
+				for (const settingsName of names) {
+					const settingsValue = values[settingsName];
+					if (stored.some((setting) => setting.settingsName === settingsName)) {
+						// Every row of the name, bounded by the integration and the tenant as the token writes above are
+						await settings.update({ integrationId, tenantId, settingsName }, { settingsValue });
+					} else {
+						await settings.save({ settingsName, settingsValue, tenantId, organizationId, integrationId });
+					}
+				}
+			});
+
+		if (rowLock) {
+			await write();
+			return;
+		}
+		const run = ZapierService.embeddedSettingsWrites.catch(() => undefined).then(write);
+		ZapierService.embeddedSettingsWrites = run.catch(() => undefined);
+		await run;
+	}
+
+	/**
+	 * The Zapier OAuth configuration the web app may see: the client ID, redirect URI and post-install URL the server is
+	 * configured with, and the scopes it asks Zapier for. Never the client secret.
+	 */
+	getOAuthConfig(): IZapierOAuthPublicConfig {
+		const zapierConfig = this.config.get('zapier');
+		return {
+			clientId: zapierConfig?.clientId || null,
+			redirectUri: zapierConfig?.redirectUri || null,
+			postInstallUrl: zapierConfig?.postInstallUrl || null,
+			scopes: ZAPIER_OAUTH_SCOPES.split(' ').filter(Boolean)
+		};
+	}
+
+	/**
+	 * A Zapier integration of the current tenant, for a caller who is a member of the organization it belongs to. The
+	 * tenant-aware lookup alone would let a member of one organization act on another organization's integration.
+	 *
+	 * @param integrationId - The ID of the integration.
+	 * @throws NotFoundException - If the tenant has no Zapier integration with that ID (a malformed ID included).
+	 * @throws ForbiddenException - If the caller is not a member of the integration's organization.
+	 */
+	async findIntegrationForCurrentUser(integrationId: ID): Promise<IIntegrationTenant> {
+		let integration: IIntegrationTenant | null = null;
+		// A malformed ID is a missing integration, not a lookup failure: PostgreSQL rejects it as a uuid
+		if (isUUID(integrationId)) {
+			try {
+				integration = await this._integrationTenantService.findOneByOptions({
+					where: { id: integrationId, name: IntegrationEnum.ZAPIER }
+				});
+			} catch (error) {
+				if (!(error instanceof NotFoundException)) {
+					throw error;
+				}
+			}
+		}
+		if (!integration) {
+			throw new NotFoundException(`Zapier integration ${integrationId} not found`);
+		}
+		await assertCurrentUserBelongsToOrganization(this._dataSource.manager, integration.organizationId);
+		return { ...integration, name: IntegrationEnum.ZAPIER };
 	}
 }

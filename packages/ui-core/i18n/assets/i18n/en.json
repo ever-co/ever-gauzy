@@ -4354,6 +4354,7 @@
 		"ESTIMATE_HOURS": "Hours",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "Status",
+		"CREATE_STATUS": "Create status",
 		"TASK_PRIORITY": "Priority",
 		"TASK_SIZE": "Size",
 		"PARENT_TASK": "Parent Task",
@@ -8278,7 +8279,8 @@
 			"OVERVIEW": "Overview",
 			"BOARD": "Board",
 			"ACTIVITY": "Activity",
-			"COMMENTS": "Comments"
+			"COMMENTS": "Comments",
+			"DOCUMENTS": "Documents"
 		},
 		"BOARD": "Board",
 		"COLUMN_EMPTY": "No tasks",
@@ -8293,6 +8295,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} commented on",
 		"ACTIVITY_REPLIED": "{{ actor }} replied to a comment on",
 		"ACTIVITY_FIELDS": "Changed: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} changed the status of",
+		"ACTIVITY_STATUS_FROM_TO": "Status changed from {{ from }} to {{ to }}",
 		"SOMEONE": "Someone",
 		"TODAY": "Today",
 		"YESTERDAY": "Yesterday",

@@ -3822,6 +3822,7 @@
 		"ESTIMATE_HOURS": "Ore",
 		"ESTIMATE_MINUTES": "Minuti",
 		"TASKS_STATUS": "Stato",
+		"CREATE_STATUS": "Crea stato",
 		"TASK_PRIORITY": "Priorità",
 		"TASK_SIZE": "Taglia",
 		"PARENT_TASK": "Attività principale",
@@ -7079,7 +7080,8 @@
 			"OVERVIEW": "Panoramica",
 			"BOARD": "Bacheca",
 			"ACTIVITY": "Attività",
-			"COMMENTS": "Commenti"
+			"COMMENTS": "Commenti",
+			"DOCUMENTS": "Documenti"
 		},
 		"BOARD": "Bacheca",
 		"COLUMN_EMPTY": "Nessuna attività",
@@ -7094,6 +7096,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} ha commentato",
 		"ACTIVITY_REPLIED": "{{ actor }} ha risposto a un commento su",
 		"ACTIVITY_FIELDS": "Modificato: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} ha cambiato lo stato di",
+		"ACTIVITY_STATUS_FROM_TO": "Stato cambiato da {{ from }} a {{ to }}",
 		"SOMEONE": "Qualcuno",
 		"TODAY": "Oggi",
 		"YESTERDAY": "Ieri",

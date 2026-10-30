@@ -3820,6 +3820,7 @@
 		"ESTIMATE_HOURS": "الساعات",
 		"ESTIMATE_MINUTES": "الدقائق",
 		"TASKS_STATUS": "الحالة",
+		"CREATE_STATUS": "إنشاء حالة",
 		"TASK_PRIORITY": "الأولوية",
 		"TASK_SIZE": "حجم",
 		"PARENT_TASK": "المهمة الرئيسية",
@@ -7071,7 +7072,8 @@
 			"OVERVIEW": "نظرة عامة",
 			"BOARD": "اللوحة",
 			"ACTIVITY": "النشاط",
-			"COMMENTS": "التعليقات"
+			"COMMENTS": "التعليقات",
+			"DOCUMENTS": "المستندات"
 		},
 		"BOARD": "اللوحة",
 		"COLUMN_EMPTY": "لا توجد مهام",
@@ -7086,6 +7088,8 @@
 		"ACTIVITY_COMMENTED": "علّق {{ actor }} على",
 		"ACTIVITY_REPLIED": "ردّ {{ actor }} على تعليق في",
 		"ACTIVITY_FIELDS": "تم تغيير: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "غيّر {{ actor }} حالة",
+		"ACTIVITY_STATUS_FROM_TO": "تغيّرت الحالة من {{ from }} إلى {{ to }}",
 		"SOMEONE": "شخص ما",
 		"TODAY": "اليوم",
 		"YESTERDAY": "أمس",

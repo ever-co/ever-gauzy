@@ -74,8 +74,84 @@
 				</div>
 			</div>
 
+			<!-- Tabs, as the project page's: the task itself, and its subtasks as a board. -->
+			<div class="tab-row project-page-tabs task-page-tabs">
+				<div class="tabs" role="tablist" [attr.aria-label]="task.title">
+					@for (item of tabs; track item.id) {
+						<button
+							type="button"
+							role="tab"
+							class="tab"
+							[id]="'task-view-tab-' + item.id"
+							[attr.aria-controls]="'task-view-pane-' + item.id"
+							[class.is-active]="tab === item.id"
+							[attr.aria-selected]="tab === item.id"
+							(click)="selectTab(item.id)"
+						>
+							<nb-icon [icon]="item.icon" aria-hidden="true"></nb-icon>
+							{{ item.label | translate }}
+							@if (item.id === 'board' && subtasks.length) {
+								<span class="title-count tab-count">{{ subtasks.length }}</span>
+							}
+						</button>
+					}
+				</div>
+			</div>
+
+			<!-- The Board loads when first opened, then stays loaded: a move still saving when the Overview opens
+			     still reaches its Subtasks panel. -->
+			@if (boardOpened) {
+				<div
+					class="project-page-pane task-page-wide"
+					role="tabpanel"
+					id="task-view-pane-board"
+					aria-labelledby="task-view-tab-board"
+					[hidden]="tab !== 'board'"
+				>
+					<!-- The task and its subtasks on one board, as Jira's. A card moved on it changes its task's status:
+					     the page reads the task again. -->
+					<ga-project-board
+						[parentId]="task.id"
+						[projectId]="task.projectId"
+						[organizationId]="organization?.id"
+						[tenantId]="organization?.tenantId"
+						[openTaskPage]="true"
+						emptyKey="TASK_VIEW.NO_SUBTASKS"
+						[reloadKey]="boardReloadKey"
+						(taskMoved)="onBoardTaskMoved()"
+					></ga-project-board>
+				</div>
+			}
+
+			<!-- Activity loads each time it is opened: what changed on the task and its subtasks, and its comments. -->
+			@if (tab === 'activity') {
+				<div
+					class="project-page-pane task-page-wide"
+					role="tabpanel"
+					id="task-view-pane-activity"
+					aria-labelledby="task-view-tab-activity"
+				>
+					<ga-project-activity
+						[taskId]="task.id"
+						[taskTitle]="task.title"
+						[projectId]="task.projectId"
+						[subtasks]="subtasks"
+						[organizationId]="organization?.id"
+						[tenantId]="organization?.tenantId"
+						[openTaskPage]="true"
+						[reloadKey]="activityReloadKey"
+					></ga-project-activity>
+				</div>
+			}
+
 			<!-- The work: what it is, the time put into it day by day, what it breaks down into and what it is tied to. -->
-			<div class="project-view-col project-view-col--main">
+			<div
+				class="project-view-col project-view-col--main"
+				role="tabpanel"
+				id="task-view-pane-overview"
+				aria-labelledby="task-view-tab-overview"
+				[hidden]="tab !== 'overview'"
+			>
 				<ngx-record-view
 					class="task-description"
 					[record]="task"
@@ -195,7 +271,7 @@
 			</div>
 
 			<!-- The facts: its details, its time — tracked and entry by entry — and its stamps. -->
-			<div class="project-view-col project-view-col--side">
+			<div class="project-view-col project-view-col--side" [hidden]="tab !== 'overview'">
 				<!-- The project the task belongs to, opening the project's own page for those who may view it. -->
 				<section class="panel project-view-panel">
 					<header class="panel-header">

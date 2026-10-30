@@ -126,16 +126,39 @@ describe('AccountDeletionService', () => {
 		it('locks the address, revokes the live link (clearing its address), stores only the token hash', async () => {
 			const { service, findUsers, repository, builder, transactionManager, emailService } = setup();
 			findUsers.mockResolvedValue([user]);
+			// The address and client-address digests are keyed with the deployment's secret.
+			const previousKey = process.env['ENCRYPTION_KEY'];
+			process.env['ENCRYPTION_KEY'] = 'a-deployment-encryption-key-1';
 
-			await service.request({ email: ' Jane@Ever.co ', callbackUrl: 'https://evil.example/steal' }, { ip: '1.2.3.4' });
+			try {
+				await service.request({ email: ' Jane@Ever.co ', callbackUrl: 'https://evil.example/steal' }, { ip: '1.2.3.4' });
+			} finally {
+				if (previousKey === undefined) {
+					delete process.env['ENCRYPTION_KEY'];
+				} else {
+					process.env['ENCRYPTION_KEY'] = previousKey;
+				}
+			}
 
+			// The lock is named by the unkeyed digest of the address, whatever secret the instance holds, so two
+			// instances that briefly hold different secrets still serialise on the same name.
+			const unkeyed = require('node:crypto').createHash('sha256').update('jane@ever.co', 'utf8').digest('hex');
 			expect(transactionManager.query).toHaveBeenCalledWith(expect.stringContaining('pg_advisory_xact_lock'), [
-				expect.stringContaining('account-deletion:')
+				`account-deletion:${unkeyed}`
 			]);
+			// The limit and the revocation also find the address's rows by the clear address a live request keeps,
+			// which a replaced secret does not change.
+			expect(repository.count).toHaveBeenCalledWith({
+				where: expect.arrayContaining([expect.objectContaining({ email: 'jane@ever.co' })])
+			});
+			expect(builder.where).toHaveBeenCalledWith(
+				expect.arrayContaining([expect.objectContaining({ email: 'jane@ever.co', completedAt: expect.anything() })])
+			);
 			expect(builder.set).toHaveBeenCalledWith({ revokedAt: expect.any(Date), email: null });
 			const stored = repository.save.mock.calls[0][0];
 			expect(stored.email).toBe('jane@ever.co');
 			expect(stored.tokenHash).toMatch(/^[0-9a-f]{64}$/);
+			expect(stored.requestIpHash).toMatch(/^[0-9a-f]{64}$/);
 			expect(stored.requestIpHash).not.toContain('1.2.3.4');
 
 			const { deletionLink } = emailService.sendAccountDeletionLink.mock.calls[0][0];

@@ -165,6 +165,8 @@ jest.mock('@gauzy/core', () => {
 		// against a rounding this suite invented rather than the one the money layer performs.
 		...jest.requireActual('@gauzy/core/src/lib/money/decimal'),
 		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
+		toClientSafeError: jest.requireActual('@gauzy/core/src/lib/core/errors/database-error').toClientSafeError,
+		redactDatabaseError: jest.requireActual('@gauzy/core/src/lib/core/errors/database-error').redactDatabaseError,
 		SequenceService: class SequenceService {},
 		assertPlainReferencesNotForeign: (...args: unknown[]) => mockAssertReferences(...args),
 		RequestContext: {
@@ -187,7 +189,7 @@ jest.mock('@gauzy/plugin-entitlement/src/lib/entitlement/entitlement.service', (
 	EntitlementService: class EntitlementService {}
 }));
 
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import {
 	AdjustmentOwnerType,
@@ -205,6 +207,7 @@ import { SubscriptionItemService } from '../subscription-item/subscription-item.
 import { SubscriptionBillingService } from '../subscription-billing/subscription-billing.service';
 import { SubscriptionItem } from '../subscription-item/subscription-item.entity';
 import { SubscriptionBilling } from '../subscription-billing/subscription-billing.entity';
+import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { Subscription } from './subscription.entity';
 import { SubscriptionService } from './subscription.service';
 import { SUBSCRIPTION_REFERENCES } from '../subscription.references';
@@ -492,6 +495,7 @@ function subscriptionFixture(
 		withInstruments?: boolean;
 		instrumentRefusal?: { reasonCode?: string; reason?: string };
 		inFlightOnNewKey?: boolean;
+		transactionalUpdateError?: () => Error;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -513,10 +517,19 @@ function subscriptionFixture(
 	const entityToTable = new Map<unknown, keyof ITables>([
 		[Subscription, 'subscription'],
 		[SubscriptionItem, 'subscription_item'],
-		[SubscriptionBilling, 'subscription_billing']
+		[SubscriptionBilling, 'subscription_billing'],
+		[SubscriptionPlan, 'subscription_plan']
 	]);
+	/** The row locks the service took (`lockPlanRow`), in order, and what "commits" while one is waited for. */
+	const locks: string[] = [];
+	const onLock: Array<() => void> = [];
 	const manager = {
 		connection: { options: { type: 'postgres' } },
+		query: async (sql: string) => {
+			locks.push(sql);
+			onLock.splice(0).forEach((committed) => committed());
+			return [];
+		},
 		// A transaction's repository writes the same store: the double's transaction restores it on a rollback.
 		getRepository: (entity: unknown) => {
 			const table = entityToTable.get(entity);
@@ -525,7 +538,16 @@ function subscriptionFixture(
 				throw new Error('the in-memory double was handed an entity it does not know');
 			}
 
-			return repository(tables, table, table === 'subscription' ? () => commits.push('subscription') : undefined);
+			const transactional = repository(tables, table, table === 'subscription' ? () => commits.push('subscription') : undefined);
+
+			// A write of the subscription inside a transaction that the database refuses, for the case about how that is answered.
+			if (options.transactionalUpdateError && table === 'subscription') {
+				transactional.update = async () => {
+					throw options.transactionalUpdateError!();
+				};
+			}
+
+			return transactional;
 		},
 		create: (_entity: unknown, partial: Row) => ({ ...partial }),
 		save: async (entity: unknown, rowOrRows: any) => {
@@ -770,6 +792,8 @@ function subscriptionFixture(
 			adjustments.filter((row) => row.ownerType === AdjustmentOwnerType.SUBSCRIPTION_BILLING && row.ownerId === ownerId),
 		idempotencyService,
 		commits,
+		locks,
+		onLock,
 		subscription: (id: string) => tables.subscription.find((row) => row.id === id),
 		items: (subscriptionId: string = SUBSCRIPTION) =>
 			tables.subscription_item.filter((row) => row.subscriptionId === subscriptionId && !row.deletedAt),
@@ -957,6 +981,35 @@ describe('SubscriptionService — putting a customer on a plan (doc 11 §10.4)',
 			fixture.service.createSubscription({ planId: PLAN, items: [{ variantId: VARIANT }] } as never)
 		).rejects.toThrow(/must name the customer/);
 		expect(fixture.tables.subscription).toEqual([]);
+	});
+
+	it('holds the plan row in share mode while the subscription is created on it', async () => {
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+
+		await fixture.service.createSubscription({
+			planId: PLAN,
+			customerId: CUSTOMER,
+			items: [{ variantId: VARIANT, quantity: '1', unitPrice: '120' }]
+		});
+
+		expect(fixture.locks).toEqual([expect.stringMatching(/FROM "subscription_plan" WHERE "id" = \$1 FOR SHARE$/)]);
+	});
+
+	it('sees a deactivation that committed while it waited for the plan row, and commits nothing', async () => {
+		const fixture = subscriptionFixture({ subscriptions: [], items: [], billings: [] });
+		// The plan passed the checks before the transaction; an update deactivates it before the lock is granted.
+		fixture.onLock.push(() => {
+			fixture.tables.subscription_plan.find((row) => row.id === PLAN).isActive = false;
+		});
+
+		await expect(
+			fixture.service.createSubscription({
+				planId: PLAN,
+				customerId: CUSTOMER,
+				items: [{ variantId: VARIANT, quantity: '1', unitPrice: '120' }]
+			})
+		).rejects.toThrow('SUBSCRIPTION_PLAN_INACTIVE');
+		expect(fixture.commits).toEqual([]);
 	});
 
 	it('refuses a currency that disagrees with the plan’s, and commits nothing', async () => {
@@ -1555,6 +1608,52 @@ describe('SubscriptionService — plan changes and proration (doc 11 §10.8)', (
 		const outcome = await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
 
 		expect(outcome.subscription.metadata?.['discountPercentage']).toBeUndefined();
+	});
+
+	it('refuses a move to a plan priced in another currency, before anything is charged', async () => {
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN), planRow(BETTER_PLAN, { currency: 'EUR' })],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' }
+		});
+
+		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow(
+			'SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in EUR and the subscription is billed in USD.'
+		);
+		expect(fixture.prorationCalls).toHaveLength(0);
+		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(PLAN);
+	});
+});
+
+describe('SubscriptionService — a write the database refuses inside a transaction', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('is answered as CrudService.update answers it: a 400 that carries no database internals', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.PENDING })],
+			transactionalUpdateError: () =>
+				Object.assign(new Error('numeric field overflow on column "quantity" of relation "subscription"'), {
+					code: '22003',
+					query: 'UPDATE "subscription" SET "status" = $1 WHERE "id" = $2',
+					parameters: ['ACTIVE', SUBSCRIPTION]
+				})
+		});
+
+		const logged = jest.spyOn((fixture.service as any).logger, 'error').mockImplementation(() => undefined);
+
+		const refused = await fixture.service.activate(SUBSCRIPTION).catch((error: unknown) => error);
+
+		expect(refused).toBeInstanceOf(BadRequestException);
+		expect(JSON.stringify((refused as BadRequestException).getResponse())).not.toMatch(/UPDATE|"subscription"|quantity/);
+		expect(fixture.subscription(SUBSCRIPTION).status).toBe(SubscriptionStatus.PENDING);
+		// What the answer no longer carries is logged for the operator, without the values the statement was bound to.
+		expect(logged).toHaveBeenCalledTimes(1);
+		expect(logged.mock.calls[0][0]).toMatch(/22003/);
+		expect(logged.mock.calls[0][0]).not.toMatch(/"ACTIVE"/);
 	});
 });
 

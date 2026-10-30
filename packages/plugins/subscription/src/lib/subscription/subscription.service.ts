@@ -23,7 +23,9 @@ import {
 	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	matchesExpectation,
-	parseEntityVersion
+	parseEntityVersion,
+	redactDatabaseError,
+	toClientSafeError
 } from '@gauzy/core';
 import {
 	IChangeSubscriptionPlanInput,
@@ -60,6 +62,7 @@ import {
 } from '../subscription.cycle';
 import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
+import { lockPlanRow } from '../subscription-plan/subscription-plan.lock';
 import { SUBSCRIPTION_REFERENCES } from '../subscription.references';
 import { currentScope } from '../subscription.scope';
 import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription.writable';
@@ -561,6 +564,22 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		};
 
 		const created = await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+			// The plan row in share mode until this commits (`lockPlanRow`): a plan update waits for it and then counts
+			// this subscription, and an update that committed first is seen here, so the subscription never starts on a
+			// plan that was deactivated or re-priced in another currency after the checks above.
+			await lockPlanRow(manager, plan.id, 'share');
+			const current = await manager.findOne(SubscriptionPlan, { where: { id: plan.id } });
+			if (!current || current.isActive === false) {
+				throw new BadRequestException(
+					`SUBSCRIPTION_PLAN_INACTIVE: the plan "${plan.code}" is not active, so no new subscription may be created from it.`
+				);
+			}
+			if (current.currency && currency && current.currency !== currency) {
+				throw new BadRequestException(
+					`SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in ${current.currency} and the request states ${currency}.`
+				);
+			}
+
 			const subscription = await manager.save(
 				Subscription,
 				manager.create(Subscription, {
@@ -1140,6 +1159,16 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		this.assertLive(subscription);
 
 		const plan = await this.planService.assertSubscribable(input.planId);
+
+		// A subscription is billed in its plan's currency (`POST /subscriptions` refuses another, and a plan with live
+		// subscriptions may not change it): its lines, prorations and carried credits are priced in it, so it moves
+		// only to a plan priced in the same one.
+		if (plan.currency && plan.currency !== subscription.currency) {
+			throw new BadRequestException(
+				`SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in ${plan.currency} and the subscription is billed in ${subscription.currency}.`
+			);
+		}
+
 		const variantId = await this.planService.resolveVariantId(plan);
 		const existing = await this.itemService.findForSubscription(id);
 		const requested: ISubscriptionItemInput[] = variantId
@@ -3236,7 +3265,29 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		const subscriptions = manager.getRepository(Subscription);
 
 		return {
-			update: (criteria, partial) => subscriptions.update(criteria as never, partial as never),
+			update: async (criteria, partial) => {
+				try {
+					return await subscriptions.update(criteria as never, partial as never);
+				} catch (error) {
+					// Logged as the platform's database-error filter logs one (the driver's code, its masked message and
+					// the statement, without the bound values), because the answer below no longer carries any of it.
+					const redacted = redactDatabaseError(error);
+					let detail: string;
+					try {
+						detail = redacted instanceof Error ? redacted.message : JSON.stringify(redacted);
+					} catch {
+						detail = 'the error could not be converted to JSON';
+					}
+					this.logger.error(
+						`The database refused a write of subscription ${String((criteria as { id?: unknown })?.id ?? '')}: ${detail}`
+					);
+
+					// Answered as `CrudService.update` answers a failed write: a 400 that carries none of the database's
+					// internals (the statement, its parameters, the driver's detail). A version conflict is not an error
+					// of this statement — `commitVersionedUpdate` raises it from the affected-row count — so it is unchanged.
+					throw new BadRequestException(toClientSafeError(error));
+				}
+			},
 			findOneByIdString: async (id) => {
 				const subscription = await subscriptions.findOne({ where: { id, ...currentScope() } } as never);
 

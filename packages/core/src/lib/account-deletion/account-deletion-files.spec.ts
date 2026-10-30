@@ -1,5 +1,16 @@
 jest.mock('../core/context', () => ({ RequestContext: { currentRequest: () => null } }));
-jest.mock('../core/file-storage', () => ({ FileStorage: class {} }));
+/** The storage provider `deleteStoredFiles` deletes through, replaced by a case that is about it. */
+const mockStorageProvider: { deleteFile: jest.Mock; deleteFileOrFail: jest.Mock } = {
+	deleteFile: jest.fn(),
+	deleteFileOrFail: jest.fn()
+};
+jest.mock('../core/file-storage', () => ({
+	FileStorage: class {
+		getProvider() {
+			return mockStorageProvider;
+		}
+	}
+}));
 
 import * as fs from 'fs';
 import * as os from 'os';
@@ -8,6 +19,7 @@ import { DataSource } from 'typeorm';
 import {
 	collectStoredFiles,
 	deleteRowsAddressedTo,
+	deleteStoredFiles,
 	deleteUnusedRows,
 	isKeyOfTenant,
 	onlyFilesOfTenant
@@ -187,5 +199,28 @@ describe('deleteRowsAddressedTo: the workspace a person leaves keeps no row addr
 
 		await expect(deleteRowsAddressedTo(dataSource.manager, TENANT, 'leaver@example.test')).resolves.toBeUndefined();
 		expect(await ids('invite')).toEqual(['invite-coworker', 'invite-other-workspace']);
+	});
+});
+
+describe('deleteStoredFiles: a file is counted as removed only when the provider removed it', () => {
+	afterEach(() => jest.clearAllMocks());
+
+	it('deletes through deleteFileOrFail, and counts a file the provider could not remove as failed', async () => {
+		// `deleteFile` would resolve here (a provider without a client): the strict call is what tells the two apart.
+		mockStorageProvider.deleteFile.mockResolvedValue(undefined);
+		mockStorageProvider.deleteFileOrFail.mockImplementation(async (key: string) => {
+			if (key.endsWith('unreachable.png')) {
+				throw new Error(`The file "${key}" was not deleted: Wasabi storage is not configured.`);
+			}
+		});
+
+		const removed = await deleteStoredFiles([
+			{ table: 'image_asset', provider: 'WASABI' as never, key: `uploads/image_assets/${TENANT}/unreachable.png` },
+			{ table: 'image_asset', provider: 'LOCAL' as never, key: `uploads/image_assets/${TENANT}/avatar.png` }
+		] as never);
+
+		expect(removed).toEqual({ deleted: 1, failed: 1 });
+		expect(mockStorageProvider.deleteFileOrFail).toHaveBeenCalledTimes(2);
+		expect(mockStorageProvider.deleteFile).not.toHaveBeenCalled();
 	});
 });

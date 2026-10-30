@@ -16,22 +16,38 @@
 	*ngIf="shown"
 	class="docs-links-panel"
 	[class.is-drop-target]="dragActive"
-	[attr.aria-labelledby]="'docs-links-panel-title-' + entityId"
+	[attr.aria-labelledby]="'docs-links-panel-title-' + (entityId || 'pending')"
 	(dragenter)="onDragEnter($event)"
 	(dragover)="onDragOver($event)"
 	(dragleave)="onDragLeave($event)"
 	(drop)="onDrop($event)"
 >
 	<header class="docs-links-panel-header">
-		<h6 class="docs-links-panel-title" [id]="'docs-links-panel-title-' + entityId">
+		<h6 class="docs-links-panel-title" [id]="'docs-links-panel-title-' + (entityId || 'pending')">
 			{{ 'DOCS.LINKS.PANEL_TITLE' | translate }}
 		</h6>
-		<span class="docs-links-panel-count" *ngIf="links.length">{{ links.length }}</span>
+		<span class="docs-links-panel-count" *ngIf="links.length || pending.length">{{ links.length || pending.length }}</span>
 
 		<!-- Icon buttons with tooltips: the panel often sits in a narrow column. -->
 		<div class="docs-links-panel-actions">
+			<!-- List rows or grid tiles; offered once there is something to lay out. -->
 			<button
-				*ngIf="!readonly && canLink"
+				*ngIf="links.length || pending.length"
+				type="button"
+				nbButton
+				ghost
+				status="basic"
+				size="small"
+				class="docs-links-icon-button"
+				[attr.aria-label]="(view === 'grid' ? 'DOCS.LINKS.LIST_VIEW' : 'DOCS.LINKS.GRID_VIEW') | translate"
+				[nbTooltip]="(view === 'grid' ? 'DOCS.LINKS.LIST_VIEW' : 'DOCS.LINKS.GRID_VIEW') | translate"
+				(click)="toggleView()"
+			>
+				<nb-icon [icon]="view === 'grid' ? 'list-outline' : 'grid-outline'"></nb-icon>
+			</button>
+
+			<button
+				*ngIf="!readonly && canLink && !isPending"
 				type="button"
 				nbButton
 				ghost
@@ -107,7 +123,7 @@
 			</button>
 		</div>
 
-		<ng-container *ngIf="!loading && !loadError && !links.length">
+		<ng-container *ngIf="!loading && !loadError && !links.length && !pending.length">
 			<!-- With upload rights the empty state is the upload target itself. -->
 			<button
 				*ngIf="!readonly && canUpload; else emptyNote"
@@ -119,7 +135,7 @@
 				<span class="docs-links-icon" aria-hidden="true"><nb-icon icon="cloud-upload-outline"></nb-icon></span>
 				<span class="docs-links-panel-empty-text">
 					<span>{{ 'DOCS.LINKS.PANEL_EMPTY' | translate }}</span>
-					<span class="docs-links-panel-empty-hint">{{ 'DOCS.LINKS.UPLOAD_HINT' | translate }}</span>
+					<span class="docs-links-panel-empty-hint">{{ (isPending ? 'DOCS.LINKS.PENDING_HINT' : 'DOCS.LINKS.UPLOAD_HINT') | translate }}</span>
 				</span>
 			</button>
 			<ng-template #emptyNote>
@@ -130,14 +146,16 @@
 			</ng-template>
 		</ng-container>
 
-		<ul class="docs-links-list" *ngIf="links.length">
+		<ul class="docs-links-list" [class.is-grid]="view === 'grid'" *ngIf="links.length">
 			<li
 				class="docs-links-row"
 				*ngFor="let link of links; trackBy: trackByLink"
 				[attr.data-family]="familyOf(link)"
 			>
+				<!-- On a grid tile an image shows itself, once fetched; everything else keeps its icon. -->
 				<span class="docs-links-icon" aria-hidden="true">
-					<nb-icon [icon]="iconOf(link)"></nb-icon>
+					<img *ngIf="view === 'grid' && thumbOf(link) as thumb; else linkIcon" class="docs-links-thumb" [src]="thumb" alt="" />
+					<ng-template #linkIcon><nb-icon [icon]="iconOf(link)"></nb-icon></ng-template>
 				</span>
 
 				<!-- Its hit area covers the whole row; the row's own buttons sit above it. -->
@@ -156,6 +174,19 @@
 				</button>
 
 				<span class="docs-links-row-actions">
+					<button
+						*ngIf="isImage(link)"
+						type="button"
+						nbButton
+						ghost
+						status="basic"
+						size="tiny"
+						[attr.aria-label]="'DOCS.PREVIEW.TITLE' | translate"
+						[nbTooltip]="'DOCS.PREVIEW.TITLE' | translate"
+						(click)="previewLink(link)"
+					>
+						<nb-icon icon="eye-outline"></nb-icon>
+					</button>
 					<button
 						*ngIf="isFile(link)"
 						type="button"
@@ -186,5 +217,63 @@
 				</span>
 			</li>
 		</ul>
+
+		<!-- A deferred panel's held files: uploaded and attached once the record is saved. -->
+		<ng-container *ngIf="pending.length">
+			<ul class="docs-links-list" [class.is-grid]="view === 'grid'">
+				<li
+					class="docs-links-row"
+					*ngFor="let item of pending; trackBy: trackByPending"
+					[attr.data-family]="familyOf(item.row)"
+				>
+					<span class="docs-links-icon" aria-hidden="true">
+						<img
+							*ngIf="view === 'grid' && pendingThumbOf(item.file) as thumb; else pendingIcon"
+							class="docs-links-thumb"
+							[src]="thumb"
+							alt=""
+						/>
+						<ng-template #pendingIcon><nb-icon [icon]="iconOf(item.row)"></nb-icon></ng-template>
+					</span>
+					<span class="docs-links-row-file" [title]="item.file.name">
+						<span class="docs-links-row-name">{{ item.file.name }}</span>
+						<span class="docs-links-row-meta" *ngIf="typeOf(item.row) || sizeOf(item.row)">
+							<span *ngIf="typeOf(item.row)">{{ typeOf(item.row) }}</span>
+							<span *ngIf="typeOf(item.row) && sizeOf(item.row)" aria-hidden="true">·</span>
+							<span *ngIf="sizeOf(item.row)">{{ sizeOf(item.row) }}</span>
+						</span>
+					</span>
+					<span class="docs-links-row-actions">
+						<button
+							type="button"
+							nbButton
+							ghost
+							status="basic"
+							size="tiny"
+							[attr.aria-label]="(canPreviewPending(item.file) ? 'DOCS.PREVIEW.TITLE' : 'DOCS.PREVIEW.DOWNLOAD') | translate"
+							[nbTooltip]="(canPreviewPending(item.file) ? 'DOCS.PREVIEW.TITLE' : 'DOCS.PREVIEW.DOWNLOAD') | translate"
+							(click)="previewPending(item.file)"
+						>
+							<!-- Images and PDFs are shown; any other held file is downloaded, never opened as a page. -->
+							<nb-icon [icon]="canPreviewPending(item.file) ? 'eye-outline' : 'download-outline'"></nb-icon>
+						</button>
+						<button
+							type="button"
+							nbButton
+							ghost
+							status="basic"
+							size="tiny"
+							class="docs-links-row-remove"
+							[attr.aria-label]="'DOCS.LINKS.REMOVE_PENDING' | translate"
+							[nbTooltip]="'DOCS.LINKS.REMOVE_PENDING' | translate"
+							(click)="removePending(item.file)"
+						>
+							<nb-icon icon="close-outline"></nb-icon>
+						</button>
+					</span>
+				</li>
+			</ul>
+			<p class="docs-links-panel-pending-note">{{ 'DOCS.LINKS.PENDING_HINT' | translate }}</p>
+		</ng-container>
 	</div>
 </section>

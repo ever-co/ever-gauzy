@@ -469,6 +469,21 @@ export class WasabiS3Provider extends Provider<WasabiS3Provider> {
 	}
 
 	/**
+	 * Deletes a file, or throws when it was not deleted: `deleteFile` only warns when no Wasabi client can be built
+	 * (the credentials are missing), and resolves.
+	 *
+	 * @param key The key of the file to delete.
+	 * @throws Error when no Wasabi client can be built, or when the deletion itself fails.
+	 */
+	override async deleteFileOrFail(key: string): Promise<void> {
+		if (!this.getWasabiInstance()) {
+			throw new Error(`The file "${key}" was not deleted: Wasabi storage is not configured.`);
+		}
+
+		await this.deleteFile(key);
+	}
+
+	/**
 	 * Get an AWS S3 instance configured with Wasabi details.
 	 *
 	 * @returns An AWS S3 instance or null in case of an error

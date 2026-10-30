@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { In } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { Money, RequestContext, isUniqueViolation } from '@gauzy/core';
+import { Money, RequestContext, isUniqueViolation, toClientSafeError } from '@gauzy/core';
 import {
 	ISubscriptionCatalogPort,
 	ISubscriptionPlan,
@@ -12,6 +12,7 @@ import {
 import { ISubscriptionCadence, normalizeDecimal, normalizeDiscountFraction } from '../subscription.cycle';
 import { currentScope } from '../subscription.scope';
 import { SubscriptionPlan } from './subscription-plan.entity';
+import { lockPlanRow } from './subscription-plan.lock';
 import { MikroOrmSubscriptionPlanRepository } from './repository/mikro-orm-subscription-plan.repository';
 import { TypeOrmSubscriptionPlanRepository } from './repository/type-orm-subscription-plan.repository';
 import { TypeOrmSubscriptionRepository } from '../subscription/repository/type-orm-subscription.repository';
@@ -101,48 +102,102 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 	 * @param changes The fields to change.
 	 * @returns The updated plan.
 	 * @throws BadRequestException when the plan is in use and the code or its active state would move.
+	 * @throws ConflictException when the organization already holds the new code.
 	 * @throws NotFoundException when the plan is not the caller's.
 	 */
 	public async updatePlan(id: ID, stated: Partial<SubscriptionPlan>): Promise<SubscriptionPlan> {
-		const plan = await this.findOneScoped(id);
+		// The checks `super.update` made before it wrote are made here, because the write now runs in the plan row's
+		// transaction (a write through the repository would take another connection and wait for the lock held there).
+		// First the organization boundary: a caller confined to an organization, or with none in the token, is answered
+		// 404 for another organization's plan, before anything about that plan (its target, its code) can shape the
+		// answer. The write below is pinned to the organization established here.
+		await this.findOneByIdString(id);
+
+		const scoped = await this.findOneScoped(id);
 		// A stated currency is checked and written in its canonical form, so the live-subscription check below compares
 		// the value that is stored: `" usd "` is `USD`, and `null` or `"US"` is refused rather than reaching the column.
 		const changes: Partial<SubscriptionPlan> =
 			stated?.currency !== undefined
 				? { ...stated, currency: canonicalPlanCurrency(stated.currency) as never }
 				: stated;
-		const normalized = this.normalize({ ...plan, ...changes } as Partial<SubscriptionPlan>);
+		// Validated on the plan as it was read, so a malformed request is refused before any lock is taken.
+		const checked = this.normalize({ ...scoped, ...changes } as Partial<SubscriptionPlan>);
 
-		if (changes.code && changes.code !== plan.code) {
-			if (await this.hasLiveSubscriptions(id)) {
+		// Then nothing the patch names may be another tenant's row (SEC-D-03).
+		if (RequestContext.currentUser()) {
+			await this.assertNestedGraphNotForeign([this.updatable(checked) as any], RequestContext.currentTenantId());
+		}
+
+		if (changes.code && changes.code !== scoped.code) {
+			await this.assertCodeIsFree(changes.code, id);
+		}
+
+		// The live-subscription checks and the write run under the plan row's lock (`lockPlanRow`): a subscription being
+		// created on the plan holds it in share mode until it commits, so the checks count it, and none can start on the
+		// terms this write changes once the checks have passed.
+		await this.typeOrmSubscriptionPlanRepository.manager.transaction(async (manager) => {
+			await lockPlanRow(manager, id, 'update');
+			// Read again under the lock: an update that committed while this one waited for it changed the row, and the
+			// checks and the write below are made against the plan as it now is, not the copy read above (which would
+			// write back the fields that update changed).
+			const plan = await manager.findOne(SubscriptionPlan, {
+				where: { id, tenantId: scoped.tenantId, organizationId: scoped.organizationId }
+			});
+
+			if (!plan) {
+				throw new NotFoundException('The subscription plan was not found.');
+			}
+
+			const normalized = this.normalize({ ...plan, ...changes } as Partial<SubscriptionPlan>);
+			const live = () => this.hasLiveSubscriptions(id, manager);
+
+			if (changes.code && changes.code !== plan.code && (await live())) {
 				throw new BadRequestException(
 					'SUBSCRIPTION_PLAN_CODE_IMMUTABLE: a plan with live subscriptions cannot be recoded; the code is what a customer and an invoice quote.'
 				);
 			}
 
-			await this.assertCodeIsFree(changes.code, id);
-		}
+			// The currency is frozen under live subscriptions for the reason the code is (R2-G16): their lines, setup fee
+			// and prorations are priced in it, and `POST /subscriptions` refuses a request whose currency differs from
+			// the plan's. `PUT /subscription-plans/:id` always took a currency; `updateSubscriptionPlan` takes it now too.
+			if (
+				changes.currency !== undefined &&
+				changes.currency !== canonicalStoredCurrency(plan.currency) &&
+				(await live())
+			) {
+				throw new BadRequestException(
+					'SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE: a plan with live subscriptions cannot change currency; they are priced and billed in it.'
+				);
+			}
 
-		// The currency is frozen under live subscriptions for the reason the code is (R2-G16): their lines, setup fee
-		// and prorations are priced in it, and `POST /subscriptions` refuses a request whose currency differs from
-		// the plan's. `PUT /subscription-plans/:id` always took a currency; `updateSubscriptionPlan` takes it now too.
-		if (
-			changes.currency !== undefined &&
-			changes.currency !== canonicalStoredCurrency(plan.currency) &&
-			(await this.hasLiveSubscriptions(id))
-		) {
-			throw new BadRequestException(
-				'SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE: a plan with live subscriptions cannot change currency; they are priced and billed in it.'
-			);
-		}
+			if (changes.isActive === false && plan.isActive !== false && (await live())) {
+				throw new ConflictException(
+					'SUBSCRIPTION_PLAN_HAS_SUBSCRIBERS: this plan still has live subscriptions; they would keep billing, so deactivate it only once they have been moved or cancelled.'
+				);
+			}
 
-		if (changes.isActive === false && plan.isActive !== false && (await this.hasLiveSubscriptions(id))) {
-			throw new ConflictException(
-				'SUBSCRIPTION_PLAN_HAS_SUBSCRIBERS: this plan still has live subscriptions; they would keep billing, so deactivate it only once they have been moved or cancelled.'
-			);
-		}
+			// Written by the transaction holding the lock (a write on another connection would wait for it), in the
+			// plan's own tenant and organization, which the reads above established. A code another plan of the
+			// organization took after `assertCodeIsFree` read it reaches the unique index here, and is answered as
+			// `create` answers it.
+			try {
+				await manager.update(
+					SubscriptionPlan,
+					{ id, tenantId: plan.tenantId, organizationId: plan.organizationId },
+					this.updatable(normalized) as any
+				);
+			} catch (error) {
+				if (isUniqueViolation(error)) {
+					throw new ConflictException(
+						`SUBSCRIPTION_PLAN_CODE_TAKEN: this organization already has a plan coded "${changes.code}".`
+					);
+				}
 
-		await super.update(id, this.updatable(normalized) as any);
+				// Any other failure of the write is answered as `CrudService.update` answers it: a 400 whose message
+				// carries none of the database's internals (the statement, its parameters, the driver's detail).
+				throw new BadRequestException(toClientSafeError(error));
+			}
+		});
 
 		return await this.findOneScoped(id);
 	}
@@ -315,14 +370,16 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 	 * @param planId The plan to count subscribers of.
 	 * @returns True when at least one subscription is still live on it.
 	 */
-	public async hasLiveSubscriptions(planId: ID): Promise<boolean> {
-		const count = await this.typeOrmSubscriptionRepository.count({
-			where: {
-				planId,
-				status: In(LIVE_SUBSCRIPTION_STATUSES),
-				...currentScope()
-			}
-		});
+	public async hasLiveSubscriptions(planId: ID, manager?: EntityManager): Promise<boolean> {
+		const where = {
+			planId,
+			status: In(LIVE_SUBSCRIPTION_STATUSES),
+			...currentScope()
+		};
+		// In the caller's transaction when it states one (a plan update under the plan row's lock).
+		const count = manager
+			? await manager.count(this.typeOrmSubscriptionRepository.target, { where } as never)
+			: await this.typeOrmSubscriptionRepository.count({ where });
 
 		return count > 0;
 	}

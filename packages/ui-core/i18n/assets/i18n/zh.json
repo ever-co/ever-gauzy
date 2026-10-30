@@ -3822,6 +3822,7 @@
 		"ESTIMATE_HOURS": "时",
 		"ESTIMATE_MINUTES": "Mins - 分钟",
 		"TASKS_STATUS": "状态",
+		"CREATE_STATUS": "创建状态",
 		"TASK_PRIORITY": "优先",
 		"TASK_SIZE": "大小",
 		"PARENT_TASK": "父任务",
@@ -7079,7 +7080,8 @@
 			"OVERVIEW": "概览",
 			"BOARD": "看板",
 			"ACTIVITY": "动态",
-			"COMMENTS": "评论"
+			"COMMENTS": "评论",
+			"DOCUMENTS": "文档"
 		},
 		"BOARD": "看板",
 		"COLUMN_EMPTY": "暂无任务",
@@ -7094,6 +7096,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} 评论了",
 		"ACTIVITY_REPLIED": "{{ actor }} 回复了评论：",
 		"ACTIVITY_FIELDS": "已更改：{{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} 更改了状态：",
+		"ACTIVITY_STATUS_FROM_TO": "状态已从 {{ from }} 更改为 {{ to }}",
 		"SOMEONE": "某人",
 		"TODAY": "今天",
 		"YESTERDAY": "昨天",

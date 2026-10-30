@@ -140,16 +140,21 @@ export class ActivepiecesService {
 	}
 
 	/**
-	 * Create MCP server
+	 * Create MCP server (legacy Activepieces MCP API only: under MCP 2.0 a project has exactly one server, and the API
+	 * answers 400). The API creates it in the tenant's Activepieces project, so `integrationId` is not sent; an
+	 * `agentId` is refused, since Activepieces creates a server from its name alone.
 	 */
 	createMcpServer(
 		integrationId: ID,
-		data: { name: string; agentId: string }
+		data: { name: string; agentId?: string },
+		projectId?: string
 	): Observable<IActivepiecesMcpServerPublic> {
-		return this.http.post<IActivepiecesMcpServerPublic>(
-			`${API_PREFIX}/integration/activepieces/mcp-server/${integrationId}`,
-			data
-		);
+		let params = new HttpParams();
+		if (projectId) params = params.set('projectId', projectId);
+
+		return this.http.post<IActivepiecesMcpServerPublic>(`${API_PREFIX}/integration/activepieces/mcp`, data, {
+			params
+		});
 	}
 
 	/**
@@ -167,11 +172,10 @@ export class ActivepiecesService {
 	}
 
 	/**
-	 * Delete MCP server
+	 * Delete MCP server (legacy Activepieces MCP API only: under MCP 2.0 a project's one server cannot be deleted, and
+	 * the API answers 400). The API reads the server in the tenant's Activepieces project, so `integrationId` is not sent.
 	 */
 	deleteMcpServer(integrationId: ID, serverId: string): Observable<void> {
-		return this.http.delete<void>(
-			`${API_PREFIX}/integration/activepieces/mcp-server/${integrationId}/${serverId}`
-		);
+		return this.http.delete<void>(`${API_PREFIX}/integration/activepieces/mcp/${encodeURIComponent(serverId)}`);
 	}
 }

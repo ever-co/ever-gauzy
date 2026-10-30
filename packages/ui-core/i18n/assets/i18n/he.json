@@ -3850,6 +3850,7 @@
 		"ESTIMATE_HOURS": "Hours",
 		"ESTIMATE_MINUTES": "Mins",
 		"TASKS_STATUS": "עבודה",
+		"CREATE_STATUS": "יצירת סטטוס",
 		"TASK_PRIORITY": "עדיפות",
 		"TASK_SIZE": "גודל",
 		"PARENT_TASK": "משימה ראשית",
@@ -7089,7 +7090,8 @@
 			"OVERVIEW": "סקירה",
 			"BOARD": "לוח",
 			"ACTIVITY": "פעילות",
-			"COMMENTS": "תגובות"
+			"COMMENTS": "תגובות",
+			"DOCUMENTS": "מסמכים"
 		},
 		"BOARD": "לוח",
 		"COLUMN_EMPTY": "אין משימות",
@@ -7104,6 +7106,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} הגיב/ה על",
 		"ACTIVITY_REPLIED": "{{ actor }} השיב/ה לתגובה על",
 		"ACTIVITY_FIELDS": "שונה: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} שינה/תה את הסטטוס של",
+		"ACTIVITY_STATUS_FROM_TO": "הסטטוס שונה מ־{{ from }} ל־{{ to }}",
 		"SOMEONE": "מישהו",
 		"TODAY": "היום",
 		"YESTERDAY": "אתמול",
