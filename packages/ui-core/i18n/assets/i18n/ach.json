@@ -6093,9 +6093,10 @@
 			"OVERVIEW": "Overview",
 			"BOARD": "Board",
 			"ACTIVITY": "Activity",
-			"COMMENTS": "Comments"
+			"COMMENTS": "Comments",
+			"DOCUMENTS": "Documents"
 		},
-		"TASKS_BY_STATUS": "Tasks by status",
+		"BOARD": "Board",
 		"COLUMN_EMPTY": "No tasks",
 		"CANNOT_DROP": "Tasks can’t be moved to “{{ column }}” because it isn’t a status of this project.",
 		"ACTIVITY": "Activity",
@@ -6108,6 +6109,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} commented on",
 		"ACTIVITY_REPLIED": "{{ actor }} replied to a comment on",
 		"ACTIVITY_FIELDS": "Changed: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} changed the status of",
+		"ACTIVITY_STATUS_FROM_TO": "Status changed from {{ from }} to {{ to }}",
 		"SOMEONE": "Someone",
 		"TODAY": "Today",
 		"YESTERDAY": "Yesterday",

@@ -1,22 +1,21 @@
-<!-- The project's tasks as a board: one column per status, each card opening its task. -->
+<!-- The project's tasks as a board: one column per status, each card opening its task. No title of its own: the
+     host's Board tab names it. -->
 <section class="panel project-view-panel board-panel" [nbSpinner]="board.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
-	<header class="panel-header">
-		<h5 class="panel-title panel-title--icon">
-			{{ 'PROJECT_VIEW.TASKS_BY_STATUS' | translate }}
-			@if (total) {
-			<span class="title-count">{{ total }}</span>
-			}
-		</h5>
-	</header>
 	<div class="panel-body">
 		@if (board.failed) {
 		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
-		} @else if (!board.loading && !total) {
-		<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_QUICK_LOOK.NO_TASKS', icon: 'checkmark-square-2-outline' }"></ng-container>
+		} @else if (!board.loading && !total && !hasParent) {
+		<ng-container *ngTemplateOutlet="empty; context: { $implicit: emptyKey, icon: 'checkmark-square-2-outline' }"></ng-container>
 		} @else {
 		<div class="board" role="list" cdkDropListGroup>
 			@for (column of board.value; track column.id) {
-			<section class="board-column" role="listitem" [attr.aria-label]="column.name" [attr.data-column-id]="column.id" [class.is-refusing]="refusingColumnId === column.id">
+			<section
+				class="board-column"
+				role="listitem"
+				[attr.aria-label]="column.name"
+				[attr.data-column-id]="column.id"
+				[class.is-refusing]="refusingColumnId === column.id"
+			>
 				<header class="board-column-header">
 					<span class="board-column-dot" [class]="'board-column-dot group-' + column.group" [style.background-color]="column.color || null"></span>
 					<span class="board-column-name" [nbTooltip]="column.name" nbTooltipPlacement="top">{{ column.name }}</span>
@@ -45,14 +44,21 @@
 					>
 						<a
 							class="board-card"
+							[class.is-parent]="card.isParent"
 							[class.is-done]="card.done"
 							[class.is-saving]="card.saving"
 							[class.is-draggable]="canMove"
 							[attr.aria-busy]="card.saving || null"
-							[routerLink]="[]"
-							[queryParams]="{ task: card.id }"
-							queryParamsHandling="merge"
+							[routerLink]="openTaskPage ? ['/pages/tasks/view', card.id] : []"
+							[queryParams]="openTaskPage ? null : { task: card.id }"
+							[queryParamsHandling]="openTaskPage ? null : 'merge'"
 						>
+							@if (card.isParent) {
+							<span class="board-card-parent">
+								<nb-icon icon="layers-outline" aria-hidden="true"></nb-icon>
+								{{ 'TASKS_PAGE.PARENT_TASK' | translate }}
+							</span>
+							}
 							<span class="board-card-title">{{ card.title }}</span>
 							<span class="board-card-meta">
 								@if (card.key) {

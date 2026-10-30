@@ -60,7 +60,11 @@ interface IBoardCard {
 	progress?: ITaskProgress | null;
 	/** True while a move to another column is being saved. */
 	saving?: boolean;
+	/** The task whose subtasks the board shows: on the board too, as Jira's boards keep a parent with its subtasks. */
+	isParent?: boolean;
 }
+
+const BOARD_RELATIONS = ['taskStatus', 'taskPriority', 'members', 'members.user'];
 
 /** One board column: a status, its colour, and its cards. */
 interface IBoardColumn {
@@ -96,6 +100,9 @@ const normalizeStatus = (value?: string): string => (value || '').trim().toLower
  * Pages run over the whole project rather than per column: a task's column can come from its status row or
  * from its bare status value, which one filter cannot ask for, and a card moved to another column leaves
  * the pages as they were.
+ *
+ * Given a `parentId`, the board is a task's: the task itself and its subtasks, in the columns of the task's
+ * project, the task's card marked as the parent and first in its column.
  */
 @Component({
 	selector: 'ga-project-board',
@@ -122,14 +129,24 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	@Input() projectId: string;
 	@Input() organizationId: string;
 	@Input() tenantId: string;
+	/** The task whose subtasks the board shows, in place of the project's tasks. */
+	@Input() parentId?: string;
+	/** A card opens its task's own page, in place of the host's task drawer (`?task=`). */
+	@Input() openTaskPage = false;
+	/** What an empty board says. */
+	@Input() emptyKey = 'PROJECT_QUICK_LOOK.NO_TASKS';
+	/** Bumped by the host after a change it made elsewhere (its status menu, an edit): the board reads again. */
+	@Input() reloadKey = 0;
 	/** A card's task saved with another status, so the host can bring what else shows the task up to date. */
 	@Output() readonly taskMoved = new EventEmitter<string>();
 
 	public board: Loadable<IBoardColumn[]> = loading([]);
 	/** The column under a dragged card that will not take it, marked so the user sees it before letting go. */
 	public refusingColumnId: string | null = null;
-	/** The project's tasks, read or not. */
+	/** The project's tasks, read or not: the subtasks, on a task's board. */
 	public total = 0;
+	/** A task's board shows the task itself, so it is not empty without subtasks. */
+	public hasParent = false;
 	/** The next page is on its way. */
 	public loadingMore = false;
 	/** The next page failed: the board's end offers to read it again, rather than asking again by itself. */
@@ -142,9 +159,12 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	/** The columns by status row and by status value or name, built with the columns and kept for the next pages. */
 	private _columnsById = new Map<string, IBoardColumn>();
 	private _columnsByKey = new Map<string, IBoardColumn>();
-	/** Each task's time worked, once read; the cards of later pages take their bars from it. */
+	/**
+	 * Each task's time worked, once read; with a project, the cards of later pages take their bars from it.
+	 * Without one, the time is read for the cards on the board, a page's at a time.
+	 */
 	private _worked: Map<string, number> | null = null;
-	private _projectWorked: IProjectWorkedTime = { total: 0 };
+	private _projectWorked?: IProjectWorkedTime;
 	/** Settles when the drag under way ends, and is `null` without one. */
 	private _dragEnd: Promise<void> | null = null;
 	private _releaseDrag: (() => void) | null = null;
@@ -262,7 +282,10 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
-		if (this.projectId && (changes['projectId'] || changes['organizationId'])) {
+		if (
+			(this.projectId || this.parentId) &&
+			(changes['projectId'] || changes['parentId'] || changes['organizationId'] || changes['reloadKey'])
+		) {
 			void this.load();
 		}
 	}
@@ -282,7 +305,16 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			const page = await this.fetchPage(this._offset);
 			// A page asked for before the drag began waits for it to end.
 			await this._dragEnd;
-			if (sequence === this._sequence) this.addPage(this.board.value, page);
+			if (sequence === this._sequence) {
+				const placed = this.addPage(this.board.value, page);
+				// Without a project, the time is read for the new cards on their own.
+				if (!this.projectId && placed.length) {
+					void this.loadProgress(
+						sequence,
+						placed.map((task) => task.id)
+					);
+				}
+			}
 		} catch {
 			if (sequence === this._sequence) this.loadMoreFailed = true;
 		} finally {
@@ -330,20 +362,37 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		const sequence = ++this._sequence;
 		// The board is replaced, and a dragged card with it: no end of that drag will be reported.
 		this.endDrag();
+		const { parentId } = this;
 		this.board = loading([]);
 		this.total = 0;
 		this.loadingMore = false;
 		this.loadMoreFailed = false;
 		this._offset = 0;
 		this._placed = new Set();
+		this.hasParent = false;
 		this._worked = null;
+		this._projectWorked = undefined;
 		try {
-			const [statuses, page] = await Promise.all([
+			const [statuses, page, parent] = await Promise.all([
 				this.fetchStatuses().catch((): ITaskStatus[] => []),
-				this.fetchPage(0)
+				this.fetchPage(0),
+				// The parent's own card; a failed read leaves the board with its subtasks only.
+				parentId
+					? firstValueFrom(
+							this._http.get<ITask>(`${API_PREFIX}/tasks/${parentId}`, {
+								params: toParams({ relations: BOARD_RELATIONS })
+							})
+						).catch((): ITask | null => null)
+					: Promise.resolve<ITask | null>(null)
 			]);
 			if (sequence !== this._sequence) return;
 			const columns = this.toColumns(statuses);
+			// The parent goes on before the pages, which read its subtasks only.
+			if (parent?.id) {
+				this.place(columns, [parent]);
+				this._placed.add(parent.id);
+				this.hasParent = true;
+			}
 			this.addPage(columns, page);
 			this.board = loaded(columns);
 			void this.loadProgress(sequence);
@@ -354,14 +403,17 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		}
 	}
 
-	/** A page of the project's tasks, from row `skip`. The id settles equal dates, so a row stays on one page. */
+	/**
+	 * A page of the project's tasks, or of a task's subtasks given a `parentId`, from row `skip`. The id settles
+	 * equal dates, so a row stays on one page.
+	 */
 	private fetchPage(skip: number): Promise<IPagination<ITask>> {
-		const { organizationId, tenantId, projectId } = this;
+		const { organizationId, tenantId, projectId, parentId } = this;
 		return firstValueFrom(
 			this._http.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, {
 				params: toParams({
-					where: { organizationId, tenantId, projectId },
-					relations: ['taskStatus', 'taskPriority', 'members', 'members.user'],
+					where: { organizationId, tenantId, ...(parentId ? { parentId } : { projectId }) },
+					relations: BOARD_RELATIONS,
 					order: { createdAt: 'DESC', id: 'ASC' },
 					take: BOARD_PAGE_SIZE,
 					skip
@@ -373,38 +425,48 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	/**
 	 * Puts a page's tasks on the board. Tasks deleted since the last page moved the unread ones back by as many
 	 * rows, so the next page starts that much earlier; what it reads again is already placed. An empty page with
-	 * none deleted means the rest are gone: nothing more is asked.
+	 * none deleted means the rest are gone: nothing more is asked. Returns the tasks it put on.
 	 */
-	private addPage(columns: IBoardColumn[], page: IPagination<ITask>): void {
+	private addPage(columns: IBoardColumn[], page: IPagination<ITask>): ITask[] {
 		const items = page?.items || [];
 		const total = page?.total || 0;
 		const deleted = this.total - total;
 		if (deleted > 0) this._offset = Math.max(0, this._offset - deleted);
 		else this._offset = items.length ? this._offset + items.length : total;
 		this.total = total;
-		this.place(
-			columns,
-			items.filter((task) => !this._placed.has(task.id))
-		);
+		const fresh = items.filter((task) => !this._placed.has(task.id));
+		this.place(columns, fresh);
 		items.forEach((task) => this._placed.add(task.id));
+		return fresh;
 	}
 
 	/**
 	 * The time worked on each of the project's tasks, all time, against its estimate — or, without one,
 	 * as its share of the project's time: the cards' progress bars. They come after the board, so a slow or
-	 * failed read (most often a 403) never holds it up.
+	 * failed read (most often a 403) never holds it up. Subtasks outside any project are read on their own,
+	 * and without a project's time to share, only those with an estimate show a bar: the cards on the board, or
+	 * the `ids` given (a page's new cards).
 	 */
-	private async loadProgress(sequence: number): Promise<void> {
+	private async loadProgress(sequence: number, ids?: string[]): Promise<void> {
 		const { organizationId, tenantId, projectId } = this;
+		const taskIds = ids || (this.board.value || []).flatMap((column) => column.cards.map((card) => card.id));
+		if (!projectId && !taskIds.length) return;
 		try {
 			const rows = await this._statisticsService.getTasksStatistics({
 				organizationId,
 				tenantId,
-				projectIds: [projectId]
+				...(projectId ? { projectIds: [projectId] } : { taskIds })
 			});
 			if (sequence !== this._sequence) return;
-			this._worked = new Map((rows || []).map((row: ITasksStatistics) => [row.id, Number(row.duration) || 0]));
-			this._projectWorked = projectWorkedTimeOf([...this._worked.values()]);
+			const worked = new Map((rows || []).map((row: ITasksStatistics) => [row.id, Number(row.duration) || 0]));
+			if (projectId) {
+				this._worked = worked;
+				this._projectWorked = projectWorkedTimeOf([...worked.values()]);
+			} else {
+				// The rows leave out a task with no time worked: it is read all the same, at none.
+				taskIds.forEach((id) => worked.has(id) || worked.set(id, 0));
+				this._worked = new Map([...(this._worked || []), ...worked]);
+			}
 			for (const column of this.board.value || []) {
 				column.cards.forEach((card) => this.setProgress(card));
 			}
@@ -428,9 +490,9 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		return scopedTaskStatusesOf(read, { organizationId, tenantId, projectId });
 	}
 
-	/** The card's bar, once the time worked has been read. */
+	/** The card's bar, once the time worked has been read: without a project, the time of its own task. */
 	private setProgress(card: IBoardCard): void {
-		if (!this._worked) return;
+		if (!this._worked || (!this.projectId && !this._worked.has(card.id))) return;
 		card.progress = taskProgressOf(this._worked.get(card.id) || 0, card.estimate, this._projectWorked);
 	}
 
@@ -486,9 +548,11 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			}
 			column.cards.push(this.toCard(task, today));
 		}
-		// Each column: overdue cards first, the rest in the order the tasks came.
+		// Each column: the parent first, then overdue cards, the rest in the order the tasks came.
 		for (const column of columns) {
-			column.cards.sort((a, b) => Number(b.overdue) - Number(a.overdue));
+			column.cards.sort(
+				(a, b) => Number(!!b.isParent) - Number(!!a.isParent) || Number(b.overdue) - Number(a.overdue)
+			);
 		}
 	}
 
@@ -506,7 +570,8 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			soon: false,
 			people: (task.members || []).map((member) => personOf(member)).filter(Boolean),
 			done: false,
-			estimate: Number(task.estimate) || 0
+			estimate: Number(task.estimate) || 0,
+			isParent: !!this.parentId && task.id === this.parentId
 		};
 		this.setDone(card, isTaskFinished(task));
 		this.setProgress(card);

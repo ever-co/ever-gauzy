@@ -172,6 +172,32 @@
     color: var(--gauzy-text-color-2);
     text-decoration: line-through;
   }
+
+  // The task whose subtasks the board shows: its title in bold, under its "Parent task" label.
+  &.is-parent {
+    .board-card-title {
+      font-weight: 600;
+    }
+  }
+}
+
+.board-card-parent {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.25rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 0.875rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--gauzy-text-color-2);
+
+  nb-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+    font-size: 0.75rem;
+  }
 }
 
 .board-card-title {

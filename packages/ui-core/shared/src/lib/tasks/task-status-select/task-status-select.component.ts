@@ -1,4 +1,14 @@
-import { AfterViewInit, Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output, ChangeDetectionStrategy } from '@angular/core';
+import {
+	AfterViewInit,
+	Component,
+	EventEmitter,
+	forwardRef,
+	Input,
+	OnDestroy,
+	OnInit,
+	Output,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { BehaviorSubject, combineLatest, debounceTime, filter, firstValueFrom, map, Subject, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,19 +26,44 @@ import { distinctUntilChange, sluggable } from '@gauzy/ui-core/common';
 import { ErrorHandlingService, Store, TaskStatusesService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
+/**
+ * The workflow category a status belongs to, the way Jira colours statuses: every status is
+ * "to do", "in progress" or "done".
+ */
+type StatusCategory = 'TODO' | 'IN_PROGRESS' | 'DONE';
+
+/** Lozenge colour for a status that has no valid colour of its own. */
+const CATEGORY_COLORS: Record<StatusCategory, string> = {
+	TODO: '#8590a2',
+	IN_PROGRESS: '#579dff',
+	DONE: '#4bce97'
+};
+
+/** Built-in status slugs that are not "to do", for statuses saved without the workflow flags. */
+const IN_PROGRESS_VALUES = new Set<string>([
+	TaskStatusEnum.IN_PROGRESS,
+	TaskStatusEnum.READY_FOR_REVIEW,
+	TaskStatusEnum.IN_REVIEW,
+	TaskStatusEnum.BLOCKED
+]);
+const DONE_VALUES = new Set<string>([TaskStatusEnum.DONE, TaskStatusEnum.COMPLETED, TaskStatusEnum.CANCELLED]);
+
+const HEX_COLOR = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ga-task-status-select',
-    templateUrl: './task-status-select.component.html',
-    providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => TaskStatusSelectComponent),
-            multi: true
-        }
-    ],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	selector: 'ga-task-status-select',
+	templateUrl: './task-status-select.component.html',
+	styleUrls: ['./task-status-select.component.scss'],
+	providers: [
+		{
+			provide: NG_VALUE_ACCESSOR,
+			useExisting: forwardRef(() => TaskStatusSelectComponent),
+			multi: true
+		}
+	],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
 export class TaskStatusSelectComponent extends TranslationBaseComponent implements AfterViewInit, OnInit, OnDestroy {
 	public organization: IOrganization;
@@ -229,6 +264,60 @@ export class TaskStatusSelectComponent extends TranslationBaseComponent implemen
 				untilDestroyed(this) // Clean up the subscription when component is destroyed
 			)
 			.subscribe();
+	}
+
+	/**
+	 * The workflow category of a status. The `isTodo` / `isInProgress` / `isDone` flags win;
+	 * statuses saved without them (and the built-in fallback list) are placed by their slug.
+	 *
+	 * @param status - The task status to categorize.
+	 * @returns The status category.
+	 */
+	categoryOf(status: Partial<ITaskStatus> | null): StatusCategory {
+		if (status?.isDone) return 'DONE';
+		if (status?.isInProgress) return 'IN_PROGRESS';
+		if (status?.isTodo) return 'TODO';
+
+		const value = status?.template || status?.value || sluggable(status?.name ?? '');
+		if (DONE_VALUES.has(value)) return 'DONE';
+		if (IN_PROGRESS_VALUES.has(value)) return 'IN_PROGRESS';
+		return 'TODO';
+	}
+
+	/**
+	 * The lozenge colour of a status: its own colour when it is a valid hex value,
+	 * otherwise the colour of its workflow category.
+	 *
+	 * @param status - The task status, or `null` for a status that does not exist yet.
+	 * @returns A `#rrggbb` / `#rgb` colour.
+	 */
+	colorOf(status: Partial<ITaskStatus> | null): string {
+		const color = status?.color?.trim();
+		if (color && HEX_COLOR.test(color)) {
+			return color.startsWith('#') ? color : `#${color}`;
+		}
+		return CATEGORY_COLORS[this.categoryOf(status)];
+	}
+
+	/**
+	 * The human-readable name of a status (built-in names are slugs such as `in-progress`).
+	 *
+	 * @param status - The task status.
+	 * @returns The display label.
+	 */
+	labelOf(status: Partial<ITaskStatus> | null): string {
+		return (status?.name ?? '').replace(/-/g, ' ');
+	}
+
+	/**
+	 * Whether a dropdown row is the currently selected status.
+	 *
+	 * @param status - The status of the row.
+	 */
+	isSelected(status: ITaskStatus): boolean {
+		if (!this.status || !status) return false;
+		if (this.status.id && status.id) return this.status.id === status.id;
+		return this.status.value === status.value;
 	}
 
 	/**

@@ -47,6 +47,7 @@
 		<div class="tab-row project-page-tabs">
 			<div class="tabs" role="tablist" [attr.aria-label]="card.name">
 				@for (item of tabs; track item.id) {
+				@if (item.id !== 'documents' || canSeeDocuments) {
 				<button
 					type="button"
 					role="tab"
@@ -62,7 +63,11 @@
 					@if (item.id === 'comments' && commentCount) {
 					<span class="title-count tab-count">{{ commentCount }}</span>
 					}
+					@if (item.id === 'documents' && documentCount) {
+					<span class="title-count tab-count">{{ documentCount }}</span>
+					}
 				</button>
+				}
 				}
 			</div>
 		</div>
@@ -126,6 +131,24 @@
 				[tenantId]="organization?.tenantId"
 				(countChange)="onCommentCount($event)"
 			></ga-project-comments>
+		</div>
+		}
+
+		<!-- The Documents load when first opened, then stay loaded, so an upload in flight finishes. -->
+		@if (documentsOpened) {
+		<div
+			class="project-page-pane"
+			role="tabpanel"
+			id="project-view-pane-documents"
+			aria-labelledby="project-view-tab-documents"
+			[hidden]="tab !== 'documents'"
+		>
+			<gz-document-links-panel
+				[entity]="documentEntity"
+				[entityId]="card.id"
+				[entityLabel]="card.name"
+				(countChanged)="onDocumentCount($event)"
+			></gz-document-links-panel>
 		</div>
 		}
 
