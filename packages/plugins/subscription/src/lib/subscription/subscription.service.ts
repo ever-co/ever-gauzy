@@ -2804,7 +2804,11 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			return await work();
 		}
 
-		return await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+		// READ COMMITTED, which is Postgres's default but not MySQL's: under REPEATABLE READ the plan read below would fix
+		// the transaction's snapshot before the settlement runs, and the versioned write's read of the subscription
+		// would then miss a version another request committed meanwhile — a caller that accepts any version would be
+		// refused with a conflict after the proration had been charged.
+		return await this.typeOrmSubscriptionRepository.manager.transaction('READ COMMITTED', async (manager) => {
 			await lockPlanRow(manager, planId, 'share');
 			const current = await manager.findOne(SubscriptionPlan, { where: { id: planId } });
 

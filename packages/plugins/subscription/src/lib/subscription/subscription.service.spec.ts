@@ -575,10 +575,40 @@ function subscriptionFixture(
 			);
 		}
 	};
-	const transaction = async (run: (transactional: any) => Promise<any>) => {
+	/** The isolation level each transaction was opened with (`undefined` for the database's default). */
+	const isolations: Array<string | undefined> = [];
+	let transactionOpen = false;
+	/**
+	 * Every write, with the connection it ran on — the transaction's manager or a service's own repository — and
+	 * whether a transaction was open at the time: the in-memory tables cannot tell the two connections apart.
+	 */
+	const writes: Array<{ table: string; via: 'transaction' | 'repository'; duringTransaction: boolean; patch?: Row }> = [];
+	const logged = <R extends Record<string, any>>(target: R, table: string, via: 'transaction' | 'repository'): R => {
+		for (const method of ['save', 'update', 'softDelete']) {
+			const original = target[method];
+
+			(target as Record<string, unknown>)[method] = async (...args: any[]) => {
+				writes.push({ table, via, duringTransaction: transactionOpen, patch: method === 'update' ? args[1] : args[0] });
+
+				return original(...args);
+			};
+		}
+
+		return target;
+	};
+	logged(subscriptionRepository, 'subscription', 'repository');
+	const transactionalRepository = manager.getRepository;
+	manager.getRepository = (entity: unknown) =>
+		logged(transactionalRepository(entity), String(entityToTable.get(entity)), 'transaction');
+	const transaction = async (...args: any[]) => {
+		// `transaction(run)` or `transaction(isolationLevel, run)`, as TypeORM's `EntityManager.transaction` takes.
+		const run: (transactional: any) => Promise<any> = args[args.length - 1];
 		const copy = Object.fromEntries(
 			Object.entries(tables).map(([table, rows]) => [table, rows.map((row) => ({ ...row }))])
 		);
+
+		isolations.push(args.length > 1 ? args[0] : undefined);
+		transactionOpen = true;
 
 		try {
 			return await run(manager);
@@ -588,6 +618,8 @@ function subscriptionFixture(
 			}
 
 			throw error;
+		} finally {
+			transactionOpen = false;
 		}
 	};
 
@@ -617,7 +649,7 @@ function subscriptionFixture(
 		catalog as never
 	);
 	const itemService = new SubscriptionItemService(
-		repository(tables, 'subscription_item') as never,
+		logged(repository(tables, 'subscription_item'), 'subscription_item', 'repository') as never,
 		{} as never,
 		pricing as never,
 		catalog as never
@@ -782,6 +814,8 @@ function subscriptionFixture(
 		commits,
 		locks,
 		onLock,
+		isolations,
+		writes,
 		subscription: (id: string) => tables.subscription.find((row) => row.id === id),
 		items: (subscriptionId: string = SUBSCRIPTION) =>
 			tables.subscription_item.filter((row) => row.subscriptionId === subscriptionId && !row.deletedAt),
@@ -1623,6 +1657,27 @@ describe('SubscriptionService — plan changes and proration (doc 11 §10.8)', (
 		expect(chargedWhenLocked).toEqual([0]);
 		expect(outcome.settlement).toBe('CHARGED');
 		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(BETTER_PLAN);
+	});
+
+	it('writes the move on the connection holding the plan lock, at READ COMMITTED, and the lines after it commits', async () => {
+		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		// The planId write runs in the transaction that holds the plan row in share mode: its foreign-key check on the
+		// plan then never queues behind a plan update waiting for that lock (MySQL queues a new S behind a waiting X).
+		const move = fixture.writes.filter((write) => write.table === 'subscription' && write.patch?.planId === BETTER_PLAN);
+
+		expect(move).toEqual([expect.objectContaining({ via: 'transaction', duringTransaction: true })]);
+		// Under REPEATABLE READ (MySQL's default) the versioned write would read the subscription from a snapshot
+		// taken before the settlement ran.
+		expect(fixture.isolations).toEqual(['READ COMMITTED']);
+
+		// The lines are rewritten once the move has committed, on their own connection.
+		const lines = fixture.writes.filter((write) => write.table === 'subscription_item');
+
+		expect(lines.length).toBeGreaterThan(0);
+		expect(lines.every((write) => write.via === 'repository' && !write.duringTransaction)).toBe(true);
 	});
 
 	it('refuses the move when the plan was deactivated while it waited for the lock, and charges nothing', async () => {
