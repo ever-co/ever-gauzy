@@ -106,6 +106,13 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 	 * @throws NotFoundException when the plan is not the caller's.
 	 */
 	public async updatePlan(id: ID, stated: Partial<SubscriptionPlan>): Promise<SubscriptionPlan> {
+		// The checks `super.update` made before it wrote are made here, because the write now runs in the plan row's
+		// transaction (a write through the repository would take another connection and wait for the lock held there).
+		// First the organization boundary: a caller confined to an organization, or with none in the token, is answered
+		// 404 for another organization's plan, before anything about that plan (its target, its code) can shape the
+		// answer. The write below is pinned to the organization established here.
+		await this.findOneByIdString(id);
+
 		const scoped = await this.findOneScoped(id);
 		// A stated currency is checked and written in its canonical form, so the live-subscription check below compares
 		// the value that is stored: `" usd "` is `USD`, and `null` or `"US"` is refused rather than reaching the column.
@@ -116,13 +123,7 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 		// Validated on the plan as it was read, so a malformed request is refused before any lock is taken.
 		const checked = this.normalize({ ...scoped, ...changes } as Partial<SubscriptionPlan>);
 
-		// The checks `super.update` made before it wrote, made here because the write now runs in the plan row's
-		// transaction (a write through the repository would take another connection and wait for the lock held there):
-		// the plan inside the caller's organization boundary — a caller confined to an organization, or with none in
-		// the token, is answered 404 for another organization's plan — and nothing the patch names in another tenant
-		// (SEC-D-03). The write below is pinned to the organization established here.
-		await this.findOneByIdString(id);
-
+		// Then nothing the patch names may be another tenant's row (SEC-D-03).
 		if (RequestContext.currentUser()) {
 			await this.assertNestedGraphNotForeign([this.updatable(checked) as any], RequestContext.currentTenantId());
 		}

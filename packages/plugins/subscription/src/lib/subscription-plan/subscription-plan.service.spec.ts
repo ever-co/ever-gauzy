@@ -975,6 +975,20 @@ describe('SubscriptionPlanService.updatePlan under the plan row lock', () => {
 		expect(fixture.patches).toEqual([]);
 	});
 
+	it('answers 404 for a plan outside the boundary before the patch is validated against that plan', async () => {
+		// The plan has a variant, so a patch naming a product would be refused as ambiguous: that answer would tell
+		// the caller the plan exists and has a variant.
+		const fixture = planFixture({ plans: [planRow('plan-1', { variantId: VARIANT })] });
+
+		jest.spyOn(fixture.service as any, 'findOneByIdString').mockRejectedValue(
+			new NotFoundException('The requested record was not found')
+		);
+
+		await expect(fixture.service.updatePlan('plan-1', { productId: 'product-1' } as any)).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+	});
+
 	it("checks what the patch points at against the signed-in caller's tenant, and writes nothing it refuses", async () => {
 		const fixture = planFixture();
 
