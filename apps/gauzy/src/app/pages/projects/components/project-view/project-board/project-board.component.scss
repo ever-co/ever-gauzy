@@ -1,3 +1,8 @@
+// The columns stop just short of the panel's bottom edge.
+.panel.board-panel .panel-body {
+  padding-bottom: 0.5rem;
+}
+
 // The board: columns side by side, scrolling sideways when they do not fit.
 .board {
   display: grid;
