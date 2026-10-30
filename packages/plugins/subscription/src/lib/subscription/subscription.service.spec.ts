@@ -1597,6 +1597,70 @@ describe('SubscriptionService — plan changes and proration (doc 11 §10.8)', (
 
 		expect(outcome.subscription.metadata?.['discountPercentage']).toBeUndefined();
 	});
+
+	it('refuses a move to a plan priced in another currency, before anything is charged', async () => {
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN), planRow(BETTER_PLAN, { currency: 'EUR' })],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' }
+		});
+
+		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow(
+			'SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in EUR and the subscription is billed in USD.'
+		);
+		expect(fixture.prorationCalls).toHaveLength(0);
+		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(PLAN);
+	});
+
+	it('holds the plan it moves to in share mode from before the charge until the move is written', async () => {
+		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
+		const chargedWhenLocked: number[] = [];
+
+		fixture.onLock.push(() => chargedWhenLocked.push(fixture.prorationCalls.length));
+
+		const outcome = await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		expect(fixture.locks).toEqual([expect.stringMatching(/FROM "subscription_plan" WHERE "id" = \$1 FOR SHARE$/)]);
+		expect(chargedWhenLocked).toEqual([0]);
+		expect(outcome.settlement).toBe('CHARGED');
+		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(BETTER_PLAN);
+	});
+
+	it('refuses the move when the plan was deactivated while it waited for the lock, and charges nothing', async () => {
+		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
+
+		// A plan update deactivates the plan and commits before the share lock is granted.
+		fixture.onLock.push(() => {
+			fixture.tables.subscription_plan.find((row) => row.id === BETTER_PLAN)!.isActive = false;
+		});
+
+		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow(
+			/SUBSCRIPTION_PLAN_INACTIVE/
+		);
+		expect(fixture.prorationCalls).toHaveLength(0);
+		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(PLAN);
+	});
+
+	it('refuses the move when the plan was re-priced in another currency while it waited for the lock', async () => {
+		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
+
+		fixture.onLock.push(() => {
+			fixture.tables.subscription_plan.find((row) => row.id === BETTER_PLAN)!.currency = 'EUR';
+		});
+
+		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow(
+			/SUBSCRIPTION_CURRENCY_MISMATCH/
+		);
+		expect(fixture.prorationCalls).toHaveLength(0);
+		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(PLAN);
+	});
+
+	it('takes no plan lock for a change that stays on the plan', async () => {
+		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', 'variant-c': '30.00' } });
+
+		await fixture.service.addItem(SUBSCRIPTION, { variantId: 'variant-c', quantity: '1' } as any);
+
+		expect(fixture.locks).toEqual([]);
+	});
 });
 
 describe('SubscriptionService — billing one cycle (doc 11 §10.5)', () => {
