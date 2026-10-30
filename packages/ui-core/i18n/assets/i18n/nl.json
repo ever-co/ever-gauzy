@@ -7118,6 +7118,9 @@
 		"COMMENT_IMAGE_FAILED": "{{ name }} kon niet worden geüpload."
 	},
 	"TASK_VIEW": {
+		"PROJECT": "Project",
+		"NO_PROJECT": "Geen project",
+		"OPEN_PROJECT": "Project openen",
 		"CHANGE_STATUS": "Status wijzigen",
 		"LINK_COPIED": "Link gekopieerd",
 		"SUBTASKS": "Subtaken",

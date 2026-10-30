@@ -7163,6 +7163,9 @@
 		"COMMENT_IMAGE_FAILED": "{{ name }} не можа да бъде качено."
 	},
 	"TASK_VIEW": {
+		"PROJECT": "Проект",
+		"NO_PROJECT": "Няма проект",
+		"OPEN_PROJECT": "Отвори проекта",
 		"CHANGE_STATUS": "Промяна на статуса",
 		"LINK_COPIED": "Връзката е копирана",
 		"SUBTASKS": "Подзадачи",

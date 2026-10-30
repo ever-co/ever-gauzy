@@ -177,6 +177,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	savingStatus = false;
 
 	readonly canEdit: boolean;
+	/**
+	 * Whether the project panel links to the project's own page, which has its own guard. Follows the
+	 * permissions, which may load after the page is built.
+	 */
+	canViewProject = false;
 
 	private taskId: string = null;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
@@ -219,6 +224,13 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				this.organization = organization;
 				void this.load();
 			});
+		this.store.userRolePermissions$
+			.pipe(
+				map(() => this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)),
+				distinctUntilChanged(),
+				untilDestroyed(this)
+			)
+			.subscribe((canViewProject) => (this.canViewProject = canViewProject));
 		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back.
 		this.route.queryParamMap
 			.pipe(
@@ -593,14 +605,16 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			hash: (value) => this.hashNumberPipe.transform(value)
 		});
 		// The description is the work, beside the subtasks; the details and the stamps are the facts. The
-		// status is the header's button, as in Jira, so the details leave it out.
+		// status is the header's button, as in Jira, and the project has a panel of its own, so the details leave
+		// both out.
+		const ownedElsewhere = new Set(['TASKS_PAGE.TASKS_STATUS', 'TASKS_PAGE.TASKS_PROJECT']);
 		this.mainSections = sections.filter((section) => section.variant === 'plain');
 		this.metaSections = sections.filter((section) => section.variant === 'meta');
 		this.detailsSections = sections
 			.filter((section) => section.variant !== 'plain' && section.variant !== 'meta')
 			.map((section) => ({
 				...section,
-				fields: section.fields.filter((field) => field.label !== 'TASKS_PAGE.TASKS_STATUS')
+				fields: section.fields.filter((field) => !ownedElsewhere.has(field.label))
 			}));
 	}
 

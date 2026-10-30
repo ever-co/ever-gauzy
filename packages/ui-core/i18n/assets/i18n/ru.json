@@ -7136,6 +7136,9 @@
 		"COMMENT_IMAGE_FAILED": "Не удалось загрузить {{ name }}."
 	},
 	"TASK_VIEW": {
+		"PROJECT": "Проект",
+		"NO_PROJECT": "Нет проекта",
+		"OPEN_PROJECT": "Открыть проект",
 		"CHANGE_STATUS": "Изменить статус",
 		"LINK_COPIED": "Ссылка скопирована",
 		"SUBTASKS": "Подзадачи",

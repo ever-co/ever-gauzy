@@ -272,6 +272,40 @@
 
 			<!-- The facts: its details, its time — tracked and entry by entry — and its stamps. -->
 			<div class="project-view-col project-view-col--side" [hidden]="tab !== 'overview'">
+				<!-- The project the task belongs to, opening the project's own page for those who may view it. -->
+				<section class="panel project-view-panel">
+					<header class="panel-header">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="folder-outline" aria-hidden="true"></nb-icon>
+							{{ 'TASK_VIEW.PROJECT' | translate }}
+						</h5>
+					</header>
+					<div class="panel-body panel-body--flush">
+						@if (task.project; as project) {
+							@if (canViewProject) {
+								<a class="task-project" [routerLink]="['/pages/organization/projects/view', project.id]">
+									<ng-container *ngTemplateOutlet="projectRow; context: { $implicit: project }"></ng-container>
+									<nb-icon
+										class="task-project-open"
+										icon="arrow-forward-outline"
+										[nbTooltip]="'TASK_VIEW.OPEN_PROJECT' | translate"
+										nbTooltipPlacement="top"
+										[attr.aria-label]="'TASK_VIEW.OPEN_PROJECT' | translate"
+									></nb-icon>
+								</a>
+							} @else {
+								<span class="task-project">
+									<ng-container *ngTemplateOutlet="projectRow; context: { $implicit: project }"></ng-container>
+								</span>
+							}
+						} @else {
+							<ng-container
+								*ngTemplateOutlet="empty; context: { $implicit: 'TASK_VIEW.NO_PROJECT', icon: 'folder-outline' }"
+							></ng-container>
+						}
+					</div>
+				</section>
+
 				<ngx-record-view [record]="task" [sections]="detailsSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
 
 				<!-- Time tracking, as Jira's: logged against the estimate, and what is left (or how far over). -->
@@ -434,6 +468,18 @@
 			<span [class]="'project-status tone-' + (status.tone || 'basic')">{{ status.text }}</span>
 		}
 	</a>
+</ng-template>
+
+<!-- A project's image (or a folder) and its name. -->
+<ng-template #projectRow let-project>
+	<span class="task-project-avatar" aria-hidden="true">
+		@if (project.imageUrl) {
+			<img [src]="project.imageUrl" alt="" />
+		} @else {
+			<nb-icon icon="folder-outline"></nb-icon>
+		}
+	</span>
+	<span class="task-project-name" [nbTooltip]="project.name" nbTooltipPlacement="top">{{ project.name }}</span>
 </ng-template>
 
 <ng-template #avatar let-person>

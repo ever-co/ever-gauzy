@@ -6131,6 +6131,9 @@
 		"COMMENT_IMAGE_FAILED": "Couldn’t upload {{ name }}."
 	},
 	"TASK_VIEW": {
+		"PROJECT": "Project",
+		"NO_PROJECT": "No project",
+		"OPEN_PROJECT": "Open project",
 		"CHANGE_STATUS": "Change status",
 		"LINK_COPIED": "Link copied",
 		"SUBTASKS": "Subtasks",

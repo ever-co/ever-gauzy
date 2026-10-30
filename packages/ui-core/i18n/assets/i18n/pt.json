@@ -7118,6 +7118,9 @@
 		"COMMENT_IMAGE_FAILED": "Não foi possível enviar {{ name }}."
 	},
 	"TASK_VIEW": {
+		"PROJECT": "Projeto",
+		"NO_PROJECT": "Sem projeto",
+		"OPEN_PROJECT": "Abrir projeto",
 		"CHANGE_STATUS": "Alterar status",
 		"LINK_COPIED": "Link copiado",
 		"SUBTASKS": "Subtarefas",
