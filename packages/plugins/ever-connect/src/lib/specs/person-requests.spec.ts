@@ -119,11 +119,11 @@ describe('A person\'s requests and /.well-known/ever-connect', () => {
 		it('a handling that stopped after the links were removed is taken up again for the same accounts, never no_account', async () => {
 			linkPerson();
 			const requests = handler();
-			const update = h.identity.updateRequest.bind(h.identity);
 			let failures = 0;
-			jest.spyOn(h.identity, 'updateRequest').mockImplementation(async (id, values) => {
+			const update = h.identity.updateClaimedRequest.bind(h.identity);
+			jest.spyOn(h.identity, 'updateClaimedRequest').mockImplementation(async (id, token, values, until) => {
 				if ('result' in values && failures++ === 0) throw new Error('database went away');
-				return update(id, values);
+				return update(id, token, values, until);
 			});
 			const event = envelope('deletion', '01JJYMM5DB8395H7EH8359HC7J');
 			await expect(requests.handle(event)).rejects.toThrow('database went away');
@@ -204,6 +204,30 @@ describe('A person\'s requests and /.well-known/ever-connect', () => {
 		[row] = await h.dataSource.query('SELECT * FROM "ever_connect_person_request"');
 		expect(row.state).toBe('answered');
 		expect(await requests.sendDue()).toBe(0);
+	});
+
+	it('a handling that lost its claim (it ran too long) does not overwrite the answer of the one that took over', async () => {
+		linkPerson();
+		let release: () => void = () => undefined;
+		const slow = {
+			deletePersonData: jest.fn(
+				() => new Promise<{ result: 'deleted' }>((resolve) => (release = () => resolve({ result: 'deleted' })))
+			),
+			exportPersonData: jest.fn()
+		};
+		const first = handler(slow);
+		const event = envelope('deletion', '01JJYMM5DB8395H7EH8359HC7K');
+		const running = first.handle(event);
+		while (!slow.deletePersonData.mock.calls.length) {
+			await new Promise((resolve) => setImmediate(resolve));
+		}
+		// The claim ran out (no renewal reached the database): another handling takes over and answers.
+		await h.dataSource.query(`UPDATE "ever_connect_person_request" SET "claimedUntil" = 0`);
+		h.clock.t += 3 * 60_000;
+		expect(await handler().resumeDue()).toBe(1);
+		release();
+		await running;
+		expect(h.platform.callsTo(ACK).map((c) => c.body?.['result'])).toEqual(['failed']);
 	});
 
 	it('a request Ever Platform does not have for this installation is not sent again', async () => {

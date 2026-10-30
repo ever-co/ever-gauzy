@@ -12,6 +12,8 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/
  * - `subjectHash`: `sha256(<issuer>#<subject>)`, as Ever Platform names an identity in a deletion or
  *   export request.
  * - `lastError`: a code, never a value.
+ * - `createdAt` (when the link or unlink happened) and `seq` (one more than the user's previous
+ *   report) order one user's reports: they are sent in that order.
  *
  * Identifiers and the tenant's display name only: never an e-mail address or a person's name. Times
  * are epoch milliseconds. Created by the core `EverConnectIdentity` migration; never exported.
@@ -19,7 +21,7 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/
 @SkipExport()
 @ColumnIndex('IDX_ever_connect_person_link_report_due', ['state', 'nextAttemptAt'])
 @ColumnIndex('IDX_ever_connect_person_link_report_subject', ['subjectHash'])
-@ColumnIndex('IDX_ever_connect_person_link_report_user', ['userId'])
+@ColumnIndex('IDX_ever_connect_person_link_report_user', ['userId', 'state'])
 @MultiORMEntity('ever_connect_person_link_report')
 export class EverConnectPersonLinkReport {
 	@PrimaryKey({ type: 'varchar', length: 36 })
@@ -67,6 +69,9 @@ export class EverConnectPersonLinkReport {
 
 	@MultiORMColumn({ type: 'bigint', nullable: true })
 	sentAt?: number | null;
+
+	@MultiORMColumn({ type: 'integer', default: 0 })
+	seq: number;
 
 	@MultiORMColumn({ type: 'bigint' })
 	createdAt: number;

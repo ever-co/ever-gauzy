@@ -98,11 +98,15 @@ export class EverConnectIdentityWorker implements OnModuleInit, OnModuleDestroy 
 		}
 	}
 
-	/** Once the client is ready: the links that existed before are queued, then marked done (retried until then). */
+	/**
+	 * Once the client is ready: the existing links of each linked tenant (also one linked later) are
+	 * queued, then the tenant is marked done; a pass that could not run marks nothing (retried).
+	 */
 	private async backfill(): Promise<void> {
-		if (await this.everIdLogin.backfillDue()) {
-			await this.reporter.backfill();
-			await this.everIdLogin.markBackfilled();
+		const linked = (await this.store.liveLinks()).filter((link) => link.status === 'linked').map((link) => link.tenantId);
+		const due = await this.everIdLogin.backfillDue(linked);
+		if (due.length && (await this.reporter.backfill(due)) !== null) {
+			await this.everIdLogin.markBackfilled(due);
 		}
 	}
 

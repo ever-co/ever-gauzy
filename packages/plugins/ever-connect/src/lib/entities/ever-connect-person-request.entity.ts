@@ -10,8 +10,8 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/
  * - `kind`: `deletion` or `export`.
  * - `subjectHashes`: the identities the request names (JSON, `sha256(<issuer>#<subject>)` each);
  *   `userIds`: the Gauzy users linked to them, kept before any link is removed (JSON), so a request
- *   handled again after a failure answers for the same accounts; `claimedUntil`: the API process
- *   working on it holds it until then.
+ *   handled again after a failure answers for the same accounts; `claimedBy` / `claimedUntil`:
+ *   the handling that holds it, renewed while it runs; only that handling writes the answer.
  * - `result`: `deleted`, `anonymised`, `retained_legal`, `no_account`, `exported` or `failed`, with
  *   `reasonCode` (a machine token) for `failed` and `legalBasis` for `retained_legal`.
  * - `exportUrlEncrypted`: the link to this installation's own export, stored encrypted.
@@ -43,6 +43,9 @@ export class EverConnectPersonRequest {
 
 	@MultiORMColumn({ type: 'text', nullable: true })
 	userIds?: string | null;
+
+	@MultiORMColumn({ type: 'varchar', length: 36, nullable: true })
+	claimedBy?: string | null;
 
 	@MultiORMColumn({ type: 'bigint', nullable: true })
 	claimedUntil?: number | null;

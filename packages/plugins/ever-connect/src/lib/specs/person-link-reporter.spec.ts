@@ -62,9 +62,9 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		h.clock.t += OIDC_CLIENT_POLL_FIRST_MS;
 		await h.everIdLogin.pollDue();
 		// As the worker does once the client is ready.
-		if (await h.everIdLogin.backfillDue()) {
-			await reporter.backfill();
-			await h.everIdLogin.markBackfilled();
+		const due = await h.everIdLogin.backfillDue([TENANT]);
+		if (due.length && (await reporter.backfill(due)) !== null) {
+			await h.everIdLogin.markBackfilled(due);
 		}
 	}
 
@@ -239,6 +239,32 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		await h.identity.purgeReports([row.subjectHash]);
 		expect(await reporter.sendDue()).toBe(0);
 		expect(h.platform.callsTo(POST)).toEqual([]);
+	});
+
+	it('reports made in the same millisecond keep their order; the batch is never filled with reports that must wait', async () => {
+		await clientReady();
+		h.platform.offline = true;
+		await reporter.unlinked(payload({ subject: 'identity-a' }) as never);
+		await reporter.sendDue();
+		h.platform.offline = false;
+		// Same time as the unlink: its order key still puts it after the unlink.
+		await reporter.linked(payload({ subject: 'identity-b' }) as never, h.clock.now());
+		for (let i = 0; i < 60; i++) {
+			await reporter.linked(payload({ userId: `waiting-${i}`, subject: `s-${i}` }) as never);
+		}
+		const [unlink] = await h.dataSource.query(`SELECT * FROM "ever_connect_person_link_report" WHERE "op" = 'unlink'`);
+		h.clock.t = Number(unlink.nextAttemptAt);
+		// Every other user's report goes; user-1's link waits for its unlink, which goes first.
+		await reporter.sendDue();
+		await reporter.sendDue();
+		await reporter.sendDue();
+		expect(h.platform.callsTo(POST)).toHaveLength(61);
+		const userOne = h.platform.calls.filter((c) => c.path.endsWith('/user-1') || c.body?.['product_user_ref'] === 'user-1');
+		expect(userOne.map((c) => c.method)).toEqual(['DELETE', 'DELETE', 'POST']);
+	});
+
+	it('a backfill that cannot run (no client yet) counts as nothing done', async () => {
+		expect(await reporter.backfill()).toBeNull();
 	});
 
 	it('events are handled in the order they happened; an older event never undoes a newer report', async () => {

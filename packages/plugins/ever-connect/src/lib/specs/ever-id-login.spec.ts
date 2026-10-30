@@ -233,16 +233,18 @@ describe('Sign in with Ever ID: the sign-in client', () => {
 		expect(await h.everIdLogin.status()).toBe('pending');
 	});
 
-	it('the links that existed before stay due until they were queued, once the client is ready', async () => {
+	it('the existing links stay due per linked tenant until they were queued, once the client is ready', async () => {
 		platformMakesTheClient(0);
 		await h.connectAndEnable();
 		await h.everIdLogin.enabled();
-		expect(await h.everIdLogin.backfillDue()).toBe(false);
+		expect(await h.everIdLogin.backfillDue(['t1'])).toEqual([]);
 		h.clock.t += OIDC_CLIENT_POLL_FIRST_MS;
 		await h.everIdLogin.pollDue();
-		expect(await h.everIdLogin.backfillDue()).toBe(true);
-		await h.everIdLogin.markBackfilled();
-		expect(await h.everIdLogin.backfillDue()).toBe(false);
+		expect(await h.everIdLogin.backfillDue(['t1', 't1'])).toEqual(['t1']);
+		await h.everIdLogin.markBackfilled(['t1']);
+		expect(await h.everIdLogin.backfillDue(['t1'])).toEqual([]);
+		// A tenant linked later is due then.
+		expect(await h.everIdLogin.backfillDue(['t1', 't2'])).toEqual(['t2']);
 		// Still the same client.
 		expect((await h.everIdLogin.getEverIdLoginConfig())?.clientSecret).toBe(SECRET);
 	});

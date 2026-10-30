@@ -23,6 +23,7 @@ export interface PersonLinkReportRecord {
 	lastError: string | null;
 	sentAt: number | null;
 	createdAt: number;
+	seq: number;
 }
 
 /** One person's request and its answer (`ever_connect_person_request`). */
@@ -35,6 +36,7 @@ export interface PersonRequestRecord {
 	subjectHashes: string[];
 	/** The Gauzy users linked to them, kept before any link was removed (`null`: not looked up yet). */
 	userIds: string[] | null;
+	claimedBy: string | null;
 	claimedUntil: number | null;
 	result: string | null;
 	reasonCode: string | null;
@@ -64,7 +66,8 @@ function toReport(row: Row): PersonLinkReportRecord {
 		nextAttemptAt: num(row['nextAttemptAt']),
 		lastError: str(row['lastError']),
 		sentAt: num(row['sentAt']),
-		createdAt: num(row['createdAt']) ?? 0
+		createdAt: num(row['createdAt']) ?? 0,
+		seq: num(row['seq']) ?? 0
 	};
 }
 
@@ -76,6 +79,7 @@ function toRequest(row: Row): PersonRequestRecord {
 		respondBy: num(row['respondBy']),
 		subjectHashes: jsonList(row['subjectHashes']) ?? [],
 		userIds: jsonList(row['userIds']),
+		claimedBy: str(row['claimedBy']),
 		claimedUntil: num(row['claimedUntil']),
 		result: str(row['result']),
 		reasonCode: str(row['reasonCode']),
@@ -119,19 +123,28 @@ export class EverConnectIdentityStore {
 
 	// ── Link reports ──────────────────────────────────────────────────────────
 
-	/** Adds a report, due now; `createdAt` (default now) is when its link or unlink happened, which orders the reports. */
+	/**
+	 * Adds a report, due now. `createdAt` (default now) is when its link or unlink happened, and `seq`
+	 * is one more than the user's latest report: together they order one user's reports.
+	 */
 	async addReport(
-		values: Omit<PersonLinkReportRecord, 'state' | 'attempts' | 'nextAttemptAt' | 'lastError' | 'sentAt' | 'createdAt'> & {
+		values: Omit<PersonLinkReportRecord, 'state' | 'attempts' | 'nextAttemptAt' | 'lastError' | 'sentAt' | 'createdAt' | 'seq'> & {
 			createdAt?: number;
 		}
 	): Promise<void> {
 		const at = this.now();
+		const q = (c: string) => this.sql.q(c);
+		const { rows } = await this.sql.run(
+			`SELECT MAX(${q('seq')}) AS ${q('seq')} FROM ${q(REPORT)} WHERE ${q('userId')} = ${this.sql.ph(1)}`,
+			[values.userId]
+		);
 		await this.sql.insertIgnore(REPORT, {
 			...values,
 			state: 'pending',
 			attempts: 0,
 			nextAttemptAt: at,
 			createdAt: values.createdAt ?? at,
+			seq: (num(rows[0]?.['seq']) ?? 0) + 1,
 			updatedAt: at
 		});
 	}
@@ -167,9 +180,29 @@ export class EverConnectIdentityStore {
 		return affected;
 	}
 
-	/** Pending reports due at `at`, oldest first. */
+	/**
+	 * Pending reports due at `at`, oldest first, that are their user's next one: a report waits while an
+	 * earlier pending report of the same user exists (by `createdAt`, then `seq`), so the limit never
+	 * fills with reports that cannot go yet.
+	 */
 	async dueReports(at: number, limit: number): Promise<PersonLinkReportRecord[]> {
-		return (await this.due(REPORT, at, limit)).map(toReport);
+		const q = (c: string) => this.sql.q(c);
+		const { rows } = await this.sql.run(
+			`SELECT r.* FROM ${q(REPORT)} r WHERE r.${q('state')} = ${this.sql.ph(1)} AND r.${q('nextAttemptAt')} IS NOT NULL AND r.${q('nextAttemptAt')} <= ${this.sql.ph(2)} ` +
+				`AND NOT EXISTS (SELECT 1 FROM ${q(REPORT)} o WHERE o.${q('userId')} = r.${q('userId')} AND o.${q('state')} = ${this.sql.ph(3)} ` +
+				`AND (o.${q('createdAt')} < r.${q('createdAt')} OR (o.${q('createdAt')} = r.${q('createdAt')} AND o.${q('seq')} < r.${q('seq')}))) ` +
+				`ORDER BY r.${q('nextAttemptAt')} ASC LIMIT ${Math.max(1, Math.floor(limit))}`,
+			['pending', at, 'pending']
+		);
+		return rows.map(toReport);
+	}
+
+	/** Whether an earlier pending report of the same user exists (it goes first). */
+	async hasEarlierPending(row: Pick<PersonLinkReportRecord, 'id' | 'userId' | 'createdAt' | 'seq'>): Promise<boolean> {
+		return (await this.pendingReportsOfUser(row.userId)).some(
+			(other) =>
+				other.id !== row.id && (other.createdAt < row.createdAt || (other.createdAt === row.createdAt && other.seq < row.seq))
+		);
 	}
 
 	async updateReport(id: string, values: Partial<Record<keyof PersonLinkReportRecord, unknown>>): Promise<void> {
@@ -217,15 +250,39 @@ export class EverConnectIdentityStore {
 	}
 
 	/**
-	 * Claims a request without an answer yet for `until` (compare and set): only one API process
-	 * works on it at a time, and a claim that ran out (the process stopped) can be taken again.
+	 * Claims a request without an answer yet for the handling `token`, until `until` (compare and set):
+	 * one handling works on it at a time, and a claim that ran out (the process stopped) can be taken
+	 * again.
 	 */
-	async claimRequest(id: string, until: number): Promise<boolean> {
+	async claimRequest(id: string, token: string, until: number): Promise<boolean> {
 		const q = (c: string) => this.sql.q(c);
 		const { affected } = await this.sql.run(
-			`UPDATE ${q(REQUEST)} SET ${q('claimedUntil')} = ${this.sql.ph(1)}, ${q('updatedAt')} = ${this.sql.ph(2)} ` +
-				`WHERE ${q('id')} = ${this.sql.ph(3)} AND ${q('result')} IS NULL AND (${q('claimedUntil')} IS NULL OR ${q('claimedUntil')} <= ${this.sql.ph(4)})`,
-			[until, this.now(), id, this.now()]
+			`UPDATE ${q(REQUEST)} SET ${q('claimedBy')} = ${this.sql.ph(1)}, ${q('claimedUntil')} = ${this.sql.ph(2)}, ${q('updatedAt')} = ${this.sql.ph(3)} ` +
+				`WHERE ${q('id')} = ${this.sql.ph(4)} AND ${q('result')} IS NULL AND (${q('claimedUntil')} IS NULL OR ${q('claimedUntil')} <= ${this.sql.ph(5)})`,
+			[token, until, this.now(), id, this.now()]
+		);
+		return affected === 1;
+	}
+
+	/**
+	 * Writes `values` to a request only while the handling `token` holds it and it has no answer (a
+	 * fenced write): returns whether it was written. With `until`, the claim is renewed at once.
+	 */
+	async updateClaimedRequest(
+		id: string,
+		token: string,
+		values: Partial<Record<keyof PersonRequestRecord, unknown>>,
+		until?: number
+	): Promise<boolean> {
+		const row: Record<string, unknown> = { ...values, updatedAt: this.now() };
+		if (Array.isArray(values.userIds)) row['userIds'] = JSON.stringify(values.userIds);
+		if (until !== undefined) row['claimedUntil'] = until;
+		const q = (c: string) => this.sql.q(c);
+		const columns = Object.keys(row);
+		const { affected } = await this.sql.run(
+			`UPDATE ${q(REQUEST)} SET ${columns.map((c, i) => `${q(c)} = ${this.sql.ph(i + 1)}`).join(', ')} ` +
+				`WHERE ${q('id')} = ${this.sql.ph(columns.length + 1)} AND ${q('claimedBy')} = ${this.sql.ph(columns.length + 2)} AND ${q('result')} IS NULL`,
+			[...Object.values(row), id, token]
 		);
 		return affected === 1;
 	}

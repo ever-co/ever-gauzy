@@ -36,11 +36,11 @@ Append-only: `at`, `tenantId` / `organizationId` (empty for an action on the ins
 
 ## `ever_connect_person_link_report`
 
-One row per Ever ID link (`op = 'link'`) or unlink (`op = 'unlink'`) of a Gauzy user to report to Ever Platform: `userId`, `tenantId`, `tenantName` (the tenant's display name, never a person's name), `issuer`, `subject`, `subjectHash` (`sha256(<issuer>#<subject>)`), `linkMethod` (`explicit`, `confirmed`), `state` (`pending`, `sent`, `failed`, `dropped`), `attempts`, `nextAttemptAt`, `lastError` (a code), `sentAt`, `createdAt`, `updatedAt`. Indexes on (`state`, `nextAttemptAt`), (`subjectHash`) and (`userId`). No e-mail address.
+One row per Ever ID link (`op = 'link'`) or unlink (`op = 'unlink'`) of a Gauzy user to report to Ever Platform: `userId`, `tenantId`, `tenantName` (the tenant's display name, never a person's name), `issuer`, `subject`, `subjectHash` (`sha256(<issuer>#<subject>)`), `linkMethod` (`explicit`, `confirmed`), `state` (`pending`, `sent`, `failed`, `dropped`), `attempts`, `nextAttemptAt`, `lastError` (a code), `sentAt`, `seq` (one more than the user's previous report; with `createdAt`, the order one user's reports are sent in), `createdAt`, `updatedAt`. Indexes on (`state`, `nextAttemptAt`), (`subjectHash`) and (`userId`, `state`). No e-mail address.
 
 ## `ever_connect_person_request`
 
-One row per deletion or export request of a person (`id` = the event id): `kind` (`deletion`, `export`), `jobId`, `respondBy`, `subjectHashes` (JSON: the identities the request names), `userIds` (JSON: the Gauzy users linked to them, kept before any link is removed), `claimedUntil` (the API process working on it holds it until then), `result`, `reasonCode`, `legalBasis`, `exportUrlEncrypted` (AES-256-GCM), `state` (`pending`, `answered`, `rejected`), `attempts`, `nextAttemptAt`, `lastError` (a code), `answeredAt`, `createdAt`, `updatedAt`. Indexes on (`state`, `nextAttemptAt`) and (`jobId`).
+One row per deletion or export request of a person (`id` = the event id): `kind` (`deletion`, `export`), `jobId`, `respondBy`, `subjectHashes` (JSON: the identities the request names), `userIds` (JSON: the Gauzy users linked to them, kept before any link is removed), `claimedBy` / `claimedUntil` (the handling working on it holds it until then, renewed while it runs; only that handling writes the answer), `result`, `reasonCode`, `legalBasis`, `exportUrlEncrypted` (AES-256-GCM), `state` (`pending`, `answered`, `rejected`), `attempts`, `nextAttemptAt`, `lastError` (a code), `answeredAt`, `createdAt`, `updatedAt`. Indexes on (`state`, `nextAttemptAt`) and (`jobId`).
 
 ## `ever_connect_lookup_cache`
 

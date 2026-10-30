@@ -67,13 +67,14 @@ const TABLES: Table[] = [
 			bigint('nextAttemptAt'),
 			varchar('lastError', 64),
 			bigint('sentAt'),
+			integer('seq', 0),
 			bigint('createdAt', true),
 			bigint('updatedAt', true)
 		],
 		indexes: [
 			{ name: 'IDX_ever_connect_person_link_report_due', columns: ['state', 'nextAttemptAt'] },
 			{ name: 'IDX_ever_connect_person_link_report_subject', columns: ['subjectHash'] },
-			{ name: 'IDX_ever_connect_person_link_report_user', columns: ['userId'] }
+			{ name: 'IDX_ever_connect_person_link_report_user', columns: ['userId', 'state'] }
 		]
 	},
 	{
@@ -87,6 +88,7 @@ const TABLES: Table[] = [
 			bigint('respondBy'),
 			text('subjectHashes'),
 			text('userIds'),
+			varchar('claimedBy', 36),
 			bigint('claimedUntil'),
 			varchar('result', 32),
 			varchar('reasonCode', 64),

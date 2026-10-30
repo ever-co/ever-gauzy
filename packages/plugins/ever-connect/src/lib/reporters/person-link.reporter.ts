@@ -172,15 +172,21 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * Reports the links that exist now, for the tenants linked to an Ever organization only, read a
-	 * page at a time: a link whose latest report is a link (waiting or sent) is not reported again; one
-	 * whose latest report is an unlink (or that was never reported) is. Returns how many reports were
-	 * added; throws when the links cannot be read (the worker tries again).
+	 * Reports the links that exist now, for the given tenants (default: every tenant linked to an Ever
+	 * organization), read a page at a time: a link whose latest report is a link (waiting or sent) is
+	 * not reported again; one whose latest report is an unlink (or that was never reported) is. Returns
+	 * how many reports were added, or `null` when it could not run (not connected, no client yet, the
+	 * Ever ID sign-in plugin not loaded): then nothing counts as done. Throws when the links cannot be
+	 * read (the worker tries again).
 	 */
-	async backfill(): Promise<number> {
+	async backfill(tenants?: string[]): Promise<number | null> {
 		const issuer = await this.platformIssuer();
-		const tenantIds = [...new Set((await this.store.liveLinks()).filter((l) => l.status === 'linked').map((l) => l.tenantId))];
-		if (!this.accounts || !issuer || !tenantIds.length || !(await this.connected())) {
+		const linked = [...new Set((await this.store.liveLinks()).filter((l) => l.status === 'linked').map((l) => l.tenantId))];
+		const tenantIds = tenants ? linked.filter((tenantId) => tenants.includes(tenantId)) : linked;
+		if (!this.accounts || !issuer || !(await this.connected())) {
+			return null;
+		}
+		if (!tenantIds.length) {
 			return 0;
 		}
 		let added = 0;
@@ -246,11 +252,8 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 				await this.identity.updateReport(row.id, { state: 'dropped', nextAttemptAt: null, lastError: 'integration_off' });
 				continue;
 			}
-			// One user's reports go in order: this one waits while an older one of the same user is pending.
-			const older = (await this.identity.pendingReportsOfUser(row.userId)).find(
-				(other) => other.id !== row.id && other.createdAt < row.createdAt
-			);
-			if (older) continue;
+			// One user's reports go in order: this one waits while an earlier one of the same user is pending.
+			if (await this.identity.hasEarlierPending(row)) continue;
 			if (await this.send(row)) sent++;
 		}
 		return sent;

@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { EVER_ID_ACCOUNTS, EverIdAccountsPort } from '@gauzy/plugin-auth-zitadel';
 import { EverConnectAuditService } from '../ever-connect-audit.service';
 import { EverConnectIdentityStore, PersonRequestRecord } from '../ever-connect-identity.store';
@@ -25,18 +26,22 @@ export function personRequestKind(type: string): 'deletion' | 'export' | null {
 /** A lower-case SHA-256 hex digest (`subject_hash`). */
 const HASH_SHAPE = /^[0-9a-f]{64}$/;
 
-/** How long one API process holds a request it works on (it is handled again after that). */
+/** How long a handling holds a request it works on, renewed while it runs (taken up again after that). */
 export const REQUEST_CLAIM_MS = LEASE_MS;
+
+/** How often a running handling renews its claim. */
+const CLAIM_RENEW_MS = Math.floor(REQUEST_CLAIM_MS / 3);
 
 /**
  * A person's deletion and export requests from the event feed, and this installation's answers
  * (`POST /v1/instances/me/ack`).
  *
  * Each request is recorded by its event id, with the identities it names, before it is handled, so a
- * request read twice (a replayed page, two API processes) is answered once. One API process claims it
- * at a time; the Gauzy users linked to its identities are looked up once and kept before any link is
- * removed, so a handling that stopped half-way (an error, a restart) is taken up again by the worker
- * and answers for the same accounts. The answer is sent at once; when Ever Platform cannot be reached
+ * request read twice (a replayed page, two API processes) is answered once. One handling claims it
+ * at a time (renewing the claim while it runs, and writing only while it holds it); the Gauzy users
+ * linked to its identities are looked up once and kept before any link is removed, so a handling that
+ * stopped half-way (an error, a restart) is taken up again by the worker and answers for the same
+ * accounts. The answer is sent at once; when Ever Platform cannot be reached
  * it is kept and sent again by the API process holding the connection's lease, with a back-off of up
  * to a day. Answers are not gated by any integration: a request already received stays answerable
  * after Sign in with Ever ID is switched off.
@@ -106,21 +111,36 @@ export class PersonRequestsHandler {
 		return sent;
 	}
 
-	/** Works out and sends the answer of one recorded request, unless it has one or another process holds it. */
+	/** Works out and sends the answer of one recorded request, unless it has one or another handling holds it. */
 	private async process(id: string): Promise<boolean> {
 		let row = await this.identity.request(id);
-		if (!row || row.result !== null || !(await this.identity.claimRequest(id, this.now() + REQUEST_CLAIM_MS))) {
+		const token = randomUUID();
+		if (!row || row.result !== null || !(await this.identity.claimRequest(id, token, this.now() + REQUEST_CLAIM_MS))) {
 			return false;
 		}
-		let userIds = row.userIds;
-		if (userIds === null) {
-			// Looked up once, before any link is removed, and kept: handled again, the answer is for the same accounts.
-			userIds = this.accounts ? await this.accounts.findUsers(row.subjectHashes) : [];
-			await this.identity.updateRequest(id, { userIds });
+		// The claim is renewed while the participant works (a large export may take a while).
+		const renew = setInterval(() => {
+			this.identity
+				.updateClaimedRequest(id, token, {}, this.now() + REQUEST_CLAIM_MS)
+				.catch((error) => this.logger.warn(`A person's request could not be held (${errorCode(error)}).`));
+		}, CLAIM_RENEW_MS);
+		renew.unref?.();
+		let answer: PersonRequestAnswer;
+		try {
+			let userIds = row.userIds;
+			if (userIds === null) {
+				// Looked up once, before any link is removed, and kept: handled again, the answer is for the same accounts.
+				userIds = this.accounts ? await this.accounts.findUsers(row.subjectHashes) : [];
+				if (!(await this.identity.updateClaimedRequest(id, token, { userIds }))) {
+					return false;
+				}
+			}
+			const subject = { subjectHashes: row.subjectHashes, userIds, jobId: row.jobId };
+			answer = await (row.kind === 'deletion' ? this.deletion : this.exports).answer(subject);
+		} finally {
+			clearInterval(renew);
 		}
-		const subject = { subjectHashes: row.subjectHashes, userIds, jobId: row.jobId };
-		const answer: PersonRequestAnswer = await (row.kind === 'deletion' ? this.deletion : this.exports).answer(subject);
-		await this.identity.updateRequest(id, {
+		const kept = await this.identity.updateClaimedRequest(id, token, {
 			result: answer.result,
 			reasonCode: answer.reasonCode ?? null,
 			legalBasis: answer.legalBasis ?? null,
@@ -129,6 +149,10 @@ export class PersonRequestsHandler {
 			nextAttemptAt: this.now(),
 			claimedUntil: null
 		});
+		if (!kept) {
+			// Another handling took it over (this one held it too long): its answer stands.
+			return false;
+		}
 		await this.audit
 			.record({
 				action: 'person_request.answer',

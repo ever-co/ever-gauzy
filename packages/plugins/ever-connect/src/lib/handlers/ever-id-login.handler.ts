@@ -25,8 +25,8 @@ export const EVER_ID_LOGIN = 'ever_id_login';
  * client got, and the client once it was handed over.
  *
  * - `pending`: asked for; read again at `nextPollAt` (5 seconds, then less often, at most every 5 minutes);
- * - `ready`: the issuer, client id and secret, handed over once by Ever Platform (`backfilledAt`:
- *   when the links that existed before were queued for reporting);
+ * - `ready`: the issuer, client id and secret, handed over once by Ever Platform
+ *   (`backfilledTenants`: the linked tenants whose existing Ever ID links were queued for reporting);
  * - `failed`: Ever Platform could not make it, or this installation's sign-in endpoints cannot be
  *   registered (`code`); switching the integration off and on again asks again;
  * - `lost`: Ever Platform made it, but its secret did not reach this installation (it is handed over
@@ -41,7 +41,7 @@ interface SignInClientState {
 	polls?: number;
 	nextPollAt?: number | null;
 	code?: string | null;
-	backfilledAt?: number | null;
+	backfilledTenants?: string[];
 }
 
 /** The state of the sign-in client as the Integrations & data tab shows it (never the secret). */
@@ -236,19 +236,27 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 		return true;
 	}
 
-	/** Whether the client is ready and the links that existed before it still wait to be reported. */
-	async backfillDue(): Promise<boolean> {
+	/**
+	 * The linked tenants (of `linkedTenantIds`) whose existing Ever ID links still wait to be reported:
+	 * none before the client is ready; a tenant linked later is due then.
+	 */
+	async backfillDue(linkedTenantIds: string[]): Promise<string[]> {
 		const row = await this.store.integration('instance', EVER_ID_LOGIN);
 		const state = row?.enabled ? this.read(row.configEncrypted) : null;
-		return state?.status === 'ready' && !state.backfilledAt;
+		if (state?.status !== 'ready') {
+			return [];
+		}
+		const done = new Set(state.backfilledTenants ?? []);
+		return [...new Set(linkedTenantIds)].filter((tenantId) => !done.has(tenantId));
 	}
 
-	/** The links that existed before the client was ready were queued for reporting. */
-	async markBackfilled(): Promise<void> {
+	/** The existing links of these tenants were queued for reporting. */
+	async markBackfilled(tenantIds: string[]): Promise<void> {
 		const row = await this.store.integration('instance', EVER_ID_LOGIN);
 		const state = this.read(row?.configEncrypted ?? null);
 		if (row?.enabled && state?.status === 'ready') {
-			await this.write(row.configEncrypted, { ...state, backfilledAt: this.now() }, false, { consentId: row.consentId });
+			const backfilledTenants = [...new Set([...(state.backfilledTenants ?? []), ...tenantIds])];
+			await this.write(row.configEncrypted, { ...state, backfilledTenants }, false, { consentId: row.consentId });
 		}
 	}
 
