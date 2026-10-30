@@ -1624,6 +1624,210 @@ describe('SubscriptionService — plan changes and proration (doc 11 §10.8)', (
 	});
 });
 
+describe('SubscriptionService — a change from the next period takes hold when that period opens', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const APRIL_NEXT_YEAR = new Date('2027-04-01T00:00:00.000Z');
+
+	it('renews on the scheduled plan, its lines, quantity, discount and cadence, and previews exactly that', async () => {
+		// The failure scenario: `effective = 'NEXT_PERIOD'` wrote `metadata.scheduledPlanChange` and nothing ever read
+		// it, so the subscription renewed on the plan it was leaving, for good.
+		const fixture = subscriptionFixture({
+			plans: [
+				planRow(PLAN),
+				planRow(BETTER_PLAN, { discountPercentage: '0.1', billingPeriod: SubscriptionBillingPeriod.YEARLY })
+			],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' }
+		});
+
+		const scheduled = await fixture.service.changePlan(SUBSCRIPTION, {
+			planId: BETTER_PLAN,
+			quantity: '2',
+			effective: 'NEXT_PERIOD'
+		});
+
+		expect(scheduled.settlement).toBe('SCHEDULED');
+		// Nothing moves before the period opens: not the plan, the quantity, the lines, nor the discount — restated
+		// now, a cycle still billed on the old plan would take the new plan's discount.
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: PLAN, quantity: '1.000000' });
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['discountPercentage']).toBeUndefined();
+		expect(fixture.items().map((row) => row.variantId)).toEqual([VARIANT]);
+
+		const preview = await fixture.service.previewNextBilling(SUBSCRIPTION, MID_MARCH);
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		// 2 × 300.00 less the new plan's 10 %, for the year the new plan bills from April.
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PAID, amount: '540.000000' });
+		expect(new Date(outcome.periodEnd as Date)).toEqual(APRIL_NEXT_YEAR);
+		expect(preview).toEqual({
+			subscriptionId: SUBSCRIPTION,
+			amount: '540.000000',
+			currency: 'USD',
+			periodStart: APRIL,
+			periodEnd: APRIL_NEXT_YEAR,
+			nextBillingAt: APRIL
+		});
+		expect(fixture.orderCalls[0]).toMatchObject({
+			amount: '540.000000',
+			lines: [{ variantId: BETTER_VARIANT, quantity: '2.000000', unitPrice: '300.000000' }]
+		});
+
+		const renewed = fixture.subscription(SUBSCRIPTION);
+
+		expect(renewed).toMatchObject({ planId: BETTER_PLAN, currentPeriodEnd: APRIL_NEXT_YEAR });
+		expect(Number(renewed?.quantity)).toBe(2);
+		expect(renewed?.metadata?.['discountPercentage']).toBe('0.1');
+		expect(renewed?.metadata?.['scheduledPlanChange']).toBeUndefined();
+		expect(fixture.items().map((row) => row.variantId)).toEqual([BETTER_VARIANT]);
+		expect(fixture.events.find((event) => event.name === 'subscription.renewed')?.data).toMatchObject({
+			planId: BETTER_PLAN
+		});
+	});
+
+	it('bills the period it was scheduled in on the old plan, and takes hold at the next one', async () => {
+		// The opening period is not billed yet (`nextBillingAt` is its start): a change from the next period does not
+		// reach back into it.
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { nextBillingAt: new Date(MARCH) })],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' }
+		});
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+
+		const opening = await fixture.service.billCycle(SUBSCRIPTION, { asOf: MARCH });
+
+		expect(opening).toMatchObject({ amount: '120.000000', periodStart: MARCH });
+		expect(fixture.subscription(SUBSCRIPTION)?.planId).toBe(PLAN);
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['scheduledPlanChange']).toMatchObject({
+			planId: BETTER_PLAN
+		});
+
+		const next = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(next).toMatchObject({ amount: '300.000000', periodStart: APRIL });
+		expect(fixture.subscription(SUBSCRIPTION)?.planId).toBe(BETTER_PLAN);
+		expect(fixture.orderCalls.map((call) => call.lines[0].variantId)).toEqual([VARIANT, BETTER_VARIANT]);
+	});
+
+	it.each([
+		['deactivated', { isActive: false }, /SUBSCRIPTION_PLAN_INACTIVE/],
+		['re-priced in another currency', { currency: 'EUR' }, /SUBSCRIPTION_CURRENCY_MISMATCH/]
+	])(
+		'refuses the change when the plan was %s meanwhile, tells it, and renews on the plan the subscription is on',
+		async (_case, planned, reason) => {
+			const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
+
+			await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+			Object.assign(fixture.tables.subscription_plan.find((row) => row.id === BETTER_PLAN) as Row, planned);
+
+			const preview = await fixture.service.previewNextBilling(SUBSCRIPTION, MID_MARCH);
+			const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+			expect(preview?.amount).toBe('120.000000');
+			expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PAID, amount: '120.000000' });
+			expect(fixture.orderCalls[0].lines).toEqual([expect.objectContaining({ variantId: VARIANT })]);
+			expect(fixture.subscription(SUBSCRIPTION)?.planId).toBe(PLAN);
+			// Cleared, so the next cycles do not refuse it again.
+			expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['scheduledPlanChange']).toBeUndefined();
+			expect(
+				fixture.events.find((event) => event.name === 'subscription.scheduled-change-refused')?.data
+			).toMatchObject({
+				subscriptionId: SUBSCRIPTION,
+				planId: BETTER_PLAN,
+				reason: expect.stringMatching(reason)
+			});
+		}
+	);
+
+	it('fails the cycle, keeping the change, when the plan cannot be read for a reason of the database’s own', async () => {
+		// Only the plan's own answer refuses a change the customer asked for; an outage fails the cycle, which is retried.
+		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+		jest.spyOn(fixture.planService, 'assertSubscribable').mockRejectedValueOnce(new Error('connection reset'));
+
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('connection reset');
+		expect(fixture.orderCalls).toEqual([]);
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['scheduledPlanChange']).toMatchObject({
+			planId: BETTER_PLAN
+		});
+	});
+
+	it('is replaced by a plan change made now: the latest decision about the plan holds at the renewal', async () => {
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN), planRow(BETTER_PLAN), planRow('plan-3', { variantId: 'variant-c' })],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00', 'variant-c': '60.00' }
+		});
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: 'plan-3', effective: 'NEXT_PERIOD' });
+
+		// The upgrade is prorated inside the period, as the worked example of doc 11 §10.8 is.
+		jest.useFakeTimers({ now: MID_MARCH, doNotFake: ['nextTick', 'queueMicrotask', 'setImmediate', 'setTimeout'] });
+
+		try {
+			await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).resolves.toMatchObject({
+				settlement: 'CHARGED'
+			});
+		} finally {
+			jest.useRealTimers();
+		}
+
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['scheduledPlanChange']).toBeUndefined();
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({ amount: '300.000000' });
+		expect(fixture.subscription(SUBSCRIPTION)?.planId).toBe(BETTER_PLAN);
+	});
+
+	it('applies a change of lines recorded with no current period at the first cycle', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { currentPeriodStart: null, currentPeriodEnd: null })],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '15.50' }
+		});
+
+		const scheduled = await fixture.service.addItem(SUBSCRIPTION, { variantId: BETTER_VARIANT, quantity: '2' });
+
+		expect(scheduled.settlement).toBe('SCHEDULED');
+		expect(fixture.items().map((row) => row.variantId)).toEqual([VARIANT]);
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({ amount: '151.000000' });
+		expect(fixture.items().map((row) => row.variantId)).toEqual([VARIANT, BETTER_VARIANT]);
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['scheduledPlanChange']).toBeUndefined();
+	});
+
+	it('is the service’s own key: a caller’s metadata neither plants one nor erases one (SEC-B-03)', async () => {
+		// Planted, it would move the subscription to another plan at the next renewal with no plan change at all.
+		const planted = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
+
+		await planted.service.applyChanges(SUBSCRIPTION, {
+			metadata: { scheduledPlanChange: { planId: BETTER_PLAN, effectiveAt: APRIL }, note: 'kept' }
+		} as never);
+
+		expect(planted.subscription(SUBSCRIPTION)?.metadata).toEqual({ note: 'kept' });
+		await expect(planted.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).resolves.toMatchObject({
+			amount: '120.000000'
+		});
+		expect(planted.subscription(SUBSCRIPTION)?.planId).toBe(PLAN);
+
+		const kept = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
+
+		await kept.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+		await kept.service.applyChanges(SUBSCRIPTION, { metadata: { note: 'kept' } } as never);
+
+		expect(kept.subscription(SUBSCRIPTION)?.metadata?.['scheduledPlanChange']).toMatchObject({
+			planId: BETTER_PLAN
+		});
+	});
+});
+
 describe('SubscriptionService — a write the database refuses inside a transaction', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
