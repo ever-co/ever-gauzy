@@ -14,8 +14,6 @@
 		} @else if (!board.loading && !total) {
 		<ng-container *ngTemplateOutlet="empty; context: { $implicit: 'PROJECT_QUICK_LOOK.NO_TASKS', icon: 'checkmark-square-2-outline' }"></ng-container>
 		} @else {
-		<!-- The board scrolls in its own box, the height of the view, so the page stays one screen tall. -->
-		<div class="board-scroller" cdkScrollable>
 		<div class="board" role="list" cdkDropListGroup>
 			@for (column of board.value; track column.id) {
 			<section class="board-column" role="listitem" [attr.aria-label]="column.name" [attr.data-column-id]="column.id" [class.is-refusing]="refusingColumnId === column.id">
@@ -139,7 +137,6 @@
 			}
 		</div>
 		}
-		</div>
 		}
 	</div>
 </section>

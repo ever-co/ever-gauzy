@@ -14,7 +14,6 @@ import {
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { CdkDragDrop, CdkDragMove, DragDropModule, transferArrayItem } from '@angular/cdk/drag-drop';
-import { CdkScrollable } from '@angular/cdk/scrolling';
 import { RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
@@ -105,7 +104,6 @@ const normalizeStatus = (value?: string): string => (value || '').trim().toLower
 		CommonModule,
 		RouterModule,
 		DragDropModule,
-		CdkScrollable,
 		NbButtonModule,
 		NbIconModule,
 		NbSpinnerModule,

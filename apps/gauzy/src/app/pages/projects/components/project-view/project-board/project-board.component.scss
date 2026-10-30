@@ -1,21 +1,14 @@
-// The board's box: no taller than what the view leaves under the page's header and tabs, however many
-// cards are read. It scrolls both ways, so the columns scroll together.
-.board-scroller {
-  max-height: calc(100vh - 17rem);
-  min-height: 20rem;
-  overflow: auto;
-}
-
-// The columns side by side.
+// The board: columns side by side, scrolling sideways when they do not fit.
 .board {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(15rem, 1fr);
   gap: 0.75rem;
+  overflow-x: auto;
   padding-bottom: 0.25rem;
 }
 
-// Where the next page is read from; it stands below the columns, in the box's flow.
+// Where the next page is read from, below the columns.
 .board-end {
   position: relative;
   min-height: 2rem;
@@ -32,18 +25,11 @@
   background-color: var(--gauzy-hover-tint);
 }
 
-// Stays over its column as the board scrolls: the card colour under the tint, or the cards would show through.
 .board-column-header {
-  position: sticky;
-  top: 0;
-  z-index: 1;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 0.75rem;
-  border-radius: 0.375rem 0.375rem 0 0;
-  background-color: var(--gauzy-card-1);
-  background-image: linear-gradient(var(--gauzy-hover-tint), var(--gauzy-hover-tint));
 }
 
 .board-column-dot {
