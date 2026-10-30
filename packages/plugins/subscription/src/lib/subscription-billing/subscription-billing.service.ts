@@ -483,6 +483,46 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	}
 
 	/**
+	 * Records what a retry charges on a cycle nothing has settled.
+	 *
+	 * A retry prices the period when it runs, as a first attempt does: the lines as they stand then, and a change
+	 * scheduled for the period that took hold at that attempt. The row an earlier attempt wrote keeps the amount that
+	 * attempt priced unless it is restated here, and `markPaid` keeps whatever the row says, so a cycle settled on the
+	 * retry would record, return and announce another amount than the one its order charged. Predicated on the cycle
+	 * still being unsettled: a cycle settled meanwhile keeps its amount.
+	 *
+	 * @param billing The cycle as read.
+	 * @param amount What the retry charges.
+	 * @param pricing The gross amount and the discount the charge was priced from.
+	 * @returns The cycle as it stands.
+	 */
+	public async repriceUnsettled(
+		billing: SubscriptionBilling,
+		amount: DecimalString,
+		pricing: { gross: DecimalString; discount: DecimalString }
+	): Promise<SubscriptionBilling> {
+		const restated = this.normalizeAmount(amount, billing.currency);
+		const metadata = (billing.metadata ?? {}) as Record<string, unknown>;
+
+		if (
+			billing.amount === restated &&
+			metadata['gross'] === pricing.gross &&
+			metadata['discount'] === pricing.discount
+		) {
+			return billing;
+		}
+
+		await this.writeIf(
+			billing.id,
+			{ status: In([SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED]) },
+			async () => null,
+			{ amount: restated, metadata: { ...metadata, ...pricing } }
+		);
+
+		return await this.findOneScoped(billing.id);
+	}
+
+	/**
 	 * Records that a paid cycle was refunded.
 	 *
 	 * @param id The cycle.

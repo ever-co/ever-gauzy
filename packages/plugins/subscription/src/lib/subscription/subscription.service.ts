@@ -310,6 +310,40 @@ function isVersionConflict(error: unknown): boolean {
 }
 
 /**
+ * Raised inside the transaction that applies a scheduled change when the plan it moves to is no longer the plan the
+ * change was priced on: deactivated, priced in another currency, or given other terms after the change was read. The
+ * change is read again (`applyScheduledChange`), so it is refused or priced on the plan as it now stands.
+ */
+class ScheduledPlanMoved extends ConflictException {
+	constructor() {
+		super(
+			'SUBSCRIPTION_SCHEDULED_PLAN_CHANGED: the plan a scheduled change moves to changed while the change was being applied. Read the subscription again and retry.'
+		);
+	}
+}
+
+/**
+ * @param plan A plan as read.
+ * @returns What a scheduled change is checked and priced against, so two reads of the plan can be compared: whether it
+ * may be taken up, its currency, what it delivers, its discount and its cadence.
+ */
+function scheduledPlanTerms(plan: SubscriptionPlan | null): string {
+	return JSON.stringify(
+		plan
+			? [
+					plan.isActive !== false,
+					plan.currency ?? null,
+					plan.variantId ?? null,
+					plan.productId ?? null,
+					plan.discountPercentage ?? null,
+					plan.billingPeriod ?? null,
+					plan.billingInterval ?? null
+			  ]
+			: null
+	);
+}
+
+/**
  * The codes that mean the instrument a subscription points at can no longer be charged.
  *
  * A revocation and an expiry are terminal states of a row, and a miss is a row that is not there at
@@ -2063,10 +2097,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			// (`rememberSetupFee`, `clearPendingCredit`) write the metadata they were handed, and the one read before the
 			// change would put a cleared change back.
 			subscription = opened.subscription;
+			items = await this.itemService.findForSubscription(subscription.id);
 
 			if (opened.plan) {
 				plan = opened.plan;
-				items = await this.itemService.findForSubscription(subscription.id);
 				// The period opens on the new plan's cadence. A row an earlier attempt wrote for it moved its end with the
 				// change, so every later retry, which reads the period from the plan, finds the row on the same period.
 				period = periodFrom(period.start, this.planService.cadenceOf(plan));
@@ -2082,17 +2116,21 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			metadata: subscription.metadata
 		});
 
-		const billing =
-			existing ??
-			(await this.billingService.createPending({
-				subscriptionId: subscription.id,
-				periodStart: period.start,
-				periodEnd: period.end,
-				amount: net.toStorageString(),
-				currency: subscription.currency,
-				dueAt: period.start,
-				metadata: { gross: gross.toStorageString(), discount: discount.toStorageString() }
-			}));
+		// A retry charges what it prices now (the lines as they stand, a change that took hold at this attempt), so the row
+		// an earlier attempt wrote records that: the amount the cycle settles for, and that `subscription.renewed`
+		// reports, is the amount its order charged.
+		const pricing = { gross: gross.toStorageString(), discount: discount.toStorageString() };
+		const billing = existing
+			? await this.billingService.repriceUnsettled(existing, net.toStorageString(), pricing)
+			: await this.billingService.createPending({
+					subscriptionId: subscription.id,
+					periodStart: period.start,
+					periodEnd: period.end,
+					amount: net.toStorageString(),
+					currency: subscription.currency,
+					dueAt: period.start,
+					metadata: pricing
+			  });
 
 		if (discount.isPositive()) {
 			await this.appendDiscount(billing, subscription, discount);
@@ -3014,6 +3052,11 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * is on. A cycle row an earlier attempt wrote for the period (a retry of a failed charge) moves its end to the new
 	 * plan's cadence on the same transaction (`recutUnsettled`).
 	 *
+	 * The plan the change moves to is read again under its row lock, as `createSubscription` reads it, and has to be the
+	 * plan the change was priced on; a plan changed meanwhile has the change read again (`ScheduledPlanMoved`). A claim
+	 * lost to a write that took the change away (a plan change made now clears it) stops the cycle: it read the plan,
+	 * the lines and the metadata before that write, and the next pass bills the subscription as the write left it.
+	 *
 	 * @param id The subscription being billed.
 	 * @param periodStart The start of the period the cycle bills.
 	 * @param spend The reader the cycle's subscription writes take their expectation from.
@@ -3032,6 +3075,12 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			const due = await this.scheduledChangeAt(subscription, periodStart);
 
 			if (!due) {
+				if (attempt > 1) {
+					throw new ConflictException(
+						'SUBSCRIPTION_CHANGED_DURING_CYCLE: the subscription changed while its billing cycle was opening; the next billing pass bills it as it now stands.'
+					);
+				}
+
 				return null;
 			}
 
@@ -3040,6 +3089,18 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 			try {
 				await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+					if (lines && due.plan) {
+						// A plan update holds this lock while it counts the plan's live subscriptions, so it either committed
+						// before (and the plan is read here as it left it) or waits for this change to commit (and counts it).
+						await lockPlanRow(manager, due.plan.id, 'share');
+
+						const current = await manager.findOne(SubscriptionPlan, { where: { id: due.plan.id } });
+
+						if (scheduledPlanTerms(current) !== scheduledPlanTerms(due.plan)) {
+							throw new ScheduledPlanMoved();
+						}
+					}
+
 					await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
 						where: currentScope(),
 						id,
@@ -3076,7 +3137,11 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					}
 				});
 			} catch (error) {
-				if (stated.wildcard && attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+				if (
+					stated.wildcard &&
+					attempt < METADATA_EDIT_ATTEMPTS &&
+					(isVersionConflict(error) || error instanceof ScheduledPlanMoved)
+				) {
 					continue;
 				}
 

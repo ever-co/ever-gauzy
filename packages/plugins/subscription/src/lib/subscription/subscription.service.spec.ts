@@ -1869,10 +1869,56 @@ describe('SubscriptionService — a change from the next period takes hold when 
 			return due;
 		});
 
-		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
-
+		// Copilot on #11565, round 2: going on after the lost claim charged the plan, lines and metadata the cycle read
+		// before the winning write (120 for the old line instead of 60), and its later writes could put the change back.
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow(
+			/SUBSCRIPTION_CHANGED_DURING_CYCLE/
+		);
+		expect(fixture.orderCalls).toEqual([]);
 		expect(fixture.subscription(SUBSCRIPTION)?.planId).toBe('plan-3');
 		expect(fixture.items().map((row) => row.variantId)).toEqual(['variant-c']);
+
+		// The next pass bills the subscription as the winning change left it.
+		fixture.idempotencyService.advanceBy(5 * 60 * 1000);
+
+		const next = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(next).toMatchObject({ status: SubscriptionBillingStatus.PAID, amount: '60.000000' });
+		expect(fixture.orderCalls[0].lines).toEqual([expect.objectContaining({ variantId: 'variant-c' })]);
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['scheduledPlanChange']).toBeUndefined();
+	});
+
+	it('refuses the change when the plan is deactivated between the read and its lock', async () => {
+		// Copilot on #11565, round 2: the plan was checked before the transaction, without its row lock, so a plan update
+		// that saw no subscriber on it could deactivate it before the switch committed.
+		const fixture = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+
+		const read = (fixture.service as any).scheduledChangeAt.bind(fixture.service);
+
+		jest.spyOn(fixture.service as any, 'scheduledChangeAt').mockImplementationOnce(async (...args: unknown[]) => {
+			const due = await read(...args);
+			const index = fixture.tables.subscription_plan.findIndex((plan) => plan.id === BETTER_PLAN);
+
+			// A new row, as a database answers the read under the lock with: the plan the change was priced on stays as read.
+			fixture.tables.subscription_plan[index] = { ...fixture.tables.subscription_plan[index], isActive: false };
+
+			return due;
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.locks).toEqual(
+			expect.arrayContaining([expect.stringMatching(/FROM "subscription_plan" WHERE "id" = \$1 FOR SHARE$/)])
+		);
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PAID, amount: '120.000000' });
+		expect(fixture.subscription(SUBSCRIPTION)?.planId).toBe(PLAN);
+		expect(fixture.items().map((row) => row.variantId)).toEqual([VARIANT]);
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['scheduledPlanChange']).toBeUndefined();
+		expect(
+			fixture.events.find((event) => event.name === 'subscription.scheduled-change-refused')?.data
+		).toMatchObject({ planId: BETTER_PLAN, reason: expect.stringMatching(/SUBSCRIPTION_PLAN_INACTIVE/) });
 	});
 
 	it('moves a failed attempt’s row onto the new cadence when the change takes hold at its retry', async () => {
@@ -1918,6 +1964,16 @@ describe('SubscriptionService — a change from the next period takes hold when 
 		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
 			planId: BETTER_PLAN,
 			currentPeriodEnd: APRIL_NEXT_YEAR
+		});
+		// Copilot and CodeRabbit on #11565, round 2: the row, the outcome and the event record what the order charged,
+		// not the month the first attempt priced.
+		expect(paid.amount).toBe('300.000000');
+		expect(fixture.cycle(APRIL)).toMatchObject({
+			amount: '300.000000',
+			metadata: expect.objectContaining({ gross: '300.000000', discount: '0.000000' })
+		});
+		expect(fixture.events.find((event) => event.name === 'subscription.renewed')?.data).toMatchObject({
+			amount: '300.000000'
 		});
 	});
 
