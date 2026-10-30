@@ -24,6 +24,7 @@ import {
 	commitVersionedUpdate,
 	matchesExpectation,
 	parseEntityVersion,
+	redactDatabaseError,
 	toClientSafeError
 } from '@gauzy/core';
 import {
@@ -3268,6 +3269,19 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				try {
 					return await subscriptions.update(criteria as never, partial as never);
 				} catch (error) {
+					// Logged as the platform's database-error filter logs one (the driver's code, its masked message and
+					// the statement, without the bound values), because the answer below no longer carries any of it.
+					const redacted = redactDatabaseError(error);
+					let detail: string;
+					try {
+						detail = redacted instanceof Error ? redacted.message : JSON.stringify(redacted);
+					} catch {
+						detail = 'unserialisable database error';
+					}
+					this.logger.error(
+						`The database refused a write of subscription ${String((criteria as { id?: unknown })?.id ?? '')}: ${detail}`
+					);
+
 					// Answered as `CrudService.update` answers a failed write: a 400 that carries none of the database's
 					// internals (the statement, its parameters, the driver's detail). A version conflict is not an error
 					// of this statement — `commitVersionedUpdate` raises it from the affected-row count — so it is unchanged.

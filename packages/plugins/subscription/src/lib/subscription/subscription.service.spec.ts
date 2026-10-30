@@ -166,6 +166,7 @@ jest.mock('@gauzy/core', () => {
 		...jest.requireActual('@gauzy/core/src/lib/money/decimal'),
 		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
 		toClientSafeError: jest.requireActual('@gauzy/core/src/lib/core/errors/database-error').toClientSafeError,
+		redactDatabaseError: jest.requireActual('@gauzy/core/src/lib/core/errors/database-error').redactDatabaseError,
 		SequenceService: class SequenceService {},
 		assertPlainReferencesNotForeign: (...args: unknown[]) => mockAssertReferences(...args),
 		RequestContext: {
@@ -1642,11 +1643,17 @@ describe('SubscriptionService — a write the database refuses inside a transact
 				})
 		});
 
+		const logged = jest.spyOn((fixture.service as any).logger, 'error').mockImplementation(() => undefined);
+
 		const refused = await fixture.service.activate(SUBSCRIPTION).catch((error: unknown) => error);
 
 		expect(refused).toBeInstanceOf(BadRequestException);
 		expect(JSON.stringify((refused as BadRequestException).getResponse())).not.toMatch(/UPDATE|"subscription"|quantity/);
 		expect(fixture.subscription(SUBSCRIPTION).status).toBe(SubscriptionStatus.PENDING);
+		// What the answer no longer carries is logged for the operator, without the values the statement was bound to.
+		expect(logged).toHaveBeenCalledTimes(1);
+		expect(logged.mock.calls[0][0]).toMatch(/22003/);
+		expect(logged.mock.calls[0][0]).not.toMatch(/"ACTIVE"/);
 	});
 });
 
