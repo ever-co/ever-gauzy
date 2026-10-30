@@ -8278,7 +8278,8 @@
 			"OVERVIEW": "Overview",
 			"BOARD": "Board",
 			"ACTIVITY": "Activity",
-			"COMMENTS": "Comments"
+			"COMMENTS": "Comments",
+			"DOCUMENTS": "Documents"
 		},
 		"BOARD": "Board",
 		"COLUMN_EMPTY": "No tasks",

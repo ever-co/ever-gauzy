@@ -5,7 +5,7 @@ import { BehaviorSubject, combineLatest, firstValueFrom } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
-import { BaseEntityEnum, IOrganization, ITask } from '@gauzy/contracts';
+import { BaseEntityEnum, FeatureEnum, IOrganization, ITask, PermissionsEnum } from '@gauzy/contracts';
 import {
 	CommentService,
 	OrganizationProjectsService,
@@ -44,9 +44,9 @@ export enum ProjectViewPeriod {
 }
 
 /** The page's tabs, in the manner of Jira's project pages; the open one is in the URL (`?tab=`). */
-export type ProjectViewTab = 'overview' | 'board' | 'activity' | 'comments';
+export type ProjectViewTab = 'overview' | 'board' | 'activity' | 'comments' | 'documents';
 
-const TABS: ProjectViewTab[] = ['overview', 'board', 'activity', 'comments'];
+const TABS: ProjectViewTab[] = ['overview', 'board', 'activity', 'comments', 'documents'];
 
 /** Tabs whose figures read over the period, and so show the period switcher. */
 const PERIOD_TABS = new Set<ProjectViewTab>(['overview']);
@@ -76,7 +76,8 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
 		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
 		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' },
-		{ id: 'comments', label: 'PROJECT_VIEW.TABS.COMMENTS', icon: 'message-square-outline' }
+		{ id: 'comments', label: 'PROJECT_VIEW.TABS.COMMENTS', icon: 'message-square-outline' },
+		{ id: 'documents', label: 'PROJECT_VIEW.TABS.DOCUMENTS', icon: 'file-text-outline' }
 	];
 	tab: ProjectViewTab = 'overview';
 
@@ -107,6 +108,13 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	commentCount = 0;
 	/** The Comments tab has counted the comments for this project: its count is newer than the first read. */
 	private commentCountFromTab = false;
+
+	/** The Documents load when first opened, then stay mounted, so an upload in flight is not cut off. */
+	documentsOpened = false;
+	/** The project's attached documents, as the Documents tab last counted them. */
+	documentCount = 0;
+	/** Entity type the Documents tab attaches its links to. */
+	readonly documentEntity = BaseEntityEnum.OrganizationProject;
 
 	/**
 	 * The task open in the drawer — the quick look the task lists open — named by `?task=<id>`, so it can
@@ -160,14 +168,19 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 				this.organization = organization;
 				void this.load();
 			});
-		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back.
-		this.route.queryParamMap
-			.pipe(
+		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back. It is checked
+		// again when the feature flags land: they arrive after the page, and gate the Documents tab.
+		combineLatest([
+			this.route.queryParamMap.pipe(
 				map((params) => params.get('tab') as ProjectViewTab),
-				distinctUntilChanged(),
-				untilDestroyed(this)
-			)
-			.subscribe((tab) => this.openTab(TABS.includes(tab) ? tab : 'overview'));
+				distinctUntilChanged()
+			),
+			this.store.featureOrganizations$,
+			this.store.featureTenant$,
+			this.store.featureToggles$
+		])
+			.pipe(untilDestroyed(this))
+			.subscribe(([tab]) => this.openTab(TABS.includes(tab) && this.canOpenTab(tab) ? tab : 'overview'));
 		// The task drawer follows the URL too, and reloads with the organization.
 		combineLatest([this.route.queryParamMap.pipe(map((params) => params.get('task'))), organization$])
 			.pipe(
@@ -280,6 +293,20 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		this.tab = tab;
 		if (tab === 'board') this.boardOpened = true;
 		if (tab === 'comments') this.commentsOpened = true;
+		if (tab === 'documents') this.documentsOpened = true;
+	}
+
+	/**
+	 * Whether the Documents tab is offered: the same gates as its panel — DOCS_READ and the
+	 * organization's Documents feature — so the tab never opens on an empty pane.
+	 */
+	get canSeeDocuments(): boolean {
+		return this.store.hasPermission(PermissionsEnum.DOCS_READ) && this.store.hasFeatureEnabled(FeatureEnum.FEATURE_DOCUMENTS);
+	}
+
+	/** Whether a tab named in the URL may open; the others fall back to the Overview. */
+	private canOpenTab(tab: ProjectViewTab): boolean {
+		return tab !== 'documents' || this.canSeeDocuments;
 	}
 
 	/** Whether the open tab reads over the period, and so shows the period switcher. */
@@ -299,6 +326,7 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 		this.isArchived = false;
 		this.commentCount = 0;
 		this.commentCountFromTab = false;
+		this.documentCount = 0;
 		this.state = 'loading';
 		try {
 			const project = await firstValueFrom(this.projectsService.getById(id, ['image']));
@@ -320,6 +348,11 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 			this.card = null;
 			this.state = recordViewPageStateOf(error);
 		}
+	}
+
+	/** The count the Documents tab reports after each load, upload or removal. */
+	onDocumentCount(count: number): void {
+		this.documentCount = count;
 	}
 
 	/** The count the Comments tab reports each time it reads its list, after a post or a delete among others. */

@@ -12,7 +12,16 @@
   </nb-card-header>
   <nb-card-body class="custom-body-content">
     <ng-template [ngxPermissionsOnly]="['ALL_ORG_EDIT', 'ORG_PROJECT_ADD']">
-      <ga-project-mutation [integration]="false" (onSubmitted)="onSubmit($event)"></ga-project-mutation>
+      <!-- The form, with the Documents panel on its right, as on the edit page. -->
+      <div class="project-edit-layout">
+        <div class="project-edit-main">
+          <ga-project-mutation [integration]="false" (onSubmitted)="onSubmit($event)"></ga-project-mutation>
+        </div>
+        <!-- The project has no id yet: the panel holds the files and attaches them once it is saved. -->
+        <aside class="project-edit-aside">
+          <gz-document-links-panel [deferred]="true" [entity]="documentEntity"></gz-document-links-panel>
+        </aside>
+      </div>
     </ng-template>
   </nb-card-body>
 </nb-card>

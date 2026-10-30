@@ -1,0 +1,69 @@
+@use 'themes' as *;
+
+// One picture, as large as the viewport allows, on the card's own surface.
+// Paints only with the shared gauzy-* and theme tokens, so every theme follows.
+
+.docs-image-preview {
+	display: flex;
+	flex-direction: column;
+	width: min(90vw, 64rem);
+	max-height: 90vh;
+	margin: 0;
+}
+
+.docs-image-preview-header {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.5rem 0.75rem 0.5rem 1rem;
+}
+
+.docs-image-preview-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	font-size: 0.875rem;
+	font-weight: 500;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: nb-theme(text-basic-color);
+}
+
+.docs-image-preview-actions {
+	display: flex;
+	flex-shrink: 0;
+	gap: 0.25rem;
+}
+
+.docs-image-preview-body {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 12rem;
+	padding: 1rem;
+	overflow: auto;
+	background-color: var(--gauzy-sidebar-background-4);
+}
+
+.docs-image-preview-img {
+	display: block;
+	max-width: 100%;
+	max-height: calc(90vh - 7rem);
+	object-fit: contain;
+	border-radius: nb-theme(border-radius);
+}
+
+.docs-image-preview-error {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0;
+	font-size: 0.8125rem;
+	color: nb-theme(text-basic-color);
+
+	nb-icon {
+		width: 1rem;
+		height: 1rem;
+		font-size: 1rem;
+	}
+}

@@ -7079,7 +7079,8 @@
 			"OVERVIEW": "概览",
 			"BOARD": "看板",
 			"ACTIVITY": "动态",
-			"COMMENTS": "评论"
+			"COMMENTS": "评论",
+			"DOCUMENTS": "文档"
 		},
 		"BOARD": "看板",
 		"COLUMN_EMPTY": "暂无任务",

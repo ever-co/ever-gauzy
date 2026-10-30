@@ -7081,7 +7081,8 @@
 			"OVERVIEW": "Resumen",
 			"BOARD": "Tablero",
 			"ACTIVITY": "Actividad",
-			"COMMENTS": "Comentarios"
+			"COMMENTS": "Comentarios",
+			"DOCUMENTS": "Documentos"
 		},
 		"BOARD": "Tablero",
 		"COLUMN_EMPTY": "Sin tareas",
