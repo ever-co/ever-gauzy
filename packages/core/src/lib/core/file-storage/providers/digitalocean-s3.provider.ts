@@ -410,6 +410,21 @@ export class DigitalOceanS3Provider extends Provider<DigitalOceanS3Provider> {
 	}
 
 	/**
+	 * Deletes a file, or throws when it was not deleted: `deleteFile` only warns when no DigitalOcean client can be built
+	 * (the credentials are missing), and resolves.
+	 *
+	 * @param key The key of the file to delete.
+	 * @throws Error when no DigitalOcean client can be built, or when the deletion itself fails.
+	 */
+	override async deleteFileOrFail(key: string): Promise<void> {
+		if (!this.getDigitalOceanInstance()) {
+			throw new Error(`The file "${key}" was not deleted: DigitalOcean storage is not configured.`);
+		}
+
+		await this.deleteFile(key);
+	}
+
+	/**
 	 * Get an AWS S3 instance configured with DigitalOcean details.
 	 *
 	 * @returns An AWS S3 instance or null in case of an error

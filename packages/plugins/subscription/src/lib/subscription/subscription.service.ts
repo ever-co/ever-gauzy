@@ -3276,7 +3276,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					try {
 						detail = redacted instanceof Error ? redacted.message : JSON.stringify(redacted);
 					} catch {
-						detail = 'unserialisable database error';
+						detail = 'the error could not be converted to JSON';
 					}
 					this.logger.error(
 						`The database refused a write of subscription ${String((criteria as { id?: unknown })?.id ?? '')}: ${detail}`

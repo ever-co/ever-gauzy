@@ -206,7 +206,9 @@ export async function deleteStoredFiles(
 	try {
 		for (const { provider, key } of unique(files)) {
 			try {
-				await new FileStorage().getProvider(provider || undefined).deleteFile(key);
+				// `deleteFileOrFail`: `deleteFile` resolves without deleting when a provider has no client or a key
+				// resolves outside the local root, and such a file would be reported as removed while it stays stored.
+				await new FileStorage().getProvider(provider || undefined).deleteFileOrFail(key);
 			} catch {
 				failed++;
 			}
