@@ -295,6 +295,7 @@ const subscriptionRow = (id: string, overrides: Row = {}): Row => ({
  * @param options.subscriptions The subscriptions the fixture starts with.
  * @param options.catalog The catalogue, or `false` for a tenant that has none.
  * @param options.uniqueViolationOnSave Whether the write loses a race against another writer's insert.
+ * @param options.uniqueViolationOnUpdate Whether an update's write loses a race for the code it takes.
  */
 function planFixture(
 	options: {
@@ -302,6 +303,7 @@ function planFixture(
 		subscriptions?: Row[];
 		catalog?: { subscribable?: Record<string, boolean>; defaultVariant?: Record<string, string | null> } | false;
 		uniqueViolationOnSave?: boolean;
+		uniqueViolationOnUpdate?: boolean;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -343,7 +345,10 @@ function planFixture(
 					}
 			  };
 	const subscriptionRepository = repository(tables, 'subscription');
-	/** Every statement run in the update's transaction, in order: the plan row's lock, then the live counts. */
+	/**
+	 * Every statement run in the update's transaction, in order: the plan row's lock, the plan read again under it,
+	 * then the live counts.
+	 */
 	const statements: string[] = [];
 	const transactional = {
 		connection: { options: { type: 'postgres' } },
@@ -351,11 +356,25 @@ function planFixture(
 			statements.push(sql);
 			return [];
 		},
+		findOne: async (_entity: unknown, findOptions: any) => {
+			statements.push('read the plan');
+			return planRepository.findOne(findOptions);
+		},
 		count: async (_entity: unknown, findOptions: any) => {
 			statements.push('count live subscriptions');
 			return subscriptionRepository.count(findOptions);
 		},
-		update: async (_entity: unknown, criteria: any, partial: any) => patchRecorder.update(criteria, partial)
+		update: async (_entity: unknown, criteria: any, partial: any) => {
+			if (options.uniqueViolationOnUpdate) {
+				const error = new Error('duplicate key value violates unique constraint "UQ_subscription_plan_org_code"');
+
+				(error as Row).code = '23505';
+
+				throw error;
+			}
+
+			return patchRecorder.update(criteria, partial);
+		}
 	};
 	Object.assign(patchRecorder, { manager: { transaction: async (run: (manager: any) => Promise<any>) => run(transactional) } });
 	const service = new SubscriptionPlanService(
@@ -881,8 +900,39 @@ describe('SubscriptionPlanService.updatePlan under the plan row lock', () => {
 		await fixture.service.updatePlan('plan-1', { isActive: false });
 
 		expect(fixture.statements[0]).toMatch(/FROM "subscription_plan" WHERE "id" = \$1 FOR UPDATE$/);
-		expect(fixture.statements[1]).toBe('count live subscriptions');
+		expect(fixture.statements.slice(1)).toEqual(['read the plan', 'count live subscriptions']);
 		expect(fixture.plan('plan-1').isActive).toBe(false);
+	});
+
+	it('writes over the plan as an update that committed while it waited for the lock left it', async () => {
+		const fixture = planFixture();
+		const transaction = (fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction;
+		// Another update moves the plan to EUR and commits before this one is granted the lock.
+		(fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction = async (run: any) =>
+			transaction(async (manager: any) =>
+				run({
+					...manager,
+					query: async (sql: string) => {
+						fixture.statements.push(sql);
+						fixture.tables.subscription_plan[0] = { ...fixture.tables.subscription_plan[0], currency: 'EUR' };
+						return [];
+					}
+				})
+			);
+
+		const updated = await fixture.service.updatePlan('plan-1', { name: 'Renamed' });
+
+		expect(updated).toMatchObject({ name: 'Renamed', currency: 'EUR' });
+		expect(fixture.patches[0]).toMatchObject({ name: 'Renamed', currency: 'EUR' });
+	});
+
+	it('answers a code another plan took after the pre-check with 409 SUBSCRIPTION_PLAN_CODE_TAKEN', async () => {
+		const fixture = planFixture({ uniqueViolationOnUpdate: true });
+
+		await expect(fixture.service.updatePlan('plan-1', { code: 'TAKEN' })).rejects.toThrow(
+			new ConflictException('SUBSCRIPTION_PLAN_CODE_TAKEN: this organization already has a plan coded "TAKEN".')
+		);
+		expect(fixture.plan('plan-1').code).toBe('PLAN-1');
 	});
 
 	it('counts a subscription that committed while it waited for the lock, and refuses the deactivation', async () => {
