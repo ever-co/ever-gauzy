@@ -1,5 +1,6 @@
 import {
 	ChangeDetectionStrategy,
+	ChangeDetectorRef,
 	Component,
 	EventEmitter,
 	Input,
@@ -98,7 +99,7 @@ const PRIORITY_LEVELS = new Set<string>(['urgent', 'high', 'medium', 'low']);
 		'../../project-quick-look/project-quick-look.component.scss',
 		'./project-board.component.scss'
 	],
-	changeDetection: ChangeDetectionStrategy.Eager
+	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProjectBoardComponent implements OnChanges {
 	@Input() projectId: string;
@@ -116,7 +117,8 @@ export class ProjectBoardComponent implements OnChanges {
 		private readonly _http: HttpClient,
 		private readonly _store: Store,
 		private readonly _toastrService: ToastrService,
-		private readonly _statisticsService: TimesheetStatisticsService
+		private readonly _statisticsService: TimesheetStatisticsService,
+		private readonly _changeDetectorRef: ChangeDetectorRef
 	) {}
 
 	/** Moving a card writes the task, so only a user who may edit tasks can drag. */
@@ -184,6 +186,7 @@ export class ProjectBoardComponent implements OnChanges {
 			this._toastrService.danger(error);
 		} finally {
 			card.saving = false;
+			this._changeDetectorRef.markForCheck();
 		}
 	}
 
@@ -229,6 +232,8 @@ export class ProjectBoardComponent implements OnChanges {
 			void this.loadProgress(sequence);
 		} catch {
 			if (sequence === this._sequence) this.board = failed([]);
+		} finally {
+			this._changeDetectorRef.markForCheck();
 		}
 	}
 
@@ -253,6 +258,7 @@ export class ProjectBoardComponent implements OnChanges {
 					card.progress = taskProgressOf(worked.get(card.id) || 0, card.estimate, project);
 				}
 			}
+			this._changeDetectorRef.markForCheck();
 		} catch {
 			// The cards stay without bars.
 		}

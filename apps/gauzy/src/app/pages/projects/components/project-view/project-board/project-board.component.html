@@ -99,7 +99,7 @@
 									@for (person of card.people.slice(0, 3); track $index) {
 									<span class="board-card-person" [nbTooltip]="person.name" nbTooltipPlacement="top">
 										@if (person.avatarUrl) {
-										<img [src]="person.avatarUrl" [alt]="person.name" />
+										<img loading="lazy" decoding="async" [src]="person.avatarUrl" [alt]="person.name" />
 										} @else {
 										<span aria-hidden="true">{{ person.initials }}</span>
 										}
