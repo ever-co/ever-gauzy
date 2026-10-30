@@ -133,7 +133,7 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 					timer.unref?.();
 				})
 			]).finally(() => timer && clearTimeout(timer));
-			return (answer as EverIdentityContext | null) ?? null;
+			return (answer as unknown as EverIdentityContext | null) ?? null;
 		} catch (error) {
 			if (isCredentialRevoked(error)) {
 				this.signals.revoked$.next();

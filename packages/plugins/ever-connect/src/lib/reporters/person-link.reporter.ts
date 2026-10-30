@@ -88,7 +88,9 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 				this.eventBus.ofType(ZitadelAccountUnlinkedEvent).subscribe((event) => void this.safely(() => this.unlinked(event.payload)))
 			);
 		}
-		this.everIdLogin.onReady(() => this.backfill());
+		this.everIdLogin.onReady(async () => {
+			await this.backfill();
+		});
 	}
 
 	onModuleDestroy(): void {
