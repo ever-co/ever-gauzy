@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -- tables and paragraphs are kept on one line each (prettier formats the tables) -->
+
 # Migrations of @gauzy/plugin-ever-connect
 
 Plugins cannot carry their own migrations yet, so the tables of this plugin are created by a migration in `packages/core/src/lib/database/migrations/`. Move it here once plugins can own migrations.

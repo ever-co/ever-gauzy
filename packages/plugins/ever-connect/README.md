@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -- tables and paragraphs are kept on one line each (prettier formats the tables) -->
+
 # @gauzy/plugin-ever-connect
 
 Connects an Ever Gauzy installation to Ever Platform, links its organizations to Ever organizations, and keeps the state of each integration the organizations consent to in app.ever.co.
