@@ -15,6 +15,15 @@
   padding-bottom: 0.25rem;
 }
 
+// Where the next page is read from; it stands below the columns, in the box's flow.
+.board-end {
+  position: relative;
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .board-column {
   display: flex;
   flex-direction: column;

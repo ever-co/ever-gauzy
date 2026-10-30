@@ -2,10 +2,13 @@ import {
 	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	Component,
+	ElementRef,
 	EventEmitter,
 	Input,
 	OnChanges,
+	OnDestroy,
 	Output,
+	ViewChild,
 	type SimpleChanges
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -14,7 +17,7 @@ import { CdkDragDrop, CdkDragMove, DragDropModule, transferArrayItem } from '@an
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import { NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
 import { IPagination, ITask, ITasksStatistics, ITaskStatus, PermissionsEnum } from '@gauzy/contracts';
@@ -25,6 +28,7 @@ import {
 	dueInWords,
 	humanize,
 	IPersonChip,
+	IProjectWorkedTime,
 	ITaskProgress,
 	Loadable,
 	loaded,
@@ -74,6 +78,15 @@ interface IBoardColumn {
 
 const PRIORITY_LEVELS = new Set<string>(['urgent', 'high', 'medium', 'low']);
 
+/** The tasks read at a time; the API takes at most 100. */
+const BOARD_PAGE_SIZE = 50;
+
+/**
+ * How near the end of the board the next page starts loading. The sideways margin is what keeps the end in
+ * reach of a user scrolled over to the last columns: the end is drawn under the first ones.
+ */
+const BOARD_END_MARGIN = '400px 100000px';
+
 /** A status value or name as columns are matched by it. */
 const normalizeStatus = (value?: string): string => (value || '').trim().toLowerCase().replace(/\s+/g, '-');
 
@@ -82,6 +95,11 @@ const normalizeStatus = (value?: string): string => (value || '').trim().toLower
  * tenant's own order and colours (the project's statuses, else the organization's), each card naming
  * its key, title, priority, due date and assignees, and opening the task's page. A user who may edit
  * tasks drags a card to another column to change its status; a move that fails to save goes back.
+ *
+ * The tasks come a page at a time, the newest first, the next page as the board is scrolled near its end.
+ * Pages run over the whole project rather than per column: a task's column can come from its status row or
+ * from its bare status value, which one filter cannot ask for, and a card moved to another column leaves
+ * the pages as they were.
  */
 @Component({
 	selector: 'ga-project-board',
@@ -91,6 +109,7 @@ const normalizeStatus = (value?: string): string => (value || '').trim().toLower
 		RouterModule,
 		DragDropModule,
 		CdkScrollable,
+		NbButtonModule,
 		NbIconModule,
 		NbSpinnerModule,
 		NbTooltipModule,
@@ -104,7 +123,7 @@ const normalizeStatus = (value?: string): string => (value || '').trim().toLower
 	],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ProjectBoardComponent implements OnChanges {
+export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	@Input() projectId: string;
 	@Input() organizationId: string;
 	@Input() tenantId: string;
@@ -114,10 +133,26 @@ export class ProjectBoardComponent implements OnChanges {
 	public board: Loadable<IBoardColumn[]> = loading([]);
 	/** The column under a dragged card that will not take it, marked so the user sees it before letting go. */
 	public refusingColumnId: string | null = null;
+	/** The project's tasks, read or not. */
+	public total = 0;
+	/** The next page is on its way. */
+	public loadingMore = false;
+	/** The next page failed: the board's end offers to read it again, rather than asking again by itself. */
+	public loadMoreFailed = false;
 	private _sequence = 0;
-	/** The columns by status row and by status value or name, built with the columns. */
+	/** The tasks asked of the server so far, where the next page starts. */
+	private _offset = 0;
+	/** The tasks on the board: a task created while paging pushes the last one read into the next page. */
+	private _placed = new Set<string>();
+	/** The columns by status row and by status value or name, built with the columns and kept for the next pages. */
 	private _columnsById = new Map<string, IBoardColumn>();
 	private _columnsByKey = new Map<string, IBoardColumn>();
+	/** Each task's time worked, once read; the cards of later pages take their bars from it. */
+	private _worked: Map<string, number> | null = null;
+	private _projectWorked: IProjectWorkedTime = { total: 0 };
+	private _dragging = false;
+	private _endObserver: IntersectionObserver | null = null;
+	private _end: HTMLElement | null = null;
 
 	constructor(
 		private readonly _http: HttpClient,
@@ -126,6 +161,27 @@ export class ProjectBoardComponent implements OnChanges {
 		private readonly _statisticsService: TimesheetStatisticsService,
 		private readonly _changeDetectorRef: ChangeDetectorRef
 	) {}
+
+	/** The end of the board, there while pages remain: the next page loads once it nears the view. */
+	@ViewChild('boardEnd')
+	set boardEnd(end: ElementRef<HTMLElement> | undefined) {
+		this._endObserver?.disconnect();
+		this._endObserver = null;
+		this._end = end?.nativeElement ?? null;
+		if (!this._end) return;
+		this._endObserver = new IntersectionObserver(
+			(entries) => {
+				if (entries.some((entry) => entry.isIntersecting)) this.onEndReached();
+			},
+			{ root: this._end.parentElement, rootMargin: BOARD_END_MARGIN }
+		);
+		this._endObserver.observe(this._end);
+	}
+
+	/** Pages remain to read. */
+	get hasMore(): boolean {
+		return this._offset < this.total;
+	}
 
 	/** Moving a card writes the task, so only a user who may edit tasks can drag. */
 	get canMove(): boolean {
@@ -140,6 +196,16 @@ export class ProjectBoardComponent implements OnChanges {
 		const column = this.columnAt(event.pointerPosition);
 		const id = column && !column.statusId ? column.id : null;
 		if (id !== this.refusingColumnId) this.refusingColumnId = id;
+	}
+
+	/** No page lands during a drag: the drop lists measured themselves when it began. */
+	onDragStarted(): void {
+		this._dragging = true;
+	}
+
+	onDragEnded(): void {
+		this._dragging = false;
+		this.watchEnd();
 	}
 
 	/**
@@ -202,8 +268,30 @@ export class ProjectBoardComponent implements OnChanges {
 		}
 	}
 
-	get total(): number {
-		return (this.board.value || []).reduce((sum, column) => sum + column.cards.length, 0);
+	ngOnDestroy(): void {
+		this._endObserver?.disconnect();
+	}
+
+	/** Reads the next page onto the board. */
+	async loadMore(): Promise<void> {
+		if (this.loadingMore || !this.hasMore) return;
+		const sequence = this._sequence;
+		this.loadingMore = true;
+		this.loadMoreFailed = false;
+		this._changeDetectorRef.markForCheck();
+		try {
+			const page = await this.fetchPage(this._offset);
+			if (sequence === this._sequence) this.addPage(this.board.value, page);
+		} catch {
+			if (sequence === this._sequence) this.loadMoreFailed = true;
+		} finally {
+			// A reload since owns the flags, and the board.
+			if (sequence === this._sequence) {
+				this.loadingMore = false;
+				this._changeDetectorRef.markForCheck();
+				this.watchEnd();
+			}
+		}
 	}
 
 	peopleNames(people: IPersonChip[]): string {
@@ -217,25 +305,37 @@ export class ProjectBoardComponent implements OnChanges {
 		return id ? (this.board.value || []).find((column) => column.id === id) : undefined;
 	}
 
+	private onEndReached(): void {
+		if (!this.loadMoreFailed && !this._dragging) void this.loadMore();
+	}
+
+	/**
+	 * Looks at the board's end anew. The observer speaks only when the end comes into reach, and a page too
+	 * short to push it back out leaves it there: watched afresh, it reports where it now is.
+	 */
+	private watchEnd(): void {
+		if (!this._end) return;
+		this._endObserver?.unobserve(this._end);
+		this._endObserver?.observe(this._end);
+	}
+
 	private async load(): Promise<void> {
 		const sequence = ++this._sequence;
-		const { organizationId, tenantId, projectId } = this;
 		this.board = loading([]);
+		this.total = 0;
+		this.loadingMore = false;
+		this.loadMoreFailed = false;
+		this._offset = 0;
+		this._placed = new Set();
+		this._worked = null;
 		try {
-			const [statuses, tasks] = await Promise.all([
+			const [statuses, page] = await Promise.all([
 				this.fetchStatuses().catch((): ITaskStatus[] => []),
-				firstValueFrom(
-					this._http.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, {
-						params: toParams({
-							where: { organizationId, tenantId, projectId },
-							relations: ['taskStatus', 'taskPriority', 'members', 'members.user']
-						})
-					})
-				)
+				this.fetchPage(0)
 			]);
 			if (sequence !== this._sequence) return;
 			const columns = this.toColumns(statuses);
-			this.place(columns, tasks?.items || []);
+			this.addPage(columns, page);
 			this.board = loaded(columns);
 			void this.loadProgress(sequence);
 		} catch {
@@ -243,6 +343,34 @@ export class ProjectBoardComponent implements OnChanges {
 		} finally {
 			this._changeDetectorRef.markForCheck();
 		}
+	}
+
+	/** A page of the project's tasks, from row `skip`. The id settles equal dates, so a row stays on one page. */
+	private fetchPage(skip: number): Promise<IPagination<ITask>> {
+		const { organizationId, tenantId, projectId } = this;
+		return firstValueFrom(
+			this._http.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, {
+				params: toParams({
+					where: { organizationId, tenantId, projectId },
+					relations: ['taskStatus', 'taskPriority', 'members', 'members.user'],
+					order: { createdAt: 'DESC', id: 'ASC' },
+					take: BOARD_PAGE_SIZE,
+					skip
+				})
+			})
+		);
+	}
+
+	/** Puts a page's tasks on the board. An empty page means the rest are gone: nothing more is asked. */
+	private addPage(columns: IBoardColumn[], page: IPagination<ITask>): void {
+		const items = page?.items || [];
+		this.total = page?.total || 0;
+		this._offset = items.length ? this._offset + items.length : this.total;
+		this.place(
+			columns,
+			items.filter((task) => !this._placed.has(task.id))
+		);
+		items.forEach((task) => this._placed.add(task.id));
 	}
 
 	/**
@@ -259,12 +387,10 @@ export class ProjectBoardComponent implements OnChanges {
 				projectIds: [projectId]
 			});
 			if (sequence !== this._sequence) return;
-			const worked = new Map((rows || []).map((row: ITasksStatistics) => [row.id, Number(row.duration) || 0]));
-			const project = projectWorkedTimeOf([...worked.values()]);
+			this._worked = new Map((rows || []).map((row: ITasksStatistics) => [row.id, Number(row.duration) || 0]));
+			this._projectWorked = projectWorkedTimeOf([...this._worked.values()]);
 			for (const column of this.board.value || []) {
-				for (const card of column.cards) {
-					card.progress = taskProgressOf(worked.get(card.id) || 0, card.estimate, project);
-				}
+				column.cards.forEach((card) => this.setProgress(card));
 			}
 			this._changeDetectorRef.markForCheck();
 		} catch {
@@ -284,6 +410,12 @@ export class ProjectBoardComponent implements OnChanges {
 				)
 			)?.items || [];
 		return scopedTaskStatusesOf(read, { organizationId, tenantId, projectId });
+	}
+
+	/** The card's bar, once the time worked has been read. */
+	private setProgress(card: IBoardCard): void {
+		if (!this._worked) return;
+		card.progress = taskProgressOf(this._worked.get(card.id) || 0, card.estimate, this._projectWorked);
 	}
 
 	/** The columns of the statuses, in their order, and the lookups a task finds its column by. */
@@ -361,6 +493,7 @@ export class ProjectBoardComponent implements OnChanges {
 			estimate: Number(task.estimate) || 0
 		};
 		this.setDone(card, isTaskFinished(task));
+		this.setProgress(card);
 		return card;
 	}
 

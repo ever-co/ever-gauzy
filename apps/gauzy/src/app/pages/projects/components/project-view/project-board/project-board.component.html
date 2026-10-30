@@ -23,7 +23,8 @@
 				<header class="board-column-header">
 					<span class="board-column-dot" [class]="'board-column-dot group-' + column.group" [style.background-color]="column.color || null"></span>
 					<span class="board-column-name" [nbTooltip]="column.name" nbTooltipPlacement="top">{{ column.name }}</span>
-					<span class="board-column-count">{{ column.cards.length }}</span>
+					<!-- With pages still to read, the column may hold more than it shows. -->
+					<span class="board-column-count">{{ column.cards.length }}{{ hasMore ? '+' : '' }}</span>
 				</header>
 				<ul
 					class="board-cards"
@@ -35,7 +36,16 @@
 					(cdkDropListDropped)="drop($event)"
 				>
 					@for (card of column.cards; track card.id) {
-					<li class="board-card-item" cdkDrag [cdkDragData]="card" [cdkDragDisabled]="card.saving" [cdkDragStartDelay]="{ touch: 250, mouse: 0 }" (cdkDragMoved)="onDragMoved($event)">
+					<li
+						class="board-card-item"
+						cdkDrag
+						[cdkDragData]="card"
+						[cdkDragDisabled]="card.saving"
+						[cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
+						(cdkDragStarted)="onDragStarted()"
+						(cdkDragMoved)="onDragMoved($event)"
+						(cdkDragEnded)="onDragEnded()"
+					>
 						<a
 							class="board-card"
 							[class.is-done]="card.done"
@@ -115,12 +125,21 @@
 						</a>
 					</li>
 					} @empty {
+					@if (!hasMore) {
 					<li class="board-column-empty">{{ 'PROJECT_VIEW.COLUMN_EMPTY' | translate }}</li>
+					}
 					}
 				</ul>
 			</section>
 			}
 		</div>
+		@if (hasMore) {
+		<div #boardEnd class="board-end" [nbSpinner]="loadingMore" nbSpinnerSize="tiny" nbSpinnerStatus="basic">
+			@if (loadMoreFailed) {
+			<button type="button" nbButton ghost size="tiny" status="basic" (click)="loadMore()">{{ 'BUTTONS.RETRY' | translate }}</button>
+			}
+		</div>
+		}
 		</div>
 		}
 	</div>
