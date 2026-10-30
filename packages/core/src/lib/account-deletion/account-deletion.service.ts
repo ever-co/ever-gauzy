@@ -60,6 +60,7 @@ import { AccountDeletionRequest } from './account-deletion-request.entity';
 import {
 	ACCOUNT_DELETION_EMAIL_WINDOW_MS,
 	ACCOUNT_DELETION_MAX_REQUESTS_PER_EMAIL,
+	accountDeletionAddressLockKey,
 	accountDeletionEmailHashes,
 	accountDeletionTtlMinutes,
 	buildAccountDeletionLink,
@@ -183,7 +184,7 @@ export class AccountDeletionService {
 			const ttlMinutes = accountDeletionTtlMinutes();
 			const token = generateAccountDeletionToken();
 
-			const created = await this.withAddressLock(emailHash, (manager) =>
+			const created = await this.withAddressLock(accountDeletionAddressLockKey(email), (manager) =>
 				this.issueLink(manager, emailHash, email, token, ttlMinutes, input, meta, users[0])
 			);
 			if (!created) {
@@ -222,11 +223,17 @@ export class AccountDeletionService {
 		firstUser: User
 	): Promise<AccountDeletionRequest | null> {
 		const repository = manager.getRepository(AccountDeletionRequest);
-		// Every digest a row of this address may carry (keyed under either secret, or the legacy unkeyed one), so the
-		// limit and the one-live-link rule hold across a change of digest.
+		// The rows of this address: by every digest it may carry (keyed under either secret, or the legacy unkeyed one),
+		// and by the clear address a request keeps until it is revoked or completed. That one survives a replaced
+		// secret too, so a live link is always found and revoked; a revoked row of a replaced secret no longer counts
+		// towards the hourly limit, which is all such a replacement loosens.
 		const emailHashes = In(accountDeletionEmailHashes(email));
+		const since = MoreThan(new Date(Date.now() - ACCOUNT_DELETION_EMAIL_WINDOW_MS));
 		const recent = await repository.count({
-			where: { emailHash: emailHashes, createdAt: MoreThan(new Date(Date.now() - ACCOUNT_DELETION_EMAIL_WINDOW_MS)) }
+			where: [
+				{ emailHash: emailHashes, createdAt: since },
+				{ email, createdAt: since }
+			]
 		});
 		if (recent >= ACCOUNT_DELETION_MAX_REQUESTS_PER_EMAIL) {
 			return null;
@@ -240,7 +247,10 @@ export class AccountDeletionService {
 			.createQueryBuilder()
 			.update(AccountDeletionRequest)
 			.set({ revokedAt: now, email: null })
-			.where({ emailHash: emailHashes, completedAt: IsNull(), revokedAt: IsNull() })
+			.where([
+				{ emailHash: emailHashes, completedAt: IsNull(), revokedAt: IsNull() },
+				{ email, completedAt: IsNull(), revokedAt: IsNull() }
+			])
 			.callListeners(false)
 			.execute();
 		return await repository.save(
@@ -690,24 +700,24 @@ export class AccountDeletionService {
 
 	/**
 	 * Runs `work` in a transaction that holds a per-address lock until it commits or rolls back: a Postgres
-	 * advisory transaction lock on the address hash; on MySQL a named lock taken on the transaction's own
+	 * advisory transaction lock on the address's lock key (`accountDeletionAddressLockKey`); on MySQL a named lock taken on the transaction's own
 	 * connection before it starts and released after it ends (failing closed when it cannot be taken). SQLite
 	 * serializes writers anyway.
 	 */
-	private async withAddressLock<T>(emailHash: string, work: (manager: EntityManager) => Promise<T>): Promise<T> {
+	private async withAddressLock<T>(lockKey: string, work: (manager: EntityManager) => Promise<T>): Promise<T> {
 		const type = this.dataSource.driver.options.type;
 		if (type !== 'mysql') {
 			return await this.dataSource.transaction(async (manager) => {
 				if (type === 'postgres') {
 					await manager.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
-						`account-deletion:${emailHash}`
+						`account-deletion:${lockKey}`
 					]);
 				}
 				return await work(manager);
 			});
 		}
 
-		const name = `gauzy:account-deletion:${emailHash.slice(0, 32)}`;
+		const name = `gauzy:account-deletion:${lockKey.slice(0, 32)}`;
 		const runner = this.dataSource.createQueryRunner();
 		await runner.connect();
 		try {

@@ -127,6 +127,19 @@ export function accountDeletionEmailHashes(email: string, env: Env = process.env
 }
 
 /**
+ * The name of the per-address lock that serialises issuing a link: the unkeyed SHA-256 of the normalized address.
+ * It must not depend on the deployment's secret, or two instances that hold different ones for a moment (a rolling
+ * deploy that adds `ENCRYPTION_KEY`) would lock different names for the same address. It is never stored: a
+ * Postgres advisory lock keeps a number derived from it, a MySQL named lock keeps it only while held.
+ *
+ * @param email The address.
+ * @returns 64 hexadecimal characters.
+ */
+export function accountDeletionAddressLockKey(email: string): string {
+	return sha256(normalizeAccountDeletionEmail(email));
+}
+
+/**
  * The digest of the client address for the audit record, keyed as {@link hashAccountDeletionEmail} is. Unlike the
  * address's, it is not recorded at all when no usable secret is configured: nothing depends on it, and an unkeyed
  * digest of an IPv4 address is reversed in seconds (the rule `TermsAcceptanceService` follows for its IP digest).

@@ -140,9 +140,20 @@ describe('AccountDeletionService', () => {
 				}
 			}
 
+			// The lock is named by the unkeyed digest of the address, whatever secret the instance holds, so two
+			// instances that briefly hold different secrets still serialise on the same name.
+			const unkeyed = require('node:crypto').createHash('sha256').update('jane@ever.co', 'utf8').digest('hex');
 			expect(transactionManager.query).toHaveBeenCalledWith(expect.stringContaining('pg_advisory_xact_lock'), [
-				expect.stringContaining('account-deletion:')
+				`account-deletion:${unkeyed}`
 			]);
+			// The limit and the revocation also find the address's rows by the clear address a live request keeps,
+			// which a replaced secret does not change.
+			expect(repository.count).toHaveBeenCalledWith({
+				where: expect.arrayContaining([expect.objectContaining({ email: 'jane@ever.co' })])
+			});
+			expect(builder.where).toHaveBeenCalledWith(
+				expect.arrayContaining([expect.objectContaining({ email: 'jane@ever.co', completedAt: expect.anything() })])
+			);
 			expect(builder.set).toHaveBeenCalledWith({ revokedAt: expect.any(Date), email: null });
 			const stored = repository.save.mock.calls[0][0];
 			expect(stored.email).toBe('jane@ever.co');

@@ -2,6 +2,7 @@ import {
 	ACCOUNT_DELETION_DEFAULT_TTL_MINUTES,
 	ACCOUNT_DELETION_MAX_TTL_MINUTES,
 	ACCOUNT_DELETION_MIN_TTL_MINUTES,
+	accountDeletionAddressLockKey,
 	accountDeletionEmailHashes,
 	accountDeletionTtlMinutes,
 	buildAccountDeletionLink,
@@ -80,6 +81,11 @@ describe('account deletion token helpers', () => {
 			expect(hashes).toContain(sha256('jane@example.com'));
 			expect(new Set(hashes).size).toBe(hashes.length);
 			expect(accountDeletionEmailHashes('jane@example.com', noKey)).toEqual([sha256('jane@example.com')]);
+		});
+
+		it('names the address lock independently of the secret, so instances holding different ones still serialise', () => {
+			expect(accountDeletionAddressLockKey(' Jane@Example.com ')).toBe(sha256('jane@example.com'));
+			expect(accountDeletionAddressLockKey('jane@example.com')).not.toBe(hashAccountDeletionEmail('jane@example.com', withKey));
 		});
 
 		it('keys the client address, and records none rather than an unkeyed digest IPv4 can be enumerated from', () => {
