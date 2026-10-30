@@ -1,1 +1,196 @@
 @forward '@shared/add-task-dialog';
+
+$side-width: 22.5rem;
+$label-width: 6.5rem;
+$hairline: 1px solid var(--gauzy-border-default-color);
+
+:host {
+  display: block;
+  width: 65rem;
+  max-width: calc(100vw - 2rem);
+}
+
+.task-dialog {
+  margin-bottom: 0;
+  max-height: calc(100vh - 3rem);
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1.5rem;
+  border-bottom: $hairline;
+}
+
+.task-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+:host .title {
+  margin: 0;
+  color: var(--gauzy-text-color-1);
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+}
+
+.task-reference {
+  color: var(--gauzy-text-color-2);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.close-button {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--gauzy-text-color-2);
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+    color: var(--gauzy-text-color-1);
+  }
+}
+
+// The two columns scroll on their own, so the details stay put while a long
+// description is being written.
+.task-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.task-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) $side-width;
+  max-height: calc(100vh - 11rem);
+}
+
+.task-main,
+.task-side {
+  min-height: 0;
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+}
+
+.task-main .form-group:last-child {
+  margin-bottom: 0;
+}
+
+.title-input {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.required-mark {
+  color: var(--gauzy-text-color-2);
+}
+
+.task-description {
+  display: block;
+}
+
+.task-side {
+  border-inline-start: $hairline;
+  background-color: var(--gauzy-card-2);
+}
+
+.side-title {
+  margin: 0 0 0.75rem;
+  color: var(--gauzy-text-color-1);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+// Label on the left, value on the right, the way an issue's details panel reads.
+@mixin field-row() {
+  display: grid;
+  grid-template-columns: $label-width minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0.75rem;
+  margin: 0;
+  padding: 0.25rem 0;
+
+  .label {
+    margin: 0;
+  }
+}
+
+.field {
+  @include field-row();
+}
+
+// The number field renders its own label and form-group.
+.task-number {
+  display: block;
+
+  ::ng-deep .form-group {
+    @include field-row();
+  }
+}
+
+.estimate-inputs {
+  gap: 0.375rem;
+
+  input {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+  }
+}
+
+.task-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-top: $hairline;
+}
+
+.required-note {
+  color: var(--gauzy-text-color-2);
+  font-size: 0.75rem;
+}
+
+.task-actions {
+  display: flex;
+  flex: none;
+  gap: 0.5rem;
+}
+
+@media (max-width: 56rem) {
+  .task-body {
+    overflow-y: auto;
+  }
+
+  .task-layout {
+    grid-template-columns: minmax(0, 1fr);
+    max-height: none;
+  }
+
+  .task-main,
+  .task-side {
+    overflow-y: visible;
+  }
+
+  .task-side {
+    border-inline-start: 0;
+    border-top: $hairline;
+  }
+}
