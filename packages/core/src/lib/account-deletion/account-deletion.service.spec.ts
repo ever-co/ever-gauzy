@@ -126,8 +126,19 @@ describe('AccountDeletionService', () => {
 		it('locks the address, revokes the live link (clearing its address), stores only the token hash', async () => {
 			const { service, findUsers, repository, builder, transactionManager, emailService } = setup();
 			findUsers.mockResolvedValue([user]);
+			// The address and client-address digests are keyed with the deployment's secret.
+			const previousKey = process.env['ENCRYPTION_KEY'];
+			process.env['ENCRYPTION_KEY'] = 'a-deployment-encryption-key-1';
 
-			await service.request({ email: ' Jane@Ever.co ', callbackUrl: 'https://evil.example/steal' }, { ip: '1.2.3.4' });
+			try {
+				await service.request({ email: ' Jane@Ever.co ', callbackUrl: 'https://evil.example/steal' }, { ip: '1.2.3.4' });
+			} finally {
+				if (previousKey === undefined) {
+					delete process.env['ENCRYPTION_KEY'];
+				} else {
+					process.env['ENCRYPTION_KEY'] = previousKey;
+				}
+			}
 
 			expect(transactionManager.query).toHaveBeenCalledWith(expect.stringContaining('pg_advisory_xact_lock'), [
 				expect.stringContaining('account-deletion:')
@@ -136,6 +147,7 @@ describe('AccountDeletionService', () => {
 			const stored = repository.save.mock.calls[0][0];
 			expect(stored.email).toBe('jane@ever.co');
 			expect(stored.tokenHash).toMatch(/^[0-9a-f]{64}$/);
+			expect(stored.requestIpHash).toMatch(/^[0-9a-f]{64}$/);
 			expect(stored.requestIpHash).not.toContain('1.2.3.4');
 
 			const { deletionLink } = emailService.sendAccountDeletionLink.mock.calls[0][0];

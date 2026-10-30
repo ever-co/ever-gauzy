@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { createHash, randomUUID } from 'node:crypto';
-import { DataSource, EntityManager, IsNull, LessThan, MoreThan, Not } from 'typeorm';
+import { DataSource, EntityManager, In, IsNull, LessThan, MoreThan, Not } from 'typeorm';
 import { pick } from 'underscore';
 import { environment } from '@gauzy/config';
 import { deepMerge } from '@gauzy/utils';
@@ -60,6 +60,7 @@ import { AccountDeletionRequest } from './account-deletion-request.entity';
 import {
 	ACCOUNT_DELETION_EMAIL_WINDOW_MS,
 	ACCOUNT_DELETION_MAX_REQUESTS_PER_EMAIL,
+	accountDeletionEmailHashes,
 	accountDeletionTtlMinutes,
 	buildAccountDeletionLink,
 	generateAccountDeletionToken,
@@ -221,8 +222,11 @@ export class AccountDeletionService {
 		firstUser: User
 	): Promise<AccountDeletionRequest | null> {
 		const repository = manager.getRepository(AccountDeletionRequest);
+		// Every digest a row of this address may carry (keyed under either secret, or the legacy unkeyed one), so the
+		// limit and the one-live-link rule hold across a change of digest.
+		const emailHashes = In(accountDeletionEmailHashes(email));
 		const recent = await repository.count({
-			where: { emailHash, createdAt: MoreThan(new Date(Date.now() - ACCOUNT_DELETION_EMAIL_WINDOW_MS)) }
+			where: { emailHash: emailHashes, createdAt: MoreThan(new Date(Date.now() - ACCOUNT_DELETION_EMAIL_WINDOW_MS)) }
 		});
 		if (recent >= ACCOUNT_DELETION_MAX_REQUESTS_PER_EMAIL) {
 			return null;
@@ -236,7 +240,7 @@ export class AccountDeletionService {
 			.createQueryBuilder()
 			.update(AccountDeletionRequest)
 			.set({ revokedAt: now, email: null })
-			.where({ emailHash, completedAt: IsNull(), revokedAt: IsNull() })
+			.where({ emailHash: emailHashes, completedAt: IsNull(), revokedAt: IsNull() })
 			.callListeners(false)
 			.execute();
 		return await repository.save(

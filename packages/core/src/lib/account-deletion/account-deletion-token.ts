@@ -1,4 +1,5 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, createHmac, hkdfSync, randomBytes } from 'node:crypto';
+import { isKnownDefaultSecret } from '@gauzy/contracts';
 
 /** Bytes of randomness in a deletion token (256 bits). */
 export const ACCOUNT_DELETION_TOKEN_BYTES = 32;
@@ -43,17 +44,101 @@ export function normalizeAccountDeletionEmail(email: string): string {
 	return (email || '').trim().toLowerCase();
 }
 
+/** The environment the digest key is derived from; `process.env` unless a caller states one. */
+type Env = Record<string, string | undefined>;
+
+const HKDF_SALT = Buffer.from('gauzy:account-deletion', 'utf8');
+const HKDF_INFO = Buffer.from('account-deletion-digest-v1', 'utf8');
+
+/** Each warning once per process. */
+const warned = new Set<string>();
+
 /**
- * SHA-256 (hex) of the normalized address. Stored with every request (it is what the per-address limit
- * counts) and kept after the deletion as the audit trail, when the clear address is cleared.
+ * The keys the address and client-address digests are made with, the one new digests use first.
+ *
+ * An unkeyed SHA-256 of an address is matched against any list of known addresses, and one of an IPv4 client address
+ * is reversed by trying all 2^32 of them. The digests are therefore keyed (HMAC-SHA256) with a key derived for this one
+ * purpose with HKDF-SHA256, as the platform derives its other storage keys, from `ENCRYPTION_KEY`, or from `JWT_SECRET`
+ * when that is not a value published in the repository. Both candidates are returned, so a row keyed under
+ * `JWT_SECRET` is still found once `ENCRYPTION_KEY` is configured.
+ *
+ * @param env The environment.
+ * @returns The keys, the preferred first; none when no usable secret is configured.
  */
-export function hashAccountDeletionEmail(email: string): string {
-	return createHash('sha256').update(normalizeAccountDeletionEmail(email), 'utf8').digest('hex');
+function digestKeys(env: Env): Buffer[] {
+	return [env['ENCRYPTION_KEY'], env['JWT_SECRET']]
+		.filter((raw): raw is string => typeof raw === 'string' && raw.trim() !== '' && !isKnownDefaultSecret(raw))
+		.map((raw) => Buffer.from(hkdfSync('sha256', Buffer.from(raw, 'utf8'), HKDF_SALT, HKDF_INFO, 32)));
 }
 
-/** SHA-256 (hex) of the client address, for the audit record. Null when there is none. */
-export function hashAccountDeletionIp(ip: string | null | undefined): string | null {
-	return ip ? createHash('sha256').update(ip, 'utf8').digest('hex') : null;
+/** SHA-256 (hex) of a value: the legacy stored form, and what the keyed form is computed over. */
+function sha256(value: string): string {
+	return createHash('sha256').update(value, 'utf8').digest('hex');
+}
+
+/** HMAC-SHA256 (hex) of a legacy digest: 64 characters, like the legacy form, so the columns keep their size. */
+function keyed(key: Buffer, digest: string): string {
+	return createHmac('sha256', key).update(digest, 'utf8').digest('hex');
+}
+
+/**
+ * The digest of the normalized address stored with every request: what the per-address limit counts and what one
+ * live link per address is found by, kept after the deletion as the audit trail once the clear address is cleared.
+ *
+ * Keyed (see {@link digestKeys}); the HMAC is taken over the legacy SHA-256 so that rows written before can be keyed
+ * later without the address. With no usable secret configured it is the legacy unkeyed SHA-256, warned once: the
+ * per-address limit cannot work without some digest.
+ *
+ * @param email The address.
+ * @param env The environment.
+ * @returns 64 hexadecimal characters.
+ */
+export function hashAccountDeletionEmail(email: string, env: Env = process.env): string {
+	const digest = sha256(normalizeAccountDeletionEmail(email));
+	const [key] = digestKeys(env);
+
+	if (!key) {
+		if (!warned.has('email')) {
+			warned.add('email');
+			console.warn(
+				'Account deletion: neither ENCRYPTION_KEY nor a non-default JWT_SECRET is set, so request addresses are stored as unkeyed SHA-256 digests.'
+			);
+		}
+
+		return digest;
+	}
+
+	return keyed(key, digest);
+}
+
+/**
+ * Every digest a stored request of this address may carry: keyed under each configured secret, and the legacy
+ * unkeyed one rows written before keying carry. The per-address limit and the one-live-link rule look rows up by all
+ * of them, so neither resets when the digest changes.
+ *
+ * @param email The address.
+ * @param env The environment.
+ * @returns The distinct digests, the one new requests are stored under first.
+ */
+export function accountDeletionEmailHashes(email: string, env: Env = process.env): string[] {
+	const digest = sha256(normalizeAccountDeletionEmail(email));
+
+	return [...new Set([hashAccountDeletionEmail(email, env), ...digestKeys(env).map((key) => keyed(key, digest)), digest])];
+}
+
+/**
+ * The digest of the client address for the audit record, keyed as {@link hashAccountDeletionEmail} is. Unlike the
+ * address's, it is not recorded at all when no usable secret is configured: nothing depends on it, and an unkeyed
+ * digest of an IPv4 address is reversed in seconds (the rule `TermsAcceptanceService` follows for its IP digest).
+ *
+ * @param ip The client address.
+ * @param env The environment.
+ * @returns 64 hexadecimal characters, or null when there is no address or no key.
+ */
+export function hashAccountDeletionIp(ip: string | null | undefined, env: Env = process.env): string | null {
+	const [key] = digestKeys(env);
+
+	return ip && key ? keyed(key, sha256(ip)) : null;
 }
 
 /**
