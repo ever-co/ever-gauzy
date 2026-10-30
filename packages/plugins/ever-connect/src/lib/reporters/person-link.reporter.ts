@@ -60,7 +60,8 @@ const stripTrailingSlashes = (value: string): string => value.replace(/\/+$/, ''
  * retried. Each report is reconciled with the Ever ID sign-in plugin's link as it is when it is sent:
  * a link that exists is reported as a link, one that does not as an unlink, whatever order the events
  * arrived in (on one API process or several). An unlink removes every link of the user on Ever
- * Platform, so the user's other Ever ID links are reported again right after it. Ever Platform not knowing the subject yet (`422 subject_unknown`), or not answering, is
+ * Platform, so the user's other Ever ID links are queued again before it is sent (once, however often
+ * it is retried) and go right after it. Ever Platform not knowing the subject yet (`422 subject_unknown`), or not answering, is
  * retried with a back-off of up to a day, then given up (audited). Once the client is ready, the
  * links that existed before are reported too (for the linked tenants only), by the worker, until
  * that is done.
@@ -302,8 +303,9 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 					createHash('sha256').update(row.id).digest('hex')
 				);
 			} else {
-				await client.instances.personLinks.remove(row.userId);
+				// Queued first: if the unlink goes through and anything after it fails, they are kept.
 				await this.reportOtherLinks(row);
+				await client.instances.personLinks.remove(row.userId);
 			}
 			await this.identity.updateReport(row.id, {
 				state: 'sent',
@@ -360,8 +362,9 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 	}
 
 	/**
-	 * After an unlink: Ever Platform removed every link of the user (it keys them by the user), so the
-	 * user's other links of Ever Platform's issuer are queued again; they go after the unlink.
+	 * Before an unlink: Ever Platform removes every link of the user (it keys them by the user), so the
+	 * user's other links of Ever Platform's issuer are queued again (not when a link report of the same
+	 * identity already waits); they go after the unlink, which is older.
 	 */
 	private async reportOtherLinks(row: PersonLinkReportRecord): Promise<void> {
 		const issuer = await this.platformIssuer();
@@ -371,6 +374,11 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 		for (const link of await this.accounts.linksOfUser(row.userId)) {
 			const method = REPORTED_METHODS[link.linkMethod];
 			if (!method || stripTrailingSlashes(link.issuer) !== issuer || link.subject === row.subject) continue;
+			const subjectHash = subjectHashOf(link.issuer, link.subject);
+			const waiting = (await this.identity.reportsOf(link.userId, subjectHash)).some(
+				(other) => other.op === 'link' && other.state === 'pending'
+			);
+			if (waiting) continue;
 			await this.identity.addReport({
 				id: randomUUID(),
 				op: 'link',
@@ -379,7 +387,7 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 				tenantName: tenantDisplayName(link.tenantName),
 				issuer: link.issuer,
 				subject: link.subject,
-				subjectHash: subjectHashOf(link.issuer, link.subject),
+				subjectHash,
 				linkMethod: method
 			});
 			this.nudge();

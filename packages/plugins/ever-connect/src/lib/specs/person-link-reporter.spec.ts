@@ -304,6 +304,27 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		expect(sent.map((c) => `${c.method} ${c.body?.['identity_subject'] ?? ''}`.trim())).toEqual(['DELETE', 'POST identity-b']);
 	});
 
+	it('the other links are queued before the unlink goes, once however often it is retried', async () => {
+		await clientReady();
+		hold({ subject: 'identity-b' });
+		await reporter.unlinked(payload({ subject: 'identity-a' }) as never);
+		h.platform.offline = true;
+		await reporter.sendDue();
+		h.clock.t += 60_000;
+		await reporter.sendDue();
+		const rows = await h.dataSource.query(`SELECT "op", "subject", "state" FROM "ever_connect_person_link_report" ORDER BY "seq"`);
+		expect(rows).toEqual([
+			{ op: 'unlink', subject: 'identity-a', state: 'pending' },
+			{ op: 'link', subject: 'identity-b', state: 'pending' }
+		]);
+		h.platform.offline = false;
+		h.clock.t += 3_600_000;
+		await reporter.sendDue();
+		await reporter.sendDue();
+		const sent = h.platform.calls.filter((c) => c.path.includes('person-links') && c.method === 'POST');
+		expect(sent.map((c) => c.body?.['identity_subject'])).toEqual(['identity-b']);
+	});
+
 	it('a backfill that cannot run (no client yet) counts as nothing done', async () => {
 		expect(await reporter.backfill()).toBeNull();
 	});
