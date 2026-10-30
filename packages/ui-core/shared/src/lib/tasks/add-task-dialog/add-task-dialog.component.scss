@@ -98,8 +98,13 @@ $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
   padding-inline-start: 0.5rem;
 }
 
-.task-main .form-group:last-child {
-  margin-bottom: 0;
+.task-main {
+  display: flex;
+  flex-direction: column;
+
+  .form-group {
+    flex: none;
+  }
 }
 
 .required-mark {
@@ -124,16 +129,43 @@ $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
   line-height: 1.25rem;
 }
 
-.task-description {
-  display: block;
+// The editor takes the height the title leaves and scrolls only its text, so the
+// toolbar stays above the text instead of moving with it.
+.task-main .description-group {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 16rem;
+  margin-bottom: 0;
+}
 
-  // The formatting tools stay reachable while scrolling through a long description.
-  ::ng-deep ga-rich-text-toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
-    background: var(--background-basic-color-1);
+.task-description {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+
+  ::ng-deep {
+    .rich-text-editor {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    ga-rich-text-toolbar {
+      flex: none;
+    }
+
+    .rich-text-editor__content {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    // Fills the box, so a click anywhere below the text still lands in the editor.
+    .ProseMirror {
+      flex: 1 0 auto;
+    }
   }
 }
 

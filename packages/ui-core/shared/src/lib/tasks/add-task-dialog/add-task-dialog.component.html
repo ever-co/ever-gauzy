@@ -38,14 +38,14 @@
             (keydown.enter)="$event.preventDefault()"
           ></textarea>
         </div>
-        <div class="form-group">
+        <div class="form-group description-group">
           <label class="label section-label">{{ 'TASKS_PAGE.TASKS_DESCRIPTION' | translate }}</label>
           <ga-rich-text-editor
             class="task-description"
             formControlName="description"
             preset="standard"
             outputFormat="html"
-            minHeight="260px"
+            minHeight="8rem"
             [placeholder]="'FORM.PLACEHOLDERS.DESCRIPTION' | translate"
           ></ga-rich-text-editor>
         </div>
