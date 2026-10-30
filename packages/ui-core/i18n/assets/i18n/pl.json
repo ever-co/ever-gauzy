@@ -7093,6 +7093,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} skomentował(a)",
 		"ACTIVITY_REPLIED": "{{ actor }} odpowiedział(a) na komentarz w",
 		"ACTIVITY_FIELDS": "Zmieniono: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} zmienił(a) status",
+		"ACTIVITY_STATUS_FROM_TO": "Status zmieniony z {{ from }} na {{ to }}",
 		"SOMEONE": "Ktoś",
 		"TODAY": "Dzisiaj",
 		"YESTERDAY": "Wczoraj",

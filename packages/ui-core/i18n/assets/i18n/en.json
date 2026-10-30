@@ -8293,6 +8293,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} commented on",
 		"ACTIVITY_REPLIED": "{{ actor }} replied to a comment on",
 		"ACTIVITY_FIELDS": "Changed: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} changed the status of",
+		"ACTIVITY_STATUS_FROM_TO": "Status changed from {{ from }} to {{ to }}",
 		"SOMEONE": "Someone",
 		"TODAY": "Today",
 		"YESTERDAY": "Yesterday",

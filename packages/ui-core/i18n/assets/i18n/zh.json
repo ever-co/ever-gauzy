@@ -7094,6 +7094,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} 评论了",
 		"ACTIVITY_REPLIED": "{{ actor }} 回复了评论：",
 		"ACTIVITY_FIELDS": "已更改：{{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} 更改了状态：",
+		"ACTIVITY_STATUS_FROM_TO": "状态已从 {{ from }} 更改为 {{ to }}",
 		"SOMEONE": "某人",
 		"TODAY": "今天",
 		"YESTERDAY": "昨天",

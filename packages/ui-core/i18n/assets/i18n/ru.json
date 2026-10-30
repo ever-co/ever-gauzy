@@ -7112,6 +7112,8 @@
 		"ACTIVITY_COMMENTED": "{{ actor }} прокомментировал(а)",
 		"ACTIVITY_REPLIED": "{{ actor }} ответил(а) на комментарий в",
 		"ACTIVITY_FIELDS": "Изменено: {{ fields }}",
+		"ACTIVITY_STATUS_CHANGED": "{{ actor }} изменил(а) статус",
+		"ACTIVITY_STATUS_FROM_TO": "Статус изменён с {{ from }} на {{ to }}",
 		"SOMEONE": "Кто-то",
 		"TODAY": "Сегодня",
 		"YESTERDAY": "Вчера",
