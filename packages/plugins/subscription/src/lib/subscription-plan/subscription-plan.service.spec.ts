@@ -342,10 +342,26 @@ function planFixture(
 						return stated && productId in stated ? stated[productId] : VARIANT;
 					}
 			  };
+	const subscriptionRepository = repository(tables, 'subscription');
+	/** Every statement run in the update's transaction, in order: the plan row's lock, then the live counts. */
+	const statements: string[] = [];
+	const transactional = {
+		connection: { options: { type: 'postgres' } },
+		query: async (sql: string) => {
+			statements.push(sql);
+			return [];
+		},
+		count: async (_entity: unknown, findOptions: any) => {
+			statements.push('count live subscriptions');
+			return subscriptionRepository.count(findOptions);
+		},
+		update: async (_entity: unknown, criteria: any, partial: any) => patchRecorder.update(criteria, partial)
+	};
+	Object.assign(patchRecorder, { manager: { transaction: async (run: (manager: any) => Promise<any>) => run(transactional) } });
 	const service = new SubscriptionPlanService(
 		patchRecorder as never,
 		{} as never,
-		repository(tables, 'subscription') as never,
+		subscriptionRepository as never,
 		catalog as never
 	);
 
@@ -353,6 +369,7 @@ function planFixture(
 		service,
 		tables,
 		patches,
+		statements,
 		plan: (id: string) => tables.subscription_plan.find((row) => row.id === id)
 	};
 }
@@ -847,5 +864,47 @@ describe('SubscriptionPlanService — the reads a listing and a guard are built 
 		expect(await fixture.service.findByCode('NOPE')).toBeNull();
 		await expect(fixture.service.findOneScoped('plan-1')).resolves.toMatchObject({ id: 'plan-1' });
 		await expect(fixture.service.findOneScoped('theirs')).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
+
+describe('SubscriptionPlanService.updatePlan under the plan row lock', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('locks the plan row before it counts live subscriptions, and writes in that transaction', async () => {
+		const fixture = planFixture();
+
+		await fixture.service.updatePlan('plan-1', { isActive: false });
+
+		expect(fixture.statements[0]).toMatch(/FROM "subscription_plan" WHERE "id" = \$1 FOR UPDATE$/);
+		expect(fixture.statements[1]).toBe('count live subscriptions');
+		expect(fixture.plan('plan-1').isActive).toBe(false);
+	});
+
+	it('counts a subscription that committed while it waited for the lock, and refuses the deactivation', async () => {
+		const fixture = planFixture({ subscriptions: [] });
+		const query = fixture.statements;
+		// A subscription created on the plan commits before the lock is granted.
+		const transaction = (fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction;
+		(fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction = async (run: any) =>
+			transaction(async (manager: any) =>
+				run({
+					...manager,
+					query: async (sql: string) => {
+						query.push(sql);
+						fixture.tables.subscription.push(subscriptionRow('committed-meanwhile'));
+						return [];
+					}
+				})
+			);
+
+		await expect(fixture.service.updatePlan('plan-1', { isActive: false })).rejects.toThrow(
+			'SUBSCRIPTION_PLAN_HAS_SUBSCRIBERS'
+		);
+		expect(fixture.plan('plan-1').isActive).not.toBe(false);
 	});
 });

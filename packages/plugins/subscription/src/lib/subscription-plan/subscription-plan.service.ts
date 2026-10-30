@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { In } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { ID } from '@gauzy/contracts';
 import { Money, RequestContext, isUniqueViolation } from '@gauzy/core';
 import {
@@ -12,6 +12,7 @@ import {
 import { ISubscriptionCadence, normalizeDecimal, normalizeDiscountFraction } from '../subscription.cycle';
 import { currentScope } from '../subscription.scope';
 import { SubscriptionPlan } from './subscription-plan.entity';
+import { lockPlanRow } from './subscription-plan.lock';
 import { MikroOrmSubscriptionPlanRepository } from './repository/mikro-orm-subscription-plan.repository';
 import { TypeOrmSubscriptionPlanRepository } from './repository/type-orm-subscription-plan.repository';
 import { TypeOrmSubscriptionRepository } from '../subscription/repository/type-orm-subscription.repository';
@@ -114,35 +115,49 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 		const normalized = this.normalize({ ...plan, ...changes } as Partial<SubscriptionPlan>);
 
 		if (changes.code && changes.code !== plan.code) {
-			if (await this.hasLiveSubscriptions(id)) {
+			await this.assertCodeIsFree(changes.code, id);
+		}
+
+		// The live-subscription checks and the write run under the plan row's lock (`lockPlanRow`): a subscription being
+		// created on the plan holds it in share mode until it commits, so the checks count it, and none can start on the
+		// terms this write changes once the checks have passed.
+		await this.typeOrmSubscriptionPlanRepository.manager.transaction(async (manager) => {
+			await lockPlanRow(manager, id, 'update');
+			const live = () => this.hasLiveSubscriptions(id, manager);
+
+			if (changes.code && changes.code !== plan.code && (await live())) {
 				throw new BadRequestException(
 					'SUBSCRIPTION_PLAN_CODE_IMMUTABLE: a plan with live subscriptions cannot be recoded; the code is what a customer and an invoice quote.'
 				);
 			}
 
-			await this.assertCodeIsFree(changes.code, id);
-		}
+			// The currency is frozen under live subscriptions for the reason the code is (R2-G16): their lines, setup fee
+			// and prorations are priced in it, and `POST /subscriptions` refuses a request whose currency differs from
+			// the plan's. `PUT /subscription-plans/:id` always took a currency; `updateSubscriptionPlan` takes it now too.
+			if (
+				changes.currency !== undefined &&
+				changes.currency !== canonicalStoredCurrency(plan.currency) &&
+				(await live())
+			) {
+				throw new BadRequestException(
+					'SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE: a plan with live subscriptions cannot change currency; they are priced and billed in it.'
+				);
+			}
 
-		// The currency is frozen under live subscriptions for the reason the code is (R2-G16): their lines, setup fee
-		// and prorations are priced in it, and `POST /subscriptions` refuses a request whose currency differs from
-		// the plan's. `PUT /subscription-plans/:id` always took a currency; `updateSubscriptionPlan` takes it now too.
-		if (
-			changes.currency !== undefined &&
-			changes.currency !== canonicalStoredCurrency(plan.currency) &&
-			(await this.hasLiveSubscriptions(id))
-		) {
-			throw new BadRequestException(
-				'SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE: a plan with live subscriptions cannot change currency; they are priced and billed in it.'
+			if (changes.isActive === false && plan.isActive !== false && (await live())) {
+				throw new ConflictException(
+					'SUBSCRIPTION_PLAN_HAS_SUBSCRIBERS: this plan still has live subscriptions; they would keep billing, so deactivate it only once they have been moved or cancelled.'
+				);
+			}
+
+			// Written by the transaction holding the lock (a write on another connection would wait for it), in the
+			// plan's own tenant and organization, which `findOneScoped` established above.
+			await manager.update(
+				SubscriptionPlan,
+				{ id, tenantId: plan.tenantId, organizationId: plan.organizationId },
+				this.updatable(normalized) as any
 			);
-		}
-
-		if (changes.isActive === false && plan.isActive !== false && (await this.hasLiveSubscriptions(id))) {
-			throw new ConflictException(
-				'SUBSCRIPTION_PLAN_HAS_SUBSCRIBERS: this plan still has live subscriptions; they would keep billing, so deactivate it only once they have been moved or cancelled.'
-			);
-		}
-
-		await super.update(id, this.updatable(normalized) as any);
+		});
 
 		return await this.findOneScoped(id);
 	}
@@ -315,14 +330,16 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 	 * @param planId The plan to count subscribers of.
 	 * @returns True when at least one subscription is still live on it.
 	 */
-	public async hasLiveSubscriptions(planId: ID): Promise<boolean> {
-		const count = await this.typeOrmSubscriptionRepository.count({
-			where: {
-				planId,
-				status: In(LIVE_SUBSCRIPTION_STATUSES),
-				...currentScope()
-			}
-		});
+	public async hasLiveSubscriptions(planId: ID, manager?: EntityManager): Promise<boolean> {
+		const where = {
+			planId,
+			status: In(LIVE_SUBSCRIPTION_STATUSES),
+			...currentScope()
+		};
+		// In the caller's transaction when it states one (a plan update under the plan row's lock).
+		const count = manager
+			? await manager.count(this.typeOrmSubscriptionRepository.target, { where } as never)
+			: await this.typeOrmSubscriptionRepository.count({ where });
 
 		return count > 0;
 	}

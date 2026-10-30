@@ -60,6 +60,7 @@ import {
 } from '../subscription.cycle';
 import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
+import { lockPlanRow } from '../subscription-plan/subscription-plan.lock';
 import { SUBSCRIPTION_REFERENCES } from '../subscription.references';
 import { currentScope } from '../subscription.scope';
 import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription.writable';
@@ -561,6 +562,22 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		};
 
 		const created = await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+			// The plan row in share mode until this commits (`lockPlanRow`): a plan update waits for it and then counts
+			// this subscription, and an update that committed first is seen here, so the subscription never starts on a
+			// plan that was deactivated or re-priced in another currency after the checks above.
+			await lockPlanRow(manager, plan.id, 'share');
+			const current = await manager.findOne(SubscriptionPlan, { where: { id: plan.id } });
+			if (!current || current.isActive === false) {
+				throw new BadRequestException(
+					`SUBSCRIPTION_PLAN_INACTIVE: the plan "${plan.code}" is not active, so no new subscription may be created from it.`
+				);
+			}
+			if (current.currency && currency && current.currency !== currency) {
+				throw new BadRequestException(
+					`SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in ${current.currency} and the request states ${currency}.`
+				);
+			}
+
 			const subscription = await manager.save(
 				Subscription,
 				manager.create(Subscription, {
