@@ -216,6 +216,23 @@ describe('Sign in with Ever ID: the sign-in client', () => {
 		expect(await h.everIdLogin.status()).toBe('pending');
 	});
 
+	it('switched off while its client was being asked for: nothing is kept for it', async () => {
+		await h.connectAndEnable();
+		h.platform.on(POST, async () => {
+			// The operator switches it off while the request is on its way.
+			await h.store.saveIntegration('instance', EVER_ID_LOGIN, { state: 'disabled', enabled: false });
+			await h.everIdLogin.disabled();
+			return { status: 202, body: { status: 'pending', job_id: null } };
+		});
+		await h.everIdLogin.enabled();
+		expect(await storedBlob()).toBeNull();
+		// Enabled again: asked for again.
+		h.platform.on(POST, { status: 202, body: { status: 'pending', job_id: null } });
+		await h.store.saveIntegration('instance', EVER_ID_LOGIN, { state: 'enabled', enabled: true });
+		await h.everIdLogin.enabled();
+		expect(await h.everIdLogin.status()).toBe('pending');
+	});
+
 	it('the links that existed before stay due until they were queued, once the client is ready', async () => {
 		platformMakesTheClient(0);
 		await h.connectAndEnable();

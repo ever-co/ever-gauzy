@@ -170,6 +170,7 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 			return;
 		}
 		const blob = row.configEncrypted;
+		const consent = { consentId: row.consentId };
 		const current = this.read(blob);
 		if (current && (current.status === 'ready' || current.status === 'pending')) {
 			return;
@@ -178,7 +179,7 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 			this.logger.warn(
 				'Sign in with Ever ID needs an https API_BASE_URL (or ZITADEL_CALLBACK_URL) on one origin; its sign-in client is not asked for.'
 			);
-			await this.write(blob, { status: 'failed', code: 'endpoints_unusable' });
+			await this.write(blob, { status: 'failed', code: 'endpoints_unusable' }, true, consent);
 			return;
 		}
 		const { redirectUri, logoutUri } = this.config.signIn;
@@ -203,7 +204,8 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 				throw error;
 			}
 		}
-		await this.write(blob, next);
+		// Switched off (or consented anew) while it was being asked for: nothing is kept for it.
+		await this.write(blob, next, true, consent);
 	}
 
 	/**
@@ -245,8 +247,8 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 	async markBackfilled(): Promise<void> {
 		const row = await this.store.integration('instance', EVER_ID_LOGIN);
 		const state = this.read(row?.configEncrypted ?? null);
-		if (state?.status === 'ready') {
-			await this.write(row?.configEncrypted ?? null, { ...state, backfilledAt: this.now() }, false);
+		if (row?.enabled && state?.status === 'ready') {
+			await this.write(row.configEncrypted, { ...state, backfilledAt: this.now() }, false, { consentId: row.consentId });
 		}
 	}
 
@@ -328,7 +330,7 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 				next = later();
 			}
 		}
-		await this.write(blob, next, next.status !== 'pending');
+		await this.write(blob, next, next.status !== 'pending', { consentId: row.consentId });
 		return true;
 	}
 
@@ -364,13 +366,22 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 		}
 	}
 
-	/** Stores `next` over `expected` (compare and set); audits a change of status. */
-	private async write(expected: string | null, next: SignInClientState, audit = true): Promise<boolean> {
+	/**
+	 * Stores `next` over `expected` (compare and set), only while the integration is enabled under the
+	 * consent `whileEnabled` names; audits a change of status.
+	 */
+	private async write(
+		expected: string | null,
+		next: SignInClientState,
+		audit: boolean,
+		whileEnabled: { consentId: string | null }
+	): Promise<boolean> {
 		const written = await this.store.setIntegrationConfig(
 			'instance',
 			EVER_ID_LOGIN,
 			this.secrets.seal(JSON.stringify(next), 'integration_config'),
-			expected
+			expected,
+			whileEnabled
 		);
 		this.cache = null;
 		if (written && audit) {

@@ -119,15 +119,19 @@ export class EverConnectIdentityStore {
 
 	// ── Link reports ──────────────────────────────────────────────────────────
 
-	/** Adds a report, due now. */
-	async addReport(values: Omit<PersonLinkReportRecord, 'state' | 'attempts' | 'nextAttemptAt' | 'lastError' | 'sentAt' | 'createdAt'>): Promise<void> {
+	/** Adds a report, due now; `createdAt` (default now) is when its link or unlink happened, which orders the reports. */
+	async addReport(
+		values: Omit<PersonLinkReportRecord, 'state' | 'attempts' | 'nextAttemptAt' | 'lastError' | 'sentAt' | 'createdAt'> & {
+			createdAt?: number;
+		}
+	): Promise<void> {
 		const at = this.now();
 		await this.sql.insertIgnore(REPORT, {
 			...values,
 			state: 'pending',
 			attempts: 0,
 			nextAttemptAt: at,
-			createdAt: at,
+			createdAt: values.createdAt ?? at,
 			updatedAt: at
 		});
 	}

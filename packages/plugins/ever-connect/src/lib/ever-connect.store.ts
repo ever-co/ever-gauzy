@@ -376,14 +376,16 @@ export class EverConnectStore {
 
 	/**
 	 * Replaces the sealed configuration of one integration, only when it is still `expected` (compare
-	 * and set): two API processes never overwrite each other's newer value. Returns whether it was
-	 * written.
+	 * and set): two API processes never overwrite each other's newer value. With `whileEnabled`, only
+	 * while the integration is enabled under that consent (a value made for a consent that ended
+	 * meanwhile is not stored). Returns whether it was written.
 	 */
 	async setIntegrationConfig(
 		scope: string,
 		name: string,
 		configEncrypted: string | null,
-		expected: string | null
+		expected: string | null,
+		whileEnabled?: { consentId: string | null }
 	): Promise<boolean> {
 		await this.saveIntegration(scope, name, {});
 		const q = (c: string) => this.sql.q(c);
@@ -391,7 +393,17 @@ export class EverConnectStore {
 		let condition = `${q('configEncrypted')} IS NULL`;
 		if (expected !== null) {
 			params.push(expected);
-			condition = `${q('configEncrypted')} = ${this.sql.ph(5)}`;
+			condition = `${q('configEncrypted')} = ${this.sql.ph(params.length)}`;
+		}
+		if (whileEnabled) {
+			params.push(true);
+			condition += ` AND ${q('enabled')} = ${this.sql.ph(params.length)}`;
+			if (whileEnabled.consentId === null) {
+				condition += ` AND ${q('consentId')} IS NULL`;
+			} else {
+				params.push(whileEnabled.consentId);
+				condition += ` AND ${q('consentId')} = ${this.sql.ph(params.length)}`;
+			}
 		}
 		const { affected } = await this.sql.run(
 			`UPDATE ${q(INTEGRATION)} SET ${q('configEncrypted')} = ${this.sql.ph(1)}, ${q('updatedAt')} = ${this.sql.ph(2)} ` +

@@ -80,7 +80,7 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 	});
 
 	/** Lets the event bus subscribers run. */
-	const settle = () => new Promise((resolve) => setImmediate(resolve));
+	const settle = () => reporter.settled();
 
 	it('a link on the event bus is reported once, with the SDK request body and no e-mail key', async () => {
 		await clientReady();
@@ -239,6 +239,23 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		await h.identity.purgeReports([row.subjectHash]);
 		expect(await reporter.sendDue()).toBe(0);
 		expect(h.platform.callsTo(POST)).toEqual([]);
+	});
+
+	it('events are handled in the order they happened; an older event never undoes a newer report', async () => {
+		await clientReady();
+		const t0 = h.clock.now();
+		// A later unlink was handled first (another API process): the earlier link is stale.
+		expect(await reporter.unlinked(payload() as never, t0 + 10)).toBe(true);
+		expect(await reporter.linked(payload() as never, t0 + 5)).toBe(false);
+		const rows = await h.dataSource.query('SELECT "op", "state" FROM "ever_connect_person_link_report"');
+		expect(rows).toEqual([{ op: 'unlink', state: 'pending' }]);
+		// In one process, both events go through one queue in publish order.
+		await bus.publish(new ZitadelAccountLinkedEvent(payload({ subject: 'other' }) as never));
+		await bus.publish(new ZitadelAccountUnlinkedEvent(payload({ subject: 'other' }) as never));
+		await settle();
+		const other = await h.dataSource.query(`SELECT "op", "state" FROM "ever_connect_person_link_report" WHERE "subject" = 'other' ORDER BY "createdAt", rowid`);
+		expect(other.map((r: { op: string }) => r.op)).toEqual(['link', 'unlink']);
+		expect(other.find((r: { op: string }) => r.op === 'link').state).toBe('dropped');
 	});
 
 	it('the tenant name is sent only when it does not look like an e-mail address', () => {

@@ -67,6 +67,8 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger('EverConnect');
 	private readonly now: () => number;
 	private readonly subscriptions: Subscription[] = [];
+	/** The link events of this process, handled one at a time in the order they were published. */
+	private queue: Promise<void> = Promise.resolve();
 	/** Asks the identity worker to run soon (set by the worker). */
 	nudge: () => void = () => undefined;
 
@@ -87,8 +89,12 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 	onModuleInit(): void {
 		if (this.eventBus) {
 			this.subscriptions.push(
-				this.eventBus.ofType(ZitadelAccountLinkedEvent).subscribe((event) => void this.safely(() => this.linked(event.payload))),
-				this.eventBus.ofType(ZitadelAccountUnlinkedEvent).subscribe((event) => void this.safely(() => this.unlinked(event.payload)))
+				this.eventBus
+					.ofType(ZitadelAccountLinkedEvent)
+					.subscribe((event) => this.enqueue(() => this.linked(event.payload, event.createdAt.getTime()))),
+				this.eventBus
+					.ofType(ZitadelAccountUnlinkedEvent)
+					.subscribe((event) => this.enqueue(() => this.unlinked(event.payload, event.createdAt.getTime())))
 			);
 		}
 	}
@@ -97,16 +103,34 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 		for (const subscription of this.subscriptions) subscription.unsubscribe();
 	}
 
-	/** A Gauzy user linked an Ever ID: a link report, when it is to be reported. */
-	async linked(payload: ZitadelAccountEventPayload): Promise<boolean> {
+	/** Handles link events one at a time, in the order they were published in this process. */
+	private enqueue(work: () => Promise<unknown>): void {
+		this.queue = this.queue.then(() => this.safely(work));
+	}
+
+	/** Waits until the link events received so far are handled (for tests and shutdown). */
+	settled(): Promise<void> {
+		return this.queue;
+	}
+
+	/**
+	 * A Gauzy user linked an Ever ID (at `at`, when the event happened): a link report, when it is to be
+	 * reported and no newer report of the same identity exists (another API process may have handled a
+	 * later unlink first).
+	 */
+	async linked(payload: ZitadelAccountEventPayload, at = this.now()): Promise<boolean> {
 		const method = payload.linkMethod ? REPORTED_METHODS[payload.linkMethod] : undefined;
 		if (!method || !(await this.reportable(payload))) {
 			return false;
 		}
 		const subjectHash = subjectHashOf(payload.issuer, payload.subject);
+		if (await this.newerExists(payload.userId, subjectHash, at)) {
+			return false;
+		}
 		// An unlink of the same identity not sent yet is superseded.
-		await this.supersede(payload.userId, subjectHash, 'unlink');
+		await this.supersede(payload.userId, subjectHash, 'unlink', at);
 		await this.identity.addReport({
+			createdAt: at,
 			id: randomUUID(),
 			op: 'link',
 			userId: payload.userId,
@@ -121,14 +145,18 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 		return true;
 	}
 
-	/** A Gauzy user unlinked an Ever ID: an unlink report, when it is to be reported. */
-	async unlinked(payload: ZitadelAccountEventPayload): Promise<boolean> {
+	/** A Gauzy user unlinked an Ever ID (at `at`): an unlink report, when it is to be reported (see {@link linked}). */
+	async unlinked(payload: ZitadelAccountEventPayload, at = this.now()): Promise<boolean> {
 		if (!(await this.reportable(payload))) {
 			return false;
 		}
 		const subjectHash = subjectHashOf(payload.issuer, payload.subject);
-		await this.supersede(payload.userId, subjectHash, 'link');
+		if (await this.newerExists(payload.userId, subjectHash, at)) {
+			return false;
+		}
+		await this.supersede(payload.userId, subjectHash, 'link', at);
 		await this.identity.addReport({
+			createdAt: at,
 			id: randomUUID(),
 			op: 'unlink',
 			userId: payload.userId,
@@ -208,13 +236,13 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 		if (!due.length) {
 			return 0;
 		}
-		const enabled = (await this.store.integration('instance', EVER_ID_LOGIN))?.enabled === true;
 		let sent = 0;
 		for (const candidate of due) {
-			// Read again: a person's deletion may have removed it, or switching off dropped it, meanwhile.
+			// Read again: a person's deletion may have removed it, switching off or a newer report dropped
+			// it, or the integration ended, while the reports before it were sent.
 			const row = await this.identity.report(candidate.id);
 			if (!row || row.state !== 'pending') continue;
-			if (!enabled) {
+			if ((await this.store.integration('instance', EVER_ID_LOGIN))?.enabled !== true) {
 				await this.identity.updateReport(row.id, { state: 'dropped', nextAttemptAt: null, lastError: 'integration_off' });
 				continue;
 			}
@@ -339,10 +367,15 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 		return links[0] ?? null;
 	}
 
-	/** Pending reports of the opposite operation for the same user and identity are not sent any more. */
-	private async supersede(userId: string, subjectHash: string, op: 'link' | 'unlink'): Promise<void> {
+	/** Whether a report of the same user and identity happened after `at` (this event is older than what is known). */
+	private async newerExists(userId: string, subjectHash: string, at: number): Promise<boolean> {
+		return (await this.identity.reportsOf(userId, subjectHash)).some((row) => row.createdAt > at && row.state !== 'dropped');
+	}
+
+	/** Older pending reports of the opposite operation for the same user and identity are not sent any more. */
+	private async supersede(userId: string, subjectHash: string, op: 'link' | 'unlink', at = this.now()): Promise<void> {
 		for (const row of await this.identity.reportsOf(userId, subjectHash)) {
-			if (row.op === op && row.state === 'pending') {
+			if (row.op === op && row.state === 'pending' && row.createdAt <= at) {
 				await this.identity.updateReport(row.id, { state: 'dropped', nextAttemptAt: null, lastError: 'superseded' });
 			}
 		}
