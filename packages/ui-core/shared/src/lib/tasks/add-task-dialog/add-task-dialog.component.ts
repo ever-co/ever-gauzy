@@ -102,6 +102,19 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		this._task = value;
 	}
 
+	/** Callers also pass an id-less `selectedTask` to prefill a new task, so only an id means editing. */
+	get isEditing(): boolean {
+		return !!this.selectedTask?.id;
+	}
+
+	/** The task's short reference for the dialog header, e.g. `GA-42`. */
+	get taskReference(): string {
+		if (!this.isEditing) {
+			return '';
+		}
+		return [this.selectedTask.prefix, this.selectedTask.number].filter(Boolean).join('-');
+	}
+
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
