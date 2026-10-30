@@ -96,11 +96,11 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 	}
 
 	/** The Overview, once opened. */
-	@ViewChild(ProjectQuickLookComponent) quickLook?: ProjectQuickLookComponent;
+	@ViewChild(ProjectQuickLookComponent) readonly quickLook?: ProjectQuickLookComponent;
 
 	/**
-	 * The Overview loads when first opened, then stays mounted behind the other tabs: it reads every task and
-	 * the project's time, which a page opened on another tab has no use for.
+	 * The Overview loads when first opened for the project on screen, then stays mounted behind the other tabs:
+	 * it reads every task and the project's time, which a page opened on another tab has no use for.
 	 */
 	overviewOpened = false;
 
@@ -316,6 +316,9 @@ export class ProjectViewPageComponent extends TranslationBaseComponent implement
 			if (!project?.id || (project.organizationId && project.organizationId !== organization.id)) {
 				throw { status: 404 };
 			}
+			// Another project, or organization, starts unopened. Set here and not with the resets above: the first
+			// load starts before the URL has named the tab.
+			this.overviewOpened = this.tab === 'overview';
 			this.card = {
 				id: project.id,
 				name: project.name,
