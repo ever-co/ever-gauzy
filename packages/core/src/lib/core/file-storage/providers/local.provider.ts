@@ -212,6 +212,21 @@ export class LocalProvider extends Provider<LocalProvider> {
 	}
 
 	/**
+	 * Deletes a file, or throws when it was not deleted: `deleteFile` refuses a key that resolves outside the storage
+	 * root with a warning, and resolves. A file that is not there is already gone and resolves here too.
+	 *
+	 * @param file The key of the file to delete.
+	 * @throws Error when the key resolves outside the storage root, or when the deletion itself fails.
+	 */
+	override async deleteFileOrFail(file: string): Promise<void> {
+		if (file && !this.path(file)) {
+			throw new Error(`The file "${file}" was not deleted: it resolves outside the storage root.`);
+		}
+
+		await this.deleteFile(file);
+	}
+
+	/**
 	 * Map a partial UploadedFile object to include filename and URL.
 	 *
 	 * @param file - The partial UploadedFile object to map

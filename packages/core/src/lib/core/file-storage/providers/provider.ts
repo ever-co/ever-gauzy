@@ -50,6 +50,21 @@ export abstract class Provider<T> {
 	abstract deleteFile(filePath: string): Promise<void>;
 
 	/**
+	 * Delete a file, or throw when it was not deleted.
+	 *
+	 * `deleteFile` resolves without deleting anything in the cases its best-effort callers rely on (a provider whose
+	 * client could not be built, a key that resolves outside the local root), so that a clean-up never fails the
+	 * request around it. A caller that has to know the file is gone, such as account deletion, which reports what it
+	 * could not remove, calls this instead. A provider whose `deleteFile` can resolve without deleting overrides it.
+	 *
+	 * @param filePath The path of the file to be deleted.
+	 * @throws Error when the provider did not delete the file.
+	 */
+	async deleteFileOrFail(filePath: string): Promise<void> {
+		await this.deleteFile(filePath);
+	}
+
+	/**
 	 * Get an instance of the storage provider.
 	 */
 	abstract getProviderInstance(): T;

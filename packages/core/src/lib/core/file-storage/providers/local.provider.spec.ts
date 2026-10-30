@@ -88,6 +88,21 @@ describe('LocalProvider — keys stay inside the root folder (#10674)', () => {
 		expect(fs.existsSync(join(root, 'uploads', 'inside.txt'))).toBe(false);
 	});
 
+	it('deleteFileOrFail throws for a key outside the root, where deleteFile resolves, and deletes one inside it', async () => {
+		await expect(provider.deleteFile('../outside.txt')).resolves.toBeUndefined();
+		await expect(provider.deleteFileOrFail('../outside.txt')).rejects.toThrow(/outside the storage root/);
+		await expect(provider.deleteFileOrFail('../public-secret/secret.txt')).rejects.toThrow(/outside the storage root/);
+
+		expect(fs.existsSync(join(base, 'outside.txt'))).toBe(true);
+		expect(fs.existsSync(secret)).toBe(true);
+
+		await provider.deleteFileOrFail('uploads/inside.txt');
+
+		expect(fs.existsSync(join(root, 'uploads', 'inside.txt'))).toBe(false);
+		// A file that is not there is already gone.
+		await expect(provider.deleteFileOrFail('uploads/inside.txt')).resolves.toBeUndefined();
+	});
+
 	it('answers 400 to a write outside the root and writes nothing there', async () => {
 		const attempt = provider.putFile(Buffer.from('written'), '../public-secret/planted.txt');
 
