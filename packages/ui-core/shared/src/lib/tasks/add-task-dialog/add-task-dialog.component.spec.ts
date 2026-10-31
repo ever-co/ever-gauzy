@@ -1,10 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Subject } from 'rxjs';
-import { IOrganization, IOrganizationProjectModule, IPagination } from '@gauzy/contracts';
+import { of, Subject } from 'rxjs';
+import {
+	IOrganization,
+	IOrganizationProject,
+	IOrganizationProjectModule,
+	IPagination,
+	ITask,
+	IUser,
+	TaskStatusEnum
+} from '@gauzy/contracts';
 import { AddTaskDialogComponent } from './add-task-dialog.component';
 import { AddTaskDialogModule } from './add-task-dialog.module';
-import { AuthService, EmployeesService, OrganizationProjectModuleService } from '@gauzy/ui-core/core';
+import { AuthService, EmployeesService, OrganizationProjectModuleService, Store } from '@gauzy/ui-core/core';
 import { ProjectSelectorComponent } from '../../selectors/project/project/project.component';
 import { ContactSelectorComponent } from '../../contact-selector/contact-selector.component';
 describe('AddTaskDialogComponent', () => {
@@ -130,6 +138,66 @@ describe('AddTaskDialogComponent', () => {
 
 			expect(component.form.value).not.toHaveProperty('organizationContactId');
 			expect(component.form.value).not.toHaveProperty('organizationContact');
+		});
+	});
+
+	/*
+	 * The modules a project offers load when the dialog's project changes. They used to load only because the
+	 * project selector re-applied the URL's project after its first list; it no longer does that over a project
+	 * the form already has, so the dialog must load them for its own starting project.
+	 */
+	describe("the starting project's modules", () => {
+		const checkout = { id: 'module-1', name: 'Checkout' } as IOrganizationProjectModule;
+		const website = { id: 'project-1', name: 'Website' } as IOrganizationProject;
+		let store: Store;
+
+		beforeEach(() => {
+			jest.spyOn(TestBed.inject(OrganizationProjectModuleService), 'getAllModulesByProjectId').mockReturnValue(
+				of({ items: [checkout], total: 1 })
+			);
+			store = TestBed.inject(Store);
+			store.user = { id: 'user-1', tenantId: 'tenant-1' } as IUser;
+			store.selectedOrganization = { id: 'organization-1', tenantId: 'tenant-1' } as IOrganization;
+		});
+
+		afterEach(() => {
+			store.selectedProject = null;
+			store.selectedOrganization = null;
+		});
+
+		const open = async (task?: ITask) => {
+			const dialog = TestBed.createComponent(AddTaskDialogComponent);
+			dialog.componentInstance.task = task;
+			dialog.detectChanges();
+			await dialog.whenStable();
+			return dialog.componentInstance;
+		};
+
+		it('keeps the modules of a task saved unchanged', async () => {
+			const dialog = await open({
+				id: 'task-1',
+				title: 'Checkout flow',
+				status: TaskStatusEnum.OPEN,
+				project: website,
+				modules: [checkout],
+				members: [],
+				teams: []
+			} as ITask);
+
+			expect(dialog.availableModules).toEqual([checkout]);
+
+			dialog.onSave();
+
+			expect(dialog.form.get('modules').value).toEqual([checkout]);
+		});
+
+		it("offers the page's selected project's modules to a new task", async () => {
+			store.selectedProject = website;
+
+			const dialog = await open();
+
+			expect(dialog.form.get('projectId').value).toBe('project-1');
+			expect(dialog.availableModules).toEqual([checkout]);
 		});
 	});
 });

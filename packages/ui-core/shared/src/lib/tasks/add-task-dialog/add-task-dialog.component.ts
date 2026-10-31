@@ -111,6 +111,14 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	}
 
 	ngOnInit() {
+		// Subscribed first, so the project the task being edited already has (set by `initializeForm`) and
+		// the page's selected project (set below) load their modules too. They used to load only when the
+		// project selector re-applied the URL's project, which it no longer does over a form's own project.
+		this.form
+			.get('projectId')
+			.valueChanges.pipe(untilDestroyed(this))
+			.subscribe(() => this.loadAvailableModules());
+
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;
@@ -153,11 +161,6 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				untilDestroyed(this)
 			)
 			.subscribe();
-
-		this.form
-			.get('projectId')
-			.valueChanges.pipe(untilDestroyed(this))
-			.subscribe(() => this.loadAvailableModules());
 
 		this.organizationContactControl.valueChanges
 			.pipe(untilDestroyed(this))
