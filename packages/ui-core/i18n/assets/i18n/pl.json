@@ -5336,6 +5336,7 @@
 			"MAX_LIMIT_REACHED": "Osiągnięto maksymalny limit"
 		},
 		"MESSAGE": {
+			"KEY_RESULTS_OWNER_REQUIRED": "Wybierz osobę odpowiedzialną za ten cel: jego wyniki kluczowe muszą należeć do pracownika.",
 			"ERRORS": "Proszę sprawdzić formularz pod kątem błędów",
 			"PROJECT_LOAD": "Nie można wczytać projektów",
 			"COPIED": "Skopiowano link do schowka",

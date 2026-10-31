@@ -5098,6 +5098,7 @@
 			"MAX_LIMIT_REACHED": "crwdns7528:0crwdne7528:0"
 		},
 		"MESSAGE": {
+			"KEY_RESULTS_OWNER_REQUIRED": "Choose a lead for this objective: its key results must be owned by an employee.",
 			"ERRORS": "crwdns7430:0crwdne7430:0",
 			"PROJECT_LOAD": "crwdns2395:0crwdne2395:0",
 			"COPIED": "crwdns2397:0crwdne2397:0",

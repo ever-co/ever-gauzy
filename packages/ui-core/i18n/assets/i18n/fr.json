@@ -5338,6 +5338,7 @@
 			"MAX_LIMIT_REACHED": "Limite maximale atteinte"
 		},
 		"MESSAGE": {
+			"KEY_RESULTS_OWNER_REQUIRED": "Choisissez un responsable pour cet objectif : ses résultats clés doivent appartenir à un employé.",
 			"ERRORS": "Veuillez vérifier le formulaire pour les erreurs.",
 			"PROJECT_LOAD": "Impossible de charger les projets.",
 			"COPIED": "Lien copié dans le presse-papiers",

@@ -5337,6 +5337,7 @@
 			"MAX_LIMIT_REACHED": "Maximale limiet bereikt"
 		},
 		"MESSAGE": {
+			"KEY_RESULTS_OWNER_REQUIRED": "Kies een leider voor dit doel: de kernresultaten ervan moeten eigendom zijn van een werknemer.",
 			"ERRORS": "Controleer alstublieft het formulier op fouten.",
 			"PROJECT_LOAD": "Kon projecten niet laden",
 			"COPIED": "Link gekopieerd naar klembord",
