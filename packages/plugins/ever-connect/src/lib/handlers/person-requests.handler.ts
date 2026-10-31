@@ -113,9 +113,14 @@ export class PersonRequestsHandler {
 
 	/** Works out and sends the answer of one recorded request, unless it has one or another handling holds it. */
 	private async process(id: string): Promise<boolean> {
-		let row = await this.identity.request(id);
+		const seen = await this.identity.request(id);
 		const token = randomUUID();
-		if (!row || row.result !== null || !(await this.identity.claimRequest(id, token, this.now() + REQUEST_CLAIM_MS))) {
+		if (!seen || seen.result !== null || !(await this.identity.claimRequest(id, token, this.now() + REQUEST_CLAIM_MS))) {
+			return false;
+		}
+		// Read again once held: another handling may have recorded the users before its claim ran out.
+		let row = await this.identity.request(id);
+		if (!row || row.result !== null || row.claimedBy !== token) {
 			return false;
 		}
 		// The claim is renewed while the participant works (a large export may take a while).
@@ -135,7 +140,16 @@ export class PersonRequestsHandler {
 					return false;
 				}
 			}
-			const subject = { subjectHashes: row.subjectHashes, userIds, jobId: row.jobId };
+			let kept = userIds;
+			const keepUsers = async (found: string[]): Promise<void> => {
+				const merged = [...new Set([...kept, ...found])];
+				if (merged.length === kept.length) return;
+				if (!(await this.identity.updateClaimedRequest(id, token, { userIds: merged }))) {
+					throw new Error("A person's request is no longer held by this handling.");
+				}
+				kept = merged;
+			};
+			const subject = { subjectHashes: row.subjectHashes, userIds, jobId: row.jobId, keepUsers };
 			answer = await (row.kind === 'deletion' ? this.deletion : this.exports).answer(subject);
 		} finally {
 			clearInterval(renew);

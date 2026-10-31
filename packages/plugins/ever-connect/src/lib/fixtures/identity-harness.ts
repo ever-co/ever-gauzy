@@ -115,8 +115,9 @@ export class FakeAccounts implements EverIdAccountsPort {
 		return [...new Set(this.matching(hashes).map((link) => link.userId))];
 	}
 
-	async erase(hashes: string[]): Promise<string[]> {
+	async erase(hashes: string[], keep?: (userIds: string[]) => Promise<void>): Promise<string[]> {
 		const rows = this.matching(hashes);
+		if (rows.length) await keep?.([...new Set(rows.map((link) => link.userId))]);
 		this.erased.push(hashes);
 		this.links_ = this.links_.filter((link) => !rows.includes(link));
 		return [...new Set(rows.map((link) => link.userId))];

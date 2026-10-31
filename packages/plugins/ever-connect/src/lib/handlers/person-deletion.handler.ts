@@ -25,6 +25,8 @@ export interface PersonRequestSubject {
 	/** The Gauzy users linked to them when the request was first handled. */
 	userIds: string[];
 	jobId: string;
+	/** Records more users of the request (under its claim) before any of their links is removed; throws when it cannot. */
+	keepUsers?: (userIds: string[]) => Promise<void>;
 }
 
 /** A reason code as the contract takes it. */
@@ -61,8 +63,8 @@ export class PersonDeletionHandler {
 			// The Ever ID sign-in plugin is not loaded: its links cannot be looked up here.
 			return { result: 'failed', reasonCode: 'account_deletion_pending', accounts: 0 };
 		}
-		// A link made since the users were looked up is removed too, and its user counted.
-		const erased = await this.accounts.erase(subject.subjectHashes);
+		// A link made since the users were looked up is removed too: its user is recorded first, then counted.
+		const erased = await this.accounts.erase(subject.subjectHashes, subject.keepUsers);
 		const userIds = [...new Set([...subject.userIds, ...erased])];
 		if (!userIds.length) {
 			return { result: 'no_account', accounts: 0 };

@@ -40,12 +40,14 @@ export class ZitadelPersonDataListener implements EverIdAccountsPort {
 		return unique((await this.matching(subjectHashes)).map((row) => row.userId));
 	}
 
-	async erase(subjectHashes: string[]): Promise<string[]> {
+	async erase(subjectHashes: string[], keep?: (userIds: string[]) => Promise<void>): Promise<string[]> {
 		const rows = await this.matching(subjectHashes);
 		if (!rows.length) {
 			return [];
 		}
 		const userIds = unique(rows.map((row) => row.userId));
+		// The caller records the users first: a handling that stops after this point still knows them.
+		await keep?.(userIds);
 		await this.sessions.endSessionsOfUsers(userIds);
 		await this.accounts.delete({ id: In(rows.map((row) => row.id)) });
 		await this.sessions.endSessionsOfUsers(userIds);

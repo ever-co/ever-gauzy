@@ -15,7 +15,7 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/
  *   once) or `repair` (reported again after an unlink of the same user).
  * - `lastError`: a code, never a value.
  * - `createdAt` (when the link or unlink happened) and `seq` (one more than the user's previous
- *   report) order one user's reports: they are sent in that order.
+ *   report, unique per user) order one user's reports: they are sent in that order.
  *
  * Identifiers and the tenant's display name only: never an e-mail address or a person's name. Times
  * are epoch milliseconds. Created by the core `EverConnectIdentity` migration; never exported.
@@ -24,6 +24,7 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/
 @ColumnIndex('IDX_ever_connect_person_link_report_due', ['state', 'nextAttemptAt'])
 @ColumnIndex('IDX_ever_connect_person_link_report_subject', ['subjectHash'])
 @ColumnIndex('IDX_ever_connect_person_link_report_user', ['userId', 'state'])
+@ColumnIndex('IDX_ever_connect_person_link_report_user_seq', ['userId', 'seq'], { unique: true })
 @MultiORMEntity('ever_connect_person_link_report')
 export class EverConnectPersonLinkReport {
 	@PrimaryKey({ type: 'varchar', length: 36 })

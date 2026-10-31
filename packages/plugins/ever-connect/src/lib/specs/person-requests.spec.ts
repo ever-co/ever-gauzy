@@ -141,6 +141,23 @@ describe('A person\'s requests and /.well-known/ever-connect', () => {
 			expect(await requests.resumeDue()).toBe(0);
 		});
 
+		it('a user linked after the first lookup is recorded on the request before their link goes', async () => {
+			linkPerson();
+			const requests = handler();
+			const event = envelope('deletion', '01JJYMM5DB8395H7EH8359HC7N');
+			// Another account links the identity between the lookup and the erase.
+			const findUsers = accounts.findUsers.bind(accounts);
+			jest.spyOn(accounts, 'findUsers').mockImplementationOnce(async (hashes) => {
+				const found = await findUsers(hashes);
+				accounts.add({ userId: 'user-2', tenantId: 't2', tenantName: 'Zephyr', issuer: ISSUER, subject: SUBJECT, linkMethod: 'explicit' });
+				return found;
+			});
+			await requests.handle(event);
+			const [row] = await h.dataSource.query('SELECT "userIds" FROM "ever_connect_person_request"');
+			expect(JSON.parse(row.userIds).sort()).toEqual(['user-1', 'user-2']);
+			expect(h.platform.callsTo(ACK)[0].body).toMatchObject({ result: 'failed' });
+		});
+
 		it('answers no_account when nothing here is linked to the person', async () => {
 			await handler().handle(envelope('deletion', '01JJYMM5DB8395H7EH8359HC78'));
 			expect(h.platform.callsTo(ACK)[0].body).toEqual({ job_id: '01JSF0AY2MRHJXQBQWY8CW44MM', result: 'no_account' });

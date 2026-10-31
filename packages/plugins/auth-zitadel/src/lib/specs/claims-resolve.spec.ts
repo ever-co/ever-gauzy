@@ -170,6 +170,18 @@ describe('Ever ID accounts of a person (deletion and export requests)', () => {
 		expect(ended.endSessionsOfUsers).not.toHaveBeenCalled();
 	});
 
+	it('erase hands the users to keep before any link goes; a failing keep removes nothing', async () => {
+		const repo = repository(many(3));
+		const listener = new ZitadelPersonDataListener(repo as never, sessions() as never);
+		const target = [hash('https://auth.ever.co', 'subject-1')];
+		await expect(listener.erase(target, async () => Promise.reject(new Error('not kept')))).rejects.toThrow('not kept');
+		expect(repo.rows).toHaveLength(3);
+		const kept: string[][] = [];
+		expect(await listener.erase(target, async (userIds) => void kept.push(userIds))).toEqual(['user-1']);
+		expect(kept).toEqual([['user-1']]);
+		expect(repo.rows).toHaveLength(2);
+	});
+
 	it('a failure to end the sessions leaves the links for the next attempt', async () => {
 		const repo = repository(many(3));
 		const ended = { endSessionsOfUsers: jest.fn().mockRejectedValueOnce(new Error('store down')).mockResolvedValue(1) };

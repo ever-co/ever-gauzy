@@ -367,6 +367,17 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		expect(reports.map((r) => r.id)).toEqual(['r-sent', 'r-failed']);
 	});
 
+	it('two reports of one user never share a seq, also when they are added at once', async () => {
+		const base = { userId: 'user-1', tenantId: TENANT, tenantName: 'Acme', issuer: ISSUER, subjectHash: 'h'.repeat(64), linkMethod: 'explicit', op: 'link' as const };
+		await Promise.all([
+			h.identity.addReport({ ...base, id: 'c-1', subject: 'a', createdAt: 7 }),
+			h.identity.addReport({ ...base, id: 'c-2', subject: 'b', createdAt: 7 }),
+			h.identity.addReport({ ...base, id: 'c-3', subject: 'c', createdAt: 7 })
+		]);
+		const rows = await h.dataSource.query(`SELECT "seq" FROM "ever_connect_person_link_report" WHERE "userId" = 'user-1' ORDER BY "seq"`);
+		expect(rows.map((r: { seq: number }) => Number(r.seq))).toEqual([1, 2, 3]);
+	});
+
 	it('a backfill that cannot run (no client yet) counts as nothing done', async () => {
 		expect(await reporter.backfill()).toBeNull();
 	});

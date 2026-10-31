@@ -75,7 +75,8 @@ const TABLES: Table[] = [
 		indexes: [
 			{ name: 'IDX_ever_connect_person_link_report_due', columns: ['state', 'nextAttemptAt'] },
 			{ name: 'IDX_ever_connect_person_link_report_subject', columns: ['subjectHash'] },
-			{ name: 'IDX_ever_connect_person_link_report_user', columns: ['userId', 'state'] }
+			{ name: 'IDX_ever_connect_person_link_report_user', columns: ['userId', 'state'] },
+			{ name: 'IDX_ever_connect_person_link_report_user_seq', columns: ['userId', 'seq'], unique: true }
 		]
 	},
 	{

@@ -23,6 +23,8 @@ export class EverConnectIdentityWorker implements OnModuleInit, OnModuleDestroy 
 	private readonly logger = new Logger('EverConnect');
 	private readonly subscriptions: Subscription[] = [];
 	private timer: NodeJS.Timeout | null = null;
+	/** When the scheduled pass runs (a nudge only brings it forward). */
+	private deadline = 0;
 	private running = false;
 	private ticking: Promise<void> | null = null;
 
@@ -112,7 +114,13 @@ export class EverConnectIdentityWorker implements OnModuleInit, OnModuleDestroy 
 
 	private schedule(delayMs: number): void {
 		if (!this.running) return;
+		const at = Date.now() + delayMs;
+		if (this.timer && this.deadline <= at) {
+			// A pass is due sooner already: never postpone it.
+			return;
+		}
 		if (this.timer) clearTimeout(this.timer);
+		this.deadline = at;
 		this.timer = setTimeout(() => {
 			this.timer = null;
 			this.tick()

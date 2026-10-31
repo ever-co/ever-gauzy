@@ -128,7 +128,9 @@ export class EverConnectIdentityStore {
 
 	/**
 	 * Adds a report, due now. `createdAt` (default now) is when its link or unlink happened, and `seq`
-	 * is one more than the user's latest report: together they order one user's reports.
+	 * is one more than the user's latest report (unique per user: two API processes adding a report of
+	 * the same user at once never share one; the second takes the next): together they order one
+	 * user's reports.
 	 */
 	async addReport(
 		values: Omit<PersonLinkReportRecord, 'state' | 'attempts' | 'nextAttemptAt' | 'lastError' | 'sentAt' | 'createdAt' | 'seq' | 'origin'> & {
@@ -138,20 +140,27 @@ export class EverConnectIdentityStore {
 	): Promise<void> {
 		const at = this.now();
 		const q = (c: string) => this.sql.q(c);
-		const { rows } = await this.sql.run(
-			`SELECT MAX(${q('seq')}) AS ${q('seq')} FROM ${q(REPORT)} WHERE ${q('userId')} = ${this.sql.ph(1)}`,
-			[values.userId]
-		);
-		await this.sql.insertIgnore(REPORT, {
-			...values,
-			origin: values.origin ?? 'event',
-			state: 'pending',
-			attempts: 0,
-			nextAttemptAt: at,
-			createdAt: values.createdAt ?? at,
-			seq: (num(rows[0]?.['seq']) ?? 0) + 1,
-			updatedAt: at
-		});
+		for (let attempt = 0; attempt < 10; attempt++) {
+			const { rows } = await this.sql.run(
+				`SELECT MAX(${q('seq')}) AS ${q('seq')} FROM ${q(REPORT)} WHERE ${q('userId')} = ${this.sql.ph(1)}`,
+				[values.userId]
+			);
+			const inserted = await this.sql.insertIgnore(REPORT, {
+				...values,
+				origin: values.origin ?? 'event',
+				state: 'pending',
+				attempts: 0,
+				nextAttemptAt: at,
+				createdAt: values.createdAt ?? at,
+				seq: (num(rows[0]?.['seq']) ?? 0) + 1,
+				updatedAt: at
+			});
+			// Not inserted: another process took this seq (or the row exists already).
+			if (inserted || (await this.report(values.id))) {
+				return;
+			}
+		}
+		throw new Error('A link report could not be ordered after its user\'s other reports.');
 	}
 
 	async report(id: string): Promise<PersonLinkReportRecord | null> {
