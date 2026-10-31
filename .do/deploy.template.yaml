@@ -9,8 +9,8 @@
 # Before you click "Create", fill in every SECRET below: the API refuses to start with blank or published
 # authentication secrets, and refuses to seed its first accounts with the published passwords. Generate the four
 # secrets with e.g. `openssl rand -hex 64`, and the three passwords with e.g. `openssl rand -hex 24` (the sign-in form
-# takes at most 50 characters). The seeded accounts are admin@ever.co (Super Admin), local.admin@ever.co (Admin)
-# and employee@ever.co (Employee).
+# takes at most 50 characters). The seeded accounts are the demo Super Admin, Admin and Employee; their sign-in
+# addresses are the defaults listed in README.md.
 #
 # The worker fires the scheduled jobs (the per-minute outbox dispatch, webhook retries, sweeps) onto Redis queues
 # that the API consumes. Without the two, event_outbox only grows and GraphQL subscriptions, the search index,

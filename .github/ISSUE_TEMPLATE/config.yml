@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Report a security vulnerability
     url: https://github.com/ever-co/ever-gauzy/security/advisories/new
-    about: Please report security vulnerabilities privately (see SECURITY.md), here or by email to security@ever.co, never in a public issue.
+    about: Please report security vulnerabilities privately, here or by email (address in SECURITY.md), never in a public issue.
   - name: Documentation
     url: https://docs.gauzy.co
     about: Setup guides and documentation.
