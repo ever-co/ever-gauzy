@@ -69,7 +69,10 @@ export class AuditQueueTransaction implements IAuditQueueTransaction {
 		}
 		const [row] = await this._databaseProvider.connection.transaction(async (trx: Knex.Transaction) => {
 			try {
-				const data = await trx(TABLE_NAME_AUDIT_QUEUE).where('queue_id', '=', id).update(changes).returning('*');
+				const data = await trx(TABLE_NAME_AUDIT_QUEUE)
+					.where('queue_id', '=', id)
+					.update(changes)
+					.returning('*');
 				return data;
 			} catch (error) {
 				throw new AppError('AUDIT_QUEUE_TRX', error);
