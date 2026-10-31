@@ -55,6 +55,8 @@ export interface IReportExportOptions {
  * providers: [{ provide: REPORT_EXPORTERS, useClass: XlsxReportExporter, multi: true }]
  * ```
  *
- * CSV is built in; an exporter registered for a format that already exists replaces it.
+ * `ReportExportService` is a root service, so the provider goes in the application's root providers (a
+ * plugin's own root providers included). CSV is built in; an exporter registered for a format that already
+ * exists replaces it.
  */
 export const REPORT_EXPORTERS = new InjectionToken<IReportExporter[]>('REPORT_EXPORTERS');
