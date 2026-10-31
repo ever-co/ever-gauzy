@@ -5453,6 +5453,7 @@
 		},
 		"MESSAGE": {
 			"KEY_RESULTS_OWNER_REQUIRED": "Wählen Sie eine verantwortliche Person für dieses Ziel: Seine Schlüsselergebnisse müssen einem Mitarbeiter gehören.",
+			"GOAL_PRESET_ROLLBACK_FAILED": "Diese aus der Vorlage erstellten Einträge konnten nicht entfernt werden: {{ names }}. Löschen Sie sie unter Ziele oder Zieleinstellungen.",
 			"ERRORS": "Bitte überprüfen Sie das Formular auf Fehler.",
 			"PROJECT_LOAD": "Konnte Projekte nicht laden",
 			"COPIED": "Link in Zwischenablage kopiert",

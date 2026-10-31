@@ -5459,6 +5459,7 @@
 		},
 		"MESSAGE": {
 			"KEY_RESULTS_OWNER_REQUIRED": "Elige un responsable para este objetivo: sus resultados clave deben pertenecer a un empleado.",
+			"GOAL_PRESET_ROLLBACK_FAILED": "No se pudieron eliminar estos registros creados a partir del preajuste: {{ names }}. Elimínalos desde Metas o Configuración de metas.",
 			"ERRORS": "Por favor, revisa el formulario en busca de errores.",
 			"PROJECT_LOAD": "No se pudieron cargar los proyectos.",
 			"COPIED": "Enlace copiado al portapapeles.",

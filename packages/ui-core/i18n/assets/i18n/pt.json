@@ -5457,6 +5457,7 @@
 		},
 		"MESSAGE": {
 			"KEY_RESULTS_OWNER_REQUIRED": "Escolha um responsável para este objetivo: seus resultados-chave devem pertencer a um funcionário.",
+			"GOAL_PRESET_ROLLBACK_FAILED": "Não foi possível remover estes registros criados a partir do predefinido: {{ names }}. Exclua-os em Metas ou Definição de Metas.",
 			"ERRORS": "Por favor, verifique o formulário em busca de erros.",
 			"PROJECT_LOAD": "Não foi possível carregar os projetos.",
 			"COPIED": "Link copiado para a área de transferência",

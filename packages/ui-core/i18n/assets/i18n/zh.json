@@ -6033,6 +6033,7 @@
 		},
 		"MESSAGE": {
 			"KEY_RESULTS_OWNER_REQUIRED": "请为此目标选择负责人：其关键结果必须由员工负责。",
+			"GOAL_PRESET_ROLLBACK_FAILED": "无法删除从预设创建的这些记录：{{ names }}。请在“目标”或“目标设定”中删除它们。",
 			"ERRORS": "请检查表格中是否有错误。",
 			"PROJECT_LOAD": "无法加载项目",
 			"COPIED": "链接已复制到剪贴板",
