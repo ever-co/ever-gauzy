@@ -64,6 +64,12 @@ const priorityRank = (option: IBoardFilterOption): number => {
 	return rank < 0 ? PRIORITY_ORDER.length : rank;
 };
 
+/** The colour behind a person's initials: from their name, so they keep it. Dark enough to carry white text. */
+export function boardAvatarColorOf(name: string): string {
+	const hue = [...(name || '')].reduce((sum, letter) => (sum * 31 + letter.charCodeAt(0)) % 360, 0);
+	return `hsl(${hue} 55% 34%)`;
+}
+
 export function isBoardFilterActive(filter: IBoardFilter): boolean {
 	return (
 		!!filter.search.trim() ||

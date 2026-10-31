@@ -1,5 +1,6 @@
 import {
 	BOARD_UNASSIGNED,
+	boardAvatarColorOf,
 	boardFilterOptionsOf,
 	IBoardFilter,
 	IBoardFilterCard,
@@ -63,6 +64,13 @@ describe('board filter', () => {
 
 			expect(matchesBoardFilter(card({ labels: [{ id: 'tag-1', name: 'Backend' }] }), labels)).toBe(true);
 			expect(matchesBoardFilter(card({ labels: [{ id: 'tag-2', name: 'Backend' }] }), labels)).toBe(false);
+		});
+	});
+
+	describe('boardAvatarColorOf', () => {
+		it('gives a person the same colour each time, and people different ones', () => {
+			expect(boardAvatarColorOf('Ann Brown')).toBe(boardAvatarColorOf('Ann Brown'));
+			expect(boardAvatarColorOf('Ann Brown')).not.toBe(boardAvatarColorOf('Bob Stone'));
 		});
 	});
 

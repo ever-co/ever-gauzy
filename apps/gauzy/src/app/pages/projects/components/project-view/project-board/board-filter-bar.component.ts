@@ -3,6 +3,7 @@ import { NbButtonModule, NbIconModule, NbSelectModule, NbTooltipModule } from '@
 import { TranslatePipe } from '@ngx-translate/core';
 import {
 	BOARD_UNASSIGNED,
+	boardAvatarColorOf,
 	BoardFilterFacet,
 	IBoardFilter,
 	IBoardFilterOptions,
@@ -26,6 +27,7 @@ import {
 })
 export class BoardFilterBarComponent {
 	readonly unassigned = BOARD_UNASSIGNED;
+	readonly avatarColor = boardAvatarColorOf;
 	readonly menus: { facet: Exclude<BoardFilterFacet, 'people'>; label: string }[] = [
 		{ facet: 'priorities', label: 'PROJECT_VIEW.BOARD_FILTER.PRIORITY' },
 		{ facet: 'types', label: 'PROJECT_VIEW.BOARD_FILTER.TYPE' },

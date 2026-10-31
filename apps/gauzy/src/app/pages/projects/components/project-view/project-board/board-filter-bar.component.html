@@ -13,7 +13,23 @@
 	</label>
 
 	@if (options.people.length || options.unassigned) {
+	<!-- As Jira's: Unassigned first, then the people. -->
 	<div class="board-filter-people" role="group" [attr.aria-label]="'PROJECT_VIEW.BOARD_FILTER.ASSIGNEES' | translate">
+		@if (options.unassigned) {
+		@let selected = filter.people.includes(unassigned);
+		<button
+			type="button"
+			class="board-filter-person"
+			[class.is-active]="selected"
+			[attr.aria-pressed]="selected"
+			[attr.aria-label]="'PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate"
+			[nbTooltip]="'PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate"
+			nbTooltipPlacement="top"
+			(click)="togglePerson(unassigned)"
+		>
+			<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
+		</button>
+		}
 		@for (person of options.people; track person.id) {
 		@let selected = filter.people.includes(person.id);
 		<button
@@ -29,23 +45,10 @@
 			@if (person.avatarUrl) {
 			<img [src]="person.avatarUrl" alt="" />
 			} @else {
-			<span aria-hidden="true">{{ person.initials }}</span>
+			<span class="board-filter-initials" [style.background-color]="avatarColor(person.name)" aria-hidden="true">{{
+				person.initials
+			}}</span>
 			}
-		</button>
-		}
-		@if (options.unassigned) {
-		@let selected = filter.people.includes(unassigned);
-		<button
-			type="button"
-			class="board-filter-person"
-			[class.is-active]="selected"
-			[attr.aria-pressed]="selected"
-			[attr.aria-label]="'PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate"
-			[nbTooltip]="'PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate"
-			nbTooltipPlacement="top"
-			(click)="togglePerson(unassigned)"
-		>
-			<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
 		</button>
 		}
 	</div>
