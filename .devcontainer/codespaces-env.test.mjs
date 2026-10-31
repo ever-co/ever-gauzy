@@ -24,7 +24,7 @@ function sourced(env, files = {}) {
 			writeFileSync(join(workspace, name), content);
 		}
 		const print = VARIABLES.map((name) => `printf '%s\\n' "\${${name}-<unset>}"`).join('; ');
-		const helpers = `if command -v _gauzy_forward > /dev/null; then echo defined; else echo gone; fi`;
+		const helpers = `if command -v _gauzy_keep || command -v _gauzy_file_value; then echo defined; else echo gone; fi 2> /dev/null | tail -n 1`;
 		const output = execFileSync(
 			'bash',
 			['-c', `. "$0" "$1"; ${print}; ${helpers}`, SCRIPT, workspace.replace(/\\/g, '/')],
@@ -81,36 +81,52 @@ describe('codespaces-env.sh', () => {
 		);
 	});
 
-	it('leaves values already set in the shell alone, without listing them', () => {
+	it('keeps values the shell already has, and lists them so that the API keeps them over .env.local too', () => {
 		assert.deepEqual(
 			sourced({ ...CODESPACE, API_BASE_URL: 'http://localhost:3000', CLIENT_BASE_URL: 'http://localhost:4200' }),
 			{
 				...FORWARDED,
 				API_BASE_URL: 'http://localhost:3000',
 				CLIENT_BASE_URL: 'http://localhost:4200',
-				ALLOWED_ORIGINS: 'http://localhost:4200',
-				ENV_LOCAL_NO_OVERRIDE: 'ALLOWED_ORIGINS'
+				ALLOWED_ORIGINS: 'http://localhost:4200'
 			}
 		);
-		const origins = sourced({ ...CODESPACE, ALLOWED_ORIGINS: '*' });
-		assert.equal(origins.ALLOWED_ORIGINS, '*');
-		assert.equal(origins.ENV_LOCAL_NO_OVERRIDE, 'API_BASE_URL,CLIENT_BASE_URL');
+		assert.deepEqual(sourced({ ...CODESPACE, ALLOWED_ORIGINS: '*' }), { ...FORWARDED, ALLOWED_ORIGINS: '*' });
 	});
 
-	it('leaves a value you wrote in .env or .env.local alone', () => {
+	it('uses a value you wrote in .env.local or .env, and keeps it over .env.local', () => {
 		assert.deepEqual(
 			sourced(CODESPACE, {
 				'.env.local': 'API_BASE_URL=https://api.example.test\nCLIENT_BASE_URL=http://localhost:4200\n',
 				'.env': "ALLOWED_ORIGINS='https://ui.example.test'\n"
 			}),
-			{ ...FORWARDED, API_BASE_URL: null, ALLOWED_ORIGINS: null, ENV_LOCAL_NO_OVERRIDE: 'CLIENT_BASE_URL' }
+			{ ...FORWARDED, API_BASE_URL: 'https://api.example.test', ALLOWED_ORIGINS: 'https://ui.example.test' }
 		);
 	});
 
-	it('adds to a list the environment already has', () => {
+	it(".env's value counts while .env.local holds the localhost default, and .env.local's wins over it", () => {
+		const tracked = readFileSync(TRACKED_ENV_LOCAL, 'utf8');
+		const dotEnv = 'API_BASE_URL=https://from-dot-env.example.test\nCLIENT_BASE_URL=https://ui.example.test\n';
+		assert.deepEqual(sourced(CODESPACE, { '.env.local': tracked, '.env': dotEnv }), {
+			...FORWARDED,
+			API_BASE_URL: 'https://from-dot-env.example.test',
+			CLIENT_BASE_URL: 'https://ui.example.test',
+			ALLOWED_ORIGINS: 'https://ui.example.test'
+		});
+		const envLocal = `${tracked}\nAPI_BASE_URL=https://from-env-local.example.test\n`;
+		assert.equal(
+			sourced(CODESPACE, { '.env.local': envLocal, '.env': dotEnv }).API_BASE_URL,
+			'https://from-env-local.example.test'
+		);
+	});
+
+	it('adds to a list the environment already has, once', () => {
 		assert.equal(
 			sourced({ ...CODESPACE, ENV_LOCAL_NO_OVERRIDE: 'DB_TYPE' }).ENV_LOCAL_NO_OVERRIDE,
 			'DB_TYPE,API_BASE_URL,CLIENT_BASE_URL,ALLOWED_ORIGINS'
 		);
+		// A nested shell sources the script again, with the parent's exported values and list.
+		const nested = { ...CODESPACE, ...Object.fromEntries(Object.entries(FORWARDED).slice(0, 4)) };
+		assert.deepEqual(sourced(nested), FORWARDED);
 	});
 });
