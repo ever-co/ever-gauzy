@@ -448,6 +448,18 @@ jobs:
         if: always()
         run: node --test tools/scripts/runtime-dependency-check.test.mjs
 
+      # The web UI's translations (#9448): every language catalogue must parse - one JSON error and the UI cannot load
+      # a single string of that language - and the report lists, per language, the keys still shown in English and the
+      # values whose placeholders differ from English. It holds no language to parity (that would make every new
+      # English key wait for its translations); hold one locally with `node tools/scripts/i18n-parity-check.mjs zh`.
+      - name: Every UI translation catalogue parses, with a parity report per language
+        if: always()
+        run: node tools/scripts/i18n-parity-check.mjs --all
+
+      - name: The translation parity check's own cases
+        if: always()
+        run: node --test tools/scripts/i18n-parity-check.test.mjs
+
       # The mapped types (`PartialType`, `PickType`, `OmitType`, `IntersectionType`) copy the parent DTO's field
       # initializers into every instance, and a `ValidationPipe` builds the request body with that constructor - so a
       # partial update arrived carrying the create DTO's defaults and wrote them back: `PUT /payment-collections/:id
