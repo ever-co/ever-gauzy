@@ -20,6 +20,8 @@ describe('calculateBillableAmount', () => {
 		// A quarter of an hour at 8.54 is exactly 2.135, and at 33.98 exactly 8.495: both ties a float misses
 		expect(calculateBillableAmount(900, 8.54)).toBe(2.14);
 		expect(calculateBillableAmount(900, 33.98)).toBe(8.5);
+		// …and at 40.30 exactly 10.075
+		expect(calculateBillableAmount(900, 40.3)).toBe(10.08);
 		// Just under a tie stays below it: 21 minutes at 0.29 is 0.1015
 		expect(calculateBillableAmount(1260, 0.29)).toBe(0.1);
 	});
