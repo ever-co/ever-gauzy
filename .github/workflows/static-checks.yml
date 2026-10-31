@@ -502,6 +502,12 @@ jobs:
         if: always()
         run: node --test apps/api/config/source-map-rebase.test.mjs
 
+      # In a GitHub codespace the browser reaches the forwarded ports, not localhost: the dev container points the API
+      # and web UI URLs at them there, and changes nothing anywhere else. Only a codespace runs that path.
+      - name: The dev container's Codespaces URLs apply in a codespace only and never override a set value
+        if: always()
+        run: node --test .devcontainer/codespaces-env.test.mjs
+
       # In production the API refuses to start without its JWT and session secrets, and to seed without the
       # DEMO_*_PASSWORD values (packages/core/src/lib/bootstrap/validate-secrets.ts). The one-click templates
       # (Deploy to DigitalOcean, the Caddy compose file and its env sample) must ask the operator for each of them

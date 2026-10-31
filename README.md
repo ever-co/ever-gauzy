@@ -284,6 +284,7 @@ The repository ships a [Dev Container](https://containers.dev) definition in [`.
 
 -   Open the repository in [GitHub Codespaces](https://codespaces.new/ever-co/ever-gauzy) (pick a machine with at least 4 cores and 16 GB of memory), or in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension ("Dev Containers: Clone Repository in Container Volume" is the fastest on Windows and macOS).
 -   `yarn bootstrap` runs once when the container is created. Then run `yarn start` as described above (SQLite by default).
+-   In a codespace, terminals point `API_BASE_URL`, `CLIENT_BASE_URL` and `ALLOWED_ORIGINS` at the forwarded `https://<codespace>-3000/4200.app.github.dev` URLs ([`.devcontainer/codespaces-env.sh`](.devcontainer/codespaces-env.sh); values you set yourself, or in `.env`, win). The web UI calls the API from your browser, which cannot reach a private forwarded port, so set port 3000 to **Public** in the Ports view (anyone with its URL can then reach that development API and its default seeded accounts: switch it back when you are done). In VS Code desktop you can instead keep the forwarded localhost ports: `export API_BASE_URL=http://localhost:3000 CLIENT_BASE_URL=http://localhost:4200 ALLOWED_ORIGINS=http://localhost:4200` before `yarn start`.
 -   To use PostgreSQL, Redis, MinIO and the other services instead, run `docker compose -f docker-compose.infra.yml up -d` inside the container and point `.env` / `.env.local` at them.
 
 #### Debugging the API in VS Code
