@@ -185,9 +185,14 @@ export function isValidServerHost(value: unknown): boolean {
 	return parseServerHost(value).kind !== 'invalid';
 }
 
-/** The value to save: spaces around a host would end up in the server's URLs. */
+/**
+ * The value to save: spaces around a host would end up in the server's URLs, and the server adds
+ * `http://` to a host that does not start with a lower-case `http`, so `HTTPS://` is saved as `https://`.
+ */
 export function normalizeServerHost(value: string | null | undefined): string | null | undefined {
-	return typeof value === 'string' ? value.trim() : value;
+	return typeof value === 'string'
+		? value.trim().replace(HTTP_SCHEME_PATTERN, (scheme) => scheme.toLowerCase())
+		: value;
 }
 
 /**

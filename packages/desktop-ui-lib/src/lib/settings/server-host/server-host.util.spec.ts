@@ -280,6 +280,13 @@ describe('normalizeServerHost', () => {
 		expect(normalizeServerHost(' 192.168.1.20  ')).toBe('192.168.1.20');
 	});
 
+	it('writes http:// and https:// in lower case, as the server only recognises them so', () => {
+		expect(normalizeServerHost('HTTPS://Gauzy.Example.com')).toBe('https://Gauzy.Example.com');
+		expect(normalizeServerHost(' Http://192.168.1.20:3000/x ')).toBe('http://192.168.1.20:3000/x');
+		expect(normalizeServerHost('https://gauzy.example.com')).toBe('https://gauzy.example.com');
+		expect(normalizeServerHost('gauzy.example.com')).toBe('gauzy.example.com');
+	});
+
 	it('leaves a missing value alone', () => {
 		expect(normalizeServerHost(undefined)).toBeUndefined();
 		expect(normalizeServerHost(null)).toBeNull();
