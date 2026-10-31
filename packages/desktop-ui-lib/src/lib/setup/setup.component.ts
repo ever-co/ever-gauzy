@@ -35,6 +35,12 @@ import { FormsModule } from '@angular/forms';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { SslComponent } from '../settings/ssl/ssl.component';
 import { SecretComponent } from '../settings/secret/secret.component';
+import {
+	isValidServerHost,
+	normalizeServerHost,
+	SERVER_HOST_INVALID_MESSAGE,
+	ServerHostInputComponent
+} from '../settings/server-host';
 import { UpperCasePipe } from '@angular/common';
 
 @Component({
@@ -56,6 +62,7 @@ import { UpperCasePipe } from '@angular/common';
 		NbInputModule,
 		SslComponent,
 		SecretComponent,
+		ServerHostInputComponent,
 		NbFormFieldModule,
 		NbProgressBarModule,
 		UpperCasePipe,
@@ -337,6 +344,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 		if (this.connectivity.integrated) {
 			return {
 				...this.serverConfig.integrated,
+				host: normalizeServerHost(this.serverConfig.integrated.host),
 				isLocalServer: true,
 				...(this.isServer && { lanAccess: this.lanAccess })
 			};
@@ -392,6 +400,15 @@ export class SetupComponent implements OnInit, OnDestroy {
 	}
 
 	public async saveAndRun() {
+		// The host field can change while the connection check runs: check it again before saving (#7550).
+		if (this.connectivity.integrated && this.isIntegratedHostInvalid) {
+			this._notifier.error(this._translateService.instant(SERVER_HOST_INVALID_MESSAGE));
+			this.isSaving = false;
+			this.isCheckConnection = false;
+			this.validation();
+			this._cdr.detectChanges();
+			return;
+		}
 		if (this.connectivity.integrated) {
 			this.onProgress = true;
 		}
@@ -449,19 +466,35 @@ export class SetupComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	/** Gauzy Server and Gauzy API Server: the "Server Hostname / IP Address" field changed. */
+	onIntegratedHostChange(host: string) {
+		this.serverConfig.integrated.host = host;
+		this.validation();
+	}
+
 	validation() {
 		const { integrated, custom, live } = this.connectivity;
 		const { port, portUi } = this.serverConfig.integrated;
+		const integratedHostValid = !this.isIntegratedHostInvalid;
 		const { apiHost } = this.serverConfig.custom;
 		const { host, dbPort, dbName, dbUser, dbPassword } = this.databaseConfig.postgre;
 
 		const { postgre, sqlite } = this.databaseDriver;
 
 		switch (true) {
-			case integrated && port && portUi && dbPort && host && dbName && dbUser && dbPassword && postgre:
+			case integrated &&
+				integratedHostValid &&
+				port &&
+				portUi &&
+				dbPort &&
+				host &&
+				dbName &&
+				dbUser &&
+				dbPassword &&
+				postgre:
 				this.buttonSave = true;
 				break;
-			case integrated && port && portUi && sqlite:
+			case integrated && integratedHostValid && port && portUi && sqlite:
 				this.buttonSave = true;
 				break;
 			case custom && apiHost && this.serverConfig.custom.port > 0:
@@ -615,6 +648,14 @@ export class SetupComponent implements OnInit, OnDestroy {
 		return this._environment.IS_SERVER_API;
 	}
 
+	/**
+	 * Server apps: the "Server Hostname / IP Address" holds a value that is neither an IP address nor a host
+	 * name, so it cannot be saved (#7550). Other apps do not show the field and keep its default.
+	 */
+	public get isIntegratedHostInvalid(): boolean {
+		return this.isServer && !isValidServerHost(this.serverConfig.integrated.host);
+	}
+
 	public get isAgent(): boolean {
 		return this._environment.IS_AGENT;
 	}
@@ -624,6 +665,8 @@ export class SetupComponent implements OnInit, OnDestroy {
 	}
 
 	public onChangeProxyConfig(config: IProxyConfig) {
+		// The SSL form can replace its config object (after Browse), so keep the host field's SSL hint on it.
+		this.proxyOptions = config ?? this.proxyOptions;
 		this.electronService.ipcRenderer.send('update_server_config', {
 			secureProxy: config
 		});

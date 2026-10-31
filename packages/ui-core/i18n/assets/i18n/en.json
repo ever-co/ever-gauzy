@@ -6078,6 +6078,18 @@
 			"SERVER_HOSTNAME": "Server Hostname/ IP Address",
 			"LAN_ACCESS": "Allow other computers on the network to connect",
 			"LAN_ACCESS_HINT": "When off, only this computer can connect to the API and the web UI.",
+			"SERVER_HOST": {
+				"INVALID": "Enter a valid IP address or host name, such as 192.168.1.20 or gauzy.example.com.",
+				"SSL_WITH_IP": "SSL is on: a host name is recommended, as certificates are usually issued for a name. A certificate that lists this IP address also works.",
+				"IPV6": "The server accepts IPv4 connections only, so other computers cannot connect through an IPv6 address. Use an IPv4 address or a host name.",
+				"PORT": "Leave the port out: the ports are set in their own fields.",
+				"PATH": "Leave out what follows the host name (such as /): the ports are added right after this value.",
+				"DETECT": "Detect my IP",
+				"DETECT_HINT": "Fill in this computer's network address. Only this computer's own addresses are read (no online lookup), so a public address held by a router is not shown.",
+				"DETECTED": "This computer's addresses:",
+				"NO_ADDRESS": "No network address was found. Check that this computer is connected to a network.",
+				"ONLY_IPV6": "Only IPv6 addresses were found, and the server accepts IPv4 connections only. Enter an IPv4 address or a host name."
+			},
 			"AUTO_START_STARTUP": "Auto Start On Startup",
 			"SERVER_TYPE": "Server Type",
 			"LOCAL_API_PORT": "Local API Port",

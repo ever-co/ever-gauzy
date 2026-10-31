@@ -18,6 +18,7 @@ export * from './lib/desktop-wakatime';
 export * from './lib/error-handler';
 export * from './lib/integrations';
 export * from './lib/interfaces';
+export * from './lib/network';
 export * from './lib/offline';
 export * from './lib/offline/desktop-offline-mode-handler';
 export * from './lib/plugin-system';

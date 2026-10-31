@@ -56,6 +56,7 @@ import {
 	LocalStore,
 	ProtocolRouter,
 	ReadWriteFile,
+	registerDesktopNetworkAddressesHandler,
 	ReverseProxy,
 	ReverseUiProxy,
 	ServerConfig,
@@ -910,6 +911,8 @@ ipcMain.on('save_encrypted_file', (event, value) => {
 
 ipcMain.handle('get-app-path', () => app.getAppPath());
 ipcMain.handle('app_setting', () => LocalStore.getApplicationConfig());
+// The setup and settings screens offer these next to the "Server Hostname / IP Address" field.
+registerDesktopNetworkAddressesHandler();
 ipcMain.on('get-arch', (event) => {
 	event.sender.send('get-arch', process.arch);
 });
