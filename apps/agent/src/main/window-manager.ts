@@ -261,7 +261,8 @@ class AppWindow {
 				this.notificationWindow = new ScreenCaptureWindow(
 					this.getUiPath('screen-capture'),
 					this.getPreloadPath(),
-					this.showNotificationWindow.bind(this)
+					this.showNotificationWindow.bind(this),
+					this.hideNotificationWindow.bind(this)
 				);
 				await this.notificationWindow.loadURL();
 				return;
