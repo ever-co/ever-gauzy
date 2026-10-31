@@ -145,6 +145,17 @@ function paidByAnotherPass(billing: SubscriptionBilling, byOperator: boolean): C
 	return !byOperator && billing.orderId ? chargeClaimLost(billing, 'paid') : null;
 }
 
+/** The refusal of an operator's write over a cycle that was restated after the operator read it. */
+function cycleRestated(billing: SubscriptionBilling, action: string): ConflictException {
+	return new ConflictException({
+		message:
+			`SUBSCRIPTION_BILLING_CYCLE_RESTATED: billing cycle '${billing.id}' was restated (its amount or period changed) ` +
+			`while it was being ${action}; read the cycle again and retry.`,
+		code: 'SUBSCRIPTION_BILLING_CYCLE_RESTATED',
+		details: { subscriptionBillingId: billing.id, status: billing.status, amount: billing.amount, periodEnd: billing.periodEnd }
+	});
+}
+
 /**
  * @param billing A cycle as it was read.
  * @returns The tenant and organization it belongs to, carrying only the identifiers it has.
@@ -916,13 +927,22 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * then forgave a period whose money was being taken. The condition rides in the statement, which also clears a stale
 	 * claim, so the waived cycle carries none.
 	 *
+	 * The waiver writes the cycle's metadata back with its reason, from the row it read, so the statement is also
+	 * predicated on the cycle's amount and period end being the ones it read. A restatement that commits in between
+	 * (`restateUnsettled`, which moves the amount, the period end and the `gross`/`discount` it keeps in the metadata)
+	 * refuses the waiver with `SUBSCRIPTION_BILLING_CYCLE_RESTATED`, rather than the waiver keeping the new amount beside
+	 * the old gross and discount.
+	 *
 	 * @param id The cycle.
 	 * @param options Why, and any note kept beside it.
 	 * @returns The updated cycle.
-	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a pass is charging the cycle.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a pass is charging the cycle, or with
+	 * `SUBSCRIPTION_BILLING_CYCLE_RESTATED` when the cycle was restated after it was read.
 	 */
 	public async markWaived(id: ID, options: { reason: string; note?: string } = { reason: '' }): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
+		// The amount and period end the operator's decision was read on, taken now.
+		const read = { amount: String(billing.amount), periodEnd: new Date(billing.periodEnd) };
 
 		if (!WAIVABLE_FROM.includes(billing.status as SubscriptionBillingStatus)) {
 			throw invalidTransition(billing, 'waived', WAIVABLE_FROM);
@@ -936,22 +956,36 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		const refusal = async () => {
 			const current = await this.findOneScoped(id);
 
-			// Still waivable, so what refused the write was a pass's claim on the cycle.
-			return WAIVABLE_FROM.includes(current.status as SubscriptionBillingStatus)
-				? chargeInFlight(current, 'waived')
-				: invalidTransition(current, 'waived', WAIVABLE_FROM);
+			if (!WAIVABLE_FROM.includes(current.status as SubscriptionBillingStatus)) {
+				return invalidTransition(current, 'waived', WAIVABLE_FROM);
+			}
+
+			// Still waivable: what refused the write was a pass's claim, or a restatement since the read.
+			return holdsLiveChargeClaim(current) ? chargeInFlight(current, 'waived') : cycleRestated(current, 'waived');
 		};
 
-		await this.settleFenced(id, 'waived', refusal, (current) => ({
-			status: SubscriptionBillingStatus.WAIVED,
-			paidAt: null,
-			nextRetryAt: null,
-			metadata: {
-				...(current.metadata ?? {}),
-				waivedReason: options.reason,
-				...(options.note ? { waivedNote: options.note } : {})
-			}
-		}));
+		await this.settleFenced(
+			id,
+			'waived',
+			refusal,
+			(current) => ({
+				status: SubscriptionBillingStatus.WAIVED,
+				paidAt: null,
+				nextRetryAt: null,
+				metadata: {
+					...(current.metadata ?? {}),
+					waivedReason: options.reason,
+					...(options.note ? { waivedNote: options.note } : {})
+				}
+			}),
+			// The waiver is of the cycle the operator read: one restated since (`restateUnsettled`) is refused, read again
+			// under the fence, which no restatement can pass while it holds.
+			(current) =>
+				String(current.amount) === read.amount && new Date(current.periodEnd).getTime() === read.periodEnd.getTime()
+					? null
+					: cycleRestated(current, 'waived'),
+			{ amount: read.amount, periodEnd: read.periodEnd }
+		);
 
 		return await this.findOneScoped(id);
 	}
@@ -972,13 +1006,17 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * @param refusal Decides, on the row as it now stands, why the cycle could not be claimed or written, or answers null
 	 * when the state it reached is the outcome the operator wanted.
 	 * @param patch The columns the settlement writes, built from the row read under the fence.
+	 * @param guard Refuses the settlement on the row read under the fence, when the operator's decision no longer holds.
+	 * @param condition What else the write is predicated on.
 	 * @returns True when the settlement was written.
 	 */
 	private async settleFenced(
 		id: ID,
 		action: string,
 		refusal: () => Promise<Error | null>,
-		patch: (current: SubscriptionBilling) => Record<string, unknown>
+		patch: (current: SubscriptionBilling) => Record<string, unknown>,
+		guard: (current: SubscriptionBilling) => Error | null = () => null,
+		condition: FindOptionsWhere<SubscriptionBilling> = {}
 	): Promise<boolean> {
 		const fence = await this.claimCharge(id);
 
@@ -999,9 +1037,15 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 				throw chargeInFlight(fence.billing, action);
 			}
 
+			const refused = guard(fence.billing);
+
+			if (refused) {
+				throw refused;
+			}
+
 			const result = await this.writeIf(
 				id,
-				{ status: In([...CHARGEABLE_FROM]), chargeClaimToken: fence.token },
+				{ ...condition, status: In([...CHARGEABLE_FROM]), chargeClaimToken: fence.token } as FindOptionsWhere<SubscriptionBilling>,
 				refusal,
 				{ ...patch(fence.billing), ...NO_CHARGE_CLAIM } as any
 			);
@@ -1075,6 +1119,168 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		);
 
 		return await this.findOneScoped(id, manager);
+	}
+
+	/**
+	 * Restates a cycle nothing has settled for a change that takes hold as the cycle's period opens: its end, when the
+	 * change moves the cadence, and the amount, gross and discount the period is now priced at.
+	 *
+	 * A change scheduled from the next period is applied by the cycle that opens that period, and the retry of an
+	 * attempt that failed is such a cycle as well: the subscription stays `ACTIVE` through the dunning schedule, so a
+	 * change can be scheduled after the first attempt. The row has to describe the period the change opens, or the
+	 * order, the row and the calendar the cycle advances would describe different periods and amounts.
+	 *
+	 * One write, on the transaction that applies the change, predicated on the cycle still being unsettled. A payment or
+	 * a waiver that reached the row first makes it match nothing, and the refusal rolls the change back with it. One
+	 * that read the row before this commits finds the restated amount, and records the payment over it (a waiver is
+	 * predicated on the amount it read, and is refused instead: `markWaived`).
+	 *
+	 * The write is also predicated on the charge claim (`claimCharge`): a billing pass names the claim it holds on the
+	 * cycle and restates it only while the claim is still its own, and a write that names none restates only a cycle no
+	 * pass is charging. Either way a cycle whose money another pass is taking is not restated under it.
+	 *
+	 * @param id The cycle.
+	 * @param values The end of its period on the new cadence (when it moves), and what the period is priced at.
+	 * @param manager The caller's transaction, which a refusal rolls back.
+	 * @param chargeClaim The token of the billing pass restating the cycle it holds.
+	 * @returns The cycle as it stands.
+	 * @throws ConflictException when the cycle was settled meanwhile, or another pass holds its charge claim.
+	 */
+	public async restateUnsettled(
+		id: ID,
+		values: { periodEnd?: Date; amount: DecimalString; pricing: { gross: DecimalString; discount: DecimalString } },
+		manager: EntityManager,
+		chargeClaim?: string
+	): Promise<SubscriptionBilling> {
+		const billing = await this.findOneScoped(id, manager);
+		const metadata = (billing.metadata ?? {}) as Record<string, unknown>;
+
+		await this.writeIf(
+			id,
+			{ status: In([...CHARGEABLE_FROM]), ...this.heldBy(chargeClaim) },
+			async () => {
+				const current = await this.findOneScoped(id, manager);
+
+				if (!CHARGEABLE_FROM.includes(current.status as SubscriptionBillingStatus)) {
+					return new ConflictException(
+						'SUBSCRIPTION_BILLING_CYCLE_SETTLED: the billing cycle was settled while a scheduled plan change was being applied to it.'
+					);
+				}
+
+				// Still unsettled: the claim is not the writer's, or the row already held these values (MySQL reports such a
+				// row as not affected).
+				return this.holdsClaim(current, chargeClaim) ? null : this.claimRefusal(current, chargeClaim, 'restated');
+			},
+			{
+				...(values.periodEnd ? { periodEnd: values.periodEnd } : {}),
+				amount: this.normalizeAmount(values.amount, billing.currency),
+				metadata: { ...metadata, ...values.pricing }
+			},
+			this.cyclesOn(manager)
+		);
+
+		return await this.findOneScoped(id, manager);
+	}
+
+	/**
+	 * Records what a retry charges on a cycle nothing has settled.
+	 *
+	 * A retry prices the period when it runs, as a first attempt does: the lines as they stand then, and a change
+	 * scheduled for the period that took hold at that attempt. The row an earlier attempt wrote keeps the amount that
+	 * attempt priced unless it is restated here, and `markPaid` keeps whatever the row says, so a cycle settled on the
+	 * retry would record, return and announce another amount than the one its order charged. Predicated on the cycle
+	 * still being unsettled: a cycle settled meanwhile keeps its amount, and the retry stops before it charges it.
+	 *
+	 * Predicated on the charge claim as `restateUnsettled` is: the retry reprices the cycle only while it still holds
+	 * the claim it names.
+	 *
+	 * @param billing The cycle as read.
+	 * @param amount What the retry charges.
+	 * @param pricing The gross amount and the discount the charge was priced from.
+	 * @param chargeClaim The token of the billing pass repricing the cycle it holds.
+	 * @returns The cycle as it stands.
+	 * @throws ConflictException when the cycle was settled meanwhile, or another pass holds its charge claim.
+	 */
+	public async repriceUnsettled(
+		billing: SubscriptionBilling,
+		amount: DecimalString,
+		pricing: { gross: DecimalString; discount: DecimalString },
+		chargeClaim?: string
+	): Promise<SubscriptionBilling> {
+		// Read again, and refused when settled, before anything is compared: a payment or a waiver recorded since the
+		// cycle read the row (after a change restated it, for one) leaves a row whose price may already match, and
+		// answering it as unsettled would have the retry charge a period that is paid.
+		const current = await this.findOneScoped(billing.id);
+
+		if (![SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED].includes(current.status)) {
+			throw new ConflictException(
+				'SUBSCRIPTION_BILLING_CYCLE_SETTLED: the billing cycle was settled while its retry was being priced, so it is not charged again.'
+			);
+		}
+
+		const restated = this.normalizeAmount(amount, current.currency);
+		const metadata = (current.metadata ?? {}) as Record<string, unknown>;
+
+		if (
+			current.amount === restated &&
+			metadata['gross'] === pricing.gross &&
+			metadata['discount'] === pricing.discount
+		) {
+			return current;
+		}
+
+		await this.writeIf(
+			billing.id,
+			{ status: In([...CHARGEABLE_FROM]), ...this.heldBy(chargeClaim) },
+			async () => {
+				const latest = await this.findOneScoped(billing.id);
+
+				if (!CHARGEABLE_FROM.includes(latest.status as SubscriptionBillingStatus)) {
+					return new ConflictException(
+						'SUBSCRIPTION_BILLING_CYCLE_SETTLED: the billing cycle was settled while its retry was being priced, so it is not charged again.'
+					);
+				}
+
+				// Still unsettled: the statement matched nothing either because the claim is not this pass's, or because it
+				// wrote the values the row already held (MySQL reports such a row as not affected).
+				return this.holdsClaim(latest, chargeClaim) ? null : this.claimRefusal(latest, chargeClaim, 'repriced');
+			},
+			{ amount: restated, metadata: { ...metadata, ...pricing } }
+		);
+
+		return await this.findOneScoped(billing.id);
+	}
+
+	/**
+	 * The claim condition of a write to an unsettled cycle: the claim the billing pass names, or, for a write that names
+	 * none, no pass charging the cycle at all.
+	 *
+	 * @param chargeClaim The token of the billing pass making the write.
+	 * @returns The condition.
+	 */
+	private heldBy(chargeClaim?: string): FindOptionsWhere<SubscriptionBilling> {
+		return chargeClaim ? { chargeClaimToken: chargeClaim } : noLiveChargeClaim();
+	}
+
+	/**
+	 * @param billing The cycle as it now stands.
+	 * @param chargeClaim The token of the billing pass making the write.
+	 * @returns Whether the write's claim condition still holds for the cycle.
+	 */
+	private holdsClaim(billing: SubscriptionBilling, chargeClaim?: string): boolean {
+		return chargeClaim ? billing.chargeClaimToken === chargeClaim : !holdsLiveChargeClaim(billing);
+	}
+
+	/**
+	 * The refusal of a write to an unsettled cycle that the claim condition refused.
+	 *
+	 * @param billing The cycle as it now stands.
+	 * @param chargeClaim The token of the billing pass making the write.
+	 * @param action What the write does to the cycle.
+	 * @returns `SUBSCRIPTION_BILLING_CHARGE_CLAIM_LOST` for a pass, `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` for anyone else.
+	 */
+	private claimRefusal(billing: SubscriptionBilling, chargeClaim: string | undefined, action: string): ConflictException {
+		return chargeClaim ? chargeClaimLost(billing, action) : chargeInFlight(billing, action);
 	}
 
 	/**

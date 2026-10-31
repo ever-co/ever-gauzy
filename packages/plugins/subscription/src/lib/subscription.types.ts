@@ -102,6 +102,19 @@ export enum SubscriptionProrationKind {
  */
 export interface ISubscriptionCatalogPort {
 	/**
+	 * @param variantId A variant a plan is attached to.
+	 * @returns True when the variant is the caller's (an existence read in the caller's tenant and organization;
+	 * whether it may be sold on recurring terms is {@link isVariantSubscribable}).
+	 */
+	variantExists(variantId: ID): Promise<boolean>;
+
+	/**
+	 * @param productId A product a plan is attached to.
+	 * @returns True when the product is the caller's, read as {@link variantExists} reads a variant.
+	 */
+	productExists(productId: ID): Promise<boolean>;
+
+	/**
 	 * @param variantId The variant the plan delivers.
 	 * @returns True when the variant is marked as sellable on a recurring basis.
 	 */

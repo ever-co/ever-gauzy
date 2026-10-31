@@ -3802,6 +3802,8 @@
 		"ADD_TASKS": "Adicionar Tarefas",
 		"EDIT_TASKS": "Editar tarefas",
 		"EDIT_TASK": "Editar Tarefa",
+		"CREATE_TASK": "Criar Tarefa",
+		"REQUIRED_FIELDS_NOTE": "Os campos marcados com * são obrigatórios",
 		"DELETE_TASK": "Apagar Tarefa",
 		"TASKS_TITLE": "Título",
 		"TASKS_DESCRIPTION": "Descrição",

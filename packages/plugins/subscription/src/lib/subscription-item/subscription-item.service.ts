@@ -1,4 +1,5 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { EntityManager } from 'typeorm';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { Money, RequestContext } from '@gauzy/core';
 import {
@@ -121,6 +122,68 @@ export class SubscriptionItemService extends SubscriptionCrudService<Subscriptio
 		}
 
 		return written.sort((left, right) => (left.position ?? 0) - (right.position ?? 0));
+	}
+
+	/**
+	 * Writes a resolved line set inside a caller's transaction, as `replaceItems` writes one.
+	 *
+	 * A line whose variant is already there is updated in place, a new variant is added, and a line whose variant is
+	 * no longer in the set is soft-deleted. On the transaction's manager the lines commit with the write they belong
+	 * to: a change scheduled for the next period moves the plan and its lines together, so a refused claim on the
+	 * subscription leaves the lines another change wrote where that change put them.
+	 *
+	 * @param manager The transaction.
+	 * @param subscriptionId The subscription the lines belong to.
+	 * @param lines The line set, already resolved (`prepareItems`).
+	 */
+	public async writePreparedItems(
+		manager: EntityManager,
+		subscriptionId: ID,
+		lines: Array<{
+			variantId: ID;
+			quantity: DecimalString;
+			unitPrice: DecimalString;
+			position: number;
+			metadata?: Record<string, unknown>;
+		}>
+	): Promise<void> {
+		const repository = manager.getRepository(SubscriptionItem);
+		const existing = await repository.find({ where: { subscriptionId, ...currentScope() } as never });
+		const kept = new Set<ID>();
+
+		for (const line of lines) {
+			kept.add(line.variantId);
+
+			const current = existing.find((row) => row.variantId === line.variantId);
+
+			if (current) {
+				await repository.update(current.id, {
+					quantity: line.quantity,
+					unitPrice: line.unitPrice,
+					position: line.position
+				} as never);
+				continue;
+			}
+
+			await repository.save(
+				repository.create({
+					subscriptionId,
+					variantId: line.variantId,
+					quantity: line.quantity,
+					unitPrice: line.unitPrice,
+					position: line.position,
+					metadata: line.metadata,
+					tenantId: RequestContext.currentTenantId(),
+					organizationId: RequestContext.currentOrganizationId()
+				} as never)
+			);
+		}
+
+		for (const row of existing) {
+			if (!kept.has(row.variantId)) {
+				await repository.softDelete(row.id);
+			}
+		}
 	}
 
 	/**

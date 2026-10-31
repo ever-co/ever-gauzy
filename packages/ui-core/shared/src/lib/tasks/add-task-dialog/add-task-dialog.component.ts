@@ -102,6 +102,20 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		this._task = value;
 	}
 
+	/** Callers also pass an id-less `selectedTask` to prefill a new task, so only an id means editing. */
+	get isEditing(): boolean {
+		return !!this.selectedTask?.id;
+	}
+
+	/** The task's short reference for the dialog header, e.g. `GAU-42`. */
+	get taskReference(): string {
+		if (!this.isEditing) {
+			return '';
+		}
+		// `taskNumber` is a server-side virtual column (prefix + number), absent from ITask.
+		return (this.selectedTask as any).taskNumber || '';
+	}
+
 	ngOnInit() {
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
@@ -187,9 +201,11 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				status,
 				priority,
 				size,
-				estimateDays: duration.days(),
-				estimateHours: duration.hours(),
-				estimateMinutes: duration.minutes(),
+				// `asDays`, not `days`: `days()` wraps at a month and would drop the rest on save.
+				// `|| null` leaves an unset part showing its placeholder instead of a 0.
+				estimateDays: Math.floor(duration.asDays()) || null,
+				estimateHours: duration.hours() || null,
+				estimateMinutes: duration.minutes() || null,
 				dueDate: dueDate ? new Date(dueDate) : null,
 				description,
 				tags,

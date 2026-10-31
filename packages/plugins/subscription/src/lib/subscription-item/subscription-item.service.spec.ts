@@ -291,6 +291,8 @@ function itemFixture(
 		options.withCatalog === false
 			? undefined
 			: {
+					variantExists: async () => true,
+					productExists: async () => true,
 					isVariantSubscribable: async () => true,
 					defaultVariantOf: async () => 'default-variant'
 			  };

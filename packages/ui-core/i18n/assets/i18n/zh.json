@@ -3802,6 +3802,8 @@
 		"ADD_TASKS": "添加任务",
 		"EDIT_TASKS": "编辑任务",
 		"EDIT_TASK": "编辑任务",
+		"CREATE_TASK": "创建任务",
+		"REQUIRED_FIELDS_NOTE": "标有 * 的字段为必填项",
 		"DELETE_TASK": "删除任务",
 		"TASKS_TITLE": "标题",
 		"TASKS_DESCRIPTION": "描述",
