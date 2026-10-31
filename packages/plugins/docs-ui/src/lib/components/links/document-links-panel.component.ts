@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { HttpEventType, HttpResponse } from '@angular/common/http';
 import {
 	Component,
@@ -11,13 +10,7 @@ import {
 	ChangeDetectionStrategy
 } from '@angular/core';
 import { Router } from '@angular/router';
-import {
-	NbButtonModule,
-	NbDialogService,
-	NbIconModule,
-	NbSpinnerModule,
-	NbTooltipModule
-} from '@nebular/theme';
+import { NbButtonModule, NbDialogService, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UntilDestroy } from '@ngneat/until-destroy';
 import { filter, firstValueFrom, map, Subject, takeUntil } from 'rxjs';
@@ -87,14 +80,7 @@ const GRID_THUMBNAIL_MAX_BYTES = 10 * 1024 * 1024;
 @Component({
 	selector: 'gz-document-links-panel',
 	standalone: true,
-	imports: [
-		CommonModule,
-		TranslatePipe,
-		NbButtonModule,
-		NbIconModule,
-		NbSpinnerModule,
-		NbTooltipModule
-	],
+	imports: [TranslatePipe, NbButtonModule, NbIconModule, NbSpinnerModule, NbTooltipModule],
 	providers: [DocumentsService],
 	templateUrl: './document-links-panel.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
@@ -354,7 +340,7 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 	/** A saved image's tile picture, once fetched; the tile shows its family icon until then. */
 	thumbOf(link: IDocumentLink): string | null {
 		const documentId = link?.documentId ?? link?.document?.id;
-		return documentId ? this.imageUrls.get(String(documentId)) ?? null : null;
+		return documentId ? (this.imageUrls.get(String(documentId)) ?? null) : null;
 	}
 
 	/** A held image's tile picture, read from the user's machine. */
@@ -586,7 +572,7 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 								failed: failed.length,
 								total,
 								names: failed.map(({ name }) => name).join(', ')
-						  })
+							})
 				);
 			}
 			return failed;
@@ -720,7 +706,9 @@ export class DocumentLinksPanelComponent extends TranslationBaseComponent implem
 					)
 			);
 			if (!document?.id) {
-				throw new Error(this.getTranslation('DOCS.LINKS.TOAST_FAILED_SOME', { failed: 1, total: 1, names: file.name }));
+				throw new Error(
+					this.getTranslation('DOCS.LINKS.TOAST_FAILED_SOME', { failed: 1, total: 1, names: file.name })
+				);
 			}
 			documentId = document.id as ID;
 			this.uploadedDocuments.set(file, documentId);

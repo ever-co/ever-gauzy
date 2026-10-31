@@ -9,6 +9,9 @@ import {
 	FilePath
 } from '@gauzy/desktop-core';
 
+/** The API of Gauzy Cloud: the default server, and the time tracker's "Gauzy Cloud" server option. */
+export const GAUZY_CLOUD_API_URL = 'https://api.gauzy.co';
+
 /**
  * Local Store Facade for Desktop App
  */
@@ -33,7 +36,7 @@ export const LocalStore = {
 
 		return config?.isLocalServer
 			? `http://localhost:${config?.port ?? 3000}` // Defaults to port 3000 if missing
-			: config?.serverUrl ?? 'https://api.gauzy.co'; // Default external server URL
+			: (config?.serverUrl ?? GAUZY_CLOUD_API_URL); // Default external server URL
 	},
 
 	/**
@@ -47,7 +50,7 @@ export const LocalStore = {
 			return {
 				apiHost: config.isLocalServer
 					? `http://localhost:${config.port ?? 3000}`
-					: config.serverUrl ?? 'https://api.gauzy.co',
+					: (config.serverUrl ?? GAUZY_CLOUD_API_URL),
 				token: auth?.token || null,
 				employeeId: auth?.employeeId || null,
 				organizationId: auth?.organizationId || null,

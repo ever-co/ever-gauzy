@@ -179,6 +179,30 @@ export class RequestContext {
 	}
 
 	/**
+	 * Runs work in a child of the current request-context store, so that what it sets there stays its own.
+	 *
+	 * The store of a request is shared by everything the request runs, and a GraphQL request resolves its fields
+	 * concurrently. A value set in it while one field awaits — a service's "skip the employee filter" counter, for
+	 * one — is read by every other field until it is unset. The child starts as a copy of the store (the request's
+	 * context, its user and its correlation id are all there, by reference), and what the work sets is set in the
+	 * copy: work running beside it, and the code after it, never see it.
+	 *
+	 * Outside any store (a script, a job, a unit test that never booted the application) the work runs as it is.
+	 *
+	 * @param callback - The work to run in the child store.
+	 * @returns Whatever `callback` returns.
+	 */
+	static runIsolated<T>(callback: () => T): T {
+		const clsService = RequestContext.clsService;
+
+		if (!clsService?.isActive()) {
+			return callback();
+		}
+
+		return clsService.run({ ifNested: 'inherit' }, callback);
+	}
+
+	/**
 	 * Gets the current request context.
 	 *
 	 * @returns The current RequestContext instance.

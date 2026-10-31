@@ -31,6 +31,8 @@
 
 		@if (imageUrl) {
 		<img [src]="imageUrl" alt="Receipt Image" (mouseenter)="hoverState = true" (mouseleave)="hoverState = false" />
+		} @else {
+		<p class="empty-hint">{{ 'EXPENSES_PAGE.MUTATION.NO_RECEIPT' | translate }}</p>
 		}
 	</nb-card-body>
 	<nb-card-footer class="text-left">

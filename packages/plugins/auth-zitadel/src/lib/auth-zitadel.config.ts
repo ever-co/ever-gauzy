@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { isSelfServiceSignupAllowed, resolveAuthSwitches } from '@gauzy/config';
 
 /** The switch that loads the plugin. Off unless set to exactly `true`. */
 export const ZITADEL_ENABLED_ENV = 'ZITADEL_ENABLED';
@@ -24,7 +25,10 @@ export interface AuthZitadelSettings {
 	allowedAudiences: string[];
 	/** The link mode in effect (`confirmed` only on Ever Cloud). */
 	linkMode: ZitadelLinkMode;
-	/** The confirmed sign-up path for people new to Gauzy (Ever Cloud only). */
+	/**
+	 * The confirmed sign-up path for people new to Gauzy (Ever Cloud only, and never while the operator has closed
+	 * registration with `APP_USER_REGISTRATION=false` or `ALLOW_TENANTS_REGISTRATION=false`).
+	 */
 	signupEnabled: boolean;
 	backchannelLogoutEnabled: boolean;
 	handoffTtlSeconds: number;
@@ -235,6 +239,12 @@ export function parseZitadelSettings(env: Env, warn: (message: string) => void =
 	if (signupRequested && !isCloud) {
 		warn('ZITADEL_SIGNUP_ENABLED is only available on Ever Cloud; ignored.');
 	}
+	// The operator's registration switches close every sign-up, this one included: it creates a workspace owner
+	// through Gauzy's register path, which the public register route refuses while registration is closed.
+	const registrationOpen = isSelfServiceSignupAllowed(resolveAuthSwitches(env));
+	if (signupRequested && isCloud && !registrationOpen) {
+		warn('ZITADEL_SIGNUP_ENABLED is ignored: APP_USER_REGISTRATION or ALLOW_TENANTS_REGISTRATION is false.');
+	}
 
 	if (readStrictBoolean(env, 'ZITADEL_JIT_PROVISIONING', false, warn)) {
 		warn('ZITADEL_JIT_PROVISIONING: accounts are never created without the person confirming; ignored.');
@@ -251,7 +261,7 @@ export function parseZitadelSettings(env: Env, warn: (message: string) => void =
 		callbackUrl: env['ZITADEL_CALLBACK_URL']?.trim() || `${apiBaseUrl}/api/auth/zitadel/callback`,
 		allowedAudiences: list(env['ZITADEL_ALLOWED_AUDIENCES']),
 		linkMode,
-		signupEnabled: signupRequested && isCloud,
+		signupEnabled: signupRequested && isCloud && registrationOpen,
 		backchannelLogoutEnabled: readStrictBoolean(env, 'ZITADEL_BACKCHANNEL_LOGOUT_ENABLED', true, warn),
 		handoffTtlSeconds: boundedInt(env, 'ZITADEL_HANDOFF_TTL_S', 60, 10, 600, warn),
 		confirmTtlSeconds: boundedInt(env, 'ZITADEL_CONFIRM_TTL_S', 1800, 60, 86_400, warn),

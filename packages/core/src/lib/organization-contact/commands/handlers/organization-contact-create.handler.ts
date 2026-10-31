@@ -1,13 +1,21 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BadRequestException } from '@nestjs/common';
 import { In } from 'typeorm';
-import { IEmployee, IOrganizationContact, IOrganizationProject, IOrganizationProjectEmployee } from '@gauzy/contracts';
+import {
+	ID,
+	IEmployee,
+	IOrganizationContact,
+	IOrganizationContactCreateInput,
+	IOrganizationProject,
+	IOrganizationProjectEmployee
+} from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../../../core/context';
 import { OrganizationContactCreateCommand } from '../organization-contact-create.command';
 import { OrganizationContactService } from '../../organization-contact.service';
 import { OrganizationProjectService } from '../../../organization-project/organization-project.service';
 import { ContactService } from '../../../contact/contact.service';
+import { toCreateOnlyContactInput } from '../../organization-contact-create-only';
 
 @CommandHandler(OrganizationContactCreateCommand)
 export class OrganizationContactCreateHandler implements ICommandHandler<OrganizationContactCreateCommand> {
@@ -24,9 +32,13 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 	 * @returns A promise that resolves to the newly created organization contact (IOrganizationContact).
 	 */
 	public async execute(command: OrganizationContactCreateCommand): Promise<IOrganizationContact> {
-		try {
-			const { input } = command;
+		// A caller who may create contacts but not edit them creates only. Checked before the catch-all below,
+		// which answers every failure with a 400, so the refusal keeps its 403.
+		const input = command.options?.createOnly
+			? await toCreateOnlyContactInput(command.input, (ids) => this.findProjectsOf(command.input, ids))
+			: command.input;
 
+		try {
 			const organizationId = input.organizationId;
 			const tenantId = RequestContext.currentTenantId() ?? input.tenantId;
 
@@ -85,5 +97,19 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 		} catch (error) {
 			throw new BadRequestException('Failed to create organization contact', error.message);
 		}
+	}
+
+	/**
+	 * The projects `ids` names among those of the organization the contact is created in (within the caller's
+	 * tenant and organization boundary), with the contact each already has.
+	 */
+	private async findProjectsOf(input: IOrganizationContactCreateInput, ids: ID[]): Promise<IOrganizationProject[]> {
+		if (!input.organizationId) {
+			return [];
+		}
+
+		return this._organizationProjectService.find({
+			where: { id: In(ids), organizationId: input.organizationId }
+		});
 	}
 }

@@ -1,5 +1,11 @@
 import { Component, OnInit, Input, forwardRef, OnDestroy, AfterViewInit, ChangeDetectionStrategy } from '@angular/core';
-import { ContactType, IEmployee, IOrganization, IOrganizationContact, PermissionsEnum } from '@gauzy/contracts';
+import {
+	ContactType,
+	IEmployee,
+	IOrganization,
+	IOrganizationContact,
+	ORGANIZATION_CONTACT_CREATE_PERMISSIONS
+} from '@gauzy/contracts';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
@@ -38,6 +44,12 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 	 */
 	@Input() placeholder: string | null = null;
 
+	/**
+	 * ID given to the selector's input, so a `<label for="…">` outside it names the field for screen
+	 * readers. Left null, the input gets no ID, as before.
+	 */
+	@Input() labelForId: string | null = null;
+
 	private _employeeId: IEmployee['id'];
 	public get employeeId(): IEmployee['id'] {
 		return this._employeeId;
@@ -70,8 +82,9 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 	) {}
 
 	ngOnInit(): void {
+		// Typing a new name creates the contact: offered to whoever may create one (ever-co/ever-gauzy#5468).
 		this.hasEditContact$ = this.store.userRolePermissions$.pipe(
-			map(() => this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT))
+			map(() => this.store.hasAnyPermission(...ORGANIZATION_CONTACT_CREATE_PERMISSIONS))
 		);
 	}
 

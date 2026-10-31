@@ -1,0 +1,336 @@
+<!-- The discussion on the record, laid out as the objective dialog's Comments: the comments, oldest first, a
+     comment with replies hanging a thread card off its avatar, and the comment box under them (newest first, the
+     box above them). The count is on the page's tab. -->
+<section class="panel project-view-panel" [nbSpinner]="threads.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+	@if (canWrite && newestFirst) {
+	<header class="comment-footer comment-footer--top">
+		<ng-container *ngTemplateOutlet="commentBox"></ng-container>
+	</header>
+	}
+	<div class="panel-body">
+		@if (threads.failed) {
+		<!-- A failed read, told apart from an empty list. -->
+		<div class="empty-state load-error" role="alert">
+			<span>{{ 'GOALS_PAGE.COMMENT_THREAD.LOAD_ERROR' | translate }}</span>
+			<button type="button" nbButton status="basic" size="tiny" [disabled]="threads.loading" (click)="load()">
+				{{ 'BUTTONS.RETRY' | translate }}
+			</button>
+		</div>
+		} @else if (!threads.loading && !threads.value.length) {
+		<div class="empty-state">{{ text.empty | translate }}</div>
+		} @else {
+		<ol class="comments">
+			@for (thread of threads.value; track thread.entry.comment.id) {
+			@let entry = thread.entry;
+			@let open = openThreadId === entry.comment.id;
+			@let latest = thread.replies[thread.replies.length - 1];
+			<li class="comment" [class.has-thread]="open || thread.replies.length">
+				<!-- The avatar, with the thread's stem running down from it to the elbow into the card. -->
+				<div class="comment-gutter">
+					<ng-container *ngTemplateOutlet="authorAvatar; context: { $implicit: entry }"></ng-container>
+					<span class="thread-stem" aria-hidden="true"></span>
+				</div>
+				<div class="comment-main">
+					<ng-container *ngTemplateOutlet="message; context: { $implicit: entry }"></ng-container>
+					@if (canWrite) {
+					<div class="comment-actions">
+						<button type="button" class="comment-action" (click)="replyTo(thread)">
+							<nb-icon icon="corner-up-left-outline" aria-hidden="true"></nb-icon>
+							{{ 'GOALS_PAGE.COMMENT_THREAD.REPLY' | translate }}
+						</button>
+						<ng-container *ngTemplateOutlet="deleteControl; context: { $implicit: entry }"></ng-container>
+					</div>
+					}
+				</div>
+				@if (open || thread.replies.length) {
+				<!-- The thread card. Closed, it sums the thread up — the comment, how many replies, the latest one;
+				     open, it lists the replies over a reply box. -->
+				<div class="thread">
+					<div class="thread-card" [class.open]="open">
+						<div class="thread-summary">
+							<span class="thread-title">{{ entry.text || ('PROJECT_VIEW.COMMENT_IMAGE' | translate) }}</span>
+							<button type="button" class="thread-toggle" [attr.aria-expanded]="open" (click)="toggleThread(thread)">
+								{{
+									(thread.replies.length === 1
+										? 'GOALS_PAGE.COMMENT_THREAD.ONE_MESSAGE'
+										: 'GOALS_PAGE.COMMENT_THREAD.MESSAGES'
+									) | translate : { count: thread.replies.length }
+								}}
+								<nb-icon [icon]="open ? 'chevron-down-outline' : 'chevron-right-outline'" aria-hidden="true"></nb-icon>
+							</button>
+						</div>
+						@if (!open) {
+						<div class="thread-latest">
+							@if (latest) {
+							<span class="thread-latest-text">
+								<b>{{ latest.author?.name || ('GOALS_PAGE.COMMENT_THREAD.UNKNOWN_AUTHOR' | translate) }}</b>
+								{{ latest.text || ('PROJECT_VIEW.COMMENT_IMAGE' | translate) }}
+							</span>
+							<span class="thread-age" [nbTooltip]="latest.timeLong" nbTooltipPlacement="top">{{ latest.ago }}</span>
+							} @else {
+							<span class="thread-latest-text">{{ 'GOALS_PAGE.COMMENT_THREAD.NO_MESSAGES' | translate }}</span>
+							}
+						</div>
+						} @else {
+						@if (thread.replies.length) {
+						<ol class="replies">
+							@for (reply of thread.replies; track reply.comment.id) {
+							<li class="reply">
+								<ng-container *ngTemplateOutlet="authorAvatar; context: { $implicit: reply, small: true }"></ng-container>
+								<div class="comment-main">
+									<ng-container *ngTemplateOutlet="message; context: { $implicit: reply }"></ng-container>
+									@if (reply.canDelete) {
+									<div class="comment-actions">
+										<ng-container *ngTemplateOutlet="deleteControl; context: { $implicit: reply }"></ng-container>
+									</div>
+									}
+								</div>
+							</li>
+							}
+						</ol>
+						} @else {
+						<div class="thread-latest">
+							<span class="thread-latest-text">{{ 'GOALS_PAGE.COMMENT_THREAD.NO_MESSAGES' | translate }}</span>
+						</div>
+						}
+						<!-- The reply box: one block — picked images, the text, then the paperclip and Reply. -->
+						@if (canWrite) {
+						<div class="composer composer--reply" (dragover)="onDragOver($event)" (drop)="onDrop('reply', $event)">
+							<ng-container *ngTemplateOutlet="pendingImages; context: { $implicit: 'reply' }"></ng-container>
+							<textarea
+								class="composer-input"
+								rows="1"
+								[id]="idPrefix + '-reply-' + entry.comment.id"
+								[formControl]="replyControl"
+								[placeholder]="'GOALS_PAGE.COMMENT_THREAD.REPLY_PLACEHOLDER' | translate"
+								[attr.aria-label]="'GOALS_PAGE.COMMENT_THREAD.REPLY_PLACEHOLDER' | translate"
+								(paste)="onPaste('reply', $event)"
+								(keydown.control.enter)="addReply(thread)"
+								(keydown.meta.enter)="addReply(thread)"
+								(keydown.escape)="toggleThread(thread)"
+							></textarea>
+							<div class="composer-toolbar">
+								<ng-container *ngTemplateOutlet="attachButton; context: { $implicit: 'reply' }"></ng-container>
+								<button
+									type="button"
+									class="composer-send"
+									[class.is-busy]="postingReply"
+									[disabled]="!canPost('reply') || postingReply"
+									[nbTooltip]="'GOALS_PAGE.COMMENT_THREAD.REPLY' | translate"
+									[attr.aria-label]="'GOALS_PAGE.COMMENT_THREAD.REPLY' | translate"
+									(click)="addReply(thread)"
+								>
+									<nb-icon icon="paper-plane-outline" aria-hidden="true"></nb-icon>
+								</button>
+							</div>
+						</div>
+						}
+						}
+					</div>
+				</div>
+				}
+			</li>
+			}
+		</ol>
+		}
+	</div>
+	@if (canWrite && !newestFirst) {
+	<footer class="comment-footer">
+		<ng-container *ngTemplateOutlet="commentBox"></ng-container>
+	</footer>
+	}
+</section>
+
+<!-- The comment box, under the list or above it: one block — picked images, the text, then a toolbar with the
+     paperclip and the send button. Ctrl/Cmd+Enter posts too; images can also be pasted or dropped on it. -->
+<ng-template #commentBox>
+	<div class="composer" (dragover)="onDragOver($event)" (drop)="onDrop('comment', $event)">
+		<ng-container *ngTemplateOutlet="pendingImages; context: { $implicit: 'comment' }"></ng-container>
+		<textarea
+			class="composer-input"
+			rows="1"
+			[id]="idPrefix + '-comment'"
+			[formControl]="commentControl"
+			[placeholder]="text.placeholder | translate"
+			[attr.aria-label]="text.placeholder | translate"
+			(paste)="onPaste('comment', $event)"
+			(keydown.control.enter)="addComment()"
+			(keydown.meta.enter)="addComment()"
+		></textarea>
+		<div class="composer-toolbar">
+			<ng-container *ngTemplateOutlet="attachButton; context: { $implicit: 'comment' }"></ng-container>
+			<button
+				type="button"
+				class="composer-send"
+				[class.is-busy]="postingComment"
+				[disabled]="!canPost('comment') || postingComment"
+				[nbTooltip]="text.send | translate"
+				[attr.aria-label]="text.send | translate"
+				(click)="addComment()"
+			>
+				<nb-icon icon="paper-plane-outline" aria-hidden="true"></nb-icon>
+			</button>
+		</div>
+	</div>
+</ng-template>
+
+<!-- A message's author line and text. -->
+<ng-template #message let-entry>
+	<div class="comment-head">
+		@if (entry.author && entry.authorLink) {
+		<a class="comment-author" [routerLink]="entry.authorLink">{{ entry.author.name }}</a>
+		} @else if (entry.author) {
+		<span class="comment-author">{{ entry.author.name }}</span>
+		} @else {
+		<span class="comment-author">{{ 'GOALS_PAGE.COMMENT_THREAD.UNKNOWN_AUTHOR' | translate }}</span>
+		}
+		<time class="comment-time" [attr.datetime]="entry.comment.createdAt" [nbTooltip]="entry.timeLong" nbTooltipPlacement="top">
+			{{ entry.comment.createdAt | date : 'short' }}
+		</time>
+	</div>
+	@if (entry.text) {
+	<p class="comment-text">{{ entry.text }}</p>
+	}
+	@if (entry.images.length) {
+	<!-- The attached images as thumbnails, from the addresses looked up for their assets; each opens full size. One
+	     first being looked up shows empty; one whose lookup failed shows an image icon, and clicking it tries again. -->
+	<div class="comment-images">
+		@for (image of entry.images; track $index) {
+		@let urls = imageUrls.get(image.assetId);
+		<button
+			type="button"
+			class="comment-image"
+			[class.is-unavailable]="!urls"
+			[disabled]="urls === undefined"
+			[attr.aria-label]="image.name || ('PROJECT_VIEW.COMMENT_IMAGE' | translate)"
+			(click)="openImage(image)"
+		>
+			@if (urls) {
+			<img [src]="urls.thumb" [alt]="image.name" loading="lazy" />
+			} @else if (urls === null) {
+			<nb-icon icon="image-outline" aria-hidden="true"></nb-icon>
+			}
+		</button>
+		}
+	</div>
+	}
+</ng-template>
+
+<!-- The paperclip that picks images for a box, for those the image upload lets in. -->
+<ng-template #attachButton let-box>
+	@if (canAttach) {
+	<input #picker type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/bmp" multiple hidden (change)="onPick(box, picker)" />
+	<button
+		type="button"
+		class="composer-tool"
+		[nbTooltip]="'PROJECT_VIEW.ATTACH_IMAGES' | translate"
+		[attr.aria-label]="'PROJECT_VIEW.ATTACH_IMAGES' | translate"
+		(click)="picker.click()"
+	>
+		<nb-icon icon="attach-outline" aria-hidden="true"></nb-icon>
+	</button>
+	}
+</ng-template>
+
+<!-- The images picked for a box: each from its file at once, dimmed with a spinner while it uploads. -->
+<ng-template #pendingImages let-box>
+	@if (pending[box].length) {
+	<ul class="pending-images">
+		@for (image of pending[box]; track image.key) {
+		<li class="pending-image" [class.is-uploading]="image.uploading" [nbSpinner]="image.uploading" nbSpinnerSize="tiny" nbSpinnerStatus="basic">
+			<img [src]="image.preview" [alt]="image.name" />
+			<button
+				type="button"
+				class="pending-remove"
+				[disabled]="isPosting(box)"
+				[nbTooltip]="'PROJECT_VIEW.REMOVE_IMAGE' | translate"
+				[attr.aria-label]="'PROJECT_VIEW.REMOVE_IMAGE' | translate"
+				(click)="removeImage(box, image)"
+			>
+				<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
+			</button>
+		</li>
+		}
+	</ul>
+	}
+</ng-template>
+
+<!-- Delete as a bare trash icon, where the server would allow it; clicking it asks inline before deleting. -->
+<ng-template #deleteControl let-entry>
+	@if (entry.canDelete) {
+	@if (confirmingDeleteId === entry.comment.id) {
+	<span class="delete-confirm" role="group">
+		<span class="delete-question">{{ 'GOALS_PAGE.COMMENT_THREAD.DELETE_CONFIRM' | translate }}</span>
+		<button type="button" class="comment-action" [disabled]="deleting" (click)="confirmingDeleteId = null">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button type="button" class="comment-action danger confirm" [disabled]="deleting" (click)="deleteComment(entry.comment)">
+			{{ 'BUTTONS.DELETE' | translate }}
+		</button>
+	</span>
+	} @else {
+	<button
+		type="button"
+		class="comment-action danger icon-only"
+		[nbTooltip]="'BUTTONS.DELETE' | translate"
+		[attr.aria-label]="'BUTTONS.DELETE' | translate"
+		(click)="confirmingDeleteId = entry.comment.id"
+	>
+		<nb-icon icon="trash-2-outline" aria-hidden="true"></nb-icon>
+	</button>
+	}
+	}
+</ng-template>
+
+<!-- The author's photo, linking to their page when the comment has one. -->
+<ng-template #authorAvatar let-entry let-small="small">
+	@if (entry.authorLink) {
+	<a class="comment-avatar-link" [routerLink]="entry.authorLink" [attr.aria-label]="entry.author?.name">
+		<ng-container *ngTemplateOutlet="avatar; context: { $implicit: entry.author, small: small }"></ng-container>
+	</a>
+	} @else {
+	<ng-container *ngTemplateOutlet="avatar; context: { $implicit: entry.author, small: small }"></ng-container>
+	}
+</ng-template>
+
+<ng-template #avatar let-person let-small="small">
+	<span class="comment-avatar" [class.small]="small" aria-hidden="true">
+		@if (person?.avatarUrl) {
+		<img [src]="person.avatarUrl" alt="" />
+		} @else if (person) {
+		{{ person.initials }}
+		} @else {
+		<nb-icon icon="person-outline"></nb-icon>
+		}
+	</span>
+</ng-template>
+
+<!-- An image open full size over the page; a click outside it, the close button or Esc closes it. -->
+@if (viewing) {
+<!-- The focus is trapped inside while it is open, starts on the close button, and goes back to the thumbnail
+     however it closes. -->
+<div
+	class="image-viewer"
+	role="dialog"
+	aria-modal="true"
+	[attr.aria-label]="viewing.name"
+	cdkTrapFocus
+	cdkTrapFocusAutoCapture
+	(click)="closeImage()"
+>
+	<button
+		type="button"
+		cdkFocusInitial
+		class="image-viewer-close"
+		[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+		(click)="closeImage()"
+	>
+		<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
+	</button>
+	<img [src]="viewing.url" [alt]="viewing.name" (click)="$event.stopPropagation()" />
+	<a class="image-viewer-open" [href]="viewing.url" target="_blank" rel="noopener noreferrer" (click)="$event.stopPropagation()">
+		{{ 'PROJECT_VIEW.OPEN_IMAGE' | translate }}
+		<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+	</a>
+</div>
+}

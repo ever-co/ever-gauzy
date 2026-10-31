@@ -8,53 +8,63 @@ import { UploadQueueItem } from '../../services/upload-queue.service';
 @Component({
 	selector: 'gz-docs-upload-progress',
 	template: `
-		<nb-card class="docs-upload-progress" *ngIf="items?.length" [attr.aria-label]="'DOCS.A11Y.UPLOAD_PROGRESS' | translate">
-			<nb-card-header class="docs-upload-header">
-				<span>{{ 'DOCS.UPLOAD.BUTTON' | translate }}</span>
-				<button nbButton ghost size="tiny" (click)="clearFinished.emit()">
-					{{ 'DOCS.UPLOAD.CLEAR_FINISHED' | translate }}
-				</button>
-			</nb-card-header>
-			<nb-card-body>
-				<div class="docs-upload-row" *ngFor="let item of items; trackBy: trackByKey">
-					<div class="docs-upload-meta">
-						<span class="docs-upload-name" [nbTooltip]="item.file.name">{{ item.file.name }}</span>
-						<span class="docs-upload-size">{{ humanize(item.file.size) }}</span>
-						<!-- Dedup notice (R-UPL-04) — advisory only, the upload still went through -->
-						<span class="docs-upload-duplicate" *ngIf="item.duplicateOfId">
-							<nb-icon icon="copy-outline" size="tiny"></nb-icon>
-							{{
-								item.duplicateOfName
-									? ('DOCS.UPLOAD.DUPLICATE_NOTICE' | translate : { name: item.duplicateOfName })
-									: ('DOCS.UPLOAD.DUPLICATE_NOTICE_UNKNOWN' | translate)
-							}}
-						</span>
-					</div>
-					<nb-progress-bar
-						*ngIf="item.state === 'uploading'"
-						[value]="item.progress"
-						status="primary"
-						size="tiny"
-					></nb-progress-bar>
-					<span class="docs-upload-state done" *ngIf="item.state === 'done'">
-						<nb-icon icon="checkmark-circle-2-outline" size="tiny"></nb-icon>
-						{{ 'DOCS.UPLOAD.PROGRESS_DONE' | translate }}
-					</span>
-					<span class="docs-upload-state error" *ngIf="item.state === 'error'" [nbTooltip]="item.error || ''">
-						<nb-icon icon="alert-triangle-outline" size="tiny"></nb-icon>
-						{{ 'DOCS.UPLOAD.PROGRESS_ERROR' | translate }}
-					</span>
-					<span class="docs-upload-actions">
-						<button *ngIf="item.state === 'error'" nbButton ghost size="tiny" (click)="retry.emit(item.key)">
-							{{ 'DOCS.UPLOAD.RETRY' | translate }}
-						</button>
-						<button nbButton ghost size="tiny" (click)="dismiss.emit(item.key)">
-							<nb-icon icon="close-outline" size="tiny"></nb-icon>
-						</button>
-					</span>
-				</div>
-			</nb-card-body>
-		</nb-card>
+		@if (items?.length) {
+			<nb-card class="docs-upload-progress" [attr.aria-label]="'DOCS.A11Y.UPLOAD_PROGRESS' | translate">
+				<nb-card-header class="docs-upload-header">
+					<span>{{ 'DOCS.UPLOAD.BUTTON' | translate }}</span>
+					<button nbButton ghost size="tiny" (click)="clearFinished.emit()">
+						{{ 'DOCS.UPLOAD.CLEAR_FINISHED' | translate }}
+					</button>
+				</nb-card-header>
+				<nb-card-body>
+					@for (item of items; track trackByKey($index, item)) {
+						<div class="docs-upload-row">
+							<div class="docs-upload-meta">
+								<span class="docs-upload-name" [nbTooltip]="item.file.name">{{ item.file.name }}</span>
+								<span class="docs-upload-size">{{ humanize(item.file.size) }}</span>
+								<!-- Dedup notice (R-UPL-04) — advisory only, the upload still went through -->
+								@if (item.duplicateOfId) {
+									<span class="docs-upload-duplicate">
+										<nb-icon icon="copy-outline" size="tiny"></nb-icon>
+										{{
+											item.duplicateOfName
+												? ('DOCS.UPLOAD.DUPLICATE_NOTICE'
+													| translate: { name: item.duplicateOfName })
+												: ('DOCS.UPLOAD.DUPLICATE_NOTICE_UNKNOWN' | translate)
+										}}
+									</span>
+								}
+							</div>
+							@if (item.state === 'uploading') {
+								<nb-progress-bar [value]="item.progress" status="primary" size="tiny"></nb-progress-bar>
+							}
+							@if (item.state === 'done') {
+								<span class="docs-upload-state done">
+									<nb-icon icon="checkmark-circle-2-outline" size="tiny"></nb-icon>
+									{{ 'DOCS.UPLOAD.PROGRESS_DONE' | translate }}
+								</span>
+							}
+							@if (item.state === 'error') {
+								<span class="docs-upload-state error" [nbTooltip]="item.error || ''">
+									<nb-icon icon="alert-triangle-outline" size="tiny"></nb-icon>
+									{{ 'DOCS.UPLOAD.PROGRESS_ERROR' | translate }}
+								</span>
+							}
+							<span class="docs-upload-actions">
+								@if (item.state === 'error') {
+									<button nbButton ghost size="tiny" (click)="retry.emit(item.key)">
+										{{ 'DOCS.UPLOAD.RETRY' | translate }}
+									</button>
+								}
+								<button nbButton ghost size="tiny" (click)="dismiss.emit(item.key)">
+									<nb-icon icon="close-outline" size="tiny"></nb-icon>
+								</button>
+							</span>
+						</div>
+					}
+				</nb-card-body>
+			</nb-card>
+		}
 	`,
 	styles: [
 		`

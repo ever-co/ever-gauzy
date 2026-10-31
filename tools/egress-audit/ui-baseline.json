@@ -11743,6 +11743,42 @@
 			"attribute": "href",
 			"url": "https://gauzy.co/subprocessors",
 			"reason": "link to a Gauzy legal page, written in the DPIA Support Pack vendored from @ever-co/legal 0.5.0 (packages/plugins/legal-ui/src/lib/content/dpia.en.generated.ts)"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "link to the company website (footer of every page)"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "link to the Gauzy website (logo and footer of every page)"
 		}
 	]
 }

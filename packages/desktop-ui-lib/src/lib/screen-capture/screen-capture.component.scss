@@ -56,7 +56,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  align-self: flex-start;
+  align-self: stretch;
   gap: 4px;
   padding: 6px 6px 0 6px;
 
@@ -64,6 +64,14 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    width: 100%;
+  }
+
+  // Closes the notification at once (#7643), at the right end of the title row
+  .notification-close {
+    margin-left: auto;
+    padding: 0;
+    -webkit-app-region: no-drag;
   }
 }
 

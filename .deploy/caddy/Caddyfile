@@ -1,0 +1,32 @@
+# Caddy in front of Ever Gauzy, used by docker-compose.caddy.yml (see the comments there and README.md).
+#
+# One site, one origin: https://{$GAUZY_DOMAIN}. Caddy obtains and renews its certificate by itself: from Let's Encrypt
+# or ZeroSSL for a public domain that points at this host (ports 80 and 443 must be reachable), or from its own local
+# certificate authority for `localhost` and other internal names.
+#
+# To receive certificate expiry notices from the CA, add a global options block at the top of this file:
+#   {
+#       email you@example.com
+#   }
+
+{$GAUZY_DOMAIN:localhost} {
+	# The API: REST under /api, GraphQL at /graphql (queries and mutations, and the graphql-ws subscription socket,
+	# whose WebSocket upgrade reverse_proxy passes through as is), the uploaded files it serves under /public
+	# (FILE_PROVIDER=LOCAL), and its Swagger UI at /swg with the OpenAPI document at /swg-json and /swg-yaml.
+	# The Scalar API reference at /docs is not routed: its page loads its script from a CDN, which here would run on the
+	# web app's origin. To publish it anyway, add `/docs /docs/*` to this matcher.
+	@api path /api /api/* /graphql /public/* /swg /swg/* /swg-json /swg-yaml
+	handle @api {
+		reverse_proxy api:3000 {
+			# Caddy sets X-Forwarded-For / -Proto / -Host itself and drops what an untrusted client sent, so the API
+			# (TRUST_PROXY=1) sees the real client address. CF-Connecting-IP is client-writable unless every request
+			# comes through Cloudflare, so it never reaches the API from here either (GHSA-86mw-2crg-vmhc).
+			header_up -CF-Connecting-IP
+		}
+	}
+
+	# Everything else is the web app (its own nginx serves the Angular build).
+	handle {
+		reverse_proxy webapp:4200
+	}
+}

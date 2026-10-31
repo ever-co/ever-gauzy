@@ -93,7 +93,8 @@ function surfaces(options: { granted?: PermissionsEnum[] } = {}) {
 		organizationService as never,
 		userOrganizationService as never,
 		userService as never,
-		contactService as never
+		contactService as never,
+		{ create: jest.fn() } as never
 	);
 	const commandBus = { execute: jest.fn((command) => handler.execute(command)) };
 

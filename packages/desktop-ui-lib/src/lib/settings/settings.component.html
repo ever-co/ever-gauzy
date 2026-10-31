@@ -232,6 +232,47 @@
 									) | translate
 								}}
 							</nb-toggle>
+							<div class="screenshot-sound">
+								<span class="screenshot-sound-label">
+									{{ 'TIMER_TRACKER.SETTINGS.SCREENSHOT_SOUND' | translate }}:
+								</span>
+								<span
+									class="screenshot-sound-name"
+									[title]="
+										customScreenshotSound?.name ||
+										('TIMER_TRACKER.SETTINGS.SCREENSHOT_SOUND_DEFAULT' | translate)
+									"
+								>
+									{{
+										customScreenshotSound?.name ||
+											('TIMER_TRACKER.SETTINGS.SCREENSHOT_SOUND_DEFAULT' | translate)
+									}}
+								</span>
+								<button
+									nbButton
+									size="small"
+									status="basic"
+									type="button"
+									[disabled]="isChangingScreenshotSound"
+									(click)="chooseScreenshotSound()"
+								>
+									{{ 'TIMER_TRACKER.SETTINGS.CHOOSE_SOUND' | translate }}
+								</button>
+								@if (customScreenshotSound) {
+									<button
+										nbButton
+										ghost
+										size="small"
+										status="basic"
+										type="button"
+										[disabled]="isChangingScreenshotSound"
+										(click)="resetScreenshotSound()"
+									>
+										{{ 'TIMER_TRACKER.SETTINGS.USE_DEFAULT_SOUND' | translate }}
+									</button>
+								}
+							</div>
+							<small>{{ 'TIMER_TRACKER.SETTINGS.SCREENSHOT_SOUND_HINT' | translate }}</small>
 						</nb-card-body>
 					</nb-card>
 				</div>
@@ -292,6 +333,31 @@
 					</nb-card>
 				</div>
 			</div>
+			@if (!isAgent) {
+				<div class="row">
+					<div class="col-12">
+						<h6>
+							{{ 'TIMER_TRACKER.SETTINGS.TIMER_SOUNDS' | translate }}
+						</h6>
+					</div>
+				</div>
+				<div class="row notification">
+					<div class="col-10">
+						<nb-card>
+							<nb-card-body>
+								<nb-toggle
+									[checked]="appSetting?.timerStartStopSound === true"
+									(checkedChange)="toggleTimerStartStopSound($event)"
+									status="basic"
+								>
+									{{ 'TIMER_TRACKER.SETTINGS.TIMER_START_STOP_SOUND' | translate }}
+								</nb-toggle>
+								<small>{{ 'TIMER_TRACKER.SETTINGS.TIMER_START_STOP_SOUND_HINT' | translate }}</small>
+							</nb-card-body>
+						</nb-card>
+					</div>
+				</div>
+			}
 			<div class="row">
 				<div class="col-12">
 					<h6>
@@ -741,14 +807,11 @@
 														}
 														@if (isServer) {
 															<div class="col-7 form-group">
-																<input
-																	[(ngModel)]="config.host"
-																	type="text"
-																	nbInput
-																	fullWidth
-																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
-																	status="basic"
-																/>
+																<gauzy-server-host-input
+																	[(host)]="config.host"
+																	[disabled]="!!appSetting?.timerStarted"
+																	[sslEnabled]="!!config?.secureProxy?.enable"
+																></gauzy-server-host-input>
 															</div>
 														}
 														@if (config?.isLocalServer) {
@@ -1279,7 +1342,7 @@
 			nbButton
 			status="primary"
 			(click)="restartApp()"
-			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted"
+			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted || isServerHostInvalid"
 		>
 			{{ (isServer ? 'BUTTONS.SAVE' : 'BUTTONS.SAVE_RESTART') | translate }}
 			<nb-icon [icon]="isServer ? 'save' : 'refresh-outline'" *gauzySpinnerButton="isRestart$ | async"></nb-icon>

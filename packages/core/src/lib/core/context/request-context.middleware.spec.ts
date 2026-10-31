@@ -209,6 +209,57 @@ describe('RequestContextMiddleware — correlation id propagation', () => {
 			expect(log.mock.calls[1][0]).toContain('completed with status 200.');
 		});
 
+		describe('reuses the URL redaction of the HTTP request log', () => {
+			/** Runs one request; `routeParams` are what the router matched by the time the response ends. */
+			function lifecycleLines(originalUrl: string, routeParams: Record<string, string> = {}): string[] {
+				const log = jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => undefined);
+				const cls = buildClsService();
+				RequestContext.setClsService(cls);
+				const middleware = new RequestContextMiddleware(cls);
+				const { req, res } = buildReqRes();
+				req.originalUrl = originalUrl;
+				req.params = {};
+
+				middleware.use(req, res, jest.fn());
+				req.params = routeParams;
+				res.end();
+
+				return log.mock.calls.map(([line]) => String(line));
+			}
+
+			it('in both lines: sensitive query values and the segment after /token/', () => {
+				const lines = lifecycleLines('/api/shared-entity/token/0a1b2c3d?email=jane%40example.com&page=2', {
+					token: '0a1b2c3d'
+				});
+
+				expect(lines[0]).toContain(
+					'GET request to http://localhost/api/shared-entity/token/[REDACTED]?email=[REDACTED]&page=2 started.'
+				);
+				expect(lines[1]).toContain(
+					'request to http://localhost/api/shared-entity/token/[REDACTED]?email=[REDACTED]&page=2 completed'
+				);
+				expect(lines.join(' ')).not.toMatch(/0a1b2c3d|jane/);
+			});
+
+			it('in both lines: a signed token in the path', () => {
+				const jwt = ['eyJhbGciOiJIUzI1NiJ9', 'eyJzdWIiOiIxIn0', 'c2ln'].join('.');
+
+				const lines = lifecycleLines(`/api/public/invoice/42/${jwt}`, { id: '42', token: jwt });
+
+				expect(lines[0]).toContain('http://localhost/api/public/invoice/42/[REDACTED] started.');
+				expect(lines[1]).toContain('http://localhost/api/public/invoice/42/[REDACTED] completed');
+				expect(lines.join(' ')).not.toContain(jwt);
+			});
+
+			it('in the completion line: a sensitive route parameter, known once the request is routed', () => {
+				const lines = lifecycleLines('/api/public/invoice/42/opaque-value', { id: '42', token: 'opaque-value' });
+
+				expect(lines[1]).toContain(
+					'GET request to http://localhost/api/public/invoice/42/[REDACTED] completed with status 200.'
+				);
+			});
+		});
+
 		// Kubernetes probes every pod every few seconds; each logged line was also a Sentry event.
 		it.each(['/api/health', '/api/health?full=true', '/api/health/database'])(
 			'does not log the health check %s',

@@ -20,20 +20,21 @@ import { DOCS_ACTION_MENU_CLASS } from '../../actions/docs-action-menu';
 @Component({
 	selector: 'gz-docs-row-actions',
 	template: `
-		<button
-			*ngIf="menuItems?.length"
-			nbButton
-			ghost
-			size="tiny"
-			type="button"
-			class="docs-row-actions"
-			[nbContextMenu]="menuItems"
-			[nbContextMenuTag]="tag"
-			[nbContextMenuClass]="menuClass"
-			[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
-		>
-			<nb-icon icon="more-horizontal-outline" size="tiny"></nb-icon>
-		</button>
+		@if (menuItems?.length) {
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				type="button"
+				class="docs-row-actions"
+				[nbContextMenu]="menuItems"
+				[nbContextMenuTag]="tag"
+				[nbContextMenuClass]="menuClass"
+				[attr.aria-label]="'DOCS.A11Y.NODE_ACTIONS' | translate"
+			>
+				<nb-icon icon="more-horizontal-outline" size="tiny"></nb-icon>
+			</button>
+		}
 	`,
 	styles: [
 		`

@@ -5,6 +5,7 @@ import { DangerZoneComponent } from './danger-zone/danger-zone.component';
 import { SettingsComponent } from './settings.component';
 import { EmailHistoryComponent } from './email-history/email-history.component';
 import { SmsGatewayComponent } from './sms-gateway/sms-gateway.component';
+import { changelogManagerGuard } from './changelog/changelog-manager.guard';
 
 /**
  * Creates the settings child routes.
@@ -149,6 +150,22 @@ export function createSettingsRoutes(_pageRouteRegistryService: PageRouteRegistr
 							only: [PermissionsEnum.ACCESS_DELETE_ACCOUNT, PermissionsEnum.ACCESS_DELETE_ALL_DATA],
 							redirectTo: '/pages/settings'
 						},
+						selectors: {
+							project: false,
+							employee: false,
+							organization: false,
+							date: false
+						}
+					}
+				},
+				{
+					// The What's New entries are installation-wide: only a super admin may open the page, and
+					// the API further limits changes to the installation's operator.
+					path: 'whats-new',
+					loadComponent: () =>
+						import('./changelog/changelog-admin.component').then((m) => m.ChangelogAdminComponent),
+					canActivate: [changelogManagerGuard],
+					data: {
 						selectors: {
 							project: false,
 							employee: false,

@@ -30,8 +30,8 @@ async function cancel(data: Record<string, unknown>) {
 	const revoked: unknown[][] = [];
 	const lookedUp: unknown[] = [];
 	const entitlementService = {
-		find: async (options: { where: Record<string, unknown> }) => {
-			lookedUp.push(options.where);
+		findGranted: async (provenance: Record<string, unknown>, scope: Record<string, unknown>) => {
+			lookedUp.push({ ...provenance, ...scope });
 
 			return [{ id: 'entitlement-1' }, { id: 'entitlement-2' }];
 		},

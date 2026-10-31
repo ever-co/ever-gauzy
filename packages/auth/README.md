@@ -39,6 +39,23 @@ does nothing and makes no outbound request. Only the configured issuer's own
 endpoints are ever called, and only asymmetric signatures (`RS256`, `ES256`,
 `EdDSA`) are accepted.
 
+## Built-in social sign-in
+
+The redirect sign-ins in `src/lib/<provider>` (Google, GitHub, Facebook,
+Microsoft, LinkedIn, X/Twitter) hand the provider's addresses to
+`validateOAuthLoginEmail`, which signs an existing account in only through an
+address flagged `verified`. Each strategy sets that flag from the provider's
+own guarantee only; the shared helpers for it live in
+`src/lib/social-auth-emails.ts`:
+
+- `emailsFromOidcClaims`: OpenID Connect providers; verified only when
+  `email_verified` is `true`. LinkedIn uses it with its UserInfo endpoint
+  ("Sign In with LinkedIn using OpenID Connect", scopes `openid profile email`;
+  the LinkedIn app needs that product).
+- `flagProviderConfirmedEmails`: providers that return an address only once it
+  is confirmed (Facebook `/me`, X `account/verify_credentials` with
+  `include_email`; the X app needs "Request email address from users").
+
 ## Provider plugins
 
 Additional sign-in methods live in plugins that build on this package rather
@@ -49,6 +66,9 @@ than inside it:
   `KEYCLOAK_*` settings keep their names.
 - `@gauzy/plugin-auth-zitadel` (`packages/plugins/auth-zitadel`): Ever ID
   sign-in.
+- `@gauzy/plugin-auth-oidc` (`packages/plugins/auth-oidc`): sign-in with any
+  standards-compliant OpenID Connect provider (`OIDC_*` settings). It and the
+  Keycloak plugin run the same `OidcEmailSignInService` of this library.
 
-Both are off unless an operator switches them on (`KEYCLOAK_ENABLED`,
-`ZITADEL_ENABLED`); see each plugin's README.
+All are off unless an operator switches them on (`KEYCLOAK_ENABLED`,
+`ZITADEL_ENABLED`, `OIDC_ENABLED`); see each plugin's README.

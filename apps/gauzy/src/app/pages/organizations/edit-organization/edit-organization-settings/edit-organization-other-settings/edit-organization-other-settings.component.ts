@@ -17,7 +17,8 @@ import { filter, tap, debounceTime, map } from 'rxjs/operators';
 import * as moment from 'moment';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { NbAccordionComponent, NbAccordionItemComponent, NbThemeService } from '@nebular/theme';
+import { NbAccordionComponent, NbAccordionItemComponent, NbDialogService, NbThemeService } from '@nebular/theme';
+import { firstValueFrom } from 'rxjs';
 import {
 	DEFAULT_ACTIVITY_PROOF_DURATIONS,
 	DEFAULT_DATE_FORMATS,
@@ -49,6 +50,8 @@ import {
 	WeekDaysEnum,
 	IOrganizationTaskSetting,
 	AgentExitLogoutField,
+	IAgentRestrictionLocation,
+	IScreenshotCaptureAcknowledgement,
 	isEEAOrUKRegion
 } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-core/common';
@@ -60,9 +63,10 @@ import {
 	Store,
 	ToastrService,
 	applyEEAUKFormRestrictions,
-	bindAgentRestrictionListeners
+	bindAgentRestrictionListeners,
+	ScreenshotCaptureAcknowledgementPrompt
 } from '@gauzy/ui-core/core';
-import { NotesWithTagsComponent } from '@gauzy/ui-core/shared';
+import { NotesWithTagsComponent, ScreenshotCaptureAcknowledgementDialogComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -82,12 +86,36 @@ export class EditOrganizationOtherSettingsComponent
 
 	public get isEEAOrUK(): boolean {
 		if (!this.organization) return false;
-		return isEEAOrUKRegion({
-			regionCode: this.form.get('regionCode')?.value || this.organization.regionCode,
-			timeZone: this.form.get('timeZone')?.value || this.organization.timeZone,
-			country: this.organization.contact?.country
-		});
+		return isEEAOrUKRegion(this.location);
 	}
+
+	/** Where the organization is, with the form's pending region and time zone applied. */
+	private get location(): IAgentRestrictionLocation {
+		return {
+			regionCode: this.form.get('regionCode')?.value || this.organization?.regionCode,
+			timeZone: this.form.get('timeZone')?.value || this.organization?.timeZone,
+			country: this.organization?.contact?.country
+		};
+	}
+
+	/**
+	 * Issue #9872: turning screen capture on for an EEA/UK organization asks the admin for the acknowledgement
+	 * the API requires, and sends it with the save. Like the API, it reads the stored location as well as the
+	 * pending one, so moving out of the EEA/UK in the same save still asks.
+	 */
+	public readonly screenshotCaptureAcknowledgement = new ScreenshotCaptureAcknowledgementPrompt({
+		control: () => this.form?.get('allowScreenshotCapture'),
+		persisted: () => this.organization,
+		location: () => [
+			{
+				regionCode: this.organization?.regionCode,
+				timeZone: this.organization?.timeZone,
+				country: this.organization?.contact?.country
+			},
+			this.location
+		],
+		ask: () => this._askForScreenshotCaptureAcknowledgement()
+	});
 
 	/**
 	 * A restriction this organization already had while already in EEA/UK: shown as stored, so an
@@ -343,7 +371,8 @@ export class EditOrganizationOtherSettingsComponent
 		private readonly _toastrService: ToastrService,
 		private readonly _organizationEditStore: OrganizationEditStore,
 		private readonly _store: Store,
-		private readonly _accountingTemplateService: AccountingTemplateService
+		private readonly _accountingTemplateService: AccountingTemplateService,
+		private readonly _dialogService: NbDialogService
 	) {
 		super(themeService, translateService);
 	}
@@ -514,6 +543,19 @@ export class EditOrganizationOtherSettingsComponent
 			untilDestroyed(this),
 			() => (this.acknowledgeAgentExitLogoutRestriction = true)
 		);
+
+		this.screenshotCaptureAcknowledgement.bind(untilDestroyed(this));
+	}
+
+	/**
+	 * Opens the screen capture acknowledgement dialog: resolves to the statements confirmed, or `null` if cancelled.
+	 */
+	private async _askForScreenshotCaptureAcknowledgement(): Promise<IScreenshotCaptureAcknowledgement | null> {
+		const dialog = this._dialogService.open(ScreenshotCaptureAcknowledgementDialogComponent, {
+			context: { organizationName: this.organization?.name },
+			closeOnBackdropClick: false
+		});
+		return (await firstValueFrom(dialog.onClose, { defaultValue: null })) ?? null;
 	}
 
 	/**
@@ -565,6 +607,12 @@ export class EditOrganizationOtherSettingsComponent
 			return;
 		}
 
+		// Issue #9872: turning screen capture on for an EEA/UK organization needs the admin's acknowledgement. If
+		// they cancel, the toggle is back off and nothing is saved, so they can review before saving again.
+		if (!(await this.screenshotCaptureAcknowledgement.confirm())) {
+			return;
+		}
+
 		// Extract organization ID and update organization settings
 		const { id: organizationId, name } = this.organization;
 
@@ -577,9 +625,11 @@ export class EditOrganizationOtherSettingsComponent
 				...this.form.value,
 				allowAgentAppExit,
 				allowLogoutFromAgentApp,
-				acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction
+				acknowledgeAgentExitLogoutRestriction: this.acknowledgeAgentExitLogoutRestriction,
+				...this.screenshotCaptureAcknowledgement.payload
 			});
 			this.acknowledgeAgentExitLogoutRestriction = false;
+			this.screenshotCaptureAcknowledgement.reset();
 
 			// Update the organization in the store
 			this._organizationEditStore.organizationAction = {
@@ -589,6 +639,8 @@ export class EditOrganizationOtherSettingsComponent
 			this._store.selectedOrganization = organization;
 		} catch (error) {
 			console.error('Error while updating organization settings', error);
+			// Shows why the save was refused (e.g. SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED).
+			this._toastrService.danger(error);
 			return; // Exit early if an error occurs
 		}
 
@@ -902,6 +954,7 @@ export class EditOrganizationOtherSettingsComponent
 			return;
 		}
 		this.acknowledgeAgentExitLogoutRestriction = false;
+		this.screenshotCaptureAcknowledgement.reset();
 		this._organizationEditStore.selectedOrganization = this.organization;
 		this._setDefaultAccountingTemplates();
 

@@ -81,6 +81,7 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			policy.accrualRate = entity.accrualRate;
 			policy.accrualFrequency = entity.accrualFrequency;
 			policy.isDefault = entity.isDefault;
+			policy.requireSufficientBalance = entity.requireSufficientBalance;
 
 			// Find employees
 			policy.employees = await this.findPolicyEmployees(entity.employees, tenantId, organizationId);
@@ -126,6 +127,10 @@ export class TimeOffPolicyService extends TenantAwareCrudService<TimeOffPolicy> 
 			policy.accrualRate = entity.accrualRate;
 			policy.accrualFrequency = entity.accrualFrequency;
 			policy.isDefault = entity.isDefault;
+			// A body that leaves the setting out (an older client) keeps the policy's current one.
+			if (typeof entity.requireSufficientBalance === 'boolean') {
+				policy.requireSufficientBalance = entity.requireSufficientBalance;
+			}
 
 			// A body without employees keeps the current members: the save skips a relation left unset.
 			const hasEmployeesInBody = Array.isArray(entity.employees);

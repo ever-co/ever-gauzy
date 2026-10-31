@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/
 import { Observable } from 'rxjs';
 import { ITimeLogFilters, ReportGroupByFilter, ReportGroupFilterEnum } from '@gauzy/contracts';
 import { DateRangePickerBuilderService, TimesheetFilterService } from '@gauzy/ui-core/core';
-import { GauzyFiltersComponent } from '@gauzy/ui-core/shared';
+import { DailyGridComponent, GauzyFiltersComponent, ReportExportFormatEnum } from '@gauzy/ui-core/shared';
 
 @Component({
 	selector: 'gauzy-time-activities',
@@ -19,11 +19,28 @@ export class TimeActivitiesComponent implements OnInit {
 	readonly ReportGroupFilterEnum = ReportGroupFilterEnum;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(DailyGridComponent) dailyGrid: DailyGridComponent;
 
 	constructor(
 		private readonly timesheetFilterService: TimesheetFilterService,
 		public readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {}
+
+	/**
+	 * Whether the report has rows to export: the grid's latest request, for the current filters and grouping, has
+	 * answered with time entries (an older request that answers late never enables it).
+	 */
+	get canExport(): boolean {
+		return !!this.dailyGrid?.canExport;
+	}
+
+	/**
+	 * Downloads the time entries the grid shows — for the current filters, in the selected grouping — as a
+	 * CSV file named after the selected date range.
+	 */
+	exportToCsv(): void {
+		this.dailyGrid?.exportReport(ReportExportFormatEnum.CSV);
+	}
 
 	filtersChange(filters: ITimeLogFilters) {
 		if (this.gauzyFiltersComponent.saveFilters) {

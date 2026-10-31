@@ -45,56 +45,80 @@ import { DocumentStaticViewComponent } from '../read-only/document-static-view.c
 				</button>
 			</div>
 
-			<div class="gz-versions-error" *ngIf="loadError">
-				{{ 'DOCS.ERRORS.PANEL_LOAD' | translate }}
-				<button nbButton size="tiny" status="primary" type="button" (click)="load()">
-					{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
-				</button>
-			</div>
-
-			<div class="gz-versions-empty" *ngIf="!loading && !loadError && !versions.length">
-				{{ 'DOCS.EDITOR.NO_VERSIONS' | translate }}
-			</div>
-
-			<ul class="gz-versions-list" *ngIf="versions.length">
-				<li *ngFor="let version of versions">
-					<button
-						type="button"
-						class="gz-version-row"
-						[class.active]="selected?.id === version.id"
-						(click)="select(version)"
-					>
-						<span class="gz-version-name">{{ version.name }}</span>
-						<span class="gz-version-meta">
-							{{ version.lastSavedAt | date : 'medium' }}
-							<ng-container *ngIf="version.createdBy?.fullName"> · {{ version.createdBy?.fullName }}</ng-container>
-						</span>
+			@if (loadError) {
+				<div class="gz-versions-error">
+					{{ 'DOCS.ERRORS.PANEL_LOAD' | translate }}
+					<button nbButton size="tiny" status="primary" type="button" (click)="load()">
+						{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
 					</button>
-				</li>
-			</ul>
-
-			<div class="gz-version-preview" *ngIf="selected">
-				<div class="gz-version-preview-actions">
-					<ng-container *ngIf="!confirmingRestore; else confirmRestore">
-						<button nbButton size="tiny" status="primary" type="button" (click)="confirmingRestore = true">
-							{{ 'DOCS.EDITOR.RESTORE' | translate }}
-						</button>
-					</ng-container>
-					<ng-template #confirmRestore>
-						<span class="gz-version-confirm-text">{{ 'DOCS.EDITOR.RESTORE_CONFIRM' | translate }}</span>
-						<button nbButton size="tiny" status="danger" type="button" [disabled]="restoring" (click)="restore()">
-							{{ 'DOCS.EDITOR.RESTORE' | translate }}
-						</button>
-						<button nbButton size="tiny" ghost type="button" (click)="confirmingRestore = false">
-							{{ 'DOCS.UPLOAD.CANCEL' | translate }}
-						</button>
-					</ng-template>
 				</div>
-				<gz-document-static-view
-					[contentJson]="selectedSnapshot?.contentJson ?? null"
-					[contentHtml]="selectedSnapshot?.contentHtml ?? null"
-				></gz-document-static-view>
-			</div>
+			}
+
+			@if (!loading && !loadError && !versions.length) {
+				<div class="gz-versions-empty">
+					{{ 'DOCS.EDITOR.NO_VERSIONS' | translate }}
+				</div>
+			}
+
+			@if (versions.length) {
+				<ul class="gz-versions-list">
+					@for (version of versions; track version) {
+						<li>
+							<button
+								type="button"
+								class="gz-version-row"
+								[class.active]="selected?.id === version.id"
+								(click)="select(version)"
+							>
+								<span class="gz-version-name">{{ version.name }}</span>
+								<span class="gz-version-meta">
+									{{ version.lastSavedAt | date: 'medium' }}
+									@if (version.createdBy?.fullName) {
+										· {{ version.createdBy?.fullName }}
+									}
+								</span>
+							</button>
+						</li>
+					}
+				</ul>
+			}
+
+			@if (selected) {
+				<div class="gz-version-preview">
+					<div class="gz-version-preview-actions">
+						@if (!confirmingRestore) {
+							<button
+								nbButton
+								size="tiny"
+								status="primary"
+								type="button"
+								(click)="confirmingRestore = true"
+							>
+								{{ 'DOCS.EDITOR.RESTORE' | translate }}
+							</button>
+						} @else {
+							<span class="gz-version-confirm-text">{{ 'DOCS.EDITOR.RESTORE_CONFIRM' | translate }}</span>
+							<button
+								nbButton
+								size="tiny"
+								status="danger"
+								type="button"
+								[disabled]="restoring"
+								(click)="restore()"
+							>
+								{{ 'DOCS.EDITOR.RESTORE' | translate }}
+							</button>
+							<button nbButton size="tiny" ghost type="button" (click)="confirmingRestore = false">
+								{{ 'DOCS.UPLOAD.CANCEL' | translate }}
+							</button>
+						}
+					</div>
+					<gz-document-static-view
+						[contentJson]="selectedSnapshot?.contentJson ?? null"
+						[contentHtml]="selectedSnapshot?.contentHtml ?? null"
+					></gz-document-static-view>
+				</div>
+			}
 		</div>
 	`,
 	styles: [

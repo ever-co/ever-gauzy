@@ -1,0 +1,119 @@
+<!-- Recent activity: what was created, changed or deleted, newest first; a task or project row opens its page. -->
+<section class="panel">
+	<header class="panel-header">
+		<h5 class="panel-title">{{ i18n + '.TITLE' | translate }}</h5>
+		@if (total) {
+			<span class="panel-count">{{ total }}</span>
+		}
+		<div class="panel-actions">
+			<nb-select
+				size="tiny"
+				class="activity-filter"
+				[selected]="entityFilter"
+				(selectedChange)="setEntityFilter($event)"
+				[attr.aria-label]="i18n + '.FILTER' | translate"
+			>
+				@for (option of entityFilters; track option.key) {
+					<nb-option [value]="option.key">{{ option.label | translate }}</nb-option>
+				}
+			</nb-select>
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				type="button"
+				[disabled]="loading"
+				[attr.aria-label]="'BUTTONS.REFRESH' | translate"
+				[nbTooltip]="'BUTTONS.REFRESH' | translate"
+				(click)="reload()"
+			>
+				<nb-icon icon="refresh-outline"></nb-icon>
+			</button>
+		</div>
+	</header>
+
+	<ul
+		class="side-list activity-list"
+		[attr.aria-busy]="loading || null"
+		[nbSpinner]="loading && !items.length"
+		nbSpinnerStatus="primary"
+		nbSpinnerSize="small"
+	>
+		@for (item of items; track item.id) {
+			<li class="side-item activity-item">
+				<span class="activity-icon" [attr.data-tone]="item.tone" aria-hidden="true">
+					<nb-icon [icon]="item.icon"></nb-icon>
+				</span>
+				<span class="side-text">
+					@if (item.link) {
+						<a class="side-title activity-title" [routerLink]="item.link" [title]="item.title">
+							{{ item.title || (i18n + '.UNTITLED' | translate) }}
+						</a>
+					} @else {
+						<span class="side-title" [title]="item.title">{{
+							item.title || (i18n + '.UNTITLED' | translate)
+						}}</span>
+					}
+					<span class="side-meta">
+						{{ item.entityLabelKey ? (item.entityLabelKey | translate) : item.entityLabel }} ·
+						{{
+							item.summaryKey
+								? (item.summaryKey
+									| translate
+										: { actor: item.actorKey ? (item.actorKey | translate) : item.actorName })
+								: item.action
+						}}
+						@if (item.changedFields.length) {
+							· <span [title]="item.changedFields.join(', ')">{{ item.changedFields.join(', ') }}</span>
+						}
+					</span>
+				</span>
+				@if (item.when) {
+					<time
+						class="activity-time"
+						[attr.datetime]="item.createdAt"
+						[title]="item.createdAt | date: 'medium'"
+						>{{ item.when }}</time
+					>
+				}
+			</li>
+		} @empty {
+			@if (failed) {
+				<li class="pm-state pm-state--compact">
+					<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+					<p class="state-title">{{ i18n + '.ERROR' | translate }}</p>
+					<button nbButton outline size="tiny" status="basic" type="button" (click)="reload()">
+						{{ 'BUTTONS.RETRY' | translate }}
+					</button>
+				</li>
+			} @else if (!loading) {
+				<li class="pm-state pm-state--compact">
+					<nb-icon icon="activity-outline" aria-hidden="true"></nb-icon>
+					<p class="state-title">{{ i18n + '.EMPTY' | translate }}</p>
+					<p class="state-hint">{{ i18n + '.EMPTY_HINT' | translate }}</p>
+				</li>
+			}
+		}
+	</ul>
+
+	<!-- The next page on demand; a page that failed to load offers to try again. -->
+	@if (items.length && (hasMore || failed)) {
+		<div class="load-more">
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				type="button"
+				[disabled]="loading"
+				[nbSpinner]="loading"
+				nbSpinnerSize="tiny"
+				nbSpinnerStatus="basic"
+				(click)="loadMore()"
+			>
+				{{ (failed ? 'BUTTONS.RETRY' : 'BUTTONS.SHOW_MORE') | translate }}
+			</button>
+		</div>
+	}
+</section>

@@ -29,7 +29,33 @@ enabled by a tenant as a whole or not at all.
 `ENTITLEMENT_GRANT` consumes the order and subscription events and grants the
 right against the order line that produced it, so the grant and the purchase
 cannot disagree. A replayed grant returns the original right instead of creating
-a second one.
+a second one, and two deliveries of the same `order.placed` racing each other
+cannot both create one either: `UQ_entitlement_live_line_grant` admits one live
+(not revoked, not deleted) right per tenant, order line and kind, and the grant
+that loses the race returns the winner's right. A line may be granted again once
+its right is revoked; a derived number then takes the next revision (`…-L-2`).
+
+**A settlement delivered early is not lost.** The grant path is reorderable, so
+`order.completed` can be handled before a retried `order.placed`, when there is
+nothing yet to put into force. When the installation binds
+`ENTITLEMENT_ORDER_STATE_PORT` (the API's composition module binds it to the
+order package's `OrderStateReader`), the placement reads where the order is now:
+
+- an order already cancelled (`CANCELED`, or `canceledAt` once archived) or
+  refunded in full (payment `REFUNDED`) grants nothing, and the skip is logged;
+- on an order that settled since — `COMPLETED` or `completedAt`, or payment
+  `CAPTURED` in full — the placement puts into force, line by line, the rights of
+  the lines still paid for in full (nothing refunded on them), at the quantity
+  they were granted. A line refunded in full or in part keeps its right
+  `PENDING`: lowering it here would apply a refund a second time when that
+  refund's own delivery, possibly still queued, subtracts it again. Every line
+  of an order refunded in part also stays `PENDING` when the port cannot answer
+  the lines (the order package answers no lines while their refund register does
+  not add up to the refunded total of the order's ledger);
+- an order cancelled or refunded in full while the placement was granting has
+  what it granted withdrawn again, with the reason the matching event gives.
+
+Left unbound, the rights stay `PENDING` until the next settlement event, as before.
 
 **A right that has been withdrawn cannot be activated.** An entitlement that is
 `REVOKED`, that is past `endsAt + gracePeriodDays`, or whose live activations
