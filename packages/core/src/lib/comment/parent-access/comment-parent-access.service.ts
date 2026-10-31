@@ -12,13 +12,7 @@ import { BaseEntityEnum, ID } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { COMMENT_PARENT_ACCESS_POLICY } from './comment-parent-access-policy.decorator';
 import { CommentParentAccess, ICommentParent, ICommentParentAccessPolicy } from './comment-parent-access.types';
-
-/**
- * Compares record-type spellings the way the databases' text collations may: ignoring case, accents, spaces,
- * punctuation and ignorable characters. MySQL's default collations find `organizationcontact` equal to
- * `OrganizationContact`, so a comment stored under such a spelling is read with that record's comments there.
- */
-const RECORD_TYPE_SPELLING = new Intl.Collator('en', { sensitivity: 'base', ignorePunctuation: true, usage: 'search' });
+import { isSpellingOfRecordType } from './record-type-spelling';
 
 /**
  * The registry of comment-parent policies, and the check every governed comment read or write goes through.
@@ -70,7 +64,7 @@ export class CommentParentAccessService implements OnModuleInit {
 	/**
 	 * The governed record type `entity` names, or `undefined` when it names none.
 	 *
-	 * Any spelling a database could take for a governed type names it (see {@link RECORD_TYPE_SPELLING}), so a
+	 * Any spelling a database could take for a governed type names it (see {@link isSpellingOfRecordType}), so a
 	 * comment stored under `organizationcontact` follows the contact policy wherever it is read or changed.
 	 */
 	governedTypeOf(entity: unknown): BaseEntityEnum | undefined {
@@ -150,7 +144,7 @@ export class CommentParentAccessService implements OnModuleInit {
 			return exact;
 		}
 		for (const [type, policy] of this.policies) {
-			if (RECORD_TYPE_SPELLING.compare(entity, type) === 0) {
+			if (isSpellingOfRecordType(entity, type)) {
 				return policy;
 			}
 		}
