@@ -1974,6 +1974,8 @@
 			"ASSIGN_TO": "التعيين إلى",
 			"INCLUDE_TAXES": "تشمل الضرائب",
 			"ATTACH_A_RECEIPT": "أرفق إيصالاً",
+			"NO_RECEIPT": "لم يتم إرفاق إيصال بعد. انقر لتحميل إيصال.",
+			"RECEIPT_ATTACHED": "تم إرفاق الإيصال",
 			"EMPLOYEES_GENERATE_EXPENSE": "الموظفين الذين يولدون مصاريف",
 			"TAX_DEDUCTIBLE": "قابل للاستقطاع الضريبي",
 			"NOT_TAX_DEDUCTIBLE": "غير قابل للاستقطاع الضريبي",

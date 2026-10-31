@@ -2019,6 +2019,8 @@
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
 			"ATTACH_A_RECEIPT": "Attach a receipt",
+			"NO_RECEIPT": "עדיין לא צורפה קבלה. לחץ כדי להעלות קבלה.",
+			"RECEIPT_ATTACHED": "הקבלה צורפה",
 			"EMPLOYEES_GENERATE_EXPENSE": "Employees that generate expense",
 			"TAX_DEDUCTIBLE": "Tax Deductible",
 			"NOT_TAX_DEDUCTIBLE": "Not Tax Deductible",

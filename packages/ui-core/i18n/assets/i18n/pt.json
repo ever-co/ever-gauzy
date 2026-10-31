@@ -1975,6 +1975,8 @@
 			"ASSIGN_TO": "Atribua a",
 			"INCLUDE_TAXES": "Inclua impostos",
 			"ATTACH_A_RECEIPT": "Anexe um recibo.",
+			"NO_RECEIPT": "Nenhum recibo anexado ainda. Clique para enviar um.",
+			"RECEIPT_ATTACHED": "Recibo anexado",
 			"EMPLOYEES_GENERATE_EXPENSE": "Funcionários que geram despesas",
 			"TAX_DEDUCTIBLE": "Deducível de impostos",
 			"NOT_TAX_DEDUCTIBLE": "Não dedutível de impostos.",

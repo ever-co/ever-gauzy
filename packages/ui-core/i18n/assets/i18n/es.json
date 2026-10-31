@@ -1977,6 +1977,8 @@
 			"ASSIGN_TO": "Asignar a",
 			"INCLUDE_TAXES": "Incluir impuestos",
 			"ATTACH_A_RECEIPT": "Adjunta un recibo",
+			"NO_RECEIPT": "Aún no hay ningún recibo adjunto. Haga clic para subir uno.",
+			"RECEIPT_ATTACHED": "Recibo adjunto",
 			"EMPLOYEES_GENERATE_EXPENSE": "Empleados que generan gastos",
 			"TAX_DEDUCTIBLE": "Deducible de impuestos",
 			"NOT_TAX_DEDUCTIBLE": "No es deducible de impuestos.",

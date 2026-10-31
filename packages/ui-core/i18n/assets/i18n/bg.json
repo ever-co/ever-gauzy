@@ -2051,6 +2051,8 @@
 			"ASSIGN_TO": "Възложи на",
 			"INCLUDE_TAXES": "Включете такси",
 			"ATTACH_A_RECEIPT": "Приложете разписка",
+			"NO_RECEIPT": "Все още няма прикачена разписка. Щракнете, за да качите.",
+			"RECEIPT_ATTACHED": "Разписката е прикачена",
 			"EMPLOYEES_GENERATE_EXPENSE": "Employees that generate expense",
 			"TAX_DEDUCTIBLE": "Tax Deductible",
 			"NOT_TAX_DEDUCTIBLE": "Not Tax Deductible",

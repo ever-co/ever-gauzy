@@ -1976,6 +1976,8 @@
 			"ASSIGN_TO": "Assign to - Assigner à",
 			"INCLUDE_TAXES": "Inclure les taxes",
 			"ATTACH_A_RECEIPT": "Joindre un reçu",
+			"NO_RECEIPT": "Aucun reçu joint pour le moment. Cliquez pour en téléverser un.",
+			"RECEIPT_ATTACHED": "Reçu joint",
 			"EMPLOYEES_GENERATE_EXPENSE": "Les employés qui génèrent des frais.",
 			"TAX_DEDUCTIBLE": "Déductible d'impôt",
 			"NOT_TAX_DEDUCTIBLE": "Non déductible fiscalement",

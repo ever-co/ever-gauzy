@@ -1975,6 +1975,8 @@
 			"ASSIGN_TO": "Zuweisen",
 			"INCLUDE_TAXES": "Inklusive Steuern",
 			"ATTACH_A_RECEIPT": "Hänge eine Quittung an",
+			"NO_RECEIPT": "Noch keine Quittung angehängt. Klicken Sie, um eine hochzuladen.",
+			"RECEIPT_ATTACHED": "Quittung angehängt",
 			"EMPLOYEES_GENERATE_EXPENSE": "Mitarbeiter, die Ausgaben verursachen",
 			"TAX_DEDUCTIBLE": "Steuerlich absetzbar",
 			"NOT_TAX_DEDUCTIBLE": "Nicht steuerlich absetzbar",
