@@ -4,8 +4,24 @@ import * as finalhandler from 'finalhandler';
 import * as path from 'node:path';
 import { parse } from 'node:url';
 import * as serveStatic from 'serve-static';
+import { isIndexHtmlRequest, serveIndexHtml } from './index-html';
 
 export type StaticFileHandler = (req: IncomingMessage, res: ServerResponse) => void;
+
+/**
+ * The variable through which the launcher hands the UI server the web UI's runtime configuration (desktop-lib's
+ * `UI_RUNTIME_CONFIG_SCRIPT_ENV`, set by its UiService; this process cannot load desktop-lib).
+ */
+export const UI_RUNTIME_CONFIG_SCRIPT_ENV = 'UI_RUNTIME_CONFIG_SCRIPT';
+
+/** Options of {@link createStaticFileHandler}. */
+export interface StaticFileHandlerOptions {
+	/**
+	 * HTML inserted into the UI's `index.html` as it is served (see `index-html.ts`): Gauzy Server's runtime
+	 * configuration. Without it, `index.html` is served as it is on disk, like every other file.
+	 */
+	indexHtmlSnippet?: string;
+}
 
 /**
  * The request handler of the UI server: serves the files under `root` with serve-static (send).
@@ -17,8 +33,12 @@ export type StaticFileHandler = (req: IncomingMessage, res: ServerResponse) => v
  * What the UI sees is unchanged: `index.html` for a directory, a 301 to the trailing-slash URL for a directory asked
  * without one, 404 for a missing file (no SPA fallback, as before), `Cache-Control: max-age=3600`. Errors are answered
  * with their status and no stack trace (`env: 'production'`, whatever NODE_ENV says) and logged as before.
+ *
+ * With an `indexHtmlSnippet`, `/` and `/index.html` are the exception: the start page is served with the snippet in
+ * it and `Cache-Control: no-cache`, from a file that is never written to.
  */
-export function createStaticFileHandler(root: string): StaticFileHandler {
+export function createStaticFileHandler(root: string, options: StaticFileHandlerOptions = {}): StaticFileHandler {
+	const { indexHtmlSnippet } = options;
 	const serve = serveStatic(root, {
 		index: ['index.html'],
 		redirect: true,
@@ -34,14 +54,24 @@ export function createStaticFileHandler(root: string): StaticFileHandler {
 				console.log(JSON.stringify(parse(req.url || '', true).query));
 			}
 		});
-		serve(
-			req,
-			res,
-			finalhandler(req, res, {
-				env: 'production',
-				onerror: (err: { message?: string }) => console.error(`Error serving ${req.url} - ${err.message}`)
-			})
-		);
+
+		const serveFromDisk = () =>
+			serve(
+				req,
+				res,
+				finalhandler(req, res, {
+					env: 'production',
+					onerror: (err: { message?: string }) => console.error(`Error serving ${req.url} - ${err.message}`)
+				})
+			);
+
+		if (indexHtmlSnippet && isIndexHtmlRequest(req)) {
+			// A start page that cannot be read is answered as before (404 when it is missing).
+			serveIndexHtml(root, indexHtmlSnippet, req, res, serveFromDisk);
+			return;
+		}
+
+		serveFromDisk();
 	};
 }
 
@@ -55,7 +85,9 @@ export class StaticFileServer {
 		this.isPackaged = process.env.isPackaged === 'true';
 		const baseDir = this.isPackaged ? ['..', '..'] : ['..'];
 		this.dirUi = path.join(__dirname, ...baseDir, 'data', 'ui');
-		this.handler = createStaticFileHandler(this.dirUi);
+		this.handler = createStaticFileHandler(this.dirUi, {
+			indexHtmlSnippet: process.env[UI_RUNTIME_CONFIG_SCRIPT_ENV]
+		});
 	}
 
 	public serveFile(req: IncomingMessage, res: ServerResponse): void {

@@ -1,6 +1,7 @@
 import { LocalStore } from '../desktop-store';
 import { IServerConfig, IReadWriteFile, IServerSetting } from '../interfaces';
 import { resolveDesktopListenHost, toDesktopClientUrl } from './desktop-listen-host';
+import { applyUiRuntimeConfig } from './ui-runtime-config';
 
 export class ServerConfig implements IServerConfig {
 	private _readWriteFile: IReadWriteFile;
@@ -9,60 +10,34 @@ export class ServerConfig implements IServerConfig {
 		this._readWriteFile = readWrite;
 	}
 
+	/**
+	 * Writes the web UI's runtime configuration (the API URL it calls) into its `index.html` when the install
+	 * directory is writable, as before. It is a fallback: the UI server inserts the same script as it serves the file
+	 * (see `ui-runtime-config.ts`), so a directory the app cannot write to (a .deb under `/opt`, an AppImage) is skipped
+	 * with a warning instead of failing the start (#7735), and no other error here stops the server either.
+	 */
 	public update(): void {
 		if (!this._readWriteFile) return;
 
 		try {
-			// read original file
-			let fileContent = this._readWriteFile.read();
+			const fileContent = this._readWriteFile.read();
 
-			// replace all url in the file to normalize url file.
-			fileContent = this._replaceUrl(fileContent, this.apiUrl);
+			if (typeof fileContent !== 'string') {
+				console.warn(
+					'The web UI directory is not writable: its index.html is left as it is, and the UI server adds the API URL as it serves it.'
+				);
+				return;
+			}
 
-			// remove duplicated content
-			fileContent = this._removeDuplicates(fileContent);
+			const updatedContent = applyUiRuntimeConfig(fileContent, this.apiUrl);
 
-			// override the original file
-			this._readWriteFile.write(fileContent);
+			// An unchanged URL leaves the file untouched.
+			if (updatedContent !== fileContent) {
+				this._readWriteFile.write(updatedContent);
+			}
 		} catch (error) {
 			console.error('Cannot update initial Server file', error);
-			throw new Error(error);
 		}
-	}
-
-	private _replaceUrl(fileContent: string, newUrl: string): string {
-		// Add http protocol if missing
-		newUrl = newUrl.indexOf('http') === 0 ? newUrl : `http://${newUrl}`;
-		// Regex pattern to match URLs with global flag (g)
-		const regex = /api:\s*['"]((https?:\/\/[^'"]+))['"]/g;
-		const match = regex.exec(fileContent);
-		// Replace all occurrences of the URL with the new one
-		return match ? fileContent.replace(regex, `api: '${newUrl}'`) : this._initialConfig(newUrl, fileContent);
-	}
-
-	private _removeDuplicates(text: string): string {
-		// Regex pattern to match the <script>...</script> group
-		const scriptRegex = /(<script>[\s\S]*?<\/script>)/g;
-
-		// Find the duplicates and remove them
-		const deduplicatedText = text.replace(scriptRegex, (match, p1, offset) => {
-			// Keep the match if it's the first occurrence, remove duplicates
-			return offset === text.indexOf(match) ? match : '';
-		});
-
-		return deduplicatedText;
-	}
-
-	private _initialConfig(url: string, fileContent: string) {
-		const configStr = `
-		<script> window._env = { api: '${url}' };
-		if (typeof global === "undefined") {
-			var global = window;
-		}; </script>`;
-
-		const elementToReplace = '</body>';
-
-		return fileContent.replace(elementToReplace, configStr.concat('\n').concat(elementToReplace));
 	}
 
 	public get apiPort(): number {

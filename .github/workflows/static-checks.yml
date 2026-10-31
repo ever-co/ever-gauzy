@@ -486,6 +486,14 @@ jobs:
         if: always()
         run: node --test tools/electron/app-builder-lib-patch.test.js
 
+      # electron-builder unpacks a package from app.asar on its own only for files ending in .dll/.exe/.dylib/.so/.node,
+      # so sharp's versioned Linux libvips (libvips-cpp.so.42) stayed packed while its .node addon was unpacked, and Ever
+      # Gauzy Desktop failed on Linux with "Could not load the sharp module" (#9167). Every desktop app that packages
+      # sharp (through @gauzy/core or @gauzy/plugin-docs) must unpack sharp and @img explicitly, as sharp's docs ask.
+      - name: Every desktop app that packages sharp unpacks it from app.asar
+        if: always()
+        run: node --test tools/electron/asar-unpack.test.js
+
       # Every release-mac job ends by adding minimumSystemVersion (Darwin 22.0.0 = macOS 13, Electron 44's minimum) to
       # the latest-mac.yml it published; without it electron-updater on macOS 12 updates into an app that does not
       # start. Only a release run reaches that action, so its manifest edit and its staged swap of the release asset
