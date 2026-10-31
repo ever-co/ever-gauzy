@@ -131,6 +131,42 @@ describe('The leave balance follows a time-off decision on TypeORM and on MikroO
 					.fork()
 					.transactional(async (em: any) => await work(loaded.mikroOrmTimeOffBalanceLedger(em)));
 
+	/**
+	 * Runs `work` on one transaction of the ORM named, over that ORM's ledger with `wrap` laid over it, which is handed
+	 * a way to run a statement on that transaction.
+	 */
+	const onWrappedLedger = async <R>(
+		ormType: Orm,
+		wrap: (ledger: any, run: (sql: string, params: unknown[]) => Promise<unknown>) => any,
+		work: (ledger: any) => Promise<R>
+	): Promise<R> =>
+		ormType === 'typeorm'
+			? await dataSource.transaction(
+					async (manager: any) =>
+						await work(
+							wrap(loaded.typeOrmTimeOffBalanceLedger(manager), (sql, params) => manager.query(sql, params))
+						)
+			  )
+			: await orm.em
+					.fork()
+					.transactional(
+						async (em: any) =>
+							await work(wrap(loaded.mikroOrmTimeOffBalanceLedger(em), (sql, params) => em.execute(sql, params)))
+					);
+
+	/** What a ledger was asked to lock and to move, in order. */
+	const recording = (calls: string[]) => (ledger: any) => ({
+		...ledger,
+		lockBalances: async (ids: string[], tenantId: string) => {
+			calls.push(`lock ${[...ids].sort().join(',')}`);
+			return await ledger.lockBalances(ids, tenantId);
+		},
+		moveTakenDays: async (id: string, tenantId: string, days: number, move: string) => {
+			calls.push(`${move} ${id}`);
+			return await ledger.moveTakenDays(id, tenantId, days, move);
+		}
+	});
+
 	/** A request approval service answering on the ORM named, as the module builds it. */
 	const requestApprovals = (ormType: Orm): any => {
 		const em = orm.em.fork();
@@ -425,6 +461,132 @@ describe('The leave balance follows a time-off decision on TypeORM and on MikroO
 
 			expect(await balance(id)).toEqual({ taken: 3, remaining: 17 });
 			expect(await deductions()).toEqual([expect.objectContaining({ balanceId: id, days: 3 })]);
+		});
+
+		const moveTo = (range: { start: string; end: string }) =>
+			dataSource.query(`UPDATE "time_off_request" SET "start" = ?, "end" = ? WHERE "id" = ?`, [
+				range.start,
+				range.end,
+				LEAVE
+			]);
+
+		// #11608 review: a recharge that took nothing dropped every record of the charge, so the next one took nothing.
+		it('keeps a zero-day record of the charge when an edit leaves it taking nothing, and charges the edit back', async () => {
+			const id = await allocate();
+			await fileLeave({ status: 'APPROVED' });
+			await onLedger(ormType, async (ledger) => service().deduct(ledger, await leave()));
+
+			// Saturday 7 and Sunday 8 November.
+			await moveTo({ start: '2026-11-06 23:00:00.000', end: '2026-11-07 23:00:00.000' });
+			await onLedger(ormType, async (ledger) => service().recharge(ledger, await leave()));
+			expect(await balance(id)).toEqual({ taken: 0, remaining: 20 });
+			expect(await deductions()).toEqual([{ balanceId: id, days: 0, ...scope, withdrawn: false }]);
+			await expect(onLedger(ormType, async (ledger) => service().hasCharge(ledger, await leave()))).resolves.toBe(
+				true
+			);
+
+			// Withdrawn and put back while it takes nothing, it stays charged.
+			await onLedger(ormType, async (ledger) => service().withdraw(ledger, await leave()));
+			await onLedger(ormType, async (ledger) => service().reinstate(ledger, await leave()));
+			expect(await deductions()).toEqual([{ balanceId: id, days: 0, ...scope, withdrawn: false }]);
+
+			await moveTo(WEEK);
+			await onLedger(ormType, async (ledger) => service().recharge(ledger, await leave()));
+			expect(await balance(id)).toEqual({ taken: 5, remaining: 15 });
+			expect(await deductions()).toEqual([{ balanceId: id, days: 5, ...scope, withdrawn: false }]);
+		});
+
+		it('gives back nothing for a zero-day record, and removes it with the approval', async () => {
+			const id = await allocate();
+			await fileLeave({ status: 'APPROVED' });
+			await onLedger(ormType, async (ledger) => service().deduct(ledger, await leave()));
+			await dataSource.query(`UPDATE "time_off_request" SET "isHoliday" = 1 WHERE "id" = ?`, [LEAVE]);
+			await onLedger(ormType, async (ledger) => service().recharge(ledger, await leave()));
+
+			await expect(onLedger(ormType, async (ledger) => service().restore(ledger, await leave()))).resolves.toBe(0);
+
+			expect(await balance(id)).toEqual({ taken: 0, remaining: 20 });
+			expect(await deductions()).toEqual([]);
+		});
+
+		// #11608 review: under READ COMMITTED a balance removed after it was read made the spend move nothing, and a
+		// strict policy let the approval through.
+		describe('a balance removed after it was read', () => {
+			const removedOnceRead = (ledger: any, run: (sql: string, params: unknown[]) => Promise<unknown>) => ({
+				...ledger,
+				balancesOf: async (...args: unknown[]) => {
+					const rows = await ledger.balancesOf(...args);
+					await run(`UPDATE "time_off_balance" SET "deletedAt" = ?`, ['2026-10-30 00:00:00.000']);
+					return rows;
+				}
+			});
+
+			it('refuses the approval under a policy that requires sufficient balance, and rolls back', async () => {
+				await requireSufficientBalance();
+				const id = await allocate();
+				await fileLeave({ status: 'APPROVED' });
+				const approved = await leave();
+
+				await expect(
+					onWrappedLedger(ormType, removedOnceRead, (ledger) => service().deduct(ledger, approved))
+				).rejects.toThrow(/no leave balance is allocated under this time-off policy for 2026/);
+
+				expect(await deductions()).toEqual([]);
+				expect(await balance(id)).toEqual({ taken: 0, remaining: 20 });
+				// The removal rolled back with it.
+				expect(await dataSource.query(`SELECT * FROM "time_off_balance" WHERE "deletedAt" IS NOT NULL`)).toEqual(
+					[]
+				);
+			});
+
+			it('takes nothing from it, by default, as from a balance that never existed', async () => {
+				await allocate();
+				await fileLeave({ status: 'APPROVED' });
+				const approved = await leave();
+
+				await expect(
+					onWrappedLedger(ormType, removedOnceRead, (ledger) => service().deduct(ledger, approved))
+				).resolves.toEqual([]);
+
+				expect(await deductions()).toEqual([]);
+			});
+		});
+
+		// #11608 review: a recharge locked the balances it gave back to, then the ones it took from.
+		it('locks the balances a recharge gives back to and takes from together, before any day moves', async () => {
+			const mine = await allocate();
+			const theirs = await allocate({ employeeId: COLLEAGUE });
+			await fileLeave({ status: 'APPROVED' });
+			await onLedger(ormType, async (ledger) => service().deduct(ledger, await leave()));
+			await dataSource.query(`UPDATE "time_off_request_employee" SET "employeeId" = ? WHERE "timeOffRequestId" = ?`, [
+				COLLEAGUE,
+				LEAVE
+			]);
+			const calls: string[] = [];
+
+			await onWrappedLedger(ormType, recording(calls), async (ledger) => service().recharge(ledger, await leave()));
+
+			expect(calls).toEqual([`lock ${[mine, theirs].sort().join(',')}`, `giveBack ${mine}`, `overdraw ${theirs}`]);
+			expect(await balance(mine)).toEqual({ taken: 0, remaining: 20 });
+			expect(await balance(theirs)).toEqual({ taken: 5, remaining: 15 });
+		});
+
+		it('locks the balances it moves before any day moves, on an approval and a reversal too', async () => {
+			const mine = await allocate();
+			const theirs = await allocate({ employeeId: COLLEAGUE });
+			await fileLeave({ status: 'APPROVED', employees: [EMPLOYEE, COLLEAGUE] });
+			const calls: string[] = [];
+			const both = [mine, theirs].sort();
+
+			await onWrappedLedger(ormType, recording(calls), async (ledger) => service().deduct(ledger, await leave()));
+			await onWrappedLedger(ormType, recording(calls), async (ledger) => service().restore(ledger, await leave()));
+
+			expect(calls).toEqual([
+				`lock ${both.join(',')}`,
+				...both.map((id) => `overdraw ${id}`),
+				`lock ${both.join(',')}`,
+				...both.map((id) => `giveBack ${id}`)
+			]);
 		});
 	});
 

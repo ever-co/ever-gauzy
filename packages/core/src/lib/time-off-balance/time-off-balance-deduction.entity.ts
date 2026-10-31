@@ -22,7 +22,9 @@ import { MikroOrmTimeOffBalanceDeductionRepository } from './repository/mikro-or
  * The rows follow the request after its approval, in the same transaction as each write of it (see
  * `TimeOffBalanceDeductionService` and `TimeOffRequestService`): an edit of its dates, employees, policy or holiday
  * flag gives them back and records what the edited request takes; withdrawing the request gives them back and keeps
- * them soft-deleted, so that putting it back takes those days again; deleting it gives them back first.
+ * them soft-deleted, so that putting it back takes those days again; deleting it gives them back first. A charged
+ * request an edit leaves taking nothing (a weekend, a holiday entry) keeps a zero-day row on each balance it took from:
+ * the record that it is charged, so the edit back takes its days again.
  *
  * `(timeOffRequestId, balanceId)` is UNIQUE: the last line of defence against one request being deducted twice from
  * the same balance, should two approvals ever get past the request's row lock.

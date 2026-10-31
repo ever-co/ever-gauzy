@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { Between, EntityManager, In, IsNull, LessThan, MoreThanOrEqual, Not } from 'typeorm';
-import { raw } from '@mikro-orm/core';
+import { LockMode, QueryOrder, raw } from '@mikro-orm/core';
 import type { EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
 import type { SqlEntityManager } from '@mikro-orm/knex';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
+import { isMySQL, isPostgres } from '@gauzy/config';
 import { ID } from '@gauzy/contracts';
 import {
 	OfficialHoliday,
@@ -83,9 +84,9 @@ export interface ITimeOffBalanceLedger {
 	/**
 	 * Removes the deductions a withdrawal of the request gave back (see {@link withdrawDeductions}), inside the tenant.
 	 *
-	 * @returns How many there were.
+	 * @returns The deductions removed.
 	 */
-	purgeWithdrawnDeductions(timeOffRequestId: ID, tenantId: ID): Promise<number>;
+	purgeWithdrawnDeductions(timeOffRequestId: ID, tenantId: ID): Promise<ITimeOffBalanceDeductionRecord[]>;
 	/** Who the request was filed by and is for, inside the tenant; null when it is not there. */
 	partiesOf(timeOffRequestId: ID, tenantId: ID): Promise<ITimeOffBalanceRequestParties | null>;
 	/** The zone of a user, inside the tenant, as stored. */
@@ -114,7 +115,20 @@ export interface ITimeOffBalanceLedger {
 	moveTakenDays(balanceId: ID, tenantId: ID, days: number, move: TakenDaysMove): Promise<number>;
 	/** Whether the balance is still there, inside the tenant. */
 	balanceExists(balanceId: ID, tenantId: ID): Promise<boolean>;
+	/**
+	 * Takes the row locks of the balances named, inside the tenant, in one statement that locks them in the order of
+	 * their ids (`SELECT … ORDER BY "id" FOR UPDATE`; SQLite serializes transactions instead and takes none): what a
+	 * decision or a write of a request takes before it moves days on any of them, so two transactions that move days on
+	 * the same balances lock them in the same order and cannot deadlock (#11608 review).
+	 */
+	lockBalances(balanceIds: ID[], tenantId: ID): Promise<void>;
 }
+
+/** Whether the dialect has row locks (TypeORM refuses `setLock` on SQLite, whose transactions are serialized). */
+const hasRowLocks = (): boolean => isPostgres() || isMySQL();
+
+/** The ids named, once each. */
+const distinctIds = (ids: ID[]): ID[] => [...new Set((ids ?? []).filter(Boolean))];
 
 /**
  * The TypeORM ledger: every statement on the manager handed over (the decision's transaction).
@@ -142,9 +156,16 @@ export function typeOrmTimeOffBalanceLedger(manager: EntityManager): ITimeOffBal
 		withdrawDeductions: async (ids, tenantId) => {
 			await manager.softDelete(TimeOffBalanceDeduction, { id: In(ids), tenantId });
 		},
-		purgeWithdrawnDeductions: async (timeOffRequestId, tenantId) =>
-			(await manager.delete(TimeOffBalanceDeduction, { timeOffRequestId, tenantId, deletedAt: Not(IsNull()) }))
-				.affected ?? 0,
+		purgeWithdrawnDeductions: async (timeOffRequestId, tenantId) => {
+			const withdrawn = await manager.find(TimeOffBalanceDeduction, {
+				where: { timeOffRequestId, tenantId, deletedAt: Not(IsNull()) },
+				withDeleted: true
+			});
+			if (withdrawn.length > 0) {
+				await manager.delete(TimeOffBalanceDeduction, { id: In(withdrawn.map(({ id }) => id)), tenantId });
+			}
+			return withdrawn.map(({ id, balanceId, days }) => ({ id, balanceId, days: Number(days) }));
+		},
 		partiesOf: async (id, tenantId) => {
 			// Read on its own: the decision's locked read joins nothing, since PostgreSQL refuses `FOR UPDATE` on the
 			// nullable side of an outer join.
@@ -205,7 +226,20 @@ export function typeOrmTimeOffBalanceLedger(manager: EntityManager): ITimeOffBal
 			}),
 		moveTakenDays: async (balanceId, tenantId, days, move) =>
 			await moveTakenDays(manager, balanceRowById(balanceId, tenantId), days, move),
-		balanceExists: async (id, tenantId) => (await manager.count(TimeOffBalance, { where: { id, tenantId } })) > 0
+		balanceExists: async (id, tenantId) => (await manager.count(TimeOffBalance, { where: { id, tenantId } })) > 0,
+		lockBalances: async (balanceIds, tenantId) => {
+			const ids = distinctIds(balanceIds);
+			if (ids.length === 0 || !hasRowLocks()) {
+				return;
+			}
+			await manager
+				.createQueryBuilder(TimeOffBalance, 'time_off_balance')
+				.select('time_off_balance.id')
+				.where({ id: In(ids), tenantId })
+				.orderBy('time_off_balance.id', 'ASC')
+				.setLock('pessimistic_write')
+				.getMany();
+		}
 	};
 }
 
@@ -266,13 +300,27 @@ export function mikroOrmTimeOffBalanceLedger(manager: MikroOrmEntityManager): IT
 				{ deletedAt: new Date() } as any
 			);
 		},
-		purgeWithdrawnDeductions: async (timeOffRequestId, tenantId) =>
-			await em.nativeDelete(
+		purgeWithdrawnDeductions: async (timeOffRequestId, tenantId) => {
+			// The soft-delete filter would keep every statement to live rows, and these are withdrawn ones.
+			const withdrawnRows = { filters: { [SOFT_DELETABLE_FILTER]: false } };
+			const withdrawn = (await em.find(
 				TimeOffBalanceDeduction,
 				{ timeOffRequest: timeOffRequestId, tenantId, deletedAt: { $ne: null } } as any,
-				// The soft-delete filter would keep every statement to live rows, and these are withdrawn ones.
-				{ filters: { [SOFT_DELETABLE_FILTER]: false } }
-			),
+				{ ...fromTable, ...withdrawnRows }
+			)) as any[];
+			if (withdrawn.length > 0) {
+				await em.nativeDelete(
+					TimeOffBalanceDeduction,
+					{ id: { $in: withdrawn.map(({ id }) => id) }, tenantId } as any,
+					withdrawnRows
+				);
+			}
+			return withdrawn.map((row) => ({
+				id: row.id,
+				balanceId: idOf(row.balance, row.balanceId),
+				days: Number(row.days)
+			}));
+		},
 		partiesOf: async (id, tenantId) => {
 			const request = (await em.findOne(
 				TimeOffRequest,
@@ -341,6 +389,19 @@ export function mikroOrmTimeOffBalanceLedger(manager: MikroOrmEntityManager): IT
 			return result?.affectedRows ?? 0;
 		},
 		balanceExists: async (id, tenantId) =>
-			(await em.count(TimeOffBalance, { id, tenantId, ...live } as any)) > 0
+			(await em.count(TimeOffBalance, { id, tenantId, ...live } as any)) > 0,
+		lockBalances: async (balanceIds, tenantId) => {
+			const ids = distinctIds(balanceIds);
+			if (ids.length === 0 || !hasRowLocks()) {
+				return;
+			}
+			await em
+				.createQueryBuilder(TimeOffBalance)
+				.select('id')
+				.where({ id: { $in: ids }, tenantId, ...live } as any)
+				.orderBy({ id: QueryOrder.ASC } as any)
+				.setLockMode(LockMode.PESSIMISTIC_WRITE)
+				.execute('all');
+		}
 	};
 }

@@ -2,9 +2,9 @@
 import '../core/entities/internal';
 
 import { BadRequestException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, SelectQueryBuilder } from 'typeorm';
 import { StatusTypesEnum } from '@gauzy/contracts';
-import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
+import { isPostgres, TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { coreEntities } from '../core/entities';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
@@ -55,6 +55,10 @@ const scope = { tenantId: TENANT, organizationId: ORG };
 const WEEK = { start: '2026-11-01 23:00:00.000', end: '2026-11-07 23:00:00.000' };
 /** Monday 2 to Wednesday 4 November 2026, picked in Berlin: three working days. */
 const THREE_DAYS = { start: '2026-11-01T23:00:00.000Z', end: '2026-11-03T23:00:00.000Z' };
+/** Saturday 7 and Sunday 8 November 2026, picked in Berlin: no working day. */
+const WEEKEND = { start: '2026-11-06T23:00:00.000Z', end: '2026-11-07T23:00:00.000Z' };
+/** The week again, as the request dialog sends it. */
+const WORKING_WEEK = { start: '2026-11-01T23:00:00.000Z', end: '2026-11-07T23:00:00.000Z' };
 
 describe('TimeOffRequestService keeps the leave balance with an approved request', () => {
 	let dataSource: DataSource;
@@ -174,6 +178,7 @@ describe('TimeOffRequestService keeps the leave balance with an approved request
 	});
 
 	beforeEach(async () => {
+		(isPostgres as jest.Mock).mockReturnValue(false);
 		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
 		// A manager of the organization who may act for its employees, inside its organization boundary.
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: USER, tenantId: TENANT, employeeId: null } as any);
@@ -266,7 +271,7 @@ describe('TimeOffRequestService keeps the leave balance with an approved request
 			expect(await stored()).toMatchObject({ policyId: OTHER_POLICY });
 		});
 
-		it('gives its days back when it becomes a holiday entry', async () => {
+		it('gives its days back when it becomes a holiday entry, and takes them again when it stops being one', async () => {
 			const id = await allocate();
 			await fileLeave();
 			await approvalTakes();
@@ -274,7 +279,71 @@ describe('TimeOffRequestService keeps the leave balance with an approved request
 			await edit({ isHoliday: true });
 
 			expect(await balance(id)).toEqual({ taken: 0, remaining: 20 });
-			expect(await deductions()).toEqual([]);
+			// The record that it is charged stays, at zero days.
+			expect(await deductions()).toEqual([expect.objectContaining({ balanceId: id, days: 0, withdrawn: false })]);
+
+			await edit({ isHoliday: false });
+
+			expect(await balance(id)).toEqual({ taken: 5, remaining: 15 });
+			expect(await deductions()).toEqual([expect.objectContaining({ balanceId: id, days: 5 })]);
+		});
+
+		// #11608 review: an edit that left a charged request taking nothing used to drop every record of its charge, and
+		// the edit back then took nothing, past even a policy that requires sufficient balance.
+		it('keeps it charged through an edit to a weekend and back', async () => {
+			const id = await allocate();
+			await fileLeave();
+			await approvalTakes();
+
+			await edit(WEEKEND);
+			expect(await balance(id)).toEqual({ taken: 0, remaining: 20 });
+			expect(await deductions()).toEqual([expect.objectContaining({ balanceId: id, days: 0 })]);
+
+			await edit(WORKING_WEEK);
+			expect(await balance(id)).toEqual({ taken: 5, remaining: 15 });
+			expect(await deductions()).toEqual([expect.objectContaining({ balanceId: id, days: 5 })]);
+		});
+
+		it('keeps it charged through an edit onto a policy it has no balance under, and back', async () => {
+			const id = await allocate();
+			await fileLeave();
+			await approvalTakes();
+
+			await edit({ policy: { id: OTHER_POLICY } });
+			expect(await balance(id)).toEqual({ taken: 0, remaining: 20 });
+
+			// Back onto a policy that requires approval: an administrator's edit.
+			jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(true);
+			await edit({ policy: { id: POLICY } });
+			expect(await balance(id)).toEqual({ taken: 5, remaining: 15 });
+		});
+
+		it('under a policy that requires sufficient balance, refuses (400) an edit back from a weekend its balance cannot cover', async () => {
+			await requireSufficientBalance();
+			const id = await allocate({ accrued: 6 });
+			await fileLeave();
+			await approvalTakes();
+			await edit(WEEKEND);
+			// The days given back were spent meanwhile.
+			await dataSource.query(`UPDATE "time_off_balance" SET "taken" = 4, "remaining" = 2 WHERE "id" = ?`, [id]);
+
+			await expect(edit(WORKING_WEEK)).rejects.toBeInstanceOf(BadRequestException);
+
+			expect(await balance(id)).toEqual({ taken: 4, remaining: 2 });
+			expect(new Date((await stored()).start + 'Z').toISOString()).toBe(WEEKEND.start);
+		});
+
+		it('keeps it charged through a withdrawal and recovery while it takes nothing', async () => {
+			const id = await allocate();
+			await fileLeave();
+			await approvalTakes();
+			await edit(WEEKEND);
+
+			await service.softRemove(LEAVE);
+			await service.softRecover(LEAVE);
+			await edit(WORKING_WEEK);
+
+			expect(await balance(id)).toEqual({ taken: 5, remaining: 15 });
 		});
 
 		it('leaves the charge where it is for an edit that changes none of them, the stored values sent back included', async () => {
@@ -350,6 +419,81 @@ describe('TimeOffRequestService keeps the leave balance with an approved request
 
 			expect(await balance(id)).toEqual({ taken: 0, remaining: 20 });
 			expect(await deductions()).toEqual([]);
+			expect(new Date((await stored()).end + 'Z').toISOString()).toBe(THREE_DAYS.end);
+		});
+	});
+
+	// #11608 review: the decision to move the charge was made on a read taken before the save, without a lock.
+	describe('an edit decided under the row lock of the request', () => {
+		/** The request as a read taken before a decision or another edit committed saw it. */
+		const staleRead = (row: Row) =>
+			jest.spyOn(service, 'findOneByIdString').mockImplementationOnce(async () => {
+				const current = await dataSource.manager.findOne(TimeOffRequest, {
+					where: { id: LEAVE },
+					relations: { policy: true, organization: true }
+				});
+				return Object.assign(current, row);
+			});
+
+		it('recharges a request approved after the edit first read it as requested', async () => {
+			const id = await allocate();
+			await fileLeave();
+			await approvalTakes();
+			staleRead({ status: StatusTypesEnum.REQUESTED });
+
+			await edit(THREE_DAYS);
+
+			expect(await balance(id)).toEqual({ taken: 3, remaining: 17 });
+			expect(await deductions()).toEqual([expect.objectContaining({ days: 3 })]);
+		});
+
+		it('recharges an edit its first read took for unchanged, against the dates another edit saved since', async () => {
+			const id = await allocate();
+			await fileLeave();
+			await approvalTakes();
+			// The first read already saw the dates this edit sends; the stored request has the week.
+			staleRead({ start: new Date(THREE_DAYS.start), end: new Date(THREE_DAYS.end) });
+
+			await edit({ ...THREE_DAYS, description: 'again' });
+
+			expect(await balance(id)).toEqual({ taken: 3, remaining: 17 });
+		});
+
+		it('saves an edit that writes nothing leave balances follow through the plain save, outside any lock', async () => {
+			const id = await allocate();
+			await fileLeave();
+			await approvalTakes();
+			const save = jest.spyOn(service, 'save');
+			const transaction = jest.spyOn(dataSource.manager, 'transaction');
+
+			await edit({ description: 'reworded', isArchived: true });
+
+			expect(save).toHaveBeenCalledTimes(1);
+			expect(transaction).not.toHaveBeenCalled();
+			expect(await balance(id)).toEqual({ taken: 5, remaining: 15 });
+		});
+
+		it('takes the row lock of the request, then those of the balances in one statement, on PostgreSQL and MySQL', async () => {
+			const mine = await allocate();
+			const theirs = await allocate({ employeeId: COLLEAGUE });
+			await fileLeave();
+			await approvalTakes();
+			(isPostgres as jest.Mock).mockReturnValue(true);
+			const locked: string[] = [];
+			// SQLite has no row locks: the statements are recorded, and run without one.
+			jest.spyOn(SelectQueryBuilder.prototype, 'setLock').mockImplementation(function (
+				this: SelectQueryBuilder<any>,
+				mode: string
+			) {
+				locked.push(`${this.expressionMap.mainAlias?.name}:${mode}`);
+				return this;
+			} as any);
+
+			await edit({ employees: [{ id: COLLEAGUE }] });
+
+			expect(locked).toEqual(['time_off_request:pessimistic_write', 'time_off_balance:pessimistic_write']);
+			expect(await balance(mine)).toEqual({ taken: 0, remaining: 20 });
+			expect(await balance(theirs)).toEqual({ taken: 5, remaining: 15 });
 		});
 	});
 

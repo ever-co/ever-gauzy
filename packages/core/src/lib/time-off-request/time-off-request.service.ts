@@ -271,9 +271,10 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 
 			const edit = { ...members, ...(employees ? { employees } : {}), id } as unknown as TimeOffRequest;
 
-			// An edit of what an approval took days for moves those days with it (#10183); any other edit saves as before.
-			if (await this.editMovesCharge(stored, members, employees)) {
-				return await this.saveRecharged(edit);
+			// An edit that writes what leave balances follow is decided and saved under the request's row lock, with its
+			// balances (#10183); any other edit saves as before.
+			if (this.writesCharge(members, employees)) {
+				return await this.saveFollowingCharge(edit, members, employees, policyId);
 			}
 			return await this.save(edit);
 		} catch (error) {
@@ -408,56 +409,56 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 	}
 
 	/**
-	 * Whether an edit moves the leave-balance charge of the request: it is approved, its approval took days that are
-	 * still recorded, and the edit changes its dates, holiday flag, policy or employees (see `editChangesCharge`).
-	 * The stored employees are read only for an edit that names employees and changes nothing else that counts.
+	 * Whether an edit writes something an approved request's charge on leave balances follows: its dates, its holiday
+	 * flag, its policy or its employees. Such an edit is decided under the request's row lock
+	 * ({@link saveFollowingCharge}); any other (its description, its document, archiving it) saves as before.
 	 *
-	 * @param stored The stored request, read with its policy.
 	 * @param members The members the edit writes.
 	 * @param employees The employees the edit writes, or undefined when it keeps the stored ones.
 	 */
-	private async editMovesCharge(
-		stored: TimeOffRequest,
-		members: ITimeOffWriteMembers,
-		employees: Array<{ id: ID }> | undefined
-	): Promise<boolean> {
-		const tenantId = RequestContext.currentTenantId();
-		if (!this.timeOffBalanceDeductionService || !tenantId || stored?.status !== StatusTypesEnum.APPROVED) {
-			return false;
-		}
-		const manager = this.typeOrmRepository.manager;
-		const ledger = typeOrmTimeOffBalanceLedger(manager);
-		if (!(await this.timeOffBalanceDeductionService.hasCharge(ledger, { id: stored.id, tenantId }))) {
-			return false;
-		}
-		if (editChangesCharge(stored, members, undefined)) {
-			return true;
-		}
-		if (employees === undefined) {
-			return false;
-		}
-		const current = await manager.findOne(TimeOffRequest, {
-			where: { id: stored.id, tenantId },
-			relations: { employees: true },
-			loadEagerRelations: false
-		});
-		return editChangesCharge({ ...stored, employees: current?.employees ?? [] }, members, employees);
+	private writesCharge(members: ITimeOffWriteMembers, employees: Array<{ id: ID }> | undefined): boolean {
+		return (
+			!!this.timeOffBalanceDeductionService &&
+			!!RequestContext.currentTenantId() &&
+			(members.start !== undefined ||
+				members.end !== undefined ||
+				members.isHoliday !== undefined ||
+				members.policy !== undefined ||
+				employees !== undefined)
+		);
 	}
 
 	/**
-	 * Saves an edit that moves the leave-balance charge of an approved request, on one transaction with the charge
-	 * (see {@link withChargeFollowing}): what its approval took is given back and what the edited request takes is
-	 * taken (`TimeOffBalanceDeductionService.recharge`). A policy that requires sufficient balance refuses (400) an edit
-	 * its balances cannot cover, and the edit is not saved.
+	 * Saves an edit that writes what leave balances follow (see {@link writesCharge}), on one transaction that holds the
+	 * request's row lock from before anything is decided (see {@link withChargeFollowing}), so a decision of the request
+	 * or another edit of it waits, or is waited for, and never lands in between (#11608 review):
 	 *
-	 * The checks `save()` makes (the tenant of the stored row and of the graph the save writes, the organization
-	 * boundary) are made before the transaction opens, so none of their reads waits for it; the save itself is the one
-	 * the CRUD base hands TypeORM, on the transaction's manager (as the request approval's edit does).
+	 *  - the request is compared as it stands under the lock: its status, its dates, holiday flag, policy and employees,
+	 *    and whether its approval charged it — a request approved meanwhile is recharged, and an edit found to change
+	 *    nothing that counts leaves a charge another edit just moved where it is;
+	 *  - when it is approved, charged, and the edit changes one of them, what its approval took is given back and what
+	 *    the edited request takes is taken (`TimeOffBalanceDeductionService.recharge`); a policy that requires
+	 *    sufficient balance refuses (400) an edit its balances cannot cover, and the edit is not saved;
+	 *  - otherwise the edit is saved as it is, and nothing moves.
+	 *
+	 * The policy guard runs again on what the lock found (an approval committed since the first read must not let the
+	 * request move onto a policy that requires one). The checks `save()` makes (the tenant of the stored row and of the
+	 * graph the save writes, the organization boundary) run before the transaction opens, so none of their reads waits
+	 * for it; the save itself is the one the CRUD base hands TypeORM, on the transaction's manager (as the request
+	 * approval's edit does).
 	 *
 	 * @param edit The members the edit writes, with the request's id.
+	 * @param members The members the edit writes.
+	 * @param employees The employees the edit writes, or undefined when it keeps the stored ones.
+	 * @param policyId The policy the edit names, if any.
 	 * @returns The request, as saved.
 	 */
-	private async saveRecharged(edit: TimeOffRequest): Promise<TimeOffRequest> {
+	private async saveFollowingCharge(
+		edit: TimeOffRequest,
+		members: ITimeOffWriteMembers,
+		employees: Array<{ id: ID }> | undefined,
+		policyId: ID | undefined
+	): Promise<TimeOffRequest> {
 		const tenantId = RequestContext.currentTenantId();
 		await this.assertNotForeignRow(edit, tenantId);
 		await this.assertNestedGraphNotForeign([edit], tenantId);
@@ -466,21 +467,59 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 		return await this.withChargeFollowing(
 			edit.id,
 			(error) => new BadRequestException(toClientSafeError(error)),
-			async (manager, ledger, _locked, lockTenantId) => {
+			async (manager, ledger, locked, lockTenantId) => {
+				await this.assertPolicyChangeKeepsDecision(locked, policyId);
+				const recharge =
+					locked.status === StatusTypesEnum.APPROVED &&
+					(await this.timeOffBalanceDeductionService.hasCharge(ledger, locked)) &&
+					(await this.editChangesLockedCharge(manager, locked, members, employees));
+
 				const saved = await manager.save(TimeOffRequest, {
 					...edit,
 					tenant: { id: lockTenantId },
 					tenantId: lockTenantId
 				} as TimeOffRequest);
-				// The request as the edit left it, read on the transaction.
-				const edited = await manager.findOne(TimeOffRequest, {
-					where: { id: edit.id, tenantId: lockTenantId },
-					loadEagerRelations: false
-				});
-				await this.timeOffBalanceDeductionService.recharge(ledger, edited);
+				if (recharge) {
+					// The request as the edit left it, read on the transaction.
+					const edited = await manager.findOne(TimeOffRequest, {
+						where: { id: edit.id, tenantId: lockTenantId },
+						loadEagerRelations: false
+					});
+					await this.timeOffBalanceDeductionService.recharge(ledger, edited);
+				}
 				return saved;
 			}
 		);
+	}
+
+	/**
+	 * Whether an edit changes the dates, holiday flag, policy or employees of the request as its row lock found it (see
+	 * `editChangesCharge`). Its employees are read, on the transaction, only for an edit that names employees and
+	 * changes nothing else that counts.
+	 *
+	 * @param manager The transaction's manager.
+	 * @param locked The request, as its row lock found it.
+	 * @param members The members the edit writes.
+	 * @param employees The employees the edit writes, or undefined when it keeps the stored ones.
+	 */
+	private async editChangesLockedCharge(
+		manager: EntityManager,
+		locked: TimeOffRequest,
+		members: ITimeOffWriteMembers,
+		employees: Array<{ id: ID }> | undefined
+	): Promise<boolean> {
+		if (editChangesCharge(locked, members, undefined)) {
+			return true;
+		}
+		if (employees === undefined) {
+			return false;
+		}
+		const current = await manager.findOne(TimeOffRequest, {
+			where: { id: locked.id, tenantId: locked.tenantId },
+			relations: { employees: true },
+			loadEagerRelations: false
+		});
+		return editChangesCharge({ ...locked, employees: current?.employees ?? [] }, members, employees);
 	}
 
 	/**
