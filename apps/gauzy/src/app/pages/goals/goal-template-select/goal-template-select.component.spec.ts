@@ -164,13 +164,15 @@ describe('GoalTemplateSelectComponent — create from preset (#4825)', () => {
 		expect(keyResultService.createBulkKeyResult).not.toHaveBeenCalled();
 	});
 
-	it('creates the key result without a KPI when the KPI is refused, never with the template’s', async () => {
-		const { component, keyResultService, toastrService } = build({ kpiFails: true });
+	it('creates no objective or key results when a KPI cannot be created, rather than a KPI result without its KPI', async () => {
+		const { component, goalService, keyResultService, toastrService } = build({ kpiFails: true });
 
 		await component.createGoal();
 
 		expect(toastrService.warning).toHaveBeenCalledWith('TOASTR.MESSAGE.KPI_CREATION_FAILED');
-		const [[keyResults]] = keyResultService.createBulkKeyResult.mock.calls;
-		expect(keyResults[0]).not.toHaveProperty('kpiId');
+		expect(toastrService.error).toHaveBeenCalledWith('TOASTR.MESSAGE.GOAL_CREATION_FAILED');
+		expect(goalService.createGoal).not.toHaveBeenCalled();
+		expect(keyResultService.createBulkKeyResult).not.toHaveBeenCalled();
+		expect(component.dialogRef.close).not.toHaveBeenCalled();
 	});
 });

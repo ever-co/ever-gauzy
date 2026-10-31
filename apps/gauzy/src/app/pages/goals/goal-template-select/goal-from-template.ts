@@ -117,7 +117,7 @@ const KEY_RESULT_DEFAULTS = {
  *
  * @param template The key result template.
  * @param refs The objective created, the employee who owns the key result and, for a KPI key result, the KPI
- *   created for it (none when that failed: the template's own KPI id is never used).
+ *   created for it (the template's own KPI id is never used).
  * @param scope The organization and tenant.
  */
 export function buildKeyResultFromTemplate(

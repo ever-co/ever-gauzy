@@ -146,7 +146,7 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 	}
 
 	/**
-	 * Creates the objective, the KPIs of its KPI key results, and its key results from the selected preset.
+	 * Creates the KPIs of the selected preset's KPI key results, then the objective and its key results.
 	 *
 	 * Every payload is built field by field (`goal-from-template.ts`): the template's own ids never reach the
 	 * requests, so the same preset can be used again and again, each time creating records of its own (#4825).
@@ -171,6 +171,18 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 		}
 
 		try {
+			// Create the KPI of each KPI key result first. A KPI key result is only saved with its KPI (the key result
+			// screens read the linked KPI), so when one cannot be created, the objective is not created either
+			const kpiIds = new Map<IKeyResultTemplate, ID>();
+			for (const keyResult of keyResultTemplates.filter(({ type }) => type === KeyResultTypeEnum.KPI)) {
+				const kpiId = await this.createKpi(keyResult, scope);
+				if (!kpiId) {
+					this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_FAILED'));
+					return;
+				}
+				kpiIds.set(keyResult, kpiId);
+			}
+
 			// Create the goal
 			const goalCreated = await this.goalService.createGoal(
 				buildGoalFromTemplate(this.selectedGoalTemplate, form, scope)
@@ -180,13 +192,13 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 				return;
 			}
 
-			// Create the KPI of each KPI key result, then the key results themselves
-			const keyResults = await Promise.all(
-				keyResultTemplates.map(async (keyResult) => {
-					const kpiId =
-						keyResult.type === KeyResultTypeEnum.KPI ? await this.createKpi(keyResult, scope) : undefined;
-					return buildKeyResultFromTemplate(keyResult, { goalId: goalCreated.id, ownerId, kpiId }, scope);
-				})
+			// Then its key results, each KPI key result linked to the KPI created for it
+			const keyResults = keyResultTemplates.map((keyResult) =>
+				buildKeyResultFromTemplate(
+					keyResult,
+					{ goalId: goalCreated.id, ownerId, kpiId: kpiIds.get(keyResult) },
+					scope
+				)
 			);
 
 			// Create Key Results in bulk
@@ -208,8 +220,8 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 	/**
 	 * Creates the KPI a KPI key result template describes, in the selected organization.
 	 *
-	 * @returns The new KPI's id, or `undefined` (with a warning) when it could not be created: the key result is
-	 *   then created without a KPI, as before, never pointing at the template's KPI.
+	 * @returns The new KPI's id, or `undefined` (with a warning naming it) when it could not be created; the
+	 *   caller then creates nothing more.
 	 */
 	private async createKpi(keyResult: IKeyResultTemplate, scope: IGoalPresetScope): Promise<ID | undefined> {
 		try {
