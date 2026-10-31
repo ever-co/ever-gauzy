@@ -35,14 +35,16 @@ describe('ProjectSelectorComponent', () => {
 		({ id, name: id, organizationContactId }) as IOrganizationProject;
 
 	let getAll: jest.Mock;
+	let getAllByEmployee: jest.Mock;
 	let queryParams$: BehaviorSubject<Record<string, string>>;
 	let component: ProjectSelectorComponent;
 
 	beforeEach(() => {
 		getAll = jest.fn();
+		getAllByEmployee = jest.fn();
 		queryParams$ = new BehaviorSubject<Record<string, string>>({});
 		component = new ProjectSelectorComponent(
-			{ getAll, getAllByEmployee: jest.fn() } as unknown as OrganizationProjectsService,
+			{ getAll, getAllByEmployee } as unknown as OrganizationProjectsService,
 			{
 				selectedOrganization$: of(organization),
 				userRolePermissions$: of([]),
@@ -76,6 +78,86 @@ describe('ProjectSelectorComponent', () => {
 		await acmeRequest;
 
 		expect(component.projects.map(({ id }) => id)).toEqual(['globex-site']);
+	});
+
+	/*
+	 * A form narrows the list to a client or an employee. Until the new list loads, the previous one's projects
+	 * must not be offered: one picked meanwhile would not belong to the new client or employee.
+	 */
+	describe('narrowed to another client or employee', () => {
+		const ids = () => component.projects.map(({ id }) => id);
+
+		it("offers none of the previous client's projects while the new client's list loads", async () => {
+			getAll.mockResolvedValue({ items: [project('acme-site', 'client-acme')] });
+			component.organizationContactId = 'client-acme';
+			component.ngOnInit();
+			await flush();
+			expect(ids()).toEqual(['acme-site']);
+
+			const globex = deferred<{ items: IOrganizationProject[] }>();
+			getAll.mockReturnValueOnce(globex.promise);
+			component.organizationContactId = 'client-globex';
+
+			expect(component.projects).toEqual([]);
+
+			globex.resolve({ items: [project('globex-site', 'client-globex')] });
+			await flush();
+
+			expect(ids()).toEqual(['globex-site']);
+		});
+
+		it("does not offer the previous client's projects again when the new client's list fails to load", async () => {
+			getAll.mockResolvedValue({ items: [project('acme-site', 'client-acme')] });
+			component.organizationContactId = 'client-acme';
+			component.ngOnInit();
+			await flush();
+			const quiet = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+			try {
+				getAll.mockRejectedValueOnce(new Error('API unreachable'));
+				component.organizationContactId = 'client-globex';
+				await flush();
+
+				expect(component.projects).toEqual([]);
+			} finally {
+				quiet.mockRestore();
+			}
+		});
+
+		it("offers none of the previous employee's projects while the new employee's list loads", async () => {
+			getAllByEmployee.mockResolvedValue([project('alice-site')]);
+			component.employeeId = 'employee-alice';
+			component.ngOnInit();
+			await flush();
+			expect(ids()).toEqual(['alice-site']);
+
+			const bob = deferred<IOrganizationProject[]>();
+			getAllByEmployee.mockReturnValueOnce(bob.promise);
+			component.employeeId = 'employee-bob';
+
+			expect(component.projects).toEqual([]);
+
+			bob.resolve([project('bob-site')]);
+			await flush();
+
+			expect(ids()).toEqual(['bob-site']);
+		});
+
+		it('keeps its list while it reloads for the same client, e.g. when the page query changes', async () => {
+			getAll.mockResolvedValue({ items: [project('acme-site', 'client-acme')] });
+			component.organizationContactId = 'client-acme';
+			component.ngOnInit();
+			await flush();
+
+			const reload = deferred<{ items: IOrganizationProject[] }>();
+			getAll.mockReturnValueOnce(reload.promise);
+			queryParams$.next({ date: '2026-10-31' });
+
+			expect(ids()).toEqual(['acme-site']);
+
+			reload.resolve({ items: [project('acme-site', 'client-acme')] });
+			await flush();
+		});
 	});
 
 	describe("the page's project (?projectId=)", () => {

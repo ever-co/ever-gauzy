@@ -43,6 +43,9 @@ describe('AddTaskDialogComponent', () => {
 		const projectSelector = (): ProjectSelectorComponent =>
 			fixture.debugElement.query(By.directive(ProjectSelectorComponent)).componentInstance;
 
+		/** A project of the other client, as the project selector would report it. */
+		const intranet = { id: 'project-2', name: 'Intranet', organizationContactId: GLOBEX } as IOrganizationProject;
+
 		const selectProject = (organizationContactId: string | null) => {
 			component.form.patchValue({
 				project: { id: 'project-1', name: 'Website', organizationContactId },
@@ -73,6 +76,36 @@ describe('AddTaskDialogComponent', () => {
 
 			expect(component.form.get('projectId').value).toBeNull();
 			expect(component.form.get('project').value).toBeNull();
+		});
+
+		it("offers none of the previous list's projects while the picked client's list loads", () => {
+			projectSelector().projects = [intranet];
+
+			component.organizationContactControl.setValue(ACME);
+			fixture.detectChanges();
+
+			expect(projectSelector().projects).toEqual([]);
+		});
+
+		it('does not keep a project of another client picked in the project selector', () => {
+			component.organizationContactControl.setValue(ACME);
+			fixture.detectChanges();
+
+			projectSelector().selectProject(intranet);
+
+			expect(component.form.get('projectId').value).toBeNull();
+			expect(component.form.get('project').value).toBeNull();
+		});
+
+		it('keeps a project of the picked client picked in the project selector', () => {
+			const website = { id: 'project-1', name: 'Website', organizationContactId: ACME } as IOrganizationProject;
+			component.organizationContactControl.setValue(ACME);
+			fixture.detectChanges();
+
+			projectSelector().selectProject(website);
+
+			expect(component.form.get('projectId').value).toBe('project-1');
+			expect(component.form.get('project').value).toEqual(website);
 		});
 
 		it("clears that project's modules with it, so none are saved on a task without a project", () => {

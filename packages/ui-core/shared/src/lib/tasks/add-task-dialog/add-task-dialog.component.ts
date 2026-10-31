@@ -182,18 +182,25 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	}
 
 	/**
-	 * Clears the selected project when it does not belong to the client the project list is now narrowed to,
-	 * together with its modules: modules belong to a project, and `loadAvailableModules` keeps the old
-	 * project's list when there is no project, so they would otherwise be saved on a task without one.
+	 * Clears the selected project when it does not belong to the client the project list is now narrowed to.
 	 *
 	 * @param organizationContactId The picked client, or `null` once it is cleared.
 	 */
 	onClientChanged(organizationContactId: ID | null): void {
 		if (!isProjectOfClient(this.form.get('project').value, organizationContactId)) {
-			this.selectedModules = [];
-			this.availableModules = [];
-			this.form.patchValue({ project: null, projectId: null, modules: [] });
+			this.clearProject();
 		}
+	}
+
+	/**
+	 * Clears the selected project together with its modules: modules belong to a project, and
+	 * `loadAvailableModules` keeps the old project's list when there is no project, so they would
+	 * otherwise be saved on a task without one.
+	 */
+	private clearProject(): void {
+		this.selectedModules = [];
+		this.availableModules = [];
+		this.form.patchValue({ project: null, projectId: null, modules: [] });
 	}
 
 	initializeForm() {
@@ -294,6 +301,14 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	}
 
 	selectedProject(project: IOrganizationProject) {
+		// The selector lists the picked client's projects, but its list is not only the server's answer (a project
+		// created elsewhere is appended to it), so the pick is checked too: the task would be saved on it.
+		// `id` skips the empty "All Projects" entry the selector reports when its project is cleared: that is no
+		// project, not another client's.
+		if (project?.id && !isProjectOfClient(project, this.organizationContactControl.value)) {
+			this.clearProject();
+			return;
+		}
 		this.form.get('project').setValue(project);
 		this.form.get('project').updateValueAndValidity();
 	}
