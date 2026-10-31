@@ -2431,8 +2431,11 @@ describe('SubscriptionService — a cycle’s charge is fenced against an operat
 	it('does not turn a failed bookkeeping write after the payment into a failed charge, so nothing charges it again', async () => {
 		const fixture = subscriptionFixture({ plans: [planRow(PLAN, { setupFee: '25' }), planRow(BETTER_PLAN)] });
 
-		// The write that remembers the setup fee the order carried fails after the payment is recorded.
-		jest.spyOn(fixture.service as any, 'rememberSetupFee').mockRejectedValueOnce(new Error('the database went away'));
+		// The write that remembers the setup fee the order carried (with the calendar, in one transaction) fails after the
+		// payment is recorded.
+		jest
+			.spyOn((fixture.service as any).typeOrmSubscriptionRepository.manager, 'transaction')
+			.mockRejectedValueOnce(new Error('the database went away'));
 
 		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
 
@@ -2450,13 +2453,465 @@ describe('SubscriptionService — a cycle’s charge is fenced against an operat
 			(await fixture.idempotencyService.findByKey('subscription.bill', `${SUBSCRIPTION}:${APRIL.toISOString()}`))?.status
 		).toBe('IN_PROGRESS');
 
-		// A later pass replays the paid cycle and charges nothing.
+		// A later pass finishes the paid cycle and charges nothing.
 		fixture.idempotencyService.advanceBy(3 * 60 * 1000);
 
 		const replayed = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
 
 		expect(replayed).toMatchObject({ status: SubscriptionBillingStatus.PAID, replayed: true, orderId: 'order-1' });
 		expect(fixture.orderCalls).toHaveLength(1);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: monthAfter(APRIL), billingCycleCount: 1 });
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['chargedSetupFeePlanIds']).toEqual([PLAN]);
+	});
+});
+
+/**
+ * A cycle the billing run charged is finished once (`finishCycle`).
+ *
+ * The run records the charge's outcome on the cycle, then finishes it: the subscription's bookkeeping (the setup fee
+ * the order carried, the deferred credit it consumed) and its calendar, in one write, with the renewal told in that
+ * write's transaction. A pass cut off between the outcome and the finish — a crash, a failed write, a payment whose
+ * read-back threw — used to leave the cycle paid and the subscription on its period: every later pass replayed the
+ * cycle, completed the period's key on it, and the subscription was never billed again nor its renewal told. Copilot's
+ * review of #11570 (round 2) set what the finish must hold to, and each case below is one of them: the row's own
+ * period, once across the run and a recovering pass, the consumed credit subtracted by its own amount, an invoiced
+ * cycle's bookkeeping without its calendar, and a retryable state after a payment whose read failed.
+ */
+describe('SubscriptionService — a charged cycle is finished once, by whichever pass gets there (finishCycle)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const MAY = monthAfter(APRIL);
+	const named = (fixture: ReturnType<typeof subscriptionFixture>, name: string) =>
+		fixture.events.filter((event) => event.name === name);
+	/** The subscription's transactions; the finish's write and the events it tells run in one. */
+	const transactions = (fixture: ReturnType<typeof subscriptionFixture>) =>
+		(fixture.service as any).typeOrmSubscriptionRepository.manager;
+	/** The next finish's write fails, after the charge's outcome is recorded. */
+	const failNextFinish = (fixture: ReturnType<typeof subscriptionFixture>) =>
+		jest.spyOn(transactions(fixture), 'transaction').mockRejectedValueOnce(new Error('the database went away'));
+	/** The status of the period's billing key. */
+	const keyOf = async (fixture: ReturnType<typeof subscriptionFixture>, periodStart: Date = APRIL) =>
+		(await fixture.idempotencyService.findByKey('subscription.bill', `${SUBSCRIPTION}:${periodStart.toISOString()}`))?.status;
+	/** The period key's lease runs out, so the next pass takes the period over. */
+	const leaseRunsOut = (fixture: ReturnType<typeof subscriptionFixture>) => fixture.idempotencyService.advanceBy(3 * 60 * 1000);
+	/** Another write lands on the subscription, as a plan change would: the row moves on a version. */
+	const writeSubscription = (fixture: ReturnType<typeof subscriptionFixture>, patch: Row) => {
+		const row = fixture.subscription(SUBSCRIPTION)!;
+
+		Object.assign(row, patch, { version: row.version + 1 });
+	};
+
+	it('finishes a paid cycle whose finish failed on the next pass, once, without charging it again', async () => {
+		const fixture = subscriptionFixture({ plans: [planRow(PLAN, { setupFee: '25' }), planRow(BETTER_PLAN)] });
+
+		failNextFinish(fixture);
+
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+
+		// The charge is recorded with what it left the subscription to record, and nothing else moved.
+		expect(fixture.cycle(APRIL)).toMatchObject({
+			status: SubscriptionBillingStatus.PAID,
+			orderId: 'order-1',
+			metadata: expect.objectContaining({ cycleBookkeeping: { setupFeePlanId: PLAN } })
+		});
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: APRIL, billingCycleCount: 0 });
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['chargedSetupFeePlanIds']).toBeUndefined();
+		expect(fixture.events).toEqual([]);
+		expect(await keyOf(fixture)).toBe('IN_PROGRESS');
+
+		leaseRunsOut(fixture);
+
+		const run = await fixture.service.runBilling({ asOf: APRIL });
+
+		expect(run.results[0]).toMatchObject({
+			status: SubscriptionBillingStatus.PAID,
+			replayed: true,
+			orderId: 'order-1',
+			periodStart: APRIL,
+			periodEnd: MAY
+		});
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			currentPeriodStart: APRIL,
+			currentPeriodEnd: MAY,
+			nextBillingAt: MAY,
+			billingCycleCount: 1
+		});
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['chargedSetupFeePlanIds']).toEqual([PLAN]);
+		expect(named(fixture, 'subscription.renewed')).toHaveLength(1);
+		expect(named(fixture, 'subscription.renewed')[0].data).toMatchObject({
+			billingId: fixture.cycle(APRIL)?.id,
+			orderId: 'order-1',
+			periodStart: APRIL,
+			periodEnd: MAY,
+			nextBillingAt: MAY
+		});
+		expect(await keyOf(fixture)).toBe('COMPLETED');
+
+		// The next pass of the same day has nothing due, and the next period is billed as a renewal: one charge per
+		// period, and the setup fee is not charged again.
+		await fixture.service.runBilling({ asOf: APRIL });
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: MAY });
+
+		expect(fixture.orderCalls).toHaveLength(2);
+		expect(fixture.orderCalls[1]).toMatchObject({ periodStart: MAY, firstCycle: false });
+		expect(fixture.orderCalls[1].setupFee).toBeUndefined();
+		expect(named(fixture, 'subscription.renewed')).toHaveLength(2);
+		expect(fixture.subscription(SUBSCRIPTION)?.billingCycleCount).toBe(2);
+	});
+
+	it('leaves the period’s key open after a payment whose read-back threw, and the next pass finishes the cycle', async () => {
+		const fixture = subscriptionFixture();
+		const markPaid = fixture.billingService.markPaid.bind(fixture.billingService);
+
+		// The payment's write commits, and reading the cycle back fails.
+		jest.spyOn(fixture.billingService, 'markPaid').mockImplementationOnce(async (id, options) => {
+			await markPaid(id, options);
+
+			throw new Error('the connection dropped reading the cycle back');
+		});
+
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow(
+			'the connection dropped reading the cycle back'
+		);
+
+		// Not a failed charge: no attempt counted, no retry, no dunning. And not a settled replay: the key is open.
+		expect(fixture.cycle(APRIL)).toMatchObject({
+			status: SubscriptionBillingStatus.PAID,
+			orderId: 'order-1',
+			attemptCount: 0,
+			chargeClaimToken: null
+		});
+		expect(fixture.cycle(APRIL)?.nextRetryAt ?? null).toBeNull();
+		expect(fixture.cycle(APRIL)?.lastError ?? null).toBeNull();
+		expect(named(fixture, 'subscription.payment-failed')).toEqual([]);
+		expect(await keyOf(fixture)).toBe('IN_PROGRESS');
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: APRIL, billingCycleCount: 0 });
+
+		leaseRunsOut(fixture);
+
+		const finished = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(finished).toMatchObject({ status: SubscriptionBillingStatus.PAID, replayed: true, orderId: 'order-1' });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: MAY, billingCycleCount: 1 });
+		expect(named(fixture, 'subscription.renewed')).toHaveLength(1);
+		expect(fixture.orderCalls).toHaveLength(1);
+	});
+
+	it('tells one renewal and moves the calendar once when a pass takes the key over while the charging pass finishes', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.PENDING })]
+		});
+		const transaction = transactions(fixture).transaction;
+		let interleaved: Awaited<ReturnType<SubscriptionService['billCycle']>> | undefined;
+
+		// The charging pass has read the subscription and decided its finish; before its write lands, its key's lease
+		// runs out and a second pass takes the period over and finishes the cycle first.
+		jest.spyOn(transactions(fixture), 'transaction').mockImplementationOnce(async (run: any) => {
+			leaseRunsOut(fixture);
+			interleaved = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+			return transaction(run);
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(interleaved).toMatchObject({ status: SubscriptionBillingStatus.PAID, replayed: true, orderId: 'order-1' });
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PAID, replayed: false, orderId: 'order-1' });
+		expect(fixture.orderCalls).toHaveLength(1);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			nextBillingAt: MAY,
+			billingCycleCount: 1
+		});
+		expect(named(fixture, 'subscription.activated')).toHaveLength(1);
+		expect(named(fixture, 'subscription.renewed')).toHaveLength(1);
+	});
+
+	it('leaves the calendar where it was when the renewal could not be told, and the next pass tells it once', async () => {
+		const fixture = subscriptionFixture();
+		const outbox = (fixture.service as any).outbox;
+		const append = outbox.append.bind(outbox);
+		let refused = false;
+
+		// The first renewal is refused by the outbox, inside the transaction the calendar is written in.
+		jest.spyOn(outbox, 'append').mockImplementation(async (manager: unknown, event: Row) => {
+			if (event.name === 'subscription.renewed' && !refused) {
+				refused = true;
+
+				throw new Error('the outbox refused the event');
+			}
+
+			return append(manager, event);
+		});
+
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the outbox refused the event');
+
+		// The write the event was told with rolled back with it.
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: APRIL, billingCycleCount: 0, version: 1 });
+
+		leaseRunsOut(fixture);
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: MAY, billingCycleCount: 1 });
+		expect(named(fixture, 'subscription.renewed')).toHaveLength(1);
+		expect(fixture.orderCalls).toHaveLength(1);
+	});
+
+	it('finishes from the cycle’s own period after the subscription moved to a plan of another cadence', async () => {
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN), planRow(BETTER_PLAN, { billingPeriod: SubscriptionBillingPeriod.YEARLY })]
+		});
+
+		failNextFinish(fixture);
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+
+		// The customer moved to the yearly plan before the monthly cycle was finished.
+		writeSubscription(fixture, { planId: BETTER_PLAN });
+		leaseRunsOut(fixture);
+
+		const finished = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		// A month on, as the paid row covers, not a year on as the new cadence would compute.
+		expect(finished).toMatchObject({ periodStart: APRIL, periodEnd: MAY, replayed: true });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			currentPeriodStart: APRIL,
+			currentPeriodEnd: MAY,
+			nextBillingAt: MAY,
+			billingCycleCount: 1
+		});
+		expect(named(fixture, 'subscription.renewed')[0].data).toMatchObject({ periodEnd: MAY, nextBillingAt: MAY });
+	});
+
+	it('subtracts the credit the cycle consumed and keeps a credit deferred after it, so neither is granted twice', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, { metadata: { pendingCredit: { amount: '-30.000000', currency: 'USD' } } })
+			]
+		});
+
+		failNextFinish(fixture);
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+
+		expect(fixture.orderCalls[0]).toMatchObject({ creditAmount: '-30.000000' });
+		expect(fixture.cycle(APRIL)?.metadata?.['cycleBookkeeping']).toEqual({ credit: '-30.000000' });
+
+		// Another downgrade defers 10 more before the cycle is finished; the carried credit accumulates (`applyChange`).
+		writeSubscription(fixture, { metadata: { pendingCredit: { amount: '-40.000000', currency: 'USD' } } });
+		leaseRunsOut(fixture);
+		await fixture.service.runBilling({ asOf: APRIL });
+
+		// The 30 the April order carried is spent; the 10 decided after it is owed to the next cycle.
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['pendingCredit']).toMatchObject({
+			amount: '-10.000000',
+			currency: 'USD'
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: MAY });
+
+		expect(fixture.orderCalls[1]).toMatchObject({ periodStart: MAY, creditAmount: '-10.000000' });
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['pendingCredit']).toBeUndefined();
+		// 40 owed, 40 granted: 30 on April, 10 on May.
+		expect(fixture.adjustmentsOf(fixture.cycle(APRIL)?.id).map((row) => row.amount)).toEqual(['-30.000000']);
+		expect(fixture.adjustmentsOf(fixture.cycle(MAY)?.id).map((row) => row.amount)).toEqual(['-10.000000']);
+	});
+
+	it('keeps a credit deferred while the cycle was being charged, on the run’s own finish', async () => {
+		let fixture: ReturnType<typeof subscriptionFixture>;
+		fixture = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, { metadata: { pendingCredit: { amount: '-30.000000', currency: 'USD' } } })
+			],
+			orders: () => {
+				// A downgrade defers 10 more while the order path is taking the money.
+				writeSubscription(fixture, { metadata: { pendingCredit: { amount: '-40.000000', currency: 'USD' } } });
+
+				return { orderId: 'order-1', paid: true };
+			}
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['pendingCredit']).toMatchObject({ amount: '-10.000000' });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: MAY, billingCycleCount: 1 });
+	});
+
+	it('applies the credit the run consumed, not one a correction wrote into the cycle before it was charged', async () => {
+		const fixture = subscriptionFixture({
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, { metadata: { pendingCredit: { amount: '-30.000000', currency: 'USD' } } })
+			],
+			billings: [
+				{
+					id: 'cycle-april',
+					tenantId: TENANT,
+					organizationId: ORG,
+					subscriptionId: SUBSCRIPTION,
+					periodStart: new Date(APRIL),
+					periodEnd: MAY,
+					amount: '120.000000',
+					currency: 'USD',
+					status: SubscriptionBillingStatus.PENDING,
+					dueAt: new Date(APRIL),
+					paidAt: null,
+					attemptCount: 0,
+					metadata: { cycleBookkeeping: { credit: '-1000.000000' } }
+				}
+			]
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.cycle(APRIL)?.metadata?.['cycleBookkeeping']).toEqual({ credit: '-30.000000' });
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['pendingCredit']).toBeUndefined();
+	});
+
+	it('applies an invoiced cycle’s bookkeeping on a later pass without moving its calendar, and its payment moves it once', async () => {
+		const fixture = subscriptionFixture({
+			orders: { paid: false },
+			plans: [planRow(PLAN, { setupFee: '25' }), planRow(BETTER_PLAN)],
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, { metadata: { pendingCredit: { amount: '-30.000000', currency: 'USD' } } })
+			]
+		});
+
+		failNextFinish(fixture);
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+
+		expect(fixture.cycle(APRIL)).toMatchObject({
+			status: SubscriptionBillingStatus.INVOICED,
+			metadata: expect.objectContaining({
+				calendarDeferred: true,
+				cycleBookkeeping: { credit: '-30.000000', setupFeePlanId: PLAN }
+			})
+		});
+
+		leaseRunsOut(fixture);
+
+		const replayed = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		// The credit already in the invoice is spent and the setup fee remembered; the calendar waits for the payment.
+		expect(replayed).toMatchObject({ status: SubscriptionBillingStatus.INVOICED, replayed: true });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: APRIL, billingCycleCount: 0 });
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['pendingCredit']).toBeUndefined();
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['chargedSetupFeePlanIds']).toEqual([PLAN]);
+		expect(fixture.events).toEqual([]);
+		expect(fixture.orderCalls).toHaveLength(1);
+
+		// A downgrade defers a new credit while the invoice is open; the payment does not spend it again.
+		writeSubscription(fixture, {
+			metadata: { ...fixture.subscription(SUBSCRIPTION)?.metadata, pendingCredit: { amount: '-10.000000', currency: 'USD' } }
+		});
+		await fixture.service.payCycle(fixture.cycle(APRIL)!.id);
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: MAY, billingCycleCount: 1 });
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['pendingCredit']).toMatchObject({ amount: '-10.000000' });
+		expect(named(fixture, 'subscription.renewed')).toHaveLength(1);
+	});
+
+	it('applies an invoiced cycle’s left-over bookkeeping with the calendar its payment moves', async () => {
+		const fixture = subscriptionFixture({
+			orders: { paid: false },
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, { metadata: { pendingCredit: { amount: '-30.000000', currency: 'USD' } } })
+			]
+		});
+
+		failNextFinish(fixture);
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+
+		// No pass reaches a subscription held by its open invoice (`findDue`); a downgrade adds 10 before the payment.
+		writeSubscription(fixture, { metadata: { pendingCredit: { amount: '-40.000000', currency: 'USD' } } });
+		await fixture.service.payCycle(fixture.cycle(APRIL)!.id);
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: MAY, billingCycleCount: 1 });
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['pendingCredit']).toMatchObject({ amount: '-10.000000' });
+		expect(named(fixture, 'subscription.renewed')).toHaveLength(1);
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: MAY });
+
+		expect(fixture.orderCalls[1]).toMatchObject({ periodStart: MAY, creditAmount: '-10.000000' });
+	});
+
+	it('finishes a cycle whose key an earlier build completed on a replay, charging nothing', async () => {
+		const fixture = subscriptionFixture();
+
+		failNextFinish(fixture);
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+
+		// A build before this one met the paid cycle, replayed it as settled and completed the period's key on it.
+		const key = fixture.idempotencyService.records.get(`subscription.bill:${SUBSCRIPTION}:${APRIL.toISOString()}`)!;
+
+		await fixture.idempotencyService.complete(key, {
+			responseStatus: 200,
+			responseBody: { subscriptionId: SUBSCRIPTION, status: SubscriptionBillingStatus.PAID, replayed: true }
+		});
+
+		await fixture.service.runBilling({ asOf: APRIL });
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: MAY, billingCycleCount: 1 });
+		expect(named(fixture, 'subscription.renewed')).toHaveLength(1);
+		expect(fixture.orderCalls).toHaveLength(1);
+
+		// The subscription is no longer due on April, so the next pass of the day moves nothing again.
+		const next = await fixture.service.runBilling({ asOf: APRIL });
+
+		expect(next.examined).toBe(0);
+		expect(fixture.subscription(SUBSCRIPTION)?.billingCycleCount).toBe(1);
+		expect(named(fixture, 'subscription.renewed')).toHaveLength(1);
+	});
+
+	it('replays a cycle an operator paid without an order, as before', async () => {
+		const fixture = subscriptionFixture({
+			billings: [
+				{
+					id: 'cycle-april',
+					tenantId: TENANT,
+					organizationId: ORG,
+					subscriptionId: SUBSCRIPTION,
+					periodStart: new Date(APRIL),
+					periodEnd: MAY,
+					amount: '120.000000',
+					currency: 'USD',
+					status: SubscriptionBillingStatus.PAID,
+					paidAt: new Date(APRIL),
+					attemptCount: 0
+				}
+			]
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PAID, replayed: true, billingId: 'cycle-april' });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: APRIL, billingCycleCount: 0 });
+		expect(fixture.events).toEqual([]);
+		expect(fixture.orderCalls).toEqual([]);
+	});
+
+	it('does not bring back a subscription cancelled while its cycle was being charged', async () => {
+		let fixture: ReturnType<typeof subscriptionFixture>;
+		fixture = subscriptionFixture({
+			orders: async () => {
+				await fixture.service.cancel(SUBSCRIPTION, { reason: 'customer left', immediate: true });
+
+				return { orderId: 'order-1', paid: true };
+			}
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PAID, replayed: false, orderId: 'order-1' });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			status: SubscriptionStatus.CANCELED,
+			nextBillingAt: null,
+			billingCycleCount: 0
+		});
+		expect(named(fixture, 'subscription.renewed')).toEqual([]);
 	});
 });
 
@@ -3004,10 +3459,14 @@ describe('SubscriptionService — the versioned write', () => {
 	});
 
 	it('spends the caller’s version on the first write and rides the row’s own version after it', async () => {
-		// A cycle that owes a setup fee writes the subscription twice: the fee it remembers, and the
-		// cycle it records. The first carries the caller's version; the second would be refused if it
-		// carried it too, because the row has moved on — by this request's own first write.
-		const fixture = subscriptionFixture({ plans: [planRow(PLAN, { setupFee: '30' }), planRow(BETTER_PLAN)] });
+		// A cycle that resumes a pause that ran out writes the subscription twice: the resume, and the cycle it finishes
+		// (the setup fee it remembers rides in that second write, `finishCycle`). The first carries the caller's version;
+		// the second would be refused if it carried it too, because the row has moved on — by this request's own first
+		// write.
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN, { setupFee: '30' }), planRow(BETTER_PLAN)],
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { status: SubscriptionStatus.PAUSED, pausedUntil: new Date(APRIL) })]
+		});
 
 		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true }, asReadByTheCaller);
 
@@ -3017,6 +3476,21 @@ describe('SubscriptionService — the versioned write', () => {
 			billingCycleCount: 1,
 			version: 3
 		});
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['chargedSetupFeePlanIds']).toEqual([PLAN]);
+	});
+
+	it('remembers a cycle’s setup fee in the write that records the cycle, under the caller’s version', async () => {
+		const fixture = subscriptionFixture({ plans: [planRow(PLAN, { setupFee: '30' }), planRow(BETTER_PLAN)] });
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true }, asReadByTheCaller);
+
+		expect(outcome.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			billingCycleCount: 1,
+			version: 2
+		});
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['chargedSetupFeePlanIds']).toEqual([PLAN]);
 	});
 
 	it('refuses a cycle predicated on a version the subscription no longer holds', async () => {

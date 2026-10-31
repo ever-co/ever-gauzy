@@ -221,6 +221,26 @@ export const RIGHTS_WITHHELD_FOR = 'rightsWithheldFor';
 export const CALENDAR_DEFERRED = 'calendarDeferred';
 export const CALENDAR_SETTLED_AT = 'calendarSettledAt';
 
+/**
+ * The metadata key a cycle the billing run charged records, with the charge's outcome, what the subscription owes the
+ * charge's bookkeeping: the deferred credit the order carried and the plan whose setup fee it carried.
+ *
+ * It is written in the statement that records the outcome (`markPaid`, `markInvoiced`), so a cycle whose order carried a
+ * credit or a setup fee never stands recorded without saying so. The subscription's bookkeeping is applied from it once
+ * (`SubscriptionService.finishCycle`): the credit is subtracted from the one still carried, so a credit a later change
+ * added is kept, and the subscription records the cycle it applied so nothing is applied twice. The run writes it whole
+ * on every outcome, so a value a correction wrote into an uncharged cycle's metadata never stands as the run's.
+ */
+export const CYCLE_BOOKKEEPING = 'cycleBookkeeping';
+
+/** What a cycle's charge left the subscription to record (`CYCLE_BOOKKEEPING`). */
+export interface ICycleBookkeeping {
+	/** The deferred credit the order carried, negative, at the storage scale of a money column. */
+	credit?: DecimalString;
+	/** The plan whose setup fee the order carried. */
+	setupFeePlanId?: ID;
+}
+
 /** The refusal of a settling action from a status it may not start from. */
 function invalidTransition(
 	billing: SubscriptionBilling,
@@ -417,6 +437,7 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * @param deferred The rights the cycle holds back until it is paid, and whether they include the activation
 	 * of the trial it converts.
 	 * @param chargeClaim The token of the billing pass recording its own charge.
+	 * @param bookkeeping What the order left the subscription to record (`CYCLE_BOOKKEEPING`), written with the status.
 	 * @returns The updated cycle.
 	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_CLAIM_LOST` when the pass no longer holds the claim
 	 * it names, or BadRequestException with `SUBSCRIPTION_BILLING_TRANSITION_INVALID` when the cycle was settled since.
@@ -426,7 +447,8 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		orderId: ID,
 		amount?: DecimalString,
 		deferred?: { activation: boolean; calendar?: boolean },
-		chargeClaim?: string
+		chargeClaim?: string,
+		bookkeeping?: ICycleBookkeeping
 	): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
 		const patch = {
@@ -435,13 +457,18 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			amount: amount ? this.normalizeAmount(amount, billing.currency) : billing.amount,
 			lastError: null,
 			...NO_CHARGE_CLAIM,
-			...(deferred
+			...(deferred || bookkeeping
 				? {
 						metadata: {
 							...(billing.metadata ?? {}),
-							[RIGHTS_DEFERRED]: true,
-							...(deferred.activation ? { [ACTIVATION_DEFERRED]: true } : {}),
-							...(deferred.calendar ? { [CALENDAR_DEFERRED]: true } : {})
+							...(deferred
+								? {
+										[RIGHTS_DEFERRED]: true,
+										...(deferred.activation ? { [ACTIVATION_DEFERRED]: true } : {}),
+										...(deferred.calendar ? { [CALENDAR_DEFERRED]: true } : {})
+								  }
+								: {}),
+							...(bookkeeping ? { [CYCLE_BOOKKEEPING]: { ...bookkeeping } } : {})
 						}
 				  }
 				: {})
@@ -486,14 +513,21 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 *
 	 * @param id The cycle.
 	 * @param options The instant the payment settled, the order it settled and the attempt count; `chargeClaim` is the
-	 * token of the billing pass recording its own charge.
+	 * token of the billing pass recording its own charge, and `bookkeeping` what its order left the subscription to
+	 * record (`CYCLE_BOOKKEEPING`), written with the payment.
 	 * @returns The updated cycle.
 	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when an operator pays a cycle a pass is
 	 * charging, or with `SUBSCRIPTION_BILLING_CHARGE_CLAIM_LOST` when the pass that names a claim no longer holds it.
 	 */
 	public async markPaid(
 		id: ID,
-		options: { paidAt?: Date; orderId?: ID; attemptCount?: number; chargeClaim?: string } = {}
+		options: {
+			paidAt?: Date;
+			orderId?: ID;
+			attemptCount?: number;
+			chargeClaim?: string;
+			bookkeeping?: ICycleBookkeeping;
+		} = {}
 	): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
 		const byOperator = !options.chargeClaim;
@@ -549,11 +583,34 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 				attemptCount: options.attemptCount ?? billing.attemptCount,
 				nextRetryAt: null,
 				lastError: null,
-				...NO_CHARGE_CLAIM
+				...NO_CHARGE_CLAIM,
+				...(options.bookkeeping
+					? { metadata: { ...(billing.metadata ?? {}), [CYCLE_BOOKKEEPING]: { ...options.bookkeeping } } }
+					: {})
 			} as any
 		);
 
 		return await this.findOneScoped(id);
+	}
+
+	/**
+	 * What a cycle the billing run charged left the subscription to record (`CYCLE_BOOKKEEPING`).
+	 *
+	 * @param billing The cycle.
+	 * @returns The credit its order carried and the plan whose setup fee it carried; empty for a cycle that records
+	 * neither, which is every cycle recorded before the run wrote them.
+	 */
+	public bookkeepingOf(billing: SubscriptionBilling): ICycleBookkeeping {
+		const recorded = billing?.metadata?.[CYCLE_BOOKKEEPING] as ICycleBookkeeping | undefined;
+
+		if (!recorded || typeof recorded !== 'object') {
+			return {};
+		}
+
+		return {
+			...(typeof recorded.credit === 'string' ? { credit: recorded.credit } : {}),
+			...(recorded.setupFeePlanId ? { setupFeePlanId: recorded.setupFeePlanId } : {})
+		};
 	}
 
 	/**
@@ -596,6 +653,17 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 */
 	public holdsDeferredCalendar(billing: SubscriptionBilling): boolean {
 		return billing?.metadata?.[CALENDAR_DEFERRED] === true;
+	}
+
+	/**
+	 * Whether a cycle's calendar is its payment's to move, released or not: a cycle invoiced unpaid, whose payment
+	 * moves the subscription onto its period (Q7-W4, `SubscriptionService.payCycle`), not the billing run.
+	 *
+	 * @param billing The cycle.
+	 * @returns True when the cycle held, or still holds, the subscription's calendar for its payment.
+	 */
+	public heldCalendar(billing: SubscriptionBilling): boolean {
+		return this.holdsDeferredCalendar(billing) || typeof billing?.metadata?.[CALENDAR_SETTLED_AT] === 'string';
 	}
 
 	/**
