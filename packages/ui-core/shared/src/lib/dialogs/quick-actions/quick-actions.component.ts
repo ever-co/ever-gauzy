@@ -38,7 +38,6 @@ type GroupType = {
 export interface IQuickActionEditItem {
 	id: string;
 	title: string;
-	icon: NbMenuItem['icon'];
 }
 
 /** One group of the edit mode. */
@@ -94,6 +93,8 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 	private draftOverrides: Record<string, string> = {};
 	/** The actions this dialog lists, i.e. the ones the user may run. */
 	private visibleIds = new Set<string>();
+	/** Set once the dialog is closed: a save still in flight must not touch the shared editing state. */
+	private destroyed = false;
 	private recorder: ShortcutRecorder | null = null;
 	private preferences: IQuickActionsUiPreferences | null = null;
 
@@ -144,6 +145,7 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 	}
 
 	ngOnDestroy(): void {
+		this.destroyed = true;
 		// -- closed while editing: resume the global shortcuts
 		if (this.editMode) {
 			this.quickActionsPreferencesService.setEditing(false);
@@ -188,6 +190,7 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 
 	/** Puts the draft back to the built-in order and shortcuts (saved with Save). */
 	resetToDefaults(): void {
+		if (this.saving) return;
 		this.stopCapture();
 		this.draftOrder = resolveQuickActionOrder(null);
 		this.setDraftOverrides({});
@@ -204,7 +207,10 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 			await this.quickActionsPreferencesService.save(
 				toQuickActionsPreferences(this.draftOrder, this.draftOverrides)
 			);
-			this.cancelEditing();
+			// -- closed meanwhile: the editing state may already belong to the next dialog, leave it alone
+			if (!this.destroyed) {
+				this.cancelEditing();
+			}
 			this.toastrService.success('QUICK_ACTIONS_CUSTOMIZE.SAVED');
 		} catch (error) {
 			console.error('Error while saving the quick actions customization:', error);
@@ -216,11 +222,13 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 
 	/** Drag and drop within a group. */
 	drop(group: IQuickActionEditGroup, event: CdkDragDrop<IQuickActionEditGroup>): void {
+		if (this.saving) return;
 		this.moveAction(group, event.previousIndex, event.currentIndex);
 	}
 
 	/** The keyboard alternative to drag and drop: moves an action one place up (-1) or down (+1). */
 	move(group: IQuickActionEditGroup, index: number, offset: -1 | 1): void {
+		if (this.saving) return;
 		const { id } = group.items[index];
 		const position = index + offset;
 		if (!this.moveAction(group, index, position)) return;
@@ -234,6 +242,7 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 
 	/** Starts recording a new shortcut for an action ("click, then press the keys"). */
 	startCapture(id: string): void {
+		if (this.saving) return;
 		this.capturingId = id;
 		this.capturePreview = '';
 		this.recorder = new ShortcutRecorder();
@@ -261,6 +270,7 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 
 	/** Removes an action's shortcut. */
 	clearShortcut(id: string): void {
+		if (this.saving) return;
 		this.setShortcut(id, '');
 	}
 
@@ -373,7 +383,7 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 			.map(({ group, groupTitle, items }) => ({
 				group,
 				groupTitle,
-				items: items.map((item) => ({ id: getQuickActionId(item), title: item.title, icon: item.icon }))
+				items: items.map((item) => ({ id: getQuickActionId(item), title: item.title }))
 			}));
 	}
 

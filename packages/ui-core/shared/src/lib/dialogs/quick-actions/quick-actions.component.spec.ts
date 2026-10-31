@@ -430,6 +430,53 @@ describe('QuickActionsComponent', () => {
 			consoleError.mockRestore();
 		});
 
+		it('locks the draft while the save is pending', async () => {
+			let finish: () => void;
+			preferencesService.save.mockReturnValueOnce(new Promise<void>((resolve) => (finish = resolve)));
+			startEditing();
+			record('Create Task', 'y');
+			query<HTMLButtonElement>('button.save').click();
+			fixture.detectChanges();
+
+			expect(component.saving).toBe(true);
+			for (const selector of [
+				'button.reset',
+				'button.cancel-edit',
+				'button.save',
+				'#qa-move-down-createInvoice'
+			]) {
+				expect(query<HTMLButtonElement>(selector).disabled).toBe(true);
+			}
+			expect(shortcutButton('Create Task').disabled).toBe(true);
+			component.resetToDefaults();
+			component.clearShortcut('createTask');
+			component.startCapture('viewTasks');
+			expect(component.draftShortcuts['createTask']).toBe('y');
+			expect(component.capturingId).toBeNull();
+
+			finish();
+			await fixture.whenStable();
+			await Promise.resolve();
+			expect(component.editMode).toBe(false);
+		});
+
+		it('leaves the editing state alone when a save completes after the dialog closed', async () => {
+			let finish: () => void;
+			preferencesService.save.mockReturnValueOnce(new Promise<void>((resolve) => (finish = resolve)));
+			startEditing();
+			query<HTMLButtonElement>('button.save').click();
+			fixture.destroy();
+			expect(preferencesService.editing()).toBe(false);
+
+			// -- another Quick Actions dialog is being customized when the old request completes
+			preferencesService.setEditing(true);
+			finish();
+			await Promise.resolve();
+			await Promise.resolve();
+			expect(preferencesService.editing()).toBe(true);
+			expect(toastr.success).toHaveBeenCalledWith('QUICK_ACTIONS_CUSTOMIZE.SAVED');
+		});
+
 		it('resumes the global shortcuts when the dialog closes while editing', () => {
 			startEditing();
 			fixture.destroy();

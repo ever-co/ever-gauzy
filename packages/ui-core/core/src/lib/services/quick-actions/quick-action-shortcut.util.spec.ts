@@ -172,7 +172,7 @@ describe('quick-action-shortcut.util', () => {
 		});
 
 		it('refuses combinations reserved by the browser or the operating system', () => {
-			for (const shortcut of ['ctrl+k', 'ctrl+t', 'alt+x', 'meta+w', 'ctrl+shift+n', '/', "'"]) {
+			for (const shortcut of ['ctrl+k', 'ctrl+t', 'alt+x', 'meta+w', 'ctrl+shift+n', '/', "'", '/+y', "y+'"]) {
 				expect([shortcut, checkShortcut(shortcut)?.code]).toEqual([
 					shortcut,
 					QuickActionShortcutErrorEnum.RESERVED

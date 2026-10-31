@@ -56,6 +56,7 @@
               cdkDropList
               cdkDropListLockAxis="y"
               [cdkDropListData]="group"
+              [cdkDropListDisabled]="saving"
               [attr.aria-labelledby]="'qa-group-' + group.group"
               (cdkDropListDropped)="drop(group, $event)"
             >
@@ -72,7 +73,7 @@
                       size="tiny"
                       type="button"
                       [id]="'qa-move-up-' + item.id"
-                      [disabled]="first"
+                      [disabled]="first || saving"
                       [attr.aria-label]="'QUICK_ACTIONS_CUSTOMIZE.MOVE_UP' | translate: { action: item.title }"
                       [attr.title]="'QUICK_ACTIONS_CUSTOMIZE.MOVE_UP' | translate: { action: item.title }"
                       (click)="move(group, index, -1)"
@@ -85,7 +86,7 @@
                       size="tiny"
                       type="button"
                       [id]="'qa-move-down-' + item.id"
-                      [disabled]="last"
+                      [disabled]="last || saving"
                       [attr.aria-label]="'QUICK_ACTIONS_CUSTOMIZE.MOVE_DOWN' | translate: { action: item.title }"
                       [attr.title]="'QUICK_ACTIONS_CUSTOMIZE.MOVE_DOWN' | translate: { action: item.title }"
                       (click)="move(group, index, 1)"
@@ -100,6 +101,7 @@
                       type="button"
                       class="shortcut"
                       [class.capturing]="capturingId === item.id"
+                      [disabled]="saving"
                       [attr.aria-label]="getShortcutLabel(item)"
                       [attr.aria-describedby]="'qa-error-' + item.id"
                       (click)="startCapture(item.id)"
@@ -118,7 +120,7 @@
                       ghost
                       size="tiny"
                       type="button"
-                      [disabled]="!draftShortcuts[item.id]"
+                      [disabled]="saving || !draftShortcuts[item.id]"
                       [attr.aria-label]="'QUICK_ACTIONS_CUSTOMIZE.CLEAR_SHORTCUT' | translate: { action: item.title }"
                       [attr.title]="'QUICK_ACTIONS_CUSTOMIZE.CLEAR_SHORTCUT' | translate: { action: item.title }"
                       (click)="clearShortcut(item.id)"
@@ -138,11 +140,11 @@
   </nb-card-body>
   @if (editMode) {
     <nb-card-footer>
-      <button nbButton ghost status="basic" type="button" class="reset" (click)="resetToDefaults()">
+      <button nbButton ghost status="basic" type="button" class="reset" [disabled]="saving" (click)="resetToDefaults()">
         {{ 'QUICK_ACTIONS_CUSTOMIZE.RESET' | translate }}
       </button>
       <div class="footer-actions">
-        <button nbButton outline status="basic" type="button" class="cancel-edit" (click)="cancelEditing()">
+        <button nbButton outline status="basic" type="button" class="cancel-edit" [disabled]="saving" (click)="cancelEditing()">
           {{ 'BUTTONS.CANCEL' | translate }}
         </button>
         <button nbButton status="success" type="button" class="save" [disabled]="saving" (click)="save()">

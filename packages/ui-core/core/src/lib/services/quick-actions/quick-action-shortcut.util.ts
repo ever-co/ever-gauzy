@@ -24,7 +24,10 @@ export const SHORTCUT_MODIFIERS: ReadonlyArray<ShortcutModifier> = ['ctrl', 'alt
  */
 export const RESERVED_SHORTCUT_MODIFIERS: ReadonlyArray<ShortcutModifier> = ['ctrl', 'alt', 'meta'];
 
-/** Single keys a browser acts on outside text fields (Firefox quick find). */
+/**
+ * Keys a browser acts on outside text fields when pressed without Shift (Firefox quick find), so a
+ * shortcut may not use them unshifted, alone or as one of its keys (`shift+/` is fine).
+ */
 export const RESERVED_SHORTCUTS: ReadonlyArray<string> = ['/', "'"];
 
 /** Most non-modifier keys a shortcut may combine (`'a+e'` is two). */
@@ -302,7 +305,7 @@ export function checkShortcut(shortcut: string | null | undefined): IQuickAction
 	const canonical = buildShortcut(modifiers, keys);
 	if (
 		modifiers.some((modifier) => RESERVED_SHORTCUT_MODIFIERS.includes(modifier)) ||
-		RESERVED_SHORTCUTS.includes(canonical) ||
+		(!modifiers.length && keys.some((key) => RESERVED_SHORTCUTS.includes(key))) ||
 		canonical === normalizeShortcut(QUICK_ACTIONS_DIALOG_SHORTCUT)
 	) {
 		return { code: QuickActionShortcutErrorEnum.RESERVED };
