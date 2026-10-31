@@ -587,6 +587,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							isAway: true,
 							isOnline: true,
 							billRateValue: true,
+							// The currency the amounts grid prints the amount in
+							billRateCurrency: true,
 							user: {
 								id: true,
 								firstName: true,
