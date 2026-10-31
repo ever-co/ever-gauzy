@@ -46,6 +46,11 @@ export interface ITimeOffPolicyEntitlement {
 	accrualFrequency?: LeaveAccrualFrequencyEnum;
 	/** Whether this is the organization's default policy. */
 	isDefault?: boolean;
+	/**
+	 * Whether an approval is refused when an employee's leave balance for the policy cannot cover the request's
+	 * working days. Off (the default): the approval goes through and the balance is overdrawn.
+	 */
+	requireSufficientBalance?: boolean;
 }
 
 export interface ITimeOffPolicy extends IBasePerTenantAndOrganizationEntityModel, ITimeOffPolicyEntitlement {
@@ -146,10 +151,13 @@ export enum TimeOffRequestFormTypeEnum {
  * The organization document each request form is read from, found by this name (case and extra spaces
  * aside). The demo seed creates both documents under these names.
  */
-export const TIME_OFF_REQUEST_FORM_DOCUMENT_NAMES: Readonly<Record<TimeOffRequestFormTypeEnum, string>> = Object.freeze({
+export const TIME_OFF_REQUEST_FORM_DOCUMENT_NAMES: TimeOffRequestFormDocumentNames = Object.freeze({
 	[TimeOffRequestFormTypeEnum.PAID]: 'Paid Days off Request',
 	[TimeOffRequestFormTypeEnum.UNPAID]: 'Unpaid Days off Request'
 });
+
+/** The document name of each request form. */
+export type TimeOffRequestFormDocumentNames = Readonly<Record<TimeOffRequestFormTypeEnum, string>>;
 
 /**
  * A publicly recognized holiday for a country, kept per organization.

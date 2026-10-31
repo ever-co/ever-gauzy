@@ -1,13 +1,13 @@
 // Must stay first: loads the entity graph before the handler pulls an entity.
 import '../../../core/entities/internal';
 
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { StatusTypesEnum, StatusTypesMapRequestApprovalEnum } from '@gauzy/contracts';
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { coreEntities } from '../../../core/entities';
 import { RequestContext } from '../../../core/context';
-import { CreateTimeOffBalanceDeductionTable1791000003630 } from '../../../database/migrations/1791000003630-CreateTimeOffBalanceDeductionTable';
+import { ConnectTimeOffBalancesToApproval1791000003630 } from '../../../database/migrations/1791000003630-ConnectTimeOffBalancesToApproval';
 import { TimeOffBalanceDeductionService } from '../../../time-off-balance/time-off-balance-deduction.service';
 import { TimeOffRequest } from '../../time-off-request.entity';
 import { TimeOffStatusCommand } from '../time-off.status.command';
@@ -16,15 +16,15 @@ import { TimeOffStatusHandler } from './time-off.status.handler';
 /**
  * Leave balances follow the approve / deny decision (ever-co/ever-gauzy#10183, item 1), on a real better-sqlite3
  * database whose tables TypeORM created from the real entities, as the migrations create them in an installation —
- * and whose `time_off_balance_deduction` table is the one its migration creates, which TypeORM must find nothing to
- * change in.
+ * and whose `time_off_balance_deduction` table and `time_off_policy.requireSufficientBalance` column are the ones the
+ * migration creates, which TypeORM must find nothing to change in.
  *
  * - Approving a request takes its working days (weekdays, less the organization's official holidays, split per
- *   calendar year) from the balance each employee has for the request's policy and year, in the decision's
- *   transaction.
+ *   calendar year, read in the zone the dates were picked in) from the balance each employee has for the request's
+ *   policy and year, in the decision's transaction.
  * - No balance row: approval works exactly as before, and nothing is created.
- * - A balance without the days left refuses the approval (400): the request, its approval and the balance stay as
- *   they were.
+ * - A balance without the days left is overdrawn: the approval goes through. Only a policy that requires sufficient
+ *   balance refuses it (400), and then the request, its approval and the balance stay as they were.
  * - Denying an approved request gives back what its approval took, and only that; deciding a request the way it is
  *   already decided moves nothing, so a repeated or concurrent approval never deducts twice.
  */
@@ -71,9 +71,12 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 	};
 
 	/** A request of the employees named, under the policy named, `REQUESTED` unless stated. */
-	const fileLeave = async (
-		{ employees = [EMPLOYEE], status = StatusTypesEnum.REQUESTED, policyId = POLICY, ...row }: Row = {}
-	): Promise<void> => {
+	const fileLeave = async ({
+		employees = [EMPLOYEE],
+		status = StatusTypesEnum.REQUESTED,
+		policyId = POLICY,
+		...row
+	}: Row = {}): Promise<void> => {
 		await insert('time_off_request', {
 			id: LEAVE,
 			...WEEK,
@@ -132,7 +135,9 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 		});
 
 	const balance = async (id: string): Promise<{ taken: number; remaining: number }> => {
-		const [row] = await dataSource.query(`SELECT "taken", "remaining" FROM "time_off_balance" WHERE "id" = ?`, [id]);
+		const [row] = await dataSource.query(`SELECT "taken", "remaining" FROM "time_off_balance" WHERE "id" = ?`, [
+			id
+		]);
 		return { taken: Number(row.taken), remaining: Number(row.remaining) };
 	};
 
@@ -166,12 +171,14 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 		// The fixtures name rows of tables this suite has no reason to fill (users, the employees' users).
 		await dataSource.query('PRAGMA foreign_keys = OFF');
 
-		// The deduction table as an installation gets it: from its migration, not from `synchronize`.
+		// The deduction table and the policy column as an installation gets them: from the migration, not from
+		// `synchronize`.
 		await dataSource.query(`DROP TABLE "time_off_balance_deduction"`);
+		await dataSource.query(`ALTER TABLE "time_off_policy" DROP COLUMN "requireSufficientBalance"`);
 		const queryRunner = dataSource.createQueryRunner();
 		jest.spyOn(console, 'log').mockImplementation(() => undefined);
 		try {
-			await new CreateTimeOffBalanceDeductionTable1791000003630().up(queryRunner);
+			await new ConnectTimeOffBalancesToApproval1791000003630().up(queryRunner);
 		} finally {
 			await queryRunner.release();
 			jest.restoreAllMocks();
@@ -196,6 +203,7 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 			'time_off_request',
 			'time_off_policy',
 			'employee',
+			'user',
 			'organization',
 			'tenant'
 		]) {
@@ -212,20 +220,30 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 		await insert('employee', { id: EMPLOYEE, userId: USER, ...scope });
 		await insert('employee', { id: COLLEAGUE, userId: USER, ...scope });
 		for (const id of [POLICY, OTHER_POLICY]) {
-			await insert('time_off_policy', { id, name: `policy ${id.slice(-1)}`, requiresApproval: 1, paid: 1, ...scope });
+			await insert('time_off_policy', {
+				id,
+				name: `policy ${id.slice(-1)}`,
+				requiresApproval: 1,
+				paid: 1,
+				...scope
+			});
 		}
 	});
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('creates the deduction table through its migration exactly as the entity maps it', async () => {
+	it('creates the deduction table and the policy column through the migration exactly as the entities map them', async () => {
 		const { upQueries } = await dataSource.driver.createSchemaBuilder().log();
 
 		expect(
-			upQueries.map(({ query }) => query).filter((query) => query.includes('time_off_balance_deduction'))
+			upQueries
+				.map(({ query }) => query)
+				.filter((query) => query.includes('time_off_balance_deduction') || query.includes('time_off_policy'))
 		).toEqual([]);
 		const indexes: Row[] = await dataSource.query(`PRAGMA index_list("time_off_balance_deduction")`);
-		expect(indexes.find(({ name }) => name === 'IDX_time_off_balance_deduction_unique')).toMatchObject({ unique: 1 });
+		expect(indexes.find(({ name }) => name === 'IDX_time_off_balance_deduction_unique')).toMatchObject({
+			unique: 1
+		});
 	});
 
 	describe('no balance row: approval works exactly as before', () => {
@@ -272,7 +290,11 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 			await holiday({ date: '2026-11-03', isRecurring: 0 });
 			await holiday({ date: '2001-11-05', isRecurring: 1 });
 			// Another organization's holiday is not this one's.
-			await holiday({ date: '2026-11-04', isRecurring: 0, organizationId: '0f7c1a2e-0000-4000-8000-00000000b002' });
+			await holiday({
+				date: '2026-11-04',
+				isRecurring: 0,
+				organizationId: '0f7c1a2e-0000-4000-8000-00000000b002'
+			});
 			await fileLeave();
 
 			await decide(StatusTypesEnum.APPROVED);
@@ -315,7 +337,40 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 		});
 	});
 
-	describe('a balance without the days left', () => {
+	describe('a balance without the days left, by default', () => {
+		it('approves, takes the full days and leaves the balance overdrawn', async () => {
+			const id = await allocate({ accrued: 6, taken: 2 });
+			await fileLeave();
+
+			await expect(decide(StatusTypesEnum.APPROVED)).resolves.toMatchObject({ status: StatusTypesEnum.APPROVED });
+
+			expect(await statuses()).toEqual({
+				leave: StatusTypesEnum.APPROVED,
+				approval: StatusTypesMapRequestApprovalEnum.APPROVED
+			});
+			expect(await balance(id)).toEqual({ taken: 7, remaining: -1 });
+			expect(await deductions()).toEqual([{ balanceId: id, days: 5, ...scope }]);
+		});
+
+		it('gives the overdrawn days back when the approval is taken back', async () => {
+			const id = await allocate({ accrued: 3 });
+			await fileLeave();
+			await decide(StatusTypesEnum.APPROVED);
+
+			await decide(StatusTypesEnum.DENIED);
+
+			expect(await balance(id)).toEqual({ taken: 0, remaining: 3 });
+			expect(await deductions()).toEqual([]);
+		});
+	});
+
+	describe('a balance without the days left, under a policy that requires sufficient balance', () => {
+		beforeEach(async () => {
+			await dataSource.query(`UPDATE "time_off_policy" SET "requireSufficientBalance" = 1 WHERE "id" = ?`, [
+				POLICY
+			]);
+		});
+
 		it('refuses the approval (400), and writes nothing', async () => {
 			const id = await allocate({ accrued: 6, taken: 2 });
 			await fileLeave();
@@ -341,6 +396,71 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 			expect(await balance(short)).toEqual({ taken: 0, remaining: 1 });
 			expect(await deductions()).toEqual([]);
 		});
+
+		it('approves as usual when the balance has the days', async () => {
+			const id = await allocate({ accrued: 5 });
+			await fileLeave();
+
+			await decide(StatusTypesEnum.APPROVED);
+
+			expect(await balance(id)).toEqual({ taken: 5, remaining: 0 });
+		});
+	});
+
+	describe('the zone the days are read in', () => {
+		/** Monday 2 to Friday 6 November 2026, picked in Sydney (UTC+11): 13:00 UTC the day before each. */
+		const SYDNEY_WEEK = { start: '2026-11-01 13:00:00.000', end: '2026-11-05 13:00:00.000' };
+		const FILER = '0f7c1a2e-0000-4000-8000-00000000c002';
+
+		beforeEach(async () => {
+			// Los Angeles is nineteen hours behind Sydney: read there, the week would run Sunday to Thursday.
+			await dataSource.query(`UPDATE "organization" SET "timeZone" = 'America/Los_Angeles' WHERE "id" = ?`, [
+				ORG
+			]);
+		});
+
+		it('is the zone of the user who filed the request', async () => {
+			await insert('user', { id: FILER, tenantId: TENANT, timeZone: 'Australia/Sydney' });
+			const id = await allocate();
+			await fileLeave({ ...SYDNEY_WEEK, createdByUserId: FILER });
+
+			await decide(StatusTypesEnum.APPROVED);
+
+			expect(await balance(id)).toEqual({ taken: 5, remaining: 15 });
+		});
+
+		it("else the employee's own, for a request of one employee", async () => {
+			await insert('user', { id: USER, tenantId: TENANT, timeZone: 'Australia/Sydney' });
+			const id = await allocate();
+			await fileLeave(SYDNEY_WEEK);
+
+			await decide(StatusTypesEnum.APPROVED);
+
+			expect(await balance(id)).toEqual({ taken: 5, remaining: 15 });
+		});
+
+		it("else the organization's, passing over a zone that is not one", async () => {
+			await insert('user', { id: USER, tenantId: TENANT, timeZone: 'Mars/Olympus_Mons' });
+			const id = await allocate();
+			// Monday 2 to Friday 6 November, picked in Los Angeles (UTC-8): 08:00 UTC each day.
+			await fileLeave({ start: '2026-11-02 08:00:00.000', end: '2026-11-06 08:00:00.000' });
+
+			await decide(StatusTypesEnum.APPROVED);
+
+			expect(await balance(id)).toEqual({ taken: 5, remaining: 15 });
+		});
+	});
+
+	it('approves a request longer than three years without a deduction, and logs why', async () => {
+		const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+		const id = await allocate();
+		await fileLeave({ start: '2026-11-01 23:00:00.000', end: '2030-11-07 23:00:00.000' });
+
+		await expect(decide(StatusTypesEnum.APPROVED)).resolves.toMatchObject({ status: StatusTypesEnum.APPROVED });
+
+		expect(await balance(id)).toEqual({ taken: 0, remaining: 20 });
+		expect(await deductions()).toEqual([]);
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining(`Time-off request ${LEAVE} runs`));
 	});
 
 	describe('taking the approval back', () => {
@@ -424,7 +544,9 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 			const deductionService = new TimeOffBalanceDeductionService();
 
 			await deductionService.settle(dataSource.manager, leave, StatusTypesEnum.APPROVED);
-			await expect(deductionService.settle(dataSource.manager, leave, StatusTypesEnum.APPROVED)).resolves.toBeUndefined();
+			await expect(
+				deductionService.settle(dataSource.manager, leave, StatusTypesEnum.APPROVED)
+			).resolves.toBeUndefined();
 
 			expect(await balance(id)).toEqual({ taken: 5, remaining: 15 });
 			expect(await deductions()).toHaveLength(1);

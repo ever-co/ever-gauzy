@@ -339,7 +339,7 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 				parameters: { employeeId, policyId, year, tenantId, organizationId }
 			},
 			days,
-			spending
+			spending ? 'spend' : 'giveBack'
 		);
 	}
 

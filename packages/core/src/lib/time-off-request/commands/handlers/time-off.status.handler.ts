@@ -74,14 +74,17 @@ export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusComman
 	 * {@link TimeOffBalanceDeductionService}): approving takes the request's working days from the balances its
 	 * employees have for its policy and year, denying an approved request gives back what its approval took, and
 	 * deciding a request the way it is already decided moves nothing. No balance row, no change — approval works as
-	 * before for an organization that never allocated balances. The lock on the leave makes two decisions of the same
-	 * request take turns, so the second sees the first's status and its deduction.
+	 * before for an organization that never allocated balances. A balance that cannot cover the request is overdrawn,
+	 * unless the request's policy requires sufficient balance (`requireSufficientBalance`, off by default). The lock on
+	 * the leave makes two decisions of the same request take turns, so the second sees the first's status and its
+	 * deduction.
 	 *
 	 * @param id The time-off request.
 	 * @param tenantId The caller's tenant.
 	 * @param status The decision.
 	 * @throws NotFoundException when the leave was removed since it was read; neither status is written then.
-	 * @throws BadRequestException when an approval needs more days than a balance has left; nothing is written then.
+	 * @throws BadRequestException when the policy requires sufficient balance and an approval needs more days than a
+	 * balance has left; nothing is written then.
 	 */
 	protected async decide(id: ID, tenantId: ID, status: StatusTypesEnum): Promise<void> {
 		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
@@ -105,8 +108,8 @@ export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusComman
 				throw new NotFoundException('Request time off not found');
 			}
 
-			// The balance first, so an approval it cannot cover is refused (400) before a status is written; the
-			// transaction rolls back whatever was written either way.
+			// The balance first, so an approval a strict policy's balance cannot cover is refused (400) before a status is
+			// written; the transaction rolls back whatever was written either way.
 			await this.timeOffBalanceDeductionService.settle(manager, leave, status);
 
 			await manager.update(TimeOffRequest, { id, tenantId }, { status });

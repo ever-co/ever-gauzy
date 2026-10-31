@@ -5,6 +5,10 @@ import { DatabaseTypeEnum } from '@gauzy/config';
 /** The table this migration creates. */
 const TABLE = 'time_off_balance_deduction';
 
+/** The policy table, and the column this migration adds to it. */
+const POLICY_TABLE = 'time_off_policy';
+const POLICY_COLUMN = 'requireSufficientBalance';
+
 /**
  * TypeORM's own names for the keys and indexes the `TimeOffBalanceDeduction` entity declares (its default naming
  * strategy: a hash of the table and column names), so a generated migration sees no drift.
@@ -49,19 +53,22 @@ const REFERENCES: ReadonlyArray<{ column: ForeignKeyColumn; table: string; onUpd
 ];
 
 /**
- * Creates `time_off_balance_deduction`: the days one approved time-off request took from one leave balance
- * (ever-co/ever-gauzy#10183). Approving a request writes its rows, and taking the approval back gives exactly those
- * days back and removes them, so a reversal never gives back days that were not taken and a repeated approval never
- * takes them twice.
+ * Connects leave balances to the approval flow (ever-co/ever-gauzy#10183):
  *
- * Pure additive: one new table with its keys and indexes. No existing table, column or row is touched, so it is safe
- * on a populated database; the table starts empty, and requests approved before it simply have nothing recorded
- * (their approval took nothing). Every dialect's `up` is guarded by `hasTable`, so a re-run adds nothing; `down`
- * drops the table. Every foreign key cascades on delete: deleting a request or a balance is never refused because of
- * this record.
+ * - creates `time_off_balance_deduction`: the days one approved time-off request took from one leave balance.
+ *   Approving a request writes its rows, and taking the approval back gives exactly those days back and removes them,
+ *   so a reversal never gives back days that were not taken and a repeated approval never takes them twice;
+ * - adds `time_off_policy.requireSufficientBalance` (nullable, default false): the per-policy opt-in that refuses an
+ *   approval the balance cannot cover. Off, the approval goes through and the balance is overdrawn.
+ *
+ * Pure additive: one new table with its keys and indexes, and one nullable column. No existing row is changed, so it
+ * is safe on a populated database; the table starts empty, and requests approved before it simply have nothing
+ * recorded (their approval took nothing). Every dialect's `up` is guarded by `hasTable` / `hasColumn`, so a re-run
+ * adds nothing; `down` drops both. Every foreign key cascades on delete: deleting a request or a balance is never
+ * refused because of this record.
  */
-export class CreateTimeOffBalanceDeductionTable1791000003630 implements MigrationInterface {
-	name = 'CreateTimeOffBalanceDeductionTable1791000003630';
+export class ConnectTimeOffBalancesToApproval1791000003630 implements MigrationInterface {
+	name = 'ConnectTimeOffBalancesToApproval1791000003630';
 
 	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
 	private readonly advisoryLockKey = 1791000003630;
@@ -103,9 +110,15 @@ export class CreateTimeOffBalanceDeductionTable1791000003630 implements Migratio
 			case DatabaseTypeEnum.betterSqlite3:
 			case DatabaseTypeEnum.postgres:
 				await queryRunner.query(`DROP TABLE IF EXISTS "${TABLE}"`);
+				if (await queryRunner.hasColumn(POLICY_TABLE, POLICY_COLUMN)) {
+					await queryRunner.query(`ALTER TABLE "${POLICY_TABLE}" DROP COLUMN "${POLICY_COLUMN}"`);
+				}
 				break;
 			case DatabaseTypeEnum.mysql:
 				await queryRunner.query(`DROP TABLE IF EXISTS \`${TABLE}\``);
+				if (await queryRunner.hasColumn(POLICY_TABLE, POLICY_COLUMN)) {
+					await queryRunner.query(`ALTER TABLE \`${POLICY_TABLE}\` DROP COLUMN \`${POLICY_COLUMN}\``);
+				}
 				break;
 			default:
 				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
@@ -120,6 +133,9 @@ export class CreateTimeOffBalanceDeductionTable1791000003630 implements Migratio
 	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
 		if (queryRunner.isTransactionActive) {
 			await queryRunner.query(`SELECT pg_advisory_xact_lock($1)`, [this.advisoryLockKey]);
+		}
+		if (!(await queryRunner.hasColumn(POLICY_TABLE, POLICY_COLUMN))) {
+			await queryRunner.query(`ALTER TABLE "${POLICY_TABLE}" ADD "${POLICY_COLUMN}" boolean DEFAULT false`);
 		}
 		if (await queryRunner.hasTable(TABLE)) return;
 
@@ -147,6 +163,9 @@ export class CreateTimeOffBalanceDeductionTable1791000003630 implements Migratio
 	 * @param queryRunner
 	 */
 	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+		if (!(await queryRunner.hasColumn(POLICY_TABLE, POLICY_COLUMN))) {
+			await queryRunner.query(`ALTER TABLE "${POLICY_TABLE}" ADD COLUMN "${POLICY_COLUMN}" boolean DEFAULT (0)`);
+		}
 		if (await queryRunner.hasTable(TABLE)) return;
 
 		const foreignKeys = REFERENCES.map(
@@ -179,6 +198,11 @@ export class CreateTimeOffBalanceDeductionTable1791000003630 implements Migratio
 			throw new Error(`${this.name}: could not acquire the MySQL migration lock ${lockName}.`);
 		}
 		try {
+			if (!(await queryRunner.hasColumn(POLICY_TABLE, POLICY_COLUMN))) {
+				await queryRunner.query(
+					`ALTER TABLE \`${POLICY_TABLE}\` ADD \`${POLICY_COLUMN}\` tinyint NULL DEFAULT 0`
+				);
+			}
 			await this.mysqlCreateTable(queryRunner);
 		} finally {
 			await queryRunner.query(`SELECT RELEASE_LOCK(?)`, [lockName]);

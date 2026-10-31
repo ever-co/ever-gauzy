@@ -16,6 +16,15 @@ export interface ITimeOffBalanceRows {
 }
 
 /**
+ * How days move between `remaining` and `taken`:
+ *
+ * - `spend`: taken, but only when the balance has them left (`remaining >= days`); otherwise nothing changes;
+ * - `overdraw`: taken whatever is left, so `remaining` may go below zero (an overdrawn balance);
+ * - `giveBack`: given back, `taken` clamped at zero.
+ */
+export type TakenDaysMove = 'spend' | 'overdraw' | 'giveBack';
+
+/**
  * Where a statement is built: the balance repository, or a transaction's entity manager so the statement is part of
  * that transaction.
  */
@@ -41,13 +50,14 @@ export function balanceRowById(id: string, tenantId: string): ITimeOffBalanceRow
  * approvals cannot lose an update: two read-modify-write pairs would each read the same `taken`, and one deduction
  * would vanish.
  *
- * Spending (`spending: true`) only matches a balance that has the days left; a zero count means "not enough" (or no
- * such balance). Giving days back clamps `taken` at zero, so a double reversal can never push it negative.
+ * `spend` only matches a balance that has the days left; a zero count means "not enough" (or no such balance).
+ * `overdraw` matches the balance whatever is left; a zero count means no such balance. `giveBack` clamps `taken` at
+ * zero, so a double reversal can never push it negative.
  *
  * @param source Where the statement is built: a transaction's manager to make it part of that transaction.
  * @param rows The balance rows the statement may change.
  * @param days How many days to move. Must be greater than zero.
- * @param spending Whether the days are taken (`true`) or given back (`false`).
+ * @param move Whether the days are spent, spent even past what is left, or given back.
  * @returns the number of rows the statement changed (0 or 1 for a single balance).
  * @throws BadRequestException when `days` is not greater than zero.
  */
@@ -55,16 +65,15 @@ export async function moveTakenDays(
 	source: ITimeOffBalanceStatementSource,
 	rows: ITimeOffBalanceRows,
 	days: number,
-	spending: boolean
+	move: TakenDaysMove
 ): Promise<number> {
 	if (!(days > 0)) {
 		// A negative or zero delta would invert the arithmetic and hand out leave for free.
 		throw new BadRequestException('The number of days must be greater than zero');
 	}
 
-	const takenExpression = spending
-		? p(`"taken" + :days`)
-		: p(`CASE WHEN "taken" - :days < 0 THEN 0 ELSE "taken" - :days END`);
+	const takenExpression =
+		move !== 'giveBack' ? p(`"taken" + :days`) : p(`CASE WHEN "taken" - :days < 0 THEN 0 ELSE "taken" - :days END`);
 
 	// Explicit, parameterised conditions rather than an object literal: an UPDATE builder's object form is easy to get
 	// subtly wrong, and this leaves no doubt about what is scoped.
@@ -80,7 +89,7 @@ export async function moveTakenDays(
 		.where(p(rows.where), rows.parameters)
 		.setParameter('days', days);
 
-	if (spending) {
+	if (move === 'spend') {
 		builder.andWhere(p(`"accrued" + "carriedForward" - "taken" - "carriedOut" >= :days`));
 	}
 
