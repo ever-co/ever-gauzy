@@ -265,7 +265,7 @@ Notes:
 -   during the first API start, DB will be automatically seeded with a minimum set of initial data if no users are found.
 -   you can run seed any moment manually (e.g. if you changed entities schemas) with the `yarn seed` command to re-initialize DB (warning: unsafe for production!). The same default-credential check applies: with `NODE_ENV=production` and `DEMO != true` the seed refuses to run unless `DEMO_SUPER_ADMIN_PASSWORD` / `DEMO_ADMIN_PASSWORD` / `DEMO_EMPLOYEE_PASSWORD` are set to non-default values.
 -   it is possible to run generation of extremely large amounts of fake data for demo purposes/testing with `yarn seed:all` (warning: takes ~10 min to complete)
--   to see one log line per API request while developing (method, path, status, duration and request id; headers, bodies and sensitive parameter values are never logged), set `LOG_HTTP_REQUESTS=true` in `.env.local`.
+-   local runs log one line per API request (method, path, status, duration and request id; headers, bodies and sensitive parameter values are never logged): `LOG_HTTP_REQUESTS=true` in `.env.local`. Set it to `false` to silence it; it is off by default everywhere else. It covers the REST routes under `/api`; GraphQL operations on `/graphql` are not logged.
 
 #### Optional / Recommended for Production
 
