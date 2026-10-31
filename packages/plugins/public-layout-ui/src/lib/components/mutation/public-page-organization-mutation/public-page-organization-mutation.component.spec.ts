@@ -30,9 +30,16 @@ class RichTextEditorStubComponent implements ControlValueAccessor {
 	@Input() preset: string;
 	@Input() outputFormat: string;
 	@Input() minHeight: string;
-	writeValue(): void {}
-	registerOnChange(): void {}
-	registerOnTouched(): void {}
+	// The overview editor's value is not under test: the stand-in only has to be a form control.
+	writeValue(): void {
+		/* nothing to render */
+	}
+	registerOnChange(): void {
+		/* never changes */
+	}
+	registerOnTouched(): void {
+		/* never touched */
+	}
 }
 
 @Component({ selector: 'ngx-skills-input', template: '' })
