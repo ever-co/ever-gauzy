@@ -1,6 +1,7 @@
 import { DAO, IDatabaseProvider } from '../../interfaces';
 import { ProviderFactory } from '../databases';
 import { TABLE_NAME_TAGS, TagTO } from '../dto';
+import { toUpdatePayload, warnEmptyUpdate } from '../utils';
 
 export class TagDAO implements DAO<TagTO> {
 	private _provider: IDatabaseProvider;
@@ -24,10 +25,14 @@ export class TagDAO implements DAO<TagTO> {
 			.where('id', id)[0];
 	}
 	public async update(id: number, value: Partial<TagTO>): Promise<void> {
+		const changes = toUpdatePayload(value);
+		if (!changes) {
+			return warnEmptyUpdate('TAG_DAO', id);
+		}
 		await this._provider
 			.connection<TagTO>(TABLE_NAME_TAGS)
 			.where('id', '=', id)
-			.update(value);
+			.update(changes);
 	}
 	public async delete(value: Partial<TagTO>): Promise<void> {
 		await this._provider

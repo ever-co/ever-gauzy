@@ -57,6 +57,26 @@ export type IAiChatUiPreferences = {
 	maximized?: boolean;
 };
 
+/**
+ * Per-user customization of the Quick Actions dialog and its keyboard shortcuts.
+ *
+ * Stored server-side under `IUserUiPreferences.quickActions` as OVERRIDES of the built-in
+ * defaults, so actions and default shortcuts added by a later release still reach the user.
+ * No stored object means "the defaults", exactly as before the feature existed.
+ */
+export type IQuickActionsUiPreferences = {
+	/**
+	 * Action ids in the user's order. Actions are only ever reordered within their group;
+	 * an action missing from the list keeps its default place after the listed ones.
+	 */
+	order?: string[];
+	/**
+	 * Action id → shortcut, in hotkeys-js syntax (`'shift+i'`, `'a+e'`). An empty string means
+	 * the user removed that action's shortcut; an action missing from the map keeps its default.
+	 */
+	shortcuts?: Record<string, string>;
+};
+
 /** A feature's state: a plain JSON object (the API rejects arrays and primitives at the top level). */
 export type UiPreferenceFeature = { [key: string]: unknown };
 
@@ -69,6 +89,7 @@ export type UiPreferenceFeature = { [key: string]: unknown };
  */
 export interface IUserUiPreferences {
 	aiChat?: IAiChatUiPreferences;
+	quickActions?: IQuickActionsUiPreferences;
 	/** Any other feature: ONE plain (non-array) object per feature key. */
 	[feature: string]: UiPreferenceFeature | undefined;
 }
@@ -79,6 +100,7 @@ export interface IUserUiPreferences {
  */
 export interface IUserUiPreferencesUpdateInput {
 	aiChat?: IAiChatUiPreferences | null;
+	quickActions?: IQuickActionsUiPreferences | null;
 	[feature: string]: UiPreferenceFeature | null | undefined;
 }
 

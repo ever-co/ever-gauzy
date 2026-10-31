@@ -12,6 +12,8 @@ import {
 	IOrganizationContactFindInput,
 	IOrganizationProject,
 	IPagination,
+	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
+	ORGANIZATION_CONTACT_DELETE_PERMISSIONS,
 	ITag,
 	PermissionsEnum
 } from '@gauzy/contracts';
@@ -32,6 +34,7 @@ import {
 	OrganizationContactUpdateCommand
 } from './commands';
 import { OrganizationContactService } from './organization-contact.service';
+import { organizationContactCreateOptions } from './organization-contact.permissions';
 import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `ContactDetailInput` declares in the schema. */
@@ -303,16 +306,19 @@ export class OrganizationContactResolver {
 	 * Records a party, with the detail row the delivered handler stores beside it.
 	 *
 	 * The same command the create route dispatches, with the members the delivered body validates and
-	 * the three relations its handler reads. The tenant is stamped by the service from the credential
-	 * and is never stated by the caller.
+	 * the three relations its handler reads, behind the same pair of permissions: `ORG_CONTACT_ADD` or
+	 * `ORG_CONTACT_EDIT`, a caller without the latter creating only. The tenant is stamped by the service
+	 * from the credential and is never stated by the caller.
 	 */
 	@Mutation('createOrganizationContact')
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Permissions(...ORGANIZATION_CONTACT_CREATE_PERMISSIONS)
 	async createOrganizationContact(
 		@Args('input') input: ICreateOrganizationContactInput
 	): Promise<IOrganizationContact> {
-		return await this.commandBus.execute(new OrganizationContactCreateCommand(this.payload(input)));
+		return await this.commandBus.execute(
+			new OrganizationContactCreateCommand(this.payload(input), organizationContactCreateOptions())
+		);
 	}
 
 	/**
@@ -363,14 +369,13 @@ export class OrganizationContactResolver {
 	 * with, so a caller that names one is told it is missing rather than that the removal succeeded.
 	 *
 	 * The route overrides the inherited `CrudController.delete()` only to attach the gate, and states
-	 * `@UseGuards(PermissionGuard)` with `ORG_CONTACT_EDIT` — the same permission its create and edit
-	 * routes carry, because removing a party is the same administrative act as writing one. The field
-	 * states the same pair: without it, any member of the tenant could remove a party here that the
-	 * route refuses them.
+	 * `@UseGuards(PermissionGuard)` with `ORG_CONTACT_DELETE` or `ORG_CONTACT_EDIT` (which has always
+	 * allowed it). The field states the same pair: without it, any member of the tenant could remove a
+	 * party here that the route refuses them.
 	 */
 	@Mutation('deleteOrganizationContact')
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Permissions(...ORGANIZATION_CONTACT_DELETE_PERMISSIONS)
 	async deleteOrganizationContact(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.organizationContactService.delete(id));
 	}
@@ -379,14 +384,14 @@ export class OrganizationContactResolver {
 	 * Withdraws a party: the row is marked rather than removed, and the recovery below reads it back.
 	 *
 	 * The route overrides the inherited `CrudController.softRemove()` only to attach the gate, and
-	 * states `@UseGuards(PermissionGuard)` with `ORG_CONTACT_EDIT` — a withdrawal hides the party from
-	 * every list, which is a removal as far as authority goes. The field states the same pair: the
-	 * delivered route is not the ungated inherited one it used to be, so mirroring it means mirroring
-	 * the gate.
+	 * states `@UseGuards(PermissionGuard)` with the delete's pair, `ORG_CONTACT_DELETE` or
+	 * `ORG_CONTACT_EDIT`: a withdrawal hides the party from every list, which is a removal as far as
+	 * authority goes. The field states the same pair: the delivered route is not the ungated inherited
+	 * one it used to be, so mirroring it means mirroring the gate.
 	 */
 	@Mutation('softDeleteOrganizationContact')
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Permissions(...ORGANIZATION_CONTACT_DELETE_PERMISSIONS)
 	async softDeleteOrganizationContact(@Args('id', { type: () => ID }) id: Id): Promise<IOrganizationContact> {
 		return await this.organizationContactService.softRemove(id);
 	}
@@ -395,13 +400,14 @@ export class OrganizationContactResolver {
 	 * Puts a withdrawn party back, clearing the marker the withdrawal set.
 	 *
 	 * The route overrides the inherited `CrudController.softRecover()` only to attach the gate, and
-	 * states `@UseGuards(PermissionGuard)` with `ORG_CONTACT_EDIT`; the field states the same pair.
+	 * states `@UseGuards(PermissionGuard)` with the withdrawal's pair, `ORG_CONTACT_DELETE` or `ORG_CONTACT_EDIT`;
+	 * the field states the same pair.
 	 * Restoring is what undoes the withdrawal above, so a caller the withdrawal route refuses must not
 	 * be able to reverse one here either.
 	 */
 	@Mutation('recoverOrganizationContact')
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Permissions(...ORGANIZATION_CONTACT_DELETE_PERMISSIONS)
 	async recoverOrganizationContact(@Args('id', { type: () => ID }) id: Id): Promise<IOrganizationContact> {
 		return await this.organizationContactService.softRecover(id);
 	}

@@ -3,7 +3,7 @@ import '../core/entities/internal';
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { LockMode } from '@mikro-orm/core';
+import { IsolationLevel, LockMode } from '@mikro-orm/core';
 import { In } from 'typeorm';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import {
@@ -634,7 +634,10 @@ describe('the answer transaction on each ORM', () => {
 					affected: entity === TimeOffRequest ? 0 : 1
 				}))
 			};
-			const repository = { manager: { transaction: jest.fn(async (work: any) => await work(manager)) } };
+			// `transaction(body)`, or `transaction(isolationLevel, body)`: the body comes last.
+			const repository = {
+				manager: { transaction: jest.fn(async (...args: any[]) => await args[args.length - 1](manager)) }
+			};
 			const service = new RequestApprovalService(
 				repository as any,
 				...(Array.from({ length: 7 }, () => ({})) as [any, any, any, any, any, any, any])
@@ -680,6 +683,29 @@ describe('the answer transaction on each ORM', () => {
 				expect(update).not.toHaveBeenCalled();
 			}
 		);
+
+		// #11608 review: under MySQL's REPEATABLE READ, the leave's charge, read after the leave's lock, would answer
+		// from the snapshot of the slots' read and miss an edit of its employees committed in between.
+		it('on MySQL runs the answer at READ COMMITTED, as PostgreSQL does by default', async () => {
+			(isMySQL as jest.Mock).mockReturnValue(true);
+			const { handler, repository } = typeOrm();
+
+			await handler.execute(new RequestApprovalStatusCommand('approval-1', APPROVED));
+
+			expect(repository.manager.transaction).toHaveBeenCalledWith('READ COMMITTED', expect.any(Function));
+		});
+
+		it.each([
+			['PostgreSQL', isPostgres],
+			['SQLite', null]
+		])('on %s leaves the isolation level to the database', async (_, dialect) => {
+			(dialect as jest.Mock | null)?.mockReturnValue(true);
+			const { handler, repository } = typeOrm();
+
+			await handler.execute(new RequestApprovalStatusCommand('approval-1', APPROVED));
+
+			expect(repository.manager.transaction.mock.calls).toEqual([[expect.any(Function)]]);
+		});
 
 		it('on SQLite takes no row lock: the transaction is serialized there', async () => {
 			const { handler, query } = typeOrm();
@@ -776,9 +802,8 @@ describe('the answer transaction on each ORM', () => {
 					}
 				}
 			};
-			const mikroOrmRepository = {
-				getEntityManager: () => ({ transactional: jest.fn(async (work: any) => work(em)) })
-			};
+			const transactional = jest.fn(async (work: any, ..._options: unknown[]) => work(em));
+			const mikroOrmRepository = { getEntityManager: () => ({ transactional }) };
 			const service = new RequestApprovalService(
 				typeOrmRepository as any,
 				mikroOrmRepository as any,
@@ -788,8 +813,28 @@ describe('the answer transaction on each ORM', () => {
 			jest.spyOn(service, 'findOneByIdString').mockResolvedValue(answered() as any);
 			jest.spyOn(service as any, 'serialize').mockImplementation((row: any) => ({ ...row }));
 			const handler = new RequestApprovalStatusHandler(service);
-			return { handler, em };
+			return { handler, em, transactional };
 		}
+
+		it('on MySQL runs the answer at READ COMMITTED, as PostgreSQL does by default (#11608 review)', async () => {
+			(isMySQL as jest.Mock).mockReturnValue(true);
+			const { handler, transactional } = mikroOrm();
+
+			await handler.execute(new RequestApprovalStatusCommand('approval-1', APPROVED));
+
+			expect(transactional).toHaveBeenCalledWith(expect.any(Function), {
+				isolationLevel: IsolationLevel.READ_COMMITTED
+			});
+		});
+
+		it('on PostgreSQL leaves the isolation level to the database', async () => {
+			(isPostgres as jest.Mock).mockReturnValue(true);
+			const { handler, transactional } = mikroOrm();
+
+			await handler.execute(new RequestApprovalStatusCommand('approval-1', APPROVED));
+
+			expect(transactional).toHaveBeenCalledWith(expect.any(Function), undefined);
+		});
 
 		it.each([
 			['PostgreSQL', isPostgres],

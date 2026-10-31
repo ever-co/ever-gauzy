@@ -69,3 +69,40 @@ export async function lockEntitlement(
 
 	return await query.getOne();
 }
+
+/**
+ * Holds the order line a grant is for until the grant's transaction ends, where the dialect has row locks.
+ *
+ * What serialises two grants of one line when `UQ_entitlement_live_line_grant` is missing (a database whose
+ * existing duplicates kept the migration from creating it): the second grant waits here until the first has
+ * committed, and its read under the lock then finds the first one's right. The row is the order line the right's
+ * `FK_entitlement_order_line` points at, so it exists for every grant the insert would accept; nothing of it is
+ * read. Taken as the transaction's first statement, so that MySQL's REPEATABLE READ snapshot, which its first plain
+ * read takes, comes after the lock. The embedded dialect serialises its writers, so nothing is asked for there, as
+ * in {@link lockEntitlement}.
+ *
+ * @param manager The grant's transaction manager.
+ * @param orderLineId The order line the grant is for.
+ */
+export async function lockOrderLine(manager: EntityManager, orderLineId: ID): Promise<void> {
+	if (isMikroOrmEntitlementManager(manager)) {
+		if (isPostgres() || isMySQL()) {
+			// On the transaction's own connection; knex binds `?` on both dialects.
+			const statement = isMySQL()
+				? 'SELECT `id` FROM `order_line` WHERE `id` = ? FOR UPDATE'
+				: 'SELECT "id" FROM "order_line" WHERE "id" = ? FOR UPDATE';
+			await manager.em
+				.getConnection()
+				.execute(statement, [orderLineId], 'all', manager.em.getTransactionContext());
+		}
+		return;
+	}
+
+	const dialect = manager.connection.options.type as DatabaseTypeEnum;
+
+	if (dialect === DatabaseTypeEnum.postgres) {
+		await manager.query(`SELECT "id" FROM "order_line" WHERE "id" = $1 FOR UPDATE`, [orderLineId]);
+	} else if (dialect === DatabaseTypeEnum.mysql) {
+		await manager.query('SELECT `id` FROM `order_line` WHERE `id` = ? FOR UPDATE', [orderLineId]);
+	}
+}

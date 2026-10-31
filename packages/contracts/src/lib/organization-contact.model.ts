@@ -12,6 +12,7 @@ import {
 } from './base-entity.model';
 import { ITimeLog } from './timesheet.model';
 import { IRelationalImageAsset } from './image-asset.model';
+import { PermissionsEnum } from './role-permission.model';
 
 export interface IOrganizationContactEntityMutationInput {
 	organizationContactId?: ID;
@@ -106,3 +107,22 @@ export enum ContactType {
 	CUSTOMER = 'CUSTOMER',
 	LEAD = 'LEAD'
 }
+
+/**
+ * Creating a contact (ever-co/ever-gauzy#5468): `ORG_CONTACT_ADD`, or `ORG_CONTACT_EDIT`, which has always allowed it.
+ * Any one of them is enough, so nobody who could create a contact before loses it. The API gates the create with
+ * this list and the apps show their "add contact" actions to the same holders.
+ */
+export const ORGANIZATION_CONTACT_CREATE_PERMISSIONS: readonly PermissionsEnum[] = Object.freeze([
+	PermissionsEnum.ORG_CONTACT_ADD,
+	PermissionsEnum.ORG_CONTACT_EDIT
+]);
+
+/**
+ * Deleting or withdrawing a contact (ever-co/ever-gauzy#5468): `ORG_CONTACT_DELETE`, or `ORG_CONTACT_EDIT`, which
+ * has always allowed it. Any one of them is enough.
+ */
+export const ORGANIZATION_CONTACT_DELETE_PERMISSIONS: readonly PermissionsEnum[] = Object.freeze([
+	PermissionsEnum.ORG_CONTACT_DELETE,
+	PermissionsEnum.ORG_CONTACT_EDIT
+]);

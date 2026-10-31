@@ -1,6 +1,7 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { NbDialogRef } from '@nebular/theme';
 import { IImageAsset } from '@gauzy/contracts';
+import { toActualReceipt } from '../expense-receipt.utils';
 
 @Component({
     selector: 'ga-attach-receipt',
@@ -18,7 +19,8 @@ export class AttachReceiptComponent implements OnInit {
 	disable = true;
 
 	ngOnInit() {
-		this.imageUrl = this.currentReceipt;
+		// Without a receipt the dialog shows only the upload prompt, never the old sample invoice.
+		this.imageUrl = toActualReceipt(this.currentReceipt);
 	}
 
 	/**

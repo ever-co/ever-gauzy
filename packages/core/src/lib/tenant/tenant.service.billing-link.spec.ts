@@ -188,6 +188,11 @@ describe('TenantService.onboardTenant — the session id is proof, not a tenant 
 		};
 		// No tenant left behind by an earlier attempt.
 		service.find = jest.fn(async () => []);
+		// Tenant registration open (the default switches).
+		service.registrationPolicyService = {
+			assertTenantRegistrationOpen: jest.fn(async () => undefined),
+			isFirstTenantExceptionOpen: jest.fn(async () => false)
+		};
 		service.importRecords = jest.fn(async () => undefined);
 		service.linkStripeCustomerAtOnboarding = jest.fn(async () => {
 			order.push('link');

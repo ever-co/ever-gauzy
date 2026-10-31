@@ -4,6 +4,7 @@ import {
 	Component,
 	ElementRef,
 	Inject,
+	inject,
 	NgZone,
 	OnDestroy,
 	OnInit,
@@ -14,7 +15,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS } from '@gauzy/constants';
-import { IOSInfo, LanguagesEnum } from '@gauzy/contracts';
+import { IDesktopScreenshotSound, IDesktopScreenshotSoundResult, IOSInfo, LanguagesEnum } from '@gauzy/contracts';
 import {
 	NbAccordionModule,
 	NbButtonModule,
@@ -43,6 +44,7 @@ import { GAUZY_ENV } from '../constants';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { ElectronService } from '../electron/services';
+import { changesScreenshotSound, ScreenshotSoundSettingService } from './screenshot-sound';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { LanguageSelectorComponent } from '../language/language-selector.component';
 import { TimeZoneManager, ToastrNotificationService, ZoneEnum, Store } from '../services';
@@ -51,6 +53,12 @@ import { SwitchThemeComponent } from '../theme-selector/switch-theme/switch-them
 import { ReplacePipe } from '../time-tracker/pipes/replace.pipe';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { SslComponent } from './ssl/ssl.component';
+import {
+	isValidServerHost,
+	normalizeServerHost,
+	SERVER_HOST_INVALID_MESSAGE,
+	ServerHostInputComponent
+} from './server-host';
 import { PermissionManagerComponent } from '../permission-manager/permission-manager.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -88,6 +96,7 @@ import { PermissionManagerComponent } from '../permission-manager/permission-man
 		SpinnerButtonDirective,
 		NgTemplateOutlet,
 		SslComponent,
+		ServerHostInputComponent,
 		AsyncPipe,
 		LowerCasePipe,
 		TitleCasePipe,
@@ -442,7 +451,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		visibleAwOption: true,
 		visibleWakatimeOption: false,
 		preferredLanguage: LanguagesEnum.ENGLISH,
-		enforced: false
+		enforced: false,
+		/** Short tones when the timer starts and stops (#7141): off unless turned on */
+		timerStartStopSound: false,
+		/** The screenshot sound chosen on this computer (#6715), `null` for the bundled sound */
+		customScreenshotSound: null as IDesktopScreenshotSound | null
 	};
 	periodOption = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS;
 	selectedPeriod = 5;
@@ -516,6 +529,9 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	driverOptions = ['better-sqlite', 'sqlite', 'postgres', ...(this.isDesktopTimer || this.isAgent ? ['mysql'] : [])];
 	muted: boolean;
+	/** True while the screenshot sound is being chosen or reset */
+	isChangingScreenshotSound = false;
+	private readonly _screenshotSound = inject(ScreenshotSoundSettingService);
 
 	delayOptions: number[] = [0.5, 1, 3, 24];
 	zones = TimeZoneManager.zones;
@@ -996,6 +1012,46 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		this.muted = !value;
 	}
 
+	/** The screenshot sound chosen on this computer, `null` for the bundled sound (#6715) */
+	get customScreenshotSound(): IDesktopScreenshotSound | null {
+		return this.appSetting?.customScreenshotSound ?? null;
+	}
+
+	/** Asks for a sound file to play when a screenshot is taken on this computer */
+	chooseScreenshotSound(): Promise<void> {
+		return this.changeScreenshotSound(() => this._screenshotSound.choose());
+	}
+
+	/** Goes back to the screenshot sound bundled with the app */
+	resetScreenshotSound(): Promise<void> {
+		return this.changeScreenshotSound(() => this._screenshotSound.reset());
+	}
+
+	/** Turns the timer start and stop tones on or off (#7141) */
+	toggleTimerStartStopSound(value: boolean) {
+		this.updateSetting(value, 'timerStartStopSound');
+	}
+
+	private async changeScreenshotSound(request: () => Promise<IDesktopScreenshotSoundResult>): Promise<void> {
+		if (this.isChangingScreenshotSound) {
+			return;
+		}
+		this.isChangingScreenshotSound = true;
+		try {
+			const result = await request();
+			if (changesScreenshotSound(result)) {
+				// The main process saved it. This page sends its whole copy of the settings back with its next change:
+				// keep that copy in step, or it would put the previous sound back.
+				this._ngZone.run(() => {
+					this.appSetting.customScreenshotSound = result.sound;
+					this.rememberSettings({ customScreenshotSound: result.sound }, this.persistedAppSetting);
+				});
+			}
+		} finally {
+			this._ngZone.run(() => (this.isChangingScreenshotSound = false));
+		}
+	}
+
 	toggleAutoLaunch(value) {
 		this.updateSetting(value, 'autoLaunch');
 		this.electronService.ipcRenderer.send('launch_on_startup', {
@@ -1054,6 +1110,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	public async restartApp(): Promise<void> {
+		// Server apps: never save a "Server Hostname / IP Address" the server cannot use (#7550).
+		if (this.isServerHostInvalid) {
+			this._notifier.error(this._translateService.instant(SERVER_HOST_INVALID_MESSAGE));
+			return;
+		}
 		this._isRestart$.next(true);
 		if (!this.isServer && !this.authSetting.isLogout) {
 			// isRestart=true prevents the settings window from being closed during logout,
@@ -1069,7 +1130,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			});
 		});
 		const newConfig: any = {
-			...this.config
+			...this.config,
+			...(this.isServer && { host: normalizeServerHost(this.config.host) })
 		};
 		if (this.config.timeTrackerWindow) newConfig.awHost = `http://127.0.0.1:${this.config.awPort}`;
 		this.electronService.ipcRenderer.send('save_additional_setting', thConfig);
@@ -1486,12 +1548,38 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		}
 		this.config[type] = value;
 		this.persistedServerConfig[type] = this.cloneSettingValue(value);
-		this.electronService.ipcRenderer.send('update_server_config', this.config);
+		this.electronService.ipcRenderer.send('update_server_config', this.serverConfigToStore());
 		if (showNotification) {
 			this._notifier.success(
 				'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
 			);
 		}
+	}
+
+	/**
+	 * Gauzy Server and Gauzy API Server: the "Server Hostname / IP Address" typed in the settings is
+	 * neither an IP address nor a host name, so Save stays disabled until it is fixed (#7550).
+	 */
+	public get isServerHostInvalid(): boolean {
+		return this.isServer && !isValidServerHost(this.config?.host);
+	}
+
+	/**
+	 * The server config an immediate update (SSL, auto start) stores. Server apps store the host trimmed,
+	 * as Save does, without changing the text being typed; while it is invalid it is left out: the
+	 * stored config is merged, so it keeps the last saved host.
+	 */
+	private serverConfigToStore(): Record<string, unknown> {
+		if (!this.isServer) {
+			return this.config;
+		}
+		const config: Record<string, unknown> = { ...this.config };
+		if (this.isServerHostInvalid) {
+			delete config['host'];
+		} else {
+			config['host'] = normalizeServerHost(this.config.host);
+		}
+		return config;
 	}
 
 	/** Last values sent to the desktop process. Forms may mutate appSetting/config before save. */

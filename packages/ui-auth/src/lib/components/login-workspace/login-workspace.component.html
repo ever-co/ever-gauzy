@@ -26,7 +26,7 @@
 						<span>{{ 'BUTTONS.LOGIN' | translate }}</span>
 					</a>
 				</p>
-				<p class="redirect-link-p">
+				<p *gaRegistrationEnabled class="redirect-link-p">
 					<a [routerLink]="['/auth/register']" class="text-link">{{ 'BUTTONS.REGISTER' | translate }}</a>
 				</p>
 			</section>

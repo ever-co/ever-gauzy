@@ -179,6 +179,30 @@ export function parseIntEnv(
 }
 
 /**
+ * A PEM block header (`-----BEGIN CERTIFICATE-----`). The space it contains is in neither base64 alphabet, so a
+ * base64-encoded value can never match this.
+ */
+const PEM_HEADER = /-----BEGIN [A-Z0-9 ]+-----/;
+
+/**
+ * Reads the database CA certificate from the value of `DB_CA_CERT`.
+ *
+ * The variable has always taken the PEM file base64-encoded (one line, safe in any env file), and still does.
+ * It now also takes the PEM text itself, which is what managed-database platforms hand out: DigitalOcean App
+ * Platform's `${db.CA_CERT}` binding, for example. Before, such a value was base64-"decoded" into garbage and
+ * every TLS connection to the database failed.
+ *
+ * @param value - The raw `DB_CA_CERT` value.
+ * @returns The PEM text of the CA certificate.
+ */
+export const decodeCaCertificate = (value: string): string => {
+	if (PEM_HEADER.test(value)) {
+		return value;
+	}
+	return Buffer.from(value, 'base64').toString('ascii');
+};
+
+/**
  * Gets TLS options for a database connection based on the provided SSL mode.
  *
  * @param {boolean} dbSslMode - The SSL mode for the database connection.
@@ -191,17 +215,16 @@ export const getTlsOptions = (dbSslMode: boolean): TlsOptions | undefined => {
 		return undefined;
 	}
 
-	// Obtain the CA certificate from the environment variable and decode it
-	const base64data = process.env.DB_CA_CERT;
-	if (!base64data) {
+	// Obtain the CA certificate (base64-encoded or PEM, see decodeCaCertificate) from the environment variable
+	const caCertificate = process.env.DB_CA_CERT;
+	if (!caCertificate) {
 		// Handle the case where DB_CA_CERT is not defined
 		console.error('DB_CA_CERT is not defined. TLS options cannot be configured.');
 		return undefined;
 	}
 
 	try {
-		const buff = Buffer.from(base64data, 'base64');
-		const sslCert = buff.toString('ascii');
+		const sslCert = decodeCaCertificate(caCertificate);
 
 		// Return TLS options with the decoded CA certificate
 		return {

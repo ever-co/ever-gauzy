@@ -24,6 +24,7 @@ import { TaskStatusSelectModule } from '../task-status-select/task-status-select
 import { TaskNumberFieldModule } from '../task-number/task-number-field.module';
 import { ProjectSelectModule } from '../../selectors';
 import { TaskSelectModule } from '../task-select/task-select.module';
+import { ContactSelectorModule } from '../../contact-selector/contact-selector.module';
 import { HashNumberPipe } from '../../pipes/hash-number.pipe';
 
 @NgModule({
@@ -51,6 +52,7 @@ import { HashNumberPipe } from '../../pipes/hash-number.pipe';
 		TaskSizeSelectModule,
 		TaskNumberFieldModule,
 		TaskSelectModule,
+		ContactSelectorModule,
 		HashNumberPipe
 	],
 	declarations: [AddTaskDialogComponent],

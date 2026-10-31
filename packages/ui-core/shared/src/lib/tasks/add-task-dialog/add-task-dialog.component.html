@@ -87,6 +87,15 @@
             </nb-select>
           </div>
           <div class="field">
+            <!-- Optional client: narrows the project list below; empty lists every project. Not part of the task. -->
+            <label class="label" for="add-task-client">{{ 'CONTEXT_MENU.CLIENT' | translate }}</label>
+            <ga-contact-selector
+              [formControl]="organizationContactControl"
+              [placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+              labelForId="add-task-client"
+            ></ga-contact-selector>
+          </div>
+          <div class="field">
             <label class="label">{{ 'CONTEXT_MENU.PROJECT' | translate }}</label>
             <ga-project-selector
               formControlName="projectId"
@@ -94,6 +103,7 @@
               [skipGlobalChange]="true"
               [defaultSelected]="false"
               [showAllOption]="false"
+              [organizationContactId]="organizationContactControl.value"
               (onChanged)="selectedProject($event)"
             ></ga-project-selector>
           </div>

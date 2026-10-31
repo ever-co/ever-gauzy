@@ -25,6 +25,19 @@
 					</nb-select>
 				</div>
 			</div>
+			<div gaFilterActions class="col-auto single-filter-wrapper export-action">
+				<button
+					nbButton
+					status="basic"
+					outline
+					class="export-csv-button"
+					[disabled]="!canExport"
+					(click)="exportToCsv()"
+				>
+					<nb-icon icon="download-outline"></nb-icon>
+					{{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
+				</button>
+			</div>
 		</ngx-gauzy-filters>
 	</div>
 	<div class="custom-card-body">

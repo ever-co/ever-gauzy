@@ -1,279 +1,316 @@
 <!--
-	Record-side Documents panel (spec 00 §6.14 R-LNK-02). The whole panel disappears
-	for a user without DOCS_READ or on an organization with FEATURE_DOCUMENTS off —
-	the component decides, not the five host templates.
+Record-side Documents panel (spec 00 §6.14 R-LNK-02). The whole panel disappears
+for a user without DOCS_READ or on an organization with FEATURE_DOCUMENTS off —
+the component decides, not the five host templates.
 
-	The action gates are `*ngIf` over Store checks rather than `*ngxPermissionsOnly`:
-	uploading needs DOCS_CREATE **and** DOCS_UPDATE (a document write followed by a
-	link write), and `ngxPermissionsOnly` with a list is an OR — it would offer the
-	button to someone who can only do half of it and leave the file unattached.
+The action gates are `*ngIf` over Store checks rather than `*ngxPermissionsOnly`:
+uploading needs DOCS_CREATE **and** DOCS_UPDATE (a document write followed by a
+link write), and `ngxPermissionsOnly` with a list is an OR — it would offer the
+button to someone who can only do half of it and leave the file unattached.
 
-	`readonly` hosts (the invoice/estimate VIEW page) additionally drop the
-	attach / upload / unlink affordances — open and download stay.
+`readonly` hosts (the invoice/estimate VIEW page) additionally drop the
+attach / upload / unlink affordances — open and download stay.
 -->
 <!-- Files dropped anywhere on the panel are uploaded and attached, like the file picker. -->
-<section
-	*ngIf="shown"
-	class="docs-links-panel"
-	[class.is-drop-target]="dragActive"
-	[attr.aria-labelledby]="'docs-links-panel-title-' + (entityId || 'pending')"
-	(dragenter)="onDragEnter($event)"
-	(dragover)="onDragOver($event)"
-	(dragleave)="onDragLeave($event)"
-	(drop)="onDrop($event)"
->
-	<header class="docs-links-panel-header">
-		<h6 class="docs-links-panel-title" [id]="'docs-links-panel-title-' + (entityId || 'pending')">
-			{{ 'DOCS.LINKS.PANEL_TITLE' | translate }}
-		</h6>
-		<span class="docs-links-panel-count" *ngIf="links.length || pending.length">{{ links.length || pending.length }}</span>
-
-		<!-- Icon buttons with tooltips: the panel often sits in a narrow column. -->
-		<div class="docs-links-panel-actions">
-			<!-- List rows or grid tiles; offered once there is something to lay out. -->
-			<button
-				*ngIf="links.length || pending.length"
-				type="button"
-				nbButton
-				ghost
-				status="basic"
-				size="small"
-				class="docs-links-icon-button"
-				[attr.aria-label]="(view === 'grid' ? 'DOCS.LINKS.LIST_VIEW' : 'DOCS.LINKS.GRID_VIEW') | translate"
-				[nbTooltip]="(view === 'grid' ? 'DOCS.LINKS.LIST_VIEW' : 'DOCS.LINKS.GRID_VIEW') | translate"
-				(click)="toggleView()"
-			>
-				<nb-icon [icon]="view === 'grid' ? 'list-outline' : 'grid-outline'"></nb-icon>
-			</button>
-
-			<button
-				*ngIf="!readonly && canLink && !isPending"
-				type="button"
-				nbButton
-				ghost
-				status="basic"
-				size="small"
-				class="docs-links-icon-button"
-				[attr.aria-label]="'DOCS.LINKS.ATTACH_EXISTING' | translate"
-				[nbTooltip]="'DOCS.LINKS.ATTACH_EXISTING' | translate"
-				(click)="attachExisting()"
-			>
-				<nb-icon icon="link-2-outline"></nb-icon>
-			</button>
-
-			<button
-				*ngIf="!readonly && canUpload"
-				type="button"
-				nbButton
-				ghost
-				status="basic"
-				size="small"
-				class="docs-links-icon-button"
-				[disabled]="uploading"
-				[attr.aria-label]="'DOCS.LINKS.UPLOAD_NEW' | translate"
-				[nbTooltip]="'DOCS.LINKS.UPLOAD_NEW' | translate"
-				(click)="fileInput.click()"
-			>
-				<nb-icon icon="upload-outline"></nb-icon>
-			</button>
-		</div>
-	</header>
-
-	<!--
-		Visually hidden and driven entirely by the upload buttons (header and empty state),
-		so it carries an id and an explicit accessible name, and is taken out of the tab
-		order: a focusable control the user cannot see is a keyboard trap, and the buttons
-		are the real ones. At the section's level, with no structural directive of its
-		own, so both of those views can reach it; nothing triggers it without upload rights.
-	-->
-	<input
-		#fileInput
-		id="docs-links-panel-file-input"
-		type="file"
-		multiple
-		tabindex="-1"
-		class="docs-links-panel-file"
-		[attr.aria-label]="'DOCS.LINKS.UPLOAD_NEW' | translate"
-		[accept]="accept"
-		(change)="uploadNew(fileInput)"
-	/>
-
-	<!-- A batch upload reports where it is; the list stays readable underneath. -->
-	<div class="docs-links-panel-progress" *ngIf="uploadProgress as progress" role="status">
-		<span class="docs-links-panel-progress-label">
-			{{ 'DOCS.LINKS.UPLOADING' | translate : { current: uploadStep, total: progress.total } }}
-		</span>
-		<span class="docs-links-panel-progress-track" aria-hidden="true">
-			<span class="docs-links-panel-progress-bar" [style.width.%]="(progress.done / progress.total) * 100"></span>
-		</span>
-	</div>
-
-	<!-- Shown while files are dragged over the panel. -->
-	<div class="docs-links-panel-drop" *ngIf="dragActive" aria-hidden="true">
-		<nb-icon icon="cloud-upload-outline"></nb-icon>
-		<span>{{ 'DOCS.LINKS.DROP_HERE' | translate }}</span>
-	</div>
-
-	<div class="docs-links-panel-body" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="small">
-		<div class="docs-links-panel-error" *ngIf="loadError" role="alert">
-			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
-			<span>{{ 'DOCS.LINKS.PANEL_LOAD_ERROR' | translate }}</span>
-			<button type="button" nbButton ghost status="basic" size="tiny" (click)="load()">
-				{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
-			</button>
-		</div>
-
-		<ng-container *ngIf="!loading && !loadError && !links.length && !pending.length">
-			<!-- With upload rights the empty state is the upload target itself. -->
-			<button
-				*ngIf="!readonly && canUpload; else emptyNote"
-				type="button"
-				class="docs-links-panel-empty is-action"
-				[disabled]="uploading"
-				(click)="fileInput.click()"
-			>
-				<span class="docs-links-icon" aria-hidden="true"><nb-icon icon="cloud-upload-outline"></nb-icon></span>
-				<span class="docs-links-panel-empty-text">
-					<span>{{ 'DOCS.LINKS.PANEL_EMPTY' | translate }}</span>
-					<span class="docs-links-panel-empty-hint">{{ (isPending ? 'DOCS.LINKS.PENDING_HINT' : 'DOCS.LINKS.UPLOAD_HINT') | translate }}</span>
+@if (shown) {
+	<section
+		class="docs-links-panel"
+		[class.is-drop-target]="dragActive"
+		[attr.aria-labelledby]="'docs-links-panel-title-' + (entityId || 'pending')"
+		(dragenter)="onDragEnter($event)"
+		(dragover)="onDragOver($event)"
+		(dragleave)="onDragLeave($event)"
+		(drop)="onDrop($event)"
+	>
+		<header class="docs-links-panel-header">
+			<h6 class="docs-links-panel-title" [id]="'docs-links-panel-title-' + (entityId || 'pending')">
+				{{ 'DOCS.LINKS.PANEL_TITLE' | translate }}
+			</h6>
+			@if (links.length || pending.length) {
+				<span class="docs-links-panel-count">{{ links.length || pending.length }}</span>
+			}
+			<!-- Icon buttons with tooltips: the panel often sits in a narrow column. -->
+			<div class="docs-links-panel-actions">
+				<!-- List rows or grid tiles; offered once there is something to lay out. -->
+				@if (links.length || pending.length) {
+					<button
+						type="button"
+						nbButton
+						ghost
+						status="basic"
+						size="small"
+						class="docs-links-icon-button"
+						[attr.aria-label]="
+							(view === 'grid' ? 'DOCS.LINKS.LIST_VIEW' : 'DOCS.LINKS.GRID_VIEW') | translate
+						"
+						[nbTooltip]="(view === 'grid' ? 'DOCS.LINKS.LIST_VIEW' : 'DOCS.LINKS.GRID_VIEW') | translate"
+						(click)="toggleView()"
+					>
+						<nb-icon [icon]="view === 'grid' ? 'list-outline' : 'grid-outline'"></nb-icon>
+					</button>
+				}
+				@if (!readonly && canLink && !isPending) {
+					<button
+						type="button"
+						nbButton
+						ghost
+						status="basic"
+						size="small"
+						class="docs-links-icon-button"
+						[attr.aria-label]="'DOCS.LINKS.ATTACH_EXISTING' | translate"
+						[nbTooltip]="'DOCS.LINKS.ATTACH_EXISTING' | translate"
+						(click)="attachExisting()"
+					>
+						<nb-icon icon="link-2-outline"></nb-icon>
+					</button>
+				}
+				@if (!readonly && canUpload) {
+					<button
+						type="button"
+						nbButton
+						ghost
+						status="basic"
+						size="small"
+						class="docs-links-icon-button"
+						[disabled]="uploading"
+						[attr.aria-label]="'DOCS.LINKS.UPLOAD_NEW' | translate"
+						[nbTooltip]="'DOCS.LINKS.UPLOAD_NEW' | translate"
+						(click)="fileInput.click()"
+					>
+						<nb-icon icon="upload-outline"></nb-icon>
+					</button>
+				}
+			</div>
+		</header>
+		<!--
+    Visually hidden and driven entirely by the upload buttons (header and empty state),
+    so it carries an id and an explicit accessible name, and is taken out of the tab
+    order: a focusable control the user cannot see is a keyboard trap, and the buttons
+    are the real ones. At the section's level, with no structural directive of its
+    own, so both of those views can reach it; nothing triggers it without upload rights.
+    -->
+		<input
+			#fileInput
+			id="docs-links-panel-file-input"
+			type="file"
+			multiple
+			tabindex="-1"
+			class="docs-links-panel-file"
+			[attr.aria-label]="'DOCS.LINKS.UPLOAD_NEW' | translate"
+			[accept]="accept"
+			(change)="uploadNew(fileInput)"
+		/>
+		<!-- A batch upload reports where it is; the list stays readable underneath. -->
+		@if (uploadProgress; as progress) {
+			<div class="docs-links-panel-progress" role="status">
+				<span class="docs-links-panel-progress-label">
+					{{ 'DOCS.LINKS.UPLOADING' | translate: { current: uploadStep, total: progress.total } }}
 				</span>
-			</button>
-			<ng-template #emptyNote>
-				<div class="docs-links-panel-empty">
-					<span class="docs-links-icon" aria-hidden="true"><nb-icon icon="folder-outline"></nb-icon></span>
-					<span>{{ 'DOCS.LINKS.PANEL_EMPTY' | translate }}</span>
+				<span class="docs-links-panel-progress-track" aria-hidden="true">
+					<span
+						class="docs-links-panel-progress-bar"
+						[style.width.%]="(progress.done / progress.total) * 100"
+					></span>
+				</span>
+			</div>
+		}
+		<!-- Shown while files are dragged over the panel. -->
+		@if (dragActive) {
+			<div class="docs-links-panel-drop" aria-hidden="true">
+				<nb-icon icon="cloud-upload-outline"></nb-icon>
+				<span>{{ 'DOCS.LINKS.DROP_HERE' | translate }}</span>
+			</div>
+		}
+		<div class="docs-links-panel-body" [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="small">
+			@if (loadError) {
+				<div class="docs-links-panel-error" role="alert">
+					<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+					<span>{{ 'DOCS.LINKS.PANEL_LOAD_ERROR' | translate }}</span>
+					<button type="button" nbButton ghost status="basic" size="tiny" (click)="load()">
+						{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
+					</button>
 				</div>
-			</ng-template>
-		</ng-container>
-
-		<ul class="docs-links-list" [class.is-grid]="view === 'grid'" *ngIf="links.length">
-			<li
-				class="docs-links-row"
-				*ngFor="let link of links; trackBy: trackByLink"
-				[attr.data-family]="familyOf(link)"
-			>
-				<!-- On a grid tile an image shows itself, once fetched; everything else keeps its icon. -->
-				<span class="docs-links-icon" aria-hidden="true">
-					<img *ngIf="view === 'grid' && thumbOf(link) as thumb; else linkIcon" class="docs-links-thumb" [src]="thumb" alt="" />
-					<ng-template #linkIcon><nb-icon [icon]="iconOf(link)"></nb-icon></ng-template>
-				</span>
-
-				<!-- Its hit area covers the whole row; the row's own buttons sit above it. -->
-				<button
-					type="button"
-					class="docs-links-row-open"
-					[title]="labelOf(link)"
-					(click)="open(link)"
-				>
-					<span class="docs-links-row-name">{{ labelOf(link) }}</span>
-					<span class="docs-links-row-meta" *ngIf="typeOf(link) || sizeOf(link)">
-						<span *ngIf="typeOf(link)">{{ typeOf(link) }}</span>
-						<span *ngIf="typeOf(link) && sizeOf(link)" aria-hidden="true">·</span>
-						<span *ngIf="sizeOf(link)">{{ sizeOf(link) }}</span>
-					</span>
-				</button>
-
-				<span class="docs-links-row-actions">
+			}
+			@if (!loading && !loadError && !links.length && !pending.length) {
+				<!-- With upload rights the empty state is the upload target itself. -->
+				@if (!readonly && canUpload) {
 					<button
-						*ngIf="isImage(link)"
 						type="button"
-						nbButton
-						ghost
-						status="basic"
-						size="tiny"
-						[attr.aria-label]="'DOCS.PREVIEW.TITLE' | translate"
-						[nbTooltip]="'DOCS.PREVIEW.TITLE' | translate"
-						(click)="previewLink(link)"
+						class="docs-links-panel-empty is-action"
+						[disabled]="uploading"
+						(click)="fileInput.click()"
 					>
-						<nb-icon icon="eye-outline"></nb-icon>
-					</button>
-					<button
-						*ngIf="isFile(link)"
-						type="button"
-						nbButton
-						ghost
-						status="basic"
-						size="tiny"
-						[attr.aria-label]="'DOCS.PREVIEW.DOWNLOAD' | translate"
-						[nbTooltip]="'DOCS.PREVIEW.DOWNLOAD' | translate"
-						(click)="download(link)"
-					>
-						<nb-icon icon="download-outline"></nb-icon>
-					</button>
-					<button
-						*ngIf="!readonly && canLink"
-						type="button"
-						nbButton
-						ghost
-						status="basic"
-						size="tiny"
-						class="docs-links-row-remove"
-						[attr.aria-label]="'DOCS.LINKS.REMOVE' | translate"
-						[nbTooltip]="'DOCS.LINKS.REMOVE' | translate"
-						(click)="unlink(link)"
-					>
-						<nb-icon icon="trash-2-outline"></nb-icon>
-					</button>
-				</span>
-			</li>
-		</ul>
-
-		<!-- A deferred panel's held files: uploaded and attached once the record is saved. -->
-		<ng-container *ngIf="pending.length">
-			<ul class="docs-links-list" [class.is-grid]="view === 'grid'">
-				<li
-					class="docs-links-row"
-					*ngFor="let item of pending; trackBy: trackByPending"
-					[attr.data-family]="familyOf(item.row)"
-				>
-					<span class="docs-links-icon" aria-hidden="true">
-						<img
-							*ngIf="view === 'grid' && pendingThumbOf(item.file) as thumb; else pendingIcon"
-							class="docs-links-thumb"
-							[src]="thumb"
-							alt=""
-						/>
-						<ng-template #pendingIcon><nb-icon [icon]="iconOf(item.row)"></nb-icon></ng-template>
-					</span>
-					<span class="docs-links-row-file" [title]="item.file.name">
-						<span class="docs-links-row-name">{{ item.file.name }}</span>
-						<span class="docs-links-row-meta" *ngIf="typeOf(item.row) || sizeOf(item.row)">
-							<span *ngIf="typeOf(item.row)">{{ typeOf(item.row) }}</span>
-							<span *ngIf="typeOf(item.row) && sizeOf(item.row)" aria-hidden="true">·</span>
-							<span *ngIf="sizeOf(item.row)">{{ sizeOf(item.row) }}</span>
+						<span class="docs-links-icon" aria-hidden="true"
+							><nb-icon icon="cloud-upload-outline"></nb-icon
+						></span>
+						<span class="docs-links-panel-empty-text">
+							<span>{{ 'DOCS.LINKS.PANEL_EMPTY' | translate }}</span>
+							<span class="docs-links-panel-empty-hint">{{
+								(isPending ? 'DOCS.LINKS.PENDING_HINT' : 'DOCS.LINKS.UPLOAD_HINT') | translate
+							}}</span>
 						</span>
-					</span>
-					<span class="docs-links-row-actions">
-						<button
-							type="button"
-							nbButton
-							ghost
-							status="basic"
-							size="tiny"
-							[attr.aria-label]="(canPreviewPending(item.file) ? 'DOCS.PREVIEW.TITLE' : 'DOCS.PREVIEW.DOWNLOAD') | translate"
-							[nbTooltip]="(canPreviewPending(item.file) ? 'DOCS.PREVIEW.TITLE' : 'DOCS.PREVIEW.DOWNLOAD') | translate"
-							(click)="previewPending(item.file)"
-						>
-							<!-- Images and PDFs are shown; any other held file is downloaded, never opened as a page. -->
-							<nb-icon [icon]="canPreviewPending(item.file) ? 'eye-outline' : 'download-outline'"></nb-icon>
-						</button>
-						<button
-							type="button"
-							nbButton
-							ghost
-							status="basic"
-							size="tiny"
-							class="docs-links-row-remove"
-							[attr.aria-label]="'DOCS.LINKS.REMOVE_PENDING' | translate"
-							[nbTooltip]="'DOCS.LINKS.REMOVE_PENDING' | translate"
-							(click)="removePending(item.file)"
-						>
-							<nb-icon icon="close-outline"></nb-icon>
-						</button>
-					</span>
-				</li>
-			</ul>
-			<p class="docs-links-panel-pending-note">{{ 'DOCS.LINKS.PENDING_HINT' | translate }}</p>
-		</ng-container>
-	</div>
-</section>
+					</button>
+				} @else {
+					<div class="docs-links-panel-empty">
+						<span class="docs-links-icon" aria-hidden="true"
+							><nb-icon icon="folder-outline"></nb-icon
+						></span>
+						<span>{{ 'DOCS.LINKS.PANEL_EMPTY' | translate }}</span>
+					</div>
+				}
+			}
+			@if (links.length) {
+				<ul class="docs-links-list" [class.is-grid]="view === 'grid'">
+					@for (link of links; track trackByLink($index, link)) {
+						<li class="docs-links-row" [attr.data-family]="familyOf(link)">
+							<!-- On a grid tile an image shows itself, once fetched; everything else keeps its icon. -->
+							<span class="docs-links-icon" aria-hidden="true">
+								@if (view === 'grid' && thumbOf(link); as thumb) {
+									<img class="docs-links-thumb" [src]="thumb" alt="" />
+								} @else {
+									<nb-icon [icon]="iconOf(link)"></nb-icon>
+								}
+							</span>
+							<!-- Its hit area covers the whole row; the row's own buttons sit above it. -->
+							<button
+								type="button"
+								class="docs-links-row-open"
+								[title]="labelOf(link)"
+								(click)="open(link)"
+							>
+								<span class="docs-links-row-name">{{ labelOf(link) }}</span>
+								@if (typeOf(link) || sizeOf(link)) {
+									<span class="docs-links-row-meta">
+										@if (typeOf(link)) {
+											<span>{{ typeOf(link) }}</span>
+										}
+										@if (typeOf(link) && sizeOf(link)) {
+											<span aria-hidden="true">·</span>
+										}
+										@if (sizeOf(link)) {
+											<span>{{ sizeOf(link) }}</span>
+										}
+									</span>
+								}
+							</button>
+							<span class="docs-links-row-actions">
+								@if (isImage(link)) {
+									<button
+										type="button"
+										nbButton
+										ghost
+										status="basic"
+										size="tiny"
+										[attr.aria-label]="'DOCS.PREVIEW.TITLE' | translate"
+										[nbTooltip]="'DOCS.PREVIEW.TITLE' | translate"
+										(click)="previewLink(link)"
+									>
+										<nb-icon icon="eye-outline"></nb-icon>
+									</button>
+								}
+								@if (isFile(link)) {
+									<button
+										type="button"
+										nbButton
+										ghost
+										status="basic"
+										size="tiny"
+										[attr.aria-label]="'DOCS.PREVIEW.DOWNLOAD' | translate"
+										[nbTooltip]="'DOCS.PREVIEW.DOWNLOAD' | translate"
+										(click)="download(link)"
+									>
+										<nb-icon icon="download-outline"></nb-icon>
+									</button>
+								}
+								@if (!readonly && canLink) {
+									<button
+										type="button"
+										nbButton
+										ghost
+										status="basic"
+										size="tiny"
+										class="docs-links-row-remove"
+										[attr.aria-label]="'DOCS.LINKS.REMOVE' | translate"
+										[nbTooltip]="'DOCS.LINKS.REMOVE' | translate"
+										(click)="unlink(link)"
+									>
+										<nb-icon icon="trash-2-outline"></nb-icon>
+									</button>
+								}
+							</span>
+						</li>
+					}
+				</ul>
+			}
+			<!-- A deferred panel's held files: uploaded and attached once the record is saved. -->
+			@if (pending.length) {
+				<ul class="docs-links-list" [class.is-grid]="view === 'grid'">
+					@for (item of pending; track trackByPending($index, item)) {
+						<li class="docs-links-row" [attr.data-family]="familyOf(item.row)">
+							<span class="docs-links-icon" aria-hidden="true">
+								@if (view === 'grid' && pendingThumbOf(item.file); as thumb) {
+									<img class="docs-links-thumb" [src]="thumb" alt="" />
+								} @else {
+									<nb-icon [icon]="iconOf(item.row)"></nb-icon>
+								}
+							</span>
+							<span class="docs-links-row-file" [title]="item.file.name">
+								<span class="docs-links-row-name">{{ item.file.name }}</span>
+								@if (typeOf(item.row) || sizeOf(item.row)) {
+									<span class="docs-links-row-meta">
+										@if (typeOf(item.row)) {
+											<span>{{ typeOf(item.row) }}</span>
+										}
+										@if (typeOf(item.row) && sizeOf(item.row)) {
+											<span aria-hidden="true">·</span>
+										}
+										@if (sizeOf(item.row)) {
+											<span>{{ sizeOf(item.row) }}</span>
+										}
+									</span>
+								}
+							</span>
+							<span class="docs-links-row-actions">
+								<button
+									type="button"
+									nbButton
+									ghost
+									status="basic"
+									size="tiny"
+									[attr.aria-label]="
+										(canPreviewPending(item.file) ? 'DOCS.PREVIEW.TITLE' : 'DOCS.PREVIEW.DOWNLOAD')
+											| translate
+									"
+									[nbTooltip]="
+										(canPreviewPending(item.file) ? 'DOCS.PREVIEW.TITLE' : 'DOCS.PREVIEW.DOWNLOAD')
+											| translate
+									"
+									(click)="previewPending(item.file)"
+								>
+									<!-- Images and PDFs are shown; any other held file is downloaded, never opened as a page. -->
+									<nb-icon
+										[icon]="canPreviewPending(item.file) ? 'eye-outline' : 'download-outline'"
+									></nb-icon>
+								</button>
+								<button
+									type="button"
+									nbButton
+									ghost
+									status="basic"
+									size="tiny"
+									class="docs-links-row-remove"
+									[attr.aria-label]="'DOCS.LINKS.REMOVE_PENDING' | translate"
+									[nbTooltip]="'DOCS.LINKS.REMOVE_PENDING' | translate"
+									(click)="removePending(item.file)"
+								>
+									<nb-icon icon="close-outline"></nb-icon>
+								</button>
+							</span>
+						</li>
+					}
+				</ul>
+				<p class="docs-links-panel-pending-note">{{ 'DOCS.LINKS.PENDING_HINT' | translate }}</p>
+			}
+		</div>
+	</section>
+}

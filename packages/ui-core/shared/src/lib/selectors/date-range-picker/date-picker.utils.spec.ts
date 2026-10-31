@@ -3,12 +3,19 @@ import 'moment-timezone';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {
+	buildPresetRanges,
+	isCustomDateRange,
+	isPreviousRangeDisabled,
+	keepRangeFromToday,
+	PRESET_UNIT_OF_TIME,
+	PRESET_UNITS_OF_TIME,
 	selectUnitOfTime,
 	shiftUTCtoLocal,
 	toLocalPickerMoment,
 	toPickerDateRange,
 	toPickerRange
 } from './date-picker.utils';
+import { DateRangeKeyEnum } from './date-picker.interface';
 
 dayjs.extend(utc);
 
@@ -256,6 +263,10 @@ describe('toPickerRange — the days the user clicked are the days selected', ()
 		const month = toPickerRange(picked, true, 'month');
 		expect(month.startDate.valueOf()).toBe(local(2026, 9, 1));
 		expect(month.endDate.valueOf()).toBe(local(2026, 9, 31, 23, 59, 59, 999));
+
+		const year = toPickerRange(picked, true, 'year');
+		expect(year.startDate.valueOf()).toBe(local(2026, 0, 1));
+		expect(year.endDate.valueOf()).toBe(local(2026, 11, 31, 23, 59, 59, 999));
 	});
 
 	it('gives null while either end is missing', () => {
@@ -303,5 +314,219 @@ describe("toPickerDateRange — the library's ngModel echo becomes the Dates it 
 
 		expect(toPickerDateRange(withMoment)).toBe(withMoment);
 		expect(toPickerDateRange(null)).toBeNull();
+	});
+});
+
+describe('buildPresetRanges — the menu offers whole days, weeks, months and years', () => {
+	// 23 Sep 2026, a Wednesday: mid-week, mid-month and mid-year, so every whole unit is visibly
+	// different from the instant itself. Built from LOCAL parts so the day is the same in every zone.
+	const NOW = moment(local(2026, 8, 23, 15, 30));
+	const day = (value: moment.Moment): string => value.format('YYYY-MM-DD');
+	const span = ([start, end]: [moment.Moment, moment.Moment]): [string, string] => [day(start), day(end)];
+
+	it('lists every unit of an unlocked picker, current before last, in menu order', () => {
+		const ranges = buildPresetRanges(PRESET_UNITS_OF_TIME, NOW);
+
+		expect(Object.keys(ranges)).toEqual([
+			DateRangeKeyEnum.TODAY,
+			DateRangeKeyEnum.YESTERDAY,
+			DateRangeKeyEnum.CURRENT_WEEK,
+			DateRangeKeyEnum.LAST_WEEK,
+			DateRangeKeyEnum.CURRENT_MONTH,
+			DateRangeKeyEnum.LAST_MONTH,
+			DateRangeKeyEnum.CURRENT_YEAR,
+			DateRangeKeyEnum.LAST_YEAR
+		]);
+	});
+
+	it('"Current Year" is 1 Jan to 31 Dec of this year, "Last Year" the whole year before', () => {
+		const ranges = buildPresetRanges(PRESET_UNITS_OF_TIME, NOW);
+
+		expect(span(ranges[DateRangeKeyEnum.CURRENT_YEAR])).toEqual(['2026-01-01', '2026-12-31']);
+		expect(span(ranges[DateRangeKeyEnum.LAST_YEAR])).toEqual(['2025-01-01', '2025-12-31']);
+		expect(ranges[DateRangeKeyEnum.CURRENT_YEAR][0].valueOf()).toBe(local(2026, 0, 1));
+		expect(ranges[DateRangeKeyEnum.CURRENT_YEAR][1].valueOf()).toBe(local(2026, 11, 31, 23, 59, 59, 999));
+	});
+
+	it('keeps the day, week and month presets the menu always offered', () => {
+		const ranges = buildPresetRanges(PRESET_UNITS_OF_TIME, NOW);
+		// The first day of the week follows the moment locale, so the expectation asks moment for it.
+		const weekStart = NOW.clone().startOf('week');
+
+		expect(span(ranges[DateRangeKeyEnum.TODAY])).toEqual(['2026-09-23', '2026-09-23']);
+		expect(span(ranges[DateRangeKeyEnum.YESTERDAY])).toEqual(['2026-09-22', '2026-09-22']);
+		expect(span(ranges[DateRangeKeyEnum.CURRENT_WEEK])).toEqual([
+			day(weekStart),
+			day(weekStart.clone().endOf('week'))
+		]);
+		expect(span(ranges[DateRangeKeyEnum.LAST_WEEK])).toEqual([
+			day(weekStart.clone().subtract(1, 'week')),
+			day(weekStart.clone().subtract(1, 'week').endOf('week'))
+		]);
+		expect(span(ranges[DateRangeKeyEnum.CURRENT_MONTH])).toEqual(['2026-09-01', '2026-09-30']);
+		expect(span(ranges[DateRangeKeyEnum.LAST_MONTH])).toEqual(['2026-08-01', '2026-08-31']);
+	});
+
+	it('steps back a whole unit even from the last day of a long month', () => {
+		const ranges = buildPresetRanges(['month'], moment(local(2026, 2, 31, 12)));
+
+		expect(span(ranges[DateRangeKeyEnum.LAST_MONTH])).toEqual(['2026-02-01', '2026-02-28']);
+	});
+
+	it.each([['day'], ['week'], ['month'], ['year']])('a picker locked to %s offers only that unit', (unit) => {
+		const ranges = buildPresetRanges([unit as moment.unitOfTime.Base], NOW);
+
+		expect(Object.keys(ranges)).toHaveLength(2);
+		expect(Object.keys(ranges).every((label) => PRESET_UNIT_OF_TIME[label as DateRangeKeyEnum] === unit)).toBe(
+			true
+		);
+	});
+
+	it('skips a unit that has no presets', () => {
+		expect(buildPresetRanges(['hour'], NOW)).toEqual({});
+	});
+
+	describe('where future dates are not allowed', () => {
+		const ranges = buildPresetRanges(PRESET_UNITS_OF_TIME, NOW, NOW.clone());
+
+		it('ends the current week, month and year today', () => {
+			expect(span(ranges[DateRangeKeyEnum.CURRENT_YEAR])).toEqual(['2026-01-01', '2026-09-23']);
+			expect(span(ranges[DateRangeKeyEnum.CURRENT_MONTH])).toEqual(['2026-09-01', '2026-09-23']);
+			expect(ranges[DateRangeKeyEnum.CURRENT_WEEK][1].valueOf()).toBe(NOW.valueOf());
+		});
+
+		it('leaves the ranges that are already over untouched', () => {
+			expect(span(ranges[DateRangeKeyEnum.LAST_YEAR])).toEqual(['2025-01-01', '2025-12-31']);
+			expect(span(ranges[DateRangeKeyEnum.LAST_MONTH])).toEqual(['2026-08-01', '2026-08-31']);
+			expect(span(ranges[DateRangeKeyEnum.YESTERDAY])).toEqual(['2026-09-22', '2026-09-22']);
+		});
+	});
+
+	describe('where past dates are not allowed', () => {
+		const ranges = buildPresetRanges(PRESET_UNITS_OF_TIME, NOW, null, NOW.clone());
+
+		it('leaves out the presets that are already over, so none can end before it starts', () => {
+			expect(Object.keys(ranges)).toEqual([
+				DateRangeKeyEnum.TODAY,
+				DateRangeKeyEnum.CURRENT_WEEK,
+				DateRangeKeyEnum.CURRENT_MONTH,
+				DateRangeKeyEnum.CURRENT_YEAR
+			]);
+		});
+
+		it('starts the current day, week, month and year now, and still ends them on their last day', () => {
+			expect(ranges[DateRangeKeyEnum.CURRENT_YEAR][0].valueOf()).toBe(NOW.valueOf());
+			expect(span(ranges[DateRangeKeyEnum.CURRENT_YEAR])).toEqual(['2026-09-23', '2026-12-31']);
+			expect(span(ranges[DateRangeKeyEnum.TODAY])).toEqual(['2026-09-23', '2026-09-23']);
+			for (const [start, end] of Object.values(ranges)) {
+				expect(start.isAfter(end)).toBe(false);
+			}
+		});
+
+		it('with future dates disallowed too, the current presets are just today', () => {
+			const today = buildPresetRanges(PRESET_UNITS_OF_TIME, NOW, NOW.clone(), NOW.clone());
+
+			expect(Object.values(today).map(span)).toEqual(Array(4).fill(['2026-09-23', '2026-09-23']));
+		});
+
+		it('offers no preset rather than one that ends before it starts, when the limits leave nothing', () => {
+			// `minDate` an hour after `maxDate`, on the same day.
+			const ranges = buildPresetRanges(['day'], NOW, NOW.clone(), NOW.clone().add(1, 'hour'));
+
+			expect(ranges).toEqual({});
+		});
+	});
+});
+
+describe('isPreviousRangeDisabled — "Previous" stops at today where past dates are disallowed', () => {
+	const NOW = moment(local(2026, 9, 23, 15, 30));
+	const startingOn = (value: number) => ({ startDate: new Date(value) });
+
+	it('stops once the range starts today, or earlier, where past dates are disallowed', () => {
+		expect(isPreviousRangeDisabled(startingOn(local(2026, 9, 23)), true, NOW)).toBe(true);
+		expect(isPreviousRangeDisabled(startingOn(local(2026, 0, 1)), true, NOW)).toBe(true);
+	});
+
+	it('still steps back from a range that starts after today', () => {
+		expect(isPreviousRangeDisabled(startingOn(local(2026, 9, 26)), true, NOW)).toBe(false);
+	});
+
+	it('always steps back where past dates are allowed', () => {
+		expect(isPreviousRangeDisabled(startingOn(local(2026, 9, 23)), false, NOW)).toBe(false);
+	});
+
+	it('is disabled while no range is selected, like "Next"', () => {
+		expect(isPreviousRangeDisabled(null, false, NOW)).toBe(true);
+		expect(isPreviousRangeDisabled({ startDate: null }, false, NOW)).toBe(true);
+	});
+});
+
+describe('keepRangeFromToday — a step back never crosses today where past dates are disallowed', () => {
+	const NOW = moment(local(2026, 9, 23, 15, 30));
+	// From next week (26 Oct - 1 Nov), "Previous" steps to this week: 19 - 25 Oct.
+	const thisWeek = { startDate: new Date(local(2026, 9, 19)), endDate: new Date(local(2026, 9, 25, 23, 59)) };
+
+	it('starts the range today instead of in the past, keeping its end', () => {
+		const kept = keepRangeFromToday(thisWeek, true, NOW);
+
+		expect(kept.startDate.getTime()).toBe(local(2026, 9, 23));
+		expect(kept.endDate).toBe(thisWeek.endDate);
+	});
+
+	it('leaves the range as it is where past dates are allowed', () => {
+		expect(keepRangeFromToday(thisWeek, false, NOW)).toBe(thisWeek);
+	});
+
+	it('leaves a range that starts today or later as it is', () => {
+		const fromToday = { ...thisWeek, startDate: new Date(local(2026, 9, 23)) };
+
+		expect(keepRangeFromToday(fromToday, true, NOW)).toBe(fromToday);
+	});
+});
+
+describe('isCustomDateRange — presets step by their unit, other ranges by their length', () => {
+	// 23 Oct 2026, with future dates disallowed: "Current Month" ends today.
+	const NOW = moment(local(2026, 9, 23, 15, 30));
+	const presets = buildPresetRanges(PRESET_UNITS_OF_TIME, NOW, NOW.clone());
+	const range = (start: moment.Moment, end: moment.Moment) => ({ startDate: start, endDate: end });
+
+	it('a range equal to a preset is not custom', () => {
+		const [start, end] = presets[DateRangeKeyEnum.CURRENT_MONTH];
+
+		expect(isCustomDateRange(range(start, end), presets, false)).toBe(false);
+	});
+
+	it('any other range is custom', () => {
+		expect(isCustomDateRange(range(moment(local(2026, 9, 3)), moment(local(2026, 9, 9))), presets, false)).toBe(
+			true
+		);
+	});
+
+	it('a range is custom while the picker has no presets yet', () => {
+		expect(isCustomDateRange(range(NOW.clone(), NOW.clone()), undefined, false)).toBe(true);
+	});
+
+	it('compares days, so the library date objects the picker keeps its presets as work too', () => {
+		const libraryPresets = {
+			[DateRangeKeyEnum.TODAY]: [dayjs(local(2026, 9, 23)), dayjs(local(2026, 9, 23))]
+		} as Record<string, [dayjs.Dayjs, dayjs.Dayjs]>;
+
+		expect(isCustomDateRange(range(NOW.clone(), NOW.clone()), libraryPresets, false)).toBe(false);
+	});
+
+	it("a locked picker's whole month is never custom, though the current month preset ends today", () => {
+		// What `toPickerRange` makes of a pick on a month-locked picker: the whole of October.
+		const october = range(NOW.clone().startOf('month'), NOW.clone().endOf('month'));
+
+		expect(isCustomDateRange(october, presets, false)).toBe(true);
+		expect(isCustomDateRange(october, presets, true)).toBe(false);
+	});
+});
+
+describe('PRESET_UNIT_OF_TIME — picking a preset sets the unit the arrows step by', () => {
+	it('maps every preset label, the year presets to year', () => {
+		expect(Object.keys(PRESET_UNIT_OF_TIME).sort()).toEqual(Object.values(DateRangeKeyEnum).sort());
+		expect(PRESET_UNIT_OF_TIME[DateRangeKeyEnum.CURRENT_YEAR]).toBe('year');
+		expect(PRESET_UNIT_OF_TIME[DateRangeKeyEnum.LAST_YEAR]).toBe('year');
 	});
 });

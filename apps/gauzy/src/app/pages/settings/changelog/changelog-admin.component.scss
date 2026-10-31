@@ -1,0 +1,203 @@
+// Same vocabulary as the other Settings pages (OAuth clients, File storage): 12px body, hairline panels, no
+// shadows. Every custom property carries a fallback: `--gauzy-*` is undefined in material-light / -dark.
+$divider: 1px solid var(--gauzy-border-default-color, var(--border-basic-color-3));
+$panel: inset 0 0 0 1px var(--gauzy-border-default-color, var(--border-basic-color-3));
+$muted: var(--text-hint-color);
+
+:host {
+  // `.card-scroll` pins the card to the page frame; the body is the one scroll area.
+  nb-card.card-scroll > nb-card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow: auto;
+  }
+}
+
+.header {
+  .page-title {
+    margin: 0;
+  }
+
+  .subtitle {
+    max-width: 48rem;
+    margin: 0.25rem 0 0;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.125rem;
+    color: $muted;
+  }
+}
+
+.menu-setting {
+  font-weight: 400;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.section + .section {
+  margin-top: 1.75rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+
+  button[nbButton] {
+    flex: 0 0 auto;
+    text-transform: none;
+  }
+}
+
+.section-copy {
+  min-width: 0;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.section-hint {
+  margin: 0.125rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.125rem;
+  color: $muted;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem 1rem;
+  border-radius: var(--gauzy-radius-sm, 0.5rem);
+  box-shadow: $panel;
+  text-align: center;
+}
+
+.state-title,
+.state-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.state-hint {
+  color: $muted;
+}
+
+.table-panel {
+  overflow-x: auto;
+  border-radius: var(--gauzy-radius-sm, 0.5rem);
+  box-shadow: $panel;
+}
+
+.entries-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+
+  th,
+  td {
+    padding: 0.625rem 1rem;
+    text-align: start;
+    vertical-align: top;
+  }
+
+  th {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: $muted;
+  }
+
+  td {
+    font-weight: 400;
+    line-height: 1.125rem;
+  }
+
+  tbody tr {
+    border-top: $divider;
+
+    &:hover {
+      background: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.06));
+    }
+  }
+
+  .date-col {
+    width: 8rem;
+    white-space: nowrap;
+  }
+
+  .actions-col {
+    width: 6rem;
+    white-space: nowrap;
+    text-align: end;
+  }
+}
+
+.entry-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.entry-icon {
+  flex: 0 0 auto;
+  font-size: 1rem;
+  color: var(--color-primary-default);
+}
+
+.entry-link {
+  display: inline-flex;
+  color: $muted;
+
+  nb-icon {
+    font-size: 0.875rem;
+  }
+}
+
+.entry-content {
+  margin-top: 0.25rem;
+  max-width: 48rem;
+  color: $muted;
+  overflow-wrap: anywhere;
+}
+
+.deleted-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-radius: var(--gauzy-radius-sm, 0.5rem);
+  box-shadow: $panel;
+}
+
+.deleted-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+
+  & + & {
+    border-top: $divider;
+  }
+
+  button[nbButton] {
+    text-transform: none;
+  }
+}

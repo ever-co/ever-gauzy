@@ -32,7 +32,9 @@ import { DocumentsService } from '../services/documents.service';
 				<div class="docs-dialog-field">
 					<label class="label">{{ 'DOCS.DETAIL.CATEGORIES' | translate }}</label>
 					<nb-select multiple fullWidth size="small" [(selected)]="categoryIds">
-						<nb-option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</nb-option>
+						@for (category of categories; track category) {
+							<nb-option [value]="category.id">{{ category.name }}</nb-option>
+						}
 					</nb-select>
 					<div class="hint">{{ 'DOCS.BULK.SET_CATEGORIES_HINT' | translate }}</div>
 				</div>

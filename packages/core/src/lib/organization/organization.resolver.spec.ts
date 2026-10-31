@@ -332,6 +332,23 @@ describe('OrganizationResolver — the SDL declares the capabilities the REST ro
 		expect(update).toMatch(/show_employees_count: Boolean/);
 		expect(update).toMatch(/id: ID!/);
 	});
+
+	it('lets a caller turn screen capture on, with the acknowledgement an EEA/UK organization needs (#9872)', () => {
+		const create = printed.match(/input CreateOrganizationInput \{([\s\S]*?)\n\}/)?.[1] ?? '';
+		const update = printed.match(/input UpdateOrganizationInput \{([\s\S]*?)\n\}/)?.[1] ?? '';
+		const acknowledgement =
+			printed.match(/input ScreenshotCaptureAcknowledgementInput \{([\s\S]*?)\n\}/)?.[1] ?? '';
+
+		for (const body of [create, update]) {
+			expect(body).toMatch(/allowScreenshotCapture: Boolean\n/);
+			expect(body).toMatch(/screenshotCaptureAcknowledgement: ScreenshotCaptureAcknowledgementInput/);
+			// The record of the acknowledgement is the server's to write.
+			expect(body).not.toMatch(/screenshotCaptureAcknowledgedAt|screenshotCaptureAcknowledgedByUserId/);
+		}
+		expect(acknowledgement).toMatch(/lawfulBasis: Boolean/);
+		expect(acknowledgement).toMatch(/employeeNotice: Boolean/);
+		expect(acknowledgement).toMatch(/worksCouncil: Boolean/);
+	});
 });
 
 describe('OrganizationResolver — the connection contract', () => {

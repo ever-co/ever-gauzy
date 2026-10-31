@@ -14,3 +14,5 @@ export * from './lib/plugin-marketplace.window';
 export * from './lib/provider-sign-in';
 export * from './lib/screen-capture-notification';
 export * from './lib/utils/desktop-window-utils';
+export * from './lib/utils/window-position';
+export * from './lib/utils/window-position-memory';

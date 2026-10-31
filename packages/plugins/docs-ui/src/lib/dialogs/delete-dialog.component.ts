@@ -40,15 +40,17 @@ export interface IDocsDeleteDialogResult {
 			<nb-card-header>{{ 'DOCS.DIALOGS.DELETE_TITLE' | translate }}</nb-card-header>
 			<nb-card-body>
 				<p class="docs-delete-body">
-					{{ 'DOCS.DIALOGS.DELETE_BODY' | translate : { name: target?.name || '' } }}
+					{{ 'DOCS.DIALOGS.DELETE_BODY' | translate: { name: target?.name || '' } }}
 				</p>
 				<!-- The radios exist only when there is actually a subtree to decide about. -->
-				<nb-radio-group *ngIf="hasChildren" [(ngModel)]="strategy" name="docs-delete-strategy">
-					<nb-radio value="subtree">{{ 'DOCS.DIALOGS.DELETE_SUBTREE_OPTION' | translate }}</nb-radio>
-					<nb-radio value="promote-children">
-						{{ 'DOCS.DIALOGS.DELETE_PROMOTE_OPTION' | translate }}
-					</nb-radio>
-				</nb-radio-group>
+				@if (hasChildren) {
+					<nb-radio-group [(ngModel)]="strategy" name="docs-delete-strategy">
+						<nb-radio value="subtree">{{ 'DOCS.DIALOGS.DELETE_SUBTREE_OPTION' | translate }}</nb-radio>
+						<nb-radio value="promote-children">
+							{{ 'DOCS.DIALOGS.DELETE_PROMOTE_OPTION' | translate }}
+						</nb-radio>
+					</nb-radio-group>
+				}
 			</nb-card-body>
 			<nb-card-footer class="docs-dialog-footer">
 				<button nbButton ghost (click)="cancel()">{{ 'DOCS.UPLOAD.CANCEL' | translate }}</button>

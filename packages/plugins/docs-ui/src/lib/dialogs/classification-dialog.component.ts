@@ -41,23 +41,27 @@ export interface IDocsUploadDialogResult {
 			<nb-card-header>{{ 'DOCS.UPLOAD.DIALOG_TITLE' | translate }}</nb-card-header>
 			<nb-card-body>
 				<div class="docs-dialog-field">
-					<label class="label">{{ 'DOCS.UPLOAD.FILES' | translate : { count: files.length } }}</label>
+					<label class="label">{{ 'DOCS.UPLOAD.FILES' | translate: { count: files.length } }}</label>
 					<div class="docs-upload-files">
-						<div class="docs-upload-file" *ngFor="let file of files; trackBy: trackByFile">
-							<span class="docs-upload-file-name" [nbTooltip]="file.name">{{ file.name }}</span>
-							<span class="docs-upload-file-size">{{ humanize(file.size) }}</span>
-							<button
-								nbButton
-								ghost
-								size="tiny"
-								[attr.aria-label]="'DOCS.UPLOAD.REMOVE_FILE' | translate : { name: file.name }"
-								[nbTooltip]="'DOCS.UPLOAD.REMOVE_FILE' | translate : { name: file.name }"
-								(click)="removeFile(file)"
-							>
-								<nb-icon icon="close-outline" size="tiny"></nb-icon>
-							</button>
-						</div>
-						<div class="hint" *ngIf="!files.length">{{ 'DOCS.UPLOAD.NO_FILES' | translate }}</div>
+						@for (file of files; track trackByFile($index, file)) {
+							<div class="docs-upload-file">
+								<span class="docs-upload-file-name" [nbTooltip]="file.name">{{ file.name }}</span>
+								<span class="docs-upload-file-size">{{ humanize(file.size) }}</span>
+								<button
+									nbButton
+									ghost
+									size="tiny"
+									[attr.aria-label]="'DOCS.UPLOAD.REMOVE_FILE' | translate: { name: file.name }"
+									[nbTooltip]="'DOCS.UPLOAD.REMOVE_FILE' | translate: { name: file.name }"
+									(click)="removeFile(file)"
+								>
+									<nb-icon icon="close-outline" size="tiny"></nb-icon>
+								</button>
+							</div>
+						}
+						@if (!files.length) {
+							<div class="hint">{{ 'DOCS.UPLOAD.NO_FILES' | translate }}</div>
+						}
 					</div>
 				</div>
 				<div class="docs-dialog-field">
@@ -70,7 +74,9 @@ export interface IDocsUploadDialogResult {
 				<div class="docs-dialog-field">
 					<label class="label">{{ 'DOCS.UPLOAD.CATEGORIES' | translate }}</label>
 					<nb-select multiple fullWidth size="small" [(selected)]="categoryIds">
-						<nb-option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</nb-option>
+						@for (category of categories; track category) {
+							<nb-option [value]="category.id">{{ category.name }}</nb-option>
+						}
 					</nb-select>
 				</div>
 				<div class="docs-dialog-field">
@@ -82,12 +88,14 @@ export interface IDocsUploadDialogResult {
 						(selectedTagsEvent)="tags = $event"
 					></ga-tags-color-input>
 				</div>
-				<div class="docs-dialog-field" *ngIf="aiEnabled">
-					<nb-toggle [(checked)]="classifyWithAi" labelPosition="end">
-						{{ 'DOCS.UPLOAD.AI_CLASSIFY_TOGGLE' | translate }}
-					</nb-toggle>
-					<div class="hint">{{ 'DOCS.UPLOAD.AI_CLASSIFY_HINT' | translate }}</div>
-				</div>
+				@if (aiEnabled) {
+					<div class="docs-dialog-field">
+						<nb-toggle [(checked)]="classifyWithAi" labelPosition="end">
+							{{ 'DOCS.UPLOAD.AI_CLASSIFY_TOGGLE' | translate }}
+						</nb-toggle>
+						<div class="hint">{{ 'DOCS.UPLOAD.AI_CLASSIFY_HINT' | translate }}</div>
+					</div>
+				}
 				<div class="docs-dialog-field">
 					<nb-toggle [(checked)]="importToKnowledge" labelPosition="end">
 						{{ 'DOCS.UPLOAD.KNOWLEDGE_TOGGLE' | translate }}
@@ -97,8 +105,12 @@ export interface IDocsUploadDialogResult {
 				<div class="docs-dialog-field">
 					<label class="label">{{ 'DOCS.UPLOAD.VISIBILITY' | translate }}</label>
 					<nb-select fullWidth size="small" [(selected)]="visibility">
-						<nb-option [value]="visibilityEnum.ORGANIZATION">{{ 'DOCS.VISIBILITY.ORGANIZATION' | translate }}</nb-option>
-						<nb-option [value]="visibilityEnum.PRIVATE">{{ 'DOCS.VISIBILITY.PRIVATE' | translate }}</nb-option>
+						<nb-option [value]="visibilityEnum.ORGANIZATION">{{
+							'DOCS.VISIBILITY.ORGANIZATION' | translate
+						}}</nb-option>
+						<nb-option [value]="visibilityEnum.PRIVATE">{{
+							'DOCS.VISIBILITY.PRIVATE' | translate
+						}}</nb-option>
 					</nb-select>
 				</div>
 			</nb-card-body>

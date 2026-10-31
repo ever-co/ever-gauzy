@@ -109,6 +109,8 @@ import {
 	OrganizationTeamJoinRequest,
 	OrganizationVendor,
 	Payment,
+	PayrollItem,
+	PayrollRun,
 	Pipeline,
 	PipelineStage,
 	Product,
@@ -314,6 +316,8 @@ import { MikroOrmOrganizationRepository } from '../../organization/repository/mi
 import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
 import { MikroOrmPaymentRepository } from '../../payment/repository/mikro-orm-payment.repository';
 import { TypeOrmPaymentRepository } from '../../payment/repository/type-orm-payment.repository';
+import { TypeOrmPayrollItemRepository } from '../../payroll-item/repository/type-orm-payroll-item.repository';
+import { TypeOrmPayrollRunRepository } from '../../payroll-run/repository/type-orm-payroll-run.repository';
 import { MikroOrmPipelineStageRepository } from '../../pipeline-stage/repository/mikro-orm-pipeline-stage.repository';
 import { TypeOrmPipelineStageRepository } from '../../pipeline-stage/repository/type-orm-pipeline-stage.repository';
 import { MikroOrmPipelineRepository } from '../../pipeline/repository/mikro-orm-pipeline.repository';
@@ -845,6 +849,12 @@ export class RepositoriesService implements OnModuleInit {
 		public typeOrmPaymentRepository: TypeOrmPaymentRepository,
 
 		mikroOrmPaymentRepository: MikroOrmPaymentRepository,
+
+		@InjectRepository(PayrollRun)
+		public typeOrmPayrollRunRepository: TypeOrmPayrollRunRepository,
+
+		@InjectRepository(PayrollItem)
+		public typeOrmPayrollItemRepository: TypeOrmPayrollItemRepository,
 
 		@InjectRepository(Pipeline)
 		public typeOrmPipelineRepository: TypeOrmPipelineRepository,
@@ -1744,6 +1754,20 @@ export class RepositoriesService implements OnModuleInit {
 			 */
 			{
 				repository: this.typeOrmPaymentRepository
+			},
+			/*
+			 * Payroll & Related Entities
+			 * A run before its line items: an item's `payrollRunId` (and `employeeId`) is remapped through the import
+			 * record of a row imported earlier. Payroll rows always carry their tenant and organization, so a row
+			 * without either is never a shared default to stamp into the exporting tenant's archive.
+			 */
+			{
+				repository: this.typeOrmPayrollRunRepository,
+				excludeGlobalDefaults: true
+			},
+			{
+				repository: this.typeOrmPayrollItemRepository,
+				excludeGlobalDefaults: true
 			},
 			/*
 			 * Request Approval & Related Entities

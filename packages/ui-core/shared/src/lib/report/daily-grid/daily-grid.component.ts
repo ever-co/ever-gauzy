@@ -1,4 +1,13 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	inject,
+	Input,
+	OnDestroy,
+	OnInit,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,9 +21,11 @@ import {
 	ReportGroupFilterEnum
 } from '@gauzy/contracts';
 import { Environment, environment } from '@gauzy/ui-config';
-import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-core/common';
+import { distinctUntilChange, isEmpty, LatestRequest, progressStatus } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, Store, TimesheetService } from '@gauzy/ui-core/core';
 import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/gauzy-filters';
+import { buildReportExportFileName, ReportExportFormatEnum, ReportExportService } from '../export';
+import { buildDailyReportExportTable, DAILY_REPORT_EXPORT_NAME } from './daily-report-export';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,6 +46,17 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 	ReportGroupFilterEnum = ReportGroupFilterEnum;
 
 	@Input() showGroupBy: boolean = true;
+
+	private readonly reportExportService = inject(ReportExportService);
+
+	/**
+	 * Keeps the report requests in order: every filter or grouping change starts one, and they can overlap. Only
+	 * the latest may show its rows and end the loading state; an older answer that lands later is dropped.
+	 */
+	private readonly reportRequests = new LatestRequest();
+
+	/** The request the rows on screen answer; `null` while the latest request is pending or failed. */
+	private loadedRequest: IGetTimeLogReportInput | null = null;
 
 	/*
 	 * Getter & Setter for the group-by filter
@@ -128,37 +150,83 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 	/**
 	 * Retrieves daily logs if the organization and request are set.
 	 *
-	 * @returns {Promise<void>}
+	 * Requests can overlap (each filter or grouping change starts one while the previous may still be pending), so
+	 * only the latest started applies its answer: an older one that lands later neither replaces the newer rows nor
+	 * ends the loading state the newer request still holds.
+	 *
+	 * @returns {Promise<void>} Settles when this request has answered, whether its answer was applied or dropped.
 	 */
 	async getLogs(): Promise<void> {
 		if (!this.organization || isEmpty(this.request)) {
 			return;
 		}
 
-		// Clear current data
+		// The request to send (the latest payload), and its place in the sequence of requests
+		const payloads = this.payloads$.getValue() as IGetTimeLogReportInput;
+		const ticket = this.reportRequests.start();
+
+		// Clear current data: the rows on screen no longer answer the current filters
 		this.dailyLogs = [];
+		this.loadedRequest = null;
 
 		// Set loading to true to indicate that the logs are being fetched
 		this.loading = true;
 
 		try {
-			// Get the current payloads from the observable
-			const payloads = this.payloads$.getValue();
-
 			// Fetch new daily logs data
 			const newLogs = await this.timesheetService.getDailyReport(payloads);
 
+			// A newer request started meanwhile: its answer, not this one, belongs on screen
+			if (!this.reportRequests.isLatest(ticket)) {
+				return;
+			}
+
 			// Update dailyLogs with the newly fetched data
 			this.dailyLogs = newLogs;
+			this.loadedRequest = payloads;
 		} catch (error) {
-			// Log the error and provide meaningful feedback to the user if necessary
-			console.error('Error while retrieving daily logs report', error);
-			// Optionally: Show a notification or alert to the user about the error
-			// this.notificationService.showError('Failed to load daily logs.');
+			// Only the latest request's failure is the report's; a superseded one no longer matters
+			if (this.reportRequests.isLatest(ticket)) {
+				console.error('Error while retrieving daily logs report', error);
+			}
 		} finally {
-			// Ensure that loading is set to false whether the request was successful or not
-			this.loading = false;
+			// Only the latest request ends the loading state: while a newer one is pending, the grid is still loading
+			if (this.reportRequests.isLatest(ticket)) {
+				this.loading = false;
+			}
 		}
+	}
+
+	/**
+	 * Whether there is anything to export: the latest report request has answered with time entries, so the rows
+	 * on screen belong to the current filters, in the grouping the grid shows.
+	 */
+	get canExport(): boolean {
+		return !this.loading && this.dailyLogs?.length > 0 && this.loadedRequest?.groupBy === this.groupBy;
+	}
+
+	/**
+	 * Downloads the time entries the grid shows — for the current filters, in its current grouping — as a file
+	 * named after the report and the selected date range.
+	 *
+	 * It only serialises what the grid already fetched, so it exports exactly what the caller can see; it does
+	 * nothing while that is not the answer to the current filters and grouping (see `canExport`).
+	 *
+	 * @param format - The format to export to: CSV, or one a plugin registered through `REPORT_EXPORTERS`.
+	 * @param reportName - What the file name starts with, before the date range.
+	 */
+	exportReport(format: string = ReportExportFormatEnum.CSV, reportName: string = DAILY_REPORT_EXPORT_NAME): void {
+		if (!this.canExport) {
+			return;
+		}
+		// Read the rows in the grouping they were requested in: their shape depends on it
+		const table = buildDailyReportExportTable(this.dailyLogs, this.loadedRequest.groupBy, (key) =>
+			this.getTranslation(key)
+		);
+		this.reportExportService.export(table, {
+			fileName: buildReportExportFileName(reportName, this.request?.startDate, this.request?.endDate),
+			format
+		});
 	}
 
 	public getStatus(value: number) {

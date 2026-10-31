@@ -1,11 +1,18 @@
 import { AsyncPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl, SafeUrl } from '@angular/platform-browser';
-import { NbCardModule, NbLayoutModule } from '@nebular/theme';
+import { NbButtonModule, NbCardModule, NbIconModule, NbLayoutModule } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { TranslatePipe } from '@ngx-translate/core';
 import { BehaviorSubject, catchError, Observable, tap } from 'rxjs';
 import { GAUZY_ENV } from '../constants';
 import { ElectronService } from '../electron/services';
+
+/**
+ * IPC channel the close button sends: the main process hides this notification at once (#7643).
+ * Mirrors `ScreenCaptureNotification.CLOSE_CHANNEL` of @gauzy/desktop-window, which runs in the main process.
+ */
+export const CLOSE_SCREEN_CAPTURE_NOTIFICATION = 'close_screen_capture_notification';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -13,7 +20,7 @@ import { ElectronService } from '../electron/services';
 	templateUrl: './screen-capture.component.html',
 	styleUrls: ['./screen-capture.component.scss'],
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [NbLayoutModule, NbCardModule, AsyncPipe]
+	imports: [NbLayoutModule, NbCardModule, NbButtonModule, NbIconModule, AsyncPipe, TranslatePipe]
 })
 export class ScreenCaptureComponent implements OnInit {
 	private _screenCaptureUrl$: BehaviorSubject<SafeUrl>;
@@ -42,6 +49,11 @@ export class ScreenCaptureComponent implements OnInit {
 			)
 			.subscribe();
 		this.sendRendererReady();
+	}
+
+	/** Hides the notification now, instead of waiting for it to go away on its own (#7643). */
+	public close(): void {
+		this.electronService.ipcRenderer?.send(CLOSE_SCREEN_CAPTURE_NOTIFICATION);
 	}
 
 	private async sendRendererReady() {

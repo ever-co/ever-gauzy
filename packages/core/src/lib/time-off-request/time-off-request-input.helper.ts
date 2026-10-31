@@ -23,6 +23,10 @@ import { ID, PermissionsEnum, StatusTypesEnum } from '@gauzy/contracts';
  * Free of entity imports so it can be unit-tested on plain objects.
  */
 
+/** Whether two ids name the same row: the database compares UUIDs without regard to case. */
+export const sameId = (a: unknown, b: unknown): boolean =>
+	String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
+
 /** The grants that let a caller name other employees on a time-off request. */
 export const TIME_OFF_FOR_OTHERS_PERMISSIONS: ReadonlyArray<PermissionsEnum> = Object.freeze([
 	PermissionsEnum.CHANGE_SELECTED_EMPLOYEE,
@@ -131,6 +135,57 @@ export function writableTimeOffMembers(
 	}
 
 	return members;
+}
+
+/** A stored time-off request, as far as what it takes from leave balances goes. */
+export interface ITimeOffChargedMembers {
+	start?: Date | string | null;
+	end?: Date | string | null;
+	isHoliday?: boolean | null;
+	policyId?: ID | null;
+	policy?: { id?: ID } | null;
+	employees?: Array<{ id?: ID } | null> | null;
+}
+
+/**
+ * Whether an edit changes what a time-off request takes from leave balances: its dates, its holiday flag, its policy
+ * or its employees. Each is compared with the stored request, since the request dialog sends every member on each
+ * edit, changed or not; a member the edit does not write keeps the stored value and changes nothing.
+ *
+ * An edit that changes none of them (its description, its document, archiving it) leaves the charge of an approved
+ * request where it is.
+ *
+ * @param stored The stored request, read with its policy and employees.
+ * @param members The members the edit writes (see {@link writableTimeOffMembers}).
+ * @param employees The employees the edit writes (see {@link timeOffEmployees}), or undefined when it keeps the
+ * stored ones.
+ */
+export function editChangesCharge(
+	stored: ITimeOffChargedMembers | null | undefined,
+	members: ITimeOffWriteMembers,
+	employees: Array<{ id: ID }> | undefined
+): boolean {
+	const instant = (value: unknown): number => (value ? new Date(value as Date | string).getTime() : NaN);
+	const sameInstant = (a: unknown, b: unknown): boolean => {
+		const [x, y] = [instant(a), instant(b)];
+		return Number.isNaN(x) || Number.isNaN(y) ? String(a ?? '') === String(b ?? '') : x === y;
+	};
+	const idsOf = (rows: Array<{ id?: ID } | null> | null | undefined): string[] =>
+		[...new Set((rows ?? []).map((row) => String(row?.id ?? '').toLowerCase()).filter(Boolean))].sort();
+
+	if (members.start !== undefined && !sameInstant(members.start, stored?.start)) {
+		return true;
+	}
+	if (members.end !== undefined && !sameInstant(members.end, stored?.end)) {
+		return true;
+	}
+	if (members.isHoliday !== undefined && Boolean(members.isHoliday) !== Boolean(stored?.isHoliday)) {
+		return true;
+	}
+	if (members.policy?.id && !sameId(members.policy.id, stored?.policy?.id ?? stored?.policyId)) {
+		return true;
+	}
+	return employees !== undefined && idsOf(employees).join() !== idsOf(stored?.employees).join();
 }
 
 /**

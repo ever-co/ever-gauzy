@@ -28,7 +28,7 @@ import {
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
 import { CommentService } from '@gauzy/ui-core/core';
 import { SmartDataViewLayoutModule } from '@gauzy/ui-core/shared';
-import { parseCommentImages } from '../project-comments/comment-images.util';
+import { parseCommentImages } from '../../../../shared/entity-comments/comment-images.util';
 import {
 	humanize,
 	IPersonChip,
