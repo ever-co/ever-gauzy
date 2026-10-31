@@ -25,12 +25,15 @@ describe('OpenID Connect plugin settings', () => {
 			expect(warn).not.toHaveBeenCalled();
 		});
 
-		it.each(['TRUE', 'True', '1', 'yes', 'on', ' true'])('stays off for OIDC_ENABLED=%j and says so once, without the value', (value) => {
-			const warn = jest.fn();
-			expect(isOidcEnabled({ ...configured, OIDC_ENABLED: value }, warn)).toBe(false);
-			expect(warn).toHaveBeenCalledTimes(1);
-			expect(warn.mock.calls[0][0]).toContain('OIDC_ENABLED must be "true" or "false"');
-		});
+		it.each(['TRUE', 'True', '1', 'yes', 'on', ' true'])(
+			'stays off for OIDC_ENABLED=%j and says so once, without the value',
+			(value) => {
+				const warn = jest.fn();
+				expect(isOidcEnabled({ ...configured, OIDC_ENABLED: value }, warn)).toBe(false);
+				expect(warn).toHaveBeenCalledTimes(1);
+				expect(warn.mock.calls[0][0]).toContain('OIDC_ENABLED must be "true" or "false"');
+			}
+		);
 
 		it('reads nothing else while it is off', () => {
 			const warn = jest.fn();
@@ -41,7 +44,12 @@ describe('OpenID Connect plugin settings', () => {
 		it('stays off when switched on without a usable configuration, naming the settings but never their values', () => {
 			const warn = jest.fn();
 			const secret = 'XXXXXXX';
-			expect(isOidcEnabled({ OIDC_ENABLED: 'true', OIDC_ISSUER: 'http://id.example.test', OIDC_CLIENT_SECRET: secret }, warn)).toBe(false);
+			expect(
+				isOidcEnabled(
+					{ OIDC_ENABLED: 'true', OIDC_ISSUER: 'http://id.example.test', OIDC_CLIENT_SECRET: secret },
+					warn
+				)
+			).toBe(false);
 			expect(warn).toHaveBeenCalledTimes(1);
 			const [message] = warn.mock.calls[0];
 			expect(message).toContain('OIDC_ISSUER (insecure_url)');
@@ -58,13 +66,22 @@ describe('OpenID Connect plugin settings', () => {
 			expect(isOidcConfigured({ ...configured, OIDC_ISSUER: '' })).toBe(false);
 			expect(isOidcConfigured({ ...configured, OIDC_CLIENT_ID: ' ' })).toBe(false);
 			expect(isOidcConfigured({ ...configured, OIDC_CLIENT_SECRET: '' })).toBe(false);
-			expect(isOidcConfigured({ ...configured, OIDC_CLIENT_ID: 'XXXXXXX', OIDC_CLIENT_SECRET: 'XXXXXXX' })).toBe(false);
+			expect(isOidcConfigured({ ...configured, OIDC_CLIENT_ID: 'XXXXXXX', OIDC_CLIENT_SECRET: 'XXXXXXX' })).toBe(
+				false
+			);
 		});
 
 		it('needs a usable callback URL when one is set', () => {
-			expect(isOidcConfigured({ ...configured, OIDC_CALLBACK_URL: 'https://api.example.test/api/auth/oidc/callback' })).toBe(true);
+			expect(
+				isOidcConfigured({
+					...configured,
+					OIDC_CALLBACK_URL: 'https://api.example.test/api/auth/oidc/callback'
+				})
+			).toBe(true);
 			expect(isOidcConfigured({ ...configured, OIDC_CALLBACK_URL: 'not a url' })).toBe(false);
-			expect(isOidcConfigured({ ...configured, OIDC_CALLBACK_URL: 'https://api.example.test/callback#fragment' })).toBe(false);
+			expect(
+				isOidcConfigured({ ...configured, OIDC_CALLBACK_URL: 'https://api.example.test/callback#fragment' })
+			).toBe(false);
 		});
 	});
 
@@ -89,10 +106,13 @@ describe('OpenID Connect plugin settings', () => {
 		});
 
 		it('keeps the issuer exactly as configured, trailing slash included', () => {
-			expect(parseOidcSettings({ ...configured, OIDC_ISSUER: '  https://id.example.test/application/o/gauzy/ ' }).issuer).toBe(
-				'https://id.example.test/application/o/gauzy/'
+			expect(
+				parseOidcSettings({ ...configured, OIDC_ISSUER: '  https://id.example.test/application/o/gauzy/ ' })
+					.issuer
+			).toBe('https://id.example.test/application/o/gauzy/');
+			expect(parseOidcSettings({ ...configured, OIDC_ISSUER: 'https://id.example.test' }).issuer).toBe(
+				'https://id.example.test'
 			);
-			expect(parseOidcSettings({ ...configured, OIDC_ISSUER: 'https://id.example.test' }).issuer).toBe('https://id.example.test');
 		});
 
 		it('does not use a refused issuer', () => {
@@ -132,12 +152,18 @@ describe('OpenID Connect plugin settings', () => {
 				'profile',
 				'groups'
 			]);
-			expect(parseOidcSettings({ ...configured, OIDC_SCOPES: 'openid email' }).scopes).toEqual(['openid', 'email']);
+			expect(parseOidcSettings({ ...configured, OIDC_SCOPES: 'openid email' }).scopes).toEqual([
+				'openid',
+				'email'
+			]);
 		});
 
 		it('says so when "email" is not requested', () => {
 			const warn = jest.fn();
-			expect(parseOidcSettings({ ...configured, OIDC_SCOPES: 'openid profile' }, warn).scopes).toEqual(['openid', 'profile']);
+			expect(parseOidcSettings({ ...configured, OIDC_SCOPES: 'openid profile' }, warn).scopes).toEqual([
+				'openid',
+				'profile'
+			]);
 			expect(warn).toHaveBeenCalledWith(expect.stringContaining('does not request "email"'));
 		});
 	});

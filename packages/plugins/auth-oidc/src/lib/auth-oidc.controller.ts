@@ -55,7 +55,9 @@ export class AuthOidcController {
 			res.redirect(302, this.signIn.loginPageUrl(reason));
 			return;
 		}
-		const { success, authData } = await this.socialSignIn.validateOAuthLoginEmail([{ value: result.email, verified: true }]);
+		const { success, authData } = await this.socialSignIn.validateOAuthLoginEmail([
+			{ value: result.email, verified: true }
+		]);
 		await this.socialSignIn.routeRedirect(success, authData, res);
 	}
 }

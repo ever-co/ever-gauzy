@@ -90,7 +90,11 @@ export function oidcCallbackUrlProblem(value: string): 'invalid_url' | null {
 	} catch {
 		return 'invalid_url';
 	}
-	const usable = (url.protocol === 'https:' || url.protocol === 'http:') && !url.username && !url.password && !value.includes('#');
+	const usable =
+		(url.protocol === 'https:' || url.protocol === 'http:') &&
+		!url.username &&
+		!url.password &&
+		!value.includes('#');
 	return usable ? null : 'invalid_url';
 }
 
@@ -105,7 +109,9 @@ function parseScopes(raw: string | undefined, warn: (message: string) => void): 
 		.filter(Boolean);
 	const scopes = configured.length ? [...new Set(configured)] : [...OIDC_DEFAULT_SCOPES];
 	if (!scopes.includes('email')) {
-		warn('OIDC_SCOPES does not request "email": most providers then send no e-mail address, and nobody can sign in.');
+		warn(
+			'OIDC_SCOPES does not request "email": most providers then send no e-mail address, and nobody can sign in.'
+		);
 	}
 	return scopes.includes('openid') ? scopes : ['openid', ...scopes];
 }
