@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { ID } from '@gauzy/contracts';
-import { ProductVariant, ProductVariantSetting, RequestContext } from '@gauzy/core';
+import { Product, ProductVariant, ProductVariantSetting, RequestContext } from '@gauzy/core';
 
 /**
  * How a variant is sold: whether it is offered on recurring terms, and which variant represents its
@@ -21,7 +21,11 @@ import { ProductVariant, ProductVariantSetting, RequestContext } from '@gauzy/co
  *   product whose variants none of them carry the mark answers with nothing rather than with the
  *   first row a query happened to return.
  *
- * Both reads are scoped to the caller's tenant and organization, like every other read of this
+ * Whether a product or a variant is the caller's at all is a third question, answered by an existence read: a plan
+ * may be drafted on a variant of the caller's own catalogue before the variant is marked as sellable on recurring
+ * terms, so "is it the caller's" and "may it be sold on recurring terms" are not the same read.
+ *
+ * Every read is scoped to the caller's tenant and organization, like every other read of this
  * package: a variant of another tenant is not found, and a caller cannot learn that it exists.
  *
  * The class owns no table, writes nothing, and adds no rule to the ones the columns already carry.
@@ -32,8 +36,50 @@ export class ProductVariantSaleService {
 		@InjectRepository(ProductVariant)
 		private readonly typeOrmProductVariantRepository: Repository<ProductVariant>,
 		@InjectRepository(ProductVariantSetting)
-		private readonly typeOrmProductVariantSettingRepository: Repository<ProductVariantSetting>
+		private readonly typeOrmProductVariantSettingRepository: Repository<ProductVariantSetting>,
+		@InjectRepository(Product)
+		private readonly typeOrmProductRepository: Repository<Product>
 	) {}
+
+	/**
+	 * Whether a variant is one of the caller's.
+	 *
+	 * @param variantId The variant to read.
+	 * @returns True when the caller's organization holds the variant.
+	 * @throws BadRequestException when no variant was named.
+	 */
+	public async variantExists(variantId: ID): Promise<boolean> {
+		if (!variantId) {
+			throw new BadRequestException('CATALOG_VARIANT_REQUIRED: a variant is read by its identifier.');
+		}
+
+		const variant = await this.typeOrmProductVariantRepository.findOne({
+			select: { id: true },
+			where: { id: variantId, ...this.scope() } as FindOptionsWhere<ProductVariant>
+		});
+
+		return !!variant;
+	}
+
+	/**
+	 * Whether a product is one of the caller's.
+	 *
+	 * @param productId The product to read.
+	 * @returns True when the caller's organization holds the product.
+	 * @throws BadRequestException when no product was named.
+	 */
+	public async productExists(productId: ID): Promise<boolean> {
+		if (!productId) {
+			throw new BadRequestException('CATALOG_PRODUCT_REQUIRED: a product is read by its identifier.');
+		}
+
+		const product = await this.typeOrmProductRepository.findOne({
+			select: { id: true },
+			where: { id: productId, ...this.scope() } as FindOptionsWhere<Product>
+		});
+
+		return !!product;
+	}
 
 	/**
 	 * Whether a variant is marked as sellable on a recurring basis.

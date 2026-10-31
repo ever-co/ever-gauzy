@@ -308,7 +308,13 @@ function planFixture(
 	options: {
 		plans?: Row[];
 		subscriptions?: Row[];
-		catalog?: { subscribable?: Record<string, boolean>; defaultVariant?: Record<string, string | null> } | false;
+		catalog?:
+			| {
+					subscribable?: Record<string, boolean>;
+					defaultVariant?: Record<string, string | null>;
+					foreign?: string[];
+			  }
+			| false;
 		uniqueViolationOnSave?: boolean;
 		uniqueViolationOnUpdate?: boolean;
 		updateError?: () => Error;
@@ -343,6 +349,9 @@ function planFixture(
 		options.catalog === false
 			? undefined
 			: {
+					// The catalogue holds every product and variant but those the fixture names as another organization's.
+					variantExists: async (variantId: string) => !configured?.foreign?.includes(variantId),
+					productExists: async (productId: string) => !configured?.foreign?.includes(productId),
 					isVariantSubscribable: async (variantId: string) => configured?.subscribable?.[variantId] ?? true,
 					defaultVariantOf: async (productId: string) => {
 						// A product the fixture states nothing about has a default variant; a product it states
@@ -817,6 +826,54 @@ describe('SubscriptionPlanService — the cadence and the sellability the catalo
 
 		await expect(withoutCatalog.service.assertSubscribable('plan-1')).resolves.toMatchObject({ id: 'plan-1' });
 		await expect(entitlement.service.assertSubscribable('plan-1')).resolves.toMatchObject({ id: 'plan-1' });
+	});
+
+	it("refuses to create or move a plan onto a product or variant outside the caller's catalogue", async () => {
+		// CodeRabbit on #11558: the target is two scalar columns, so the foreign-graph check (SEC-D-03) never read them.
+		const fixture = planFixture({
+			plans: [planRow('plan-1', { variantId: VARIANT })],
+			catalog: { foreign: ['foreign-variant', 'foreign-product'] }
+		});
+
+		await expect(
+			fixture.service.create({
+				name: 'Foreign',
+				code: 'FOREIGN',
+				currency: 'USD',
+				variantId: 'foreign-variant'
+			} as never)
+		).rejects.toThrow(/SUBSCRIPTION_PLAN_TARGET_NOT_FOUND: variant foreign-variant/);
+		await expect(
+			fixture.service.create({
+				name: 'Foreign',
+				code: 'FOREIGN',
+				currency: 'USD',
+				productId: 'foreign-product'
+			} as never)
+		).rejects.toThrow(/SUBSCRIPTION_PLAN_TARGET_NOT_FOUND: product foreign-product/);
+		await expect(fixture.service.updatePlan('plan-1', { variantId: 'foreign-variant' } as never)).rejects.toThrow(
+			/SUBSCRIPTION_PLAN_TARGET_NOT_FOUND/
+		);
+		expect(fixture.plan('plan-1')?.variantId).toBe(VARIANT);
+		expect(fixture.tables.subscription_plan).toHaveLength(1);
+	});
+
+	it('reads only a target the update moves, so a plan keeps the one it has', async () => {
+		// A plan stored before the check (with a target the catalogue no longer finds) can still be corrected.
+		const fixture = planFixture({
+			plans: [planRow('plan-1', { variantId: 'foreign-variant' })],
+			catalog: { foreign: ['foreign-variant'] }
+		});
+
+		await expect(fixture.service.updatePlan('plan-1', { name: 'Renamed' } as never)).resolves.toMatchObject({
+			name: 'Renamed'
+		});
+		await expect(
+			fixture.service.updatePlan('plan-1', { variantId: 'foreign-variant' } as never)
+		).resolves.toMatchObject({ variantId: 'foreign-variant' });
+		await expect(fixture.service.updatePlan('plan-1', { variantId: VARIANT } as never)).resolves.toMatchObject({
+			variantId: VARIANT
+		});
 	});
 
 	it('resolves the variant a plan delivers, and answers nothing for an entitlement', async () => {

@@ -40,6 +40,8 @@ const LIVE_SUBSCRIPTION_STATUSES: SubscriptionStatus[] = [
  * - **A plan's target must be sellable on a recurring basis.** The catalogue answers that question,
  *   not this table; the check runs on every creation and never on a renewal, because withdrawing a
  *   variant must not stop an agreement already paid for.
+ * - **A plan's target is the caller's.** The product or variant a plan is created or updated onto has
+ *   to be in the caller's own catalogue (`assertTargetOwned`).
  */
 @Injectable()
 export class SubscriptionPlanService extends SubscriptionCrudService<SubscriptionPlan> {
@@ -62,6 +64,7 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 	 * @throws BadRequestException when a stated value is outside its range, or when both a product and
 	 * a variant were named.
 	 * @throws ConflictException when the organization already holds the code.
+	 * @throws NotFoundException when the product or variant named is not in the caller's catalogue.
 	 */
 	public async create(entity: Partial<SubscriptionPlan>): Promise<SubscriptionPlan> {
 		const tenantId = RequestContext.currentTenantId();
@@ -80,6 +83,7 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 			throw new BadRequestException('A plan must state the currency its amounts are expressed in.');
 		}
 
+		await this.assertTargetOwned(plan);
 		await this.assertCodeIsFree(plan.code);
 
 		try {
@@ -103,7 +107,8 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 	 * @returns The updated plan.
 	 * @throws BadRequestException when the plan is in use and the code or its active state would move.
 	 * @throws ConflictException when the organization already holds the new code.
-	 * @throws NotFoundException when the plan is not the caller's.
+	 * @throws NotFoundException when the plan is not the caller's, or when the product or variant it is moved onto is
+	 * not in the caller's catalogue.
 	 */
 	public async updatePlan(id: ID, stated: Partial<SubscriptionPlan>): Promise<SubscriptionPlan> {
 		// The checks `super.update` made before it wrote are made here, because the write now runs in the plan row's
@@ -127,6 +132,13 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 		if (RequestContext.currentUser()) {
 			await this.assertNestedGraphNotForeign([this.updatable(checked) as any], RequestContext.currentTenantId());
 		}
+
+		// Nor a target outside the caller's catalogue. Only a target the patch moves is read: a plan whose target is
+		// unchanged keeps it, so a correction of its name does not depend on the catalogue.
+		await this.assertTargetOwned({
+			productId: changes.productId && changes.productId !== scoped.productId ? checked.productId : undefined,
+			variantId: changes.variantId && changes.variantId !== scoped.variantId ? checked.variantId : undefined
+		});
 
 		if (changes.code && changes.code !== scoped.code) {
 			await this.assertCodeIsFree(changes.code, id);
@@ -340,6 +352,37 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 	 * @param plan The plan being subscribed to.
 	 * @throws BadRequestException when the catalogue, which is registered, refuses the plan's target.
 	 */
+	/**
+	 * Refuses a plan target outside the caller's catalogue.
+	 *
+	 * A plan's target is two scalar columns with no mapped relation, so the platform's foreign-graph check (SEC-D-03,
+	 * `assertNestedGraphNotForeign`) never reads them, and create and update stored any identifier. The catalogue
+	 * answers whether the product or variant is the caller's: an existence read, not "subscribable", since a plan may
+	 * be drafted on a variant not marked sellable yet, which only a new subscription refuses (`assertTargetSellable`).
+	 * Answered 404, as a read of another organization's row is: the caller learns nothing about it.
+	 *
+	 * @param target The product and the variant a plan is created or moved onto.
+	 * @throws NotFoundException when either is not in the caller's catalogue.
+	 */
+	private async assertTargetOwned(target: { productId?: ID | null; variantId?: ID | null }): Promise<void> {
+		if (!this.catalog) {
+			// No catalogue is registered, so there is nothing to ask, as `assertTargetSellable` reads it.
+			return;
+		}
+
+		if (target.variantId && !(await this.catalog.variantExists(target.variantId))) {
+			throw new NotFoundException(
+				`SUBSCRIPTION_PLAN_TARGET_NOT_FOUND: variant ${target.variantId} is not in this organization's catalogue.`
+			);
+		}
+
+		if (target.productId && !(await this.catalog.productExists(target.productId))) {
+			throw new NotFoundException(
+				`SUBSCRIPTION_PLAN_TARGET_NOT_FOUND: product ${target.productId} is not in this organization's catalogue.`
+			);
+		}
+	}
+
 	public async assertTargetSellable(plan: ISubscriptionPlan): Promise<void> {
 		if (!this.catalog) {
 			// No catalogue is registered, so there is nothing to ask and nothing to assert: a tenant
