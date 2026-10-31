@@ -76,7 +76,7 @@
 									class="hint-button"
 									[attr.aria-label]="'POP_UPS.BANNER_HINT' | translate"
 									[nbTooltip]="'POP_UPS.BANNER_HINT' | translate"
-									nbTooltipTrigger="noop"
+									[nbTooltipTrigger]="bannerHintTrigger"
 									#bannerHint="nbTooltip"
 									(mouseenter)="bannerHint.show()"
 									(mouseleave)="bannerHint.hide()"
