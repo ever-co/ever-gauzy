@@ -113,4 +113,14 @@ describe('AlwaysOn position', () => {
 
 		expect(windowOptions[0]).toEqual(expect.objectContaining({ x: 900, y: 20, width: 270, height: 45 }));
 	});
+
+	it('keeps the compact size and spot for a compact widget opened after an expanded one', () => {
+		// Left at the bottom-right corner: restored with the wrong (expanded) size, it would be clamped elsewhere
+		storeData['windowPositions'] = { [AlwaysOn.POSITION_KEYS.compact]: { x: 1860, y: 970 } };
+
+		new AlwaysOn('index.html', 'preload.js', true, true);
+		new AlwaysOn('index.html');
+
+		expect(windowOptions[1]).toEqual(expect.objectContaining({ x: 1860, y: 970, width: 60, height: 110 }));
+	});
 });
