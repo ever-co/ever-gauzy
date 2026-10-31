@@ -210,55 +210,59 @@ export class TenantService extends CrudService<Tenant> {
 	 * in-process guard alone: such a deployment serializes every query through one connection, and across pods it keeps
 	 * the behaviour from before this lock (a duplicate tenant, never a half-seeded one).
 	 *
-	 * While `ALLOW_TENANTS_REGISTRATION=false` still lets the first tenant of an empty database be created, every
-	 * creator takes the same lock instead (see {@link onboardingLockId}).
+	 * While `ALLOW_TENANTS_REGISTRATION=false` still lets the first tenant of an empty database be created, the
+	 * creator also takes a lock shared by every creator (see {@link onboardingLockIds}).
 	 *
 	 * @param user - The creator.
 	 * @param work - Everything from choosing the tenant to linking the creator.
 	 * @throws ConflictException when another onboarding of the same user (or, while only the first tenant may be
-	 * created, of anyone) holds the lock.
+	 * created, any other first onboarding) holds one of the locks.
 	 */
 	private async withOnboardingLock<T>(user: IUser, work: () => Promise<T>): Promise<T> {
-		const lockId = await this.onboardingLockId(user);
-		const key = `tenant-onboarding:${lockId}`;
+		const lockIds = await this.onboardingLockIds(user);
+		const keys = lockIds.map((lockId) => `tenant-onboarding:${lockId}`);
 		const dataSource = this.ormType === MultiORMEnum.TypeORM ? this.typeOrmRepository?.manager?.dataSource : null;
 		const type = dataSource?.options.type;
 		const slots = TenantService.lockConnectionSlots(dataSource?.options);
 
-		// A second onboarding of the same creator in this process is refused at once, before it could wait for a
-		// lock-connection slot; the database lock then keeps out the ones on other pods.
-		if (TenantService.onboardingInProgress.has(lockId)) {
+		// A second onboarding of the same creator (or a second first onboarding) in this process is refused at once,
+		// before it could wait for a lock-connection slot; the database lock then keeps out the ones on other pods.
+		if (lockIds.some((lockId) => TenantService.onboardingInProgress.has(lockId))) {
 			throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
 		}
-		TenantService.onboardingInProgress.add(lockId);
+		lockIds.forEach((lockId) => TenantService.onboardingInProgress.add(lockId));
 		try {
 			if ((type === 'postgres' || type === 'mysql') && slots > 0) {
 				await TenantService.takeLockConnectionSlot(slots);
 				try {
-					return await this.withDatabaseLock(dataSource, type, key, work);
+					return await this.withDatabaseLock(dataSource, type, keys, work);
 				} finally {
 					TenantService.releaseLockConnectionSlot();
 				}
 			}
 			return await work();
 		} finally {
-			TenantService.onboardingInProgress.delete(lockId);
+			lockIds.forEach((lockId) => TenantService.onboardingInProgress.delete(lockId));
 		}
 	}
 
 	/**
-	 * Whose onboarding lock {@link withOnboardingLock} takes: the creator's own, or, while
-	 * `ALLOW_TENANTS_REGISTRATION=false` still lets the first tenant of an empty database be created, one lock shared by
-	 * every creator. The switch's check and the tenant's insert are separate steps, so without it two first onboardings
-	 * could both find the table empty and both create a tenant. Once a tenant exists every creator is back on their own
-	 * lock, and the switch refuses new tenants.
+	 * The onboarding locks {@link withOnboardingLock} holds, in the order it takes them.
+	 *
+	 * Always the creator's own, so that one person's onboardings never overlap. While
+	 * `ALLOW_TENANTS_REGISTRATION=false` still lets the first tenant of an empty database be created, also one lock
+	 * shared by every creator: the switch's check and the tenant's insert are separate steps, so without it two first
+	 * onboardings could both find the table empty and both create a tenant. Once a tenant exists only the creator's
+	 * own lock is taken, and the switch refuses new tenants.
 	 *
 	 * @param user - The creator.
 	 */
-	private async onboardingLockId(user: IUser): Promise<ID> {
-		return (await this.registrationPolicyService.isFirstTenantExceptionOpen())
-			? TenantService.FIRST_TENANT_LOCK_ID
-			: user.id;
+	private async onboardingLockIds(user: IUser): Promise<ID[]> {
+		const lockIds: ID[] = [user.id];
+		if (await this.registrationPolicyService.isFirstTenantExceptionOpen()) {
+			lockIds.push(TenantService.FIRST_TENANT_LOCK_ID);
+		}
+		return lockIds;
 	}
 
 	/**
@@ -291,14 +295,16 @@ export class TenantService extends CrudService<Tenant> {
 	}
 
 	/**
-	 * Runs `work` holding the database lock named `key` on a connection of its own (see {@link withOnboardingLock}).
+	 * Runs `work` holding the database locks named `keys`, taken in order on one connection of its own (see
+	 * {@link withOnboardingLock}). One connection however many locks, so an onboarding never waits for a second
+	 * lock-connection slot while it holds the first.
 	 *
-	 * @throws ConflictException when the lock is held.
+	 * @throws ConflictException when any of the locks is held.
 	 */
 	private async withDatabaseLock<T>(
 		dataSource: DataSource,
 		type: 'postgres' | 'mysql',
-		key: string,
+		keys: string[],
 		work: () => Promise<T>
 	): Promise<T> {
 		const runner = dataSource.createQueryRunner();
@@ -310,17 +316,19 @@ export class TenantService extends CrudService<Tenant> {
 					// The transaction sits idle while `work` runs on other connections: a server-side
 					// `idle_in_transaction_session_timeout` would end the session, and the lock with it, mid-onboarding.
 					await runner.query('SET LOCAL idle_in_transaction_session_timeout = 0');
-					const [row] = await runner.query(
-						`SELECT pg_try_advisory_xact_lock(hashtextextended($1, 0)) AS "acquired"`,
-						[key]
-					);
-					if (!row?.acquired) {
-						throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
+					for (const key of keys) {
+						const [row] = await runner.query(
+							`SELECT pg_try_advisory_xact_lock(hashtextextended($1, 0)) AS "acquired"`,
+							[key]
+						);
+						if (!row?.acquired) {
+							throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
+						}
 					}
 					return await work();
 				} finally {
-					// The transaction wrote nothing: ending it only releases the lock. If it cannot be ended
-					// the connection is gone, and the lock went with its session.
+					// The transaction wrote nothing: ending it only releases the locks it took. If it cannot be ended
+					// the connection is gone, and the locks went with its session.
 					await runner.rollbackTransaction().catch((error) => {
 						this.logger.warn(`The onboarding lock's transaction could not be ended: ${error?.message}`);
 					});
@@ -328,19 +336,25 @@ export class TenantService extends CrudService<Tenant> {
 			}
 
 			// GET_LOCK names are at most 64 characters: `gauzy:tenant-onboarding:<uuid>` is 60.
-			const name = `gauzy:${key}`;
-			const [row] = await runner.query('SELECT GET_LOCK(?, 0) AS `acquired`', [name]);
-			if (Number(row?.acquired) !== 1) {
-				throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
-			}
+			const held: string[] = [];
 			try {
+				for (const key of keys) {
+					const name = `gauzy:${key}`;
+					const [row] = await runner.query('SELECT GET_LOCK(?, 0) AS `acquired`', [name]);
+					if (Number(row?.acquired) !== 1) {
+						throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
+					}
+					held.push(name);
+				}
 				return await work();
 			} finally {
-				// Best effort, so a failure here never replaces the onboarding's result or error: a named lock the
-				// server could not release is gone with the session anyway.
-				await runner.query('SELECT RELEASE_LOCK(?)', [name]).catch((error) => {
-					this.logger.warn(`The onboarding lock could not be released: ${error?.message}`);
-				});
+				// In reverse order, best effort, so a failure here never replaces the onboarding's result or error: a
+				// named lock the server could not release is gone with the session anyway.
+				for (const name of held.reverse()) {
+					await runner.query('SELECT RELEASE_LOCK(?)', [name]).catch((error) => {
+						this.logger.warn(`The onboarding lock could not be released: ${error?.message}`);
+					});
+				}
 			}
 		} finally {
 			await runner.release().catch((error) => {
