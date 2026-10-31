@@ -609,7 +609,10 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			throw invalidTransition(billing, 'paid', PAYABLE_FROM);
 		}
 
-		if (byOperator && holdsLiveChargeClaim(billing)) {
+		// A pass charging the cycle right now, or one that sent an attempt to the order path and was cut off before
+		// recording its outcome (`ATTEMPT_REQUEST`): that attempt's order may exist, and the next pass recovers it under
+		// the same key. Paid by hand meanwhile, the cycle settled a period whose money the order path may have taken.
+		if (byOperator && (holdsLiveChargeClaim(billing) || this.holdsUnrecordedAttempt(billing))) {
 			throw chargeInFlight(billing, 'paid');
 		}
 
@@ -682,6 +685,20 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		);
 
 		return !!written?.affected;
+	}
+
+	/**
+	 * Whether a cycle a pass charges carries an attempt sent to the order path whose outcome was never recorded: its
+	 * order may exist, and the next pass recovers it under the same key (`frozenAttemptOf`).
+	 *
+	 * @param billing The cycle.
+	 * @returns True while that attempt stands.
+	 */
+	public holdsUnrecordedAttempt(billing: SubscriptionBilling): boolean {
+		return (
+			CHARGEABLE_FROM.includes(billing?.status as SubscriptionBillingStatus) &&
+			!!this.frozenAttemptOf(billing, (billing.attemptCount ?? 0) + 1)
+		);
 	}
 
 	/**
@@ -898,7 +915,8 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			throw invalidTransition(billing, 'waived', WAIVABLE_FROM);
 		}
 
-		if (holdsLiveChargeClaim(billing)) {
+		// As for a payment (`markPaid`): a waiver of a cycle whose attempt may have an order forgave money taken.
+		if (holdsLiveChargeClaim(billing) || this.holdsUnrecordedAttempt(billing)) {
 			throw chargeInFlight(billing, 'waived');
 		}
 

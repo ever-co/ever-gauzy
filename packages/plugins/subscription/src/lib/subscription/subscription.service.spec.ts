@@ -3252,6 +3252,28 @@ describe('SubscriptionService — a charged cycle is finished once, by whichever
 		expect(fixture.cycle(APRIL)).toMatchObject({ metadata: { note: 'corrected' }, chargeClaimToken: null });
 	});
 
+	it('refuses an operator’s payment or waiver of a cycle whose attempt may have an order, until a pass records it', async () => {
+		const fixture = subscriptionFixture({ orders: idempotentOrders() });
+		const inFlight = { response: { code: 'SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT' } };
+
+		jest.spyOn(fixture.billingService, 'markPaid').mockRejectedValueOnce(new Error('the database went away'));
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+
+		const cycleId = fixture.cycle(APRIL)!.id;
+
+		// The claim is released, and the frozen attempt is what shows the order path may have taken the money.
+		await expect(fixture.service.payCycle(cycleId)).rejects.toMatchObject(inFlight);
+		await expect(fixture.billingService.markWaived(cycleId, { reason: 'goodwill' })).rejects.toMatchObject(inFlight);
+		expect(fixture.cycle(APRIL)).toMatchObject({ status: SubscriptionBillingStatus.PENDING });
+
+		// The next pass records the attempt's own order; nothing settled it by hand in between.
+		leaseRunsOut(fixture);
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.cycle(APRIL)).toMatchObject({ status: SubscriptionBillingStatus.PAID, orderId: 'order-1' });
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: MAY, billingCycleCount: 1 });
+	});
+
 	it('does not write a resume’s calendar back over the calendar a finish moved after the resume read it', async () => {
 		let fixture: ReturnType<typeof subscriptionFixture>;
 		let finished!: () => void;
