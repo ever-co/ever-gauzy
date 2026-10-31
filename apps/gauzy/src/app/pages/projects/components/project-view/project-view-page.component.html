@@ -124,13 +124,14 @@
 			aria-labelledby="project-view-tab-comments"
 			[hidden]="tab !== 'comments'"
 		>
-			<ga-project-comments
-				[projectId]="card.id"
-				[projectName]="card.name"
+			<ga-entity-comments
+				[entity]="documentEntity"
+				[entityId]="card.id"
+				[entityName]="card.name"
 				[organizationId]="organization?.id"
 				[tenantId]="organization?.tenantId"
 				(countChange)="onCommentCount($event)"
-			></ga-project-comments>
+			></ga-entity-comments>
 		</div>
 		}
 

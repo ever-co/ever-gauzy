@@ -19,8 +19,40 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment-timezone';
 import { BaseEntityEnum, IComment, ID, IImageAsset, PermissionsEnum } from '@gauzy/contracts';
 import { CommentService, ImageAssetService, Store, ToastrService } from '@gauzy/ui-core/core';
-import { IPersonChip, Loadable, loaded, loading, failed, personOf } from '../project-view.utils';
+import {
+	IPersonChip,
+	Loadable,
+	loaded,
+	loading,
+	failed,
+	personOf
+} from '../../projects/components/project-view/project-view.utils';
 import { ICommentImage, parseCommentImages, withCommentImages } from './comment-images.util';
+
+/**
+ * The texts that name what the comments are (translation keys): a contact's "notes" are a project's "comments".
+ * Each one left out keeps the comments' own wording.
+ */
+export interface IEntityCommentsLabels {
+	/** Shown when the record has none yet. */
+	empty: string;
+	/** The comment box's placeholder. */
+	placeholder: string;
+	/** The comment box's send button. */
+	send: string;
+	/** The message after one is deleted. */
+	deleted: string;
+}
+
+export const DEFAULT_ENTITY_COMMENTS_LABELS: Readonly<IEntityCommentsLabels> = Object.freeze({
+	empty: 'PROJECT_VIEW.NO_COMMENTS',
+	placeholder: 'PROJECT_VIEW.COMMENT_PLACEHOLDER',
+	send: 'BUTTONS.ADD_COMMENT',
+	deleted: 'GOALS_PAGE.COMMENT_THREAD.DELETED'
+});
+
+/** Numbers each instance, so the ids of its boxes are unique on a page that shows more than one. */
+let instances = 0;
 
 /** A comment as the tab draws it: its author and times worked out once, when the list is read. */
 interface ICommentEntry {
@@ -83,17 +115,20 @@ interface ICommentThread {
 }
 
 /**
- * The project page's Comments tab: the discussion on the project through the generic comment API —
- * comments, oldest first, each with its replies one level deep, a box to post a new one, a reply box per
- * thread, and delete where the server would allow it. Images attach to a comment or reply — picked, pasted or
- * dropped — and show under its text as thumbnails that open full size.
+ * The discussion on one record through the generic comment API — a project's Comments tab, a contact's Notes —
+ * comments, oldest first (or newest first, with the box above them), each with its replies one level deep, a box
+ * to post a new one, a reply box per thread, and delete where the server would allow it. Images attach to a
+ * comment or reply — picked, pasted or dropped — and show under its text as thumbnails that open full size.
+ *
+ * A reader who may not write the record's comments (`canWrite` false) sees them without the boxes, replies and
+ * delete. The server decides either way: this only keeps the page from offering what it would refuse.
  *
  * An image is uploaded as an image asset when it is picked; the comment refers to the asset, and its address is
  * looked up through the image asset API when comments are read. An upload that is not posted — removed, left in
  * an unsent box, or finished after its image was removed — is deleted again.
  */
 @Component({
-	selector: 'ga-project-comments',
+	selector: 'ga-entity-comments',
 	standalone: true,
 	imports: [
 		CommonModule,
@@ -108,21 +143,36 @@ interface ICommentThread {
 	],
 	// Not provided at the root: each user of the image upload provides it.
 	providers: [ImageAssetService],
-	templateUrl: './project-comments.component.html',
+	templateUrl: './entity-comments.component.html',
 	styleUrls: [
-		'../../../../employees/view-employee/view-employee.component.scss',
-		'../../project-quick-look/project-quick-look.component.scss',
-		'./project-comments.component.scss'
+		'../../employees/view-employee/view-employee.component.scss',
+		'../../projects/components/project-quick-look/project-quick-look.component.scss',
+		'./entity-comments.component.scss'
 	],
 	changeDetection: ChangeDetectionStrategy.Eager
 })
-export class ProjectCommentsComponent implements OnChanges, OnDestroy {
-	@Input() projectId: string;
-	@Input() projectName: string;
+export class EntityCommentsComponent implements OnChanges, OnDestroy {
+	/** The type of the record the comments hang off. */
+	@Input() entity: BaseEntityEnum;
+	@Input() entityId: ID;
+	/** The record's name, which mention notifications quote. */
+	@Input() entityName: string;
 	@Input() organizationId: string;
 	@Input() tenantId: string;
+	/** Newest first, the comment box above them; oldest first, the box under them, by default. */
+	@Input() newestFirst = false;
+	/** Whether the reader may post, reply and delete. */
+	@Input() canWrite = true;
+	/** What the comments are called; see {@link IEntityCommentsLabels}. */
+	@Input() set labels(labels: Partial<IEntityCommentsLabels> | null | undefined) {
+		this.text = { ...DEFAULT_ENTITY_COMMENTS_LABELS, ...(labels ?? {}) };
+	}
 	/** The number of comments, replies included, each time the list is read: the page shows it on the tab. */
 	@Output() readonly countChange = new EventEmitter<number>();
+
+	protected text: IEntityCommentsLabels = { ...DEFAULT_ENTITY_COMMENTS_LABELS };
+	/** The prefix of this instance's box ids. */
+	protected readonly idPrefix = `ga-entity-comments-${++instances}`;
 
 	protected threads: Loadable<ICommentThread[]> = loading([]);
 
@@ -168,7 +218,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 		this._store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.MEDIA_GALLERY_VIEW);
 
 	ngOnChanges(changes: SimpleChanges): void {
-		if (this.projectId && (changes['projectId'] || changes['organizationId'])) {
+		if (this.entity && this.entityId && (changes['entity'] || changes['entityId'] || changes['organizationId'])) {
 			this.openThreadId = null;
 			this.confirmingDeleteId = null;
 			this.clearImages('comment');
@@ -184,16 +234,12 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 		this.clearImages('reply');
 	}
 
-	/** Reads (or re-reads) the project's comments; the list on screen stays while it reloads. */
+	/** Reads (or re-reads) the record's comments; the list on screen stays while it reloads. */
 	protected async load(): Promise<void> {
 		const sequence = ++this._sequence;
 		this.threads = loading(this.threads.value);
 		try {
-			const { items } = await this._commentService.getAll(
-				BaseEntityEnum.OrganizationProject,
-				this.projectId,
-				this.scope()
-			);
+			const { items } = await this._commentService.getAll(this.entity, this.entityId, this.scope());
 			if (sequence !== this._sequence) return;
 			const threads = this.buildThreads(items);
 			this.threads = loaded(threads);
@@ -206,7 +252,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 		}
 	}
 
-	/** Posts the comment box's text, with its images, on the project. */
+	/** Posts the comment box's text, with its images, on the record. */
 	protected async addComment(): Promise<void> {
 		if (!this.canPost('comment') || this.postingComment) return;
 		const text = this.commentControl.value.trim();
@@ -238,7 +284,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 			this.replyControl.reset();
 			this.clearImages('reply');
 		}
-		setTimeout(() => document.getElementById(`project-comment-reply-${id}`)?.focus());
+		setTimeout(() => document.getElementById(`${this.idPrefix}-reply-${id}`)?.focus());
 	}
 
 	/** Posts the reply box's text, with its images, under the thread's comment. */
@@ -498,7 +544,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 		try {
 			await this._commentService.delete(comment.id);
 			if (this.openThreadId === comment.id) this.openThreadId = null;
-			this._toastr.success('GOALS_PAGE.COMMENT_THREAD.DELETED');
+			this._toastr.success(this.text.deleted);
 			await this.load();
 		} catch (error) {
 			this._toastr.danger(error?.error?.message ?? error?.message, this._translate.instant('TOASTR.TITLE.ERROR'));
@@ -516,9 +562,9 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 		try {
 			await this._commentService.create({
 				comment,
-				entity: BaseEntityEnum.OrganizationProject,
-				entityId: this.projectId,
-				entityName: this.projectName,
+				entity: this.entity,
+				entityId: this.entityId,
+				entityName: this.entityName,
 				...(parentId ? { parentId } : {}),
 				...this.scope()
 			});
@@ -532,7 +578,8 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 
 	/**
 	 * Groups the flat list into threads. Replies are one level deep: a reply to a reply joins the thread of the
-	 * comment at its root, and a reply whose parent is gone is shown as a comment of its own.
+	 * comment at its root, and a reply whose parent is gone is shown as a comment of its own. Newest first turns
+	 * the threads round; the replies inside a thread stay oldest first, as a conversation reads.
 	 */
 	private buildThreads(comments: IComment[]): ICommentThread[] {
 		const byId = new Map(comments.map((comment) => [comment.id, comment]));
@@ -555,7 +602,8 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 				threads.get(root.id).replies.push(this.toEntry(comment));
 			}
 		}
-		return [...threads.values()];
+		const ordered = [...threads.values()];
+		return this.newestFirst ? ordered.reverse() : ordered;
 	}
 
 	private toEntry(comment: IComment): ICommentEntry {
@@ -594,6 +642,7 @@ export class ProjectCommentsComponent implements OnChanges, OnDestroy {
 	 * employee record, by `createdByUserId` when they do not.
 	 */
 	private canDelete(comment: IComment): boolean {
+		if (!this.canWrite) return false;
 		if (this._store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) return true;
 		const user = this._store.user;
 		if (!user) return false;

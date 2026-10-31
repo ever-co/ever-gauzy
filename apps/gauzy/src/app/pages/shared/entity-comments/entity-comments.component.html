@@ -1,7 +1,12 @@
-<!-- The discussion on the project, laid out as the objective dialog's Comments: the comments, oldest first, a
-     comment with replies hanging a thread card off its avatar, and the comment box under them. The count is on
-     the page's Comments tab. -->
+<!-- The discussion on the record, laid out as the objective dialog's Comments: the comments, oldest first, a
+     comment with replies hanging a thread card off its avatar, and the comment box under them (newest first, the
+     box above them). The count is on the page's tab. -->
 <section class="panel project-view-panel" [nbSpinner]="threads.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+	@if (canWrite && newestFirst) {
+	<header class="comment-footer comment-footer--top">
+		<ng-container *ngTemplateOutlet="commentBox"></ng-container>
+	</header>
+	}
 	<div class="panel-body">
 		@if (threads.failed) {
 		<!-- A failed read, told apart from an empty list. -->
@@ -12,7 +17,7 @@
 			</button>
 		</div>
 		} @else if (!threads.loading && !threads.value.length) {
-		<div class="empty-state">{{ 'PROJECT_VIEW.NO_COMMENTS' | translate }}</div>
+		<div class="empty-state">{{ text.empty | translate }}</div>
 		} @else {
 		<ol class="comments">
 			@for (thread of threads.value; track thread.entry.comment.id) {
@@ -27,6 +32,7 @@
 				</div>
 				<div class="comment-main">
 					<ng-container *ngTemplateOutlet="message; context: { $implicit: entry }"></ng-container>
+					@if (canWrite) {
 					<div class="comment-actions">
 						<button type="button" class="comment-action" (click)="replyTo(thread)">
 							<nb-icon icon="corner-up-left-outline" aria-hidden="true"></nb-icon>
@@ -34,6 +40,7 @@
 						</button>
 						<ng-container *ngTemplateOutlet="deleteControl; context: { $implicit: entry }"></ng-container>
 					</div>
+					}
 				</div>
 				@if (open || thread.replies.length) {
 				<!-- The thread card. Closed, it sums the thread up — the comment, how many replies, the latest one;
@@ -87,12 +94,13 @@
 						</div>
 						}
 						<!-- The reply box: one block — picked images, the text, then the paperclip and Reply. -->
+						@if (canWrite) {
 						<div class="composer composer--reply" (dragover)="onDragOver($event)" (drop)="onDrop('reply', $event)">
 							<ng-container *ngTemplateOutlet="pendingImages; context: { $implicit: 'reply' }"></ng-container>
 							<textarea
 								class="composer-input"
 								rows="1"
-								[id]="'project-comment-reply-' + entry.comment.id"
+								[id]="idPrefix + '-reply-' + entry.comment.id"
 								[formControl]="replyControl"
 								[placeholder]="'GOALS_PAGE.COMMENT_THREAD.REPLY_PLACEHOLDER' | translate"
 								[attr.aria-label]="'GOALS_PAGE.COMMENT_THREAD.REPLY_PLACEHOLDER' | translate"
@@ -117,6 +125,7 @@
 							</div>
 						</div>
 						}
+						}
 					</div>
 				</div>
 				}
@@ -125,39 +134,45 @@
 		</ol>
 		}
 	</div>
-	<!-- The comment box under the list: one block — picked images, the text, then a toolbar with the paperclip
-	     and the send button. Ctrl/Cmd+Enter posts too; images can also be pasted or dropped on it. -->
+	@if (canWrite && !newestFirst) {
 	<footer class="comment-footer">
-		<div class="composer" (dragover)="onDragOver($event)" (drop)="onDrop('comment', $event)">
-			<ng-container *ngTemplateOutlet="pendingImages; context: { $implicit: 'comment' }"></ng-container>
-			<textarea
-				id="project-comment"
-				class="composer-input"
-				rows="1"
-				[formControl]="commentControl"
-				[placeholder]="'PROJECT_VIEW.COMMENT_PLACEHOLDER' | translate"
-				[attr.aria-label]="'PROJECT_VIEW.COMMENT_PLACEHOLDER' | translate"
-				(paste)="onPaste('comment', $event)"
-				(keydown.control.enter)="addComment()"
-				(keydown.meta.enter)="addComment()"
-			></textarea>
-			<div class="composer-toolbar">
-				<ng-container *ngTemplateOutlet="attachButton; context: { $implicit: 'comment' }"></ng-container>
-				<button
-					type="button"
-					class="composer-send"
-					[class.is-busy]="postingComment"
-					[disabled]="!canPost('comment') || postingComment"
-					[nbTooltip]="'BUTTONS.ADD_COMMENT' | translate"
-					[attr.aria-label]="'BUTTONS.ADD_COMMENT' | translate"
-					(click)="addComment()"
-				>
-					<nb-icon icon="paper-plane-outline" aria-hidden="true"></nb-icon>
-				</button>
-			</div>
-		</div>
+		<ng-container *ngTemplateOutlet="commentBox"></ng-container>
 	</footer>
+	}
 </section>
+
+<!-- The comment box, under the list or above it: one block — picked images, the text, then a toolbar with the
+     paperclip and the send button. Ctrl/Cmd+Enter posts too; images can also be pasted or dropped on it. -->
+<ng-template #commentBox>
+	<div class="composer" (dragover)="onDragOver($event)" (drop)="onDrop('comment', $event)">
+		<ng-container *ngTemplateOutlet="pendingImages; context: { $implicit: 'comment' }"></ng-container>
+		<textarea
+			class="composer-input"
+			rows="1"
+			[id]="idPrefix + '-comment'"
+			[formControl]="commentControl"
+			[placeholder]="text.placeholder | translate"
+			[attr.aria-label]="text.placeholder | translate"
+			(paste)="onPaste('comment', $event)"
+			(keydown.control.enter)="addComment()"
+			(keydown.meta.enter)="addComment()"
+		></textarea>
+		<div class="composer-toolbar">
+			<ng-container *ngTemplateOutlet="attachButton; context: { $implicit: 'comment' }"></ng-container>
+			<button
+				type="button"
+				class="composer-send"
+				[class.is-busy]="postingComment"
+				[disabled]="!canPost('comment') || postingComment"
+				[nbTooltip]="text.send | translate"
+				[attr.aria-label]="text.send | translate"
+				(click)="addComment()"
+			>
+				<nb-icon icon="paper-plane-outline" aria-hidden="true"></nb-icon>
+			</button>
+		</div>
+	</div>
+</ng-template>
 
 <!-- A message's author line and text. -->
 <ng-template #message let-entry>

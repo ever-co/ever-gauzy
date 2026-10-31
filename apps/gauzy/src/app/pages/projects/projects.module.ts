@@ -36,7 +36,7 @@ import { ProjectQuickLookComponent } from './components/project-quick-look/proje
 import { ProjectViewPageComponent } from './components/project-view/project-view-page.component';
 import { ProjectBoardComponent } from './components/project-view/project-board/project-board.component';
 import { ProjectActivityComponent } from './components/project-view/project-activity/project-activity.component';
-import { ProjectCommentsComponent } from './components/project-view/project-comments/project-comments.component';
+import { EntityCommentsComponent } from '../shared/entity-comments/entity-comments.component';
 import { TaskViewHeaderComponent } from '../tasks/components/task-view/task-view-header.component';
 
 @NgModule({
@@ -70,7 +70,8 @@ import { TaskViewHeaderComponent } from '../tasks/components/task-view/task-view
 		// The project page's other tabs. Standalone, used only by the project page.
 		ProjectBoardComponent,
 		ProjectActivityComponent,
-		ProjectCommentsComponent,
+		// The Comments tab: the shared comments of a record, also the contact page's Notes.
+		EntityCommentsComponent,
 		// The task drawer's issue-style header, shared with the task lists. Standalone.
 		TaskViewHeaderComponent
 	],
