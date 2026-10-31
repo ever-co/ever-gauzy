@@ -1,6 +1,13 @@
 import { Logger } from '@nestjs/common';
 import { environment } from '@gauzy/config';
-import { FakeOidcHttp, TestSigningKey, generateSigningKey, publishIssuer, randomTestSecret, signTestToken } from './fixtures/oidc-test-kit';
+import {
+	FakeOidcHttp,
+	TestSigningKey,
+	generateSigningKey,
+	publishIssuer,
+	randomTestSecret,
+	signTestToken
+} from './fixtures/oidc-test-kit';
 import { OidcClientService } from './oidc-client.service';
 import { OidcDiscoveryService } from './oidc-discovery.service';
 import { OidcEmailSignInFlow, OidcEmailSignInService } from './oidc-email-sign-in.service';
@@ -74,12 +81,19 @@ describe('OidcEmailSignInService (sign-in by verified e-mail on the shared libra
 		nextClaims = { iss: ISSUER, aud: CLIENT_ID, sub: 'person-1', iat: now, exp: now + 300 };
 		http.on(tokenEndpoint, async () => ({
 			status: 200,
-			data: { id_token: await signTestToken(key, { nonce: lastNonce, ...nextClaims }), access_token: 'access', token_type: 'Bearer' }
+			data: {
+				id_token: await signTestToken(key, { nonce: lastNonce, ...nextClaims }),
+				access_token: 'access',
+				token_type: 'Bearer'
+			}
 		}));
 		const transport = http as unknown as OidcHttpService;
 		const discovery = new OidcDiscoveryService(transport);
 		const client = new OidcClientService(discovery, new OidcJwksService(discovery, transport), transport);
-		service = new OidcEmailSignInService(new OidcTransactionService({ transactionSecret: randomTestSecret() }), client);
+		service = new OidcEmailSignInService(
+			new OidcTransactionService({ transactionSecret: randomTestSecret() }),
+			client
+		);
 		browser = new Browser();
 		warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 	});
@@ -113,7 +127,10 @@ describe('OidcEmailSignInService (sign-in by verified e-mail on the shared libra
 		nextClaims = { ...nextClaims, email: 'person@example.test', email_verified: true };
 		const state = await start();
 
-		await expect(complete({ code: 'code-1', state })).resolves.toEqual({ status: 'verified', email: 'person@example.test' });
+		await expect(complete({ code: 'code-1', state })).resolves.toEqual({
+			status: 'verified',
+			email: 'person@example.test'
+		});
 		expect(browser.has(COOKIE)).toBe(false);
 		expect(http.calls(tokenEndpoint)).toHaveLength(1);
 	});
@@ -128,6 +145,83 @@ describe('OidcEmailSignInService (sign-in by verified e-mail on the shared libra
 		const state = await start();
 
 		await expect(complete({ code: 'code-1', state })).resolves.toEqual({ status: 'email_unverified' });
+	});
+
+	describe('userinfo fallback (the ID token carries no address)', () => {
+		const USERINFO = `${ISSUER}/oidc/v1/userinfo`;
+		const withFallback = (): OidcEmailSignInFlow => ({ ...flow(), userinfoFallback: true });
+
+		it('reads a verified address from the userinfo endpoint with the access token', async () => {
+			http.on(USERINFO, {
+				status: 200,
+				data: { sub: 'person-1', email: 'person@example.test', email_verified: true }
+			});
+			const state = await start(withFallback());
+
+			await expect(complete({ code: 'code-1', state }, withFallback())).resolves.toEqual({
+				status: 'verified',
+				email: 'person@example.test'
+			});
+			expect(http.calls(USERINFO)).toHaveLength(1);
+			expect(http.calls(USERINFO)[0].headers['Authorization']).toBe('Bearer access');
+		});
+
+		it('refuses a userinfo answer for another subject', async () => {
+			http.on(USERINFO, {
+				status: 200,
+				data: { sub: 'someone-else', email: 'person@example.test', email_verified: true }
+			});
+			const state = await start(withFallback());
+
+			await expect(complete({ code: 'code-1', state }, withFallback())).resolves.toEqual({ status: 'failed' });
+			expect(warn).toHaveBeenCalledWith('Test provider sign-in failed: token_invalid');
+		});
+
+		it.each([
+			['email_verified: false', { email: 'person@example.test', email_verified: false }],
+			['email_verified as the string "true"', { email: 'person@example.test', email_verified: 'true' }],
+			['no e-mail address', { email_verified: true }],
+			['an e-mail address that is not a string', { email: ['person@example.test'], email_verified: true }]
+		])('refuses a userinfo address the issuer does not report verified (%s)', async (_name, claims) => {
+			http.on(USERINFO, { status: 200, data: { sub: 'person-1', ...claims } });
+			const state = await start(withFallback());
+
+			await expect(complete({ code: 'code-1', state }, withFallback())).resolves.toEqual({
+				status: 'email_unverified'
+			});
+		});
+
+		it('reports a failing userinfo endpoint as failed', async () => {
+			http.fail(USERINFO);
+			const state = await start(withFallback());
+
+			await expect(complete({ code: 'code-1', state }, withFallback())).resolves.toEqual({ status: 'failed' });
+		});
+
+		it('never calls the userinfo endpoint without the setting', async () => {
+			http.on(USERINFO, {
+				status: 200,
+				data: { sub: 'person-1', email: 'person@example.test', email_verified: true }
+			});
+			const state = await start();
+
+			await expect(complete({ code: 'code-1', state })).resolves.toEqual({ status: 'email_unverified' });
+			expect(http.calls(USERINFO)).toHaveLength(0);
+		});
+
+		it('never calls the userinfo endpoint when the ID token carries the address', async () => {
+			nextClaims = { ...nextClaims, email: 'person@example.test', email_verified: false };
+			http.on(USERINFO, {
+				status: 200,
+				data: { sub: 'person-1', email: 'person@example.test', email_verified: true }
+			});
+			const state = await start(withFallback());
+
+			await expect(complete({ code: 'code-1', state }, withFallback())).resolves.toEqual({
+				status: 'email_unverified'
+			});
+			expect(http.calls(USERINFO)).toHaveLength(0);
+		});
 	});
 
 	it('refuses an ID token from another issuer', async () => {
@@ -178,7 +272,9 @@ describe('OidcEmailSignInService (sign-in by verified e-mail on the shared libra
 			status: 'verified',
 			email: 'person@example.test'
 		});
-		await expect(service.complete(request, browser.response, flow(), { code: 'code-1', state })).resolves.toEqual({ status: 'failed' });
+		await expect(service.complete(request, browser.response, flow(), { code: 'code-1', state })).resolves.toEqual({
+			status: 'failed'
+		});
 		expect(http.calls(tokenEndpoint)).toHaveLength(1);
 	});
 

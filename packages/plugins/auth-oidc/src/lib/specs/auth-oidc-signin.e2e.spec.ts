@@ -37,7 +37,10 @@ class FakeSocialSignIn implements SocialSignInPort {
 	async validateOAuthLoginEmail(emails: Array<{ value: string; verified: boolean }>) {
 		this.calls.push(emails);
 		const match = emails.find((email) => email.verified && this.users.has(email.value));
-		return { success: !!match, authData: { jwt: match ? 'gauzy-access-token' : null, userId: match ? 'user-1' : null } };
+		return {
+			success: !!match,
+			authData: { jwt: match ? 'gauzy-access-token' : null, userId: match ? 'user-1' : null }
+		};
 	}
 
 	async routeRedirect(success: boolean, auth: { jwt: string; userId: string }, res: unknown) {
@@ -60,7 +63,8 @@ describe('OpenID Connect sign-in (HTTP, against an in-process OpenID Provider)',
 	let nextClaims: Record<string, unknown>;
 	let lastNonce: string;
 
-	const loginPage = (reason: string) => `${environment.clientBaseUrl.replace(/\/+$/, '')}/#/auth/login?error=${reason}`;
+	const loginPage = (reason: string) =>
+		`${environment.clientBaseUrl.replace(/\/+$/, '')}/#/auth/login?error=${reason}`;
 
 	function settings(env: Record<string, string> = {}): AuthOidcSettings {
 		return parseOidcSettings({
@@ -127,7 +131,9 @@ describe('OpenID Connect sign-in (HTTP, against an in-process OpenID Provider)',
 
 	async function get(url: string): Promise<Response> {
 		const response = await fetch(url, { redirect: 'manual', headers: cookie ? { cookie } : {} });
-		const setCookie = response.headers.getSetCookie().find((value) => value.startsWith(`${OIDC_TRANSACTION_COOKIE}=`));
+		const setCookie = response.headers
+			.getSetCookie()
+			.find((value) => value.startsWith(`${OIDC_TRANSACTION_COOKIE}=`));
 		if (setCookie) {
 			cookie = setCookie.split(';')[0];
 		}
@@ -146,7 +152,9 @@ describe('OpenID Connect sign-in (HTTP, against an in-process OpenID Provider)',
 	async function signIn(claims: Record<string, unknown>): Promise<string> {
 		nextClaims = { ...nextClaims, ...claims };
 		const state = (await authorize()).searchParams.get('state');
-		const callback = await get(`${baseUrl}${OIDC_CALLBACK_PATH}?code=provider-code&state=${encodeURIComponent(state)}`);
+		const callback = await get(
+			`${baseUrl}${OIDC_CALLBACK_PATH}?code=provider-code&state=${encodeURIComponent(state)}`
+		);
 		return callback.headers.get('location');
 	}
 
@@ -171,7 +179,9 @@ describe('OpenID Connect sign-in (HTTP, against an in-process OpenID Provider)',
 		expect(location.searchParams.get('nonce')).toBeTruthy();
 		expect(location.searchParams.get('scope')).toBe('openid email profile');
 		expect(location.searchParams.get('redirect_uri')).toBe(CALLBACK);
-		const setCookie = response.headers.getSetCookie().find((value) => value.startsWith(`${OIDC_TRANSACTION_COOKIE}=`));
+		const setCookie = response.headers
+			.getSetCookie()
+			.find((value) => value.startsWith(`${OIDC_TRANSACTION_COOKIE}=`));
 		expect(setCookie).toMatch(/HttpOnly/i);
 		expect(setCookie).toMatch(/SameSite=Lax/i);
 		expect(setCookie).toMatch(/Path=\/api\/auth/);
@@ -185,7 +195,39 @@ describe('OpenID Connect sign-in (HTTP, against an in-process OpenID Provider)',
 		expect(social.calls).toEqual([[{ value: 'person@example.test', verified: true }]]);
 		const [exchange] = http.calls(`${ISSUER}/oauth/v2/token`);
 		expect(exchange.headers['Authorization']).toMatch(/^Basic /);
-		expect(exchange.form).toEqual(expect.objectContaining({ grant_type: 'authorization_code', code: 'provider-code', redirect_uri: CALLBACK }));
+		expect(exchange.form).toEqual(
+			expect.objectContaining({ grant_type: 'authorization_code', code: 'provider-code', redirect_uri: CALLBACK })
+		);
+	});
+
+	it('reads the address from the userinfo endpoint when the ID token carries none (Zitadel and others)', async () => {
+		const userinfo = `${ISSUER}/oidc/v1/userinfo`;
+		http.on(userinfo, {
+			status: 200,
+			data: { sub: 'person-1', email: 'person@example.test', email_verified: true }
+		});
+		social.users.add('person@example.test');
+
+		const landing = await signIn({});
+
+		expect(landing).toBe(`${environment.clientBaseUrl}/#/sign-in/success?jwt=gauzy-access-token&userId=user-1`);
+		expect(social.calls).toEqual([[{ value: 'person@example.test', verified: true }]]);
+		expect(http.calls(userinfo).map((request) => request.headers['Authorization'])).toEqual([
+			'Bearer provider-access-token'
+		]);
+	});
+
+	it('refuses a userinfo address the provider does not report verified', async () => {
+		http.on(`${ISSUER}/oidc/v1/userinfo`, {
+			status: 200,
+			data: { sub: 'person-1', email: 'person@example.test', email_verified: false }
+		});
+		social.users.add('person@example.test');
+
+		const landing = await signIn({});
+
+		expect(landing).toBe(loginPage('email_unverified'));
+		expect(social.calls).toHaveLength(0);
 	});
 
 	it('sends an unknown verified e-mail to the register page and creates nothing', async () => {
@@ -213,7 +255,9 @@ describe('OpenID Connect sign-in (HTTP, against an in-process OpenID Provider)',
 		const state = (await authorize()).searchParams.get('state');
 		lastNonce = 'nonce-of-another-sign-in';
 
-		const callback = await get(`${baseUrl}${OIDC_CALLBACK_PATH}?code=provider-code&state=${encodeURIComponent(state)}`);
+		const callback = await get(
+			`${baseUrl}${OIDC_CALLBACK_PATH}?code=provider-code&state=${encodeURIComponent(state)}`
+		);
 
 		expect(callback.headers.get('location')).toBe(loginPage('sign_in_failed'));
 		expect(social.calls).toHaveLength(0);
@@ -223,7 +267,9 @@ describe('OpenID Connect sign-in (HTTP, against an in-process OpenID Provider)',
 		const state = (await authorize()).searchParams.get('state');
 		cookie = '';
 
-		const callback = await get(`${baseUrl}${OIDC_CALLBACK_PATH}?code=provider-code&state=${encodeURIComponent(state)}`);
+		const callback = await get(
+			`${baseUrl}${OIDC_CALLBACK_PATH}?code=provider-code&state=${encodeURIComponent(state)}`
+		);
 
 		expect(callback.headers.get('location')).toBe(loginPage('sign_in_failed'));
 		expect(http.calls(`${ISSUER}/oauth/v2/token`)).toHaveLength(0);
@@ -233,7 +279,9 @@ describe('OpenID Connect sign-in (HTTP, against an in-process OpenID Provider)',
 	it('sends a cancelled sign-in back to the login page', async () => {
 		const state = (await authorize()).searchParams.get('state');
 
-		const callback = await get(`${baseUrl}${OIDC_CALLBACK_PATH}?error=access_denied&state=${encodeURIComponent(state)}`);
+		const callback = await get(
+			`${baseUrl}${OIDC_CALLBACK_PATH}?error=access_denied&state=${encodeURIComponent(state)}`
+		);
 
 		expect(callback.headers.get('location')).toBe(loginPage('sign_in_failed'));
 		expect(http.calls(`${ISSUER}/oauth/v2/token`)).toHaveLength(0);
@@ -243,7 +291,10 @@ describe('OpenID Connect sign-in (HTTP, against an in-process OpenID Provider)',
 		await app.close();
 		const issuer = 'https://id.example.test/application/o/gauzy/';
 		const document = { ...discoveryDocumentFor('https://id.example.test/application/o/gauzy'), issuer };
-		http.on('https://id.example.test/application/o/gauzy/.well-known/openid-configuration', { status: 200, data: document });
+		http.on('https://id.example.test/application/o/gauzy/.well-known/openid-configuration', {
+			status: 200,
+			data: document
+		});
 		http.on(document.jwks_uri, { status: 200, data: { keys: [key.publicJwk] } });
 		serveTokens(issuer, document.token_endpoint);
 		await start(settings({ OIDC_ISSUER: issuer }));
@@ -260,7 +311,9 @@ describe('OpenID Connect sign-in (HTTP, against an in-process OpenID Provider)',
 
 		const location = await authorize();
 
-		expect(location.searchParams.get('redirect_uri')).toBe(`${environment.baseUrl.replace(/\/+$/, '')}/api/auth/oidc/callback`);
+		expect(location.searchParams.get('redirect_uri')).toBe(
+			`${environment.baseUrl.replace(/\/+$/, '')}/api/auth/oidc/callback`
+		);
 	});
 
 	it('answers enabled:false and 404 when it is not configured, without contacting anything', async () => {
@@ -268,7 +321,10 @@ describe('OpenID Connect sign-in (HTTP, against an in-process OpenID Provider)',
 		http = new FakeOidcHttp();
 		await start(settings({ OIDC_ISSUER: 'http://id.example.test' }));
 
-		expect(await (await get(`${baseUrl}/api/auth/oidc/config`)).json()).toEqual({ enabled: false, reason: 'unconfigured' });
+		expect(await (await get(`${baseUrl}/api/auth/oidc/config`)).json()).toEqual({
+			enabled: false,
+			reason: 'unconfigured'
+		});
 		expect((await get(`${baseUrl}/api/auth/oidc`)).status).toBe(404);
 		expect((await get(`${baseUrl}${OIDC_CALLBACK_PATH}?code=x&state=y`)).status).toBe(404);
 		expect(http.requests).toHaveLength(0);

@@ -11,9 +11,7 @@ const SIGN_IN_MODE = 'signin';
 
 /** The verified e-mail address of a completed sign-in, or why there is none. */
 export type OidcEmailSignInResult =
-	| { status: 'verified'; email: string }
-	| { status: 'email_unverified' }
-	| { status: 'failed' };
+	{ status: 'verified'; email: string } | { status: 'email_unverified' } | { status: 'failed' };
 
 /** One provider plugin's sign-in: the issuer, the plugin's own cookie and its name in log lines. */
 export interface OidcEmailSignInFlow {
@@ -23,6 +21,18 @@ export interface OidcEmailSignInFlow {
 	cookieName: string;
 	/** Name of the sign-in method in log lines (for example `Keycloak`). Never a secret. */
 	label: string;
+	/**
+	 * When the ID token carries no e-mail address, read it (and `email_verified`) from the issuer's userinfo
+	 * endpoint instead. Some providers (Zitadel, Authelia) keep the address out of the ID token by default. The
+	 * answer counts only for the ID token's own subject. Off unless set.
+	 */
+	userinfoFallback?: boolean;
+}
+
+/** An e-mail address and whether the issuer reports it verified. */
+interface ReportedEmail {
+	email?: string;
+	verified: boolean;
 }
 
 /** The query parameters of an authorization callback. */
@@ -105,11 +115,15 @@ export class OidcEmailSignInService {
 			if (query.error || !query.code) {
 				return { status: 'failed' };
 			}
-			const { idToken } = await this.client.exchangeCode(flow.config, query.code, transaction);
-			if (!idToken.emailVerified || !idToken.email) {
+			const { idToken, accessToken } = await this.client.exchangeCode(flow.config, query.code, transaction);
+			const reported: ReportedEmail =
+				!idToken.email && flow.userinfoFallback && accessToken
+					? await this.userinfoEmail(flow, accessToken, idToken.subject)
+					: { email: idToken.email, verified: idToken.emailVerified };
+			if (!reported.verified || !reported.email) {
 				return { status: 'email_unverified' };
 			}
-			return { status: 'verified', email: idToken.email };
+			return { status: 'verified', email: reported.email };
 		} catch (error) {
 			this.logger.warn(`${flow.label} sign-in failed: ${failureCode(error)}`);
 			return { status: 'failed' };
@@ -124,6 +138,23 @@ export class OidcEmailSignInService {
 	 */
 	loginPageUrl(reason: string): string {
 		return `${stripTrailingSlashes(environment.clientBaseUrl)}/#/auth/login?error=${encodeURIComponent(reason)}`;
+	}
+
+	/**
+	 * Reads the address from the userinfo endpoint; the library accepts the answer only for `subject`.
+	 * Verified means `email_verified: true` exactly, as for the ID token.
+	 */
+	private async userinfoEmail(
+		flow: OidcEmailSignInFlow,
+		accessToken: string,
+		subject: string
+	): Promise<ReportedEmail> {
+		const claims = await this.client.userinfo(flow.config, accessToken, subject);
+		const email = claims['email'];
+		return {
+			email: typeof email === 'string' && email ? email : undefined,
+			verified: claims['email_verified'] === true
+		};
 	}
 
 	private cookie(flow: OidcEmailSignInFlow): OidcTransactionCookieOptions {

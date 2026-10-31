@@ -56,7 +56,9 @@ export class AuthOidcSignInService {
 
 	/** What the login page needs to know: whether to show the button, and its label. */
 	publicConfig(): AuthOidcPublicConfig {
-		return this.flow ? { enabled: true, displayName: this.settings.displayName } : { enabled: false, reason: 'unconfigured' };
+		return this.flow
+			? { enabled: true, displayName: this.settings.displayName }
+			: { enabled: false, reason: 'unconfigured' };
 	}
 
 	/**
@@ -78,7 +80,11 @@ export class AuthOidcSignInService {
 	 * @param query - The `code`, `state` and `error` query parameters.
 	 * @returns The verified e-mail address, or why there is none.
 	 */
-	async complete(request: OidcCookieRequest, response: OidcCookieResponse, query: OidcCallbackQuery): Promise<OidcEmailSignInResult> {
+	async complete(
+		request: OidcCookieRequest,
+		response: OidcCookieResponse,
+		query: OidcCallbackQuery
+	): Promise<OidcEmailSignInResult> {
 		return this.signIn.complete(request, response, this.requireFlow(), query);
 	}
 
@@ -108,7 +114,9 @@ export class AuthOidcSignInService {
 				scopes
 			},
 			cookieName: OIDC_TRANSACTION_COOKIE,
-			label: 'OpenID Connect'
+			label: 'OpenID Connect',
+			// Some providers (Zitadel, Authelia) leave the address out of the ID token: read it from userinfo then.
+			userinfoFallback: true
 		};
 	}
 }

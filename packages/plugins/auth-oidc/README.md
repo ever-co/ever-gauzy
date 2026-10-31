@@ -60,11 +60,13 @@ Register Gauzy at the provider as a confidential web client:
 
 The provider must publish its OpenID configuration at
 `<issuer>/.well-known/openid-configuration` with that exact `issuer`, keep
-the endpoints it lists (authorize, token, key set) on the issuer's own origin,
-sign ID tokens with `RS256`, `ES256` or `EdDSA`, and put the person's address
-with `email_verified: true` into the ID token. A provider whose key set lives
-on another host, or that does not report verified addresses, cannot be used
-with this plugin.
+the endpoints it lists (authorize, token, key set, userinfo) on the issuer's
+own origin, sign ID tokens with `RS256`, `ES256` or `EdDSA`, and report the
+person's address with `email_verified: true`: in the ID token, or, when the ID
+token carries no address (Zitadel and Authelia leave it out by default), from
+its userinfo endpoint, whose answer counts only for the ID token's own
+subject. A provider whose key set lives on another host, or that does not
+report verified addresses, cannot be used with this plugin.
 
 ## What it adds
 
