@@ -2245,9 +2245,9 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		expect(fixture.subscription(SUBSCRIPTION).reservedPlanId).toBe(BETTER_PLAN);
 	});
 
-	it('releases a reservation abandoned past the lease on the next billing pass, and leaves a fresh one', async () => {
-		const abandoned = {
-			key: `${SUBSCRIPTION}:abandoned`,
+	it('recovers a reservation abandoned past the lease on the next billing pass, and leaves a fresh one', async () => {
+		const abandoned = (id: string, msAgo: number) => ({
+			key: `${id}:abandoned`,
 			change: 'abandoned',
 			planId: BETTER_PLAN,
 			settlement: 'CHARGED',
@@ -2256,28 +2256,29 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 			net: '92.900000',
 			currency: 'USD',
 			periodStart: MARCH.toISOString(),
-			description: 'Plan changed to PLAN-2.'
-		};
+			description: 'Plan changed to PLAN-2.',
+			at: new Date(MID_MARCH.getTime() - msAgo).toISOString(),
+			quantity: null,
+			discountPercentage: null,
+			replaceLines: true,
+			items: [{ variantId: BETTER_VARIANT, quantity: '1.000000', unitPrice: '300.000000', position: 0 }]
+		});
+		const reserving = (id: string, msAgo: number) =>
+			subscriptionRow(id, { reservedPlanId: BETTER_PLAN, metadata: { changeIntent: abandoned(id, msAgo) } });
 		const fixture = subscriptionFixture({
 			prices: UPGRADE,
 			subscriptions: [
-				subscriptionRow(SUBSCRIPTION, {
-					reservedPlanId: BETTER_PLAN,
-					metadata: { changeIntent: { ...abandoned, at: new Date(MID_MARCH.getTime() - 11 * 60 * 1000).toISOString() } }
-				}),
-				subscriptionRow('subscription-2', {
-					reservedPlanId: BETTER_PLAN,
-					metadata: {
-						changeIntent: { ...abandoned, key: 'subscription-2:settling', at: new Date(MID_MARCH.getTime() - 60 * 1000).toISOString() }
-					}
-				})
-			]
+				reserving(SUBSCRIPTION, 11 * 60 * 1000),
+				reserving('subscription-unknown', 11 * 60 * 1000),
+				reserving('subscription-settling', 60 * 1000)
+			],
+			items: [itemRow('item-1'), itemRow('item-2', { subscriptionId: 'subscription-unknown' })]
 		});
 
-		// Its charge went through and the apply never followed.
-		fixture.idempotencyService.records.set(`subscription.proration:${abandoned.key}`, {
+		// The first one's charge went through and the apply never followed; the second's claim is gone.
+		fixture.idempotencyService.records.set(`subscription.proration:${SUBSCRIPTION}:abandoned`, {
 			scope: 'subscription.proration',
-			key: abandoned.key,
+			key: `${SUBSCRIPTION}:abandoned`,
 			requestHash: 'abandoned',
 			response: { status: 200 },
 			lockedAt: 0
@@ -2285,21 +2286,104 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 
 		await fixture.service.runBilling({ asOf: MID_MARCH });
 
-		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: PLAN, reservedPlanId: null });
+		// Paid for: applied from its record, plan and lines, rather than reversed for having waited.
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
+		expect(fixture.items().map((line) => line.variantId)).toEqual([BETTER_VARIANT]);
 		expect(fixture.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toBeUndefined();
-		expect(fixture.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toEqual([
-			expect.objectContaining({ key: abandoned.key, amount: '92.900000', settled: 'SETTLED' })
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toBeUndefined();
+		// Nothing can tell whether its charge was made: recorded for reversal, announced, and cleared.
+		expect(fixture.subscription('subscription-unknown')).toMatchObject({ planId: PLAN, reservedPlanId: null });
+		expect(fixture.subscription('subscription-unknown').metadata?.['settlementReversals']).toEqual([
+			expect.objectContaining({ key: 'subscription-unknown:abandoned', amount: '92.900000', settled: 'UNKNOWN' })
 		]);
 		expect(fixture.events).toContainEqual(
 			expect.objectContaining({
 				name: 'subscription.settlement-reversal-required',
-				aggregateId: SUBSCRIPTION,
-				data: expect.objectContaining({ key: abandoned.key })
+				aggregateId: 'subscription-unknown',
+				data: expect.objectContaining({ key: 'subscription-unknown:abandoned' })
 			})
 		);
 		// A minute old: still the request's own.
-		expect(fixture.subscription('subscription-2')).toMatchObject({ reservedPlanId: BETTER_PLAN });
-		expect(fixture.subscription('subscription-2').metadata?.['changeIntent']).toMatchObject({ key: 'subscription-2:settling' });
+		expect(fixture.subscription('subscription-settling')).toMatchObject({ planId: PLAN, reservedPlanId: BETTER_PLAN });
+		expect(fixture.subscription('subscription-settling').metadata?.['changeIntent']).toMatchObject({
+			key: 'subscription-settling:abandoned'
+		});
+	});
+
+	it('writes only the lines whose quantity changes, so a correction made to another line meanwhile stands', async () => {
+		const fixture = subscriptionFixture({
+			prices: { [VARIANT]: '120.00', 'variant-c': '10.00' },
+			items: [itemRow('item-1'), itemRow('item-2', { variantId: 'variant-c', unitPrice: '10.000000', position: 1 })],
+			onProration: () => {
+				// While the change is being charged, an operator corrects the other line's price (`PUT /subscription-items/:id`).
+				fixture.tables.subscription_item.find((row) => row.id === 'item-2')!.unitPrice = '12.000000';
+			}
+		});
+
+		await fixture.service.changeItemQuantity(SUBSCRIPTION, VARIANT, '2');
+
+		expect(fixture.items().map((line) => [line.variantId, line.quantity, line.unitPrice])).toEqual([
+			[VARIANT, '2.000000', '120.000000'],
+			['variant-c', '1.000000', '12.000000']
+		]);
+	});
+
+	it('releases a record only while the request that made it still holds it', async () => {
+		// Another request resumed the change, so the record carries its token now and it may be charging it: the request
+		// that made the record, refused by its payer, must not take it away.
+		const held = { key: `${SUBSCRIPTION}:held`, change: 'held', planId: BETTER_PLAN, owner: 'resumed-by-another' };
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { reservedPlanId: BETTER_PLAN, metadata: { changeIntent: held } })]
+		});
+		const service = fixture.service as any;
+
+		await service.releaseChange(SUBSCRIPTION, { ...held, owner: 'made-it' });
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ reservedPlanId: BETTER_PLAN, version: 1 });
+
+		await service.releaseChange(SUBSCRIPTION, held);
+
+		expect(fixture.subscription(SUBSCRIPTION).reservedPlanId).toBeNull();
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toBeUndefined();
+	});
+
+	it('keeps a change recorded meanwhile when a cancellation or a scheduled change writes the metadata it read', async () => {
+		const recorded = { key: `${SUBSCRIPTION}:recorded`, change: 'recorded', planId: BETTER_PLAN, at: MID_MARCH.toISOString() };
+		/** Records a change between the read a write's metadata was built from and that write, once. */
+		const recordMeanwhile = () => {
+			let done = false;
+
+			return (_criteria: Row, partial: Row, tables: ITables, commit: (write: (tables: ITables) => void) => void) => {
+				const row = tables.subscription.find((candidate) => candidate.id === SUBSCRIPTION)!;
+
+				if (!done && partial?.metadata && !row.metadata?.changeIntent) {
+					done = true;
+					commit((written) => {
+						const moved = written.subscription.find((candidate) => candidate.id === SUBSCRIPTION)!;
+
+						moved.version += 1;
+						moved.reservedPlanId = BETTER_PLAN;
+						moved.metadata = { ...(moved.metadata ?? {}), changeIntent: recorded };
+					});
+				}
+			};
+		};
+
+		const cancelled = subscriptionFixture({ onSubscriptionUpdate: recordMeanwhile() });
+
+		await cancelled.service.cancel(SUBSCRIPTION, { immediate: true });
+
+		expect(cancelled.subscription(SUBSCRIPTION).status).toBe(SubscriptionStatus.CANCELED);
+		expect(cancelled.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toMatchObject({ key: recorded.key });
+
+		const scheduled = subscriptionFixture({ prices: UPGRADE, onSubscriptionUpdate: recordMeanwhile() });
+
+		await scheduled.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+
+		expect(scheduled.subscription(SUBSCRIPTION).metadata).toMatchObject({
+			changeIntent: { key: recorded.key },
+			scheduledPlanChange: { planId: BETTER_PLAN }
+		});
 	});
 
 	it('refuses another change while one is being settled, and replaces one abandoned past the lease', async () => {
@@ -2330,8 +2414,19 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		expect(fresh.prorationCalls).toEqual([]);
 		expect(fresh.subscription(SUBSCRIPTION)).toMatchObject({ planId: PLAN, reservedPlanId: 'plan-3', version: 1 });
 
-		// Eleven minutes old, and its charge went through: the claim it was raised under completed.
-		const stale = subscriptionFixture({ prices: UPGRADE, subscriptions: [recordedAt(11 * 60 * 1000)] });
+		// Eleven minutes old, and its charge went through: the claim it was raised under completed. The customer paid for
+		// it, so it takes hold first, applied from its record, and this change — priced on the row before it — is read again.
+		const paidFor = {
+			...abandoned,
+			planId: BETTER_PLAN,
+			replaceLines: true,
+			items: [{ variantId: BETTER_VARIANT, quantity: '1.000000', unitPrice: '300.000000', position: 0 }],
+			at: new Date(MID_MARCH.getTime() - 11 * 60 * 1000).toISOString()
+		};
+		const stale = subscriptionFixture({
+			prices: UPGRADE,
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { reservedPlanId: BETTER_PLAN, metadata: { changeIntent: paidFor } })]
+		});
 
 		stale.idempotencyService.records.set(`subscription.proration:${abandoned.key}`, {
 			scope: 'subscription.proration',
@@ -2341,19 +2436,13 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 			lockedAt: 0
 		});
 
-		const outcome = await stale.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
-
-		expect(outcome).toMatchObject({ settlement: 'CHARGED', net: '92.900000' });
-		expect(stale.subscription(SUBSCRIPTION)).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
-		expect(stale.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toEqual([
-			expect.objectContaining({ key: abandoned.key, amount: '10.000000', planId: 'plan-3', settled: 'SETTLED' })
-		]);
-		expect(stale.events).toContainEqual(
-			expect.objectContaining({
-				name: 'subscription.settlement-reversal-required',
-				data: expect.objectContaining({ key: abandoned.key, settled: 'SETTLED' })
-			})
+		await expect(stale.service.changePlan(SUBSCRIPTION, { planId: PLAN, quantity: '2' })).rejects.toThrow(
+			/SUBSCRIPTION_CHANGE_APPLIED_FIRST/
 		);
+		expect(stale.subscription(SUBSCRIPTION)).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
+		expect(stale.items().map((line) => line.variantId)).toEqual([BETTER_VARIANT]);
+		expect(stale.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toBeUndefined();
+		expect(stale.prorationCalls).toEqual([]);
 
 		// Eleven minutes old, and no claim is left for its charge: a completed claim is deleted once its retention ends, so
 		// a missing one proves nothing, and the charge is recorded as unknown rather than taken for one never made.
