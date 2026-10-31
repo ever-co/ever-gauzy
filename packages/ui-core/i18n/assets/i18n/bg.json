@@ -6542,6 +6542,7 @@
 		"SIGN_IN_WITH_EVER_ID": "Вход с Ever ID",
 		"LOGIN_WITH_EVER_ID": "Вход с {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Вход с Keycloak",
+		"SIGN_IN_WITH_SSO": "Вход с {{ name }}",
 		"FORGOT_EMAIL_TITLE": "Забравен имейл?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Вход с магически код",

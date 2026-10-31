@@ -6496,6 +6496,7 @@
 		"SIGN_IN_WITH_EVER_ID": "Accedi con Ever ID",
 		"LOGIN_WITH_EVER_ID": "Accedi con {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Accedi con Keycloak",
+		"SIGN_IN_WITH_SSO": "Accedi con {{ name }}",
 		"FORGOT_EMAIL_TITLE": "Hai dimenticato l'email?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Accedi con un codice magico",

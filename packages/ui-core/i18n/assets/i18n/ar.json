@@ -6494,6 +6494,7 @@
 		"SIGN_IN_WITH_EVER_ID": "تسجيل الدخول باستخدام Ever ID",
 		"LOGIN_WITH_EVER_ID": "تسجيل الدخول باستخدام {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "تسجيل الدخول باستخدام Keycloak",
+		"SIGN_IN_WITH_SSO": "تسجيل الدخول باستخدام {{ name }}",
 		"FORGOT_EMAIL_TITLE": "نسيت البريد الإلكتروني؟",
 		"LOGIN_MAGIC": {
 			"TITLE": "تسجيل الدخول بواسطة رمز سحري",

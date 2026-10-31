@@ -6507,6 +6507,7 @@
 		"SIGN_IN_WITH_EVER_ID": "התחברות עם Ever ID",
 		"LOGIN_WITH_EVER_ID": "התחברות עם {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "התחברות עם Keycloak",
+		"SIGN_IN_WITH_SSO": "התחברות עם {{ name }}",
 		"FORGOT_EMAIL_TITLE": "שכחת כתובת דואר אלקטרוני?",
 		"LOGIN_MAGIC": {
 			"TITLE": "התחברות עם קוד קסם",

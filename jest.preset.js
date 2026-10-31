@@ -21,7 +21,7 @@ const nxPreset = require('@nx/jest/preset').default;
 //   d3-*, internmap                  -> @swimlane/ngx-charts (desktop-ui-lib's recap module, which the
 //                                       desktop apps' shells load through the library's entry point)
 //   jose                             -> the shared OpenID Connect library in `@gauzy/auth` (the auth,
-//                                       auth-keycloak and auth-zitadel suites)
+//                                       auth-keycloak, auth-oidc and auth-zitadel suites)
 //   marked                           -> docs-ui's markdown rendering (ESM-only from marked 16, `.esm.js`)
 //   hash-it                          -> desktop-ui-lib's cache services (ESM-only from hash-it 7)
 // plus every `.mjs` file: Angular and its ecosystem ship ESM-only `fesm2022/*.mjs` bundles, which the

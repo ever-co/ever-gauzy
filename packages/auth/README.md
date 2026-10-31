@@ -66,6 +66,9 @@ than inside it:
   `KEYCLOAK_*` settings keep their names.
 - `@gauzy/plugin-auth-zitadel` (`packages/plugins/auth-zitadel`): Ever ID
   sign-in.
+- `@gauzy/plugin-auth-oidc` (`packages/plugins/auth-oidc`): sign-in with any
+  standards-compliant OpenID Connect provider (`OIDC_*` settings). It and the
+  Keycloak plugin run the same `OidcEmailSignInService` of this library.
 
-Both are off unless an operator switches them on (`KEYCLOAK_ENABLED`,
-`ZITADEL_ENABLED`); see each plugin's README.
+All are off unless an operator switches them on (`KEYCLOAK_ENABLED`,
+`ZITADEL_ENABLED`, `OIDC_ENABLED`); see each plugin's README.
