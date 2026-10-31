@@ -1172,7 +1172,8 @@
 		"DOCUMENTS": "מסמכים",
 		"BILLING": "חיוב",
 		"MONITORING": "ניטור",
-		"ADD_ITEM": "הוסף {{ name }}"
+		"ADD_ITEM": "הוסף {{ name }}",
+		"WHATS_NEW": "מה חדש"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1273,7 +1274,49 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "What's new?",
 		"LEARN_MORE_URL": "Learn more",
-		"GAUZY_FEATURES": "Gauzy features"
+		"GAUZY_FEATURES": "Gauzy features",
+		"MANAGE": {
+			"TITLE": "מה חדש",
+			"SUBTITLE": "הרשומות של חלונית \"מה חדש\" וכרטיסי התכונות של דף ההרשמה. הן משותפות לכל הדיירים בהתקנה הזו, ולכן רק המפעיל שלה יכול לשנות אותן.",
+			"WHATS_NEW": "חלונית \"מה חדש\"",
+			"WHATS_NEW_HINT": "מוצגות בחלונית \"מה חדש\" ובדף הכניסה, החדשות ביותר קודם.",
+			"FEATURES": "תכונות דף ההרשמה",
+			"FEATURES_HINT": "מוצגות ככרטיסים לצד טופס ההרשמה.",
+			"ADD": "הוספת רשומה",
+			"ADD_TITLE": "הוספת רשומת \"מה חדש\"",
+			"EDIT_TITLE": "עריכת רשומת \"מה חדש\"",
+			"EMPTY": "אין עדיין רשומות.",
+			"LOAD_FAILED": "לא ניתן היה לטעון את הרשומות.",
+			"DELETED": "נמחקו",
+			"DELETED_HINT": "רשומות שנמחקו בזמן שהדף הזה פתוח. \"שחזור\" מחזיר רשומה.",
+			"COLUMNS": {
+				"DATE": "תאריך",
+				"ENTRY": "רשומה",
+				"ACTIONS": "פעולות"
+			},
+			"FIELDS": {
+				"TITLE": "כותרת",
+				"DATE": "תאריך",
+				"ICON": "סמל",
+				"ICON_HINT": "שם של סמל Eva, למשל star-outline.",
+				"CONTENT": "טקסט",
+				"CONTENT_HINT": "עד {{ max }} תווים.",
+				"LEARN_MORE_URL": "קישור \"מידע נוסף\"",
+				"IMAGE_URL": "קישור לתמונה",
+				"IS_FEATURE": "תכונה בדף ההרשמה",
+				"IS_FEATURE_HINT": "הצגת הרשומה ככרטיס לצד טופס ההרשמה במקום בחלונית \"מה חדש\"."
+			},
+			"ERRORS": {
+				"REQUIRED": "שדה חובה.",
+				"HTTP_URL": "יש להזין כתובת מלאה שמתחילה ב-http:// או https://.",
+				"UNKNOWN_ICON": "אין סמל בשם הזה. יש להשתמש בשם של סמל Eva, למשל star-outline."
+			},
+			"PREVIEW": "תצוגה מקדימה",
+			"SAVED_MESSAGE": "הרשומה נשמרה.",
+			"DELETED_MESSAGE": "הרשומה נמחקה.",
+			"RESTORED_MESSAGE": "הרשומה שוחזרה.",
+			"FORBIDDEN": "רק מפעיל ההתקנה יכול לשנות את רשומות \"מה חדש\"."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Members Worked",
@@ -1936,7 +1979,36 @@
 			"NO_DUE_DATE": "ללא תאריך יעד",
 			"CLEAR_FILTERS": "נקה מסננים",
 			"NO_MATCHES": "אין משימות שתואמות למסננים אלה",
-			"NO_MATCHES_HINT": "נסו סטטוס, עדיפות או תאריך יעד אחרים, או נקו את המסננים."
+			"NO_MATCHES_HINT": "נסו סטטוס, עדיפות או תאריך יעד אחרים, או נקו את המסננים.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "פעילות אחרונה",
+				"FILTER": "סוג פעילות",
+				"ALL": "כל הפעילות",
+				"TASKS": "משימות",
+				"PROJECTS": "פרויקטים",
+				"EMPTY": "אין פעילות אחרונה",
+				"EMPTY_HINT": "משימות ופרויקטים שנוצרו, שונו או נמחקו מופיעים כאן.",
+				"ERROR": "לא ניתן לטעון את הפעילות האחרונה.",
+				"UNTITLED": "ללא כותרת",
+				"SYSTEM": "מערכת",
+				"CREATED": "נוצר",
+				"UPDATED": "עודכן",
+				"DELETED": "נמחק",
+				"CREATED_BY": "נוצר על ידי {{ actor }}",
+				"UPDATED_BY": "עודכן על ידי {{ actor }}",
+				"DELETED_BY": "נמחק על ידי {{ actor }}",
+				"ENTITY": {
+					"TASK": "משימה",
+					"PROJECT": "פרויקט",
+					"SPRINT": "ספרינט",
+					"MODULE": "מודול",
+					"TEAM": "צוות",
+					"COMMENT": "תגובה",
+					"DAILY_PLAN": "תוכנית יומית",
+					"CONTACT": "איש קשר",
+					"DOCUMENT": "מסמך"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "על פני {{ count }} עובדים",
@@ -6543,7 +6615,12 @@
 		"UNKNOWN": "לא ידוע",
 		"DEAL_DELETED": "Deal '{{ name }}' was removed",
 		"DEAL_EDITED": "Deal '{{ name }}' was changed",
-		"DEAL_ADDED": "Deal '{{ name }}' was added"
+		"DEAL_ADDED": "Deal '{{ name }}' was added",
+		"BOARD": "לוח",
+		"BOARD_VIEW": "הצגת העסקאות כלוח, עמודה לכל שלב",
+		"LIST_VIEW": "חזרה לרשימה",
+		"BOARD_NO_STAGES": "לצינור זה אין עדיין שלבים. הוסיפו שלבים כדי לראות את העסקאות שלו כלוח.",
+		"BOARD_COLUMN_EMPTY": "אין עסקאות"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edit Deal | Pipeline: '{{ name }}'"

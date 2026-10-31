@@ -6,16 +6,30 @@
 			<span class="docs-preview-name" [nbTooltip]="document?.originalFilename || document?.name">
 				{{ document?.name }}
 			</span>
-			<span class="docs-preview-pages" *ngIf="viewer === 'pdf' && pdfTotal > 0">
-				{{ 'DOCS.PREVIEW.PAGE_OF' | translate : { page: pdfPage, total: pdfTotal } }}
-			</span>
+			@if (viewer === 'pdf' && pdfTotal > 0) {
+				<span class="docs-preview-pages">
+					{{ 'DOCS.PREVIEW.PAGE_OF' | translate: { page: pdfPage, total: pdfTotal } }}
+				</span>
+			}
 		</div>
 		<div class="docs-preview-actions">
-			<ng-container *ngIf="viewer === 'pdf'">
-				<button nbButton ghost size="small" (click)="pdfViewer?.zoomOut()" [nbTooltip]="'DOCS.PREVIEW.ZOOM_OUT' | translate">
+			@if (viewer === 'pdf') {
+				<button
+					nbButton
+					ghost
+					size="small"
+					(click)="pdfViewer?.zoomOut()"
+					[nbTooltip]="'DOCS.PREVIEW.ZOOM_OUT' | translate"
+				>
 					<nb-icon icon="minus-circle-outline"></nb-icon>
 				</button>
-				<button nbButton ghost size="small" (click)="pdfViewer?.zoomIn()" [nbTooltip]="'DOCS.PREVIEW.ZOOM_IN' | translate">
+				<button
+					nbButton
+					ghost
+					size="small"
+					(click)="pdfViewer?.zoomIn()"
+					[nbTooltip]="'DOCS.PREVIEW.ZOOM_IN' | translate"
+				>
 					<nb-icon icon="plus-circle-outline"></nb-icon>
 				</button>
 				<button nbButton ghost size="small" (click)="pdfViewer?.prev()">
@@ -24,7 +38,7 @@
 				<button nbButton ghost size="small" (click)="pdfViewer?.next()">
 					<nb-icon icon="arrow-ios-forward-outline"></nb-icon>
 				</button>
-			</ng-container>
+			}
 			<button nbButton ghost size="small" [disabled]="downloading" (click)="download()">
 				<nb-icon icon="download-outline"></nb-icon>
 				{{ 'DOCS.PREVIEW.DOWNLOAD' | translate }}
@@ -33,67 +47,94 @@
 				<nb-icon icon="info-outline"></nb-icon>
 				{{ 'DOCS.PREVIEW.OPEN_DETAILS' | translate }}
 			</button>
-			<button *ngIf="!inline" nbButton ghost size="small" class="docs-preview-close" (click)="close()">
-				<nb-icon icon="close-outline"></nb-icon>
-			</button>
+			@if (!inline) {
+				<button nbButton ghost size="small" class="docs-preview-close" (click)="close()">
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			}
 		</div>
 	</nb-card-header>
 
 	<nb-card-body class="docs-preview-body" [nbSpinner]="loading" nbSpinnerStatus="primary">
-		<ng-container [ngSwitch]="viewer">
+		@switch (viewer) {
 			<!-- PDF -->
-			<gz-docs-pdf-viewer
-				*ngSwitchCase="'pdf'"
-				[src]="blob"
-				[initialPage]="locator?.page || 1"
-				(pageChanged)="onPdfPage($event)"
-				(renderFailed)="onRenderFailed()"
-			></gz-docs-pdf-viewer>
-
+			@case ('pdf') {
+				<gz-docs-pdf-viewer
+					[src]="blob"
+					[initialPage]="locator?.page || 1"
+					(pageChanged)="onPdfPage($event)"
+					(renderFailed)="onRenderFailed()"
+				></gz-docs-pdf-viewer>
+			}
 			<!-- Image -->
-			<div *ngSwitchCase="'image'" class="docs-preview-media">
-				<img *ngIf="mediaUrl" [src]="mediaUrl" [alt]="$safeNavigationMigration($safeNavigationMigration(document?.name))" (error)="onRenderFailed()" />
-			</div>
-
-			<!-- Video -->
-			<div *ngSwitchCase="'video'" class="docs-preview-media">
-				<video *ngIf="mediaUrl" [src]="mediaUrl" controls (error)="onRenderFailed()"></video>
-			</div>
-
-			<!-- Audio -->
-			<div *ngSwitchCase="'audio'" class="docs-preview-media">
-				<audio *ngIf="mediaUrl" [src]="mediaUrl" controls (error)="onRenderFailed()"></audio>
-			</div>
-
-			<!-- Markdown / plain text -->
-			<div *ngSwitchCase="'text'" class="docs-preview-text">
-				<pre *ngIf="plainText !== null">{{ plainText }}</pre>
-				<div *ngIf="textHtml" class="docs-preview-markdown" [innerHTML]="textHtml"></div>
-			</div>
-
-			<!-- Office formats: extracted markdown + notice -->
-			<div *ngSwitchCase="'extracted'" class="docs-preview-text">
-				<div class="docs-preview-notice">
-					<nb-icon icon="info-outline"></nb-icon>
-					<span>{{ 'DOCS.PREVIEW.EXTRACTED_NOTICE' | translate }}</span>
+			@case ('image') {
+				<div class="docs-preview-media">
+					@if (mediaUrl) {
+						<img
+							[src]="mediaUrl"
+							[alt]="$safeNavigationMigration($safeNavigationMigration(document?.name))"
+							(error)="onRenderFailed()"
+						/>
+					}
 				</div>
-				<div *ngIf="textHtml" class="docs-preview-markdown" [innerHTML]="textHtml"></div>
-			</div>
-
+			}
+			<!-- Video -->
+			@case ('video') {
+				<div class="docs-preview-media">
+					@if (mediaUrl) {
+						<video [src]="mediaUrl" controls (error)="onRenderFailed()"></video>
+					}
+				</div>
+			}
+			<!-- Audio -->
+			@case ('audio') {
+				<div class="docs-preview-media">
+					@if (mediaUrl) {
+						<audio [src]="mediaUrl" controls (error)="onRenderFailed()"></audio>
+					}
+				</div>
+			}
+			<!-- Markdown / plain text -->
+			@case ('text') {
+				<div class="docs-preview-text">
+					@if (plainText !== null) {
+						<pre>{{ plainText }}</pre>
+					}
+					@if (textHtml) {
+						<div class="docs-preview-markdown" [innerHTML]="textHtml"></div>
+					}
+				</div>
+			}
+			<!-- Office formats: extracted markdown + notice -->
+			@case ('extracted') {
+				<div class="docs-preview-text">
+					<div class="docs-preview-notice">
+						<nb-icon icon="info-outline"></nb-icon>
+						<span>{{ 'DOCS.PREVIEW.EXTRACTED_NOTICE' | translate }}</span>
+					</div>
+					@if (textHtml) {
+						<div class="docs-preview-markdown" [innerHTML]="textHtml"></div>
+					}
+				</div>
+			}
 			<!-- Fallback download card -->
-			<div *ngSwitchDefault class="docs-preview-fallback">
-				<nb-icon icon="file-outline" class="docs-preview-fallback-icon"></nb-icon>
-				<h6>{{ 'DOCS.PREVIEW.FALLBACK_TITLE' | translate }}</h6>
-				<p>{{ 'DOCS.PREVIEW.FALLBACK_BODY' | translate }}</p>
-				<p class="docs-preview-fallback-meta">
-					{{ document?.originalFilename || document?.name }}
-					<span *ngIf="document?.fileSize"> · {{ humanizeSize($safeNavigationMigration(document?.fileSize)) }}</span>
-				</p>
-				<button nbButton status="primary" [disabled]="downloading" (click)="download()">
-					<nb-icon icon="download-outline"></nb-icon>
-					{{ 'DOCS.PREVIEW.DOWNLOAD' | translate }}
-				</button>
-			</div>
-		</ng-container>
+			@default {
+				<div class="docs-preview-fallback">
+					<nb-icon icon="file-outline" class="docs-preview-fallback-icon"></nb-icon>
+					<h6>{{ 'DOCS.PREVIEW.FALLBACK_TITLE' | translate }}</h6>
+					<p>{{ 'DOCS.PREVIEW.FALLBACK_BODY' | translate }}</p>
+					<p class="docs-preview-fallback-meta">
+						{{ document?.originalFilename || document?.name }}
+						@if (document?.fileSize) {
+							<span> · {{ humanizeSize($safeNavigationMigration(document?.fileSize)) }}</span>
+						}
+					</p>
+					<button nbButton status="primary" [disabled]="downloading" (click)="download()">
+						<nb-icon icon="download-outline"></nb-icon>
+						{{ 'DOCS.PREVIEW.DOWNLOAD' | translate }}
+					</button>
+				</div>
+			}
+		}
 	</nb-card-body>
 </nb-card>

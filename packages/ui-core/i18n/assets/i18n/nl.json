@@ -1168,7 +1168,8 @@
 		"DOCUMENTS": "Documenten",
 		"BILLING": "Facturatie",
 		"MONITORING": "Monitoring",
-		"ADD_ITEM": "{{ name }} toevoegen"
+		"ADD_ITEM": "{{ name }} toevoegen",
+		"WHATS_NEW": "Wat is er nieuw"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1269,7 +1270,49 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "Wat is er nieuw?",
 		"LEARN_MORE_URL": "Meer informatie leren",
-		"GAUZY_FEATURES": "Gauzy functies"
+		"GAUZY_FEATURES": "Gauzy functies",
+		"MANAGE": {
+			"TITLE": "Wat is er nieuw",
+			"SUBTITLE": "De items van het paneel Wat is er nieuw en de functiekaarten van de registratiepagina. Ze worden gedeeld door alle tenants van deze installatie, dus alleen de beheerder van de installatie kan ze wijzigen.",
+			"WHATS_NEW": "Paneel Wat is er nieuw",
+			"WHATS_NEW_HINT": "Getoond in het paneel Wat is er nieuw en op de aanmeldpagina, nieuwste eerst.",
+			"FEATURES": "Functies van de registratiepagina",
+			"FEATURES_HINT": "Getoond als kaarten naast het registratieformulier.",
+			"ADD": "Item toevoegen",
+			"ADD_TITLE": "Nieuwsitem toevoegen",
+			"EDIT_TITLE": "Nieuwsitem bewerken",
+			"EMPTY": "Nog geen items.",
+			"LOAD_FAILED": "De items konden niet worden geladen.",
+			"DELETED": "Verwijderd",
+			"DELETED_HINT": "Items die zijn verwijderd terwijl deze pagina open is. Herstellen zet er een terug.",
+			"COLUMNS": {
+				"DATE": "Datum",
+				"ENTRY": "Item",
+				"ACTIONS": "Acties"
+			},
+			"FIELDS": {
+				"TITLE": "Titel",
+				"DATE": "Datum",
+				"ICON": "Pictogram",
+				"ICON_HINT": "Een Eva-pictogramnaam, zoals star-outline.",
+				"CONTENT": "Tekst",
+				"CONTENT_HINT": "Maximaal {{ max }} tekens.",
+				"LEARN_MORE_URL": "Link 'Meer informatie'",
+				"IMAGE_URL": "Afbeeldingslink",
+				"IS_FEATURE": "Functie van de registratiepagina",
+				"IS_FEATURE_HINT": "Toon dit item als kaart naast het registratieformulier in plaats van in het paneel Wat is er nieuw."
+			},
+			"ERRORS": {
+				"REQUIRED": "Verplicht.",
+				"HTTP_URL": "Voer een volledig adres in dat begint met http:// of https://.",
+				"UNKNOWN_ICON": "Geen pictogram heeft deze naam. Gebruik een Eva-pictogramnaam, zoals star-outline."
+			},
+			"PREVIEW": "Voorbeeld",
+			"SAVED_MESSAGE": "Item opgeslagen.",
+			"DELETED_MESSAGE": "Item verwijderd.",
+			"RESTORED_MESSAGE": "Item hersteld.",
+			"FORBIDDEN": "Alleen de beheerder van de installatie kan de nieuwsitems wijzigen."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Gewerkte leden",
@@ -1894,7 +1937,36 @@
 			"NO_DUE_DATE": "Geen vervaldatum",
 			"CLEAR_FILTERS": "Filters wissen",
 			"NO_MATCHES": "Geen taken komen overeen met deze filters",
-			"NO_MATCHES_HINT": "Probeer een andere status, prioriteit of vervaldatum, of wis de filters."
+			"NO_MATCHES_HINT": "Probeer een andere status, prioriteit of vervaldatum, of wis de filters.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Recente activiteit",
+				"FILTER": "Soort activiteit",
+				"ALL": "Alle activiteit",
+				"TASKS": "Taken",
+				"PROJECTS": "Projecten",
+				"EMPTY": "Geen recente activiteit",
+				"EMPTY_HINT": "Hier verschijnen aangemaakte, gewijzigde of verwijderde taken en projecten.",
+				"ERROR": "De recente activiteit kon niet worden geladen.",
+				"UNTITLED": "Zonder titel",
+				"SYSTEM": "Systeem",
+				"CREATED": "Aangemaakt",
+				"UPDATED": "Bijgewerkt",
+				"DELETED": "Verwijderd",
+				"CREATED_BY": "Aangemaakt door {{ actor }}",
+				"UPDATED_BY": "Bijgewerkt door {{ actor }}",
+				"DELETED_BY": "Verwijderd door {{ actor }}",
+				"ENTITY": {
+					"TASK": "Taak",
+					"PROJECT": "Project",
+					"SPRINT": "Sprint",
+					"MODULE": "Module",
+					"TEAM": "Team",
+					"COMMENT": "Opmerking",
+					"DAILY_PLAN": "Dagplanning",
+					"CONTACT": "Contact",
+					"DOCUMENT": "Document"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Over {{ count }} werknemers",
@@ -6533,7 +6605,12 @@
 		"UNKNOWN": "Onbekend",
 		"DEAL_DELETED": "Deal '{{ name }}' is verwijderd",
 		"DEAL_EDITED": "Deal '{{ name }}' werd gewijzigd",
-		"DEAL_ADDED": "Deal '{{ name }}' is toegevoegd"
+		"DEAL_ADDED": "Deal '{{ name }}' is toegevoegd",
+		"BOARD": "Bord",
+		"BOARD_VIEW": "Deals als bord tonen, één kolom per fase",
+		"LIST_VIEW": "Terug naar de lijst",
+		"BOARD_NO_STAGES": "Deze pipeline heeft nog geen fasen. Voeg fasen toe om de deals als bord te zien.",
+		"BOARD_COLUMN_EMPTY": "Geen deals"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Bewerk Deal | Pipeline: '{{ name }}'"

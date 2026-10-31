@@ -1,6 +1,7 @@
 import '../../../core/entities/internal';
 
-import { IOrganizationUpdateInput } from '@gauzy/contracts';
+import { NotFoundException } from '@nestjs/common';
+import { EEA_UK_AGENT_RESTRICTION_ERR_MSG, IOrganizationUpdateInput } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { ApiErrorCode } from '../../../core/errors/api-error-codes';
 import { ApiException } from '../../../core/errors/api-exception';
@@ -265,7 +266,7 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 		expect(organizationService.create).not.toHaveBeenCalled();
 	});
 
-	it('reads no contact when the write does not turn capture on, or links the current one', async () => {
+	it('reads no contact when the write links none, or links the current one', async () => {
 		given({
 			allowScreenshotCapture: false,
 			regionCode: 'en',
@@ -273,7 +274,7 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 			contactId: 'contact-us'
 		});
 
-		await update({ name: 'Renamed', contactId: 'contact-uk' });
+		await update({ name: 'Renamed' });
 		await update({ allowScreenshotCapture: true, contactId: 'contact-us' });
 
 		expect(contactService.findOneOrFailByIdString).not.toHaveBeenCalled();
@@ -308,5 +309,202 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 
 		expect(saved()).not.toHaveProperty('screenshotCaptureAcknowledgedAt');
 		expect(saved()).not.toHaveProperty('screenshotCaptureAcknowledgedByUserId');
+	});
+});
+
+/**
+ * Issue #9873 — the agent exit/logout restriction judges the organization's location after the write, from what is
+ * stored and what the write stores (region code, time zone, the country of a contact it links by id). Neither a
+ * top-level `country` nor the country of a contact the request carries is stored, so they change no decision.
+ */
+describe('OrganizationUpdateHandler — agent exit/logout restriction location', () => {
+	const fixture = createTenantFixture();
+	const RESTRICT = { allowAgentAppExit: false, acknowledgeAgentExitLogoutRestriction: true };
+
+	let restore: () => void;
+	let organizationService: { findOneByIdString: jest.Mock; create: jest.Mock; update: jest.Mock };
+	let activityLogService: { create: jest.Mock };
+	let contactService: { findOneOrFailByIdString: jest.Mock };
+	let moduleRef: { get: jest.Mock };
+	let self: Record<string, unknown>;
+
+	const row = (values: Record<string, unknown>) => ({
+		id: 'org-1',
+		name: 'Org',
+		tenantId: fixture.tenantId,
+		allowScreenshotCapture: false,
+		contact: null,
+		...values
+	});
+	/** The organization as read before the update and, by default the same, as read back after the save. */
+	const given = (stored: Record<string, unknown>, saved: Record<string, unknown> = stored) => {
+		organizationService.findOneByIdString.mockResolvedValueOnce(row(stored)).mockResolvedValue(row(saved));
+	};
+
+	beforeEach(() => {
+		({ restore } = asTenantUser(fixture));
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(fixture.user.id);
+		organizationService = {
+			findOneByIdString: jest.fn(),
+			create: jest.fn(async (entity) => entity),
+			update: jest.fn()
+		};
+		activityLogService = { create: jest.fn().mockResolvedValue({}) };
+		contactService = { findOneOrFailByIdString: jest.fn().mockResolvedValue({ success: false }) };
+		// No employee service here: lifting the employees' restrictions shows only as this lookup.
+		moduleRef = { get: jest.fn() };
+		self = {
+			organizationService,
+			activityLogService,
+			contactService,
+			moduleRef,
+			logger: { error: jest.fn() }
+		};
+		const prototype = OrganizationUpdateHandler.prototype as unknown as Record<
+			'update' | 'savedLocation',
+			(...args: unknown[]) => unknown
+		>;
+		self.update = prototype.update.bind(self);
+		self.savedLocation = prototype.savedLocation.bind(self);
+	});
+
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	const update = (input: Record<string, unknown>) =>
+		OrganizationUpdateHandler.prototype.execute.call(
+			self,
+			new OrganizationUpdateCommand('org-1', input as unknown as IOrganizationUpdateInput)
+		);
+
+	describe.each([
+		['no country', {}],
+		['an unstored country outside the EEA/UK', { country: 'US' }],
+		['an unstored country inside the EEA/UK', { country: 'DE' }]
+	])('a request with %s', (_, country) => {
+		it('cannot restrict exit for a UK organization', async () => {
+			given({ regionCode: 'en', timeZone: 'America/New_York', contact: { country: 'GB' } });
+
+			await expect(update({ ...country, ...RESTRICT })).rejects.toThrow(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
+			expect(organizationService.create).not.toHaveBeenCalled();
+			expect(activityLogService.create).not.toHaveBeenCalled();
+		});
+
+		it('restricts exit for an organization outside the EEA/UK with the acknowledgement, recording it', async () => {
+			given({ regionCode: 'en', timeZone: 'America/New_York', contact: { country: 'US' } });
+
+			await update({ ...country, ...RESTRICT });
+
+			expect(organizationService.create).toHaveBeenCalledWith(
+				expect.objectContaining({ allowAgentAppExit: false })
+			);
+			expect(activityLogService.create).toHaveBeenCalledWith(
+				expect.objectContaining({ updatedFields: ['allowAgentAppExit'] })
+			);
+		});
+
+		it('does not move a restricted organization into the EEA/UK, so it saves and lifts nothing', async () => {
+			given({
+				regionCode: 'en',
+				timeZone: 'America/New_York',
+				contact: { country: 'US' },
+				allowAgentAppExit: false
+			});
+
+			await update({ ...country, name: 'Renamed' });
+
+			expect(organizationService.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Renamed' }));
+			expect(moduleRef.get).not.toHaveBeenCalled();
+		});
+	});
+
+	it('counts a contact the write links by id: linking a UK contact while restricting exit is refused', async () => {
+		given({ regionCode: 'en', timeZone: 'America/New_York', contactId: 'contact-us', contact: { country: 'US' } });
+		contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
+
+		await expect(update({ contact: { id: 'contact-uk' }, ...RESTRICT })).rejects.toThrow(
+			EEA_UK_AGENT_RESTRICTION_ERR_MSG
+		);
+		expect(contactService.findOneOrFailByIdString).toHaveBeenCalledWith('contact-uk');
+		expect(organizationService.create).not.toHaveBeenCalled();
+	});
+
+	it('does not move the organization for a contact the request carries: its country is not stored', async () => {
+		given({
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contact: { country: 'US' },
+			allowAgentAppExit: false
+		});
+
+		await update({ contact: { country: 'DE' } });
+
+		// Saved although exit stays restricted, and nothing is lifted: the saved row is still in the US.
+		expect(organizationService.create).toHaveBeenCalled();
+		expect(moduleRef.get).not.toHaveBeenCalled();
+	});
+
+	it('lifts employee restrictions when a linked contact moves the organization into the EEA/UK', async () => {
+		const US = { regionCode: 'en', timeZone: 'America/New_York' };
+		given(
+			{ ...US, contactId: 'contact-us', contact: { country: 'US' } },
+			{ ...US, contactId: 'contact-uk', contact: { country: 'GB' } }
+		);
+		contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
+
+		await update({ contact: { id: 'contact-uk' } });
+
+		expect(moduleRef.get).toHaveBeenCalled();
+	});
+
+	it('allows moving out of the EEA/UK and restricting exit in one save when the stored result is outside it', async () => {
+		given({ regionCode: 'en', timeZone: 'Europe/Berlin', contact: { country: 'US' } });
+
+		await update({ timeZone: 'America/New_York', ...RESTRICT });
+
+		expect(organizationService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ timeZone: 'America/New_York', allowAgentAppExit: false })
+		);
+		expect(activityLogService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ updatedFields: ['allowAgentAppExit'] })
+		);
+	});
+
+	it('still refuses when the stored result stays in the EEA/UK: the time zone moves out, the UK contact stays', async () => {
+		given({ regionCode: 'en', timeZone: 'Europe/Berlin', contact: { country: 'GB' } });
+
+		await expect(update({ timeZone: 'America/New_York', ...RESTRICT })).rejects.toThrow(
+			EEA_UK_AGENT_RESTRICTION_ERR_MSG
+		);
+		expect(organizationService.create).not.toHaveBeenCalled();
+	});
+
+	it('allows unlinking a UK contact and restricting exit in one save when the stored result is outside the EEA/UK', async () => {
+		given({
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contactId: 'contact-uk',
+			contact: { id: 'contact-uk', country: 'GB' }
+		});
+
+		await update({ contact: null, ...RESTRICT });
+
+		expect(organizationService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ contact: null, allowAgentAppExit: false })
+		);
+		expect(activityLogService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ updatedFields: ['allowAgentAppExit'] })
+		);
+	});
+
+	it('refuses an update that links a contact it cannot read: the location after the save is unknown', async () => {
+		given({ regionCode: 'en', timeZone: 'America/New_York', contactId: 'contact-us', contact: { country: 'US' } });
+
+		await expect(update({ contact: { id: 'contact-x' }, ...RESTRICT })).rejects.toThrow(NotFoundException);
+		await expect(update({ contact: { id: 'contact-x' }, name: 'Renamed' })).rejects.toThrow(NotFoundException);
+		expect(organizationService.create).not.toHaveBeenCalled();
+		expect(activityLogService.create).not.toHaveBeenCalled();
 	});
 });

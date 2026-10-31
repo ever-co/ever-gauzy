@@ -1168,7 +1168,8 @@
 		"DOCUMENTS": "Documenti",
 		"BILLING": "Fatturazione",
 		"MONITORING": "Monitoraggio",
-		"ADD_ITEM": "Aggiungi {{ name }}"
+		"ADD_ITEM": "Aggiungi {{ name }}",
+		"WHATS_NEW": "Novità"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1269,7 +1270,49 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "Cosa c'è di nuovo?",
 		"LEARN_MORE_URL": "Scopri di più",
-		"GAUZY_FEATURES": "Caratteristiche di Gauzy"
+		"GAUZY_FEATURES": "Caratteristiche di Gauzy",
+		"MANAGE": {
+			"TITLE": "Novità",
+			"SUBTITLE": "Le voci del pannello Novità e le schede delle funzionalità della pagina di registrazione. Sono condivise da tutti i tenant di questa installazione, quindi solo il suo operatore può modificarle.",
+			"WHATS_NEW": "Pannello Novità",
+			"WHATS_NEW_HINT": "Mostrate nel pannello Novità e nella pagina di accesso, le più recenti per prime.",
+			"FEATURES": "Funzionalità della pagina di registrazione",
+			"FEATURES_HINT": "Mostrate come schede accanto al modulo di registrazione.",
+			"ADD": "Aggiungi voce",
+			"ADD_TITLE": "Aggiungi una novità",
+			"EDIT_TITLE": "Modifica la novità",
+			"EMPTY": "Ancora nessuna voce.",
+			"LOAD_FAILED": "Impossibile caricare le voci.",
+			"DELETED": "Eliminate",
+			"DELETED_HINT": "Voci eliminate mentre questa pagina è aperta. Ripristina ne rimette una al suo posto.",
+			"COLUMNS": {
+				"DATE": "Data",
+				"ENTRY": "Voce",
+				"ACTIONS": "Azioni"
+			},
+			"FIELDS": {
+				"TITLE": "Titolo",
+				"DATE": "Data",
+				"ICON": "Icona",
+				"ICON_HINT": "Il nome di un'icona Eva, ad esempio star-outline.",
+				"CONTENT": "Testo",
+				"CONTENT_HINT": "Fino a {{ max }} caratteri.",
+				"LEARN_MORE_URL": "Link «Scopri di più»",
+				"IMAGE_URL": "Link dell'immagine",
+				"IS_FEATURE": "Funzionalità della pagina di registrazione",
+				"IS_FEATURE_HINT": "Mostra questa voce come scheda accanto al modulo di registrazione invece che nel pannello Novità."
+			},
+			"ERRORS": {
+				"REQUIRED": "Obbligatorio.",
+				"HTTP_URL": "Inserisci un indirizzo completo che inizi con http:// o https://.",
+				"UNKNOWN_ICON": "Nessuna icona ha questo nome. Usa il nome di un'icona Eva, ad esempio star-outline."
+			},
+			"PREVIEW": "Anteprima",
+			"SAVED_MESSAGE": "Voce salvata.",
+			"DELETED_MESSAGE": "Voce eliminata.",
+			"RESTORED_MESSAGE": "Voce ripristinata.",
+			"FORBIDDEN": "Solo l'operatore dell'installazione può modificare le novità."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Membri che hanno lavorato",
@@ -1894,7 +1937,36 @@
 			"NO_DUE_DATE": "Nessuna scadenza",
 			"CLEAR_FILTERS": "Cancella filtri",
 			"NO_MATCHES": "Nessuna attività corrisponde a questi filtri",
-			"NO_MATCHES_HINT": "Prova un altro stato, priorità o scadenza, oppure cancella i filtri."
+			"NO_MATCHES_HINT": "Prova un altro stato, priorità o scadenza, oppure cancella i filtri.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Modifiche recenti",
+				"FILTER": "Tipo di modifica",
+				"ALL": "Tutte le modifiche",
+				"TASKS": "Attività",
+				"PROJECTS": "Progetti",
+				"EMPTY": "Nessuna modifica recente",
+				"EMPTY_HINT": "Qui compaiono le attività e i progetti creati, modificati o eliminati.",
+				"ERROR": "Impossibile caricare le modifiche recenti.",
+				"UNTITLED": "Senza titolo",
+				"SYSTEM": "Sistema",
+				"CREATED": "Creato",
+				"UPDATED": "Aggiornato",
+				"DELETED": "Eliminato",
+				"CREATED_BY": "Creato da {{ actor }}",
+				"UPDATED_BY": "Aggiornato da {{ actor }}",
+				"DELETED_BY": "Eliminato da {{ actor }}",
+				"ENTITY": {
+					"TASK": "Attività",
+					"PROJECT": "Progetto",
+					"SPRINT": "Sprint",
+					"MODULE": "Modulo",
+					"TEAM": "Team",
+					"COMMENT": "Commento",
+					"DAILY_PLAN": "Piano giornaliero",
+					"CONTACT": "Contatto",
+					"DOCUMENT": "Documento"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Su {{ count }} dipendenti",
@@ -6533,7 +6605,12 @@
 		"UNKNOWN": "Sconosciuto",
 		"DEAL_DELETED": "L'accordo '{{ name }}' è stato rimosso",
 		"DEAL_EDITED": "L'accordo '{{ name }}' è stato modificato",
-		"DEAL_ADDED": "L'accordo '{{ name }}' è stato aggiunto"
+		"DEAL_ADDED": "L'accordo '{{ name }}' è stato aggiunto",
+		"BOARD": "Bacheca",
+		"BOARD_VIEW": "Mostra le trattative come bacheca, una colonna per fase",
+		"LIST_VIEW": "Torna all'elenco",
+		"BOARD_NO_STAGES": "Questa pipeline non ha ancora fasi. Aggiungi delle fasi per vedere le sue trattative come bacheca.",
+		"BOARD_COLUMN_EMPTY": "Nessuna trattativa"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Modifica Affare | Pipeline: '{{ name }}'"

@@ -78,7 +78,7 @@ describe('name cell thumbnails', () => {
 		});
 
 		it('binds the sanitizing accessor rather than the raw column', () => {
-			expect(source).toContain('*ngIf="thumbnailUrl as thumbnail; else leadIcon"');
+			expect(source).toContain('@if (thumbnailUrl; as thumbnail)');
 			expect(source).not.toContain('[src]="rowData.thumbUrl"');
 		});
 	});

@@ -1167,7 +1167,8 @@
 		"DOCUMENTS": "Dokumenty",
 		"BILLING": "Fakturacja",
 		"MONITORING": "Monitorowanie",
-		"ADD_ITEM": "Dodaj {{ name }}"
+		"ADD_ITEM": "Dodaj {{ name }}",
+		"WHATS_NEW": "Co nowego"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1268,7 +1269,49 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "Co nowego?",
 		"LEARN_MORE_URL": "Dowiedz się więcej",
-		"GAUZY_FEATURES": "Funkcje Gauzy"
+		"GAUZY_FEATURES": "Funkcje Gauzy",
+		"MANAGE": {
+			"TITLE": "Co nowego",
+			"SUBTITLE": "Wpisy panelu „Co nowego” i karty funkcji strony rejestracji. Są wspólne dla wszystkich dzierżawców tej instalacji, więc zmieniać je może tylko jej operator.",
+			"WHATS_NEW": "Panel „Co nowego”",
+			"WHATS_NEW_HINT": "Wyświetlane w panelu „Co nowego” i na stronie logowania, od najnowszych.",
+			"FEATURES": "Funkcje strony rejestracji",
+			"FEATURES_HINT": "Wyświetlane jako karty obok formularza rejestracji.",
+			"ADD": "Dodaj wpis",
+			"ADD_TITLE": "Dodaj wpis „Co nowego”",
+			"EDIT_TITLE": "Edytuj wpis „Co nowego”",
+			"EMPTY": "Brak wpisów.",
+			"LOAD_FAILED": "Nie udało się wczytać wpisów.",
+			"DELETED": "Usunięte",
+			"DELETED_HINT": "Wpisy usunięte, gdy ta strona jest otwarta. Przywróć przywraca wpis.",
+			"COLUMNS": {
+				"DATE": "Data",
+				"ENTRY": "Wpis",
+				"ACTIONS": "Akcje"
+			},
+			"FIELDS": {
+				"TITLE": "Tytuł",
+				"DATE": "Data",
+				"ICON": "Ikona",
+				"ICON_HINT": "Nazwa ikony Eva, np. star-outline.",
+				"CONTENT": "Tekst",
+				"CONTENT_HINT": "Do {{ max }} znaków.",
+				"LEARN_MORE_URL": "Link „Dowiedz się więcej”",
+				"IMAGE_URL": "Link do obrazu",
+				"IS_FEATURE": "Funkcja strony rejestracji",
+				"IS_FEATURE_HINT": "Pokaż ten wpis jako kartę obok formularza rejestracji zamiast w panelu „Co nowego”."
+			},
+			"ERRORS": {
+				"REQUIRED": "Wymagane.",
+				"HTTP_URL": "Wpisz pełny adres zaczynający się od http:// lub https://.",
+				"UNKNOWN_ICON": "Żadna ikona nie ma tej nazwy. Użyj nazwy ikony Eva, np. star-outline."
+			},
+			"PREVIEW": "Podgląd",
+			"SAVED_MESSAGE": "Wpis zapisany.",
+			"DELETED_MESSAGE": "Wpis usunięty.",
+			"RESTORED_MESSAGE": "Wpis przywrócony.",
+			"FORBIDDEN": "Tylko operator instalacji może zmieniać wpisy „Co nowego”."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Członkowie pracowali",
@@ -1893,7 +1936,36 @@
 			"NO_DUE_DATE": "Bez terminu",
 			"CLEAR_FILTERS": "Wyczyść filtry",
 			"NO_MATCHES": "Żadne zadania nie pasują do tych filtrów",
-			"NO_MATCHES_HINT": "Wybierz inny status, priorytet lub termin albo wyczyść filtry."
+			"NO_MATCHES_HINT": "Wybierz inny status, priorytet lub termin albo wyczyść filtry.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Ostatnia aktywność",
+				"FILTER": "Rodzaj aktywności",
+				"ALL": "Cała aktywność",
+				"TASKS": "Zadania",
+				"PROJECTS": "Projekty",
+				"EMPTY": "Brak ostatniej aktywności",
+				"EMPTY_HINT": "Tutaj pojawiają się utworzone, zmienione lub usunięte zadania i projekty.",
+				"ERROR": "Nie udało się wczytać ostatniej aktywności.",
+				"UNTITLED": "Bez tytułu",
+				"SYSTEM": "System",
+				"CREATED": "Utworzone",
+				"UPDATED": "Zaktualizowane",
+				"DELETED": "Usunięte",
+				"CREATED_BY": "Utworzone przez {{ actor }}",
+				"UPDATED_BY": "Zaktualizowane przez {{ actor }}",
+				"DELETED_BY": "Usunięte przez {{ actor }}",
+				"ENTITY": {
+					"TASK": "Zadanie",
+					"PROJECT": "Projekt",
+					"SPRINT": "Sprint",
+					"MODULE": "Moduł",
+					"TEAM": "Zespół",
+					"COMMENT": "Komentarz",
+					"DAILY_PLAN": "Plan dnia",
+					"CONTACT": "Kontakt",
+					"DOCUMENT": "Dokument"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Wśród {{ count }} pracowników",
@@ -6532,7 +6604,12 @@
 		"UNKNOWN": "Nieznany",
 		"DEAL_DELETED": "Umowa '{{ name }}' została usunięta",
 		"DEAL_EDITED": "Umowa '{{ name }}' została zmieniona",
-		"DEAL_ADDED": "Transakcja '{{ name }}' została dodana"
+		"DEAL_ADDED": "Transakcja '{{ name }}' została dodana",
+		"BOARD": "Tablica",
+		"BOARD_VIEW": "Pokaż transakcje jako tablicę, jedna kolumna na etap",
+		"LIST_VIEW": "Powrót do listy",
+		"BOARD_NO_STAGES": "Ten lejek nie ma jeszcze etapów. Dodaj etapy, aby zobaczyć jego transakcje jako tablicę.",
+		"BOARD_COLUMN_EMPTY": "Brak transakcji"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edytuj umowę | Pipeline: '{{ name }}'"

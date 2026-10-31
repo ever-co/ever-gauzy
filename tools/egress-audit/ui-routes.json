@@ -1793,6 +1793,14 @@
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
+      "path": "/pages/settings/whats-new",
+      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:161",
+      "guards": [
+        "changelogManagerGuard"
+      ],
+      "source": "router"
+    },
+    {
       "path": "/pages/tasks",
       "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:13",
       "redirect_to": "dashboard",

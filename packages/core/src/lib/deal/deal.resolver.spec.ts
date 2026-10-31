@@ -28,9 +28,8 @@ import { DealResolver } from './deal.resolver';
  *   platform's own cursor codec behind it, so a cursor obtained over REST resumes here;
  * - every field reaches the same `DealService` method the REST route reaches;
  * - **the guard chain is the controller's and every field states the permission its own route runs
- *   under** — including the edit, the removal and the two lifecycle moves, whose routes inherit the
- *   controller's class-level *view* permission, and the create, which is the one route that raises
- *   itself to the edit one;
+ *   under** — the reads inherit the controller's class-level *view* permission, and every write (the
+ *   create, the edit, the removal and the two lifecycle moves) states the *edit* one, as its route does;
  * - the members the delivered reader cannot produce are not declared at all;
  * - a deal that is not there is `null` on the one-row field rather than a refusal.
  */
@@ -431,18 +430,25 @@ describe('DealResolver — the guard stack and the permission are the controller
 		expect(stated).toEqual(expected);
 	});
 
-	it('carries the class’s view permission on every write but the create', () => {
-		// The controller overrides only the list, the one-row read and the create; the edit, the
-		// removal and the two lifecycle moves are inherited from the CRUD base and therefore run under
-		// the controller's class-level *view* permission. Widening them here — or narrowing the reads
-		// with the edit permission the resource's own name suggests — is the asymmetry the
-		// two-protocol rule forbids us to resolve on one surface only.
-		for (const field of ['deals', 'deal', 'dealCount', 'updateDeal', 'deleteDeal', 'softDeleteDeal', 'recoverDeal']) {
+	it('carries the class’s view permission on the reads and the edit permission on every write', () => {
+		// The controller states `EDIT_SALES_PIPELINES` on every write — the create, and the edit, the
+		// removal and the two lifecycle moves it overrides from the CRUD base for that alone — matching
+		// what the web app asks for before it offers them; the reads keep the class's *view* permission.
+		// Changing one surface without the other is the asymmetry the two-protocol rule forbids.
+		for (const field of ['deals', 'deal', 'dealCount']) {
 			expect(permissionOfField(field)).toEqual([PermissionsEnum.VIEW_SALES_PIPELINES]);
 		}
 
-		expect(permissionOfField('createDeal')).toEqual([PermissionsEnum.EDIT_SALES_PIPELINES]);
-		expect(permissionOfRoute(DealController, 'create')).toEqual([PermissionsEnum.EDIT_SALES_PIPELINES]);
+		for (const [field, handler] of [
+			['createDeal', 'create'],
+			['updateDeal', 'update'],
+			['deleteDeal', 'delete'],
+			['softDeleteDeal', 'softRemove'],
+			['recoverDeal', 'softRecover']
+		]) {
+			expect(permissionOfField(field)).toEqual([PermissionsEnum.EDIT_SALES_PIPELINES]);
+			expect(permissionOfRoute(DealController, handler)).toEqual([PermissionsEnum.EDIT_SALES_PIPELINES]);
+		}
 	});
 });
 

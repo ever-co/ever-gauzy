@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DoCheck, OnDestroy, inject } from '@angular/core';
 import { NbButtonModule, NbIconModule, NbProgressBarModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -27,42 +26,39 @@ import { EditorUploadService, IEditorUpload } from '../services/editor-upload.se
 @Component({
 	selector: 'gz-image-node-view',
 	standalone: true,
-	imports: [CommonModule, TranslatePipe, NbButtonModule, NbIconModule, NbProgressBarModule],
+	imports: [TranslatePipe, NbButtonModule, NbIconModule, NbProgressBarModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<figure class="gz-image-node" [class.selected]="selected()" [attr.data-align]="align">
-			<img
-				*ngIf="displaySrc; else placeholder"
-				class="gz-image"
-				[src]="displaySrc"
-				[alt]="alt"
-				[style.width]="width"
-				draggable="false"
-			/>
-			<ng-template #placeholder>
+			@if (displaySrc) {
+				<img class="gz-image" [src]="displaySrc" [alt]="alt" [style.width]="width" draggable="false" />
+			} @else {
 				<div class="gz-image-fallback" role="img" [attr.aria-label]="alt">
 					<nb-icon [icon]="failed ? 'alert-circle-outline' : 'image-outline'"></nb-icon>
-					<span *ngIf="failed">{{ 'DOCS.EDITOR.IMAGE.UNAVAILABLE' | translate }}</span>
-					<span *ngIf="!failed">{{ 'DOCS.EDITOR.IMAGE.LOADING' | translate }}</span>
+					@if (failed) {
+						<span>{{ 'DOCS.EDITOR.IMAGE.UNAVAILABLE' | translate }}</span>
+					}
+					@if (!failed) {
+						<span>{{ 'DOCS.EDITOR.IMAGE.LOADING' | translate }}</span>
+					}
 				</div>
-			</ng-template>
+			}
 
-			<nb-progress-bar
-				*ngIf="upload?.status === 'uploading'"
-				[value]="upload?.progress ?? 0"
-				size="tiny"
-				status="primary"
-			></nb-progress-bar>
+			@if (upload?.status === 'uploading') {
+				<nb-progress-bar [value]="upload?.progress ?? 0" size="tiny" status="primary"></nb-progress-bar>
+			}
 
-			<div class="gz-image-actions" *ngIf="upload?.status === 'error'">
-				<span class="gz-image-error">{{ 'DOCS.EDITOR.ATTACHMENT.FAILED' | translate }}</span>
-				<button nbButton ghost size="tiny" status="primary" type="button" (click)="retry()">
-					{{ 'DOCS.EDITOR.ATTACHMENT.RETRY' | translate }}
-				</button>
-				<button nbButton ghost size="tiny" status="danger" type="button" (click)="remove()">
-					{{ 'DOCS.EDITOR.ATTACHMENT.REMOVE' | translate }}
-				</button>
-			</div>
+			@if (upload?.status === 'error') {
+				<div class="gz-image-actions">
+					<span class="gz-image-error">{{ 'DOCS.EDITOR.ATTACHMENT.FAILED' | translate }}</span>
+					<button nbButton ghost size="tiny" status="primary" type="button" (click)="retry()">
+						{{ 'DOCS.EDITOR.ATTACHMENT.RETRY' | translate }}
+					</button>
+					<button nbButton ghost size="tiny" status="danger" type="button" (click)="remove()">
+						{{ 'DOCS.EDITOR.ATTACHMENT.REMOVE' | translate }}
+					</button>
+				</div>
+			}
 		</figure>
 	`,
 	styles: [

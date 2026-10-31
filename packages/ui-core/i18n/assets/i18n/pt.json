@@ -1168,7 +1168,8 @@
 		"DOCUMENTS": "Documentos",
 		"BILLING": "Faturamento",
 		"MONITORING": "Monitoramento",
-		"ADD_ITEM": "Adicionar {{ name }}"
+		"ADD_ITEM": "Adicionar {{ name }}",
+		"WHATS_NEW": "Novidades"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1269,7 +1270,49 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "O que há de novo?",
 		"LEARN_MORE_URL": "Aprenda mais",
-		"GAUZY_FEATURES": "Características translúcidas"
+		"GAUZY_FEATURES": "Funcionalidades do Gauzy",
+		"MANAGE": {
+			"TITLE": "Novidades",
+			"SUBTITLE": "As entradas do painel de novidades e os cartões de funcionalidades da página de registo. São partilhadas por todos os inquilinos desta instalação, por isso só o seu operador as pode alterar.",
+			"WHATS_NEW": "Painel de novidades",
+			"WHATS_NEW_HINT": "Mostradas no painel de novidades e na página de início de sessão, as mais recentes primeiro.",
+			"FEATURES": "Funcionalidades da página de registo",
+			"FEATURES_HINT": "Mostradas como cartões ao lado do formulário de registo.",
+			"ADD": "Adicionar entrada",
+			"ADD_TITLE": "Adicionar uma novidade",
+			"EDIT_TITLE": "Editar a novidade",
+			"EMPTY": "Ainda não há entradas.",
+			"LOAD_FAILED": "Não foi possível carregar as entradas.",
+			"DELETED": "Eliminadas",
+			"DELETED_HINT": "Entradas eliminadas enquanto esta página está aberta. Restaurar repõe uma.",
+			"COLUMNS": {
+				"DATE": "Data",
+				"ENTRY": "Entrada",
+				"ACTIONS": "Ações"
+			},
+			"FIELDS": {
+				"TITLE": "Título",
+				"DATE": "Data",
+				"ICON": "Ícone",
+				"ICON_HINT": "Um nome de ícone Eva, por exemplo star-outline.",
+				"CONTENT": "Texto",
+				"CONTENT_HINT": "Até {{ max }} caracteres.",
+				"LEARN_MORE_URL": "Link «Saiba mais»",
+				"IMAGE_URL": "Link da imagem",
+				"IS_FEATURE": "Funcionalidade da página de registo",
+				"IS_FEATURE_HINT": "Mostrar esta entrada como cartão ao lado do formulário de registo em vez de no painel de novidades."
+			},
+			"ERRORS": {
+				"REQUIRED": "Obrigatório.",
+				"HTTP_URL": "Introduza um endereço completo que comece por http:// ou https://.",
+				"UNKNOWN_ICON": "Nenhum ícone tem este nome. Use um nome de ícone Eva, por exemplo star-outline."
+			},
+			"PREVIEW": "Pré-visualização",
+			"SAVED_MESSAGE": "Entrada guardada.",
+			"DELETED_MESSAGE": "Entrada eliminada.",
+			"RESTORED_MESSAGE": "Entrada restaurada.",
+			"FORBIDDEN": "Só o operador da instalação pode alterar as novidades."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Membros Trabalharam",
@@ -1894,7 +1937,36 @@
 			"NO_DUE_DATE": "Sem data de vencimento",
 			"CLEAR_FILTERS": "Limpar filtros",
 			"NO_MATCHES": "Nenhuma tarefa corresponde a estes filtros",
-			"NO_MATCHES_HINT": "Tente outro status, prioridade ou data de vencimento, ou limpe os filtros."
+			"NO_MATCHES_HINT": "Tente outro status, prioridade ou data de vencimento, ou limpe os filtros.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Atividade recente",
+				"FILTER": "Tipo de atividade",
+				"ALL": "Toda a atividade",
+				"TASKS": "Tarefas",
+				"PROJECTS": "Projetos",
+				"EMPTY": "Sem atividade recente",
+				"EMPTY_HINT": "Aqui aparecem as tarefas e os projetos criados, alterados ou eliminados.",
+				"ERROR": "Não foi possível carregar a atividade recente.",
+				"UNTITLED": "Sem título",
+				"SYSTEM": "Sistema",
+				"CREATED": "Criado",
+				"UPDATED": "Atualizado",
+				"DELETED": "Eliminado",
+				"CREATED_BY": "Criado por {{ actor }}",
+				"UPDATED_BY": "Atualizado por {{ actor }}",
+				"DELETED_BY": "Eliminado por {{ actor }}",
+				"ENTITY": {
+					"TASK": "Tarefa",
+					"PROJECT": "Projeto",
+					"SPRINT": "Sprint",
+					"MODULE": "Módulo",
+					"TEAM": "Equipa",
+					"COMMENT": "Comentário",
+					"DAILY_PLAN": "Plano diário",
+					"CONTACT": "Contacto",
+					"DOCUMENT": "Documento"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Entre {{ count }} funcionários",
@@ -6533,7 +6605,12 @@
 		"UNKNOWN": "Desconhecido",
 		"DEAL_DELETED": "O acordo '{{ name }}' foi removido.",
 		"DEAL_EDITED": "O acordo '{{ name }}' foi alterado.",
-		"DEAL_ADDED": "O negócio '{{ name }}' foi adicionado."
+		"DEAL_ADDED": "O negócio '{{ name }}' foi adicionado.",
+		"BOARD": "Quadro",
+		"BOARD_VIEW": "Mostrar os negócios como quadro, uma coluna por etapa",
+		"LIST_VIEW": "Voltar à lista",
+		"BOARD_NO_STAGES": "Este pipeline ainda não tem etapas. Adicione etapas para ver os seus negócios como quadro.",
+		"BOARD_COLUMN_EMPTY": "Sem negócios"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Editar Negócio | Pipeline: '{{ name }}'"

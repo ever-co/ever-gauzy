@@ -16,31 +16,33 @@ import { sanitizeMediaUrl } from '../../../editor/read-only/safe-url.util';
 	template: `
 		<div class="docs-name-cell" [nbTooltip]="tooltip" nbTooltipStatus="basic">
 			<span class="docs-name-lead">
-				<img
-					*ngIf="thumbnailUrl as thumbnail; else leadIcon"
-					class="docs-name-thumb"
-					[src]="thumbnail"
-					alt=""
-					loading="lazy"
-					(error)="onThumbnailError()"
-				/>
-				<ng-template #leadIcon>
-					<span class="docs-name-icon" *ngIf="rowData?.icon; else evaIcon">{{ rowData.icon }}</span>
-					<ng-template #evaIcon>
+				@if (thumbnailUrl; as thumbnail) {
+					<img class="docs-name-thumb" [src]="thumbnail" alt="" loading="lazy" (error)="onThumbnailError()" />
+				} @else {
+					@if (rowData?.icon) {
+						<span class="docs-name-icon">{{ rowData.icon }}</span>
+					} @else {
 						<nb-icon [icon]="icon" size="small" [style.color]="rowData?.color || null"></nb-icon>
-					</ng-template>
-				</ng-template>
+					}
+				}
 			</span>
 			<span class="docs-name-text">{{ rowData?.name }}</span>
-			<nb-badge *ngIf="rowData?.isArchived" status="basic" [text]="'DOCS.FILTERS.PRESET_ARCHIVED' | translate"></nb-badge>
-			<nb-icon
-				*ngIf="rowData?.visibility === visibilityEnum.PRIVATE"
-				icon="eye-off-outline"
-				size="tiny"
-				[nbTooltip]="'DOCS.VISIBILITY.PRIVATE' | translate"
-			></nb-icon>
-			<nb-icon *ngIf="rowData?.isLocked" icon="lock-outline" size="tiny"></nb-icon>
-			<span class="docs-name-version" *ngIf="rowData?.version > 1">v{{ rowData.version }}</span>
+			@if (rowData?.isArchived) {
+				<nb-badge status="basic" [text]="'DOCS.FILTERS.PRESET_ARCHIVED' | translate"></nb-badge>
+			}
+			@if (rowData?.visibility === visibilityEnum.PRIVATE) {
+				<nb-icon
+					icon="eye-off-outline"
+					size="tiny"
+					[nbTooltip]="'DOCS.VISIBILITY.PRIVATE' | translate"
+				></nb-icon>
+			}
+			@if (rowData?.isLocked) {
+				<nb-icon icon="lock-outline" size="tiny"></nb-icon>
+			}
+			@if (rowData?.version > 1) {
+				<span class="docs-name-version">v{{ rowData.version }}</span>
+			}
 		</div>
 	`,
 	styles: [
