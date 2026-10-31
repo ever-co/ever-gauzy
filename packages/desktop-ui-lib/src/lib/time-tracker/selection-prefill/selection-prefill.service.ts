@@ -10,7 +10,7 @@ import {
 } from '../../shared/features/time-tracker-form/time-tracker-form.service';
 import { SelectorElectronService } from '../../shared/services/selector-electron.service';
 import { TimeTrackerStatusService } from '../time-tracker-status/time-tracker-status.service';
-import { findChoice, IPagedChoices } from './find-choice';
+import { ChoiceListUnavailableError, findChoice, IPagedChoices } from './find-choice';
 import { selectionFromLastLog, toProjectConfig } from './last-log-selection';
 import {
 	hasSelection,
@@ -26,10 +26,11 @@ import {
  * device starts with the client, project, team, task and note last tracked with, instead of an empty form.
  *
  * It runs once for a user and organization (online), and only over an empty selection with no timer running: a
- * selection the user makes, or clears, afterwards is left alone, and a lookup that fails is tried again on the next
- * load. The choices are made one after another, each in its selector's list as reloaded for the choices before it (a
- * project's teams and tasks once the project is chosen), so a choice the employee can no longer pick is left out. What
- * was chosen is stored like a selection the user makes, so the timer starts with it and a refresh keeps it.
+ * selection the user makes, or clears, afterwards is left alone. An attempt that fails (the last log or a list could
+ * not be loaded) is taken back and tried again on the next load. The choices are made one after another, each in its
+ * selector's list as reloaded for the choices before it (a project's teams and tasks once the project is chosen), so a
+ * choice the employee can no longer pick is left out. What was chosen is stored like a selection the user makes, so
+ * the timer starts with it and a refresh keeps it.
  */
 @Injectable({
 	providedIn: 'root'
@@ -90,6 +91,8 @@ export class SelectionPrefillService {
 
 		// Still the user, organization and stopped timer the lookup started for (an organization switch resets).
 		const isCurrent = () => generation === this._generation && this._contextKey() === key && !isRunning();
+		// What this attempt chose so far: taken back if it fails, so the next attempt starts over from an empty form.
+		const applied: Partial<ITimeTrackerFormState> = {};
 
 		this._inFlight.add(flight);
 		try {
@@ -97,7 +100,6 @@ export class SelectionPrefillService {
 			if (!isCurrent() || !status) {
 				return null;
 			}
-			this._settled.add(key);
 
 			const selection = selectionFromLastLog({
 				local: mergeSelections(this._timeTrackerFormService.getState(), saved),
@@ -105,11 +107,19 @@ export class SelectionPrefillService {
 				status,
 				organizationId
 			});
-			const applied = selection ? await this._apply(selection, isCurrent) : null;
-			const kept = applied ? this._persist(applied) : {};
+			if (selection && !(await this._apply(selection, applied, isCurrent))) {
+				return null;
+			}
+
+			// Settled only by a complete attempt: a failed one is tried again on the next load.
+			this._settled.add(key);
+			const kept = this._persist(applied);
 			return Object.keys(kept).length > 0 ? kept : null;
 		} catch (error) {
-			console.warn('[SelectionPrefill] Could not read the last time log, the next load tries again', error);
+			if (isCurrent()) {
+				this._undo(applied);
+			}
+			console.warn('[SelectionPrefill] Could not prefill the selection, the next load tries again', error);
 			return null;
 		} finally {
 			this._inFlight.delete(flight);
@@ -132,17 +142,18 @@ export class SelectionPrefillService {
 
 	/**
 	 * Makes the choices of `selection` one after another, each in its selector's list as reloaded for the choices made
-	 * before it, then the note.
+	 * before it, then the note, recording each one in `applied`. Once the user changes the selection, no further choice
+	 * is made.
 	 *
-	 * @returns what was applied; `null` when the context changed meanwhile. Once the user changes the selection, no
-	 * further choice is made.
+	 * @returns `false` when the context changed meanwhile (the attempt is dropped), `true` otherwise.
+	 * @throws ChoiceListUnavailableError when a list could not be loaded (a failed request, or offline): whether it
+	 * offers the choice is unknown.
 	 */
 	private async _apply(
 		selection: Partial<ITimeTrackerFormState>,
+		applied: Partial<ITimeTrackerFormState>,
 		isCurrent: () => boolean
-	): Promise<Partial<ITimeTrackerFormState> | null> {
-		const applied: Partial<ITimeTrackerFormState> = {};
-
+	): Promise<boolean> {
 		for (const field of SELECTOR_FIELDS) {
 			const id = selection[field];
 			if (!id) {
@@ -151,10 +162,13 @@ export class SelectionPrefillService {
 
 			const found = await findChoice(this._lists[field], id);
 			if (!isCurrent()) {
-				return null;
+				return false;
+			}
+			if (this._store.isOffline) {
+				throw new ChoiceListUnavailableError('offline'); // the selectors skip loading while offline
 			}
 			if (!sameSelection(this._timeTrackerFormService.getState(), applied)) {
-				return applied; // the user took over
+				return true; // the user took over
 			}
 			if (found) {
 				const choice: Partial<ITimeTrackerFormState> = {};
@@ -168,7 +182,7 @@ export class SelectionPrefillService {
 			this._timeTrackerFormService.setState({ note: selection.note });
 			applied.note = selection.note;
 		}
-		return applied;
+		return true;
 	}
 
 	/**
@@ -183,5 +197,16 @@ export class SelectionPrefillService {
 			this._selectorElectronService.update(toProjectConfig(kept));
 		}
 		return kept;
+	}
+
+	/** Takes back what the prefill applied and the form still has (a choice the user made meanwhile stays). */
+	private _undo(applied: Partial<ITimeTrackerFormState>): void {
+		const cleared: Partial<ITimeTrackerFormState> = {};
+		for (const field of Object.keys(keptSelection(this._timeTrackerFormService.getState(), applied))) {
+			cleared[field as keyof ITimeTrackerFormState] = '';
+		}
+		if (Object.keys(cleared).length > 0) {
+			this._timeTrackerFormService.setState(cleared);
+		}
 	}
 }

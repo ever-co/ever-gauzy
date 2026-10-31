@@ -1,3 +1,5 @@
+import { firstValueFrom, Observable } from 'rxjs';
+
 /** How many pages of a selector's list the prefill looks through for a choice of the last log (10 entries a page). */
 export const MAX_PREFILL_PAGES = 5;
 
@@ -5,13 +7,25 @@ export const MAX_PREFILL_PAGES = 5;
 export interface IPagedChoices<T> {
 	/** Starts the list over: the next load answers its first page, filtered by the choices made so far. */
 	resetPage(): void;
-	/** Loads the current page into the list (a failure leaves the list as it is). */
+	/** Loads the current page into the list. A failure does not reject: it is recorded as the list's error. */
 	load(): Promise<void>;
 	/** The entries loaded so far. */
 	getAll(): T[];
 	/** Moves to the next page. */
 	onScrollToEnd(): void;
-	readonly selectorQuery: { readonly hasNext: boolean };
+	readonly selectorQuery: {
+		readonly hasNext: boolean;
+		/** The error of the last load, `null` once a load succeeds. */
+		selectError(): Observable<unknown>;
+	};
+}
+
+/** A selector's list could not be loaded: whether it offers the choice is unknown, which is not the same as missing. */
+export class ChoiceListUnavailableError extends Error {
+	constructor(readonly reason?: unknown) {
+		super('A selector list could not be loaded');
+		this.name = 'ChoiceListUnavailableError';
+	}
 }
 
 /**
@@ -22,6 +36,7 @@ export interface IPagedChoices<T> {
  * is one the employee can still track time on.
  *
  * @returns the entry, or `null` when the list does not offer it within `maxPages` pages.
+ * @throws ChoiceListUnavailableError when a page could not be loaded.
  */
 export async function findChoice<T extends { id?: string }>(
 	list: IPagedChoices<T>,
@@ -31,6 +46,11 @@ export async function findChoice<T extends { id?: string }>(
 	list.resetPage();
 	for (let page = 1; ; page++) {
 		await list.load();
+		const error = await firstValueFrom(list.selectorQuery.selectError());
+		if (error) {
+			throw new ChoiceListUnavailableError(error);
+		}
+
 		const entry = list.getAll().find((item) => item?.id === id);
 		if (entry || page >= maxPages || !list.selectorQuery.hasNext) {
 			return entry ?? null;

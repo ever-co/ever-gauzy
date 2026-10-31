@@ -1,15 +1,25 @@
-import { findChoice, IPagedChoices } from './find-choice';
+import { of } from 'rxjs';
+import { ChoiceListUnavailableError, findChoice, IPagedChoices } from './find-choice';
 
-/** A selector's list over `offered`, loaded `limit` entries a page, as `SelectorService` loads it. */
-function pagedList(offered: string[], limit = 2) {
+/**
+ * A selector's list over `offered`, loaded `limit` entries a page, as `SelectorService` loads it: a failed load
+ * resolves and records its error (`failingPage`).
+ */
+function pagedList(offered: string[], limit = 2, failingPage?: number) {
 	let page = 1;
 	let data: { id: string }[] = [];
+	let error: Error | null = null;
 	const list = {
 		resetPage: jest.fn(() => {
 			page = 1;
 			data = [];
 		}),
 		load: jest.fn(async () => {
+			if (page === failingPage) {
+				error = new Error('Request failed');
+				return;
+			}
+			error = null;
 			data = [...data, ...offered.slice((page - 1) * limit, page * limit).map((id) => ({ id }))];
 		}),
 		getAll: () => data,
@@ -19,7 +29,8 @@ function pagedList(offered: string[], limit = 2) {
 		selectorQuery: {
 			get hasNext() {
 				return page * limit < offered.length;
-			}
+			},
+			selectError: () => of(error)
 		}
 	};
 	return list satisfies IPagedChoices<{ id: string }>;
@@ -48,6 +59,12 @@ describe('findChoice', () => {
 
 		await expect(findChoice(list, 'gone')).resolves.toBeNull();
 		expect(list.load).toHaveBeenCalledTimes(2);
+	});
+
+	it('fails when a page cannot be loaded: the choice is unknown, not missing', async () => {
+		const list = pagedList(['a', 'b', 'c', 'd'], 2, 2);
+
+		await expect(findChoice(list, 'd')).rejects.toBeInstanceOf(ChoiceListUnavailableError);
 	});
 
 	it('stops after the pages it may look through', async () => {

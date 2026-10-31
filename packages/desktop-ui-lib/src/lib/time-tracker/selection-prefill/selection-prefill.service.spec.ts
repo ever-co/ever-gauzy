@@ -1,3 +1,4 @@
+import { of } from 'rxjs';
 import { Store } from '../../services/store.service';
 import { ClientSelectorService } from '../../shared/features/client-selector/+state/client-selector.service';
 import { ProjectSelectorService } from '../../shared/features/project-selector/+state/project-selector.service';
@@ -16,13 +17,17 @@ type Entry = { id: string };
 
 /**
  * A selector as the time tracker has it: a list the employee may pick from, loaded two entries a page, and the
- * choice, which (like `SelectorStore.updateSelected`) only finds an entry of the pages loaded.
+ * choice, which (like `SelectorStore.updateSelected`) only finds an entry of the pages loaded. A failed load resolves
+ * and records its error, as the selector services do.
  */
 function selector(offered: () => string[], limit = 2) {
 	const list = {
 		page: 1,
 		data: [] as Entry[],
 		selected: null as Entry | null,
+		error: null as Error | null,
+		/** Fails the next load. */
+		failNext: false,
 		/** Runs as a load starts: what the user does while the list loads. */
 		onLoad: undefined as (() => void) | undefined,
 		resetPage: jest.fn(() => {
@@ -31,6 +36,12 @@ function selector(offered: () => string[], limit = 2) {
 		}),
 		load: jest.fn(async () => {
 			list.onLoad?.();
+			if (list.failNext) {
+				list.failNext = false;
+				list.error = new Error('Request failed');
+				return;
+			}
+			list.error = null;
 			const ids = offered().slice((list.page - 1) * limit, list.page * limit);
 			list.data = [...list.data, ...ids.map((id) => ({ id }))];
 		}),
@@ -41,7 +52,8 @@ function selector(offered: () => string[], limit = 2) {
 		selectorQuery: {
 			get hasNext() {
 				return list.page * limit < offered().length;
-			}
+			},
+			selectError: () => of(list.error)
 		},
 		select: (id: string | null) => {
 			list.selected = list.data.find((entry) => entry.id === id) ?? null;
@@ -225,6 +237,36 @@ describe('SelectionPrefillService', () => {
 
 		await expect(prefill()).resolves.toEqual(all);
 		expect(statusService.status).toHaveBeenCalledTimes(2);
+		warn.mockRestore();
+	});
+
+	it('takes back an attempt whose list could not load, stores nothing and tries again on the next load', async () => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		// Client and project are chosen, then the team list fails to load.
+		lists.teamId.failNext = true;
+
+		await expect(prefill()).resolves.toBeNull();
+		expect(formService.getState()).toEqual({ clientId: '', projectId: '', teamId: '', taskId: '', note: '' });
+		expect(selectorElectron.update).not.toHaveBeenCalled();
+
+		await expect(prefill()).resolves.toEqual(all);
+		expect(selectorElectron.update).toHaveBeenCalledWith(stored);
+		warn.mockRestore();
+	});
+
+	it('takes back an attempt that went offline while a list loaded', async () => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		lists.projectId.onLoad = () => {
+			lists.projectId.onLoad = undefined;
+			store.isOffline = true;
+		};
+
+		await expect(prefill()).resolves.toBeNull();
+		expect(formService.getState().clientId).toBe('');
+		expect(selectorElectron.update).not.toHaveBeenCalled();
+
+		store.isOffline = false;
+		await expect(prefill()).resolves.toEqual(all);
 		warn.mockRestore();
 	});
 
