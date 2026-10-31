@@ -10,7 +10,7 @@ describe('findTimeOffRequestForm', () => {
 	const { PAID, UNPAID } = TimeOffRequestFormTypeEnum;
 
 	const document = (name: string, documentUrl: string, extra: Partial<IOrganizationDocument> = {}) =>
-		({ id: `${name}@${documentUrl}`, name, documentUrl, ...extra } as IOrganizationDocument);
+		({ id: `${name}@${documentUrl}`, name, documentUrl, ...extra }) as IOrganizationDocument;
 
 	const handbook = document('Employee Handbook', 'https://files.test/handbook.pdf');
 	const paid = document('Paid Days off Request', 'https://files.test/paid.pdf');
@@ -67,5 +67,23 @@ describe('findTimeOffRequestForm', () => {
 		expect(findTimeOffRequestForm([older, newer], PAID)).toBe(newer);
 		expect(findTimeOffRequestForm([newer, older], PAID)).toBe(newer);
 		expect(findTimeOffRequestForm([undated, paid], PAID)).toBe(undated);
+	});
+
+	it('prefers an older form it can download to a newer one whose link is not http(s)', () => {
+		const older = document('Paid Days off Request', 'https://files.test/2025.pdf', {
+			createdAt: new Date('2025-01-10T00:00:00.000Z')
+		});
+		const newer = document('Paid Days off Request', 'javascript:alert(1)', {
+			createdAt: new Date('2026-03-01T00:00:00.000Z')
+		});
+
+		expect(findTimeOffRequestForm([newer, older], PAID)).toBe(older);
+		expect(findTimeOffRequestForm([older, newer], PAID)).toBe(older);
+	});
+
+	it('still answers the form when its only link is not http(s), so the dialog can say it cannot be downloaded', () => {
+		const unusable = document('Paid Days off Request', 'ftp://files.test/paid.pdf');
+
+		expect(findTimeOffRequestForm([handbook, unusable], PAID)).toBe(unusable);
 	});
 });
