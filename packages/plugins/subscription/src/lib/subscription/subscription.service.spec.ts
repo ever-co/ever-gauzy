@@ -167,6 +167,11 @@ jest.mock('@gauzy/core', () => {
 		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
 		toClientSafeError: jest.requireActual('@gauzy/core/src/lib/core/errors/database-error').toClientSafeError,
 		redactDatabaseError: jest.requireActual('@gauzy/core/src/lib/core/errors/database-error').redactDatabaseError,
+		// The order path's fence a cycle's charge claim is measured in (`chargeClaimWindowMs`): the platform's own
+		// stale-lock window, `IdempotencyService.DEFAULT_STALE_LOCK_MS` in `idempotency.service.ts`.
+		IdempotencyService: class IdempotencyService {
+			static readonly DEFAULT_STALE_LOCK_MS = 2 * 60 * 1000;
+		},
 		SequenceService: class SequenceService {},
 		assertPlainReferencesNotForeign: (...args: unknown[]) => mockAssertReferences(...args),
 		RequestContext: {
@@ -204,7 +209,7 @@ import {
 } from '../subscription.types';
 import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
 import { SubscriptionItemService } from '../subscription-item/subscription-item.service';
-import { SubscriptionBillingService } from '../subscription-billing/subscription-billing.service';
+import { SubscriptionBillingService, chargeClaimWindowMs } from '../subscription-billing/subscription-billing.service';
 import { SubscriptionItem } from '../subscription-item/subscription-item.entity';
 import { SubscriptionBilling } from '../subscription-billing/subscription-billing.entity';
 import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
@@ -284,6 +289,11 @@ function repository(tables: ITables, tableName: keyof ITables, onWrite?: (entity
 					return (expected.value ?? []).some((candidate: unknown) => matchesValue(value, candidate));
 				case 'lessThanOrEqual':
 					return instant(value ?? 0) <= instant(expected.value ?? 0);
+				// SQL's `NULL < x` matches nothing, which is why a stale-or-absent claim is stated as `Or(IsNull(), LessThan(…))`.
+				case 'lessThan':
+					return value !== null && value !== undefined && instant(value) < instant(expected.value);
+				case 'or':
+					return (expected.value as unknown as unknown[]).some((operand) => matchesValue(value, operand));
 				case 'isNull':
 					return value === null || value === undefined;
 				default:
@@ -489,7 +499,7 @@ function subscriptionFixture(
 		items?: Row[];
 		billings?: Row[];
 		prices?: Record<string, string | null>;
-		orders?: { paid?: boolean; paidAt?: Date; orderId?: string } | ((request: Row) => Row | never);
+		orders?: { paid?: boolean; paidAt?: Date; orderId?: string } | ((request: Row) => Row | Promise<Row> | never);
 		withPricing?: boolean;
 		withOrder?: boolean;
 		withInstruments?: boolean;
@@ -2151,6 +2161,190 @@ describe('SubscriptionService — a failure is a state, not an exception (doc 11
 
 		expect(fixture.instrumentCalls).toHaveLength(1);
 		expect(fixture.instrumentCalls[0]).toMatchObject({ accountHolderId: HOLDER, paymentMethodTokenId: TOKEN });
+	});
+});
+
+/**
+ * The charge claim (CodeRabbit on ever-co/ever-gauzy#11565): a pass claims the cycle before it calls the order path,
+ * an operator's `pay` or `waive` is refused while the claim is live, the attempt's outcome ends it, and a stale claim
+ * is recovered under the earlier call's attempt key so the order path's own idempotency says what that call did.
+ */
+describe('SubscriptionService — a cycle’s charge is fenced against an operator settling it (charge claim)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	const inFlight = { status: 409, response: { code: 'SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT' } };
+	/** The open April cycle, as an earlier pass left it. */
+	const aprilCycle = (overrides: Row = {}): Row => ({
+		id: 'cycle-april',
+		tenantId: TENANT,
+		organizationId: ORG,
+		subscriptionId: SUBSCRIPTION,
+		periodStart: new Date(APRIL),
+		periodEnd: monthAfter(APRIL),
+		amount: '120.000000',
+		currency: 'USD',
+		status: SubscriptionBillingStatus.PENDING,
+		dueAt: new Date(APRIL),
+		paidAt: null,
+		attemptCount: 0,
+		...overrides
+	});
+	/** A claim a pass took the given time ago. */
+	const claimedAgo = (ms: number, token: string): Row => ({
+		chargeClaimToken: token,
+		chargeClaimedAt: new Date(Date.now() - ms)
+	});
+	const staleClaim = () => claimedAgo(chargeClaimWindowMs() + 1000, 'a-pass-that-died');
+	const eventNames = (fixture: ReturnType<typeof subscriptionFixture>) => fixture.events.map((event) => event.name);
+
+	it.each([
+		['pays', (fixture: ReturnType<typeof subscriptionFixture>, id: string) => fixture.service.payCycle(id)],
+		[
+			'waives',
+			(fixture: ReturnType<typeof subscriptionFixture>, id: string) =>
+				fixture.billingService.markWaived(id, { reason: 'goodwill' })
+		]
+	])('refuses an operator who %s the cycle while its charge is in flight, and records the charge', async (_action, settle) => {
+		let refusal: unknown;
+		let fixture: ReturnType<typeof subscriptionFixture>;
+		fixture = subscriptionFixture({
+			orders: async () => {
+				// The operator acts while the order path is taking the money.
+				refusal = await settle(fixture, fixture.cycle(APRIL)!.id).catch((error: unknown) => error);
+
+				return { orderId: 'order-1', paid: true };
+			}
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(refusal).toMatchObject(inFlight);
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PAID, orderId: 'order-1', replayed: false });
+		expect(fixture.cycle(APRIL)).toMatchObject({
+			status: SubscriptionBillingStatus.PAID,
+			orderId: 'order-1',
+			chargeClaimToken: null,
+			chargeClaimedAt: null
+		});
+		expect(fixture.orderCalls).toHaveLength(1);
+	});
+
+	it.each([
+		[true, SubscriptionBillingStatus.PAID],
+		[false, SubscriptionBillingStatus.INVOICED]
+	])('ends the claim when the order path answers paid: %s (%s)', async (paid, status) => {
+		const fixture = subscriptionFixture({ orders: { paid, orderId: 'order-1' } });
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.cycle(APRIL)).toMatchObject({ status, chargeClaimToken: null, chargeClaimedAt: null });
+	});
+
+	it('ends the claim when the charge fails, so the operator can settle the failed cycle', async () => {
+		const fixture = subscriptionFixture({
+			orders: () => {
+				throw new Error('SUBSCRIPTION_CHARGE_DECLINED: the instrument was declined');
+			}
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+		const cycle = fixture.cycle(APRIL)!;
+
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.FAILED, errorCode: 'SUBSCRIPTION_CHARGE_DECLINED' });
+		expect(cycle).toMatchObject({ attemptCount: 1, chargeClaimToken: null, chargeClaimedAt: null });
+		await expect(fixture.billingService.markWaived(cycle.id, { reason: 'goodwill' })).resolves.toMatchObject({
+			status: SubscriptionBillingStatus.WAIVED
+		});
+	});
+
+	it('ends the claim when recording the attempt throws, rather than fencing the cycle until it goes stale', async () => {
+		const fixture = subscriptionFixture({
+			orders: () => {
+				throw new Error('SUBSCRIPTION_CHARGE_DECLINED: the instrument was declined');
+			}
+		});
+
+		jest.spyOn(fixture.billingService, 'markFailed').mockRejectedValueOnce(new Error('the database went away'));
+
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+		expect(fixture.cycle(APRIL)).toMatchObject({
+			status: SubscriptionBillingStatus.PENDING,
+			chargeClaimToken: null,
+			chargeClaimedAt: null
+		});
+	});
+
+	it('does not charge a cycle another pass is charging, and leaves that pass’s claim alone', async () => {
+		const fixture = subscriptionFixture({ billings: [aprilCycle(claimedAgo(1000, 'another-pass'))] });
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PENDING, replayed: true, billingId: 'cycle-april' });
+		expect(outcome.message).toMatch(/Another billing pass is charging this cycle/);
+		expect(fixture.orderCalls).toEqual([]);
+		expect(fixture.cycle(APRIL)).toMatchObject({ chargeClaimToken: 'another-pass', attemptCount: 0 });
+		expect(eventNames(fixture)).toEqual([]);
+	});
+
+	it('recovers a stale claim and charges under the attempt key the earlier call used', async () => {
+		const fixture = subscriptionFixture({ billings: [aprilCycle(staleClaim())], orders: { paid: true, orderId: 'order-1' } });
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PAID, orderId: 'order-1' });
+		expect(fixture.orderCalls).toHaveLength(1);
+		// Attempt 1, as the pass that died used: the order path answers that call's order, if it raised one.
+		expect(fixture.orderCalls[0].idempotencyKey).toBe(`${SUBSCRIPTION}:${APRIL.toISOString()}:1`);
+		expect(fixture.cycle(APRIL)).toMatchObject({ chargeClaimToken: null, chargeClaimedAt: null });
+	});
+
+	it('keeps the fence when the recovered attempt is still in flight at the order path, and records no failure', async () => {
+		const fixture = subscriptionFixture({
+			billings: [aprilCycle(staleClaim())],
+			orders: () => {
+				throw new Error('ORDER_SUBSCRIPTION_IN_FLIGHT: another attempt at this cycle holds its key and is still working.');
+			}
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+		const cycle = fixture.cycle(APRIL)!;
+
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PENDING, replayed: true });
+		// The attempt count is unchanged, so the next attempt keeps the order key the call still running holds.
+		expect(cycle).toMatchObject({ status: SubscriptionBillingStatus.PENDING, attemptCount: 0 });
+		expect(cycle.lastError ?? null).toBeNull();
+		expect(eventNames(fixture)).not.toContain('subscription.payment-failed');
+		// The recovering pass holds a fresh claim, so the operator still meets the fence.
+		expect(cycle.chargeClaimToken).toEqual(expect.any(String));
+		expect(cycle.chargeClaimToken).not.toBe('a-pass-that-died');
+		await expect(fixture.service.payCycle(cycle.id)).rejects.toMatchObject(inFlight);
+	});
+
+	it('records nothing for an attempt that outlived its claim, leaving the cycle to the pass that recovered it', async () => {
+		let fixture: ReturnType<typeof subscriptionFixture>;
+		fixture = subscriptionFixture({
+			orders: () => {
+				// The call outlives the claim's window, and another pass recovers the cycle meanwhile.
+				Object.assign(fixture.cycle(APRIL)!, { chargeClaimToken: 'recovering-pass', chargeClaimedAt: new Date() });
+
+				throw new Error('SUBSCRIPTION_CHARGE_DECLINED: the instrument was declined');
+			}
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PENDING, replayed: true });
+		expect(fixture.cycle(APRIL)).toMatchObject({
+			status: SubscriptionBillingStatus.PENDING,
+			attemptCount: 0,
+			chargeClaimToken: 'recovering-pass'
+		});
+		expect(eventNames(fixture)).not.toContain('subscription.payment-failed');
 	});
 });
 

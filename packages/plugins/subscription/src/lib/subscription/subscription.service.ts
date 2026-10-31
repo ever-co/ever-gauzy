@@ -130,6 +130,15 @@ function spendableExpectation(expectation: IVersionExpectation): () => IVersionE
 /** The key a billing cycle's idempotency claim is scoped under. */
 const BILLING_SCOPE = 'subscription.bill';
 
+/**
+ * The code the order path refuses an attempt with while another call still holds the attempt's key and is working
+ * (`ISubscriptionOrderGatewayPort.raiseSubscriptionOrder`).
+ *
+ * That attempt is in flight elsewhere, not failed. Recorded as a failure, it would move the cycle's attempt count — and
+ * with it the order key of the next attempt, which the order path no longer fences against the call still running.
+ */
+const ORDER_ATTEMPT_IN_FLIGHT = 'ORDER_SUBSCRIPTION_IN_FLIGHT';
+
 /** The key a proration charge's idempotency claim is scoped under. */
 const PRORATION_SCOPE = 'subscription.proration';
 
@@ -1959,17 +1968,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		if (existing && RAISED_CYCLE_STATUSES.includes(existing.status)) {
 			// The period is settled. Recomputing it would be a second answer to a question the row has
 			// already answered, and acting on that answer is how a customer is charged twice.
-			return {
-				subscriptionId: subscription.id,
-				billingId: existing.id,
-				status: existing.status,
-				replayed: true,
-				orderId: existing.orderId,
-				amount: existing.amount,
-				currency: existing.currency,
-				periodStart: existing.periodStart,
-				periodEnd: existing.periodEnd
-			};
+			return this.raisedCycleOutcome(subscription, existing);
 		}
 
 		if (existing?.nextRetryAt && !manual && new Date(existing.nextRetryAt).getTime() > now.getTime()) {
@@ -1998,7 +1997,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		// rather than to the calls, and a path that writes nothing does not spend it.
 		const spend = spendableExpectation(expectation);
 
-		const billing =
+		const opened =
 			existing ??
 			(await this.billingService.createPending({
 				subscriptionId: subscription.id,
@@ -2010,29 +2009,130 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				metadata: { gross: gross.toStorageString(), discount: discount.toStorageString() }
 			}));
 
-		if (discount.isPositive()) {
-			await this.appendDiscount(billing, subscription, discount);
+		// The charge is claimed on the cycle before anything is charged, and while the order path is called the claim is
+		// what an operator's `pay` or `waive` meets (`SubscriptionBillingService.claimCharge`). One conditional statement
+		// takes it, so no row lock is held across the external call.
+		const claim = await this.billingService.claimCharge(opened.id);
+
+		if (!claim.token) {
+			return this.unclaimedCycleOutcome(subscription, claim.billing);
 		}
 
-		const credit = await this.consumePendingCredit(subscription, billing);
+		// The claimed row is the one charged: a pass that recovered a stale claim reads the attempt count the earlier
+		// call left, so it calls the order path under that call's attempt key and the order path's own idempotency says
+		// what the call did.
+		const billing = claim.billing;
+		let stillFenced = false;
 
-		const failure = await this.raiseCycleOrder(
-			subscription,
-			plan,
-			items,
-			billing,
-			period,
-			net,
-			credit,
-			discount,
-			spend
-		);
+		try {
+			if (discount.isPositive()) {
+				await this.appendDiscount(billing, subscription, discount);
+			}
 
-		if (failure) {
-			return await this.recordFailure(subscription, billing, failure, now, spend());
+			const credit = await this.consumePendingCredit(subscription, billing);
+
+			const failure = await this.raiseCycleOrder(
+				subscription,
+				plan,
+				items,
+				billing,
+				period,
+				net,
+				credit,
+				discount,
+				spend,
+				claim.token
+			);
+
+			if (failure?.code === ORDER_ATTEMPT_IN_FLIGHT) {
+				// An earlier call is still charging this attempt, and the order path still fences it. This pass records
+				// nothing and keeps its claim, so the cycle stays fenced against an operator for as long as the order path
+				// fences the call; that call's outcome ends the claim, or the claim goes stale and the next pass recovers it.
+				stillFenced = true;
+
+				return this.unclaimedCycleOutcome(subscription, billing);
+			}
+
+			if (failure) {
+				return await this.recordFailure(subscription, billing, failure, now, spend(), claim.token);
+			}
+
+			return await this.recordSuccess(subscription, plan, billing, period, items, spend());
+		} finally {
+			if (!stillFenced) {
+				await this.endChargeClaim(billing, claim.token);
+			}
+		}
+	}
+
+	/**
+	 * Ends a cycle's charge claim once the attempt that took it is over.
+	 *
+	 * The write that recorded the attempt's outcome has ended it already, and the token keeps a claim another pass
+	 * recovered in place. A release that fails leaves the claim to go stale, which fences the cycle a little longer
+	 * and is answered by the next pass, so it does not replace the cycle's own answer.
+	 *
+	 * @param billing The cycle.
+	 * @param token The claim's token.
+	 */
+	private async endChargeClaim(billing: SubscriptionBilling, token: string): Promise<void> {
+		try {
+			await this.billingService.releaseChargeClaim(billing.id, token);
+		} catch (error) {
+			// The driver's message without the statement's bound values, as the platform's database-error filter logs it.
+			const redacted = redactDatabaseError(error);
+
+			this.logger.warn(
+				`Subscription ${billing.subscriptionId}: the charge claim on cycle ${billing.id} was not released ` +
+					`(${redacted instanceof Error ? redacted.message : 'a database error'}); it goes stale and the next ` +
+					`pass recovers it.`
+			);
+		}
+	}
+
+	/**
+	 * What a pass answers for a period whose cycle is already raised: the row's own record of it.
+	 *
+	 * @param subscription The subscription being billed.
+	 * @param billing The raised cycle.
+	 * @returns The replayed outcome.
+	 */
+	private raisedCycleOutcome(subscription: Subscription, billing: SubscriptionBilling): ISubscriptionBillingOutcome {
+		return {
+			subscriptionId: subscription.id,
+			billingId: billing.id,
+			status: billing.status,
+			replayed: true,
+			orderId: billing.orderId,
+			amount: billing.amount,
+			currency: billing.currency,
+			periodStart: billing.periodStart,
+			periodEnd: billing.periodEnd
+		};
+	}
+
+	/**
+	 * What a pass answers for a cycle it could not charge: one settled since it was read, or one another pass is
+	 * charging. Nothing is charged, written or told, so nothing is spent either.
+	 *
+	 * @param subscription The subscription being billed.
+	 * @param billing The cycle as it now stands.
+	 * @returns The replayed outcome.
+	 */
+	private unclaimedCycleOutcome(subscription: Subscription, billing: SubscriptionBilling): ISubscriptionBillingOutcome {
+		if (RAISED_CYCLE_STATUSES.includes(billing.status)) {
+			return this.raisedCycleOutcome(subscription, billing);
 		}
 
-		return await this.recordSuccess(subscription, plan, billing, period, items, spend());
+		return {
+			subscriptionId: subscription.id,
+			billingId: billing.id,
+			status: billing.status,
+			replayed: true,
+			periodStart: billing.periodStart,
+			periodEnd: billing.periodEnd,
+			message: 'Another billing pass is charging this cycle, so this pass leaves it to that one.'
+		};
 	}
 
 	/**
@@ -2048,6 +2148,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param discount The plan discount granted, when one was.
 	 * @param nextExpectation The reader the two subscription writes below take their expectation from,
 	 * so that whichever of them runs first carries the version the route's caller stated.
+	 * @param chargeClaim The token of the charge claim this pass holds on the cycle, which its payment ends.
 	 * @returns A platform code and message when the charge could not be made, or undefined on success.
 	 */
 	private async raiseCycleOrder(
@@ -2059,7 +2160,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		net: Money,
 		credit: Money | null,
 		discount: Money,
-		nextExpectation: () => IVersionExpectation
+		nextExpectation: () => IVersionExpectation,
+		chargeClaim: string
 	): Promise<{ code: string; message: string } | undefined> {
 		if (!this.orderGateway) {
 			return {
@@ -2120,11 +2222,13 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					await this.billingService.markPaid(billing.id, {
 						paidAt: result.paidAt ?? new Date(),
 						orderId: result.orderId,
-						attemptCount: billing.attemptCount ?? 0
+						attemptCount: billing.attemptCount ?? 0,
+						chargeClaim
 					});
 				} catch (error) {
 					// The money was taken; an operator settled the cycle another way (waived or refunded it) while the
-					// charge was in flight. That is not a failed charge, and reporting it as one would schedule a retry -
+					// charge was in flight. The charge claim refuses that while it is live, so this is a charge that
+					// outlived its claim. That is not a failed charge, and reporting it as one would schedule a retry -
 					// a second charge. The cycle keeps the operator's decision and the conflict is logged for follow-up.
 					if ((error as { response?: { code?: string } })?.response?.code !== 'SUBSCRIPTION_BILLING_TRANSITION_INVALID') {
 						throw error;
@@ -2173,6 +2277,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param now The instant the attempt failed at.
 	 * @param expectation The version the caller read the subscription at, carried by whichever of the
 	 * two writes below records the attempt — only one of them ever runs.
+	 * @param chargeClaim The token of the charge claim this pass holds on the cycle. The attempt is recorded only while
+	 * the claim is still the pass's (`SubscriptionBillingService.markFailed`).
 	 * @returns What the attempt did.
 	 */
 	private async recordFailure(
@@ -2180,7 +2286,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		billing: SubscriptionBilling,
 		failure: { code: string; message: string },
 		now: Date,
-		expectation: IVersionExpectation = ANY_VERSION
+		expectation: IVersionExpectation = ANY_VERSION,
+		chargeClaim?: string
 	): Promise<ISubscriptionBillingOutcome> {
 		const attempts = (billing.attemptCount ?? 0) + 1;
 		const exhausted = isDunningExhausted(attempts);
@@ -2190,8 +2297,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		const failed = await this.billingService.markFailed(billing.id, {
 			attemptCount: attempts,
 			error,
-			nextRetryAt: retryAt
+			nextRetryAt: retryAt,
+			chargeClaim
 		});
+
+		if (!failed) {
+			// This attempt outlived its claim and another pass recovered the cycle: that pass records the attempt it made
+			// under the same order key. Nothing is recorded here — no dunning step, no `subscription.payment-failed`.
+			return this.unclaimedCycleOutcome(subscription, await this.billingService.findOneScoped(billing.id));
+		}
 
 		if (exhausted) {
 			// The retry policy is spent. The subscription keeps its history and its period, and stops

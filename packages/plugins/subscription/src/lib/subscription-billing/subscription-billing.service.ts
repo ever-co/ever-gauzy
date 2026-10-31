@@ -1,7 +1,18 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { DeleteResult, EntityManager, FindOptionsWhere, In, IsNull, LessThanOrEqual, Repository } from 'typeorm';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import {
+	DeleteResult,
+	EntityManager,
+	FindOptionsWhere,
+	In,
+	IsNull,
+	LessThan,
+	LessThanOrEqual,
+	Or,
+	Repository
+} from 'typeorm';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
-import { Money, isUniqueViolation } from '@gauzy/core';
+import { IdempotencyService, Money, isUniqueViolation } from '@gauzy/core';
 import { SubscriptionBillingStatus } from '../subscription.types';
 import { currentScope } from '../subscription.scope';
 import { normalizeDecimal } from '../subscription.cycle';
@@ -32,6 +43,95 @@ const WAIVABLE_FROM: readonly SubscriptionBillingStatus[] = [
 	SubscriptionBillingStatus.PENDING,
 	SubscriptionBillingStatus.FAILED
 ];
+
+/**
+ * The statuses a billing pass may claim a cycle's charge from: the ones it charges. Every other status already records
+ * the period's outcome — an order, a payment, a waiver, a refund — and a pass replays it instead of charging it.
+ */
+const CHARGEABLE_FROM: readonly SubscriptionBillingStatus[] = [
+	SubscriptionBillingStatus.PENDING,
+	SubscriptionBillingStatus.FAILED
+];
+
+/** A cycle's charge-claim columns as every write that ends the claim leaves them. */
+const NO_CHARGE_CLAIM = { chargeClaimToken: null, chargeClaimedAt: null } as const;
+
+/**
+ * How many of the order path's own fences one charge claim lasts.
+ *
+ * The order path fences one attempt with its own idempotency claim on the attempt's key, and lets another caller of
+ * that key take it over once the claim has been held for `IdempotencyService.DEFAULT_STALE_LOCK_MS`: by then it treats
+ * the call as abandoned. The cycle's claim is taken a little earlier than the order path's — the payer, the discount
+ * and the credit are read in between — so it lasts two of those windows. It therefore does not go stale while the order
+ * path still fences the attempt, and a pass that recovers a stale claim calls the order path with the same attempt key
+ * (`SubscriptionService.executeCycle`): the order path answers with the order the earlier call raised, refuses with
+ * `ORDER_SUBSCRIPTION_IN_FLIGHT` while that call is still working, or runs the attempt the earlier call abandoned.
+ */
+const CHARGE_CLAIM_FENCES = 2;
+
+/**
+ * @returns How long a charge claim stays live, in milliseconds.
+ */
+export function chargeClaimWindowMs(): number {
+	return CHARGE_CLAIM_FENCES * IdempotencyService.DEFAULT_STALE_LOCK_MS;
+}
+
+/**
+ * Whether a billing pass is charging a cycle right now: it holds a claim taken less than a window ago.
+ *
+ * Both claim columns are written together and cleared together; a token without its instant is treated as stale, so a
+ * damaged row can still be recovered rather than fenced for good.
+ *
+ * @param billing The cycle as it was read.
+ * @param now The instant to judge the claim at.
+ * @returns True while the claim is live.
+ */
+export function holdsLiveChargeClaim(
+	billing: Pick<SubscriptionBilling, 'chargeClaimToken' | 'chargeClaimedAt'>,
+	now: Date = new Date()
+): boolean {
+	if (!billing?.chargeClaimToken || !billing.chargeClaimedAt) {
+		return false;
+	}
+
+	return now.getTime() - new Date(billing.chargeClaimedAt).getTime() < chargeClaimWindowMs();
+}
+
+/**
+ * The condition a write states to apply only to a cycle no billing pass is charging: no claim, or a stale one.
+ *
+ * The columns are set and cleared together, so the instant alone answers it, in the statement's own WHERE.
+ *
+ * @param now The instant to judge a claim at.
+ * @returns The condition on `chargeClaimedAt`.
+ */
+function noLiveChargeClaim(now: Date = new Date()): FindOptionsWhere<SubscriptionBilling> {
+	return { chargeClaimedAt: Or(IsNull(), LessThan(new Date(now.getTime() - chargeClaimWindowMs()))) };
+}
+
+/**
+ * The refusal of an operator's write to a cycle a billing pass is charging right now.
+ *
+ * The claim may already have ended by the time the refusal is built (it refused the statement, then its pass recorded
+ * the outcome), so its instants are reported only when the row still carries them.
+ */
+function chargeInFlight(billing: SubscriptionBilling, action: string): ConflictException {
+	const claimedAt = billing.chargeClaimedAt ? new Date(billing.chargeClaimedAt) : null;
+
+	return new ConflictException({
+		message:
+			`SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT: billing cycle '${billing.id}' is being charged by a billing pass, so ` +
+			`it cannot be ${action} until the charge's outcome is recorded; read the cycle again and retry.`,
+		code: 'SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT',
+		details: {
+			subscriptionBillingId: billing.id,
+			status: billing.status,
+			...(claimedAt
+				? { chargeClaimedAt: claimedAt, claimLiveUntil: new Date(claimedAt.getTime() + chargeClaimWindowMs()) }
+				: {})
+		}
+	});
+}
 
 /**
  * The metadata keys an invoiced cycle holds its rights back under until it is paid (R4-05, interim).
@@ -104,6 +204,8 @@ function recordsBilledMoney(billing: SubscriptionBilling): boolean {
  */
 @Injectable()
 export class SubscriptionBillingService extends SubscriptionCrudService<SubscriptionBilling> {
+	private readonly logger = new Logger(SubscriptionBillingService.name);
+
 	constructor(
 		readonly typeOrmSubscriptionBillingRepository: TypeOrmSubscriptionBillingRepository,
 		readonly mikroOrmSubscriptionBillingRepository: MikroOrmSubscriptionBillingRepository
@@ -174,11 +276,74 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	}
 
 	/**
+	 * Claims a cycle's charge for one billing pass, before the pass calls the order path.
+	 *
+	 * The claim is one conditional statement — the shortest transaction there is, and no row lock outlives it, so none is
+	 * held across the external call: it writes a token only this pass knows, and the instant, on a cycle that is still
+	 * `PENDING` or `FAILED` and that no other pass is charging. While it is live, an operator's `pay` or `waive`, a
+	 * correction, a deletion and a reschedule refuse the cycle (`SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT`), so none of them
+	 * can settle or move a cycle whose money is being taken. The write that records the attempt's outcome ends it
+	 * (`markPaid`, `markInvoiced`, `markFailed`), and `releaseChargeClaim` ends a claim whose attempt recorded nothing.
+	 *
+	 * A claim older than `chargeClaimWindowMs()` is stale — its pass died, or is still waiting on a call the order path
+	 * no longer fences — and this statement takes it over. The pass that does charges under the same attempt number, so
+	 * the order path's own idempotency decides what the earlier call left: its order, a call still in flight, or nothing.
+	 *
+	 * @param id The cycle.
+	 * @returns The claim's token and the cycle as it now stands; a null token when the cycle is settled or another pass
+	 * holds a live claim on it.
+	 */
+	public async claimCharge(id: ID): Promise<{ token: string | null; billing: SubscriptionBilling }> {
+		const before = await this.findOneScoped(id);
+		const token = randomUUID();
+		const now = new Date();
+		const claimed = await this.writeIf(
+			id,
+			{ status: In([...CHARGEABLE_FROM]), ...noLiveChargeClaim(now) },
+			async () => null,
+			{ chargeClaimToken: token, chargeClaimedAt: now }
+		);
+		const billing = await this.findOneScoped(id);
+
+		if (!claimed?.affected) {
+			return { token: null, billing };
+		}
+
+		if (before.chargeClaimToken && !holdsLiveChargeClaim(before, now)) {
+			this.logger.warn(
+				`Subscription billing cycle ${id}: recovered a stale charge claim taken at ` +
+					`${new Date(before.chargeClaimedAt ?? 0).toISOString()}; the order path decides what its attempt left.`
+			);
+		}
+
+		return { token, billing };
+	}
+
+	/**
+	 * Ends a charge claim whose attempt recorded no outcome on the cycle.
+	 *
+	 * Only the claim the token names is cleared: a pass whose stale claim another pass recovered leaves the recovering
+	 * pass's claim in place.
+	 *
+	 * @param id The cycle.
+	 * @param token The token `claimCharge` handed the pass.
+	 * @returns True when the claim was still this pass's and is now cleared.
+	 */
+	public async releaseChargeClaim(id: ID, token: string): Promise<boolean> {
+		const released = await this.writeIf(id, { chargeClaimToken: token }, async () => null, { ...NO_CHARGE_CLAIM });
+
+		return !!released?.affected;
+	}
+
+	/**
 	 * Records that a cycle produced an order.
 	 *
 	 * **The rights it holds back are recorded in the same statement (R4-05).** An invoiced cycle has an order
 	 * and no money, so the rights of its period wait for its payment; writing the flags with the status means
 	 * no payment can ever see the cycle `INVOICED` without them, which a second write after this one allowed.
+	 *
+	 * The same statement ends the charge claim (`claimCharge`): the attempt's outcome is recorded, so nothing is in
+	 * flight any longer.
 	 *
 	 * @param id The cycle.
 	 * @param orderId The order it produced.
@@ -200,6 +365,7 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			status: SubscriptionBillingStatus.INVOICED,
 			amount: amount ? this.normalizeAmount(amount, billing.currency) : billing.amount,
 			lastError: null,
+			...NO_CHARGE_CLAIM,
 			...(deferred
 				? {
 						metadata: {
@@ -221,15 +387,25 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * `paidAt` is non-null exactly when a cycle is `PAID`, which is what makes the pair assert what
 	 * the other says rather than merely accompany it.
 	 *
+	 * **An operator's payment is refused while a billing pass is charging the cycle** (`claimCharge`), with
+	 * `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT`: recorded then, it settled a cycle whose money the pass was taking, and the
+	 * conflict was only noticed after the charge. The condition rides in the statement, so a pass that claims the cycle
+	 * after the read below is not paid over. The billing run's own payment names its claim and is never refused by
+	 * one — the money it records was taken — and it ends the claim in the same statement.
+	 *
 	 * @param id The cycle.
-	 * @param options The instant the payment settled, the order it settled and the attempt count.
+	 * @param options The instant the payment settled, the order it settled and the attempt count; `chargeClaim` is the
+	 * token of the billing pass recording its own charge.
 	 * @returns The updated cycle.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when an operator pays a cycle a pass is
+	 * charging.
 	 */
 	public async markPaid(
 		id: ID,
-		options: { paidAt?: Date; orderId?: ID; attemptCount?: number } = {}
+		options: { paidAt?: Date; orderId?: ID; attemptCount?: number; chargeClaim?: string } = {}
 	): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
+		const byOperator = !options.chargeClaim;
 
 		// A cycle that is already paid is settled: recording its payment again is a no-op, not a refusal. The billing
 		// run reaches here when an operator recorded the payment while the run's own charge was in flight, and a
@@ -242,20 +418,37 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			throw invalidTransition(billing, 'paid', PAYABLE_FROM);
 		}
 
+		if (byOperator && holdsLiveChargeClaim(billing)) {
+			throw chargeInFlight(billing, 'paid');
+		}
+
 		const refusal = async () => {
 			const current = await this.findOneScoped(id);
 
-			return current.status === SubscriptionBillingStatus.PAID ? null : invalidTransition(current, 'paid', PAYABLE_FROM);
+			if (current.status === SubscriptionBillingStatus.PAID) {
+				return null;
+			}
+
+			// Still payable, so what refused the operator's write was a pass's claim on the cycle.
+			return byOperator && PAYABLE_FROM.includes(current.status as SubscriptionBillingStatus)
+				? chargeInFlight(current, 'paid')
+				: invalidTransition(current, 'paid', PAYABLE_FROM);
 		};
 
-		await this.writeIf(id, { status: In([...PAYABLE_FROM]) }, refusal, {
-			status: SubscriptionBillingStatus.PAID,
-			paidAt: options.paidAt ?? new Date(),
-			orderId: options.orderId ?? billing.orderId,
-			attemptCount: options.attemptCount ?? billing.attemptCount,
-			nextRetryAt: null,
-			lastError: null
-		} as any);
+		await this.writeIf(
+			id,
+			{ status: In([...PAYABLE_FROM]), ...(byOperator ? noLiveChargeClaim() : {}) },
+			refusal,
+			{
+				status: SubscriptionBillingStatus.PAID,
+				paidAt: options.paidAt ?? new Date(),
+				orderId: options.orderId ?? billing.orderId,
+				attemptCount: options.attemptCount ?? billing.attemptCount,
+				nextRetryAt: null,
+				lastError: null,
+				...NO_CHARGE_CLAIM
+			} as any
+		);
 
 		return await this.findOneScoped(id);
 	}
@@ -356,22 +549,42 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	/**
 	 * Records a failed attempt and when the next one is owed.
 	 *
+	 * A billing pass recording its own attempt names its charge claim (`claimCharge`), and the attempt is recorded only
+	 * while that claim is still the pass's — in the same statement, which also ends it. A pass whose claim went stale
+	 * and was recovered by another pass records nothing: the cycle is that pass's now, and a failure written over it
+	 * would move the attempt count, so the next attempt's order key, under a charge still in flight. Nor is a failure
+	 * written over a cycle an operator settled once the claim had gone stale.
+	 *
 	 * @param id The cycle.
-	 * @param options How many attempts it has now used, why it failed, and when to try again.
-	 * @returns The updated cycle.
+	 * @param options How many attempts it has now used, why it failed, and when to try again; `chargeClaim` is the
+	 * token of the billing pass recording its own attempt.
+	 * @returns The updated cycle, or null when the stated claim is no longer the pass's and nothing was recorded.
 	 */
 	public async markFailed(
 		id: ID,
-		options: { attemptCount: number; error: string; nextRetryAt?: Date | null; orderId?: ID }
-	): Promise<SubscriptionBilling> {
-		await super.update(id, {
+		options: { attemptCount: number; error: string; nextRetryAt?: Date | null; orderId?: ID; chargeClaim?: string }
+	): Promise<SubscriptionBilling | null> {
+		const patch = {
 			status: SubscriptionBillingStatus.FAILED,
 			attemptCount: options.attemptCount,
 			lastError: options.error,
 			nextRetryAt: options.nextRetryAt ?? null,
 			orderId: options.orderId ?? undefined,
 			paidAt: null
-		} as any);
+		};
+
+		if (options.chargeClaim) {
+			const recorded = await this.writeIf(id, { chargeClaimToken: options.chargeClaim }, async () => null, {
+				...patch,
+				...NO_CHARGE_CLAIM
+			});
+
+			if (!recorded?.affected) {
+				return null;
+			}
+		} else {
+			await super.update(id, patch as any);
+		}
 
 		return await this.findOneScoped(id);
 	}
@@ -379,9 +592,14 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	/**
 	 * Records that a cycle was deliberately not charged.
 	 *
+	 * Refused while a billing pass is charging the cycle (`claimCharge`), as an operator's payment is: a waiver recorded
+	 * then forgave a period whose money was being taken. The condition rides in the statement, which also clears a stale
+	 * claim, so the waived cycle carries none.
+	 *
 	 * @param id The cycle.
 	 * @param options Why, and any note kept beside it.
 	 * @returns The updated cycle.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a pass is charging the cycle.
 	 */
 	public async markWaived(id: ID, options: { reason: string; note?: string } = { reason: '' }): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
@@ -390,10 +608,24 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			throw invalidTransition(billing, 'waived', WAIVABLE_FROM);
 		}
 
-		await this.writeIf(id, { status: In([...WAIVABLE_FROM]) }, async () => invalidTransition(await this.findOneScoped(id), 'waived', WAIVABLE_FROM), {
+		if (holdsLiveChargeClaim(billing)) {
+			throw chargeInFlight(billing, 'waived');
+		}
+
+		const refusal = async () => {
+			const current = await this.findOneScoped(id);
+
+			// Still waivable, so what refused the write was a pass's claim on the cycle.
+			return WAIVABLE_FROM.includes(current.status as SubscriptionBillingStatus)
+				? chargeInFlight(current, 'waived')
+				: invalidTransition(current, 'waived', WAIVABLE_FROM);
+		};
+
+		await this.writeIf(id, { status: In([...WAIVABLE_FROM]), ...noLiveChargeClaim() }, refusal, {
 			status: SubscriptionBillingStatus.WAIVED,
 			paidAt: null,
 			nextRetryAt: null,
+			...NO_CHARGE_CLAIM,
 			metadata: {
 				...(billing.metadata ?? {}),
 				waivedReason: options.reason,
@@ -434,7 +666,13 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		// for one the transaction may be holding (a pool of one never frees it).
 		const billing = await this.findOneScoped(id, manager);
 
-		if (billing.status !== SubscriptionBillingStatus.PENDING || billing.orderId || billing.attemptCount) {
+		// A cycle a pass is charging right now (`claimCharge`) is being billed for the period it covers, so it stays there.
+		if (
+			billing.status !== SubscriptionBillingStatus.PENDING ||
+			billing.orderId ||
+			billing.attemptCount ||
+			holdsLiveChargeClaim(billing)
+		) {
 			return billing;
 		}
 
@@ -443,7 +681,7 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		// charge put it, which is the answer for a cycle that records money billed.
 		await this.writeIf(
 			id,
-			{ status: SubscriptionBillingStatus.PENDING, orderId: IsNull(), attemptCount: 0 },
+			{ status: SubscriptionBillingStatus.PENDING, orderId: IsNull(), attemptCount: 0, ...noLiveChargeClaim() },
 			async () => null,
 			{ periodStart: period.start, periodEnd: period.end, dueAt: period.start },
 			this.cyclesOn(manager)
@@ -550,7 +788,8 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * @param criteria The cycle, or the conditions that select the cycles to remove.
 	 * @param options The inherited options, forwarded to the base class.
 	 * @returns The delete result, as the base class answers it.
-	 * @throws ConflictException with `SUBSCRIPTION_BILLING_NOT_DELETABLE` when a selected cycle records money billed.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_NOT_DELETABLE` when a selected cycle records money billed, or
+	 * with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a billing pass is charging one.
 	 */
 	public async delete(criteria: ID | FindOptionsWhere<SubscriptionBilling>, options?: any): Promise<DeleteResult> {
 		const where = typeof criteria === 'string' ? { id: criteria } : { ...(criteria ?? {}) };
@@ -558,6 +797,12 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			where: { ...where, ...currentScope() } as FindOptionsWhere<SubscriptionBilling>
 		});
 		const billed = cycles.find(recordsBilledMoney);
+		// A schedule entry a pass is charging right now (`claimCharge`) is about to record money billed.
+		const charging = cycles.find((cycle) => holdsLiveChargeClaim(cycle));
+
+		if (!billed && charging) {
+			throw chargeInFlight(charging, 'deleted');
+		}
 
 		if (billed) {
 			throw new ConflictException({
@@ -592,7 +837,8 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * @returns The update result, as the base class answers it.
 	 * @throws BadRequestException with `SUBSCRIPTION_BILLING_FIELD_NOT_WRITABLE` when the write would move a member
 	 * other than the amount, the due date or the metadata.
-	 * @throws ConflictException with `SUBSCRIPTION_BILLING_SETTLED` when the cycle already records money billed.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_SETTLED` when the cycle already records money billed, or with
+	 * `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a billing pass is charging it.
 	 */
 	public async update(id: any, partialEntity: any): Promise<any> {
 		if (typeof id !== 'string') {
@@ -631,18 +877,34 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			throw settled(billing);
 		}
 
+		// A pass charging the cycle right now (`claimCharge`) has priced it already: a corrected amount would describe a
+		// charge that was never made.
+		if (holdsLiveChargeClaim(billing)) {
+			throw chargeInFlight(billing, 'corrected');
+		}
+
 		let correction = writableOnly(patch, SUBSCRIPTION_BILLING_WRITABLE_MEMBERS);
 
 		if (correction['amount'] !== undefined) {
 			correction = { ...correction, amount: this.normalizeAmount(correction['amount'] as DecimalString, billing.currency) };
 		}
 
-		// The statement is conditional on the cycle still recording no money billed, so a charge that lands between the
-		// read above and this write is not corrected over.
+		// The statement is conditional on the cycle still recording no money billed and no pass charging it, so a charge
+		// that starts or lands between the read above and this write is not corrected over.
 		return this.writeIf(
 			id,
-			{ status: SubscriptionBillingStatus.PENDING, orderId: IsNull(), paidAt: IsNull(), attemptCount: 0 },
-			async () => settled(await this.findOneScoped(id)),
+			{
+				status: SubscriptionBillingStatus.PENDING,
+				orderId: IsNull(),
+				paidAt: IsNull(),
+				attemptCount: 0,
+				...noLiveChargeClaim()
+			},
+			async () => {
+				const current = await this.findOneScoped(id);
+
+				return recordsBilledMoney(current) ? settled(current) : chargeInFlight(current, 'corrected');
+			},
 			correction
 		);
 	}
