@@ -62,10 +62,11 @@ const NO_CHARGE_CLAIM = { chargeClaimToken: null, chargeClaimedAt: null } as con
  * The order path fences one attempt with its own idempotency claim on the attempt's key, and lets another caller of
  * that key take it over once the claim has been held for `IdempotencyService.DEFAULT_STALE_LOCK_MS`: by then it treats
  * the call as abandoned. The cycle's claim is taken a little earlier than the order path's — the payer, the discount
- * and the credit are read in between — so it lasts two of those windows. It therefore does not go stale while the order
- * path still fences the attempt, and a pass that recovers a stale claim calls the order path with the same attempt key
- * (`SubscriptionService.executeCycle`): the order path answers with the order the earlier call raised, refuses with
- * `ORDER_SUBSCRIPTION_IN_FLIGHT` while that call is still working, or runs the attempt the earlier call abandoned.
+ * and the credit are read in between — so it lasts two of those windows: it does not go stale while the order path
+ * still fences the attempt unless those reads alone took a whole window. A pass that recovers a stale claim calls the
+ * order path with the same attempt key (`SubscriptionService.executeCycle`): the order path answers with the order the
+ * earlier call raised, refuses with `ORDER_SUBSCRIPTION_IN_FLIGHT` while that call is still working, or runs the
+ * attempt the earlier call abandoned.
  */
 const CHARGE_CLAIM_FENCES = 2;
 
@@ -86,7 +87,7 @@ export function chargeClaimWindowMs(): number {
  * @param now The instant to judge the claim at.
  * @returns True while the claim is live.
  */
-export function holdsLiveChargeClaim(
+function holdsLiveChargeClaim(
 	billing: Pick<SubscriptionBilling, 'chargeClaimToken' | 'chargeClaimedAt'>,
 	now: Date = new Date()
 ): boolean {
