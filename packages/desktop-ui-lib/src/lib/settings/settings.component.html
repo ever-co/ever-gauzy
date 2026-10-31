@@ -277,31 +277,6 @@
 					</nb-card>
 				</div>
 			</div>
-			@if (!isAgent) {
-				<div class="row">
-					<div class="col-12">
-						<p>
-							{{ 'TIMER_TRACKER.SETTINGS.TIMER_SOUNDS' | translate }}
-						</p>
-					</div>
-				</div>
-				<div class="row notification">
-					<div class="col-10">
-						<nb-card>
-							<nb-card-body>
-								<nb-toggle
-									[checked]="appSetting?.timerStartStopSound === true"
-									(checkedChange)="toggleTimerStartStopSound($event)"
-									status="basic"
-								>
-									{{ 'TIMER_TRACKER.SETTINGS.TIMER_START_STOP_SOUND' | translate }}
-								</nb-toggle>
-								<small>{{ 'TIMER_TRACKER.SETTINGS.TIMER_START_STOP_SOUND_HINT' | translate }}</small>
-							</nb-card-body>
-						</nb-card>
-					</div>
-				</div>
-			}
 		}
 		@if ((selectedMenu$ | async) === 'TIMER_TRACKER.TIMER') {
 			<div class="row titlebar-space">
@@ -358,6 +333,31 @@
 					</nb-card>
 				</div>
 			</div>
+			@if (!isAgent) {
+				<div class="row">
+					<div class="col-12">
+						<h6>
+							{{ 'TIMER_TRACKER.SETTINGS.TIMER_SOUNDS' | translate }}
+						</h6>
+					</div>
+				</div>
+				<div class="row notification">
+					<div class="col-10">
+						<nb-card>
+							<nb-card-body>
+								<nb-toggle
+									[checked]="appSetting?.timerStartStopSound === true"
+									(checkedChange)="toggleTimerStartStopSound($event)"
+									status="basic"
+								>
+									{{ 'TIMER_TRACKER.SETTINGS.TIMER_START_STOP_SOUND' | translate }}
+								</nb-toggle>
+								<small>{{ 'TIMER_TRACKER.SETTINGS.TIMER_START_STOP_SOUND_HINT' | translate }}</small>
+							</nb-card-body>
+						</nb-card>
+					</div>
+				</div>
+			}
 			<div class="row">
 				<div class="col-12">
 					<h6>
