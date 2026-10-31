@@ -44,7 +44,11 @@ export const createMySqlAdminConnection: MySqlAdminConnectionFactory = async (co
 const MYSQL_DEFAULT_PORT = 3306;
 
 /** The access-denied errors (`ER_DBACCESS_DENIED_ERROR`, `ER_ACCESS_DENIED_ERROR`, `ER_SPECIFIC_ACCESS_DENIED_ERROR`). */
-const MYSQL_ACCESS_DENIED = new Set(['ER_DBACCESS_DENIED_ERROR', 'ER_ACCESS_DENIED_ERROR', 'ER_SPECIFIC_ACCESS_DENIED_ERROR']);
+const MYSQL_ACCESS_DENIED = new Set([
+	'ER_DBACCESS_DENIED_ERROR',
+	'ER_ACCESS_DENIED_ERROR',
+	'ER_SPECIFIC_ACCESS_DENIED_ERROR'
+]);
 const MYSQL_ACCESS_DENIED_ERRNOS = new Set([1044, 1045, 1227]);
 
 export interface MySqlDatabaseProvisionerOptions {
@@ -120,7 +124,10 @@ export class MySqlDatabaseProvisioner implements DatabaseProvisioner {
 		}
 	}
 
-	private async create(connection: MySqlAdminConnection, target: DatabaseProvisionTarget): Promise<DatabaseProvisionOutcome> {
+	private async create(
+		connection: MySqlAdminConnection,
+		target: DatabaseProvisionTarget
+	): Promise<DatabaseProvisionOutcome> {
 		const database = quoteMySqlIdentifier(target.database);
 		try {
 			// IF NOT EXISTS: another replica (or a person) may have created it since the lookup.

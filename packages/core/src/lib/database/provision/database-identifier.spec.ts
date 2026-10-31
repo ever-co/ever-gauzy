@@ -34,7 +34,9 @@ describe('assertValidDatabaseName', () => {
 
 	it('accepts ordinary names, including ones that need quoting', () => {
 		expect(() => assertValidDatabaseName('gauzy', { maxBytes: POSTGRES_MAX_DATABASE_NAME_BYTES })).not.toThrow();
-		expect(() => assertValidDatabaseName('Gauzy Dev-1', { maxLength: MYSQL_MAX_DATABASE_NAME_LENGTH })).not.toThrow();
+		expect(() =>
+			assertValidDatabaseName('Gauzy Dev-1', { maxLength: MYSQL_MAX_DATABASE_NAME_LENGTH })
+		).not.toThrow();
 	});
 
 	it('refuses an empty name and a NUL byte as a configuration error', () => {

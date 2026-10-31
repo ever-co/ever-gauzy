@@ -42,7 +42,9 @@ export type DatabaseProvisionerRegistry = Readonly<Partial<Record<string, Databa
  */
 export function createDatabaseProvisioners(env: NodeJS.ProcessEnv = process.env): DatabaseProvisionerRegistry {
 	return {
-		[DatabaseTypeEnum.postgres]: new PostgresDatabaseProvisioner({ maintenanceDatabase: env.DB_CREATE_MAINTENANCE_DB }),
+		[DatabaseTypeEnum.postgres]: new PostgresDatabaseProvisioner({
+			maintenanceDatabase: env.DB_CREATE_MAINTENANCE_DB
+		}),
 		[DatabaseTypeEnum.mysql]: new MySqlDatabaseProvisioner()
 	};
 }

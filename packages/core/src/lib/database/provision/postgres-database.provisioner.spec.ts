@@ -83,7 +83,11 @@ describe('PostgresDatabaseProvisioner', () => {
 			maintenanceDatabase: ' template1 ',
 			createClient: (config) => {
 				configs.push(config);
-				return { connect: async () => undefined, query: async () => ({ rows: [1] }), end: async () => undefined };
+				return {
+					connect: async () => undefined,
+					query: async () => ({ rows: [1] }),
+					end: async () => undefined
+				};
 			}
 		});
 

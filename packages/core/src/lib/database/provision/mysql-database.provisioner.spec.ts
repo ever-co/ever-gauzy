@@ -1,5 +1,9 @@
 import { DatabaseProvisionError, DatabaseProvisionTarget } from './database-provisioner';
-import { MySqlAdminConnection, MySqlAdminConnectionConfig, MySqlDatabaseProvisioner } from './mysql-database.provisioner';
+import {
+	MySqlAdminConnection,
+	MySqlAdminConnectionConfig,
+	MySqlDatabaseProvisioner
+} from './mysql-database.provisioner';
 
 /** A `mysql2` error: a message, a symbolic code and an errno. */
 function mysqlError(code: string, errno: number, message: string): Error & { code: string; errno: number } {

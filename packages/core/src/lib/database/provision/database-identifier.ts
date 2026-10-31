@@ -29,7 +29,10 @@ export function assertValidDatabaseName(name: string, limit: { maxBytes?: number
 		throw new DatabaseProvisionError('DB_NAME is empty: there is no database to create.', 'config');
 	}
 	if (name.includes('\0')) {
-		throw new DatabaseProvisionError('DB_NAME contains a NUL character, which no database name may contain.', 'config');
+		throw new DatabaseProvisionError(
+			'DB_NAME contains a NUL character, which no database name may contain.',
+			'config'
+		);
 	}
 	if (limit.maxBytes !== undefined && Buffer.byteLength(name, 'utf8') > limit.maxBytes) {
 		throw new DatabaseProvisionError(

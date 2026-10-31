@@ -1,4 +1,8 @@
-import { assertValidDatabaseName, POSTGRES_MAX_DATABASE_NAME_BYTES, quotePostgresIdentifier } from './database-identifier';
+import {
+	assertValidDatabaseName,
+	POSTGRES_MAX_DATABASE_NAME_BYTES,
+	quotePostgresIdentifier
+} from './database-identifier';
 import {
 	DatabaseProvisioner,
 	DatabaseProvisionError,
@@ -137,7 +141,10 @@ export class PostgresDatabaseProvisioner implements DatabaseProvisioner {
 		}
 	}
 
-	private async create(client: PostgresAdminClient, target: DatabaseProvisionTarget): Promise<DatabaseProvisionOutcome> {
+	private async create(
+		client: PostgresAdminClient,
+		target: DatabaseProvisionTarget
+	): Promise<DatabaseProvisionOutcome> {
 		try {
 			await client.query(`CREATE DATABASE ${quotePostgresIdentifier(target.database)}`);
 			return 'created';

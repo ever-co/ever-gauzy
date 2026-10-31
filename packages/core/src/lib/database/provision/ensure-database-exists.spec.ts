@@ -21,7 +21,7 @@ const postgresOptions: DatabaseConnectionOptionsLike = {
 };
 
 function provisionerReturning(result: Promise<'exists' | 'created'>) {
-	const ensureDatabase = jest.fn((_target: DatabaseProvisionTarget) => result);
+	const ensureDatabase = jest.fn<Promise<'exists' | 'created'>, [DatabaseProvisionTarget]>(() => result);
 	const provisioner: DatabaseProvisioner = { ensureDatabase };
 	return { provisioner, ensureDatabase };
 }
@@ -129,23 +129,20 @@ describe('ensureDatabaseExists', () => {
 		expect(logger.log).toHaveBeenCalledWith('DB_CREATE_IF_NOT_EXISTS: database "gauzy" exists.');
 	});
 
-	it.each(['connect', 'check'] as const)(
-		'warns and lets startup continue when the %s step fails',
-		async (stage) => {
-			const { provisioner } = provisionerReturning(
-				Promise.reject(new DatabaseProvisionError('could not connect: ECONNREFUSED', stage))
-			);
-			const logger = fakeLogger();
+	it.each(['connect', 'check'] as const)('warns and lets startup continue when the %s step fails', async (stage) => {
+		const { provisioner } = provisionerReturning(
+			Promise.reject(new DatabaseProvisionError('could not connect: ECONNREFUSED', stage))
+		);
+		const logger = fakeLogger();
 
-			await expect(
-				ensureDatabaseExists(postgresOptions, { env: enabled, logger, provisioners: { postgres: provisioner } })
-			).resolves.toBe('unverified');
+		await expect(
+			ensureDatabaseExists(postgresOptions, { env: enabled, logger, provisioners: { postgres: provisioner } })
+		).resolves.toBe('unverified');
 
-			expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('could not connect: ECONNREFUSED'));
-			expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Startup continues'));
-			expect(logger.warn).not.toHaveBeenCalledWith(expect.stringContaining('not-logged'));
-		}
-	);
+		expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('could not connect: ECONNREFUSED'));
+		expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Startup continues'));
+		expect(logger.warn).not.toHaveBeenCalledWith(expect.stringContaining('not-logged'));
+	});
 
 	it('warns rather than stopping startup on an unexpected error', async () => {
 		const { provisioner } = provisionerReturning(Promise.reject(new TypeError('boom')));
@@ -156,21 +153,24 @@ describe('ensureDatabaseExists', () => {
 		).resolves.toBe('unverified');
 	});
 
-	it.each(['create', 'config'] as const)('stops startup with a clear message when the %s step fails', async (stage) => {
-		const { provisioner } = provisionerReturning(
-			Promise.reject(new DatabaseProvisionError('role "gauzy_app" needs the CREATEDB privilege', stage))
-		);
+	it.each(['create', 'config'] as const)(
+		'stops startup with a clear message when the %s step fails',
+		async (stage) => {
+			const { provisioner } = provisionerReturning(
+				Promise.reject(new DatabaseProvisionError('role "gauzy_app" needs the CREATEDB privilege', stage))
+			);
 
-		const error = await ensureDatabaseExists(postgresOptions, {
-			env: enabled,
-			logger: fakeLogger(),
-			provisioners: { postgres: provisioner }
-		}).catch((caught) => caught);
+			const error = await ensureDatabaseExists(postgresOptions, {
+				env: enabled,
+				logger: fakeLogger(),
+				provisioners: { postgres: provisioner }
+			}).catch((caught) => caught);
 
-		expect(error).toBeInstanceOf(DatabaseProvisionError);
-		expect(error.stage).toBe(stage);
-		expect(error.message).toBe('DB_CREATE_IF_NOT_EXISTS: role "gauzy_app" needs the CREATEDB privilege');
-	});
+			expect(error).toBeInstanceOf(DatabaseProvisionError);
+			expect(error.stage).toBe(stage);
+			expect(error.message).toBe('DB_CREATE_IF_NOT_EXISTS: role "gauzy_app" needs the CREATEDB privilege');
+		}
+	);
 
 	it('creates a missing PostgreSQL database end to end through the built-in provisioner', async () => {
 		const statements: string[] = [];
