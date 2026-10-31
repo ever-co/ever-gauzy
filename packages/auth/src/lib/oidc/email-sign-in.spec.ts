@@ -4,6 +4,7 @@ import { FakeOidcHttp, TestSigningKey, generateSigningKey, publishIssuer, random
 import { OidcClientService } from './oidc-client.service';
 import { OidcDiscoveryService } from './oidc-discovery.service';
 import { OidcEmailSignInFlow, OidcEmailSignInService } from './oidc-email-sign-in.service';
+import { OidcHttpService } from './oidc-http.service';
 import { OidcJwksService } from './oidc-jwks.service';
 import { OidcCookieRequest, OidcCookieResponse, OidcTransactionService } from './oidc-transaction.service';
 
@@ -75,8 +76,9 @@ describe('OidcEmailSignInService (sign-in by verified e-mail on the shared libra
 			status: 200,
 			data: { id_token: await signTestToken(key, { nonce: lastNonce, ...nextClaims }), access_token: 'access', token_type: 'Bearer' }
 		}));
-		const discovery = new OidcDiscoveryService(http as any);
-		const client = new OidcClientService(discovery, new OidcJwksService(discovery, http as any), http as any);
+		const transport = http as unknown as OidcHttpService;
+		const discovery = new OidcDiscoveryService(transport);
+		const client = new OidcClientService(discovery, new OidcJwksService(discovery, transport), transport);
 		service = new OidcEmailSignInService(new OidcTransactionService({ transactionSecret: randomTestSecret() }), client);
 		browser = new Browser();
 		warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);

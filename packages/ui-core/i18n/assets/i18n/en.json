@@ -7139,6 +7139,7 @@
 		"SIGN_IN_WITH_EVER_ID": "Sign in with Ever ID",
 		"LOGIN_WITH_EVER_ID": "Login with {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Sign in with Keycloak",
+		"SIGN_IN_WITH_SSO": "Sign in with {{ name }}",
 		"FORGOT_EMAIL_TITLE": "Forgot Email?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Log in with a magic code.",

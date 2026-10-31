@@ -6468,6 +6468,7 @@
 		"SIGN_IN_WITH_EVER_ID": "Iniciar sesión con Ever ID",
 		"LOGIN_WITH_EVER_ID": "Iniciar sesión con {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Iniciar sesión con Keycloak",
+		"SIGN_IN_WITH_SSO": "Iniciar sesión con {{ name }}",
 		"FORGOT_EMAIL_TITLE": "¿Olvidó su correo electrónico?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Iniciar sesión con un código mágico",

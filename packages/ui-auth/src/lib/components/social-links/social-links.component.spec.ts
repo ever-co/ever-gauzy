@@ -5,14 +5,14 @@ import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { environment } from '@gauzy/ui-config';
 import { AppService } from '@gauzy/ui-core/core';
-import { ISignInProvider, SocialLinksComponent, configuredSignInLink } from './social-links.component';
+import { ISignInProvider, SocialLinksComponent, configuredSignInLink, signInDisplayName } from './social-links.component';
 import { EverIdLoginLabelComponent, everIdLoginLabelParts } from './ever-id-login-label.component';
 
 describe('SocialLinksComponent', () => {
 	let component: SocialLinksComponent;
 	let fixture: ComponentFixture<SocialLinksComponent>;
 	let http: HttpTestingController;
-	const saved = { zitadel: environment.ZITADEL_AUTH_LINK, keycloak: environment.KEYCLOAK_AUTH_LINK };
+	const saved = { zitadel: environment.ZITADEL_AUTH_LINK, keycloak: environment.KEYCLOAK_AUTH_LINK, oidc: environment.OIDC_AUTH_LINK };
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
@@ -26,6 +26,7 @@ describe('SocialLinksComponent', () => {
 	afterEach(() => {
 		environment.ZITADEL_AUTH_LINK = saved.zitadel;
 		environment.KEYCLOAK_AUTH_LINK = saved.keycloak;
+		environment.OIDC_AUTH_LINK = saved.oidc;
 	});
 
 	function create(): ISignInProvider[] {
@@ -40,6 +41,7 @@ describe('SocialLinksComponent', () => {
 	it('should create', () => {
 		environment.ZITADEL_AUTH_LINK = '';
 		environment.KEYCLOAK_AUTH_LINK = '';
+		environment.OIDC_AUTH_LINK = '';
 		create();
 		expect(component).toBeTruthy();
 	});
@@ -47,6 +49,7 @@ describe('SocialLinksComponent', () => {
 	it('shows no sign-in plugin button and makes no request while no link is configured', () => {
 		environment.ZITADEL_AUTH_LINK = '';
 		environment.KEYCLOAK_AUTH_LINK = '';
+		environment.OIDC_AUTH_LINK = '';
 		const providers = create();
 		expect(providers).toEqual([]);
 		http.expectNone(() => true);
@@ -56,6 +59,7 @@ describe('SocialLinksComponent', () => {
 	it('shows Ever ID first and prominent when its link is set and the API reports it enabled', () => {
 		environment.ZITADEL_AUTH_LINK = 'http://localhost:3000/api/auth/zitadel';
 		environment.KEYCLOAK_AUTH_LINK = 'http://localhost:3000/api/auth/keycloak';
+		environment.OIDC_AUTH_LINK = '';
 		let providers: ISignInProvider[] = [];
 		fixture = TestBed.createComponent(SocialLinksComponent);
 		component = fixture.componentInstance;
@@ -75,6 +79,7 @@ describe('SocialLinksComponent', () => {
 	it('hides a button whose plugin is off on the API (404)', () => {
 		environment.ZITADEL_AUTH_LINK = 'http://localhost:3000/api/auth/zitadel';
 		environment.KEYCLOAK_AUTH_LINK = '';
+		environment.OIDC_AUTH_LINK = '';
 		let providers: ISignInProvider[] = [{} as ISignInProvider];
 		fixture = TestBed.createComponent(SocialLinksComponent);
 		component = fixture.componentInstance;
@@ -82,6 +87,75 @@ describe('SocialLinksComponent', () => {
 		component.signInProviders$.subscribe((value) => (providers = value));
 		http.expectOne((request) => request.url.endsWith('/auth/zitadel/config')).flush({}, { status: 404, statusText: 'Not Found' });
 		expect(providers).toEqual([]);
+	});
+
+	it('shows "Sign in with <provider>" for OpenID Connect, after Ever ID and Keycloak, with the name the API reports', () => {
+		environment.ZITADEL_AUTH_LINK = 'http://localhost:3000/api/auth/zitadel';
+		environment.KEYCLOAK_AUTH_LINK = 'http://localhost:3000/api/auth/keycloak';
+		environment.OIDC_AUTH_LINK = 'http://localhost:3000/api/auth/oidc';
+		let providers: ISignInProvider[] = [];
+		fixture = TestBed.createComponent(SocialLinksComponent);
+		component = fixture.componentInstance;
+		component.ngOnInit();
+		component.signInProviders$.subscribe((value) => (providers = value));
+
+		http.expectOne((request) => request.url.endsWith('/auth/zitadel/config')).flush({ enabled: true });
+		http.expectOne((request) => request.url.endsWith('/auth/keycloak/config')).flush({ enabled: true });
+		http.expectOne((request) => request.url.endsWith('/auth/oidc/config')).flush({ enabled: true, displayName: 'Acme ID' });
+
+		expect(providers.map((provider) => provider.id)).toEqual(['ever-id', 'keycloak', 'oidc']);
+		expect(providers[2]).toEqual({
+			id: 'oidc',
+			url: 'http://localhost:3000/api/auth/oidc',
+			titleKey: 'LOGIN_PAGE.SIGN_IN_WITH_SSO',
+			titleParams: { name: 'Acme ID' },
+			prominent: false
+		});
+		expect(providers[1].titleParams).toBeUndefined();
+	});
+
+	it('hides the OpenID Connect button while the API reports the plugin off', () => {
+		environment.ZITADEL_AUTH_LINK = '';
+		environment.KEYCLOAK_AUTH_LINK = '';
+		environment.OIDC_AUTH_LINK = 'http://localhost:3000/api/auth/oidc';
+		let providers: ISignInProvider[] = [{} as ISignInProvider];
+		fixture = TestBed.createComponent(SocialLinksComponent);
+		component = fixture.componentInstance;
+		component.ngOnInit();
+		component.signInProviders$.subscribe((value) => (providers = value));
+
+		http.expectOne((request) => request.url.endsWith('/auth/oidc/config')).flush({ enabled: false, reason: 'unconfigured' });
+
+		expect(providers).toEqual([]);
+	});
+
+	it('renders the OpenID Connect button with its translated, named label and its link', () => {
+		environment.ZITADEL_AUTH_LINK = '';
+		environment.KEYCLOAK_AUTH_LINK = '';
+		environment.OIDC_AUTH_LINK = 'http://localhost:3000/api/auth/oidc';
+		const translate = TestBed.inject(TranslateService);
+		translate.setTranslation('en', { LOGIN_PAGE: { SIGN_IN_WITH_SSO: 'Sign in with {{ name }}' } });
+		translate.use('en');
+		fixture = TestBed.createComponent(SocialLinksComponent);
+		fixture.detectChanges();
+
+		http.expectOne((request) => request.url.endsWith('/auth/oidc/config')).flush({ enabled: true, displayName: '<b>Acme</b>' });
+		fixture.detectChanges();
+
+		const button = (fixture.nativeElement as HTMLElement).querySelector('a[data-provider="oidc"]');
+		expect(button?.getAttribute('href')).toBe('http://localhost:3000/api/auth/oidc');
+		// The name is text, never markup.
+		expect(button?.textContent?.trim()).toBe('Sign in with <b>Acme</b>');
+		expect(button?.querySelector('b')).toBeNull();
+	});
+
+	it('shows "SSO" when the API reports no usable provider name', () => {
+		expect(signInDisplayName(undefined)).toBe('SSO');
+		expect(signInDisplayName(42)).toBe('SSO');
+		expect(signInDisplayName('   ')).toBe('SSO');
+		expect(signInDisplayName('x'.repeat(41))).toBe('SSO');
+		expect(signInDisplayName('Acme\nID')).toBe('SSO');
+		expect(signInDisplayName(' Acme ID ')).toBe('Acme ID');
 	});
 
 	it('treats an unreplaced Docker placeholder as not configured', () => {

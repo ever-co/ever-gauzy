@@ -6466,6 +6466,7 @@
 		"SIGN_IN_WITH_EVER_ID": "Inloggen met Ever ID",
 		"LOGIN_WITH_EVER_ID": "Inloggen met {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Inloggen met Keycloak",
+		"SIGN_IN_WITH_SSO": "Inloggen met {{ name }}",
 		"FORGOT_EMAIL_TITLE": "E-mail vergeten?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Inloggen met een magische code",
