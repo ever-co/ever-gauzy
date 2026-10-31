@@ -1166,7 +1166,8 @@
 		"DOCUMENTS": "Documentos",
 		"BILLING": "Facturación",
 		"MONITORING": "Supervisión",
-		"ADD_ITEM": "Agregar {{ name }}"
+		"ADD_ITEM": "Agregar {{ name }}",
+		"WHATS_NEW": "Novedades"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1267,7 +1268,48 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "¿Qué hay de nuevo?",
 		"LEARN_MORE_URL": "Aprende más.",
-		"GAUZY_FEATURES": "Características difuminadas"
+		"GAUZY_FEATURES": "Características difuminadas",
+		"MANAGE": {
+			"TITLE": "Novedades",
+			"SUBTITLE": "Las entradas del panel de novedades y las tarjetas de funciones de la página de registro. Las comparten todos los inquilinos de esta instalación, por lo que solo su operador puede cambiarlas.",
+			"WHATS_NEW": "Panel de novedades",
+			"WHATS_NEW_HINT": "Se muestran en el panel de novedades y en la página de inicio de sesión, las más recientes primero.",
+			"FEATURES": "Funciones de la página de registro",
+			"FEATURES_HINT": "Se muestran como tarjetas junto al formulario de registro.",
+			"ADD": "Añadir entrada",
+			"ADD_TITLE": "Añadir una novedad",
+			"EDIT_TITLE": "Editar la novedad",
+			"EMPTY": "Aún no hay entradas.",
+			"LOAD_FAILED": "No se pudieron cargar las entradas.",
+			"DELETED": "Eliminadas",
+			"DELETED_HINT": "Entradas eliminadas mientras esta página está abierta. Restaurar devuelve una.",
+			"COLUMNS": {
+				"DATE": "Fecha",
+				"ENTRY": "Entrada",
+				"ACTIONS": "Acciones"
+			},
+			"FIELDS": {
+				"TITLE": "Título",
+				"DATE": "Fecha",
+				"ICON": "Icono",
+				"ICON_HINT": "Un nombre de icono Eva, por ejemplo star-outline.",
+				"CONTENT": "Texto",
+				"CONTENT_HINT": "Hasta {{ max }} caracteres.",
+				"LEARN_MORE_URL": "Enlace «Más información»",
+				"IMAGE_URL": "Enlace de la imagen",
+				"IS_FEATURE": "Función de la página de registro",
+				"IS_FEATURE_HINT": "Mostrar esta entrada como tarjeta junto al formulario de registro en lugar de en el panel de novedades."
+			},
+			"ERRORS": {
+				"REQUIRED": "Obligatorio.",
+				"HTTP_URL": "Introduce una dirección completa que empiece por http:// o https://."
+			},
+			"PREVIEW": "Vista previa",
+			"SAVED_MESSAGE": "Entrada guardada.",
+			"DELETED_MESSAGE": "Entrada eliminada.",
+			"RESTORED_MESSAGE": "Entrada restaurada.",
+			"FORBIDDEN": "Solo el operador de la instalación puede cambiar las novedades."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Miembros trabajaron",

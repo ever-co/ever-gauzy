@@ -1165,7 +1165,8 @@
 		"DOCUMENTS": "Documents",
 		"BILLING": "Facturation",
 		"MONITORING": "Surveillance",
-		"ADD_ITEM": "Ajouter {{ name }}"
+		"ADD_ITEM": "Ajouter {{ name }}",
+		"WHATS_NEW": "Nouveautés"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1266,7 +1267,48 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "Quoi de neuf?",
 		"LEARN_MORE_URL": "En savoir plus",
-		"GAUZY_FEATURES": "Caractéristiques vaporeuses"
+		"GAUZY_FEATURES": "Caractéristiques vaporeuses",
+		"MANAGE": {
+			"TITLE": "Nouveautés",
+			"SUBTITLE": "Les entrées du panneau Nouveautés et les cartes de fonctionnalités de la page d'inscription. Elles sont partagées par tous les locataires de cette installation : seul son opérateur peut les modifier.",
+			"WHATS_NEW": "Panneau Nouveautés",
+			"WHATS_NEW_HINT": "Affichées dans le panneau Nouveautés et sur la page de connexion, les plus récentes en premier.",
+			"FEATURES": "Fonctionnalités de la page d'inscription",
+			"FEATURES_HINT": "Affichées sous forme de cartes à côté du formulaire d'inscription.",
+			"ADD": "Ajouter une entrée",
+			"ADD_TITLE": "Ajouter une nouveauté",
+			"EDIT_TITLE": "Modifier la nouveauté",
+			"EMPTY": "Aucune entrée pour le moment.",
+			"LOAD_FAILED": "Les entrées n'ont pas pu être chargées.",
+			"DELETED": "Supprimées",
+			"DELETED_HINT": "Entrées supprimées pendant que cette page est ouverte. Restaurer en remet une en place.",
+			"COLUMNS": {
+				"DATE": "Date",
+				"ENTRY": "Entrée",
+				"ACTIONS": "Actions"
+			},
+			"FIELDS": {
+				"TITLE": "Titre",
+				"DATE": "Date",
+				"ICON": "Icône",
+				"ICON_HINT": "Un nom d'icône Eva, par exemple star-outline.",
+				"CONTENT": "Texte",
+				"CONTENT_HINT": "Jusqu'à {{ max }} caractères.",
+				"LEARN_MORE_URL": "Lien « En savoir plus »",
+				"IMAGE_URL": "Lien de l'image",
+				"IS_FEATURE": "Fonctionnalité de la page d'inscription",
+				"IS_FEATURE_HINT": "Afficher cette entrée sous forme de carte à côté du formulaire d'inscription au lieu du panneau Nouveautés."
+			},
+			"ERRORS": {
+				"REQUIRED": "Obligatoire.",
+				"HTTP_URL": "Saisissez une adresse complète commençant par http:// ou https://."
+			},
+			"PREVIEW": "Aperçu",
+			"SAVED_MESSAGE": "Entrée enregistrée.",
+			"DELETED_MESSAGE": "Entrée supprimée.",
+			"RESTORED_MESSAGE": "Entrée restaurée.",
+			"FORBIDDEN": "Seul l'opérateur de l'installation peut modifier les nouveautés."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Membres ont travaillé",

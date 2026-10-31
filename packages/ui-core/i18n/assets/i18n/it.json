@@ -1164,7 +1164,8 @@
 		"DOCUMENTS": "Documenti",
 		"BILLING": "Fatturazione",
 		"MONITORING": "Monitoraggio",
-		"ADD_ITEM": "Aggiungi {{ name }}"
+		"ADD_ITEM": "Aggiungi {{ name }}",
+		"WHATS_NEW": "Novità"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1265,7 +1266,48 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "Cosa c'è di nuovo?",
 		"LEARN_MORE_URL": "Scopri di più",
-		"GAUZY_FEATURES": "Caratteristiche di Gauzy"
+		"GAUZY_FEATURES": "Caratteristiche di Gauzy",
+		"MANAGE": {
+			"TITLE": "Novità",
+			"SUBTITLE": "Le voci del pannello Novità e le schede delle funzionalità della pagina di registrazione. Sono condivise da tutti i tenant di questa installazione, quindi solo il suo operatore può modificarle.",
+			"WHATS_NEW": "Pannello Novità",
+			"WHATS_NEW_HINT": "Mostrate nel pannello Novità e nella pagina di accesso, le più recenti per prime.",
+			"FEATURES": "Funzionalità della pagina di registrazione",
+			"FEATURES_HINT": "Mostrate come schede accanto al modulo di registrazione.",
+			"ADD": "Aggiungi voce",
+			"ADD_TITLE": "Aggiungi una novità",
+			"EDIT_TITLE": "Modifica la novità",
+			"EMPTY": "Ancora nessuna voce.",
+			"LOAD_FAILED": "Impossibile caricare le voci.",
+			"DELETED": "Eliminate",
+			"DELETED_HINT": "Voci eliminate mentre questa pagina è aperta. Ripristina ne rimette una al suo posto.",
+			"COLUMNS": {
+				"DATE": "Data",
+				"ENTRY": "Voce",
+				"ACTIONS": "Azioni"
+			},
+			"FIELDS": {
+				"TITLE": "Titolo",
+				"DATE": "Data",
+				"ICON": "Icona",
+				"ICON_HINT": "Il nome di un'icona Eva, ad esempio star-outline.",
+				"CONTENT": "Testo",
+				"CONTENT_HINT": "Fino a {{ max }} caratteri.",
+				"LEARN_MORE_URL": "Link «Scopri di più»",
+				"IMAGE_URL": "Link dell'immagine",
+				"IS_FEATURE": "Funzionalità della pagina di registrazione",
+				"IS_FEATURE_HINT": "Mostra questa voce come scheda accanto al modulo di registrazione invece che nel pannello Novità."
+			},
+			"ERRORS": {
+				"REQUIRED": "Obbligatorio.",
+				"HTTP_URL": "Inserisci un indirizzo completo che inizi con http:// o https://."
+			},
+			"PREVIEW": "Anteprima",
+			"SAVED_MESSAGE": "Voce salvata.",
+			"DELETED_MESSAGE": "Voce eliminata.",
+			"RESTORED_MESSAGE": "Voce ripristinata.",
+			"FORBIDDEN": "Solo l'operatore dell'installazione può modificare le novità."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Membri che hanno lavorato",

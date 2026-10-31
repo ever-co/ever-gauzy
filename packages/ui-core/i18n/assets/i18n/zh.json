@@ -1164,7 +1164,8 @@
 		"DOCUMENTS": "文件",
 		"BILLING": "计费",
 		"MONITORING": "监控",
-		"ADD_ITEM": "添加{{ name }}"
+		"ADD_ITEM": "添加{{ name }}",
+		"WHATS_NEW": "新功能"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1265,7 +1266,48 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "有什么新的吗？",
 		"LEARN_MORE_URL": "了解更多",
-		"GAUZY_FEATURES": "薄厚特徵"
+		"GAUZY_FEATURES": "薄厚特徵",
+		"MANAGE": {
+			"TITLE": "新功能",
+			"SUBTITLE": "“新功能”面板的条目和注册页面的功能卡片。它们由本安装的所有租户共享，因此只有安装的运营者可以更改。",
+			"WHATS_NEW": "“新功能”面板",
+			"WHATS_NEW_HINT": "显示在“新功能”面板和登录页面上，最新的在前。",
+			"FEATURES": "注册页面功能",
+			"FEATURES_HINT": "以卡片形式显示在注册表单旁边。",
+			"ADD": "添加条目",
+			"ADD_TITLE": "添加“新功能”条目",
+			"EDIT_TITLE": "编辑“新功能”条目",
+			"EMPTY": "暂无条目。",
+			"LOAD_FAILED": "无法加载条目。",
+			"DELETED": "已删除",
+			"DELETED_HINT": "在此页面打开期间删除的条目。点击“恢复”可将其放回。",
+			"COLUMNS": {
+				"DATE": "日期",
+				"ENTRY": "条目",
+				"ACTIONS": "操作"
+			},
+			"FIELDS": {
+				"TITLE": "标题",
+				"DATE": "日期",
+				"ICON": "图标",
+				"ICON_HINT": "Eva 图标名称，例如 star-outline。",
+				"CONTENT": "文本",
+				"CONTENT_HINT": "最多 {{ max }} 个字符。",
+				"LEARN_MORE_URL": "“了解更多”链接",
+				"IMAGE_URL": "图片链接",
+				"IS_FEATURE": "注册页面功能",
+				"IS_FEATURE_HINT": "将此条目作为卡片显示在注册表单旁边，而不是显示在“新功能”面板中。"
+			},
+			"ERRORS": {
+				"REQUIRED": "必填。",
+				"HTTP_URL": "请输入以 http:// 或 https:// 开头的完整地址。"
+			},
+			"PREVIEW": "预览",
+			"SAVED_MESSAGE": "条目已保存。",
+			"DELETED_MESSAGE": "条目已删除。",
+			"RESTORED_MESSAGE": "条目已恢复。",
+			"FORBIDDEN": "只有安装的运营者可以更改“新功能”条目。"
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "成员工作",

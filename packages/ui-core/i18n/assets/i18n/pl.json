@@ -1163,7 +1163,8 @@
 		"DOCUMENTS": "Dokumenty",
 		"BILLING": "Fakturacja",
 		"MONITORING": "Monitorowanie",
-		"ADD_ITEM": "Dodaj {{ name }}"
+		"ADD_ITEM": "Dodaj {{ name }}",
+		"WHATS_NEW": "Co nowego"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1264,7 +1265,48 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "Co nowego?",
 		"LEARN_MORE_URL": "Dowiedz się więcej",
-		"GAUZY_FEATURES": "Funkcje Gauzy"
+		"GAUZY_FEATURES": "Funkcje Gauzy",
+		"MANAGE": {
+			"TITLE": "Co nowego",
+			"SUBTITLE": "Wpisy panelu „Co nowego” i karty funkcji strony rejestracji. Są wspólne dla wszystkich dzierżawców tej instalacji, więc zmieniać je może tylko jej operator.",
+			"WHATS_NEW": "Panel „Co nowego”",
+			"WHATS_NEW_HINT": "Wyświetlane w panelu „Co nowego” i na stronie logowania, od najnowszych.",
+			"FEATURES": "Funkcje strony rejestracji",
+			"FEATURES_HINT": "Wyświetlane jako karty obok formularza rejestracji.",
+			"ADD": "Dodaj wpis",
+			"ADD_TITLE": "Dodaj wpis „Co nowego”",
+			"EDIT_TITLE": "Edytuj wpis „Co nowego”",
+			"EMPTY": "Brak wpisów.",
+			"LOAD_FAILED": "Nie udało się wczytać wpisów.",
+			"DELETED": "Usunięte",
+			"DELETED_HINT": "Wpisy usunięte, gdy ta strona jest otwarta. Przywróć przywraca wpis.",
+			"COLUMNS": {
+				"DATE": "Data",
+				"ENTRY": "Wpis",
+				"ACTIONS": "Akcje"
+			},
+			"FIELDS": {
+				"TITLE": "Tytuł",
+				"DATE": "Data",
+				"ICON": "Ikona",
+				"ICON_HINT": "Nazwa ikony Eva, np. star-outline.",
+				"CONTENT": "Tekst",
+				"CONTENT_HINT": "Do {{ max }} znaków.",
+				"LEARN_MORE_URL": "Link „Dowiedz się więcej”",
+				"IMAGE_URL": "Link do obrazu",
+				"IS_FEATURE": "Funkcja strony rejestracji",
+				"IS_FEATURE_HINT": "Pokaż ten wpis jako kartę obok formularza rejestracji zamiast w panelu „Co nowego”."
+			},
+			"ERRORS": {
+				"REQUIRED": "Wymagane.",
+				"HTTP_URL": "Wpisz pełny adres zaczynający się od http:// lub https://."
+			},
+			"PREVIEW": "Podgląd",
+			"SAVED_MESSAGE": "Wpis zapisany.",
+			"DELETED_MESSAGE": "Wpis usunięty.",
+			"RESTORED_MESSAGE": "Wpis przywrócony.",
+			"FORBIDDEN": "Tylko operator instalacji może zmieniać wpisy „Co nowego”."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Członkowie pracowali",

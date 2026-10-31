@@ -1062,7 +1062,8 @@
 		"FEATURES": "crwdns8764:0crwdne8764:0",
 		"ACCOUNTING_TEMPLATES": "crwdns10166:0crwdne10166:0",
 		"FOCUS": "crwdns11138:0crwdne11138:0",
-		"APPLICATIONS": "crwdns11140:0crwdne11140:0"
+		"APPLICATIONS": "crwdns11140:0crwdne11140:0",
+		"WHATS_NEW": "What's New"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1153,7 +1154,48 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "crwdns10190:0crwdne10190:0",
 		"LEARN_MORE_URL": "crwdns10192:0crwdne10192:0",
-		"GAUZY_FEATURES": "crwdns11168:0crwdne11168:0"
+		"GAUZY_FEATURES": "crwdns11168:0crwdne11168:0",
+		"MANAGE": {
+			"TITLE": "What's New",
+			"SUBTITLE": "The entries of the What's New panel and the feature cards of the sign-up page. They are shared by every tenant of this installation, so only its operator can change them.",
+			"WHATS_NEW": "What's New panel",
+			"WHATS_NEW_HINT": "Shown in the What's New panel and on the sign-in page, newest first.",
+			"FEATURES": "Sign-up page features",
+			"FEATURES_HINT": "Shown as cards beside the sign-up form.",
+			"ADD": "Add entry",
+			"ADD_TITLE": "Add a What's New entry",
+			"EDIT_TITLE": "Edit the What's New entry",
+			"EMPTY": "No entries yet.",
+			"LOAD_FAILED": "The entries could not be loaded.",
+			"DELETED": "Deleted",
+			"DELETED_HINT": "Entries deleted while this page is open. Restore puts one back.",
+			"COLUMNS": {
+				"DATE": "Date",
+				"ENTRY": "Entry",
+				"ACTIONS": "Actions"
+			},
+			"FIELDS": {
+				"TITLE": "Title",
+				"DATE": "Date",
+				"ICON": "Icon",
+				"ICON_HINT": "An Eva icon name, such as star-outline.",
+				"CONTENT": "Text",
+				"CONTENT_HINT": "Up to {{ max }} characters.",
+				"LEARN_MORE_URL": "Learn more link",
+				"IMAGE_URL": "Image link",
+				"IS_FEATURE": "Sign-up page feature",
+				"IS_FEATURE_HINT": "Show this entry as a card beside the sign-up form instead of in the What's New panel."
+			},
+			"ERRORS": {
+				"REQUIRED": "Required.",
+				"HTTP_URL": "Enter a full address starting with http:// or https://."
+			},
+			"PREVIEW": "Preview",
+			"SAVED_MESSAGE": "Entry saved.",
+			"DELETED_MESSAGE": "Entry deleted.",
+			"RESTORED_MESSAGE": "Entry restored.",
+			"FORBIDDEN": "Only the installation's operator can change the What's New entries."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "crwdns8242:0crwdne8242:0",
