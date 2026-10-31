@@ -5585,6 +5585,7 @@
 		"RETURN_ONLINE": "Ritorno online",
 		"SEARCH": "Ricerca",
 		"OPEN_SETTINGS": "Apri Impostazioni",
+		"OPEN_WEB_PORTAL": "Apri il mio tempo e le mie attività nell'app web",
 		"REFRESH": "Aggiorna",
 		"SWITCHED_OFFLINE": "Sei passato alla modalità offline adesso",
 		"SWITCHED_ONLINE": "Ora sei passato alla modalità online",
@@ -5671,7 +5672,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "Non sei un dipendente attivo di {{ name }}, quindi il timer non può registrare il tempo lì. Stai ancora lavorando nella tua organizzazione attuale.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "È in corso il cambio di organizzazione. Avvia il timer al termine del cambio.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "Non sei un dipendente attivo di {{ name }} e il ritorno alla tua organizzazione precedente non è riuscito. Accedi di nuovo.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "Non è stato possibile completare il passaggio a {{ name }} su questo dispositivo. Accedi di nuovo."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Non è stato possibile completare il passaggio a {{ name }} su questo dispositivo. Accedi di nuovo.",
+			"CONNECTION_LOST": "Sei offline. Il tuo tempo viene salvato su questo dispositivo e verrà sincronizzato al ritorno della connessione.",
+			"CONNECTION_RESTORED": "Sei di nuovo online.",
+			"CONNECTION_RESTORED_SYNCING": "Sei di nuovo online. Sincronizzazione di {{ count }} elementi in sospeso."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Il tracker è stato fermato a causa di inattività!",

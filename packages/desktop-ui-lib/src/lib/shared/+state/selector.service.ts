@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { concatMap, Observable } from 'rxjs';
+import { ListRequestGuard } from './list-request-guard';
 import { SelectorQuery } from './selector.query';
 import { SelectorStore } from './selector.store';
 
@@ -7,6 +8,12 @@ import { SelectorStore } from './selector.store';
 	providedIn: 'root'
 })
 export abstract class SelectorService<T> {
+	/**
+	 * The loads under way: `load()` puts an answer in the list only while it still belongs to it (no `resetPage()` and
+	 * the same organization since the request).
+	 */
+	protected readonly requests = new ListRequestGuard();
+
 	protected constructor(
 		public readonly selectorStore: SelectorStore<T>,
 		public readonly selectorQuery: SelectorQuery<T>
@@ -56,7 +63,9 @@ export abstract class SelectorService<T> {
 		return this.selectorQuery.page$.pipe(concatMap(() => this.load()));
 	}
 
+	/** Empties the list for what it lists now; the answers to the loads under way are dropped. */
 	public resetPage() {
+		this.requests.invalidate();
 		this.selectorStore.update({ page: 1, data: [] });
 	}
 }

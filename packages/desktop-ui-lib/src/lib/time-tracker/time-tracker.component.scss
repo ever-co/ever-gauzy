@@ -282,6 +282,15 @@ nb-card-body {
   text-transform: uppercase;
 }
 
+// Thin, barely visible separators between the footer's groups (settings | name and web app link | status).
+.footer-divider {
+  display: inline-block;
+  width: 1px;
+  height: 12px;
+  background-color: var(--gauzy-text-color-2);
+  opacity: 0.3;
+}
+
 .timer-max {
   max-width: 385px;
 }

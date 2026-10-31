@@ -6179,6 +6179,7 @@
 		"RETURN_ONLINE": "Return Online",
 		"SEARCH": "Search",
 		"OPEN_SETTINGS": "Open Settings",
+		"OPEN_WEB_PORTAL": "Open my time and activity in the web app",
 		"REFRESH": "Refresh",
 		"SWITCHED_OFFLINE": "You switched to offline mode now",
 		"SWITCHED_ONLINE": "You switched to online mode now",
@@ -6270,7 +6271,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "You are not an active employee of {{ name }}, so the timer cannot track time there. You are still working in your current organization.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "The organization is being switched. Start the timer once the switch has finished.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "You are not an active employee of {{ name }}, and switching back to your previous organization failed. Please sign in again.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "Switching to {{ name }} could not be completed on this device. Please sign in again."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Switching to {{ name }} could not be completed on this device. Please sign in again.",
+			"CONNECTION_LOST": "You are offline. Your time is saved on this device and will be synced when the connection is back.",
+			"CONNECTION_RESTORED": "You are back online.",
+			"CONNECTION_RESTORED_SYNCING": "You are back online. Syncing {{ count }} pending item(s)."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Tracker was stopped due to inactivity!",

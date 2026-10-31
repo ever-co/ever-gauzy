@@ -5583,6 +5583,7 @@
 		"RETURN_ONLINE": "Retour en ligne",
 		"SEARCH": "Recherche",
 		"OPEN_SETTINGS": "Ouvrir les paramètres",
+		"OPEN_WEB_PORTAL": "Ouvrir mon temps et mon activité dans l'application web",
 		"REFRESH": "Rafraîchir",
 		"SWITCHED_OFFLINE": "Vous êtes maintenant passé en mode hors ligne.",
 		"SWITCHED_ONLINE": "Vous êtes maintenant passé en mode en ligne",
@@ -5669,7 +5670,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "Vous n'êtes pas un employé actif de {{ name }}, le minuteur ne peut donc pas y suivre le temps. Vous travaillez toujours dans votre organisation actuelle.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "Le changement d'organisation est en cours. Démarrez le minuteur une fois le changement terminé.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "Vous n'êtes pas un employé actif de {{ name }}, et le retour à votre organisation précédente a échoué. Veuillez vous reconnecter.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "Le passage à {{ name }} n'a pas pu être terminé sur cet appareil. Veuillez vous reconnecter."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Le passage à {{ name }} n'a pas pu être terminé sur cet appareil. Veuillez vous reconnecter.",
+			"CONNECTION_LOST": "Vous êtes hors ligne. Votre temps est enregistré sur cet appareil et sera synchronisé au retour de la connexion.",
+			"CONNECTION_RESTORED": "Vous êtes de nouveau en ligne.",
+			"CONNECTION_RESTORED_SYNCING": "Vous êtes de nouveau en ligne. Synchronisation de {{ count }} élément(s) en attente."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Le tracker a été arrêté en raison d'inactivité !",
