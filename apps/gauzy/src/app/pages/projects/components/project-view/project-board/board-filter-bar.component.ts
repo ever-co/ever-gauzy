@@ -26,9 +26,9 @@ import {
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BoardFilterBarComponent {
-	readonly unassigned = BOARD_UNASSIGNED;
-	readonly avatarColor = boardAvatarColorOf;
-	readonly menus: { facet: Exclude<BoardFilterFacet, 'people'>; label: string }[] = [
+	protected readonly unassigned = BOARD_UNASSIGNED;
+	protected readonly avatarColor = boardAvatarColorOf;
+	protected readonly menus: { facet: Exclude<BoardFilterFacet, 'people'>; label: string }[] = [
 		{ facet: 'priorities', label: 'PROJECT_VIEW.BOARD_FILTER.PRIORITY' },
 		{ facet: 'types', label: 'PROJECT_VIEW.BOARD_FILTER.TYPE' },
 		{ facet: 'labels', label: 'PROJECT_VIEW.BOARD_FILTER.LABELS' }
@@ -42,24 +42,24 @@ export class BoardFilterBarComponent {
 	@Input() total = 0;
 	@Output() readonly filterChange = new EventEmitter<IBoardFilter>();
 
-	get active(): boolean {
+	protected get active(): boolean {
 		return isBoardFilterActive(this.filter);
 	}
 
-	onSearch(search: string): void {
+	protected onSearch(search: string): void {
 		this.filterChange.emit({ ...this.filter, search });
 	}
 
-	onSelect(facet: BoardFilterFacet, values: string[]): void {
+	protected onSelect(facet: BoardFilterFacet, values: string[]): void {
 		this.filterChange.emit({ ...this.filter, [facet]: values });
 	}
 
-	togglePerson(id: string): void {
+	protected togglePerson(id: string): void {
 		const { people } = this.filter;
 		this.onSelect('people', people.includes(id) ? people.filter((person) => person !== id) : [...people, id]);
 	}
 
-	clear(): void {
+	protected clear(): void {
 		this.filterChange.emit(NO_BOARD_FILTER);
 	}
 }

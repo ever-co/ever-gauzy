@@ -2,6 +2,7 @@ import {
 	ChangeDetectionStrategy,
 	ChangeDetectorRef,
 	Component,
+	inject,
 	Input,
 	OnChanges,
 	OnDestroy,
@@ -40,15 +41,14 @@ export class BoardMinimapComponent implements OnChanges, OnDestroy {
 	@Input() target: HTMLElement;
 	@Input() columnCount = 0;
 
-	public segments: number[] = [];
-	public viewport: IBoardViewport | null = null;
+	protected segments: number[] = [];
+	protected viewport: IBoardViewport | null = null;
 	/** Where the frame was taken, as a share of the map from the frame's start; `null` without a drag. */
 	private _grab: number | null = null;
 	private _resizeObserver: ResizeObserver | null = null;
 	private _watched: HTMLElement | null = null;
+	private readonly _changeDetectorRef = inject(ChangeDetectorRef);
 	private readonly _measure = () => this.measure();
-
-	constructor(private readonly _changeDetectorRef: ChangeDetectorRef) {}
 
 	ngOnChanges(changes: SimpleChanges): void {
 		if (changes['target']) this.watch();
@@ -63,7 +63,7 @@ export class BoardMinimapComponent implements OnChanges, OnDestroy {
 		this.unwatch();
 	}
 
-	onPointerDown(event: PointerEvent): void {
+	protected onPointerDown(event: PointerEvent): void {
 		if (!this.viewport) return;
 		const { start, size } = this.viewport;
 		const within = this.shareAt(event) - start;
@@ -72,11 +72,11 @@ export class BoardMinimapComponent implements OnChanges, OnDestroy {
 		this.scrollTo(event);
 	}
 
-	onPointerMove(event: PointerEvent): void {
+	protected onPointerMove(event: PointerEvent): void {
 		if (this._grab !== null) this.scrollTo(event);
 	}
 
-	onPointerUp(): void {
+	protected onPointerUp(): void {
 		this._grab = null;
 	}
 

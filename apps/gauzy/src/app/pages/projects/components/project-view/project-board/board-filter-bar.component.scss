@@ -150,32 +150,25 @@
   min-width: 7.5rem;
   max-width: 11rem;
 
-  // The search box's height and surface. The global input floor would draw the menu 46px tall; matched to Nebular's
-  // own `nb-select.appearance-outline.status-basic.size-tiny` so this rule outranks it, with `!important` for the
-  // floor and the global background that carry it.
-  &.appearance-outline.status-basic.size-tiny ::ng-deep .select-button {
-    display: flex;
-    align-items: center;
-    min-height: 1.75rem !important;
-    height: 1.75rem;
-    padding: 0 1.5rem 0 0.5rem;
-    border: 0;
-    border-radius: 0.25rem;
-    box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
-    background-color: var(--gauzy-card-2) !important;
-    font-size: 0.75rem;
-    line-height: 1rem;
-    color: var(--gauzy-text-color-2);
+  // The search box's height and surface, through the variables Nebular's select and the global select rules read, so
+  // nothing reaches into the component. The global height floor (`$default-height`) is this line height plus 0.875rem
+  // of padding: 1.75rem, as the search box; a tiny select draws no line of it. The rules read the hairline, the radius
+  // and the `!important` background straight from their variables, so setting those here restyles this select alone.
+  --select-medium-text-line-height: 0.875rem;
+  --select-tiny-text-font-size: 0.75rem;
+  --select-tiny-text-line-height: 1rem;
+  --select-tiny-placeholder-text-font-size: 0.75rem;
+  --select-outline-tiny-padding: 0 0.5rem;
+  --select-icon-offset: 1.5rem;
+  --select-outline-basic-text-color: var(--gauzy-text-color-2);
+  --select-outline-basic-placeholder-text-color: var(--gauzy-text-color-2);
+  --gauzy-overlay-border-color: var(--gauzy-border-default-color);
+  --gauzy-card-1: var(--gauzy-card-2);
+  --border-radius: 0.25rem;
 
-    nb-icon {
-      right: 0.25rem;
-      font-size: 1rem;
-    }
-  }
-
-  &.is-active.appearance-outline.status-basic.size-tiny ::ng-deep .select-button {
-    box-shadow: inset 0 0 0 1px var(--gauzy-action-info-text);
-    color: var(--gauzy-text-color-1);
+  &.is-active {
+    --gauzy-overlay-border-color: var(--gauzy-action-info-text);
+    --select-outline-basic-text-color: var(--gauzy-text-color-1);
   }
 }
 
