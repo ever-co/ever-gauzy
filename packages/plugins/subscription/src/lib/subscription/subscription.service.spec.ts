@@ -273,7 +273,19 @@ interface ITables {
  * @param onWrite A hook the fixture uses to model a competing writer.
  */
 function repository(tables: ITables, tableName: keyof ITables, onWrite?: (entity: Row) => void) {
-	let sequence = 0;
+	/**
+	 * An id no row of the table holds yet. Counted from the table, not per repository: a transaction is handed a
+	 * repository of its own, and two transactions that each counted from one gave two new rows the same id.
+	 */
+	const nextId = () => {
+		let sequence = tables[tableName].length + 1;
+
+		while (tables[tableName].some((row) => row.id === `${String(tableName)}-new-${sequence}`)) {
+			sequence += 1;
+		}
+
+		return `${String(tableName)}-new-${sequence}`;
+	};
 	const live = () => tables[tableName].filter((row) => !row.deletedAt);
 	const same = (left: unknown, right: unknown) => String(left ?? '') === String(right ?? '');
 	/** The instant a column value stands for, whichever form the driver handed it back in. */
@@ -390,7 +402,7 @@ function repository(tables: ITables, tableName: keyof ITables, onWrite?: (entity
 				}
 			}
 
-			const created = { id: `${String(tableName)}-new-${++sequence}`, ...entity };
+			const created = { id: nextId(), ...entity };
 
 			tables[tableName].push(created);
 
@@ -1942,6 +1954,24 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 			amount: '-30.970000',
 			currency: 'USD'
 		});
+	});
+
+	it('settles the same change made twice in one period on its own account each time', async () => {
+		// 120 → 60 → 120 → 60 inside March: the two downgrades are the same change at the same amount. Keyed on that
+		// alone, the second replayed the first's credit claim and wrote no row, while carrying a second credit.
+		const fixture = subscriptionFixture({ prices: DOWNGRADE, billings: [marchCycle()] });
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: PLAN });
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		const credits = fixture.adjustmentsOf('cycle-march').filter((row) => row.type === AdjustmentType.CREDIT);
+
+		expect(credits.map((row) => row.amount)).toEqual(['-30.970000', '-30.970000']);
+		expect(credits[0].metadata.changeKey).not.toBe(credits[1].metadata.changeKey);
+		// And the upgrade between them was charged, under a key of its own.
+		expect(fixture.prorationCalls).toHaveLength(1);
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['pendingCredit']).toMatchObject({ amount: '-61.940000' });
 	});
 
 	it('finds a credit already written by its key when the claim it was written under is gone', async () => {

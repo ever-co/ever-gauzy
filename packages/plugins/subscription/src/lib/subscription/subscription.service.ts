@@ -294,9 +294,9 @@ interface IScheduledPlanChange {
  */
 interface IChangeIntent {
 	/**
-	 * The settlement's key, derived from the change: the subscription, what changes, the amount and the period. The
-	 * charge is claimed under it and the `CREDIT` adjustment carries it, so the change settles once however often it
-	 * is repeated.
+	 * The settlement's key, derived from the change: the subscription, what changes, the amount, the period and the
+	 * version the change was read at. The charge is claimed under it and the `CREDIT` adjustment carries it, so the
+	 * change settles once however often it is repeated while outstanding.
 	 */
 	key: string;
 	/**
@@ -3078,7 +3078,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		const { intent: held, resumed } = await this.reserveChange(
 			subscription,
 			{
-				key: `${subscription.id}:${this.hash({ change: identity, amount, periodStart }).slice(0, 32)}`,
+				// The version the change was read at too: the same change made twice in one period (120 → 60 → 120 → 60)
+				// is two changes, each settled on its own account. A repeat of one still outstanding resumes its record, key
+				// and all (`reserveChange`), and one repeated after it was applied nets nothing.
+				key: `${subscription.id}:${this.hash({
+					change: identity,
+					amount,
+					periodStart,
+					version: parseEntityVersion((subscription as unknown as Record<string, unknown>)['version'])
+				}).slice(0, 32)}`,
 				change: identity,
 				planId: change.planId ?? null,
 				settlement,
