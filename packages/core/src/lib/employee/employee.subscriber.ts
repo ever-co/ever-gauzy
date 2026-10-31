@@ -11,7 +11,10 @@ import {
 	TypeOrmEntityManager
 } from '../core/entities/subscribers/entity-event-subscriber.types';
 import { recountMembersOfEmployeeProjects } from '../organization-project/organization-project-members-count';
-import { newEmployeeScreenshotCapture, readOrganizationScreenshotCapture } from './employee-screenshot-capture-default';
+import {
+	readOrganizationScreenshotCapture,
+	screenshotCaptureFromOrganization
+} from './employee-screenshot-capture-default';
 
 @EventSubscriber()
 export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
@@ -175,13 +178,14 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	}
 
 	/**
-	 * Issue #9872: a new employee starts with its organization's screen capture setting, unless the write states one
-	 * (see `newEmployeeScreenshotCapture`). Every create path (REST, GraphQL, bulk, invite, registration, integrations,
-	 * seeds) ends in this hook. Runs on create only, so existing employees keep their value.
+	 * Issue #9872: when the platform sets an employee's screen capture itself — creating the employee, or starting or
+	 * resuming their work — it follows the organization's setting at that moment, unless the write states a value
+	 * (see `screenshotCaptureFromOrganization`). Every create path (REST, GraphQL, bulk, invite, registration,
+	 * integrations, import, seeds) ends in these hooks. A stored value is never rewritten at any other moment.
 	 *
-	 * @param entity The employee about to be inserted.
+	 * @param entity The employee about to be written.
 	 * @param em The entity manager of the write.
-	 * @param requested The value the write carried before the work-status rule.
+	 * @param requested The value the write carried before the work-status rule; `undefined` when it states none.
 	 */
 	private async applyOrganizationScreenshotCapture(
 		entity: Employee,
@@ -191,22 +195,29 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		try {
 			if (requested !== undefined && requested !== null) return;
 
-			const organizationId = entity.organizationId ?? entity.organization?.id;
+			const ormType = getORMType();
+			const tenantId = entity.tenantId ?? entity.tenant?.id;
+			// A write may omit the organization (Back to Work sends only the end date): the stored employee's then.
+			const organizationId =
+				entity.organizationId ??
+				entity.organization?.id ??
+				(em && entity.id
+					? (await this.findEmployee(em, entity.id, undefined, tenantId, ormType))?.organizationId
+					: undefined);
 			if (!organizationId) return;
 
-			const organizationAllows = await readOrganizationScreenshotCapture(
-				em,
-				organizationId,
-				entity.tenantId ?? entity.tenant?.id,
-				getORMType()
+			const organizationAllows = await readOrganizationScreenshotCapture(em, organizationId, tenantId, ormType);
+			const value = screenshotCaptureFromOrganization(
+				requested,
+				entity.allowScreenshotCapture,
+				organizationAllows
 			);
-			const value = newEmployeeScreenshotCapture(requested, entity.allowScreenshotCapture, organizationAllows);
 			if (value !== undefined) {
 				entity.allowScreenshotCapture = value;
 			}
 		} catch (error) {
 			console.error(
-				'EmployeeSubscriber: Could not apply the organization screen capture setting to a new employee:',
+				'EmployeeSubscriber: Could not apply the organization screen capture setting to the employee:',
 				error?.message
 			);
 		}
@@ -232,9 +243,18 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			const hasEndedWork = !!entity.endWork && isChanged('endWork');
 			// "Back to Work" clears the stored end date: the employee resumes work.
 			const hasResumedWork = entity.endWork === null && !!changedProperties?.includes('endWork');
+			// Whether the write itself sets screen capture, before the work-status rule below does.
+			const statesScreenshotCapture = changedProperties
+				? changedProperties.includes('allowScreenshotCapture')
+				: entity.allowScreenshotCapture !== undefined && entity.allowScreenshotCapture !== null;
 
 			// Updates the employee's status based on the start and end work dates.
 			await this.updateEmployeeStatus(entity, em, hasStartedWork || hasResumedWork, hasEndedWork);
+
+			// Issue #9872: starting or resuming work turns screen capture on only where the organization allows it.
+			if ((hasStartedWork || hasResumedWork) && !statesScreenshotCapture) {
+				await this.applyOrganizationScreenshotCapture(entity, em, undefined);
+			}
 
 			// The flags the members count reads can also be written directly (`PUT /employee/:id` takes them), and
 			// a write whose changes are not reported may carry them.

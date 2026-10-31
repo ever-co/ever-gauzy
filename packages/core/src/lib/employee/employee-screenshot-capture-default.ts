@@ -9,18 +9,23 @@ import {
 } from '../core/entities/subscribers/entity-event-subscriber.types';
 
 /**
- * Issue #9872 — a NEW employee's screen capture follows its organization's setting at that moment.
+ * Issue #9872 — when the platform sets an employee's screen capture itself, it follows the organization's setting
+ * at that moment.
  *
  * The desktop apps decide on the employee flag: the Agent reads only it, and the Timer captures when it is on
  * whatever the organization says (`allowScreenshotCapture()` in `desktop-lib`). With the employee column defaulting
- * to `true`, an organization created with capture off still captured as soon as it had employees. A new employee
- * now starts with its organization's value, unless the write states one.
+ * to `true`, and starting work setting it to `true`, an organization with capture off still captured as soon as it
+ * had working employees. So:
  *
- * Existing employees are never touched: this applies to creation only, and the desktop logic is unchanged.
+ * - a new employee starts with its organization's value, unless the write states one;
+ * - starting or resuming work turns capture on only where the organization allows it (ending work still turns it
+ *   off).
+ *
+ * A stored value is never rewritten outside those two moments, and the desktop logic is unchanged.
  */
 
 /**
- * The screen capture value to store for a new employee.
+ * The screen capture value to store when the platform sets it: on creation, or when work starts or resumes.
  *
  * @param requested the value the write carried, before any hook changed it. A stated value (anything but
  *   `undefined`/`null`, including an imported `"1"`) keeps today's behaviour.
@@ -29,7 +34,7 @@ import {
  * @param organizationAllows the organization's `allowScreenshotCapture`; `undefined`/`null` when it could not be read
  * @returns the value to store
  */
-export function newEmployeeScreenshotCapture(
+export function screenshotCaptureFromOrganization(
 	requested: unknown,
 	current: boolean | undefined,
 	organizationAllows: boolean | null | undefined
@@ -40,7 +45,7 @@ export function newEmployeeScreenshotCapture(
 	if (typeof organizationAllows !== 'boolean') {
 		return current;
 	}
-	// An employee whose work has already ended starts with capture off, as before; otherwise the organization decides.
+	// An employee whose work has ended has capture off, as before; otherwise the organization decides.
 	return current !== false && organizationAllows;
 }
 

@@ -1,6 +1,19 @@
 <nb-card class="screenshot-capture-acknowledgement">
 	<nb-card-header class="d-flex flex-column">
-		<span class="cancel"><i (click)="cancel()" class="fas fa-times"></i></span>
+		<div class="cancel">
+			<button
+				type="button"
+				class="close-button"
+				nbButton
+				ghost
+				size="small"
+				status="basic"
+				[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+				(click)="cancel()"
+			>
+				<nb-icon icon="close-outline"></nb-icon>
+			</button>
+		</div>
 		<div class="title">
 			{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREEN_CAPTURE_ACKNOWLEDGEMENT_TITLE' | translate }}
 		</div>

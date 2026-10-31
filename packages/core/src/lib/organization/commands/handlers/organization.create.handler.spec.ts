@@ -19,12 +19,31 @@ const TENANT = '00000000-0000-4000-8000-000000000001';
 const ADMIN = '00000000-0000-4000-8000-0000000000b1';
 const ALL = { lawfulBasis: true, employeeNotice: true, worksCouncil: true };
 
+/** How many `runOutsideOrganizationBoundary` blocks are open: the real helper, counted. */
+const mockBoundary = { open: 0 };
+jest.mock('../../../core/crud/organization-boundary', () => {
+	const actual = jest.requireActual('../../../core/crud/organization-boundary');
+	return {
+		...actual,
+		runOutsideOrganizationBoundary: async (callback: () => Promise<unknown>) => {
+			mockBoundary.open++;
+			try {
+				return await actual.runOutsideOrganizationBoundary(callback);
+			} finally {
+				mockBoundary.open--;
+			}
+		}
+	};
+});
+
 function setup() {
 	const organizationService = {
 		tableName: 'organization',
 		create: jest.fn(async (payload: Record<string, unknown>) => ({ ...payload, id: 'org-1', tenantId: TENANT })),
 		update: jest.fn(),
-		findOneByIdString: jest.fn(async (id: string) => ({ id }))
+		findOneByIdString: jest.fn(async (id: string) => ({ id })),
+		// A create names no stored organization unless a test says so.
+		findOneOrFailByIdString: jest.fn().mockResolvedValue({ success: false })
 	};
 	const activityLogService = { create: jest.fn().mockResolvedValue({}) };
 	const handler = new OrganizationCreateHandler(
@@ -101,6 +120,12 @@ describe('OrganizationCreateHandler — screen capture', () => {
 
 	it('creates an EEA organization with capture on when acknowledged, recording who, when and the tenant', async () => {
 		const { create, created, activityLogService } = setup();
+		// The new organization is outside the caller's token organization: the log entry crosses the boundary.
+		let boundaryOpenAtLog = 0;
+		activityLogService.create.mockImplementation(async () => {
+			boundaryOpenAtLog = mockBoundary.open;
+			return {};
+		});
 
 		await create({
 			allowScreenshotCapture: true,
@@ -123,6 +148,7 @@ describe('OrganizationCreateHandler — screen capture', () => {
 				}
 			})
 		);
+		expect(boundaryOpenAtLog).toBeGreaterThan(0);
 	});
 
 	it('never takes the record from the body', async () => {
@@ -135,5 +161,57 @@ describe('OrganizationCreateHandler — screen capture', () => {
 
 		expect(created()).not.toHaveProperty('screenshotCaptureAcknowledgedAt');
 		expect(created()).not.toHaveProperty('screenshotCaptureAcknowledgedByUserId');
+	});
+
+	it('looks nothing up for a create without an id', async () => {
+		const { create, organizationService } = setup();
+
+		await create({});
+
+		expect(organizationService.findOneOrFailByIdString).not.toHaveBeenCalled();
+	});
+
+	it('treats an id that names no organization of this tenant as a new organization', async () => {
+		const { create, created, organizationService } = setup();
+
+		await create({ id: 'org-new' });
+
+		expect(organizationService.findOneOrFailByIdString).toHaveBeenCalledWith('org-new', {
+			relations: { contact: true }
+		});
+		expect(created()).toMatchObject({ allowScreenshotCapture: false });
+	});
+
+	describe('a create that names an existing organization, which the save updates', () => {
+		const stored = (values: Record<string, unknown>) => ({
+			success: true,
+			record: { id: 'org-9', tenantId: TENANT, contact: null, ...values }
+		});
+
+		it('asks for the acknowledgement when it turns capture on for a stored EEA/UK organization', async () => {
+			const { create, organizationService } = setup();
+			organizationService.findOneOrFailByIdString.mockResolvedValue(
+				stored({ allowScreenshotCapture: false, contact: { country: 'GB' } })
+			);
+
+			// No location in the request: the stored one is what counts.
+			await expect(create({ id: 'org-9', allowScreenshotCapture: true })).rejects.toMatchObject({
+				code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED
+			});
+			expect(organizationService.create).not.toHaveBeenCalled();
+		});
+
+		it('keeps the stored value when the request does not set one, instead of the new-organization default', async () => {
+			const { create, created, activityLogService, organizationService } = setup();
+			organizationService.findOneOrFailByIdString.mockResolvedValue(
+				stored({ allowScreenshotCapture: true, timeZone: 'Europe/Berlin' })
+			);
+
+			await create({ id: 'org-9' });
+
+			expect(created()).toMatchObject({ allowScreenshotCapture: true });
+			expect(created()).not.toHaveProperty('screenshotCaptureAcknowledgedAt');
+			expect(activityLogService.create).not.toHaveBeenCalled();
+		});
 	});
 });

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, signal } from '@angular/core';
-import { NbButtonModule, NbCardModule, NbCheckboxModule, NbDialogRef } from '@nebular/theme';
+import { NbButtonModule, NbCardModule, NbCheckboxModule, NbDialogRef, NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
 	IScreenshotCaptureAcknowledgement,
@@ -24,7 +24,7 @@ const STATEMENT_KEYS: Readonly<Record<ScreenshotCaptureAcknowledgementStatement,
 @Component({
 	selector: 'ngx-screenshot-capture-acknowledgement-dialog',
 	standalone: true,
-	imports: [NbCardModule, NbCheckboxModule, NbButtonModule, TranslatePipe],
+	imports: [NbCardModule, NbCheckboxModule, NbButtonModule, NbIconModule, TranslatePipe],
 	templateUrl: './screenshot-capture-acknowledgement-dialog.component.html',
 	styleUrls: ['./screenshot-capture-acknowledgement-dialog.component.scss'],
 	changeDetection: ChangeDetectionStrategy.Eager

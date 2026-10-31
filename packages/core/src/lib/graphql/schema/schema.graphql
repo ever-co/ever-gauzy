@@ -33908,6 +33908,28 @@ input OrganizationContactDetailInput {
 }
 
 """
+The statements an admin confirms before screen capture is turned on for an organization in the EEA or the UK
+(issue #9872). The write is refused with `SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED`, naming the statements
+still missing, unless all three are true.
+"""
+input ScreenshotCaptureAcknowledgementInput {
+  """
+  The organization has a lawful basis for capturing its workers' screens (GDPR Art. 6), assessed as necessary and proportionate.
+  """
+  lawfulBasis: Boolean
+
+  """
+  The workers concerned were told, before capture starts, what is captured, why and for how long (GDPR Art. 13).
+  """
+  employeeNotice: Boolean
+
+  """
+  Any works council or employee-representative process this requires is complete, or none applies.
+  """
+  worksCouncil: Boolean
+}
+
+"""
 What a caller states when it files an organization.
 
 The members are the ones the delivered create body validates and the delivered handler reads. Three
@@ -33971,6 +33993,17 @@ input CreateOrganizationInput {
 
   """The contact row to file beside the organization."""
   contact: OrganizationContactDetailInput
+
+  """
+  Whether the tracker captures screenshots. A new organization starts with it off unless this turns it on (issue #9872).
+  """
+  allowScreenshotCapture: Boolean
+
+  """
+  The admin's acknowledgement, required with all three statements true when this write turns screen capture on
+  for an organization in the EEA or the UK. Request-only: the server records who gave it and when.
+  """
+  screenshotCaptureAcknowledgement: ScreenshotCaptureAcknowledgementInput
 }
 
 """
@@ -34002,6 +34035,17 @@ input UpdateOrganizationInput {
   bonusPercentage: Float
   bonusType: String
   contact: OrganizationContactDetailInput
+
+  """
+  Whether the tracker captures screenshots. Turning it on for an organization in the EEA or the UK takes the acknowledgement below.
+  """
+  allowScreenshotCapture: Boolean
+
+  """
+  The admin's acknowledgement, required with all three statements true when this write turns screen capture on
+  for an organization in the EEA or the UK. Request-only: the server records who gave it and when.
+  """
+  screenshotCaptureAcknowledgement: ScreenshotCaptureAcknowledgementInput
 
   """Whether the public profile shows income."""
   show_income: Boolean

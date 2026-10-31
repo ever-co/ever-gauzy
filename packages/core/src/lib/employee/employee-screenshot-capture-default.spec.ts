@@ -13,14 +13,17 @@ import {
 import { MultiORMEnum } from '../core/utils';
 import { Employee } from './employee.entity';
 import { EmployeeSubscriber } from './employee.subscriber';
-import { newEmployeeScreenshotCapture, readOrganizationScreenshotCapture } from './employee-screenshot-capture-default';
+import {
+	screenshotCaptureFromOrganization,
+	readOrganizationScreenshotCapture
+} from './employee-screenshot-capture-default';
 
 /**
- * Issue #9872 — the desktop apps capture when the EMPLOYEE flag is on, so a new employee now starts with its
- * organization's screen capture setting instead of the column default `true`. A value the write states wins, and
- * existing employees are never touched.
+ * Issue #9872 — the desktop apps capture when the EMPLOYEE flag is on, so when the platform sets that flag itself (a new
+ * employee, work starting or resuming) it follows the organization instead of turning it on. A value the write states
+ * wins, and a stored value is never rewritten at any other moment.
  */
-describe('newEmployeeScreenshotCapture', () => {
+describe('screenshotCaptureFromOrganization', () => {
 	it.each([
 		// requested, after the work-status rule, organization → stored
 		[undefined, undefined, false, false],
@@ -32,7 +35,7 @@ describe('newEmployeeScreenshotCapture', () => {
 		// Work already ended at creation: off, as before.
 		[undefined, false, true, false]
 	])('requested %p, work-status %p, organization %p → %p', (requested, current, organization, expected) => {
-		expect(newEmployeeScreenshotCapture(requested, current, organization)).toBe(expected);
+		expect(screenshotCaptureFromOrganization(requested, current, organization)).toBe(expected);
 	});
 
 	it.each([
@@ -40,20 +43,24 @@ describe('newEmployeeScreenshotCapture', () => {
 		[false, false],
 		['1', true]
 	])('keeps today’s behaviour when the write states a value (%p)', (requested, current) => {
-		expect(newEmployeeScreenshotCapture(requested, current, false)).toBe(current);
+		expect(screenshotCaptureFromOrganization(requested, current, false)).toBe(current);
 	});
 
 	it('keeps today’s behaviour when the organization could not be read', () => {
-		expect(newEmployeeScreenshotCapture(undefined, undefined, undefined)).toBeUndefined();
-		expect(newEmployeeScreenshotCapture(undefined, true, null)).toBe(true);
+		expect(screenshotCaptureFromOrganization(undefined, undefined, undefined)).toBeUndefined();
+		expect(screenshotCaptureFromOrganization(undefined, true, null)).toBe(true);
 	});
 });
 
-/** An entity manager of the given ORM whose `findOne` answers `row`. */
-function entityManager(orm: 'typeorm' | 'mikro-orm', row: Record<string, unknown> | null) {
+/** An entity manager of the given ORM whose `findOne` answers `organization`, and `employee` for an employee. */
+function entityManager(
+	orm: 'typeorm' | 'mikro-orm',
+	organization: Record<string, unknown> | null,
+	employee: Record<string, unknown> | null = null
+) {
 	const prototype = orm === 'typeorm' ? TypeOrmEntityManager.prototype : MikroOrmEntityManager.prototype;
 	const em = Object.create(prototype);
-	em.findOne = jest.fn().mockResolvedValue(row);
+	em.findOne = jest.fn(async (target: unknown) => (target === Organization ? organization : employee));
 	return em as (TypeOrmEntityManager | MikroOrmEntityManager) & { findOne: jest.Mock };
 }
 
@@ -105,7 +112,7 @@ describe('readOrganizationScreenshotCapture', () => {
 	});
 });
 
-describe('EmployeeSubscriber — screen capture of a new employee', () => {
+describe('EmployeeSubscriber — screen capture set by the platform', () => {
 	const previousOrm = process.env.DB_ORM;
 
 	afterEach(() => {
@@ -114,14 +121,22 @@ describe('EmployeeSubscriber — screen capture of a new employee', () => {
 		else process.env.DB_ORM = previousOrm;
 	});
 
-	function setup(orm: 'typeorm' | 'mikro-orm', organization: Record<string, unknown> | null) {
+	function setup(
+		orm: 'typeorm' | 'mikro-orm',
+		organization: Record<string, unknown> | null,
+		employee: Record<string, unknown> | null = null
+	) {
 		process.env.DB_ORM = orm === 'typeorm' ? MultiORMEnum.TypeORM : MultiORMEnum.MikroORM;
 		const subscriber = new EmployeeSubscriber();
 		// Starting work also updates the user's membership; that write is not under test here.
 		jest.spyOn(subscriber, 'setUserOrganizationStatus').mockResolvedValue(undefined);
 		jest.spyOn(console, 'error').mockImplementation(() => undefined);
-		return { subscriber, em: entityManager(orm, organization) };
+		return { subscriber, em: entityManager(orm, organization, employee) };
 	}
+
+	/** The organizations `findOne` was asked for. */
+	const organizationReads = (em: { findOne: jest.Mock }) =>
+		em.findOne.mock.calls.filter(([target]) => target === Organization);
 
 	const newEmployee = (values: Partial<Employee> = {}) =>
 		Object.assign(new Employee(), { id: 'employee-1', tenantId: 'tenant-1', organizationId: 'org-1', ...values });
@@ -200,6 +215,68 @@ describe('EmployeeSubscriber — screen capture of a new employee', () => {
 
 			expect(employee.allowScreenshotCapture).toBe(true);
 			expect(em.findOne).not.toHaveBeenCalled();
+		});
+
+		describe('when work starts or resumes', () => {
+			it('turns capture on only where the organization allows it', async () => {
+				const { subscriber, em } = setup(orm, { allowScreenshotCapture: false });
+				const employee = newEmployee({ allowScreenshotCapture: false, startedWorkOn: new Date('2026-10-01') });
+
+				await subscriber.beforeEntityUpdate(employee, em, ['startedWorkOn']);
+
+				expect(employee).toMatchObject({
+					allowScreenshotCapture: false,
+					isActive: true,
+					isTrackingEnabled: true
+				});
+			});
+
+			it('turns capture on in an organization that allows it (as before)', async () => {
+				const { subscriber, em } = setup(orm, { allowScreenshotCapture: true });
+				const employee = newEmployee({ allowScreenshotCapture: false, startedWorkOn: new Date('2026-10-01') });
+
+				await subscriber.beforeEntityUpdate(employee, em, ['startedWorkOn']);
+
+				expect(employee.allowScreenshotCapture).toBe(true);
+			});
+
+			it('reads the stored employee’s organization when Back to Work sends only the end date', async () => {
+				const { subscriber, em } = setup(
+					orm,
+					{ allowScreenshotCapture: false },
+					{ id: 'employee-1', organizationId: 'org-1' }
+				);
+				const employee = Object.assign(new Employee(), {
+					id: 'employee-1',
+					tenantId: 'tenant-1',
+					endWork: null
+				});
+
+				await subscriber.beforeEntityUpdate(employee, em, ['endWork']);
+
+				expect(employee).toMatchObject({ allowScreenshotCapture: false, isActive: true, isArchived: false });
+				expect(JSON.stringify(organizationReads(em))).toContain('org-1');
+			});
+
+			it('keeps today’s behaviour when the write sets capture itself', async () => {
+				const { subscriber, em } = setup(orm, { allowScreenshotCapture: false });
+				const employee = newEmployee({ allowScreenshotCapture: true, startedWorkOn: new Date('2026-10-01') });
+
+				await subscriber.beforeEntityUpdate(employee, em, ['startedWorkOn', 'allowScreenshotCapture']);
+
+				expect(employee.allowScreenshotCapture).toBe(true);
+				expect(organizationReads(em)).toHaveLength(0);
+			});
+
+			it('still turns capture off when work ends, without reading the organization', async () => {
+				const { subscriber, em } = setup(orm, { allowScreenshotCapture: true });
+				const employee = newEmployee({ allowScreenshotCapture: true, endWork: new Date('2026-10-01') });
+
+				await subscriber.beforeEntityUpdate(employee, em, ['endWork']);
+
+				expect(employee.allowScreenshotCapture).toBe(false);
+				expect(organizationReads(em)).toHaveLength(0);
+			});
 		});
 	});
 });

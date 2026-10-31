@@ -91,4 +91,15 @@ describe('ScreenshotCaptureAcknowledgementDialogComponent', () => {
 
 		expect(dialogRef.close).toHaveBeenCalledWith(null);
 	});
+
+	it('closes with nothing from the header, which is a labelled button keyboard users can reach', () => {
+		const { fixture, dialogRef } = setup();
+
+		const close = fixture.nativeElement.querySelector('nb-card-header button.close-button') as HTMLButtonElement;
+		expect(close.type).toBe('button');
+		expect(close.getAttribute('aria-label')).toBe('BUTTONS.CLOSE');
+		close.click();
+
+		expect(dialogRef.close).toHaveBeenCalledWith(null);
+	});
 });

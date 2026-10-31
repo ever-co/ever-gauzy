@@ -197,9 +197,48 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 
 		await update({ name: 'Renamed', allowScreenshotCapture: true });
 
-		expect(saved()).toMatchObject({ name: 'Renamed', allowScreenshotCapture: true });
+		expect(saved()).toMatchObject({ name: 'Renamed' });
+		// The stored value sent back is not written: the column keeps what it holds.
+		expect(saved()).not.toHaveProperty('allowScreenshotCapture');
 		expect(saved()).not.toHaveProperty('screenshotCaptureAcknowledgedAt');
 		expect(activityLogService.create).not.toHaveBeenCalled();
+	});
+
+	it('cannot turn capture back on by racing a save that turned it off', async () => {
+		// Read while capture was still on; another admin turns it off before this save is written.
+		given({ allowScreenshotCapture: true, regionCode: 'de', timeZone: 'Europe/Berlin' });
+
+		await update({ name: 'Renamed', allowScreenshotCapture: true });
+
+		// Nothing of this write sets the flag, so the other admin's `false` stays.
+		expect(saved()).not.toHaveProperty('allowScreenshotCapture');
+	});
+
+	it('reads the stored contact country: a top-level country the write does not store does not skip the check', async () => {
+		given({
+			allowScreenshotCapture: false,
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contact: { country: 'GB' }
+		});
+
+		await expect(update({ allowScreenshotCapture: true, country: 'US' })).rejects.toMatchObject({
+			code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED
+		});
+		expect(organizationService.create).not.toHaveBeenCalled();
+	});
+
+	it('reads the contact the write carries: moving the address into the EEA while turning capture on asks too', async () => {
+		given({
+			allowScreenshotCapture: false,
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contact: { country: 'US' }
+		});
+
+		await expect(update({ allowScreenshotCapture: true, contact: { country: 'DE' } })).rejects.toMatchObject({
+			code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED
+		});
 	});
 
 	it('never asks to turn capture off', async () => {
@@ -208,6 +247,7 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 		await update({ allowScreenshotCapture: false });
 
 		expect(saved()).toMatchObject({ allowScreenshotCapture: false });
+		expect(activityLogService.create).not.toHaveBeenCalled();
 	});
 
 	it('asks nothing outside the EEA and the UK, as before', async () => {

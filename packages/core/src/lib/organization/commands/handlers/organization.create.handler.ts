@@ -1,7 +1,16 @@
 import { BadRequestException, Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { faker } from '@faker-js/faker';
-import { IOrganization, IUser, newOrganizationAllowsScreenshotCapture, RolesEnum } from '@gauzy/contracts';
+import {
+	IAgentRestrictionLocation,
+	ID,
+	IOrganization,
+	IOrganizationCreateInput,
+	IScreenshotCaptureAcknowledgementRecord,
+	IUser,
+	newOrganizationAllowsScreenshotCapture,
+	RolesEnum
+} from '@gauzy/contracts';
 import { UserService } from '../../../user/user.service';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { OrganizationService } from '../../organization.service';
@@ -54,15 +63,8 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 		// Issue #9872: a new organization starts with screen capture off. Turning it on here, for an EEA/UK
 		// organization, takes the admin's acknowledgement, which is recorded on the row. Also checked before
 		// the `try`, so the refusal keeps its code.
-		const allowScreenshotCapture = newOrganizationAllowsScreenshotCapture(command.input);
-		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(
-			{ ...command.input, allowScreenshotCapture },
-			null,
-			{
-				regionCode: command.input.regionCode,
-				timeZone: command.input.timeZone,
-				country: command.input.contact?.country || command.input.country
-			}
+		const { allowScreenshotCapture, screenshotCaptureAcknowledgement } = await this.resolveScreenshotCapture(
+			command.input
 		);
 		try {
 			const input = omitScreenshotCaptureAcknowledgementFields(command.input);
@@ -126,10 +128,14 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 			const { id: organizationId } = organization;
 
 			if (screenshotCaptureAcknowledgement) {
-				await logScreenshotCaptureAcknowledgement(
-					this.activityLogService,
-					organization,
-					screenshotCaptureAcknowledgement
+				// The new organization is not the one of the caller's token, so its log entry is written outside the
+				// organization boundary, as the provisioning steps below are (the create itself is authorized).
+				await runOutsideOrganizationBoundary(() =>
+					logScreenshotCaptureAcknowledgement(
+						this.activityLogService,
+						organization,
+						screenshotCaptureAcknowledgement
+					)
 				);
 			}
 
@@ -257,5 +263,56 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 		} catch (error) {
 			this.logger.error('Error occurred while executing organization update tasks:', error?.message);
 		}
+	}
+
+	/**
+	 * Issue #9872: the screen capture value to create the organization with, and the acknowledgement to record
+	 * with it (see `resolveScreenshotCaptureAcknowledgement`).
+	 *
+	 * A new organization starts with capture off unless the request turns it on. A request whose `id` names an
+	 * organization of this tenant makes the save update that organization, so it is judged as the update it is:
+	 * the stored value stays unless the request sets one, turning it on is a change from the stored value, and
+	 * the stored location counts as well as the requested one.
+	 *
+	 * @param input The create request.
+	 * @throws ApiException 400 `SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED` (see `resolveScreenshotCaptureAcknowledgement`)
+	 */
+	private async resolveScreenshotCapture(input: IOrganizationCreateInput): Promise<{
+		allowScreenshotCapture: boolean;
+		screenshotCaptureAcknowledgement: IScreenshotCaptureAcknowledgementRecord | null;
+	}> {
+		const requestedLocation: IAgentRestrictionLocation = {
+			regionCode: input.regionCode,
+			timeZone: input.timeZone,
+			country: input.contact?.country || input.country
+		};
+		const stored = await this.findStoredOrganization(input.id);
+
+		const allowScreenshotCapture =
+			stored && typeof input.allowScreenshotCapture !== 'boolean'
+				? stored.allowScreenshotCapture
+				: newOrganizationAllowsScreenshotCapture(input);
+		const location = stored
+			? [
+					requestedLocation,
+					{ regionCode: stored.regionCode, timeZone: stored.timeZone, country: stored.contact?.country }
+				]
+			: requestedLocation;
+
+		return {
+			allowScreenshotCapture,
+			screenshotCaptureAcknowledgement: resolveScreenshotCaptureAcknowledgement(
+				{ ...input, allowScreenshotCapture },
+				stored,
+				location
+			)
+		};
+	}
+
+	/** The organization of the current tenant a create request's `id` names, if any. */
+	private async findStoredOrganization(id: ID | undefined): Promise<IOrganization | null> {
+		if (!id) return null;
+		const found = await this.organizationService.findOneOrFailByIdString(id, { relations: { contact: true } });
+		return found.success ? found.record : null;
 	}
 }

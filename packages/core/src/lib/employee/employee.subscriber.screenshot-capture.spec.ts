@@ -12,8 +12,9 @@ import { Employee } from './employee.entity';
 import { EmployeeSubscriber } from './employee.subscriber';
 
 /**
- * Issue #9872 — a new employee starts with its organization's screen capture setting, through the real
- * `EmployeeSubscriber` on a real better-sqlite database. Each create path of the application ends in one of the
+ * Issue #9872 — a new employee starts with its organization's screen capture setting, and starting or resuming work
+ * turns capture on only where the organization allows it, through the real `EmployeeSubscriber` on a real
+ * better-sqlite database. Each create path of the application ends in one of the
  * writes below:
  *
  * - `repository.save(repository.create(…))`: `EmployeeService.create` (REST `POST /employee`, `POST /employee/bulk`,
@@ -61,7 +62,7 @@ const OrganizationSchema = new EntitySchema<Organization>({
 	}
 });
 
-describe('EmployeeSubscriber — a new employee follows its organization’s screen capture (TypeORM round trip)', () => {
+describe('EmployeeSubscriber — screen capture follows the organization (TypeORM round trip)', () => {
 	const previousOrm = process.env.DB_ORM;
 
 	let dataSource: DataSource;
@@ -189,6 +190,42 @@ describe('EmployeeSubscriber — a new employee follows its organization’s scr
 			await employees.save(existing);
 
 			expect(await stored('e-1')).toMatchObject({ allowScreenshotCapture: true, billRateValue: 50 });
+		});
+	});
+
+	describe('starting or resuming work later', () => {
+		it('keeps capture off in an organization that has it off (an invited employee whose work starts)', async () => {
+			await employees.save(employees.create(employee('e-1', ORG_OFF)));
+
+			const invited = await stored('e-1');
+			invited.startedWorkOn = new Date('2026-10-01');
+			await employees.save(invited);
+
+			expect(await stored('e-1')).toMatchObject({ allowScreenshotCapture: false, isActive: true });
+		});
+
+		it('keeps capture off on Back to Work in an organization that has it off', async () => {
+			await employees.save(employees.create(employee('e-1', ORG_OFF, { endWork: new Date('2026-09-30') })));
+
+			const ended = await stored('e-1');
+			ended.endWork = null;
+			await employees.save(ended);
+
+			expect(await stored('e-1')).toMatchObject({
+				allowScreenshotCapture: false,
+				isActive: true,
+				isArchived: false
+			});
+		});
+
+		it('turns capture on in an organization that has it on (as before)', async () => {
+			await employees.save(employees.create(employee('e-1', ORG_ON, { allowScreenshotCapture: false })));
+
+			const invited = await stored('e-1');
+			invited.startedWorkOn = new Date('2026-10-01');
+			await employees.save(invited);
+
+			expect((await stored('e-1')).allowScreenshotCapture).toBe(true);
 		});
 	});
 });

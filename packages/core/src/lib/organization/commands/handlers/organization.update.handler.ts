@@ -89,8 +89,14 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 
 		// Issue #9872: turning screen capture on for an EEA/UK organization takes the admin's acknowledgement,
 		// stored with the change below. Re-saving an organization that already captures, or turning capture
-		// off, asks nothing, so existing organizations keep their value without a new step.
-		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(input, organization, location);
+		// off, asks nothing, so existing organizations keep their value without a new step. The stored location
+		// counts as well as the requested one: the organization keeps its country on its contact, so a top-level
+		// `country` the write never stores cannot take a UK or EEA organization out of the check.
+		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(input, organization, [
+			previousLocation,
+			location,
+			{ country: changes.contact?.country }
+		]);
 		input = changes;
 
 		// Written and awaited before the save: no restriction without its recorded acknowledgement.
@@ -134,6 +140,12 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			}),
 			...screenshotCaptureAcknowledgement
 		};
+		// Issue #9872: the flag is written only when this request changes it from the row read above. Sending the
+		// stored value back writes nothing, so a save that raced one turning capture off cannot turn it back on
+		// without an acknowledgement: every write of `true` went through the check above.
+		if (updateData.allowScreenshotCapture === organization.allowScreenshotCapture) {
+			delete updateData.allowScreenshotCapture;
+		}
 
 		// Creates a new organization or updates an existing one based on the provided data.
 		await this.organizationService.create({ ...updateData, id });
