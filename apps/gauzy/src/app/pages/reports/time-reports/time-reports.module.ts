@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { NbCardModule, NbIconModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
+import { NbButtonModule, NbCardModule, NbIconModule, NbSelectModule, NbSpinnerModule } from '@nebular/theme';
 import {
 	DailyGridModule,
 	DailyStatisticsModule,
@@ -14,6 +14,7 @@ import { TimeReportsComponent } from './time-reports/time-reports.component';
 @NgModule({
 	declarations: [TimeReportsComponent],
 	imports: [
+		NbButtonModule,
 		NbCardModule,
 		NbIconModule,
 		NbSelectModule,
