@@ -819,6 +819,8 @@
 		"NAME": "姓名",
 		"YEAR": "年份",
 		"BANNER": "橫幅",
+		"BANNER_PLACEHOLDER": "例如：我们为企业打造开源软件",
+		"BANNER_HINT": "显示在公开页面上公司名称下方的简短标语",
 		"SIZE": "尺寸",
 		"YEAR_FOUNDED": "成立年份",
 		"COMPANY_SIZE": "公司规模",
@@ -1639,6 +1641,22 @@
 			}
 		},
 		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "同步标签",
+				"TITLE": "同步设置",
+				"SUBTITLE": "{{ repository }} 的 issue 如何同步到 {{ project }}",
+				"AUTO_SYNC": "自动同步 issue",
+				"AUTO_SYNC_HINT": "在 GitHub 上新建或修改的 issue 会在此项目中创建或更新任务。",
+				"ONLY_LABELLED": "仅同步带标签的 issue",
+				"ONLY_LABELLED_HINT": "只有带下方标签的 issue 会被自动同步。",
+				"LABEL": "标签",
+				"LABEL_HINT": "选择仓库中的标签或输入其他标签。留空则使用默认标签 {{ label }}。",
+				"LABEL_INVALID": "GitHub 标签为单行，最多 {{ max }} 个字符。",
+				"ALL_ISSUES": "所有 issue",
+				"AUTO_SYNC_OFF": "自动同步已关闭",
+				"EDIT": "编辑同步设置",
+				"SAVED": "已保存“{{ project }}”的同步设置"
+			},
 			"INSTALLATION": {
 				"INSTALLING": "正在安装，请稍候...",
 				"NOT_CONNECTED": "GitHub 未连接",
@@ -2446,6 +2464,8 @@
 			"ASSIGN_TO": "分配给",
 			"INCLUDE_TAXES": "包括税费",
 			"ATTACH_A_RECEIPT": "附上收据",
+			"NO_RECEIPT": "尚未附加收据。点击上传。",
+			"RECEIPT_ATTACHED": "已附加收据",
 			"EMPLOYEES_GENERATE_EXPENSE": "产生费用的员工",
 			"TAX_DEDUCTIBLE": "税额可抵扣",
 			"NOT_TAX_DEDUCTIBLE": "不可抵税",

@@ -764,6 +764,8 @@
 		"NAME": "Nom",
 		"YEAR": "Année",
 		"BANNER": "Bannière",
+		"BANNER_PLACEHOLDER": "ex. : Nous créons des logiciels open source pour les entreprises",
+		"BANNER_HINT": "Un court slogan affiché sous le nom de votre entreprise sur votre page publique",
 		"SIZE": "Taille",
 		"YEAR_FOUNDED": "Année de fondation",
 		"COMPANY_SIZE": "Taille de l'entreprise",
@@ -1340,6 +1342,24 @@
 		"STANDARD_WORK_HOURS": "Heures de travail standard ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Étiquette de synchronisation",
+				"TITLE": "Paramètres de synchronisation",
+				"SUBTITLE": "Comment les issues de {{ repository }} sont synchronisées avec {{ project }}",
+				"AUTO_SYNC": "Synchroniser automatiquement les issues",
+				"AUTO_SYNC_HINT": "Les issues ouvertes ou modifiées sur GitHub créent ou mettent à jour des tâches dans ce projet.",
+				"ONLY_LABELLED": "Uniquement les issues avec une étiquette",
+				"ONLY_LABELLED_HINT": "Seules les issues portant l'étiquette ci-dessous sont synchronisées automatiquement.",
+				"LABEL": "Étiquette",
+				"LABEL_HINT": "Choisissez une étiquette du dépôt ou saisissez-en une autre. Laissez vide pour utiliser l'étiquette par défaut, {{ label }}.",
+				"LABEL_INVALID": "Une étiquette GitHub tient sur une seule ligne de {{ max }} caractères au maximum.",
+				"ALL_ISSUES": "Toutes les issues",
+				"AUTO_SYNC_OFF": "Synchronisation automatique désactivée",
+				"EDIT": "Modifier les paramètres de synchronisation",
+				"SAVED": "Paramètres de synchronisation enregistrés pour '{{ project }}'"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "Applications et intégrations disponibles",
 		"ADDED_UPWORK_TRANSACTION": "Transaction ajoutée sur Upwork.",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total des transactions de dépenses réussies: {{ totalExpenses }}. Total des transactions de revenus réussies: {{ totalIncomes }}.",
@@ -1976,6 +1996,8 @@
 			"ASSIGN_TO": "Assign to - Assigner à",
 			"INCLUDE_TAXES": "Inclure les taxes",
 			"ATTACH_A_RECEIPT": "Joindre un reçu",
+			"NO_RECEIPT": "Aucun reçu joint pour le moment. Cliquez pour en téléverser un.",
+			"RECEIPT_ATTACHED": "Reçu joint",
 			"EMPLOYEES_GENERATE_EXPENSE": "Les employés qui génèrent des frais.",
 			"TAX_DEDUCTIBLE": "Déductible d'impôt",
 			"NOT_TAX_DEDUCTIBLE": "Non déductible fiscalement",

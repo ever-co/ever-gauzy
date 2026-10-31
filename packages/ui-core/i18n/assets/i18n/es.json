@@ -765,6 +765,8 @@
 		"NAME": "Nombre",
 		"YEAR": "Año",
 		"BANNER": "Banner",
+		"BANNER_PLACEHOLDER": "p. ej., Creamos software de código abierto para empresas",
+		"BANNER_HINT": "Un eslogan breve que se muestra bajo el nombre de su empresa en su página pública",
 		"SIZE": "Tamaño",
 		"YEAR_FOUNDED": "Año de Fundación",
 		"COMPANY_SIZE": "Tamaño de la empresa",
@@ -1341,6 +1343,24 @@
 		"STANDARD_WORK_HOURS": "Horas de trabajo estándar ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Etiqueta de sincronización",
+				"TITLE": "Ajustes de sincronización",
+				"SUBTITLE": "Cómo se sincronizan las incidencias de {{ repository }} con {{ project }}",
+				"AUTO_SYNC": "Sincronizar incidencias automáticamente",
+				"AUTO_SYNC_HINT": "Las incidencias abiertas o modificadas en GitHub crean o actualizan tareas en este proyecto.",
+				"ONLY_LABELLED": "Solo incidencias con una etiqueta",
+				"ONLY_LABELLED_HINT": "Solo se sincronizan automáticamente las incidencias que llevan la etiqueta de abajo.",
+				"LABEL": "Etiqueta",
+				"LABEL_HINT": "Elija una etiqueta del repositorio o escriba otra. Déjela vacía para usar la etiqueta predeterminada, {{ label }}.",
+				"LABEL_INVALID": "Una etiqueta de GitHub es una sola línea de {{ max }} caracteres como máximo.",
+				"ALL_ISSUES": "Todas las incidencias",
+				"AUTO_SYNC_OFF": "Sincronización automática desactivada",
+				"EDIT": "Editar ajustes de sincronización",
+				"SAVED": "Ajustes de sincronización guardados para '{{ project }}'"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "Aplicaciones y integraciones disponibles",
 		"ADDED_UPWORK_TRANSACTION": "Añadida transacción de Upwork",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Transacción total de gastos exitosas: {{ totalExpenses }}. Transacción total de ingresos exitosas: {{ totalIncomes }}.",
@@ -1977,6 +1997,8 @@
 			"ASSIGN_TO": "Asignar a",
 			"INCLUDE_TAXES": "Incluir impuestos",
 			"ATTACH_A_RECEIPT": "Adjunta un recibo",
+			"NO_RECEIPT": "Aún no hay ningún recibo adjunto. Haga clic para subir uno.",
+			"RECEIPT_ATTACHED": "Recibo adjunto",
 			"EMPLOYEES_GENERATE_EXPENSE": "Empleados que generan gastos",
 			"TAX_DEDUCTIBLE": "Deducible de impuestos",
 			"NOT_TAX_DEDUCTIBLE": "No es deducible de impuestos.",

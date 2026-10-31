@@ -660,6 +660,8 @@
 		"NAME": "crwdns4618:0crwdne4618:0",
 		"YEAR": "crwdns4620:0crwdne4620:0",
 		"BANNER": "crwdns3854:0crwdne3854:0",
+		"BANNER_PLACEHOLDER": "e.g. We build open-source software for businesses",
+		"BANNER_HINT": "A short tagline shown under your company name on your public page",
 		"SIZE": "crwdns4622:0crwdne4622:0",
 		"YEAR_FOUNDED": "crwdns3856:0crwdne3856:0",
 		"COMPANY_SIZE": "crwdns4624:0crwdne4624:0",
@@ -1226,6 +1228,24 @@
 		}
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Sync label",
+				"TITLE": "Sync settings",
+				"SUBTITLE": "How issues of {{ repository }} sync into {{ project }}",
+				"AUTO_SYNC": "Auto-sync issues",
+				"AUTO_SYNC_HINT": "Issues opened or changed on GitHub create or update tasks in this project.",
+				"ONLY_LABELLED": "Only issues with a label",
+				"ONLY_LABELLED_HINT": "Only issues that carry the label below are synced automatically.",
+				"LABEL": "Label",
+				"LABEL_HINT": "Pick one of the repository's labels or type another. Leave it empty to use the default label, {{ label }}.",
+				"LABEL_INVALID": "A GitHub label is a single line of at most {{ max }} characters.",
+				"ALL_ISSUES": "All issues",
+				"AUTO_SYNC_OFF": "Auto-sync off",
+				"EDIT": "Edit sync settings",
+				"SAVED": "Sync settings saved for '{{ project }}'"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "crwdns8266:0crwdne8266:0",
 		"ADDED_UPWORK_TRANSACTION": "crwdns3202:0crwdne3202:0",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "crwdns3204:0{{ totalExpenses }}crwdnd3204:0{{ totalIncomes }}crwdne3204:0",
@@ -1861,6 +1881,8 @@
 			"ASSIGN_TO": "crwdns2553:0crwdne2553:0",
 			"INCLUDE_TAXES": "crwdns2555:0crwdne2555:0",
 			"ATTACH_A_RECEIPT": "crwdns2557:0crwdne2557:0",
+			"NO_RECEIPT": "No receipt attached yet. Click to upload one.",
+			"RECEIPT_ATTACHED": "Receipt attached",
 			"EMPLOYEES_GENERATE_EXPENSE": "crwdns7684:0crwdne7684:0",
 			"TAX_DEDUCTIBLE": "crwdns10006:0crwdne10006:0",
 			"NOT_TAX_DEDUCTIBLE": "crwdns10008:0crwdne10008:0",

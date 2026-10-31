@@ -762,6 +762,8 @@
 		"NAME": "Imię",
 		"YEAR": "Rok",
 		"BANNER": "Baner",
+		"BANNER_PLACEHOLDER": "np. Tworzymy oprogramowanie open source dla firm",
+		"BANNER_HINT": "Krótkie hasło wyświetlane pod nazwą firmy na Twojej stronie publicznej",
 		"SIZE": "Rozmiar",
 		"YEAR_FOUNDED": "Rok założenia",
 		"COMPANY_SIZE": "Rozmiar firmy",
@@ -1338,6 +1340,24 @@
 		"STANDARD_WORK_HOURS": "Standardowe godziny pracy ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Etykieta synchronizacji",
+				"TITLE": "Ustawienia synchronizacji",
+				"SUBTITLE": "Jak zgłoszenia z {{ repository }} są synchronizowane z {{ project }}",
+				"AUTO_SYNC": "Automatycznie synchronizuj zgłoszenia",
+				"AUTO_SYNC_HINT": "Zgłoszenia otwarte lub zmienione w GitHub tworzą lub aktualizują zadania w tym projekcie.",
+				"ONLY_LABELLED": "Tylko zgłoszenia z etykietą",
+				"ONLY_LABELLED_HINT": "Automatycznie synchronizowane są tylko zgłoszenia z poniższą etykietą.",
+				"LABEL": "Etykieta",
+				"LABEL_HINT": "Wybierz etykietę repozytorium lub wpisz inną. Pozostaw puste, aby użyć domyślnej etykiety {{ label }}.",
+				"LABEL_INVALID": "Etykieta GitHub to jeden wiersz o długości co najwyżej {{ max }} znaków.",
+				"ALL_ISSUES": "Wszystkie zgłoszenia",
+				"AUTO_SYNC_OFF": "Automatyczna synchronizacja wyłączona",
+				"EDIT": "Edytuj ustawienia synchronizacji",
+				"SAVED": "Zapisano ustawienia synchronizacji dla '{{ project }}'"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "Dostępne aplikacje i integracje",
 		"ADDED_UPWORK_TRANSACTION": "Dodana transakcja Upwork",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Całkowita liczba udanych transakcji wydatków: {{ totalExpenses }}. Całkowita liczba udanych transakcji przychodów: {{ totalIncomes }}",
@@ -1974,6 +1994,8 @@
 			"ASSIGN_TO": "Przypisać do",
 			"INCLUDE_TAXES": "Zawiera podatki",
 			"ATTACH_A_RECEIPT": "Załącz paragon",
+			"NO_RECEIPT": "Nie załączono jeszcze paragonu. Kliknij, aby go przesłać.",
+			"RECEIPT_ATTACHED": "Paragon załączony",
 			"EMPLOYEES_GENERATE_EXPENSE": "Pracownicy generujący wydatki",
 			"TAX_DEDUCTIBLE": "Odpowiedni do odliczenia od podatku",
 			"NOT_TAX_DEDUCTIBLE": "Nieodliczalne od podatku",

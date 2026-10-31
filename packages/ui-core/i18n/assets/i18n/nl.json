@@ -763,6 +763,8 @@
 		"NAME": "Naam",
 		"YEAR": "Jaar",
 		"BANNER": "Banner",
+		"BANNER_PLACEHOLDER": "bijv. Wij bouwen opensourcesoftware voor bedrijven",
+		"BANNER_HINT": "Een korte slogan die op je openbare pagina onder je bedrijfsnaam wordt getoond",
 		"SIZE": "Grootte",
 		"YEAR_FOUNDED": "Jaar Opgericht",
 		"COMPANY_SIZE": "Bedrijfsgrootte",
@@ -1339,6 +1341,24 @@
 		"STANDARD_WORK_HOURS": "Standaard werkuren ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Synclabel",
+				"TITLE": "Synchronisatie-instellingen",
+				"SUBTITLE": "Hoe issues van {{ repository }} met {{ project }} worden gesynchroniseerd",
+				"AUTO_SYNC": "Issues automatisch synchroniseren",
+				"AUTO_SYNC_HINT": "Issues die op GitHub worden geopend of gewijzigd, maken taken in dit project aan of werken ze bij.",
+				"ONLY_LABELLED": "Alleen issues met een label",
+				"ONLY_LABELLED_HINT": "Alleen issues met het label hieronder worden automatisch gesynchroniseerd.",
+				"LABEL": "Label",
+				"LABEL_HINT": "Kies een label van de repository of typ een ander. Laat leeg om het standaardlabel {{ label }} te gebruiken.",
+				"LABEL_INVALID": "Een GitHub-label is één regel van maximaal {{ max }} tekens.",
+				"ALL_ISSUES": "Alle issues",
+				"AUTO_SYNC_OFF": "Automatische synchronisatie uit",
+				"EDIT": "Synchronisatie-instellingen bewerken",
+				"SAVED": "Synchronisatie-instellingen opgeslagen voor '{{ project }}'"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "Beschikbare apps & integraties",
 		"ADDED_UPWORK_TRANSACTION": "Toegevoegde Upwork-transactie",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Totale uitgavetransacties succesvol: {{ totalExpenses }}. Totale inkomstentransacties succesvol: {{ totalIncomes }}.",
@@ -1975,6 +1995,8 @@
 			"ASSIGN_TO": "Toewijzen aan",
 			"INCLUDE_TAXES": "Inclusief belastingen",
 			"ATTACH_A_RECEIPT": "Voeg een bon toe",
+			"NO_RECEIPT": "Nog geen bon bijgevoegd. Klik om er een te uploaden.",
+			"RECEIPT_ATTACHED": "Bon bijgevoegd",
 			"EMPLOYEES_GENERATE_EXPENSE": "Werknemers die kosten genereren",
 			"TAX_DEDUCTIBLE": "Aftrekbaar van belastingen",
 			"NOT_TAX_DEDUCTIBLE": "Niet aftrekbaar voor belasting",

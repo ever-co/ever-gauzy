@@ -58,7 +58,10 @@ describe('DateRangePickerResolver — the route owns the unit where the picker i
 			['week', 'day', ...THAT_WEEK],
 			['week', 'month', ...THAT_WEEK],
 			['month', 'day', ...THAT_MONTH],
-			['month', 'week', ...THAT_MONTH]
+			['month', 'week', ...THAT_MONTH],
+			// A year picked on an unlocked page never stretches a locked one.
+			['day', 'year', WEDNESDAY, WEDNESDAY],
+			['month', 'year', ...THAT_MONTH]
 		])(
 			'a %s-locked route stays on its own unit when the URL says %s',
 			(unitOfTime, staleUnit, expectedStart, expectedEnd) => {
@@ -113,6 +116,24 @@ describe('DateRangePickerResolver — the route owns the unit where the picker i
 
 			expect(range.unitOfTime).toBe('month');
 			expect([day(range.startDate), day(range.endDate)]).toEqual(THAT_MONTH);
+		});
+
+		it('reloads a "Current Year" pick as the whole year', () => {
+			const range = resolve({ unit_of_time: 'year' }, { unitOfTime: 'week' });
+
+			expect(range.unitOfTime).toBe('year');
+			expect([day(range.startDate), day(range.endDate)]).toEqual(['2026-01-01', '2026-12-31']);
+		});
+
+		it('reloads a "Last Year" pick from the dates the picker wrote, still stepping by year', () => {
+			const range = resolve(
+				{ date: '2025-01-01', date_end: '2025-12-31', unit_of_time: 'year', is_custom_date: 'false' },
+				{ unitOfTime: 'week' }
+			);
+
+			expect(range.unitOfTime).toBe('year');
+			expect([day(range.startDate), day(range.endDate)]).toEqual(['2025-01-01', '2025-12-31']);
+			expect(range.isCustomDate).toBe(false);
 		});
 
 		it('preserves an explicit start and end, spanning whatever the user dragged', () => {
