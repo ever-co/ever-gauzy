@@ -46,7 +46,7 @@ export interface ReportDayData {
 	activity: number;
 	/** What the employee's tracked time in the range costs at their bill rate; `null` when they have no rate. */
 	spent?: number | null;
-	/** The currency `spent` is in: the employee's bill rate currency, `null` when it is not set. */
+	/** The currency `spent` is in: the employee's bill rate currency, or the organization's when the rate states none. */
 	currency?: IEmployee['billRateCurrency'] | null;
 }
 

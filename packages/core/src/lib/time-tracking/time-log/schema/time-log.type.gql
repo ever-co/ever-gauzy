@@ -386,9 +386,9 @@ type TimeLogWeeklyReport {
 	sum: Int
 	"The week's tracked activity, as a percentage."
 	activity: Float
-	"What the week's tracked time costs at the employee's bill rate, rounded to cents. Money; null without a rate."
+	"What the week's tracked time costs at the employee's bill rate, rounded once to the minor unit of `currency`. Money; null without a rate."
 	spent: Decimal
-	"The currency `spent` is in: the employee's bill rate currency, null where it is not set."
+	"The currency `spent` is in: the employee's bill rate currency, or the organization's where the rate states none. Null without an amount."
 	currency: String
 }
 
