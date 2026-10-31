@@ -177,6 +177,24 @@ describe('PublicPageOrganizationMutationComponent — the banner field explains 
 				document.removeEventListener('keyup', reachesDialog);
 			}
 		});
+
+		it('Escape closes a hint opened by hover while focus stays in the banner field, and only the hint', () => {
+			const reachesDialog = jest.fn();
+			document.addEventListener('keyup', reachesDialog);
+
+			try {
+				bannerInput().focus();
+				hint().triggerEventHandler('mouseenter', {});
+				expect(tooltip().isShown).toBe(true);
+
+				bannerInput().dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape', bubbles: true }));
+
+				expect(tooltip().isShown).toBe(false);
+				expect(reachesDialog).not.toHaveBeenCalled();
+			} finally {
+				document.removeEventListener('keyup', reachesDialog);
+			}
+		});
 	});
 
 	it('still edits the banner the organization already has', () => {

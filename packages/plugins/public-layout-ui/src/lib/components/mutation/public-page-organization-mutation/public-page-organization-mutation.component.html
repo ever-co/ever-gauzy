@@ -69,6 +69,7 @@
 								<!--
 									The hint opens on hover, keyboard focus and click/tap. Nebular's triggers each
 									cover only one of those (the default `hint` is mouse-only), so it is driven here.
+									Escape closes it without closing the dialog: see `closeHintOnEscape`.
 								-->
 								<button
 									type="button"
@@ -82,7 +83,6 @@
 									(focus)="bannerHint.show()"
 									(blur)="bannerHint.hide()"
 									(click)="bannerHint.show()"
-									(keyup.escape)="dismissHint(bannerHint, $event)"
 								>
 									<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
 								</button>
