@@ -38,8 +38,11 @@ const account = (id: string, role: RolesEnum, tenantId = TENANT_A) => ({
 	role: { name: role }
 });
 
+/** The two reset routes, plus the stubbed collaborators the tests inspect. */
+type ResetRoutes = Pick<AuthService, 'requestResetPassword' | 'resetPassword'> & Record<string, any>;
+
 /** An AuthService wired with only what the two reset routes touch. */
-function buildService(users: any[] = []) {
+function buildService(users: any[] = []): ResetRoutes {
 	const service: any = Object.create(AuthService.prototype);
 	Object.defineProperty(service, 'ormType', { get: () => MultiORMEnum.TypeORM });
 	service.logger = { error: jest.fn(), warn: jest.fn(), log: jest.fn(), debug: jest.fn() };
@@ -52,7 +55,7 @@ function buildService(users: any[] = []) {
 		findOneByIdString: jest.fn(async (id: string) => users.find((user) => user.id === id) ?? null),
 		changePassword: jest.fn(async () => undefined)
 	};
-	return service as AuthService & Record<string, any>;
+	return service;
 }
 
 const resetTokenFor = (user: { id: string; tenantId: string }) =>
