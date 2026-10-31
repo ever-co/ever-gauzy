@@ -6701,7 +6701,12 @@
 		"UNKNOWN": "Unknown",
 		"DEAL_DELETED": "Deal '{{ name }}' was removed",
 		"DEAL_EDITED": "Deal '{{ name }}' was changed",
-		"DEAL_ADDED": "Deal '{{ name }}' was added"
+		"DEAL_ADDED": "Deal '{{ name }}' was added",
+		"BOARD": "Board",
+		"BOARD_VIEW": "Show the deals as a board, one column per stage",
+		"LIST_VIEW": "Back to the list",
+		"BOARD_NO_STAGES": "This pipeline has no stages yet. Add stages to see its deals as a board.",
+		"BOARD_COLUMN_EMPTY": "No deals"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edit Deal | Pipeline: '{{ name }}'"

@@ -6100,7 +6100,12 @@
 		"UNKNOWN": "Nieznany",
 		"DEAL_DELETED": "Umowa '{{ name }}' została usunięta",
 		"DEAL_EDITED": "Umowa '{{ name }}' została zmieniona",
-		"DEAL_ADDED": "Transakcja '{{ name }}' została dodana"
+		"DEAL_ADDED": "Transakcja '{{ name }}' została dodana",
+		"BOARD": "Tablica",
+		"BOARD_VIEW": "Pokaż transakcje jako tablicę, jedna kolumna na etap",
+		"LIST_VIEW": "Powrót do listy",
+		"BOARD_NO_STAGES": "Ten lejek nie ma jeszcze etapów. Dodaj etapy, aby zobaczyć jego transakcje jako tablicę.",
+		"BOARD_COLUMN_EMPTY": "Brak transakcji"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edytuj umowę | Pipeline: '{{ name }}'"

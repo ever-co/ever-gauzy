@@ -5490,7 +5490,12 @@
 		"HIGH": "crwdns9838:0crwdne9838:0",
 		"DEAL_DELETED": "crwdns9180:0{{ name }}crwdne9180:0",
 		"DEAL_EDITED": "crwdns9182:0{{ name }}crwdne9182:0",
-		"DEAL_ADDED": "crwdns9184:0{{ name }}crwdne9184:0"
+		"DEAL_ADDED": "crwdns9184:0{{ name }}crwdne9184:0",
+		"BOARD": "Board",
+		"BOARD_VIEW": "Show the deals as a board, one column per stage",
+		"LIST_VIEW": "Back to the list",
+		"BOARD_NO_STAGES": "This pipeline has no stages yet. Add stages to see its deals as a board.",
+		"BOARD_COLUMN_EMPTY": "No deals"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "crwdns9910:0{{ name }}crwdne9910:0"

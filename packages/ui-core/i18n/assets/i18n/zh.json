@@ -6101,7 +6101,12 @@
 		"UNKNOWN": "未知",
 		"DEAL_DELETED": "交易'{{ name }}'已被删除",
 		"DEAL_EDITED": "交易“{{ name }}”已被修改",
-		"DEAL_ADDED": "交易 '{{ name }}' 已添加"
+		"DEAL_ADDED": "交易 '{{ name }}' 已添加",
+		"BOARD": "看板",
+		"BOARD_VIEW": "以看板显示交易，每个阶段一列",
+		"LIST_VIEW": "返回列表",
+		"BOARD_NO_STAGES": "此管道还没有阶段。添加阶段即可以看板查看其交易。",
+		"BOARD_COLUMN_EMPTY": "没有交易"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "编辑交易 | 渠道: '{{ name }}'"

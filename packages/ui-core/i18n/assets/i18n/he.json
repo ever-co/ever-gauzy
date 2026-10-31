@@ -6113,7 +6113,12 @@
 		"UNKNOWN": "לא ידוע",
 		"DEAL_DELETED": "Deal '{{ name }}' was removed",
 		"DEAL_EDITED": "Deal '{{ name }}' was changed",
-		"DEAL_ADDED": "Deal '{{ name }}' was added"
+		"DEAL_ADDED": "Deal '{{ name }}' was added",
+		"BOARD": "לוח",
+		"BOARD_VIEW": "הצגת העסקאות כלוח, עמודה לכל שלב",
+		"LIST_VIEW": "חזרה לרשימה",
+		"BOARD_NO_STAGES": "לצינור זה אין עדיין שלבים. הוסיפו שלבים כדי לראות את העסקאות שלו כלוח.",
+		"BOARD_COLUMN_EMPTY": "אין עסקאות"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Edit Deal | Pipeline: '{{ name }}'"

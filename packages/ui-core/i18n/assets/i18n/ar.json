@@ -6099,7 +6099,12 @@
 		"UNKNOWN": "Unknown",
 		"DEAL_DELETED": "تمت إزالة الصفقة '{{ name }}'",
 		"DEAL_EDITED": "تم تغيير الصفقة '{{ name }}'",
-		"DEAL_ADDED": "تمت إضافة الصفقة '{{ name }}'"
+		"DEAL_ADDED": "تمت إضافة الصفقة '{{ name }}'",
+		"BOARD": "لوحة",
+		"BOARD_VIEW": "عرض الصفقات كلوحة، عمود لكل مرحلة",
+		"LIST_VIEW": "العودة إلى القائمة",
+		"BOARD_NO_STAGES": "لا يحتوي خط الأنابيب هذا على مراحل بعد. أضف مراحل لعرض صفقاته كلوحة.",
+		"BOARD_COLUMN_EMPTY": "لا توجد صفقات"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "تعديل الصفقة | الخط الزمني: '{{ name }}'"

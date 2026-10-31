@@ -6103,7 +6103,12 @@
 		"UNKNOWN": "Desconocido",
 		"DEAL_DELETED": "El trato '{{ name }}' fue eliminado",
 		"DEAL_EDITED": "El acuerdo '{{ name }}' fue cambiado.",
-		"DEAL_ADDED": "El acuerdo '{{ name }}' fue añadido."
+		"DEAL_ADDED": "El acuerdo '{{ name }}' fue añadido.",
+		"BOARD": "Tablero",
+		"BOARD_VIEW": "Mostrar los negocios como tablero, una columna por etapa",
+		"LIST_VIEW": "Volver a la lista",
+		"BOARD_NO_STAGES": "Este pipeline aún no tiene etapas. Añada etapas para ver sus negocios como tablero.",
+		"BOARD_COLUMN_EMPTY": "Sin negocios"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Editar Acuerdo | Pipeline: '{{ name }}'"

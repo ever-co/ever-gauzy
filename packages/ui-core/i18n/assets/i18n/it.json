@@ -6101,7 +6101,12 @@
 		"UNKNOWN": "Sconosciuto",
 		"DEAL_DELETED": "L'accordo '{{ name }}' è stato rimosso",
 		"DEAL_EDITED": "L'accordo '{{ name }}' è stato modificato",
-		"DEAL_ADDED": "L'accordo '{{ name }}' è stato aggiunto"
+		"DEAL_ADDED": "L'accordo '{{ name }}' è stato aggiunto",
+		"BOARD": "Bacheca",
+		"BOARD_VIEW": "Mostra le trattative come bacheca, una colonna per fase",
+		"LIST_VIEW": "Torna all'elenco",
+		"BOARD_NO_STAGES": "Questa pipeline non ha ancora fasi. Aggiungi delle fasi per vedere le sue trattative come bacheca.",
+		"BOARD_COLUMN_EMPTY": "Nessuna trattativa"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Modifica Affare | Pipeline: '{{ name }}'"

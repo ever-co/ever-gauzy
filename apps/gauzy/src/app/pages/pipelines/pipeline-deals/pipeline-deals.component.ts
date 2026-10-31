@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { ActivatedRoute, Data } from '@angular/router';
+import { ActivatedRoute, Data, ParamMap, Router } from '@angular/router';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { IDeal, IPipeline, ComponentLayoutStyleEnum, IOrganization, ID, IPagination } from '@gauzy/contracts';
 import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import { DealsService, ErrorHandlingService, PipelinesService, Store, ToastrService } from '@gauzy/ui-core/core';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs/operators';
 import { catchError, combineLatest, firstValueFrom, map, Observable, of, Subject, switchMap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -18,6 +18,9 @@ import {
 } from '@gauzy/ui-core/shared';
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
+
+/** The `view` query parameter that opens the deals as a board, so the board can be linked to and survives a reload. */
+export const DEALS_BOARD_VIEW = 'board';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,6 +46,10 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 	public pipeline: IPipeline;
 	public pipeline$: Observable<IPipeline>;
 	public deals$: Observable<IDeal[]>;
+	/** The deals shown as a board, one column per stage, in place of the table or the cards grid (opt-in). */
+	public isBoardView = false;
+	/** A deal was moved on the board: the table and grid read the deals again before they show. */
+	private _boardChanged = false;
 
 	/**
 	 * Checks if the current layout style is grid.
@@ -67,7 +74,8 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 		private readonly _toastrService: ToastrService,
 		private readonly _store: Store,
 		private readonly _activatedRoute: ActivatedRoute,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _router: Router
 	) {
 		super(translateService);
 		this.setView();
@@ -108,7 +116,8 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 						organizationId,
 						tenantId
 					},
-					['stage', 'createdByUser']
+					// `client`: the board's cards name the deal's client.
+					['stage', 'createdByUser', 'client']
 				);
 			}),
 			// Map the contacts to the clients property
@@ -149,6 +158,50 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		// The board view follows the `view` query parameter, so it can be linked to and survives a reload.
+		this._activatedRoute.queryParamMap
+			.pipe(
+				map((params: ParamMap) => params.get('view') === DEALS_BOARD_VIEW),
+				distinctUntilChanged(),
+				tap((isBoardView: boolean) => this._applyBoardView(isBoardView)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Opens the deals as a board, or goes back to the table or cards grid the layout selector chose.
+	 */
+	toggleBoardView(): void {
+		this._router.navigate([], {
+			relativeTo: this._activatedRoute,
+			queryParams: { view: this.isBoardView ? null : DEALS_BOARD_VIEW },
+			queryParamsHandling: 'merge'
+		});
+	}
+
+	/**
+	 * A deal was saved at another stage from the board.
+	 */
+	onBoardDealMoved(): void {
+		this._boardChanged = true;
+	}
+
+	/**
+	 * Shows or leaves the board.
+	 *
+	 * @param isBoardView Whether the deals show as a board.
+	 */
+	private _applyBoardView(isBoardView: boolean): void {
+		this.isBoardView = isBoardView;
+		// A row picked in the table has no card standing for it on the board.
+		this.clearItem();
+		// Back from a board where deals moved: the table and grid read the deals again.
+		if (!isBoardView && this._boardChanged) {
+			this._boardChanged = false;
+			this.subject$.next(true);
+		}
 	}
 
 	ngAfterViewInit() {

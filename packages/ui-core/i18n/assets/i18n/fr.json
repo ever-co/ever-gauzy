@@ -6099,7 +6099,12 @@
 		"UNKNOWN": "Inconnu",
 		"DEAL_DELETED": "L'accord '{{ name }}' a été supprimé.",
 		"DEAL_EDITED": "L'accord '{{ name }}' a été modifié.",
-		"DEAL_ADDED": "La transaction '{{ name }}' a été ajoutée"
+		"DEAL_ADDED": "La transaction '{{ name }}' a été ajoutée",
+		"BOARD": "Tableau",
+		"BOARD_VIEW": "Afficher les affaires sous forme de tableau, une colonne par étape",
+		"LIST_VIEW": "Retour à la liste",
+		"BOARD_NO_STAGES": "Ce pipeline n'a pas encore d'étapes. Ajoutez des étapes pour voir ses affaires sous forme de tableau.",
+		"BOARD_COLUMN_EMPTY": "Aucune affaire"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Modifier l'affaire | Pipeline : '{{ name }}'"

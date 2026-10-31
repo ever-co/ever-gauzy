@@ -6097,7 +6097,12 @@
 		"UNKNOWN": "Unbekannt",
 		"DEAL_DELETED": "Der Deal '{{ name }}' wurde entfernt.",
 		"DEAL_EDITED": "Deal '{{ name }}' wurde geändert.",
-		"DEAL_ADDED": "Deal '{{ name }}' wurde hinzugefügt."
+		"DEAL_ADDED": "Deal '{{ name }}' wurde hinzugefügt.",
+		"BOARD": "Board",
+		"BOARD_VIEW": "Deals als Board anzeigen, eine Spalte pro Phase",
+		"LIST_VIEW": "Zurück zur Liste",
+		"BOARD_NO_STAGES": "Diese Pipeline hat noch keine Phasen. Fügen Sie Phasen hinzu, um ihre Deals als Board zu sehen.",
+		"BOARD_COLUMN_EMPTY": "Keine Deals"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Bearbeiten Sie das Angebot | Vertriebspipeline: '{{ name }}'"

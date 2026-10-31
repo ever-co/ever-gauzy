@@ -6101,7 +6101,12 @@
 		"UNKNOWN": "Onbekend",
 		"DEAL_DELETED": "Deal '{{ name }}' is verwijderd",
 		"DEAL_EDITED": "Deal '{{ name }}' werd gewijzigd",
-		"DEAL_ADDED": "Deal '{{ name }}' is toegevoegd"
+		"DEAL_ADDED": "Deal '{{ name }}' is toegevoegd",
+		"BOARD": "Bord",
+		"BOARD_VIEW": "Deals als bord tonen, één kolom per fase",
+		"LIST_VIEW": "Terug naar de lijst",
+		"BOARD_NO_STAGES": "Deze pipeline heeft nog geen fasen. Voeg fasen toe om de deals als bord te zien.",
+		"BOARD_COLUMN_EMPTY": "Geen deals"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Bewerk Deal | Pipeline: '{{ name }}'"
