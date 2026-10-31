@@ -17,7 +17,6 @@ import {
 	IEntitlementOrderStatePort,
 	IEntitlementScope
 } from '../entitlement.types';
-import { Entitlement } from '../entitlement/entitlement.entity';
 import { EntitlementService } from '../entitlement/entitlement.service';
 import { activatableOrderLines, orderWithdrawalReason } from './entitlement-order-settlement';
 
@@ -426,7 +425,7 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 				continue;
 			}
 
-			const entitlements = await this.findByOrderLine(line.orderLineId, scope);
+			const entitlements = await this.entitlementService.findGranted({ orderLineId: line.orderLineId }, scope);
 
 			for (const entitlement of entitlements) {
 				if (line.full === true || line.quantity === undefined) {
@@ -481,7 +480,7 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			return;
 		}
 
-		const entitlements = await this.findBySubscription(subscriptionId, scope);
+		const entitlements = await this.entitlementService.findGranted({ subscriptionId }, scope);
 
 		for (const entitlement of entitlements) {
 			await this.entitlementService.extend(
@@ -514,7 +513,7 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			return;
 		}
 
-		for (const entitlement of await this.findBySubscription(subscriptionId, scope)) {
+		for (const entitlement of await this.entitlementService.findGranted({ subscriptionId }, scope)) {
 			await this.entitlementService.suspend(entitlement.id, EntitlementSuspensionReason.PAYMENT_FAILED, scope);
 		}
 	}
@@ -549,7 +548,7 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			return;
 		}
 
-		for (const entitlement of await this.findBySubscription(subscriptionId, scope)) {
+		for (const entitlement of await this.entitlementService.findGranted({ subscriptionId }, scope)) {
 			await this.entitlementService.revoke(
 				entitlement.id,
 				EntitlementRevocationReason.SUBSCRIPTION_ENDED,
@@ -572,7 +571,7 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			return;
 		}
 
-		for (const entitlement of await this.findBySubscription(subscriptionId, scope)) {
+		for (const entitlement of await this.entitlementService.findGranted({ subscriptionId }, scope)) {
 			await this.entitlementService.expire(entitlement.id, data.reason ?? 'SUBSCRIPTION_EXPIRED', scope);
 		}
 	}
@@ -585,53 +584,8 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 	 * @param scope The tenant and organization.
 	 */
 	private async withdrawOrder(orderId: ID, reason: string, scope: IEntitlementScope): Promise<void> {
-		for (const entitlement of await this.findByOrder(orderId, scope)) {
+		for (const entitlement of await this.entitlementService.findGranted({ orderId }, scope)) {
 			await this.entitlementService.revoke(entitlement.id, reason, scope);
 		}
-	}
-
-	/**
-	 * @param orderId The order.
-	 * @param scope The tenant and organization.
-	 * @returns The rights the order granted.
-	 */
-	private async findByOrder(orderId: ID, scope: IEntitlementScope): Promise<Entitlement[]> {
-		return await this.entitlementService.find({
-			where: {
-				orderId,
-				...(scope.tenantId ? { tenantId: scope.tenantId } : {}),
-				...(scope.organizationId ? { organizationId: scope.organizationId } : {})
-			} as any
-		});
-	}
-
-	/**
-	 * @param orderLineId The granting line.
-	 * @param scope The tenant and organization.
-	 * @returns The rights the line granted.
-	 */
-	private async findByOrderLine(orderLineId: ID, scope: IEntitlementScope): Promise<Entitlement[]> {
-		return await this.entitlementService.find({
-			where: {
-				orderLineId,
-				...(scope.tenantId ? { tenantId: scope.tenantId } : {}),
-				...(scope.organizationId ? { organizationId: scope.organizationId } : {})
-			} as any
-		});
-	}
-
-	/**
-	 * @param subscriptionId The subscription.
-	 * @param scope The tenant and organization.
-	 * @returns The rights the subscription keeps alive.
-	 */
-	private async findBySubscription(subscriptionId: ID, scope: IEntitlementScope): Promise<Entitlement[]> {
-		return await this.entitlementService.find({
-			where: {
-				subscriptionId,
-				...(scope.tenantId ? { tenantId: scope.tenantId } : {}),
-				...(scope.organizationId ? { organizationId: scope.organizationId } : {})
-			} as any
-		});
 	}
 }

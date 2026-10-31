@@ -96,7 +96,7 @@ async function place(options: {
 
 			return [];
 		},
-		find: async () =>
+		findGranted: async () =>
 			[...(options.existing ?? []), ...granted.map((_, index) => `entitlement-${index + 1}`)].map((id) => ({
 				id
 			})),

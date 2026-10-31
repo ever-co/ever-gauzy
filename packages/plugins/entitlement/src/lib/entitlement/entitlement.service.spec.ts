@@ -458,6 +458,7 @@ function entitlementFixture(
 		// The statement a conditional write goes through: the criteria — `version` included — decides
 		// which row the patch reaches, so a row that holds another version reports nothing affected.
 		update: async (criteria: any, patch: Row) => await manager.update(Entitlement, criteria, patch),
+		find: async (options: any = {}) => await manager.find(Entitlement, options),
 		findOne: async (options: any = {}) => {
 			const { where, order } = options;
 
@@ -1164,6 +1165,27 @@ describe('EntitlementService — putting a purchased right into force (doc 05 §
 		expect(fixture.store('refunded').status).toBe(EntitlementStatus.PENDING);
 		expect(fixture.store('elsewhere').status).toBe(EntitlementStatus.PENDING);
 		expect(fixture.events()).toEqual([EntitlementEventName.ACTIVATED]);
+	});
+
+	it('reads the rights one provenance granted under the scope stated, in any status, and nothing for none', async () => {
+		const fixture = entitlementFixture({
+			rights: [
+				rightRow('a', { orderId: ORDER, orderLineId: 'line-1', status: EntitlementStatus.PENDING }),
+				rightRow('b', { orderId: ORDER, orderLineId: 'line-2', status: EntitlementStatus.REVOKED }),
+				rightRow('c', { orderId: 'another-order', subscriptionId: 'sub-1', status: EntitlementStatus.ACTIVE })
+			]
+		});
+		const ids = (rows: { id?: unknown }[]) => rows.map((row) => row.id).sort();
+
+		expect(
+			ids(await fixture.service.findGranted({ orderId: ORDER }, { tenantId: TENANT, organizationId: ORG }))
+		).toEqual(['a', 'b']);
+		expect(ids(await fixture.service.findGranted({ orderLineId: 'line-2' }, { tenantId: TENANT }))).toEqual(['b']);
+		expect(ids(await fixture.service.findGranted({ subscriptionId: 'sub-1' }, { tenantId: TENANT }))).toEqual([
+			'c'
+		]);
+		expect(await fixture.service.findGranted({ orderId: ORDER }, { tenantId: 'another-tenant' })).toEqual([]);
+		expect(await fixture.service.findGranted({}, { tenantId: TENANT })).toEqual([]);
 	});
 
 	it('ignores a line named without its order, and answers nothing', async () => {

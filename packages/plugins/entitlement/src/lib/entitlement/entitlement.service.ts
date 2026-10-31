@@ -320,6 +320,38 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	}
 
 	/**
+	 * Reads the rights one provenance granted: an order, one of its lines, or a subscription.
+	 *
+	 * What the event consumer withdraws, reduces or revokes through. It reads through the same path as this
+	 * service's own reads outside a transaction ({@link entitlementRows}): the TypeORM repository under TypeORM,
+	 * and a fresh MikroORM fork under MikroORM, so a delivery that runs without a request (and therefore without a
+	 * MikroORM request context) can still read. Only the scope stated is applied; there is no caller to read it
+	 * from.
+	 *
+	 * @param provenance The order, the order line or the subscription; at least one must be named.
+	 * @param scope The tenant and organization the event belongs to.
+	 * @returns The rights, in any status; none when no provenance is named.
+	 */
+	public async findGranted(
+		provenance: { orderId?: ID; orderLineId?: ID; subscriptionId?: ID },
+		scope: IEntitlementScope = {}
+	): Promise<Entitlement[]> {
+		if (!provenance.orderId && !provenance.orderLineId && !provenance.subscriptionId) {
+			return [];
+		}
+
+		return await this.entitlementRows().find({
+			where: {
+				...(provenance.orderId ? { orderId: provenance.orderId } : {}),
+				...(provenance.orderLineId ? { orderLineId: provenance.orderLineId } : {}),
+				...(provenance.subscriptionId ? { subscriptionId: provenance.subscriptionId } : {}),
+				...(scope.tenantId ? { tenantId: scope.tenantId } : {}),
+				...(scope.organizationId ? { organizationId: scope.organizationId } : {})
+			} as any
+		});
+	}
+
+	/**
 	 * Puts the rights a purchase granted into force.
 	 *
 	 * This is what the payment, order-completion and subscription events call: a right is granted

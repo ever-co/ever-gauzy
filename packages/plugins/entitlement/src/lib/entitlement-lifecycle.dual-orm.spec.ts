@@ -1417,14 +1417,6 @@ describe.each([
 			} = {}
 		): Promise<Row[]> {
 			const port = state ? { findState: async () => state } : undefined;
-			// The CRUD base this harness doubles has no `find`; the consumer's withdrawal and refund paths read the
-			// rights through it, so it is answered from the table, matching every member of the criteria.
-			Object.assign(harness.entitlements, {
-				find: async ({ where }: { where: Row }) =>
-					(await harness.rows('entitlement')).filter((row) =>
-						Object.entries(where).every(([member, value]) => row[member] === value)
-					)
-			});
 			const consumer = new EntitlementGrantConsumer(harness.entitlements, undefined, port);
 			const deliver = (name: string, data: Row) =>
 				consumer.handle(
