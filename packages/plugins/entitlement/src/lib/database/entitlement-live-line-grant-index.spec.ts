@@ -1,9 +1,16 @@
+// The repository is only the provider's way to TypeORM's connection; its entity graph has no part in these cases.
+jest.mock('../entitlement/repository/type-orm-entitlement.repository', () => ({
+	TypeOrmEntitlementRepository: class {}
+}));
+
+import { Logger } from '@nestjs/common';
 import { DatabaseTypeEnum } from '@gauzy/config';
 import {
 	AddEntitlementLiveLineGrantUniqueIndex1791000003580,
 	AddEntitlementVersionColumn1791000000580,
 	ENTITLEMENT_MIGRATIONS
 } from './migrations';
+import { EntitlementLiveLineGrantIndex } from './entitlement-live-line-grant-index';
 
 /**
  * #11023 — one order line grants at most one live right of a kind.
@@ -180,5 +187,85 @@ describe('AddEntitlementLiveLineGrantUniqueIndex1791000003580 (#11023)', () => {
 		expect(ENTITLEMENT_MIGRATIONS.indexOf(AddEntitlementVersionColumn1791000000580)).toBeLessThan(
 			ENTITLEMENT_MIGRATIONS.indexOf(AddEntitlementLiveLineGrantUniqueIndex1791000003580)
 		);
+	});
+});
+
+/**
+ * #11601 review — a database whose duplicates kept the tick from creating the index is recorded as migrated all the
+ * same, so the plugin runs the tick's guarded statements again at every start and tells the grant what it found.
+ */
+describe('EntitlementLiveLineGrantIndex', () => {
+	beforeEach(() => {
+		jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** The provider over a TypeORM connection whose query runners are the one given. */
+	const providerOver = (runner: object) => {
+		const released = jest.fn(async () => undefined);
+		const provider = new EntitlementLiveLineGrantIndex({
+			manager: { connection: { createQueryRunner: () => ({ ...runner, release: released }) } }
+		} as never);
+
+		return { provider, released };
+	};
+
+	it('answers from the tick’s own check whether the index is there afterwards', async () => {
+		for (const type of [DatabaseTypeEnum.postgres, DatabaseTypeEnum.sqlite, DatabaseTypeEnum.mysql]) {
+			const migration = new AddEntitlementLiveLineGrantUniqueIndex1791000003580();
+
+			await expect(migration.install(recordingRunner({ type, index: true }) as never)).resolves.toBe(true);
+			await expect(migration.install(recordingRunner({ type }) as never)).resolves.toBe(true);
+			await expect(migration.install(recordingRunner({ type, duplicates: ['line-1'] }) as never)).resolves.toBe(
+				false
+			);
+			await expect(migration.install(recordingRunner({ type, table: false }) as never)).resolves.toBe(false);
+		}
+	});
+
+	it('creates the index at start once the duplicates are gone, and tells the grant it is there', async () => {
+		const runner = recordingRunner({ type: DatabaseTypeEnum.postgres });
+		const { provider, released } = providerOver(runner);
+
+		expect(provider.isPresent()).toBe(false);
+
+		await provider.onApplicationBootstrap();
+
+		expect(ddlOf(runner)).toEqual([
+			expect.stringContaining('CREATE UNIQUE INDEX IF NOT EXISTS "UQ_entitlement_live_line_grant"')
+		]);
+		expect(provider.isPresent()).toBe(true);
+		expect(released).toHaveBeenCalledTimes(1);
+	});
+
+	it('withholds it while duplicates remain, says how they are handled meanwhile, and tells the grant it is missing', async () => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const runner = recordingRunner({ type: DatabaseTypeEnum.postgres, duplicates: ['line-1'] });
+		const { provider } = providerOver(runner);
+
+		await expect(provider.refresh()).resolves.toBe(false);
+
+		expect(ddlOf(runner)).toEqual([]);
+		expect(provider.isPresent()).toBe(false);
+		expect(String(warn.mock.calls[0][0])).toMatch(/locks the line for its transaction/);
+		expect(String(warn.mock.calls[0][0])).toMatch(/next start of the API creates the index/);
+	});
+
+	it('answers "missing" when the check itself fails, logs why, and still releases the runner', async () => {
+		const error = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+		const { provider, released } = providerOver({
+			connection: { options: { type: DatabaseTypeEnum.postgres } },
+			hasTable: async () => {
+				throw new Error('permission denied for table entitlement');
+			}
+		});
+
+		await expect(provider.refresh()).resolves.toBe(false);
+
+		expect(provider.isPresent()).toBe(false);
+		expect(String(error.mock.calls[0][0])).toContain('permission denied for table entitlement');
+		expect(released).toHaveBeenCalledTimes(1);
 	});
 });

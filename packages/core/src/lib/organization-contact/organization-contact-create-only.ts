@@ -29,7 +29,9 @@ export type FindContactProjects = (ids: ID[]) => Promise<Pick<IOrganizationProje
  *   candidate or contact holding them;
  * - existing invoices, payments, expenses, incomes and time logs are refused;
  * - projects may be named only by id, only when they are projects of the organization that have no contact yet,
- *   and only the link is written: nothing else the body says about a project is saved.
+ *   and only the link is written: nothing else the body says about a project is saved. This read can be overtaken
+ *   by another request, so the link is written only where the project still has no contact
+ *   (`OrganizationContactService.createClaimingProjects`).
  *
  * Everything else — the contact's own fields, its members, tags and new contact details — is created as for any
  * caller.
