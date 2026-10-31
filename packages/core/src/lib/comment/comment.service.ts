@@ -12,6 +12,7 @@ import {
 	UpdateResult
 } from 'typeorm';
 import { isUUID } from 'class-validator';
+import { parseToBoolean } from '@gauzy/utils';
 import {
 	BaseEntityEnum,
 	EntitySubscriptionTypeEnum,
@@ -24,7 +25,7 @@ import {
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { IFindOneOptions } from '../core/crud/icrud.service';
-import { LegacyFindManyOptions, LegacyFindOneOptions } from '../core/utils';
+import { LegacyFindManyOptions, LegacyFindOneOptions, normalizeRelationsToPaths } from '../core/utils';
 import { RequestContext } from '../core/context';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { EmployeeService } from '../employee/employee.service';
@@ -245,44 +246,28 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * Lists comments (`GET /comment`, the `comments` field). See {@link readWithinParents}.
 	 */
 	public async findAll(filter?: LegacyFindManyOptions<Comment>): Promise<IPagination<Comment>> {
-		return this.readWithinParents(
-			filter?.where,
-			(where) => super.findAll(withWhere(filter, where)),
-			filter?.withDeleted
-		);
+		return this.readWithinParents(filter?.where, (where) => super.findAll(withWhere(filter, where)), filter);
 	}
 
 	/**
 	 * Lists comments. See {@link readWithinParents}.
 	 */
 	public async find(filter?: LegacyFindManyOptions<Comment>): Promise<Comment[]> {
-		return this.readWithinParents(
-			filter?.where,
-			(where) => super.find(withWhere(filter, where)),
-			filter?.withDeleted
-		);
+		return this.readWithinParents(filter?.where, (where) => super.find(withWhere(filter, where)), filter);
 	}
 
 	/**
 	 * Lists a page of comments (`GET /comment/pagination`). See {@link readWithinParents}.
 	 */
 	public async paginate(filter?: LegacyFindManyOptions<Comment>): Promise<IPagination<Comment>> {
-		return this.readWithinParents(
-			filter?.where,
-			(where) => super.paginate(withWhere(filter, where)),
-			filter?.withDeleted
-		);
+		return this.readWithinParents(filter?.where, (where) => super.paginate(withWhere(filter, where)), filter);
 	}
 
 	/**
 	 * Counts comments. See {@link readWithinParents}.
 	 */
 	public async count(options?: LegacyFindManyOptions<Comment>): Promise<number> {
-		return this.readWithinParents(
-			options?.where,
-			(where) => super.count(withWhere(options, where)),
-			options?.withDeleted
-		);
+		return this.readWithinParents(options?.where, (where) => super.count(withWhere(options, where)), options);
 	}
 
 	/**
@@ -314,9 +299,13 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		}
 
 		await this._parentAccess.assertMay('read', stored.entity, stored.entityId);
-		// A withdrawn note is its author's, as a withdrawn comment is everywhere else (see mayReadWithdrawnOf).
-		if (stored.deletedAt && !this.mayReadWithdrawnOf([stored.entity]) && !this.isCallerAuthorOf(stored)) {
-			throw new NotFoundException(`The requested record was not found`);
+		if (parseToBoolean(options?.withDeleted) && !this.mayReadWithdrawnOf([stored.entity])) {
+			// A withdrawn note is its author's, as a withdrawn comment is everywhere else (see mayReadWithdrawnOf),
+			// and what the read would join beside it includes other authors' withdrawn comments.
+			assertReadsCommentsOnly(pinned?.where, pinned);
+			if (stored.deletedAt && !this.isCallerAuthorOf(stored)) {
+				throw new NotFoundException(`The requested record was not found`);
+			}
 		}
 		return this.readAcrossAuthors(() => this.findOneByIdString(id, pinned));
 	}
@@ -513,16 +502,17 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * exactly as before.
 	 *
 	 * A read that includes withdrawn comments (`withDeleted`) answers the withdrawn comments of a governed record to
-	 * their authors only, unless the caller may write that record's comments (see {@link mayReadWithdrawnOf}).
+	 * their authors only, unless the caller may write that record's comments (see {@link mayReadWithdrawnOf}). Such a
+	 * read states its criteria on the comments alone and loads no relations (see {@link assertReadsCommentsOnly}).
 	 *
 	 * @param where - The read's criteria.
 	 * @param read - The base read, given the criteria to run.
-	 * @param withDeleted - Whether the read includes withdrawn comments.
+	 * @param options - The read's options: whether it includes withdrawn comments, and what it loads beside them.
 	 */
 	private async readWithinParents<R>(
 		where: unknown,
 		read: (where: unknown) => Promise<R>,
-		withDeleted?: unknown
+		options?: { withDeleted?: unknown }
 	): Promise<R> {
 		const scope = scopeCommentReadToParents(where as object, this._parentAccess.governedEntities(), (entity) =>
 			this._parentAccess.governedTypeOf(entity)
@@ -534,10 +524,12 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			return read(scope.where);
 		}
 
-		const criteria =
-			withDeleted && !this.mayReadWithdrawnOf(scope.parents.map(({ entity }) => entity))
-				? this.withdrawnKeptToAuthor(scope.where)
-				: scope.where;
+		const keptToAuthor =
+			parseToBoolean(options?.withDeleted) && !this.mayReadWithdrawnOf(scope.parents.map(({ entity }) => entity));
+		if (keptToAuthor) {
+			assertReadsCommentsOnly(scope.where, options);
+		}
+		const criteria = keptToAuthor ? this.withdrawnKeptToAuthor(scope.where) : scope.where;
 		return this.readAcrossAuthors(() => read(criteria));
 	}
 
@@ -714,6 +706,40 @@ function alongside(stated: unknown, condition: FindOperator<unknown>): FindOpera
 		return statedIsNull && conditionIsNull ? condition : undefined;
 	}
 	return And(stated instanceof FindOperator ? stated : Equal(stated), condition);
+}
+
+/**
+ * Refuses a read of withdrawn comments kept to their author that also loads relations or states criteria on one.
+ *
+ * With `withDeleted`, what a read joins includes withdrawn rows too, whoever wrote them: the replies or the parent it
+ * loads, and the related rows its criteria filter by. The author scope applies to the comments read, not to those.
+ *
+ * @param where - The read's criteria.
+ * @param options - The read's options.
+ * @throws {BadRequestException} When the read loads a relation, or states criteria on one.
+ */
+function assertReadsCommentsOnly(where: unknown, options: unknown): void {
+	const { relations, loadRelationIds, join } = (options ?? {}) as Record<string, unknown>;
+	const alternatives = (Array.isArray(where) ? where : [where ?? {}]) as Record<string, unknown>[];
+	const filtersByRelation = alternatives.some((alternative) =>
+		Object.values(alternative ?? {}).some(isRelationCriterion)
+	);
+	if (normalizeRelationsToPaths(relations).length > 0 || loadRelationIds || join || filtersByRelation) {
+		throw new BadRequestException(
+			'A read that includes withdrawn comments states its criteria on the comments alone and loads no relations, unless you may edit the comments of their record.'
+		);
+	}
+}
+
+/** Whether a criterion's value filters by a related row: a nested object, rather than a value or a find operator. */
+function isRelationCriterion(value: unknown): boolean {
+	return (
+		value !== null &&
+		typeof value === 'object' &&
+		!(value instanceof FindOperator) &&
+		!(value instanceof Date) &&
+		!Array.isArray(value)
+	);
 }
 
 /** Whether `condition` is `IsNull()`. */

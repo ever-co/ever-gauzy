@@ -507,6 +507,48 @@ describe('CommentService — the comments of a governed record follow its policy
 				);
 			});
 
+			it('refuses a viewer’s read of withdrawn notes that loads or filters by relations', async () => {
+				as([PermissionsEnum.ORG_CONTACT_VIEW]);
+				const findAll = listed();
+				const where = { entity: CONTACT, entityId: CONTACT_ID };
+
+				for (const options of [
+					{ where, withDeleted: true, relations: ['replies'] },
+					{ where, withDeleted: true, relations: { parent: true } },
+					{ where, withDeleted: 'true', relations: ['employee'] },
+					{ where, withDeleted: true, loadRelationIds: true },
+					{
+						where,
+						withDeleted: true,
+						join: { alias: 'comment', leftJoinAndSelect: { r: 'comment.replies' } }
+					},
+					{ where: { ...where, replies: { comment: 'Called them' } }, withDeleted: true }
+				]) {
+					await expect(service.findAll(options as any)).rejects.toBeInstanceOf(BadRequestException);
+				}
+				await expect(
+					service.findReadableById(OWN_WITHDRAWN_NOTE, { withDeleted: true, relations: ['replies'] } as any)
+				).rejects.toBeInstanceOf(BadRequestException);
+				expect(findAll).not.toHaveBeenCalled();
+			});
+
+			it('loads relations as before on live notes, and for those who may write notes', async () => {
+				const findAll = listed();
+				const where = { entity: CONTACT, entityId: CONTACT_ID };
+
+				as([PermissionsEnum.ORG_CONTACT_VIEW]);
+				await service.findAll({ where, relations: ['replies'] } as any);
+				await service.findAll({ where, withDeleted: 'false', relations: ['replies'] } as any);
+				await expect(
+					service.findReadableById(NOTE, { withDeleted: false, relations: ['replies'] } as any)
+				).resolves.toEqual(expect.objectContaining({ id: NOTE }));
+				as([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT]);
+				await service.findAll({ where, withDeleted: true, relations: ['replies'] } as any);
+
+				expect(findAll).toHaveBeenCalledTimes(3);
+				expect(findAll).toHaveBeenLastCalledWith({ where, withDeleted: true, relations: ['replies'] });
+			});
+
 			it('keeps a project comment list with withdrawn rows exactly as before', async () => {
 				as([]);
 				const findAll = listed();
