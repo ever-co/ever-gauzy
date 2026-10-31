@@ -91,11 +91,11 @@ const DEAL_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * **The guard chain and the class permission are the controller's.** `DealController` carries
  * `TenantPermissionGuard` and `PermissionGuard` on the class and states `VIEW_SALES_PIPELINES` there,
  * so this class carries the same three things — the two guards, the gate below, and that permission.
- * Each field then states the permission its own route runs under, which for this resource is the
- * class permission on every route except the create: the one-row read, the count, the edit, the
- * removal and the two lifecycle moves all inherit it, and only `POST /deals` raises itself to
- * `EDIT_SALES_PIPELINES`. Stating the edit permission on the reads here "to make them consistent"
- * would refuse a caller the REST list route serves.
+ * Each field then states the permission its own route runs under: the reads (the list, the one-row
+ * read and the count) inherit the class's view permission, and every write (the create, the edit, the
+ * removal and the two lifecycle moves) states `EDIT_SALES_PIPELINES`, as its route does. Stating the
+ * edit permission on the reads here "to make them consistent" would refuse a caller the REST list
+ * route serves.
  *
  * **The gate is the catalogue's**: `FEATURE_GRAPHQL` is the code the commerce catalogue declares for
  * the GraphQL endpoint and its resolvers, applied once here so every field below is behind the one
@@ -201,7 +201,7 @@ export class DealResolver {
 	 * not there, is answered with the miss rather than with a write.
 	 */
 	@Mutation('updateDeal')
-	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
+	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	async updateDeal(@Args('input') input: IUpdateDealInput): Promise<Deal> {
 		const { id, ...values } = input;
 
@@ -218,7 +218,7 @@ export class DealResolver {
 	 * succeeded.
 	 */
 	@Mutation('deleteDeal')
-	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
+	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	async deleteDeal(@Args('id', { type: () => ID }) id: Id): Promise<boolean> {
 		return deleteRemovedRows(await this.dealService.delete(id));
 	}
@@ -227,7 +227,7 @@ export class DealResolver {
 	 * Withdraws a deal: the row is marked rather than removed, and the recovery below reads it back.
 	 */
 	@Mutation('softDeleteDeal')
-	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
+	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	async softDeleteDeal(@Args('id', { type: () => ID }) id: Id): Promise<Deal> {
 		return await this.dealService.softRemove(id);
 	}
@@ -236,7 +236,7 @@ export class DealResolver {
 	 * Puts a withdrawn deal back, clearing the marker the withdrawal set.
 	 */
 	@Mutation('recoverDeal')
-	@Permissions(PermissionsEnum.VIEW_SALES_PIPELINES)
+	@Permissions(PermissionsEnum.EDIT_SALES_PIPELINES)
 	async recoverDeal(@Args('id', { type: () => ID }) id: Id): Promise<Deal> {
 		return await this.dealService.softRecover(id);
 	}
