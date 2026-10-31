@@ -24,7 +24,7 @@
 			<ng-content></ng-content>
 		</ga-board-filter-bar>
 		}
-		<div class="board" role="list" cdkDropListGroup>
+		<div #boardScroller class="board" role="list" cdkDropListGroup>
 			@for (column of board.value; track column.id) {
 			@let cards = visibleCards(column);
 			<section
@@ -154,6 +154,9 @@
 			</section>
 			}
 		</div>
+		@if (filterable) {
+		<ga-board-minimap [target]="boardScroller" [columnCount]="board.value.length"></ga-board-minimap>
+		}
 		@if (hasMore) {
 		<div #boardEnd class="board-end" [nbSpinner]="loadingMore" nbSpinnerSize="tiny" nbSpinnerStatus="basic">
 			@if (loadMoreFailed) {

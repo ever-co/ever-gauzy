@@ -40,6 +40,7 @@ import {
 	taskProgressOf
 } from '../project-view.utils';
 import { BoardFilterBarComponent } from './board-filter-bar.component';
+import { BoardMinimapComponent } from './board-minimap.component';
 import {
 	boardFilterOptionsOf,
 	IBoardFilter,
@@ -126,6 +127,7 @@ const normalizeStatus = (value?: string): string => (value || '').trim().toLower
 		RouterModule,
 		DragDropModule,
 		BoardFilterBarComponent,
+		BoardMinimapComponent,
 		NbButtonModule,
 		NbIconModule,
 		NbSpinnerModule,
@@ -152,7 +154,7 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	@Input() emptyKey = 'PROJECT_QUICK_LOOK.NO_TASKS';
 	/** Bumped by the host after a change it made elsewhere (its status menu, an edit): the board reads again. */
 	@Input() reloadKey = 0;
-	/** Shows the filters over the columns. */
+	/** Shows the filters over the columns, and the map of the columns once they no longer fit. */
 	@Input() filterable = false;
 	/** A card's task saved with another status, so the host can bring what else shows the task up to date. */
 	@Output() readonly taskMoved = new EventEmitter<string>();
