@@ -139,7 +139,11 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				// without a role is stored with `roleId` null, and `newRole?.id` is undefined for them: compared as
 				// they were, every plain member was rewritten on each edit of the team.
 				const roleChanged = (newRole?.id ?? null) !== (member.roleId ?? null);
-				if (roleChanged || (flagsManagers && !!member.isManager !== isManager)) {
+				const flagChanged = !!member.isManager !== isManager;
+				// A member left out of the managers who keeps a custom role loses the manager flag whoever edits: before
+				// #6569 their role was cleared, and the flag with it. Only setting the flag still needs `flagsManagers`.
+				const keepsRoleLeavesManagers = !isManager && !!newRole;
+				if (roleChanged || (flagChanged && (flagsManagers || keepsRoleLeavesManagers))) {
 					await this.withoutEmployeeFilter(() =>
 						super.update(member.id, {
 							role: newRole,

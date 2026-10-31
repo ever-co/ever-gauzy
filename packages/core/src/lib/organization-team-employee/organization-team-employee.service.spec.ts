@@ -319,8 +319,13 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 			expect(updated).toEqual([]);
 		});
 
-		it('clears only the manager flag of a custom-role member left out of the managers', async () => {
-			asCallerWithChangeSelectedEmployee();
+		// Before #6569 the role was cleared and the flag with it, by any editor: keeping the role must not keep the
+		// manager access the edit takes away, even for a team manager without CHANGE_SELECTED_EMPLOYEE
+		it.each([
+			['a team manager without CHANGE_SELECTED_EMPLOYEE', () => undefined],
+			['a caller with CHANGE_SELECTED_EMPLOYEE', () => asCallerWithChangeSelectedEmployee()]
+		])('clears only the manager flag of a custom-role member left out of the managers, for %s', async (_, asCaller) => {
+			asCaller();
 
 			await withMember({ ...reviewer, isManager: true }, () =>
 				editTeam(['manager-employee'], ['member-employee', 'reviewer-employee'])
