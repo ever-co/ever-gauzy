@@ -517,24 +517,35 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		amount: DecimalString,
 		pricing: { gross: DecimalString; discount: DecimalString }
 	): Promise<SubscriptionBilling> {
-		const restated = this.normalizeAmount(amount, billing.currency);
-		const metadata = (billing.metadata ?? {}) as Record<string, unknown>;
+		// Read again, and refused when settled, before anything is compared: a payment or a waiver recorded since the
+		// cycle read the row (after a change restated it, for one) leaves a row whose price may already match, and
+		// answering it as unsettled would have the retry charge a period that is paid.
+		const current = await this.findOneScoped(billing.id);
+
+		if (![SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED].includes(current.status)) {
+			throw new ConflictException(
+				'SUBSCRIPTION_BILLING_CYCLE_SETTLED: the billing cycle was settled while its retry was being priced, so it is not charged again.'
+			);
+		}
+
+		const restated = this.normalizeAmount(amount, current.currency);
+		const metadata = (current.metadata ?? {}) as Record<string, unknown>;
 
 		if (
-			billing.amount === restated &&
+			current.amount === restated &&
 			metadata['gross'] === pricing.gross &&
 			metadata['discount'] === pricing.discount
 		) {
-			return billing;
+			return current;
 		}
 
 		await this.writeIf(
 			billing.id,
 			{ status: In([SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED]) },
 			async () => {
-				const current = await this.findOneScoped(billing.id);
+				const latest = await this.findOneScoped(billing.id);
 
-				return [SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED].includes(current.status)
+				return [SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED].includes(latest.status)
 					? null
 					: new ConflictException(
 							'SUBSCRIPTION_BILLING_CYCLE_SETTLED: the billing cycle was settled while its retry was being priced, so it is not charged again.'

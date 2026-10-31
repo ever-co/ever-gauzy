@@ -2365,6 +2365,76 @@ describe('SubscriptionService — a change from the next period takes hold when 
 		expect(new Date(fixture.cycle(APRIL)?.periodEnd)).toEqual(MAY);
 	});
 
+	it('refuses the change when the target plan’s ceiling is lowered between the read and its lock', async () => {
+		// Greptile and Copilot on #11602: the locked re-read compared terms that left the ceiling out, so a ceiling lowered
+		// to the cycles already used in that window still let the change bill past it.
+		const fixture = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { billingCycleCount: 2 })],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' }
+		});
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+
+		const read = (fixture.service as any).scheduledChangeAt.bind(fixture.service);
+
+		jest.spyOn(fixture.service as any, 'scheduledChangeAt').mockImplementationOnce(async (...args: unknown[]) => {
+			const due = await read(...args);
+			const index = fixture.tables.subscription_plan.findIndex((plan) => plan.id === BETTER_PLAN);
+
+			fixture.tables.subscription_plan[index] = {
+				...fixture.tables.subscription_plan[index],
+				maxBillingCycles: 2
+			};
+
+			return due;
+		});
+
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).resolves.toMatchObject({
+			amount: '120.000000'
+		});
+		expect(fixture.subscription(SUBSCRIPTION)?.planId).toBe(PLAN);
+		expect(
+			fixture.events.find((event) => event.name === 'subscription.scheduled-change-refused')?.data
+		).toMatchObject({ reason: expect.stringMatching(/SUBSCRIPTION_CYCLE_CEILING_REACHED/) });
+	});
+
+	it('does not charge a retried row a payment settled after the change restated it', async () => {
+		// Greptile and Copilot on #11602: the restated price already matched, so the reprice answered the paid row as
+		// unsettled and the retry raised another order for it.
+		let attempts = 0;
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN), planRow(BETTER_PLAN, { billingPeriod: SubscriptionBillingPeriod.YEARLY })],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' },
+			orders: () => {
+				attempts += 1;
+				throw new Error(`SUBSCRIPTION_CHARGE_DECLINED: attempt ${attempts} was declined`);
+			}
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+		fixture.idempotencyService.advanceBy(5 * 60 * 1000);
+
+		const reprice = fixture.billingService.repriceUnsettled.bind(fixture.billingService);
+
+		jest.spyOn(fixture.billingService, 'repriceUnsettled').mockImplementationOnce(
+			async (...args: [any, any, any]) => {
+				// An operator records the payment once the change has committed its restated row.
+				fixture.tables.subscription_billing[0] = {
+					...fixture.tables.subscription_billing[0],
+					status: SubscriptionBillingStatus.PAID
+				};
+
+				return reprice(...args);
+			}
+		);
+
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true })).rejects.toThrow(
+			/SUBSCRIPTION_BILLING_CYCLE_SETTLED/
+		);
+		expect(fixture.orderCalls).toHaveLength(1);
+	});
+
 	it('is the service’s own key: a caller’s metadata neither plants one nor erases one (SEC-B-03)', async () => {
 		// Planted, it would move the subscription to another plan at the next renewal with no plan change at all.
 		const planted = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });

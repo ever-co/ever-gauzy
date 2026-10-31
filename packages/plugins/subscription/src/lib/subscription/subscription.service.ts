@@ -334,7 +334,7 @@ class ScheduledPlanMoved extends ConflictException {
 /**
  * @param plan A plan as read.
  * @returns What a scheduled change is checked and priced against, so two reads of the plan can be compared: whether it
- * may be taken up, its currency, what it delivers, its discount and its cadence.
+ * may be taken up, its currency, what it delivers, its discount, its cadence and its cycle ceiling.
  */
 function scheduledPlanTerms(plan: SubscriptionPlan | null): string {
 	return JSON.stringify(
@@ -346,7 +346,8 @@ function scheduledPlanTerms(plan: SubscriptionPlan | null): string {
 					plan.productId ?? null,
 					plan.discountPercentage ?? null,
 					plan.billingPeriod ?? null,
-					plan.billingInterval ?? null
+					plan.billingInterval ?? null,
+					plan.maxBillingCycles ?? null
 			  ]
 			: null
 	);
