@@ -153,6 +153,11 @@ export {
 	OrganizationContactModule,
 	OrganizationContactService
 } from './lib/organization-contact';
+// The comment-access policy contract, for a package whose records carry comments that must follow the record's own
+// access rules: it declares a provider with `@CommentParentAccessPolicy()` implementing the interface, and the
+// comment API applies it (see `OrganizationContactCommentAccessPolicy`, which governs a contact's notes).
+export { CommentParentAccessPolicy } from './lib/comment/parent-access';
+export type { ICommentParent, ICommentParentAccessPolicy } from './lib/comment/parent-access';
 export {
 	OrganizationProjectCreateCommand,
 	OrganizationProjectModule,

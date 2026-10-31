@@ -1,5 +1,6 @@
 import { CqrsModule } from '@nestjs/cqrs';
 import { Module } from '@nestjs/common';
+import { DiscoveryModule } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { MentionModule } from '../mention/mention.module';
@@ -9,6 +10,7 @@ import { CommandHandlers } from './commands/handlers';
 import { CommentService } from './comment.service';
 import { CommentController } from './comment.controller';
 import { CommentResolver } from './comment.resolver';
+import { CommentParentAccessService } from './parent-access';
 import { Comment } from './comment.entity';
 import { TypeOrmCommentRepository } from './repository/type-orm-comment.repository';
 import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
@@ -29,11 +31,14 @@ import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.reposi
 		RolePermissionModule,
 		EmployeeModule,
 		MentionModule,
-		CqrsModule
+		CqrsModule,
+		// Finds the comment-access policies other modules declare (`@CommentParentAccessPolicy()`).
+		DiscoveryModule
 	],
 	controllers: [CommentController],
 	providers: [
 		CommentService,
+		CommentParentAccessService,
 		// The GraphQL view of the same resource: declared here because a resolver can only inject
 		// services its own module can reach, and this module is what reaches them.
 		CommentResolver,

@@ -115,7 +115,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROJECT_VIEW,
 			PermissionsEnum.ORG_PROJECT_EDIT,
 			PermissionsEnum.ORG_PROJECT_DELETE,
+			PermissionsEnum.ORG_CONTACT_ADD,
 			PermissionsEnum.ORG_CONTACT_EDIT,
+			PermissionsEnum.ORG_CONTACT_DELETE,
 			PermissionsEnum.ORG_CONTACT_VIEW,
 			/** Daily CRUD Permissions Start */
 			PermissionsEnum.DAILY_PLAN_CREATE,
@@ -573,7 +575,9 @@ export const DEFAULT_ROLE_PERMISSIONS = [
 			PermissionsEnum.ORG_PROJECT_VIEW,
 			PermissionsEnum.ORG_PROJECT_EDIT,
 			PermissionsEnum.ORG_PROJECT_DELETE,
+			PermissionsEnum.ORG_CONTACT_ADD,
 			PermissionsEnum.ORG_CONTACT_EDIT,
+			PermissionsEnum.ORG_CONTACT_DELETE,
 			PermissionsEnum.ORG_CONTACT_VIEW,
 
 			/** Daily CRUD Permissions Start */

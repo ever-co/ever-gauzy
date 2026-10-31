@@ -2916,6 +2916,8 @@
 				"ORG_PROJECT_VIEW": "See the projects you can access and their details.",
 				"ORG_PROJECT_EDIT": "Change projects: their settings, members, managers and budget.",
 				"ORG_PROJECT_DELETE": "Delete projects.",
+				"ORG_CONTACT_ADD": "Create contacts: clients, customers and leads.",
+				"ORG_CONTACT_DELETE": "Delete and restore contacts: clients, customers and leads.",
 				"ORG_CONTACT_EDIT": "Create and edit contacts: clients, customers and leads.",
 				"ORG_CONTACT_VIEW": "See the organization's contacts: clients, customers and leads.",
 				"DAILY_PLAN_CREATE": "Create daily plans of the tasks to work on each day.",
@@ -3318,7 +3320,9 @@
 			"ORG_SPRINT_EDIT": "crwdns7456:0crwdne7456:0",
 			"ORG_SPRINT_VIEW": "crwdns7458:0crwdne7458:0",
 			"ORG_PROJECT_EDIT": "crwdns7460:0crwdne7460:0",
+			"ORG_CONTACT_ADD": "Create Contacts",
 			"ORG_CONTACT_EDIT": "crwdns7462:0crwdne7462:0",
+			"ORG_CONTACT_DELETE": "Delete Contacts",
 			"ORG_CONTACT_VIEW": "crwdns8734:0crwdne8734:0",
 			"ORG_TEAM_EDIT": "crwdns7464:0crwdne7464:0",
 			"ORG_CONTRACT_EDIT": "crwdns7466:0crwdne7466:0",
@@ -3679,7 +3683,12 @@
 		"ADDRESS": "crwdns8756:0crwdne8756:0",
 		"ADDRESS_2": "crwdns11245:0crwdne11245:0",
 		"MEMBERS": "crwdns8758:0crwdne8758:0",
-		"BUDGET": "crwdns10527:0crwdne10527:0"
+		"BUDGET": "crwdns10527:0crwdne10527:0",
+		"NOTES": "Notes",
+		"NO_NOTES": "No notes yet. Add the first one.",
+		"NOTE_PLACEHOLDER": "Write a note…",
+		"ADD_NOTE": "Add note",
+		"NOTE_DELETED": "Note deleted"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "crwdns4798:0crwdne4798:0",

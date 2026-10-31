@@ -3581,6 +3581,8 @@
 				"ORG_PROJECT_VIEW": "See the projects you can access and their details.",
 				"ORG_PROJECT_EDIT": "Change projects: their settings, members, managers and budget.",
 				"ORG_PROJECT_DELETE": "Delete projects.",
+				"ORG_CONTACT_ADD": "Create contacts: clients, customers and leads.",
+				"ORG_CONTACT_DELETE": "Delete and restore contacts: clients, customers and leads.",
 				"ORG_CONTACT_EDIT": "Create and edit contacts: clients, customers and leads.",
 				"ORG_CONTACT_VIEW": "See the organization's contacts: clients, customers and leads.",
 				"DAILY_PLAN_CREATE": "Create daily plans of the tasks to work on each day.",
@@ -4020,7 +4022,9 @@
 			"ORG_PROJECT_VIEW": "View Projects",
 			"ORG_PROJECT_EDIT": "Edit Projects",
 			"ORG_PROJECT_DELETE": "Delete Projects",
+			"ORG_CONTACT_ADD": "Create Contacts",
 			"ORG_CONTACT_EDIT": "Create/Edit Contacts",
+			"ORG_CONTACT_DELETE": "Delete Contacts",
 			"ORG_CONTACT_VIEW": "View Contacts",
 			"DAILY_PLAN_CREATE": "Create Daily Plans",
 			"DAILY_PLAN_READ": "View Daily Plans",
@@ -4374,7 +4378,12 @@
 		"BUDGET": "Budget",
 		"PHOTO_HINT": "Click or drop an image to upload",
 		"SEARCH_EMPLOYEES": "Search employees by name or email",
-		"NO_MEMBERS": "No members added yet"
+		"NO_MEMBERS": "No members added yet",
+		"NOTES": "Notes",
+		"NO_NOTES": "No notes yet. Add the first one.",
+		"NOTE_PLACEHOLDER": "Write a note…",
+		"ADD_NOTE": "Add note",
+		"NOTE_DELETED": "Note deleted"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",

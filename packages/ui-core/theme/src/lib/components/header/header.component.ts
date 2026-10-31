@@ -51,6 +51,7 @@ import {
 	getDefaultQuickActionShortcuts,
 	getQuickActionBindings,
 	keyCodesToShortcut,
+	mayOpenContactAddForm,
 	normalizeShortcut
 } from '@gauzy/ui-core/core';
 import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED, QuickActionsComponent } from '@gauzy/ui-core/shared';
@@ -684,6 +685,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		// The support menu (Support Chat / FAQ / Help / About) was built here and
 		// rendered by the speech-bubble header action. It now lives in the Quick
 		// Settings panel, see ThemeSettingsComponent.
+		// "Create lead / customer / client" open a contacts page's add form.
+		const canAddContact = mayOpenContactAddForm(this.store);
 		this.createQuickActionsMenu = [
 			// Divider (Accounting)
 			...(this.store.hasAnyPermission(PermissionsEnum.INVOICES_EDIT, PermissionsEnum.ALL_ORG_EDIT)
@@ -970,7 +973,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 					]
 				: []),
 			// Divider (Contacts)
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(canAddContact
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_LEAD'),
@@ -985,7 +988,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						}
 					]
 				: []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(canAddContact
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_CUSTOMER'),
@@ -1000,7 +1003,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						}
 					]
 				: []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(canAddContact
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_CLIENT'),

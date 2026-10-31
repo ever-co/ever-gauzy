@@ -3081,6 +3081,8 @@
 				"ORG_PROJECT_VIEW": "Ver os projetos aos quais você tem acesso e seus detalhes.",
 				"ORG_PROJECT_EDIT": "Alterar projetos: configurações, membros, gerentes e orçamento.",
 				"ORG_PROJECT_DELETE": "Excluir projetos.",
+				"ORG_CONTACT_ADD": "Criar contatos: clientes, consumidores e leads.",
+				"ORG_CONTACT_DELETE": "Excluir e restaurar contatos: clientes, consumidores e leads.",
 				"ORG_CONTACT_EDIT": "Criar e editar contatos: clientes, consumidores e leads.",
 				"ORG_CONTACT_VIEW": "Ver os contatos da organização: clientes, consumidores e leads.",
 				"DAILY_PLAN_CREATE": "Criar planos diários com as tarefas a serem trabalhadas em cada dia.",
@@ -3515,7 +3517,9 @@
 			"ORG_PROJECT_VIEW": "Ver Projetos",
 			"ORG_PROJECT_EDIT": "Editar Projetos",
 			"ORG_PROJECT_DELETE": "Excluir Projetos.",
+			"ORG_CONTACT_ADD": "Criar contatos",
 			"ORG_CONTACT_EDIT": "Criar/Editar contatos",
+			"ORG_CONTACT_DELETE": "Excluir contatos",
 			"ORG_CONTACT_VIEW": "Visualizar contatos",
 			"PROJECT_MODULE_CREATE": "Criar módulos de projeto",
 			"PROJECT_MODULE_READ": "Ver módulos de projeto",
@@ -3850,7 +3854,12 @@
 		"BUDGET": "Orçamento",
 		"PHOTO_HINT": "Clique ou solte uma imagem para enviar",
 		"SEARCH_EMPLOYEES": "Pesquise funcionários por nome ou e-mail",
-		"NO_MEMBERS": "Nenhum membro adicionado ainda"
+		"NO_MEMBERS": "Nenhum membro adicionado ainda",
+		"NOTES": "Notas",
+		"NO_NOTES": "Ainda não há notas. Adicione a primeira.",
+		"NOTE_PLACEHOLDER": "Escreva uma nota…",
+		"ADD_NOTE": "Adicionar nota",
+		"NOTE_DELETED": "Nota excluída"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Idiomas",

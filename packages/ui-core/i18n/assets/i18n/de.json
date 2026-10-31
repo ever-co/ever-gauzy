@@ -3077,6 +3077,8 @@
 				"ORG_PROJECT_VIEW": "Die Projekte, auf die Zugriff besteht, und ihre Details ansehen.",
 				"ORG_PROJECT_EDIT": "Projekte ändern: Einstellungen, Mitglieder, Manager und Budget.",
 				"ORG_PROJECT_DELETE": "Projekte löschen.",
+				"ORG_CONTACT_ADD": "Kontakte erstellen: Kunden, Auftraggeber und Leads.",
+				"ORG_CONTACT_DELETE": "Kontakte löschen und wiederherstellen: Kunden, Auftraggeber und Leads.",
 				"ORG_CONTACT_EDIT": "Kontakte erstellen und bearbeiten: Kunden, Auftraggeber und Leads.",
 				"ORG_CONTACT_VIEW": "Die Kontakte der Organisation ansehen: Kunden, Auftraggeber und Leads.",
 				"DAILY_PLAN_CREATE": "Tagespläne mit den Aufgaben erstellen, an denen jeden Tag gearbeitet werden soll.",
@@ -3511,7 +3513,9 @@
 			"ORG_PROJECT_VIEW": "Projekte anzeigen",
 			"ORG_PROJECT_EDIT": "Bearbeiten von Projekten",
 			"ORG_PROJECT_DELETE": "Projekte löschen",
+			"ORG_CONTACT_ADD": "Kontakte erstellen",
 			"ORG_CONTACT_EDIT": "Kontakte erstellen/bearbeiten",
+			"ORG_CONTACT_DELETE": "Kontakte löschen",
 			"ORG_CONTACT_VIEW": "Kontakte anzeigen",
 			"PROJECT_MODULE_CREATE": "Projekmodule erstellen",
 			"PROJECT_MODULE_READ": "Projekmodule anzeigen",
@@ -3846,7 +3850,12 @@
 		"BUDGET": "Haushalt",
 		"PHOTO_HINT": "Klicken oder Bild hierher ziehen, um es hochzuladen",
 		"SEARCH_EMPLOYEES": "Mitarbeiter nach Name oder E-Mail suchen",
-		"NO_MEMBERS": "Noch keine Mitglieder hinzugefügt"
+		"NO_MEMBERS": "Noch keine Mitglieder hinzugefügt",
+		"NOTES": "Notizen",
+		"NO_NOTES": "Noch keine Notizen. Fügen Sie die erste hinzu.",
+		"NOTE_PLACEHOLDER": "Notiz schreiben…",
+		"ADD_NOTE": "Notiz hinzufügen",
+		"NOTE_DELETED": "Notiz gelöscht"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Sprachen",

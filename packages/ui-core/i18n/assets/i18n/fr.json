@@ -3082,6 +3082,8 @@
 				"ORG_PROJECT_VIEW": "Voir les projets auxquels vous avez accès et leurs détails.",
 				"ORG_PROJECT_EDIT": "Modifier les projets : paramètres, membres, responsables et budget.",
 				"ORG_PROJECT_DELETE": "Supprimer des projets.",
+				"ORG_CONTACT_ADD": "Créer des contacts : clients, acheteurs et prospects.",
+				"ORG_CONTACT_DELETE": "Supprimer et restaurer des contacts : clients, acheteurs et prospects.",
 				"ORG_CONTACT_EDIT": "Créer et modifier des contacts : clients, acheteurs et prospects.",
 				"ORG_CONTACT_VIEW": "Voir les contacts de l'organisation : clients, acheteurs et prospects.",
 				"DAILY_PLAN_CREATE": "Créer des plans quotidiens des tâches sur lesquelles travailler chaque jour.",
@@ -3512,7 +3514,9 @@
 			"ORG_PROJECT_VIEW": "Voir les projets",
 			"ORG_PROJECT_EDIT": "Modifier les projets",
 			"ORG_PROJECT_DELETE": "Supprimer les projets",
+			"ORG_CONTACT_ADD": "Créer des contacts",
 			"ORG_CONTACT_EDIT": "Créer/Modifier des contacts",
+			"ORG_CONTACT_DELETE": "Supprimer des contacts",
 			"ORG_CONTACT_VIEW": "Voir les contacts",
 			"PROJECT_MODULE_CREATE": "Créer des modules de projet",
 			"PROJECT_MODULE_READ": "Voir les modules de projet",
@@ -3851,7 +3855,12 @@
 		"BUDGET": "Budget",
 		"PHOTO_HINT": "Cliquez ou déposez une image pour la téléverser",
 		"SEARCH_EMPLOYEES": "Rechercher des employés par nom ou e-mail",
-		"NO_MEMBERS": "Aucun membre ajouté pour le moment"
+		"NO_MEMBERS": "Aucun membre ajouté pour le moment",
+		"NOTES": "Notes",
+		"NO_NOTES": "Aucune note pour le moment. Ajoutez la première.",
+		"NOTE_PLACEHOLDER": "Écrire une note…",
+		"ADD_NOTE": "Ajouter une note",
+		"NOTE_DELETED": "Note supprimée"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Langues",

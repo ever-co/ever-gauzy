@@ -1,7 +1,8 @@
 @use 'gauzy/_gauzy-cards' as *;
 
-// The project's comments, laid out as the objective dialog's Comments tab (goal-details.component.scss): quiet
-// chat messages at a 12px scale, a thread card hung off a comment's avatar, and the comment box as the footer.
+// A record's comments, laid out as the objective dialog's Comments tab (goal-details.component.scss): quiet
+// chat messages at a 12px scale, a thread card hung off a comment's avatar, and the comment box as the footer
+// (or as the header, newest first).
 $control-font-size: 12px;
 $control-padding-x: 0.75rem;
 $inset: 1rem;
@@ -341,6 +342,11 @@ a.comment-author:hover {
 // The comment box, under the list.
 .comment-footer {
   padding: 0.5rem $inset $inset;
+}
+
+// Above the list, newest first: the gap is under the box instead.
+.comment-footer--top {
+  padding: $inset $inset 0.5rem;
 }
 
 // A box as one quiet block: the picked images, a borderless text area that starts on one line and grows with the

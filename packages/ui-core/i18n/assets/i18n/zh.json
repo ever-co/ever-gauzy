@@ -3584,6 +3584,8 @@
 				"ORG_PROJECT_VIEW": "查看你可访问的项目及其详情。",
 				"ORG_PROJECT_EDIT": "更改项目：设置、成员、经理和预算。",
 				"ORG_PROJECT_DELETE": "删除项目。",
+				"ORG_CONTACT_ADD": "创建联系人：客户、顾客和潜在客户。",
+				"ORG_CONTACT_DELETE": "删除和恢复联系人：客户、顾客和潜在客户。",
 				"ORG_CONTACT_EDIT": "创建和编辑联系人：客户、顾客和潜在客户。",
 				"ORG_CONTACT_VIEW": "查看组织的联系人：客户、顾客和潜在客户。",
 				"DAILY_PLAN_CREATE": "创建每日计划，列出每天要处理的任务。",
@@ -4023,7 +4025,9 @@
 			"ORG_PROJECT_VIEW": "查看项目",
 			"ORG_PROJECT_EDIT": "编辑项目",
 			"ORG_PROJECT_DELETE": "删除项目",
+			"ORG_CONTACT_ADD": "创建联系人",
 			"ORG_CONTACT_EDIT": "创建/编辑联系人",
+			"ORG_CONTACT_DELETE": "删除联系人",
 			"ORG_CONTACT_VIEW": "查看联系人",
 			"DAILY_PLAN_CREATE": "创建每日计划",
 			"DAILY_PLAN_READ": "查看每日计划",
@@ -4377,7 +4381,12 @@
 		"BUDGET": "预算",
 		"PHOTO_HINT": "点击或拖放图片以上传",
 		"SEARCH_EMPLOYEES": "按姓名或邮箱搜索员工",
-		"NO_MEMBERS": "尚未添加成员"
+		"NO_MEMBERS": "尚未添加成员",
+		"NOTES": "备注",
+		"NO_NOTES": "暂无备注。添加第一条备注。",
+		"NOTE_PLACEHOLDER": "写一条备注…",
+		"ADD_NOTE": "添加备注",
+		"NOTE_DELETED": "备注已删除"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "语言",

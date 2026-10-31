@@ -13,6 +13,7 @@ import { NavMenuSectionItem } from '../../services/nav-builder/nav-builder-types
 import { SidebarMenuService } from '../../services/nav-builder/sidebar-menu.service';
 import { EmployeeTrackedDataAccessService } from '../../services/timesheet/employee-tracked-data-access.service';
 import { Store } from '../../services/store/store.service';
+import { mayOpenContactAddForm } from '../../utils/contact-permissions.util';
 
 @UntilDestroy()
 @Directive({
@@ -848,6 +849,8 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 	 * Returns the contacts menu section with sub-items.
 	 */
 	private _getContactsMenu(): NavMenuSectionItem[] {
+		// The "+" of each list opens its add form, for those who may create a contact and open the list.
+		const addContact = (link: string) => (mayOpenContactAddForm(this._store) ? { add: link } : undefined);
 		return [
 			{
 				id: 'contacts',
@@ -875,11 +878,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						link: `/pages/contacts/leads`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.LEADS',
-							...this._addLink(
-								'/pages/contacts/leads?openAddDialog=true',
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_CONTACT_EDIT
-							)
+							...addContact('/pages/contacts/leads?openAddDialog=true')
 						}
 					},
 					{
@@ -889,11 +888,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						link: `/pages/contacts/customers`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.CUSTOMERS',
-							...this._addLink(
-								'/pages/contacts/customers?openAddDialog=true',
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_CONTACT_EDIT
-							)
+							...addContact('/pages/contacts/customers?openAddDialog=true')
 						}
 					},
 					{
@@ -903,11 +898,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						link: `/pages/contacts/clients`,
 						data: {
 							translationKey: 'CONTACTS_PAGE.CLIENTS',
-							...this._addLink(
-								'/pages/contacts/clients?openAddDialog=true',
-								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_CONTACT_EDIT
-							)
+							...addContact('/pages/contacts/clients?openAddDialog=true')
 						}
 					}
 				]
