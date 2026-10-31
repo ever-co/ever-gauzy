@@ -159,9 +159,9 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 	it('judges the location after the change: moving into the UK while turning capture on asks too', async () => {
 		given({ allowScreenshotCapture: false, regionCode: 'en', timeZone: 'America/New_York' });
 
-		await expect(
-			update({ allowScreenshotCapture: true, timeZone: 'Europe/London' })
-		).rejects.toBeInstanceOf(ApiException);
+		await expect(update({ allowScreenshotCapture: true, timeZone: 'Europe/London' })).rejects.toBeInstanceOf(
+			ApiException
+		);
 	});
 
 	it('turns capture on with the acknowledgement, recording who and when in the same write', async () => {

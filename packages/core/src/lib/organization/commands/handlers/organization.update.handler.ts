@@ -139,7 +139,11 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		await this.organizationService.create({ ...updateData, id });
 
 		if (screenshotCaptureAcknowledgement) {
-			await logScreenshotCaptureAcknowledgement(this.activityLogService, organization, screenshotCaptureAcknowledgement);
+			await logScreenshotCaptureAcknowledgement(
+				this.activityLogService,
+				organization,
+				screenshotCaptureAcknowledgement
+			);
 		}
 
 		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker.

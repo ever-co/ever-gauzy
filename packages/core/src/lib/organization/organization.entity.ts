@@ -406,8 +406,8 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	 *
 	 * A new organization starts with it off (issue #9872, see `newOrganizationAllowsScreenshotCapture`), and
 	 * turning it on for an EEA/UK organization takes the admin's acknowledgement. The column default stays
-	 * `true` on purpose: changing it would not change existing rows, and nothing writes an organization
-	 * without going through the create handler, which states the value.
+	 * `true` on purpose: changing it would not change existing rows, and every path that creates an
+	 * organization states the value (the create handler, the client-invite acceptance and the demo seeds).
 	 */
 	@ApiPropertyOptional({ type: () => Boolean })
 	@IsOptional()

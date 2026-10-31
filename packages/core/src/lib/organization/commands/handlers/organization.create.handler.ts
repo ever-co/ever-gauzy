@@ -126,7 +126,11 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 			const { id: organizationId } = organization;
 
 			if (screenshotCaptureAcknowledgement) {
-				await logScreenshotCaptureAcknowledgement(this.activityLogService, organization, screenshotCaptureAcknowledgement);
+				await logScreenshotCaptureAcknowledgement(
+					this.activityLogService,
+					organization,
+					screenshotCaptureAcknowledgement
+				);
 			}
 
 			// 4. Take each super admin user and add him/her to created organization
