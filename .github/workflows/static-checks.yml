@@ -493,3 +493,11 @@ jobs:
       - name: The latest-mac.yml minimum-macOS edit keeps the manifest and swaps it safely
         if: always()
         run: node --test .github/actions/set-mac-minimum-system-version/set-mac-minimum-system-version.test.cjs
+
+      # The API and worker builds copy every compiled @gauzy package into dist/apps/<app>/node_modules/@gauzy and
+      # rewrite the copied source maps so they still lead to packages/*/src; without that, breakpoints in the
+      # packages never bind and stack traces point to files that do not exist (#9573). Only a full API build runs
+      # that copy, so its cases run here (a temporary workspace: no build, no install).
+      - name: The API and worker builds keep the copied packages' source maps pointing at the sources
+        if: always()
+        run: node --test apps/api/config/source-map-rebase.test.mjs

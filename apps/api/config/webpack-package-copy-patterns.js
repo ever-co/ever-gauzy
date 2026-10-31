@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const { sourceMapRebaseTransform } = require('./source-map-rebase');
 
 // Directories to skip during scanning
 const SKIP_DIRS = new Set([
@@ -133,6 +134,17 @@ function configEnvironmentTransform(configPackageDir, environment) {
 }
 
 /**
+ * Chains CopyWebpackPlugin transforms: each one receives what the previous one returned.
+ *
+ * @param {Array<(content: Buffer|string, absoluteFrom: string) => Buffer|string>} transforms - Applied in order.
+ * @returns {(content: Buffer|string, absoluteFrom: string) => Buffer|string} CopyWebpackPlugin `transform`.
+ */
+function composeTransforms(transforms) {
+	return (content, absoluteFrom) =>
+		transforms.reduce((current, transform) => transform(current, absoluteFrom), content);
+}
+
+/**
  * Process a package directory and add it to patterns if valid
  * @param {string} fullPath - Full path to package directory
  * @param {string} packageJsonPath - Path to package.json
@@ -158,14 +170,22 @@ function processPackageDirectory(fullPath, packageJsonPath, targetNodeModulesDir
 	}
 
 	const selectsEnvironment = packageJson.name === '@gauzy/config' && options.environment;
+	const to = path.join(targetNodeModulesDir, packageName);
+	// The copy is deeper in the tree than the compiled package, so its source maps' relative sources are rewritten to
+	// still reach packages/*/src (see ./source-map-rebase.js).
+	const rebaseSourceMaps = sourceMapRebaseTransform(fullPath, to);
 
 	patterns.push({
 		from: fullPath,
-		to: path.join(targetNodeModulesDir, packageName),
+		to,
 		globOptions: {
 			ignore: ['**/node_modules/**']
 		},
-		...(selectsEnvironment && { transform: configEnvironmentTransform(fullPath, options.environment) }),
+		transform: selectsEnvironment
+			? // Not cached: the environment file written here is read from another compiled file at copy time.
+				composeTransforms([configEnvironmentTransform(fullPath, options.environment), rebaseSourceMaps])
+			: // Cached by file content and both directories, so a watch rebuild does not parse every map again.
+				{ transformer: rebaseSourceMaps, cache: { keys: { rebaseFrom: fullPath, rebaseTo: to } } },
 		// The packages are already compiled; leave them as they are. Without this, the production build's
 		// Terser pass also minified every copied package and turned `class InventoryPlugin` into an anonymous
 		// class named after its decorator alias (`InventoryPlugin_1`). Plugin dependencies (`dependsOn`) are
