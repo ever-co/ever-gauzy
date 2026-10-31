@@ -2665,6 +2665,16 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		await replaced.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
 
 		expect(replaced.subscription(SUBSCRIPTION).metadata?.['scheduledPlanChange']).toBeUndefined();
+
+		// An unsigned entry an earlier release wrote, still taken at the renewal, is replaced the same way.
+		const unsigned = subscriptionFixture({
+			prices: UPGRADE,
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { scheduledPlanChange: { planId: PLAN } } })]
+		});
+
+		await unsigned.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		expect(unsigned.subscription(SUBSCRIPTION).metadata?.['scheduledPlanChange']).toBeUndefined();
 	});
 
 	it('refuses another change while one is being settled, and replaces one abandoned past the lease', async () => {

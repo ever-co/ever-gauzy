@@ -355,8 +355,9 @@ interface IChangeIntent {
 	/** Whether the change replaces the line set (a plan change, a line added or removed), or only changes quantities. */
 	replaceLines?: boolean;
 	/**
-	 * The signature of the change scheduled for the next period when this plan change was decided, or null when none
-	 * was: the one it replaces. A change scheduled after it is a later decision, and the apply leaves it.
+	 * What the change scheduled for the next period was when this plan change was decided (`scheduleIdentity`), or null
+	 * when none was: the one it replaces, signed or not. A change scheduled after it is a later decision, and the apply
+	 * leaves it.
 	 */
 	replacesSchedule?: string | null;
 	/**
@@ -3201,9 +3202,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				quantity,
 				discountPercentage: change.planId ? change.discountPercentage ?? null : null,
 				replaceLines,
-				replacesSchedule: change.planId
-					? ((metadata[SCHEDULED_PLAN_CHANGE] as IScheduledPlanChange | undefined)?.signature ?? null)
-					: null,
+				replacesSchedule: change.planId ? this.scheduleIdentity(metadata[SCHEDULED_PLAN_CHANGE]) : null,
 				items: replaceLines
 					? change.after
 					: change.after.filter((line) => {
@@ -3527,9 +3526,9 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			// And it replaces the plan change scheduled for the next period when it was decided: the latest decision about
 			// the plan holds, so an upgrade made now is not undone at the renewal by a downgrade scheduled before it. One
 			// scheduled after it, while it was being settled, is the later decision, and stays.
-			const scheduled = metadata[SCHEDULED_PLAN_CHANGE] as IScheduledPlanChange | undefined;
+			const scheduled = this.scheduleIdentity(metadata[SCHEDULED_PLAN_CHANGE]);
 
-			if (!scheduled || intent.replacesSchedule === undefined || scheduled.signature === intent.replacesSchedule) {
+			if (!scheduled || intent.replacesSchedule === undefined || scheduled === intent.replacesSchedule) {
 				delete metadata[SCHEDULED_PLAN_CHANGE];
 			}
 		}
@@ -3904,6 +3903,33 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		}
 
 		return 'UNSETTLED';
+	}
+
+	/**
+	 * @param scheduled The change scheduled for the next period, as stored, or nothing.
+	 * @returns What tells that entry from any other — the hash of its members in a fixed order, so the same entry read
+	 * twice gives the same answer whichever order its JSON column hands the members back in, signed or not — or null
+	 * when there is none.
+	 */
+	private scheduleIdentity(scheduled: unknown): string | null {
+		if (!scheduled || typeof scheduled !== 'object') {
+			return null;
+		}
+
+		const canonical = (value: unknown): unknown =>
+			Array.isArray(value)
+				? value.map(canonical)
+				: value && typeof value === 'object' && !(value instanceof Date)
+				? Object.fromEntries(
+						Object.keys(value as Record<string, unknown>)
+							.sort()
+							.map((key) => [key, canonical((value as Record<string, unknown>)[key])])
+				  )
+				: value instanceof Date
+				? value.toISOString()
+				: value;
+
+		return this.hash({ scheduled: canonical(scheduled) });
 	}
 
 	/**
