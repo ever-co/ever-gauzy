@@ -35,7 +35,11 @@ describe('listDesktopNetworkAddresses', () => {
 	it('leaves out link-local addresses, which other computers cannot use in a URL', () => {
 		expect(
 			addressesOf({
-				eth0: [info('169.254.10.20', 'IPv4'), info('fe80::1c2d:3e4f:5a6b:7c8d', 'IPv6'), info('192.168.1.20', 'IPv4')]
+				eth0: [
+					info('169.254.10.20', 'IPv4'),
+					info('fe80::1c2d:3e4f:5a6b:7c8d', 'IPv6'),
+					info('192.168.1.20', 'IPv4')
+				]
 			})
 		).toEqual(['192.168.1.20']);
 	});

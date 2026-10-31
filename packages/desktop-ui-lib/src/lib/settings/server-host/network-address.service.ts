@@ -19,7 +19,9 @@ export class NetworkAddressService {
 	 */
 	public async list(): Promise<IDesktopNetworkAddress[]> {
 		try {
-			const addresses: unknown = await this.electronService.ipcRenderer?.invoke(DESKTOP_NETWORK_ADDRESSES_CHANNEL);
+			const addresses: unknown = await this.electronService.ipcRenderer?.invoke(
+				DESKTOP_NETWORK_ADDRESSES_CHANNEL
+			);
 			return Array.isArray(addresses) ? addresses.filter(isNetworkAddress) : [];
 		} catch (error) {
 			this.loggerService.warn('Cannot list the network addresses', error);

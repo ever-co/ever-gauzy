@@ -1523,7 +1523,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		if (!this.isServerHostInvalid) {
 			return this.config;
 		}
-		const { host, ...config } = this.config;
+		const config: Record<string, unknown> = { ...this.config };
+		delete config['host'];
 		return config;
 	}
 

@@ -30,7 +30,12 @@ describe('NetworkAddressService', () => {
 
 	it('drops entries that are not addresses', async () => {
 		const lan = { name: 'Wi-Fi', address: '192.168.1.20', family: 'IPv4', virtual: false };
-		invoke.mockResolvedValue([lan, null, { name: 'x', address: '', family: 'IPv4' }, { name: 'y', address: '1.2.3.4' }]);
+		invoke.mockResolvedValue([
+			lan,
+			null,
+			{ name: 'x', address: '', family: 'IPv4' },
+			{ name: 'y', address: '1.2.3.4' }
+		]);
 
 		await expect(service.list()).resolves.toEqual([lan]);
 	});

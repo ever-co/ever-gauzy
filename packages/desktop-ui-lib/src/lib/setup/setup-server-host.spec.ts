@@ -46,14 +46,19 @@ describe('SetupComponent: server host', () => {
 			expect(component.buttonSave).toBe(false);
 		});
 
-		it.each(['192.168.1.20', 'gauzy.example.com', '127.0.0.1', 'localhost', '[fd00::20]', 'https://gauzy.example.com:3000', ''])(
-			'keeps Save enabled for %s',
-			(host) => {
-				component.onIntegratedHostChange(host);
+		it.each([
+			'192.168.1.20',
+			'gauzy.example.com',
+			'127.0.0.1',
+			'localhost',
+			'[fd00::20]',
+			'https://gauzy.example.com:3000',
+			''
+		])('keeps Save enabled for %s', (host) => {
+			component.onIntegratedHostChange(host);
 
-				expect(component.buttonSave).toBe(true);
-			}
-		);
+			expect(component.buttonSave).toBe(true);
+		});
 
 		it('enables Save again once the host is fixed', () => {
 			component.onIntegratedHostChange('999.1.1.1');

@@ -95,7 +95,9 @@ describe('parseServerHost', () => {
 	});
 
 	it('ignores spaces around the value', () => {
-		expect(parseServerHost('  192.168.1.20 ')).toEqual(expect.objectContaining({ kind: 'ipv4', hostname: '192.168.1.20' }));
+		expect(parseServerHost('  192.168.1.20 ')).toEqual(
+			expect.objectContaining({ kind: 'ipv4', hostname: '192.168.1.20' })
+		);
 	});
 
 	it('tells whether an IPv6 address is in brackets', () => {
@@ -111,12 +113,20 @@ describe('parseServerHost', () => {
 });
 
 describe('isValidServerHost', () => {
-	it.each(['', '0.0.0.0', '127.0.0.1', '192.168.1.20', 'localhost', 'gauzy.example.com', '::1', '[::1]', 'http://192.168.1.20:3000', 'https://gauzy.example.com'])(
-		'keeps accepting %s (accepted before the check existed)',
-		(value) => {
-			expect(isValidServerHost(value)).toBe(true);
-		}
-	);
+	it.each([
+		'',
+		'0.0.0.0',
+		'127.0.0.1',
+		'192.168.1.20',
+		'localhost',
+		'gauzy.example.com',
+		'::1',
+		'[::1]',
+		'http://192.168.1.20:3000',
+		'https://gauzy.example.com'
+	])('keeps accepting %s (accepted before the check existed)', (value) => {
+		expect(isValidServerHost(value)).toBe(true);
+	});
 
 	it.each(['999.1.1.1', 'bad host!'])('blocks %s', (value) => {
 		expect(isValidServerHost(value)).toBe(false);
@@ -146,9 +156,12 @@ describe('checkServerHost', () => {
 			}
 		);
 
-		it.each(['gauzy.example.com', 'localhost', 'https://gauzy.example.com'])('has no warning for the name %s', (value) => {
-			expect(checkServerHost(value, { sslEnabled: true }).warnings).toEqual([]);
-		});
+		it.each(['gauzy.example.com', 'localhost', 'https://gauzy.example.com'])(
+			'has no warning for the name %s',
+			(value) => {
+				expect(checkServerHost(value, { sslEnabled: true }).warnings).toEqual([]);
+			}
+		);
 
 		it('has no SSL warning while SSL is off', () => {
 			expect(checkServerHost('192.168.1.20', { sslEnabled: false }).warnings).toEqual([]);
@@ -224,6 +237,8 @@ describe('withDetectedAddress', () => {
 	});
 
 	it('brackets an IPv6 address', () => {
-		expect(withDetectedAddress('http://0.0.0.0', { address: 'fd00::20', family: 'IPv6' })).toBe('http://[fd00::20]');
+		expect(withDetectedAddress('http://0.0.0.0', { address: 'fd00::20', family: 'IPv6' })).toBe(
+			'http://[fd00::20]'
+		);
 	});
 });

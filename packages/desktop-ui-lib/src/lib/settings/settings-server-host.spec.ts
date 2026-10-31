@@ -29,7 +29,9 @@ describe('SettingsComponent: server host', () => {
 		component = fixture.componentInstance;
 		fixture.detectChanges();
 		send = jest.spyOn(TestBed.inject(ElectronService).ipcRenderer, 'send');
-		notifyError = jest.spyOn(TestBed.inject(ToastrNotificationService), 'error').mockImplementation(() => undefined);
+		notifyError = jest
+			.spyOn(TestBed.inject(ToastrNotificationService), 'error')
+			.mockImplementation(() => undefined);
 	}
 
 	const sent = (channel: string) => send.mock.calls.filter(([name]) => name === channel).map(([, arg]) => arg);
@@ -46,14 +48,19 @@ describe('SettingsComponent: server host', () => {
 			expect(component.isServerHostInvalid).toBe(true);
 		});
 
-		it.each(['0.0.0.0', '192.168.1.20', 'gauzy.example.com', 'localhost', '[fd00::20]', 'http://192.168.1.20:3000', ''])(
-			'keeps Save enabled for %s',
-			(host) => {
-				component.config.host = host;
+		it.each([
+			'0.0.0.0',
+			'192.168.1.20',
+			'gauzy.example.com',
+			'localhost',
+			'[fd00::20]',
+			'http://192.168.1.20:3000',
+			''
+		])('keeps Save enabled for %s', (host) => {
+			component.config.host = host;
 
-				expect(component.isServerHostInvalid).toBe(false);
-			}
-		);
+			expect(component.isServerHostInvalid).toBe(false);
+		});
 
 		it('does not save an invalid host, and says why', async () => {
 			component.config.host = '999.1.1.1';
