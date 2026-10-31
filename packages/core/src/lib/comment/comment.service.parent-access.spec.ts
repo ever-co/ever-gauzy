@@ -5,7 +5,7 @@
 import '../core/entities/internal';
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { And, Equal, In, Not } from 'typeorm';
+import { And, Equal, In, IsNull, Not } from 'typeorm';
 import { BaseEntityEnum, ICommentCreateInput, PermissionsEnum } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
@@ -35,8 +35,10 @@ const OWN_NOTE = '22222222-2222-4222-8222-222222222222'; // the caller's own not
 const OTHER_CONTACT_NOTE = '33333333-3333-4333-8333-333333333333';
 const PROJECT_COMMENT = '44444444-4444-4444-8444-444444444444';
 const LOOKALIKE_NOTE = '55555555-5555-4555-8555-555555555555';
+const WITHDRAWN_NOTE = '66666666-6666-4666-8666-666666666666'; // a colleague's withdrawn note
+const OWN_WITHDRAWN_NOTE = '77777777-7777-4777-8777-777777777777';
 
-const STORED: Record<string, { id: string; entity: string; entityId: string; employeeId: string }> = {
+const STORED: Record<string, { id: string; entity: string; entityId: string; employeeId: string; deletedAt?: Date }> = {
 	[NOTE]: { id: NOTE, entity: CONTACT, entityId: CONTACT_ID, employeeId: 'employee-colleague' },
 	[OWN_NOTE]: { id: OWN_NOTE, entity: CONTACT, entityId: CONTACT_ID, employeeId: 'employee-me' },
 	[OTHER_CONTACT_NOTE]: {
@@ -46,6 +48,20 @@ const STORED: Record<string, { id: string; entity: string; entityId: string; emp
 		employeeId: 'employee-me'
 	},
 	[PROJECT_COMMENT]: { id: PROJECT_COMMENT, entity: PROJECT, entityId: PROJECT_ID, employeeId: 'employee-me' },
+	[WITHDRAWN_NOTE]: {
+		id: WITHDRAWN_NOTE,
+		entity: CONTACT,
+		entityId: CONTACT_ID,
+		employeeId: 'employee-colleague',
+		deletedAt: new Date('2026-10-01T00:00:00.000Z')
+	},
+	[OWN_WITHDRAWN_NOTE]: {
+		id: OWN_WITHDRAWN_NOTE,
+		entity: CONTACT,
+		entityId: CONTACT_ID,
+		employeeId: 'employee-me',
+		deletedAt: new Date('2026-10-01T00:00:00.000Z')
+	},
 	// A note stored under another spelling of the type, which MySQL reads with the contact's notes.
 	[LOOKALIKE_NOTE]: {
 		id: LOOKALIKE_NOTE,
@@ -369,6 +385,97 @@ describe('CommentService — the comments of a governed record follow its policy
 				expect.objectContaining({ id: NOTE })
 			);
 			expect(policy.findAccessibleParent).toHaveBeenCalledWith(CONTACT_ID);
+		});
+
+		describe('withdrawn notes', () => {
+			const listed = () =>
+				jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockResolvedValue({ items: [], total: 0 });
+			const notesWithDeleted = { where: { entity: CONTACT, entityId: CONTACT_ID }, withDeleted: true };
+
+			it('lists a viewer every live note, and only their own withdrawn ones', async () => {
+				as([PermissionsEnum.ORG_CONTACT_VIEW]);
+				const findAll = listed();
+
+				await service.findAll(notesWithDeleted as any);
+
+				expect(findAll).toHaveBeenCalledWith({
+					where: [
+						{ entity: CONTACT, entityId: CONTACT_ID, deletedAt: IsNull() },
+						{
+							entity: CONTACT,
+							entityId: CONTACT_ID,
+							deletedAt: Not(IsNull()),
+							employeeId: Equal('employee-me')
+						}
+					],
+					withDeleted: true
+				});
+			});
+
+			it('keeps what the criteria state about the withdrawal beside the added condition', async () => {
+				as([PermissionsEnum.ORG_CONTACT_VIEW]);
+				const count = jest.spyOn(TenantAwareCrudService.prototype, 'count').mockResolvedValue(0);
+
+				await service.count({
+					where: { entity: CONTACT, entityId: CONTACT_ID, deletedAt: Not(IsNull()) },
+					withDeleted: true
+				} as any);
+
+				expect(count).toHaveBeenCalledWith({
+					where: [
+						{ entity: CONTACT, entityId: CONTACT_ID, deletedAt: And(Not(IsNull()), IsNull()) },
+						{
+							entity: CONTACT,
+							entityId: CONTACT_ID,
+							deletedAt: And(Not(IsNull()), Not(IsNull())),
+							employeeId: Equal('employee-me')
+						}
+					],
+					withDeleted: true
+				});
+			});
+
+			it('lists every withdrawn note to those who may write notes or act for other employees', async () => {
+				const findAll = listed();
+				const paginate = jest
+					.spyOn(TenantAwareCrudService.prototype, 'paginate')
+					.mockResolvedValue({ items: [], total: 0 });
+
+				as([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT]);
+				await service.findAll(notesWithDeleted as any);
+				as([PermissionsEnum.ORG_CONTACT_VIEW], { canChangeSelectedEmployee: true });
+				await service.paginate(notesWithDeleted as any);
+
+				expect(findAll).toHaveBeenCalledWith(notesWithDeleted);
+				expect(paginate).toHaveBeenCalledWith(notesWithDeleted);
+			});
+
+			it('reads one withdrawn note to its author and to those who may write notes, and to no other viewer', async () => {
+				as([PermissionsEnum.ORG_CONTACT_VIEW]);
+				await expect(
+					service.findReadableById(WITHDRAWN_NOTE, { withDeleted: true } as any)
+				).rejects.toBeInstanceOf(NotFoundException);
+				await expect(
+					service.findReadableById(OWN_WITHDRAWN_NOTE, { withDeleted: true } as any)
+				).resolves.toEqual(expect.objectContaining({ id: OWN_WITHDRAWN_NOTE }));
+
+				as([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT]);
+				await expect(service.findReadableById(WITHDRAWN_NOTE, { withDeleted: true } as any)).resolves.toEqual(
+					expect.objectContaining({ id: WITHDRAWN_NOTE })
+				);
+			});
+
+			it('keeps a project comment list with withdrawn rows exactly as before', async () => {
+				as([]);
+				const findAll = listed();
+
+				await service.findAll({ where: { entity: PROJECT, entityId: PROJECT_ID }, withDeleted: true } as any);
+
+				expect(findAll).toHaveBeenCalledWith({
+					where: { entity: And(Equal(PROJECT), Not(In([CONTACT]))), entityId: PROJECT_ID },
+					withDeleted: true
+				});
+			});
 		});
 
 		it('refuses one note to a caller who may not view contacts', async () => {

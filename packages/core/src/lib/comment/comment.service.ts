@@ -1,6 +1,16 @@
 import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
-import { DeleteResult, FindOperator, FindOptionsWhere, SaveOptions, UpdateResult } from 'typeorm';
+import {
+	And,
+	DeleteResult,
+	Equal,
+	FindOperator,
+	FindOptionsWhere,
+	IsNull,
+	Not,
+	SaveOptions,
+	UpdateResult
+} from 'typeorm';
 import { isUUID } from 'class-validator';
 import {
 	BaseEntityEnum,
@@ -235,28 +245,44 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * Lists comments (`GET /comment`, the `comments` field). See {@link readWithinParents}.
 	 */
 	public async findAll(filter?: LegacyFindManyOptions<Comment>): Promise<IPagination<Comment>> {
-		return this.readWithinParents(filter?.where, (where) => super.findAll(withWhere(filter, where)));
+		return this.readWithinParents(
+			filter?.where,
+			(where) => super.findAll(withWhere(filter, where)),
+			filter?.withDeleted
+		);
 	}
 
 	/**
 	 * Lists comments. See {@link readWithinParents}.
 	 */
 	public async find(filter?: LegacyFindManyOptions<Comment>): Promise<Comment[]> {
-		return this.readWithinParents(filter?.where, (where) => super.find(withWhere(filter, where)));
+		return this.readWithinParents(
+			filter?.where,
+			(where) => super.find(withWhere(filter, where)),
+			filter?.withDeleted
+		);
 	}
 
 	/**
 	 * Lists a page of comments (`GET /comment/pagination`). See {@link readWithinParents}.
 	 */
 	public async paginate(filter?: LegacyFindManyOptions<Comment>): Promise<IPagination<Comment>> {
-		return this.readWithinParents(filter?.where, (where) => super.paginate(withWhere(filter, where)));
+		return this.readWithinParents(
+			filter?.where,
+			(where) => super.paginate(withWhere(filter, where)),
+			filter?.withDeleted
+		);
 	}
 
 	/**
 	 * Counts comments. See {@link readWithinParents}.
 	 */
 	public async count(options?: LegacyFindManyOptions<Comment>): Promise<number> {
-		return this.readWithinParents(options?.where, (where) => super.count(withWhere(options, where)));
+		return this.readWithinParents(
+			options?.where,
+			(where) => super.count(withWhere(options, where)),
+			options?.withDeleted
+		);
 	}
 
 	/**
@@ -288,6 +314,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		}
 
 		await this._parentAccess.assertMay('read', stored.entity, stored.entityId);
+		// A withdrawn note is its author's, as a withdrawn comment is everywhere else (see mayReadWithdrawnOf).
+		if (stored.deletedAt && !this.mayReadWithdrawnOf([stored.entity]) && !this.isCallerAuthorOf(stored)) {
+			throw new NotFoundException(`The requested record was not found`);
+		}
 		return this.readAcrossAuthors(() => this.findOneByIdString(id, pinned));
 	}
 
@@ -482,18 +512,91 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * their authors'), while every other read keeps the base scope, so the comments of other records are listed
 	 * exactly as before.
 	 *
+	 * A read that includes withdrawn comments (`withDeleted`) answers the withdrawn comments of a governed record to
+	 * their authors only, unless the caller may write that record's comments (see {@link mayReadWithdrawnOf}).
+	 *
 	 * @param where - The read's criteria.
 	 * @param read - The base read, given the criteria to run.
+	 * @param withDeleted - Whether the read includes withdrawn comments.
 	 */
-	private async readWithinParents<R>(where: unknown, read: (where: unknown) => Promise<R>): Promise<R> {
+	private async readWithinParents<R>(
+		where: unknown,
+		read: (where: unknown) => Promise<R>,
+		withDeleted?: unknown
+	): Promise<R> {
 		const scope = scopeCommentReadToParents(where as object, this._parentAccess.governedEntities(), (entity) =>
 			this._parentAccess.governedTypeOf(entity)
 		);
 		for (const { entity, entityId } of scope.parents) {
 			await this._parentAccess.assertMay('read', entity, entityId);
 		}
+		if (!scope.onlyGovernedParents) {
+			return read(scope.where);
+		}
 
-		return scope.onlyGovernedParents ? this.readAcrossAuthors(() => read(scope.where)) : read(scope.where);
+		const criteria =
+			withDeleted && !this.mayReadWithdrawnOf(scope.parents.map(({ entity }) => entity))
+				? this.withdrawnKeptToAuthor(scope.where)
+				: scope.where;
+		return this.readAcrossAuthors(() => read(criteria));
+	}
+
+	/**
+	 * Whether the caller may read every author's withdrawn comments of these governed record types: a holder of
+	 * CHANGE_SELECTED_EMPLOYEE, who may act on any comment, or of the permission each type's policy asks to write its
+	 * comments, which withdraws and restores them. Anyone else reads only their own withdrawn comments, as they do on
+	 * every other record.
+	 */
+	private mayReadWithdrawnOf(entities: ReadonlyArray<string>): boolean {
+		return (
+			RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) ||
+			entities.every((entity) => this._parentAccess.holdsPermission('write', entity))
+		);
+	}
+
+	/**
+	 * The column and value that identify the caller's own comments: their employee, or, for a caller without an
+	 * employee record, the user who posted them. `null` when the caller has neither.
+	 */
+	private callerAuthorship(): [column: 'employeeId' | 'createdByUserId', value: ID] | null {
+		const employeeId = this.callerEmployeeId();
+		if (employeeId) {
+			return ['employeeId', employeeId];
+		}
+		const userId = RequestContext.currentUserId();
+		return userId ? ['createdByUserId', userId] : null;
+	}
+
+	/** Whether the caller wrote `comment`, by {@link callerAuthorship}. */
+	private isCallerAuthorOf(comment: Comment): boolean {
+		const own = this.callerAuthorship();
+		return !!own && comment[own[0]] === own[1];
+	}
+
+	/**
+	 * A governed read's criteria, with withdrawn comments kept to their author.
+	 *
+	 * Each alternative becomes two: its live comments, and its withdrawn comments that the caller wrote. A caller
+	 * with no identity to own a comment reads the live ones only. What the alternative already states about the
+	 * withdrawal or the author is kept beside the added condition.
+	 */
+	private withdrawnKeptToAuthor(where: unknown): unknown[] {
+		const own = this.callerAuthorship();
+		const alternatives = (Array.isArray(where) ? where : [where ?? {}]) as Record<string, unknown>[];
+
+		return alternatives.flatMap((alternative) => {
+			const live = { ...alternative, deletedAt: alongside(alternative.deletedAt, IsNull()) };
+			if (!own) {
+				return [live];
+			}
+			const [column, value] = own;
+			const withdrawnOwn = {
+				...alternative,
+				deletedAt: alongside(alternative.deletedAt, Not(IsNull())),
+				[column]: alongside(alternative[column], Equal(value))
+			};
+			return [live, withdrawnOwn];
+		});
 	}
 
 	/**
@@ -582,6 +685,14 @@ function parentStatedById<I extends { parent?: { id?: ID } | null; parentId?: ID
 		throw new BadRequestException('A reply states the comment it replies to once, by its id.');
 	}
 	return { ...rest, parentId } as I;
+}
+
+/** What a criterion already states about a column (a value or a find operator), and `condition`, as one operator. */
+function alongside(stated: unknown, condition: FindOperator<unknown>): FindOperator<unknown> {
+	if (stated === undefined) {
+		return condition;
+	}
+	return And(stated instanceof FindOperator ? stated : Equal(stated), condition);
 }
 
 /** `fields` without `keys`. */

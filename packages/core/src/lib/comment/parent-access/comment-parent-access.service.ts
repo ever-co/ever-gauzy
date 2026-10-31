@@ -112,8 +112,7 @@ export class CommentParentAccessService implements OnModuleInit {
 			return null;
 		}
 
-		const permissions = access === 'read' ? policy.readPermissions : policy.writePermissions;
-		if (!RequestContext.hasAnyPermission([...permissions])) {
+		if (!this.holdsPermission(access, entity)) {
 			throw new ForbiddenException(
 				`You don't have permission to ${access} the comments of this ${policy.entity}.`
 			);
@@ -126,6 +125,19 @@ export class CommentParentAccessService implements OnModuleInit {
 		}
 
 		return parent;
+	}
+
+	/**
+	 * Whether the caller holds one of the permissions the policy of `entity` asks for the access. No record is read;
+	 * a record type without a policy answers `false`.
+	 */
+	holdsPermission(access: CommentParentAccess, entity: unknown): boolean {
+		const policy = this.policyFor(entity);
+		if (!policy) {
+			return false;
+		}
+		const permissions = access === 'read' ? policy.readPermissions : policy.writePermissions;
+		return RequestContext.hasAnyPermission([...permissions]);
 	}
 
 	/** The policy of the governed type `entity` names, in its own spelling or any other. */
