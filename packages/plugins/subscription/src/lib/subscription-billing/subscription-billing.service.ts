@@ -128,6 +128,23 @@ function chargeClaimLost(billing: SubscriptionBilling, action: string): Conflict
 	});
 }
 
+/**
+ * The refusal of a billing pass's payment of a cycle another pass has already paid, or null when there is none.
+ *
+ * Recording a payment on a paid cycle is otherwise a no-op: an operator's payment, or the run's when an operator paid
+ * the cycle while its charge was in flight — that payment leaves the cycle without an order, and the run still moves
+ * the calendar for it. A paid cycle that carries an order was paid by a billing pass, since only the run writes
+ * `orderId`. A pass that meets one has outlived its claim, and the pass that recovered the cycle recorded the charge
+ * and finishes it; the late pass is refused, so it does not record the success a second time.
+ *
+ * @param billing The paid cycle.
+ * @param byOperator Whether the payment is an operator's.
+ * @returns The refusal, or null when recording the payment again is a no-op.
+ */
+function paidByAnotherPass(billing: SubscriptionBilling, byOperator: boolean): ConflictException | null {
+	return !byOperator && billing.orderId ? chargeClaimLost(billing, 'paid') : null;
+}
+
 /** The refusal of a hard delete of a cycle that records money billed (doc 13 §11.4). */
 function notDeletable(billed: SubscriptionBilling): ConflictException {
 	return new ConflictException({
@@ -471,6 +488,12 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		// run reaches here when an operator recorded the payment while the run's own charge was in flight, and a
 		// refusal there would be read as a failed charge and turned into a retry - a second charge (Greptile).
 		if (billing.status === SubscriptionBillingStatus.PAID) {
+			const lost = paidByAnotherPass(billing, byOperator);
+
+			if (lost) {
+				throw lost;
+			}
+
 			return billing;
 		}
 
@@ -486,7 +509,7 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			const current = await this.findOneScoped(id);
 
 			if (current.status === SubscriptionBillingStatus.PAID) {
-				return null;
+				return paidByAnotherPass(current, byOperator);
 			}
 
 			if (!PAYABLE_FROM.includes(current.status as SubscriptionBillingStatus)) {

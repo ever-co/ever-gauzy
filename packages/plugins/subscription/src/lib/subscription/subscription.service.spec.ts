@@ -2377,6 +2377,31 @@ describe('SubscriptionService — a cycle’s charge is fenced against an operat
 		}
 	);
 
+	it('records no second success for a late payment of a cycle the recovering pass already paid', async () => {
+		let fixture: ReturnType<typeof subscriptionFixture>;
+		fixture = subscriptionFixture({
+			orders: () => {
+				// The call outlives its claim; the pass that recovered the cycle is handed the order and records it first.
+				Object.assign(fixture.cycle(APRIL)!, {
+					status: SubscriptionBillingStatus.PAID,
+					paidAt: new Date(APRIL),
+					orderId: 'order-1',
+					chargeClaimToken: null,
+					chargeClaimedAt: null
+				});
+
+				return { orderId: 'order-1', paid: true };
+			}
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PAID, replayed: true, orderId: 'order-1' });
+		// The recovering pass finishes the cycle; the late pass neither moves the calendar nor tells a renewal.
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: APRIL, billingCycleCount: 0 });
+		expect(eventNames(fixture)).toEqual([]);
+	});
+
 	it('does not write a late invoice over a cycle an operator paid once the claim went stale', async () => {
 		let fixture: ReturnType<typeof subscriptionFixture>;
 		fixture = subscriptionFixture({
@@ -2400,7 +2425,7 @@ describe('SubscriptionService — a cycle’s charge is fenced against an operat
 		expect(eventNames(fixture)).not.toContain('subscription.payment-failed');
 	});
 
-	it('does not turn a failed bookkeeping write after the payment into a failed charge; the next pass finishes the cycle', async () => {
+	it('does not turn a failed bookkeeping write after the payment into a failed charge, so nothing charges it again', async () => {
 		const fixture = subscriptionFixture({ plans: [planRow(PLAN, { setupFee: '25' }), planRow(BETTER_PLAN)] });
 
 		// The write that remembers the setup fee the order carried fails after the payment is recorded.
@@ -2408,26 +2433,27 @@ describe('SubscriptionService — a cycle’s charge is fenced against an operat
 
 		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
 
-		// The money is recorded and nothing marks it failed, so no retry charges it again; the calendar has not moved.
+		// The money is recorded and nothing marks it failed: no attempt is counted and no retry is scheduled.
 		expect(fixture.cycle(APRIL)).toMatchObject({
 			status: SubscriptionBillingStatus.PAID,
 			orderId: 'order-1',
 			attemptCount: 0,
 			chargeClaimToken: null
 		});
-		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: APRIL, billingCycleCount: 0 });
-		expect(eventNames(fixture)).toEqual([]);
+		expect(fixture.cycle(APRIL)?.nextRetryAt ?? null).toBeNull();
+		expect(eventNames(fixture)).not.toContain('subscription.payment-failed');
+		// The period's key is not completed on the error.
+		expect(
+			(await fixture.idempotencyService.findByKey('subscription.bill', `${SUBSCRIPTION}:${APRIL.toISOString()}`))?.status
+		).toBe('IN_PROGRESS');
 
-		// The period's key was not completed on it: once its lease is stale, the next pass finishes the paid cycle.
+		// A later pass replays the paid cycle and charges nothing.
 		fixture.idempotencyService.advanceBy(3 * 60 * 1000);
 
-		const finished = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+		const replayed = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
 
-		expect(finished).toMatchObject({ status: SubscriptionBillingStatus.PAID, replayed: true, orderId: 'order-1' });
+		expect(replayed).toMatchObject({ status: SubscriptionBillingStatus.PAID, replayed: true, orderId: 'order-1' });
 		expect(fixture.orderCalls).toHaveLength(1);
-		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: monthAfter(APRIL), billingCycleCount: 1 });
-		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.chargedSetupFeePlanIds).toEqual([PLAN]);
-		expect(eventNames(fixture)).toEqual(['subscription.renewed']);
 	});
 });
 

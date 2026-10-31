@@ -1246,6 +1246,24 @@ describe('SubscriptionBillingService — a charge in flight fences the cycle (ch
 		});
 	});
 
+	it('refuses a late pass’s payment of a cycle another pass paid, and keeps the no-op for one an operator paid', async () => {
+		const fixture = billingFixture([
+			billingRow('paid-by-a-pass', { status: SubscriptionBillingStatus.PAID, paidAt: new Date(), orderId: 'order-1' }),
+			nextPeriod('paid-by-an-operator', { status: SubscriptionBillingStatus.PAID, paidAt: new Date() })
+		]);
+
+		await expect(
+			fixture.service.markPaid('paid-by-a-pass', { orderId: 'order-1', chargeClaim: 'the-pass-whose-claim-went-stale' })
+		).rejects.toMatchObject(claimLost);
+		// The operator's payment left no order, so the pass whose charge was in flight still records its success.
+		const operatorPaid = await fixture.service.markPaid('paid-by-an-operator', { orderId: 'order-2', chargeClaim: 'a-pass' });
+
+		expect(operatorPaid.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(operatorPaid.orderId ?? null).toBeNull();
+		// An operator's payment of a cycle a pass already paid stays a no-op.
+		await expect(fixture.service.markPaid('paid-by-a-pass')).resolves.toMatchObject({ orderId: 'order-1' });
+	});
+
 	it('refuses the invoice of a pass whose claim another pass recovered', async () => {
 		const fixture = billingFixture([billingRow('billing-1', live())]);
 
