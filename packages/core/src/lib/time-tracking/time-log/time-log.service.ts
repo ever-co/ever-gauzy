@@ -58,7 +58,12 @@ import {
 } from './../../core/utils';
 import { RequestContext } from '../../core/context';
 import { moment } from './../../core/moment-extend';
-import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
+import {
+	calculateAverage,
+	calculateAverageActivity,
+	calculateBillableAmount,
+	calculateDuration
+} from './time-log.utils';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
@@ -66,6 +71,7 @@ import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-em
 import { TypeOrmOrganizationProjectRepository } from '../../organization-project/repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
+import { Organization } from '../../organization/organization.entity';
 import { TimeLog } from './time-log.entity';
 
 @Injectable()
@@ -256,6 +262,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							userId: true,
 							isAway: true,
 							isOnline: true,
+							// The rate the week's `spent` is priced at, as the owed-amount report reads it
+							billRateValue: true,
+							billRateCurrency: true,
 							user: {
 								id: true,
 								firstName: true,
@@ -293,6 +302,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// The days the report covers, and the zone its rows are grouped by
 		const { days, timeZone } = this.reportDateRange(request);
 
+		// A rate that states no currency is in the organization's, as the report page shows it; read only when needed
+		const organizationCurrency = logs.some(({ employee }) => this.hasRateWithoutCurrency(employee))
+			? await this.findOrganizationCurrency(request.organizationId)
+			: null;
+
 		// Process weekly logs using lodash and Moment.js
 		const weeklyLogs = chain(logs)
 			.groupBy('employeeId')
@@ -320,17 +334,61 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					dates[date] = byDate[date] || 0;
 				});
 
+				// What the week's time costs at the employee's bill rate; null when they have no rate
+				const currency = employee?.billRateCurrency || organizationCurrency;
+				const spent = calculateBillableAmount(weeklyDuration, employee?.billRateValue, currency);
+
 				// Return the processed weekly logs data
 				return {
 					employee,
 					dates,
 					sum: weeklyDuration || null,
-					activity: parseFloat(parseFloat(weeklyActivity + '').toFixed(2))
+					activity: parseFloat(parseFloat(weeklyActivity + '').toFixed(2)),
+					spent,
+					currency: spent === null ? null : currency || null
 				};
 			})
 			.value();
 
 		return weeklyLogs;
+	}
+
+	/**
+	 * Whether an employee has a bill rate but states no currency for it.
+	 *
+	 * @param employee - The employee, as a report loaded it.
+	 */
+	private hasRateWithoutCurrency(employee: IEmployee | null | undefined): boolean {
+		return !!employee && !employee.billRateCurrency && Number(employee.billRateValue) > 0;
+	}
+
+	/**
+	 * The currency of an organization of the current tenant.
+	 *
+	 * @param organizationId - The organization.
+	 * @returns Its currency, or null when it is not set or there is no organization to read.
+	 */
+	private async findOrganizationCurrency(organizationId: ID | undefined): Promise<string | null> {
+		const tenantId = RequestContext.currentTenantId();
+		if (!organizationId || !tenantId) {
+			return null;
+		}
+		let organization: Pick<IOrganization, 'currency'> | null;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				organization = await this.mikroOrmRepository
+					.getEntityManager()
+					.findOne(Organization, { id: organizationId, tenantId });
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				organization = await this.typeOrmRepository.manager.findOne(Organization, {
+					where: { id: organizationId, tenantId },
+					select: { id: true, currency: true }
+				});
+				break;
+		}
+		return organization?.currency || null;
 	}
 
 	/**
