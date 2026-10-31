@@ -42,7 +42,7 @@ const NAMES_ASSIGNED_COMMENTS = new RegExp(ASSIGNED_COMMENTS, 'i');
 
 function mentions(value: unknown, depth: number): boolean {
 	if (typeof value === 'string') {
-		return NAMES_ASSIGNED_COMMENTS.test(value);
+		return NAMES_ASSIGNED_COMMENTS.test(value) || mentionsOnceDecoded(value, depth);
 	}
 	if (value === null || typeof value !== 'object' || Buffer.isBuffer(value)) {
 		return false;
@@ -56,4 +56,27 @@ function mentions(value: unknown, depth: number): boolean {
 	return Object.entries(value).some(
 		([key, element]) => NAMES_ASSIGNED_COMMENTS.test(key) || mentions(element, depth + 1)
 	);
+}
+
+/**
+ * Whether a JSON text names the relation once decoded, as a `data` parameter is decoded (`ParseJsonPipe`) before the
+ * read: a JSON escape (`assignedComments`) spells the name without its letters. A text without a backslash
+ * decodes to the same letters the plain test already saw, so only a text with one is decoded; one that is not JSON
+ * is refused by that pipe, so it reads nothing.
+ */
+function mentionsOnceDecoded(text: string, depth: number): boolean {
+	if (!text.includes('\\')) {
+		return false;
+	}
+	if (depth >= MENTION_DEPTH) {
+		return true;
+	}
+	let decoded: unknown;
+	try {
+		decoded = JSON.parse(text);
+	} catch {
+		return false;
+	}
+	// A JSON text may itself hold a JSON text: it is judged as it decodes in turn
+	return mentions(decoded, depth + 1);
 }

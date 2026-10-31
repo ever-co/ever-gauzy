@@ -32,11 +32,16 @@ describe('assigned comments', () => {
 	});
 
 	describe('mentionsAssignedComments', () => {
+		// The relation's name with its `C` written as a JSON escape: the text holds a backslash, not the letter.
+		const ESCAPED_JSON = '{"relations":["employee.assigned\\u0043omments"]}';
+
 		it.each([
 			['a list of relations', { relations: ['members.employee.assignedComments'] }],
 			['a relation tree', { relations: { members: { employee: { assignedComments: 'true' } } } }],
 			['a single relation', { relations: 'assignedComments' }],
 			['a JSON parameter', { data: '{"relations":["assignedComments"]}' }],
+			['a JSON parameter that escapes a letter', { data: ESCAPED_JSON }],
+			['a JSON text inside a JSON text', { data: JSON.stringify(ESCAPED_JSON) }],
 			['another casing', { relations: ['ASSIGNEDCOMMENTS'] }],
 			['a selection', { select: { assignedComments: { id: 'true' } } }],
 			['a body', { findInput: { relations: ['employee.assignedComments'] } }]
@@ -49,6 +54,9 @@ describe('assigned comments', () => {
 			expect(mentionsAssignedComments({})).toBe(false);
 			expect(mentionsAssignedComments(undefined)).toBe(false);
 			expect(mentionsAssignedComments(Buffer.from('assignedComments'))).toBe(false);
+			// An escape that decodes to another relation, and a backslash in a text that is not JSON
+			expect(mentionsAssignedComments({ data: '{"relations":["employee.\\u0075ser"]}' })).toBe(false);
+			expect(mentionsAssignedComments({ search: 'C:\\Users\\notes' })).toBe(false);
 		});
 
 		it('counts a request nested deeper than it looks as naming it', () => {
