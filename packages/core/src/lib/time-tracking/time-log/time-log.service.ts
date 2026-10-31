@@ -58,7 +58,12 @@ import {
 } from './../../core/utils';
 import { RequestContext } from '../../core/context';
 import { moment } from './../../core/moment-extend';
-import { calculateAverage, calculateAverageActivity, calculateDuration } from './time-log.utils';
+import {
+	calculateAverage,
+	calculateAverageActivity,
+	calculateBillableAmount,
+	calculateDuration
+} from './time-log.utils';
 import { prepareSQLQuery as p } from './../../database/database.helper';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from './repository/mikro-orm-time-log.repository';
@@ -256,6 +261,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							userId: true,
 							isAway: true,
 							isOnline: true,
+							// The rate the week's `spent` is priced at, as the owed-amount report reads it
+							billRateValue: true,
+							billRateCurrency: true,
 							user: {
 								id: true,
 								firstName: true,
@@ -320,12 +328,17 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					dates[date] = byDate[date] || 0;
 				});
 
+				// What the week's time costs at the employee's bill rate; null when they have no rate
+				const spent = calculateBillableAmount(weeklyDuration, employee?.billRateValue);
+
 				// Return the processed weekly logs data
 				return {
 					employee,
 					dates,
 					sum: weeklyDuration || null,
-					activity: parseFloat(parseFloat(weeklyActivity + '').toFixed(2))
+					activity: parseFloat(parseFloat(weeklyActivity + '').toFixed(2)),
+					spent,
+					currency: spent === null ? null : employee?.billRateCurrency ?? null
 				};
 			})
 			.value();

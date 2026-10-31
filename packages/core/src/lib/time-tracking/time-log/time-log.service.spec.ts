@@ -331,6 +331,83 @@ describe('TimeLogService', () => {
 				expect(report[0].dates[zoned]).not.toBe(0);
 			});
 		});
+
+		/**
+		 * The weekly report's Spent column (#4735): each employee's week priced at their bill rate, the way
+		 * the owed-amount report prices a day, and nothing at all for an employee without a rate.
+		 */
+		describe('weekly spent', () => {
+			const OTHER_EMPLOYEE_ID = '9c8b7a69-5847-4362-9150-4f3e2d1c0b9a';
+
+			const log = (employee: Record<string, unknown>, id: string, duration: number) => ({
+				id,
+				employeeId: employee.id,
+				startedAt: '2026-01-06T09:00:00.000Z',
+				stoppedAt: '2026-01-06T10:00:00.000Z',
+				duration,
+				employee,
+				timeSlots: [{ id: `${id}-slot`, overall: 300, duration: 600 }]
+			});
+
+			type WeeklyEntry = { employee: { id: string }; spent: number | null; currency: string | null };
+
+			beforeEach(() => {
+				actAs({ canChangeSelectedEmployee: true });
+			});
+
+			it('selects the bill rate and its currency with the employee', async () => {
+				const setFindOptions = jest.spyOn(builder, 'setFindOptions');
+
+				await service.getWeeklyReport(request);
+
+				const [{ select }] = setFindOptions.mock.calls[0] as unknown as [{ select: Record<string, any> }];
+				expect(select.employee).toEqual(
+					expect.objectContaining({ billRateValue: true, billRateCurrency: true })
+				);
+			});
+
+			it('prices each employee week at their rate, and leaves an employee without a rate unpriced', async () => {
+				const billed = { id: TARGET_EMPLOYEE_ID, billRateValue: 40, billRateCurrency: 'EUR' };
+				const unbilled = { id: OTHER_EMPLOYEE_ID, billRateValue: null, billRateCurrency: 'USD' };
+				builder.rows = [
+					log(billed, 'f1a2b3c4-0000-4000-8000-000000000001', 5400),
+					log(billed, 'f1a2b3c4-0000-4000-8000-000000000002', 1800),
+					log(unbilled, 'f1a2b3c4-0000-4000-8000-000000000003', 3600)
+				];
+
+				const report = (await service.getWeeklyReport(request)) as WeeklyEntry[];
+				const byEmployee = new Map(report.map((entry) => [entry.employee.id, entry]));
+
+				// 2 hours at 40
+				expect(byEmployee.get(TARGET_EMPLOYEE_ID)).toEqual(
+					expect.objectContaining({ spent: 80, currency: 'EUR' })
+				);
+				// No rate: no amount, and no currency for an amount that is not there
+				expect(byEmployee.get(OTHER_EMPLOYEE_ID)).toEqual(
+					expect.objectContaining({ spent: null, currency: null })
+				);
+			});
+
+			it('reads the rate the same way under MikroORM, where a numeric column may arrive as a string', async () => {
+				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: '12.50', billRateCurrency: 'USD' };
+				const find = jest.fn().mockResolvedValue([log(employee, 'f1a2b3c4-0000-4000-8000-000000000004', 4500)]);
+				// The MikroORM branch only needs its where-builder, the repository and the serializer; own
+				// properties shadow the prototype's `ormType` getter.
+				const self = Object.create(TimeLogService.prototype, {
+					ormType: { value: MultiORMEnum.MikroORM },
+					mikroOrmRepository: { value: { find } },
+					buildMikroOrmTimeLogWhere: { value: jest.fn().mockResolvedValue({}) },
+					serialize: { value: (entity: unknown) => entity }
+				});
+
+				const report = (await TimeLogService.prototype.getWeeklyReport.call(self, request)) as WeeklyEntry[];
+
+				// The whole employee is populated, rate included
+				expect(find.mock.calls[0][1].populate).toEqual(expect.arrayContaining(['employee']));
+				// 1.25 hours at 12.50
+				expect(report[0]).toEqual(expect.objectContaining({ spent: 15.63, currency: 'USD' }));
+			});
+		});
 	});
 
 	/**
