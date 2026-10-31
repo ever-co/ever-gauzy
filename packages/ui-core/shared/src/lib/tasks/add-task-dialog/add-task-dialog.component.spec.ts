@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { IOrganizationProjectModule } from '@gauzy/contracts';
 import { AddTaskDialogComponent } from './add-task-dialog.component';
 import { AddTaskDialogModule } from './add-task-dialog.module';
 import { AuthService, EmployeesService } from '@gauzy/ui-core/core';
@@ -65,12 +66,27 @@ describe('AddTaskDialogComponent', () => {
 			expect(component.form.get('project').value).toBeNull();
 		});
 
+		it("clears that project's modules with it, so none are saved on a task without a project", () => {
+			selectProject(GLOBEX);
+			component.availableModules = [{ id: 'module-1', name: 'Checkout' } as IOrganizationProjectModule];
+			component.onModulesSelected(['module-1']);
+			component.form.patchValue({ modules: ['module-1'] });
+
+			component.organizationContactControl.setValue(ACME);
+
+			expect(component.selectedModules).toEqual([]);
+			expect(component.availableModules).toEqual([]);
+			expect(component.form.get('modules').value).toEqual([]);
+		});
+
 		it('keeps a selected project of the picked client', () => {
 			selectProject(ACME);
+			component.onModulesSelected(['module-1']);
 
 			component.organizationContactControl.setValue(ACME);
 
 			expect(component.form.get('projectId').value).toBe('project-1');
+			expect(component.selectedModules).toEqual(['module-1']);
 		});
 
 		it('keeps the selected project when the client is cleared again', () => {

@@ -165,13 +165,17 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	}
 
 	/**
-	 * Clears the selected project when it does not belong to the client the project list is now narrowed to.
+	 * Clears the selected project when it does not belong to the client the project list is now narrowed to,
+	 * together with its modules: modules belong to a project, and `loadAvailableModules` keeps the old
+	 * project's list when there is no project, so they would otherwise be saved on a task without one.
 	 *
 	 * @param organizationContactId The picked client, or `null` once it is cleared.
 	 */
 	onClientChanged(organizationContactId: ID | null): void {
 		if (!isProjectOfClient(this.form.get('project').value, organizationContactId)) {
-			this.form.patchValue({ project: null, projectId: null });
+			this.selectedModules = [];
+			this.availableModules = [];
+			this.form.patchValue({ project: null, projectId: null, modules: [] });
 		}
 	}
 
