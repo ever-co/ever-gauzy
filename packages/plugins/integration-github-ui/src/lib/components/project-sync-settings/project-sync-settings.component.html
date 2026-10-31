@@ -1,12 +1,14 @@
 <nb-card class="project-sync-settings" [nbSpinner]="saving" nbSpinnerStatus="primary" nbSpinnerSize="small">
 	<nb-card-header class="project-sync-settings__header">
 		<h6 class="project-sync-settings__title">{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.TITLE' | translate }}</h6>
-		<span class="project-sync-settings__subtitle">
-			{{
-				'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.SUBTITLE'
-					| translate: { project: project?.name, repository: repository?.fullName }
-			}}
-		</span>
+		@if (repository?.fullName) {
+			<span class="project-sync-settings__subtitle">
+				{{
+					'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.SUBTITLE'
+						| translate: { project: project?.name, repository: repository.fullName }
+				}}
+			</span>
+		}
 	</nb-card-header>
 	<nb-card-body class="project-sync-settings__body" [formGroup]="form">
 		<div class="setting">
