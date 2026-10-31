@@ -2130,6 +2130,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		// an earlier attempt wrote records that: the amount the cycle settles for, and that `subscription.renewed`
 		// reports, is the amount its order charged.
 		const pricing = { gross: gross.toStorageString(), discount: discount.toStorageString() };
+		// A row the change restated on its own transaction (`applyScheduledChange`) already carries this discount, so its
+		// discount rows are brought to it first: a payment recorded after that commit stops the retry below
+		// (`SUBSCRIPTION_BILLING_CYCLE_SETTLED`), and the row it settled then still agrees with its ledger.
+		const restated = !!existing && !!opened?.plan;
+
+		if (restated) {
+			await this.appendDiscount(existing as SubscriptionBilling, subscription, discount);
+		}
+
 		const billing = existing
 			? await this.billingService.repriceUnsettled(existing, net.toStorageString(), pricing)
 			: await this.billingService.createPending({
@@ -2142,7 +2151,9 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					metadata: pricing
 			  });
 
-		await this.appendDiscount(billing, subscription, discount);
+		if (!restated) {
+			await this.appendDiscount(billing, subscription, discount);
+		}
 
 		const credit = await this.consumePendingCredit(subscription, billing);
 

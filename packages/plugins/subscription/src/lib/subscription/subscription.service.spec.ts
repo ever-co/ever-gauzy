@@ -2435,6 +2435,49 @@ describe('SubscriptionService — a change from the next period takes hold when 
 		expect(fixture.orderCalls).toHaveLength(1);
 	});
 
+	it('brings the discount rows to the restated row before a payment recorded meanwhile can stop the retry', async () => {
+		// Copilot on #11602: the retry was stopped (the row paid) before its discount rows were reconciled, so a cycle
+		// restated from 120 at 10 % off to 300 with none kept the month's -12 promotion on a row that grants nothing.
+		let attempts = 0;
+		const fixture = subscriptionFixture({
+			plans: [
+				planRow(PLAN, { discountPercentage: '0.1' }),
+				planRow(BETTER_PLAN, { billingPeriod: SubscriptionBillingPeriod.YEARLY })
+			],
+			prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' },
+			orders: () => {
+				attempts += 1;
+				throw new Error(`SUBSCRIPTION_CHARGE_DECLINED: attempt ${attempts} was declined`);
+			}
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN, effective: 'NEXT_PERIOD' });
+		fixture.idempotencyService.advanceBy(5 * 60 * 1000);
+
+		const reprice = fixture.billingService.repriceUnsettled.bind(fixture.billingService);
+
+		jest.spyOn(fixture.billingService, 'repriceUnsettled').mockImplementationOnce(
+			async (...args: [any, any, any]) => {
+				fixture.tables.subscription_billing[0] = {
+					...fixture.tables.subscription_billing[0],
+					status: SubscriptionBillingStatus.PAID
+				};
+
+				return reprice(...args);
+			}
+		);
+
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true })).rejects.toThrow(
+			/SUBSCRIPTION_BILLING_CYCLE_SETTLED/
+		);
+		expect(fixture.cycle(APRIL)?.metadata).toMatchObject({ gross: '300.000000', discount: '0.000000' });
+		expect(fixture.adjustmentsOf(fixture.cycle(APRIL)?.id).map((row: Row) => [row.type, row.amount])).toEqual([
+			['PROMOTION', '-12.000000'],
+			['MANUAL', '12.000000']
+		]);
+	});
+
 	it('is the service’s own key: a caller’s metadata neither plants one nor erases one (SEC-B-03)', async () => {
 		// Planted, it would move the subscription to another plan at the next renewal with no plan change at all.
 		const planted = subscriptionFixture({ prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' } });
