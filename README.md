@@ -336,13 +336,16 @@ Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/d
 
 ## 💌 Contact Us
 
+<a href="https://cal.com/ever"><img src="https://cal.com/book-with-cal-dark.svg" alt="Book a call with Ever" /></a>
+
+-   [Book a call with us](https://cal.com/ever) on Cal.com
 -   [Ever.co Website Contact Us page](https://ever.co/contacts)
 -   [Slack Community](https://join.slack.com/t/gauzy/shared_invite/enQtNzc5MTA5MDUwODg2LTI0MGEwYTlmNWFlNzQzMzBlOWExNTk0NzAyY2IwYWYwMzZjMTliYjMwNDI3NTJmYmM4MDQ4NDliMDNiNDY1NWU)
 -   [Discord Chat](https://discord.gg/hKQfn4j)
 -   [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/ever-gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 -   [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 -   For business inquiries: <mailto:gauzy@ever.co>
--   Please report security vulnerabilities to <mailto:security@ever.co>
+-   Please report security vulnerabilities privately, with [GitHub private vulnerability reporting](https://github.com/ever-co/ever-gauzy/security/advisories/new) or to <mailto:security@ever.co> (see our [Security Policy](SECURITY.md))
 -   [Gauzy Platform @ Twitter](https://twitter.com/gauzyplatform)
 -   [Gauzy Platform @ Facebook](https://www.facebook.com/gauzyplatform)
 
@@ -354,7 +357,7 @@ See more details in the [LICENSES.md](LICENSES.md).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
 
-If you discover any issue regarding security, please disclose the information responsibly by sending an email to <mailto:security@ever.co> or on [huntr](https://huntr.com) and not by creating a GitHub issue.
+If you discover any issue regarding security, please disclose the information responsibly and privately, not by creating a public GitHub issue: report it with [GitHub private vulnerability reporting](https://github.com/ever-co/ever-gauzy/security/advisories/new) or by sending an email to <mailto:security@ever.co>. See our [Security Policy](SECURITY.md) for what to include and what happens next.
 
 ## 🛡️ License
 
