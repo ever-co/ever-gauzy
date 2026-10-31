@@ -8,6 +8,7 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 import { And, Equal, In, IsNull, Not } from 'typeorm';
 import { BaseEntityEnum, ICommentCreateInput, PermissionsEnum } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
+import { convertTypeORMWhereToMikroORM } from '../core/utils';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { CommentService } from './comment.service';
@@ -421,9 +422,9 @@ describe('CommentService — the comments of a governed record follow its policy
 					withDeleted: true
 				} as any);
 
+				// No live note is withdrawn, so only the caller's own withdrawn notes are left.
 				expect(count).toHaveBeenCalledWith({
 					where: [
-						{ entity: CONTACT, entityId: CONTACT_ID, deletedAt: And(Not(IsNull()), IsNull()) },
 						{
 							entity: CONTACT,
 							entityId: CONTACT_ID,
@@ -433,6 +434,47 @@ describe('CommentService — the comments of a governed record follow its policy
 					],
 					withDeleted: true
 				});
+			});
+
+			it('states the author scope so that the MikroORM translation keeps every condition', async () => {
+				as([PermissionsEnum.ORG_CONTACT_VIEW]);
+				const findAll = listed();
+				const withdrawnAt = '2026-10-01T00:00:00.000Z';
+
+				await service.findAll({
+					where: { entity: CONTACT, entityId: CONTACT_ID, deletedAt: withdrawnAt },
+					withDeleted: true
+				} as any);
+				await service.findAll({
+					where: { entity: CONTACT, entityId: CONTACT_ID, deletedAt: IsNull() },
+					withDeleted: true
+				} as any);
+
+				// A withdrawal date is met by withdrawn notes only, and those are the caller's own.
+				expect(convertTypeORMWhereToMikroORM(findAll.mock.calls[0][0].where as any)).toEqual([
+					{
+						entity: CONTACT,
+						entityId: CONTACT_ID,
+						deletedAt: { $eq: withdrawnAt, $ne: null },
+						employeeId: { $eq: 'employee-me' }
+					}
+				]);
+				expect(convertTypeORMWhereToMikroORM(findAll.mock.calls[1][0].where as any)).toEqual([
+					{ entity: CONTACT, entityId: CONTACT_ID, deletedAt: null }
+				]);
+			});
+
+			it('reads no note when no part of the criteria can be met by the caller', async () => {
+				as([PermissionsEnum.ORG_CONTACT_VIEW], { employeeId: null });
+				jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(null as never);
+				const findAll = listed();
+
+				await service.findAll({
+					where: { entity: CONTACT, entityId: CONTACT_ID, deletedAt: Not(IsNull()) },
+					withDeleted: true
+				} as any);
+
+				expect(findAll).toHaveBeenCalledWith({ where: [{ id: IsNull() }], withDeleted: true });
 			});
 
 			it('lists every withdrawn note to those who may write notes or act for other employees', async () => {

@@ -578,25 +578,33 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 *
 	 * Each alternative becomes two: its live comments, and its withdrawn comments that the caller wrote. A caller
 	 * with no identity to own a comment reads the live ones only. What the alternative already states about the
-	 * withdrawal or the author is kept beside the added condition.
+	 * withdrawal or the author is kept beside the added condition, and a part that no comment can meet beside it is
+	 * left out (see {@link alongside}). When no part is left, the read is of no comment: an empty list of
+	 * alternatives would read every one.
 	 */
 	private withdrawnKeptToAuthor(where: unknown): unknown[] {
 		const own = this.callerAuthorship();
 		const alternatives = (Array.isArray(where) ? where : [where ?? {}]) as Record<string, unknown>[];
 
-		return alternatives.flatMap((alternative) => {
-			const live = { ...alternative, deletedAt: alongside(alternative.deletedAt, IsNull()) };
-			if (!own) {
-				return [live];
+		const kept = alternatives.flatMap((alternative) => {
+			const parts: Record<string, unknown>[] = [];
+			const live = alongside(alternative.deletedAt, IsNull());
+			if (live) {
+				parts.push({ ...alternative, deletedAt: live });
 			}
-			const [column, value] = own;
-			const withdrawnOwn = {
-				...alternative,
-				deletedAt: alongside(alternative.deletedAt, Not(IsNull())),
-				[column]: alongside(alternative[column], Equal(value))
-			};
-			return [live, withdrawnOwn];
+			if (own) {
+				const [column, value] = own;
+				const withdrawn = alongside(alternative.deletedAt, Not(IsNull()));
+				const author = alongside(alternative[column], Equal(value));
+				if (withdrawn && author) {
+					parts.push({ ...alternative, deletedAt: withdrawn, [column]: author });
+				}
+			}
+			return parts;
 		});
+
+		// A comment's id is never null.
+		return kept.length > 0 ? kept : [{ id: IsNull() }];
 	}
 
 	/**
@@ -687,12 +695,30 @@ function parentStatedById<I extends { parent?: { id?: ID } | null; parentId?: ID
 	return { ...rest, parentId } as I;
 }
 
-/** What a criterion already states about a column (a value or a find operator), and `condition`, as one operator. */
-function alongside(stated: unknown, condition: FindOperator<unknown>): FindOperator<unknown> {
+/**
+ * What a criterion already states about a column (a value or a find operator), and `condition`, as one operator;
+ * `undefined` when no row meets both.
+ *
+ * `IsNull()` is never put inside `And(...)`: the MikroORM translation of `And` drops a part that translates to
+ * `null`, which would leave the other part alone and read more rows than both allow. It is not needed there
+ * either. Every other condition a criterion states compares the column, and a comparison never holds for a null
+ * column, so `IsNull()` beside any of them is met by no row, and beside `IsNull()` it is itself.
+ */
+function alongside(stated: unknown, condition: FindOperator<unknown>): FindOperator<unknown> | undefined {
 	if (stated === undefined) {
 		return condition;
 	}
+	const statedIsNull = isNullCondition(stated);
+	const conditionIsNull = isNullCondition(condition);
+	if (statedIsNull || conditionIsNull) {
+		return statedIsNull && conditionIsNull ? condition : undefined;
+	}
 	return And(stated instanceof FindOperator ? stated : Equal(stated), condition);
+}
+
+/** Whether `condition` is `IsNull()`. */
+function isNullCondition(condition: unknown): boolean {
+	return condition instanceof FindOperator && condition.type === 'isNull';
 }
 
 /** `fields` without `keys`. */

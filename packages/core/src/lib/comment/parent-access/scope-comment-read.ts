@@ -98,6 +98,11 @@ function outsideGoverned(stated: unknown, governed: ReadonlyArray<string>): Find
 	if (stated === undefined || stated === null) {
 		return outside;
 	}
+	// A null type is none of the governed ones. `IsNull()` stays alone: the MikroORM translation of `And` drops a
+	// part that translates to `null`, which would leave only `NOT IN` and read every other type.
+	if (stated instanceof FindOperator && stated.type === 'isNull') {
+		return stated as FindOperator<string>;
+	}
 	if (stated instanceof FindOperator) {
 		return And(stated as FindOperator<string>, outside);
 	}

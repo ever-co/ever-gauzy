@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
-import { And, Equal, FindOperator, In, Not } from 'typeorm';
+import { And, Equal, FindOperator, In, IsNull, Not } from 'typeorm';
 import { BaseEntityEnum } from '@gauzy/contracts';
+import { convertTypeORMWhereToMikroORM } from '../../core/utils';
 import { scopeCommentReadToParents } from './scope-comment-read';
 
 const CONTACT = BaseEntityEnum.OrganizationContact;
@@ -88,6 +89,23 @@ describe('scopeCommentReadToParents', () => {
 
 		expect(scope.where).toEqual({ entity: And(stated, outside()) });
 		expect((scope.where as { entity: FindOperator<string> }).entity).toBeInstanceOf(FindOperator);
+	});
+
+	it('keeps a stated null type alone, so that the MikroORM translation keeps it', () => {
+		const scope = scopeCommentReadToParents({ entity: IsNull(), entityId: PROJECT_ID }, GOVERNED);
+
+		expect(scope.where).toEqual({ entity: IsNull(), entityId: PROJECT_ID });
+		expect(convertTypeORMWhereToMikroORM(scope.where as any)).toEqual({ entity: null, entityId: PROJECT_ID });
+	});
+
+	it('states the exclusion so that the MikroORM translation keeps it beside the stated type', () => {
+		const scope = scopeCommentReadToParents({ entity: PROJECT, entityId: PROJECT_ID }, GOVERNED);
+
+		expect(convertTypeORMWhereToMikroORM(scope.where as any)).toEqual({
+			entity: { $eq: PROJECT },
+			entityId: PROJECT_ID,
+			$and: [{ $not: { entity: { $in: [CONTACT] } } }]
+		});
 	});
 
 	it('scopes each alternative of a list on its own', () => {
