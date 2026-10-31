@@ -34,7 +34,10 @@ import { DatabaseTypeEnum } from '@gauzy/config';
  *
  * Which of two live rights a customer keeps is a decision about a licence they hold, not one a migration may
  * take. Where duplicates already exist the tick creates nothing, changes no row and logs which order lines
- * are affected; the grant's read-before-insert still stands. Every statement is guarded, so a re-run changes
+ * are affected. It is recorded as run all the same, so the plugin runs {@link install} again at every start
+ * (`EntitlementLiveLineGrantIndex`): once a person has revoked the extra rights, the next start creates the
+ * index. Until then the grant holds the order line's row for its transaction and reads again under it, which
+ * keeps the race closed without the index (#11601 review). Every statement is guarded, so a re-run changes
  * nothing, and `down` drops exactly what this tick creates.
  */
 export class AddEntitlementLiveLineGrantUniqueIndex1791000003580 implements MigrationInterface {
@@ -67,17 +70,25 @@ export class AddEntitlementLiveLineGrantUniqueIndex1791000003580 implements Migr
 	public async up(queryRunner: QueryRunner): Promise<void> {
 		console.log(chalk.yellow(this.name + ' start running!'));
 
+		await this.install(queryRunner);
+	}
+
+	/**
+	 * Creates the index unless it is already there or the rows would violate it: what {@link up} runs, and what
+	 * the plugin runs again at every start, for a database whose duplicates kept this tick from creating it.
+	 *
+	 * @param queryRunner
+	 * @returns Whether the index is there afterwards.
+	 */
+	public async install(queryRunner: QueryRunner): Promise<boolean> {
 		switch (queryRunner.connection.options.type as DatabaseTypeEnum) {
 			case DatabaseTypeEnum.sqlite:
 			case DatabaseTypeEnum.betterSqlite3:
-				await this.sqliteUpQueryRunner(queryRunner);
-				break;
+				return await this.sqliteUpQueryRunner(queryRunner);
 			case DatabaseTypeEnum.postgres:
-				await this.postgresUpQueryRunner(queryRunner);
-				break;
+				return await this.postgresUpQueryRunner(queryRunner);
 			case DatabaseTypeEnum.mysql:
-				await this.mysqlUpQueryRunner(queryRunner);
-				break;
+				return await this.mysqlUpQueryRunner(queryRunner);
 			default:
 				throw Error(`Unsupported database: ${queryRunner.connection.options.type}`);
 		}
@@ -112,8 +123,8 @@ export class AddEntitlementLiveLineGrantUniqueIndex1791000003580 implements Migr
 	 *
 	 * @param queryRunner
 	 */
-	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await this.addIndex(queryRunner, DatabaseTypeEnum.postgres, [this.partialIndexStatement()]);
+	public async postgresUpQueryRunner(queryRunner: QueryRunner): Promise<boolean> {
+		return await this.addIndex(queryRunner, DatabaseTypeEnum.postgres, [this.partialIndexStatement()]);
 	}
 
 	/**
@@ -134,8 +145,8 @@ export class AddEntitlementLiveLineGrantUniqueIndex1791000003580 implements Migr
 	 *
 	 * @param queryRunner
 	 */
-	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
-		await this.addIndex(queryRunner, DatabaseTypeEnum.sqlite, [this.partialIndexStatement()]);
+	public async sqliteUpQueryRunner(queryRunner: QueryRunner): Promise<boolean> {
+		return await this.addIndex(queryRunner, DatabaseTypeEnum.sqlite, [this.partialIndexStatement()]);
 	}
 
 	/**
@@ -159,7 +170,7 @@ export class AddEntitlementLiveLineGrantUniqueIndex1791000003580 implements Migr
 	 *
 	 * @param queryRunner
 	 */
-	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<any> {
+	public async mysqlUpQueryRunner(queryRunner: QueryRunner): Promise<boolean> {
 		const self = AddEntitlementLiveLineGrantUniqueIndex1791000003580;
 		const statements: string[] = [];
 
@@ -174,7 +185,7 @@ export class AddEntitlementLiveLineGrantUniqueIndex1791000003580 implements Migr
 			`CREATE UNIQUE INDEX \`UQ_entitlement_live_line_grant\` ON \`entitlement\` (\`${self.MYSQL_KEY}\`)`
 		);
 
-		await this.addIndex(queryRunner, DatabaseTypeEnum.mysql, statements);
+		return await this.addIndex(queryRunner, DatabaseTypeEnum.mysql, statements);
 	}
 
 	/**
@@ -231,16 +242,21 @@ export class AddEntitlementLiveLineGrantUniqueIndex1791000003580 implements Migr
 	 * @param queryRunner
 	 * @param dialect The dialect whose catalogue is probed.
 	 * @param statements The dialect's own statements, in order.
+	 * @returns Whether the index is there afterwards.
 	 */
-	private async addIndex(queryRunner: QueryRunner, dialect: DatabaseTypeEnum, statements: string[]): Promise<void> {
+	private async addIndex(
+		queryRunner: QueryRunner,
+		dialect: DatabaseTypeEnum,
+		statements: string[]
+	): Promise<boolean> {
 		const self = AddEntitlementLiveLineGrantUniqueIndex1791000003580;
 
 		if (!(await queryRunner.hasTable(self.TABLE))) {
-			return;
+			return false;
 		}
 
 		if (await this.indexExists(queryRunner, dialect)) {
-			return;
+			return true;
 		}
 
 		const rows: unknown = await queryRunner.query(this.duplicatesQuery(dialect));
@@ -262,17 +278,20 @@ export class AddEntitlementLiveLineGrantUniqueIndex1791000003580 implements Migr
 			console.warn(
 				chalk.red(
 					`${this.name}: ${affected.length} order line(s) carry more than one live right of a kind, so ${self.INDEX} ` +
-						`was NOT created and no row was changed: ${named}${more}. Once a person has revoked the extra rights, ` +
-						`create the index with the statements this migration issues: ${statements.join('; ')}`
+						`was NOT created and no row was changed: ${named}${more}. Until it exists, a grant of an order line locks ` +
+						`the line for its transaction instead. Once a person has revoked the extra rights, the next start of the ` +
+						`API creates the index, or create it now with: ${statements.join('; ')}`
 				)
 			);
 
-			return;
+			return false;
 		}
 
 		for (const statement of statements) {
 			await queryRunner.query(statement);
 		}
+
+		return true;
 	}
 
 	/**

@@ -264,6 +264,8 @@ function entitlementFixture(
 		sequence?: { formatted: string } | Error;
 		assertWritable?: (input: any) => void;
 		issue?: (input: any) => Promise<any>;
+		/** Whether the database holds `UQ_entitlement_live_line_grant`; it does unless stated. */
+		liveLineGrantIndex?: boolean;
 	} = {}
 ) {
 	let sequence = 0;
@@ -563,7 +565,8 @@ function entitlementFixture(
 		sequenceService as never,
 		ruleService as never,
 		outbox as never,
-		eventBus as never
+		eventBus as never,
+		{ isPresent: () => options.liveLineGrantIndex ?? true } as never
 	);
 
 	return {
@@ -1046,6 +1049,102 @@ describe('EntitlementService — a grant racing another grant of the same line (
 		);
 		expect(attempts).toBe(10);
 		expect(exhausted.appended).toEqual([]);
+	});
+});
+
+/**
+ * A database whose existing duplicates kept the migration from creating `UQ_entitlement_live_line_grant` has nothing
+ * that refuses a second live right of a line (#11601 review). Until the index is in place, a grant of a line locks the
+ * line on its own transaction and reads again under the lock; on the dialects with row locks the lock is a statement
+ * of its own, recorded here in order with the inserts.
+ */
+describe('EntitlementService — a grant of an order line where the unique index is missing (#11601 review)', () => {
+	const PG_LOCK = 'SELECT "id" FROM "order_line" WHERE "id" = $1 FOR UPDATE';
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	function onDialect(type: 'postgres' | 'mysql', seed: { rights?: Row[] } = {}, liveLineGrantIndex = false) {
+		const fixture = entitlementFixture(seed, { liveLineGrantIndex });
+		const statements: Array<[string, unknown[]]> = [];
+		const save = fixture.manager.save;
+
+		fixture.manager.connection = { options: { type } };
+		fixture.manager.query = async (sql: string, parameters: unknown[]) => {
+			statements.push([sql, parameters]);
+
+			return [];
+		};
+		fixture.manager.save = async (entity: unknown, row: any) => {
+			if (entity === Entitlement) {
+				statements.push(['INSERT entitlement', [row.orderLineId ?? null]]);
+			}
+
+			return await save(entity, row);
+		};
+
+		return { fixture, statements };
+	}
+
+	it.each([
+		['postgres', PG_LOCK],
+		['mysql', 'SELECT `id` FROM `order_line` WHERE `id` = ? FOR UPDATE']
+	] as const)('locks the order line on %s before it reads again and inserts', async (type, lock) => {
+		const { fixture, statements } = onDialect(type);
+
+		const result = await fixture.service.grant({ orderId: ORDER, orderLineId: ORDER_LINE });
+
+		expect(result.created).toBe(true);
+		expect(statements).toEqual([
+			[lock, [ORDER_LINE]],
+			['INSERT entitlement', [ORDER_LINE]]
+		]);
+	});
+
+	it('answers a grant that lost the race with the right its read under the lock finds, and writes nothing', async () => {
+		const winner = rightRow('winner', {
+			orderId: ORDER,
+			orderLineId: ORDER_LINE,
+			status: EntitlementStatus.PENDING,
+			number: 'E-WINNER'
+		});
+		const { fixture, statements } = onDialect('postgres', { rights: [winner] });
+		// The read before the transaction ran before the winner committed; the one under the lock sees the table.
+		const original = (fixture.service as any).findExistingGrant.bind(fixture.service);
+		const read = jest.spyOn(fixture.service as any, 'findExistingGrant');
+
+		read.mockImplementationOnce(async () => null).mockImplementation(original);
+
+		const result = await fixture.service.grant(
+			{ orderId: ORDER, orderLineId: ORDER_LINE, issueKey: true, conditions: [{ attribute: 'region' } as never] },
+			{ tenantId: TENANT, organizationId: ORG }
+		);
+
+		expect(result).toEqual({ entitlement: expect.objectContaining({ id: 'winner' }), created: false });
+		expect(statements).toEqual([[PG_LOCK, [ORDER_LINE]]]);
+		expect(read).toHaveBeenCalledTimes(2);
+		expect(read.mock.calls[1][3]).toBe(fixture.manager);
+		expect(fixture.tables.entitlement.map((row) => row.id)).toEqual(['winner']);
+		expect(fixture.appended).toEqual([]);
+		expect(fixture.published).toEqual([]);
+		expect(fixture.conditionsReplaced).toEqual([]);
+		expect(fixture.tables.entitlement_key).toEqual([]);
+	});
+
+	it('locks nothing once the index is in place, nor for a right no order line granted', async () => {
+		const indexed = onDialect('postgres', {}, true);
+
+		await indexed.fixture.service.grant({ orderId: ORDER, orderLineId: ORDER_LINE });
+		expect(indexed.statements).toEqual([['INSERT entitlement', [ORDER_LINE]]]);
+
+		const operator = onDialect('postgres');
+
+		await operator.fixture.service.grant({ customerId: 'customer-1' });
+		expect(operator.statements).toEqual([['INSERT entitlement', [null]]]);
 	});
 });
 

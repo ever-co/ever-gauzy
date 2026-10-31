@@ -37,7 +37,7 @@ import { EntitlementChangedEvent, EntitlementRevokedEvent } from '../events/enti
 import { ENTITLEMENT_RULE_OWNER, toRuleInputs } from '../entitlement-conditions';
 import { isDueForExpiry, toWholeQuantity } from '../entitlement-check/entitlement-rules';
 import { recountEntitlementOccupancy } from '../entitlement-counts';
-import { lockEntitlement } from '../entitlement-lock';
+import { lockEntitlement, lockOrderLine } from '../entitlement-lock';
 import {
 	DERIVED_ENTITLEMENT_NUMBER_ATTEMPTS,
 	IEntitlementNumber,
@@ -57,6 +57,7 @@ import { MikroOrmEntitlementRepository } from './repository/mikro-orm-entitlemen
 import { TypeOrmEntitlementRepository } from './repository/type-orm-entitlement.repository';
 import { movedReadOnlyMembers, notWritable, writableOnly } from '../entitlement.writable';
 import { EntitlementCrudService } from '../entitlement-crud.service';
+import { EntitlementLiveLineGrantIndex } from '../database/entitlement-live-line-grant-index';
 
 /** Statuses from which a right may be extended by a renewal. */
 const EXTENDABLE_STATUSES: EntitlementStatus[] = [
@@ -122,7 +123,8 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 		private readonly sequenceService: SequenceService,
 		private readonly ruleService: RuleService,
 		private readonly outbox: EventOutboxService,
-		private readonly eventBus: EventBus
+		private readonly eventBus: EventBus,
+		private readonly liveLineGrantIndex: EntitlementLiveLineGrantIndex
 	) {
 		super(typeOrmEntitlementRepository, mikroOrmEntitlementRepository);
 	}
@@ -190,7 +192,8 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	 *
 	 * The replay holds under concurrency too (#11023): two deliveries of one line that both read no
 	 * right before either wrote one are refused by `UQ_entitlement_live_line_grant` on the second insert,
-	 * and {@link insertGrant} answers that refusal with the right the first one wrote.
+	 * and {@link insertGrant} answers that refusal with the right the first one wrote. Where the database
+	 * lacks that index, {@link insertGrant} serialises the two on the order line instead.
 	 *
 	 * @param input What grants the right, and what it carries.
 	 * @param scope The tenant and organization the grant belongs to; the request context is the
@@ -1310,6 +1313,12 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	 *
 	 * Every other error is rethrown untouched.
 	 *
+	 * The migration withholds `UQ_entitlement_live_line_grant` from a database whose order lines already carry
+	 * duplicates, and nothing would then refuse the second insert (#11601 review). Until the index is in place
+	 * ({@link EntitlementLiveLineGrantIndex}), a grant of an order line therefore locks the line first, on its own
+	 * transaction, and reads again under the lock: a grant that lost the race waits for the winner to commit, finds
+	 * its right and returns it as the replay, without writing.
+	 *
 	 * @param input What grants the right.
 	 * @param row The row to write, without its number.
 	 * @param scope The tenant and organization the grant belongs to.
@@ -1326,11 +1335,24 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 
 		for (let attempt = 1; ; attempt++) {
 			try {
-				const entitlement = await this.transaction((manager) =>
-					this.writeGrant(manager, { ...row, number: number.value } as Partial<Entitlement>)
-				);
+				return await this.transaction(async (manager) => {
+					if (row.orderLineId && !this.liveLineGrantIndex.isPresent()) {
+						await lockOrderLine(manager, row.orderLineId);
 
-				return { entitlement, created: true };
+						const raced = await this.findExistingGrant(input, row.kind as EntitlementKind, scope, manager);
+
+						if (raced) {
+							return { entitlement: raced, created: false };
+						}
+					}
+
+					const entitlement = await this.writeGrant(manager, {
+						...row,
+						number: number.value
+					} as Partial<Entitlement>);
+
+					return { entitlement, created: true };
+				});
 			} catch (error) {
 				if (!isUniqueViolation(error)) {
 					throw error;
@@ -1406,12 +1428,15 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	 * @param input The grant.
 	 * @param kind The kind being granted.
 	 * @param scope The tenant and organization the lookup is scoped to.
+	 * @param manager The transaction to read on, for the read a grant makes under the order line's lock; outside
+	 * any transaction when omitted.
 	 * @returns The existing right, or null.
 	 */
 	private async findExistingGrant(
 		input: IEntitlementGrantInput,
 		kind: EntitlementKind,
-		scope: IEntitlementScope = {}
+		scope: IEntitlementScope = {},
+		manager?: EntityManager
 	): Promise<Entitlement | null> {
 		if (!input.orderLineId && !input.subscriptionId && !input.number) {
 			return null;
@@ -1443,10 +1468,10 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 			where.organizationId = organizationId;
 		}
 
-		const existing = await this.entitlementRows().findOne({
-			where: where as any,
-			order: { createdAt: 'DESC' } as any
-		});
+		const options = { where: where as any, order: { createdAt: 'DESC' } as any };
+		const existing = manager
+			? await manager.findOne(Entitlement, options)
+			: await this.entitlementRows().findOne(options);
 
 		if (existing) {
 			this.logger.debug(`Grant replayed against ${input.orderLineId ?? input.subscriptionId ?? input.number}; returning ${existing.id}.`);

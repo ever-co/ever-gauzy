@@ -509,6 +509,11 @@ interface IHarness {
 	/** Empties the package's tables and the outbox beneath the services, so a case starts from nothing. */
 	clear(): Promise<void>;
 	close(): Promise<void>;
+	/**
+	 * What the grant is told of `UQ_entitlement_live_line_grant` (`EntitlementLiveLineGrantIndex`): absent, as the
+	 * fixture schemas create none, unless a case ran the migration and says otherwise.
+	 */
+	liveLineGrantIndex: { present: boolean };
 }
 
 /**
@@ -598,6 +603,12 @@ function wire(repositories: {
 }) {
 	const { published, sequenceService, ruleService, eventBus } = collaborators();
 	const { typeOrm, mikroOrm, outbox } = repositories;
+	const liveLineGrantIndex = {
+		present: false,
+		isPresent() {
+			return this.present;
+		}
+	};
 
 	const check = new EntitlementCheckService(
 		typeOrm.entitlement,
@@ -623,10 +634,11 @@ function wire(repositories: {
 		sequenceService as never,
 		ruleService as never,
 		outbox as never,
-		eventBus as never
+		eventBus as never,
+		liveLineGrantIndex as never
 	);
 
-	return { entitlements, activations, keys, check, published };
+	return { entitlements, activations, keys, check, published, liveLineGrantIndex };
 }
 
 const TABLES = ['outbox_row', 'entitlement_activation', 'entitlement_key', 'entitlement'];
@@ -829,6 +841,7 @@ describe.each([
 		await harness.clear();
 		harness.appended.length = 0;
 		harness.published.length = 0;
+		harness.liveLineGrantIndex.present = false;
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -1272,6 +1285,7 @@ describe.each([
 			jest.spyOn(console, 'log').mockImplementation(() => undefined);
 
 			await harness.migrate(migration, 'up');
+			harness.liveLineGrantIndex.present = true;
 			// The production rule over numbers (`1791000000360`), which the fixture schemas do not map.
 			await harness.query(
 				`CREATE UNIQUE INDEX "UQ_entitlement_number" ON "entitlement" ` +
@@ -1364,6 +1378,54 @@ describe.each([
 			expect((await harness.rows('entitlement')).map((row) => row.number)).toEqual(['ENT-WINNER']);
 			expect(await harness.rows('entitlement_key')).toEqual([]);
 			expect(await eventNames(harness)).toEqual([EntitlementEventName.CREATED]);
+		});
+
+		it('without the index, holds the line and answers a grant that lost the race with the winner’s right', async () => {
+			// A database whose duplicates kept the migration from creating the index (#11601 review).
+			await harness.migrate(migration, 'down');
+			harness.liveLineGrantIndex.present = false;
+
+			const winner = await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1', number: 'ENT-WINNER' } as any,
+				SCOPE
+			);
+
+			// The loser's read outside the transaction ran before the winner committed; its read under the line's
+			// lock, on the transaction, sees the table as it is.
+			const read = jest.spyOn(harness.entitlements as any, 'findExistingGrant').mockResolvedValueOnce(null);
+
+			const loser = await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1', number: 'ENT-LOSER', issueKey: true } as any,
+				SCOPE
+			);
+
+			expect(loser.created).toBe(false);
+			expect(loser.entitlement.id).toBe(winner.entitlement.id);
+			expect(loser.plaintextKey).toBeUndefined();
+			expect(read).toHaveBeenCalledTimes(2);
+			expect(read.mock.calls[1][3]).toBeDefined();
+			expect((await harness.rows('entitlement')).map((row) => row.number)).toEqual(['ENT-WINNER']);
+			expect(await harness.rows('entitlement_key')).toEqual([]);
+			expect(await eventNames(harness)).toEqual([EntitlementEventName.CREATED]);
+
+			// Another kind of the same line, and the line again once its right is revoked, are still granted.
+			read.mockRestore();
+			const seat = await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1', kind: EntitlementKind.SEAT, number: 'ENT-SEAT' } as any,
+				SCOPE
+			);
+			await harness.entitlements.revoke(
+				winner.entitlement.id as string,
+				EntitlementRevocationReason.REFUNDED,
+				SCOPE
+			);
+			const again = await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1', number: 'ENT-AGAIN' } as any,
+				SCOPE
+			);
+
+			expect(seat.created).toBe(true);
+			expect(again.created).toBe(true);
 		});
 
 		it('numbers a line granted again after revocation with the next revision of its derived number', async () => {
@@ -1598,6 +1660,62 @@ describe.each([
 	});
 
 	if (orm === 'mikro-orm') {
+		it('holds the order line of a grant on the transaction’s connection while the index is missing', async () => {
+			// SQLite has no `FOR UPDATE`: the statement is recorded with the connection it was sent on, and answered here.
+			const locks: Array<{ sql: string; params: unknown[]; onTransaction: boolean }> = [];
+			const getConnection = MikroOrmEntityManager.prototype.getConnection;
+
+			jest.spyOn(MikroOrmEntityManager.prototype, 'getConnection').mockImplementation(function (
+				this: MikroOrmEntityManager,
+				...args: any[]
+			) {
+				const connection = (getConnection as any).apply(this, args);
+				const em = this;
+
+				return new Proxy(connection, {
+					get: (target, member, receiver) =>
+						member === 'execute'
+							? async (sql: string, params: unknown[], method: any, context: unknown) => {
+									if (!/FOR UPDATE/.test(sql)) {
+										return await target.execute(sql, params, method, context);
+									}
+									locks.push({
+										sql,
+										params,
+										onTransaction: em.isInTransaction() && context === em.getTransactionContext()
+									});
+									return [];
+								}
+							: Reflect.get(target, member, receiver)
+				});
+			} as any);
+			(gauzyConfig.isPostgres as jest.Mock).mockReturnValue(true);
+
+			await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1', number: 'ENT-HELD' } as any,
+				SCOPE
+			);
+
+			expect(locks).toEqual([
+				{
+					sql: 'SELECT "id" FROM "order_line" WHERE "id" = ? FOR UPDATE',
+					params: ['line-1'],
+					onTransaction: true
+				}
+			]);
+
+			// With the index in place, or for a right no order line granted, nothing is held.
+			locks.length = 0;
+			await harness.entitlements.grant({ number: 'ENT-OPERATOR' } as any, SCOPE);
+			harness.liveLineGrantIndex.present = true;
+			await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-2', number: 'ENT-INDEXED' } as any,
+				SCOPE
+			);
+
+			expect(locks).toEqual([]);
+		});
+
 		it('takes the row lock on the dialects that have one, in the transaction the transition runs in', async () => {
 			const { entitlement } = await harness.entitlements.grant({} as any, SCOPE);
 			const reads = jest.spyOn(MikroOrmEntityManager.prototype, 'findOne');
