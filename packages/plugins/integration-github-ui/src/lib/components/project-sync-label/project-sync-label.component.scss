@@ -16,8 +16,8 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   border-radius: $default-radius;
-  color: nb-theme(text-basic-color);
-  background-color: nb-theme(background-basic-color-3);
+  color: var(--text-basic-color);
+  background-color: var(--background-basic-color-3);
 }
 
 .project-sync-label__text {
