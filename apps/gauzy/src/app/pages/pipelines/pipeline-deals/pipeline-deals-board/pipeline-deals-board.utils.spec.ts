@@ -1,5 +1,5 @@
 import { IDeal, IPipelineStage } from '@gauzy/contracts';
-import { toDealBoardCard, toDealBoardColumns } from './pipeline-deals-board.utils';
+import { DealBoardMoves, toDealBoardCard, toDealBoardColumns } from './pipeline-deals-board.utils';
 
 const stage = (id: string, index: number, name = id): IPipelineStage => ({ id, index, name }) as IPipelineStage;
 const deal = (id: string, stageId: string, extra: Partial<IDeal> = {}): IDeal =>
@@ -76,5 +76,34 @@ describe('toDealBoardCard', () => {
 		expect(card.createdByImageUrl).toBeUndefined();
 		expect(card.probability).toBeNull();
 		expect(card.probabilityBadge.level).toBe('unknown');
+	});
+});
+
+describe('DealBoardMoves', () => {
+	it('settles to whether any tracked move was saved, waiting for the ones still under way', async () => {
+		const moves = new DealBoardMoves();
+		let finish: (saved: boolean) => void;
+		moves.track(Promise.resolve(false));
+		moves.track(new Promise<boolean>((done) => (finish = done)));
+
+		const settled = moves.settle();
+		let done = false;
+		void settled.then(() => (done = true));
+		await Promise.resolve();
+		expect(done).toBe(false);
+
+		finish(true);
+		await expect(settled).resolves.toBe(true);
+	});
+
+	it('changes nothing when every move failed, and forgets the moves it settled', async () => {
+		const moves = new DealBoardMoves();
+		moves.track(Promise.resolve(false));
+
+		await expect(moves.settle()).resolves.toBe(false);
+
+		moves.track(Promise.resolve(true));
+		await expect(moves.settle()).resolves.toBe(true);
+		await expect(moves.settle()).resolves.toBe(false);
 	});
 });

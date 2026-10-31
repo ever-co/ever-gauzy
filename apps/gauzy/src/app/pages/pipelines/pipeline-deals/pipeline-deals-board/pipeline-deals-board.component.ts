@@ -17,10 +17,12 @@ import { ID, IDeal, IPipelineStage, PermissionsEnum } from '@gauzy/contracts';
 import { DealsService, ErrorHandlingService, Store } from '@gauzy/ui-core/core';
 import { IDealBoardCard, IDealBoardColumn, toDealBoardColumns } from './pipeline-deals-board.utils';
 
-/** A deal saved at another stage from the board. */
+/** A deal being saved at another stage from the board. */
 export interface IDealStageMove {
 	dealId: ID;
 	stageId: ID;
+	/** Settles once the save does, with whether the deal was saved. Never rejects. */
+	saved: Promise<boolean>;
 }
 
 /**
@@ -60,8 +62,11 @@ export class PipelineDealsBoardComponent implements OnChanges {
 	@Input() deals: IDeal[] = [];
 	@Input() organizationId: ID;
 	@Input() tenantId: ID;
-	/** A deal saved at another stage, so the host can bring its other views up to date. */
-	@Output() readonly dealMoved = new EventEmitter<IDealStageMove>();
+	/**
+	 * A deal is being saved at another stage, so the host can bring its other views up to date once `saved`
+	 * settles. Emitted when the save starts, while the board is still there to emit it.
+	 */
+	@Output() readonly dealMoving = new EventEmitter<IDealStageMove>();
 
 	public columns: IDealBoardColumn[] = [];
 	/** Bumped whenever the columns are rebuilt: a save that settles afterwards has no card left to put back. */
@@ -107,13 +112,21 @@ export class PipelineDealsBoardComponent implements OnChanges {
 		transferArrayItem(from.cards, to.cards, index, event.currentIndex);
 		card.saving = true;
 		const sequence = this._sequence;
+		const save = this._dealsService.updateStage(card.id, to.stageId, {
+			organizationId: this.organizationId,
+			tenantId: this.tenantId
+		});
+		this.dealMoving.emit({
+			dealId: card.id,
+			stageId: to.stageId,
+			saved: save.then(
+				() => true,
+				() => false
+			)
+		});
 		try {
-			await this._dealsService.updateStage(card.id, to.stageId, {
-				organizationId: this.organizationId,
-				tenantId: this.tenantId
-			});
+			await save;
 			card.stageId = to.stageId;
-			this.dealMoved.emit({ dealId: card.id, stageId: to.stageId });
 		} catch (error) {
 			// The columns were rebuilt since the drop: the card is no longer on the board to put back.
 			if (sequence === this._sequence) {

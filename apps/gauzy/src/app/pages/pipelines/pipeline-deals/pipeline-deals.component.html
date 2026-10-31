@@ -55,7 +55,7 @@
 			[deals]="deals"
 			[organizationId]="pipeline?.organizationId"
 			[tenantId]="pipeline?.tenantId"
-			(dealMoved)="onBoardDealMoved()"
+			(dealMoving)="onBoardDealMoving($event)"
 		></ga-pipeline-deals-board>
 		} @else {
 		<ng-template

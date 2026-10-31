@@ -72,8 +72,8 @@ describe('PipelineDealsBoardComponent', () => {
 		const component = board();
 		const [lead, won] = component.columns;
 		const card = lead.cards[0];
-		const moved = jest.fn();
-		component.dealMoved.subscribe(moved);
+		const moving = jest.fn();
+		component.dealMoving.subscribe(moving);
 
 		await component.drop(dropEvent(lead, won, card));
 
@@ -85,7 +85,8 @@ describe('PipelineDealsBoardComponent', () => {
 		expect(ids(won)).toEqual(['a', 'c']);
 		expect(card.stageId).toBe('won');
 		expect(card.saving).toBe(false);
-		expect(moved).toHaveBeenCalledWith({ dealId: 'a', stageId: 'won' });
+		expect(moving).toHaveBeenCalledWith({ dealId: 'a', stageId: 'won', saved: expect.any(Promise) });
+		await expect(moving.mock.calls[0][0].saved).resolves.toBe(true);
 	});
 
 	it('moves the card at once and marks it saving while the save is under way', async () => {
@@ -95,10 +96,15 @@ describe('PipelineDealsBoardComponent', () => {
 		let resolve: () => void;
 		dealsService.updateStage.mockReturnValue(new Promise<void>((done) => (resolve = done)));
 
+		const moving = jest.fn();
+		component.dealMoving.subscribe(moving);
+
 		const pending = component.drop(dropEvent(lead, won, card, 1));
 
 		expect(ids(won)).toEqual(['c', 'b']);
 		expect(card.saving).toBe(true);
+		// Reported when the save starts, so a host the board is removed from can still wait for it.
+		expect(moving).toHaveBeenCalledTimes(1);
 
 		resolve();
 		await pending;
@@ -111,8 +117,8 @@ describe('PipelineDealsBoardComponent', () => {
 		const card = lead.cards[1];
 		const error = new Error('403');
 		dealsService.updateStage.mockRejectedValue(error);
-		const moved = jest.fn();
-		component.dealMoved.subscribe(moved);
+		const moving = jest.fn();
+		component.dealMoving.subscribe(moving);
 
 		await component.drop(dropEvent(lead, won, card));
 
@@ -121,7 +127,7 @@ describe('PipelineDealsBoardComponent', () => {
 		expect(card.stageId).toBe('lead');
 		expect(card.saving).toBe(false);
 		expect(errorHandling.handleError).toHaveBeenCalledWith(error);
-		expect(moved).not.toHaveBeenCalled();
+		await expect(moving.mock.calls[0][0].saved).resolves.toBe(false);
 	});
 
 	it('saves nothing for a drop on the column the card came from', async () => {

@@ -73,3 +73,28 @@ export function toDealBoardColumns(
 	}
 	return columns;
 }
+
+/**
+ * The board's moves the host has not yet brought its other views up to date with. A move is tracked from the
+ * moment it starts, because leaving the board removes it (and its outputs) while a save can still be under
+ * way: the host settles the moves when the board is left and reads the deals again once they are done.
+ */
+export class DealBoardMoves {
+	private _pending: Promise<boolean>[] = [];
+
+	/** A move that started; `saved` settles with whether the deal was saved. */
+	track(saved: Promise<boolean>): void {
+		this._pending.push(saved);
+	}
+
+	/**
+	 * Waits for every move tracked so far, and forgets them. Resolves whether any was saved: a move that
+	 * failed put its card back, so it changed nothing to read again.
+	 */
+	async settle(): Promise<boolean> {
+		const pending = this._pending;
+		this._pending = [];
+		const results = await Promise.all(pending);
+		return results.some(Boolean);
+	}
+}

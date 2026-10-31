@@ -18,6 +18,8 @@ import {
 } from '@gauzy/ui-core/shared';
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
+import { IDealStageMove } from './pipeline-deals-board/pipeline-deals-board.component';
+import { DealBoardMoves } from './pipeline-deals-board/pipeline-deals-board.utils';
 
 /** The `view` query parameter that opens the deals as a board, so the board can be linked to and survives a reload. */
 export const DEALS_BOARD_VIEW = 'board';
@@ -48,8 +50,8 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 	public deals$: Observable<IDeal[]>;
 	/** The deals shown as a board, one column per stage, in place of the table or the cards grid (opt-in). */
 	public isBoardView = false;
-	/** A deal was moved on the board: the table and grid read the deals again before they show. */
-	private _boardChanged = false;
+	/** Deals moved on the board: once their saves settle, the table and grid read the deals again. */
+	private readonly _boardMoves = new DealBoardMoves();
 
 	/**
 	 * Checks if the current layout style is grid.
@@ -182,10 +184,12 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 	}
 
 	/**
-	 * A deal was saved at another stage from the board.
+	 * A deal is being saved at another stage from the board.
+	 *
+	 * @param move The move, with its save.
 	 */
-	onBoardDealMoved(): void {
-		this._boardChanged = true;
+	onBoardDealMoving(move: IDealStageMove): void {
+		this._boardMoves.track(move.saved);
 	}
 
 	/**
@@ -197,10 +201,10 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 		this.isBoardView = isBoardView;
 		// A row picked in the table has no card standing for it on the board.
 		this.clearItem();
-		// Back from a board where deals moved: the table and grid read the deals again.
-		if (!isBoardView && this._boardChanged) {
-			this._boardChanged = false;
-			this.subject$.next(true);
+		// Back from a board where deals moved: once the saves still under way settle, the table and grid read
+		// the deals again (leaving the board removed it, so it can no longer report them).
+		if (!isBoardView) {
+			void this._boardMoves.settle().then((changed) => changed && this.subject$.next(true));
 		}
 	}
 
