@@ -2,7 +2,7 @@ import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/cor
 import { HttpClient } from '@angular/common/http';
 import { environment } from '@gauzy/ui-config';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, startWith } from 'rxjs/operators';
 import { combineLatest, Observable, of } from 'rxjs';
 import { IAppConfig } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
@@ -148,7 +148,9 @@ export class SocialLinksComponent implements OnInit {
 				const provider: ISignInProvider = { id, url, titleKey, prominent };
 				return namedLabel ? { ...provider, titleParams: { name: signInDisplayName(config.displayName) } } : provider;
 			}),
-			catchError(() => of(null))
+			catchError(() => of(null)),
+			// Hidden until its own check answers: a slow check never holds back the other buttons.
+			startWith(null)
 		);
 	}
 

@@ -114,6 +114,27 @@ describe('SocialLinksComponent', () => {
 		expect(providers[1].titleParams).toBeUndefined();
 	});
 
+	it('shows each button as soon as its own check answers, while another check is still pending', () => {
+		environment.ZITADEL_AUTH_LINK = 'http://localhost:3000/api/auth/zitadel';
+		environment.KEYCLOAK_AUTH_LINK = 'http://localhost:3000/api/auth/keycloak';
+		environment.OIDC_AUTH_LINK = 'http://localhost:3000/api/auth/oidc';
+		let providers: ISignInProvider[] = [{} as ISignInProvider];
+		fixture = TestBed.createComponent(SocialLinksComponent);
+		component = fixture.componentInstance;
+		component.ngOnInit();
+		component.signInProviders$.subscribe((value) => (providers = value));
+
+		expect(providers).toEqual([]);
+		const oidc = http.expectOne((request) => request.url.endsWith('/auth/oidc/config'));
+		http.expectOne((request) => request.url.endsWith('/auth/zitadel/config')).flush({ enabled: true });
+		http.expectOne((request) => request.url.endsWith('/auth/keycloak/config')).flush({ enabled: true });
+
+		expect(providers.map((provider) => provider.id)).toEqual(['ever-id', 'keycloak']);
+
+		oidc.flush({ enabled: true, displayName: 'Acme ID' });
+		expect(providers.map((provider) => provider.id)).toEqual(['ever-id', 'keycloak', 'oidc']);
+	});
+
 	it('hides the OpenID Connect button while the API reports the plugin off', () => {
 		environment.ZITADEL_AUTH_LINK = '';
 		environment.KEYCLOAK_AUTH_LINK = '';
