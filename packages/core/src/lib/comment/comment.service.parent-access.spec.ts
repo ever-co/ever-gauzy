@@ -11,6 +11,8 @@ import { CrudService } from '../core/crud/crud.service';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { CommentService } from './comment.service';
+import { CommentResolver } from './comment.resolver';
+import { CommentCreateHandler } from './commands/handlers/comment.create.handler';
 import { CommentParentAccessService, ICommentParent, ICommentParentAccessPolicy } from './parent-access';
 
 /**
@@ -32,6 +34,7 @@ const NOTE = '11111111-1111-4111-8111-111111111111'; // a colleague's note on th
 const OWN_NOTE = '22222222-2222-4222-8222-222222222222'; // the caller's own note on the contact
 const OTHER_CONTACT_NOTE = '33333333-3333-4333-8333-333333333333';
 const PROJECT_COMMENT = '44444444-4444-4444-8444-444444444444';
+const LOOKALIKE_NOTE = '55555555-5555-4555-8555-555555555555';
 
 const STORED: Record<string, { id: string; entity: string; entityId: string; employeeId: string }> = {
 	[NOTE]: { id: NOTE, entity: CONTACT, entityId: CONTACT_ID, employeeId: 'employee-colleague' },
@@ -42,7 +45,14 @@ const STORED: Record<string, { id: string; entity: string; entityId: string; emp
 		entityId: OTHER_CONTACT_ID,
 		employeeId: 'employee-me'
 	},
-	[PROJECT_COMMENT]: { id: PROJECT_COMMENT, entity: PROJECT, entityId: PROJECT_ID, employeeId: 'employee-me' }
+	[PROJECT_COMMENT]: { id: PROJECT_COMMENT, entity: PROJECT, entityId: PROJECT_ID, employeeId: 'employee-me' },
+	// A note stored under another spelling of the type, which MySQL reads with the contact's notes.
+	[LOOKALIKE_NOTE]: {
+		id: LOOKALIKE_NOTE,
+		entity: 'organizationcontact',
+		entityId: CONTACT_ID,
+		employeeId: 'employee-colleague'
+	}
 };
 
 const contactPolicy = (): ICommentParentAccessPolicy => ({
@@ -114,14 +124,16 @@ describe('CommentService — the comments of a governed record follow its policy
 			if (!row || (options?.where?.employeeId && options.where.employeeId !== row.employeeId)) {
 				throw new NotFoundException('The requested record was not found');
 			}
-			return { ...row };
+			return { ...row, organizationId: 'organization-of-contact' };
 		});
 		withoutEmployeeFilter = jest.fn((read: () => Promise<unknown>) => read());
 		Object.assign(service as any, {
 			findOneByIdString: findOne,
 			findOneByWhereOptions: jest.fn(async ({ id, employeeId }: { id: string; employeeId?: string }) => {
 				const row = STORED[id];
-				return row && (!employeeId || row.employeeId === employeeId) ? { ...row } : null;
+				return row && (!employeeId || row.employeeId === employeeId)
+					? { ...row, organizationId: 'organization-of-contact' }
+					: null;
 			}),
 			withoutEmployeeFilter,
 			withoutOrganizationBoundary: jest.fn((read: () => Promise<unknown>) => read())
@@ -364,6 +376,207 @@ describe('CommentService — the comments of a governed record follow its policy
 				BadRequestException
 			);
 			await expect(service.update(OWN_NOTE, { parentId: NOTE } as any)).resolves.toBeDefined();
+		});
+
+		it('keeps an edited note on its contact and in its organization, whatever the edit states', async () => {
+			as([PermissionsEnum.ORG_CONTACT_EDIT]);
+
+			await service.update(OWN_NOTE, {
+				comment: 'edited',
+				organizationId: 'organization-elsewhere',
+				organization: { id: 'organization-elsewhere' },
+				entity: PROJECT,
+				entityId: PROJECT_ID
+			} as any);
+
+			const written = baseCreate.mock.calls[0][0];
+			expect(written).toEqual(
+				expect.objectContaining({ id: OWN_NOTE, comment: 'edited', organizationId: 'organization-of-contact' })
+			);
+			expect(written).not.toHaveProperty('organization');
+			expect(written).not.toHaveProperty('entity');
+			expect(written).not.toHaveProperty('entityId');
+		});
+
+		it('refuses to move a project comment onto a contact, in any spelling', async () => {
+			as([PermissionsEnum.ORG_CONTACT_EDIT]);
+
+			for (const entity of [CONTACT, 'organizationcontact']) {
+				await expect(
+					service.update(PROJECT_COMMENT, { entity, entityId: CONTACT_ID } as any)
+				).rejects.toBeInstanceOf(BadRequestException);
+			}
+			expect(baseCreate).not.toHaveBeenCalled();
+		});
+
+		it('still lets a project comment’s edit state its organization, as before', async () => {
+			as([]);
+
+			await service.update(PROJECT_COMMENT, { comment: 'edited', organizationId: 'organization-stated' } as any);
+
+			expect(baseCreate).toHaveBeenCalledWith(
+				expect.objectContaining({ id: PROJECT_COMMENT, organizationId: 'organization-stated' })
+			);
+		});
+	});
+
+	describe('another spelling of the contact type', () => {
+		/** The refusal of the type check itself, not the 400 every unexpected failure of a create becomes. */
+		const CANONICAL_ONLY = `states its entity as "${CONTACT}"`;
+
+		it.each(['organizationcontact', 'ORGANIZATIONCONTACT', 'Organization Contact', 'OrganizationContact '])(
+			'refuses a new comment on %p, which MySQL would list with the contact’s notes',
+			async (entity) => {
+				as([PermissionsEnum.ORG_CONTACT_EDIT]);
+
+				const refusal = service.create(note({ entity: entity as BaseEntityEnum }));
+
+				await expect(refusal).rejects.toBeInstanceOf(BadRequestException);
+				await expect(refusal).rejects.toThrow(CANONICAL_ONLY);
+				expect(policy.findAccessibleParent).not.toHaveBeenCalled();
+				expect(baseCreate).not.toHaveBeenCalled();
+			}
+		);
+
+		it('refuses it from the GraphQL createComment mutation through to the service', async () => {
+			as([PermissionsEnum.ORG_CONTACT_EDIT]);
+			const handler = new CommentCreateHandler(service);
+			const commandBus = { execute: jest.fn((command) => handler.execute(command)) };
+			const resolver = new CommentResolver(service, commandBus as never);
+
+			const refusal = resolver.createComment({
+				comment: 'A note under another spelling',
+				entity: 'organizationcontact',
+				entityId: CONTACT_ID,
+				organizationId: 'organization-stated'
+			} as any);
+
+			await expect(refusal).rejects.toBeInstanceOf(BadRequestException);
+			await expect(refusal).rejects.toThrow(CANONICAL_ONLY);
+			expect(commandBus.execute).toHaveBeenCalledTimes(1);
+			expect(baseCreate).not.toHaveBeenCalled();
+		});
+
+		it('reads a stored note of another spelling under the contact policy', async () => {
+			as([]);
+			await expect(service.findReadableById(LOOKALIKE_NOTE, {} as any)).rejects.toBeInstanceOf(
+				ForbiddenException
+			);
+
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+			await expect(service.findReadableById(LOOKALIKE_NOTE, {} as any)).resolves.toEqual(
+				expect.objectContaining({ id: LOOKALIKE_NOTE })
+			);
+			expect(policy.findAccessibleParent).toHaveBeenCalledWith(CONTACT_ID);
+		});
+
+		it('lists the notes of a contact named in another spelling only for those who may view it', async () => {
+			jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockResolvedValue({ items: [], total: 0 });
+			const where = { entity: 'organizationcontact', entityId: CONTACT_ID };
+
+			as([]);
+			await expect(service.findAll({ where } as any)).rejects.toBeInstanceOf(ForbiddenException);
+
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+			await expect(service.findAll({ where } as any)).resolves.toEqual({ items: [], total: 0 });
+			expect(policy.findAccessibleParent).toHaveBeenCalledWith(CONTACT_ID);
+		});
+
+		it('edits a stored note of another spelling only with ORG_CONTACT_EDIT', async () => {
+			as([PermissionsEnum.ORG_CONTACT_VIEW], { canChangeSelectedEmployee: true });
+
+			await expect(service.update(LOOKALIKE_NOTE, { comment: 'edited' })).rejects.toBeInstanceOf(
+				ForbiddenException
+			);
+		});
+	});
+
+	describe('a governed record’s organization on create', () => {
+		it('stores a note in the contact’s organization, and drops an organization relation the body states', async () => {
+			as([PermissionsEnum.ORG_CONTACT_EDIT]);
+
+			await service.create(note({ organization: { id: 'organization-elsewhere' } } as any));
+
+			const written = baseCreate.mock.calls[0][0];
+			expect(written.organizationId).toBe('organization-of-contact');
+			expect(written).not.toHaveProperty('organization');
+		});
+
+		it('keeps a project comment’s stated organization relation, as before', async () => {
+			as([]);
+
+			await service.create(
+				note({ entity: PROJECT, entityId: PROJECT_ID, organization: { id: 'organization-stated' } } as any)
+			);
+
+			expect(baseCreate).toHaveBeenCalledWith(
+				expect.objectContaining({ organization: { id: 'organization-stated' } })
+			);
+		});
+	});
+
+	describe('reading one comment by id', () => {
+		it('reads the comment the path names, whatever id the criteria state', async () => {
+			as([], { canChangeSelectedEmployee: true });
+
+			// A project comment's id in the path, a note's id in the criteria: the read stays on the project comment.
+			await expect(service.findReadableById(PROJECT_COMMENT, { where: { id: NOTE } } as any)).resolves.toEqual(
+				expect.objectContaining({ id: PROJECT_COMMENT })
+			);
+			expect(findOne).toHaveBeenLastCalledWith(PROJECT_COMMENT, { where: { id: PROJECT_COMMENT } });
+			expect(hasAnyPermission).not.toHaveBeenCalled();
+		});
+
+		it('keeps a governed note’s read on the note the path names', async () => {
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+
+			await service.findReadableById(NOTE, {
+				where: { id: PROJECT_COMMENT, employeeId: 'employee-colleague' }
+			} as any);
+
+			expect(findOne).toHaveBeenLastCalledWith(NOTE, { where: { id: NOTE, employeeId: 'employee-colleague' } });
+		});
+
+		it.each([
+			['a list', [{ id: NOTE }]],
+			['text', 'id=' + NOTE],
+			['a find operator', In([NOTE])]
+		])('refuses criteria stated as %s', async (_label, where) => {
+			as([], { canChangeSelectedEmployee: true });
+
+			await expect(service.findReadableById(PROJECT_COMMENT, { where } as any)).rejects.toBeInstanceOf(
+				BadRequestException
+			);
+		});
+	});
+
+	describe('lifting the employee filter', () => {
+		it('lifts it inside a request-context store of its own, every time', async () => {
+			as([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT]);
+			const order: string[] = [];
+			const runIsolated = jest.spyOn(RequestContext, 'runIsolated').mockImplementation((work) => {
+				order.push('isolated');
+				return work();
+			});
+			withoutEmployeeFilter.mockImplementation((read: () => Promise<unknown>) => {
+				order.push('without-employee-filter');
+				return read();
+			});
+			jest.spyOn(TenantAwareCrudService.prototype, 'findAll').mockResolvedValue({ items: [], total: 0 });
+
+			await service.findAll({ where: { entity: CONTACT, entityId: CONTACT_ID } } as any);
+			await service.findReadableById(NOTE, {} as any);
+			await service.create(note({ parentId: NOTE }));
+
+			expect(withoutEmployeeFilter.mock.calls.length).toBeGreaterThanOrEqual(4);
+			expect(runIsolated).toHaveBeenCalledTimes(withoutEmployeeFilter.mock.calls.length);
+			// Every lift opens its own store first.
+			expect(order).toEqual(
+				Array.from({ length: runIsolated.mock.calls.length }).flatMap(() => [
+					'isolated',
+					'without-employee-filter'
+				])
+			);
 		});
 	});
 });
