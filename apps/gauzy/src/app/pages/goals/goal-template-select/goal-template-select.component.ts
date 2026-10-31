@@ -152,14 +152,16 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 	 * requests, so the same preset can be used again and again, each time creating records of its own (#4825).
 	 */
 	async createGoal() {
-		if (!this.selectedGoalTemplate || !this.form.valid) {
+		// Read once: another preset picked while the requests below are pending must not mix into this one
+		const template = this.selectedGoalTemplate;
+		if (!template || !this.form.valid) {
 			return;
 		}
 
 		const form: IGoalPresetForm = this.form.value;
 		const { id: organizationId, tenantId } = this.organization;
 		const scope: IGoalPresetScope = { organizationId, tenantId };
-		const keyResultTemplates = this.selectedGoalTemplate.keyResults ?? [];
+		const keyResultTemplates = template.keyResults ?? [];
 
 		// A key result must be owned by an employee: checked before anything is created, so a preset is never
 		// left half-made (an objective without its key results)
@@ -185,7 +187,7 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 
 			// Create the goal
 			const goalCreated = await this.goalService.createGoal(
-				buildGoalFromTemplate(this.selectedGoalTemplate, form, scope)
+				buildGoalFromTemplate(template, form, scope)
 			);
 			if (!goalCreated) {
 				this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_FAILED'));

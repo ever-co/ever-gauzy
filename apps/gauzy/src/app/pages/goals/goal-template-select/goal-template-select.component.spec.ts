@@ -138,6 +138,20 @@ describe('GoalTemplateSelectComponent — create from preset (#4825)', () => {
 		expect(component.selectedGoalTemplate).toEqual(preset());
 	});
 
+	it('builds the whole objective from the preset chosen when creation started, even if another is picked meanwhile', async () => {
+		const { component, goalService, goalSettingsService, keyResultService } = build();
+		// The user goes back and picks another preset while the KPI request is pending
+		goalSettingsService.createKPI.mockImplementationOnce(async () => {
+			component.selectedGoalTemplate = { ...preset(), name: 'Another preset', keyResults: [] };
+			return { id: 'kpi-new-1' };
+		});
+
+		await component.createGoal();
+
+		expect(goalService.createGoal).toHaveBeenCalledWith(expect.objectContaining({ name: 'Grow the website' }));
+		expect(keyResultService.createBulkKeyResult.mock.calls[0][0]).toHaveLength(2);
+	});
+
 	it('gives an organization objective’s key results to the lead, else to the employee creating it', async () => {
 		const withLead = build();
 		withLead.component.form.patchValue({ leadId: 'employee-lead' });
