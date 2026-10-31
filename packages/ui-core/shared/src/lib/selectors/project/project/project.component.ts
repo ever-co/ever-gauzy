@@ -283,17 +283,21 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 				switchMap(([_, queryParams]) =>
 					// Fetch projects and handle errors during retrieval
 					from(this.getProjects()).pipe(
-						// Return the projectId from queryParams on success
-						map(() => queryParams.projectId),
+						// Pass on the URL's projectId, and whether this request's list is the one now shown
+						map((loaded: boolean) => ({ projectId: queryParams.projectId as ID | null, loaded })),
 						// Handle any errors that occur during project fetching
 						catchError((error) => {
 							console.error('Error fetching projects:', error);
-							return of(null); // Return a null value to prevent project selection on error
+							return of({ projectId: null as ID | null, loaded: false }); // No list, so no selection
 						})
 					)
 				),
 				// After fetching, select the URL's project. A form's selector takes it only as its starting value.
-				tap((projectId: ID | null) => {
+				tap(({ projectId, loaded }) => {
+					// A failed or superseded request installed no list: the first load is still to come.
+					if (!loaded) {
+						return;
+					}
 					const isFirstLoad = !this._hasLoadedProjects;
 					this._hasLoadedProjects = true;
 					const context = {
@@ -338,12 +342,15 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 * Retrieves projects based on specified parameters.
 	 * If an employee ID is provided, retrieves projects associated with that employee.
 	 * Otherwise, retrieves all projects for the organization. Optionally inserts an "All Projects" option.
+	 *
+	 * @returns true once this request's list is the one shown; false with no organization, on an error,
+	 * or when a newer request took over.
 	 */
-	async getProjects(): Promise<void> {
+	async getProjects(): Promise<boolean> {
 		// Return early if the organization is not defined
 		if (!this.organization) {
 			console.warn('Organization is not defined.');
-			return;
+			return false;
 		}
 
 		const { id: organizationId, tenantId } = this.organization;
@@ -366,7 +373,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			// A newer request (another client or employee picked meanwhile) owns the list now: an earlier
 			// one that answers last must not put the previous filter's projects back.
 			if (request !== this._projectsRequest) {
-				return;
+				return false;
 			}
 			this.projects = projects;
 
@@ -375,9 +382,11 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 				this.projects.unshift(ALL_PROJECT_SELECTED);
 				this.selectProject(ALL_PROJECT_SELECTED);
 			}
+			return true;
 		} catch (error) {
 			console.error('Error retrieving projects:', error);
 			this._errorHandlingService.handleError(error);
+			return false;
 		}
 	}
 

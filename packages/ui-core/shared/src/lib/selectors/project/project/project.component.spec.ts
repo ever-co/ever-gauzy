@@ -119,6 +119,26 @@ describe('ProjectSelectorComponent', () => {
 				expect(component.projectId).toBeNull();
 			});
 
+			it('is still the starting value when the first list fails to load and a reload succeeds', async () => {
+				// ngOnInit asks twice (the organization arrives through two subscriptions): both fail.
+				const unreachable = new Error('API unreachable');
+				getAll.mockRejectedValueOnce(unreachable).mockRejectedValueOnce(unreachable);
+				const quiet = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+				try {
+					component.ngOnInit();
+					await flush();
+					expect(component.projectId).toBeFalsy();
+
+					component.organizationContactId = null; // any reload, e.g. a client picked and cleared
+					await flush();
+
+					expect(component.projectId).toBe('page-project');
+				} finally {
+					quiet.mockRestore();
+				}
+			});
+
 			it('does not replace the project of the task being edited', async () => {
 				component.writeValue('picked-project');
 
