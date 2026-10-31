@@ -137,6 +137,11 @@ interface IScreen {
 interface IScreenshotRequest {
 	screenSize: IScreen;
 	activeWindow?: { id: string; index?: number | null } | null;
+	/**
+	 * Whether the screen may be captured, as the main process decided for this time slot: only when the organization and
+	 * the employee both allow it (issue #9872). Anything but `true` takes no image.
+	 */
+	allowScreenshotCapture?: boolean;
 }
 
 type IScreenshotResult = ICapturedImage;
@@ -2482,6 +2487,13 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	public async takeScreenCapture(arg: { displays: IScreenshotResult[] } & IScreenshotRequest): Promise<IScreenshotResult[]> {
 		let HighResolutionScreenshots: IScreenshotResult[] = [];
 		let lowResolutionScreenshots: IScreenshotResult[] = [];
+
+		// Issue #9872: no image is taken, with any capture engine (Wayland's included), unless the main process says the
+		// organization and the employee both allow it.
+		if (arg?.allowScreenshotCapture !== true) {
+			this._loggerService.info('Screen capture is not allowed: no screenshot taken');
+			return HighResolutionScreenshots;
+		}
 
 		try {
 			this._loggerService.info('Take screen capture');

@@ -181,4 +181,17 @@ describe('screen capture permission', () => {
 
 		expect(await captures()).toBe(false);
 	});
+
+	it('takes no image with the screenshot-desktop engine of a time slot when the organization does not allow it', async () => {
+		// `getScreenshot` is what the timer calls for the "ScreenshotDesktopLib" engine; it used to capture regardless
+		auth.current = {
+			allowScreenshotCapture: false,
+			user: { employee: { allowScreenshotCapture: true, organization: { allowScreenshotCapture: false } } }
+		};
+		listDisplays.mockClear();
+		listDisplays.mockResolvedValue([{ id: '1' }, { id: '2' }]);
+
+		expect(await getScreenshot()).toEqual([]);
+		expect(listDisplays).not.toHaveBeenCalled();
+	});
 });

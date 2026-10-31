@@ -4,6 +4,8 @@ import { TimeTrackerComponent } from './time-tracker.component';
 import { AuthService, AuthStrategy } from '../auth/services';
 import { environment } from '@gauzy/ui-config';
 import { GAUZY_ENV } from '../constants';
+import { ElectronService } from '../electron/services';
+import { ScreenCaptureWebRTCService } from '../electron/services/electron/screen-capture.service';
 import { Store } from '../services';
 import { ConnectivityNotifierService } from './connectivity';
 import { WebPortalService } from './web-portal';
@@ -76,5 +78,68 @@ describe('TimeTrackerComponent', () => {
 
 		expect(notify).toHaveBeenCalledWith(false, true, 0);
 		await expect(firstValueFrom(component.isOffline$)).resolves.toBe(true);
+	});
+
+	/**
+	 * Issue #9872: a time slot takes no image unless the main process says the organization and the employee both allow
+	 * screen capture, whichever way the renderer captures: Electron's desktop capturer, or WebRTC on Wayland.
+	 */
+	describe('screen capture permission', () => {
+		const image = 'data:image/png;base64,aW1n';
+		let isWayland = false;
+		let desktopCapturer: jest.SpyInstance;
+		let webRtc: jest.SpyInstance;
+
+		const timeSlot = (allowScreenshotCapture?: boolean) => ({
+			displays: null,
+			screenSize: { width: 1920, height: 1080 },
+			activeWindow: { id: '1', index: 0 },
+			allowScreenshotCapture
+		});
+
+		beforeEach(() => {
+			const electron = TestBed.inject(ElectronService);
+			electron.ipcRenderer = {
+				invoke: jest.fn(async (channel: string) => (channel === 'GET_IS_WAYLAND' ? isWayland : undefined)),
+				send: jest.fn()
+			} as unknown as ElectronService['ipcRenderer'];
+			desktopCapturer = jest.spyOn(electron.desktopCapturer, 'getSources').mockResolvedValue([]);
+			webRtc = jest
+				.spyOn(TestBed.inject(ScreenCaptureWebRTCService), 'takeScreenshot')
+				.mockResolvedValue([{ name: 'Screen 0', display_id: '1', screenshot: image, thumbnail: image }]);
+		});
+
+		it('takes no image on Wayland when capture is not allowed', async () => {
+			isWayland = true;
+
+			expect(await component.takeScreenCapture(timeSlot(false))).toEqual([]);
+			expect(webRtc).not.toHaveBeenCalled();
+		});
+
+		it("takes no image with Electron's desktop capturer when capture is not allowed", async () => {
+			isWayland = false;
+
+			expect(await component.takeScreenCapture(timeSlot(false))).toEqual([]);
+			expect(desktopCapturer).not.toHaveBeenCalled();
+		});
+
+		it('takes no image when the main process did not say capture is allowed', async () => {
+			isWayland = true;
+
+			expect(await component.takeScreenCapture(timeSlot())).toEqual([]);
+			expect(webRtc).not.toHaveBeenCalled();
+		});
+
+		it('captures on Wayland when capture is allowed', async () => {
+			isWayland = true;
+			jest.spyOn(component, 'handleLastCapture').mockResolvedValue(undefined);
+			const notify = jest.spyOn(component, 'screenshotNotify').mockImplementation(() => undefined);
+
+			const screens = await component.takeScreenCapture(timeSlot(true));
+
+			expect(webRtc).toHaveBeenCalledTimes(1);
+			expect(screens).toEqual([expect.objectContaining({ name: 'Screen 0', id: '1' })]);
+			expect(notify).toHaveBeenCalled();
+		});
 	});
 });

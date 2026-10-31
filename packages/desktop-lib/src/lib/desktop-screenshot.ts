@@ -20,7 +20,7 @@ const captureOnlyActiveWindow = async (
 	soundPath
 ) => {
 	/* Checking if the user is allowed to take a screenshot. */
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 	// The screenshot library and Electron do not always report the same display ids (Linux can
@@ -62,7 +62,7 @@ const captureAllWindow = async (
 	soundPath
 ) => {
 	/* Checking if the user is allowed to take a screenshot. */
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
@@ -108,7 +108,7 @@ const uploadScreenShot = async (
 	soundPath
 ) => {
 	// Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
@@ -201,7 +201,7 @@ const uploadScreenShot = async (
 
 const writeScreenshotLocally = (img, fileName) => {
 	// Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 	const imgLocation = path.join(app.getPath('userData'), '/public/temp');
@@ -247,7 +247,7 @@ const readOrCreateTempDir = (tempPath) => {
 
 export const detectActiveWindow = () => {
 	// Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
@@ -267,7 +267,7 @@ export const detectActiveWindow = () => {
 
 const updateLastCapture = (timeTrackerWindow, timeSlotId) => {
 	// Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
@@ -279,7 +279,7 @@ const updateLastCapture = (timeTrackerWindow, timeSlotId) => {
 
 const showCapture = (timeTrackerWindow, url) => {
 	// Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
@@ -295,7 +295,7 @@ const showCapturedToRenderer = async (
 	timeTrackerWindow
 ) => {
 	//  Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
@@ -318,7 +318,7 @@ const showCapturedToRenderer = async (
 export async function takeshot(timeTrackerWindow, arg, notificationWindow, isTemp, windowPath, soundPath) {
 	try {
 		// Checking if the user is allowed to take a screenshot. */
-		if (!allowScreenshotCapture()) {
+		if (!isScreenshotCaptureAllowed()) {
 			return;
 		}
 
@@ -374,7 +374,7 @@ export async function takeshot(timeTrackerWindow, arg, notificationWindow, isTem
 export async function captureScreen(timeTrackerWindow, notificationWindow, timeSlotId, quitApp, windowPath, soundPath) {
 	try {
 		// Checking if the user is allowed to take a screenshot
-		if (!allowScreenshotCapture()) {
+		if (!isScreenshotCaptureAllowed()) {
 			return;
 		}
 
@@ -442,6 +442,11 @@ export function saveTempImage(img, name, timeSlotId, timeTrackerWindow) {
 
 export async function getScreenshot() {
 	const allDisplays = [];
+
+	// Checking if the user is allowed to take a screenshot
+	if (!isScreenshotCaptureAllowed()) {
+		return allDisplays;
+	}
 
 	try {
 		const displays = await screenshot.listDisplays();
@@ -527,8 +532,12 @@ export async function notifyScreenshot(notificationWindow, thumb, windowPath, so
  * the signed-in user, so a change on either side applies from its next refresh. Until it has, the employee and the
  * organization stored at sign-in decide, by the same rule. The employee's own setting used to be enough on its own, so
  * an employee was still captured while their organization had capture off.
+ *
+ * Every capture of the timer asks it before taking an image: the functions in this file, and the time slot that
+ * `TimerHandler.takeScreenshotActivities` builds, which also hands the answer to the renderer so that its own capture
+ * (Wayland's included) takes none either.
  */
-function allowScreenshotCapture(): boolean {
+export function isScreenshotCaptureAllowed(): boolean {
 	const auth = LocalStore.getStore('auth');
 	if (typeof auth?.allowScreenshotCapture === 'boolean') {
 		return auth.allowScreenshotCapture;
