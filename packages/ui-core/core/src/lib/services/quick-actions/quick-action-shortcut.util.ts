@@ -363,7 +363,13 @@ export type ShortcutRecorderResult =
 	/** Escape on its own: keep the current shortcut. */
 	| { status: 'cancelled' }
 	/** Tab: stop recording and let the browser move the focus (the keyboard is never trapped). */
-	| { status: 'released' };
+	| { status: 'released' }
+	/**
+	 * The release of a key that went down before the recording started (typically the Enter that
+	 * pressed the shortcut button): not part of the recording, so it must reach the page's other
+	 * listeners, which saw it go down (hotkeys-js would otherwise think it is still held).
+	 */
+	| { status: 'ignored' };
 
 /**
  * Records one shortcut from key events ("click the shortcut, then press the new keys").
@@ -371,11 +377,14 @@ export type ShortcutRecorderResult =
  * Keys are collected while they go down and the combination is complete when the last one is
  * released, so two-key shortcuts such as `A+E` can be recorded. Escape, Backspace and Delete pressed
  * on their own are commands, acted on when released (so the matching key-up never reaches a dialog
- * that closes on Escape). One recorder per recording.
+ * that closes on Escape). A key released without having gone down during the recording is ignored.
+ * One recorder per recording.
  */
 export class ShortcutRecorder {
 	private readonly keys: string[] = [];
 	private readonly held = new Set<string>();
+	/** Every key that went down during the recording, modifiers included. */
+	private readonly pressed = new Set<string>();
 	private readonly modifiers = new Set<ShortcutModifier>();
 	private command: { status: 'cleared' | 'cancelled'; key: string } | null = null;
 
@@ -383,6 +392,9 @@ export class ShortcutRecorder {
 		const name = keyboardEventToKeyName(event);
 		if (name === 'tab') {
 			return { status: 'released' };
+		}
+		if (name) {
+			this.pressed.add(name);
 		}
 		if (!name || event.repeat || isShortcutModifier(name)) {
 			return this.recording(event);
@@ -408,6 +420,9 @@ export class ShortcutRecorder {
 
 	keyup(event: ShortcutRecorderEvent): ShortcutRecorderResult {
 		const name = keyboardEventToKeyName(event);
+		if (!name || !this.pressed.has(name)) {
+			return { status: 'ignored' };
+		}
 		if (this.command && name === this.command.key) {
 			return { status: this.command.status };
 		}

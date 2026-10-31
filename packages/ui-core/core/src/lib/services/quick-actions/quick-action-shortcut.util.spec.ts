@@ -322,12 +322,27 @@ describe('quick-action-shortcut.util', () => {
 			expect(recorder.keyup(key('Shift'))).toEqual({ status: 'recording', preview: '' });
 		});
 
-		it('ignores the release of a key pressed before recording started, and auto-repeat', () => {
+		it('reports the release of a key pressed before recording started as ignored', () => {
+			// -- the Enter that pressed the shortcut button: its release belongs to the page, not to the recording
 			const recorder = new ShortcutRecorder();
-			expect(recorder.keyup(key('Enter'))).toEqual({ status: 'recording', preview: '' });
+			expect(recorder.keyup(key('Enter'))).toEqual({ status: 'ignored' });
+			expect(recorder.keyup(key('Shift'))).toEqual({ status: 'ignored' });
+			expect(recorder.keyup(key('Unidentified'))).toEqual({ status: 'ignored' });
+			recorder.keydown(key('y'));
+			expect(recorder.keyup(key('y'))).toEqual({ status: 'recorded', shortcut: 'y' });
+		});
+
+		it('ignores auto-repeat', () => {
+			const recorder = new ShortcutRecorder();
 			recorder.keydown(key('y'));
 			expect(recorder.keydown(key('y', { repeat: true }))).toEqual({ status: 'recording', preview: 'y' });
 			expect(recorder.keyup(key('y'))).toEqual({ status: 'recorded', shortcut: 'y' });
+		});
+
+		it('keeps the release of a modifier pressed during the recording', () => {
+			const recorder = new ShortcutRecorder();
+			recorder.keydown(key('Shift', { shiftKey: true }));
+			expect(recorder.keyup(key('Shift')).status).toBe('recording');
 		});
 	});
 });

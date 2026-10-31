@@ -19,13 +19,13 @@ import {
 	findQuickActionDefinition,
 	formatShortcut,
 	getQuickActionId,
-	normalizeShortcut,
 	reorderSubset,
 	resolveQuickActionOrder,
 	resolveQuickActionShortcuts,
 	sortByQuickActionOrder,
 	toQuickActionsPreferences,
-	validateQuickActionShortcut
+	validateQuickActionShortcut,
+	withQuickActionShortcut
 } from '@gauzy/ui-core/core';
 
 type GroupType = {
@@ -72,7 +72,10 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 	saving = false;
 	/** The groups as the edit mode lists them (the user's visible actions, in the draft order). */
 	editGroups: IQuickActionEditGroup[] = [];
-	/** Draft while editing: the effective shortcut of every built-in action (`''` = none). */
+	/**
+	 * Draft while editing: the effective shortcut of every built-in action (`''` = none), derived
+	 * from the defaults and `draftOverrides`.
+	 */
 	draftShortcuts: Record<string, string> = {};
 	/** The action whose shortcut is being recorded, and what has been pressed so far. */
 	capturingId: string | null = null;
@@ -84,6 +87,13 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 
 	/** Draft while editing: the effective order of every built-in action. */
 	private draftOrder: string[] = [];
+	/**
+	 * Draft while editing: the user's own shortcut choices (`''` = removed on purpose). Only these
+	 * are saved; an action whose default is taken by one of them is just left without a shortcut.
+	 */
+	private draftOverrides: Record<string, string> = {};
+	/** The actions this dialog lists, i.e. the ones the user may run. */
+	private visibleIds = new Set<string>();
 	private recorder: ShortcutRecorder | null = null;
 	private preferences: IQuickActionsUiPreferences | null = null;
 
@@ -136,7 +146,7 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 	ngOnDestroy(): void {
 		// -- closed while editing: resume the global shortcuts
 		if (this.editMode) {
-			this.quickActionsPreferencesService.editing.set(false);
+			this.quickActionsPreferencesService.setEditing(false);
 		}
 	}
 
@@ -157,12 +167,15 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 
 	/** Enters the edit mode with a draft of the current order and shortcuts. Global shortcuts pause. */
 	startEditing(): void {
+		this.visibleIds = new Set(
+			(this.items ?? []).map(getQuickActionId).filter((id) => !!findQuickActionDefinition(id))
+		);
 		this.draftOrder = resolveQuickActionOrder(this.preferences);
-		this.draftShortcuts = resolveQuickActionShortcuts(this.preferences);
+		this.setDraftOverrides({ ...(this.preferences?.shortcuts ?? {}) });
 		this.shortcutErrors = {};
 		this.statusMessage = '';
 		this.editMode = true;
-		this.quickActionsPreferencesService.editing.set(true);
+		this.quickActionsPreferencesService.setEditing(true);
 		this.refreshEditGroups();
 	}
 
@@ -170,14 +183,14 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 	cancelEditing(): void {
 		this.stopCapture();
 		this.editMode = false;
-		this.quickActionsPreferencesService.editing.set(false);
+		this.quickActionsPreferencesService.setEditing(false);
 	}
 
 	/** Puts the draft back to the built-in order and shortcuts (saved with Save). */
 	resetToDefaults(): void {
 		this.stopCapture();
 		this.draftOrder = resolveQuickActionOrder(null);
-		this.draftShortcuts = resolveQuickActionShortcuts(null);
+		this.setDraftOverrides({});
 		this.shortcutErrors = {};
 		this.refreshEditGroups();
 	}
@@ -189,7 +202,7 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 		this.saving = true;
 		try {
 			await this.quickActionsPreferencesService.save(
-				toQuickActionsPreferences(this.draftOrder, this.draftShortcuts)
+				toQuickActionsPreferences(this.draftOrder, this.draftOverrides)
 			);
 			this.cancelEditing();
 			this.toastrService.success('QUICK_ACTIONS_CUSTOMIZE.SAVED');
@@ -263,6 +276,10 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 	}
 
 	private handleRecorderResult(result: ShortcutRecorderResult, event: KeyboardEvent, id: string): void {
+		if (result.status === 'ignored') {
+			// -- the release of a key pressed before recording (the Enter that started it): let it through
+			return;
+		}
 		if (result.status === 'released') {
 			// -- Tab: stop recording and let the focus move on
 			this.stopCapture();
@@ -289,8 +306,15 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 		}
 	}
 
+	/**
+	 * Takes a recorded shortcut, unless it breaks the rules or another listed action uses it. An
+	 * action the user cannot see (no permission) never blocks a key: it loses that key instead.
+	 */
 	private applyRecordedShortcut(id: string, shortcut: string): void {
-		const error = validateQuickActionShortcut(shortcut, id, this.draftShortcuts);
+		const listed = Object.fromEntries(
+			Object.entries(this.draftShortcuts).filter(([other]) => this.visibleIds.has(other))
+		);
+		const error = validateQuickActionShortcut(shortcut, id, listed);
 		if (error) {
 			this.setError(id, this.describeError(error, shortcut));
 			return;
@@ -305,8 +329,13 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 	}
 
 	private setShortcut(id: string, shortcut: string): void {
-		this.draftShortcuts = { ...this.draftShortcuts, [id]: normalizeShortcut(shortcut) };
+		this.setDraftOverrides(withQuickActionShortcut(this.draftOverrides, id, shortcut));
 		this.setError(id, null);
+	}
+
+	private setDraftOverrides(overrides: Record<string, string>): void {
+		this.draftOverrides = overrides;
+		this.draftShortcuts = resolveQuickActionShortcuts({ shortcuts: overrides });
 	}
 
 	private setError(id: string, message: string | null): void {

@@ -66,8 +66,9 @@ export function sanitizeQuickActionsPreferences(
  * definition order.
  *
  * The user's own choices win; each default then applies unless it clashes with a combination
- * already taken. A saved shortcut that breaks the rules or clashes with an earlier one is ignored,
- * so the action falls back to its default.
+ * already taken (the action is then left without a shortcut, and gets its default back once that
+ * combination is free again). A saved shortcut that breaks the rules or clashes with an earlier one
+ * is ignored, so the action falls back to its default.
  */
 export function resolveQuickActionShortcuts(
 	preferences: IQuickActionsUiPreferences | null | undefined,
@@ -106,6 +107,44 @@ export function resolveQuickActionShortcuts(
 		}
 	}
 	return shortcuts;
+}
+
+/**
+ * The user's own shortcut choices after giving `shortcut` to the action `id` (`''` removes its
+ * shortcut on purpose). Any other choice that clashes with it is dropped: the latest choice wins, and
+ * that action falls back to its default whenever the default is free. Pure: returns a new object.
+ *
+ * @param overrides The user's own choices (action id → shortcut, `''` = removed on purpose).
+ */
+export function withQuickActionShortcut(
+	overrides: Readonly<Record<string, string>>,
+	id: string,
+	shortcut: string
+): Record<string, string> {
+	const chosen = normalizeShortcut(shortcut);
+	const next: Record<string, string> = {};
+	for (const [other, value] of Object.entries(overrides)) {
+		if (other !== id && !(chosen && shortcutsConflict(chosen, value))) {
+			next[other] = value;
+		}
+	}
+	next[id] = chosen;
+	return next;
+}
+
+/**
+ * The shortcuts to bind, as `[action id, shortcut]` pairs in definition order: every action that has
+ * a shortcut and that `isAvailable` accepts (an action the signed-in user cannot run must not take
+ * a key press).
+ */
+export function getQuickActionBindings(
+	shortcuts: Readonly<Record<string, string>>,
+	isAvailable: (id: string) => boolean,
+	definitions: ReadonlyArray<IQuickActionDefinition> = QUICK_ACTION_DEFINITIONS
+): Array<[string, string]> {
+	return definitions
+		.filter(({ id }) => hasOwn(shortcuts, id) && !!shortcuts[id] && isAvailable(id))
+		.map(({ id }): [string, string] => [id, shortcuts[id]]);
 }
 
 /**
@@ -165,13 +204,20 @@ function sameOrderWithinGroups(
 
 /**
  * The preferences to save for an edited layout: `order` only when some group's sequence differs
- * from the default, `shortcuts` only for the actions whose shortcut differs from their default (an
- * action missing from `shortcuts` keeps its default). `null` when the layout is the default one,
- * which removes the stored customization.
+ * from the default, `shortcuts` only for the user's own choices that differ from the action's
+ * default. `null` when the layout is the default one, which removes the stored customization.
+ *
+ * `overrides` must hold the user's choices only, never the effective shortcuts: an action left
+ * without a shortcut because its default clashes with one of those choices is not a removal, and
+ * must stay unstored so that it gets its default back once the combination is free again. An action
+ * missing from `overrides` keeps its default.
+ *
+ * @param order The effective order (see {@link resolveQuickActionOrder}).
+ * @param overrides The user's own choices (action id → shortcut, `''` = removed on purpose).
  */
 export function toQuickActionsPreferences(
 	order: ReadonlyArray<string>,
-	shortcuts: Readonly<Record<string, string>>,
+	overrides: Readonly<Record<string, string>>,
 	definitions: ReadonlyArray<IQuickActionDefinition> = QUICK_ACTION_DEFINITIONS
 ): IQuickActionsUiPreferences | null {
 	const preferences: IQuickActionsUiPreferences = {};
@@ -182,16 +228,16 @@ export function toQuickActionsPreferences(
 		preferences.order = effectiveOrder;
 	}
 
-	const overrides: Record<string, string> = {};
+	const shortcuts: Record<string, string> = {};
 	for (const { id, shortcut } of definitions) {
 		const fallback = normalizeShortcut(shortcut);
-		const value = hasOwn(shortcuts, id) ? normalizeShortcut(shortcuts[id]) : fallback;
+		const value = hasOwn(overrides, id) ? normalizeShortcut(overrides[id]) : fallback;
 		if (value !== fallback) {
-			overrides[id] = value;
+			shortcuts[id] = value;
 		}
 	}
-	if (Object.keys(overrides).length) {
-		preferences.shortcuts = overrides;
+	if (Object.keys(shortcuts).length) {
+		preferences.shortcuts = shortcuts;
 	}
 
 	return preferences.order || preferences.shortcuts ? preferences : null;

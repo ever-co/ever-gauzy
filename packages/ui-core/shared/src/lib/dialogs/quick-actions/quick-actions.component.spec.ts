@@ -3,12 +3,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NbMenuItem } from '@nebular/theme';
 import { BehaviorSubject } from 'rxjs';
+import hotkeys from 'hotkeys-js';
 import { IQuickActionsUiPreferences } from '@gauzy/contracts';
 import { QuickActionsPreferencesService, TimeTrackerService, ToastrService } from '@gauzy/ui-core/core';
 import { IQuickActionEditGroup, QuickActionsComponent } from './quick-actions.component';
 import { DialogsModule } from '../dialogs.module';
 
-/** Menu items as the header builds them (titles already translated). */
+/**
+ * Menu items as the header builds them (titles already translated). The user has no permission for
+ * the other actions, so the header leaves them out: Create Estimate (E), Add Employee (A+E), ...
+ */
 const ITEMS: NbMenuItem[] = [
 	{ title: 'Create Invoice', icon: 'archive-outline', link: 'invoices/add', data: { action: 'createInvoice' } },
 	{ title: 'Received Invoices', icon: 'archive', link: 'invoices/received', data: { action: 'receivedInvoices' } },
@@ -27,6 +31,7 @@ describe('QuickActionsComponent', () => {
 	let preferencesService: {
 		preferences$: BehaviorSubject<IQuickActionsUiPreferences | null>;
 		editing: ReturnType<typeof signal<boolean>>;
+		setEditing: jest.Mock;
 		save: jest.Mock;
 	};
 	let toastr: { success: jest.Mock; danger: jest.Mock };
@@ -72,7 +77,13 @@ describe('QuickActionsComponent', () => {
 
 	beforeEach(async () => {
 		preferences$ = new BehaviorSubject<IQuickActionsUiPreferences | null>(null);
-		preferencesService = { preferences$, editing: signal(false), save: jest.fn().mockResolvedValue(undefined) };
+		const editing = signal(false);
+		preferencesService = {
+			preferences$,
+			editing,
+			setEditing: jest.fn((value: boolean) => editing.set(value)),
+			save: jest.fn().mockResolvedValue(undefined)
+		};
 		toastr = { success: jest.fn(), danger: jest.fn() };
 
 		await TestBed.configureTestingModule({
@@ -250,6 +261,57 @@ describe('QuickActionsComponent', () => {
 			expect(row('Create Task').querySelector('p.shortcut-error').textContent.trim()).toBe('');
 		});
 
+		describe('with actions the user cannot see', () => {
+			it('gives the user a key a hidden action has by default; the hidden action loses it', async () => {
+				startEditing();
+				record('Create Task', 'e');
+				expect(component.shortcutErrors['createTask']).toBeUndefined();
+				expect(component.draftShortcuts['createTask']).toBe('e');
+				expect(component.draftShortcuts['createEstimate']).toBe('');
+
+				await clickSave();
+				// -- the displaced default is not stored as a removal: it comes back once E is free again
+				expect(preferencesService.save).toHaveBeenCalledWith({ shortcuts: { createTask: 'e' } });
+			});
+
+			it('is not blocked by the start of a hidden two-key shortcut', () => {
+				startEditing();
+				record('Create Task', 'a');
+				expect(component.draftShortcuts['createTask']).toBe('a');
+				expect(component.draftShortcuts['addEmployee']).toBe('');
+				expect(component.draftShortcuts['addDepartment']).toBe('');
+			});
+
+			it('takes a key from a hidden action’s own saved shortcut, which falls back to its default', async () => {
+				preferences$.next({ shortcuts: { createEstimate: 'y' } });
+				startEditing();
+				record('Create Task', 'y');
+				expect(component.draftShortcuts['createTask']).toBe('y');
+				expect(component.draftShortcuts['createEstimate']).toBe('e');
+
+				await clickSave();
+				expect(preferencesService.save).toHaveBeenCalledWith({ shortcuts: { createTask: 'y' } });
+			});
+		});
+
+		it('does not save a default that a saved shortcut only displaces', async () => {
+			preferences$.next({ shortcuts: { createTask: 'i' } });
+			startEditing();
+			expect(component.draftShortcuts['createInvoice']).toBe('');
+			expect(shortcutButton('Create Invoice').textContent.trim()).toBe('QUICK_ACTIONS_CUSTOMIZE.NO_SHORTCUT');
+
+			record('View Tasks', 'y');
+			await clickSave();
+			expect(preferencesService.save).toHaveBeenCalledWith({ shortcuts: { createTask: 'i', viewTasks: 'y' } });
+		});
+
+		it('gives a displaced default back when its key is freed', () => {
+			preferences$.next({ shortcuts: { createTask: 'i' } });
+			startEditing();
+			record('Create Task', 'y');
+			expect(component.draftShortcuts['createInvoice']).toBe('i');
+		});
+
 		it('refuses combinations the browser or the system own', () => {
 			startEditing();
 			record('Create Task', 'y', { ctrlKey: true });
@@ -283,6 +345,34 @@ describe('QuickActionsComponent', () => {
 			expect(component.capturingId).toBeNull();
 			expect(component.draftShortcuts['createTask']).toBe('t');
 			expect(component.editMode).toBe(true);
+		});
+
+		it('lets the release of the Enter that started a recording reach the page, so no key stays held', () => {
+			// -- hotkeys-js listens on the document, like the header's shortcuts do
+			hotkeys('*', 'quick-actions-spec', () => undefined);
+			try {
+				startEditing();
+				const button = shortcutButton('Create Task');
+				// -- Enter on a focused button: its keydown reaches the document, then it presses the button
+				button.dispatchEvent(new KeyboardEvent('keydown', key('Enter')));
+				expect(hotkeys.getPressedKeyCodes()).toEqual([13]);
+				button.click();
+				fixture.detectChanges();
+				expect(component.capturingId).toBe('createTask');
+
+				const release = new KeyboardEvent('keyup', key('Enter'));
+				button.dispatchEvent(release);
+				expect(release.defaultPrevented).toBe(false);
+				expect(hotkeys.getPressedKeyCodes()).toEqual([]);
+				expect(component.capturingId).toBe('createTask');
+
+				query<HTMLButtonElement>('button.cancel-edit').click();
+				fixture.detectChanges();
+				expect(preferencesService.setEditing).toHaveBeenLastCalledWith(false);
+				expect(hotkeys.getPressedKeyCodes()).toEqual([]);
+			} finally {
+				hotkeys.unbind('*', 'quick-actions-spec');
+			}
 		});
 
 		it('lets Tab move the focus on', () => {

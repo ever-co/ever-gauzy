@@ -63,8 +63,27 @@ function record<T>(source: { subscribe: (next: (value: T) => void) => unknown })
 }
 
 describe('QuickActionsPreferencesService', () => {
-	it('is not editing by default', () => {
-		expect(setup().service.editing()).toBe(false);
+	describe('editing', () => {
+		it('is off by default', () => {
+			expect(setup().service.editing()).toBe(false);
+		});
+
+		it('announces each end of the customization, even when nothing changed', () => {
+			const { service } = setup();
+			const ended = jest.fn();
+			service.editingEnded$.subscribe(ended);
+
+			service.setEditing(true);
+			expect(service.editing()).toBe(true);
+			expect(ended).not.toHaveBeenCalled();
+
+			service.setEditing(false);
+			expect(service.editing()).toBe(false);
+			expect(ended).toHaveBeenCalledTimes(1);
+
+			service.setEditing(false);
+			expect(ended).toHaveBeenCalledTimes(1);
+		});
 	});
 
 	describe('reading', () => {
@@ -158,6 +177,28 @@ describe('QuickActionsPreferencesService', () => {
 			updateUiPreferences.mockResolvedValueOnce([] as unknown as IUserUiPreferences);
 			await service.save(null);
 			expect(store.user.uiPreferences).toEqual({ chatSidebar: { expanded: true } });
+		});
+
+		it('keeps another feature’s preferences saved while the request was in flight', async () => {
+			const { service, store, updateUiPreferences } = setup(
+				user('u1', { chatSidebar: { expanded: false } } as IUserUiPreferences)
+			);
+			let answer: (value: IUserUiPreferences) => void;
+			updateUiPreferences.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+
+			const saving = service.save({ shortcuts: { createTask: 'y' } });
+			// -- the chat panel saves meanwhile; the server's answer to the quick-actions write predates it
+			store.user = user('u1', { chatSidebar: { expanded: true } } as IUserUiPreferences);
+			answer({
+				chatSidebar: { expanded: false },
+				quickActions: { shortcuts: { createTask: 'y' } }
+			} as IUserUiPreferences);
+			await saving;
+
+			expect(store.user.uiPreferences).toEqual({
+				chatSidebar: { expanded: true },
+				quickActions: { shortcuts: { createTask: 'y' } }
+			});
 		});
 
 		it('rejects and changes nothing when the request fails', async () => {

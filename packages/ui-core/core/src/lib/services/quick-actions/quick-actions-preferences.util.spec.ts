@@ -6,12 +6,14 @@ import {
 } from './quick-action.definitions';
 import { normalizeShortcut } from './quick-action-shortcut.util';
 import {
+	getQuickActionBindings,
 	reorderSubset,
 	resolveQuickActionOrder,
 	resolveQuickActionShortcuts,
 	sanitizeQuickActionsPreferences,
 	sortByQuickActionOrder,
-	toQuickActionsPreferences
+	toQuickActionsPreferences,
+	withQuickActionShortcut
 } from './quick-actions-preferences.util';
 
 const DEFAULT_IDS = QUICK_ACTION_DEFINITIONS.map(({ id }) => id);
@@ -151,6 +153,61 @@ describe('quick-actions-preferences.util', () => {
 		});
 	});
 
+	describe('withQuickActionShortcut', () => {
+		it('records the choice in canonical spelling and leaves the input alone', () => {
+			const before = { viewTasks: '' };
+			expect(withQuickActionShortcut(before, 'createTask', 'Shift+Y')).toEqual({
+				viewTasks: '',
+				createTask: 'shift+y'
+			});
+			expect(before).toEqual({ viewTasks: '' });
+		});
+
+		it('records a removal on purpose', () => {
+			expect(withQuickActionShortcut({ createInvoice: 'y' }, 'createTask', '')).toEqual({
+				createInvoice: 'y',
+				createTask: ''
+			});
+		});
+
+		it('drops the other choices that clash with it (the latest choice wins)', () => {
+			const before = { createInvoice: 'y', viewTasks: '', createTeam: 'a' };
+			expect(withQuickActionShortcut(before, 'createTask', 'y')).toEqual({
+				viewTasks: '',
+				createTeam: 'a',
+				createTask: 'y'
+			});
+			expect(withQuickActionShortcut(before, 'createTask', 'a+e')).toEqual({
+				createInvoice: 'y',
+				viewTasks: '',
+				createTask: 'a+e'
+			});
+		});
+
+		it('lets an action whose choice was dropped fall back to its default', () => {
+			const overrides = withQuickActionShortcut({ createInvoice: 'y' }, 'createTask', 'y');
+			const shortcuts = resolveQuickActionShortcuts({ shortcuts: overrides });
+			expect(shortcuts['createTask']).toBe('y');
+			expect(shortcuts['createInvoice']).toBe('i');
+		});
+	});
+
+	describe('getQuickActionBindings', () => {
+		it('lists the available actions that have a shortcut, in definition order', () => {
+			const shortcuts = resolveQuickActionShortcuts({ shortcuts: { createTask: 'i' } });
+			const available = new Set(['viewTasks', 'createInvoice', 'createTask', 'newDocumentPage']);
+			expect(getQuickActionBindings(shortcuts, (id) => available.has(id))).toEqual([
+				['createTask', 'i'],
+				['viewTasks', 'shift+t']
+			]);
+		});
+
+		it('binds nothing for an action the user may not run', () => {
+			expect(getQuickActionBindings(DEFAULT_SHORTCUTS, () => false)).toEqual([]);
+			expect(getQuickActionBindings(DEFAULT_SHORTCUTS, () => true)).toHaveLength(29);
+		});
+	});
+
 	describe('resolveQuickActionOrder', () => {
 		it('gives the built-in order when nothing is saved', () => {
 			expect(resolveQuickActionOrder(null)).toEqual(DEFAULT_IDS);
@@ -221,6 +278,20 @@ describe('quick-actions-preferences.util', () => {
 			});
 			expect(order).not.toEqual(DEFAULT_IDS);
 			expect(toQuickActionsPreferences(order, DEFAULT_SHORTCUTS)).toBeNull();
+		});
+
+		it('never stores a default that is only displaced, so it comes back once its key is free', () => {
+			const stored = { newDocumentPage: 'i' };
+			expect(resolveQuickActionShortcuts({ shortcuts: stored })['createInvoice']).toBe('');
+
+			const saved = toQuickActionsPreferences(DEFAULT_IDS, stored);
+			expect(saved).toEqual({ shortcuts: { newDocumentPage: 'i' } });
+
+			const moved = withQuickActionShortcut(saved.shortcuts, 'newDocumentPage', 'shift+p');
+			expect(resolveQuickActionShortcuts({ shortcuts: moved })['createInvoice']).toBe('i');
+			expect(toQuickActionsPreferences(DEFAULT_IDS, moved)).toEqual({
+				shortcuts: { newDocumentPage: 'shift+p' }
+			});
 		});
 
 		it('round-trips through the resolvers', () => {
