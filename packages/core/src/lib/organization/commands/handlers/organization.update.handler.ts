@@ -4,6 +4,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
 	BaseEntityEnum,
 	checkAgentExitLogoutRestrictionChange,
+	IAgentRestrictionLocation,
 	ID,
 	IOrganization,
 	IOrganizationUpdateInput,
@@ -18,9 +19,8 @@ import {
 	recordAgentRestrictionAcknowledgement
 } from '../../../employee/agent-exit-logout-restriction';
 import { OrganizationService } from '../../organization.service';
+import { organizationLocations, storedOrganizationLocation } from '../../organization-location';
 import {
-	currentContactId,
-	linkedContactCountry,
 	logScreenshotCaptureAcknowledgement,
 	omitScreenshotCaptureAcknowledgementFields,
 	resolveScreenshotCaptureAcknowledgement
@@ -71,16 +71,20 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		// Issue #9872: the screen capture acknowledgement is request-only too, and its record is the server's.
 		const changes: IOrganizationUpdateInput = omitScreenshotCaptureAcknowledgementFields(input);
 		delete changes.acknowledgeAgentExitLogoutRestriction;
-		const previousLocation = {
-			regionCode: organization.regionCode,
-			timeZone: organization.timeZone,
-			country: organization.contact?.country
-		};
-		const location = {
-			regionCode: changes.regionCode ?? previousLocation.regionCode,
-			timeZone: changes.timeZone ?? previousLocation.timeZone,
-			country: changes.country || previousLocation.country
-		};
+		// The location is judged from what is stored and what this write stores (see `organizationLocations`): the
+		// region code, the time zone and the country of the contact the organization is linked to. Neither a top-level
+		// `country` nor the fields of a contact the request carries are stored by the save, so they move nothing.
+		// The exit/logout rule judges the location after the write only.
+		const {
+			stored: previousLocation,
+			after: location,
+			requested,
+			unreadContactId
+		} = await organizationLocations(organization, changes, this.contactService);
+		// Without the contact the save links, the location after the write is unknown: nothing is judged or saved.
+		if (unreadContactId) {
+			throw new NotFoundException(`Contact with ID ${unreadContactId} not found.`);
+		}
 		const { error: restrictionError, newRestrictions } = checkAgentExitLogoutRestrictionChange(
 			input,
 			organization,
@@ -93,23 +97,12 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 
 		// Issue #9872: turning screen capture on for an EEA/UK organization takes the admin's acknowledgement,
 		// stored with the change below. Re-saving an organization that already captures, or turning capture
-		// off, asks nothing, so existing organizations keep their value without a new step. The stored location
-		// counts as well as the requested one: the organization keeps its country on its contact, so a top-level
-		// `country` the write never stores cannot take a UK or EEA organization out of the check, and a contact the
-		// write links by id counts with the country it has.
-		const linkedCountry =
-			input.allowScreenshotCapture === true
-				? await linkedContactCountry(
-						this.contactService,
-						changes.contact?.id ?? (changes as { contactId?: ID }).contactId,
-						currentContactId(organization)
-					)
-				: undefined;
+		// off, asks nothing, so existing organizations keep their value without a new step. It asks if the
+		// organization is in the EEA/UK before or after the write, or by any location value the request names.
 		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(input, organization, [
 			previousLocation,
 			location,
-			{ country: changes.contact?.country },
-			{ country: linkedCountry }
+			...requested
 		]);
 		input = changes;
 
@@ -172,8 +165,13 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			);
 		}
 
-		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker.
-		if (!isEEAOrUKLocation(previousLocation) && isEEAOrUKLocation(location)) {
+		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker. Confirmed on the row as
+		// saved, read back only when the write may have moved the organization.
+		if (
+			!isEEAOrUKLocation(previousLocation) &&
+			isEEAOrUKLocation([location, ...requested]) &&
+			isEEAOrUKLocation(await this.savedLocation(id))
+		) {
 			try {
 				await liftEmployeeAgentRestrictions(
 					this.moduleRef.get(EmployeeService, { strict: false }),
@@ -188,5 +186,15 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 
 		// Return the updated organization entity
 		return await this.organizationService.findOneByIdString(id);
+	}
+
+	/**
+	 * Where the organization is as saved: read back after the save, with its contact.
+	 *
+	 * @param id The organization.
+	 */
+	private async savedLocation(id: ID): Promise<IAgentRestrictionLocation> {
+		const saved = await this.organizationService.findOneByIdString(id, { relations: { contact: true } });
+		return storedOrganizationLocation(saved);
 	}
 }

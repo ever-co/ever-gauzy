@@ -29,9 +29,8 @@ import { OrganizationTaskSizeBulkCreateCommand } from './../../../tasks/sizes/co
 import { OrganizationTaskPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
 import { OrganizationIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
 import { OrganizationTaskSettingCreateCommand } from '../../../organization-task-setting/commands';
+import { currentContactId, linkedContactCountry } from '../../organization-location';
 import {
-	currentContactId,
-	linkedContactCountry,
 	logScreenshotCaptureAcknowledgement,
 	omitScreenshotCaptureAcknowledgementFields,
 	resolveScreenshotCaptureAcknowledgement
