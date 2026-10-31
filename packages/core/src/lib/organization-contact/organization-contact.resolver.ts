@@ -400,13 +400,14 @@ export class OrganizationContactResolver {
 	 * Puts a withdrawn party back, clearing the marker the withdrawal set.
 	 *
 	 * The route overrides the inherited `CrudController.softRecover()` only to attach the gate, and
-	 * states `@UseGuards(PermissionGuard)` with `ORG_CONTACT_EDIT`; the field states the same pair.
+	 * states `@UseGuards(PermissionGuard)` with the withdrawal's pair, `ORG_CONTACT_DELETE` or `ORG_CONTACT_EDIT`;
+	 * the field states the same pair.
 	 * Restoring is what undoes the withdrawal above, so a caller the withdrawal route refuses must not
 	 * be able to reverse one here either.
 	 */
 	@Mutation('recoverOrganizationContact')
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Permissions(...ORGANIZATION_CONTACT_DELETE_PERMISSIONS)
 	async recoverOrganizationContact(@Args('id', { type: () => ID }) id: Id): Promise<IOrganizationContact> {
 		return await this.organizationContactService.softRecover(id);
 	}

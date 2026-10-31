@@ -764,11 +764,11 @@ describe('the routes GHSA-v79w-54p2-wmh5 left reachable by any tenant member', (
 		);
 	});
 
-	it('gates editing and restoring an organization contact with ORG_CONTACT_EDIT', () => {
+	it('gates editing an organization contact with ORG_CONTACT_EDIT', () => {
 		expectFullyGated(
 			OrganizationContactController,
 			[PermissionsEnum.ORG_CONTACT_EDIT],
-			['updateByEmployee', 'create', 'delete', 'softRemove']
+			['updateByEmployee', 'create', 'delete', 'softRemove', 'softRecover']
 		);
 	});
 
@@ -781,8 +781,8 @@ describe('the routes GHSA-v79w-54p2-wmh5 left reachable by any tenant member', (
 		);
 	});
 
-	it('gates deleting and soft-deleting an organization contact with ORG_CONTACT_DELETE or ORG_CONTACT_EDIT', () => {
-		const otherRoutes = ['updateByEmployee', 'update', 'softRecover', 'create'];
+	it('gates deleting, soft-deleting and restoring an organization contact with ORG_CONTACT_DELETE or ORG_CONTACT_EDIT', () => {
+		const otherRoutes = ['updateByEmployee', 'update', 'create'];
 		expectFullyGated(
 			OrganizationContactController,
 			[PermissionsEnum.ORG_CONTACT_DELETE, PermissionsEnum.ORG_CONTACT_EDIT],

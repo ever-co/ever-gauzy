@@ -119,13 +119,13 @@ describe('Organization contact permissions (ever-co/ever-gauzy#5468)', () => {
 		});
 	});
 
-	it('lets a holder of ORG_CONTACT_DELETE alone delete and withdraw a contact, and not create, edit or restore one', async () => {
+	it('lets a holder of ORG_CONTACT_DELETE alone delete, withdraw and restore a contact, and not create or edit one', async () => {
 		expect(await allowed([PermissionsEnum.ORG_CONTACT_DELETE])).toEqual({
 			create: [false, false],
 			update: [false, false],
 			delete: [true, true],
 			softRemove: [true, true],
-			softRecover: [false, false]
+			softRecover: [true, true]
 		});
 	});
 

@@ -288,7 +288,8 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	 * RESTORE a soft-deleted organization contact by id
 	 *
 	 * Overrides the inherited `CrudController.softRecover()` route only to attach the permission gate
-	 * (GHSA-v79w-54p2-wmh5): `ORG_CONTACT_EDIT`, the permission that edits a contact.
+	 * (GHSA-v79w-54p2-wmh5): `ORG_CONTACT_DELETE` or `ORG_CONTACT_EDIT`, the pair that withdraws a contact. A restore
+	 * undoes a withdrawal, so whoever may withdraw a contact may bring it back (ever-co/ever-gauzy#5468).
 	 *
 	 * @param id
 	 * @returns
@@ -300,7 +301,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Permissions(...ORGANIZATION_CONTACT_DELETE_PERMISSIONS)
 	@Put(':id/recover')
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationContact> {

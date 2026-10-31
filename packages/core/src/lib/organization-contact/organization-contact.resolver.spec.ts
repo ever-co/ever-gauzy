@@ -704,13 +704,13 @@ describe('OrganizationContactResolver — the guard stack is the controller’s,
 		// whose handlers state none. It now overrides all three for no other reason than to attach
 		// `@UseGuards(PermissionGuard)` (GHSA-v79w-54p2-wmh5), so a field left unpermissioned here is a
 		// way to remove, withdraw or restore a party that the route refuses. The removal and the
-		// withdrawal take the delete grant or the edit grant (ever-co/ever-gauzy#5468); the restoration
-		// stays with the edit grant. The route side is read first so the comparison below cannot pass on
-		// the two surfaces being empty together.
+		// withdrawal take the delete grant or the edit grant (ever-co/ever-gauzy#5468), and so does the
+		// restoration that undoes a withdrawal. The route side is read first so the comparison below cannot
+		// pass on the two surfaces being empty together.
 		const expected: Record<string, PermissionsEnum[]> = {
 			delete: [PermissionsEnum.ORG_CONTACT_DELETE, PermissionsEnum.ORG_CONTACT_EDIT],
 			softRemove: [PermissionsEnum.ORG_CONTACT_DELETE, PermissionsEnum.ORG_CONTACT_EDIT],
-			softRecover: [PermissionsEnum.ORG_CONTACT_EDIT]
+			softRecover: [PermissionsEnum.ORG_CONTACT_DELETE, PermissionsEnum.ORG_CONTACT_EDIT]
 		};
 		for (const [route, permissions] of Object.entries(expected)) {
 			expect(permissionOfRoute(OrganizationContactController, route)).toEqual(permissions);
