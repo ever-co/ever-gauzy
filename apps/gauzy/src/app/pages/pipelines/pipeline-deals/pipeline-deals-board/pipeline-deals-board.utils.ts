@@ -78,9 +78,19 @@ export function toDealBoardColumns(
  * The board's moves the host has not yet brought its other views up to date with. A move is tracked from the
  * moment it starts, because leaving the board removes it (and its outputs) while a save can still be under
  * way: the host settles the moves when the board is left and reads the deals again once they are done.
+ *
+ * Until then the board is held back: a board shown again meanwhile would be built from deals read before the
+ * moves, with a moved card back at its old stage and free to be dragged while its first save is still under
+ * way, so an older save finishing last could overwrite a newer stage.
  */
 export class DealBoardMoves {
 	private _pending: Promise<boolean>[] = [];
+	private _settling = 0;
+
+	/** True while moves tracked before the board was left are settling, or the deals are being read again. */
+	get held(): boolean {
+		return this._settling > 0;
+	}
 
 	/** A move that started; `saved` settles with whether the deal was saved. */
 	track(saved: Promise<boolean>): void {
@@ -88,13 +98,26 @@ export class DealBoardMoves {
 	}
 
 	/**
-	 * Waits for every move tracked so far, and forgets them. Resolves whether any was saved: a move that
-	 * failed put its card back, so it changed nothing to read again.
+	 * Waits for every move tracked so far, forgets them and, if any was saved, reads the deals again through
+	 * `reread`; the board is {@link held} until then. A move that failed put its card back, so it changed
+	 * nothing to read again. Does nothing when no move was tracked.
+	 *
+	 * @param reread Reads the deals again, resolving once they are read.
 	 */
-	async settle(): Promise<boolean> {
+	async settle(reread: () => Promise<void>): Promise<void> {
+		if (!this._pending.length) {
+			return;
+		}
 		const pending = this._pending;
 		this._pending = [];
-		const results = await Promise.all(pending);
-		return results.some(Boolean);
+		this._settling++;
+		try {
+			const results = await Promise.all(pending);
+			if (results.some(Boolean)) {
+				await reread();
+			}
+		} finally {
+			this._settling--;
+		}
 	}
 }

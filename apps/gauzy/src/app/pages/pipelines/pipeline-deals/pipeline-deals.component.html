@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" class="card-scroll" nbSpinnerSize="large" nbSpinnerStatus="primary">
+<nb-card [nbSpinner]="loading || isBoardHeld" class="card-scroll" nbSpinnerSize="large" nbSpinnerStatus="primary">
 	<nb-card-header class="card-header-title">
 		@if (pipeline$ | async; as pipeline) {
 		<div class="card-header-title">
@@ -50,6 +50,8 @@
 		}
 		@if (deals$ | async; as deals) {
 		@if (isBoardView) {
+		<!-- Held back while moves made before the board was left settle and the deals are read again. -->
+		@if (!isBoardHeld) {
 		<ga-pipeline-deals-board
 			[stages]="pipeline?.stages"
 			[deals]="deals"
@@ -57,6 +59,7 @@
 			[tenantId]="pipeline?.tenantId"
 			(dealMoving)="onBoardDealMoving($event)"
 		></ga-pipeline-deals-board>
+		}
 		} @else {
 		<ng-template
 			[ngTemplateOutlet]="dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout"

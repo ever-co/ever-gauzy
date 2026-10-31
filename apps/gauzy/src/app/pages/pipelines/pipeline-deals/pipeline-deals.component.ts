@@ -52,6 +52,16 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 	public isBoardView = false;
 	/** Deals moved on the board: once their saves settle, the table and grid read the deals again. */
 	private readonly _boardMoves = new DealBoardMoves();
+	/** Emits each time a read of the deals ends, whether it succeeded or failed. */
+	private readonly _dealsRead$ = new Subject<void>();
+
+	/**
+	 * The board was left while its moves were saving: it shows again once they settle and the deals have been
+	 * read again, so it is never built from deals read before the moves (see {@link DealBoardMoves}).
+	 */
+	public get isBoardHeld(): boolean {
+		return this._boardMoves.held;
+	}
 
 	/**
 	 * Checks if the current layout style is grid.
@@ -135,6 +145,7 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 			}),
 			tap(() => {
 				this.loading = false;
+				this._dealsRead$.next();
 			}),
 			untilDestroyed(this)
 		);
@@ -204,8 +215,18 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 		// Back from a board where deals moved: once the saves still under way settle, the table and grid read
 		// the deals again (leaving the board removed it, so it can no longer report them).
 		if (!isBoardView) {
-			void this._boardMoves.settle().then((changed) => changed && this.subject$.next(true));
+			void this._boardMoves.settle(() => this._readDealsAgain()).finally(() => this._cdr.markForCheck());
 		}
+	}
+
+	/**
+	 * Reads the deals again, resolving once the read ends. The read starts at once and marks the page as
+	 * loading; a list that stopped reading after an earlier failure has nothing to wait for.
+	 */
+	private _readDealsAgain(): Promise<void> {
+		const read = firstValueFrom(this._dealsRead$);
+		this.subject$.next(true);
+		return this.loading ? read : Promise.resolve();
 	}
 
 	ngAfterViewInit() {

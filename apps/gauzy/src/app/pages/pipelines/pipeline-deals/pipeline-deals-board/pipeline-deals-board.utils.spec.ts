@@ -80,30 +80,62 @@ describe('toDealBoardCard', () => {
 });
 
 describe('DealBoardMoves', () => {
-	it('settles to whether any tracked move was saved, waiting for the ones still under way', async () => {
+	/** Lets every promise that has settled run its callbacks. */
+	const flush = () => new Promise<void>((done) => setTimeout(done));
+
+	it('holds the board until the moves still under way settle and the deals are read again', async () => {
 		const moves = new DealBoardMoves();
-		let finish: (saved: boolean) => void;
+		let finishSave: (saved: boolean) => void;
+		let finishRead: () => void;
+		const reread = jest.fn(() => new Promise<void>((done) => (finishRead = done)));
 		moves.track(Promise.resolve(false));
-		moves.track(new Promise<boolean>((done) => (finish = done)));
+		moves.track(new Promise<boolean>((done) => (finishSave = done)));
 
-		const settled = moves.settle();
-		let done = false;
-		void settled.then(() => (done = true));
-		await Promise.resolve();
-		expect(done).toBe(false);
+		const settled = moves.settle(reread);
+		await flush();
+		expect(moves.held).toBe(true);
+		expect(reread).not.toHaveBeenCalled();
 
-		finish(true);
-		await expect(settled).resolves.toBe(true);
+		finishSave(true);
+		await flush();
+		expect(reread).toHaveBeenCalledTimes(1);
+		expect(moves.held).toBe(true);
+
+		finishRead();
+		await settled;
+		expect(moves.held).toBe(false);
 	});
 
-	it('changes nothing when every move failed, and forgets the moves it settled', async () => {
+	it('reads nothing again when every move failed, and forgets the moves it settled', async () => {
 		const moves = new DealBoardMoves();
+		const reread = jest.fn(() => Promise.resolve());
 		moves.track(Promise.resolve(false));
 
-		await expect(moves.settle()).resolves.toBe(false);
+		await moves.settle(reread);
+		expect(reread).not.toHaveBeenCalled();
+		expect(moves.held).toBe(false);
 
 		moves.track(Promise.resolve(true));
-		await expect(moves.settle()).resolves.toBe(true);
-		await expect(moves.settle()).resolves.toBe(false);
+		await moves.settle(reread);
+		await moves.settle(reread);
+		expect(reread).toHaveBeenCalledTimes(1);
+	});
+
+	it('never holds the board when no move was tracked', async () => {
+		const moves = new DealBoardMoves();
+		const reread = jest.fn(() => Promise.resolve());
+
+		const settled = moves.settle(reread);
+		expect(moves.held).toBe(false);
+		await settled;
+		expect(reread).not.toHaveBeenCalled();
+	});
+
+	it('lets the board show again even if reading the deals fails', async () => {
+		const moves = new DealBoardMoves();
+		moves.track(Promise.resolve(true));
+
+		await expect(moves.settle(() => Promise.reject(new Error('offline')))).rejects.toThrow('offline');
+		expect(moves.held).toBe(false);
 	});
 });
