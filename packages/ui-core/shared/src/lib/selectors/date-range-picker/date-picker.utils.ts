@@ -364,7 +364,51 @@ function addPreset(
 	if (minDate && end.isBefore(minDate, 'day')) {
 		return;
 	}
-	ranges[key] = [minDate && start.isBefore(minDate) ? minDate.clone() : start, end];
+	const from = minDate && start.isBefore(minDate) ? minDate.clone() : start;
+	// Limits that leave nothing of the unit (`maxDate` before `minDate`, or before the unit starts): no preset.
+	if (from.isAfter(end)) {
+		return;
+	}
+	ranges[key] = [from, end];
+}
+
+/**
+ * Whether the "Previous" arrow is disabled, the counterpart of "Next" stopping at today. Where past dates
+ * are disallowed, a range that already starts today (or earlier) has no earlier period left to step to:
+ * stepping back would select days before `minDate`.
+ *
+ * @param range The selected range.
+ * @param isPastDisallowed Whether the page disallows past dates.
+ * @param now Today.
+ */
+export function isPreviousRangeDisabled(
+	range: { startDate?: Date | string | null } | null | undefined,
+	isPastDisallowed: boolean,
+	now: moment.Moment = moment()
+): boolean {
+	if (!range?.startDate) {
+		return true;
+	}
+	return isPastDisallowed && moment(range.startDate).isSameOrBefore(now, 'day');
+}
+
+/**
+ * Where past dates are disallowed, a step back that would start before today starts today instead, as
+ * the presets do at `minDate`. (From a range that already starts today, "Previous" is disabled.)
+ *
+ * @param range The range "Previous" stepped to.
+ * @param isPastDisallowed Whether the page disallows past dates.
+ * @param now Today.
+ */
+export function keepRangeFromToday<T extends { startDate?: Date | string | null }>(
+	range: T,
+	isPastDisallowed: boolean,
+	now: moment.Moment = moment()
+): T {
+	if (!isPastDisallowed || !range?.startDate || !moment(range.startDate).isBefore(now, 'day')) {
+		return range;
+	}
+	return { ...range, startDate: now.clone().startOf('day').toDate() };
 }
 
 /** The whole `unit` starting at `start`, ending on `maxDate` at the latest. */

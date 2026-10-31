@@ -30,6 +30,8 @@ import {
 	buildPresetRanges,
 	dayOfWeekAsString,
 	isCustomDateRange,
+	isPreviousRangeDisabled,
+	keepRangeFromToday,
 	PRESET_UNIT_OF_TIME,
 	PRESET_UNITS_OF_TIME,
 	selectUnitOfTime,
@@ -356,7 +358,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 				tap(() => {
 					this.setPastStrategy();
 					this.setFutureStrategy();
-					// After the strategies: the presets end on the `maxDate` they settle.
+					// After the strategies: the presets keep within the `minDate` and `maxDate` they settle.
 					this.createDateRangeMenus();
 				}),
 				untilDestroyed(this)
@@ -483,15 +485,30 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * Also updates the query parameters without navigating away.
 	 */
 	previousRange(): void {
+		if (this.isPreviousDisabled()) {
+			return;
+		}
+
 		// Set the strategy to 'previous' on the arrow object
 		this.arrow.setStrategy(this.previous);
 
-		// Execute the strategy to get the previous range
-		const previousRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
+		// Execute the strategy to get the previous range; where past dates are disallowed, it starts today at the earliest
+		const previousRange = keepRangeFromToday(
+			this.arrow.execute(this.rangePicker, this.unitOfTime),
+			this.hasPastStrategy()
+		);
 
 		// Update the selected date range and ensure consistency with the range picker
 		this.selectedDateRange = { ...previousRange };
 		this.rangePicker = { ...previousRange };
+	}
+
+	/**
+	 * Determines whether the "Previous" button should be disabled: where past dates are disallowed, once the
+	 * selected range starts today (see `isPreviousRangeDisabled`).
+	 */
+	isPreviousDisabled(): boolean {
+		return isPreviousRangeDisabled(this.selectedDateRange, this.hasPastStrategy());
 	}
 
 	/**

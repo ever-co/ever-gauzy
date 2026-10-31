@@ -5,6 +5,8 @@ import utc from 'dayjs/plugin/utc';
 import {
 	buildPresetRanges,
 	isCustomDateRange,
+	isPreviousRangeDisabled,
+	keepRangeFromToday,
 	PRESET_UNIT_OF_TIME,
 	PRESET_UNITS_OF_TIME,
 	selectUnitOfTime,
@@ -426,6 +428,59 @@ describe('buildPresetRanges — the menu offers whole days, weeks, months and ye
 
 			expect(Object.values(today).map(span)).toEqual(Array(4).fill(['2026-09-23', '2026-09-23']));
 		});
+
+		it('offers no preset rather than one that ends before it starts, when the limits leave nothing', () => {
+			// `minDate` an hour after `maxDate`, on the same day.
+			const ranges = buildPresetRanges(['day'], NOW, NOW.clone(), NOW.clone().add(1, 'hour'));
+
+			expect(ranges).toEqual({});
+		});
+	});
+});
+
+describe('isPreviousRangeDisabled — "Previous" stops at today where past dates are disallowed', () => {
+	const NOW = moment(local(2026, 9, 23, 15, 30));
+	const startingOn = (value: number) => ({ startDate: new Date(value) });
+
+	it('stops once the range starts today, or earlier, where past dates are disallowed', () => {
+		expect(isPreviousRangeDisabled(startingOn(local(2026, 9, 23)), true, NOW)).toBe(true);
+		expect(isPreviousRangeDisabled(startingOn(local(2026, 0, 1)), true, NOW)).toBe(true);
+	});
+
+	it('still steps back from a range that starts after today', () => {
+		expect(isPreviousRangeDisabled(startingOn(local(2026, 9, 26)), true, NOW)).toBe(false);
+	});
+
+	it('always steps back where past dates are allowed', () => {
+		expect(isPreviousRangeDisabled(startingOn(local(2026, 9, 23)), false, NOW)).toBe(false);
+	});
+
+	it('is disabled while no range is selected, like "Next"', () => {
+		expect(isPreviousRangeDisabled(null, false, NOW)).toBe(true);
+		expect(isPreviousRangeDisabled({ startDate: null }, false, NOW)).toBe(true);
+	});
+});
+
+describe('keepRangeFromToday — a step back never crosses today where past dates are disallowed', () => {
+	const NOW = moment(local(2026, 9, 23, 15, 30));
+	// From next week (26 Oct - 1 Nov), "Previous" steps to this week: 19 - 25 Oct.
+	const thisWeek = { startDate: new Date(local(2026, 9, 19)), endDate: new Date(local(2026, 9, 25, 23, 59)) };
+
+	it('starts the range today instead of in the past, keeping its end', () => {
+		const kept = keepRangeFromToday(thisWeek, true, NOW);
+
+		expect(kept.startDate.getTime()).toBe(local(2026, 9, 23));
+		expect(kept.endDate).toBe(thisWeek.endDate);
+	});
+
+	it('leaves the range as it is where past dates are allowed', () => {
+		expect(keepRangeFromToday(thisWeek, false, NOW)).toBe(thisWeek);
+	});
+
+	it('leaves a range that starts today or later as it is', () => {
+		const fromToday = { ...thisWeek, startDate: new Date(local(2026, 9, 23)) };
+
+		expect(keepRangeFromToday(fromToday, true, NOW)).toBe(fromToday);
 	});
 });
 
