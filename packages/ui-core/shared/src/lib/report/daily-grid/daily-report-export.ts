@@ -194,10 +194,12 @@ function dailyReportColumns(
 			header: translate('REPORT_PAGE.TIME'),
 			value: (row) => durationFormat.transform(row.duration)
 		},
+		// Exact, not rounded: rounding each entry drifts the column's sum away from the report's total (sixty
+		// one-minute entries would sum to 1.2 hours rather than 1). Format the column to show fewer decimals.
 		hours: {
 			key: 'hours',
 			header: translate('REPORT_PAGE.HOURS'),
-			value: (row) => Math.round((row.duration / 3600) * 100) / 100
+			value: (row) => row.duration / 3600
 		},
 		activity: {
 			key: 'activity',

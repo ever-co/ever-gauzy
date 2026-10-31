@@ -180,6 +180,38 @@ describe('buildDailyReportExportTable', () => {
 		expect(second).toBe('"2026-10-01","Ada Lovelace","Apollo","Acme","","","00:30:00",0.5,55.5');
 	});
 
+	it.each([
+		['sixty one-minute entries', 60, 60],
+		['three twenty-minute entries', 3, 1200],
+		['ninety forty-second entries', 90, 40]
+	])('exports hours that add up to the report total for %s', (_label, entries, duration) => {
+		const report = [
+			{
+				date: '2026-10-01',
+				logs: [
+					{
+						project: apollo,
+						employeeLogs: [
+							{
+								employee: ada,
+								sum: entries * duration,
+								activity: 0,
+								tasks: Array.from({ length: entries }, () => ({ duration }))
+							}
+						]
+					}
+				]
+			}
+		];
+		const table = buildDailyReportExportTable(asReport(report), ReportGroupFilterEnum.date, translate);
+		const hours = table.columns.find((column) => column.key === 'hours');
+
+		const total = table.rows.reduce((sum, row) => sum + Number(hours?.value(row)), 0);
+
+		// One hour of time sums to one hour: rounding each entry to 2 decimals summed to 1.2, 0.99 and 0.9
+		expect(total).toBeCloseTo(1, 10);
+	});
+
 	it('neutralizes a note that a spreadsheet would run as a formula', () => {
 		const report = [
 			{
