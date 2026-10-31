@@ -383,10 +383,14 @@ export function envSampleProblems(source, secrets) {
 	const problems = [];
 
 	for (const key of secrets) {
-		const line = lines.find((candidate) => new RegExp(`^\\s*${key}\\s*=`).test(candidate));
-		if (line === undefined) {
+		// Every line that assigns the key (a later one would win), each matched as a whole assignment: an empty value,
+		// optionally quoted, optionally followed by a comment. Anything else, `abc=` or base64 `YWJj==` included, is
+		// a value.
+		const listed = lines.filter((candidate) => new RegExp(`^\\s*${key}\\s*=`).test(candidate));
+		const empty = new RegExp(`^\\s*${key}\\s*=\\s*(?:""|'')?(?:\\s+#.*)?\\s*$`);
+		if (listed.length === 0) {
 			problems.push(`does not list ${key}= for the operator to fill in`);
-		} else if (!/=\s*(""|'')?\s*$/.test(line)) {
+		} else if (!listed.every((line) => empty.test(line))) {
 			problems.push(`${key} has a value; leave it empty for the operator to fill in`);
 		}
 	}

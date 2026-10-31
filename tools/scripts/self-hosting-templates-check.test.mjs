@@ -380,4 +380,23 @@ describe('envSampleProblems', () => {
 			'EXPRESS_SESSION_SECRET has a value; leave it empty for the operator to fill in'
 		]);
 	});
+
+	it('reports a value that ends in `=` (base64), and one on a later line for the same key', () => {
+		for (const lines of [
+			'EXPRESS_SESSION_SECRET=YWJj==',
+			'EXPRESS_SESSION_SECRET=abc=',
+			'EXPRESS_SESSION_SECRET=\nEXPRESS_SESSION_SECRET=x'
+		]) {
+			assert.deepEqual(envSampleProblems(`${sample}\n${lines}`, ['EXPRESS_SESSION_SECRET']), [
+				'EXPRESS_SESSION_SECRET has a value; leave it empty for the operator to fill in'
+			]);
+		}
+	});
+
+	it('passes an empty value followed by a comment', () => {
+		assert.deepEqual(
+			envSampleProblems(`${sample}\nEXPRESS_SESSION_SECRET= # openssl rand -hex 64`, ['EXPRESS_SESSION_SECRET']),
+			[]
+		);
+	});
 });
