@@ -85,9 +85,10 @@ export class WindowPositionMemory {
 		if (!position) {
 			return;
 		}
-		this.pending = null;
 		try {
 			this.storage.set(this.key, position);
+			// Kept until written: a failed timed save is tried again when the window closes
+			this.pending = null;
 		} catch (error) {
 			console.warn(`Could not save the position of the "${this.key}" window`, error);
 		}

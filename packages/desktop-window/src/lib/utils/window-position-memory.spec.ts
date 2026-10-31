@@ -153,6 +153,30 @@ describe('WindowPositionMemory', () => {
 		expect(warn).toHaveBeenCalledTimes(2);
 		warn.mockRestore();
 	});
+
+	it('tries a failed save again when the window closes', () => {
+		const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		storage.set = jest
+			.fn()
+			.mockImplementationOnce(() => {
+				throw new Error('store busy');
+			})
+			.mockImplementation((key: string, position) => {
+				storage.saved[key] = position;
+			});
+		const window = fakeWindow();
+		new WindowPositionMemory('widget', storage).track(window as any);
+
+		window.moveTo(640, 360);
+		jest.advanceTimersByTime(WindowPositionMemory.SAVE_DELAY_MS);
+		expect(storage.saved['widget']).toBeUndefined();
+
+		window.destroy();
+
+		expect(storage.saved['widget']).toEqual({ x: 640, y: 360 });
+		expect(storage.set).toHaveBeenCalledTimes(2);
+		warn.mockRestore();
+	});
 });
 
 describe('windowPositionStore', () => {
