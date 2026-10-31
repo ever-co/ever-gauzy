@@ -5484,6 +5484,17 @@
 			"SERVER_HOSTNAME": "Nazwa hosta/adres IP serwera",
 			"LAN_ACCESS": "Zezwalaj innym komputerom w sieci na połączenie",
 			"LAN_ACCESS_HINT": "Po wyłączeniu tylko ten komputer może łączyć się z API i interfejsem WWW.",
+			"SERVER_HOST": {
+				"INVALID": "Wprowadź prawidłowy adres IP lub nazwę hosta, np. 192.168.1.20 lub gauzy.example.com.",
+				"SSL_WITH_IP": "SSL jest włączony: zalecana jest nazwa hosta, ponieważ certyfikaty są zwykle wystawiane dla nazwy. Certyfikat zawierający ten adres IP również zadziała.",
+				"IPV6_BRACKETS": "Umieść adres IPv6 w nawiasach kwadratowych, np. [fd00::20], aby można go było użyć w adresie URL.",
+				"PORT": "Pomiń port: porty ustawia się w osobnych polach.",
+				"PATH": "Usuń to, co następuje po nazwie hosta (np. /): porty są dodawane bezpośrednio po tej wartości.",
+				"DETECT": "Wykryj moje IP",
+				"DETECT_HINT": "Wpisuje adres sieciowy tego komputera. Odczytywane są tylko adresy tego komputera (bez wyszukiwania online), więc publiczny adres przypisany do routera nie jest pokazywany.",
+				"DETECTED": "Adresy tego komputera:",
+				"NO_ADDRESS": "Nie znaleziono adresu sieciowego. Sprawdź, czy ten komputer jest połączony z siecią."
+			},
 			"AUTO_START_STARTUP": "Automatyczne uruchamianie przy starcie",
 			"SERVER_TYPE": "Typ serwera",
 			"LOCAL_API_PORT": "Port lokalnego interfejsu API",

@@ -5481,6 +5481,17 @@
 			"SERVER_HOSTNAME": "Server-Hostname/IP-Adresse",
 			"LAN_ACCESS": "Verbindungen von anderen Computern im Netzwerk zulassen",
 			"LAN_ACCESS_HINT": "Wenn deaktiviert, kann nur dieser Computer eine Verbindung zur API und zur Web-Oberfläche herstellen.",
+			"SERVER_HOST": {
+				"INVALID": "Geben Sie eine gültige IP-Adresse oder einen gültigen Hostnamen ein, z. B. 192.168.1.20 oder gauzy.example.com.",
+				"SSL_WITH_IP": "SSL ist aktiviert: Ein Hostname wird empfohlen, da Zertifikate in der Regel für einen Namen ausgestellt werden. Ein Zertifikat, das diese IP-Adresse enthält, funktioniert ebenfalls.",
+				"IPV6_BRACKETS": "Setzen Sie eine IPv6-Adresse in eckige Klammern, z. B. [fd00::20], damit sie in einer URL verwendet werden kann.",
+				"PORT": "Lassen Sie den Port weg: Die Ports werden in eigenen Feldern festgelegt.",
+				"PATH": "Lassen Sie alles nach dem Hostnamen weg (z. B. /): Die Ports werden direkt an diesen Wert angehängt.",
+				"DETECT": "Meine IP erkennen",
+				"DETECT_HINT": "Trägt die Netzwerkadresse dieses Computers ein. Es werden nur die Adressen dieses Computers gelesen (keine Online-Abfrage), daher wird eine öffentliche Adresse eines Routers nicht angezeigt.",
+				"DETECTED": "Adressen dieses Computers:",
+				"NO_ADDRESS": "Es wurde keine Netzwerkadresse gefunden. Prüfen Sie, ob dieser Computer mit einem Netzwerk verbunden ist."
+			},
 			"AUTO_START_STARTUP": "Automatischer Start beim Hochfahren",
 			"SERVER_TYPE": "Servertyp",
 			"LOCAL_API_PORT": "Lokaler Api-Port",

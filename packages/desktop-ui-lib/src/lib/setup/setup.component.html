@@ -408,18 +408,15 @@
 										/>
 									</div>
 									} @if (isServer) {
-									<div class="col-4">
+									<div class="col-12">
 										<label class="integration-label">{{
 											'TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME' | translate
 										}}</label>
-										<input
-											type="url"
-											nbInput
-											fullWidth
-											status="basic"
-											[(ngModel)]="serverConfig.integrated.host"
-											(ngModelChange)="validation()"
-										/>
+										<gauzy-server-host-input
+											[host]="serverConfig.integrated.host"
+											[sslEnabled]="proxyOptions.enable"
+											(hostChange)="onIntegratedHostChange($event)"
+										></gauzy-server-host-input>
 									</div>
 									<div class="col-4">
 										<label class="integration-label">{{

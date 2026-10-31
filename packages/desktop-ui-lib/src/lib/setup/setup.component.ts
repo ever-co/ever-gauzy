@@ -35,6 +35,7 @@ import { FormsModule } from '@angular/forms';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { SslComponent } from '../settings/ssl/ssl.component';
 import { SecretComponent } from '../settings/secret/secret.component';
+import { isValidServerHost, normalizeServerHost, ServerHostInputComponent } from '../settings/server-host';
 import { UpperCasePipe } from '@angular/common';
 
 @Component({
@@ -56,6 +57,7 @@ import { UpperCasePipe } from '@angular/common';
 		NbInputModule,
 		SslComponent,
 		SecretComponent,
+		ServerHostInputComponent,
 		NbFormFieldModule,
 		NbProgressBarModule,
 		UpperCasePipe,
@@ -337,6 +339,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 		if (this.connectivity.integrated) {
 			return {
 				...this.serverConfig.integrated,
+				host: normalizeServerHost(this.serverConfig.integrated.host),
 				isLocalServer: true,
 				...(this.isServer && { lanAccess: this.lanAccess })
 			};
@@ -449,19 +452,37 @@ export class SetupComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	/** Gauzy Server and Gauzy API Server: the "Server Hostname / IP Address" field changed. */
+	onIntegratedHostChange(host: string) {
+		this.serverConfig.integrated.host = host;
+		this.validation();
+	}
+
 	validation() {
 		const { integrated, custom, live } = this.connectivity;
 		const { port, portUi } = this.serverConfig.integrated;
+		// Server apps: a host that is neither an IP address nor a host name cannot be saved (#7550).
+		// Other apps do not show the field and keep its default.
+		const integratedHostValid = !this.isServer || isValidServerHost(this.serverConfig.integrated.host);
 		const { apiHost } = this.serverConfig.custom;
 		const { host, dbPort, dbName, dbUser, dbPassword } = this.databaseConfig.postgre;
 
 		const { postgre, sqlite } = this.databaseDriver;
 
 		switch (true) {
-			case integrated && port && portUi && dbPort && host && dbName && dbUser && dbPassword && postgre:
+			case integrated &&
+				integratedHostValid &&
+				port &&
+				portUi &&
+				dbPort &&
+				host &&
+				dbName &&
+				dbUser &&
+				dbPassword &&
+				postgre:
 				this.buttonSave = true;
 				break;
-			case integrated && port && portUi && sqlite:
+			case integrated && integratedHostValid && port && portUi && sqlite:
 				this.buttonSave = true;
 				break;
 			case custom && apiHost && this.serverConfig.custom.port > 0:

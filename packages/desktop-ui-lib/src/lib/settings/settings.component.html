@@ -741,14 +741,11 @@
 														}
 														@if (isServer) {
 															<div class="col-7 form-group">
-																<input
-																	[(ngModel)]="config.host"
-																	type="text"
-																	nbInput
-																	fullWidth
-																	[disabled]="$safeNavigationMigration(appSetting?.timerStarted)"
-																	status="basic"
-																/>
+																<gauzy-server-host-input
+																	[(host)]="config.host"
+																	[disabled]="!!appSetting?.timerStarted"
+																	[sslEnabled]="!!config?.secureProxy?.enable"
+																></gauzy-server-host-input>
 															</div>
 														}
 														@if (config?.isLocalServer) {
@@ -1279,7 +1276,7 @@
 			nbButton
 			status="primary"
 			(click)="restartApp()"
-			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted"
+			[disabled]="(restartDisable$ | async) || appSetting?.timerStarted || isServerHostInvalid"
 		>
 			{{ (isServer ? 'BUTTONS.SAVE' : 'BUTTONS.SAVE_RESTART') | translate }}
 			<nb-icon [icon]="isServer ? 'save' : 'refresh-outline'" *gauzySpinnerButton="isRestart$ | async"></nb-icon>

@@ -5485,6 +5485,17 @@
 			"SERVER_HOSTNAME": "Servernaam/IP-adres",
 			"LAN_ACCESS": "Andere computers in het netwerk toestaan verbinding te maken",
 			"LAN_ACCESS_HINT": "Indien uitgeschakeld, kan alleen deze computer verbinding maken met de API en de webinterface.",
+			"SERVER_HOST": {
+				"INVALID": "Voer een geldig IP-adres of een geldige hostnaam in, zoals 192.168.1.20 of gauzy.example.com.",
+				"SSL_WITH_IP": "SSL staat aan: een hostnaam wordt aanbevolen, omdat certificaten meestal voor een naam worden uitgegeven. Een certificaat met dit IP-adres werkt ook.",
+				"IPV6_BRACKETS": "Zet een IPv6-adres tussen vierkante haken, zoals [fd00::20], zodat het in een URL kan worden gebruikt.",
+				"PORT": "Laat de poort weg: de poorten stelt u in hun eigen velden in.",
+				"PATH": "Laat weg wat na de hostnaam komt (zoals /): de poorten worden direct na deze waarde toegevoegd.",
+				"DETECT": "Mijn IP detecteren",
+				"DETECT_HINT": "Vult het netwerkadres van deze computer in. Alleen de adressen van deze computer worden gelezen (geen online opzoeking), dus een openbaar adres van een router wordt niet getoond.",
+				"DETECTED": "Adressen van deze computer:",
+				"NO_ADDRESS": "Er is geen netwerkadres gevonden. Controleer of deze computer met een netwerk is verbonden."
+			},
 			"AUTO_START_STARTUP": "Automatisch starten bij opstarten",
 			"SERVER_TYPE": "Servertype",
 			"LOCAL_API_PORT": "Lokale API-poort",

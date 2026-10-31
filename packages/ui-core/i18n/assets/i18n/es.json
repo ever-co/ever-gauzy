@@ -5487,6 +5487,17 @@
 			"SERVER_HOSTNAME": "Nombre de host/IP del servidor",
 			"LAN_ACCESS": "Permitir que otros equipos de la red se conecten",
 			"LAN_ACCESS_HINT": "Si está desactivado, solo este equipo puede conectarse a la API y a la interfaz web.",
+			"SERVER_HOST": {
+				"INVALID": "Introduzca una dirección IP o un nombre de host válidos, como 192.168.1.20 o gauzy.example.com.",
+				"SSL_WITH_IP": "SSL está activado: se recomienda un nombre de host, ya que los certificados suelen emitirse para un nombre. Un certificado que incluya esta dirección IP también funciona.",
+				"IPV6_BRACKETS": "Escriba una dirección IPv6 entre corchetes, como [fd00::20], para poder usarla en una URL.",
+				"PORT": "No incluya el puerto: los puertos se configuran en sus propios campos.",
+				"PATH": "Quite lo que sigue al nombre de host (como /): los puertos se añaden justo después de este valor.",
+				"DETECT": "Detectar mi IP",
+				"DETECT_HINT": "Rellena la dirección de red de este equipo. Solo se leen las direcciones de este equipo (sin consulta en línea), por lo que no se muestra una dirección pública asignada a un router.",
+				"DETECTED": "Direcciones de este equipo:",
+				"NO_ADDRESS": "No se encontró ninguna dirección de red. Compruebe que este equipo esté conectado a una red."
+			},
 			"AUTO_START_STARTUP": "Inicio automático al iniciar",
 			"SERVER_TYPE": "Tipo de servidor",
 			"LOCAL_API_PORT": "Puerto de API local",
