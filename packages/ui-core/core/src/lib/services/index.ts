@@ -56,6 +56,7 @@ export * from './pipeline';
 export * from './plane';
 export * from './product';
 export * from './proposal';
+export * from './quick-actions';
 export * from './request-approval';
 export * from './role';
 export * from './route-util';

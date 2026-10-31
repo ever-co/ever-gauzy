@@ -6112,6 +6112,27 @@
 		"PROBABILITY": "Kans",
 		"SELECT_CLIENT": "Klant"
 	},
+	"QUICK_ACTIONS_CUSTOMIZE": {
+		"EDIT": "Snelle acties aanpassen",
+		"HINT": "Sleep een actie, of gebruik de pijlen, om ze binnen haar groep te herschikken. Klik op een sneltoets en druk daarna op de nieuwe toetsen.",
+		"RESET": "Standaardwaarden herstellen",
+		"PRESS_KEYS": "Druk op toetsen…",
+		"NO_SHORTCUT": "Geen",
+		"MOVE_UP": "{{ action }} omhoog verplaatsen",
+		"MOVE_DOWN": "{{ action }} omlaag verplaatsen",
+		"MOVED": "{{ action }} verplaatst naar positie {{ position }} van {{ total }}",
+		"CHANGE_SHORTCUT": "Sneltoets van {{ action }} wijzigen (huidig: {{ shortcut }})",
+		"RECORDING": "Druk op de nieuwe toetsen voor {{ action }}. Escape annuleert, Backspace verwijdert de sneltoets.",
+		"CLEAR_SHORTCUT": "Sneltoets van {{ action }} verwijderen",
+		"SAVED": "Snelle acties opgeslagen",
+		"SAVE_ERROR": "Uw snelle acties konden niet worden opgeslagen. Probeer het opnieuw.",
+		"ERRORS": {
+			"INVALID": "Gebruik een letter-, cijfer- of leestekentoets, eventueel met Shift.",
+			"TOO_MANY_KEYS": "Gebruik hoogstens twee toetsen, eventueel met Shift.",
+			"RESERVED": "{{ shortcut }} is gereserveerd door de browser of het besturingssysteem.",
+			"CONFLICT": "{{ shortcut }} wordt al gebruikt door {{ action }}."
+		}
+	},
 	"DIALOG": {
 		"CONFIRM": "Bevestigen",
 		"ALERT": "Waarschuwing",

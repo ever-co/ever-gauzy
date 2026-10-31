@@ -6112,6 +6112,27 @@
 		"PROBABILITY": "Probabilità",
 		"SELECT_CLIENT": "Cliente"
 	},
+	"QUICK_ACTIONS_CUSTOMIZE": {
+		"EDIT": "Personalizza le azioni rapide",
+		"HINT": "Trascina un'azione, o usa le sue frecce, per riordinarla all'interno del suo gruppo. Fai clic su una scorciatoia, poi premi i nuovi tasti.",
+		"RESET": "Ripristina i valori predefiniti",
+		"PRESS_KEYS": "Premi i tasti…",
+		"NO_SHORTCUT": "Nessuna",
+		"MOVE_UP": "Sposta su {{ action }}",
+		"MOVE_DOWN": "Sposta giù {{ action }}",
+		"MOVED": "{{ action }} spostata in posizione {{ position }} di {{ total }}",
+		"CHANGE_SHORTCUT": "Cambia la scorciatoia di {{ action }} (attuale: {{ shortcut }})",
+		"RECORDING": "Premi i nuovi tasti per {{ action }}. Esc annulla, Backspace rimuove la scorciatoia.",
+		"CLEAR_SHORTCUT": "Rimuovi la scorciatoia di {{ action }}",
+		"SAVED": "Azioni rapide salvate",
+		"SAVE_ERROR": "Impossibile salvare le tue azioni rapide. Riprova.",
+		"ERRORS": {
+			"INVALID": "Usa una lettera, una cifra o un tasto di punteggiatura, eventualmente con Maiusc.",
+			"TOO_MANY_KEYS": "Usa al massimo due tasti, eventualmente con Maiusc.",
+			"RESERVED": "{{ shortcut }} è riservata dal browser o dal sistema operativo.",
+			"CONFLICT": "{{ shortcut }} è già usata da {{ action }}."
+		}
+	},
 	"DIALOG": {
 		"CONFIRM": "Conferma",
 		"ALERT": "Avviso",

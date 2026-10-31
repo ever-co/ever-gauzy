@@ -1,24 +1,154 @@
-<nb-card>
+<nb-card [attr.aria-busy]="saving">
   <nb-card-header >
-    <div>
+    <div class="title">
       <h6>
         {{ "DIALOG.QUICK_ACTIONS" | translate }}
       </h6>
       <nb-tag status="basic" appearance="filled" size="tiny" [text]="shortcutDialog.split('+').join(' + ').toUpperCase()"></nb-tag>
     </div>
-    <span class="cancel" (click)="closeDialog()"><i class="fas fa-times"></i></span>
+    <div class="header-actions">
+      @if (!editMode) {
+        <button
+          nbButton
+          ghost
+          size="small"
+          type="button"
+          class="edit"
+          [attr.aria-label]="'QUICK_ACTIONS_CUSTOMIZE.EDIT' | translate"
+          [attr.title]="'QUICK_ACTIONS_CUSTOMIZE.EDIT' | translate"
+          (click)="startEditing()"
+        >
+          <nb-icon icon="edit-outline"></nb-icon>
+        </button>
+      }
+      <span
+        class="cancel"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="'BUTTONS.CLOSE' | translate"
+        (click)="closeDialog()"
+        (keydown.enter)="closeDialog()"
+        (keydown.space)="$event.preventDefault(); closeDialog()"
+      ><i class="fas fa-times" aria-hidden="true"></i></span>
+    </div>
   </nb-card-header>
-  <nb-card-body >
-    @for (group of groupedQuickActions; track group) {
-      @if (group.items?.length) {
+  <nb-card-body [class.editing]="editMode">
+    @if (!editMode) {
+      @for (group of groupedQuickActions; track group) {
+        @if (group.items?.length) {
+          <div class="group-container">
+            <div class="group-content">
+              <p class="group-header">{{ group.groupTitle | translate }}</p>
+              <nb-menu [items]="group.items">
+              </nb-menu>
+            </div>
+          </div>
+        }
+      }
+    } @else {
+      <p class="edit-hint">{{ 'QUICK_ACTIONS_CUSTOMIZE.HINT' | translate }}</p>
+      @for (group of editGroups; track group.group) {
         <div class="group-container">
           <div class="group-content">
-            <p class="group-header">{{ group.groupTitle | translate }}</p>
-            <nb-menu [items]="group.items">
-            </nb-menu>
+            <p class="group-header" [id]="'qa-group-' + group.group">{{ group.groupTitle | translate }}</p>
+            <ul
+              class="edit-list"
+              cdkDropList
+              cdkDropListLockAxis="y"
+              [cdkDropListData]="group"
+              [attr.aria-labelledby]="'qa-group-' + group.group"
+              (cdkDropListDropped)="drop(group, $event)"
+            >
+              @for (item of group.items; track item.id; let index = $index, first = $first, last = $last) {
+                <li class="edit-item" cdkDrag cdkDragPreviewContainer="parent" [cdkDragData]="item">
+                  <div class="edit-row">
+                    <span class="drag-handle" cdkDragHandle aria-hidden="true">
+                      <nb-icon icon="menu-outline"></nb-icon>
+                    </span>
+                    <span class="action-title">{{ item.title }}</span>
+                    <button
+                      nbButton
+                      ghost
+                      size="tiny"
+                      type="button"
+                      [id]="'qa-move-up-' + item.id"
+                      [disabled]="first"
+                      [attr.aria-label]="'QUICK_ACTIONS_CUSTOMIZE.MOVE_UP' | translate: { action: item.title }"
+                      [attr.title]="'QUICK_ACTIONS_CUSTOMIZE.MOVE_UP' | translate: { action: item.title }"
+                      (click)="move(group, index, -1)"
+                    >
+                      <nb-icon icon="arrow-upward-outline"></nb-icon>
+                    </button>
+                    <button
+                      nbButton
+                      ghost
+                      size="tiny"
+                      type="button"
+                      [id]="'qa-move-down-' + item.id"
+                      [disabled]="last"
+                      [attr.aria-label]="'QUICK_ACTIONS_CUSTOMIZE.MOVE_DOWN' | translate: { action: item.title }"
+                      [attr.title]="'QUICK_ACTIONS_CUSTOMIZE.MOVE_DOWN' | translate: { action: item.title }"
+                      (click)="move(group, index, 1)"
+                    >
+                      <nb-icon icon="arrow-downward-outline"></nb-icon>
+                    </button>
+                    <button
+                      nbButton
+                      outline
+                      size="tiny"
+                      status="basic"
+                      type="button"
+                      class="shortcut"
+                      [class.capturing]="capturingId === item.id"
+                      [attr.aria-label]="getShortcutLabel(item)"
+                      [attr.aria-describedby]="'qa-error-' + item.id"
+                      (click)="startCapture(item.id)"
+                      (keydown)="onCaptureKeydown($event, item.id)"
+                      (keyup)="onCaptureKeyup($event, item.id)"
+                      (blur)="onCaptureBlur(item.id)"
+                    >
+                      @if (capturingId === item.id) {
+                        {{ capturePreview || ('QUICK_ACTIONS_CUSTOMIZE.PRESS_KEYS' | translate) }}
+                      } @else {
+                        {{ formatShortcut(draftShortcuts[item.id]) || ('QUICK_ACTIONS_CUSTOMIZE.NO_SHORTCUT' | translate) }}
+                      }
+                    </button>
+                    <button
+                      nbButton
+                      ghost
+                      size="tiny"
+                      type="button"
+                      [disabled]="!draftShortcuts[item.id]"
+                      [attr.aria-label]="'QUICK_ACTIONS_CUSTOMIZE.CLEAR_SHORTCUT' | translate: { action: item.title }"
+                      [attr.title]="'QUICK_ACTIONS_CUSTOMIZE.CLEAR_SHORTCUT' | translate: { action: item.title }"
+                      (click)="clearShortcut(item.id)"
+                    >
+                      <nb-icon icon="close-outline"></nb-icon>
+                    </button>
+                  </div>
+                  <p class="shortcut-error" aria-live="polite" [id]="'qa-error-' + item.id">{{ shortcutErrors[item.id] }}</p>
+                </li>
+              }
+            </ul>
           </div>
         </div>
       }
+      <p class="visually-hidden" role="status" aria-live="polite">{{ statusMessage }}</p>
     }
   </nb-card-body>
+  @if (editMode) {
+    <nb-card-footer>
+      <button nbButton ghost status="basic" type="button" class="reset" (click)="resetToDefaults()">
+        {{ 'QUICK_ACTIONS_CUSTOMIZE.RESET' | translate }}
+      </button>
+      <div class="footer-actions">
+        <button nbButton outline status="basic" type="button" class="cancel-edit" (click)="cancelEditing()">
+          {{ 'BUTTONS.CANCEL' | translate }}
+        </button>
+        <button nbButton status="success" type="button" class="save" [disabled]="saving" (click)="save()">
+          {{ 'BUTTONS.SAVE' | translate }}
+        </button>
+      </div>
+    </nb-card-footer>
+  }
 </nb-card>
