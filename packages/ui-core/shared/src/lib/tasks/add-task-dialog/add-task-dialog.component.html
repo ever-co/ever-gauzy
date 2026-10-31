@@ -25,10 +25,11 @@
       <div class="row">
         <div class="col-sm-12">
           <div class="form-group">
-            <label class="label">{{ 'CONTEXT_MENU.CLIENT' | translate }}</label>
+            <label class="label" for="add-task-client">{{ 'CONTEXT_MENU.CLIENT' | translate }}</label>
             <ga-contact-selector
               [formControl]="organizationContactControl"
               [placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+              labelForId="add-task-client"
             ></ga-contact-selector>
           </div>
         </div>

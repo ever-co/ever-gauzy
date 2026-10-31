@@ -322,13 +322,15 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	 * Loads available modules based on the selected project ID.
 	 */
 	private async loadAvailableModules() {
-		if (!this.organization || !this.form.get('projectId')?.value) return;
+		const projectId = this.form.get('projectId')?.value;
+		if (!this.organization || !projectId) return;
 		const modules = await firstValueFrom(
-			this.organizationProjectModuleService.getAllModulesByProjectId({
-				projectId: this.form.get('projectId')?.value
-			})
+			this.organizationProjectModuleService.getAllModulesByProjectId({ projectId })
 		);
 
+		// The project changed (or a client cleared it) while this answer was on its way: it lists another
+		// project's modules, which must not be offered, or saved, for the current one.
+		if (this.form.get('projectId')?.value !== projectId) return;
 		this.availableModules = modules?.items || [];
 	}
 

@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { IOrganizationProjectModule } from '@gauzy/contracts';
+import { Subject } from 'rxjs';
+import { IOrganization, IOrganizationProjectModule, IPagination } from '@gauzy/contracts';
 import { AddTaskDialogComponent } from './add-task-dialog.component';
 import { AddTaskDialogModule } from './add-task-dialog.module';
-import { AuthService, EmployeesService } from '@gauzy/ui-core/core';
+import { AuthService, EmployeesService, OrganizationProjectModuleService } from '@gauzy/ui-core/core';
 import { ProjectSelectorComponent } from '../../selectors/project/project/project.component';
 import { ContactSelectorComponent } from '../../contact-selector/contact-selector.component';
 describe('AddTaskDialogComponent', () => {
@@ -77,6 +78,28 @@ describe('AddTaskDialogComponent', () => {
 			expect(component.selectedModules).toEqual([]);
 			expect(component.availableModules).toEqual([]);
 			expect(component.form.get('modules').value).toEqual([]);
+		});
+
+		it('ignores modules that arrive for a project the client cleared meanwhile', async () => {
+			const answer = new Subject<IPagination<IOrganizationProjectModule>>();
+			jest.spyOn(TestBed.inject(OrganizationProjectModuleService), 'getAllModulesByProjectId').mockReturnValue(
+				answer
+			);
+			component.organization = { id: 'organization-1' } as IOrganization;
+			selectProject(GLOBEX); // asks for the project's modules
+
+			component.organizationContactControl.setValue(ACME); // clears the project before they arrive
+			answer.next({ items: [{ id: 'module-1', name: 'Checkout' } as IOrganizationProjectModule], total: 1 });
+			await fixture.whenStable();
+
+			expect(component.availableModules).toEqual([]);
+		});
+
+		it('names the client field with its label, for screen readers', () => {
+			const input: HTMLInputElement = fixture.nativeElement.querySelector('ga-contact-selector input');
+
+			expect(input.id).toBe('add-task-client');
+			expect(fixture.nativeElement.querySelector('label[for="add-task-client"]')).toBeTruthy();
 		});
 
 		it('keeps a selected project of the picked client', () => {
