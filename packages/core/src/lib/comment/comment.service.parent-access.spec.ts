@@ -11,6 +11,7 @@ import { CrudService } from '../core/crud/crud.service';
 import { convertTypeORMWhereToMikroORM } from '../core/utils';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
+import { Comment } from './comment.entity';
 import { CommentService } from './comment.service';
 import { CommentResolver } from './comment.resolver';
 import { CommentCreateHandler } from './commands/handlers/comment.create.handler';
@@ -791,6 +792,131 @@ describe('CommentService — the comments of a governed record follow its policy
 			expect(baseCreate).toHaveBeenCalledWith(
 				expect.objectContaining({ organization: { id: 'organization-stated' } })
 			);
+		});
+	});
+
+	describe('comments loaded beside the ones read', () => {
+		const contactNote = (overrides: Record<string, unknown> = {}) => ({
+			id: NOTE,
+			entity: CONTACT,
+			entityId: CONTACT_ID,
+			employeeId: 'employee-colleague',
+			comment: 'Wants a quote by Friday',
+			...overrides
+		});
+		const projectReply = { id: 'project-reply', entity: PROJECT, entityId: PROJECT_ID, employeeId: 'employee-me' };
+		/** A project comment in a thread that crossed records before the contact's notes were kept to their own. */
+		const crossRecordThread = (parent: Record<string, unknown> = contactNote()) => ({
+			id: PROJECT_COMMENT,
+			entity: PROJECT,
+			entityId: PROJECT_ID,
+			employeeId: 'employee-me',
+			parentId: parent.id,
+			parent,
+			replies: [contactNote({ id: OWN_NOTE, employeeId: 'employee-me' }), { ...projectReply }]
+		});
+		const listed = (...items: unknown[]) =>
+			jest
+				.spyOn(TenantAwareCrudService.prototype, 'findAll')
+				.mockResolvedValue({ items, total: items.length } as never);
+		const projectComments = {
+			where: { entity: PROJECT, entityId: PROJECT_ID },
+			relations: ['parent', 'replies']
+		};
+
+		it('leaves notes out of a project comment’s parent and replies for a caller who may not view contacts', async () => {
+			as([]);
+			listed(crossRecordThread());
+
+			const { items } = await service.findAll(projectComments as any);
+
+			expect(items[0].parent).toBeNull();
+			expect(items[0].replies).toEqual([projectReply]);
+			expect(policy.findAccessibleParent).not.toHaveBeenCalled();
+		});
+
+		it('keeps them for a caller who may view the contact, checking the contact once', async () => {
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+			listed(crossRecordThread());
+
+			const { items } = await service.findAll(projectComments as any);
+
+			expect(items[0].parent).toEqual(contactNote());
+			expect(items[0].replies.map(({ id }) => id)).toEqual([OWN_NOTE, 'project-reply']);
+			expect(policy.findAccessibleParent).toHaveBeenCalledTimes(1);
+		});
+
+		it('leaves out a note of a contact the caller does not reach', async () => {
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+			listed(crossRecordThread(contactNote({ entityId: FOREIGN_CONTACT_ID })));
+
+			const { items } = await service.findAll(projectComments as any);
+
+			expect(items[0].parent).toBeNull();
+			expect(items[0].replies.map(({ id }) => id)).toEqual([OWN_NOTE, 'project-reply']);
+		});
+
+		it('reads one project comment without the notes it loads, for a caller who may not view contacts', async () => {
+			as([]);
+			findOne.mockImplementation(async () => crossRecordThread());
+
+			const read = await service.findReadableById(PROJECT_COMMENT, { relations: ['parent', 'replies'] } as any);
+
+			expect(read.parent).toBeNull();
+			expect(read.replies).toEqual([projectReply]);
+		});
+
+		it('reads one note without a reply of a contact the caller does not reach', async () => {
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+			findOne.mockImplementation(async (id: string) => ({
+				...STORED[id],
+				replies: [
+					contactNote({ id: OTHER_CONTACT_NOTE, entityId: FOREIGN_CONTACT_ID }),
+					contactNote({ id: OWN_NOTE, employeeId: 'employee-me' })
+				]
+			}));
+
+			const read = await service.findReadableById(NOTE, { relations: ['replies'] } as any);
+
+			expect(read.replies.map(({ id }) => id)).toEqual([OWN_NOTE]);
+			// The note's own contact is checked once, for the read and its reply alike.
+			expect((policy.findAccessibleParent as jest.Mock).mock.calls).toEqual([[CONTACT_ID], [FOREIGN_CONTACT_ID]]);
+		});
+
+		it('keeps a withdrawn note another employee wrote from a viewer, and lets its author and editors read it', async () => {
+			const withdrawnParent = (employeeId: string) =>
+				crossRecordThread(contactNote({ employeeId, deletedAt: new Date('2026-10-01T00:00:00.000Z') }));
+			const parentRead = async () => {
+				const { items } = await service.findAll({ ...projectComments, withDeleted: true } as any);
+				return items[0].parent;
+			};
+
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+			listed(withdrawnParent('employee-colleague'));
+			await expect(parentRead()).resolves.toBeNull();
+
+			listed(withdrawnParent('employee-me'));
+			await expect(parentRead()).resolves.toEqual(expect.objectContaining({ id: NOTE }));
+
+			as([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT]);
+			listed(withdrawnParent('employee-colleague'));
+			await expect(parentRead()).resolves.toEqual(expect.objectContaining({ id: NOTE }));
+		});
+
+		it('checks a note loaded through another relation, and keeps a related comment it cannot place only as an id', async () => {
+			as([]);
+			const assigned = Object.assign(new Comment(), contactNote());
+			listed({
+				...crossRecordThread({ id: NOTE }),
+				replies: [{ id: OWN_NOTE, comment: 'loaded without its record type' }],
+				employee: { id: 'employee-me', assignedComments: [assigned] }
+			});
+
+			const { items } = await service.findAll(projectComments as any);
+
+			expect(items[0].employee.assignedComments).toEqual([]);
+			expect(items[0].parent).toEqual({ id: NOTE });
+			expect(items[0].replies).toEqual([]);
 		});
 	});
 

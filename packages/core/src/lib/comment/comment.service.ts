@@ -32,7 +32,8 @@ import { EmployeeService } from '../employee/employee.service';
 import { MentionService } from '../mention/mention.service';
 import { isCallerTenantAdmin, withoutAuthorChange } from '../shared/ownership';
 import { Comment } from './comment.entity';
-import { CommentParentAccessService, scopeCommentReadToParents } from './parent-access';
+import { CommentParentAccessService, ICommentParentRef, scopeCommentReadToParents } from './parent-access';
+import { withoutUnreadableRelatedComments } from './related-comments.helper';
 import { TypeOrmCommentRepository } from './repository/type-orm-comment.repository';
 import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
 
@@ -296,7 +297,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		const pinned = criteriaPinnedTo(id, options);
 		const stored = await this.findGovernedComment(id, !!options?.withDeleted);
 		if (!stored) {
-			return this.findOneByIdString(id, pinned);
+			return this.withReadableRelatedComments(await this.findOneByIdString(id, pinned));
 		}
 
 		await this._parentAccess.assertMay('read', stored.entity, stored.entityId);
@@ -308,7 +309,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				throw new NotFoundException(`The requested record was not found`);
 			}
 		}
-		return this.readAcrossAuthors(() => this.findOneByIdString(id, pinned));
+		return this.withReadableRelatedComments(
+			await this.readAcrossAuthors(() => this.findOneByIdString(id, pinned)),
+			[{ entity: this._parentAccess.governedTypeOf(stored.entity), entityId: stored.entityId }]
+		);
 	}
 
 	/**
@@ -533,13 +537,71 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			);
 		}
 		if (!scope.onlyGovernedParents) {
-			return read(scope.where);
+			return this.withReadableRelatedComments(await read(scope.where), scope.parents);
 		}
 		if (keptToAuthor) {
 			assertReadsCommentsOnly(scope.where, options);
 		}
 		const criteria = keptToAuthor ? this.withdrawnKeptToAuthor(scope.where) : scope.where;
-		return this.readAcrossAuthors(() => read(criteria));
+		return this.withReadableRelatedComments(await this.readAcrossAuthors(() => read(criteria)), scope.parents);
+	}
+
+	/**
+	 * A read's result without the related comments the caller may not read (see
+	 * {@link withoutUnreadableRelatedComments}).
+	 *
+	 * A thread stays on one record (see {@link assertReplyStaysInThread}), but one written before a policy governed
+	 * its record type can cross records, and other relations reach comments of any record (an employee's
+	 * `assignedComments`). A related comment of a governed record is therefore kept only when its record's policy lets
+	 * the caller read its comments, and, when it is withdrawn, only for its author or a caller who may write them. A
+	 * related comment loaded without its record type cannot be told apart, so only an id-only stub of one is kept.
+	 *
+	 * @param result - The read's result: a page, a list, a comment, or a count, which is returned as it is.
+	 * @param readable - Governed records the read has already checked.
+	 */
+	private async withReadableRelatedComments<R>(
+		result: R,
+		readable: ReadonlyArray<ICommentParentRef> = []
+	): Promise<R> {
+		if (result === null || typeof result !== 'object' || this._parentAccess.governedEntities().length === 0) {
+			return result;
+		}
+
+		const verdicts = new Map<string, Promise<boolean>>(
+			readable.map(({ entity, entityId }) => [`${entity}:${entityId}`, Promise.resolve(true)])
+		);
+		const mayReadRecord = (type: string, entityId: unknown): Promise<boolean> => {
+			const key = `${type}:${entityId}`;
+			if (!verdicts.has(key)) {
+				verdicts.set(
+					key,
+					this._parentAccess.assertMay('read', type, entityId as ID).then(
+						() => true,
+						(error: unknown) => {
+							if (error instanceof HttpException) {
+								return false;
+							}
+							throw error;
+						}
+					)
+				);
+			}
+			return verdicts.get(key);
+		};
+
+		return withoutUnreadableRelatedComments(result, async (comment) => {
+			if (typeof comment.entity !== 'string') {
+				return Object.keys(comment).every((key) => key === 'id');
+			}
+			const type = this._parentAccess.governedTypeOf(comment.entity);
+			if (!type) {
+				return true;
+			}
+			if (!(await mayReadRecord(type, comment.entityId))) {
+				return false;
+			}
+			return !comment.deletedAt || this.mayReadWithdrawnOf([type]) || this.isCallerAuthorOf(comment);
+		});
 	}
 
 	/**
@@ -569,7 +631,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	}
 
 	/** Whether the caller wrote `comment`, by {@link callerAuthorship}. */
-	private isCallerAuthorOf(comment: Comment): boolean {
+	private isCallerAuthorOf(comment: Partial<Record<'employeeId' | 'createdByUserId', unknown>>): boolean {
 		const own = this.callerAuthorship();
 		return !!own && comment[own[0]] === own[1];
 	}
