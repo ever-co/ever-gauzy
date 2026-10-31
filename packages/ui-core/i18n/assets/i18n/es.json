@@ -1272,7 +1272,7 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "¿Qué hay de nuevo?",
 		"LEARN_MORE_URL": "Aprende más.",
-		"GAUZY_FEATURES": "Características difuminadas",
+		"GAUZY_FEATURES": "Funciones de Gauzy",
 		"MANAGE": {
 			"TITLE": "Novedades",
 			"SUBTITLE": "Las entradas del panel de novedades y las tarjetas de funciones de la página de registro. Las comparten todos los inquilinos de esta instalación, por lo que solo su operador puede cambiarlas.",
