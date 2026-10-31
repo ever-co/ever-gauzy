@@ -49,6 +49,9 @@ export class TenantService extends CrudService<Tenant> {
 	/** Creators onboarding in this process right now: the onboarding lock where the database offers none. */
 	private static readonly onboardingInProgress = new Set<ID>();
 
+	/** The onboarding lock every creator shares while only the first tenant of an empty database may be created. */
+	private static readonly FIRST_TENANT_LOCK_ID = 'first-tenant';
+
 	/** Onboardings of this process holding a lock connection, and those waiting for one (see `withOnboardingLock`). */
 	private static lockConnectionsInUse = 0;
 	private static readonly lockConnectionWaiters: Array<() => void> = [];
@@ -207,22 +210,27 @@ export class TenantService extends CrudService<Tenant> {
 	 * in-process guard alone: such a deployment serializes every query through one connection, and across pods it keeps
 	 * the behaviour from before this lock (a duplicate tenant, never a half-seeded one).
 	 *
+	 * While `ALLOW_TENANTS_REGISTRATION=false` still lets the first tenant of an empty database be created, every
+	 * creator takes the same lock instead (see {@link onboardingLockId}).
+	 *
 	 * @param user - The creator.
 	 * @param work - Everything from choosing the tenant to linking the creator.
-	 * @throws ConflictException when another onboarding of the same user holds the lock.
+	 * @throws ConflictException when another onboarding of the same user (or, while only the first tenant may be
+	 * created, of anyone) holds the lock.
 	 */
 	private async withOnboardingLock<T>(user: IUser, work: () => Promise<T>): Promise<T> {
-		const key = `tenant-onboarding:${user.id}`;
+		const lockId = await this.onboardingLockId(user);
+		const key = `tenant-onboarding:${lockId}`;
 		const dataSource = this.ormType === MultiORMEnum.TypeORM ? this.typeOrmRepository?.manager?.dataSource : null;
 		const type = dataSource?.options.type;
 		const slots = TenantService.lockConnectionSlots(dataSource?.options);
 
 		// A second onboarding of the same creator in this process is refused at once, before it could wait for a
 		// lock-connection slot; the database lock then keeps out the ones on other pods.
-		if (TenantService.onboardingInProgress.has(user.id)) {
+		if (TenantService.onboardingInProgress.has(lockId)) {
 			throw new ConflictException(TenantService.ONBOARDING_IN_PROGRESS);
 		}
-		TenantService.onboardingInProgress.add(user.id);
+		TenantService.onboardingInProgress.add(lockId);
 		try {
 			if ((type === 'postgres' || type === 'mysql') && slots > 0) {
 				await TenantService.takeLockConnectionSlot(slots);
@@ -234,8 +242,23 @@ export class TenantService extends CrudService<Tenant> {
 			}
 			return await work();
 		} finally {
-			TenantService.onboardingInProgress.delete(user.id);
+			TenantService.onboardingInProgress.delete(lockId);
 		}
+	}
+
+	/**
+	 * Whose onboarding lock {@link withOnboardingLock} takes: the creator's own, or, while
+	 * `ALLOW_TENANTS_REGISTRATION=false` still lets the first tenant of an empty database be created, one lock shared by
+	 * every creator. The switch's check and the tenant's insert are separate steps, so without it two first onboardings
+	 * could both find the table empty and both create a tenant. Once a tenant exists every creator is back on their own
+	 * lock, and the switch refuses new tenants.
+	 *
+	 * @param user - The creator.
+	 */
+	private async onboardingLockId(user: IUser): Promise<ID> {
+		return (await this.registrationPolicyService.isFirstTenantExceptionOpen())
+			? TenantService.FIRST_TENANT_LOCK_ID
+			: user.id;
 	}
 
 	/**

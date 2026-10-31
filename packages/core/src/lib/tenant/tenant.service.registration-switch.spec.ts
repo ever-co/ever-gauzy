@@ -3,7 +3,7 @@
  * to finish initializing before TenantService (and the repositories it imports) are evaluated.
  */
 import '../core/entities/internal';
-import { ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { environment, IAuthSwitches } from '@gauzy/config';
 import { MultiORMEnum } from '../core/utils';
 import * as utils from '../core/utils';
@@ -111,6 +111,35 @@ describe('TenantService.onboardTenant — ALLOW_TENANTS_REGISTRATION', () => {
 
 		expect(service.create).not.toHaveBeenCalled();
 		expect(tenant).toEqual(expect.objectContaining({ id: UNFINISHED_TENANT, name: 'Second try' }));
+	});
+
+	it('lets only one of two simultaneous first onboardings by different people through', async () => {
+		switches.authSwitches = { ...switches.authSwitches, tenantsRegistration: false };
+		const service = buildService({ tenants: 0 });
+		const other = { id: '99999999-9999-4999-8999-999999999999', email: 'rival@newco.test' } as any;
+
+		const results = await Promise.allSettled([
+			service.onboardTenant({ name: 'First Co' }, creator()),
+			service.onboardTenant({ name: 'Rival Co' }, other)
+		]);
+
+		// Both found the table empty: one shared lock lets one create the first tenant and refuses the other.
+		expect(results.map((result) => result.status)).toEqual(['fulfilled', 'rejected']);
+		expect((results[1] as PromiseRejectedResult).reason).toBeInstanceOf(ConflictException);
+		expect(service.create).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps onboardings of different people independent with the default switch', async () => {
+		const service = buildService({ tenants: 0 });
+		const other = { id: '99999999-9999-4999-8999-999999999999', email: 'rival@newco.test' } as any;
+
+		const results = await Promise.allSettled([
+			service.onboardTenant({ name: 'First Co' }, creator()),
+			service.onboardTenant({ name: 'Rival Co' }, other)
+		]);
+
+		expect(results.map((result) => result.status)).toEqual(['fulfilled', 'fulfilled']);
+		expect(service.create).toHaveBeenCalledTimes(2);
 	});
 
 	it('is not closed by APP_USER_REGISTRATION=false alone', async () => {

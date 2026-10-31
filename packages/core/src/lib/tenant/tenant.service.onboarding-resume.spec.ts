@@ -58,7 +58,10 @@ function buildService({
 	service.linkStripeCustomerAtOnboarding = jest.fn(async () => null);
 	service.configService = { get: () => ({ name: 'local' }) };
 	// Tenant registration open (the default switches); `tenant.service.registration-switch.spec.ts` covers it closed.
-	service.registrationPolicyService = { assertTenantRegistrationOpen: jest.fn(async () => undefined) };
+	service.registrationPolicyService = {
+		assertTenantRegistrationOpen: jest.fn(async () => undefined),
+		isFirstTenantExceptionOpen: jest.fn(async () => false)
+	};
 	return { service, exists };
 }
 

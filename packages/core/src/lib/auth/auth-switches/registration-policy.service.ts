@@ -83,6 +83,18 @@ export class RegistrationPolicyService {
 	}
 
 	/**
+	 * Whether a new tenant may be created now only through the first-tenant exception: `ALLOW_TENANTS_REGISTRATION`
+	 * is off and the installation has no tenant yet. Tenant onboarding then takes one lock shared by every creator
+	 * (see `TenantService`), so that two first onboardings cannot both find the table empty and both create a tenant.
+	 */
+	async isFirstTenantExceptionOpen(): Promise<boolean> {
+		if (environment.authSwitches.tenantsRegistration) {
+			return false;
+		}
+		return !(await this.hasAnyTenant());
+	}
+
+	/**
 	 * Whether the installation has at least one tenant. Soft-deleted tenants count: an installation that has had a
 	 * tenant is no longer a new one.
 	 */

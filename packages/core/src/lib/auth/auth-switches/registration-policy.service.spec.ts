@@ -134,3 +134,26 @@ describe('RegistrationPolicyService.hasAnyTenant', () => {
 		expect(typeOrm.exists).toHaveBeenCalledTimes(1);
 	});
 });
+
+describe('RegistrationPolicyService.isFirstTenantExceptionOpen', () => {
+	it('is closed with the default switch, without querying anything', async () => {
+		const { policy, typeOrm } = buildPolicy({ tenants: 0 });
+
+		await expect(policy.isFirstTenantExceptionOpen()).resolves.toBe(false);
+		expect(typeOrm.exists).not.toHaveBeenCalled();
+	});
+
+	it('is open while ALLOW_TENANTS_REGISTRATION=false and the installation has no tenant', async () => {
+		setSwitches({ tenantsRegistration: false });
+		const { policy } = buildPolicy({ tenants: 0 });
+
+		await expect(policy.isFirstTenantExceptionOpen()).resolves.toBe(true);
+	});
+
+	it('is over once the installation has a tenant', async () => {
+		setSwitches({ tenantsRegistration: false });
+		const { policy } = buildPolicy({ tenants: 1 });
+
+		await expect(policy.isFirstTenantExceptionOpen()).resolves.toBe(false);
+	});
+});
