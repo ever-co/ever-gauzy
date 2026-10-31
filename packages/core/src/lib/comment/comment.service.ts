@@ -608,9 +608,24 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * Whether the caller may read a comment loaded beside the ones a read answers (see
 	 * {@link withReadableRelatedComments}). Each governed record is checked once per read.
 	 *
+	 * A comment of a governed record is judged on its stored row, read by its id, rather than on the columns the read
+	 * loaded: a read that selects some of them (`select`) would leave out the ones the verdict rests on, such as whether
+	 * the comment is withdrawn and who wrote it. A caller without the policy's read permission is refused before any
+	 * row is read.
+	 *
 	 * @param readable - Governed records the read has already checked.
 	 */
 	private relatedCommentReadable(readable: ReadonlyArray<ICommentParentRef> = []): IsCommentReadable {
+		const rows = new Map<string, Promise<Comment | undefined>>();
+		const storedRow = (id: unknown): Promise<Comment | undefined> => {
+			if (typeof id !== 'string' || !isUUID(id)) {
+				return Promise.resolve(undefined);
+			}
+			if (!rows.has(id)) {
+				rows.set(id, this.findStoredComment(id));
+			}
+			return rows.get(id);
+		};
 		const verdicts = new Map<string, Promise<boolean>>(
 			readable.map(({ entity, entityId }) => [`${entity}:${entityId}`, Promise.resolve(true)])
 		);
@@ -637,15 +652,37 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			if (typeof comment.entity !== 'string') {
 				return Object.keys(comment).every((key) => key === 'id');
 			}
-			const type = this._parentAccess.governedTypeOf(comment.entity);
+			if (!this._parentAccess.governedTypeOf(comment.entity)) {
+				return true;
+			}
+			if (!this._parentAccess.holdsPermission('read', comment.entity)) {
+				return false;
+			}
+			const stored = await storedRow(comment.id);
+			if (!stored) {
+				return false;
+			}
+			const type = this._parentAccess.governedTypeOf(stored.entity);
 			if (!type) {
 				return true;
 			}
-			if (!(await mayReadRecord(type, comment.entityId))) {
+			if (!(await mayReadRecord(type, stored.entityId))) {
 				return false;
 			}
-			return !comment.deletedAt || this.mayReadWithdrawnOf([type]) || this.isCallerAuthorOf(comment);
+			return !stored.deletedAt || this.mayReadWithdrawnOf([type]) || this.isCallerAuthorOf(stored);
 		};
+	}
+
+	/**
+	 * The stored comment `id`, whoever wrote it and whether or not it is withdrawn; `undefined` when it is not a comment
+	 * of the caller's tenant. It only decides whether a comment loaded elsewhere may be answered (see
+	 * {@link relatedCommentReadable}), so it reaches every organization of the tenant: the record's policy then decides
+	 * whether the caller reaches that comment's record.
+	 */
+	private findStoredComment(id: ID): Promise<Comment | undefined> {
+		return this.readAcrossAuthors(() =>
+			this.withoutOrganizationBoundary(() => this.findOneByIdString(id, { withDeleted: true }))
+		).catch(undefinedWhenNotFound);
 	}
 
 	/**

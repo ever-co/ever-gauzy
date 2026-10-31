@@ -41,6 +41,7 @@ const PROJECT_COMMENT = '44444444-4444-4444-8444-444444444444';
 const LOOKALIKE_NOTE = '55555555-5555-4555-8555-555555555555';
 const WITHDRAWN_NOTE = '66666666-6666-4666-8666-666666666666'; // a colleague's withdrawn note
 const OWN_WITHDRAWN_NOTE = '77777777-7777-4777-8777-777777777777';
+const FOREIGN_CONTACT_NOTE = '88888888-8888-4888-8888-888888888888'; // a note on a contact the caller does not reach
 
 const STORED: Record<string, { id: string; entity: string; entityId: string; employeeId: string; deletedAt?: Date }> = {
 	[NOTE]: { id: NOTE, entity: CONTACT, entityId: CONTACT_ID, employeeId: 'employee-colleague' },
@@ -52,6 +53,12 @@ const STORED: Record<string, { id: string; entity: string; entityId: string; emp
 		employeeId: 'employee-me'
 	},
 	[PROJECT_COMMENT]: { id: PROJECT_COMMENT, entity: PROJECT, entityId: PROJECT_ID, employeeId: 'employee-me' },
+	[FOREIGN_CONTACT_NOTE]: {
+		id: FOREIGN_CONTACT_NOTE,
+		entity: CONTACT,
+		entityId: FOREIGN_CONTACT_ID,
+		employeeId: 'employee-me'
+	},
 	[WITHDRAWN_NOTE]: {
 		id: WITHDRAWN_NOTE,
 		entity: CONTACT,
@@ -879,7 +886,11 @@ describe('CommentService — the comments of a governed record follow its policy
 					{
 						id: 'team-1',
 						assignedComments: [
-							assignedNote({ id: OTHER_CONTACT_NOTE, entityId: FOREIGN_CONTACT_ID }),
+							assignedNote({
+								id: FOREIGN_CONTACT_NOTE,
+								entityId: FOREIGN_CONTACT_ID,
+								employeeId: 'employee-me'
+							}),
 							assignedNote({ id: WITHDRAWN_NOTE, deletedAt: new Date('2026-10-01T00:00:00.000Z') })
 						],
 						members: [{ id: 'member-1', employee: ownEmployee() }]
@@ -997,7 +1008,7 @@ describe('CommentService — the comments of a governed record follow its policy
 
 		it('leaves out a note of a contact the caller does not reach', async () => {
 			as([PermissionsEnum.ORG_CONTACT_VIEW]);
-			listed(crossRecordThread(contactNote({ entityId: FOREIGN_CONTACT_ID })));
+			listed(crossRecordThread(contactNote({ id: FOREIGN_CONTACT_NOTE, entityId: FOREIGN_CONTACT_ID })));
 
 			const { items } = await service.findAll(projectComments as any);
 
@@ -1020,7 +1031,7 @@ describe('CommentService — the comments of a governed record follow its policy
 			findOne.mockImplementation(async (id: string) => ({
 				...STORED[id],
 				replies: [
-					contactNote({ id: OTHER_CONTACT_NOTE, entityId: FOREIGN_CONTACT_ID }),
+					contactNote({ id: FOREIGN_CONTACT_NOTE, entityId: FOREIGN_CONTACT_ID, employeeId: 'employee-me' }),
 					contactNote({ id: OWN_NOTE, employeeId: 'employee-me' })
 				]
 			}));
@@ -1033,23 +1044,79 @@ describe('CommentService — the comments of a governed record follow its policy
 		});
 
 		it('keeps a withdrawn note another employee wrote from a viewer, and lets its author and editors read it', async () => {
-			const withdrawnParent = (employeeId: string) =>
-				crossRecordThread(contactNote({ employeeId, deletedAt: new Date('2026-10-01T00:00:00.000Z') }));
+			const withdrawnParent = (id: string) => crossRecordThread(contactNote({ ...STORED[id] }));
 			const parentRead = async () => {
 				const { items } = await service.findAll({ ...projectComments, withDeleted: true } as any);
 				return items[0].parent;
 			};
 
 			as([PermissionsEnum.ORG_CONTACT_VIEW]);
-			listed(withdrawnParent('employee-colleague'));
+			listed(withdrawnParent(WITHDRAWN_NOTE));
 			await expect(parentRead()).resolves.toBeNull();
 
-			listed(withdrawnParent('employee-me'));
-			await expect(parentRead()).resolves.toEqual(expect.objectContaining({ id: NOTE }));
+			listed(withdrawnParent(OWN_WITHDRAWN_NOTE));
+			await expect(parentRead()).resolves.toEqual(expect.objectContaining({ id: OWN_WITHDRAWN_NOTE }));
 
 			as([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT]);
-			listed(withdrawnParent('employee-colleague'));
-			await expect(parentRead()).resolves.toEqual(expect.objectContaining({ id: NOTE }));
+			listed(withdrawnParent(WITHDRAWN_NOTE));
+			await expect(parentRead()).resolves.toEqual(expect.objectContaining({ id: WITHDRAWN_NOTE }));
+		});
+
+		/**
+		 * A read that selects some of a comment's columns (`select`) loads a related note without the ones its verdict
+		 * rests on: whether it is withdrawn, and who wrote it. The note is judged on its stored row.
+		 */
+		it('judges a withdrawn note loaded with some of its columns by its stored row', async () => {
+			const partial = (id: string) => ({ id, entity: CONTACT, entityId: CONTACT_ID, comment: 'Wants a quote' });
+			const parentRead = async (id: string) => {
+				listed(crossRecordThread(partial(id)));
+				const { items } = await service.findAll({ ...projectComments, withDeleted: true } as any);
+				return items[0].parent;
+			};
+
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+			await expect(parentRead(WITHDRAWN_NOTE)).resolves.toBeNull();
+			await expect(parentRead(OWN_WITHDRAWN_NOTE)).resolves.toEqual(partial(OWN_WITHDRAWN_NOTE));
+			await expect(parentRead(NOTE)).resolves.toEqual(partial(NOTE));
+			expect(findOne).toHaveBeenCalledWith(WITHDRAWN_NOTE, { withDeleted: true });
+
+			as([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT]);
+			await expect(parentRead(WITHDRAWN_NOTE)).resolves.toEqual(partial(WITHDRAWN_NOTE));
+		});
+
+		it('judges a note an employee is assigned, loaded with some of its columns, by its stored row', async () => {
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+			const employee = {
+				id: 'employee-me',
+				assignedComments: [WITHDRAWN_NOTE, OWN_WITHDRAWN_NOTE, NOTE].map((id) => ({
+					id,
+					entity: CONTACT,
+					entityId: CONTACT_ID
+				}))
+			};
+
+			await service.withReadableLoadedComments(employee);
+
+			expect(employee.assignedComments.map(({ id }) => id)).toEqual([OWN_WITHDRAWN_NOTE, NOTE]);
+		});
+
+		it('leaves out a note whose stored row it cannot find, and reads no row for a caller who may not view contacts', async () => {
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+			const missing = { id: '99999999-9999-4999-8999-999999999999', entity: CONTACT, entityId: CONTACT_ID };
+			const employee = { id: 'employee-me', assignedComments: [missing, { ...missing, id: 'not-a-uuid' }] };
+
+			await service.withReadableLoadedComments(employee);
+			expect(employee.assignedComments).toEqual([]);
+
+			as([]);
+			findOne.mockClear();
+			const other = {
+				id: 'employee-me',
+				assignedComments: [{ id: NOTE, entity: CONTACT, entityId: CONTACT_ID }]
+			};
+			await service.withReadableLoadedComments(other);
+			expect(other.assignedComments).toEqual([]);
+			expect(findOne).not.toHaveBeenCalled();
 		});
 
 		it('checks a note loaded through another relation, and keeps a related comment it cannot place only as an id', async () => {
