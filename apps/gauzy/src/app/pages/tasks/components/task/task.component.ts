@@ -671,7 +671,8 @@ export class TaskComponent extends PaginationFilterBaseComponent implements OnIn
 		if (this.isTasksPage()) {
 			dialog = this.dialogService.open(AddTaskDialogComponent, {
 				context: {
-					selectedTask: this.selectedTask
+					// Without the id the dialog reads this as a new task, not as an edit of the original.
+					selectedTask: { ...this.selectedTask, id: undefined }
 				}
 			});
 		} else if (this.isMyTasksPage()) {
