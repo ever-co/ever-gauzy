@@ -22,6 +22,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { ALL_PROJECT_SELECTED } from './default-project';
+import { shouldSelectUrlProject } from './project-selector.utils';
 import { entitySelectPanelClass } from '../../entity-select-panel-class';
 
 @UntilDestroy({ checkProperties: true })
@@ -49,6 +50,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	private _projectId: ID | ID[]; // Internal storage for the project IDs.
 	private _employeeId: ID; // Internal storage for the employee ID.
 	private _organizationContactId: ID; // Internal storage for the organization contact ID.
+	private _projectsRequest = 0; // Counts project list requests, so only the latest one fills the list.
 
 	/**
 	 * Determines whether the component should be displayed in a shortened form.
@@ -289,9 +291,9 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 						})
 					)
 				),
-				// After fetching, select the project if projectId exists
+				// After fetching, select the URL's project; a form's selector keeps what is already picked in it
 				tap((projectId: ID | null) => {
-					if (projectId) {
+					if (shouldSelectUrlProject(projectId, this.projectId, this.skipGlobalChange)) {
 						this.selectProjectById(projectId);
 					}
 				}),
@@ -344,11 +346,20 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			tenantId
 		};
 
+		const request = ++this._projectsRequest;
+
 		try {
 			// Retrieve projects based on whether employeeId is provided
-			this.projects = this.employeeId
+			const projects = this.employeeId
 				? await this._organizationProjects.getAllByEmployee(this.employeeId, queryOptions)
 				: (await this._organizationProjects.getAll([], queryOptions)).items || [];
+
+			// A newer request (another client or employee picked meanwhile) owns the list now: an earlier
+			// one that answers last must not put the previous filter's projects back.
+			if (request !== this._projectsRequest) {
+				return;
+			}
+			this.projects = projects;
 
 			// Optionally add "All Projects" option
 			if (this.showAllOption) {
