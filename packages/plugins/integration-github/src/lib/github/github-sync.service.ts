@@ -19,7 +19,9 @@ import {
 	IOrganizationGithubRepository,
 	IIntegrationMap,
 	GithubRepositoryStatusEnum,
-	ID
+	ID,
+	hasGithubSyncLabel,
+	resolveGithubSyncLabel
 } from '@gauzy/contracts';
 import {
 	AutomationLabelSyncCommand,
@@ -592,6 +594,9 @@ export class GithubSyncService {
 	/**
 	 * Determines whether an issue should be synchronized based on project settings.
 	 *
+	 * A project that syncs only labelled issues matches them on its own label, or on the default one
+	 * when it has none (see `resolveGithubSyncLabel`).
+	 *
 	 * @param project - The project configuration.
 	 * @param issue - The GitHub issue to be synchronized.
 	 * @returns A boolean indicating whether the issue should be synchronized.
@@ -601,7 +606,7 @@ export class GithubSyncService {
 			return false;
 		}
 		if (project.isTasksAutoSyncOnLabel) {
-			return !!issue.labels.find((label) => label.name.trim() === project.syncTag.trim());
+			return hasGithubSyncLabel(issue.labels, resolveGithubSyncLabel(project.syncTag));
 		}
 		return true;
 	}
