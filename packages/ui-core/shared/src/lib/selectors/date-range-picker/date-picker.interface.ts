@@ -23,7 +23,9 @@ export enum DateRangeKeyEnum {
 	CURRENT_WEEK = 'Current Week',
 	LAST_WEEK = 'Last Week',
 	CURRENT_MONTH = 'Current Month',
-	LAST_MONTH = 'Last Month'
+	LAST_MONTH = 'Last Month',
+	CURRENT_YEAR = 'Current Year',
+	LAST_YEAR = 'Last Year'
 }
 
 export interface DateRangeClicked {

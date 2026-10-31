@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { IDateRangePicker, ISelectedDateRange, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
-import { TimePeriod } from './date-picker.interface';
+import { DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
 
 /**
  * We are having issue, when organization not allowed future date
@@ -248,4 +248,76 @@ export function selectUnitOfTime({
 	}
 
 	return null;
+}
+
+/** The units whose presets an unlocked picker offers, in the order the ranges menu lists them. */
+export const PRESET_UNITS_OF_TIME: readonly moment.unitOfTime.Base[] = ['day', 'week', 'month', 'year'];
+
+/**
+ * The unit of time each preset spans. Picking a preset switches the picker to that unit, so the
+ * arrows then step by it: a day after "Today", a whole year after "Current Year".
+ */
+export const PRESET_UNIT_OF_TIME: Readonly<Record<DateRangeKeyEnum, moment.unitOfTime.Base>> = {
+	[DateRangeKeyEnum.TODAY]: 'day',
+	[DateRangeKeyEnum.YESTERDAY]: 'day',
+	[DateRangeKeyEnum.CURRENT_WEEK]: 'week',
+	[DateRangeKeyEnum.LAST_WEEK]: 'week',
+	[DateRangeKeyEnum.CURRENT_MONTH]: 'month',
+	[DateRangeKeyEnum.LAST_MONTH]: 'month',
+	[DateRangeKeyEnum.CURRENT_YEAR]: 'year',
+	[DateRangeKeyEnum.LAST_YEAR]: 'year'
+};
+
+/** The "current" and "last" preset of each unit that has presets. */
+const PRESETS_BY_UNIT: Partial<Record<moment.unitOfTime.Base, readonly [DateRangeKeyEnum, DateRangeKeyEnum]>> = {
+	day: [DateRangeKeyEnum.TODAY, DateRangeKeyEnum.YESTERDAY],
+	week: [DateRangeKeyEnum.CURRENT_WEEK, DateRangeKeyEnum.LAST_WEEK],
+	month: [DateRangeKeyEnum.CURRENT_MONTH, DateRangeKeyEnum.LAST_MONTH],
+	year: [DateRangeKeyEnum.CURRENT_YEAR, DateRangeKeyEnum.LAST_YEAR]
+};
+
+/**
+ * Builds the preset ranges of the picker's menu: for each unit, the whole unit containing `now`
+ * ("Today", "Current Week", …) and the whole unit before it ("Yesterday", "Last Week", …).
+ *
+ * A preset reaching past `maxDate` ends on `maxDate` instead, so on an organization that does not
+ * allow future dates "Current Year" runs from 1 January to today rather than to 31 December.
+ *
+ * @param units The units to offer presets for; a unit without presets is skipped.
+ * @param now The instant the presets are relative to.
+ * @param maxDate The last selectable instant, or `null` when future dates are allowed.
+ * @returns The ranges keyed by their menu label, in the order of `units`.
+ */
+export function buildPresetRanges(
+	units: readonly moment.unitOfTime.Base[],
+	now: moment.Moment = moment(),
+	maxDate: moment.Moment | null = null
+): DateRanges {
+	const ranges: DateRanges = {};
+
+	for (const unit of units) {
+		const presets = PRESETS_BY_UNIT[unit];
+		if (!presets) {
+			continue;
+		}
+
+		const [currentKey, lastKey] = presets;
+		const current = now.clone().startOf(unit);
+		const last = current.clone().subtract(1, unit);
+
+		ranges[currentKey] = wholeUnit(current, unit, maxDate);
+		ranges[lastKey] = wholeUnit(last, unit, maxDate);
+	}
+
+	return ranges;
+}
+
+/** The whole `unit` starting at `start`, ending on `maxDate` at the latest. */
+function wholeUnit(
+	start: moment.Moment,
+	unit: moment.unitOfTime.Base,
+	maxDate: moment.Moment | null
+): [moment.Moment, moment.Moment] {
+	const end = start.clone().endOf(unit);
+	return [start, maxDate && end.isAfter(maxDate) ? maxDate.clone() : end];
 }

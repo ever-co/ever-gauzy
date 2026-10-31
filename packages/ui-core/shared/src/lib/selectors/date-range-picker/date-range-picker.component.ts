@@ -26,8 +26,16 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
-import { dayOfWeekAsString, selectUnitOfTime, toPickerDateRange, toPickerRange } from './date-picker.utils';
-import { DateRangeClicked, DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
+import {
+	buildPresetRanges,
+	dayOfWeekAsString,
+	PRESET_UNIT_OF_TIME,
+	PRESET_UNITS_OF_TIME,
+	selectUnitOfTime,
+	toPickerDateRange,
+	toPickerRange
+} from './date-picker.utils';
+import { DateRangeClicked, DateRanges, TimePeriod } from './date-picker.interface';
 import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
@@ -345,9 +353,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					}
 				}),
 				tap(() => {
-					this.createDateRangeMenus();
 					this.setPastStrategy();
 					this.setFutureStrategy();
+					// After the strategies: the presets end on the `maxDate` they settle.
+					this.createDateRangeMenus();
 				}),
 				untilDestroyed(this)
 			)
@@ -389,41 +398,11 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * @param unitOfTime The unit a locked picker offers; defaults to the picker's current unit.
 	 */
 	createDateRangeMenus(unitOfTime: moment.unitOfTime.Base = this.unitOfTime): void {
-		this.ranges = {};
+		// A locked picker offers only its own unit; an unlocked one every unit with presets, year included.
+		const units = this.isLockDatePicker ? [unitOfTime] : PRESET_UNITS_OF_TIME;
 
-		// Helper function to add ranges to the ranges object
-		const addRange = (key: DateRangeKeyEnum, startDate: moment.Moment, endDate: moment.Moment) => {
-			this.ranges[key] = [startDate, endDate];
-		};
-
-		// Determine which units of time are allowed
-		const allowedUnits = this.isLockDatePicker ? [unitOfTime] : ['day', 'week', 'month'];
-
-		// Add date ranges based on the allowed units of time
-		allowedUnits.forEach((unit) => {
-			switch (unit) {
-				case 'day':
-					addRange(DateRangeKeyEnum.TODAY, moment(), moment());
-					addRange(DateRangeKeyEnum.YESTERDAY, moment().subtract(1, 'days'), moment().subtract(1, 'days'));
-					break;
-				case 'week':
-					addRange(DateRangeKeyEnum.CURRENT_WEEK, moment().startOf('week'), moment().endOf('week'));
-					addRange(
-						DateRangeKeyEnum.LAST_WEEK,
-						moment().subtract(1, 'week').startOf('week'),
-						moment().subtract(1, 'week').endOf('week')
-					);
-					break;
-				case 'month':
-					addRange(DateRangeKeyEnum.CURRENT_MONTH, moment().startOf('month'), moment().endOf('month'));
-					addRange(
-						DateRangeKeyEnum.LAST_MONTH,
-						moment().subtract(1, 'month').startOf('month'),
-						moment().subtract(1, 'month').endOf('month')
-					);
-					break;
-			}
-		});
+		// Where future dates are disallowed, `setFutureStrategy` has set `maxDate` to today: presets end there.
+		this.ranges = buildPresetRanges(units, moment(), this.maxDate ? moment(this.maxDate) : null);
 	}
 
 	/**
@@ -568,17 +547,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * @param {DateRangeClicked} range - The clicked range object.
 	 */
 	rangeClicked(range: DateRangeClicked) {
-		// Define the mapping outside the method to avoid recreating it on every call
-		const unitOfTimeMap: Record<string, moment.unitOfTime.Base> = {
-			[DateRangeKeyEnum.TODAY]: 'day',
-			[DateRangeKeyEnum.YESTERDAY]: 'day',
-			[DateRangeKeyEnum.CURRENT_WEEK]: 'week',
-			[DateRangeKeyEnum.LAST_WEEK]: 'week',
-			[DateRangeKeyEnum.CURRENT_MONTH]: 'month',
-			[DateRangeKeyEnum.LAST_MONTH]: 'month'
-		};
-
-		const unitOfTime = unitOfTimeMap[range.label];
+		const unitOfTime = PRESET_UNIT_OF_TIME[range.label];
 		if (unitOfTime) {
 			this.unitOfTime = unitOfTime;
 		} else {
