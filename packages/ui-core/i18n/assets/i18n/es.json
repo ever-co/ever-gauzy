@@ -939,6 +939,8 @@
 			"MERCHANT": "Comerciante",
 			"ORGANIZATION": "Organización",
 			"PAYMENT": "Pago",
+			"PAYROLL_RUN": "Ejecución de nómina",
+			"PAYROLL_ITEM": "Concepto de nómina",
 			"PIPELINE": "Tubería",
 			"PIPELINE_STAGE": "Etapa del canal",
 			"PRODUCT": "Producto",

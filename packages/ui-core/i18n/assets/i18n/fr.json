@@ -938,6 +938,8 @@
 			"MERCHANT": "Marchand",
 			"ORGANIZATION": "Organisation",
 			"PAYMENT": "Paiement",
+			"PAYROLL_RUN": "Cycle de paie",
+			"PAYROLL_ITEM": "Ligne de paie",
 			"PIPELINE": "Pipeline",
 			"PIPELINE_STAGE": "Étape du pipeline",
 			"PRODUCT": "Produit",

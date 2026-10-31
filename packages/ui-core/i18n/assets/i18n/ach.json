@@ -842,6 +842,8 @@
 			"MERCHANT": "crwdns10414:0crwdne10414:0",
 			"ORGANIZATION": "crwdns9260:0crwdne9260:0",
 			"PAYMENT": "crwdns9262:0crwdne9262:0",
+			"PAYROLL_RUN": "Payroll Run",
+			"PAYROLL_ITEM": "Payroll Item",
 			"PIPELINE": "crwdns9264:0crwdne9264:0",
 			"PIPELINE_STAGE": "crwdns10416:0crwdne10416:0",
 			"PRODUCT": "crwdns9266:0crwdne9266:0",

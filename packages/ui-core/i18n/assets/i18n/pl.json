@@ -936,6 +936,8 @@
 			"MERCHANT": "Kupiec",
 			"ORGANIZATION": "Organizacja",
 			"PAYMENT": "Płatność",
+			"PAYROLL_RUN": "Przebieg płacowy",
+			"PAYROLL_ITEM": "Pozycja przebiegu płacowego",
 			"PIPELINE": "Rurociąg",
 			"PIPELINE_STAGE": "Etap w procesie",
 			"PRODUCT": "Produkt",

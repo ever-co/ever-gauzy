@@ -937,6 +937,8 @@
 			"MERCHANT": "Händler",
 			"ORGANIZATION": "Organisation",
 			"PAYMENT": "Zahlung",
+			"PAYROLL_RUN": "Lohnlauf",
+			"PAYROLL_ITEM": "Lohnlaufposition",
 			"PIPELINE": "Pipeline",
 			"PIPELINE_STAGE": "Pipeline Stufe",
 			"PRODUCT": "Produkt",

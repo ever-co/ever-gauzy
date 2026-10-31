@@ -937,6 +937,8 @@
 			"MERCHANT": "Mercador",
 			"ORGANIZATION": "Organização",
 			"PAYMENT": "Pagamento",
+			"PAYROLL_RUN": "Execução da folha",
+			"PAYROLL_ITEM": "Item da folha de pagamento",
 			"PIPELINE": "Pipeline - Oleoduto ou gasoduto, é uma estrutura ou sistema de tubulações utilizado para transportar líquidos ou gases de um local para outro. É comumente utilizado na indústria petrolífera para o transporte de petróleo, gás natural e produtos derivados, como gasolina e diesel. Também pode ser utilizado em outras indústrias, como a de mineração, para o transporte de minerais por exemplo. A construção de um oleoduto ou gasoduto envolve a instalação de tubos, estações de bombeamento e controle, além de medidas de segurança para evitar vazamentos ou rupturas na infraestrutura. O transporte por meio de pipeline geralmente é considerado mais eficiente e econômico em longas distâncias, se comparado com outros meios de transporte, como o rodoviário ou marítimo.",
 			"PIPELINE_STAGE": "Estágio do pipeline",
 			"PRODUCT": "Produto",

@@ -945,6 +945,8 @@
 			"MERCHANT": "Торговец",
 			"ORGANIZATION": "Организация",
 			"PAYMENT": "Оплата",
+			"PAYROLL_RUN": "Расчёт зарплаты",
+			"PAYROLL_ITEM": "Строка расчёта зарплаты",
 			"PIPELINE": "Трубопровод",
 			"PIPELINE_STAGE": "Стадия Трубопровода",
 			"PRODUCT": "Товар",

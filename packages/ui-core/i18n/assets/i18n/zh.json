@@ -937,6 +937,8 @@
 			"MERCHANT": "商人",
 			"ORGANIZATION": "组织",
 			"PAYMENT": "支付",
+			"PAYROLL_RUN": "薪资批次",
+			"PAYROLL_ITEM": "薪资条目",
 			"PIPELINE": "管道",
 			"PIPELINE_STAGE": "管道阶段",
 			"PRODUCT": "产品",

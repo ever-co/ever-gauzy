@@ -964,6 +964,8 @@
 			"MERCHANT": "Търговец",
 			"ORGANIZATION": "Организация",
 			"PAYMENT": "Плащане",
+			"PAYROLL_RUN": "Ведомост за заплати",
+			"PAYROLL_ITEM": "Позиция от ведомост за заплати",
 			"PIPELINE": "Процес",
 			"PIPELINE_STAGE": "Етап на процеса",
 			"PRODUCT": "Продукт",

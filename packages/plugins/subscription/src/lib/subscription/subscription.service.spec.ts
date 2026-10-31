@@ -619,6 +619,8 @@ function subscriptionFixture(
 					}
 			  };
 	const catalog = {
+		variantExists: async () => true,
+		productExists: async () => true,
 		isVariantSubscribable: async () => true,
 		defaultVariantOf: async () => VARIANT
 	};

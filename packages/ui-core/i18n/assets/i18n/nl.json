@@ -937,6 +937,8 @@
 			"MERCHANT": "Handelaar",
 			"ORGANIZATION": "Organisatie",
 			"PAYMENT": "Betaling",
+			"PAYROLL_RUN": "Salarisronde",
+			"PAYROLL_ITEM": "Salarisregel",
 			"PIPELINE": "Pijpleiding",
 			"PIPELINE_STAGE": "Fase van de pijplijn",
 			"PRODUCT": "Product",
