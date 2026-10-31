@@ -4,18 +4,20 @@
  */
 import '../core/entities/internal';
 
-import { ExecutionContext, Logger } from '@nestjs/common';
+import { ExecutionContext, Logger, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ID, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import {
+	ID,
+	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
+	ORGANIZATION_CONTACT_DELETE_PERMISSIONS,
+	PermissionsEnum,
+	RolesEnum
+} from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { PermissionGuard } from '../shared/guards/permission.guard';
 import { OrganizationContactController } from './organization-contact.controller';
 import { OrganizationContactResolver } from './organization-contact.resolver';
-import {
-	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
-	ORGANIZATION_CONTACT_DELETE_PERMISSIONS,
-	organizationContactCreateOptions
-} from './organization-contact.permissions';
+import { organizationContactCreateOptions } from './organization-contact.permissions';
 
 /**
  * ever-co/ever-gauzy#5468: creating and deleting a contact get their own grants, `ORG_CONTACT_ADD` and
@@ -25,7 +27,7 @@ import {
 const TENANT_ID = '1f3c5a7e-0000-4000-8000-000000000001';
 const ROLE_ID = '1f3c5a7e-0000-4000-8000-0000000000aa';
 
-type Surface = { target: Function; handler: string };
+type Surface = { target: Type<unknown>; handler: string };
 
 const REST = (handler: string): Surface => ({ target: OrganizationContactController, handler });
 const GRAPHQL = (handler: string): Surface => ({ target: OrganizationContactResolver, handler });

@@ -12,6 +12,8 @@ import {
 	IOrganizationContactFindInput,
 	IOrganizationProject,
 	IPagination,
+	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
+	ORGANIZATION_CONTACT_DELETE_PERMISSIONS,
 	ITag,
 	PermissionsEnum
 } from '@gauzy/contracts';
@@ -32,11 +34,7 @@ import {
 	OrganizationContactUpdateCommand
 } from './commands';
 import { OrganizationContactService } from './organization-contact.service';
-import {
-	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
-	ORGANIZATION_CONTACT_DELETE_PERMISSIONS,
-	organizationContactCreateOptions
-} from './organization-contact.permissions';
+import { organizationContactCreateOptions } from './organization-contact.permissions';
 import { deleteRemovedRows } from '../graphql/delete-answer';
 
 /** The members `ContactDetailInput` declares in the schema. */

@@ -22,6 +22,8 @@ import {
 	IEmployee,
 	IOrganizationContact,
 	IPagination,
+	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
+	ORGANIZATION_CONTACT_DELETE_PERMISSIONS,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
@@ -33,11 +35,7 @@ import {
 } from './commands';
 import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactService } from './organization-contact.service';
-import {
-	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
-	ORGANIZATION_CONTACT_DELETE_PERMISSIONS,
-	organizationContactCreateOptions
-} from './organization-contact.permissions';
+import { organizationContactCreateOptions } from './organization-contact.permissions';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO } from './../shared/dto';
