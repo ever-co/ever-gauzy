@@ -3274,6 +3274,54 @@ describe('SubscriptionService — a charged cycle is finished once, by whichever
 		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: MAY, billingCycleCount: 1 });
 	});
 
+	it.each([
+		['pays', (fixture: ReturnType<typeof subscriptionFixture>) => fixture.service.payCycle('cycle-april')],
+		['waives', (fixture: ReturnType<typeof subscriptionFixture>) => fixture.billingService.markWaived('cycle-april', { reason: 'goodwill' })]
+	])(
+		'refuses an operator who read the cycle before a pass froze an attempt and %s it after that pass was cut off',
+		async (_action, settle) => {
+			const fixture = subscriptionFixture({
+				orders: idempotentOrders(),
+				billings: [
+					{
+						id: 'cycle-april',
+						tenantId: TENANT,
+						organizationId: ORG,
+						subscriptionId: SUBSCRIPTION,
+						periodStart: new Date(APRIL),
+						periodEnd: MAY,
+						amount: '120.000000',
+						currency: 'USD',
+						status: SubscriptionBillingStatus.PENDING,
+						dueAt: new Date(APRIL),
+						paidAt: null,
+						attemptCount: 0
+					}
+				]
+			});
+			const claimCharge = fixture.billingService.claimCharge.bind(fixture.billingService);
+
+			// After the operator's read and before its write, a pass freezes an attempt, raises the order and is cut off
+			// before recording it, releasing its claim.
+			jest.spyOn(fixture.billingService, 'claimCharge').mockImplementationOnce(async (id) => {
+				jest.spyOn(fixture.billingService, 'markPaid').mockRejectedValueOnce(new Error('the database went away'));
+				await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+
+				return claimCharge(id);
+			});
+
+			await expect(settle(fixture)).rejects.toMatchObject({ response: { code: 'SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT' } });
+			expect(fixture.cycle(APRIL)).toMatchObject({ status: SubscriptionBillingStatus.PENDING, chargeClaimToken: null });
+
+			// The next pass recovers the attempt's order.
+			leaseRunsOut(fixture);
+			await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+			expect(fixture.cycle(APRIL)).toMatchObject({ status: SubscriptionBillingStatus.PAID, orderId: 'order-1' });
+			expect(new Set(fixture.orderCalls.map((call) => call.idempotencyKey)).size).toBe(1);
+		}
+	);
+
 	it('does not write a resume’s calendar back over the calendar a finish moved after the resume read it', async () => {
 		let fixture: ReturnType<typeof subscriptionFixture>;
 		let finished!: () => void;

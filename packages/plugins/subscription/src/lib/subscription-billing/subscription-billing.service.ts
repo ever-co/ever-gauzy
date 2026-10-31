@@ -632,6 +632,19 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			return byOperator ? chargeInFlight(current, 'paid') : chargeClaimLost(current, 'paid');
 		};
 
+		if (byOperator && CHARGEABLE_FROM.includes(billing.status as SubscriptionBillingStatus)) {
+			await this.settleFenced(id, 'paid', refusal, (current) => ({
+				status: SubscriptionBillingStatus.PAID,
+				paidAt: options.paidAt ?? new Date(),
+				orderId: options.orderId ?? current.orderId,
+				attemptCount: options.attemptCount ?? current.attemptCount,
+				nextRetryAt: null,
+				lastError: null
+			}));
+
+			return await this.findOneScoped(id);
+		}
+
 		await this.writeIf(
 			id,
 			{
@@ -929,19 +942,85 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 				: invalidTransition(current, 'waived', WAIVABLE_FROM);
 		};
 
-		await this.writeIf(id, { status: In([...WAIVABLE_FROM]), ...noLiveChargeClaim() }, refusal, {
+		await this.settleFenced(id, 'waived', refusal, (current) => ({
 			status: SubscriptionBillingStatus.WAIVED,
 			paidAt: null,
 			nextRetryAt: null,
-			...NO_CHARGE_CLAIM,
 			metadata: {
-				...(billing.metadata ?? {}),
+				...(current.metadata ?? {}),
 				waivedReason: options.reason,
 				...(options.note ? { waivedNote: options.note } : {})
 			}
-		} as any);
+		}));
 
 		return await this.findOneScoped(id);
+	}
+
+	/**
+	 * Writes an operator's settlement of a cycle a pass could charge (`PENDING`, `FAILED`) under a fence against the
+	 * billing run, as a correction is written (`update`).
+	 *
+	 * A check of the row read before the write is not enough (Greptile, CodeRabbit): an operator could read the cycle
+	 * before a pass froze an attempt (`freezeAttempt`), and settle it after that pass raised the order, failed to record
+	 * its outcome and released its claim — a payment or waiver over money the order path took, which the next pass could
+	 * no longer recover. The cycle's charge claim is taken for the settlement (`claimCharge`), the row is read again under
+	 * it, an attempt whose outcome was never recorded refuses the settlement, and the write is conditional on the claim's
+	 * token and ends it.
+	 *
+	 * @param id The cycle.
+	 * @param action What the settlement does, for the refusal.
+	 * @param refusal Decides, on the row as it now stands, why the cycle could not be claimed or written, or answers null
+	 * when the state it reached is the outcome the operator wanted.
+	 * @param patch The columns the settlement writes, built from the row read under the fence.
+	 * @returns True when the settlement was written.
+	 */
+	private async settleFenced(
+		id: ID,
+		action: string,
+		refusal: () => Promise<Error | null>,
+		patch: (current: SubscriptionBilling) => Record<string, unknown>
+	): Promise<boolean> {
+		const fence = await this.claimCharge(id);
+
+		if (!fence.token) {
+			const refused = await refusal();
+
+			if (refused) {
+				throw refused;
+			}
+
+			return false;
+		}
+
+		let written = false;
+
+		try {
+			if (this.holdsUnrecordedAttempt(fence.billing)) {
+				throw chargeInFlight(fence.billing, action);
+			}
+
+			const result = await this.writeIf(
+				id,
+				{ status: In([...CHARGEABLE_FROM]), chargeClaimToken: fence.token },
+				refusal,
+				{ ...patch(fence.billing), ...NO_CHARGE_CLAIM } as any
+			);
+
+			written = !!result?.affected;
+
+			return written;
+		} finally {
+			if (!written) {
+				try {
+					await this.releaseChargeClaim(id, fence.token);
+				} catch (error) {
+					this.logger.warn(
+						`Subscription billing cycle ${id}: the fence of an operator's settlement was not released ` +
+							`(${(error as Error)?.message ?? error}); it goes stale.`
+					);
+				}
+			}
+		}
 	}
 
 	/**
