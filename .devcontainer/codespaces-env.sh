@@ -25,6 +25,8 @@ if [ -n "${CODESPACE_NAME:-}" ] && [ -n "${GITHUB_CODESPACES_PORT_FORWARDING_DOM
 	_gauzy_file_value() {
 		for _gauzy_file in "$_gauzy_root/.env.local" "$_gauzy_root/.env"; do
 			[ -f "$_gauzy_file" ] || continue
+			# The backticks below are literal (dotenv's third quote style), not command substitution.
+			# shellcheck disable=SC2016
 			_gauzy_value=$(sed -n "s/^[[:space:]]*\(export[[:space:]][[:space:]]*\)\{0,1\}$1[[:space:]]*=[[:space:]]*//p" "$_gauzy_file" |
 				tail -n 1 | tr -d '\r' |
 				sed -e 's/^"\([^"]*\)".*$/\1/' -e 't' -e "s/^'\([^']*\)'.*\$/\1/" -e 't' -e 's/^`\([^`]*\)`.*$/\1/' -e 't' \
