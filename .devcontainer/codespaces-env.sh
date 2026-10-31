@@ -19,12 +19,16 @@ if [ -n "${CODESPACE_NAME:-}" ] && [ -n "${GITHUB_CODESPACES_PORT_FORWARDING_DOM
 	_gauzy_root=${1:-${CODESPACE_VSCODE_FOLDER:-$PWD}}
 
 	# Prints the value .env.local, else .env, in the workspace gives variable $1, unless it is empty or $2 (an empty
-	# $2: any value counts). It reads the last `NAME=value` line of each file (`export NAME=value` too), without quotes
-	# or carriage returns. Prints nothing when neither file sets one.
+	# $2: any value counts). It reads the last `NAME=value` line of each file (`export NAME=value` too) as dotenv does:
+	# the text between its quotes when it is quoted, otherwise the text before any `#` comment, without surrounding
+	# whitespace or a carriage return. Prints nothing when neither file sets one.
 	_gauzy_file_value() {
 		for _gauzy_file in "$_gauzy_root/.env.local" "$_gauzy_root/.env"; do
 			[ -f "$_gauzy_file" ] || continue
-			_gauzy_value=$(sed -n "s/^[[:space:]]*\(export[[:space:]][[:space:]]*\)\{0,1\}$1[[:space:]]*=[[:space:]]*//p" "$_gauzy_file" | tail -n 1 | tr -d "\r\"'")
+			_gauzy_value=$(sed -n "s/^[[:space:]]*\(export[[:space:]][[:space:]]*\)\{0,1\}$1[[:space:]]*=[[:space:]]*//p" "$_gauzy_file" |
+				tail -n 1 | tr -d '\r' |
+				sed -e 's/^"\([^"]*\)".*$/\1/' -e 't' -e "s/^'\([^']*\)'.*\$/\1/" -e 't' -e 's/^`\([^`]*\)`.*$/\1/' -e 't' \
+					-e 's/#.*$//' -e 's/[[:space:]]*$//')
 			if [ -n "$_gauzy_value" ] && [ "$_gauzy_value" != "$2" ]; then
 				printf '%s' "$_gauzy_value"
 				return 0

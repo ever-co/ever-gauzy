@@ -120,6 +120,29 @@ describe('codespaces-env.sh', () => {
 		);
 	});
 
+	it('reads values as dotenv does: inside their quotes, before a # comment, without trailing spaces', () => {
+		assert.deepEqual(
+			sourced(CODESPACE, {
+				'.env':
+					'API_BASE_URL="https://api.example.test" # custom API\n' +
+					'CLIENT_BASE_URL=https://ui.example.test   # the web UI   \n' +
+					"ALLOWED_ORIGINS='https://ui.example.test,https://admin.example.test'  \n"
+			}),
+			{
+				...FORWARDED,
+				API_BASE_URL: 'https://api.example.test',
+				CLIENT_BASE_URL: 'https://ui.example.test',
+				ALLOWED_ORIGINS: 'https://ui.example.test,https://admin.example.test'
+			}
+		);
+		assert.equal(
+			sourced(CODESPACE, { '.env': 'API_BASE_URL="https://api.example.test/#/home"\n' }).API_BASE_URL,
+			'https://api.example.test/#/home'
+		);
+		// A default with a comment after it is still the default.
+		assert.deepEqual(sourced(CODESPACE, { '.env': 'API_BASE_URL=http://localhost:3000 # default\n' }), FORWARDED);
+	});
+
 	it('adds to a list the environment already has, once', () => {
 		assert.equal(
 			sourced({ ...CODESPACE, ENV_LOCAL_NO_OVERRIDE: 'DB_TYPE' }).ENV_LOCAL_NO_OVERRIDE,
