@@ -2051,7 +2051,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				return;
 			}
 
-			const noted = !!recorded && state === 'UNKNOWN' && this.noteReversal(metadata, recorded, state);
+			const noted = !!recorded && state !== 'UNSETTLED' && this.noteReversal(metadata, recorded, state);
 
 			delete metadata[CHANGE_INTENT];
 
@@ -3282,8 +3282,17 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		let resumed = false;
 		let replaced: { intent: IChangeIntent; state: Exclude<ISettlementState, 'UNSETTLED'> } | null = null;
 
+		// The same change resumes its record while settling it again under its key is safe: once it is marked settled, or
+		// inside the order path's replay window. Past that window an unmarked record is resolved as an abandoned one below
+		// — its charge raised again under an expired key could be raised twice.
+		const resumable =
+			!!recorded &&
+			recorded.change === intent.change &&
+			(!!recorded.settledAt ||
+				Date.now() - new Date(recorded.recordedAt ?? recorded.at).getTime() < CHANGE_REPLAY_WINDOW_MS);
+
 		if (recorded) {
-			if (recorded.change === intent.change) {
+			if (resumable) {
 				// Resumed with its own key, amounts and lines: priced again a second later, the same change would carry
 				// another amount, and so another key, and be settled twice. The token is this request's from now on.
 				held = { ...recorded, at: intent.at, owner: randomUUID() };
@@ -3294,7 +3303,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				);
 			} else {
 				// Resolved here, before the transaction: the stores it asks and the order path take connections of their own.
-				let state: 'APPLIED' | 'UNKNOWN' | 'UNSETTLED';
+				let state: 'APPLIED' | ISettlementState;
 
 				try {
 					state = await this.resolveAbandonedChange(subscription, recorded);
@@ -3313,7 +3322,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					);
 				}
 
-				if (state === 'UNKNOWN' && this.noteReversal(metadata, recorded, state)) {
+				if (state !== 'UNSETTLED' && this.noteReversal(metadata, recorded, state)) {
 					replaced = { intent: recorded, state };
 				}
 
@@ -3769,6 +3778,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * - Past that window raising it again could charge twice, so it is `UNKNOWN`: the caller records it for reversal, and an
 	 *   operator settles it from that record.
 	 * - It moved nothing: `UNSETTLED`, and the caller clears or replaces it.
+	 * - The subscription ended meanwhile: nothing is applied or raised again; what moved (`SETTLED`) or may have
+	 *   (`UNKNOWN`) is recorded for reversal by the caller.
 	 *
 	 * @param subscription The subscription, as read.
 	 * @param recorded The abandoned record.
@@ -3779,11 +3790,17 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	private async resolveAbandonedChange(
 		subscription: Subscription,
 		recorded: IChangeIntent
-	): Promise<'APPLIED' | 'UNKNOWN' | 'UNSETTLED'> {
+	): Promise<'APPLIED' | ISettlementState> {
 		const state = await this.settlementOf(subscription, recorded);
 
 		if (state === 'UNSETTLED') {
 			return 'UNSETTLED';
+		}
+
+		// A subscription that ended since takes no change and is charged nothing more: what the change settled is recorded
+		// for reversal as it stands, and nothing is raised again for it.
+		if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(subscription.status)) {
+			return state;
 		}
 
 		let moved = true;

@@ -2522,6 +2522,83 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		});
 	});
 
+	it('resolves rather than resumes the same change once its record is past the replay window unmarked', async () => {
+		const fixture = subscriptionFixture({ prices: UPGRADE, onSubscriptionUpdate: raceTheApply(3) });
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN }).catch(() => undefined);
+
+		const first = fixture.prorationCalls[0].idempotencyKey;
+
+		// Its mark could not be written, and a day later the claims it was raised under (ours and the order path's) are
+		// gone: raised again under that key, the charge could be made twice, unseen.
+		delete fixture.subscription(SUBSCRIPTION).metadata.changeIntent.settledAt;
+		fixture.idempotencyService.forget();
+		jest.setSystemTime(new Date(MID_MARCH.getTime() + 24 * 60 * 60 * 1000));
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		// The old record is recorded for reversal as unknown, and the change is settled anew under a key of its own.
+		expect(fixture.prorationCalls.map((call) => call.idempotencyKey)).toEqual([first, expect.not.stringMatching(first)]);
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toEqual([
+			expect.objectContaining({ key: first, settled: 'UNKNOWN' })
+		]);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
+	});
+
+	it('reconciles an ended subscription’s abandoned change without applying it or charging it again', async () => {
+		const ended = (id: string) =>
+			subscriptionRow(id, {
+				status: SubscriptionStatus.CANCELED,
+				reservedPlanId: BETTER_PLAN,
+				metadata: {
+					changeIntent: {
+						key: `${id}:abandoned`,
+						change: 'abandoned',
+						planId: BETTER_PLAN,
+						settlement: 'CHARGED',
+						net: '92.900000',
+						currency: 'USD',
+						periodStart: MARCH.toISOString(),
+						description: 'Plan changed to PLAN-2.',
+						at: new Date(MID_MARCH.getTime() - 11 * 60 * 1000).toISOString(),
+						replaceLines: true,
+						items: [{ variantId: BETTER_VARIANT, quantity: '1.000000', unitPrice: '300.000000', position: 0 }]
+					}
+				}
+			});
+		const fixture = subscriptionFixture({
+			prices: UPGRADE,
+			subscriptions: [ended('subscription-charged'), ended('subscription-unknown')],
+			items: [
+				itemRow('item-1', { subscriptionId: 'subscription-charged' }),
+				itemRow('item-2', { subscriptionId: 'subscription-unknown' })
+			]
+		});
+
+		// The first one's charge was made; nothing tells about the second's.
+		fixture.idempotencyService.records.set('subscription.proration:subscription-charged:abandoned', {
+			scope: 'subscription.proration',
+			key: 'subscription-charged:abandoned',
+			requestHash: 'abandoned',
+			response: { status: 200 },
+			lockedAt: 0
+		});
+
+		await fixture.service.runBilling({ asOf: MID_MARCH });
+
+		// Nothing raised again, nothing applied: each is recorded for reversal as it stands, and its reservation goes.
+		expect(fixture.prorationCalls).toEqual([]);
+		expect(fixture.subscription('subscription-charged')).toMatchObject({ planId: PLAN, reservedPlanId: null });
+		expect(fixture.subscription('subscription-charged').metadata?.['settlementReversals']).toEqual([
+			expect.objectContaining({ key: 'subscription-charged:abandoned', settled: 'SETTLED' })
+		]);
+		expect(fixture.subscription('subscription-unknown')).toMatchObject({ planId: PLAN, reservedPlanId: null });
+		expect(fixture.subscription('subscription-unknown').metadata?.['settlementReversals']).toEqual([
+			expect.objectContaining({ key: 'subscription-unknown:abandoned', settled: 'UNKNOWN' })
+		]);
+		expect(fixture.items('subscription-charged').map((line) => line.variantId)).toEqual([VARIANT]);
+	});
+
 	it('refuses another change while one is being settled, and replaces one abandoned past the lease', async () => {
 		const abandoned = {
 			key: `${SUBSCRIPTION}:abandoned`,
