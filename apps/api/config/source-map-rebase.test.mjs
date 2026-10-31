@@ -12,8 +12,10 @@ const { isRelativeSourcePath, rebaseSourceMap, sourceMapRebaseTransform } = requ
 const { getCopyPatterns } = require('./webpack-package-copy-patterns.js');
 
 // A workspace laid out like this repository: compiled packages under dist/packages, the API's copies under
-// dist/apps/api/node_modules/@gauzy.
-const WORKSPACE = path.resolve(os.tmpdir(), 'gauzy-source-map-rebase-workspace');
+// dist/apps/api/node_modules/@gauzy. A new directory for each run, removed when it ends, so that runs never share
+// or delete each other's fixtures.
+const WORKSPACE = fs.mkdtempSync(path.join(os.tmpdir(), 'gauzy-source-map-rebase-'));
+after(() => fs.rmSync(WORKSPACE, { recursive: true, force: true }));
 const COMPILED = path.join(WORKSPACE, 'dist', 'packages', 'core');
 const COPIED = path.join(WORKSPACE, 'dist', 'apps', 'api', 'node_modules', '@gauzy', 'core');
 const BOOTSTRAP = path.join('src', 'lib', 'bootstrap');
@@ -145,7 +147,6 @@ describe('getCopyPatterns', () => {
 	const distPackages = path.join(WORKSPACE, 'dist', 'packages');
 	const target = path.join(WORKSPACE, 'dist', 'apps', 'api', 'node_modules', '@gauzy');
 
-	fs.rmSync(WORKSPACE, { recursive: true, force: true });
 	fs.mkdirSync(path.join(COMPILED, BOOTSTRAP), { recursive: true });
 	fs.writeFileSync(path.join(COMPILED, 'package.json'), JSON.stringify({ name: '@gauzy/core' }));
 	// @gauzy/config, whose environment.js the build replaces with the requested environment.
@@ -157,8 +158,6 @@ describe('getCopyPatterns', () => {
 		path.join(environments, 'select-compiled-environment.js'),
 		'exports.compiledEnvironmentContent = (_dir, environment) => `selected:${environment}`;'
 	);
-
-	after(() => fs.rmSync(WORKSPACE, { recursive: true, force: true }));
 
 	/** Runs a pattern's transform, whether it is a function or a `{ transformer, cache }` object. */
 	const run = (pattern, content, absoluteFrom) =>
