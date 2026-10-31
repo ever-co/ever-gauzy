@@ -352,7 +352,10 @@ describe('buildPresetRanges — the menu offers whole days, weeks, months and ye
 
 		expect(span(ranges[DateRangeKeyEnum.TODAY])).toEqual(['2026-09-23', '2026-09-23']);
 		expect(span(ranges[DateRangeKeyEnum.YESTERDAY])).toEqual(['2026-09-22', '2026-09-22']);
-		expect(span(ranges[DateRangeKeyEnum.CURRENT_WEEK])).toEqual([day(weekStart), day(weekStart.clone().endOf('week'))]);
+		expect(span(ranges[DateRangeKeyEnum.CURRENT_WEEK])).toEqual([
+			day(weekStart),
+			day(weekStart.clone().endOf('week'))
+		]);
 		expect(span(ranges[DateRangeKeyEnum.LAST_WEEK])).toEqual([
 			day(weekStart.clone().subtract(1, 'week')),
 			day(weekStart.clone().subtract(1, 'week').endOf('week'))

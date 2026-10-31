@@ -15,7 +15,10 @@ describe('isPlaceholderReceipt — the sample invoice is not a receipt', () => {
 
 	it.each([
 		['an uploaded receipt', UPLOADED],
-		['a receipt that merely shares the file name', 'https://files.example.com/attach_receipts/invoice-template.png'],
+		[
+			'a receipt that merely shares the file name',
+			'https://files.example.com/attach_receipts/invoice-template.png'
+		],
 		['an empty string', ''],
 		['null', null],
 		['undefined', undefined]

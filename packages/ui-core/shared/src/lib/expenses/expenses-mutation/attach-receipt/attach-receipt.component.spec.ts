@@ -57,7 +57,9 @@ describe('AttachReceiptComponent — an expense without a receipt shows no recei
 	it('shows a receipt that was really uploaded', () => {
 		open('https://files.example.com/attach_receipts/receipt-42.png');
 
-		expect(image().nativeElement.getAttribute('src')).toBe('https://files.example.com/attach_receipts/receipt-42.png');
+		expect(image().nativeElement.getAttribute('src')).toBe(
+			'https://files.example.com/attach_receipts/receipt-42.png'
+		);
 		expect(hint()).toBeNull();
 	});
 

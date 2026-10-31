@@ -10,7 +10,11 @@ const days = ({ startDate, endDate }: IDateRangePicker): [string, string] => [
 ];
 
 /** A range built from LOCAL parts (month is 0-indexed), so the days are the same in every zone. */
-const range = (start: [number, number, number], end: [number, number, number], isCustomDate = false): IDateRangePicker => ({
+const range = (
+	start: [number, number, number],
+	end: [number, number, number],
+	isCustomDate = false
+): IDateRangePicker => ({
 	startDate: new Date(start[0], start[1], start[2]),
 	endDate: new Date(end[0], end[1], end[2], 23, 59, 59, 999),
 	isCustomDate
