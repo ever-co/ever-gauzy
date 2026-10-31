@@ -20,9 +20,10 @@
  * Routes. Both templates serve the web app and the API from one origin, so a path the API serves but the proxy sends
  * to the web app is a feature that silently does not work (GraphQL did, at first). The API's paths are read from
  * where it declares them: the REST global prefix (`packages/core/src/lib/bootstrap/index.ts`), the uploaded files'
- * `serveRoot` (`packages/core/src/lib/helper.ts`) and the GraphQL path (`packages/constants/src/lib/api.ts`). Each
- * must reach the API, App Platform's with its path kept (`preserve_path_prefix: true`), and the web app's own paths
- * must not.
+ * `serveRoot` (`packages/core/src/lib/helper.ts`), the GraphQL path (`packages/constants/src/lib/api.ts`) and the
+ * Swagger UI path with its OpenAPI documents (`packages/core/src/lib/bootstrap/swagger.ts`). Each must reach the API,
+ * App Platform's with its path kept (`preserve_path_prefix: true`), and the web app's own paths must not. (The Scalar
+ * reference that `swagger.ts` also mounts is left out on purpose: see the comment in the Caddyfile.)
  *
  * Read by hand rather than with a YAML parser: this job installs nothing (see static-checks.yml), and the shapes
  * below are the ones these templates use. A list or path the reader cannot find is reported rather than skipped.
@@ -39,6 +40,7 @@ const SECRETS_SOURCE = 'packages/core/src/lib/bootstrap/validate-secrets.ts';
 const REST_PREFIX_SOURCE = 'packages/core/src/lib/bootstrap/index.ts';
 const FILES_ROOT_SOURCE = 'packages/core/src/lib/helper.ts';
 const GRAPHQL_PATH_SOURCE = 'packages/constants/src/lib/api.ts';
+const SWAGGER_PATH_SOURCE = 'packages/core/src/lib/bootstrap/swagger.ts';
 
 const APP_PLATFORM_TEMPLATE = '.do/deploy.template.yaml';
 const CADDYFILE = '.deploy/caddy/Caddyfile';
@@ -53,6 +55,15 @@ const COMPOSE_ONLY_SECRETS = ['DB_PASS'];
 
 /** Paths of the web app, which must not be sent to the API. */
 const WEB_APP_PATHS = ['/', '/auth/login'];
+
+/** What each kind of API path serves; `apiPaths` returns at least one path of each kind it finds. */
+export const API_PATH_KINDS = {
+	rest: 'REST',
+	graphql: 'GraphQL, including the subscription socket',
+	files: 'uploaded files',
+	swagger: 'Swagger UI',
+	openApi: 'the OpenAPI document'
+};
 
 /**
  * The secrets the API requires, as read from `validate-secrets.ts`.
@@ -72,25 +83,37 @@ export function requiredSecrets(source) {
 /**
  * The paths the API serves outside the web app, as read from where the API declares them.
  *
- * @param {{ restPrefix: string, filesRoot: string, graphqlPath: string }} sources The texts of the three files.
- * @returns {Array<{ path: string, what: string }>} Request paths that must reach the API; empty for a declaration
+ * @param {{ restPrefix: string, filesRoot: string, graphqlPath: string, swaggerPath: string }} sources The texts of
+ *   the four files.
+ * @returns {Array<{ path: string, what: string }>} Request paths that must reach the API; none for a declaration
  *   that is not found.
  */
-export function apiPaths({ restPrefix, filesRoot, graphqlPath }) {
+export function apiPaths({ restPrefix, filesRoot, graphqlPath, swaggerPath }) {
 	const rest = /const globalPrefix = '([^']+)'/.exec(restPrefix)?.[1];
 	const files = /serveRoot: '([^']+)'/.exec(filesRoot)?.[1];
 	const graphql = /export const DEFAULT_GRAPHQL_API_PATH = '([^']+)'/.exec(graphqlPath)?.[1];
+	// The default of setupSwagger's `swaggerPath` option. Nest serves the UI's page and files under it, and the
+	// OpenAPI document next to it, at `<path>-json` and `<path>-yaml`.
+	const swagger = /\bswaggerPath = '([^']+)'/.exec(swaggerPath)?.[1];
 	const under = (root, name) => `/${root.replace(/^\/+|\/+$/g, '')}${name ? `/${name}` : ''}`;
 
 	return [
 		...(rest
 			? [
-					{ path: under(rest), what: 'REST' },
-					{ path: under(rest, 'health'), what: 'REST' }
+					{ path: under(rest), what: API_PATH_KINDS.rest },
+					{ path: under(rest, 'health'), what: API_PATH_KINDS.rest }
 				]
 			: []),
-		...(graphql ? [{ path: under(graphql), what: 'GraphQL, including the subscription socket' }] : []),
-		...(files ? [{ path: under(files, 'avatar.png'), what: 'uploaded files' }] : [])
+		...(graphql ? [{ path: under(graphql), what: API_PATH_KINDS.graphql }] : []),
+		...(files ? [{ path: under(files, 'avatar.png'), what: API_PATH_KINDS.files }] : []),
+		...(swagger
+			? [
+					{ path: under(swagger), what: API_PATH_KINDS.swagger },
+					{ path: under(swagger, 'swagger-ui-init.js'), what: API_PATH_KINDS.swagger },
+					{ path: `${under(swagger)}-json`, what: API_PATH_KINDS.openApi },
+					{ path: `${under(swagger)}-yaml`, what: API_PATH_KINDS.openApi }
+				]
+			: [])
 	];
 }
 
@@ -379,7 +402,8 @@ function main() {
 	const paths = apiPaths({
 		restPrefix: read(REST_PREFIX_SOURCE),
 		filesRoot: read(FILES_ROOT_SOURCE),
-		graphqlPath: read(GRAPHQL_PATH_SOURCE)
+		graphqlPath: read(GRAPHQL_PATH_SOURCE),
+		swaggerPath: read(SWAGGER_PATH_SOURCE)
 	});
 
 	const problems = [];
@@ -388,10 +412,12 @@ function main() {
 			`${SECRETS_SOURCE}: CHECKED_SECRETS or KNOWN_DEFAULT_SEED_CREDENTIALS not found; update this gate's reader`
 		);
 	}
-	if (new Set(paths.map((path) => path.what)).size < 3) {
+	const found = new Set(paths.map((path) => path.what));
+	const missing = Object.values(API_PATH_KINDS).filter((kind) => !found.has(kind));
+	if (missing.length > 0) {
 		problems.push(
-			`the API's REST prefix, GraphQL path or uploaded files root was not found in ${REST_PREFIX_SOURCE}, ` +
-				`${GRAPHQL_PATH_SOURCE} or ${FILES_ROOT_SOURCE}; update this gate's reader`
+			`the API's paths for ${missing.join(', ')} were not found in ${REST_PREFIX_SOURCE}, ${GRAPHQL_PATH_SOURCE}, ` +
+				`${FILES_ROOT_SOURCE} or ${SWAGGER_PATH_SOURCE}; update this gate's reader`
 		);
 	}
 	const report = (file, found) => problems.push(...found.map((problem) => `${file}: ${problem}`));

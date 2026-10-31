@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+	API_PATH_KINDS,
 	apiPaths,
 	appPlatformEnvs,
 	appPlatformProblems,
@@ -49,22 +50,34 @@ describe('apiPaths', () => {
 	const sources = {
 		restPrefix: "\tconst globalPrefix = 'api';\n\tapp.setGlobalPrefix(globalPrefix);",
 		filesRoot: "\t\t\tserveRoot: '/public/', // Root URL from which the static files are served",
-		graphqlPath: "export const DEFAULT_GRAPHQL_API_PATH = 'graphql';"
+		graphqlPath: "export const DEFAULT_GRAPHQL_API_PATH = 'graphql';",
+		swaggerPath:
+			"\t\tversion = '1.0',\n\t\tswaggerPath = 'swg',\n\t\tscalarPath = 'docs',\n\t\tswaggerPath?: string;"
 	};
 
-	it('reads the REST prefix, the GraphQL path and the uploaded files root where the API declares them', () => {
+	it('reads the REST prefix, the GraphQL path, the uploaded files root and the Swagger UI path where the API declares them', () => {
 		assert.deepEqual(apiPaths(sources), [
 			{ path: '/api', what: 'REST' },
 			{ path: '/api/health', what: 'REST' },
 			{ path: '/graphql', what: 'GraphQL, including the subscription socket' },
-			{ path: '/public/avatar.png', what: 'uploaded files' }
+			{ path: '/public/avatar.png', what: 'uploaded files' },
+			{ path: '/swg', what: 'Swagger UI' },
+			{ path: '/swg/swagger-ui-init.js', what: 'Swagger UI' },
+			{ path: '/swg-json', what: 'the OpenAPI document' },
+			{ path: '/swg-yaml', what: 'the OpenAPI document' }
 		]);
+		assert.deepEqual(new Set(apiPaths(sources).map((path) => path.what)), new Set(Object.values(API_PATH_KINDS)));
 	});
 
 	it('leaves out a declaration it cannot find (the gate then reports it)', () => {
 		const paths = apiPaths({ ...sources, graphqlPath: "export const GRAPHQL_PATH = 'graphql';" });
 		assert.equal(
 			paths.some((path) => path.what.startsWith('GraphQL')),
+			false
+		);
+		const withoutSwagger = apiPaths({ ...sources, swaggerPath: "SwaggerModule.setup('swg', app, document);" });
+		assert.equal(
+			withoutSwagger.some((path) => path.path.startsWith('/swg')),
 			false
 		);
 	});

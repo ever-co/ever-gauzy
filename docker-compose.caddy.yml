@@ -4,8 +4,8 @@
 #   docker compose -f docker-compose.caddy.yml --env-file .env.caddy up -d
 #
 # Caddy is the only service published on the host (ports 80 and 443). It serves the web app and the API from ONE
-# origin, https://$GAUZY_DOMAIN: /api/*, /graphql and /public/* go to the API, everything else to the web app (see
-# .deploy/caddy/Caddyfile). With the default GAUZY_DOMAIN=localhost Caddy uses its own local certificate authority,
+# origin, https://$GAUZY_DOMAIN: /api/*, /graphql, /public/* and /swg (Swagger UI) go to the API, everything else to
+# the web app (see .deploy/caddy/Caddyfile). With the default GAUZY_DOMAIN=localhost Caddy uses its own local certificate authority,
 # so the stack runs on your machine without a domain (your browser warns until you trust Caddy's root certificate);
 # with a real domain pointing at this host it gets a Let's Encrypt / ZeroSSL certificate by itself.
 #
