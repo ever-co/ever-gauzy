@@ -14,6 +14,15 @@ jest.mock('@gauzy/core', () => {
 
 	class BaseEntity {}
 
+	const RequestContext = {
+		currentUser: () => null,
+		currentUserId: () => null,
+		currentTenantId: (): string | null => null,
+		currentOrganizationId: (): string | null => null,
+		currentEmployeeId: () => null,
+		hasPermission: () => false
+	};
+
 	class TenantAwareCrudService {
 		constructor(
 			protected readonly typeOrmRepository: any,
@@ -24,8 +33,19 @@ jest.mock('@gauzy/core', () => {
 			return 'typeorm';
 		}
 
+		/** The platform's read, kept inside the caller's tenant and organization (a caller confined to one). */
 		async find(options: any = {}): Promise<any> {
-			return this.typeOrmRepository.find(options);
+			const tenantId = RequestContext.currentTenantId();
+			const organizationId = RequestContext.currentOrganizationId();
+
+			return this.typeOrmRepository.find({
+				...options,
+				where: {
+					...(options.where ?? {}),
+					...(tenantId ? { tenantId } : {}),
+					...(organizationId ? { organizationId } : {})
+				}
+			});
 		}
 
 		async paginate(options: any = {}): Promise<any> {
@@ -108,14 +128,8 @@ jest.mock('@gauzy/core', () => {
 			static readonly DEFAULT_STALE_LOCK_MS = 2 * 60 * 1000;
 		},
 		SequenceService: class SequenceService {},
-		RequestContext: {
-			currentUser: () => null,
-			currentUserId: () => null,
-			currentTenantId: () => null,
-			currentOrganizationId: () => null,
-			currentEmployeeId: () => null,
-			hasPermission: () => false
-		}
+		// The same object the base class reads, so a suite's spies on it reach the base class's scope too.
+		RequestContext
 	};
 });
 
@@ -1274,6 +1288,27 @@ describe('SubscriptionBillingService — a charge in flight fences the cycle (ch
 			status: SubscriptionBillingStatus.PENDING,
 			chargeClaimToken: 'another-pass'
 		});
+	});
+
+	it('refuses a late pass’s invoice of a cycle the recovering pass already recorded', async () => {
+		const fixture = billingFixture([
+			billingRow('billing-1', { status: SubscriptionBillingStatus.PAID, paidAt: new Date(), orderId: 'order-1' })
+		]);
+
+		await expect(
+			fixture.service.markInvoiced('billing-1', 'order-1', undefined, undefined, 'the-pass-whose-claim-went-stale')
+		).rejects.toMatchObject(claimLost);
+		expect(fixture.billing('billing-1')).toMatchObject({ status: SubscriptionBillingStatus.PAID });
+	});
+
+	it('fences a cycle of another organization that the base class’s soft removal reaches (a tenant admin’s)', async () => {
+		// The caller works in ORG; the base class's own read reaches the tenant's other organization, as it does for a
+		// tenant admin, so the fence is written in the cycle's own organization rather than the caller's.
+		const fixture = billingFixture([billingRow('theirs', { organizationId: OTHER_ORG, ...live() })]);
+
+		await expect(fixture.service.softRemove('theirs')).rejects.toMatchObject(inFlight);
+		expect(fixture.billing('theirs')?.deletedAt).toBeUndefined();
+		expect(fixture.billing('theirs')?.chargeClaimToken).toBe('another-pass');
 	});
 
 	it('does not write a late invoice over a cycle an operator settled once the pass’s claim went stale', async () => {

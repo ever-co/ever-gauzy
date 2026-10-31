@@ -2377,7 +2377,10 @@ describe('SubscriptionService — a cycle’s charge is fenced against an operat
 		}
 	);
 
-	it('records no second success for a late payment of a cycle the recovering pass already paid', async () => {
+	it.each([
+		['payment', true],
+		['invoice', false]
+	])('records no second success for a late %s of a cycle the recovering pass already paid (paid: %s)', async (_outcome, paid) => {
 		let fixture: ReturnType<typeof subscriptionFixture>;
 		fixture = subscriptionFixture({
 			orders: () => {
@@ -2390,7 +2393,7 @@ describe('SubscriptionService — a cycle’s charge is fenced against an operat
 					chargeClaimedAt: null
 				});
 
-				return { orderId: 'order-1', paid: true };
+				return { orderId: 'order-1', paid };
 			}
 		});
 

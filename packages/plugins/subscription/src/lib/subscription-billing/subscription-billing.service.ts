@@ -145,6 +145,17 @@ function paidByAnotherPass(billing: SubscriptionBilling, byOperator: boolean): C
 	return !byOperator && billing.orderId ? chargeClaimLost(billing, 'paid') : null;
 }
 
+/**
+ * @param billing A cycle as it was read.
+ * @returns The tenant and organization it belongs to, carrying only the identifiers it has.
+ */
+function scopeOf(billing: SubscriptionBilling): { tenantId?: ID; organizationId?: ID } {
+	return {
+		...(billing.tenantId ? { tenantId: billing.tenantId } : {}),
+		...(billing.organizationId ? { organizationId: billing.organizationId } : {})
+	};
+}
+
 /** The refusal of a hard delete of a cycle that records money billed (doc 13 §11.4). */
 function notDeletable(billed: SubscriptionBilling): ConflictException {
 	return new ConflictException({
@@ -443,7 +454,10 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 				async () => {
 					const current = await this.findOneScoped(id);
 
-					return CHARGEABLE_FROM.includes(current.status as SubscriptionBillingStatus)
+					// Still chargeable, or already carrying an order (only the run writes `orderId`): either way the pass
+					// that recovered this pass's claim holds the cycle, and records and finishes it. A cycle settled
+					// without an order is an operator's decision, which the run keeps.
+					return CHARGEABLE_FROM.includes(current.status as SubscriptionBillingStatus) || current.orderId
 						? chargeClaimLost(current, 'invoiced')
 						: invalidTransition(current, 'invoiced', CHARGEABLE_FROM);
 				},
@@ -871,8 +885,9 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * `SUBSCRIPTION_BILLING_NOT_DELETABLE`, and `DELETE /subscription-billings/:id/soft` retires it while keeping the
 	 * history. The refusal is made here, below the route, so any caller of the generic delete is held to it.
 	 *
-	 * The cycles are read inside the caller's tenant and organization, as `findOneScoped` reads them; a cycle that is
-	 * not the caller's is left to the base class, which answers it exactly as it did before.
+	 * The cycles are read through the base class's own scope, the one its DELETE runs in, so every cycle the DELETE can
+	 * reach is checked; a cycle that is not the caller's is left to the base class, which answers it exactly as before.
+	 * Each chargeable one is fenced against the billing run until the DELETE lands (`fencedAgainstCharges`).
 	 *
 	 * @param criteria The cycle, or the conditions that select the cycles to remove.
 	 * @param options The inherited options, forwarded to the base class.
@@ -882,9 +897,9 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 */
 	public async delete(criteria: ID | FindOptionsWhere<SubscriptionBilling>, options?: any): Promise<DeleteResult> {
 		const where = typeof criteria === 'string' ? { id: criteria } : { ...(criteria ?? {}) };
-		const cycles = await this.typeOrmSubscriptionBillingRepository.find({
-			where: { ...where, ...currentScope() } as FindOptionsWhere<SubscriptionBilling>
-		});
+		// Read through the base class's own scope, the one its DELETE runs in, so every cycle the DELETE can reach is
+		// checked and fenced - a tenant admin reaches every organization of the tenant, not only the selected one.
+		const cycles = await this.find({ where: where as FindOptionsWhere<SubscriptionBilling> });
 		const billed = cycles.find(recordsBilledMoney);
 
 		if (billed) {
@@ -924,7 +939,9 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a billing pass is charging it.
 	 */
 	public async softRemove(id: ID, options?: any, saveOptions?: any): Promise<SubscriptionBilling> {
-		const billing = await this.cyclesOn().findOne({ where: { id, ...currentScope() } });
+		// The base class's own read, so the cycle fenced is the one its soft removal reaches. The inherited route's rest
+		// parameter is not find options, so none are passed.
+		const billing = await this.findOneByIdString(id).catch(() => null);
 
 		if (!billing) {
 			return super.softRemove(id, options, saveOptions);
@@ -943,9 +960,8 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 */
 	public async softDelete(criteria: string | number | FindOptionsWhere<SubscriptionBilling>, options?: any): Promise<any> {
 		const where = typeof criteria === 'object' && criteria !== null ? { ...criteria } : { id: criteria };
-		const cycles = await this.typeOrmSubscriptionBillingRepository.find({
-			where: { ...where, ...currentScope() } as FindOptionsWhere<SubscriptionBilling>
-		});
+		// The base class's own scope, the one its soft delete runs in.
+		const cycles = await this.find({ where: where as FindOptionsWhere<SubscriptionBilling> });
 
 		return this.fencedAgainstCharges(cycles, 'retired', () => super.softDelete(criteria as any, options));
 	}
@@ -961,7 +977,11 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * Settled cycles are not fenced, since no pass charges them. The fences are released afterwards, whatever the write
 	 * did; a removed row matches nothing.
 	 *
-	 * @param cycles The cycles the write selects, as they were read.
+	 * Each fence is written in the tenant and organization the cycle was read in, not the caller's current scope: the
+	 * write being fenced is the base class's, which reaches every organization the caller may write to (a tenant
+	 * admin's, all of the tenant's), so the fence names exactly the row that write reaches.
+	 *
+	 * @param cycles The cycles the write selects, as the base class's own scope read them.
 	 * @param action What the write does to them, for the refusal.
 	 * @param write The write, handed the cycles as they stand under the fence.
 	 * @returns What the write answers.
@@ -971,7 +991,7 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		action: string,
 		write: (fenced: SubscriptionBilling[]) => Promise<R>
 	): Promise<R> {
-		const fences: Array<{ id: ID; token: string }> = [];
+		const fences: Array<{ where: FindOptionsWhere<SubscriptionBilling>; token: string }> = [];
 
 		try {
 			const fenced: SubscriptionBilling[] = [];
@@ -982,26 +1002,36 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 					continue;
 				}
 
-				const claim = await this.claimCharge(cycle.id);
+				const row = { id: cycle.id, ...scopeOf(cycle) } as FindOptionsWhere<SubscriptionBilling>;
+				const token = randomUUID();
+				const now = new Date();
+				const claimed = await this.typeOrmSubscriptionBillingRepository.update(
+					{ ...row, status: In([...CHARGEABLE_FROM]), ...noLiveChargeClaim(now) } as FindOptionsWhere<SubscriptionBilling>,
+					{ chargeClaimToken: token, chargeClaimedAt: now } as any
+				);
+				const current = (await this.typeOrmSubscriptionBillingRepository.findOne({ where: row })) ?? cycle;
 
-				if (claim.token) {
-					fences.push({ id: cycle.id, token: claim.token });
-				} else if (holdsLiveChargeClaim(claim.billing)) {
-					throw chargeInFlight(claim.billing, action);
+				if (claimed?.affected) {
+					fences.push({ where: row, token });
+				} else if (holdsLiveChargeClaim(current, now)) {
+					throw chargeInFlight(current, action);
 				}
 
-				fenced.push(claim.billing);
+				fenced.push(current);
 			}
 
 			return await write(fenced);
 		} finally {
 			for (const fence of fences) {
 				try {
-					await this.releaseChargeClaim(fence.id, fence.token);
+					await this.typeOrmSubscriptionBillingRepository.update(
+						{ ...fence.where, chargeClaimToken: fence.token } as FindOptionsWhere<SubscriptionBilling>,
+						{ ...NO_CHARGE_CLAIM } as any
+					);
 				} catch (error) {
 					this.logger.warn(
-						`Subscription billing cycle ${fence.id}: the fence of an operator's write was not released ` +
-							`(${(error as Error)?.message ?? error}); it goes stale.`
+						`Subscription billing cycle ${String(fence.where.id)}: the fence of an operator's write was not ` +
+							`released (${(error as Error)?.message ?? error}); it goes stale.`
 					);
 				}
 			}
