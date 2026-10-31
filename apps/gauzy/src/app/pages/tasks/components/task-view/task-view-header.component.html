@@ -1,14 +1,15 @@
-<header class="task-view-header" [class.is-large]="large">
+<header class="task-view-header">
 	<div class="task-view-crumbs">
 		@if (task?.project?.name) {
-			<span class="task-view-project">
-				@if (task.project.imageUrl) {
-					<img [src]="task.project.imageUrl" alt="" />
-				} @else {
-					<nb-icon icon="folder-outline"></nb-icon>
-				}
-				<span class="task-view-project-name">{{ task.project.name }}</span>
-			</span>
+			@if (projectLink) {
+				<a class="task-view-project" [routerLink]="projectLink">
+					<ng-container *ngTemplateOutlet="project"></ng-container>
+				</a>
+			} @else {
+				<span class="task-view-project">
+					<ng-container *ngTemplateOutlet="project"></ng-container>
+				</span>
+			}
 			<nb-icon class="task-view-sep" icon="chevron-right-outline"></nb-icon>
 		}
 		<span class="task-view-key">{{ $any(task)?.taskNumber | hash }}</span>
@@ -20,3 +21,12 @@
 		}}</span>
 	}
 </header>
+
+<ng-template #project>
+	@if (task.project.imageUrl) {
+		<img [src]="task.project.imageUrl" alt="" />
+	} @else {
+		<nb-icon icon="folder-outline"></nb-icon>
+	}
+	<span class="task-view-project-name">{{ task.project.name }}</span>
+</ng-template>
