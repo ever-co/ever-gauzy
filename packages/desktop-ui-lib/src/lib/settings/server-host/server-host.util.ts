@@ -252,24 +252,32 @@ function classifyName(hostname: string): 'ipv4' | 'hostname' | 'invalid' {
 	if (ascii === null) {
 		return 'invalid';
 	}
-	if (isIPv4(ascii)) {
+	// A URL host may end with a dot, an IPv4 address too: `192.168.1.20.` opens `192.168.1.20`.
+	if (isIPv4(ascii.endsWith('.') ? ascii.slice(0, -1) : ascii)) {
 		return 'ipv4';
 	}
 	return isHostName(ascii) ? 'hostname' : 'invalid';
 }
 
+/** Added to a name before the URL parser maps it, so that it reads the name as a domain (see {@link toAsciiName}). */
+const DOMAIN_LABEL_SUFFIX = '.x';
+
 /**
  * A name as a URL host holds it. An internationalised name (`bücher.example`) becomes its punycode
  * form (`xn--bcher-kva.example`), with the mappings browsers apply (fullwidth letters, digits, dots).
  * Null when browsers refuse it as a host, such as `bad／host`, whose fullwidth slash maps to `/`.
- * An ASCII name is returned as it is: the URL parser would also turn `192.168.1` into an address.
+ *
+ * The URL parser would also rewrite a name that looks like an IPv4 address (`192.168.1。020` becomes
+ * `192.168.1.16`), so it gets a last label that is not a number, and the octets are checked as typed.
+ * An ASCII name is returned as it is, for the same reason.
  */
 function toAsciiName(name: string): string | null {
 	if (ASCII_PATTERN.test(name)) {
 		return name;
 	}
 	try {
-		return new URL(`http://${name}`).hostname;
+		const hostname = new URL(`http://${name}${DOMAIN_LABEL_SUFFIX}`).hostname;
+		return hostname.endsWith(DOMAIN_LABEL_SUFFIX) ? hostname.slice(0, -DOMAIN_LABEL_SUFFIX.length) : null;
 	} catch {
 		return null;
 	}

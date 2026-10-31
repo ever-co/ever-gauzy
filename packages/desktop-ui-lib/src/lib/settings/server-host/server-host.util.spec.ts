@@ -40,6 +40,9 @@ describe('parseServerHost', () => {
 		['☕.example', 'hostname'],
 		['１９２.１６８.１.２０', 'ipv4'],
 		['192.168.001.001', 'ipv4'],
+		['192.168.1.20.', 'ipv4'],
+		['http://192.168.1.20.:3000', 'ipv4'],
+		['192.168.1。20', 'ipv4'],
 		['192.168.1.07', 'ipv4'],
 		['00.0.0.0', 'ipv4'],
 		['::ffff:0.0.0.0', 'ipv6'],
@@ -113,7 +116,11 @@ describe('parseServerHost', () => {
 			['010.0.0.1', '8.0.0.1'],
 			['192.168.001.020', '192.168.1.16'],
 			['192.168.1.099', 'nothing (refused)'],
-			['192.168.1.08', 'nothing (refused)']
+			['192.168.1.08', 'nothing (refused)'],
+			['192.168.1.020.', '192.168.1.16'],
+			// A fullwidth or ideographic dot and fullwidth digits map to ASCII ones first.
+			['192.168.1。020', '192.168.1.16'],
+			['192．168．1．０２０', '192.168.1.16']
 		])('rejects %s, which a browser opens as %s', (value) => {
 			expect(parseServerHost(value).kind).toBe('invalid');
 		});
@@ -185,7 +192,8 @@ describe('isValidServerHost', () => {
 		'http://192.168.1.20:3000',
 		'https://gauzy.example.com',
 		'bücher.example',
-		'192.168.001.001'
+		'192.168.001.001',
+		'192.168.1.20.'
 	])('keeps accepting %s (accepted before the check existed)', (value) => {
 		expect(isValidServerHost(value)).toBe(true);
 	});
