@@ -429,7 +429,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private async resetAtMidnight() {
 		if (TimeTrackerDateManager.isMidnight) {
 			try {
-				await this.restart();
+				// An internal split for the new day, not the user stopping and starting: no start or stop sound (#7141)
+				await this._timerSound.quietly(() => this.restart());
 			} catch (error) {
 				this._errorHandlerService.handleError(error);
 			}

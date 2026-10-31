@@ -98,6 +98,18 @@ export interface IDesktopScreenshotSoundResult {
 	error?: DesktopScreenshotSoundError;
 }
 
+/** The sound settings a desktop window reads with {@link DesktopSoundSettingsChannel.GET}, without the rest of the settings. */
+export interface IDesktopSoundSettings {
+	/** Whether a short sound plays when this computer starts or stops tracking (#7141). Off unless switched on. */
+	timerStartStopSound: boolean;
+}
+
+/** IPC channels (`ipcRenderer.invoke`) of the sound settings. */
+export enum DesktopSoundSettingsChannel {
+	/** Answers with the {@link IDesktopSoundSettings}. */
+	GET = 'GET_SOUND_SETTINGS'
+}
+
 export type TLogLevel = 'info' | 'warn' | 'error' | 'all';
 export type TServiceName = 'timer' | 'screenshot' | 'timeslot' | 'all';
 export type TSyncStatus = 'pending' | 'success' | 'failure' | 'all';

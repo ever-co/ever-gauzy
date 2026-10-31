@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { DesktopSoundSettingsChannel } from '@gauzy/contracts';
 import { firstValueFrom, from, Subject, toArray } from 'rxjs';
 import { ElectronService } from '../../electron/services';
 import { IgnitionState, ITimerIgnition, TimerStartMode } from '../+state/time-tracker.store';
@@ -30,8 +31,9 @@ function fakeAudioContext(state: AudioContextState = 'running') {
 	};
 }
 
-const enabled = { setting: { timerStartStopSound: true } };
-const disabled = { setting: { timerStartStopSound: false } };
+/** The answers of the sound settings handler (DesktopSoundSettingsChannel.GET). */
+const enabled = { timerStartStopSound: true };
+const disabled = { timerStartStopSound: false };
 
 describe('TimerSoundService', () => {
 	let electron: { invoke: jest.Mock };
@@ -60,9 +62,8 @@ describe('TimerSoundService', () => {
 		it('is on only when the setting is switched on', () => {
 			expect(isTimerSoundEnabled(enabled)).toBe(true);
 			expect(isTimerSoundEnabled(disabled)).toBe(false);
-			expect(isTimerSoundEnabled({ setting: {} })).toBe(false);
-			expect(isTimerSoundEnabled({ setting: { timerStartStopSound: 'true' } })).toBe(false);
 			expect(isTimerSoundEnabled({})).toBe(false);
+			expect(isTimerSoundEnabled({ timerStartStopSound: 'true' } as any)).toBe(false);
 			expect(isTimerSoundEnabled(null)).toBe(false);
 			expect(isTimerSoundEnabled(undefined)).toBe(false);
 		});
@@ -76,7 +77,9 @@ describe('TimerSoundService', () => {
 
 			await expect(service.play('start')).resolves.toBe(false);
 
-			expect(electron.invoke).toHaveBeenCalledWith('app_setting');
+			// Only the sound settings are read, not the whole configuration
+			expect(electron.invoke).toHaveBeenCalledWith(DesktopSoundSettingsChannel.GET);
+			expect(electron.invoke).not.toHaveBeenCalledWith('app_setting');
 			expect(createContext).not.toHaveBeenCalled();
 		});
 
@@ -180,6 +183,66 @@ describe('TimerSoundService', () => {
 			ignition$.next({ state: IgnitionState.STARTED, mode: TimerStartMode.REMOTE });
 			ignition$.next({ state: IgnitionState.STOPPED, mode: TimerStartMode.STOP });
 			subscription.unsubscribe();
+
+			expect(play).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('quietly', () => {
+		const stopped: ITimerIgnition = { state: IgnitionState.STOPPED, mode: TimerStartMode.STOP };
+		const stopping: ITimerIgnition = { state: IgnitionState.STOPPING, mode: TimerStartMode.MANUAL };
+		const starting: ITimerIgnition = { state: IgnitionState.STARTING, mode: TimerStartMode.MANUAL };
+		const startedHere: ITimerIgnition = { state: IgnitionState.STARTED, mode: TimerStartMode.MANUAL };
+		let ignition$: Subject<ITimerIgnition>;
+		let play: jest.SpyInstance;
+
+		beforeEach(() => {
+			setUp();
+			play = jest.spyOn(service, 'play');
+			ignition$ = new Subject<ITimerIgnition>();
+			service.watch(ignition$).subscribe();
+			ignition$.next(stopped);
+			ignition$.next(startedHere);
+			play.mockClear();
+		});
+
+		afterEach(() => ignition$.complete());
+
+		it('keeps the midnight rollover silent (stop, then start again for the new day)', async () => {
+			const result = await service.quietly(async () => {
+				ignition$.next(stopping);
+				ignition$.next(stopped);
+				ignition$.next(starting);
+				ignition$.next(startedHere);
+				return 'restarted';
+			});
+
+			expect(result).toBe('restarted');
+			expect(play).not.toHaveBeenCalled();
+
+			// The user stopping afterwards is cued as usual
+			ignition$.next(stopped);
+			expect(play.mock.calls).toEqual([['stop']]);
+		});
+
+		it('cues a stop when the rollover failed and left the timer stopped, and passes the error on', async () => {
+			await expect(
+				service.quietly(async () => {
+					ignition$.next(stopping);
+					ignition$.next(stopped);
+					throw new Error('could not start again');
+				})
+			).rejects.toThrow('could not start again');
+
+			expect(play.mock.calls).toEqual([['stop']]);
+		});
+
+		it('stays quiet until the last of nested quiet stretches ends', async () => {
+			await service.quietly(async () => {
+				await service.quietly(async () => ignition$.next(stopped));
+				expect(play).not.toHaveBeenCalled();
+				ignition$.next(startedHere);
+			});
 
 			expect(play).not.toHaveBeenCalled();
 		});

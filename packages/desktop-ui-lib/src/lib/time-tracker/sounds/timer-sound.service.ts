@@ -1,5 +1,6 @@
 import { inject, Injectable, InjectionToken } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { DesktopSoundSettingsChannel, IDesktopSoundSettings } from '@gauzy/contracts';
+import { BehaviorSubject, distinctUntilChanged, map, Observable, tap } from 'rxjs';
 import { ElectronService } from '../../electron/services';
 import { ITimerIgnition } from '../+state/time-tracker.store';
 import { TimerSoundCue, timerSoundCues } from './timer-sound-cues';
@@ -34,11 +35,11 @@ export const TIMER_SOUND_TONES = new InjectionToken<TimerSoundToneSet>('TIMER_SO
 });
 
 /**
- * Whether the start and stop sounds are on, from the answer of the main process's `app_setting` handler
- * (`{ setting: appSetting, ... }`). Off unless switched on (#7141).
+ * Whether the start and stop sounds are on, from the sound settings of the main process
+ * (`DesktopSoundSettingsChannel.GET`). Off unless switched on (#7141).
  */
-export function isTimerSoundEnabled(appConfig: unknown): boolean {
-	return (appConfig as { setting?: { timerStartStopSound?: unknown } } | null)?.setting?.timerStartStopSound === true;
+export function isTimerSoundEnabled(settings: Partial<IDesktopSoundSettings> | null | undefined): boolean {
+	return settings?.timerStartStopSound === true;
 }
 
 /**
@@ -51,6 +52,8 @@ export class TimerSoundService {
 	private readonly _createContext = inject(TIMER_SOUND_AUDIO_CONTEXT);
 	private readonly _tones = inject(TIMER_SOUND_TONES);
 	private _context: ITimerSoundOutput | null = null;
+	/** How many quiet stretches are running (see {@link quietly}). */
+	private readonly _quietDepth$ = new BehaviorSubject(0);
 
 	/**
 	 * Plays the cues of the timer's ignition changes, from the moment of subscribing.
@@ -58,10 +61,28 @@ export class TimerSoundService {
 	 * @returns The cues, as they are played (or skipped while the setting is off).
 	 */
 	public watch(ignition$: Observable<ITimerIgnition>): Observable<TimerSoundCue> {
+		const quiet$ = this._quietDepth$.pipe(
+			map((depth) => depth > 0),
+			distinctUntilChanged()
+		);
 		return ignition$.pipe(
-			timerSoundCues(),
+			timerSoundCues(quiet$),
 			tap((cue) => void this.play(cue))
 		);
+	}
+
+	/**
+	 * Runs an internal split of the timer, such as the midnight rollover (stop, then start again for the new day),
+	 * without the start and stop cues: the user did not start or stop anything. Only what it changed in the end is
+	 * cued: a stop when the timer stayed stopped.
+	 */
+	public async quietly<T>(work: () => Promise<T>): Promise<T> {
+		this._quietDepth$.next(this._quietDepth$.value + 1);
+		try {
+			return await work();
+		} finally {
+			this._quietDepth$.next(Math.max(this._quietDepth$.value - 1, 0));
+		}
 	}
 
 	/**
@@ -71,8 +92,11 @@ export class TimerSoundService {
 	 */
 	public async play(cue: TimerSoundCue): Promise<boolean> {
 		try {
-			// Read on each cue, so switching the setting applies at once, from any window
-			if (!isTimerSoundEnabled(await this._electronService.invoke('app_setting'))) {
+			// Read only the sound settings, on each cue, so switching the setting applies at once, from any window
+			const settings = await this._electronService.invoke<void, IDesktopSoundSettings>(
+				DesktopSoundSettingsChannel.GET
+			);
+			if (!isTimerSoundEnabled(settings)) {
 				return false;
 			}
 			const tones = this._tones[cue];

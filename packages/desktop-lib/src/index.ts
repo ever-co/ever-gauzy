@@ -23,6 +23,7 @@ export * from './lib/offline/desktop-offline-mode-handler';
 export * from './lib/plugin-system';
 export * from './lib/protocol';
 export * from './lib/screenshot-sound';
+export * from './lib/sound-settings';
 export * from './lib/server';
 export * from './lib/states';
 export * from './lib/strategies';
