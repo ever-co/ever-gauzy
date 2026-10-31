@@ -3,7 +3,13 @@ import { combineLatest, EMPTY } from 'rxjs';
 import { catchError, debounceTime, filter, startWith, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { FeatureEnum, IDashboard, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import {
+	FeatureEnum,
+	IDashboard,
+	IOrganization,
+	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DashboardStoreService } from '../../services/dashboard/dashboard-store.service';
@@ -878,7 +884,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							...this._addLink(
 								'/pages/contacts/leads?openAddDialog=true',
 								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_CONTACT_EDIT
+								...ORGANIZATION_CONTACT_CREATE_PERMISSIONS
 							)
 						}
 					},
@@ -892,7 +898,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							...this._addLink(
 								'/pages/contacts/customers?openAddDialog=true',
 								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_CONTACT_EDIT
+								...ORGANIZATION_CONTACT_CREATE_PERMISSIONS
 							)
 						}
 					},
@@ -906,7 +912,7 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 							...this._addLink(
 								'/pages/contacts/clients?openAddDialog=true',
 								PermissionsEnum.ALL_ORG_EDIT,
-								PermissionsEnum.ORG_CONTACT_EDIT
+								...ORGANIZATION_CONTACT_CREATE_PERMISSIONS
 							)
 						}
 					}

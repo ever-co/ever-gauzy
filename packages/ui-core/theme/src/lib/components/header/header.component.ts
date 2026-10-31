@@ -16,6 +16,7 @@ import {
 	IOrganizationProject,
 	ISelectedEmployee,
 	IUser,
+	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
 	PermissionsEnum,
 	TimeLogSourceEnum,
 	TimeLogType
@@ -1058,7 +1059,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 					]
 				: []),
 			// Divider (Contacts)
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(this.store.hasAnyPermission(...ORGANIZATION_CONTACT_CREATE_PERMISSIONS, PermissionsEnum.ALL_ORG_EDIT)
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_LEAD'),
@@ -1077,7 +1078,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						}
 					]
 				: []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(this.store.hasAnyPermission(...ORGANIZATION_CONTACT_CREATE_PERMISSIONS, PermissionsEnum.ALL_ORG_EDIT)
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_CUSTOMER'),
@@ -1096,7 +1097,7 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 						}
 					]
 				: []),
-			...(this.store.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT, PermissionsEnum.ALL_ORG_EDIT)
+			...(this.store.hasAnyPermission(...ORGANIZATION_CONTACT_CREATE_PERMISSIONS, PermissionsEnum.ALL_ORG_EDIT)
 				? [
 						{
 							title: this.getTranslation('QUICK_ACTIONS_MENU.CREATE_CLIENT'),

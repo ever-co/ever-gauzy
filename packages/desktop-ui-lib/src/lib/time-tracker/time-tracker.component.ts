@@ -21,6 +21,7 @@ import {
 	ITimeLog,
 	ITimeSlot,
 	ITimeSlotTimeLogs,
+	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
 	PermissionsEnum,
 	TaskStatusEnum,
 	TimerActionTypeEnum,
@@ -103,7 +104,7 @@ import { TaskSelectorService } from '../shared/features/task-selector/+state/tas
 import { TeamSelectorService } from '../shared/features/team-selector/+state/team-selector.service';
 import { TimeTrackerFormComponent } from '../shared/features/time-tracker-form/time-tracker-form.component';
 import { TimeTrackerFormService } from '../shared/features/time-tracker-form/time-tracker-form.service';
-import { hasAllPermissions } from '../shared/utils/permission.util';
+import { hasAllPermissions, hasAnyPermission } from '../shared/utils/permission.util';
 import { SelectorValidator } from '../shared/utils/validation/selector.validator';
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
@@ -283,9 +284,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 						permissions,
 						PermissionsEnum.ORG_TASK_ADD
 					);
-					this.clientSelectorService.hasPermission = hasAllPermissions(
+					this.clientSelectorService.hasPermission = hasAnyPermission(
 						permissions,
-						PermissionsEnum.ORG_CONTACT_EDIT
+						...ORGANIZATION_CONTACT_CREATE_PERMISSIONS
 					);
 					this.projectSelectorService.hasPermission = hasAllPermissions(
 						permissions,
