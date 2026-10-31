@@ -15,15 +15,27 @@ import {
  */
 describe('web portal URL', () => {
 	const cloudAppUrl = 'https://app.gauzy.co/#';
+	// Gauzy Cloud's API address, as the main process answers it.
+	const cloudApiUrl = 'https://api.gauzy.co';
 
 	describe('resolveWebAppBaseUrl', () => {
 		it('is GAUZY_CLOUD_APP for Gauzy Cloud', () => {
-			expect(resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co', cloudAppUrl })).toBe(
+			expect(resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co', cloudAppUrl, cloudApiUrl })).toBe(
 				'https://app.gauzy.co/#'
 			);
-			expect(resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co/', cloudAppUrl })).toBe(
+			expect(resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co/', cloudAppUrl, cloudApiUrl })).toBe(
 				'https://app.gauzy.co/#'
 			);
+		});
+
+		it('knows no server as Gauzy Cloud without its API address from the main process', () => {
+			expect(resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co', cloudAppUrl })).toBeNull();
+			expect(
+				resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co', cloudAppUrl, cloudApiUrl: null })
+			).toBeNull();
+			expect(
+				resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co', cloudAppUrl, cloudApiUrl: 'not a url' })
+			).toBeNull();
 		});
 
 		it('is the web UI served on this computer', () => {
@@ -37,16 +49,22 @@ describe('web portal URL', () => {
 		});
 
 		it('is unknown for a custom server: no guess', () => {
-			expect(resolveWebAppBaseUrl({ apiHost: 'https://gauzy.example.com', cloudAppUrl })).toBeNull();
-			expect(resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co.example.com', cloudAppUrl })).toBeNull();
-			expect(resolveWebAppBaseUrl({ apiHost: 'http://api.gauzy.co', cloudAppUrl })).toBeNull();
+			expect(resolveWebAppBaseUrl({ apiHost: 'https://gauzy.example.com', cloudAppUrl, cloudApiUrl })).toBeNull();
+			expect(
+				resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co.example.com', cloudAppUrl, cloudApiUrl })
+			).toBeNull();
+			expect(resolveWebAppBaseUrl({ apiHost: 'http://api.gauzy.co', cloudAppUrl, cloudApiUrl })).toBeNull();
 		});
 
 		it('is unknown without a usable address', () => {
-			expect(resolveWebAppBaseUrl({ apiHost: undefined, cloudAppUrl })).toBeNull();
-			expect(resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co', cloudAppUrl: '' })).toBeNull();
+			expect(resolveWebAppBaseUrl({ apiHost: undefined, cloudAppUrl, cloudApiUrl })).toBeNull();
+			expect(resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co', cloudAppUrl: '', cloudApiUrl })).toBeNull();
 			expect(
-				resolveWebAppBaseUrl({ apiHost: 'https://api.gauzy.co', cloudAppUrl: 'javascript:alert(1)' })
+				resolveWebAppBaseUrl({
+					apiHost: 'https://api.gauzy.co',
+					cloudAppUrl: 'javascript:alert(1)',
+					cloudApiUrl
+				})
 			).toBeNull();
 			expect(resolveWebAppBaseUrl({ apiHost: 'x', localWebAppUrl: 'file:///etc/passwd' })).toBeNull();
 		});

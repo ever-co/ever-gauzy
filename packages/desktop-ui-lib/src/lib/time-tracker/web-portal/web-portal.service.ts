@@ -7,6 +7,9 @@ import { buildTimeActivitiesUrl, isHttpUrl, resolveWebAppBaseUrl } from './web-p
 /** The main-process channel answering the address of the web UI the app serves on this computer (`null` when none runs). */
 export const LOCAL_WEB_APP_URL_CHANNEL = 'GET_LOCAL_WEB_APP_URL';
 
+/** The main-process channel answering the address of Gauzy Cloud's API, which the main process keeps. */
+export const CLOUD_API_URL_CHANNEL = 'GET_GAUZY_CLOUD_API_URL';
+
 /**
  * The time tracker's link to the web app (#9517): opens the employee's time and activity of today in the browser.
  * The link is offered only where the web app's address is known (Gauzy Cloud, or a web UI served on this computer).
@@ -31,16 +34,18 @@ export class WebPortalService {
 
 	/** Works out where the web app is for the API the time tracker uses (`apiHost`). */
 	public async refresh(apiHost: string | null | undefined): Promise<void> {
-		let localWebAppUrl: string | null = null;
-		try {
-			localWebAppUrl = (await this._electronService.ipcRenderer?.invoke(LOCAL_WEB_APP_URL_CHANNEL)) ?? null;
-		} catch (error) {
-			// A main process without the channel: no local web app to link to.
-			console.warn('[WebPortal] Could not read the local web app address', error);
-		}
+		const [localWebAppUrl, cloudApiUrl] = await Promise.all([
+			this._askMainProcess(LOCAL_WEB_APP_URL_CHANNEL, 'local web app address'),
+			this._askMainProcess(CLOUD_API_URL_CHANNEL, 'Gauzy Cloud API address')
+		]);
 
 		this._baseUrl$.next(
-			resolveWebAppBaseUrl({ apiHost, cloudAppUrl: this._environment?.GAUZY_CLOUD_APP, localWebAppUrl })
+			resolveWebAppBaseUrl({
+				apiHost,
+				cloudAppUrl: this._environment?.GAUZY_CLOUD_APP,
+				localWebAppUrl,
+				cloudApiUrl
+			})
 		);
 	}
 
@@ -55,5 +60,18 @@ export class WebPortalService {
 		}
 		await this._electronService.shell.openExternal(url);
 		return true;
+	}
+
+	/**
+	 * Asks the main process for an address on `channel`.
+	 * @returns the address, or `null` when there is none or the main process has no such channel (no link from it then).
+	 */
+	private async _askMainProcess(channel: string, what: string): Promise<string | null> {
+		try {
+			return (await this._electronService.ipcRenderer?.invoke(channel)) ?? null;
+		} catch (error) {
+			console.warn(`[WebPortal] Could not read the ${what}`, error);
+			return null;
+		}
 	}
 }
