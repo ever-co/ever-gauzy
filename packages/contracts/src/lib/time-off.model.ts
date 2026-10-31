@@ -46,6 +46,11 @@ export interface ITimeOffPolicyEntitlement {
 	accrualFrequency?: LeaveAccrualFrequencyEnum;
 	/** Whether this is the organization's default policy. */
 	isDefault?: boolean;
+	/**
+	 * Whether an approval is refused when an employee's leave balance for the policy cannot cover the request's
+	 * working days. Off (the default): the approval goes through and the balance is overdrawn.
+	 */
+	requireSufficientBalance?: boolean;
 }
 
 export interface ITimeOffPolicy extends IBasePerTenantAndOrganizationEntityModel, ITimeOffPolicyEntitlement {
@@ -135,6 +140,26 @@ export enum StatusTypesMapRequestApprovalEnum {
 }
 
 /**
+ * The request forms an employee can download from the time-off request dialog (issue #5481).
+ */
+export enum TimeOffRequestFormTypeEnum {
+	PAID = 'paid',
+	UNPAID = 'unpaid'
+}
+
+/**
+ * The organization document each request form is read from, found by this name (case and extra spaces
+ * aside). The demo seed creates both documents under these names.
+ */
+export const TIME_OFF_REQUEST_FORM_DOCUMENT_NAMES: TimeOffRequestFormDocumentNames = Object.freeze({
+	[TimeOffRequestFormTypeEnum.PAID]: 'Paid Days off Request',
+	[TimeOffRequestFormTypeEnum.UNPAID]: 'Unpaid Days off Request'
+});
+
+/** The document name of each request form. */
+export type TimeOffRequestFormDocumentNames = Readonly<Record<TimeOffRequestFormTypeEnum, string>>;
+
+/**
  * A publicly recognized holiday for a country, kept per organization.
  *
  * Issue #314 asks for an `OfficialHolidays` table so the "Add Holidays" dialog can offer a
@@ -197,6 +222,21 @@ export interface ITimeOffBalance extends IBasePerTenantAndOrganizationEntityMode
 	carriedOut: number;
 	/** `accrued + carriedForward - taken - carriedOut`, maintained by the server. */
 	remaining: number;
+}
+
+/**
+ * The days one approved time-off request took from one balance (one employee, one policy, one year).
+ *
+ * Written when the request is approved and removed when the approval is taken back, so a reversal gives back
+ * exactly what the approval took, and a repeated approval finds the days already taken (issue #10183).
+ */
+export interface ITimeOffBalanceDeduction extends IBasePerTenantAndOrganizationEntityModel {
+	timeOffRequest?: ITimeOff;
+	timeOffRequestId: ID;
+	balance?: ITimeOffBalance;
+	balanceId: ID;
+	/** Working days taken from the balance. Always positive. */
+	days: number;
 }
 
 export interface ITimeOffBalanceFindInput extends IBasePerTenantAndOrganizationEntityModel {

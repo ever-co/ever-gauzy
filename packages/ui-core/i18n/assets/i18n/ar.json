@@ -762,6 +762,8 @@
 		"NAME": "اسم",
 		"YEAR": "سنة",
 		"BANNER": "راية",
+		"BANNER_PLACEHOLDER": "مثال: نطوّر برمجيات مفتوحة المصدر للشركات",
+		"BANNER_HINT": "شعار قصير يظهر أسفل اسم شركتك في صفحتك العامة",
 		"SIZE": "الحجم",
 		"YEAR_FOUNDED": "سنة التأسيس",
 		"COMPANY_SIZE": "حجم الشركة",
@@ -1338,6 +1340,24 @@
 		"STANDARD_WORK_HOURS": "ساعات العمل القياسية ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "وسم المزامنة",
+				"TITLE": "إعدادات المزامنة",
+				"SUBTITLE": "كيف تتم مزامنة مشكلات {{ repository }} مع {{ project }}",
+				"AUTO_SYNC": "مزامنة المشكلات تلقائيًا",
+				"AUTO_SYNC_HINT": "المشكلات التي تُفتح أو تُعدَّل على GitHub تُنشئ مهام في هذا المشروع أو تُحدّثها.",
+				"ONLY_LABELLED": "المشكلات التي تحمل وسمًا فقط",
+				"ONLY_LABELLED_HINT": "تتم مزامنة المشكلات التي تحمل الوسم أدناه تلقائيًا فقط.",
+				"LABEL": "الوسم",
+				"LABEL_HINT": "اختر أحد وسوم المستودع أو اكتب وسمًا آخر. اتركه فارغًا لاستخدام الوسم الافتراضي {{ label }}.",
+				"LABEL_INVALID": "وسم GitHub سطر واحد لا يتجاوز {{ max }} حرفًا.",
+				"ALL_ISSUES": "كل المشكلات",
+				"AUTO_SYNC_OFF": "المزامنة التلقائية متوقفة",
+				"EDIT": "تعديل إعدادات المزامنة",
+				"SAVED": "تم حفظ إعدادات المزامنة لـ '{{ project }}'"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "التطبيقات والتكاملات المتاحة",
 		"ADDED_UPWORK_TRANSACTION": "تم إضافة معاملة على منصة أبو ورك",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "إجمالي المعاملات المصروفة التي تمت بنجاح: {{ totalExpenses }}. إجمالي المعاملات الداخلة التي تمت بنجاح: {{ totalIncomes }}.",
@@ -1974,6 +1994,8 @@
 			"ASSIGN_TO": "التعيين إلى",
 			"INCLUDE_TAXES": "تشمل الضرائب",
 			"ATTACH_A_RECEIPT": "أرفق إيصالاً",
+			"NO_RECEIPT": "لم يتم إرفاق إيصال بعد. انقر لتحميل إيصال.",
+			"RECEIPT_ATTACHED": "تم إرفاق الإيصال",
 			"EMPLOYEES_GENERATE_EXPENSE": "الموظفين الذين يولدون مصاريف",
 			"TAX_DEDUCTIBLE": "قابل للاستقطاع الضريبي",
 			"NOT_TAX_DEDUCTIBLE": "غير قابل للاستقطاع الضريبي",
@@ -3542,6 +3564,10 @@
 		"VIEW_REQUEST_DOCUMENT": "عرض مستند الطلب",
 		"MULTIPLE_EMPLOYEES": "موظفون متعددون",
 		"UPLOAD_REQUEST_DOCUMENT": "تحميل مستند الطلب",
+		"REQUEST_FORM_NOT_FOUND": "لم يتم رفع نموذج \"{{ name }}\" لهذه المؤسسة بعد. يمكن للمسؤول إضافة مستند بهذا الاسم من قسم المستندات.",
+		"REQUEST_FORM_UNAVAILABLE": "تعذر تنزيل نموذج \"{{ name }}\". يمكن للمسؤول التحقق من رابطه في قسم المستندات.",
+		"REQUEST_FORM_BLOCKED": "منع المتصفح فتح نموذج \"{{ name }}\" في علامة تبويب جديدة. استخدم الرابط أسفل الأزرار لفتحه.",
+		"OPEN_REQUEST_FORM": "فتح نموذج \"{{ name }}\"",
 		"STATUSES": {
 			"REQUESTED": "مطلوب",
 			"APPROVED": "معتمد",
@@ -3561,6 +3587,7 @@
 			"EDIT_POLICY": "تحرير السياسة",
 			"NAME": "الاسم",
 			"REQUIRES_APPROVAL": "يتطلب الموافقة",
+			"REQUIRE_SUFFICIENT_BALANCE": "رفض الموافقات التي لا يغطيها رصيد الإجازات",
 			"PAID": "مدفوع",
 			"NAME_IS_REQUIRED": "اسم السياسة مطلوب!"
 		},
@@ -6489,6 +6516,7 @@
 		"SIGN_IN_WITH_EVER_ID": "تسجيل الدخول باستخدام Ever ID",
 		"LOGIN_WITH_EVER_ID": "تسجيل الدخول باستخدام {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "تسجيل الدخول باستخدام Keycloak",
+		"SIGN_IN_WITH_SSO": "تسجيل الدخول باستخدام {{ name }}",
 		"FORGOT_EMAIL_TITLE": "نسيت البريد الإلكتروني؟",
 		"LOGIN_MAGIC": {
 			"TITLE": "تسجيل الدخول بواسطة رمز سحري",

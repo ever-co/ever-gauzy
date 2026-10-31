@@ -94,6 +94,7 @@ export * from './lib/feature.model';
 export * from './lib/file-provider';
 export * from './lib/geo-location.model';
 export * from './lib/github.model';
+export * from './lib/github-sync-label';
 export * from './lib/goal-settings.model';
 export * from './lib/goals.model';
 export * from './lib/help-center-article.model';

@@ -771,6 +771,8 @@
 		"NAME": "Имя",
 		"YEAR": "Год",
 		"BANNER": "Баннер",
+		"BANNER_PLACEHOLDER": "напр. Мы создаём программное обеспечение с открытым исходным кодом для бизнеса",
+		"BANNER_HINT": "Короткий слоган, который отображается под названием компании на публичной странице",
 		"SIZE": "Размер",
 		"YEAR_FOUNDED": "Дата создания",
 		"COMPANY_SIZE": "Размер компании",
@@ -1593,6 +1595,22 @@
 			}
 		},
 		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Метка синхронизации",
+				"TITLE": "Настройки синхронизации",
+				"SUBTITLE": "Как issues из {{ repository }} синхронизируются с {{ project }}",
+				"AUTO_SYNC": "Автоматически синхронизировать issues",
+				"AUTO_SYNC_HINT": "Issues, открытые или изменённые на GitHub, создают или обновляют задачи в этом проекте.",
+				"ONLY_LABELLED": "Только issues с меткой",
+				"ONLY_LABELLED_HINT": "Автоматически синхронизируются только issues с указанной ниже меткой.",
+				"LABEL": "Метка",
+				"LABEL_HINT": "Выберите метку репозитория или введите другую. Оставьте пустым, чтобы использовать метку по умолчанию — {{ label }}.",
+				"LABEL_INVALID": "Метка GitHub — это одна строка длиной не более {{ max }} символов.",
+				"ALL_ISSUES": "Все issues",
+				"AUTO_SYNC_OFF": "Автосинхронизация выключена",
+				"EDIT": "Изменить настройки синхронизации",
+				"SAVED": "Настройки синхронизации для '{{ project }}' сохранены"
+			},
 			"TITLE": "GitHub Integration",
 			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
 			"SELECT_REPOSITORY": "Repository",
@@ -2026,6 +2044,8 @@
 			"ASSIGN_TO": "Назначить",
 			"INCLUDE_TAXES": "Включить налоги",
 			"ATTACH_A_RECEIPT": "Добавить квитанцию",
+			"NO_RECEIPT": "Квитанция ещё не прикреплена. Нажмите, чтобы загрузить.",
+			"RECEIPT_ATTACHED": "Квитанция прикреплена",
 			"EMPLOYEES_GENERATE_EXPENSE": "Сотрудники, которые производят расходы",
 			"TAX_DEDUCTIBLE": "Налоговый вычитаемый",
 			"NOT_TAX_DEDUCTIBLE": "Не облагаемый налогом",
@@ -3579,6 +3599,10 @@
 		"VIEW_REQUEST_DOCUMENT": "Просмотр запроса документа",
 		"MULTIPLE_EMPLOYEES": "Несколько сотрудников",
 		"UPLOAD_REQUEST_DOCUMENT": "Загрузить документ запроса",
+		"REQUEST_FORM_NOT_FOUND": "Для этой организации ещё не загружена форма «{{ name }}». Администратор может добавить документ с таким названием в разделе «Документы».",
+		"REQUEST_FORM_UNAVAILABLE": "Не удалось скачать форму «{{ name }}». Администратор может проверить её ссылку в разделе «Документы».",
+		"REQUEST_FORM_BLOCKED": "Браузер заблокировал открытие формы «{{ name }}» в новой вкладке. Откройте её по ссылке под кнопками.",
+		"OPEN_REQUEST_FORM": "Открыть форму «{{ name }}»",
 		"STATUSES": {
 			"REQUESTED": "Запрошено",
 			"APPROVED": "Одобрено",
@@ -3598,6 +3622,7 @@
 			"EDIT_POLICY": "Изменить политику",
 			"NAME": "Имя",
 			"REQUIRES_APPROVAL": "Требует одобрения",
+			"REQUIRE_SUFFICIENT_BALANCE": "Отклонять одобрения, которые не покрывает баланс отпусков",
 			"PAID": "Оплачено",
 			"NAME_IS_REQUIRED": "Требуется название политики!"
 		},
@@ -6510,6 +6535,7 @@
 		"SIGN_IN_WITH_EVER_ID": "Войти через Ever ID",
 		"LOGIN_WITH_EVER_ID": "Войти через {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Войти через Keycloak",
+		"SIGN_IN_WITH_SSO": "Войти через {{ name }}",
 		"FORGOT_EMAIL_TITLE": "Забыли адрес электронной почты?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Вход с магическим кодом",

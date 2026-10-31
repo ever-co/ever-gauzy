@@ -20,6 +20,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { OrganizationSettingService, Store } from '@gauzy/ui-core/core';
 import { AttachReceiptComponent } from './attach-receipt/attach-receipt.component';
+import { PLACEHOLDER_RECEIPT, toActualReceipt } from './expense-receipt.utils';
 import { FormHelpers } from '../../forms/helpers';
 import { ALL_EMPLOYEES_SELECTED } from '../../selectors/employee/default-employee';
 
@@ -52,7 +53,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 	expenseTypesEnum = ExpenseTypesEnum;
 	taxTypes = Object.values(TaxTypesEnum);
 	public statuses: string[] = [];
-	defaultImage = './assets/images/others/invoice-template.png';
+	/**
+	 * @deprecated A sample invoice, not a receipt: new expenses now start without one. Kept for code
+	 * that still reads it; expenses saved with it are read as having no receipt (`toActualReceipt`).
+	 */
+	defaultImage = PLACEHOLDER_RECEIPT;
 	calculatedValue = '0';
 	duplicate: boolean;
 	showNotes: boolean = false;
@@ -82,7 +87,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 			taxType: [TaxTypesEnum.PERCENTAGE],
 			taxLabel: [],
 			rateValue: [0],
-			receipt: [self.defaultImage],
+			// No receipt until one is uploaded (it used to start as a sample invoice image).
+			receipt: [null],
 			splitExpense: [false],
 			tags: [],
 			employee: [],
@@ -224,7 +230,7 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 				taxType: this.expense.taxType,
 				taxLabel: this.expense.taxLabel,
 				rateValue: this.expense.rateValue,
-				receipt: this.expense.receipt,
+				receipt: toActualReceipt(this.expense.receipt),
 				splitExpense: this.expense.splitExpense,
 				tags: this.expense.tags,
 				status: this.expense.status,
@@ -277,8 +283,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 				closeOnEsc: false
 			})
 			.onClose.pipe(
-				tap((receipt) => {
-					this.form.get('receipt').setValue(receipt);
+				tap((receipt: string | null | undefined) => {
+					this.form.get('receipt').setValue(toActualReceipt(receipt));
 					this.form.get('receipt').updateValueAndValidity();
 				}),
 				untilDestroyed(this)

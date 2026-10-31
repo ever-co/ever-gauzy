@@ -767,6 +767,8 @@
 		"NAME": "שם",
 		"YEAR": "Year",
 		"BANNER": "Banner",
+		"BANNER_PLACEHOLDER": "לדוגמה: אנחנו בונים תוכנת קוד פתוח לעסקים",
+		"BANNER_HINT": "סלוגן קצר שמוצג מתחת לשם החברה בדף הציבורי שלך",
 		"SIZE": "Size",
 		"YEAR_FOUNDED": "Year Founded",
 		"COMPANY_SIZE": "Company Size",
@@ -1586,6 +1588,22 @@
 			}
 		},
 		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "תווית סנכרון",
+				"TITLE": "הגדרות סנכרון",
+				"SUBTITLE": "כיצד issues מ-{{ repository }} מסונכרנים עם {{ project }}",
+				"AUTO_SYNC": "סנכרון issues אוטומטי",
+				"AUTO_SYNC_HINT": "issues שנפתחים או משתנים ב-GitHub יוצרים או מעדכנים משימות בפרויקט זה.",
+				"ONLY_LABELLED": "רק issues עם תווית",
+				"ONLY_LABELLED_HINT": "רק issues הנושאים את התווית שלהלן מסונכרנים אוטומטית.",
+				"LABEL": "תווית",
+				"LABEL_HINT": "בחרו תווית של המאגר או הקלידו אחרת. השאירו ריק כדי להשתמש בתווית ברירת המחדל, {{ label }}.",
+				"LABEL_INVALID": "תווית GitHub היא שורה אחת של עד {{ max }} תווים.",
+				"ALL_ISSUES": "כל ה-issues",
+				"AUTO_SYNC_OFF": "סנכרון אוטומטי כבוי",
+				"EDIT": "עריכת הגדרות סנכרון",
+				"SAVED": "הגדרות הסנכרון של '{{ project }}' נשמרו"
+			},
 			"TITLE": "GitHub Integration",
 			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
 			"SELECT_REPOSITORY": "Repository",
@@ -2019,6 +2037,8 @@
 			"ASSIGN_TO": "Assign to",
 			"INCLUDE_TAXES": "Include Taxes",
 			"ATTACH_A_RECEIPT": "Attach a receipt",
+			"NO_RECEIPT": "עדיין לא צורפה קבלה. לחץ כדי להעלות קבלה.",
+			"RECEIPT_ATTACHED": "הקבלה צורפה",
 			"EMPLOYEES_GENERATE_EXPENSE": "Employees that generate expense",
 			"TAX_DEDUCTIBLE": "Tax Deductible",
 			"NOT_TAX_DEDUCTIBLE": "Not Tax Deductible",
@@ -3572,6 +3592,10 @@
 		"VIEW_REQUEST_DOCUMENT": "View Request Document",
 		"MULTIPLE_EMPLOYEES": "Multiple employees",
 		"UPLOAD_REQUEST_DOCUMENT": "Upload Request Document",
+		"REQUEST_FORM_NOT_FOUND": "עדיין לא הועלה טופס \"{{ name }}\" עבור הארגון הזה. מנהל/ת יכול/ה להוסיף מסמך בשם זה תחת מסמכים.",
+		"REQUEST_FORM_UNAVAILABLE": "לא ניתן היה להוריד את הטופס \"{{ name }}\". מנהל/ת יכול/ה לבדוק את הקישור שלו תחת מסמכים.",
+		"REQUEST_FORM_BLOCKED": "הדפדפן חסם את פתיחת הטופס \"{{ name }}\" בכרטיסייה חדשה. השתמשו בקישור שמתחת לכפתורים כדי לפתוח אותו.",
+		"OPEN_REQUEST_FORM": "פתיחת הטופס \"{{ name }}\"",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
@@ -3591,6 +3615,7 @@
 			"EDIT_POLICY": "Edit Policy",
 			"NAME": "שם",
 			"REQUIRES_APPROVAL": "Requires Approval",
+			"REQUIRE_SUFFICIENT_BALANCE": "דחיית אישורים שיתרת החופשה אינה מכסה",
 			"PAID": "Paid",
 			"NAME_IS_REQUIRED": "Policy name is required!"
 		},
@@ -6502,6 +6527,7 @@
 		"SIGN_IN_WITH_EVER_ID": "התחברות עם Ever ID",
 		"LOGIN_WITH_EVER_ID": "התחברות עם {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "התחברות עם Keycloak",
+		"SIGN_IN_WITH_SSO": "התחברות עם {{ name }}",
 		"FORGOT_EMAIL_TITLE": "שכחת כתובת דואר אלקטרוני?",
 		"LOGIN_MAGIC": {
 			"TITLE": "התחברות עם קוד קסם",

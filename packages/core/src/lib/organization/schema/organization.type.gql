@@ -44,7 +44,7 @@ type Organization {
 	isDefault: Boolean!
 	"The public profile's path segment, when the organization publishes one."
 	profile_link: String
-	"The banner the public profile shows, as a URL."
+	"The tagline the public profile shows under the organization's name."
 	banner: String
 	"How many people work in the organization, as the row records it. A figure the row carries rather than one this surface counts."
 	totalEmployees: Int

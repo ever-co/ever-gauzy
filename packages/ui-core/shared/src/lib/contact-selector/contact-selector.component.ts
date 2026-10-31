@@ -38,6 +38,12 @@ export class ContactSelectorComponent implements AfterViewInit, OnInit, OnDestro
 	 */
 	@Input() placeholder: string | null = null;
 
+	/**
+	 * ID given to the selector's input, so a `<label for="…">` outside it names the field for screen
+	 * readers. Left null, the input gets no ID, as before.
+	 */
+	@Input() labelForId: string | null = null;
+
 	private _employeeId: IEmployee['id'];
 	public get employeeId(): IEmployee['id'] {
 		return this._employeeId;

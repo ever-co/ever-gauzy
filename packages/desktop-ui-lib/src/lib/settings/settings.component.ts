@@ -4,6 +4,7 @@ import {
 	Component,
 	ElementRef,
 	Inject,
+	inject,
 	NgZone,
 	OnDestroy,
 	OnInit,
@@ -14,7 +15,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS } from '@gauzy/constants';
-import { IOSInfo, LanguagesEnum } from '@gauzy/contracts';
+import { IDesktopScreenshotSound, IDesktopScreenshotSoundResult, IOSInfo, LanguagesEnum } from '@gauzy/contracts';
 import {
 	NbAccordionModule,
 	NbButtonModule,
@@ -43,6 +44,7 @@ import { GAUZY_ENV } from '../constants';
 import { AboutComponent } from '../dialogs/about/about.component';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { ElectronService } from '../electron/services';
+import { changesScreenshotSound, ScreenshotSoundSettingService } from './screenshot-sound';
 import { LanguageElectronService } from '../language/language-electron.service';
 import { LanguageSelectorComponent } from '../language/language-selector.component';
 import { TimeZoneManager, ToastrNotificationService, ZoneEnum, Store } from '../services';
@@ -449,7 +451,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		visibleAwOption: true,
 		visibleWakatimeOption: false,
 		preferredLanguage: LanguagesEnum.ENGLISH,
-		enforced: false
+		enforced: false,
+		/** Short tones when the timer starts and stops (#7141): off unless turned on */
+		timerStartStopSound: false,
+		/** The screenshot sound chosen on this computer (#6715), `null` for the bundled sound */
+		customScreenshotSound: null as IDesktopScreenshotSound | null
 	};
 	periodOption = DEFAULT_SCREENSHOT_FREQUENCY_OPTIONS;
 	selectedPeriod = 5;
@@ -523,6 +529,9 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 
 	driverOptions = ['better-sqlite', 'sqlite', 'postgres', ...(this.isDesktopTimer || this.isAgent ? ['mysql'] : [])];
 	muted: boolean;
+	/** True while the screenshot sound is being chosen or reset */
+	isChangingScreenshotSound = false;
+	private readonly _screenshotSound = inject(ScreenshotSoundSettingService);
 
 	delayOptions: number[] = [0.5, 1, 3, 24];
 	zones = TimeZoneManager.zones;
@@ -1001,6 +1010,46 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	toggleNotificationSoundChange(value: boolean) {
 		this.updateSetting(!value, 'mutedNotification');
 		this.muted = !value;
+	}
+
+	/** The screenshot sound chosen on this computer, `null` for the bundled sound (#6715) */
+	get customScreenshotSound(): IDesktopScreenshotSound | null {
+		return this.appSetting?.customScreenshotSound ?? null;
+	}
+
+	/** Asks for a sound file to play when a screenshot is taken on this computer */
+	chooseScreenshotSound(): Promise<void> {
+		return this.changeScreenshotSound(() => this._screenshotSound.choose());
+	}
+
+	/** Goes back to the screenshot sound bundled with the app */
+	resetScreenshotSound(): Promise<void> {
+		return this.changeScreenshotSound(() => this._screenshotSound.reset());
+	}
+
+	/** Turns the timer start and stop tones on or off (#7141) */
+	toggleTimerStartStopSound(value: boolean) {
+		this.updateSetting(value, 'timerStartStopSound');
+	}
+
+	private async changeScreenshotSound(request: () => Promise<IDesktopScreenshotSoundResult>): Promise<void> {
+		if (this.isChangingScreenshotSound) {
+			return;
+		}
+		this.isChangingScreenshotSound = true;
+		try {
+			const result = await request();
+			if (changesScreenshotSound(result)) {
+				// The main process saved it. This page sends its whole copy of the settings back with its next change:
+				// keep that copy in step, or it would put the previous sound back.
+				this._ngZone.run(() => {
+					this.appSetting.customScreenshotSound = result.sound;
+					this.rememberSettings({ customScreenshotSound: result.sound }, this.persistedAppSetting);
+				});
+			}
+		} finally {
+			this._ngZone.run(() => (this.isChangingScreenshotSound = false));
+		}
 	}
 
 	toggleAutoLaunch(value) {

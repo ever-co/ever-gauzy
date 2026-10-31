@@ -5,6 +5,7 @@ import {
 	Component,
 	ElementRef,
 	Inject,
+	inject,
 	NgZone,
 	OnInit,
 	TemplateRef,
@@ -107,6 +108,7 @@ import { hasAllPermissions } from '../shared/utils/permission.util';
 import { SelectorValidator } from '../shared/utils/validation/selector.validator';
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
+import { SoundFilePlayer, TimerSoundService } from './sounds';
 import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 import { OrganizationSwitchService } from './organization-selector/organization-switch.service';
 import { HumanizePipe } from './pipes/humanize.pipe';
@@ -226,7 +228,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	smartTableSettings: object;
 	tableData = [];
 	isTrackingEnabled = true;
-	sound: any = null;
+	/** Plays the screenshot sound the main process asks for (`play_sound`). */
+	sound = new SoundFilePlayer();
+	/** The start and stop sounds (#7141), off unless switched on in the settings. */
+	private readonly _timerSound = inject(TimerSoundService);
 	private dialogRequest$ = new Subject<{ dialog: TemplateRef<any>; option: any }>();
 	private _remoteLastTimeSlot$: Promise<ITimeSlot | null> | null = null;
 	/**
@@ -450,7 +455,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	private async resetAtMidnight() {
 		if (TimeTrackerDateManager.isMidnight) {
 			try {
-				await this.restart();
+				// An internal split for the new day, not the user stopping and starting: no start or stop sound (#7141)
+				await this._timerSound.quietly(() => this.restart());
 			} catch (error) {
 				this._errorHandlerService.handleError(error);
 			}
@@ -967,6 +973,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 			)
 			.subscribe();
 
+		// A short sound when this computer starts or stops tracking, if switched on in the settings (#7141)
+		this._timerSound.watch(this.timeTrackerQuery.ignition$).pipe(untilDestroyed(this)).subscribe();
+
 		this.timeTrackerQuery.isEditing$
 			.pipe(
 				filter((editing) => editing && !this._isOffline),
@@ -1337,18 +1346,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('play_sound', (event, arg) =>
-			this._ngZone.run(() => {
-				try {
-					if (!this.sound && arg.soundFile) {
-						this.sound = new Audio(arg.soundFile);
-						this.sound.play();
-					} else {
-						this.sound.play();
-					}
-				} catch (error) {
-					this._errorHandlerService.handleError(error);
-				}
-			})
+			this._ngZone.run(() =>
+				// The file may change: a screenshot sound chosen in the settings (#6715)
+				this.sound.play(arg?.soundFile).catch((error) => this._errorHandlerService.handleError(error))
+			)
 		);
 
 		this.electronService.ipcRenderer.on('show_toast_message', (event, arg) =>

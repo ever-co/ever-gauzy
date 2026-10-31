@@ -763,6 +763,8 @@
 		"NAME": "Naam",
 		"YEAR": "Jaar",
 		"BANNER": "Banner",
+		"BANNER_PLACEHOLDER": "bijv. Wij bouwen opensourcesoftware voor bedrijven",
+		"BANNER_HINT": "Een korte slogan die op je openbare pagina onder je bedrijfsnaam wordt getoond",
 		"SIZE": "Grootte",
 		"YEAR_FOUNDED": "Jaar Opgericht",
 		"COMPANY_SIZE": "Bedrijfsgrootte",
@@ -1339,6 +1341,24 @@
 		"STANDARD_WORK_HOURS": "Standaard werkuren ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Synclabel",
+				"TITLE": "Synchronisatie-instellingen",
+				"SUBTITLE": "Hoe issues van {{ repository }} met {{ project }} worden gesynchroniseerd",
+				"AUTO_SYNC": "Issues automatisch synchroniseren",
+				"AUTO_SYNC_HINT": "Issues die op GitHub worden geopend of gewijzigd, maken taken in dit project aan of werken ze bij.",
+				"ONLY_LABELLED": "Alleen issues met een label",
+				"ONLY_LABELLED_HINT": "Alleen issues met het label hieronder worden automatisch gesynchroniseerd.",
+				"LABEL": "Label",
+				"LABEL_HINT": "Kies een label van de repository of typ een ander. Laat leeg om het standaardlabel {{ label }} te gebruiken.",
+				"LABEL_INVALID": "Een GitHub-label is één regel van maximaal {{ max }} tekens.",
+				"ALL_ISSUES": "Alle issues",
+				"AUTO_SYNC_OFF": "Automatische synchronisatie uit",
+				"EDIT": "Synchronisatie-instellingen bewerken",
+				"SAVED": "Synchronisatie-instellingen opgeslagen voor '{{ project }}'"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "Beschikbare apps & integraties",
 		"ADDED_UPWORK_TRANSACTION": "Toegevoegde Upwork-transactie",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Totale uitgavetransacties succesvol: {{ totalExpenses }}. Totale inkomstentransacties succesvol: {{ totalIncomes }}.",
@@ -1975,6 +1995,8 @@
 			"ASSIGN_TO": "Toewijzen aan",
 			"INCLUDE_TAXES": "Inclusief belastingen",
 			"ATTACH_A_RECEIPT": "Voeg een bon toe",
+			"NO_RECEIPT": "Nog geen bon bijgevoegd. Klik om er een te uploaden.",
+			"RECEIPT_ATTACHED": "Bon bijgevoegd",
 			"EMPLOYEES_GENERATE_EXPENSE": "Werknemers die kosten genereren",
 			"TAX_DEDUCTIBLE": "Aftrekbaar van belastingen",
 			"NOT_TAX_DEDUCTIBLE": "Niet aftrekbaar voor belasting",
@@ -3544,6 +3566,10 @@
 		"VIEW_REQUEST_DOCUMENT": "Bekijk verzoek document",
 		"MULTIPLE_EMPLOYEES": "Meerdere werknemers",
 		"UPLOAD_REQUEST_DOCUMENT": "Upload aanvraagdocument",
+		"REQUEST_FORM_NOT_FOUND": "Voor deze organisatie is nog geen formulier \"{{ name }}\" geüpload. Een beheerder kan onder Documenten een document met deze naam toevoegen.",
+		"REQUEST_FORM_UNAVAILABLE": "Het formulier \"{{ name }}\" kon niet worden gedownload. Een beheerder kan de link ervan controleren onder Documenten.",
+		"REQUEST_FORM_BLOCKED": "Je browser heeft het openen van het formulier \"{{ name }}\" in een nieuw tabblad geblokkeerd. Gebruik de link onder de knoppen om het te openen.",
+		"OPEN_REQUEST_FORM": "Formulier \"{{ name }}\" openen",
 		"STATUSES": {
 			"REQUESTED": "Opgevraagd",
 			"APPROVED": "Goedgekeurd",
@@ -3563,6 +3589,7 @@
 			"EDIT_POLICY": "Bewerk beleid",
 			"NAME": "Naam",
 			"REQUIRES_APPROVAL": "Vereist goedkeuring",
+			"REQUIRE_SUFFICIENT_BALANCE": "Goedkeuringen weigeren die het verlofsaldo niet dekt",
 			"PAID": "Betaald",
 			"NAME_IS_REQUIRED": "De naam van het beleid is verplicht!"
 		},
@@ -6491,6 +6518,7 @@
 		"SIGN_IN_WITH_EVER_ID": "Inloggen met Ever ID",
 		"LOGIN_WITH_EVER_ID": "Inloggen met {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Inloggen met Keycloak",
+		"SIGN_IN_WITH_SSO": "Inloggen met {{ name }}",
 		"FORGOT_EMAIL_TITLE": "E-mail vergeten?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Inloggen met een magische code",

@@ -763,6 +763,8 @@
 		"NAME": "Nome",
 		"YEAR": "Anno",
 		"BANNER": "Bandiera",
+		"BANNER_PLACEHOLDER": "es. Sviluppiamo software open source per le aziende",
+		"BANNER_HINT": "Un breve slogan mostrato sotto il nome della tua azienda nella tua pagina pubblica",
 		"SIZE": "Dimensione",
 		"YEAR_FOUNDED": "Anno di fondazione",
 		"COMPANY_SIZE": "Dimensione dell'azienda",
@@ -1339,6 +1341,24 @@
 		"STANDARD_WORK_HOURS": "Ore di lavoro standard ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Etichetta di sincronizzazione",
+				"TITLE": "Impostazioni di sincronizzazione",
+				"SUBTITLE": "Come le issue di {{ repository }} si sincronizzano con {{ project }}",
+				"AUTO_SYNC": "Sincronizza automaticamente le issue",
+				"AUTO_SYNC_HINT": "Le issue aperte o modificate su GitHub creano o aggiornano attività in questo progetto.",
+				"ONLY_LABELLED": "Solo issue con un'etichetta",
+				"ONLY_LABELLED_HINT": "Solo le issue con l'etichetta qui sotto vengono sincronizzate automaticamente.",
+				"LABEL": "Etichetta",
+				"LABEL_HINT": "Scegli un'etichetta del repository o digitane un'altra. Lascia vuoto per usare l'etichetta predefinita, {{ label }}.",
+				"LABEL_INVALID": "Un'etichetta GitHub è una sola riga di massimo {{ max }} caratteri.",
+				"ALL_ISSUES": "Tutte le issue",
+				"AUTO_SYNC_OFF": "Sincronizzazione automatica disattivata",
+				"EDIT": "Modifica impostazioni di sincronizzazione",
+				"SAVED": "Impostazioni di sincronizzazione salvate per '{{ project }}'"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "App e integrazioni disponibili",
 		"ADDED_UPWORK_TRANSACTION": "Aggiunta transazione Upwork",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Le transazioni di spese totali sono riuscite: {{ totalExpenses }}. Le transazioni di entrate totali sono riuscite: {{ totalIncomes }}",
@@ -1975,6 +1995,8 @@
 			"ASSIGN_TO": "Assegnare a",
 			"INCLUDE_TAXES": "Includere le tasse",
 			"ATTACH_A_RECEIPT": "Allega una ricevuta",
+			"NO_RECEIPT": "Nessuna ricevuta allegata. Fai clic per caricarne una.",
+			"RECEIPT_ATTACHED": "Ricevuta allegata",
 			"EMPLOYEES_GENERATE_EXPENSE": "Dipendenti che generano spese",
 			"TAX_DEDUCTIBLE": "Detraibile fiscale",
 			"NOT_TAX_DEDUCTIBLE": "Non deducibile fiscale",
@@ -3544,6 +3566,10 @@
 		"VIEW_REQUEST_DOCUMENT": "Visualizza documento di richiesta",
 		"MULTIPLE_EMPLOYEES": "Dipendenti multipli",
 		"UPLOAD_REQUEST_DOCUMENT": "Carica documento richiesto",
+		"REQUEST_FORM_NOT_FOUND": "Per questa organizzazione non è ancora stato caricato alcun modulo \"{{ name }}\". Un amministratore può aggiungere un documento con questo nome in Documenti.",
+		"REQUEST_FORM_UNAVAILABLE": "Impossibile scaricare il modulo \"{{ name }}\". Un amministratore può verificarne il link in Documenti.",
+		"REQUEST_FORM_BLOCKED": "Il browser ha impedito l'apertura del modulo \"{{ name }}\" in una nuova scheda. Usa il link sotto i pulsanti per aprirlo.",
+		"OPEN_REQUEST_FORM": "Apri il modulo \"{{ name }}\"",
 		"STATUSES": {
 			"REQUESTED": "Richiesto",
 			"APPROVED": "Approvato",
@@ -3563,6 +3589,7 @@
 			"EDIT_POLICY": "Modifica politica",
 			"NAME": "Nome",
 			"REQUIRES_APPROVAL": "Richiede approvazione",
+			"REQUIRE_SUFFICIENT_BALANCE": "Rifiuta le approvazioni che il saldo ferie non copre",
 			"PAID": "Pagato",
 			"NAME_IS_REQUIRED": "Il nome della politica è obbligatorio!"
 		},
@@ -6491,6 +6518,7 @@
 		"SIGN_IN_WITH_EVER_ID": "Accedi con Ever ID",
 		"LOGIN_WITH_EVER_ID": "Accedi con {{ everId }}",
 		"SIGN_IN_WITH_KEYCLOAK": "Accedi con Keycloak",
+		"SIGN_IN_WITH_SSO": "Accedi con {{ name }}",
 		"FORGOT_EMAIL_TITLE": "Hai dimenticato l'email?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Accedi con un codice magico",

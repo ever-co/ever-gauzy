@@ -763,6 +763,8 @@
 		"NAME": "姓名",
 		"YEAR": "年份",
 		"BANNER": "橫幅",
+		"BANNER_PLACEHOLDER": "例如：我们为企业打造开源软件",
+		"BANNER_HINT": "显示在公开页面上公司名称下方的简短标语",
 		"SIZE": "尺寸",
 		"YEAR_FOUNDED": "成立年份",
 		"COMPANY_SIZE": "公司规模",
@@ -1339,6 +1341,24 @@
 		"STANDARD_WORK_HOURS": "标准工作时间 ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "同步标签",
+				"TITLE": "同步设置",
+				"SUBTITLE": "{{ repository }} 的 issue 如何同步到 {{ project }}",
+				"AUTO_SYNC": "自动同步 issue",
+				"AUTO_SYNC_HINT": "在 GitHub 上新建或修改的 issue 会在此项目中创建或更新任务。",
+				"ONLY_LABELLED": "仅同步带标签的 issue",
+				"ONLY_LABELLED_HINT": "只有带下方标签的 issue 会被自动同步。",
+				"LABEL": "标签",
+				"LABEL_HINT": "选择仓库中的标签或输入其他标签。留空则使用默认标签 {{ label }}。",
+				"LABEL_INVALID": "GitHub 标签为单行，最多 {{ max }} 个字符。",
+				"ALL_ISSUES": "所有 issue",
+				"AUTO_SYNC_OFF": "自动同步已关闭",
+				"EDIT": "编辑同步设置",
+				"SAVED": "已保存“{{ project }}”的同步设置"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "可用应用程序与集成",
 		"ADDED_UPWORK_TRANSACTION": "添加了Upwork交易",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "总花费交易成功：{{ totalExpenses }}。总收入交易成功：{{ totalIncomes }}。",
@@ -1975,6 +1995,8 @@
 			"ASSIGN_TO": "分配给",
 			"INCLUDE_TAXES": "包括税费",
 			"ATTACH_A_RECEIPT": "附上收据",
+			"NO_RECEIPT": "尚未附加收据。点击上传。",
+			"RECEIPT_ATTACHED": "已附加收据",
 			"EMPLOYEES_GENERATE_EXPENSE": "产生费用的员工",
 			"TAX_DEDUCTIBLE": "税额可抵扣",
 			"NOT_TAX_DEDUCTIBLE": "不可抵税",
@@ -3544,6 +3566,10 @@
 		"VIEW_REQUEST_DOCUMENT": "查看请求文件",
 		"MULTIPLE_EMPLOYEES": "多个员工",
 		"UPLOAD_REQUEST_DOCUMENT": "上传请求文档",
+		"REQUEST_FORM_NOT_FOUND": "该组织尚未上传“{{ name }}”表单。管理员可以在“文档”中添加同名文档。",
+		"REQUEST_FORM_UNAVAILABLE": "无法下载“{{ name }}”表单。管理员可以在“文档”中检查其链接。",
+		"REQUEST_FORM_BLOCKED": "浏览器阻止了在新标签页中打开“{{ name }}”表单。请使用按钮下方的链接打开它。",
+		"OPEN_REQUEST_FORM": "打开“{{ name }}”表单",
 		"STATUSES": {
 			"REQUESTED": "要求的。",
 			"APPROVED": "已批准",
@@ -3563,6 +3589,7 @@
 			"EDIT_POLICY": "编辑政策",
 			"NAME": "姓名 (Xìngmíng)",
 			"REQUIRES_APPROVAL": "需要批准",
+			"REQUIRE_SUFFICIENT_BALANCE": "拒绝假期余额不足以覆盖的审批",
 			"PAID": "支付",
 			"NAME_IS_REQUIRED": "政策名称是必需的！"
 		},
@@ -6491,6 +6518,7 @@
 		"SIGN_IN_WITH_EVER_ID": "使用 Ever ID 登录",
 		"LOGIN_WITH_EVER_ID": "使用 {{ everId }} 登录",
 		"SIGN_IN_WITH_KEYCLOAK": "使用 Keycloak 登录",
+		"SIGN_IN_WITH_SSO": "使用 {{ name }} 登录",
 		"FORGOT_EMAIL_TITLE": "忘记电子邮件？",
 		"LOGIN_MAGIC": {
 			"TITLE": "使用魔法代码登录",

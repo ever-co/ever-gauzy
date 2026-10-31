@@ -60,6 +60,13 @@
 					[checked]="paid"
 					>{{ 'TIME_OFF_PAGE.POLICY.PAID' | translate }}
 				</nb-checkbox>
+				<nb-checkbox
+					(checkedChange)="changeRequireSufficientBalance($event)"
+					class="my-auto align-center"
+					status="primary"
+					[checked]="requireSufficientBalance"
+					>{{ 'TIME_OFF_PAGE.POLICY.REQUIRE_SUFFICIENT_BALANCE' | translate }}
+				</nb-checkbox>
 			</div>
 		</form>
 	</nb-card-body>

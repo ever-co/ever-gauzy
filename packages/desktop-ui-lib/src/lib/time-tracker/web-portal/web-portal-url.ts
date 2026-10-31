@@ -1,6 +1,3 @@
-/** The API of Gauzy Cloud: the time tracker's "Gauzy Cloud" server option (the setup's live server). */
-export const GAUZY_CLOUD_API_URL = 'https://api.gauzy.co';
-
 /** The web app page with an employee's time and activity. */
 export const TIME_ACTIVITIES_PATH = '/pages/employees/activity/time-activities';
 
@@ -18,17 +15,17 @@ export function isHttpUrl(url: string | null | undefined): boolean {
 }
 
 /**
- * The web app's address with its hash routing (`…/#`), without a trailing slash: `GAUZY_CLOUD_APP` already holds it
- * (`https://app.gauzy.co/#`), a local server's web UI address (`http://127.0.0.1:4200`) does not.
+ * The web app's address with its hash routing (`…/#`), without a trailing slash: `GAUZY_CLOUD_APP` already ends with
+ * `/#`, a local server's web UI address (`http://127.0.0.1:4200`) does not.
  */
 export function withHashRouting(url: string): string {
 	const base = url.trim().replace(/\/+$/, '');
 	return base.includes('#') ? base : `${base}/#`;
 }
 
-/** Whether two URLs share their origin (scheme, host and port). */
-function sameOrigin(a: string | null | undefined, b: string): boolean {
-	if (!isHttpUrl(a)) {
+/** Whether two http(s) URLs share their origin (scheme, host and port). */
+function sameOrigin(a: string | null | undefined, b: string | null | undefined): boolean {
+	if (!isHttpUrl(a) || !isHttpUrl(b)) {
 		return false;
 	}
 	return new URL(a).origin === new URL(b).origin;
@@ -37,12 +34,12 @@ function sameOrigin(a: string | null | undefined, b: string): boolean {
 export interface IWebAppSources {
 	/** The API the time tracker works with. */
 	apiHost: string | null | undefined;
-	/** The web app of Gauzy Cloud (`GAUZY_CLOUD_APP`, `https://app.gauzy.co/#` by default). */
+	/** The web app of Gauzy Cloud (`GAUZY_CLOUD_APP`). */
 	cloudAppUrl?: string | null;
 	/** The web UI the app serves on this computer, while its UI server runs (from the main process). */
 	localWebAppUrl?: string | null;
-	/** The API of Gauzy Cloud, {@link GAUZY_CLOUD_API_URL} unless given. */
-	cloudApiUrl?: string;
+	/** The API of Gauzy Cloud (from the main process). Without it, no server counts as Gauzy Cloud. */
+	cloudApiUrl?: string | null;
 }
 
 /**
@@ -54,7 +51,7 @@ export interface IWebAppSources {
  *   tracker shows no link rather than a guessed one.
  */
 export function resolveWebAppBaseUrl(sources: IWebAppSources): string | null {
-	const { apiHost, cloudAppUrl, localWebAppUrl, cloudApiUrl = GAUZY_CLOUD_API_URL } = sources;
+	const { apiHost, cloudAppUrl, localWebAppUrl, cloudApiUrl } = sources;
 
 	if (isHttpUrl(localWebAppUrl)) {
 		return withHashRouting(localWebAppUrl);

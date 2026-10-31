@@ -763,6 +763,8 @@
 		"NAME": "Name",
 		"YEAR": "Jahr",
 		"BANNER": "Banner",
+		"BANNER_PLACEHOLDER": "z. B. Wir entwickeln Open-Source-Software für Unternehmen",
+		"BANNER_HINT": "Ein kurzer Slogan, der auf Ihrer öffentlichen Seite unter Ihrem Firmennamen angezeigt wird",
 		"SIZE": "Größe",
 		"YEAR_FOUNDED": "Gründungsjahr",
 		"COMPANY_SIZE": "Unternehmensgröße",
@@ -1339,6 +1341,24 @@
 		"STANDARD_WORK_HOURS": "Standardarbeitszeit ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Sync-Label",
+				"TITLE": "Sync-Einstellungen",
+				"SUBTITLE": "Wie Issues aus {{ repository }} mit {{ project }} synchronisiert werden",
+				"AUTO_SYNC": "Issues automatisch synchronisieren",
+				"AUTO_SYNC_HINT": "Auf GitHub eröffnete oder geänderte Issues erstellen oder aktualisieren Aufgaben in diesem Projekt.",
+				"ONLY_LABELLED": "Nur Issues mit einem Label",
+				"ONLY_LABELLED_HINT": "Nur Issues mit dem unten angegebenen Label werden automatisch synchronisiert.",
+				"LABEL": "Label",
+				"LABEL_HINT": "Wählen Sie ein Label des Repositorys oder geben Sie ein anderes ein. Leer lassen, um das Standard-Label {{ label }} zu verwenden.",
+				"LABEL_INVALID": "Ein GitHub-Label ist eine einzelne Zeile mit höchstens {{ max }} Zeichen.",
+				"ALL_ISSUES": "Alle Issues",
+				"AUTO_SYNC_OFF": "Automatische Synchronisierung aus",
+				"EDIT": "Sync-Einstellungen bearbeiten",
+				"SAVED": "Sync-Einstellungen für '{{ project }}' gespeichert"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "Verfügbare Apps und Integrationen",
 		"ADDED_UPWORK_TRANSACTION": "Hinzugefügte Upwork-Transaktion",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Gesamtbetrag der Ausgaben erfolgreich: {{ totalExpenses }}. Gesamtbetrag der Einnahmen erfolgreich: {{ totalIncomes }}.",
@@ -1975,6 +1995,8 @@
 			"ASSIGN_TO": "Zuweisen",
 			"INCLUDE_TAXES": "Inklusive Steuern",
 			"ATTACH_A_RECEIPT": "Hänge eine Quittung an",
+			"NO_RECEIPT": "Noch keine Quittung angehängt. Klicken Sie, um eine hochzuladen.",
+			"RECEIPT_ATTACHED": "Quittung angehängt",
 			"EMPLOYEES_GENERATE_EXPENSE": "Mitarbeiter, die Ausgaben verursachen",
 			"TAX_DEDUCTIBLE": "Steuerlich absetzbar",
 			"NOT_TAX_DEDUCTIBLE": "Nicht steuerlich absetzbar",
@@ -3540,6 +3562,10 @@
 		"VIEW_REQUEST_DOCUMENT": "Ansehen Anforderungsdokument",
 		"MULTIPLE_EMPLOYEES": "Mehrere Mitarbeiter",
 		"UPLOAD_REQUEST_DOCUMENT": "Hochladen der Anforderungsdokumente",
+		"REQUEST_FORM_NOT_FOUND": "Für diese Organisation wurde noch kein Formular „{{ name }}“ hochgeladen. Ein Administrator kann unter „Dokumente“ ein Dokument mit diesem Namen hinzufügen.",
+		"REQUEST_FORM_UNAVAILABLE": "Das Formular „{{ name }}“ konnte nicht heruntergeladen werden. Ein Administrator kann den Link unter „Dokumente“ prüfen.",
+		"REQUEST_FORM_BLOCKED": "Ihr Browser hat das Öffnen des Formulars „{{ name }}“ in einem neuen Tab blockiert. Öffnen Sie es über den Link unter den Schaltflächen.",
+		"OPEN_REQUEST_FORM": "Formular „{{ name }}“ öffnen",
 		"STATUSES": {
 			"REQUESTED": "Bitte teilen Sie Ihren Wunsch mit.",
 			"APPROVED": "Genehmigt",
@@ -3559,6 +3585,7 @@
 			"EDIT_POLICY": "Bearbeiten Sie die Richtlinie",
 			"NAME": "Name",
 			"REQUIRES_APPROVAL": "Erfordert Genehmigung",
+			"REQUIRE_SUFFICIENT_BALANCE": "Genehmigungen ablehnen, die das Urlaubskonto nicht deckt",
 			"PAID": "Bezahlt",
 			"NAME_IS_REQUIRED": "Der Name der Richtlinie ist erforderlich!"
 		},
@@ -6487,6 +6514,7 @@
 		"SIGN_IN_WITH_EVER_ID": "Mit Ever ID anmelden",
 		"LOGIN_WITH_EVER_ID": "Mit {{ everId }} anmelden",
 		"SIGN_IN_WITH_KEYCLOAK": "Mit Keycloak anmelden",
+		"SIGN_IN_WITH_SSO": "Mit {{ name }} anmelden",
 		"FORGOT_EMAIL_TITLE": "E-Mail vergessen?",
 		"LOGIN_MAGIC": {
 			"TITLE": "Einloggen mit einem magischen Code",
