@@ -134,6 +134,45 @@ describe('PostgresDatabaseProvisioner', () => {
 		);
 	});
 
+	it('connects with the configured URL pointed at the maintenance database, so its TLS settings apply', async () => {
+		const { provisioner, configs } = fakeServer({ existing: ['gauzy'] });
+
+		await provisioner.ensureDatabase({
+			...target,
+			url: 'postgres://gauzy_app@db.local:5433/gauzy?sslmode=verify-full&sslrootcert=%2Fca.pem'
+		});
+
+		expect(configs[0].connectionString).toBe(
+			'postgres://gauzy_app@db.local:5433/postgres?sslmode=verify-full&sslrootcert=%2Fca.pem'
+		);
+		expect(configs[0].database).toBe('postgres');
+	});
+
+	it('closes the connection at once when the caller stops waiting, even while a query hangs', async () => {
+		let failPending: (error: Error) => void = () => undefined;
+		const client = {
+			connect: async () => undefined,
+			query: jest.fn(
+				() =>
+					new Promise<{ rows: unknown[] }>((_, reject) => {
+						failPending = reject;
+					})
+			),
+			// `pg` drops the socket of a running query on end(), which fails that query.
+			end: jest.fn(async () => failPending(new Error('Connection terminated')))
+		};
+		const provisioner = new PostgresDatabaseProvisioner({ createClient: () => client });
+		const stop = new AbortController();
+
+		const running = provisioner.ensureDatabase(target, stop.signal);
+		await new Promise((resolve) => setImmediate(resolve));
+		expect(client.query).toHaveBeenCalledTimes(1);
+		stop.abort();
+
+		await expect(running).rejects.toMatchObject({ stage: 'check' });
+		expect(client.end).toHaveBeenCalledTimes(1);
+	});
+
 	it('listens for connection errors before connecting, so a dropped connection cannot crash startup', async () => {
 		const listeners: Array<(error: Error) => void> = [];
 		const order: string[] = [];

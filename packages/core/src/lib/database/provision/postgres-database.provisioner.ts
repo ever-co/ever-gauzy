@@ -11,7 +11,8 @@ import {
 	DEFAULT_PROVISION_CONNECT_TIMEOUT_MS,
 	describeDriverError,
 	describeServer,
-	DriverError
+	DriverError,
+	whenAborted
 } from './database-provisioner';
 
 /** The part of a `pg` `Client` the provisioner uses. */
@@ -33,6 +34,8 @@ export interface PostgresAdminClientConfig {
 	ssl?: unknown;
 	connectionTimeoutMillis: number;
 	application_name: string;
+	/** The configured URL pointed at the maintenance database; `pg` lets its fields win over the separate ones. */
+	connectionString?: string;
 	statement_timeout?: number;
 	lock_timeout?: number;
 	keepAlive?: boolean;
@@ -60,6 +63,17 @@ export const createPgAdminClient: PostgresAdminClientFactory = async (config) =>
  * not connect to `postgres`.
  */
 export const DEFAULT_POSTGRES_MAINTENANCE_DATABASE = 'postgres';
+
+/** The connection URL pointed at another database, everything else (TLS settings such as `sslmode`) kept. */
+export function connectionUrlForDatabase(url: string, database: string): string | undefined {
+	try {
+		const parsed = new URL(url);
+		parsed.pathname = `/${encodeURIComponent(database)}`;
+		return parsed.toString();
+	} catch {
+		return undefined;
+	}
+}
 
 const POSTGRES_DEFAULT_PORT = 5432;
 
@@ -95,18 +109,23 @@ export class PostgresDatabaseProvisioner implements DatabaseProvisioner {
 		this.createClient = createClient ?? createPgAdminClient;
 	}
 
-	async ensureDatabase(target: DatabaseProvisionTarget): Promise<DatabaseProvisionOutcome> {
+	async ensureDatabase(target: DatabaseProvisionTarget, signal?: AbortSignal): Promise<DatabaseProvisionOutcome> {
 		assertValidDatabaseName(target.database, { maxBytes: POSTGRES_MAX_DATABASE_NAME_BYTES });
 
 		const client = await this.connect(target);
+		// Ends the session once. Closing must never hide the outcome (or the error) below. When the caller stops
+		// waiting it runs at once, and `pg` then drops the socket of a query that hangs instead of waiting for it.
+		let closing: Promise<unknown> | undefined;
+		const close = () => (closing ??= client.end().catch(() => undefined));
+		const stopListening = whenAborted(signal, () => void close());
 		try {
 			if (await this.exists(client, target)) {
 				return 'exists';
 			}
 			return await this.create(client, target);
 		} finally {
-			// Closing must never hide the outcome (or the error) above.
-			await client.end().catch(() => undefined);
+			stopListening();
+			await close();
 		}
 	}
 
@@ -119,6 +138,9 @@ export class PostgresDatabaseProvisioner implements DatabaseProvisioner {
 				password: target.password,
 				database: this.maintenanceDatabase,
 				ssl: target.ssl,
+				connectionString: target.url
+					? connectionUrlForDatabase(target.url, this.maintenanceDatabase)
+					: undefined,
 				connectionTimeoutMillis: target.connectTimeoutMs || DEFAULT_PROVISION_CONNECT_TIMEOUT_MS,
 				// Names the session in pg_stat_activity, so a DBA can tell it from the API's own pool.
 				application_name: 'gauzy-db-provision',

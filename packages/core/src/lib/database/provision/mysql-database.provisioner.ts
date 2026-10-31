@@ -7,7 +7,8 @@ import {
 	DEFAULT_PROVISION_CONNECT_TIMEOUT_MS,
 	describeDriverError,
 	describeServer,
-	DriverError
+	DriverError,
+	whenAborted
 } from './database-provisioner';
 
 /** The part of a `mysql2/promise` connection the provisioner uses. */
@@ -15,6 +16,8 @@ export interface MySqlAdminConnection {
 	/** Resolves to `[rows, fields]`, as `mysql2/promise` does. */
 	query(sql: string, values?: unknown[]): Promise<[unknown, unknown?]>;
 	end(): Promise<unknown>;
+	/** Closes the socket at once, without waiting for a running query. */
+	destroy?(): void;
 	/** `mysql2` emits `error` when an idle connection drops; see {@link MySqlDatabaseProvisioner}. */
 	on?(event: 'error', listener: (error: Error) => void): unknown;
 }
@@ -77,18 +80,27 @@ export class MySqlDatabaseProvisioner implements DatabaseProvisioner {
 		this.connect = connect ?? createMySqlAdminConnection;
 	}
 
-	async ensureDatabase(target: DatabaseProvisionTarget): Promise<DatabaseProvisionOutcome> {
+	async ensureDatabase(target: DatabaseProvisionTarget, signal?: AbortSignal): Promise<DatabaseProvisionOutcome> {
 		assertValidDatabaseName(target.database, { maxLength: MYSQL_MAX_DATABASE_NAME_LENGTH });
 
 		const connection = await this.open(target);
+		// When the caller stops waiting, the socket is dropped at once: `end()` would wait for a query that hangs.
+		let destroyed = false;
+		const stopListening = whenAborted(signal, () => {
+			destroyed = true;
+			connection.destroy?.();
+		});
 		try {
 			if (await this.exists(connection, target)) {
 				return 'exists';
 			}
 			return await this.create(connection, target);
 		} finally {
+			stopListening();
 			// Closing must never hide the outcome (or the error) above.
-			await connection.end().catch(() => undefined);
+			if (!destroyed) {
+				await connection.end().catch(() => undefined);
+			}
 		}
 	}
 

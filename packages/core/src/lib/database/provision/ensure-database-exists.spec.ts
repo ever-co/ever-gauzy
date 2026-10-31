@@ -21,7 +21,9 @@ const postgresOptions: DatabaseConnectionOptionsLike = {
 };
 
 function provisionerReturning(result: Promise<'exists' | 'created'>) {
-	const ensureDatabase = jest.fn<Promise<'exists' | 'created'>, [DatabaseProvisionTarget]>(() => result);
+	const ensureDatabase = jest.fn<Promise<'exists' | 'created'>, [DatabaseProvisionTarget, AbortSignal?]>(
+		() => result
+	);
 	const provisioner: DatabaseProvisioner = { ensureDatabase };
 	return { provisioner, ensureDatabase };
 }
@@ -108,7 +110,8 @@ describe('toDatabaseProvisionTarget', () => {
 				port: 6543,
 				user: 'gauzy@app',
 				password: 'p@ss',
-				database: 'gauzy dev'
+				database: 'gauzy dev',
+				url: 'postgres://gauzy%40app:p%40ss@db.example:6543/gauzy%20dev?sslmode=require'
 			})
 		);
 	});
@@ -183,7 +186,10 @@ describe('ensureDatabaseExists', () => {
 			ensureDatabaseExists(postgresOptions, { env: enabled, logger, provisioners: { postgres: provisioner } })
 		).resolves.toBe('created');
 
-		expect(ensureDatabase).toHaveBeenCalledWith(toDatabaseProvisionTarget(postgresOptions));
+		expect(ensureDatabase).toHaveBeenCalledWith(
+			toDatabaseProvisionTarget(postgresOptions),
+			expect.any(AbortSignal)
+		);
 		expect(logger.log).toHaveBeenCalledWith('DB_CREATE_IF_NOT_EXISTS: created database "gauzy".');
 	});
 
@@ -238,6 +244,38 @@ describe('ensureDatabaseExists', () => {
 		expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('did not answer within'));
 		expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Startup continues'));
 		expect(logger.log).not.toHaveBeenCalled();
+	});
+
+	it('tells the provisioner to stop at the deadline, and only then', async () => {
+		const signals: Array<AbortSignal | undefined> = [];
+		const hanging: DatabaseProvisioner = {
+			ensureDatabase: (_target, signal) => {
+				signals.push(signal);
+				return new Promise<never>(() => undefined);
+			}
+		};
+		const answering: DatabaseProvisioner = {
+			ensureDatabase: async (_target, signal) => {
+				signals.push(signal);
+				return 'exists';
+			}
+		};
+
+		await ensureDatabaseExists(postgresOptions, {
+			env: enabled,
+			logger: fakeLogger(),
+			provisioners: { postgres: hanging },
+			timeoutMs: 10
+		});
+		await ensureDatabaseExists(postgresOptions, {
+			env: enabled,
+			logger: fakeLogger(),
+			provisioners: { postgres: answering },
+			timeoutMs: 10_000
+		});
+
+		expect(signals[0]?.aborted).toBe(true);
+		expect(signals[1]?.aborted).toBe(false);
 	});
 
 	it('ignores whatever the provisioner does after the deadline', async () => {

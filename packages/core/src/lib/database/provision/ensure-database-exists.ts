@@ -98,14 +98,8 @@ type ConnectionFields = Pick<DatabaseConnectionOptionsLike, 'host' | 'port' | 'u
  * configure the connection with a URL alone), so the provisioning reads them the same way. A URL that does not
  * parse adds nothing.
  */
-function connectionUrlFields(url: unknown): ConnectionFields {
-	if (typeof url !== 'string' || url.trim() === '') {
-		return {};
-	}
-	let parsed: URL;
-	try {
-		parsed = new URL(url);
-	} catch {
+function connectionUrlFields(parsed: URL | undefined): ConnectionFields {
+	if (!parsed) {
 		return {};
 	}
 	const fields: ConnectionFields = {
@@ -119,10 +113,23 @@ function connectionUrlFields(url: unknown): ConnectionFields {
 	return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined)) as ConnectionFields;
 }
 
+/** The `url` option parsed, or `undefined` when there is none or it does not parse. */
+function parseConnectionUrl(url: unknown): URL | undefined {
+	if (typeof url !== 'string' || url.trim() === '') {
+		return undefined;
+	}
+	try {
+		return new URL(url);
+	} catch {
+		return undefined;
+	}
+}
+
 /** The provisioning target described by the ORM's connection options. */
 export function toDatabaseProvisionTarget(options: DatabaseConnectionOptionsLike): DatabaseProvisionTarget {
 	const extra = options?.extra;
-	const fields: ConnectionFields = { ...options, ...connectionUrlFields(options?.url) };
+	const url = parseConnectionUrl(options?.url);
+	const fields: ConnectionFields = { ...options, ...connectionUrlFields(url) };
 	return {
 		type: String(options?.type ?? ''),
 		// SQLite's `database` is a file path (or a buffer for sql.js); only a networked engine's name is used.
@@ -136,7 +143,8 @@ export function toDatabaseProvisionTarget(options: DatabaseConnectionOptionsLike
 		statementTimeoutMs: positiveMs(extra?.statement_timeout),
 		lockTimeoutMs: positiveMs(extra?.lock_timeout),
 		keepAlive: typeof extra?.keepAlive === 'boolean' ? extra.keepAlive : undefined,
-		keepAliveInitialDelayMs: positiveMs(extra?.keepAliveInitialDelayMillis)
+		keepAliveInitialDelayMs: positiveMs(extra?.keepAliveInitialDelayMillis),
+		url: url ? (options.url as string) : undefined
 	};
 }
 
@@ -211,14 +219,19 @@ export async function ensureDatabaseExists(
 
 	const deadlineMs =
 		timeoutMs ?? (target.connectTimeoutMs || DEFAULT_PROVISION_CONNECT_TIMEOUT_MS) + PROVISION_WORK_BUDGET_MS;
+	// At the deadline the provisioner is told to stop, and closes its connection at once.
+	const stop = new AbortController();
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	const deadline = new Promise<typeof TIMED_OUT>((resolve) => {
-		timer = setTimeout(() => resolve(TIMED_OUT), deadlineMs);
+		timer = setTimeout(() => {
+			stop.abort();
+			resolve(TIMED_OUT);
+		}, deadlineMs);
 	});
 	try {
 		// The race also handles a late rejection of the provisioner, so nothing it does after the deadline can
-		// surface as an unhandled rejection; its connection is closed whenever it finishes.
-		const outcome = await Promise.race([provisioner.ensureDatabase(target), deadline]);
+		// surface as an unhandled rejection.
+		const outcome = await Promise.race([provisioner.ensureDatabase(target, stop.signal), deadline]);
 		if (outcome === TIMED_OUT) {
 			logger.warn(
 				`DB_CREATE_IF_NOT_EXISTS: the database server did not answer within ${Math.ceil(deadlineMs / 1000)}s, ` +

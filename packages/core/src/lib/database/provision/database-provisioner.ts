@@ -38,6 +38,11 @@ export interface DatabaseProvisionTarget {
 	/** TCP keep-alive as the API's own connections use it (`DB_KEEP_ALIVE`), so a dropped connection is noticed. */
 	readonly keepAlive?: boolean;
 	readonly keepAliveInitialDelayMs?: number;
+	/**
+	 * The connection URL, when the connection is configured with one. PostgreSQL reads its TLS settings (`sslmode`,
+	 * certificates) from it, as the API's own pool does.
+	 */
+	readonly url?: string;
 }
 
 /**
@@ -54,9 +59,29 @@ export interface DatabaseProvisioner {
 	/**
 	 * Checks whether `target.database` exists on the server and creates it when it does not.
 	 *
+	 * @param signal - Aborted when the caller stops waiting: the provisioner then closes its connection at once, so
+	 *   a server that stopped answering leaves no open socket behind (one would keep a seed or migration process
+	 *   alive after its own connections closed).
 	 * @throws {DatabaseProvisionError} naming the stage that failed.
 	 */
-	ensureDatabase(target: DatabaseProvisionTarget): Promise<DatabaseProvisionOutcome>;
+	ensureDatabase(target: DatabaseProvisionTarget, signal?: AbortSignal): Promise<DatabaseProvisionOutcome>;
+}
+
+/**
+ * Calls `stop` once `signal` is aborted, or at once when it already is.
+ *
+ * @returns The function that stops listening.
+ */
+export function whenAborted(signal: AbortSignal | undefined, stop: () => void): () => void {
+	if (!signal) {
+		return () => undefined;
+	}
+	if (signal.aborted) {
+		stop();
+		return () => undefined;
+	}
+	signal.addEventListener('abort', stop, { once: true });
+	return () => signal.removeEventListener('abort', stop);
 }
 
 /**

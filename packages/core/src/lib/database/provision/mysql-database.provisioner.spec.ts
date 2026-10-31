@@ -99,6 +99,31 @@ describe('MySqlDatabaseProvisioner', () => {
 		expect(() => listeners[0](new Error('Connection lost: The server closed the connection.'))).not.toThrow();
 	});
 
+	it('drops the socket at once when the caller stops waiting, instead of waiting for a query that hangs', async () => {
+		let failPending: (error: Error) => void = () => undefined;
+		const connection = {
+			query: jest.fn(
+				() =>
+					new Promise<[unknown, unknown?]>((_, reject) => {
+						failPending = reject;
+					})
+			),
+			end: jest.fn(async () => undefined),
+			destroy: jest.fn(() => failPending(new Error('Connection lost')))
+		};
+		const provisioner = new MySqlDatabaseProvisioner({ connect: async () => connection });
+		const stop = new AbortController();
+
+		const running = provisioner.ensureDatabase(target, stop.signal);
+		await new Promise((resolve) => setImmediate(resolve));
+		expect(connection.query).toHaveBeenCalledTimes(1);
+		stop.abort();
+
+		await expect(running).rejects.toMatchObject({ stage: 'check' });
+		expect(connection.destroy).toHaveBeenCalledTimes(1);
+		expect(connection.end).not.toHaveBeenCalled();
+	});
+
 	it('creates nothing when the database exists, looking it up with a bound parameter', async () => {
 		const { provisioner, statements, connection } = fakeServer({ existing: ['gauzy'] });
 
