@@ -34,12 +34,15 @@ export function withoutAssignedComments<T>(input: T): T {
  * @param value - The request's parsed query or body.
  */
 export function mentionsAssignedComments(value: unknown): boolean {
-	return mentions(value, ASSIGNED_COMMENTS.toLowerCase(), 0);
+	return mentions(value, 0);
 }
 
-function mentions(value: unknown, name: string, depth: number): boolean {
+/** The relation's name in any casing; tested in place, so a long body string is not copied to compare it. */
+const NAMES_ASSIGNED_COMMENTS = new RegExp(ASSIGNED_COMMENTS, 'i');
+
+function mentions(value: unknown, depth: number): boolean {
 	if (typeof value === 'string') {
-		return value.toLowerCase().includes(name);
+		return NAMES_ASSIGNED_COMMENTS.test(value);
 	}
 	if (value === null || typeof value !== 'object' || Buffer.isBuffer(value)) {
 		return false;
@@ -48,9 +51,9 @@ function mentions(value: unknown, name: string, depth: number): boolean {
 		return true;
 	}
 	if (Array.isArray(value)) {
-		return value.some((element) => mentions(element, name, depth + 1));
+		return value.some((element) => mentions(element, depth + 1));
 	}
 	return Object.entries(value).some(
-		([key, element]) => key.toLowerCase().includes(name) || mentions(element, name, depth + 1)
+		([key, element]) => NAMES_ASSIGNED_COMMENTS.test(key) || mentions(element, depth + 1)
 	);
 }
