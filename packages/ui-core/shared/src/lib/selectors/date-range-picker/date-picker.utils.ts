@@ -282,16 +282,21 @@ const PRESETS_BY_UNIT: Partial<Record<moment.unitOfTime.Base, readonly [DateRang
  *
  * A preset reaching past `maxDate` ends on `maxDate` instead, so on an organization that does not
  * allow future dates "Current Year" runs from 1 January to today rather than to 31 December.
+ * Likewise a preset reaching back before `minDate` starts on `minDate`, and one that is over before
+ * `minDate`'s day ("Yesterday", "Last Year", … where past dates are not allowed) is left out: the
+ * picker would otherwise still list it, and picking it would give a range that ends before it starts.
  *
  * @param units The units to offer presets for; a unit without presets is skipped.
  * @param now The instant the presets are relative to.
  * @param maxDate The last selectable instant, or `null` when future dates are allowed.
+ * @param minDate The first selectable instant, or `null` when past dates are allowed.
  * @returns The ranges keyed by their menu label, in the order of `units`.
  */
 export function buildPresetRanges(
 	units: readonly moment.unitOfTime.Base[],
 	now: moment.Moment = moment(),
-	maxDate: moment.Moment | null = null
+	maxDate: moment.Moment | null = null,
+	minDate: moment.Moment | null = null
 ): DateRanges {
 	const ranges: DateRanges = {};
 
@@ -305,11 +310,24 @@ export function buildPresetRanges(
 		const current = now.clone().startOf(unit);
 		const last = current.clone().subtract(1, unit);
 
-		ranges[currentKey] = wholeUnit(current, unit, maxDate);
-		ranges[lastKey] = wholeUnit(last, unit, maxDate);
+		addPreset(ranges, currentKey, wholeUnit(current, unit, maxDate), minDate);
+		addPreset(ranges, lastKey, wholeUnit(last, unit, maxDate), minDate);
 	}
 
 	return ranges;
+}
+
+/** Adds `range` under `key`, starting on `minDate` at the earliest; a range over before `minDate`'s day is left out. */
+function addPreset(
+	ranges: DateRanges,
+	key: DateRangeKeyEnum,
+	[start, end]: [moment.Moment, moment.Moment],
+	minDate: moment.Moment | null
+): void {
+	if (minDate && end.isBefore(minDate, 'day')) {
+		return;
+	}
+	ranges[key] = [minDate && start.isBefore(minDate) ? minDate.clone() : start, end];
 }
 
 /** The whole `unit` starting at `start`, ending on `maxDate` at the latest. */

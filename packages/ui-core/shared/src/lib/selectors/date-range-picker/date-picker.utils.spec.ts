@@ -398,6 +398,34 @@ describe('buildPresetRanges — the menu offers whole days, weeks, months and ye
 			expect(span(ranges[DateRangeKeyEnum.YESTERDAY])).toEqual(['2026-09-22', '2026-09-22']);
 		});
 	});
+
+	describe('where past dates are not allowed', () => {
+		const ranges = buildPresetRanges(PRESET_UNITS_OF_TIME, NOW, null, NOW.clone());
+
+		it('leaves out the presets that are already over, so none can end before it starts', () => {
+			expect(Object.keys(ranges)).toEqual([
+				DateRangeKeyEnum.TODAY,
+				DateRangeKeyEnum.CURRENT_WEEK,
+				DateRangeKeyEnum.CURRENT_MONTH,
+				DateRangeKeyEnum.CURRENT_YEAR
+			]);
+		});
+
+		it('starts the current day, week, month and year now, and still ends them on their last day', () => {
+			expect(ranges[DateRangeKeyEnum.CURRENT_YEAR][0].valueOf()).toBe(NOW.valueOf());
+			expect(span(ranges[DateRangeKeyEnum.CURRENT_YEAR])).toEqual(['2026-09-23', '2026-12-31']);
+			expect(span(ranges[DateRangeKeyEnum.TODAY])).toEqual(['2026-09-23', '2026-09-23']);
+			for (const [start, end] of Object.values(ranges)) {
+				expect(start.isAfter(end)).toBe(false);
+			}
+		});
+
+		it('with future dates disallowed too, the current presets are just today', () => {
+			const today = buildPresetRanges(PRESET_UNITS_OF_TIME, NOW, NOW.clone(), NOW.clone());
+
+			expect(Object.values(today).map(span)).toEqual(Array(4).fill(['2026-09-23', '2026-09-23']));
+		});
+	});
 });
 
 describe('PRESET_UNIT_OF_TIME — picking a preset sets the unit the arrows step by', () => {

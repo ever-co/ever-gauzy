@@ -402,7 +402,14 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 		const units = this.isLockDatePicker ? [unitOfTime] : PRESET_UNITS_OF_TIME;
 
 		// Where future dates are disallowed, `setFutureStrategy` has set `maxDate` to today: presets end there.
-		this.ranges = buildPresetRanges(units, moment(), this.maxDate ? moment(this.maxDate) : null);
+		// Where past dates are, `setPastStrategy` has set `minDate` to today: presets start there, and the
+		// ones already over ("Yesterday", "Last Year", …) are not offered.
+		this.ranges = buildPresetRanges(
+			units,
+			moment(),
+			this.maxDate ? moment(this.maxDate) : null,
+			this.minDate ? moment(this.minDate) : null
+		);
 	}
 
 	/**
