@@ -4347,6 +4347,8 @@
 		"ADD_TASKS": "Добави задачи",
 		"EDIT_TASKS": "Редактирай задачи",
 		"EDIT_TASK": "Редактирай задача",
+		"CREATE_TASK": "Създай задача",
+		"REQUIRED_FIELDS_NOTE": "Полетата, отбелязани с *, са задължителни",
 		"DELETE_TASK": "Изтрий задача",
 		"TASKS_TITLE": "Заглавие",
 		"TASKS_DESCRIPTION": "Описание",

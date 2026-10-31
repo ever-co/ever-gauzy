@@ -4289,6 +4289,8 @@
 		"ADD_TASKS": "Taken toevoegen",
 		"EDIT_TASKS": "Taken bewerken",
 		"EDIT_TASK": "Bewerk taak",
+		"CREATE_TASK": "Taak aanmaken",
+		"REQUIRED_FIELDS_NOTE": "Velden met een * zijn verplicht",
 		"DELETE_TASK": "Verwijder taak",
 		"TASKS_TITLE": "Titel",
 		"TASKS_DESCRIPTION": "Beschrijving",

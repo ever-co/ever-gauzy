@@ -4285,6 +4285,8 @@
 		"ADD_TASKS": "Fügen Sie Aufgaben hinzu",
 		"EDIT_TASKS": "Aufgaben bearbeiten",
 		"EDIT_TASK": "Bearbeiten Sie die Aufgabe",
+		"CREATE_TASK": "Aufgabe erstellen",
+		"REQUIRED_FIELDS_NOTE": "Mit * gekennzeichnete Felder sind Pflichtfelder",
 		"DELETE_TASK": "Lösche Aufgabe",
 		"TASKS_TITLE": "Titel",
 		"TASKS_DESCRIPTION": "Beschreibung",

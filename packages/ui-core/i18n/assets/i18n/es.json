@@ -4291,6 +4291,8 @@
 		"ADD_TASKS": "Agregar tareas",
 		"EDIT_TASKS": "Editar tareas",
 		"EDIT_TASK": "Editar tarea",
+		"CREATE_TASK": "Crear tarea",
+		"REQUIRED_FIELDS_NOTE": "Los campos marcados con * son obligatorios",
 		"DELETE_TASK": "Eliminar tarea",
 		"TASKS_TITLE": "Título",
 		"TASKS_DESCRIPTION": "Descripción",

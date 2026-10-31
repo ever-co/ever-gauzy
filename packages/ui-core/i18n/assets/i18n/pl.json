@@ -4288,6 +4288,8 @@
 		"ADD_TASKS": "Dodaj zadania",
 		"EDIT_TASKS": "Edytuj zadania",
 		"EDIT_TASK": "Edytuj zadanie",
+		"CREATE_TASK": "Utwórz zadanie",
+		"REQUIRED_FIELDS_NOTE": "Pola oznaczone * są wymagane",
 		"DELETE_TASK": "Usuń zadanie",
 		"TASKS_TITLE": "Tytuł",
 		"TASKS_DESCRIPTION": "Opis",
