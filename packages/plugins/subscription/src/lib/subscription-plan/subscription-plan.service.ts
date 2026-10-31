@@ -160,6 +160,21 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 				throw new NotFoundException('The subscription plan was not found.');
 			}
 
+			// A target the patch restates was not read from the catalogue above: it was the plan's own as read. If an update
+			// that committed while this one waited moved the target, writing the restated one back would put a target no
+			// check read onto the plan, so the caller reads the plan again instead. Asked here without the catalogue, whose
+			// read on another connection would wait on the one this transaction holds.
+			const restated = (column: 'productId' | 'variantId') =>
+				changes[column] !== undefined &&
+				changes[column] === scoped[column] &&
+				(plan[column] ?? null) !== (scoped[column] ?? null);
+
+			if (restated('productId') || restated('variantId')) {
+				throw new ConflictException(
+					"SUBSCRIPTION_PLAN_TARGET_CHANGED: the plan's target changed while this update was waiting for it. Read the plan again and retry."
+				);
+			}
+
 			const normalized = this.normalize({ ...plan, ...changes } as Partial<SubscriptionPlan>);
 			const live = () => this.hasLiveSubscriptions(id, manager);
 

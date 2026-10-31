@@ -995,6 +995,37 @@ describe('SubscriptionPlanService.updatePlan under the plan row lock', () => {
 		expect(fixture.patches[0]).toMatchObject({ name: 'Renamed', currency: 'EUR' });
 	});
 
+	it('refuses to write back a restated target once an update that committed meanwhile moved it', async () => {
+		// Copilot, Greptile and CodeRabbit on #11571: a restated target is not read from the catalogue (it was the plan's
+		// own), so writing it over a target another update set while this one waited would put an unchecked one back.
+		const fixture = planFixture({
+			plans: [planRow('plan-1', { variantId: 'foreign-variant' })],
+			catalog: { foreign: ['foreign-variant'] }
+		});
+		const transaction = (fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction;
+		// Another update repairs the target onto the caller's own variant before this one is granted the lock.
+		(fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction = async (run: any) =>
+			transaction(async (manager: any) =>
+				run({
+					...manager,
+					query: async (sql: string) => {
+						fixture.statements.push(sql);
+						fixture.tables.subscription_plan[0] = {
+							...fixture.tables.subscription_plan[0],
+							variantId: VARIANT
+						};
+						return [];
+					}
+				})
+			);
+
+		await expect(
+			fixture.service.updatePlan('plan-1', { name: 'Renamed', variantId: 'foreign-variant' } as never)
+		).rejects.toThrow(/SUBSCRIPTION_PLAN_TARGET_CHANGED/);
+		expect(fixture.plan('plan-1')).toMatchObject({ variantId: VARIANT });
+		expect(fixture.patches).toEqual([]);
+	});
+
 	it('answers a code another plan took after the pre-check with 409 SUBSCRIPTION_PLAN_CODE_TAKEN', async () => {
 		const fixture = planFixture({ uniqueViolationOnUpdate: true });
 
