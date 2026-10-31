@@ -1,7 +1,8 @@
 @use 'gauzy/_gauzy-dialogs' as *;
 
 nb-card {
-  min-width: 375px;
+  // Shrinks below 375px on a narrow phone, so the statements and buttons stay inside the viewport.
+  min-width: min(375px, calc(100vw - 2rem));
   max-width: 640px;
 }
 
