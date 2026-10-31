@@ -159,15 +159,15 @@ export class EverConnectIdentityStore {
 		return row ? toReport(row) : null;
 	}
 
-	/** The reports of one user and identity, oldest first. */
+	/** The reports of one user and identity, oldest first (by `createdAt`, then the user's `seq`). */
 	async reportsOf(userId: string, subjectHash: string): Promise<PersonLinkReportRecord[]> {
-		const rows = await this.sql.select(REPORT, { userId, subjectHash }, { orderBy: [['createdAt', 'ASC']] });
+		const rows = await this.sql.select(REPORT, { userId, subjectHash }, { orderBy: [['createdAt', 'ASC'], ['seq', 'ASC']] });
 		return rows.map(toReport);
 	}
 
 	/** The pending reports of one user, oldest first (Ever Platform keys a link by the user). */
 	async pendingReportsOfUser(userId: string): Promise<PersonLinkReportRecord[]> {
-		const rows = await this.sql.select(REPORT, { userId, state: 'pending' }, { orderBy: [['createdAt', 'ASC']] });
+		const rows = await this.sql.select(REPORT, { userId, state: 'pending' }, { orderBy: [['createdAt', 'ASC'], ['seq', 'ASC']] });
 		return rows.map(toReport);
 	}
 

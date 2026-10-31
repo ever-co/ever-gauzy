@@ -356,6 +356,17 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		expect(sent.map((c) => c.body?.['identity_subject'])).toEqual(['identity-b']);
 	});
 
+	it('the latest report of an identity is chosen by seq when two share a millisecond', async () => {
+		await clientReady();
+		const base = { userId: 'user-1', tenantId: TENANT, tenantName: 'Acme', issuer: ISSUER, subject: 'same-ms', subjectHash: 'h'.repeat(64), linkMethod: 'explicit' };
+		await h.identity.addReport({ ...base, id: 'r-sent', op: 'link', createdAt: 5 });
+		await h.identity.addReport({ ...base, id: 'r-failed', op: 'link', createdAt: 5 });
+		await h.identity.updateReport('r-sent', { state: 'sent' });
+		await h.identity.updateReport('r-failed', { state: 'failed', lastError: '422_subject_unknown' });
+		const reports = await h.identity.reportsOf('user-1', 'h'.repeat(64));
+		expect(reports.map((r) => r.id)).toEqual(['r-sent', 'r-failed']);
+	});
+
 	it('a backfill that cannot run (no client yet) counts as nothing done', async () => {
 		expect(await reporter.backfill()).toBeNull();
 	});
