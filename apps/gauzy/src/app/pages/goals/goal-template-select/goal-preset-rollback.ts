@@ -30,7 +30,12 @@ export class GoalPresetRollback {
 		const notRemoved: string[] = [];
 		for (const record of this.created.splice(0).reverse()) {
 			try {
-				await record.remove();
+				const result = await record.remove();
+				// A delete scoped to another organization than the record's matches no row (`{ affected: 0 }`): the
+				// record is still there, so it is named as left behind
+				if (deletedNothing(result)) {
+					notRemoved.unshift(record.name);
+				}
 			} catch (error) {
 				console.error(`Could not remove ${record.name} after the preset failed:`, error);
 				notRemoved.unshift(record.name);
@@ -38,4 +43,9 @@ export class GoalPresetRollback {
 		}
 		return notRemoved;
 	}
+}
+
+/** Whether a delete request answered that it removed no row (a TypeORM `DeleteResult` with `affected: 0`). */
+function deletedNothing(result: unknown): boolean {
+	return typeof result === 'object' && result !== null && (result as { affected?: unknown }).affected === 0;
 }

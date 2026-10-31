@@ -39,6 +39,15 @@ describe('GoalPresetRollback', () => {
 		}
 	});
 
+	it('names a record whose delete matched no row as left behind', async () => {
+		const rollback = new GoalPresetRollback();
+		rollback.add('KPI 1', async () => ({ raw: [], affected: 0 }));
+		rollback.add('KPI 2', async () => ({ raw: [], affected: 1 }));
+		rollback.add('Objective', async () => undefined);
+
+		await expect(rollback.undo()).resolves.toEqual(['KPI 1']);
+	});
+
 	it('removes each record once', async () => {
 		const remove = jest.fn(async () => undefined);
 		const rollback = new GoalPresetRollback();
