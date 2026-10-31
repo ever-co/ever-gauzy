@@ -1341,6 +1341,24 @@
 		"STANDARD_WORK_HOURS": "Ore di lavoro standard ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Etichetta di sincronizzazione",
+				"TITLE": "Impostazioni di sincronizzazione",
+				"SUBTITLE": "Come le issue di {{ repository }} si sincronizzano con {{ project }}",
+				"AUTO_SYNC": "Sincronizza automaticamente le issue",
+				"AUTO_SYNC_HINT": "Le issue aperte o modificate su GitHub creano o aggiornano attività in questo progetto.",
+				"ONLY_LABELLED": "Solo issue con un'etichetta",
+				"ONLY_LABELLED_HINT": "Solo le issue con l'etichetta qui sotto vengono sincronizzate automaticamente.",
+				"LABEL": "Etichetta",
+				"LABEL_HINT": "Scegli un'etichetta del repository o digitane un'altra. Lascia vuoto per usare l'etichetta predefinita, {{ label }}.",
+				"LABEL_INVALID": "Un'etichetta GitHub è una sola riga di massimo {{ max }} caratteri.",
+				"ALL_ISSUES": "Tutte le issue",
+				"AUTO_SYNC_OFF": "Sincronizzazione automatica disattivata",
+				"EDIT": "Modifica impostazioni di sincronizzazione",
+				"SAVED": "Impostazioni di sincronizzazione salvate per '{{ project }}'"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "App e integrazioni disponibili",
 		"ADDED_UPWORK_TRANSACTION": "Aggiunta transazione Upwork",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Le transazioni di spese totali sono riuscite: {{ totalExpenses }}. Le transazioni di entrate totali sono riuscite: {{ totalIncomes }}",

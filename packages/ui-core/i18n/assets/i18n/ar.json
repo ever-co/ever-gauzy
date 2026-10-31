@@ -1340,6 +1340,24 @@
 		"STANDARD_WORK_HOURS": "ساعات العمل القياسية ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "وسم المزامنة",
+				"TITLE": "إعدادات المزامنة",
+				"SUBTITLE": "كيف تتم مزامنة مشكلات {{ repository }} مع {{ project }}",
+				"AUTO_SYNC": "مزامنة المشكلات تلقائيًا",
+				"AUTO_SYNC_HINT": "المشكلات التي تُفتح أو تُعدَّل على GitHub تُنشئ مهام في هذا المشروع أو تُحدّثها.",
+				"ONLY_LABELLED": "المشكلات التي تحمل وسمًا فقط",
+				"ONLY_LABELLED_HINT": "تتم مزامنة المشكلات التي تحمل الوسم أدناه تلقائيًا فقط.",
+				"LABEL": "الوسم",
+				"LABEL_HINT": "اختر أحد وسوم المستودع أو اكتب وسمًا آخر. اتركه فارغًا لاستخدام الوسم الافتراضي {{ label }}.",
+				"LABEL_INVALID": "وسم GitHub سطر واحد لا يتجاوز {{ max }} حرفًا.",
+				"ALL_ISSUES": "كل المشكلات",
+				"AUTO_SYNC_OFF": "المزامنة التلقائية متوقفة",
+				"EDIT": "تعديل إعدادات المزامنة",
+				"SAVED": "تم حفظ إعدادات المزامنة لـ '{{ project }}'"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "التطبيقات والتكاملات المتاحة",
 		"ADDED_UPWORK_TRANSACTION": "تم إضافة معاملة على منصة أبو ورك",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "إجمالي المعاملات المصروفة التي تمت بنجاح: {{ totalExpenses }}. إجمالي المعاملات الداخلة التي تمت بنجاح: {{ totalIncomes }}.",

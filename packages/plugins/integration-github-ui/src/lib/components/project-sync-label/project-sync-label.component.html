@@ -1,0 +1,28 @@
+<div class="project-sync-label">
+	@switch (syncMode) {
+		@case (syncModeEnum.LABELLED) {
+			<span class="project-sync-label__tag" [title]="syncLabel">{{ syncLabel }}</span>
+		}
+		@case (syncModeEnum.ALL_ISSUES) {
+			<span class="project-sync-label__text">{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.ALL_ISSUES' | translate }}</span>
+		}
+		@default {
+			<span class="project-sync-label__text project-sync-label__text--muted">
+				{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.AUTO_SYNC_OFF' | translate }}
+			</span>
+		}
+	}
+	<button
+		type="button"
+		nbButton
+		ghost
+		status="basic"
+		size="small"
+		class="project-sync-label__edit"
+		[title]="'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.EDIT' | translate"
+		[attr.aria-label]="'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.EDIT' | translate"
+		(click)="onEdit($event)"
+	>
+		<nb-icon icon="edit-outline"></nb-icon>
+	</button>
+</div>

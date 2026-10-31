@@ -1342,6 +1342,24 @@
 		"STANDARD_WORK_HOURS": "Heures de travail standard ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Étiquette de synchronisation",
+				"TITLE": "Paramètres de synchronisation",
+				"SUBTITLE": "Comment les issues de {{ repository }} sont synchronisées avec {{ project }}",
+				"AUTO_SYNC": "Synchroniser automatiquement les issues",
+				"AUTO_SYNC_HINT": "Les issues ouvertes ou modifiées sur GitHub créent ou mettent à jour des tâches dans ce projet.",
+				"ONLY_LABELLED": "Uniquement les issues avec une étiquette",
+				"ONLY_LABELLED_HINT": "Seules les issues portant l'étiquette ci-dessous sont synchronisées automatiquement.",
+				"LABEL": "Étiquette",
+				"LABEL_HINT": "Choisissez une étiquette du dépôt ou saisissez-en une autre. Laissez vide pour utiliser l'étiquette par défaut, {{ label }}.",
+				"LABEL_INVALID": "Une étiquette GitHub tient sur une seule ligne de {{ max }} caractères au maximum.",
+				"ALL_ISSUES": "Toutes les issues",
+				"AUTO_SYNC_OFF": "Synchronisation automatique désactivée",
+				"EDIT": "Modifier les paramètres de synchronisation",
+				"SAVED": "Paramètres de synchronisation enregistrés pour '{{ project }}'"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "Applications et intégrations disponibles",
 		"ADDED_UPWORK_TRANSACTION": "Transaction ajoutée sur Upwork.",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "Total des transactions de dépenses réussies: {{ totalExpenses }}. Total des transactions de revenus réussies: {{ totalIncomes }}.",

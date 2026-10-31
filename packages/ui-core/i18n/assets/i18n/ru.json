@@ -1595,6 +1595,22 @@
 			}
 		},
 		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Метка синхронизации",
+				"TITLE": "Настройки синхронизации",
+				"SUBTITLE": "Как issues из {{ repository }} синхронизируются с {{ project }}",
+				"AUTO_SYNC": "Автоматически синхронизировать issues",
+				"AUTO_SYNC_HINT": "Issues, открытые или изменённые на GitHub, создают или обновляют задачи в этом проекте.",
+				"ONLY_LABELLED": "Только issues с меткой",
+				"ONLY_LABELLED_HINT": "Автоматически синхронизируются только issues с указанной ниже меткой.",
+				"LABEL": "Метка",
+				"LABEL_HINT": "Выберите метку репозитория или введите другую. Оставьте пустым, чтобы использовать метку по умолчанию — {{ label }}.",
+				"LABEL_INVALID": "Метка GitHub — это одна строка длиной не более {{ max }} символов.",
+				"ALL_ISSUES": "Все issues",
+				"AUTO_SYNC_OFF": "Автосинхронизация выключена",
+				"EDIT": "Изменить настройки синхронизации",
+				"SAVED": "Настройки синхронизации для '{{ project }}' сохранены"
+			},
 			"TITLE": "GitHub Integration",
 			"AUTO_SYNC_TABLE_LABEL": "Syncing GitHub Repositories and Projects",
 			"SELECT_REPOSITORY": "Repository",
