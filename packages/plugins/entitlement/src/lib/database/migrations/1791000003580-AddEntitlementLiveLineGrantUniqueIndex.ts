@@ -245,7 +245,13 @@ export class AddEntitlementLiveLineGrantUniqueIndex1791000003580 implements Migr
 
 		const rows: unknown = await queryRunner.query(this.duplicatesQuery(dialect));
 		const affected = Array.isArray(rows)
-			? [...new Set(rows.map((row: any) => String(row?.orderLineId ?? row?.orderlineid ?? '')))]
+			? [
+					...new Set(
+						rows.map((row: { orderLineId?: unknown; orderlineid?: unknown } | null) =>
+							String(row?.orderLineId ?? row?.orderlineid ?? '')
+						)
+					)
+				]
 			: [];
 
 		if (affected.length > 0) {
