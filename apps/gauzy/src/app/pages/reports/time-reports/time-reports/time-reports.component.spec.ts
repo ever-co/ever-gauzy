@@ -75,8 +75,9 @@ describe('TimeReportsComponent', () => {
 		});
 
 		it('exports the loaded rows, in the grid grouping, named after the selected range', () => {
-			component.request = {
-				...component.request,
+			// The date range the grid read the report for
+			component.dailyGrid.request = {
+				...component.dailyGrid.request,
 				startDate: new Date(2026, 9, 1),
 				endDate: new Date(2026, 9, 31, 23, 59, 59)
 			};

@@ -170,6 +170,9 @@ function employeeName(employee: IEmployee | null | undefined): string {
 
 const durationFormat = new DurationFormatPipe();
 
+/** What an exported Time & Activity file is named, before its date range. */
+export const DAILY_REPORT_EXPORT_NAME = 'time-activity';
+
 /** The columns of the export: one per grouping, then the entry's own. */
 type DailyReportColumnKey = ReportGroupByFilter | 'task' | 'notes' | 'time' | 'hours' | 'activity';
 

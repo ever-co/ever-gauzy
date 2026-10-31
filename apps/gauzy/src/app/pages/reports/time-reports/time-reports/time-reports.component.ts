@@ -15,19 +15,13 @@ import {
 import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import {
 	BaseSelectorFilterComponent,
-	buildDailyReportExportTable,
-	buildReportExportFileName,
 	ChartUtil,
 	DailyGridComponent,
 	GauzyFiltersComponent,
 	IChartData,
 	ReportExportFormatEnum,
-	ReportExportService,
 	TimeZoneService
 } from '@gauzy/ui-core/shared';
-
-/** The name exported Time & Activity files start with, before their date range. */
-const EXPORT_FILE_NAME = 'time-activity';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -55,8 +49,7 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 		private readonly timesheetFilterService: TimesheetFilterService,
 		protected readonly store: Store,
 		protected readonly dateRangePickerBuilderService: DateRangePickerBuilderService,
-		protected readonly timeZoneService: TimeZoneService,
-		private readonly reportExportService: ReportExportService
+		protected readonly timeZoneService: TimeZoneService
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
 	}
@@ -65,26 +58,15 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 	 * Whether the report has rows to export: the grid has finished loading and found time entries.
 	 */
 	get canExport(): boolean {
-		return !!this.dailyGrid && !this.dailyGrid.loading && this.dailyGrid.dailyLogs?.length > 0;
+		return !!this.dailyGrid?.canExport;
 	}
 
 	/**
 	 * Downloads the time entries the grid shows — for the current filters, in its current grouping — as a
 	 * CSV file named after the selected date range.
-	 *
-	 * It only serialises what the grid already fetched, so it exports exactly what the caller can see.
 	 */
 	exportToCsv(): void {
-		if (!this.canExport) {
-			return;
-		}
-		const table = buildDailyReportExportTable(this.dailyGrid.dailyLogs, this.dailyGrid.groupBy, (key) =>
-			this.getTranslation(key)
-		);
-		this.reportExportService.export(table, {
-			fileName: buildReportExportFileName(EXPORT_FILE_NAME, this.request?.startDate, this.request?.endDate),
-			format: ReportExportFormatEnum.CSV
-		});
+		this.dailyGrid?.exportReport(ReportExportFormatEnum.CSV);
 	}
 
 	ngOnInit() {
