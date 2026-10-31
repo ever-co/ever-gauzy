@@ -1,4 +1,6 @@
 import { ChangeDetectorRef, SimpleChange } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
 import { ActionTypeEnum, BaseEntityEnum, IActivityLog } from '@gauzy/contracts';
 import { ActivityLogService } from '@gauzy/ui-core/core';
 import { RecentActivityComponent } from './recent-activity.component';
@@ -23,11 +25,19 @@ const row = (id: string): IActivityLog =>
  */
 describe('RecentActivityComponent', () => {
 	let service: { getPage: jest.Mock };
+	let language: string;
+	let languageChanges: Subject<{ lang: string }>;
 
 	const panel = async (organizationId: string | null = ORGANIZATION) => {
+		const translate = {
+			getCurrentLang: () => language,
+			getFallbackLang: () => 'en',
+			onLangChange: languageChanges
+		};
 		const component = new RecentActivityComponent(
 			service as unknown as ActivityLogService,
-			{ markForCheck: jest.fn() } as unknown as ChangeDetectorRef
+			{ markForCheck: jest.fn() } as unknown as ChangeDetectorRef,
+			translate as unknown as TranslateService
 		);
 		Object.assign(component, { organizationId, tenantId: TENANT });
 		component.ngOnChanges({ organizationId: new SimpleChange(undefined, organizationId, true) });
@@ -37,6 +47,8 @@ describe('RecentActivityComponent', () => {
 
 	beforeEach(() => {
 		service = { getPage: jest.fn(async () => ({ items: [row('1'), row('2')], total: 3 })) };
+		language = 'en';
+		languageChanges = new Subject();
 	});
 
 	it('reads the first page for the organization and shows its rows', async () => {
@@ -56,7 +68,7 @@ describe('RecentActivityComponent', () => {
 		jest.useFakeTimers({ now: Date.now() });
 		try {
 			component.ngOnInit();
-			expect(component.items[0].when).toBe('a few seconds ago');
+			expect(component.items[0].when).toBe('now');
 			markForCheck.mockClear();
 
 			jest.advanceTimersByTime(5 * RECENT_ACTIVITY_CLOCK_MS);
@@ -64,9 +76,14 @@ describe('RecentActivityComponent', () => {
 			expect(component.items[0].when).toBe('5 minutes ago');
 			expect(markForCheck).toHaveBeenCalled();
 
+			language = 'zh';
+			languageChanges.next({ lang: 'zh' });
+			expect(component.items[0].when).toBe('5分钟前');
+
 			component.ngOnDestroy();
 			jest.advanceTimersByTime(60 * RECENT_ACTIVITY_CLOCK_MS);
-			expect(component.items[0].when).toBe('5 minutes ago');
+			languageChanges.next({ lang: 'en' });
+			expect(component.items[0].when).toBe('5分钟前');
 		} finally {
 			component.ngOnDestroy();
 			jest.useRealTimers();

@@ -8,17 +8,18 @@ import {
 	OnInit,
 	type SimpleChanges
 } from '@angular/core';
-import { interval, Subscription } from 'rxjs';
+import { interval, merge, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { BaseEntityEnum, ID } from '@gauzy/contracts';
 import { ActivityLogService } from '@gauzy/ui-core/core';
 import {
 	IRecentActivityItem,
 	mergeRecentActivity,
 	RECENT_ACTIVITY_CLOCK_MS,
+	RECENT_ACTIVITY_DEFAULT_LANGUAGE,
 	RECENT_ACTIVITY_I18N,
 	RecentActivityFilter,
 	toRecentActivityItem,
@@ -77,8 +78,18 @@ export class RecentActivityComponent implements OnInit, OnChanges, OnDestroy {
 
 	constructor(
 		private readonly _activityLogService: ActivityLogService,
-		private readonly _changeDetectorRef: ChangeDetectorRef
+		private readonly _changeDetectorRef: ChangeDetectorRef,
+		private readonly _translateService: TranslateService
 	) {}
+
+	/** The UI's language, which the rows' ages are told in. */
+	private get _language(): string {
+		return (
+			this._translateService.getCurrentLang() ||
+			this._translateService.getFallbackLang() ||
+			RECENT_ACTIVITY_DEFAULT_LANGUAGE
+		);
+	}
 
 	/** More rows match than the panel holds. */
 	get hasMore(): boolean {
@@ -86,7 +97,10 @@ export class RecentActivityComponent implements OnInit, OnChanges, OnDestroy {
 	}
 
 	ngOnInit(): void {
-		this._clock = interval(RECENT_ACTIVITY_CLOCK_MS).subscribe(() => this._tellAges());
+		// Every minute, and in the new language when the user picks another one.
+		this._clock = merge(interval(RECENT_ACTIVITY_CLOCK_MS), this._translateService.onLangChange).subscribe(() =>
+			this._tellAges()
+		);
 	}
 
 	ngOnDestroy(): void {
@@ -141,13 +155,15 @@ export class RecentActivityComponent implements OnInit, OnChanges, OnDestroy {
 				return;
 			}
 			const now = new Date();
+			const language = this._language;
 			// Every row's age is told again from the same moment, the ones already shown included.
 			this.items = withRelativeTimes(
 				mergeRecentActivity(
 					this.items,
-					(items || []).map((log) => toRecentActivityItem(log, now))
+					(items || []).map((log) => toRecentActivityItem(log, now, language))
 				),
-				now
+				now,
+				language
 			);
 			// An empty page means the rest is gone (deleted since the count): nothing more to ask for.
 			this.total = items?.length ? total || 0 : this.items.length;
@@ -166,7 +182,7 @@ export class RecentActivityComponent implements OnInit, OnChanges, OnDestroy {
 
 	/** Tells the rows' ages again from now; draws the panel only when one reads differently. */
 	private _tellAges(): void {
-		const items = withRelativeTimes(this.items);
+		const items = withRelativeTimes(this.items, new Date(), this._language);
 		if (items !== this.items) {
 			this.items = items;
 			this._changeDetectorRef.markForCheck();

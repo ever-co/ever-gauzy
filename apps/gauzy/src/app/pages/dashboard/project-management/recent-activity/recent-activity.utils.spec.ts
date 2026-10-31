@@ -151,11 +151,11 @@ describe('withRelativeTimes', () => {
 
 	it('tells each row its age again from a later moment', () => {
 		const rows = [item('a', '2026-10-31T11:59:50.000Z'), item('b', '2026-10-30T12:00:00.000Z')];
-		expect(rows.map((row) => row.when)).toEqual(['a few seconds ago', 'a day ago']);
+		expect(rows.map((row) => row.when)).toEqual(['now', 'yesterday']);
 
 		const later = withRelativeTimes(rows, new Date('2026-10-31T13:00:00.000Z'));
 
-		expect(later.map((row) => row.when)).toEqual(['an hour ago', 'a day ago']);
+		expect(later.map((row) => row.when)).toEqual(['1 hour ago', 'yesterday']);
 		expect(later[1]).toBe(rows[1]);
 	});
 
@@ -167,5 +167,31 @@ describe('withRelativeTimes', () => {
 
 	it('says nothing for a row without a time', () => {
 		expect(relativeTime(undefined, now)).toBe('');
+		expect(relativeTime('not a date', now)).toBe('');
+	});
+
+	it('tells ages in the language asked for, with the same thresholds as before', () => {
+		const ago = (seconds: number, language?: string) =>
+			relativeTime(new Date(now.getTime() - seconds * 1000), now, language);
+
+		expect([ago(44), ago(45), ago(90), ago(44 * 60), ago(3 * 3600), ago(2 * 86400), ago(400 * 86400)]).toEqual([
+			'now',
+			'1 minute ago',
+			'2 minutes ago',
+			'44 minutes ago',
+			'3 hours ago',
+			'2 days ago',
+			'last year'
+		]);
+		expect(ago(5 * 60, 'zh')).toBe('5分钟前');
+		expect(ago(-30)).toBe('now');
+		// A language the browser has no wording for falls back to one it has, with the number still told.
+		expect(ago(5 * 60, 'ach')).toContain('5');
+	});
+
+	it('tells the rows again in another language', () => {
+		const rows = [item('a', '2026-10-30T12:00:00.000Z')];
+
+		expect(withRelativeTimes(rows, now, 'fr').map((row) => row.when)).toEqual(['hier']);
 	});
 });

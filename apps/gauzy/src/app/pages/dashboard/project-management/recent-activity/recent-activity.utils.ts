@@ -1,4 +1,3 @@
-import * as moment from 'moment';
 import { ActionTypeEnum, ActorTypeEnum, BaseEntityEnum, IActivityLog, IEmployee } from '@gauzy/contracts';
 
 /** Where the panel's translations live. */
@@ -112,8 +111,13 @@ function authorOf(employee?: IEmployee | null): string {
  *
  * @param log The activity log row.
  * @param now The moment the relative time is told from.
+ * @param language The UI language the relative time is told in.
  */
-export function toRecentActivityItem(log: IActivityLog, now: Date = new Date()): IRecentActivityItem {
+export function toRecentActivityItem(
+	log: IActivityLog,
+	now: Date = new Date(),
+	language: string = RECENT_ACTIVITY_DEFAULT_LANGUAGE
+): IRecentActivityItem {
 	const action = String(log.action ?? '');
 	const known = ACTIONS[action as ActionTypeEnum];
 	const isSystem = log.actorType === ActorTypeEnum.System;
@@ -142,26 +146,82 @@ export function toRecentActivityItem(log: IActivityLog, now: Date = new Date()):
 		tone: known?.tone ?? 'other',
 		icon: known?.icon ?? 'activity-outline',
 		createdAt: log.createdAt,
-		when: relativeTime(log.createdAt, now)
+		when: relativeTime(log.createdAt, now, language)
 	};
 }
 
-/** How often the panel tells its rows' ages again, so "a few seconds ago" does not stay so. */
+/** How often the panel tells its rows' ages again, so "now" does not stay so. */
 export const RECENT_ACTIVITY_CLOCK_MS = 60_000;
 
-/** How long before `now` something happened, as the panel says it ("5 minutes ago"). */
-export function relativeTime(createdAt: Date | string | null | undefined, now: Date = new Date()): string {
-	return createdAt ? moment(createdAt).from(now) : '';
+/** The language ages are told in when the UI names none: the UI's own fallback. */
+export const RECENT_ACTIVITY_DEFAULT_LANGUAGE = 'en';
+
+const SECOND = 1;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+/**
+ * Up to how many seconds an age is told in each unit, and how many seconds that unit counts (Moment's
+ * thresholds: under 45 seconds is "now", under 45 minutes is minutes, under 22 hours is hours, and so on).
+ */
+const AGE_UNITS: ReadonlyArray<[limit: number, unit: Intl.RelativeTimeFormatUnit, seconds: number]> = [
+	[45 * SECOND, 'second', 0],
+	[45 * MINUTE, 'minute', MINUTE],
+	[22 * HOUR, 'hour', HOUR],
+	[26 * DAY, 'day', DAY],
+	[320 * DAY, 'month', 30 * DAY],
+	[Infinity, 'year', 365 * DAY]
+];
+
+const ageFormats = new Map<string, Intl.RelativeTimeFormat>();
+
+/** The browser's relative time wording for `language` ("5 minutes ago", "5分钟前"), the UI's fallback if unknown. */
+function ageFormat(language: string): Intl.RelativeTimeFormat {
+	let format = ageFormats.get(language);
+	if (!format) {
+		try {
+			format = new Intl.RelativeTimeFormat(language, { numeric: 'auto' });
+		} catch {
+			format = new Intl.RelativeTimeFormat(RECENT_ACTIVITY_DEFAULT_LANGUAGE, { numeric: 'auto' });
+		}
+		ageFormats.set(language, format);
+	}
+	return format;
+}
+
+/**
+ * How long before `now` something happened, as the panel says it ("5 minutes ago"), in the UI's language.
+ * The browser words it, so it reads right in every language without locale data of the app's own.
+ */
+export function relativeTime(
+	createdAt: Date | string | null | undefined,
+	now: Date = new Date(),
+	language: string = RECENT_ACTIVITY_DEFAULT_LANGUAGE
+): string {
+	const time = createdAt ? new Date(createdAt).getTime() : NaN;
+	if (Number.isNaN(time)) {
+		return '';
+	}
+	const elapsed = (now.getTime() - time) / 1000;
+	const [, unit, seconds] = AGE_UNITS.find(([limit]) => Math.abs(elapsed) < limit) ?? AGE_UNITS[AGE_UNITS.length - 1];
+	const count = seconds ? Math.round(Math.abs(elapsed) / seconds) : 0;
+	// Past ages count back; a time a little ahead of this clock counts forward rather than reading as past.
+	return ageFormat(language).format(elapsed >= 0 ? -count : count, unit);
 }
 
 /**
  * The rows with their ages told again from `now`. Rows whose age reads the same are kept as they are, and
  * the list itself is kept when none changed, so an unchanged panel is not drawn again.
  */
-export function withRelativeTimes(items: IRecentActivityItem[], now: Date = new Date()): IRecentActivityItem[] {
+export function withRelativeTimes(
+	items: IRecentActivityItem[],
+	now: Date = new Date(),
+	language: string = RECENT_ACTIVITY_DEFAULT_LANGUAGE
+): IRecentActivityItem[] {
 	let changed = false;
 	const told = items.map((item) => {
-		const when = relativeTime(item.createdAt, now);
+		const when = relativeTime(item.createdAt, now, language);
 		if (when === item.when) {
 			return item;
 		}
