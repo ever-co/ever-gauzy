@@ -40,6 +40,21 @@ describe('ContactViewComponent: the Notes tab', () => {
 		expect(page.canWriteNotes).toBe(writes);
 	});
 
+	it('loads the notes on the first opening of the tab, and keeps them when another tab opens', () => {
+		const page = contactViewFor(PermissionsEnum.ORG_CONTACT_VIEW);
+		expect(page.notesOpened).toBe(false);
+
+		page.onTabChange({ tabId: undefined });
+		page.onTabChange(null);
+		expect(page.notesOpened).toBe(false);
+
+		page.onTabChange({ tabId: page.notesTabId });
+		expect(page.notesOpened).toBe(true);
+
+		page.onTabChange({ tabId: undefined });
+		expect(page.notesOpened).toBe(true);
+	});
+
 	it('attaches the notes to the contact', () => {
 		expect(contactViewFor().documentEntity).toBe('OrganizationContact');
 	});

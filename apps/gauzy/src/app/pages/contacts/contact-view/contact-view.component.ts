@@ -51,6 +51,10 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 	 */
 	readonly canReadNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_VIEW);
 	readonly canWriteNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT);
+	/** The Notes tab's id, and whether it has been opened: its comments are loaded on the first opening only. */
+	readonly notesTabId = 'notes';
+	notesOpened = false;
+
 	readonly notesLabels: IEntityCommentsLabels = {
 		empty: 'CONTACTS_PAGE.NO_NOTES',
 		placeholder: 'CONTACTS_PAGE.NOTE_PLACEHOLDER',
@@ -68,6 +72,16 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 		private readonly filterArrayPipe: FilterArrayPipe
 	) {
 		super(translateService);
+	}
+
+	/**
+	 * Notes the first opening of the Notes tab. The flag stays set, so switching tabs keeps the notes rather than
+	 * loading them again.
+	 */
+	onTabChange(tab: { tabId?: string } | null | undefined): void {
+		if (tab?.tabId === this.notesTabId) {
+			this.notesOpened = true;
+		}
 	}
 
 	ngOnInit(): void {

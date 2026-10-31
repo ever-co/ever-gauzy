@@ -237,7 +237,7 @@
 			</aside>
 
 			<section class="contact-main">
-				<nb-tabset>
+				<nb-tabset (changeTab)="onTabChange($event)">
 					<nb-tab [tabTitle]="'CONTACTS_PAGE.ADDRESS' | translate">
 						<div class="pane">
 							<!--
@@ -349,13 +349,15 @@
 					</nb-tab>
 
 					<!--
-						Notes on the contact (ever-co/ever-gauzy#1114), newest first. Loaded when the tab is
-						first opened. Readers without ORG_CONTACT_EDIT see the notes without the box.
+						Notes on the contact (ever-co/ever-gauzy#1114), newest first. Created when the tab is
+						first opened, and kept afterwards. A tab's projected content is created with the page
+						whether the tab is open or not, hence the flag. Readers without ORG_CONTACT_EDIT see the
+						notes without the box.
 					-->
 					@if (canReadNotes) {
-						<nb-tab [tabTitle]="'CONTACTS_PAGE.NOTES' | translate" [lazyLoad]="true">
+						<nb-tab [tabTitle]="'CONTACTS_PAGE.NOTES' | translate" [tabId]="notesTabId">
 							<div class="pane">
-								@if (selectedContact) {
+								@if (selectedContact && notesOpened) {
 									<ga-entity-comments
 										[entity]="documentEntity"
 										[entityId]="selectedContact.id"
