@@ -41,4 +41,18 @@ export class DealsService extends Service<IDeal, IDealFindInput, IDealCreateInpu
 			})
 		);
 	}
+
+	/**
+	 * Moves a deal to another stage, through the same update endpoint as the deal form. Only the stage is
+	 * sent: a title or probability read when the page loaded would undo a newer edit made elsewhere.
+	 *
+	 * @param id The ID of the deal to move
+	 * @param stageId The stage the deal moves to
+	 * @param scope The organization and tenant the deal belongs to
+	 * @returns A promise of the update result
+	 */
+	updateStage(id: ID, stageId: ID, scope: Pick<IDeal, 'organizationId' | 'tenantId'>): Promise<IDeal> {
+		const { organizationId, tenantId } = scope;
+		return this.update(id, { stageId, organizationId, tenantId } as IDealCreateInput);
+	}
 }

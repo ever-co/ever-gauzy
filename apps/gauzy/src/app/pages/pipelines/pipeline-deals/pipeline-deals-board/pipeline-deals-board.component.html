@@ -1,0 +1,88 @@
+<!-- The pipeline's deals as a board: one column per stage, each card opening the deal's edit page for those who may edit. -->
+@if (!columns.length) {
+	<div class="deals-board-state">
+		<nb-icon icon="layers-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'PIPELINE_DEALS_PAGE.BOARD_NO_STAGES' | translate }}</p>
+	</div>
+} @else {
+	<div class="board deals-board" role="list" cdkDropListGroup>
+		@for (column of columns; track column.stageId) {
+			<section class="board-column" role="listitem" [attr.aria-label]="column.name">
+				<header class="board-column-header">
+					<span class="board-column-dot" aria-hidden="true"></span>
+					<span
+						class="board-column-name"
+						[nbTooltip]="column.description || column.name"
+						nbTooltipPlacement="top"
+						>{{ column.name }}</span
+					>
+					<span class="board-column-count">{{ column.cards.length }}</span>
+				</header>
+				<ul
+					class="board-cards"
+					cdkDropList
+					[cdkDropListData]="column"
+					[cdkDropListDisabled]="!canMove"
+					[cdkDropListSortingDisabled]="true"
+					(cdkDropListDropped)="drop($event)"
+				>
+					@for (card of column.cards; track card.id) {
+						<li
+							class="board-card-item"
+							cdkDrag
+							[cdkDragData]="card"
+							[cdkDragDisabled]="card.saving"
+							[cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
+						>
+							<a
+								class="board-card"
+								[class.is-draggable]="canMove"
+								[class.is-saving]="card.saving"
+								[attr.aria-busy]="card.saving || null"
+								[routerLink]="canMove ? ['./', card.id, 'edit'] : null"
+								[nbSpinner]="!!card.saving"
+								nbSpinnerSize="tiny"
+								nbSpinnerStatus="basic"
+							>
+								<span class="board-card-title">{{ card.title }}</span>
+								@if (card.clientName) {
+									<span class="board-card-meta deal-card-client">
+										<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
+										{{ card.clientName }}
+									</span>
+								}
+								<span class="board-card-footer">
+									<span [class]="card.probabilityBadge.className">
+										{{ card.probability ?? '—' }} - {{ card.probabilityBadge.labelKey | translate }}
+									</span>
+									@if (card.createdByName) {
+										<span
+											class="board-card-person"
+											[nbTooltip]="card.createdByName"
+											nbTooltipPlacement="top"
+										>
+											@if (card.createdByImageUrl) {
+												<img
+													loading="lazy"
+													decoding="async"
+													[src]="card.createdByImageUrl"
+													[alt]="card.createdByName"
+												/>
+											} @else {
+												<span aria-hidden="true">{{
+													card.createdByName.charAt(0) | uppercase
+												}}</span>
+											}
+										</span>
+									}
+								</span>
+							</a>
+						</li>
+					} @empty {
+						<li class="board-column-empty">{{ 'PIPELINE_DEALS_PAGE.BOARD_COLUMN_EMPTY' | translate }}</li>
+					}
+				</ul>
+			</section>
+		}
+	</div>
+}

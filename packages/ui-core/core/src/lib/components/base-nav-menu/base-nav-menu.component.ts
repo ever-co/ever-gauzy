@@ -3,7 +3,7 @@ import { combineLatest, EMPTY } from 'rxjs';
 import { catchError, debounceTime, filter, startWith, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { FeatureEnum, IDashboard, IOrganization, PermissionsEnum } from '@gauzy/contracts';
+import { FeatureEnum, IDashboard, IOrganization, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { DashboardStoreService } from '../../services/dashboard/dashboard-store.service';
@@ -1222,6 +1222,17 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 						data: {
 							translationKey: 'MENU.OAUTH_CLIENTS',
 							permissionKeys: [PermissionsEnum.OAUTH_CLIENT_VIEW]
+						}
+					},
+					{
+						id: 'settings-whats-new',
+						title: "What's New",
+						icon: 'fas fa-bullhorn',
+						link: '/pages/settings/whats-new',
+						data: {
+							translationKey: 'MENU.WHATS_NEW',
+							// The entries are installation-wide; the page's guard asks the API for the same role.
+							hide: () => this._store.user?.role?.name !== RolesEnum.SUPER_ADMIN
 						}
 					},
 					{

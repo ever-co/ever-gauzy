@@ -59,6 +59,7 @@ import { HumanResourcesComponent } from './human-resources/human-resources.compo
 import { AccountingComponent } from './accounting/accounting.component';
 import { ProjectManagementComponent } from './project-management/project-management.component';
 import { ProjectManagementDetailsComponent } from './project-management/project-management-details/project-management-details.component';
+import { RecentActivityComponent } from './project-management/recent-activity/recent-activity.component';
 import { ProjectQuickLookComponent } from '../projects/components/project-quick-look/project-quick-look.component';
 import { TaskViewHeaderComponent } from '../tasks/components/task-view/task-view-header.component';
 import {
@@ -172,7 +173,9 @@ const COMPONENTS = [
 		// Project management quick looks: the same task and project drawers as the employee page.
 		RecordViewModule,
 		TaskViewHeaderComponent,
-		ProjectQuickLookComponent
+		ProjectQuickLookComponent,
+		// Project management: the Recent activity panel.
+		RecentActivityComponent
 	],
 	declarations: [...COMPONENTS],
 	exports: [RouterModule],

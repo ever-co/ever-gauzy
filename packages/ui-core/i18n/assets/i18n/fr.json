@@ -1169,7 +1169,8 @@
 		"DOCUMENTS": "Documents",
 		"BILLING": "Facturation",
 		"MONITORING": "Surveillance",
-		"ADD_ITEM": "Ajouter {{ name }}"
+		"ADD_ITEM": "Ajouter {{ name }}",
+		"WHATS_NEW": "Nouveautés"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1270,7 +1271,49 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "Quoi de neuf?",
 		"LEARN_MORE_URL": "En savoir plus",
-		"GAUZY_FEATURES": "Caractéristiques vaporeuses"
+		"GAUZY_FEATURES": "Fonctionnalités de Gauzy",
+		"MANAGE": {
+			"TITLE": "Nouveautés",
+			"SUBTITLE": "Les entrées du panneau Nouveautés et les cartes de fonctionnalités de la page d'inscription. Elles sont partagées par tous les locataires de cette installation : seul son opérateur peut les modifier.",
+			"WHATS_NEW": "Panneau Nouveautés",
+			"WHATS_NEW_HINT": "Affichées dans le panneau Nouveautés et sur la page de connexion, les plus récentes en premier.",
+			"FEATURES": "Fonctionnalités de la page d'inscription",
+			"FEATURES_HINT": "Affichées sous forme de cartes à côté du formulaire d'inscription.",
+			"ADD": "Ajouter une entrée",
+			"ADD_TITLE": "Ajouter une nouveauté",
+			"EDIT_TITLE": "Modifier la nouveauté",
+			"EMPTY": "Aucune entrée pour le moment.",
+			"LOAD_FAILED": "Les entrées n'ont pas pu être chargées.",
+			"DELETED": "Supprimées",
+			"DELETED_HINT": "Entrées supprimées pendant que cette page est ouverte. Restaurer en remet une en place.",
+			"COLUMNS": {
+				"DATE": "Date",
+				"ENTRY": "Entrée",
+				"ACTIONS": "Actions"
+			},
+			"FIELDS": {
+				"TITLE": "Titre",
+				"DATE": "Date",
+				"ICON": "Icône",
+				"ICON_HINT": "Un nom d'icône Eva, par exemple star-outline.",
+				"CONTENT": "Texte",
+				"CONTENT_HINT": "Jusqu'à {{ max }} caractères.",
+				"LEARN_MORE_URL": "Lien « En savoir plus »",
+				"IMAGE_URL": "Lien de l'image",
+				"IS_FEATURE": "Fonctionnalité de la page d'inscription",
+				"IS_FEATURE_HINT": "Afficher cette entrée sous forme de carte à côté du formulaire d'inscription au lieu du panneau Nouveautés."
+			},
+			"ERRORS": {
+				"REQUIRED": "Obligatoire.",
+				"HTTP_URL": "Saisissez une adresse complète commençant par http:// ou https://.",
+				"UNKNOWN_ICON": "Aucune icône ne porte ce nom. Utilisez un nom d'icône Eva, par exemple star-outline."
+			},
+			"PREVIEW": "Aperçu",
+			"SAVED_MESSAGE": "Entrée enregistrée.",
+			"DELETED_MESSAGE": "Entrée supprimée.",
+			"RESTORED_MESSAGE": "Entrée restaurée.",
+			"FORBIDDEN": "Seul l'opérateur de l'installation peut modifier les nouveautés."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Membres ont travaillé",
@@ -1895,7 +1938,36 @@
 			"NO_DUE_DATE": "Sans échéance",
 			"CLEAR_FILTERS": "Effacer les filtres",
 			"NO_MATCHES": "Aucune tâche ne correspond à ces filtres",
-			"NO_MATCHES_HINT": "Essayez un autre statut, une autre priorité ou une autre échéance, ou effacez les filtres."
+			"NO_MATCHES_HINT": "Essayez un autre statut, une autre priorité ou une autre échéance, ou effacez les filtres.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Activité récente",
+				"FILTER": "Type d'activité",
+				"ALL": "Toute l'activité",
+				"TASKS": "Tâches",
+				"PROJECTS": "Projets",
+				"EMPTY": "Aucune activité récente",
+				"EMPTY_HINT": "Les tâches et projets créés, modifiés ou supprimés apparaissent ici.",
+				"ERROR": "Impossible de charger l'activité récente.",
+				"UNTITLED": "Sans titre",
+				"SYSTEM": "Système",
+				"CREATED": "Créé",
+				"UPDATED": "Modifié",
+				"DELETED": "Supprimé",
+				"CREATED_BY": "Créé par {{ actor }}",
+				"UPDATED_BY": "Modifié par {{ actor }}",
+				"DELETED_BY": "Supprimé par {{ actor }}",
+				"ENTITY": {
+					"TASK": "Tâche",
+					"PROJECT": "Projet",
+					"SPRINT": "Sprint",
+					"MODULE": "Module",
+					"TEAM": "Équipe",
+					"COMMENT": "Commentaire",
+					"DAILY_PLAN": "Plan du jour",
+					"CONTACT": "Contact",
+					"DOCUMENT": "Document"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Sur {{ count }} employés",
@@ -6522,7 +6594,12 @@
 		"UNKNOWN": "Inconnu",
 		"DEAL_DELETED": "L'accord '{{ name }}' a été supprimé.",
 		"DEAL_EDITED": "L'accord '{{ name }}' a été modifié.",
-		"DEAL_ADDED": "La transaction '{{ name }}' a été ajoutée"
+		"DEAL_ADDED": "La transaction '{{ name }}' a été ajoutée",
+		"BOARD": "Tableau",
+		"BOARD_VIEW": "Afficher les affaires sous forme de tableau, une colonne par étape",
+		"LIST_VIEW": "Retour à la liste",
+		"BOARD_NO_STAGES": "Ce pipeline n'a pas encore d'étapes. Ajoutez des étapes pour voir ses affaires sous forme de tableau.",
+		"BOARD_COLUMN_EMPTY": "Aucune affaire"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Modifier l'affaire | Pipeline : '{{ name }}'"

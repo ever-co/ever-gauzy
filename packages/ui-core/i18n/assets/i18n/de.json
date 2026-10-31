@@ -1168,7 +1168,8 @@
 		"DOCUMENTS": "Dokumente",
 		"BILLING": "Rechnungsstellung",
 		"MONITORING": "Überwachung",
-		"ADD_ITEM": "{{ name }} hinzufügen"
+		"ADD_ITEM": "{{ name }} hinzufügen",
+		"WHATS_NEW": "Neuigkeiten"
 	},
 	"SETTINGS_GENERAL": {
 		"SCOPE": {
@@ -1269,7 +1270,49 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "Was gibt es Neues?",
 		"LEARN_MORE_URL": "Erfahren Sie mehr",
-		"GAUZY_FEATURES": "Gauzy Merkmale"
+		"GAUZY_FEATURES": "Gauzy Merkmale",
+		"MANAGE": {
+			"TITLE": "Neuigkeiten",
+			"SUBTITLE": "Die Einträge des Bereichs „Neuigkeiten“ und die Funktionskarten der Registrierungsseite. Sie gelten für alle Mandanten dieser Installation, daher kann nur deren Betreiber sie ändern.",
+			"WHATS_NEW": "Bereich „Neuigkeiten“",
+			"WHATS_NEW_HINT": "Wird im Bereich „Neuigkeiten“ und auf der Anmeldeseite angezeigt, die neuesten zuerst.",
+			"FEATURES": "Funktionen der Registrierungsseite",
+			"FEATURES_HINT": "Werden als Karten neben dem Registrierungsformular angezeigt.",
+			"ADD": "Eintrag hinzufügen",
+			"ADD_TITLE": "Neuigkeit hinzufügen",
+			"EDIT_TITLE": "Neuigkeit bearbeiten",
+			"EMPTY": "Noch keine Einträge.",
+			"LOAD_FAILED": "Die Einträge konnten nicht geladen werden.",
+			"DELETED": "Gelöscht",
+			"DELETED_HINT": "Einträge, die gelöscht wurden, während diese Seite geöffnet ist. „Wiederherstellen“ holt einen zurück.",
+			"COLUMNS": {
+				"DATE": "Datum",
+				"ENTRY": "Eintrag",
+				"ACTIONS": "Aktionen"
+			},
+			"FIELDS": {
+				"TITLE": "Titel",
+				"DATE": "Datum",
+				"ICON": "Symbol",
+				"ICON_HINT": "Ein Eva-Symbolname, zum Beispiel star-outline.",
+				"CONTENT": "Text",
+				"CONTENT_HINT": "Bis zu {{ max }} Zeichen.",
+				"LEARN_MORE_URL": "Link „Mehr erfahren“",
+				"IMAGE_URL": "Bild-Link",
+				"IS_FEATURE": "Funktion der Registrierungsseite",
+				"IS_FEATURE_HINT": "Diesen Eintrag als Karte neben dem Registrierungsformular statt im Bereich „Neuigkeiten“ anzeigen."
+			},
+			"ERRORS": {
+				"REQUIRED": "Pflichtfeld.",
+				"HTTP_URL": "Geben Sie eine vollständige Adresse ein, die mit http:// oder https:// beginnt.",
+				"UNKNOWN_ICON": "Kein Symbol hat diesen Namen. Verwenden Sie einen Eva-Symbolnamen, zum Beispiel star-outline."
+			},
+			"PREVIEW": "Vorschau",
+			"SAVED_MESSAGE": "Eintrag gespeichert.",
+			"DELETED_MESSAGE": "Eintrag gelöscht.",
+			"RESTORED_MESSAGE": "Eintrag wiederhergestellt.",
+			"FORBIDDEN": "Nur der Betreiber der Installation kann die Neuigkeiten ändern."
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "Mitglieder haben gearbeitet.",
@@ -1894,7 +1937,36 @@
 			"NO_DUE_DATE": "Kein Fälligkeitsdatum",
 			"CLEAR_FILTERS": "Filter zurücksetzen",
 			"NO_MATCHES": "Keine Aufgaben entsprechen diesen Filtern",
-			"NO_MATCHES_HINT": "Wählen Sie einen anderen Status, eine andere Priorität oder ein anderes Fälligkeitsdatum, oder setzen Sie die Filter zurück."
+			"NO_MATCHES_HINT": "Wählen Sie einen anderen Status, eine andere Priorität oder ein anderes Fälligkeitsdatum, oder setzen Sie die Filter zurück.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Letzte Aktivitäten",
+				"FILTER": "Aktivitätstyp",
+				"ALL": "Alle Aktivitäten",
+				"TASKS": "Aufgaben",
+				"PROJECTS": "Projekte",
+				"EMPTY": "Keine aktuellen Aktivitäten",
+				"EMPTY_HINT": "Hier erscheinen erstellte, geänderte oder gelöschte Aufgaben und Projekte.",
+				"ERROR": "Die letzten Aktivitäten konnten nicht geladen werden.",
+				"UNTITLED": "Ohne Titel",
+				"SYSTEM": "System",
+				"CREATED": "Erstellt",
+				"UPDATED": "Aktualisiert",
+				"DELETED": "Gelöscht",
+				"CREATED_BY": "Erstellt von {{ actor }}",
+				"UPDATED_BY": "Aktualisiert von {{ actor }}",
+				"DELETED_BY": "Gelöscht von {{ actor }}",
+				"ENTITY": {
+					"TASK": "Aufgabe",
+					"PROJECT": "Projekt",
+					"SPRINT": "Sprint",
+					"MODULE": "Modul",
+					"TEAM": "Team",
+					"COMMENT": "Kommentar",
+					"DAILY_PLAN": "Tagesplan",
+					"CONTACT": "Kontakt",
+					"DOCUMENT": "Dokument"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Über {{ count }} Mitarbeiter",
@@ -6520,7 +6592,12 @@
 		"UNKNOWN": "Unbekannt",
 		"DEAL_DELETED": "Der Deal '{{ name }}' wurde entfernt.",
 		"DEAL_EDITED": "Deal '{{ name }}' wurde geändert.",
-		"DEAL_ADDED": "Deal '{{ name }}' wurde hinzugefügt."
+		"DEAL_ADDED": "Deal '{{ name }}' wurde hinzugefügt.",
+		"BOARD": "Board",
+		"BOARD_VIEW": "Deals als Board anzeigen, eine Spalte pro Phase",
+		"LIST_VIEW": "Zurück zur Liste",
+		"BOARD_NO_STAGES": "Diese Pipeline hat noch keine Phasen. Fügen Sie Phasen hinzu, um ihre Deals als Board zu sehen.",
+		"BOARD_COLUMN_EMPTY": "Keine Deals"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "Bearbeiten Sie das Angebot | Vertriebspipeline: '{{ name }}'"

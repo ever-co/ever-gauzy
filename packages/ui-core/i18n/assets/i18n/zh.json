@@ -1225,7 +1225,8 @@
 		"OPEN_GA_BROWSER": "在浏览器中打开 Gauzy",
 		"START_SERVER": "开始服务器",
 		"STOP_SERVER": "停止服务器",
-		"BILLING": "计费"
+		"BILLING": "计费",
+		"WHATS_NEW": "新功能"
 	},
 	"SETTINGS_MENU": {
 		"THEMES": "主题",
@@ -1302,7 +1303,49 @@
 	"CHANGELOG_MENU": {
 		"HEADER": "有什么新的吗？",
 		"LEARN_MORE_URL": "了解更多",
-		"GAUZY_FEATURES": "薄厚特徵"
+		"GAUZY_FEATURES": "Gauzy 功能",
+		"MANAGE": {
+			"TITLE": "新功能",
+			"SUBTITLE": "“新功能”面板的条目和注册页面的功能卡片。它们由本安装的所有租户共享，因此只有安装的运营者可以更改。",
+			"WHATS_NEW": "“新功能”面板",
+			"WHATS_NEW_HINT": "显示在“新功能”面板和登录页面上，最新的在前。",
+			"FEATURES": "注册页面功能",
+			"FEATURES_HINT": "以卡片形式显示在注册表单旁边。",
+			"ADD": "添加条目",
+			"ADD_TITLE": "添加“新功能”条目",
+			"EDIT_TITLE": "编辑“新功能”条目",
+			"EMPTY": "暂无条目。",
+			"LOAD_FAILED": "无法加载条目。",
+			"DELETED": "已删除",
+			"DELETED_HINT": "在此页面打开期间删除的条目。点击“恢复”可将其放回。",
+			"COLUMNS": {
+				"DATE": "日期",
+				"ENTRY": "条目",
+				"ACTIONS": "操作"
+			},
+			"FIELDS": {
+				"TITLE": "标题",
+				"DATE": "日期",
+				"ICON": "图标",
+				"ICON_HINT": "Eva 图标名称，例如 star-outline。",
+				"CONTENT": "文本",
+				"CONTENT_HINT": "最多 {{ max }} 个字符。",
+				"LEARN_MORE_URL": "“了解更多”链接",
+				"IMAGE_URL": "图片链接",
+				"IS_FEATURE": "注册页面功能",
+				"IS_FEATURE_HINT": "将此条目作为卡片显示在注册表单旁边，而不是显示在“新功能”面板中。"
+			},
+			"ERRORS": {
+				"REQUIRED": "必填。",
+				"HTTP_URL": "请输入以 http:// 或 https:// 开头的完整地址。",
+				"UNKNOWN_ICON": "没有此名称的图标。请使用 Eva 图标名称，例如 star-outline。"
+			},
+			"PREVIEW": "预览",
+			"SAVED_MESSAGE": "条目已保存。",
+			"DELETED_MESSAGE": "条目已删除。",
+			"RESTORED_MESSAGE": "条目已恢复。",
+			"FORBIDDEN": "只有安装的运营者可以更改“新功能”条目。"
+		}
 	},
 	"REPORT_PAGE": {
 		"MEMBERS_WORKED": "成员工作",
@@ -2362,7 +2405,36 @@
 			"NO_DUE_DATE": "无截止日期",
 			"CLEAR_FILTERS": "清除筛选",
 			"NO_MATCHES": "没有符合这些筛选条件的任务",
-			"NO_MATCHES_HINT": "请尝试其他状态、优先级或截止日期，或清除筛选。"
+			"NO_MATCHES_HINT": "请尝试其他状态、优先级或截止日期，或清除筛选。",
+			"RECENT_ACTIVITY": {
+				"TITLE": "最近活动",
+				"FILTER": "活动类型",
+				"ALL": "全部活动",
+				"TASKS": "任务",
+				"PROJECTS": "项目",
+				"EMPTY": "暂无最近活动",
+				"EMPTY_HINT": "创建、修改或删除的任务和项目会显示在这里。",
+				"ERROR": "无法加载最近活动。",
+				"UNTITLED": "无标题",
+				"SYSTEM": "系统",
+				"CREATED": "已创建",
+				"UPDATED": "已更新",
+				"DELETED": "已删除",
+				"CREATED_BY": "由 {{ actor }} 创建",
+				"UPDATED_BY": "由 {{ actor }} 更新",
+				"DELETED_BY": "由 {{ actor }} 删除",
+				"ENTITY": {
+					"TASK": "任务",
+					"PROJECT": "项目",
+					"SPRINT": "冲刺",
+					"MODULE": "模块",
+					"TEAM": "团队",
+					"COMMENT": "评论",
+					"DAILY_PLAN": "每日计划",
+					"CONTACT": "联系人",
+					"DOCUMENT": "文档"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "共 {{ count }} 名员工",
@@ -7140,7 +7212,12 @@
 		"UNKNOWN": "未知",
 		"DEAL_DELETED": "交易'{{ name }}'已被删除",
 		"DEAL_EDITED": "交易“{{ name }}”已被修改",
-		"DEAL_ADDED": "交易 '{{ name }}' 已添加"
+		"DEAL_ADDED": "交易 '{{ name }}' 已添加",
+		"BOARD": "看板",
+		"BOARD_VIEW": "以看板显示交易，每个阶段一列",
+		"LIST_VIEW": "返回列表",
+		"BOARD_NO_STAGES": "此管道还没有阶段。添加阶段即可以看板查看其交易。",
+		"BOARD_COLUMN_EMPTY": "没有交易"
 	},
 	"PIPELINE_DEAL_EDIT_PAGE": {
 		"HEADER": "编辑交易 | 渠道: '{{ name }}'"
