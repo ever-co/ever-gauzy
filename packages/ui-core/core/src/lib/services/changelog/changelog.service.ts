@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { IChangelog, IChangelogCreateInput, IChangelogFindInput, ID, IPagination } from '@gauzy/contracts';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, defer, of } from 'rxjs';
 import { Observable } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { API_PREFIX, toParams } from '@gauzy/ui-core/common';
@@ -19,15 +19,30 @@ export class ChangelogService {
 	 * change, so the sidebar shows the change.
 	 */
 	private _publishedRequest: IChangelogFindInput | null = null;
+	/** The reads published to {@link changelogs$}, numbered as they start: the last started, and the last shown. */
+	private _readsStarted = 0;
+	private _readShown = 0;
 
 	constructor(private readonly http: HttpClient) {}
 
 	/**
-	 * The entries matching `request`, published to {@link changelogs$} for the "What's New" sidebar.
+	 * The entries matching `request`, published to {@link changelogs$} for the "What's New" sidebar. Reads can
+	 * overlap (two changes in a row each read the sidebar again): a read that started before the one the sidebar
+	 * already shows is not published, so an older answer arriving last never replaces newer entries.
 	 */
 	getAll(request: IChangelogFindInput): Observable<IPagination<IChangelog>> {
 		this._publishedRequest = request;
-		return this.find(request).pipe(tap(({ items }) => this._changelogs$.next(items)));
+		return defer(() => {
+			const read = ++this._readsStarted;
+			return this.find(request).pipe(
+				tap(({ items }) => {
+					if (read > this._readShown) {
+						this._readShown = read;
+						this._changelogs$.next(items);
+					}
+				})
+			);
+		});
 	}
 
 	/**

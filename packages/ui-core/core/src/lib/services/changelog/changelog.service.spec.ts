@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom, of, throwError } from 'rxjs';
+import { firstValueFrom, of, Subject, throwError } from 'rxjs';
 import { IChangelog } from '@gauzy/contracts';
 import { ChangelogService } from './changelog.service';
 
@@ -62,6 +62,38 @@ describe('ChangelogService', () => {
 		expect(saved).toEqual({ id: 'news-2', title: 'Fresh news' });
 		expect(http.get).toHaveBeenCalledTimes(2);
 		expect(http.get.mock.calls[1][1].params.get('isFeature')).toBe('0');
+		expect(shown).toEqual(refreshed);
+	});
+
+	it('never lets an older read of the sidebar, answered last, replace newer entries', async () => {
+		await firstValueFrom(service.getAll({ isFeature: 0 }));
+		const older = new Subject<{ items: IChangelog[]; total: number }>();
+		const newer = new Subject<{ items: IChangelog[]; total: number }>();
+		http.get.mockReturnValueOnce(older).mockReturnValueOnce(newer);
+
+		// Two changes in a row: each reads the sidebar again, and the first read is answered last.
+		const first = firstValueFrom(service.update('news-1', { title: 'Edited' }));
+		const second = firstValueFrom(service.create({ title: 'Fresh news' }));
+		newer.next({ items: refreshed, total: refreshed.length });
+		newer.complete();
+		older.next({ items: [{ id: 'news-1', title: 'Edited' }], total: 1 });
+		older.complete();
+		await Promise.all([first, second]);
+
+		expect(shown).toEqual(refreshed);
+	});
+
+	it('still shows an older read when the newer one fails', async () => {
+		await firstValueFrom(service.getAll({ isFeature: 0 }));
+		const older = new Subject<{ items: IChangelog[]; total: number }>();
+		http.get.mockReturnValueOnce(older).mockReturnValueOnce(throwError(() => new Error('offline')));
+
+		const first = firstValueFrom(service.delete('news-1'));
+		await firstValueFrom(service.recover('news-1'));
+		older.next({ items: refreshed, total: refreshed.length });
+		older.complete();
+		await first;
+
 		expect(shown).toEqual(refreshed);
 	});
 
