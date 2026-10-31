@@ -1,35 +1,39 @@
-import { EnvironmentInjector, runInInjectionContext } from '@angular/core';
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Router, UrlTree } from '@angular/router';
-import { firstValueFrom, isObservable, Observable, of } from 'rxjs';
+import { provideRouter, Router } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { of } from 'rxjs';
 import { RegistrationConfigService } from '../services/auth/registration-config.service';
 import { registrationEnabledGuard } from './registration-enabled.guard';
 
+@Component({ selector: 'ga-registration-guard-page', standalone: true, template: '' })
+class PageComponent {}
+
 /**
  * The register page opens only while the server accepts public sign-ups; otherwise the visitor lands on sign-in.
+ * The guard runs in a real router, as the auth routes use it.
  */
 describe('registrationEnabledGuard', () => {
-	function run(enabled: boolean): Promise<boolean | UrlTree> {
+	async function openRegisterPage(enabled: boolean): Promise<string> {
 		TestBed.configureTestingModule({
-			providers: [{ provide: RegistrationConfigService, useValue: { registrationEnabled$: of(enabled) } }]
+			providers: [
+				{ provide: RegistrationConfigService, useValue: { registrationEnabled$: of(enabled) } },
+				provideRouter([
+					{ path: 'auth/register', canActivate: [registrationEnabledGuard], component: PageComponent },
+					{ path: 'auth/login', component: PageComponent }
+				])
+			]
 		});
-		const result = runInInjectionContext(TestBed.inject(EnvironmentInjector), () =>
-			registrationEnabledGuard({} as never, { url: '/auth/register' } as never)
-		);
-		if (!isObservable(result)) {
-			throw new Error('The guard answers with an observable');
-		}
-		return firstValueFrom(result as Observable<boolean | UrlTree>);
+		const harness = await RouterTestingHarness.create();
+		await harness.navigateByUrl('/auth/register');
+		return TestBed.inject(Router).url;
 	}
 
 	it('opens the register page while sign-ups are open', async () => {
-		await expect(run(true)).resolves.toBe(true);
+		await expect(openRegisterPage(true)).resolves.toBe('/auth/register');
 	});
 
 	it('sends the visitor to sign in while sign-ups are closed', async () => {
-		const result = await run(false);
-
-		expect(result).toBeInstanceOf(UrlTree);
-		expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/auth/login');
+		await expect(openRegisterPage(false)).resolves.toBe('/auth/login');
 	});
 });
