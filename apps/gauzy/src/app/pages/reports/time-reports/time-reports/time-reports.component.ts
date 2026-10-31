@@ -55,7 +55,8 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 	}
 
 	/**
-	 * Whether the report has rows to export: the grid has finished loading and found time entries.
+	 * Whether the report has rows to export: the grid's latest request, for the current filters and grouping, has
+	 * answered with time entries (an older request that answers late never enables it).
 	 */
 	get canExport(): boolean {
 		return !!this.dailyGrid?.canExport;
