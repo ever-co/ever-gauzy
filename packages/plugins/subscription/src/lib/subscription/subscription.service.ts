@@ -848,11 +848,44 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @throws BadRequestException when it is not paused.
 	 */
 	public async resume(id: ID, at?: Date, expectation: IVersionExpectation = ANY_VERSION): Promise<Subscription> {
-		const subscription = await this.findOneScoped(id);
-
-		this.assertStatus(subscription, [SubscriptionStatus.PAUSED], 'resume');
-
 		const now = at ?? new Date();
+
+		// The calendar a resume writes is decided from the subscription as read, so the write is predicated on the version
+		// it was read at (Copilot): predicated on whatever version the row holds when its statement runs, a resume that
+		// read the calendar on a cycle being charged wrote that instant back over the calendar the cycle's finish had
+		// moved meanwhile, and the next pass finished the cycle a second time. On that conflict the row is read again and
+		// the calendar decided again.
+		for (let attempt = 1; ; attempt += 1) {
+			const subscription = await this.findOneScoped(id);
+
+			this.assertStatus(subscription, [SubscriptionStatus.PAUSED], 'resume');
+
+			try {
+				const nextBillingAt = await this.resumeAsRead(subscription, now, this.readVersionPredicate(subscription, expectation));
+
+				await this.emit('subscription.resumed', id, { subscriptionId: id, resumedAt: now, nextBillingAt });
+
+				return await this.findOneScoped(id);
+			} catch (error) {
+				if (expectation.wildcard && attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				throw error;
+			}
+		}
+	}
+
+	/**
+	 * Writes the resume of a paused subscription, decided from the subscription as read.
+	 *
+	 * @param subscription The subscription, as read.
+	 * @param now The instant it resumes at.
+	 * @param expectation The version the decision was read at, which the write is predicated on.
+	 * @returns The next billing instant the resume wrote.
+	 */
+	private async resumeAsRead(subscription: Subscription, now: Date, expectation: IVersionExpectation): Promise<Date> {
+		const id = subscription.id;
 
 		if (this.owesOpeningPeriod(subscription)) {
 			const plan = await this.planService.findOneScoped(subscription.planId);
@@ -893,9 +926,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				}
 			});
 
-			await this.emit('subscription.resumed', id, { subscriptionId: id, resumedAt: now, nextBillingAt });
-
-			return await this.findOneScoped(id);
+			return nextBillingAt;
 		}
 
 		// An invoice still waiting for its payment keeps the subscription on its period (Q7-W4): resuming past it
@@ -916,13 +947,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			}
 		});
 
-		await this.emit('subscription.resumed', id, {
-			subscriptionId: id,
-			resumedAt: now,
-			nextBillingAt
-		});
-
-		return await this.findOneScoped(id);
+		return nextBillingAt;
 	}
 
 	/**
@@ -3660,6 +3685,21 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	): Promise<void> {
 		if ((subscription.billingCycleCount ?? 0) > 0) {
 			return;
+		}
+
+		if (
+			opening &&
+			(!!this.billingService.frozenAttemptOf(opening, (opening.attemptCount ?? 0) + 1) || this.leftUnfinished(opening)) &&
+			new Date(opening.periodStart).getTime() !== period.start.getTime()
+		) {
+			// The opening cycle was sent to the order path and its outcome never recorded, or it was charged and not
+			// finished (a manual bill of a pending subscription, say): it cannot move, and committing the subscription onto
+			// another period would leave the charge's finish with a calendar that no longer points at it — the paid period
+			// uncounted and a later one billed over it (Copilot). The whole write is refused, as for a cycle charged since
+			// it was read. A charge still before the order path holds a live claim, which `reschedulePending` refuses.
+			throw new ConflictException(
+				'SUBSCRIPTION_OPENING_CYCLE_CHANGED: the opening billing cycle is being charged. Read the subscription again once its charge is recorded and retry.'
+			);
 		}
 
 		if (!opening || !this.isUntouched(opening) || new Date(opening.periodStart).getTime() === period.start.getTime()) {
