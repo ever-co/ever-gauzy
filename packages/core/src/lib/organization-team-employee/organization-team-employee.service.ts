@@ -23,6 +23,7 @@ import { EntitySubscriptionService } from '../entity-subscription/entity-subscri
 import { TypeOrmOrganizationTeamEmployeeRepository } from './repository/type-orm-organization-team-employee.repository';
 import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
 import { IWorkingEmployeeLookup } from '../employee/former-employees';
+import { teamRoleAfterEdit } from './team-manager-membership';
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
@@ -127,11 +128,12 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			}
 		}
 
-		// 2. Update role for existing members
+		// 2. Update role for existing members. A member named as a manager gets the manager role; any other member
+		// keeps a custom role they were given, and loses a manager role the edit no longer gives them (#6569).
 		await Promise.all(
 			updatedMembers.map(async (member) => {
 				const isManager = managerIds.includes(member.employeeId);
-				const newRole = isManager ? role : null;
+				const newRole = teamRoleAfterEdit(member, isManager, role);
 
 				// Only update if the role or (for a caller who sets the flag) the manager flag has changed. A member
 				// without a role is stored with `roleId` null, and `newRole?.id` is undefined for them: compared as
