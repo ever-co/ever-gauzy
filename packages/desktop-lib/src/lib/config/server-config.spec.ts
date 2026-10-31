@@ -59,4 +59,22 @@ describe('ServerConfig URLs', () => {
 		expect(config.uiUrl).toBe('http://127.0.0.1:4200');
 		expect(config.setting.host).toBe('192.168.1.20');
 	});
+
+	describe("localUiUrl (the time tracker's link to the web app)", () => {
+		it('is the web UI address when the app uses the integrated or a local server', () => {
+			mockConfigs.current = { isLocalServer: true, host: '0.0.0.0', port: 3000, portUi: 4200 };
+
+			expect(new ServerConfig().localUiUrl).toBe('http://127.0.0.1:4200');
+		});
+
+		it('is null for a remote server: its web UI address is unknown', () => {
+			mockConfigs.current = { isLocalServer: false, serverUrl: 'https://gauzy.example.com', portUi: 4200 };
+
+			expect(new ServerConfig().localUiUrl).toBeNull();
+		});
+
+		it('is null before the app was set up', () => {
+			expect(new ServerConfig().localUiUrl).toBeNull();
+		});
+	});
 });

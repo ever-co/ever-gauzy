@@ -99,6 +99,14 @@ export class ServerConfig implements IServerConfig {
 		return `${this.uiHostName}:${this.uiPort}`;
 	}
 
+	/**
+	 * The web UI of the server the app is set up with, when that server runs on this computer (the integrated or a
+	 * local server); `null` for a remote server, whose web UI address the app has no way to know.
+	 */
+	public get localUiUrl(): string | null {
+		return this.setting?.isLocalServer ? this.uiUrl : null;
+	}
+
 	public get setting(): IServerSetting {
 		return LocalStore.getStore('configs');
 	}

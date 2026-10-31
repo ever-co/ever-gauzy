@@ -13,6 +13,7 @@ import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { AppWindowManager } from './app-window-manager';
+import { ServerConfig } from './config/server-config';
 import { TrackingSleepInactivity } from './contexts';
 import {
 	DialogStopTimerLogoutConfirmation,
@@ -686,6 +687,9 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 	ipcMain.handle('GET_IS_WAYLAND', () => {
 		return process.platform === 'linux' && process.env.XDG_SESSION_TYPE === 'wayland';
 	});
+
+	// The time tracker links to the web app (#9517): on the integrated or a local server, that is its web UI.
+	ipcMain.handle('GET_LOCAL_WEB_APP_URL', (): string | null => new ServerConfig().localUiUrl);
 
 	ipcMain.handle('GET_ALL_DISPLAYS', () => {
 		return screen.getAllDisplays();
@@ -1664,6 +1668,7 @@ export function removeAllHandlers() {
 		'UPDATE_SCREENSHOT_SYNC_STATUS',
 		'EXPORT_AUDIT_LOGS',
 		'GET_IS_WAYLAND',
+		'GET_LOCAL_WEB_APP_URL',
 		'GET_ALL_DISPLAYS',
 		'GET_SCREEN_SOURCES'
 	];
