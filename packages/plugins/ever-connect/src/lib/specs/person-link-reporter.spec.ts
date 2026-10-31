@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { EventBus } from '@gauzy/core';
-import { ZitadelAccountLinkedEvent, ZitadelAccountUnlinkedEvent } from '@gauzy/plugin-auth-zitadel';
+import { ZitadelAccountLinkedEvent, ZitadelAccountSignedInEvent, ZitadelAccountUnlinkedEvent } from '@gauzy/plugin-auth-zitadel';
 import { IDENTITY_RETRY_MAX_MS, OIDC_CLIENT_POLL_FIRST_MS } from '../ever-connect.constants';
 import { FakeAccounts, identityHarness, IdentityHarness, ISSUER, problem } from '../fixtures/identity-harness';
 import { insert } from '../fixtures/test-db';
@@ -180,6 +180,23 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		h.clock.t += IDENTITY_RETRY_MAX_MS * 3;
 		await reporter.sendDue();
 		expect(h.platform.callsTo(POST)).toHaveLength(1);
+
+		// The user signs in with Ever ID (through this installation's client): the link is reported again,
+		// with its stored method, and Ever Platform now takes it.
+		h.platform.on(POST, (call) => ({ status: 201, body: { id: 'PL9', person_id: 'P9', instance_id: 'I', product_user_ref: call.body?.['product_user_ref'], link_method: 'explicit', linked_at: '2026-11-02T10:00:00Z' } }));
+		await bus.publish(new ZitadelAccountSignedInEvent(payload({ userId: 'user-9', subject: 's9', linkMethod: undefined }) as never));
+		await settle();
+		await reporter.sendDue();
+		expect(h.platform.callsTo(POST).map((c) => c.body?.['link_method'])).toEqual(['explicit', 'explicit']);
+		const rows = await h.dataSource.query(`SELECT "origin", "state" FROM "ever_connect_person_link_report" ORDER BY "seq"`);
+		expect(rows).toEqual([
+			{ origin: 'backfill', state: 'failed' },
+			{ origin: 'event', state: 'sent' }
+		]);
+		// Signed in again: nothing more is queued (the latest report went through).
+		await bus.publish(new ZitadelAccountSignedInEvent(payload({ userId: 'user-9', subject: 's9' }) as never));
+		await settle();
+		expect(await h.dataSource.query('SELECT COUNT(*) AS n FROM "ever_connect_person_link_report"')).toEqual([{ n: 2 }]);
 	});
 
 	it('Ever Platform not answering is retried; a 403 (not enabled there) drops the report', async () => {

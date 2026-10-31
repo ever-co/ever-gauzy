@@ -126,6 +126,7 @@ export class ZitadelSigninService {
 
 		const linked = await this.accounts.findLinkedUsers(identity.issuer, identity.subject);
 		if (linked.length) {
+			await this.events.signedIn(linked, identity);
 			return { type: 'workspaces', response: await this.signInLinked(linked, identity, hints, idToken.sid) };
 		}
 

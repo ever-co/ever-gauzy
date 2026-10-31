@@ -8,6 +8,7 @@ import {
 	subjectHashOf,
 	ZitadelAccountEventPayload,
 	ZitadelAccountLinkedEvent,
+	ZitadelAccountSignedInEvent,
 	ZitadelAccountUnlinkedEvent
 } from '@gauzy/plugin-auth-zitadel';
 import { EverConnectAuditService } from '../ever-connect-audit.service';
@@ -67,7 +68,8 @@ const stripTrailingSlashes = (value: string): string => value.replace(/\/+$/, ''
  * client, and answers `422 subject_unknown` otherwise. For a link just made (or one reported again
  * after an unlink) that answer, like no answer at all, is retried with a back-off of up to a day,
  * then given up (audited); for a link that existed before (the backfill) it is final at once: its
- * user never signed in through this client, and asking again changes nothing.
+ * user never signed in through this client, and asking again changes nothing. When that user later
+ * signs in with Ever ID, the link is reported again.
  *
  * Once the client is ready, the links that existed before are reported too (for the linked tenants
  * only), by the worker, until that is done.
@@ -104,7 +106,10 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 					.subscribe((event) => this.enqueue(() => this.linked(event.payload, event.createdAt.getTime()))),
 				this.eventBus
 					.ofType(ZitadelAccountUnlinkedEvent)
-					.subscribe((event) => this.enqueue(() => this.unlinked(event.payload, event.createdAt.getTime())))
+					.subscribe((event) => this.enqueue(() => this.unlinked(event.payload, event.createdAt.getTime()))),
+				this.eventBus
+					.ofType(ZitadelAccountSignedInEvent)
+					.subscribe((event) => this.enqueue(() => this.signedIn(event.payload)))
 			);
 		}
 	}
@@ -176,6 +181,41 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 			subject: payload.subject,
 			subjectHash,
 			linkMethod: null
+		});
+		this.nudge();
+		return true;
+	}
+
+	/**
+	 * A Gauzy user signed in with Ever ID: when Ever Platform refused their link before because the
+	 * subject had not signed in through this installation's client (`422 subject_unknown`), the link is
+	 * reported again now (its method as stored). Nothing is queued otherwise.
+	 */
+	async signedIn(payload: ZitadelAccountEventPayload): Promise<boolean> {
+		if (!this.accounts || !(await this.reportable(payload))) {
+			return false;
+		}
+		const subjectHash = subjectHashOf(payload.issuer, payload.subject);
+		const latest = (await this.identity.reportsOf(payload.userId, subjectHash)).filter((row) => row.state !== 'dropped').pop();
+		if (latest?.state !== 'failed' || latest.lastError !== '422_subject_unknown') {
+			return false;
+		}
+		const link = await this.accounts.findLink(payload.userId, payload.issuer, payload.subject);
+		const method = link ? REPORTED_METHODS[link.linkMethod] : undefined;
+		if (!link || !method) {
+			return false;
+		}
+		await this.identity.addReport({
+			id: randomUUID(),
+			op: 'link',
+			origin: 'event',
+			userId: link.userId,
+			tenantId: link.tenantId,
+			tenantName: tenantDisplayName(link.tenantName),
+			issuer: link.issuer,
+			subject: link.subject,
+			subjectHash,
+			linkMethod: method
 		});
 		this.nudge();
 		return true;
