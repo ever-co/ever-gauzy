@@ -50,7 +50,18 @@
 						[maxlength]="maxLength"
 						[status]="invalid('icon') ? 'danger' : 'basic'"
 					/>
-					<small class="hint">{{ i18n + '.FIELDS.ICON_HINT' | translate }}</small>
+					@if (invalid('icon')) {
+						<small class="error">
+							{{
+								(form.get('icon')?.hasError('unknownIcon')
+									? i18n + '.ERRORS.UNKNOWN_ICON'
+									: i18n + '.ERRORS.REQUIRED'
+								) | translate
+							}}
+						</small>
+					} @else {
+						<small class="hint">{{ i18n + '.FIELDS.ICON_HINT' | translate }}</small>
+					}
 				</div>
 			</div>
 

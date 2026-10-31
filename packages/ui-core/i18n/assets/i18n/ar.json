@@ -1299,7 +1299,8 @@
 			},
 			"ERRORS": {
 				"REQUIRED": "مطلوب.",
-				"HTTP_URL": "أدخل عنوانًا كاملاً يبدأ بـ http:// أو https://."
+				"HTTP_URL": "أدخل عنوانًا كاملاً يبدأ بـ http:// أو https://.",
+				"UNKNOWN_ICON": "لا توجد أيقونة بهذا الاسم. استخدم اسم أيقونة Eva، مثل star-outline."
 			},
 			"PREVIEW": "معاينة",
 			"SAVED_MESSAGE": "تم حفظ الإدخال.",

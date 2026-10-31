@@ -8,11 +8,14 @@ import { AuthService } from '@gauzy/ui-core/core';
 export const CHANGELOG_MANAGER_FALLBACK_URL = '/pages/settings';
 
 /**
- * Lets only a super admin open the What's New management page: the API takes changes from no one else. The
- * role is asked of the API, not read from the cached user, and a failed check keeps the page closed. (The
- * API can still refuse a super admin who is not the installation's operator; the page says so then.)
+ * Whether the signed-in user may open the What's New management page: only a super admin may, since the API
+ * takes changes from no one else. The role is asked of the API, not read from the cached user, and a failed
+ * check keeps the page closed. (The API can still refuse a super admin who is not the installation's
+ * operator; the page says so then.) Runs in an injection context.
+ *
+ * @returns `true`, or where to send the user instead.
  */
-export const changelogManagerGuard: CanActivateFn = async (): Promise<boolean | UrlTree> => {
+export async function canManageChangelog(): Promise<boolean | UrlTree> {
 	const router = inject(Router);
 	const authService = inject(AuthService);
 	try {
@@ -23,4 +26,7 @@ export const changelogManagerGuard: CanActivateFn = async (): Promise<boolean | 
 		// Fall through: an unanswered check is not a yes.
 	}
 	return router.parseUrl(CHANGELOG_MANAGER_FALLBACK_URL);
-};
+}
+
+/** The What's New management route's guard; see {@link canManageChangelog}. */
+export const changelogManagerGuard: CanActivateFn = () => canManageChangelog();

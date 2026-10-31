@@ -6,6 +6,7 @@ import {
 	NbCardModule,
 	NbCheckboxModule,
 	NbDialogRef,
+	NbIconLibraries,
 	NbIconModule,
 	NbInputModule,
 	NbSpinnerModule
@@ -20,6 +21,8 @@ import {
 	IChangelogFormValue,
 	httpUrlValidator,
 	isForbidden,
+	knownIconValidator,
+	requiredTextValidator,
 	toChangelogFormValue,
 	toChangelogInput,
 	toChangelogPreview
@@ -64,6 +67,7 @@ export class ChangelogEntryDialogComponent implements OnInit {
 		private readonly _changelogService: ChangelogService,
 		private readonly _toastrService: ToastrService,
 		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _iconLibraries: NbIconLibraries,
 		private readonly _cdr: ChangeDetectorRef
 	) {}
 
@@ -73,23 +77,35 @@ export class ChangelogEntryDialogComponent implements OnInit {
 
 	ngOnInit(): void {
 		const value = toChangelogFormValue(this.entry);
-		const text = [Validators.required, Validators.maxLength(this.maxLength)];
+		const text = [requiredTextValidator, Validators.maxLength(this.maxLength)];
 		const link = [httpUrlValidator, Validators.maxLength(this.maxLength)];
 		this.form = this._formBuilder.group({
 			title: [value.title, text],
-			icon: [value.icon, text],
+			icon: [value.icon, [...text, knownIconValidator(this._isKnownIcon)]],
 			date: [value.date, Validators.required],
 			content: [value.content, text],
 			learnMoreUrl: [value.learnMoreUrl, link],
 			imageUrl: [value.imageUrl, link],
 			isFeature: [value.isFeature]
 		});
-		this.preview = toChangelogPreview(value);
+		this.preview = toChangelogPreview(value, this._isKnownIcon);
 		this.form.valueChanges.subscribe((changed: IChangelogFormValue) => {
-			this.preview = toChangelogPreview(changed);
+			this.preview = toChangelogPreview(changed, this._isKnownIcon);
 			this._cdr.markForCheck();
 		});
 	}
+
+	/**
+	 * Whether the app can draw an icon of that name. When the icon registry cannot tell (no default pack), the
+	 * name is let through rather than every icon refused.
+	 */
+	private readonly _isKnownIcon = (name: string): boolean => {
+		try {
+			return !!this._iconLibraries.getIcon(name);
+		} catch {
+			return true;
+		}
+	};
 
 	/** Whether the field holds something the API will not take, once the user has been at it. */
 	invalid(name: keyof IChangelogFormValue): boolean {

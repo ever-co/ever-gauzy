@@ -1300,7 +1300,8 @@
 			},
 			"ERRORS": {
 				"REQUIRED": "Verplicht.",
-				"HTTP_URL": "Voer een volledig adres in dat begint met http:// of https://."
+				"HTTP_URL": "Voer een volledig adres in dat begint met http:// of https://.",
+				"UNKNOWN_ICON": "Geen pictogram heeft deze naam. Gebruik een Eva-pictogramnaam, zoals star-outline."
 			},
 			"PREVIEW": "Voorbeeld",
 			"SAVED_MESSAGE": "Item opgeslagen.",

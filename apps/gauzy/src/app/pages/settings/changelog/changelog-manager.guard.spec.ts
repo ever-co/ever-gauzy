@@ -1,20 +1,17 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { RolesEnum } from '@gauzy/contracts';
 import { AuthService } from '@gauzy/ui-core/core';
-import { CHANGELOG_MANAGER_FALLBACK_URL, changelogManagerGuard } from './changelog-manager.guard';
+import { CHANGELOG_MANAGER_FALLBACK_URL, canManageChangelog } from './changelog-manager.guard';
 
 /** Only a super admin, as the API says, may open the What's New management page. */
-describe('changelogManagerGuard', () => {
+describe("canManageChangelog (the What's New route guard)", () => {
 	const fallback = {} as UrlTree;
 	let hasRole: jest.Mock<Observable<boolean>>;
 	let parseUrl: jest.Mock;
 
-	const run = () =>
-		TestBed.runInInjectionContext(() =>
-			changelogManagerGuard({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
-		);
+	const run = () => TestBed.runInInjectionContext(() => canManageChangelog());
 
 	beforeEach(() => {
 		hasRole = jest.fn(() => of(true));

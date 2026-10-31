@@ -1,6 +1,6 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { FormBuilder } from '@angular/forms';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbIconLibraries } from '@nebular/theme';
 import { Subject, of, throwError } from 'rxjs';
 import { IChangelog } from '@gauzy/contracts';
 import { ChangelogService, ErrorHandlingService, ToastrService } from '@gauzy/ui-core/core';
@@ -26,6 +26,9 @@ describe('ChangelogEntryDialogComponent', () => {
 	let changelogService: { create: jest.Mock; update: jest.Mock };
 	let toastrService: { danger: jest.Mock };
 	let errorHandlingService: { handleError: jest.Mock };
+	/** The icons the app can draw. */
+	const ICONS = new Set(['moon-outline', 'star-outline', 'flash-outline']);
+	const iconLibraries = { getIcon: (name: string) => (ICONS.has(name) ? { name } : null) };
 	let component: ChangelogEntryDialogComponent;
 
 	const open = (entry: IChangelog | null): ChangelogEntryDialogComponent => {
@@ -35,6 +38,7 @@ describe('ChangelogEntryDialogComponent', () => {
 			changelogService as unknown as ChangelogService,
 			toastrService as unknown as ToastrService,
 			errorHandlingService as unknown as ErrorHandlingService,
+			iconLibraries as unknown as NbIconLibraries,
 			{ markForCheck: jest.fn() } as unknown as ChangeDetectorRef
 		);
 		component.entry = entry;
@@ -63,9 +67,37 @@ describe('ChangelogEntryDialogComponent', () => {
 		expect(component.invalid('date')).toBe(false);
 	});
 
+	it('does not save a title, icon or text made only of spaces, since they are saved trimmed', async () => {
+		open(existing);
+		component.form.patchValue({ title: '   ', content: ' \t ', icon: '  ' });
+
+		await component.save();
+
+		expect(changelogService.update).not.toHaveBeenCalled();
+		expect(component.form.get('title').errors).toEqual({ required: true });
+		expect(component.form.get('content').errors).toEqual({ required: true });
+		expect(component.form.get('icon').errors).toEqual({ required: true });
+	});
+
+	it('does not save an icon the app cannot draw, and previews the default icon meanwhile', async () => {
+		open(existing);
+		component.form.patchValue({ icon: 'moon-outlin' });
+
+		await component.save();
+
+		expect(changelogService.update).not.toHaveBeenCalled();
+		expect(component.form.get('icon').errors).toEqual({ unknownIcon: true });
+		expect(component.invalid('icon')).toBe(true);
+		expect(component.preview.icon).toBe('star-outline');
+
+		component.form.patchValue({ icon: 'flash-outline' });
+		expect(component.form.get('icon').errors).toBeNull();
+		expect(component.preview.icon).toBe('flash-outline');
+	});
+
 	it('refuses links that are not full http(s) addresses, and text longer than MySQL keeps', async () => {
 		open(existing);
-		component.form.patchValue({ learnMoreUrl: 'javascript:alert(1)', imageUrl: 'gauzy.co/logo.png' });
+		component.form.patchValue({ learnMoreUrl: 'javascript:alert(1)', imageUrl: 'https:gauzy.co/logo.png' });
 
 		await component.save();
 

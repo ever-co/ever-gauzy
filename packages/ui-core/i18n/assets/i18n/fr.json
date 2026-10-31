@@ -1301,7 +1301,8 @@
 			},
 			"ERRORS": {
 				"REQUIRED": "Obligatoire.",
-				"HTTP_URL": "Saisissez une adresse complète commençant par http:// ou https://."
+				"HTTP_URL": "Saisissez une adresse complète commençant par http:// ou https://.",
+				"UNKNOWN_ICON": "Aucune icône ne porte ce nom. Utilisez un nom d'icône Eva, par exemple star-outline."
 			},
 			"PREVIEW": "Aperçu",
 			"SAVED_MESSAGE": "Entrée enregistrée.",

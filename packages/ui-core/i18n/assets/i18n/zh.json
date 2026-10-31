@@ -1300,7 +1300,8 @@
 			},
 			"ERRORS": {
 				"REQUIRED": "必填。",
-				"HTTP_URL": "请输入以 http:// 或 https:// 开头的完整地址。"
+				"HTTP_URL": "请输入以 http:// 或 https:// 开头的完整地址。",
+				"UNKNOWN_ICON": "没有此名称的图标。请使用 Eva 图标名称，例如 star-outline。"
 			},
 			"PREVIEW": "预览",
 			"SAVED_MESSAGE": "条目已保存。",

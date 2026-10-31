@@ -5,6 +5,8 @@ import {
 	httpUrlValidator,
 	isForbidden,
 	isHttpUrl,
+	knownIconValidator,
+	requiredTextValidator,
 	sortChangelogEntries,
 	toChangelogFormValue,
 	toChangelogInput,
@@ -32,6 +34,11 @@ describe('changelog admin utils', () => {
 			expect(isHttpUrl('data:image/png;base64,AAAA')).toBe(false);
 			expect(isHttpUrl('/pages/dashboard')).toBe(false);
 			expect(isHttpUrl('gauzy.co')).toBe(false);
+			// Parses as https, but a browser reads it relative to the page it is on.
+			expect(isHttpUrl('https:gauzy.co')).toBe(false);
+			expect(isHttpUrl('https:/gauzy.co')).toBe(false);
+			expect(isHttpUrl('https:///gauzy.co')).toBe(false);
+			expect(isHttpUrl('HTTPS://gauzy.co')).toBe(true);
 			expect(isHttpUrl('')).toBe(false);
 			expect(isHttpUrl(undefined)).toBe(false);
 		});
@@ -43,6 +50,23 @@ describe('changelog admin utils', () => {
 			expect(httpUrlValidator(new FormControl(' https://gauzy.co '))).toBeNull();
 			expect(httpUrlValidator(new FormControl('javascript:alert(1)'))).toEqual({ httpUrl: true });
 			expect(httpUrlValidator(new FormControl('www.gauzy.co'))).toEqual({ httpUrl: true });
+		});
+	});
+
+	describe('required text and icons', () => {
+		it('takes text with something other than spaces', () => {
+			expect(requiredTextValidator(new FormControl('Dark mode'))).toBeNull();
+			expect(requiredTextValidator(new FormControl('  '))).toEqual({ required: true });
+			expect(requiredTextValidator(new FormControl(''))).toEqual({ required: true });
+			expect(requiredTextValidator(new FormControl(null))).toEqual({ required: true });
+		});
+
+		it('takes only icons the app can draw, and leaves an empty name to the required check', () => {
+			const validator = knownIconValidator((name) => name === 'star-outline');
+
+			expect(validator(new FormControl(' star-outline '))).toBeNull();
+			expect(validator(new FormControl('star-outlin'))).toEqual({ unknownIcon: true });
+			expect(validator(new FormControl(''))).toBeNull();
 		});
 	});
 
@@ -124,6 +148,13 @@ describe('changelog admin utils', () => {
 			expect(preview.title).toBe('Dark mode');
 			expect(preview.date).toEqual(new Date('2026-10-31T00:00:00.000Z'));
 			expect(preview.learnMoreUrl).toBe('https://gauzy.co');
+		});
+
+		it('previews the default icon until the name is one the app can draw', () => {
+			const isKnownIcon = (name: string) => name === 'moon-outline';
+
+			expect(toChangelogPreview(form(), isKnownIcon).icon).toBe('moon-outline');
+			expect(toChangelogPreview(form({ icon: 'moon-outli' }), isKnownIcon).icon).toBe(CHANGELOG_DEFAULT_ICON);
 		});
 
 		it('leaves out a missing date and links that are not yet full http(s) addresses', () => {

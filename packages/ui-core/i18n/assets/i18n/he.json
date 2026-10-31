@@ -1304,7 +1304,8 @@
 			},
 			"ERRORS": {
 				"REQUIRED": "שדה חובה.",
-				"HTTP_URL": "יש להזין כתובת מלאה שמתחילה ב-http:// או https://."
+				"HTTP_URL": "יש להזין כתובת מלאה שמתחילה ב-http:// או https://.",
+				"UNKNOWN_ICON": "אין סמל בשם הזה. יש להשתמש בשם של סמל Eva, למשל star-outline."
 			},
 			"PREVIEW": "תצוגה מקדימה",
 			"SAVED_MESSAGE": "הרשומה נשמרה.",

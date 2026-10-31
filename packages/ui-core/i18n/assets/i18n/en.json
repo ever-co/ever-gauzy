@@ -1331,7 +1331,8 @@
 			},
 			"ERRORS": {
 				"REQUIRED": "Required.",
-				"HTTP_URL": "Enter a full address starting with http:// or https://."
+				"HTTP_URL": "Enter a full address starting with http:// or https://.",
+				"UNKNOWN_ICON": "No icon has this name. Use an Eva icon name, such as star-outline."
 			},
 			"PREVIEW": "Preview",
 			"SAVED_MESSAGE": "Entry saved.",

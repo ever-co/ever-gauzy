@@ -24,14 +24,21 @@ export interface IChangelogFormValue {
 	isFeature: boolean;
 }
 
-/** Whether `value` is a full http(s) address: the only links the What's New cards open. */
+/** A link spelled out in full: the scheme, both slashes, then the host. */
+const FULL_HTTP_URL = /^https?:\/\/[^\s/?#]/i;
+
+/**
+ * Whether `value` is a full http(s) address: the only links the What's New cards open. The address must
+ * spell out `http://` or `https://` and a host, not only parse as one: `https:example.com` parses, but a
+ * browser reads it relative to the page it is on.
+ */
 export function isHttpUrl(value: string | null | undefined): boolean {
-	if (!value) {
+	if (!value || !FULL_HTTP_URL.test(value)) {
 		return false;
 	}
 	try {
 		const url = new URL(value);
-		return url.protocol === 'http:' || url.protocol === 'https:';
+		return (url.protocol === 'http:' || url.protocol === 'https:') && !!url.hostname;
 	} catch {
 		return false;
 	}
@@ -42,6 +49,22 @@ export const httpUrlValidator: ValidatorFn = (control: AbstractControl): Validat
 	const value = typeof control.value === 'string' ? control.value.trim() : control.value;
 	return !value || isHttpUrl(value) ? null : { httpUrl: true };
 };
+
+/** A required text: something other than spaces, since the text is saved trimmed. */
+export const requiredTextValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+	typeof control.value === 'string' && control.value.trim() ? null : { required: true };
+
+/**
+ * An icon the app can draw: the cards show the icon by name, and a name no icon pack holds draws nothing.
+ *
+ * @param isKnownIcon Whether an icon of that name is registered.
+ */
+export function knownIconValidator(isKnownIcon: (name: string) => boolean): ValidatorFn {
+	return (control: AbstractControl): ValidationErrors | null => {
+		const name = typeof control.value === 'string' ? control.value.trim() : '';
+		return !name || isKnownIcon(name) ? null : { unknownIcon: true };
+	};
+}
 
 /**
  * A stored date as the day a date input shows: `2026-08-05T00:00:00.000Z` → `2026-08-05`. Entries are dated
@@ -96,12 +119,20 @@ export function toChangelogInput(value: IChangelogFormValue): IChangelogCreateIn
 
 /**
  * The entry as the What's New card would show the form's value while it is being typed: no date until one is
- * picked (the date pipe throws on an invalid date), and no link or image until it is a full http(s) address.
+ * picked (the date pipe throws on an invalid date), the default icon until the name is one the app can draw,
+ * and no link or image until it is a full http(s) address.
+ *
+ * @param value The form's value.
+ * @param isKnownIcon Whether an icon of that name is registered.
  */
-export function toChangelogPreview(value: IChangelogFormValue): IChangelog {
+export function toChangelogPreview(
+	value: IChangelogFormValue,
+	isKnownIcon: (name: string) => boolean = () => true
+): IChangelog {
 	const input = toChangelogInput(value);
 	return {
 		...input,
+		icon: isKnownIcon(input.icon) ? input.icon : CHANGELOG_DEFAULT_ICON,
 		date: value.date && !isNaN(input.date.getTime()) ? input.date : undefined,
 		learnMoreUrl: isHttpUrl(input.learnMoreUrl) ? input.learnMoreUrl : '',
 		imageUrl: isHttpUrl(input.imageUrl) ? input.imageUrl : ''

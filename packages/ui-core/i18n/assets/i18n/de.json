@@ -1300,7 +1300,8 @@
 			},
 			"ERRORS": {
 				"REQUIRED": "Pflichtfeld.",
-				"HTTP_URL": "Geben Sie eine vollständige Adresse ein, die mit http:// oder https:// beginnt."
+				"HTTP_URL": "Geben Sie eine vollständige Adresse ein, die mit http:// oder https:// beginnt.",
+				"UNKNOWN_ICON": "Kein Symbol hat diesen Namen. Verwenden Sie einen Eva-Symbolnamen, zum Beispiel star-outline."
 			},
 			"PREVIEW": "Vorschau",
 			"SAVED_MESSAGE": "Eintrag gespeichert.",
