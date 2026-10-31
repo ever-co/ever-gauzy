@@ -27,11 +27,7 @@ import {
 } from '../shared/guards';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import {
-	RegistrationPolicyService,
-	SELF_REGISTRATION_DISABLED_MESSAGE,
-	SelfRegistrationGuard
-} from './auth-switches';
+import { RegistrationPolicyService, SELF_REGISTRATION_DISABLED_MESSAGE, SelfRegistrationGuard } from './auth-switches';
 
 /**
  * #5784 / #7821 at the HTTP boundary: `POST /api/auth/register` answers 403 to a public sign-up while the operator
@@ -146,9 +142,7 @@ describe('AuthController — registration switches over HTTP', () => {
 	});
 
 	it('publishes whether the public sign-up is open, without authentication', async () => {
-		expect(
-			new Reflector().get(PUBLIC_METHOD_METADATA, AuthController.prototype.registrationConfig)
-		).toBe(true);
+		expect(new Reflector().get(PUBLIC_METHOD_METADATA, AuthController.prototype.registrationConfig)).toBe(true);
 
 		await request(app.getHttpServer()).get('/api/auth/registration/config').expect(200, { enabled: true });
 

@@ -137,9 +137,9 @@ describe('AuthService.resetPassword — ADMIN_PASSWORD_RESET', () => {
 		const admin = account('admin-1', RolesEnum.ADMIN);
 		const service = buildService([admin]);
 
-		await expect(service.resetPassword({ token: resetTokenFor(admin), password: 'new-password' } as any)).resolves.toBe(
-			true
-		);
+		await expect(
+			service.resetPassword({ token: resetTokenFor(admin), password: 'new-password' } as any)
+		).resolves.toBe(true);
 
 		expect(service.userService.changePassword).toHaveBeenCalledWith('admin-1', '$2b$10$new-hash');
 		expect(service.userService.findOneByIdString).toHaveBeenCalledWith('admin-1', {

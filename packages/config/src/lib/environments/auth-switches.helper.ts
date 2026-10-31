@@ -102,6 +102,8 @@ export function resolveAuthSwitches(
  * @param switches - The resolved switches.
  * @returns True when neither `APP_USER_REGISTRATION` nor `ALLOW_TENANTS_REGISTRATION` is off.
  */
-export function isSelfServiceSignupAllowed(switches: Pick<IAuthSwitches, 'userRegistration' | 'tenantsRegistration'>): boolean {
+export function isSelfServiceSignupAllowed(
+	switches: Pick<IAuthSwitches, 'userRegistration' | 'tenantsRegistration'>
+): boolean {
 	return switches.userRegistration && switches.tenantsRegistration;
 }
