@@ -25,7 +25,7 @@ export class GithubProjectSyncLabelComponent {
 	@Input() value: unknown;
 
 	/** Emits the project when its sync settings should be edited. */
-	@Output() edit = new EventEmitter<IOrganizationProject>();
+	@Output() readonly edit = new EventEmitter<IOrganizationProject>();
 
 	/** How the project syncs the issues GitHub sends. */
 	get syncMode(): GithubProjectSyncModeEnum {

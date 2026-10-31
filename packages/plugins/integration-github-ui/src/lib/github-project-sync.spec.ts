@@ -46,6 +46,12 @@ describe('collectGithubLabelNames', () => {
 		]);
 	});
 
+	it('offers a preferred name in the repository’s spelling when it differs only by case (the sync matches exactly)', () => {
+		const repository = [{ labels: [{ name: 'gauzy' }, { name: 'needs-gauzy' }, { name: 'bug' }] }] as never[];
+
+		expect(collectGithubLabelNames(repository, ['Gauzy', 'Needs-Gauzy'])).toEqual(['gauzy', 'needs-gauzy', 'bug']);
+	});
+
 	it('skips empty preferred names (a project without a label of its own)', () => {
 		expect(collectGithubLabelNames([], ['Gauzy', null, undefined, '  '])).toEqual(['Gauzy']);
 	});

@@ -28,9 +28,26 @@ export function getGithubProjectSyncMode(
 }
 
 /**
+ * Each name once, compared regardless of case like GitHub compares label names (a repository cannot hold both `Bug`
+ * and `bug`); the first spelling wins. Empty names are dropped.
+ */
+function uniqueLabelNames(names: ReadonlyArray<string>): string[] {
+	const seen = new Set<string>();
+	return names.filter((name) => {
+		const key = name.toLowerCase();
+		if (!name || seen.has(key)) {
+			return false;
+		}
+		seen.add(key);
+		return true;
+	});
+}
+
+/**
  * The label names to offer for a project's sync label: the preferred ones first, in the given order (the default
- * label, the project's own), then every label the issues carry, alphabetically. Each name appears once, compared
- * regardless of case like GitHub compares them (a repository cannot hold both `Bug` and `bug`).
+ * label, the project's own), then every other label the issues carry, alphabetically. Each name appears once,
+ * compared regardless of case. A preferred name the repository spells differently (`Gauzy` against the repository's
+ * `gauzy`) is offered in the repository's spelling: the sync matches label names exactly, so that is the one to pick.
  *
  * @param issues - Issues of the repository; their labels are the suggestions.
  * @param preferred - Names to list first; empty ones are skipped.
@@ -39,20 +56,18 @@ export function collectGithubLabelNames(
 	issues: ReadonlyArray<Pick<IGithubIssue, 'labels'>> | null | undefined,
 	preferred: ReadonlyArray<string | null | undefined> = []
 ): string[] {
-	const repositoryLabels = (issues ?? [])
-		.flatMap((issue) => issue?.labels ?? [])
-		.map((label) => normalizeGithubLabelName(label?.name))
-		.sort((a, b) => a.localeCompare(b));
+	const repositoryLabels = uniqueLabelNames(
+		(issues ?? [])
+			.flatMap((issue) => issue?.labels ?? [])
+			.map((label) => normalizeGithubLabelName(label?.name))
+			.sort((a, b) => a.localeCompare(b))
+	);
+	const repositorySpelling = new Map(repositoryLabels.map((name) => [name.toLowerCase(), name]));
+	const preferredLabels = preferred
+		.map(normalizeGithubLabelName)
+		.map((name) => repositorySpelling.get(name.toLowerCase()) ?? name);
 
-	const seen = new Set<string>();
-	return [...preferred.map(normalizeGithubLabelName), ...repositoryLabels].filter((name) => {
-		const key = name.toLowerCase();
-		if (!name || seen.has(key)) {
-			return false;
-		}
-		seen.add(key);
-		return true;
-	});
+	return uniqueLabelNames([...preferredLabels, ...repositoryLabels]);
 }
 
 /**
