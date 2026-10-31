@@ -32,6 +32,11 @@ jest.mock('@gauzy/config', () => ({
 	isMySQL: jest.fn(() => false)
 }));
 
+// The ledger the balance side runs on, built over the manager handed to it: the transaction's, or not.
+jest.mock('../../../time-off-balance/time-off-balance-ledger', () => ({
+	typeOrmTimeOffBalanceLedger: jest.fn((manager: unknown) => ({ over: manager }))
+}));
+
 const TENANT = 'tenant-a';
 const ID = 'time-off-1';
 
@@ -205,7 +210,7 @@ describe('TimeOffStatusHandler', () => {
 
 		// The leave as its locked read found it: the status the decision moves it from.
 		expect(balances.settle).toHaveBeenCalledWith(
-			manager,
+			{ over: manager },
 			expect.objectContaining({ id: ID, tenantId: TENANT, status: StatusTypesEnum.REQUESTED }),
 			StatusTypesEnum.APPROVED
 		);

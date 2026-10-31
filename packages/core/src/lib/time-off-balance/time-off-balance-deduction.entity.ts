@@ -15,14 +15,22 @@ import { MikroOrmTimeOffBalanceDeductionRepository } from './repository/mikro-or
  * balance side of a decision exact and repeatable:
  *
  *  - a reversal gives back what was taken, not what a recount finds today (holidays added since, a balance
- *    allocated after the approval, a request approved before balances were connected to approvals, or through a
- *    route that does not deduct yet, all give back nothing they did not take);
+ *    allocated after the approval, a request approved before balances were connected to approvals, all give back
+ *    nothing they did not take);
  *  - an approval that finds rows for its request has already taken its days and takes none again.
+ *
+ * The rows follow the request after its approval, in the same transaction as each write of it (see
+ * `TimeOffBalanceDeductionService` and `TimeOffRequestService`): an edit of its dates, employees, policy or holiday
+ * flag gives them back and records what the edited request takes; withdrawing the request gives them back and keeps
+ * them soft-deleted, so that putting it back takes those days again; deleting it gives them back first. A charged
+ * request an edit leaves taking nothing (a weekend, a holiday entry) keeps a zero-day row on each balance it took from:
+ * the record that it is charged, so the edit back takes its days again.
  *
  * `(timeOffRequestId, balanceId)` is UNIQUE: the last line of defence against one request being deducted twice from
  * the same balance, should two approvals ever get past the request's row lock.
  *
- * Both relations cascade on delete: deleting a request or a balance must never be refused because of this record.
+ * Both relations cascade on delete: deleting a request or a balance must never be refused because of this record. A
+ * request's own deletion has given the days back by then, so the cascade only removes rows already settled.
  */
 @ColumnIndex('IDX_time_off_balance_deduction_unique', ['timeOffRequestId', 'balanceId'], { unique: true })
 @MultiORMEntity('time_off_balance_deduction', {
