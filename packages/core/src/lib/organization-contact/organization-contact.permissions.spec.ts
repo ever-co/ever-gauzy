@@ -6,6 +6,7 @@ import '../core/entities/internal';
 
 import { ExecutionContext, Logger, Type } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { PERMISSIONS_METADATA } from '@gauzy/constants';
 import {
 	ID,
 	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
@@ -18,6 +19,7 @@ import { PermissionGuard } from '../shared/guards/permission.guard';
 import { OrganizationContactController } from './organization-contact.controller';
 import { OrganizationContactResolver } from './organization-contact.resolver';
 import { organizationContactCreateOptions } from './organization-contact.permissions';
+import { OrganizationContactCommentAccessPolicy } from './organization-contact-comment-access.policy';
 
 /**
  * ever-co/ever-gauzy#5468: creating and deleting a contact get their own grants, `ORG_CONTACT_ADD` and
@@ -133,6 +135,19 @@ describe('Organization contact permissions (ever-co/ever-gauzy#5468)', () => {
 		const verdicts = await allowed([PermissionsEnum.ORG_CONTACT_VIEW]);
 
 		expect(Object.values(verdicts).flat()).not.toContain(true);
+	});
+
+	it('gives a contact’s notes exactly the permissions of the contact’s own read and edit routes', () => {
+		const policy = new OrganizationContactCommentAccessPolicy({} as never);
+		const route = (handler: string) =>
+			Reflect.getMetadata(PERMISSIONS_METADATA, (OrganizationContactController.prototype as any)[handler]);
+
+		// The contact list, page and count take ORG_CONTACT_VIEW; the edit takes ORG_CONTACT_EDIT. Neither accepts
+		// ALL_ORG_EDIT, so the notes do not either.
+		expect(route('pagination')).toEqual([...policy.readPermissions]);
+		expect(route('getCount')).toEqual([...policy.readPermissions]);
+		expect(route('update')).toEqual([...policy.writePermissions]);
+		expect([...policy.readPermissions, ...policy.writePermissions]).not.toContain(PermissionsEnum.ALL_ORG_EDIT);
 	});
 
 	it('makes a create by a caller without ORG_CONTACT_EDIT create-only, and leaves an editor’s create as it was', () => {
