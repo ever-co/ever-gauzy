@@ -329,7 +329,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				});
 
 				// What the week's time costs at the employee's bill rate; null when they have no rate
-				const spent = calculateBillableAmount(weeklyDuration, employee?.billRateValue);
+				const spent = calculateBillableAmount(
+					weeklyDuration,
+					employee?.billRateValue,
+					employee?.billRateCurrency
+				);
 
 				// Return the processed weekly logs data
 				return {

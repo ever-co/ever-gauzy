@@ -388,6 +388,30 @@ describe('TimeLogService', () => {
 				);
 			});
 
+			it("prices the week's total seconds once, in the rate's currency", async () => {
+				const yen = { id: TARGET_EMPLOYEE_ID, billRateValue: 1501, billRateCurrency: 'JPY' };
+				const cents = { id: OTHER_EMPLOYEE_ID, billRateValue: 20.15, billRateCurrency: 'EUR' };
+				builder.rows = [
+					log(yen, 'f1a2b3c4-0000-4000-8000-000000000005', 900),
+					log(yen, 'f1a2b3c4-0000-4000-8000-000000000006', 900),
+					log(cents, 'f1a2b3c4-0000-4000-8000-000000000007', 1200),
+					log(cents, 'f1a2b3c4-0000-4000-8000-000000000008', 600)
+				];
+
+				const report = (await service.getWeeklyReport(request)) as WeeklyEntry[];
+				const byEmployee = new Map(report.map((entry) => [entry.employee.id, entry]));
+
+				// Half an hour at 1,501 yen is 750.5, and yen has no minor unit; pricing each quarter hour
+				// first (375.25 → 375, twice) would answer 750
+				expect(byEmployee.get(TARGET_EMPLOYEE_ID)).toEqual(
+					expect.objectContaining({ spent: 751, currency: 'JPY' })
+				);
+				// Half an hour at 20.15 is exactly 10.075
+				expect(byEmployee.get(OTHER_EMPLOYEE_ID)).toEqual(
+					expect.objectContaining({ spent: 10.08, currency: 'EUR' })
+				);
+			});
+
 			it('reads the rate the same way under MikroORM, where a numeric column may arrive as a string', async () => {
 				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: '12.50', billRateCurrency: 'USD' };
 				const find = jest.fn().mockResolvedValue([log(employee, 'f1a2b3c4-0000-4000-8000-000000000004', 4500)]);
