@@ -182,7 +182,7 @@
             </nb-select>
           </div>
           <div class="field">
-            <label class="label">
+            <label for="parentTask" class="label">
               {{ 'TASKS_PAGE.PARENT_TASK' | translate }}
               @if (organization?.requireTask) {
                 <span class="required-mark" aria-hidden="true">*</span>
@@ -190,6 +190,7 @@
             </label>
             <ga-task-selector
               name="parentId"
+              labelForId="parentTask"
               [projectId]="getControlValue('projectId')"
               formControlName="parentId"
               [required]="$safeNavigationMigration(organization?.requireTask)"
