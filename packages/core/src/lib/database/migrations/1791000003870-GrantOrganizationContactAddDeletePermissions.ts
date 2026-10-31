@@ -170,10 +170,17 @@ export class GrantOrganizationContactAddDeletePermissions1791000003870 implement
 			await run(`INSERT INTO "role_permission" (${columns}) VALUES ${groups.join(', ')}${onDuplicate}`, values);
 		}
 
+		// The update states again what made a row one to switch on, so a decision another API process records after
+		// the read (a tenant administrator switching it off, or deleting it) is kept.
 		for (const batch of chunks(switchOn, MAX_PARAMETERS)) {
 			const placeholders = batch.map((_, index) => `$${index + 1}`);
 			await run(
-				`UPDATE "role_permission" SET "enabled" = ${truthy} WHERE "id" IN (${placeholders.join(', ')})`,
+				`UPDATE "role_permission" SET "enabled" = ${truthy}
+				WHERE "id" IN (${placeholders.join(', ')})
+					AND "enabled" = ${falsy}
+					AND "createdByUserId" IS NULL
+					AND "updatedByUserId" IS NULL
+					AND "deletedAt" IS NULL`,
 				batch
 			);
 		}

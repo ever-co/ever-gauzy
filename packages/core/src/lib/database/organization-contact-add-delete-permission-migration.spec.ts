@@ -227,6 +227,31 @@ describe('GrantOrganizationContactAddDeletePermissions1791000003870: the new gra
 		);
 	});
 
+	it('keeps a decision an administrator records after its read, on a row a reload wrote switched off', async () => {
+		const queryRunner = dataSource.createQueryRunner();
+		const query = queryRunner.query.bind(queryRunner);
+		let decided = false;
+		jest.spyOn(queryRunner, 'query').mockImplementation(async (sql: string, parameters?: unknown[]) => {
+			if (!decided && /^\s*UPDATE/i.test(sql)) {
+				decided = true;
+				// Another API process records an administrator's decision on the reload's row between the read and
+				// the update: still switched off, now attributed.
+				await query(`UPDATE "role_permission" SET "updatedByUserId" = ? WHERE "id" = ?`, [ADMIN_USER, id(11)]);
+			}
+			return query(sql, parameters);
+		});
+
+		await new GrantOrganizationContactAddDeletePermissions1791000003870().up(queryRunner);
+		await queryRunner.release();
+
+		expect(decided).toBe(true);
+		expect(
+			await dataSource.query(`SELECT "enabled", "updatedByUserId" FROM "role_permission" WHERE "id" = ?`, [
+				id(11)
+			])
+		).toEqual([{ enabled: 0, updatedByUserId: ADMIN_USER }]);
+	});
+
 	it('writes in batches, not one statement per role, as it runs before the API starts', async () => {
 		// 600 more tenant roles that edit contacts, each with a reload-written switched-off ORG_CONTACT_DELETE row.
 		const HOLDERS = 600;
