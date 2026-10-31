@@ -107,6 +107,18 @@ describe('ProjectSelectorComponent', () => {
 				expect(component.projectId).toBe('picked-project');
 			});
 
+			it('does not bring the page project back once the form cleared it', async () => {
+				component.ngOnInit();
+				await flush();
+				expect(component.projectId).toBe('page-project');
+				component.writeValue(null); // e.g. a client the page project does not belong to
+
+				component.organizationContactId = null; // the client is cleared again
+				await flush();
+
+				expect(component.projectId).toBeNull();
+			});
+
 			it('does not replace the project of the task being edited', async () => {
 				component.writeValue('picked-project');
 

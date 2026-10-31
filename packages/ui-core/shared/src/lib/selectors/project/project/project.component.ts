@@ -51,6 +51,7 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	private _employeeId: ID; // Internal storage for the employee ID.
 	private _organizationContactId: ID; // Internal storage for the organization contact ID.
 	private _projectsRequest = 0; // Counts project list requests, so only the latest one fills the list.
+	private _hasLoadedProjects = false; // Whether a project list has loaded yet; reloads come after it.
 
 	/**
 	 * Determines whether the component should be displayed in a shortened form.
@@ -291,9 +292,17 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 						})
 					)
 				),
-				// After fetching, select the URL's project; a form's selector keeps what is already picked in it
+				// After fetching, select the URL's project. A form's selector takes it only as its starting value.
 				tap((projectId: ID | null) => {
-					if (shouldSelectUrlProject(projectId, this.projectId, this.skipGlobalChange)) {
+					const isFirstLoad = !this._hasLoadedProjects;
+					this._hasLoadedProjects = true;
+					const context = {
+						urlProjectId: projectId,
+						selected: this.projectId,
+						skipGlobalChange: this.skipGlobalChange,
+						isFirstLoad
+					};
+					if (shouldSelectUrlProject(context)) {
 						this.selectProjectById(projectId);
 					}
 				}),
