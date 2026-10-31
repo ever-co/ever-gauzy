@@ -18,3 +18,20 @@ export function mayOpenContactAddForm(permissions: IPermissionChecks): boolean {
 		permissions.hasAllPermissions(PermissionsEnum.ORG_CONTACT_ADD, PermissionsEnum.ORG_CONTACT_VIEW)
 	);
 }
+
+/**
+ * The projects the contact form offers to link to a new contact.
+ *
+ * A holder of `ORG_CONTACT_EDIT` may link any project of the organization. A user who creates contacts without it
+ * (`ORG_CONTACT_ADD`, ever-co/ever-gauzy#5468) creates them in create-only mode, where the server links only the
+ * projects that have no contact yet, so only those are offered. The server still refuses any other project, and the
+ * form shows its message.
+ */
+export function projectsLinkableToNewContact<P extends { organizationContactId?: unknown }>(
+	permissions: IPermissionChecks,
+	projects: P[]
+): P[] {
+	return permissions.hasAnyPermission(PermissionsEnum.ORG_CONTACT_EDIT)
+		? projects
+		: projects.filter((project) => !project.organizationContactId);
+}

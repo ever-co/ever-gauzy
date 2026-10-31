@@ -1,5 +1,5 @@
 import { PermissionsEnum } from '@gauzy/contracts';
-import { IPermissionChecks, mayOpenContactAddForm } from './contact-permissions.util';
+import { IPermissionChecks, mayOpenContactAddForm, projectsLinkableToNewContact } from './contact-permissions.util';
 
 /** The checks of a user holding `granted`, as the `Store` answers them. */
 const holding = (...granted: PermissionsEnum[]): IPermissionChecks => ({
@@ -28,5 +28,23 @@ describe('mayOpenContactAddForm', () => {
 		['ORG_CONTACT_ADD without access to the contacts pages', [ORG_CONTACT_ADD, ALL_ORG_VIEW]]
 	])('does not offer it to a holder of %s', (_label, granted) => {
 		expect(mayOpenContactAddForm(holding(...granted))).toBe(false);
+	});
+});
+
+describe('projectsLinkableToNewContact', () => {
+	const unassigned = { id: 'project-unassigned', organizationContactId: null };
+	const assigned = { id: 'project-assigned', organizationContactId: 'contact-1' };
+	const projects = [unassigned, assigned];
+
+	it('offers every project to a holder of ORG_CONTACT_EDIT, as before', () => {
+		expect(projectsLinkableToNewContact(holding(ORG_CONTACT_EDIT), projects)).toBe(projects);
+		expect(projectsLinkableToNewContact(holding(ORG_CONTACT_ADD, ORG_CONTACT_EDIT), projects)).toBe(projects);
+	});
+
+	it('offers a create-only user only the projects that have no contact yet, the ones the server links', () => {
+		expect(projectsLinkableToNewContact(holding(ORG_CONTACT_ADD, ORG_CONTACT_VIEW), projects)).toEqual([
+			unassigned
+		]);
+		expect(projectsLinkableToNewContact(holding(ORG_CONTACT_ADD, ALL_ORG_EDIT), projects)).toEqual([unassigned]);
 	});
 });
