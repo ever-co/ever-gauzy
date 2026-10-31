@@ -520,7 +520,19 @@ export async function notifyScreenshot(notificationWindow, thumb, windowPath, so
 	notificationWindow?.hide();
 }
 
+/**
+ * Whether the screen may be captured: only when the organization and the employee both allow it (issue #9872).
+ *
+ * The timer stores the two combined (`allowScreenshotCapture`, sent with `update_timer_auth_config`) each time it reads
+ * the signed-in user, so a change on either side applies from its next refresh. Until it has, the employee and the
+ * organization stored at sign-in decide, by the same rule. The employee's own setting used to be enough on its own, so
+ * an employee was still captured while their organization had capture off.
+ */
 function allowScreenshotCapture(): boolean {
 	const auth = LocalStore.getStore('auth');
-	return Boolean((auth?.allowScreenshotCapture ?? false) || (auth?.user?.employee?.allowScreenshotCapture ?? false));
+	if (typeof auth?.allowScreenshotCapture === 'boolean') {
+		return auth.allowScreenshotCapture;
+	}
+	const employee = auth?.user?.employee;
+	return employee?.allowScreenshotCapture === true && employee?.organization?.allowScreenshotCapture === true;
 }

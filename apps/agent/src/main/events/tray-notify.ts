@@ -1,5 +1,5 @@
 import TrayMenu, { MonitoringCapture } from "../tray";
-import { getTrayIcon, getAppSetting } from '../util';
+import { getTrayIcon, getAppSetting, screenshotCaptureAllowed } from '../util';
 import { environment } from '../../environments/environment';
 import { TEventArgs } from './event-types';
 
@@ -58,7 +58,7 @@ export class TrayNotify {
 	private updateTrayMonitoring() {
 		const appSetting = getAppSetting();
 		const captures: MonitoringCapture[] = ['time'];
-		if (appSetting?.allowScreenshotCapture) {
+		if (screenshotCaptureAllowed(appSetting)) {
 			captures.push('screenshots');
 		}
 		if (appSetting?.kbMouseTracking) {
