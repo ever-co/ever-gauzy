@@ -453,6 +453,85 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	}
 
 	/**
+	 * Moves the end of a cycle nothing has settled, for a plan change that takes hold as the cycle's period opens.
+	 *
+	 * A change scheduled from the next period is applied by the cycle that opens that period, and the retry of an
+	 * attempt that failed is such a cycle as well: the subscription stays `ACTIVE` through the dunning schedule, so a
+	 * change can be scheduled after the first attempt. The period then opens on the new plan's cadence, and its row has
+	 * to say so, or the order, the row and the calendar the cycle advances would describe three different periods.
+	 * Predicated on the cycle still being unsettled, so a cycle settled meanwhile keeps the period it was settled for.
+	 *
+	 * @param id The cycle.
+	 * @param end The end of its period on the new plan's cadence.
+	 * @param manager The caller's transaction, which a refusal rolls back.
+	 * @returns The cycle as it stands.
+	 * @throws ConflictException when the cycle was settled meanwhile.
+	 */
+	public async recutUnsettled(id: ID, end: Date, manager: EntityManager): Promise<SubscriptionBilling> {
+		await this.writeIf(
+			id,
+			{ status: In([SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED]) },
+			async () =>
+				new ConflictException(
+					'SUBSCRIPTION_BILLING_CYCLE_SETTLED: the billing cycle was settled while a scheduled plan change was being applied to it.'
+				),
+			{ periodEnd: end },
+			this.cyclesOn(manager)
+		);
+
+		return await this.findOneScoped(id, manager);
+	}
+
+	/**
+	 * Records what a retry charges on a cycle nothing has settled.
+	 *
+	 * A retry prices the period when it runs, as a first attempt does: the lines as they stand then, and a change
+	 * scheduled for the period that took hold at that attempt. The row an earlier attempt wrote keeps the amount that
+	 * attempt priced unless it is restated here, and `markPaid` keeps whatever the row says, so a cycle settled on the
+	 * retry would record, return and announce another amount than the one its order charged. Predicated on the cycle
+	 * still being unsettled: a cycle settled meanwhile keeps its amount, and the retry stops before it charges it.
+	 *
+	 * @param billing The cycle as read.
+	 * @param amount What the retry charges.
+	 * @param pricing The gross amount and the discount the charge was priced from.
+	 * @returns The cycle as it stands.
+	 * @throws ConflictException when the cycle was settled meanwhile.
+	 */
+	public async repriceUnsettled(
+		billing: SubscriptionBilling,
+		amount: DecimalString,
+		pricing: { gross: DecimalString; discount: DecimalString }
+	): Promise<SubscriptionBilling> {
+		const restated = this.normalizeAmount(amount, billing.currency);
+		const metadata = (billing.metadata ?? {}) as Record<string, unknown>;
+
+		if (
+			billing.amount === restated &&
+			metadata['gross'] === pricing.gross &&
+			metadata['discount'] === pricing.discount
+		) {
+			return billing;
+		}
+
+		await this.writeIf(
+			billing.id,
+			{ status: In([SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED]) },
+			async () => {
+				const current = await this.findOneScoped(billing.id);
+
+				return [SubscriptionBillingStatus.PENDING, SubscriptionBillingStatus.FAILED].includes(current.status)
+					? null
+					: new ConflictException(
+							'SUBSCRIPTION_BILLING_CYCLE_SETTLED: the billing cycle was settled while its retry was being priced, so it is not charged again.'
+					  );
+			},
+			{ amount: restated, metadata: { ...metadata, ...pricing } }
+		);
+
+		return await this.findOneScoped(billing.id);
+	}
+
+	/**
 	 * Records that a paid cycle was refunded.
 	 *
 	 * @param id The cycle.
