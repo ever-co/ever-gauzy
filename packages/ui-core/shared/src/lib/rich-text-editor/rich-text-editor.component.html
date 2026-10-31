@@ -3,13 +3,14 @@
 	[class.rich-text-editor--disabled]="isDisabled"
 	[class.rich-text-editor--focused]="isFocused"
 >
-	<ga-rich-text-toolbar
-		*ngIf="editor"
-		[editor]="editor"
-		[groups]="toolbarGroups"
-		[options]="toolbarOptions"
-		[disabled]="isDisabled"
-	></ga-rich-text-toolbar>
+	@if (editor) {
+		<ga-rich-text-toolbar
+			[editor]="editor"
+			[groups]="toolbarGroups"
+			[options]="toolbarOptions"
+			[disabled]="isDisabled"
+		></ga-rich-text-toolbar>
+	}
 	<div
 		#content
 		class="rich-text-editor__content"
@@ -18,17 +19,21 @@
 		[style.--rte-max-height]="maxHeight"
 	></div>
 	<!-- SSR / pre-instantiation preview: non-interactive, sanitized -->
-	<div *ngIf="!editor && ssrPreviewHtml" class="rich-text-editor__ssr-preview" [innerHTML]="ssrPreviewHtml"></div>
-	<div *ngIf="showCounter" class="rich-text-editor__footer">
-		<span
-			class="rich-text-editor__counter"
-			[class.rich-text-editor__counter--warning]="counterStatus === 'warning'"
-			[class.rich-text-editor__counter--danger]="counterStatus === 'danger'"
-		>
-			{{ 'RICH_TEXT_EDITOR.CHARACTERS' | translate : { count: characters } }}
-		</span>
-		<span class="rich-text-editor__counter">
-			{{ 'RICH_TEXT_EDITOR.WORDS' | translate : { count: words } }}
-		</span>
-	</div>
+	@if (!editor && ssrPreviewHtml) {
+		<div class="rich-text-editor__ssr-preview" [innerHTML]="ssrPreviewHtml"></div>
+	}
+	@if (showCounter) {
+		<div class="rich-text-editor__footer">
+			<span
+				class="rich-text-editor__counter"
+				[class.rich-text-editor__counter--warning]="counterStatus === 'warning'"
+				[class.rich-text-editor__counter--danger]="counterStatus === 'danger'"
+			>
+				{{ 'RICH_TEXT_EDITOR.CHARACTERS' | translate: { count: characters } }}
+			</span>
+			<span class="rich-text-editor__counter">
+				{{ 'RICH_TEXT_EDITOR.WORDS' | translate: { count: words } }}
+			</span>
+		</div>
+	}
 </div>
