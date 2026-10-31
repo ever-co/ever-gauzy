@@ -286,6 +286,16 @@ The repository ships a [Dev Container](https://containers.dev) definition in [`.
 -   `yarn bootstrap` runs once when the container is created. Then run `yarn start` as described above (SQLite by default).
 -   To use PostgreSQL, Redis, MinIO and the other services instead, run `docker compose -f docker-compose.infra.yml up -d` inside the container and point `.env` / `.env.local` at them.
 
+#### Debugging the API in VS Code
+
+[`.vscode/launch.json`](.vscode/launch.json) has three configurations:
+
+-   **Debug Server** attaches to `yarn start:api` or `yarn start:worker` (both listen for a debugger on port 9229, so debug one at a time) and re-attaches after every rebuild. For breakpoints in startup code (bootstrap, module initialization, migrations, seeds), start with `yarn start:api:debug` or `yarn start:worker:debug` instead: the process waits for the debugger before it runs any code, and continues once **Debug Server** has set the breakpoints.
+-   **Launch Program** builds and starts the API in watch mode under the debugger, without a separate terminal or port, so startup breakpoints bind on every start.
+-   **Debug Nest Framework** runs the API last built (`dist/apps/api/main.js`) under the debugger, without building it again.
+
+Breakpoints bind in `apps/api/src` and in the workspace packages (`packages/*/src`): the API and worker builds rewrite the source maps of the packages they copy into `dist/apps/<app>/node_modules/@gauzy`, so that they still lead to the sources. With VS Code connected to WSL (Remote - WSL) this works as is; Windows VS Code attaching to an API that runs inside WSL also needs `localRoot` and `remoteRoot` (the repository path on Windows and in WSL) in **Debug Server**.
+
 #### Optional / Recommended for Production
 
 -   Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later (16.x recommended for production). Note: other DB can be configured manually in TypeORM / MikroORM / Knex. The default DB is set to SQLite (recommended for testing/demo purposes only).
