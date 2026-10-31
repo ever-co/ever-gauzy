@@ -37,6 +37,18 @@ export interface StoreSchema extends IApplicationConfig {
 	 * Includes the `appSetting` property which specifies the application settings.
 	 */
 	appSetting: IApplicationSetting;
+
+	/**
+	 * Where windows the user can move were last left, by window (see `WindowPositionMemory` in desktop-window).
+	 * Kept apart from `appSetting`, which the settings page writes back whole.
+	 */
+	windowPositions?: Record<string, IWindowPosition>;
+}
+
+/** The top-left corner of a window, in screen coordinates (DIP). */
+export interface IWindowPosition {
+	x: number;
+	y: number;
 }
 
 /**

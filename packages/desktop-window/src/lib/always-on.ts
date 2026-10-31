@@ -2,15 +2,19 @@ import {
 	BaseWindow,
 	DefaultWindow,
 	IBaseWindow,
+	IWindowPosition,
 	RegisteredWindow,
 	WindowConfig,
 	WindowManager
 } from '@gauzy/desktop-core';
 import { screen } from 'electron';
+import { WindowPositionMemory } from './utils/window-position-memory';
 
 export class AlwaysOn extends BaseWindow implements IBaseWindow {
 	private static WIDTH: number = 60;
 	private static HEIGHT: number = 110;
+	/** Where each size of the widget was last left (#7683): the compact and the expanded widget differ in size. */
+	public static readonly POSITION_KEYS = { compact: 'always-on-compact', expand: 'always-on-expand' } as const;
 	private readonly manager = WindowManager.getInstance();
 
 	constructor(
@@ -23,6 +27,13 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 			AlwaysOn.WIDTH = 270;
 			AlwaysOn.HEIGHT = 45;
 		}
+
+		// Back where the user left it when that spot is on a connected display, at the default place otherwise
+		const positionMemory = new WindowPositionMemory(
+			isExpandMode ? AlwaysOn.POSITION_KEYS.expand : AlwaysOn.POSITION_KEYS.compact
+		);
+		const position =
+			positionMemory.restore({ width: AlwaysOn.WIDTH, height: AlwaysOn.HEIGHT }) ?? AlwaysOn.defaultPosition();
 
 		super(
 			new DefaultWindow(
@@ -41,8 +52,8 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 							}),
 					alwaysOnTop: true,
 					center: false,
-					x: 16,
-					y: Math.floor((screen.getPrimaryDisplay().workAreaSize.height - AlwaysOn.HEIGHT) / 2),
+					x: position.x,
+					y: position.y,
 					...(contextIsolation && preloadPath
 						? {
 								webPreferences: {
@@ -70,6 +81,16 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 		this.browserWindow.on('closed', () => {
 			this.manager.unregister(RegisteredWindow.WIDGET);
 		});
+
+		positionMemory.track(this.browserWindow);
+	}
+
+	/** Where the widget opens when it has no remembered position: the left edge, half-way down the primary display. */
+	private static defaultPosition(): IWindowPosition {
+		return {
+			x: 16,
+			y: Math.floor((screen.getPrimaryDisplay().workAreaSize.height - AlwaysOn.HEIGHT) / 2)
+		};
 	}
 
 	public override show(): void {
