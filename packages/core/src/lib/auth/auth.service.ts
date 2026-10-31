@@ -2359,7 +2359,7 @@ export class AuthService extends SocialAuthService {
 					throw new Error(`ORM type not implemented: ${this.ormType}`);
 			}
 
-			// Do NOT log the magic code — sensitive credential
+			// Still do NOT log the magic code: only EmailService prints it, in local development or with PRINT_EMAIL_CODES
 			this.logger.debug(`Magic code sent for email: ${email}, expires at: ${codeExpireAt}`);
 
 			// If it's not a demo code, send the magic code to the user's email
@@ -2392,7 +2392,7 @@ export class AuthService extends SocialAuthService {
 					)}&code=${encodeURIComponent(magicCode)}`;
 				}
 
-				// Do NOT log the magic link — contains sensitive code
+				// Still do NOT log the magic link: only EmailService prints it, in local development or with PRINT_EMAIL_CODES
 				this.logger.debug(`Magic link generated for email: ${email}`);
 
 				// Send the magic code to the user's email
