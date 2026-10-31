@@ -267,6 +267,33 @@ describe('TimeLogService', () => {
 		});
 
 		/**
+		 * The Amounts Owed grid prints each amount in `employee.billRateCurrency`. The TypeORM read selected
+		 * the rate but not its currency, so every amount fell back to the currency pipe's default (USD) under
+		 * TypeORM, while MikroORM, which populates the whole employee, showed the employee's own currency.
+		 */
+		it('selects the bill rate currency with the rate for the owed-amount report', async () => {
+			actAs({ canChangeSelectedEmployee: true });
+			const setFindOptions = jest.spyOn(builder, 'setFindOptions');
+			builder.rows = [
+				{
+					id: '5d1c2b3a-4f5e-4d6c-8b7a-9e0f1a2b3c4d',
+					employeeId: TARGET_EMPLOYEE_ID,
+					startedAt: '2026-01-06T09:00:00.000Z',
+					stoppedAt: '2026-01-06T10:00:00.000Z',
+					duration: 3600,
+					employee: { id: TARGET_EMPLOYEE_ID, billRateValue: 40, billRateCurrency: 'EUR' }
+				}
+			];
+
+			const report = await service.getOwedAmountReport(request);
+
+			const [{ select }] = setFindOptions.mock.calls[0] as unknown as [{ select: Record<string, any> }];
+			expect(select.employee).toEqual(expect.objectContaining({ billRateValue: true, billRateCurrency: true }));
+			// The currency travels with the employee to the grid
+			expect(report[0].employees[0].employee).toEqual(expect.objectContaining({ billRateCurrency: 'EUR' }));
+		});
+
+		/**
 		 * `moment().tz(undefined)` returns undefined rather than a moment, so every report that groups
 		 * its rows by `.tz(timeZone).format(...)` answered 500 "Cannot read properties of undefined
 		 * (reading 'format')" for a request that named no time zone — but only once the organization had
