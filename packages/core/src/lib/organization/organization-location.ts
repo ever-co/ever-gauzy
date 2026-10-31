@@ -46,14 +46,32 @@ export async function linkedContactCountry(
 	return (found?.success && found.record?.country) || undefined;
 }
 
+/** Where an organization row is: its region code, time zone and the country of its (loaded) contact. */
+export function storedOrganizationLocation(
+	organization:
+		| (Pick<IOrganization, 'regionCode' | 'timeZone'> & { contact?: Pick<IContact, 'country'> | null })
+		| null
+		| undefined
+): IAgentRestrictionLocation {
+	return {
+		regionCode: organization?.regionCode,
+		timeZone: organization?.timeZone,
+		country: organization?.contact?.country
+	};
+}
+
 /** An organization's location before and after one update. */
 export interface IOrganizationLocations {
 	/** Where the organization is as stored: region code, time zone and the country of its contact. */
 	stored: IAgentRestrictionLocation;
 	/**
-	 * Every location the organization may have after the write: the stored one, plus the values the write stores
-	 * (region code, time zone, the country of the contact it carries, the country of a contact it links by id).
-	 * The organization counts as EEA/UK after the write if any of them is.
+	 * Every location the organization may have after the write, for the checks made before the save: the stored
+	 * one, plus the values the write stores (region code, time zone, the country of a contact it links by id) and
+	 * the country of a contact it carries. The organization counts as EEA/UK after the write if any of them is.
+	 *
+	 * A carried contact counts although the save may not store it (the relation does not cascade under TypeORM), so
+	 * these checks ask or refuse rather than miss a move. An effect that follows a move once saved, such as lifting
+	 * the employees' restrictions, reads the saved row instead (see {@link storedOrganizationLocation}).
 	 */
 	after: IAgentRestrictionLocation[];
 }
@@ -74,11 +92,7 @@ export async function organizationLocations(
 	changes: Pick<IOrganizationUpdateInput, 'regionCode' | 'timeZone' | 'contact'> & { contactId?: ID | null },
 	contacts: IContactLookup | undefined
 ): Promise<IOrganizationLocations> {
-	const stored: IAgentRestrictionLocation = {
-		regionCode: organization.regionCode,
-		timeZone: organization.timeZone,
-		country: organization.contact?.country
-	};
+	const stored = storedOrganizationLocation(organization);
 	const linkedCountry = await linkedContactCountry(
 		contacts,
 		changes.contact?.id ?? changes.contactId ?? undefined,

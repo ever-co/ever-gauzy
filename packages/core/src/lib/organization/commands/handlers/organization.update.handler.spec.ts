@@ -327,15 +327,17 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 	let moduleRef: { get: jest.Mock };
 	let self: Record<string, unknown>;
 
-	const given = (stored: Record<string, unknown>) => {
-		organizationService.findOneByIdString.mockResolvedValue({
-			id: 'org-1',
-			name: 'Org',
-			tenantId: fixture.tenantId,
-			allowScreenshotCapture: false,
-			contact: null,
-			...stored
-		});
+	const row = (values: Record<string, unknown>) => ({
+		id: 'org-1',
+		name: 'Org',
+		tenantId: fixture.tenantId,
+		allowScreenshotCapture: false,
+		contact: null,
+		...values
+	});
+	/** The organization as read before the update and, by default the same, as read back after the save. */
+	const given = (stored: Record<string, unknown>, saved: Record<string, unknown> = stored) => {
+		organizationService.findOneByIdString.mockResolvedValueOnce(row(stored)).mockResolvedValue(row(saved));
 	};
 
 	beforeEach(() => {
@@ -357,8 +359,12 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 			moduleRef,
 			logger: { error: jest.fn() }
 		};
-		const prototype = OrganizationUpdateHandler.prototype as unknown as { update: (...args: unknown[]) => unknown };
+		const prototype = OrganizationUpdateHandler.prototype as unknown as Record<
+			'update' | 'savedLocation',
+			(...args: unknown[]) => unknown
+		>;
 		self.update = prototype.update.bind(self);
+		self.savedLocation = prototype.savedLocation.bind(self);
 	});
 
 	afterEach(() => {
@@ -437,13 +443,33 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 	});
 
 	it('lifts employee restrictions when a linked contact moves the organization into the EEA/UK', async () => {
-		given({ regionCode: 'en', timeZone: 'America/New_York', contactId: 'contact-us', contact: { country: 'US' } });
+		const US = { regionCode: 'en', timeZone: 'America/New_York' };
+		given(
+			{ ...US, contactId: 'contact-us', contact: { country: 'US' } },
+			{ ...US, contactId: 'contact-uk', contact: { country: 'GB' } }
+		);
 		contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
 
 		await update({ contactId: 'contact-uk' });
 
 		expect(moduleRef.get).toHaveBeenCalled();
 	});
+
+	it.each([
+		['not stored (TypeORM: the relation does not cascade)', 'US', false],
+		['stored', 'DE', true]
+	])(
+		'lifts employee restrictions for a contact the write carries only when it was saved: %s',
+		async (_, savedCountry, lifted) => {
+			const US = { regionCode: 'en', timeZone: 'America/New_York' };
+			given({ ...US, contact: { country: 'US' } }, { ...US, contact: { country: savedCountry } });
+
+			await update({ contact: { country: 'DE' } });
+
+			expect(organizationService.create).toHaveBeenCalled();
+			expect(moduleRef.get).toHaveBeenCalledTimes(lifted ? 1 : 0);
+		}
+	);
 
 	it('counts the stored location too: moving out of the EEA/UK and restricting exit in one save is refused', async () => {
 		given({ regionCode: 'en', timeZone: 'Europe/Berlin', contact: { country: 'US' } });

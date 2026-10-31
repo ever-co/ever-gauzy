@@ -1,4 +1,9 @@
-import { currentContactId, linkedContactCountry, organizationLocations } from './organization-location';
+import {
+	currentContactId,
+	linkedContactCountry,
+	organizationLocations,
+	storedOrganizationLocation
+} from './organization-location';
 
 /**
  * Where an organization is for the EEA/UK rules (#9872 screen capture, #9873 agent exit/logout): judged from what
@@ -42,6 +47,27 @@ describe('currentContactId', () => {
 	it('answers undefined for an organization without a contact, or none at all', () => {
 		expect(currentContactId({ contactId: null, contact: null })).toBeUndefined();
 		expect(currentContactId(undefined)).toBeUndefined();
+	});
+});
+
+describe('storedOrganizationLocation', () => {
+	it('reads the region code, the time zone and the country of the loaded contact', () => {
+		expect(
+			storedOrganizationLocation({ regionCode: 'en', timeZone: 'Europe/London', contact: { country: 'GB' } })
+		).toEqual({ regionCode: 'en', timeZone: 'Europe/London', country: 'GB' });
+	});
+
+	it('answers an empty location for an organization without a contact, or none at all', () => {
+		expect(storedOrganizationLocation({ regionCode: undefined, timeZone: undefined, contact: null })).toEqual({
+			regionCode: undefined,
+			timeZone: undefined,
+			country: undefined
+		});
+		expect(storedOrganizationLocation(undefined)).toEqual({
+			regionCode: undefined,
+			timeZone: undefined,
+			country: undefined
+		});
 	});
 });
 

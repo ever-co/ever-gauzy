@@ -4,6 +4,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
 	BaseEntityEnum,
 	checkAgentExitLogoutRestrictionChange,
+	IAgentRestrictionLocation,
 	ID,
 	IOrganization,
 	IOrganizationUpdateInput,
@@ -18,7 +19,7 @@ import {
 	recordAgentRestrictionAcknowledgement
 } from '../../../employee/agent-exit-logout-restriction';
 import { OrganizationService } from '../../organization.service';
-import { organizationLocations } from '../../organization-location';
+import { organizationLocations, storedOrganizationLocation } from '../../organization-location';
 import {
 	logScreenshotCaptureAcknowledgement,
 	omitScreenshotCaptureAcknowledgementFields,
@@ -153,8 +154,13 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			);
 		}
 
-		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker.
-		if (!isEEAOrUKLocation(previousLocation) && isEEAOrUKLocation(location)) {
+		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker. Judged on the row as
+		// saved: a contact the write carries counts in the checks above, but moves the organization only if stored.
+		if (
+			!isEEAOrUKLocation(previousLocation) &&
+			isEEAOrUKLocation(location) &&
+			isEEAOrUKLocation(await this.savedLocation(id))
+		) {
 			try {
 				await liftEmployeeAgentRestrictions(
 					this.moduleRef.get(EmployeeService, { strict: false }),
@@ -169,5 +175,15 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 
 		// Return the updated organization entity
 		return await this.organizationService.findOneByIdString(id);
+	}
+
+	/**
+	 * Where the organization is as saved: read back after the save, with its contact.
+	 *
+	 * @param id The organization.
+	 */
+	private async savedLocation(id: ID): Promise<IAgentRestrictionLocation> {
+		const saved = await this.organizationService.findOneByIdString(id, { relations: { contact: true } });
+		return storedOrganizationLocation(saved);
 	}
 }
