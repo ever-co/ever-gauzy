@@ -7088,6 +7088,17 @@
 		"BOARD": "Bacheca",
 		"COLUMN_EMPTY": "Nessuna attività",
 		"CANNOT_DROP": "Le attività non possono essere spostate in «{{ column }}» perché non è uno stato di questo progetto.",
+		"BOARD_FILTER": {
+			"TITLE": "Filtri della bacheca",
+			"SEARCH": "Cerca in questa bacheca",
+			"ASSIGNEES": "Filtra per assegnatario",
+			"UNASSIGNED": "Non assegnata",
+			"PRIORITY": "Priorità",
+			"TYPE": "Tipo",
+			"LABELS": "Etichette",
+			"CLEAR": "Cancella filtri",
+			"RESULTS": "{{ shown }} di {{ total }} attività"
+		},
 		"ACTIVITY": "Attività",
 		"ACTIVITY_CAPTION": "Modifiche recenti al progetto e alle sue attività",
 		"NO_ACTIVITY": "Ancora nessuna attività",

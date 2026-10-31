@@ -7088,6 +7088,17 @@
 		"BOARD": "Quadro",
 		"COLUMN_EMPTY": "Sem tarefas",
 		"CANNOT_DROP": "As tarefas não podem ser movidas para “{{ column }}” porque não é um status deste projeto.",
+		"BOARD_FILTER": {
+			"TITLE": "Filtros do quadro",
+			"SEARCH": "Pesquisar neste quadro",
+			"ASSIGNEES": "Filtrar por responsável",
+			"UNASSIGNED": "Não atribuída",
+			"PRIORITY": "Prioridade",
+			"TYPE": "Tipo",
+			"LABELS": "Etiquetas",
+			"CLEAR": "Limpar filtros",
+			"RESULTS": "{{ shown }} de {{ total }} tarefas"
+		},
 		"ACTIVITY": "Atividade",
 		"ACTIVITY_CAPTION": "Mudanças recentes no projeto e em suas tarefas",
 		"NO_ACTIVITY": "Ainda não há atividade",

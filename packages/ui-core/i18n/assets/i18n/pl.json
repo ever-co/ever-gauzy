@@ -7087,6 +7087,17 @@
 		"BOARD": "Tablica",
 		"COLUMN_EMPTY": "Brak zadań",
 		"CANNOT_DROP": "Zadań nie można przenieść do „{{ column }}”, ponieważ nie jest to status tego projektu.",
+		"BOARD_FILTER": {
+			"TITLE": "Filtry tablicy",
+			"SEARCH": "Szukaj na tej tablicy",
+			"ASSIGNEES": "Filtruj według osoby przypisanej",
+			"UNASSIGNED": "Nieprzypisane",
+			"PRIORITY": "Priorytet",
+			"TYPE": "Typ",
+			"LABELS": "Etykiety",
+			"CLEAR": "Wyczyść filtry",
+			"RESULTS": "{{ shown }} z {{ total }} zadań"
+		},
 		"ACTIVITY": "Aktywność",
 		"ACTIVITY_CAPTION": "Ostatnie zmiany w projekcie i jego zadaniach",
 		"NO_ACTIVITY": "Brak aktywności",

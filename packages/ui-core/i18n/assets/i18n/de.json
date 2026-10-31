@@ -7084,6 +7084,17 @@
 		"BOARD": "Board",
 		"COLUMN_EMPTY": "Keine Aufgaben",
 		"CANNOT_DROP": "Aufgaben können nicht nach „{{ column }}“ verschoben werden, da dies kein Status dieses Projekts ist.",
+		"BOARD_FILTER": {
+			"TITLE": "Board-Filter",
+			"SEARCH": "Dieses Board durchsuchen",
+			"ASSIGNEES": "Nach zugewiesener Person filtern",
+			"UNASSIGNED": "Nicht zugewiesen",
+			"PRIORITY": "Priorität",
+			"TYPE": "Typ",
+			"LABELS": "Labels",
+			"CLEAR": "Filter zurücksetzen",
+			"RESULTS": "{{ shown }} von {{ total }} Aufgaben"
+		},
 		"ACTIVITY": "Aktivität",
 		"ACTIVITY_CAPTION": "Letzte Änderungen am Projekt und seinen Aufgaben",
 		"NO_ACTIVITY": "Noch keine Aktivität",

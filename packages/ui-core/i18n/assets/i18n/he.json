@@ -7098,6 +7098,17 @@
 		"BOARD": "לוח",
 		"COLUMN_EMPTY": "אין משימות",
 		"CANNOT_DROP": "לא ניתן להעביר משימות אל ״{{ column }}״, כי זה אינו סטטוס של פרויקט זה.",
+		"BOARD_FILTER": {
+			"TITLE": "מסנני הלוח",
+			"SEARCH": "חיפוש בלוח זה",
+			"ASSIGNEES": "סינון לפי אחראי",
+			"UNASSIGNED": "לא משויך",
+			"PRIORITY": "עדיפות",
+			"TYPE": "סוג",
+			"LABELS": "תוויות",
+			"CLEAR": "ניקוי מסננים",
+			"RESULTS": "{{ shown }} מתוך {{ total }} משימות"
+		},
 		"ACTIVITY": "פעילות",
 		"ACTIVITY_CAPTION": "שינויים אחרונים בפרויקט ובמשימותיו",
 		"NO_ACTIVITY": "אין עדיין פעילות",
