@@ -66,12 +66,23 @@
 						<div class="field field--wide">
 							<div class="label-row">
 								<label class="label" for="banner">{{ 'POP_UPS.BANNER' | translate }}</label>
-								<!-- A button so the hint opens on focus and tap too, not only on hover. -->
+								<!--
+									The hint opens on hover, keyboard focus and click/tap. Nebular's triggers each
+									cover only one of those (the default `hint` is mouse-only), so it is driven here.
+								-->
 								<button
 									type="button"
 									class="hint-button"
 									[attr.aria-label]="'POP_UPS.BANNER_HINT' | translate"
 									[nbTooltip]="'POP_UPS.BANNER_HINT' | translate"
+									nbTooltipTrigger="noop"
+									#bannerHint="nbTooltip"
+									(mouseenter)="bannerHint.show()"
+									(mouseleave)="bannerHint.hide()"
+									(focus)="bannerHint.show()"
+									(blur)="bannerHint.hide()"
+									(click)="bannerHint.show()"
+									(keydown.escape)="bannerHint.hide()"
 								>
 									<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
 								</button>

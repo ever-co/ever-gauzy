@@ -7,6 +7,7 @@ import {
 	NbCardModule,
 	NbIconModule,
 	NbInputModule,
+	NbOverlayContainerAdapter,
 	NbSelectModule,
 	NbToggleModule,
 	NbTooltipDirective,
@@ -91,14 +92,28 @@ describe('PublicPageOrganizationMutationComponent — the banner field explains 
 			providers: [
 				{ provide: Store, useValue: { user: { tenantId: 'tenant-1' } } },
 				{ provide: ToastrService, useValue: { success: jest.fn(), danger: jest.fn() } },
-				{ provide: OrganizationAwardsService, useValue: { getAll: jest.fn().mockResolvedValue({ items: [] }) } },
-				{ provide: OrganizationLanguagesService, useValue: { getAll: jest.fn().mockResolvedValue({ items: [] }) } }
+				{
+					provide: OrganizationAwardsService,
+					useValue: { getAll: jest.fn().mockResolvedValue({ items: [] }) }
+				},
+				{
+					provide: OrganizationLanguagesService,
+					useValue: { getAll: jest.fn().mockResolvedValue({ items: [] }) }
+				}
 			]
 		}).compileComponents();
+
+		// The app's <nb-layout> hosts Nebular's overlays; without one here, the body does, so tooltips can open.
+		TestBed.inject(NbOverlayContainerAdapter).setContainer(document.body);
 
 		fixture = TestBed.createComponent(PublicPageOrganizationMutationComponent);
 		fixture.componentInstance.organization = organization;
 		fixture.detectChanges();
+	});
+
+	afterEach(() => {
+		TestBed.inject(NbOverlayContainerAdapter).clearContainer();
+		document.body.querySelectorAll('.cdk-overlay-container').forEach((container) => container.remove());
 	});
 
 	const bannerInput = (): HTMLInputElement => fixture.debugElement.query(By.css('input#banner')).nativeElement;
@@ -115,6 +130,32 @@ describe('PublicPageOrganizationMutationComponent — the banner field explains 
 		expect(hint.nativeElement.getAttribute('type')).toBe('button');
 		expect(hint.nativeElement.getAttribute('aria-label')).toBe('POP_UPS.BANNER_HINT');
 		expect(hint.injector.get(NbTooltipDirective).content).toBe('POP_UPS.BANNER_HINT');
+	});
+
+	describe('the hint opens for every way of reaching the button', () => {
+		const hint = () => fixture.debugElement.query(By.css('.label-row .hint-button'));
+		const tooltip = (): NbTooltipDirective => hint().injector.get(NbTooltipDirective);
+
+		it.each([
+			['mouseenter', 'mouseleave'],
+			['focus', 'blur']
+		])('opens on %s and closes on %s', (open, close) => {
+			expect(tooltip().isShown).toBe(false);
+
+			hint().triggerEventHandler(open, {});
+			expect(tooltip().isShown).toBe(true);
+
+			hint().triggerEventHandler(close, {});
+			expect(tooltip().isShown).toBe(false);
+		});
+
+		it('opens on click or tap, and Escape closes it', () => {
+			hint().nativeElement.click();
+			expect(tooltip().isShown).toBe(true);
+
+			hint().nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+			expect(tooltip().isShown).toBe(false);
+		});
 	});
 
 	it('still edits the banner the organization already has', () => {
