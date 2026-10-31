@@ -18,9 +18,8 @@ import {
 	recordAgentRestrictionAcknowledgement
 } from '../../../employee/agent-exit-logout-restriction';
 import { OrganizationService } from '../../organization.service';
+import { organizationLocations } from '../../organization-location';
 import {
-	currentContactId,
-	linkedContactCountry,
 	logScreenshotCaptureAcknowledgement,
 	omitScreenshotCaptureAcknowledgementFields,
 	resolveScreenshotCaptureAcknowledgement
@@ -71,16 +70,14 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		// Issue #9872: the screen capture acknowledgement is request-only too, and its record is the server's.
 		const changes: IOrganizationUpdateInput = omitScreenshotCaptureAcknowledgementFields(input);
 		delete changes.acknowledgeAgentExitLogoutRestriction;
-		const previousLocation = {
-			regionCode: organization.regionCode,
-			timeZone: organization.timeZone,
-			country: organization.contact?.country
-		};
-		const location = {
-			regionCode: changes.regionCode ?? previousLocation.regionCode,
-			timeZone: changes.timeZone ?? previousLocation.timeZone,
-			country: changes.country || previousLocation.country
-		};
+		// Both rules judge the location from what is stored and what this write stores: the region code, the time
+		// zone and the country of the organization's contact (a contact the write carries or links by id counts with
+		// its country). A top-level `country` is not stored on the organization, so it does not move it.
+		const { stored: previousLocation, after: location } = await organizationLocations(
+			organization,
+			changes,
+			this.contactService
+		);
 		const { error: restrictionError, newRestrictions } = checkAgentExitLogoutRestrictionChange(
 			input,
 			organization,
@@ -93,24 +90,8 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 
 		// Issue #9872: turning screen capture on for an EEA/UK organization takes the admin's acknowledgement,
 		// stored with the change below. Re-saving an organization that already captures, or turning capture
-		// off, asks nothing, so existing organizations keep their value without a new step. The stored location
-		// counts as well as the requested one: the organization keeps its country on its contact, so a top-level
-		// `country` the write never stores cannot take a UK or EEA organization out of the check, and a contact the
-		// write links by id counts with the country it has.
-		const linkedCountry =
-			input.allowScreenshotCapture === true
-				? await linkedContactCountry(
-						this.contactService,
-						changes.contact?.id ?? (changes as { contactId?: ID }).contactId,
-						currentContactId(organization)
-					)
-				: undefined;
-		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(input, organization, [
-			previousLocation,
-			location,
-			{ country: changes.contact?.country },
-			{ country: linkedCountry }
-		]);
+		// off, asks nothing, so existing organizations keep their value without a new step.
+		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(input, organization, location);
 		input = changes;
 
 		// Written and awaited before the save: no restriction without its recorded acknowledgement.

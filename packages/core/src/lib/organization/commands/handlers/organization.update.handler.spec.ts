@@ -1,6 +1,6 @@
 import '../../../core/entities/internal';
 
-import { IOrganizationUpdateInput } from '@gauzy/contracts';
+import { EEA_UK_AGENT_RESTRICTION_ERR_MSG, IOrganizationUpdateInput } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { ApiErrorCode } from '../../../core/errors/api-error-codes';
 import { ApiException } from '../../../core/errors/api-exception';
@@ -265,7 +265,7 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 		expect(organizationService.create).not.toHaveBeenCalled();
 	});
 
-	it('reads no contact when the write does not turn capture on, or links the current one', async () => {
+	it('reads no contact when the write links none, or links the current one', async () => {
 		given({
 			allowScreenshotCapture: false,
 			regionCode: 'en',
@@ -273,7 +273,7 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 			contactId: 'contact-us'
 		});
 
-		await update({ name: 'Renamed', contactId: 'contact-uk' });
+		await update({ name: 'Renamed' });
 		await update({ allowScreenshotCapture: true, contactId: 'contact-us' });
 
 		expect(contactService.findOneOrFailByIdString).not.toHaveBeenCalled();
@@ -308,5 +308,148 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 
 		expect(saved()).not.toHaveProperty('screenshotCaptureAcknowledgedAt');
 		expect(saved()).not.toHaveProperty('screenshotCaptureAcknowledgedByUserId');
+	});
+});
+
+/**
+ * Issue #9873 — the agent exit/logout restriction judges the organization's location the way the screen capture
+ * check does: from what is stored and what the write stores (region code, time zone, the country of the contact it
+ * carries or links by id). A top-level `country` is not stored on the organization, so it changes no decision.
+ */
+describe('OrganizationUpdateHandler — agent exit/logout restriction location', () => {
+	const fixture = createTenantFixture();
+	const RESTRICT = { allowAgentAppExit: false, acknowledgeAgentExitLogoutRestriction: true };
+
+	let restore: () => void;
+	let organizationService: { findOneByIdString: jest.Mock; create: jest.Mock; update: jest.Mock };
+	let activityLogService: { create: jest.Mock };
+	let contactService: { findOneOrFailByIdString: jest.Mock };
+	let moduleRef: { get: jest.Mock };
+	let self: Record<string, unknown>;
+
+	const given = (stored: Record<string, unknown>) => {
+		organizationService.findOneByIdString.mockResolvedValue({
+			id: 'org-1',
+			name: 'Org',
+			tenantId: fixture.tenantId,
+			allowScreenshotCapture: false,
+			contact: null,
+			...stored
+		});
+	};
+
+	beforeEach(() => {
+		({ restore } = asTenantUser(fixture));
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(fixture.user.id);
+		organizationService = {
+			findOneByIdString: jest.fn(),
+			create: jest.fn(async (entity) => entity),
+			update: jest.fn()
+		};
+		activityLogService = { create: jest.fn().mockResolvedValue({}) };
+		contactService = { findOneOrFailByIdString: jest.fn().mockResolvedValue({ success: false }) };
+		// No employee service here: lifting the employees' restrictions shows only as this lookup.
+		moduleRef = { get: jest.fn() };
+		self = {
+			organizationService,
+			activityLogService,
+			contactService,
+			moduleRef,
+			logger: { error: jest.fn() }
+		};
+		const prototype = OrganizationUpdateHandler.prototype as unknown as { update: (...args: unknown[]) => unknown };
+		self.update = prototype.update.bind(self);
+	});
+
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	const update = (input: Record<string, unknown>) =>
+		OrganizationUpdateHandler.prototype.execute.call(
+			self,
+			new OrganizationUpdateCommand('org-1', input as unknown as IOrganizationUpdateInput)
+		);
+
+	describe.each([
+		['no country', {}],
+		['an unstored country outside the EEA/UK', { country: 'US' }],
+		['an unstored country inside the EEA/UK', { country: 'DE' }]
+	])('a request with %s', (_, country) => {
+		it('cannot restrict exit for a UK organization', async () => {
+			given({ regionCode: 'en', timeZone: 'America/New_York', contact: { country: 'GB' } });
+
+			await expect(update({ ...country, ...RESTRICT })).rejects.toThrow(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
+			expect(organizationService.create).not.toHaveBeenCalled();
+			expect(activityLogService.create).not.toHaveBeenCalled();
+		});
+
+		it('restricts exit for an organization outside the EEA/UK with the acknowledgement, recording it', async () => {
+			given({ regionCode: 'en', timeZone: 'America/New_York', contact: { country: 'US' } });
+
+			await update({ ...country, ...RESTRICT });
+
+			expect(organizationService.create).toHaveBeenCalledWith(
+				expect.objectContaining({ allowAgentAppExit: false })
+			);
+			expect(activityLogService.create).toHaveBeenCalledWith(
+				expect.objectContaining({ updatedFields: ['allowAgentAppExit'] })
+			);
+		});
+
+		it('does not move a restricted organization into the EEA/UK, so it saves and lifts nothing', async () => {
+			given({
+				regionCode: 'en',
+				timeZone: 'America/New_York',
+				contact: { country: 'US' },
+				allowAgentAppExit: false
+			});
+
+			await update({ ...country, name: 'Renamed' });
+
+			expect(organizationService.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Renamed' }));
+			expect(moduleRef.get).not.toHaveBeenCalled();
+		});
+	});
+
+	it('counts a contact the write links by id: linking a UK contact while restricting exit is refused', async () => {
+		given({ regionCode: 'en', timeZone: 'America/New_York', contactId: 'contact-us', contact: { country: 'US' } });
+		contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
+
+		await expect(update({ contactId: 'contact-uk', ...RESTRICT })).rejects.toThrow(
+			EEA_UK_AGENT_RESTRICTION_ERR_MSG
+		);
+		expect(contactService.findOneOrFailByIdString).toHaveBeenCalledWith('contact-uk');
+		expect(organizationService.create).not.toHaveBeenCalled();
+	});
+
+	it('counts a contact the write carries: moving it into the EEA while exit stays restricted is refused', async () => {
+		given({
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contact: { country: 'US' },
+			allowAgentAppExit: false
+		});
+
+		await expect(update({ contact: { country: 'DE' } })).rejects.toThrow(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
+		expect(organizationService.create).not.toHaveBeenCalled();
+	});
+
+	it('lifts employee restrictions when a linked contact moves the organization into the EEA/UK', async () => {
+		given({ regionCode: 'en', timeZone: 'America/New_York', contactId: 'contact-us', contact: { country: 'US' } });
+		contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
+
+		await update({ contactId: 'contact-uk' });
+
+		expect(moduleRef.get).toHaveBeenCalled();
+	});
+
+	it('counts the stored location too: moving out of the EEA/UK and restricting exit in one save is refused', async () => {
+		given({ regionCode: 'en', timeZone: 'Europe/Berlin', contact: { country: 'US' } });
+
+		await expect(update({ timeZone: 'America/New_York', ...RESTRICT })).rejects.toThrow(
+			EEA_UK_AGENT_RESTRICTION_ERR_MSG
+		);
 	});
 });

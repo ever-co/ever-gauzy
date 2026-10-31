@@ -5,8 +5,6 @@ import {
 	BaseEntityEnum,
 	checkScreenshotCaptureChange,
 	IAgentRestrictionLocation,
-	IContact,
-	ID,
 	IOrganization,
 	IScreenshotCaptureAcknowledgementRecord,
 	IScreenshotCaptureSettingInput,
@@ -14,8 +12,6 @@ import {
 	SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_STATEMENTS
 } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
-import { runOutsideOrganizationBoundary } from '../core/crud/organization-boundary';
-import type { ITryRequest } from '../core/crud/try-request';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
 import type { ActivityLogService } from '../activity-log/activity-log.service';
@@ -85,43 +81,6 @@ export function resolveScreenshotCaptureAcknowledgement(
 		screenshotCaptureAcknowledgedAt: new Date(),
 		screenshotCaptureAcknowledgedByUserId: RequestContext.currentUserId() ?? null
 	};
-}
-
-/** What {@link linkedContactCountry} reads contacts with: `ContactService`, tenant-scoped. */
-export interface IContactLookup {
-	findOneOrFailByIdString(id: ID): Promise<ITryRequest<Pick<IContact, 'country'>>>;
-}
-
-/**
- * The contact an organization row links: its `contactId` column (on the entity, not on `IOrganization`) or the
- * loaded relation.
- */
-export function currentContactId(
-	organization: { contactId?: ID | null; contact?: Pick<IContact, 'id'> | null } | null | undefined
-): ID | undefined {
-	return organization?.contactId ?? organization?.contact?.id ?? undefined;
-}
-
-/**
- * The country of a contact an organization write links by id, when it is not the organization's current contact:
- * the organization will be where that contact is, so its country counts in the EEA/UK check. Read within the
- * tenant, across its organizations (the write itself may link any contact of the tenant).
- *
- * @param contacts the contact lookup; none (e.g. not resolvable) reads nothing
- * @param contactId the contact the write links (`contact.id` or `contactId`)
- * @param currentContactId the organization's current contact, which the stored location already covers
- * @returns the contact's country, or `undefined` when there is no other contact or it cannot be read
- */
-export async function linkedContactCountry(
-	contacts: IContactLookup | undefined,
-	contactId: ID | undefined,
-	currentContactId?: ID | null
-): Promise<string | undefined> {
-	if (!contacts || !contactId || contactId === currentContactId) {
-		return undefined;
-	}
-	const found = await runOutsideOrganizationBoundary(() => contacts.findOneOrFailByIdString(contactId));
-	return (found?.success && found.record?.country) || undefined;
 }
 
 /**
