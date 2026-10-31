@@ -9,5 +9,6 @@ export class OrganizationSettingDTO extends PickType(Organization, [
 	'startWeekOn',
 	'inviteExpiryPeriod',
 	'regionCode',
-	'allowEmployeeToSeeTrackedData'
+	'allowEmployeeToSeeTrackedData',
+	'allowScreenshotCapture'
 ] as const) {}

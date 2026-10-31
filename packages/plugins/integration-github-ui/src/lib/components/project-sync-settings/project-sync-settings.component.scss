@@ -1,0 +1,69 @@
+@use 'gauzy/_gauzy-overrides' as *;
+
+:host {
+  display: block;
+}
+
+.project-sync-settings {
+  width: 30rem;
+  max-width: 90vw;
+  margin: 0;
+}
+
+.project-sync-settings__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.project-sync-settings__title {
+  margin: 0;
+  color: nb-theme(text-basic-color);
+}
+
+.project-sync-settings__subtitle {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
+  overflow-wrap: anywhere;
+}
+
+.project-sync-settings__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.setting {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.setting__hint,
+.setting__error {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.setting__hint {
+  color: var(--gauzy-text-color-2, var(--text-hint-color));
+}
+
+.setting__error {
+  color: nb-theme(text-danger-color);
+}
+
+.setting__label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.project-sync-settings__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}

@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
+import { Profile } from 'passport';
 import { Strategy } from 'passport-twitter';
+import { flagProviderConfirmedEmails } from '../social-auth-emails';
 
 @Injectable()
 export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
@@ -25,15 +27,17 @@ export class TwitterStrategy extends PassportStrategy(Strategy, 'twitter') {
 	 *
 	 * @returns The user object built from the profile.
 	 */
-	async validate(accessToken: string, refreshToken: string, profile: any) {
+	async validate(accessToken: string, refreshToken: string, profile: Profile) {
 		try {
-			console.log('Twitter OAuth validate:', profile);
-			// Extract relevant information from the user's profile
-			const { emails } = profile;
-
 			// Construct user object
 			const user = {
-				emails,
+				// passport-twitter reads the address from `GET account/verify_credentials` with `include_email`, which
+				// X documents as: "If the user does not have an email address on their account, or if the email
+				// address is not verified, null will be returned." So an address X returned is one its holder confirmed
+				// (X API v2 names the same field `confirmed_email`), and an empty value is never marked verified.
+				// https://developer.x.com/en/docs/twitter-api/v1/accounts-and-users/manage-account-settings/api-reference/get-account-verify_credentials
+				// https://docs.x.com/x-api/fundamentals/data-dictionary
+				emails: flagProviderConfirmedEmails(profile?.emails),
 				accessToken,
 				refreshToken
 			};
@@ -79,7 +83,9 @@ export const parseTwitterConfig = (configService: ConfigService): Record<string,
 		consumerSecret: consumerSecret || 'disabled',
 		// Use the retrieved callbackURL, or default to the API_BASE_URL (or localhost) plus the callback path.
 		callbackURL: callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/twitter/callback`,
-		// Always include the email field in the Twitter OAuth response.
+		// Always include the email field in the Twitter OAuth response. X returns it only for a confirmed address, and
+		// only when the app has "Request email address from users" enabled. The profile is read from passport-twitter's
+		// default `account/verify_credentials`; validate relies on that endpoint's confirmed-address contract.
 		includeEmail: true
 	};
 };

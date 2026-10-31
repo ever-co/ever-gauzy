@@ -7,14 +7,18 @@ import {
 	ITimeOff,
 	IOrganization,
 	StatusTypesEnum,
-	IImageAsset as IDocumentAsset
+	IImageAsset as IDocumentAsset,
+	TIME_OFF_REQUEST_FORM_DOCUMENT_NAMES,
+	TimeOffRequestFormTypeEnum
 } from '@gauzy/contracts';
-import { debounceTime, filter, first, tap } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { CompareDateValidator, OrganizationDocumentsService, Store } from '@gauzy/ui-core/core';
-import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
+import { CompareDateValidator, OrganizationDocumentsService, Store, ToastrService } from '@gauzy/ui-core/core';
+import { distinctUntilChange, downloadFile, toHttpUrl } from '@gauzy/ui-core/common';
 import { EmployeeSelectorComponent } from '../../selectors/employee/employee.component';
 import { FormHelpers } from '../../forms/helpers';
+import { findTimeOffRequestForm } from './time-off-request-form';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -26,6 +30,10 @@ import { FormHelpers } from '../../forms/helpers';
 })
 export class TimeOffRequestMutationComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;
+	readonly RequestFormType = TimeOffRequestFormTypeEnum;
+
+	/** The request form the browser would not open in a new tab, offered as a link the user clicks instead. */
+	blockedRequestForm: { name: string; url: string } | null = null;
 
 	/**
 	 * Employee Selector
@@ -84,7 +92,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		private readonly fb: UntypedFormBuilder,
 		private readonly documentsService: OrganizationDocumentsService,
 		private readonly store: Store,
-		private readonly dateService: NbDateService<Date>
+		private readonly dateService: NbDateService<Date>,
+		private readonly toastrService: ToastrService
 	) {
 		this.minDate = this.dateService.addMonth(this.dateService.today(), 0);
 	}
@@ -168,24 +177,42 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		}
 	}
 
-	getRequestForm(reqType: string) {
+	/**
+	 * Downloads the organization's paid or unpaid request form (issue #5481). The form is the organization
+	 * document named as in `TIME_OFF_REQUEST_FORM_DOCUMENT_NAMES`, whatever its place in the list; when there is
+	 * none, or its link does not give a file, a hint says so instead of opening another document. When the browser
+	 * blocks the tab the form would open in, the dialog shows a link to it.
+	 *
+	 * @param type Which form.
+	 */
+	async getRequestForm(type: TimeOffRequestFormTypeEnum): Promise<void> {
+		if (!this.organization) {
+			return;
+		}
+		this.blockedRequestForm = null;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
-		this.documentsService
-			.getAll({ tenantId, organizationId })
-			.pipe(first())
-			.subscribe(({ items }) => {
-				if (isNotEmpty(items)) {
-					let downloadDocUrl: string;
-					if (reqType === 'paid') {
-						downloadDocUrl = items[0].documentUrl;
-					} else {
-						downloadDocUrl = items[1].documentUrl;
-					}
-					window.open(`${downloadDocUrl}`);
-				}
-			});
+		try {
+			const { items } = await firstValueFrom(this.documentsService.getAll({ tenantId, organizationId }));
+			const form = findTimeOffRequestForm(items, type);
+			if (!form) {
+				this.toastrService.warning('TIME_OFF_PAGE.REQUEST_FORM_NOT_FOUND', {
+					name: TIME_OFF_REQUEST_FORM_DOCUMENT_NAMES[type]
+				});
+				return;
+			}
+
+			const result = await downloadFile(form.documentUrl, form.name);
+			if (result === 'invalid' || result === 'unavailable') {
+				this.toastrService.warning('TIME_OFF_PAGE.REQUEST_FORM_UNAVAILABLE', { name: form.name });
+			} else if (result === 'blocked') {
+				this.blockedRequestForm = { name: form.name, url: toHttpUrl(form.documentUrl).href };
+				this.toastrService.warning('TIME_OFF_PAGE.REQUEST_FORM_BLOCKED', { name: form.name });
+			}
+		} catch (error) {
+			this.toastrService.danger(error);
+		}
 	}
 
 	private _createNewRecord() {

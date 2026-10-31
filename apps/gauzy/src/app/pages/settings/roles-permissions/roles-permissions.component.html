@@ -113,12 +113,15 @@
                         >
                         <div class="custom-permission-view">
                           <!--
-                            The <small> line under this one used to render the SAME
-                            translation key, so every row printed its label twice —
-                            once bold, once as a 11px grey "description". There are no
-                            *_DESCRIPTION keys in the catalogue for it to have meant.
+                            The label, then what the permission lets a role do, from
+                            ORGANIZATIONS_PAGE.PERMISSIONS.DESCRIPTIONS (the line is left
+                            out for a permission the catalogue does not describe). The
+                            <small> once here rendered the label's own key a second time.
                           -->
                           <strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
+                          @if (permissionTexts.get(permission)?.description; as description) {
+                            <small class="permission-description">{{ description }}</small>
+                          }
                         </div>
                       </nb-toggle>
                     }
@@ -160,8 +163,11 @@
                         [disabled]="isDisabledAdministrationPermissions()"
                         >
                         <div class="custom-permission-view">
-                          <!-- Same duplicated-label removal as the General group above. -->
+                          <!-- Label and description, as in the General group above. -->
                           <strong>{{ 'ORGANIZATIONS_PAGE.PERMISSIONS.' + permission | translate }}</strong>
+                          @if (permissionTexts.get(permission)?.description; as description) {
+                            <small class="permission-description">{{ description }}</small>
+                          }
                         </div>
                       </nb-toggle>
                     }

@@ -24,6 +24,7 @@ import {
 	InviteService,
 	NoAuthGuard,
 	PageRouteRegistryService,
+	RegistrationEnabledDirective,
 	RoleService
 } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
@@ -112,7 +113,9 @@ const COMPONENTS = [
 		// Standalone card shared with the changelog sidebar
 		ChangelogEntryComponent,
 		// The content of the "Login with Ever ID" button
-		EverIdLoginLabelComponent
+		EverIdLoginLabelComponent,
+		// Hides the Register links while the server does not accept public sign-ups
+		RegistrationEnabledDirective
 	],
 	declarations: [...COMPONENTS],
 	providers: [

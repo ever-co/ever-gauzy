@@ -2,35 +2,86 @@
 	// Use IntelliSense to learn about possible attributes.
 	// Hover to view descriptions of existing attributes.
 	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	//
+	// How to debug the API and the worker: "Debugging the API in VS Code" in README.md.
+	// WSL: with VS Code connected to WSL (Remote - WSL) these configurations work as they are. To attach Windows VS Code
+	// to an API running inside WSL, add "localRoot" (the repository path on Windows) and "remoteRoot" (the repository
+	// path in WSL) to "Debug Server".
 	"version": "0.2.0",
 	"configurations": [
-	
 		{
+			// Attaches to `yarn start:api` or `yarn start:worker` (Node inspector on port 9229) and re-attaches after
+			// every rebuild. `yarn start:api:debug` / `yarn start:worker:debug` make the process wait for the debugger
+			// before it runs any code, so breakpoints in startup code bind too; it continues once they are set.
 			"type": "node",
 			"request": "attach",
 			"name": "Debug Server",
 			"sourceMaps": true,
 			"restart": true,
-			"port": 9229
+			"port": 9229,
+			"continueOnAttach": true,
+			"skipFiles": ["<node_internals>/**"],
+			// The default skips every node_modules folder, but the builds copy the compiled workspace packages into
+			// dist/apps/<app>/node_modules/@gauzy, and their source maps lead back to packages/*/src.
+			"resolveSourceMapLocations": [
+				"${workspaceFolder}/**",
+				"!**/node_modules/**",
+				"${workspaceFolder}/dist/apps/api/node_modules/@gauzy/**",
+				"${workspaceFolder}/dist/apps/worker/node_modules/@gauzy/**"
+			],
+			"outFiles": ["${workspaceFolder}/dist/apps/api/**/*.js", "${workspaceFolder}/dist/apps/worker/**/*.js"]
 		},
 		{
+			// Builds and starts the API in watch mode, like `yarn start:api`, with the debugger attached from the start:
+			// breakpoints in startup code bind on the first start and after every rebuild, with no port to attach to.
+			// It calls Nx directly because the debugger attaches through NODE_OPTIONS, which `yarn start:api` replaces.
 			"type": "node",
 			"request": "launch",
 			"name": "Launch Program",
-			"program": "${workspaceFolder}\\start:gauzy",
-			"preLaunchTask": "tsc: build - tsconfig.json",
-			"outFiles": ["${workspaceFolder}/dist/out-tsc/**/*.js"]
+			"program": "${workspaceFolder}/node_modules/nx/dist/bin/nx.js",
+			// No inspector port of its own: the debugger is already attached, and port 9229 stays free.
+			"args": ["serve", "api", "--inspect=false"],
+			"cwd": "${workspaceFolder}",
+			"env": {
+				"NODE_ENV": "development",
+				"NODE_OPTIONS": "--max-old-space-size=12288",
+				// A daemon started here would outlive the debug session, with the debugger attached to it.
+				"NX_DAEMON": "false"
+			},
+			"console": "integratedTerminal",
+			"autoAttachChildProcesses": true,
+			"sourceMaps": true,
+			"skipFiles": ["<node_internals>/**"],
+			"resolveSourceMapLocations": [
+				"${workspaceFolder}/**",
+				"!**/node_modules/**",
+				"${workspaceFolder}/dist/apps/api/node_modules/@gauzy/**"
+			],
+			"outFiles": ["${workspaceFolder}/dist/apps/api/**/*.js"]
 		},
-
 		{
+			// Runs the API that `yarn start:api` or `yarn build:api` last built (dist/apps/api/main.js) under the
+			// debugger, without building or watching it: the quickest way to step through the startup of a built API.
 			"type": "node",
 			"request": "launch",
 			"name": "Debug Nest Framework",
-			"args": ["${workspaceFolder}/src/main.ts"],
-			"runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+			"program": "${workspaceFolder}/dist/apps/api/main.js",
+			// Stack traces printed by the API point to the TypeScript sources too.
+			"runtimeArgs": ["--enable-source-maps"],
+			"cwd": "${workspaceFolder}",
+			"env": {
+				"NODE_ENV": "development",
+				"NODE_OPTIONS": "--max-old-space-size=12288"
+			},
+			"console": "integratedTerminal",
 			"sourceMaps": true,
-			"cwd": "${workspaceRoot}",
-			"protocol": "inspector"
+			"skipFiles": ["<node_internals>/**"],
+			"resolveSourceMapLocations": [
+				"${workspaceFolder}/**",
+				"!**/node_modules/**",
+				"${workspaceFolder}/dist/apps/api/node_modules/@gauzy/**"
+			],
+			"outFiles": ["${workspaceFolder}/dist/apps/api/**/*.js"]
 		}
 	]
 }

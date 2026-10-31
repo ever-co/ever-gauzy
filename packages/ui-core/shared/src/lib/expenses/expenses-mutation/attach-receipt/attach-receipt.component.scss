@@ -37,4 +37,18 @@
 		top: calc(50% - 68px / 2);
 		left: calc(50% - 68px / 2);
 	}
+
+	// Under the upload icon while nothing is attached; clicks go through to the uploader beneath.
+	.empty-hint {
+		z-index: 2;
+		position: absolute;
+		top: calc(50% + 68px / 2 + 0.75rem);
+		left: 0;
+		width: 100%;
+		margin: 0;
+		padding: 0 1rem;
+		text-align: center;
+		pointer-events: none;
+		color: nb-theme(text-hint-color);
+	}
 }

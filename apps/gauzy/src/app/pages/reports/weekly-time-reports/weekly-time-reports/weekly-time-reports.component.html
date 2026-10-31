@@ -132,8 +132,18 @@
 										<div class="responsive-table-header">
 											{{ 'REPORT_PAGE.SPENT' | translate }}
 										</div>
-										<div class="responsive-table-content mobile-padding">
+										<div class="responsive-table-content mobile-padding spent-cell">
+											@if (hasSpent(log)) {
+											<span>
+												{{
+													log.spent
+														| currency: (log.currency || organization?.currency)
+														| position: organization?.currencyPosition
+												}}
+											</span>
+											} @else {
 											<span> &#8212; </span>
+											}
 										</div>
 									</div>
 								</div>

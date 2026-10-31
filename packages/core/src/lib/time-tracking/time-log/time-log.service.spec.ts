@@ -40,6 +40,7 @@ import { TimesheetFirstOrCreateCommand, TimesheetRecalculateCommand } from '../t
 import { TimeSlotBulkDeleteCommand } from '../time-slot/commands';
 import { TimeSlotBulkDeleteHandler } from '../time-slot/commands/handlers/time-slot-bulk-delete.handler';
 import { generateTimeSlots } from '../time-slot/utils';
+import { Organization } from '../../organization/organization.entity';
 import { TimeLog } from './time-log.entity';
 import { TimeLogService } from './time-log.service';
 
@@ -266,6 +267,33 @@ describe('TimeLogService', () => {
 		});
 
 		/**
+		 * The Amounts Owed grid prints each amount in `employee.billRateCurrency`. The TypeORM read selected
+		 * the rate but not its currency, so every amount fell back to the currency pipe's default (USD) under
+		 * TypeORM, while MikroORM, which populates the whole employee, showed the employee's own currency.
+		 */
+		it('selects the bill rate currency with the rate for the owed-amount report', async () => {
+			actAs({ canChangeSelectedEmployee: true });
+			const setFindOptions = jest.spyOn(builder, 'setFindOptions');
+			builder.rows = [
+				{
+					id: '5d1c2b3a-4f5e-4d6c-8b7a-9e0f1a2b3c4d',
+					employeeId: TARGET_EMPLOYEE_ID,
+					startedAt: '2026-01-06T09:00:00.000Z',
+					stoppedAt: '2026-01-06T10:00:00.000Z',
+					duration: 3600,
+					employee: { id: TARGET_EMPLOYEE_ID, billRateValue: 40, billRateCurrency: 'EUR' }
+				}
+			];
+
+			const report = await service.getOwedAmountReport(request);
+
+			const [{ select }] = setFindOptions.mock.calls[0] as unknown as [{ select: Record<string, any> }];
+			expect(select.employee).toEqual(expect.objectContaining({ billRateValue: true, billRateCurrency: true }));
+			// The currency travels with the employee to the grid
+			expect(report[0].employees[0].employee).toEqual(expect.objectContaining({ billRateCurrency: 'EUR' }));
+		});
+
+		/**
 		 * `moment().tz(undefined)` returns undefined rather than a moment, so every report that groups
 		 * its rows by `.tz(timeZone).format(...)` answered 500 "Cannot read properties of undefined
 		 * (reading 'format')" for a request that named no time zone — but only once the organization had
@@ -329,6 +357,163 @@ describe('TimeLogService', () => {
 				// UTC+9: 22:00Z on the 6th is already 07:00 on the 7th there
 				const zoned = moment.utc(LOG_STARTED_AT).tz('Asia/Tokyo').format('YYYY-MM-DD');
 				expect(report[0].dates[zoned]).not.toBe(0);
+			});
+		});
+
+		/**
+		 * The weekly report's Spent column (#4735): each employee's week priced at their bill rate, the way
+		 * the owed-amount report prices a day, and nothing at all for an employee without a rate.
+		 */
+		describe('weekly spent', () => {
+			const OTHER_EMPLOYEE_ID = '9c8b7a69-5847-4362-9150-4f3e2d1c0b9a';
+
+			const log = (employee: Record<string, unknown>, id: string, duration: number) => ({
+				id,
+				employeeId: employee.id,
+				startedAt: '2026-01-06T09:00:00.000Z',
+				stoppedAt: '2026-01-06T10:00:00.000Z',
+				duration,
+				employee,
+				timeSlots: [{ id: `${id}-slot`, overall: 300, duration: 600 }]
+			});
+
+			type WeeklyEntry = { employee: { id: string }; spent: number | null; currency: string | null };
+
+			beforeEach(() => {
+				actAs({ canChangeSelectedEmployee: true });
+			});
+
+			it('selects the bill rate and its currency with the employee', async () => {
+				const setFindOptions = jest.spyOn(builder, 'setFindOptions');
+
+				await service.getWeeklyReport(request);
+
+				const [{ select }] = setFindOptions.mock.calls[0] as unknown as [{ select: Record<string, any> }];
+				expect(select.employee).toEqual(
+					expect.objectContaining({ billRateValue: true, billRateCurrency: true })
+				);
+			});
+
+			/** Hands the TypeORM repository an entity manager, for the organization currency lookup. */
+			const organizationLookup = (organization: { currency?: string | null } | null) => {
+				const findOne = jest.fn().mockResolvedValue(organization);
+				Object.assign(service.typeOrmTimeLogRepository, { manager: { findOne } });
+				return findOne;
+			};
+
+			it('prices each employee week at their rate, and leaves an employee without a rate unpriced', async () => {
+				const findOrganization = organizationLookup({ currency: 'KWD' });
+				const billed = { id: TARGET_EMPLOYEE_ID, billRateValue: 40, billRateCurrency: 'EUR' };
+				const unbilled = { id: OTHER_EMPLOYEE_ID, billRateValue: null, billRateCurrency: 'USD' };
+				builder.rows = [
+					log(billed, 'f1a2b3c4-0000-4000-8000-000000000001', 5400),
+					log(billed, 'f1a2b3c4-0000-4000-8000-000000000002', 1800),
+					log(unbilled, 'f1a2b3c4-0000-4000-8000-000000000003', 3600)
+				];
+
+				const report = (await service.getWeeklyReport(request)) as WeeklyEntry[];
+
+				// Every rate states its currency, so the organization is not read
+				expect(findOrganization).not.toHaveBeenCalled();
+				const byEmployee = new Map(report.map((entry) => [entry.employee.id, entry]));
+
+				// 2 hours at 40
+				expect(byEmployee.get(TARGET_EMPLOYEE_ID)).toEqual(
+					expect.objectContaining({ spent: 80, currency: 'EUR' })
+				);
+				// No rate: no amount, and no currency for an amount that is not there
+				expect(byEmployee.get(OTHER_EMPLOYEE_ID)).toEqual(
+					expect.objectContaining({ spent: null, currency: null })
+				);
+			});
+
+			it("prices the week's total seconds once, in the rate's currency", async () => {
+				const yen = { id: TARGET_EMPLOYEE_ID, billRateValue: 1501, billRateCurrency: 'JPY' };
+				const cents = { id: OTHER_EMPLOYEE_ID, billRateValue: 20.15, billRateCurrency: 'EUR' };
+				builder.rows = [
+					log(yen, 'f1a2b3c4-0000-4000-8000-000000000005', 900),
+					log(yen, 'f1a2b3c4-0000-4000-8000-000000000006', 900),
+					log(cents, 'f1a2b3c4-0000-4000-8000-000000000007', 1200),
+					log(cents, 'f1a2b3c4-0000-4000-8000-000000000008', 600)
+				];
+
+				const report = (await service.getWeeklyReport(request)) as WeeklyEntry[];
+				const byEmployee = new Map(report.map((entry) => [entry.employee.id, entry]));
+
+				// Half an hour at 1,501 yen is 750.5, and yen has no minor unit; pricing each quarter hour
+				// first (375.25 → 375, twice) would answer 750
+				expect(byEmployee.get(TARGET_EMPLOYEE_ID)).toEqual(
+					expect.objectContaining({ spent: 751, currency: 'JPY' })
+				);
+				// Half an hour at 20.15 is exactly 10.075
+				expect(byEmployee.get(OTHER_EMPLOYEE_ID)).toEqual(
+					expect.objectContaining({ spent: 10.08, currency: 'EUR' })
+				);
+			});
+
+			it("prices a rate that states no currency in the organization's, as the page shows it", async () => {
+				const findOrganization = organizationLookup({ currency: 'KWD' });
+				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: 7.25, billRateCurrency: null };
+				builder.rows = [log(employee, 'f1a2b3c4-0000-4000-8000-000000000009', 1000)];
+
+				const report = (await service.getWeeklyReport(request)) as WeeklyEntry[];
+
+				// Read once, scoped to the caller's tenant
+				expect(findOrganization).toHaveBeenCalledTimes(1);
+				expect(findOrganization).toHaveBeenCalledWith(
+					Organization,
+					expect.objectContaining({ where: { id: ORGANIZATION_ID, tenantId: TENANT_ID } })
+				);
+				// 1,000 seconds at 7.25 is 2.01388…, to the dinar's three decimals rather than an assumed two
+				expect(report[0]).toEqual(expect.objectContaining({ spent: 2.014, currency: 'KWD' }));
+			});
+
+			it('keeps two decimals and no currency when the organization states none either', async () => {
+				organizationLookup({ currency: null });
+				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: 7.25, billRateCurrency: null };
+				builder.rows = [log(employee, 'f1a2b3c4-0000-4000-8000-00000000000a', 1000)];
+
+				const report = (await service.getWeeklyReport(request)) as WeeklyEntry[];
+
+				expect(report[0]).toEqual(expect.objectContaining({ spent: 2.01, currency: null }));
+			});
+
+			it('reads the rate the same way under MikroORM, where a numeric column may arrive as a string', async () => {
+				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: '12.50', billRateCurrency: 'USD' };
+				const find = jest.fn().mockResolvedValue([log(employee, 'f1a2b3c4-0000-4000-8000-000000000004', 4500)]);
+				// The MikroORM branch only needs its where-builder, the repository and the serializer; own
+				// properties shadow the prototype's `ormType` getter.
+				const self = Object.create(TimeLogService.prototype, {
+					ormType: { value: MultiORMEnum.MikroORM },
+					mikroOrmRepository: { value: { find } },
+					buildMikroOrmTimeLogWhere: { value: jest.fn().mockResolvedValue({}) },
+					serialize: { value: (entity: unknown) => entity }
+				});
+
+				const report = (await TimeLogService.prototype.getWeeklyReport.call(self, request)) as WeeklyEntry[];
+
+				// The whole employee is populated, rate included
+				expect(find.mock.calls[0][1].populate).toEqual(expect.arrayContaining(['employee']));
+				// 1.25 hours at 12.50
+				expect(report[0]).toEqual(expect.objectContaining({ spent: 15.63, currency: 'USD' }));
+			});
+
+			it("falls back to the organization's currency under MikroORM too", async () => {
+				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: '1501', billRateCurrency: null };
+				const find = jest.fn().mockResolvedValue([log(employee, 'f1a2b3c4-0000-4000-8000-00000000000b', 1800)]);
+				const findOne = jest.fn().mockResolvedValue({ currency: 'JPY' });
+				const self = Object.create(TimeLogService.prototype, {
+					ormType: { value: MultiORMEnum.MikroORM },
+					mikroOrmRepository: { value: { find, getEntityManager: () => ({ findOne }) } },
+					buildMikroOrmTimeLogWhere: { value: jest.fn().mockResolvedValue({}) },
+					serialize: { value: (entity: unknown) => entity }
+				});
+
+				const report = (await TimeLogService.prototype.getWeeklyReport.call(self, request)) as WeeklyEntry[];
+
+				expect(findOne).toHaveBeenCalledWith(Organization, { id: ORGANIZATION_ID, tenantId: TENANT_ID });
+				// Half an hour at 1,501 yen is 750.5, and yen has no minor unit
+				expect(report[0]).toEqual(expect.objectContaining({ spent: 751, currency: 'JPY' }));
 			});
 		});
 	});

@@ -1,7 +1,7 @@
 // Must stay first: loads the entity graph before the handler pulls an entity.
 import '../../../core/entities/internal';
 
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { isMySQL, isPostgres } from '@gauzy/config';
 import { StatusTypesEnum, StatusTypesMapRequestApprovalEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
@@ -21,6 +21,9 @@ import { TimeOffStatusHandler } from './time-off.status.handler';
  * The decision is now one transaction: the approval's row is locked first (the request approval route's lock and lock
  * order), then the leave's, which must still be there; then each row's status is written, and nothing else. Who may
  * decide, and re-deciding a decided leave, are unchanged.
+ *
+ * The leave balance moves on the same transaction, from the leave as its locked read found it (ever-co/ever-gauzy#10183);
+ * what it does to the balances is covered on a real database in `time-off.status.handler.balance.spec.ts`.
  */
 
 jest.mock('@gauzy/config', () => ({
@@ -80,10 +83,12 @@ function setUp({ leave = true, approval = true }: { leave?: boolean; approval?: 
 		manager: { transaction: jest.fn(async (work: any) => await work(manager)) }
 	};
 	const requestApprovals = { findOneBy: jest.fn(), save: jest.fn() };
-	const handler = new TimeOffStatusHandler(timeOffRequests as any, requestApprovals as any);
+	// The balance side of the decision, covered on a real database in `time-off.status.handler.balance.spec.ts`.
+	const balances = { settle: jest.fn(async () => undefined) };
+	const handler = new TimeOffStatusHandler(timeOffRequests as any, requestApprovals as any, balances as any);
 	const decide = (status: StatusTypesEnum) => handler.execute(new TimeOffStatusCommand(ID, status));
 
-	return { store, query, leaveQuery, manager, timeOffRequests, requestApprovals, decide };
+	return { store, query, leaveQuery, manager, timeOffRequests, requestApprovals, balances, decide };
 }
 
 describe('TimeOffStatusHandler', () => {
@@ -190,6 +195,52 @@ describe('TimeOffStatusHandler', () => {
 		);
 		expect(manager.update).not.toHaveBeenCalled();
 		expect(store.approval.status).toBe(StatusTypesMapRequestApprovalEnum.REQUESTED);
+	});
+
+	it('settles the leave balance on the transaction, from the locked leave, before either status is written', async () => {
+		(isPostgres as jest.Mock).mockReturnValue(true);
+		const { store, leaveQuery, manager, balances, decide } = setUp();
+
+		await decide(StatusTypesEnum.APPROVED);
+
+		// The leave as its locked read found it: the status the decision moves it from.
+		expect(balances.settle).toHaveBeenCalledWith(
+			manager,
+			expect.objectContaining({ id: ID, tenantId: TENANT, status: StatusTypesEnum.REQUESTED }),
+			StatusTypesEnum.APPROVED
+		);
+		const [settled] = balances.settle.mock.invocationCallOrder;
+		expect(leaveQuery.getOne.mock.invocationCallOrder[0]).toBeLessThan(settled);
+		expect(settled).toBeLessThan(manager.update.mock.invocationCallOrder[0]);
+		expect(store.leave.status).toBe(StatusTypesEnum.APPROVED);
+	});
+
+	it('writes neither status when the balance refuses the approval (400), and rolls back', async () => {
+		const { store, manager, balances, timeOffRequests, decide } = setUp();
+		balances.settle.mockRejectedValueOnce(new BadRequestException('Insufficient leave balance'));
+
+		await expect(decide(StatusTypesEnum.APPROVED)).rejects.toBeInstanceOf(BadRequestException);
+
+		await expect(timeOffRequests.manager.transaction.mock.results[0].value).rejects.toBeInstanceOf(
+			BadRequestException
+		);
+		expect(manager.update).not.toHaveBeenCalled();
+		expect(store.leave.status).toBe(StatusTypesEnum.REQUESTED);
+		expect(store.approval.status).toBe(StatusTypesMapRequestApprovalEnum.REQUESTED);
+	});
+
+	it('settles nothing for a leave removed after the first read (404)', async () => {
+		const { store, balances, timeOffRequests, decide } = setUp();
+		const read = timeOffRequests.findOneBy.getMockImplementation() as (where: Row) => Promise<Row | null>;
+		timeOffRequests.findOneBy.mockImplementationOnce(async (where: Row) => {
+			const row = await read(where);
+			store.leave = null;
+			return row;
+		});
+
+		await expect(decide(StatusTypesEnum.APPROVED)).rejects.toBeInstanceOf(NotFoundException);
+
+		expect(balances.settle).not.toHaveBeenCalled();
 	});
 
 	it('writes only the leave when it has no request approval, as before', async () => {
