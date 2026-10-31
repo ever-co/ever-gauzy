@@ -11,10 +11,10 @@ import {
 	appPlatformProblems,
 	appPlatformRouteProblems,
 	appPlatformRoutes,
-	caddyApiPatterns,
-	caddyFallbackUpstream,
 	caddyPathMatches,
 	caddyRouteProblems,
+	caddyRoutes,
+	caddyUpstream,
 	composeProblems,
 	envSampleProblems,
 	requiredSecrets
@@ -296,59 +296,115 @@ describe('caddyPathMatches', () => {
 	});
 });
 
-describe('caddyRouteProblems', () => {
-	it('reads the patterns of the matchers whose handle block proxies to the api', () => {
-		assert.deepEqual(caddyApiPatterns(CADDYFILE), ['/api', '/api/*', '/graphql', '/public/*']);
+describe('caddyRoutes', () => {
+	it('reads each handle block with its paths and upstream', () => {
+		assert.deepEqual(caddyRoutes(CADDYFILE), [
+			{ paths: ['/api', '/api/*', '/graphql', '/public/*'], upstream: 'api' },
+			{ paths: null, upstream: 'webapp' }
+		]);
 	});
 
-	it('reads an inline `reverse_proxy @matcher api:...` too', () => {
-		const inline = '@backend path /graphql\nreverse_proxy @backend api:3000\nreverse_proxy webapp:4200';
-		assert.deepEqual(caddyApiPatterns(inline), ['/graphql']);
+	it("puts handle blocks in Caddy's order: path matchers (longest first), named matchers, then the catch-all", () => {
+		const source = [
+			'handle {\n\treverse_proxy webapp:4200\n}',
+			'handle @api {\n\treverse_proxy api:3000\n}',
+			'handle /api/* {\n\tredir https://example.test\n}',
+			'handle /api/health {\n\treverse_proxy api:3000\n}',
+			'@api path /api /api/*'
+		].join('\n');
+		assert.deepEqual(caddyRoutes(source), [
+			{ paths: ['/api/health'], upstream: 'api' },
+			{ paths: ['/api/*'], upstream: null },
+			{ paths: ['/api', '/api/*'], upstream: 'api' },
+			{ paths: null, upstream: 'webapp' }
+		]);
 	});
+
+	it('puts reverse_proxy lines outside any handle block after every handle block, in the same order', () => {
+		const source = [
+			'reverse_proxy webapp:4200',
+			'@backend path /graphql',
+			'reverse_proxy @backend api:3000',
+			'handle /x {\n\treverse_proxy x:1\n}'
+		].join('\n');
+		assert.deepEqual(caddyRoutes(source), [
+			{ paths: ['/x'], upstream: 'x' },
+			{ paths: ['/graphql'], upstream: 'api' },
+			{ paths: null, upstream: 'webapp' }
+		]);
+	});
+
+	it('ends a handle block at its closing brace, and gives a matcher it cannot read no paths', () => {
+		const source = [
+			'@api {\n\tpath /api/*\n}',
+			'handle @api {\n\treverse_proxy api:3000 {\n\t\theader_up -X\n\t}\n}',
+			'reverse_proxy webapp:4200'
+		].join('\n');
+		assert.deepEqual(caddyRoutes(source), [
+			{ paths: [], upstream: 'api' },
+			{ paths: null, upstream: 'webapp' }
+		]);
+	});
+});
+
+describe('caddyUpstream', () => {
+	it('gives the upstream of the first route matching the path; null when none proxies it', () => {
+		const routes = caddyRoutes(CADDYFILE);
+		assert.equal(caddyUpstream(routes, '/graphql'), 'api');
+		assert.equal(caddyUpstream(routes, '/auth/login'), 'webapp');
+		assert.equal(caddyUpstream([], '/'), null);
+		assert.equal(caddyUpstream([{ paths: null, upstream: null }], '/'), null);
+	});
+});
+
+describe('caddyRouteProblems', () => {
+	const fallback = '\thandle {\n\t\treverse_proxy webapp:4200\n\t}\n';
+	const notServed = [
+		'/ (the web app) is not proxied to the webapp',
+		'/auth/login (the web app) is not proxied to the webapp'
+	];
 
 	it('passes a Caddyfile that proxies every API path to the api and the rest to the web app', () => {
+		assert.ok(CADDYFILE.includes(fallback));
 		assert.deepEqual(caddyRouteProblems(CADDYFILE, PATHS), []);
 	});
 
 	it('reports an API path left to the web app (the /graphql miss)', () => {
 		assert.deepEqual(caddyRouteProblems(CADDYFILE.replace(' /graphql', ''), PATHS), [
-			'/graphql (GraphQL) is not proxied to the api'
+			'/graphql (GraphQL) goes to webapp, not the api'
 		]);
 	});
 
 	it('reports a web app path proxied to the api', () => {
 		assert.deepEqual(caddyRouteProblems(CADDYFILE.replace('/public/*', '/*'), PATHS), [
-			'/ (the web app) is proxied to the api',
-			'/auth/login (the web app) is proxied to the api'
+			'/ (the web app) goes to api, not the webapp',
+			'/auth/login (the web app) goes to api, not the webapp'
 		]);
 	});
 
 	it('reports a catch-all route that is missing, redirected, or proxied elsewhere', () => {
-		const fallback = '\thandle {\n\t\treverse_proxy webapp:4200\n\t}\n';
-		assert.ok(CADDYFILE.includes(fallback));
-		const missing = 'no catch-all `handle { reverse_proxy webapp:... }`: the web app is not served';
-		assert.deepEqual(caddyRouteProblems(CADDYFILE.replace(fallback, ''), PATHS), [missing]);
+		assert.deepEqual(caddyRouteProblems(CADDYFILE.replace(fallback, ''), PATHS), notServed);
 		assert.deepEqual(
 			caddyRouteProblems(CADDYFILE.replace('reverse_proxy webapp:4200', 'redir https://example.test'), PATHS),
-			[missing]
+			notServed
 		);
 		assert.deepEqual(caddyRouteProblems(CADDYFILE.replace('webapp:4200', 'api:3000'), PATHS), [
-			'the catch-all route proxies to api, not the webapp'
+			'/ (the web app) goes to api, not the webapp',
+			'/auth/login (the web app) goes to api, not the webapp'
 		]);
 	});
-});
 
-describe('caddyFallbackUpstream', () => {
-	it("reads the upstream of the handle block without a matcher, not a named matcher's", () => {
-		assert.equal(caddyFallbackUpstream(CADDYFILE), 'webapp');
-		assert.equal(caddyFallbackUpstream('handle @api {\n\treverse_proxy webapp:4200\n}'), null);
+	it('does not take a handle block with a path matcher for the catch-all', () => {
+		const scoped = CADDYFILE.replace(fallback, fallback.replace('handle {', 'handle /dashboard/* {'));
+		assert.deepEqual(caddyRouteProblems(scoped, PATHS), notServed);
 	});
 
-	it('reads a reverse_proxy without a matcher outside any handle block, before or after one', () => {
-		const handleApi = 'handle @api {\n\treverse_proxy api:3000 {\n\t\theader_up -X\n\t}\n}';
-		assert.equal(caddyFallbackUpstream(`reverse_proxy webapp:4200\n${handleApi}`), 'webapp');
-		assert.equal(caddyFallbackUpstream(`site {\n\t${handleApi}\n\treverse_proxy webapp:4200\n}`), 'webapp');
-		assert.equal(caddyFallbackUpstream(handleApi), null);
+	it('lets a path-matched handle block win over the named matcher, wherever it is written', () => {
+		const shadowed = CADDYFILE.replace(
+			fallback,
+			`\thandle /graphql {\n\t\treverse_proxy webapp:4200\n\t}\n${fallback}`
+		);
+		assert.deepEqual(caddyRouteProblems(shadowed, PATHS), ['/graphql (GraphQL) goes to webapp, not the api']);
 	});
 });
 

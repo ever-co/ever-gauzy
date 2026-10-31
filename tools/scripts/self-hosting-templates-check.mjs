@@ -23,8 +23,9 @@
  * `serveRoot` (`packages/core/src/lib/helper.ts`), the GraphQL path (`packages/constants/src/lib/api.ts`) and the
  * Swagger UI path with its OpenAPI documents (`packages/core/src/lib/bootstrap/swagger.ts`). Each must reach the API,
  * App Platform's with its path kept (`preserve_path_prefix: true`), and the web app's own paths must reach the web
- * app (App Platform's `webapp` component, Caddy's catch-all `handle` block). (The Scalar
- * reference that `swagger.ts` also mounts is left out on purpose: see the comment in the Caddyfile.)
+ * app (App Platform's `webapp` component, Caddy's catch-all `handle` block), each path resolved by its proxy's own
+ * precedence rules (App Platform: the longest prefix; Caddy: see `caddyRoutes`). (The Scalar reference that
+ * `swagger.ts` also mounts is left out on purpose: see the comment in the Caddyfile.)
  *
  * Read by hand rather than with a YAML parser: this job installs nothing (see static-checks.yml), and the shapes
  * below are the ones these templates use. A list or path the reader cannot find is reported rather than skipped.
@@ -282,56 +283,57 @@ export function appPlatformRouteProblems(source, paths) {
 }
 
 /**
- * The path patterns a Caddyfile sends to the API: those of every named matcher whose `handle` block proxies to it,
- * or that a `reverse_proxy @matcher api:...` line names.
+ * The routes of a Caddyfile, in the order Caddy tries them. `handle` blocks are mutually exclusive and come first; a
+ * `reverse_proxy` outside any `handle` block runs only when no `handle` block matched, so those follow. Each group is
+ * sorted as Caddy sorts directives of one name: those with a path matcher (`handle /x/* {`), longest path first; then
+ * those with a named matcher (`handle @api {`), in order; then those without a matcher (the catch-all).
+ *
+ * Named matchers are read from one-line `@name path ...` definitions; one defined otherwise matches no path here, so
+ * the paths it would send are reported rather than assumed. A `handle` block's upstream is its first `reverse_proxy`
+ * line without a matcher (null when it has none, e.g. one that only redirects).
  *
  * @param {string} source The Caddyfile's text.
- * @returns {string[]} Caddy path patterns (`/api`, `/api/*`, ...).
+ * @returns {Array<{ paths: string[]|null, upstream: string|null }>} Each route's path patterns (null: every path)
+ *   and the host it proxies to.
  */
-export function caddyApiPatterns(source) {
+export function caddyRoutes(source) {
 	const matchers = new Map();
-	const toApi = new Set();
-	let handled = null;
+	const handles = [];
+	const outside = [];
+	// The `handle` block the current line is in, and the brace depth it opened at.
+	let handle = null;
+	let depth = 0;
 
 	for (const line of source.split(/\r?\n/)) {
 		if (/^\s*(#|$)/.test(line)) continue;
 		const matcher = /^\s*@([A-Za-z0-9_-]+)\s+path\s+(.+?)\s*$/.exec(line);
 		if (matcher) matchers.set(matcher[1], matcher[2].split(/\s+/));
 
-		const handle = /^\s*handle(?:\s+@([A-Za-z0-9_-]+))?\s*\{/.exec(line);
-		if (handle) handled = handle[1] ?? null;
-		if (handled && new RegExp(`^\\s*reverse_proxy\\s+${API_COMPONENT}:`).test(line)) toApi.add(handled);
-		const inline = new RegExp(`^\\s*reverse_proxy\\s+@([A-Za-z0-9_-]+)\\s+${API_COMPONENT}:`).exec(line);
-		if (inline) toApi.add(inline[1]);
-	}
-
-	return [...toApi].flatMap((name) => matchers.get(name) ?? []);
-}
-
-/**
- * The upstream a Caddyfile sends every other request to: the host of the `reverse_proxy` in its `handle` block
- * without a matcher, or of a `reverse_proxy` without a matcher outside any `handle` block.
- *
- * @param {string} source The Caddyfile's text.
- * @returns {string|null} The upstream host (`webapp`, ...); null when there is no catch-all route.
- */
-export function caddyFallbackUpstream(source) {
-	let depth = 0;
-	// The `handle` block the current line is in: its matcher ('' for none) and the brace depth it opened at.
-	let handle = null;
-
-	for (const line of source.split(/\r?\n/)) {
-		if (/^\s*(#|$)/.test(line)) continue;
-		const opened = /^\s*handle(?:\s+@([A-Za-z0-9_-]+))?\s*\{/.exec(line);
-		if (opened) handle = { matcher: opened[1] ?? '', depth };
-		const proxy = /^\s*reverse_proxy\s+([A-Za-z0-9_.-]+):/.exec(line);
-		if (proxy && (handle === null || handle.matcher === '')) return proxy[1];
+		const opened = /^\s*handle(?:\s+(@[A-Za-z0-9_-]+|[/*]\S*))?\s*\{/.exec(line);
+		const proxy = /^\s*reverse_proxy\s+(?:(@[A-Za-z0-9_-]+|[/*]\S*)\s+)?([A-Za-z0-9_.-]+):/.exec(line);
+		if (opened) {
+			handle = { matcher: opened[1] ?? null, upstream: null, depth, order: handles.length };
+			handles.push(handle);
+		} else if (proxy && handle) {
+			if (!proxy[1] && handle.upstream === null) handle.upstream = proxy[2];
+		} else if (proxy) {
+			outside.push({ matcher: proxy[1] ?? null, upstream: proxy[2], order: outside.length });
+		}
 
 		depth += (line.match(/\{/g) ?? []).length - (line.match(/\}/g) ?? []).length;
 		if (handle && depth <= handle.depth) handle = null;
 	}
 
-	return null;
+	const rank = ({ matcher }) => (matcher === null ? 2 : matcher.startsWith('@') ? 1 : 0);
+	const length = ({ matcher }) => matcher.replace(/\*/g, '').length;
+	const caddyOrder = (a, b) => rank(a) - rank(b) || (rank(a) === 0 ? length(b) - length(a) : 0) || a.order - b.order;
+	const paths = (matcher) =>
+		matcher === null ? null : matcher.startsWith('@') ? (matchers.get(matcher.slice(1)) ?? []) : [matcher];
+
+	return [...handles.sort(caddyOrder), ...outside.sort(caddyOrder)].map(({ matcher, upstream }) => ({
+		paths: paths(matcher),
+		upstream
+	}));
 }
 
 /**
@@ -347,33 +349,43 @@ export function caddyPathMatches(pattern, path) {
 }
 
 /**
- * What a Caddyfile gets wrong about routing.
+ * Where a Caddyfile sends a request path: the upstream of the first route that matches it.
+ *
+ * @param {Array<{ paths: string[]|null, upstream: string|null }>} routes The Caddyfile's routes (`caddyRoutes`).
+ * @param {string} path A request path.
+ * @returns {string|null} The upstream host; null when no route proxies the path.
+ */
+export function caddyUpstream(routes, path) {
+	const route = routes.find(
+		({ paths }) => paths === null || paths.some((pattern) => caddyPathMatches(pattern, path))
+	);
+	return route?.upstream ?? null;
+}
+
+/**
+ * What a Caddyfile gets wrong about routing: every API path must be proxied to the API, and the web app's paths to
+ * the web app (which the catch-all `handle { reverse_proxy webapp:... }` does).
  *
  * @param {string} source The Caddyfile's text.
  * @param {Array<{ path: string, what: string }>} paths The paths that must reach the API.
  * @returns {string[]} One message per problem; empty when there is none.
  */
 export function caddyRouteProblems(source, paths) {
-	const patterns = caddyApiPatterns(source);
-	const toApi = (path) => patterns.some((pattern) => caddyPathMatches(pattern, path));
-	const problems = [];
+	const routes = caddyRoutes(source);
+	const problem = (path, what, expected) => {
+		const upstream = caddyUpstream(routes, path);
+		if (upstream === expected) return [];
+		return [
+			upstream === null
+				? `${path} (${what}) is not proxied to the ${expected}`
+				: `${path} (${what}) goes to ${upstream}, not the ${expected}`
+		];
+	};
 
-	for (const { path, what } of paths) {
-		if (!toApi(path)) problems.push(`${path} (${what}) is not proxied to the ${API_COMPONENT}`);
-	}
-	for (const path of WEB_APP_PATHS) {
-		if (toApi(path)) problems.push(`${path} (the web app) is proxied to the ${API_COMPONENT}`);
-	}
-	const fallback = caddyFallbackUpstream(source);
-	if (fallback !== WEB_APP_COMPONENT) {
-		problems.push(
-			fallback === null
-				? `no catch-all \`handle { reverse_proxy ${WEB_APP_COMPONENT}:... }\`: the web app is not served`
-				: `the catch-all route proxies to ${fallback}, not the ${WEB_APP_COMPONENT}`
-		);
-	}
-
-	return problems;
+	return [
+		...paths.flatMap(({ path, what }) => problem(path, what, API_COMPONENT)),
+		...WEB_APP_PATHS.flatMap((path) => problem(path, 'the web app', WEB_APP_COMPONENT))
+	];
 }
 
 /**
