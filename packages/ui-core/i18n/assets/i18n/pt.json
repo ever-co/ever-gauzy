@@ -5571,6 +5571,7 @@
 		"RETURN_ONLINE": "Retorno Online",
 		"SEARCH": "Pesquisar",
 		"OPEN_SETTINGS": "Abrir Configurações",
+		"OPEN_WEB_PORTAL": "Abrir meu tempo e atividade no aplicativo web",
 		"REFRESH": "Atualizar",
 		"SWITCHED_OFFLINE": "Você mudou para o modo offline agora",
 		"SWITCHED_ONLINE": "Você mudou para o modo online agora.",
@@ -5657,7 +5658,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "Você não é um funcionário ativo de {{ name }}, portanto o cronômetro não pode registrar tempo lá. Você continua trabalhando na sua organização atual.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "A organização está sendo trocada. Inicie o cronômetro quando a troca terminar.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "Você não é um funcionário ativo de {{ name }} e não foi possível voltar para sua organização anterior. Faça login novamente.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "Não foi possível concluir a troca para {{ name }} neste dispositivo. Faça login novamente."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Não foi possível concluir a troca para {{ name }} neste dispositivo. Faça login novamente.",
+			"CONNECTION_LOST": "Você está offline. Seu tempo é salvo neste dispositivo e será sincronizado quando a conexão voltar.",
+			"CONNECTION_RESTORED": "Você está online novamente.",
+			"CONNECTION_RESTORED_SYNCING": "Você está online novamente. Sincronizando {{ count }} item(ns) pendente(s)."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "O rastreador foi parado devido à inatividade!",

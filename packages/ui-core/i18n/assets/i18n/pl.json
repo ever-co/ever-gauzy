@@ -5570,6 +5570,7 @@
 		"RETURN_ONLINE": "Powrót online",
 		"SEARCH": "Szukaj",
 		"OPEN_SETTINGS": "Otwórz ustawienia",
+		"OPEN_WEB_PORTAL": "Otwórz mój czas i aktywność w aplikacji internetowej",
 		"REFRESH": "Odśwież",
 		"SWITCHED_OFFLINE": "Przełączyłeś się teraz w tryb offline",
 		"SWITCHED_ONLINE": "Teraz przełączyłeś się w tryb online",
@@ -5656,7 +5657,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "Nie jesteś aktywnym pracownikiem {{ name }}, więc licznik czasu nie może tam rejestrować czasu. Nadal pracujesz w bieżącej organizacji.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "Trwa przełączanie organizacji. Uruchom licznik czasu po zakończeniu przełączania.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "Nie jesteś aktywnym pracownikiem {{ name }}, a powrót do poprzedniej organizacji nie powiódł się. Zaloguj się ponownie.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "Nie udało się dokończyć przełączania na {{ name }} na tym urządzeniu. Zaloguj się ponownie."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Nie udało się dokończyć przełączania na {{ name }} na tym urządzeniu. Zaloguj się ponownie.",
+			"CONNECTION_LOST": "Jesteś offline. Twój czas jest zapisywany na tym urządzeniu i zostanie zsynchronizowany po przywróceniu połączenia.",
+			"CONNECTION_RESTORED": "Znowu jesteś online.",
+			"CONNECTION_RESTORED_SYNCING": "Znowu jesteś online. Synchronizowanie oczekujących elementów: {{ count }}."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Śledzenie zostało zatrzymane z powodu braku aktywności!",

@@ -5569,6 +5569,7 @@
 		"RETURN_ONLINE": "العودة عبر الإنترنت",
 		"SEARCH": "البحث",
 		"OPEN_SETTINGS": "افتح الإعدادات",
+		"OPEN_WEB_PORTAL": "افتح وقتي ونشاطي في تطبيق الويب",
 		"REFRESH": "تحديث",
 		"SWITCHED_OFFLINE": "لقد قُمت بالتبديل إلى وضع عدم الاتصال الآن.",
 		"SWITCHED_ONLINE": "لقد قمت بالتبديل إلى وضع الانترنت الآن",
@@ -5655,7 +5656,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "أنت لست موظفًا نشطًا في {{ name }}، لذلك لا يمكن للمؤقت تتبع الوقت هناك. ما زلت تعمل في مؤسستك الحالية.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "جارٍ تبديل المؤسسة. ابدأ المؤقت بعد اكتمال التبديل.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "أنت لست موظفًا نشطًا في {{ name }}، وفشلت العودة إلى مؤسستك السابقة. يرجى تسجيل الدخول مرة أخرى.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "تعذّر إكمال التبديل إلى {{ name }} على هذا الجهاز. يرجى تسجيل الدخول مرة أخرى."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "تعذّر إكمال التبديل إلى {{ name }} على هذا الجهاز. يرجى تسجيل الدخول مرة أخرى.",
+			"CONNECTION_LOST": "أنت غير متصل. يتم حفظ وقتك على هذا الجهاز وستتم مزامنته عند عودة الاتصال.",
+			"CONNECTION_RESTORED": "لقد عدت متصلاً.",
+			"CONNECTION_RESTORED_SYNCING": "لقد عدت متصلاً. جارٍ مزامنة {{ count }} من العناصر المعلّقة."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "تم إيقاف التتبع بسبب الخمول!",

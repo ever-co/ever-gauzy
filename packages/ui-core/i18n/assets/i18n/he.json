@@ -5585,6 +5585,7 @@
 		"RETURN_ONLINE": "חזור למצב מקוון",
 		"SEARCH": "חיפוש",
 		"OPEN_SETTINGS": "פתח הגדרות",
+		"OPEN_WEB_PORTAL": "פתח את הזמן והפעילות שלי באפליקציית האינטרנט",
 		"REFRESH": "רענון",
 		"SWITCHED_OFFLINE": "החלפת למצב לא מקוון",
 		"SWITCHED_ONLINE": "החלפת למצב מקוון",
@@ -5672,7 +5673,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "אינך עובד פעיל ב-{{ name }}, ולכן הטיימר אינו יכול לעקוב אחר זמן שם. אתה עדיין עובד בארגון הנוכחי שלך.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "הארגון מוחלף כעת. הפעל את הטיימר לאחר שההחלפה תסתיים.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "אינך עובד פעיל ב-{{ name }}, והחזרה לארגון הקודם שלך נכשלה. נא להתחבר מחדש.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "לא ניתן היה להשלים את המעבר אל {{ name }} במכשיר זה. נא להתחבר מחדש."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "לא ניתן היה להשלים את המעבר אל {{ name }} במכשיר זה. נא להתחבר מחדש.",
+			"CONNECTION_LOST": "אתה במצב לא מקוון. הזמן שלך נשמר במכשיר זה ויסונכרן כשהחיבור יחזור.",
+			"CONNECTION_RESTORED": "חזרת למצב מקוון.",
+			"CONNECTION_RESTORED_SYNCING": "חזרת למצב מקוון. מסנכרן פריטים ממתינים: {{ count }}."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "המעקב נעצר בשל ביטול הפעילות!",

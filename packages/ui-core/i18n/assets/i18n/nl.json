@@ -5571,6 +5571,7 @@
 		"RETURN_ONLINE": "Terugkeren online",
 		"SEARCH": "Zoeken",
 		"OPEN_SETTINGS": "Open Instellingen",
+		"OPEN_WEB_PORTAL": "Mijn tijd en activiteit openen in de webapp",
 		"REFRESH": "Vernieuwen",
 		"SWITCHED_OFFLINE": "Je bent nu overgeschakeld naar de offline modus",
 		"SWITCHED_ONLINE": "Je bent nu overgeschakeld naar de online modus.",
@@ -5657,7 +5658,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "Je bent geen actieve medewerker van {{ name }}, dus de timer kan daar geen tijd registreren. Je werkt nog steeds in je huidige organisatie.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "De organisatie wordt gewisseld. Start de timer zodra het wisselen is voltooid.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "Je bent geen actieve medewerker van {{ name }} en terugschakelen naar je vorige organisatie is mislukt. Meld je opnieuw aan.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "Overschakelen naar {{ name }} kon op dit apparaat niet worden voltooid. Meld je opnieuw aan."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Overschakelen naar {{ name }} kon op dit apparaat niet worden voltooid. Meld je opnieuw aan.",
+			"CONNECTION_LOST": "Je bent offline. Je tijd wordt op dit apparaat bewaard en gesynchroniseerd zodra de verbinding terug is.",
+			"CONNECTION_RESTORED": "Je bent weer online.",
+			"CONNECTION_RESTORED_SYNCING": "Je bent weer online. Openstaande items worden gesynchroniseerd: {{ count }}."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "De tracker is gestopt vanwege inactiviteit!",

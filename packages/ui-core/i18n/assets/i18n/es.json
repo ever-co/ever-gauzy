@@ -5573,6 +5573,7 @@
 		"RETURN_ONLINE": "Volver en línea",
 		"SEARCH": "Buscar",
 		"OPEN_SETTINGS": "Abrir configuración.",
+		"OPEN_WEB_PORTAL": "Abrir mi tiempo y actividad en la aplicación web",
 		"REFRESH": "Actualizar",
 		"SWITCHED_OFFLINE": "Ahora has cambiado al modo sin conexión.",
 		"SWITCHED_ONLINE": "Te has cambiado al modo en línea ahora",
@@ -5659,7 +5660,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "No eres un empleado activo de {{ name }}, por lo que el temporizador no puede registrar tiempo allí. Sigues trabajando en tu organización actual.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "Se está cambiando de organización. Inicia el temporizador cuando termine el cambio.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "No eres un empleado activo de {{ name }} y no se pudo volver a tu organización anterior. Inicia sesión de nuevo.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "No se pudo completar el cambio a {{ name }} en este dispositivo. Inicia sesión de nuevo."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "No se pudo completar el cambio a {{ name }} en este dispositivo. Inicia sesión de nuevo.",
+			"CONNECTION_LOST": "Estás sin conexión. Tu tiempo se guarda en este dispositivo y se sincronizará cuando vuelva la conexión.",
+			"CONNECTION_RESTORED": "Vuelves a estar en línea.",
+			"CONNECTION_RESTORED_SYNCING": "Vuelves a estar en línea. Sincronizando {{ count }} elemento(s) pendiente(s)."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "¡El seguimiento fue detenido debido a la inactividad!",

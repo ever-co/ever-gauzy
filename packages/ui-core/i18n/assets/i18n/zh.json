@@ -5571,6 +5571,7 @@
 		"RETURN_ONLINE": "返程在线",
 		"SEARCH": "搜索",
 		"OPEN_SETTINGS": "打开设置",
+		"OPEN_WEB_PORTAL": "在网页应用中打开我的时间和活动",
 		"REFRESH": "刷新",
 		"SWITCHED_OFFLINE": "你现在切换到了离线模式",
 		"SWITCHED_ONLINE": "你现在切换到了在线模式",
@@ -5657,7 +5658,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "您不是 {{ name }} 的在职员工，因此计时器无法在那里记录时间。您仍在当前组织中工作。",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "正在切换组织。请在切换完成后再启动计时器。",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "您不是 {{ name }} 的在职员工，且未能切换回您之前的组织。请重新登录。",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "无法在此设备上完成切换到 {{ name }}。请重新登录。"
+			"ORGANIZATION_SWITCH_INCOMPLETE": "无法在此设备上完成切换到 {{ name }}。请重新登录。",
+			"CONNECTION_LOST": "您已离线。您的时间会保存在此设备上，并在连接恢复后同步。",
+			"CONNECTION_RESTORED": "您已重新联网。",
+			"CONNECTION_RESTORED_SYNCING": "您已重新联网。正在同步 {{ count }} 个待处理项。"
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "由于不活动，追踪器已停止！",
