@@ -74,7 +74,7 @@ export class CommentController extends CrudController<Comment> {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Query() params: FindOptionsQueryDTO<Comment>
 	): Promise<Comment> {
-		return this.commentService.findOneByIdString(id, params);
+		return this.commentService.findReadableById(id, params);
 	}
 
 	/**

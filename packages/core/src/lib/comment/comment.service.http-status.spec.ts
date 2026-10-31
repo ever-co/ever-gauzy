@@ -4,6 +4,7 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context/request-context';
 import { CommentService } from './comment.service';
+import { CommentParentAccessService } from './parent-access';
 
 /**
  * The comment service turned every failure into a 400, so a missing comment or a missing author employee
@@ -23,6 +24,7 @@ describe('CommentService keeps the status of its client errors', () => {
 		Object.assign(Object.create(CommentService.prototype), {
 			_eventBus: { publish: jest.fn() },
 			_mentionService: { publishMention: jest.fn(), updateEntityMentions: jest.fn() },
+			_parentAccess: new CommentParentAccessService(),
 			...overrides
 		}) as CommentService;
 

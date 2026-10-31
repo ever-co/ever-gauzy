@@ -1,6 +1,7 @@
 import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, ForbiddenException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { DeleteResult, FindOptionsWhere, SaveOptions, UpdateResult } from 'typeorm';
+import { isUUID } from 'class-validator';
 import {
 	BaseEntityEnum,
 	EntitySubscriptionTypeEnum,
@@ -8,17 +9,19 @@ import {
 	ICommentCreateInput,
 	ICommentUpdateInput,
 	ID,
+	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { TenantAwareCrudService } from './../core/crud';
 import { IFindOneOptions } from '../core/crud/icrud.service';
-import { LegacyFindOneOptions } from '../core/utils';
+import { LegacyFindManyOptions, LegacyFindOneOptions } from '../core/utils';
 import { RequestContext } from '../core/context';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
 import { EmployeeService } from '../employee/employee.service';
 import { MentionService } from '../mention/mention.service';
 import { isCallerTenantAdmin, withoutAuthorChange } from '../shared/ownership';
 import { Comment } from './comment.entity';
+import { CommentParentAccessService, scopeCommentReadToParents } from './parent-access';
 import { TypeOrmCommentRepository } from './repository/type-orm-comment.repository';
 import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
 
@@ -40,7 +43,8 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		readonly mikroOrmCommentRepository: MikroOrmCommentRepository,
 		private readonly _eventBus: EventBus,
 		private readonly _employeeService: EmployeeService,
-		private readonly _mentionService: MentionService
+		private readonly _mentionService: MentionService,
+		private readonly _parentAccess: CommentParentAccessService
 	) {
 		super(typeOrmCommentRepository, mikroOrmCommentRepository);
 	}
@@ -73,6 +77,12 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			// Who resolved a comment is not the body's to state either, and a new comment has no resolver.
 			const { mentionEmployeeIds = [], organizationId, ...data } = this.withoutAuthorship(input);
 
+			// A record governed by a comment-access policy (a contact's notes, for one) is written only by those
+			// its policy allows, and a comment on it is stored in the record's own organization. Every other
+			// record keeps the rules above, unchanged.
+			const parent = await this._parentAccess.assertMay('write', input.entity, input.entityId);
+			await this.assertReplyStaysInThread(input.entity, input.entityId, input.parentId);
+
 			// Validate that the employee exists (only a real id can be looked up — an empty one used to
 			// match an arbitrary employee and pass vacuously).
 			if (employeeId) {
@@ -87,7 +97,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				...data,
 				employeeId,
 				tenantId,
-				organizationId
+				organizationId: parent?.organizationId ?? organizationId
 			});
 
 			// Publish mentions for each mentioned employee, if any.
@@ -167,6 +177,13 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				throw new BadRequestException(`Comment with id ${id} not found`);
 			}
 
+			// A comment of a governed record is edited only by those its policy lets write that record's comments,
+			// and a reply it is made into stays in the record's thread.
+			await this._parentAccess.assertMay('write', comment.entity, comment.entityId);
+			if (input?.parentId !== undefined) {
+				await this.assertReplyStaysInThread(comment.entity, comment.entityId, input.parentId);
+			}
+
 			// Update the comment with the new input data. Who wrote and who resolved it are not an edit's to
 			// restate, by the rule every per-user row follows (ever-co/ever-gauzy#11328, withoutAuthorChange):
 			// `createdByUserId` and `createdByUser` never, the author and resolver columns only by a tenant
@@ -203,6 +220,63 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			console.log(`Error while updating comment: ${error.message}`, error);
 			throw new BadRequestException('Comment update failed', error);
 		}
+	}
+
+	/**
+	 * Lists comments (`GET /comment`, the `comments` field). See {@link readWithinParents}.
+	 */
+	public async findAll(filter?: LegacyFindManyOptions<Comment>): Promise<IPagination<Comment>> {
+		return this.readWithinParents(filter?.where, (where) => super.findAll(withWhere(filter, where)));
+	}
+
+	/**
+	 * Lists comments. See {@link readWithinParents}.
+	 */
+	public async find(filter?: LegacyFindManyOptions<Comment>): Promise<Comment[]> {
+		return this.readWithinParents(filter?.where, (where) => super.find(withWhere(filter, where)));
+	}
+
+	/**
+	 * Lists a page of comments (`GET /comment/pagination`). See {@link readWithinParents}.
+	 */
+	public async paginate(filter?: LegacyFindManyOptions<Comment>): Promise<IPagination<Comment>> {
+		return this.readWithinParents(filter?.where, (where) => super.paginate(withWhere(filter, where)));
+	}
+
+	/**
+	 * Counts comments. See {@link readWithinParents}.
+	 */
+	public async count(options?: LegacyFindManyOptions<Comment>): Promise<number> {
+		return this.readWithinParents(options?.where, (where) => super.count(withWhere(options, where)));
+	}
+
+	/**
+	 * Counts comments (`GET /comment/count`, the `commentCount` field). See {@link readWithinParents}.
+	 */
+	public async countBy(options?: FindOptionsWhere<Comment>): Promise<number> {
+		return this.readWithinParents(options, (where) => super.countBy(where as FindOptionsWhere<Comment>));
+	}
+
+	/**
+	 * Reads one comment for a caller (`GET /comment/:id`, the `comment` field).
+	 *
+	 * A comment of a record without a comment-access policy is read exactly as `findOneByIdString` reads it. A
+	 * comment of a governed record is answered to those its policy lets read that record's comments, whoever wrote
+	 * it, as the record's list is.
+	 *
+	 * @param id - The comment.
+	 * @param options - Find options, as `findOneByIdString` takes them.
+	 * @throws {NotFoundException} When the comment, or its governed record, is not one the caller may reach.
+	 * @throws {ForbiddenException} When the caller may not read the comments of its governed record.
+	 */
+	public async findReadableById(id: ID, options?: LegacyFindOneOptions<Comment>): Promise<Comment> {
+		const stored = await this.findGovernedComment(id, !!options?.withDeleted);
+		if (!stored) {
+			return this.findOneByIdString(id, options);
+		}
+
+		await this._parentAccess.assertMay('read', stored.entity, stored.entityId);
+		return this.withoutEmployeeFilter(() => this.findOneByIdString(id, options));
 	}
 
 	/**
@@ -326,6 +400,12 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 */
 	private async assertMayManage(id: ID, withDeleted: boolean): Promise<void> {
 		if (RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			// Any comment of the tenant, as before; a comment of a governed record also needs its policy's write
+			// permission. A missing comment is still the base method's to answer.
+			const stored = await this.findGovernedComment(id, withDeleted);
+			if (stored) {
+				await this._parentAccess.assertMay('write', stored.entity, stored.entityId);
+			}
 			return;
 		}
 
@@ -336,6 +416,105 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		}
 
 		const own = (employeeId ? { employeeId } : { createdByUserId: userId }) as FindOptionsWhere<Comment>;
-		await this.findOneByIdString(id, { where: own, ...(withDeleted ? { withDeleted: true } : {}) });
+		const comment = await this.findOneByIdString(id, { where: own, ...(withDeleted ? { withDeleted: true } : {}) });
+		if (comment) {
+			await this._parentAccess.assertMay('write', comment.entity, comment.entityId);
+		}
 	}
+
+	/**
+	 * Runs a comment list or count read inside what the comment-access policies allow.
+	 *
+	 * The criteria are kept by {@link scopeCommentReadToParents}: an alternative that names one governed record
+	 * (`{ entity, entityId }`) is read only when the record's policy lets the caller read its comments, and every
+	 * other alternative leaves the comments of governed records out. A read whose every alternative names a governed
+	 * record answers all of that record's comments, whoever wrote them (a contact's notes are the contact's, not
+	 * their authors'), while every other read keeps the base scope, so the comments of other records are listed
+	 * exactly as before.
+	 *
+	 * @param where - The read's criteria.
+	 * @param read - The base read, given the criteria to run.
+	 */
+	private async readWithinParents<R>(where: unknown, read: (where: unknown) => Promise<R>): Promise<R> {
+		const scope = scopeCommentReadToParents(where as object, this._parentAccess.governedEntities());
+		for (const { entity, entityId } of scope.parents) {
+			await this._parentAccess.assertMay('read', entity, entityId);
+		}
+
+		return scope.onlyGovernedParents ? this.withoutEmployeeFilter(() => read(scope.where)) : read(scope.where);
+	}
+
+	/**
+	 * The stored comment `id` when it belongs to a record governed by a comment-access policy; `undefined` when it
+	 * belongs to any other record, or is not a comment of the caller's tenant and organization.
+	 *
+	 * The lookup reaches every comment of the caller's scope, whoever wrote it, because it only decides which rule
+	 * applies: what the caller is then answered is still read through that rule.
+	 */
+	private async findGovernedComment(id: ID, withDeleted: boolean): Promise<Comment | undefined> {
+		if (this._parentAccess.governedEntities().length === 0) {
+			return undefined;
+		}
+
+		const stored = await this.withoutEmployeeFilter(() =>
+			this.findOneByIdString(id, withDeleted ? { withDeleted: true } : {})
+		).catch(undefinedWhenNotFound);
+
+		return stored && this._parentAccess.isGoverned(stored.entity) ? stored : undefined;
+	}
+
+	/**
+	 * Keeps a reply in its record's thread when either side is a comment of a governed record.
+	 *
+	 * A reply can be read with its parent (`relations: ['parent']`) and a comment with its replies, so a reply on
+	 * another record would carry a governed record's comment out to readers its policy does not allow, or the
+	 * reverse. Replies between records without a policy keep today's behaviour: nothing is checked.
+	 *
+	 * @param entity - The type of the record the reply belongs to.
+	 * @param entityId - The record the reply belongs to.
+	 * @param parentId - The comment it replies to.
+	 * @throws {NotFoundException} When a governed record's reply names no comment of the tenant.
+	 * @throws {BadRequestException} When the two comments do not belong to the same record.
+	 */
+	private async assertReplyStaysInThread(
+		entity: string,
+		entityId: ID,
+		parentId: ID | null | undefined
+	): Promise<void> {
+		if (!parentId || this._parentAccess.governedEntities().length === 0) {
+			return;
+		}
+
+		const governed = this._parentAccess.isGoverned(entity);
+		const parent = isUUID(parentId)
+			? await this.withoutEmployeeFilter(() =>
+					this.withoutOrganizationBoundary(() => this.findOneByIdString(parentId, { withDeleted: true }))
+				).catch(undefinedWhenNotFound)
+			: undefined;
+
+		if (!parent) {
+			if (governed) {
+				throw new NotFoundException(`Comment with id ${parentId} not found`);
+			}
+			return;
+		}
+
+		const sameRecord = parent.entity === entity && parent.entityId === entityId;
+		if ((governed || this._parentAccess.isGoverned(parent.entity)) && !sameRecord) {
+			throw new BadRequestException('A reply belongs to the same record as the comment it replies to.');
+		}
+	}
+}
+
+/** `filter` with `where` as its criteria, or `filter` itself when the criteria did not change. */
+function withWhere<O extends { where?: unknown }>(filter: O | undefined, where: unknown): O | undefined {
+	return where === filter?.where ? filter : ({ ...(filter ?? {}), where } as O);
+}
+
+/** A lookup's answer when the row is not there, rather than the base finder's 404. */
+function undefinedWhenNotFound(error: unknown): undefined {
+	if (error instanceof NotFoundException) {
+		return undefined;
+	}
+	throw error;
 }

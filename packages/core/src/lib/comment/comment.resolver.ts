@@ -197,7 +197,7 @@ export class CommentResolver {
 	@Query('comment')
 	async comment(@Args('id', { type: () => ID }) id: Id): Promise<Comment | null> {
 		try {
-			return await this.commentService.findOneByIdString(id, {} as FindOptionsQueryDTO<Comment>);
+			return await this.commentService.findReadableById(id, {} as FindOptionsQueryDTO<Comment>);
 		} catch (error) {
 			if (error instanceof NotFoundException) {
 				return null;

@@ -114,6 +114,7 @@ function surfaces() {
 	const commentService = {
 		findAll: jest.fn().mockResolvedValue({ items: ROWS, total: ROWS.length }),
 		findOneByIdString: jest.fn().mockResolvedValue(ROWS[0]),
+		findReadableById: jest.fn().mockResolvedValue(ROWS[0]),
 		countBy: jest.fn().mockResolvedValue(ROWS.length),
 		delete: jest.fn().mockResolvedValue({ affected: 1 }),
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-04-01T10:00:00.000Z') }),
@@ -451,12 +452,12 @@ describe('CommentResolver — one concept, two protocols, the same operations', 
 		expect(await resolver.comment(ROOT)).toBe(ROWS[0]);
 		// The route hands the method the find options it bound from its query string; this surface names
 		// no relation, so it hands the method the route's own default — an empty option object.
-		expect(commentService.findOneByIdString).toHaveBeenCalledWith(ROOT, {});
+		expect(commentService.findReadableById).toHaveBeenCalledWith(ROOT, {});
 	});
 
 	it('answers null for a comment that is not there, which is the REST route’s 404 in this vocabulary', async () => {
 		const { resolver, commentService } = surfaces();
-		commentService.findOneByIdString.mockRejectedValueOnce(new NotFoundException());
+		commentService.findReadableById.mockRejectedValueOnce(new NotFoundException());
 
 		expect(await resolver.comment(REPLY)).toBeNull();
 	});
