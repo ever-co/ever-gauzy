@@ -6,8 +6,11 @@ import { BaseEntityEnum, ID, PermissionsEnum } from '@gauzy/contracts';
  */
 export interface ICommentParent {
 	id: ID;
-	/** The record's organization: a comment posted on it is stored in the same one. */
-	organizationId?: ID | null;
+	/**
+	 * The record's organization: a comment posted on it is stored in the same one. `null` for a record of the whole
+	 * tenant, whose comments then belong to no organization either.
+	 */
+	organizationId: ID | null;
 }
 
 /** Whether a comment of a governed record is being read, or written (posted, edited, withdrawn, removed). */

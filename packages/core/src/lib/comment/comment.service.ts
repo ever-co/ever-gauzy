@@ -115,7 +115,8 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				...(parent ? omit(data, ['organization']) : data),
 				employeeId,
 				tenantId,
-				organizationId: parent?.organizationId ?? organizationId
+				// The record's organization, null for a record of the whole tenant; the stated one otherwise.
+				organizationId: parent ? (parent.organizationId ?? null) : organizationId
 			});
 
 			// Publish mentions for each mentioned employee, if any.

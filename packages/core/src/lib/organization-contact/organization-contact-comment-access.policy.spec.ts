@@ -38,6 +38,15 @@ describe('OrganizationContactCommentAccessPolicy: who may read and write a conta
 		expect(find).toHaveBeenCalledWith(CONTACT_ID);
 	});
 
+	it('answers a contact of the whole tenant with no organization', async () => {
+		const find = jest.fn().mockResolvedValue({ id: CONTACT_ID, organizationId: null, name: 'Acme' });
+
+		await expect(policyWith(find).findAccessibleParent(CONTACT_ID)).resolves.toEqual({
+			id: CONTACT_ID,
+			organizationId: null
+		});
+	});
+
 	it('answers null for a contact the caller cannot reach', async () => {
 		const find = jest.fn().mockRejectedValue(new NotFoundException('The requested record was not found'));
 

@@ -770,6 +770,17 @@ describe('CommentService — the comments of a governed record follow its policy
 			expect(written).not.toHaveProperty('organization');
 		});
 
+		it('stores a note on a contact of the whole tenant in no organization, whatever the body states', async () => {
+			as([PermissionsEnum.ORG_CONTACT_EDIT]);
+			(policy.findAccessibleParent as jest.Mock).mockResolvedValueOnce({ id: CONTACT_ID, organizationId: null });
+
+			await service.create(note({ organization: { id: 'organization-elsewhere' } } as any));
+
+			const written = baseCreate.mock.calls[0][0];
+			expect(written.organizationId).toBeNull();
+			expect(written).not.toHaveProperty('organization');
+		});
+
 		it('keeps a project comment’s stated organization relation, as before', async () => {
 			as([]);
 

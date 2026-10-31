@@ -23,7 +23,7 @@ export class OrganizationContactCommentAccessPolicy implements ICommentParentAcc
 	async findAccessibleParent(entityId: ID): Promise<ICommentParent | null> {
 		try {
 			const contact = await this.organizationContactService.findOneByIdString(entityId);
-			return contact ? { id: contact.id, organizationId: contact.organizationId } : null;
+			return contact ? { id: contact.id, organizationId: contact.organizationId ?? null } : null;
 		} catch (error) {
 			if (error instanceof NotFoundException) {
 				return null;
