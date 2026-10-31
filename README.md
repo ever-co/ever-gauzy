@@ -10,6 +10,8 @@
 [![License: AGPL v3][uri_license_image]][uri_license]
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ever-co/ever-gauzy)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ever-co/ever-gauzy)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/GitHub%20Codespaces-Open-blue?logo=github)](https://codespaces.new/ever-co/ever-gauzy)
+[![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/ever-co/ever-gauzy)
 
 ## 💡 What's New
 - 🔥🔥🔥 we just released [Ever Works](https://github.com/ever-works/ever-works) - An open agentic runtime that autonomously researches, ships, and maintains entire businesses, 24/7. Please grab it now from <https://github.com/ever-works/ever-works> and make it ⭐⭐⭐ on GitHub!
@@ -218,6 +220,16 @@ Note: those credentials exist only because this stack runs with `DEMO=true`. The
 
 Note: we recommend using Kubernetes for production workloads instead of Docker Compose!
 
+#### Self-hosting with Caddy (automatic HTTPS)
+
+[`docker-compose.caddy.yml`](docker-compose.caddy.yml) runs Gauzy (prebuilt API and web app images, PostgreSQL) behind [Caddy](https://caddyserver.com), which obtains and renews HTTPS certificates by itself:
+
+-   `cp .env.caddy.sample .env.caddy` and fill in every empty value in `.env.caddy`: the database password and the four secrets above (e.g. from `openssl rand -hex 64`), and the three `DEMO_*_PASSWORD` values (e.g. from `openssl rand -hex 24`: the sign-in form takes at most 50 characters). Docker Compose refuses to start while one is missing. `.env.caddy` is git-ignored.
+-   Set `GAUZY_DOMAIN` to your domain (its DNS must point at the server, with ports 80 and 443 open) to get a Let's Encrypt / ZeroSSL certificate, or keep `localhost` to try it locally with Caddy's own certificate authority (your browser warns until you trust it).
+-   Run `docker compose -f docker-compose.caddy.yml --env-file .env.caddy up -d` and open `https://<GAUZY_DOMAIN>`.
+
+Caddy is the only container published on the host. It serves everything from one origin: `/api`, `/graphql` (including subscriptions), `/public` (uploaded files) and `/swg` (Swagger UI, with the OpenAPI document at `/swg-json` and `/swg-yaml`) go to the API, the rest to the web app, and `TRUST_PROXY=1` is set for you because the API is reachable only through Caddy. The stack also runs Redis and the worker, which fires the scheduled jobs (outbox dispatch, webhook retries, sweeps): without them outbound webhooks, the search index and GraphQL subscriptions receive no events. Other settings are read from `.env.compose`. Uploaded files are kept in a volume. The routing lives in [`.deploy/caddy/Caddyfile`](.deploy/caddy/Caddyfile).
+
 #### Build
 
 -   Edit `.env.compose` (if needed) to use your custom settings, e.g. DB type.
@@ -267,6 +279,25 @@ Notes:
 -   it is possible to run generation of extremely large amounts of fake data for demo purposes/testing with `yarn seed:all` (warning: takes ~10 min to complete)
 -   local runs log one line per API request (method, path, status, duration and request id; headers, bodies and sensitive parameter values are never logged): `LOG_HTTP_REQUESTS=true` in `.env.local`. Set it to `false` to silence it; it is off by default everywhere else. It covers the REST routes under `/api`; GraphQL operations on `/graphql` are not logged.
 
+#### Dev Container / GitHub Codespaces
+
+The repository ships a [Dev Container](https://containers.dev) definition in [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json): Node 26 and Yarn 1.22, Docker (inside the container) and the GitHub CLI, with ports 3000 (API) and 4200 (web UI) forwarded.
+
+-   Open the repository in [GitHub Codespaces](https://codespaces.new/ever-co/ever-gauzy) (pick a machine with at least 4 cores and 16 GB of memory), or in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension ("Dev Containers: Clone Repository in Container Volume" is the fastest on Windows and macOS).
+-   `yarn bootstrap` runs once when the container is created. Then run `yarn start` as described above (SQLite by default).
+-   In a codespace, terminals set `API_BASE_URL` to the forwarded API URL `https://<codespace>-3000.app.github.dev`, and `CLIENT_BASE_URL` and `ALLOWED_ORIGINS` to the forwarded web UI URL `https://<codespace>-4200.app.github.dev` ([`.devcontainer/codespaces-env.sh`](.devcontainer/codespaces-env.sh)). Values you set yourself win: in the shell, then in `.env.local`, then in `.env`. The API keeps whichever value is used over the localhost URLs of the tracked `.env.local` (the script lists them in `ENV_LOCAL_NO_OVERRIDE`). The web UI calls the API from your browser, which cannot reach a private forwarded port, so set port 3000 to **Public** in the Ports view (anyone with its URL can then reach that development API and its default seeded accounts: switch it back when you are done). In VS Code desktop you can instead keep the forwarded localhost ports: `export API_BASE_URL=http://localhost:3000 CLIENT_BASE_URL=http://localhost:4200 ALLOWED_ORIGINS=http://localhost:4200` before `yarn start`.
+-   To use PostgreSQL, Redis, MinIO and the other services instead, run `docker compose -f docker-compose.infra.yml up -d` inside the container and point `.env` / `.env.local` at them.
+
+#### Debugging the API in VS Code
+
+[`.vscode/launch.json`](.vscode/launch.json) has three configurations:
+
+-   **Debug Server** attaches to `yarn start:api` or `yarn start:worker` (both listen for a debugger on port 9229, so debug one at a time) and re-attaches after every rebuild. For breakpoints in startup code (bootstrap, module initialization, migrations, seeds), start with `yarn start:api:debug` or `yarn start:worker:debug` instead: the process waits for the debugger before it runs any code, and continues once **Debug Server** has set the breakpoints.
+-   **Launch Program** builds and starts the API in watch mode under the debugger, without a separate terminal or port, so startup breakpoints bind on every start.
+-   **Debug Nest Framework** runs the API last built (`dist/apps/api/main.js`) under the debugger, without building it again.
+
+Breakpoints bind in `apps/api/src` and in the workspace packages (`packages/*/src`): the API and worker builds rewrite the source maps of the packages they copy into `dist/apps/<app>/node_modules/@gauzy`, so that they still lead to the sources. With VS Code connected to WSL (Remote - WSL) this works as is; Windows VS Code attaching to an API that runs inside WSL also needs `localRoot` and `remoteRoot` (the repository path on Windows and in WSL) in **Debug Server**.
+
 #### Optional / Recommended for Production
 
 -   Optionally (recommended for production) install and run [PostgreSQL](https://www.postgresql.org) version 14 or later (16.x recommended for production). Note: other DB can be configured manually in TypeORM / MikroORM / Knex. The default DB is set to SQLite (recommended for testing/demo purposes only). Set `DB_CREATE_IF_NOT_EXISTS=true` to let the API create the `DB_NAME` database on a PostgreSQL / MySQL server that does not have it yet (off by default; the DB user needs the `CREATEDB` / `CREATE` privilege, and on PostgreSQL `DB_CREATE_MAINTENANCE_DB`, default `postgres`, names the database it connects to for that).
@@ -290,6 +321,9 @@ Notes:
 
 #### DigitalOcean App Platform
 
+[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/ever-co/ever-gauzy/tree/develop)
+
+-   The button above creates an App Platform app from [`.do/deploy.template.yaml`](.do/deploy.template.yaml): the prebuilt API, web app and worker images, an internal Redis and a development PostgreSQL database, served from one URL (`/api`, `/graphql`, `/public`, `/swg`, `/swg-json` and `/swg-yaml` go to the API, everything else to the web app). The worker and Redis deliver events (outbound webhooks, the search index, GraphQL subscriptions). Before you click "Create", fill in the secrets it asks for: `JWT_SECRET`, `JWT_REFRESH_TOKEN_SECRET`, `JWT_VERIFICATION_TOKEN_SECRET` and `EXPRESS_SESSION_SECRET` (e.g. from `openssl rand -hex 64`), and the three `DEMO_*_PASSWORD` values (e.g. from `openssl rand -hex 24`: the sign-in form takes at most 50 characters). The API refuses to start or to seed its first accounts without them (see "Production" above). The first start migrates and seeds the database, which takes a few minutes. Uploaded files live in the API container, which loses them on every redeploy, until you configure object storage (`FILE_PROVIDER`, e.g. DigitalOcean Spaces), and the development database is meant for trying Gauzy out: switch to a managed production database for real use.
 -   For the most simple deployment scenarios (e.g. for yourself or your small organization), check our [DigitalOcean App Platform configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.do) and corresponding [GitHub Action](https://github.com/ever-co/ever-gauzy/blob/develop/.github/workflows/deploy-do-app-platform-stage.yml).
 
 #### Virtual Instances / Droplets (via SSH)
@@ -337,13 +371,16 @@ Deploy Ever Gauzy instantly with one click on [RepoCloud](https://repocloud.io/d
 
 ## 💌 Contact Us
 
+<a href="https://cal.com/ever"><img src="https://cal.com/book-with-cal-dark.svg" alt="Book a call with Ever" /></a>
+
+-   [Book a call with us](https://cal.com/ever) on Cal.com
 -   [Ever.co Website Contact Us page](https://ever.co/contacts)
 -   [Slack Community](https://join.slack.com/t/gauzy/shared_invite/enQtNzc5MTA5MDUwODg2LTI0MGEwYTlmNWFlNzQzMzBlOWExNTk0NzAyY2IwYWYwMzZjMTliYjMwNDI3NTJmYmM4MDQ4NDliMDNiNDY1NWU)
 -   [Discord Chat](https://discord.gg/hKQfn4j)
 -   [![Gitter](https://badges.gitter.im/JoinChat.svg)](https://gitter.im/ever-co/ever-gauzy?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 -   [![Get help on Codementor](https://cdn.codementor.io/badges/get_help_github.svg)](https://www.codementor.io/evereq?utm_source=github&utm_medium=button&utm_term=evereq&utm_campaign=github)
 -   For business inquiries: <mailto:gauzy@ever.co>
--   Please report security vulnerabilities to <mailto:security@ever.co>
+-   Please report security vulnerabilities privately, with [GitHub private vulnerability reporting](https://github.com/ever-co/ever-gauzy/security/advisories/new) or to <mailto:security@ever.co> (see our [Security Policy](SECURITY.md))
 -   [Gauzy Platform @ Twitter](https://twitter.com/gauzyplatform)
 -   [Gauzy Platform @ Facebook](https://www.facebook.com/gauzyplatform)
 
@@ -355,7 +392,7 @@ See more details in the [LICENSES.md](LICENSES.md).
 
 In a production setup, all client-side to server-side (backend, APIs) communications should be encrypted using HTTPS/WSS/SSL (REST APIs, GraphQL endpoint, Socket.io WebSockets, etc.).
 
-If you discover any issue regarding security, please disclose the information responsibly by sending an email to <mailto:security@ever.co> or on [huntr](https://huntr.com) and not by creating a GitHub issue.
+If you discover any issue regarding security, please disclose the information responsibly and privately, not by creating a public GitHub issue: report it with [GitHub private vulnerability reporting](https://github.com/ever-co/ever-gauzy/security/advisories/new) or by sending an email to <mailto:security@ever.co>. See our [Security Policy](SECURITY.md) for what to include and what happens next.
 
 ## 🛡️ License
 

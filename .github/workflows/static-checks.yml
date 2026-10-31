@@ -501,3 +501,31 @@ jobs:
       - name: The latest-mac.yml minimum-macOS edit keeps the manifest and swaps it safely
         if: always()
         run: node --test .github/actions/set-mac-minimum-system-version/set-mac-minimum-system-version.test.cjs
+
+      # The API and worker builds copy every compiled @gauzy package into dist/apps/<app>/node_modules/@gauzy and
+      # rewrite the copied source maps so they still lead to packages/*/src; without that, breakpoints in the
+      # packages never bind and stack traces point to files that do not exist (#9573). Only a full API build runs
+      # that copy, so its cases run here (a temporary workspace: no build, no install).
+      - name: The API and worker builds keep the copied packages' source maps pointing at the sources
+        if: always()
+        run: node --test apps/api/config/source-map-rebase.test.mjs
+
+      # In a GitHub codespace the browser reaches the forwarded ports, not localhost: the dev container points the API
+      # and web UI URLs at them there, and changes nothing anywhere else. Only a codespace runs that path.
+      - name: The dev container's Codespaces URLs apply in a codespace only and never override a set value
+        if: always()
+        run: node --test .devcontainer/codespaces-env.test.mjs
+
+      # In production the API refuses to start without its JWT and session secrets, and to seed without the
+      # DEMO_*_PASSWORD values (packages/core/src/lib/bootstrap/validate-secrets.ts). The one-click templates
+      # (Deploy to DigitalOcean, the Caddy compose file and its env sample) must ask the operator for each of them
+      # and ship none: a missing one deploys an API that never starts, a filled-in one is a published credential.
+      # They also serve the web app and the API from one origin, so every path the API declares (REST prefix,
+      # GraphQL, uploaded files) must be routed to the API, or that feature silently does not work.
+      - name: The self-hosting templates ask for every secret the API needs, ship none, and route every API path
+        if: always()
+        run: node tools/scripts/self-hosting-templates-check.mjs
+
+      - name: The self-hosting templates gate reads every shape it must
+        if: always()
+        run: node --test tools/scripts/self-hosting-templates-check.test.mjs
