@@ -1851,12 +1851,17 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 			key,
 			planId: BETTER_PLAN,
 			settlement: 'CHARGED',
-			net: '92.900000'
+			net: '92.900000',
+			// The record says itself that its charge was made, for as long as it stands.
+			settledAt: expect.any(String),
+			moved: true
 		});
 
-		// An hour later the same change is priced lower, under another key. It resumes the record instead: the charge is
-		// replayed from its claim rather than raised again, and the move is applied.
+		// An hour later the same change is priced lower, under another key. It resumes the record instead, and the claim
+		// the charge was made under is gone by then (its retention ended): the record's own mark is what keeps the charge
+		// from being raised again, and the move is applied.
 		jest.setSystemTime(AN_HOUR_LATER);
+		fixture.idempotencyService.forget();
 
 		const retried = await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
 
@@ -1909,7 +1914,9 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		});
 
 		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN }).catch(() => undefined);
+		// Neither the claim nor the record's own mark is left to say the row was written: the row is what says it.
 		fixture.idempotencyService.forget();
+		delete fixture.subscription(SUBSCRIPTION).metadata.changeIntent.settledAt;
 
 		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
 
@@ -1917,28 +1924,91 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		expect(fixture.subscription(SUBSCRIPTION).metadata?.['pendingCredit']).toMatchObject({ amount: '-30.970000' });
 	});
 
-	it('releases the record and the plan’s reservation when the charge fails', async () => {
+	it('releases the record and the plan’s reservation when the settlement fails before anything is charged', async () => {
 		let during: Row = {};
-		const fixture = subscriptionFixture({
-			prices: UPGRADE,
-			onProration: async () => {
-				during = {
-					reservedPlanId: fixture.subscription(SUBSCRIPTION).reservedPlanId,
-					live: await fixture.planService.hasLiveSubscriptions(BETTER_PLAN)
-				};
+		const fixture = subscriptionFixture({ prices: UPGRADE });
 
-				throw new BadRequestException('PAYMENT_DECLINED: the card was declined.');
-			}
+		// The payer is refused: the order path is never reached.
+		jest.spyOn(fixture.service as any, 'resolvePayer').mockImplementation(async () => {
+			during = {
+				reservedPlanId: fixture.subscription(SUBSCRIPTION).reservedPlanId,
+				live: await fixture.planService.hasLiveSubscriptions(BETTER_PLAN)
+			};
+
+			return {
+				refusal: {
+					code: 'SUBSCRIPTION_PAYMENT_METHOD_MISSING',
+					message: 'No payment instrument is remembered for this subscription.'
+				}
+			};
 		});
 
-		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow('PAYMENT_DECLINED');
+		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow(
+			'SUBSCRIPTION_PAYMENT_METHOD_MISSING'
+		);
 
-		// Held while the charge was being raised...
+		// Held while the change was being settled...
 		expect(during).toEqual({ reservedPlanId: BETTER_PLAN, live: true });
 		// ...and released once it failed: the plan may be updated again, and another change is not refused.
+		expect(fixture.prorationCalls).toEqual([]);
 		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: PLAN, reservedPlanId: null });
 		expect(fixture.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toBeUndefined();
 		expect(await fixture.planService.hasLiveSubscriptions(BETTER_PLAN)).toBe(false);
+	});
+
+	it('keeps the record when the order call fails, and a repeat raises the charge under the same key', async () => {
+		// The order path was reached, so the charge may have been raised before the call failed: the record stays, and the
+		// repeat goes back to the order path under the same key, which it replays when the order exists.
+		let failures = 1;
+		const fixture = subscriptionFixture({
+			prices: UPGRADE,
+			onProration: async () => {
+				if (failures > 0) {
+					failures -= 1;
+
+					throw new Error('ORDER_PATH_TIMEOUT: the order service did not answer.');
+				}
+			}
+		});
+
+		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow('ORDER_PATH_TIMEOUT');
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: PLAN, reservedPlanId: BETTER_PLAN });
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toMatchObject({ settlement: 'CHARGED' });
+
+		// Straight away the claim is still held by the failed call; once its lock ages out, the repeat takes it over.
+		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow(
+			/SUBSCRIPTION_PRORATION_IN_FLIGHT/
+		);
+		fixture.idempotencyService.advanceBy(3 * 60 * 1000);
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		expect(fixture.prorationCalls).toHaveLength(2);
+		expect(fixture.prorationCalls[1].idempotencyKey).toBe(fixture.prorationCalls[0].idempotencyKey);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
+	});
+
+	it('resumes a recorded change after a renewal moved the subscription on, as it was settled', async () => {
+		const fixture = subscriptionFixture({ prices: UPGRADE, onSubscriptionUpdate: raceTheApply(3) });
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN }).catch(() => undefined);
+
+		// The billing run renews the subscription into April with the change still recorded.
+		Object.assign(fixture.subscription(SUBSCRIPTION), {
+			currentPeriodStart: new Date(APRIL),
+			currentPeriodEnd: new Date('2026-05-01T00:00:00.000Z'),
+			nextBillingAt: new Date('2026-05-01T00:00:00.000Z'),
+			version: fixture.subscription(SUBSCRIPTION).version + 1
+		});
+		jest.setSystemTime(new Date('2026-04-10T00:00:00.000Z'));
+
+		const resumed = await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		// The same change, recognised although the period moved: applied as settled in March, not charged again.
+		expect(resumed).toMatchObject({ settlement: 'CHARGED', net: '92.900000' });
+		expect(fixture.prorationCalls).toHaveLength(1);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toBeUndefined();
 	});
 
 	it('leaves the record to the request already settling the same change', async () => {
@@ -2044,14 +2114,41 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 			})
 		);
 
-		// Eleven minutes old, and nothing was charged: it is replaced with nothing to reverse.
-		const unsettled = subscriptionFixture({ prices: UPGRADE, subscriptions: [recordedAt(11 * 60 * 1000)] });
+		// Eleven minutes old, and no claim is left for its charge: a completed claim is deleted once its retention ends, so
+		// a missing one proves nothing, and the charge is recorded as unknown rather than taken for one never made.
+		const unclaimed = subscriptionFixture({ prices: UPGRADE, subscriptions: [recordedAt(11 * 60 * 1000)] });
 
-		await unsettled.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+		await unclaimed.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
 
-		expect(unsettled.subscription(SUBSCRIPTION).planId).toBe(BETTER_PLAN);
-		expect(unsettled.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toBeUndefined();
-		expect(unsettled.events.map((event) => event.name)).not.toContain('subscription.settlement-reversal-required');
+		expect(unclaimed.subscription(SUBSCRIPTION).planId).toBe(BETTER_PLAN);
+		expect(unclaimed.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toEqual([
+			expect.objectContaining({ key: abandoned.key, settled: 'UNKNOWN' })
+		]);
+
+		// Eleven minutes old, a credit, and no `CREDIT` row carries its key (the rows are never deleted): nothing to reverse.
+		const uncredited = subscriptionFixture({
+			prices: UPGRADE,
+			billings: [marchCycle()],
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					reservedPlanId: 'plan-3',
+					metadata: {
+						changeIntent: {
+							...abandoned,
+							settlement: 'DEFERRED',
+							net: '-10.000000',
+							at: new Date(MID_MARCH.getTime() - 11 * 60 * 1000).toISOString()
+						}
+					}
+				})
+			]
+		});
+
+		await uncredited.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		expect(uncredited.subscription(SUBSCRIPTION).planId).toBe(BETTER_PLAN);
+		expect(uncredited.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toBeUndefined();
+		expect(uncredited.events.map((event) => event.name)).not.toContain('subscription.settlement-reversal-required');
 	});
 });
 

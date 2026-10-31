@@ -295,7 +295,11 @@ interface IChangeIntent {
 	 * is repeated.
 	 */
 	key: string;
-	/** What changes, the amount aside: the same change repeated resumes this record rather than pricing another. */
+	/**
+	 * What changes — the plan, the quantity, the lines and the description — with the amount and the period aside: the
+	 * same change repeated resumes this record rather than pricing another, in the period it was recorded in or after a
+	 * renewal moved the subscription on.
+	 */
 	change: string;
 	/** The plan the change moves to; reserved on the row (`reservedPlanId`) until the change is applied or released. */
 	planId: ID | null;
@@ -310,6 +314,14 @@ interface IChangeIntent {
 	description: string;
 	/** When the change was recorded or last resumed: what tells a change still settling from an abandoned one. */
 	at: string;
+	/**
+	 * When the settlement was made, written only when the apply that should have followed it could not be: a repeat of
+	 * the change applies it without settling it again, however long after (the claim a charge was made under is deleted
+	 * once its retention ends), and a change replacing it knows its settlement stands.
+	 */
+	settledAt?: string;
+	/** Whether that settlement moved money outside the row: a charge, or a `CREDIT` adjustment written. */
+	moved?: boolean;
 }
 
 /** Whether a recorded change's settlement moved money, as far as the stores that took it can tell (`settlementOf`). */
@@ -2958,11 +2970,11 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			: 'WAIVED';
 		const periodStart = period.start.toISOString();
 		const quantity = change.quantity !== undefined ? normalizeDecimal(change.quantity, subscription.quantity) : null;
+		// The period is left out, so a repeat after a renewal is still the same change; the key carries it.
 		const identity = this.hash({
 			planId: change.planId ?? null,
 			quantity,
 			lines: change.after.map((line) => [line.variantId, line.quantity, line.unitPrice, line.position]),
-			periodStart,
 			description: change.description
 		});
 		const amount = net.toStorageString();
@@ -2993,17 +3005,27 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		let moved: boolean;
 
-		try {
-			moved = await this.settleChange(subscription, held);
-		} catch (error) {
-			// Nothing was settled — the payer was refused, the order path failed, the credit was not written — so the
-			// record and its reservation go, and the target plan is free to be updated again. A change another request is
-			// settling under the same key keeps them: the record is that request's as much as this one's.
-			if (!(error instanceof ProrationInFlight)) {
-				await this.releaseChange(subscription.id, held);
-			}
+		if (held.settledAt) {
+			// Resumed after its settlement was made and its apply failed: it is applied, not settled again.
+			moved = held.moved === true;
+		} else {
+			const progress = { started: false };
 
-			throw error;
+			try {
+				moved = await this.settleChange(subscription, held, progress);
+			} catch (error) {
+				// Released only when the failure is known to come before anything was settled — the payer was refused, the
+				// order capability is missing — so the target plan is free to be updated again. Once the order path or the
+				// credit's row was reached, a failure there or in completing the claim after it may have left money moved:
+				// the record stays, a repeat of the change resumes it under the same key (which the order path replays),
+				// and a change replacing it records its settlement for reversal. A change another request is settling under
+				// the same key keeps it too: the record is that request's as much as this one's.
+				if (!progress.started && !(error instanceof ProrationInFlight)) {
+					await this.releaseChange(subscription.id, held);
+				}
+
+				throw error;
+			}
 		}
 
 		await this.applySettledChange(subscription.id, change, held, moved);
@@ -3052,7 +3074,9 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * applied or released.
 	 *
 	 * A change recorded already is resumed when it is the same change — a retry of a request whose write was refused,
-	 * or a second click — so its key, and the claim and the credit under it, are shared. Another change is refused while
+	 * or a second click — so its key, and the claim and the credit under it, are shared. It is resumed as recorded, with
+	 * the period and the amounts it was settled on, also after a renewal moved the subscription on: what it charged or
+	 * credited is what it settled, and it takes hold when it is applied. Another change is refused while
 	 * the record is fresh; one abandoned past {@link CHANGE_INTENT_LEASE_MS} is replaced, and its settlement, when the
 	 * stores that took it say it moved money or cannot tell, is recorded for reversal with the write that replaces it.
 	 *
@@ -3146,19 +3170,23 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 *
 	 * @param subscription The subscription, as the change read it.
 	 * @param intent The record the change settles under.
+	 * @param progress Set once the settlement reaches the order path or the credit's row: from there on a failure may
+	 * have left money moved.
 	 * @returns Whether money moved outside the subscription's own row: a charge, or a `CREDIT` adjustment written.
 	 */
-	private async settleChange(subscription: Subscription, intent: IChangeIntent): Promise<boolean> {
-		const net = Money.of(intent.net, intent.currency);
-
+	private async settleChange(
+		subscription: Subscription,
+		intent: IChangeIntent,
+		progress: { started: boolean }
+	): Promise<boolean> {
 		if (intent.settlement === 'CHARGED') {
-			await this.chargeProration(subscription, net, intent.description, intent.key);
+			await this.chargeProration(subscription, intent, progress);
 
 			return true;
 		}
 
 		if (intent.settlement === 'DEFERRED') {
-			return await this.appendCredit(subscription, net, intent.description, intent.key);
+			return await this.appendCredit(subscription, intent, progress);
 		}
 
 		return false;
@@ -3267,7 +3295,57 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					continue;
 				}
 
+				if (moved && isVersionConflict(error)) {
+					await this.markSettled(id, intent);
+				}
+
 				throw error;
+			}
+		}
+	}
+
+	/**
+	 * Writes on a change's record that its settlement was made, when the apply that should have followed could not be
+	 * written: the record then says so itself, for as long as it stands, rather than through a claim whose retention
+	 * ends. A mark that cannot be written is logged; the claim still replays the charge until its retention ends, and the
+	 * order path replays its own key.
+	 *
+	 * @param id The subscription.
+	 * @param intent The record the settlement was made under.
+	 */
+	private async markSettled(id: ID, intent: IChangeIntent): Promise<void> {
+		for (let attempt = 1; ; attempt += 1) {
+			try {
+				const current = await this.findOneScoped(id);
+				const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
+				const recorded = this.changeIntentOf(metadata);
+
+				if (recorded?.key !== intent.key || recorded.settledAt) {
+					return;
+				}
+
+				metadata[CHANGE_INTENT] = { ...recorded, settledAt: new Date().toISOString(), moved: true };
+
+				await commitVersionedUpdate<Subscription>(this, {
+					where: currentScope(),
+					id,
+					expectation: this.readVersionPredicate(current, ANY_VERSION),
+					patch: { metadata }
+				});
+
+				return;
+			} catch (error) {
+				if (attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				this.logger.error(
+					`Subscription ${id}: the change ${intent.key} was settled and not applied, and its record could not be marked settled: ${
+						(error as Error)?.message ?? error
+					}`
+				);
+
+				return;
 			}
 		}
 	}
@@ -3431,27 +3509,28 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
-	 * Whether an abandoned change's settlement moved money, as the stores that took it tell: the charge's claim, or the
-	 * `CREDIT` adjustment carrying the change's key. A claim still held means a charge that may or may not have been
-	 * raised, which nothing here can tell.
+	 * Whether an abandoned change's settlement moved money: as its record says when it was marked settled
+	 * (`markSettled`), otherwise as the stores that took it tell. A charge is known settled only by its completed claim;
+	 * a claim still held, or none at all, proves nothing — a completed claim is deleted once its retention ends — so the
+	 * charge is unknown. A credit is known by its `CREDIT` row, which carries the change's key and is never deleted.
 	 *
 	 * @param subscription The subscription.
 	 * @param intent The abandoned record.
 	 * @returns `SETTLED`, `UNKNOWN`, or `UNSETTLED` when nothing moved.
 	 */
 	private async settlementOf(subscription: Subscription, intent: IChangeIntent): Promise<ISettlementState> {
+		if (intent.settledAt) {
+			return intent.moved ? 'SETTLED' : 'UNSETTLED';
+		}
+
 		if (intent.settlement === 'CHARGED') {
 			const claim = await this.idempotencyService.findByKey(PRORATION_SCOPE, intent.key);
 
-			return claim?.status === IdempotencyStatus.COMPLETED
-				? 'SETTLED'
-				: claim?.status === IdempotencyStatus.IN_PROGRESS
-				? 'UNKNOWN'
-				: 'UNSETTLED';
+			return claim?.status === IdempotencyStatus.COMPLETED ? 'SETTLED' : 'UNKNOWN';
 		}
 
 		if (intent.settlement === 'DEFERRED') {
-			const owner = await this.billingService.findByPeriod(subscription.id, new Date(intent.periodStart));
+			const owner = await this.currentPeriodBilling(subscription, intent.periodStart);
 			const rows = owner
 				? await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, owner.id)
 				: [];
@@ -3786,14 +3865,18 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * still settles on its own account.
 	 *
 	 * @param subscription The subscription that changed.
-	 * @param net What is owed, positive.
-	 * @param description What the change was.
-	 * @param key The key of the recorded change (`reserveChange`), which the charge is claimed and raised under.
+	 * @param intent The recorded change (`reserveChange`): what is owed, positive, the period it was priced in, and the
+	 * key the charge is claimed and raised under.
+	 * @param progress Set just before the order path is called: from there on a failure may have left a charge raised.
 	 * @throws BadRequestException when the order capability is not registered, or when the remembered
 	 * payer may not be charged.
 	 * @throws ProrationInFlight when the identical change is already being settled.
 	 */
-	private async chargeProration(subscription: Subscription, net: Money, description: string, key: string): Promise<void> {
+	private async chargeProration(
+		subscription: Subscription,
+		intent: IChangeIntent,
+		progress: { started: boolean }
+	): Promise<void> {
 		if (!this.orderGateway) {
 			throw new BadRequestException(
 				'SUBSCRIPTION_ORDER_GATEWAY_UNAVAILABLE: the order capability is not registered, so the difference this change produced cannot be charged.'
@@ -3806,8 +3889,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			throw new BadRequestException(`${payer.refusal.code}: ${payer.refusal.message}`);
 		}
 
-		const amount = net.toStorageString();
-		const periodStart = subscription.currentPeriodStart ? new Date(subscription.currentPeriodStart).toISOString() : '';
+		// The record's own amount and period, so a change resumed after a renewal is claimed as it was first claimed.
+		const amount = intent.net;
+		const periodStart = intent.periodStart;
+		const key = intent.key;
 		const claim = await this.idempotencyService.claim({
 			scope: PRORATION_SCOPE,
 			key,
@@ -3824,12 +3909,14 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			throw new ProrationInFlight();
 		}
 
+		progress.started = true;
+
 		const result = await this.orderGateway.raiseProrationOrder({
 			subscriptionId: subscription.id,
 			customerId: subscription.customerId,
 			currency: subscription.currency,
 			amount,
-			description,
+			description: intent.description,
 			paymentAccountHolderId: payer.accountHolderId,
 			paymentMethodTokenId: payer.paymentMethodTokenId,
 			idempotencyKey: key
@@ -3858,20 +3945,25 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * that stopped after writing the row finds it too.
 	 *
 	 * @param subscription The subscription that changed.
-	 * @param net The negative difference the change produced.
-	 * @param description What the change was.
-	 * @param key The key of the recorded change (`reserveChange`).
+	 * @param intent The recorded change (`reserveChange`): the negative difference it produced, the period it was priced
+	 * in (whose cycle the row is written against, also when it is resumed after a renewal) and its key.
+	 * @param progress Set once the row may be written: from there on a failure may have left it written.
 	 * @returns Whether the cycle carries the change's `CREDIT` row: false when the period has no cycle to attach it to.
 	 * @throws ProrationInFlight when another request is writing the same change's row.
 	 */
-	private async appendCredit(subscription: Subscription, net: Money, description: string, key: string): Promise<boolean> {
-		const owner = await this.currentPeriodBilling(subscription);
+	private async appendCredit(
+		subscription: Subscription,
+		intent: IChangeIntent,
+		progress: { started: boolean }
+	): Promise<boolean> {
+		const owner = await this.currentPeriodBilling(subscription, intent.periodStart);
 
 		if (!owner) {
 			return false;
 		}
 
-		const amount = net.toStorageString();
+		const amount = intent.net;
+		const key = intent.key;
 		const claim = await this.idempotencyService.claim({
 			scope: PRORATION_CREDIT_SCOPE,
 			key,
@@ -3886,6 +3978,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			throw new ProrationInFlight();
 		}
 
+		progress.started = true;
+
 		const written = (await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, owner.id)).find(
 			(row) => row.metadata?.['changeKey'] === key
 		);
@@ -3899,7 +3993,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				currency: subscription.currency,
 				referenceType: 'subscription',
 				referenceId: subscription.id,
-				description,
+				description: intent.description,
 				metadata: { changeKey: key }
 			}));
 
@@ -4183,15 +4277,19 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
-	 * @param subscription The subscription to read the current period's cycle of.
-	 * @returns The cycle covering the current period, or null when it has none.
+	 * @param subscription The subscription to read a period's cycle of.
+	 * @param periodStart The start of the period; by default the current one.
+	 * @returns The cycle covering the period, or null when it has none.
 	 */
-	private async currentPeriodBilling(subscription: Subscription): Promise<SubscriptionBilling | null> {
-		if (!subscription.currentPeriodStart) {
+	private async currentPeriodBilling(
+		subscription: Subscription,
+		periodStart: Date | string | undefined = subscription.currentPeriodStart
+	): Promise<SubscriptionBilling | null> {
+		if (!periodStart) {
 			return null;
 		}
 
-		return await this.billingService.findByPeriod(subscription.id, new Date(subscription.currentPeriodStart));
+		return await this.billingService.findByPeriod(subscription.id, new Date(periodStart));
 	}
 
 	/**
