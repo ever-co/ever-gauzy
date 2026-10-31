@@ -3,6 +3,16 @@
   padding-bottom: 0.5rem;
 }
 
+// With its filters, the board sits straight on the page: no frame, no inset, and nothing clipped at its edges.
+.panel.project-view-panel.board-panel.is-flat {
+  border: 0;
+  overflow: visible;
+
+  .panel-body {
+    padding: 0;
+  }
+}
+
 // The board: columns side by side, scrolling sideways when they do not fit.
 .board {
   display: grid;

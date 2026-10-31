@@ -1,0 +1,174 @@
+:host {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+// Search | assignees | menus, then how many match and the way out, at the far end. Wraps on narrow screens.
+.board-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.board-filter-search {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex: 0 1 15rem;
+  min-width: 10rem;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0 0.5rem;
+  border-radius: 0.25rem;
+  background-color: var(--gauzy-card-2);
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+  color: var(--gauzy-text-color-2);
+  cursor: text;
+
+  &:focus-within {
+    box-shadow: inset 0 0 0 1px var(--gauzy-action-info-text);
+  }
+
+  nb-icon {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+// A bare `<input>`, so the global form-control rule lands on it, with a full control's height and chrome: stripped
+// so it reads as the search box's text, as the dashboard's filter bar does.
+.board-filter-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-1);
+  appearance: none;
+
+  &::placeholder {
+    color: var(--gauzy-text-color-2);
+  }
+
+  &::-webkit-search-cancel-button {
+    cursor: pointer;
+  }
+}
+
+.board-filter-people {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+// An assignee to toggle; the ring, kept clear of the avatar by a gap, says it is on.
+.board-filter-person {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.375rem;
+  height: 1.375rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--gauzy-active-tint);
+  font: inherit;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-1);
+  cursor: pointer;
+  transition: box-shadow 0.12s ease-in-out;
+
+  &:hover {
+    box-shadow:
+      0 0 0 2px var(--gauzy-card-1),
+      0 0 0 3px var(--gauzy-text-color-2);
+  }
+
+  &.is-active {
+    box-shadow:
+      0 0 0 2px var(--gauzy-card-1),
+      0 0 0 4px var(--gauzy-action-info-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: 2px;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+.board-filter-menu {
+  min-width: 7.5rem;
+  max-width: 11rem;
+
+  // Matched to Nebular's own `nb-select.appearance-outline.status-basic` so this rule outranks it.
+  &.is-active.appearance-outline.status-basic ::ng-deep .select-button {
+    border-color: var(--gauzy-action-info-text);
+  }
+}
+
+.board-filter-count {
+  display: inline-block;
+  min-width: 1rem;
+  margin-inline-start: 0.25rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-active-tint);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.board-filter-end {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.board-filter-results {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--gauzy-text-color-2);
+}
+
+// The search takes the whole line, and the rest wraps under it.
+@media screen and (max-width: 40rem) {
+  .board-filter-search {
+    flex: 1 1 100%;
+  }
+
+  .board-filter-end {
+    margin-inline-start: 0;
+  }
+}
