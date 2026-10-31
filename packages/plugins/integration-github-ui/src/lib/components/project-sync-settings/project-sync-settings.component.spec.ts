@@ -194,7 +194,10 @@ describe('GithubProjectSyncSettingsComponent', () => {
 	});
 
 	it('still offers the default label and the project’s own when the repository labels cannot be read', async () => {
-		await create({}, throwError(() => new Error('GitHub is unavailable')));
+		await create(
+			{},
+			throwError(() => new Error('GitHub is unavailable'))
+		);
 
 		expect(latest(component.filteredLabels$)).toEqual(['Gauzy', 'needs-gauzy']);
 		expect(errorHandlingService.handleError).not.toHaveBeenCalled();

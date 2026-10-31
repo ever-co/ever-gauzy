@@ -4,7 +4,9 @@
 			<span class="project-sync-label__tag" [title]="syncLabel">{{ syncLabel }}</span>
 		}
 		@case (syncModeEnum.ALL_ISSUES) {
-			<span class="project-sync-label__text">{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.ALL_ISSUES' | translate }}</span>
+			<span class="project-sync-label__text">{{
+				'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.ALL_ISSUES' | translate
+			}}</span>
 		}
 		@default {
 			<span class="project-sync-label__text project-sync-label__text--muted">

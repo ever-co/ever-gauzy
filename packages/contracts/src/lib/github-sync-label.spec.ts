@@ -20,9 +20,12 @@ describe('resolveGithubSyncLabel', () => {
 		expect(resolveGithubSyncLabel('  needs gauzy \t')).toBe('needs gauzy');
 	});
 
-	it.each([undefined, null, '', '   '])('falls back to the default label when the project has none (%p)', (syncTag) => {
-		expect(resolveGithubSyncLabel(syncTag)).toBe(SyncTags.GAUZY);
-	});
+	it.each([undefined, null, '', '   '])(
+		'falls back to the default label when the project has none (%p)',
+		(syncTag) => {
+			expect(resolveGithubSyncLabel(syncTag)).toBe(SyncTags.GAUZY);
+		}
+	);
 
 	it('uses the same default label the GitHub page always stored', () => {
 		expect(resolveGithubSyncLabel()).toBe('Gauzy');

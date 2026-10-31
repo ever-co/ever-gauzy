@@ -1,12 +1,13 @@
 import { Component, OnInit, ViewChild, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import {
+	ID,
 	IGoalTemplate,
 	IGoalTimeFrame,
+	IKeyResultTemplate,
 	TimeFrameStatusEnum,
 	IEmployee,
 	IOrganizationTeam,
 	GoalLevelEnum,
-	KeyResultWeightEnum,
 	KeyResultTypeEnum,
 	IOrganization
 } from '@gauzy/contracts';
@@ -26,6 +27,14 @@ import {
 } from '@gauzy/ui-core/core';
 import { TranslateService } from '@ngx-translate/core';
 import { EditTimeFrameComponent } from '../../../pages/goal-settings/edit-time-frame/edit-time-frame.component';
+import {
+	buildGoalFromTemplate,
+	buildKeyResultFromTemplate,
+	buildKpiFromTemplate,
+	IGoalPresetForm,
+	IGoalPresetScope,
+	keyResultOwnerId
+} from './goal-from-template';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -136,103 +145,99 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 		this.selectedGoalTemplate = goalTemplate;
 	}
 
+	/**
+	 * Creates the KPIs of the selected preset's KPI key results, then the objective and its key results.
+	 *
+	 * Every payload is built field by field (`goal-from-template.ts`): the template's own ids never reach the
+	 * requests, so the same preset can be used again and again, each time creating records of its own (#4825).
+	 */
 	async createGoal() {
-		if (!!this.selectedGoalTemplate && this.form.valid) {
-			const formValue = this.form.value;
+		// Read once: another preset picked while the requests below are pending must not mix into this one
+		const template = this.selectedGoalTemplate;
+		if (!template || !this.form.valid) {
+			return;
+		}
 
-			const { id: organizationId, tenantId } = this.organization;
-			const goal = {
-				...this.selectedGoalTemplate,
-				...formValue,
-				description: ' ',
-				progress: 0,
-				organizationId,
-				tenantId
-			};
-			goal[
-				this.form.value.level === GoalLevelEnum.EMPLOYEE
-					? 'ownerEmployeeId'
-					: this.form.value.level === GoalLevelEnum.TEAM
-					? 'ownerTeamId'
-					: 'organizationId'
-			] = this.form.value.ownerId;
+		const form: IGoalPresetForm = this.form.value;
+		const { id: organizationId, tenantId } = this.organization;
+		const scope: IGoalPresetScope = { organizationId, tenantId };
+		const keyResultTemplates = template.keyResults ?? [];
 
-			const { owner, keyResults, ...goalData } = goal;
-			const newGoal = {
-				...goalData,
-				organizationId,
-				tenantId
-			};
+		// A key result must be owned by an employee: checked before anything is created, so a preset is never
+		// left half-made (an objective without its key results)
+		const user = this.store.user;
+		const ownerId = keyResultOwnerId(form, user?.employee?.id ?? user?.employeeId);
+		if (keyResultTemplates.length > 0 && !ownerId) {
+			this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.KEY_RESULTS_OWNER_REQUIRED'));
+			return;
+		}
 
-			try {
-				// Create the goal
-				const goalCreated = await this.goalService.createGoal(newGoal);
-				if (!goalCreated) {
+		try {
+			// Create the KPI of each KPI key result first. A KPI key result is only saved with its KPI (the key result
+			// screens read the linked KPI), so when one cannot be created, the objective is not created either
+			const kpiIds = new Map<IKeyResultTemplate, ID>();
+			for (const keyResult of keyResultTemplates.filter(({ type }) => type === KeyResultTypeEnum.KPI)) {
+				const kpiId = await this.createKpi(keyResult, scope);
+				if (!kpiId) {
 					this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_FAILED'));
 					return;
 				}
-
-				// Create associated KPIs
-				const kpiPromises = this.selectedGoalTemplate.keyResults.map(async (keyResult) => {
-					if (keyResult.type === KeyResultTypeEnum.KPI) {
-						const kpiData = {
-							...keyResult.kpi,
-							organization: this.orgId
-						};
-						try {
-							const res = await this.goalSettingsService.createKPI(kpiData);
-							keyResult.kpiId = res?.id;
-							this.toastrService.success(
-								this.getTranslation('TOASTR.MESSAGE.KPI_CREATED', { name: keyResult.name })
-							);
-						} catch (error) {
-							this.toastrService.warning(
-								this.getTranslation('TOASTR.MESSAGE.KPI_CREATION_FAILED', { name: keyResult.name })
-							);
-						}
-						return keyResult;
-					}
-					return keyResult;
-				});
-
-				const KEY_RESULT_DEFAULTS = {
-					description: ' ',
-					progress: 0,
-					status: 'none',
-					weight: KeyResultWeightEnum.DEFAULT
-				};
-
-				// Wait for all KPI promises to complete
-				const updatedKeyResults = await Promise.all(kpiPromises);
-
-				// Prepare Key Results for bulk creation
-				const keyResults = updatedKeyResults.map((keyResult) => {
-					const { kpi, goalId, ...keyResultData } = keyResult;
-					return {
-						...keyResultData,
-						...KEY_RESULT_DEFAULTS,
-						goalId: goalCreated.id,
-						update: keyResult.initialValue,
-						ownerId: this.form.value.ownerId,
-						organizationId,
-						tenantId
-					};
-				});
-
-				// Create Key Results in bulk
-				const keyResultsCreated = await this.keyResultService.createBulkKeyResult(keyResults);
-				if (keyResultsCreated) {
-					this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.KEY_RESULTS_CREATED'));
-					this.closeDialog('done');
-				}
-			} catch (error) {
-				console.error('Goal creation failed:', error);
-				this.toastrService.error(
-					this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_ERROR', {
-						error: error.message || 'Unknown error'
-					})
-				);
+				kpiIds.set(keyResult, kpiId);
 			}
+
+			// Create the goal
+			const goalCreated = await this.goalService.createGoal(
+				buildGoalFromTemplate(template, form, scope)
+			);
+			if (!goalCreated) {
+				this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_FAILED'));
+				return;
+			}
+
+			// Then its key results, each KPI key result linked to the KPI created for it
+			const keyResults = keyResultTemplates.map((keyResult) =>
+				buildKeyResultFromTemplate(
+					keyResult,
+					{ goalId: goalCreated.id, ownerId, kpiId: kpiIds.get(keyResult) },
+					scope
+				)
+			);
+
+			// Create Key Results in bulk
+			const keyResultsCreated = await this.keyResultService.createBulkKeyResult(keyResults);
+			if (keyResultsCreated) {
+				this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.KEY_RESULTS_CREATED'));
+				this.closeDialog('done');
+			}
+		} catch (error) {
+			console.error('Goal creation failed:', error);
+			this.toastrService.error(
+				this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_ERROR', {
+					error: error.message || 'Unknown error'
+				})
+			);
+		}
+	}
+
+	/**
+	 * Creates the KPI a KPI key result template describes, in the selected organization.
+	 *
+	 * @returns The new KPI's id, or `undefined` (with a warning naming it) when it could not be created; the
+	 *   caller then creates nothing more.
+	 */
+	private async createKpi(keyResult: IKeyResultTemplate, scope: IGoalPresetScope): Promise<ID | undefined> {
+		try {
+			if (!keyResult.kpi) {
+				throw new Error(`Key result template ${keyResult.name} has no KPI`);
+			}
+			const kpi = await this.goalSettingsService.createKPI(buildKpiFromTemplate(keyResult.kpi, scope));
+			this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.KPI_CREATED', { name: keyResult.name }));
+			return kpi?.id;
+		} catch {
+			this.toastrService.warning(
+				this.getTranslation('TOASTR.MESSAGE.KPI_CREATION_FAILED', { name: keyResult.name })
+			);
+			return undefined;
 		}
 	}
 	previousStep() {

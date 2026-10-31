@@ -104,7 +104,10 @@ describe('GithubViewComponent — the project sync label', () => {
 
 		expect(organizationProjectsService.getById).toHaveBeenCalledWith('project-1');
 		expect(organizationProjectsService.updateProjectSetting).toHaveBeenCalledTimes(1);
-		expect(organizationProjectsService.updateProjectSetting).toHaveBeenCalledWith('project-1', linkedWith('needs-gauzy'));
+		expect(organizationProjectsService.updateProjectSetting).toHaveBeenCalledWith(
+			'project-1',
+			linkedWith('needs-gauzy')
+		);
 		expect(githubService.autoSyncIssues).toHaveBeenCalled();
 	});
 
@@ -113,7 +116,10 @@ describe('GithubViewComponent — the project sync label', () => {
 
 		component.manualSyncIssues();
 
-		expect(organizationProjectsService.updateProjectSetting).toHaveBeenCalledWith('project-1', linkedWith('needs-gauzy'));
+		expect(organizationProjectsService.updateProjectSetting).toHaveBeenCalledWith(
+			'project-1',
+			linkedWith('needs-gauzy')
+		);
 		expect(githubService.manualSyncIssues).toHaveBeenCalled();
 	});
 

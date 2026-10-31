@@ -55,32 +55,36 @@ describe('GithubSyncService.syncAutomationIssue — the project sync label', () 
 	};
 
 	it('syncs an issue that carries the label the project chose', async () => {
-		await expect(syncedProjectIds(project({ syncTag: 'needs-gauzy' }), issueWith('bug', 'needs-gauzy'))).resolves.toEqual([
-			'project-1'
-		]);
+		await expect(
+			syncedProjectIds(project({ syncTag: 'needs-gauzy' }), issueWith('bug', 'needs-gauzy'))
+		).resolves.toEqual(['project-1']);
 	});
 
 	it('matches the chosen label once trimmed', async () => {
-		await expect(syncedProjectIds(project({ syncTag: ' needs-gauzy ' }), issueWith('needs-gauzy'))).resolves.toEqual([
-			'project-1'
-		]);
+		await expect(
+			syncedProjectIds(project({ syncTag: ' needs-gauzy ' }), issueWith('needs-gauzy'))
+		).resolves.toEqual(['project-1']);
 	});
 
 	it('does not sync an issue that only carries the default label when the project chose another one', async () => {
-		await expect(syncedProjectIds(project({ syncTag: 'needs-gauzy' }), issueWith(SyncTags.GAUZY))).resolves.toEqual([]);
+		await expect(syncedProjectIds(project({ syncTag: 'needs-gauzy' }), issueWith(SyncTags.GAUZY))).resolves.toEqual(
+			[]
+		);
 	});
 
 	it.each([null, undefined, '', '  '])(
 		'syncs an issue carrying the default label when the project has no label of its own (%p)',
 		async (syncTag) => {
-			await expect(syncedProjectIds(project({ syncTag }), issueWith(SyncTags.GAUZY))).resolves.toEqual(['project-1']);
+			await expect(syncedProjectIds(project({ syncTag }), issueWith(SyncTags.GAUZY))).resolves.toEqual([
+				'project-1'
+			]);
 		}
 	);
 
 	it('keeps the default label working as before for a project that stores it', async () => {
-		await expect(syncedProjectIds(project({ syncTag: SyncTags.GAUZY }), issueWith(SyncTags.GAUZY))).resolves.toEqual([
-			'project-1'
-		]);
+		await expect(
+			syncedProjectIds(project({ syncTag: SyncTags.GAUZY }), issueWith(SyncTags.GAUZY))
+		).resolves.toEqual(['project-1']);
 		await expect(syncedProjectIds(project({ syncTag: SyncTags.GAUZY }), issueWith('bug'))).resolves.toEqual([]);
 	});
 
