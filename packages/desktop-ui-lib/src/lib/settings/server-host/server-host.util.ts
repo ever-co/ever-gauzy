@@ -69,9 +69,10 @@ export const SERVER_HOST_WARNING_RULES: readonly IServerHostRule[] = [
 		applies: ({ kind }, { sslEnabled }) => !!sslEnabled && (kind === 'ipv4' || kind === 'ipv6' || kind === 'empty')
 	},
 	{
-		// The server builds its URLs as `http://<host>:<port>`, which needs an IPv6 address in brackets.
-		message: `${MESSAGES}.IPV6_BRACKETS`,
-		applies: ({ kind, bracketed }) => kind === 'ipv6' && !bracketed
+		// With LAN access on, the API and the web UI listen on 0.0.0.0, which accepts IPv4 connections
+		// only (see REACHABLE_SERVER_ADDRESS_FAMILIES): other computers cannot use an IPv6 address.
+		message: `${MESSAGES}.IPV6`,
+		applies: ({ kind }) => kind === 'ipv6'
 	},
 	{
 		// The API and web UI ports are separate settings, added after the host.
@@ -87,11 +88,16 @@ export const SERVER_HOST_WARNING_RULES: readonly IServerHostRule[] = [
 
 const SCHEME_PATTERN = /^([a-z][a-z\d+.-]*):\/\//i;
 const HTTP_SCHEME_PATTERN = /^https?:\/\//i;
-const IPV4_PATTERN = /^\d{1,3}(?:\.\d{1,3}){3}$/;
+/** A decimal IPv4 octet without a leading zero, which would make it octal to browsers (`020` is 16). */
+const IPV4_OCTET_PATTERN = /^(?:0|[1-9]\d{0,2})$/;
+/** An IPv4 octet with a leading zero (`07`, `020`, `099`). */
+const IPV4_ZERO_PADDED_OCTET_PATTERN = /^0\d{1,2}$/;
 const IPV6_GROUP_PATTERN = /^[\da-f]{1,4}$/i;
 const IPV6_ZONE_PATTERN = /^[\w.-]+$/;
-/** A DNS label: letters, digits, `_` and inner `-`; non-ASCII letters for internationalised names. */
-const HOSTNAME_LABEL_PATTERN = /^[a-z\d_\u0080-￿](?:[a-z\d_\u0080-￿-]{0,61}[a-z\d_\u0080-￿])?$/i;
+/** Printable ASCII: a name made of it needs no conversion to be used as a URL host. */
+const ASCII_PATTERN = /^[!-~]*$/;
+/** A DNS label in its ASCII form: letters, digits, `_` and inner `-` (`xn--` for internationalised names). */
+const HOSTNAME_LABEL_PATTERN = /^[a-z\d_](?:[a-z\d_-]{0,61}[a-z\d_])?$/i;
 
 /**
  * Reads a "Server Hostname / IP Address" value: an optional `http://` or `https://`, a host (IPv4,
@@ -182,6 +188,21 @@ export function normalizeServerHost(value: string | null | undefined): string | 
 	return typeof value === 'string' ? value.trim() : value;
 }
 
+/**
+ * The address families other computers can reach Gauzy Server and Gauzy API Server on. With LAN access
+ * on, the API and the web UI listen on `0.0.0.0` (`resolveDesktopListenHost` in desktop-lib), which
+ * accepts IPv4 connections only, so an IPv6 address is not offered for the host field.
+ */
+export const REACHABLE_SERVER_ADDRESS_FAMILIES: readonly IDesktopNetworkAddress['family'][] = ['IPv4'];
+
+/** The detected addresses worth offering for the host field, best first. */
+export function reachableServerAddresses<T extends Pick<IDesktopNetworkAddress, 'family'>>(
+	addresses: readonly T[],
+	families: readonly IDesktopNetworkAddress['family'][] = REACHABLE_SERVER_ADDRESS_FAMILIES
+): T[] {
+	return addresses.filter(({ family }) => families.includes(family));
+}
+
 /** How a detected address is written in the host field: an IPv6 address in square brackets. */
 export function toServerHostAddress({ address, family }: Pick<IDesktopNetworkAddress, 'address' | 'family'>): string {
 	return family === 'IPv6' ? `[${address}]` : address;
@@ -225,14 +246,48 @@ function isPort(port: string): boolean {
 }
 
 function classifyName(hostname: string): 'ipv4' | 'hostname' | 'invalid' {
-	if (isIPv4(hostname)) {
+	const ascii = toAsciiName(hostname);
+	if (ascii === null) {
+		return 'invalid';
+	}
+	if (isIPv4(ascii)) {
 		return 'ipv4';
 	}
-	return isHostName(hostname) ? 'hostname' : 'invalid';
+	return isHostName(ascii) ? 'hostname' : 'invalid';
 }
 
-function isIPv4(value: string): boolean {
-	return IPV4_PATTERN.test(value) && value.split('.').every((octet) => Number(octet) <= 255);
+/**
+ * A name as a URL host holds it. An internationalised name (`bücher.example`) becomes its punycode
+ * form (`xn--bcher-kva.example`), with the mappings browsers apply (fullwidth letters, digits, dots).
+ * Null when browsers refuse it as a host, such as `bad／host`, whose fullwidth slash maps to `/`.
+ * An ASCII name is returned as it is: the URL parser would also turn `192.168.1` into an address.
+ */
+function toAsciiName(name: string): string | null {
+	if (ASCII_PATTERN.test(name)) {
+		return name;
+	}
+	try {
+		return new URL(`http://${name}`).hostname;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Four octets of 0 to 255. Browsers read an octet with a leading zero as octal (`192.168.1.020` is
+ * `192.168.1.16`, `192.168.1.099` is refused), so one is only accepted where both readings agree
+ * (`192.168.001.001`), and never in the IPv4 tail of an IPv6 address, which browsers refuse.
+ */
+function isIPv4(value: string, { zeroPadded = true }: { zeroPadded?: boolean } = {}): boolean {
+	const octets = value.split('.');
+	return (
+		octets.length === 4 &&
+		octets.every((octet) =>
+			IPV4_OCTET_PATTERN.test(octet)
+				? Number(octet) <= 255
+				: zeroPadded && IPV4_ZERO_PADDED_OCTET_PATTERN.test(octet) && Number(octet) < 8
+		)
+	);
 }
 
 /** An IPv6 address, `::` shorthand, an IPv4 tail (`::ffff:192.168.1.20`) and a zone (`%eth0`) allowed. */
@@ -245,7 +300,7 @@ function isIPv6(value: string): boolean {
 	const lastColon = address.lastIndexOf(':');
 	const tail = address.slice(lastColon + 1);
 	if (lastColon >= 0 && tail.includes('.')) {
-		if (!isIPv4(tail)) {
+		if (!isIPv4(tail, { zeroPadded: false })) {
 			return false;
 		}
 		// An IPv4 tail takes the place of the last two 16-bit groups.
@@ -265,9 +320,9 @@ function isIPv6(value: string): boolean {
 }
 
 /**
- * A host name: labels of letters, digits, `_` and inner `-` (underscores and non-ASCII letters are
- * accepted, as internal and internationalised names use them). A name whose last label is a number
- * is not one: browsers read it as an IPv4 address (`192.168.1`, `999.1.1.1`).
+ * A host name in its ASCII form ({@link toAsciiName}): labels of letters, digits, `_` and inner `-`
+ * (underscores are accepted, as internal names use them). A name whose last label is a number is not
+ * one: browsers read it as an IPv4 address (`192.168.1`, `999.1.1.1`, `192.168.1.020`).
  */
 function isHostName(value: string): boolean {
 	const name = value.endsWith('.') ? value.slice(0, -1) : value;

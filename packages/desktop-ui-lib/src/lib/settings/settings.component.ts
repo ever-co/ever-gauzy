@@ -1516,15 +1516,20 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	/**
-	 * The server config an immediate update (SSL, auto start) stores. The host being typed is left out
-	 * while it is invalid: the stored config is merged, so it keeps the last saved host.
+	 * The server config an immediate update (SSL, auto start) stores. Server apps store the host trimmed,
+	 * as Save does, without changing the text being typed; while it is invalid it is left out: the
+	 * stored config is merged, so it keeps the last saved host.
 	 */
 	private serverConfigToStore(): Record<string, unknown> {
-		if (!this.isServerHostInvalid) {
+		if (!this.isServer) {
 			return this.config;
 		}
 		const config: Record<string, unknown> = { ...this.config };
-		delete config['host'];
+		if (this.isServerHostInvalid) {
+			delete config['host'];
+		} else {
+			config['host'] = normalizeServerHost(this.config.host);
+		}
 		return config;
 	}
 

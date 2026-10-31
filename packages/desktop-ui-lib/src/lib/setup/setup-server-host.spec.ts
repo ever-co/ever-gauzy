@@ -2,7 +2,9 @@ import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { environment } from '@gauzy/ui-config';
 import { GAUZY_ENV } from '../constants';
+import { ElectronService } from '../electron/services';
 import { LanguageSelectorComponent } from '../language/language-selector.component';
+import { ToastrNotificationService } from '../services/toastr-notification.service';
 import { SetupComponent } from './setup.component';
 
 /**
@@ -71,6 +73,49 @@ describe('SetupComponent: server host', () => {
 			component.onIntegratedHostChange('  192.168.1.20 ');
 
 			expect(component.getServerConfig()).toEqual(expect.objectContaining({ host: '192.168.1.20' }));
+		});
+
+		describe('saving after the database check', () => {
+			let send: jest.SpyInstance;
+			let notifyError: jest.SpyInstance;
+
+			const sent = (channel: string) =>
+				send.mock.calls.filter(([name]) => name === channel).map(([, arg]) => arg);
+
+			beforeEach(() => {
+				const { ipcRenderer } = TestBed.inject(ElectronService);
+				send = jest.spyOn(ipcRenderer, 'send');
+				jest.spyOn(ipcRenderer, 'invoke').mockResolvedValue(undefined);
+				notifyError = jest
+					.spyOn(TestBed.inject(ToastrNotificationService), 'error')
+					.mockImplementation(() => undefined);
+			});
+
+			// The IPC bridge of test-setup.ts is one global object: spies on it would keep earlier tests' calls.
+			afterEach(() => jest.restoreAllMocks());
+
+			it('checks the host again: one made invalid while the check ran is not saved', async () => {
+				component.onIntegratedHostChange('192.168.1.20');
+				component.saveChange();
+				component.serverConfig.integrated.host = 'bad host!';
+
+				await component.saveAndRun();
+
+				expect(sent('start_server')).toEqual([]);
+				expect(notifyError).toHaveBeenCalledWith('TIMER_TRACKER.SETTINGS.SERVER_HOST.INVALID');
+				expect(component.isSaving).toBe(false);
+				expect(component.buttonSave).toBe(false);
+			});
+
+			it('starts the server with a valid host', async () => {
+				component.onIntegratedHostChange(' 192.168.1.20 ');
+				component.saveChange();
+
+				await component.saveAndRun();
+
+				expect(sent('start_server')).toEqual([expect.objectContaining({ host: '192.168.1.20' })]);
+				expect(notifyError).not.toHaveBeenCalled();
+			});
 		});
 	});
 

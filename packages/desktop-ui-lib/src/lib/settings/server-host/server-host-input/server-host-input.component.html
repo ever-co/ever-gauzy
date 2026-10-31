@@ -8,6 +8,7 @@
 			[status]="status()"
 			[value]="host() ?? ''"
 			[disabled]="disabled()"
+			[attr.aria-label]="'TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME' | translate"
 			[attr.aria-invalid]="!check().valid"
 			(input)="onInput($event)"
 		/>
@@ -44,7 +45,7 @@
 					[disabled]="disabled()"
 					(click)="use(address)"
 				>
-					{{ toServerHostAddress(address) }}
+					{{ address.address }}
 					<span class="interface-name">{{ address.name }}</span>
 				</button>
 			}

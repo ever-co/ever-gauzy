@@ -35,7 +35,12 @@ import { FormsModule } from '@angular/forms';
 import { SpinnerButtonDirective } from '../directives/spinner-button.directive';
 import { SslComponent } from '../settings/ssl/ssl.component';
 import { SecretComponent } from '../settings/secret/secret.component';
-import { isValidServerHost, normalizeServerHost, ServerHostInputComponent } from '../settings/server-host';
+import {
+	isValidServerHost,
+	normalizeServerHost,
+	SERVER_HOST_INVALID_MESSAGE,
+	ServerHostInputComponent
+} from '../settings/server-host';
 import { UpperCasePipe } from '@angular/common';
 
 @Component({
@@ -395,6 +400,15 @@ export class SetupComponent implements OnInit, OnDestroy {
 	}
 
 	public async saveAndRun() {
+		// The host field can change while the connection check runs: check it again before saving (#7550).
+		if (this.connectivity.integrated && this.isIntegratedHostInvalid) {
+			this._notifier.error(this._translateService.instant(SERVER_HOST_INVALID_MESSAGE));
+			this.isSaving = false;
+			this.isCheckConnection = false;
+			this.validation();
+			this._cdr.detectChanges();
+			return;
+		}
 		if (this.connectivity.integrated) {
 			this.onProgress = true;
 		}
@@ -461,9 +475,7 @@ export class SetupComponent implements OnInit, OnDestroy {
 	validation() {
 		const { integrated, custom, live } = this.connectivity;
 		const { port, portUi } = this.serverConfig.integrated;
-		// Server apps: a host that is neither an IP address nor a host name cannot be saved (#7550).
-		// Other apps do not show the field and keep its default.
-		const integratedHostValid = !this.isServer || isValidServerHost(this.serverConfig.integrated.host);
+		const integratedHostValid = !this.isIntegratedHostInvalid;
 		const { apiHost } = this.serverConfig.custom;
 		const { host, dbPort, dbName, dbUser, dbPassword } = this.databaseConfig.postgre;
 
@@ -634,6 +646,14 @@ export class SetupComponent implements OnInit, OnDestroy {
 
 	public get isServerApi(): boolean {
 		return this._environment.IS_SERVER_API;
+	}
+
+	/**
+	 * Server apps: the "Server Hostname / IP Address" holds a value that is neither an IP address nor a host
+	 * name, so it cannot be saved (#7550). Other apps do not show the field and keep its default.
+	 */
+	public get isIntegratedHostInvalid(): boolean {
+		return this.isServer && !isValidServerHost(this.serverConfig.integrated.host);
 	}
 
 	public get isAgent(): boolean {

@@ -415,6 +415,7 @@
 										<gauzy-server-host-input
 											[host]="serverConfig.integrated.host"
 											[sslEnabled]="proxyOptions.enable"
+											[disabled]="isSaving || isCheckConnection"
 											(hostChange)="onIntegratedHostChange($event)"
 										></gauzy-server-host-input>
 									</div>

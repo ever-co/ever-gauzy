@@ -99,6 +99,17 @@ describe('SettingsComponent: server host', () => {
 
 			expect(sent('update_server_config')).toEqual([expect.objectContaining({ host: 'gauzy.example.com' })]);
 		});
+
+		it('stores the host without the spaces around it, as Save does, leaving the field as typed', () => {
+			component.config.host = ' gauzy.example.com  ';
+
+			component.updateServerConfig(false, 'autoStart', false);
+
+			expect(sent('update_server_config')).toEqual([
+				expect.objectContaining({ autoStart: false, host: 'gauzy.example.com' })
+			]);
+			expect(component.config.host).toBe(' gauzy.example.com  ');
+		});
 	});
 
 	describe('apps without the host field', () => {

@@ -5488,13 +5488,14 @@
 			"SERVER_HOST": {
 				"INVALID": "Voer een geldig IP-adres of een geldige hostnaam in, zoals 192.168.1.20 of gauzy.example.com.",
 				"SSL_WITH_IP": "SSL staat aan: een hostnaam wordt aanbevolen, omdat certificaten meestal voor een naam worden uitgegeven. Een certificaat met dit IP-adres werkt ook.",
-				"IPV6_BRACKETS": "Zet een IPv6-adres tussen vierkante haken, zoals [fd00::20], zodat het in een URL kan worden gebruikt.",
+				"IPV6": "De server accepteert alleen IPv4-verbindingen, dus andere computers kunnen niet verbinden via een IPv6-adres. Gebruik een IPv4-adres of een hostnaam.",
 				"PORT": "Laat de poort weg: de poorten stelt u in hun eigen velden in.",
 				"PATH": "Laat weg wat na de hostnaam komt (zoals /): de poorten worden direct na deze waarde toegevoegd.",
 				"DETECT": "Mijn IP detecteren",
 				"DETECT_HINT": "Vult het netwerkadres van deze computer in. Alleen de adressen van deze computer worden gelezen (geen online opzoeking), dus een openbaar adres van een router wordt niet getoond.",
 				"DETECTED": "Adressen van deze computer:",
-				"NO_ADDRESS": "Er is geen netwerkadres gevonden. Controleer of deze computer met een netwerk is verbonden."
+				"NO_ADDRESS": "Er is geen netwerkadres gevonden. Controleer of deze computer met een netwerk is verbonden.",
+				"ONLY_IPV6": "Er zijn alleen IPv6-adressen gevonden en de server accepteert alleen IPv4-verbindingen. Voer een IPv4-adres of een hostnaam in."
 			},
 			"AUTO_START_STARTUP": "Automatisch starten bij opstarten",
 			"SERVER_TYPE": "Servertype",

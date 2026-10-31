@@ -6,6 +6,7 @@ import { ServerHostInputComponent } from './server-host-input.component';
 
 const LAN: IDesktopNetworkAddress = { name: 'Wi-Fi', address: '192.168.1.20', family: 'IPv4', virtual: false };
 const IPV6: IDesktopNetworkAddress = { name: 'Ethernet', address: 'fd00::20', family: 'IPv6', virtual: false };
+const OTHER_LAN: IDesktopNetworkAddress = { name: 'Ethernet', address: '10.0.0.5', family: 'IPv4', virtual: false };
 
 describe('ServerHostInputComponent', () => {
 	let fixture: ComponentFixture<ServerHostInputComponent>;
@@ -43,7 +44,7 @@ describe('ServerHostInputComponent', () => {
 	}
 
 	beforeEach(async () => {
-		addresses = [LAN, IPV6];
+		addresses = [LAN, IPV6, OTHER_LAN];
 		notifier = { warn: jest.fn() };
 		await TestBed.configureTestingModule({
 			imports: [ServerHostInputComponent],
@@ -63,6 +64,12 @@ describe('ServerHostInputComponent', () => {
 		expect(hostChanges).toEqual(['192.168.1.30']);
 	});
 
+	it('labels the input for screen readers', async () => {
+		await render('0.0.0.0');
+
+		expect(input().getAttribute('aria-label')).toBe('TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME');
+	});
+
 	describe('invalid host (#7550)', () => {
 		it.each(['999.1.1.1', 'bad host!'])('shows an error for %s', async (value) => {
 			await render(value);
@@ -72,7 +79,7 @@ describe('ServerHostInputComponent', () => {
 			expect(input().classList).toContain('status-danger');
 		});
 
-		it.each(['192.168.1.20', 'gauzy.example.com', '0.0.0.0', 'localhost', '[::1]', ''])(
+		it.each(['192.168.1.20', 'gauzy.example.com', '0.0.0.0', 'localhost', ''])(
 			'shows no error for %s',
 			async (value) => {
 				await render(value);
@@ -82,6 +89,15 @@ describe('ServerHostInputComponent', () => {
 				expect(input().classList).toContain('status-basic');
 			}
 		);
+
+		it('accepts a typed IPv6 address, with a warning that the server listens on IPv4 only', async () => {
+			await render('[::1]');
+
+			expect(errors()).toEqual([]);
+			expect(warnings()).toEqual(['TIMER_TRACKER.SETTINGS.SERVER_HOST.IPV6']);
+			expect(input().getAttribute('aria-invalid')).toBe('false');
+			expect(input().classList).toContain('status-warning');
+		});
 
 		it('clears the error once the value is fixed', async () => {
 			await render('999.1.1.1');
@@ -117,25 +133,33 @@ describe('ServerHostInputComponent', () => {
 	});
 
 	describe('detected addresses (#7547)', () => {
-		it('lists this computer’s addresses without changing the host', async () => {
+		it('lists this computer’s IPv4 addresses without changing the host', async () => {
 			await render('0.0.0.0');
 
 			expect(addressButtons().map((button) => button.textContent.replace(/\s+/g, ' ').trim())).toEqual([
 				'192.168.1.20 Wi-Fi',
-				'[fd00::20] Ethernet'
+				'10.0.0.5 Ethernet'
 			]);
 			expect(component.host()).toBe('0.0.0.0');
 			expect(hostChanges).toEqual([]);
 		});
 
-		it('puts a chosen address in the field (IPv6 in brackets)', async () => {
+		it('does not offer IPv6 addresses: the servers listen on 0.0.0.0, which is IPv4 only', async () => {
+			addresses = [IPV6];
+			await render('0.0.0.0');
+
+			expect(addressButtons()).toEqual([]);
+			expect(element().querySelector('.detected-addresses')).toBeNull();
+		});
+
+		it('puts a chosen address in the field', async () => {
 			await render('0.0.0.0');
 
 			addressButtons()[1].click();
 			fixture.detectChanges();
 
-			expect(component.host()).toBe('[fd00::20]');
-			expect(input().value).toBe('[fd00::20]');
+			expect(component.host()).toBe('10.0.0.5');
+			expect(input().value).toBe('10.0.0.5');
 		});
 
 		it('shows no list when the computer has no address to offer', async () => {
@@ -167,13 +191,26 @@ describe('ServerHostInputComponent', () => {
 			expect(detect).toHaveBeenCalled();
 		});
 
-		it('falls back to an IPv6 address when there is no IPv4 one', async () => {
+		it('keeps the host and says why when only IPv6 addresses are found', async () => {
 			addresses = [IPV6];
 			await render('');
 
 			await component.detect();
+			fixture.detectChanges();
 
-			expect(component.host()).toBe('[fd00::20]');
+			expect(component.host()).toBe('');
+			expect(hostChanges).toEqual([]);
+			expect(addressButtons()).toEqual([]);
+			expect(notifier.warn).toHaveBeenCalledWith('TIMER_TRACKER.SETTINGS.SERVER_HOST.ONLY_IPV6');
+		});
+
+		it('fills in an IPv4 address even when an IPv6 one is listed first', async () => {
+			addresses = [IPV6, OTHER_LAN];
+			await render('');
+
+			await component.detect();
+
+			expect(component.host()).toBe('10.0.0.5');
 		});
 
 		it('keeps the host and says so when no address is found', async () => {
