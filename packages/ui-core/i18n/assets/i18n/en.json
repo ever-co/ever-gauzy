@@ -4070,6 +4070,10 @@
 		"VIEW_REQUEST_DOCUMENT": "View Request Document",
 		"MULTIPLE_EMPLOYEES": "Multiple employees",
 		"UPLOAD_REQUEST_DOCUMENT": "Upload Request Document",
+		"REQUEST_FORM_NOT_FOUND": "No \"{{ name }}\" form is uploaded for this organization yet. An administrator can add a document with that name under Documents.",
+		"REQUEST_FORM_UNAVAILABLE": "The \"{{ name }}\" form could not be downloaded. An administrator can check its link under Documents.",
+		"REQUEST_FORM_BLOCKED": "Your browser blocked the \"{{ name }}\" form from opening in a new tab. Use the link below the buttons to open it.",
+		"OPEN_REQUEST_FORM": "Open the \"{{ name }}\" form",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
@@ -4089,6 +4093,7 @@
 			"EDIT_POLICY": "Edit Policy",
 			"NAME": "Name",
 			"REQUIRES_APPROVAL": "Requires Approval",
+			"REQUIRE_SUFFICIENT_BALANCE": "Refuse approvals the leave balance cannot cover",
 			"PAID": "Paid",
 			"NAME_IS_REQUIRED": "Policy name is required!"
 		},

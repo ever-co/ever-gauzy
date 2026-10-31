@@ -3544,6 +3544,10 @@
 		"VIEW_REQUEST_DOCUMENT": "Bekijk verzoek document",
 		"MULTIPLE_EMPLOYEES": "Meerdere werknemers",
 		"UPLOAD_REQUEST_DOCUMENT": "Upload aanvraagdocument",
+		"REQUEST_FORM_NOT_FOUND": "Voor deze organisatie is nog geen formulier \"{{ name }}\" geüpload. Een beheerder kan onder Documenten een document met deze naam toevoegen.",
+		"REQUEST_FORM_UNAVAILABLE": "Het formulier \"{{ name }}\" kon niet worden gedownload. Een beheerder kan de link ervan controleren onder Documenten.",
+		"REQUEST_FORM_BLOCKED": "Je browser heeft het openen van het formulier \"{{ name }}\" in een nieuw tabblad geblokkeerd. Gebruik de link onder de knoppen om het te openen.",
+		"OPEN_REQUEST_FORM": "Formulier \"{{ name }}\" openen",
 		"STATUSES": {
 			"REQUESTED": "Opgevraagd",
 			"APPROVED": "Goedgekeurd",
@@ -3563,6 +3567,7 @@
 			"EDIT_POLICY": "Bewerk beleid",
 			"NAME": "Naam",
 			"REQUIRES_APPROVAL": "Vereist goedkeuring",
+			"REQUIRE_SUFFICIENT_BALANCE": "Goedkeuringen weigeren die het verlofsaldo niet dekt",
 			"PAID": "Betaald",
 			"NAME_IS_REQUIRED": "De naam van het beleid is verplicht!"
 		},

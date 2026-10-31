@@ -3544,6 +3544,10 @@
 		"VIEW_REQUEST_DOCUMENT": "查看请求文件",
 		"MULTIPLE_EMPLOYEES": "多个员工",
 		"UPLOAD_REQUEST_DOCUMENT": "上传请求文档",
+		"REQUEST_FORM_NOT_FOUND": "该组织尚未上传“{{ name }}”表单。管理员可以在“文档”中添加同名文档。",
+		"REQUEST_FORM_UNAVAILABLE": "无法下载“{{ name }}”表单。管理员可以在“文档”中检查其链接。",
+		"REQUEST_FORM_BLOCKED": "浏览器阻止了在新标签页中打开“{{ name }}”表单。请使用按钮下方的链接打开它。",
+		"OPEN_REQUEST_FORM": "打开“{{ name }}”表单",
 		"STATUSES": {
 			"REQUESTED": "要求的。",
 			"APPROVED": "已批准",
@@ -3563,6 +3567,7 @@
 			"EDIT_POLICY": "编辑政策",
 			"NAME": "姓名 (Xìngmíng)",
 			"REQUIRES_APPROVAL": "需要批准",
+			"REQUIRE_SUFFICIENT_BALANCE": "拒绝假期余额不足以覆盖的审批",
 			"PAID": "支付",
 			"NAME_IS_REQUIRED": "政策名称是必需的！"
 		},

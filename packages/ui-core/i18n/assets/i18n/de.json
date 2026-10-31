@@ -3540,6 +3540,10 @@
 		"VIEW_REQUEST_DOCUMENT": "Ansehen Anforderungsdokument",
 		"MULTIPLE_EMPLOYEES": "Mehrere Mitarbeiter",
 		"UPLOAD_REQUEST_DOCUMENT": "Hochladen der Anforderungsdokumente",
+		"REQUEST_FORM_NOT_FOUND": "Für diese Organisation wurde noch kein Formular „{{ name }}“ hochgeladen. Ein Administrator kann unter „Dokumente“ ein Dokument mit diesem Namen hinzufügen.",
+		"REQUEST_FORM_UNAVAILABLE": "Das Formular „{{ name }}“ konnte nicht heruntergeladen werden. Ein Administrator kann den Link unter „Dokumente“ prüfen.",
+		"REQUEST_FORM_BLOCKED": "Ihr Browser hat das Öffnen des Formulars „{{ name }}“ in einem neuen Tab blockiert. Öffnen Sie es über den Link unter den Schaltflächen.",
+		"OPEN_REQUEST_FORM": "Formular „{{ name }}“ öffnen",
 		"STATUSES": {
 			"REQUESTED": "Bitte teilen Sie Ihren Wunsch mit.",
 			"APPROVED": "Genehmigt",
@@ -3559,6 +3563,7 @@
 			"EDIT_POLICY": "Bearbeiten Sie die Richtlinie",
 			"NAME": "Name",
 			"REQUIRES_APPROVAL": "Erfordert Genehmigung",
+			"REQUIRE_SUFFICIENT_BALANCE": "Genehmigungen ablehnen, die das Urlaubskonto nicht deckt",
 			"PAID": "Bezahlt",
 			"NAME_IS_REQUIRED": "Der Name der Richtlinie ist erforderlich!"
 		},

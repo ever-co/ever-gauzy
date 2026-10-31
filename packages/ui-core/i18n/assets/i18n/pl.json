@@ -3543,6 +3543,10 @@
 		"VIEW_REQUEST_DOCUMENT": "Zobacz dokument żądania",
 		"MULTIPLE_EMPLOYEES": "Wielu pracowników",
 		"UPLOAD_REQUEST_DOCUMENT": "Prześlij dokument żądania",
+		"REQUEST_FORM_NOT_FOUND": "Dla tej organizacji nie przesłano jeszcze formularza „{{ name }}”. Administrator może dodać dokument o tej nazwie w sekcji Dokumenty.",
+		"REQUEST_FORM_UNAVAILABLE": "Nie udało się pobrać formularza „{{ name }}”. Administrator może sprawdzić jego link w sekcji Dokumenty.",
+		"REQUEST_FORM_BLOCKED": "Przeglądarka zablokowała otwarcie formularza „{{ name }}” w nowej karcie. Użyj linku pod przyciskami, aby go otworzyć.",
+		"OPEN_REQUEST_FORM": "Otwórz formularz „{{ name }}”",
 		"STATUSES": {
 			"REQUESTED": "Żądane",
 			"APPROVED": "Zatwierdzone",
@@ -3562,6 +3566,7 @@
 			"EDIT_POLICY": "Edytuj politykę",
 			"NAME": "Imię",
 			"REQUIRES_APPROVAL": "Wymaga zatwierdzenia",
+			"REQUIRE_SUFFICIENT_BALANCE": "Odrzucaj zatwierdzenia, których saldo urlopu nie pokrywa",
 			"PAID": "Zapłacone",
 			"NAME_IS_REQUIRED": "Wymagana jest nazwa polisy!"
 		},

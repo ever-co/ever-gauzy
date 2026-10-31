@@ -3545,6 +3545,10 @@
 		"VIEW_REQUEST_DOCUMENT": "Afficher le document de demande",
 		"MULTIPLE_EMPLOYEES": "Plusieurs employés",
 		"UPLOAD_REQUEST_DOCUMENT": "Télécharger le document demandé.",
+		"REQUEST_FORM_NOT_FOUND": "Aucun formulaire « {{ name }} » n'a encore été ajouté pour cette organisation. Un administrateur peut ajouter un document portant ce nom dans Documents.",
+		"REQUEST_FORM_UNAVAILABLE": "Le formulaire « {{ name }} » n'a pas pu être téléchargé. Un administrateur peut vérifier son lien dans Documents.",
+		"REQUEST_FORM_BLOCKED": "Votre navigateur a empêché l'ouverture du formulaire « {{ name }} » dans un nouvel onglet. Utilisez le lien sous les boutons pour l'ouvrir.",
+		"OPEN_REQUEST_FORM": "Ouvrir le formulaire « {{ name }} »",
 		"STATUSES": {
 			"REQUESTED": "Demandé",
 			"APPROVED": "Approuvé",
@@ -3564,6 +3568,7 @@
 			"EDIT_POLICY": "Modifier la politique",
 			"NAME": "Nom",
 			"REQUIRES_APPROVAL": "Nécessite une approbation",
+			"REQUIRE_SUFFICIENT_BALANCE": "Refuser les approbations que le solde de congés ne couvre pas",
 			"PAID": "Payé",
 			"NAME_IS_REQUIRED": "Le nom de la politique est requis !"
 		},

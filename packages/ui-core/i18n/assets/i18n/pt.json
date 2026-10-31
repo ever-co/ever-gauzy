@@ -3544,6 +3544,10 @@
 		"VIEW_REQUEST_DOCUMENT": "Visualizar documento solicitado",
 		"MULTIPLE_EMPLOYEES": "Vários funcionários",
 		"UPLOAD_REQUEST_DOCUMENT": "Carregar Documento de Solicitação",
+		"REQUEST_FORM_NOT_FOUND": "Ainda não foi carregado nenhum formulário \"{{ name }}\" para esta organização. Um administrador pode adicionar um documento com esse nome em Documentos.",
+		"REQUEST_FORM_UNAVAILABLE": "Não foi possível baixar o formulário \"{{ name }}\". Um administrador pode verificar o link dele em Documentos.",
+		"REQUEST_FORM_BLOCKED": "O navegador bloqueou a abertura do formulário \"{{ name }}\" em uma nova aba. Use o link abaixo dos botões para abri-lo.",
+		"OPEN_REQUEST_FORM": "Abrir o formulário \"{{ name }}\"",
 		"STATUSES": {
 			"REQUESTED": "Solicitado.",
 			"APPROVED": "Aprovado.",
@@ -3563,6 +3567,7 @@
 			"EDIT_POLICY": "Editar Política",
 			"NAME": "Nome",
 			"REQUIRES_APPROVAL": "Necessita de aprovação",
+			"REQUIRE_SUFFICIENT_BALANCE": "Recusar aprovações que o saldo de folgas não cobre",
 			"PAID": "Pago",
 			"NAME_IS_REQUIRED": "Nome da política é necessário!"
 		},

@@ -3572,6 +3572,10 @@
 		"VIEW_REQUEST_DOCUMENT": "View Request Document",
 		"MULTIPLE_EMPLOYEES": "Multiple employees",
 		"UPLOAD_REQUEST_DOCUMENT": "Upload Request Document",
+		"REQUEST_FORM_NOT_FOUND": "עדיין לא הועלה טופס \"{{ name }}\" עבור הארגון הזה. מנהל/ת יכול/ה להוסיף מסמך בשם זה תחת מסמכים.",
+		"REQUEST_FORM_UNAVAILABLE": "לא ניתן היה להוריד את הטופס \"{{ name }}\". מנהל/ת יכול/ה לבדוק את הקישור שלו תחת מסמכים.",
+		"REQUEST_FORM_BLOCKED": "הדפדפן חסם את פתיחת הטופס \"{{ name }}\" בכרטיסייה חדשה. השתמשו בקישור שמתחת לכפתורים כדי לפתוח אותו.",
+		"OPEN_REQUEST_FORM": "פתיחת הטופס \"{{ name }}\"",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
@@ -3591,6 +3595,7 @@
 			"EDIT_POLICY": "Edit Policy",
 			"NAME": "שם",
 			"REQUIRES_APPROVAL": "Requires Approval",
+			"REQUIRE_SUFFICIENT_BALANCE": "דחיית אישורים שיתרת החופשה אינה מכסה",
 			"PAID": "Paid",
 			"NAME_IS_REQUIRED": "Policy name is required!"
 		},

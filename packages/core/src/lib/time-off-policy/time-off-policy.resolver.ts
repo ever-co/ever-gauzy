@@ -36,6 +36,7 @@ export interface ICreateTimeOffPolicyInput {
 	accrualRate?: number;
 	accrualFrequency?: string;
 	isDefault?: boolean;
+	requireSufficientBalance?: boolean;
 }
 
 /** The members `UpdateTimeOffPolicyInput` declares in the schema. */
