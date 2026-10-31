@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { NbDialogRef, NbTooltipDirective } from '@nebular/theme';
+import { NbDialogRef, NbTooltipDirective, NbTrigger } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import moment from 'moment';
 import {
@@ -104,6 +104,9 @@ export class PublicPageOrganizationMutationComponent extends TranslationBaseComp
 
 	/** The banner field's info hint; present while the tab that holds it is open. */
 	@ViewChild('bannerHint') private bannerHint?: NbTooltipDirective;
+
+	/** The hint opens and closes from its button's own events only, so Nebular adds no trigger of its own. */
+	readonly bannerHintTrigger = NbTrigger.NOOP;
 
 	constructor(
 		readonly translateService: TranslateService,
