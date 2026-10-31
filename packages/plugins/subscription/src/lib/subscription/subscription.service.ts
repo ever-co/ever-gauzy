@@ -60,6 +60,7 @@ import {
 	recurringAmount,
 	resumedNextBillingAt
 } from '../subscription.cycle';
+import { signScheduledChange, verifyScheduledChange } from '../subscription.schedule-signature';
 import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
 import { lockPlanRow } from '../subscription-plan/subscription-plan.lock';
@@ -222,14 +223,51 @@ const CANCEL_AT_PERIOD_END = 'cancelAtPeriodEnd';
 const EXPIRED_BY_CYCLE = 'expiredByCycle';
 
 /**
+ * The metadata key a change taken from the next period is recorded under (`effective = 'NEXT_PERIOD'`), until the
+ * cycle that opens that period applies it (`applyScheduledChange`).
+ */
+const SCHEDULED_PLAN_CHANGE = 'scheduledPlanChange';
+
+/**
+ * The adjustment reason a cycle's discount is lowered under when a retry is priced on a smaller one. A `PROMOTION`
+ * only ever lowers what is payable, so giving part of an earlier grant back is a governed `MANUAL` correction.
+ */
+const DISCOUNT_RESTATED_REASON = 'SUBSCRIPTION_DISCOUNT_RESTATED';
+
+/** A recurring line as `SubscriptionItemService.prepareItems` prices it, written nowhere yet. */
+type IPricedLine = {
+	variantId: ID;
+	quantity: DecimalString;
+	unitPrice: DecimalString;
+	position: number;
+	metadata?: Record<string, unknown>;
+};
+
+/** A change recorded under {@link SCHEDULED_PLAN_CHANGE}, as `applyChange` writes it. */
+interface IScheduledPlanChange {
+	/** What `signScheduledChange` signed the change with when `applyChange` recorded it. */
+	signature?: string;
+	/** The plan to move to; absent for a change of lines alone. */
+	planId?: ID;
+	/** The quantity the plan change states. */
+	quantity?: DecimalString;
+	/** The recurring lines of a change of lines alone, as they were priced when it was recorded. */
+	items?: IPricedLine[];
+	/** The start of the first period the change applies to; null when it was recorded with no current period. */
+	effectiveAt?: Date | string | null;
+	description?: string;
+}
+
+/**
  * The metadata keys the service writes and the billing run trusts (SEC-B-03): the discount override, the proration
  * credit carried into the next cycle, the plans whose setup fee was charged, the end of the trial, the proration
- * threshold below which a plan change's charge is waived, the cancellation at the end of the period, and the cycle
- * whose payment expired the subscription. A caller's metadata can neither set nor erase them —
- * `metadata: { discountPercentage: "1" }` billed every later cycle at 0, `{ pendingCredit: { amount: "100000" } }`
- * credited the next one, `{ minimumProrationCharge: "1000000" }` waived every upgrade's charge, and
- * `{ cancelAtPeriodEnd: true }` cancelled the subscription with no cancellation (CodeRabbit). They move through the
- * service's own actions.
+ * threshold below which a plan change's charge is waived, the cancellation at the end of the period, the cycle
+ * whose payment expired the subscription, and the change scheduled for the next period. A caller's metadata can
+ * neither set nor erase them — `metadata: { discountPercentage: "1" }` billed every later cycle at 0,
+ * `{ pendingCredit: { amount: "100000" } }` credited the next one, `{ minimumProrationCharge: "1000000" }` waived
+ * every upgrade's charge, and `{ cancelAtPeriodEnd: true }` cancelled the subscription with no cancellation
+ * (CodeRabbit); `{ scheduledPlanChange: { planId } }` would move it to another plan at the next renewal with no plan
+ * change at all. They move through the service's own actions.
  */
 export const RESERVED_SUBSCRIPTION_METADATA_KEYS: readonly string[] = [
 	DISCOUNT_OVERRIDE,
@@ -238,7 +276,8 @@ export const RESERVED_SUBSCRIPTION_METADATA_KEYS: readonly string[] = [
 	TRIAL_ENDS_AT,
 	MINIMUM_PRORATION_CHARGE,
 	CANCEL_AT_PERIOD_END,
-	EXPIRED_BY_CYCLE
+	EXPIRED_BY_CYCLE,
+	SCHEDULED_PLAN_CHANGE
 ];
 
 /**
@@ -286,6 +325,41 @@ function reservedMetadataOf(metadata: unknown): Record<string, unknown> {
  */
 function isVersionConflict(error: unknown): boolean {
 	return (error as { code?: unknown } | null)?.code === ApiErrorCode.ENTITY_VERSION_CONFLICT;
+}
+
+/**
+ * Raised inside the transaction that applies a scheduled change when the plan it moves to is no longer the plan the
+ * change was priced on: deactivated, priced in another currency, or given other terms after the change was read. The
+ * change is read again (`applyScheduledChange`), so it is refused or priced on the plan as it now stands.
+ */
+class ScheduledPlanMoved extends ConflictException {
+	constructor() {
+		super(
+			'SUBSCRIPTION_SCHEDULED_PLAN_CHANGED: the plan a scheduled change moves to changed while the change was being applied. Read the subscription again and retry.'
+		);
+	}
+}
+
+/**
+ * @param plan A plan as read.
+ * @returns What a scheduled change is checked and priced against, so two reads of the plan can be compared: whether it
+ * may be taken up, its currency, what it delivers, its discount, its cadence and its cycle ceiling.
+ */
+function scheduledPlanTerms(plan: SubscriptionPlan | null): string {
+	return JSON.stringify(
+		plan
+			? [
+					plan.isActive !== false,
+					plan.currency ?? null,
+					plan.variantId ?? null,
+					plan.productId ?? null,
+					plan.discountPercentage ?? null,
+					plan.billingPeriod ?? null,
+					plan.billingInterval ?? null,
+					plan.maxBillingCycles ?? null
+			  ]
+			: null
+	);
 }
 
 /**
@@ -1178,17 +1252,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			);
 		}
 
-		const variantId = await this.planService.resolveVariantId(plan);
 		const existing = await this.itemService.findForSubscription(id);
-		const requested: ISubscriptionItemInput[] = variantId
-			? [{ variantId, quantity: input.quantity ?? subscription.quantity }]
-			: existing.map((row) => ({
-					variantId: row.variantId,
-					quantity: input.quantity ?? row.quantity,
-					unitPrice: row.unitPrice,
-					position: row.position
-			  }));
-		const prepared = await this.itemService.prepareItems(requested, subscription.currency, subscription.customerId);
+		const prepared = await this.planLines(subscription, plan, existing, input.quantity);
 
 		return await this.applyChange(
 			subscription,
@@ -1209,6 +1274,35 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
+	 * The recurring lines a subscription has on a plan it moves to, priced, written nowhere: the plan's own variant
+	 * at the stated quantity, or — for a plan that delivers none — the subscription's lines at that quantity.
+	 *
+	 * @param subscription The subscription moving.
+	 * @param plan The plan it moves to.
+	 * @param existing Its recurring lines now.
+	 * @param quantity The quantity the change states, when it states one.
+	 * @returns The lines, in position order.
+	 */
+	private async planLines(
+		subscription: Subscription,
+		plan: SubscriptionPlan,
+		existing: SubscriptionItem[],
+		quantity?: DecimalString | number
+	): Promise<IPricedLine[]> {
+		const variantId = await this.planService.resolveVariantId(plan);
+		const requested: ISubscriptionItemInput[] = variantId
+			? [{ variantId, quantity: quantity ?? subscription.quantity }]
+			: existing.map((row) => ({
+					variantId: row.variantId,
+					quantity: quantity ?? row.quantity,
+					unitPrice: row.unitPrice,
+					position: row.position
+			  }));
+
+		return await this.itemService.prepareItems(requested, subscription.currency, subscription.customerId);
+	}
+
+	/**
 	 * Adds a recurring line mid-cycle and settles the remainder of the period.
 	 *
 	 * @param id The subscription to add the line to.
@@ -1225,7 +1319,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		this.assertLive(subscription);
 
-		const before = await this.itemService.findForSubscription(id);
+		const before = await this.linesToEdit(subscription);
 		const prepared = await this.itemService.prepareItems(
 			[
 				...before.map((row) => ({
@@ -1271,7 +1365,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		this.assertLive(subscription);
 
-		const before = await this.itemService.findForSubscription(id);
+		const before = await this.linesToEdit(subscription);
 
 		if (!before.some((row) => row.variantId === variantId)) {
 			throw new NotFoundException(
@@ -1319,7 +1413,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		this.assertLive(subscription);
 
-		const before = await this.itemService.findForSubscription(id);
+		const before = await this.linesToEdit(subscription);
 
 		if (!before.some((row) => row.variantId === variantId)) {
 			throw new NotFoundException(
@@ -1641,16 +1735,28 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			return null;
 		}
 
+		// The cycle applies the change scheduled for this period before pricing it (`applyScheduledChange`), so the
+		// preview prices what that change makes of the subscription, writing none of it.
+		const scheduled = await this.scheduledChangeAt(subscription, period.start);
+		const opensOn =
+			scheduled?.items && !scheduled.refused
+				? { items: scheduled.items, plan: scheduled.plan ?? plan, metadata: scheduled.metadata }
+				: { items, plan, metadata: subscription.metadata };
+		const periodEnd =
+			scheduled?.plan && !scheduled.refused
+				? periodFrom(period.start, this.planService.cadenceOf(scheduled.plan)).end
+				: period.end;
+
 		// A retry prices the lines as they stand when it runs, exactly as a first attempt does, rather than
 		// charging what the failed attempt recorded — so the preview prices them now, with the same function.
-		const { net } = priceCycle({ items, currency: subscription.currency, plan, metadata: subscription.metadata });
+		const { net } = priceCycle({ ...opensOn, currency: subscription.currency });
 
 		return {
 			subscriptionId: subscription.id,
 			amount: net.toStorageString(),
 			currency: subscription.currency,
 			periodStart: period.start,
-			periodEnd: period.end,
+			periodEnd,
 			nextBillingAt: retryAt ?? period.start
 		};
 	}
@@ -1955,7 +2061,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		manual: boolean,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<ISubscriptionBillingOutcome> {
-		const items = await this.itemService.findForSubscription(subscription.id);
+		let items = await this.itemService.findForSubscription(subscription.id);
 
 		if (!items.length) {
 			throw new BadRequestException(
@@ -1963,7 +2069,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			);
 		}
 
-		const existing = await this.billingService.findByPeriod(subscription.id, period.start);
+		let existing = await this.billingService.findByPeriod(subscription.id, period.start);
 
 		if (existing && RAISED_CYCLE_STATUSES.includes(existing.status)) {
 			// The period is settled. Recomputing it would be a second answer to a question the row has
@@ -1984,48 +2090,95 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			};
 		}
 
-		// The one computation of a cycle's amount, which the upcoming-billing preview calls as well.
-		const { gross, discount, net } = priceCycle({
-			items,
-			currency: subscription.currency,
-			plan,
-			metadata: subscription.metadata
-		});
-
-		// The subscription is written by whichever of the two writes below runs first — the metadata the
-		// order path records, or the cycle's own record — so the caller's version is handed to the writes
-		// rather than to the calls, and a path that writes nothing does not spend it.
+		// The subscription is written by whichever of the writes below runs first — the change scheduled for this
+		// period, the metadata the order path records, or the cycle's own record — so the caller's version is handed
+		// to the writes rather than to the calls, and a path that writes nothing does not spend it.
 		const spend = spendableExpectation(expectation);
 
-		const opened =
-			existing ??
-			(await this.billingService.createPending({
-				subscriptionId: subscription.id,
-				periodStart: period.start,
-				periodEnd: period.end,
-				amount: net.toStorageString(),
-				currency: subscription.currency,
-				dueAt: period.start,
-				metadata: { gross: gross.toStorageString(), discount: discount.toStorageString() }
-			}));
-
-		// The charge is claimed on the cycle before anything is charged, and while the order path is called the claim is
+		// The charge is claimed on the cycle before anything touches it, and while the order path is called the claim is
 		// what an operator's `pay` or `waive` meets (`SubscriptionBillingService.claimCharge`). One conditional statement
-		// takes it, so no row lock is held across the external call.
-		const claim = await this.billingService.claimCharge(opened.id);
+		// takes it, so no row lock is held across the external call. A row an earlier attempt wrote is claimed before the
+		// change scheduled for its period restates it and before the retry reprices it, so both write under the claim; a
+		// row this attempt opens is claimed as soon as it exists.
+		let claim = existing ? await this.billingService.claimCharge(existing.id) : null;
 
-		if (!claim.token) {
+		if (claim && !claim.token) {
 			return this.unclaimedCycleOutcome(subscription, claim.billing);
 		}
 
 		// The claimed row is the one charged: a pass that recovered a stale claim reads the attempt count the earlier
 		// call left, so it calls the order path under that call's attempt key and the order path's own idempotency says
 		// what the call did.
-		const billing = claim.billing;
+		existing = claim ? claim.billing : existing;
 		let stillFenced = false;
 
 		try {
-			if (discount.isPositive()) {
+			// A change taken from the next period (`effective = 'NEXT_PERIOD'`) takes hold here, as the period it was
+			// scheduled for opens: the period is priced on the plan and lines it moved to. It used to be recorded and never
+			// read, so the subscription kept renewing on the plan it was leaving. The cycle holds the period's claim, so one
+			// pass applies it.
+			const opened = await this.applyScheduledChange(subscription.id, period.start, spend, existing, plan, claim?.token);
+
+			if (opened) {
+				// Applied or refused, the cycle goes on with the subscription as the change left it: its later writes
+				// (`rememberSetupFee`, `clearPendingCredit`) write the metadata they were handed, and the one read before the
+				// change would put a cleared change back.
+				subscription = opened.subscription;
+				items = await this.itemService.findForSubscription(subscription.id);
+
+				if (opened.plan) {
+					plan = opened.plan;
+					// The period opens on the new plan's cadence. A row an earlier attempt wrote for it moved its end with the
+					// change, so every later retry, which reads the period from the plan, finds the row on the same period.
+					period = periodFrom(period.start, this.planService.cadenceOf(plan));
+					existing = existing ? await this.billingService.findByPeriod(subscription.id, period.start) : existing;
+				}
+			}
+
+			// The one computation of a cycle's amount, which the upcoming-billing preview calls as well.
+			const { gross, discount, net } = priceCycle({
+				items,
+				currency: subscription.currency,
+				plan,
+				metadata: subscription.metadata
+			});
+
+			// A retry charges what it prices now (the lines as they stand, a change that took hold at this attempt), so the
+			// row an earlier attempt wrote records that: the amount the cycle settles for, and that `subscription.renewed`
+			// reports, is the amount its order charged.
+			const pricing = { gross: gross.toStorageString(), discount: discount.toStorageString() };
+			// A row the change restated on its own transaction (`applyScheduledChange`) already carries this discount, so its
+			// discount rows are brought to it first: a payment recorded after that commit stops the retry below
+			// (`SUBSCRIPTION_BILLING_CYCLE_SETTLED`), and the row it settled then still agrees with its ledger.
+			const restated = !!existing && !!opened?.plan;
+
+			if (restated) {
+				await this.appendDiscount(existing as SubscriptionBilling, subscription, discount);
+			}
+
+			const priced = existing
+				? await this.billingService.repriceUnsettled(existing, net.toStorageString(), pricing, claim.token)
+				: await this.billingService.createPending({
+						subscriptionId: subscription.id,
+						periodStart: period.start,
+						periodEnd: period.end,
+						amount: net.toStorageString(),
+						currency: subscription.currency,
+						dueAt: period.start,
+						metadata: pricing
+				  });
+
+			if (!claim) {
+				claim = await this.billingService.claimCharge(priced.id);
+
+				if (!claim.token) {
+					return this.unclaimedCycleOutcome(subscription, claim.billing);
+				}
+			}
+
+			const billing = existing ? priced : claim.billing;
+
+			if (!restated) {
 				await this.appendDiscount(billing, subscription, discount);
 			}
 
@@ -2064,8 +2217,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 			return await this.recordSuccess(subscription, plan, billing, period, items, spend());
 		} finally {
-			if (!stillFenced) {
-				await this.endChargeClaim(billing, claim.token);
+			if (claim?.token && !stillFenced) {
+				await this.endChargeClaim(claim.billing, claim.token);
 			}
 		}
 	}
@@ -2806,7 +2959,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			planId?: ID;
 			quantity?: DecimalString | number;
 			discountPercentage?: string;
-			before: SubscriptionItem[];
+			before: Array<Pick<IPricedLine, 'variantId' | 'quantity' | 'unitPrice'>>;
 			after: Array<{ variantId: ID; quantity: DecimalString; unitPrice: DecimalString; position: number; metadata?: Record<string, unknown> }>;
 			effective: 'IMMEDIATE' | 'NEXT_PERIOD';
 			description: string;
@@ -2819,24 +2972,38 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		const newRecurring = recurringAmount(change.after, currency);
 		const metadata: Record<string, unknown> = { ...(subscription.metadata ?? {}) };
 
-		if (change.planId) {
-			// A plan change re-states the discount: the new plan's terms replace whatever the old one
-			// was sold with, and a plan that grants none must not inherit the previous one's.
-			if (change.discountPercentage === undefined) {
-				delete metadata['discountPercentage'];
-			} else {
-				metadata['discountPercentage'] = change.discountPercentage;
-			}
-		}
-
 		const scheduled =
 			change.effective === 'NEXT_PERIOD' || !subscription.currentPeriodStart || !subscription.currentPeriodEnd;
 
 		if (scheduled) {
-			metadata['scheduledPlanChange'] = {
+			// Recorded, not made: the cycle that opens the next period applies it (`applyScheduledChange`), so the plan,
+			// its lines, the quantity and the discount move together at that boundary. A plan change keeps no lines here:
+			// they are priced from the plan when the period opens, over the lines the subscription has then. The discount
+			// is restated there too; restated now, the cycles still billed on the old plan took the new plan's discount.
+			const recorded: IScheduledPlanChange = {
 				...(change.planId ? { planId: change.planId } : {}),
+				...(change.planId && change.quantity !== undefined
+					? { quantity: normalizeDecimal(change.quantity, subscription.quantity) }
+					: {}),
+				...(change.planId
+					? {}
+					: {
+							items: change.after.map((line) => ({
+								variantId: line.variantId,
+								quantity: line.quantity,
+								unitPrice: line.unitPrice,
+								position: line.position,
+								...(line.metadata ? { metadata: line.metadata } : {})
+							}))
+						}),
 				effectiveAt: subscription.currentPeriodEnd ?? null,
 				description: change.description
+			};
+
+			// Signed, so the billing run can tell it from an entry a caller's metadata wrote (`scheduledChangeAt`).
+			metadata[SCHEDULED_PLAN_CHANGE] = {
+				...recorded,
+				signature: signScheduledChange(subscription.id, recorded)
 			};
 
 			await commitVersionedUpdate<Subscription>(this, {
@@ -2854,6 +3021,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				settlement: 'SCHEDULED',
 				currency
 			};
+		}
+
+		if (change.planId) {
+			// A plan change re-states the discount: the new plan's terms replace whatever the old one
+			// was sold with, and a plan that grants none must not inherit the previous one's.
+			this.restateDiscount(metadata, change.discountPercentage);
+			// And it replaces a plan change scheduled earlier for the next period: the latest decision about the plan
+			// holds, so an upgrade made now is not undone at the renewal by a downgrade scheduled before it.
+			delete metadata[SCHEDULED_PLAN_CHANGE];
 		}
 
 		const period: ISubscriptionPeriod = {
@@ -2945,6 +3121,346 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			settlement,
 			currency
 		};
+	}
+
+	/**
+	 * The lines a change of lines builds on.
+	 *
+	 * The lines the subscription has, unless it has no current period and a change of lines is already recorded: with
+	 * no period a change of lines is recorded rather than made (`applyChange`), and a second one built on the lines the
+	 * subscription has replaced the first, which was then missing from the first bill. It builds on the recorded lines.
+	 *
+	 * @param subscription The subscription being changed.
+	 * @returns The lines, in position order.
+	 */
+	private async linesToEdit(
+		subscription: Subscription
+	): Promise<Array<Omit<IPricedLine, 'position'> & { position?: number }>> {
+		const pending = subscription.metadata?.[SCHEDULED_PLAN_CHANGE] as IScheduledPlanChange | undefined;
+		const recordsLines = !subscription.currentPeriodStart || !subscription.currentPeriodEnd;
+
+		if (
+			recordsLines &&
+			!!pending &&
+			verifyScheduledChange(subscription.id, pending) &&
+			!pending.planId &&
+			Array.isArray(pending.items) &&
+			pending.items.length
+		) {
+			return pending.items.map((line) => ({ ...line }));
+		}
+
+		return (await this.itemService.findForSubscription(subscription.id)).map((row) => ({
+			variantId: row.variantId,
+			quantity: row.quantity,
+			unitPrice: row.unitPrice,
+			position: row.position
+		}));
+	}
+
+	/**
+	 * Restates the discount a plan change carries: the new plan's terms replace whatever the old one was sold with,
+	 * and a plan that grants none leaves none behind.
+	 *
+	 * @param metadata The subscription's metadata, edited in place.
+	 * @param discountPercentage The new plan's discount, when it grants one.
+	 */
+	private restateDiscount(metadata: Record<string, unknown>, discountPercentage?: string): void {
+		if (discountPercentage === undefined) {
+			delete metadata[DISCOUNT_OVERRIDE];
+		} else {
+			metadata[DISCOUNT_OVERRIDE] = discountPercentage;
+		}
+	}
+
+	/**
+	 * What the change scheduled for a period makes of the subscription when the cycle opening that period applies it.
+	 * Reads only: the cycle applies the answer (`applyScheduledChange`) and the upcoming-billing preview prices it.
+	 *
+	 * A change is due once the period it was recorded for opens: its `effectiveAt`, the end of the period it was
+	 * recorded in, is at or before the start of the period being billed. A plan change is checked again against the
+	 * plan as it stands then, as `changePlan` checks it: a plan that may no longer be taken up (deactivated, gone, its
+	 * target no longer sellable) or that is priced in another currency now refuses the change, and the period opens on
+	 * the plan the subscription is on. Its lines are priced from the plan then, over the lines the subscription has then.
+	 *
+	 * @param subscription The subscription being billed.
+	 * @param periodStart The start of the period the cycle bills.
+	 * @returns Null when no change is due; otherwise the metadata without the change, and either why the change is
+	 * refused or the lines (and, for a plan change, the plan) the period opens on.
+	 */
+	private async scheduledChangeAt(
+		subscription: Subscription,
+		periodStart: Date
+	): Promise<{
+		change: IScheduledPlanChange;
+		metadata: Record<string, unknown>;
+		refused?: string;
+		plan?: SubscriptionPlan;
+		quantity?: DecimalString;
+		items?: IPricedLine[];
+	} | null> {
+		const change = subscription.metadata?.[SCHEDULED_PLAN_CHANGE] as IScheduledPlanChange | undefined;
+
+		if (!change || typeof change !== 'object') {
+			return null;
+		}
+
+		if (change.effectiveAt && new Date(change.effectiveAt).getTime() > periodStart.getTime()) {
+			return null;
+		}
+
+		const metadata: Record<string, unknown> = { ...(subscription.metadata ?? {}) };
+
+		delete metadata[SCHEDULED_PLAN_CHANGE];
+
+		// Only what this service recorded and signed is applied (`verifyScheduledChange`): an entry a caller's metadata
+		// wrote before the key was reserved, or through an instance that does not reserve it yet, may still be on the row,
+		// and its lines or quantity were never checked by anything. A plan alone, the shape the service wrote before it
+		// signed anything, still takes hold: the plan is checked again below and the lines are priced from it.
+		const trusted = verifyScheduledChange(subscription.id, change);
+
+		// A signature that is there and does not verify is refused outright, rather than read as the unsigned shape: the
+		// change was recorded with lines or a quantity it can no longer prove (an edited entry, a key since removed), and
+		// applying its plan without them would bill terms nobody asked for. The refusal is told, so it is not silent.
+		if (!trusted && change.signature !== undefined) {
+			return {
+				change,
+				metadata,
+				refused:
+					'SUBSCRIPTION_SCHEDULED_CHANGE_UNTRUSTED: the scheduled change carries a signature that does not verify.'
+			};
+		}
+
+		if (!change.planId) {
+			if (!trusted || !Array.isArray(change.items) || !change.items.length) {
+				return {
+					change,
+					metadata,
+					refused:
+						'SUBSCRIPTION_SCHEDULED_CHANGE_UNTRUSTED: the scheduled change names no plan and no recurring lines this service recorded.'
+				};
+			}
+
+			try {
+				// Checked again as a change of lines made now is checked: the variants still sellable and the set well formed.
+				const items = await this.itemService.prepareItems(
+					change.items.map((line) => ({
+						variantId: line.variantId,
+						quantity: line.quantity,
+						unitPrice: line.unitPrice,
+						position: line.position,
+						...(line.metadata ? { metadata: line.metadata } : {})
+					})),
+					subscription.currency,
+					subscription.customerId
+				);
+
+				return { change, metadata, items };
+			} catch (error) {
+				if (error instanceof BadRequestException || error instanceof NotFoundException) {
+					return { change, metadata, refused: error.message };
+				}
+
+				throw error;
+			}
+		}
+
+		const quantity = trusted ? change.quantity : undefined;
+
+		try {
+			const plan = await this.planService.assertSubscribable(change.planId);
+
+			if (plan.currency && plan.currency !== subscription.currency) {
+				return {
+					change,
+					metadata,
+					refused: `SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in ${plan.currency} and the subscription is billed in ${subscription.currency}.`
+				};
+			}
+
+			// The cycle's ceiling was checked against the plan the subscription is leaving (`billCycle`), so the plan it
+			// moves to is checked here: a plan that bills at most N cycles, already used, does not bill this one.
+			if (
+				plan.maxBillingCycles !== undefined &&
+				plan.maxBillingCycles !== null &&
+				(subscription.billingCycleCount ?? 0) >= plan.maxBillingCycles
+			) {
+				return {
+					change,
+					metadata,
+					refused: `SUBSCRIPTION_CYCLE_CEILING_REACHED: the plan bills at most ${plan.maxBillingCycles} cycles, which the subscription has already used.`
+				};
+			}
+
+			const existing = await this.itemService.findForSubscription(subscription.id);
+			const items = await this.planLines(subscription, plan, existing, quantity);
+
+			this.restateDiscount(
+				metadata,
+				plan.discountPercentage !== undefined && plan.discountPercentage !== null
+					? String(plan.discountPercentage)
+					: undefined
+			);
+
+			return { change, metadata, plan, quantity, items };
+		} catch (error) {
+			// The plan's own answer (inactive, gone, its target or a line no longer sellable) refuses the change; anything
+			// else fails the cycle, which is retried, rather than dropping a change the customer asked for.
+			if (error instanceof BadRequestException || error instanceof NotFoundException) {
+				return { change, metadata, refused: error.message };
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Applies the change scheduled for the period a cycle opens, before the period is priced (`executeCycle`).
+	 *
+	 * One transaction, the claim first: the plan, the quantity, the restated discount and the cleared change are one
+	 * write predicated on the version the change was read at, and the lines follow it on the same transaction. A change
+	 * made meanwhile (a plan change made now, a change recorded again) moves the version, so the claim matches nothing
+	 * before any line is written and the change is read again rather than overwritten; a failure after the claim rolls
+	 * both back. A refused change is cleared and told (`subscription.scheduled-change-refused`) in one transaction too,
+	 * so a retry cannot find it cleared and its notice never written, and the period opens on the plan the subscription
+	 * is on. A cycle row an earlier attempt wrote for the period (a retry of a failed charge) is restated on the same
+	 * transaction (`restateUnsettled`): its end moves to the new plan's cadence and its amount to what the period is now
+	 * priced at, so a payment recorded meanwhile cannot leave the new period on the old amount.
+	 *
+	 * The plan the change moves to is read again under its row lock, as `createSubscription` reads it, and has to be the
+	 * plan the change was priced on; a plan changed meanwhile has the change read again (`ScheduledPlanMoved`). A claim
+	 * lost to a write that took the change away (a plan change made now clears it) stops the cycle: it read the plan,
+	 * the lines and the metadata before that write, and the next pass bills the subscription as the write left it.
+	 *
+	 * @param id The subscription being billed.
+	 * @param periodStart The start of the period the cycle bills.
+	 * @param spend The reader the cycle's subscription writes take their expectation from.
+	 * @param cycle The row an earlier attempt wrote for the period, when there is one.
+	 * @param current The plan the subscription is on, which a change of lines alone opens the period on.
+	 * @param chargeClaim The token of the charge claim the cycle holds on that row, which its restatement names.
+	 * @returns Null when no change was due; otherwise the subscription as the change left it, with the plan the period
+	 * opens on when the change was applied, and without one when it was refused.
+	 */
+	private async applyScheduledChange(
+		id: ID,
+		periodStart: Date,
+		spend: () => IVersionExpectation,
+		cycle: SubscriptionBilling | null,
+		current: SubscriptionPlan,
+		chargeClaim?: string
+	): Promise<{ subscription: Subscription; plan?: SubscriptionPlan } | null> {
+		for (let attempt = 1; ; attempt += 1) {
+			const subscription = await this.findOneScoped(id);
+			const due = await this.scheduledChangeAt(subscription, periodStart);
+
+			if (!due) {
+				if (attempt > 1) {
+					throw new ConflictException(
+						'SUBSCRIPTION_CHANGED_DURING_CYCLE: the subscription changed while its billing cycle was opening; the next billing pass bills it as it now stands.'
+					);
+				}
+
+				return null;
+			}
+
+			const stated = spend();
+			const lines = due.refused ? undefined : due.items;
+
+			try {
+				await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+					if (lines && due.plan) {
+						// A plan update holds this lock while it counts the plan's live subscriptions, so it either committed
+						// before (and the plan is read here as it left it) or waits for this change to commit (and counts it).
+						await lockPlanRow(manager, due.plan.id, 'share');
+
+						const current = await manager.findOne(SubscriptionPlan, { where: { id: due.plan.id } });
+
+						if (scheduledPlanTerms(current) !== scheduledPlanTerms(due.plan)) {
+							throw new ScheduledPlanMoved();
+						}
+					}
+
+					await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+						where: currentScope(),
+						id,
+						expectation: this.readVersionPredicate(subscription, stated),
+						patch: lines
+							? {
+									...(due.plan ? { planId: due.plan.id } : {}),
+									...(due.quantity !== undefined ? { quantity: due.quantity } : {}),
+									metadata: due.metadata
+							  }
+							: { metadata: due.metadata }
+					});
+
+					if (lines) {
+						await this.itemService.writePreparedItems(manager, id, lines);
+
+						if (cycle) {
+							// Priced as `executeCycle` prices the period (`priceCycle`), on the lines, plan and metadata the
+							// change opens it on, so the reprice that follows the commit finds nothing left to restate.
+							const opensOn = due.plan ?? current;
+							const { gross, discount, net } = priceCycle({
+								items: lines,
+								currency: subscription.currency,
+								plan: opensOn,
+								metadata: due.metadata
+							});
+							const end = due.plan
+								? periodFrom(periodStart, this.planService.cadenceOf(due.plan)).end
+								: null;
+
+							await this.billingService.restateUnsettled(
+								cycle.id,
+								{
+									...(end && new Date(cycle.periodEnd).getTime() !== end.getTime()
+										? { periodEnd: end }
+										: {}),
+									amount: net.toStorageString(),
+									pricing: { gross: gross.toStorageString(), discount: discount.toStorageString() }
+								},
+								manager,
+								chargeClaim
+							);
+						}
+					} else {
+						await this.emit(
+							'subscription.scheduled-change-refused',
+							id,
+							{
+								subscriptionId: id,
+								planId: due.change.planId ?? null,
+								periodStart,
+								reason: due.refused ?? null
+							},
+							manager
+						);
+					}
+				});
+			} catch (error) {
+				if (
+					stated.wildcard &&
+					attempt < METADATA_EDIT_ATTEMPTS &&
+					(isVersionConflict(error) || error instanceof ScheduledPlanMoved)
+				) {
+					continue;
+				}
+
+				throw error;
+			}
+
+			const opened = await this.findOneScoped(id);
+
+			if (!lines) {
+				this.logger.warn(
+					`Subscription ${id}: the change scheduled for the period from ${periodStart.toISOString()} was refused: ${due.refused}`
+				);
+
+				return { subscription: opened };
+			}
+
+			return { subscription: opened, plan: await this.planService.findOneScoped(opened.planId) };
+		}
 	}
 
 	/**
@@ -3076,21 +3592,63 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param discount The discount granted.
 	 */
 	private async appendDiscount(billing: SubscriptionBilling, subscription: Subscription, discount: Money): Promise<void> {
-		const existing = await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, billing.id);
+		const currency = subscription.currency;
+		// What the cycle's rows grant of the plan's discount so far: its plan promotions, and the corrections that gave
+		// part of them back. A promotion with another reference is another discount's, which this one does not restate.
+		const granted = (
+			await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, billing.id)
+		).filter(
+			(row) =>
+				row.referenceType === 'subscription-plan' &&
+				(row.type === AdjustmentType.PROMOTION ||
+					(row.type === AdjustmentType.MANUAL && row.reasonCode === DISCOUNT_RESTATED_REASON))
+		);
+		const total = Money.sum(
+			granted.map((row) => Money.of(row.amount, currency)),
+			currency
+		).round();
+		const owed = discount.negate().round();
 
-		if (existing.some((row) => row.type === AdjustmentType.PROMOTION)) {
+		if (total.equals(owed)) {
 			return;
 		}
 
+		// The ledger is append-only, and its rows add up to the discount the order carries: a retry priced on other terms
+		// (a change that took hold at this attempt, lines changed since the first) adds the difference. A larger discount
+		// is a further `PROMOTION`. A smaller one, or none, gives part of an earlier grant back, which a `PROMOTION` (only
+		// ever negative) cannot say: it is a governed `MANUAL` correction under the service's own reason.
+		const difference = owed.subtract(total).round();
+
+		if (difference.isNegative()) {
+			await this.adjustmentService.append({
+				ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
+				ownerId: billing.id,
+				type: AdjustmentType.PROMOTION,
+				amount: difference.toStorageString(),
+				currency,
+				referenceType: 'subscription-plan',
+				referenceId: subscription.planId,
+				description: granted.length ? 'Recurring plan discount, raised on a retry.' : 'Recurring plan discount.'
+			});
+
+			return;
+		}
+
+		await this.adjustmentService.ensureReason({
+			code: DISCOUNT_RESTATED_REASON,
+			label: 'Subscription discount restated on a retry',
+			appliesTo: AdjustmentType.MANUAL
+		});
 		await this.adjustmentService.append({
 			ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
 			ownerId: billing.id,
-			type: AdjustmentType.PROMOTION,
-			amount: discount.negate().toStorageString(),
-			currency: subscription.currency,
+			type: AdjustmentType.MANUAL,
+			amount: difference.toStorageString(),
+			currency,
 			referenceType: 'subscription-plan',
 			referenceId: subscription.planId,
-			description: 'Recurring plan discount.'
+			reasonCode: DISCOUNT_RESTATED_REASON,
+			description: 'Recurring plan discount lowered on a retry priced on other terms.'
 		});
 	}
 
@@ -3462,9 +4020,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param name The event name.
 	 * @param subscriptionId The aggregate the event is about.
 	 * @param data The projection a consumer receives.
+	 * @param manager The transaction the event commits with, when the write it reports is made on one.
 	 */
-	private async emit(name: string, subscriptionId: ID, data: Record<string, unknown>): Promise<void> {
-		await this.outbox.append(this.typeOrmSubscriptionRepository.manager, {
+	private async emit(
+		name: string,
+		subscriptionId: ID,
+		data: Record<string, unknown>,
+		manager: EntityManager = this.typeOrmSubscriptionRepository.manager
+	): Promise<void> {
+		await this.outbox.append(manager, {
 			name,
 			aggregateType: 'SUBSCRIPTION',
 			aggregateId: subscriptionId,

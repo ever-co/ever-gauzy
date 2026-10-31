@@ -1180,6 +1180,32 @@ describe('SubscriptionBillingService — a charge in flight fences the cycle (ch
 		expect(fixture.billing('billing-1')?.metadata?.waivedReason).toBeUndefined();
 	});
 
+	it('restates or reprices a cycle only under the claim of the pass that names it, or when no pass is charging it', async () => {
+		const fixture = billingFixture([billingRow('billing-1', { status: SubscriptionBillingStatus.FAILED, ...live() })]);
+		// The change's transaction: the double's transactional repository is the same table.
+		const manager = { getRepository: () => fixture.service.typeOrmSubscriptionBillingRepository } as never;
+		const values = { amount: '99', pricing: { gross: '99.000000', discount: '0.000000' } };
+		const pricing = { gross: '98.000000', discount: '0.000000' };
+
+		// No claim named: another pass is charging the cycle.
+		await expect(fixture.service.restateUnsettled('billing-1', values, manager)).rejects.toMatchObject(inFlight);
+		// A claim that is no longer the writer's.
+		await expect(
+			fixture.service.restateUnsettled('billing-1', values, manager, 'the-pass-whose-claim-went-stale')
+		).rejects.toMatchObject(claimLost);
+		await expect(
+			fixture.service.repriceUnsettled(fixture.billing('billing-1') as never, '98', pricing, 'the-pass-whose-claim-went-stale')
+		).rejects.toMatchObject(claimLost);
+		expect(fixture.billing('billing-1')?.amount).toBe('120.000000');
+
+		// The pass that holds the claim restates and reprices it.
+		await fixture.service.restateUnsettled('billing-1', values, manager, 'another-pass');
+		expect(fixture.billing('billing-1')?.amount).toBe('99.000000');
+
+		await fixture.service.repriceUnsettled(fixture.billing('billing-1') as never, '98', pricing, 'another-pass');
+		expect(fixture.billing('billing-1')).toMatchObject({ amount: '98.000000', chargeClaimToken: 'another-pass' });
+	});
+
 	it('refuses to correct, delete or reschedule a cycle a pass is charging', async () => {
 		const fixture = billingFixture([billingRow('billing-1', live())]);
 
