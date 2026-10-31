@@ -39,6 +39,7 @@ import {
 } from '../core/entities/internal';
 import { Tenant } from './tenant.entity';
 import { StripeSubscriptionService, describeError } from '../shared/billing/stripe-subscription.service';
+import { RegistrationPolicyService } from '../auth/auth-switches/registration-policy.service';
 
 @Injectable()
 export class TenantService extends CrudService<Tenant> {
@@ -64,7 +65,8 @@ export class TenantService extends CrudService<Tenant> {
 		readonly mikroOrmUserRepository: MikroOrmUserRepository,
 		readonly commandBus: CommandBus,
 		readonly configService: ConfigService,
-		readonly stripeSubscriptionService: StripeSubscriptionService
+		readonly stripeSubscriptionService: StripeSubscriptionService,
+		readonly registrationPolicyService: RegistrationPolicyService
 	) {
 		super(typeOrmTenantRepository, mikroOrmTenantRepository);
 	}
@@ -114,6 +116,8 @@ export class TenantService extends CrudService<Tenant> {
 	 * @throws BadRequestException when the creator already has a tenant: a second request (a double submit, a
 	 * retry while the first attempt was still running) that passed the route's check before the first one linked
 	 * the creator.
+	 * @throws ForbiddenException when a new tenant would be created while the operator has closed tenant
+	 * registration (`ALLOW_TENANTS_REGISTRATION=false`).
 	 */
 	private async createOrResumeTenant(input: ITenantCreateInput, user: IUser): Promise<Tenant> {
 		if (await this.userHasTenant(user)) {
@@ -125,6 +129,12 @@ export class TenantService extends CrudService<Tenant> {
 		// another one: every retry used to leave one more empty tenant behind.
 		const unfinished = await this.findUnfinishedTenant(user);
 		const onlyMissing = !!unfinished;
+
+		// Only a NEW tenant is subject to the operator's switch: finishing the creator's own unfinished tenant adds
+		// no workspace. Checked here, where REST (`POST /tenant`) and GraphQL (`createTenant`) meet.
+		if (!unfinished) {
+			await this.registrationPolicyService.assertTenantRegistrationOpen();
+		}
 
 		// Creates and saves a tenant entity from the given details. The creator is stated here, not left to the base
 		// subscriber alone: under MikroORM `createdByUserId` is a mirror (`persist: false`) that is stored only through
