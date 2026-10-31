@@ -39,7 +39,7 @@
 	"postCreateCommand": {
 		"dependencies": "yarn bootstrap",
 		// In GitHub Codespaces, the API and web UI URLs the browser can reach (see codespaces-env.sh); nothing elsewhere.
-		"codespaces-urls": "echo '. \"${containerWorkspaceFolder}/.devcontainer/codespaces-env.sh\"' | tee -a ~/.bashrc ~/.zshrc > /dev/null"
+		"codespaces-urls": "echo '. \"${containerWorkspaceFolder}/.devcontainer/codespaces-env.sh\" \"${containerWorkspaceFolder}\"' | tee -a ~/.bashrc ~/.zshrc > /dev/null"
 	},
 
 	"customizations": {
