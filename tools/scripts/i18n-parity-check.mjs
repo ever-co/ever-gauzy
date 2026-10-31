@@ -14,19 +14,23 @@
  *   2. reports the keys the translation lacks (they fall back to English at runtime) and the keys only it has
  *      (informational: an old key nobody reads any more costs nothing);
  *   3. compares the placeholders of every shared key, counting repeats, so a value that repeats or drops one is caught:
- *        - ngx-translate interpolations, `{{ name }}` (inner whitespace is not significant: `{{name}}` is the same);
+ *        - ngx-translate interpolations, `{{ name }}` (the whitespace around the name is not significant, so `{{name}}`
+ *          is the same; the name itself is compared as written, so `{{ user name }}` is not `{{ username }}`);
  *        - HTML tags, by name and kind (`<strong>`, `</strong>`, `<br/>`); attributes are not compared, but an
  *          interpolation inside one (`<a href={{url}}>`) is, as an interpolation;
  *        - printf-style tokens (`%s`, `%d`, `%1$s`);
- *        - single-brace arguments, `{count}` (the nestjs-i18n format the API uses) and the argument of an ICU
- *          `{count, plural, ...}` / `{gender, select, ...}` (the branch texts are translatable and not compared);
+ *        - single-brace arguments, `{count}` (the nestjs-i18n format the API uses), and ICU arguments,
+ *          `{count, plural, ...}` / `{gender, select, ...}`, read with their braces matched: the branch texts are
+ *          translatable and not compared, the placeholders inside the branches are. Only one branch is shown and a
+ *          language can have other branches than English (Chinese plurals need only `other`), so the branches of an
+ *          argument contribute each placeholder any of them uses, once;
  *   4. lists the values still identical to English (informational: brand names, codes and placeholders-only values
  *      are legitimately the same; everything else is untranslated text).
  *
  * It fails (exit 1) on a missing key or a placeholder mismatch for the languages named on the command line, so it can
  * hold one complete translation to parity without failing on the ones still in progress. `--all` reports every
- * language of the folder and fails only on a catalogue that cannot be read (invalid JSON): the UI then cannot load a
- * single string of that language. That is the mode CI runs; holding a language to parity in CI would require every
+ * language of the folder (a folder with only `en.json`, like most plugin folders, has its English catalogue checked)
+ * and fails only on a catalogue that cannot be read (invalid JSON): the UI then cannot load a single string of it. That is the mode CI runs; holding a language to parity in CI would require every
  * new English key to ship with its translation, which is a decision for the maintainers, not for this script.
  *
  * Run from the repository root:
@@ -51,17 +55,32 @@ export const DEFAULT_DIRECTORY = 'packages/ui-core/i18n/assets/i18n';
 /** The catalogue every translation is measured against. */
 export const SOURCE_LANGUAGE = 'en';
 
-/** `{{ name }}`: an ngx-translate interpolation. */
-const INTERPOLATION = /\{\{\s*([^{}]*?)\s*\}\}/g;
+// The placeholder patterns are sticky (`y`): the reader tries them at one position of the text at a time.
+
+/** `{{ name }}`: an ngx-translate interpolation; the name is captured without the whitespace around it. */
+const INTERPOLATION = /\{\{\s*([^{}]*?)\s*\}\}/y;
+
+/** The same anywhere in a text: the interpolations inside the attributes of an HTML tag. */
+const INTERPOLATIONS = /\{\{\s*([^{}]*?)\s*\}\}/g;
 
 /** An HTML tag: opening, closing (`</b>`) or self-closing (`<br/>`); the attributes are skipped. */
-const HTML_TAG = /<(\/?)([A-Za-z][\w-]*)\b(?:[^<>"']|"[^"]*"|'[^']*')*?(\/?)>/g;
+const HTML_TAG = /<(\/?)([A-Za-z][\w-]*)\b(?:[^<>"']|"[^"]*"|'[^']*')*?(\/?)>/y;
 
 /** `%s`, `%d`, `%1$s`: a printf-style token. */
-const PRINTF = /%(?:\d+\$)?(?:s|d|i|f)/g;
+const PRINTF = /%(?:\d+\$)?(?:s|d|i|f)/y;
 
-/** `{count}` or the head of an ICU argument, `{count, plural,`: a single-brace argument. */
-const SINGLE_BRACE = /\{\s*([A-Za-z_][\w.]*)\s*(?:,\s*([A-Za-z]+)\s*)?[,}]/g;
+/** The head of a single-brace argument: `{count}`, `{when, date,` or `{count, plural,`. */
+const ARGUMENT = /\{\s*([A-Za-z_][\w.]*)\s*(?:,\s*([A-Za-z]+)\s*)?([,}])/y;
+
+/** One branch of a plural or select argument, up to the brace that opens its text: `one {`, `=0 {`, `offset:1 other {`. */
+const BRANCH = /\s*(?:offset:\s*\d+\s*)?(?:=\s*\d+|[A-Za-z][\w-]*)\s*\{/y;
+
+/** The brace that closes a plural or select argument, after its last branch. */
+const ARGUMENT_END = /\s*\}/y;
+
+// cspell:ignore selectordinal
+/** The ICU argument types whose value is a set of branches, each a message of its own. */
+const BRANCHING_TYPES = new Set(['plural', 'select', 'selectordinal']);
 
 /**
  * Flattens a nested catalogue to dotted key paths, in document order.
@@ -96,28 +115,173 @@ export function placeholdersOf(value) {
 		return [];
 	}
 
+	return readMessage(value, 0, false).tokens.sort();
+}
+
+/**
+ * Matches a sticky pattern exactly at `index`.
+ *
+ * @param {RegExp} pattern a pattern with the `y` flag
+ * @param {string} text
+ * @param {number} index
+ * @returns {RegExpExecArray | null}
+ */
+function matchAt(pattern, text, index) {
+	pattern.lastIndex = index;
+	return pattern.exec(text);
+}
+
+/**
+ * Reads the placeholders of a message from `index` to the end of the text or, inside an ICU branch, to the brace that
+ * closes the branch.
+ *
+ * @param {string} text
+ * @param {number} index
+ * @param {boolean} inBranch
+ * @returns {{ tokens: string[], end: number }} the tokens, and the index where the message ends
+ */
+function readMessage(text, index, inBranch) {
 	const tokens = [];
 
-	for (const [, expression] of value.matchAll(INTERPOLATION)) {
-		tokens.push(`{{${expression.replace(/\s+/g, '')}}}`);
+	while (index < text.length) {
+		if (inBranch && text[index] === '}') {
+			break;
+		}
+
+		const placeholder = readPlaceholder(text, index);
+
+		if (placeholder) {
+			tokens.push(...placeholder.tokens);
+			index = placeholder.end;
+		} else {
+			index++;
+		}
 	}
 
-	// Single braces are read once the interpolations are gone, so `{{ name }}` is not read twice.
-	const withoutInterpolations = value.replace(INTERPOLATION, ' ');
+	return { tokens, end: index };
+}
 
-	for (const [, name, kind] of withoutInterpolations.matchAll(SINGLE_BRACE)) {
-		tokens.push(kind ? `{${name},${kind}}` : `{${name}}`);
+/**
+ * Reads the placeholder that starts at `index`, if one does.
+ *
+ * @param {string} text
+ * @param {number} index
+ * @returns {{ tokens: string[], end: number } | null} its tokens and the index after it
+ */
+function readPlaceholder(text, index) {
+	switch (text[index]) {
+		case '{': {
+			const interpolation = matchAt(INTERPOLATION, text, index);
+
+			if (interpolation) {
+				return { tokens: [`{{${interpolation[1]}}}`], end: index + interpolation[0].length };
+			}
+
+			return readArgument(text, index);
+		}
+		case '<': {
+			const tag = matchAt(HTML_TAG, text, index);
+
+			if (!tag) {
+				return null;
+			}
+
+			const [whole, closing, name, selfClosing] = tag;
+			const inAttributes = [...whole.matchAll(INTERPOLATIONS)].map(([, expression]) => `{{${expression}}}`);
+
+			return {
+				tokens: [`<${closing}${name.toLowerCase()}${selfClosing}>`, ...inAttributes],
+				end: index + whole.length
+			};
+		}
+		case '%': {
+			const printf = matchAt(PRINTF, text, index);
+
+			return printf ? { tokens: [printf[0]], end: index + printf[0].length } : null;
+		}
+		default:
+			return null;
+	}
+}
+
+/**
+ * Reads the single-brace argument that starts at `index`, if one does: `{count}`, `{when, date, short}`, or a plural or
+ * select argument with its branches. A brace that opens no argument (`{ "key": "value" }`) is text.
+ *
+ * @param {string} text
+ * @param {number} index
+ * @returns {{ tokens: string[], end: number } | null}
+ */
+function readArgument(text, index) {
+	const head = matchAt(ARGUMENT, text, index);
+
+	if (!head) {
+		return null;
 	}
 
-	for (const [, closing, name, selfClosing] of value.matchAll(HTML_TAG)) {
-		tokens.push(`<${closing}${name.toLowerCase()}${selfClosing}>`);
+	const [whole, name, type, terminator] = head;
+	const token = type ? `{${name},${type}}` : `{${name}}`;
+	let cursor = index + whole.length;
+
+	if (terminator === '}') {
+		return { tokens: [token], end: cursor };
 	}
 
-	for (const [token] of value.matchAll(PRINTF)) {
-		tokens.push(token);
+	if (!BRANCHING_TYPES.has(type)) {
+		// `{when, date, short}`: the style is not a placeholder.
+		return { tokens: [token], end: closingBraceAfter(text, cursor) };
 	}
 
-	return tokens.sort();
+	// Only one branch is shown, and a language can have other branches than English (Chinese plurals need only
+	// `other`), so the branches contribute each placeholder any of them uses, once.
+	const inBranches = new Set();
+
+	while (cursor < text.length) {
+		const end = matchAt(ARGUMENT_END, text, cursor);
+
+		if (end) {
+			return { tokens: [token, ...inBranches], end: cursor + end[0].length };
+		}
+
+		const branch = matchAt(BRANCH, text, cursor);
+
+		if (!branch) {
+			// Not a list of branches: the rest of the argument is text.
+			return { tokens: [token, ...inBranches], end: closingBraceAfter(text, cursor) };
+		}
+
+		const message = readMessage(text, cursor + branch[0].length, true);
+
+		for (const placeholder of message.tokens) {
+			inBranches.add(placeholder);
+		}
+
+		// Past the brace that closes the branch.
+		cursor = message.end + 1;
+	}
+
+	return { tokens: [token, ...inBranches], end: text.length };
+}
+
+/**
+ * The index after the brace that closes an argument whose remaining text starts at `index`, nested braces included.
+ *
+ * @param {string} text
+ * @param {number} index
+ * @returns {number}
+ */
+function closingBraceAfter(text, index) {
+	let depth = 1;
+
+	for (let cursor = index; cursor < text.length; cursor++) {
+		if (text[cursor] === '{') {
+			depth++;
+		} else if (text[cursor] === '}' && --depth === 0) {
+			return cursor + 1;
+		}
+	}
+
+	return text.length;
 }
 
 /**
@@ -271,7 +435,8 @@ function main() {
 	const directory = resolve(ROOT, options.directory);
 	const languages = options.all ? languagesIn(directory) : options.languages;
 
-	if (languages.length === 0) {
+	// `--all` on a folder with only the English catalogue (most plugin folders) still checks that it parses.
+	if (languages.length === 0 && !options.all) {
 		console.error('Name at least one language (e.g. `zh`), or pass --all.');
 		process.exit(2);
 	}
@@ -306,6 +471,12 @@ function main() {
 			JSON.stringify(Object.fromEntries(results.map(({ language, result }) => [language, result])), null, 2)
 		);
 	} else {
+		if (results.length === 0) {
+			console.log(
+				`${SOURCE_LANGUAGE}: ${flattenCatalogue(source).size} keys, no translation in ${options.directory} yet`
+			);
+		}
+
 		for (const { language, result } of results) {
 			console.log(summarize(language, result));
 

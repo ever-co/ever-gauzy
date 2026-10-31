@@ -8,6 +8,11 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
 	compareCatalogues,
 	flattenCatalogue,
@@ -15,6 +20,28 @@ import {
 	parseArguments,
 	placeholdersOf
 } from './i18n-parity-check.mjs';
+
+const SCRIPT = fileURLToPath(new URL('./i18n-parity-check.mjs', import.meta.url));
+
+/**
+ * Runs the check on a temporary folder that holds `files` (file name -> contents).
+ *
+ * @param {Record<string, string>} files
+ * @param {string[]} args
+ */
+function runOnFolder(files, ...args) {
+	const directory = mkdtempSync(join(tmpdir(), 'i18n-parity-'));
+
+	try {
+		for (const [name, contents] of Object.entries(files)) {
+			writeFileSync(join(directory, name), contents);
+		}
+
+		return spawnSync(process.execPath, [SCRIPT, ...args, '--dir', directory], { encoding: 'utf8' });
+	} finally {
+		rmSync(directory, { recursive: true, force: true });
+	}
+}
 
 test('a catalogue flattens to dotted paths in document order', () => {
 	const flat = flattenCatalogue({ BUTTONS: { SAVE: 'Save', NESTED: { DEEP: 'Deep' } }, TITLE: 'Title' });
@@ -29,9 +56,18 @@ test('an empty-string key keeps its own path', () => {
 	assert.deepEqual([...flat.keys()], ['TEXT.']);
 });
 
-test('interpolations are read without their inner whitespace', () => {
+test('interpolations are read without the whitespace around their name', () => {
 	assert.deepEqual(placeholdersOf('Hello {{ name }}'), placeholdersOf('你好 {{name}}'));
 	assert.deepEqual(placeholdersOf("'{{ name }}' in '{{ organization }}'"), ['{{name}}', '{{organization}}']);
+});
+
+test('only the whitespace around an interpolation name is ignored, not the whitespace inside it', () => {
+	assert.deepEqual(placeholdersOf('{{  name }}'), ['{{name}}']);
+	assert.notDeepEqual(placeholdersOf('{{ user name }}'), placeholdersOf('{{ username }}'));
+	assert.equal(
+		compareCatalogues({ A: 'Hi {{ username }}' }, { A: '你好 {{ user name }}' }).placeholderMismatches.length,
+		1
+	);
 });
 
 test('placeholders are compared with repeats counted, so order does not matter but repetition does', () => {
@@ -53,6 +89,39 @@ test('printf tokens and single-brace arguments are read; JSON-looking text is no
 	assert.deepEqual(placeholdersOf('{ "key": "value" }'), []);
 	assert.deepEqual(placeholdersOf('No placeholders here.'), []);
 	assert.deepEqual(placeholdersOf(undefined), []);
+});
+
+test('ICU branch text is not a placeholder, even a single word, so a translation with other branches passes', () => {
+	assert.deepEqual(placeholdersOf('{count, plural, one {item} other {items}}'), ['{count,plural}']);
+	assert.deepEqual(placeholdersOf('{gender, select, male {he} female {she} other {they}}'), ['{gender,select}']);
+	assert.deepEqual(placeholdersOf('Due {when, date, short}'), ['{when,date}']);
+
+	const result = compareCatalogues(
+		{ ITEMS: '{count, plural, one {item} other {items}}' },
+		{ ITEMS: '{count, plural, other {项}}' }
+	);
+
+	assert.deepEqual(result.placeholderMismatches, []);
+});
+
+test('placeholders inside ICU branches count once per argument, nested arguments included', () => {
+	const english =
+		'{count, plural, =0 {No task for {name}} one {One task for {name}} other {# tasks for {name}, <b>{{ team }}</b>}}';
+
+	assert.deepEqual(placeholdersOf(english), ['</b>', '<b>', '{count,plural}', '{name}', '{{team}}']);
+	assert.deepEqual(
+		placeholdersOf('{count, plural, other {{name} 有 # 个任务，<b>{{ team }}</b>}}'),
+		placeholdersOf(english)
+	);
+	assert.notDeepEqual(
+		placeholdersOf('{count, plural, other {有 # 个任务，<b>{{ team }}</b>}}'),
+		placeholdersOf(english)
+	);
+	assert.deepEqual(placeholdersOf('{count, plural, other {{gender, select, male {{name} (he)} other {{name}}}}}'), [
+		'{count,plural}',
+		'{gender,select}',
+		'{name}'
+	]);
 });
 
 test('missing, extra and identical keys are reported', () => {
@@ -113,4 +182,19 @@ test('the command line names languages, a folder and a list', () => {
 	assert.throws(() => parseArguments(['zh', '--list', 'everything']), /--list takes one of/);
 	assert.throws(() => parseArguments(['--strict']), /Unknown option/);
 	assert.throws(() => parseArguments(['zh', '--dir']), /--dir needs a folder/);
+});
+
+test('--all checks a folder that holds only the English catalogue, and fails when that catalogue does not parse', () => {
+	const englishOnly = runOnFolder({ 'en.json': '{ "TITLE": "Title", "SAVE": "Save" }' }, '--all');
+
+	assert.equal(englishOnly.status, 0, englishOnly.stderr);
+	assert.match(englishOnly.stdout, /en: 2 keys, no translation in /);
+
+	const broken = runOnFolder({ 'en.json': '{ "TITLE": ' }, '--all');
+
+	assert.equal(broken.status, 1);
+	assert.match(broken.stderr, /en\.json/);
+
+	// Without --all a language has to be named.
+	assert.equal(runOnFolder({ 'en.json': '{}' }).status, 2);
 });
