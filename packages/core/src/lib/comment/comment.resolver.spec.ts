@@ -7,7 +7,7 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
@@ -485,6 +485,21 @@ describe('CommentResolver — one concept, two protocols, the same operations', 
 		const command = commandBus.execute.mock.calls[0][0];
 		expect(command).toBeInstanceOf(CommentCreateCommand);
 		expect(command.input).toEqual(input);
+	});
+
+	it.each([
+		['another spelling of a type', 'organizationcontact'],
+		['a type with a dotless i', 'Organ\u0131zationContact'],
+		['a type with a trailing space', 'Task '],
+		['an unknown type', 'NotARecordType'],
+		['no type', undefined]
+	])('refuses %s as the entity of a new comment, as the REST route does', async (_label, entity) => {
+		const { resolver, commandBus } = surfaces();
+
+		await expect(
+			resolver.createComment({ comment: 'Hello', entity, entityId: TASK, organizationId: ORGANIZATION } as never)
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(commandBus.execute).not.toHaveBeenCalled();
 	});
 
 	it('edits a comment through the command the REST route dispatches, with the identifier beside the body', async () => {

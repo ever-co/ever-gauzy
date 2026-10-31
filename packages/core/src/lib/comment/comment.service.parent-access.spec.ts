@@ -478,7 +478,7 @@ describe('CommentService — the comments of a governed record follow its policy
 			}
 		);
 
-		it('refuses it from the GraphQL createComment mutation through to the service', async () => {
+		it('refuses it at the GraphQL createComment mutation, before the service is reached', async () => {
 			as([PermissionsEnum.ORG_CONTACT_EDIT]);
 			const handler = new CommentCreateHandler(service);
 			const commandBus = { execute: jest.fn((command) => handler.execute(command)) };
@@ -492,8 +492,8 @@ describe('CommentService — the comments of a governed record follow its policy
 			} as any);
 
 			await expect(refusal).rejects.toBeInstanceOf(BadRequestException);
-			await expect(refusal).rejects.toThrow(CANONICAL_ONLY);
-			expect(commandBus.execute).toHaveBeenCalledTimes(1);
+			await expect(refusal).rejects.toThrow('entity must be one of the following values');
+			expect(commandBus.execute).not.toHaveBeenCalled();
 			expect(baseCreate).not.toHaveBeenCalled();
 		});
 
