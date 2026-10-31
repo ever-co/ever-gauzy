@@ -501,3 +501,15 @@ jobs:
       - name: The API and worker builds keep the copied packages' source maps pointing at the sources
         if: always()
         run: node --test apps/api/config/source-map-rebase.test.mjs
+
+      # In production the API refuses to start without its JWT and session secrets, and to seed without the
+      # DEMO_*_PASSWORD values (packages/core/src/lib/bootstrap/validate-secrets.ts). The one-click templates
+      # (Deploy to DigitalOcean, the Caddy compose file and its env sample) must ask the operator for each of them
+      # and ship none: a missing one deploys an API that never starts, a filled-in one is a published credential.
+      - name: The self-hosting templates ask for every secret the API needs and ship none
+        if: always()
+        run: node tools/scripts/self-hosting-secrets-check.mjs
+
+      - name: The self-hosting secrets gate reads every shape it must
+        if: always()
+        run: node --test tools/scripts/self-hosting-secrets-check.test.mjs
