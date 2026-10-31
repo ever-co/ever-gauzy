@@ -763,6 +763,8 @@
 		"NAME": "Naam",
 		"YEAR": "Jaar",
 		"BANNER": "Banner",
+		"BANNER_PLACEHOLDER": "bijv. Wij bouwen opensourcesoftware voor bedrijven",
+		"BANNER_HINT": "Een korte slogan die op je openbare pagina onder je bedrijfsnaam wordt getoond",
 		"SIZE": "Grootte",
 		"YEAR_FOUNDED": "Jaar Opgericht",
 		"COMPANY_SIZE": "Bedrijfsgrootte",

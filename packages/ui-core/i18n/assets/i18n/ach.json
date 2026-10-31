@@ -660,6 +660,8 @@
 		"NAME": "crwdns4618:0crwdne4618:0",
 		"YEAR": "crwdns4620:0crwdne4620:0",
 		"BANNER": "crwdns3854:0crwdne3854:0",
+		"BANNER_PLACEHOLDER": "e.g. We build open-source software for businesses",
+		"BANNER_HINT": "A short tagline shown under your company name on your public page",
 		"SIZE": "crwdns4622:0crwdne4622:0",
 		"YEAR_FOUNDED": "crwdns3856:0crwdne3856:0",
 		"COMPANY_SIZE": "crwdns4624:0crwdne4624:0",

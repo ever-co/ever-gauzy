@@ -763,6 +763,8 @@
 		"NAME": "姓名",
 		"YEAR": "年份",
 		"BANNER": "橫幅",
+		"BANNER_PLACEHOLDER": "例如：我们为企业打造开源软件",
+		"BANNER_HINT": "显示在公开页面上公司名称下方的简短标语",
 		"SIZE": "尺寸",
 		"YEAR_FOUNDED": "成立年份",
 		"COMPANY_SIZE": "公司规模",

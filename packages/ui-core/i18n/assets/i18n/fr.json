@@ -764,6 +764,8 @@
 		"NAME": "Nom",
 		"YEAR": "Année",
 		"BANNER": "Bannière",
+		"BANNER_PLACEHOLDER": "ex. : Nous créons des logiciels open source pour les entreprises",
+		"BANNER_HINT": "Un court slogan affiché sous le nom de votre entreprise sur votre page publique",
 		"SIZE": "Taille",
 		"YEAR_FOUNDED": "Année de fondation",
 		"COMPANY_SIZE": "Taille de l'entreprise",

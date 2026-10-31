@@ -767,6 +767,8 @@
 		"NAME": "שם",
 		"YEAR": "Year",
 		"BANNER": "Banner",
+		"BANNER_PLACEHOLDER": "לדוגמה: אנחנו בונים תוכנת קוד פתוח לעסקים",
+		"BANNER_HINT": "סלוגן קצר שמוצג מתחת לשם החברה בדף הציבורי שלך",
 		"SIZE": "Size",
 		"YEAR_FOUNDED": "Year Founded",
 		"COMPANY_SIZE": "Company Size",

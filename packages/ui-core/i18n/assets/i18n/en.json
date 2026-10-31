@@ -819,6 +819,8 @@
 		"NAME": "Name",
 		"YEAR": "Year",
 		"BANNER": "Banner",
+		"BANNER_PLACEHOLDER": "e.g. We build open-source software for businesses",
+		"BANNER_HINT": "A short tagline shown under your company name on your public page",
 		"SIZE": "Size",
 		"YEAR_FOUNDED": "Year Founded",
 		"COMPANY_SIZE": "Company Size",

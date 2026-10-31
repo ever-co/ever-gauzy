@@ -64,13 +64,24 @@
 							/>
 						</div>
 						<div class="field field--wide">
-							<label class="label" for="banner">{{ 'POP_UPS.BANNER' | translate }}</label>
+							<div class="label-row">
+								<label class="label" for="banner">{{ 'POP_UPS.BANNER' | translate }}</label>
+								<!-- A button so the hint opens on focus and tap too, not only on hover. -->
+								<button
+									type="button"
+									class="hint-button"
+									[attr.aria-label]="'POP_UPS.BANNER_HINT' | translate"
+									[nbTooltip]="'POP_UPS.BANNER_HINT' | translate"
+								>
+									<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
+								</button>
+							</div>
 							<input
 								id="banner"
 								nbInput
 								type="text"
 								fullWidth
-								placeholder="{{ 'POP_UPS.BANNER' | translate }}"
+								placeholder="{{ 'POP_UPS.BANNER_PLACEHOLDER' | translate }}"
 								formControlName="banner"
 								autocomplete="off"
 							/>

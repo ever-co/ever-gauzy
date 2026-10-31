@@ -763,6 +763,8 @@
 		"NAME": "Nome",
 		"YEAR": "Anno",
 		"BANNER": "Bandiera",
+		"BANNER_PLACEHOLDER": "es. Sviluppiamo software open source per le aziende",
+		"BANNER_HINT": "Un breve slogan mostrato sotto il nome della tua azienda nella tua pagina pubblica",
 		"SIZE": "Dimensione",
 		"YEAR_FOUNDED": "Anno di fondazione",
 		"COMPANY_SIZE": "Dimensione dell'azienda",
