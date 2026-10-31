@@ -425,15 +425,28 @@ export class SubscriptionPlanService extends SubscriptionCrudService<Subscriptio
 	}
 
 	/**
+	 * Whether a plan is in use: a live subscription on it, or a live subscription a mid-cycle change is moving onto it.
+	 * The change reserves the plan (`reservedPlanId`) before it settles and clears the reservation with the write that
+	 * moves the subscription, so a plan update counts the subscription from before the money moves until after it is on
+	 * the plan. A subscription that ended meanwhile no longer holds the plan: it bills nothing on it either way, and a
+	 * reservation it was left with never stands in the way of the plan's update.
+	 *
 	 * @param planId The plan to count subscribers of.
-	 * @returns True when at least one subscription is still live on it.
+	 * @returns True when at least one subscription is still live on it, or reserves it.
 	 */
 	public async hasLiveSubscriptions(planId: ID, manager?: EntityManager): Promise<boolean> {
-		const where = {
-			planId,
-			status: In(LIVE_SUBSCRIPTION_STATUSES),
-			...currentScope()
-		};
+		const where = [
+			{
+				planId,
+				status: In(LIVE_SUBSCRIPTION_STATUSES),
+				...currentScope()
+			},
+			{
+				reservedPlanId: planId,
+				status: In(LIVE_SUBSCRIPTION_STATUSES),
+				...currentScope()
+			}
+		];
 		// In the caller's transaction when it states one (a plan update under the plan row's lock).
 		const count = manager
 			? await manager.count(this.typeOrmSubscriptionRepository.target, { where } as never)
