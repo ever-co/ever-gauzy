@@ -6,6 +6,7 @@
  * doubled because the reader only hands them a criteria and reads back a few columns.
  */
 jest.mock('@gauzy/core', () => ({
+	...jest.requireActual('@gauzy/core/src/lib/money/decimal'),
 	MultiORMEnum: { TypeORM: 'typeorm', MikroORM: 'mikro-orm' },
 	getORMType: jest.fn(() => 'typeorm')
 }));
@@ -46,6 +47,7 @@ const ORDER_ROW = {
 	fulfillmentStatus: FulfillmentStatus.FULFILLED,
 	completedAt: COMPLETED_AT,
 	canceledAt: null,
+	refundedTotal: 100.1,
 	customerId: 'customer-1',
 	total: '120.00',
 	metadata: { note: 'internal' }
@@ -53,8 +55,23 @@ const ORDER_ROW = {
 
 /** The order's line rows, with columns the reader must not hand on and a quantity the driver answered as text. */
 const LINE_ROWS = [
-	{ id: 'line-1', orderId: ORDER, quantity: 1, refundedQuantity: 1, unitPrice: '100.00', productName: 'Pro' },
-	{ id: 'line-2', orderId: ORDER, quantity: '2.000000', refundedQuantity: null, unitPrice: '10.00' }
+	{
+		id: 'line-1',
+		orderId: ORDER,
+		quantity: 1,
+		refundedQuantity: 1,
+		refundedAmount: 100,
+		unitPrice: '100.00',
+		productName: 'Pro'
+	},
+	{
+		id: 'line-2',
+		orderId: ORDER,
+		quantity: '2.000000',
+		refundedQuantity: null,
+		refundedAmount: 0.1,
+		unitPrice: '10.00'
+	}
 ];
 
 /** What the reader answers for {@link ORDER_ROW} and {@link LINE_ROWS}. */
@@ -162,13 +179,49 @@ describe('OrderStateReader — where an order is now, for another package (#1102
 	it('answers when the order completed or was cancelled, which archiving keeps', async () => {
 		const canceledAt = new Date('2026-10-02T10:00:00Z');
 		const repos = repositories(
-			{ ...ORDER_ROW, status: OrderStatus.ARCHIVED, completedAt: undefined, canceledAt },
+			{ ...ORDER_ROW, status: OrderStatus.ARCHIVED, completedAt: undefined, canceledAt, refundedTotal: 0 },
 			[]
 		);
 
 		const state = await readerOver(repos).findState(ORDER, { tenantId: TENANT });
 
 		expect(state).toMatchObject({ status: OrderStatus.ARCHIVED, completedAt: null, canceledAt, lines: [] });
+	});
+
+	it('answers no lines when their refund register does not account for every refund the ledger records (Copilot on #11577)', async () => {
+		// A line report lost after the refund committed, or a refund made against no line: the lines would
+		// understate what was refunded, so the caller is told they cannot decide per line.
+		const lost = repositories({ ...ORDER_ROW, refundedTotal: '100.100001' });
+		const nothingOnLines = repositories({ ...ORDER_ROW, refundedTotal: 5 }, [
+			{ id: 'line-1', quantity: 1, refundedQuantity: 0, refundedAmount: 0 }
+		]);
+
+		await expect(readerOver(lost).findState(ORDER, { tenantId: TENANT })).resolves.toMatchObject({ lines: null });
+		await expect(readerOver(nothingOnLines).findState(ORDER, { tenantId: TENANT })).resolves.toMatchObject({
+			lines: null
+		});
+	});
+
+	it('answers the lines when they account for at least what the ledger records, exactly and not by float sums', async () => {
+		// 0.1 + 0.2 is not 0.3 in floating point; the register is summed as decimals.
+		const exact = repositories({ ...ORDER_ROW, refundedTotal: 0.3 }, [
+			{ id: 'line-1', quantity: 1, refundedQuantity: 0, refundedAmount: 0.1 },
+			{ id: 'line-2', quantity: 1, refundedQuantity: 0, refundedAmount: 0.2 }
+		]);
+		const ahead = repositories({ ...ORDER_ROW, refundedTotal: 0 }, [
+			{ id: 'line-1', quantity: 1, refundedQuantity: 1, refundedAmount: 10 }
+		]);
+		const unrefunded = repositories({ ...ORDER_ROW, refundedTotal: undefined }, [
+			{ id: 'line-1', quantity: 1, refundedQuantity: undefined, refundedAmount: undefined }
+		]);
+
+		expect((await readerOver(exact).findState(ORDER, { tenantId: TENANT }))?.lines).toHaveLength(2);
+		expect((await readerOver(ahead).findState(ORDER, { tenantId: TENANT }))?.lines).toEqual([
+			{ id: 'line-1', quantity: 1, refundedQuantity: 1 }
+		]);
+		expect((await readerOver(unrefunded).findState(ORDER, { tenantId: TENANT }))?.lines).toEqual([
+			{ id: 'line-1', quantity: 1, refundedQuantity: 0 }
+		]);
 	});
 
 	it('reads across the tenant’s organizations when no organization is stated, but never across tenants', async () => {

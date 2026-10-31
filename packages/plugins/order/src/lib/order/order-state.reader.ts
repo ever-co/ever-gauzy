@@ -1,6 +1,7 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { FulfillmentStatus, ID, OrderPaymentStatus, OrderStatus } from '@gauzy/contracts';
+import { addDecimalStrings, compareDecimalStrings } from '@gauzy/core';
 import { IOrderRowScope } from '../order-history/order-row-scope';
 import { OrderLine } from '../order-line/order-line.entity';
 import { MikroOrmOrderLineRepository } from '../order-line/repository/mikro-orm-order-line.repository';
@@ -33,8 +34,12 @@ export interface IOrderStateSnapshot {
 	readonly completedAt: Date | null;
 	/** When the order was cancelled. Archiving keeps it, so it still says so once the status reads `ARCHIVED`. */
 	readonly canceledAt: Date | null;
-	/** Every line of the order, with its bought and its refunded quantity. */
-	readonly lines: readonly IOrderLineStateSnapshot[];
+	/**
+	 * Every line of the order, with its bought and its refunded quantity; `null` when the lines' refund register
+	 * does not account for all the money the order's ledger says was refunded, so it cannot say which lines are
+	 * still paid for.
+	 */
+	readonly lines: readonly IOrderLineStateSnapshot[] | null;
 }
 
 /**
@@ -50,6 +55,11 @@ export interface IOrderStateSnapshot {
  * **Lines.** A refund pays back lines, not the order: once part of the money is refunded, only the lines' own
  * `refundedQuantity` (the cache this package keeps over its succeeded refunds) says which purchases are still
  * paid for. The snapshot carries every line's bought and refunded quantity so the caller decides per line.
+ * That register is reported to after the refund commits and a report can be lost (the payment package logs it
+ * and `recomputeRefundCounters` converges it later), and a refund need not name a line at all. So the lines are
+ * answered only while their `refundedAmount` adds up to at least the order's `refundedTotal`, the ledger's own
+ * figure: when it does not, some refunded money is not on any line the register shows, and `lines` is `null`
+ * rather than a register that would understate a refund.
  *
  * **Scope.** A consumer has no request, so there is no caller whose tenant could scope the read; the event's
  * tenant is passed in instead, and it is required. A read without a tenant answers `null` rather than looking
@@ -106,12 +116,31 @@ export class OrderStateReader {
 			fulfillmentStatus: order.fulfillmentStatus,
 			completedAt: order.completedAt ?? null,
 			canceledAt: order.canceledAt ?? null,
-			lines: lines.map((line) => ({
-				id: line.id,
-				quantity: Number(line.quantity ?? 0),
-				refundedQuantity: Number(line.refundedQuantity ?? 0)
-			}))
+			lines: this.accountsForEveryRefund(order, lines)
+				? lines.map((line) => ({
+						id: line.id,
+						quantity: Number(line.quantity ?? 0),
+						refundedQuantity: Number(line.refundedQuantity ?? 0)
+					}))
+				: null
 		};
+	}
+
+	/**
+	 * Whether the lines' refund register accounts for every amount the order's ledger says was refunded.
+	 *
+	 * The sum is exact (decimal strings, never `number` arithmetic), and only a shortfall disqualifies the
+	 * register: lines that show more refunded than the ledger (a ledger report that is the one still to land)
+	 * only make the caller more careful, never less.
+	 *
+	 * @param order The order, with the ledger's `refundedTotal`.
+	 * @param lines Its lines, with their `refundedAmount`.
+	 * @returns True when the lines can say which purchases are still paid for.
+	 */
+	private accountsForEveryRefund(order: Order, lines: readonly OrderLine[]): boolean {
+		const onLines = lines.reduce((sum, line) => addDecimalStrings(sum, `${line.refundedAmount ?? 0}`), '0');
+
+		return compareDecimalStrings(onLines, `${order.refundedTotal ?? 0}`) >= 0;
 	}
 
 	/**

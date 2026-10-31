@@ -188,3 +188,95 @@ export function activatableOrderLines(
 
 	return wanted;
 }
+
+/**
+ * The ceiling a right granted from a line keeps once the line's refunds are applied, as the refund handler would
+ * have applied them had the refund been delivered after the placement.
+ *
+ * The refund handler lowers a right by the units refunded on its line (`payment.refunded`, partial line), so the
+ * same subtraction is made here, from the quantity the placement granted rather than from the right's current
+ * one, which keeps it idempotent: a replay computes the same ceiling. The result is rounded down to whole seats,
+ * because a right counts seats and a fraction of a refunded unit is not a seat still paid for.
+ *
+ * @param grantedQuantity The quantity the placement granted for the line.
+ * @param line The line, as the order port answered it; absent when the port does not answer lines.
+ * @returns The ceiling, never negative.
+ */
+export function refundAdjustedQuantity(grantedQuantity: number, line?: IEntitlementOrderLineState): number {
+	const granted = Number(grantedQuantity);
+	const refunded = Number(line?.refundedQuantity ?? 0);
+
+	if (!Number.isFinite(granted) || !Number.isFinite(refunded)) {
+		return 0;
+	}
+
+	return Math.max(0, Math.floor(granted - refunded));
+}
+
+/** One right a placement granted, as the consumer hands it to {@link planLateActivation}. */
+export interface IEntitlementPlacedGrant {
+	/** The line the right was granted from. */
+	readonly orderLineId: ID;
+	/** The right. */
+	readonly entitlementId: ID;
+	/** The right's quantity as it stands now: what was granted, or less when a replay found it reduced. */
+	readonly quantity: number;
+	/** The quantity the placement granted for the line. */
+	readonly grantedQuantity: number;
+}
+
+/** What a late placement does to put the rights it granted into force: the reductions first, then the lines. */
+export interface IEntitlementLateActivationPlan {
+	/** The rights to lower to the ceiling their line still pays for, before any is put into force. */
+	readonly reductions: ReadonlyArray<{ readonly entitlementId: ID; readonly quantity: number }>;
+	/** The lines whose rights to put into force. */
+	readonly orderLineIds: ID[];
+}
+
+/**
+ * Plans how a late `order.placed` puts the rights it granted into force on an order that settled.
+ *
+ * A line is put into force only when {@link activatableOrderLines} admits it and every right it granted keeps a
+ * positive ceiling ({@link refundAdjustedQuantity}). A right whose line was refunded in part is lowered to that
+ * ceiling first, so a line that bought two seats and had one refunded before the placement puts one seat into
+ * force, not two. A right already at or below its ceiling is not touched, so a replay plans no reduction. A line
+ * left out keeps its rights `PENDING` and untouched.
+ *
+ * @param state The order's state, as the order port answered it.
+ * @param grants The rights the placement granted.
+ * @returns The reductions and the lines to put into force.
+ */
+export function planLateActivation(
+	state: IEntitlementOrderState | null | undefined,
+	grants: readonly IEntitlementPlacedGrant[]
+): IEntitlementLateActivationPlan {
+	const admitted = activatableOrderLines(
+		state,
+		grants.map((grant) => grant.orderLineId)
+	);
+	const lines = Array.isArray(state?.lines) ? new Map(state.lines.map((line) => [String(line.id), line])) : null;
+	const reductions: Array<{ entitlementId: ID; quantity: number }> = [];
+	const orderLineIds: ID[] = [];
+
+	for (const orderLineId of admitted) {
+		const ofLine = grants.filter((grant) => String(grant.orderLineId) === String(orderLineId));
+		const ceilings = ofLine.map((grant) => ({
+			grant,
+			ceiling: lines ? refundAdjustedQuantity(grant.grantedQuantity, lines.get(String(orderLineId))) : Infinity
+		}));
+
+		if (ceilings.some(({ grant, ceiling }) => Math.min(ceiling, Number(grant.quantity)) <= 0)) {
+			continue;
+		}
+
+		for (const { grant, ceiling } of ceilings) {
+			if (ceiling < Number(grant.quantity)) {
+				reductions.push({ entitlementId: grant.entitlementId, quantity: ceiling });
+			}
+		}
+
+		orderLineIds.push(orderLineId);
+	}
+
+	return { reductions, orderLineIds };
+}

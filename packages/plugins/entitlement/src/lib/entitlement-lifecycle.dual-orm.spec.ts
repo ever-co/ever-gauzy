@@ -1401,16 +1401,25 @@ describe.each([
 		 *
 		 * @param orderId The order.
 		 * @param state What the order port answers, or `undefined` for a consumer with no port bound.
-		 * @param options The event delivered first (`order.completed` unless stated; `null` for none) and how many
-		 * granting lines the placement carries (one unless stated), named `<order>-line-<n>`.
+		 * @param options The event delivered first (`order.completed` unless stated; `null` for none), how many
+		 * granting lines the placement carries (one unless stated), named `<order>-line-<n>`, and the quantity each
+		 * line bought (one unless stated).
 		 * @returns The rights the placement granted, as the table holds them, in line order.
 		 */
 		async function deliverPlacementLate(
 			orderId: string,
 			state?: IEntitlementOrderState,
-			options: { first?: string | null; lines?: number } = {}
+			options: { first?: string | null; lines?: number; quantity?: number } = {}
 		): Promise<Row[]> {
 			const port = state ? { findState: async () => state } : undefined;
+			// The CRUD base this harness doubles has no `find`; the consumer's withdrawal reads the order's rights
+			// through it, so it is answered from the table, under the event's tenant.
+			Object.assign(harness.entitlements, {
+				find: async ({ where }: { where: Row }) =>
+					(await harness.rows('entitlement')).filter(
+						(row) => row.orderId === where.orderId && row.tenantId === where.tenantId
+					)
+			});
 			const consumer = new EntitlementGrantConsumer(harness.entitlements, undefined, port);
 			const deliver = (name: string, data: Row) =>
 				consumer.handle(
@@ -1432,7 +1441,7 @@ describe.each([
 				orderId,
 				lines: Array.from({ length: options.lines ?? 1 }, (_, index) => ({
 					orderLineId: `${orderId}-line-${index + 1}`,
-					quantity: 1,
+					quantity: options.quantity ?? 1,
 					entitlement: { activationLimit: 2 }
 				}))
 			});
@@ -1493,6 +1502,24 @@ describe.each([
 			]);
 		});
 
+		it('lowers a right whose line was refunded in part to the seats still paid for before putting it into force', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			const rights = await deliverPlacementLate(
+				'order-seats',
+				{
+					status: OrderStatus.COMPLETED,
+					paymentStatus: OrderPaymentStatus.PARTIALLY_REFUNDED,
+					lines: [{ id: 'order-seats-line-1', quantity: 2, refundedQuantity: 1 }]
+				},
+				{ quantity: 2 }
+			);
+
+			expect(rights).toHaveLength(1);
+			expect(rights[0]).toMatchObject({ status: EntitlementStatus.ACTIVE });
+			expect(Number(rights[0].quantity)).toBe(1);
+		});
+
 		it('puts nothing into force on an order refunded in part when the port cannot say which lines', async () => {
 			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
 
@@ -1508,12 +1535,10 @@ describe.each([
 		it('grants nothing for an order cancelled or refunded in full before the placement was delivered', async () => {
 			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
 
-			// The `order.canceled` handled first found nothing to withdraw; what it does has suites of its own, and
-			// this harness doubles the CRUD read it withdraws through, so it is not delivered here.
 			const canceled = await deliverPlacementLate(
 				'order-canceled',
 				{ status: OrderStatus.CANCELED, paymentStatus: OrderPaymentStatus.NOT_PAID },
-				{ first: null }
+				{ first: 'order.canceled' }
 			);
 			const refunded = await deliverPlacementLate('order-refunded', {
 				status: OrderStatus.COMPLETED,

@@ -11,6 +11,8 @@ import {
 	isOrderSettled,
 	isOrderWithdrawn,
 	orderWithdrawalReason,
+	planLateActivation,
+	refundAdjustedQuantity,
 	remainingOrderLineQuantity
 } from './entitlement-order-settlement';
 
@@ -222,6 +224,84 @@ describe('activatableOrderLines', () => {
 		expect(activatableOrderLines({ status: OrderStatus.CONFIRMED, lines }, ['a'])).toEqual([]);
 		expect(activatableOrderLines({ status: OrderStatus.CANCELED, lines }, ['a'])).toEqual([]);
 		expect(activatableOrderLines(null, ['a'])).toEqual([]);
+	});
+});
+
+describe('refundAdjustedQuantity', () => {
+	it('lowers what was granted by the units refunded on the line, as the refund handler would', () => {
+		expect(refundAdjustedQuantity(2, { id: 'l', quantity: 2, refundedQuantity: 1 })).toBe(1);
+		expect(refundAdjustedQuantity(3, { id: 'l', quantity: 3, refundedQuantity: '0.000000' })).toBe(3);
+		expect(refundAdjustedQuantity(1, { id: 'l', quantity: 1, refundedQuantity: 1 })).toBe(0);
+	});
+
+	it('rounds down to whole seats and never goes below zero', () => {
+		expect(refundAdjustedQuantity(2, { id: 'l', quantity: 2, refundedQuantity: 0.5 })).toBe(1);
+		expect(refundAdjustedQuantity(1, { id: 'l', quantity: 5, refundedQuantity: 4 })).toBe(0);
+	});
+
+	it('keeps what was granted when the line is not known, and answers zero for a value that is not a number', () => {
+		expect(refundAdjustedQuantity(4)).toBe(4);
+		expect(refundAdjustedQuantity(4, { id: 'l', refundedQuantity: 'some' })).toBe(0);
+	});
+});
+
+describe('planLateActivation', () => {
+	const SETTLED = { status: OrderStatus.COMPLETED, paymentStatus: OrderPaymentStatus.PARTIALLY_REFUNDED };
+	const grant = (orderLineId: string, grantedQuantity: number, quantity = grantedQuantity) => ({
+		orderLineId,
+		entitlementId: `right-${orderLineId}`,
+		quantity,
+		grantedQuantity
+	});
+
+	it('lowers a right whose line was refunded in part before putting the line into force (Copilot on #11577)', () => {
+		const plan = planLateActivation({ ...SETTLED, lines: [{ id: 'seats', quantity: 2, refundedQuantity: 1 }] }, [
+			grant('seats', 2)
+		]);
+
+		expect(plan).toEqual({ reductions: [{ entitlementId: 'right-seats', quantity: 1 }], orderLineIds: ['seats'] });
+	});
+
+	it('plans no reduction for a right a replay finds already lowered, so a replay changes nothing', () => {
+		const plan = planLateActivation({ ...SETTLED, lines: [{ id: 'seats', quantity: 2, refundedQuantity: 1 }] }, [
+			grant('seats', 2, 1)
+		]);
+
+		expect(plan).toEqual({ reductions: [], orderLineIds: ['seats'] });
+	});
+
+	it('leaves out, untouched, a line refunded in full or whose right would keep no seat', () => {
+		const plan = planLateActivation(
+			{
+				...SETTLED,
+				lines: [
+					{ id: 'refunded', quantity: 1, refundedQuantity: 1 },
+					{ id: 'policy', quantity: 5, refundedQuantity: 3 },
+					{ id: 'kept', quantity: 1, refundedQuantity: 0 }
+				]
+			},
+			[grant('refunded', 1), grant('policy', 2), grant('kept', 1)]
+		);
+
+		expect(plan).toEqual({ reductions: [], orderLineIds: ['kept'] });
+	});
+
+	it('puts every line into force at its quantity when the order is settled and nothing says a line was refunded', () => {
+		const plan = planLateActivation({ status: OrderStatus.COMPLETED, paymentStatus: OrderPaymentStatus.CAPTURED }, [
+			grant('a', 2),
+			grant('b', 1)
+		]);
+
+		expect(plan).toEqual({ reductions: [], orderLineIds: ['a', 'b'] });
+	});
+
+	it('plans nothing when the order has not settled, or was refunded in part without line state', () => {
+		const empty = { reductions: [], orderLineIds: [] };
+
+		expect(planLateActivation({ status: OrderStatus.CONFIRMED }, [grant('a', 1)])).toEqual(empty);
+		expect(planLateActivation(SETTLED, [grant('a', 1)])).toEqual(empty);
+		expect(planLateActivation({ ...SETTLED, lines: null }, [grant('a', 1)])).toEqual(empty);
+		expect(planLateActivation(null, [grant('a', 1)])).toEqual(empty);
 	});
 });
 

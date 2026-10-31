@@ -51,8 +51,9 @@ const OPEN = { status: OrderStatus.CONFIRMED, paymentStatus: OrderPaymentStatus.
  * Delivers one `order.placed` to a consumer built with the port (or without it).
  *
  * @param options What the order port answers — `state` on every read, or `states` read by read — whether it is
- * bound at all, the lines the placement carries, and a read that fails.
- * @returns What the consumer granted, activated, revoked and read, and in which order.
+ * bound at all, the lines the placement carries, a read that fails, and the rights an earlier attempt of the
+ * delivery already granted.
+ * @returns What the consumer granted, reduced, activated, revoked and read, and in which order.
  */
 async function place(options: {
 	state?: IEntitlementOrderState | null;
@@ -60,9 +61,11 @@ async function place(options: {
 	bound?: boolean;
 	lines?: unknown[];
 	readError?: { onRead: number; error: Error };
+	existing?: string[];
 }) {
 	const order: string[] = [];
 	const granted: unknown[][] = [];
+	const reduced: unknown[][] = [];
 	const activated: unknown[][] = [];
 	const revoked: unknown[][] = [];
 	const reads: unknown[][] = [];
@@ -71,7 +74,15 @@ async function place(options: {
 			order.push('grant');
 			granted.push(args);
 
-			return { entitlement: { id: `entitlement-${granted.length}` }, created: true };
+			const input = args[0] as { quantity: number };
+
+			return { entitlement: { id: `entitlement-${granted.length}`, quantity: input.quantity }, created: true };
+		},
+		reduce: async (...args: unknown[]) => {
+			order.push('reduce');
+			reduced.push(args);
+
+			return {};
 		},
 		activateGranted: async (...args: unknown[]) => {
 			order.push('activate');
@@ -79,7 +90,10 @@ async function place(options: {
 
 			return [];
 		},
-		find: async () => granted.map((_, index) => ({ id: `entitlement-${index + 1}` })),
+		find: async () =>
+			[...(options.existing ?? []), ...granted.map((_, index) => `entitlement-${index + 1}`)].map((id) => ({
+				id
+			})),
 		revoke: async (...args: unknown[]) => {
 			order.push('revoke');
 			revoked.push(args);
@@ -121,7 +135,7 @@ async function place(options: {
 		alreadyDelivered: async () => false
 	} as never);
 
-	return { granted, activated, revoked, reads, order };
+	return { granted, reduced, activated, revoked, reads, order };
 }
 
 describe('EntitlementGrantConsumer — order.placed after the order settled (#11023)', () => {
@@ -196,7 +210,7 @@ describe('EntitlementGrantConsumer — order.placed after the order settled (#11
 					lines: [
 						{ id: 'line-1', quantity: 1, refundedQuantity: 1 },
 						{ id: 'line-2', quantity: 3, refundedQuantity: 0 },
-						{ id: 'line-3', quantity: 2, refundedQuantity: 1 }
+						{ id: 'line-3', quantity: 1, refundedQuantity: 0 }
 					]
 				}
 			});
@@ -220,6 +234,24 @@ describe('EntitlementGrantConsumer — order.placed after the order settled (#11
 		});
 	});
 
+	it('lowers a right whose line was refunded in part to the seats still paid for, then puts it into force', async () => {
+		const { granted, reduced, activated, order } = await place({
+			lines: [{ ...GRANTING_LINE, quantity: 2 }],
+			state: {
+				status: OrderStatus.COMPLETED,
+				paymentStatus: OrderPaymentStatus.PARTIALLY_REFUNDED,
+				lines: [{ id: 'line-1', quantity: 2, refundedQuantity: 1 }]
+			}
+		});
+
+		expect(granted[0][0]).toMatchObject({ orderLineId: 'line-1', quantity: 2 });
+		// Copilot on #11577: the refund was handled first and found nothing to reduce, so the placement lowers
+		// the right to the one seat still paid for, the way the refund handler would have, before activating it.
+		expect(reduced).toEqual([['entitlement-1', 1, EntitlementRevocationReason.REFUNDED, SCOPE]]);
+		expect(activated).toEqual([[{ orderId: ORDER, orderLineId: 'line-1' }, SCOPE]]);
+		expect(order).toEqual(['read', 'grant', 'read', 'reduce', 'activate']);
+	});
+
 	describe('an order cancelled or refunded in full before the placement was delivered', () => {
 		it('grants nothing, says why, and reads the order once', async () => {
 			for (const [state, reason] of [
@@ -239,6 +271,16 @@ describe('EntitlementGrantConsumer — order.placed after the order settled (#11
 					`order.placed event-1 was delivered after order ${ORDER} was withdrawn (${reason}), so no entitlement was granted.`
 				);
 			}
+		});
+
+		it('finishes withdrawing what an earlier attempt granted, so a retry does not leave it in place (Copilot on #11577)', async () => {
+			const { granted, revoked } = await place({
+				existing: ['entitlement-early'],
+				state: { status: OrderStatus.CANCELED, paymentStatus: OrderPaymentStatus.NOT_PAID }
+			});
+
+			expect(granted).toEqual([]);
+			expect(revoked).toEqual([['entitlement-early', EntitlementRevocationReason.ORDER_CANCELED, SCOPE]]);
 		});
 
 		it('withdraws what it granted when the order was withdrawn while it was granting', async () => {

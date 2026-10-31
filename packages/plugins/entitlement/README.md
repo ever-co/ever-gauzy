@@ -45,9 +45,12 @@ order package's `OrderStateReader`), the placement reads where the order is now:
   refunded in full (payment `REFUNDED`) grants nothing, and the skip is logged;
 - on an order that settled since — `COMPLETED` or `completedAt`, or payment
   `CAPTURED` in full — the placement puts into force, line by line, the rights of
-  the lines still paid for (`quantity` above `refundedQuantity`); a line refunded
-  in full keeps its right `PENDING`, and so does every line of an order refunded
-  in part when the port cannot answer the lines;
+  the lines still paid for (`quantity` above `refundedQuantity`), each first
+  lowered by the units refunded on its line, as the refund handler would have
+  lowered it; a line refunded in full keeps its right `PENDING`, and so does
+  every line of an order refunded in part when the port cannot answer the lines
+  (the order package answers no lines while their refund register does not add
+  up to the refunded total of the order's ledger);
 - an order cancelled or refunded in full while the placement was granting has
   what it granted withdrawn again, with the reason the matching event gives.
 

@@ -19,7 +19,7 @@ import {
 } from '../entitlement.types';
 import { Entitlement } from '../entitlement/entitlement.entity';
 import { EntitlementService } from '../entitlement/entitlement.service';
-import { activatableOrderLines, orderWithdrawalReason } from './entitlement-order-settlement';
+import { IEntitlementPlacedGrant, orderWithdrawalReason, planLateActivation } from './entitlement-order-settlement';
 
 /**
  * The shape a granting order line carries.
@@ -193,7 +193,7 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 	 * The right is not yet in force: it is granted by the purchase and becomes exercisable when the
 	 * money settles, which is normally the next event. A placement delivered after the order's later events
 	 * reads where the order is now instead: it grants nothing for an order that was cancelled or refunded in
-	 * full in the meantime (see {@link isWithdrawnBeforePlacement}), and it puts into force what it granted when
+	 * full in the meantime (see {@link withdrawnBeforePlacement}), and it puts into force what it granted when
 	 * the order settled in the meantime (see {@link reconcileWithOrderState}).
 	 *
 	 * @param event The `order.placed` event.
@@ -213,17 +213,18 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			(line): line is IOrderLineProjection & { entitlement: IOrderLineEntitlementPolicy } => !!line.entitlement
 		);
 
-		if (!granting.length || (await this.isWithdrawnBeforePlacement(orderId, event, scope))) {
+		if (!granting.length || (await this.withdrawnBeforePlacement(orderId, event, scope))) {
 			return;
 		}
 
-		const orderLineIds: ID[] = [];
+		const grants: IEntitlementPlacedGrant[] = [];
 
 		for (const line of granting) {
 			const policy = line.entitlement;
 			const orderLineId = line.orderLineId ?? line.lineId ?? line.id;
+			const grantedQuantity = policy.quantity ?? Number(line.quantity ?? 1);
 
-			await this.entitlementService.grant(
+			const { entitlement } = await this.entitlementService.grant(
 				{
 					customerId: data.customerId,
 					orderId,
@@ -231,7 +232,7 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 					productId: line.productId,
 					variantId: line.variantId,
 					kind: policy.kind ?? EntitlementKind.LICENCE,
-					quantity: policy.quantity ?? Number(line.quantity ?? 1),
+					quantity: grantedQuantity,
 					startsAt: policy.startsAt ? new Date(policy.startsAt) : new Date(),
 					endsAt: policy.endsAt ? new Date(policy.endsAt) : undefined,
 					gracePeriodDays: policy.gracePeriodDays,
@@ -241,28 +242,36 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 				scope
 			);
 
-			if (orderLineId) {
-				orderLineIds.push(orderLineId);
+			if (orderLineId && entitlement?.id) {
+				grants.push({
+					orderLineId,
+					entitlementId: entitlement.id as ID,
+					quantity: Number(entitlement.quantity ?? grantedQuantity),
+					grantedQuantity
+				});
 			}
 		}
 
-		await this.reconcileWithOrderState(orderId, orderLineIds, event, scope);
+		await this.reconcileWithOrderState(orderId, grants, event, scope);
 	}
 
 	/**
 	 * Whether the order a placement is about to grant from was cancelled or refunded in full before the
-	 * placement was delivered.
+	 * placement was delivered, in which case what the order granted is withdrawn and nothing new is granted.
 	 *
 	 * The `order.canceled` or the full `payment.refunded` handled first found nothing to withdraw, and nothing
-	 * after it will withdraw what a late placement grants, so the placement grants nothing and says so. Without
-	 * the port, or for an order the port does not find, the placement grants as it always did.
+	 * after it will withdraw what a late placement grants, so the placement grants nothing and says so. It still
+	 * withdraws what the order already granted, which is a no-op when nothing was: an earlier attempt of this
+	 * delivery may have granted and then failed part-way through its own withdrawal, and its retry must finish
+	 * that rather than skip it. Without the port, or for an order the port does not find, the placement grants as
+	 * it always did.
 	 *
 	 * @param orderId The order the placement grants from.
 	 * @param event The `order.placed` event, for the log.
 	 * @param scope The tenant and organization the event belongs to.
 	 * @returns True when nothing should be granted.
 	 */
-	private async isWithdrawnBeforePlacement(
+	private async withdrawnBeforePlacement(
 		orderId: ID,
 		event: IEventEnvelope,
 		scope: IEntitlementScope
@@ -281,6 +290,8 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			`order.placed ${event.id} was delivered after order ${orderId} was withdrawn (${reason}), so no entitlement was granted.`
 		);
 
+		await this.withdrawOrder(orderId, reason, scope);
+
 		return true;
 	}
 
@@ -292,9 +303,10 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 	 * placement grants afterwards would wait for a settlement event that has already come and gone. The
 	 * order's own state is the durable memo of that settlement — `COMPLETED` is written in the transaction
 	 * that appends `order.completed` — so it is asked here, after the grants, and the activation the
-	 * settlement handler performs is repeated, line by line: only the lines that are still paid for are put
-	 * into force ({@link activatableOrderLines}), so a refund handled before the placement does not leave the
-	 * line it refunded with a right in force. A line left out keeps its right `PENDING`.
+	 * settlement handler performs is repeated, line by line ({@link planLateActivation}): only the lines that
+	 * are still paid for are put into force, and a right whose line was refunded in part is first lowered to
+	 * what the line still pays for, as the refund handler would have lowered it. A line left out keeps its
+	 * right `PENDING`.
 	 *
 	 * Asking after the grants is what closes the race with a concurrent cancellation as well: when the order
 	 * reads cancelled or refunded in full now, its `order.canceled` or `payment.refunded` may already have
@@ -304,13 +316,13 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 	 * swallowed: the delivery is retried, and the grants it repeats are replays.
 	 *
 	 * @param orderId The order the placement granted from.
-	 * @param orderLineIds The lines the placement granted rights for.
+	 * @param grants The rights the placement granted.
 	 * @param event The `order.placed` event, for the log.
 	 * @param scope The tenant and organization the event belongs to.
 	 */
 	private async reconcileWithOrderState(
 		orderId: ID,
-		orderLineIds: readonly ID[],
+		grants: readonly IEntitlementPlacedGrant[],
 		event: IEventEnvelope,
 		scope: IEntitlementScope
 	): Promise<void> {
@@ -330,17 +342,21 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			return;
 		}
 
-		const activatable = activatableOrderLines(state, orderLineIds);
+		const plan = planLateActivation(state, grants);
 
-		if (!activatable.length) {
+		if (!plan.orderLineIds.length) {
 			return;
 		}
 
 		this.logger.log(
-			`order.placed ${event.id} was delivered after order ${orderId} settled, so the entitlements of ${activatable.length} of its ${orderLineIds.length} granting line(s) were put into force on placement.`
+			`order.placed ${event.id} was delivered after order ${orderId} settled, so the entitlements of ${plan.orderLineIds.length} of its ${grants.length} granting line(s) were put into force on placement (${plan.reductions.length} lowered to what their line still pays for).`
 		);
 
-		for (const orderLineId of activatable) {
+		for (const { entitlementId, quantity } of plan.reductions) {
+			await this.entitlementService.reduce(entitlementId, quantity, EntitlementRevocationReason.REFUNDED, scope);
+		}
+
+		for (const orderLineId of plan.orderLineIds) {
 			await this.entitlementService.activateGranted({ orderId, orderLineId }, scope);
 		}
 	}
