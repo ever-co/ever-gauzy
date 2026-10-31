@@ -26,7 +26,7 @@ import {
 	PermissionsEnum,
 	NullableString
 } from '@gauzy/contracts';
-import { API_PREFIX, ComponentEnum, distinctUntilChange, toUTC } from '@gauzy/ui-core/common';
+import { API_PREFIX, ComponentEnum, distinctUntilChange, escapeHtml, toHttpUrl, toUTC } from '@gauzy/ui-core/common';
 import {
 	PaginationFilterBaseComponent,
 	IPaginationBase,
@@ -71,6 +71,8 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 	public organization: IOrganization;
 	public timeOff$: Subject<any> = this.subject$;
 	private _refresh$: Subject<any> = new Subject();
+	/** Requests whose status change is still on its way to the server: another change waits for its answer. */
+	private readonly _statusChangesInFlight = new Set<ID>();
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -219,21 +221,15 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				data: selectedItem
 			});
 		}
+		if (this._statusChangesInFlight.has(this.selectedTimeOffRecord.id)) {
+			return;
+		}
 		if (this.selectedTimeOffRecord.status !== StatusTypesEnum.APPROVED) {
-			const record = this.selectedTimeOffRecord;
-			const { id: requestId, status: previousStatus } = record;
-			record.status = StatusTypesEnum.APPROVED;
-			this._timeOffService
-				.updateRequestStatus(requestId, 'approval')
-				.pipe(untilDestroyed(this), first())
-				.subscribe({
-					next: () => {
-						this._toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.STATUS_SET_APPROVED');
-						this._refresh$.next(true);
-						this.timeOff$.next(true);
-					},
-					error: (error: HttpErrorResponse) => this._onStatusRefused(record, previousStatus, error)
-				});
+			this._sendStatus(this.selectedTimeOffRecord, StatusTypesEnum.APPROVED, 'approval', () => {
+				this._toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.STATUS_SET_APPROVED');
+				this._refresh$.next(true);
+				this.timeOff$.next(true);
+			});
 		} else {
 			this._toastrService.success(
 				'TIME_OFF_PAGE.NOTIFICATIONS.APPROVED_NO_CHANGES',
@@ -256,20 +252,14 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 				data: selectedItem
 			});
 		}
+		if (this._statusChangesInFlight.has(this.selectedTimeOffRecord.id)) {
+			return;
+		}
 		if (this.selectedTimeOffRecord.status !== StatusTypesEnum.DENIED) {
-			const record = this.selectedTimeOffRecord;
-			const { id: requestId, status: previousStatus } = record;
-			record.status = StatusTypesEnum.DENIED;
-			this._timeOffService
-				.updateRequestStatus(requestId, 'denied')
-				.pipe(untilDestroyed(this), first())
-				.subscribe({
-					next: () => {
-						this._toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED');
-						this.timeOff$.next(true);
-					},
-					error: (error: HttpErrorResponse) => this._onStatusRefused(record, previousStatus, error)
-				});
+			this._sendStatus(this.selectedTimeOffRecord, StatusTypesEnum.DENIED, 'denied', () => {
+				this._toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED');
+				this.timeOff$.next(true);
+			});
 		} else {
 			this._toastrService.success(
 				'TIME_OFF_PAGE.NOTIFICATIONS.DENIED_NO_CHANGES',
@@ -278,6 +268,38 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 			this._refresh$.next(true);
 			this.timeOff$.next(true);
 		}
+	}
+
+	/**
+	 * Sends a status change for one request, showing it on the row ahead of the answer. Only one change per request
+	 * is on its way at a time (Approve and Deny ignore the row until the answer is in), so the status a refusal puts
+	 * back is always the one the server confirmed, not another click's.
+	 *
+	 * @param record The row.
+	 * @param status The status asked for.
+	 * @param route The status route of the API.
+	 * @param onAccepted What to do once the server accepted it.
+	 */
+	private _sendStatus(
+		record: ITimeOff,
+		status: StatusTypesEnum,
+		route: 'approval' | 'denied',
+		onAccepted: () => void
+	) {
+		const { id: requestId, status: previousStatus } = record;
+		this._statusChangesInFlight.add(requestId);
+		record.status = status;
+		this._timeOffService
+			.updateRequestStatus(requestId, route)
+			.pipe(
+				untilDestroyed(this),
+				first(),
+				finalize(() => this._statusChangesInFlight.delete(requestId))
+			)
+			.subscribe({
+				next: onAccepted,
+				error: (error: HttpErrorResponse) => this._onStatusRefused(record, previousStatus, error)
+			});
 	}
 
 	/**
@@ -595,7 +617,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 	mapTimeOffRequest(timeOff: ITimeOff) {
 		let employeeName: string;
 		let employeeImage: string;
-		let extendedDescription = '';
+		let extendedDescription: string;
 
 		if (timeOff.employees.length !== 1) {
 			employeeName = this.getTranslation('TIME_OFF_PAGE.MULTIPLE_EMPLOYEES');
@@ -604,9 +626,12 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 			employeeName = `${timeOff.employees[0].fullName}`;
 			employeeImage = timeOff.employees[0].user.imageUrl;
 		}
-		if (timeOff.documentUrl) {
-			extendedDescription = `<a href=${timeOff.documentUrl} target="_blank">${this.getTranslation(
-				'TIME_OFF_PAGE.VIEW_REQUEST_DOCUMENT'
+		// The request's document link goes through the shared safe opener's check: http(s) only, quoted, and opened
+		// without access to this page.
+		const documentUrl = toHttpUrl(timeOff.documentUrl)?.href;
+		if (documentUrl) {
+			extendedDescription = `<a href="${escapeHtml(documentUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(
+				this.getTranslation('TIME_OFF_PAGE.VIEW_REQUEST_DOCUMENT')
 			)}</a><br>${timeOff.description}`;
 		} else {
 			extendedDescription = timeOff.description;
