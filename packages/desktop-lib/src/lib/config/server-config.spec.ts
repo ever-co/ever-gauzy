@@ -7,7 +7,9 @@ jest.mock('../desktop-store', () => ({
 	}
 }));
 
+import { IReadWriteFile } from '../interfaces';
 import { ServerConfig } from './server-config';
+import { applyUiRuntimeConfig } from './ui-runtime-config';
 
 /**
  * The URLs the server apps hand out (API_BASE_URL, the web UI's API URL, "open in browser") are built
@@ -58,5 +60,78 @@ describe('ServerConfig URLs', () => {
 		expect(config.apiUrl).toBe('http://127.0.0.1:3000');
 		expect(config.uiUrl).toBe('http://127.0.0.1:4200');
 		expect(config.setting.host).toBe('192.168.1.20');
+	});
+});
+
+/**
+ * Gauzy Server writes the web UI's API URL into the install directory's index.html. A .deb install (root-owned
+ * /opt/Gauzy Server) or an AppImage (read-only mount) cannot be written to: `read()` answers undefined there, and
+ * `update()` threw "Cannot read properties of undefined (reading 'replace')", which stopped the setup (#7735). The UI
+ * server now inserts the URL as it serves the page, so the file is only a fallback.
+ */
+describe('ServerConfig.update', () => {
+	const INDEX = '<html><body><ga-app></ga-app></body></html>';
+
+	/** A file stub: `content` is what `read()` answers (undefined: the directory is not writable). */
+	const file = (content: string | undefined): jest.Mocked<IReadWriteFile> => ({
+		hasDirectoryAccess: content !== undefined,
+		read: jest.fn(() => content),
+		write: jest.fn()
+	});
+
+	let warn: jest.SpyInstance;
+	let error: jest.SpyInstance;
+
+	beforeEach(() => {
+		mockConfigs.current = { host: '0.0.0.0', port: 3000, portUi: 4200 };
+		warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+		error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => {
+		mockConfigs.current = undefined;
+		warn.mockRestore();
+		error.mockRestore();
+	});
+
+	it('skips a UI directory it cannot write to, with a warning instead of an error', () => {
+		const readOnly = file(undefined);
+
+		expect(() => new ServerConfig(readOnly).update()).not.toThrow();
+
+		expect(readOnly.write).not.toHaveBeenCalled();
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('not writable'));
+	});
+
+	it('CONTROL: still writes the API URL into a writable install', () => {
+		const writable = file(INDEX);
+
+		new ServerConfig(writable).update();
+
+		expect(writable.write).toHaveBeenCalledWith(applyUiRuntimeConfig(INDEX, 'http://127.0.0.1:3000'));
+	});
+
+	it('leaves the file untouched when it already points at the API', () => {
+		const current = file(applyUiRuntimeConfig(INDEX, 'http://127.0.0.1:3000'));
+
+		new ServerConfig(current).update();
+
+		expect(current.write).not.toHaveBeenCalled();
+	});
+
+	it('logs any other failure instead of stopping the start, since the UI server adds the URL anyway', () => {
+		const broken = file(INDEX);
+		broken.read.mockImplementation(() => {
+			throw new Error('EIO');
+		});
+
+		expect(() => new ServerConfig(broken).update()).not.toThrow();
+
+		expect(broken.write).not.toHaveBeenCalled();
+		expect(error).toHaveBeenCalled();
+	});
+
+	it('does nothing without a file (Gauzy API Server and the services)', () => {
+		expect(() => new ServerConfig().update()).not.toThrow();
 	});
 });
