@@ -713,6 +713,19 @@ describe('CommentService — the comments of a governed record follow its policy
 			expect(policy.findAccessibleParent).toHaveBeenCalledWith(CONTACT_ID);
 		});
 
+		it('accepts a reply to a stored note of another spelling, which is a note of the same contact', async () => {
+			as([PermissionsEnum.ORG_CONTACT_EDIT]);
+
+			await service.create(note({ parentId: LOOKALIKE_NOTE }));
+
+			expect(baseCreate).toHaveBeenCalledWith(
+				expect.objectContaining({ entity: CONTACT, entityId: CONTACT_ID, parentId: LOOKALIKE_NOTE })
+			);
+			await expect(
+				service.create(note({ entityId: OTHER_CONTACT_ID, parentId: LOOKALIKE_NOTE }))
+			).rejects.toBeInstanceOf(BadRequestException);
+		});
+
 		it('edits a stored note of another spelling only with ORG_CONTACT_EDIT', async () => {
 			as([PermissionsEnum.ORG_CONTACT_VIEW], { canChangeSelectedEmployee: true });
 

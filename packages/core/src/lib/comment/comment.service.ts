@@ -654,7 +654,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			return;
 		}
 
-		const sameRecord = parent.entity === entity && parent.entityId === entityId;
+		// A governed type is compared as its policy names it: a note stored under another spelling of the type is a
+		// comment of the same record.
+		const typeOf = (type: string) => this._parentAccess.governedTypeOf(type) ?? type;
+		const sameRecord = typeOf(parent.entity) === typeOf(entity) && parent.entityId === entityId;
 		if ((governed || this._parentAccess.isGoverned(parent.entity)) && !sameRecord) {
 			throw new BadRequestException('A reply belongs to the same record as the comment it replies to.');
 		}
