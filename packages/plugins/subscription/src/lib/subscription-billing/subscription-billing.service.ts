@@ -329,6 +329,30 @@ function invalidTransition(
 }
 
 /**
+ * Locks a cycle's row for the rest of the caller's transaction (Postgres and MySQL; SQLite has a single writer and no row
+ * locks), so a read the transaction decides from is the row its write lands on: a billing pass's claim or frozen attempt
+ * committed before the lock is seen by the read, and one after it waits for the transaction.
+ *
+ * @param manager The transaction's entity manager.
+ * @param id The cycle.
+ */
+async function lockCycleRow(manager: EntityManager, id: ID): Promise<void> {
+	const type = manager.connection?.options?.type;
+
+	if (type !== 'postgres' && type !== 'mysql') {
+		return;
+	}
+
+	const name = (identifier: string) => (type === 'mysql' ? `\`${identifier}\`` : `"${identifier}"`);
+	const placeholder = type === 'postgres' ? '$1' : '?';
+
+	await manager.query(
+		`SELECT ${name('id')} FROM ${name('subscription_billing')} WHERE ${name('id')} = ${placeholder} FOR UPDATE`,
+		[id]
+	);
+}
+
+/**
  * Whether a cycle records money billed.
  *
  * Every status past `PENDING` does — an order was raised, a payment settled or failed, a refund or a waiver was
@@ -1124,15 +1148,22 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		}
 
 		// Every statement on the caller's transaction when there is one: a read on a second connection waits
-		// for one the transaction may be holding (a pool of one never frees it).
+		// for one the transaction may be holding (a pool of one never frees it). The row is locked first, so the read is
+		// the row the write lands on: an attempt a pass froze and abandoned after the caller read the cycle is seen here.
+		if (manager) {
+			await lockCycleRow(manager, id);
+		}
+
 		const billing = await this.findOneScoped(id, manager);
 
-		// A cycle a pass is charging right now (`claimCharge`) is being billed for the period it covers, so it stays there.
+		// A cycle a pass is charging right now (`claimCharge`) is being billed for the period it covers, so it stays there;
+		// so does one sent to the order path whose outcome was never recorded (its order names this period).
 		if (
 			billing.status !== SubscriptionBillingStatus.PENDING ||
 			billing.orderId ||
 			billing.attemptCount ||
-			holdsLiveChargeClaim(billing)
+			holdsLiveChargeClaim(billing) ||
+			this.holdsUnrecordedAttempt(billing)
 		) {
 			return billing;
 		}

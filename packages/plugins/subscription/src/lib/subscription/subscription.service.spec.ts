@@ -4240,6 +4240,114 @@ describe('SubscriptionService — a charged cycle is finished once, by whichever
 		}
 	);
 
+	it('appends a settled cycle’s missing discount once when a pass that took the period over reconciles it too', async () => {
+		const fixture = subscriptionFixture({
+			billings: [
+				{
+					id: 'cycle-april',
+					tenantId: TENANT,
+					organizationId: ORG,
+					subscriptionId: SUBSCRIPTION,
+					periodStart: new Date(APRIL),
+					periodEnd: MAY,
+					amount: '108.000000',
+					currency: 'USD',
+					status: SubscriptionBillingStatus.PAID,
+					paidAt: new Date(APRIL),
+					attemptCount: 0,
+					metadata: { gross: '120.000000', discount: '12.000000' }
+				}
+			]
+		});
+		const append = (fixture.service as any).appendDiscount.bind(fixture.service);
+
+		// While the first pass reconciles, its period's lease runs out and another pass takes the period over.
+		jest.spyOn(fixture.service as any, 'appendDiscount').mockImplementationOnce(async (...args: unknown[]) => {
+			fixture.idempotencyService.records.delete(`subscription.bill:${SUBSCRIPTION}:${APRIL.toISOString()}`);
+			await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+			return append(...args);
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.adjustmentsOf('cycle-april').map((row) => row.amount)).toEqual(['-12.000000']);
+	});
+
+	it('keeps the calendar on a period a pass has taken but whose cycle it has not opened yet, across a pause and resume', async () => {
+		let fixture: ReturnType<typeof subscriptionFixture>;
+		fixture = subscriptionFixture();
+		const createPending = fixture.billingService.createPending.bind(fixture.billingService);
+
+		// The pass holds the period's billing key; before it opens the cycle, an operator pauses and resumes the subscription.
+		jest.spyOn(fixture.billingService, 'createPending').mockImplementationOnce(async (input) => {
+			await fixture.service.pause(SUBSCRIPTION, { reason: 'customer asked' });
+			await fixture.service.resume(SUBSCRIPTION, new Date(APRIL.getTime() + 60 * 60 * 1000));
+
+			expect(fixture.subscription(SUBSCRIPTION)?.nextBillingAt).toEqual(APRIL);
+
+			return createPending(input);
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			status: SubscriptionStatus.ACTIVE,
+			nextBillingAt: MAY,
+			billingCycleCount: 1
+		});
+		expect(named(fixture, 'subscription.renewed')).toHaveLength(1);
+	});
+
+	it('refuses an activation whose opening-cycle read predates an attempt a pass froze and abandoned', async () => {
+		const fixture = subscriptionFixture({
+			orders: idempotentOrders(),
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					status: SubscriptionStatus.PENDING,
+					currentPeriodStart: new Date(APRIL),
+					currentPeriodEnd: MAY,
+					nextBillingAt: new Date(APRIL)
+				})
+			],
+			billings: [
+				{
+					id: 'cycle-april',
+					tenantId: TENANT,
+					organizationId: ORG,
+					subscriptionId: SUBSCRIPTION,
+					periodStart: new Date(APRIL),
+					periodEnd: MAY,
+					amount: '120.000000',
+					currency: 'USD',
+					status: SubscriptionBillingStatus.PENDING,
+					dueAt: new Date(APRIL),
+					paidAt: null,
+					attemptCount: 0
+				}
+			]
+		});
+		const openingCycleOn = (fixture.service as any).openingCycleOn.bind(fixture.service);
+
+		// The activation reads the opening cycle untouched; a manual pass then freezes an attempt, raises the order and is
+		// cut off before recording it.
+		jest.spyOn(fixture.service as any, 'openingCycleOn').mockImplementationOnce(async (...args: unknown[]) => {
+			const read = { ...(await openingCycleOn(...args)) };
+
+			jest.spyOn(fixture.billingService, 'markPaid').mockRejectedValueOnce(new Error('the database went away'));
+			await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true })).rejects.toThrow(
+				'the database went away'
+			);
+
+			return read;
+		});
+
+		// The reschedule reads the cycle again under its lock and leaves it on the period its order names.
+		await expect(fixture.service.activate(SUBSCRIPTION)).rejects.toMatchObject({
+			message: expect.stringContaining('SUBSCRIPTION_OPENING_CYCLE_CHANGED')
+		});
+	});
+
 	it('refuses an operator’s payment or waiver of a cycle whose attempt may have an order, until a pass records it', async () => {
 		const fixture = subscriptionFixture({ orders: idempotentOrders() });
 		const inFlight = { response: { code: 'SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT' } };

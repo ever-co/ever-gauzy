@@ -166,6 +166,13 @@ const PRORATION_SCOPE = 'subscription.proration';
 const RIGHTS_RELEASE_SCOPE = 'subscription.rights.release';
 
 /**
+ * The key the reconciliation of a raised cycle's discount rows is claimed under (`reconcileRecordedDiscount`): one claim
+ * per cycle, so two passes meeting one cycle — one whose period's lease ran out, and the pass that took it over — do not
+ * both append the difference the ledger is missing.
+ */
+const DISCOUNT_RECONCILE_SCOPE = 'subscription.discount.reconcile';
+
+/**
  * The subscription statuses a late payment releases no rights for (R4-05, review note from px-refunds): the
  * subscription ended — cancelled, expired, or failed out of dunning — while the invoice was open. The cycle is
  * recorded paid and the reason the rights were withheld is kept on it; nothing extends a right of a
@@ -2911,7 +2918,27 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			return;
 		}
 
-		await this.appendDiscount(billing, subscription, Money.of(String(recorded), billing.currency).round());
+		const discount = Money.of(String(recorded), billing.currency).round();
+		// The ledger is read and appended to under the claim (Greptile, Copilot): a ledger appends without checking for a
+		// row like the one it appends, so two passes that both read it short would both append what is missing.
+		const claim = await this.idempotencyService.claim({
+			scope: DISCOUNT_RECONCILE_SCOPE,
+			key: String(billing.id),
+			requestHash: this.hash({ billingId: billing.id, discount: discount.toStorageString() }),
+			resourceType: 'subscription_billing'
+		});
+
+		if (claim.outcome !== IdempotencyOutcome.CLAIMED) {
+			return;
+		}
+
+		await this.appendDiscount(billing, subscription, discount);
+		await this.idempotencyService.complete(claim.record, {
+			responseStatus: 200,
+			responseBody: { billingId: billing.id, discount: discount.toStorageString() },
+			resourceType: 'subscription_billing',
+			resourceId: billing.id
+		});
 	}
 
 	/**
@@ -3287,9 +3314,23 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			return false;
 		}
 
-		const open = await this.billingService.findByPeriod(subscription.id, new Date(subscription.nextBillingAt));
+		const at = new Date(subscription.nextBillingAt);
+		const open = await this.billingService.findByPeriod(subscription.id, at);
 
-		return !!open && (this.billingService.holdsDeferredCalendar(open) || this.heldByCharge(open));
+		if (open && (this.billingService.holdsDeferredCalendar(open) || this.heldByCharge(open))) {
+			return true;
+		}
+
+		if (open && !this.isUntouched(open)) {
+			return false;
+		}
+
+		// A pass holds the period's billing key from before it opens or claims the cycle (Copilot): a charge that has not
+		// reached the cycle yet shows only there. A failed cycle keeps the key open for its dunning attempt, and is not
+		// held by it.
+		const key = await this.idempotencyService.findByKey(BILLING_SCOPE, `${subscription.id}:${at.toISOString()}`);
+
+		return key?.status === IdempotencyStatus.IN_PROGRESS;
 	}
 
 	/**
