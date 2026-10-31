@@ -157,6 +157,22 @@ describe('A person\'s requests and /.well-known/ever-connect', () => {
 			expect(h.platform.callsTo(ACK)[0].body).toEqual({ job_id: '01JSF0AY2MRHJXQBQWY8CW44MM', result: 'anonymised' });
 		});
 
+		it('retained_legal goes with its legal basis (checked against the SDK request schema before it is sent)', async () => {
+			linkPerson();
+			const participant = {
+				deletePersonData: jest.fn().mockResolvedValue({ result: 'retained_legal', legalBasis: 'HGB 257 (commercial records, 10 years)' }),
+				exportPersonData: jest.fn()
+			};
+			await handler(participant).handle(envelope('deletion', '01JJYMM5DB8395H7EH8359HC7M'));
+			expect(h.platform.callsTo(ACK)[0].body).toEqual({
+				job_id: '01JSF0AY2MRHJXQBQWY8CW44MM',
+				result: 'retained_legal',
+				legal_basis: 'HGB 257 (commercial records, 10 years)'
+			});
+			const [row] = await h.dataSource.query('SELECT "state" FROM "ever_connect_person_request"');
+			expect(row.state).toBe('answered');
+		});
+
 		it('without the Ever ID sign-in plugin the links cannot be looked up: failed, never no_account', async () => {
 			await handler(undefined, false).handle(envelope('deletion', '01JJYMM5DB8395H7EH8359HC7A'));
 			expect(h.platform.callsTo(ACK)[0].body).toMatchObject({ result: 'failed', detail: { reason_code: 'account_deletion_pending' } });

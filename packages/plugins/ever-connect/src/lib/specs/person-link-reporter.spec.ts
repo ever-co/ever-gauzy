@@ -107,7 +107,8 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		});
 		expect(JSON.stringify(call.body)).not.toMatch(/mail|@/);
 		const [row] = await h.dataSource.query('SELECT * FROM "ever_connect_person_link_report"');
-		expect(call.headers['idempotency-key']).toBe(createHash('sha256').update(row.id).digest('hex'));
+		// The pinned contract takes no Idempotency-Key here (the same report again answers the same link).
+		expect(call.headers['idempotency-key']).toBeUndefined();
 		expect(row.state).toBe('sent');
 		expect(row.subjectHash).toBe(createHash('sha256').update(`${ISSUER}#275396402232829475`).digest('hex'));
 		// Nothing more is due.
@@ -166,6 +167,19 @@ describe('Sign in with Ever ID: the person-link reporter', () => {
 		expect(retryDelay(13)).toBe(IDENTITY_RETRY_MAX_MS);
 		const audit = await h.auditRows();
 		expect(audit.filter((r) => r.action === 'person_link.report' && r.details['state'] === 'failed')).toHaveLength(1);
+	});
+
+	it('a link that existed before, whose user never signed in through this client (422 subject_unknown), is final at once', async () => {
+		h.platform.on(POST, problem(422, 'subject_unknown'));
+		accounts.add({ userId: 'user-9', tenantId: TENANT, tenantName: 'Acme', issuer: ISSUER, subject: 's9', linkMethod: 'explicit' });
+		await clientReady();
+		await reporter.sendDue();
+		const [row] = await h.dataSource.query('SELECT "origin", "state", "lastError", "attempts" FROM "ever_connect_person_link_report"');
+		expect(row).toMatchObject({ origin: 'backfill', state: 'failed', lastError: '422_subject_unknown' });
+		expect(Number(row.attempts)).toBe(1);
+		h.clock.t += IDENTITY_RETRY_MAX_MS * 3;
+		await reporter.sendDue();
+		expect(h.platform.callsTo(POST)).toHaveLength(1);
 	});
 
 	it('Ever Platform not answering is retried; a 403 (not enabled there) drops the report', async () => {

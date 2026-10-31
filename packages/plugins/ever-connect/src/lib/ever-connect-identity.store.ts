@@ -10,6 +10,8 @@ const REQUEST = 'ever_connect_person_request';
 export interface PersonLinkReportRecord {
 	id: string;
 	op: 'link' | 'unlink';
+	/** `event` (a link or unlink just made), `backfill` (a link that existed before) or `repair` (after an unlink). */
+	origin: 'event' | 'backfill' | 'repair';
 	userId: string;
 	tenantId: string | null;
 	tenantName: string | null;
@@ -54,6 +56,7 @@ function toReport(row: Row): PersonLinkReportRecord {
 	return {
 		id: String(row['id']),
 		op: String(row['op']) as PersonLinkReportRecord['op'],
+		origin: (str(row['origin']) ?? 'event') as PersonLinkReportRecord['origin'],
 		userId: String(row['userId']),
 		tenantId: str(row['tenantId']),
 		tenantName: str(row['tenantName']),
@@ -128,8 +131,9 @@ export class EverConnectIdentityStore {
 	 * is one more than the user's latest report: together they order one user's reports.
 	 */
 	async addReport(
-		values: Omit<PersonLinkReportRecord, 'state' | 'attempts' | 'nextAttemptAt' | 'lastError' | 'sentAt' | 'createdAt' | 'seq'> & {
+		values: Omit<PersonLinkReportRecord, 'state' | 'attempts' | 'nextAttemptAt' | 'lastError' | 'sentAt' | 'createdAt' | 'seq' | 'origin'> & {
 			createdAt?: number;
+			origin?: PersonLinkReportRecord['origin'];
 		}
 	): Promise<void> {
 		const at = this.now();
@@ -140,6 +144,7 @@ export class EverConnectIdentityStore {
 		);
 		await this.sql.insertIgnore(REPORT, {
 			...values,
+			origin: values.origin ?? 'event',
 			state: 'pending',
 			attempts: 0,
 			nextAttemptAt: at,

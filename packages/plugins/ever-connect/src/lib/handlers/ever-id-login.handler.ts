@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
-import { createHash } from 'node:crypto';
 import { EverConnectConfigPort, EverIdentityContext } from '@gauzy/plugin-auth-zitadel';
 import { EverConnectAuditService } from '../ever-connect-audit.service';
 import type { EverConnectConfig } from '../ever-connect-config';
@@ -185,10 +184,11 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 		const { redirectUri, logoutUri } = this.config.signIn;
 		let next: SignInClientState;
 		try {
-			const answer = (await (await this.platform.getClient()).instances.oidcClient.request(
-				{ redirect_uri: redirectUri, logout_uri: logoutUri },
-				sha256(`oidc-client|${connection.platformInstanceId}|${row.consentId ?? ''}|${redirectUri}|${logoutUri}`)
-			)) as { status?: string; job_id?: string | null };
+			// No Idempotency-Key: asked again, a pending or ready client answers 409, which is read below.
+			const answer = (await (await this.platform.getClient()).instances.oidcClient.request({
+				redirect_uri: redirectUri,
+				logout_uri: logoutUri
+			})) as { status?: string; job_id?: string | null };
 			next = { status: 'pending', jobId: answer?.job_id ?? null, polls: 0, nextPollAt: this.now() + OIDC_CLIENT_POLL_FIRST_MS };
 		} catch (error) {
 			if (isCredentialRevoked(error)) {
@@ -404,4 +404,3 @@ export class EverIdLoginHandler implements EverConnectConfigPort {
 	}
 }
 
-const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');

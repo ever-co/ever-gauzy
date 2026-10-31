@@ -36,6 +36,10 @@ describe('integration definitions', () => {
 		expect(GAUZY_INTEGRATIONS.map((definition) => definition.key).sort()).toEqual(forGauzy);
 	});
 
+	it('Sign in with Ever ID is pinned at its second scope version (the consent text app.ever.co shows)', () => {
+		expect(gauzyIntegration('ever_id_login')?.scopeVersion).toBe(2);
+	});
+
 	it.each(GAUZY_INTEGRATIONS.map((definition) => [definition.key, definition] as const))(
 		'%s: the pinned scope version and digest are the scope shipped',
 		(key, definition) => {

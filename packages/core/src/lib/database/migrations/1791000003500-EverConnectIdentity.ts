@@ -55,6 +55,7 @@ const TABLES: Table[] = [
 		columns: [
 			varchar('id', 36, true),
 			varchar('op', 8, true),
+			varchar('origin', 16),
 			varchar('userId', 64, true),
 			varchar('tenantId', 64),
 			varchar('tenantName', 120),

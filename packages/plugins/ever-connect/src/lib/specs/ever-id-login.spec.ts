@@ -61,6 +61,7 @@ describe('Sign in with Ever ID: the sign-in client', () => {
 			redirect_uri: 'https://gauzy.example.com/api/auth/zitadel/callback',
 			logout_uri: 'https://gauzy.example.com/api/auth/zitadel/backchannel-logout'
 		});
+		expect(h.platform.callsTo(POST)[0].headers['idempotency-key']).toBeUndefined();
 		expect(await h.everIdLogin.status()).toBe('pending');
 		expect(await h.everIdLogin.getEverIdLoginConfig()).toBeNull();
 

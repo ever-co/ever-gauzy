@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { Subscription } from 'rxjs';
 import { EventBus } from '@gauzy/core';
 import {
@@ -50,8 +50,8 @@ const stripTrailingSlashes = (value: string): string => value.replace(/\/+$/, ''
  * this installation is connected, Sign in with Ever ID is enabled with its client ready, the identity
  * is one of Ever Platform's own issuer, and the user's tenant has a live link to an Ever
  * organization. Each link or unlink becomes a row of `ever_connect_person_link_report`; the API
- * process holding the connection's lease sends it within seconds, with `Idempotency-Key =
- * sha256(row id)`. What is sent: the Gauzy user id, the issuer and subject, how the link was made,
+ * process holding the connection's lease sends it within seconds (the same report again answers the
+ * link already recorded, so no Idempotency-Key is needed). What is sent: the Gauzy user id, the issuer and subject, how the link was made,
  * the tenant and organization ids, the tenant link and the tenant's display name. Never an e-mail
  * address or a person's name.
  *
@@ -61,10 +61,16 @@ const stripTrailingSlashes = (value: string): string => value.replace(/\/+$/, ''
  * a link that exists is reported as a link, one that does not as an unlink, whatever order the events
  * arrived in (on one API process or several). An unlink removes every link of the user on Ever
  * Platform, so the user's other Ever ID links are queued again before it is sent (once, however often
- * it is retried) and go right after it. Ever Platform not knowing the subject yet (`422 subject_unknown`), or not answering, is
- * retried with a back-off of up to a day, then given up (audited). Once the client is ready, the
- * links that existed before are reported too (for the linked tenants only), by the worker, until
- * that is done.
+ * it is retried) and go right after it.
+ *
+ * Ever Platform takes a link only for a subject that signed in through this installation's own Ever ID
+ * client, and answers `422 subject_unknown` otherwise. For a link just made (or one reported again
+ * after an unlink) that answer, like no answer at all, is retried with a back-off of up to a day,
+ * then given up (audited); for a link that existed before (the backfill) it is final at once: its
+ * user never signed in through this client, and asking again changes nothing.
+ *
+ * Once the client is ready, the links that existed before are reported too (for the linked tenants
+ * only), by the worker, until that is done.
  */
 @Injectable()
 export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
@@ -210,6 +216,7 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 				await this.identity.addReport({
 					id: randomUUID(),
 					op: 'link',
+					origin: 'backfill',
 					userId: link.userId,
 					tenantId: link.tenantId,
 					tenantName: tenantDisplayName(link.tenantName),
@@ -299,8 +306,7 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 						product_org_id: link.organizationId,
 						tenant_link_id: link.linkId,
 						...(row.tenantName ? { display_name: row.tenantName } : {})
-					},
-					createHash('sha256').update(row.id).digest('hex')
+					}
 				);
 			} else {
 				// Queued first: if the unlink goes through and anything after it fails, they are kept.
@@ -341,9 +347,11 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 			await this.identity.updateReport(row.id, { state: 'dropped', nextAttemptAt: null, attempts, lastError: code });
 			return;
 		}
+		const subjectUnknown = error instanceof ProblemError && error.status === 422 && error.code === 'subject_unknown';
 		const retryable =
 			isUnreachable(error) ||
-			(error instanceof ProblemError && error.status === 422 && error.code === 'subject_unknown') ||
+			// A link that existed before: its user never signed in through this installation's client (final).
+			(subjectUnknown && row.origin !== 'backfill') ||
 			!(error instanceof ProblemError || error instanceof RequestRefusedError);
 		// Retried until the wait before this attempt was already a day.
 		if (retryable && retryDelay(row.attempts) < IDENTITY_RETRY_MAX_MS) {
@@ -382,6 +390,7 @@ export class PersonLinkReporter implements OnModuleInit, OnModuleDestroy {
 			await this.identity.addReport({
 				id: randomUUID(),
 				op: 'link',
+				origin: 'repair',
 				userId: link.userId,
 				tenantId: link.tenantId,
 				tenantName: tenantDisplayName(link.tenantName),

@@ -28,10 +28,11 @@ const pin = (
 	key: IntegrationKey,
 	scopeSha256: string,
 	available: boolean,
-	appEverCoOnly = false
+	appEverCoOnly = false,
+	scopeVersion = 1
 ): GauzyIntegrationDefinition => ({
 	key,
-	scopeVersion: 1,
+	scopeVersion,
 	scopeSha256,
 	available,
 	instanceWide: isInstanceWideKey(key),
@@ -47,7 +48,7 @@ export const GAUZY_INTEGRATIONS: ReadonlyArray<GauzyIntegrationDefinition> = Obj
 	pin('stats_link', '390773fb3fbffb6d5b48d2d6f220a2a0a827fd6ff01cbd66cd3186062eabe437', true),
 	// Sign in with Ever ID through this installation's own sign-in client; it reads "coming soon"
 	// while Ever Platform does (its state follows Ever Platform's).
-	pin('ever_id_login', '210842e6907fe9d071074098ac8a9b81143a3031995cc00ecff5a9d882dd30bd', true),
+	pin('ever_id_login', '38f54c9ca4d9fc6f09208a38d07c0bd0bbbfd4fda1b6e9cdbe4cadc4163cd87e', true, false, 2),
 	pin('counterparty_lookup', '67ad3983e9ac1f6cafdeee3aacf8b6ecad95bc72d878cd92f7711031bcfc88ce', false),
 	pin('counterparty_discoverable', '170ea9ef4df68381e0b94f81b83154e0a67b7d3b7a59269b09462c22f1171c9f', false, true),
 	pin('profile_import', '23cc377dc8172f610704e18908a826c45d03a1096fa43f0c907d842568f6d582', false),

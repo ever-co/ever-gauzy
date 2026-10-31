@@ -38,7 +38,7 @@ Append-only: `at`, `tenantId` / `organizationId` (empty for an action on the ins
 
 ## `ever_connect_person_link_report`
 
-One row per Ever ID link (`op = 'link'`) or unlink (`op = 'unlink'`) of a Gauzy user to report to Ever Platform: `userId`, `tenantId`, `tenantName` (the tenant's display name, never a person's name), `issuer`, `subject`, `subjectHash` (`sha256(<issuer>#<subject>)`), `linkMethod` (`explicit`, `confirmed`), `state` (`pending`, `sent`, `failed`, `dropped`), `attempts`, `nextAttemptAt`, `lastError` (a code), `sentAt`, `seq` (one more than the user's previous report; with `createdAt`, the order one user's reports are sent in), `createdAt`, `updatedAt`. Indexes on (`state`, `nextAttemptAt`), (`subjectHash`) and (`userId`, `state`). No e-mail address.
+One row per Ever ID link (`op = 'link'`) or unlink (`op = 'unlink'`) of a Gauzy user to report to Ever Platform: `origin` (`event`, `backfill`, `repair`), `userId`, `tenantId`, `tenantName` (the tenant's display name, never a person's name), `issuer`, `subject`, `subjectHash` (`sha256(<issuer>#<subject>)`), `linkMethod` (`explicit`, `confirmed`), `state` (`pending`, `sent`, `failed`, `dropped`), `attempts`, `nextAttemptAt`, `lastError` (a code), `sentAt`, `seq` (one more than the user's previous report; with `createdAt`, the order one user's reports are sent in), `createdAt`, `updatedAt`. Indexes on (`state`, `nextAttemptAt`), (`subjectHash`) and (`userId`, `state`). No e-mail address.
 
 ## `ever_connect_person_request`
 

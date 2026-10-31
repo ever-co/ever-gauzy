@@ -11,6 +11,8 @@ import { ColumnIndex, MultiORMColumn, MultiORMEntity, SkipExport } from '@gauzy/
  *   more, for example the integration was switched off).
  * - `subjectHash`: `sha256(<issuer>#<subject>)`, as Ever Platform names an identity in a deletion or
  *   export request.
+ * - `origin`: `event` (a link or unlink just made), `backfill` (a link that existed before, reported
+ *   once) or `repair` (reported again after an unlink of the same user).
  * - `lastError`: a code, never a value.
  * - `createdAt` (when the link or unlink happened) and `seq` (one more than the user's previous
  *   report) order one user's reports: they are sent in that order.
@@ -31,6 +33,10 @@ export class EverConnectPersonLinkReport {
 	/** `link` or `unlink`. */
 	@MultiORMColumn({ type: 'varchar', length: 8 })
 	op: string;
+
+	/** `event`, `backfill` or `repair`. */
+	@MultiORMColumn({ type: 'varchar', length: 16, nullable: true })
+	origin?: string | null;
 
 	@MultiORMColumn({ type: 'varchar', length: 64 })
 	userId: string;
