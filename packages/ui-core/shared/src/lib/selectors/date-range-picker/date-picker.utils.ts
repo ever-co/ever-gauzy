@@ -153,6 +153,43 @@ export function toPickerRange(
 	};
 }
 
+/** A preset's start or end: a moment, or the date object the picker library rewrites presets into. */
+type PresetDate = { format(format: string): string };
+
+/**
+ * Whether a picked range is "custom", that is, not one of the menu's presets. The arrows step a custom
+ * range by its length in days, and a preset by its calendar unit.
+ *
+ * A locked picker only ever selects one whole unit (`toPickerRange` widens every pick to it), so its
+ * ranges are never custom. Comparing them with the presets would mark the current month custom wherever
+ * future dates are disallowed, because that preset ends today, and "Previous" would then step 31 days
+ * back from October (31 Aug to 30 Sep) instead of to September.
+ *
+ * @param range The picked range.
+ * @param presets The menu's preset ranges, as the picker holds them (moment or library date objects).
+ * @param isLockDatePicker Whether the picker only allows one whole unit of time.
+ */
+export function isCustomDateRange(
+	range: { startDate: moment.Moment; endDate: moment.Moment },
+	presets: Record<string, [PresetDate, PresetDate]> | null | undefined,
+	isLockDatePicker: boolean
+): boolean {
+	if (isLockDatePicker) {
+		return false;
+	}
+	if (!presets) {
+		return true;
+	}
+
+	const day = 'YYYY-MM-DD';
+	const start = moment(range.startDate).format(day);
+	const end = moment(range.endDate).format(day);
+
+	return !Object.values(presets).some(
+		([presetStart, presetEnd]) => presetStart.format(day) === start && presetEnd.format(day) === end
+	);
+}
+
 /**
  * Brings a range written back through `[(ngModel)]` to the `Date`s `IDateRangePicker` promises.
  *

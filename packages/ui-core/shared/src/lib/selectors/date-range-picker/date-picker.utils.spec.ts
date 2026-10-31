@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import {
 	buildPresetRanges,
+	isCustomDateRange,
 	PRESET_UNIT_OF_TIME,
 	PRESET_UNITS_OF_TIME,
 	selectUnitOfTime,
@@ -425,6 +426,45 @@ describe('buildPresetRanges — the menu offers whole days, weeks, months and ye
 
 			expect(Object.values(today).map(span)).toEqual(Array(4).fill(['2026-09-23', '2026-09-23']));
 		});
+	});
+});
+
+describe('isCustomDateRange — presets step by their unit, other ranges by their length', () => {
+	// 23 Oct 2026, with future dates disallowed: "Current Month" ends today.
+	const NOW = moment(local(2026, 9, 23, 15, 30));
+	const presets = buildPresetRanges(PRESET_UNITS_OF_TIME, NOW, NOW.clone());
+	const range = (start: moment.Moment, end: moment.Moment) => ({ startDate: start, endDate: end });
+
+	it('a range equal to a preset is not custom', () => {
+		const [start, end] = presets[DateRangeKeyEnum.CURRENT_MONTH];
+
+		expect(isCustomDateRange(range(start, end), presets, false)).toBe(false);
+	});
+
+	it('any other range is custom', () => {
+		expect(isCustomDateRange(range(moment(local(2026, 9, 3)), moment(local(2026, 9, 9))), presets, false)).toBe(
+			true
+		);
+	});
+
+	it('a range is custom while the picker has no presets yet', () => {
+		expect(isCustomDateRange(range(NOW.clone(), NOW.clone()), undefined, false)).toBe(true);
+	});
+
+	it('compares days, so the library date objects the picker keeps its presets as work too', () => {
+		const libraryPresets = {
+			[DateRangeKeyEnum.TODAY]: [dayjs(local(2026, 9, 23)), dayjs(local(2026, 9, 23))]
+		} as Record<string, [dayjs.Dayjs, dayjs.Dayjs]>;
+
+		expect(isCustomDateRange(range(NOW.clone(), NOW.clone()), libraryPresets, false)).toBe(false);
+	});
+
+	it("a locked picker's whole month is never custom, though the current month preset ends today", () => {
+		// What `toPickerRange` makes of a pick on a month-locked picker: the whole of October.
+		const october = range(NOW.clone().startOf('month'), NOW.clone().endOf('month'));
+
+		expect(isCustomDateRange(october, presets, false)).toBe(true);
+		expect(isCustomDateRange(october, presets, true)).toBe(false);
 	});
 });
 

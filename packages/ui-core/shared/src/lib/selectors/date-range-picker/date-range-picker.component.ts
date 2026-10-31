@@ -29,6 +29,7 @@ import { Next, Previous } from './arrow/strategies';
 import {
 	buildPresetRanges,
 	dayOfWeekAsString,
+	isCustomDateRange,
 	PRESET_UNIT_OF_TIME,
 	PRESET_UNITS_OF_TIME,
 	selectUnitOfTime,
@@ -570,34 +571,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * @returns True if the date range is custom, false otherwise.
 	 */
 	isCustomDate(dateRange: { startDate: moment.Moment; endDate: moment.Moment }): boolean {
-		// If the date range picker directive or its ranges are not available, consider it a custom range
-		if (!this.dateRangePickerDirective?.ranges) {
-			return true;
-		}
-
-		const predefinedRanges = this.dateRangePickerDirective.ranges;
-		const formattedStartDate = moment(dateRange.startDate).format('YYYY-MM-DD');
-		const formattedEndDate = moment(dateRange.endDate).format('YYYY-MM-DD');
-
-		// Iterate over the predefined ranges to check for a match
-		for (const rangeLabel in predefinedRanges) {
-			if (predefinedRanges.hasOwnProperty(rangeLabel)) {
-				const [rangeStartDate, rangeEndDate] = predefinedRanges[rangeLabel];
-
-				// Format the predefined range dates for comparison
-				const predefinedStartDate = rangeStartDate.format('YYYY-MM-DD');
-				const predefinedEndDate = rangeEndDate.format('YYYY-MM-DD');
-
-				// Compare the formatted dates
-				if (formattedStartDate === predefinedStartDate && formattedEndDate === predefinedEndDate) {
-					// The date range matches a predefined range; it's not custom
-					return false;
-				}
-			}
-		}
-
-		// No matching predefined range found; it's a custom date range
-		return true;
+		return isCustomDateRange(dateRange, this.dateRangePickerDirective?.ranges, this.isLockDatePicker);
 	}
 
 	/**
