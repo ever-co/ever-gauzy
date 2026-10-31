@@ -17,6 +17,11 @@ import {
 	recordAgentRestrictionAcknowledgement
 } from '../../../employee/agent-exit-logout-restriction';
 import { OrganizationService } from '../../organization.service';
+import {
+	logScreenshotCaptureAcknowledgement,
+	omitScreenshotCaptureAcknowledgementFields,
+	resolveScreenshotCaptureAcknowledgement
+} from '../../screenshot-capture-acknowledgement';
 import { OrganizationUpdateCommand } from '../organization.update.command';
 
 @CommandHandler(OrganizationUpdateCommand)
@@ -59,7 +64,8 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		// Issue #9873: EEA/UK organizations may not stop workers exiting or logging out of the agent;
 		// elsewhere doing so requires an explicit acknowledgement, recorded against the admin.
 		// The acknowledgement is a request flag, not an organization column.
-		const changes: IOrganizationUpdateInput = { ...input };
+		// Issue #9872: the screen capture acknowledgement is request-only too, and its record is the server's.
+		const changes: IOrganizationUpdateInput = omitScreenshotCaptureAcknowledgementFields(input);
 		delete changes.acknowledgeAgentExitLogoutRestriction;
 		const previousLocation = {
 			regionCode: organization.regionCode,
@@ -80,6 +86,11 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		if (restrictionError) {
 			throw new BadRequestException(restrictionError);
 		}
+
+		// Issue #9872: turning screen capture on for an EEA/UK organization takes the admin's acknowledgement,
+		// stored with the change below. Re-saving an organization that already captures, or turning capture
+		// off, asks nothing, so existing organizations keep their value without a new step.
+		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(input, organization, location);
 		input = changes;
 
 		// Written and awaited before the save: no restriction without its recorded acknowledgement.
@@ -120,11 +131,16 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			...(has('show_employees_count') && { show_employees_count: input.show_employees_count !== false }),
 			...(input.standardWorkHoursPerDay !== undefined && {
 				standardWorkHoursPerDay: input.standardWorkHoursPerDay
-			})
+			}),
+			...screenshotCaptureAcknowledgement
 		};
 
 		// Creates a new organization or updates an existing one based on the provided data.
 		await this.organizationService.create({ ...updateData, id });
+
+		if (screenshotCaptureAcknowledgement) {
+			await logScreenshotCaptureAcknowledgement(this.activityLogService, organization, screenshotCaptureAcknowledgement);
+		}
 
 		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker.
 		if (!isEEAOrUKLocation(previousLocation) && isEEAOrUKLocation(location)) {

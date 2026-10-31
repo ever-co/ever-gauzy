@@ -405,6 +405,18 @@ export const ApiErrorCode = {
 	JOB_DEAD_LETTER_STATE_INVALID: 'JOB_DEAD_LETTER_STATE_INVALID',
 
 	/* ------------------------------------------------------------------ *
+	 * Screen capture — the monitoring settings of an organization
+	 * ------------------------------------------------------------------ */
+
+	/**
+	 * Screen capture was turned on for an organization in the EEA or the UK without the admin's explicit
+	 * acknowledgement (issue #9872). `details.missing` lists the statements still to confirm
+	 * (`lawfulBasis`, `employeeNotice`, `worksCouncil`); the request is repeated with
+	 * `screenshotCaptureAcknowledgement` setting all three to `true`.
+	 */
+	SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED: 'SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED',
+
+	/* ------------------------------------------------------------------ *
 	 * Platform — the floor every route falls back to
 	 * ------------------------------------------------------------------ */
 

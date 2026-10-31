@@ -1,11 +1,12 @@
 import { BadRequestException, Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { faker } from '@faker-js/faker';
-import { IOrganization, IUser, RolesEnum } from '@gauzy/contracts';
+import { IOrganization, IUser, newOrganizationAllowsScreenshotCapture, RolesEnum } from '@gauzy/contracts';
 import { UserService } from '../../../user/user.service';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { OrganizationService } from '../../organization.service';
 import { ContactService } from '../../../contact/contact.service';
+import { ActivityLogService } from '../../../activity-log/activity-log.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
 import { OrganizationCommerceDefaultsCreateCommand } from '../organization-commerce-defaults.create.command';
 import { assertNoAgentRestrictionOnCreate } from '../../../employee/agent-exit-logout-restriction';
@@ -19,6 +20,11 @@ import { OrganizationTaskSizeBulkCreateCommand } from './../../../tasks/sizes/co
 import { OrganizationTaskPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
 import { OrganizationIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
 import { OrganizationTaskSettingCreateCommand } from '../../../organization-task-setting/commands';
+import {
+	logScreenshotCaptureAcknowledgement,
+	omitScreenshotCaptureAcknowledgementFields,
+	resolveScreenshotCaptureAcknowledgement
+} from '../../screenshot-capture-acknowledgement';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler implements ICommandHandler<OrganizationCreateCommand> {
@@ -29,7 +35,8 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 		private readonly organizationService: OrganizationService,
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly userService: UserService,
-		private readonly contactService: ContactService
+		private readonly contactService: ContactService,
+		private readonly activityLogService: ActivityLogService
 	) {}
 
 	/**
@@ -44,8 +51,21 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 		// Issue #9873: exit/logout can only be restricted on an existing organization, with an acknowledgement.
 		// Checked before the `try` below, which turns every error into a generic one.
 		assertNoAgentRestrictionOnCreate(command.input);
+		// Issue #9872: a new organization starts with screen capture off. Turning it on here, for an EEA/UK
+		// organization, takes the admin's acknowledgement, which is recorded on the row. Also checked before
+		// the `try`, so the refusal keeps its code.
+		const allowScreenshotCapture = newOrganizationAllowsScreenshotCapture(command.input);
+		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(
+			{ ...command.input, allowScreenshotCapture },
+			null,
+			{
+				regionCode: command.input.regionCode,
+				timeZone: command.input.timeZone,
+				country: command.input.contact?.country || command.input.country
+			}
+		);
 		try {
-			const { input } = command;
+			const input = omitScreenshotCaptureAcknowledgementFields(command.input);
 			const { isImporting = false, sourceId = null, userOrganizationSourceId = null } = input;
 			const tenantId = RequestContext.currentTenantId();
 
@@ -99,9 +119,15 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 				brandColor: faker.color.rgb(),
 				...(input.standardWorkHoursPerDay && {
 					standardWorkHoursPerDay: input.standardWorkHoursPerDay
-				})
+				}),
+				allowScreenshotCapture,
+				...screenshotCaptureAcknowledgement
 			});
 			const { id: organizationId } = organization;
+
+			if (screenshotCaptureAcknowledgement) {
+				await logScreenshotCaptureAcknowledgement(this.activityLogService, organization, screenshotCaptureAcknowledgement);
+			}
 
 			// 4. Take each super admin user and add him/her to created organization
 			try {
