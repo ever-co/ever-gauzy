@@ -1,5 +1,5 @@
 import { FindOptionsWhere, In } from 'typeorm';
-import { RolesEnum } from '@gauzy/contracts';
+import { ID, IRole, RolesEnum } from '@gauzy/contracts';
 import type { OrganizationTeamEmployee } from './organization-team-employee.entity';
 
 /**
@@ -29,4 +29,38 @@ export function teamManagerMembershipWhere(
 		{ ...member, isManager: true },
 		{ ...member, role: managerRole }
 	];
+}
+
+/**
+ * The team role a member already on a team holds after an edit of the team that states its managers.
+ *
+ * A member the edit names as a manager gets the manager role. Any other member keeps the role they hold — a custom
+ * role given to them on purpose survives an edit that does not mention it (#6569) — unless that role is the manager
+ * role the edit hands out or one of the {@link TEAM_MANAGER_ROLES}: a manager the edit leaves out loses it, as
+ * before, so no member keeps manager authority the edit took away.
+ *
+ * @param member - The membership as stored, with its role loaded.
+ * @param isManager - Whether the edit names the member as a manager.
+ * @param managerRole - The role the edit gives the team's managers (MANAGER).
+ * @returns The role to store on the membership, or `null` for a plain member.
+ */
+export function teamRoleAfterEdit(
+	member: { roleId?: ID | null; role?: IRole | null },
+	isManager: boolean,
+	managerRole: IRole
+): IRole | null {
+	if (isManager) {
+		return managerRole;
+	}
+
+	const current = member.role;
+	if (!current) {
+		return null;
+	}
+
+	const roleId = current.id ?? member.roleId;
+	const grantsManagement =
+		(!!managerRole?.id && roleId === managerRole.id) || TEAM_MANAGER_ROLES.includes(current.name as RolesEnum);
+
+	return grantsManagement ? null : current;
 }
