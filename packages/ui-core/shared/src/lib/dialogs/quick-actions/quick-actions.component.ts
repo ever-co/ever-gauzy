@@ -31,7 +31,7 @@ import {
 type GroupType = {
 	group: QuickActionGroupEnum;
 	groupTitle: string;
-	items: any[];
+	items: NbMenuItem[];
 };
 
 /** One action as the edit mode lists it. */
@@ -58,7 +58,7 @@ export interface IQuickActionEditGroup {
 })
 export class QuickActionsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	@Input() items: NbMenuItem[] = [];
-	@Input() shortcutDialog: string = '';
+	@Input() shortcutDialog = '';
 
 	groupedQuickActions: GroupType[];
 	actions = {
@@ -310,7 +310,8 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 	}
 
 	private setError(id: string, message: string | null): void {
-		const { [id]: _previous, ...others } = this.shortcutErrors;
+		const others = { ...this.shortcutErrors };
+		delete others[id];
 		this.shortcutErrors = message ? { ...others, [id]: message } : others;
 	}
 
@@ -391,7 +392,8 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 
 	/** The item with its shortcut as badge (no badge without a shortcut). */
 	private withShortcutBadge(item: NbMenuItem, shortcut: string | undefined): NbMenuItem {
-		const { badge: _badge, ...rest } = item;
+		const rest: NbMenuItem = { ...item };
+		delete rest.badge;
 		return shortcut ? { ...rest, badge: { text: formatShortcut(shortcut), status: 'control' } } : rest;
 	}
 }

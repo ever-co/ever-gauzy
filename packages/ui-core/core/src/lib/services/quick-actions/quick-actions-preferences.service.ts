@@ -84,7 +84,8 @@ export class QuickActionsPreferencesService {
 		if (merged && typeof merged === 'object' && !Array.isArray(merged)) {
 			return merged;
 		}
-		const { quickActions: _previous, ...others } = user.uiPreferences ?? {};
+		const others: IUserUiPreferences = { ...(user.uiPreferences ?? {}) };
+		delete others.quickActions;
 		return preferences ? { ...others, quickActions: preferences } : others;
 	}
 }

@@ -95,10 +95,6 @@ const NAMED_KEY_CODES: Readonly<Record<number, string>> = {
  * (its key map, including its short aliases).
  */
 const EVENT_KEY_NAMES: Readonly<Record<string, string>> = {
-	shift: 'shift',
-	control: 'ctrl',
-	alt: 'alt',
-	meta: 'meta',
 	backspace: 'backspace',
 	tab: 'tab',
 	enter: 'enter',
@@ -256,6 +252,9 @@ export function keyCodesToShortcut(codes: ReadonlyArray<number>): string {
  */
 export function keyboardEventToKeyName(event: Pick<KeyboardEvent, 'key' | 'code' | 'keyCode'>): string | null {
 	const key = typeof event.key === 'string' ? event.key.toLowerCase() : '';
+	if (hasOwn(MODIFIER_ALIASES, key)) {
+		return MODIFIER_ALIASES[key];
+	}
 	if (hasOwn(EVENT_KEY_NAMES, key)) {
 		return EVENT_KEY_NAMES[key];
 	}
