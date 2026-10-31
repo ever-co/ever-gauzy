@@ -3,6 +3,7 @@ import { writeFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import * as moment from 'moment';
 import * as path from 'path';
 import { LocalStore } from './desktop-store';
+import { playScreenshotSound } from './screenshot-sound/screenshot-sound.service';
 import * as Form from 'form-data';
 import { screen } from 'electron';
 import screenshot from 'screenshot-desktop';
@@ -300,19 +301,10 @@ const showCapturedToRenderer = async (
 
 	console.log('showCapturedToRenderer:', windowPath);
 
-	const soundCamera = soundPath;
-
 	notificationWindow.show(thumbUrl);
 
-	try {
-		if (existsSync(soundCamera)) {
-			timeTrackerWindow.webContents.send('play_sound', {
-				soundFile: soundCamera
-			});
-		}
-	} catch (err) {
-		console.error('sound camera not found', err);
-	}
+	// The custom sound chosen on this computer, or the bundled one; silent when muted in the settings
+	playScreenshotSound(timeTrackerWindow, soundPath);
 
 	notificationWindow.hide();
 
@@ -512,10 +504,6 @@ export async function getScreenshot() {
 }
 
 export async function notifyScreenshot(notificationWindow, thumb, windowPath, soundPath, timeTrackerWindow) {
-	const soundCamera = soundPath;
-
-	const appSetting = LocalStore.getStore('appSetting');
-
 	const thumbImg = `data:image/png;base64, ${thumb.img}`;
 
 	global.variableGlobal.screenshotSrc = thumbImg;
@@ -526,15 +514,8 @@ export async function notifyScreenshot(notificationWindow, thumb, windowPath, so
 		fullUrl: thumbImg
 	});
 
-	try {
-		if (existsSync(soundCamera) && appSetting && !appSetting.mutedNotification) {
-			timeTrackerWindow?.webContents.send('play_sound', {
-				soundFile: soundCamera
-			});
-		}
-	} catch (err) {
-		console.error('sound camera not found');
-	}
+	// The custom sound chosen on this computer, or the bundled one; silent when muted in the settings
+	playScreenshotSound(timeTrackerWindow, soundPath);
 
 	notificationWindow?.hide();
 }

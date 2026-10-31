@@ -46,6 +46,8 @@ import {
 import { pluginListeners } from './plugin-system';
 import { AkitaStorageHandler } from './storage/akita-storage.handler';
 import { RemoteTrackingSleep } from './strategies';
+import { registerScreenshotSoundHandlers, removeScreenshotSoundHandlers } from './screenshot-sound';
+import { registerSoundSettingsHandlers, removeSoundSettingsHandlers } from './sound-settings';
 import { TranslateService } from './translation';
 import { ActivityWindow } from '@gauzy/desktop-activity';
 import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
@@ -708,6 +710,11 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		}
 		return _cachedScreen;
 	});
+
+	// The custom screenshot sound of the settings page (#6715)
+	registerScreenshotSoundHandlers();
+	// The sound settings the time tracker reads (#7141)
+	registerSoundSettingsHandlers();
 
 	pluginListeners();
 }
@@ -1646,6 +1653,8 @@ export function removeTimerListener() {
 }
 
 export function removeAllHandlers() {
+	removeScreenshotSoundHandlers();
+	removeSoundSettingsHandlers();
 	const channels = [
 		'UPDATE_SYNCED_TIMER',
 		'UPDATE_SYNCED',

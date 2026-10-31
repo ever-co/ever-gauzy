@@ -1,4 +1,4 @@
-import { Display, screen } from 'electron';
+import { Display, IpcMainEvent, ipcMain, screen } from 'electron';
 import {
 	IBaseWindow,
 	BaseWindow,
@@ -13,7 +13,13 @@ import {
 export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow {
 	private static readonly WIDTH: number = 310;
 	private static readonly HEIGHT: number = 170;
+	/** How long the notification stays after `hide()` is called. */
+	public static readonly AUTO_HIDE_DELAY_MS = 3000;
+	/** IPC channel (`ipcRenderer.send`) the notification's close button sends (#7643). */
+	public static readonly CLOSE_CHANNEL = 'close_screen_capture_notification';
 	private readonly manager = WindowManager.getInstance();
+	/** The pending delayed hide, if any. */
+	private hideTimeout: ReturnType<typeof setTimeout> | null = null;
 
 	/**
 	 * Initializes a new instance of the `ScreenCaptureNotification` class.
@@ -38,6 +44,9 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 					alwaysOnTop: true, // Keeps the window always on top
 					center: false, // Prevents the window from being centered
 					focusable: false, // Makes the window non-focusable
+					// macOS: a click on this never-active window reaches the page (its close button) instead of only
+					// trying to activate the window. No effect elsewhere.
+					acceptFirstMouse: true,
 					skipTaskbar: true, // Excludes the window from the taskbar
 					...ScreenCaptureNotification.notificationPosition(), // Top-right corner of the chosen display
 					...(preloadPath
@@ -70,6 +79,18 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 
 		// Register the window with the window manager
 		this.manager.register(RegisteredWindow.CAPTURE, this);
+
+		// The close button of the notification hides it right away, instead of waiting for the delayed hide.
+		const onCloseRequest = (event: IpcMainEvent) => {
+			if (event.sender === this.browserWindow?.webContents) {
+				this.hideNow();
+			}
+		};
+		ipcMain.on(ScreenCaptureNotification.CLOSE_CHANNEL, onCloseRequest);
+		this.browserWindow.on('closed', () => {
+			this.clearHideTimeout();
+			ipcMain.removeListener(ScreenCaptureNotification.CLOSE_CHANNEL, onCloseRequest);
+		});
 	}
 
 	/**
@@ -135,12 +156,31 @@ export class ScreenCaptureNotification extends BaseWindow implements IBaseWindow
 	 * that any ongoing operations or animations have time to complete before the
 	 * window is hidden.
 	 *
+	 * A new call restarts the delay, so a notification shown again meanwhile stays its full time.
+	 *
 	 * @returns {void} - This method does not return any value.
 	 */
 	public hide(): void {
+		this.clearHideTimeout();
 		// Hide the browser window after a 3-second delay
-		setTimeout(() => {
+		this.hideTimeout = setTimeout(() => {
+			this.hideTimeout = null;
 			super.hide(); // Calls the parent class's hide method
-		}, 3000);
+		}, ScreenCaptureNotification.AUTO_HIDE_DELAY_MS);
+	}
+
+	/**
+	 * Hides the browser window at once (the notification's close button, #7643), dropping the pending delayed hide.
+	 */
+	public hideNow(): void {
+		this.clearHideTimeout();
+		super.hide();
+	}
+
+	private clearHideTimeout(): void {
+		if (this.hideTimeout) {
+			clearTimeout(this.hideTimeout);
+			this.hideTimeout = null;
+		}
 	}
 }
