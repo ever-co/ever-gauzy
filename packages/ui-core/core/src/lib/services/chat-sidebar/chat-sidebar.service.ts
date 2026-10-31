@@ -453,10 +453,12 @@ export class ChatSidebarService {
 
 	/**
 	 * PUT the current state to `/user/ui-preferences` if it differs from what
-	 * the server is known to hold, then mirror the merged result into
+	 * the server is known to hold, then mirror the saved `aiChat` into
 	 * `Store.user.uiPreferences` (so the next `user$` emission does not revert
-	 * the panel). Failures are logged and swallowed — the panel must never break
-	 * because a preference could not be saved.
+	 * the panel). Only that key is replaced: another feature's preferences saved
+	 * while this request was in flight (the Quick Actions, say) stay as they are,
+	 * even though the server's answer may predate them. Failures are logged and
+	 * swallowed — the panel must never break because a preference could not be saved.
 	 */
 	private async persistNow(): Promise<void> {
 		const userId = this.userId;
@@ -476,9 +478,9 @@ export class ChatSidebarService {
 			this.serverState = { ...state };
 			const current = this.store.user;
 			if (current && String(current.id) === userId) {
-				const uiPreferences =
-					merged && typeof merged === 'object' ? merged : { ...current.uiPreferences, aiChat: state };
-				this.store.user = { ...current, uiPreferences };
+				const answered = !!merged && typeof merged === 'object' && !Array.isArray(merged);
+				const aiChat = (answered ? merged.aiChat : undefined) ?? state;
+				this.store.user = { ...current, uiPreferences: { ...(current.uiPreferences ?? {}), aiChat } };
 			}
 		} catch (error) {
 			console.warn('[ChatSidebarService] Could not persist chat panel state:', error);

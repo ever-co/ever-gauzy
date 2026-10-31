@@ -6534,6 +6534,27 @@
 		"PROBABILITY": "Prawdopodobieństwo",
 		"SELECT_CLIENT": "Klient"
 	},
+	"QUICK_ACTIONS_CUSTOMIZE": {
+		"EDIT": "Dostosuj szybkie działania",
+		"HINT": "Przeciągnij działanie lub użyj jego strzałek, aby zmienić jego kolejność w grupie. Kliknij skrót, a następnie naciśnij nowe klawisze.",
+		"RESET": "Przywróć domyślne",
+		"PRESS_KEYS": "Naciśnij klawisze…",
+		"NO_SHORTCUT": "Brak",
+		"MOVE_UP": "Przenieś {{ action }} w górę",
+		"MOVE_DOWN": "Przenieś {{ action }} w dół",
+		"MOVED": "{{ action }} przeniesiono na pozycję {{ position }} z {{ total }}",
+		"CHANGE_SHORTCUT": "Zmień skrót dla {{ action }} (obecny: {{ shortcut }})",
+		"RECORDING": "Naciśnij nowe klawisze dla {{ action }}. Escape anuluje, Backspace usuwa skrót.",
+		"CLEAR_SHORTCUT": "Usuń skrót dla {{ action }}",
+		"SAVED": "Zapisano szybkie działania",
+		"SAVE_ERROR": "Nie udało się zapisać szybkich działań. Spróbuj ponownie.",
+		"ERRORS": {
+			"INVALID": "Użyj litery, cyfry lub znaku interpunkcyjnego, opcjonalnie z Shift.",
+			"TOO_MANY_KEYS": "Użyj najwyżej dwóch klawiszy, opcjonalnie z Shift.",
+			"RESERVED": "{{ shortcut }} jest zarezerwowany przez przeglądarkę lub system operacyjny.",
+			"CONFLICT": "{{ shortcut }} jest już używany przez {{ action }}."
+		}
+	},
 	"DIALOG": {
 		"CONFIRM": "Potwierdź",
 		"ALERT": "Alarm",

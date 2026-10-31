@@ -6545,6 +6545,27 @@
 		"PROBABILITY": "Probability",
 		"SELECT_CLIENT": "Client"
 	},
+	"QUICK_ACTIONS_CUSTOMIZE": {
+		"EDIT": "התאמה אישית של פעולות מהירות",
+		"HINT": "גררו פעולה, או השתמשו בחצים שלה, כדי לשנות את מיקומה בתוך הקבוצה. לחצו על קיצור מקשים ואז הקישו על המקשים החדשים.",
+		"RESET": "שחזור ברירות המחדל",
+		"PRESS_KEYS": "הקישו על מקשים…",
+		"NO_SHORTCUT": "ללא",
+		"MOVE_UP": "העברת {{ action }} למעלה",
+		"MOVE_DOWN": "העברת {{ action }} למטה",
+		"MOVED": "{{ action }} הועבר למיקום {{ position }} מתוך {{ total }}",
+		"CHANGE_SHORTCUT": "שינוי קיצור המקשים של {{ action }} (נוכחי: {{ shortcut }})",
+		"RECORDING": "הקישו על המקשים החדשים עבור {{ action }}. Escape מבטל, Backspace מסיר את קיצור המקשים.",
+		"CLEAR_SHORTCUT": "הסרת קיצור המקשים של {{ action }}",
+		"SAVED": "הפעולות המהירות נשמרו",
+		"SAVE_ERROR": "לא ניתן היה לשמור את הפעולות המהירות. נסו שוב.",
+		"ERRORS": {
+			"INVALID": "השתמשו באות, בספרה או בסימן פיסוק, אפשר עם Shift.",
+			"TOO_MANY_KEYS": "השתמשו בשני מקשים לכל היותר, אפשר עם Shift.",
+			"RESERVED": "{{ shortcut }} שמור על ידי הדפדפן או מערכת ההפעלה.",
+			"CONFLICT": "{{ shortcut }} כבר בשימוש על ידי {{ action }}."
+		}
+	},
 	"DIALOG": {
 		"CONFIRM": "אשר",
 		"ALERT": "Alert",

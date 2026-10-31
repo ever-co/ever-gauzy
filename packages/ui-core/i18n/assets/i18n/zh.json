@@ -7151,6 +7151,27 @@
 		"PROBABILITY": "概率",
 		"SELECT_CLIENT": "客户"
 	},
+	"QUICK_ACTIONS_CUSTOMIZE": {
+		"EDIT": "自定义快速操作",
+		"HINT": "拖动操作或使用其箭头按钮，可在所属分组内调整顺序。点击快捷键，然后按下新的按键。",
+		"RESET": "恢复默认设置",
+		"PRESS_KEYS": "请按键…",
+		"NO_SHORTCUT": "无",
+		"MOVE_UP": "将{{ action }}上移",
+		"MOVE_DOWN": "将{{ action }}下移",
+		"MOVED": "{{ action }}已移至第 {{ position }} 位（共 {{ total }} 项）",
+		"CHANGE_SHORTCUT": "更改{{ action }}的快捷键（当前：{{ shortcut }}）",
+		"RECORDING": "请按下{{ action }}的新按键。按 Escape 取消，按 Backspace 删除快捷键。",
+		"CLEAR_SHORTCUT": "删除{{ action }}的快捷键",
+		"SAVED": "快速操作已保存",
+		"SAVE_ERROR": "无法保存您的快速操作，请重试。",
+		"ERRORS": {
+			"INVALID": "请使用字母、数字或标点键，可搭配 Shift。",
+			"TOO_MANY_KEYS": "最多使用两个按键，可搭配 Shift。",
+			"RESERVED": "{{ shortcut }} 已被浏览器或操作系统保留。",
+			"CONFLICT": "{{ shortcut }} 已被{{ action }}使用。"
+		}
+	},
 	"DIALOG": {
 		"CONFIRM": "确认",
 		"ALERT": "警告",
