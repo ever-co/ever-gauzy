@@ -937,6 +937,8 @@
 			"MERCHANT": "Commerciante",
 			"ORGANIZATION": "Organizzazione",
 			"PAYMENT": "Pagamento",
+			"PAYROLL_RUN": "Ciclo paga",
+			"PAYROLL_ITEM": "Voce del ciclo paga",
 			"PIPELINE": "Condotta principale",
 			"PIPELINE_STAGE": "Stadio del flusso di lavoro",
 			"PRODUCT": "Prodotto",

@@ -994,6 +994,8 @@
 			"MERCHANT": "Merchant",
 			"ORGANIZATION": "Organization",
 			"PAYMENT": "Payment",
+			"PAYROLL_RUN": "Payroll Run",
+			"PAYROLL_ITEM": "Payroll Item",
 			"PIPELINE": "Pipeline",
 			"PIPELINE_STAGE": "Pipeline Stage",
 			"PRODUCT": "Product",

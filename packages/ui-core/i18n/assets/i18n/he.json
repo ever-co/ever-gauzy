@@ -941,6 +941,8 @@
 			"MERCHANT": "Merchant",
 			"ORGANIZATION": "Organization",
 			"PAYMENT": "Payment",
+			"PAYROLL_RUN": "הרצת שכר",
+			"PAYROLL_ITEM": "פריט בהרצת שכר",
 			"PIPELINE": "Pipeline",
 			"PIPELINE_STAGE": "Pipeline Stage",
 			"PRODUCT": "Product",

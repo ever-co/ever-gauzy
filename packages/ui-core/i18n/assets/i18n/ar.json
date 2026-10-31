@@ -936,6 +936,8 @@
 			"MERCHANT": "تاجر",
 			"ORGANIZATION": "مؤسسة",
 			"PAYMENT": "الدفع",
+			"PAYROLL_RUN": "دورة الرواتب",
+			"PAYROLL_ITEM": "بند دورة الرواتب",
 			"PIPELINE": "أنبوبة",
 			"PIPELINE_STAGE": "مرحلة الأنابيب",
 			"PRODUCT": "المنتج",
