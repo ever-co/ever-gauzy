@@ -55,12 +55,14 @@ describe('GoalTemplateSelectComponent — create from preset (#4825)', () => {
 		let goalCount = 0;
 		let kpiCount = 0;
 		// Untyped mocks, so `mock.calls` can be read back without casts
-		const goalService = { createGoal: jest.fn(), delete: jest.fn(async () => ({ affected: 1 })) };
+		const goalService = { createGoal: jest.fn(), delete: jest.fn() };
 		goalService.createGoal.mockImplementation(async (goal: { name: string }) => ({
 			id: `goal-new-${++goalCount}`,
 			name: goal.name
 		}));
-		const goalSettingsService = { createKPI: jest.fn(), deleteKPI: jest.fn(async () => ({ affected: 1 })) };
+		goalService.delete.mockResolvedValue({ affected: 1 });
+		const goalSettingsService = { createKPI: jest.fn(), deleteKPI: jest.fn() };
+		goalSettingsService.deleteKPI.mockResolvedValue({ affected: 1 });
 		goalSettingsService.createKPI.mockImplementation(async () => {
 			if (kpiFails) throw new Error('refused');
 			return { id: `kpi-new-${++kpiCount}` };
