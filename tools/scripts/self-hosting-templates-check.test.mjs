@@ -304,18 +304,30 @@ describe('caddyRoutes', () => {
 		]);
 	});
 
-	it("puts handle blocks in Caddy's order: path matchers (longest first), named matchers, then the catch-all", () => {
+	it("puts handle blocks in Caddy's order: one path each by length, a matcher before none, else as written", () => {
 		const source = [
 			'handle {\n\treverse_proxy webapp:4200\n}',
 			'handle @api {\n\treverse_proxy api:3000\n}',
 			'handle /api/* {\n\tredir https://example.test\n}',
 			'handle /api/health {\n\treverse_proxy api:3000\n}',
+			'handle /api {\n\treverse_proxy api:3000\n}',
 			'@api path /api /api/*'
 		].join('\n');
 		assert.deepEqual(caddyRoutes(source), [
+			{ paths: ['/api', '/api/*'], upstream: 'api' },
 			{ paths: ['/api/health'], upstream: 'api' },
 			{ paths: ['/api/*'], upstream: null },
-			{ paths: ['/api', '/api/*'], upstream: 'api' },
+			{ paths: ['/api'], upstream: 'api' },
+			{ paths: null, upstream: 'webapp' }
+		]);
+	});
+
+	it('sorts two single-path matchers of equal length lexically, and treats `*` as no matcher', () => {
+		const source =
+			'handle * {\n\treverse_proxy webapp:4200\n}\nhandle /b {\n\treverse_proxy b:1\n}\nhandle /a {\n\treverse_proxy a:1\n}';
+		assert.deepEqual(caddyRoutes(source), [
+			{ paths: ['/a'], upstream: 'a' },
+			{ paths: ['/b'], upstream: 'b' },
 			{ paths: null, upstream: 'webapp' }
 		]);
 	});
@@ -344,6 +356,33 @@ describe('caddyRoutes', () => {
 			{ paths: [], upstream: 'api' },
 			{ paths: null, upstream: 'webapp' }
 		]);
+	});
+
+	it('sorts handle_path blocks with the handle blocks and route blocks after them, and marks a stripped prefix', () => {
+		const source = [
+			'route {\n\treverse_proxy webapp:4200\n}',
+			'route /docs/* {\n\treverse_proxy docs:8080\n}',
+			'handle_path /api/* {\n\treverse_proxy api:3000\n}',
+			'handle @api {\n\treverse_proxy api:3000\n}',
+			'@api path /graphql'
+		].join('\n');
+		assert.deepEqual(caddyRoutes(source), [
+			{ paths: ['/graphql'], upstream: 'api' },
+			{ paths: ['/api/*'], upstream: 'api (prefix stripped by handle_path)' },
+			{ paths: ['/docs/*'], upstream: 'docs' },
+			{ paths: null, upstream: 'webapp' }
+		]);
+	});
+
+	it('ignores a reverse_proxy nested in a block it does not model, or in a snippet', () => {
+		const source = [
+			'(proxy) {\n\treverse_proxy webapp:4200\n}',
+			'site {',
+			'\thandle_errors {\n\t\treverse_proxy webapp:4200\n\t}',
+			'\thandle {\n\t\troute /x {\n\t\t\treverse_proxy webapp:4200\n\t\t}\n\t}',
+			'}'
+		].join('\n');
+		assert.deepEqual(caddyRoutes(source), [{ paths: null, upstream: null }]);
 	});
 });
 
@@ -394,17 +433,35 @@ describe('caddyRouteProblems', () => {
 		]);
 	});
 
-	it('does not take a handle block with a path matcher for the catch-all', () => {
-		const scoped = CADDYFILE.replace(fallback, fallback.replace('handle {', 'handle /dashboard/* {'));
-		assert.deepEqual(caddyRouteProblems(scoped, PATHS), notServed);
+	it('does not take a handle, handle_path or route block with a path matcher for the catch-all', () => {
+		for (const block of ['handle /dashboard/* {', 'handle_path /dashboard/* {', 'route /dashboard/* {']) {
+			const scoped = CADDYFILE.replace(fallback, fallback.replace('handle {', block));
+			assert.deepEqual(caddyRouteProblems(scoped, PATHS), notServed, block);
+		}
 	});
 
-	it('lets a path-matched handle block win over the named matcher, wherever it is written', () => {
-		const shadowed = CADDYFILE.replace(
-			fallback,
-			`\thandle /graphql {\n\t\treverse_proxy webapp:4200\n\t}\n${fallback}`
-		);
-		assert.deepEqual(caddyRouteProblems(shadowed, PATHS), ['/graphql (GraphQL) goes to webapp, not the api']);
+	it('takes a route block without a matcher for the catch-all', () => {
+		const route = CADDYFILE.replace(fallback, fallback.replace('handle {', 'route {'));
+		assert.deepEqual(caddyRouteProblems(route, PATHS), []);
+	});
+
+	it('reports API paths whose prefix handle_path strips', () => {
+		const stripping = CADDYFILE.replace(
+			'@api path /api /api/* /graphql /public/*',
+			'@api path /graphql /public/*'
+		).replace('handle @api {', 'handle_path /api/* {\n\t\treverse_proxy api:3000\n\t}\n\thandle @api {');
+		assert.deepEqual(caddyRouteProblems(stripping, PATHS), [
+			'/api (REST) goes to webapp, not the api',
+			'/api/health (REST) goes to api (prefix stripped by handle_path), not the api'
+		]);
+	});
+
+	it('reports an API path a handle block written before the named matcher takes, and not one written after', () => {
+		const graphqlToWebApp = '\thandle /graphql {\n\t\treverse_proxy webapp:4200\n\t}\n';
+		const before = CADDYFILE.replace('\thandle @api {', `${graphqlToWebApp}\thandle @api {`);
+		assert.deepEqual(caddyRouteProblems(before, PATHS), ['/graphql (GraphQL) goes to webapp, not the api']);
+		const after = CADDYFILE.replace(fallback, `${graphqlToWebApp}${fallback}`);
+		assert.deepEqual(caddyRouteProblems(after, PATHS), []);
 	});
 });
 

@@ -283,14 +283,30 @@ export function appPlatformRouteProblems(source, paths) {
 }
 
 /**
- * The routes of a Caddyfile, in the order Caddy tries them. `handle` blocks are mutually exclusive and come first; a
- * `reverse_proxy` outside any `handle` block runs only when no `handle` block matched, so those follow. Each group is
- * sorted as Caddy sorts directives of one name: those with a path matcher (`handle /x/* {`), longest path first; then
- * those with a named matcher (`handle @api {`), in order; then those without a matcher (the catch-all).
+ * The Caddyfile blocks that route requests, by the rank of their directive: Caddy tries a lower rank first, and sorts
+ * `handle_path` with `handle` (one mutually exclusive group).
+ */
+const CADDY_ROUTE_BLOCKS = { handle: 0, handle_path: 0, route: 1 };
+
+/** The rank of a `reverse_proxy` outside any block: it runs only when no block before it answered. */
+const CADDY_OUTSIDE_RANK = 2;
+
+/**
+ * The routes of a Caddyfile, in the order Caddy tries them. Its top-level `handle` and `handle_path` blocks come
+ * first (one mutually exclusive group), then its `route` blocks, then the `reverse_proxy` lines outside any block,
+ * which run only when no block before them answered. Within each, the order is the one Caddy's `sortRoutes`
+ * (caddyconfig/httpcaddyfile/directives.go) gives, by a stable insertion sort as Go's `sort.SliceStable` does for
+ * short lists: of two blocks matching exactly one path each, the one longer without its trailing `*` comes first
+ * (`/x` before `/x*`, equal lengths in lexical order); otherwise one with a matcher comes before one without (the
+ * catch-all); otherwise they
+ * keep the order they are written in, so `handle /graphql` written after `handle @api` (several paths) never runs
+ * for /graphql.
  *
- * Named matchers are read from one-line `@name path ...` definitions; one defined otherwise matches no path here, so
- * the paths it would send are reported rather than assumed. A `handle` block's upstream is its first `reverse_proxy`
- * line without a matcher (null when it has none, e.g. one that only redirects).
+ * A block's upstream is the first `reverse_proxy` line without a matcher directly inside it: null when it has none
+ * (e.g. one that only redirects), and marked when `handle_path` strips the matched prefix first. Named matchers are
+ * read from one-line `@name path ...` definitions. What this reader does not model is left out so that the paths it
+ * would serve are reported rather than assumed: a matcher defined otherwise matches no path, and a `reverse_proxy`
+ * nested in any other block (`handle_errors`, a block inside a route block) is ignored.
  *
  * @param {string} source The Caddyfile's text.
  * @returns {Array<{ paths: string[]|null, upstream: string|null }>} Each route's path patterns (null: every path)
@@ -298,42 +314,78 @@ export function appPlatformRouteProblems(source, paths) {
  */
 export function caddyRoutes(source) {
 	const matchers = new Map();
-	const handles = [];
-	const outside = [];
-	// The `handle` block the current line is in, and the brace depth it opened at.
-	let handle = null;
-	let depth = 0;
+	const routes = [];
+	// The blocks the current line is in, outermost first: a site (or global options) block, a route block, or other.
+	const blocks = [];
 
 	for (const line of source.split(/\r?\n/)) {
 		if (/^\s*(#|$)/.test(line)) continue;
 		const matcher = /^\s*@([A-Za-z0-9_-]+)\s+path\s+(.+?)\s*$/.exec(line);
 		if (matcher) matchers.set(matcher[1], matcher[2].split(/\s+/));
 
-		const opened = /^\s*handle(?:\s+(@[A-Za-z0-9_-]+|[/*]\S*))?\s*\{/.exec(line);
+		const topLevel = blocks.every((block) => block.kind === 'site');
+		const inner = blocks.at(-1);
 		const proxy = /^\s*reverse_proxy\s+(?:(@[A-Za-z0-9_-]+|[/*]\S*)\s+)?([A-Za-z0-9_.-]+):/.exec(line);
-		if (opened) {
-			handle = { matcher: opened[1] ?? null, upstream: null, depth, order: handles.length };
-			handles.push(handle);
-		} else if (proxy && handle) {
-			if (!proxy[1] && handle.upstream === null) handle.upstream = proxy[2];
-		} else if (proxy) {
-			outside.push({ matcher: proxy[1] ?? null, upstream: proxy[2], order: outside.length });
+		if (proxy && inner?.kind === 'route') {
+			if (!proxy[1] && inner.route.upstream === null) inner.route.upstream = proxy[2];
+		} else if (proxy && topLevel) {
+			routes.push({ kind: CADDY_OUTSIDE_RANK, matcher: proxy[1] ?? null, upstream: proxy[2], strips: false });
 		}
 
-		depth += (line.match(/\{/g) ?? []).length - (line.match(/\}/g) ?? []).length;
-		if (handle && depth <= handle.depth) handle = null;
+		const opened = /^\s*(handle|handle_path|route)(?:\s+(@[A-Za-z0-9_-]+|[/*]\S*))?\s*\{/.exec(line);
+		const net = (line.match(/\{/g) ?? []).length - (line.match(/\}/g) ?? []).length;
+		for (let count = 0; count < net; count++) {
+			if (count === 0 && opened && topLevel) {
+				const route = {
+					kind: CADDY_ROUTE_BLOCKS[opened[1]],
+					matcher: opened[2] ?? null,
+					upstream: null,
+					strips: opened[1] === 'handle_path'
+				};
+				routes.push(route);
+				blocks.push({ kind: 'route', route });
+			} else {
+				// A snippet, `(name) {`, is not a site: what it holds is not known to run.
+				blocks.push({ kind: blocks.length === 0 && !/^\s*\(/.test(line) ? 'site' : 'other' });
+			}
+		}
+		blocks.splice(blocks.length + Math.min(net, 0));
 	}
 
-	const rank = ({ matcher }) => (matcher === null ? 2 : matcher.startsWith('@') ? 1 : 0);
-	const length = ({ matcher }) => matcher.replace(/\*/g, '').length;
-	const caddyOrder = (a, b) => rank(a) - rank(b) || (rank(a) === 0 ? length(b) - length(a) : 0) || a.order - b.order;
+	// `*` matches every request, as no matcher does.
 	const paths = (matcher) =>
-		matcher === null ? null : matcher.startsWith('@') ? (matchers.get(matcher.slice(1)) ?? []) : [matcher];
-
-	return [...handles.sort(caddyOrder), ...outside.sort(caddyOrder)].map(({ matcher, upstream }) => ({
-		paths: paths(matcher),
-		upstream
+		matcher === null || matcher === '*'
+			? null
+			: matcher.startsWith('@')
+				? (matchers.get(matcher.slice(1)) ?? [])
+				: [matcher];
+	const stripped = ({ strips, upstream }) =>
+		upstream !== null && strips ? `${upstream} (prefix stripped by handle_path)` : upstream;
+	const resolved = routes.map((route) => ({
+		kind: route.kind,
+		paths: paths(route.matcher),
+		upstream: stripped(route)
 	}));
+
+	// Caddy's comparator: whether route a sorts before route b.
+	const before = (a, b) => {
+		if (a.kind !== b.kind) return a.kind < b.kind;
+		if (a.paths?.length === 1 && b.paths?.length === 1) {
+			const [aPath, bPath] = [a.paths[0], b.paths[0]];
+			const [aTrimmed, bTrimmed] = [aPath.replace(/\*$/, ''), bPath.replace(/\*$/, '')];
+			if (aTrimmed === bTrimmed) return aPath.length < bPath.length;
+			if (aTrimmed.length === bTrimmed.length) return aTrimmed < bTrimmed;
+			return aTrimmed.length > bTrimmed.length;
+		}
+		return a.paths !== null && b.paths === null;
+	};
+	for (let index = 1; index < resolved.length; index++) {
+		for (let at = index; at > 0 && before(resolved[at], resolved[at - 1]); at--) {
+			[resolved[at - 1], resolved[at]] = [resolved[at], resolved[at - 1]];
+		}
+	}
+
+	return resolved.map(({ paths: routePaths, upstream }) => ({ paths: routePaths, upstream }));
 }
 
 /**
