@@ -1,0 +1,43 @@
+<nb-card class="screenshot-capture-acknowledgement">
+	<nb-card-header class="d-flex flex-column">
+		<span class="cancel"><i (click)="cancel()" class="fas fa-times"></i></span>
+		<div class="title">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREEN_CAPTURE_ACKNOWLEDGEMENT_TITLE' | translate }}
+		</div>
+		@if (organizationName) {
+			<div class="subtitle">{{ organizationName }}</div>
+		}
+	</nb-card-header>
+	<nb-card-body>
+		<p class="intro">{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREEN_CAPTURE_ACKNOWLEDGEMENT_INTRO' | translate }}</p>
+		@for (item of statements; track item.statement) {
+			<nb-checkbox
+				class="statement d-block"
+				status="primary"
+				[attr.data-statement]="item.statement"
+				[checked]="confirmed()[item.statement]"
+				(checkedChange)="toggle(item.statement, $event)"
+			>
+				{{ item.key | translate }}
+			</nb-checkbox>
+		}
+		<p class="recorded">
+			{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREEN_CAPTURE_ACKNOWLEDGEMENT_RECORDED' | translate }}
+		</p>
+	</nb-card-body>
+	<nb-card-footer>
+		<button type="button" class="cancel-button" nbButton outline status="basic" (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			type="button"
+			class="confirm-button"
+			nbButton
+			status="primary"
+			[disabled]="!complete"
+			(click)="confirm()"
+		>
+			{{ 'ORGANIZATIONS_PAGE.EDIT.SETTINGS.SCREEN_CAPTURE_ACKNOWLEDGEMENT_CONFIRM' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

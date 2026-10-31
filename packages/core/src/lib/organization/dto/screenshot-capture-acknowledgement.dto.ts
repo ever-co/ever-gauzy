@@ -26,8 +26,7 @@ export class ScreenshotCaptureAcknowledgementDTO implements IScreenshotCaptureAc
 
 	@ApiProperty({
 		type: () => Boolean,
-		description:
-			'Any works council or employee-representative process this requires is complete, or none applies.'
+		description: 'Any works council or employee-representative process this requires is complete, or none applies.'
 	})
 	@IsBoolean()
 	readonly worksCouncil: boolean;

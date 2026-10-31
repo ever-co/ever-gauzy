@@ -113,9 +113,10 @@ describe('organization screen capture acknowledgement migration on SQLite', () =
 			[ADMIN, ON]
 		);
 		await expect(
-			dataSource.query(`UPDATE "organization" SET "screenshotCaptureAcknowledgedByUserId" = 'nobody' WHERE "id" = ?`, [
-				ON
-			])
+			dataSource.query(
+				`UPDATE "organization" SET "screenshotCaptureAcknowledgedByUserId" = 'nobody' WHERE "id" = ?`,
+				[ON]
+			)
 		).rejects.toThrow(/FOREIGN KEY/);
 
 		await dataSource.query(`DELETE FROM "user" WHERE "id" = ?`, [ADMIN]);

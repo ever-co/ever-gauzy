@@ -32,7 +32,10 @@ describe('omitScreenshotCaptureAcknowledgementFields', () => {
 			screenshotCaptureAcknowledgedByUser: { id: 'someone-else' }
 		};
 
-		expect(omitScreenshotCaptureAcknowledgementFields(input)).toEqual({ name: 'Acme', allowScreenshotCapture: true });
+		expect(omitScreenshotCaptureAcknowledgementFields(input)).toEqual({
+			name: 'Acme',
+			allowScreenshotCapture: true
+		});
 	});
 
 	it('never mutates its argument', () => {
@@ -67,7 +70,11 @@ describe('resolveScreenshotCaptureAcknowledgement', () => {
 
 	it('refuses turning capture on for an EEA organization without the acknowledgement, naming what is missing', () => {
 		const error = refusal(() =>
-			resolveScreenshotCaptureAcknowledgement({ allowScreenshotCapture: true }, { allowScreenshotCapture: false }, EEA)
+			resolveScreenshotCaptureAcknowledgement(
+				{ allowScreenshotCapture: true },
+				{ allowScreenshotCapture: false },
+				EEA
+			)
 		);
 
 		expect(error).toBeInstanceOf(ApiException);
@@ -102,7 +109,7 @@ describe('resolveScreenshotCaptureAcknowledgement', () => {
 
 		expect(record?.screenshotCaptureAcknowledgedByUserId).toBe(ADMIN);
 		expect(record?.screenshotCaptureAcknowledgedAt).toBeInstanceOf(Date);
-		expect(record!.screenshotCaptureAcknowledgedAt!.getTime()).toBeGreaterThanOrEqual(before);
+		expect(record?.screenshotCaptureAcknowledgedAt?.getTime()).toBeGreaterThanOrEqual(before);
 	});
 
 	it('records no user when the request has none', () => {
@@ -127,7 +134,11 @@ describe('resolveScreenshotCaptureAcknowledgement', () => {
 
 	it('asks nothing outside the EEA and the UK', () => {
 		expect(
-			resolveScreenshotCaptureAcknowledgement({ allowScreenshotCapture: true }, { allowScreenshotCapture: false }, ELSEWHERE)
+			resolveScreenshotCaptureAcknowledgement(
+				{ allowScreenshotCapture: true },
+				{ allowScreenshotCapture: false },
+				ELSEWHERE
+			)
 		).toBeNull();
 	});
 

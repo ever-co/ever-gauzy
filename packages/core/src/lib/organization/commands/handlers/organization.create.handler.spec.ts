@@ -36,7 +36,9 @@ function setup() {
 		activityLogService as never
 	);
 	const create = (input: Record<string, unknown>) =>
-		handler.execute(new OrganizationCreateCommand({ name: 'Acme', currency: 'EUR', ...input } as IOrganizationCreateInput));
+		handler.execute(
+			new OrganizationCreateCommand({ name: 'Acme', currency: 'EUR', ...input } as IOrganizationCreateInput)
+		);
 	const created = () => organizationService.create.mock.calls[0][0];
 
 	return { organizationService, activityLogService, create, created };
@@ -92,15 +94,19 @@ describe('OrganizationCreateHandler — screen capture', () => {
 	it('reads the country of the contact, so a UK address asks too', async () => {
 		const { create } = setup();
 
-		await expect(
-			create({ allowScreenshotCapture: true, contact: { country: 'GB' } })
-		).rejects.toMatchObject({ code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED });
+		await expect(create({ allowScreenshotCapture: true, contact: { country: 'GB' } })).rejects.toMatchObject({
+			code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED
+		});
 	});
 
 	it('creates an EEA organization with capture on when acknowledged, recording who, when and the tenant', async () => {
 		const { create, created, activityLogService } = setup();
 
-		await create({ allowScreenshotCapture: true, timeZone: 'Europe/Berlin', screenshotCaptureAcknowledgement: ALL });
+		await create({
+			allowScreenshotCapture: true,
+			timeZone: 'Europe/Berlin',
+			screenshotCaptureAcknowledgement: ALL
+		});
 
 		expect(created()).toMatchObject({ allowScreenshotCapture: true, screenshotCaptureAcknowledgedByUserId: ADMIN });
 		expect(created().screenshotCaptureAcknowledgedAt).toBeInstanceOf(Date);
@@ -110,7 +116,10 @@ describe('OrganizationCreateHandler — screen capture', () => {
 				entityId: 'org-1',
 				tenantId: TENANT,
 				data: {
-					screenshotCaptureAcknowledgement: expect.objectContaining({ acknowledgedByUserId: ADMIN, tenantId: TENANT })
+					screenshotCaptureAcknowledgement: expect.objectContaining({
+						acknowledgedByUserId: ADMIN,
+						tenantId: TENANT
+					})
 				}
 			})
 		);
