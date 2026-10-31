@@ -11,8 +11,9 @@
  * links): those occurrences are recorded in `static-hostnames.baseline.json`, which may only shrink.
  *
  *   node tools/egress-audit/static-hostnames.mjs
- *       the files git tracks, outside the module directories (ALLOWED below), against the `code`
- *       part of the baseline: per file and host, never more occurrences than recorded
+ *       the files git tracks (and new files it does not ignore), outside the module directories
+ *       (ALLOWED below), against the `code` part of the baseline: per file and host, never more
+ *       occurrences than recorded
  *   node tools/egress-audit/static-hostnames.mjs --bundle <dir>
  *       every text file of a built web app (the `/srv/gauzy` of the web app image), against the
  *       `bundle` part: never a host that is not recorded (file names and counts change with every
@@ -28,6 +29,7 @@
  *
  * Exit 0 when clean, 1 naming every new occurrence, 2 on a usage error.
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -121,7 +123,7 @@ const SKIP_DIRS = new Set([
 	'tmp'
 ]);
 
-/** Every file under `root`, outside SKIP_DIRS (in CI the checkout holds exactly the tracked files). */
+/** Every file under `root`, outside SKIP_DIRS: a tree that is not a git work tree (the fixtures, a source archive). */
 function walk(root, skip = SKIP_DIRS) {
 	const out = [];
 	const visit = (dir) => {
@@ -136,8 +138,32 @@ function walk(root, skip = SKIP_DIRS) {
 	return out.sort(byCodeUnit);
 }
 
+/**
+ * The source files of the work tree at `root`: those git tracks and the new ones it does not ignore, outside
+ * SKIP_DIRS, as in a CI checkout. A local checkout also holds files git ignores because they are generated (the web
+ * app's `environment*.ts`, written from `.env`): they are not source, never reach CI, and would fail the scan only
+ * there. Outside a git work tree, or without git, every file under `root` (`walk`).
+ */
+export function sourceFiles(root, skip = SKIP_DIRS) {
+	let listed;
+	try {
+		listed = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], {
+			cwd: root,
+			encoding: 'utf8',
+			maxBuffer: 256 * 1024 * 1024,
+			stdio: ['ignore', 'pipe', 'ignore']
+		});
+	} catch {
+		return walk(root, skip);
+	}
+	// `--cached` lists a file once per merge stage while a conflict is unresolved.
+	return [...new Set(listed.split('\0').filter(Boolean))]
+		.filter((file) => !file.split('/').some((part) => skip.has(part)))
+		.sort(byCodeUnit);
+}
+
 /** `{file: {host: count}}` of the core code under `root` (outside ALLOWED). */
-export function scanCode(root, { patterns = ALLOWED, files = walk(root) } = {}) {
+export function scanCode(root, { patterns = ALLOWED, files = sourceFiles(root) } = {}) {
 	const lists = loadEverHosts();
 	const found = {};
 	for (const file of files) {
