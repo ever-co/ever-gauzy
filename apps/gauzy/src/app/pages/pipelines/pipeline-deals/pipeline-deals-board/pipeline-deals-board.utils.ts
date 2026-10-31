@@ -53,14 +53,24 @@ export function toDealBoardCard(deal: IDeal): IDealBoardCard {
 
 /**
  * The board's columns: one per stage of the pipeline, in the stages' own order (`index`), each holding the
- * deals at that stage in the order they came. A deal whose stage is not one of the pipeline's (moved to
- * another pipeline since the page loaded) has no column and is left off the board.
+ * deals at that stage in the order they came.
+ *
+ * `stages` is the pipeline as the page loaded it, so it can lack a stage added since. The pipeline's deals are
+ * read with their stage, and the read only returns deals at this pipeline's stages: a deal whose stage is not
+ * in `stages` brings its own stage's column. A deal at an unknown stage that came without its stage has no
+ * column and is left off the board.
  */
 export function toDealBoardColumns(
 	stages: IPipelineStage[] | null | undefined,
 	deals: IDeal[] | null | undefined
 ): IDealBoardColumn[] {
-	const ordered = [...(stages || [])].sort((a, b) => (Number(a.index) || 0) - (Number(b.index) || 0));
+	const known = new Map((stages || []).map((stage) => [stage.id, stage]));
+	for (const deal of deals || []) {
+		if (deal.stage && deal.stage.id === deal.stageId && !known.has(deal.stage.id)) {
+			known.set(deal.stage.id, deal.stage);
+		}
+	}
+	const ordered = [...known.values()].sort((a, b) => (Number(a.index) || 0) - (Number(b.index) || 0));
 	const columns: IDealBoardColumn[] = ordered.map((stage) => ({
 		stageId: stage.id,
 		name: stage.name,

@@ -30,6 +30,16 @@ describe('toDealBoardColumns', () => {
 		expect(columns[0].cards.map((card) => card.id)).toEqual(['a']);
 	});
 
+	it('gives a deal at a stage added since the page loaded the column of the stage it was read with', () => {
+		const columns = toDealBoardColumns(
+			[stage('lead', 1), stage('won', 3)],
+			[deal('a', 'offer', { stage: stage('offer', 2) }), deal('b', 'offer', { stage: stage('offer', 2) })]
+		);
+
+		expect(columns.map((column) => column.stageId)).toEqual(['lead', 'offer', 'won']);
+		expect(columns[1].cards.map((card) => card.id)).toEqual(['a', 'b']);
+	});
+
 	it('has no columns without stages', () => {
 		expect(toDealBoardColumns(undefined, [deal('a', 'lead')])).toEqual([]);
 		expect(toDealBoardColumns([], null)).toEqual([]);
