@@ -74,15 +74,20 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			// used to be the fallback, so a caller with no employee record could post as any employee,
 			// mention notifications included.
 			const employeeId = this.callerEmployeeId();
-			// Who resolved a comment is not the body's to state either, and a new comment has no resolver.
-			const { mentionEmployeeIds = [], organizationId, ...data } = this.withoutAuthorship(input);
+			// Who resolved a comment is not the body's to state either, and a new comment has no resolver. The
+			// comment it replies to is stated by `parentId` alone, the member the thread check reads.
+			const {
+				mentionEmployeeIds = [],
+				organizationId,
+				...data
+			} = parentStatedById(this.withoutAuthorship(input));
 
 			// A record governed by a comment-access policy (a contact's notes, for one) is written only by those
 			// its policy allows, under the record type as its policy spells it, and a comment on it is stored in
 			// the record's own organization. Every other record keeps the rules above, unchanged.
 			this._parentAccess.assertCanonical(input.entity);
 			const parent = await this._parentAccess.assertMay('write', input.entity, input.entityId);
-			await this.assertReplyStaysInThread(input.entity, input.entityId, input.parentId);
+			await this.assertReplyStaysInThread(input.entity, input.entityId, data.parentId);
 
 			// Validate that the employee exists (only a real id can be looked up — an empty one used to
 			// match an arbitrary employee and pass vacuously).
@@ -162,6 +167,8 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			const employeeId = RequestContext.currentEmployeeId();
 			const canChangeSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 			const { mentionEmployeeIds } = input;
+			// The comment an edit makes this one reply to is stated by `parentId` alone, which the thread check reads.
+			const changes = parentStatedById(input);
 
 			// Find the comment for the current employee with the given id. Callers holding
 			// CHANGE_SELECTED_EMPLOYEE may edit any comment of the tenant; everyone else must be the
@@ -182,8 +189,8 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			// A comment of a governed record is edited only by those its policy lets write that record's comments,
 			// and a reply it is made into stays in the record's thread.
 			const parent = await this._parentAccess.assertMay('write', comment.entity, comment.entityId);
-			if (input.parentId !== undefined) {
-				await this.assertReplyStaysInThread(comment.entity, comment.entityId, input.parentId);
+			if (changes.parentId !== undefined) {
+				await this.assertReplyStaysInThread(comment.entity, comment.entityId, changes.parentId);
 			}
 
 			// Update the comment with the new input data. Who wrote and who resolved it are not an edit's to
@@ -193,7 +200,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			// ICommentUpdateInput already leaves the author out, but the REST DTO still carried `employeeId`,
 			// and a CHANGE_SELECTED_EMPLOYEE holder's edit wrote it. A resolver the body names is the caller.
 			const updatedComment = await super.create({
-				...this.keptInPlace(withoutAuthorChange(input, AUTHORSHIP_COLUMNS), comment, !!parent),
+				...this.keptInPlace(withoutAuthorChange(changes, AUTHORSHIP_COLUMNS), comment, !!parent),
 				...this.resolverStatedBy(input),
 				id
 			});
@@ -554,6 +561,27 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 /** `filter` with `where` as its criteria, or `filter` itself when the criteria did not change. */
 function withWhere<O extends { where?: unknown }>(filter: O | undefined, where: unknown): O | undefined {
 	return where === filter?.where ? filter : ({ ...(filter ?? {}), where } as O);
+}
+
+/**
+ * `input` with the comment it replies to stated by `parentId` alone.
+ *
+ * The thread checks read `parentId`, so a `parent` relation written beside it would skip them. The REST whitelist and
+ * the GraphQL input already leave `parent` out; a service-level caller's `parent` is kept as the same reply, stated by
+ * its id, so what is stored does not change.
+ *
+ * @throws {BadRequestException} When `parent` names no comment by id, or another comment than `parentId` names.
+ */
+function parentStatedById<I extends { parent?: { id?: ID } | null; parentId?: ID | null }>(input: I): I {
+	if (input?.parent === undefined) {
+		return input;
+	}
+	const { parent, ...rest } = input;
+	const parentId = parent === null ? null : parent?.id;
+	if (parentId === undefined || (rest.parentId !== undefined && rest.parentId !== parentId)) {
+		throw new BadRequestException('A reply states the comment it replies to once, by its id.');
+	}
+	return { ...rest, parentId } as I;
 }
 
 /** `fields` without `keys`. */

@@ -201,6 +201,33 @@ describe('CommentService — the comments of a governed record follow its policy
 				service.create(note({ entity: PROJECT, entityId: PROJECT_ID, parentId: NOTE }))
 			).rejects.toBeInstanceOf(BadRequestException);
 		});
+
+		it('checks a reply stated as a parent relation as it checks one stated by parentId', async () => {
+			as([PermissionsEnum.ORG_CONTACT_EDIT]);
+
+			await expect(
+				service.create(note({ entity: PROJECT, entityId: PROJECT_ID, parent: { id: NOTE } } as any))
+			).rejects.toBeInstanceOf(BadRequestException);
+			await expect(service.update(OWN_NOTE, { parent: { id: PROJECT_COMMENT } } as any)).rejects.toBeInstanceOf(
+				BadRequestException
+			);
+			expect(baseCreate).not.toHaveBeenCalled();
+
+			await service.create(note({ parent: { id: NOTE } } as any));
+			const written = baseCreate.mock.calls[0][0];
+			expect(written.parentId).toBe(NOTE);
+			expect(written).not.toHaveProperty('parent');
+		});
+
+		it('refuses a reply whose parent relation and parentId name different comments, or no comment', async () => {
+			as([PermissionsEnum.ORG_CONTACT_EDIT]);
+
+			await expect(
+				service.create(note({ parentId: NOTE, parent: { id: OWN_NOTE } } as any))
+			).rejects.toBeInstanceOf(BadRequestException);
+			await expect(service.create(note({ parent: {} } as any))).rejects.toBeInstanceOf(BadRequestException);
+			expect(baseCreate).not.toHaveBeenCalled();
+		});
 	});
 
 	describe('the comments of every other record keep today’s rules', () => {
@@ -217,6 +244,19 @@ describe('CommentService — the comments of a governed record follow its policy
 					organizationId: 'organization-stated'
 				})
 			);
+		});
+
+		it('stores a project reply stated as a parent relation as the same reply, by its id', async () => {
+			as([]);
+
+			await service.create(
+				note({ entity: PROJECT, entityId: PROJECT_ID, parent: { id: PROJECT_COMMENT } } as any)
+			);
+
+			expect(baseCreate).toHaveBeenCalledWith(
+				expect.objectContaining({ entity: PROJECT, parentId: PROJECT_COMMENT })
+			);
+			expect(baseCreate.mock.calls[0][0]).not.toHaveProperty('parent');
 		});
 
 		it('posts a project reply as before, to a project comment or to a parent it cannot find', async () => {
