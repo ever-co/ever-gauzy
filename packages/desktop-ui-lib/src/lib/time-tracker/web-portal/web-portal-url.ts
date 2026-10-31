@@ -39,7 +39,7 @@ export interface IWebAppSources {
 	apiHost: string | null | undefined;
 	/** The web app of Gauzy Cloud (`GAUZY_CLOUD_APP`, `https://app.gauzy.co/#` by default). */
 	cloudAppUrl?: string | null;
-	/** The web UI of the integrated or local server, when the time tracker uses one (from the main process). */
+	/** The web UI the app serves on this computer, while its UI server runs (from the main process). */
 	localWebAppUrl?: string | null;
 	/** The API of Gauzy Cloud, {@link GAUZY_CLOUD_API_URL} unless given. */
 	cloudApiUrl?: string;
@@ -48,7 +48,7 @@ export interface IWebAppSources {
 /**
  * Where the web app is for the server the time tracker uses (#9517), or `null` when that is not known:
  *
- * - the integrated or a local server: its web UI;
+ * - a web UI the app serves on this computer (Gauzy Server, API Server): that one;
  * - Gauzy Cloud: `GAUZY_CLOUD_APP`;
  * - any other (custom) server: unknown. Its web app address cannot be derived from its API address, so the time
  *   tracker shows no link rather than a guessed one.

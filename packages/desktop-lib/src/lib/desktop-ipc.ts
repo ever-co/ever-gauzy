@@ -25,6 +25,7 @@ import NotificationDesktop from './desktop-notifier';
 import { DesktopOsInactivityHandler } from './desktop-os-inactivity-handler';
 import { DesktopPowerManager } from './desktop-power-manager';
 import { notifyScreenshot, takeshot } from './desktop-screenshot';
+import { DesktopServerFactory } from './desktop-server-factory';
 import { LocalStore } from './desktop-store';
 import TimerHandler from './desktop-timer';
 import { UIError } from './error-handler';
@@ -688,8 +689,10 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		return process.platform === 'linux' && process.env.XDG_SESSION_TYPE === 'wayland';
 	});
 
-	// The time tracker links to the web app (#9517): on the integrated or a local server, that is its web UI.
-	ipcMain.handle('GET_LOCAL_WEB_APP_URL', (): string | null => new ServerConfig().localUiUrl);
+	// The time tracker links to the web app (#9517): the web UI this app serves, only while its UI server runs.
+	ipcMain.handle('GET_LOCAL_WEB_APP_URL', (): string | null =>
+		new ServerConfig().localUiUrl(!!DesktopServerFactory.getUiInstance()?.running)
+	);
 
 	ipcMain.handle('GET_ALL_DISPLAYS', () => {
 		return screen.getAllDisplays();

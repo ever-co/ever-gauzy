@@ -100,11 +100,14 @@ export class ServerConfig implements IServerConfig {
 	}
 
 	/**
-	 * The web UI of the server the app is set up with, when that server runs on this computer (the integrated or a
-	 * local server); `null` for a remote server, whose web UI address the app has no way to know.
+	 * The web UI this app serves on this computer, or `null` when it serves none. Gauzy Server and Gauzy API Server
+	 * start a web UI server next to the API; Gauzy Desktop's integrated server runs the API only (its UI is the app
+	 * window), and the web UI of a remote server is not known here.
+	 *
+	 * @param isUiServerRunning whether this app's web UI server runs.
 	 */
-	public get localUiUrl(): string | null {
-		return this.setting?.isLocalServer ? this.uiUrl : null;
+	public localUiUrl(isUiServerRunning: boolean): string | null {
+		return isUiServerRunning ? this.uiUrl : null;
 	}
 
 	public get setting(): IServerSetting {

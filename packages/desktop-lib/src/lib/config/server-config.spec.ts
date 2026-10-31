@@ -61,20 +61,22 @@ describe('ServerConfig URLs', () => {
 	});
 
 	describe("localUiUrl (the time tracker's link to the web app)", () => {
-		it('is the web UI address when the app uses the integrated or a local server', () => {
+		it('is the address of the web UI this app serves while its UI server runs (Gauzy Server, API Server)', () => {
+			mockConfigs.current = { host: '0.0.0.0', port: 3000, portUi: 4300 };
+
+			expect(new ServerConfig().localUiUrl(true)).toBe('http://127.0.0.1:4300');
+		});
+
+		it("is null without a running UI server: Gauzy Desktop's integrated server runs the API only", () => {
 			mockConfigs.current = { isLocalServer: true, host: '0.0.0.0', port: 3000, portUi: 4200 };
 
-			expect(new ServerConfig().localUiUrl).toBe('http://127.0.0.1:4200');
+			expect(new ServerConfig().localUiUrl(false)).toBeNull();
 		});
 
 		it('is null for a remote server: its web UI address is unknown', () => {
 			mockConfigs.current = { isLocalServer: false, serverUrl: 'https://gauzy.example.com', portUi: 4200 };
 
-			expect(new ServerConfig().localUiUrl).toBeNull();
-		});
-
-		it('is null before the app was set up', () => {
-			expect(new ServerConfig().localUiUrl).toBeNull();
+			expect(new ServerConfig().localUiUrl(false)).toBeNull();
 		});
 	});
 });

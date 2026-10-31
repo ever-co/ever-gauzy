@@ -4,12 +4,12 @@ import { GAUZY_ENV } from '../../constants';
 import { ElectronService } from '../../electron/services';
 import { buildTimeActivitiesUrl, isHttpUrl, resolveWebAppBaseUrl } from './web-portal-url';
 
-/** The main-process channel answering the integrated or local server's web UI address (`null` otherwise). */
+/** The main-process channel answering the address of the web UI the app serves on this computer (`null` when none runs). */
 export const LOCAL_WEB_APP_URL_CHANNEL = 'GET_LOCAL_WEB_APP_URL';
 
 /**
  * The time tracker's link to the web app (#9517): opens the employee's time and activity of today in the browser.
- * The link is offered only where the web app's address is known (Gauzy Cloud, the integrated or a local server).
+ * The link is offered only where the web app's address is known (Gauzy Cloud, or a web UI served on this computer).
  */
 @Injectable({
 	providedIn: 'root'

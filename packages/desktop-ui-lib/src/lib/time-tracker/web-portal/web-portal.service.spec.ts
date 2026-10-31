@@ -27,7 +27,7 @@ describe('WebPortalService', () => {
 		expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(LOCAL_WEB_APP_URL_CHANNEL);
 	});
 
-	it('links a local server to the web UI the main process reports', async () => {
+	it('links to the web UI the main process reports it serves', async () => {
 		electron.ipcRenderer.invoke.mockResolvedValueOnce('http://127.0.0.1:4200');
 
 		await service.refresh('http://localhost:3000');

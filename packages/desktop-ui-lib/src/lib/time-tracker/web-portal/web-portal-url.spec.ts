@@ -10,7 +10,7 @@ import {
 /**
  * The time tracker's link to the employee's time and activity in the web app (#9517), as the owner specified it:
  * `…/#/pages/employees/activity/time-activities?organizationId=…&date=<today>&date_end=<today>&unit_of_time=day&employeeId=…&is_custom_date=false`.
- * The web app's address is known for Gauzy Cloud and for the integrated or a local server only; for any other server
+ * The web app's address is known for Gauzy Cloud and for a web UI served on this computer only; for any other server
  * no link is offered rather than a guessed one.
  */
 describe('web portal URL', () => {
@@ -26,7 +26,7 @@ describe('web portal URL', () => {
 			);
 		});
 
-		it('is the web UI of the integrated or a local server', () => {
+		it('is the web UI served on this computer', () => {
 			expect(
 				resolveWebAppBaseUrl({
 					apiHost: 'http://localhost:3000',
