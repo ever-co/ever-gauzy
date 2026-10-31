@@ -7,6 +7,7 @@ import { StatusTypesEnum, StatusTypesMapRequestApprovalEnum } from '@gauzy/contr
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { coreEntities } from '../../../core/entities';
 import { RequestContext } from '../../../core/context';
+import { CreateTimeOffBalanceDeductionTable1791000003630 } from '../../../database/migrations/1791000003630-CreateTimeOffBalanceDeductionTable';
 import { TimeOffBalanceDeductionService } from '../../../time-off-balance/time-off-balance-deduction.service';
 import { TimeOffRequest } from '../../time-off-request.entity';
 import { TimeOffStatusCommand } from '../time-off.status.command';
@@ -14,7 +15,9 @@ import { TimeOffStatusHandler } from './time-off.status.handler';
 
 /**
  * Leave balances follow the approve / deny decision (ever-co/ever-gauzy#10183, item 1), on a real better-sqlite3
- * database whose tables TypeORM created from the real entities, as the migrations create them in an installation.
+ * database whose tables TypeORM created from the real entities, as the migrations create them in an installation —
+ * and whose `time_off_balance_deduction` table is the one its migration creates, which TypeORM must find nothing to
+ * change in.
  *
  * - Approving a request takes its working days (weekdays, less the organization's official holidays, split per
  *   calendar year) from the balance each employee has for the request's policy and year, in the decision's
@@ -163,6 +166,17 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 		// The fixtures name rows of tables this suite has no reason to fill (users, the employees' users).
 		await dataSource.query('PRAGMA foreign_keys = OFF');
 
+		// The deduction table as an installation gets it: from its migration, not from `synchronize`.
+		await dataSource.query(`DROP TABLE "time_off_balance_deduction"`);
+		const queryRunner = dataSource.createQueryRunner();
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		try {
+			await new CreateTimeOffBalanceDeductionTable1791000003630().up(queryRunner);
+		} finally {
+			await queryRunner.release();
+			jest.restoreAllMocks();
+		}
+
 		const leaves = dataSource.getRepository(TimeOffRequest);
 		handler = new TimeOffStatusHandler(leaves as any, {} as any, new TimeOffBalanceDeductionService());
 	}, TIMEOUT);
@@ -203,6 +217,16 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 	});
 
 	afterEach(() => jest.restoreAllMocks());
+
+	it('creates the deduction table through its migration exactly as the entity maps it', async () => {
+		const { upQueries } = await dataSource.driver.createSchemaBuilder().log();
+
+		expect(
+			upQueries.map(({ query }) => query).filter((query) => query.includes('time_off_balance_deduction'))
+		).toEqual([]);
+		const indexes: Row[] = await dataSource.query(`PRAGMA index_list("time_off_balance_deduction")`);
+		expect(indexes.find(({ name }) => name === 'IDX_time_off_balance_deduction_unique')).toMatchObject({ unique: 1 });
+	});
 
 	describe('no balance row: approval works exactly as before', () => {
 		it('approves, and creates no balance and no deduction', async () => {
