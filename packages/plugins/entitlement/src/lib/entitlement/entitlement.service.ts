@@ -1344,6 +1344,8 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 						if (raced) {
 							return { entitlement: raced, created: false };
 						}
+
+						await this.assertLineNotGrantedElsewhere(row, manager);
 					}
 
 					const entitlement = await this.writeGrant(manager, {
@@ -1368,6 +1370,9 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 					return { entitlement: raced, created: false };
 				}
 
+				// No other number gets past a line another organization holds.
+				await this.assertLineNotGrantedElsewhere(row);
+
 				const next = number.derived ? deriveEntitlementNumber(input, attempt) : undefined;
 
 				if (!next || attempt >= DERIVED_ENTITLEMENT_NUMBER_ATTEMPTS) {
@@ -1380,6 +1385,48 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 
 				number = { value: next, derived: true };
 			}
+		}
+	}
+
+	/**
+	 * Refuses a grant of an order line whose live right of the kind belongs to another organization of the tenant.
+	 *
+	 * `UQ_entitlement_live_line_grant` keys a live right on the tenant, the order line and the kind, without the
+	 * organization, so the database refuses that grant whichever organization makes it. {@link findExistingGrant}
+	 * reads within the grant's organization and does not see the right, and returning it would hand one
+	 * organization another's licence (#11601 review). Called once the grant's own organization has no live right of
+	 * the line: under the line's lock where the index is missing, which keeps the second live right out, and after
+	 * the index refused the insert, which answers that refusal with a 409 instead of the driver's error.
+	 *
+	 * A right without a tenant is outside the index, and so outside this check.
+	 *
+	 * @param row The row the grant would write.
+	 * @param manager The transaction to read on; outside any transaction when omitted.
+	 * @throws ApiException with `UNIQUE_CONSTRAINT_VIOLATION` (409) when another organization holds the line.
+	 */
+	private async assertLineNotGrantedElsewhere(row: Partial<Entitlement>, manager?: EntityManager): Promise<void> {
+		if (!row.orderLineId || !row.tenantId) {
+			return;
+		}
+
+		const options = {
+			where: {
+				tenantId: row.tenantId,
+				orderLineId: row.orderLineId,
+				kind: row.kind,
+				status: Not(EntitlementStatus.REVOKED)
+			} as any
+		};
+		const held = manager
+			? await manager.findOne(Entitlement, options)
+			: await this.entitlementRows().findOne(options);
+
+		if (held && (held.organizationId ?? null) !== (row.organizationId ?? null)) {
+			throw new ApiException(
+				409,
+				ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION,
+				'This order line already has a live right of this kind in another organization, so no second one was granted.'
+			);
 		}
 	}
 

@@ -1428,6 +1428,41 @@ describe.each([
 			expect(again.created).toBe(true);
 		});
 
+		/**
+		 * The index keys a live right on the tenant, the line and the kind, not the organization (#11601 review): a
+		 * grant of the line from another organization of the tenant is refused with a 409, whether the index refuses
+		 * it or the grant's read under the line's lock does, and the right that holds the line is neither duplicated
+		 * nor handed to the other organization.
+		 */
+		it.each([
+			['the index refuses', true],
+			['the index is missing and the read under the lock refuses', false]
+		])('answers a line another organization of the tenant holds with a 409 where %s', async (_case, indexed) => {
+			if (!indexed) {
+				await harness.migrate(migration, 'down');
+				harness.liveLineGrantIndex.present = false;
+			}
+
+			await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1', number: 'ENT-THEIRS' } as any,
+				{
+					tenantId: TENANT,
+					organizationId: OTHER_ORG
+				}
+			);
+
+			const refusal = await harness.entitlements
+				.grant({ orderId: 'order-1', orderLineId: 'line-1', number: 'ENT-OURS', issueKey: true } as any, SCOPE)
+				.catch((error: unknown) => error);
+
+			expect(refusal).toMatchObject({ status: 409, code: ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION });
+			expect((await harness.rows('entitlement')).map((row) => [row.number, row.organizationId])).toEqual([
+				['ENT-THEIRS', OTHER_ORG]
+			]);
+			expect(await harness.rows('entitlement_key')).toEqual([]);
+			expect(await eventNames(harness)).toEqual([EntitlementEventName.CREATED]);
+		});
+
 		it('numbers a line granted again after revocation with the next revision of its derived number', async () => {
 			// An event grant has no numbering series in reach, so its number is derived from the purchase; the revoked
 			// right keeps that number under `UQ_entitlement_number`, which used to refuse the re-grant outright.

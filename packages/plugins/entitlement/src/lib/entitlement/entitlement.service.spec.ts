@@ -954,6 +954,24 @@ describe('EntitlementService — a grant racing another grant of the same line (
 		}
 	);
 
+	it('answers a line another organization of the tenant holds with a 409, without trying another number', async () => {
+		// The index keys a live right on the tenant, the line and the kind, so it refuses this grant; the read of the
+		// grant's own organization does not see the right that holds the line (#11601 review).
+		const theirs = rightRow('theirs', { orderId: ORDER, orderLineId: ORDER_LINE, organizationId: 'another-org' });
+		const fixture = entitlementFixture({ rights: [theirs] }, { sequence: new Error('no series in context') });
+		const refusals = enforceUniqueRules(fixture, UNIQUE_VIOLATIONS[0][1]);
+
+		const refusal = await fixture.service
+			.grant({ orderId: ORDER, orderLineId: ORDER_LINE }, { tenantId: TENANT, organizationId: ORG })
+			.catch((error) => error);
+
+		expect(refusal).toMatchObject({ status: 409, code: ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION });
+		expect(refusals).toEqual(['UQ_entitlement_live_line_grant']);
+		expect(fixture.tables.entitlement.map((row) => row.id)).toEqual(['theirs']);
+		expect(fixture.appended).toEqual([]);
+		expect(fixture.published).toEqual([]);
+	});
+
 	it('rethrows any error that is not a unique violation, untouched and without a second read', async () => {
 		const fixture = entitlementFixture();
 		const failure = Object.assign(new Error('connection reset'), { code: 'ECONNRESET' });
@@ -1132,6 +1150,26 @@ describe('EntitlementService — a grant of an order line where the unique index
 		expect(fixture.appended).toEqual([]);
 		expect(fixture.published).toEqual([]);
 		expect(fixture.conditionsReplaced).toEqual([]);
+		expect(fixture.tables.entitlement_key).toEqual([]);
+	});
+
+	it('refuses, under the lock, a line another organization of the tenant holds, as the index would', async () => {
+		const theirs = rightRow('theirs', { orderId: ORDER, orderLineId: ORDER_LINE, organizationId: 'another-org' });
+		const { fixture, statements } = onDialect('postgres', { rights: [theirs] });
+
+		const refusal = await fixture.service
+			.grant(
+				{ orderId: ORDER, orderLineId: ORDER_LINE, issueKey: true },
+				{ tenantId: TENANT, organizationId: ORG }
+			)
+			.catch((error) => error);
+
+		expect(refusal).toMatchObject({ status: 409, code: ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION });
+		// Neither returned to this organization nor duplicated: the lock was taken, and nothing was written.
+		expect(statements).toEqual([[PG_LOCK, [ORDER_LINE]]]);
+		expect(fixture.tables.entitlement.map((row) => row.id)).toEqual(['theirs']);
+		expect(fixture.appended).toEqual([]);
+		expect(fixture.published).toEqual([]);
 		expect(fixture.tables.entitlement_key).toEqual([]);
 	});
 
