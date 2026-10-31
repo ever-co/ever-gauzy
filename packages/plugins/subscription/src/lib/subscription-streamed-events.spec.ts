@@ -35,7 +35,8 @@ describe('SubscriptionStreamedEvents', () => {
 			'subscription.payment-failed',
 			'subscription.renewed',
 			'subscription.resumed',
-			'subscription.scheduled-change-refused'
+			'subscription.scheduled-change-refused',
+			'subscription.settlement-reversal-required'
 		]);
 		expect(consumer.register).toHaveBeenCalledTimes(1);
 	});
@@ -50,7 +51,7 @@ describe('SubscriptionStreamedEvents', () => {
 		const catalogue = new SubscriptionCatalogue();
 
 		expect(() => new SubscriptionStreamedEvents(catalogue).onModuleInit()).not.toThrow();
-		expect(catalogue.size).toBe(10);
+		expect(catalogue.size).toBe(11);
 	});
 
 	it('declares only names the package really appends to the outbox', () => {
