@@ -429,7 +429,7 @@ export class ShortcutRecorder {
 		if (this.command && name === this.command.key) {
 			return { status: this.command.status };
 		}
-		if (name && this.held.delete(name) && this.held.size === 0 && this.keys.length) {
+		if (this.held.delete(name) && this.held.size === 0 && this.keys.length) {
 			return { status: 'recorded', shortcut: buildShortcut(this.modifiers, this.keys) };
 		}
 		return this.recording(event);
