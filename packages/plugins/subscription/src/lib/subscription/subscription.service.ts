@@ -2559,7 +2559,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			}
 
 			if (credit && !credit.isZero()) {
-				await this.clearPendingCredit(subscription, credit, nextExpectation());
+				await this.clearPendingCredit(subscription, credit, billing.id, nextExpectation());
 			}
 
 			return undefined;
@@ -3550,8 +3550,11 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			// **next** billing order".
 			const carried = this.pendingCreditOf(metadata, intent.currency);
 			const total = carried ? carried.add(net).round() : net;
+			// The cycles that already took their credit off stay listed (`clearPendingCredit`).
+			const consumedBy = carried ? (metadata[PENDING_CREDIT] as { consumedBy?: string[] })?.consumedBy : undefined;
 
 			metadata[PENDING_CREDIT] = {
+				...(Array.isArray(consumedBy) ? { consumedBy } : {}),
 				amount: total.toStorageString(),
 				currency: intent.currency,
 				at: intent.at,
@@ -4642,19 +4645,27 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * Only the amount the cycle consumed is taken off, from the row as it is after the order path: a credit a change
 	 * carried meanwhile stays carried for the next cycle, and a change recorded meanwhile is kept (`rememberSetupFee`).
 	 *
+	 * **Once per cycle.** The cycles whose credit was taken off are listed on the carried entry (`consumedBy`): a pass
+	 * that took over a stale claim on the same cycle, and consumed the same credit, takes nothing more off — taken off
+	 * twice, the second came out of the credit a change carried since.
+	 *
 	 * @param subscription The subscription whose deferred credit was applied.
 	 * @param consumed The credit the cycle applied.
+	 * @param billingId The cycle that applied it.
 	 * @param expectation The version the write is predicated on.
 	 */
 	private async clearPendingCredit(
 		subscription: Subscription,
 		consumed: Money,
+		billingId: ID,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<void> {
 		await this.mergeMetadata(subscription.id, expectation, (metadata) => {
-			const pending = metadata[PENDING_CREDIT] as { amount?: string; currency?: string } | undefined;
+			const pending = metadata[PENDING_CREDIT] as
+				| { amount?: string; currency?: string; consumedBy?: string[] }
+				| undefined;
 
-			if (!pending?.amount) {
+			if (!pending?.amount || (Array.isArray(pending.consumedBy) && pending.consumedBy.includes(billingId))) {
 				return false;
 			}
 
@@ -4666,7 +4677,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			if (left?.isNegative()) {
 				metadata[PENDING_CREDIT] = {
 					...(metadata[PENDING_CREDIT] as Record<string, unknown>),
-					amount: left.toStorageString()
+					amount: left.toStorageString(),
+					consumedBy: [...(Array.isArray(pending.consumedBy) ? pending.consumedBy : []), billingId].slice(-10)
 				};
 			} else {
 				delete metadata[PENDING_CREDIT];

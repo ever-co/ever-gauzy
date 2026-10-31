@@ -2236,13 +2236,15 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		const service = fixture.service as any;
 
 		await service.rememberSetupFee(read, fixture.tables.subscription_plan[0]);
-		await service.clearPendingCredit(read, Money.of('-12.000000', 'USD'));
+		await service.clearPendingCredit(read, Money.of('-12.000000', 'USD'), 'cycle-april');
+		// A pass that took over the same cycle's stale claim consumed the same credit: nothing more is taken off.
+		await service.clearPendingCredit(read, Money.of('-12.000000', 'USD'), 'cycle-april');
 
 		expect(fixture.subscription(SUBSCRIPTION).metadata).toMatchObject({
 			changeIntent: { key: `${SUBSCRIPTION}:recorded` },
 			chargedSetupFeePlanIds: [PLAN],
-			// Only what the pass consumed is taken off; what the change carried since stays for the next cycle.
-			pendingCredit: { amount: '-30.970000', currency: 'USD' }
+			// Only what the pass consumed is taken off, once; what the change carried since stays for the next cycle.
+			pendingCredit: { amount: '-30.970000', currency: 'USD', consumedBy: ['cycle-april'] }
 		});
 		expect(fixture.subscription(SUBSCRIPTION).reservedPlanId).toBe(BETTER_PLAN);
 	});
