@@ -131,7 +131,8 @@ export function buildKeyResultFromTemplate(
 		unit: template.unit,
 		initialValue: template.initialValue,
 		targetValue: template.targetValue,
-		update: template.initialValue,
+		// The key result's progress value is required, the template's initial value is not: it then starts at zero
+		update: template.initialValue ?? 0,
 		deadline: template.deadline,
 		hardDeadline: template.hardDeadline,
 		softDeadline: template.softDeadline,

@@ -150,6 +150,16 @@ describe('goal-from-template (#4825)', () => {
 			});
 		});
 
+		it('starts the required update value at zero when the template has no initial value', () => {
+			const keyResult = buildKeyResultFromTemplate(
+				{ ...keyResultTemplate, initialValue: null },
+				{ goalId: 'goal-new', ownerId: 'employee-1' },
+				scope
+			);
+			expect(keyResult.update).toBe(0);
+			expect(keyResult.initialValue).toBeNull();
+		});
+
 		it("does not fall back to the template's KPI when no KPI was created", () => {
 			const keyResult = buildKeyResultFromTemplate(
 				keyResultTemplate,
