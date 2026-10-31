@@ -26,11 +26,12 @@ import {
  * device starts with the client, project, team, task and note last tracked with, instead of an empty form.
  *
  * It runs once for a user and organization (online), and only over an empty selection with no timer running: a
- * selection the user makes, or clears, afterwards is left alone. An attempt that fails (the last log or a list could
- * not be loaded) is taken back and tried again on the next load. The choices are made one after another, each in its
- * selector's list as reloaded for the choices before it (a project's teams and tasks once the project is chosen), so a
- * choice the employee can no longer pick is left out. What was chosen is stored like a selection the user makes, so
- * the timer starts with it and a refresh keeps it.
+ * selection the user makes, or clears, afterwards is left alone, and once a timer start begins nothing more is chosen
+ * (the start takes the selection shown then). An attempt that fails (the last log or a list could not be loaded), or
+ * is interrupted by a reload (`cancel()`), is taken back and tried again on the next load. The choices are made one
+ * after another, each in its selector's list as reloaded for the choices before it (a project's teams and tasks once
+ * the project is chosen), so a choice the employee can no longer pick is left out. What was chosen is stored like a
+ * selection the user makes, so the timer starts with it and a refresh keeps it.
  */
 @Injectable({
 	providedIn: 'root'
@@ -38,9 +39,12 @@ import {
 export class SelectionPrefillService {
 	/** The user and organization pairs the prefill is settled for: it ran, or found a selection of their own. */
 	private readonly _settled = new Set<string>();
-	/** The lookups under way, by generation, user and organization: one at a time for each. */
-	private readonly _inFlight = new Set<string>();
-	/** Counts the resets: a lookup started before the latest one answers for a context left since and is dropped. */
+	/**
+	 * The attempts under way, by generation, user and organization (one at a time for each), with what each chose so
+	 * far.
+	 */
+	private readonly _inFlight = new Map<string, Partial<ITimeTrackerFormState>>();
+	/** Counts the cancels: an attempt started before the latest one answers for a context left since and is dropped. */
 	private _generation = 0;
 	/** The selectors to choose in, by form field. */
 	private readonly _lists: Readonly<Record<SelectorField, IPagedChoices<{ id?: string }>>>;
@@ -66,8 +70,8 @@ export class SelectionPrefillService {
 	/**
 	 * Prefills the selection when the time tracker has none and no timer runs.
 	 *
-	 * @param isRunning whether the timer runs on this device, read again once the server answered (the user may have
-	 * started it meanwhile).
+	 * @param isRunning whether the timer runs, or is starting, on this device; read again after each step (the user may
+	 * start it meanwhile, and the start takes the selection shown then, so nothing more is chosen from then on).
 	 * @param saved the selection saved on this device: a choice the selectors could not show yet (their lists still
 	 * loading) is still the user's choice, and is never replaced.
 	 * @returns the selection prefilled (and stored), or `null` when nothing was.
@@ -89,12 +93,14 @@ export class SelectionPrefillService {
 			return null;
 		}
 
-		// Still the user, organization and stopped timer the lookup started for (an organization switch resets).
+		// Still the user, organization and stopped timer the lookup started for, and not cancelled (an organization switch
+		// or a reload cancels).
 		const isCurrent = () => generation === this._generation && this._contextKey() === key && !isRunning();
-		// What this attempt chose so far: taken back if it fails, so the next attempt starts over from an empty form.
+		// What this attempt chose so far: taken back if it fails or is cancelled, so the next attempt starts over from an
+		// empty form.
 		const applied: Partial<ITimeTrackerFormState> = {};
 
-		this._inFlight.add(flight);
+		this._inFlight.set(flight, applied);
 		try {
 			const status = await this._timeTrackerStatusService.status();
 			if (!isCurrent() || !status) {
@@ -127,11 +133,28 @@ export class SelectionPrefillService {
 	}
 
 	/**
+	 * Drops the attempt under way, taking back what it chose so far, without settling: the next prefill tries again.
+	 *
+	 * For a reload, which puts the selection saved on this device back over the form: the attempt would take that for
+	 * the user's own choice and stop for good, with the user having chosen nothing. Taken back here, at once, what it
+	 * chose cannot clear a choice of the attempt that follows.
+	 */
+	public cancel(): void {
+		const current = `${this._generation}|`;
+		for (const [flight, applied] of this._inFlight) {
+			if (flight.startsWith(current)) {
+				this._undo(applied);
+			}
+		}
+		this._generation++;
+	}
+
+	/**
 	 * Lets the prefill run again, e.g. in an organization just switched to (the switch clears the selection), and drops
-	 * the lookups still under way for the context left.
+	 * the attempts still under way for the context left.
 	 */
 	public reset(): void {
-		this._generation++;
+		this.cancel();
 		this._settled.clear();
 	}
 
@@ -160,7 +183,7 @@ export class SelectionPrefillService {
 				continue;
 			}
 
-			const found = await findChoice(this._lists[field], id);
+			const found = await findChoice(this._lists[field], id, { isCurrent });
 			if (!isCurrent()) {
 				return false;
 			}

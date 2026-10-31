@@ -1094,6 +1094,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					taskId: arg.taskId,
 					note: arg.note
 				};
+				// The saved selection goes back over the form: a prefill under way would take it for the user's own
+				// choice and stop for good. It is dropped (what it chose taken back), and the one below starts over.
+				this._selectionPrefill.cancel();
 				this.timeTrackerFormService.setState(savedSelection);
 				const parallelizedTasks: Promise<void>[] = [
 					this.loadStatuses(),
@@ -1111,8 +1114,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (!this._isLockSyncProcess && this.inQueue.size > 0) {
 					this.electronService.ipcRenderer.send('check-interrupted-sequences');
 				}
-				// A device without a selection of its own takes over the employee's last time log (#7753).
-				void this._selectionPrefill.prefill(() => this.start, savedSelection);
+				// A device without a selection of its own takes over the employee's last time log (#7753). Nothing more is
+				// chosen once a start begins: `START_TIMER` sends the selection shown then (the selectors' stores).
+				void this._selectionPrefill.prefill(
+					() => this.start || this._organizationSwitchService.isStartingTimer,
+					savedSelection
+				);
 			})
 		);
 

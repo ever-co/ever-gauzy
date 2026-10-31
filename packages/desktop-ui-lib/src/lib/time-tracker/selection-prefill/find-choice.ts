@@ -35,17 +35,24 @@ export class ChoiceListUnavailableError extends Error {
  * The lists only offer what the employee may pick (their clients, projects, teams and tasks), so an entry found here
  * is one the employee can still track time on.
  *
- * @returns the entry, or `null` when the list does not offer it within `maxPages` pages.
+ * @param options.maxPages how many pages to look through.
+ * @param options.isCurrent whether the lookup is still wanted, read after each page: once it is not (another
+ * organization, the timer started), no further page is loaded.
+ * @returns the entry, or `null` when the list does not offer it within `maxPages` pages, or the lookup is no longer
+ * wanted.
  * @throws ChoiceListUnavailableError when a page could not be loaded.
  */
 export async function findChoice<T extends { id?: string }>(
 	list: IPagedChoices<T>,
 	id: string,
-	maxPages: number = MAX_PREFILL_PAGES
+	{ maxPages = MAX_PREFILL_PAGES, isCurrent = () => true }: { maxPages?: number; isCurrent?: () => boolean } = {}
 ): Promise<T | null> {
 	list.resetPage();
 	for (let page = 1; ; page++) {
 		await list.load();
+		if (!isCurrent()) {
+			return null;
+		}
 		const error = await firstValueFrom(list.selectorQuery.selectError());
 		if (error) {
 			throw new ChoiceListUnavailableError(error);

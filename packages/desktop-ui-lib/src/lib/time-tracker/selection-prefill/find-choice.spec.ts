@@ -70,7 +70,19 @@ describe('findChoice', () => {
 	it('stops after the pages it may look through', async () => {
 		const list = pagedList(['a', 'b', 'c', 'd', 'e', 'f', 'g']);
 
-		await expect(findChoice(list, 'g', 2)).resolves.toBeNull();
+		await expect(findChoice(list, 'g', { maxPages: 2 })).resolves.toBeNull();
 		expect(list.load).toHaveBeenCalledTimes(2);
+	});
+
+	it('loads no further page once the lookup is no longer wanted (another organization, the timer started)', async () => {
+		const list = pagedList(['a', 'b', 'c', 'd', 'e']);
+		let current = true;
+		list.load.mockImplementationOnce(async () => {
+			current = false; // e.g. the organization switches while the first page loads
+		});
+
+		await expect(findChoice(list, 'e', { isCurrent: () => current })).resolves.toBeNull();
+		expect(list.load).toHaveBeenCalledTimes(1);
+		expect(list.onScrollToEnd).not.toHaveBeenCalled();
 	});
 });

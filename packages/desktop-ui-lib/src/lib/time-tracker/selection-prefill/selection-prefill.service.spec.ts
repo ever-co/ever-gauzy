@@ -312,6 +312,47 @@ describe('SelectionPrefillService', () => {
 		expect(selectorElectron.update).toHaveBeenCalledWith({ organizationContactId: 'client-1' });
 	});
 
+	it('chooses nothing more once a timer start begins: the timer tracks the selection shown when it starts', async () => {
+		// The user presses Start while the team list loads (`isRunning` covers the start under way).
+		lists.teamId.onLoad = () => {
+			lists.teamId.onLoad = undefined;
+			running = true;
+		};
+
+		await expect(prefill()).resolves.toBeNull();
+
+		// What was shown when the start began stays (the start sent it), and nothing is chosen after it.
+		expect(formService.getState()).toEqual({ ...all, teamId: '', taskId: '', note: '' });
+		expect(lists.teamId.load).toHaveBeenCalledTimes(1);
+		expect(lists.taskId.load).not.toHaveBeenCalled();
+		expect(selectorElectron.update).not.toHaveBeenCalled();
+	});
+
+	it('takes back an attempt a reload interrupts and starts over, instead of stopping for good', async () => {
+		// The reload (timer_tracker_show) comes while the team list loads: it cancels, then replays the saved selection.
+		lists.teamId.onLoad = () => {
+			lists.teamId.onLoad = undefined;
+			service.cancel();
+		};
+
+		await expect(prefill()).resolves.toBeNull();
+		expect(formService.getState()).toEqual({ clientId: '', projectId: '', teamId: '', taskId: '', note: '' });
+		expect(selectorElectron.update).not.toHaveBeenCalled();
+
+		// The reload's own prefill.
+		await expect(prefill()).resolves.toEqual(all);
+		expect(selectorElectron.update).toHaveBeenCalledWith(stored);
+	});
+
+	it('stays settled through a reload once it ran: a selection cleared afterwards stays cleared', async () => {
+		await prefill();
+		clear();
+		service.cancel();
+
+		await expect(prefill()).resolves.toBeNull();
+		expect(statusService.status).toHaveBeenCalledTimes(1);
+	});
+
 	it('does nothing while the timer runs, including when it started during the request', async () => {
 		statusService.status.mockImplementationOnce(async () => {
 			running = true;
