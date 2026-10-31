@@ -1,10 +1,24 @@
-import { ForbiddenException, Injectable, NotFoundException, OnModuleInit, Optional } from '@nestjs/common';
+import {
+	BadRequestException,
+	ForbiddenException,
+	Injectable,
+	NotFoundException,
+	OnModuleInit,
+	Optional
+} from '@nestjs/common';
 import { DiscoveryService, Reflector } from '@nestjs/core';
 import { isUUID } from 'class-validator';
 import { BaseEntityEnum, ID } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
 import { COMMENT_PARENT_ACCESS_POLICY } from './comment-parent-access-policy.decorator';
 import { CommentParentAccess, ICommentParent, ICommentParentAccessPolicy } from './comment-parent-access.types';
+
+/**
+ * Compares record-type spellings the way the databases' text collations may: ignoring case, accents, spaces,
+ * punctuation and ignorable characters. MySQL's default collations find `organizationcontact` equal to
+ * `OrganizationContact`, so a comment stored under such a spelling is read with that record's comments there.
+ */
+const RECORD_TYPE_SPELLING = new Intl.Collator('en', { sensitivity: 'base', ignorePunctuation: true, usage: 'search' });
 
 /**
  * The registry of comment-parent policies, and the check every governed comment read or write goes through.
@@ -48,14 +62,39 @@ export class CommentParentAccessService implements OnModuleInit {
 		this.policies.set(policy.entity, policy);
 	}
 
-	/** The record types whose comments a policy governs. */
+	/** The record types whose comments a policy governs, each as its policy spells it. */
 	governedEntities(): BaseEntityEnum[] {
 		return [...this.policies.keys()] as BaseEntityEnum[];
 	}
 
-	/** Whether the comments of `entity` are governed by a policy. */
+	/**
+	 * The governed record type `entity` names, or `undefined` when it names none.
+	 *
+	 * Any spelling a database could take for a governed type names it (see {@link RECORD_TYPE_SPELLING}), so a
+	 * comment stored under `organizationcontact` follows the contact policy wherever it is read or changed.
+	 */
+	governedTypeOf(entity: unknown): BaseEntityEnum | undefined {
+		return this.policyFor(entity)?.entity;
+	}
+
+	/** Whether the comments of `entity`, in any spelling of a governed type, are governed by a policy. */
 	isGoverned(entity: unknown): boolean {
-		return typeof entity === 'string' && this.policies.has(entity);
+		return this.policyFor(entity) !== undefined;
+	}
+
+	/**
+	 * Refuses a new comment whose record type is a governed type spelled otherwise than its policy spells it.
+	 *
+	 * Such a comment would be checked as that record's comment yet stored under a value that some databases read with
+	 * the record's comments and others do not. A comment on a record without a policy is not affected.
+	 *
+	 * @throws {BadRequestException} When `entity` is another spelling of a governed type.
+	 */
+	assertCanonical(entity: unknown): void {
+		const policy = this.policyFor(entity);
+		if (policy && entity !== policy.entity) {
+			throw new BadRequestException(`A comment on a ${policy.entity} states its entity as "${policy.entity}".`);
+		}
 	}
 
 	/**
@@ -68,7 +107,7 @@ export class CommentParentAccessService implements OnModuleInit {
 	 *         answer the same, so a record of another organization or tenant cannot be told from a missing one.
 	 */
 	async assertMay(access: CommentParentAccess, entity: unknown, entityId: unknown): Promise<ICommentParent | null> {
-		const policy = this.isGoverned(entity) ? this.policies.get(entity as string) : undefined;
+		const policy = this.policyFor(entity);
 		if (!policy) {
 			return null;
 		}
@@ -87,5 +126,22 @@ export class CommentParentAccessService implements OnModuleInit {
 		}
 
 		return parent;
+	}
+
+	/** The policy of the governed type `entity` names, in its own spelling or any other. */
+	private policyFor(entity: unknown): ICommentParentAccessPolicy | undefined {
+		if (typeof entity !== 'string') {
+			return undefined;
+		}
+		const exact = this.policies.get(entity);
+		if (exact) {
+			return exact;
+		}
+		for (const [type, policy] of this.policies) {
+			if (RECORD_TYPE_SPELLING.compare(entity, type) === 0) {
+				return policy;
+			}
+		}
+		return undefined;
 	}
 }

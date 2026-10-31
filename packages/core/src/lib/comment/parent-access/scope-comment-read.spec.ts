@@ -67,6 +67,20 @@ describe('scopeCommentReadToParents', () => {
 		}
 	});
 
+	it('checks another spelling as the governed record’s read when the matcher says it names that type', () => {
+		const typeOf = (entity: string) => (entity.toLowerCase() === CONTACT.toLowerCase() ? CONTACT : undefined);
+		const where = { entity: 'organizationcontact', entityId: CONTACT_ID };
+
+		const scope = scopeCommentReadToParents(where, GOVERNED, typeOf);
+
+		expect(scope.where).toBe(where);
+		expect(scope.parents).toEqual([{ entity: CONTACT, entityId: CONTACT_ID }]);
+		expect(scope.onlyGovernedParents).toBe(true);
+		expect(() => scopeCommentReadToParents({ entity: 'organizationcontact' }, GOVERNED, typeOf)).toThrow(
+			BadRequestException
+		);
+	});
+
 	it('keeps a find operator on the type and adds the exclusion beside it', () => {
 		const stated = In([PROJECT, CONTACT]);
 

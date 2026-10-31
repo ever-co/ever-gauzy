@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { BaseEntityEnum, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context/request-context';
@@ -76,6 +76,60 @@ describe('CommentParentAccessService', () => {
 					findAccessibleParent: async () => null
 				})
 			).toThrow(/already registered/);
+		});
+	});
+
+	describe('spellings of a governed record type', () => {
+		/** Spellings MySQL's default collations find equal to `OrganizationContact`. */
+		const LOOKALIKES = [
+			'organizationcontact',
+			'ORGANIZATIONCONTACT',
+			'OrganizationContact ',
+			' OrganizationContact',
+			'Organization Contact',
+			'Organization_Contact',
+			'Organizatión Contact',
+			'Organization\u200bContact'
+		];
+		let service: CommentParentAccessService;
+
+		beforeEach(() => {
+			service = new CommentParentAccessService();
+			service.register(new ContactPolicy());
+		});
+
+		it.each(LOOKALIKES)('governs %p as the contact type, so a stored row follows the policy', (spelling) => {
+			expect(service.isGoverned(spelling)).toBe(true);
+			expect(service.governedTypeOf(spelling)).toBe(BaseEntityEnum.OrganizationContact);
+		});
+
+		it.each(LOOKALIKES)('refuses %p as a new comment’s entity', (spelling) => {
+			expect(() => service.assertCanonical(spelling)).toThrow(BadRequestException);
+		});
+
+		it('accepts the policy’s own spelling, and any record type without a policy', () => {
+			expect(() => service.assertCanonical(BaseEntityEnum.OrganizationContact)).not.toThrow();
+			expect(() => service.assertCanonical(BaseEntityEnum.OrganizationProject)).not.toThrow();
+			expect(() => service.assertCanonical('organizationproject')).not.toThrow();
+			expect(() => service.assertCanonical(undefined)).not.toThrow();
+		});
+
+		it('leaves other record types and longer names ungoverned', () => {
+			for (const entity of [
+				...Object.values(BaseEntityEnum).filter((type) => type !== BaseEntityEnum.OrganizationContact),
+				'OrganizationContacts',
+				'Contact'
+			]) {
+				expect(service.isGoverned(entity)).toBe(false);
+			}
+		});
+
+		it('checks a stored row of another spelling with the contact policy', async () => {
+			holding(PermissionsEnum.ORG_CONTACT_EDIT);
+
+			await expect(service.assertMay('read', 'organizationcontact', CONTACT_ID)).rejects.toBeInstanceOf(
+				ForbiddenException
+			);
 		});
 	});
 

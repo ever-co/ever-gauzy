@@ -32,12 +32,18 @@ export interface ICommentReadScope<W> {
  *
  * With no governed types the criteria are returned as they are.
  *
+ * `governedTypeOf` says which governed type a stated `entity` names. By default only the exact spelling does; the
+ * comment service passes the policy registry's own answer, under which a database's other spellings of a governed
+ * type (`organizationcontact`) name it too, so such an alternative is checked as that record's read.
+ *
  * @throws {BadRequestException} When an alternative names a governed type without one record id, or when the
  *         criteria are not objects or state `entity` as something other than text or a find operator.
  */
 export function scopeCommentReadToParents<W extends object>(
 	where: W | W[] | undefined | null,
-	governed: ReadonlyArray<string>
+	governed: ReadonlyArray<string>,
+	governedTypeOf: (entity: string) => string | undefined = (entity) =>
+		governed.includes(entity) ? entity : undefined
 ): ICommentReadScope<W> {
 	if (governed.length === 0) {
 		return { where: where ?? undefined, parents: [], onlyGovernedParents: false };
@@ -64,13 +70,14 @@ export function scopeCommentReadToParents<W extends object>(
 		}
 		const { entity, entityId } = alternative as Record<string, unknown>;
 
-		if (typeof entity === 'string' && governed.includes(entity)) {
+		const governedType = typeof entity === 'string' ? governedTypeOf(entity) : undefined;
+		if (governedType) {
 			if (typeof entityId !== 'string' || !isUUID(entityId)) {
 				throw new BadRequestException(
-					`The comments of a ${entity} are read one record at a time: state its entityId.`
+					`The comments of a ${governedType} are read one record at a time: state its entityId.`
 				);
 			}
-			parents.set(`${entity}:${entityId}`, { entity, entityId });
+			parents.set(`${governedType}:${entityId}`, { entity: governedType, entityId });
 			return alternative as W;
 		}
 
