@@ -1,5 +1,5 @@
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DATE_PIPE_DEFAULT_OPTIONS } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { TranslatePipe } from '@ngx-translate/core';
 import { IChangelog } from '@gauzy/contracts';
@@ -14,7 +14,9 @@ describe('ChangelogEntryComponent', () => {
 		});
 	});
 
-	const shownDate = (date: string): string => {
+	/** The card's date for an entry dated `date`, for a reader whose dates default to the `timezone` offset. */
+	const shownDate = (date: string, timezone: string): string => {
+		TestBed.configureTestingModule({ providers: [{ provide: DATE_PIPE_DEFAULT_OPTIONS, useValue: { timezone } }] });
 		const fixture = TestBed.createComponent(ChangelogEntryComponent);
 		fixture.componentRef.setInput('entry', {
 			title: 'Dark mode',
@@ -26,12 +28,12 @@ describe('ChangelogEntryComponent', () => {
 		return (fixture.nativeElement as HTMLElement).querySelector('.entry-header-date').textContent.trim();
 	};
 
-	// Entries are dated at midnight UTC. Read in local time, the first would be the day before west of UTC,
-	// and the second the day after east of it.
-	it.each(['2026-10-31T00:00:00.000Z', '2026-10-31T23:30:00.000Z'])(
-		'shows the UTC day of an entry dated %s, whatever the time zone',
-		(date) => {
-			expect(shownDate(date)).toBe('Oct 31, 2026');
-		}
-	);
+	// Entries are dated at midnight UTC. Read in the reader's time zone, midnight would be the day before west of
+	// UTC, and a late hour the day after east of it.
+	it.each([
+		['2026-10-31T00:00:00.000Z', '-0800'],
+		['2026-10-31T23:30:00.000Z', '+0900']
+	])('shows the UTC day of an entry dated %s to a reader at %s', (date, timezone) => {
+		expect(shownDate(date, timezone)).toBe('Oct 31, 2026');
+	});
 });
