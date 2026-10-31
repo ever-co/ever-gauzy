@@ -206,8 +206,23 @@
 				icon="cog"
 				pack="font-awesome"
 			></nb-icon>
+			<span aria-hidden="true" class="footer-divider"></span>
 			<span class="user-label pointed">{{ userData?.name }}</span>
 		</div>
+		@if (webPortalUrl$ | async) {
+		<nb-icon
+			(click)="openWebPortal()"
+			(keydown.enter)="openWebPortal()"
+			[attr.aria-label]="'TIMER_TRACKER.OPEN_WEB_PORTAL' | translate"
+			[nbTooltip]="'TIMER_TRACKER.OPEN_WEB_PORTAL' | translate"
+			class="icon pointed"
+			icon="link"
+			pack="font-awesome"
+			role="link"
+			tabindex="0"
+		></nb-icon>
+		}
+		<span aria-hidden="true" class="footer-divider"></span>
 		} @if (isRefresh$ | async) {
 		<nb-icon class="icon ml-2 mr-2 sync spin" icon="loader-outline"></nb-icon>
 		} @if (!(isRefresh$ | async)) {

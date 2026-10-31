@@ -12,7 +12,9 @@ const sharedOrganizationRelations = {
 	},
 	featureOrganizations: PermissionsEnum.ALL_ORG_VIEW,
 	contact: PermissionsEnum.ORG_CONTACT_VIEW,
-	organizationSprints: PermissionsEnum.ORG_SPRINT_VIEW
+	organizationSprints: PermissionsEnum.ORG_SPRINT_VIEW,
+	// The admin who acknowledged turning screen capture on (issue #9872): a user row, like `employees.user`.
+	screenshotCaptureAcknowledgedByUser: PermissionsEnum.ORG_USERS_VIEW
 };
 
 export const ORGANIZATION_SENSITIVE_RELATIONS: SensitiveRelationConfig = {

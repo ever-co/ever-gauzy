@@ -37,7 +37,9 @@
 			"node_modules/@sentry/electron",
 			"node_modules/better-sqlite3",
 			"node_modules/@sentry/profiling-node/lib",
-			"node_modules/@gauzy/core/src/lib/i18n"
+			"node_modules/@gauzy/core/src/lib/i18n",
+			"**/node_modules/sharp/**/*",
+			"**/node_modules/@img/**/*"
 		],
 		"directories": {
 			"buildResources": "icons",
@@ -197,6 +199,7 @@
 		"@gauzy/plugin-ai-provider-vercel-gateway": "file:../../../dist/packages/plugins/ai-provider-vercel-gateway",
 		"@gauzy/plugin-ai-provider-whisper-cpp": "file:../../../dist/packages/plugins/ai-provider-whisper-cpp",
 		"@gauzy/plugin-auth-keycloak": "file:../../../dist/packages/plugins/auth-keycloak",
+		"@gauzy/plugin-auth-oidc": "file:../../../dist/packages/plugins/auth-oidc",
 		"@gauzy/plugin-auth-zitadel": "file:../../../dist/packages/plugins/auth-zitadel",
 		"@gauzy/plugin-cart": "file:../../../dist/packages/plugins/cart",
 		"@gauzy/plugin-catalog": "file:../../../dist/packages/plugins/catalog",
@@ -332,6 +335,7 @@
 		"@gauzy/plugin-ai-provider-vercel-gateway": "file:../../../dist/packages/plugins/ai-provider-vercel-gateway",
 		"@gauzy/plugin-ai-provider-whisper-cpp": "file:../../../dist/packages/plugins/ai-provider-whisper-cpp",
 		"@gauzy/plugin-auth-keycloak": "file:../../../dist/packages/plugins/auth-keycloak",
+		"@gauzy/plugin-auth-oidc": "file:../../../dist/packages/plugins/auth-oidc",
 		"@gauzy/plugin-auth-zitadel": "file:../../../dist/packages/plugins/auth-zitadel",
 		"@gauzy/plugin-docs": "file:../../../dist/packages/plugins/docs",
 		"@gauzy/plugin-ever-connect": "file:../../../dist/packages/plugins/ever-connect",

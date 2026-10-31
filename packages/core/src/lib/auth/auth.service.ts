@@ -95,6 +95,7 @@ import { isDeactivatedEmployee } from './deactivated-employee';
 import { EmailConfirmationService } from './email-confirmation.service';
 import { warnRejectedEmailLink, withAllowedEmailLinks } from './email-link-origin';
 import { signupRequiresEmailVerification } from './signup-email-verification';
+import { canResetPasswordByEmail } from './auth-switches/admin-password-reset';
 import {
 	SOCIAL_SIGNIN_UNCONFIRMED_ACCOUNT_MESSAGE,
 	socialSigninRequiresVerifiedAccount
@@ -1162,10 +1163,20 @@ export class AuthService extends SocialAuthService {
 		try {
 			const { email } = request;
 
-			// Fetch users with specific criteria
-			const users = await this.fetchUsers(email);
+			// Fetch users with specific criteria, keeping only the accounts whose password may be reset by e-mail:
+			// with ADMIN_PASSWORD_RESET=false, an Admin or Super Admin account gets no link.
+			const accounts = await this.fetchUsers(email);
+			const users = accounts.filter((user: IUser) => canResetPasswordByEmail(user));
 
-			// If no users found, silently succeed to prevent user enumeration
+			if (users.length < accounts.length) {
+				this.logger.log(
+					`Password reset link withheld from ${accounts.length - users.length} Admin/Super Admin ` +
+						`account(s): ADMIN_PASSWORD_RESET is false.`
+				);
+			}
+
+			// If no users found (or none may reset by e-mail), silently succeed to prevent user enumeration:
+			// the answer is the same as for an address that has no account.
 			if (users.length === 0) {
 				return true;
 			}
@@ -1373,14 +1384,23 @@ export class AuthService extends SocialAuthService {
 
 			const { id, tenantId } = decoded;
 
-			// Fetch the user by ID and tenant
+			// Fetch the user by ID and tenant, with the role the ADMIN_PASSWORD_RESET check below reads
 			const user = await this.userService.findOneByIdString(id, {
 				where: { tenantId },
-				relations: { tenant: true }
+				relations: { tenant: true, role: true }
 			});
 
 			if (!user) {
 				throw new NotFoundException('Password Reset Failed.');
+			}
+
+			// A link sent before the operator set ADMIN_PASSWORD_RESET=false, or to an account promoted since,
+			// must not work for an Admin or Super Admin either. Refused before the token is consumed; the caller
+			// sees the same generic failure as for any other refused token.
+			if (!canResetPasswordByEmail(user)) {
+				throw new ForbiddenException(
+					'Password reset by e-mail is disabled for Admin and Super Admin accounts (ADMIN_PASSWORD_RESET=false).'
+				);
 			}
 
 			// Claim the token BEFORE changing anything. The record was only read above, so up to
@@ -2359,7 +2379,7 @@ export class AuthService extends SocialAuthService {
 					throw new Error(`ORM type not implemented: ${this.ormType}`);
 			}
 
-			// Do NOT log the magic code — sensitive credential
+			// Still do NOT log the magic code: only EmailService prints it, in local development or with PRINT_EMAIL_CODES
 			this.logger.debug(`Magic code sent for email: ${email}, expires at: ${codeExpireAt}`);
 
 			// If it's not a demo code, send the magic code to the user's email
@@ -2392,7 +2412,7 @@ export class AuthService extends SocialAuthService {
 					)}&code=${encodeURIComponent(magicCode)}`;
 				}
 
-				// Do NOT log the magic link — contains sensitive code
+				// Still do NOT log the magic link: only EmailService prints it, in local development or with PRINT_EMAIL_CODES
 				this.logger.debug(`Magic link generated for email: ${email}`);
 
 				// Send the magic code to the user's email

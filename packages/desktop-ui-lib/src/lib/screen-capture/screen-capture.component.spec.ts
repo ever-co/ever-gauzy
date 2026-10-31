@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ScreenCaptureComponent } from './screen-capture.component';
+import { By } from '@angular/platform-browser';
+import { CLOSE_SCREEN_CAPTURE_NOTIFICATION, ScreenCaptureComponent } from './screen-capture.component';
 import { environment } from '@gauzy/ui-config';
 import { GAUZY_ENV } from '../constants';
+import { ElectronService } from '../electron/services';
 describe('ScreenCaptureComponent', () => {
 	let component: ScreenCaptureComponent;
 	let fixture: ComponentFixture<ScreenCaptureComponent>;
@@ -20,5 +22,18 @@ describe('ScreenCaptureComponent', () => {
 	});
 	it('should create', () => {
 		expect(component).toBeTruthy();
+	});
+
+	// The notification could only be waited out (#7643)
+	it('asks the main process to hide the notification when its close button is clicked', () => {
+		const send = jest.spyOn(TestBed.inject(ElectronService).ipcRenderer, 'send');
+		const button = fixture.debugElement.query(By.css('button.notification-close'));
+
+		expect(button.attributes['type']).toBe('button');
+		expect(button.attributes['aria-label']).toBeTruthy();
+		button.nativeElement.click();
+
+		expect(send).toHaveBeenCalledWith(CLOSE_SCREEN_CAPTURE_NOTIFICATION);
+		expect(CLOSE_SCREEN_CAPTURE_NOTIFICATION).toBe('close_screen_capture_notification');
 	});
 });

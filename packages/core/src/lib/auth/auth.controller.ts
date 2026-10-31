@@ -17,6 +17,7 @@ import { I18nLang } from 'nestjs-i18n';
 import { Public } from '@gauzy/common';
 import {
 	IAuthResponse,
+	IRegistrationConfig,
 	ISocialAccount,
 	ISocialAccountExistUser,
 	ITokenPair,
@@ -39,6 +40,7 @@ import {
 } from './../shared/guards';
 import { RegisterUserDTO, UserEmailDTO, UserLoginDTO, UserSigninWorkspaceDTO } from './../user/dto';
 import { AuthService } from './auth.service';
+import { RegistrationPolicyService, SelfRegistrationGuard } from './auth-switches';
 import {
 	AuthLoginCommand,
 	AuthRegisterCommand,
@@ -61,7 +63,8 @@ import { FindUserBySocialLoginDTO, SocialLoginBodyRequestDTO } from './social-ac
 export class AuthController {
 	constructor(
 		private readonly authService: AuthService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly registrationPolicyService: RegistrationPolicyService
 	) {}
 
 	/**
@@ -126,12 +129,19 @@ export class AuthController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, the response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'Registration is disabled on this server (APP_USER_REGISTRATION or ALLOW_TENANTS_REGISTRATION is false)'
+	})
 	@Post('/register')
 	@Public()
 	// Order matters: RegisterAuthorizationGuard authenticates an admin creating a user and sets
-	// request.user, which SubscriptionRequiredGuard then reads to let that case through without
-	// demanding a subscription. SubscriptionRequiredGuard is inert unless STRIPE_SECRET_KEY is set.
-	@UseGuards(RegisterAuthorizationGuard, SubscriptionRequiredGuard)
+	// request.user, which SelfRegistrationGuard and SubscriptionRequiredGuard then read to let that case
+	// through. SelfRegistrationGuard refuses a public sign-up while the operator has closed registration
+	// (inert with the default switches), before SubscriptionRequiredGuard could ask Stripe about the address.
+	// SubscriptionRequiredGuard is inert unless STRIPE_SECRET_KEY is set.
+	@UseGuards(RegisterAuthorizationGuard, SelfRegistrationGuard, SubscriptionRequiredGuard)
 	@UseValidationPipe({ whitelist: true, transform: true })
 	@Throttle({ default: { limit: 3, ttl: 60000 } })
 	async register(
@@ -148,6 +158,22 @@ export class AuthController {
 				languageCode
 			)
 		);
+	}
+
+	/**
+	 * Whether this server accepts new accounts through its public sign-up.
+	 *
+	 * Public: the sign-in and register pages ask it before anyone is signed in, to hide the Register links on a
+	 * server whose operator closed registration. It reveals nothing the register route does not.
+	 *
+	 * @returns `{ enabled }`, false while `APP_USER_REGISTRATION` or `ALLOW_TENANTS_REGISTRATION` closes it.
+	 */
+	@ApiOperation({ summary: 'Whether this server accepts new accounts through its public sign-up' })
+	@ApiOkResponse({ description: 'The registration availability of this server' })
+	@Get('/registration/config')
+	@Public()
+	async registrationConfig(): Promise<IRegistrationConfig> {
+		return { enabled: await this.registrationPolicyService.isSelfRegistrationOpen() };
 	}
 
 	/**

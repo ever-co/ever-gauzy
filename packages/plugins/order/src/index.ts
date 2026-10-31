@@ -26,6 +26,7 @@ export * from './lib/order-platform-adapters.module';
 
 export * from './lib/order/order.entity';
 export * from './lib/order/order.service';
+export * from './lib/order/order-state.reader';
 export * from './lib/order/order.controller';
 export * from './lib/order/repository/type-orm-order.repository';
 export * from './lib/order/repository/mikro-orm-order.repository';

@@ -41,3 +41,7 @@ nb-radio-group {
 .employees {
   	margin-bottom: 15px;
 }
+// Marks the "Attach a receipt" button once a receipt is attached.
+.receipt-attached {
+	color: nb-theme(color-success-500);
+}

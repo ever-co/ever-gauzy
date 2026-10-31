@@ -96,7 +96,7 @@ export const createDefaultOrganizations = async (
 	const contacts = await getRandomContacts(dataSource);
 
 	for (const organization of organizations) {
-		const { name, currency, defaultValueDateType, imageUrl, isDefault, totalEmployees } = organization;
+		const { name, currency, defaultValueDateType, imageUrl, isDefault, totalEmployees, banner } = organization;
 
 		const defaultOrganization = new Organization();
 		defaultOrganization.name = name;
@@ -122,7 +122,8 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.show_clients_count = true;
 		defaultOrganization.show_clients = true;
 		defaultOrganization.show_employees_count = true;
-		defaultOrganization.banner = faker.lorem.sentence();
+		// The tagline under the company name on the public page: the one the seed data gives, else a catch phrase.
+		defaultOrganization.banner = banner || faker.company.catchPhrase();
 		defaultOrganization.skills = skills;
 		defaultOrganization.brandColor = faker.color.rgb();
 		defaultOrganization.timeZone = faker.helpers.arrayElement(
@@ -144,6 +145,9 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.tenant = tenant;
 		defaultOrganization.valueDate = moment().add(faker.number.int(10), 'days').toDate();
 		defaultOrganization.allowEmployeeToSeeTrackedData = true;
+		// Demo data shows screenshots, so it turns screen capture on explicitly: new organizations
+		// start with it off (issue #9872).
+		defaultOrganization.allowScreenshotCapture = true;
 
 		defaultOrganizations.push(defaultOrganization);
 	}
@@ -246,7 +250,7 @@ const generateRandomOrganization = async (
 	organization.show_minimum_project_size = true;
 	organization.show_clients_count = true;
 	organization.show_employees_count = true;
-	organization.banner = faker.lorem.sentence();
+	organization.banner = faker.company.catchPhrase();
 	organization.skills = skills;
 	organization.brandColor = faker.color.rgb();
 	organization.contact = getRandomElement(contacts);
@@ -264,6 +268,9 @@ const generateRandomOrganization = async (
 	organization.tenant = tenant;
 	organization.valueDate = moment().add(faker.number.int(10), 'days').toDate();
 	organization.allowEmployeeToSeeTrackedData = true;
+	// Demo data shows screenshots, so it turns screen capture on explicitly: new organizations
+	// start with it off (issue #9872).
+	organization.allowScreenshotCapture = true;
 
 	return organization;
 };

@@ -124,6 +124,17 @@ export class TimeOffPolicy extends TenantOrganizationBaseEntity implements ITime
 	isDefault?: boolean;
 
 	/**
+	 * Whether approving a request refuses (400) when an employee's leave balance for this policy cannot cover its
+	 * working days (issue #10183). Off by default: the approval goes through and the balance is overdrawn (its
+	 * `remaining` goes below zero). Without a balance row nothing is checked either way.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ nullable: true, default: false })
+	requireSufficientBalance?: boolean;
+
+	/**
 	 * TimeOffRequest
 	 */
 	@MultiORMOneToMany(() => TimeOffRequest, (it) => it.policy, {

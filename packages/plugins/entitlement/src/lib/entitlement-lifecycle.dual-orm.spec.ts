@@ -91,6 +91,9 @@ jest.mock('@gauzy/core', () => {
 		parseEntityVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').parseEntityVersion,
 		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
 		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
+		// How a grant tells a lost insert race from a real failure is the kernel's rule, answered here against the
+		// error each ORM really raises when SQLite refuses the insert (#11023).
+		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
 		// The cross-tenant reference check a grant runs is the platform's own, over the same database.
 		assertPlainReferencesNotForeign: (...args: unknown[]) =>
 			jest
@@ -134,7 +137,7 @@ const mockCaller: { tenantId: string | null; organizationId: string | null; user
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { DataSource, EntitySchema } from 'typeorm';
+import { DataSource, EntitySchema, MigrationInterface } from 'typeorm';
 import {
 	EntityCaseNamingStrategy,
 	EntityManager as MikroOrmEntityManager,
@@ -147,7 +150,8 @@ import { EntityRepository } from '@mikro-orm/knex';
 import { SOFT_DELETABLE_FILTER } from 'mikro-orm-soft-delete';
 import * as gauzyConfig from '@gauzy/config';
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
-import { OrganizationContact } from '@gauzy/core';
+import { IEventEnvelope, OrderPaymentStatus, OrderStatus } from '@gauzy/contracts';
+import { OrganizationContact, isUniqueViolation } from '@gauzy/core';
 import { ApiErrorCode } from '@gauzy/core/src/lib/core/errors/api-error-codes';
 import { Entitlement } from './entitlement/entitlement.entity';
 import { EntitlementActivation } from './entitlement-activation/entitlement-activation.entity';
@@ -158,7 +162,14 @@ import {
 	EntitlementKind,
 	EntitlementStatus
 } from './entitlement.enums';
-import { EntitlementCheckReason, EntitlementEventName } from './entitlement.types';
+import {
+	EntitlementCheckReason,
+	EntitlementEventName,
+	EntitlementRevocationReason,
+	IEntitlementOrderState
+} from './entitlement.types';
+import { AddEntitlementLiveLineGrantUniqueIndex1791000003580 } from './database/migrations';
+import { EntitlementGrantConsumer } from './events/entitlement-grant.consumer';
 import { EntitlementService } from './entitlement/entitlement.service';
 import { EntitlementActivationService } from './entitlement-activation/entitlement-activation.service';
 import { EntitlementKeyService } from './entitlement-key/entitlement-key.service';
@@ -485,6 +496,10 @@ interface IHarness {
 	row(table: string, id: string): Promise<Row | undefined>;
 	/** Writes columns straight into a row, outside the services — a concurrent writer. */
 	poke(table: string, id: string, columns: Row): Promise<void>;
+	/** Runs one statement against the database, outside the services. */
+	query(sql: string, parameters?: unknown[]): Promise<Row[]>;
+	/** Runs one migration of the package, in one direction, against this database. */
+	migrate(migration: MigrationInterface, direction: 'up' | 'down'): Promise<void>;
 	/** The events the outbox double wrote, oldest first, with the kind of manager each was handed. */
 	appended: Array<{ name: string; aggregateId: string; through: string }>;
 	/** What the services published on the in-process bus. */
@@ -657,6 +672,18 @@ async function typeOrmHarness(): Promise<IHarness> {
 				[...names.map((name) => columns[name]), id]
 			);
 		},
+		query: (sql, parameters = []) => dataSource.query(sql, parameters),
+		migrate: async (migration, direction) => {
+			// The migration runs on the query runner TypeORM hands every migration, so its catalogue probes and its
+			// guarded statements are exercised as they are in production.
+			const runner = dataSource.createQueryRunner();
+
+			try {
+				await migration[direction](runner);
+			} finally {
+				await runner.release();
+			}
+		},
 		failNextAppend: () => void (state.failNext = true),
 		clear: async () => {
 			for (const table of TABLES) {
@@ -739,6 +766,20 @@ async function mikroOrmHarness(): Promise<IHarness> {
 				...names.map((name) => columns[name]),
 				id
 			]);
+		},
+		query: (sql, parameters = []) => execute(sql, parameters),
+		migrate: async (migration, direction) => {
+			// Under `DB_ORM=mikro-orm` the platform still runs its migrations through TypeORM; here the same statements
+			// reach the MikroORM connection's database through the members of a query runner the migration calls.
+			const runner = {
+				connection: { options: { type: 'better-sqlite3' } },
+				hasTable: async (table: string) =>
+					(await execute(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?`, [table])).length >
+					0,
+				query: (sql: string, parameters: unknown[] = []) => execute(sql, parameters)
+			};
+
+			await migration[direction](runner as never);
 		},
 		failNextAppend: () => void (state.failNext = true),
 		clear: async () => {
@@ -1218,6 +1259,342 @@ describe.each([
 		expect((await harness.row('entitlement', foreignTenant.entitlement.id as string)).status).toBe(
 			EntitlementStatus.ACTIVE
 		);
+	});
+
+	/**
+	 * #11023, against the real database on each ORM: `UQ_entitlement_live_line_grant` is created by the package's own
+	 * migration and dropped again after each case, so the cases above run on the schema they always ran on.
+	 */
+	describe('one live right per order line, and a placement delivered after its settlement (#11023)', () => {
+		const migration = new AddEntitlementLiveLineGrantUniqueIndex1791000003580();
+
+		beforeEach(async () => {
+			jest.spyOn(console, 'log').mockImplementation(() => undefined);
+
+			await harness.migrate(migration, 'up');
+			// The production rule over numbers (`1791000000360`), which the fixture schemas do not map.
+			await harness.query(
+				`CREATE UNIQUE INDEX "UQ_entitlement_number" ON "entitlement" ` +
+					`(COALESCE("organizationId", '00000000-0000-0000-0000-000000000000'), "number") WHERE "deletedAt" IS NULL`
+			);
+		});
+
+		afterEach(async () => {
+			await harness.query(`DROP INDEX IF EXISTS "UQ_entitlement_number"`);
+			await harness.migrate(migration, 'down');
+		});
+
+		/** Whether the database's catalogue holds an index. */
+		const indexExists = async (name: string) =>
+			(await harness.query(`SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?`, [name])).length > 0;
+
+		it('is created by the migration, and its down removes it', async () => {
+			expect(await indexExists('UQ_entitlement_live_line_grant')).toBe(true);
+
+			await harness.migrate(migration, 'down');
+			expect(await indexExists('UQ_entitlement_live_line_grant')).toBe(false);
+
+			await harness.migrate(migration, 'up');
+			await harness.migrate(migration, 'up');
+			expect(await indexExists('UQ_entitlement_live_line_grant')).toBe(true);
+		});
+
+		it('refuses a second live right for one line and kind, and admits one after revocation or of another kind', async () => {
+			const first = await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1', number: 'ENT-FIRST' } as any,
+				SCOPE
+			);
+
+			// A duplicate read that never sees the first right: only the database stands between it and a second one.
+			jest.spyOn(harness.entitlements as any, 'findExistingGrant').mockResolvedValue(null);
+
+			const refusal = await harness.entitlements
+				.grant({ orderId: 'order-1', orderLineId: 'line-1', number: 'ENT-SECOND' } as any, SCOPE)
+				.then(
+					() => null,
+					(error: unknown) => error
+				);
+
+			expect(refusal).not.toBeNull();
+			expect(isUniqueViolation(refusal)).toBe(true);
+			expect((await harness.rows('entitlement')).map((row) => row.number)).toEqual(['ENT-FIRST']);
+			expect(await eventNames(harness)).toEqual([EntitlementEventName.CREATED]);
+
+			(harness.entitlements as any).findExistingGrant.mockRestore();
+
+			const seat = await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1', kind: EntitlementKind.SEAT, number: 'ENT-SEAT' } as any,
+				SCOPE
+			);
+
+			expect(seat.created).toBe(true);
+
+			await harness.entitlements.revoke(
+				first.entitlement.id as string,
+				EntitlementRevocationReason.REFUNDED,
+				SCOPE
+			);
+
+			const again = await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1', number: 'ENT-AGAIN' } as any,
+				SCOPE
+			);
+
+			expect(again.created).toBe(true);
+			expect(again.entitlement.id).not.toBe(first.entitlement.id);
+		});
+
+		it('answers a grant that lost the race to the same line with the winner’s right, and writes nothing', async () => {
+			const winner = await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1', number: 'ENT-WINNER' } as any,
+				SCOPE
+			);
+
+			// The loser's read ran before the winner committed; every read after it sees the table as it is.
+			jest.spyOn(harness.entitlements as any, 'findExistingGrant').mockResolvedValueOnce(null);
+
+			const loser = await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1', number: 'ENT-LOSER', issueKey: true } as any,
+				SCOPE
+			);
+
+			expect(loser.created).toBe(false);
+			expect(loser.entitlement.id).toBe(winner.entitlement.id);
+			expect(loser.plaintextKey).toBeUndefined();
+			expect((await harness.rows('entitlement')).map((row) => row.number)).toEqual(['ENT-WINNER']);
+			expect(await harness.rows('entitlement_key')).toEqual([]);
+			expect(await eventNames(harness)).toEqual([EntitlementEventName.CREATED]);
+		});
+
+		it('numbers a line granted again after revocation with the next revision of its derived number', async () => {
+			// An event grant has no numbering series in reach, so its number is derived from the purchase; the revoked
+			// right keeps that number under `UQ_entitlement_number`, which used to refuse the re-grant outright.
+			jest.spyOn((harness.entitlements as any).sequenceService, 'allocate').mockRejectedValue(
+				new Error('no series in context')
+			);
+
+			const first = await harness.entitlements.grant({ orderId: 'order-1', orderLineId: 'line-1' } as any, SCOPE);
+
+			await harness.entitlements.revoke(
+				first.entitlement.id as string,
+				EntitlementRevocationReason.REFUNDED,
+				SCOPE
+			);
+
+			const second = await harness.entitlements.grant(
+				{ orderId: 'order-1', orderLineId: 'line-1' } as any,
+				SCOPE
+			);
+
+			expect(first.entitlement.number).toBe('E-ORDER1-LINE1-L');
+			expect(second.created).toBe(true);
+			expect(second.entitlement.number).toBe('E-ORDER1-LINE1-L-2');
+			expect((await harness.rows('entitlement')).map((row) => row.number).sort()).toEqual([
+				'E-ORDER1-LINE1-L',
+				'E-ORDER1-LINE1-L-2'
+			]);
+		});
+
+		/**
+		 * Delivers an earlier event of one order and then its `order.placed` — the order a reorderable consumer can
+		 * handle them in — to a consumer over this half's services.
+		 *
+		 * @param orderId The order.
+		 * @param state What the order port answers, or `undefined` for a consumer with no port bound.
+		 * @param options The event delivered first (`order.completed` unless stated; `null` for none), how many
+		 * granting lines the placement carries (one unless stated), named `<order>-line-<n>`, the quantity each
+		 * line bought (one unless stated), and an event delivered after the placement.
+		 * @returns The rights the placement granted, as the table holds them, in line order.
+		 */
+		async function deliverPlacementLate(
+			orderId: string,
+			state?: IEntitlementOrderState,
+			options: {
+				first?: string | null;
+				lines?: number;
+				quantity?: number;
+				then?: { name: string; data: Row };
+			} = {}
+		): Promise<Row[]> {
+			const port = state ? { findState: async () => state } : undefined;
+			const consumer = new EntitlementGrantConsumer(harness.entitlements, undefined, port);
+			const deliver = (name: string, data: Row) =>
+				consumer.handle(
+					{
+						id: randomUUID(),
+						name,
+						tenantId: TENANT,
+						organizationId: ORG,
+						aggregate: { type: 'ORDER', id: orderId },
+						data
+					} as unknown as IEventEnvelope,
+					{ assertOrder: async () => undefined, alreadyDelivered: async () => false } as never
+				);
+
+			if (options.first !== null) {
+				await deliver(options.first ?? 'order.completed', { orderId });
+			}
+			await deliver('order.placed', {
+				orderId,
+				lines: Array.from({ length: options.lines ?? 1 }, (_, index) => ({
+					orderLineId: `${orderId}-line-${index + 1}`,
+					quantity: options.quantity ?? 1,
+					entitlement: { activationLimit: 2 }
+				}))
+			});
+
+			if (options.then) {
+				await deliver(options.then.name, options.then.data);
+			}
+
+			return (await harness.rows('entitlement'))
+				.filter((row) => row.orderId === orderId)
+				.sort((a, b) => String(a.orderLineId).localeCompare(String(b.orderLineId)));
+		}
+
+		it('puts the rights a late placement grants into force when the order already completed', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			const rights = await deliverPlacementLate('order-late', {
+				status: OrderStatus.COMPLETED,
+				paymentStatus: OrderPaymentStatus.CAPTURED
+			});
+
+			expect(rights).toHaveLength(1);
+			expect(rights[0]).toMatchObject({
+				status: EntitlementStatus.ACTIVE,
+				tenantId: TENANT,
+				organizationId: ORG
+			});
+		});
+
+		it('leaves them PENDING when the order has not settled, or when no order port is bound', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			const unsettled = await deliverPlacementLate('order-unsettled', {
+				status: OrderStatus.CONFIRMED,
+				paymentStatus: OrderPaymentStatus.AUTHORIZED
+			});
+			const unbound = await deliverPlacementLate('order-unbound');
+
+			expect(unsettled.map((row) => row.status)).toEqual([EntitlementStatus.PENDING]);
+			expect(unbound.map((row) => row.status)).toEqual([EntitlementStatus.PENDING]);
+		});
+
+		it('puts into force only the line still paid for on an order refunded in part before the placement', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			const rights = await deliverPlacementLate(
+				'order-partial',
+				{
+					status: OrderStatus.COMPLETED,
+					paymentStatus: OrderPaymentStatus.PARTIALLY_REFUNDED,
+					lines: [
+						{ id: 'order-partial-line-1', quantity: 1, refundedQuantity: 1 },
+						{ id: 'order-partial-line-2', quantity: 1, refundedQuantity: 0 }
+					]
+				},
+				{ lines: 2 }
+			);
+
+			expect(rights.map((row) => [row.orderLineId, row.status])).toEqual([
+				['order-partial-line-1', EntitlementStatus.PENDING],
+				['order-partial-line-2', EntitlementStatus.ACTIVE]
+			]);
+		});
+
+		it('leaves a line refunded in part PENDING, so the refund delivered after the placement applies once', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			// The order already records one of the two seats as refunded, and that refund's own delivery arrives only
+			// after the placement (Copilot on #11577). Had the placement lowered the right to one seat, the refund
+			// would subtract the same seat again and revoke the seat still paid for.
+			const rights = await deliverPlacementLate(
+				'order-seats',
+				{
+					status: OrderStatus.COMPLETED,
+					paymentStatus: OrderPaymentStatus.PARTIALLY_REFUNDED,
+					lines: [{ id: 'order-seats-line-1', quantity: 2, refundedQuantity: 1 }]
+				},
+				{
+					quantity: 2,
+					then: {
+						name: 'payment.refunded',
+						data: { orderId: 'order-seats', lines: [{ orderLineId: 'order-seats-line-1', quantity: 1 }] }
+					}
+				}
+			);
+
+			expect(rights.map((row) => [row.status, Number(row.quantity)])).toEqual([[EntitlementStatus.PENDING, 1]]);
+		});
+
+		it('puts nothing into force on an order refunded in part when the port cannot say which lines', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			const rights = await deliverPlacementLate(
+				'order-partial-unknown',
+				{ status: OrderStatus.COMPLETED, paymentStatus: OrderPaymentStatus.PARTIALLY_REFUNDED },
+				{ lines: 2 }
+			);
+
+			expect(rights.map((row) => row.status)).toEqual([EntitlementStatus.PENDING, EntitlementStatus.PENDING]);
+		});
+
+		it('grants nothing for an order cancelled or refunded in full before the placement was delivered', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			const canceled = await deliverPlacementLate(
+				'order-canceled',
+				{ status: OrderStatus.CANCELED, paymentStatus: OrderPaymentStatus.NOT_PAID },
+				{ first: 'order.canceled' }
+			);
+			const refunded = await deliverPlacementLate('order-refunded', {
+				status: OrderStatus.COMPLETED,
+				paymentStatus: OrderPaymentStatus.REFUNDED
+			});
+
+			expect(canceled).toEqual([]);
+			expect(refunded).toEqual([]);
+		});
+
+		it('lowers only the live right of a line granted again after a revocation when part of it is refunded', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			const revoked = await harness.entitlements.grant(
+				{ orderId: 'order-regranted', orderLineId: 'line-1', quantity: 3, number: 'ENT-REVOKED' } as any,
+				SCOPE
+			);
+
+			await harness.entitlements.revoke(
+				revoked.entitlement.id as string,
+				EntitlementRevocationReason.REFUNDED,
+				SCOPE
+			);
+
+			const live = await harness.entitlements.grant(
+				{ orderId: 'order-regranted', orderLineId: 'line-1', quantity: 3, number: 'ENT-LIVE' } as any,
+				SCOPE
+			);
+
+			await new EntitlementGrantConsumer(harness.entitlements).handle(
+				{
+					id: randomUUID(),
+					name: 'payment.refunded',
+					tenantId: TENANT,
+					organizationId: ORG,
+					aggregate: { type: 'ORDER', id: 'order-regranted' },
+					data: { orderId: 'order-regranted', lines: [{ orderLineId: 'line-1', quantity: 1 }] }
+				} as unknown as IEventEnvelope,
+				{ assertOrder: async () => undefined, alreadyDelivered: async () => false } as never
+			);
+
+			const rows = new Map((await harness.rows('entitlement')).map((row) => [row.id, row]));
+
+			expect(rows.get(revoked.entitlement.id)).toMatchObject({ status: EntitlementStatus.REVOKED });
+			expect(Number(rows.get(revoked.entitlement.id)?.quantity)).toBe(3);
+			expect(Number(rows.get(live.entitlement.id)?.quantity)).toBe(2);
+			expect((await eventNames(harness)).filter((name) => name === EntitlementEventName.REDUCED)).toHaveLength(1);
+		});
 	});
 
 	if (orm === 'mikro-orm') {

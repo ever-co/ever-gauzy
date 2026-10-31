@@ -15,6 +15,7 @@ import {
 	pluginListeners,
 	ProviderFactory,
 	DesktopOfflineModeHandler,
+	registerScreenshotSoundHandlers,
 } from '@gauzy/desktop-lib';
 import { getApiBaseUrl, delaySync, getAuthConfig, getAppSetting, updateProject } from '../util';
 import { startServer } from './app';
@@ -346,6 +347,9 @@ export default function AppIpcMain() {
 	ipcMain.on('get-arch', (event) => {
 		event.sender.send('get-arch', process.arch);
 	});
+
+	// The custom screenshot sound of the settings page (#6715)
+	registerScreenshotSoundHandlers();
 
 	pluginListeners();
 }

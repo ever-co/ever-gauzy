@@ -98,6 +98,7 @@ COPY --chown=node:node packages/plugins/email-provider-mailgun/package.json ./pa
 COPY --chown=node:node packages/plugins/email-provider-sendgrid/package.json ./packages/plugins/email-provider-sendgrid/
 COPY --chown=node:node packages/plugins/email-provider-ses/package.json ./packages/plugins/email-provider-ses/
 COPY --chown=node:node packages/plugins/auth-keycloak/package.json ./packages/plugins/auth-keycloak/
+COPY --chown=node:node packages/plugins/auth-oidc/package.json ./packages/plugins/auth-oidc/
 COPY --chown=node:node packages/plugins/auth-zitadel/package.json ./packages/plugins/auth-zitadel/
 COPY --chown=node:node packages/plugins/ever-instance/package.json ./packages/plugins/ever-instance/
 COPY --chown=node:node packages/plugins/ever-stats/package.json ./packages/plugins/ever-stats/
@@ -254,6 +255,7 @@ COPY --chown=node:node packages/plugins/email-provider-mailgun/package.json ./pa
 COPY --chown=node:node packages/plugins/email-provider-sendgrid/package.json ./packages/plugins/email-provider-sendgrid/
 COPY --chown=node:node packages/plugins/email-provider-ses/package.json ./packages/plugins/email-provider-ses/
 COPY --chown=node:node packages/plugins/auth-keycloak/package.json ./packages/plugins/auth-keycloak/
+COPY --chown=node:node packages/plugins/auth-oidc/package.json ./packages/plugins/auth-oidc/
 COPY --chown=node:node packages/plugins/auth-zitadel/package.json ./packages/plugins/auth-zitadel/
 COPY --chown=node:node packages/plugins/ever-instance/package.json ./packages/plugins/ever-instance/
 COPY --chown=node:node packages/plugins/ever-stats/package.json ./packages/plugins/ever-stats/
@@ -497,6 +499,7 @@ RUN --mount=type=bind,from=prod-dependencies,source=/srv/gauzy/node_modules,targ
     if [ -d /mnt/packages/plugins/email-provider-sendgrid/node_modules ]; then cp -r /mnt/packages/plugins/email-provider-sendgrid/node_modules ./node_modules/@gauzy/plugin-email-provider-sendgrid/; fi && \
     if [ -d /mnt/packages/plugins/email-provider-ses/node_modules ]; then cp -r /mnt/packages/plugins/email-provider-ses/node_modules ./node_modules/@gauzy/plugin-email-provider-ses/; fi && \
     if [ -d /mnt/packages/plugins/auth-keycloak/node_modules ]; then cp -r /mnt/packages/plugins/auth-keycloak/node_modules ./node_modules/@gauzy/plugin-auth-keycloak/; fi && \
+    if [ -d /mnt/packages/plugins/auth-oidc/node_modules ]; then cp -r /mnt/packages/plugins/auth-oidc/node_modules ./node_modules/@gauzy/plugin-auth-oidc/; fi && \
     if [ -d /mnt/packages/plugins/auth-zitadel/node_modules ]; then cp -r /mnt/packages/plugins/auth-zitadel/node_modules ./node_modules/@gauzy/plugin-auth-zitadel/; fi && \
     if [ -d /mnt/packages/plugins/ever-instance/node_modules ]; then cp -r /mnt/packages/plugins/ever-instance/node_modules ./node_modules/@gauzy/plugin-ever-instance/; fi && \
     if [ -d /mnt/packages/plugins/ever-stats/node_modules ]; then cp -r /mnt/packages/plugins/ever-stats/node_modules ./node_modules/@gauzy/plugin-ever-stats/; fi && \

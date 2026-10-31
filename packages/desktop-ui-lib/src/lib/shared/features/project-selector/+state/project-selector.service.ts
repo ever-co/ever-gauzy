@@ -69,6 +69,7 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 		organizationContactId?: string;
 		organizationTeamId?: string;
 	}): Promise<void> {
+		const isCurrent = this.requests.start(() => this.store.organizationId);
 		try {
 			this.projectSelectorStore.setLoading(true);
 
@@ -98,9 +99,15 @@ export class ProjectSelectorService extends SelectorService<IOrganizationProject
 				...options
 			};
 			const { items: data, total } = await this.timeTrackerService.getPaginatedProjects(request);
+			if (!isCurrent()) {
+				return; // for a list emptied since, or another organization
+			}
 			this.projectSelectorStore.updateInfiniteList({ data, total });
 			this.projectSelectorStore.setError(null);
 		} catch (error) {
+			if (!isCurrent()) {
+				return;
+			}
 			this.toastrNotifier.error(error.message || 'An error occurred while fetching projects.');
 			this.projectSelectorStore.setError(error);
 		} finally {

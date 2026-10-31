@@ -4,6 +4,7 @@ import { environment } from '@gauzy/config';
 import { OIDC_MODULE_OPTIONS, OidcModuleOptions } from './oidc-module.options';
 import { OidcClientService } from './oidc-client.service';
 import { OidcDiscoveryService } from './oidc-discovery.service';
+import { OidcEmailSignInService } from './oidc-email-sign-in.service';
 import { OidcHttpService } from './oidc-http.service';
 import { OidcJwksService } from './oidc-jwks.service';
 import { OidcLogoutTokenService } from './oidc-logout-token.service';
@@ -15,7 +16,8 @@ const SERVICES = [
 	OidcJwksService,
 	OidcTransactionService,
 	OidcClientService,
-	OidcLogoutTokenService
+	OidcLogoutTokenService,
+	OidcEmailSignInService
 ];
 
 /** Default options: the transaction key is derived from the platform's JWT secret. */
