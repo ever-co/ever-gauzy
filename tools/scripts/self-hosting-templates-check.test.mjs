@@ -12,6 +12,7 @@ import {
 	appPlatformRouteProblems,
 	appPlatformRoutes,
 	caddyApiPatterns,
+	caddyFallbackUpstream,
 	caddyPathMatches,
 	caddyRouteProblems,
 	composeProblems,
@@ -248,9 +249,22 @@ describe('appPlatformRouteProblems', () => {
 			'/api (REST) goes to webapp, not the api',
 			'/api/health (REST) goes to webapp, not the api'
 		]);
+		assert.deepEqual(appPlatformRouteProblems(SPEC.replace('prefix: /api', 'prefix: /auth'), []), [
+			'/auth/login (the web app) goes to api, not the webapp'
+		]);
+	});
+
+	it('reports web app paths no rule sends to the webapp component', () => {
+		const rootRule =
+			'      - match:\n          path:\n            prefix: /\n        component:\n          name: webapp\n';
+		assert.ok(SPEC.includes(rootRule));
+		assert.deepEqual(appPlatformRouteProblems(SPEC.replace(rootRule, ''), PATHS), [
+			'/ (the web app) goes to no component, not the webapp',
+			'/auth/login (the web app) goes to no component, not the webapp'
+		]);
 		assert.deepEqual(
-			appPlatformRouteProblems(SPEC.replace('prefix: /api', 'prefix: /auth'), [])[0],
-			'/auth/login (the web app) goes to the api'
+			appPlatformRouteProblems(SPEC.replace(rootRule, rootRule.replace('name: webapp', 'name: docs')), PATHS),
+			['/ (the web app) goes to docs, not the webapp', '/auth/login (the web app) goes to docs, not the webapp']
 		);
 	});
 });
@@ -307,6 +321,34 @@ describe('caddyRouteProblems', () => {
 			'/ (the web app) is proxied to the api',
 			'/auth/login (the web app) is proxied to the api'
 		]);
+	});
+
+	it('reports a catch-all route that is missing, redirected, or proxied elsewhere', () => {
+		const fallback = '\thandle {\n\t\treverse_proxy webapp:4200\n\t}\n';
+		assert.ok(CADDYFILE.includes(fallback));
+		const missing = 'no catch-all `handle { reverse_proxy webapp:... }`: the web app is not served';
+		assert.deepEqual(caddyRouteProblems(CADDYFILE.replace(fallback, ''), PATHS), [missing]);
+		assert.deepEqual(
+			caddyRouteProblems(CADDYFILE.replace('reverse_proxy webapp:4200', 'redir https://example.test'), PATHS),
+			[missing]
+		);
+		assert.deepEqual(caddyRouteProblems(CADDYFILE.replace('webapp:4200', 'api:3000'), PATHS), [
+			'the catch-all route proxies to api, not the webapp'
+		]);
+	});
+});
+
+describe('caddyFallbackUpstream', () => {
+	it("reads the upstream of the handle block without a matcher, not a named matcher's", () => {
+		assert.equal(caddyFallbackUpstream(CADDYFILE), 'webapp');
+		assert.equal(caddyFallbackUpstream('handle @api {\n\treverse_proxy webapp:4200\n}'), null);
+	});
+
+	it('reads a reverse_proxy without a matcher outside any handle block, before or after one', () => {
+		const handleApi = 'handle @api {\n\treverse_proxy api:3000 {\n\t\theader_up -X\n\t}\n}';
+		assert.equal(caddyFallbackUpstream(`reverse_proxy webapp:4200\n${handleApi}`), 'webapp');
+		assert.equal(caddyFallbackUpstream(`site {\n\t${handleApi}\n\treverse_proxy webapp:4200\n}`), 'webapp');
+		assert.equal(caddyFallbackUpstream(handleApi), null);
 	});
 });
 
@@ -393,10 +435,19 @@ describe('envSampleProblems', () => {
 		}
 	});
 
-	it('passes an empty value followed by a comment', () => {
+	it('passes empty quotes followed by a comment', () => {
+		for (const line of [
+			'EXPRESS_SESSION_SECRET="" # openssl rand -hex 64',
+			"EXPRESS_SESSION_SECRET=''  # note  "
+		]) {
+			assert.deepEqual(envSampleProblems(`${sample}\n${line}`, ['EXPRESS_SESSION_SECRET']), [], line);
+		}
+	});
+
+	it('reports a comment without quotes before it, which compose reads as the value', () => {
 		assert.deepEqual(
 			envSampleProblems(`${sample}\nEXPRESS_SESSION_SECRET= # openssl rand -hex 64`, ['EXPRESS_SESSION_SECRET']),
-			[]
+			['EXPRESS_SESSION_SECRET has a value; leave it empty for the operator to fill in']
 		);
 	});
 });

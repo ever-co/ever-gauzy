@@ -22,7 +22,8 @@
  * where it declares them: the REST global prefix (`packages/core/src/lib/bootstrap/index.ts`), the uploaded files'
  * `serveRoot` (`packages/core/src/lib/helper.ts`), the GraphQL path (`packages/constants/src/lib/api.ts`) and the
  * Swagger UI path with its OpenAPI documents (`packages/core/src/lib/bootstrap/swagger.ts`). Each must reach the API,
- * App Platform's with its path kept (`preserve_path_prefix: true`), and the web app's own paths must not. (The Scalar
+ * App Platform's with its path kept (`preserve_path_prefix: true`), and the web app's own paths must reach the web
+ * app (App Platform's `webapp` component, Caddy's catch-all `handle` block). (The Scalar
  * reference that `swagger.ts` also mounts is left out on purpose: see the comment in the Caddyfile.)
  *
  * Read by hand rather than with a YAML parser: this job installs nothing (see static-checks.yml), and the shapes
@@ -49,6 +50,9 @@ const COMPOSE_ENV_SAMPLE = '.env.caddy.sample';
 
 /** The App Platform component, and the Caddy upstream host, that run the API. */
 const API_COMPONENT = 'api';
+
+/** The App Platform component, and the Caddy upstream host, that serve the web app. */
+const WEB_APP_COMPONENT = 'webapp';
 
 /** Secrets only the compose file needs: the password of the Postgres it runs itself. */
 const COMPOSE_ONLY_SECRETS = ['DB_PASS'];
@@ -269,8 +273,9 @@ export function appPlatformRouteProblems(source, paths) {
 		}
 	}
 	for (const path of WEB_APP_PATHS) {
-		if (route(path)?.component === API_COMPONENT)
-			problems.push(`${path} (the web app) goes to the ${API_COMPONENT}`);
+		const component = route(path)?.component;
+		if (component !== WEB_APP_COMPONENT)
+			problems.push(`${path} (the web app) goes to ${component ?? 'no component'}, not the ${WEB_APP_COMPONENT}`);
 	}
 
 	return problems;
@@ -304,6 +309,32 @@ export function caddyApiPatterns(source) {
 }
 
 /**
+ * The upstream a Caddyfile sends every other request to: the host of the `reverse_proxy` in its `handle` block
+ * without a matcher, or of a `reverse_proxy` without a matcher outside any `handle` block.
+ *
+ * @param {string} source The Caddyfile's text.
+ * @returns {string|null} The upstream host (`webapp`, ...); null when there is no catch-all route.
+ */
+export function caddyFallbackUpstream(source) {
+	let depth = 0;
+	// The `handle` block the current line is in: its matcher ('' for none) and the brace depth it opened at.
+	let handle = null;
+
+	for (const line of source.split(/\r?\n/)) {
+		if (/^\s*(#|$)/.test(line)) continue;
+		const opened = /^\s*handle(?:\s+@([A-Za-z0-9_-]+))?\s*\{/.exec(line);
+		if (opened) handle = { matcher: opened[1] ?? '', depth };
+		const proxy = /^\s*reverse_proxy\s+([A-Za-z0-9_.-]+):/.exec(line);
+		if (proxy && (handle === null || handle.matcher === '')) return proxy[1];
+
+		depth += (line.match(/\{/g) ?? []).length - (line.match(/\}/g) ?? []).length;
+		if (handle && depth <= handle.depth) handle = null;
+	}
+
+	return null;
+}
+
+/**
  * Whether a request path matches a Caddy path pattern (exact, or `*` for any run of characters; case-insensitive).
  *
  * @param {string} pattern A Caddy path pattern.
@@ -332,6 +363,14 @@ export function caddyRouteProblems(source, paths) {
 	}
 	for (const path of WEB_APP_PATHS) {
 		if (toApi(path)) problems.push(`${path} (the web app) is proxied to the ${API_COMPONENT}`);
+	}
+	const fallback = caddyFallbackUpstream(source);
+	if (fallback !== WEB_APP_COMPONENT) {
+		problems.push(
+			fallback === null
+				? `no catch-all \`handle { reverse_proxy ${WEB_APP_COMPONENT}:... }\`: the web app is not served`
+				: `the catch-all route proxies to ${fallback}, not the ${WEB_APP_COMPONENT}`
+		);
 	}
 
 	return problems;
@@ -383,11 +422,11 @@ export function envSampleProblems(source, secrets) {
 	const problems = [];
 
 	for (const key of secrets) {
-		// Every line that assigns the key (a later one would win), each matched as a whole assignment: an empty value,
-		// optionally quoted, optionally followed by a comment. Anything else, `abc=` or base64 `YWJj==` included, is
-		// a value.
+		// Every line that assigns the key (a later one would win), each matched as a whole assignment: nothing, or
+		// empty quotes optionally followed by a comment. Anything else is a value: `abc=`, base64 `YWJj==`, and
+		// `KEY= # note`, which compose reads as the value `# note` (so `${KEY:?}` would accept it).
 		const listed = lines.filter((candidate) => new RegExp(`^\\s*${key}\\s*=`).test(candidate));
-		const empty = new RegExp(`^\\s*${key}\\s*=\\s*(?:""|'')?(?:\\s+#.*)?\\s*$`);
+		const empty = new RegExp(`^\\s*${key}\\s*=\\s*(?:(?:""|'')(?:\\s+#.*)?)?\\s*$`);
 		if (listed.length === 0) {
 			problems.push(`does not list ${key}= for the operator to fill in`);
 		} else if (!listed.every((line) => empty.test(line))) {

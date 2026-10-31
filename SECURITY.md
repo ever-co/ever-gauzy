@@ -63,7 +63,7 @@ services.
 The production checklist (secrets the API refuses to start without, seeded
 account passwords, proxy trust and rate limits) is the "Production" list
 under "Run with Docker Compose" in the [README](README.md#production). In
-production, serve every client-to-server connection (REST, GraphQL,
-WebSockets) over HTTPS.
+production, serve REST and GraphQL over HTTPS, and WebSocket connections
+(GraphQL subscriptions included) over WSS.
 
 [releases]: https://github.com/ever-co/ever-gauzy/releases
