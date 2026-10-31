@@ -29,7 +29,20 @@ enabled by a tenant as a whole or not at all.
 `ENTITLEMENT_GRANT` consumes the order and subscription events and grants the
 right against the order line that produced it, so the grant and the purchase
 cannot disagree. A replayed grant returns the original right instead of creating
-a second one.
+a second one, and two deliveries of the same `order.placed` racing each other
+cannot both create one either: `UQ_entitlement_live_line_grant` admits one live
+(not revoked, not deleted) right per tenant, order line and kind, and the grant
+that loses the race returns the winner's right. A line may be granted again once
+its right is revoked; a derived number then takes the next revision (`…-L-2`).
+
+**A settlement delivered early is not lost.** The grant path is reorderable, so
+`order.completed` can be handled before a retried `order.placed`, when there is
+nothing yet to put into force. When the installation binds
+`ENTITLEMENT_ORDER_STATE_PORT` (the API's composition module binds it to the
+order package's `OrderStateReader`), the placement asks the order whether it has
+settled since — `COMPLETED`, or payment `CAPTURED`, and never `CANCELED` — and
+puts what it granted into force itself. Left unbound, the rights stay `PENDING`
+until the next settlement event, as before.
 
 **A right that has been withdrawn cannot be activated.** An entitlement that is
 `REVOKED`, that is past `endsAt + gracePeriodDays`, or whose live activations

@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit, Optional } from '@nestjs/common';
 import {
 	EventConsumerKind,
 	EventConsumerOrdering,
@@ -11,12 +11,15 @@ import { EventConsumerRegistry } from '@gauzy/core';
 import { EntitlementKind } from '../entitlement.enums';
 import {
 	ENTITLEMENT_CONSUMED_EVENTS,
+	ENTITLEMENT_ORDER_STATE_PORT,
 	EntitlementRevocationReason,
 	EntitlementSuspensionReason,
+	IEntitlementOrderStatePort,
 	IEntitlementScope
 } from '../entitlement.types';
 import { Entitlement } from '../entitlement/entitlement.entity';
 import { EntitlementService } from '../entitlement/entitlement.service';
+import { isOrderSettled } from './entitlement-order-settlement';
 
 /**
  * The shape a granting order line carries.
@@ -67,6 +70,13 @@ export interface IRefundLineProjection {
  * Delivery is at-least-once, and every handler here is idempotent on purpose: the grant is keyed by
  * its provenance, activating a right that is already in force is a no-op, and the transitions a
  * replay would repeat are the ones that check the state they move away from.
+ *
+ * Delivery is also reorderable, so a retried `order.placed` can arrive after the `order.completed` it
+ * preceded, when there was nothing yet to put into force. Where the deployment binds
+ * {@link ENTITLEMENT_ORDER_STATE_PORT}, the placement asks the order capability whether the order has
+ * settled since and, if so, puts what it granted into force itself (#11023). The order row is the durable
+ * record of the settlement, and it is read through the port the order capability provides, never from
+ * its table. Without the port the rights stay `PENDING` until the next settlement event, as before.
  */
 @Injectable()
 export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
@@ -92,7 +102,10 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 
 	constructor(
 		private readonly entitlementService: EntitlementService,
-		@Optional() private readonly registry?: EventConsumerRegistry
+		@Optional() private readonly registry?: EventConsumerRegistry,
+		@Optional()
+		@Inject(ENTITLEMENT_ORDER_STATE_PORT)
+		private readonly orderState?: IEntitlementOrderStatePort
 	) {}
 
 	/**
@@ -176,7 +189,8 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 	 * Grants a `PENDING` right for every line of a placed order that carries an entitlement policy.
 	 *
 	 * The right is not yet in force: it is granted by the purchase and becomes exercisable when the
-	 * money settles, which is the next event.
+	 * money settles, which is normally the next event. When the settlement was delivered first, the order
+	 * already records it, and the rights are put into force here (see {@link activateIfAlreadySettled}).
 	 *
 	 * @param event The `order.placed` event.
 	 * @param scope The tenant and organization the event belongs to.
@@ -191,12 +205,16 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			return;
 		}
 
+		let granting = 0;
+
 		for (const line of lines) {
 			const policy = line.entitlement;
 
 			if (!policy) {
 				continue;
 			}
+
+			granting++;
 
 			const orderLineId = line.orderLineId ?? line.lineId ?? line.id;
 
@@ -218,6 +236,49 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 				scope
 			);
 		}
+
+		if (granting > 0) {
+			await this.activateIfAlreadySettled(orderId, event, scope);
+		}
+	}
+
+	/**
+	 * Puts the rights a placement just granted into force when the order settled before the placement was
+	 * delivered.
+	 *
+	 * The consumer is reorderable, so `order.completed` (or `payment.captured`) can be handled before a
+	 * retried `order.placed`: it then finds nothing `PENDING` to activate, and without this the rights the
+	 * placement grants afterwards would wait for a settlement event that has already come and gone. The
+	 * order's own state is the durable memo of that settlement — `COMPLETED` is written in the transaction
+	 * that appends `order.completed` — so it is asked here, after the grants, and the same activation the
+	 * settlement handler performs is repeated. It is idempotent, so a replay of either event changes nothing.
+	 *
+	 * A read that fails is not swallowed: the delivery is retried, and the grants it repeats are replays.
+	 *
+	 * @param orderId The order the placement granted from.
+	 * @param event The `order.placed` event, for the log.
+	 * @param scope The tenant and organization the event belongs to.
+	 */
+	private async activateIfAlreadySettled(
+		orderId: ID,
+		event: IEventEnvelope,
+		scope: IEntitlementScope
+	): Promise<void> {
+		if (!this.orderState) {
+			return;
+		}
+
+		const state = await this.orderState.findState(orderId, scope);
+
+		if (!isOrderSettled(state)) {
+			return;
+		}
+
+		this.logger.log(
+			`order.placed ${event.id} was delivered after order ${orderId} settled, so its entitlements were put into force on placement.`
+		);
+
+		await this.entitlementService.activateGranted({ orderId }, scope);
 	}
 
 	/**

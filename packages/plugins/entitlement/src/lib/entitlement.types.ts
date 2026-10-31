@@ -405,6 +405,41 @@ export interface IEntitlementCatalogPort {
 	findVariant(id: ID): Promise<IEntitlementCatalogItem | null>;
 }
 
+/**
+ * The order capability's answer to "where is this order now", reached through an optional port (#11023).
+ *
+ * The grant consumer is reorderable, so an order's settlement (`order.completed`, `payment.captured`) can
+ * be delivered before a retried `order.placed`: the settlement finds no right to put into force, and the
+ * rights the late placement then grants would stay `PENDING` with nothing left to move them. The order's
+ * own row is the durable record that it settled — `order.completed` is appended in the same transaction
+ * that writes `status = COMPLETED` — so a late placement asks the order package for it, by identifier and
+ * under the event's own tenant, without this package reading the order's table.
+ *
+ * Bound by the installation's composition module to the order package's `OrderStateReader`. Left unbound,
+ * a late placement grants exactly what it granted before and leaves the rights `PENDING`.
+ */
+export const ENTITLEMENT_ORDER_STATE_PORT = 'ENTITLEMENT_ORDER_STATE_PORT';
+
+/** What the order port answers about one order: its lifecycle and its money state, as the order row holds them. */
+export interface IEntitlementOrderState {
+	/** The order's lifecycle status (`OrderStatus`). */
+	readonly status?: string | null;
+	/** The order's materialised payment status (`OrderPaymentStatus`). */
+	readonly paymentStatus?: string | null;
+}
+
+/** The order capability as this package consumes it. */
+export interface IEntitlementOrderStatePort {
+	/**
+	 * Reads one order's state, held to the scope stated.
+	 *
+	 * @param orderId The order.
+	 * @param scope The tenant (required: an order is never read across tenants) and organization of the event.
+	 * @returns The state, or `null` when no such order exists in that scope.
+	 */
+	findState(orderId: ID, scope: IEntitlementScope): Promise<IEntitlementOrderState | null>;
+}
+
 /*
 |--------------------------------------------------------------------------
 | The events this domain consumes and produces
@@ -417,7 +452,9 @@ export interface IEntitlementCatalogPort {
  * Consumption is by event *name*, through the platform's consumer registry, which is what lets this
  * package act on another domain's facts without importing its classes and without reading its
  * tables. The payload is the projection the producing domain published; anything this package needs
- * and the payload does not carry is reported rather than looked up.
+ * and the payload does not carry is reported rather than looked up — with one exception, the state an
+ * order has reached, which a late `order.placed` asks the order capability for through
+ * {@link ENTITLEMENT_ORDER_STATE_PORT} (#11023).
  */
 export const ENTITLEMENT_CONSUMED_EVENTS: string[] = [
 	'order.placed',
