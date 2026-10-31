@@ -107,12 +107,13 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		return !!this.selectedTask?.id;
 	}
 
-	/** The task's short reference for the dialog header, e.g. `GA-42`. */
+	/** The task's short reference for the dialog header, e.g. `GAU-42`. */
 	get taskReference(): string {
 		if (!this.isEditing) {
 			return '';
 		}
-		return [this.selectedTask.prefix, this.selectedTask.number].filter(Boolean).join('-');
+		// `taskNumber` is a server-side virtual column (prefix + number), absent from ITask.
+		return (this.selectedTask as any).taskNumber || '';
 	}
 
 	ngOnInit() {

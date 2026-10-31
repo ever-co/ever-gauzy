@@ -2,7 +2,7 @@
   <nb-card-header class="task-header">
     <div class="task-heading">
       @if (taskReference) {
-        <span class="task-reference">{{ taskReference }}</span>
+        <span class="task-reference">{{ taskReference | hash }}</span>
       }
       <h5 class="title">
         {{ (isEditing ? 'TASKS_PAGE.EDIT_TASK' : 'TASKS_PAGE.CREATE_TASK') | translate }}
@@ -34,6 +34,7 @@
             nbInput
             fullWidth
             cdkFocusInitial
+            aria-required="true"
             [placeholder]="'FORM.PLACEHOLDERS.ADD_TITLE' | translate"
             (keydown.enter)="$event.preventDefault()"
           ></textarea>
@@ -181,7 +182,12 @@
             </nb-select>
           </div>
           <div class="field">
-            <label class="label">{{ 'TASKS_PAGE.PARENT_TASK' | translate }}</label>
+            <label class="label">
+              {{ 'TASKS_PAGE.PARENT_TASK' | translate }}
+              @if (organization?.requireTask) {
+                <span class="required-mark" aria-hidden="true">*</span>
+              }
+            </label>
             <ga-task-selector
               name="parentId"
               [projectId]="getControlValue('projectId')"
