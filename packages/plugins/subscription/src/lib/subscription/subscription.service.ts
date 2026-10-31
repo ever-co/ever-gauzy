@@ -202,6 +202,13 @@ const CHARGED_SETUP_FEES = 'chargedSetupFeePlanIds';
 /** The metadata key that carries a proration credit into the next cycle. */
 const PENDING_CREDIT = 'pendingCredit';
 
+/**
+ * The description of the adjustment a cycle consumes the carried credit under (`consumePendingCredit`). A plan
+ * change's own record of a credit it decided is described in the change's words (`appendCredit`), so this one tells the
+ * consumption apart when a cycle recorded before `CYCLE_BOOKKEEPING` existed is finished (`owedBookkeepingOf`).
+ */
+const CONSUMED_CREDIT_DESCRIPTION = 'Credit from an earlier plan change.';
+
 /** The metadata key a per-subscription discount override is stored under. */
 const DISCOUNT_OVERRIDE = 'discountPercentage';
 
@@ -892,8 +899,9 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		}
 
 		// An invoice still waiting for its payment keeps the subscription on its period (Q7-W4): resuming past it
-		// would start a new period over the invoiced one, and bill the customer twice for the same time.
-		const nextBillingAt = (await this.awaitsCyclePayment(subscription))
+		// would start a new period over the invoiced one, and bill the customer twice for the same time. So does a
+		// charge of that period a pass has started or recorded and not finished (`calendarHeldByCycle`).
+		const nextBillingAt = (await this.calendarHeldByCycle(subscription))
 			? new Date(subscription.nextBillingAt as Date)
 			: resumedNextBillingAt(subscription.currentPeriodEnd, now);
 
@@ -1509,7 +1517,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			const charged = await this.billingService.findByPeriod(subscription.id, period.start);
 
 			if (charged && this.leftUnfinished(charged)) {
-				return await this.finishCycle(subscription.id, charged.id, this.billingService.bookkeepingOf(charged), {
+				return await this.finishCycle(subscription.id, charged.id, await this.owedBookkeepingOf(charged), {
 					expectation: spend(),
 					replayed: true
 				});
@@ -1619,7 +1627,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				};
 			} else {
 				calendar = {
-					nextBillingAt: (await this.awaitsCyclePayment(subscription))
+					nextBillingAt: (await this.calendarHeldByCycle(subscription))
 						? new Date(subscription.nextBillingAt as Date)
 						: resumedNextBillingAt(subscription.currentPeriodEnd, runsAt),
 					currentPeriodEnd: subscription.currentPeriodEnd
@@ -1999,7 +2007,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			if (this.leftUnfinished(existing)) {
 				// The run charged it and the pass that did was cut off before the cycle was finished: what is left is
 				// done from the row, charging nothing.
-				return await this.finishCycle(subscription.id, existing.id, this.billingService.bookkeepingOf(existing), {
+				return await this.finishCycle(subscription.id, existing.id, await this.owedBookkeepingOf(existing), {
 					expectation,
 					replayed: true
 				});
@@ -2069,7 +2077,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			const credit = await this.consumePendingCredit(subscription, billing);
 			const bookkeeping = this.cycleBookkeepingFor(subscription, plan, credit);
 
-			const failure = await this.raiseCycleOrder(
+			const raised = await this.raiseCycleOrder(
 				subscription,
 				plan,
 				items,
@@ -2081,6 +2089,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				bookkeeping,
 				claim.token
 			);
+			const failure = raised.failure;
 
 			if (failure?.code === ORDER_ATTEMPT_IN_FLIGHT) {
 				// An earlier call is still charging this attempt, and the order path still fences it. This pass records
@@ -2100,9 +2109,9 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				return await this.recordFailure(subscription, billing, failure, now, spend(), claim.token);
 			}
 
-			// The bookkeeping this pass's order left is handed over as well as recorded on the row: a cycle an operator
+			// The bookkeeping the order was raised with is handed over as well as recorded on the row: a cycle an operator
 			// settled while the charge was in flight kept the operator's record, without it.
-			return await this.finishCycle(subscription.id, billing.id, bookkeeping, {
+			return await this.finishCycle(subscription.id, billing.id, raised.bookkeeping, {
 				expectation: spend(),
 				replayed: false
 			});
@@ -2196,7 +2205,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param discount The plan discount granted, when one was.
 	 * @param bookkeeping What the order leaves the subscription to record, written on the cycle with the charge's outcome.
 	 * @param chargeClaim The token of the charge claim this pass holds on the cycle, which its payment ends.
-	 * @returns A platform code and message when the charge could not be made, or undefined once its outcome is recorded.
+	 * @returns A platform code and message when the charge could not be made (none once its outcome is recorded), and the
+	 * bookkeeping of the request the order path was called with: a takeover of an attempt resends that attempt's.
 	 * @throws Whatever recording the outcome of an order the order path raised throws, other than the refusals handled
 	 * below: that is not a failed charge, since the money may have been taken.
 	 */
@@ -2211,68 +2221,104 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		discount: Money,
 		bookkeeping: ICycleBookkeeping,
 		chargeClaim: string
-	): Promise<{ code: string; message: string } | undefined> {
+	): Promise<{ failure?: { code: string; message: string }; bookkeeping: ICycleBookkeeping }> {
 		if (!this.orderGateway) {
 			return {
-				code: 'SUBSCRIPTION_ORDER_GATEWAY_UNAVAILABLE',
-				message:
-					'The order capability is not registered, so a cycle cannot raise the order it bills; the cycle is recorded as failed rather than marked paid.'
+				failure: {
+					code: 'SUBSCRIPTION_ORDER_GATEWAY_UNAVAILABLE',
+					message:
+						'The order capability is not registered, so a cycle cannot raise the order it bills; the cycle is recorded as failed rather than marked paid.'
+				},
+				bookkeeping
 			};
 		}
 
-		const payer = await this.resolvePayer(subscription);
-
-		if (payer.refusal) {
-			return payer.refusal;
-		}
-
-		const setupFee = this.setupFeeFor(subscription, plan);
 		// One key per attempt, not per period. The per-period key is what the cycle's idempotency claim
 		// holds, and it is deliberately left open after a failure so the dunning schedule's next
 		// attempt can take it over; the order path's key has to move with the attempt, or a retry
 		// would be answered with the decline it is trying to recover from. Two runs of the *same*
 		// attempt still collide, which is what stops one attempt charging twice.
 		const attempt = (billing.attemptCount ?? 0) + 1;
+		// A pass that takes over an attempt whose outcome was never recorded — its pass died, or the write recording it
+		// failed — resends the request that attempt made (`ATTEMPT_REQUEST`). The order path replays an attempt only for
+		// the same request: one rebuilt from lines changed since was refused, recorded as a failed charge and charged again
+		// under the next attempt's key, and a credit deferred since was recorded as consumed by an order that never carried it.
+		let frozen = this.billingService.frozenAttemptOf(billing, attempt);
+
+		if (frozen) {
+			this.logger.warn(
+				`Subscription ${subscription.id}: attempt ${attempt} at cycle ${billing.id} was made before and its outcome ` +
+					`never recorded; resending its request so the order path answers with what it did.`
+			);
+		} else {
+			const payer = await this.resolvePayer(subscription);
+
+			if (payer.refusal) {
+				return { failure: payer.refusal, bookkeeping };
+			}
+
+			const setupFee = this.setupFeeFor(subscription, plan);
+
+			frozen = {
+				attempt,
+				request: {
+					subscriptionId: subscription.id,
+					billingId: billing.id,
+					customerId: subscription.customerId,
+					originOrderId: subscription.originOrderId,
+					currency: subscription.currency,
+					periodStart: period.start,
+					periodEnd: period.end,
+					firstCycle: subscription.billingCycleCount === 0,
+					lines: items.map((item) => ({
+						variantId: item.variantId,
+						quantity: item.quantity,
+						unitPrice: item.unitPrice
+					})),
+					amount: net.toStorageString(),
+					...(setupFee ? { setupFee } : {}),
+					...(discount.isPositive() ? { discountAmount: discount.toStorageString() } : {}),
+					...(credit && !credit.isZero() ? { creditAmount: credit.toStorageString() } : {}),
+					paymentAccountHolderId: payer.accountHolderId,
+					paymentMethodTokenId: payer.paymentMethodTokenId,
+					idempotencyKey: `${subscription.id}:${period.start.toISOString()}:${attempt}`,
+					note: `Subscription cycle ${period.start.toISOString()}, attempt ${attempt}`
+				},
+				bookkeeping
+			};
+
+			if (!(await this.billingService.freezeAttempt(billing.id, chargeClaim, frozen))) {
+				// The claim went stale before the call and another pass holds the cycle; that pass charges it.
+				return {
+					failure: {
+						code: CHARGE_CLAIM_LOST,
+						message: `${CHARGE_CLAIM_LOST}: the charge claim on billing cycle '${billing.id}' went stale before its order was raised.`
+					},
+					bookkeeping
+				};
+			}
+		}
 
 		let result: Awaited<ReturnType<ISubscriptionOrderGatewayPort['raiseSubscriptionOrder']>>;
 
 		try {
-			result = await this.orderGateway.raiseSubscriptionOrder({
-				subscriptionId: subscription.id,
-				billingId: billing.id,
-				customerId: subscription.customerId,
-				originOrderId: subscription.originOrderId,
-				currency: subscription.currency,
-				periodStart: period.start,
-				periodEnd: period.end,
-				firstCycle: subscription.billingCycleCount === 0,
-				lines: items.map((item) => ({
-					variantId: item.variantId,
-					quantity: item.quantity,
-					unitPrice: item.unitPrice
-				})),
-				amount: net.toStorageString(),
-				...(setupFee ? { setupFee } : {}),
-				...(discount.isPositive() ? { discountAmount: discount.toStorageString() } : {}),
-				...(credit && !credit.isZero() ? { creditAmount: credit.toStorageString() } : {}),
-				paymentAccountHolderId: payer.accountHolderId,
-				paymentMethodTokenId: payer.paymentMethodTokenId,
-				idempotencyKey: `${subscription.id}:${period.start.toISOString()}:${attempt}`,
-				note: `Subscription cycle ${period.start.toISOString()}, attempt ${attempt}`
-			});
+			result = await this.orderGateway.raiseSubscriptionOrder(frozen.request);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 
 			return {
-				code: /^([A-Z][A-Z0-9_]{3,}):/.exec(message)?.[1] ?? 'SUBSCRIPTION_CHARGE_FAILED',
-				message
+				failure: { code: /^([A-Z][A-Z0-9_]{3,}):/.exec(message)?.[1] ?? 'SUBSCRIPTION_CHARGE_FAILED', message },
+				bookkeeping: frozen.bookkeeping
 			};
 		}
 
 		if (!result?.orderId) {
 			return {
-				code: 'SUBSCRIPTION_ORDER_NOT_RAISED',
-				message: 'The order capability did not return an order for this cycle.'
+				failure: {
+					code: 'SUBSCRIPTION_ORDER_NOT_RAISED',
+					message: 'The order capability did not return an order for this cycle.'
+				},
+				bookkeeping: frozen.bookkeeping
 			};
 		}
 
@@ -2289,7 +2335,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					orderId: result.orderId,
 					attemptCount: billing.attemptCount ?? 0,
 					chargeClaim,
-					bookkeeping
+					bookkeeping: frozen.bookkeeping
 				});
 			} else {
 				// R4-05: nothing was paid, so the rights of the period wait for the payment. The flags are written
@@ -2298,10 +2344,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				await this.billingService.markInvoiced(
 					billing.id,
 					result.orderId,
-					net.toStorageString(),
+					frozen.request.amount,
 					{ activation: this.convertsTrial(subscription, plan), calendar: true },
 					chargeClaim,
-					bookkeeping
+					frozen.bookkeeping
 				);
 			}
 		} catch (error) {
@@ -2316,7 +2362,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 						`outlived its claim; the pass that now holds the cycle records it.`
 				);
 
-				return { code: CHARGE_CLAIM_LOST, message: (error as Error).message };
+				return { failure: { code: CHARGE_CLAIM_LOST, message: (error as Error).message }, bookkeeping: frozen.bookkeeping };
 			}
 
 			// The order was raised, and an operator settled the cycle another way (paid, waived or refunded it) once
@@ -2334,7 +2380,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			);
 		}
 
-		return undefined;
+		return { bookkeeping: frozen.bookkeeping };
 	}
 
 	/**
@@ -2614,9 +2660,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 *
 	 * The run writes `orderId` and nothing else does, so an order names a cycle the run charged. Met at the period the
 	 * calendar points at, it was charged by a pass cut off before the cycle was finished. A paid cycle that never held the
-	 * calendar for its payment is finished whole, and an invoiced one that holds it has its bookkeeping left (Q7-W4). A
-	 * paid cycle that held the calendar is its payment's to finish (`payCycle`), and one settled without an order is the
-	 * operator's.
+	 * calendar for its payment is finished whole — refunded since, too: its period was billed and counted, and left
+	 * unfinished the subscription would stay on it — and an invoiced one that holds it has its bookkeeping left (Q7-W4).
+	 * A paid cycle that held the calendar is its payment's to finish (`payCycle`), and one settled without an order is
+	 * the operator's.
 	 *
 	 * @param billing The raised cycle.
 	 * @returns True when a pass finishes it.
@@ -2626,7 +2673,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			return false;
 		}
 
-		if (billing.status === SubscriptionBillingStatus.PAID) {
+		if ([SubscriptionBillingStatus.PAID, SubscriptionBillingStatus.REFUNDED].includes(billing.status)) {
 			return !this.billingService.heldCalendar(billing);
 		}
 
@@ -2669,12 +2716,50 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
+	 * What a charged cycle left the subscription to record, read from the cycle (`CYCLE_BOOKKEEPING`).
+	 *
+	 * A cycle whose outcome a build before this one recorded carries no such record, and that build may or may not have
+	 * cleared the deferred credit before it was cut off. The credit the cycle consumed is then read back from the
+	 * adjustment it was consumed under (`consumePendingCredit`), marked as inferred: it is subtracted only from a carried
+	 * credit large enough to still hold it (`bookkeptMetadata`), so a credit that build already cleared is not taken off a
+	 * later one. The setup fee needs no such reading: one is charged only on a subscription's first cycle
+	 * (`setupFeeFor`), which the finish counts.
+	 *
+	 * @param billing The cycle.
+	 * @returns What is owed, and whether it was inferred.
+	 */
+	private async owedBookkeepingOf(billing: SubscriptionBilling): Promise<ICycleBookkeeping & { inferred?: boolean }> {
+		const recorded = this.billingService.bookkeepingOf(billing);
+
+		if (recorded) {
+			return recorded;
+		}
+
+		const consumed = (await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, billing.id)).filter(
+			(row) => row.type === AdjustmentType.CREDIT && row.description === CONSUMED_CREDIT_DESCRIPTION
+		);
+
+		if (!consumed.length) {
+			return {};
+		}
+
+		const credit = Money.sum(
+			consumed.map((row) => Money.of(String(row.amount), billing.currency)),
+			billing.currency
+		).round();
+
+		return credit.isNegative() ? { credit: credit.toStorageString(), inferred: true } : {};
+	}
+
+	/**
 	 * The subscription's metadata with a cycle's bookkeeping applied, or null when none is left to apply.
 	 *
 	 * The setup fee the order carried is remembered against its plan, and the deferred credit the order consumed is
 	 * subtracted from the credit the subscription still carries — not cleared: a plan change that deferred another credit
 	 * after the cycle consumed this one added it to the same total (`applyChange`), and that part is owed to the next
-	 * cycle. A remainder that is not a credit is not carried. The cycle is recorded as applied in the same metadata
+	 * cycle. A remainder that is not a credit is not carried. A consumption inferred for a cycle an older build recorded
+	 * (`owedBookkeepingOf`) is subtracted only from a carried credit that still holds it: a smaller one is what that build
+	 * left after clearing it, plus what was deferred since. The cycle is recorded as applied in the same metadata
 	 * (`BOOKKEPT_CYCLE`), so a cycle already applied answers null.
 	 *
 	 * @param subscription The subscription, as read.
@@ -2685,7 +2770,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	private bookkeptMetadata(
 		subscription: Subscription,
 		billing: SubscriptionBilling,
-		owed: ICycleBookkeeping
+		owed: ICycleBookkeeping & { inferred?: boolean }
 	): Record<string, unknown> | null {
 		const stored: Record<string, unknown> = subscription.metadata ?? {};
 
@@ -2716,7 +2801,12 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		if (credits && pending?.amount) {
 			const left = Money.of(pending.amount, subscription.currency).round().subtract(consumed).round();
 
-			if (left.isNegative()) {
+			if (owed.inferred && left.isPositive()) {
+				this.logger.warn(
+					`Subscription ${subscription.id}: cycle ${billing.id} was recorded by an earlier build, and the credit ` +
+						`it consumed (${consumed.toStorageString()}) is no longer carried whole; the carried credit is kept.`
+				);
+			} else if (left.isNegative()) {
 				metadata[PENDING_CREDIT] = { ...pending, amount: left.toStorageString() };
 			} else {
 				delete metadata[PENDING_CREDIT];
@@ -2831,6 +2921,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param billing The paid cycle.
 	 */
 	private async settleDeferredCalendar(billing: SubscriptionBilling): Promise<void> {
+		const owed = await this.owedBookkeepingOf(billing);
+
 		for (let attempt = 1; ; attempt += 1) {
 			const subscription = await this.findOneScoped(billing.subscriptionId);
 
@@ -2850,7 +2942,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					? SubscriptionStatus.ACTIVE
 					: subscription.status;
 			// The bookkeeping the cycle's order left, when the pass that invoiced it was cut off before applying it.
-			const bookkept = this.bookkeptMetadata(subscription, billing, this.billingService.bookkeepingOf(billing));
+			const bookkept = this.bookkeptMetadata(subscription, billing, owed);
 
 			try {
 				await commitVersionedUpdate<Subscription>(this, {
@@ -2906,24 +2998,30 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
-	 * Whether the subscription's next billing instant is held by an invoice still waiting for its payment (Q7-W4).
+	 * Whether the subscription's next billing instant is held by the cycle at it, so a resume keeps it there: an invoice
+	 * still waiting for its payment (Q7-W4), or a charge — one a pass has started (it holds or held the cycle's charge
+	 * claim), or one recorded whose cycle is not finished yet (`leftUnfinished`).
 	 *
-	 * The cycle's flag decides, not its status: a payment interrupted after the cycle was recorded `PAID` and before
-	 * it moved the calendar leaves the flag on, and the period must stay where the retry of that payment finds it —
-	 * moved past it, the retry would find the cycle no longer open and the paid period would never be counted
-	 * (Greptile).
+	 * The cycle's flag decides for an invoice, not its status: a payment interrupted after the cycle was recorded `PAID`
+	 * and before it moved the calendar leaves the flag on, and the period must stay where the retry of that payment finds
+	 * it — moved past it, the retry would find the cycle no longer open and the paid period would never be counted
+	 * (Greptile). A charge holds it for the same reason: resumed past the cycle a pass is charging, the finish would find
+	 * the calendar elsewhere and leave the paid period uncounted, and the next pass would bill a period over it (Copilot).
 	 *
 	 * @param subscription The subscription, as read.
-	 * @returns True when its calendar waits on that invoice.
+	 * @returns True when its calendar waits on that cycle.
 	 */
-	private async awaitsCyclePayment(subscription: Subscription): Promise<boolean> {
+	private async calendarHeldByCycle(subscription: Subscription): Promise<boolean> {
 		if (!subscription.nextBillingAt) {
 			return false;
 		}
 
 		const open = await this.billingService.findByPeriod(subscription.id, new Date(subscription.nextBillingAt));
 
-		return !!open && this.billingService.holdsDeferredCalendar(open);
+		return (
+			!!open &&
+			(this.billingService.holdsDeferredCalendar(open) || !!open.chargeClaimToken || this.leftUnfinished(open))
+		);
 	}
 
 	/**
@@ -3377,7 +3475,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				currency: subscription.currency,
 				referenceType: 'subscription',
 				referenceId: subscription.id,
-				description: 'Credit from an earlier plan change.'
+				description: CONSUMED_CREDIT_DESCRIPTION
 			});
 		}
 

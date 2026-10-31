@@ -13,7 +13,7 @@ import {
 } from 'typeorm';
 import { CurrencyCode, DecimalString, ID } from '@gauzy/contracts';
 import { IdempotencyService, Money, isUniqueViolation } from '@gauzy/core';
-import { SubscriptionBillingStatus } from '../subscription.types';
+import { ISubscriptionOrderRequest, SubscriptionBillingStatus } from '../subscription.types';
 import { currentScope } from '../subscription.scope';
 import { normalizeDecimal } from '../subscription.cycle';
 import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription.writable';
@@ -241,6 +241,61 @@ export interface ICycleBookkeeping {
 	setupFeePlanId?: ID;
 }
 
+/**
+ * The metadata key a billing pass freezes an attempt's order request under, with the bookkeeping that request leaves,
+ * before it calls the order path (`freezeAttempt`).
+ *
+ * The order path replays an attempt under its key only for the same request (subscription, cycle, amount, period,
+ * lines), and answers a different one with `ORDER_SUBSCRIPTION_KEY_REUSED`. A pass that takes over an attempt whose
+ * outcome was never recorded — its pass died, or the write recording it failed — therefore resends this request rather
+ * than one built from the subscription as it now stands: a line changed meanwhile would otherwise be refused, recorded
+ * as a failed charge and charged again under the next attempt's key, and a credit deferred meanwhile would be recorded
+ * as consumed by an order that never carried it.
+ */
+export const ATTEMPT_REQUEST = 'attemptRequest';
+
+/** An attempt's frozen request (`ATTEMPT_REQUEST`). */
+export interface IFrozenAttempt {
+	/** The attempt it was frozen for: `attemptCount + 1` when the attempt was made. */
+	attempt: number;
+	/** The order request, as the order path was called with it. */
+	request: ISubscriptionOrderRequest;
+	/** What that request leaves the subscription to record. */
+	bookkeeping: ICycleBookkeeping;
+}
+
+/**
+ * The metadata keys the service writes on a cycle and decides from: the rights and the calendar an invoice holds back
+ * for its payment, what a charge left to record, and an attempt's frozen request. A caller's metadata — a cycle opened
+ * or corrected by hand — can neither set nor erase them, and the billing run's own outcome resets them, so no
+ * hand-written value stands as one the service wrote.
+ */
+export const SERVICE_OWNED_CYCLE_KEYS: readonly string[] = [
+	RIGHTS_DEFERRED,
+	ACTIVATION_DEFERRED,
+	RIGHTS_RELEASED_AT,
+	RIGHTS_WITHHELD_FOR,
+	CALENDAR_DEFERRED,
+	CALENDAR_SETTLED_AT,
+	CYCLE_BOOKKEEPING,
+	ATTEMPT_REQUEST
+];
+
+/**
+ * @param metadata A cycle's metadata, or a caller's.
+ * @param owned True for the service's own keys, false for everything else.
+ * @returns The members of one kind.
+ */
+function metadataPart(metadata: unknown, owned: boolean): Record<string, unknown> {
+	if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+		return {};
+	}
+
+	return Object.fromEntries(
+		Object.entries(metadata as Record<string, unknown>).filter(([key]) => SERVICE_OWNED_CYCLE_KEYS.includes(key) === owned)
+	);
+}
+
 /** The refusal of a settling action from a status it may not start from. */
 function invalidTransition(
 	billing: SubscriptionBilling,
@@ -260,15 +315,17 @@ function invalidTransition(
  * Whether a cycle records money billed.
  *
  * Every status past `PENDING` does — an order was raised, a payment settled or failed, a refund or a waiver was
- * decided — and so does a `PENDING` cycle an order, a charge attempt or a payment has already touched. Only a
- * `PENDING` cycle none of those reached is a schedule entry that holds no money history.
+ * decided — and so does a `PENDING` cycle an order, a charge attempt or a payment has already touched, including an
+ * attempt frozen for the order path whose outcome was never recorded (its order may exist). Only a `PENDING` cycle none
+ * of those reached is a schedule entry that holds no money history.
  */
 function recordsBilledMoney(billing: SubscriptionBilling): boolean {
 	return (
 		billing.status !== SubscriptionBillingStatus.PENDING ||
 		!!billing.orderId ||
 		Number(billing.attemptCount ?? 0) > 0 ||
-		!!billing.paidAt
+		!!billing.paidAt ||
+		!!billing.metadata?.[ATTEMPT_REQUEST]
 	);
 }
 
@@ -339,7 +396,8 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 				status: SubscriptionBillingStatus.PENDING,
 				dueAt: input.dueAt ?? periodStart,
 				attemptCount: 0,
-				metadata: input.metadata,
+				// A cycle opened by hand (`POST /subscription-billings`) carries none of the service's own keys.
+				metadata: input.metadata === undefined ? undefined : metadataPart(input.metadata, false),
 				...currentScope()
 			} as any);
 		} catch (error) {
@@ -460,7 +518,9 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			...(deferred || bookkeeping
 				? {
 						metadata: {
-							...(billing.metadata ?? {}),
+							// The run's own outcome starts the service's keys afresh: a cycle it charges was `PENDING` or
+							// `FAILED`, and none of them is the run's on such a cycle.
+							...(chargeClaim ? metadataPart(billing.metadata, false) : billing.metadata ?? {}),
 							...(deferred
 								? {
 										[RIGHTS_DEFERRED]: true,
@@ -584,9 +644,16 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 				nextRetryAt: null,
 				lastError: null,
 				...NO_CHARGE_CLAIM,
-				...(options.bookkeeping
-					? { metadata: { ...(billing.metadata ?? {}), [CYCLE_BOOKKEEPING]: { ...options.bookkeeping } } }
-					: {})
+				// The run's own payment starts the service's keys afresh, as its invoice does (`markInvoiced`): a hand-written
+				// calendar or rights marker would otherwise keep the cycle from moving the calendar it paid for.
+				...(byOperator
+					? {}
+					: {
+							metadata: {
+								...metadataPart(billing.metadata, false),
+								[CYCLE_BOOKKEEPING]: { ...(options.bookkeeping ?? {}) }
+							}
+					  })
 			} as any
 		);
 
@@ -594,17 +661,69 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	}
 
 	/**
+	 * Freezes the request a billing pass is about to send the order path for an attempt, with the bookkeeping it leaves
+	 * (`ATTEMPT_REQUEST`), so a pass that takes the attempt over resends it unchanged.
+	 *
+	 * Written only while the pass still holds the charge claim it names, so no correction can land between the freeze
+	 * and the call, and a pass that lost its claim freezes nothing.
+	 *
+	 * @param id The cycle.
+	 * @param chargeClaim The token of the claim the pass holds.
+	 * @param frozen The attempt, its request and its bookkeeping.
+	 * @returns True when the attempt is frozen; false when the claim is no longer the pass's.
+	 */
+	public async freezeAttempt(id: ID, chargeClaim: string, frozen: IFrozenAttempt): Promise<boolean> {
+		const billing = await this.findOneScoped(id);
+		const written = await this.writeIf(
+			id,
+			{ status: In([...CHARGEABLE_FROM]), chargeClaimToken: chargeClaim },
+			async () => null,
+			{ metadata: { ...(billing.metadata ?? {}), [ATTEMPT_REQUEST]: frozen } }
+		);
+
+		return !!written?.affected;
+	}
+
+	/**
+	 * The request an attempt was frozen with, when the cycle's frozen attempt is the one about to be made.
+	 *
+	 * An attempt whose outcome was recorded moved the attempt count (`markFailed`) or settled the cycle, so a frozen
+	 * request from it no longer matches; only a takeover of the same attempt reads one back.
+	 *
+	 * @param billing The cycle, as the pass claimed it.
+	 * @param attempt The attempt about to be made: `attemptCount + 1`.
+	 * @returns The frozen attempt, its period instants restored to dates, or null.
+	 */
+	public frozenAttemptOf(billing: SubscriptionBilling, attempt: number): IFrozenAttempt | null {
+		const frozen = billing?.metadata?.[ATTEMPT_REQUEST] as IFrozenAttempt | undefined;
+
+		if (!frozen?.request || Number(frozen.attempt) !== attempt) {
+			return null;
+		}
+
+		return {
+			attempt,
+			request: {
+				...frozen.request,
+				periodStart: new Date(frozen.request.periodStart),
+				periodEnd: new Date(frozen.request.periodEnd)
+			},
+			bookkeeping: frozen.bookkeeping ?? {}
+		};
+	}
+
+	/**
 	 * What a cycle the billing run charged left the subscription to record (`CYCLE_BOOKKEEPING`).
 	 *
 	 * @param billing The cycle.
-	 * @returns The credit its order carried and the plan whose setup fee it carried; empty for a cycle that records
-	 * neither, which is every cycle recorded before the run wrote them.
+	 * @returns The credit its order carried and the plan whose setup fee it carried, empty when it carried neither; null
+	 * for a cycle whose outcome was recorded before the run wrote them, which says nothing either way.
 	 */
-	public bookkeepingOf(billing: SubscriptionBilling): ICycleBookkeeping {
+	public bookkeepingOf(billing: SubscriptionBilling): ICycleBookkeeping | null {
 		const recorded = billing?.metadata?.[CYCLE_BOOKKEEPING] as ICycleBookkeeping | undefined;
 
 		if (!recorded || typeof recorded !== 'object') {
-			return {};
+			return null;
 		}
 
 		return {
@@ -1170,6 +1289,14 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 
 		if (correction['amount'] !== undefined) {
 			correction = { ...correction, amount: this.normalizeAmount(correction['amount'] as DecimalString, billing.currency) };
+		}
+
+		if (correction['metadata'] !== undefined) {
+			// The caller's own keys; the service's keys stay as the cycle carries them (`SERVICE_OWNED_CYCLE_KEYS`).
+			correction = {
+				...correction,
+				metadata: { ...metadataPart(correction['metadata'], false), ...metadataPart(billing.metadata, true) }
+			};
 		}
 
 		// The statement is conditional on the cycle still recording no money billed and no pass charging it, so a charge
