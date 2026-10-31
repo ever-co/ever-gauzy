@@ -154,12 +154,15 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	/**
-	 * Sets the employee ID and triggers change and touch events.
+	 * Narrows the list to the employee's projects and reloads it.
 	 *
 	 * @param value - The ID of the employee to be set.
 	 */
 	@Input()
 	public set employeeId(value: ID) {
+		if (value !== this._employeeId) {
+			this.clearProjects();
+		}
 		this._employeeId = value;
 		this.subject$.next(true);
 	}
@@ -174,12 +177,15 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	/**
-	 * Sets the organization contact ID and triggers change and touch events.
+	 * Narrows the list to the projects of the organization contact (client) and reloads it.
 	 *
 	 * @param value - The ID of the organization contact to be set.
 	 */
 	@Input()
 	public set organizationContactId(value: ID) {
+		if (value !== this._organizationContactId) {
+			this.clearProjects();
+		}
 		this._organizationContactId = value;
 		this.subject$.next(true);
 	}
@@ -388,6 +394,16 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			this._errorHandlingService.handleError(error);
 			return false;
 		}
+	}
+
+	/**
+	 * Empties the list once the client or employee it is narrowed to changes, until the new list loads.
+	 * The previous filter's projects must not be offered meanwhile: one picked from them would not belong
+	 * to the new client or employee. A failed load leaves the list empty rather than offering them again.
+	 * The selected project keeps its label, as ng-select does not drop a selection for an empty list.
+	 */
+	private clearProjects(): void {
+		this.projects = [];
 	}
 
 	/**
