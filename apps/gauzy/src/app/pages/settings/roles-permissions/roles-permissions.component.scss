@@ -262,7 +262,8 @@ $muted: var(--text-hint-color);
     font-weight: 400;
     line-height: 1rem;
     text-align: start;
-    color: nb-theme(gauzy-text-color-2);
+    // Material light and dark do not define gauzy-text-color-2; fall back to their hint color.
+    color: var(--gauzy-text-color-2, var(--text-hint-color));
   }
 
   // Was 16px / 600 on every one of ~100 rows, which made the list read as a
