@@ -199,6 +199,21 @@ export interface ITimeOffBalance extends IBasePerTenantAndOrganizationEntityMode
 	remaining: number;
 }
 
+/**
+ * The days one approved time-off request took from one balance (one employee, one policy, one year).
+ *
+ * Written when the request is approved and removed when the approval is taken back, so a reversal gives back
+ * exactly what the approval took, and a repeated approval finds the days already taken (issue #10183).
+ */
+export interface ITimeOffBalanceDeduction extends IBasePerTenantAndOrganizationEntityModel {
+	timeOffRequest?: ITimeOff;
+	timeOffRequestId: ID;
+	balance?: ITimeOffBalance;
+	balanceId: ID;
+	/** Working days taken from the balance. Always positive. */
+	days: number;
+}
+
 export interface ITimeOffBalanceFindInput extends IBasePerTenantAndOrganizationEntityModel {
 	employeeId?: ID;
 	policyId?: ID;
