@@ -14,6 +14,7 @@ import {
 	assertPlainReferencesNotForeign,
 	bumpVersion,
 	commitVersionedUpdate,
+	isUniqueViolation,
 	parseEntityVersion
 } from '@gauzy/core';
 import { Entitlement } from './entitlement.entity';
@@ -37,6 +38,11 @@ import { ENTITLEMENT_RULE_OWNER, toRuleInputs } from '../entitlement-conditions'
 import { isDueForExpiry, toWholeQuantity } from '../entitlement-check/entitlement-rules';
 import { recountEntitlementOccupancy } from '../entitlement-counts';
 import { lockEntitlement } from '../entitlement-lock';
+import {
+	DERIVED_ENTITLEMENT_NUMBER_ATTEMPTS,
+	IEntitlementNumber,
+	deriveEntitlementNumber
+} from '../entitlement-number';
 import { ENTITLEMENT_REFERENCES } from '../entitlement.references';
 import {
 	appendEntitlementEvent,
@@ -182,6 +188,10 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	 * the transaction opens, because the numbering series takes its own row lock and a number that is
 	 * never used is cheaper than a deadlock between two series.
 	 *
+	 * The replay holds under concurrency too (#11023): two deliveries of one line that both read no
+	 * right before either wrote one are refused by `UQ_entitlement_live_line_grant` on the second insert,
+	 * and {@link insertGrant} answers that refusal with the right the first one wrote.
+	 *
 	 * @param input What grants the right, and what it carries.
 	 * @param scope The tenant and organization the grant belongs to; the request context is the
 	 * fallback, so the same method serves an operator and a replayed order event.
@@ -225,19 +235,18 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 			return { entitlement: existing, created: false };
 		}
 
-		const number = input.number ?? (await this.allocateNumber(input));
 		const tenantId = scope.tenantId ?? RequestContext.currentTenantId();
 		const organizationId = scope.organizationId ?? RequestContext.currentOrganizationId();
 
-		const entitlement = await this.transaction(async (manager) => {
-			const row = manager.create(Entitlement, {
+		const inserted = await this.insertGrant(
+			input,
+			{
 				customerId: input.customerId ?? null,
 				orderId: input.orderId ?? null,
 				orderLineId: input.orderLineId ?? null,
 				subscriptionId: input.subscriptionId ?? null,
 				productId: input.productId ?? null,
 				variantId: input.variantId ?? null,
-				number,
 				kind,
 				quantity,
 				startsAt,
@@ -259,33 +268,17 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 				metadata: (input.metadata as any) ?? null,
 				...(tenantId ? { tenantId } : {}),
 				...(organizationId ? { organizationId } : {})
-			} as Partial<Entitlement>);
+			} as Partial<Entitlement>,
+			scope
+		);
 
-			const saved = await manager.save(Entitlement, row);
+		if (!inserted.created) {
+			// A concurrent grant of the same provenance wrote the right first; this call is its replay, and
+			// a replay announces nothing, writes no conditions and issues no second key.
+			return { entitlement: inserted.entitlement, created: false };
+		}
 
-			await appendEntitlementEvent(this.outbox, manager, {
-				name: EntitlementEventName.CREATED,
-				aggregateType: 'ENTITLEMENT',
-				aggregateId: saved.id as ID,
-				data: {
-					entitlementId: saved.id,
-					customerId: saved.customerId ?? null,
-					orderId: saved.orderId ?? null,
-					orderLineId: saved.orderLineId ?? null,
-					subscriptionId: saved.subscriptionId ?? null,
-					kind: saved.kind,
-					quantity: saved.quantity,
-					startsAt: saved.startsAt,
-					endsAt: saved.endsAt ?? null,
-					status: saved.status,
-					number: saved.number
-				},
-				tenantId,
-				organizationId
-			});
-
-			return saved;
-		});
+		const entitlement = inserted.entitlement;
 
 		// The rule set is written after the right exists, in the rule engine's own transaction: the
 		// rules are rows in a kernel table that this package does not own, and the only thing that has
@@ -327,6 +320,38 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	}
 
 	/**
+	 * Reads the rights one provenance granted: an order, one of its lines, or a subscription.
+	 *
+	 * What the event consumer withdraws, reduces or revokes through. It reads through the same path as this
+	 * service's own reads outside a transaction ({@link entitlementRows}): the TypeORM repository under TypeORM,
+	 * and a fresh MikroORM fork under MikroORM, so a delivery that runs without a request (and therefore without a
+	 * MikroORM request context) can still read. Only the scope stated is applied; there is no caller to read it
+	 * from.
+	 *
+	 * @param provenance The order, the order line or the subscription; at least one must be named.
+	 * @param scope The tenant and organization the event belongs to.
+	 * @returns The rights, in any status; none when no provenance is named.
+	 */
+	public async findGranted(
+		provenance: { orderId?: ID; orderLineId?: ID; subscriptionId?: ID },
+		scope: IEntitlementScope = {}
+	): Promise<Entitlement[]> {
+		if (!provenance.orderId && !provenance.orderLineId && !provenance.subscriptionId) {
+			return [];
+		}
+
+		return await this.entitlementRows().find({
+			where: {
+				...(provenance.orderId ? { orderId: provenance.orderId } : {}),
+				...(provenance.orderLineId ? { orderLineId: provenance.orderLineId } : {}),
+				...(provenance.subscriptionId ? { subscriptionId: provenance.subscriptionId } : {}),
+				...(scope.tenantId ? { tenantId: scope.tenantId } : {}),
+				...(scope.organizationId ? { organizationId: scope.organizationId } : {})
+			} as any
+		});
+	}
+
+	/**
 	 * Puts the rights a purchase granted into force.
 	 *
 	 * This is what the payment, order-completion and subscription events call: a right is granted
@@ -343,12 +368,14 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	 * right that is `EXPIRED` with its event emitted, its keys withdrawn and its activations closed
 	 * rather than a row that only looks closed.
 	 *
-	 * @param filter Which rights to put into force: the order they came from, or the subscription.
+	 * @param filter Which rights to put into force: the order they came from, or the subscription. With an
+	 * order, `orderLineId` narrows it to the rights one of its lines granted, for a caller that decides line
+	 * by line whether a purchase is still paid for (#11023); it is ignored without an order.
 	 * @param scope The tenant and organization the event belongs to.
 	 * @returns The ids of the rights that were put into force.
 	 */
 	public async activateGranted(
-		filter: { orderId?: ID; subscriptionId?: ID },
+		filter: { orderId?: ID; orderLineId?: ID; subscriptionId?: ID },
 		scope: IEntitlementScope = {}
 	): Promise<ID[]> {
 		if (!filter.orderId && !filter.subscriptionId) {
@@ -363,7 +390,12 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 			const pending = await manager.find(Entitlement, {
 				where: {
 					status: EntitlementStatus.PENDING,
-					...(filter.orderId ? { orderId: filter.orderId } : { subscriptionId: filter.subscriptionId }),
+					...(filter.orderId
+						? {
+								orderId: filter.orderId,
+								...(filter.orderLineId ? { orderLineId: filter.orderLineId } : {})
+							}
+						: { subscriptionId: filter.subscriptionId }),
 					...(tenantId ? { tenantId } : {}),
 					...(organizationId ? { organizationId } : {})
 				} as any
@@ -621,7 +653,7 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	 * customer paid for less than they were granted, not for nothing. The surplus activations are
 	 * revoked newest-first — the seats taken longest ago are the ones a customer is likeliest to still
 	 * be using — and a right reduced to zero is revoked outright, because a right that permits nothing
-	 * is not a right.
+	 * is not a right. A right that is already revoked is answered as it stands, with no write and no event.
 	 *
 	 * @param id The right to reduce.
 	 * @param quantity The ceiling that remains.
@@ -646,6 +678,13 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 
 		return await this.transaction(async (manager) => {
 			const entitlement = await this.requireLocked(manager, id, scope);
+
+			// A revoked right permits nothing, so every reduction of it already holds: like `revoke`, and like a
+			// reduction to zero (which is one), it changes nothing and announces nothing. It is decided under the
+			// lock, so a revocation that commits after the caller read the right is seen here.
+			if (entitlement.status === EntitlementStatus.REVOKED) {
+				return entitlement;
+			}
 
 			if (next >= Number(entitlement.quantity)) {
 				throw new BadRequestException(
@@ -1250,6 +1289,113 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	}
 
 	/**
+	 * Writes a new right with its `entitlement.created` event, or answers the right a concurrent grant of
+	 * the same provenance wrote first.
+	 *
+	 * The read in {@link grant} finds a right that was already granted, but it cannot see one another
+	 * delivery is writing at the same instant: the consumer is at-least-once and reorderable, so two
+	 * deliveries of one `order.placed` — or an operator's grant racing the event — can both read nothing
+	 * and both insert (#11023). The database is what decides that race. `UQ_entitlement_live_line_grant`
+	 * holds one live right per line and kind, and `UQ_entitlement_number` one right per number, so the
+	 * second insert is refused with a unique violation, its transaction rolls back with its event, and the
+	 * refusal is answered here by state rather than by parsing a driver message:
+	 *
+	 * - **the provenance now has a live right** — a concurrent grant won; that right is returned as a
+	 *   replay, exactly as the read would have returned it a moment later;
+	 * - **it has none, and the number was derived from the provenance** — the number is held by a right
+	 *   that no longer counts (the line's revoked right keeps its number), so the next revision of it is
+	 *   tried, a bounded number of times;
+	 * - **anything else** — a number the caller stated or the series allocated is held by another right —
+	 *   is the caller's conflict, and the database's refusal is rethrown as it was.
+	 *
+	 * Every other error is rethrown untouched.
+	 *
+	 * @param input What grants the right.
+	 * @param row The row to write, without its number.
+	 * @param scope The tenant and organization the grant belongs to.
+	 * @returns The right, and whether this call wrote it.
+	 */
+	private async insertGrant(
+		input: IEntitlementGrantInput,
+		row: Partial<Entitlement>,
+		scope: IEntitlementScope
+	): Promise<{ entitlement: Entitlement; created: boolean }> {
+		let number: IEntitlementNumber = input.number
+			? { value: input.number, derived: false }
+			: await this.allocateNumber(input);
+
+		for (let attempt = 1; ; attempt++) {
+			try {
+				const entitlement = await this.transaction((manager) =>
+					this.writeGrant(manager, { ...row, number: number.value } as Partial<Entitlement>)
+				);
+
+				return { entitlement, created: true };
+			} catch (error) {
+				if (!isUniqueViolation(error)) {
+					throw error;
+				}
+
+				const raced = await this.findExistingGrant(input, row.kind as EntitlementKind, scope);
+
+				if (raced) {
+					this.logger.debug(
+						`A concurrent grant of ${input.orderLineId ?? input.subscriptionId ?? input.number} wrote ${raced.id} first; returning it.`
+					);
+
+					return { entitlement: raced, created: false };
+				}
+
+				const next = number.derived ? deriveEntitlementNumber(input, attempt) : undefined;
+
+				if (!next || attempt >= DERIVED_ENTITLEMENT_NUMBER_ATTEMPTS) {
+					throw error;
+				}
+
+				this.logger.warn(
+					`The number "${number.value}" derived for this grant is held by another right, so the right is numbered "${next}".`
+				);
+
+				number = { value: next, derived: true };
+			}
+		}
+	}
+
+	/**
+	 * Writes one new right and its `entitlement.created` event, in the caller's transaction.
+	 *
+	 * @param manager The caller's transaction manager.
+	 * @param values The row's columns, its number included.
+	 * @returns The stored right.
+	 */
+	private async writeGrant(manager: EntityManager, values: Partial<Entitlement>): Promise<Entitlement> {
+		const saved = await manager.save(Entitlement, manager.create(Entitlement, values));
+
+		await appendEntitlementEvent(this.outbox, manager, {
+			name: EntitlementEventName.CREATED,
+			aggregateType: 'ENTITLEMENT',
+			aggregateId: saved.id as ID,
+			data: {
+				entitlementId: saved.id,
+				customerId: saved.customerId ?? null,
+				orderId: saved.orderId ?? null,
+				orderLineId: saved.orderLineId ?? null,
+				subscriptionId: saved.subscriptionId ?? null,
+				kind: saved.kind,
+				quantity: saved.quantity,
+				startsAt: saved.startsAt,
+				endsAt: saved.endsAt ?? null,
+				status: saved.status,
+				number: saved.number
+			},
+			tenantId: values.tenantId,
+			organizationId: values.organizationId
+		});
+
+		return saved;
+	}
+
+	/**
 	 * Looks for the right a grant would duplicate.
 	 *
 	 * The provenance is the identity: one granting line grants one right of a kind, and one
@@ -1337,48 +1483,28 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	 * key rather than reporting a generic not-found.
 	 *
 	 * @param input What grants the right.
-	 * @returns The formatted number.
+	 * @returns The formatted number, and whether it was derived from the provenance.
 	 * @throws BadRequestException when no number can be allocated or derived.
 	 */
-	private async allocateNumber(input: IEntitlementGrantInput): Promise<string> {
+	private async allocateNumber(input: IEntitlementGrantInput): Promise<IEntitlementNumber> {
 		try {
 			const allocated = await this.sequenceService.allocate(ENTITLEMENT_NUMBER_KEY);
 
-			return allocated.formatted;
+			return { value: allocated.formatted, derived: false };
 		} catch (error) {
-			const derived = this.deriveNumber(input);
+			const derived = deriveEntitlementNumber(input);
 
 			if (derived) {
 				this.logger.warn(
 					`No numbering series "${ENTITLEMENT_NUMBER_KEY}" is reachable for this grant, so the right is numbered from its provenance as "${derived}".`
 				);
 
-				return derived;
+				return { value: derived, derived: true };
 			}
 
 			throw new BadRequestException(
 				`No numbering series is configured for entitlements (key "${ENTITLEMENT_NUMBER_KEY}"), so a right cannot be numbered.`
 			);
 		}
-	}
-
-	/**
-	 * @param input What grants the right.
-	 * @returns A number derived from the purchase that granted it, or undefined when it came from no
-	 * purchase.
-	 */
-	private deriveNumber(input: IEntitlementGrantInput): string | undefined {
-		const kind = (input.kind ?? EntitlementKind.LICENCE).charAt(0);
-		const short = (value: ID): string => String(value).replace(/-/g, '').slice(0, 8).toUpperCase();
-
-		if (input.orderId && input.orderLineId) {
-			return `E-${short(input.orderId)}-${short(input.orderLineId)}-${kind}`;
-		}
-
-		if (input.subscriptionId) {
-			return `E-SUB-${short(input.subscriptionId)}-${kind}`;
-		}
-
-		return undefined;
 	}
 }
