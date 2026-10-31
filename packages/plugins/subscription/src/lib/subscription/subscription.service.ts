@@ -33,6 +33,7 @@ import {
 	ISubscriptionInstrumentPort,
 	ISubscriptionItemInput,
 	ISubscriptionOrderGatewayPort,
+	ISubscriptionOrderResult,
 	ISubscriptionPlanChangeOutcome,
 	ISubscriptionBillingOutcome,
 	ISubscriptionBillingRunOutcome,
@@ -70,7 +71,7 @@ import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription
 import { SubscriptionItem } from '../subscription-item/subscription-item.entity';
 import { SubscriptionItemService } from '../subscription-item/subscription-item.service';
 import { SubscriptionBilling } from '../subscription-billing/subscription-billing.entity';
-import { SubscriptionBillingService } from '../subscription-billing/subscription-billing.service';
+import { CHARGE_CLAIM_LOST, SubscriptionBillingService } from '../subscription-billing/subscription-billing.service';
 import { Subscription } from './subscription.entity';
 import { MikroOrmSubscriptionRepository } from './repository/mikro-orm-subscription.repository';
 import { TypeOrmSubscriptionRepository } from './repository/type-orm-subscription.repository';
@@ -130,6 +131,25 @@ function spendableExpectation(expectation: IVersionExpectation): () => IVersionE
 
 /** The key a billing cycle's idempotency claim is scoped under. */
 const BILLING_SCOPE = 'subscription.bill';
+
+/**
+ * The code the order path refuses an attempt with while another call still holds the attempt's key and is working
+ * (`ISubscriptionOrderGatewayPort.raiseSubscriptionOrder`).
+ *
+ * That attempt is in flight elsewhere, not failed. Recorded as a failure, it would move the cycle's attempt count — and
+ * with it the order key of the next attempt, which the order path no longer fences against the call still running.
+ */
+const ORDER_ATTEMPT_IN_FLIGHT = 'ORDER_SUBSCRIPTION_IN_FLIGHT';
+
+/**
+ * The code the order path refuses an attempt with when its key already raised an order for a request priced otherwise
+ * (`ISubscriptionOrderGatewayPort.raiseSubscriptionOrder`).
+ *
+ * The attempt key is reused only by a pass that recovered a stale claim, and the call that took the key first is one
+ * whose outcome this pass cannot learn: recorded as a failure, it would move the attempt count, and the next attempt's
+ * new key could charge a period that call already charged.
+ */
+const ORDER_ATTEMPT_KEY_REUSED = 'ORDER_SUBSCRIPTION_KEY_REUSED';
 
 /** The key a proration charge's idempotency claim is scoped under. */
 const PRORATION_SCOPE = 'subscription.proration';
@@ -2065,17 +2085,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		if (existing && RAISED_CYCLE_STATUSES.includes(existing.status)) {
 			// The period is settled. Recomputing it would be a second answer to a question the row has
 			// already answered, and acting on that answer is how a customer is charged twice.
-			return {
-				subscriptionId: subscription.id,
-				billingId: existing.id,
-				status: existing.status,
-				replayed: true,
-				orderId: existing.orderId,
-				amount: existing.amount,
-				currency: existing.currency,
-				periodStart: existing.periodStart,
-				periodEnd: existing.periodEnd
-			};
+			return this.raisedCycleOutcome(subscription, existing);
 		}
 
 		if (existing?.nextRetryAt && !manual && new Date(existing.nextRetryAt).getTime() > now.getTime()) {
@@ -2096,84 +2106,224 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		// to the writes rather than to the calls, and a path that writes nothing does not spend it.
 		const spend = spendableExpectation(expectation);
 
-		// A change taken from the next period (`effective = 'NEXT_PERIOD'`) takes hold here, as the period it was
-		// scheduled for opens: the period is priced on the plan and lines it moved to. It used to be recorded and never
-		// read, so the subscription kept renewing on the plan it was leaving. The cycle holds the period's claim, so one
-		// pass applies it.
-		const opened = await this.applyScheduledChange(subscription.id, period.start, spend, existing, plan);
+		// The charge is claimed on the cycle before anything touches it, and while the order path is called the claim is
+		// what an operator's `pay` or `waive` meets (`SubscriptionBillingService.claimCharge`). One conditional statement
+		// takes it, so no row lock is held across the external call. A row an earlier attempt wrote is claimed before the
+		// change scheduled for its period restates it and before the retry reprices it, so both write under the claim; a
+		// row this attempt opens is claimed as soon as it exists.
+		let claim = existing ? await this.billingService.claimCharge(existing.id) : null;
 
-		if (opened) {
-			// Applied or refused, the cycle goes on with the subscription as the change left it: its later writes
-			// (`rememberSetupFee`, `clearPendingCredit`) write the metadata they were handed, and the one read before the
-			// change would put a cleared change back.
-			subscription = opened.subscription;
-			items = await this.itemService.findForSubscription(subscription.id);
+		if (claim && !claim.token) {
+			return this.unclaimedCycleOutcome(subscription, claim.billing);
+		}
 
-			if (opened.plan) {
-				plan = opened.plan;
-				// The period opens on the new plan's cadence. A row an earlier attempt wrote for it moved its end with the
-				// change, so every later retry, which reads the period from the plan, finds the row on the same period.
-				period = periodFrom(period.start, this.planService.cadenceOf(plan));
-				existing = existing ? await this.billingService.findByPeriod(subscription.id, period.start) : existing;
+		// The claimed row is the one charged: a pass that recovered a stale claim reads the attempt count the earlier
+		// call left, so it calls the order path under that call's attempt key and the order path's own idempotency says
+		// what the call did.
+		existing = claim ? claim.billing : existing;
+		let stillFenced = false;
+
+		try {
+			// A change taken from the next period (`effective = 'NEXT_PERIOD'`) takes hold here, as the period it was
+			// scheduled for opens: the period is priced on the plan and lines it moved to. It used to be recorded and never
+			// read, so the subscription kept renewing on the plan it was leaving. The cycle holds the period's claim, so one
+			// pass applies it.
+			const opened = await this.applyScheduledChange(subscription.id, period.start, spend, existing, plan, claim?.token);
+
+			if (opened) {
+				// Applied or refused, the cycle goes on with the subscription as the change left it: its later writes
+				// (`rememberSetupFee`, `clearPendingCredit`) write the metadata they were handed, and the one read before the
+				// change would put a cleared change back.
+				subscription = opened.subscription;
+				items = await this.itemService.findForSubscription(subscription.id);
+
+				if (opened.plan) {
+					plan = opened.plan;
+					// The period opens on the new plan's cadence. A row an earlier attempt wrote for it moved its end with the
+					// change, so every later retry, which reads the period from the plan, finds the row on the same period.
+					period = periodFrom(period.start, this.planService.cadenceOf(plan));
+					existing = existing ? await this.billingService.findByPeriod(subscription.id, period.start) : existing;
+				}
+			}
+
+			// The one computation of a cycle's amount, which the upcoming-billing preview calls as well.
+			const { gross, discount, net } = priceCycle({
+				items,
+				currency: subscription.currency,
+				plan,
+				metadata: subscription.metadata
+			});
+
+			// A retry charges what it prices now (the lines as they stand, a change that took hold at this attempt), so the
+			// row an earlier attempt wrote records that: the amount the cycle settles for, and that `subscription.renewed`
+			// reports, is the amount its order charged.
+			const pricing = { gross: gross.toStorageString(), discount: discount.toStorageString() };
+			// A row the change restated on its own transaction (`applyScheduledChange`) already carries this discount, so its
+			// discount rows are brought to it first: a payment recorded after that commit stops the retry below
+			// (`SUBSCRIPTION_BILLING_CYCLE_SETTLED`), and the row it settled then still agrees with its ledger.
+			const restated = !!existing && !!opened?.plan;
+
+			if (restated) {
+				await this.appendDiscount(existing as SubscriptionBilling, subscription, discount);
+			}
+
+			const priced = existing
+				? await this.billingService.repriceUnsettled(existing, net.toStorageString(), pricing, claim.token)
+				: await this.billingService.createPending({
+						subscriptionId: subscription.id,
+						periodStart: period.start,
+						periodEnd: period.end,
+						amount: net.toStorageString(),
+						currency: subscription.currency,
+						dueAt: period.start,
+						metadata: pricing
+				  });
+
+			if (!claim) {
+				claim = await this.billingService.claimCharge(priced.id);
+
+				if (!claim.token) {
+					return this.unclaimedCycleOutcome(subscription, claim.billing);
+				}
+			}
+
+			const billing = existing ? priced : claim.billing;
+
+			if (!restated) {
+				await this.appendDiscount(billing, subscription, discount);
+			}
+
+			const credit = await this.consumePendingCredit(subscription, billing);
+
+			const failure = await this.raiseCycleOrder(
+				subscription,
+				plan,
+				items,
+				billing,
+				period,
+				net,
+				credit,
+				discount,
+				spend,
+				claim.token
+			);
+
+			if (failure?.code === ORDER_ATTEMPT_IN_FLIGHT) {
+				// An earlier call is still charging this attempt, and the order path still fences it. This pass records
+				// nothing and keeps its claim, so the cycle stays fenced against an operator for as long as the order path
+				// fences the call; that call's outcome ends the claim, or the claim goes stale and the next pass recovers it.
+				stillFenced = true;
+
+				return this.unclaimedCycleOutcome(subscription, billing);
+			}
+
+			if (failure?.code === CHARGE_CLAIM_LOST) {
+				// The charge outlived its claim and another pass holds the cycle; that pass records it.
+				return this.unclaimedCycleOutcome(subscription, await this.billingService.findOneScoped(billing.id));
+			}
+
+			if (failure?.code === ORDER_ATTEMPT_KEY_REUSED) {
+				// An earlier call of this attempt raised its order on other terms (the cycle was repriced since), and its
+				// outcome cannot be read from here. Nothing is recorded, so the attempt count and the key stay where that
+				// call left them; the claim is released, so an operator can reconcile the cycle with that order.
+				this.logger.error(
+					`Subscription ${subscription.id}: attempt ${(billing.attemptCount ?? 0) + 1} of cycle ${billing.id} ` +
+						`already raised an order on other terms; the cycle is left for an operator to reconcile with it.`
+				);
+
+				return {
+					subscriptionId: subscription.id,
+					billingId: billing.id,
+					status: billing.status,
+					replayed: true,
+					periodStart: billing.periodStart,
+					periodEnd: billing.periodEnd,
+					errorCode: ORDER_ATTEMPT_KEY_REUSED,
+					message:
+						'An earlier call of this attempt raised its order on other terms; nothing is recorded until the cycle is reconciled with that order.'
+				};
+			}
+
+			if (failure) {
+				return await this.recordFailure(subscription, billing, failure, now, spend(), claim.token);
+			}
+
+			return await this.recordSuccess(subscription, plan, billing, period, items, spend());
+		} finally {
+			if (claim?.token && !stillFenced) {
+				await this.endChargeClaim(claim.billing, claim.token);
 			}
 		}
+	}
 
-		// The one computation of a cycle's amount, which the upcoming-billing preview calls as well.
-		const { gross, discount, net } = priceCycle({
-			items,
-			currency: subscription.currency,
-			plan,
-			metadata: subscription.metadata
-		});
+	/**
+	 * Ends a cycle's charge claim once the attempt that took it is over.
+	 *
+	 * The write that recorded the attempt's outcome has ended it already, and the token keeps a claim another pass
+	 * recovered in place. A release that fails leaves the claim to go stale, which fences the cycle a little longer
+	 * and is answered by the next pass, so it does not replace the cycle's own answer.
+	 *
+	 * @param billing The cycle.
+	 * @param token The claim's token.
+	 */
+	private async endChargeClaim(billing: SubscriptionBilling, token: string): Promise<void> {
+		try {
+			await this.billingService.releaseChargeClaim(billing.id, token);
+		} catch (error) {
+			// The driver's message without the statement's bound values, as the platform's database-error filter logs it.
+			const redacted = redactDatabaseError(error);
 
-		// A retry charges what it prices now (the lines as they stand, a change that took hold at this attempt), so the row
-		// an earlier attempt wrote records that: the amount the cycle settles for, and that `subscription.renewed`
-		// reports, is the amount its order charged.
-		const pricing = { gross: gross.toStorageString(), discount: discount.toStorageString() };
-		// A row the change restated on its own transaction (`applyScheduledChange`) already carries this discount, so its
-		// discount rows are brought to it first: a payment recorded after that commit stops the retry below
-		// (`SUBSCRIPTION_BILLING_CYCLE_SETTLED`), and the row it settled then still agrees with its ledger.
-		const restated = !!existing && !!opened?.plan;
+			this.logger.warn(
+				`Subscription ${billing.subscriptionId}: the charge claim on cycle ${billing.id} was not released ` +
+					`(${redacted instanceof Error ? redacted.message : 'a database error'}); it goes stale and the next ` +
+					`pass recovers it.`
+			);
+		}
+	}
 
-		if (restated) {
-			await this.appendDiscount(existing as SubscriptionBilling, subscription, discount);
+	/**
+	 * What a pass answers for a period whose cycle is already raised: the row's own record of it.
+	 *
+	 * @param subscription The subscription being billed.
+	 * @param billing The raised cycle.
+	 * @returns The replayed outcome.
+	 */
+	private raisedCycleOutcome(subscription: Subscription, billing: SubscriptionBilling): ISubscriptionBillingOutcome {
+		return {
+			subscriptionId: subscription.id,
+			billingId: billing.id,
+			status: billing.status,
+			replayed: true,
+			orderId: billing.orderId,
+			amount: billing.amount,
+			currency: billing.currency,
+			periodStart: billing.periodStart,
+			periodEnd: billing.periodEnd
+		};
+	}
+
+	/**
+	 * What a pass answers for a cycle it could not charge: one settled since it was read, or one another pass is
+	 * charging. Nothing is charged, written or told, so nothing is spent either.
+	 *
+	 * @param subscription The subscription being billed.
+	 * @param billing The cycle as it now stands.
+	 * @returns The replayed outcome.
+	 */
+	private unclaimedCycleOutcome(subscription: Subscription, billing: SubscriptionBilling): ISubscriptionBillingOutcome {
+		if (RAISED_CYCLE_STATUSES.includes(billing.status)) {
+			return this.raisedCycleOutcome(subscription, billing);
 		}
 
-		const billing = existing
-			? await this.billingService.repriceUnsettled(existing, net.toStorageString(), pricing)
-			: await this.billingService.createPending({
-					subscriptionId: subscription.id,
-					periodStart: period.start,
-					periodEnd: period.end,
-					amount: net.toStorageString(),
-					currency: subscription.currency,
-					dueAt: period.start,
-					metadata: pricing
-			  });
-
-		if (!restated) {
-			await this.appendDiscount(billing, subscription, discount);
-		}
-
-		const credit = await this.consumePendingCredit(subscription, billing);
-
-		const failure = await this.raiseCycleOrder(
-			subscription,
-			plan,
-			items,
-			billing,
-			period,
-			net,
-			credit,
-			discount,
-			spend
-		);
-
-		if (failure) {
-			return await this.recordFailure(subscription, billing, failure, now, spend());
-		}
-
-		return await this.recordSuccess(subscription, plan, billing, period, items, spend());
+		return {
+			subscriptionId: subscription.id,
+			billingId: billing.id,
+			status: billing.status,
+			replayed: true,
+			periodStart: billing.periodStart,
+			periodEnd: billing.periodEnd,
+			message: 'Another billing pass is charging this cycle, so this pass leaves it to that one.'
+		};
 	}
 
 	/**
@@ -2189,6 +2339,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param discount The plan discount granted, when one was.
 	 * @param nextExpectation The reader the two subscription writes below take their expectation from,
 	 * so that whichever of them runs first carries the version the route's caller stated.
+	 * @param chargeClaim The token of the charge claim this pass holds on the cycle, which its payment ends.
 	 * @returns A platform code and message when the charge could not be made, or undefined on success.
 	 */
 	private async raiseCycleOrder(
@@ -2200,7 +2351,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		net: Money,
 		credit: Money | null,
 		discount: Money,
-		nextExpectation: () => IVersionExpectation
+		nextExpectation: () => IVersionExpectation,
+		chargeClaim: string
 	): Promise<{ code: string; message: string } | undefined> {
 		if (!this.orderGateway) {
 			return {
@@ -2224,8 +2376,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		// attempt still collide, which is what stops one attempt charging twice.
 		const attempt = (billing.attemptCount ?? 0) + 1;
 
+		let result: ISubscriptionOrderResult;
+
 		try {
-			const result = await this.orderGateway.raiseSubscriptionOrder({
+			result = await this.orderGateway.raiseSubscriptionOrder({
 				subscriptionId: subscription.id,
 				billingId: billing.id,
 				customerId: subscription.customerId,
@@ -2248,53 +2402,6 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				idempotencyKey: `${subscription.id}:${period.start.toISOString()}:${attempt}`,
 				note: `Subscription cycle ${period.start.toISOString()}, attempt ${attempt}`
 			});
-
-			if (!result?.orderId) {
-				return {
-					code: 'SUBSCRIPTION_ORDER_NOT_RAISED',
-					message: 'The order capability did not return an order for this cycle.'
-				};
-			}
-
-			if (result.paid) {
-				try {
-					await this.billingService.markPaid(billing.id, {
-						paidAt: result.paidAt ?? new Date(),
-						orderId: result.orderId,
-						attemptCount: billing.attemptCount ?? 0
-					});
-				} catch (error) {
-					// The money was taken; an operator settled the cycle another way (waived or refunded it) while the
-					// charge was in flight. That is not a failed charge, and reporting it as one would schedule a retry -
-					// a second charge. The cycle keeps the operator's decision and the conflict is logged for follow-up.
-					if ((error as { response?: { code?: string } })?.response?.code !== 'SUBSCRIPTION_BILLING_TRANSITION_INVALID') {
-						throw error;
-					}
-
-					this.logger.warn(
-						`Subscription ${subscription.id}: cycle ${billing.id} was settled by an operator while its charge ` +
-							`(order ${result.orderId}) succeeded; the cycle keeps the operator's status.`
-					);
-				}
-			} else {
-				// R4-05: nothing was paid, so the rights of the period wait for the payment. The flags are written
-				// with the status, so no payment can see the cycle invoiced without them.
-				// Q7-W4: the calendar waits for the payment too, so the flag that says so is written with the status.
-				await this.billingService.markInvoiced(billing.id, result.orderId, net.toStorageString(), {
-					activation: this.convertsTrial(subscription, plan),
-					calendar: true
-				});
-			}
-
-			if (setupFee) {
-				await this.rememberSetupFee(subscription, plan, nextExpectation());
-			}
-
-			if (credit && !credit.isZero()) {
-				await this.clearPendingCredit(subscription, nextExpectation());
-			}
-
-			return undefined;
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 
@@ -2303,6 +2410,81 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				message
 			};
 		}
+
+		if (!result?.orderId) {
+			return {
+				code: 'SUBSCRIPTION_ORDER_NOT_RAISED',
+				message: 'The order capability did not return an order for this cycle.'
+			};
+		}
+
+		// The order exists from here on, so an error recording its outcome is not a failed charge: recorded as one, it
+		// moved the attempt count, and the next attempt's new key charged the customer again. It propagates instead; the
+		// cycle keeps its attempt count and the claim is released, so the next pass calls the order path under this same
+		// attempt key and is handed this order to record.
+		try {
+			if (result.paid) {
+				await this.billingService.markPaid(billing.id, {
+					paidAt: result.paidAt ?? new Date(),
+					orderId: result.orderId,
+					attemptCount: billing.attemptCount ?? 0,
+					chargeClaim
+				});
+			} else {
+				// R4-05: nothing was paid, so the rights of the period wait for the payment. The flags are written
+				// with the status, so no payment can see the cycle invoiced without them.
+				// Q7-W4: the calendar waits for the payment too, so the flag that says so is written with the status.
+				await this.billingService.markInvoiced(
+					billing.id,
+					result.orderId,
+					net.toStorageString(),
+					{ activation: this.convertsTrial(subscription, plan), calendar: true },
+					chargeClaim
+				);
+			}
+		} catch (error) {
+			const code = (error as { response?: { code?: string } })?.response?.code;
+
+			if (code === CHARGE_CLAIM_LOST) {
+				// This charge outlived its claim, and another pass recovered the cycle. That pass charges under the same
+				// attempt key, so the order path hands it this charge's order to record; recording it here as well
+				// would clear that pass's fence while it is still working.
+				this.logger.warn(
+					`Subscription ${subscription.id}: the charge of cycle ${billing.id} (order ${result.orderId}) ` +
+						`outlived its claim; the pass that now holds the cycle records it.`
+				);
+
+				return { code: CHARGE_CLAIM_LOST, message: (error as Error).message };
+			}
+
+			// The order was raised, and an operator settled the cycle another way (paid, waived or refunded it) once
+			// this charge's claim had gone stale - the claim refuses that while it is live. That is not a failed
+			// charge, and reporting it as one would schedule a retry - a second charge. The cycle keeps the
+			// operator's decision and the conflict is logged for follow-up.
+			if (code !== 'SUBSCRIPTION_BILLING_TRANSITION_INVALID') {
+				throw error;
+			}
+
+			this.logger.warn(
+				`Subscription ${subscription.id}: cycle ${billing.id} was settled by an operator while its charge ` +
+					`(order ${result.orderId}, ${result.paid ? 'paid' : 'unpaid'}) was in flight; the cycle keeps ` +
+					`the operator's status.`
+			);
+		}
+
+		// The charge's outcome is recorded, and what remains is the cycle's bookkeeping on the subscription. An error in
+		// it is not a failed charge: recorded as one, it marked a cycle whose money was taken as failed, and the dunning
+		// retry charged it again. It propagates instead, so nothing charges the cycle again and the period's key is not
+		// completed on it; the cycle stays recorded as the order path answered.
+		if (setupFee) {
+			await this.rememberSetupFee(subscription, plan, nextExpectation());
+		}
+
+		if (credit && !credit.isZero()) {
+			await this.clearPendingCredit(subscription, nextExpectation());
+		}
+
+		return undefined;
 	}
 
 	/**
@@ -2314,6 +2496,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param now The instant the attempt failed at.
 	 * @param expectation The version the caller read the subscription at, carried by whichever of the
 	 * two writes below records the attempt — only one of them ever runs.
+	 * @param chargeClaim The token of the charge claim this pass holds on the cycle. The attempt is recorded only while
+	 * the claim is still the pass's (`SubscriptionBillingService.markFailed`).
 	 * @returns What the attempt did.
 	 */
 	private async recordFailure(
@@ -2321,7 +2505,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		billing: SubscriptionBilling,
 		failure: { code: string; message: string },
 		now: Date,
-		expectation: IVersionExpectation = ANY_VERSION
+		expectation: IVersionExpectation = ANY_VERSION,
+		chargeClaim?: string
 	): Promise<ISubscriptionBillingOutcome> {
 		const attempts = (billing.attemptCount ?? 0) + 1;
 		const exhausted = isDunningExhausted(attempts);
@@ -2331,8 +2516,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		const failed = await this.billingService.markFailed(billing.id, {
 			attemptCount: attempts,
 			error,
-			nextRetryAt: retryAt
+			nextRetryAt: retryAt,
+			chargeClaim
 		});
+
+		if (!failed) {
+			// This attempt outlived its claim and another pass recovered the cycle: that pass records the attempt it made
+			// under the same order key. Nothing is recorded here — no dunning step, no `subscription.payment-failed`.
+			return this.unclaimedCycleOutcome(subscription, await this.billingService.findOneScoped(billing.id));
+		}
 
 		if (exhausted) {
 			// The retry policy is spent. The subscription keeps its history and its period, and stops
@@ -3184,6 +3376,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param spend The reader the cycle's subscription writes take their expectation from.
 	 * @param cycle The row an earlier attempt wrote for the period, when there is one.
 	 * @param current The plan the subscription is on, which a change of lines alone opens the period on.
+	 * @param chargeClaim The token of the charge claim the cycle holds on that row, which its restatement names.
 	 * @returns Null when no change was due; otherwise the subscription as the change left it, with the plan the period
 	 * opens on when the change was applied, and without one when it was refused.
 	 */
@@ -3192,7 +3385,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		periodStart: Date,
 		spend: () => IVersionExpectation,
 		cycle: SubscriptionBilling | null,
-		current: SubscriptionPlan
+		current: SubscriptionPlan,
+		chargeClaim?: string
 	): Promise<{ subscription: Subscription; plan?: SubscriptionPlan } | null> {
 		for (let attempt = 1; ; attempt += 1) {
 			const subscription = await this.findOneScoped(id);
@@ -3264,7 +3458,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 									amount: net.toStorageString(),
 									pricing: { gross: gross.toStorageString(), discount: discount.toStorageString() }
 								},
-								manager
+								manager,
+								chargeClaim
 							);
 						}
 					} else {
