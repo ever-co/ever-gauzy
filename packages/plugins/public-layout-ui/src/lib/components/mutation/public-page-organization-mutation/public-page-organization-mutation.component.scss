@@ -247,7 +247,7 @@ nb-card.dialog {
 
 	&:hover,
 	&:focus-visible {
-		color: nb-theme(color-primary-500);
+		color: var(--color-primary-500);
 	}
 }
 

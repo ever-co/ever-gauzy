@@ -25,7 +25,9 @@ services:
     image: ghcr.io/ever-co/gauzy-api:latest
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      PRINT_EMAIL_CODES: ${PRINT_EMAIL_CODES:-true}
+      # Off by default: 'true' prints sign-in codes and email links on the API console (loopback base URLs only).
+      # To turn it on for a local run: PRINT_EMAIL_CODES=true docker compose -f docker-compose.demo.yml up
+      PRINT_EMAIL_CODES: ${PRINT_EMAIL_CODES:-false}
       DB_HOST: db
       MAKE_WEBHOOK_URL: ${MAKE_WEBHOOK_URL:-}
 
