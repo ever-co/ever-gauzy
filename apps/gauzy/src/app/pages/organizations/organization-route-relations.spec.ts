@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, Data, Router, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, Data, Router } from '@angular/router';
 import { Observable, lastValueFrom, of, throwError } from 'rxjs';
 import { IOrganization, PermissionsEnum } from '@gauzy/contracts';
 import { AuthService, OrganizationsService, Store } from '@gauzy/ui-core/core';
@@ -73,6 +73,9 @@ describe('permissionHolder', () => {
 	});
 });
 
+/** The resolver as it is written: it reads the route alone, and always answers an observable. */
+const resolveOrganization = OrganizationResolver as unknown as (route: ActivatedRouteSnapshot) => Observable<unknown>;
+
 describe('OrganizationResolver — the settings route', () => {
 	const ORGANIZATION = { id: 'organization-1', name: 'Ever' } as IOrganization;
 	let getById: jest.Mock;
@@ -81,10 +84,9 @@ describe('OrganizationResolver — the settings route', () => {
 
 	const resolve = async (): Promise<unknown> => {
 		const route = { params: { id: ORGANIZATION.id }, firstChild: { data: SETTINGS_ROUTE_DATA } };
-		// The resolver always answers an observable.
 		const resolved = TestBed.runInInjectionContext(() =>
-			OrganizationResolver(route as unknown as ActivatedRouteSnapshot, {} as RouterStateSnapshot)
-		) as Observable<unknown>;
+			resolveOrganization(route as unknown as ActivatedRouteSnapshot)
+		);
 		return lastValueFrom(resolved);
 	};
 
