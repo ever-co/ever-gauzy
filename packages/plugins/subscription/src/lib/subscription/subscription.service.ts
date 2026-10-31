@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, Inject, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { DeepPartial, EntityManager, LessThanOrEqual } from 'typeorm';
+import { DeepPartial, EntityManager, IsNull, LessThanOrEqual, Not } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	AdjustmentType,
@@ -232,10 +232,14 @@ const SCHEDULED_PLAN_CHANGE = 'scheduledPlanChange';
 const CHANGE_INTENT = 'changeIntent';
 
 /**
- * The metadata key the write that applies a change records the change's key under: a request that settled the same
- * change and lost the race to apply it reads it here and stops, rather than taking the change for one replaced.
+ * The metadata key the write that applies a change adds the change's key to: a request that settled the same change
+ * and lost the race to apply it finds it here and stops, rather than taking the change for one replaced — also when
+ * further changes were applied since. The last {@link APPLIED_CHANGES_KEPT} are kept.
  */
-const LAST_APPLIED_CHANGE = 'lastAppliedChange';
+const APPLIED_CHANGES = 'appliedChanges';
+
+/** How many applied changes' keys {@link APPLIED_CHANGES} keeps: far more than can be applied while one request runs. */
+const APPLIED_CHANGES_KEPT = 20;
 
 /**
  * The metadata key a settlement that stands without the change it paid for is recorded under, for an operator to
@@ -350,7 +354,7 @@ export const RESERVED_SUBSCRIPTION_METADATA_KEYS: readonly string[] = [
 	EXPIRED_BY_CYCLE,
 	SCHEDULED_PLAN_CHANGE,
 	CHANGE_INTENT,
-	LAST_APPLIED_CHANGE,
+	APPLIED_CHANGES,
 	SETTLEMENT_REVERSALS
 ];
 
@@ -1863,6 +1867,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		const now = options.asOf ?? new Date();
 		const limit = Math.max(1, Math.trunc(options.limit ?? 200));
 
+		if (!options.subscriptionId) {
+			await this.recoverAbandonedChanges(limit);
+		}
+
 		const due = options.subscriptionId
 			? [await this.findOneScoped(options.subscriptionId)]
 			: await this.findDue(now, limit);
@@ -1906,6 +1914,88 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		}
 
 		return { examined: due.length, billed, failed, skipped, results };
+	}
+
+	/**
+	 * Recovers the mid-cycle changes abandoned with a plan reserved: a change whose apply kept losing and was not
+	 * repeated, one whose release could not be written, one whose request stopped. Each holds its target plan against
+	 * every plan update (`SubscriptionPlanService.hasLiveSubscriptions`) until it is resolved, and nothing else resolves
+	 * it unless the subscription is changed again, so every billing pass looks for them, by the reservation's index.
+	 *
+	 * A record past {@link CHANGE_INTENT_LEASE_MS} is resolved as a change replacing it would resolve it: its settlement,
+	 * when it moved money or nothing can tell, is recorded for reversal and announced, and the record and the reservation
+	 * are cleared in the same versioned write. A record still inside the lease is left to the request settling it. One
+	 * that cannot be recovered is logged and left for the next pass; it never stops the billing.
+	 *
+	 * @param limit How many reserving subscriptions one pass looks at.
+	 */
+	private async recoverAbandonedChanges(limit: number): Promise<void> {
+		const reserving = await this.typeOrmSubscriptionRepository.find({
+			where: { reservedPlanId: Not(IsNull()), ...currentScope() } as never,
+			take: limit
+		});
+
+		for (const subscription of reserving) {
+			try {
+				await this.recoverAbandonedChange(subscription.id);
+			} catch (error) {
+				this.logger.error(
+					`Subscription ${subscription.id}: its abandoned change could not be recovered: ${(error as Error)?.message ?? error}`
+				);
+			}
+		}
+	}
+
+	/**
+	 * @param id A subscription holding a plan reservation.
+	 */
+	private async recoverAbandonedChange(id: ID): Promise<void> {
+		for (let attempt = 1; ; attempt += 1) {
+			const current = await this.findOneScoped(id);
+			const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
+			const recorded = this.changeIntentOf(metadata);
+
+			if (!current.reservedPlanId || (recorded && Date.now() - new Date(recorded.at).getTime() < CHANGE_INTENT_LEASE_MS)) {
+				return;
+			}
+
+			const state = recorded ? await this.settlementOf(current, recorded) : 'UNSETTLED';
+			const noted = !!recorded && state !== 'UNSETTLED' && this.noteReversal(metadata, recorded, state);
+
+			delete metadata[CHANGE_INTENT];
+
+			try {
+				await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+					await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+						where: currentScope(),
+						id,
+						expectation: this.readVersionPredicate(current, ANY_VERSION),
+						patch: { metadata, reservedPlanId: null }
+					});
+
+					if (noted) {
+						await this.emit(
+							'subscription.settlement-reversal-required',
+							id,
+							this.reversalEvent(id, recorded, state),
+							manager
+						);
+					}
+				});
+
+				this.logger.warn(
+					`Subscription ${id}: the change ${recorded?.key ?? '(no record)'} was abandoned with plan ${current.reservedPlanId} reserved; the reservation is released and its settlement is ${state}.`
+				);
+
+				return;
+			} catch (error) {
+				if (attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				throw error;
+			}
+		}
 	}
 
 	/**
@@ -2373,7 +2463,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			}
 
 			if (credit && !credit.isZero()) {
-				await this.clearPendingCredit(subscription, nextExpectation());
+				await this.clearPendingCredit(subscription, credit, nextExpectation());
 			}
 
 			return undefined;
@@ -2985,7 +3075,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		// target plan against a plan update meanwhile; the settlement runs outside any transaction, because the order path
 		// takes connections of its own and holding one across it deadlocks a pool of one; and the apply re-reads the row
 		// until it lands, while the record is still this change's (`applySettledChange`).
-		const held = await this.reserveChange(
+		const { intent: held, resumed } = await this.reserveChange(
 			subscription,
 			{
 				key: `${subscription.id}:${this.hash({ change: identity, amount, periodStart }).slice(0, 32)}`,
@@ -3019,8 +3109,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				// credit's row was reached, a failure there or in completing the claim after it may have left money moved:
 				// the record stays, a repeat of the change resumes it under the same key (which the order path replays),
 				// and a change replacing it records its settlement for reversal. A change another request is settling under
-				// the same key keeps it too: the record is that request's as much as this one's.
-				if (!progress.started && !(error instanceof ProrationInFlight)) {
+				// the same key keeps it too: the record is that request's as much as this one's. And a record this request
+				// resumed rather than made is never released here: an earlier attempt may have settled it, and a refusal this
+				// time (a payer revoked since) says nothing about that one.
+				if (!progress.started && !resumed && !(error instanceof ProrationInFlight)) {
 					await this.releaseChange(subscription.id, held);
 				}
 
@@ -3029,29 +3121,6 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		}
 
 		await this.applySettledChange(subscription.id, change, held, moved);
-
-		if (change.planId || change.after.length !== change.before.length) {
-			await this.itemService.replaceItems(
-				subscription.id,
-				change.after.map((line) => ({
-					variantId: line.variantId,
-					quantity: line.quantity,
-					unitPrice: line.unitPrice,
-					position: line.position,
-					metadata: line.metadata
-				})),
-				currency,
-				subscription.customerId
-			);
-		} else {
-			for (const line of change.after) {
-				const current = change.before.find((row) => row.variantId === line.variantId);
-
-				if (current && String(current.quantity) !== String(line.quantity)) {
-					await this.itemService.changeQuantity(subscription.id, line.variantId, line.quantity, currency);
-				}
-			}
-		}
 
 		return {
 			subscription: await this.findOneScoped(subscription.id),
@@ -3083,7 +3152,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param subscription The subscription, as the change read it.
 	 * @param intent The change, as priced.
 	 * @param expectation The version the caller read the subscription at.
-	 * @returns The record the change settles under: this one, or the one it resumes.
+	 * @returns The record the change settles under — this one, or the one it resumes — and whether it was resumed.
 	 * @throws ConflictException with `SUBSCRIPTION_CHANGE_IN_FLIGHT` while another change is being settled.
 	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the subscription moved since the change read it.
 	 * @throws BadRequestException when the target plan was deactivated or re-priced in another currency meanwhile.
@@ -3092,7 +3161,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		subscription: Subscription,
 		intent: IChangeIntent,
 		expectation: IVersionExpectation
-	): Promise<IChangeIntent> {
+	): Promise<{ intent: IChangeIntent; resumed: boolean }> {
 		const metadata: Record<string, unknown> = { ...(subscription.metadata ?? {}) };
 		const recorded = this.changeIntentOf(metadata);
 		let held = intent;
@@ -3161,7 +3230,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			}
 		});
 
-		return held;
+		return { intent: held, resumed: held !== intent };
 	}
 
 	/**
@@ -3193,18 +3262,20 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
-	 * Applies a settled change: the plan, the quantity and the metadata it moves, with the record and the reservation
-	 * cleared, in one versioned write.
+	 * Applies a settled change: the plan, the quantity, the metadata and the recurring lines it moves, with the record
+	 * and the reservation cleared, in one short transaction — the versioned write of the subscription and the lines on
+	 * the same manager, as a scheduled change is applied. Lines written after the record was cleared could fail with the
+	 * settlement made and nothing left to resume.
 	 *
 	 * The write is built from the row as it is now, not as the change read it: a billing pass or an edit that moved the
 	 * row since keeps what it wrote (the credit a pass consumed, the calendar it advanced), and the carried credit is
 	 * added to what is carried now. A write that loses its race reads the row again and is made again, for as long as
 	 * the record is this change's. A record that is gone was applied by a request resuming the same change — the row
-	 * names it last applied — or replaced, and then the settlement stands without its change and is recorded for
-	 * reversal rather than lost.
+	 * lists its key among those applied — or replaced, and then the settlement stands without its change and is recorded
+	 * for reversal rather than lost.
 	 *
 	 * @param id The subscription.
-	 * @param change What changes.
+	 * @param change What changes, with the lines it leaves the subscription with, as priced.
 	 * @param intent The record the change was settled under.
 	 * @param moved Whether the settlement moved money outside the row.
 	 * @throws ConflictException with `SUBSCRIPTION_CHANGE_SUPERSEDED` when the record was replaced.
@@ -3213,16 +3284,22 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 */
 	private async applySettledChange(
 		id: ID,
-		change: { planId?: ID; quantity?: DecimalString | number; discountPercentage?: string },
+		change: {
+			planId?: ID;
+			quantity?: DecimalString | number;
+			discountPercentage?: string;
+			after: IPricedLine[];
+		},
 		intent: IChangeIntent,
 		moved: boolean
 	): Promise<void> {
 		for (let attempt = 1; ; attempt += 1) {
 			const current = await this.findOneScoped(id);
 			const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
+			const applied = Array.isArray(metadata[APPLIED_CHANGES]) ? (metadata[APPLIED_CHANGES] as string[]) : [];
 
 			if (this.changeIntentOf(metadata)?.key !== intent.key) {
-				if (metadata[LAST_APPLIED_CHANGE] === intent.key) {
+				if (applied.includes(intent.key)) {
 					return;
 				}
 
@@ -3272,21 +3349,26 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			}
 
 			delete metadata[CHANGE_INTENT];
-			metadata[LAST_APPLIED_CHANGE] = intent.key;
+			metadata[APPLIED_CHANGES] = [...applied.filter((key) => key !== intent.key), intent.key].slice(
+				-APPLIED_CHANGES_KEPT
+			);
 
 			try {
-				await commitVersionedUpdate<Subscription>(this, {
-					where: currentScope(),
-					id,
-					expectation: this.readVersionPredicate(current, ANY_VERSION),
-					patch: {
-						...(change.planId ? { planId: change.planId } : {}),
-						...(change.quantity !== undefined
-							? { quantity: normalizeDecimal(change.quantity, current.quantity) }
-							: {}),
-						metadata,
-						reservedPlanId: null
-					}
+				await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+					await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+						where: currentScope(),
+						id,
+						expectation: this.readVersionPredicate(current, ANY_VERSION),
+						patch: {
+							...(change.planId ? { planId: change.planId } : {}),
+							...(change.quantity !== undefined
+								? { quantity: normalizeDecimal(change.quantity, current.quantity) }
+								: {}),
+							metadata,
+							reservedPlanId: null
+						}
+					});
+					await this.itemService.writePreparedItems(manager, id, change.after);
 				});
 
 				return;
@@ -3295,7 +3377,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					continue;
 				}
 
-				if (moved && isVersionConflict(error)) {
+				// Whatever stopped the apply — the row kept moving, a line could not be written — the settlement stands.
+				if (moved) {
 					await this.markSettled(id, intent);
 				}
 
@@ -3877,6 +3960,20 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		intent: IChangeIntent,
 		progress: { started: boolean }
 	): Promise<void> {
+		// The record's own amount and period, so a change resumed after a renewal is claimed as it was first claimed.
+		const amount = intent.net;
+		const periodStart = intent.periodStart;
+		const key = intent.key;
+		const requestHash = this.hash({ subscriptionId: subscription.id, amount, periodStart });
+		// A charge already made is recognised before the order capability or the payer is asked again: a resumed change
+		// whose payer was revoked since would otherwise be refused, and its charge taken for one never made. Read only; a
+		// missing claim is taken below, after the checks, so a refused request leaves none behind.
+		const made = await this.idempotencyService.findByKey(PRORATION_SCOPE, key);
+
+		if (made?.status === IdempotencyStatus.COMPLETED && made.requestHash === requestHash) {
+			return;
+		}
+
 		if (!this.orderGateway) {
 			throw new BadRequestException(
 				'SUBSCRIPTION_ORDER_GATEWAY_UNAVAILABLE: the order capability is not registered, so the difference this change produced cannot be charged.'
@@ -3889,15 +3986,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			throw new BadRequestException(`${payer.refusal.code}: ${payer.refusal.message}`);
 		}
 
-		// The record's own amount and period, so a change resumed after a renewal is claimed as it was first claimed.
-		const amount = intent.net;
-		const periodStart = intent.periodStart;
-		const key = intent.key;
-		const claim = await this.idempotencyService.claim({
-			scope: PRORATION_SCOPE,
-			key,
-			requestHash: this.hash({ subscriptionId: subscription.id, amount, periodStart })
-		});
+		const claim = await this.idempotencyService.claim({ scope: PRORATION_SCOPE, key, requestHash });
 
 		if (claim.outcome === IdempotencyOutcome.REPLAYED) {
 			// This exact change was already charged for this period. The caller gets the same answer
@@ -4002,6 +4091,21 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			resourceType: 'adjustment',
 			resourceId: row?.id
 		});
+
+		if (!written) {
+			// The lookup and the insert are two statements; a writer that stalled between them past the claim's lock while
+			// another took the claim over writes a second row. Such a row moves no money — the credit is carried by the
+			// apply, once — but an operator is told, since the ledger is append-only and only a reversing row corrects it.
+			const rows = (await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, owner.id)).filter(
+				(candidate) => candidate.metadata?.['changeKey'] === key
+			);
+
+			if (rows.length > 1) {
+				this.logger.error(
+					`Subscription ${subscription.id}: cycle ${owner.id} carries ${rows.length} CREDIT rows for the change ${key}; all but the first need a reversing row.`
+				);
+			}
+		}
 
 		return true;
 	}
@@ -4231,6 +4335,12 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
+	 * Records that a plan's setup fee was charged.
+	 *
+	 * The cycle calls this after the order path, so the metadata is merged into the row as it is then, not into the copy
+	 * the cycle read before: a change recorded meanwhile (`reserveChange`) or a credit carried meanwhile would otherwise
+	 * be written away, and a change that already settled would read as replaced.
+	 *
 	 * @param subscription The subscription whose setup fee was charged.
 	 * @param plan The plan whose setup fee it was.
 	 * @param expectation The version the write is predicated on.
@@ -4240,40 +4350,97 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		plan: SubscriptionPlan,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<void> {
-		const charged = (subscription.metadata?.[CHARGED_SETUP_FEES] as ID[]) ?? [];
+		await this.mergeMetadata(subscription.id, expectation, (metadata) => {
+			const charged = (metadata[CHARGED_SETUP_FEES] as ID[]) ?? [];
 
-		if (charged.includes(plan.id)) {
-			return;
-		}
-
-		await commitVersionedUpdate<Subscription>(this, {
-			where: currentScope(),
-			id: subscription.id,
-			expectation,
-			patch: {
-				metadata: { ...(subscription.metadata ?? {}), [CHARGED_SETUP_FEES]: [...charged, plan.id] }
+			if (charged.includes(plan.id)) {
+				return false;
 			}
+
+			metadata[CHARGED_SETUP_FEES] = [...charged, plan.id];
+
+			return true;
 		});
 	}
 
 	/**
+	 * Takes the deferred credit a cycle applied off the subscription.
+	 *
+	 * Only the amount the cycle consumed is taken off, from the row as it is after the order path: a credit a change
+	 * carried meanwhile stays carried for the next cycle, and a change recorded meanwhile is kept (`rememberSetupFee`).
+	 *
 	 * @param subscription The subscription whose deferred credit was applied.
+	 * @param consumed The credit the cycle applied.
 	 * @param expectation The version the write is predicated on.
 	 */
 	private async clearPendingCredit(
 		subscription: Subscription,
+		consumed: Money,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<void> {
-		const metadata = { ...(subscription.metadata ?? {}) };
+		await this.mergeMetadata(subscription.id, expectation, (metadata) => {
+			const pending = metadata[PENDING_CREDIT] as { amount?: string; currency?: string } | undefined;
 
-		delete metadata[PENDING_CREDIT];
+			if (!pending?.amount) {
+				return false;
+			}
 
-		await commitVersionedUpdate<Subscription>(this, {
-			where: currentScope(),
-			id: subscription.id,
-			expectation,
-			patch: { metadata }
+			// Read as the cycle read it (`consumePendingCredit`); a credit in a currency other than the one consumed is
+			// cleared whole, as it always was.
+			const carried = Money.of(pending.amount, pending.currency ?? subscription.currency).round();
+			const left = carried.currency === consumed.currency ? carried.subtract(consumed).round() : null;
+
+			if (left?.isNegative()) {
+				metadata[PENDING_CREDIT] = {
+					...(metadata[PENDING_CREDIT] as Record<string, unknown>),
+					amount: left.toStorageString()
+				};
+			} else {
+				delete metadata[PENDING_CREDIT];
+			}
+
+			return true;
 		});
+	}
+
+	/**
+	 * Edits a subscription's metadata on the row as it is: read, edited, and written under the version read, again on a
+	 * conflict while the caller conditioned on none.
+	 *
+	 * @param id The subscription.
+	 * @param expectation The version the write is predicated on.
+	 * @param edit Edits the metadata in place; false when there is nothing to write.
+	 */
+	private async mergeMetadata(
+		id: ID,
+		expectation: IVersionExpectation,
+		edit: (metadata: Record<string, unknown>) => boolean
+	): Promise<void> {
+		for (let attempt = 1; ; attempt += 1) {
+			const current = await this.findOneScoped(id);
+			const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
+
+			if (!edit(metadata)) {
+				return;
+			}
+
+			try {
+				await commitVersionedUpdate<Subscription>(this, {
+					where: currentScope(),
+					id,
+					expectation: this.readVersionPredicate(current, expectation),
+					patch: { metadata }
+				});
+
+				return;
+			} catch (error) {
+				if (expectation.wildcard && attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				throw error;
+			}
+		}
 	}
 
 	/**

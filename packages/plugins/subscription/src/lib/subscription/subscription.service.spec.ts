@@ -196,7 +196,7 @@ import {
 	AdjustmentType,
 	IdempotencyOutcome
 } from '@gauzy/contracts';
-import { ApiErrorCode, ApiException, IVersionExpectation, RequestContext } from '@gauzy/core';
+import { ApiErrorCode, ApiException, IVersionExpectation, Money, RequestContext } from '@gauzy/core';
 import {
 	SubscriptionBillingPeriod,
 	SubscriptionBillingStatus,
@@ -287,6 +287,9 @@ function repository(tables: ITables, tableName: keyof ITables, onWrite?: (entity
 					return instant(value ?? 0) <= instant(expected.value ?? 0);
 				case 'isNull':
 					return value === null || value === undefined;
+				case 'not':
+					// `value` unwraps a nested operator; `child` is the operator itself (`Not(IsNull())`).
+					return !matchesValue(value, expected.child ?? expected.value);
 				default:
 					throw new Error(`the in-memory double does not implement the "${expected.type}" operator`);
 			}
@@ -487,8 +490,9 @@ const itemRow = (id: string, overrides: Row = {}): Row => ({
  * @param options.inFlightOnNewKey Whether the idempotency store is already held by another worker.
  * @param options.onProration What the order capability does while it raises a proration charge, before it answers:
  * what a case observes mid-settlement, or how it fails.
- * @param options.onSubscriptionUpdate What happens just before a write of the subscription outside a transaction runs:
- * a competing writer, when a case is about a race.
+ * @param options.onSubscriptionUpdate What happens just before a write of the subscription runs, inside a transaction or
+ * outside one: a competing writer, when a case is about a race. What it writes through `commit` is another request's
+ * committed write, so a rollback of the transaction it ran in keeps it.
  */
 function subscriptionFixture(
 	options: {
@@ -505,7 +509,12 @@ function subscriptionFixture(
 		inFlightOnNewKey?: boolean;
 		transactionalUpdateError?: () => Error;
 		onProration?: (request: Row) => unknown;
-		onSubscriptionUpdate?: (criteria: Row, partial: Row, tables: ITables) => void;
+		onSubscriptionUpdate?: (
+			criteria: Row,
+			partial: Row,
+			tables: ITables,
+			commit: (write: (tables: ITables) => void) => void
+		) => void;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -523,14 +532,25 @@ function subscriptionFixture(
 	/** Every write the service committed, so a rollback can be asserted rather than assumed. */
 	const commits: string[] = [];
 
-	const subscriptionRepository = repository(tables, 'subscription', () => commits.push('subscription'));
-	const plainUpdate = subscriptionRepository.update;
-
-	subscriptionRepository.update = async (criteria: any, partial: any) => {
-		options.onSubscriptionUpdate?.(criteria, partial, tables);
-
-		return await plainUpdate(criteria, partial);
+	/** The writes another request committed while a transaction of this one ran, which its rollback keeps. */
+	let committedMeanwhile: Array<() => void> | null = null;
+	const commit = (write: (written: ITables) => void) => {
+		write(tables);
+		committedMeanwhile?.push(() => write(tables));
 	};
+	/** Has `onSubscriptionUpdate` run in front of a repository's writes of the subscription. */
+	const raced = (writer: ReturnType<typeof repository>) => {
+		const plain = writer.update;
+
+		writer.update = async (criteria: any, partial: any) => {
+			options.onSubscriptionUpdate?.(criteria, partial, tables, commit);
+
+			return await plain(criteria, partial);
+		};
+
+		return writer;
+	};
+	const subscriptionRepository = raced(repository(tables, 'subscription', () => commits.push('subscription')));
 
 	const entityToTable = new Map<unknown, keyof ITables>([
 		[Subscription, 'subscription'],
@@ -556,7 +576,10 @@ function subscriptionFixture(
 				throw new Error('the in-memory double was handed an entity it does not know');
 			}
 
-			const transactional = repository(tables, table, table === 'subscription' ? () => commits.push('subscription') : undefined);
+			const transactional =
+				table === 'subscription'
+					? raced(repository(tables, table, () => commits.push('subscription')))
+					: repository(tables, table);
 
 			// A write of the subscription inside a transaction that the database refuses, for the case about how that is answered.
 			if (options.transactionalUpdateError && table === 'subscription') {
@@ -610,6 +633,8 @@ function subscriptionFixture(
 			Object.entries(tables).map(([table, rows]) => [table, rows.map((row) => ({ ...row }))])
 		);
 
+		committedMeanwhile = [];
+
 		try {
 			return await run(manager);
 		} catch (error) {
@@ -617,7 +642,13 @@ function subscriptionFixture(
 				(tables as unknown as Record<string, Row[]>)[table] = rows;
 			}
 
+			for (const write of committedMeanwhile ?? []) {
+				write();
+			}
+
 			throw error;
+		} finally {
+			committedMeanwhile = null;
 		}
 	};
 
@@ -1752,19 +1783,28 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 	const raceTheApply = (times: number, write?: (row: Row) => void) => {
 		let left = times;
 
-		return (_criteria: Row, partial: Row, tables: ITables) => {
-			if (left > 0 && partial?.metadata?.['lastAppliedChange']) {
+		return (_criteria: Row, partial: Row, tables: ITables, commit: (write: (tables: ITables) => void) => void) => {
+			const row = tables.subscription.find((candidate) => candidate.id === SUBSCRIPTION)!;
+			const before: string[] = row.metadata?.['appliedChanges'] ?? [];
+			// The write applying a change is the one that adds a key to the row's applied changes.
+			const applies = (partial?.metadata?.['appliedChanges'] ?? []).some((key: string) => !before.includes(key));
+
+			if (left > 0 && applies) {
 				left -= 1;
+				commit((written) => {
+					const moved = written.subscription.find((candidate) => candidate.id === SUBSCRIPTION)!;
 
-				const row = tables.subscription.find((candidate) => candidate.id === SUBSCRIPTION)!;
-
-				row.version += 1;
-				(
-					write ??
-					((moved: Row) => {
-						moved.metadata = { ...(moved.metadata ?? {}), passes: Number(moved.metadata?.['passes'] ?? 0) + 1 };
-					})
-				)(row);
+					moved.version += 1;
+					(
+						write ??
+						((competing: Row) => {
+							competing.metadata = {
+								...(competing.metadata ?? {}),
+								passes: Number(competing.metadata?.['passes'] ?? 0) + 1
+							};
+						})
+					)(moved);
+				});
 			}
 		};
 	};
@@ -1830,7 +1870,7 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		// The other writer's write is kept, and the row names the change it applied last.
 		expect(fixture.subscription(SUBSCRIPTION).metadata).toMatchObject({
 			passes: 1,
-			lastAppliedChange: fixture.prorationCalls[0].idempotencyKey
+			appliedChanges: [fixture.prorationCalls[0].idempotencyKey]
 		});
 	});
 
@@ -1868,7 +1908,7 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		expect(retried).toMatchObject({ settlement: 'CHARGED', net: '92.900000' });
 		expect(fixture.prorationCalls).toHaveLength(1);
 		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
-		expect(fixture.subscription(SUBSCRIPTION).metadata?.['lastAppliedChange']).toBe(key);
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['appliedChanges']).toEqual([key]);
 	});
 
 	it('writes a downgrade’s credit once when its write keeps losing, and carries it once when the change is retried', async () => {
@@ -2059,6 +2099,177 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		);
 		// The record that replaced this one is left as it is.
 		expect(fixture.subscription(SUBSCRIPTION).metadata?.['changeIntent']?.key).toBe('another-change');
+	});
+
+	it('is not told its change was replaced when a request resuming it applied it and another change followed', async () => {
+		// Between this request's read and its write, a request resuming the same change applied it and a later change was
+		// applied after it: the record is gone, and the change is among those the row lists as applied.
+		const fixture = subscriptionFixture({
+			prices: UPGRADE,
+			onSubscriptionUpdate: raceTheApply(1, (row) => {
+				const { changeIntent, ...rest } = row.metadata;
+
+				row.planId = BETTER_PLAN;
+				row.reservedPlanId = null;
+				row.metadata = { ...rest, appliedChanges: [changeIntent.key, `${SUBSCRIPTION}:later-change`] };
+			})
+		});
+
+		const outcome = await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		expect(outcome).toMatchObject({ settlement: 'CHARGED', net: '92.900000' });
+		expect(fixture.prorationCalls).toHaveLength(1);
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toBeUndefined();
+		expect(fixture.events.map((event) => event.name)).not.toContain('subscription.settlement-reversal-required');
+	});
+
+	it('writes the lines with the apply: a line that cannot be written leaves the change recorded, not half applied', async () => {
+		const fixture = subscriptionFixture({ prices: UPGRADE });
+		const write = jest
+			.spyOn(fixture.itemService, 'writePreparedItems')
+			.mockRejectedValueOnce(new Error('SUBSCRIPTION_ITEM_WRITE_FAILED: the line could not be written.'));
+
+		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow(
+			'SUBSCRIPTION_ITEM_WRITE_FAILED'
+		);
+
+		// The subscription write rolled back with the line: still on the old plan and its lines, the change recorded and
+		// marked settled, the plan reserved.
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: PLAN, reservedPlanId: BETTER_PLAN });
+		expect(fixture.items().map((line) => line.variantId)).toEqual([VARIANT]);
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toMatchObject({ settledAt: expect.any(String) });
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		expect(write).toHaveBeenCalledTimes(2);
+		expect(fixture.prorationCalls).toHaveLength(1);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
+		expect(fixture.items().map((line) => line.variantId)).toEqual([BETTER_VARIANT]);
+	});
+
+	it('recognises a charge already made when the payer was revoked since, and never releases a record it resumed', async () => {
+		const fixture = subscriptionFixture({ prices: UPGRADE, onSubscriptionUpdate: raceTheApply(3) });
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN }).catch(() => undefined);
+		// The record's own mark could not be written, so the repeat goes back to the charge.
+		delete fixture.subscription(SUBSCRIPTION).metadata.changeIntent.settledAt;
+
+		const payer = jest.spyOn(fixture.service as any, 'resolvePayer').mockResolvedValue({
+			refusal: { code: 'PAYMENT_METHOD_TOKEN_REVOKED', message: 'The payment method was revoked.' }
+		});
+
+		// Its claim is still there: the charge is recognised before the payer is asked, and the change applied.
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		expect(payer).not.toHaveBeenCalled();
+		expect(fixture.prorationCalls).toHaveLength(1);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
+
+		// Its claim is gone too: the payer refuses the repeat, and the record it resumed stays for the next one.
+		const forgetting = subscriptionFixture({ prices: UPGRADE, onSubscriptionUpdate: raceTheApply(3) });
+
+		await forgetting.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN }).catch(() => undefined);
+		delete forgetting.subscription(SUBSCRIPTION).metadata.changeIntent.settledAt;
+		forgetting.idempotencyService.forget();
+		jest.spyOn(forgetting.service as any, 'resolvePayer').mockResolvedValue({
+			refusal: { code: 'PAYMENT_METHOD_TOKEN_REVOKED', message: 'The payment method was revoked.' }
+		});
+
+		await expect(forgetting.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow(
+			'PAYMENT_METHOD_TOKEN_REVOKED'
+		);
+		expect(forgetting.subscription(SUBSCRIPTION)).toMatchObject({ planId: PLAN, reservedPlanId: BETTER_PLAN });
+		expect(forgetting.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toMatchObject({ settlement: 'CHARGED' });
+	});
+
+	it('keeps a change recorded while a billing pass that read the subscription before it writes its own metadata', async () => {
+		// The pass read the subscription before the change was recorded, charged the cycle, and only then remembers the
+		// setup fee and takes the credit it consumed off. Written from its own copy, the record and the credit the change
+		// carried meanwhile were gone.
+		const read = subscriptionRow(SUBSCRIPTION, { metadata: { pendingCredit: { amount: '-12.000000', currency: 'USD' } } });
+		const fixture = subscriptionFixture({
+			prices: UPGRADE,
+			subscriptions: [
+				{
+					...read,
+					reservedPlanId: BETTER_PLAN,
+					version: 2,
+					metadata: {
+						pendingCredit: { amount: '-42.970000', currency: 'USD' },
+						changeIntent: { key: `${SUBSCRIPTION}:recorded`, change: 'recorded', planId: BETTER_PLAN, at: MID_MARCH.toISOString() }
+					}
+				}
+			]
+		});
+		const service = fixture.service as any;
+
+		await service.rememberSetupFee(read, fixture.tables.subscription_plan[0]);
+		await service.clearPendingCredit(read, Money.of('-12.000000', 'USD'));
+
+		expect(fixture.subscription(SUBSCRIPTION).metadata).toMatchObject({
+			changeIntent: { key: `${SUBSCRIPTION}:recorded` },
+			chargedSetupFeePlanIds: [PLAN],
+			// Only what the pass consumed is taken off; what the change carried since stays for the next cycle.
+			pendingCredit: { amount: '-30.970000', currency: 'USD' }
+		});
+		expect(fixture.subscription(SUBSCRIPTION).reservedPlanId).toBe(BETTER_PLAN);
+	});
+
+	it('releases a reservation abandoned past the lease on the next billing pass, and leaves a fresh one', async () => {
+		const abandoned = {
+			key: `${SUBSCRIPTION}:abandoned`,
+			change: 'abandoned',
+			planId: BETTER_PLAN,
+			settlement: 'CHARGED',
+			credit: '61.940000',
+			charge: '154.840000',
+			net: '92.900000',
+			currency: 'USD',
+			periodStart: MARCH.toISOString(),
+			description: 'Plan changed to PLAN-2.'
+		};
+		const fixture = subscriptionFixture({
+			prices: UPGRADE,
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					reservedPlanId: BETTER_PLAN,
+					metadata: { changeIntent: { ...abandoned, at: new Date(MID_MARCH.getTime() - 11 * 60 * 1000).toISOString() } }
+				}),
+				subscriptionRow('subscription-2', {
+					reservedPlanId: BETTER_PLAN,
+					metadata: {
+						changeIntent: { ...abandoned, key: 'subscription-2:settling', at: new Date(MID_MARCH.getTime() - 60 * 1000).toISOString() }
+					}
+				})
+			]
+		});
+
+		// Its charge went through and the apply never followed.
+		fixture.idempotencyService.records.set(`subscription.proration:${abandoned.key}`, {
+			scope: 'subscription.proration',
+			key: abandoned.key,
+			requestHash: 'abandoned',
+			response: { status: 200 },
+			lockedAt: 0
+		});
+
+		await fixture.service.runBilling({ asOf: MID_MARCH });
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: PLAN, reservedPlanId: null });
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toBeUndefined();
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toEqual([
+			expect.objectContaining({ key: abandoned.key, amount: '92.900000', settled: 'SETTLED' })
+		]);
+		expect(fixture.events).toContainEqual(
+			expect.objectContaining({
+				name: 'subscription.settlement-reversal-required',
+				aggregateId: SUBSCRIPTION,
+				data: expect.objectContaining({ key: abandoned.key })
+			})
+		);
+		// A minute old: still the request's own.
+		expect(fixture.subscription('subscription-2')).toMatchObject({ reservedPlanId: BETTER_PLAN });
+		expect(fixture.subscription('subscription-2').metadata?.['changeIntent']).toMatchObject({ key: 'subscription-2:settling' });
 	});
 
 	it('refuses another change while one is being settled, and replaces one abandoned past the lease', async () => {

@@ -53,6 +53,7 @@ export class Subscription extends TenantOrganizationBaseEntity implements ISubsc
 	@ApiPropertyOptional({ type: () => String, readOnly: true })
 	@IsOptional()
 	@IsUUID()
+	@ColumnIndex('IDX_subscription_reserved_plan')
 	@MultiORMColumn({ nullable: true })
 	reservedPlanId?: ID | null;
 
