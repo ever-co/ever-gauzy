@@ -5,7 +5,7 @@
  * The web UI reads its strings with ngx-translate from `packages/ui-core/i18n/assets/i18n/<lang>.json` (Crowdin maps
  * `en.json` to `%two_letters_code%.json`, and contributors also edit the language files directly). A key that is
  * missing from a language file does not fail anywhere: the UI silently shows the English text, so a translation
- * drifts out of date one feature at a time (#9448: Chinese had 6,030 of 7,007 keys). A value that drops or renames a
+ * drifts out of date one feature at a time (#9448: Chinese had 6,056 of 7,051 keys). A value that drops or renames a
  * placeholder is worse: `{{ name }}` renders literally, or the value the code passes in disappears from the sentence.
  *
  * For each language asked for, the check
