@@ -312,9 +312,9 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 });
 
 /**
- * Issue #9873 — the agent exit/logout restriction judges the organization's location the way the screen capture
- * check does: from what is stored and what the write stores (region code, time zone, the country of the contact it
- * carries or links by id). A top-level `country` is not stored on the organization, so it changes no decision.
+ * Issue #9873 — the agent exit/logout restriction judges the organization's location after the write, from what is
+ * stored and what the write stores (region code, time zone, the country of a contact it links by id). Neither a
+ * top-level `country` nor the country of a contact the request carries is stored, so they change no decision.
  */
 describe('OrganizationUpdateHandler — agent exit/logout restriction location', () => {
 	const fixture = createTenantFixture();
@@ -423,14 +423,14 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 		given({ regionCode: 'en', timeZone: 'America/New_York', contactId: 'contact-us', contact: { country: 'US' } });
 		contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
 
-		await expect(update({ contactId: 'contact-uk', ...RESTRICT })).rejects.toThrow(
+		await expect(update({ contact: { id: 'contact-uk' }, ...RESTRICT })).rejects.toThrow(
 			EEA_UK_AGENT_RESTRICTION_ERR_MSG
 		);
 		expect(contactService.findOneOrFailByIdString).toHaveBeenCalledWith('contact-uk');
 		expect(organizationService.create).not.toHaveBeenCalled();
 	});
 
-	it('counts a contact the write carries: moving it into the EEA while exit stays restricted is refused', async () => {
+	it('does not move the organization for a contact the request carries: its country is not stored', async () => {
 		given({
 			regionCode: 'en',
 			timeZone: 'America/New_York',
@@ -438,8 +438,11 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 			allowAgentAppExit: false
 		});
 
-		await expect(update({ contact: { country: 'DE' } })).rejects.toThrow(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
-		expect(organizationService.create).not.toHaveBeenCalled();
+		await update({ contact: { country: 'DE' } });
+
+		// Saved although exit stays restricted, and nothing is lifted: the saved row is still in the US.
+		expect(organizationService.create).toHaveBeenCalled();
+		expect(moduleRef.get).not.toHaveBeenCalled();
 	});
 
 	it('lifts employee restrictions when a linked contact moves the organization into the EEA/UK', async () => {
@@ -450,32 +453,30 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 		);
 		contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
 
-		await update({ contactId: 'contact-uk' });
+		await update({ contact: { id: 'contact-uk' } });
 
 		expect(moduleRef.get).toHaveBeenCalled();
 	});
 
-	it.each([
-		['not stored (TypeORM: the relation does not cascade)', 'US', false],
-		['stored', 'DE', true]
-	])(
-		'lifts employee restrictions for a contact the write carries only when it was saved: %s',
-		async (_, savedCountry, lifted) => {
-			const US = { regionCode: 'en', timeZone: 'America/New_York' };
-			given({ ...US, contact: { country: 'US' } }, { ...US, contact: { country: savedCountry } });
-
-			await update({ contact: { country: 'DE' } });
-
-			expect(organizationService.create).toHaveBeenCalled();
-			expect(moduleRef.get).toHaveBeenCalledTimes(lifted ? 1 : 0);
-		}
-	);
-
-	it('counts the stored location too: moving out of the EEA/UK and restricting exit in one save is refused', async () => {
+	it('allows moving out of the EEA/UK and restricting exit in one save when the stored result is outside it', async () => {
 		given({ regionCode: 'en', timeZone: 'Europe/Berlin', contact: { country: 'US' } });
+
+		await update({ timeZone: 'America/New_York', ...RESTRICT });
+
+		expect(organizationService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ timeZone: 'America/New_York', allowAgentAppExit: false })
+		);
+		expect(activityLogService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ updatedFields: ['allowAgentAppExit'] })
+		);
+	});
+
+	it('still refuses when the stored result stays in the EEA/UK: the time zone moves out, the UK contact stays', async () => {
+		given({ regionCode: 'en', timeZone: 'Europe/Berlin', contact: { country: 'GB' } });
 
 		await expect(update({ timeZone: 'America/New_York', ...RESTRICT })).rejects.toThrow(
 			EEA_UK_AGENT_RESTRICTION_ERR_MSG
 		);
+		expect(organizationService.create).not.toHaveBeenCalled();
 	});
 });

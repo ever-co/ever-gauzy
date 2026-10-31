@@ -1,6 +1,7 @@
 import { IAgentRestrictionLocation, IContact, ID, IOrganization, IOrganizationUpdateInput } from '@gauzy/contracts';
 import { runOutsideOrganizationBoundary } from '../core/crud/organization-boundary';
 import type { ITryRequest } from '../core/crud/try-request';
+import { getORMType, MultiORM, MultiORMEnum } from '../core/utils';
 
 /**
  * Where an organization is, for the rules that depend on the EEA/UK: the screen capture acknowledgement
@@ -65,24 +66,32 @@ export interface IOrganizationLocations {
 	/** Where the organization is as stored: region code, time zone and the country of its contact. */
 	stored: IAgentRestrictionLocation;
 	/**
-	 * Every location the organization may have after the write, for the checks made before the save: the stored
-	 * one, plus the values the write stores (region code, time zone, the country of a contact it links by id) and
-	 * the country of a contact it carries. The organization counts as EEA/UK after the write if any of them is.
-	 *
-	 * A carried contact counts although the save may not store it (the relation does not cascade under TypeORM), so
-	 * these checks ask or refuse rather than miss a move. An effect that follows a move once saved, such as lifting
-	 * the employees' restrictions, reads the saved row instead (see {@link storedOrganizationLocation}).
+	 * Where the organization is after the write, from what the save stores: the region code and time zone the write
+	 * sets (the stored ones otherwise), and the country of the contact the organization is linked to afterwards.
 	 */
-	after: IAgentRestrictionLocation[];
+	after: IAgentRestrictionLocation;
+	/**
+	 * The location values the request names, whether the save stores them or not: the region code, the time zone,
+	 * the country of a contact it carries and the country of a contact it links by id. Only for a check that asks
+	 * rather than allows (the screen capture acknowledgement), where counting more can only ask more.
+	 */
+	requested: IAgentRestrictionLocation[];
 }
 
 /**
  * The organization's location before and after an update, judged from what is stored and what the write stores.
  * Reads a contact only when the write links one other than the organization's current contact.
  *
+ * What an organization save stores for its contact (the relation does not cascade):
+ * - a contact linked by `contact.id`, under both ORMs, with the country that contact has;
+ * - a contact linked by the `contactId` column, under TypeORM only (MikroORM does not map the column);
+ * - never the fields of a contact the request carries, such as its `country`; and never a top-level `country`.
+ * A linked contact whose country cannot be read keeps the stored country, so the result can only be stricter.
+ *
  * @param organization the organization as stored, with its contact loaded
  * @param changes the update as it will be written
  * @param contacts the contact lookup for a contact the write links by id
+ * @param ormType the ORM the save runs on
  */
 export async function organizationLocations(
 	organization: Pick<IOrganization, 'regionCode' | 'timeZone'> & {
@@ -90,19 +99,23 @@ export async function organizationLocations(
 		contact?: Pick<IContact, 'id' | 'country'> | null;
 	},
 	changes: Pick<IOrganizationUpdateInput, 'regionCode' | 'timeZone' | 'contact'> & { contactId?: ID | null },
-	contacts: IContactLookup | undefined
+	contacts: IContactLookup | undefined,
+	ormType: MultiORM = getORMType()
 ): Promise<IOrganizationLocations> {
 	const stored = storedOrganizationLocation(organization);
-	const linkedCountry = await linkedContactCountry(
-		contacts,
-		changes.contact?.id ?? changes.contactId ?? undefined,
-		currentContactId(organization)
-	);
+	const current = currentContactId(organization);
+	const linked = changes.contact?.id ?? changes.contactId ?? undefined;
+	const linkedCountry = await linkedContactCountry(contacts, linked, current);
+	const savesLink = !!linked && linked !== current && (!!changes.contact?.id || ormType === MultiORMEnum.TypeORM);
 
 	return {
 		stored,
-		after: [
-			stored,
+		after: {
+			regionCode: changes.regionCode !== undefined ? changes.regionCode : stored.regionCode,
+			timeZone: changes.timeZone !== undefined ? changes.timeZone : stored.timeZone,
+			country: savesLink ? (linkedCountry ?? stored.country) : stored.country
+		},
+		requested: [
 			{ regionCode: changes.regionCode, timeZone: changes.timeZone, country: changes.contact?.country },
 			{ country: linkedCountry }
 		]

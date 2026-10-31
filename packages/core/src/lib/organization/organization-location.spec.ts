@@ -4,6 +4,7 @@ import {
 	organizationLocations,
 	storedOrganizationLocation
 } from './organization-location';
+import { MultiORMEnum } from '../core/utils';
 
 /**
  * Where an organization is for the EEA/UK rules (#9872 screen capture, #9873 agent exit/logout): judged from what
@@ -78,36 +79,82 @@ describe('organizationLocations', () => {
 		contactId: 'contact-us',
 		contact: { id: 'contact-us', country: 'US' }
 	};
+	const UK_CONTACT = { success: true, record: { country: 'GB' } };
 
-	it('answers the stored location, and after the write the stored one plus what the write stores', async () => {
-		const contacts = lookup({ success: true, record: { country: 'GB' } });
-
-		const { stored, after } = await organizationLocations(
+	it('answers the stored location, the location after the write and the values the request names', async () => {
+		const { stored, after, requested } = await organizationLocations(
 			STORED,
 			{ timeZone: 'Europe/Berlin', contact: { id: 'contact-uk', country: 'FR' } as never },
-			contacts
+			lookup(UK_CONTACT),
+			MultiORMEnum.TypeORM
 		);
 
 		expect(stored).toEqual({ regionCode: 'en', timeZone: 'America/New_York', country: 'US' });
-		expect(after).toEqual([
-			stored,
+		// The linked contact counts with the country it has; the carried `country` is not stored.
+		expect(after).toEqual({ regionCode: 'en', timeZone: 'Europe/Berlin', country: 'GB' });
+		expect(requested).toEqual([
 			{ regionCode: undefined, timeZone: 'Europe/Berlin', country: 'FR' },
 			{ country: 'GB' }
 		]);
 	});
 
-	it('leaves out a top-level country, which the organization does not store', async () => {
-		const { after } = await organizationLocations(STORED, { country: 'DE' } as never, lookup({ success: false }));
+	it('moves nothing for a top-level country or the country of a contact the request carries', async () => {
+		const { after, requested } = await organizationLocations(
+			STORED,
+			{ country: 'DE', contact: { country: 'DE' } } as never,
+			lookup(UK_CONTACT)
+		);
 
-		expect(after.some((location) => location.country === 'DE')).toBe(false);
+		expect(after).toEqual({ regionCode: 'en', timeZone: 'America/New_York', country: 'US' });
+		// The carried country is only a requested value; the top-level one is not even that.
+		expect(requested).toEqual([
+			{ regionCode: undefined, timeZone: undefined, country: 'DE' },
+			{ country: undefined }
+		]);
 	});
 
-	it('reads a contact linked by contactId, and none when the write links the current one or none', async () => {
-		const contacts = lookup({ success: true, record: { country: 'GB' } });
+	it.each([
+		[MultiORMEnum.TypeORM, 'GB'],
+		[MultiORMEnum.MikroORM, 'US']
+	])(
+		'counts a contact linked by the contactId column only where the save stores it (%s)',
+		async (ormType, country) => {
+			const { after, requested } = await organizationLocations(
+				STORED,
+				{ contactId: 'contact-uk' },
+				lookup(UK_CONTACT),
+				ormType
+			);
 
-		await expect(organizationLocations(STORED, { contactId: 'contact-uk' }, contacts)).resolves.toMatchObject({
-			after: [expect.anything(), expect.anything(), { country: 'GB' }]
-		});
+			expect(after.country).toBe(country);
+			expect(requested).toContainEqual({ country: 'GB' });
+		}
+	);
+
+	it('keeps the stored country when the contact a write links cannot be read', async () => {
+		const { after } = await organizationLocations(
+			STORED,
+			{ contact: { id: 'contact-x' } as never },
+			lookup({ success: false })
+		);
+
+		expect(after.country).toBe('US');
+	});
+
+	it('takes the region code and time zone the write sets, including a cleared one', async () => {
+		const { after } = await organizationLocations(
+			{ ...STORED, timeZone: 'Europe/Berlin' },
+			{ regionCode: 'en-IE', timeZone: null as never },
+			lookup({ success: false })
+		);
+
+		expect(after).toMatchObject({ regionCode: 'en-IE', timeZone: null });
+	});
+
+	it('reads a linked contact once, and none when the write links the current one or none', async () => {
+		const contacts = lookup(UK_CONTACT);
+
+		await organizationLocations(STORED, { contactId: 'contact-uk' }, contacts);
 		expect(contacts.findOneOrFailByIdString).toHaveBeenCalledTimes(1);
 
 		await organizationLocations(STORED, { contactId: 'contact-us' }, contacts);

@@ -71,14 +71,15 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		// Issue #9872: the screen capture acknowledgement is request-only too, and its record is the server's.
 		const changes: IOrganizationUpdateInput = omitScreenshotCaptureAcknowledgementFields(input);
 		delete changes.acknowledgeAgentExitLogoutRestriction;
-		// Both rules judge the location from what is stored and what this write stores: the region code, the time
-		// zone and the country of the organization's contact (a contact the write carries or links by id counts with
-		// its country). A top-level `country` is not stored on the organization, so it does not move it.
-		const { stored: previousLocation, after: location } = await organizationLocations(
-			organization,
-			changes,
-			this.contactService
-		);
+		// The location is judged from what is stored and what this write stores (see `organizationLocations`): the
+		// region code, the time zone and the country of the contact the organization is linked to. Neither a top-level
+		// `country` nor the fields of a contact the request carries are stored by the save, so they move nothing.
+		// The exit/logout rule judges the location after the write only.
+		const {
+			stored: previousLocation,
+			after: location,
+			requested
+		} = await organizationLocations(organization, changes, this.contactService);
 		const { error: restrictionError, newRestrictions } = checkAgentExitLogoutRestrictionChange(
 			input,
 			organization,
@@ -91,8 +92,13 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 
 		// Issue #9872: turning screen capture on for an EEA/UK organization takes the admin's acknowledgement,
 		// stored with the change below. Re-saving an organization that already captures, or turning capture
-		// off, asks nothing, so existing organizations keep their value without a new step.
-		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(input, organization, location);
+		// off, asks nothing, so existing organizations keep their value without a new step. It asks if the
+		// organization is in the EEA/UK before or after the write, or by any location value the request names.
+		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(input, organization, [
+			previousLocation,
+			location,
+			...requested
+		]);
 		input = changes;
 
 		// Written and awaited before the save: no restriction without its recorded acknowledgement.
@@ -154,11 +160,11 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			);
 		}
 
-		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker. Judged on the row as
-		// saved: a contact the write carries counts in the checks above, but moves the organization only if stored.
+		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker. Confirmed on the row as
+		// saved, read back only when the write may have moved the organization.
 		if (
 			!isEEAOrUKLocation(previousLocation) &&
-			isEEAOrUKLocation(location) &&
+			isEEAOrUKLocation([location, ...requested]) &&
 			isEEAOrUKLocation(await this.savedLocation(id))
 		) {
 			try {
