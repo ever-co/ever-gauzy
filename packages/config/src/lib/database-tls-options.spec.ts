@@ -6,7 +6,9 @@ import { decodeCaCertificate, getTlsOptions } from './database-helpers';
  */
 describe('database TLS options', () => {
 	// Not a real certificate: only the PEM framing matters to these tests.
-	const PEM = ['-----BEGIN CERTIFICATE-----', 'MIIBszCCAVmgAwIBAgIUTESTONLY', '-----END CERTIFICATE-----', ''].join('\n');
+	const PEM = ['-----BEGIN CERTIFICATE-----', 'MIIBszCCAVmgAwIBAgIUTESTONLY', '-----END CERTIFICATE-----', ''].join(
+		'\n'
+	);
 	const BASE64 = Buffer.from(PEM, 'ascii').toString('base64');
 
 	describe('decodeCaCertificate', () => {

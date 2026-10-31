@@ -16,141 +16,141 @@
 #
 # This file is separate from `.do/app.yaml`, the template our CI deploys from (its $VARS are filled by the workflow).
 spec:
-    name: ever-gauzy
-    services:
-        - name: api
-          image:
-              registry_type: GHCR
-              registry: ever-co
-              repository: gauzy-api
-              tag: latest
-          http_port: 3000
-          instance_count: 1
-          instance_size_slug: apps-s-1vcpu-2gb
-          health_check:
-              http_path: /api/health
-              # The first start migrates and seeds an empty database, which takes a few minutes.
-              initial_delay_seconds: 60
-              period_seconds: 15
-              failure_threshold: 40
-          envs:
-              - key: NODE_ENV
-                scope: RUN_TIME
-                value: production
-              - key: DEMO
-                scope: RUN_TIME
-                value: 'false'
-              - key: API_HOST
-                scope: RUN_TIME
-                value: 0.0.0.0
-              - key: API_PORT
-                scope: RUN_TIME
-                value: '3000'
-              - key: API_BASE_URL
-                scope: RUN_TIME
-                value: ${APP_URL}
-              - key: CLIENT_BASE_URL
-                scope: RUN_TIME
-                value: ${APP_URL}
-              - key: ALLOWED_ORIGINS
-                scope: RUN_TIME
-                value: ${APP_URL}
-              - key: LOG_LEVEL
-                scope: RUN_TIME
-                value: info
-              - key: DB_TYPE
-                scope: RUN_TIME
-                value: postgres
-              - key: DB_HOST
-                scope: RUN_TIME
-                value: ${db.HOSTNAME}
-              - key: DB_PORT
-                scope: RUN_TIME
-                value: ${db.PORT}
-              - key: DB_NAME
-                scope: RUN_TIME
-                value: ${db.DATABASE}
-              - key: DB_USER
-                scope: RUN_TIME
-                value: ${db.USERNAME}
-              - key: DB_PASS
-                scope: RUN_TIME
-                value: ${db.PASSWORD}
-              # Managed databases only accept TLS; DB_CA_CERT takes the certificate as PEM or base64.
-              - key: DB_SSL_MODE
-                scope: RUN_TIME
-                value: 'true'
-              - key: DB_CA_CERT
-                scope: RUN_TIME
-                value: ${db.CA_CERT}
-              # Secrets: fill in each one before creating the app (see the note at the top).
-              - key: JWT_SECRET
-                scope: RUN_TIME
-                type: SECRET
-              - key: JWT_REFRESH_TOKEN_SECRET
-                scope: RUN_TIME
-                type: SECRET
-              - key: JWT_VERIFICATION_TOKEN_SECRET
-                scope: RUN_TIME
-                type: SECRET
-              - key: EXPRESS_SESSION_SECRET
-                scope: RUN_TIME
-                type: SECRET
-              # Passwords of the three accounts seeded on the first start.
-              - key: DEMO_SUPER_ADMIN_PASSWORD
-                scope: RUN_TIME
-                type: SECRET
-              - key: DEMO_ADMIN_PASSWORD
-                scope: RUN_TIME
-                type: SECRET
-              - key: DEMO_EMPLOYEE_PASSWORD
-                scope: RUN_TIME
-                type: SECRET
+  name: ever-gauzy
+  services:
+    - name: api
+      image:
+        registry_type: GHCR
+        registry: ever-co
+        repository: gauzy-api
+        tag: latest
+      http_port: 3000
+      instance_count: 1
+      instance_size_slug: apps-s-1vcpu-2gb
+      health_check:
+        http_path: /api/health
+        # The first start migrates and seeds an empty database, which takes a few minutes.
+        initial_delay_seconds: 60
+        period_seconds: 15
+        failure_threshold: 40
+      envs:
+        - key: NODE_ENV
+          scope: RUN_TIME
+          value: production
+        - key: DEMO
+          scope: RUN_TIME
+          value: 'false'
+        - key: API_HOST
+          scope: RUN_TIME
+          value: 0.0.0.0
+        - key: API_PORT
+          scope: RUN_TIME
+          value: '3000'
+        - key: API_BASE_URL
+          scope: RUN_TIME
+          value: ${APP_URL}
+        - key: CLIENT_BASE_URL
+          scope: RUN_TIME
+          value: ${APP_URL}
+        - key: ALLOWED_ORIGINS
+          scope: RUN_TIME
+          value: ${APP_URL}
+        - key: LOG_LEVEL
+          scope: RUN_TIME
+          value: info
+        - key: DB_TYPE
+          scope: RUN_TIME
+          value: postgres
+        - key: DB_HOST
+          scope: RUN_TIME
+          value: ${db.HOSTNAME}
+        - key: DB_PORT
+          scope: RUN_TIME
+          value: ${db.PORT}
+        - key: DB_NAME
+          scope: RUN_TIME
+          value: ${db.DATABASE}
+        - key: DB_USER
+          scope: RUN_TIME
+          value: ${db.USERNAME}
+        - key: DB_PASS
+          scope: RUN_TIME
+          value: ${db.PASSWORD}
+        # Managed databases only accept TLS; DB_CA_CERT takes the certificate as PEM or base64.
+        - key: DB_SSL_MODE
+          scope: RUN_TIME
+          value: 'true'
+        - key: DB_CA_CERT
+          scope: RUN_TIME
+          value: ${db.CA_CERT}
+        # Secrets: fill in each one before creating the app (see the note at the top).
+        - key: JWT_SECRET
+          scope: RUN_TIME
+          type: SECRET
+        - key: JWT_REFRESH_TOKEN_SECRET
+          scope: RUN_TIME
+          type: SECRET
+        - key: JWT_VERIFICATION_TOKEN_SECRET
+          scope: RUN_TIME
+          type: SECRET
+        - key: EXPRESS_SESSION_SECRET
+          scope: RUN_TIME
+          type: SECRET
+        # Passwords of the three accounts seeded on the first start.
+        - key: DEMO_SUPER_ADMIN_PASSWORD
+          scope: RUN_TIME
+          type: SECRET
+        - key: DEMO_ADMIN_PASSWORD
+          scope: RUN_TIME
+          type: SECRET
+        - key: DEMO_EMPLOYEE_PASSWORD
+          scope: RUN_TIME
+          type: SECRET
 
-        - name: webapp
-          image:
-              registry_type: GHCR
-              registry: ever-co
-              repository: gauzy-webapp
-              tag: latest
-          http_port: 4200
-          instance_count: 1
-          instance_size_slug: apps-s-1vcpu-0.5gb
-          health_check:
-              http_path: /
-          envs:
-              - key: DEMO
-                scope: RUN_TIME
-                value: 'false'
-              - key: API_BASE_URL
-                scope: RUN_TIME
-                value: ${APP_URL}
-              - key: CLIENT_BASE_URL
-                scope: RUN_TIME
-                value: ${APP_URL}
+    - name: webapp
+      image:
+        registry_type: GHCR
+        registry: ever-co
+        repository: gauzy-webapp
+        tag: latest
+      http_port: 4200
+      instance_count: 1
+      instance_size_slug: apps-s-1vcpu-0.5gb
+      health_check:
+        http_path: /
+      envs:
+        - key: DEMO
+          scope: RUN_TIME
+          value: 'false'
+        - key: API_BASE_URL
+          scope: RUN_TIME
+          value: ${APP_URL}
+        - key: CLIENT_BASE_URL
+          scope: RUN_TIME
+          value: ${APP_URL}
 
-    databases:
-        - name: db
-          engine: PG
-          production: false
+  databases:
+    - name: db
+      engine: PG
+      production: false
 
-    ingress:
-        rules:
-            - match:
-                  path:
-                      prefix: /api
-              component:
-                  name: api
-                  preserve_path_prefix: true
-            # Uploaded files, served by the API at /public/... (FILE_PROVIDER=LOCAL).
-            - match:
-                  path:
-                      prefix: /public
-              component:
-                  name: api
-                  preserve_path_prefix: true
-            - match:
-                  path:
-                      prefix: /
-              component:
-                  name: webapp
+  ingress:
+    rules:
+      - match:
+          path:
+            prefix: /api
+        component:
+          name: api
+          preserve_path_prefix: true
+      # Uploaded files, served by the API at /public/... (FILE_PROVIDER=LOCAL).
+      - match:
+          path:
+            prefix: /public
+        component:
+          name: api
+          preserve_path_prefix: true
+      - match:
+          path:
+            prefix: /
+        component:
+          name: webapp
