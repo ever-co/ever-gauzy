@@ -2346,6 +2346,89 @@ describe('SubscriptionService — a cycle’s charge is fenced against an operat
 		});
 		expect(eventNames(fixture)).not.toContain('subscription.payment-failed');
 	});
+
+	it.each([
+		['payment', true],
+		['invoice', false]
+	])(
+		'records no %s whose claim another pass recovered, and leaves that pass to record it (paid: %s)',
+		async (_outcome, paid) => {
+			let fixture: ReturnType<typeof subscriptionFixture>;
+			fixture = subscriptionFixture({
+				orders: () => {
+					// The call outlives the claim's window, and another pass recovers the cycle meanwhile.
+					Object.assign(fixture.cycle(APRIL)!, { chargeClaimToken: 'recovering-pass', chargeClaimedAt: new Date() });
+
+					return { orderId: 'order-1', paid };
+				}
+			});
+
+			const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+			expect(outcome).toMatchObject({ status: SubscriptionBillingStatus.PENDING, replayed: true });
+			expect(fixture.cycle(APRIL)).toMatchObject({
+				status: SubscriptionBillingStatus.PENDING,
+				chargeClaimToken: 'recovering-pass'
+			});
+			expect(fixture.cycle(APRIL)?.paidAt ?? null).toBeNull();
+			expect(fixture.cycle(APRIL)?.orderId ?? null).toBeNull();
+			expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: APRIL, billingCycleCount: 0 });
+			expect(eventNames(fixture)).toEqual([]);
+		}
+	);
+
+	it('does not write a late invoice over a cycle an operator paid once the claim went stale', async () => {
+		let fixture: ReturnType<typeof subscriptionFixture>;
+		fixture = subscriptionFixture({
+			orders: () => {
+				// The claim went stale during the call, and an operator recorded the payment.
+				Object.assign(fixture.cycle(APRIL)!, {
+					status: SubscriptionBillingStatus.PAID,
+					paidAt: new Date(APRIL),
+					chargeClaimToken: null,
+					chargeClaimedAt: null
+				});
+
+				return { orderId: 'order-1', paid: false };
+			}
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome.status).toBe(SubscriptionBillingStatus.PAID);
+		expect(fixture.cycle(APRIL)).toMatchObject({ status: SubscriptionBillingStatus.PAID, paidAt: new Date(APRIL) });
+		expect(eventNames(fixture)).not.toContain('subscription.payment-failed');
+	});
+
+	it('does not turn a failed bookkeeping write after the payment into a failed charge; the next pass finishes the cycle', async () => {
+		const fixture = subscriptionFixture({ plans: [planRow(PLAN, { setupFee: '25' }), planRow(BETTER_PLAN)] });
+
+		// The write that remembers the setup fee the order carried fails after the payment is recorded.
+		jest.spyOn(fixture.service as any, 'rememberSetupFee').mockRejectedValueOnce(new Error('the database went away'));
+
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+
+		// The money is recorded and nothing marks it failed, so no retry charges it again; the calendar has not moved.
+		expect(fixture.cycle(APRIL)).toMatchObject({
+			status: SubscriptionBillingStatus.PAID,
+			orderId: 'order-1',
+			attemptCount: 0,
+			chargeClaimToken: null
+		});
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: APRIL, billingCycleCount: 0 });
+		expect(eventNames(fixture)).toEqual([]);
+
+		// The period's key was not completed on it: once its lease is stale, the next pass finishes the paid cycle.
+		fixture.idempotencyService.advanceBy(3 * 60 * 1000);
+
+		const finished = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(finished).toMatchObject({ status: SubscriptionBillingStatus.PAID, replayed: true, orderId: 'order-1' });
+		expect(fixture.orderCalls).toHaveLength(1);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ nextBillingAt: monthAfter(APRIL), billingCycleCount: 1 });
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.chargedSetupFeePlanIds).toEqual([PLAN]);
+		expect(eventNames(fixture)).toEqual(['subscription.renewed']);
+	});
 });
 
 describe('SubscriptionService — the adjustments a cycle carries (doc 11 §10.8, §10.10)', () => {

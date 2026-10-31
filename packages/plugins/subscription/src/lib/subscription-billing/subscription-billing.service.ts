@@ -111,6 +111,41 @@ function noLiveChargeClaim(now: Date = new Date()): FindOptionsWhere<Subscriptio
 }
 
 /**
+ * The code a billing pass's write is refused with when the cycle's charge claim is no longer the pass's: it went stale
+ * and another pass recovered the cycle. That pass charges under the same attempt key and records the outcome, so the
+ * refused pass records nothing (`SubscriptionService.raiseCycleOrder`).
+ */
+export const CHARGE_CLAIM_LOST = 'SUBSCRIPTION_BILLING_CHARGE_CLAIM_LOST';
+
+/** The refusal of a billing pass's write to a cycle whose charge claim another pass now holds. */
+function chargeClaimLost(billing: SubscriptionBilling, action: string): ConflictException {
+	return new ConflictException({
+		message:
+			`${CHARGE_CLAIM_LOST}: billing cycle '${billing.id}' is no longer this billing pass's to record as ${action}; ` +
+			`its charge claim went stale and another pass now holds the cycle.`,
+		code: CHARGE_CLAIM_LOST,
+		details: { subscriptionBillingId: billing.id, status: billing.status }
+	});
+}
+
+/** The refusal of a hard delete of a cycle that records money billed (doc 13 §11.4). */
+function notDeletable(billed: SubscriptionBilling): ConflictException {
+	return new ConflictException({
+		message:
+			`SUBSCRIPTION_BILLING_NOT_DELETABLE: billing cycle '${billed.id}' is ${billed.status} and records money ` +
+			`billed, so it is history rather than a schedule entry; retire it with DELETE ` +
+			`/subscription-billings/:id/soft instead.`,
+		code: 'SUBSCRIPTION_BILLING_NOT_DELETABLE',
+		details: {
+			subscriptionBillingId: billed.id,
+			status: billed.status,
+			...(billed.orderId ? { orderId: billed.orderId } : {}),
+			attemptCount: Number(billed.attemptCount ?? 0)
+		}
+	});
+}
+
+/**
  * The refusal of an operator's write to a cycle a billing pass is charging right now.
  *
  * The claim may already have ended by the time the refusal is built (it refused the statement, then its pass recorded
@@ -344,24 +379,29 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * no payment can ever see the cycle `INVOICED` without them, which a second write after this one allowed.
 	 *
 	 * The same statement ends the charge claim (`claimCharge`): the attempt's outcome is recorded, so nothing is in
-	 * flight any longer.
+	 * flight any longer. A billing pass names its claim, and the invoice is recorded only while the claim is still the
+	 * pass's and the cycle is still one a pass charges: an invoice that comes back after the claim went stale neither
+	 * clears the claim of the pass that recovered the cycle nor writes `INVOICED` over a cycle an operator settled since.
 	 *
 	 * @param id The cycle.
 	 * @param orderId The order it produced.
 	 * @param amount The amount actually billed, when it differs from the opened one.
 	 * @param deferred The rights the cycle holds back until it is paid, and whether they include the activation
 	 * of the trial it converts.
+	 * @param chargeClaim The token of the billing pass recording its own charge.
 	 * @returns The updated cycle.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_CLAIM_LOST` when the pass no longer holds the claim
+	 * it names, or BadRequestException with `SUBSCRIPTION_BILLING_TRANSITION_INVALID` when the cycle was settled since.
 	 */
 	public async markInvoiced(
 		id: ID,
 		orderId: ID,
 		amount?: DecimalString,
-		deferred?: { activation: boolean; calendar?: boolean }
+		deferred?: { activation: boolean; calendar?: boolean },
+		chargeClaim?: string
 	): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
-
-		await super.update(id, {
+		const patch = {
 			orderId,
 			status: SubscriptionBillingStatus.INVOICED,
 			amount: amount ? this.normalizeAmount(amount, billing.currency) : billing.amount,
@@ -377,7 +417,24 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 						}
 				  }
 				: {})
-		} as any);
+		};
+
+		if (chargeClaim) {
+			await this.writeIf(
+				id,
+				{ status: In([...CHARGEABLE_FROM]), chargeClaimToken: chargeClaim },
+				async () => {
+					const current = await this.findOneScoped(id);
+
+					return CHARGEABLE_FROM.includes(current.status as SubscriptionBillingStatus)
+						? chargeClaimLost(current, 'invoiced')
+						: invalidTransition(current, 'invoiced', CHARGEABLE_FROM);
+				},
+				patch
+			);
+		} else {
+			await super.update(id, patch as any);
+		}
 
 		return await this.findOneScoped(id);
 	}
@@ -391,15 +448,17 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * **An operator's payment is refused while a billing pass is charging the cycle** (`claimCharge`), with
 	 * `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT`: recorded then, it settled a cycle whose money the pass was taking, and the
 	 * conflict was only noticed after the charge. The condition rides in the statement, so a pass that claims the cycle
-	 * after the read below is not paid over. The billing run's own payment names its claim and is never refused by
-	 * one — the money it records was taken — and it ends the claim in the same statement.
+	 * after the read below is not paid over. The billing run's own payment names its claim and is recorded only while
+	 * the claim is still the pass's, in the statement that ends it: a pass whose claim went stale and was recovered is
+	 * refused with `SUBSCRIPTION_BILLING_CHARGE_CLAIM_LOST` and leaves the recovering pass's fence in place — that pass
+	 * charges under the same attempt key, so the order path hands it this charge's order to record.
 	 *
 	 * @param id The cycle.
 	 * @param options The instant the payment settled, the order it settled and the attempt count; `chargeClaim` is the
 	 * token of the billing pass recording its own charge.
 	 * @returns The updated cycle.
 	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when an operator pays a cycle a pass is
-	 * charging.
+	 * charging, or with `SUBSCRIPTION_BILLING_CHARGE_CLAIM_LOST` when the pass that names a claim no longer holds it.
 	 */
 	public async markPaid(
 		id: ID,
@@ -430,15 +489,21 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 				return null;
 			}
 
-			// Still payable, so what refused the operator's write was a pass's claim on the cycle.
-			return byOperator && PAYABLE_FROM.includes(current.status as SubscriptionBillingStatus)
-				? chargeInFlight(current, 'paid')
-				: invalidTransition(current, 'paid', PAYABLE_FROM);
+			if (!PAYABLE_FROM.includes(current.status as SubscriptionBillingStatus)) {
+				return invalidTransition(current, 'paid', PAYABLE_FROM);
+			}
+
+			// Still payable, so what refused the write was a claim: a pass charging the cycle (for an operator), or the
+			// pass that recovered the cycle after this pass's claim went stale (for the run).
+			return byOperator ? chargeInFlight(current, 'paid') : chargeClaimLost(current, 'paid');
 		};
 
 		await this.writeIf(
 			id,
-			{ status: In([...PAYABLE_FROM]), ...(byOperator ? noLiveChargeClaim() : {}) },
+			{
+				status: In([...PAYABLE_FROM]),
+				...(byOperator ? noLiveChargeClaim() : { chargeClaimToken: options.chargeClaim })
+			},
 			refusal,
 			{
 				status: SubscriptionBillingStatus.PAID,
@@ -798,30 +863,126 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			where: { ...where, ...currentScope() } as FindOptionsWhere<SubscriptionBilling>
 		});
 		const billed = cycles.find(recordsBilledMoney);
-		// A schedule entry a pass is charging right now (`claimCharge`) is about to record money billed.
-		const charging = cycles.find((cycle) => holdsLiveChargeClaim(cycle));
-
-		if (!billed && charging) {
-			throw chargeInFlight(charging, 'deleted');
-		}
 
 		if (billed) {
-			throw new ConflictException({
-				message:
-					`SUBSCRIPTION_BILLING_NOT_DELETABLE: billing cycle '${billed.id}' is ${billed.status} and records money ` +
-					`billed, so it is history rather than a schedule entry; retire it with DELETE ` +
-					`/subscription-billings/:id/soft instead.`,
-				code: 'SUBSCRIPTION_BILLING_NOT_DELETABLE',
-				details: {
-					subscriptionBillingId: billed.id,
-					status: billed.status,
-					...(billed.orderId ? { orderId: billed.orderId } : {}),
-					attemptCount: Number(billed.attemptCount ?? 0)
-				}
-			});
+			throw notDeletable(billed);
 		}
 
-		return super.delete(criteria as any, options);
+		if (!cycles.length) {
+			return super.delete(criteria as any, options);
+		}
+
+		// A schedule entry a pass is charging, or starts charging after the read above, is about to record money billed:
+		// each one is fenced against the billing run until the DELETE lands, and read again under the fence.
+		return this.fencedAgainstCharges(cycles, 'deleted', async (fenced) => {
+			const billedMeanwhile = fenced.find(recordsBilledMoney);
+
+			if (billedMeanwhile) {
+				throw notDeletable(billedMeanwhile);
+			}
+
+			return super.delete(criteria as any, options);
+		});
+	}
+
+	/**
+	 * Retires a cycle (`DELETE /subscription-billings/:id`, `DELETE …/:id/soft`, `softDeleteSubscriptionBilling`).
+	 *
+	 * Any cycle may be retired, settled history included, but not one a billing pass is charging right now: retired then,
+	 * it left every read while the pass took the money, and the pass could no longer record what it took. A cycle a pass
+	 * could charge is fenced for the retirement (`fencedAgainstCharges`), so a pass that claims it first refuses the
+	 * retirement with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT`, and no pass can start charging it before the retirement
+	 * lands. A cycle that is not the caller's is left to the base class, which answers it as it always did.
+	 *
+	 * @param id The cycle.
+	 * @param options The inherited find options.
+	 * @param saveOptions The inherited save options.
+	 * @returns The retired cycle.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a billing pass is charging it.
+	 */
+	public async softRemove(id: ID, options?: any, saveOptions?: any): Promise<SubscriptionBilling> {
+		const billing = await this.cyclesOn().findOne({ where: { id, ...currentScope() } });
+
+		if (!billing) {
+			return super.softRemove(id, options, saveOptions);
+		}
+
+		return this.fencedAgainstCharges([billing], 'retired', () => super.softRemove(id, options, saveOptions));
+	}
+
+	/**
+	 * Retires the cycles a criteria selects, fenced against the billing run as `softRemove` is.
+	 *
+	 * @param criteria The cycle, or the conditions that select the cycles to retire.
+	 * @param options The inherited options.
+	 * @returns The result, as the base class answers it.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a billing pass is charging one.
+	 */
+	public async softDelete(criteria: string | number | FindOptionsWhere<SubscriptionBilling>, options?: any): Promise<any> {
+		const where = typeof criteria === 'object' && criteria !== null ? { ...criteria } : { id: criteria };
+		const cycles = await this.typeOrmSubscriptionBillingRepository.find({
+			where: { ...where, ...currentScope() } as FindOptionsWhere<SubscriptionBilling>
+		});
+
+		return this.fencedAgainstCharges(cycles, 'retired', () => super.softDelete(criteria as any, options));
+	}
+
+	/**
+	 * Runs an operator's retirement or deletion of cycles with each one fenced against the billing run.
+	 *
+	 * Neither is a statement this service writes: the platform's soft removal stamps who retired the row through its
+	 * subscriber, and the delete belongs to the base class, so the claim cannot ride in their WHERE as it does in a
+	 * payment's or a waiver's. Each cycle a pass could charge (`PENDING`, `FAILED`) is therefore claimed for the write as
+	 * a pass claims one it charges (`claimCharge`): a cycle a pass is charging refuses the write with
+	 * `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT`, and no pass can start charging a fenced cycle before the write lands.
+	 * Settled cycles are not fenced, since no pass charges them. The fences are released afterwards, whatever the write
+	 * did; a removed row matches nothing.
+	 *
+	 * @param cycles The cycles the write selects, as they were read.
+	 * @param action What the write does to them, for the refusal.
+	 * @param write The write, handed the cycles as they stand under the fence.
+	 * @returns What the write answers.
+	 */
+	private async fencedAgainstCharges<R>(
+		cycles: SubscriptionBilling[],
+		action: string,
+		write: (fenced: SubscriptionBilling[]) => Promise<R>
+	): Promise<R> {
+		const fences: Array<{ id: ID; token: string }> = [];
+
+		try {
+			const fenced: SubscriptionBilling[] = [];
+
+			for (const cycle of cycles) {
+				if (!CHARGEABLE_FROM.includes(cycle.status as SubscriptionBillingStatus)) {
+					fenced.push(cycle);
+					continue;
+				}
+
+				const claim = await this.claimCharge(cycle.id);
+
+				if (claim.token) {
+					fences.push({ id: cycle.id, token: claim.token });
+				} else if (holdsLiveChargeClaim(claim.billing)) {
+					throw chargeInFlight(claim.billing, action);
+				}
+
+				fenced.push(claim.billing);
+			}
+
+			return await write(fenced);
+		} finally {
+			for (const fence of fences) {
+				try {
+					await this.releaseChargeClaim(fence.id, fence.token);
+				} catch (error) {
+					this.logger.warn(
+						`Subscription billing cycle ${fence.id}: the fence of an operator's write was not released ` +
+							`(${(error as Error)?.message ?? error}); it goes stale.`
+					);
+				}
+			}
+		}
 	}
 
 	/**

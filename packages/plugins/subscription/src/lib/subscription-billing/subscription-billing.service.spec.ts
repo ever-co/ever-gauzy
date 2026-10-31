@@ -66,6 +66,14 @@ jest.mock('@gauzy/core', () => {
 		async softDelete(criteria: any): Promise<any> {
 			return this.typeOrmRepository.softDelete(criteria);
 		}
+
+		async softRemove(id: any): Promise<any> {
+			const record = await this.findOneByIdString(id);
+
+			await this.typeOrmRepository.softDelete(id);
+
+			return { ...record, deletedAt: new Date() };
+		}
 	}
 
 	return {
@@ -1222,6 +1230,92 @@ describe('SubscriptionBillingService — a charge in flight fences the cycle (ch
 		expect(refused.token).toBeNull();
 		expect(fixture.billing('just-live')?.chargeClaimToken).toBe('another-pass');
 	});
+
+	const claimLost = { status: 409, response: { code: 'SUBSCRIPTION_BILLING_CHARGE_CLAIM_LOST' } };
+
+	it('refuses the payment of a pass whose claim another pass recovered, and leaves that pass’s fence in place', async () => {
+		const fixture = billingFixture([billingRow('billing-1', live())]);
+
+		await expect(
+			fixture.service.markPaid('billing-1', { orderId: 'order-1', chargeClaim: 'the-pass-whose-claim-went-stale' })
+		).rejects.toMatchObject(claimLost);
+		expect(fixture.billing('billing-1')).toMatchObject({
+			status: SubscriptionBillingStatus.PENDING,
+			paidAt: null,
+			chargeClaimToken: 'another-pass'
+		});
+	});
+
+	it('refuses the invoice of a pass whose claim another pass recovered', async () => {
+		const fixture = billingFixture([billingRow('billing-1', live())]);
+
+		await expect(
+			fixture.service.markInvoiced('billing-1', 'order-1', undefined, undefined, 'the-pass-whose-claim-went-stale')
+		).rejects.toMatchObject(claimLost);
+		expect(fixture.billing('billing-1')).toMatchObject({
+			status: SubscriptionBillingStatus.PENDING,
+			chargeClaimToken: 'another-pass'
+		});
+	});
+
+	it('does not write a late invoice over a cycle an operator settled once the pass’s claim went stale', async () => {
+		const paidAt = new Date('2026-03-02T00:00:00.000Z');
+		const fixture = billingFixture([billingRow('billing-1', { status: SubscriptionBillingStatus.PAID, paidAt })]);
+
+		await expect(
+			fixture.service.markInvoiced('billing-1', 'order-1', undefined, undefined, 'the-pass-whose-claim-went-stale')
+		).rejects.toMatchObject({ status: 400, response: { code: 'SUBSCRIPTION_BILLING_TRANSITION_INVALID' } });
+		expect(fixture.billing('billing-1')).toMatchObject({ status: SubscriptionBillingStatus.PAID, paidAt });
+	});
+
+	it('refuses to retire a cycle a pass is charging, and retires one no pass is charging', async () => {
+		const fixture = billingFixture([
+			billingRow('charging', live()),
+			nextPeriod('idle'),
+			billingRow('paid', {
+				periodStart: new Date('2026-05-01T00:00:00.000Z'),
+				periodEnd: new Date('2026-06-01T00:00:00.000Z'),
+				status: SubscriptionBillingStatus.PAID,
+				paidAt: new Date()
+			})
+		]);
+
+		await expect(fixture.service.softRemove('charging')).rejects.toMatchObject(inFlight);
+		expect(fixture.billing('charging')?.deletedAt).toBeUndefined();
+
+		await fixture.service.softRemove('idle');
+		await fixture.service.softRemove('paid');
+
+		// The retirement's own fence is released once it lands.
+		expect(fixture.billing('idle')).toMatchObject({ deletedAt: expect.any(Date), chargeClaimToken: null });
+		expect(fixture.billing('paid')).toMatchObject({ deletedAt: expect.any(Date), status: SubscriptionBillingStatus.PAID });
+	});
+
+	it.each([
+		['retire', (service: SubscriptionBillingService) => service.softRemove('billing-1'), 'findOne'],
+		['delete', (service: SubscriptionBillingService) => service.delete('billing-1'), 'find']
+	])(
+		'refuses to %s a cycle a pass claims after the operator’s write read it',
+		async (_action, write, readWith) => {
+			const fixture = billingFixture([billingRow('billing-1')]);
+			const store = fixture.service.typeOrmSubscriptionBillingRepository as unknown as Row;
+			const read = store[readWith];
+
+			// The pass's claim commits right after the operator's write read the cycle unclaimed.
+			store[readWith] = async (options: Row) => {
+				store[readWith] = read;
+				const found = await read(options);
+
+				Object.assign(fixture.billing('billing-1')!, live());
+
+				return found;
+			};
+
+			await expect(write(fixture.service)).rejects.toMatchObject(inFlight);
+			expect(fixture.billing('billing-1')).toMatchObject({ chargeClaimToken: 'another-pass' });
+			expect(fixture.billing('billing-1')?.deletedAt).toBeUndefined();
+		}
+	);
 
 	it('lets an operator settle a cycle whose claim is stale, and clears the claim with it', async () => {
 		const fixture = billingFixture([billingRow('to-pay', stale()), nextPeriod('to-waive', stale())]);
