@@ -7,6 +7,13 @@ import { ID, IOrganizationContactCreateInput, IOrganizationProject } from '@gauz
  */
 const EXISTING_ROW_RELATIONS = ['invoices', 'payments', 'expenses', 'incomes', 'timeLogs'] as const;
 
+/**
+ * The links from contact details back to the record that holds them. They are the inverse side of a one-to-one, so
+ * saving new details with one re-points that record — an employee, a candidate or another contact — to the new
+ * details.
+ */
+const CONTACT_DETAILS_HOLDERS = ['employee', 'candidate', 'organizationContact'] as const;
+
 /** Reads the projects of the new contact's organization that `ids` name. */
 export type FindContactProjects = (ids: ID[]) => Promise<Pick<IOrganizationProject, 'id' | 'organizationContactId'>[]>;
 
@@ -18,7 +25,8 @@ export type FindContactProjects = (ids: ID[]) => Promise<Pick<IOrganizationProje
  * invoices, payments, expenses, incomes and time logs onto the new contact. Each of those changes a record that
  * already exists, which is editing, so for this caller:
  *
- * - an existing contact or existing contact details are refused;
+ * - an existing contact or existing contact details are refused, and so are new details that name the employee,
+ *   candidate or contact holding them;
  * - existing invoices, payments, expenses, incomes and time logs are refused;
  * - projects may be named only by id, only when they are projects of the organization that have no contact yet,
  *   and only the link is written: nothing else the body says about a project is saved.
@@ -42,6 +50,10 @@ export async function toCreateOnlyContactInput(
 	}
 	if (input.contactId || input.contact?.id) {
 		refuse('reuse existing contact details');
+	}
+	const details = (input.contact ?? {}) as unknown as Record<string, unknown>;
+	if (CONTACT_DETAILS_HOLDERS.some((holder) => details[holder] != null)) {
+		refuse('give its contact details to an existing employee, candidate or contact');
 	}
 	for (const relation of EXISTING_ROW_RELATIONS) {
 		const rows = (input as unknown as Record<string, unknown>)[relation];

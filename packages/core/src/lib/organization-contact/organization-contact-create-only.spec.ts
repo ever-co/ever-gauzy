@@ -37,6 +37,15 @@ describe('toCreateOnlyContactInput: what a caller who may create contacts but no
 		['an existing contact', { id: 'contact-existing' }],
 		['existing contact details by id', { contactId: 'details-existing' }],
 		['existing contact details inline', { contact: { id: 'details-existing', city: 'Sofia' } }],
+		['new contact details given to an existing employee', { contact: { city: 'Sofia', employee: { id: 'e-1' } } }],
+		[
+			'new contact details given to an existing candidate',
+			{ contact: { city: 'Sofia', candidate: { id: 'c-1' } } }
+		],
+		[
+			'new contact details given to an existing contact',
+			{ contact: { city: 'Sofia', organizationContact: { id: 'contact-existing' } } }
+		],
 		['existing invoices', { invoices: [{ id: 'invoice-1' }] }],
 		['existing payments', { payments: [{ id: 'payment-1' }] }],
 		['existing expenses', { expenses: [{ id: 'expense-1' }] }],
