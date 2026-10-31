@@ -6,6 +6,7 @@ import { PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { EverConnectModule } from './ever-connect.module';
 import { EverConnectEnabledGuard, EverConnectOperatorGuard } from './guards/ever-connect-operator.guard';
+import { WELL_KNOWN_PATH } from './well-known/ever-connect-well-known.service';
 
 const MANIFEST = join(__dirname, '../../ever-connect.routes.json');
 
@@ -80,6 +81,13 @@ describe('route manifest', () => {
 			'GET /api/ever-connect/usage',
 			'GET /api/ever-connect/provision',
 			'POST /api/ever-connect/provision'
+		]);
+	});
+
+	it('declares the one route registered on the HTTP server outside /api: /.well-known/ever-connect', () => {
+		const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8'));
+		expect(manifest.adapter_endpoints.map((e: Route & { auth: string }) => `${e.method} ${e.path} ${e.auth}`)).toEqual([
+			`GET ${WELL_KNOWN_PATH} public`
 		]);
 	});
 

@@ -41,8 +41,39 @@ describe('readEverConnectConfig', () => {
 			returnUrl: null,
 			returnUnusable: false,
 			issuer: null,
-			localPlatform: false
+			localPlatform: false,
+			signIn: {
+				redirectUri: 'http://localhost:3000/api/auth/zitadel/callback',
+				logoutUri: 'http://localhost:3000/api/auth/zitadel/backchannel-logout'
+			}
 		});
+	});
+
+	it('the Ever ID sign-in endpoints: from ZITADEL_CALLBACK_URL or API_BASE_URL, on one https origin', () => {
+		expect(readEverConnectConfig({ API_BASE_URL: 'https://gauzy.example.com/' }).signIn).toEqual({
+			redirectUri: 'https://gauzy.example.com/api/auth/zitadel/callback',
+			logoutUri: 'https://gauzy.example.com/api/auth/zitadel/backchannel-logout'
+		});
+		expect(
+			readEverConnectConfig({
+				API_BASE_URL: 'https://api.example.com',
+				ZITADEL_CALLBACK_URL: 'https://edge.example.com/api/auth/zitadel/callback'
+			}).signIn
+		).toEqual({
+			redirectUri: 'https://edge.example.com/api/auth/zitadel/callback',
+			logoutUri: 'https://edge.example.com/api/auth/zitadel/backchannel-logout'
+		});
+		// Not registrable: plain http on a network address, two origins, a query.
+		expect(readEverConnectConfig({ API_BASE_URL: 'http://10.0.0.5:3000' }).signIn).toBeNull();
+		expect(
+			readEverConnectConfig({
+				API_BASE_URL: 'https://api.example.com',
+				ZITADEL_CALLBACK_URL: 'https://edge.example.com/signin'
+			}).signIn
+		).toBeNull();
+		expect(
+			readEverConnectConfig({ ZITADEL_CALLBACK_URL: 'https://gauzy.example.com/api/auth/zitadel/callback?x=1' }).signIn
+		).toBeNull();
 	});
 
 	it('cloud only from EVER_INSTALL_SOURCE=cloud, never from other signals', () => {
