@@ -1,23 +1,57 @@
-import { ISoundFileAudio, SoundFilePlayer } from './sound-file-player';
+import { ISoundFileAudio, SoundFilePlayer, soundFileUrl } from './sound-file-player';
+
+describe('soundFileUrl', () => {
+	it.each([
+		[
+			'C:\\Program Files\\Gauzy\\resources\\data\\sound\\snapshot-sound.wav',
+			'file:///C:/Program%20Files/Gauzy/resources/data/sound/snapshot-sound.wav'
+		],
+		[
+			'C:\\Users\\J#\\AppData\\Roaming\\gauzy\\sounds\\screenshot-sound-1.mp3',
+			'file:///C:/Users/J%23/AppData/Roaming/gauzy/sounds/screenshot-sound-1.mp3'
+		],
+		['d:/data/100% sound?.ogg', 'file:///d:/data/100%25%20sound%3F.ogg'],
+		['\\\\server\\share\\sounds\\chime.wav', 'file://server/share/sounds/chime.wav'],
+		[
+			'/home/j/.config/gauzy/sounds/screenshot-sound-1.ogg',
+			'file:///home/j/.config/gauzy/sounds/screenshot-sound-1.ogg'
+		],
+		[
+			'/Users/Ana María/Library/Application Support/gauzy/#1.wav',
+			'file:///Users/Ana%20Mar%C3%ADa/Library/Application%20Support/gauzy/%231.wav'
+		]
+	])('makes a file URL of the path %s', (file, url) => {
+		expect(soundFileUrl(file)).toBe(url);
+	});
+
+	it.each([
+		'file:///C:/sounds/chime.wav',
+		'https://cdn.example.com/chime.mp3',
+		'data:audio/wav;base64,UklGRg==',
+		'assets/sounds/chime.wav'
+	])('keeps a URL or a path relative to the page as it is (%s)', (file) => {
+		expect(soundFileUrl(file)).toBe(file);
+	});
+});
 
 describe('SoundFilePlayer', () => {
-	let created: { file: string; audio: { play: jest.Mock; pause: jest.Mock } }[];
+	let created: { url: string; audio: { play: jest.Mock; pause: jest.Mock } }[];
 	let player: SoundFilePlayer;
 
 	beforeEach(() => {
 		created = [];
-		player = new SoundFilePlayer((file) => {
+		player = new SoundFilePlayer((url) => {
 			const audio = { play: jest.fn().mockResolvedValue(undefined), pause: jest.fn() };
-			created.push({ file, audio });
+			created.push({ url, audio });
 			return audio as unknown as ISoundFileAudio;
 		});
 	});
 
-	it('plays the file it is given', async () => {
+	it('plays the file it is given, from its file URL', async () => {
 		await player.play('/app/assets/sound.wav');
 
 		expect(created).toHaveLength(1);
-		expect(created[0].file).toBe('/app/assets/sound.wav');
+		expect(created[0].url).toBe('file:///app/assets/sound.wav');
 		expect(created[0].audio.play).toHaveBeenCalledTimes(1);
 		expect(player.file).toBe('/app/assets/sound.wav');
 	});
@@ -35,9 +69,9 @@ describe('SoundFilePlayer', () => {
 		await player.play('/app/assets/sound.wav');
 		await player.play('/user-data/sounds/screenshot-sound-1.mp3');
 
-		expect(created.map(({ file }) => file)).toEqual([
-			'/app/assets/sound.wav',
-			'/user-data/sounds/screenshot-sound-1.mp3'
+		expect(created.map(({ url }) => url)).toEqual([
+			'file:///app/assets/sound.wav',
+			'file:///user-data/sounds/screenshot-sound-1.mp3'
 		]);
 		expect(created[0].audio.pause).toHaveBeenCalled();
 		expect(created[1].audio.play).toHaveBeenCalledTimes(1);
