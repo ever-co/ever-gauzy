@@ -3377,7 +3377,12 @@
 		"BUDGET": "Budget",
 		"PHOTO_HINT": "Klik of sleep een afbeelding om te uploaden",
 		"SEARCH_EMPLOYEES": "Zoek medewerkers op naam of e-mail",
-		"NO_MEMBERS": "Nog geen leden toegevoegd"
+		"NO_MEMBERS": "Nog geen leden toegevoegd",
+		"NOTES": "Notities",
+		"NO_NOTES": "Nog geen notities. Voeg de eerste toe.",
+		"NOTE_PLACEHOLDER": "Schrijf een notitie…",
+		"ADD_NOTE": "Notitie toevoegen",
+		"NOTE_DELETED": "Notitie verwijderd"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Talen",

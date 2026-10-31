@@ -3378,7 +3378,12 @@
 		"BUDGET": "Budget",
 		"PHOTO_HINT": "Cliquez ou déposez une image pour la téléverser",
 		"SEARCH_EMPLOYEES": "Rechercher des employés par nom ou e-mail",
-		"NO_MEMBERS": "Aucun membre ajouté pour le moment"
+		"NO_MEMBERS": "Aucun membre ajouté pour le moment",
+		"NOTES": "Notes",
+		"NO_NOTES": "Aucune note pour le moment. Ajoutez la première.",
+		"NOTE_PLACEHOLDER": "Écrire une note…",
+		"ADD_NOTE": "Ajouter une note",
+		"NOTE_DELETED": "Note supprimée"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Langues",

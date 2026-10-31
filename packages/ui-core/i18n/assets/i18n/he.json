@@ -3405,7 +3405,12 @@
 		"BUDGET": "Budget",
 		"PHOTO_HINT": "לחצו או גררו תמונה להעלאה",
 		"SEARCH_EMPLOYEES": "חפשו עובדים לפי שם או אימייל",
-		"NO_MEMBERS": "עדיין לא נוספו חברים"
+		"NO_MEMBERS": "עדיין לא נוספו חברים",
+		"NOTES": "הערות",
+		"NO_NOTES": "אין עדיין הערות. הוסיפו את הראשונה.",
+		"NOTE_PLACEHOLDER": "כתבו הערה…",
+		"ADD_NOTE": "הוספת הערה",
+		"NOTE_DELETED": "ההערה נמחקה"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",

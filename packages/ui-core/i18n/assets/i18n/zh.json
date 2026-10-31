@@ -3377,7 +3377,12 @@
 		"BUDGET": "预算",
 		"PHOTO_HINT": "点击或拖放图片以上传",
 		"SEARCH_EMPLOYEES": "按姓名或邮箱搜索员工",
-		"NO_MEMBERS": "尚未添加成员"
+		"NO_MEMBERS": "尚未添加成员",
+		"NOTES": "备注",
+		"NO_NOTES": "暂无备注。添加第一条备注。",
+		"NOTE_PLACEHOLDER": "写一条备注…",
+		"ADD_NOTE": "添加备注",
+		"NOTE_DELETED": "备注已删除"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "语言",

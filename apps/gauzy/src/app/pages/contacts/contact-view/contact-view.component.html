@@ -349,6 +349,29 @@
 					</nb-tab>
 
 					<!--
+						Notes on the contact (ever-co/ever-gauzy#1114), newest first. Loaded when the tab is
+						first opened. Readers without ORG_CONTACT_EDIT see the notes without the box.
+					-->
+					@if (canReadNotes) {
+						<nb-tab [tabTitle]="'CONTACTS_PAGE.NOTES' | translate" [lazyLoad]="true">
+							<div class="pane">
+								@if (selectedContact) {
+									<ga-entity-comments
+										[entity]="documentEntity"
+										[entityId]="selectedContact.id"
+										[entityName]="selectedContact.name"
+										[organizationId]="selectedContact.organizationId"
+										[tenantId]="selectedContact.tenantId"
+										[newestFirst]="true"
+										[canWrite]="canWriteNotes"
+										[labels]="notesLabels"
+									></ga-entity-comments>
+								}
+							</div>
+						</nb-tab>
+					}
+
+					<!--
 						Record-side Documents panel (spec 00 §6.14 R-LNK-02). The panel gates
 						itself on DOCS_READ + FEATURE_DOCUMENTS and renders nothing when either
 						is missing — the tab is kept unconditional so the tabset does not have

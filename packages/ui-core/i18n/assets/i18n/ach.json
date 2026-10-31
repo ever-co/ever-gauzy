@@ -3205,7 +3205,12 @@
 		"ADDRESS": "crwdns8756:0crwdne8756:0",
 		"ADDRESS_2": "crwdns11245:0crwdne11245:0",
 		"MEMBERS": "crwdns8758:0crwdne8758:0",
-		"BUDGET": "crwdns10527:0crwdne10527:0"
+		"BUDGET": "crwdns10527:0crwdne10527:0",
+		"NOTES": "Notes",
+		"NO_NOTES": "No notes yet. Add the first one.",
+		"NOTE_PLACEHOLDER": "Write a note…",
+		"ADD_NOTE": "Add note",
+		"NOTE_DELETED": "Note deleted"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "crwdns4798:0crwdne4798:0",

@@ -3379,7 +3379,12 @@
 		"BUDGET": "Presupuesto",
 		"PHOTO_HINT": "Haz clic o suelta una imagen para subirla",
 		"SEARCH_EMPLOYEES": "Busca empleados por nombre o correo",
-		"NO_MEMBERS": "Aún no se han añadido miembros"
+		"NO_MEMBERS": "Aún no se han añadido miembros",
+		"NOTES": "Notas",
+		"NO_NOTES": "Aún no hay notas. Añade la primera.",
+		"NOTE_PLACEHOLDER": "Escribe una nota…",
+		"ADD_NOTE": "Añadir nota",
+		"NOTE_DELETED": "Nota eliminada"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Idiomas.",

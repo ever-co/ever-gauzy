@@ -6,7 +6,8 @@ import {
 	IFavorite,
 	IOrganization,
 	IOrganizationContact,
-	IOrganizationContactCreateInput
+	IOrganizationContactCreateInput,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +18,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FilterArrayPipe, LeafletMapComponent } from '@gauzy/ui-core/shared';
 import { Store } from '@gauzy/ui-core/core';
 import { EmployeesService, OrganizationContactService } from '@gauzy/ui-core/core';
+import { IEntityCommentsLabels } from '../../shared/entity-comments/entity-comments.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -40,8 +42,21 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 	/** Tail of the queued member saves; see `updateOrganizationContactMembers`. */
 	private _membersUpdate: Promise<void> = Promise.resolve();
 
-	/** Entity type the record-side Documents tab attaches its links to. */
+	/** Entity type the record-side Documents tab attaches its links to, and the Notes tab its notes. */
 	readonly documentEntity = BaseEntityEnum.OrganizationContact;
+
+	/**
+	 * The Notes tab (ever-co/ever-gauzy#1114): the contact's comments, shown to those who may view contacts and
+	 * written by those who may edit them, the permissions the server checks on the contact itself.
+	 */
+	readonly canReadNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_VIEW);
+	readonly canWriteNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT);
+	readonly notesLabels: IEntityCommentsLabels = {
+		empty: 'CONTACTS_PAGE.NO_NOTES',
+		placeholder: 'CONTACTS_PAGE.NOTE_PLACEHOLDER',
+		send: 'CONTACTS_PAGE.ADD_NOTE',
+		deleted: 'CONTACTS_PAGE.NOTE_DELETED'
+	};
 
 	constructor(
 		readonly translateService: TranslateService,

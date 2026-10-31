@@ -3373,7 +3373,12 @@
 		"BUDGET": "Haushalt",
 		"PHOTO_HINT": "Klicken oder Bild hierher ziehen, um es hochzuladen",
 		"SEARCH_EMPLOYEES": "Mitarbeiter nach Name oder E-Mail suchen",
-		"NO_MEMBERS": "Noch keine Mitglieder hinzugefügt"
+		"NO_MEMBERS": "Noch keine Mitglieder hinzugefügt",
+		"NOTES": "Notizen",
+		"NO_NOTES": "Noch keine Notizen. Fügen Sie die erste hinzu.",
+		"NOTE_PLACEHOLDER": "Notiz schreiben…",
+		"ADD_NOTE": "Notiz hinzufügen",
+		"NOTE_DELETED": "Notiz gelöscht"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Sprachen",

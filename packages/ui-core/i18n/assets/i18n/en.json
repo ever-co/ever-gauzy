@@ -3903,7 +3903,12 @@
 		"BUDGET": "Budget",
 		"PHOTO_HINT": "Click or drop an image to upload",
 		"SEARCH_EMPLOYEES": "Search employees by name or email",
-		"NO_MEMBERS": "No members added yet"
+		"NO_MEMBERS": "No members added yet",
+		"NOTES": "Notes",
+		"NO_NOTES": "No notes yet. Add the first one.",
+		"NOTE_PLACEHOLDER": "Write a note…",
+		"ADD_NOTE": "Add note",
+		"NOTE_DELETED": "Note deleted"
 	},
 	"PUBLIC_PAGE": {
 		"LANGUAGES": "Languages",
