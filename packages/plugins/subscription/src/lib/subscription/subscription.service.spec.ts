@@ -2244,9 +2244,33 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 			changeIntent: { key: `${SUBSCRIPTION}:recorded` },
 			chargedSetupFeePlanIds: [PLAN],
 			// Only what the pass consumed is taken off, once; what the change carried since stays for the next cycle.
-			pendingCredit: { amount: '-30.970000', currency: 'USD', consumedBy: ['cycle-april'] }
+			pendingCredit: { amount: '-30.970000', currency: 'USD' },
+			consumedCreditCycles: ['cycle-april']
 		});
 		expect(fixture.subscription(SUBSCRIPTION).reservedPlanId).toBe(BETTER_PLAN);
+
+		// Consumed to nothing, the carried entry goes; the cycle stays listed, so a pass that took over the same cycle
+		// after a change carried new credit takes none of it.
+		const whole = subscriptionFixture({
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { metadata: { pendingCredit: { amount: '-12.000000', currency: 'USD' } } })]
+		});
+		const wholeService = whole.service as any;
+		const wholeRead = whole.subscription(SUBSCRIPTION);
+
+		await wholeService.clearPendingCredit({ ...wholeRead }, Money.of('-12.000000', 'USD'), 'cycle-april');
+
+		expect(whole.subscription(SUBSCRIPTION).metadata?.['pendingCredit']).toBeUndefined();
+
+		whole.subscription(SUBSCRIPTION).metadata = {
+			...whole.subscription(SUBSCRIPTION).metadata,
+			pendingCredit: { amount: '-30.970000', currency: 'USD' }
+		};
+		await wholeService.clearPendingCredit({ ...wholeRead }, Money.of('-12.000000', 'USD'), 'cycle-april');
+
+		expect(whole.subscription(SUBSCRIPTION).metadata).toMatchObject({
+			pendingCredit: { amount: '-30.970000' },
+			consumedCreditCycles: ['cycle-april']
+		});
 	});
 
 	it('recovers a reservation abandoned past the lease on the next billing pass, and leaves a fresh one', async () => {
@@ -2650,6 +2674,32 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		// The later decision stands: the subscription moves now, and back at the renewal.
 		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(BETTER_PLAN);
 		expect(fixture.subscription(SUBSCRIPTION).metadata?.['scheduledPlanChange']).toMatchObject({ planId: PLAN });
+
+		// The same change scheduled again while it was charged is another decision, signed with a token of its own, and
+		// stays too.
+		const again = { planId: PLAN, effectiveAt: APRIL, description: 'again', decision: 'first' };
+		const rescheduled = subscriptionFixture({
+			prices: UPGRADE,
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					metadata: { scheduledPlanChange: { ...again, signature: signScheduledChange(SUBSCRIPTION, again as never) } }
+				})
+			],
+			onProration: () => {
+				const row = rescheduled.subscription(SUBSCRIPTION);
+				const repeated = { ...again, decision: 'second' };
+
+				row.metadata = {
+					...row.metadata,
+					scheduledPlanChange: { ...repeated, signature: signScheduledChange(SUBSCRIPTION, repeated as never) }
+				};
+				row.version += 1;
+			}
+		});
+
+		await rescheduled.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		expect(rescheduled.subscription(SUBSCRIPTION).metadata?.['scheduledPlanChange']).toMatchObject({ decision: 'second' });
 
 		// The control: one scheduled before the plan change was decided is the earlier decision, and goes.
 		const earlier = { planId: PLAN, effectiveAt: APRIL, description: 'scheduled first' };

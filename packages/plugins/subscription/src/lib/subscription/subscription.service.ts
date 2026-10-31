@@ -205,6 +205,16 @@ const CHARGED_SETUP_FEES = 'chargedSetupFeePlanIds';
 /** The metadata key that carries a proration credit into the next cycle. */
 const PENDING_CREDIT = 'pendingCredit';
 
+/**
+ * The metadata key the cycles whose consumed credit was taken off the carried credit are listed under
+ * (`clearPendingCredit`), apart from the carried entry, so the list outlives an entry consumed to nothing. The last
+ * {@link CONSUMED_CREDIT_CYCLES_KEPT} are kept.
+ */
+const CONSUMED_CREDIT_CYCLES = 'consumedCreditCycles';
+
+/** How many cycles {@link CONSUMED_CREDIT_CYCLES} keeps: far more than can be billed while one pass runs. */
+const CONSUMED_CREDIT_CYCLES_KEPT = 20;
+
 /** The metadata key a per-subscription discount override is stored under. */
 const DISCOUNT_OVERRIDE = 'discountPercentage';
 
@@ -302,6 +312,11 @@ interface IScheduledPlanChange {
 	/** The start of the first period the change applies to; null when it was recorded with no current period. */
 	effectiveAt?: Date | string | null;
 	description?: string;
+	/**
+	 * A token of this decision alone, signed with it: the same change scheduled again is another decision, which a plan
+	 * change decided before it does not replace (`replacesSchedule`).
+	 */
+	decision?: string;
 }
 
 /**
@@ -397,7 +412,8 @@ export const RESERVED_SUBSCRIPTION_METADATA_KEYS: readonly string[] = [
 	SCHEDULED_PLAN_CHANGE,
 	CHANGE_INTENT,
 	APPLIED_CHANGES,
-	SETTLEMENT_REVERSALS
+	SETTLEMENT_REVERSALS,
+	CONSUMED_CREDIT_CYCLES
 ];
 
 /**
@@ -3114,7 +3130,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 							}))
 						}),
 				effectiveAt: subscription.currentPeriodEnd ?? null,
-				description: change.description
+				description: change.description,
+				decision: randomUUID()
 			};
 
 			// Signed, so the billing run can tell it from an entry a caller's metadata wrote (`scheduledChangeAt`).
@@ -3549,11 +3566,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			// **next** billing order".
 			const carried = this.pendingCreditOf(metadata, intent.currency);
 			const total = carried ? carried.add(net).round() : net;
-			// The cycles that already took their credit off stay listed (`clearPendingCredit`).
-			const consumedBy = carried ? (metadata[PENDING_CREDIT] as { consumedBy?: string[] })?.consumedBy : undefined;
 
 			metadata[PENDING_CREDIT] = {
-				...(Array.isArray(consumedBy) ? { consumedBy } : {}),
 				amount: total.toStorageString(),
 				currency: intent.currency,
 				at: intent.at,
@@ -4671,9 +4685,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * Only the amount the cycle consumed is taken off, from the row as it is after the order path: a credit a change
 	 * carried meanwhile stays carried for the next cycle, and a change recorded meanwhile is kept (`rememberSetupFee`).
 	 *
-	 * **Once per cycle.** The cycles whose credit was taken off are listed on the carried entry (`consumedBy`): a pass
-	 * that took over a stale claim on the same cycle, and consumed the same credit, takes nothing more off — taken off
-	 * twice, the second came out of the credit a change carried since.
+	 * **Once per cycle.** The cycles whose credit was taken off are listed under {@link CONSUMED_CREDIT_CYCLES}, apart
+	 * from the carried entry, so the list stands when the entry is consumed to nothing and a change carries new credit
+	 * after it: a pass that took over a stale claim on the same cycle, and consumed the same credit, takes nothing more
+	 * off — taken off twice, the second came out of the credit a change carried since.
 	 *
 	 * @param subscription The subscription whose deferred credit was applied.
 	 * @param consumed The credit the cycle applied.
@@ -4687,13 +4702,16 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<void> {
 		await this.mergeMetadata(subscription.id, expectation, (metadata) => {
-			const pending = metadata[PENDING_CREDIT] as
-				| { amount?: string; currency?: string; consumedBy?: string[] }
-				| undefined;
+			const pending = metadata[PENDING_CREDIT] as { amount?: string; currency?: string } | undefined;
+			const cycles = Array.isArray(metadata[CONSUMED_CREDIT_CYCLES])
+				? (metadata[CONSUMED_CREDIT_CYCLES] as string[])
+				: [];
 
-			if (!pending?.amount || (Array.isArray(pending.consumedBy) && pending.consumedBy.includes(billingId))) {
+			if (!pending?.amount || cycles.includes(billingId)) {
 				return false;
 			}
+
+			metadata[CONSUMED_CREDIT_CYCLES] = [...cycles, billingId].slice(-CONSUMED_CREDIT_CYCLES_KEPT);
 
 			// Read as the cycle read it (`consumePendingCredit`); a credit in a currency other than the one consumed is
 			// cleared whole, as it always was.
@@ -4703,8 +4721,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			if (left?.isNegative()) {
 				metadata[PENDING_CREDIT] = {
 					...(metadata[PENDING_CREDIT] as Record<string, unknown>),
-					amount: left.toStorageString(),
-					consumedBy: [...(Array.isArray(pending.consumedBy) ? pending.consumedBy : []), billingId].slice(-10)
+					amount: left.toStorageString()
 				};
 			} else {
 				delete metadata[PENDING_CREDIT];
