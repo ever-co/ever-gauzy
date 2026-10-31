@@ -9,6 +9,7 @@ import { coreEntities } from '../../../core/entities';
 import { RequestContext } from '../../../core/context';
 import { ConnectTimeOffBalancesToApproval1791000003630 } from '../../../database/migrations/1791000003630-ConnectTimeOffBalancesToApproval';
 import { TimeOffBalanceDeductionService } from '../../../time-off-balance/time-off-balance-deduction.service';
+import { typeOrmTimeOffBalanceLedger } from '../../../time-off-balance/time-off-balance-ledger';
 import { TimeOffRequest } from '../../time-off-request.entity';
 import { TimeOffStatusCommand } from '../time-off.status.command';
 import { TimeOffStatusHandler } from './time-off.status.handler';
@@ -405,6 +406,58 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 
 			expect(await balance(id)).toEqual({ taken: 5, remaining: 0 });
 		});
+
+		// A policy that requires sufficient balance cannot be satisfied by a balance that was never allocated
+		// (#11601 review): no row is no days left, not a free pass.
+		it('refuses the approval (400) when the employee has no balance for the policy, and writes nothing', async () => {
+			// A balance under another policy covers nothing under this one.
+			const other = await allocate({ policyId: OTHER_POLICY });
+			await fileLeave();
+
+			const refusal = decide(StatusTypesEnum.APPROVED);
+			await expect(refusal).rejects.toBeInstanceOf(BadRequestException);
+			await expect(refusal).rejects.toThrow(/no leave balance is allocated under this time-off policy for 2026/);
+
+			expect(await statuses()).toEqual({
+				leave: StatusTypesEnum.REQUESTED,
+				approval: StatusTypesMapRequestApprovalEnum.REQUESTED
+			});
+			expect(await dataSource.query(`SELECT * FROM "time_off_balance" WHERE "policyId" = ?`, [POLICY])).toEqual([]);
+			expect(await balance(other)).toEqual({ taken: 0, remaining: 20 });
+			expect(await deductions()).toEqual([]);
+		});
+
+		it('refuses the approval (400) when one of its employees has no balance, and takes nothing from the other', async () => {
+			const covered = await allocate({ accrued: 20 });
+			await fileLeave({ employees: [EMPLOYEE, COLLEAGUE] });
+
+			await expect(decide(StatusTypesEnum.APPROVED)).rejects.toBeInstanceOf(BadRequestException);
+
+			expect(await balance(covered)).toEqual({ taken: 0, remaining: 20 });
+			expect(await deductions()).toEqual([]);
+		});
+
+		it('refuses the approval (400) when it takes working days of a year with no balance', async () => {
+			// Monday 28 December 2026 to Friday 8 January 2027: a 2026 balance only.
+			const id = await allocate({ accrued: 20 });
+			await fileLeave({ start: '2026-12-27 23:00:00.000', end: '2027-01-07 23:00:00.000' });
+
+			await expect(decide(StatusTypesEnum.APPROVED)).rejects.toThrow(/for 2027/);
+
+			expect(await balance(id)).toEqual({ taken: 0, remaining: 20 });
+			expect(await deductions()).toEqual([]);
+		});
+
+		it('needs no balance for a year it takes no working day of', async () => {
+			// Monday 28 to Thursday 31 December 2026, and Friday 1 January 2027, a holiday: 2027 contributes nothing.
+			await holiday({ date: '2027-01-01', isRecurring: 0 });
+			const id = await allocate({ accrued: 20 });
+			await fileLeave({ start: '2026-12-27 23:00:00.000', end: '2026-12-31 23:00:00.000' });
+
+			await decide(StatusTypesEnum.APPROVED);
+
+			expect(await balance(id)).toEqual({ taken: 4, remaining: 16 });
+		});
 	});
 
 	describe('the zone the days are read in', () => {
@@ -542,11 +595,10 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 			await fileLeave();
 			const [leave] = await dataSource.query(`SELECT * FROM "time_off_request" WHERE "id" = ?`, [LEAVE]);
 			const deductionService = new TimeOffBalanceDeductionService();
+			const ledger = typeOrmTimeOffBalanceLedger(dataSource.manager);
 
-			await deductionService.settle(dataSource.manager, leave, StatusTypesEnum.APPROVED);
-			await expect(
-				deductionService.settle(dataSource.manager, leave, StatusTypesEnum.APPROVED)
-			).resolves.toBeUndefined();
+			await deductionService.settle(ledger, leave, StatusTypesEnum.APPROVED);
+			await expect(deductionService.settle(ledger, leave, StatusTypesEnum.APPROVED)).resolves.toBeUndefined();
 
 			expect(await balance(id)).toEqual({ taken: 5, remaining: 15 });
 			expect(await deductions()).toHaveLength(1);

@@ -1,6 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 import { PermissionsEnum, StatusTypesEnum } from '@gauzy/contracts';
 import {
+	editChangesCharge,
 	filedTimeOffStatus,
 	requestedPolicyId,
 	TIME_OFF_FOR_OTHERS_PERMISSIONS,
@@ -132,5 +133,62 @@ describe('time-off request write whitelist (F2)', () => {
 			// An edit that does not mention them leaves them as stored.
 			expect(timeOffEmployees(undefined, caller, { create: false })).toBeUndefined();
 		});
+	});
+});
+
+/**
+ * Whether an edit of an approved request moves what its approval took from leave balances (ever-co/ever-gauzy#10183,
+ * #11601 review): its dates, its holiday flag, its policy or its employees, compared with the stored request, since
+ * the request dialog sends every member on each edit.
+ */
+describe('editChangesCharge', () => {
+	const POLICY = '0f7c1a2e-0000-4000-8000-00000000e001';
+	const stored = {
+		start: new Date('2026-11-01T23:00:00.000Z'),
+		end: new Date('2026-11-07T23:00:00.000Z'),
+		isHoliday: false,
+		policy: { id: POLICY },
+		policyId: POLICY,
+		employees: [{ id: 'employee-a' }, { id: 'employee-b' }]
+	};
+
+	it('is false for an edit that writes none of them (description, document, archiving)', () => {
+		expect(editChangesCharge(stored, { description: 'reworded', isArchived: true }, undefined)).toBe(false);
+	});
+
+	it('is false for the stored values sent back, in another shape', () => {
+		expect(
+			editChangesCharge(
+				stored,
+				{
+					start: '2026-11-01T23:00:00.000Z',
+					end: stored.end,
+					isHoliday: false,
+					policy: { id: POLICY.toUpperCase() }
+				},
+				[{ id: 'EMPLOYEE-B' }, { id: 'employee-a' }]
+			)
+		).toBe(false);
+	});
+
+	it.each([
+		['a start', { start: '2026-11-02T23:00:00.000Z' }],
+		['an end', { end: new Date('2026-11-12T23:00:00.000Z') }],
+		['the holiday flag', { isHoliday: true }],
+		['the policy', { policy: { id: '0f7c1a2e-0000-4000-8000-00000000e002' } }]
+	])('is true for an edit that moves %s', (_, members) => {
+		expect(editChangesCharge(stored, members, undefined)).toBe(true);
+	});
+
+	it('is true for an edit that adds or removes an employee', () => {
+		expect(editChangesCharge(stored, {}, [{ id: 'employee-a' }])).toBe(true);
+		expect(editChangesCharge(stored, {}, [{ id: 'employee-a' }, { id: 'employee-b' }, { id: 'employee-c' }])).toBe(
+			true
+		);
+	});
+
+	it('reads the stored policy from its id when the relation was not loaded', () => {
+		const { policy, ...withoutRelation } = stored;
+		expect(editChangesCharge(withoutRelation, { policy: { id: policy.id } }, undefined)).toBe(false);
 	});
 });

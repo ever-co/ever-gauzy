@@ -126,11 +126,16 @@ export class RequestApprovalStatusHandler implements ICommandHandler<RequestAppr
 	 * a plain read answers from the transaction's snapshot, which predates a decision the time-off route committed
 	 * while the answer ran, and would still show the leave `REQUESTED`.
 	 *
+	 * A leave that moves takes its leave balance with it, by the time-off route's own rules (see
+	 * `IRequestApprovalAnswerTransaction.moveTimeOff`, ever-co/ever-gauzy#10183); a leave its own route decided has
+	 * settled its balance then.
+	 *
 	 * @param transaction The answer's transaction.
 	 * @param id The time-off request.
 	 * @param tenantId The caller's tenant.
 	 * @param status The status the decision gives it.
 	 * @throws ConflictException when the leave was decided otherwise.
+	 * @throws BadRequestException when its policy requires sufficient balance and its balances cannot cover it.
 	 */
 	private async moveTimeOff(
 		transaction: IRequestApprovalAnswerTransaction,
