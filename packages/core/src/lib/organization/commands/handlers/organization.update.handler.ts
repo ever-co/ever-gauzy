@@ -78,8 +78,13 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		const {
 			stored: previousLocation,
 			after: location,
-			requested
+			requested,
+			unreadContactId
 		} = await organizationLocations(organization, changes, this.contactService);
+		// Without the contact the save links, the location after the write is unknown: nothing is judged or saved.
+		if (unreadContactId) {
+			throw new NotFoundException(`Contact with ID ${unreadContactId} not found.`);
+		}
 		const { error: restrictionError, newRestrictions } = checkAgentExitLogoutRestrictionChange(
 			input,
 			organization,

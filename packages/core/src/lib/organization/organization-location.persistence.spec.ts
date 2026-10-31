@@ -3,13 +3,14 @@ import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { DataSource, EntitySchema as TypeOrmEntitySchema } from 'typeorm';
 import { CrudService } from '../core/crud/crud.service';
 import { MikroOrmBaseEntityRepository } from '../core/repository/mikro-orm-base-entity.repository';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORM, MultiORMEnum } from '../core/utils';
+import { IOrganizationContactChanges, savedContactLink } from './organization-location';
 
 /**
  * What an organization save stores for its contact, under each ORM: the premise of `organizationLocations`, which
- * judges the EEA/UK location after an update from what the save stores.
+ * judges the EEA/UK location after an update from what the save stores (`savedContactLink`).
  *
- * The organization's \`contact\` relation does not cascade, and its \`contactId\` column is a TypeORM relation id that
+ * The organization's `contact` relation does not cascade, and its `contactId` column is a TypeORM relation id that
  * MikroORM does not map. The tables here are mapped the same way and written through the CRUD base's upsert
  * (`CrudService.create` with the organization's id), on in-memory better-sqlite3.
  */
@@ -36,15 +37,66 @@ type Store = {
 };
 
 /**
+ * Each request, sent to an organization linked to the US contact, and the contact the organization is linked to
+ * after the save under each ORM (`null`: no contact).
+ */
+const SAVES: {
+	request: string;
+	payload: IOrganizationContactChanges & Record<string, unknown>;
+	typeorm: string | null;
+	mikroorm: string | null;
+	/** What the location check reads instead, where it takes the stricter reading. */
+	mikroormCheck?: string;
+}[] = [
+	{
+		request: 'a contact by contact.id, with a country',
+		payload: { contact: { id: UK, country: 'DE' } },
+		typeorm: UK,
+		mikroorm: UK
+	},
+	{
+		request: 'the current contact, with a country',
+		payload: { contact: { id: US, country: 'DE' } },
+		typeorm: US,
+		mikroorm: US
+	},
+	{ request: 'a contact by its id alone', payload: { contact: UK }, typeorm: null, mikroorm: UK },
+	{ request: 'contact: null', payload: { contact: null }, typeorm: null, mikroorm: null },
+	{ request: 'a contact by the contactId column', payload: { contactId: UK }, typeorm: UK, mikroorm: US },
+	{ request: 'contactId: null', payload: { contactId: null }, typeorm: null, mikroorm: US },
+	{ request: 'contactId with contact: null', payload: { contactId: UK, contact: null }, typeorm: UK, mikroorm: null },
+	{
+		request: 'an id alone with the current contactId',
+		payload: { contact: UK, contactId: US },
+		typeorm: null,
+		mikroorm: UK
+	},
+	{
+		request: 'contact.id with contactId: null',
+		payload: { contact: { id: UK }, contactId: null },
+		typeorm: UK,
+		mikroorm: UK
+	},
+	{
+		request: 'a contact without an id',
+		payload: { contact: { country: 'DE' } },
+		typeorm: US,
+		mikroorm: null,
+		mikroormCheck: US
+	},
+	{ request: 'a top-level country', payload: { country: 'DE' }, typeorm: US, mikroorm: US }
+];
+
+/**
  * Runs the cases against one store, seeded with an organization linked to a US contact and a UK contact on the side.
  *
  * @param name the ORM
- * @param storesContactIdColumn whether the save stores the `contactId` column
+ * @param ormType the ORM the location check is told the save runs on
  * @param open opens the store
  */
 function describeStore(
 	name: string,
-	storesContactIdColumn: boolean,
+	ormType: MultiORM,
 	open: () => Promise<{ store: Store; seed: () => Promise<void>; close: () => Promise<void> }>
 ) {
 	describe(name, () => {
@@ -60,36 +112,24 @@ function describeStore(
 		});
 		afterEach(() => jest.restoreAllMocks());
 
-		it('stores a contact linked by contact.id, with the country that contact has, not the one sent with it', async () => {
-			await store.upsert({ name: 'Renamed', contact: { id: UK, country: 'DE' } });
+		it.each(SAVES)('$request', async ({ payload, typeorm, mikroorm, mikroormCheck }) => {
+			const expected = ormType === MultiORMEnum.TypeORM ? typeorm : mikroorm;
 
-			expect(await store.linked()).toEqual({ contactId: UK, country: 'GB' });
-		});
+			await store.upsert({ name: 'Renamed', ...payload });
 
-		it('never stores the country of a contact the request carries, with or without an id', async () => {
-			await store.upsert({ name: 'Renamed', contact: { id: US, country: 'DE' } });
-			await store.upsert({ name: 'Renamed again', contact: { country: 'DE' } });
-
+			expect((await store.linked()).contactId).toBe(expected);
+			// No contact is written: a linked contact keeps its own country, a carried country is not stored.
 			expect(await store.countries()).toEqual(['GB', 'US']);
-			expect((await store.linked()).country).not.toBe('DE');
-		});
-
-		it(`${storesContactIdColumn ? 'stores' : 'does not store'} a contact linked by the contactId column`, async () => {
-			await store.upsert({ name: 'Renamed', contactId: UK });
-
-			expect((await store.linked()).contactId).toBe(storesContactIdColumn ? UK : US);
-		});
-
-		it('stores no top-level country', async () => {
-			await store.upsert({ name: 'Renamed', country: 'DE' });
-
-			expect(await store.linked()).toEqual({ contactId: US, country: 'US' });
-			expect(await store.countries()).toEqual(['GB', 'US']);
+			// The location check reads the same contact (`undefined`: the current one is kept).
+			const check = savedContactLink(payload, US, ormType);
+			expect(check === undefined ? US : check).toBe(
+				ormType === MultiORMEnum.MikroORM && mikroormCheck ? mikroormCheck : expected
+			);
 		});
 	});
 }
 
-describeStore('under MikroORM', false, async () => {
+describeStore('under MikroORM', MultiORMEnum.MikroORM, async () => {
 	const orm = await MikroORM.init<BetterSqliteDriver>({
 		driver: BetterSqliteDriver,
 		dbName: ':memory:',
@@ -161,7 +201,7 @@ describeStore('under MikroORM', false, async () => {
 	};
 });
 
-describeStore('under TypeORM', true, async () => {
+describeStore('under TypeORM', MultiORMEnum.TypeORM, async () => {
 	const dataSource = new DataSource({
 		type: 'better-sqlite3',
 		database: ':memory:',

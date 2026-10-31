@@ -1,5 +1,6 @@
 import '../../../core/entities/internal';
 
+import { NotFoundException } from '@nestjs/common';
 import { EEA_UK_AGENT_RESTRICTION_ERR_MSG, IOrganizationUpdateInput } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { ApiErrorCode } from '../../../core/errors/api-error-codes';
@@ -478,5 +479,32 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 			EEA_UK_AGENT_RESTRICTION_ERR_MSG
 		);
 		expect(organizationService.create).not.toHaveBeenCalled();
+	});
+
+	it('allows unlinking a UK contact and restricting exit in one save when the stored result is outside the EEA/UK', async () => {
+		given({
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contactId: 'contact-uk',
+			contact: { id: 'contact-uk', country: 'GB' }
+		});
+
+		await update({ contact: null, ...RESTRICT });
+
+		expect(organizationService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ contact: null, allowAgentAppExit: false })
+		);
+		expect(activityLogService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ updatedFields: ['allowAgentAppExit'] })
+		);
+	});
+
+	it('refuses an update that links a contact it cannot read: the location after the save is unknown', async () => {
+		given({ regionCode: 'en', timeZone: 'America/New_York', contactId: 'contact-us', contact: { country: 'US' } });
+
+		await expect(update({ contact: { id: 'contact-x' }, ...RESTRICT })).rejects.toThrow(NotFoundException);
+		await expect(update({ contact: { id: 'contact-x' }, name: 'Renamed' })).rejects.toThrow(NotFoundException);
+		expect(organizationService.create).not.toHaveBeenCalled();
+		expect(activityLogService.create).not.toHaveBeenCalled();
 	});
 });
