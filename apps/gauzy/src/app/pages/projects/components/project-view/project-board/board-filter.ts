@@ -86,7 +86,7 @@ export function isBoardFilterActive(filter: IBoardFilter): boolean {
  */
 export function matchesBoardFilter(card: IBoardFilterCard, filter: IBoardFilter): boolean {
 	const search = filter.search.trim().replace(/^#/, '').toLowerCase();
-	if (search && !`${card.title} ${card.key}`.toLowerCase().includes(search)) return false;
+	if (search && ![card.title, card.key].some((text) => text?.toLowerCase().includes(search))) return false;
 	if (filter.people.length) {
 		const assigned = card.people.some((person) => filter.people.includes(person.id));
 		const unassigned = !card.people.length && filter.people.includes(BOARD_UNASSIGNED);

@@ -35,6 +35,10 @@ describe('board filter', () => {
 			expect(matchesBoardFilter(card(), filter({ search: 'signup' }))).toBe(false);
 		});
 
+		it('does not match a search across the end of the title and the start of the key', () => {
+			expect(matchesBoardFilter(card(), filter({ search: 'page DES' }))).toBe(false);
+		});
+
 		it('takes any of the choices within a filter', () => {
 			const priorities = filter({ priorities: ['high', 'low'] });
 
