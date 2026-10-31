@@ -334,7 +334,7 @@ class ScheduledPlanMoved extends ConflictException {
 /**
  * @param plan A plan as read.
  * @returns What a scheduled change is checked and priced against, so two reads of the plan can be compared: whether it
- * may be taken up, its currency, what it delivers, its discount and its cadence.
+ * may be taken up, its currency, what it delivers, its discount, its cadence and its cycle ceiling.
  */
 function scheduledPlanTerms(plan: SubscriptionPlan | null): string {
 	return JSON.stringify(
@@ -346,7 +346,8 @@ function scheduledPlanTerms(plan: SubscriptionPlan | null): string {
 					plan.productId ?? null,
 					plan.discountPercentage ?? null,
 					plan.billingPeriod ?? null,
-					plan.billingInterval ?? null
+					plan.billingInterval ?? null,
+					plan.maxBillingCycles ?? null
 			  ]
 			: null
 	);
@@ -2099,7 +2100,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		// scheduled for opens: the period is priced on the plan and lines it moved to. It used to be recorded and never
 		// read, so the subscription kept renewing on the plan it was leaving. The cycle holds the period's claim, so one
 		// pass applies it.
-		const opened = await this.applyScheduledChange(subscription.id, period.start, spend, existing);
+		const opened = await this.applyScheduledChange(subscription.id, period.start, spend, existing, plan);
 
 		if (opened) {
 			// Applied or refused, the cycle goes on with the subscription as the change left it: its later writes
@@ -2129,6 +2130,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		// an earlier attempt wrote records that: the amount the cycle settles for, and that `subscription.renewed`
 		// reports, is the amount its order charged.
 		const pricing = { gross: gross.toStorageString(), discount: discount.toStorageString() };
+		// A row the change restated on its own transaction (`applyScheduledChange`) already carries this discount, so its
+		// discount rows are brought to it first: a payment recorded after that commit stops the retry below
+		// (`SUBSCRIPTION_BILLING_CYCLE_SETTLED`), and the row it settled then still agrees with its ledger.
+		const restated = !!existing && !!opened?.plan;
+
+		if (restated) {
+			await this.appendDiscount(existing as SubscriptionBilling, subscription, discount);
+		}
+
 		const billing = existing
 			? await this.billingService.repriceUnsettled(existing, net.toStorageString(), pricing)
 			: await this.billingService.createPending({
@@ -2141,7 +2151,9 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					metadata: pricing
 			  });
 
-		await this.appendDiscount(billing, subscription, discount);
+		if (!restated) {
+			await this.appendDiscount(billing, subscription, discount);
+		}
 
 		const credit = await this.consumePendingCredit(subscription, billing);
 
@@ -3113,6 +3125,20 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				};
 			}
 
+			// The cycle's ceiling was checked against the plan the subscription is leaving (`billCycle`), so the plan it
+			// moves to is checked here: a plan that bills at most N cycles, already used, does not bill this one.
+			if (
+				plan.maxBillingCycles !== undefined &&
+				plan.maxBillingCycles !== null &&
+				(subscription.billingCycleCount ?? 0) >= plan.maxBillingCycles
+			) {
+				return {
+					change,
+					metadata,
+					refused: `SUBSCRIPTION_CYCLE_CEILING_REACHED: the plan bills at most ${plan.maxBillingCycles} cycles, which the subscription has already used.`
+				};
+			}
+
 			const existing = await this.itemService.findForSubscription(subscription.id);
 			const items = await this.planLines(subscription, plan, existing, quantity);
 
@@ -3144,8 +3170,9 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * before any line is written and the change is read again rather than overwritten; a failure after the claim rolls
 	 * both back. A refused change is cleared and told (`subscription.scheduled-change-refused`) in one transaction too,
 	 * so a retry cannot find it cleared and its notice never written, and the period opens on the plan the subscription
-	 * is on. A cycle row an earlier attempt wrote for the period (a retry of a failed charge) moves its end to the new
-	 * plan's cadence on the same transaction (`recutUnsettled`).
+	 * is on. A cycle row an earlier attempt wrote for the period (a retry of a failed charge) is restated on the same
+	 * transaction (`restateUnsettled`): its end moves to the new plan's cadence and its amount to what the period is now
+	 * priced at, so a payment recorded meanwhile cannot leave the new period on the old amount.
 	 *
 	 * The plan the change moves to is read again under its row lock, as `createSubscription` reads it, and has to be the
 	 * plan the change was priced on; a plan changed meanwhile has the change read again (`ScheduledPlanMoved`). A claim
@@ -3156,6 +3183,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param periodStart The start of the period the cycle bills.
 	 * @param spend The reader the cycle's subscription writes take their expectation from.
 	 * @param cycle The row an earlier attempt wrote for the period, when there is one.
+	 * @param current The plan the subscription is on, which a change of lines alone opens the period on.
 	 * @returns Null when no change was due; otherwise the subscription as the change left it, with the plan the period
 	 * opens on when the change was applied, and without one when it was refused.
 	 */
@@ -3163,7 +3191,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		id: ID,
 		periodStart: Date,
 		spend: () => IVersionExpectation,
-		cycle: SubscriptionBilling | null
+		cycle: SubscriptionBilling | null,
+		current: SubscriptionPlan
 	): Promise<{ subscription: Subscription; plan?: SubscriptionPlan } | null> {
 		for (let attempt = 1; ; attempt += 1) {
 			const subscription = await this.findOneScoped(id);
@@ -3212,10 +3241,31 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					if (lines) {
 						await this.itemService.writePreparedItems(manager, id, lines);
 
-						const end = due.plan ? periodFrom(periodStart, this.planService.cadenceOf(due.plan)).end : null;
+						if (cycle) {
+							// Priced as `executeCycle` prices the period (`priceCycle`), on the lines, plan and metadata the
+							// change opens it on, so the reprice that follows the commit finds nothing left to restate.
+							const opensOn = due.plan ?? current;
+							const { gross, discount, net } = priceCycle({
+								items: lines,
+								currency: subscription.currency,
+								plan: opensOn,
+								metadata: due.metadata
+							});
+							const end = due.plan
+								? periodFrom(periodStart, this.planService.cadenceOf(due.plan)).end
+								: null;
 
-						if (cycle && end && new Date(cycle.periodEnd).getTime() !== end.getTime()) {
-							await this.billingService.recutUnsettled(cycle.id, end, manager);
+							await this.billingService.restateUnsettled(
+								cycle.id,
+								{
+									...(end && new Date(cycle.periodEnd).getTime() !== end.getTime()
+										? { periodEnd: end }
+										: {}),
+									amount: net.toStorageString(),
+									pricing: { gross: gross.toStorageString(), discount: discount.toStorageString() }
+								},
+								manager
+							);
 						}
 					} else {
 						await this.emit(
