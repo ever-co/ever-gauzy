@@ -49,11 +49,17 @@
 					</nb-autocomplete>
 					@if (form.controls.syncTag.invalid) {
 						<p id="github-project-sync-label-hint" class="setting__error" role="alert">
-							{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.LABEL_INVALID' | translate: { max: labelMaxLength } }}
+							{{
+								'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.LABEL_INVALID'
+									| translate: { max: labelMaxLength }
+							}}
 						</p>
 					} @else {
 						<p id="github-project-sync-label-hint" class="setting__hint">
-							{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.LABEL_HINT' | translate: { label: defaultSyncLabel } }}
+							{{
+								'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.LABEL_HINT'
+									| translate: { label: defaultSyncLabel }
+							}}
 						</p>
 					}
 				</div>
