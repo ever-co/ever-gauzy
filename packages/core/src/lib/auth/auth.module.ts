@@ -32,6 +32,8 @@ import { UserOrganizationModule } from '../user-organization/user-organization.m
 import { UserOrganizationService } from '../user-organization/user-organization.services';
 import { UserModule } from '../user/user.module';
 import { AuthController } from './auth.controller';
+// After AuthController, whose guards barrel has already loaded it: the module load order stays as it was.
+import { RegisterAuthorizationGuard } from '../shared/guards/register-authorization.guard';
 import { RegistrationPolicyService } from './auth-switches';
 import { AuthService } from './auth.service';
 import { CommandHandlers } from './commands/handlers';
@@ -114,7 +116,10 @@ const strategies = [AuthenticatedUserCacheProvider, JwtStrategy, JwtRefreshToken
 		...EventHandlers,
 		...strategies,
 		TypeOrmTenantRepository,
-		MikroOrmTenantRepository
+		MikroOrmTenantRepository,
+		// Also a provider, not only a guard of the register route: SelfRegistrationGuard asks it to verify an
+		// administrator's token while registration is closed.
+		RegisterAuthorizationGuard
 	],
 	// The validated-context cache is exported so an off-boarding write can `forget` a user from another module.
 	exports: [...providers, AuthenticatedUserCacheProvider]

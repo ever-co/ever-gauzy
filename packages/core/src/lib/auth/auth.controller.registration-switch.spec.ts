@@ -40,20 +40,30 @@ import { RegistrationPolicyService, SELF_REGISTRATION_DISABLED_MESSAGE, SelfRegi
 const switches = environment as unknown as { authSwitches: IAuthSwitches };
 const OPEN: IAuthSwitches = { userRegistration: true, tenantsRegistration: true, adminPasswordReset: true };
 
+/** The bearer token the stand-in below accepts as an administrator's. */
+const ADMIN_AUTHORIZATION = 'Bearer admin-token';
+
 /**
  * Stands in for RegisterAuthorizationGuard, with its rule: only a body that carries a privileged field (here
- * `organizationId`) is authenticated, and a bearer token then marks an administrator. A body without one passes
- * unauthenticated even with a token, because it creates a tenant-less account exactly like a public sign-up.
+ * `organizationId`) is authenticated as it passes, and the administrator's token then sets `request.user`.
+ * `isAdministratorRequest` answers SelfRegistrationGuard's question about a body without one. The real guard runs
+ * with SelfRegistrationGuard in `auth-switches/self-registration.guard.authorization.spec.ts`.
  */
 class AdminFromHeaderGuard implements CanActivate {
 	canActivate(context: ExecutionContext): boolean {
 		const req = context.switchToHttp().getRequest();
-		if (req.body?.organizationId && req.headers.authorization) {
+		if (req.body?.organizationId && req.headers.authorization === ADMIN_AUTHORIZATION) {
 			req.user = { id: 'admin-id', tenantId: 'tenant-id' };
 		}
 		return true;
 	}
+
+	async isAdministratorRequest(req: { headers: Record<string, string> }): Promise<boolean> {
+		return req.headers.authorization === ADMIN_AUTHORIZATION;
+	}
 }
+
+const registerAuthorization = new AdminFromHeaderGuard();
 
 const allow: CanActivate = { canActivate: () => true };
 
@@ -79,6 +89,7 @@ describe('AuthController — registration switches over HTTP', () => {
 			providers: [
 				{ provide: AuthService, useValue: {} },
 				{ provide: CommandBus, useValue: { execute } },
+				{ provide: RegisterAuthorizationGuard, useValue: registerAuthorization },
 				{
 					provide: RegistrationPolicyService,
 					useFactory: () => new RegistrationPolicyService(tenantTable as never, { count: jest.fn() } as never)
@@ -86,7 +97,7 @@ describe('AuthController — registration switches over HTTP', () => {
 			]
 		})
 			.overrideGuard(RegisterAuthorizationGuard)
-			.useValue(new AdminFromHeaderGuard())
+			.useValue(registerAuthorization)
 			.overrideGuard(SubscriptionRequiredGuard)
 			.useValue(allow)
 			.overrideGuard(AuthRefreshGuard)
@@ -141,19 +152,29 @@ describe('AuthController — registration switches over HTTP', () => {
 
 		await request(app.getHttpServer())
 			.post('/api/auth/register')
-			.set('Authorization', 'Bearer admin-token')
+			.set('Authorization', ADMIN_AUTHORIZATION)
 			.send({ ...signup, organizationId: ORGANIZATION_ID })
 			.expect(201);
 		expect(execute).toHaveBeenCalledTimes(1);
 	});
 
-	it('refuses a tenant-less sign-up while registration is closed, even with a token', async () => {
+	it('lets an administrator’s token through without privileged fields while registration is closed', async () => {
 		switches.authSwitches = { ...OPEN, userRegistration: false };
 
-		// Without a privileged field nothing ties the new account to the caller's tenant: it is a public sign-up.
+		await request(app.getHttpServer())
+			.post('/api/auth/register')
+			.set('Authorization', ADMIN_AUTHORIZATION)
+			.send(signup)
+			.expect(201);
+		expect(execute).toHaveBeenCalledTimes(1);
+	});
+
+	it('refuses a sign-up with a token that is not an administrator’s while registration is closed', async () => {
+		switches.authSwitches = { ...OPEN, userRegistration: false };
+
 		const response = await request(app.getHttpServer())
 			.post('/api/auth/register')
-			.set('Authorization', 'Bearer admin-token')
+			.set('Authorization', 'Bearer someone-else')
 			.send(signup)
 			.expect(403);
 
