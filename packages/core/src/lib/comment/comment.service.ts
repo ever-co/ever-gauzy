@@ -503,7 +503,8 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 *
 	 * A read that includes withdrawn comments (`withDeleted`) answers the withdrawn comments of a governed record to
 	 * their authors only, unless the caller may write that record's comments (see {@link mayReadWithdrawnOf}). Such a
-	 * read states its criteria on the comments alone and loads no relations (see {@link assertReadsCommentsOnly}).
+	 * read states its criteria on the comments alone and loads no relations (see {@link assertReadsCommentsOnly}), and
+	 * reads the governed records' comments apart from any other record's, whose reads keep the base scope.
 	 *
 	 * @param where - The read's criteria.
 	 * @param read - The base read, given the criteria to run.
@@ -520,12 +521,19 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		for (const { entity, entityId } of scope.parents) {
 			await this._parentAccess.assertMay('read', entity, entityId);
 		}
+
+		const keptToAuthor =
+			scope.parents.length > 0 &&
+			parseToBoolean(options?.withDeleted) &&
+			!this.mayReadWithdrawnOf(scope.parents.map(({ entity }) => entity));
+		if (keptToAuthor && !scope.onlyGovernedParents) {
+			throw new BadRequestException(
+				'A read that includes withdrawn comments of a governed record reads that record alone, unless you may edit its comments.'
+			);
+		}
 		if (!scope.onlyGovernedParents) {
 			return read(scope.where);
 		}
-
-		const keptToAuthor =
-			parseToBoolean(options?.withDeleted) && !this.mayReadWithdrawnOf(scope.parents.map(({ entity }) => entity));
 		if (keptToAuthor) {
 			assertReadsCommentsOnly(scope.where, options);
 		}

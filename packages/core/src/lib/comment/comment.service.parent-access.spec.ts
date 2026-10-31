@@ -532,6 +532,30 @@ describe('CommentService — the comments of a governed record follow its policy
 				expect(findAll).not.toHaveBeenCalled();
 			});
 
+			it('refuses a viewer’s read of withdrawn notes that also reads another record’s comments', async () => {
+				const findAll = listed();
+				const where = [
+					{ entity: CONTACT, entityId: CONTACT_ID },
+					{ entity: PROJECT, entityId: PROJECT_ID }
+				];
+
+				// A caller with no employee record, whose comment reads the base scope does not narrow to an author.
+				as([PermissionsEnum.ORG_CONTACT_VIEW], { employeeId: null });
+				await expect(service.findAll({ where, withDeleted: true } as any)).rejects.toBeInstanceOf(
+					BadRequestException
+				);
+				await expect(service.count({ where, withDeleted: 'true' } as any)).rejects.toBeInstanceOf(
+					BadRequestException
+				);
+				expect(findAll).not.toHaveBeenCalled();
+
+				// Without withdrawn rows, or for those who may write notes, the read is as before.
+				await service.findAll({ where } as any);
+				as([PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT], { employeeId: null });
+				await service.findAll({ where, withDeleted: true } as any);
+				expect(findAll).toHaveBeenCalledTimes(2);
+			});
+
 			it('loads relations as before on live notes, and for those who may write notes', async () => {
 				const findAll = listed();
 				const where = { entity: CONTACT, entityId: CONTACT_ID };
