@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { LockMode, raw } from '@mikro-orm/core';
+import { IsolationLevel, LockMode, raw } from '@mikro-orm/core';
 import type { Collection, EntityManager as MikroOrmEntityManager } from '@mikro-orm/core';
 import { Brackets, EntityManager, FindManyOptions, In } from 'typeorm';
 import { isUUID } from 'class-validator';
@@ -93,8 +93,8 @@ export interface IRequestApprovalAnswerTransaction {
 	lockRequest(id: ID, tenantId: ID): Promise<RequestApproval | null>;
 	/**
 	 * The request's approver slots, read after the lock, so they carry every answer committed before it was granted
-	 * (on PostgreSQL every statement reads what is committed; on MySQL the snapshot of a transaction's plain reads is
-	 * taken at its first one, which comes after the locking read).
+	 * (every statement of the answer reads what is committed when it runs: PostgreSQL's default, and the isolation the
+	 * answer sets on MySQL, see {@link RequestApprovalService.answer}).
 	 */
 	readSlots(
 		requestApprovalId: ID,
@@ -139,11 +139,11 @@ export interface IRequestApprovalAnswerTransaction {
 	/**
 	 * Reads the document a request is about, inside the tenant (withdrawn rows left out), or null.
 	 *
-	 * `locked` reads it under a row lock (`FOR UPDATE` on PostgreSQL and MySQL), which reads the version committed
-	 * now. A plain read on MySQL (REPEATABLE READ) answers from the transaction's snapshot, taken at its first plain
-	 * read: a change committed since, such as the time-off route deciding the leave, is not seen there.
+	 * `locked` reads it under a row lock (`FOR UPDATE` on PostgreSQL and MySQL), held until the transaction ends, so
+	 * nothing else, such as the time-off route deciding the leave, changes the row before the answer commits. A plain
+	 * read holds no lock.
 	 *
-	 * @param locked Read the row's current version under a row lock rather than the transaction's snapshot.
+	 * @param locked Read the row under a row lock.
 	 */
 	readLinkedDocument(
 		kind: RequestApprovalLinkedDocumentKind,
@@ -1064,17 +1064,27 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 	): Promise<R> {
 		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
 		const rowLock = isPostgres() || isMySQL();
+		// MySQL's REPEATABLE READ answers every plain read from the snapshot of the transaction's first one, its slots,
+		// so a leave's charge, read after the leave's lock, would miss an edit of its employees committed in between
+		// (#11608 review). READ COMMITTED reads what is committed at each statement, as PostgreSQL does by default;
+		// SQLite takes no isolation level.
+		const readCommitted = isMySQL();
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				return await this.mikroOrmRepository
 					.getEntityManager()
-					.transactional(async (em) => await work(this.mikroOrmAnswerTransaction(em, rowLock)));
+					.transactional(
+						async (em) => await work(this.mikroOrmAnswerTransaction(em, rowLock)),
+						readCommitted ? { isolationLevel: IsolationLevel.READ_COMMITTED } : undefined
+					);
 			case MultiORMEnum.TypeORM:
-			default:
-				return await this.typeOrmRepository.manager.transaction(
-					async (manager) => await work(this.typeOrmAnswerTransaction(manager, rowLock))
-				);
+			default: {
+				const body = async (manager: EntityManager) => await work(this.typeOrmAnswerTransaction(manager, rowLock));
+				return readCommitted
+					? await this.typeOrmRepository.manager.transaction('READ COMMITTED', body)
+					: await this.typeOrmRepository.manager.transaction(body);
+			}
 		}
 	}
 

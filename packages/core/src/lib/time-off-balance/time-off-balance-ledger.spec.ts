@@ -52,9 +52,9 @@ describe('ITimeOffBalanceLedger.lockBalances', () => {
 	});
 
 	describe('on TypeORM', () => {
-		const setUp = () => {
+		const setUp = (found: Array<{ id: string }> = []) => {
 			const calls: Array<[string, ...unknown[]]> = [];
-			const builder = recordingQueryBuilder(calls, []);
+			const builder = recordingQueryBuilder(calls, found);
 			const manager = { createQueryBuilder: jest.fn(() => builder) };
 			return { calls, manager, ledger: typeOrmTimeOffBalanceLedger(manager as any) };
 		};
@@ -94,12 +94,29 @@ describe('ITimeOffBalanceLedger.lockBalances', () => {
 
 			expect(manager.createQueryBuilder).not.toHaveBeenCalled();
 		});
+
+		// #11608 review: a balance removed since it was read is not locked, and nothing may be recorded against it.
+		it('answers the balances it locked, leaving out one that is gone', async () => {
+			const { ledger } = setUp([{ id: 'balance-a' }]);
+
+			expect(await ledger.lockBalances(['balance-b', 'balance-a'], TENANT)).toEqual(['balance-a']);
+		});
+
+		it('answers every balance named, once each, on SQLite, whose transactions are serialized', async () => {
+			(isPostgres as jest.Mock).mockReturnValue(false);
+			const { ledger } = setUp();
+
+			expect(await ledger.lockBalances(['balance-b', 'balance-a', 'balance-b'], TENANT)).toEqual([
+				'balance-b',
+				'balance-a'
+			]);
+		});
 	});
 
 	describe('on MikroORM', () => {
-		const setUp = () => {
+		const setUp = (found: Array<{ id: string }> = []) => {
 			const calls: Array<[string, ...unknown[]]> = [];
-			const builder = recordingQueryBuilder(calls, []);
+			const builder = recordingQueryBuilder(calls, found);
 			const em: Record<string, jest.Mock> = { createQueryBuilder: jest.fn(() => builder) };
 			em['getContext'] = jest.fn(() => em);
 			return { calls, em, ledger: mikroOrmTimeOffBalanceLedger(em as any) };
@@ -125,9 +142,15 @@ describe('ITimeOffBalanceLedger.lockBalances', () => {
 			(isPostgres as jest.Mock).mockReturnValue(false);
 			const { em, ledger } = setUp();
 
-			await ledger.lockBalances(['balance-a'], TENANT);
+			expect(await ledger.lockBalances(['balance-a'], TENANT)).toEqual(['balance-a']);
 
 			expect(em.createQueryBuilder).not.toHaveBeenCalled();
+		});
+
+		it('answers the live balances it locked, leaving out one that is gone', async () => {
+			const { ledger } = setUp([{ id: 'balance-b' }]);
+
+			expect(await ledger.lockBalances(['balance-b', 'balance-a'], TENANT)).toEqual(['balance-b']);
 		});
 	});
 });

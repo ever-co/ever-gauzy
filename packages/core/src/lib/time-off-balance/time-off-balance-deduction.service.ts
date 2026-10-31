@@ -361,7 +361,10 @@ export class TimeOffBalanceDeductionService {
 	 * moves (see `ITimeOffBalanceLedger.lockBalances`): giving back and then taking would otherwise lock them in two
 	 * rounds, and two edits swapping employees or policies could each hold a balance the other waits for (#11608
 	 * review). A request that takes nothing now keeps a zero-day record of its charge on the balances it took from, so
-	 * the next edit or recovery charges it again.
+	 * the next edit or recovery charges it again — on those still there. A balance removed meanwhile took its
+	 * deductions with it (they cascade on delete), and a record naming it would fail the write on its foreign key: with
+	 * none left, the request is left uncharged, as one whose balances were removed just before the write (#11608
+	 * review).
 	 *
 	 * @param ledger The write's transaction.
 	 * @param leave The request as the write left it.
@@ -377,9 +380,13 @@ export class TimeOffBalanceDeductionService {
 	): Promise<ITimeOffBalanceDeductionRecord[]> {
 		const { id, tenantId, organizationId } = leave;
 		const charge = await this.chargeOf(ledger, leave);
-		await ledger.lockBalances(
-			[...previous.map(({ balanceId }) => balanceId), ...balanceIdsOf(charge?.balances ?? [])],
-			tenantId
+		const locked = new Set(
+			(
+				await ledger.lockBalances(
+					[...previous.map(({ balanceId }) => balanceId), ...balanceIdsOf(charge?.balances ?? [])],
+					tenantId
+				)
+			).map(idKey)
 		);
 		await giveBackFirst?.();
 
@@ -387,15 +394,14 @@ export class TimeOffBalanceDeductionService {
 		if (taken.length > 0) {
 			return taken;
 		}
-		await ledger.recordDeductions(
-			[...new Set(previous.map(({ balanceId }) => balanceId))].map((balanceId) => ({
-				tenantId,
-				organizationId,
-				timeOffRequestId: id,
-				balanceId,
-				days: 0
-			}))
+		const stillThere = [...new Set(previous.map(({ balanceId }) => balanceId))].filter((balanceId) =>
+			locked.has(idKey(balanceId))
 		);
+		if (stillThere.length > 0) {
+			await ledger.recordDeductions(
+				stillThere.map((balanceId) => ({ tenantId, organizationId, timeOffRequestId: id, balanceId, days: 0 }))
+			);
+		}
 		return [];
 	}
 

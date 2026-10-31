@@ -304,6 +304,38 @@ describe('TimeOffRequestService keeps the leave balance with an approved request
 			expect(await deductions()).toEqual([expect.objectContaining({ balanceId: id, days: 5 })]);
 		});
 
+		// #11608 review: a balance removed after the edit read its charge, and before it locked the balances, took the
+		// charge's deductions with it (they cascade on delete); a zero-day record naming it would fail the edit on its
+		// foreign key.
+		it('records no charge on a balance removed before the edit locked it', async () => {
+			const id = await allocate();
+			await fileLeave();
+			await approvalTakes();
+			const leave = await dataSource.manager.findOne(TimeOffRequest, {
+				where: { id: LEAVE },
+				loadEagerRelations: false
+			});
+			const toWeekend = { ...leave, start: new Date(WEEKEND.start), end: new Date(WEEKEND.end) };
+
+			await dataSource.transaction(async (manager) => {
+				const ledger = typeOrmTimeOffBalanceLedger(manager);
+				await deductionService.recharge(
+					{
+						...ledger,
+						// Another transaction removes the balance, and the cascade its deduction; the lock no longer finds it.
+						lockBalances: async (ids, tenantId) => {
+							await manager.query(`DELETE FROM "time_off_balance_deduction" WHERE "balanceId" = ?`, [id]);
+							await manager.query(`DELETE FROM "time_off_balance" WHERE "id" = ?`, [id]);
+							return (await ledger.lockBalances(ids, tenantId)).filter((locked) => locked !== id);
+						}
+					},
+					toWeekend as any
+				);
+			});
+
+			expect(await deductions()).toEqual([]);
+		});
+
 		it('keeps it charged through an edit onto a policy it has no balance under, and back', async () => {
 			const id = await allocate();
 			await fileLeave();

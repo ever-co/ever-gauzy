@@ -120,8 +120,11 @@ export interface ITimeOffBalanceLedger {
 	 * their ids (`SELECT … ORDER BY "id" FOR UPDATE`; SQLite serializes transactions instead and takes none): what a
 	 * decision or a write of a request takes before it moves days on any of them, so two transactions that move days on
 	 * the same balances lock them in the same order and cannot deadlock (#11608 review).
+	 *
+	 * @returns The ids of the balances locked: the ones still there, so a balance removed since it was read is left
+	 * out. Without row locks, the ids named: SQLite serializes transactions, so none is removed during one.
 	 */
-	lockBalances(balanceIds: ID[], tenantId: ID): Promise<void>;
+	lockBalances(balanceIds: ID[], tenantId: ID): Promise<ID[]>;
 }
 
 /** Whether the dialect has row locks (TypeORM refuses `setLock` on SQLite, whose transactions are serialized). */
@@ -230,15 +233,16 @@ export function typeOrmTimeOffBalanceLedger(manager: EntityManager): ITimeOffBal
 		lockBalances: async (balanceIds, tenantId) => {
 			const ids = distinctIds(balanceIds);
 			if (ids.length === 0 || !hasRowLocks()) {
-				return;
+				return ids;
 			}
-			await manager
+			const locked = await manager
 				.createQueryBuilder(TimeOffBalance, 'time_off_balance')
 				.select('time_off_balance.id')
 				.where({ id: In(ids), tenantId })
 				.orderBy('time_off_balance.id', 'ASC')
 				.setLock('pessimistic_write')
 				.getMany();
+			return locked.map(({ id }) => id);
 		}
 	};
 }
@@ -393,15 +397,16 @@ export function mikroOrmTimeOffBalanceLedger(manager: MikroOrmEntityManager): IT
 		lockBalances: async (balanceIds, tenantId) => {
 			const ids = distinctIds(balanceIds);
 			if (ids.length === 0 || !hasRowLocks()) {
-				return;
+				return ids;
 			}
-			await em
+			const locked = (await em
 				.createQueryBuilder(TimeOffBalance)
 				.select('id')
 				.where({ id: { $in: ids }, tenantId, ...live } as any)
 				.orderBy({ id: QueryOrder.ASC } as any)
 				.setLockMode(LockMode.PESSIMISTIC_WRITE)
-				.execute('all');
+				.execute('all')) as Array<{ id: ID }>;
+			return locked.map(({ id }) => id);
 		}
 	};
 }
