@@ -20,6 +20,7 @@ import {
 	CHANGELOG_FIELD_MAX_LENGTH,
 	IChangelogFormValue,
 	httpUrlValidator,
+	imageUrlValidator,
 	isForbidden,
 	knownIconValidator,
 	requiredTextValidator,
@@ -85,7 +86,7 @@ export class ChangelogEntryDialogComponent implements OnInit {
 			date: [value.date, Validators.required],
 			content: [value.content, text],
 			learnMoreUrl: [value.learnMoreUrl, link],
-			imageUrl: [value.imageUrl, link],
+			imageUrl: [value.imageUrl, [imageUrlValidator, Validators.maxLength(this.maxLength)]],
 			isFeature: [value.isFeature]
 		});
 		this.preview = toChangelogPreview(value, this._isKnownIcon);

@@ -50,6 +50,27 @@ export const httpUrlValidator: ValidatorFn = (control: AbstractControl): Validat
 	return !value || isHttpUrl(value) ? null : { httpUrl: true };
 };
 
+/**
+ * An image bundled with the web app, named by its path under `assets/`, as the seeded sign-up features name
+ * theirs (`assets/images/features/macbook-1.png`). Folder names carry no dots, so the path cannot climb out
+ * of `assets/`, and it cannot start with `//` (another host).
+ */
+const BUNDLED_IMAGE = /^\/?assets\/(?:[\w-]+\/)*[\w-]+(?:\.[\w-]+)+$/;
+
+/** Whether `value` is an image a card may show: a full http(s) address, or an image bundled with the app. */
+export function isImageUrl(value: string | null | undefined): boolean {
+	return isHttpUrl(value) || (!!value && BUNDLED_IMAGE.test(value));
+}
+
+/**
+ * An optional image: empty, a full http(s) address, or an image bundled with the app (so a seeded sign-up
+ * feature can be edited without replacing its picture). Links the cards open stay http(s) only.
+ */
+export const imageUrlValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+	const value = typeof control.value === 'string' ? control.value.trim() : control.value;
+	return !value || isImageUrl(value) ? null : { httpUrl: true };
+};
+
 /** A required text: something other than spaces, since the text is saved trimmed. */
 export const requiredTextValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
 	typeof control.value === 'string' && control.value.trim() ? null : { required: true };
@@ -135,7 +156,7 @@ export function toChangelogPreview(
 		icon: isKnownIcon(input.icon) ? input.icon : CHANGELOG_DEFAULT_ICON,
 		date: value.date && !isNaN(input.date.getTime()) ? input.date : undefined,
 		learnMoreUrl: isHttpUrl(input.learnMoreUrl) ? input.learnMoreUrl : '',
-		imageUrl: isHttpUrl(input.imageUrl) ? input.imageUrl : ''
+		imageUrl: isImageUrl(input.imageUrl) ? input.imageUrl : ''
 	};
 }
 

@@ -109,6 +109,29 @@ describe('ChangelogEntryDialogComponent', () => {
 		expect(component.form.get('content').errors).toEqual(expect.objectContaining({ maxlength: expect.anything() }));
 	});
 
+	it('saves an edit to a seeded sign-up feature whose image is bundled with the app, and previews it', async () => {
+		const seeded: IChangelog = {
+			...existing,
+			id: 'feature-1',
+			isFeature: true,
+			learnMoreUrl: '',
+			imageUrl: 'assets/images/features/macbook-1.png'
+		};
+		open(seeded);
+		expect(component.preview.imageUrl).toBe('assets/images/features/macbook-1.png');
+		component.form.patchValue({ title: 'Time tracking, everywhere' });
+
+		await component.save();
+
+		expect(changelogService.update).toHaveBeenCalledWith(
+			'feature-1',
+			expect.objectContaining({
+				title: 'Time tracking, everywhere',
+				imageUrl: 'assets/images/features/macbook-1.png'
+			})
+		);
+	});
+
 	it('adds a new entry, of the kind it was opened for, and closes with it', async () => {
 		open({ isFeature: true });
 		component.form.patchValue({ title: ' Time tracking ', content: 'Track every minute.', date: '2026-10-31' });

@@ -3,8 +3,10 @@ import {
 	CHANGELOG_DEFAULT_ICON,
 	IChangelogFormValue,
 	httpUrlValidator,
+	imageUrlValidator,
 	isForbidden,
 	isHttpUrl,
+	isImageUrl,
 	knownIconValidator,
 	requiredTextValidator,
 	sortChangelogEntries,
@@ -50,6 +52,28 @@ describe('changelog admin utils', () => {
 			expect(httpUrlValidator(new FormControl(' https://gauzy.co '))).toBeNull();
 			expect(httpUrlValidator(new FormControl('javascript:alert(1)'))).toEqual({ httpUrl: true });
 			expect(httpUrlValidator(new FormControl('www.gauzy.co'))).toEqual({ httpUrl: true });
+			// The links the cards open never point into the app.
+			expect(httpUrlValidator(new FormControl('assets/images/features/macbook-1.png'))).toEqual({
+				httpUrl: true
+			});
+		});
+
+		it('takes an image that is a full http(s) address or bundled with the app, as the seeded features are', () => {
+			expect(isImageUrl('https://gauzy.co/logo.png')).toBe(true);
+			expect(isImageUrl('assets/images/features/macbook-1.png')).toBe(true);
+			expect(isImageUrl('/assets/images/logo.svg')).toBe(true);
+			expect(isImageUrl('assets/images/../../secret.png')).toBe(false);
+			expect(isImageUrl('//evil.example/assets/logo.png')).toBe(false);
+			expect(isImageUrl('assets/')).toBe(false);
+			expect(isImageUrl('assets/images/features')).toBe(false);
+			expect(isImageUrl('images/logo.png')).toBe(false);
+			expect(isImageUrl('javascript:alert(1)')).toBe(false);
+			expect(isImageUrl('data:image/png;base64,AAAA')).toBe(false);
+			expect(isImageUrl('')).toBe(false);
+
+			expect(imageUrlValidator(new FormControl(' assets/images/features/macbook-2.png '))).toBeNull();
+			expect(imageUrlValidator(new FormControl(''))).toBeNull();
+			expect(imageUrlValidator(new FormControl('https:gauzy.co/logo.png'))).toEqual({ httpUrl: true });
 		});
 	});
 
