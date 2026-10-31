@@ -2,15 +2,19 @@ import {
 	BaseWindow,
 	DefaultWindow,
 	IBaseWindow,
+	IWindowPosition,
 	RegisteredWindow,
 	WindowConfig,
 	WindowManager
 } from '@gauzy/desktop-core';
 import { screen } from 'electron';
+import { WindowPositionMemory } from './utils/window-position-memory';
 
 export class AlwaysOn extends BaseWindow implements IBaseWindow {
-	private static WIDTH: number = 60;
-	private static HEIGHT: number = 110;
+	/** The size of each widget: compact, and expanded (a bar). Read per widget, never changed. */
+	public static readonly SIZES = { compact: { width: 60, height: 110 }, expand: { width: 270, height: 45 } } as const;
+	/** Where each size of the widget was last left (#7683): the compact and the expanded widget differ in size. */
+	public static readonly POSITION_KEYS = { compact: 'always-on-compact', expand: 'always-on-expand' } as const;
 	private readonly manager = WindowManager.getInstance();
 
 	constructor(
@@ -19,10 +23,14 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 		private readonly contextIsolation?: boolean,
 		private readonly isExpandMode?: boolean
 	) {
-		if (isExpandMode) {
-			AlwaysOn.WIDTH = 270;
-			AlwaysOn.HEIGHT = 45;
-		}
+		// The size of this widget's own mode: a compact widget opened after an expanded one keeps its own size
+		const size = isExpandMode ? AlwaysOn.SIZES.expand : AlwaysOn.SIZES.compact;
+
+		// Back where the user left it when that spot is on a connected display, at the default place otherwise
+		const positionMemory = new WindowPositionMemory(
+			isExpandMode ? AlwaysOn.POSITION_KEYS.expand : AlwaysOn.POSITION_KEYS.compact
+		);
+		const position = positionMemory.restore(size) ?? AlwaysOn.defaultPosition(size.height);
 
 		super(
 			new DefaultWindow(
@@ -30,8 +38,8 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 					frame: false,
 					resizable: false,
 					roundedCorners: true,
-					width: AlwaysOn.WIDTH,
-					height: AlwaysOn.HEIGHT,
+					width: size.width,
+					height: size.height,
 					...(isExpandMode
 						? {
 								transparent: true
@@ -41,8 +49,8 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 							}),
 					alwaysOnTop: true,
 					center: false,
-					x: 16,
-					y: Math.floor((screen.getPrimaryDisplay().workAreaSize.height - AlwaysOn.HEIGHT) / 2),
+					x: position.x,
+					y: position.y,
 					...(contextIsolation && preloadPath
 						? {
 								webPreferences: {
@@ -70,6 +78,16 @@ export class AlwaysOn extends BaseWindow implements IBaseWindow {
 		this.browserWindow.on('closed', () => {
 			this.manager.unregister(RegisteredWindow.WIDGET);
 		});
+
+		positionMemory.track(this.browserWindow);
+	}
+
+	/** Where the widget opens when it has no remembered position: the left edge, half-way down the primary display. */
+	private static defaultPosition(height: number): IWindowPosition {
+		return {
+			x: 16,
+			y: Math.floor((screen.getPrimaryDisplay().workAreaSize.height - height) / 2)
+		};
 	}
 
 	public override show(): void {

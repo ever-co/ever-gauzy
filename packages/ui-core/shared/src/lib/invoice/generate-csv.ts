@@ -1,28 +1,19 @@
 import { saveAs } from 'file-saver';
-
-/**
- * Leading characters a spreadsheet may treat as the start of a formula, plus their full-width forms.
- *
- * Kept in step with `neutralizeSpreadsheetCell` in `@gauzy/utils` (packages/utils/src/lib/spreadsheet-safe.ts).
- * `@gauzy/ui-core` does not depend on `@gauzy/utils`, and that barrel pulls in Node's `crypto`, so the
- * few lines are copied here rather than imported into the browser bundle.
- */
-const FORMULA_TRIGGER = /^[=+\-@\t\r＝＋－＠]/;
-
-/** A strictly numeric string such as `-12.50`, which must stay a number in the spreadsheet. */
-const STRICTLY_NUMERIC = /^[+-]?\d+(\.\d+)?([eE][+-]?\d+)?$/;
+import {
+	CSV_MIME_TYPE,
+	CSV_RECORD_SEPARATOR,
+	CSV_UTF8_BOM,
+	neutralizeSpreadsheetText,
+	quoteCsvText
+} from '@gauzy/ui-core/common';
 
 /**
  * Prefixes `'` to text a spreadsheet would otherwise evaluate as a formula (GHSA-7xp5-j564-4752):
  * contact names, payment notes and user names are written by other tenant users and end up in
- * this file. A value that already starts with `'` is prefixed too, like the server-side export.
+ * this file. The guard lives with the shared CSV encoding in `@gauzy/ui-core/common`; it stays
+ * exported from here for the callers that import it from this module.
  */
-export function neutralizeSpreadsheetText(value: string): string {
-	if (value.startsWith("'") || (FORMULA_TRIGGER.test(value) && !STRICTLY_NUMERIC.test(value))) {
-		return "'" + value;
-	}
-	return value;
-}
+export { neutralizeSpreadsheetText };
 
 /**
  * The text of one cell, before it is quoted.
@@ -61,7 +52,7 @@ function toCsvField(value: unknown): string {
 	if (typeof value === 'number' || typeof value === 'boolean') {
 		return String(value);
 	}
-	return `"${neutralizeSpreadsheetText(toCellText(value)).replace(/"/g, '""')}"`;
+	return quoteCsvText(toCellText(value));
 }
 
 /**
@@ -90,12 +81,11 @@ export function buildCsv(data: any[], headers: string[]): string {
 	const columns = Object.keys(data[0] ?? {});
 	const lines = data.map((row) => columns.map((column) => toCsvField(row[column])).join(','));
 	lines.unshift(toHeaderLine(headers));
-	return lines.join('\r\n');
+	return lines.join(CSV_RECORD_SEPARATOR);
 }
 
 export async function generateCsv(data: any[], headers: string[], fileName: string) {
-	const BOM = '﻿';
-	const csvArray = BOM + buildCsv(data, headers);
-	const blob = new Blob([csvArray], { type: 'text/csv;charset=utf-8' });
+	const csvArray = CSV_UTF8_BOM + buildCsv(data, headers);
+	const blob = new Blob([csvArray], { type: CSV_MIME_TYPE });
 	saveAs(blob, `${fileName}.csv`);
 }

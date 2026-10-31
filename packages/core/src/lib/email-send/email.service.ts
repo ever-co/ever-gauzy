@@ -26,6 +26,7 @@ import { environment as env } from '@gauzy/config';
 import { deepMerge } from '@gauzy/utils';
 import { allowedEmailBaseUrl, warnRejectedEmailLink, withAllowedEmailLinks } from '../auth/email-link-origin';
 import { RequestContext } from '../core/context';
+import { printEmailCodeInLocalDevelopment } from '../logger';
 import { EmailSendService } from './../email-send/email-send.service';
 import { describeEmailSendError } from './email-send-error';
 import { Organization, EmailHistory } from './../core/entities/internal';
@@ -276,6 +277,12 @@ export class EmailService {
 			message: '',
 			organization
 		};
+		printEmailCodeInLocalDevelopment(
+			this.logger,
+			'Client invitation link',
+			primaryEmail,
+			sendOptions.locals.generatedUrl
+		);
 
 		// Check if the email domain is allowed.
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
@@ -333,6 +340,7 @@ export class EmailService {
 			organization,
 			user: invitedByUser
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Invitation link', email, registerUrl);
 
 		// Check if the email domain is allowed.
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
@@ -389,6 +397,8 @@ export class EmailService {
 			organization,
 			user: invitedByUser
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Team invitation code', email, inviteCode);
+		printEmailCodeInLocalDevelopment(this.logger, 'Team invitation link', email, inviteLink);
 
 		// Check if the email domain is disallowed.
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
@@ -443,6 +453,7 @@ export class EmailService {
 			organization,
 			user: invitedByUser
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Invitation link', email, registerUrl);
 
 		// Check if the email domain is disallowed.
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
@@ -633,6 +644,8 @@ export class EmailService {
 				host: env.clientBaseUrl
 			}
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Email verification code', email, verificationCode);
+		printEmailCodeInLocalDevelopment(this.logger, 'Email verification link', email, verificationLink);
 
 		if (DISALLOW_EMAIL_SERVER_DOMAIN.some((server) => email.includes(server))) {
 			this.logger.warn(`Verification email for user ${user.id} not sent: the recipient domain is blocked.`);
@@ -748,6 +761,7 @@ export class EmailService {
 			languageCode,
 			message: ''
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Password reset link', email, resetLink);
 
 		// Check if the email domain is disallowed
 		if (DISALLOW_EMAIL_SERVER_DOMAIN.some((server) => email.includes(server))) {
@@ -812,6 +826,10 @@ export class EmailService {
 			languageCode,
 			message: ''
 		};
+		for (const { tenantName, resetLink } of items) {
+			const label = `Password reset link (${tenantName})`;
+			printEmailCodeInLocalDevelopment(this.logger, label, email, resetLink);
+		}
 
 		// Return early if the email domain is disallowed
 		if (DISALLOW_EMAIL_SERVER_DOMAIN.some((server) => email.includes(server))) {
@@ -1030,6 +1048,8 @@ export class EmailService {
 			languageCode: locale,
 			message: ''
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Sign-in code', email, magicCode);
+		printEmailCodeInLocalDevelopment(this.logger, 'Sign-in link', email, magicLink);
 
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 
@@ -1083,6 +1103,7 @@ export class EmailService {
 			user: user,
 			organization
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Email change code', user.email, verificationCode);
 
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
@@ -1142,6 +1163,12 @@ export class EmailService {
 			message: '',
 			organization
 		};
+		printEmailCodeInLocalDevelopment(
+			this.logger,
+			'Team join request code',
+			organizationTeamJoinRequest.email,
+			organizationTeamJoinRequest.code
+		);
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -1413,6 +1440,7 @@ export class EmailService {
 		locale: LanguagesEnum;
 		integration: IAppIntegrationConfig;
 	}): Promise<void> {
+		printEmailCodeInLocalDevelopment(this.logger, 'Account deletion link', email, deletionLink);
 		await this.sendAccountDeletionEmail(EmailTemplateEnum.ACCOUNT_DELETION_REQUEST, email, {
 			locale,
 			email,

@@ -8,7 +8,7 @@ export class ReadWriteFile implements IReadWriteFile {
 		this._path = path;
 	}
 
-	public read(): string {
+	public read(): string | undefined {
 		if (!this.hasDirectoryAccess) {
 			return;
 		}

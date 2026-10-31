@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy, StrategyOptions } from 'passport-facebook';
+import { flagProviderConfirmedEmails } from '../social-auth-emails';
 
 @Injectable()
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
@@ -34,7 +35,7 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
 			const user = {
 				// Graph has no per-address verified flag, so the /me email is trusted the way the token sign-in
 				// (verifyFacebookToken) trusts it. An empty value is never marked verified.
-				emails: (emails ?? []).map(({ value }) => ({ value, verified: Boolean(value) })),
+				emails: flagProviderConfirmedEmails(emails),
 				accessToken,
 				refreshToken
 			};

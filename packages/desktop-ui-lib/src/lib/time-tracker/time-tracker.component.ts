@@ -5,6 +5,7 @@ import {
 	Component,
 	ElementRef,
 	Inject,
+	inject,
 	NgZone,
 	OnInit,
 	TemplateRef,
@@ -107,6 +108,7 @@ import { hasAllPermissions } from '../shared/utils/permission.util';
 import { SelectorValidator } from '../shared/utils/validation/selector.validator';
 import { TimeTrackerQuery } from './+state/time-tracker.query';
 import { IgnitionState, TimeTrackerStore } from './+state/time-tracker.store';
+import { SoundFilePlayer, TimerSoundService } from './sounds';
 import { OrganizationSelectorComponent } from './organization-selector/organization-selector.component';
 import { OrganizationSwitchService } from './organization-selector/organization-switch.service';
 import { HumanizePipe } from './pipes/humanize.pipe';
@@ -116,6 +118,9 @@ import { TimeTrackerStatusService } from './time-tracker-status/time-tracker-sta
 import { IScreenshotUploadContext, TimeTrackerService } from './time-tracker.service';
 import { TimerTrackerChangeDialogComponent } from './timer-tracker-change-dialog/timer-tracker-change-dialog.component';
 import { ICapturedImage, withoutEmptyImages } from './capture-images';
+import { ConnectivityNotifierService } from './connectivity';
+import { SelectionPrefillService } from './selection-prefill';
+import { WebPortalService } from './web-portal';
 
 enum TimerStartMode {
 	MANUAL = 'manual',
@@ -223,7 +228,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 	smartTableSettings: object;
 	tableData = [];
 	isTrackingEnabled = true;
-	sound: any = null;
+	/** Plays the screenshot sound the main process asks for (`play_sound`). */
+	sound = new SoundFilePlayer();
+	/** The start and stop sounds (#7141), off unless switched on in the settings. */
+	private readonly _timerSound = inject(TimerSoundService);
 	private dialogRequest$ = new Subject<{ dialog: TemplateRef<any>; option: any }>();
 	private _remoteLastTimeSlot$: Promise<ITimeSlot | null> | null = null;
 	/**
@@ -269,7 +277,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		private readonly router: Router,
 		private readonly _auditLogService: AuditLogService,
 		private readonly _screenCaptureService: ScreenCaptureWebRTCService,
-		private readonly _organizationSwitchService: OrganizationSwitchService
+		private readonly _organizationSwitchService: OrganizationSwitchService,
+		private readonly _connectivityNotifier: ConnectivityNotifierService,
+		private readonly _selectionPrefill: SelectionPrefillService,
+		private readonly _webPortal: WebPortalService
 	) {
 		this.iconLibraries.registerFontPack('font-awesome', {
 			packClass: 'fas',
@@ -421,10 +432,31 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		return this._organizationSwitchService.isSwitching$;
 	}
 
+	/** The web app's address, `null` where it is unknown (a custom server): the footer link shows only when known. */
+	public get webPortalUrl$(): Observable<string | null> {
+		return this._webPortal.baseUrl$;
+	}
+
+	/** Opens the employee's time and activity of today in the web app (#9517). */
+	public async openWebPortal(): Promise<void> {
+		try {
+			await this._webPortal.openTimeActivities(this._store.organizationId, this.userData?.employee?.id);
+		} catch (error) {
+			this._errorHandlerService.handleError(error);
+		}
+	}
+
+	/** Records whether the time tracker is offline, and tells the user when that changed (#8415). */
+	private _setOffline(isOffline: boolean): void {
+		this._connectivityNotifier.notify(this._isOffline, isOffline, this.inQueue.size);
+		this._isOffline$.next(isOffline);
+	}
+
 	private async resetAtMidnight() {
 		if (TimeTrackerDateManager.isMidnight) {
 			try {
-				await this.restart();
+				// An internal split for the new day, not the user stopping and starting: no start or stop sound (#7141)
+				await this._timerSound.quietly(() => this.restart());
 			} catch (error) {
 				this._errorHandlerService.handleError(error);
 			}
@@ -849,6 +881,8 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this._organizationSwitchService.organizationEntered$
 			.pipe(
 				tap(() => this.clearLastScreenCapture()),
+				// The switch cleared the selection: the new organization's last time log may prefill it again.
+				tap(() => this._selectionPrefill.reset()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -938,6 +972,9 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		// A short sound when this computer starts or stops tracking, if switched on in the settings (#7141)
+		this._timerSound.watch(this.timeTrackerQuery.ignition$).pipe(untilDestroyed(this)).subscribe();
 
 		this.timeTrackerQuery.isEditing$
 			.pipe(
@@ -1047,9 +1084,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		this.electronService.ipcRenderer.on('timer_tracker_show', (event, arg) =>
 			this._ngZone.run(async () => {
 				if (!this._store.user?.employee) return;
-				this._isOffline$.next(typeof arg.isOffline !== 'undefined' ? arg.isOffline : this._isOffline);
+				this._setOffline(typeof arg.isOffline !== 'undefined' ? arg.isOffline : this._isOffline);
 				this._store.host = arg.apiHost;
 				this.apiHost = arg.apiHost;
+				void this._webPortal.refresh(arg.apiHost);
 				this.argFromMain = arg;
 				this.token = arg.token;
 				this._activityWatchViewService.aw$.next(!!arg.aw?.isAw);
@@ -1058,13 +1096,17 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (!this._isReady && this.appSetting?.alwaysOn) {
 					this.electronService.ipcRenderer.send('show_ao');
 				}
-				this.timeTrackerFormService.setState({
+				const savedSelection = {
 					clientId: arg.organizationContactId,
 					teamId: arg.organizationTeamId,
 					projectId: arg.projectId,
 					taskId: arg.taskId,
 					note: arg.note
-				});
+				};
+				// The saved selection goes back over the form: a prefill under way would take it for the user's own
+				// choice and stop for good. It is dropped (what it chose taken back), and the one below starts over.
+				this._selectionPrefill.cancel();
+				this.timeTrackerFormService.setState(savedSelection);
 				const parallelizedTasks: Promise<void>[] = [
 					this.loadStatuses(),
 					this.clientSelectorService.load(),
@@ -1081,6 +1123,12 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (!this._isLockSyncProcess && this.inQueue.size > 0) {
 					this.electronService.ipcRenderer.send('check-interrupted-sequences');
 				}
+				// A device without a selection of its own takes over the employee's last time log (#7753). Nothing more is
+				// chosen once a start begins: `START_TIMER` sends the selection shown then (the selectors' stores).
+				void this._selectionPrefill.prefill(
+					() => this.start || this._organizationSwitchService.isStartingTimer,
+					savedSelection
+				);
 			})
 		);
 
@@ -1298,18 +1346,10 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 		);
 
 		this.electronService.ipcRenderer.on('play_sound', (event, arg) =>
-			this._ngZone.run(() => {
-				try {
-					if (!this.sound && arg.soundFile) {
-						this.sound = new Audio(arg.soundFile);
-						this.sound.play();
-					} else {
-						this.sound.play();
-					}
-				} catch (error) {
-					this._errorHandlerService.handleError(error);
-				}
-			})
+			this._ngZone.run(() =>
+				// The file may change: a screenshot sound chosen in the settings (#6715)
+				this.sound.play(arg?.soundFile).catch((error) => this._errorHandlerService.handleError(error))
+			)
 		);
 
 		this.electronService.ipcRenderer.on('show_toast_message', (event, arg) =>
@@ -1336,7 +1376,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 
 		this.electronService.ipcRenderer.on('offline-handler', (event, isOffline) => {
 			this._ngZone.run(() => {
-				this._isOffline$.next(isOffline);
+				this._setOffline(isOffline);
 				this._loggerService.info('You switched to ' + (isOffline ? 'offline' : 'online') + ' mode now');
 				if (!isOffline) {
 					this.refreshTimer();

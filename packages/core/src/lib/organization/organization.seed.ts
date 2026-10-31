@@ -144,6 +144,9 @@ export const createDefaultOrganizations = async (
 		defaultOrganization.tenant = tenant;
 		defaultOrganization.valueDate = moment().add(faker.number.int(10), 'days').toDate();
 		defaultOrganization.allowEmployeeToSeeTrackedData = true;
+		// Demo data shows screenshots, so it turns screen capture on explicitly: new organizations
+		// start with it off (issue #9872).
+		defaultOrganization.allowScreenshotCapture = true;
 
 		defaultOrganizations.push(defaultOrganization);
 	}
@@ -264,6 +267,9 @@ const generateRandomOrganization = async (
 	organization.tenant = tenant;
 	organization.valueDate = moment().add(faker.number.int(10), 'days').toDate();
 	organization.allowEmployeeToSeeTrackedData = true;
+	// Demo data shows screenshots, so it turns screen capture on explicitly: new organizations
+	// start with it off (issue #9872).
+	organization.allowScreenshotCapture = true;
 
 	return organization;
 };

@@ -3995,7 +3995,8 @@ type Query {
   
   `sum` is the employee's summed duration over the range, **in seconds**, and it is null where the
   range holds no log of theirs at all — the delivered answer rather than a fabricated zero.
-  `activity` is the tracked activity of the range as a percentage of its tracked time.
+  `activity` is the tracked activity of the range as a percentage of its tracked time. `spent` is
+  that duration priced at the employee's bill rate, in `currency`, and null where they have no rate.
   """
   timeLogWeeklyReport(
     """The organization whose week is reported."""
@@ -26905,6 +26906,11 @@ that domain's create and the two have to agree member for member.
 
 `originalUrl` is absent for the same reason it is absent above: the transport's origin header supplies
 it, and the delivered handler overwrites a stated one.
+
+Screen capture is the one exception to "member for member" (issue #9872): the organization is created with
+`allowScreenshotCapture` off whatever the body says, and `screenshotCaptureAcknowledgement` is dropped, because
+this request is public and nobody could be recorded as having acknowledged it. The new workspace's admin turns
+capture on from the organization's settings. Every other member of `contactOrganization` is passed through.
 """
 input AcceptOrganizationContactInviteInput {
   """The invitation to take up."""
@@ -33908,6 +33914,28 @@ input OrganizationContactDetailInput {
 }
 
 """
+The statements an admin confirms before screen capture is turned on for an organization in the EEA or the UK
+(issue #9872). The write is refused with `SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED`, naming the statements
+still missing, unless all three are true.
+"""
+input ScreenshotCaptureAcknowledgementInput {
+  """
+  The organization has a lawful basis for capturing its workers' screens (GDPR Art. 6), assessed as necessary and proportionate.
+  """
+  lawfulBasis: Boolean
+
+  """
+  The workers concerned were told, before capture starts, what is captured, why and for how long (GDPR Art. 13).
+  """
+  employeeNotice: Boolean
+
+  """
+  Any works council or employee-representative process this requires is complete, or none applies.
+  """
+  worksCouncil: Boolean
+}
+
+"""
 What a caller states when it files an organization.
 
 The members are the ones the delivered create body validates and the delivered handler reads. Three
@@ -33971,6 +33999,17 @@ input CreateOrganizationInput {
 
   """The contact row to file beside the organization."""
   contact: OrganizationContactDetailInput
+
+  """
+  Whether the tracker captures screenshots. A new organization starts with it off unless this turns it on (issue #9872).
+  """
+  allowScreenshotCapture: Boolean
+
+  """
+  The admin's acknowledgement, required with all three statements true when this write turns screen capture on
+  for an organization in the EEA or the UK. Request-only: the server records who gave it and when.
+  """
+  screenshotCaptureAcknowledgement: ScreenshotCaptureAcknowledgementInput
 }
 
 """
@@ -34002,6 +34041,17 @@ input UpdateOrganizationInput {
   bonusPercentage: Float
   bonusType: String
   contact: OrganizationContactDetailInput
+
+  """
+  Whether the tracker captures screenshots. Turning it on for an organization in the EEA or the UK takes the acknowledgement below.
+  """
+  allowScreenshotCapture: Boolean
+
+  """
+  The admin's acknowledgement, required with all three statements true when this write turns screen capture on
+  for an organization in the EEA or the UK. Request-only: the server records who gave it and when.
+  """
+  screenshotCaptureAcknowledgement: ScreenshotCaptureAcknowledgementInput
 
   """Whether the public profile shows income."""
   show_income: Boolean
@@ -43371,7 +43421,8 @@ One employee's week.
 
 `sum` is **in seconds** and is null where the range holds no log of that employee at all, which is the
 delivered answer rather than a fabricated zero. `activity` is a percentage of the tracked activity of
-the week over its tracked time.
+the week over its tracked time. `spent` is **money**: the week's summed duration priced at the
+employee's bill rate, as the owed-amount report prices a day, and null where the employee has no rate.
 """
 type TimeLogWeeklyReport {
   """
@@ -43387,6 +43438,16 @@ type TimeLogWeeklyReport {
 
   """The week's tracked activity, as a percentage."""
   activity: Float
+
+  """
+  What the week's tracked time costs at the employee's bill rate, rounded once to the minor unit of `currency`. Money; null without a rate.
+  """
+  spent: Decimal
+
+  """
+  The currency `spent` is in: the employee's bill rate currency, or the organization's where the rate states none. Null without an amount.
+  """
+  currency: String
 }
 
 """
