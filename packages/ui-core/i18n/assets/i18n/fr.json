@@ -3010,6 +3010,8 @@
 				"ORG_PROJECT_VIEW": "Voir les projets auxquels vous avez accès et leurs détails.",
 				"ORG_PROJECT_EDIT": "Modifier les projets : paramètres, membres, responsables et budget.",
 				"ORG_PROJECT_DELETE": "Supprimer des projets.",
+				"ORG_CONTACT_ADD": "Créer des contacts : clients, acheteurs et prospects.",
+				"ORG_CONTACT_DELETE": "Supprimer et restaurer des contacts : clients, acheteurs et prospects.",
 				"ORG_CONTACT_EDIT": "Créer et modifier des contacts : clients, acheteurs et prospects.",
 				"ORG_CONTACT_VIEW": "Voir les contacts de l'organisation : clients, acheteurs et prospects.",
 				"DAILY_PLAN_CREATE": "Créer des plans quotidiens des tâches sur lesquelles travailler chaque jour.",

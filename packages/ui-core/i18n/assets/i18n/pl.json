@@ -3008,6 +3008,8 @@
 				"ORG_PROJECT_VIEW": "Wyświetlaj projekty, do których masz dostęp, i ich szczegóły.",
 				"ORG_PROJECT_EDIT": "Zmieniaj projekty: ich ustawienia, członków, kierowników i budżet.",
 				"ORG_PROJECT_DELETE": "Usuwaj projekty.",
+				"ORG_CONTACT_ADD": "Twórz kontakty: klientów, odbiorców i potencjalnych klientów.",
+				"ORG_CONTACT_DELETE": "Usuwaj i przywracaj kontakty: klientów, odbiorców i potencjalnych klientów.",
 				"ORG_CONTACT_EDIT": "Twórz i edytuj kontakty: klientów, odbiorców i potencjalnych klientów.",
 				"ORG_CONTACT_VIEW": "Wyświetlaj kontakty organizacji: klientów, odbiorców i potencjalnych klientów.",
 				"DAILY_PLAN_CREATE": "Twórz plany dnia z zadaniami do wykonania każdego dnia.",

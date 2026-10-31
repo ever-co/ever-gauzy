@@ -3509,6 +3509,8 @@
 				"ORG_PROJECT_VIEW": "See the projects you can access and their details.",
 				"ORG_PROJECT_EDIT": "Change projects: their settings, members, managers and budget.",
 				"ORG_PROJECT_DELETE": "Delete projects.",
+				"ORG_CONTACT_ADD": "Create contacts: clients, customers and leads.",
+				"ORG_CONTACT_DELETE": "Delete and restore contacts: clients, customers and leads.",
 				"ORG_CONTACT_EDIT": "Create and edit contacts: clients, customers and leads.",
 				"ORG_CONTACT_VIEW": "See the organization's contacts: clients, customers and leads.",
 				"DAILY_PLAN_CREATE": "Create daily plans of the tasks to work on each day.",

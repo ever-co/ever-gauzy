@@ -3005,6 +3005,8 @@
 				"ORG_PROJECT_VIEW": "Die Projekte, auf die Zugriff besteht, und ihre Details ansehen.",
 				"ORG_PROJECT_EDIT": "Projekte ändern: Einstellungen, Mitglieder, Manager und Budget.",
 				"ORG_PROJECT_DELETE": "Projekte löschen.",
+				"ORG_CONTACT_ADD": "Kontakte erstellen: Kunden, Auftraggeber und Leads.",
+				"ORG_CONTACT_DELETE": "Kontakte löschen und wiederherstellen: Kunden, Auftraggeber und Leads.",
 				"ORG_CONTACT_EDIT": "Kontakte erstellen und bearbeiten: Kunden, Auftraggeber und Leads.",
 				"ORG_CONTACT_VIEW": "Die Kontakte der Organisation ansehen: Kunden, Auftraggeber und Leads.",
 				"DAILY_PLAN_CREATE": "Tagespläne mit den Aufgaben erstellen, an denen jeden Tag gearbeitet werden soll.",

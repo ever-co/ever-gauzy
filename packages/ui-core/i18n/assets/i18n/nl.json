@@ -3009,6 +3009,8 @@
 				"ORG_PROJECT_VIEW": "De projecten waartoe u toegang hebt en hun details bekijken.",
 				"ORG_PROJECT_EDIT": "Projecten wijzigen: instellingen, leden, managers en budget.",
 				"ORG_PROJECT_DELETE": "Projecten verwijderen.",
+				"ORG_CONTACT_ADD": "Contacten aanmaken: klanten, afnemers en leads.",
+				"ORG_CONTACT_DELETE": "Contacten verwijderen en herstellen: klanten, afnemers en leads.",
 				"ORG_CONTACT_EDIT": "Contacten aanmaken en bewerken: klanten, afnemers en leads.",
 				"ORG_CONTACT_VIEW": "De contacten van de organisatie bekijken: klanten, afnemers en leads.",
 				"DAILY_PLAN_CREATE": "Dagplanningen aanmaken met de taken waaraan elke dag wordt gewerkt.",

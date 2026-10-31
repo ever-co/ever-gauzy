@@ -3512,6 +3512,8 @@
 				"ORG_PROJECT_VIEW": "查看你可访问的项目及其详情。",
 				"ORG_PROJECT_EDIT": "更改项目：设置、成员、经理和预算。",
 				"ORG_PROJECT_DELETE": "删除项目。",
+				"ORG_CONTACT_ADD": "创建联系人：客户、顾客和潜在客户。",
+				"ORG_CONTACT_DELETE": "删除和恢复联系人：客户、顾客和潜在客户。",
 				"ORG_CONTACT_EDIT": "创建和编辑联系人：客户、顾客和潜在客户。",
 				"ORG_CONTACT_VIEW": "查看组织的联系人：客户、顾客和潜在客户。",
 				"DAILY_PLAN_CREATE": "创建每日计划，列出每天要处理的任务。",
