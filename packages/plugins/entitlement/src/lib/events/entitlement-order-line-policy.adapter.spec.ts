@@ -155,7 +155,7 @@ describe('EntitlementGrantConsumer — order.placed lines and order.canceled', (
 				granted.push(args);
 				return { created: true };
 			},
-			find: async () => [{ id: 'entitlement-1' }],
+			findGranted: async () => [{ id: 'entitlement-1' }],
 			revoke: async (...args: unknown[]) => {
 				revoked.push(args);
 			}
