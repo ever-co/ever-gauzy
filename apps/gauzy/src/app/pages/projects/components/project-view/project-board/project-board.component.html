@@ -8,11 +8,7 @@
 	nbSpinnerStatus="basic"
 >
 	<div class="panel-body">
-		@if (board.failed) {
-		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
-		} @else if (!board.loading && !total && !hasParent) {
-		<ng-container *ngTemplateOutlet="empty; context: { $implicit: emptyKey, icon: 'checkmark-square-2-outline' }"></ng-container>
-		} @else {
+		<!-- Whatever the board's state: what the host puts in this row must not go when the board fails to load. -->
 		@if (filterable) {
 		<ga-board-filter-bar
 			[filter]="filter"
@@ -24,6 +20,11 @@
 			<ng-content></ng-content>
 		</ga-board-filter-bar>
 		}
+		@if (board.failed) {
+		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
+		} @else if (!board.loading && !total && !hasParent) {
+		<ng-container *ngTemplateOutlet="empty; context: { $implicit: emptyKey, icon: 'checkmark-square-2-outline' }"></ng-container>
+		} @else {
 		<div #boardScroller class="board" role="list" cdkDropListGroup>
 			@for (column of board.value; track column.id) {
 			@let cards = visibleCards(column);
