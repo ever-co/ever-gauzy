@@ -26,7 +26,12 @@ export enum EverWorksLinkType {
 	/** A Gauzy mailbox message handed to an Ever Works agent (P4c): the inbox email ↔ the EW email message. */
 	AGENT_EMAIL = 'AGENT_EMAIL',
 	/** An Ever Works agent email mirrored into the Gauzy Inbox (P4c, read-only): the EW message ↔ the inbox item. */
-	AGENT_EMAIL_MIRROR = 'AGENT_EMAIL_MIRROR'
+	AGENT_EMAIL_MIRROR = 'AGENT_EMAIL_MIRROR',
+	/**
+	 * A Gauzy Inbox item mirrored to Ever Works: one recipient's copy (the `inbox_item_recipient` id) ↔ the Ever Works
+	 * inbox item made for that person (an Ever Works item has one recipient).
+	 */
+	GAUZY_INBOX_ITEM = 'GAUZY_INBOX_ITEM'
 }
 
 export enum EverWorksLinkState {

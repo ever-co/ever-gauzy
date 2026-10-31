@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { IInboxItemWithState, InboxItemKindEnum, InboxItemStatusEnum, InboxTabEnum } from '@gauzy/contracts';
 import { Store } from '@gauzy/ui-core/core';
@@ -267,5 +268,57 @@ describe('InboxPageComponent', () => {
 		email$.next(true);
 		fixture.detectChanges();
 		expect(find('my-mailbox')?.getAttribute('href')).toBe('/pages/inbox/mailbox');
+	});
+
+	describe('the deep link ?item=<id> (an Ever Works copy links back here)', () => {
+		function withItemLink(id: string) {
+			email$.next(false);
+			TestBed.configureTestingModule({
+				providers: [
+					{
+						provide: ActivatedRoute,
+						useValue: { snapshot: { queryParamMap: convertToParamMap({ item: id }) } }
+					}
+				]
+			});
+		}
+
+		it('opens that item once the Inbox is served, as a click on its row does, though no tab lists it', () => {
+			api.counts.mockReturnValue(of({ unread: 1, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));
+			api.get.mockReturnValue(of(item('deep')));
+			api.setState.mockReturnValue(
+				of(item('deep', { recipient: { isRead: true, isArchived: false, snoozedUntil: null } }))
+			);
+			withItemLink('deep');
+			const { component, fixture, find } = render();
+			fixture.detectChanges();
+			expect(api.get).toHaveBeenCalledWith('deep');
+			expect(component.selected()).toMatchObject({ id: 'deep', recipient: { isRead: true } });
+			// Opened like a row: an unread item becomes read.
+			expect(api.setState).toHaveBeenCalledWith('deep', { isRead: true });
+			expect(find('no-selection')).toBeNull();
+		});
+
+		it('an id the API does not show me (404) is ignored quietly', () => {
+			api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));
+			api.get.mockReturnValue(throwError(() => ({ status: 404, error: { message: 'Not Found' } })));
+			withItemLink('not-mine');
+			const { component, fixture, find } = render();
+			fixture.detectChanges();
+			expect(component.view()).toBe('ready');
+			expect(component.selected()).toBeNull();
+			expect(component.actionError()).toBeNull();
+			expect(find('item-a')).not.toBeNull();
+			expect(find('no-selection')).not.toBeNull();
+		});
+
+		it('is not asked for where the API does not serve the Inbox', () => {
+			api.counts.mockReturnValue(throwError(() => ({ status: 404 })));
+			withItemLink('deep');
+			expect(render().component.view()).toBe('unavailable');
+			expect(api.get).not.toHaveBeenCalled();
+		});
 	});
 });

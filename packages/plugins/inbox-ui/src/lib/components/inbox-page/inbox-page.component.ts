@@ -408,9 +408,12 @@ export class InboxPageComponent implements OnInit {
 	readonly search$ = new Subject<string>();
 	/** `false`: a fresh first page; `true`: the next page after `nextCursor`. */
 	private readonly load$ = new Subject<boolean>();
+	/** `?item=` of the URL, opened once the Inbox is served (then forgotten: a retry does not open it again). */
+	private requestedItemId: string | null = null;
 
 	ngOnInit(): void {
 		this.readRequestedTab();
+		this.requestedItemId = this.route.snapshot.queryParamMap.get('item')?.trim() || null;
 		this.setUpListStream();
 		this.setUpSearch();
 		this.checkAvailability();
@@ -434,9 +437,30 @@ export class InboxPageComponent implements OnInit {
 				next: () => {
 					this.view.set('ready');
 					this.reload();
+					this.openRequestedItem();
 				},
 				error: (error: HttpErrorResponse) =>
 					this.view.set(error?.status === 404 || error?.status === 403 ? 'unavailable' : 'error')
+			});
+	}
+
+	/**
+	 * The deep link `?item=<id>` (an Ever Works copy of an item links back here): the item opens as a click on its row
+	 * opens it, whichever tab it is listed in. An id the API does not show me (404: not mine, gone), or any other failure
+	 * to read it, leaves the page as it is (the list does not depend on it); so does an item I opened in the meantime.
+	 */
+	private openRequestedItem(): void {
+		const id = this.requestedItemId;
+		this.requestedItemId = null;
+		if (!id) return;
+		this.api
+			.get(id)
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (item) => {
+					if (item?.id && !this.selectedId()) this.open(item);
+				},
+				error: () => undefined
 			});
 	}
 

@@ -67,6 +67,9 @@ the seed) and answers the routes below.
 - `API_BASE_URL`: the public HTTPS address of this API, where Ever Works
   delivers webhooks. Without one, no webhook is registered and the change feed
   alone keeps the sync going.
+- `CLIENT_BASE_URL` (else `APP_LINK`): the public HTTPS address of the Gauzy
+  web app. The Ever Works copy of a Gauzy Inbox item links back to the item
+  there (`<app>/#/pages/inbox?item=<id>`). Without one, the copy has no link.
 - `EVER_WORKS_WEBHOOK_REQUESTS_PER_MINUTE`: per-process limit of the public
   webhook route (default 1200).
 - `EVER_WORKS_SYNC_LOOP=off`: keeps this process out of the sync loop (it still
@@ -182,6 +185,12 @@ below use the `INTEGRATION_` prefix; paths share the
 | GET | `/mappings/:integrationTenantId/conflicts` | `VIEW` |
 | POST | `/mappings/:integrationTenantId/conflicts/:id/resolve` | `EDIT` |
 | DELETE | `/mappings/:integrationTenantId` | `DELETE` |
+| GET | `/me/inbox-preferences` | `INBOX_VIEW` (no prefix) |
+| PUT | `/me/inbox-preferences` | `INBOX_VIEW` (no prefix) |
+
+The two `/me` routes are the signed-in person's own: the person is always the
+caller (from the credential, never a parameter), no organization is named, and
+the answer is `Cache-Control: no-store`.
 
 Keys are write-only: no response carries the integration key or the webhook
 secret, and connection responses are `Cache-Control: no-store`.
@@ -358,18 +367,89 @@ and answered `202`.
   goals; resolving or retiring the initiative completes the mission. Gauzy
   never activates a mission. Drafts wait until active, and **leadership
   initiatives never sync** (one that turns leadership stops syncing, flagged).
-- **Inbox (where the Gauzy Inbox is loaded).** Ever Works inbox items
-  (questions, approvals, escalations, notices; `inbox.item.*`, served to a key
-  with `inbox:read`) become Gauzy Inbox items (`source = EVER_WORKS`) of the
-  Gauzy user paired with the recipient, with the linked task, project and
-  agent. An item whose recipient is not paired yet waits (deferred, retried
-  hourly) until the People tab pairs them; the tab lists those waiting items
-  per member (`deferredInbox` of `GET …/people`), and pairing a member makes
-  their items due at once. A reply in Gauzy goes to Ever Works
-  at once, acting as the recipient (`inbox:write`); an item already decided
-  there shows the answer Ever Works holds. Read / unread and archive follow
-  to Ever Works; snoozing stays in Gauzy. Without the Gauzy Inbox, inbox
-  events are skipped.
+- **Inbox (where the Gauzy Inbox is loaded), both ways.** The `inbox`
+  direction is `both` (the default of a new mapping), `ew_to_gauzy`,
+  `gauzy_to_ew` or `off`; a mapping made before keeps the `ew_to_gauzy` it was
+  created with until an admin changes it. The `InboxItem` sync setting turns
+  both ways off.
+  - **Ever Works → Gauzy.** Ever Works inbox items (questions, approvals,
+    escalations, notices; `inbox.item.*`, served to a key with `inbox:read`)
+    become Gauzy Inbox items (`source = EVER_WORKS`) of the Gauzy user paired
+    with the recipient, with the linked task, project and agent. An item whose
+    recipient is not paired yet waits (deferred, retried hourly) until the
+    People tab pairs them; the tab lists those waiting items per member
+    (`deferredInbox` of `GET …/people`), and pairing a member makes their items
+    due at once. A reply in Gauzy goes to Ever Works at once, acting as the
+    recipient (`inbox:write`); an item already decided there shows the answer
+    Ever Works holds. Read / unread and archive follow to Ever Works; snoozing
+    stays in Gauzy. Without the Gauzy Inbox, inbox events are skipped.
+  - **Gauzy → Ever Works.** Gauzy's own Inbox items (questions, approvals,
+    escalations, notices and the emails of a person's mailboxes) are filed in
+    the Ever Works inbox of the paired member (`POST /inbox/items`, scope
+    `inbox:write`, `sourceLabel` "Ever Gauzy", a link back to the item when
+    `CLIENT_BASE_URL` is set). An item goes when its recipient is paired with
+    an Ever Works member, it is not Ever Works' own (`source = EVER_WORKS` never
+    goes back: loop guard) nor one of the integration's own notices, the
+    direction writes to Ever Works, the `InboxItem` setting is on, the person's
+    preference sends its kind, and, for an item about a task, the task's sync
+    scope allows the Ever platform (`syncScope: none` keeps it out). Each
+    recipient of a Gauzy item gets a copy of their own (an Ever Works item has
+    one recipient): `externalId = <inbox item id>:<recipient row id>`, linked
+    `GAUZY_INBOX_ITEM`. The Inbox tells the integration about every write
+    (`INBOX_ITEM_FEED`, see the Inbox README), which queues one outbound change
+    per paired recipient (coalesced, retried, dead-lettered, fenced on the
+    lease like every push). A 10-minute sweep queues a change whose notice was
+    missed in the last hour (an item never sent only when it changed after the
+    inbox started going to Ever Works: older ones go only with the backfill)
+    and archives the copy of a recipient row that is gone. A replay of the same
+    `externalId` answers the copy filed before, so a retry never files twice;
+    what its person did to it meanwhile is applied to Gauzy first. Later
+    changes are patched with
+    `If-Match` (`PATCH /inbox/items/:id`): title, body, choices, `resolved`
+    with the answer, and `archived` when the person archives it (or its source
+    cancels it); read and snooze stay in Gauzy. Only the fields Gauzy changed
+    since its last push are sent, so what the person did in Ever Works is never
+    undone, and Gauzy's answer never goes over one the person gave there. A
+    `412` (the person changed the copy meanwhile) reads it again, applies what
+    the person did to Gauzy, then sends Gauzy's change once on the current
+    version (contract v1-draft.17, CR-15). An item archived before it went out
+    is not filed. An email goes with its sender, mailbox
+    address, subject and time (`email`), and its body as plain text.
+  - **What the person does in Ever Works** on such a copy (`inbox.item.*`: a
+    reply or decision, read / unread, archive) comes back to the Gauzy item
+    through the Inbox's own reply and state actions, signed in as the
+    recipient, so the reply reaches the item's source like a reply made in
+    Gauzy. Only what moved in Ever Works since it was last seen is applied, so
+    an event never undoes a Gauzy change still waiting to be pushed. Versions
+    only go up: an event at or below the link's version is skipped (an answer
+    a push's `412` retry already brought over among them), and a reply to an
+    item already answered in Gauzy keeps Gauzy's answer. A copy deleted in Ever
+    Works is unlinked and kept as a tombstone (Ever Works deletes for good, so
+    the copy is never filed again); the Gauzy item stays. A copy filed for a
+    member the person is no longer paired with gets nothing more. An item this
+    connection's key filed (`integrationKeyId`) is never brought into the
+    Gauzy Inbox as an Ever Works item.
+  - **Each person decides what goes.** Every kind is sent by default, emails
+    included. On **Settings → Ever Works inbox** (`GET`/`PUT
+    /me/inbox-preferences`, stored per user and tenant in
+    `ever_works_inbox_preference` as the kinds they keep out) a person turns
+    off any kind, and sees, per mapped organization, whether their items are
+    sent and, if not, why (not paired, direction, sync setting, mapping off).
+    An admin sees each paired person's effective choice on the People tab
+    (`inboxToEverWorks` of `GET …/people`), read-only.
+
+  | Gauzy Inbox kind | Ever Works kind | Choices |
+  | --- | --- | --- |
+  | `QUESTION` | `question` | the item's options |
+  | `APPROVAL` | `approval` | the item's options, else Approve / Reject |
+  | `ESCALATION` | `question` | the item's options |
+  | `NOTICE` | `notice`, `mention` or `assignment` (below) | none |
+  | `EMAIL` | `email` | none |
+  | any other | `other` | none |
+
+  A notice whose `metadata.notificationType` is `Mention` or `Assignment`
+  (the platform's notification types) goes as a `mention` or an `assignment`.
+
 - **Mailboxes routed to an agent (G-P4-6, where the Inbox email features
   run).** A Gauzy mailbox whose settings name an Ever Works agent
   (`PATCH /api/inbox/mailboxes/:id` with
@@ -448,8 +528,13 @@ and answered `202`.
   page and stores every record as an initial event that the record type's
   handler applies like a live one, then queues the Gauzy records in scope for
   Ever Works where its direction writes there; the next phase starts once
-  those records are applied. Each sweep works within a time budget and saves
-  the phase's checkpoint after every page, so a run resumes where it stopped,
+  those records are applied. The inbox phase sends the open Gauzy Inbox items
+  of paired people (as their preferences allow) only when the mapping's
+  `backfillGauzyInbox` is on (off by default: without it, only the items
+  written from then on go); the dry run counts them either way (`gauzy` of the
+  inbox phase, and `creates.inEverWorks` once the backfill is on). Each sweep
+  works within a time budget and saves the phase's checkpoint after every
+  page, so a run resumes where it stopped,
   in whichever process holds the connection; a cancelled run stops at its next
   checkpoint; a phase whose handler is
   not part of this version is skipped and picked up by a later resync. At the

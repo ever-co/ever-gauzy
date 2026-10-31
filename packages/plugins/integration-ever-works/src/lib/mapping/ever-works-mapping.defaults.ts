@@ -15,7 +15,11 @@ export const EVER_WORKS_DOMAINS = {
 	goals: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	ideas: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	tasks: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
-	inbox: ['ew_to_gauzy', 'off'],
+	/**
+	 * Ever Works inbox items into the Gauzy Inbox (`ew_to_gauzy`), the Gauzy Inbox's own items to Ever Works
+	 * (`gauzy_to_ew`, each person choosing which kinds), or both.
+	 */
+	inbox: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	docs: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	/** The read-only mirror of Ever Works agent mail into the Gauzy Inbox (plan 04 §6, optional). */
 	agentEmail: ['off', 'ew_to_gauzy']
@@ -33,7 +37,9 @@ export const DEFAULT_EVER_WORKS_DIRECTIONS: Record<EverWorksDomain, EverWorksDir
 	goals: 'both',
 	ideas: 'both',
 	tasks: 'both',
-	inbox: 'ew_to_gauzy',
+	// New mappings mirror both ways (owner decision, 2026-10-29). A mapping stores every direction when it is made, so
+	// an existing mapping keeps the `ew_to_gauzy` it was created with until an admin changes it.
+	inbox: 'both',
 	docs: 'both',
 	agentEmail: 'off'
 };

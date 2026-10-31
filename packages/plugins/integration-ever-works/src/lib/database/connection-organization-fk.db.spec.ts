@@ -198,11 +198,17 @@ describe('ever_works_connection organization foreign key (F59)', () => {
 		expect(await connectionRow(kept)).toMatchObject({ organizationId: null });
 	});
 
-	it("TypeORM's revert of the last plugin migration is this one, and the run after it re-applies it", async () => {
+	it("TypeORM's revert of the plugin migrations after it reaches this one, and the run after it re-applies them", async () => {
+		// The migrations after this one (the inbox preferences table) come off first; none of them touches the connection.
+		await dataSource.undoLastMigration({ transaction: 'each' });
+		expect(await organizationRule()).toBe('SET NULL');
 		await dataSource.undoLastMigration({ transaction: 'each' });
 		expect(await organizationRule()).toBe('CASCADE');
 		const pending = await dataSource.runMigrations({ transaction: 'each' });
-		expect(pending.map((m) => m.name)).toEqual(['AlterEverWorksConnectionOrganizationForeignKey1791000003100']);
+		expect(pending.map((m) => m.name)).toEqual([
+			'AlterEverWorksConnectionOrganizationForeignKey1791000003100',
+			'CreateEverWorksInboxPreference1791000003510'
+		]);
 		expect(await organizationRule()).toBe('SET NULL');
 	});
 
