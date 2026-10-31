@@ -95,7 +95,9 @@ describe('ChangelogAdminComponent', () => {
 		component.add(component.sections[1]);
 
 		expect(dialogService.open).toHaveBeenCalledWith(ChangelogEntryDialogComponent, {
-			context: { entry: { isFeature: true } }
+			context: { entry: { isFeature: true } },
+			closeOnBackdropClick: false,
+			closeOnEsc: false
 		});
 		expect(toastrService.success).toHaveBeenCalledWith('CHANGELOG_MENU.MANAGE.SAVED_MESSAGE');
 		expect(changelogService.find).toHaveBeenCalledTimes(2);
@@ -106,7 +108,11 @@ describe('ChangelogAdminComponent', () => {
 
 		component.edit(newer);
 
-		expect(dialogService.open).toHaveBeenCalledWith(ChangelogEntryDialogComponent, { context: { entry: newer } });
+		expect(dialogService.open).toHaveBeenCalledWith(ChangelogEntryDialogComponent, {
+			context: { entry: newer },
+			closeOnBackdropClick: false,
+			closeOnEsc: false
+		});
 		expect(changelogService.find).not.toHaveBeenCalled();
 		expect(toastrService.success).not.toHaveBeenCalled();
 	});

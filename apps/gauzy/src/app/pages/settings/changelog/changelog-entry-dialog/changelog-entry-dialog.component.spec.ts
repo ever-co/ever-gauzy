@@ -180,6 +180,27 @@ describe('ChangelogEntryDialogComponent', () => {
 		expect(dialogRef.close).toHaveBeenCalledTimes(1);
 	});
 
+	it('cannot be closed while it saves, by Cancel or Escape, and closes on either otherwise', async () => {
+		const response = new Subject<IChangelog>();
+		changelogService.update.mockReturnValueOnce(response);
+		open(existing);
+
+		const saving = component.save();
+		component.cancel();
+		component.onEscape();
+		expect(dialogRef.close).not.toHaveBeenCalled();
+
+		response.next(existing);
+		response.complete();
+		await saving;
+		expect(dialogRef.close).toHaveBeenCalledTimes(1);
+		expect(dialogRef.close).toHaveBeenCalledWith(expect.objectContaining({ id: 'news-1' }));
+
+		open(existing);
+		component.onEscape();
+		expect(dialogRef.close).toHaveBeenLastCalledWith();
+	});
+
 	it('previews the card as it is typed, without a link until it is a full address', () => {
 		open(existing);
 		expect(component.preview.learnMoreUrl).toBe('https://gauzy.co/blog/dark-mode');

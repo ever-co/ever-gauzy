@@ -133,7 +133,9 @@ export class ChangelogAdminComponent implements OnInit {
 	/** Opens the entry form; a saved entry reads the list again. */
 	private _openDialog(entry: IChangelog): void {
 		this._dialogService
-			.open(ChangelogEntryDialogComponent, { context: { entry } })
+			// The form closes itself on Cancel and Escape, but not while it saves; a click beside it never
+			// closes it, so what was typed is not lost to a stray click.
+			.open(ChangelogEntryDialogComponent, { context: { entry }, closeOnBackdropClick: false, closeOnEsc: false })
 			.onClose.subscribe((saved?: IChangelog) => {
 				if (saved) {
 					this._toastrService.success(`${this.i18n}.SAVED_MESSAGE`);

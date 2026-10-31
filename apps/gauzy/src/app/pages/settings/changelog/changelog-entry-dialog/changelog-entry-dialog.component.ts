@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -142,7 +142,20 @@ export class ChangelogEntryDialogComponent implements OnInit {
 		}
 	}
 
+	/**
+	 * Closes without saving. Not while a save is under way: the dialog would close as if nothing was saved,
+	 * the page would not show the entry once it is, and adding it again would make a duplicate.
+	 */
 	cancel(): void {
+		if (this.saving) {
+			return;
+		}
 		this._dialogRef.close();
+	}
+
+	/** Escape closes the form as Cancel does (the page opens it with the dialog's own Escape handling off). */
+	@HostListener('document:keydown.escape')
+	onEscape(): void {
+		this.cancel();
 	}
 }
