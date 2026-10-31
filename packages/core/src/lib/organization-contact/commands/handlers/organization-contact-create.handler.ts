@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { In } from 'typeorm';
 import {
 	ID,
@@ -34,7 +34,8 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 	public async execute(command: OrganizationContactCreateCommand): Promise<IOrganizationContact> {
 		// A caller who may create contacts but not edit them creates only. Checked before the catch-all below,
 		// which answers every failure with a 400, so the refusal keeps its 403.
-		const input = command.options?.createOnly
+		const createOnly = !!command.options?.createOnly;
+		const input = createOnly
 			? await toCreateOnlyContactInput(command.input, (ids) => this.findProjectsOf(command.input, ids))
 			: command.input;
 
@@ -72,6 +73,26 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 				input.members = [...(input.members || []), ...projectMembers];
 			}
 
+			// The projects were read as unassigned above, and another request may assign one before the save. The
+			// create-only create therefore claims them in the contact's own transaction, details included, and
+			// fails with 409 rather than move a project another contact has (#11601 review).
+			if (createOnly && isNotEmpty(input.projects)) {
+				return await this._organizationContactService.createClaimingProjects({
+					...input,
+					contact: {
+						...input.contact,
+						organizationId,
+						tenantId,
+						organization: { id: organizationId },
+						tenant: { id: tenantId }
+					},
+					organizationId,
+					organization: { id: organizationId },
+					tenantId,
+					tenant: { id: tenantId }
+				});
+			}
+
 			// Create contact details of organization
 			try {
 				input.contact = await this._contactService.create({
@@ -95,6 +116,10 @@ export class OrganizationContactCreateHandler implements ICommandHandler<Organiz
 				tenant: { id: tenantId }
 			});
 		} catch (error) {
+			// A project claimed by another request keeps its 409, so the caller knows to choose again.
+			if (error instanceof ConflictException) {
+				throw error;
+			}
 			throw new BadRequestException('Failed to create organization contact', error.message);
 		}
 	}
