@@ -24,9 +24,13 @@ describe('UI runtime config', () => {
 	const legacyConfig = (url: string) =>
 		`\n\t\t<script> window._env = { api: '${url}' };\n\t\tif (typeof global === "undefined") {\n\t\t\tvar global = window;\n\t\t}; </script>\n`;
 
-	/** The `window` the scripts of `html` leave behind, run in order the way a browser runs inline scripts. */
-	const runInlineScripts = (html: string) => {
-		const window: { _env?: { api: string } } = {};
+	/**
+	 * The `window` the scripts of `html` leave behind, run in order the way a browser runs inline scripts, in a page
+	 * opened at `hostname` (none: a window without `location`).
+	 */
+	const runInlineScripts = (html: string, hostname?: string) => {
+		const window: { _env?: { api: string }; location?: { hostname: string } } =
+			hostname === undefined ? {} : { location: { hostname } };
 		const context = vm.createContext({ window });
 		for (const [, body] of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) {
 			vm.runInContext(body, context);
@@ -43,13 +47,13 @@ describe('UI runtime config', () => {
 
 	describe('buildUiRuntimeConfigScript', () => {
 		it('sets window._env.api to the API URL and defines `global` for the browser', () => {
-			const script = buildUiRuntimeConfigScript('http://127.0.0.1:3000');
+			const script = buildUiRuntimeConfigScript('http://192.168.1.20:3000');
 
 			expect(script).toBe(
-				`<script>window._env = { api: "http://127.0.0.1:3000" }; if (typeof global === 'undefined') { var global = window; }</script>`
+				`<script>window._env = { api: "http://192.168.1.20:3000" }; if (typeof global === 'undefined') { var global = window; }</script>`
 			);
 			const { window, context } = runInlineScripts(script);
-			expect(window._env).toEqual({ api: 'http://127.0.0.1:3000' });
+			expect(window._env).toEqual({ api: 'http://192.168.1.20:3000' });
 			expect(vm.runInContext('global === window', context)).toBe(true);
 		});
 
@@ -73,6 +77,70 @@ describe('UI runtime config', () => {
 			const { window } = runInlineScripts(script);
 			expect(window._env.api).toBe(url);
 			expect(window).not.toHaveProperty('hacked');
+		});
+	});
+
+	/**
+	 * With LAN access on and the default host setting, the API URL is the loopback address (`http://127.0.0.1:3000`), and
+	 * the same script reaches every browser: one on another computer called its own loopback address and could not use
+	 * the web UI. It now calls the API at the host it opened the web UI at, on the API's scheme and port.
+	 */
+	describe('buildUiRuntimeConfigScript for browsers on other computers', () => {
+		const apiFor = (apiUrl: string, hostname?: string) =>
+			runInlineScripts(buildUiRuntimeConfigScript(apiUrl), hostname).window._env.api;
+
+		it('has a browser on another computer call the API at the host it opened the web UI at', () => {
+			expect(apiFor('http://127.0.0.1:3000', '192.168.1.20')).toBe('http://192.168.1.20:3000');
+			expect(apiFor('http://127.0.0.1:3000', 'gauzy-server.lan')).toBe('http://gauzy-server.lan:3000');
+			expect(apiFor('http://127.0.0.1:3000', '[fe80::1]')).toBe('http://[fe80::1]:3000');
+		});
+
+		it("keeps the API's scheme and port", () => {
+			expect(apiFor('https://127.0.0.1:3443', '192.168.1.20')).toBe('https://192.168.1.20:3443');
+			expect(apiFor('localhost:3100', '192.168.1.20')).toBe('http://192.168.1.20:3100');
+		});
+
+		it('gives a browser on this computer the API URL as before', () => {
+			for (const hostname of ['127.0.0.1', 'localhost', 'LOCALHOST', '127.0.1.1', '[::1]', '0.0.0.0', '']) {
+				expect(apiFor('http://127.0.0.1:3000', hostname)).toBe('http://127.0.0.1:3000');
+			}
+			expect(apiFor('http://127.0.0.1:3000')).toBe('http://127.0.0.1:3000');
+		});
+
+		it('treats every loopback and "every interface" API host alike', () => {
+			for (const apiUrl of [
+				'http://localhost:3000',
+				'http://0.0.0.0:3000',
+				'http://[::1]:3000',
+				'http://[::]:3000'
+			]) {
+				expect(apiFor(apiUrl, '192.168.1.20')).toBe('http://192.168.1.20:3000');
+				expect(apiFor(apiUrl, '127.0.0.1')).toBe(apiUrl);
+			}
+		});
+
+		it('gives every browser the same URL when the API host is one other computers reach', () => {
+			for (const apiUrl of [
+				'http://192.168.1.20:3000',
+				'https://gauzy.example.com:3000',
+				'http://127.0.0.1.nip.io:3000'
+			]) {
+				expect(apiFor(apiUrl, '10.0.0.5')).toBe(apiUrl);
+				expect(buildUiRuntimeConfigScript(apiUrl)).not.toContain('location');
+			}
+		});
+
+		it('is still one script up to its own </script>, so applying it again replaces it as a whole', () => {
+			const script = buildUiRuntimeConfigScript('http://127.0.0.1:3000');
+
+			expect(count(script, '</script>')).toBe(1);
+			expect(count(script, '<')).toBe(2);
+			const html = applyUiRuntimeConfig(
+				applyUiRuntimeConfig(INDEX, 'http://127.0.0.1:3000'),
+				'http://192.168.1.20:3000'
+			);
+			expect(count(html, 'window._env')).toBe(1);
+			expect(html).not.toContain('location');
 		});
 	});
 

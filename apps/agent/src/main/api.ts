@@ -341,7 +341,8 @@ export class ApiService {
 	async getEmployeeSetting(employeeId: string): Promise<Partial<TEmployeeResponse>> {
 		const authConfig = getAuthConfig();
 		const path = `/api/employee/${employeeId}`;
-		const employee: Partial<TEmployeeResponse> = await this.get(path, {});
+		// With its organisation: the agent captures the screen only when the organisation allows it too (issue #9872)
+		const employee: Partial<TEmployeeResponse> = await this.get(path, { 'relations[0]': 'organization' });
 		if (employee?.id) {
 			authConfig.user.employee = employee;
 			this.mainEvent.emit(MAIN_EVENT, {
