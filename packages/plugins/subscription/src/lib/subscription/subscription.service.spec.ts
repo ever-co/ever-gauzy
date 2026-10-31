@@ -2599,6 +2599,72 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		expect(fixture.items('subscription-charged').map((line) => line.variantId)).toEqual([VARIANT]);
 	});
 
+	it('applies nothing to a subscription that ended while its change was being charged, and records the charge for reversal', async () => {
+		const fixture = subscriptionFixture({
+			prices: UPGRADE,
+			onProration: () => {
+				// The customer cancels while the upgrade's charge is being raised.
+				const row = fixture.subscription(SUBSCRIPTION);
+
+				Object.assign(row, { status: SubscriptionStatus.CANCELED, version: row.version + 1 });
+			}
+		});
+
+		const refusal = await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN }).catch((error) => error);
+
+		expect(refusal).toBeInstanceOf(ConflictException);
+		expect(refusal.message).toMatch(/^SUBSCRIPTION_CHANGE_NOT_APPLIED: .*recorded on the subscription for reversal/);
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({
+			status: SubscriptionStatus.CANCELED,
+			planId: PLAN,
+			reservedPlanId: null
+		});
+		expect(fixture.items().map((line) => line.variantId)).toEqual([VARIANT]);
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toBeUndefined();
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toEqual([
+			expect.objectContaining({ key: fixture.prorationCalls[0].idempotencyKey, settled: 'SETTLED' })
+		]);
+		expect(fixture.events.map((event) => event.name)).toContain('subscription.settlement-reversal-required');
+	});
+
+	it('keeps a change scheduled for the next period after the plan change was decided, and replaces one scheduled before', async () => {
+		const scheduledLater = { planId: PLAN, effectiveAt: APRIL, description: 'back at renewal' };
+		const fixture = subscriptionFixture({
+			prices: UPGRADE,
+			onProration: () => {
+				// While the upgrade is being charged, a change back to the old plan is scheduled for the renewal.
+				const row = fixture.subscription(SUBSCRIPTION);
+
+				row.metadata = {
+					...row.metadata,
+					scheduledPlanChange: { ...scheduledLater, signature: signScheduledChange(SUBSCRIPTION, scheduledLater as never) }
+				};
+				row.version += 1;
+			}
+		});
+
+		await fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		// The later decision stands: the subscription moves now, and back at the renewal.
+		expect(fixture.subscription(SUBSCRIPTION).planId).toBe(BETTER_PLAN);
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['scheduledPlanChange']).toMatchObject({ planId: PLAN });
+
+		// The control: one scheduled before the plan change was decided is the earlier decision, and goes.
+		const earlier = { planId: PLAN, effectiveAt: APRIL, description: 'scheduled first' };
+		const replaced = subscriptionFixture({
+			prices: UPGRADE,
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					metadata: { scheduledPlanChange: { ...earlier, signature: signScheduledChange(SUBSCRIPTION, earlier as never) } }
+				})
+			]
+		});
+
+		await replaced.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		expect(replaced.subscription(SUBSCRIPTION).metadata?.['scheduledPlanChange']).toBeUndefined();
+	});
+
 	it('refuses another change while one is being settled, and replaces one abandoned past the lease', async () => {
 		const abandoned = {
 			key: `${SUBSCRIPTION}:abandoned`,

@@ -355,6 +355,11 @@ interface IChangeIntent {
 	/** Whether the change replaces the line set (a plan change, a line added or removed), or only changes quantities. */
 	replaceLines?: boolean;
 	/**
+	 * The signature of the change scheduled for the next period when this plan change was decided, or null when none
+	 * was: the one it replaces. A change scheduled after it is a later decision, and the apply leaves it.
+	 */
+	replacesSchedule?: string | null;
+	/**
 	 * When the settlement was made, written only when the apply that should have followed it could not be: a repeat of
 	 * the change applies it without settling it again, however long after (the claim a charge was made under is deleted
 	 * once its retention ends), and a change replacing it knows its settlement stands.
@@ -3196,6 +3201,9 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				quantity,
 				discountPercentage: change.planId ? change.discountPercentage ?? null : null,
 				replaceLines,
+				replacesSchedule: change.planId
+					? ((metadata[SCHEDULED_PLAN_CHANGE] as IScheduledPlanChange | undefined)?.signature ?? null)
+					: null,
 				items: replaceLines
 					? change.after
 					: change.after.filter((line) => {
@@ -3479,13 +3487,51 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			);
 		}
 
+		if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(current.status)) {
+			// The subscription ended while the change was being settled: it takes no change. What the change settled is
+			// recorded for reversal and announced, and the record and the reservation go, in one write.
+			const noted = moved && this.noteReversal(metadata, intent, 'SETTLED');
+
+			delete metadata[CHANGE_INTENT];
+
+			await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+				await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+					where: currentScope(),
+					id,
+					expectation: this.readVersionPredicate(current, ANY_VERSION),
+					patch: { metadata, reservedPlanId: null }
+				});
+
+				if (noted) {
+					await this.emit(
+						'subscription.settlement-reversal-required',
+						id,
+						this.reversalEvent(id, intent, 'SETTLED'),
+						manager
+					);
+				}
+			});
+
+			throw new ConflictException(
+				`SUBSCRIPTION_CHANGE_NOT_APPLIED: the subscription ended while this change was being settled${
+					moved ? '; its settlement is recorded on the subscription for reversal' : ''
+				}.`
+			);
+		}
+
 		if (intent.planId) {
 			// A plan change re-states the discount: the new plan's terms replace whatever the old one
 			// was sold with, and a plan that grants none must not inherit the previous one's.
 			this.restateDiscount(metadata, intent.discountPercentage ?? undefined);
-			// And it replaces a plan change scheduled earlier for the next period: the latest decision about the plan
-			// holds, so an upgrade made now is not undone at the renewal by a downgrade scheduled before it.
-			delete metadata[SCHEDULED_PLAN_CHANGE];
+
+			// And it replaces the plan change scheduled for the next period when it was decided: the latest decision about
+			// the plan holds, so an upgrade made now is not undone at the renewal by a downgrade scheduled before it. One
+			// scheduled after it, while it was being settled, is the later decision, and stays.
+			const scheduled = metadata[SCHEDULED_PLAN_CHANGE] as IScheduledPlanChange | undefined;
+
+			if (!scheduled || intent.replacesSchedule === undefined || scheduled.signature === intent.replacesSchedule) {
+				delete metadata[SCHEDULED_PLAN_CHANGE];
+			}
 		}
 
 		const net = Money.of(intent.net, intent.currency);
