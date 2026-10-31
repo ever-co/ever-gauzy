@@ -833,7 +833,12 @@ describe('SubscriptionBillingService â€” a correction moves an uncharged cycleâ€
 
 		await fixture.service.update('billing-1', { amount: '99', status: SubscriptionBillingStatus.PENDING, attemptCount: 0 });
 
-		expect(update).toHaveBeenLastCalledWith(expect.anything(), { amount: '99.000000' });
+		// The correction's own write, which also ends the fence it held against the billing run for that write.
+		expect(update).toHaveBeenLastCalledWith(expect.anything(), {
+			amount: '99.000000',
+			chargeClaimToken: null,
+			chargeClaimedAt: null
+		});
 	});
 
 	it('pays a cycle that is due, invoiced or retrying, and waives one that is due or retrying', async () => {
