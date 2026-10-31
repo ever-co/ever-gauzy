@@ -6542,6 +6542,27 @@
 		"PROBABILITY": "Probabilité",
 		"SELECT_CLIENT": "Client"
 	},
+	"QUICK_ACTIONS_CUSTOMIZE": {
+		"EDIT": "Personnaliser les actions rapides",
+		"HINT": "Faites glisser une action, ou utilisez ses flèches, pour la réordonner dans son groupe. Cliquez sur un raccourci, puis appuyez sur les nouvelles touches.",
+		"RESET": "Rétablir les valeurs par défaut",
+		"PRESS_KEYS": "Appuyez sur les touches…",
+		"NO_SHORTCUT": "Aucun",
+		"MOVE_UP": "Monter {{ action }}",
+		"MOVE_DOWN": "Descendre {{ action }}",
+		"MOVED": "{{ action }} déplacé en position {{ position }} sur {{ total }}",
+		"CHANGE_SHORTCUT": "Modifier le raccourci de {{ action }} (actuel : {{ shortcut }})",
+		"RECORDING": "Appuyez sur les nouvelles touches pour {{ action }}. Échap annule, Retour arrière supprime le raccourci.",
+		"CLEAR_SHORTCUT": "Supprimer le raccourci de {{ action }}",
+		"SAVED": "Actions rapides enregistrées",
+		"SAVE_ERROR": "Impossible d'enregistrer vos actions rapides. Veuillez réessayer.",
+		"ERRORS": {
+			"INVALID": "Utilisez une lettre, un chiffre ou une touche de ponctuation, éventuellement avec Maj.",
+			"TOO_MANY_KEYS": "Utilisez au plus deux touches, éventuellement avec Maj.",
+			"RESERVED": "{{ shortcut }} est réservé par le navigateur ou le système d'exploitation.",
+			"CONFLICT": "{{ shortcut }} est déjà utilisé par {{ action }}."
+		}
+	},
 	"DIALOG": {
 		"CONFIRM": "Confirmer",
 		"ALERT": "Alerte",

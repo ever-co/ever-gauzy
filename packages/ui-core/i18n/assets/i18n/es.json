@@ -6546,6 +6546,27 @@
 		"PROBABILITY": "Probabilidad",
 		"SELECT_CLIENT": "Cliente"
 	},
+	"QUICK_ACTIONS_CUSTOMIZE": {
+		"EDIT": "Personalizar acciones rápidas",
+		"HINT": "Arrastre una acción, o use sus flechas, para reordenarla dentro de su grupo. Haga clic en un atajo y luego pulse las nuevas teclas.",
+		"RESET": "Restablecer valores predeterminados",
+		"PRESS_KEYS": "Pulse las teclas…",
+		"NO_SHORTCUT": "Ninguno",
+		"MOVE_UP": "Subir {{ action }}",
+		"MOVE_DOWN": "Bajar {{ action }}",
+		"MOVED": "{{ action }} movido a la posición {{ position }} de {{ total }}",
+		"CHANGE_SHORTCUT": "Cambiar el atajo de {{ action }} (actual: {{ shortcut }})",
+		"RECORDING": "Pulse las nuevas teclas para {{ action }}. Escape cancela, Retroceso elimina el atajo.",
+		"CLEAR_SHORTCUT": "Eliminar el atajo de {{ action }}",
+		"SAVED": "Acciones rápidas guardadas",
+		"SAVE_ERROR": "No se pudieron guardar sus acciones rápidas. Inténtelo de nuevo.",
+		"ERRORS": {
+			"INVALID": "Use una letra, un dígito o una tecla de puntuación, opcionalmente con Mayús.",
+			"TOO_MANY_KEYS": "Use como máximo dos teclas, opcionalmente con Mayús.",
+			"RESERVED": "{{ shortcut }} está reservado por el navegador o el sistema operativo.",
+			"CONFLICT": "{{ shortcut }} ya lo usa {{ action }}."
+		}
+	},
 	"DIALOG": {
 		"CONFIRM": "Confirmar",
 		"ALERT": "Alerta",

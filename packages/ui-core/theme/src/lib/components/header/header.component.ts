@@ -14,6 +14,7 @@ import {
 	IEmployee,
 	IOrganization,
 	IOrganizationProject,
+	IQuickActionsUiPreferences,
 	ISelectedEmployee,
 	IUser,
 	PermissionsEnum,
@@ -38,13 +39,25 @@ import {
 	OrganizationTeamStore,
 	OrganizationTeamsService,
 	OrganizationsService,
+	QUICK_ACTIONS_DIALOG_SHORTCUT,
+	QuickActionsPreferencesService,
 	SelectorBuilderService,
+	START_TIMER_QUICK_ACTION,
+	STOP_TIMER_QUICK_ACTION,
 	Store,
 	TimeTrackerService,
 	UsersOrganizationsService,
-	mayOpenContactAddForm
+	getAvailableQuickActionIds,
+	getDefaultQuickActionShortcuts,
+	getQuickActionBindings,
+	keyCodesToShortcut,
+	mayOpenContactAddForm,
+	normalizeShortcut
 } from '@gauzy/ui-core/core';
 import { ALL_EMPLOYEES_SELECTED, NO_EMPLOYEE_SELECTED, QuickActionsComponent } from '@gauzy/ui-core/shared';
+
+/** hotkeys-js scope of the header's keyboard shortcuts. */
+const SHORTCUTS_SCOPE = 'defaultShortcuts';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -74,8 +87,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	createQuickActionsMenu: NbMenuItem[];
 	showExtraActions = false;
 	actions = {
-		START_TIMER: 'START_TIMER',
-		STOP_TIMER: 'STOP_TIMER'
+		START_TIMER: START_TIMER_QUICK_ACTION,
+		STOP_TIMER: STOP_TIMER_QUICK_ACTION
 	};
 	timerDuration: string;
 	organization: IOrganization;
@@ -87,41 +100,24 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	isCollapse: boolean = true;
 	@Input() expanded: boolean = true;
 
+	/** Registered shortcuts (canonical spelling, see `normalizeShortcut`) → what they do. */
 	private shortcutsMap = new Map<string, () => void>();
+	/** The user's saved Quick Actions customization (`null` = the defaults). */
+	private quickActionPreferences: IQuickActionsUiPreferences | null = null;
+	/** What `registerQuickActionShortcuts` bound last, to skip binding the same set again. */
+	private registeredQuickActions: string | null = null;
 
 	quickActionsRef: NbDialogRef<QuickActionsComponent> | null;
 
-	defaultShortcuts = {
-		quickActions: 'ctrl+Q',
-		createInvoice: 'I',
-		receivedInvoices: 'shift+I',
-		createEstimate: 'E',
-		receivedEstimates: 'shift+E',
-		createPayment: 'P',
-		createIncome: 'C',
-		createExpense: 'X',
-		createTeam: 'G',
-		createTask: 'T',
-		createProject: 'J',
-		viewTasks: 'shift+T',
-		viewTeamTasks: 'shift+G',
-		addEmployee: 'A+E',
-		addInventory: 'A+I',
-		addEquipment: 'A+Q',
-		addVendor: 'A+V',
-		addDepartment: 'A+D',
-		timeLog: 'shift+L',
-		viewAppointments: 'shift+A',
-		viewTimeActivity: 'shift+S',
-		startTimer: 'S',
-		stopTimer: 'O',
-		createCandidate: 'U',
-		createProposal: 'R',
-		createContract: 'K',
-		createLead: 'D',
-		createCustomer: 'M',
-		createClient: 'N',
-		viewClients: 'shift+N'
+	/**
+	 * The built-in shortcuts: `quickActions` toggles the Quick Actions dialog, every other key is a
+	 * quick-action id (see `QUICK_ACTION_DEFINITIONS`). What is registered is these defaults merged
+	 * with the user's saved customization (`QuickActionsPreferencesService.preferences$`), for the
+	 * actions the user may run.
+	 */
+	defaultShortcuts: Record<string, string> = {
+		quickActions: QUICK_ACTIONS_DIALOG_SHORTCUT,
+		...getDefaultQuickActionShortcuts()
 	};
 
 	constructor(
@@ -145,7 +141,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		private readonly employeeStore: EmployeeStore,
 		private readonly selectorBuilderService: SelectorBuilderService,
 		private readonly cd: ChangeDetectorRef,
-		private readonly dialogService: NbDialogService
+		private readonly dialogService: NbDialogService,
+		private readonly quickActionsPreferencesService: QuickActionsPreferencesService
 	) {
 		super(translate);
 	}
@@ -297,48 +294,48 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	 * Setup shortcuts
 	 */
 	private setupShortcuts() {
-		// -- register the default shortcuts
-		this.registerDefaultShortcuts();
+		hotkeys('*', { scope: SHORTCUTS_SCOPE }, this.onShortcut);
 
-		hotkeys(
-			'*',
-			{
-				scope: 'defaultShortcuts'
-			},
-			(event: KeyboardEvent, handler: HotkeysEvent) => {
-				const pressedKeys: string = this.pressedKeysToString(handler);
-				// -- prevent triggering shortcuts when typing in NbOptions (searchable inputs)
-				if ((event.target as Element).localName === 'nb-option') return;
-				if (this.shortcutsMap.has(pressedKeys)) {
-					// -- close dialog if open when using shortcuts and prevent closing dialog by pressing unregistered keys
-					this.quickActionsRef &&
-					pressedKeys !== this.defaultShortcuts.quickActions.toLowerCase() &&
-					this.shortcutsMap.has(pressedKeys)
-						? this.quickActionsRef.close()
-						: null;
-					if (handler.scope === 'defaultShortcuts' && this.shortcutsMap.has(pressedKeys)) {
-						this.shortcutsMap.get(pressedKeys)();
-					}
-				}
-			}
-		);
+		// -- register the shortcuts: the defaults merged with the user's customization, again on every change
+		this.quickActionsPreferencesService.preferences$
+			.pipe(
+				tap((preferences: IQuickActionsUiPreferences | null) => {
+					this.quickActionPreferences = preferences;
+					this.registerQuickActionShortcuts();
+				}),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		// -- and once more whenever the customization ends, even unchanged: binding again makes hotkeys-js
+		// forget keys it still thinks are held because their release was part of a recording
+		this.quickActionsPreferencesService.editingEnded$
+			.pipe(
+				tap(() => this.registerQuickActionShortcuts(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
-	 * Pressed keys to string
-	 *
-	 * @param handler
-	 * @returns
+	 * Handles every key press in the shortcuts scope: runs the registered shortcut it completes, if any.
 	 */
-	private pressedKeysToString(handler: HotkeysEvent): string {
-		return handler.keys
-			.map((keyNum) => {
-				return hotkeys.modifierMap[keyNum]
-					? hotkeys.modifierMap[keyNum].toString().replace('Key', '')
-					: String.fromCharCode(keyNum).toLowerCase();
-			})
-			.join('+');
-	}
+	private readonly onShortcut = (event: KeyboardEvent, handler: HotkeysEvent): void => {
+		// -- prevent triggering shortcuts when typing in NbOptions (searchable inputs)
+		if ((event.target as Element).localName === 'nb-option') return;
+		// -- paused while the Quick Actions are being customized (recording a shortcut, unsaved changes)
+		if (this.quickActionsPreferencesService.editing()) return;
+
+		const pressedKeys: string = keyCodesToShortcut(handler.keys ?? []);
+		if (!this.shortcutsMap.has(pressedKeys)) return;
+
+		// -- close dialog if open when using shortcuts and prevent closing dialog by pressing unregistered keys
+		if (this.quickActionsRef && pressedKeys !== normalizeShortcut(this.defaultShortcuts.quickActions)) {
+			this.quickActionsRef.close();
+		}
+		if (handler.scope === SHORTCUTS_SCOPE) {
+			this.shortcutsMap.get(pressedKeys)();
+		}
+	};
 
 	/**
 	 * Register shortcut
@@ -346,60 +343,67 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	 * @param action
 	 */
 	private registerShortcut(keys: string, action: () => void) {
-		this.shortcutsMap.set(keys.toLowerCase(), action);
-		hotkeys(keys, 'defaultShortcuts', () => {});
-		hotkeys.setScope('defaultShortcuts');
+		const shortcut = normalizeShortcut(keys);
+		this.shortcutsMap.set(shortcut, action);
+		hotkeys(shortcut, SHORTCUTS_SCOPE, () => {});
+		hotkeys.setScope(SHORTCUTS_SCOPE);
 	}
 
 	/**
-	 * Register default shortcuts
+	 * Unregisters every shortcut registered by `registerShortcut`.
 	 */
-	private registerDefaultShortcuts() {
+	private unregisterShortcuts() {
+		this.shortcutsMap.forEach((_action, shortcut) => hotkeys.unbind(shortcut, SHORTCUTS_SCOPE));
+		this.shortcutsMap.clear();
+	}
+
+	/**
+	 * Registers the Quick Actions dialog toggle and the shortcut of every quick action the user may
+	 * run (`getAvailableQuickActionIds`), replacing whatever was registered before. Conflicts are
+	 * resolved among those actions only, as the dialog does for its badges, so an action the user
+	 * cannot run never holds or displaces a key. Runs again when the preferences or the menu change;
+	 * an unchanged set is not bound again unless `force` is set.
+	 *
+	 * @param force Bind again even when nothing changed (it also resets the keys hotkeys-js thinks are held).
+	 */
+	private registerQuickActionShortcuts(force = false) {
+		const available = getAvailableQuickActionIds(this.createQuickActionsMenu);
+		const bindings = getQuickActionBindings(this.quickActionPreferences, available);
+		const registered = JSON.stringify(bindings);
+		if (!force && registered === this.registeredQuickActions) return;
+		this.registeredQuickActions = registered;
+
+		this.unregisterShortcuts();
 		// -- Toggle QuickActions Dialog
 		this.registerShortcut(this.defaultShortcuts.quickActions, () => this.toggleQuickActionsDialog());
-		// -- Accounting
-		this.registerShortcut(this.defaultShortcuts.createInvoice, () => this.navigateTo('createInvoice'));
-		this.registerShortcut(this.defaultShortcuts.receivedInvoices, () => this.navigateTo('receivedInvoices'));
-		this.registerShortcut(this.defaultShortcuts.createIncome, () => this.navigateTo('createIncome'));
-		this.registerShortcut(this.defaultShortcuts.receivedEstimates, () => this.navigateTo('receivedEstimates'));
-		this.registerShortcut(this.defaultShortcuts.createExpense, () => this.navigateTo('createExpense'));
-		this.registerShortcut(this.defaultShortcuts.createEstimate, () => this.navigateTo('createEstimate'));
-		this.registerShortcut(this.defaultShortcuts.createPayment, () => this.navigateTo('createPayment'));
-		// -- project management
-		this.registerShortcut(this.defaultShortcuts.createTeam, () => this.navigateTo('createTeam'));
-		this.registerShortcut(this.defaultShortcuts.createTask, () => this.navigateTo('createTask'));
-		this.registerShortcut(this.defaultShortcuts.createProject, () => this.navigateTo('createProject'));
-		this.registerShortcut(this.defaultShortcuts.viewTasks, () => this.navigateTo('viewTasks'));
-		this.registerShortcut(this.defaultShortcuts.viewTeamTasks, () => this.navigateTo('viewTeamTasks'));
-		// -- Organization
-		this.registerShortcut(this.defaultShortcuts.addEmployee, () => this.navigateTo('addEmployee'));
-		this.registerShortcut(this.defaultShortcuts.addInventory, () => this.navigateTo('addInventory'));
-		this.registerShortcut(this.defaultShortcuts.addEquipment, () => this.navigateTo('addEquipment'));
-		this.registerShortcut(this.defaultShortcuts.addVendor, () => this.navigateTo('addVendor'));
-		this.registerShortcut(this.defaultShortcuts.addDepartment, () => this.navigateTo('addDepartment'));
-		// -- Jobs
-		this.registerShortcut(this.defaultShortcuts.createCandidate, () => this.navigateTo('createCandidate'));
-		this.registerShortcut(this.defaultShortcuts.createProposal, () => this.navigateTo('createProposal'));
-		this.registerShortcut(this.defaultShortcuts.createContract, () => this.navigateTo('createContract'));
-		// -- contact
-		this.registerShortcut(this.defaultShortcuts.createLead, () => this.navigateTo('createLead'));
-		this.registerShortcut(this.defaultShortcuts.createCustomer, () => this.navigateTo('createCustomer'));
-		this.registerShortcut(this.defaultShortcuts.createClient, () => this.navigateTo('createClient'));
-		this.registerShortcut(this.defaultShortcuts.viewClients, () => this.navigateTo('viewClients'));
-		// -- Time Tracking
-		this.registerShortcut(this.defaultShortcuts.timeLog, () => this.navigateTo('timeLog'));
-		this.registerShortcut(this.defaultShortcuts.viewAppointments, () => this.navigateTo('viewAppointments'));
-		this.registerShortcut(this.defaultShortcuts.viewTimeActivity, () => this.navigateTo('viewTimeActivity'));
-		// -- Start timer
-		this.registerShortcut(this.defaultShortcuts.startTimer, () => {
-			if (this.timeTrackerService.running) return;
-			this.timeTrackerService.setTimeLogType(TimeLogType.TRACKED);
-			this.timeTrackerService.openAndStartTimer();
-		});
-		// -- Stop timer
-		this.registerShortcut(this.defaultShortcuts.stopTimer, async () => {
-			if (this.timeTrackerService.running) await this.timeTrackerService.toggle();
-		});
+		// -- Accounting, Organization, Project Management, Jobs, Contacts, Time Tracking, Documents
+		for (const [id, shortcut] of bindings) {
+			this.registerShortcut(shortcut, this.getQuickActionHandler(id));
+		}
+	}
+
+	/**
+	 * What a quick action's shortcut does: start or stop the timer, or open the action's page.
+	 *
+	 * @param action The quick-action id.
+	 */
+	private getQuickActionHandler(action: string): () => void {
+		switch (action) {
+			// -- Start timer
+			case this.actions.START_TIMER:
+				return () => {
+					if (this.timeTrackerService.running) return;
+					this.timeTrackerService.setTimeLogType(TimeLogType.TRACKED);
+					this.timeTrackerService.openAndStartTimer();
+				};
+			// -- Stop timer
+			case this.actions.STOP_TIMER:
+				return async () => {
+					if (this.timeTrackerService.running) await this.timeTrackerService.toggle();
+				};
+			default:
+				return () => this.navigateTo(action);
+		}
 	}
 
 	/**
@@ -411,18 +415,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		} else {
 			this.quickActionsRef.close();
 		}
-	}
-
-	/**
-	 *
-	 * @param value
-	 * @returns
-	 */
-	private formatShortcut(value: string): string {
-		return value
-			.split('+')
-			.map((key) => key.toUpperCase())
-			.join(' + ');
 	}
 
 	/**
@@ -705,10 +697,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/accounting/invoices/add',
 							data: {
 								action: 'createInvoice'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createInvoice),
-								status: 'control'
 							}
 						}
 					]
@@ -724,10 +712,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/accounting/invoices/received-invoices',
 							data: {
 								action: 'receivedInvoices'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.receivedInvoices),
-								status: 'control'
 							}
 						}
 					]
@@ -743,10 +727,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createIncome),
-								status: 'control'
 							}
 						}
 					]
@@ -762,10 +742,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createExpense),
-								status: 'control'
 							}
 						}
 					]
@@ -779,10 +755,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/accounting/invoices/estimates/add',
 							data: {
 								action: 'createEstimate'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createEstimate),
-								status: 'control'
 							}
 						}
 					]
@@ -798,10 +770,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/accounting/invoices/received-estimates',
 							data: {
 								action: 'receivedEstimates'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.receivedEstimates),
-								status: 'control'
 							}
 						}
 					]
@@ -817,10 +785,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createPayment),
-								status: 'control'
 							}
 						}
 					]
@@ -837,10 +801,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.addEmployee),
-								status: 'control'
 							}
 						}
 					]
@@ -853,10 +813,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/organization/inventory/create',
 							data: {
 								action: 'addInventory'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.addInventory),
-								status: 'control'
 							}
 						}
 					]
@@ -873,10 +829,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.addEquipment),
-								status: 'control'
 							}
 						}
 					]
@@ -892,10 +844,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.addVendor),
-								status: 'control'
 							}
 						}
 					]
@@ -911,10 +859,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.addDepartment),
-								status: 'control'
 							}
 						}
 					]
@@ -932,10 +876,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createTeam),
-								status: 'control'
 							}
 						}
 					]
@@ -951,10 +891,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createTask),
-								status: 'control'
 							}
 						}
 					]
@@ -967,10 +903,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/organization/projects/create',
 							data: {
 								action: 'createProject'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createProject),
-								status: 'control'
 							}
 						}
 					]
@@ -983,10 +915,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/tasks/dashboard',
 							data: {
 								action: 'viewTasks'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.viewTasks),
-								status: 'control'
 							}
 						}
 					]
@@ -999,10 +927,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/tasks/team',
 							data: {
 								action: 'viewTeamTasks'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.viewTeamTasks),
-								status: 'control'
 							}
 						}
 					]
@@ -1020,10 +944,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createCandidate),
-								status: 'control'
 							}
 						}
 					]
@@ -1036,10 +956,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/sales/proposals/register',
 							data: {
 								action: 'createProposal'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createProposal),
-								status: 'control'
 							}
 						}
 					]
@@ -1052,10 +968,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/integrations/upwork',
 							data: {
 								action: 'createContract'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createContract),
-								status: 'control'
 							}
 						}
 					]
@@ -1072,10 +984,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createLead),
-								status: 'control'
 							}
 						}
 					]
@@ -1091,10 +999,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createCustomer),
-								status: 'control'
 							}
 						}
 					]
@@ -1110,10 +1014,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							},
 							queryParams: {
 								openAddDialog: true
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.createClient),
-								status: 'control'
 							}
 						}
 					]
@@ -1126,10 +1026,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/contacts/clients',
 							data: {
 								action: 'viewClients'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.viewClients),
-								status: 'control'
 							}
 						}
 					]
@@ -1143,10 +1039,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/employees/timesheets/daily',
 							data: {
 								action: 'timeLog'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.timeLog),
-								status: 'control'
 							}
 						}
 					]
@@ -1159,10 +1051,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/employees/appointments',
 							data: {
 								action: 'viewAppointments'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.viewAppointments),
-								status: 'control'
 							}
 						}
 					]
@@ -1175,10 +1063,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							link: 'pages/employees/activity/time-activities',
 							data: {
 								action: 'viewTimeActivity'
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.viewTimeActivity),
-								status: 'control'
 							}
 						}
 					]
@@ -1191,10 +1075,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							hidden: !this.isEmployee || this.isElectron,
 							data: {
 								action: this.actions.START_TIMER // -- Start the timer
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.startTimer),
-								status: 'control'
 							}
 						}
 					]
@@ -1207,10 +1087,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 							hidden: !this.isEmployee || this.isElectron,
 							data: {
 								action: this.actions.STOP_TIMER // -- Stop the timer
-							},
-							badge: {
-								text: this.formatShortcut(this.defaultShortcuts.stopTimer),
-								status: 'control'
 							}
 						}
 					]
@@ -1249,6 +1125,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 					]
 				: [])
 		];
+		// -- the actions the user may run can change with the menu: bind their shortcuts again
+		this.registerQuickActionShortcuts();
 	}
 
 	/**
@@ -1307,5 +1185,9 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		this.isCollapse = event;
 	}
 
-	ngOnDestroy() {}
+	ngOnDestroy() {
+		// -- a later header (after signing in again) registers its own: never leave two listening
+		this.unregisterShortcuts();
+		hotkeys.unbind('*', SHORTCUTS_SCOPE, this.onShortcut);
+	}
 }

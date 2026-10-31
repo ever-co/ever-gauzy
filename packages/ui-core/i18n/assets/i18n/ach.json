@@ -5918,6 +5918,27 @@
 		"PROBABILITY": "crwdns8438:0crwdne8438:0",
 		"SELECT_CLIENT": "crwdns9840:0crwdne9840:0"
 	},
+	"QUICK_ACTIONS_CUSTOMIZE": {
+		"EDIT": "Customize quick actions",
+		"HINT": "Drag an action, or use its arrows, to reorder it within its group. Click a shortcut, then press the new keys.",
+		"RESET": "Reset to defaults",
+		"PRESS_KEYS": "Press keys…",
+		"NO_SHORTCUT": "None",
+		"MOVE_UP": "Move {{ action }} up",
+		"MOVE_DOWN": "Move {{ action }} down",
+		"MOVED": "{{ action }} moved to position {{ position }} of {{ total }}",
+		"CHANGE_SHORTCUT": "Change the shortcut of {{ action }} (current: {{ shortcut }})",
+		"RECORDING": "Press the new keys for {{ action }}. Escape cancels, Backspace removes the shortcut.",
+		"CLEAR_SHORTCUT": "Remove the shortcut of {{ action }}",
+		"SAVED": "Quick actions saved",
+		"SAVE_ERROR": "Could not save your quick actions. Please try again.",
+		"ERRORS": {
+			"INVALID": "Use a letter, digit or punctuation key, optionally with Shift.",
+			"TOO_MANY_KEYS": "Use at most two keys, optionally with Shift.",
+			"RESERVED": "{{ shortcut }} is reserved by the browser or the operating system.",
+			"CONFLICT": "{{ shortcut }} is already used by {{ action }}."
+		}
+	},
 	"DIALOG": {
 		"CONFIRM": "crwdns8018:0crwdne8018:0",
 		"ALERT": "crwdns8020:0crwdne8020:0",

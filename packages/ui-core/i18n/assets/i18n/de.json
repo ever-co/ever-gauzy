@@ -6540,6 +6540,27 @@
 		"PROBABILITY": "Wahrscheinlichkeit",
 		"SELECT_CLIENT": "Kunde"
 	},
+	"QUICK_ACTIONS_CUSTOMIZE": {
+		"EDIT": "Schnellaktionen anpassen",
+		"HINT": "Ziehen Sie eine Aktion oder verwenden Sie ihre Pfeile, um sie innerhalb ihrer Gruppe neu anzuordnen. Klicken Sie auf ein Tastenkürzel und drücken Sie dann die neuen Tasten.",
+		"RESET": "Auf Standard zurücksetzen",
+		"PRESS_KEYS": "Tasten drücken…",
+		"NO_SHORTCUT": "Keins",
+		"MOVE_UP": "{{ action }} nach oben verschieben",
+		"MOVE_DOWN": "{{ action }} nach unten verschieben",
+		"MOVED": "{{ action }} an Position {{ position }} von {{ total }} verschoben",
+		"CHANGE_SHORTCUT": "Tastenkürzel für {{ action }} ändern (aktuell: {{ shortcut }})",
+		"RECORDING": "Drücken Sie die neuen Tasten für {{ action }}. Escape bricht ab, die Rücktaste entfernt das Tastenkürzel.",
+		"CLEAR_SHORTCUT": "Tastenkürzel für {{ action }} entfernen",
+		"SAVED": "Schnellaktionen gespeichert",
+		"SAVE_ERROR": "Ihre Schnellaktionen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.",
+		"ERRORS": {
+			"INVALID": "Verwenden Sie eine Buchstaben-, Ziffern- oder Satzzeichentaste, optional mit Umschalt.",
+			"TOO_MANY_KEYS": "Verwenden Sie höchstens zwei Tasten, optional mit Umschalt.",
+			"RESERVED": "{{ shortcut }} ist vom Browser oder vom Betriebssystem reserviert.",
+			"CONFLICT": "{{ shortcut }} wird bereits von {{ action }} verwendet."
+		}
+	},
 	"DIALOG": {
 		"CONFIRM": "Bestätigen",
 		"ALERT": "Alarm",
