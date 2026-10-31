@@ -241,6 +241,29 @@ describe('POST /invite/contact cannot carry privileged fields into the sinks (GH
 			expect(secondCreate.contact).toEqual({ city: 'Sofia', organizationId: NEW_ORGANIZATION_ID, tenantId: NEW_TENANT_ID });
 		});
 
+		it('starts the new organization with screen capture off, whatever the body says (issue #9872)', async () => {
+			const { handler, organizationService } = buildHandler(contactInvite);
+			const command = hostileCommand();
+			Object.assign(command.input.contactOrganization, {
+				allowScreenshotCapture: true,
+				screenshotCaptureAcknowledgement: { lawfulBasis: true, employeeNotice: true, worksCouncil: true },
+				screenshotCaptureAcknowledgedAt: '2020-01-01T00:00:00.000Z',
+				screenshotCaptureAcknowledgedByUserId: 'someone-else'
+			});
+
+			await handler.execute(command);
+
+			const [firstCreate] = organizationService.create.mock.calls[0];
+			expect(firstCreate.allowScreenshotCapture).toBe(false);
+			for (const field of [
+				'screenshotCaptureAcknowledgement',
+				'screenshotCaptureAcknowledgedAt',
+				'screenshotCaptureAcknowledgedByUserId'
+			]) {
+				expect(firstCreate).not.toHaveProperty(field);
+			}
+		});
+
 		it('creates the account for the INVITED address, not a body-supplied one', async () => {
 			const { handler, authService } = buildHandler(contactInvite);
 

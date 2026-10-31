@@ -11,12 +11,20 @@ import {
 } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
+import { ContactService } from '../../../contact/contact.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import {
 	liftEmployeeAgentRestrictions,
 	recordAgentRestrictionAcknowledgement
 } from '../../../employee/agent-exit-logout-restriction';
 import { OrganizationService } from '../../organization.service';
+import {
+	currentContactId,
+	linkedContactCountry,
+	logScreenshotCaptureAcknowledgement,
+	omitScreenshotCaptureAcknowledgementFields,
+	resolveScreenshotCaptureAcknowledgement
+} from '../../screenshot-capture-acknowledgement';
 import { OrganizationUpdateCommand } from '../organization.update.command';
 
 @CommandHandler(OrganizationUpdateCommand)
@@ -26,7 +34,8 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 	constructor(
 		private readonly organizationService: OrganizationService,
 		private readonly activityLogService: ActivityLogService,
-		private readonly moduleRef: ModuleRef
+		private readonly moduleRef: ModuleRef,
+		private readonly contactService: ContactService
 	) {}
 
 	/**
@@ -59,7 +68,8 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		// Issue #9873: EEA/UK organizations may not stop workers exiting or logging out of the agent;
 		// elsewhere doing so requires an explicit acknowledgement, recorded against the admin.
 		// The acknowledgement is a request flag, not an organization column.
-		const changes: IOrganizationUpdateInput = { ...input };
+		// Issue #9872: the screen capture acknowledgement is request-only too, and its record is the server's.
+		const changes: IOrganizationUpdateInput = omitScreenshotCaptureAcknowledgementFields(input);
 		delete changes.acknowledgeAgentExitLogoutRestriction;
 		const previousLocation = {
 			regionCode: organization.regionCode,
@@ -80,6 +90,27 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		if (restrictionError) {
 			throw new BadRequestException(restrictionError);
 		}
+
+		// Issue #9872: turning screen capture on for an EEA/UK organization takes the admin's acknowledgement,
+		// stored with the change below. Re-saving an organization that already captures, or turning capture
+		// off, asks nothing, so existing organizations keep their value without a new step. The stored location
+		// counts as well as the requested one: the organization keeps its country on its contact, so a top-level
+		// `country` the write never stores cannot take a UK or EEA organization out of the check, and a contact the
+		// write links by id counts with the country it has.
+		const linkedCountry =
+			input.allowScreenshotCapture === true
+				? await linkedContactCountry(
+						this.contactService,
+						changes.contact?.id ?? (changes as { contactId?: ID }).contactId,
+						currentContactId(organization)
+					)
+				: undefined;
+		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(input, organization, [
+			previousLocation,
+			location,
+			{ country: changes.contact?.country },
+			{ country: linkedCountry }
+		]);
 		input = changes;
 
 		// Written and awaited before the save: no restriction without its recorded acknowledgement.
@@ -120,11 +151,26 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			...(has('show_employees_count') && { show_employees_count: input.show_employees_count !== false }),
 			...(input.standardWorkHoursPerDay !== undefined && {
 				standardWorkHoursPerDay: input.standardWorkHoursPerDay
-			})
+			}),
+			...screenshotCaptureAcknowledgement
 		};
+		// Issue #9872: the flag is written only when this request changes it from the row read above. Sending the
+		// stored value back writes nothing, so a save that raced one turning capture off cannot turn it back on
+		// without an acknowledgement: every write of `true` went through the check above.
+		if (updateData.allowScreenshotCapture === organization.allowScreenshotCapture) {
+			delete updateData.allowScreenshotCapture;
+		}
 
 		// Creates a new organization or updates an existing one based on the provided data.
 		await this.organizationService.create({ ...updateData, id });
+
+		if (screenshotCaptureAcknowledgement) {
+			await logScreenshotCaptureAcknowledgement(
+				this.activityLogService,
+				organization,
+				screenshotCaptureAcknowledgement
+			);
+		}
 
 		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker.
 		if (!isEEAOrUKLocation(previousLocation) && isEEAOrUKLocation(location)) {
