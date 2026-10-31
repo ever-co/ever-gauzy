@@ -97,8 +97,14 @@ const SENSITIVE_PATH_KEYWORDS: ReadonlySet<string> = new Set([
  */
 const JWT_PATTERN = /(?:^|[^\w-])eyJ[\w-]{4,}\.[\w-]{4,}\.[\w-]*/;
 
-/** An email address. Matching the domain label by label keeps the match linear in the value's length. */
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/;
+/** A character that can end the local part of an email address (the one before the `@`). */
+const EMAIL_LOCAL_CHARACTER = /[\w.!#$%&'*+=?^`{|}~-]/;
+
+/**
+ * The domain of an email address, matched from just after an `@` (sticky). Labels exclude the characters that
+ * separate addresses in a list or text, and matching them label by label keeps the scan linear.
+ */
+const EMAIL_DOMAIN = /[^\s@.,;:<>()[\]"'\\/?#&=]+(?:\.[^\s@.,;:<>()[\]"'\\/?#&=]+)+/y;
 
 /** A UUID, the shape of every entity id in the API: an id is not a secret, and it is what makes a line useful. */
 const UUID_PATTERN = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
@@ -106,11 +112,11 @@ const UUID_PATTERN = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/
 /** The shortest segment {@link looksLikeOpaqueToken} treats as a token: 12 random bytes, hex-encoded. */
 const MIN_OPAQUE_TOKEN_LENGTH = 24;
 
-/** How deep {@link holdsSensitiveData} looks into a JSON query value; anything nested deeper is redacted. */
-const MAX_JSON_DEPTH = 32;
-
-/** How many URLs nested in query values (`?redirect=/a?next=/b…`) are looked into; one nested deeper is redacted. */
-const MAX_NESTED_URL_DEPTH = 3;
+/**
+ * How deep a query value is looked into: JSON nesting and URLs inside it (`?redirect=/a?next=/b…`,
+ * `?data={"redirect":"/…"}`) share this budget, and a value nested deeper is redacted.
+ */
+const MAX_VALUE_DEPTH = 32;
 
 type IsSensitive = (name: string) => boolean;
 
@@ -151,9 +157,22 @@ function safeDecode(value: string, plusIsSpace = false): string {
 	}
 }
 
-/** A value that is sensitive whatever its name or place: one that is or holds a JWT, or an email address. */
+/** Whether a value holds an email address anywhere: alone, in text, or in a list of addresses. */
+function containsEmail(value: string): boolean {
+	for (let at = value.indexOf('@'); at !== -1; at = value.indexOf('@', at + 1)) {
+		if (at > 0 && EMAIL_LOCAL_CHARACTER.test(value[at - 1])) {
+			EMAIL_DOMAIN.lastIndex = at + 1;
+			if (EMAIL_DOMAIN.test(value)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+/** A value that is sensitive whatever its name or place: one that is or holds a JWT or an email address. */
 function isSensitiveValue(value: string): boolean {
-	return JWT_PATTERN.test(value) || EMAIL_PATTERN.test(value);
+	return JWT_PATTERN.test(value) || containsEmail(value);
 }
 
 /**
@@ -171,13 +190,16 @@ function looksLikeOpaqueToken(value: string): boolean {
 	);
 }
 
-/** Whether a parsed JSON value has a sensitive field name, or a sensitive value, anywhere inside it. */
-function holdsSensitiveData(value: unknown, isSensitive: IsSensitive, depth = 0): boolean {
-	if (depth > MAX_JSON_DEPTH) {
+/**
+ * Whether a parsed JSON value has a sensitive field name anywhere inside it, or a string that is sensitive as a
+ * query value would be (a JWT, an email address, a URL with something to redact in it).
+ */
+function holdsSensitiveData(value: unknown, isSensitive: IsSensitive, depth: number): boolean {
+	if (depth > MAX_VALUE_DEPTH) {
 		return true;
 	}
 	if (typeof value === 'string') {
-		return isSensitiveValue(value);
+		return isSensitiveQueryValue(value, isSensitive, depth + 1);
 	}
 	if (Array.isArray(value)) {
 		return value.some((item) => holdsSensitiveData(item, isSensitive, depth + 1));
@@ -206,22 +228,19 @@ function nestedUrl(value: string): string | undefined {
  * hidden, since it cannot be checked.
  */
 function isSensitiveQueryValue(value: string, isSensitive: IsSensitive, depth: number): boolean {
-	if (isSensitiveValue(value)) {
+	if (depth > MAX_VALUE_DEPTH || isSensitiveValue(value)) {
 		return true;
 	}
 	const text = value.trim();
 	if (text.startsWith('{') || text.startsWith('[')) {
 		try {
-			return holdsSensitiveData(JSON.parse(text), isSensitive);
+			return holdsSensitiveData(JSON.parse(text), isSensitive, depth + 1);
 		} catch {
 			return true;
 		}
 	}
 	const url = nestedUrl(text);
-	if (url === undefined) {
-		return false;
-	}
-	return depth >= MAX_NESTED_URL_DEPTH || redactPathAndQuery(url, isSensitive, undefined, depth + 1) !== url;
+	return url !== undefined && redactPathAndQuery(url, isSensitive, undefined, depth + 1) !== url;
 }
 
 /** One `key=value` pair of a query string, with the value redacted when the key or the value is sensitive. */
@@ -258,7 +277,7 @@ function routeParameterValues(
 	return { sensitive, accountedFor };
 }
 
-/** {@link redactRequestUrl} without the length cap; `depth` counts the URLs this one is nested in. */
+/** {@link redactRequestUrl} without the length cap; `depth` counts the values this URL is nested in. */
 function redactPathAndQuery(
 	url: string,
 	isSensitive: IsSensitive,

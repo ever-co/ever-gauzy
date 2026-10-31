@@ -98,6 +98,14 @@ describe('redactRequestUrl', () => {
 		);
 	});
 
+	it('redacts a JSON query value with a URL in it that holds something to redact', () => {
+		const withSharedLink = encodeURIComponent(JSON.stringify({ redirect: '/shared-entity/token/0a1b2c3d' }));
+		const withPlainLink = encodeURIComponent(JSON.stringify({ redirect: '/pages/employees' }));
+
+		expect(redactRequestUrl(`/api/x?data=${withSharedLink}`, { isSensitive })).toBe('/api/x?data=[REDACTED]');
+		expect(redactRequestUrl(`/api/x?data=${withPlainLink}`, { isSensitive })).toBe(`/api/x?data=${withPlainLink}`);
+	});
+
 	it('redacts a JSON-looking query value it cannot parse, and JSON nested too deep to check', () => {
 		const deep = encodeURIComponent('['.repeat(40) + ']'.repeat(40));
 
@@ -135,6 +143,19 @@ describe('redactRequestUrl', () => {
 		expect(redactRequestUrl(`/api/auth/login?redirect=${harmless}`, { isSensitive })).toBe(
 			`/api/auth/login?redirect=${harmless}`
 		);
+	});
+
+	it('redacts a value with an email address in text or in a list, and keeps one with a lone @', () => {
+		const json = encodeURIComponent(JSON.stringify({ note: 'Contact jane@example.com today' }));
+
+		expect(redactRequestUrl('/api/x?search=Contact%20jane%40example.com', { isSensitive })).toBe(
+			'/api/x?search=[REDACTED]'
+		);
+		expect(redactRequestUrl('/api/x?to=a%40x.com,b%40y.org', { isSensitive })).toBe('/api/x?to=[REDACTED]');
+		expect(redactRequestUrl(`/api/x?data=${json}`, { isSensitive })).toBe('/api/x?data=[REDACTED]');
+		for (const url of ['/api/x?q=%40scope%2Fpackage', '/api/x?q=user%40localhost', '/api/x?q=a%40']) {
+			expect(redactRequestUrl(url, { isSensitive })).toBe(url);
+		}
 	});
 
 	it('redacts an email address wherever it appears', () => {
