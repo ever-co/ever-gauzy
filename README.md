@@ -218,6 +218,16 @@ Note: those credentials exist only because this stack runs with `DEMO=true`. The
 
 Note: we recommend using Kubernetes for production workloads instead of Docker Compose!
 
+#### Self-hosting with Caddy (automatic HTTPS)
+
+[`docker-compose.caddy.yml`](docker-compose.caddy.yml) runs Gauzy (prebuilt API and web app images, PostgreSQL) behind [Caddy](https://caddyserver.com), which obtains and renews HTTPS certificates by itself:
+
+-   `cp .env.caddy.sample .env.caddy` and fill in every empty value in `.env.caddy` (the database password, the four secrets above and the three `DEMO_*_PASSWORD` values, e.g. from `openssl rand -hex 64`). Docker Compose refuses to start while one is missing. `.env.caddy` is git-ignored.
+-   Set `GAUZY_DOMAIN` to your domain (its DNS must point at the server, with ports 80 and 443 open) to get a Let's Encrypt / ZeroSSL certificate, or keep `localhost` to try it locally with Caddy's own certificate authority (your browser warns until you trust it).
+-   Run `docker compose -f docker-compose.caddy.yml --env-file .env.caddy up -d` and open `https://<GAUZY_DOMAIN>`.
+
+Caddy is the only container published on the host. It serves everything from one origin: `/api` and `/public` (uploaded files) go to the API, the rest to the web app, and `TRUST_PROXY=1` is set for you because the API is reachable only through Caddy. Other settings are read from `.env.compose`. Uploaded files are kept in a volume. Scheduled jobs run in the API; to run them in a separate worker through Redis, set `COMPOSE_PROFILES=worker` and `REDIS_ENABLED=true` together in `.env.caddy`. The routing lives in [`.deploy/caddy/Caddyfile`](.deploy/caddy/Caddyfile).
+
 #### Build
 
 -   Edit `.env.compose` (if needed) to use your custom settings, e.g. DB type.

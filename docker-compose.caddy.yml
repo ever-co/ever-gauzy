@@ -1,0 +1,170 @@
+# Ever Gauzy behind Caddy, with automatic HTTPS (https://caddyserver.com/docs/automatic-https).
+#
+#   cp .env.caddy.sample .env.caddy      # then fill in every empty value
+#   docker compose -f docker-compose.caddy.yml --env-file .env.caddy up -d
+#
+# Caddy is the only service published on the host (ports 80 and 443). It serves the web app and the API from ONE
+# origin, https://$GAUZY_DOMAIN: /api/* and /public/* go to the API, everything else to the web app (see
+# .deploy/caddy/Caddyfile). With the default GAUZY_DOMAIN=localhost Caddy uses its own local certificate authority,
+# so the stack runs on your machine without a domain (your browser warns until you trust Caddy's root certificate);
+# with a real domain pointing at this host it gets a Let's Encrypt / ZeroSSL certificate by itself.
+#
+# The API, web app and worker read their settings from .env.compose (the same file docker-compose.yml uses); the
+# `environment` entries below override the ones this stack must own: database, URLs, proxy trust, secrets.
+# Optional: COMPOSE_PROFILES=worker adds Redis and the worker (see .env.caddy.sample).
+
+name: gauzy-caddy
+
+# Settings shared by the API and the worker.
+x-gauzy-environment: &gauzy-environment
+  NODE_ENV: production
+  DEMO: 'false'
+  API_BASE_URL: ${GAUZY_PUBLIC_URL:-https://${GAUZY_DOMAIN:-localhost}}
+  CLIENT_BASE_URL: ${GAUZY_PUBLIC_URL:-https://${GAUZY_DOMAIN:-localhost}}
+  ALLOWED_ORIGINS: ${GAUZY_PUBLIC_URL:-https://${GAUZY_DOMAIN:-localhost}}
+  DB_TYPE: postgres
+  DB_HOST: db
+  DB_PORT: '5432'
+  DB_NAME: ${DB_NAME:-gauzy}
+  DB_USER: ${DB_USER:-postgres}
+  DB_PASS: ${DB_PASS:?set DB_PASS in .env.caddy}
+  # The API is reachable only through Caddy (it publishes no port), so exactly one proxy hop is trusted: req.ip,
+  # and with it every per-address rate limit, is the client address Caddy saw.
+  TRUST_PROXY: '1'
+  # Redis and the worker are optional here (COMPOSE_PROFILES=worker). Without them the API runs every scheduled
+  # job itself.
+  REDIS_ENABLED: ${REDIS_ENABLED:-false}
+  REDIS_URL: redis://redis:6379
+  # The API refuses to start without strong values for these four (generate each with `openssl rand -hex 64`).
+  JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.caddy}
+  JWT_REFRESH_TOKEN_SECRET: ${JWT_REFRESH_TOKEN_SECRET:?set JWT_REFRESH_TOKEN_SECRET in .env.caddy}
+  JWT_VERIFICATION_TOKEN_SECRET: ${JWT_VERIFICATION_TOKEN_SECRET:?set JWT_VERIFICATION_TOKEN_SECRET in .env.caddy}
+  EXPRESS_SESSION_SECRET: ${EXPRESS_SESSION_SECRET:?set EXPRESS_SESSION_SECRET in .env.caddy}
+  # Passwords of the accounts seeded on the first start against an empty database.
+  DEMO_SUPER_ADMIN_EMAIL: ${DEMO_SUPER_ADMIN_EMAIL:-}
+  DEMO_SUPER_ADMIN_PASSWORD: ${DEMO_SUPER_ADMIN_PASSWORD:?set DEMO_SUPER_ADMIN_PASSWORD in .env.caddy}
+  DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-}
+  DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:?set DEMO_ADMIN_PASSWORD in .env.caddy}
+  DEMO_EMPLOYEE_EMAIL: ${DEMO_EMPLOYEE_EMAIL:-}
+  DEMO_EMPLOYEE_PASSWORD: ${DEMO_EMPLOYEE_PASSWORD:?set DEMO_EMPLOYEE_PASSWORD in .env.caddy}
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      GAUZY_DOMAIN: ${GAUZY_DOMAIN:-localhost}
+    ports:
+      - '${GAUZY_HTTP_PORT:-80}:80'
+      - '${GAUZY_HTTPS_PORT:-443}:443'
+      - '${GAUZY_HTTPS_PORT:-443}:443/udp' # HTTP/3
+    volumes:
+      - ./.deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates and Caddy's local CA: keep them, or every restart issues new ones.
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - webapp
+    networks:
+      - gauzy
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-gauzy}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS:?set DB_PASS in .env.caddy}
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - gauzy
+
+  api:
+    image: ghcr.io/ever-co/gauzy-api:${GAUZY_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env.compose
+    environment:
+      <<: *gauzy-environment
+    entrypoint: './entrypoint.compose.sh'
+    command: ['node', 'main.js']
+    volumes:
+      # Uploaded files (FILE_PROVIDER=LOCAL): kept across container updates. Point FILE_PROVIDER at S3-compatible
+      # storage in .env.compose instead if you prefer.
+      - api_public:/srv/gauzy/apps/api/public
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gauzy
+
+  webapp:
+    image: ghcr.io/ever-co/gauzy-webapp:${GAUZY_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    env_file:
+      - .env.compose
+    environment:
+      NODE_ENV: production
+      DEMO: 'false'
+      API_BASE_URL: ${GAUZY_PUBLIC_URL:-https://${GAUZY_DOMAIN:-localhost}}
+      CLIENT_BASE_URL: ${GAUZY_PUBLIC_URL:-https://${GAUZY_DOMAIN:-localhost}}
+    depends_on:
+      - api
+    networks:
+      - gauzy
+
+  # Optional (COMPOSE_PROFILES=worker, together with REDIS_ENABLED=true): fires every scheduled job (outbox dispatch,
+  # webhook retries, sweeps) from Redis queues, so the API only enqueues them.
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    profiles: ['worker']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - gauzy
+
+  worker:
+    image: ghcr.io/ever-co/gauzy-worker:${GAUZY_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    profiles: ['worker']
+    env_file:
+      - .env.compose
+    environment:
+      <<: *gauzy-environment
+      # Uploads stay in the api container with FILE_PROVIDER=LOCAL, so the API keeps consuming docs-processing.
+      GAUZY_DOCS_QUEUE_WORKER_ENABLED: 'false'
+    entrypoint: './entrypoint.compose.sh'
+    command: ['node', 'main.js']
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_started
+    networks:
+      - gauzy
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}
+  postgres_data: {}
+  api_public: {}
+  redis_data: {}
+
+networks:
+  gauzy:
+    driver: bridge

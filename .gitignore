@@ -49,6 +49,8 @@ Thumbs.db
 
 .env
 .env.prod
+# Filled-in copy of .env.caddy.sample (docker-compose.caddy.yml): holds real secrets.
+.env.caddy
 
 # Nx
 .nx
