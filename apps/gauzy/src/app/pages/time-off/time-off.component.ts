@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { debounceTime, filter, first, tap, finalize } from 'rxjs/operators';
@@ -220,8 +220,9 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 			});
 		}
 		if (this.selectedTimeOffRecord.status !== StatusTypesEnum.APPROVED) {
-			const requestId = this.selectedTimeOffRecord.id;
-			this.selectedTimeOffRecord.status = StatusTypesEnum.APPROVED;
+			const record = this.selectedTimeOffRecord;
+			const { id: requestId, status: previousStatus } = record;
+			record.status = StatusTypesEnum.APPROVED;
 			this._timeOffService
 				.updateRequestStatus(requestId, 'approval')
 				.pipe(untilDestroyed(this), first())
@@ -231,7 +232,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 						this._refresh$.next(true);
 						this.timeOff$.next(true);
 					},
-					error: () => this._toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS')
+					error: (error: HttpErrorResponse) => this._onStatusRefused(record, previousStatus, error)
 				});
 		} else {
 			this._toastrService.success(
@@ -256,8 +257,9 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 			});
 		}
 		if (this.selectedTimeOffRecord.status !== StatusTypesEnum.DENIED) {
-			const requestId = this.selectedTimeOffRecord.id;
-			this.selectedTimeOffRecord.status = StatusTypesEnum.DENIED;
+			const record = this.selectedTimeOffRecord;
+			const { id: requestId, status: previousStatus } = record;
+			record.status = StatusTypesEnum.DENIED;
 			this._timeOffService
 				.updateRequestStatus(requestId, 'denied')
 				.pipe(untilDestroyed(this), first())
@@ -266,7 +268,7 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 						this._toastrService.success('TIME_OFF_PAGE.NOTIFICATIONS.REQUEST_DENIED');
 						this.timeOff$.next(true);
 					},
-					error: () => this._toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS')
+					error: (error: HttpErrorResponse) => this._onStatusRefused(record, previousStatus, error)
 				});
 		} else {
 			this._toastrService.success(
@@ -275,6 +277,25 @@ export class TimeOffComponent extends PaginationFilterBaseComponent implements O
 			);
 			this._refresh$.next(true);
 			this.timeOff$.next(true);
+		}
+	}
+
+	/**
+	 * A status change the server refused: the row goes back to the status the server still holds, so a second
+	 * click asks the server again instead of reporting "no changes". A refusal the server explains (a 400, such as
+	 * an approval the employee's leave balance cannot cover, issue #10183) shows its reason; anything else keeps
+	 * the generic notice.
+	 *
+	 * @param record The row whose status was changed ahead of the answer.
+	 * @param previousStatus Its status before.
+	 * @param error The server's answer.
+	 */
+	private _onStatusRefused(record: ITimeOff, previousStatus: ITimeOff['status'], error: HttpErrorResponse) {
+		record.status = previousStatus;
+		if (error?.status === 400) {
+			this._toastrService.danger(error, 'TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS');
+		} else {
+			this._toastrService.danger('TIME_OFF_PAGE.NOTIFICATIONS.ERR_SET_STATUS');
 		}
 	}
 
