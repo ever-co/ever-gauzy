@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { PermissionsEnum } from '@gauzy/contracts';
+import { BehaviorSubject, EMPTY } from 'rxjs';
+import { IRolePermission, PermissionsEnum } from '@gauzy/contracts';
 import { ContactViewComponent } from './contact-view.component';
 
 const I18N_DIR = join(__dirname, '../../../../../../../packages/ui-core/i18n/assets/i18n');
@@ -38,6 +39,40 @@ describe('ContactViewComponent: the Notes tab', () => {
 
 		expect(page.canReadNotes).toBe(reads);
 		expect(page.canWriteNotes).toBe(writes);
+	});
+
+	it('follows permissions that arrive after the page opened, as on a direct link to it', () => {
+		const granted: PermissionsEnum[] = [];
+		const permissions$ = new BehaviorSubject<IRolePermission[]>([]);
+		const store = {
+			hasPermission: (permission: PermissionsEnum) => granted.includes(permission),
+			userRolePermissions$: permissions$
+		};
+		const cd = { markForCheck: jest.fn() };
+		const unused = {} as never;
+		const page = new ContactViewComponent(
+			unused,
+			{ params: EMPTY } as never,
+			unused,
+			store as never,
+			cd as never,
+			unused,
+			unused
+		);
+
+		page.ngOnInit();
+		expect([page.canReadNotes, page.canWriteNotes]).toEqual([false, false]);
+		expect(cd.markForCheck).not.toHaveBeenCalled();
+
+		granted.push(PermissionsEnum.ORG_CONTACT_VIEW, PermissionsEnum.ORG_CONTACT_EDIT);
+		permissions$.next(granted.map((permission) => ({ permission, enabled: true }) as IRolePermission));
+		expect([page.canReadNotes, page.canWriteNotes]).toEqual([true, true]);
+		expect(cd.markForCheck).toHaveBeenCalledTimes(1);
+
+		granted.splice(1);
+		permissions$.next(granted.map((permission) => ({ permission, enabled: true }) as IRolePermission));
+		expect([page.canReadNotes, page.canWriteNotes]).toEqual([true, false]);
+		expect(cd.markForCheck).toHaveBeenCalledTimes(2);
 	});
 
 	it('loads the notes on the first opening of the tab, and keeps them when another tab opens', () => {

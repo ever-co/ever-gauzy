@@ -47,10 +47,11 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 
 	/**
 	 * The Notes tab (ever-co/ever-gauzy#1114): the contact's comments, shown to those who may view contacts and
-	 * written by those who may edit them, the permissions the server checks on the contact itself.
+	 * written by those who may edit them, the permissions the server checks on the contact itself. Both follow the
+	 * caller's permissions, which can arrive after the page opens (a direct link to it).
 	 */
-	readonly canReadNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_VIEW);
-	readonly canWriteNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT);
+	canReadNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_VIEW);
+	canWriteNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT);
 	/** The Notes tab's id, and whether it has been opened: its comments are loaded on the first opening only. */
 	readonly notesTabId = 'notes';
 	notesOpened = false;
@@ -85,6 +86,13 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 	}
 
 	ngOnInit(): void {
+		this.store.userRolePermissions$
+			.pipe(
+				tap(() => this.readNotesPermissions()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		// Watch for route parameter changes to handle navigation between different contacts
 		this.activatedRoute.params
 			.pipe(
@@ -101,6 +109,17 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/** Reads the Notes tab's permissions from the store again, and redraws the page when they changed. */
+	private readNotesPermissions(): void {
+		const canReadNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_VIEW);
+		const canWriteNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT);
+		if (canReadNotes !== this.canReadNotes || canWriteNotes !== this.canWriteNotes) {
+			this.canReadNotes = canReadNotes;
+			this.canWriteNotes = canWriteNotes;
+			this.cd.markForCheck();
+		}
 	}
 
 	/**
