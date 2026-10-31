@@ -11,6 +11,7 @@ import {
 	TypeOrmEntityManager
 } from '../core/entities/subscribers/entity-event-subscriber.types';
 import { recountMembersOfEmployeeProjects } from '../organization-project/organization-project-members-count';
+import { newEmployeeScreenshotCapture, readOrganizationScreenshotCapture } from './employee-screenshot-capture-default';
 
 @EventSubscriber()
 export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
@@ -148,6 +149,8 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	 * @param entity
 	 */
 	async beforeEntityCreate(entity: Employee, em?: MultiOrmEntityManager): Promise<void> {
+		// What the write itself said, before the work-status rule below sets it.
+		const requestedScreenshotCapture = entity.allowScreenshotCapture;
 		try {
 			// Set fullName from the associated user's name, if available
 			if (Object.prototype.hasOwnProperty.call(entity, 'user')) {
@@ -165,6 +168,46 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			console.error(
 				'EmployeeSubscriber: An error occurred during the beforeEntityCreate process:',
 				error.message
+			);
+		}
+
+		await this.applyOrganizationScreenshotCapture(entity, em, requestedScreenshotCapture);
+	}
+
+	/**
+	 * Issue #9872: a new employee starts with its organization's screen capture setting, unless the write states one
+	 * (see `newEmployeeScreenshotCapture`). Every create path (REST, GraphQL, bulk, invite, registration, integrations,
+	 * seeds) ends in this hook. Runs on create only, so existing employees keep their value.
+	 *
+	 * @param entity The employee about to be inserted.
+	 * @param em The entity manager of the write.
+	 * @param requested The value the write carried before the work-status rule.
+	 */
+	private async applyOrganizationScreenshotCapture(
+		entity: Employee,
+		em: MultiOrmEntityManager | undefined,
+		requested: unknown
+	): Promise<void> {
+		try {
+			if (requested !== undefined && requested !== null) return;
+
+			const organizationId = entity.organizationId ?? entity.organization?.id;
+			if (!organizationId) return;
+
+			const organizationAllows = await readOrganizationScreenshotCapture(
+				em,
+				organizationId,
+				entity.tenantId ?? entity.tenant?.id,
+				getORMType()
+			);
+			const value = newEmployeeScreenshotCapture(requested, entity.allowScreenshotCapture, organizationAllows);
+			if (value !== undefined) {
+				entity.allowScreenshotCapture = value;
+			}
+		} catch (error) {
+			console.error(
+				'EmployeeSubscriber: Could not apply the organization screen capture setting to a new employee:',
+				error?.message
 			);
 		}
 	}
