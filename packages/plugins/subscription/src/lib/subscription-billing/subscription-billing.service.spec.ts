@@ -1150,6 +1150,36 @@ describe('SubscriptionBillingService — a charge in flight fences the cycle (ch
 		}
 	);
 
+	it('refuses a waiver when the cycle is restated between the waiver’s read and its write, keeping the restatement', async () => {
+		const fixture = billingFixture([
+			billingRow('billing-1', { status: SubscriptionBillingStatus.FAILED, metadata: { gross: '120.000000', discount: '0.000000' } })
+		]);
+		const store = fixture.service.typeOrmSubscriptionBillingRepository as unknown as Row;
+		const update = store.update;
+
+		// A restatement commits after the waiver read the cycle and before the waiver's write runs.
+		store.update = async (criteria: Row, partial: Row) => {
+			store.update = update;
+			Object.assign(fixture.billing('billing-1')!, {
+				amount: '99.000000',
+				metadata: { gross: '110.000000', discount: '11.000000' }
+			});
+
+			return update(criteria, partial);
+		};
+
+		await expect(fixture.service.markWaived('billing-1', { reason: 'goodwill' })).rejects.toMatchObject({
+			status: 409,
+			response: { code: 'SUBSCRIPTION_BILLING_CYCLE_RESTATED' }
+		});
+		expect(fixture.billing('billing-1')).toMatchObject({
+			status: SubscriptionBillingStatus.FAILED,
+			amount: '99.000000',
+			metadata: { gross: '110.000000', discount: '11.000000' }
+		});
+		expect(fixture.billing('billing-1')?.metadata?.waivedReason).toBeUndefined();
+	});
+
 	it('refuses to correct, delete or reschedule a cycle a pass is charging', async () => {
 		const fixture = billingFixture([billingRow('billing-1', live())]);
 

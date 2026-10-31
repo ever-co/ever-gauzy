@@ -145,6 +145,17 @@ function paidByAnotherPass(billing: SubscriptionBilling, byOperator: boolean): C
 	return !byOperator && billing.orderId ? chargeClaimLost(billing, 'paid') : null;
 }
 
+/** The refusal of an operator's write over a cycle that was restated after the operator read it. */
+function cycleRestated(billing: SubscriptionBilling, action: string): ConflictException {
+	return new ConflictException({
+		message:
+			`SUBSCRIPTION_BILLING_CYCLE_RESTATED: billing cycle '${billing.id}' was restated (its amount or period changed) ` +
+			`while it was being ${action}; read the cycle again and retry.`,
+		code: 'SUBSCRIPTION_BILLING_CYCLE_RESTATED',
+		details: { subscriptionBillingId: billing.id, status: billing.status, amount: billing.amount, periodEnd: billing.periodEnd }
+	});
+}
+
 /**
  * @param billing A cycle as it was read.
  * @returns The tenant and organization it belongs to, carrying only the identifiers it has.
@@ -699,10 +710,17 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * then forgave a period whose money was being taken. The condition rides in the statement, which also clears a stale
 	 * claim, so the waived cycle carries none.
 	 *
+	 * The waiver writes the cycle's metadata back with its reason, from the row it read, so the statement is also
+	 * predicated on the cycle's amount and period end being the ones it read. A restatement that commits in between
+	 * (`restateUnsettled`, which moves the amount, the period end and the `gross`/`discount` it keeps in the metadata)
+	 * refuses the waiver with `SUBSCRIPTION_BILLING_CYCLE_RESTATED`, rather than the waiver keeping the new amount beside
+	 * the old gross and discount.
+	 *
 	 * @param id The cycle.
 	 * @param options Why, and any note kept beside it.
 	 * @returns The updated cycle.
-	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a pass is charging the cycle.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a pass is charging the cycle, or with
+	 * `SUBSCRIPTION_BILLING_CYCLE_RESTATED` when the cycle was restated after it was read.
 	 */
 	public async markWaived(id: ID, options: { reason: string; note?: string } = { reason: '' }): Promise<SubscriptionBilling> {
 		const billing = await this.findOneScoped(id);
@@ -718,23 +736,35 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		const refusal = async () => {
 			const current = await this.findOneScoped(id);
 
-			// Still waivable, so what refused the write was a pass's claim on the cycle.
-			return WAIVABLE_FROM.includes(current.status as SubscriptionBillingStatus)
-				? chargeInFlight(current, 'waived')
-				: invalidTransition(current, 'waived', WAIVABLE_FROM);
+			if (!WAIVABLE_FROM.includes(current.status as SubscriptionBillingStatus)) {
+				return invalidTransition(current, 'waived', WAIVABLE_FROM);
+			}
+
+			// Still waivable: what refused the write was a pass's claim, or a restatement since the read.
+			return holdsLiveChargeClaim(current) ? chargeInFlight(current, 'waived') : cycleRestated(current, 'waived');
 		};
 
-		await this.writeIf(id, { status: In([...WAIVABLE_FROM]), ...noLiveChargeClaim() }, refusal, {
-			status: SubscriptionBillingStatus.WAIVED,
-			paidAt: null,
-			nextRetryAt: null,
-			...NO_CHARGE_CLAIM,
-			metadata: {
-				...(billing.metadata ?? {}),
-				waivedReason: options.reason,
-				...(options.note ? { waivedNote: options.note } : {})
-			}
-		} as any);
+		await this.writeIf(
+			id,
+			{
+				status: In([...WAIVABLE_FROM]),
+				amount: billing.amount,
+				periodEnd: billing.periodEnd,
+				...noLiveChargeClaim()
+			} as FindOptionsWhere<SubscriptionBilling>,
+			refusal,
+			{
+				status: SubscriptionBillingStatus.WAIVED,
+				paidAt: null,
+				nextRetryAt: null,
+				...NO_CHARGE_CLAIM,
+				metadata: {
+					...(billing.metadata ?? {}),
+					waivedReason: options.reason,
+					...(options.note ? { waivedNote: options.note } : {})
+				}
+			} as any
+		);
 
 		return await this.findOneScoped(id);
 	}
