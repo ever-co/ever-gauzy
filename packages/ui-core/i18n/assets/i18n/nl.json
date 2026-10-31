@@ -5457,6 +5457,7 @@
 		},
 		"MESSAGE": {
 			"KEY_RESULTS_OWNER_REQUIRED": "Kies een leider voor dit doel: de kernresultaten ervan moeten eigendom zijn van een werknemer.",
+			"GOAL_PRESET_ROLLBACK_FAILED": "Deze records die vanuit de voorinstelling zijn gemaakt, konden niet worden verwijderd: {{ names }}. Verwijder ze via Doelen of Doelinstellingen.",
 			"ERRORS": "Controleer alstublieft het formulier op fouten.",
 			"PROJECT_LOAD": "Kon projecten niet laden",
 			"COPIED": "Link gekopieerd naar klembord",

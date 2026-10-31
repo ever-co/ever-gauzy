@@ -35,6 +35,7 @@ import {
 	IGoalPresetScope,
 	keyResultOwnerId
 } from './goal-from-template';
+import { GoalPresetRollback } from './goal-preset-rollback';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -150,6 +151,10 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 	 *
 	 * Every payload is built field by field (`goal-from-template.ts`): the template's own ids never reach the
 	 * requests, so the same preset can be used again and again, each time creating records of its own (#4825).
+	 *
+	 * The preset is saved whole or not at all: when a step fails, the records the earlier steps of this attempt
+	 * created are removed again (`GoalPresetRollback`), so no KPI is left without its key result and trying again
+	 * does not create a second set. A record that cannot be removed is named in a warning.
 	 */
 	async createGoal() {
 		// Read once: another preset picked while the requests below are pending must not mix into this one
@@ -172,6 +177,9 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 			return;
 		}
 
+		// What this attempt has created so far, removed again if a later step fails
+		const rollback = new GoalPresetRollback();
+
 		try {
 			// Create the KPI of each KPI key result first. A KPI key result is only saved with its KPI (the key result
 			// screens read the linked KPI), so when one cannot be created, the objective is not created either
@@ -179,9 +187,10 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 			for (const keyResult of keyResultTemplates.filter(({ type }) => type === KeyResultTypeEnum.KPI)) {
 				const kpiId = await this.createKpi(keyResult, scope);
 				if (!kpiId) {
-					this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_FAILED'));
+					await this.abandonPreset(rollback);
 					return;
 				}
+				rollback.add(keyResult.kpi?.name || keyResult.name, () => this.goalSettingsService.deleteKPI(kpiId));
 				kpiIds.set(keyResult, kpiId);
 			}
 
@@ -190,9 +199,11 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 				buildGoalFromTemplate(template, form, scope)
 			);
 			if (!goalCreated) {
-				this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_FAILED'));
+				await this.abandonPreset(rollback);
 				return;
 			}
+			// Removing the objective removes its key results with it (`key_result.goalId` cascades)
+			rollback.add(goalCreated.name || template.name, () => this.goalService.delete(goalCreated.id));
 
 			// Then its key results, each KPI key result linked to the KPI created for it
 			const keyResults = keyResultTemplates.map((keyResult) =>
@@ -205,16 +216,44 @@ export class GoalTemplateSelectComponent extends TranslationBaseComponent implem
 
 			// Create Key Results in bulk
 			const keyResultsCreated = await this.keyResultService.createBulkKeyResult(keyResults);
-			if (keyResultsCreated) {
-				this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.KEY_RESULTS_CREATED'));
-				this.closeDialog('done');
+			if (!keyResultsCreated) {
+				await this.abandonPreset(rollback);
+				return;
 			}
+			this.toastrService.success(this.getTranslation('TOASTR.MESSAGE.KEY_RESULTS_CREATED'));
+			this.closeDialog('done');
 		} catch (error) {
 			console.error('Goal creation failed:', error);
 			this.toastrService.error(
 				this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_ERROR', {
 					error: error.message || 'Unknown error'
 				})
+			);
+			await this.removeCreatedRecords(rollback);
+		}
+	}
+
+	/**
+	 * Reports that the preset could not be created, and removes what this attempt had created.
+	 *
+	 * @param rollback The records this attempt created.
+	 */
+	private async abandonPreset(rollback: GoalPresetRollback): Promise<void> {
+		this.toastrService.error(this.getTranslation('TOASTR.MESSAGE.GOAL_CREATION_FAILED'));
+		await this.removeCreatedRecords(rollback);
+	}
+
+	/**
+	 * Removes the records a failed attempt created, and names in a warning any that could not be removed, so the
+	 * user can delete them from Goals or Goal Settings.
+	 *
+	 * @param rollback The records this attempt created.
+	 */
+	private async removeCreatedRecords(rollback: GoalPresetRollback): Promise<void> {
+		const notRemoved = await rollback.undo();
+		if (notRemoved.length > 0) {
+			this.toastrService.warning(
+				this.getTranslation('TOASTR.MESSAGE.GOAL_PRESET_ROLLBACK_FAILED', { names: notRemoved.join(', ') })
 			);
 		}
 	}

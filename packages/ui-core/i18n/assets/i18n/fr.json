@@ -5458,6 +5458,7 @@
 		},
 		"MESSAGE": {
 			"KEY_RESULTS_OWNER_REQUIRED": "Choisissez un responsable pour cet objectif : ses résultats clés doivent appartenir à un employé.",
+			"GOAL_PRESET_ROLLBACK_FAILED": "Ces éléments créés à partir du préréglage n'ont pas pu être supprimés : {{ names }}. Supprimez-les depuis Objectifs ou Paramètres des objectifs.",
 			"ERRORS": "Veuillez vérifier le formulaire pour les erreurs.",
 			"PROJECT_LOAD": "Impossible de charger les projets.",
 			"COPIED": "Lien copié dans le presse-papiers",

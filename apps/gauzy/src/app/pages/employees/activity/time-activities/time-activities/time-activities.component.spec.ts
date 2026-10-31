@@ -1,9 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { IReportDayData, ReportGroupFilterEnum } from '@gauzy/contracts';
-import { DateRangePickerBuilderService, DEFAULT_DATE_PICKER_CONFIG, EmployeesService } from '@gauzy/ui-core/core';
+import { IOrganization, IReportDayData, ReportGroupFilterEnum } from '@gauzy/contracts';
+import {
+	DateRangePickerBuilderService,
+	DEFAULT_DATE_PICKER_CONFIG,
+	EmployeesService,
+	TimesheetService
+} from '@gauzy/ui-core/core';
 import { IDailyReportExportRow, IReportExportTable, ReportExportService } from '@gauzy/ui-core/shared';
 import { TimeActivitiesComponent } from './time-activities.component';
 import { TimeAndActivitiesModule } from '../time-activities.module';
+
+/** Lets the grid's `await` continuations run. */
+const flush = () => new Promise((resolve) => setTimeout(resolve));
 
 describe('TimeActivitiesComponent', () => {
 	let component: TimeActivitiesComponent;
@@ -52,16 +60,71 @@ describe('TimeActivitiesComponent', () => {
 			}
 		] as unknown as IReportDayData[];
 
+		/** The same day as the date grouping answers it: the shape the grid reads before the grouping changes. */
+		const reportByDate = [
+			{
+				date: '2026-10-01',
+				logs: [
+					{
+						project: { id: 'p-1', name: 'Apollo' },
+						employeeLogs: [
+							{
+								employee: { id: 'e-1', fullName: 'Ada Lovelace' },
+								activity: 55.5,
+								tasks: [{ task: { title: 'Stale' }, description: 'Older answer', duration: 60 }]
+							}
+						]
+					}
+				]
+			}
+		] as unknown as IReportDayData[];
+
 		const button = (): HTMLButtonElement => fixture.nativeElement.querySelector('.export-csv-button');
 
-		const loadGrid = (logs: IReportDayData[], loading = false) => {
-			component.dailyGrid.dailyLogs = logs;
-			component.dailyGrid.loading = loading;
+		/** The grid's report requests, each answered when the test says so. */
+		let answers: ((logs: IReportDayData[]) => void)[];
+
+		beforeEach(() => {
+			answers = [];
+			jest.spyOn(TestBed.inject(TimesheetService), 'getDailyReport').mockImplementation(
+				() => new Promise<IReportDayData[]>((resolve) => answers.push(resolve))
+			);
+			// The date range the grid reads the report for
+			component.dailyGrid.request = {
+				...component.dailyGrid.request,
+				startDate: new Date(2026, 9, 1),
+				endDate: new Date(2026, 9, 31, 23, 59, 59)
+			};
+		});
+
+		/** Selects the organization, as the header selector does: the grid requests the report. */
+		const selectOrganization = () => {
+			component.dailyGrid.organization = { id: 'org-1', tenantId: 'tenant-1' } as IOrganization;
+			component.dailyGrid.subject$.next(true);
 			fixture.detectChanges();
 		};
 
-		it('shows the action after the filters, disabled while the grid has no rows', () => {
-			loadGrid([]);
+		/** Answers the grid's report request at this position. */
+		const answer = async (index: number, logs: IReportDayData[]) => {
+			answers[index](logs);
+			await flush();
+			fixture.detectChanges();
+		};
+
+		/** Loads the grid with one answered request. */
+		const loadGrid = async (logs: IReportDayData[]) => {
+			selectOrganization();
+			await answer(answers.length - 1, logs);
+		};
+
+		const exported = () =>
+			reportExportService.export.mock.calls[0] as [
+				IReportExportTable<IDailyReportExportRow>,
+				{ fileName: string; format: string }
+			];
+
+		it('shows the action after the filters, disabled while the grid has no rows', async () => {
+			await loadGrid([]);
 
 			expect(button()).not.toBeNull();
 			expect(button().disabled).toBe(true);
@@ -72,31 +135,23 @@ describe('TimeActivitiesComponent', () => {
 		});
 
 		it('stays disabled while the grid is loading', () => {
-			loadGrid(report, true);
+			selectOrganization();
 
+			expect(component.dailyGrid.loading).toBe(true);
 			expect(button().disabled).toBe(true);
 		});
 
-		it('exports the loaded rows, in the selected grouping, named after the selected range', () => {
-			// The date range the grid read the report for
-			component.dailyGrid.request = {
-				...component.dailyGrid.request,
-				startDate: new Date(2026, 9, 1),
-				endDate: new Date(2026, 9, 31, 23, 59, 59)
-			};
+		it('exports the loaded rows, in the selected grouping, named after the selected range', async () => {
 			// The page's own Group by select drives the grid here
 			component.groupBy = ReportGroupFilterEnum.project;
 			fixture.detectChanges();
-			loadGrid(report);
+			await loadGrid(report);
 
 			expect(button().disabled).toBe(false);
 			button().click();
 
 			expect(reportExportService.export).toHaveBeenCalledTimes(1);
-			const [table, options] = reportExportService.export.mock.calls[0] as [
-				IReportExportTable<IDailyReportExportRow>,
-				{ fileName: string; format: string }
-			];
+			const [table, options] = exported();
 			expect(options).toEqual({ fileName: 'time-activity_2026-10-01_2026-10-31', format: 'csv' });
 			// The project grouping puts its own column first
 			expect(table.columns[0].key).toBe('project');
@@ -114,12 +169,31 @@ describe('TimeActivitiesComponent', () => {
 			]);
 		});
 
-		it('does nothing when called without rows', () => {
-			loadGrid([]);
+		it('does nothing when called without rows', async () => {
+			await loadGrid([]);
 
 			component.exportToCsv();
 
 			expect(reportExportService.export).not.toHaveBeenCalled();
+		});
+
+		it('stays disabled until the request for a new grouping answers, and exports that grouping', async () => {
+			selectOrganization();
+			// The user switches to the project grouping before the date grouping's request answers
+			component.groupBy = ReportGroupFilterEnum.project;
+			fixture.detectChanges();
+
+			await answer(0, reportByDate);
+			expect(component.dailyGrid.dailyLogs).toEqual([]);
+			expect(button().disabled).toBe(true);
+
+			await answer(1, report);
+			expect(button().disabled).toBe(false);
+			button().click();
+
+			const [table] = exported();
+			expect(table.columns[0].key).toBe('project');
+			expect(table.rows).toEqual([expect.objectContaining({ project: 'Apollo', task: 'Build', duration: 5400 })]);
 		});
 	});
 });

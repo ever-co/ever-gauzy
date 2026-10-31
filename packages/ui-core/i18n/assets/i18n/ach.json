@@ -5219,6 +5219,7 @@
 		},
 		"MESSAGE": {
 			"KEY_RESULTS_OWNER_REQUIRED": "Choose a lead for this objective: its key results must be owned by an employee.",
+			"GOAL_PRESET_ROLLBACK_FAILED": "These records created from the preset could not be removed: {{ names }}. Delete them from Goals or Goals Settings.",
 			"ERRORS": "crwdns7430:0crwdne7430:0",
 			"PROJECT_LOAD": "crwdns2395:0crwdne2395:0",
 			"COPIED": "crwdns2397:0crwdne2397:0",

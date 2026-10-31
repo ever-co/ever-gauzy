@@ -5456,6 +5456,7 @@
 		},
 		"MESSAGE": {
 			"KEY_RESULTS_OWNER_REQUIRED": "Wybierz osobę odpowiedzialną za ten cel: jego wyniki kluczowe muszą należeć do pracownika.",
+			"GOAL_PRESET_ROLLBACK_FAILED": "Nie udało się usunąć tych rekordów utworzonych z szablonu: {{ names }}. Usuń je w sekcji Cele lub Ustawienia celów.",
 			"ERRORS": "Proszę sprawdzić formularz pod kątem błędów",
 			"PROJECT_LOAD": "Nie można wczytać projektów",
 			"COPIED": "Skopiowano link do schowka",
