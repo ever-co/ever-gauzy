@@ -4,14 +4,13 @@
 #   docker compose -f docker-compose.caddy.yml --env-file .env.caddy up -d
 #
 # Caddy is the only service published on the host (ports 80 and 443). It serves the web app and the API from ONE
-# origin, https://$GAUZY_DOMAIN: /api/* and /public/* go to the API, everything else to the web app (see
+# origin, https://$GAUZY_DOMAIN: /api/*, /graphql and /public/* go to the API, everything else to the web app (see
 # .deploy/caddy/Caddyfile). With the default GAUZY_DOMAIN=localhost Caddy uses its own local certificate authority,
 # so the stack runs on your machine without a domain (your browser warns until you trust Caddy's root certificate);
 # with a real domain pointing at this host it gets a Let's Encrypt / ZeroSSL certificate by itself.
 #
 # The API, web app and worker read their settings from .env.compose (the same file docker-compose.yml uses); the
-# `environment` entries below override the ones this stack must own: database, URLs, proxy trust, secrets.
-# Optional: COMPOSE_PROFILES=worker adds Redis and the worker (see .env.caddy.sample).
+# `environment` entries below override the ones this stack must own: database, URLs, proxy trust, Redis, secrets.
 
 name: gauzy-caddy
 
@@ -31,9 +30,11 @@ x-gauzy-environment: &gauzy-environment
   # The API is reachable only through Caddy (it publishes no port), so exactly one proxy hop is trusted: req.ip,
   # and with it every per-address rate limit, is the client address Caddy saw.
   TRUST_PROXY: '1'
-  # Redis and the worker are optional here (COMPOSE_PROFILES=worker). Without them the API runs every scheduled
-  # job itself.
-  REDIS_ENABLED: ${REDIS_ENABLED:-false}
+  # Redis and the worker are what deliver events: the worker fires the scheduled jobs (the per-minute outbox
+  # dispatch, webhook retries, sweeps) onto Redis queues that the API consumes. Without them event_outbox only grows
+  # and GraphQL subscriptions, the search index, entitlement grants and outbound webhooks stay quiet
+  # (packages/core/src/lib/app/app.module.ts).
+  REDIS_ENABLED: 'true'
   REDIS_URL: redis://redis:6379
   # The API refuses to start without strong values for these four (generate each with `openssl rand -hex 64`).
   JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.caddy}
@@ -102,6 +103,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - gauzy
 
@@ -120,12 +123,10 @@ services:
     networks:
       - gauzy
 
-  # Optional (COMPOSE_PROFILES=worker, together with REDIS_ENABLED=true): fires every scheduled job (outbox dispatch,
-  # webhook retries, sweeps) from Redis queues, so the API only enqueues them.
+  # The queues between the worker and the API (see REDIS_ENABLED above). Reachable only inside this stack.
   redis:
     image: redis:alpine
     restart: unless-stopped
-    profiles: ['worker']
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
@@ -136,10 +137,10 @@ services:
     networks:
       - gauzy
 
+  # Fires every scheduled job (outbox dispatch, webhook retries, sweeps); the API runs none of them itself.
   worker:
     image: ghcr.io/ever-co/gauzy-worker:${GAUZY_IMAGE_TAG:-latest}
     restart: unless-stopped
-    profiles: ['worker']
     env_file:
       - .env.compose
     environment:

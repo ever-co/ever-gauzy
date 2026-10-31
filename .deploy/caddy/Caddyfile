@@ -10,8 +10,10 @@
 #   }
 
 {$GAUZY_DOMAIN:localhost} {
-	# The API: REST/GraphQL under /api, and the uploaded files it serves under /public (FILE_PROVIDER=LOCAL).
-	@api path /api /api/* /public/*
+	# The API: REST under /api, GraphQL at /graphql (queries and mutations, and the graphql-ws subscription socket,
+	# whose WebSocket upgrade reverse_proxy passes through as is), and the uploaded files it serves under /public
+	# (FILE_PROVIDER=LOCAL).
+	@api path /api /api/* /graphql /public/*
 	handle @api {
 		reverse_proxy api:3000 {
 			# Caddy sets X-Forwarded-For / -Proto / -Host itself and drops what an untrusted client sent, so the API

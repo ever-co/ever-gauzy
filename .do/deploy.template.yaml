@@ -1,14 +1,18 @@
 # "Deploy to DigitalOcean" button template (https://docs.digitalocean.com/products/app-platform/how-to/add-deploy-do-button/).
 # The button in README.md opens App Platform with this spec; App Platform reads it from `.do/deploy.template.yaml`.
 #
-# It runs the prebuilt public images (ghcr.io/ever-co/gauzy-api and gauzy-webapp, built from `master`) with a
-# development PostgreSQL database, behind ONE public URL: App Platform sends /api and /public to the API and
-# everything else to the web app, so the browser never makes a cross-origin call.
+# It runs the prebuilt public images (ghcr.io/ever-co/gauzy-api, gauzy-webapp and gauzy-worker, built from `master`)
+# with a development PostgreSQL database and an internal Redis, behind ONE public URL: App Platform sends /api,
+# /graphql and /public to the API and everything else to the web app, so the browser never makes a cross-origin call.
 #
 # Before you click "Create", fill in every SECRET below: the API refuses to start with blank or published
 # authentication secrets, and refuses to seed its first accounts with the published passwords. Generate each value
 # with e.g. `openssl rand -hex 64`. The seeded accounts are admin@ever.co (Super Admin), local.admin@ever.co (Admin)
 # and employee@ever.co (Employee).
+#
+# The worker fires the scheduled jobs (the per-minute outbox dispatch, webhook retries, sweeps) onto Redis queues
+# that the API consumes. Without the two, event_outbox only grows and GraphQL subscriptions, the search index,
+# entitlement grants and outbound webhooks receive no events (packages/core/src/lib/app/app.module.ts).
 #
 # Uploaded files (avatars, screenshots, documents) are stored in the API container by default and are lost when it
 # is redeployed: for a lasting install set FILE_PROVIDER and its storage settings (e.g. DigitalOcean Spaces with
@@ -17,6 +21,24 @@
 # This file is separate from `.do/app.yaml`, the template our CI deploys from (its $VARS are filled by the workflow).
 spec:
   name: ever-gauzy
+
+  # App-level variables reach every component. These four are here so that the API and the worker share one value
+  # each, entered once; the web app's entrypoint reads only the variables listed in .deploy/webapp/replacements.sed,
+  # none of which is a secret.
+  envs:
+    - key: JWT_SECRET
+      scope: RUN_TIME
+      type: SECRET
+    - key: JWT_REFRESH_TOKEN_SECRET
+      scope: RUN_TIME
+      type: SECRET
+    - key: JWT_VERIFICATION_TOKEN_SECRET
+      scope: RUN_TIME
+      type: SECRET
+    - key: EXPRESS_SESSION_SECRET
+      scope: RUN_TIME
+      type: SECRET
+
   services:
     - name: api
       image:
@@ -46,6 +68,11 @@ spec:
         - key: API_PORT
           scope: RUN_TIME
           value: '3000'
+        # V8 must feel the instance's 2 GB: with the image default (--max-old-space-size=12288) the heap grows until
+        # the instance is killed for memory instead of collecting garbage (as in .deploy/k8s/k8s-manifest.prod.yaml).
+        - key: NODE_OPTIONS
+          scope: RUN_TIME
+          value: --max-old-space-size=1536
         - key: API_BASE_URL
           scope: RUN_TIME
           value: ${APP_URL}
@@ -83,20 +110,13 @@ spec:
         - key: DB_CA_CERT
           scope: RUN_TIME
           value: ${db.CA_CERT}
-        # Secrets: fill in each one before creating the app (see the note at the top).
-        - key: JWT_SECRET
+        - key: REDIS_ENABLED
           scope: RUN_TIME
-          type: SECRET
-        - key: JWT_REFRESH_TOKEN_SECRET
+          value: 'true'
+        - key: REDIS_URL
           scope: RUN_TIME
-          type: SECRET
-        - key: JWT_VERIFICATION_TOKEN_SECRET
-          scope: RUN_TIME
-          type: SECRET
-        - key: EXPRESS_SESSION_SECRET
-          scope: RUN_TIME
-          type: SECRET
-        # Passwords of the three accounts seeded on the first start.
+          value: redis://redis:6379
+        # Passwords of the three accounts seeded on the first start (see the note at the top).
         - key: DEMO_SUPER_ADMIN_PASSWORD
           scope: RUN_TIME
           type: SECRET
@@ -129,6 +149,84 @@ spec:
           scope: RUN_TIME
           value: ${APP_URL}
 
+    # The queues between the worker and the API. Internal only: no public route, reachable by the other components
+    # at redis:6379. Queue state is not kept across a redeploy; the events themselves live in PostgreSQL
+    # (event_outbox), and the worker registers its schedules again when it starts.
+    - name: redis
+      image:
+        registry_type: DOCKER_HUB
+        registry: library
+        repository: redis
+        tag: alpine
+      instance_count: 1
+      instance_size_slug: apps-s-1vcpu-0.5gb
+      internal_ports:
+        - 6379
+      health_check:
+        port: 6379
+
+  workers:
+    - name: worker
+      image:
+        registry_type: GHCR
+        registry: ever-co
+        repository: gauzy-worker
+        tag: latest
+      instance_count: 1
+      instance_size_slug: apps-s-1vcpu-1gb
+      envs:
+        - key: NODE_ENV
+          scope: RUN_TIME
+          value: production
+        - key: DEMO
+          scope: RUN_TIME
+          value: 'false'
+        # The same for the 1 GB instance (the image default is 12288); choose a larger size and raise this if the
+        # worker restarts for memory.
+        - key: NODE_OPTIONS
+          scope: RUN_TIME
+          value: --max-old-space-size=768
+        - key: API_BASE_URL
+          scope: RUN_TIME
+          value: ${APP_URL}
+        - key: CLIENT_BASE_URL
+          scope: RUN_TIME
+          value: ${APP_URL}
+        - key: DB_TYPE
+          scope: RUN_TIME
+          value: postgres
+        - key: DB_HOST
+          scope: RUN_TIME
+          value: ${db.HOSTNAME}
+        - key: DB_PORT
+          scope: RUN_TIME
+          value: ${db.PORT}
+        - key: DB_NAME
+          scope: RUN_TIME
+          value: ${db.DATABASE}
+        - key: DB_USER
+          scope: RUN_TIME
+          value: ${db.USERNAME}
+        - key: DB_PASS
+          scope: RUN_TIME
+          value: ${db.PASSWORD}
+        - key: DB_SSL_MODE
+          scope: RUN_TIME
+          value: 'true'
+        - key: DB_CA_CERT
+          scope: RUN_TIME
+          value: ${db.CA_CERT}
+        - key: REDIS_ENABLED
+          scope: RUN_TIME
+          value: 'true'
+        - key: REDIS_URL
+          scope: RUN_TIME
+          value: redis://redis:6379
+        # Uploaded files stay in the API container (FILE_PROVIDER=LOCAL), so the API keeps processing documents.
+        - key: GAUZY_DOCS_QUEUE_WORKER_ENABLED
+          scope: RUN_TIME
+          value: 'false'
+
   databases:
     - name: db
       engine: PG
@@ -139,6 +237,13 @@ spec:
       - match:
           path:
             prefix: /api
+        component:
+          name: api
+          preserve_path_prefix: true
+      # GraphQL (queries, mutations, and the graphql-ws subscription socket on the same path).
+      - match:
+          path:
+            prefix: /graphql
         component:
           name: api
           preserve_path_prefix: true

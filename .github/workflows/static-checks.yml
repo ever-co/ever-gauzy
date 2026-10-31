@@ -506,10 +506,12 @@ jobs:
       # DEMO_*_PASSWORD values (packages/core/src/lib/bootstrap/validate-secrets.ts). The one-click templates
       # (Deploy to DigitalOcean, the Caddy compose file and its env sample) must ask the operator for each of them
       # and ship none: a missing one deploys an API that never starts, a filled-in one is a published credential.
-      - name: The self-hosting templates ask for every secret the API needs and ship none
+      # They also serve the web app and the API from one origin, so every path the API declares (REST prefix,
+      # GraphQL, uploaded files) must be routed to the API, or that feature silently does not work.
+      - name: The self-hosting templates ask for every secret the API needs, ship none, and route every API path
         if: always()
-        run: node tools/scripts/self-hosting-secrets-check.mjs
+        run: node tools/scripts/self-hosting-templates-check.mjs
 
-      - name: The self-hosting secrets gate reads every shape it must
+      - name: The self-hosting templates gate reads every shape it must
         if: always()
-        run: node --test tools/scripts/self-hosting-secrets-check.test.mjs
+        run: node --test tools/scripts/self-hosting-templates-check.test.mjs
