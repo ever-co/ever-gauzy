@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CurrencyPosition, IOrganization, ReportDayData } from '@gauzy/contracts';
+import { CurrenciesEnum, CurrencyPosition, IOrganization, ReportDayData } from '@gauzy/contracts';
 import { DateRangePickerBuilderService, DEFAULT_DATE_PICKER_CONFIG, EmployeesService } from '@gauzy/ui-core/core';
 import { WeeklyTimeReportsComponent } from './weekly-time-reports.component';
 import { WeeklyTimeReportsModule } from '../weekly-time-reports.module';
@@ -50,7 +50,7 @@ describe('WeeklyTimeReportsComponent', () => {
 		const render = (logs: ReportDayData[]) => {
 			component.organization = {
 				id: 'o-1',
-				currency: 'USD',
+				currency: CurrenciesEnum.USD,
 				currencyPosition: CurrencyPosition.LEFT
 			} as IOrganization;
 			component.weekDays = [DAY];
@@ -59,7 +59,7 @@ describe('WeeklyTimeReportsComponent', () => {
 		};
 
 		it('shows the amount in the currency of the employee rate', () => {
-			render([week({ spent: 80, currency: 'EUR' })]);
+			render([week({ spent: 80, currency: CurrenciesEnum.EUR })]);
 
 			const [cell] = spentCells();
 			expect(cell).toContain('80.00');
@@ -75,13 +75,16 @@ describe('WeeklyTimeReportsComponent', () => {
 		});
 
 		it('shows zero spent as an amount, not as a missing one', () => {
-			render([week({ spent: 0, currency: 'USD' })]);
+			render([week({ spent: 0, currency: CurrenciesEnum.USD })]);
 
 			expect(spentCells()[0]).toContain('0.00');
 		});
 
 		it('keeps the dash for an employee without a rate, and for an answer from before the column was priced', () => {
-			render([week({ spent: null, currency: null }), week({ employee: { id: 'e-2' } as ReportDayData['employee'] })]);
+			render([
+				week({ spent: null, currency: null }),
+				week({ employee: { id: 'e-2' } as ReportDayData['employee'] })
+			]);
 
 			expect(spentCells()).toEqual(['—', '—']);
 		});

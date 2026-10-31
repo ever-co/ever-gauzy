@@ -338,7 +338,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					sum: weeklyDuration || null,
 					activity: parseFloat(parseFloat(weeklyActivity + '').toFixed(2)),
 					spent,
-					currency: spent === null ? null : employee?.billRateCurrency ?? null
+					currency: spent === null ? null : (employee?.billRateCurrency ?? null)
 				};
 			})
 			.value();
