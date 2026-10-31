@@ -1,10 +1,11 @@
 import { ActivatedRouteSnapshot, ResolveFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { debounceTime, EMPTY, Observable, of } from 'rxjs';
-import { catchError, tap } from 'rxjs/operators';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import { IOrganization } from '@gauzy/contracts';
 import { isEmpty } from '@gauzy/ui-core/common';
-import { OrganizationsService, Store } from '@gauzy/ui-core/core';
+import { AuthService, OrganizationsService, Store } from '@gauzy/ui-core/core';
+import { organizationRouteRelations, permissionHolder } from './organization-route-relations';
 
 /**
  * Resolver function to fetch organization details before activating the route.
@@ -19,6 +20,7 @@ export const OrganizationResolver: ResolveFn<Observable<IOrganization | Observab
 	const _router = inject(Router);
 	const _store = inject(Store);
 	const _organizationsService = inject(OrganizationsService);
+	const _authService = inject(AuthService);
 
 	// Extract organization ID from the route parameters
 	const organizationId = route.params.id;
@@ -28,11 +30,12 @@ export const OrganizationResolver: ResolveFn<Observable<IOrganization | Observab
 		return of(EMPTY);
 	}
 
-	// Extract relations data if available
-	const relations = route.firstChild?.data?.relations || [];
+	// The relations the child route asks for: its `relations`, and its `permittedRelations` the user may load
+	const relations$ = organizationRouteRelations(route.firstChild?.data, permissionHolder(_store, _authService));
 
 	// Attempt to fetch the organization details
-	return _organizationsService.getById(organizationId, relations).pipe(
+	return relations$.pipe(
+		switchMap((relations: string[]) => _organizationsService.getById(organizationId, relations)),
 		// Debounce the request to avoid excessive API calls
 		debounceTime(200),
 		// Update the selected organization and organizationId in the store

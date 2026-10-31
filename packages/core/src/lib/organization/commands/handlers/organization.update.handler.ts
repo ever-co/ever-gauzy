@@ -19,7 +19,7 @@ import {
 	recordAgentRestrictionAcknowledgement
 } from '../../../employee/agent-exit-logout-restriction';
 import { OrganizationService } from '../../organization.service';
-import { organizationLocations, storedOrganizationLocation } from '../../organization-location';
+import { linkedContact, organizationLocations, storedOrganizationLocation } from '../../organization-location';
 import {
 	logScreenshotCaptureAcknowledgement,
 	omitScreenshotCaptureAcknowledgementFields,
@@ -57,9 +57,10 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 	 * @returns The updated organization.
 	 */
 	private async update(id: ID, input: IOrganizationUpdateInput): Promise<IOrganization> {
-		const organization: IOrganization = await this.organizationService.findOneByIdString(id, {
-			relations: { contact: true }
-		});
+		// Read without its `contact`: the location rules read the linked contact's country themselves (see
+		// `linkedContact`), so a caller who may save the settings but not view contacts still saves, and the
+		// contact is never answered.
+		const organization: IOrganization = await this.organizationService.findOneByIdString(id);
 
 		if (!organization) {
 			throw new NotFoundException(`Organization with ID ${id} not found.`);
@@ -80,7 +81,11 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			after: location,
 			requested,
 			unreadContactId
-		} = await organizationLocations(organization, changes, this.contactService);
+		} = await organizationLocations(
+			{ ...organization, contact: await linkedContact(organization, this.contactService) },
+			changes,
+			this.contactService
+		);
 		// Without the contact the save links, the location after the write is unknown: nothing is judged or saved.
 		if (unreadContactId) {
 			throw new NotFoundException(`Contact with ID ${unreadContactId} not found.`);
@@ -189,12 +194,13 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 	}
 
 	/**
-	 * Where the organization is as saved: read back after the save, with its contact.
+	 * Where the organization is as saved: read back after the save, with the country of the contact it links (read as
+	 * `update` reads it, see `linkedContact`).
 	 *
 	 * @param id The organization.
 	 */
 	private async savedLocation(id: ID): Promise<IAgentRestrictionLocation> {
-		const saved = await this.organizationService.findOneByIdString(id, { relations: { contact: true } });
-		return storedOrganizationLocation(saved);
+		const saved = await this.organizationService.findOneByIdString(id);
+		return storedOrganizationLocation({ ...saved, contact: await linkedContact(saved, this.contactService) });
 	}
 }
