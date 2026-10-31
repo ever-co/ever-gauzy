@@ -1,16 +1,9 @@
 import { ITimeLog } from '@gauzy/contracts';
 import { ITimeTrackerFormState } from '../../shared/features/time-tracker-form/time-tracker-form.service';
-
-/** The selectors whose values make up the time tracker's own selection. */
-const SELECTOR_FIELDS = ['clientId', 'projectId', 'teamId', 'taskId'] as const;
-
-/** Whether the time tracker has a selection of its own: a client, project, team or task picked. */
-export function hasSelection(state: Partial<ITimeTrackerFormState> | null | undefined): boolean {
-	return SELECTOR_FIELDS.some((field) => !!state?.[field]);
-}
+import { hasSelection } from './selection-state';
 
 export interface ILastLogSelectionContext {
-	/** The time tracker's form as it stands. */
+	/** The time tracker's own selection: its form, and the selection saved on this device. */
 	local: Partial<ITimeTrackerFormState>;
 	/** Whether the timer runs on this device. */
 	isRunning: boolean;

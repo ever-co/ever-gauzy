@@ -1,4 +1,4 @@
-import { hasSelection, ILastLogSelectionContext, selectionFromLastLog, toProjectConfig } from './last-log-selection';
+import { ILastLogSelectionContext, selectionFromLastLog, toProjectConfig } from './last-log-selection';
 
 /**
  * A timer signed in on a second device started with an empty selection: only a timer RUNNING elsewhere had its
@@ -67,15 +67,6 @@ describe('selectionFromLastLog', () => {
 			selectionFromLastLog(context({ status: { lastLog: { organizationId: 'org-1', projectId: 'project-1' } } }))
 		).toEqual({ projectId: 'project-1' });
 		expect(selectionFromLastLog(context({ status: { lastLog: { organizationId: 'org-1' } } }))).toBeNull();
-	});
-});
-
-describe('hasSelection', () => {
-	it('is true when a client, project, team or task is picked, the note aside', () => {
-		expect(hasSelection({ projectId: 'p' })).toBe(true);
-		expect(hasSelection({ note: 'only a note' })).toBe(false);
-		expect(hasSelection({ clientId: '', projectId: '', teamId: '', taskId: '' })).toBe(false);
-		expect(hasSelection(null)).toBe(false);
 	});
 });
 

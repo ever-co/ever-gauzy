@@ -1087,13 +1087,14 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 				if (!this._isReady && this.appSetting?.alwaysOn) {
 					this.electronService.ipcRenderer.send('show_ao');
 				}
-				this.timeTrackerFormService.setState({
+				const savedSelection = {
 					clientId: arg.organizationContactId,
 					teamId: arg.organizationTeamId,
 					projectId: arg.projectId,
 					taskId: arg.taskId,
 					note: arg.note
-				});
+				};
+				this.timeTrackerFormService.setState(savedSelection);
 				const parallelizedTasks: Promise<void>[] = [
 					this.loadStatuses(),
 					this.clientSelectorService.load(),
@@ -1111,7 +1112,7 @@ export class TimeTrackerComponent implements OnInit, AfterViewInit {
 					this.electronService.ipcRenderer.send('check-interrupted-sequences');
 				}
 				// A device without a selection of its own takes over the employee's last time log (#7753).
-				void this._selectionPrefill.prefill(() => this.start);
+				void this._selectionPrefill.prefill(() => this.start, savedSelection);
 			})
 		);
 
