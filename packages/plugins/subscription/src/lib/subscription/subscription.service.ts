@@ -33,6 +33,7 @@ import {
 	ISubscriptionInstrumentPort,
 	ISubscriptionItemInput,
 	ISubscriptionOrderGatewayPort,
+	ISubscriptionOrderResult,
 	ISubscriptionPlanChangeOutcome,
 	ISubscriptionBillingOutcome,
 	ISubscriptionBillingRunOutcome,
@@ -139,6 +140,16 @@ const BILLING_SCOPE = 'subscription.bill';
  * with it the order key of the next attempt, which the order path no longer fences against the call still running.
  */
 const ORDER_ATTEMPT_IN_FLIGHT = 'ORDER_SUBSCRIPTION_IN_FLIGHT';
+
+/**
+ * The code the order path refuses an attempt with when its key already raised an order for a request priced otherwise
+ * (`ISubscriptionOrderGatewayPort.raiseSubscriptionOrder`).
+ *
+ * The attempt key is reused only by a pass that recovered a stale claim, and the call that took the key first is one
+ * whose outcome this pass cannot learn: recorded as a failure, it would move the attempt count, and the next attempt's
+ * new key could charge a period that call already charged.
+ */
+const ORDER_ATTEMPT_KEY_REUSED = 'ORDER_SUBSCRIPTION_KEY_REUSED';
 
 /** The key a proration charge's idempotency claim is scoped under. */
 const PRORATION_SCOPE = 'subscription.proration';
@@ -2211,6 +2222,28 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				return this.unclaimedCycleOutcome(subscription, await this.billingService.findOneScoped(billing.id));
 			}
 
+			if (failure?.code === ORDER_ATTEMPT_KEY_REUSED) {
+				// An earlier call of this attempt raised its order on other terms (the cycle was repriced since), and its
+				// outcome cannot be read from here. Nothing is recorded, so the attempt count and the key stay where that
+				// call left them; the claim is released, so an operator can reconcile the cycle with that order.
+				this.logger.error(
+					`Subscription ${subscription.id}: attempt ${(billing.attemptCount ?? 0) + 1} of cycle ${billing.id} ` +
+						`already raised an order on other terms; the cycle is left for an operator to reconcile with it.`
+				);
+
+				return {
+					subscriptionId: subscription.id,
+					billingId: billing.id,
+					status: billing.status,
+					replayed: true,
+					periodStart: billing.periodStart,
+					periodEnd: billing.periodEnd,
+					errorCode: ORDER_ATTEMPT_KEY_REUSED,
+					message:
+						'An earlier call of this attempt raised its order on other terms; nothing is recorded until the cycle is reconciled with that order.'
+				};
+			}
+
 			if (failure) {
 				return await this.recordFailure(subscription, billing, failure, now, spend(), claim.token);
 			}
@@ -2343,8 +2376,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		// attempt still collide, which is what stops one attempt charging twice.
 		const attempt = (billing.attemptCount ?? 0) + 1;
 
+		let result: ISubscriptionOrderResult;
+
 		try {
-			const result = await this.orderGateway.raiseSubscriptionOrder({
+			result = await this.orderGateway.raiseSubscriptionOrder({
 				subscriptionId: subscription.id,
 				billingId: billing.id,
 				customerId: subscription.customerId,
@@ -2367,63 +2402,6 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				idempotencyKey: `${subscription.id}:${period.start.toISOString()}:${attempt}`,
 				note: `Subscription cycle ${period.start.toISOString()}, attempt ${attempt}`
 			});
-
-			if (!result?.orderId) {
-				return {
-					code: 'SUBSCRIPTION_ORDER_NOT_RAISED',
-					message: 'The order capability did not return an order for this cycle.'
-				};
-			}
-
-			try {
-				if (result.paid) {
-					await this.billingService.markPaid(billing.id, {
-						paidAt: result.paidAt ?? new Date(),
-						orderId: result.orderId,
-						attemptCount: billing.attemptCount ?? 0,
-						chargeClaim
-					});
-				} else {
-					// R4-05: nothing was paid, so the rights of the period wait for the payment. The flags are written
-					// with the status, so no payment can see the cycle invoiced without them.
-					// Q7-W4: the calendar waits for the payment too, so the flag that says so is written with the status.
-					await this.billingService.markInvoiced(
-						billing.id,
-						result.orderId,
-						net.toStorageString(),
-						{ activation: this.convertsTrial(subscription, plan), calendar: true },
-						chargeClaim
-					);
-				}
-			} catch (error) {
-				const code = (error as { response?: { code?: string } })?.response?.code;
-
-				if (code === CHARGE_CLAIM_LOST) {
-					// This charge outlived its claim, and another pass recovered the cycle. That pass charges under the same
-					// attempt key, so the order path hands it this charge's order to record; recording it here as well
-					// would clear that pass's fence while it is still working.
-					this.logger.warn(
-						`Subscription ${subscription.id}: the charge of cycle ${billing.id} (order ${result.orderId}) ` +
-							`outlived its claim; the pass that now holds the cycle records it.`
-					);
-
-					return { code: CHARGE_CLAIM_LOST, message: (error as Error).message };
-				}
-
-				// The order was raised, and an operator settled the cycle another way (paid, waived or refunded it) once
-				// this charge's claim had gone stale - the claim refuses that while it is live. That is not a failed
-				// charge, and reporting it as one would schedule a retry - a second charge. The cycle keeps the
-				// operator's decision and the conflict is logged for follow-up.
-				if (code !== 'SUBSCRIPTION_BILLING_TRANSITION_INVALID') {
-					throw error;
-				}
-
-				this.logger.warn(
-					`Subscription ${subscription.id}: cycle ${billing.id} was settled by an operator while its charge ` +
-						`(order ${result.orderId}, ${result.paid ? 'paid' : 'unpaid'}) was in flight; the cycle keeps ` +
-						`the operator's status.`
-				);
-			}
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 
@@ -2431,6 +2409,67 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				code: /^([A-Z][A-Z0-9_]{3,}):/.exec(message)?.[1] ?? 'SUBSCRIPTION_CHARGE_FAILED',
 				message
 			};
+		}
+
+		if (!result?.orderId) {
+			return {
+				code: 'SUBSCRIPTION_ORDER_NOT_RAISED',
+				message: 'The order capability did not return an order for this cycle.'
+			};
+		}
+
+		// The order exists from here on, so an error recording its outcome is not a failed charge: recorded as one, it
+		// moved the attempt count, and the next attempt's new key charged the customer again. It propagates instead; the
+		// cycle keeps its attempt count and the claim is released, so the next pass calls the order path under this same
+		// attempt key and is handed this order to record.
+		try {
+			if (result.paid) {
+				await this.billingService.markPaid(billing.id, {
+					paidAt: result.paidAt ?? new Date(),
+					orderId: result.orderId,
+					attemptCount: billing.attemptCount ?? 0,
+					chargeClaim
+				});
+			} else {
+				// R4-05: nothing was paid, so the rights of the period wait for the payment. The flags are written
+				// with the status, so no payment can see the cycle invoiced without them.
+				// Q7-W4: the calendar waits for the payment too, so the flag that says so is written with the status.
+				await this.billingService.markInvoiced(
+					billing.id,
+					result.orderId,
+					net.toStorageString(),
+					{ activation: this.convertsTrial(subscription, plan), calendar: true },
+					chargeClaim
+				);
+			}
+		} catch (error) {
+			const code = (error as { response?: { code?: string } })?.response?.code;
+
+			if (code === CHARGE_CLAIM_LOST) {
+				// This charge outlived its claim, and another pass recovered the cycle. That pass charges under the same
+				// attempt key, so the order path hands it this charge's order to record; recording it here as well
+				// would clear that pass's fence while it is still working.
+				this.logger.warn(
+					`Subscription ${subscription.id}: the charge of cycle ${billing.id} (order ${result.orderId}) ` +
+						`outlived its claim; the pass that now holds the cycle records it.`
+				);
+
+				return { code: CHARGE_CLAIM_LOST, message: (error as Error).message };
+			}
+
+			// The order was raised, and an operator settled the cycle another way (paid, waived or refunded it) once
+			// this charge's claim had gone stale - the claim refuses that while it is live. That is not a failed
+			// charge, and reporting it as one would schedule a retry - a second charge. The cycle keeps the
+			// operator's decision and the conflict is logged for follow-up.
+			if (code !== 'SUBSCRIPTION_BILLING_TRANSITION_INVALID') {
+				throw error;
+			}
+
+			this.logger.warn(
+				`Subscription ${subscription.id}: cycle ${billing.id} was settled by an operator while its charge ` +
+					`(order ${result.orderId}, ${result.paid ? 'paid' : 'unpaid'}) was in flight; the cycle keeps ` +
+					`the operator's status.`
+			);
 		}
 
 		// The charge's outcome is recorded, and what remains is the cycle's bookkeeping on the subscription. An error in

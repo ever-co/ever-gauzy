@@ -53,6 +53,12 @@ const CHARGEABLE_FROM: readonly SubscriptionBillingStatus[] = [
 	SubscriptionBillingStatus.FAILED
 ];
 
+/**
+ * How many times an operator's write tries to fence a chargeable cycle whose claim ended between the fence's two
+ * statements, before it refuses the write as a charge in flight (`fenceOne`).
+ */
+const FENCE_ATTEMPTS = 3;
+
 /** A cycle's charge-claim columns as every write that ends the claim leaves them. */
 const NO_CHARGE_CLAIM = { chargeClaimToken: null, chargeClaimedAt: null } as const;
 
@@ -920,6 +926,12 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			);
 		}
 
+		// Checked before the price is compared too: a retry that finds the price unchanged charges next, and it may do so
+		// only while it still holds the claim it names.
+		if (!this.holdsClaim(current, chargeClaim)) {
+			throw this.claimRefusal(current, chargeClaim, 'repriced');
+		}
+
 		const restated = this.normalizeAmount(amount, current.currency);
 		const metadata = (current.metadata ?? {}) as Record<string, unknown>;
 
@@ -1132,8 +1144,15 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 */
 	public async softRemove(id: ID, options?: any, saveOptions?: any): Promise<SubscriptionBilling> {
 		// The base class's own read, so the cycle fenced is the one its soft removal reaches. The inherited route's rest
-		// parameter is not find options, so none are passed.
-		const billing = await this.findOneByIdString(id).catch(() => null);
+		// parameter is not find options, so none are passed. Only a missing row is left to the base class; any other
+		// failure of the read is raised, rather than retiring a cycle no fence was taken on.
+		const billing = await this.findOneByIdString(id).catch((error: unknown) => {
+			if (error instanceof NotFoundException) {
+				return null;
+			}
+
+			throw error;
+		});
 
 		if (!billing) {
 			return super.softRemove(id, options, saveOptions);
@@ -1195,21 +1214,8 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 				}
 
 				const row = { id: cycle.id, ...scopeOf(cycle) } as FindOptionsWhere<SubscriptionBilling>;
-				const token = randomUUID();
-				const now = new Date();
-				const claimed = await this.typeOrmSubscriptionBillingRepository.update(
-					{ ...row, status: In([...CHARGEABLE_FROM]), ...noLiveChargeClaim(now) } as FindOptionsWhere<SubscriptionBilling>,
-					{ chargeClaimToken: token, chargeClaimedAt: now } as any
-				);
-				const current = (await this.typeOrmSubscriptionBillingRepository.findOne({ where: row })) ?? cycle;
 
-				if (claimed?.affected) {
-					fences.push({ where: row, token });
-				} else if (holdsLiveChargeClaim(current, now)) {
-					throw chargeInFlight(current, action);
-				}
-
-				fenced.push(current);
+				fenced.push(await this.fenceOne(row, cycle, action, fences));
 			}
 
 			return await write(fenced);
@@ -1226,6 +1232,52 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 							`released (${(error as Error)?.message ?? error}); it goes stale.`
 					);
 				}
+			}
+		}
+	}
+
+	/**
+	 * Fences one cycle for an operator's write (`fencedAgainstCharges`), or refuses the write.
+	 *
+	 * The claim is one conditional statement; when it matches nothing the row is read again to learn why. A cycle that
+	 * is still chargeable with no live claim on it had a claim that ended between the two statements, so the fence is
+	 * tried again rather than the write going ahead on a cycle a pass may claim next. Only a cycle settled meanwhile goes
+	 * ahead unfenced, since no pass charges it.
+	 *
+	 * @param row The cycle's id, tenant and organization.
+	 * @param cycle The cycle as it was read.
+	 * @param action What the write does to it, for the refusal.
+	 * @param fences Where a fence taken is recorded, for its release.
+	 * @returns The cycle as it stands under the fence.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a pass holds the cycle.
+	 */
+	private async fenceOne(
+		row: FindOptionsWhere<SubscriptionBilling>,
+		cycle: SubscriptionBilling,
+		action: string,
+		fences: Array<{ where: FindOptionsWhere<SubscriptionBilling>; token: string }>
+	): Promise<SubscriptionBilling> {
+		for (let attempt = 1; ; attempt += 1) {
+			const token = randomUUID();
+			const now = new Date();
+			const claimed = await this.typeOrmSubscriptionBillingRepository.update(
+				{ ...row, status: In([...CHARGEABLE_FROM]), ...noLiveChargeClaim(now) } as FindOptionsWhere<SubscriptionBilling>,
+				{ chargeClaimToken: token, chargeClaimedAt: now } as any
+			);
+			const current = (await this.typeOrmSubscriptionBillingRepository.findOne({ where: row })) ?? cycle;
+
+			if (claimed?.affected) {
+				fences.push({ where: row, token });
+
+				return current;
+			}
+
+			if (!CHARGEABLE_FROM.includes(current.status as SubscriptionBillingStatus)) {
+				return current;
+			}
+
+			if (holdsLiveChargeClaim(current, now) || attempt >= FENCE_ATTEMPTS) {
+				throw chargeInFlight(current, action);
 			}
 		}
 	}

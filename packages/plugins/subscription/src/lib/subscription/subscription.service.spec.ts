@@ -3311,6 +3311,57 @@ describe('SubscriptionService — a cycle’s charge is fenced against an operat
 		expect(eventNames(fixture)).not.toContain('subscription.payment-failed');
 	});
 
+	it('does not turn a failed write of the paid outcome into a failed charge; the next pass retries the same attempt key', async () => {
+		const fixture = subscriptionFixture({ orders: { paid: true, orderId: 'order-1' } });
+
+		jest.spyOn(fixture.billingService, 'markPaid').mockRejectedValueOnce(new Error('the database went away'));
+
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+		// No attempt is counted and the claim is released, so the order key does not move.
+		expect(fixture.cycle(APRIL)).toMatchObject({
+			status: SubscriptionBillingStatus.PENDING,
+			attemptCount: 0,
+			chargeClaimToken: null
+		});
+		expect(eventNames(fixture)).not.toContain('subscription.payment-failed');
+
+		fixture.idempotencyService.advanceBy(3 * 60 * 1000);
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		// The retry asks the order path under the same key, which hands it the order the first call raised.
+		expect(fixture.orderCalls.map((call) => call.idempotencyKey)).toEqual([
+			`${SUBSCRIPTION}:${APRIL.toISOString()}:1`,
+			`${SUBSCRIPTION}:${APRIL.toISOString()}:1`
+		]);
+		expect(fixture.cycle(APRIL)).toMatchObject({ status: SubscriptionBillingStatus.PAID, orderId: 'order-1' });
+	});
+
+	it('records no failure when the attempt key already raised an order on other terms, and releases the cycle', async () => {
+		const fixture = subscriptionFixture({
+			billings: [aprilCycle(staleClaim())],
+			orders: () => {
+				throw new Error(
+					'ORDER_SUBSCRIPTION_KEY_REUSED: this key already raised an order for a different request, so it cannot raise another one.'
+				);
+			}
+		});
+
+		const outcome = await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(outcome).toMatchObject({
+			status: SubscriptionBillingStatus.PENDING,
+			replayed: true,
+			errorCode: 'ORDER_SUBSCRIPTION_KEY_REUSED'
+		});
+		// The attempt count stays, so no later attempt's new key can charge the period the earlier call charged.
+		expect(fixture.cycle(APRIL)).toMatchObject({ attemptCount: 0, chargeClaimToken: null });
+		expect(eventNames(fixture)).not.toContain('subscription.payment-failed');
+		// The cycle is released for an operator to reconcile.
+		await expect(fixture.billingService.markWaived('cycle-april', { reason: 'reconciled' })).resolves.toMatchObject({
+			status: SubscriptionBillingStatus.WAIVED
+		});
+	});
+
 	it('does not turn a failed bookkeeping write after the payment into a failed charge, so nothing charges it again', async () => {
 		const fixture = subscriptionFixture({ plans: [planRow(PLAN, { setupFee: '25' }), planRow(BETTER_PLAN)] });
 
