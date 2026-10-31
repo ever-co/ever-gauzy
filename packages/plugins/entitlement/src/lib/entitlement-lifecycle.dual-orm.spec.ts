@@ -1402,22 +1402,27 @@ describe.each([
 		 * @param orderId The order.
 		 * @param state What the order port answers, or `undefined` for a consumer with no port bound.
 		 * @param options The event delivered first (`order.completed` unless stated; `null` for none), how many
-		 * granting lines the placement carries (one unless stated), named `<order>-line-<n>`, and the quantity each
-		 * line bought (one unless stated).
+		 * granting lines the placement carries (one unless stated), named `<order>-line-<n>`, the quantity each
+		 * line bought (one unless stated), and an event delivered after the placement.
 		 * @returns The rights the placement granted, as the table holds them, in line order.
 		 */
 		async function deliverPlacementLate(
 			orderId: string,
 			state?: IEntitlementOrderState,
-			options: { first?: string | null; lines?: number; quantity?: number } = {}
+			options: {
+				first?: string | null;
+				lines?: number;
+				quantity?: number;
+				then?: { name: string; data: Row };
+			} = {}
 		): Promise<Row[]> {
 			const port = state ? { findState: async () => state } : undefined;
-			// The CRUD base this harness doubles has no `find`; the consumer's withdrawal reads the order's rights
-			// through it, so it is answered from the table, under the event's tenant.
+			// The CRUD base this harness doubles has no `find`; the consumer's withdrawal and refund paths read the
+			// rights through it, so it is answered from the table, matching every member of the criteria.
 			Object.assign(harness.entitlements, {
 				find: async ({ where }: { where: Row }) =>
-					(await harness.rows('entitlement')).filter(
-						(row) => row.orderId === where.orderId && row.tenantId === where.tenantId
+					(await harness.rows('entitlement')).filter((row) =>
+						Object.entries(where).every(([member, value]) => row[member] === value)
 					)
 			});
 			const consumer = new EntitlementGrantConsumer(harness.entitlements, undefined, port);
@@ -1445,6 +1450,10 @@ describe.each([
 					entitlement: { activationLimit: 2 }
 				}))
 			});
+
+			if (options.then) {
+				await deliver(options.then.name, options.then.data);
+			}
 
 			return (await harness.rows('entitlement'))
 				.filter((row) => row.orderId === orderId)
@@ -1502,9 +1511,12 @@ describe.each([
 			]);
 		});
 
-		it('lowers a right whose line was refunded in part to the seats still paid for before putting it into force', async () => {
+		it('leaves a line refunded in part PENDING, so the refund delivered after the placement applies once', async () => {
 			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
 
+			// The order already records one of the two seats as refunded, and that refund's own delivery arrives only
+			// after the placement (Copilot on #11577). Had the placement lowered the right to one seat, the refund
+			// would subtract the same seat again and revoke the seat still paid for.
 			const rights = await deliverPlacementLate(
 				'order-seats',
 				{
@@ -1512,12 +1524,16 @@ describe.each([
 					paymentStatus: OrderPaymentStatus.PARTIALLY_REFUNDED,
 					lines: [{ id: 'order-seats-line-1', quantity: 2, refundedQuantity: 1 }]
 				},
-				{ quantity: 2 }
+				{
+					quantity: 2,
+					then: {
+						name: 'payment.refunded',
+						data: { orderId: 'order-seats', lines: [{ orderLineId: 'order-seats-line-1', quantity: 1 }] }
+					}
+				}
 			);
 
-			expect(rights).toHaveLength(1);
-			expect(rights[0]).toMatchObject({ status: EntitlementStatus.ACTIVE });
-			expect(Number(rights[0].quantity)).toBe(1);
+			expect(rights.map((row) => [row.status, Number(row.quantity)])).toEqual([[EntitlementStatus.PENDING, 1]]);
 		});
 
 		it('puts nothing into force on an order refunded in part when the port cannot say which lines', async () => {

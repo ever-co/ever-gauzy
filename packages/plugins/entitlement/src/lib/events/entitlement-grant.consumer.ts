@@ -19,7 +19,7 @@ import {
 } from '../entitlement.types';
 import { Entitlement } from '../entitlement/entitlement.entity';
 import { EntitlementService } from '../entitlement/entitlement.service';
-import { IEntitlementPlacedGrant, orderWithdrawalReason, planLateActivation } from './entitlement-order-settlement';
+import { activatableOrderLines, orderWithdrawalReason } from './entitlement-order-settlement';
 
 /**
  * The shape a granting order line carries.
@@ -217,14 +217,13 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			return;
 		}
 
-		const grants: IEntitlementPlacedGrant[] = [];
+		const orderLineIds: ID[] = [];
 
 		for (const line of granting) {
 			const policy = line.entitlement;
 			const orderLineId = line.orderLineId ?? line.lineId ?? line.id;
-			const grantedQuantity = policy.quantity ?? Number(line.quantity ?? 1);
 
-			const { entitlement } = await this.entitlementService.grant(
+			await this.entitlementService.grant(
 				{
 					customerId: data.customerId,
 					orderId,
@@ -232,7 +231,7 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 					productId: line.productId,
 					variantId: line.variantId,
 					kind: policy.kind ?? EntitlementKind.LICENCE,
-					quantity: grantedQuantity,
+					quantity: policy.quantity ?? Number(line.quantity ?? 1),
 					startsAt: policy.startsAt ? new Date(policy.startsAt) : new Date(),
 					endsAt: policy.endsAt ? new Date(policy.endsAt) : undefined,
 					gracePeriodDays: policy.gracePeriodDays,
@@ -242,17 +241,12 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 				scope
 			);
 
-			if (orderLineId && entitlement?.id) {
-				grants.push({
-					orderLineId,
-					entitlementId: entitlement.id as ID,
-					quantity: Number(entitlement.quantity ?? grantedQuantity),
-					grantedQuantity
-				});
+			if (orderLineId) {
+				orderLineIds.push(orderLineId);
 			}
 		}
 
-		await this.reconcileWithOrderState(orderId, grants, event, scope);
+		await this.reconcileWithOrderState(orderId, orderLineIds, event, scope);
 	}
 
 	/**
@@ -303,10 +297,10 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 	 * placement grants afterwards would wait for a settlement event that has already come and gone. The
 	 * order's own state is the durable memo of that settlement — `COMPLETED` is written in the transaction
 	 * that appends `order.completed` — so it is asked here, after the grants, and the activation the
-	 * settlement handler performs is repeated, line by line ({@link planLateActivation}): only the lines that
-	 * are still paid for are put into force, and a right whose line was refunded in part is first lowered to
-	 * what the line still pays for, as the refund handler would have lowered it. A line left out keeps its
-	 * right `PENDING`.
+	 * settlement handler performs is repeated, line by line ({@link activatableOrderLines}): only the lines
+	 * still paid for in full are put into force, at the quantity they were granted, so a refund handled before
+	 * the placement neither leaves the line it refunded with a right in force nor is applied twice. A line left
+	 * out keeps its right `PENDING`.
 	 *
 	 * Asking after the grants is what closes the race with a concurrent cancellation as well: when the order
 	 * reads cancelled or refunded in full now, its `order.canceled` or `payment.refunded` may already have
@@ -316,13 +310,13 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 	 * swallowed: the delivery is retried, and the grants it repeats are replays.
 	 *
 	 * @param orderId The order the placement granted from.
-	 * @param grants The rights the placement granted.
+	 * @param orderLineIds The lines the placement granted rights for.
 	 * @param event The `order.placed` event, for the log.
 	 * @param scope The tenant and organization the event belongs to.
 	 */
 	private async reconcileWithOrderState(
 		orderId: ID,
-		grants: readonly IEntitlementPlacedGrant[],
+		orderLineIds: readonly ID[],
 		event: IEventEnvelope,
 		scope: IEntitlementScope
 	): Promise<void> {
@@ -342,21 +336,17 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			return;
 		}
 
-		const plan = planLateActivation(state, grants);
+		const activatable = activatableOrderLines(state, orderLineIds);
 
-		if (!plan.orderLineIds.length) {
+		if (!activatable.length) {
 			return;
 		}
 
 		this.logger.log(
-			`order.placed ${event.id} was delivered after order ${orderId} settled, so the entitlements of ${plan.orderLineIds.length} of its ${grants.length} granting line(s) were put into force on placement (${plan.reductions.length} lowered to what their line still pays for).`
+			`order.placed ${event.id} was delivered after order ${orderId} settled, so the entitlements of ${activatable.length} of its ${orderLineIds.length} granting line(s) were put into force on placement.`
 		);
 
-		for (const { entitlementId, quantity } of plan.reductions) {
-			await this.entitlementService.reduce(entitlementId, quantity, EntitlementRevocationReason.REFUNDED, scope);
-		}
-
-		for (const orderLineId of plan.orderLineIds) {
+		for (const orderLineId of activatable) {
 			await this.entitlementService.activateGranted({ orderId, orderLineId }, scope);
 		}
 	}
