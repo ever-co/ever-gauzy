@@ -260,6 +260,19 @@ describe('working days of a time-off request', () => {
 			expect(workingDaysByYear('2028-02-29', '2028-02-29', { timeZone: 'UTC', holidays })).toEqual([]);
 		});
 
+		it('does not make 29 February a holiday from two separate recurring holidays on 28 February and 1 March', () => {
+			const holidays = [
+				{ date: '2027-02-28', isRecurring: true },
+				{ date: '2027-03-01', isRecurring: true }
+			];
+
+			expect(holidayDaysWithin(holidays, '2028-02-27', '2028-03-02')).toEqual(['2028-02-28', '2028-03-01']);
+			// Tuesday 29 February 2028 is a working day.
+			expect(workingDaysByYear('2028-02-29', '2028-02-29', { timeZone: 'UTC', holidays })).toEqual([
+				{ year: 2028, days: 1 }
+			]);
+		});
+
 		it('reads an end before the start as a single-day holiday', () => {
 			expect(
 				holidayDaysWithin(

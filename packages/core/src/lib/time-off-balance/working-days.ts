@@ -213,16 +213,20 @@ export function holidayDaysWithin(
 			end && end > start ? dayNumberOf(end) : startNumber,
 			startNumber + MAX_HOLIDAY_SPAN_DAYS - 1
 		);
+		// The month-days of this holiday alone: 29 February is added only for a range that itself runs across it,
+		// not for two separate holidays on 28 February and 1 March.
+		const own = new Set<string>();
 		for (let day = startNumber; day <= endNumber; day++) {
 			if (holiday.isRecurring) {
-				recurring.add(dayOfNumber(day).slice(5));
+				own.add(dayOfNumber(day).slice(5));
 			} else if (day >= from && day <= to) {
 				days.add(day);
 			}
 		}
-	}
-	if (recurring.has('02-28') && recurring.has('03-01')) {
-		recurring.add('02-29');
+		if (own.has('02-28') && own.has('03-01')) {
+			own.add('02-29');
+		}
+		own.forEach((monthDay) => recurring.add(monthDay));
 	}
 
 	for (let year = yearOf(first); year <= yearOf(last) && recurring.size > 0; year++) {
