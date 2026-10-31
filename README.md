@@ -10,6 +10,8 @@
 [![License: AGPL v3][uri_license_image]][uri_license]
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ever-co/ever-gauzy)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/ever-co/ever-gauzy)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/GitHub%20Codespaces-Open-blue?logo=github)](https://codespaces.new/ever-co/ever-gauzy)
+[![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/ever-co/ever-gauzy)
 
 ## 💡 What's New
 - 🔥🔥🔥 we just released [Ever Works](https://github.com/ever-works/ever-works) - An open agentic runtime that autonomously researches, ships, and maintains entire businesses, 24/7. Please grab it now from <https://github.com/ever-works/ever-works> and make it ⭐⭐⭐ on GitHub!
@@ -275,6 +277,14 @@ Notes:
 -   during the first API start, DB will be automatically seeded with a minimum set of initial data if no users are found.
 -   you can run seed any moment manually (e.g. if you changed entities schemas) with the `yarn seed` command to re-initialize DB (warning: unsafe for production!). The same default-credential check applies: with `NODE_ENV=production` and `DEMO != true` the seed refuses to run unless `DEMO_SUPER_ADMIN_PASSWORD` / `DEMO_ADMIN_PASSWORD` / `DEMO_EMPLOYEE_PASSWORD` are set to non-default values.
 -   it is possible to run generation of extremely large amounts of fake data for demo purposes/testing with `yarn seed:all` (warning: takes ~10 min to complete)
+
+#### Dev Container / GitHub Codespaces
+
+The repository ships a [Dev Container](https://containers.dev) definition in [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json): Node 26 and Yarn 1.22, Docker (inside the container) and the GitHub CLI, with ports 3000 (API) and 4200 (web UI) forwarded.
+
+-   Open the repository in [GitHub Codespaces](https://codespaces.new/ever-co/ever-gauzy) (pick a machine with at least 4 cores and 16 GB of memory), or in VS Code with the [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension ("Dev Containers: Clone Repository in Container Volume" is the fastest on Windows and macOS).
+-   `yarn bootstrap` runs once when the container is created. Then run `yarn start` as described above (SQLite by default).
+-   To use PostgreSQL, Redis, MinIO and the other services instead, run `docker compose -f docker-compose.infra.yml up -d` inside the container and point `.env` / `.env.local` at them.
 
 #### Optional / Recommended for Production
 
