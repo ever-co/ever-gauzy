@@ -100,12 +100,20 @@ export class EditOrganizationOtherSettingsComponent
 
 	/**
 	 * Issue #9872: turning screen capture on for an EEA/UK organization asks the admin for the acknowledgement
-	 * the API requires, and sends it with the save.
+	 * the API requires, and sends it with the save. Like the API, it reads the stored location as well as the
+	 * pending one, so moving out of the EEA/UK in the same save still asks.
 	 */
 	public readonly screenshotCaptureAcknowledgement = new ScreenshotCaptureAcknowledgementPrompt({
 		control: () => this.form?.get('allowScreenshotCapture'),
 		persisted: () => this.organization,
-		location: () => this.location,
+		location: () => [
+			{
+				regionCode: this.organization?.regionCode,
+				timeZone: this.organization?.timeZone,
+				country: this.organization?.contact?.country
+			},
+			this.location
+		],
 		ask: () => this._askForScreenshotCaptureAcknowledgement()
 	});
 

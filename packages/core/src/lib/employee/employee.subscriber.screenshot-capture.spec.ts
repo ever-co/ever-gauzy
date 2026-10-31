@@ -144,6 +144,16 @@ describe('EmployeeSubscriber — screen capture follows the organization (TypeOR
 			expect((await stored('e-2')).allowScreenshotCapture).toBe(false);
 		});
 
+		it('keeps a stated "off" when the employee starts work on creation', async () => {
+			await employees.save(
+				employees.create(
+					employee('e-1', ORG_ON, { allowScreenshotCapture: false, startedWorkOn: new Date('2026-10-01') })
+				)
+			);
+
+			expect(await stored('e-1')).toMatchObject({ allowScreenshotCapture: false, isActive: true });
+		});
+
 		it('reads the organization of the employee’s own tenant only', async () => {
 			// No such organization in that tenant: the column default applies, as before.
 			await employees.save(employees.create({ ...employee('e-1', ORG_OFF), tenantId: OTHER_TENANT }));

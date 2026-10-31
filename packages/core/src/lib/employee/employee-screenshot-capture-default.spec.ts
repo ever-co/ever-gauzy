@@ -40,11 +40,19 @@ describe('screenshotCaptureFromOrganization', () => {
 
 	it.each([
 		[true, true],
-		[false, false],
+		[true, false],
 		['1', true]
-	])('keeps today’s behaviour when the write states a value (%p)', (requested, current) => {
+	])('keeps today’s behaviour when the write states a value (%p, work-status %p)', (requested, current) => {
 		expect(screenshotCaptureFromOrganization(requested, current, false)).toBe(current);
 	});
+
+	it.each([false, 0, '0', 'false', ' FALSE '])(
+		'keeps a stated "off" (%p) off, even when the write starts work',
+		(requested) => {
+			expect(screenshotCaptureFromOrganization(requested, true, true)).toBe(false);
+			expect(screenshotCaptureFromOrganization(requested, undefined, undefined)).toBe(false);
+		}
+	);
 
 	it('keeps today’s behaviour when the organization could not be read', () => {
 		expect(screenshotCaptureFromOrganization(undefined, undefined, undefined)).toBeUndefined();
@@ -179,6 +187,16 @@ describe('EmployeeSubscriber — screen capture set by the platform', () => {
 			expect(em.findOne).not.toHaveBeenCalled();
 		});
 
+		it('keeps a stated "off" when the write also starts work', async () => {
+			const { subscriber, em } = setup(orm, { allowScreenshotCapture: true });
+			const employee = newEmployee({ allowScreenshotCapture: false, startedWorkOn: new Date('2026-10-01') });
+
+			await subscriber.beforeEntityCreate(employee, em);
+
+			expect(employee).toMatchObject({ allowScreenshotCapture: false, isActive: true });
+			expect(em.findOne).not.toHaveBeenCalled();
+		});
+
 		it('reads the organization from the relation when the write has no organizationId', async () => {
 			const { subscriber, em } = setup(orm, { allowScreenshotCapture: false });
 			const employee = newEmployee({ organizationId: undefined, organization: { id: 'org-2' } as never });
@@ -258,13 +276,23 @@ describe('EmployeeSubscriber — screen capture set by the platform', () => {
 				expect(JSON.stringify(organizationReads(em))).toContain('org-1');
 			});
 
-			it('keeps today’s behaviour when the write sets capture itself', async () => {
+			it('keeps today’s behaviour when the write turns capture on itself', async () => {
 				const { subscriber, em } = setup(orm, { allowScreenshotCapture: false });
 				const employee = newEmployee({ allowScreenshotCapture: true, startedWorkOn: new Date('2026-10-01') });
 
 				await subscriber.beforeEntityUpdate(employee, em, ['startedWorkOn', 'allowScreenshotCapture']);
 
 				expect(employee.allowScreenshotCapture).toBe(true);
+				expect(organizationReads(em)).toHaveLength(0);
+			});
+
+			it('keeps an "off" the same write states, even where the organization allows capture', async () => {
+				const { subscriber, em } = setup(orm, { allowScreenshotCapture: true });
+				const employee = newEmployee({ allowScreenshotCapture: false, startedWorkOn: new Date('2026-10-01') });
+
+				await subscriber.beforeEntityUpdate(employee, em, ['startedWorkOn', 'allowScreenshotCapture']);
+
+				expect(employee).toMatchObject({ allowScreenshotCapture: false, isActive: true });
 				expect(organizationReads(em)).toHaveLength(0);
 			});
 

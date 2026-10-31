@@ -102,6 +102,7 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 	let restore: () => void;
 	let organizationService: { findOneByIdString: jest.Mock; create: jest.Mock; update: jest.Mock };
 	let activityLogService: { create: jest.Mock };
+	let contactService: { findOneOrFailByIdString: jest.Mock };
 	let self: Record<string, unknown>;
 
 	const given = (stored: Record<string, unknown>) => {
@@ -123,13 +124,16 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 			update: jest.fn()
 		};
 		activityLogService = { create: jest.fn().mockResolvedValue({}) };
+		contactService = { findOneOrFailByIdString: jest.fn().mockResolvedValue({ success: false }) };
 		self = {
 			organizationService,
 			activityLogService,
+			contactService,
 			moduleRef: { get: jest.fn() },
 			logger: { error: jest.fn() }
 		};
-		self.update = (OrganizationUpdateHandler.prototype as any).update.bind(self);
+		const prototype = OrganizationUpdateHandler.prototype as unknown as { update: (...args: unknown[]) => unknown };
+		self.update = prototype.update.bind(self);
 	});
 
 	afterEach(() => {
@@ -239,6 +243,40 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 		await expect(update({ allowScreenshotCapture: true, contact: { country: 'DE' } })).rejects.toMatchObject({
 			code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED
 		});
+	});
+
+	it.each([
+		['contact: { id }', { contact: { id: 'contact-uk' } }],
+		['contactId', { contactId: 'contact-uk' }]
+	])('reads the country of a contact the write links by %s: a UK contact asks too', async (_, link) => {
+		given({
+			allowScreenshotCapture: false,
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contactId: 'contact-us',
+			contact: { country: 'US' }
+		});
+		contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
+
+		await expect(update({ allowScreenshotCapture: true, ...link })).rejects.toMatchObject({
+			code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED
+		});
+		expect(contactService.findOneOrFailByIdString).toHaveBeenCalledWith('contact-uk');
+		expect(organizationService.create).not.toHaveBeenCalled();
+	});
+
+	it('reads no contact when the write does not turn capture on, or links the current one', async () => {
+		given({
+			allowScreenshotCapture: false,
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contactId: 'contact-us'
+		});
+
+		await update({ name: 'Renamed', contactId: 'contact-uk' });
+		await update({ allowScreenshotCapture: true, contactId: 'contact-us' });
+
+		expect(contactService.findOneOrFailByIdString).not.toHaveBeenCalled();
 	});
 
 	it('never asks to turn capture off', async () => {

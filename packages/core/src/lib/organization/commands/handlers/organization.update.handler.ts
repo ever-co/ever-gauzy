@@ -11,6 +11,7 @@ import {
 } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
+import { ContactService } from '../../../contact/contact.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import {
 	liftEmployeeAgentRestrictions,
@@ -18,6 +19,8 @@ import {
 } from '../../../employee/agent-exit-logout-restriction';
 import { OrganizationService } from '../../organization.service';
 import {
+	currentContactId,
+	linkedContactCountry,
 	logScreenshotCaptureAcknowledgement,
 	omitScreenshotCaptureAcknowledgementFields,
 	resolveScreenshotCaptureAcknowledgement
@@ -31,7 +34,8 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 	constructor(
 		private readonly organizationService: OrganizationService,
 		private readonly activityLogService: ActivityLogService,
-		private readonly moduleRef: ModuleRef
+		private readonly moduleRef: ModuleRef,
+		private readonly contactService: ContactService
 	) {}
 
 	/**
@@ -91,11 +95,21 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		// stored with the change below. Re-saving an organization that already captures, or turning capture
 		// off, asks nothing, so existing organizations keep their value without a new step. The stored location
 		// counts as well as the requested one: the organization keeps its country on its contact, so a top-level
-		// `country` the write never stores cannot take a UK or EEA organization out of the check.
+		// `country` the write never stores cannot take a UK or EEA organization out of the check, and a contact the
+		// write links by id counts with the country it has.
+		const linkedCountry =
+			input.allowScreenshotCapture === true
+				? await linkedContactCountry(
+						this.contactService,
+						changes.contact?.id ?? (changes as { contactId?: ID }).contactId,
+						currentContactId(organization)
+					)
+				: undefined;
 		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(input, organization, [
 			previousLocation,
 			location,
-			{ country: changes.contact?.country }
+			{ country: changes.contact?.country },
+			{ country: linkedCountry }
 		]);
 		input = changes;
 

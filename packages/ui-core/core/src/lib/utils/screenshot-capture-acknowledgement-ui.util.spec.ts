@@ -14,11 +14,11 @@ describe('ScreenshotCaptureAcknowledgementPrompt', () => {
 
 	function setup(options: {
 		stored: boolean;
-		location?: IAgentRestrictionLocation;
+		location?: IAgentRestrictionLocation | IAgentRestrictionLocation[];
 		answer?: IScreenshotCaptureAcknowledgement | null | Error;
 	}) {
 		const control = new FormControl<boolean>(options.stored);
-		let location = options.location ?? EEA;
+		let location: IAgentRestrictionLocation | IAgentRestrictionLocation[] = options.location ?? EEA;
 		const ask = jest.fn(async () => {
 			if (options.answer instanceof Error) throw options.answer;
 			return options.answer === undefined ? ALL : options.answer;
@@ -86,6 +86,17 @@ describe('ScreenshotCaptureAcknowledgementPrompt', () => {
 		expect(ask).not.toHaveBeenCalled();
 		expect(await prompt.confirm()).toBe(true);
 		expect(prompt.payload).toEqual({});
+	});
+
+	it('asks when the stored location is in the EEA/UK even if the pending one is not, as the API does', async () => {
+		// The settings page passes [stored, pending]: moving out of the EEA/UK in the same save still asks.
+		const { control, prompt, ask } = setup({ stored: false, location: [EEA, ELSEWHERE] });
+
+		control.setValue(true);
+		await settled();
+
+		expect(ask).toHaveBeenCalledTimes(1);
+		expect(prompt.payload).toEqual({ screenshotCaptureAcknowledgement: ALL });
 	});
 
 	it('never asks for an organization that already captures, nor to turn capture off', async () => {

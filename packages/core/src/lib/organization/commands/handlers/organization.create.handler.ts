@@ -30,6 +30,8 @@ import { OrganizationTaskPriorityBulkCreateCommand } from './../../../tasks/prio
 import { OrganizationIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
 import { OrganizationTaskSettingCreateCommand } from '../../../organization-task-setting/commands';
 import {
+	currentContactId,
+	linkedContactCountry,
 	logScreenshotCaptureAcknowledgement,
 	omitScreenshotCaptureAcknowledgementFields,
 	resolveScreenshotCaptureAcknowledgement
@@ -272,40 +274,47 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 	 * A new organization starts with capture off unless the request turns it on. A request whose `id` names an
 	 * organization of this tenant makes the save update that organization, so it is judged as the update it is:
 	 * the stored value stays unless the request sets one, turning it on is a change from the stored value, and
-	 * the stored location counts as well as the requested one.
+	 * the stored location counts as well as the requested one. As in the update handler, the flag is then written
+	 * only when the request changes it, so a stale value is never written back. A contact the request names by id
+	 * (which the create below files with the fields sent, keeping the others) counts with the country it has.
 	 *
 	 * @param input The create request.
+	 * @returns the value to write (`undefined`: leave the stored one) and the acknowledgement record, if any
 	 * @throws ApiException 400 `SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED` (see `resolveScreenshotCaptureAcknowledgement`)
 	 */
 	private async resolveScreenshotCapture(input: IOrganizationCreateInput): Promise<{
-		allowScreenshotCapture: boolean;
+		allowScreenshotCapture: boolean | undefined;
 		screenshotCaptureAcknowledgement: IScreenshotCaptureAcknowledgementRecord | null;
 	}> {
-		const requestedLocation: IAgentRestrictionLocation = {
-			regionCode: input.regionCode,
-			timeZone: input.timeZone,
-			country: input.contact?.country || input.country
-		};
 		const stored = await this.findStoredOrganization(input.id);
 
-		const allowScreenshotCapture =
+		const effective =
 			stored && typeof input.allowScreenshotCapture !== 'boolean'
 				? stored.allowScreenshotCapture
 				: newOrganizationAllowsScreenshotCapture(input);
-		const location = stored
-			? [
-					requestedLocation,
-					{ regionCode: stored.regionCode, timeZone: stored.timeZone, country: stored.contact?.country }
-				]
-			: requestedLocation;
+		const linkedCountry = effective
+			? await linkedContactCountry(this.contactService, input.contact?.id, currentContactId(stored))
+			: undefined;
+		const locations: IAgentRestrictionLocation[] = [
+			{
+				regionCode: input.regionCode,
+				timeZone: input.timeZone,
+				country: input.contact?.country || input.country
+			},
+			{ country: linkedCountry },
+			...(stored
+				? [{ regionCode: stored.regionCode, timeZone: stored.timeZone, country: stored.contact?.country }]
+				: [])
+		];
 
+		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(
+			{ ...input, allowScreenshotCapture: effective },
+			stored,
+			locations
+		);
 		return {
-			allowScreenshotCapture,
-			screenshotCaptureAcknowledgement: resolveScreenshotCaptureAcknowledgement(
-				{ ...input, allowScreenshotCapture },
-				stored,
-				location
-			)
+			allowScreenshotCapture: stored && effective === stored.allowScreenshotCapture ? undefined : effective,
+			screenshotCaptureAcknowledgement
 		};
 	}
 

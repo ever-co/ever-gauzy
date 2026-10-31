@@ -3,6 +3,8 @@ import { RequestContext } from '../core/context';
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { ApiException } from '../core/errors/api-exception';
 import {
+	currentContactId,
+	linkedContactCountry,
 	logScreenshotCaptureAcknowledgement,
 	omitScreenshotCaptureAcknowledgementFields,
 	resolveScreenshotCaptureAcknowledgement,
@@ -192,5 +194,44 @@ describe('logScreenshotCaptureAcknowledgement', () => {
 		await expect(
 			logScreenshotCaptureAcknowledgement(activityLogService as never, organization, record)
 		).resolves.toBeUndefined();
+	});
+});
+
+describe('linkedContactCountry', () => {
+	const lookup = (result: unknown) => ({ findOneOrFailByIdString: jest.fn().mockResolvedValue(result) });
+
+	it('reads the country of a contact other than the current one', async () => {
+		const contacts = lookup({ success: true, record: { country: 'GB' } });
+
+		await expect(linkedContactCountry(contacts, 'contact-uk', 'contact-us')).resolves.toBe('GB');
+		expect(contacts.findOneOrFailByIdString).toHaveBeenCalledWith('contact-uk');
+	});
+
+	it('reads nothing without a contact, for the current contact, or without a lookup', async () => {
+		const contacts = lookup({ success: true, record: { country: 'GB' } });
+
+		await expect(linkedContactCountry(contacts, undefined, 'contact-us')).resolves.toBeUndefined();
+		await expect(linkedContactCountry(contacts, 'contact-us', 'contact-us')).resolves.toBeUndefined();
+		await expect(linkedContactCountry(undefined, 'contact-uk')).resolves.toBeUndefined();
+		expect(contacts.findOneOrFailByIdString).not.toHaveBeenCalled();
+	});
+
+	it('answers undefined for a contact that is not found or has no country', async () => {
+		await expect(linkedContactCountry(lookup({ success: false }), 'contact-x')).resolves.toBeUndefined();
+		await expect(
+			linkedContactCountry(lookup({ success: true, record: { country: null } }), 'contact-x')
+		).resolves.toBeUndefined();
+	});
+});
+
+describe('currentContactId', () => {
+	it('reads the column first, then the loaded relation', () => {
+		expect(currentContactId({ contactId: 'contact-a', contact: { id: 'contact-b' } })).toBe('contact-a');
+		expect(currentContactId({ contact: { id: 'contact-b' } })).toBe('contact-b');
+	});
+
+	it('answers undefined for an organization without a contact, or none at all', () => {
+		expect(currentContactId({ contactId: null, contact: null })).toBeUndefined();
+		expect(currentContactId(undefined)).toBeUndefined();
 	});
 });

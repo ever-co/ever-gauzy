@@ -27,8 +27,9 @@ import {
 /**
  * The screen capture value to store when the platform sets it: on creation, or when work starts or resumes.
  *
- * @param requested the value the write carried, before any hook changed it. A stated value (anything but
- *   `undefined`/`null`, including an imported `"1"`) keeps today's behaviour.
+ * @param requested the value the write carried, before any hook changed it. A stated "off" (`false`, or `0`,
+ *   `"0"`, `"false"` from an import) stays off: starting work never turns it on. Any other stated value keeps
+ *   today's behaviour.
  * @param current the value after the subscriber's work-status rule: `true` when the write starts work, `false` when
  *   it ends it, else unset
  * @param organizationAllows the organization's `allowScreenshotCapture`; `undefined`/`null` when it could not be read
@@ -39,6 +40,9 @@ export function screenshotCaptureFromOrganization(
 	current: boolean | undefined,
 	organizationAllows: boolean | null | undefined
 ): boolean | undefined {
+	if (isStatedOff(requested)) {
+		return false;
+	}
 	if (requested !== undefined && requested !== null) {
 		return current;
 	}
@@ -81,6 +85,12 @@ export async function readOrganizationScreenshotCapture(
 	}
 
 	return toBoolean(organization?.allowScreenshotCapture);
+}
+
+/** Whether a write states "off": `false`, or the `0`, `"0"` and `"false"` an import may carry. */
+function isStatedOff(value: unknown): boolean {
+	if (value === false || value === 0) return true;
+	return typeof value === 'string' && ['0', 'false'].includes(value.trim().toLowerCase());
 }
 
 /** A stored boolean as the drivers return it (`0`/`1` on SQLite and MySQL), or `undefined`. */

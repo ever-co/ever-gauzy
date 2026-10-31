@@ -46,12 +46,16 @@ function setup() {
 		findOneOrFailByIdString: jest.fn().mockResolvedValue({ success: false })
 	};
 	const activityLogService = { create: jest.fn().mockResolvedValue({}) };
+	const contactService = {
+		create: jest.fn(async () => ({ id: 'contact-1' })),
+		findOneOrFailByIdString: jest.fn().mockResolvedValue({ success: false })
+	};
 	const handler = new OrganizationCreateHandler(
 		{ execute: jest.fn() } as never,
 		organizationService as never,
 		{ tableName: 'user_organization', create: jest.fn(async () => ({ id: 'membership' })) } as never,
 		{ find: jest.fn().mockResolvedValue([]) } as never,
-		{ create: jest.fn(async () => ({ id: 'contact-1' })) } as never,
+		contactService as never,
 		activityLogService as never
 	);
 	const create = (input: Record<string, unknown>) =>
@@ -60,7 +64,7 @@ function setup() {
 		);
 	const created = () => organizationService.create.mock.calls[0][0];
 
-	return { organizationService, activityLogService, create, created };
+	return { organizationService, activityLogService, contactService, create, created };
 }
 
 beforeEach(() => {
@@ -209,9 +213,53 @@ describe('OrganizationCreateHandler — screen capture', () => {
 
 			await create({ id: 'org-9' });
 
-			expect(created()).toMatchObject({ allowScreenshotCapture: true });
+			// Not the new-organization default, and not the stored value written back: the column is left alone.
+			expect(created().allowScreenshotCapture).toBeUndefined();
 			expect(created()).not.toHaveProperty('screenshotCaptureAcknowledgedAt');
 			expect(activityLogService.create).not.toHaveBeenCalled();
+		});
+
+		it('never writes a stale stored value back, so a save racing one that turns capture off cannot undo it', async () => {
+			const { create, created, organizationService } = setup();
+			organizationService.findOneOrFailByIdString.mockResolvedValue(
+				stored({ allowScreenshotCapture: true, timeZone: 'Europe/Berlin' })
+			);
+
+			await create({ id: 'org-9', allowScreenshotCapture: true });
+
+			expect(created().allowScreenshotCapture).toBeUndefined();
+		});
+
+		it('writes a change the request makes', async () => {
+			const { create, created, organizationService } = setup();
+			organizationService.findOneOrFailByIdString.mockResolvedValue(
+				stored({ allowScreenshotCapture: true, timeZone: 'Europe/Berlin' })
+			);
+
+			await create({ id: 'org-9', allowScreenshotCapture: false });
+
+			expect(created()).toMatchObject({ allowScreenshotCapture: false });
+		});
+	});
+
+	describe('a contact the request names by id', () => {
+		it('counts with the country it has: a UK contact asks for the acknowledgement', async () => {
+			const { create, contactService, organizationService } = setup();
+			contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
+
+			await expect(
+				create({ allowScreenshotCapture: true, timeZone: 'America/New_York', contact: { id: 'contact-uk' } })
+			).rejects.toMatchObject({ code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED });
+			expect(contactService.findOneOrFailByIdString).toHaveBeenCalledWith('contact-uk');
+			expect(organizationService.create).not.toHaveBeenCalled();
+		});
+
+		it('is not read when capture stays off', async () => {
+			const { create, contactService } = setup();
+
+			await create({ contact: { id: 'contact-uk' } });
+
+			expect(contactService.findOneOrFailByIdString).not.toHaveBeenCalled();
 		});
 	});
 });

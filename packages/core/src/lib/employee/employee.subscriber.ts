@@ -180,8 +180,9 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 	/**
 	 * Issue #9872: when the platform sets an employee's screen capture itself — creating the employee, or starting or
 	 * resuming their work — it follows the organization's setting at that moment, unless the write states a value
-	 * (see `screenshotCaptureFromOrganization`). Every create path (REST, GraphQL, bulk, invite, registration,
-	 * integrations, import, seeds) ends in these hooks. A stored value is never rewritten at any other moment.
+	 * (see `screenshotCaptureFromOrganization`). A stated "off" stays off even when the write starts work. Every
+	 * create path (REST, GraphQL, bulk, invite, registration, integrations, import, seeds) ends in these hooks. A
+	 * stored value is never rewritten at any other moment.
 	 *
 	 * @param entity The employee about to be written.
 	 * @param em The entity manager of the write.
@@ -193,7 +194,14 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 		requested: unknown
 	): Promise<void> {
 		try {
-			if (requested !== undefined && requested !== null) return;
+			// A stated value needs no organization: an "off" is kept, anything else stays as the work-status rule set it.
+			if (requested !== undefined && requested !== null) {
+				const stated = screenshotCaptureFromOrganization(requested, entity.allowScreenshotCapture, undefined);
+				if (stated !== undefined) {
+					entity.allowScreenshotCapture = stated;
+				}
+				return;
+			}
 
 			const ormType = getORMType();
 			const tenantId = entity.tenantId ?? entity.tenant?.id;
@@ -243,17 +251,19 @@ export class EmployeeSubscriber extends BaseEntityEventSubscriber<Employee> {
 			const hasEndedWork = !!entity.endWork && isChanged('endWork');
 			// "Back to Work" clears the stored end date: the employee resumes work.
 			const hasResumedWork = entity.endWork === null && !!changedProperties?.includes('endWork');
-			// Whether the write itself sets screen capture, before the work-status rule below does.
+			// What the write itself sets screen capture to, before the work-status rule below does (none: undefined).
 			const statesScreenshotCapture = changedProperties
 				? changedProperties.includes('allowScreenshotCapture')
 				: entity.allowScreenshotCapture !== undefined && entity.allowScreenshotCapture !== null;
+			const requestedScreenshotCapture = statesScreenshotCapture ? entity.allowScreenshotCapture : undefined;
 
 			// Updates the employee's status based on the start and end work dates.
 			await this.updateEmployeeStatus(entity, em, hasStartedWork || hasResumedWork, hasEndedWork);
 
-			// Issue #9872: starting or resuming work turns screen capture on only where the organization allows it.
-			if ((hasStartedWork || hasResumedWork) && !statesScreenshotCapture) {
-				await this.applyOrganizationScreenshotCapture(entity, em, undefined);
+			// Issue #9872: starting or resuming work turns screen capture on only where the organization allows it,
+			// and never against an "off" the same write states.
+			if (hasStartedWork || hasResumedWork) {
+				await this.applyOrganizationScreenshotCapture(entity, em, requestedScreenshotCapture);
 			}
 
 			// The flags the members count reads can also be written directly (`PUT /employee/:id` takes them), and
