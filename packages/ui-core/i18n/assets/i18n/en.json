@@ -8190,8 +8190,8 @@
 		"TOASTR": {
 			"SUCCESS": {
 				"VERSION": {
-					"CREATED": "Plugin version v{{version}} created successfully!",
-					"UPDATED": "Plugin version v{{version}} updated successfully!",
+					"CREATED": "Plugin version v{{number}} created successfully!",
+					"UPDATED": "Plugin version v{{number}} updated successfully!",
 					"DELETED": "Plugin version deleted successfully!",
 					"RESTORED": "Plugin version restored successfully!"
 				},
