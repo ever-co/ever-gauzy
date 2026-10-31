@@ -103,6 +103,9 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 
 			let { contact = {} } = input;
 			delete input['contact'];
+			// Issue #9872: the flag written is the resolved one, and only when there is one. For a create that names a
+			// stored organization, an absent or unchanged flag leaves the key out, so neither ORM touches the column.
+			delete input.allowScreenshotCapture;
 
 			// 3. Create organization
 			const organization: IOrganization = await this.organizationService.create({
@@ -124,7 +127,7 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 				...(input.standardWorkHoursPerDay && {
 					standardWorkHoursPerDay: input.standardWorkHoursPerDay
 				}),
-				allowScreenshotCapture,
+				...(allowScreenshotCapture !== undefined && { allowScreenshotCapture }),
 				...screenshotCaptureAcknowledgement
 			});
 			const { id: organizationId } = organization;

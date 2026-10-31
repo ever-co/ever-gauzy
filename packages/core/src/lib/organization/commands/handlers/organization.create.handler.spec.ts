@@ -213,8 +213,9 @@ describe('OrganizationCreateHandler — screen capture', () => {
 
 			await create({ id: 'org-9' });
 
-			// Not the new-organization default, and not the stored value written back: the column is left alone.
-			expect(created().allowScreenshotCapture).toBeUndefined();
+			// Not the new-organization default, and not the stored value written back: the key is left out, so neither
+			// ORM assigns the column (MikroORM would assign an `undefined` member to the managed entity).
+			expect(created()).not.toHaveProperty('allowScreenshotCapture');
 			expect(created()).not.toHaveProperty('screenshotCaptureAcknowledgedAt');
 			expect(activityLogService.create).not.toHaveBeenCalled();
 		});
@@ -227,7 +228,7 @@ describe('OrganizationCreateHandler — screen capture', () => {
 
 			await create({ id: 'org-9', allowScreenshotCapture: true });
 
-			expect(created().allowScreenshotCapture).toBeUndefined();
+			expect(created()).not.toHaveProperty('allowScreenshotCapture');
 		});
 
 		it('writes a change the request makes', async () => {
