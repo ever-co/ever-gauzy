@@ -6,8 +6,11 @@ import { RegistrationPolicyService } from './registration-policy.service';
  * (`APP_USER_REGISTRATION=false` or `ALLOW_TENANTS_REGISTRATION=false`), with a 403 that says so.
  *
  * Runs after `RegisterAuthorizationGuard`, which sets `request.user` for an authenticated Admin or Super Admin
- * creating a user in their own tenant: that is not a sign-up, and it goes through. Invitations do not use this
- * route at all. Runs before `SubscriptionRequiredGuard`, so a closed server never asks Stripe about the address.
+ * creating a user in their own tenant: that is not a sign-up, and it goes through. That guard authenticates only a
+ * body carrying a privileged field (a role, organization or tenant); a body without one creates a tenant-less account
+ * exactly like a public sign-up, token or not, and is refused here while registration is closed. Invitations do not
+ * use this route at all. Runs before `SubscriptionRequiredGuard`, so a closed server never asks Stripe about the
+ * address.
  */
 @Injectable()
 export class SelfRegistrationGuard implements CanActivate {

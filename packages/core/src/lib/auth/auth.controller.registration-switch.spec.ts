@@ -40,11 +40,15 @@ import { RegistrationPolicyService, SELF_REGISTRATION_DISABLED_MESSAGE, SelfRegi
 const switches = environment as unknown as { authSwitches: IAuthSwitches };
 const OPEN: IAuthSwitches = { userRegistration: true, tenantsRegistration: true, adminPasswordReset: true };
 
-/** Stands in for RegisterAuthorizationGuard: a bearer token marks an authenticated administrator. */
+/**
+ * Stands in for RegisterAuthorizationGuard, with its rule: only a body that carries a privileged field (here
+ * `organizationId`) is authenticated, and a bearer token then marks an administrator. A body without one passes
+ * unauthenticated even with a token, because it creates a tenant-less account exactly like a public sign-up.
+ */
 class AdminFromHeaderGuard implements CanActivate {
 	canActivate(context: ExecutionContext): boolean {
 		const req = context.switchToHttp().getRequest();
-		if (req.headers.authorization) {
+		if (req.body?.organizationId && req.headers.authorization) {
 			req.user = { id: 'admin-id', tenantId: 'tenant-id' };
 		}
 		return true;
@@ -52,6 +56,8 @@ class AdminFromHeaderGuard implements CanActivate {
 }
 
 const allow: CanActivate = { canActivate: () => true };
+
+const ORGANIZATION_ID = '0f0f0f0f-0000-4000-8000-000000000001';
 
 const signup = {
 	user: { email: 'new.person@corp.test', firstName: 'New' },
@@ -136,9 +142,23 @@ describe('AuthController — registration switches over HTTP', () => {
 		await request(app.getHttpServer())
 			.post('/api/auth/register')
 			.set('Authorization', 'Bearer admin-token')
-			.send(signup)
+			.send({ ...signup, organizationId: ORGANIZATION_ID })
 			.expect(201);
 		expect(execute).toHaveBeenCalledTimes(1);
+	});
+
+	it('refuses a tenant-less sign-up while registration is closed, even with a token', async () => {
+		switches.authSwitches = { ...OPEN, userRegistration: false };
+
+		// Without a privileged field nothing ties the new account to the caller's tenant: it is a public sign-up.
+		const response = await request(app.getHttpServer())
+			.post('/api/auth/register')
+			.set('Authorization', 'Bearer admin-token')
+			.send(signup)
+			.expect(403);
+
+		expect(response.body.message).toBe(SELF_REGISTRATION_DISABLED_MESSAGE);
+		expect(execute).not.toHaveBeenCalled();
 	});
 
 	it('publishes whether the public sign-up is open, without authentication', async () => {
