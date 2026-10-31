@@ -127,6 +127,13 @@ export interface IApplicationSetting {
 	/** Display that shows the screenshot notification: an Electron display id, or `null` for the primary display */
 	screenshotNotificationDisplayId?: number | null;
 	mutedNotification: boolean;
+	/**
+	 * The screenshot sound chosen on this computer (the `IDesktopScreenshotSound` of @gauzy/contracts), played instead
+	 * of the bundled one while its file exists; `null` or unset plays the bundled sound. `mutedNotification` still mutes it.
+	 */
+	customScreenshotSound?: { path: string; name: string } | null;
+	/** Short tones when this computer's timer starts and stops tracking. Off unless `true`. */
+	timerStartStopSound?: boolean;
 	autoLaunch: boolean;
 	visibleAwOption: boolean;
 	randomScreenshotTime: boolean;

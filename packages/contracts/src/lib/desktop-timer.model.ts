@@ -60,6 +60,44 @@ export interface IDesktopSecret {
 	}
 }
 
+/**
+ * The screenshot sound chosen on one computer in the desktop apps (#6715): a copy of the file the user picked, kept in
+ * the app's own data folder so that it stays on that computer and keeps playing when the original is moved or deleted.
+ */
+export interface IDesktopScreenshotSound {
+	/** The copy that is played, inside the app's data folder. */
+	path: string;
+	/** The name of the file the user picked, shown in the settings. */
+	name: string;
+}
+
+/** IPC channels (`ipcRenderer.invoke`) of the custom screenshot sound, answered with an {@link IDesktopScreenshotSoundResult}. */
+export enum DesktopScreenshotSoundChannel {
+	/** Asks for a sound file and uses a copy of it from now on. */
+	CHOOSE = 'SELECT_SCREENSHOT_SOUND',
+	/** Goes back to the sound bundled with the app. */
+	RESET = 'RESET_SCREENSHOT_SOUND'
+}
+
+/** Why a picked file was not used as the screenshot sound. */
+export enum DesktopScreenshotSoundError {
+	/** Not one of the supported audio formats. */
+	UNSUPPORTED = 'unsupported',
+	/** Larger than a short notification sound needs to be. */
+	TOO_LARGE = 'too_large',
+	/** It could not be read or copied. */
+	FAILED = 'failed'
+}
+
+export interface IDesktopScreenshotSoundResult {
+	/** The custom sound in use now, `null` for the bundled sound. */
+	sound: IDesktopScreenshotSound | null;
+	/** The file dialog was closed without a choice: nothing changed. */
+	canceled?: boolean;
+	/** The picked file was refused: nothing changed. */
+	error?: DesktopScreenshotSoundError;
+}
+
 export type TLogLevel = 'info' | 'warn' | 'error' | 'all';
 export type TServiceName = 'timer' | 'screenshot' | 'timeslot' | 'all';
 export type TSyncStatus = 'pending' | 'success' | 'failure' | 'all';
