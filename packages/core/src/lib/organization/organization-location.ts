@@ -49,6 +49,31 @@ async function readContactCountry(
 }
 
 /**
+ * The contact an organization row links, as the location rules read it: its id and country, read by the server through
+ * the contact lookup (within the tenant, across its organizations).
+ *
+ * The organization's `contact` relation is not read for these rules. That relation is gated by the permission to view
+ * contacts on every read a client could shape (`ORGANIZATION_SENSITIVE_RELATIONS`), which saving the organization's
+ * settings does not take, and this read is never answered to the caller.
+ *
+ * @param organization the organization as stored, read without its relations
+ * @param contacts the contact lookup
+ * @returns the linked contact's id and country, no country when it cannot be read (as a missing contact loads none),
+ *          and `null` when the organization links no contact
+ */
+export async function linkedContact(
+	organization: { contactId?: ID | null; contact?: Pick<IContact, 'id'> | null } | null | undefined,
+	contacts: IContactLookup | undefined
+): Promise<Pick<IContact, 'id' | 'country'> | null> {
+	const contactId = currentContactId(organization);
+	if (!contactId) {
+		return null;
+	}
+	const { country } = await readContactCountry(contacts, contactId);
+	return { id: contactId, country };
+}
+
+/**
  * The country of a contact an organization write links by id, when it is not the organization's current contact:
  * the organization will be where that contact is, so its country counts in the EEA/UK check. Read within the
  * tenant, across its organizations (the write itself may link any contact of the tenant).

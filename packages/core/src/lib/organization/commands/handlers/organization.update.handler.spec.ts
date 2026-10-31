@@ -1,13 +1,39 @@
 import '../../../core/entities/internal';
 
-import { NotFoundException } from '@nestjs/common';
-import { EEA_UK_AGENT_RESTRICTION_ERR_MSG, IOrganizationUpdateInput } from '@gauzy/contracts';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { EntityMetadata } from 'typeorm';
+import { EEA_UK_AGENT_RESTRICTION_ERR_MSG, IOrganizationUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { ApiErrorCode } from '../../../core/errors/api-error-codes';
 import { ApiException } from '../../../core/errors/api-exception';
+import { assertSensitiveRelationsAllowed } from '../../../core/util/sensitive-relations.helper';
 import { asTenantUser, createTenantFixture } from '../../../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { OrganizationUpdateCommand } from '../organization.update.command';
 import { OrganizationUpdateHandler } from './organization.update.handler';
+
+/** The contact lookup (`ContactService`) over `contacts`, by id: a contact it does not hold is not found. */
+const contactLookup = (contacts: Record<string, Record<string, unknown>>) => ({
+	findOneOrFailByIdString: jest.fn(async (id: string) =>
+		id in contacts ? { success: true, record: contacts[id] } : { success: false }
+	)
+});
+
+/**
+ * The `contactId` an organization row read without its relations holds for a fixture's linked `contact`, which is
+ * added to `contacts` so the lookup finds it.
+ */
+const linking = (
+	contacts: Record<string, Record<string, unknown>>,
+	contactId: unknown,
+	contact: unknown
+): { contactId?: string } => {
+	if (!contact || typeof contact !== 'object') {
+		return {};
+	}
+	const linked = (contactId as string) ?? (contact as { id?: string }).id ?? 'contact-stored';
+	contacts[linked] = contact as Record<string, unknown>;
+	return { contactId: linked };
+};
 
 /**
  * The update coerced every `show_*` flag whether or not the input carried it: `!!undefined` turned the unsent
@@ -104,15 +130,20 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 	let organizationService: { findOneByIdString: jest.Mock; create: jest.Mock; update: jest.Mock };
 	let activityLogService: { create: jest.Mock };
 	let contactService: { findOneOrFailByIdString: jest.Mock };
+	let contacts: Record<string, Record<string, unknown>>;
 	let self: Record<string, unknown>;
 
-	const given = (stored: Record<string, unknown>) => {
+	/**
+	 * The organization as the handler reads it: without its relations, the contact it links named by its `contactId`
+	 * column. A fixture's `contact` is that contact, found by the contact lookup.
+	 */
+	const given = ({ contact, ...stored }: Record<string, unknown>) => {
 		organizationService.findOneByIdString.mockResolvedValue({
 			id: 'org-1',
 			name: 'Org',
 			tenantId: fixture.tenantId,
-			contact: null,
-			...stored
+			...stored,
+			...linking(contacts, stored.contactId, contact)
 		});
 	};
 
@@ -125,7 +156,8 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 			update: jest.fn()
 		};
 		activityLogService = { create: jest.fn().mockResolvedValue({}) };
-		contactService = { findOneOrFailByIdString: jest.fn().mockResolvedValue({ success: false }) };
+		contacts = {};
+		contactService = contactLookup(contacts);
 		self = {
 			organizationService,
 			activityLogService,
@@ -257,7 +289,7 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 			contactId: 'contact-us',
 			contact: { country: 'US' }
 		});
-		contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
+		contacts['contact-uk'] = { country: 'GB' };
 
 		await expect(update({ allowScreenshotCapture: true, ...link })).rejects.toMatchObject({
 			code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED
@@ -266,7 +298,7 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 		expect(organizationService.create).not.toHaveBeenCalled();
 	});
 
-	it('reads no contact when the write links none, or links the current one', async () => {
+	it('reads no other contact than the linked one when the write links none, or links the current one', async () => {
 		given({
 			allowScreenshotCapture: false,
 			regionCode: 'en',
@@ -277,7 +309,8 @@ describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
 		await update({ name: 'Renamed' });
 		await update({ allowScreenshotCapture: true, contactId: 'contact-us' });
 
-		expect(contactService.findOneOrFailByIdString).not.toHaveBeenCalled();
+		const read = contactService.findOneOrFailByIdString.mock.calls.map(([id]) => id);
+		expect(new Set(read)).toEqual(new Set(['contact-us']));
 	});
 
 	it('never asks to turn capture off', async () => {
@@ -325,16 +358,21 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 	let organizationService: { findOneByIdString: jest.Mock; create: jest.Mock; update: jest.Mock };
 	let activityLogService: { create: jest.Mock };
 	let contactService: { findOneOrFailByIdString: jest.Mock };
+	let contacts: Record<string, Record<string, unknown>>;
 	let moduleRef: { get: jest.Mock };
 	let self: Record<string, unknown>;
 
-	const row = (values: Record<string, unknown>) => ({
+	/**
+	 * The organization as the handler reads it: without its relations, the contact it links named by its `contactId`
+	 * column. A fixture's `contact` is that contact, found by the contact lookup.
+	 */
+	const row = ({ contact, ...values }: Record<string, unknown>) => ({
 		id: 'org-1',
 		name: 'Org',
 		tenantId: fixture.tenantId,
 		allowScreenshotCapture: false,
-		contact: null,
-		...values
+		...values,
+		...linking(contacts, values.contactId, contact)
 	});
 	/** The organization as read before the update and, by default the same, as read back after the save. */
 	const given = (stored: Record<string, unknown>, saved: Record<string, unknown> = stored) => {
@@ -350,7 +388,8 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 			update: jest.fn()
 		};
 		activityLogService = { create: jest.fn().mockResolvedValue({}) };
-		contactService = { findOneOrFailByIdString: jest.fn().mockResolvedValue({ success: false }) };
+		contacts = {};
+		contactService = contactLookup(contacts);
 		// No employee service here: lifting the employees' restrictions shows only as this lookup.
 		moduleRef = { get: jest.fn() };
 		self = {
@@ -422,7 +461,7 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 
 	it('counts a contact the write links by id: linking a UK contact while restricting exit is refused', async () => {
 		given({ regionCode: 'en', timeZone: 'America/New_York', contactId: 'contact-us', contact: { country: 'US' } });
-		contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
+		contacts['contact-uk'] = { country: 'GB' };
 
 		await expect(update({ contact: { id: 'contact-uk' }, ...RESTRICT })).rejects.toThrow(
 			EEA_UK_AGENT_RESTRICTION_ERR_MSG
@@ -452,7 +491,6 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 			{ ...US, contactId: 'contact-us', contact: { country: 'US' } },
 			{ ...US, contactId: 'contact-uk', contact: { country: 'GB' } }
 		);
-		contactService.findOneOrFailByIdString.mockResolvedValue({ success: true, record: { country: 'GB' } });
 
 		await update({ contact: { id: 'contact-uk' } });
 
@@ -506,5 +544,99 @@ describe('OrganizationUpdateHandler — agent exit/logout restriction location',
 		await expect(update({ contact: { id: 'contact-x' }, name: 'Renamed' })).rejects.toThrow(NotFoundException);
 		expect(organizationService.create).not.toHaveBeenCalled();
 		expect(activityLogService.create).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * Saving the organization's settings takes the permission to edit the organization, not the one to view contacts. The
+ * update judges the location from the country of the contact the organization links, which it reads itself, so a
+ * caller without ORG_CONTACT_VIEW saves the settings, and is answered no contact.
+ */
+describe('OrganizationUpdateHandler — a settings editor who may not view contacts', () => {
+	const fixture = createTenantFixture();
+	/** The organization's metadata, as the read sink walks it (the sink every CRUD read goes through). */
+	const ORGANIZATION = {
+		name: 'Organization',
+		tableName: 'organization',
+		findRelationWithPropertyPath: () => undefined
+	} as unknown as EntityMetadata;
+	/** A UK organization by its contact alone: its region code and time zone are outside the EEA/UK. */
+	const STORED = {
+		id: 'org-1',
+		name: 'Org',
+		tenantId: fixture.tenantId,
+		regionCode: 'en',
+		timeZone: 'America/New_York',
+		contactId: 'contact-uk',
+		allowScreenshotCapture: false
+	};
+
+	let restore: () => void;
+	let organizationService: { findOneByIdString: jest.Mock; create: jest.Mock; update: jest.Mock };
+	let contactService: { findOneOrFailByIdString: jest.Mock };
+	let self: Record<string, unknown>;
+
+	beforeEach(() => {
+		({ restore } = asTenantUser(fixture, { permissions: [PermissionsEnum.ALL_ORG_EDIT] }));
+		jest.spyOn(RequestContext, 'currentRequestContext').mockReturnValue({} as never);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(fixture.user.id);
+		organizationService = {
+			findOneByIdString: jest.fn(async (_id: string, options?: { relations?: unknown }) => {
+				assertSensitiveRelationsAllowed(ORGANIZATION, options?.relations);
+				return { ...STORED };
+			}),
+			create: jest.fn(async (entity) => entity),
+			update: jest.fn()
+		};
+		contactService = contactLookup({ 'contact-uk': { id: 'contact-uk', country: 'GB', city: 'London' } });
+		self = {
+			organizationService,
+			activityLogService: { create: jest.fn().mockResolvedValue({}) },
+			contactService,
+			moduleRef: { get: jest.fn() },
+			logger: { error: jest.fn() }
+		};
+		const prototype = OrganizationUpdateHandler.prototype as unknown as Record<
+			'update' | 'savedLocation',
+			(...args: unknown[]) => unknown
+		>;
+		self.update = prototype.update.bind(self);
+		self.savedLocation = prototype.savedLocation.bind(self);
+	});
+
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	const update = (input: Record<string, unknown>) =>
+		OrganizationUpdateHandler.prototype.execute.call(
+			self,
+			new OrganizationUpdateCommand('org-1', input as unknown as IOrganizationUpdateInput)
+		);
+
+	it('is refused the organization’s contact on a read of its own', async () => {
+		await expect(
+			organizationService.findOneByIdString('org-1', { relations: { contact: true } })
+		).rejects.toBeInstanceOf(ForbiddenException);
+	});
+
+	it('saves the settings, and is answered the organization without its contact', async () => {
+		const answer = await update({ name: 'Renamed', show_profits: true });
+
+		expect(organizationService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'org-1', name: 'Renamed', show_profits: true })
+		);
+		expect(answer).toMatchObject({ id: 'org-1' });
+		expect(answer).not.toHaveProperty('contact');
+	});
+
+	it('still judges the location by the linked contact: a UK organization cannot restrict exit', async () => {
+		await expect(update({ allowAgentAppExit: false, acknowledgeAgentExitLogoutRestriction: true })).rejects.toThrow(
+			EEA_UK_AGENT_RESTRICTION_ERR_MSG
+		);
+
+		expect(contactService.findOneOrFailByIdString).toHaveBeenCalledWith('contact-uk');
+		expect(organizationService.create).not.toHaveBeenCalled();
 	});
 });
