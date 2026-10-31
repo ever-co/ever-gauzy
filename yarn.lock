@@ -32916,9 +32916,9 @@ syntax-error@^1.1.1:
     acorn-node "^1.2.0"
 
 systeminformation@^5.31.1, systeminformation@^5.31.6:
-  version "5.33.15"
-  resolved "https://registry.npmjs.org/systeminformation/-/systeminformation-5.33.15.tgz#305ca18a1161c3c1ea57b126192705e60baf7169"
-  integrity sha512-s5RloL0F7xhN0ZjfHtLGnbf7EW74EI0N8NFL+1xR7Oxz9QA33obNZsl7lyfnJOhN04E/kGFPoJPlvY7TZ5fzmw==
+  version "5.33.18"
+  resolved "https://registry.yarnpkg.com/systeminformation/-/systeminformation-5.33.18.tgz#cae5983875ba291f6f036cfde86a26b422c5b71c"
+  integrity sha512-SF8DBQx3ypa8zDqZlezpHQ6M2g7TrqSEWpAtC4OsHCdLmi7J2WdxaSbA8/DJyEn2l/CHPrW0VFenoqoDccrw6g==
 
 table@^6.9.0:
   version "6.9.0"
