@@ -19,7 +19,7 @@ import {
 } from '../entitlement.types';
 import { Entitlement } from '../entitlement/entitlement.entity';
 import { EntitlementService } from '../entitlement/entitlement.service';
-import { isOrderSettled } from './entitlement-order-settlement';
+import { activatableOrderLines, orderWithdrawalReason } from './entitlement-order-settlement';
 
 /**
  * The shape a granting order line carries.
@@ -72,11 +72,13 @@ export interface IRefundLineProjection {
  * replay would repeat are the ones that check the state they move away from.
  *
  * Delivery is also reorderable, so a retried `order.placed` can arrive after the `order.completed` it
- * preceded, when there was nothing yet to put into force. Where the deployment binds
- * {@link ENTITLEMENT_ORDER_STATE_PORT}, the placement asks the order capability whether the order has
- * settled since and, if so, puts what it granted into force itself (#11023). The order row is the durable
- * record of the settlement, and it is read through the port the order capability provides, never from
- * its table. Without the port the rights stay `PENDING` until the next settlement event, as before.
+ * preceded, when there was nothing yet to put into force, or after the cancellation or the full refund
+ * that had nothing yet to withdraw. Where the deployment binds {@link ENTITLEMENT_ORDER_STATE_PORT}, the
+ * placement asks the order capability where the order is now (#11023): it grants nothing for an order
+ * already withdrawn, and it puts into force what it granted for lines that are still paid for on an order
+ * that settled since. The order and line rows are the durable record of both, and they are read through
+ * the port the order capability provides, never from its tables. Without the port the rights stay
+ * `PENDING` until the next settlement event, as before.
  */
 @Injectable()
 export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
@@ -189,8 +191,10 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 	 * Grants a `PENDING` right for every line of a placed order that carries an entitlement policy.
 	 *
 	 * The right is not yet in force: it is granted by the purchase and becomes exercisable when the
-	 * money settles, which is normally the next event. When the settlement was delivered first, the order
-	 * already records it, and the rights are put into force here (see {@link activateIfAlreadySettled}).
+	 * money settles, which is normally the next event. A placement delivered after the order's later events
+	 * reads where the order is now instead: it grants nothing for an order that was cancelled or refunded in
+	 * full in the meantime (see {@link isWithdrawnBeforePlacement}), and it puts into force what it granted when
+	 * the order settled in the meantime (see {@link reconcileWithOrderState}).
 	 *
 	 * @param event The `order.placed` event.
 	 * @param scope The tenant and organization the event belongs to.
@@ -205,17 +209,18 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			return;
 		}
 
-		let granting = 0;
+		const granting = lines.filter(
+			(line): line is IOrderLineProjection & { entitlement: IOrderLineEntitlementPolicy } => !!line.entitlement
+		);
 
-		for (const line of lines) {
+		if (!granting.length || (await this.isWithdrawnBeforePlacement(orderId, event, scope))) {
+			return;
+		}
+
+		const orderLineIds: ID[] = [];
+
+		for (const line of granting) {
 			const policy = line.entitlement;
-
-			if (!policy) {
-				continue;
-			}
-
-			granting++;
-
 			const orderLineId = line.orderLineId ?? line.lineId ?? line.id;
 
 			await this.entitlementService.grant(
@@ -235,32 +240,77 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 				},
 				scope
 			);
+
+			if (orderLineId) {
+				orderLineIds.push(orderLineId);
+			}
 		}
 
-		if (granting > 0) {
-			await this.activateIfAlreadySettled(orderId, event, scope);
-		}
+		await this.reconcileWithOrderState(orderId, orderLineIds, event, scope);
 	}
 
 	/**
-	 * Puts the rights a placement just granted into force when the order settled before the placement was
-	 * delivered.
+	 * Whether the order a placement is about to grant from was cancelled or refunded in full before the
+	 * placement was delivered.
+	 *
+	 * The `order.canceled` or the full `payment.refunded` handled first found nothing to withdraw, and nothing
+	 * after it will withdraw what a late placement grants, so the placement grants nothing and says so. Without
+	 * the port, or for an order the port does not find, the placement grants as it always did.
+	 *
+	 * @param orderId The order the placement grants from.
+	 * @param event The `order.placed` event, for the log.
+	 * @param scope The tenant and organization the event belongs to.
+	 * @returns True when nothing should be granted.
+	 */
+	private async isWithdrawnBeforePlacement(
+		orderId: ID,
+		event: IEventEnvelope,
+		scope: IEntitlementScope
+	): Promise<boolean> {
+		if (!this.orderState) {
+			return false;
+		}
+
+		const reason = orderWithdrawalReason(await this.orderState.findState(orderId, scope));
+
+		if (!reason) {
+			return false;
+		}
+
+		this.logger.warn(
+			`order.placed ${event.id} was delivered after order ${orderId} was withdrawn (${reason}), so no entitlement was granted.`
+		);
+
+		return true;
+	}
+
+	/**
+	 * Brings the rights a placement just granted in line with where the order is now.
 	 *
 	 * The consumer is reorderable, so `order.completed` (or `payment.captured`) can be handled before a
 	 * retried `order.placed`: it then finds nothing `PENDING` to activate, and without this the rights the
 	 * placement grants afterwards would wait for a settlement event that has already come and gone. The
 	 * order's own state is the durable memo of that settlement — `COMPLETED` is written in the transaction
-	 * that appends `order.completed` — so it is asked here, after the grants, and the same activation the
-	 * settlement handler performs is repeated. It is idempotent, so a replay of either event changes nothing.
+	 * that appends `order.completed` — so it is asked here, after the grants, and the activation the
+	 * settlement handler performs is repeated, line by line: only the lines that are still paid for are put
+	 * into force ({@link activatableOrderLines}), so a refund handled before the placement does not leave the
+	 * line it refunded with a right in force. A line left out keeps its right `PENDING`.
 	 *
-	 * A read that fails is not swallowed: the delivery is retried, and the grants it repeats are replays.
+	 * Asking after the grants is what closes the race with a concurrent cancellation as well: when the order
+	 * reads cancelled or refunded in full now, its `order.canceled` or `payment.refunded` may already have
+	 * found nothing to withdraw, so what the order granted is withdrawn here, with the reason that event gives.
+	 *
+	 * Every step is idempotent, so a replay of any of the events changes nothing. A read that fails is not
+	 * swallowed: the delivery is retried, and the grants it repeats are replays.
 	 *
 	 * @param orderId The order the placement granted from.
+	 * @param orderLineIds The lines the placement granted rights for.
 	 * @param event The `order.placed` event, for the log.
 	 * @param scope The tenant and organization the event belongs to.
 	 */
-	private async activateIfAlreadySettled(
+	private async reconcileWithOrderState(
 		orderId: ID,
+		orderLineIds: readonly ID[],
 		event: IEventEnvelope,
 		scope: IEntitlementScope
 	): Promise<void> {
@@ -269,16 +319,30 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 		}
 
 		const state = await this.orderState.findState(orderId, scope);
+		const reason = orderWithdrawalReason(state);
 
-		if (!isOrderSettled(state)) {
+		if (reason) {
+			this.logger.warn(
+				`order.placed ${event.id} granted while order ${orderId} was being withdrawn (${reason}), so its entitlements were withdrawn again.`
+			);
+
+			await this.withdrawOrder(orderId, reason, scope);
+			return;
+		}
+
+		const activatable = activatableOrderLines(state, orderLineIds);
+
+		if (!activatable.length) {
 			return;
 		}
 
 		this.logger.log(
-			`order.placed ${event.id} was delivered after order ${orderId} settled, so its entitlements were put into force on placement.`
+			`order.placed ${event.id} was delivered after order ${orderId} settled, so the entitlements of ${activatable.length} of its ${orderLineIds.length} granting line(s) were put into force on placement.`
 		);
 
-		await this.entitlementService.activateGranted({ orderId }, scope);
+		for (const orderLineId of activatable) {
+			await this.entitlementService.activateGranted({ orderId, orderLineId }, scope);
+		}
 	}
 
 	/**
@@ -313,9 +377,7 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			return;
 		}
 
-		for (const entitlement of await this.findByOrder(orderId, scope)) {
-			await this.entitlementService.revoke(entitlement.id, EntitlementRevocationReason.ORDER_CANCELED, scope);
-		}
+		await this.withdrawOrder(orderId, EntitlementRevocationReason.ORDER_CANCELED, scope);
 	}
 
 	/**
@@ -343,10 +405,7 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 
 		if (!lines.length) {
 			if (data.fullRefund === true || data.full === true) {
-				for (const entitlement of await this.findByOrder(orderId, scope)) {
-					await this.entitlementService.revoke(entitlement.id, EntitlementRevocationReason.REFUNDED, scope);
-				}
-
+				await this.withdrawOrder(orderId, EntitlementRevocationReason.REFUNDED, scope);
 				return;
 			}
 
@@ -509,6 +568,19 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 
 		for (const entitlement of await this.findBySubscription(subscriptionId, scope)) {
 			await this.entitlementService.expire(entitlement.id, data.reason ?? 'SUBSCRIPTION_EXPIRED', scope);
+		}
+	}
+
+	/**
+	 * Withdraws every right an order granted, as a cancellation or a full refund does.
+	 *
+	 * @param orderId The order.
+	 * @param reason The revocation reason.
+	 * @param scope The tenant and organization.
+	 */
+	private async withdrawOrder(orderId: ID, reason: string, scope: IEntitlementScope): Promise<void> {
+		for (const entitlement of await this.findByOrder(orderId, scope)) {
+			await this.entitlementService.revoke(entitlement.id, reason, scope);
 		}
 	}
 

@@ -336,12 +336,14 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	 * right that is `EXPIRED` with its event emitted, its keys withdrawn and its activations closed
 	 * rather than a row that only looks closed.
 	 *
-	 * @param filter Which rights to put into force: the order they came from, or the subscription.
+	 * @param filter Which rights to put into force: the order they came from, or the subscription. With an
+	 * order, `orderLineId` narrows it to the rights one of its lines granted, for a caller that decides line
+	 * by line whether a purchase is still paid for (#11023); it is ignored without an order.
 	 * @param scope The tenant and organization the event belongs to.
 	 * @returns The ids of the rights that were put into force.
 	 */
 	public async activateGranted(
-		filter: { orderId?: ID; subscriptionId?: ID },
+		filter: { orderId?: ID; orderLineId?: ID; subscriptionId?: ID },
 		scope: IEntitlementScope = {}
 	): Promise<ID[]> {
 		if (!filter.orderId && !filter.subscriptionId) {
@@ -356,7 +358,12 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 			const pending = await manager.find(Entitlement, {
 				where: {
 					status: EntitlementStatus.PENDING,
-					...(filter.orderId ? { orderId: filter.orderId } : { subscriptionId: filter.subscriptionId }),
+					...(filter.orderId
+						? {
+								orderId: filter.orderId,
+								...(filter.orderLineId ? { orderLineId: filter.orderLineId } : {})
+							}
+						: { subscriptionId: filter.subscriptionId }),
 					...(tenantId ? { tenantId } : {}),
 					...(organizationId ? { organizationId } : {})
 				} as any

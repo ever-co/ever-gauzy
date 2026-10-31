@@ -39,10 +39,19 @@ its right is revoked; a derived number then takes the next revision (`…-L-2`).
 `order.completed` can be handled before a retried `order.placed`, when there is
 nothing yet to put into force. When the installation binds
 `ENTITLEMENT_ORDER_STATE_PORT` (the API's composition module binds it to the
-order package's `OrderStateReader`), the placement asks the order whether it has
-settled since — `COMPLETED`, or payment `CAPTURED`, and never `CANCELED` — and
-puts what it granted into force itself. Left unbound, the rights stay `PENDING`
-until the next settlement event, as before.
+order package's `OrderStateReader`), the placement reads where the order is now:
+
+- an order already cancelled (`CANCELED`, or `canceledAt` once archived) or
+  refunded in full (payment `REFUNDED`) grants nothing, and the skip is logged;
+- on an order that settled since — `COMPLETED` or `completedAt`, or payment
+  `CAPTURED` in full — the placement puts into force, line by line, the rights of
+  the lines still paid for (`quantity` above `refundedQuantity`); a line refunded
+  in full keeps its right `PENDING`, and so does every line of an order refunded
+  in part when the port cannot answer the lines;
+- an order cancelled or refunded in full while the placement was granting has
+  what it granted withdrawn again, with the reason the matching event gives.
+
+Left unbound, the rights stay `PENDING` until the next settlement event, as before.
 
 **A right that has been withdrawn cannot be activated.** An entitlement that is
 `REVOKED`, that is past `endsAt + gracePeriodDays`, or whose live activations

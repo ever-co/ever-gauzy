@@ -2,15 +2,26 @@ import { Injectable, Optional } from '@nestjs/common';
 import { FindOptionsWhere } from 'typeorm';
 import { FulfillmentStatus, ID, OrderPaymentStatus, OrderStatus } from '@gauzy/contracts';
 import { IOrderRowScope } from '../order-history/order-row-scope';
+import { OrderLine } from '../order-line/order-line.entity';
+import { MikroOrmOrderLineRepository } from '../order-line/repository/mikro-orm-order-line.repository';
+import { TypeOrmOrderLineRepository } from '../order-line/repository/type-orm-order-line.repository';
 import { OrderUnitOfWork, inOwnUnitOfWork } from '../order-totals/order-unit-of-work';
 import { Order } from './order.entity';
 import { MikroOrmOrderRepository } from './repository/mikro-orm-order.repository';
 import { TypeOrmOrderRepository } from './repository/type-orm-order.repository';
 
+/** One line of an order: what was bought on it and what has been paid back, as the line row holds them. */
+export interface IOrderLineStateSnapshot {
+	readonly id: ID;
+	readonly quantity: number;
+	readonly refundedQuantity: number;
+}
+
 /**
- * Where one order is now: its lifecycle status and its two materialised statuses, as the order row holds them.
+ * Where one order is now: its lifecycle status, its two materialised statuses, when it completed or was cancelled,
+ * and what is still paid for on each of its lines, as the order and line rows hold them.
  *
- * A projection rather than the row, so a package that asks the question is not handed a shape the order
+ * A projection rather than the rows, so a package that asks the question is not handed a shape the order
  * package would then be unable to change.
  */
 export interface IOrderStateSnapshot {
@@ -18,6 +29,12 @@ export interface IOrderStateSnapshot {
 	readonly status: OrderStatus;
 	readonly paymentStatus: OrderPaymentStatus;
 	readonly fulfillmentStatus: FulfillmentStatus;
+	/** When the order completed. Archiving keeps it, so it still says so once the status reads `ARCHIVED`. */
+	readonly completedAt: Date | null;
+	/** When the order was cancelled. Archiving keeps it, so it still says so once the status reads `ARCHIVED`. */
+	readonly canceledAt: Date | null;
+	/** Every line of the order, with its bought and its refunded quantity. */
+	readonly lines: readonly IOrderLineStateSnapshot[];
 }
 
 /**
@@ -30,11 +47,15 @@ export interface IOrderStateSnapshot {
  * that appends `order.completed` — and this reader is the one way another package reads it: through a port the
  * installation binds to this class, never by reading the `order` table itself.
  *
+ * **Lines.** A refund pays back lines, not the order: once part of the money is refunded, only the lines' own
+ * `refundedQuantity` (the cache this package keeps over its succeeded refunds) says which purchases are still
+ * paid for. The snapshot carries every line's bought and refunded quantity so the caller decides per line.
+ *
  * **Scope.** A consumer has no request, so there is no caller whose tenant could scope the read; the event's
  * tenant is passed in instead, and it is required. A read without a tenant answers `null` rather than looking
- * across tenants. The organization narrows the read when it is stated.
+ * across tenants. The organization narrows the read when it is stated. The lines are read under the same scope.
  *
- * **ORM.** The row is read through the configured ORM, inside a persistence context of its own
+ * **ORM.** The rows are read through the configured ORM, inside one persistence context of its own
  * ({@link OrderUnitOfWork}): the consumer runs without a request, and under MikroORM the global entity manager
  * refuses context-specific reads.
  */
@@ -43,6 +64,8 @@ export class OrderStateReader {
 	constructor(
 		private readonly typeOrmOrderRepository: TypeOrmOrderRepository,
 		private readonly mikroOrmOrderRepository: MikroOrmOrderRepository,
+		private readonly typeOrmOrderLineRepository: TypeOrmOrderLineRepository,
+		private readonly mikroOrmOrderLineRepository: MikroOrmOrderLineRepository,
 		@Optional() private readonly unitOfWork?: OrderUnitOfWork
 	) {}
 
@@ -59,23 +82,35 @@ export class OrderStateReader {
 			return null;
 		}
 
-		const where = {
-			id: orderId,
+		const scoped = {
 			tenantId: scope.tenantId,
 			...(scope.organizationId ? { organizationId: scope.organizationId } : {})
 		};
 
-		const order = await inOwnUnitOfWork(this.unitOfWork, () => this.findOrder(where));
+		const read = await inOwnUnitOfWork(this.unitOfWork, async () => {
+			const order = await this.findOrder({ id: orderId, ...scoped });
 
-		if (!order) {
+			return order ? { order, lines: await this.findLines({ orderId: order.id, ...scoped }) } : null;
+		});
+
+		if (!read) {
 			return null;
 		}
+
+		const { order, lines } = read;
 
 		return {
 			id: order.id,
 			status: order.status,
 			paymentStatus: order.paymentStatus,
-			fulfillmentStatus: order.fulfillmentStatus
+			fulfillmentStatus: order.fulfillmentStatus,
+			completedAt: order.completedAt ?? null,
+			canceledAt: order.canceledAt ?? null,
+			lines: lines.map((line) => ({
+				id: line.id,
+				quantity: Number(line.quantity ?? 0),
+				refundedQuantity: Number(line.refundedQuantity ?? 0)
+			}))
 		};
 	}
 
@@ -91,5 +126,19 @@ export class OrderStateReader {
 		}
 
 		return (await this.typeOrmOrderRepository.findOne({ where: where as FindOptionsWhere<Order> })) ?? null;
+	}
+
+	/**
+	 * Reads an order's lines through the configured ORM.
+	 *
+	 * @param where The order, its tenant and, when stated, its organization.
+	 * @returns The lines.
+	 */
+	private async findLines(where: Record<string, unknown>): Promise<OrderLine[]> {
+		if (this.unitOfWork?.usesMikroOrm) {
+			return (await this.mikroOrmOrderLineRepository.find(where as never)) ?? [];
+		}
+
+		return (await this.typeOrmOrderLineRepository.find({ where: where as FindOptionsWhere<OrderLine> })) ?? [];
 	}
 }
