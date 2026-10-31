@@ -8,7 +8,7 @@ import {
 	IEventEnvelope
 } from '@gauzy/contracts';
 import { EventConsumerRegistry } from '@gauzy/core';
-import { EntitlementKind } from '../entitlement.enums';
+import { EntitlementKind, EntitlementStatus } from '../entitlement.enums';
 import {
 	ENTITLEMENT_CONSUMED_EVENTS,
 	ENTITLEMENT_ORDER_STATE_PORT,
@@ -396,6 +396,8 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 	 * reported and skipped: revoking a right because a payment event omitted its detail would
 	 * withdraw something the customer paid for, and no amount of tidiness is worth that.
 	 *
+	 * A right already revoked is left as it is: only the rights still standing are lowered or withdrawn.
+	 *
 	 * @param event The `payment.refunded` event.
 	 * @param scope The tenant and organization the event belongs to.
 	 */
@@ -428,6 +430,12 @@ export class EntitlementGrantConsumer implements IEventConsumer, OnModuleInit {
 			const entitlements = await this.entitlementService.findGranted({ orderLineId: line.orderLineId }, scope);
 
 			for (const entitlement of entitlements) {
+				// A withdrawn right has nothing left to refund. A line granted again after a revocation holds the
+				// revoked right next to its live one, and lowering the revoked one would rewrite its history.
+				if (entitlement.status === EntitlementStatus.REVOKED) {
+					continue;
+				}
+
 				if (line.full === true || line.quantity === undefined) {
 					await this.entitlementService.revoke(
 						entitlement.id,

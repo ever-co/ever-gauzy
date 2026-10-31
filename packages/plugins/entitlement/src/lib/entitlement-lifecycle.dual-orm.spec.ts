@@ -1556,6 +1556,45 @@ describe.each([
 			expect(canceled).toEqual([]);
 			expect(refunded).toEqual([]);
 		});
+
+		it('lowers only the live right of a line granted again after a revocation when part of it is refunded', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			const revoked = await harness.entitlements.grant(
+				{ orderId: 'order-regranted', orderLineId: 'line-1', quantity: 3, number: 'ENT-REVOKED' } as any,
+				SCOPE
+			);
+
+			await harness.entitlements.revoke(
+				revoked.entitlement.id as string,
+				EntitlementRevocationReason.REFUNDED,
+				SCOPE
+			);
+
+			const live = await harness.entitlements.grant(
+				{ orderId: 'order-regranted', orderLineId: 'line-1', quantity: 3, number: 'ENT-LIVE' } as any,
+				SCOPE
+			);
+
+			await new EntitlementGrantConsumer(harness.entitlements).handle(
+				{
+					id: randomUUID(),
+					name: 'payment.refunded',
+					tenantId: TENANT,
+					organizationId: ORG,
+					aggregate: { type: 'ORDER', id: 'order-regranted' },
+					data: { orderId: 'order-regranted', lines: [{ orderLineId: 'line-1', quantity: 1 }] }
+				} as unknown as IEventEnvelope,
+				{ assertOrder: async () => undefined, alreadyDelivered: async () => false } as never
+			);
+
+			const rows = new Map((await harness.rows('entitlement')).map((row) => [row.id, row]));
+
+			expect(rows.get(revoked.entitlement.id)).toMatchObject({ status: EntitlementStatus.REVOKED });
+			expect(Number(rows.get(revoked.entitlement.id)?.quantity)).toBe(3);
+			expect(Number(rows.get(live.entitlement.id)?.quantity)).toBe(2);
+			expect((await eventNames(harness)).filter((name) => name === EntitlementEventName.REDUCED)).toHaveLength(1);
+		});
 	});
 
 	if (orm === 'mikro-orm') {
