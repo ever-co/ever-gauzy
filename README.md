@@ -289,6 +289,9 @@ Notes:
 
 #### DigitalOcean App Platform
 
+[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/ever-co/ever-gauzy/tree/develop)
+
+-   The button above creates an App Platform app from [`.do/deploy.template.yaml`](.do/deploy.template.yaml): the prebuilt API and web app images plus a development PostgreSQL database, served from one URL (`/api` and `/public` go to the API, everything else to the web app). Before you click "Create", fill in the secrets it asks for (`JWT_SECRET`, `JWT_REFRESH_TOKEN_SECRET`, `JWT_VERIFICATION_TOKEN_SECRET`, `EXPRESS_SESSION_SECRET` and the three `DEMO_*_PASSWORD` values, e.g. from `openssl rand -hex 64`): the API refuses to start or to seed its first accounts without them (see "Production" above). The first start migrates and seeds the database, which takes a few minutes. Uploaded files live in the API container until you configure object storage (`FILE_PROVIDER`, e.g. DigitalOcean Spaces), and the development database is meant for trying Gauzy out: switch to a managed production database for real use.
 -   For the most simple deployment scenarios (e.g. for yourself or your small organization), check our [DigitalOcean App Platform configurations](https://github.com/ever-co/ever-gauzy/tree/develop/.do) and corresponding [GitHub Action](https://github.com/ever-co/ever-gauzy/blob/develop/.github/workflows/deploy-do-app-platform-stage.yml).
 
 #### Virtual Instances / Droplets (via SSH)
