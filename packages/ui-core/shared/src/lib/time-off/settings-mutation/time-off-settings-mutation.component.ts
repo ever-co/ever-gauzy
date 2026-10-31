@@ -29,6 +29,8 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 	name: string;
 	requiresApproval: boolean;
 	paid: boolean;
+	/** Whether approvals the leave balance cannot cover are refused (off: the balance is overdrawn). */
+	requireSufficientBalance = false;
 	showWarning = false;
 	organization: IOrganization;
 
@@ -72,10 +74,12 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 			this.name = this.policy.name;
 			this.paid = this.policy.paid;
 			this.requiresApproval = this.policy.requiresApproval;
+			this.requireSufficientBalance = Boolean(this.policy.requireSufficientBalance);
 		} else {
 			this.name = '';
 			this.paid = true;
 			this.requiresApproval = false;
+			this.requireSufficientBalance = false;
 		}
 	}
 
@@ -87,7 +91,8 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 				tenantId: this.organization.tenantId,
 				employees: this.selectedEmployees,
 				requiresApproval: this.requiresApproval,
-				paid: this.paid
+				paid: this.paid,
+				requireSufficientBalance: this.requireSufficientBalance
 			});
 		} else {
 			this.showWarning = true;
@@ -111,6 +116,10 @@ export class TimeOffSettingsMutationComponent implements OnInit, OnDestroy {
 
 	changePaidStatus(checked: boolean) {
 		this.paid = checked;
+	}
+
+	changeRequireSufficientBalance(checked: boolean) {
+		this.requireSufficientBalance = checked;
 	}
 
 	closeWarning() {
