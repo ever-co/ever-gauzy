@@ -297,6 +297,8 @@ function repository(tables: ITables, tableName: keyof ITables, onWrite?: (entity
 					return (expected.value ?? []).some((candidate: unknown) => matchesValue(value, candidate));
 				case 'lessThanOrEqual':
 					return instant(value ?? 0) <= instant(expected.value ?? 0);
+				case 'moreThan':
+					return String(value ?? '') > String(expected.value ?? '');
 				case 'isNull':
 					return value === null || value === undefined;
 				case 'not':
@@ -2402,6 +2404,121 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		expect(scheduled.subscription(SUBSCRIPTION).metadata).toMatchObject({
 			changeIntent: { key: recorded.key },
 			scheduledPlanChange: { planId: BETTER_PLAN }
+		});
+	});
+
+	it('recovers every abandoned reservation page by page, past one that keeps failing, and only in an organization', async () => {
+		const settled = (id: string, items: Row[], replaceLines: boolean) =>
+			subscriptionRow(id, {
+				reservedPlanId: BETTER_PLAN,
+				metadata: {
+					changeIntent: {
+						key: `${id}:abandoned`,
+						change: 'abandoned',
+						planId: BETTER_PLAN,
+						settlement: 'CHARGED',
+						net: '92.900000',
+						currency: 'USD',
+						periodStart: MARCH.toISOString(),
+						description: 'Plan changed to PLAN-2.',
+						at: new Date(MID_MARCH.getTime() - 11 * 60 * 1000).toISOString(),
+						settledAt: new Date(MID_MARCH.getTime() - 11 * 60 * 1000).toISOString(),
+						moved: true,
+						replaceLines,
+						items
+					}
+				}
+			});
+		const subscriptions = () => [
+			// Its apply keeps failing: it names a line the subscription does not have.
+			settled(SUBSCRIPTION, [{ variantId: 'variant-gone', quantity: '2.000000' }], false),
+			settled('subscription-2', [{ variantId: BETTER_VARIANT, quantity: '1.000000', unitPrice: '300.000000', position: 0 }], true)
+		];
+		const fixture = subscriptionFixture({
+			prices: UPGRADE,
+			subscriptions: subscriptions(),
+			items: [itemRow('item-1'), itemRow('item-2', { subscriptionId: 'subscription-2' })]
+		});
+
+		// One subscription per page: the failing one does not hold the place of the paid change behind it.
+		await fixture.service.runBilling({ asOf: MID_MARCH, limit: 1 });
+
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: PLAN, reservedPlanId: BETTER_PLAN });
+		expect(fixture.subscription('subscription-2')).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
+
+		// A pass with no organization in its scope cannot read the claims or write the lines in the subscription's own,
+		// so it recovers nothing.
+		const tenantWide = subscriptionFixture({
+			prices: UPGRADE,
+			subscriptions: subscriptions(),
+			items: [itemRow('item-1'), itemRow('item-2', { subscriptionId: 'subscription-2' })]
+		});
+
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(null);
+
+		await tenantWide.service.runBilling({ asOf: MID_MARCH });
+
+		expect(tenantWide.subscription('subscription-2')).toMatchObject({ planId: PLAN, reservedPlanId: BETTER_PLAN });
+	});
+
+	it('recovers a change of lines whose apply failed, and answers a refused line write without database internals', async () => {
+		const fixture = subscriptionFixture({
+			prices: { [VARIANT]: '120.00', 'variant-c': '10.00' },
+			items: [itemRow('item-1'), itemRow('item-2', { variantId: 'variant-c', unitPrice: '10.000000', position: 1 })]
+		});
+
+		jest.spyOn(fixture.itemService, 'writeQuantities').mockRejectedValueOnce(
+			Object.assign(new Error('duplicate key value violates unique constraint "UQ_subscription_item_variant"'), {
+				code: '23505',
+				query: 'UPDATE "subscription_item" SET "quantity" = $1 WHERE "id" = $2',
+				parameters: ['2.000000', 'item-1']
+			})
+		);
+
+		const refusal = await fixture.service.changeItemQuantity(SUBSCRIPTION, VARIANT, '2').catch((error) => error);
+
+		expect(refusal).toBeInstanceOf(BadRequestException);
+		expect(JSON.stringify(refusal.getResponse())).not.toMatch(/UQ_subscription_item_variant|subscription_item|23505/);
+		// The change of lines holds the plan the subscription is on, so a billing pass finds it.
+		expect(fixture.subscription(SUBSCRIPTION)).toMatchObject({ planId: PLAN, reservedPlanId: PLAN });
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toMatchObject({ settledAt: expect.any(String) });
+
+		jest.setSystemTime(new Date(MID_MARCH.getTime() + 11 * 60 * 1000));
+
+		await fixture.service.runBilling({ asOf: MID_MARCH });
+
+		expect(fixture.prorationCalls).toHaveLength(1);
+		expect(fixture.subscription(SUBSCRIPTION).reservedPlanId).toBeNull();
+		expect(fixture.items().map((line) => [line.variantId, line.quantity])).toEqual([
+			[VARIANT, '2.000000'],
+			['variant-c', '1.000000']
+		]);
+	});
+
+	it('marks a settled change when the read its apply starts with fails', async () => {
+		const fixture = subscriptionFixture({ prices: UPGRADE });
+		const service = fixture.service as any;
+		const read = service.findOneScoped.bind(service);
+		let reads = 0;
+
+		jest.spyOn(service, 'findOneScoped').mockImplementation(async (id: string) => {
+			reads += 1;
+
+			// The change's own read, then the apply's: the database drops the second.
+			if (reads === 2) {
+				throw new Error('Connection terminated unexpectedly');
+			}
+
+			return await read(id);
+		});
+
+		await expect(fixture.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN })).rejects.toThrow(
+			'Connection terminated unexpectedly'
+		);
+		expect(fixture.prorationCalls).toHaveLength(1);
+		expect(fixture.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toMatchObject({
+			settledAt: expect.any(String),
+			moved: true
 		});
 	});
 

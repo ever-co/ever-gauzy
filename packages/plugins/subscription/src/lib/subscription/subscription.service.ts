@@ -1,6 +1,15 @@
-import { BadRequestException, ConflictException, Injectable, Inject, Logger, NotFoundException, Optional } from '@nestjs/common';
+import {
+	BadRequestException,
+	ConflictException,
+	HttpException,
+	Injectable,
+	Inject,
+	Logger,
+	NotFoundException,
+	Optional
+} from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
-import { DeepPartial, EntityManager, IsNull, LessThanOrEqual, Not } from 'typeorm';
+import { DeepPartial, EntityManager, IsNull, LessThanOrEqual, MoreThan, Not } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	AdjustmentType,
@@ -1972,22 +1981,51 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * when it moved nothing. A record still inside the lease is left to the request settling it. One
 	 * that cannot be recovered is logged and left for the next pass; it never stops the billing.
 	 *
-	 * @param limit How many reserving subscriptions one pass looks at.
+	 * Every reserving subscription is looked at, page by page in id order: reservations exist only while changes are in
+	 * flight, so they are few, and a page that took only the first ones would let a row that keeps failing (or keeps
+	 * settling) hold the place of a paid change behind it on every pass.
+	 *
+	 * **Only in an organization's scope.** The claims a settlement was made under, the lines a change writes and the
+	 * events it appends are all the request's tenant's and organization's (`IdempotencyService` reads by the credential;
+	 * a new line and an event take the context's), so a pass run without both — a tenant-wide or scheduled one — could
+	 * miss a completed claim and raise the charge again under another scope. Such a pass recovers nothing; a pass run in
+	 * the organization, and the next change to the subscription (`reserveChange`), do.
+	 *
+	 * @param limit How many reserving subscriptions one page reads.
 	 */
 	private async recoverAbandonedChanges(limit: number): Promise<void> {
-		const reserving = await this.typeOrmSubscriptionRepository.find({
-			where: { reservedPlanId: Not(IsNull()), ...currentScope() } as never,
-			take: limit
-		});
+		if (!RequestContext.currentTenantId() || !RequestContext.currentOrganizationId()) {
+			return;
+		}
 
-		for (const subscription of reserving) {
-			try {
-				await this.recoverAbandonedChange(subscription.id);
-			} catch (error) {
-				this.logger.error(
-					`Subscription ${subscription.id}: its abandoned change could not be recovered: ${(error as Error)?.message ?? error}`
-				);
+		let after: ID | undefined;
+
+		for (;;) {
+			const page = await this.typeOrmSubscriptionRepository.find({
+				where: {
+					reservedPlanId: Not(IsNull()),
+					...(after ? { id: MoreThan(after) } : {}),
+					...currentScope()
+				} as never,
+				order: { id: 'ASC' } as never,
+				take: limit
+			});
+
+			for (const subscription of page) {
+				try {
+					await this.recoverAbandonedChange(subscription.id);
+				} catch (error) {
+					this.logger.error(
+						`Subscription ${subscription.id}: its abandoned change could not be recovered: ${(error as Error)?.message ?? error}`
+					);
+				}
 			}
+
+			if (page.length < limit) {
+				return;
+			}
+
+			after = page[page.length - 1].id;
 		}
 	}
 
@@ -3312,11 +3350,13 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				}
 			}
 
+			// A change of lines reserves the plan the subscription is on, which its own live status already holds: the
+			// reservation is also what a billing pass finds an abandoned change by (`recoverAbandonedChanges`).
 			await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
 				where: currentScope(),
 				id: subscription.id,
 				expectation: predicate,
-				patch: { metadata, reservedPlanId: held.planId }
+				patch: { metadata, reservedPlanId: held.planId ?? subscription.planId }
 			});
 
 			if (replaced) {
@@ -3382,85 +3422,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 */
 	private async applySettledChange(id: ID, intent: IChangeIntent, moved: boolean): Promise<void> {
 		for (let attempt = 1; ; attempt += 1) {
-			const current = await this.findOneScoped(id);
-			const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
-			const applied = Array.isArray(metadata[APPLIED_CHANGES]) ? (metadata[APPLIED_CHANGES] as string[]) : [];
-
-			if (this.changeIntentOf(metadata)?.key !== intent.key) {
-				if (applied.includes(intent.key)) {
-					return;
-				}
-
-				if (moved) {
-					await this.recordReversal(id, intent, 'SETTLED');
-				}
-
-				throw new ConflictException(
-					`SUBSCRIPTION_CHANGE_SUPERSEDED: another change replaced this one before it could be applied${
-						moved ? '; its settlement is recorded on the subscription for reversal' : ''
-					}. Read the subscription again.`
-				);
-			}
-
-			if (intent.planId) {
-				// A plan change re-states the discount: the new plan's terms replace whatever the old one
-				// was sold with, and a plan that grants none must not inherit the previous one's.
-				this.restateDiscount(metadata, intent.discountPercentage ?? undefined);
-				// And it replaces a plan change scheduled earlier for the next period: the latest decision about the plan
-				// holds, so an upgrade made now is not undone at the renewal by a downgrade scheduled before it.
-				delete metadata[SCHEDULED_PLAN_CHANGE];
-			}
-
-			const net = Money.of(intent.net, intent.currency);
-
-			if (intent.settlement === 'WAIVED' && net.isPositive()) {
-				metadata['waivedProrations'] = [
-					...((metadata['waivedProrations'] as unknown[]) ?? []),
-					{ amount: intent.net, currency: intent.currency, at: intent.at, description: intent.description }
-				];
-			} else if (intent.settlement === 'DEFERRED') {
-				// **The carried credit accumulates; it does not replace.** Assigning the new amount outright
-				// meant that two downgrades inside one period left only the second one's credit on the row and
-				// the first one simply stopped existing — the customer was owed 30.97 and 12.00 and was given
-				// 12.00. The money itself moves when the next cycle consumes what is carried here, which is
-				// what doc 11 §10.8 states: "no money moves now; a `CREDIT` adjustment is attached to the
-				// **next** billing order".
-				const carried = this.pendingCreditOf(metadata, intent.currency);
-				const total = carried ? carried.add(net).round() : net;
-
-				metadata[PENDING_CREDIT] = {
-					amount: total.toStorageString(),
-					currency: intent.currency,
-					at: intent.at,
-					description: intent.description
-				};
-			}
-
-			delete metadata[CHANGE_INTENT];
-			metadata[APPLIED_CHANGES] = [...applied.filter((key) => key !== intent.key), intent.key].slice(
-				-APPLIED_CHANGES_KEPT
-			);
-
 			try {
-				await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
-					await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
-						where: currentScope(),
-						id,
-						expectation: this.readVersionPredicate(current, ANY_VERSION),
-						patch: {
-							...(intent.planId ? { planId: intent.planId } : {}),
-							...(intent.quantity !== undefined && intent.quantity !== null ? { quantity: intent.quantity } : {}),
-							metadata,
-							reservedPlanId: null
-						}
-					});
-
-					if (intent.replaceLines) {
-						await this.itemService.writePreparedItems(manager, id, intent.items ?? []);
-					} else {
-						await this.itemService.writeQuantities(manager, id, intent.items ?? []);
-					}
-				});
+				await this.applySettledChangeOnce(id, intent, moved);
 
 				return;
 			} catch (error) {
@@ -3468,7 +3431,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					continue;
 				}
 
-				// Whatever stopped the apply — the row kept moving, a line could not be written — the settlement stands.
+				// Whatever stopped the apply — the row kept moving, it could not be read, a line could not be written — the
+				// settlement stands. A record that is no longer this change's is not marked (`markSettled` checks).
 				if (moved) {
 					await this.markSettled(id, intent);
 				}
@@ -3476,6 +3440,113 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				throw error;
 			}
 		}
+	}
+
+	/**
+	 * One attempt of {@link applySettledChange}: read the row, and write the change onto it.
+	 *
+	 * @param id The subscription.
+	 * @param intent The record the change was settled under.
+	 * @param moved Whether the settlement moved money outside the row.
+	 */
+	private async applySettledChangeOnce(id: ID, intent: IChangeIntent, moved: boolean): Promise<void> {
+		const current = await this.findOneScoped(id);
+		const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
+		const applied = Array.isArray(metadata[APPLIED_CHANGES]) ? (metadata[APPLIED_CHANGES] as string[]) : [];
+
+		if (this.changeIntentOf(metadata)?.key !== intent.key) {
+			if (applied.includes(intent.key)) {
+				return;
+			}
+
+			if (moved) {
+				await this.recordReversal(id, intent, 'SETTLED');
+			}
+
+			throw new ConflictException(
+				`SUBSCRIPTION_CHANGE_SUPERSEDED: another change replaced this one before it could be applied${
+					moved ? '; its settlement is recorded on the subscription for reversal' : ''
+				}. Read the subscription again.`
+			);
+		}
+
+		if (intent.planId) {
+			// A plan change re-states the discount: the new plan's terms replace whatever the old one
+			// was sold with, and a plan that grants none must not inherit the previous one's.
+			this.restateDiscount(metadata, intent.discountPercentage ?? undefined);
+			// And it replaces a plan change scheduled earlier for the next period: the latest decision about the plan
+			// holds, so an upgrade made now is not undone at the renewal by a downgrade scheduled before it.
+			delete metadata[SCHEDULED_PLAN_CHANGE];
+		}
+
+		const net = Money.of(intent.net, intent.currency);
+
+		if (intent.settlement === 'WAIVED' && net.isPositive()) {
+			metadata['waivedProrations'] = [
+				...((metadata['waivedProrations'] as unknown[]) ?? []),
+				{ amount: intent.net, currency: intent.currency, at: intent.at, description: intent.description }
+			];
+		} else if (intent.settlement === 'DEFERRED') {
+			// **The carried credit accumulates; it does not replace.** Assigning the new amount outright
+			// meant that two downgrades inside one period left only the second one's credit on the row and
+			// the first one simply stopped existing — the customer was owed 30.97 and 12.00 and was given
+			// 12.00. The money itself moves when the next cycle consumes what is carried here, which is
+			// what doc 11 §10.8 states: "no money moves now; a `CREDIT` adjustment is attached to the
+			// **next** billing order".
+			const carried = this.pendingCreditOf(metadata, intent.currency);
+			const total = carried ? carried.add(net).round() : net;
+
+			metadata[PENDING_CREDIT] = {
+				amount: total.toStorageString(),
+				currency: intent.currency,
+				at: intent.at,
+				description: intent.description
+			};
+		}
+
+		delete metadata[CHANGE_INTENT];
+		metadata[APPLIED_CHANGES] = [...applied.filter((key) => key !== intent.key), intent.key].slice(
+			-APPLIED_CHANGES_KEPT
+		);
+
+		await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+			await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+				where: currentScope(),
+				id,
+				expectation: this.readVersionPredicate(current, ANY_VERSION),
+				patch: {
+					...(intent.planId ? { planId: intent.planId } : {}),
+					...(intent.quantity !== undefined && intent.quantity !== null ? { quantity: intent.quantity } : {}),
+					metadata,
+					reservedPlanId: null
+				}
+			});
+
+			try {
+				if (intent.replaceLines) {
+					await this.itemService.writePreparedItems(manager, id, intent.items ?? []);
+				} else {
+					await this.itemService.writeQuantities(manager, id, intent.items ?? []);
+				}
+			} catch (error) {
+				// The lines are written on the transaction's repository, not through `CrudService`, so a refused write is
+				// answered here as `transactionWriter` answers one: a 400 that carries none of the database's internals.
+				// The service's own refusals (a line that is not there) pass as they are.
+				if (error instanceof HttpException) {
+					throw error;
+				}
+
+				const redacted = redactDatabaseError(error);
+
+				this.logger.error(
+					`The database refused a line write of subscription ${id}: ${
+						redacted instanceof Error ? redacted.message : String(redacted)
+					}`
+				);
+
+				throw new BadRequestException(toClientSafeError(error));
+			}
+		});
 	}
 
 	/**
