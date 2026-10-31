@@ -18,10 +18,17 @@ jest.mock(
 );
 
 let appSetting: Record<string, any> | undefined;
+/** Set to make the next settings write fail (a locked or full disk). */
+let settingWriteError: Error | null = null;
 jest.mock('../desktop-store', () => ({
 	LocalStore: {
 		getStore: (key: string) => (key === 'appSetting' ? appSetting : undefined),
 		updateApplicationSetting: (values: Record<string, unknown>) => {
+			if (settingWriteError) {
+				const error = settingWriteError;
+				settingWriteError = null;
+				throw error;
+			}
 			appSetting = { ...(appSetting ?? {}), ...values };
 		}
 	}
@@ -113,6 +120,19 @@ describe('custom screenshot sound', () => {
 
 			expect(result).toEqual({ sound: null, error: DesktopScreenshotSoundError.FAILED });
 			expect(appSetting.customScreenshotSound).toBeUndefined();
+			error.mockRestore();
+		});
+
+		it('leaves no copy behind when the settings cannot be saved, and keeps the current sound', () => {
+			const error = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+			const current = importScreenshotSound(file('one.wav')).sound;
+			settingWriteError = new Error('EBUSY: settings file locked');
+
+			const result = importScreenshotSound(file('two.ogg'));
+
+			expect(result).toEqual({ sound: current, error: DesktopScreenshotSoundError.FAILED });
+			expect(appSetting.customScreenshotSound).toEqual(current);
+			expect(fs.readdirSync(screenshotSoundDirectory())).toEqual([path.basename(current.path)]);
 			error.mockRestore();
 		});
 	});

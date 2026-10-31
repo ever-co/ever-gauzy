@@ -72,6 +72,8 @@ export function importScreenshotSound(sourcePath: string): IDesktopScreenshotSou
 	if (!extension) {
 		return { sound: current, error: DesktopScreenshotSoundError.UNSUPPORTED };
 	}
+	let copy: string | null = null;
+	let saved = false;
 	try {
 		const stats = fs.statSync(sourcePath);
 		if (!stats.isFile()) {
@@ -83,17 +85,22 @@ export function importScreenshotSound(sourcePath: string): IDesktopScreenshotSou
 
 		const directory = screenshotSoundDirectory();
 		fs.mkdirSync(directory, { recursive: true });
-		const copy = path.join(directory, `screenshot-sound-${randomUUID()}.${extension}`);
+		copy = path.join(directory, `screenshot-sound-${randomUUID()}.${extension}`);
 		fs.copyFileSync(sourcePath, copy);
 
 		const sound: IDesktopScreenshotSound = { path: copy, name: path.basename(sourcePath) };
 		LocalStore.updateApplicationSetting({ customScreenshotSound: sound });
+		saved = true;
 		if (current?.path !== copy) {
 			removeSoundCopy(current);
 		}
 		return { sound };
 	} catch (error) {
 		console.error('Could not use the file as the screenshot sound', error);
+		// The settings were not changed: a copy made for them would be left over
+		if (copy && !saved) {
+			removeSoundCopy({ path: copy, name: '' });
+		}
 		return { sound: current, error: DesktopScreenshotSoundError.FAILED };
 	}
 }
