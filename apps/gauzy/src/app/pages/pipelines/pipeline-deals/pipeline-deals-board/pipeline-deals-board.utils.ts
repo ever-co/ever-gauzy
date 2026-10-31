@@ -1,5 +1,8 @@
 import { ID, IDeal, IPipelineStage, IUser } from '@gauzy/contracts';
-import { dealProbabilityBadge, IDealProbabilityBadge } from '../../table-components/pipeline-deal-probability/deal-probability';
+import {
+	dealProbabilityBadge,
+	IDealProbabilityBadge
+} from '../../table-components/pipeline-deal-probability/deal-probability';
 
 /** One deal as a board card. */
 export interface IDealBoardCard {

@@ -134,7 +134,9 @@ export function toRecentActivityItem(log: IActivityLog, now: Date = new Date()):
 		actorName,
 		actorKey,
 		title: titleOf(log),
-		changedFields: Array.isArray(changed) ? changed.filter((field): field is string => typeof field === 'string') : [],
+		changedFields: Array.isArray(changed)
+			? changed.filter((field): field is string => typeof field === 'string')
+			: [],
 		// A deleted record has no page left to open.
 		link: page && log.entityId && action !== ActionTypeEnum.Deleted ? [page, log.entityId] : null,
 		tone: known?.tone ?? 'other',
@@ -148,7 +150,10 @@ export function toRecentActivityItem(log: IActivityLog, now: Date = new Date()):
  * The rows already shown followed by a new page's, without the ones already there. The API pages by page
  * number, so activity logged between two pages pushes the last row of one page onto the next.
  */
-export function mergeRecentActivity(existing: IRecentActivityItem[], incoming: IRecentActivityItem[]): IRecentActivityItem[] {
+export function mergeRecentActivity(
+	existing: IRecentActivityItem[],
+	incoming: IRecentActivityItem[]
+): IRecentActivityItem[] {
 	const seen = new Set(existing.map((item) => item.id));
 	return [...existing, ...incoming.filter((item) => !seen.has(item.id))];
 }

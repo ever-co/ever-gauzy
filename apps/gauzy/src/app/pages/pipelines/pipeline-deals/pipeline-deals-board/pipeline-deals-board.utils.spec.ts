@@ -42,7 +42,11 @@ describe('toDealBoardCard', () => {
 			deal('a', 'lead', {
 				probability: 5,
 				client: { name: 'Acme' } as IDeal['client'],
-				createdByUser: { firstName: 'Ada', lastName: 'Lovelace', imageUrl: 'https://img/ada.png' } as IDeal['createdByUser']
+				createdByUser: {
+					firstName: 'Ada',
+					lastName: 'Lovelace',
+					imageUrl: 'https://img/ada.png'
+				} as IDeal['createdByUser']
 			})
 		);
 

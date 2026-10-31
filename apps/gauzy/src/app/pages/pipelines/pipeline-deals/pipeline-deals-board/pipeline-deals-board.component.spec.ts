@@ -77,7 +77,10 @@ describe('PipelineDealsBoardComponent', () => {
 
 		await component.drop(dropEvent(lead, won, card));
 
-		expect(dealsService.updateStage).toHaveBeenCalledWith('a', 'won', { organizationId: ORGANIZATION, tenantId: TENANT });
+		expect(dealsService.updateStage).toHaveBeenCalledWith('a', 'won', {
+			organizationId: ORGANIZATION,
+			tenantId: TENANT
+		});
 		expect(ids(lead)).toEqual(['b']);
 		expect(ids(won)).toEqual(['a', 'c']);
 		expect(card.stageId).toBe('won');

@@ -35,7 +35,15 @@ export interface IDealStageMove {
 @Component({
 	selector: 'ga-pipeline-deals-board',
 	standalone: true,
-	imports: [CommonModule, RouterModule, DragDropModule, NbIconModule, NbSpinnerModule, NbTooltipModule, TranslatePipe],
+	imports: [
+		CommonModule,
+		RouterModule,
+		DragDropModule,
+		NbIconModule,
+		NbSpinnerModule,
+		NbTooltipModule,
+		TranslatePipe
+	],
 	templateUrl: './pipeline-deals-board.component.html',
 	// The tasks board's columns and cards, and the deals table's probability chip: one look for all of them.
 	styleUrls: [
