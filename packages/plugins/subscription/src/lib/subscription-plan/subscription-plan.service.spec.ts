@@ -188,8 +188,11 @@ function repository(tables: ITables, tableName: keyof ITables, options: { onSave
 
 		return same(value, expected);
 	};
-	const matches = (row: Row, where: Row = {}): boolean =>
-		Object.entries(where ?? {}).every(([field, expected]) => matchesValue(row[field], expected));
+	// A list of conditions is TypeORM's OR: the row matches when any one of them matches.
+	const matches = (row: Row, where: Row | Row[] = {}): boolean =>
+		Array.isArray(where)
+			? where.some((alternative) => matches(row, alternative))
+			: Object.entries(where ?? {}).every(([field, expected]) => matchesValue(row[field], expected));
 	const sorted = (found: Row[], order?: Record<string, 'ASC' | 'DESC'>) => {
 		const columns = Object.keys(order ?? {});
 
@@ -932,6 +935,24 @@ describe('SubscriptionPlanService — the reads a listing and a guard are built 
 		expect(await fixture.service.hasLiveSubscriptions('plan-3')).toBe(false);
 	});
 
+	it('counts a live subscription a change is moving onto the plan', async () => {
+		// A mid-cycle change reserves the plan it moves to before it settles, and the subscription is on the plan only once
+		// the change is applied: until then the reservation is what holds the plan.
+		const fixture = planFixture({
+			subscriptions: [
+				subscriptionRow('moving', { planId: 'plan-2', reservedPlanId: 'plan-1', status: SubscriptionStatus.PAUSED }),
+				subscriptionRow('ended', { planId: 'plan-2', reservedPlanId: 'plan-4', status: SubscriptionStatus.CANCELED }),
+				subscriptionRow('theirs', { planId: 'plan-2', reservedPlanId: 'plan-3', organizationId: OTHER_ORG })
+			]
+		});
+
+		expect(await fixture.service.hasLiveSubscriptions('plan-1')).toBe(true);
+		// A subscription that ended bills nothing on the plan, so a reservation it was left with does not hold it.
+		expect(await fixture.service.hasLiveSubscriptions('plan-4')).toBe(false);
+		// Another organization's reservation is not this one's.
+		expect(await fixture.service.hasLiveSubscriptions('plan-3')).toBe(false);
+	});
+
 	it('lists the sellable plans of the organization, by name', async () => {
 		const fixture = planFixture({
 			plans: [
@@ -970,6 +991,30 @@ describe('SubscriptionPlanService.updatePlan under the plan row lock', () => {
 
 		expect(fixture.statements[0]).toMatch(/FROM "subscription_plan" WHERE "id" = \$1 FOR UPDATE$/);
 		expect(fixture.statements.slice(1)).toEqual(['read the plan', 'count live subscriptions']);
+		expect(fixture.plan('plan-1').isActive).toBe(false);
+	});
+
+	it('refuses to deactivate or re-price a plan a change being settled has reserved', async () => {
+		// The subscription is still on another plan: a change moving it here has charged or credited for this plan and
+		// not yet applied the move. Counting only `planId`, the update found no subscriber and went through.
+		const fixture = planFixture({
+			subscriptions: [subscriptionRow('moving', { planId: 'plan-2', reservedPlanId: 'plan-1' })]
+		});
+
+		await expect(fixture.service.updatePlan('plan-1', { isActive: false })).rejects.toThrow(
+			'SUBSCRIPTION_PLAN_HAS_SUBSCRIBERS'
+		);
+		await expect(fixture.service.updatePlan('plan-1', { currency: 'EUR' } as any)).rejects.toThrow(
+			'SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE'
+		);
+		expect(fixture.plan('plan-1')).toMatchObject({ isActive: true, currency: 'USD' });
+		expect(fixture.patches).toEqual([]);
+
+		// Once the change is applied (or released), the reservation is gone and the plan is free again.
+		fixture.tables.subscription[0].reservedPlanId = null;
+
+		await fixture.service.updatePlan('plan-1', { isActive: false });
+
 		expect(fixture.plan('plan-1').isActive).toBe(false);
 	});
 

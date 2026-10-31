@@ -4,7 +4,8 @@ import { lockPlanRow } from './subscription-plan.lock';
 /**
  * The plan row lock on real databases, with two connections: a lock is held until its transaction ends, a plan update
  * and a subscription created on the plan wait for one another in either order and then see what the other committed,
- * and two subscriptions created on one plan do not wait for one another.
+ * a plan update waits for a mid-cycle change reserving the plan and then counts the reservation, and two subscriptions
+ * created on one plan do not wait for one another.
  *
  * Postgres and MySQL run when `SUBSCRIPTION_TEST_POSTGRES_URL` / `SUBSCRIPTION_TEST_MYSQL_URL` point at an empty,
  * disposable database (the build-api job's service containers); SQLite, which has no row locks, always runs.
@@ -118,6 +119,22 @@ for (const { name, url } of TARGETS) {
 			Number(
 				(await runner.query(`SELECT COUNT(*) AS ${t('n')} FROM ${t('subscription_lock_probe')} WHERE ${t('planId')} = ${mark(1)}`, [PLAN]))[0].n
 			);
+		/** A mid-cycle change reserving the plan for a subscription still on another one (`reserveChange`). */
+		const reserve = async (runner: QueryRunner, id: string) =>
+			await runner.query(`UPDATE ${t('subscription_lock_probe')} SET ${t('reservedPlanId')} = ${mark(1)} WHERE ${t('id')} = ${mark(2)}`, [
+				PLAN,
+				id
+			]);
+		/** What `hasLiveSubscriptions` counts: the subscriptions on the plan, and those a change is moving onto it. */
+		const holdersAsSeenBy = async (runner: QueryRunner): Promise<number> =>
+			Number(
+				(
+					await runner.query(
+						`SELECT COUNT(*) AS ${t('n')} FROM ${t('subscription_lock_probe')} WHERE ${t('planId')} = ${mark(1)} OR ${t('reservedPlanId')} = ${mark(2)}`,
+						[PLAN, PLAN]
+					)
+				)[0].n
+			);
 
 		beforeAll(async () => {
 			dataSource = await openDataSource(name, url);
@@ -131,7 +148,7 @@ for (const { name, url } of TARGETS) {
 			);
 			// Stands for the `subscription` rows a plan update's live-subscription check counts.
 			await dataSource.query(
-				`CREATE TABLE ${t('subscription_lock_probe')} (${t('id')} varchar(64) PRIMARY KEY, ${t('planId')} varchar(64) NOT NULL)`
+				`CREATE TABLE ${t('subscription_lock_probe')} (${t('id')} varchar(64) PRIMARY KEY, ${t('planId')} varchar(64) NOT NULL, ${t('reservedPlanId')} varchar(64) NULL)`
 			);
 		}, 60_000);
 
@@ -189,6 +206,33 @@ for (const { name, url } of TARGETS) {
 
 			expect(await settlesWithin(updateLocked, GRANTED_MS)).toBe(true);
 			expect(await subscriptionsAsSeenBy(update)).toBe(1);
+
+			await update.commitTransaction();
+		}, 30_000);
+
+		it('a plan update waits for a change reserving the plan, then counts the reservation', async () => {
+			// A subscription on another plan, which a mid-cycle change is about to move onto this one.
+			await dataSource.query(`INSERT INTO ${t('subscription_lock_probe')} (${t('id')}, ${t('planId')}) VALUES (${mark(1)}, ${mark(2)})`, [
+				'moving',
+				'another-plan'
+			]);
+
+			const change = await transaction();
+
+			await lockPlanRow(change.manager, PLAN, 'share');
+			await reserve(change, 'moving');
+
+			const update = await transaction();
+			const updateLocked = lockPlanRow(update.manager, PLAN, 'update');
+
+			expect(await settlesWithin(updateLocked, BLOCKED_MS)).toBe(false);
+
+			await change.commitTransaction();
+
+			expect(await settlesWithin(updateLocked, GRANTED_MS)).toBe(true);
+			// Counting the plan's subscriptions alone finds none: the reservation is what holds the plan.
+			expect(await subscriptionsAsSeenBy(update)).toBe(0);
+			expect(await holdersAsSeenBy(update)).toBe(1);
 
 			await update.commitTransaction();
 		}, 30_000);

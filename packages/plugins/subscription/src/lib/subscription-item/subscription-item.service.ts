@@ -187,6 +187,40 @@ export class SubscriptionItemService extends SubscriptionCrudService<Subscriptio
 	}
 
 	/**
+	 * Writes new quantities on lines the subscription has, inside a caller's transaction, as `changeQuantity` writes
+	 * one: only the quantity of only the lines named, so a correction made to another line, or to this one's price,
+	 * stands.
+	 *
+	 * @param manager The transaction.
+	 * @param subscriptionId The subscription the lines belong to.
+	 * @param lines The lines whose quantity changes, with the new quantity.
+	 * @throws NotFoundException when the subscription has no line for one of the variants.
+	 */
+	public async writeQuantities(
+		manager: EntityManager,
+		subscriptionId: ID,
+		lines: Array<{ variantId: ID; quantity: DecimalString }>
+	): Promise<void> {
+		const repository = manager.getRepository(SubscriptionItem);
+
+		for (const line of lines) {
+			const current = await repository.findOne({
+				where: { subscriptionId, variantId: line.variantId, ...currentScope() } as never
+			});
+
+			if (!current) {
+				throw new NotFoundException(
+					`SUBSCRIPTION_ITEM_NOT_FOUND: subscription ${subscriptionId} has no recurring line for variant ${line.variantId}.`
+				);
+			}
+
+			await repository.update(current.id, {
+				quantity: this.storeQuantity(normalizeDecimal(line.quantity, '1'))
+			} as never);
+		}
+	}
+
+	/**
 	 * Resolves a line set without writing it.
 	 *
 	 * Separated from `replaceItems` so a caller that has to write the lines inside its own transaction
