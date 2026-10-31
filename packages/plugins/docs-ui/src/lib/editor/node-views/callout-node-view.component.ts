@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
 import { AngularNodeViewComponent } from '../node-view/angular-node-view-renderer';
@@ -20,37 +19,46 @@ const CALLOUT_TYPES: CalloutType[] = ['info', 'success', 'warning', 'danger'];
 @Component({
 	selector: 'gz-callout-node-view',
 	standalone: true,
-	imports: [CommonModule, NbIconModule],
+	imports: [NbIconModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<div class="gz-callout" [attr.data-callout-type]="type" [class.selected]="selected()">
-			<button
-				*ngIf="editor().isEditable; else staticIcon"
-				type="button"
-				class="gz-callout-icon"
-				data-node-view-interactive
-				(click)="switcherOpen = !switcherOpen"
-			>
-				<span *ngIf="emoji; else evaIcon">{{ emoji }}</span>
-				<ng-template #evaIcon><nb-icon [icon]="icon"></nb-icon></ng-template>
-			</button>
-			<ng-template #staticIcon>
-				<span class="gz-callout-icon">
-					<span *ngIf="emoji; else evaIconRo">{{ emoji }}</span>
-					<ng-template #evaIconRo><nb-icon [icon]="icon"></nb-icon></ng-template>
-				</span>
-			</ng-template>
-			<div class="gz-callout-switcher" *ngIf="switcherOpen" data-node-view-interactive>
+			@if (editor().isEditable) {
 				<button
-					*ngFor="let option of types"
 					type="button"
-					[attr.data-callout-type]="option"
-					[class.active]="option === type"
-					(click)="setType(option)"
+					class="gz-callout-icon"
+					data-node-view-interactive
+					(click)="switcherOpen = !switcherOpen"
 				>
-					<nb-icon [icon]="iconOf(option)"></nb-icon>
+					@if (emoji) {
+						<span>{{ emoji }}</span>
+					} @else {
+						<nb-icon [icon]="icon"></nb-icon>
+					}
 				</button>
-			</div>
+			} @else {
+				<span class="gz-callout-icon">
+					@if (emoji) {
+						<span>{{ emoji }}</span>
+					} @else {
+						<nb-icon [icon]="icon"></nb-icon>
+					}
+				</span>
+			}
+			@if (switcherOpen) {
+				<div class="gz-callout-switcher" data-node-view-interactive>
+					@for (option of types; track option) {
+						<button
+							type="button"
+							[attr.data-callout-type]="option"
+							[class.active]="option === type"
+							(click)="setType(option)"
+						>
+							<nb-icon [icon]="iconOf(option)"></nb-icon>
+						</button>
+					}
+				</div>
+			}
 			<div class="gz-callout-content" data-node-view-content></div>
 		</div>
 	`,

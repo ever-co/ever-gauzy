@@ -15,10 +15,12 @@ const SOURCE_ICONS: Record<DocumentSourceEnum, string> = {
 @Component({
 	selector: 'gz-docs-source-badge',
 	template: `
-		<span class="docs-source" *ngIf="source">
-			<nb-icon [icon]="icon" size="tiny"></nb-icon>
-			<span class="docs-source__label">{{ 'DOCS.SOURCE.' + source | translate }}</span>
-		</span>
+		@if (source) {
+			<span class="docs-source">
+				<nb-icon [icon]="icon" size="tiny"></nb-icon>
+				<span class="docs-source__label">{{ 'DOCS.SOURCE.' + source | translate }}</span>
+			</span>
+		}
 	`,
 	styles: [
 		`
@@ -60,6 +62,6 @@ export class SourceBadgeComponent {
 	}
 
 	get icon(): string {
-		return this.source ? SOURCE_ICONS[this.source] ?? 'file-outline' : 'file-outline';
+		return this.source ? (SOURCE_ICONS[this.source] ?? 'file-outline') : 'file-outline';
 	}
 }

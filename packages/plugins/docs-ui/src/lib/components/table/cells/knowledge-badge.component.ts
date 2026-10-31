@@ -8,16 +8,16 @@ import { DocumentKnowledgeStatusEnum, DocumentReviewStatusEnum, IDocument } from
 	selector: 'gz-docs-knowledge-badge',
 	template: `
 		<span class="docs-badge" [ngClass]="cssClass">
-			<nb-icon *ngIf="isBusy" icon="loader-outline" size="tiny" class="docs-badge-spin"></nb-icon>
+			@if (isBusy) {
+				<nb-icon icon="loader-outline" size="tiny" class="docs-badge-spin"></nb-icon>
+			}
 			{{ 'DOCS.KNOWLEDGE.' + status | translate }}
 		</span>
-		<span
-			class="docs-badge review-pill"
-			*ngIf="rowData?.reviewStatus === reviewEnum.PENDING"
-			[nbTooltip]="'DOCS.REVIEW.PENDING_TOOLTIP' | translate"
-		>
-			{{ 'DOCS.REVIEW.PENDING' | translate }}
-		</span>
+		@if (rowData?.reviewStatus === reviewEnum.PENDING) {
+			<span class="docs-badge review-pill" [nbTooltip]="'DOCS.REVIEW.PENDING_TOOLTIP' | translate">
+				{{ 'DOCS.REVIEW.PENDING' | translate }}
+			</span>
+		}
 	`,
 	styles: [
 		`
@@ -80,7 +80,9 @@ export class KnowledgeBadgeComponent {
 	}
 
 	get isBusy(): boolean {
-		return this.status === DocumentKnowledgeStatusEnum.QUEUED || this.status === DocumentKnowledgeStatusEnum.INDEXING;
+		return (
+			this.status === DocumentKnowledgeStatusEnum.QUEUED || this.status === DocumentKnowledgeStatusEnum.INDEXING
+		);
 	}
 
 	get cssClass(): string {

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbProgressBarModule } from '@nebular/theme';
@@ -17,7 +16,7 @@ import { EditorUploadService, IEditorUpload } from '../services/editor-upload.se
 @Component({
 	selector: 'gz-file-attachment-node-view',
 	standalone: true,
-	imports: [CommonModule, TranslatePipe, NbButtonModule, NbIconModule, NbProgressBarModule],
+	imports: [TranslatePipe, NbButtonModule, NbIconModule, NbProgressBarModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<div
@@ -30,25 +29,30 @@ import { EditorUploadService, IEditorUpload } from '../services/editor-upload.se
 			<nb-icon class="gz-attachment-icon" [icon]="icon"></nb-icon>
 			<div class="gz-attachment-meta">
 				<span class="gz-attachment-name">{{ name }}</span>
-				<span class="gz-attachment-size" *ngIf="!upload">{{ humanSize }}</span>
-				<span class="gz-attachment-size" *ngIf="upload?.status === 'uploading'">
-					{{ 'DOCS.EDITOR.ATTACHMENT.UPLOADING' | translate }}
-				</span>
-				<span class="gz-attachment-error" *ngIf="upload?.status === 'error'">
-					{{ 'DOCS.EDITOR.ATTACHMENT.FAILED' | translate }}
-				</span>
-				<span class="gz-attachment-error" *ngIf="isMissing">
-					{{ 'DOCS.EDITOR.ATTACHMENT.MISSING' | translate }}
-				</span>
-				<nb-progress-bar
-					*ngIf="upload?.status === 'uploading'"
-					[value]="upload?.progress ?? 0"
-					size="tiny"
-					status="primary"
-				></nb-progress-bar>
+				@if (!upload) {
+					<span class="gz-attachment-size">{{ humanSize }}</span>
+				}
+				@if (upload?.status === 'uploading') {
+					<span class="gz-attachment-size">
+						{{ 'DOCS.EDITOR.ATTACHMENT.UPLOADING' | translate }}
+					</span>
+				}
+				@if (upload?.status === 'error') {
+					<span class="gz-attachment-error">
+						{{ 'DOCS.EDITOR.ATTACHMENT.FAILED' | translate }}
+					</span>
+				}
+				@if (isMissing) {
+					<span class="gz-attachment-error">
+						{{ 'DOCS.EDITOR.ATTACHMENT.MISSING' | translate }}
+					</span>
+				}
+				@if (upload?.status === 'uploading') {
+					<nb-progress-bar [value]="upload?.progress ?? 0" size="tiny" status="primary"></nb-progress-bar>
+				}
 			</div>
 			<div class="gz-attachment-actions">
-				<ng-container *ngIf="documentId">
+				@if (documentId) {
 					<button
 						nbButton
 						ghost
@@ -70,15 +74,15 @@ import { EditorUploadService, IEditorUpload } from '../services/editor-upload.se
 					>
 						<nb-icon icon="external-link-outline"></nb-icon>
 					</button>
-				</ng-container>
-				<ng-container *ngIf="upload?.status === 'error'">
+				}
+				@if (upload?.status === 'error') {
 					<button nbButton ghost size="tiny" status="primary" type="button" (click)="retry()">
 						{{ 'DOCS.EDITOR.ATTACHMENT.RETRY' | translate }}
 					</button>
 					<button nbButton ghost size="tiny" status="danger" type="button" (click)="remove()">
 						{{ 'DOCS.EDITOR.ATTACHMENT.REMOVE' | translate }}
 					</button>
-				</ng-container>
+				}
 			</div>
 		</div>
 	`,

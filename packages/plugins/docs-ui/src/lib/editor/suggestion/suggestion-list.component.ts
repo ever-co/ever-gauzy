@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
 
@@ -28,14 +27,16 @@ export interface ISuggestionItem<T = unknown> {
 @Component({
 	selector: 'gz-suggestion-list',
 	standalone: true,
-	imports: [CommonModule, NbIconModule],
+	imports: [NbIconModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<div class="gz-suggestion-list" role="listbox" [attr.aria-label]="ariaLabel">
-			<ng-container *ngFor="let item of items; let i = index">
-				<div class="gz-suggestion-group" *ngIf="item.group && isGroupStart(i)" role="presentation">
-					{{ item.group }}
-				</div>
+			@for (item of items; track item; let i = $index) {
+				@if (item.group && isGroupStart(i)) {
+					<div class="gz-suggestion-group" role="presentation">
+						{{ item.group }}
+					</div>
+				}
 				<button
 					type="button"
 					class="gz-suggestion-item"
@@ -48,18 +49,24 @@ export interface ISuggestionItem<T = unknown> {
 					(mouseenter)="setActive(i)"
 					(click)="select(i)"
 				>
-					<span class="gz-suggestion-glyph" *ngIf="item.glyph">{{ item.glyph }}</span>
-					<nb-icon
-						*ngIf="!item.glyph && item.icon && item.pack !== 'fa'"
-						[icon]="item.icon"
-						class="gz-suggestion-icon"
-					></nb-icon>
-					<i *ngIf="!item.glyph && item.icon && item.pack === 'fa'" class="{{ item.icon }} gz-suggestion-icon"></i>
+					@if (item.glyph) {
+						<span class="gz-suggestion-glyph">{{ item.glyph }}</span>
+					}
+					@if (!item.glyph && item.icon && item.pack !== 'fa') {
+						<nb-icon [icon]="item.icon" class="gz-suggestion-icon"></nb-icon>
+					}
+					@if (!item.glyph && item.icon && item.pack === 'fa') {
+						<i class="{{ item.icon }} gz-suggestion-icon"></i>
+					}
 					<span class="gz-suggestion-label">{{ item.label }}</span>
-					<span class="gz-suggestion-hint" *ngIf="item.hint">{{ item.hint }}</span>
+					@if (item.hint) {
+						<span class="gz-suggestion-hint">{{ item.hint }}</span>
+					}
 				</button>
-			</ng-container>
-			<div class="gz-suggestion-empty" *ngIf="!items.length">{{ emptyLabel }}</div>
+			}
+			@if (!items.length) {
+				<div class="gz-suggestion-empty">{{ emptyLabel }}</div>
+			}
 		</div>
 	`,
 	styles: [
