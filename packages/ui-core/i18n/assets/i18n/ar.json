@@ -3533,6 +3533,8 @@
 		"VIEW_REQUEST_DOCUMENT": "عرض مستند الطلب",
 		"MULTIPLE_EMPLOYEES": "موظفون متعددون",
 		"UPLOAD_REQUEST_DOCUMENT": "تحميل مستند الطلب",
+		"REQUEST_FORM_NOT_FOUND": "لم يتم رفع نموذج \"{{ name }}\" لهذه المؤسسة بعد. يمكن للمسؤول إضافة مستند بهذا الاسم من قسم المستندات.",
+		"REQUEST_FORM_UNAVAILABLE": "تعذر تنزيل نموذج \"{{ name }}\". يمكن للمسؤول التحقق من رابطه في قسم المستندات.",
 		"STATUSES": {
 			"REQUESTED": "مطلوب",
 			"APPROVED": "معتمد",

@@ -3535,6 +3535,8 @@
 		"VIEW_REQUEST_DOCUMENT": "Bekijk verzoek document",
 		"MULTIPLE_EMPLOYEES": "Meerdere werknemers",
 		"UPLOAD_REQUEST_DOCUMENT": "Upload aanvraagdocument",
+		"REQUEST_FORM_NOT_FOUND": "Voor deze organisatie is nog geen formulier \"{{ name }}\" geüpload. Een beheerder kan onder Documenten een document met deze naam toevoegen.",
+		"REQUEST_FORM_UNAVAILABLE": "Het formulier \"{{ name }}\" kon niet worden gedownload. Een beheerder kan de link ervan controleren onder Documenten.",
 		"STATUSES": {
 			"REQUESTED": "Opgevraagd",
 			"APPROVED": "Goedgekeurd",

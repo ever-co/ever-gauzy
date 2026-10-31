@@ -4061,6 +4061,8 @@
 		"VIEW_REQUEST_DOCUMENT": "View Request Document",
 		"MULTIPLE_EMPLOYEES": "Multiple employees",
 		"UPLOAD_REQUEST_DOCUMENT": "Upload Request Document",
+		"REQUEST_FORM_NOT_FOUND": "No \"{{ name }}\" form is uploaded for this organization yet. An administrator can add a document with that name under Documents.",
+		"REQUEST_FORM_UNAVAILABLE": "The \"{{ name }}\" form could not be downloaded. An administrator can check its link under Documents.",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",

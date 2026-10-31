@@ -3535,6 +3535,8 @@
 		"VIEW_REQUEST_DOCUMENT": "Visualizza documento di richiesta",
 		"MULTIPLE_EMPLOYEES": "Dipendenti multipli",
 		"UPLOAD_REQUEST_DOCUMENT": "Carica documento richiesto",
+		"REQUEST_FORM_NOT_FOUND": "Per questa organizzazione non è ancora stato caricato alcun modulo \"{{ name }}\". Un amministratore può aggiungere un documento con questo nome in Documenti.",
+		"REQUEST_FORM_UNAVAILABLE": "Impossibile scaricare il modulo \"{{ name }}\". Un amministratore può verificarne il link in Documenti.",
 		"STATUSES": {
 			"REQUESTED": "Richiesto",
 			"APPROVED": "Approvato",

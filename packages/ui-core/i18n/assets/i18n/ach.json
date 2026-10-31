@@ -3362,6 +3362,8 @@
 		"VIEW_REQUEST_DOCUMENT": "crwdns9624:0crwdne9624:0",
 		"MULTIPLE_EMPLOYEES": "crwdns9626:0crwdne9626:0",
 		"UPLOAD_REQUEST_DOCUMENT": "crwdns9952:0crwdne9952:0",
+		"REQUEST_FORM_NOT_FOUND": "No \"{{ name }}\" form is uploaded for this organization yet. An administrator can add a document with that name under Documents.",
+		"REQUEST_FORM_UNAVAILABLE": "The \"{{ name }}\" form could not be downloaded. An administrator can check its link under Documents.",
 		"STATUSES": {
 			"REQUESTED": "crwdns2505:0crwdne2505:0",
 			"APPROVED": "crwdns2507:0crwdne2507:0",

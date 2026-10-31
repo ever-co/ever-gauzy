@@ -3535,6 +3535,8 @@
 		"VIEW_REQUEST_DOCUMENT": "查看请求文件",
 		"MULTIPLE_EMPLOYEES": "多个员工",
 		"UPLOAD_REQUEST_DOCUMENT": "上传请求文档",
+		"REQUEST_FORM_NOT_FOUND": "该组织尚未上传“{{ name }}”表单。管理员可以在“文档”中添加同名文档。",
+		"REQUEST_FORM_UNAVAILABLE": "无法下载“{{ name }}”表单。管理员可以在“文档”中检查其链接。",
 		"STATUSES": {
 			"REQUESTED": "要求的。",
 			"APPROVED": "已批准",

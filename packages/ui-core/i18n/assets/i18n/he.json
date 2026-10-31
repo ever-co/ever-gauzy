@@ -3563,6 +3563,8 @@
 		"VIEW_REQUEST_DOCUMENT": "View Request Document",
 		"MULTIPLE_EMPLOYEES": "Multiple employees",
 		"UPLOAD_REQUEST_DOCUMENT": "Upload Request Document",
+		"REQUEST_FORM_NOT_FOUND": "עדיין לא הועלה טופס \"{{ name }}\" עבור הארגון הזה. מנהל/ת יכול/ה להוסיף מסמך בשם זה תחת מסמכים.",
+		"REQUEST_FORM_UNAVAILABLE": "לא ניתן היה להוריד את הטופס \"{{ name }}\". מנהל/ת יכול/ה לבדוק את הקישור שלו תחת מסמכים.",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",

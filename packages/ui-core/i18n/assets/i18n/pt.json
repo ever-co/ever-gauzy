@@ -3535,6 +3535,8 @@
 		"VIEW_REQUEST_DOCUMENT": "Visualizar documento solicitado",
 		"MULTIPLE_EMPLOYEES": "Vários funcionários",
 		"UPLOAD_REQUEST_DOCUMENT": "Carregar Documento de Solicitação",
+		"REQUEST_FORM_NOT_FOUND": "Ainda não foi carregado nenhum formulário \"{{ name }}\" para esta organização. Um administrador pode adicionar um documento com esse nome em Documentos.",
+		"REQUEST_FORM_UNAVAILABLE": "Não foi possível baixar o formulário \"{{ name }}\". Um administrador pode verificar o link dele em Documentos.",
 		"STATUSES": {
 			"REQUESTED": "Solicitado.",
 			"APPROVED": "Aprovado.",

@@ -135,6 +135,23 @@ export enum StatusTypesMapRequestApprovalEnum {
 }
 
 /**
+ * The request forms an employee can download from the time-off request dialog (issue #5481).
+ */
+export enum TimeOffRequestFormTypeEnum {
+	PAID = 'paid',
+	UNPAID = 'unpaid'
+}
+
+/**
+ * The organization document each request form is read from, found by this name (case and extra spaces
+ * aside). The demo seed creates both documents under these names.
+ */
+export const TIME_OFF_REQUEST_FORM_DOCUMENT_NAMES: Readonly<Record<TimeOffRequestFormTypeEnum, string>> = Object.freeze({
+	[TimeOffRequestFormTypeEnum.PAID]: 'Paid Days off Request',
+	[TimeOffRequestFormTypeEnum.UNPAID]: 'Unpaid Days off Request'
+});
+
+/**
  * A publicly recognized holiday for a country, kept per organization.
  *
  * Issue #314 asks for an `OfficialHolidays` table so the "Add Holidays" dialog can offer a

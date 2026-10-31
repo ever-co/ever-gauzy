@@ -3534,6 +3534,8 @@
 		"VIEW_REQUEST_DOCUMENT": "Zobacz dokument żądania",
 		"MULTIPLE_EMPLOYEES": "Wielu pracowników",
 		"UPLOAD_REQUEST_DOCUMENT": "Prześlij dokument żądania",
+		"REQUEST_FORM_NOT_FOUND": "Dla tej organizacji nie przesłano jeszcze formularza „{{ name }}”. Administrator może dodać dokument o tej nazwie w sekcji Dokumenty.",
+		"REQUEST_FORM_UNAVAILABLE": "Nie udało się pobrać formularza „{{ name }}”. Administrator może sprawdzić jego link w sekcji Dokumenty.",
 		"STATUSES": {
 			"REQUESTED": "Żądane",
 			"APPROVED": "Zatwierdzone",

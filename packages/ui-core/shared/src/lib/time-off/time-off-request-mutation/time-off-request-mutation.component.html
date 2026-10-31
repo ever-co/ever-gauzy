@@ -95,7 +95,7 @@
 							nbButton
 							status="basic"
 							class="download-btn mr-4"
-							(click)="getRequestForm('paid')"
+							(click)="getRequestForm(RequestFormType.PAID)"
 						>
 							{{ 'BUTTONS.PAID_DAYS_OFF' | translate }}
 						</button>
@@ -103,7 +103,7 @@
 							nbButton
 							status="basic"
 							class="download-btn"
-							(click)="getRequestForm('unpaid')"
+							(click)="getRequestForm(RequestFormType.UNPAID)"
 						>
 							{{ 'BUTTONS.UNPAID_DAYS_OFF' | translate }}
 						</button>

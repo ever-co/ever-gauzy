@@ -1,5 +1,11 @@
 import { DataSource } from 'typeorm';
-import { IOrganization, IOrganizationDocument, ITenant } from '@gauzy/contracts';
+import {
+	IOrganization,
+	IOrganizationDocument,
+	ITenant,
+	TIME_OFF_REQUEST_FORM_DOCUMENT_NAMES,
+	TimeOffRequestFormTypeEnum
+} from '@gauzy/contracts';
 import { OrganizationDocument } from './organization-document.entity';
 
 export const createOrganizationDocuments = async (
@@ -8,18 +14,19 @@ export const createOrganizationDocuments = async (
 	organizations: IOrganization[]
 ): Promise<IOrganizationDocument[]> => {
 	const documents: IOrganizationDocument[] = [];
+	// The time-off request dialog finds these two forms by name: keep the names shared with it.
 	for await (const organization of organizations) {
 		const requestPaidDaysOff = new OrganizationDocument({
-			name: 'Paid Days off Request',
+			name: TIME_OFF_REQUEST_FORM_DOCUMENT_NAMES[TimeOffRequestFormTypeEnum.PAID],
 			organization,
 			tenant,
-			documentUrl: `http://res.cloudinary.com/evereq/image/upload/v1595424362/everbie-products-images/qanadywgn3gxte7kwtwu.pdf`
+			documentUrl: `https://res.cloudinary.com/evereq/image/upload/v1595424362/everbie-products-images/qanadywgn3gxte7kwtwu.pdf`
 		});
 		const requestUnpaidDaysOff = new OrganizationDocument({
-			name: 'Unpaid Days off Request',
+			name: TIME_OFF_REQUEST_FORM_DOCUMENT_NAMES[TimeOffRequestFormTypeEnum.UNPAID],
 			organization,
 			tenant,
-			documentUrl: `http://res.cloudinary.com/evereq/image/upload/v1595506200/everbie-products-images/am3ujibzu660swicfcsw.pdf`
+			documentUrl: `https://res.cloudinary.com/evereq/image/upload/v1595506200/everbie-products-images/am3ujibzu660swicfcsw.pdf`
 		});
 		documents.push(requestPaidDaysOff);
 		documents.push(requestUnpaidDaysOff);
