@@ -98,6 +98,8 @@ const IPV6_ZONE_PATTERN = /^[\w.-]+$/;
 const ASCII_PATTERN = /^[!-~]*$/;
 /** A DNS label in its ASCII form: letters, digits, `_` and inner `-` (`xn--` for internationalised names). */
 const HOSTNAME_LABEL_PATTERN = /^[a-z\d_](?:[a-z\d_-]{0,61}[a-z\d_])?$/i;
+/** A label browsers read as a number, decimal or `0x` hexadecimal: a name ending in one is an IPv4 address to them. */
+const NUMERIC_LABEL_PATTERN = /^(?:\d+|0x[\da-f]*)$/i;
 
 /**
  * Reads a "Server Hostname / IP Address" value: an optional `http://` or `https://`, a host (IPv4,
@@ -321,8 +323,9 @@ function isIPv6(value: string): boolean {
 
 /**
  * A host name in its ASCII form ({@link toAsciiName}): labels of letters, digits, `_` and inner `-`
- * (underscores are accepted, as internal names use them). A name whose last label is a number is not
- * one: browsers read it as an IPv4 address (`192.168.1`, `999.1.1.1`, `192.168.1.020`).
+ * (underscores are accepted, as internal names use them). A name whose last label is a number, decimal
+ * or `0x` hexadecimal, is not one: browsers read it as an IPv4 address and open another host or none
+ * (`192.168.1`, `999.1.1.1`, `192.168.1.020`, `0xff`, `gauzy.0xff`).
  */
 function isHostName(value: string): boolean {
 	const name = value.endsWith('.') ? value.slice(0, -1) : value;
@@ -330,7 +333,7 @@ function isHostName(value: string): boolean {
 		return false;
 	}
 	const labels = name.split('.');
-	if (/^\d+$/.test(labels[labels.length - 1])) {
+	if (NUMERIC_LABEL_PATTERN.test(labels[labels.length - 1])) {
 		return false;
 	}
 	return labels.every((label) => HOSTNAME_LABEL_PATTERN.test(label));

@@ -29,6 +29,9 @@ describe('parseServerHost', () => {
 		['gauzy.example.com', 'hostname'],
 		['gauzy.example.com.', 'hostname'],
 		['my_server.lan', 'hostname'],
+		['gauzy.0xg', 'hostname'],
+		['0x.example', 'hostname'],
+		['gauzy.1e3', 'hostname'],
 		['xn--bcher-kva.example', 'hostname'],
 		['bücher.example', 'hostname'],
 		['https://bücher.example:3000', 'hostname'],
@@ -92,7 +95,13 @@ describe('parseServerHost', () => {
 		':1:2:3:4:5:6:7',
 		'1:2:3:4:5:6:7:8:9',
 		'::ffff:999.1.1.1',
-		'gggg::1'
+		'gggg::1',
+		// A hexadecimal last label makes browsers read the name as an IPv4 address.
+		'0xff',
+		'gauzy.0xff',
+		'gauzy.0X1F',
+		'gauzy.0x',
+		'gauzy.0xff.'
 	])('rejects %s', (value) => {
 		expect(parseServerHost(value).kind).toBe('invalid');
 	});

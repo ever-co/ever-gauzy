@@ -665,6 +665,8 @@ export class SetupComponent implements OnInit, OnDestroy {
 	}
 
 	public onChangeProxyConfig(config: IProxyConfig) {
+		// The SSL form can replace its config object (after Browse), so keep the host field's SSL hint on it.
+		this.proxyOptions = config ?? this.proxyOptions;
 		this.electronService.ipcRenderer.send('update_server_config', {
 			secureProxy: config
 		});

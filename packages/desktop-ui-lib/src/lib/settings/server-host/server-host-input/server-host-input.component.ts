@@ -63,6 +63,10 @@ export class ServerHostInputComponent implements OnInit {
 			const found = await this.networkAddressService.list();
 			const addresses = reachableServerAddresses(found);
 			this.addresses.set(addresses);
+			// The parent may have locked the field (Save, Check, server started) while the addresses were read.
+			if (this.disabled()) {
+				return;
+			}
 			const [preferred] = addresses;
 			if (preferred) {
 				this.use(preferred);

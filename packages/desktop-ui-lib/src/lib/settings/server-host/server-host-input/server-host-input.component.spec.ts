@@ -204,6 +204,18 @@ describe('ServerHostInputComponent', () => {
 			expect(notifier.warn).toHaveBeenCalledWith('TIMER_TRACKER.SETTINGS.SERVER_HOST.ONLY_IPV6');
 		});
 
+		it('ignores the result when the field was locked while the addresses were read', async () => {
+			await render('0.0.0.0');
+
+			const detecting = component.detect();
+			fixture.componentRef.setInput('disabled', true);
+			await detecting;
+
+			expect(component.host()).toBe('0.0.0.0');
+			expect(hostChanges).toEqual([]);
+			expect(notifier.warn).not.toHaveBeenCalled();
+		});
+
 		it('fills in an IPv4 address even when an IPv6 one is listed first', async () => {
 			addresses = [IPV6, OTHER_LAN];
 			await render('');

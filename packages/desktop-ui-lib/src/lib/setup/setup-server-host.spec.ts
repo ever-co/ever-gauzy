@@ -31,6 +31,9 @@ describe('SetupComponent: server host', () => {
 		component.databaseDriverChange(null, 'sqlite');
 	}
 
+	// The IPC bridge of test-setup.ts is one global object: spies on it would keep earlier tests' calls.
+	afterEach(() => jest.restoreAllMocks());
+
 	describe('Gauzy Server', () => {
 		beforeEach(() => create(true));
 
@@ -75,6 +78,15 @@ describe('SetupComponent: server host', () => {
 			expect(component.getServerConfig()).toEqual(expect.objectContaining({ host: '192.168.1.20' }));
 		});
 
+		it('follows the SSL form when it replaces its config, so the SSL hint stays current', () => {
+			jest.spyOn(TestBed.inject(ElectronService).ipcRenderer, 'send');
+			const replaced = { ssl: { key: 'key.pem', cert: 'cert.pem' }, secure: true, enable: true };
+
+			component.onChangeProxyConfig(replaced);
+
+			expect(component.proxyOptions).toBe(replaced);
+		});
+
 		describe('saving after the database check', () => {
 			let send: jest.SpyInstance;
 			let notifyError: jest.SpyInstance;
@@ -90,9 +102,6 @@ describe('SetupComponent: server host', () => {
 					.spyOn(TestBed.inject(ToastrNotificationService), 'error')
 					.mockImplementation(() => undefined);
 			});
-
-			// The IPC bridge of test-setup.ts is one global object: spies on it would keep earlier tests' calls.
-			afterEach(() => jest.restoreAllMocks());
 
 			it('checks the host again: one made invalid while the check ran is not saved', async () => {
 				component.onIntegratedHostChange('192.168.1.20');
