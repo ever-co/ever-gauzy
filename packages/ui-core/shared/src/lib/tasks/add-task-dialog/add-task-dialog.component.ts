@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import moment from 'moment';
@@ -8,6 +8,7 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
+	ID,
 	IEmployee,
 	IOrganization,
 	IOrganizationProject,
@@ -26,6 +27,7 @@ import {
 	Store,
 	TasksService
 } from '@gauzy/ui-core/core';
+import { isProjectOfClient } from './add-task-dialog.utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -49,6 +51,12 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	 * Payment Mutation Form
 	 */
 	public form: UntypedFormGroup = AddTaskDialogComponent.buildForm(this.fb);
+
+	/**
+	 * Optional client the project list is narrowed to; empty lists every project, as before.
+	 * Kept out of `form` on purpose: a task has no client of its own, so it must not reach the task payload.
+	 */
+	public readonly organizationContactControl = new FormControl<ID | null>(null);
 
 	constructor(
 		public readonly dialogRef: NbDialogRef<AddTaskDialogComponent>,
@@ -150,6 +158,21 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			.get('projectId')
 			.valueChanges.pipe(untilDestroyed(this))
 			.subscribe(() => this.loadAvailableModules());
+
+		this.organizationContactControl.valueChanges
+			.pipe(untilDestroyed(this))
+			.subscribe((organizationContactId) => this.onClientChanged(organizationContactId));
+	}
+
+	/**
+	 * Clears the selected project when it does not belong to the client the project list is now narrowed to.
+	 *
+	 * @param organizationContactId The picked client, or `null` once it is cleared.
+	 */
+	onClientChanged(organizationContactId: ID | null): void {
+		if (!isProjectOfClient(this.form.get('project').value, organizationContactId)) {
+			this.form.patchValue({ project: null, projectId: null });
+		}
 	}
 
 	initializeForm() {

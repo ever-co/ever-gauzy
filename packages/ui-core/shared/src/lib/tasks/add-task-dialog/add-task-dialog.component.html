@@ -21,6 +21,18 @@
           </div>
         </div>
       }
+      <!-- Optional client: narrows the project list below; empty lists every project. Not part of the task. -->
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="form-group">
+            <label class="label">{{ 'CONTEXT_MENU.CLIENT' | translate }}</label>
+            <ga-contact-selector
+              [formControl]="organizationContactControl"
+              [placeholder]="'POP_UPS.ALL_CONTACTS' | translate"
+            ></ga-contact-selector>
+          </div>
+        </div>
+      </div>
       <div class="row">
         <div class="col-sm-6">
           <div class="form-group">
@@ -31,6 +43,7 @@
               [skipGlobalChange]="true"
               [defaultSelected]="false"
               [showAllOption]="false"
+              [organizationContactId]="organizationContactControl.value"
               (onChanged)="selectedProject($event)"
             ></ga-project-selector>
           </div>
