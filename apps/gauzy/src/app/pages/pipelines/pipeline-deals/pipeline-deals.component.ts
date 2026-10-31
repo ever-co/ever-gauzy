@@ -250,6 +250,11 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 		// Set the smart table source
 		this.smartTableSource = new LocalDataSource();
 		await this.smartTableSource.load(deals);
+		// A new source starts unfiltered: keep the list narrowed to the stage the stage filter still shows
+		// (after the deals are read again, for example once the board's moves have saved).
+		if (this.stageFormControl.value) {
+			this._applyStageFilter(this.stageFormControl.value);
+		}
 
 		// Get pagination details
 		const { activePage, itemsPerPage } = this.getPagination();
@@ -374,20 +379,7 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 	 * Filter deals in the smart table data source by stageId.
 	 */
 	async filterDealsByStage(stageId: ID): Promise<void> {
-		// Set header selectors filters configuration
-		this.smartTableSource.setFilter(
-			[
-				...(stageId
-					? [
-							{
-								field: 'stageId',
-								search: stageId
-							}
-					  ]
-					: [])
-			],
-			true
-		);
+		this._applyStageFilter(stageId);
 
 		if (this.isGridLayout) {
 			try {
@@ -398,6 +390,13 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 				this._errorHandlingService.handleError(error);
 			}
 		}
+	}
+
+	/**
+	 * Narrows the table's source to the deals at `stageId`, or shows every stage again.
+	 */
+	private _applyStageFilter(stageId: ID | null): void {
+		this.smartTableSource.setFilter(stageId ? [{ field: 'stageId', search: stageId }] : [], true);
 	}
 
 	/**
