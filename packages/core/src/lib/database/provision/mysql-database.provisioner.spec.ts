@@ -18,8 +18,19 @@ function fakeServer({
 	existing = [] as string[],
 	connectError,
 	lookupError,
-	createError
-}: { existing?: string[]; connectError?: Error; lookupError?: Error; createError?: Error } = {}) {
+	recheckError,
+	createError,
+	createdMeanwhile = false
+}: {
+	existing?: string[];
+	connectError?: Error;
+	lookupError?: Error;
+	/** Fails only the lookups after the first one. */
+	recheckError?: Error;
+	createError?: Error;
+	/** The database appears (another replica created it) as the CREATE fails. */
+	createdMeanwhile?: boolean;
+} = {}) {
 	const statements: Array<{ sql: string; values?: unknown[] }> = [];
 	const configs: MySqlAdminConnectionConfig[] = [];
 	const connection: MySqlAdminConnection & { end: jest.Mock } = {
@@ -27,10 +38,14 @@ function fakeServer({
 			statements.push({ sql, values });
 			if (sql.startsWith('SELECT')) {
 				if (lookupError) throw lookupError;
+				if (recheckError && statements.filter((s) => s.sql.startsWith('SELECT')).length > 1) throw recheckError;
 				const rows = existing.includes(values?.[0] as string) ? [{ SCHEMA_NAME: values?.[0] }] : [];
 				return [rows, []] as [unknown, unknown];
 			}
-			if (createError) throw createError;
+			if (createError) {
+				if (createdMeanwhile) existing.push('gauzy');
+				throw createError;
+			}
 			return [{ affectedRows: 1 }, undefined] as [unknown, unknown];
 		}),
 		end: jest.fn(async () => undefined)
@@ -73,6 +88,17 @@ describe('MySqlDatabaseProvisioner', () => {
 		]);
 	});
 
+	it('listens for connection errors, so a connection dropping while idle cannot crash startup', async () => {
+		const { provisioner, connection } = fakeServer({ existing: ['gauzy'] });
+		const listeners: Array<(error: Error) => void> = [];
+		connection.on = (event: 'error', listener: (error: Error) => void) => listeners.push(listener);
+
+		await expect(provisioner.ensureDatabase(target)).resolves.toBe('exists');
+
+		expect(listeners).toHaveLength(1);
+		expect(() => listeners[0](new Error('Connection lost: The server closed the connection.'))).not.toThrow();
+	});
+
 	it('creates nothing when the database exists, looking it up with a bound parameter', async () => {
 		const { provisioner, statements, connection } = fakeServer({ existing: ['gauzy'] });
 
@@ -113,6 +139,33 @@ describe('MySqlDatabaseProvisioner', () => {
 		expect(error.message).toContain('Access denied');
 		expect(error.message).not.toContain('not-logged');
 		expect(connection.end).toHaveBeenCalledTimes(1);
+	});
+
+	it('answers "exists" when the user may not create it but another process has created the database', async () => {
+		const { provisioner, statements } = fakeServer({
+			createError: mysqlError('ER_DBACCESS_DENIED_ERROR', 1044, "Access denied for user 'gauzy_app'@'%'"),
+			createdMeanwhile: true
+		});
+
+		await expect(provisioner.ensureDatabase(target)).resolves.toBe('exists');
+
+		expect(statements.map((statement) => statement.sql)).toEqual([
+			'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?',
+			'CREATE DATABASE IF NOT EXISTS `gauzy` CHARACTER SET utf8mb4',
+			'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?'
+		]);
+	});
+
+	it('reports the CREATE error when the second lookup fails as well', async () => {
+		const { provisioner } = fakeServer({
+			createError: mysqlError('ER_DBACCESS_DENIED_ERROR', 1044, "Access denied for user 'gauzy_app'@'%'"),
+			recheckError: new Error('Connection lost: The server closed the connection.')
+		});
+
+		await expect(provisioner.ensureDatabase(target)).rejects.toMatchObject({
+			stage: 'create',
+			message: expect.stringContaining('needs the CREATE privilege')
+		});
 	});
 
 	it('reports any other creation failure with the server message', async () => {

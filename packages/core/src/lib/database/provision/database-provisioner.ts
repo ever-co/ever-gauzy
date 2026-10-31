@@ -29,6 +29,15 @@ export interface DatabaseProvisionTarget {
 	readonly ssl?: unknown;
 	/** How long to wait for the server to accept the connection, in milliseconds. */
 	readonly connectTimeoutMs?: number;
+	/**
+	 * The server-side limits the API's own connections run with (`DB_STATEMENT_TIMEOUT`, `DB_LOCK_TIMEOUT`), in
+	 * milliseconds. PostgreSQL applies them to the provisioning session as well.
+	 */
+	readonly statementTimeoutMs?: number;
+	readonly lockTimeoutMs?: number;
+	/** TCP keep-alive as the API's own connections use it (`DB_KEEP_ALIVE`), so a dropped connection is noticed. */
+	readonly keepAlive?: boolean;
+	readonly keepAliveInitialDelayMs?: number;
 }
 
 /**

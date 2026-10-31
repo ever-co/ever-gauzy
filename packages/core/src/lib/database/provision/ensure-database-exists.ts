@@ -6,6 +6,7 @@ import {
 	DatabaseProvisionError,
 	DatabaseProvisionOutcome,
 	DatabaseProvisionTarget,
+	DEFAULT_PROVISION_CONNECT_TIMEOUT_MS,
 	describeDriverError
 } from './database-provisioner';
 import { MySqlDatabaseProvisioner } from './mysql-database.provisioner';
@@ -23,8 +24,9 @@ import { PostgresDatabaseProvisioner } from './postgres-database.provisioner';
  * - it is missing and cannot be created (no CREATEDB / CREATE privilege, an invalid `DB_NAME`): startup stops with
  *   a message naming the privilege and the statement to run, instead of the ORM's retries ending in
  *   "database ... does not exist";
- * - the server cannot be reached or the lookup fails: a warning, and startup goes on exactly as without the
- *   flag, so the ORM reports (and retries) the connection as it always did. A role that may not connect to the
+ * - the server cannot be reached, the lookup fails, or the server does not answer within
+ *   {@link PROVISION_WORK_BUDGET_MS} after the connect timeout: a warning, and startup goes on exactly as without
+ *   the flag, so the ORM reports (and retries) the connection as it always did. A role that may not connect to the
  *   maintenance database but may connect to its own still starts.
  *
  * SQLite needs none of this: the driver creates its file on first use.
@@ -63,21 +65,78 @@ export interface DatabaseConnectionOptionsLike {
 	password?: unknown;
 	database?: unknown;
 	ssl?: unknown;
-	extra?: { connectionTimeoutMillis?: number };
+	/** A connection URL (`postgres://user:password@host:5432/gauzy`); its fields win over the separate ones. */
+	url?: unknown;
+	/** The driver options; for PostgreSQL, `postgresConnectionExtras` in `@gauzy/config` fills the session ones. */
+	extra?: {
+		connectionTimeoutMillis?: number;
+		statement_timeout?: unknown;
+		lock_timeout?: unknown;
+		keepAlive?: unknown;
+		keepAliveInitialDelayMillis?: unknown;
+	};
+}
+
+/** A positive number of milliseconds, or `undefined` for anything else (unset, `0`, a string). */
+function positiveMs(value: unknown): number | undefined {
+	return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+/** `decodeURIComponent` that leaves a malformed sequence as it is instead of throwing. */
+function safeDecode(value: string): string {
+	try {
+		return decodeURIComponent(value);
+	} catch {
+		return value;
+	}
+}
+
+type ConnectionFields = Pick<DatabaseConnectionOptionsLike, 'host' | 'port' | 'username' | 'password' | 'database'>;
+
+/**
+ * The connection fields a `url` option carries. TypeORM lets them win over the separate fields (a plugin may
+ * configure the connection with a URL alone), so the provisioning reads them the same way. A URL that does not
+ * parse adds nothing.
+ */
+function connectionUrlFields(url: unknown): ConnectionFields {
+	if (typeof url !== 'string' || url.trim() === '') {
+		return {};
+	}
+	let parsed: URL;
+	try {
+		parsed = new URL(url);
+	} catch {
+		return {};
+	}
+	const fields: ConnectionFields = {
+		// An IPv6 host comes bracketed (`[::1]`); the drivers take it bare.
+		host: parsed.hostname.replace(/^\[(.*)\]$/, '$1') || undefined,
+		port: parsed.port ? Number(parsed.port) : undefined,
+		username: parsed.username ? safeDecode(parsed.username) : undefined,
+		password: parsed.password ? safeDecode(parsed.password) : undefined,
+		database: parsed.pathname.length > 1 ? safeDecode(parsed.pathname.slice(1)) : undefined
+	};
+	return Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined)) as ConnectionFields;
 }
 
 /** The provisioning target described by the ORM's connection options. */
 export function toDatabaseProvisionTarget(options: DatabaseConnectionOptionsLike): DatabaseProvisionTarget {
+	const extra = options?.extra;
+	const fields: ConnectionFields = { ...options, ...connectionUrlFields(options?.url) };
 	return {
 		type: String(options?.type ?? ''),
 		// SQLite's `database` is a file path (or a buffer for sql.js); only a networked engine's name is used.
-		database: typeof options?.database === 'string' ? options.database : '',
-		host: options?.host,
-		port: options?.port,
-		user: options?.username,
-		password: options?.password,
+		database: typeof fields.database === 'string' ? fields.database : '',
+		host: fields.host,
+		port: fields.port,
+		user: fields.username,
+		password: fields.password,
 		ssl: options?.ssl,
-		connectTimeoutMs: options?.extra?.connectionTimeoutMillis
+		connectTimeoutMs: extra?.connectionTimeoutMillis,
+		statementTimeoutMs: positiveMs(extra?.statement_timeout),
+		lockTimeoutMs: positiveMs(extra?.lock_timeout),
+		keepAlive: typeof extra?.keepAlive === 'boolean' ? extra.keepAlive : undefined,
+		keepAliveInitialDelayMs: positiveMs(extra?.keepAliveInitialDelayMillis)
 	};
 }
 
@@ -96,7 +155,21 @@ export interface EnsureDatabaseExistsOptions {
 	logger?: Pick<LoggerService, 'log' | 'warn'>;
 	/** Defaults to {@link createDatabaseProvisioners}. */
 	provisioners?: DatabaseProvisionerRegistry;
+	/**
+	 * How long to wait for the provisioner before startup goes on without it, in milliseconds. Defaults to the
+	 * connect timeout plus {@link PROVISION_WORK_BUDGET_MS}.
+	 */
+	timeoutMs?: number;
 }
+
+/**
+ * How long the lookup and the `CREATE DATABASE` may take, on top of the connect timeout, before startup goes on
+ * without them. Both take well under a second on a healthy server; this bounds a server that accepted the
+ * connection and then stopped answering, or a statement left waiting on a lock, so they cannot hold startup.
+ */
+export const PROVISION_WORK_BUDGET_MS = 60_000;
+
+const TIMED_OUT = Symbol('timed out');
 
 /** Only a database that is known to be missing and could not be created stops startup. */
 function isFatal(error: unknown): error is DatabaseProvisionError {
@@ -113,7 +186,12 @@ function isFatal(error: unknown): error is DatabaseProvisionError {
  */
 export async function ensureDatabaseExists(
 	connectionOptions: DatabaseConnectionOptionsLike,
-	{ env = process.env, logger = new Logger('DatabaseProvision'), provisioners }: EnsureDatabaseExistsOptions = {}
+	{
+		env = process.env,
+		logger = new Logger('DatabaseProvision'),
+		provisioners,
+		timeoutMs
+	}: EnsureDatabaseExistsOptions = {}
 ): Promise<EnsureDatabaseExistsResult> {
 	if (!isDatabaseCreationEnabled(env)) {
 		return 'disabled';
@@ -131,8 +209,24 @@ export async function ensureDatabaseExists(
 		return 'not-applicable';
 	}
 
+	const deadlineMs =
+		timeoutMs ?? (target.connectTimeoutMs || DEFAULT_PROVISION_CONNECT_TIMEOUT_MS) + PROVISION_WORK_BUDGET_MS;
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const deadline = new Promise<typeof TIMED_OUT>((resolve) => {
+		timer = setTimeout(() => resolve(TIMED_OUT), deadlineMs);
+	});
 	try {
-		const outcome = await provisioner.ensureDatabase(target);
+		// The race also handles a late rejection of the provisioner, so nothing it does after the deadline can
+		// surface as an unhandled rejection; its connection is closed whenever it finishes.
+		const outcome = await Promise.race([provisioner.ensureDatabase(target), deadline]);
+		if (outcome === TIMED_OUT) {
+			logger.warn(
+				`DB_CREATE_IF_NOT_EXISTS: the database server did not answer within ${Math.ceil(deadlineMs / 1000)}s, ` +
+					`so database "${target.database}" may not have been created. Startup continues; the database ` +
+					`connection reports the cause if it fails as well.`
+			);
+			return 'unverified';
+		}
 		logger.log(
 			outcome === 'created'
 				? `DB_CREATE_IF_NOT_EXISTS: created database "${target.database}".`
@@ -149,5 +243,7 @@ export async function ensureDatabaseExists(
 				`cause if it fails as well.`
 		);
 		return 'unverified';
+	} finally {
+		clearTimeout(timer);
 	}
 }

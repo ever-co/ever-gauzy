@@ -19,6 +19,8 @@ export interface PostgresAdminClient {
 	connect(): Promise<unknown>;
 	query(text: string, values?: unknown[]): Promise<{ rows: unknown[] }>;
 	end(): Promise<unknown>;
+	/** `pg` emits `error` when the connection drops; see {@link PostgresDatabaseProvisioner}. */
+	on?(event: 'error', listener: (error: Error) => void): unknown;
 }
 
 /** The `pg` client options the provisioner sets. */
@@ -31,6 +33,10 @@ export interface PostgresAdminClientConfig {
 	ssl?: unknown;
 	connectionTimeoutMillis: number;
 	application_name: string;
+	statement_timeout?: number;
+	lock_timeout?: number;
+	keepAlive?: boolean;
+	keepAliveInitialDelayMillis?: number;
 }
 
 /** Builds the client the provisioner connects with; replaced in tests. */
@@ -76,6 +82,9 @@ export interface PostgresDatabaseProvisionerOptions {
  * `pg_database` (readable by every role) with a bound parameter, and only when it is absent runs one
  * `CREATE DATABASE "<name>"`, the name quoted as an identifier. The new database takes the server's defaults
  * (owner: the connecting role; encoding and locale: `template1`'s), as `createdb` would give it.
+ *
+ * The session gets the API's own `DB_STATEMENT_TIMEOUT` / `DB_LOCK_TIMEOUT` and TCP keep-alive settings, so the
+ * server enforces the operator's limits here too (`ensureDatabaseExists` bounds the whole step as well).
  */
 export class PostgresDatabaseProvisioner implements DatabaseProvisioner {
 	private readonly maintenanceDatabase: string;
@@ -112,8 +121,16 @@ export class PostgresDatabaseProvisioner implements DatabaseProvisioner {
 				ssl: target.ssl,
 				connectionTimeoutMillis: target.connectTimeoutMs || DEFAULT_PROVISION_CONNECT_TIMEOUT_MS,
 				// Names the session in pg_stat_activity, so a DBA can tell it from the API's own pool.
-				application_name: 'gauzy-db-provision'
+				application_name: 'gauzy-db-provision',
+				statement_timeout: target.statementTimeoutMs,
+				lock_timeout: target.lockTimeoutMs,
+				keepAlive: target.keepAlive,
+				keepAliveInitialDelayMillis: target.keepAliveInitialDelayMs
 			});
+			// A `pg` client emits `error` when its connection drops (a server restart, a network reset). Without a
+			// listener Node turns that into an uncaught exception and ends the process. A query running at that
+			// moment is rejected as well, and the stages below report that failure.
+			client.on?.('error', () => undefined);
 			await client.connect();
 			return client;
 		} catch (error) {
@@ -141,6 +158,18 @@ export class PostgresDatabaseProvisioner implements DatabaseProvisioner {
 		}
 	}
 
+	/** The lookup again, after a failed CREATE; if it fails too, the CREATE error is the one to report. */
+	private async existsAfterFailedCreate(
+		client: PostgresAdminClient,
+		target: DatabaseProvisionTarget
+	): Promise<boolean> {
+		try {
+			return await this.exists(client, target);
+		} catch {
+			return false;
+		}
+	}
+
 	private async create(
 		client: PostgresAdminClient,
 		target: DatabaseProvisionTarget
@@ -150,8 +179,10 @@ export class PostgresDatabaseProvisioner implements DatabaseProvisioner {
 			return 'created';
 		} catch (error) {
 			const code = (error as DriverError)?.code;
-			// Another replica (or a person) created it between the lookup and this statement: it exists now.
-			if (code === PG_DUPLICATE_DATABASE) {
+			// Another replica (or a person) may have created it since the lookup. PostgreSQL then says 42P04, or
+			// 23505 when both statements raced on the catalog, or 42501 to a role that could not have created it
+			// anyway: whatever the error, a database that exists now is all startup needs.
+			if (code === PG_DUPLICATE_DATABASE || (await this.existsAfterFailedCreate(client, target))) {
 				return 'exists';
 			}
 			const server = describeServer(target, POSTGRES_DEFAULT_PORT);

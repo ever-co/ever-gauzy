@@ -61,6 +61,75 @@ describe('toDatabaseProvisionTarget', () => {
 		});
 	});
 
+	it('reads the session limits and keep-alive @gauzy/config sets for PostgreSQL', () => {
+		const target = toDatabaseProvisionTarget({
+			...postgresOptions,
+			extra: {
+				connectionTimeoutMillis: 2000,
+				statement_timeout: 30_000,
+				lock_timeout: 5_000,
+				keepAlive: true,
+				keepAliveInitialDelayMillis: 10_000
+			}
+		});
+
+		expect(target).toEqual(
+			expect.objectContaining({
+				statementTimeoutMs: 30_000,
+				lockTimeoutMs: 5_000,
+				keepAlive: true,
+				keepAliveInitialDelayMs: 10_000
+			})
+		);
+	});
+
+	it('leaves out a limit that is unset, zero or not a number', () => {
+		const target = toDatabaseProvisionTarget({
+			...postgresOptions,
+			extra: { statement_timeout: 0, lock_timeout: '5000', keepAlive: 'yes' }
+		});
+
+		expect(target.statementTimeoutMs).toBeUndefined();
+		expect(target.lockTimeoutMs).toBeUndefined();
+		expect(target.keepAlive).toBeUndefined();
+		expect(target.keepAliveInitialDelayMs).toBeUndefined();
+	});
+
+	it('reads a connection configured by URL alone, as TypeORM does', () => {
+		const target = toDatabaseProvisionTarget({
+			type: 'postgres',
+			url: 'postgres://gauzy%40app:p%40ss@db.example:6543/gauzy%20dev?sslmode=require'
+		});
+
+		expect(target).toEqual(
+			expect.objectContaining({
+				type: 'postgres',
+				host: 'db.example',
+				port: 6543,
+				user: 'gauzy@app',
+				password: 'p@ss',
+				database: 'gauzy dev'
+			})
+		);
+	});
+
+	it('lets the URL win over the separate fields, keeps those it leaves out, and ignores one that does not parse', () => {
+		expect(
+			toDatabaseProvisionTarget({ ...postgresOptions, url: 'mysql://[::1]/other' }) // no user, password or port
+		).toEqual(
+			expect.objectContaining({
+				host: '::1',
+				port: 5432,
+				user: 'gauzy_app',
+				password: 'not-logged',
+				database: 'other'
+			})
+		);
+		expect(toDatabaseProvisionTarget({ ...postgresOptions, url: 'not a url' })).toEqual(
+			toDatabaseProvisionTarget(postgresOptions)
+		);
+	});
+
 	it('ignores a database that is not a name (an SQLite buffer)', () => {
 		expect(toDatabaseProvisionTarget({ type: 'sqljs', database: new Uint8Array(1) }).database).toBe('');
 	});
@@ -151,6 +220,70 @@ describe('ensureDatabaseExists', () => {
 		await expect(
 			ensureDatabaseExists(postgresOptions, { env: enabled, logger, provisioners: { postgres: provisioner } })
 		).resolves.toBe('unverified');
+	});
+
+	it('goes on with startup when the server does not answer in time, and logs why', async () => {
+		const { provisioner } = provisionerReturning(new Promise<never>(() => undefined));
+		const logger = fakeLogger();
+
+		await expect(
+			ensureDatabaseExists(postgresOptions, {
+				env: enabled,
+				logger,
+				provisioners: { postgres: provisioner },
+				timeoutMs: 20
+			})
+		).resolves.toBe('unverified');
+
+		expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('did not answer within'));
+		expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Startup continues'));
+		expect(logger.log).not.toHaveBeenCalled();
+	});
+
+	it('ignores whatever the provisioner does after the deadline', async () => {
+		let fail: (error: Error) => void = () => undefined;
+		const late = new Promise<'created'>((_, reject) => (fail = reject));
+		const { provisioner } = provisionerReturning(late);
+		const unhandled = jest.fn();
+		process.on('unhandledRejection', unhandled);
+
+		try {
+			await expect(
+				ensureDatabaseExists(postgresOptions, {
+					env: enabled,
+					logger: fakeLogger(),
+					provisioners: { postgres: provisioner },
+					timeoutMs: 5
+				})
+			).resolves.toBe('unverified');
+			fail(new DatabaseProvisionError('could not be created', 'create'));
+			await new Promise((resolve) => setTimeout(resolve, 10));
+		} finally {
+			process.off('unhandledRejection', unhandled);
+		}
+
+		expect(unhandled).not.toHaveBeenCalled();
+	});
+
+	it('waits for the connect timeout plus a minute by default', async () => {
+		jest.useFakeTimers();
+		try {
+			const { provisioner } = provisionerReturning(new Promise<never>(() => undefined));
+			let result: string | undefined;
+			void ensureDatabaseExists(postgresOptions, {
+				env: enabled,
+				logger: fakeLogger(),
+				provisioners: { postgres: provisioner }
+			}).then((value) => (result = value));
+
+			await jest.advanceTimersByTimeAsync(2000 + 60_000 - 1);
+			expect(result).toBeUndefined();
+
+			await jest.advanceTimersByTimeAsync(1);
+			expect(result).toBe('unverified');
+		} finally {
+			jest.useRealTimers();
+		}
 	});
 
 	it.each(['create', 'config'] as const)(

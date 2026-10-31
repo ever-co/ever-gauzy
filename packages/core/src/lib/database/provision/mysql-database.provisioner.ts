@@ -15,6 +15,8 @@ export interface MySqlAdminConnection {
 	/** Resolves to `[rows, fields]`, as `mysql2/promise` does. */
 	query(sql: string, values?: unknown[]): Promise<[unknown, unknown?]>;
 	end(): Promise<unknown>;
+	/** `mysql2` emits `error` when an idle connection drops; see {@link MySqlDatabaseProvisioner}. */
+	on?(event: 'error', listener: (error: Error) => void): unknown;
 }
 
 /** The `mysql2` connection options the provisioner sets: no `database`, the connection is to the server. */
@@ -92,7 +94,7 @@ export class MySqlDatabaseProvisioner implements DatabaseProvisioner {
 
 	private async open(target: DatabaseProvisionTarget): Promise<MySqlAdminConnection> {
 		try {
-			return await this.connect({
+			const connection = await this.connect({
 				host: target.host,
 				port: target.port,
 				user: target.user,
@@ -100,6 +102,10 @@ export class MySqlDatabaseProvisioner implements DatabaseProvisioner {
 				ssl: target.ssl,
 				connectTimeout: target.connectTimeoutMs || DEFAULT_PROVISION_CONNECT_TIMEOUT_MS
 			});
+			// A connection that drops while no query runs emits `error`, which Node would otherwise turn into an
+			// uncaught exception. A query running at that moment is rejected, and the stages below report that.
+			connection.on?.('error', () => undefined);
+			return connection;
 		} catch (error) {
 			throw new DatabaseProvisionError(
 				`could not connect to MySQL at ${describeServer(target, MYSQL_DEFAULT_PORT)} as "${target.user}": ` +
@@ -124,6 +130,18 @@ export class MySqlDatabaseProvisioner implements DatabaseProvisioner {
 		}
 	}
 
+	/** The lookup again, after a failed CREATE; if it fails too, the CREATE error is the one to report. */
+	private async existsAfterFailedCreate(
+		connection: MySqlAdminConnection,
+		target: DatabaseProvisionTarget
+	): Promise<boolean> {
+		try {
+			return await this.exists(connection, target);
+		} catch {
+			return false;
+		}
+	}
+
 	private async create(
 		connection: MySqlAdminConnection,
 		target: DatabaseProvisionTarget
@@ -134,6 +152,11 @@ export class MySqlDatabaseProvisioner implements DatabaseProvisioner {
 			await connection.query(`CREATE DATABASE IF NOT EXISTS ${database} CHARACTER SET utf8mb4`);
 			return 'created';
 		} catch (error) {
+			// A user without the CREATE privilege is refused even when another replica created the database since
+			// the lookup: a database that exists now is all startup needs.
+			if (await this.existsAfterFailedCreate(connection, target)) {
+				return 'exists';
+			}
 			const server = describeServer(target, MYSQL_DEFAULT_PORT);
 			const { code, errno } = (error ?? {}) as DriverError;
 			if (MYSQL_ACCESS_DENIED.has(code ?? '') || MYSQL_ACCESS_DENIED_ERRNOS.has(errno ?? 0)) {
