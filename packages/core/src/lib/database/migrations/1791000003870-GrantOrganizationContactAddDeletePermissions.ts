@@ -153,6 +153,12 @@ export class GrantOrganizationContactAddDeletePermissions1791000003870 implement
 			? `"id", "tenantId", "roleId", "permission", "enabled"`
 			: `"tenantId", "roleId", "permission", "enabled"`;
 		const perRow = explicitId ? 4 : 3;
+		// `role_permission` is unique on (tenantId, roleId, permission), and on MySQL two API processes can run this
+		// migration at once (only PostgreSQL runs are serialized). A row the other process inserted after our read is
+		// skipped, never overwritten, as the permission reload does: Postgres and SQLite share the ON CONFLICT form,
+		// and MySQL's no-op update is its equivalent (INSERT IGNORE would also hide other errors).
+		const onDuplicate =
+			dbType === DatabaseTypeEnum.mysql ? ` ON DUPLICATE KEY UPDATE "id" = "id"` : ` ON CONFLICT DO NOTHING`;
 		for (const batch of chunks(missing, Math.floor(MAX_PARAMETERS / perRow))) {
 			const values: unknown[] = [];
 			const groups = batch.map(({ tenantId, roleId, permission }) => {
@@ -161,7 +167,7 @@ export class GrantOrganizationContactAddDeletePermissions1791000003870 implement
 				values.push(...row);
 				return `(${placeholders.join(', ')}, ${truthy})`;
 			});
-			await run(`INSERT INTO "role_permission" (${columns}) VALUES ${groups.join(', ')}`, values);
+			await run(`INSERT INTO "role_permission" (${columns}) VALUES ${groups.join(', ')}${onDuplicate}`, values);
 		}
 
 		for (const batch of chunks(switchOn, MAX_PARAMETERS)) {

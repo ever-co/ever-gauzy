@@ -189,6 +189,44 @@ describe('GrantOrganizationContactAddDeletePermissions1791000003870: the new gra
 		]).toEqual(once);
 	});
 
+	it('skips a grant another process inserted after its read, keeping that row as it was', async () => {
+		const queryRunner = dataSource.createQueryRunner();
+		const query = queryRunner.query.bind(queryRunner);
+		let raced = false;
+		jest.spyOn(queryRunner, 'query').mockImplementation(async (sql: string, parameters?: unknown[]) => {
+			if (!raced && /^\s*INSERT/i.test(sql)) {
+				raced = true;
+				// Another API process grants ORG_CONTACT_ADD to ADMIN_A, switched off, between the read and the insert.
+				await query(
+					`INSERT INTO "role_permission" ("id", "tenantId", "roleId", "permission", "enabled", "isActive", "isArchived")
+					VALUES (?, ?, ?, 'ORG_CONTACT_ADD', 0, 1, 0)`,
+					[id(900), TENANT_A, ADMIN_A]
+				);
+			}
+			return query(sql, parameters);
+		});
+
+		await new GrantOrganizationContactAddDeletePermissions1791000003870().up(queryRunner);
+		await queryRunner.release();
+
+		expect(raced).toBe(true);
+		const adminAdd = await dataSource.query(
+			`SELECT "id", "enabled" FROM "role_permission" WHERE "tenantId" = ? AND "roleId" = ? AND "permission" = 'ORG_CONTACT_ADD'`,
+			[TENANT_A, ADMIN_A]
+		);
+		expect(adminAdd).toEqual([{ id: id(900), enabled: 0 }]);
+		// Every other holder still gets the grant.
+		expect(byRole(await dataSource.query(grantsSql('ORG_CONTACT_ADD')))).toEqual(
+			byRole([
+				{ tenantId: TENANT_A, roleId: ADMIN_A, enabled: 0 },
+				{ tenantId: TENANT_A, roleId: MANAGER_A, enabled: 1 },
+				{ tenantId: TENANT_A, roleId: DECIDED_A, enabled: 1 },
+				{ tenantId: TENANT_A, roleId: RELOADED_A, enabled: 1 },
+				{ tenantId: TENANT_B, roleId: ADMIN_B, enabled: 1 }
+			])
+		);
+	});
+
 	it('writes in batches, not one statement per role, as it runs before the API starts', async () => {
 		// 600 more tenant roles that edit contacts, each with a reload-written switched-off ORG_CONTACT_DELETE row.
 		const HOLDERS = 600;
