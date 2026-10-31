@@ -4,3 +4,4 @@ export * from './logger.decorator';
 export * from './logger';
 export * from './default-logger';
 export * from './debug-in-development';
+export * from './http-request-logger';

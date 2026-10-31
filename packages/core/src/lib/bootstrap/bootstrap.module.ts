@@ -1,11 +1,18 @@
 import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@nestjs/common';
 import { ConfigModule } from '@gauzy/config';
 import { PluginModule } from '@gauzy/plugin';
-import { Logger, LoggerModule } from '../logger';
+import { HttpRequestLoggerModule, Logger, LoggerModule } from '../logger';
 import { AppModule } from '../app/app.module';
 
 @Module({
-	imports: [ConfigModule, LoggerModule.forRoot(), PluginModule.init(), AppModule]
+	imports: [
+		ConfigModule,
+		LoggerModule.forRoot(),
+		// One log line per API request, only when LOG_HTTP_REQUESTS=true (off by default).
+		HttpRequestLoggerModule.forRoot(),
+		PluginModule.init(),
+		AppModule
+	]
 })
 export class BootstrapModule implements NestModule, OnApplicationShutdown {
 	/**
