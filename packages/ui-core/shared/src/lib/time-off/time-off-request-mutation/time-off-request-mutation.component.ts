@@ -15,7 +15,7 @@ import { firstValueFrom } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { CompareDateValidator, OrganizationDocumentsService, Store, ToastrService } from '@gauzy/ui-core/core';
-import { distinctUntilChange, downloadFile } from '@gauzy/ui-core/common';
+import { distinctUntilChange, downloadFile, toHttpUrl } from '@gauzy/ui-core/common';
 import { EmployeeSelectorComponent } from '../../selectors/employee/employee.component';
 import { FormHelpers } from '../../forms/helpers';
 import { findTimeOffRequestForm } from './time-off-request-form';
@@ -31,6 +31,9 @@ import { findTimeOffRequestForm } from './time-off-request-form';
 export class TimeOffRequestMutationComponent implements OnInit {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	readonly RequestFormType = TimeOffRequestFormTypeEnum;
+
+	/** The request form the browser would not open in a new tab, offered as a link the user clicks instead. */
+	blockedRequestForm: { name: string; url: string } | null = null;
 
 	/**
 	 * Employee Selector
@@ -177,7 +180,8 @@ export class TimeOffRequestMutationComponent implements OnInit {
 	/**
 	 * Downloads the organization's paid or unpaid request form (issue #5481). The form is the organization
 	 * document named as in `TIME_OFF_REQUEST_FORM_DOCUMENT_NAMES`, whatever its place in the list; when there is
-	 * none, or its link does not give a file, a hint says so instead of opening another document.
+	 * none, or its link does not give a file, a hint says so instead of opening another document. When the browser
+	 * blocks the tab the form would open in, the dialog shows a link to it.
 	 *
 	 * @param type Which form.
 	 */
@@ -185,6 +189,7 @@ export class TimeOffRequestMutationComponent implements OnInit {
 		if (!this.organization) {
 			return;
 		}
+		this.blockedRequestForm = null;
 		const { tenantId } = this.store.user;
 		const { id: organizationId } = this.organization;
 
@@ -201,6 +206,9 @@ export class TimeOffRequestMutationComponent implements OnInit {
 			const result = await downloadFile(form.documentUrl, form.name);
 			if (result === 'invalid' || result === 'unavailable') {
 				this.toastrService.warning('TIME_OFF_PAGE.REQUEST_FORM_UNAVAILABLE', { name: form.name });
+			} else if (result === 'blocked') {
+				this.blockedRequestForm = { name: form.name, url: toHttpUrl(form.documentUrl).href };
+				this.toastrService.warning('TIME_OFF_PAGE.REQUEST_FORM_BLOCKED', { name: form.name });
 			}
 		} catch (error) {
 			this.toastrService.danger(error);

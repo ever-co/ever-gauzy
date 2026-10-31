@@ -1,42 +1,19 @@
 import { saveAs } from 'file-saver';
-import { downloadFile, downloadFileName, toHttpUrl } from './download-file';
+import { downloadFile, downloadFileName } from './download-file';
 
 jest.mock('file-saver', () => ({ saveAs: jest.fn() }));
 
 describe('download-file', () => {
-	const BASE = 'https://app.gauzy.test/#/pages/employees/time-off';
-
-	describe('toHttpUrl', () => {
-		it('keeps http(s) links, and reads a relative one against the page', () => {
-			expect(toHttpUrl('https://files.test/a.pdf', BASE)?.href).toBe('https://files.test/a.pdf');
-			expect(toHttpUrl(' http://files.test/a.pdf ', BASE)?.href).toBe('http://files.test/a.pdf');
-			expect(toHttpUrl('/public/forms/a.pdf', BASE)?.href).toBe('https://app.gauzy.test/public/forms/a.pdf');
-		});
-
-		it.each([
-			['javascript:alert(document.cookie)'],
-			['JavaScript:alert(1)'],
-			['data:text/html,<script>alert(1)</script>'],
-			['blob:https://app.gauzy.test/0d8f'],
-			['file:///etc/passwd'],
-			[''],
-			['   '],
-			[null],
-			[undefined],
-			[42]
-		])('refuses %p', (url) => {
-			expect(toHttpUrl(url, BASE)).toBeNull();
-		});
-	});
-
 	describe('downloadFileName', () => {
 		const url = (href: string) => new URL(href);
 
 		it("names the file after the document, with the link's extension", () => {
-			expect(downloadFileName(url('https://files.test/v1/qanadywgn3gxte7kwtwu.pdf'), 'Paid Days off Request')).toBe(
-				'Paid Days off Request.pdf'
+			expect(
+				downloadFileName(url('https://files.test/v1/qanadywgn3gxte7kwtwu.pdf'), 'Paid Days off Request')
+			).toBe('Paid Days off Request.pdf');
+			expect(downloadFileName(url('https://files.test/forms/request.PDF?v=2'), 'Request.pdf')).toBe(
+				'Request.pdf'
 			);
-			expect(downloadFileName(url('https://files.test/forms/request.PDF?v=2'), 'Request.pdf')).toBe('Request.pdf');
 			expect(downloadFileName(url('https://files.test/forms/request'), 'Request')).toBe('Request');
 		});
 
@@ -60,7 +37,7 @@ describe('download-file', () => {
 		beforeEach(() => {
 			fetchMock = jest.fn();
 			globalThis.fetch = fetchMock as unknown as typeof fetch;
-			openMock = jest.spyOn(window, 'open').mockImplementation(() => null);
+			openMock = jest.spyOn(window, 'open');
 			(saveAs as unknown as jest.Mock).mockClear();
 		});
 
@@ -86,11 +63,22 @@ describe('download-file', () => {
 		});
 
 		it('opens the link in a new tab, without access to the page, when the host refuses the fetch', async () => {
+			const tab = { opener: window, location: { href: 'about:blank' } };
+			openMock.mockImplementation(() => tab as unknown as Window);
 			fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
 
 			await expect(downloadFile('https://files.test/v1/abc.pdf', 'Form')).resolves.toBe('opened');
 
-			expect(openMock).toHaveBeenCalledWith('https://files.test/v1/abc.pdf', '_blank', 'noopener,noreferrer');
+			expect(tab).toEqual({ opener: null, location: { href: 'https://files.test/v1/abc.pdf' } });
+			expect(saveAs).not.toHaveBeenCalled();
+		});
+
+		it('answers `blocked` when the browser blocks that tab, so the caller can offer a link', async () => {
+			openMock.mockImplementation(() => null);
+			fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+			await expect(downloadFile('https://files.test/v1/abc.pdf', 'Form')).resolves.toBe('blocked');
+
 			expect(saveAs).not.toHaveBeenCalled();
 		});
 

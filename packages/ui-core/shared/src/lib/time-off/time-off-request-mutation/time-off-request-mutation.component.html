@@ -107,6 +107,13 @@
 						>
 							{{ 'BUTTONS.UNPAID_DAYS_OFF' | translate }}
 						</button>
+						@if (blockedRequestForm) {
+						<div class="mt-2">
+							<a [href]="blockedRequestForm.url" target="_blank" rel="noopener noreferrer">
+								{{ 'TIME_OFF_PAGE.OPEN_REQUEST_FORM' | translate: { name: blockedRequestForm.name } }}
+							</a>
+						</div>
+						}
 					</div>
 				</div>
 				<div class="col-6">

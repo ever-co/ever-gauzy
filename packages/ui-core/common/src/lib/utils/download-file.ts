@@ -1,4 +1,5 @@
 import { saveAs } from 'file-saver';
+import { openInNewTab, toHttpUrl } from './safe-url';
 
 /**
  * What `downloadFile` did with a link:
@@ -6,10 +7,12 @@ import { saveAs } from 'file-saver';
  * - `downloaded`: the file was fetched and handed to the browser as a download;
  * - `opened`: the file's host does not allow it to be fetched from this page (no CORS), so it was opened in
  *   a new tab, where the browser shows or saves it;
+ * - `blocked`: that new tab was blocked by the browser (a popup opened after the fetch has outlived the click
+ *   that allowed it); the caller should offer a link the user can click;
  * - `unavailable`: the host answered with an error (a 404 for a file that is gone, say);
  * - `invalid`: the link is not an http(s) URL, so nothing was done.
  */
-export type DownloadFileResult = 'downloaded' | 'opened' | 'unavailable' | 'invalid';
+export type DownloadFileResult = 'downloaded' | 'opened' | 'blocked' | 'unavailable' | 'invalid';
 
 /** Characters no file system takes in a file name, and control characters. */
 // eslint-disable-next-line no-control-regex
@@ -17,24 +20,6 @@ const UNSAFE_FILE_NAME_CHARACTERS = /[\\/:*?"<>|\u0000-\u001f]+/g;
 
 /** A short extension at the end of a URL path, such as `.pdf`. */
 const EXTENSION = /\.[a-z0-9]{1,8}$/i;
-
-/**
- * `url` as an absolute http(s) URL, read against the page address, or `null` for anything else
- * (`javascript:`, `data:`, `blob:`, a blank value, text that is not a URL).
- *
- * Links that people type in (an organization document, say) are opened or fetched only after this check.
- */
-export function toHttpUrl(url: unknown, base: string = globalThis.location?.href): URL | null {
-	if (typeof url !== 'string' || !url.trim()) {
-		return null;
-	}
-	try {
-		const parsed = new URL(url.trim(), base);
-		return parsed.protocol === 'https:' || parsed.protocol === 'http:' ? parsed : null;
-	} catch {
-		return null;
-	}
-}
 
 /**
  * The name to save a download under: `name` without the characters file systems refuse, followed by the
@@ -57,7 +42,7 @@ export function downloadFileName(url: URL, name?: string): string {
  *
  * The file is fetched without cookies or a referrer, and never through Angular's `HttpClient`, whose
  * interceptors would send the signed-in user's token to whatever host the link names. When the host does
- * not allow the fetch, the link opens in a new tab without access to this page (`noopener,noreferrer`).
+ * not allow the fetch, the link opens in a new tab without access to this page (see `openInNewTab`).
  *
  * @returns What was done, for the caller to tell the user when the file could not be had.
  */
@@ -72,8 +57,7 @@ export async function downloadFile(url: string, name?: string): Promise<Download
 		response = await fetch(target.href, { credentials: 'omit', referrerPolicy: 'no-referrer' });
 	} catch {
 		// A cross-origin host without CORS headers (or no network): let the browser open it instead.
-		window.open(target.href, '_blank', 'noopener,noreferrer');
-		return 'opened';
+		return openInNewTab(target.href) === 'opened' ? 'opened' : 'blocked';
 	}
 
 	if (!response.ok) {

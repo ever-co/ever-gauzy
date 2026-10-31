@@ -19,7 +19,7 @@ describe('TimeOffRequestMutationComponent.getRequestForm', () => {
 	const TENANT = 'tenant-1';
 	const ORGANIZATION = 'org-1';
 
-	const document = (name: string, documentUrl: string) => ({ id: name, name, documentUrl } as IOrganizationDocument);
+	const document = (name: string, documentUrl: string) => ({ id: name, name, documentUrl }) as IOrganizationDocument;
 	const handbook = document('Employee Handbook', 'https://files.test/handbook.pdf');
 	const paid = document('Paid Days off Request', 'https://files.test/paid.pdf');
 	const unpaid = document('Unpaid Days off Request', 'https://files.test/unpaid.pdf');
@@ -32,7 +32,9 @@ describe('TimeOffRequestMutationComponent.getRequestForm', () => {
 			organization: { id: ORGANIZATION, tenantId: TENANT },
 			store: { user: { tenantId: TENANT } },
 			documentsService: {
-				getAll: jest.fn(() => (items instanceof Error ? throwError(() => items) : of({ items, total: items.length })))
+				getAll: jest.fn(() =>
+					items instanceof Error ? throwError(() => items) : of({ items, total: items.length })
+				)
 			},
 			toastrService: { warning: jest.fn(), danger: jest.fn() }
 		};
@@ -118,6 +120,29 @@ describe('TimeOffRequestMutationComponent.getRequestForm', () => {
 		await getRequestForm(PAID);
 
 		expect(component.toastrService.warning).not.toHaveBeenCalled();
+		expect(component.blockedRequestForm).toBeNull();
+	});
+
+	it('offers a link to the form when the browser blocked its tab', async () => {
+		download.mockResolvedValue('blocked');
+		const { component, getRequestForm } = setup([paid]);
+
+		await getRequestForm(PAID);
+
+		expect(component.blockedRequestForm).toEqual({ name: paid.name, url: paid.documentUrl });
+		expect(component.toastrService.warning).toHaveBeenCalledWith('TIME_OFF_PAGE.REQUEST_FORM_BLOCKED', {
+			name: paid.name
+		});
+	});
+
+	it('drops that link once another form is asked for', async () => {
+		download.mockResolvedValueOnce('blocked').mockResolvedValueOnce('downloaded');
+		const { component, getRequestForm } = setup([paid, unpaid]);
+
+		await getRequestForm(PAID);
+		await getRequestForm(UNPAID);
+
+		expect(component.blockedRequestForm).toBeNull();
 	});
 
 	it('shows the error when the documents cannot be read', async () => {
