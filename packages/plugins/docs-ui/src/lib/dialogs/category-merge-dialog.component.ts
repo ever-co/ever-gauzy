@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbSelectModule } from '@nebular/theme';
@@ -13,17 +12,21 @@ import { ID, IDocumentCategory } from '@gauzy/contracts';
  */
 @Component({
 	selector: 'gz-docs-category-merge-dialog',
-	imports: [CommonModule, FormsModule, TranslatePipe, NbButtonModule, NbCardModule, NbSelectModule],
+	imports: [FormsModule, TranslatePipe, NbButtonModule, NbCardModule, NbSelectModule],
 	template: `
 		<nb-card class="docs-dialog docs-category-merge-dialog">
 			<nb-card-header>{{ 'DOCS.SETTINGS.MERGE_TITLE' | translate }}</nb-card-header>
 			<nb-card-body>
-				<p class="hint">{{ 'DOCS.SETTINGS.MERGE_HINT' | translate : { name: $safeNavigationMigration(source?.name) } }}</p>
+				<p class="hint">
+					{{ 'DOCS.SETTINGS.MERGE_HINT' | translate: { name: $safeNavigationMigration(source?.name) } }}
+				</p>
 				<label class="label">{{ 'DOCS.SETTINGS.MERGE_TARGET' | translate }}</label>
 				<nb-select fullWidth [(selected)]="targetId">
-					<nb-option *ngFor="let category of targets" [value]="category.id">
-						{{ category.name }}
-					</nb-option>
+					@for (category of targets; track category) {
+						<nb-option [value]="category.id">
+							{{ category.name }}
+						</nb-option>
+					}
 				</nb-select>
 			</nb-card-body>
 			<nb-card-footer class="docs-dialog-footer">

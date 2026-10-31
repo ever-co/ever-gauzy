@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbIconModule } from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -24,7 +23,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
  */
 @Component({
 	selector: 'gz-docs-inbound-secret-dialog',
-	imports: [CommonModule, TranslatePipe, NbButtonModule, NbCardModule, NbIconModule],
+	imports: [TranslatePipe, NbButtonModule, NbCardModule, NbIconModule],
 	template: `
 		<nb-card class="docs-dialog docs-inbound-secret-dialog">
 			<nb-card-header>{{ 'DOCS.INBOUND.SECRET_TITLE' | translate }}</nb-card-header>
@@ -56,7 +55,9 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 						status="primary"
 						size="small"
 						[attr.aria-label]="'DOCS.INBOUND.COPY_SECRET' | translate"
-						(click)="copy($safeNavigationMigration(secret?.webhookSecret), 'DOCS.INBOUND.TOAST_SECRET_COPIED')"
+						(click)="
+							copy($safeNavigationMigration(secret?.webhookSecret), 'DOCS.INBOUND.TOAST_SECRET_COPIED')
+						"
 					>
 						<nb-icon icon="clipboard-outline"></nb-icon>
 						{{ 'DOCS.INBOUND.COPY_SECRET' | translate }}

@@ -20,7 +20,7 @@ import {
 	OnChanges,
 	SimpleChange
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { TestBed, getTestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
@@ -82,8 +82,7 @@ const registeredKey = (editor: IFakeEditor, call = 0): string =>
 const unregisteredKey = (editor: IFakeEditor, call = 0): string =>
 	(editor.unregisterPlugin.mock.calls[call][0] as PluginKey).key;
 
-const listenerFor = (mock: jest.Mock, event: string): unknown =>
-	mock.mock.calls.find((call) => call[0] === event)?.[1];
+const listenerFor = (mock: jest.Mock, event: string): unknown => mock.mock.calls.find((call) => call[0] === event)?.[1];
 
 /** The menus only hop through the zone to mark for check — run straight through. */
 const zone = {
@@ -244,12 +243,12 @@ describe('a synchronous editor swap under `*ngIf` (the `rebuildEditor()` shape)'
 	@Component({
 		selector: 'gz-rebuild-host',
 		standalone: true,
-		imports: [CommonModule, FloatingBlockMenuComponent],
+		imports: [FloatingBlockMenuComponent],
 		changeDetection: ChangeDetectionStrategy.OnPush,
 		template: `
-			<ng-container *ngIf="editor">
+			@if (editor) {
 				<gz-floating-block-menu [editor]="editor"></gz-floating-block-menu>
-			</ng-container>
+			}
 		`
 	})
 	class RebuildHostComponent implements OnChanges {
