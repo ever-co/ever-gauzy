@@ -19,6 +19,8 @@ const stopping: ITimerIgnition = { state: IgnitionState.STOPPING, mode: TimerSta
 const stoppedAfterRun: ITimerIgnition = { state: IgnitionState.STOPPED, mode: TimerStartMode.STOP };
 const restarting: ITimerIgnition = { state: IgnitionState.RESTARTING, mode: TimerStartMode.MANUAL };
 const restarted: ITimerIgnition = { state: IgnitionState.RESTARTED, mode: TimerStartMode.MANUAL };
+/** What the task change dialog sets after a silent restart: `store.update({ ignition: { state: STARTED } })`. */
+const startedAfterTaskChange: ITimerIgnition = { state: IgnitionState.STARTED };
 
 function state(
 	tracking: boolean,
@@ -86,6 +88,11 @@ describe('timer sound cues', () => {
 			expect(nextTimerSoundCue(state(true, null, true), stoppedAfterRun)).toEqual(state(false, null, true));
 			expect(nextTimerSoundCue(state(false, null, true), startedHere)).toEqual(state(true, null, true));
 		});
+
+		it('keeps what it knew through a STARTED without a mode (the task change dialog)', () => {
+			expect(nextTimerSoundCue(tracking, startedAfterTaskChange)).toEqual(state(true));
+			expect(nextTimerSoundCue(idle, startedAfterTaskChange)).toEqual(state(false));
+		});
 	});
 
 	describe('quietTimerSoundCue', () => {
@@ -139,6 +146,21 @@ describe('timer sound cues', () => {
 
 		it('says nothing for a silent restart (another task or project while tracking)', async () => {
 			await expect(cuesOf(stopped, starting, startedHere, restarting, restarted)).resolves.toEqual(['start']);
+		});
+
+		it('still cues the stop of a run after a task change', async () => {
+			await expect(
+				cuesOf(
+					stopped,
+					starting,
+					startedHere,
+					restarting,
+					restarted,
+					startedAfterTaskChange,
+					stopping,
+					stoppedAfterRun
+				)
+			).resolves.toEqual(['start', 'stop']);
 		});
 
 		it('cues each run of a day', async () => {

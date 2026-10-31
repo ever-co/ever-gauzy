@@ -40,6 +40,8 @@ export function initialTimerSoundCueState(
  * - this computer stopped tracking: `stop`;
  * - anything else (a start or stop under way, a failed start, a timer of another device, a silent restart that only
  *   changes the task): no cue.
+ * A `STARTED` without a mode keeps what was known: the task change dialog sets it after a silent restart
+ * (`{ state: STARTED }`), and the run goes on as it was.
  * While the cues are quiet, the change is followed but not cued.
  */
 export function nextTimerSoundCue(
@@ -50,6 +52,9 @@ export function nextTimerSoundCue(
 	let cue: TimerSoundCue | null = null;
 	switch (ignition?.state) {
 		case IgnitionState.STARTED:
+			if (ignition.mode == null) {
+				break;
+			}
 			tracking = isTrackingHere(ignition);
 			cue = tracking && !previous.tracking ? 'start' : null;
 			break;
