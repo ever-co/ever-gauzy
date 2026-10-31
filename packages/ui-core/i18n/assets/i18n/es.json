@@ -3539,6 +3539,8 @@
 		"UPLOAD_REQUEST_DOCUMENT": "Subir documento solicitado",
 		"REQUEST_FORM_NOT_FOUND": "Esta organización aún no tiene ningún formulario «{{ name }}». Un administrador puede añadir un documento con ese nombre en Documentos.",
 		"REQUEST_FORM_UNAVAILABLE": "No se pudo descargar el formulario «{{ name }}». Un administrador puede revisar su enlace en Documentos.",
+		"REQUEST_FORM_BLOCKED": "El navegador bloqueó la apertura del formulario «{{ name }}» en una pestaña nueva. Use el enlace bajo los botones para abrirlo.",
+		"OPEN_REQUEST_FORM": "Abrir el formulario «{{ name }}»",
 		"STATUSES": {
 			"REQUESTED": "Solicitado",
 			"APPROVED": "Aprobado",
@@ -3558,6 +3560,7 @@
 			"EDIT_POLICY": "Editar política",
 			"NAME": "Nombre",
 			"REQUIRES_APPROVAL": "Requiere Aprobación",
+			"REQUIRE_SUFFICIENT_BALANCE": "Rechazar las aprobaciones que el saldo de ausencias no cubre",
 			"PAID": "Pagado",
 			"NAME_IS_REQUIRED": "¡Se requiere el nombre de la política!"
 		},

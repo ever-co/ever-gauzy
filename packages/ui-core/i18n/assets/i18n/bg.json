@@ -3597,6 +3597,8 @@
 		"UPLOAD_REQUEST_DOCUMENT": "Upload Request Document",
 		"REQUEST_FORM_NOT_FOUND": "За тази организация все още няма качен формуляр „{{ name }}“. Администратор може да добави документ с това име в раздел „Документи“.",
 		"REQUEST_FORM_UNAVAILABLE": "Формулярът „{{ name }}“ не можа да бъде изтеглен. Администратор може да провери връзката му в раздел „Документи“.",
+		"REQUEST_FORM_BLOCKED": "Браузърът блокира отварянето на формуляра „{{ name }}“ в нов раздел. Използвайте връзката под бутоните, за да го отворите.",
+		"OPEN_REQUEST_FORM": "Отвори формуляра „{{ name }}“",
 		"STATUSES": {
 			"REQUESTED": "Requested",
 			"APPROVED": "Approved",
@@ -3616,6 +3618,7 @@
 			"EDIT_POLICY": "Edit Policy",
 			"NAME": "Име",
 			"REQUIRES_APPROVAL": "Requires Approval",
+			"REQUIRE_SUFFICIENT_BALANCE": "Отказвай одобрения, които балансът на отпуските не покрива",
 			"PAID": "Paid",
 			"NAME_IS_REQUIRED": "Policy name is required!"
 		},

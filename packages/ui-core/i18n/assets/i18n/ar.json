@@ -3535,6 +3535,8 @@
 		"UPLOAD_REQUEST_DOCUMENT": "تحميل مستند الطلب",
 		"REQUEST_FORM_NOT_FOUND": "لم يتم رفع نموذج \"{{ name }}\" لهذه المؤسسة بعد. يمكن للمسؤول إضافة مستند بهذا الاسم من قسم المستندات.",
 		"REQUEST_FORM_UNAVAILABLE": "تعذر تنزيل نموذج \"{{ name }}\". يمكن للمسؤول التحقق من رابطه في قسم المستندات.",
+		"REQUEST_FORM_BLOCKED": "منع المتصفح فتح نموذج \"{{ name }}\" في علامة تبويب جديدة. استخدم الرابط أسفل الأزرار لفتحه.",
+		"OPEN_REQUEST_FORM": "فتح نموذج \"{{ name }}\"",
 		"STATUSES": {
 			"REQUESTED": "مطلوب",
 			"APPROVED": "معتمد",
@@ -3554,6 +3556,7 @@
 			"EDIT_POLICY": "تحرير السياسة",
 			"NAME": "الاسم",
 			"REQUIRES_APPROVAL": "يتطلب الموافقة",
+			"REQUIRE_SUFFICIENT_BALANCE": "رفض الموافقات التي لا يغطيها رصيد الإجازات",
 			"PAID": "مدفوع",
 			"NAME_IS_REQUIRED": "اسم السياسة مطلوب!"
 		},

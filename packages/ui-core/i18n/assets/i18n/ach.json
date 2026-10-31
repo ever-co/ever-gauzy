@@ -3364,6 +3364,8 @@
 		"UPLOAD_REQUEST_DOCUMENT": "crwdns9952:0crwdne9952:0",
 		"REQUEST_FORM_NOT_FOUND": "No \"{{ name }}\" form is uploaded for this organization yet. An administrator can add a document with that name under Documents.",
 		"REQUEST_FORM_UNAVAILABLE": "The \"{{ name }}\" form could not be downloaded. An administrator can check its link under Documents.",
+		"REQUEST_FORM_BLOCKED": "Your browser blocked the \"{{ name }}\" form from opening in a new tab. Use the link below the buttons to open it.",
+		"OPEN_REQUEST_FORM": "Open the \"{{ name }}\" form",
 		"STATUSES": {
 			"REQUESTED": "crwdns2505:0crwdne2505:0",
 			"APPROVED": "crwdns2507:0crwdne2507:0",
@@ -3383,6 +3385,7 @@
 			"EDIT_POLICY": "crwdns2619:0crwdne2619:0",
 			"NAME": "crwdns2621:0crwdne2621:0",
 			"REQUIRES_APPROVAL": "crwdns2623:0crwdne2623:0",
+			"REQUIRE_SUFFICIENT_BALANCE": "Refuse approvals the leave balance cannot cover",
 			"PAID": "crwdns2625:0crwdne2625:0",
 			"NAME_IS_REQUIRED": "crwdns11134:0crwdne11134:0"
 		},
