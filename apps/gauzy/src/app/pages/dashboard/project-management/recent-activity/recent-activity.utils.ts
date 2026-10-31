@@ -142,8 +142,33 @@ export function toRecentActivityItem(log: IActivityLog, now: Date = new Date()):
 		tone: known?.tone ?? 'other',
 		icon: known?.icon ?? 'activity-outline',
 		createdAt: log.createdAt,
-		when: log.createdAt ? moment(log.createdAt).from(now) : ''
+		when: relativeTime(log.createdAt, now)
 	};
+}
+
+/** How often the panel tells its rows' ages again, so "a few seconds ago" does not stay so. */
+export const RECENT_ACTIVITY_CLOCK_MS = 60_000;
+
+/** How long before `now` something happened, as the panel says it ("5 minutes ago"). */
+export function relativeTime(createdAt: Date | string | null | undefined, now: Date = new Date()): string {
+	return createdAt ? moment(createdAt).from(now) : '';
+}
+
+/**
+ * The rows with their ages told again from `now`. Rows whose age reads the same are kept as they are, and
+ * the list itself is kept when none changed, so an unchanged panel is not drawn again.
+ */
+export function withRelativeTimes(items: IRecentActivityItem[], now: Date = new Date()): IRecentActivityItem[] {
+	let changed = false;
+	const told = items.map((item) => {
+		const when = relativeTime(item.createdAt, now);
+		if (when === item.when) {
+			return item;
+		}
+		changed = true;
+		return { ...item, when };
+	});
+	return changed ? told : items;
 }
 
 /**

@@ -4,8 +4,11 @@ import {
 	Component,
 	Input,
 	OnChanges,
+	OnDestroy,
+	OnInit,
 	type SimpleChanges
 } from '@angular/core';
+import { interval, Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NbButtonModule, NbIconModule, NbSelectModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
@@ -15,9 +18,11 @@ import { ActivityLogService } from '@gauzy/ui-core/core';
 import {
 	IRecentActivityItem,
 	mergeRecentActivity,
+	RECENT_ACTIVITY_CLOCK_MS,
 	RECENT_ACTIVITY_I18N,
 	RecentActivityFilter,
-	toRecentActivityItem
+	toRecentActivityItem,
+	withRelativeTimes
 } from './recent-activity.utils';
 
 /**
@@ -49,7 +54,7 @@ import {
 	],
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RecentActivityComponent implements OnChanges {
+export class RecentActivityComponent implements OnInit, OnChanges, OnDestroy {
 	@Input() organizationId: ID | null;
 	@Input() tenantId: ID | null;
 
@@ -67,6 +72,8 @@ export class RecentActivityComponent implements OnChanges {
 	private _page = 0;
 	/** Bumped by every reload: a page asked for before it is dropped when it lands. */
 	private _sequence = 0;
+	/** Tells the rows' ages again every minute while the panel is shown. */
+	private _clock: Subscription | null = null;
 
 	constructor(
 		private readonly _activityLogService: ActivityLogService,
@@ -76,6 +83,15 @@ export class RecentActivityComponent implements OnChanges {
 	/** More rows match than the panel holds. */
 	get hasMore(): boolean {
 		return this.items.length < this.total;
+	}
+
+	ngOnInit(): void {
+		this._clock = interval(RECENT_ACTIVITY_CLOCK_MS).subscribe(() => this._tellAges());
+	}
+
+	ngOnDestroy(): void {
+		this._clock?.unsubscribe();
+		this._clock = null;
 	}
 
 	ngOnChanges(changes: SimpleChanges): void {
@@ -125,9 +141,13 @@ export class RecentActivityComponent implements OnChanges {
 				return;
 			}
 			const now = new Date();
-			this.items = mergeRecentActivity(
-				this.items,
-				(items || []).map((log) => toRecentActivityItem(log, now))
+			// Every row's age is told again from the same moment, the ones already shown included.
+			this.items = withRelativeTimes(
+				mergeRecentActivity(
+					this.items,
+					(items || []).map((log) => toRecentActivityItem(log, now))
+				),
+				now
 			);
 			// An empty page means the rest is gone (deleted since the count): nothing more to ask for.
 			this.total = items?.length ? total || 0 : this.items.length;
@@ -141,6 +161,15 @@ export class RecentActivityComponent implements OnChanges {
 				this.loading = false;
 				this._changeDetectorRef.markForCheck();
 			}
+		}
+	}
+
+	/** Tells the rows' ages again from now; draws the panel only when one reads differently. */
+	private _tellAges(): void {
+		const items = withRelativeTimes(this.items);
+		if (items !== this.items) {
+			this.items = items;
+			this._changeDetectorRef.markForCheck();
 		}
 	}
 }

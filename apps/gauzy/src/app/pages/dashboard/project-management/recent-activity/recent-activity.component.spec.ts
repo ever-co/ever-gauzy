@@ -2,6 +2,7 @@ import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { ActionTypeEnum, BaseEntityEnum, IActivityLog } from '@gauzy/contracts';
 import { ActivityLogService } from '@gauzy/ui-core/core';
 import { RecentActivityComponent } from './recent-activity.component';
+import { RECENT_ACTIVITY_CLOCK_MS } from './recent-activity.utils';
 
 const ORGANIZATION = 'cccccccc-3333-4333-8333-333333333333';
 const TENANT = 'dddddddd-4444-4444-8444-444444444444';
@@ -46,6 +47,30 @@ describe('RecentActivityComponent', () => {
 		expect(component.total).toBe(3);
 		expect(component.hasMore).toBe(true);
 		expect(component.loading).toBe(false);
+	});
+
+	it('tells the rows their ages again every minute while it is shown, and stops when it is gone', async () => {
+		const component = await panel();
+		const markForCheck = (component as unknown as { _changeDetectorRef: { markForCheck: jest.Mock } })
+			._changeDetectorRef.markForCheck;
+		jest.useFakeTimers({ now: Date.now() });
+		try {
+			component.ngOnInit();
+			expect(component.items[0].when).toBe('a few seconds ago');
+			markForCheck.mockClear();
+
+			jest.advanceTimersByTime(5 * RECENT_ACTIVITY_CLOCK_MS);
+
+			expect(component.items[0].when).toBe('5 minutes ago');
+			expect(markForCheck).toHaveBeenCalled();
+
+			component.ngOnDestroy();
+			jest.advanceTimersByTime(60 * RECENT_ACTIVITY_CLOCK_MS);
+			expect(component.items[0].when).toBe('5 minutes ago');
+		} finally {
+			component.ngOnDestroy();
+			jest.useRealTimers();
+		}
 	});
 
 	it('appends the next page on "Show more", without a row already shown', async () => {

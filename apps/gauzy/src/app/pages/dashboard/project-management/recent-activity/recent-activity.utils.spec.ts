@@ -1,5 +1,11 @@
 import { ActionTypeEnum, ActorTypeEnum, BaseEntityEnum, IActivityLog } from '@gauzy/contracts';
-import { humanizeEntity, mergeRecentActivity, toRecentActivityItem } from './recent-activity.utils';
+import {
+	humanizeEntity,
+	mergeRecentActivity,
+	relativeTime,
+	toRecentActivityItem,
+	withRelativeTimes
+} from './recent-activity.utils';
 
 const NOW = new Date('2026-10-31T12:00:00.000Z');
 const KEY = 'DASHBOARD_PAGE.PROJECT_MANAGEMENT_VIEW.RECENT_ACTIVITY';
@@ -135,5 +141,31 @@ describe('mergeRecentActivity', () => {
 		const c = toRecentActivityItem(log({ id: 'c' }), NOW);
 
 		expect(mergeRecentActivity([a, b], [b, c]).map((item) => item.id)).toEqual(['a', 'b', 'c']);
+	});
+});
+
+describe('withRelativeTimes', () => {
+	const now = new Date('2026-10-31T12:00:00.000Z');
+	const item = (id: string, createdAt: string) =>
+		toRecentActivityItem({ id, createdAt } as unknown as IActivityLog, now);
+
+	it('tells each row its age again from a later moment', () => {
+		const rows = [item('a', '2026-10-31T11:59:50.000Z'), item('b', '2026-10-30T12:00:00.000Z')];
+		expect(rows.map((row) => row.when)).toEqual(['a few seconds ago', 'a day ago']);
+
+		const later = withRelativeTimes(rows, new Date('2026-10-31T13:00:00.000Z'));
+
+		expect(later.map((row) => row.when)).toEqual(['an hour ago', 'a day ago']);
+		expect(later[1]).toBe(rows[1]);
+	});
+
+	it('keeps the list itself when no age reads differently', () => {
+		const rows = [item('a', '2026-10-30T12:00:00.000Z')];
+
+		expect(withRelativeTimes(rows, new Date('2026-10-31T12:05:00.000Z'))).toBe(rows);
+	});
+
+	it('says nothing for a row without a time', () => {
+		expect(relativeTime(undefined, now)).toBe('');
 	});
 });
