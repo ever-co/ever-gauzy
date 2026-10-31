@@ -258,6 +258,14 @@ const SETTLEMENT_REVERSALS = 'settlementReversals';
 const CHANGE_INTENT_LEASE_MS = 10 * 60 * 1000;
 
 /**
+ * How long after a change was recorded its settlement may be made again under its own key to find out what it did.
+ * The order path replays a proration raised under a key it has seen for as long as it keeps the key's claim — a day,
+ * `IdempotencyService.DEFAULT_RETENTION_MS` — so inside this window raising the charge again answers with the order
+ * already made, or makes the one never made; past it, raising it again could charge twice (`resolveAbandonedChange`).
+ */
+const CHANGE_REPLAY_WINDOW_MS = 23 * 60 * 60 * 1000;
+
+/**
  * The adjustment reason a cycle's discount is lowered under when a retry is priced on a smaller one. A `PROMOTION`
  * only ever lowers what is payable, so giving part of an earlier grant back is a governed `MANUAL` correction.
  */
@@ -318,6 +326,8 @@ interface IChangeIntent {
 	description: string;
 	/** When the change was recorded or last resumed: what tells a change still settling from an abandoned one. */
 	at: string;
+	/** When the change was first recorded, kept when it is resumed: what the replay window is measured from. */
+	recordedAt?: string;
 	/**
 	 * The request holding the record: a token written by each request that records or resumes it. A request releases
 	 * the record only while it still holds it (`releaseChange`), so it never takes the record from one that resumed it.
@@ -1956,10 +1966,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * every plan update (`SubscriptionPlanService.hasLiveSubscriptions`) until it is resolved, and nothing else resolves
 	 * it unless the subscription is changed again, so every billing pass looks for them, by the reservation's index.
 	 *
-	 * A record past {@link CHANGE_INTENT_LEASE_MS} is resolved as a change meeting it would resolve it: one whose money
-	 * moved is applied from its record — the customer paid for it, and was told a repeat applies it; one that nothing can
-	 * tell about is recorded for reversal and announced, and its record and reservation are cleared in the same versioned
-	 * write; one that moved nothing is cleared. A record still inside the lease is left to the request settling it. One
+	 * A record past {@link CHANGE_INTENT_LEASE_MS} is resolved as a change meeting it resolves it
+	 * (`resolveAbandonedChange`): applied when its settlement was made or is made again under its own key; recorded for
+	 * reversal and announced when nothing can tell, its record and reservation cleared in the same versioned write; cleared
+	 * when it moved nothing. A record still inside the lease is left to the request settling it. One
 	 * that cannot be recovered is logged and left for the next pass; it never stops the billing.
 	 *
 	 * @param limit How many reserving subscriptions one pass looks at.
@@ -1994,19 +2004,16 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				return;
 			}
 
-			const state = recorded ? await this.settlementOf(current, recorded) : 'UNSETTLED';
+			// A charge still being raised (its claim held) throws here and is left for the next pass.
+			const state = recorded ? await this.resolveAbandonedChange(current, recorded) : 'UNSETTLED';
 
-			if (recorded && state === 'SETTLED') {
-				// Its money moved: the customer paid for the change, so it takes hold, applied from its record, rather than
-				// being reversed for having waited. A repeat of it afterwards nets nothing.
-				await this.applySettledChange(id, recorded, true);
-
-				this.logger.warn(`Subscription ${id}: the change ${recorded.key} was settled and abandoned; it is applied.`);
+			if (state === 'APPLIED') {
+				this.logger.warn(`Subscription ${id}: the change ${recorded?.key} was abandoned after it was settled; it is applied.`);
 
 				return;
 			}
 
-			const noted = !!recorded && state !== 'UNSETTLED' && this.noteReversal(metadata, recorded, state);
+			const noted = !!recorded && state === 'UNKNOWN' && this.noteReversal(metadata, recorded, state);
 
 			delete metadata[CHANGE_INTENT];
 
@@ -3147,6 +3154,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				periodStart,
 				description: change.description,
 				at: new Date().toISOString(),
+				recordedAt: new Date().toISOString(),
 				quantity,
 				discountPercentage: change.planId ? change.discountPercentage ?? null : null,
 				replaceLines,
@@ -3247,20 +3255,27 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 					'SUBSCRIPTION_CHANGE_IN_FLIGHT: another change to this subscription is being settled. Retry once it has been applied.'
 				);
 			} else {
-				// Asked here, before the transaction: the idempotency and adjustment stores read on connections of their own.
-				const state = await this.settlementOf(subscription, recorded);
+				// Resolved here, before the transaction: the stores it asks and the order path take connections of their own.
+				let state: 'APPLIED' | 'UNKNOWN' | 'UNSETTLED';
 
-				if (state === 'SETTLED') {
-					// Its money moved: the customer paid for that change, so it takes hold — applied from its record — rather
-					// than being reversed for having waited. This change was priced on the row before it, so it is read again.
-					await this.applySettledChange(subscription.id, recorded, true);
+				try {
+					state = await this.resolveAbandonedChange(subscription, recorded);
+				} catch (error) {
+					throw new ConflictException(
+						error instanceof ProrationInFlight
+							? 'SUBSCRIPTION_CHANGE_IN_FLIGHT: an earlier change to this subscription is still being settled. Retry once it has been applied.'
+							: 'SUBSCRIPTION_CHANGE_UNRESOLVED: an earlier change to this subscription could not be resolved yet; it stays recorded. Retry later.'
+					);
+				}
 
+				if (state === 'APPLIED') {
+					// This change was priced on the row before the earlier one took hold, so it is read again.
 					throw new ConflictException(
 						'SUBSCRIPTION_CHANGE_APPLIED_FIRST: an earlier change to this subscription, already settled, was applied first. Read the subscription again and retry.'
 					);
 				}
 
-				if (state !== 'UNSETTLED' && this.noteReversal(metadata, recorded, state)) {
+				if (state === 'UNKNOWN' && this.noteReversal(metadata, recorded, state)) {
 					replaced = { intent: recorded, state };
 				}
 
@@ -3667,6 +3682,52 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			periodStart: intent.periodStart,
 			settled: state
 		};
+	}
+
+	/**
+	 * Resolves a change abandoned past {@link CHANGE_INTENT_LEASE_MS}, for a change meeting it (`reserveChange`) and for
+	 * the billing pass (`recoverAbandonedChange`).
+	 *
+	 * - Its settlement is known to have moved money: the customer paid for the change, so it takes hold, applied from its
+	 *   record, rather than being reversed for having waited. A repeat of it afterwards nets nothing.
+	 * - Nothing can tell whether it did — a charge whose claim is still held or gone, a credit whose claim is held — and the
+	 *   change was recorded inside {@link CHANGE_REPLAY_WINDOW_MS}: its settlement is made again under its own key, which
+	 *   the order path answers with the order already made, or by making the one never made, and the credit's row is found
+	 *   by its key or written once; then it is applied. Replacing it instead let a second charge be raised under another
+	 *   key while the first might stand. A claim another request still holds stops this with `ProrationInFlight`.
+	 * - Past that window raising it again could charge twice, so it is `UNKNOWN`: the caller records it for reversal, and an
+	 *   operator settles it from that record.
+	 * - It moved nothing: `UNSETTLED`, and the caller clears or replaces it.
+	 *
+	 * @param subscription The subscription, as read.
+	 * @param recorded The abandoned record.
+	 * @returns `APPLIED`, or the state the caller clears or replaces the record in.
+	 * @throws ProrationInFlight when the settlement is still held by another request; another failure of the settlement
+	 * made again is raised as it is, and the record stays.
+	 */
+	private async resolveAbandonedChange(
+		subscription: Subscription,
+		recorded: IChangeIntent
+	): Promise<'APPLIED' | 'UNKNOWN' | 'UNSETTLED'> {
+		const state = await this.settlementOf(subscription, recorded);
+
+		if (state === 'UNSETTLED') {
+			return 'UNSETTLED';
+		}
+
+		let moved = true;
+
+		if (state === 'UNKNOWN') {
+			if (Date.now() - new Date(recorded.recordedAt ?? recorded.at).getTime() >= CHANGE_REPLAY_WINDOW_MS) {
+				return 'UNKNOWN';
+			}
+
+			moved = await this.settleChange(subscription, recorded, { started: false });
+		}
+
+		await this.applySettledChange(subscription.id, recorded, moved);
+
+		return 'APPLIED';
 	}
 
 	/**

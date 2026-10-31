@@ -2270,19 +2270,30 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 			subscriptions: [
 				reserving(SUBSCRIPTION, 11 * 60 * 1000),
 				reserving('subscription-unknown', 11 * 60 * 1000),
+				reserving('subscription-held', 11 * 60 * 1000),
+				reserving('subscription-lost', 24 * 60 * 60 * 1000),
 				reserving('subscription-settling', 60 * 1000)
 			],
-			items: [itemRow('item-1'), itemRow('item-2', { subscriptionId: 'subscription-unknown' })]
+			items: [
+				itemRow('item-1'),
+				itemRow('item-2', { subscriptionId: 'subscription-unknown' }),
+				itemRow('item-3', { subscriptionId: 'subscription-held' }),
+				itemRow('item-4', { subscriptionId: 'subscription-lost' })
+			]
 		});
+		const claim = (id: string, response: Row | null) =>
+			fixture.idempotencyService.records.set(`subscription.proration:${id}:abandoned`, {
+				scope: 'subscription.proration',
+				key: `${id}:abandoned`,
+				requestHash: 'abandoned',
+				response,
+				lockedAt: Date.now()
+			});
 
-		// The first one's charge went through and the apply never followed; the second's claim is gone.
-		fixture.idempotencyService.records.set(`subscription.proration:${SUBSCRIPTION}:abandoned`, {
-			scope: 'subscription.proration',
-			key: `${SUBSCRIPTION}:abandoned`,
-			requestHash: 'abandoned',
-			response: { status: 200 },
-			lockedAt: 0
-		});
+		// The first one's charge went through and the apply never followed. The second's claim is gone. The third's is
+		// still held: its call to the order path may still be running. The fourth was recorded a day ago, with no claim.
+		claim(SUBSCRIPTION, { status: 200 });
+		claim('subscription-held', null);
 
 		await fixture.service.runBilling({ asOf: MID_MARCH });
 
@@ -2291,16 +2302,24 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		expect(fixture.items().map((line) => line.variantId)).toEqual([BETTER_VARIANT]);
 		expect(fixture.subscription(SUBSCRIPTION).metadata?.['changeIntent']).toBeUndefined();
 		expect(fixture.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toBeUndefined();
-		// Nothing can tell whether its charge was made: recorded for reversal, announced, and cleared.
-		expect(fixture.subscription('subscription-unknown')).toMatchObject({ planId: PLAN, reservedPlanId: null });
-		expect(fixture.subscription('subscription-unknown').metadata?.['settlementReversals']).toEqual([
-			expect.objectContaining({ key: 'subscription-unknown:abandoned', amount: '92.900000', settled: 'UNKNOWN' })
+		// Nothing could tell whether its charge was made: raised again under its own key (the order path replays a key it
+		// has seen), then applied. Cleared instead, a repeat of the change would have been charged under another key.
+		expect(fixture.prorationCalls.map((call) => call.idempotencyKey)).toEqual(['subscription-unknown:abandoned']);
+		expect(fixture.subscription('subscription-unknown')).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
+		expect(fixture.subscription('subscription-unknown').metadata?.['settlementReversals']).toBeUndefined();
+		// Its claim still held: left reserved for the request raising it, or for the next pass.
+		expect(fixture.subscription('subscription-held')).toMatchObject({ planId: PLAN, reservedPlanId: BETTER_PLAN });
+		// Past the order path's replay window: raising it again could charge twice, so it is recorded for reversal,
+		// announced, and cleared.
+		expect(fixture.subscription('subscription-lost')).toMatchObject({ planId: PLAN, reservedPlanId: null });
+		expect(fixture.subscription('subscription-lost').metadata?.['settlementReversals']).toEqual([
+			expect.objectContaining({ key: 'subscription-lost:abandoned', amount: '92.900000', settled: 'UNKNOWN' })
 		]);
 		expect(fixture.events).toContainEqual(
 			expect.objectContaining({
 				name: 'subscription.settlement-reversal-required',
-				aggregateId: 'subscription-unknown',
-				data: expect.objectContaining({ key: 'subscription-unknown:abandoned' })
+				aggregateId: 'subscription-lost',
+				data: expect.objectContaining({ key: 'subscription-lost:abandoned' })
 			})
 		);
 		// A minute old: still the request's own.
@@ -2444,14 +2463,44 @@ describe('SubscriptionService — a mid-cycle change is recorded before it settl
 		expect(stale.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toBeUndefined();
 		expect(stale.prorationCalls).toEqual([]);
 
-		// Eleven minutes old, and no claim is left for its charge: a completed claim is deleted once its retention ends, so
-		// a missing one proves nothing, and the charge is recorded as unknown rather than taken for one never made.
-		const unclaimed = subscriptionFixture({ prices: UPGRADE, subscriptions: [recordedAt(11 * 60 * 1000)] });
+		// Eleven minutes old, and no claim is left for its charge: nothing can tell whether it was raised. Inside the order
+		// path's replay window the charge is raised again under its own key — the order path answers with the order when it
+		// exists — and the change is applied first. Replaced, a second charge could be raised under another key.
+		const unclaimed = subscriptionFixture({
+			prices: UPGRADE,
+			subscriptions: [subscriptionRow(SUBSCRIPTION, { reservedPlanId: BETTER_PLAN, metadata: { changeIntent: paidFor } })]
+		});
 
-		await unclaimed.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+		await expect(unclaimed.service.changePlan(SUBSCRIPTION, { planId: PLAN, quantity: '2' })).rejects.toThrow(
+			/SUBSCRIPTION_CHANGE_APPLIED_FIRST/
+		);
+		expect(unclaimed.prorationCalls.map((call) => call.idempotencyKey)).toEqual([abandoned.key]);
+		expect(unclaimed.subscription(SUBSCRIPTION)).toMatchObject({ planId: BETTER_PLAN, reservedPlanId: null });
+		expect(unclaimed.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toBeUndefined();
 
-		expect(unclaimed.subscription(SUBSCRIPTION).planId).toBe(BETTER_PLAN);
-		expect(unclaimed.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toEqual([
+		// Recorded a day ago with no claim left: raising it again could charge twice, so it is recorded for reversal as
+		// unknown, and replaced.
+		const lost = subscriptionFixture({
+			prices: UPGRADE,
+			subscriptions: [
+				subscriptionRow(SUBSCRIPTION, {
+					reservedPlanId: 'plan-3',
+					metadata: {
+						changeIntent: {
+							...abandoned,
+							at: new Date(MID_MARCH.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+							recordedAt: new Date(MID_MARCH.getTime() - 24 * 60 * 60 * 1000).toISOString()
+						}
+					}
+				})
+			]
+		});
+
+		await lost.service.changePlan(SUBSCRIPTION, { planId: BETTER_PLAN });
+
+		expect(lost.subscription(SUBSCRIPTION).planId).toBe(BETTER_PLAN);
+		expect(lost.prorationCalls.map((call) => call.idempotencyKey)).not.toContain(abandoned.key);
+		expect(lost.subscription(SUBSCRIPTION).metadata?.['settlementReversals']).toEqual([
 			expect.objectContaining({ key: abandoned.key, settled: 'UNKNOWN' })
 		]);
 
