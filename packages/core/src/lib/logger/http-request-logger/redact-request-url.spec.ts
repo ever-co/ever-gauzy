@@ -83,6 +83,20 @@ describe('redactRequestUrl', () => {
 		).toBe('/api/shared-entity/token/[REDACTED]');
 	});
 
+	it('redacts the segment after a /token/ or /secret/ segment, before the route is known', () => {
+		expect(redactRequestUrl('/api/shared-entity/token/0a1b2c3d', { isSensitive })).toBe(
+			'/api/shared-entity/token/[REDACTED]'
+		);
+		expect(redactRequestUrl('/api/x/Secret/abc/def', { isSensitive })).toBe('/api/x/Secret/[REDACTED]/def');
+		expect(redactRequestUrl('/api/x/token/', { isSensitive })).toBe('/api/x/token/');
+	});
+
+	it('keeps paths where such a word is only part of a segment, or is not a token keyword', () => {
+		for (const url of ['/api/auth/login', '/api/auth/refresh-token/abc', '/api/subscription-plan/code/basic']) {
+			expect(redactRequestUrl(url, { isSensitive })).toBe(url);
+		}
+	});
+
 	it('ignores route parameters that are not strings (a wildcard match is an array)', () => {
 		expect(redactRequestUrl('/api/files/a/b', { isSensitive, params: { splat: ['a', 'b'], key: undefined } })).toBe(
 			'/api/files/a/b'

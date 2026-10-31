@@ -4,9 +4,11 @@
  * A URL is the one part of a request the HTTP request log writes, and it can carry secrets in two places: the
  * query string (`?token=…`, `?code=…` on an OAuth callback, `?email=…`) and route parameters
  * (`/public/invoice/:id/:token`, `/shared-entity/token/:token`). Both are redacted by parameter NAME, and a value
- * that looks like a JWT is redacted wherever it appears, whatever its name. Everything else is kept as it was
- * received (still percent-encoded), so a line can neither be split by a decoded newline nor lose information a
- * developer needs.
+ * that looks like a JWT is redacted wherever it appears, whatever its name. Route parameter names are only known
+ * once the router has matched the request, so a segment that follows a segment such as `token` (`/token/<value>`)
+ * is redacted as well, which also covers a URL logged before routing. Everything else is kept as it was received
+ * (still percent-encoded), so a line can neither be split by a decoded newline nor lose information a developer
+ * needs.
  */
 
 /** What a redacted value is replaced with. */
@@ -61,6 +63,21 @@ const SENSITIVE_FRAGMENTS: readonly string[] = [
 	'session',
 	'jwt'
 ];
+
+/**
+ * Path segments, compared whole and case-insensitively, after which the next segment is a secret
+ * (`/shared-entity/token/<token>`). Deliberately narrow: `auth` or `code` here would hide `/auth/login` or a plan code.
+ */
+const SENSITIVE_PATH_KEYWORDS: ReadonlySet<string> = new Set([
+	'token',
+	'tokens',
+	'secret',
+	'password',
+	'apikey',
+	'api-key',
+	'signature',
+	'otp'
+]);
 
 /** A JSON Web Token: three base64url parts, the first one an encoded `{"`. */
 const JWT_PATTERN = /^eyJ[\w-]{4,}\.[\w-]{4,}\.[\w-]*$/;
@@ -124,7 +141,7 @@ export interface RedactRequestUrlOptions {
 	isSensitive: (name: string) => boolean;
 	/**
 	 * The route parameters the router matched (`req.params`): a path segment equal to the value of a sensitive
-	 * one is redacted.
+	 * one is redacted. Leave it out for a request that has not been routed yet.
 	 */
 	params?: Record<string, unknown>;
 	/** Defaults to {@link MAX_LOGGED_URL_LENGTH}. */
@@ -149,11 +166,15 @@ export function redactRequestUrl(
 			.filter(([name, value]) => typeof value === 'string' && value !== '' && isSensitive(name))
 			.map(([, value]) => value as string)
 	);
-	const redactedPath = path
-		.split('/')
-		.map((segment) => {
+	const segments = path.split('/');
+	const redactedPath = segments
+		.map((segment, index) => {
 			const decoded = safeDecode(segment);
-			return sensitiveSegments.has(decoded) || looksLikeJwt(decoded) ? REDACTED_VALUE : segment;
+			const afterKeyword =
+				index > 0 && SENSITIVE_PATH_KEYWORDS.has(safeDecode(segments[index - 1]).toLowerCase());
+			return (afterKeyword && segment !== '') || sensitiveSegments.has(decoded) || looksLikeJwt(decoded)
+				? REDACTED_VALUE
+				: segment;
 		})
 		.join('/');
 

@@ -3,7 +3,11 @@ import { ClsService } from 'nestjs-cls';
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { ID } from '@gauzy/contracts';
+import { createSensitiveParameterMatcher, redactRequestUrl } from '../../logger/http-request-logger/redact-request-url';
 import { RequestContext } from './request-context';
+
+/** Which query and route parameters the lifecycle lines redact: the HTTP request log's defaults. */
+const isSensitiveUrlParameter = createSensitiveParameterMatcher();
 
 /**
  * A trusted inbound `x-correlation-id` is echoed back verbatim and later interpolated into log
@@ -93,16 +97,23 @@ export class RequestContextMiddleware implements NestMiddleware {
 				this.loggingEnabled && !isHealthCheckRequest(req) && Logger.isLevelEnabled(this.lifecycleLevel);
 
 			if (logLifecycle) {
-				// Build the full request URL
-				const fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+				// The full request URL, with the same redaction as the HTTP request log (LOG_HTTP_REQUESTS). The route
+				// parameters are only known once the request has been routed, so the start line goes without them.
+				const fullUrl = (params?: Request['params']) =>
+					`${req.protocol}://${req.get('host')}${redactRequestUrl(req.originalUrl, {
+						isSensitive: isSensitiveUrlParameter,
+						params
+					})}`;
 				const contextId = RequestContext.getContextId();
-				this.logger[this.lifecycleLevel](`Context ${contextId}: ${req.method} request to ${fullUrl} started.`);
+				this.logger[this.lifecycleLevel](`Context ${contextId}: ${req.method} request to ${fullUrl()} started.`);
 
 				// Capture the original res.end function, and override it to log when the response finishes
 				const originalEnd = res.end.bind(res);
 				res.end = (...args: any[]): Response => {
 					this.logger[this.lifecycleLevel](
-						`Context ${contextId}: ${req.method} request to ${fullUrl} completed with status ${res.statusCode}.`
+						`Context ${contextId}: ${req.method} request to ${fullUrl(req.params)} completed with status ${
+							res.statusCode
+						}.`
 					);
 					// Call the original res.end and return its result
 					return originalEnd(...args);
