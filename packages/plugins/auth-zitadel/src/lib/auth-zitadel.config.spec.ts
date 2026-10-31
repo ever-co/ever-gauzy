@@ -51,6 +51,20 @@ describe('Ever ID plugin settings', () => {
 		expect(cloud.signupEnabled).toBe(true);
 	});
 
+	it('closes the sign-up path while the operator has closed registration', () => {
+		const cloudSignup = { ...base, EVER_INSTALL_SOURCE: 'cloud', ZITADEL_SIGNUP_ENABLED: 'true' };
+
+		for (const closed of [{ APP_USER_REGISTRATION: 'false' }, { ALLOW_TENANTS_REGISTRATION: 'false' }]) {
+			const warnings: string[] = [];
+			const settings = parseZitadelSettings({ ...cloudSignup, ...closed }, (m) => warnings.push(m));
+			expect(settings.signupEnabled).toBe(false);
+			expect(warnings).toEqual([expect.stringContaining('ZITADEL_SIGNUP_ENABLED is ignored')]);
+		}
+
+		// The default switches leave it as configured.
+		expect(parseZitadelSettings({ ...cloudSignup, APP_USER_REGISTRATION: 'true' }).signupEnabled).toBe(true);
+	});
+
 	it('never turns silent account creation on', () => {
 		const warnings: string[] = [];
 		const settings = parseZitadelSettings({ ...base, EVER_INSTALL_SOURCE: 'cloud', ZITADEL_JIT_PROVISIONING: 'true' }, (m) => warnings.push(m));
