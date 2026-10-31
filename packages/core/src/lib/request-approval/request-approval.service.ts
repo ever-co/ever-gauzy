@@ -43,6 +43,15 @@ import { MikroOrmOrganizationTeamRepository } from '../organization-team/reposit
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
 import {
+	TimeOffBalanceDeductionService,
+	TimeOffBalanceLeave
+} from '../time-off-balance/time-off-balance-deduction.service';
+import {
+	ITimeOffBalanceLedger,
+	mikroOrmTimeOffBalanceLedger,
+	typeOrmTimeOffBalanceLedger
+} from '../time-off-balance/time-off-balance-ledger';
+import {
 	answerRequestApproval,
 	IEmployeeApproverSlot,
 	IRequestApprovalAnswerOutcome,
@@ -146,7 +155,14 @@ export interface IRequestApprovalAnswerTransaction {
 	 * Moves a time-off request that is still `REQUESTED` to the status given — a compare-and-set, so a leave its own
 	 * route decided in the meantime is not overwritten.
 	 *
+	 * A leave that moves takes its leave balance with it, on this transaction, through the service the time-off
+	 * route decides with (`TimeOffBalanceDeductionService`, ever-co/ever-gauzy#10183): approving it takes its working
+	 * days from its employees' balances, and a policy that requires sufficient balance refuses (400) an approval its
+	 * balances cannot cover, which rolls the whole answer back. A leave that does not move (decided through its own
+	 * route, which settled its balance then) moves no balance.
+	 *
 	 * @returns How many rows moved: 0 when the leave is no longer `REQUESTED` (or not there).
+	 * @throws BadRequestException when the leave's policy requires sufficient balance and its balances cannot cover it.
 	 */
 	moveTimeOff(id: ID, tenantId: ID, status: StatusTypesEnum): Promise<number>;
 	/** Writes an equipment sharing's status, inside the tenant. */
@@ -297,7 +313,9 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 		readonly typeOrmOrganizationTeamRepository: TypeOrmOrganizationTeamRepository,
 		readonly mikroOrmOrganizationTeamRepository: MikroOrmOrganizationTeamRepository,
 		readonly typeOrmOrganizationTeamEmployeeRepository?: TypeOrmOrganizationTeamEmployeeRepository,
-		readonly mikroOrmOrganizationTeamEmployeeRepository?: MikroOrmOrganizationTeamEmployeeRepository
+		readonly mikroOrmOrganizationTeamEmployeeRepository?: MikroOrmOrganizationTeamEmployeeRepository,
+		// Moves the leave balance of a time-off request an answer moves (see `moveTimeOff`).
+		readonly timeOffBalanceDeductionService?: TimeOffBalanceDeductionService
 	) {
 		super(typeOrmRequestApprovalRepository, mikroOrmRequestApprovalRepository);
 	}
@@ -1142,7 +1160,16 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					{ id, tenantId, status: StatusTypesEnum.REQUESTED },
 					{ status }
 				);
-				return result?.affected ?? 0;
+				const moved = result?.affected ?? 0;
+				if (moved > 0) {
+					// The leave as it stands now, on this transaction (its own row lock is held since the scope check).
+					const leave = await manager.findOne(TimeOffRequest, {
+						where: { id, tenantId },
+						loadEagerRelations: false
+					});
+					await this.settleMovedTimeOff(typeOrmTimeOffBalanceLedger(manager), leave, status);
+				}
+				return moved;
 			},
 			moveEquipmentSharing: async (id, tenantId, status) => {
 				await manager.update(EquipmentSharing, { id, tenantId }, { status });
@@ -1249,12 +1276,28 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 					await mikroOrmActiveTeamMemberIds(em, teamIdsOfDocument(row), tenantId)
 				);
 			},
-			moveTimeOff: async (id, tenantId, status) =>
-				await em.nativeUpdate(
+			moveTimeOff: async (id, tenantId, status) => {
+				const moved = await em.nativeUpdate(
 					TimeOffRequest,
 					{ id, tenantId, status: StatusTypesEnum.REQUESTED } as any,
 					this.mikroOrmRowOf(em, TimeOffRequest, { status }) as any
-				),
+				);
+				if (moved > 0) {
+					// The leave as it stands now, from the table, on this transaction.
+					const row = (await em.findOne(TimeOffRequest, { id, tenantId } as any, fromTable as any)) as any;
+					// The `persist: false` mirrors may be left unhydrated; the relations have their keys.
+					const leave = row
+						? {
+								...row,
+								tenantId: row.tenantId ?? row.tenant?.id ?? tenantId,
+								organizationId: row.organizationId ?? row.organization?.id,
+								policyId: row.policyId ?? row.policy?.id
+						  }
+						: null;
+					await this.settleMovedTimeOff(mikroOrmTimeOffBalanceLedger(em), leave, status);
+				}
+				return moved;
+			},
 			moveEquipmentSharing: async (id, tenantId, status) => {
 				await em.nativeUpdate(
 					EquipmentSharing,
@@ -1263,6 +1306,28 @@ export class RequestApprovalService extends TenantAwareCrudService<RequestApprov
 				);
 			}
 		};
+	}
+
+	/**
+	 * The leave-balance side of a time-off request an answer moved out of `REQUESTED` (see `moveTimeOff`), on the
+	 * answer's transaction: the same decision, through the same service, the time-off route makes, so both approval
+	 * paths check and take the same days (ever-co/ever-gauzy#10183, #11601 review).
+	 *
+	 * @param ledger The answer's transaction, as the balance side reads and writes it.
+	 * @param leave The leave as it stands after the move, or null when it is not there.
+	 * @param status The status the answer moved it to.
+	 * @throws BadRequestException when its policy requires sufficient balance and its balances cannot cover it.
+	 */
+	private async settleMovedTimeOff(
+		ledger: ITimeOffBalanceLedger,
+		leave: TimeOffBalanceLeave | null,
+		status: StatusTypesEnum
+	): Promise<void> {
+		if (!leave) {
+			return;
+		}
+		// The compare-and-set moved it from `REQUESTED`: that is the status the decision moves it FROM.
+		await this.timeOffBalanceDeductionService?.settle(ledger, { ...leave, status: StatusTypesEnum.REQUESTED }, status);
 	}
 
 	/**

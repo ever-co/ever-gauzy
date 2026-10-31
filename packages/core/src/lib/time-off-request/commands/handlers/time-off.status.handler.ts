@@ -10,6 +10,7 @@ import { TimeOffRequest } from '../../time-off-request.entity';
 import { TypeOrmTimeOffRequestRepository } from '../../repository/type-orm-time-off-request.repository';
 import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repository/type-orm-request-approval.repository';
 import { TimeOffBalanceDeductionService } from '../../../time-off-balance/time-off-balance-deduction.service';
+import { typeOrmTimeOffBalanceLedger } from '../../../time-off-balance/time-off-balance-ledger';
 
 @CommandHandler(TimeOffStatusCommand)
 export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusCommand> {
@@ -110,7 +111,7 @@ export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusComman
 
 			// The balance first, so an approval a strict policy's balance cannot cover is refused (400) before a status is
 			// written; the transaction rolls back whatever was written either way.
-			await this.timeOffBalanceDeductionService.settle(manager, leave, status);
+			await this.timeOffBalanceDeductionService.settle(typeOrmTimeOffBalanceLedger(manager), leave, status);
 
 			await manager.update(TimeOffRequest, { id, tenantId }, { status });
 

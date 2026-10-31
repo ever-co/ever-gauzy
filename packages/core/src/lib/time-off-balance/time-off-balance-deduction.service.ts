@@ -1,16 +1,13 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { Between, EntityManager, In, LessThan, MoreThanOrEqual } from 'typeorm';
 import { ID, StatusTypesEnum } from '@gauzy/contracts';
+import { TimeOffRequest } from '../core/entities/internal';
 import {
-	OfficialHoliday,
-	Organization,
-	TimeOffBalance,
-	TimeOffPolicy,
-	TimeOffRequest,
-	User
-} from '../core/entities/internal';
-import { TimeOffBalanceDeduction } from './time-off-balance-deduction.entity';
-import { balanceRowById, INSUFFICIENT_LEAVE_BALANCE, moveTakenDays } from './time-off-balance-taken';
+	ITimeOffBalanceDeductionRecord,
+	ITimeOffBalanceLedger,
+	ITimeOffBalanceRequestParties,
+	ITimeOffBalanceRow
+} from './time-off-balance-ledger';
+import { INSUFFICIENT_LEAVE_BALANCE, noLeaveBalanceAllocated } from './time-off-balance-taken';
 import { calendarSpan, knownTimeZone, workingDaysByYear, yearsOf } from './working-days';
 
 /**
@@ -60,12 +57,23 @@ export function balanceEffectOf(
 const byId = <T extends { id?: ID }>(rows: T[], key: (row: T) => ID = (row) => row.id): T[] =>
 	[...rows].sort((a, b) => String(key(a)).localeCompare(String(key(b))));
 
+/** One spelling of an id, so ids read from two tables compare equal whatever case either stored them in. */
+const idKey = (id: ID): string => String(id).toLowerCase();
+
 /**
  * Connects leave balances to the time-off approval flow (issue #10183): approving a request takes its working days
- * from the balances of its employees, and taking the approval back gives them back.
+ * from the balances of its employees, and taking the approval back gives them back. The charge follows the request
+ * after that: an edit of its dates, employees, policy or holiday flag moves it (see {@link recharge}), withdrawing or
+ * deleting the request gives it back (see {@link restore}), and putting a withdrawn approved request back takes it
+ * again (see {@link reinstate}).
  *
- * Everything runs on the caller's transaction (the decision's), so the balances move in the same commit as the
- * request's status, and a refusal rolls both back.
+ * Every approval path decides through this one service: the time-off route (`TimeOffStatusHandler`) and the request
+ * approval's answer (`RequestApprovalStatusHandler`, ever-co/ever-gauzy#11601 review), so they check and take the
+ * same days.
+ *
+ * Everything runs on the caller's transaction, through the ledger it hands over (see
+ * {@link ITimeOffBalanceLedger}), so the balances move in the same commit as the request, and a refusal rolls both
+ * back.
  *
  * The rules that keep existing installations working as before:
  *
@@ -76,8 +84,10 @@ const byId = <T extends { id?: ID }>(rows: T[], key: (row: T) => ID = (row) => r
  *    reversal gives back those days and nothing else, and an approval that finds a record takes nothing again.
  *  - **Not enough days: overdrawn, by default.** A balance that cannot cover the request still lets the approval
  *    through and records the full deduction, so `remaining` goes below zero. A policy that requires sufficient
- *    balance (`requireSufficientBalance`) refuses the approval instead (400), in one conditional UPDATE per balance,
- *    so two approvals landing together cannot both spend the same days.
+ *    balance (`requireSufficientBalance`, off by default) refuses the approval instead (400): when a balance does not
+ *    have the days left — in one conditional UPDATE per balance, so two approvals landing together cannot both spend
+ *    the same days — and when an employee has no balance at all for a year the request takes days of, since there is
+ *    nothing to cover them.
  *  - **Never refused for the dates.** A request longer than {@link MAX_DEDUCTIBLE_SPAN_DAYS} is approved without a
  *    deduction, with a warning in the log.
  *
@@ -90,19 +100,19 @@ export class TimeOffBalanceDeductionService {
 	/**
 	 * Applies the balance side of a decision that moves `leave` to `status`, on the decision's transaction.
 	 *
-	 * @param manager The decision's transaction.
+	 * @param ledger The decision's transaction.
 	 * @param leave The request, as the decision's locked read found it.
 	 * @param status The status the decision gives it.
 	 * @throws BadRequestException when the policy requires sufficient balance and an approval needs more days than a
-	 * balance has left.
+	 * balance has left, or days of a year an employee has no balance for.
 	 */
-	async settle(manager: EntityManager, leave: TimeOffBalanceLeave, status: string): Promise<void> {
+	async settle(ledger: ITimeOffBalanceLedger, leave: TimeOffBalanceLeave, status: string): Promise<void> {
 		switch (balanceEffectOf(leave?.status, status)) {
 			case 'deduct':
-				await this.deduct(manager, leave);
+				await this.deduct(ledger, leave);
 				return;
 			case 'restore':
-				await this.restore(manager, leave);
+				await this.restore(ledger, leave);
 				return;
 			default:
 				return;
@@ -110,32 +120,45 @@ export class TimeOffBalanceDeductionService {
 	}
 
 	/**
+	 * Whether an approval of the request took days that are still recorded: what an edit has to move and a removal
+	 * has to give back.
+	 *
+	 * @param ledger The transaction to read on.
+	 * @param leave The request.
+	 */
+	async hasCharge(ledger: ITimeOffBalanceLedger, leave: Pick<TimeOffBalanceLeave, 'id' | 'tenantId'>): Promise<boolean> {
+		const { id, tenantId } = leave ?? ({} as TimeOffBalanceLeave);
+		return !!id && !!tenantId && (await ledger.countDeductions(id, tenantId)) > 0;
+	}
+
+	/**
 	 * Takes the request's working days from the balance of each of its employees, per calendar year, and records what
 	 * was taken.
 	 *
-	 * @param manager The transaction to run on.
+	 * @param ledger The transaction to run on.
 	 * @param leave The approved request.
 	 * @returns what was taken; none when the request had already taken its days, or no balance exists for it.
-	 * @throws BadRequestException when the policy requires sufficient balance and a balance does not have the days left.
+	 * @throws BadRequestException when the policy requires sufficient balance and a balance does not have the days left,
+	 * or an employee has no balance for a year the request takes days of.
 	 */
-	async deduct(manager: EntityManager, leave: TimeOffBalanceLeave): Promise<TimeOffBalanceDeduction[]> {
+	async deduct(ledger: ITimeOffBalanceLedger, leave: TimeOffBalanceLeave): Promise<ITimeOffBalanceDeductionRecord[]> {
 		const { id, tenantId, organizationId, policyId } = leave ?? ({} as TimeOffBalanceLeave);
 		if (!id || !tenantId || !organizationId || !policyId || leave.isHoliday) {
 			return [];
 		}
 
 		// Taken already: an approval that already took its days takes nothing again.
-		if ((await manager.count(TimeOffBalanceDeduction, { where: { timeOffRequestId: id, tenantId } })) > 0) {
+		if ((await ledger.countDeductions(id, tenantId)) > 0) {
 			return [];
 		}
 
-		const request = await this.requestOf(manager, leave);
-		const employeeIds = [...new Set((request?.employees ?? []).map((employee) => employee.id).filter(Boolean))];
+		const parties = await ledger.partiesOf(id, tenantId);
+		const employeeIds = [...new Set((parties?.employees ?? []).map((employee) => employee.id).filter(Boolean))];
 		if (employeeIds.length === 0) {
 			return [];
 		}
 
-		const timeZone = await this.referenceTimeZoneOf(manager, leave, request);
+		const timeZone = await this.referenceTimeZoneOf(ledger, leave, parties);
 		const span = calendarSpan(leave.start, leave.end, timeZone);
 		if (!span) {
 			return [];
@@ -148,66 +171,135 @@ export class TimeOffBalanceDeductionService {
 			return [];
 		}
 
-		const balances = await manager.find(TimeOffBalance, {
-			where: { tenantId, organizationId, policyId, employeeId: In(employeeIds), year: In(yearsOf(span)) }
-		});
-		if (balances.length === 0) {
+		const scope = { tenantId, organizationId };
+		const balances = await ledger.balancesOf(scope, policyId, employeeIds, yearsOf(span));
+		const strict = await ledger.requiresSufficientBalance(policyId, tenantId);
+		if (balances.length === 0 && !strict) {
 			// No balance, no change: approval works exactly as it did before balances were connected to it.
 			return [];
 		}
 
-		const holidays = await this.holidaysOf(manager, leave, span.first, span.last);
+		const holidays = await ledger.holidaysOf(scope, span.first, span.last);
 		const daysOfYear = new Map(
 			workingDaysByYear(leave.start, leave.end, { timeZone, holidays }).map(({ year, days }) => [year, days])
 		);
-		const strict = await this.requiresSufficientBalance(manager, leave);
+		if (strict) {
+			this.assertEveryYearAllocated(employeeIds, daysOfYear, balances);
+		}
 
-		const deductions: TimeOffBalanceDeduction[] = [];
+		const deductions = [];
 		for (const balance of byId(balances)) {
 			const taken = daysOfYear.get(Number(balance.year)) ?? 0;
 			if (taken <= 0) {
 				continue;
 			}
 			const move = strict ? 'spend' : 'overdraw';
-			if ((await moveTakenDays(manager, balanceRowById(balance.id, tenantId), taken, move)) === 0) {
+			if ((await ledger.moveTakenDays(balance.id, tenantId, taken, move)) === 0) {
 				// Not enough days left, which only a strict policy refuses. Otherwise the balance was removed since it was
 				// read: there is nothing to take from, as when it never existed.
-				if (strict && (await manager.count(TimeOffBalance, { where: { id: balance.id, tenantId } })) > 0) {
+				if (strict && (await ledger.balanceExists(balance.id, tenantId))) {
 					throw new BadRequestException(INSUFFICIENT_LEAVE_BALANCE);
 				}
 				continue;
 			}
-			deductions.push(
-				manager.create(TimeOffBalanceDeduction, {
-					tenantId,
-					organizationId,
-					timeOffRequestId: id,
-					balanceId: balance.id,
-					days: taken
-				})
-			);
+			deductions.push({ tenantId, organizationId, timeOffRequestId: id, balanceId: balance.id, days: taken });
 		}
 
-		return deductions.length > 0 ? await manager.save(TimeOffBalanceDeduction, deductions) : [];
+		return deductions.length > 0 ? await ledger.recordDeductions(deductions) : [];
 	}
 
 	/**
-	 * Gives back what an approval of the request took, and removes the record of it.
+	 * Gives back what an approval of the request took, and removes the record of it: a decision that takes the
+	 * approval back, or the request being deleted.
 	 *
 	 * Only what was recorded is given back: a request approved before balances were connected to approvals, or
 	 * while it had no balance, gives back nothing.
 	 *
-	 * @param manager The transaction to run on.
+	 * @param ledger The transaction to run on.
 	 * @param leave The request whose approval is taken back.
 	 * @returns how many days were given back.
 	 */
-	async restore(manager: EntityManager, leave: Pick<TimeOffBalanceLeave, 'id' | 'tenantId'>): Promise<number> {
+	async restore(ledger: ITimeOffBalanceLedger, leave: Pick<TimeOffBalanceLeave, 'id' | 'tenantId'>): Promise<number> {
+		return await this.giveBack(ledger, leave, (ids, tenantId) => ledger.removeDeductions(ids, tenantId));
+	}
+
+	/**
+	 * Gives back what an approval of the request took when the request is withdrawn (soft-deleted), as
+	 * {@link restore} does, and keeps the record of it as withdrawn: a recovery of the request takes those days again
+	 * ({@link reinstate}), and only a request whose withdrawal gave days back.
+	 *
+	 * @param ledger The withdrawal's transaction.
+	 * @param leave The request being withdrawn.
+	 * @returns how many days were given back.
+	 */
+	async withdraw(ledger: ITimeOffBalanceLedger, leave: Pick<TimeOffBalanceLeave, 'id' | 'tenantId'>): Promise<number> {
+		return await this.giveBack(ledger, leave, (ids, tenantId) => ledger.withdrawDeductions(ids, tenantId));
+	}
+
+	/**
+	 * Moves the charge of an approved request onto the request as an edit left it (its dates, employees, policy or
+	 * holiday flag), on the edit's transaction: what its approval took is given back, then what the edited request
+	 * takes is taken, by the rules an approval follows — so a strict policy refuses an edit its balances cannot cover,
+	 * and the transaction leaves the edit unsaved.
+	 *
+	 * Only a request whose approval took days is charged again. One approved before balances were connected to
+	 * approvals, or while it had no balance, took nothing, and an edit of it takes nothing either.
+	 *
+	 * @param ledger The edit's transaction.
+	 * @param leave The request as edited, read on that transaction.
+	 * @returns what the edited request took.
+	 * @throws BadRequestException as {@link deduct} does.
+	 */
+	async recharge(ledger: ITimeOffBalanceLedger, leave: TimeOffBalanceLeave): Promise<ITimeOffBalanceDeductionRecord[]> {
+		if (!(await this.hasCharge(ledger, leave))) {
+			return [];
+		}
+		await this.restore(ledger, leave);
+		return await this.deduct(ledger, leave);
+	}
+
+	/**
+	 * Takes again the days a withdrawal of the request gave back ({@link withdraw}), when it is put back, on the
+	 * recovery's transaction, by the rules an approval follows: a strict policy refuses a recovery its balances cannot
+	 * cover. A request whose withdrawal gave nothing back — one withdrawn before withdrawals gave days back, or that
+	 * took none — takes nothing.
+	 *
+	 * @param ledger The recovery's transaction.
+	 * @param leave The request as recovered, read on that transaction.
+	 * @returns what it took.
+	 * @throws BadRequestException as {@link deduct} does.
+	 */
+	async reinstate(ledger: ITimeOffBalanceLedger, leave: TimeOffBalanceLeave): Promise<ITimeOffBalanceDeductionRecord[]> {
+		const { id, tenantId } = leave ?? ({} as TimeOffBalanceLeave);
+		if (!id || !tenantId) {
+			return [];
+		}
+		// The withdrawn record goes first: a balance holds one deduction per request (the UNIQUE index counts it too).
+		if ((await ledger.purgeWithdrawnDeductions(id, tenantId)) === 0) {
+			return [];
+		}
+		return leave.status === StatusTypesEnum.APPROVED ? await this.deduct(ledger, leave) : [];
+	}
+
+	/**
+	 * Gives back what the recorded deductions of the request took, then settles their record.
+	 *
+	 * @param ledger The transaction to run on.
+	 * @param leave The request.
+	 * @param settleRecord What becomes of the record once its days are given back.
+	 * @returns how many days were given back.
+	 */
+	private async giveBack(
+		ledger: ITimeOffBalanceLedger,
+		leave: Pick<TimeOffBalanceLeave, 'id' | 'tenantId'>,
+		settleRecord: (ids: ID[], tenantId: ID) => Promise<void>
+	): Promise<number> {
 		const { id, tenantId } = leave ?? ({} as TimeOffBalanceLeave);
 		if (!id || !tenantId) {
 			return 0;
 		}
 
-		const deductions = await manager.find(TimeOffBalanceDeduction, { where: { timeOffRequestId: id, tenantId } });
+		const deductions = await ledger.deductionsOf(id, tenantId);
 		if (deductions.length === 0) {
 			return 0;
 		}
@@ -217,26 +309,40 @@ export class TimeOffBalanceDeductionService {
 			const days = Number(deduction.days);
 			if (days > 0) {
 				// A balance removed since gives nothing back: there is nothing left to give it to.
-				await moveTakenDays(manager, balanceRowById(deduction.balanceId, tenantId), days, 'giveBack');
+				await ledger.moveTakenDays(deduction.balanceId, tenantId, days, 'giveBack');
 				restored += days;
 			}
 		}
 
-		await manager.delete(TimeOffBalanceDeduction, { id: In(deductions.map(({ id }) => id)), tenantId });
+		await settleRecord(
+			deductions.map(({ id }) => id),
+			tenantId
+		);
 
 		return restored;
 	}
 
 	/**
-	 * The request with its employees and their users, and who filed it. Read on its own: the decision's locked read
-	 * joins nothing, since PostgreSQL refuses `FOR UPDATE` on the nullable side of an outer join.
+	 * Refuses, for a policy that requires sufficient balance, a request that takes days of a year for which one of its
+	 * employees has no balance: nothing covers those days. A year the request takes no working day of needs none.
+	 *
+	 * @throws BadRequestException naming the years without a balance.
 	 */
-	private async requestOf(manager: EntityManager, leave: TimeOffBalanceLeave): Promise<TimeOffRequest | null> {
-		return await manager.findOne(TimeOffRequest, {
-			where: { id: leave.id, tenantId: leave.tenantId },
-			relations: { employees: { user: true } },
-			loadEagerRelations: false
-		});
+	private assertEveryYearAllocated(
+		employeeIds: ID[],
+		daysOfYear: ReadonlyMap<number, number>,
+		balances: ITimeOffBalanceRow[]
+	): void {
+		const allocated = new Set(balances.map((balance) => `${idKey(balance.employeeId)}:${Number(balance.year)}`));
+		const missing = new Set<number>();
+		for (const [year, days] of daysOfYear) {
+			if (days > 0 && employeeIds.some((employeeId) => !allocated.has(`${idKey(employeeId)}:${year}`))) {
+				missing.add(year);
+			}
+		}
+		if (missing.size > 0) {
+			throw new BadRequestException(noLeaveBalanceAllocated([...missing].sort((a, b) => a - b)));
+		}
 	}
 
 	/**
@@ -248,66 +354,26 @@ export class TimeOffBalanceDeductionService {
 	 * employee travelling, or one without a zone of their own, still has the days they picked counted.
 	 */
 	private async referenceTimeZoneOf(
-		manager: EntityManager,
+		ledger: ITimeOffBalanceLedger,
 		leave: TimeOffBalanceLeave,
-		request: TimeOffRequest | null
+		parties: ITimeOffBalanceRequestParties | null
 	): Promise<string> {
 		const known = (zone?: string | null): string | null =>
 			zone && knownTimeZone(zone) === zone.trim() ? zone.trim() : null;
 
-		if (request?.createdByUserId) {
-			const filer = await manager.findOne(User, {
-				where: { id: request.createdByUserId, tenantId: leave.tenantId },
-				select: { id: true, timeZone: true },
-				loadEagerRelations: false
-			});
-			const zone = known(filer?.timeZone);
+		if (parties?.createdByUserId) {
+			const zone = known(await ledger.userTimeZone(parties.createdByUserId, leave.tenantId));
 			if (zone) {
 				return zone;
 			}
 		}
 
-		const employees = request?.employees ?? [];
-		const employeeZone = employees.length === 1 ? known(employees[0].user?.timeZone) : null;
+		const employees = parties?.employees ?? [];
+		const employeeZone = employees.length === 1 ? known(employees[0].timeZone) : null;
 		if (employeeZone) {
 			return employeeZone;
 		}
 
-		const organization = await manager.findOne(Organization, {
-			where: { id: leave.organizationId, tenantId: leave.tenantId },
-			select: { id: true, timeZone: true },
-			loadEagerRelations: false
-		});
-		return known(organization?.timeZone) ?? 'UTC';
-	}
-
-	/** Whether the request's policy refuses approvals its balances cannot cover (`requireSufficientBalance`). */
-	private async requiresSufficientBalance(manager: EntityManager, leave: TimeOffBalanceLeave): Promise<boolean> {
-		const policy = await manager.findOne(TimeOffPolicy, {
-			where: { id: leave.policyId, tenantId: leave.tenantId },
-			select: { id: true, requireSufficientBalance: true },
-			loadEagerRelations: false
-		});
-		return Boolean(policy?.requireSufficientBalance);
-	}
-
-	/**
-	 * The organization's official holidays that can fall between `first` and `last`: the recurring ones, and the
-	 * one-off ones that start in the range or start before it and run into it.
-	 */
-	private async holidaysOf(
-		manager: EntityManager,
-		leave: TimeOffBalanceLeave,
-		first: string,
-		last: string
-	): Promise<OfficialHoliday[]> {
-		const scope = { tenantId: leave.tenantId, organizationId: leave.organizationId };
-		return await manager.find(OfficialHoliday, {
-			where: [
-				{ ...scope, isRecurring: true },
-				{ ...scope, date: Between(first, last) as any },
-				{ ...scope, date: LessThan(first) as any, endDate: MoreThanOrEqual(first) as any }
-			]
-		});
+		return known(await ledger.organizationTimeZone(leave.organizationId, leave.tenantId)) ?? 'UTC';
 	}
 }
