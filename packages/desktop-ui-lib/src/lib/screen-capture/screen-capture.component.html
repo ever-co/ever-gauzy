@@ -5,6 +5,18 @@
 				<div class="notification-header-title">
 					<img class="icon-logo" [src]="logoUrl" />
 					<div class="title-window">Screen Capture</div>
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						type="button"
+						class="notification-close"
+						[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+						[title]="'BUTTONS.CLOSE' | translate"
+						(click)="close()"
+					>
+						<nb-icon icon="close-outline"></nb-icon>
+					</button>
 				</div>
 				<div class="notification-header-note">
 					<span class="hidden-long-text">{{ note }}</span>

@@ -219,6 +219,38 @@ nb-card.dialog {
 	grid-column: 1 / -1;
 }
 
+// A field label with an info button beside it (the banner's hint).
+.label-row {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.hint-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: var(--gauzy-text-color-2);
+	cursor: help;
+
+	nb-icon {
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+	}
+
+	&:hover,
+	&:focus-visible {
+		color: nb-theme(color-primary-500);
+	}
+}
+
 .label,
 :host ::ng-deep .field label {
 	margin: 0;

@@ -67,6 +67,11 @@ type TimeOffPolicy {
 	accrualFrequency: String
 	"Whether this is the organization's default policy."
 	isDefault: Boolean
+	"""
+	Whether approving a request refuses it when an employee's leave balance for this policy cannot cover the
+	request's working days. Off by default: the approval goes through and the balance is overdrawn.
+	"""
+	requireSufficientBalance: Boolean
 	tenantId: ID
 	organizationId: ID
 	isActive: Boolean
@@ -186,6 +191,7 @@ input CreateTimeOffPolicyInput {
 	"The accrual period, as the contracts package's vocabulary states it."
 	accrualFrequency: String
 	isDefault: Boolean
+	requireSufficientBalance: Boolean
 }
 
 """
@@ -210,4 +216,5 @@ input UpdateTimeOffPolicyInput {
 	accrualRate: Decimal
 	accrualFrequency: String
 	isDefault: Boolean
+	requireSufficientBalance: Boolean
 }

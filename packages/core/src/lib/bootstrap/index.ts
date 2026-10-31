@@ -55,6 +55,7 @@ import { ApiExceptionFilter, DatabaseErrorFilter } from '../core/errors';
 import { RequestContextMiddleware } from '../core/context';
 import { coreEntities } from '../core/entities';
 import { coreSubscribers } from '../core/entities/subscribers';
+import { ensureDatabaseExists } from '../database/provision';
 import { registerMikroOrmCustomFields, registerTypeOrmCustomFields } from '../core/entities/custom-entity-fields';
 import { AuthGuard } from '../shared/guards';
 import { ValidatorModule } from '../shared/validators/validator.module';
@@ -648,6 +649,11 @@ export async function preBootstrapApplicationConfig(applicationConfig: Partial<A
 
 	// Log the current database configuration (for debugging or informational purposes)
 	logDBConfig(config);
+
+	// Opt-in (DB_CREATE_IF_NOT_EXISTS=true, off by default): create the configured PostgreSQL / MySQL database when
+	// the server does not have it yet. Runs here, with the final connection options and before anything connects,
+	// so the API, `yarn seed*`, the migration commands and the worker all get it (see ../database/provision).
+	await ensureDatabaseExists(config.dbConnectionOptions);
 
 	// Register custom entity fields for Type ORM
 	await registerTypeOrmCustomFields(config);

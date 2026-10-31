@@ -478,6 +478,16 @@ describe('OrganizationSwitchService', () => {
 		await expect(service.switchOrganization(organizationB)).resolves.toBe(true);
 	});
 
+	it('tells at once whether a timer start is under way (the selection prefill stops then)', () => {
+		expect(service.isStartingTimer).toBe(false);
+
+		const endTimerStart = service.beginTimerStart();
+		expect(service.isStartingTimer).toBe(true);
+
+		endTimerStart();
+		expect(service.isStartingTimer).toBe(false);
+	});
+
 	it('lets no timer start while a switch is under way, and lets it once the switch is over', async () => {
 		const response$ = new Subject<IAuthResponse>();
 		authService.switchOrganization.mockReturnValue(response$);

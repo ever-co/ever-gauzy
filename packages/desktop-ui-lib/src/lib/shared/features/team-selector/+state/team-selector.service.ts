@@ -27,6 +27,7 @@ export class TeamSelectorService extends SelectorService<IOrganizationTeam> {
 	}
 
 	public async load(options?: { searchTerm?: string; projectId?: string }): Promise<void> {
+		const isCurrent = this.requests.start(() => this.store.organizationId);
 		try {
 			this.teamSelectorStore.setLoading(true);
 			if (this.store.isOffline) {
@@ -53,9 +54,15 @@ export class TeamSelectorService extends SelectorService<IOrganizationTeam> {
 				...options
 			};
 			const { items: data, total } = await this.timeTrackerService.getPaginatedTeams(request);
+			if (!isCurrent()) {
+				return; // for a list emptied since, or another organization
+			}
 			this.teamSelectorStore.updateInfiniteList({ data, total });
 			this.teamSelectorStore.setError(null);
 		} catch (error) {
+			if (!isCurrent()) {
+				return;
+			}
 			this.toastrNotifier.error(error.message || 'An error occurred while fetching teams.');
 			this.teamSelectorStore.setError(error);
 		} finally {

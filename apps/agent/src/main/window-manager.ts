@@ -261,7 +261,8 @@ class AppWindow {
 				this.notificationWindow = new ScreenCaptureWindow(
 					this.getUiPath('screen-capture'),
 					this.getPreloadPath(),
-					this.showNotificationWindow.bind(this)
+					this.showNotificationWindow.bind(this),
+					this.hideNotificationWindow.bind(this)
 				);
 				await this.notificationWindow.loadURL();
 				return;
@@ -288,6 +289,11 @@ class AppWindow {
 
 	async isWindowReadyToShow(window: BrowserWindow, windowType: WindowType) {
 		await delaySync(200);
+		// Closed or replaced meanwhile (the notification's close button, its auto-hide): stop waiting, nothing to show
+		const replaced = windowType === WindowType.notificationWindow && window !== this.notificationWindow?.browserWindow;
+		if (!window || window.isDestroyed?.() || replaced) {
+			return false;
+		}
 		if (!window?.webContents?.isLoading?.() && (windowType !== WindowType.notificationWindow || this.windowReadyStatus[windowType])) {
 			return true;
 		}

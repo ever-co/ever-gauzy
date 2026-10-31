@@ -250,12 +250,20 @@ $muted: var(--text-hint-color);
   border-radius: nb-theme(border-radius);
 }
 
-// One label per permission row. The `<small>` description this used to style was
-// bound to the same translation key as the `<strong>` above it, so it is gone from
-// the template — and with it the 5px gap that was only there to separate the two.
+// The permission's label, then (when the catalogue has one) a one-line description
+// of what it lets a role do. The description is the quieter, smaller line of the two.
 .custom-permission-view {
   display: flex;
   flex-direction: column;
+  gap: 0.125rem;
+
+  .permission-description {
+    font-size: 0.6875rem;
+    font-weight: 400;
+    line-height: 1rem;
+    text-align: start;
+    color: nb-theme(gauzy-text-color-2);
+  }
 
   // Was 16px / 600 on every one of ~100 rows, which made the list read as a
   // wall of headings. 12px / 400 is the body size of the other Settings pages.

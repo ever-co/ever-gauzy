@@ -406,6 +406,11 @@ that domain's create and the two have to agree member for member.
 
 `originalUrl` is absent for the same reason it is absent above: the transport's origin header supplies
 it, and the delivered handler overwrites a stated one.
+
+Screen capture is the one exception to "member for member" (issue #9872): the organization is created with
+`allowScreenshotCapture` off whatever the body says, and `screenshotCaptureAcknowledgement` is dropped, because
+this request is public and nobody could be recorded as having acknowledged it. The new workspace's admin turns
+capture on from the organization's settings. Every other member of `contactOrganization` is passed through.
 """
 input AcceptOrganizationContactInviteInput {
 	"The invitation to take up."

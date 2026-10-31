@@ -290,6 +290,110 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		expect(deleted).toEqual(['row-member']);
 		expect(result).toMatchObject({ affected: 1 });
 	});
+
+	/**
+	 * #6569 — a member given a custom team role lost it on every edit of the team: each member the edit did not name
+	 * as a manager was written back with no role. Only a manager the edit leaves out loses their role now.
+	 */
+	describe('custom team roles (#6569)', () => {
+		const customRole = { id: 'role-reviewer', name: 'Reviewer' };
+
+		/** Runs `edit` with one more membership on the team, as the database would hold it. */
+		const withMember = async (row: Record<string, unknown>, edit: () => Promise<void>) => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			rows.push({ organizationTeamId: teamId, organizationId: manager.organizationId, ...row } as any);
+			try {
+				await edit();
+			} finally {
+				rows.pop();
+			}
+		};
+		const reviewer = { id: 'row-reviewer', employeeId: 'reviewer-employee', roleId: customRole.id, role: customRole };
+
+		it('keeps the custom role of a member the edit lists as a plain member, writing nothing', async () => {
+			await withMember({ ...reviewer, isManager: false }, () =>
+				editTeam(['manager-employee'], ['member-employee', 'reviewer-employee'])
+			);
+
+			expect(deleted).toEqual([]);
+			expect(updated).toEqual([]);
+		});
+
+		// Before #6569 the role was cleared and the flag with it, by any editor: keeping the role must not keep the
+		// manager access the edit takes away, even for a team manager without CHANGE_SELECTED_EMPLOYEE
+		it.each([
+			['a team manager without CHANGE_SELECTED_EMPLOYEE', () => undefined],
+			['a caller with CHANGE_SELECTED_EMPLOYEE', () => asCallerWithChangeSelectedEmployee()]
+		])('clears only the manager flag of a custom-role member left out of the managers, for %s', async (_, asCaller) => {
+			asCaller();
+
+			await withMember({ ...reviewer, isManager: true }, () =>
+				editTeam(['manager-employee'], ['member-employee', 'reviewer-employee'])
+			);
+
+			expect(updated).toEqual([
+				{
+					id: expect.objectContaining({ id: 'row-reviewer', tenantId: manager.tenantId }),
+					changes: { role: customRole, isManager: false }
+				}
+			]);
+		});
+
+		it('still gives the manager role to a custom-role member the edit names as a manager', async () => {
+			await withMember({ ...reviewer, isManager: false }, () =>
+				editTeam(['manager-employee', 'reviewer-employee'], ['member-employee'])
+			);
+
+			// As for any promotion: the flag is written together with the role (see the promotion test above)
+			expect(updated).toEqual([
+				{
+					id: expect.objectContaining({ id: 'row-reviewer', tenantId: manager.tenantId }),
+					changes: { role: { id: 'role-manager' }, isManager: true }
+				}
+			]);
+		});
+
+		it('still takes the manager role off a manager the edit lists as a plain member', async () => {
+			await editTeam([], ['manager-employee', 'member-employee']);
+
+			expect(updated).toEqual([
+				{
+					id: expect.objectContaining({ id: 'row-manager', tenantId: manager.tenantId }),
+					changes: { role: null, isManager: false }
+				}
+			]);
+		});
+
+		it.each([RolesEnum.ADMIN, RolesEnum.SUPER_ADMIN])(
+			'takes a %s team role off a member left out of the managers, since it makes them a manager',
+			async (name) => {
+				await withMember(
+					{
+						id: 'row-admin',
+						employeeId: 'admin-employee',
+						roleId: `role-${name}`,
+						role: { id: `role-${name}`, name },
+						isManager: false
+					},
+					() => editTeam(['manager-employee'], ['member-employee', 'admin-employee'])
+				);
+
+				expect(updated).toEqual([
+					{
+						id: expect.objectContaining({ id: 'row-admin', tenantId: manager.tenantId }),
+						changes: { role: null, isManager: false }
+					}
+				]);
+			}
+		);
+
+		it('writes nothing when the edit restates the team as it is', async () => {
+			await editTeam(['manager-employee'], ['member-employee']);
+
+			expect(updated).toEqual([]);
+			expect(deleted).toEqual([]);
+		});
+	});
 });
 
 /**

@@ -22,6 +22,8 @@ export class ApplicationSettingStoreService extends StoreService implements ISto
 			simpleScreenshotNotification: false,
 			screenshotNotificationDisplayId: null, // the primary display
 			mutedNotification: false,
+			customScreenshotSound: null, // the bundled sound
+			timerStartStopSound: false,
 			autoLaunch: true,
 			visibleAwOption: true,
 			randomScreenshotTime: false,

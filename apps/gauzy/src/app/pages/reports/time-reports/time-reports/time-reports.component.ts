@@ -16,8 +16,10 @@ import { distinctUntilChange, isEmpty } from '@gauzy/ui-core/common';
 import {
 	BaseSelectorFilterComponent,
 	ChartUtil,
+	DailyGridComponent,
 	GauzyFiltersComponent,
 	IChartData,
+	ReportExportFormatEnum,
 	TimeZoneService
 } from '@gauzy/ui-core/shared';
 
@@ -38,6 +40,7 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 	public payloads$: BehaviorSubject<ITimeLogFilters> = new BehaviorSubject(null);
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
+	@ViewChild(DailyGridComponent) dailyGrid: DailyGridComponent;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -49,6 +52,21 @@ export class TimeReportsComponent extends BaseSelectorFilterComponent implements
 		protected readonly timeZoneService: TimeZoneService
 	) {
 		super(store, translateService, dateRangePickerBuilderService, timeZoneService);
+	}
+
+	/**
+	 * Whether the report has rows to export: the grid has finished loading and found time entries.
+	 */
+	get canExport(): boolean {
+		return !!this.dailyGrid?.canExport;
+	}
+
+	/**
+	 * Downloads the time entries the grid shows — for the current filters, in its current grouping — as a
+	 * CSV file named after the selected date range.
+	 */
+	exportToCsv(): void {
+		this.dailyGrid?.exportReport(ReportExportFormatEnum.CSV);
 	}
 
 	ngOnInit() {

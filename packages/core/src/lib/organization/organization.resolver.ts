@@ -2,7 +2,14 @@ import { NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
-import { ID as Id, IOrganizationCreateInput, IOrganizationUpdateInput, IPagination, PermissionsEnum } from '@gauzy/contracts';
+import {
+	ID as Id,
+	IOrganizationCreateInput,
+	IOrganizationUpdateInput,
+	IPagination,
+	IScreenshotCaptureAcknowledgement,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import {
 	ConnectionFilter,
 	ConnectionPageRequest,
@@ -55,6 +62,10 @@ export interface ICreateOrganizationInput {
 	bonusPercentage?: number;
 	bonusType?: string;
 	contact?: IOrganizationContactDetailInput;
+	/** Issue #9872: off on a new organization unless stated. */
+	allowScreenshotCapture?: boolean;
+	/** Issue #9872: required when the write turns capture on for an EEA/UK organization. */
+	screenshotCaptureAcknowledgement?: Partial<IScreenshotCaptureAcknowledgement>;
 }
 
 /** The members `UpdateOrganizationInput` declares in the schema. */

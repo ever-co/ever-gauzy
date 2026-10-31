@@ -28,6 +28,7 @@ import {
 	OrderModule,
 	OrderPaymentLedgerService,
 	OrderPlatformAdaptersModule,
+	OrderStateReader,
 	OrderTotalsService,
 	SubscriptionOrderService
 } from '@gauzy/plugin-order';
@@ -48,6 +49,7 @@ import {
 } from '@gauzy/plugin-purchasing';
 import {
 	ENTITLEMENT_CATALOG_PORT,
+	ENTITLEMENT_ORDER_STATE_PORT,
 	EntitlementModule,
 	EntitlementOrderLinePolicyAdapter
 } from '@gauzy/plugin-entitlement';
@@ -170,6 +172,10 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		// carries the lines the grant path issues a right for (Q7-W5). Unbound, an order announces no lines and a
 		// purchase grants nothing.
 		{ provide: ORDER_LINE_ENTITLEMENT_POLICY, useExisting: EntitlementOrderLinePolicyAdapter },
+		// The grant path is reorderable, so an order's settlement can be delivered before a retried placement; the
+		// placement then asks the order package whether the order has settled since, and puts what it granted into
+		// force itself (#11023). Unbound, those rights stay PENDING until another settlement event, as before.
+		{ provide: ENTITLEMENT_ORDER_STATE_PORT, useExisting: OrderStateReader },
 		// A purchase order is approved by the platform's own approval machinery: the purchasing package
 		// files the request, and the core approval service owns the row.
 		{ provide: PURCHASING_APPROVAL, useExisting: PurchaseApprovalService },
@@ -248,6 +254,7 @@ import { WAREHOUSE_FULFILLMENT, WAREHOUSE_STOCK_LEDGER } from '@gauzy/plugin-war
 		SUBSCRIPTION_CATALOG,
 		ENTITLEMENT_CATALOG_PORT,
 		ORDER_LINE_ENTITLEMENT_POLICY,
+		ENTITLEMENT_ORDER_STATE_PORT,
 		PURCHASING_APPROVAL,
 		SUBSCRIPTION_INSTRUMENTS,
 		SUBSCRIPTION_ORDER_GATEWAY,

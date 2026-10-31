@@ -26,8 +26,19 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { distinctUntilChange, isNotEmpty } from '@gauzy/ui-core/common';
 import { Arrow } from './arrow/context/arrow.class';
 import { Next, Previous } from './arrow/strategies';
-import { dayOfWeekAsString, selectUnitOfTime, toPickerDateRange, toPickerRange } from './date-picker.utils';
-import { DateRangeClicked, DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
+import {
+	buildPresetRanges,
+	dayOfWeekAsString,
+	isCustomDateRange,
+	isPreviousRangeDisabled,
+	keepRangeFromToday,
+	PRESET_UNIT_OF_TIME,
+	PRESET_UNITS_OF_TIME,
+	selectUnitOfTime,
+	toPickerDateRange,
+	toPickerRange
+} from './date-picker.utils';
+import { DateRangeClicked, DateRanges, TimePeriod } from './date-picker.interface';
 import { TimeZoneService } from '../../timesheet/gauzy-filters/timezone-filter';
 
 @UntilDestroy({ checkProperties: true })
@@ -345,9 +356,10 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 					}
 				}),
 				tap(() => {
-					this.createDateRangeMenus();
 					this.setPastStrategy();
 					this.setFutureStrategy();
+					// After the strategies: the presets keep within the `minDate` and `maxDate` they settle.
+					this.createDateRangeMenus();
 				}),
 				untilDestroyed(this)
 			)
@@ -389,41 +401,18 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * @param unitOfTime The unit a locked picker offers; defaults to the picker's current unit.
 	 */
 	createDateRangeMenus(unitOfTime: moment.unitOfTime.Base = this.unitOfTime): void {
-		this.ranges = {};
+		// A locked picker offers only its own unit; an unlocked one every unit with presets, year included.
+		const units = this.isLockDatePicker ? [unitOfTime] : PRESET_UNITS_OF_TIME;
 
-		// Helper function to add ranges to the ranges object
-		const addRange = (key: DateRangeKeyEnum, startDate: moment.Moment, endDate: moment.Moment) => {
-			this.ranges[key] = [startDate, endDate];
-		};
-
-		// Determine which units of time are allowed
-		const allowedUnits = this.isLockDatePicker ? [unitOfTime] : ['day', 'week', 'month'];
-
-		// Add date ranges based on the allowed units of time
-		allowedUnits.forEach((unit) => {
-			switch (unit) {
-				case 'day':
-					addRange(DateRangeKeyEnum.TODAY, moment(), moment());
-					addRange(DateRangeKeyEnum.YESTERDAY, moment().subtract(1, 'days'), moment().subtract(1, 'days'));
-					break;
-				case 'week':
-					addRange(DateRangeKeyEnum.CURRENT_WEEK, moment().startOf('week'), moment().endOf('week'));
-					addRange(
-						DateRangeKeyEnum.LAST_WEEK,
-						moment().subtract(1, 'week').startOf('week'),
-						moment().subtract(1, 'week').endOf('week')
-					);
-					break;
-				case 'month':
-					addRange(DateRangeKeyEnum.CURRENT_MONTH, moment().startOf('month'), moment().endOf('month'));
-					addRange(
-						DateRangeKeyEnum.LAST_MONTH,
-						moment().subtract(1, 'month').startOf('month'),
-						moment().subtract(1, 'month').endOf('month')
-					);
-					break;
-			}
-		});
+		// Where future dates are disallowed, `setFutureStrategy` has set `maxDate` to today: presets end there.
+		// Where past dates are, `setPastStrategy` has set `minDate` to today: presets start there, and the
+		// ones already over ("Yesterday", "Last Year", …) are not offered.
+		this.ranges = buildPresetRanges(
+			units,
+			moment(),
+			this.maxDate ? moment(this.maxDate) : null,
+			this.minDate ? moment(this.minDate) : null
+		);
 	}
 
 	/**
@@ -496,15 +485,30 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * Also updates the query parameters without navigating away.
 	 */
 	previousRange(): void {
+		if (this.isPreviousDisabled()) {
+			return;
+		}
+
 		// Set the strategy to 'previous' on the arrow object
 		this.arrow.setStrategy(this.previous);
 
-		// Execute the strategy to get the previous range
-		const previousRange = this.arrow.execute(this.rangePicker, this.unitOfTime);
+		// Execute the strategy to get the previous range; where past dates are disallowed, it starts today at the earliest
+		const previousRange = keepRangeFromToday(
+			this.arrow.execute(this.rangePicker, this.unitOfTime),
+			this.hasPastStrategy()
+		);
 
 		// Update the selected date range and ensure consistency with the range picker
 		this.selectedDateRange = { ...previousRange };
 		this.rangePicker = { ...previousRange };
+	}
+
+	/**
+	 * Determines whether the "Previous" button should be disabled: where past dates are disallowed, once the
+	 * selected range starts today (see `isPreviousRangeDisabled`).
+	 */
+	isPreviousDisabled(): boolean {
+		return isPreviousRangeDisabled(this.selectedDateRange, this.hasPastStrategy());
 	}
 
 	/**
@@ -568,17 +572,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * @param {DateRangeClicked} range - The clicked range object.
 	 */
 	rangeClicked(range: DateRangeClicked) {
-		// Define the mapping outside the method to avoid recreating it on every call
-		const unitOfTimeMap: Record<string, moment.unitOfTime.Base> = {
-			[DateRangeKeyEnum.TODAY]: 'day',
-			[DateRangeKeyEnum.YESTERDAY]: 'day',
-			[DateRangeKeyEnum.CURRENT_WEEK]: 'week',
-			[DateRangeKeyEnum.LAST_WEEK]: 'week',
-			[DateRangeKeyEnum.CURRENT_MONTH]: 'month',
-			[DateRangeKeyEnum.LAST_MONTH]: 'month'
-		};
-
-		const unitOfTime = unitOfTimeMap[range.label];
+		const unitOfTime = PRESET_UNIT_OF_TIME[range.label];
 		if (unitOfTime) {
 			this.unitOfTime = unitOfTime;
 		} else {
@@ -594,34 +588,7 @@ export class DateRangePickerComponent extends TranslationBaseComponent implement
 	 * @returns True if the date range is custom, false otherwise.
 	 */
 	isCustomDate(dateRange: { startDate: moment.Moment; endDate: moment.Moment }): boolean {
-		// If the date range picker directive or its ranges are not available, consider it a custom range
-		if (!this.dateRangePickerDirective?.ranges) {
-			return true;
-		}
-
-		const predefinedRanges = this.dateRangePickerDirective.ranges;
-		const formattedStartDate = moment(dateRange.startDate).format('YYYY-MM-DD');
-		const formattedEndDate = moment(dateRange.endDate).format('YYYY-MM-DD');
-
-		// Iterate over the predefined ranges to check for a match
-		for (const rangeLabel in predefinedRanges) {
-			if (predefinedRanges.hasOwnProperty(rangeLabel)) {
-				const [rangeStartDate, rangeEndDate] = predefinedRanges[rangeLabel];
-
-				// Format the predefined range dates for comparison
-				const predefinedStartDate = rangeStartDate.format('YYYY-MM-DD');
-				const predefinedEndDate = rangeEndDate.format('YYYY-MM-DD');
-
-				// Compare the formatted dates
-				if (formattedStartDate === predefinedStartDate && formattedEndDate === predefinedEndDate) {
-					// The date range matches a predefined range; it's not custom
-					return false;
-				}
-			}
-		}
-
-		// No matching predefined range found; it's a custom date range
-		return true;
+		return isCustomDateRange(dateRange, this.dateRangePickerDirective?.ranges, this.isLockDatePicker);
 	}
 
 	/**

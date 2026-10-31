@@ -1,4 +1,13 @@
-import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import {
+	AfterViewInit,
+	ChangeDetectorRef,
+	Component,
+	inject,
+	Input,
+	OnDestroy,
+	OnInit,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { BehaviorSubject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,6 +24,8 @@ import { Environment, environment } from '@gauzy/ui-config';
 import { distinctUntilChange, isEmpty, progressStatus } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, Store, TimesheetService } from '@gauzy/ui-core/core';
 import { BaseSelectorFilterComponent, TimeZoneService } from '../../timesheet/gauzy-filters';
+import { buildReportExportFileName, ReportExportFormatEnum, ReportExportService } from '../export';
+import { buildDailyReportExportTable, DAILY_REPORT_EXPORT_NAME } from './daily-report-export';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -35,6 +46,8 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 	ReportGroupFilterEnum = ReportGroupFilterEnum;
 
 	@Input() showGroupBy: boolean = true;
+
+	private readonly reportExportService = inject(ReportExportService);
 
 	/*
 	 * Getter & Setter for the group-by filter
@@ -159,6 +172,33 @@ export class DailyGridComponent extends BaseSelectorFilterComponent implements O
 			// Ensure that loading is set to false whether the request was successful or not
 			this.loading = false;
 		}
+	}
+
+	/**
+	 * Whether there is anything to export: the report has finished loading and found time entries.
+	 */
+	get canExport(): boolean {
+		return !this.loading && this.dailyLogs?.length > 0;
+	}
+
+	/**
+	 * Downloads the time entries the grid shows — for the current filters, in its current grouping — as a file
+	 * named after the report and the selected date range.
+	 *
+	 * It only serialises what the grid already fetched, so it exports exactly what the caller can see.
+	 *
+	 * @param format - The format to export to: CSV, or one a plugin registered through `REPORT_EXPORTERS`.
+	 * @param reportName - What the file name starts with, before the date range.
+	 */
+	exportReport(format: string = ReportExportFormatEnum.CSV, reportName: string = DAILY_REPORT_EXPORT_NAME): void {
+		if (!this.canExport) {
+			return;
+		}
+		const table = buildDailyReportExportTable(this.dailyLogs, this.groupBy, (key) => this.getTranslation(key));
+		this.reportExportService.export(table, {
+			fileName: buildReportExportFileName(reportName, this.request?.startDate, this.request?.endDate),
+			format
+		});
 	}
 
 	public getStatus(value: number) {

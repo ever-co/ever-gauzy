@@ -13,9 +13,9 @@ import {
 import { RequestContext } from './../core/context';
 import { TenantAwareCrudService } from './../core/crud';
 import { Employee, TimeOffPolicy } from './../core/entities/internal';
-import { prepareSQLQuery as p } from './../database/database.helper';
 import { assertCurrentUserBelongsToOrganization } from './../user-organization/assert-organization-membership';
 import { TimeOffBalance } from './time-off-balance.entity';
+import { INSUFFICIENT_LEAVE_BALANCE, moveTakenDays } from './time-off-balance-taken';
 import { MikroOrmTimeOffBalanceRepository } from './repository/mikro-orm-time-off-balance.repository';
 import { TypeOrmTimeOffBalanceRepository } from './repository/type-orm-time-off-balance.repository';
 
@@ -152,7 +152,7 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 			// Either the balance does not exist, or it does not have enough days left. `getOrFail`
 			// separates the two so the caller gets the accurate error.
 			await this.getOrFail(employeeId, policyId, year, organizationId, tenantId);
-			throw new BadRequestException('Insufficient leave balance for the requested number of days');
+			throw new BadRequestException(INSUFFICIENT_LEAVE_BALANCE);
 		}
 
 		return this.getOrFail(employeeId, policyId, year, organizationId, tenantId);
@@ -317,8 +317,9 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 	}
 
 	/**
-	 * Apply a signed change to `taken` in one statement, so concurrent approvals cannot lose an
-	 * update. When `spending` is true the statement only matches if enough days are left.
+	 * Apply a signed change to `taken` of one employee/policy/year balance in one statement, so
+	 * concurrent approvals cannot lose an update (see {@link moveTakenDays}). When `spending` is
+	 * true the statement only matches if enough days are left.
 	 *
 	 * @returns the number of rows the statement changed (0 or 1)
 	 */
@@ -331,42 +332,15 @@ export class TimeOffBalanceService extends TenantAwareCrudService<TimeOffBalance
 		tenantId: ID,
 		spending: boolean
 	): Promise<number> {
-		if (!(days > 0)) {
-			// A negative or zero delta would invert the arithmetic and hand out leave for free.
-			throw new BadRequestException('The number of days must be greater than zero');
-		}
-
-		// A reversal clamps at zero so a double cancellation can never push `taken` negative.
-		const takenExpression = spending
-			? p(`"taken" + :days`)
-			: p(`CASE WHEN "taken" - :days < 0 THEN 0 ELSE "taken" - :days END`);
-
-		// Explicit, parameterised conditions rather than an object literal: an UPDATE builder's
-		// object form is easy to get subtly wrong, and this leaves no doubt about what is scoped.
-		const builder = this.typeOrmRepository
-			.createQueryBuilder()
-			.update(TimeOffBalance)
-			.set({
-				// `remaining` goes first: MySQL evaluates single-table SET assignments left to right, so
-				// after `taken` it would read the new `taken` and count the days twice.
-				remaining: () => p(`"accrued" + "carriedForward" - (${takenExpression}) - "carriedOut"`),
-				taken: () => takenExpression
-			})
-			.where(
-				p(
-					`"employeeId" = :employeeId AND "policyId" = :policyId AND "year" = :year AND "tenantId" = :tenantId AND "organizationId" = :organizationId AND "deletedAt" IS NULL`
-				),
-				{ employeeId, policyId, year, tenantId, organizationId }
-			)
-			.setParameter('days', days);
-
-		if (spending) {
-			builder.andWhere(p(`"accrued" + "carriedForward" - "taken" - "carriedOut" >= :days`));
-		}
-
-		const result = await builder.execute();
-
-		return result.affected ?? 0;
+		return moveTakenDays(
+			this.typeOrmRepository,
+			{
+				where: `"employeeId" = :employeeId AND "policyId" = :policyId AND "year" = :year AND "tenantId" = :tenantId AND "organizationId" = :organizationId AND "deletedAt" IS NULL`,
+				parameters: { employeeId, policyId, year, tenantId, organizationId }
+			},
+			days,
+			spending ? 'spend' : 'giveBack'
+		);
 	}
 
 	/**

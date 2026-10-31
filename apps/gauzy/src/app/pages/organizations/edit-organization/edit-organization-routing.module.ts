@@ -68,7 +68,9 @@ const routes: Routes = [
 				path: 'settings',
 				component: EditOrganizationOtherSettingsComponent,
 				data: {
-					relations: ['accountingTemplates'],
+					// The contact holds the organization's country, which the EEA/UK checks on this page read
+					// (agent exit/logout #9873, screen capture acknowledgement #9872), as the API does.
+					relations: ['accountingTemplates', 'contact'],
 					selectors: {
 						project: false,
 						team: false,
