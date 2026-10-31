@@ -181,6 +181,21 @@ describe('HttpRequestLoggerModule', () => {
 			}
 		});
 
+		it('redacts a random-looking token sent with a method no route takes, and keeps ids a route matched', async () => {
+			// Built at run time: a long literal of this shape reads as a leaked secret to secret scanners.
+			const opaque = '9e8d7c6b'.repeat(4);
+			app = await createApp(true);
+
+			await request(app.getHttpServer()).post(`/api/public/invoice/42/${opaque}`).expect(404);
+			await request(app.getHttpServer()).get(`/api/employee/${opaque}`).expect(200);
+			await settle();
+
+			expect(requestLines()).toEqual([
+				expect.stringMatching(/^POST \/api\/public\/invoice\/42\/\[REDACTED\] 404 /),
+				expect.stringMatching(new RegExp(`^GET /api/employee/${opaque} 200 `))
+			]);
+		});
+
 		it('logs a server error and skips health checks', async () => {
 			app = await createApp(true);
 

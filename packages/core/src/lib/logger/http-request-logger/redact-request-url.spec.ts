@@ -25,7 +25,13 @@ describe('createSensitiveParameterMatcher', () => {
 		'otp',
 		'email',
 		'where[email]',
-		'credentials'
+		'credentials',
+		'state',
+		'oauth_verifier',
+		'code_verifier',
+		'nonce',
+		'ticket',
+		'handoff'
 	])('treats %p as sensitive', (name) => {
 		expect(isSensitive(name)).toBe(true);
 	});
@@ -62,6 +68,81 @@ describe('redactRequestUrl', () => {
 		).toBe('/api/auth/verify?token=[REDACTED]&email=[REDACTED]&page=1&access_token=[REDACTED]');
 	});
 
+	it('redacts what OAuth callbacks carry: code and state, oauth_token and oauth_verifier', () => {
+		expect(redactRequestUrl('/api/integration/make/callback?code=c0de&state=st4te', { isSensitive })).toBe(
+			'/api/integration/make/callback?code=[REDACTED]&state=[REDACTED]'
+		);
+		expect(
+			redactRequestUrl('/api/integrations/upwork/callback?oauth_token=t0k&oauth_verifier=v3r', { isSensitive })
+		).toBe('/api/integrations/upwork/callback?oauth_token=[REDACTED]&oauth_verifier=[REDACTED]');
+	});
+
+	it('redacts a JSON query value that holds a sensitive field or value, and keeps one that does not', () => {
+		const json = (value: unknown) => encodeURIComponent(JSON.stringify(value));
+		const withEmail = json({ relations: ['tags'], findInput: { email: 'jane@example.com' } });
+		const withToken = json([{ where: { accessToken: 'abc' } }]);
+		const withEmailValue = json({ filter: ['jane@example.com'] });
+		const harmless = json({ relations: ['tags'], findInput: { organizationId: '7c1e', name: 'Acme' } });
+
+		expect(redactRequestUrl(`/api/contact?data=${withEmail}&page=1`, { isSensitive })).toBe(
+			'/api/contact?data=[REDACTED]&page=1'
+		);
+		expect(redactRequestUrl(`/api/contact?data=${withToken}`, { isSensitive })).toBe(
+			'/api/contact?data=[REDACTED]'
+		);
+		expect(redactRequestUrl(`/api/contact?data=${withEmailValue}`, { isSensitive })).toBe(
+			'/api/contact?data=[REDACTED]'
+		);
+		expect(redactRequestUrl(`/api/contact?data=${harmless}`, { isSensitive })).toBe(
+			`/api/contact?data=${harmless}`
+		);
+	});
+
+	it('redacts a JSON-looking query value it cannot parse, and JSON nested too deep to check', () => {
+		const deep = encodeURIComponent('['.repeat(40) + ']'.repeat(40));
+
+		expect(redactRequestUrl('/api/contact?data=%7B%22email%22%3A%22jane', { isSensitive })).toBe(
+			'/api/contact?data=[REDACTED]'
+		);
+		expect(redactRequestUrl(`/api/contact?data=${deep}`, { isSensitive })).toBe('/api/contact?data=[REDACTED]');
+	});
+
+	it('redacts a value that holds a JWT, such as a shared invoice link passed on as a redirect', () => {
+		const jwt = ['eyJhbGciOiJIUzI1NiJ9', 'eyJzdWIiOiIxIn0', 'c2ln'].join('.');
+
+		expect(
+			redactRequestUrl(`/api/auth/login?redirect=${encodeURIComponent(`/public/invoice/42/${jwt}`)}&page=1`, {
+				isSensitive
+			})
+		).toBe('/api/auth/login?redirect=[REDACTED]&page=1');
+	});
+
+	it('redacts a URL query value with something to redact in it, and keeps one without', () => {
+		const shared = encodeURIComponent('/shared-entity/token/0a1b2c3d');
+		const oauthReturn = encodeURIComponent('https://app.example/callback#access_token=abc&expires_in=3600');
+		const nested = encodeURIComponent(`/sign-in?next=${encodeURIComponent('/x?code=c0de')}`);
+		const harmless = encodeURIComponent('https://app.example/pages/employees?page=2');
+
+		expect(redactRequestUrl(`/api/auth/login?redirect=${shared}`, { isSensitive })).toBe(
+			'/api/auth/login?redirect=[REDACTED]'
+		);
+		expect(redactRequestUrl(`/api/auth/login?returnUrl=${oauthReturn}`, { isSensitive })).toBe(
+			'/api/auth/login?returnUrl=[REDACTED]'
+		);
+		expect(redactRequestUrl(`/api/auth/login?redirect=${nested}`, { isSensitive })).toBe(
+			'/api/auth/login?redirect=[REDACTED]'
+		);
+		expect(redactRequestUrl(`/api/auth/login?redirect=${harmless}`, { isSensitive })).toBe(
+			`/api/auth/login?redirect=${harmless}`
+		);
+	});
+
+	it('redacts an email address wherever it appears', () => {
+		expect(
+			redactRequestUrl('/api/user/find/jane%40example.com?search=john%40example.org&page=1', { isSensitive })
+		).toBe('/api/user/find/[REDACTED]?search=[REDACTED]&page=1');
+	});
+
 	it('reads an encoded parameter name before judging it', () => {
 		expect(redactRequestUrl('/api/x?where%5Bpassword%5D=hunter2', { isSensitive })).toBe(
 			'/api/x?where%5Bpassword%5D=[REDACTED]'
@@ -95,6 +176,46 @@ describe('redactRequestUrl', () => {
 		for (const url of ['/api/auth/login', '/api/auth/refresh-token/abc', '/api/subscription-plan/code/basic']) {
 			expect(redactRequestUrl(url, { isSensitive })).toBe(url);
 		}
+	});
+
+	describe('a long random-looking path segment', () => {
+		// Built at run time: a long literal of this shape reads as a leaked secret to secret scanners.
+		const opaque = 'a1b2c3d4'.repeat(4);
+
+		it('is redacted when no route parameter accounts for it (not routed yet, or no route matched)', () => {
+			expect(redactRequestUrl(`/api/public/invoice/42/${opaque}`, { isSensitive })).toBe(
+				'/api/public/invoice/42/[REDACTED]'
+			);
+			expect(redactRequestUrl(`/api/public/invoice/42/${opaque}`, { isSensitive, params: {} })).toBe(
+				'/api/public/invoice/42/[REDACTED]'
+			);
+		});
+
+		it('is redacted when only a wildcard matched it, such as the middleware routes every request goes through', () => {
+			expect(
+				redactRequestUrl(`/api/public/invoice/42/${opaque}`, {
+					isSensitive,
+					params: { splat: ['public', 'invoice', '42', opaque] }
+				})
+			).toBe('/api/public/invoice/42/[REDACTED]');
+		});
+
+		it('is kept when a route parameter that is not sensitive matched it', () => {
+			expect(redactRequestUrl(`/api/report/${opaque}`, { isSensitive, params: { slug: opaque } })).toBe(
+				`/api/report/${opaque}`
+			);
+		});
+
+		it('is told apart from ids, dates and words, which are kept', () => {
+			for (const url of [
+				'/api/employee/0b8f0e2c-8a2c-4c43-9a4e-1f1b2c3d4e5f',
+				'/api/timesheet/statistics/2024-01-31',
+				'/api/organization-projects-settings-overview',
+				'/api/x/a1b2c3d4a1b2c3d4a1b2'
+			]) {
+				expect(redactRequestUrl(url, { isSensitive })).toBe(url);
+			}
+		});
 	});
 
 	it('ignores route parameters that are not strings (a wildcard match is an array)', () => {

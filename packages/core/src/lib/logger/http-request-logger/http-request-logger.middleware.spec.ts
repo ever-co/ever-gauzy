@@ -163,6 +163,37 @@ describe('HttpRequestLoggerMiddleware', () => {
 		}
 	});
 
+	describe('a request no route matched, or one abandoned before routing', () => {
+		// Built at run time: a long literal of this shape reads as a leaked secret to secret scanners.
+		const opaque = 'f0e1d2c3'.repeat(4);
+
+		it('has a long random-looking path segment redacted in its 404 line', () => {
+			const { req, res } = fakeRequest({
+				method: 'POST',
+				originalUrl: `/api/public/invoice/42/${opaque}`,
+				statusCode: 404
+			});
+
+			middleware().use(req, res, jest.fn());
+			res.emit('finish');
+
+			expect(lines[0].message).toContain('POST /api/public/invoice/42/[REDACTED] 404');
+			expect(lines[0].message).not.toContain(opaque);
+		});
+
+		it('has it redacted when the client gives up while only a middleware wildcard has matched', () => {
+			const { req, res } = fakeRequest({
+				originalUrl: `/api/public/invoice/42/${opaque}`,
+				params: { splat: ['public', 'invoice', '42', opaque] }
+			});
+
+			middleware().use(req, res, jest.fn());
+			res.emit('close');
+
+			expect(lines[0].message).toMatch(/^GET \/api\/public\/invoice\/42\/\[REDACTED\] aborted after /);
+		});
+	});
+
 	it('redacts the extra parameter names it is configured with', () => {
 		const { req, res } = fakeRequest({ originalUrl: '/api/contact?phone=555-0100' });
 
