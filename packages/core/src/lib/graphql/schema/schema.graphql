@@ -33519,7 +33519,7 @@ type Organization {
   """
   profile_link: String
 
-  """The banner the public profile shows, as a URL."""
+  """The tagline the public profile shows under the organization's name."""
   banner: String
 
   """
