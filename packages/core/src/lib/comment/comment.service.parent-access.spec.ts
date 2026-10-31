@@ -795,6 +795,114 @@ describe('CommentService — the comments of a governed record follow its policy
 		});
 	});
 
+	/**
+	 * An employee and a team read the comments they are assigned (`assignedComments`, filled by a comment's `members`
+	 * and `teams`) outside the comment API, so a note assigned to one would reach whoever reads that employee or team.
+	 */
+	describe('a governed record’s comment is assigned to no employee or team', () => {
+		const assignment = { members: [{ id: 'employee-colleague' }], teams: [{ id: 'team-1' }] };
+
+		it('stores a note without the members and teams the body states', async () => {
+			as([PermissionsEnum.ORG_CONTACT_EDIT]);
+
+			await service.create(note(assignment as any));
+
+			const written = baseCreate.mock.calls[0][0];
+			expect(written).toEqual(expect.objectContaining({ comment: note().comment, entity: CONTACT }));
+			expect(written).not.toHaveProperty('members');
+			expect(written).not.toHaveProperty('teams');
+		});
+
+		it('edits a note without the members and teams the edit states', async () => {
+			as([PermissionsEnum.ORG_CONTACT_EDIT]);
+
+			await service.update(OWN_NOTE, { comment: 'edited', ...assignment } as any);
+
+			const written = baseCreate.mock.calls[0][0];
+			expect(written).toEqual(expect.objectContaining({ id: OWN_NOTE, comment: 'edited' }));
+			expect(written).not.toHaveProperty('members');
+			expect(written).not.toHaveProperty('teams');
+		});
+
+		it('keeps the members and teams of a project comment, on create and on edit, as before', async () => {
+			as([]);
+
+			await service.create(note({ entity: PROJECT, entityId: PROJECT_ID, ...assignment } as any));
+			await service.update(PROJECT_COMMENT, { comment: 'edited', ...assignment } as any);
+
+			expect(baseCreate).toHaveBeenNthCalledWith(1, expect.objectContaining(assignment));
+			expect(baseCreate).toHaveBeenNthCalledWith(2, expect.objectContaining(assignment));
+		});
+	});
+
+	describe('the comments an employee or a team is assigned', () => {
+		const assignedNote = (overrides: Record<string, unknown> = {}) =>
+			Object.assign(new Comment(), {
+				id: NOTE,
+				entity: CONTACT,
+				entityId: CONTACT_ID,
+				employeeId: 'employee-colleague',
+				comment: 'Wants a quote by Friday',
+				...overrides
+			});
+		const assignedProjectComment = () =>
+			Object.assign(new Comment(), { ...STORED[PROJECT_COMMENT], comment: 'Ship it on Monday' });
+		/** `GET /employee/:id?relations[]=assignedComments`, the caller's own employee. */
+		const ownEmployee = () => ({ id: 'employee-me', assignedComments: [assignedNote(), assignedProjectComment()] });
+
+		it('leaves notes out for a caller who may not view contacts, and answers every other comment', async () => {
+			as([]);
+
+			const employee = await service.withReadableLoadedComments(ownEmployee());
+
+			expect(employee.assignedComments.map(({ id }) => id)).toEqual([PROJECT_COMMENT]);
+			expect(policy.findAccessibleParent).not.toHaveBeenCalled();
+		});
+
+		it('keeps them for a caller who may view the contact, checking the contact once', async () => {
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+			const employee = ownEmployee();
+			employee.assignedComments.push(assignedNote({ id: OWN_NOTE, employeeId: 'employee-me' }));
+
+			await service.withReadableLoadedComments(employee);
+
+			expect(employee.assignedComments.map(({ id }) => id)).toEqual([NOTE, PROJECT_COMMENT, OWN_NOTE]);
+			expect((policy.findAccessibleParent as jest.Mock).mock.calls).toEqual([[CONTACT_ID]]);
+		});
+
+		it('leaves out a note of a contact the caller does not reach, and a colleague’s withdrawn note', async () => {
+			as([PermissionsEnum.ORG_CONTACT_VIEW]);
+			const team = {
+				items: [
+					{
+						id: 'team-1',
+						assignedComments: [
+							assignedNote({ id: OTHER_CONTACT_NOTE, entityId: FOREIGN_CONTACT_ID }),
+							assignedNote({ id: WITHDRAWN_NOTE, deletedAt: new Date('2026-10-01T00:00:00.000Z') })
+						],
+						members: [{ id: 'member-1', employee: ownEmployee() }]
+					}
+				],
+				total: 1
+			};
+
+			await service.withReadableLoadedComments(team);
+
+			expect(team.items[0].assignedComments).toEqual([]);
+			expect(team.items[0].members[0].employee.assignedComments.map(({ id }) => id)).toEqual([
+				NOTE,
+				PROJECT_COMMENT
+			]);
+		});
+
+		it('returns an answer that holds no record as it is', async () => {
+			as([]);
+
+			await expect(service.withReadableLoadedComments(3)).resolves.toBe(3);
+			await expect(service.withReadableLoadedComments(null)).resolves.toBeNull();
+		});
+	});
+
 	describe('comments loaded beside the ones read', () => {
 		const contactNote = (overrides: Record<string, unknown> = {}) => ({
 			id: NOTE,

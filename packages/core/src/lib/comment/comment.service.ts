@@ -33,7 +33,11 @@ import { MentionService } from '../mention/mention.service';
 import { isCallerTenantAdmin, withoutAuthorChange } from '../shared/ownership';
 import { Comment } from './comment.entity';
 import { CommentParentAccessService, ICommentParentRef, scopeCommentReadToParents } from './parent-access';
-import { withoutUnreadableRelatedComments } from './related-comments.helper';
+import {
+	IsCommentReadable,
+	withoutUnreadableLoadedComments,
+	withoutUnreadableRelatedComments
+} from './related-comments.helper';
 import { TypeOrmCommentRepository } from './repository/type-orm-comment.repository';
 import { MikroOrmCommentRepository } from './repository/mikro-orm-comment.repository';
 
@@ -47,6 +51,13 @@ const AUTHORSHIP_COLUMNS: ReadonlyArray<string> = Object.freeze([
 	'resolvedByEmployeeId',
 	'resolvedByEmployee'
 ]);
+
+/**
+ * The relations a comment of a governed record never stores from a body. It belongs to its record's organization
+ * (`organizationId`), and it is assigned to no employee and no team: an assignment would answer it to whoever reads
+ * that employee's or team's `assignedComments`, past its record's policy.
+ */
+const GOVERNED_COMMENT_UNSTORED_RELATIONS: ReadonlyArray<string> = Object.freeze(['organization', 'members', 'teams']);
 
 @Injectable()
 export class CommentService extends TenantAwareCrudService<Comment> {
@@ -110,10 +121,10 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				}
 			}
 
-			// Create the comment. A governed record's comment takes the record's organization, and no
-			// `organization` relation the body states beside it.
+			// Create the comment. A governed record's comment takes the record's organization, and none of the
+			// relations the body states beside it that would carry it elsewhere (see GOVERNED_COMMENT_UNSTORED_RELATIONS).
 			const comment = await super.create({
-				...(parent ? omit(data, ['organization']) : data),
+				...(parent ? omit(data, GOVERNED_COMMENT_UNSTORED_RELATIONS) : data),
 				employeeId,
 				tenantId,
 				// The record's organization, null for a record of the whole tenant; the stated one otherwise.
@@ -397,9 +408,9 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * An edit's changes, kept from moving a comment onto or off a governed record.
 	 *
 	 * A governed record's comment stays on its record and in the organization it is stored in, whatever the edit
-	 * states: its policy checked the caller against that record, and its readers are that record's. A comment of
-	 * any other record is edited as before, except that it cannot be moved onto a governed record, which would
-	 * skip that record's write check.
+	 * states, and is assigned to no employee or team (see GOVERNED_COMMENT_UNSTORED_RELATIONS): its policy checked the
+	 * caller against that record, and its readers are that record's. A comment of any other record is edited as
+	 * before, except that it cannot be moved onto a governed record, which would skip that record's write check.
 	 *
 	 * @param changes - The edit's changes.
 	 * @param stored - The comment as stored.
@@ -410,7 +421,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		const fields = (changes ?? {}) as Record<string, unknown>;
 		if (governed) {
 			return {
-				...omit(fields, ['entity', 'entityId', 'organization']),
+				...omit(fields, ['entity', 'entityId', ...GOVERNED_COMMENT_UNSTORED_RELATIONS]),
 				organizationId: stored.organizationId
 			} as unknown as I;
 		}
@@ -563,10 +574,43 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 		result: R,
 		readable: ReadonlyArray<ICommentParentRef> = []
 	): Promise<R> {
-		if (result === null || typeof result !== 'object' || this._parentAccess.governedEntities().length === 0) {
+		if (!this.mayCarryGovernedComments(result)) {
 			return result;
 		}
+		return withoutUnreadableRelatedComments(result, this.relatedCommentReadable(readable));
+	}
 
+	/**
+	 * Another record's read (an employee's or a team's, for one) without the comments the caller may not read.
+	 *
+	 * An employee and a team reach comments through their `assignedComments` (the comment's `members` and `teams`),
+	 * which the comment API's own reads never answer. Every comment loaded there, and what it loads in turn, is kept
+	 * by the rule {@link withReadableRelatedComments} keeps a comment read's related comments by: a comment of a
+	 * governed record only for a caller its policy lets read that record's comments. Every other comment is answered as
+	 * before. See `ReadableCommentsInterceptor`, which applies it to the routes of those records.
+	 *
+	 * @param result - The read's result: a page, a list, a record, or any other answer, which is returned as it is.
+	 * @returns `result`, changed in place.
+	 */
+	public async withReadableLoadedComments<R>(result: R): Promise<R> {
+		if (!this.mayCarryGovernedComments(result)) {
+			return result;
+		}
+		return withoutUnreadableLoadedComments(result, this.relatedCommentReadable());
+	}
+
+	/** Whether a read's result could hold a governed record's comment: an object, while a policy governs a record type. */
+	private mayCarryGovernedComments(result: unknown): boolean {
+		return result !== null && typeof result === 'object' && this._parentAccess.governedEntities().length > 0;
+	}
+
+	/**
+	 * Whether the caller may read a comment loaded beside the ones a read answers (see
+	 * {@link withReadableRelatedComments}). Each governed record is checked once per read.
+	 *
+	 * @param readable - Governed records the read has already checked.
+	 */
+	private relatedCommentReadable(readable: ReadonlyArray<ICommentParentRef> = []): IsCommentReadable {
 		const verdicts = new Map<string, Promise<boolean>>(
 			readable.map(({ entity, entityId }) => [`${entity}:${entityId}`, Promise.resolve(true)])
 		);
@@ -589,7 +633,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 			return verdicts.get(key);
 		};
 
-		return withoutUnreadableRelatedComments(result, async (comment) => {
+		return async (comment) => {
 			if (typeof comment.entity !== 'string') {
 				return Object.keys(comment).every((key) => key === 'id');
 			}
@@ -601,7 +645,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 				return false;
 			}
 			return !comment.deletedAt || this.mayReadWithdrawnOf([type]) || this.isCallerAuthorOf(comment);
-		});
+		};
 	}
 
 	/**
