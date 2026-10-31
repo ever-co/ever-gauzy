@@ -189,6 +189,46 @@ describe('GrantOrganizationContactAddDeletePermissions1791000003870: the new gra
 		]).toEqual(once);
 	});
 
+	it('writes in batches, not one statement per role, as it runs before the API starts', async () => {
+		// 600 more tenant roles that edit contacts, each with a reload-written switched-off ORG_CONTACT_DELETE row.
+		const HOLDERS = 600;
+		for (let n = 0; n < HOLDERS; n++) {
+			const role = `e0000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+			await dataSource.query('INSERT INTO "role" ("id", "tenantId", "name") VALUES (?, ?, ?)', [
+				role,
+				TENANT_B,
+				`CUSTOM_${n}`
+			]);
+			await dataSource.query(
+				`INSERT INTO "role_permission" ("id", "tenantId", "roleId", "permission", "enabled", "isActive", "isArchived")
+				VALUES (?, ?, ?, 'ORG_CONTACT_EDIT', 1, 1, 0), (?, ?, ?, 'ORG_CONTACT_DELETE', 0, 1, 0)`,
+				[id(1000 + 2 * n), TENANT_B, role, id(1001 + 2 * n), TENANT_B, role]
+			);
+		}
+		const queryRunner = dataSource.createQueryRunner();
+		const query = jest.spyOn(queryRunner, 'query');
+
+		await new GrantOrganizationContactAddDeletePermissions1791000003870().up(queryRunner);
+		await queryRunner.release();
+
+		const statements = query.mock.calls.map(([sql]) => String(sql).trim().split(/\s+/)[0].toUpperCase());
+		// One read of the holders, one of each grant's rows, and the writes of 600+ rows each way in a few batches.
+		expect(statements.filter((verb) => verb === 'SELECT')).toHaveLength(3);
+		expect(statements.filter((verb) => verb === 'INSERT').length).toBeLessThanOrEqual(3);
+		expect(statements.filter((verb) => verb === 'UPDATE').length).toBeLessThanOrEqual(2);
+
+		const granted = await dataSource.query(
+			`SELECT "permission", COUNT(*) AS "roles" FROM "role_permission"
+			WHERE "permission" IN ('ORG_CONTACT_ADD', 'ORG_CONTACT_DELETE') AND "enabled" = 1 AND "tenantId" = ?
+			GROUP BY "permission" ORDER BY "permission"`,
+			[TENANT_B]
+		);
+		expect(granted).toEqual([
+			{ permission: 'ORG_CONTACT_ADD', roles: HOLDERS + 1 },
+			{ permission: 'ORG_CONTACT_DELETE', roles: HOLDERS + 1 }
+		]);
+	});
+
 	/**
 	 * On an upgrade where a permission reload runs before this migration, the reload reads the enum the deployed code
 	 * carries (the new grants included) and writes them for every role, switched on only for the role's defaults. A

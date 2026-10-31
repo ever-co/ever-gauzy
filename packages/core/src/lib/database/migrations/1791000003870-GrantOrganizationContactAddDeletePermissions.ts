@@ -11,6 +11,21 @@ const HELD = PermissionsEnum.ORG_CONTACT_EDIT;
 const GRANTED = [PermissionsEnum.ORG_CONTACT_ADD, PermissionsEnum.ORG_CONTACT_DELETE] as const;
 
 /**
+ * The bind parameters one statement may carry, well inside the strictest driver's ceiling (SQLite builds default to
+ * 999), as the permission reload keeps them (`RolePermissionUtils.insertMissingRolePermissions`).
+ */
+const MAX_PARAMETERS = 900;
+
+/** `items` in consecutive slices of at most `size`. */
+function chunks<T>(items: T[], size: number): T[][] {
+	const slices: T[][] = [];
+	for (let offset = 0; offset < items.length; offset += size) {
+		slices.push(items.slice(offset, offset + size));
+	}
+	return slices;
+}
+
+/**
  * Grants `ORG_CONTACT_ADD` and `ORG_CONTACT_DELETE` to every role that holds `ORG_CONTACT_EDIT` today, tenant by
  * tenant (ever-co/ever-gauzy#5468).
  *
@@ -27,6 +42,9 @@ const GRANTED = [PermissionsEnum.ORG_CONTACT_ADD, PermissionsEnum.ORG_CONTACT_DE
  * deleted is left exactly as its tenant left it. Nothing is removed, and running it again changes nothing.
  *
  * New tenants get the grants from `DEFAULT_ROLE_PERMISSIONS` (SUPER_ADMIN and ADMIN, the edit grant's holders).
+ *
+ * It runs before the API starts, so it reads once per grant and writes in batches: the statements it issues grow
+ * with the number of affected roles divided by the batch size, never with one round trip per role.
  */
 export class GrantOrganizationContactAddDeletePermissions1791000003870 implements MigrationInterface {
 	name = 'GrantOrganizationContactAddDeletePermissions1791000003870';
@@ -74,6 +92,9 @@ export class GrantOrganizationContactAddDeletePermissions1791000003870 implement
 			[HELD]
 		);
 
+		const missing: Array<{ tenantId: string; roleId: string; permission: PermissionsEnum }> = [];
+		const switchOn: string[] = [];
+
 		for (const permission of GRANTED) {
 			// Every row of the new grant that already exists. Read once, decided in code: MySQL refuses an UPDATE whose
 			// subquery reads the table being updated, so the rows to switch on are named by id instead.
@@ -99,17 +120,7 @@ export class GrantOrganizationContactAddDeletePermissions1791000003870 implement
 				const row = byHolder.get(`${tenantId}|${roleId}`);
 
 				if (!row) {
-					if (dbType === DatabaseTypeEnum.postgres) {
-						await run(
-							`INSERT INTO "role_permission" ("tenantId", "roleId", "permission", "enabled") VALUES ($1, $2, $3, true)`,
-							[tenantId, roleId, permission]
-						);
-					} else {
-						await run(
-							`INSERT INTO "role_permission" ("id", "tenantId", "roleId", "permission", "enabled") VALUES ($1, $2, $3, $4, 1)`,
-							[uuidV4(), tenantId, roleId, permission]
-						);
-					}
+					missing.push({ tenantId, roleId, permission });
 					inserted++;
 					continue;
 				}
@@ -124,17 +135,46 @@ export class GrantOrganizationContactAddDeletePermissions1791000003870 implement
 				const isOff = row.enabled === false || Number(row.enabled) === 0;
 				const unattributed = !row.createdByUserId && !row.updatedByUserId && !row.deletedAt;
 				if (isOff && unattributed) {
-					await run(`UPDATE "role_permission" SET "enabled" = ${truthy} WHERE "id" = $1`, [row.id]);
+					switchOn.push(row.id);
 					enabled++;
 				}
 			}
 
 			console.log(
 				chalk.green(
-					`${this.name}: ${permission} inserted for ${inserted} role(s) and switched on for ${enabled} role(s) a reload had written it switched off for.`
+					`${this.name}: ${permission} to insert for ${inserted} role(s) and to switch on for ${enabled} role(s) a reload had written it switched off for.`
 				)
 			);
 		}
+
+		// MySQL and the SQLite drivers have no UUID column default, so those rows carry an id made here.
+		const explicitId = dbType !== DatabaseTypeEnum.postgres;
+		const columns = explicitId
+			? `"id", "tenantId", "roleId", "permission", "enabled"`
+			: `"tenantId", "roleId", "permission", "enabled"`;
+		const perRow = explicitId ? 4 : 3;
+		for (const batch of chunks(missing, Math.floor(MAX_PARAMETERS / perRow))) {
+			const values: unknown[] = [];
+			const groups = batch.map(({ tenantId, roleId, permission }) => {
+				const row = explicitId ? [uuidV4(), tenantId, roleId, permission] : [tenantId, roleId, permission];
+				const placeholders = row.map((_, index) => `$${values.length + index + 1}`);
+				values.push(...row);
+				return `(${placeholders.join(', ')}, ${truthy})`;
+			});
+			await run(`INSERT INTO "role_permission" (${columns}) VALUES ${groups.join(', ')}`, values);
+		}
+
+		for (const batch of chunks(switchOn, MAX_PARAMETERS)) {
+			const placeholders = batch.map((_, index) => `$${index + 1}`);
+			await run(
+				`UPDATE "role_permission" SET "enabled" = ${truthy} WHERE "id" IN (${placeholders.join(', ')})`,
+				batch
+			);
+		}
+
+		console.log(
+			chalk.green(`${this.name}: ${missing.length} row(s) inserted, ${switchOn.length} row(s) switched on.`)
+		);
 	}
 
 	/**
