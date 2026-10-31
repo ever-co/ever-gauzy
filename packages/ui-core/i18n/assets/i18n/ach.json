@@ -1757,7 +1757,36 @@
 			"NO_DUE_DATE": "No due date",
 			"CLEAR_FILTERS": "Clear filters",
 			"NO_MATCHES": "No tasks match these filters",
-			"NO_MATCHES_HINT": "Try another status, priority or due date, or clear the filters."
+			"NO_MATCHES_HINT": "Try another status, priority or due date, or clear the filters.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Recent activity",
+				"FILTER": "Activity type",
+				"ALL": "All activity",
+				"TASKS": "Tasks",
+				"PROJECTS": "Projects",
+				"EMPTY": "No recent activity",
+				"EMPTY_HINT": "Tasks and projects created, changed or deleted show up here.",
+				"ERROR": "Recent activity could not be loaded.",
+				"UNTITLED": "Untitled",
+				"SYSTEM": "System",
+				"CREATED": "Created",
+				"UPDATED": "Updated",
+				"DELETED": "Deleted",
+				"CREATED_BY": "Created by {{ actor }}",
+				"UPDATED_BY": "Updated by {{ actor }}",
+				"DELETED_BY": "Deleted by {{ actor }}",
+				"ENTITY": {
+					"TASK": "Task",
+					"PROJECT": "Project",
+					"SPRINT": "Sprint",
+					"MODULE": "Module",
+					"TEAM": "Team",
+					"COMMENT": "Comment",
+					"DAILY_PLAN": "Daily plan",
+					"CONTACT": "Contact",
+					"DOCUMENT": "Document"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "I kin lutic {{ count }}",

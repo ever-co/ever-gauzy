@@ -1872,7 +1872,36 @@
 			"NO_DUE_DATE": "Geen vervaldatum",
 			"CLEAR_FILTERS": "Filters wissen",
 			"NO_MATCHES": "Geen taken komen overeen met deze filters",
-			"NO_MATCHES_HINT": "Probeer een andere status, prioriteit of vervaldatum, of wis de filters."
+			"NO_MATCHES_HINT": "Probeer een andere status, prioriteit of vervaldatum, of wis de filters.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Recente activiteit",
+				"FILTER": "Soort activiteit",
+				"ALL": "Alle activiteit",
+				"TASKS": "Taken",
+				"PROJECTS": "Projecten",
+				"EMPTY": "Geen recente activiteit",
+				"EMPTY_HINT": "Hier verschijnen aangemaakte, gewijzigde of verwijderde taken en projecten.",
+				"ERROR": "De recente activiteit kon niet worden geladen.",
+				"UNTITLED": "Zonder titel",
+				"SYSTEM": "Systeem",
+				"CREATED": "Aangemaakt",
+				"UPDATED": "Bijgewerkt",
+				"DELETED": "Verwijderd",
+				"CREATED_BY": "Aangemaakt door {{ actor }}",
+				"UPDATED_BY": "Bijgewerkt door {{ actor }}",
+				"DELETED_BY": "Verwijderd door {{ actor }}",
+				"ENTITY": {
+					"TASK": "Taak",
+					"PROJECT": "Project",
+					"SPRINT": "Sprint",
+					"MODULE": "Module",
+					"TEAM": "Team",
+					"COMMENT": "Opmerking",
+					"DAILY_PLAN": "Dagplanning",
+					"CONTACT": "Contact",
+					"DOCUMENT": "Document"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Over {{ count }} werknemers",

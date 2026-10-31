@@ -1873,7 +1873,36 @@
 			"NO_DUE_DATE": "Sans échéance",
 			"CLEAR_FILTERS": "Effacer les filtres",
 			"NO_MATCHES": "Aucune tâche ne correspond à ces filtres",
-			"NO_MATCHES_HINT": "Essayez un autre statut, une autre priorité ou une autre échéance, ou effacez les filtres."
+			"NO_MATCHES_HINT": "Essayez un autre statut, une autre priorité ou une autre échéance, ou effacez les filtres.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Activité récente",
+				"FILTER": "Type d'activité",
+				"ALL": "Toute l'activité",
+				"TASKS": "Tâches",
+				"PROJECTS": "Projets",
+				"EMPTY": "Aucune activité récente",
+				"EMPTY_HINT": "Les tâches et projets créés, modifiés ou supprimés apparaissent ici.",
+				"ERROR": "Impossible de charger l'activité récente.",
+				"UNTITLED": "Sans titre",
+				"SYSTEM": "Système",
+				"CREATED": "Créé",
+				"UPDATED": "Modifié",
+				"DELETED": "Supprimé",
+				"CREATED_BY": "Créé par {{ actor }}",
+				"UPDATED_BY": "Modifié par {{ actor }}",
+				"DELETED_BY": "Supprimé par {{ actor }}",
+				"ENTITY": {
+					"TASK": "Tâche",
+					"PROJECT": "Projet",
+					"SPRINT": "Sprint",
+					"MODULE": "Module",
+					"TEAM": "Équipe",
+					"COMMENT": "Commentaire",
+					"DAILY_PLAN": "Plan du jour",
+					"CONTACT": "Contact",
+					"DOCUMENT": "Document"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Sur {{ count }} employés",

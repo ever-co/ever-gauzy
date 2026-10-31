@@ -1872,7 +1872,36 @@
 			"NO_DUE_DATE": "Nessuna scadenza",
 			"CLEAR_FILTERS": "Cancella filtri",
 			"NO_MATCHES": "Nessuna attività corrisponde a questi filtri",
-			"NO_MATCHES_HINT": "Prova un altro stato, priorità o scadenza, oppure cancella i filtri."
+			"NO_MATCHES_HINT": "Prova un altro stato, priorità o scadenza, oppure cancella i filtri.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Modifiche recenti",
+				"FILTER": "Tipo di modifica",
+				"ALL": "Tutte le modifiche",
+				"TASKS": "Attività",
+				"PROJECTS": "Progetti",
+				"EMPTY": "Nessuna modifica recente",
+				"EMPTY_HINT": "Qui compaiono le attività e i progetti creati, modificati o eliminati.",
+				"ERROR": "Impossibile caricare le modifiche recenti.",
+				"UNTITLED": "Senza titolo",
+				"SYSTEM": "Sistema",
+				"CREATED": "Creato",
+				"UPDATED": "Aggiornato",
+				"DELETED": "Eliminato",
+				"CREATED_BY": "Creato da {{ actor }}",
+				"UPDATED_BY": "Aggiornato da {{ actor }}",
+				"DELETED_BY": "Eliminato da {{ actor }}",
+				"ENTITY": {
+					"TASK": "Attività",
+					"PROJECT": "Progetto",
+					"SPRINT": "Sprint",
+					"MODULE": "Modulo",
+					"TEAM": "Team",
+					"COMMENT": "Commento",
+					"DAILY_PLAN": "Piano giornaliero",
+					"CONTACT": "Contatto",
+					"DOCUMENT": "Documento"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Su {{ count }} dipendenti",

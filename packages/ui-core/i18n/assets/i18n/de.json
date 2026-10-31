@@ -1872,7 +1872,36 @@
 			"NO_DUE_DATE": "Kein Fälligkeitsdatum",
 			"CLEAR_FILTERS": "Filter zurücksetzen",
 			"NO_MATCHES": "Keine Aufgaben entsprechen diesen Filtern",
-			"NO_MATCHES_HINT": "Wählen Sie einen anderen Status, eine andere Priorität oder ein anderes Fälligkeitsdatum, oder setzen Sie die Filter zurück."
+			"NO_MATCHES_HINT": "Wählen Sie einen anderen Status, eine andere Priorität oder ein anderes Fälligkeitsdatum, oder setzen Sie die Filter zurück.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Letzte Aktivitäten",
+				"FILTER": "Aktivitätstyp",
+				"ALL": "Alle Aktivitäten",
+				"TASKS": "Aufgaben",
+				"PROJECTS": "Projekte",
+				"EMPTY": "Keine aktuellen Aktivitäten",
+				"EMPTY_HINT": "Hier erscheinen erstellte, geänderte oder gelöschte Aufgaben und Projekte.",
+				"ERROR": "Die letzten Aktivitäten konnten nicht geladen werden.",
+				"UNTITLED": "Ohne Titel",
+				"SYSTEM": "System",
+				"CREATED": "Erstellt",
+				"UPDATED": "Aktualisiert",
+				"DELETED": "Gelöscht",
+				"CREATED_BY": "Erstellt von {{ actor }}",
+				"UPDATED_BY": "Aktualisiert von {{ actor }}",
+				"DELETED_BY": "Gelöscht von {{ actor }}",
+				"ENTITY": {
+					"TASK": "Aufgabe",
+					"PROJECT": "Projekt",
+					"SPRINT": "Sprint",
+					"MODULE": "Modul",
+					"TEAM": "Team",
+					"COMMENT": "Kommentar",
+					"DAILY_PLAN": "Tagesplan",
+					"CONTACT": "Kontakt",
+					"DOCUMENT": "Dokument"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Über {{ count }} Mitarbeiter",

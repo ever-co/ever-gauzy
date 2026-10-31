@@ -1916,7 +1916,36 @@
 			"NO_DUE_DATE": "ללא תאריך יעד",
 			"CLEAR_FILTERS": "נקה מסננים",
 			"NO_MATCHES": "אין משימות שתואמות למסננים אלה",
-			"NO_MATCHES_HINT": "נסו סטטוס, עדיפות או תאריך יעד אחרים, או נקו את המסננים."
+			"NO_MATCHES_HINT": "נסו סטטוס, עדיפות או תאריך יעד אחרים, או נקו את המסננים.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "פעילות אחרונה",
+				"FILTER": "סוג פעילות",
+				"ALL": "כל הפעילות",
+				"TASKS": "משימות",
+				"PROJECTS": "פרויקטים",
+				"EMPTY": "אין פעילות אחרונה",
+				"EMPTY_HINT": "משימות ופרויקטים שנוצרו, שונו או נמחקו מופיעים כאן.",
+				"ERROR": "לא ניתן לטעון את הפעילות האחרונה.",
+				"UNTITLED": "ללא כותרת",
+				"SYSTEM": "מערכת",
+				"CREATED": "נוצר",
+				"UPDATED": "עודכן",
+				"DELETED": "נמחק",
+				"CREATED_BY": "נוצר על ידי {{ actor }}",
+				"UPDATED_BY": "עודכן על ידי {{ actor }}",
+				"DELETED_BY": "נמחק על ידי {{ actor }}",
+				"ENTITY": {
+					"TASK": "משימה",
+					"PROJECT": "פרויקט",
+					"SPRINT": "ספרינט",
+					"MODULE": "מודול",
+					"TEAM": "צוות",
+					"COMMENT": "תגובה",
+					"DAILY_PLAN": "תוכנית יומית",
+					"CONTACT": "איש קשר",
+					"DOCUMENT": "מסמך"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "על פני {{ count }} עובדים",

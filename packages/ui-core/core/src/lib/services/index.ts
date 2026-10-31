@@ -1,5 +1,6 @@
 export * from './accounting-template';
 export * from './activepieces';
+export * from './activity-log';
 export * from './ai-agent';
 export * from './analytics';
 export * from './app';

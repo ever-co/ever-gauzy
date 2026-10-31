@@ -1871,7 +1871,36 @@
 			"NO_DUE_DATE": "Bez terminu",
 			"CLEAR_FILTERS": "Wyczyść filtry",
 			"NO_MATCHES": "Żadne zadania nie pasują do tych filtrów",
-			"NO_MATCHES_HINT": "Wybierz inny status, priorytet lub termin albo wyczyść filtry."
+			"NO_MATCHES_HINT": "Wybierz inny status, priorytet lub termin albo wyczyść filtry.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Ostatnia aktywność",
+				"FILTER": "Rodzaj aktywności",
+				"ALL": "Cała aktywność",
+				"TASKS": "Zadania",
+				"PROJECTS": "Projekty",
+				"EMPTY": "Brak ostatniej aktywności",
+				"EMPTY_HINT": "Tutaj pojawiają się utworzone, zmienione lub usunięte zadania i projekty.",
+				"ERROR": "Nie udało się wczytać ostatniej aktywności.",
+				"UNTITLED": "Bez tytułu",
+				"SYSTEM": "System",
+				"CREATED": "Utworzone",
+				"UPDATED": "Zaktualizowane",
+				"DELETED": "Usunięte",
+				"CREATED_BY": "Utworzone przez {{ actor }}",
+				"UPDATED_BY": "Zaktualizowane przez {{ actor }}",
+				"DELETED_BY": "Usunięte przez {{ actor }}",
+				"ENTITY": {
+					"TASK": "Zadanie",
+					"PROJECT": "Projekt",
+					"SPRINT": "Sprint",
+					"MODULE": "Moduł",
+					"TEAM": "Zespół",
+					"COMMENT": "Komentarz",
+					"DAILY_PLAN": "Plan dnia",
+					"CONTACT": "Kontakt",
+					"DOCUMENT": "Dokument"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Wśród {{ count }} pracowników",

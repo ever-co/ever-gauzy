@@ -1872,7 +1872,36 @@
 			"NO_DUE_DATE": "无截止日期",
 			"CLEAR_FILTERS": "清除筛选",
 			"NO_MATCHES": "没有符合这些筛选条件的任务",
-			"NO_MATCHES_HINT": "请尝试其他状态、优先级或截止日期，或清除筛选。"
+			"NO_MATCHES_HINT": "请尝试其他状态、优先级或截止日期，或清除筛选。",
+			"RECENT_ACTIVITY": {
+				"TITLE": "最近动态",
+				"FILTER": "动态类型",
+				"ALL": "全部动态",
+				"TASKS": "任务",
+				"PROJECTS": "项目",
+				"EMPTY": "暂无最近动态",
+				"EMPTY_HINT": "创建、修改或删除的任务和项目会显示在这里。",
+				"ERROR": "无法加载最近动态。",
+				"UNTITLED": "无标题",
+				"SYSTEM": "系统",
+				"CREATED": "已创建",
+				"UPDATED": "已更新",
+				"DELETED": "已删除",
+				"CREATED_BY": "由 {{ actor }} 创建",
+				"UPDATED_BY": "由 {{ actor }} 更新",
+				"DELETED_BY": "由 {{ actor }} 删除",
+				"ENTITY": {
+					"TASK": "任务",
+					"PROJECT": "项目",
+					"SPRINT": "冲刺",
+					"MODULE": "模块",
+					"TEAM": "团队",
+					"COMMENT": "评论",
+					"DAILY_PLAN": "每日计划",
+					"CONTACT": "联系人",
+					"DOCUMENT": "文档"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "共 {{ count }} 名员工",

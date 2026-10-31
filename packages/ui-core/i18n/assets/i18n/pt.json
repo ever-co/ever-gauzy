@@ -1872,7 +1872,36 @@
 			"NO_DUE_DATE": "Sem data de vencimento",
 			"CLEAR_FILTERS": "Limpar filtros",
 			"NO_MATCHES": "Nenhuma tarefa corresponde a estes filtros",
-			"NO_MATCHES_HINT": "Tente outro status, prioridade ou data de vencimento, ou limpe os filtros."
+			"NO_MATCHES_HINT": "Tente outro status, prioridade ou data de vencimento, ou limpe os filtros.",
+			"RECENT_ACTIVITY": {
+				"TITLE": "Atividade recente",
+				"FILTER": "Tipo de atividade",
+				"ALL": "Toda a atividade",
+				"TASKS": "Tarefas",
+				"PROJECTS": "Projetos",
+				"EMPTY": "Sem atividade recente",
+				"EMPTY_HINT": "Aqui aparecem as tarefas e os projetos criados, alterados ou eliminados.",
+				"ERROR": "Não foi possível carregar a atividade recente.",
+				"UNTITLED": "Sem título",
+				"SYSTEM": "Sistema",
+				"CREATED": "Criado",
+				"UPDATED": "Atualizado",
+				"DELETED": "Eliminado",
+				"CREATED_BY": "Criado por {{ actor }}",
+				"UPDATED_BY": "Atualizado por {{ actor }}",
+				"DELETED_BY": "Eliminado por {{ actor }}",
+				"ENTITY": {
+					"TASK": "Tarefa",
+					"PROJECT": "Projeto",
+					"SPRINT": "Sprint",
+					"MODULE": "Módulo",
+					"TEAM": "Equipa",
+					"COMMENT": "Comentário",
+					"DAILY_PLAN": "Plano diário",
+					"CONTACT": "Contacto",
+					"DOCUMENT": "Documento"
+				}
+			}
 		},
 		"ACCOUNTING_VIEW": {
 			"EMPLOYEES_COUNT": "Entre {{ count }} funcionários",
