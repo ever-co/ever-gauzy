@@ -1211,6 +1211,56 @@ describe('SubscriptionBillingService — a charge in flight fences the cycle (ch
 		expect(fixture.billing('billing-1')).toMatchObject({ amount: '98.000000', chargeClaimToken: 'another-pass' });
 	});
 
+	it('refuses a repricing whose price is unchanged when the pass no longer holds the claim', async () => {
+		const fixture = billingFixture([
+			billingRow('billing-1', {
+				status: SubscriptionBillingStatus.FAILED,
+				metadata: { gross: '120.000000', discount: '0.000000' },
+				...live()
+			})
+		]);
+
+		await expect(
+			fixture.service.repriceUnsettled(
+				fixture.billing('billing-1') as never,
+				'120',
+				{ gross: '120.000000', discount: '0.000000' },
+				'the-pass-whose-claim-went-stale'
+			)
+		).rejects.toMatchObject(claimLost);
+	});
+
+	it('raises a failed guard read of a retirement rather than retiring the cycle unfenced', async () => {
+		const fixture = billingFixture([billingRow('billing-1', live())]);
+
+		jest.spyOn(fixture.service, 'findOneByIdString').mockRejectedValueOnce(new Error('the database went away'));
+
+		await expect(fixture.service.softRemove('billing-1')).rejects.toThrow('the database went away');
+		expect(fixture.billing('billing-1')?.deletedAt).toBeUndefined();
+	});
+
+	it('fences again when a pass’s claim ends between the fence’s statement and its read', async () => {
+		const fixture = billingFixture([billingRow('billing-1', live())]);
+		const store = fixture.service.typeOrmSubscriptionBillingRepository as unknown as Row;
+		const update = store.update;
+
+		// The first fence statement meets the pass's live claim; the pass then records its outcome and ends the claim
+		// before the fence reads the row again.
+		store.update = async (criteria: Row, partial: Row) => {
+			store.update = update;
+			const result = await update(criteria, partial);
+
+			Object.assign(fixture.billing('billing-1')!, { chargeClaimToken: null, chargeClaimedAt: null });
+
+			return result;
+		};
+
+		await fixture.service.softRemove('billing-1');
+
+		// The retirement went ahead only once its own fence was taken, and released it.
+		expect(fixture.billing('billing-1')).toMatchObject({ deletedAt: expect.any(Date), chargeClaimToken: null });
+	});
+
 	it('refuses to correct, delete or reschedule a cycle a pass is charging', async () => {
 		const fixture = billingFixture([billingRow('billing-1', live())]);
 

@@ -33,6 +33,7 @@ import {
 	ISubscriptionInstrumentPort,
 	ISubscriptionItemInput,
 	ISubscriptionOrderGatewayPort,
+	ISubscriptionOrderResult,
 	ISubscriptionPlanChangeOutcome,
 	ISubscriptionBillingOutcome,
 	ISubscriptionBillingRunOutcome,
@@ -143,6 +144,16 @@ const BILLING_SCOPE = 'subscription.bill';
  * with it the order key of the next attempt, which the order path no longer fences against the call still running.
  */
 const ORDER_ATTEMPT_IN_FLIGHT = 'ORDER_SUBSCRIPTION_IN_FLIGHT';
+
+/**
+ * The code the order path refuses an attempt with when its key already raised an order for a request priced otherwise
+ * (`ISubscriptionOrderGatewayPort.raiseSubscriptionOrder`).
+ *
+ * The attempt key is reused only by a pass that recovered a stale claim, and the call that took the key first is one
+ * whose outcome this pass cannot learn: recorded as a failure, it would move the attempt count, and the next attempt's
+ * new key could charge a period that call already charged.
+ */
+const ORDER_ATTEMPT_KEY_REUSED = 'ORDER_SUBSCRIPTION_KEY_REUSED';
 
 /** The key a proration charge's idempotency claim is scoped under. */
 const PRORATION_SCOPE = 'subscription.proration';
@@ -2295,6 +2306,33 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				return this.unclaimedCycleOutcome(subscription, await this.billingService.findOneScoped(billing.id));
 			}
 
+			if (failure?.code === ORDER_ATTEMPT_KEY_REUSED) {
+				// An earlier call of this attempt raised its order on other terms (the cycle was repriced since), and its
+				// outcome cannot be read from here. Nothing is recorded, so the attempt count and the key stay where that
+				// call left them; the claim is released, so an operator can reconcile the cycle with that order. A takeover
+				// resends the attempt's frozen request (`ATTEMPT_REQUEST`), so this answers an attempt made before requests
+				// were frozen.
+				this.logger.error(
+					`Subscription ${subscription.id}: attempt ${(billing.attemptCount ?? 0) + 1} of cycle ${billing.id} ` +
+						`already raised an order on other terms; the cycle is left for an operator to reconcile with it.`
+				);
+				// The request this pass froze is not the one the order path holds: it is dropped, so it neither stands as the
+				// attempt's nor keeps an operator from reconciling the cycle.
+				await this.billingService.unfreezeAttempt(billing.id, claim.token);
+
+				return {
+					subscriptionId: subscription.id,
+					billingId: billing.id,
+					status: billing.status,
+					replayed: true,
+					periodStart: billing.periodStart,
+					periodEnd: billing.periodEnd,
+					errorCode: ORDER_ATTEMPT_KEY_REUSED,
+					message:
+						'An earlier call of this attempt raised its order on other terms; nothing is recorded until the cycle is reconciled with that order.'
+				};
+			}
+
 			if (failure) {
 				return await this.recordFailure(subscription, billing, failure, now, spend(), claim.token);
 			}
@@ -2489,7 +2527,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			}
 		}
 
-		let result: Awaited<ReturnType<ISubscriptionOrderGatewayPort['raiseSubscriptionOrder']>>;
+		let result: ISubscriptionOrderResult;
 
 		try {
 			result = await this.orderGateway.raiseSubscriptionOrder(frozen.request);

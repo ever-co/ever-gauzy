@@ -268,7 +268,9 @@ export interface ISubscriptionOrderGatewayPort {
 	 * @returns The order the cycle produced and whether it settled. A key an earlier call completed is answered with
 	 * that call's order rather than a second one.
 	 * @throws An error whose message starts with `ORDER_SUBSCRIPTION_IN_FLIGHT:` when another call still holds the
-	 * request's `idempotencyKey` and is working: the attempt is in flight elsewhere, not failed.
+	 * request's `idempotencyKey` and is working: the attempt is in flight elsewhere, not failed. One whose message starts
+	 * with `ORDER_SUBSCRIPTION_KEY_REUSED:` when the key already raised an order for a different request: the attempt's
+	 * outcome is the earlier call's, not a failure of this one.
 	 */
 	raiseSubscriptionOrder(request: ISubscriptionOrderRequest): Promise<ISubscriptionOrderResult>;
 
