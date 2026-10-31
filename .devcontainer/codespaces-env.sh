@@ -1,6 +1,7 @@
-# Sourced by the dev container's interactive shells (postCreateCommand in devcontainer.json adds
-# `. <workspace>/.devcontainer/codespaces-env.sh <workspace>` to ~/.bashrc and ~/.zshrc), so `yarn start` and the other
-# scripts started from a terminal see these variables.
+# shellcheck shell=bash
+# Sourced, not run (hence no shebang), by the dev container's interactive shells: postCreateCommand in
+# devcontainer.json adds `. <workspace>/.devcontainer/codespaces-env.sh <workspace>` to ~/.bashrc and ~/.zshrc, so
+# `yarn start` and the other scripts started from a terminal see these variables.
 #
 # In GitHub Codespaces a browser reaches the forwarded ports at https://<codespace>-<port>.<domain>, not at localhost:
 # a web UI built with the default API_BASE_URL (http://localhost:3000) would send its API calls to the viewer's own
