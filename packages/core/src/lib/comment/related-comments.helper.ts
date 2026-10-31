@@ -1,4 +1,5 @@
 import { Comment } from './comment.entity';
+import { ASSIGNED_COMMENTS } from './assigned-comments';
 
 /** Whether the caller may read a comment found in a read's result. */
 export type IsCommentReadable = (comment: Record<string, unknown>) => Promise<boolean>;
@@ -7,7 +8,7 @@ export type IsCommentReadable = (comment: Record<string, unknown>) => Promise<bo
  * The relations of an employee and of a team that hold comments: those the record is assigned through the comment's
  * `members` and `teams`.
  */
-const COMMENT_COLLECTIONS: ReadonlySet<string> = new Set(['assignedComments']);
+const COMMENT_COLLECTIONS: ReadonlySet<string> = new Set([ASSIGNED_COMMENTS]);
 
 /**
  * Removes from a comment read's result the related comments that `isReadable` refuses, and returns the result.

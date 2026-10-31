@@ -5,6 +5,7 @@
 import '../core/entities/internal';
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { lastValueFrom, of } from 'rxjs';
 import { And, Equal, In, IsNull, Not } from 'typeorm';
 import { BaseEntityEnum, ICommentCreateInput, PermissionsEnum } from '@gauzy/contracts';
 import { CrudService } from '../core/crud/crud.service';
@@ -14,6 +15,7 @@ import { RequestContext } from '../core/context/request-context';
 import { Comment } from './comment.entity';
 import { CommentService } from './comment.service';
 import { CommentResolver } from './comment.resolver';
+import { ReadableCommentsInterceptor } from './readable-comments.interceptor';
 import { CommentCreateHandler } from './commands/handlers/comment.create.handler';
 import { CommentParentAccessService, ICommentParent, ICommentParentAccessPolicy } from './parent-access';
 
@@ -900,6 +902,45 @@ describe('CommentService — the comments of a governed record follow its policy
 
 			await expect(service.withReadableLoadedComments(3)).resolves.toBe(3);
 			await expect(service.withReadableLoadedComments(null)).resolves.toBeNull();
+		});
+
+		/** `GET /organization-projects/:id?relations[]=members.employee.assignedComments`, through any route. */
+		describe('a read of another record that asks for its members’ comments', () => {
+			const project = () => ({
+				id: PROJECT_ID,
+				name: 'Website',
+				members: [{ id: 'project-member', employeeId: 'employee-me', employee: ownEmployee() }]
+			});
+			const read = (answer: unknown) => {
+				const interceptor = new ReadableCommentsInterceptor({ get: () => service } as never);
+				const context = {
+					getType: () => 'http',
+					switchToHttp: () => ({
+						getRequest: () => ({ query: { relations: ['members', 'members.employee.assignedComments'] } })
+					})
+				};
+				return lastValueFrom(interceptor.intercept(context as never, { handle: () => of(answer) }));
+			};
+
+			it('leaves the note out of a project read for a caller who may not view contacts', async () => {
+				as([]);
+
+				const answer = (await read(project())) as ReturnType<typeof project>;
+
+				expect(answer.members[0].employee.assignedComments.map(({ id }) => id)).toEqual([PROJECT_COMMENT]);
+				expect(answer).toMatchObject({ id: PROJECT_ID, name: 'Website' });
+			});
+
+			it('keeps it for a caller who may view the contact', async () => {
+				as([PermissionsEnum.ORG_CONTACT_VIEW]);
+
+				const answer = (await read(project())) as ReturnType<typeof project>;
+
+				expect(answer.members[0].employee.assignedComments.map(({ id }) => id)).toEqual([
+					NOTE,
+					PROJECT_COMMENT
+				]);
+			});
 		});
 	});
 

@@ -35,13 +35,11 @@ import { OrganizationTeamCreateCommand } from './commands';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
 import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
-import { ReadableCommentsInterceptor } from '../comment/readable-comments.interceptor';
 
 @ApiTags('OrganizationTeam')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TEAM_EDIT)
-// The comments a team is assigned (`assignedComments`) are answered by the rules of the comment API's own reads.
-@UseInterceptors(SensitiveRelationsInterceptor, FormerEmployeesInterceptor, ReadableCommentsInterceptor)
+@UseInterceptors(SensitiveRelationsInterceptor, FormerEmployeesInterceptor)
 @SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/organization-team')
 export class OrganizationTeamController extends CrudController<OrganizationTeam> {

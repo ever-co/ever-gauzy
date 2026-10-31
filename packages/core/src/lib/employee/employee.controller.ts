@@ -59,13 +59,11 @@ import {
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
 import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
-import { ReadableCommentsInterceptor } from '../comment/readable-comments.interceptor';
 
 @ApiTags('Employee')
 @UseGuards(TenantPermissionGuard, PermissionGuard)
 @Permissions(PermissionsEnum.ORG_EMPLOYEES_EDIT)
-// The comments an employee is assigned (`assignedComments`) are answered by the rules of the comment API's own reads.
-@UseInterceptors(SensitiveRelationsInterceptor, ReadableCommentsInterceptor)
+@UseInterceptors(SensitiveRelationsInterceptor)
 @SensitiveRelations(ORGANIZATION_SENSITIVE_RELATIONS, 'organization')
 @Controller('/employee')
 export class EmployeeController extends CrudController<Employee> {

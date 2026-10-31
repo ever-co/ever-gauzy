@@ -587,7 +587,7 @@ export class CommentService extends TenantAwareCrudService<Comment> {
 	 * which the comment API's own reads never answer. Every comment loaded there, and what it loads in turn, is kept
 	 * by the rule {@link withReadableRelatedComments} keeps a comment read's related comments by: a comment of a
 	 * governed record only for a caller its policy lets read that record's comments. Every other comment is answered as
-	 * before. See `ReadableCommentsInterceptor`, which applies it to the routes of those records.
+	 * before. See `ReadableCommentsInterceptor`, which applies it to every request that names them.
 	 *
 	 * @param result - The read's result: a page, a list, a record, or any other answer, which is returned as it is.
 	 * @returns `result`, changed in place.
