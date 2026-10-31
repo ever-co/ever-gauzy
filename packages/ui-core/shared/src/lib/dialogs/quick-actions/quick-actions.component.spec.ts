@@ -146,6 +146,18 @@ describe('QuickActionsComponent', () => {
 		});
 	});
 
+	it('shows the shortcuts the header binds: a saved key of an action the user cannot run takes nothing', async () => {
+		// -- Create Estimate is not in the menu; its saved I must not displace Create Invoice's default
+		preferences$.next({ shortcuts: { createEstimate: 'i' } });
+		expect(component.groupedQuickActions[0].items[0].badge.text).toBe('I');
+
+		startEditing();
+		expect(component.draftShortcuts['createInvoice']).toBe('i');
+		await clickSave();
+		// -- the saved choice is kept for when the action is available again
+		expect(preferencesService.save).toHaveBeenCalledWith({ shortcuts: { createEstimate: 'i' } });
+	});
+
 	it('follows the saved order and shortcuts, and regroups when they change', () => {
 		preferences$.next({
 			order: ['receivedInvoices', 'createInvoice'],
@@ -267,19 +279,32 @@ describe('QuickActionsComponent', () => {
 				record('Create Task', 'e');
 				expect(component.shortcutErrors['createTask']).toBeUndefined();
 				expect(component.draftShortcuts['createTask']).toBe('e');
-				expect(component.draftShortcuts['createEstimate']).toBe('');
+				// -- an action the user cannot run is not resolved at all: it holds no key
+				expect('createEstimate' in component.draftShortcuts).toBe(false);
 
 				await clickSave();
 				// -- the displaced default is not stored as a removal: it comes back once E is free again
 				expect(preferencesService.save).toHaveBeenCalledWith({ shortcuts: { createTask: 'e' } });
 			});
 
+			it('takes the key of an action that works without being listed (Stop Timer), which then loses it', async () => {
+				startEditing();
+				expect(component.draftShortcuts['stopTimer']).toBe('o');
+				record('Create Task', 'o');
+				expect(component.shortcutErrors['createTask']).toBeUndefined();
+				expect(component.draftShortcuts['createTask']).toBe('o');
+				expect(component.draftShortcuts['stopTimer']).toBe('');
+
+				await clickSave();
+				expect(preferencesService.save).toHaveBeenCalledWith({ shortcuts: { createTask: 'o' } });
+			});
+
 			it('is not blocked by the start of a hidden two-key shortcut', () => {
 				startEditing();
 				record('Create Task', 'a');
 				expect(component.draftShortcuts['createTask']).toBe('a');
-				expect(component.draftShortcuts['addEmployee']).toBe('');
-				expect(component.draftShortcuts['addDepartment']).toBe('');
+				expect('addEmployee' in component.draftShortcuts).toBe(false);
+				expect('addDepartment' in component.draftShortcuts).toBe(false);
 			});
 
 			it('takes a key from a hidden action’s own saved shortcut, which falls back to its default', async () => {
@@ -287,7 +312,7 @@ describe('QuickActionsComponent', () => {
 				startEditing();
 				record('Create Task', 'y');
 				expect(component.draftShortcuts['createTask']).toBe('y');
-				expect(component.draftShortcuts['createEstimate']).toBe('e');
+				expect('createEstimate' in component.draftShortcuts).toBe(false);
 
 				await clickSave();
 				expect(preferencesService.save).toHaveBeenCalledWith({ shortcuts: { createTask: 'y' } });

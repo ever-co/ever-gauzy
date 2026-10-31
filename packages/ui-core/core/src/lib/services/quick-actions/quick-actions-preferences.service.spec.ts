@@ -11,8 +11,6 @@ import { BehaviorSubject } from 'rxjs';
 import { IUser, IUserUiPreferences } from '@gauzy/contracts';
 import { Store } from '../store/store.service';
 import { UsersService } from '../users/users.service';
-import { QUICK_ACTION_DEFINITIONS } from './quick-action.definitions';
-import { normalizeShortcut } from './quick-action-shortcut.util';
 import { QuickActionsPreferencesService } from './quick-actions-preferences.service';
 
 const user = (id: string, uiPreferences?: IUserUiPreferences): IUser => ({ id, uiPreferences }) as IUser;
@@ -113,21 +111,6 @@ describe('QuickActionsPreferencesService', () => {
 			store.user = user('u1', { quickActions: { shortcuts: { createTask: 'Y' } } });
 			store.user = user('u1', { quickActions: { shortcuts: { createTask: 'z' } } });
 			expect(emitted).toEqual([{ shortcuts: { createTask: 'y' } }, { shortcuts: { createTask: 'z' } }]);
-		});
-
-		it('resolves the effective shortcuts', () => {
-			const { service, store } = setup();
-			const emitted = record(service.shortcuts$);
-			expect(emitted[0]).toEqual(
-				Object.fromEntries(
-					QUICK_ACTION_DEFINITIONS.map(({ id, shortcut }) => [id, normalizeShortcut(shortcut)])
-				)
-			);
-
-			store.user = user('u1', { quickActions: { shortcuts: { createTask: 'i' } } });
-			expect(emitted).toHaveLength(2);
-			expect(emitted[1]['createTask']).toBe('i');
-			expect(emitted[1]['createInvoice']).toBe('');
 		});
 	});
 

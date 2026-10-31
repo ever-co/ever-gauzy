@@ -6,7 +6,9 @@ import {
 } from './quick-action.definitions';
 import { normalizeShortcut } from './quick-action-shortcut.util';
 import {
+	getAvailableQuickActionIds,
 	getQuickActionBindings,
+	resolveAvailableQuickActionShortcuts,
 	reorderSubset,
 	resolveQuickActionOrder,
 	resolveQuickActionShortcuts,
@@ -192,19 +194,64 @@ describe('quick-actions-preferences.util', () => {
 		});
 	});
 
+	describe('getAvailableQuickActionIds', () => {
+		it('gives the actions the menu lists plus the timer actions, in definition order', () => {
+			const menu = [{ data: { action: 'viewTasks' } }, { data: { action: 'createInvoice' } }, null, { data: {} }];
+			expect([...getAvailableQuickActionIds(menu)]).toEqual([
+				'createInvoice',
+				'viewTasks',
+				'startTimer',
+				'stopTimer'
+			]);
+		});
+
+		it('ignores menu entries that are not built-in quick actions', () => {
+			expect([...getAvailableQuickActionIds([{ data: { action: 'somethingElse' } }])]).toEqual([
+				'startTimer',
+				'stopTimer'
+			]);
+			expect([...getAvailableQuickActionIds(undefined)]).toEqual(['startTimer', 'stopTimer']);
+		});
+	});
+
+	describe('resolveAvailableQuickActionShortcuts', () => {
+		it('lets an unavailable action neither keep nor displace a key', () => {
+			const saved = { shortcuts: { createTask: 'i' } };
+			expect(resolveQuickActionShortcuts(saved)['createInvoice']).toBe('');
+
+			const shortcuts = resolveAvailableQuickActionShortcuts(saved, new Set(['createInvoice', 'viewTasks']));
+			expect(shortcuts).toEqual({ createInvoice: 'i', viewTasks: 'shift+t' });
+		});
+
+		it('gives the saved key back once the action is available again', () => {
+			const saved = { shortcuts: { createTask: 'i' } };
+			const shortcuts = resolveAvailableQuickActionShortcuts(saved, new Set(['createInvoice', 'createTask']));
+			expect(shortcuts).toEqual({ createInvoice: '', createTask: 'i' });
+		});
+	});
+
 	describe('getQuickActionBindings', () => {
-		it('lists the available actions that have a shortcut, in definition order', () => {
-			const shortcuts = resolveQuickActionShortcuts({ shortcuts: { createTask: 'i' } });
+		it('binds the available actions that have a shortcut, in definition order', () => {
 			const available = new Set(['viewTasks', 'createInvoice', 'createTask', 'newDocumentPage']);
-			expect(getQuickActionBindings(shortcuts, (id) => available.has(id))).toEqual([
+			expect(getQuickActionBindings({ shortcuts: { createTask: 'i' } }, available)).toEqual([
 				['createTask', 'i'],
 				['viewTasks', 'shift+t']
 			]);
 		});
 
-		it('binds nothing for an action the user may not run', () => {
-			expect(getQuickActionBindings(DEFAULT_SHORTCUTS, () => false)).toEqual([]);
-			expect(getQuickActionBindings(DEFAULT_SHORTCUTS, () => true)).toHaveLength(29);
+		it('binds the default a saved key of an unavailable action would have displaced', () => {
+			// -- a saved createTask: 'i', then Create Task becomes unavailable: Create Invoice keeps I
+			const available = getAvailableQuickActionIds([{ data: { action: 'createInvoice' } }]);
+			expect(getQuickActionBindings({ shortcuts: { createTask: 'i' } }, available)).toEqual([
+				['createInvoice', 'i'],
+				['startTimer', 's'],
+				['stopTimer', 'o']
+			]);
+		});
+
+		it('binds nothing for actions the user may not run', () => {
+			expect(getQuickActionBindings(null, new Set())).toEqual([]);
+			expect(getQuickActionBindings(null, new Set(DEFAULT_IDS))).toHaveLength(29);
 		});
 	});
 

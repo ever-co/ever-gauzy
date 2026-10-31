@@ -1,5 +1,11 @@
 import { IQuickActionsUiPreferences } from '@gauzy/contracts';
-import { IQuickActionDefinition, QUICK_ACTION_DEFINITIONS } from './quick-action.definitions';
+import {
+	getQuickActionId,
+	IQuickActionDefinition,
+	QUICK_ACTION_DEFINITIONS,
+	START_TIMER_QUICK_ACTION,
+	STOP_TIMER_QUICK_ACTION
+} from './quick-action.definitions';
 import { checkShortcut, normalizeShortcut, shortcutsConflict } from './quick-action-shortcut.util';
 
 /**
@@ -132,19 +138,54 @@ export function withQuickActionShortcut(
 	return next;
 }
 
+/** Actions whose shortcut works without a menu entry: they drive the timer instead of opening a page. */
+const MENU_INDEPENDENT_QUICK_ACTIONS: ReadonlyArray<string> = [START_TIMER_QUICK_ACTION, STOP_TIMER_QUICK_ACTION];
+
 /**
- * The shortcuts to bind, as `[action id, shortcut]` pairs in definition order: every action that has
- * a shortcut and that `isAvailable` accepts (an action the signed-in user cannot run must not take
- * a key press).
+ * The quick actions the signed-in user may run: every built-in action the menu lists (the header
+ * leaves out what permissions or feature flags forbid), plus the timer actions, whose shortcut works
+ * without a menu entry.
+ *
+ * @param items The quick-actions menu as the header built it (`NbMenuItem`s, `data.action` = id).
+ */
+export function getAvailableQuickActionIds(
+	items: ReadonlyArray<{ data?: { action?: unknown } } | null | undefined> | null | undefined,
+	definitions: ReadonlyArray<IQuickActionDefinition> = QUICK_ACTION_DEFINITIONS
+): Set<string> {
+	const listed = new Set((items ?? []).map(getQuickActionId));
+	return new Set(
+		definitions.map(({ id }) => id).filter((id) => listed.has(id) || MENU_INDEPENDENT_QUICK_ACTIONS.includes(id))
+	);
+}
+
+/**
+ * {@link resolveQuickActionShortcuts} among the available actions only: an action the user cannot run
+ * neither keeps a key nor displaces another action's default, whether through its saved shortcut or
+ * its default. Unavailable actions are left out of the result.
+ */
+export function resolveAvailableQuickActionShortcuts(
+	preferences: IQuickActionsUiPreferences | null | undefined,
+	available: ReadonlySet<string>,
+	definitions: ReadonlyArray<IQuickActionDefinition> = QUICK_ACTION_DEFINITIONS
+): Record<string, string> {
+	return resolveQuickActionShortcuts(
+		preferences,
+		definitions.filter(({ id }) => available.has(id))
+	);
+}
+
+/**
+ * The shortcuts to bind, as `[action id, shortcut]` pairs in definition order: every available
+ * action that has a shortcut once conflicts are resolved among the available actions (see
+ * {@link resolveAvailableQuickActionShortcuts}).
  */
 export function getQuickActionBindings(
-	shortcuts: Readonly<Record<string, string>>,
-	isAvailable: (id: string) => boolean,
+	preferences: IQuickActionsUiPreferences | null | undefined,
+	available: ReadonlySet<string>,
 	definitions: ReadonlyArray<IQuickActionDefinition> = QUICK_ACTION_DEFINITIONS
 ): Array<[string, string]> {
-	return definitions
-		.filter(({ id }) => hasOwn(shortcuts, id) && !!shortcuts[id] && isAvailable(id))
-		.map(({ id }): [string, string] => [id, shortcuts[id]]);
+	const shortcuts = resolveAvailableQuickActionShortcuts(preferences, available, definitions);
+	return definitions.filter(({ id }) => !!shortcuts[id]).map(({ id }): [string, string] => [id, shortcuts[id]]);
 }
 
 /**

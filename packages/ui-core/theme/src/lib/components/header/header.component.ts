@@ -14,6 +14,7 @@ import {
 	IEmployee,
 	IOrganization,
 	IOrganizationProject,
+	IQuickActionsUiPreferences,
 	ISelectedEmployee,
 	IUser,
 	PermissionsEnum,
@@ -46,9 +47,9 @@ import {
 	Store,
 	TimeTrackerService,
 	UsersOrganizationsService,
+	getAvailableQuickActionIds,
 	getDefaultQuickActionShortcuts,
 	getQuickActionBindings,
-	getQuickActionId,
 	keyCodesToShortcut,
 	normalizeShortcut
 } from '@gauzy/ui-core/core';
@@ -100,8 +101,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 
 	/** Registered shortcuts (canonical spelling, see `normalizeShortcut`) → what they do. */
 	private shortcutsMap = new Map<string, () => void>();
-	/** The effective shortcut of every quick action (defaults merged with the user's customization). */
-	private quickActionShortcuts: Record<string, string> = {};
+	/** The user's saved Quick Actions customization (`null` = the defaults). */
+	private quickActionPreferences: IQuickActionsUiPreferences | null = null;
 	/** What `registerQuickActionShortcuts` bound last, to skip binding the same set again. */
 	private registeredQuickActions: string | null = null;
 
@@ -110,7 +111,8 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 	/**
 	 * The built-in shortcuts: `quickActions` toggles the Quick Actions dialog, every other key is a
 	 * quick-action id (see `QUICK_ACTION_DEFINITIONS`). What is registered is these defaults merged
-	 * with the user's saved customization (`QuickActionsPreferencesService.shortcuts$`).
+	 * with the user's saved customization (`QuickActionsPreferencesService.preferences$`), for the
+	 * actions the user may run.
 	 */
 	defaultShortcuts: Record<string, string> = {
 		quickActions: QUICK_ACTIONS_DIALOG_SHORTCUT,
@@ -294,10 +296,10 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		hotkeys('*', { scope: SHORTCUTS_SCOPE }, this.onShortcut);
 
 		// -- register the shortcuts: the defaults merged with the user's customization, again on every change
-		this.quickActionsPreferencesService.shortcuts$
+		this.quickActionsPreferencesService.preferences$
 			.pipe(
-				tap((shortcuts: Record<string, string>) => {
-					this.quickActionShortcuts = shortcuts;
+				tap((preferences: IQuickActionsUiPreferences | null) => {
+					this.quickActionPreferences = preferences;
 					this.registerQuickActionShortcuts();
 				}),
 				untilDestroyed(this)
@@ -356,13 +358,16 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 
 	/**
 	 * Registers the Quick Actions dialog toggle and the shortcut of every quick action the user may
-	 * run, replacing whatever was registered before. Runs again when the shortcuts or the menu change;
+	 * run (`getAvailableQuickActionIds`), replacing whatever was registered before. Conflicts are
+	 * resolved among those actions only, as the dialog does for its badges, so an action the user
+	 * cannot run never holds or displaces a key. Runs again when the preferences or the menu change;
 	 * an unchanged set is not bound again unless `force` is set.
 	 *
 	 * @param force Bind again even when nothing changed (it also resets the keys hotkeys-js thinks are held).
 	 */
 	private registerQuickActionShortcuts(force = false) {
-		const bindings = getQuickActionBindings(this.quickActionShortcuts, (id) => this.isQuickActionAvailable(id));
+		const available = getAvailableQuickActionIds(this.createQuickActionsMenu);
+		const bindings = getQuickActionBindings(this.quickActionPreferences, available);
 		const registered = JSON.stringify(bindings);
 		if (!force && registered === this.registeredQuickActions) return;
 		this.registeredQuickActions = registered;
@@ -374,20 +379,6 @@ export class HeaderComponent extends TranslationBaseComponent implements OnInit,
 		for (const [id, shortcut] of bindings) {
 			this.registerShortcut(shortcut, this.getQuickActionHandler(id));
 		}
-	}
-
-	/**
-	 * Whether the user may run a quick action from its shortcut: the timer actions as before, any
-	 * other only when the menu lists it (permissions, feature flags), since it opens that entry's page.
-	 * An action the user may not run never takes a key press.
-	 *
-	 * @param action The quick-action id.
-	 */
-	private isQuickActionAvailable(action: string): boolean {
-		if (action === this.actions.START_TIMER || action === this.actions.STOP_TIMER) {
-			return true;
-		}
-		return (this.createQuickActionsMenu ?? []).some((item: NbMenuItem) => getQuickActionId(item) === action);
 	}
 
 	/**

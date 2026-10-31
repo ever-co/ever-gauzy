@@ -4,7 +4,7 @@ import { distinctUntilChanged, map } from 'rxjs/operators';
 import { IQuickActionsUiPreferences, IUser, IUserUiPreferences } from '@gauzy/contracts';
 import { Store } from '../store/store.service';
 import { UsersService } from '../users/users.service';
-import { resolveQuickActionShortcuts, sanitizeQuickActionsPreferences } from './quick-actions-preferences.util';
+import { sanitizeQuickActionsPreferences } from './quick-actions-preferences.util';
 
 /** The validated `quickActions` customization of a user, `null` for "the defaults". */
 function readQuickActionsPreferences(user: IUser | null | undefined): IQuickActionsUiPreferences | null {
@@ -50,11 +50,6 @@ export class QuickActionsPreferencesService {
 	readonly preferences$: Observable<IQuickActionsUiPreferences | null> = this.store.user$.pipe(
 		map((user: IUser) => readQuickActionsPreferences(user)),
 		distinctUntilChanged(sameJson)
-	);
-
-	/** The effective shortcut of every built-in action (action id → shortcut, `''` for none). */
-	readonly shortcuts$: Observable<Record<string, string>> = this.preferences$.pipe(
-		map((preferences) => resolveQuickActionShortcuts(preferences))
 	);
 
 	/** Enters (`true`) or leaves (`false`) the customization; see {@link editing}. */

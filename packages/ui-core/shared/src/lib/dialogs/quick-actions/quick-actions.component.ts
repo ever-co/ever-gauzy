@@ -18,10 +18,11 @@ import {
 	ToastrService,
 	findQuickActionDefinition,
 	formatShortcut,
+	getAvailableQuickActionIds,
 	getQuickActionId,
 	reorderSubset,
+	resolveAvailableQuickActionShortcuts,
 	resolveQuickActionOrder,
-	resolveQuickActionShortcuts,
 	sortByQuickActionOrder,
 	toQuickActionsPreferences,
 	validateQuickActionShortcut,
@@ -345,7 +346,11 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 
 	private setDraftOverrides(overrides: Record<string, string>): void {
 		this.draftOverrides = overrides;
-		this.draftShortcuts = resolveQuickActionShortcuts({ shortcuts: overrides });
+		// -- resolved like the header binds them: actions the user cannot run hold and displace nothing
+		this.draftShortcuts = resolveAvailableQuickActionShortcuts(
+			{ shortcuts: overrides },
+			getAvailableQuickActionIds(this.items)
+		);
 	}
 
 	private setError(id: string, message: string | null): void {
@@ -398,7 +403,8 @@ export class QuickActionsComponent extends TranslationBaseComponent implements O
 	 * the user's shortcut as its badge; the groups with the most items first.
 	 */
 	private _groupQuickActions(items: NbMenuItem[]): GroupType[] {
-		const shortcuts = resolveQuickActionShortcuts(this.preferences);
+		// -- the same shortcuts the header binds: resolved among the actions the user may run
+		const shortcuts = resolveAvailableQuickActionShortcuts(this.preferences, getAvailableQuickActionIds(items));
 		return this.groupItems(items, resolveQuickActionOrder(this.preferences)).map((group) => ({
 			...group,
 			items: group.items.map((item) => ({
