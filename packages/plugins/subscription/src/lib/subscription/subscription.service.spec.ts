@@ -2108,6 +2108,7 @@ describe('SubscriptionService — a change from the next period takes hold when 
 
 			expect(paid).toMatchObject({ status: SubscriptionBillingStatus.PAID, amount });
 			expect(ledger.map((row: Row) => [row.type, row.amount])).toEqual(rows);
+			expect(ledger.every((row: Row) => row.referenceType === 'subscription-plan')).toBe(true);
 			expect(ledger.filter((row: Row) => row.type === 'MANUAL')).toEqual(
 				rows.some(([type]) => type === 'MANUAL')
 					? [expect.objectContaining({ reasonCode: 'SUBSCRIPTION_DISCOUNT_RESTATED' })]
@@ -2199,6 +2200,33 @@ describe('SubscriptionService — a change from the next period takes hold when 
 			expect(fixture.items().map((row) => row.variantId)).toEqual([VARIANT]);
 		});
 
+		it('refuses a plan change whose signature does not verify, and says so (CodeRabbit on #11565)', async () => {
+			// Read as the unsigned shape, its plan would have taken hold without the quantity it was recorded with.
+			const recorded = { planId: BETTER_PLAN, quantity: '3', effectiveAt: APRIL.toISOString() };
+			const fixture = subscriptionFixture({
+				subscriptions: [
+					subscriptionRow(SUBSCRIPTION, {
+						metadata: {
+							scheduledPlanChange: {
+								...recorded,
+								signature: signScheduledChange(SUBSCRIPTION, recorded, {})
+							}
+						}
+					})
+				],
+				prices: { [VARIANT]: '120.00', [BETTER_VARIANT]: '300.00' }
+			});
+
+			await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).resolves.toMatchObject({
+				amount: '120.000000'
+			});
+			expect(fixture.subscription(SUBSCRIPTION)?.planId).toBe(PLAN);
+			expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['scheduledPlanChange']).toBeUndefined();
+			expect(
+				fixture.events.find((event) => event.name === 'subscription.scheduled-change-refused')?.data
+			).toMatchObject({ planId: BETTER_PLAN, reason: expect.stringMatching(/does not verify/) });
+		});
+
 		it('applies the lines it signed itself', async () => {
 			const fixture = subscriptionFixture({
 				subscriptions: [subscriptionRow(SUBSCRIPTION, { currentPeriodStart: null, currentPeriodEnd: null })],
@@ -2235,6 +2263,42 @@ describe('SubscriptionService — a change from the next period takes hold when 
 
 		expect(outcome).toMatchObject({ amount: '161.000000' });
 		expect(fixture.items().map((row) => row.variantId)).toEqual([VARIANT, BETTER_VARIANT, 'variant-c']);
+	});
+
+	it('leaves a promotion of another discount out of the plan discount it restates (CodeRabbit on #11565)', async () => {
+		// A cycle row may carry a promotion another discount granted; it is not the plan's, so a retry neither counts it
+		// as granted nor gives it back.
+		let attempts = 0;
+		const fixture = subscriptionFixture({
+			plans: [planRow(PLAN, { discountPercentage: '0.1' }), planRow(BETTER_PLAN)],
+			orders: () => {
+				attempts += 1;
+
+				if (attempts === 1) {
+					throw new Error('SUBSCRIPTION_CHARGE_DECLINED: attempt 1 was declined');
+				}
+
+				return { orderId: `order-${attempts}`, paid: true };
+			}
+		});
+
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+		fixture.adjustments.push({
+			ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
+			ownerId: fixture.cycle(APRIL)?.id,
+			type: AdjustmentType.PROMOTION,
+			amount: '-5.000000',
+			currency: 'USD',
+			referenceType: 'promotion',
+			referenceId: 'spring-sale'
+		});
+		fixture.idempotencyService.advanceBy(5 * 60 * 1000);
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL, manual: true });
+
+		expect(fixture.adjustmentsOf(fixture.cycle(APRIL)?.id).map((row: Row) => [row.type, row.amount])).toEqual([
+			['PROMOTION', '-12.000000'],
+			['PROMOTION', '-5.000000']
+		]);
 	});
 
 	it('is the service’s own key: a caller’s metadata neither plants one nor erases one (SEC-B-03)', async () => {

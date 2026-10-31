@@ -3054,6 +3054,18 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		// signed anything, still takes hold: the plan is checked again below and the lines are priced from it.
 		const trusted = verifyScheduledChange(subscription.id, change);
 
+		// A signature that is there and does not verify is refused outright, rather than read as the unsigned shape: the
+		// change was recorded with lines or a quantity it can no longer prove (an edited entry, a key since removed), and
+		// applying its plan without them would bill terms nobody asked for. The refusal is told, so it is not silent.
+		if (!trusted && change.signature !== undefined) {
+			return {
+				change,
+				metadata,
+				refused:
+					'SUBSCRIPTION_SCHEDULED_CHANGE_UNTRUSTED: the scheduled change carries a signature that does not verify.'
+			};
+		}
+
 		if (!change.planId) {
 			if (!trusted || !Array.isArray(change.items) || !change.items.length) {
 				return {
@@ -3375,13 +3387,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 */
 	private async appendDiscount(billing: SubscriptionBilling, subscription: Subscription, discount: Money): Promise<void> {
 		const currency = subscription.currency;
-		// What the cycle's rows grant so far: its promotions, and the corrections that gave part of them back.
+		// What the cycle's rows grant of the plan's discount so far: its plan promotions, and the corrections that gave
+		// part of them back. A promotion with another reference is another discount's, which this one does not restate.
 		const granted = (
 			await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, billing.id)
 		).filter(
 			(row) =>
-				row.type === AdjustmentType.PROMOTION ||
-				(row.type === AdjustmentType.MANUAL && row.reasonCode === DISCOUNT_RESTATED_REASON)
+				row.referenceType === 'subscription-plan' &&
+				(row.type === AdjustmentType.PROMOTION ||
+					(row.type === AdjustmentType.MANUAL && row.reasonCode === DISCOUNT_RESTATED_REASON))
 		);
 		const total = Money.sum(
 			granted.map((row) => Money.of(row.amount, currency)),
