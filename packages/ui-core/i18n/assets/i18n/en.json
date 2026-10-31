@@ -1635,6 +1635,22 @@
 			}
 		},
 		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "Sync label",
+				"TITLE": "Sync settings",
+				"SUBTITLE": "How issues of {{ repository }} sync into {{ project }}",
+				"AUTO_SYNC": "Auto-sync issues",
+				"AUTO_SYNC_HINT": "Issues opened or changed on GitHub create or update tasks in this project.",
+				"ONLY_LABELLED": "Only issues with a label",
+				"ONLY_LABELLED_HINT": "Only issues that carry the label below are synced automatically.",
+				"LABEL": "Label",
+				"LABEL_HINT": "Pick one of the repository's labels or type another. Leave it empty to use the default label, {{ label }}.",
+				"LABEL_INVALID": "A GitHub label is a single line of at most {{ max }} characters.",
+				"ALL_ISSUES": "All issues",
+				"AUTO_SYNC_OFF": "Auto-sync off",
+				"EDIT": "Edit sync settings",
+				"SAVED": "Sync settings saved for '{{ project }}'"
+			},
 			"INSTALLATION": {
 				"INSTALLING": "Installing. Please wait...",
 				"NOT_CONNECTED": "GitHub was not connected",

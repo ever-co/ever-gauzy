@@ -1,0 +1,76 @@
+<nb-card class="project-sync-settings" [nbSpinner]="saving" nbSpinnerStatus="primary" nbSpinnerSize="small">
+	<nb-card-header class="project-sync-settings__header">
+		<h6 class="project-sync-settings__title">{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.TITLE' | translate }}</h6>
+		<span class="project-sync-settings__subtitle">
+			{{
+				'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.SUBTITLE'
+					| translate: { project: project?.name, repository: repository?.fullName }
+			}}
+		</span>
+	</nb-card-header>
+	<nb-card-body class="project-sync-settings__body" [formGroup]="form">
+		<div class="setting">
+			<nb-toggle id="github-project-auto-sync" formControlName="isTasksAutoSync" status="primary">
+				{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.AUTO_SYNC' | translate }}
+			</nb-toggle>
+			<p class="setting__hint">{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.AUTO_SYNC_HINT' | translate }}</p>
+		</div>
+
+		<div class="setting">
+			<nb-toggle id="github-project-sync-on-label" formControlName="isTasksAutoSyncOnLabel" status="primary">
+				{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.ONLY_LABELLED' | translate }}
+			</nb-toggle>
+			<p class="setting__hint">{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.ONLY_LABELLED_HINT' | translate }}</p>
+
+			<!-- The label only applies to label-based sync, so it opens with it (the control is disabled otherwise). -->
+			@if (form.controls.isTasksAutoSyncOnLabel.value) {
+				<div class="setting__label">
+					<label for="github-project-sync-label" class="label">
+						{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.LABEL' | translate }}
+					</label>
+					<input
+						id="github-project-sync-label"
+						type="text"
+						nbInput
+						fullWidth
+						autocomplete="off"
+						formControlName="syncTag"
+						aria-describedby="github-project-sync-label-hint"
+						[placeholder]="defaultSyncLabel"
+						[status]="form.controls.syncTag.invalid ? 'danger' : 'basic'"
+						[nbAutocomplete]="labelOptions"
+					/>
+					<nb-autocomplete #labelOptions>
+						@for (label of filteredLabels$ | async; track label) {
+							<nb-option [value]="label">{{ label }}</nb-option>
+						}
+					</nb-autocomplete>
+					@if (form.controls.syncTag.invalid) {
+						<p id="github-project-sync-label-hint" class="setting__error" role="alert">
+							{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.LABEL_INVALID' | translate: { max: labelMaxLength } }}
+						</p>
+					} @else {
+						<p id="github-project-sync-label-hint" class="setting__hint">
+							{{ 'INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.LABEL_HINT' | translate: { label: defaultSyncLabel } }}
+						</p>
+					}
+				</div>
+			}
+		</div>
+	</nb-card-body>
+	<nb-card-footer class="project-sync-settings__footer">
+		<button type="button" nbButton ghost status="basic" size="small" (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button
+			type="button"
+			nbButton
+			status="primary"
+			size="small"
+			[disabled]="form.invalid || saving"
+			(click)="save()"
+		>
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

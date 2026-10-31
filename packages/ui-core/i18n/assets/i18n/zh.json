@@ -1337,6 +1337,24 @@
 		"STANDARD_WORK_HOURS": "标准工作时间 ({{hours}})"
 	},
 	"INTEGRATIONS": {
+		"GITHUB_PAGE": {
+			"PROJECT_SYNC": {
+				"COLUMN": "同步标签",
+				"TITLE": "同步设置",
+				"SUBTITLE": "{{ repository }} 的 issue 如何同步到 {{ project }}",
+				"AUTO_SYNC": "自动同步 issue",
+				"AUTO_SYNC_HINT": "在 GitHub 上新建或修改的 issue 会在此项目中创建或更新任务。",
+				"ONLY_LABELLED": "仅同步带标签的 issue",
+				"ONLY_LABELLED_HINT": "只有带下方标签的 issue 会被自动同步。",
+				"LABEL": "标签",
+				"LABEL_HINT": "选择仓库中的标签或输入其他标签。留空则使用默认标签 {{ label }}。",
+				"LABEL_INVALID": "GitHub 标签为单行，最多 {{ max }} 个字符。",
+				"ALL_ISSUES": "所有 issue",
+				"AUTO_SYNC_OFF": "自动同步已关闭",
+				"EDIT": "编辑同步设置",
+				"SAVED": "已保存“{{ project }}”的同步设置"
+			}
+		},
 		"AVAILABLE_INTEGRATIONS": "可用应用程序与集成",
 		"ADDED_UPWORK_TRANSACTION": "添加了Upwork交易",
 		"TOTAL_UPWORK_TRANSACTIONS_SUCCEED": "总花费交易成功：{{ totalExpenses }}。总收入交易成功：{{ totalIncomes }}。",
