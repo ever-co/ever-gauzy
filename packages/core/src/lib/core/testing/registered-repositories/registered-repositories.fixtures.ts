@@ -1,8 +1,11 @@
 import { coreEntities } from '../../entities';
 
+/** An entity class: anything `new` can build, whatever its constructor takes. */
+export type EntityClass = abstract new (...args: never[]) => unknown;
+
 /** Core entity classes by class name: `PayrollRun` for the member `typeOrmPayrollRunRepository`. */
-const CORE_ENTITIES_BY_NAME: ReadonlyMap<string, Function> = new Map(
-	(coreEntities as Function[]).map((entity) => [entity.name, entity])
+const CORE_ENTITIES_BY_NAME: ReadonlyMap<string, EntityClass> = new Map(
+	(coreEntities as EntityClass[]).map((entity) => [entity.name, entity])
 );
 
 /** `typeOrmPayrollRunRepository` -> `PayrollRun` */
@@ -23,7 +26,7 @@ const TYPEORM_REPOSITORY_MEMBER = /^typeOrm(\w+)Repository$/;
  */
 export function withStubTypeOrmRepositories<T extends object>(
 	service: T,
-	stubFor: (entity: Function | undefined, entityName: string) => unknown
+	stubFor: (entity: EntityClass | undefined, entityName: string) => unknown
 ): T {
 	const stubs = new Map<string, unknown>();
 	return new Proxy(service, {
@@ -33,10 +36,10 @@ export function withStubTypeOrmRepositories<T extends object>(
 				return Reflect.get(target, property, receiver);
 			}
 			// The same stub every time a member is read, so a spec can hold on to it.
-			if (!stubs.has(property as string)) {
-				stubs.set(property as string, stubFor(CORE_ENTITIES_BY_NAME.get(member[1]), member[1]));
+			if (!stubs.has(member[0])) {
+				stubs.set(member[0], stubFor(CORE_ENTITIES_BY_NAME.get(member[1]), member[1]));
 			}
-			return stubs.get(property as string);
+			return stubs.get(member[0]);
 		}
 	});
 }

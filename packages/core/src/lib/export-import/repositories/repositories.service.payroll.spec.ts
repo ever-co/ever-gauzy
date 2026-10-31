@@ -1,7 +1,10 @@
 import 'reflect-metadata';
 import { getMetadataArgsStorage } from 'typeorm';
 import { Employee, Organization, PayrollItem, PayrollRun, Tenant, User } from '../../core/entities/internal';
-import { withStubTypeOrmRepositories } from '../../core/testing/registered-repositories/registered-repositories.fixtures';
+import {
+	EntityClass,
+	withStubTypeOrmRepositories
+} from '../../core/testing/registered-repositories/registered-repositories.fixtures';
 import { IRepositoryModel, RepositoriesService } from './repositories.service';
 
 /**
@@ -15,26 +18,30 @@ import { IRepositoryModel, RepositoriesService } from './repositories.service';
  */
 describe('RepositoriesService — payroll registration', () => {
 	/** The registered entities, in the order the export writes and the import reads them. */
-	const registrationOrder = async (): Promise<{ service: RepositoriesService; order: Function[] }> => {
+	const registrationOrder = async (): Promise<{ service: RepositoriesService; order: EntityClass[] }> => {
 		const bare = Object.create(RepositoriesService.prototype) as RepositoriesService;
 		bare.dynamicEntitiesClassMap = [];
 		const service = withStubTypeOrmRepositories(bare, (entity, entityName) => ({
 			metadata: { target: entity, tableName: entityName }
 		}));
-		await (service as any).registerCoreRepositories();
-		return { service, order: service.repositories.map((item) => item.repository.metadata.target as Function) };
+		await (service as unknown as { registerCoreRepositories(): Promise<void> }).registerCoreRepositories();
+		return {
+			service,
+			order: service.repositories.map((item) => item.repository.metadata.target as EntityClass)
+		};
 	};
 
 	/** The entities `entity` holds a many-to-one foreign key to, its base classes' included. */
-	const referencedEntities = (entity: Function): Function[] => {
-		const owners = new Set<Function>();
-		for (let cursor = entity; typeof cursor === 'function' && cursor.name; cursor = Object.getPrototypeOf(cursor)) {
+	const referencedEntities = (entity: EntityClass): EntityClass[] => {
+		const owners = new Set<unknown>();
+		for (let cursor: unknown = entity; typeof cursor === 'function' && cursor.name;) {
 			owners.add(cursor);
+			cursor = Object.getPrototypeOf(cursor);
 		}
 		const referenced = getMetadataArgsStorage()
-			.relations.filter((relation) => owners.has(relation.target as Function))
+			.relations.filter((relation) => owners.has(relation.target))
 			.filter((relation) => relation.relationType === 'many-to-one')
-			.map((relation) => (relation.type as () => Function)());
+			.map((relation) => (relation.type as () => EntityClass)());
 		return [...new Set(referenced)].filter((referencedEntity) => referencedEntity !== entity);
 	};
 
@@ -56,7 +63,7 @@ describe('RepositoriesService — payroll registration', () => {
 	it.each([
 		['payroll_run', PayrollRun],
 		['payroll_item', PayrollItem]
-	])('registers %s after every table it holds a foreign key to', async (_table, entity) => {
+	])('registers %s after every table it holds a foreign key to', async (_table, entity: EntityClass) => {
 		const { order } = await registrationOrder();
 		const position = order.indexOf(entity);
 
@@ -76,14 +83,17 @@ describe('RepositoriesService — payroll registration', () => {
 
 	it('exports payroll rows of the exporting tenant only, never tenantless rows as shared defaults', async () => {
 		const { service } = await registrationOrder();
+		// The per-table graph needs live TypeORM metadata; stubbed to echo its repository, as in the SkipExport spec.
 		jest.spyOn(service as any, 'getRepositoryRelationsGraph').mockImplementation(async (repository: any) => ({
 			repository,
 			isCheckRelation: false
 		}));
 
 		const graph: IRepositoryModel[] = await service.buildRepositoriesRelationsGraph();
-		const payrollEntities: Function[] = [PayrollRun, PayrollItem];
-		const payroll = graph.filter((item) => payrollEntities.includes(item.repository.metadata.target as Function));
+		const payrollEntities: EntityClass[] = [PayrollRun, PayrollItem];
+		const payroll = graph.filter((item) =>
+			payrollEntities.includes(item.repository.metadata.target as EntityClass)
+		);
 
 		expect(payroll.map((item) => item.repository.metadata.target)).toEqual([PayrollRun, PayrollItem]);
 		expect(payroll.every((item) => item.excludeGlobalDefaults === true)).toBe(true);
