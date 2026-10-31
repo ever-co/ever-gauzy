@@ -1,14 +1,16 @@
 /**
- * What the entitlement consumer does with an `order.placed` delivered after the order settled (#11023).
+ * What the entitlement consumer does with an `order.placed` delivered after the order's later events (#11023).
  *
  * The consumer is reorderable, so `order.completed` can be handled before a retried `order.placed`: it finds
  * nothing `PENDING` to put into force, and the rights the late placement grants would wait for a settlement
- * that has already come and gone. Where the order-state port is bound, the placement asks the order whether
- * it settled since and puts what it granted into force itself. Where it is not, nothing changes.
+ * that has already come and gone. Likewise an `order.canceled` or a full refund handled first finds nothing to
+ * withdraw. Where the order-state port is bound, the placement asks the order where it is now: it grants
+ * nothing for an order already withdrawn, and puts into force what it granted for the lines still paid for on
+ * an order that settled. Where it is not, nothing changes.
  *
  * The consumer is the real one. `@gauzy/core` and the entitlement service are doubled at the module
  * boundary, as the package's other consumer suite does: what is under test is the decision the consumer
- * takes, and the grant and the activation it hands that decision to have suites of their own.
+ * takes, and the grant, the activation and the revocation it hands that decision to have suites of their own.
  */
 jest.mock('@gauzy/core', () => ({
 	EventConsumerRegistry: class EventConsumerRegistry {}
@@ -18,8 +20,9 @@ jest.mock('../entitlement/entitlement.service', () => ({
 	EntitlementService: class EntitlementService {}
 }));
 
+import { Logger } from '@nestjs/common';
 import { IEventEnvelope, OrderPaymentStatus, OrderStatus } from '@gauzy/contracts';
-import { IEntitlementOrderState, IEntitlementOrderStatePort } from '../entitlement.types';
+import { EntitlementRevocationReason, IEntitlementOrderState, IEntitlementOrderStatePort } from '../entitlement.types';
 import { EntitlementGrantConsumer } from './entitlement-grant.consumer';
 
 const TENANT = '00000000-0000-4000-8000-000000000001';
@@ -35,25 +38,33 @@ const GRANTING_LINE = {
 	entitlement: { activationLimit: 2 }
 };
 
+/** A second granting line. */
+const OTHER_GRANTING_LINE = { ...GRANTING_LINE, orderLineId: 'line-3', productId: 'product-3' };
+
 /** A line of ordinary goods, which grants nothing. */
 const PLAIN_LINE = { orderLineId: 'line-2', productId: 'product-2', quantity: 3 };
+
+const SETTLED = { status: OrderStatus.COMPLETED, paymentStatus: OrderPaymentStatus.CAPTURED };
+const OPEN = { status: OrderStatus.CONFIRMED, paymentStatus: OrderPaymentStatus.AUTHORIZED };
 
 /**
  * Delivers one `order.placed` to a consumer built with the port (or without it).
  *
- * @param options What the order port answers, whether it is bound at all, and the lines the placement carries.
- * @returns What the consumer granted, activated and read.
+ * @param options What the order port answers — `state` on every read, or `states` read by read — whether it is
+ * bound at all, the lines the placement carries, and a read that fails.
+ * @returns What the consumer granted, activated, revoked and read, and in which order.
  */
 async function place(options: {
 	state?: IEntitlementOrderState | null;
+	states?: Array<IEntitlementOrderState | null>;
 	bound?: boolean;
 	lines?: unknown[];
-	readError?: Error;
-	order?: string[];
+	readError?: { onRead: number; error: Error };
 }) {
-	const order = options.order ?? [];
+	const order: string[] = [];
 	const granted: unknown[][] = [];
 	const activated: unknown[][] = [];
+	const revoked: unknown[][] = [];
 	const reads: unknown[][] = [];
 	const entitlementService = {
 		grant: async (...args: unknown[]) => {
@@ -67,6 +78,13 @@ async function place(options: {
 			activated.push(args);
 
 			return [];
+		},
+		find: async () => granted.map((_, index) => ({ id: `entitlement-${index + 1}` })),
+		revoke: async (...args: unknown[]) => {
+			order.push('revoke');
+			revoked.push(args);
+
+			return {};
 		}
 	};
 	const port: IEntitlementOrderStatePort = {
@@ -74,11 +92,13 @@ async function place(options: {
 			order.push('read');
 			reads.push(args);
 
-			if (options.readError) {
-				throw options.readError;
+			if (options.readError?.onRead === reads.length) {
+				throw options.readError.error;
 			}
 
-			return options.state === undefined ? null : options.state;
+			const state = options.states ? options.states[reads.length - 1] : options.state;
+
+			return state === undefined ? null : state;
 		}
 	};
 	const event = {
@@ -101,26 +121,33 @@ async function place(options: {
 		alreadyDelivered: async () => false
 	} as never);
 
-	return { granted, activated, reads, order };
+	return { granted, activated, revoked, reads, order };
 }
 
 describe('EntitlementGrantConsumer — order.placed after the order settled (#11023)', () => {
+	let warn: jest.SpyInstance;
+	let log: jest.SpyInstance;
+
 	beforeEach(() => {
-		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+		warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
+		log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
 	});
 
 	afterEach(() => jest.restoreAllMocks());
 
-	it('puts the rights it granted into force when the order already completed', async () => {
-		const { granted, activated, reads, order } = await place({
-			state: { status: OrderStatus.COMPLETED, paymentStatus: OrderPaymentStatus.CAPTURED }
-		});
+	it('puts the right it granted into force, line by line, when the order already completed', async () => {
+		const { granted, activated, reads, order } = await place({ state: SETTLED });
 
 		expect(granted).toHaveLength(1);
-		expect(reads).toEqual([[ORDER, SCOPE]]);
-		expect(activated).toEqual([[{ orderId: ORDER }, SCOPE]]);
-		// The order is read after every grant, so what the activation finds includes them all.
-		expect(order).toEqual(['grant', 'read', 'activate']);
+		expect(reads).toEqual([
+			[ORDER, SCOPE],
+			[ORDER, SCOPE]
+		]);
+		expect(activated).toEqual([[{ orderId: ORDER, orderLineId: 'line-1' }, SCOPE]]);
+		// The order is read before the grants (to grant nothing for a withdrawn order) and after every grant,
+		// so what the activation finds includes them all.
+		expect(order).toEqual(['read', 'grant', 'read', 'activate']);
+		expect(log).toHaveBeenCalledWith(expect.stringContaining(`after order ${ORDER} settled`));
 	});
 
 	it('puts them into force when the money was captured in full', async () => {
@@ -128,77 +155,153 @@ describe('EntitlementGrantConsumer — order.placed after the order settled (#11
 			state: { status: OrderStatus.CONFIRMED, paymentStatus: OrderPaymentStatus.CAPTURED }
 		});
 
-		expect(activated).toEqual([[{ orderId: ORDER }, SCOPE]]);
+		expect(activated).toEqual([[{ orderId: ORDER, orderLineId: 'line-1' }, SCOPE]]);
+	});
+
+	it('puts them into force on an archived order that completed', async () => {
+		const { activated } = await place({
+			state: { status: OrderStatus.ARCHIVED, paymentStatus: OrderPaymentStatus.CAPTURED, completedAt: new Date() }
+		});
+
+		expect(activated).toEqual([[{ orderId: ORDER, orderLineId: 'line-1' }, SCOPE]]);
 	});
 
 	it('leaves them PENDING when the order has not settled', async () => {
 		for (const state of [
-			{ status: OrderStatus.CONFIRMED, paymentStatus: OrderPaymentStatus.AUTHORIZED },
+			OPEN,
 			{ status: OrderStatus.PENDING, paymentStatus: OrderPaymentStatus.NOT_PAID },
-			{ status: OrderStatus.PROCESSING, paymentStatus: OrderPaymentStatus.PARTIALLY_CAPTURED }
+			{ status: OrderStatus.PROCESSING, paymentStatus: OrderPaymentStatus.PARTIALLY_CAPTURED },
+			{ status: OrderStatus.ARCHIVED, paymentStatus: OrderPaymentStatus.CAPTURED }
 		]) {
-			const { granted, activated, reads } = await place({ state });
+			const { granted, activated, revoked, reads } = await place({ state });
 
 			expect(granted).toHaveLength(1);
-			expect(reads).toHaveLength(1);
+			expect(reads).toHaveLength(2);
 			expect(activated).toEqual([]);
+			expect(revoked).toEqual([]);
 		}
 	});
 
-	it('leaves them PENDING when the order was cancelled or refunded in full, whatever it recorded before', async () => {
-		for (const state of [
-			{ status: OrderStatus.CANCELED, paymentStatus: OrderPaymentStatus.CAPTURED },
-			{ status: OrderStatus.COMPLETED, paymentStatus: OrderPaymentStatus.REFUNDED }
-		]) {
-			const { activated } = await place({ state });
+	describe('an order refunded in part (Greptile/Copilot review on #11577)', () => {
+		const PARTIALLY_REFUNDED = {
+			status: OrderStatus.COMPLETED,
+			paymentStatus: OrderPaymentStatus.PARTIALLY_REFUNDED
+		};
 
+		it('puts into force only the lines still paid for, reading each line’s refund through the port', async () => {
+			const { granted, activated, revoked } = await place({
+				lines: [GRANTING_LINE, PLAIN_LINE, OTHER_GRANTING_LINE],
+				state: {
+					...PARTIALLY_REFUNDED,
+					lines: [
+						{ id: 'line-1', quantity: 1, refundedQuantity: 1 },
+						{ id: 'line-2', quantity: 3, refundedQuantity: 0 },
+						{ id: 'line-3', quantity: 2, refundedQuantity: 1 }
+					]
+				}
+			});
+
+			expect(granted).toHaveLength(2);
+			// line-1 was refunded in full before the placement: its right stays PENDING.
+			expect(activated).toEqual([[{ orderId: ORDER, orderLineId: 'line-3' }, SCOPE]]);
+			expect(revoked).toEqual([]);
+			expect(log).toHaveBeenCalledWith(expect.stringContaining('1 of its 2 granting line(s)'));
+		});
+
+		it('puts nothing into force when the port cannot say which lines were refunded', async () => {
+			const { granted, activated, revoked } = await place({
+				lines: [GRANTING_LINE, OTHER_GRANTING_LINE],
+				state: PARTIALLY_REFUNDED
+			});
+
+			expect(granted).toHaveLength(2);
 			expect(activated).toEqual([]);
-		}
+			expect(revoked).toEqual([]);
+		});
+	});
+
+	describe('an order cancelled or refunded in full before the placement was delivered', () => {
+		it('grants nothing, says why, and reads the order once', async () => {
+			for (const [state, reason] of [
+				[{ status: OrderStatus.CANCELED, paymentStatus: OrderPaymentStatus.CAPTURED }, 'ORDER_CANCELED'],
+				[{ status: OrderStatus.COMPLETED, paymentStatus: OrderPaymentStatus.REFUNDED }, 'REFUNDED'],
+				[{ status: OrderStatus.ARCHIVED, canceledAt: '2026-10-02T10:00:00.000Z' }, 'ORDER_CANCELED']
+			] as Array<[IEntitlementOrderState, string]>) {
+				warn.mockClear();
+
+				const { granted, activated, revoked, reads } = await place({ state });
+
+				expect(granted).toEqual([]);
+				expect(activated).toEqual([]);
+				expect(revoked).toEqual([]);
+				expect(reads).toEqual([[ORDER, SCOPE]]);
+				expect(warn).toHaveBeenCalledWith(
+					`order.placed event-1 was delivered after order ${ORDER} was withdrawn (${reason}), so no entitlement was granted.`
+				);
+			}
+		});
+
+		it('withdraws what it granted when the order was withdrawn while it was granting', async () => {
+			const { granted, activated, revoked, order } = await place({
+				lines: [GRANTING_LINE, OTHER_GRANTING_LINE],
+				states: [OPEN, { status: OrderStatus.CANCELED, paymentStatus: OrderPaymentStatus.NOT_PAID }]
+			});
+
+			expect(granted).toHaveLength(2);
+			expect(activated).toEqual([]);
+			expect(revoked).toEqual([
+				['entitlement-1', EntitlementRevocationReason.ORDER_CANCELED, SCOPE],
+				['entitlement-2', EntitlementRevocationReason.ORDER_CANCELED, SCOPE]
+			]);
+			expect(order).toEqual(['read', 'grant', 'grant', 'read', 'revoke', 'revoke']);
+			expect(warn).toHaveBeenCalledWith(expect.stringContaining('so its entitlements were withdrawn again'));
+		});
 	});
 
 	it('leaves them PENDING when the order port does not find the order', async () => {
 		const { granted, activated, reads } = await place({ state: null });
 
 		expect(granted).toHaveLength(1);
-		expect(reads).toHaveLength(1);
+		expect(reads).toHaveLength(2);
 		expect(activated).toEqual([]);
 	});
 
 	it('does exactly what it did before when the port is not bound: it grants, and reads and activates nothing', async () => {
-		const { granted, activated, reads } = await place({
-			bound: false,
-			state: { status: OrderStatus.COMPLETED, paymentStatus: OrderPaymentStatus.CAPTURED }
-		});
+		const { granted, activated, revoked, reads } = await place({ bound: false, state: SETTLED });
 
 		expect(granted).toHaveLength(1);
 		expect(reads).toEqual([]);
 		expect(activated).toEqual([]);
+		expect(revoked).toEqual([]);
 	});
 
-	it('does not read the order when the placement granted nothing', async () => {
-		const { granted, activated, reads } = await place({
-			lines: [PLAIN_LINE],
-			state: { status: OrderStatus.COMPLETED, paymentStatus: OrderPaymentStatus.CAPTURED }
-		});
+	it('does not read the order when the placement grants nothing', async () => {
+		const { granted, activated, reads } = await place({ lines: [PLAIN_LINE], state: SETTLED });
 
 		expect(granted).toEqual([]);
 		expect(reads).toEqual([]);
 		expect(activated).toEqual([]);
 	});
 
-	it('reads the order once for a placement that granted several lines', async () => {
+	it('reads the order twice for a placement that granted several lines, and activates each line once', async () => {
 		const { granted, activated, reads } = await place({
-			lines: [GRANTING_LINE, PLAIN_LINE, { ...GRANTING_LINE, orderLineId: 'line-3' }],
-			state: { status: OrderStatus.COMPLETED, paymentStatus: OrderPaymentStatus.CAPTURED }
+			lines: [GRANTING_LINE, PLAIN_LINE, OTHER_GRANTING_LINE],
+			state: SETTLED
 		});
 
 		expect(granted).toHaveLength(2);
-		expect(reads).toHaveLength(1);
-		expect(activated).toHaveLength(1);
+		expect(reads).toHaveLength(2);
+		expect(activated).toEqual([
+			[{ orderId: ORDER, orderLineId: 'line-1' }, SCOPE],
+			[{ orderId: ORDER, orderLineId: 'line-3' }, SCOPE]
+		]);
 	});
 
-	it('lets a failed read fail the delivery, so it is retried rather than leaving the rights PENDING', async () => {
-		await expect(place({ readError: new Error('connection reset') })).rejects.toThrow('connection reset');
+	it('lets a failed read fail the delivery, so it is retried rather than deciding on nothing', async () => {
+		const error = new Error('connection reset');
+
+		await expect(place({ readError: { onRead: 1, error } })).rejects.toThrow('connection reset');
+		await expect(place({ state: SETTLED, readError: { onRead: 2, error } })).rejects.toThrow('connection reset');
 	});
 
 	it('does not read the order on a settlement event, which activates as it always did', async () => {

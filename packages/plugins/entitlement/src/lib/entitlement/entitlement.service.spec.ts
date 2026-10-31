@@ -1140,6 +1140,40 @@ describe('EntitlementService — putting a purchased right into force (doc 05 §
 		expect(await fixture.service.activateGranted({})).toEqual([]);
 		expect(fixture.store('a').status).toBe(EntitlementStatus.PENDING);
 	});
+
+	it('puts into force only the rights one line of the order granted when the line is named (#11023)', async () => {
+		const fixture = entitlementFixture({
+			rights: [
+				rightRow('paid', { orderId: ORDER, orderLineId: 'line-paid', status: EntitlementStatus.PENDING }),
+				rightRow('refunded', {
+					orderId: ORDER,
+					orderLineId: 'line-refunded',
+					status: EntitlementStatus.PENDING
+				}),
+				rightRow('elsewhere', {
+					orderId: 'another-order',
+					orderLineId: 'line-paid',
+					status: EntitlementStatus.PENDING
+				})
+			]
+		});
+
+		const activated = await fixture.service.activateGranted({ orderId: ORDER, orderLineId: 'line-paid' });
+
+		expect(activated).toEqual(['paid']);
+		expect(fixture.store('refunded').status).toBe(EntitlementStatus.PENDING);
+		expect(fixture.store('elsewhere').status).toBe(EntitlementStatus.PENDING);
+		expect(fixture.events()).toEqual([EntitlementEventName.ACTIVATED]);
+	});
+
+	it('ignores a line named without its order, and answers nothing', async () => {
+		const fixture = entitlementFixture({
+			rights: [rightRow('a', { orderId: ORDER, orderLineId: 'line-1', status: EntitlementStatus.PENDING })]
+		});
+
+		expect(await fixture.service.activateGranted({ orderLineId: 'line-1' })).toEqual([]);
+		expect(fixture.store('a').status).toBe(EntitlementStatus.PENDING);
+	});
 });
 
 describe('EntitlementService — suspending, resuming and extending (doc 05 §19.1)', () => {

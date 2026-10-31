@@ -1396,14 +1396,20 @@ describe.each([
 		});
 
 		/**
-		 * Delivers `order.completed` and then `order.placed` for one order — the order a reorderable consumer can
+		 * Delivers an earlier event of one order and then its `order.placed` — the order a reorderable consumer can
 		 * handle them in — to a consumer over this half's services.
 		 *
 		 * @param orderId The order.
 		 * @param state What the order port answers, or `undefined` for a consumer with no port bound.
-		 * @returns The rights the placement granted, as the table holds them.
+		 * @param options The event delivered first (`order.completed` unless stated; `null` for none) and how many
+		 * granting lines the placement carries (one unless stated), named `<order>-line-<n>`.
+		 * @returns The rights the placement granted, as the table holds them, in line order.
 		 */
-		async function settleThenPlace(orderId: string, state?: IEntitlementOrderState): Promise<Row[]> {
+		async function deliverPlacementLate(
+			orderId: string,
+			state?: IEntitlementOrderState,
+			options: { first?: string | null; lines?: number } = {}
+		): Promise<Row[]> {
 			const port = state ? { findState: async () => state } : undefined;
 			const consumer = new EntitlementGrantConsumer(harness.entitlements, undefined, port);
 			const deliver = (name: string, data: Row) =>
@@ -1419,19 +1425,27 @@ describe.each([
 					{ assertOrder: async () => undefined, alreadyDelivered: async () => false } as never
 				);
 
-			await deliver('order.completed', { orderId });
+			if (options.first !== null) {
+				await deliver(options.first ?? 'order.completed', { orderId });
+			}
 			await deliver('order.placed', {
 				orderId,
-				lines: [{ orderLineId: `${orderId}-line`, quantity: 1, entitlement: { activationLimit: 2 } }]
+				lines: Array.from({ length: options.lines ?? 1 }, (_, index) => ({
+					orderLineId: `${orderId}-line-${index + 1}`,
+					quantity: 1,
+					entitlement: { activationLimit: 2 }
+				}))
 			});
 
-			return (await harness.rows('entitlement')).filter((row) => row.orderId === orderId);
+			return (await harness.rows('entitlement'))
+				.filter((row) => row.orderId === orderId)
+				.sort((a, b) => String(a.orderLineId).localeCompare(String(b.orderLineId)));
 		}
 
 		it('puts the rights a late placement grants into force when the order already completed', async () => {
 			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
 
-			const rights = await settleThenPlace('order-late', {
+			const rights = await deliverPlacementLate('order-late', {
 				status: OrderStatus.COMPLETED,
 				paymentStatus: OrderPaymentStatus.CAPTURED
 			});
@@ -1447,14 +1461,67 @@ describe.each([
 		it('leaves them PENDING when the order has not settled, or when no order port is bound', async () => {
 			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
 
-			const unsettled = await settleThenPlace('order-unsettled', {
+			const unsettled = await deliverPlacementLate('order-unsettled', {
 				status: OrderStatus.CONFIRMED,
 				paymentStatus: OrderPaymentStatus.AUTHORIZED
 			});
-			const unbound = await settleThenPlace('order-unbound');
+			const unbound = await deliverPlacementLate('order-unbound');
 
 			expect(unsettled.map((row) => row.status)).toEqual([EntitlementStatus.PENDING]);
 			expect(unbound.map((row) => row.status)).toEqual([EntitlementStatus.PENDING]);
+		});
+
+		it('puts into force only the line still paid for on an order refunded in part before the placement', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			const rights = await deliverPlacementLate(
+				'order-partial',
+				{
+					status: OrderStatus.COMPLETED,
+					paymentStatus: OrderPaymentStatus.PARTIALLY_REFUNDED,
+					lines: [
+						{ id: 'order-partial-line-1', quantity: 1, refundedQuantity: 1 },
+						{ id: 'order-partial-line-2', quantity: 1, refundedQuantity: 0 }
+					]
+				},
+				{ lines: 2 }
+			);
+
+			expect(rights.map((row) => [row.orderLineId, row.status])).toEqual([
+				['order-partial-line-1', EntitlementStatus.PENDING],
+				['order-partial-line-2', EntitlementStatus.ACTIVE]
+			]);
+		});
+
+		it('puts nothing into force on an order refunded in part when the port cannot say which lines', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			const rights = await deliverPlacementLate(
+				'order-partial-unknown',
+				{ status: OrderStatus.COMPLETED, paymentStatus: OrderPaymentStatus.PARTIALLY_REFUNDED },
+				{ lines: 2 }
+			);
+
+			expect(rights.map((row) => row.status)).toEqual([EntitlementStatus.PENDING, EntitlementStatus.PENDING]);
+		});
+
+		it('grants nothing for an order cancelled or refunded in full before the placement was delivered', async () => {
+			Object.assign(mockCaller, { tenantId: null, organizationId: null, userId: null });
+
+			// The `order.canceled` handled first found nothing to withdraw; what it does has suites of its own, and
+			// this harness doubles the CRUD read it withdraws through, so it is not delivered here.
+			const canceled = await deliverPlacementLate(
+				'order-canceled',
+				{ status: OrderStatus.CANCELED, paymentStatus: OrderPaymentStatus.NOT_PAID },
+				{ first: null }
+			);
+			const refunded = await deliverPlacementLate('order-refunded', {
+				status: OrderStatus.COMPLETED,
+				paymentStatus: OrderPaymentStatus.REFUNDED
+			});
+
+			expect(canceled).toEqual([]);
+			expect(refunded).toEqual([]);
 		});
 	});
 
