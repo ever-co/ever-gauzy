@@ -153,8 +153,29 @@ describe('PublicPageOrganizationMutationComponent — the banner field explains 
 			hint().nativeElement.click();
 			expect(tooltip().isShown).toBe(true);
 
-			hint().nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+			hint().nativeElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape', bubbles: true }));
 			expect(tooltip().isShown).toBe(false);
+		});
+
+		it('Escape on an open hint does not also close the dialog (and lose the edits)', () => {
+			// The dialog closes on an Escape keyup that reaches the document.
+			const reachesDialog = jest.fn();
+			document.addEventListener('keyup', reachesDialog);
+			const escape = () =>
+				hint().nativeElement.dispatchEvent(new KeyboardEvent('keyup', { key: 'Escape', bubbles: true }));
+
+			try {
+				hint().nativeElement.click();
+				escape();
+				expect(tooltip().isShown).toBe(false);
+				expect(reachesDialog).not.toHaveBeenCalled();
+
+				// With the hint already closed, Escape closes the dialog as before.
+				escape();
+				expect(reachesDialog).toHaveBeenCalledTimes(1);
+			} finally {
+				document.removeEventListener('keyup', reachesDialog);
+			}
 		});
 	});
 

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbTooltipDirective } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import moment from 'moment';
 import {
@@ -136,6 +136,21 @@ export class PublicPageOrganizationMutationComponent extends TranslationBaseComp
 
 	close() {
 		this.dialogRef.close();
+	}
+
+	/**
+	 * Escape on an open hint closes the hint only. The dialog also closes on Escape (a `keyup` it hears at the
+	 * document), which would throw away unsaved edits, so the key stops here while the hint is open. With the
+	 * hint closed, Escape reaches the dialog as before.
+	 *
+	 * @param hint The hint's tooltip.
+	 * @param event The Escape `keyup`.
+	 */
+	dismissHint(hint: NbTooltipDirective, event: Event): void {
+		if (hint.isShown) {
+			hint.hide();
+			event.stopPropagation();
+		}
 	}
 
 	private _initializeForm() {

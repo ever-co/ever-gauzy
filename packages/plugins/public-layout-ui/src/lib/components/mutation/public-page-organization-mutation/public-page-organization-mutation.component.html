@@ -82,7 +82,7 @@
 									(focus)="bannerHint.show()"
 									(blur)="bannerHint.hide()"
 									(click)="bannerHint.show()"
-									(keydown.escape)="bannerHint.hide()"
+									(keyup.escape)="dismissHint(bannerHint, $event)"
 								>
 									<nb-icon icon="info-outline" aria-hidden="true"></nb-icon>
 								</button>
