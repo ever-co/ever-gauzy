@@ -1385,6 +1385,20 @@ describe('EntitlementService — lowering the ceiling (doc 05 §19.1)', () => {
 		expect(fixture.tables.entitlement_key[0].status).toBe(EntitlementKeyStatus.REVOKED);
 	});
 
+	it('changes nothing and announces nothing for a right that is already revoked, whatever the quantity asked', async () => {
+		const fixture = entitlementFixture({
+			rights: [rightRow('a', { quantity: 3, status: EntitlementStatus.REVOKED })]
+		});
+
+		const lower = await fixture.service.reduce('a', 2, 'REFUNDED');
+		const notLower = await fixture.service.reduce('a', 5, 'REFUNDED');
+
+		expect(lower).toMatchObject({ id: 'a', status: EntitlementStatus.REVOKED, quantity: 3 });
+		expect(notLower).toMatchObject({ id: 'a', status: EntitlementStatus.REVOKED, quantity: 3 });
+		expect(fixture.store('a').quantity).toBe(3);
+		expect(fixture.events()).toEqual([]);
+	});
+
 	it('refuses a "reduction" that does not lower the quantity', async () => {
 		const fixture = entitlementFixture({ rights: [rightRow('a', { quantity: 2 })] });
 

@@ -653,7 +653,7 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 	 * customer paid for less than they were granted, not for nothing. The surplus activations are
 	 * revoked newest-first — the seats taken longest ago are the ones a customer is likeliest to still
 	 * be using — and a right reduced to zero is revoked outright, because a right that permits nothing
-	 * is not a right.
+	 * is not a right. A right that is already revoked is answered as it stands, with no write and no event.
 	 *
 	 * @param id The right to reduce.
 	 * @param quantity The ceiling that remains.
@@ -678,6 +678,13 @@ export class EntitlementService extends EntitlementCrudService<Entitlement> {
 
 		return await this.transaction(async (manager) => {
 			const entitlement = await this.requireLocked(manager, id, scope);
+
+			// A revoked right permits nothing, so every reduction of it already holds: like `revoke`, and like a
+			// reduction to zero (which is one), it changes nothing and announces nothing. It is decided under the
+			// lock, so a revocation that commits after the caller read the right is seen here.
+			if (entitlement.status === EntitlementStatus.REVOKED) {
+				return entitlement;
+			}
 
 			if (next >= Number(entitlement.quantity)) {
 				throw new BadRequestException(
