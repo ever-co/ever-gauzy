@@ -826,8 +826,9 @@ export class EmailService {
 			languageCode,
 			message: ''
 		};
-		for (const { resetLink } of tenants) {
-			printEmailCodeInLocalDevelopment(this.logger, 'Password reset link', email, resetLink);
+		for (const { tenantName, resetLink } of items) {
+			const label = `Password reset link (${tenantName})`;
+			printEmailCodeInLocalDevelopment(this.logger, label, email, resetLink);
 		}
 
 		// Return early if the email domain is disallowed

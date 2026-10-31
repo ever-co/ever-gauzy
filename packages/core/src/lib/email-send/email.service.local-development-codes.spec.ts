@@ -8,7 +8,9 @@ import { EmailService } from './email.service';
 /**
  * A contributor running the API locally often has no working mail server. Every email that carries a code or a
  * link prints it on the console before the send, on a local development instance only: NODE_ENV=development on a
- * non-production build, with the API and the app served from this machine. Anywhere else nothing reaches the logs.
+ * non-production build, with the API and the app served from this machine or a private network. A production
+ * build (a Docker image) prints only with PRINT_EMAIL_CODES=true, NODE_ENV=development and both URLs on this
+ * machine. Anywhere else nothing reaches the logs.
  */
 describe('EmailService - codes and links on the console of a local development instance', () => {
 	const ENGLISH = LanguagesEnum.ENGLISH;
@@ -77,15 +79,15 @@ describe('EmailService - codes and links on the console of a local development i
 				emails.multiTenantResetPassword(
 					'person@ever.co',
 					[
-						{ resetLink: RESET_LINK_TENANT_A, tenant: { id: 'a', name: 'A' } as any, user },
-						{ resetLink: RESET_LINK_TENANT_B, tenant: { id: 'b', name: 'B' } as any, user }
+						{ resetLink: RESET_LINK_TENANT_A, tenant: { id: 'a', name: 'Acme' } as any, user },
+						{ resetLink: RESET_LINK_TENANT_B, tenant: { id: 'b', name: 'Globex' } as any, user }
 					],
 					ENGLISH,
 					undefined
 				),
 			[
-				`[DEV] Password reset link for person@ever.co: ${RESET_LINK_TENANT_A}`,
-				`[DEV] Password reset link for person@ever.co: ${RESET_LINK_TENANT_B}`
+				`[DEV] Password reset link (Acme) for person@ever.co: ${RESET_LINK_TENANT_A}`,
+				`[DEV] Password reset link (Globex) for person@ever.co: ${RESET_LINK_TENANT_B}`
 			]
 		],
 		[
@@ -170,7 +172,12 @@ describe('EmailService - codes and links on the console of a local development i
 		]
 	];
 
+	/** Every line of every email, in the order of `flows`. */
+	const EVERY_LINE = flows.flatMap(([, , lines]) => lines);
+	const SIGN_IN_CODE_LINE = '[DEV] Sign-in code for person@ever.co: SIGNIN1';
+
 	const savedNodeEnv = process.env.NODE_ENV;
+	const savedOptIn = process.env.PRINT_EMAIL_CODES;
 	const savedProduction = env.production;
 	const savedApiUrl = env.baseUrl;
 	const savedAppUrl = env.clientBaseUrl;
@@ -180,16 +187,16 @@ describe('EmailService - codes and links on the console of a local development i
 	let getEmailInstance: jest.Mock;
 	let logger: { log: jest.Mock; debug: jest.Mock; warn: jest.Mock; error: jest.Mock };
 
-	function setNodeEnv(nodeEnv: string | undefined): void {
-		if (nodeEnv === undefined) {
-			delete process.env.NODE_ENV;
+	function setEnv(name: string, value: string | undefined): void {
+		if (value === undefined) {
+			delete process.env[name];
 			return;
 		}
-		process.env.NODE_ENV = nodeEnv;
+		process.env[name] = value;
 	}
 
 	function runAs(nodeEnv: string | undefined, production: boolean, apiUrl = LOCAL_API, appUrl = LOCAL_APP): void {
-		setNodeEnv(nodeEnv);
+		setEnv('NODE_ENV', nodeEnv);
 		(env as { production: boolean }).production = production;
 		env.baseUrl = apiUrl;
 		env.clientBaseUrl = appUrl;
@@ -199,6 +206,16 @@ describe('EmailService - codes and links on the console of a local development i
 		for (const [, sendIt] of flows) {
 			await sendIt(service);
 		}
+	}
+
+	async function sendSignInCode(email = 'person@ever.co'): Promise<void> {
+		await service.sendMagicLoginCode({
+			email,
+			magicCode: 'SIGNIN1',
+			magicLink: undefined,
+			locale: ENGLISH,
+			integration: env.appIntegrationConfig
+		});
 	}
 
 	/** The lines printed for the developer, in order. */
@@ -224,6 +241,7 @@ describe('EmailService - codes and links on the console of a local development i
 
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
+		setEnv('PRINT_EMAIL_CODES', undefined);
 
 		send = jest.fn(async () => ({ originalMessage: { subject: 's', html: 'h' } }));
 		const instance = { send };
@@ -240,7 +258,8 @@ describe('EmailService - codes and links on the console of a local development i
 
 	afterEach(() => {
 		jest.restoreAllMocks();
-		setNodeEnv(savedNodeEnv);
+		setEnv('NODE_ENV', savedNodeEnv);
+		setEnv('PRINT_EMAIL_CODES', savedOptIn);
 		(env as { production: boolean }).production = savedProduction;
 		env.baseUrl = savedApiUrl;
 		env.clientBaseUrl = savedAppUrl;
@@ -264,7 +283,7 @@ describe('EmailService - codes and links on the console of a local development i
 		expectNothingPrinted();
 	});
 
-	it('prints nothing on a production build, even with NODE_ENV=development', async () => {
+	it('prints nothing on a production build without the opt-in, even with NODE_ENV=development', async () => {
 		runAs('development', true);
 
 		await sendEveryEmail();
@@ -282,32 +301,69 @@ describe('EmailService - codes and links on the console of a local development i
 		expectNothingPrinted();
 	});
 
+	it.each([
+		['a 192.168.0.0/16 address', 'http://192.168.1.20:3000', 'http://192.168.1.20:4200'],
+		['a 10.0.0.0/8 address', 'http://10.1.2.3:3000', 'http://10.1.2.3:4200']
+	])('prints on a development build served from %s', async (_case, apiUrl, appUrl) => {
+		runAs('development', false, apiUrl, appUrl);
+
+		await sendSignInCode();
+
+		expect(printedLines()).toEqual([SIGN_IN_CODE_LINE]);
+	});
+
+	it.each([
+		['a 100.64.0.0/10 address', 'http://100.64.0.1:3000', 'http://100.64.0.1:4200'],
+		['a 169.254.0.0/16 address', 'http://169.254.10.20:3000', 'http://169.254.10.20:4200'],
+		['a public host', 'https://api.example.org', 'https://app.example.org']
+	])('prints nothing on a development build served from %s', async (_case, apiUrl, appUrl) => {
+		runAs('development', false, apiUrl, appUrl);
+
+		await sendSignInCode();
+
+		expect(send).toHaveBeenCalledTimes(1);
+		expectNothingPrinted();
+	});
+
+	it('prints on a production build that opted in, run with NODE_ENV=development on localhost', async () => {
+		runAs('development', true);
+		setEnv('PRINT_EMAIL_CODES', 'true');
+
+		await sendEveryEmail();
+
+		expect(send).toHaveBeenCalledTimes(flows.length);
+		expect(printedLines()).toEqual(EVERY_LINE);
+	});
+
+	it.each([
+		['a 192.168.0.0/16 address', 'development', 'true', 'http://192.168.1.20:3000', 'http://192.168.1.20:4200'],
+		['NODE_ENV=production', 'production', 'true', LOCAL_API, LOCAL_APP],
+		["PRINT_EMAIL_CODES=TRUE, not exactly 'true'", 'development', 'TRUE', LOCAL_API, LOCAL_APP],
+		["PRINT_EMAIL_CODES=1, not exactly 'true'", 'development', '1', LOCAL_API, LOCAL_APP]
+	])('prints nothing on a production build with the opt-in and %s', async (_case, nodeEnv, optIn, apiUrl, appUrl) => {
+		runAs(nodeEnv, true, apiUrl, appUrl);
+		setEnv('PRINT_EMAIL_CODES', optIn);
+
+		await sendEveryEmail();
+
+		expect(send).toHaveBeenCalledTimes(flows.length);
+		expectNothingPrinted();
+	});
+
 	it('prints the code before the send, so it shows when the send fails', async () => {
 		runAs('development', false);
 		getEmailInstance.mockRejectedValue(new Error('SMTP down'));
 
-		await service.sendMagicLoginCode({
-			email: 'person@ever.co',
-			magicCode: 'SIGNIN1',
-			magicLink: undefined,
-			locale: ENGLISH,
-			integration: env.appIntegrationConfig
-		});
+		await sendSignInCode();
 
 		expect(send).not.toHaveBeenCalled();
-		expect(printedLines()).toEqual(['[DEV] Sign-in code for person@ever.co: SIGNIN1']);
+		expect(printedLines()).toEqual([SIGN_IN_CODE_LINE]);
 	});
 
 	it('prints the code for an address on a blocked domain, which gets no email', async () => {
 		runAs('development', false);
 
-		await service.sendMagicLoginCode({
-			email: 'person@example.com',
-			magicCode: 'SIGNIN1',
-			magicLink: undefined,
-			locale: ENGLISH,
-			integration: env.appIntegrationConfig
-		});
+		await sendSignInCode('person@example.com');
 
 		expect(send).not.toHaveBeenCalled();
 		expect(printedLines()).toEqual(['[DEV] Sign-in code for person@example.com: SIGNIN1']);
