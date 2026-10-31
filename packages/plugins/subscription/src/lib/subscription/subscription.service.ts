@@ -974,10 +974,11 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			return { restart: period, nextBillingAt: period.start };
 		}
 
-		if (opening && this.billingService.holdsDeferredCalendar(opening)) {
+		if (opening && (this.billingService.holdsDeferredCalendar(opening) || this.heldByCharge(opening))) {
 			// Invoiced and waiting for its payment (Q7-W4): the period stays open, and its payment moves the calendar.
 			// A cycle already paid whose payment was interrupted before it moved the calendar still holds it, and is
-			// kept just the same: its retry is what moves the calendar.
+			// kept just the same: its retry is what moves the calendar. So does a charge of the opening period that is
+			// under way, or recorded and not finished: the finish moves the calendar onto it (`finishCycle`).
 			return { restart: null, nextBillingAt: new Date(subscription.nextBillingAt as Date) };
 		}
 
@@ -2068,13 +2069,17 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		// what the call did.
 		const billing = claim.billing;
 		let stillFenced = false;
+		// A takeover of an attempt whose outcome was never recorded resends that attempt's frozen request
+		// (`raiseCycleOrder`), whose adjustments the attempt wrote before it froze it: none is written from the
+		// subscription as it now stands, or the cycle would record a discount or a credit its order never granted.
+		const replaying = !!this.billingService.frozenAttemptOf(billing, (billing.attemptCount ?? 0) + 1);
 
 		try {
-			if (discount.isPositive()) {
+			if (discount.isPositive() && !replaying) {
 				await this.appendDiscount(billing, subscription, discount);
 			}
 
-			const credit = await this.consumePendingCredit(subscription, billing);
+			const credit = replaying ? null : await this.consumePendingCredit(subscription, billing);
 			const bookkeeping = this.cycleBookkeepingFor(subscription, plan, credit);
 
 			const raised = await this.raiseCycleOrder(
@@ -2720,15 +2725,18 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 *
 	 * A cycle whose outcome a build before this one recorded carries no such record, and that build may or may not have
 	 * cleared the deferred credit before it was cut off. The credit the cycle consumed is then read back from the
-	 * adjustment it was consumed under (`consumePendingCredit`), marked as inferred: it is subtracted only from a carried
-	 * credit large enough to still hold it (`bookkeptMetadata`), so a credit that build already cleared is not taken off a
-	 * later one. The setup fee needs no such reading: one is charged only on a subscription's first cycle
-	 * (`setupFeeFor`), which the finish counts.
+	 * adjustment it was consumed under (`consumePendingCredit`), marked as inferred with the instant it was consumed: it
+	 * is subtracted only from a carried credit no change has written since (`bookkeptMetadata`). One written since may be
+	 * a new credit after that build cleared the consumed one, or the consumed one with more added, and nothing on the row
+	 * tells the two apart, so it is left for reconciliation. The setup fee needs no such reading: one is charged only on a
+	 * subscription's first cycle (`setupFeeFor`), which the finish counts.
 	 *
 	 * @param billing The cycle.
-	 * @returns What is owed, and whether it was inferred.
+	 * @returns What is owed, and whether (and when) it was inferred.
 	 */
-	private async owedBookkeepingOf(billing: SubscriptionBilling): Promise<ICycleBookkeeping & { inferred?: boolean }> {
+	private async owedBookkeepingOf(
+		billing: SubscriptionBilling
+	): Promise<ICycleBookkeeping & { inferred?: boolean; consumedAt?: Date | null }> {
 		const recorded = this.billingService.bookkeepingOf(billing);
 
 		if (recorded) {
@@ -2747,8 +2755,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			consumed.map((row) => Money.of(String(row.amount), billing.currency)),
 			billing.currency
 		).round();
+		const instants = consumed.map((row) => (row.createdAt ? new Date(row.createdAt).getTime() : NaN));
+		const consumedAt = instants.every((instant) => Number.isFinite(instant)) ? new Date(Math.max(...instants)) : null;
 
-		return credit.isNegative() ? { credit: credit.toStorageString(), inferred: true } : {};
+		return credit.isNegative() ? { credit: credit.toStorageString(), inferred: true, consumedAt } : {};
 	}
 
 	/**
@@ -2758,9 +2768,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * subtracted from the credit the subscription still carries — not cleared: a plan change that deferred another credit
 	 * after the cycle consumed this one added it to the same total (`applyChange`), and that part is owed to the next
 	 * cycle. A remainder that is not a credit is not carried. A consumption inferred for a cycle an older build recorded
-	 * (`owedBookkeepingOf`) is subtracted only from a carried credit that still holds it: a smaller one is what that build
-	 * left after clearing it, plus what was deferred since. The cycle is recorded as applied in the same metadata
-	 * (`BOOKKEPT_CYCLE`), so a cycle already applied answers null.
+	 * (`owedBookkeepingOf`) is subtracted only from a carried credit no change has written since the cycle consumed it;
+	 * one written since is kept as it is and logged for reconciliation, since the row cannot say whether that build
+	 * cleared the consumed credit first. The cycle is recorded as applied in the same metadata (`BOOKKEPT_CYCLE`), so a
+	 * cycle already applied answers null.
 	 *
 	 * @param subscription The subscription, as read.
 	 * @param billing The cycle.
@@ -2770,7 +2781,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	private bookkeptMetadata(
 		subscription: Subscription,
 		billing: SubscriptionBilling,
-		owed: ICycleBookkeeping & { inferred?: boolean }
+		owed: ICycleBookkeeping & { inferred?: boolean; consumedAt?: Date | null }
 	): Record<string, unknown> | null {
 		const stored: Record<string, unknown> = subscription.metadata ?? {};
 
@@ -2796,15 +2807,21 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		}
 
 		// Read as `consumePendingCredit` read it when the cycle consumed it.
-		const pending = stored[PENDING_CREDIT] as { amount?: string } | undefined;
+		const pending = stored[PENDING_CREDIT] as { amount?: string; at?: string } | undefined;
 
 		if (credits && pending?.amount) {
 			const left = Money.of(pending.amount, subscription.currency).round().subtract(consumed).round();
+			const unchangedSinceConsumed =
+				!!pending.at &&
+				!!owed.consumedAt &&
+				new Date(pending.at).getTime() <= new Date(owed.consumedAt).getTime();
 
-			if (owed.inferred && left.isPositive()) {
-				this.logger.warn(
-					`Subscription ${subscription.id}: cycle ${billing.id} was recorded by an earlier build, and the credit ` +
-						`it consumed (${consumed.toStorageString()}) is no longer carried whole; the carried credit is kept.`
+			if (owed.inferred && !unchangedSinceConsumed) {
+				this.logger.error(
+					`Subscription ${subscription.id}: cycle ${billing.id} was recorded by an earlier build and consumed a ` +
+						`credit of ${consumed.toStorageString()}, and the credit carried now (${pending.amount}) was written ` +
+						`after it; whether that build cleared the consumed credit is unknown, so the carried credit is kept ` +
+						`for reconciliation.`
 				);
 			} else if (left.isNegative()) {
 				metadata[PENDING_CREDIT] = { ...pending, amount: left.toStorageString() };
@@ -3018,9 +3035,22 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		const open = await this.billingService.findByPeriod(subscription.id, new Date(subscription.nextBillingAt));
 
+		return !!open && (this.billingService.holdsDeferredCalendar(open) || this.heldByCharge(open));
+	}
+
+	/**
+	 * Whether a charge holds a cycle's period: a pass holds or held its charge claim, an attempt was frozen for the order
+	 * path and its outcome never recorded (its order may exist, and the next pass recovers it under the same key), or it
+	 * was charged and not finished yet (`leftUnfinished`).
+	 *
+	 * @param cycle The cycle.
+	 * @returns True when moving the calendar past it would bill a period over a charge.
+	 */
+	private heldByCharge(cycle: SubscriptionBilling): boolean {
 		return (
-			!!open &&
-			(this.billingService.holdsDeferredCalendar(open) || !!open.chargeClaimToken || this.leftUnfinished(open))
+			!!cycle.chargeClaimToken ||
+			!!this.billingService.frozenAttemptOf(cycle, (cycle.attemptCount ?? 0) + 1) ||
+			this.leftUnfinished(cycle)
 		);
 	}
 
@@ -3693,7 +3723,13 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @returns Whether it records no money billed and no attempt: `PENDING`, with no order and no attempt.
 	 */
 	private isUntouched(cycle: SubscriptionBilling): boolean {
-		return cycle.status === SubscriptionBillingStatus.PENDING && !cycle.orderId && !cycle.attemptCount;
+		return (
+			cycle.status === SubscriptionBillingStatus.PENDING &&
+			!cycle.orderId &&
+			!cycle.attemptCount &&
+			// An attempt frozen for the order path, whose outcome was never recorded, may have an order.
+			!this.billingService.frozenAttemptOf(cycle, 1)
+		);
 	}
 
 	/**

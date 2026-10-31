@@ -1285,38 +1285,73 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			throw chargeInFlight(billing, 'corrected');
 		}
 
-		let correction = writableOnly(patch, SUBSCRIPTION_BILLING_WRITABLE_MEMBERS);
+		// The correction is fenced against the billing run for its write, as a pass claims a cycle it charges
+		// (`claimCharge`): a correction writes the whole `metadata` column from the row it read, and without the fence a
+		// pass could freeze an attempt (`freezeAttempt`), fail to record its outcome and release its claim between that
+		// read and the write, which then erased the frozen request (Copilot). Under the fence the row is read again, and
+		// the write is conditional on the fence still being this correction's.
+		const fence = await this.claimCharge(id);
 
-		if (correction['amount'] !== undefined) {
-			correction = { ...correction, amount: this.normalizeAmount(correction['amount'] as DecimalString, billing.currency) };
+		if (!fence.token) {
+			throw recordsBilledMoney(fence.billing) ? settled(fence.billing) : chargeInFlight(fence.billing, 'corrected');
 		}
 
-		if (correction['metadata'] !== undefined) {
-			// The caller's own keys; the service's keys stay as the cycle carries them (`SERVICE_OWNED_CYCLE_KEYS`).
-			correction = {
-				...correction,
-				metadata: { ...metadataPart(correction['metadata'], false), ...metadataPart(billing.metadata, true) }
-			};
+		let written = false;
+
+		try {
+			const current = fence.billing;
+
+			if (recordsBilledMoney(current)) {
+				throw settled(current);
+			}
+
+			let correction = writableOnly(patch, SUBSCRIPTION_BILLING_WRITABLE_MEMBERS);
+
+			if (correction['amount'] !== undefined) {
+				correction = { ...correction, amount: this.normalizeAmount(correction['amount'] as DecimalString, current.currency) };
+			}
+
+			if (correction['metadata'] !== undefined) {
+				// The caller's own keys; the service's keys stay as the cycle carries them (`SERVICE_OWNED_CYCLE_KEYS`).
+				correction = {
+					...correction,
+					metadata: { ...metadataPart(correction['metadata'], false), ...metadataPart(current.metadata, true) }
+				};
+			}
+
+			// The statement is conditional on the cycle still recording no money billed and on the fence, and ends the fence.
+			const result = await this.writeIf(
+				id,
+				{
+					status: SubscriptionBillingStatus.PENDING,
+					orderId: IsNull(),
+					paidAt: IsNull(),
+					attemptCount: 0,
+					chargeClaimToken: fence.token
+				},
+				async () => {
+					const now = await this.findOneScoped(id);
+
+					return recordsBilledMoney(now) ? settled(now) : chargeInFlight(now, 'corrected');
+				},
+				{ ...correction, ...NO_CHARGE_CLAIM }
+			);
+
+			written = !!result?.affected;
+
+			return result;
+		} finally {
+			try {
+				if (!written) {
+					await this.releaseChargeClaim(id, fence.token);
+				}
+			} catch (error) {
+				this.logger.warn(
+					`Subscription billing cycle ${id}: the fence of a correction was not released ` +
+						`(${(error as Error)?.message ?? error}); it goes stale.`
+				);
+			}
 		}
-
-		// The statement is conditional on the cycle still recording no money billed and no pass charging it, so a charge
-		// that starts or lands between the read above and this write is not corrected over.
-		return this.writeIf(
-			id,
-			{
-				status: SubscriptionBillingStatus.PENDING,
-				orderId: IsNull(),
-				paidAt: IsNull(),
-				attemptCount: 0,
-				...noLiveChargeClaim()
-			},
-			async () => {
-				const current = await this.findOneScoped(id);
-
-				return recordsBilledMoney(current) ? settled(current) : chargeInFlight(current, 'corrected');
-			},
-			correction
-		);
 	}
 
 	/**
