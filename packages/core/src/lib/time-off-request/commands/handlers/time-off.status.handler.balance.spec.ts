@@ -483,4 +483,14 @@ describe('TimeOffStatusHandler moves leave balances with the decision', () => {
 			insert('time_off_balance_deduction', { id: '0f7c1a2e-0000-4000-8000-0000000d0002', ...row })
 		).rejects.toThrow(/UNIQUE/);
 	});
+
+	it('keeps one balance per employee, policy and year at the database (unique index), which the lookup relies on', async () => {
+		await allocate();
+
+		await expect(allocate()).rejects.toThrow(/UNIQUE/);
+		// Another year, policy or employee is another balance.
+		await expect(allocate({ year: 2027 })).resolves.toEqual(expect.any(String));
+		await expect(allocate({ policyId: OTHER_POLICY })).resolves.toEqual(expect.any(String));
+		await expect(allocate({ employeeId: COLLEAGUE })).resolves.toEqual(expect.any(String));
+	});
 });
