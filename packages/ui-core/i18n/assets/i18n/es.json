@@ -939,6 +939,8 @@
 			"MERCHANT": "Comerciante",
 			"ORGANIZATION": "Organización",
 			"PAYMENT": "Pago",
+			"PAYROLL_RUN": "Ejecución de nómina",
+			"PAYROLL_ITEM": "Concepto de nómina",
 			"PIPELINE": "Tubería",
 			"PIPELINE_STAGE": "Etapa del canal",
 			"PRODUCT": "Producto",
@@ -5487,6 +5489,18 @@
 			"SERVER_HOSTNAME": "Nombre de host/IP del servidor",
 			"LAN_ACCESS": "Permitir que otros equipos de la red se conecten",
 			"LAN_ACCESS_HINT": "Si está desactivado, solo este equipo puede conectarse a la API y a la interfaz web.",
+			"SERVER_HOST": {
+				"INVALID": "Introduzca una dirección IP o un nombre de host válidos, como 192.168.1.20 o gauzy.example.com.",
+				"SSL_WITH_IP": "SSL está activado: se recomienda un nombre de host, ya que los certificados suelen emitirse para un nombre. Un certificado que incluya esta dirección IP también funciona.",
+				"IPV6": "El servidor solo acepta conexiones IPv4, por lo que otros equipos no pueden conectarse mediante una dirección IPv6. Use una dirección IPv4 o un nombre de host.",
+				"PORT": "No incluya el puerto: los puertos se configuran en sus propios campos.",
+				"PATH": "Quite lo que sigue al nombre de host (como /): los puertos se añaden justo después de este valor.",
+				"DETECT": "Detectar mi IP",
+				"DETECT_HINT": "Rellena la dirección de red de este equipo. Solo se leen las direcciones de este equipo (sin consulta en línea), por lo que no se muestra una dirección pública asignada a un router.",
+				"DETECTED": "Direcciones de este equipo:",
+				"NO_ADDRESS": "No se encontró ninguna dirección de red. Compruebe que este equipo esté conectado a una red.",
+				"ONLY_IPV6": "Solo se encontraron direcciones IPv6 y el servidor solo acepta conexiones IPv4. Introduzca una dirección IPv4 o un nombre de host."
+			},
 			"AUTO_START_STARTUP": "Inicio automático al iniciar",
 			"SERVER_TYPE": "Tipo de servidor",
 			"LOCAL_API_PORT": "Puerto de API local",
@@ -5573,6 +5587,7 @@
 		"RETURN_ONLINE": "Volver en línea",
 		"SEARCH": "Buscar",
 		"OPEN_SETTINGS": "Abrir configuración.",
+		"OPEN_WEB_PORTAL": "Abrir mi tiempo y actividad en la aplicación web",
 		"REFRESH": "Actualizar",
 		"SWITCHED_OFFLINE": "Ahora has cambiado al modo sin conexión.",
 		"SWITCHED_ONLINE": "Te has cambiado al modo en línea ahora",
@@ -5659,7 +5674,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "No eres un empleado activo de {{ name }}, por lo que el temporizador no puede registrar tiempo allí. Sigues trabajando en tu organización actual.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "Se está cambiando de organización. Inicia el temporizador cuando termine el cambio.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "No eres un empleado activo de {{ name }} y no se pudo volver a tu organización anterior. Inicia sesión de nuevo.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "No se pudo completar el cambio a {{ name }} en este dispositivo. Inicia sesión de nuevo."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "No se pudo completar el cambio a {{ name }} en este dispositivo. Inicia sesión de nuevo.",
+			"CONNECTION_LOST": "Estás sin conexión. Tu tiempo se guarda en este dispositivo y se sincronizará cuando vuelva la conexión.",
+			"CONNECTION_RESTORED": "Vuelves a estar en línea.",
+			"CONNECTION_RESTORED_SYNCING": "Vuelves a estar en línea. Sincronizando {{ count }} elemento(s) pendiente(s)."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "¡El seguimiento fue detenido debido a la inactividad!",

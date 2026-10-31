@@ -938,6 +938,8 @@
 			"MERCHANT": "Marchand",
 			"ORGANIZATION": "Organisation",
 			"PAYMENT": "Paiement",
+			"PAYROLL_RUN": "Cycle de paie",
+			"PAYROLL_ITEM": "Ligne de paie",
 			"PIPELINE": "Pipeline",
 			"PIPELINE_STAGE": "Étape du pipeline",
 			"PRODUCT": "Produit",
@@ -5483,6 +5485,18 @@
 			"SERVER_HOSTNAME": "Nom d'hôte/adresse IP du serveur",
 			"LAN_ACCESS": "Autoriser les autres ordinateurs du réseau à se connecter",
 			"LAN_ACCESS_HINT": "Si désactivé, seul cet ordinateur peut se connecter à l'API et à l'interface web.",
+			"SERVER_HOST": {
+				"INVALID": "Saisissez une adresse IP ou un nom d'hôte valide, par exemple 192.168.1.20 ou gauzy.example.com.",
+				"SSL_WITH_IP": "SSL est activé : un nom d'hôte est recommandé, car les certificats sont généralement émis pour un nom. Un certificat qui contient cette adresse IP fonctionne aussi.",
+				"IPV6": "Le serveur n'accepte que les connexions IPv4 : les autres ordinateurs ne peuvent pas se connecter via une adresse IPv6. Utilisez une adresse IPv4 ou un nom d'hôte.",
+				"PORT": "N'indiquez pas le port : les ports se règlent dans leurs propres champs.",
+				"PATH": "Retirez ce qui suit le nom d'hôte (par exemple /) : les ports sont ajoutés juste après cette valeur.",
+				"DETECT": "Détecter mon IP",
+				"DETECT_HINT": "Renseigne l'adresse réseau de cet ordinateur. Seules les adresses de cet ordinateur sont lues (aucune recherche en ligne) : une adresse publique détenue par un routeur n'apparaît donc pas.",
+				"DETECTED": "Adresses de cet ordinateur :",
+				"NO_ADDRESS": "Aucune adresse réseau n'a été trouvée. Vérifiez que cet ordinateur est connecté à un réseau.",
+				"ONLY_IPV6": "Seules des adresses IPv6 ont été trouvées, et le serveur n'accepte que les connexions IPv4. Saisissez une adresse IPv4 ou un nom d'hôte."
+			},
 			"AUTO_START_STARTUP": "Démarrage automatique au démarrage",
 			"SERVER_TYPE": "Type de serveur",
 			"LOCAL_API_PORT": "Port API local",
@@ -5569,6 +5583,7 @@
 		"RETURN_ONLINE": "Retour en ligne",
 		"SEARCH": "Recherche",
 		"OPEN_SETTINGS": "Ouvrir les paramètres",
+		"OPEN_WEB_PORTAL": "Ouvrir mon temps et mon activité dans l'application web",
 		"REFRESH": "Rafraîchir",
 		"SWITCHED_OFFLINE": "Vous êtes maintenant passé en mode hors ligne.",
 		"SWITCHED_ONLINE": "Vous êtes maintenant passé en mode en ligne",
@@ -5655,7 +5670,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "Vous n'êtes pas un employé actif de {{ name }}, le minuteur ne peut donc pas y suivre le temps. Vous travaillez toujours dans votre organisation actuelle.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "Le changement d'organisation est en cours. Démarrez le minuteur une fois le changement terminé.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "Vous n'êtes pas un employé actif de {{ name }}, et le retour à votre organisation précédente a échoué. Veuillez vous reconnecter.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "Le passage à {{ name }} n'a pas pu être terminé sur cet appareil. Veuillez vous reconnecter."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Le passage à {{ name }} n'a pas pu être terminé sur cet appareil. Veuillez vous reconnecter.",
+			"CONNECTION_LOST": "Vous êtes hors ligne. Votre temps est enregistré sur cet appareil et sera synchronisé au retour de la connexion.",
+			"CONNECTION_RESTORED": "Vous êtes de nouveau en ligne.",
+			"CONNECTION_RESTORED_SYNCING": "Vous êtes de nouveau en ligne. Synchronisation de {{ count }} élément(s) en attente."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Le tracker a été arrêté en raison d'inactivité !",

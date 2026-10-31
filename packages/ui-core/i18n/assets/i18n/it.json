@@ -937,6 +937,8 @@
 			"MERCHANT": "Commerciante",
 			"ORGANIZATION": "Organizzazione",
 			"PAYMENT": "Pagamento",
+			"PAYROLL_RUN": "Ciclo paga",
+			"PAYROLL_ITEM": "Voce del ciclo paga",
 			"PIPELINE": "Condotta principale",
 			"PIPELINE_STAGE": "Stadio del flusso di lavoro",
 			"PRODUCT": "Prodotto",
@@ -5485,6 +5487,18 @@
 			"SERVER_HOSTNAME": "Nome host/indirizzo IP del server",
 			"LAN_ACCESS": "Consenti la connessione da altri computer della rete",
 			"LAN_ACCESS_HINT": "Se disattivato, solo questo computer può connettersi all'API e all'interfaccia web.",
+			"SERVER_HOST": {
+				"INVALID": "Inserisci un indirizzo IP o un nome host valido, ad esempio 192.168.1.20 o gauzy.example.com.",
+				"SSL_WITH_IP": "SSL è attivo: si consiglia un nome host, perché i certificati vengono di solito emessi per un nome. Funziona anche un certificato che include questo indirizzo IP.",
+				"IPV6": "Il server accetta solo connessioni IPv4, quindi gli altri computer non possono connettersi tramite un indirizzo IPv6. Usa un indirizzo IPv4 o un nome host.",
+				"PORT": "Ometti la porta: le porte si impostano nei rispettivi campi.",
+				"PATH": "Rimuovi ciò che segue il nome host (ad esempio /): le porte vengono aggiunte subito dopo questo valore.",
+				"DETECT": "Rileva il mio IP",
+				"DETECT_HINT": "Inserisce l'indirizzo di rete di questo computer. Vengono letti solo gli indirizzi di questo computer (nessuna ricerca online), quindi un indirizzo pubblico assegnato a un router non viene mostrato.",
+				"DETECTED": "Indirizzi di questo computer:",
+				"NO_ADDRESS": "Nessun indirizzo di rete trovato. Verifica che questo computer sia connesso a una rete.",
+				"ONLY_IPV6": "Sono stati trovati solo indirizzi IPv6 e il server accetta solo connessioni IPv4. Inserisci un indirizzo IPv4 o un nome host."
+			},
 			"AUTO_START_STARTUP": "Avvio automatico all'avvio",
 			"SERVER_TYPE": "Tipo di server",
 			"LOCAL_API_PORT": "Porta API locale",
@@ -5571,6 +5585,7 @@
 		"RETURN_ONLINE": "Ritorno online",
 		"SEARCH": "Ricerca",
 		"OPEN_SETTINGS": "Apri Impostazioni",
+		"OPEN_WEB_PORTAL": "Apri il mio tempo e le mie attività nell'app web",
 		"REFRESH": "Aggiorna",
 		"SWITCHED_OFFLINE": "Sei passato alla modalità offline adesso",
 		"SWITCHED_ONLINE": "Ora sei passato alla modalità online",
@@ -5657,7 +5672,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "Non sei un dipendente attivo di {{ name }}, quindi il timer non può registrare il tempo lì. Stai ancora lavorando nella tua organizzazione attuale.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "È in corso il cambio di organizzazione. Avvia il timer al termine del cambio.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "Non sei un dipendente attivo di {{ name }} e il ritorno alla tua organizzazione precedente non è riuscito. Accedi di nuovo.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "Non è stato possibile completare il passaggio a {{ name }} su questo dispositivo. Accedi di nuovo."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Non è stato possibile completare il passaggio a {{ name }} su questo dispositivo. Accedi di nuovo.",
+			"CONNECTION_LOST": "Sei offline. Il tuo tempo viene salvato su questo dispositivo e verrà sincronizzato al ritorno della connessione.",
+			"CONNECTION_RESTORED": "Sei di nuovo online.",
+			"CONNECTION_RESTORED_SYNCING": "Sei di nuovo online. Sincronizzazione di {{ count }} elementi in sospeso."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Il tracker è stato fermato a causa di inattività!",

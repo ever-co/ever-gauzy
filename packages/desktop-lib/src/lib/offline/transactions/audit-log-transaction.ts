@@ -2,6 +2,7 @@ import { IDatabaseProvider, ITransactionAuditLog } from "../../interfaces";
 import { AuditLogTO, TABLE_NAME_AUDIT_LOG } from "../dto";
 import { AppError } from "../../error-handler";
 import { Knex } from "knex";
+import { toUpdatePayload, warnEmptyUpdate } from "../utils";
 
 export class AuditLogTransaction implements ITransactionAuditLog {
 	private _databaseProvider: IDatabaseProvider;
@@ -28,12 +29,16 @@ export class AuditLogTransaction implements ITransactionAuditLog {
 	}
 
 	public async update(id: number, value: Partial<AuditLogTO>): Promise<void> {
+		const changes = toUpdatePayload(value);
+		if (!changes) {
+			return warnEmptyUpdate('AUDIT_LOG_TRX', id);
+		}
 		await this._databaseProvider.connection.transaction(
 			async (trx: Knex.Transaction) => {
 				try {
 					await trx(TABLE_NAME_AUDIT_LOG)
 						.where({ id })
-						.update(value);
+						.update(changes);
 					await trx.commit();
 				} catch (error) {
 					console.error('Error updating audit log entry:', error);

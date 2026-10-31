@@ -37,7 +37,9 @@
 			"node_modules/@sentry/electron",
 			"node_modules/better-sqlite3",
 			"node_modules/@sentry/profiling-node/lib",
-			"node_modules/@gauzy/core/src/lib/i18n"
+			"node_modules/@gauzy/core/src/lib/i18n",
+			"**/node_modules/sharp/**/*",
+			"**/node_modules/@img/**/*"
 		],
 		"directories": {
 			"buildResources": "icons",

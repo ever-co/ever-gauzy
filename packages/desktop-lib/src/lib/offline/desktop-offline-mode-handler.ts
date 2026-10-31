@@ -3,6 +3,7 @@ import { NetworkStateManager } from '../contexts';
 import { LocalStore } from '../desktop-store';
 import { IOfflineMode } from '../interfaces';
 import { ApiServerConnectivity } from '../states';
+import { CONNECTIVITY_PING_INTERVAL_MS } from './connectivity-timing';
 
 export class DesktopOfflineModeHandler extends EventEmitter implements IOfflineMode {
 	private static _instance: IOfflineMode;
@@ -30,7 +31,7 @@ export class DesktopOfflineModeHandler extends EventEmitter implements IOfflineM
 		this._pingTimer = null;
 
 		// Default ping timer interval set to 10 seconds
-		this._PING_INTERVAL = 10 * 1000;
+		this._PING_INTERVAL = CONNECTIVITY_PING_INTERVAL_MS;
 
 		this.on('connection-restored', () => {
 			console.log('[OfflineModeHandler]: Connection restored');

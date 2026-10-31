@@ -936,6 +936,8 @@
 			"MERCHANT": "Kupiec",
 			"ORGANIZATION": "Organizacja",
 			"PAYMENT": "Płatność",
+			"PAYROLL_RUN": "Przebieg płacowy",
+			"PAYROLL_ITEM": "Pozycja przebiegu płacowego",
 			"PIPELINE": "Rurociąg",
 			"PIPELINE_STAGE": "Etap w procesie",
 			"PRODUCT": "Produkt",
@@ -5484,6 +5486,18 @@
 			"SERVER_HOSTNAME": "Nazwa hosta/adres IP serwera",
 			"LAN_ACCESS": "Zezwalaj innym komputerom w sieci na połączenie",
 			"LAN_ACCESS_HINT": "Po wyłączeniu tylko ten komputer może łączyć się z API i interfejsem WWW.",
+			"SERVER_HOST": {
+				"INVALID": "Wprowadź prawidłowy adres IP lub nazwę hosta, np. 192.168.1.20 lub gauzy.example.com.",
+				"SSL_WITH_IP": "SSL jest włączony: zalecana jest nazwa hosta, ponieważ certyfikaty są zwykle wystawiane dla nazwy. Certyfikat zawierający ten adres IP również zadziała.",
+				"IPV6": "Serwer przyjmuje tylko połączenia IPv4, więc inne komputery nie mogą połączyć się przez adres IPv6. Użyj adresu IPv4 lub nazwy hosta.",
+				"PORT": "Pomiń port: porty ustawia się w osobnych polach.",
+				"PATH": "Usuń to, co następuje po nazwie hosta (np. /): porty są dodawane bezpośrednio po tej wartości.",
+				"DETECT": "Wykryj moje IP",
+				"DETECT_HINT": "Wpisuje adres sieciowy tego komputera. Odczytywane są tylko adresy tego komputera (bez wyszukiwania online), więc publiczny adres przypisany do routera nie jest pokazywany.",
+				"DETECTED": "Adresy tego komputera:",
+				"NO_ADDRESS": "Nie znaleziono adresu sieciowego. Sprawdź, czy ten komputer jest połączony z siecią.",
+				"ONLY_IPV6": "Znaleziono tylko adresy IPv6, a serwer przyjmuje tylko połączenia IPv4. Wprowadź adres IPv4 lub nazwę hosta."
+			},
 			"AUTO_START_STARTUP": "Automatyczne uruchamianie przy starcie",
 			"SERVER_TYPE": "Typ serwera",
 			"LOCAL_API_PORT": "Port lokalnego interfejsu API",
@@ -5570,6 +5584,7 @@
 		"RETURN_ONLINE": "Powrót online",
 		"SEARCH": "Szukaj",
 		"OPEN_SETTINGS": "Otwórz ustawienia",
+		"OPEN_WEB_PORTAL": "Otwórz mój czas i aktywność w aplikacji internetowej",
 		"REFRESH": "Odśwież",
 		"SWITCHED_OFFLINE": "Przełączyłeś się teraz w tryb offline",
 		"SWITCHED_ONLINE": "Teraz przełączyłeś się w tryb online",
@@ -5656,7 +5671,10 @@
 			"ORGANIZATION_NOT_EMPLOYEE": "Nie jesteś aktywnym pracownikiem {{ name }}, więc licznik czasu nie może tam rejestrować czasu. Nadal pracujesz w bieżącej organizacji.",
 			"ORGANIZATION_SWITCH_IN_PROGRESS": "Trwa przełączanie organizacji. Uruchom licznik czasu po zakończeniu przełączania.",
 			"ORGANIZATION_SWITCH_BACK_FAILED": "Nie jesteś aktywnym pracownikiem {{ name }}, a powrót do poprzedniej organizacji nie powiódł się. Zaloguj się ponownie.",
-			"ORGANIZATION_SWITCH_INCOMPLETE": "Nie udało się dokończyć przełączania na {{ name }} na tym urządzeniu. Zaloguj się ponownie."
+			"ORGANIZATION_SWITCH_INCOMPLETE": "Nie udało się dokończyć przełączania na {{ name }} na tym urządzeniu. Zaloguj się ponownie.",
+			"CONNECTION_LOST": "Jesteś offline. Twój czas jest zapisywany na tym urządzeniu i zostanie zsynchronizowany po przywróceniu połączenia.",
+			"CONNECTION_RESTORED": "Znowu jesteś online.",
+			"CONNECTION_RESTORED_SYNCING": "Znowu jesteś online. Synchronizowanie oczekujących elementów: {{ count }}."
 		},
 		"NATIVE_NOTIFICATION": {
 			"STOPPED_DU_INACTIVITY": "Śledzenie zostało zatrzymane z powodu braku aktywności!",

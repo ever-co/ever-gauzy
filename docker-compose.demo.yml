@@ -25,6 +25,7 @@ services:
     image: ghcr.io/ever-co/gauzy-api:latest
     environment:
       NODE_ENV: ${NODE_ENV:-development}
+      PRINT_EMAIL_CODES: ${PRINT_EMAIL_CODES:-true}
       DB_HOST: db
       MAKE_WEBHOOK_URL: ${MAKE_WEBHOOK_URL:-}
 

@@ -14,4 +14,5 @@ export { environment, gauzyToggleFeatures } from './lib/environments/environment
 export * from './lib/environments/is-development';
 export * from './lib/environments/ienvironment';
 export * from './lib/environments/social-auth.helper';
+export * from './lib/environments/auth-switches.helper';
 export { resolveSecret, isGeneratedSecret } from './lib/environments/secret-resolver';

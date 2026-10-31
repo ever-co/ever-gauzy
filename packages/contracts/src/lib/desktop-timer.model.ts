@@ -92,5 +92,25 @@ export interface IOSInfo {
 	version: string;
 }
 
+/**
+ * IPC channel (`ipcRenderer.invoke`) answered by the main process of Gauzy Server and Gauzy API
+ * Server with this computer's network addresses ({@link IDesktopNetworkAddress}[], best first).
+ */
+export const DESKTOP_NETWORK_ADDRESSES_CHANNEL = 'GET_NETWORK_ADDRESSES';
+
+/**
+ * A network address of the computer a desktop server app runs on, as offered next to the
+ * "Server Hostname / IP Address" setting. Read from the operating system only (no online lookup).
+ */
+export interface IDesktopNetworkAddress {
+	/** The network interface, such as `Wi-Fi`, `Ethernet`, `eth0` or `en0`. */
+	name: string;
+	/** The address, IPv6 without brackets, such as `192.168.1.20` or `fd00::20`. */
+	address: string;
+	family: 'IPv4' | 'IPv6';
+	/** Whether the interface looks like a virtual machine, container or VPN adapter (listed last). */
+	virtual: boolean;
+}
+
 // Combine them into a union
 export type AuditLogArgs = ILogRequest;

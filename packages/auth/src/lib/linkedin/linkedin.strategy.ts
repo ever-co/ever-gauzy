@@ -1,27 +1,73 @@
+// cspell:ignore Headerfor
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { ExtractJwt } from 'passport-jwt';
 import { Strategy } from 'passport-linkedin-oauth2';
+import { InternalOAuthError } from 'passport-oauth2';
 import { environment } from '@gauzy/config';
+import {
+	LINKEDIN_OIDC_SCOPES,
+	LINKEDIN_USERINFO_URL,
+	LinkedinProfile,
+	parseLinkedinUserInfo
+} from './linkedin-userinfo';
+
+/**
+ * The calls this strategy makes on passport-oauth2's client (node-oauth's `OAuth2`), which passport-oauth2 lets
+ * subclasses use to read the member's profile.
+ */
+interface OAuth2ProfileClient {
+	useAuthorizationHeaderforGET(useIt: boolean): void;
+	get(url: string, accessToken: string, callback: (error: unknown, body?: string | Buffer) => void): void;
+}
 
 @Injectable()
 export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
+	/** passport-oauth2's client for LinkedIn. */
+	declare protected readonly _oauth2: OAuth2ProfileClient;
+
 	constructor(protected readonly configService: ConfigService) {
 		super(parseLinkedinConfig(configService));
+		// The UserInfo endpoint takes the access token in the `Authorization: Bearer` header only.
+		this._oauth2.useAuthorizationHeaderforGET(true);
+	}
+
+	/**
+	 * Loads the member's profile from LinkedIn's OpenID Connect UserInfo endpoint.
+	 *
+	 * Replaces the loader of passport-linkedin-oauth2, which reads `/v2/me` and `/v2/emailAddress`: those need the
+	 * retired `r_liteprofile` and `r_emailaddress` scopes, and their address carries no verified flag.
+	 *
+	 * @param accessToken - The access token LinkedIn issued for the `openid profile email` scopes.
+	 * @param done - Receives the profile, or the error when LinkedIn cannot be reached or answers unexpectedly.
+	 */
+	userProfile(accessToken: string, done: (error: Error | null, profile?: LinkedinProfile) => void): void {
+		this._oauth2.get(LINKEDIN_USERINFO_URL, accessToken, (error, body) => {
+			if (error) {
+				return done(new InternalOAuthError('Failed to fetch the LinkedIn user info', error));
+			}
+
+			let profile: LinkedinProfile;
+			try {
+				profile = parseLinkedinUserInfo(String(body));
+			} catch (parseError) {
+				return done(new InternalOAuthError('Failed to parse the LinkedIn user info', parseError));
+			}
+			done(null, profile);
+		});
 	}
 
 	/**
 	 * Validates the provided OAuth profile and constructs a simplified user object.
 	 *
-	 * This function extracts the user's email(s) from the OAuth profile and combines it
-	 * with the access token. If validation succeeds, the user object is returned.
-	 * Otherwise, the error is thrown.
+	 * The profile comes from {@link userProfile}: its address is flagged verified only when LinkedIn's UserInfo
+	 * response says `email_verified: true`, and sign-in matches existing accounts through verified addresses only.
 	 *
 	 * @param _request - The incoming request object.
 	 * @param accessToken - The OAuth access token.
 	 * @param refreshToken - The OAuth refresh token.
-	 * @param profile - The user profile returned by the OAuth provider.
+	 * @param profile - The member's profile built from the UserInfo response.
 	 *
 	 * Passport contract (`@nestjs/passport`'s `PassportStrategy` mixin): the returned value is the user and a
 	 * thrown error is the error; the mixin reports either one to passport's `done` exactly once, so this
@@ -29,14 +75,11 @@ export class LinkedinStrategy extends PassportStrategy(Strategy, 'linkedin') {
 	 *
 	 * @returns The user object built from the profile.
 	 */
-	async validate(_request: any, accessToken: string, refreshToken: string, profile: any) {
+	async validate(_request: any, accessToken: string, refreshToken: string, profile: LinkedinProfile) {
 		try {
-			// Extract emails from the OAuth profile.
-			const { emails } = profile;
-
 			// Create a user object with the required properties.
 			const user = {
-				emails,
+				emails: profile?.emails ?? [],
 				accessToken,
 				refreshToken
 			};
@@ -85,8 +128,8 @@ export const parseLinkedinConfig = (configService: ConfigService): Record<string
 		callbackURL: callbackURL || `${process.env.API_BASE_URL ?? 'http://localhost:3000'}/api/auth/linkedin/callback`,
 		// Include the request object in the OAuth callback.
 		passReqToCallback: true,
-		// Specify the scope for LinkedIn OAuth (for reading basic profile and email).
-		scope: ['r_liteprofile', 'r_emailaddress'],
+		// Sign In with LinkedIn using OpenID Connect: the member's id, name, picture, and address with its verified flag.
+		scope: [...LINKEDIN_OIDC_SCOPES],
 		// Use the JWT secret from the environment for LinkedIn OAuth.
 		secretOrKey: environment.JWT_SECRET,
 		// Define how to extract the JWT from the request's Authorization header.

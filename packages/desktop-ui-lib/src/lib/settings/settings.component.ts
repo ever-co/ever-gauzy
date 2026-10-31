@@ -51,6 +51,12 @@ import { SwitchThemeComponent } from '../theme-selector/switch-theme/switch-them
 import { ReplacePipe } from '../time-tracker/pipes/replace.pipe';
 import { TimeTrackerService } from '../time-tracker/time-tracker.service';
 import { SslComponent } from './ssl/ssl.component';
+import {
+	isValidServerHost,
+	normalizeServerHost,
+	SERVER_HOST_INVALID_MESSAGE,
+	ServerHostInputComponent
+} from './server-host';
 import { PermissionManagerComponent } from '../permission-manager/permission-manager.component';
 
 @UntilDestroy({ checkProperties: true })
@@ -88,6 +94,7 @@ import { PermissionManagerComponent } from '../permission-manager/permission-man
 		SpinnerButtonDirective,
 		NgTemplateOutlet,
 		SslComponent,
+		ServerHostInputComponent,
 		AsyncPipe,
 		LowerCasePipe,
 		TitleCasePipe,
@@ -1054,6 +1061,11 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 	}
 
 	public async restartApp(): Promise<void> {
+		// Server apps: never save a "Server Hostname / IP Address" the server cannot use (#7550).
+		if (this.isServerHostInvalid) {
+			this._notifier.error(this._translateService.instant(SERVER_HOST_INVALID_MESSAGE));
+			return;
+		}
 		this._isRestart$.next(true);
 		if (!this.isServer && !this.authSetting.isLogout) {
 			// isRestart=true prevents the settings window from being closed during logout,
@@ -1069,7 +1081,8 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 			});
 		});
 		const newConfig: any = {
-			...this.config
+			...this.config,
+			...(this.isServer && { host: normalizeServerHost(this.config.host) })
 		};
 		if (this.config.timeTrackerWindow) newConfig.awHost = `http://127.0.0.1:${this.config.awPort}`;
 		this.electronService.ipcRenderer.send('save_additional_setting', thConfig);
@@ -1486,12 +1499,38 @@ export class SettingsComponent implements OnInit, AfterViewInit, OnDestroy {
 		}
 		this.config[type] = value;
 		this.persistedServerConfig[type] = this.cloneSettingValue(value);
-		this.electronService.ipcRenderer.send('update_server_config', this.config);
+		this.electronService.ipcRenderer.send('update_server_config', this.serverConfigToStore());
 		if (showNotification) {
 			this._notifier.success(
 				'Update ' + type.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase() + ' setting successfully'
 			);
 		}
+	}
+
+	/**
+	 * Gauzy Server and Gauzy API Server: the "Server Hostname / IP Address" typed in the settings is
+	 * neither an IP address nor a host name, so Save stays disabled until it is fixed (#7550).
+	 */
+	public get isServerHostInvalid(): boolean {
+		return this.isServer && !isValidServerHost(this.config?.host);
+	}
+
+	/**
+	 * The server config an immediate update (SSL, auto start) stores. Server apps store the host trimmed,
+	 * as Save does, without changing the text being typed; while it is invalid it is left out: the
+	 * stored config is merged, so it keeps the last saved host.
+	 */
+	private serverConfigToStore(): Record<string, unknown> {
+		if (!this.isServer) {
+			return this.config;
+		}
+		const config: Record<string, unknown> = { ...this.config };
+		if (this.isServerHostInvalid) {
+			delete config['host'];
+		} else {
+			config['host'] = normalizeServerHost(this.config.host);
+		}
+		return config;
 	}
 
 	/** Last values sent to the desktop process. Forms may mutate appSetting/config before save. */
