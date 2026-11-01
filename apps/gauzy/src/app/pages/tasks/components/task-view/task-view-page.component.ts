@@ -395,14 +395,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		const dialog = this.dialogService.open(AddTaskDialogComponent, { context: { selectedTask } });
 		const data: any = await firstValueFrom(dialog.onClose.pipe(first()));
 		if (!data) return;
-		const { estimateDays, estimateHours, estimateMinutes } = data;
-		const estimate =
-			(Number(estimateDays) || 0) * 24 * 60 * 60 + (Number(estimateHours) || 0) * 60 * 60 + (Number(estimateMinutes) || 0) * 60;
 		try {
 			await firstValueFrom(
 				this.tasksService.editTask({
 					...data,
-					estimate: estimate || null,
+					estimate: this.estimateOf(data),
 					...this.scope(),
 					id: taskId
 				})
@@ -412,6 +409,13 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
+	}
+
+	/** The seconds the task dialog's estimate fields add up to, or none when they are blank. */
+	private estimateOf({ estimateDays, estimateHours, estimateMinutes }: any): number | null {
+		const estimate =
+			(Number(estimateDays) || 0) * 24 * 60 * 60 + (Number(estimateHours) || 0) * 60 * 60 + (Number(estimateMinutes) || 0) * 60;
+		return estimate || null;
 	}
 
 	/** Copies the page's address, with the open tab, to paste in a chat or a ticket. */
