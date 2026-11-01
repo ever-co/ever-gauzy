@@ -7617,6 +7617,17 @@
 		"BOARD": "Tableau",
 		"COLUMN_EMPTY": "Aucune tâche",
 		"CANNOT_DROP": "Les tâches ne peuvent pas être déplacées vers « {{ column }} », car ce n’est pas un statut de ce projet.",
+		"BOARD_FILTER": {
+			"TITLE": "Filtres du tableau",
+			"SEARCH": "Rechercher dans ce tableau",
+			"ASSIGNEES": "Filtrer par responsable",
+			"UNASSIGNED": "Non assignée",
+			"PRIORITY": "Priorité",
+			"TYPE": "Type",
+			"LABELS": "Libellés",
+			"CLEAR": "Effacer les filtres",
+			"RESULTS": "{{ shown }} sur {{ total }} tâches"
+		},
 		"ACTIVITY": "Activité",
 		"ACTIVITY_CAPTION": "Changements récents du projet et de ses tâches",
 		"NO_ACTIVITY": "Aucune activité pour l'instant",

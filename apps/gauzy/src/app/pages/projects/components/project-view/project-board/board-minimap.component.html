@@ -1,0 +1,16 @@
+@if (viewport; as view) {
+<div class="board-minimap" aria-hidden="true">
+	<div
+		class="board-minimap-track"
+		(pointerdown)="onPointerDown($event)"
+		(pointermove)="onPointerMove($event)"
+		(pointerup)="onPointerUp()"
+		(pointercancel)="onPointerUp()"
+	>
+		@for (segment of segments; track segment) {
+		<span class="board-minimap-column"></span>
+		}
+		<span class="board-minimap-view" [style.inset-inline-start.%]="view.start * 100" [style.width.%]="view.size * 100"></span>
+	</div>
+</div>
+}

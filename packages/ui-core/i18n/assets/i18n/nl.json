@@ -7620,6 +7620,17 @@
 		"BOARD": "Bord",
 		"COLUMN_EMPTY": "Geen taken",
 		"CANNOT_DROP": "Taken kunnen niet naar ‘{{ column }}’ worden verplaatst, omdat dit geen status van dit project is.",
+		"BOARD_FILTER": {
+			"TITLE": "Bordfilters",
+			"SEARCH": "Dit bord doorzoeken",
+			"ASSIGNEES": "Filteren op toegewezen persoon",
+			"UNASSIGNED": "Niet toegewezen",
+			"PRIORITY": "Prioriteit",
+			"TYPE": "Type",
+			"LABELS": "Labels",
+			"CLEAR": "Filters wissen",
+			"RESULTS": "{{ shown }} van {{ total }} taken"
+		},
 		"ACTIVITY": "Activiteit",
 		"ACTIVITY_CAPTION": "Recente wijzigingen aan het project en zijn taken",
 		"NO_ACTIVITY": "Nog geen activiteit",

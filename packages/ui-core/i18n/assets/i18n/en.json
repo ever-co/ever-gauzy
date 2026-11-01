@@ -8832,6 +8832,17 @@
 		"BOARD": "Board",
 		"COLUMN_EMPTY": "No tasks",
 		"CANNOT_DROP": "Tasks can’t be moved to “{{ column }}” because it isn’t a status of this project.",
+		"BOARD_FILTER": {
+			"TITLE": "Board filters",
+			"SEARCH": "Search this board",
+			"ASSIGNEES": "Filter by assignee",
+			"UNASSIGNED": "Unassigned",
+			"PRIORITY": "Priority",
+			"TYPE": "Type",
+			"LABELS": "Labels",
+			"CLEAR": "Clear filters",
+			"RESULTS": "{{ shown }} of {{ total }} tasks"
+		},
 		"ACTIVITY": "Activity",
 		"ACTIVITY_CAPTION": "Recent changes to the project and its tasks",
 		"NO_ACTIVITY": "No activity yet",

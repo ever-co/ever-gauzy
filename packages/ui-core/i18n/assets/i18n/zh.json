@@ -8835,6 +8835,17 @@
 		"BOARD": "看板",
 		"COLUMN_EMPTY": "暂无任务",
 		"CANNOT_DROP": "无法将任务移动到“{{ column }}”，因为它不是此项目的状态。",
+		"BOARD_FILTER": {
+			"TITLE": "看板筛选",
+			"SEARCH": "搜索此看板",
+			"ASSIGNEES": "按负责人筛选",
+			"UNASSIGNED": "未分配",
+			"PRIORITY": "优先级",
+			"TYPE": "类型",
+			"LABELS": "标签",
+			"CLEAR": "清除筛选",
+			"RESULTS": "{{ shown }} / {{ total }} 个任务"
+		},
 		"ACTIVITY": "动态",
 		"ACTIVITY_CAPTION": "项目及其任务的最新变更",
 		"NO_ACTIVITY": "暂无动态",
