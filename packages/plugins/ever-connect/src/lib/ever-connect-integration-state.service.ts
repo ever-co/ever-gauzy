@@ -27,6 +27,7 @@ import {
 } from './ever-connect-platform.service';
 import { EverConnectSignals } from './ever-connect-signals';
 import { EverConnectStore, IntegrationRecord, LinkRecord } from './ever-connect.store';
+import { EVER_ID_LOGIN, EverIdLoginHandler, SignInClientStatus } from './handlers/ever-id-login.handler';
 import {
 	GAUZY_INTEGRATIONS,
 	gauzyIntegration,
@@ -34,6 +35,7 @@ import {
 	offeredOn,
 	sharedDefinition
 } from './integrations/integration-definitions';
+import { PersonLinkReporter } from './reporters/person-link.reporter';
 import { CONSTANTS, IntegrationKey, ProblemError, signCompactJws } from './sdk';
 
 /** The platform's brief state of one integration. */
@@ -77,6 +79,11 @@ export interface IntegrationView {
 	revoked_at: string | null;
 	consent: { id: string; at: string | null; source: string | null } | null;
 	policy: 'allowed' | 'denied_by_env' | 'denied_by_policy';
+	/**
+	 * Sign in with Ever ID only: how far this installation's sign-in client got (`pending`, `ready`,
+	 * `failed`; `lost` or `unreadable`: enable it again in app.ever.co). Never the client itself.
+	 */
+	sign_in_client?: SignInClientStatus;
 }
 
 const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
@@ -136,8 +143,9 @@ export function consentLinkAllowed(link: string, apiUrl: string | null): boolean
  * - The operator's policy (and `EVER_CONNECT_INTEGRATIONS_DENY`, which wins) denies an integration
  *   for every organization.
  *
- * In this release only `instance_url` and `stats_link` can be enabled; every other integration reads
- * "coming soon" whatever Ever Platform says, and nothing of it moves.
+ * In this release `instance_url`, `stats_link` and `ever_id_login` (Sign in with Ever ID, while Ever
+ * Platform offers it) can be enabled; every other integration reads "coming soon" whatever Ever
+ * Platform says, and nothing of it moves.
  */
 @Injectable()
 export class EverConnectIntegrationStateService {
@@ -157,7 +165,9 @@ export class EverConnectIntegrationStateService {
 		private readonly signals: EverConnectSignals,
 		private readonly instance: EverInstanceService,
 		@Inject(EVER_CONNECT_SETTINGS) private readonly config: EverConnectConfig,
-		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number }
+		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number },
+		@Optional() private readonly everIdLogin?: EverIdLoginHandler,
+		@Optional() private readonly linkReporter?: PersonLinkReporter
 	) {
 		this.now = clock?.now ?? (() => Date.now());
 	}
@@ -414,7 +424,10 @@ export class EverConnectIntegrationStateService {
 			consent: row?.consentId
 				? { id: row.consentId, at: isoMs(row.consentedAt), source: row.consentSource }
 				: null,
-			policy: denied === 'env' ? 'denied_by_env' : denied === 'policy' ? 'denied_by_policy' : 'allowed'
+			policy: denied === 'env' ? 'denied_by_env' : denied === 'policy' ? 'denied_by_policy' : 'allowed',
+			...(definition.key === EVER_ID_LOGIN && this.everIdLogin
+				? { sign_in_client: await this.everIdLogin.status() }
+				: {})
 		};
 	}
 
@@ -812,6 +825,8 @@ export class EverConnectIntegrationStateService {
 				await this.onDisable(after);
 			}
 		}
+		// Sign in with Ever ID's client is forgotten whatever state its row was in.
+		await this.forgetSignInClient();
 	}
 
 	/** The integrations of one link off, here only (the link was removed). */
@@ -856,6 +871,10 @@ export class EverConnectIntegrationStateService {
 			if (row.name === 'stats_link' && !this.config.cloud) {
 				await this.linkStatistics();
 			}
+			if (row.name === EVER_ID_LOGIN) {
+				// This installation's sign-in client: asked for now, read until it is ready.
+				await this.everIdLogin?.enabled();
+			}
 		} catch (error) {
 			if (isCredentialRevoked(error)) {
 				this.signals.revoked$.next();
@@ -872,7 +891,20 @@ export class EverConnectIntegrationStateService {
 	private async onDisable(row: IntegrationRecord): Promise<void> {
 		this.retry.delete(`${row.scope}|${row.name}`);
 		if (row.name === 'instance_url') {
-			await this.store.updateConnection({ publicUrl: null });
+			await this.store.updateConnection({ publicUrl: null, publicUrlCheckUntil: null });
+		}
+		if (row.name === EVER_ID_LOGIN) {
+			await this.forgetSignInClient();
+		}
+	}
+
+	/** Sign in with Ever ID ended: its client is forgotten and no link report is sent any more. */
+	private async forgetSignInClient(): Promise<void> {
+		try {
+			await this.everIdLogin?.disabled();
+			await this.linkReporter?.stop();
+		} catch (error) {
+			this.logger.warn(`Sign in with Ever ID could not be cleared here (${errorCode(error)}).`);
 		}
 	}
 

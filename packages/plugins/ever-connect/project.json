@@ -11,7 +11,7 @@
 		}
 	},
 	"tags": ["type:plugin"],
-	"implicitDependencies": ["common", "contracts", "core", "plugin", "plugin-ever-instance"],
+	"implicitDependencies": ["common", "contracts", "core", "plugin", "plugin-auth-zitadel", "plugin-ever-instance"],
 	"targets": {
 		"build": {
 			"executor": "@nx/js:tsc",

@@ -21,11 +21,12 @@ const MIGRATIONS = join(__dirname, '../../../../../core/src/lib/database/migrati
 
 type Migration = { name: string; up(runner: unknown): Promise<void>; down(runner: unknown): Promise<void> };
 
-/** The core migrations the plugin needs, in order: `ever_instance`, then the six Ever Platform tables. */
+/** The core migrations the plugin needs, in order: `ever_instance`, the six Ever Platform tables, then Sign in with Ever ID's. */
 export function connectMigrations(): Migration[] {
 	const { EverInstance1790000021000 } = require(join(MIGRATIONS, '1790000021000-EverInstance'));
 	const { EverConnect1790000021200 } = require(join(MIGRATIONS, '1790000021200-EverConnect'));
-	return [new EverInstance1790000021000(), new EverConnect1790000021200()];
+	const { EverConnectIdentity1791000003500 } = require(join(MIGRATIONS, '1791000003500-EverConnectIdentity'));
+	return [new EverInstance1790000021000(), new EverConnect1790000021200(), new EverConnectIdentity1791000003500()];
 }
 
 export const PLUGIN_TABLES = [
@@ -35,6 +36,8 @@ export const PLUGIN_TABLES = [
 	'ever_connect_policy',
 	'ever_connect_audit',
 	'ever_connect_lookup_cache',
+	'ever_connect_person_link_report',
+	'ever_connect_person_request',
 	'ever_instance'
 ];
 
