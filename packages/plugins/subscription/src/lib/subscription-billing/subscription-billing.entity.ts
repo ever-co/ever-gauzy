@@ -128,8 +128,9 @@ export class SubscriptionBilling extends TenantOrganizationBaseEntity implements
 	 * was only noticed after the money was taken. The billing run writes the token, with `chargeClaimedAt`, in one
 	 * conditional statement before it calls the order path and only while the cycle is `PENDING` or `FAILED`; the
 	 * write that records the attempt's outcome clears both. While the claim is live the settling actions refuse the
-	 * cycle with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT`; a claim older than the window the order path fences one
-	 * attempt for is stale, and the next pass recovers it (`SubscriptionBillingService.claimCharge`).
+	 * cycle with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT`; a claim older than the claim window (`chargeClaimWindowMs`,
+	 * two of the windows the order path fences one attempt for) is stale, and the next pass recovers it
+	 * (`SubscriptionBillingService.claimCharge`).
 	 */
 	@ApiPropertyOptional({ type: () => String, readOnly: true })
 	@IsOptional()

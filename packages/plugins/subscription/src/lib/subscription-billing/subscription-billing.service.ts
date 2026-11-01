@@ -356,6 +356,24 @@ async function lockedCycleRow(manager: EntityManager, id: ID): Promise<Subscript
 }
 
 /**
+ * Refuses conditions that state no value (`{}`, `{ subscriptionId: undefined }`) for a bulk delete or retirement.
+ *
+ * Read, they select every cycle in the caller's scope; the base write refused them (TypeORM's empty-criteria guard), and
+ * restricting the write to the rows read would have turned that refusal into a write of all of them (Copilot).
+ *
+ * @param criteria The conditions the caller stated.
+ * @param action What the write would do, for the refusal.
+ * @throws BadRequestException with `SUBSCRIPTION_BILLING_CRITERIA_REQUIRED` when they state none.
+ */
+function assertStatedCriteria(criteria: object, action: string): void {
+	if (!Object.values(criteria as Record<string, unknown>).some((value) => value !== undefined)) {
+		throw new BadRequestException(
+			`SUBSCRIPTION_BILLING_CRITERIA_REQUIRED: cycles are ${action} by the conditions that select them, and none were stated.`
+		);
+	}
+}
+
+/**
  * What a frozen attempt is signed for (`freezeAttempt`): the cycle it was frozen on, named apart from the subscriptions a
  * scheduled change is signed for, so neither signature verifies as the other.
  *
@@ -1479,6 +1497,11 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 */
 	public async delete(criteria: ID | FindOptionsWhere<SubscriptionBilling>, options?: any): Promise<DeleteResult> {
 		const where = typeof criteria === 'string' ? { id: criteria } : { ...(criteria ?? {}) };
+
+		if (typeof criteria !== 'string') {
+			assertStatedCriteria(where, 'deleted');
+		}
+
 		// Read through the base class's own scope, the one its DELETE runs in, so every cycle the DELETE can reach is
 		// checked and fenced - a tenant admin reaches every organization of the tenant, not only the selected one.
 		const cycles = await this.find({ where: where as FindOptionsWhere<SubscriptionBilling> });
@@ -1565,6 +1588,11 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	public async softDelete(criteria: string | number | FindOptionsWhere<SubscriptionBilling>, options?: any): Promise<any> {
 		const selects = typeof criteria === 'object' && criteria !== null;
 		const where = selects ? { ...(criteria as FindOptionsWhere<SubscriptionBilling>) } : { id: criteria };
+
+		if (selects) {
+			assertStatedCriteria(where, 'retired');
+		}
+
 		// The base class's own scope, the one its soft delete runs in.
 		const cycles = await this.find({ where: where as FindOptionsWhere<SubscriptionBilling> });
 

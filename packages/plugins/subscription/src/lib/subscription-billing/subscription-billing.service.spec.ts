@@ -1380,7 +1380,8 @@ describe('SubscriptionBillingService — a charge in flight fences the cycle (ch
 		await expect(
 			fixture.service.markPaid('paid-by-a-pass', { orderId: 'order-1', chargeClaim: 'the-pass-whose-claim-went-stale' })
 		).rejects.toMatchObject(claimLost);
-		// The operator's payment left no order, so the pass whose charge was in flight still records its success.
+		// The operator's payment left no order, so the pass whose charge was in flight is not refused: its payment is a
+		// no-op on the cycle the operator paid, and its order id is not written over the operator's payment.
 		const operatorPaid = await fixture.service.markPaid('paid-by-an-operator', { orderId: 'order-2', chargeClaim: 'a-pass' });
 
 		expect(operatorPaid.status).toBe(SubscriptionBillingStatus.PAID);
@@ -1509,6 +1510,18 @@ describe('SubscriptionBillingService — a charge in flight fences the cycle (ch
 			expect(fixture.service.frozenAttemptOf(forged as never, 1)).toBeNull();
 			expect(fixture.service.holdsUnrecordedAttempt(forged as never)).toBe(false);
 		}
+	});
+
+	it('refuses a bulk delete or retirement whose conditions state no value, rather than writing every cycle in scope', async () => {
+		const fixture = billingFixture([billingRow('billing-1'), nextPeriod('billing-2')]);
+
+		for (const criteria of [{}, { subscriptionId: undefined }]) {
+			await expect(fixture.service.delete(criteria as never)).rejects.toThrow('SUBSCRIPTION_BILLING_CRITERIA_REQUIRED');
+			await expect(fixture.service.softDelete(criteria as never)).rejects.toThrow('SUBSCRIPTION_BILLING_CRITERIA_REQUIRED');
+		}
+
+		expect(fixture.billing('billing-1')?.deletedAt).toBeUndefined();
+		expect(fixture.billing('billing-2')?.deletedAt).toBeUndefined();
 	});
 
 	it('deletes only the cycles its conditions selected when they were checked, and nothing when they selected none', async () => {
