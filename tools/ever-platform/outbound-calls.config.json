@@ -10,6 +10,9 @@
 		"8": {
 			"trigger": "while connected: at connect and at each link, with each heartbeat, on an entitlement notice on the event feed, on demand (Refresh, at most 6 an hour)",
 			"cadence": "with the heartbeat (every 24 h); on a notice; on demand"
+		},
+		"14": {
+			"cadence": "once per installation (one client serves every linked organization); then a read 5 s later, the wait doubling up to every 5 minutes, until the client is ready"
 		}
 	},
 	"module_names": {

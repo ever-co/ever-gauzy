@@ -368,7 +368,18 @@ export default {
 			await api(session, 'POST', '/api/ever-connect/integrations/ever_id_login/accept', { accepted: true }),
 			[200]
 		);
-		await until('the sign-in client (row 14)', async () => (await recordedRows(session)).includes(14) || null, 120);
+		// Both requests of the row: the POST goes out with the accept, the GET from the identity worker
+		// (5 s later, on its next pass), and the disconnect below stops that worker.
+		await until(
+			'the sign-in client requested and read (row 14, POST and GET)',
+			async () => {
+				const methods = new Set(
+					(await mock(session, 'requests')).filter((entry) => entry.row === 14).map((entry) => entry.method)
+				);
+				return (methods.has('POST') && methods.has('GET')) || null;
+			},
+			120
+		);
 
 		// Row 20: a person's deletion request arrives on the event feed (row 7) and the installation
 		// answers it. No call depends on Sign in with Ever ID for this one.
