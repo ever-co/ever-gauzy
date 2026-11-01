@@ -203,7 +203,11 @@ export class EverWorksInboxPreferencesComponent implements OnInit {
 	private readonly reload$ = new Subject<void>();
 
 	ngOnInit(): void {
-		// The first read and every retry share one switchMap: the last one wins.
+		this.setUpReads();
+	}
+
+	/** The first read and every retry share one switchMap: the last one wins. */
+	private setUpReads(): void {
 		merge(of(undefined), this.reload$)
 			.pipe(
 				switchMap(() => {
@@ -231,15 +235,15 @@ export class EverWorksInboxPreferencesComponent implements OnInit {
 		this.reload$.next();
 	}
 
-	kindLabel(kind: string): string {
+	protected kindLabel(kind: string): string {
 		return KNOWN_KINDS.has(kind) ? `EVER_WORKS.INBOX_KINDS.${kind}.LABEL` : kind;
 	}
 
-	kindHint(kind: string): string | null {
+	protected kindHint(kind: string): string | null {
 		return KNOWN_KINDS.has(kind) ? `EVER_WORKS.INBOX_KINDS.${kind}.HINT` : null;
 	}
 
-	reasonLabel(reason: string): string {
+	protected reasonLabel(reason: string): string {
 		return KNOWN_REASONS.has(reason) ? `EVER_WORKS.INBOX_PREFERENCES.REASONS.${reason}` : reason;
 	}
 

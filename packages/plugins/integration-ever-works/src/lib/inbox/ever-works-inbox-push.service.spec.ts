@@ -1033,7 +1033,7 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 
 	it('a key that writes the inbox but cannot read it sends a 412 once more on the version Ever Works names', async () => {
 		const scopes = MOCK_PRESET_SCOPES.filter((scope) => scope !== 'inbox:read');
-		const { addItem, push, inboxWrite, items, linkOf } = setup({ scopes });
+		const { addItem, push, inboxWrite, items, apply, actions, linkOf } = setup({ scopes });
 		const { item, ada } = addItem();
 		await push(ada);
 		const ewId = linkOf(ada)?.['ewId'] as string;
@@ -1047,6 +1047,19 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 			version: 3
 		});
 		expect(linkOf(ada)).toMatchObject({ ewVersion: 3 });
+
+		// The member answers (version 4) before Gauzy's next edit: the PATCH answer shows it, and it reaches Gauzy then,
+		// before the newer version is recorded; the answer's own event, below that version, is not needed any more.
+		const answered = await inboxWrite.answer(ewId, { choiceId: 'no' });
+		Object.assign(items.get(item.id as string) as IInboxItem, { body: 'The changelog is ready.' });
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(actions.reply).toHaveBeenCalledTimes(1);
+		expect(items.get(item.id as string)).toMatchObject({
+			status: InboxItemStatusEnum.ANSWERED,
+			response: expect.objectContaining({ optionId: 'no' })
+		});
+		await expect(apply(answered)).resolves.toMatchObject({ status: 'skipped' });
+		expect(actions.reply).toHaveBeenCalledTimes(1);
 	});
 
 	it('a copy the member answered comes back out of an archive made in Gauzy, its answer kept', async () => {
@@ -1528,6 +1541,10 @@ describe('EverWorksInitialSyncService — the inbox phase', () => {
 		expect(sync['planOf'](INBOX, contextWith(['inbox:read'], true, 'gauzy_to_ew'))).toMatchObject({
 			import: false,
 			export: false,
+			note: 'the Ever Works key lacks inbox:write'
+		});
+		// ... and with neither scope, the one that direction needs.
+		expect(sync['planOf'](INBOX, contextWith([], true, 'gauzy_to_ew'))).toMatchObject({
 			note: 'the Ever Works key lacks inbox:write'
 		});
 	});

@@ -496,10 +496,12 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		}
 		if (!canImport && !canExport) {
 			if (inboxNote) return { import: false, export: false, done: true, note: inboxNote };
-			if (missingScope) return { import: false, export: false, note: `the Ever Works key lacks ${spec.scope}` };
-			// The inbox sends with inbox:write: a direction that only sends, with a key that may only read, names that scope.
-			if (spec.name === 'inbox' && toEverWorks(direction) && !scopes.includes('inbox:write'))
+			// The inbox sends with inbox:write: the scope a direction that only sends needs is the one named (inbox:read is
+			// not, even when the key lacks it too); a direction that reads as well names inbox:read first.
+			const lacksWrite = spec.name === 'inbox' && toEverWorks(direction) && !scopes.includes('inbox:write');
+			if (lacksWrite && (!fromEverWorks(direction) || !missingScope))
 				return { import: false, export: false, note: 'the Ever Works key lacks inbox:write' };
+			if (missingScope) return { import: false, export: false, note: `the Ever Works key lacks ${spec.scope}` };
 			return { import: false, export: false, note: 'not synced by this version yet; a later resync picks it up' };
 		}
 		const note = spec.name === 'teams' || spec.name === 'works' ? 'unpaired records wait for their tab; only pairs are refreshed' : inboxNote;
