@@ -26,7 +26,8 @@ const KNOWN_REASONS: ReadonlySet<string> = new Set([
 	'mapping_disabled',
 	'direction',
 	'sync_setting_off',
-	'connection_inactive'
+	'connection_inactive',
+	'missing_scope'
 ]);
 
 /**

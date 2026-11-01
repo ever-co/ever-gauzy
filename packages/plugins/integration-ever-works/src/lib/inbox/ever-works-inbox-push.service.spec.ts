@@ -145,18 +145,21 @@ function setup(
 		entitySync?: Row;
 		inbox?: boolean;
 		pushSince?: string;
+		/** The key's scopes (the "Ever Gauzy" preset by default). */
+		scopes?: string[];
 	} = {}
 ) {
 	const mock = new MockEverWorksServer();
 	const ewOrg = { id: 'ew-org-1', slug: 'acme', displayName: 'Acme' };
-	const key = mock.addKey({ organizations: [ewOrg] });
+	const scopes = options.scopes ?? [...MOCK_PRESET_SCOPES];
+	const key = mock.addKey({ organizations: [ewOrg], scopes });
 	const inboxWrite = new MockEverWorksInboxWrite(mock);
 	const connection = {
 		id: 'conn-1',
 		tenantId: TENANT,
 		status: EverWorksConnectionStatus.ACTIVE,
 		// The "Ever Gauzy" preset (inbox:write, and the read scopes a related id needs) and the key's id (whoami).
-		scopes: JSON.stringify(MOCK_PRESET_SCOPES),
+		scopes: JSON.stringify(scopes),
 		keyId: (mock.keys.get(key) as { keyId: string }).keyId
 	};
 	const context = {
@@ -1028,6 +1031,39 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 		]);
 	});
 
+	it('a key that writes the inbox but cannot read it sends a 412 once more on the version Ever Works names', async () => {
+		const scopes = MOCK_PRESET_SCOPES.filter((scope) => scope !== 'inbox:read');
+		const { addItem, push, inboxWrite, items, linkOf } = setup({ scopes });
+		const { item, ada } = addItem();
+		await push(ada);
+		const ewId = linkOf(ada)?.['ewId'] as string;
+		// The member reads the copy (version 2), which this key cannot see.
+		await inboxWrite.read(ewId);
+		Object.assign(items.get(item.id as string) as IInboxItem, { title: 'Ship the release today?' });
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(inboxWrite.patched.map((patch) => patch.ifMatch)).toEqual(['"1"', '"2"']);
+		expect(inboxWrite.byExternalId(`${item.id}:${ada}`)).toMatchObject({
+			title: 'Ship the release today?',
+			version: 3
+		});
+		expect(linkOf(ada)).toMatchObject({ ewVersion: 3 });
+	});
+
+	it('a copy the member answered comes back out of an archive made in Gauzy, its answer kept', async () => {
+		const { addItem, push, inboxWrite, apply, recipients, linkOf } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		const ewId = linkOf(ada)?.['ewId'] as string;
+		await apply(await inboxWrite.answer(ewId, { choiceId: 'no' }));
+		(recipients.get(ada) as Row)['isArchived'] = true;
+		await push(ada);
+		expect(inboxWrite.byExternalId(`${item.id}:${ada}`)).toMatchObject({ state: 'archived' });
+		(recipients.get(ada) as Row)['isArchived'] = false;
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(inboxWrite.patched[inboxWrite.patched.length - 1].body).toEqual({ state: 'resolved' });
+		expect(inboxWrite.byExternalId(`${item.id}:${ada}`)).toMatchObject({ state: 'resolved', answerOptionId: 'no' });
+	});
+
 	it('archives the copy of a gone recipient row on the current version after a 412 (never a stale If-Match forever)', async () => {
 		const { addItem, push, inboxWrite, recipients, linkOf } = setup();
 		const { item, ada } = addItem();
@@ -1562,6 +1598,17 @@ describe('EverWorksInboxPreferencesService', () => {
 		expect((await preferenceService.summaries(TENANT, [ADA.user])).get(ADA.user)).toMatchObject({
 			customized: true,
 			kinds: expect.objectContaining({ email: true, other: true })
+		});
+	});
+
+	it('tells why nothing is sent while the connection key may not file inbox items (inbox:write)', async () => {
+		const { preferenceService } = setup({ scopes: MOCK_PRESET_SCOPES.filter((scope) => scope !== 'inbox:write') });
+		mockCaller.tenantId = TENANT;
+		mockCaller.userId = ADA.user;
+		expect((await preferenceService.mine()).organizations[0]).toMatchObject({
+			paired: true,
+			sending: false,
+			reason: 'missing_scope'
 		});
 	});
 

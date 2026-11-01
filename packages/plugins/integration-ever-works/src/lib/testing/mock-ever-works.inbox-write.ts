@@ -190,7 +190,8 @@ export class MockEverWorksInboxWrite {
 		if (typeof body['state'] === 'string') {
 			item['state'] = body['state'];
 			item['status'] = body['state'] === 'resolved' ? 'answered' : body['state'];
-			if (body['state'] === 'resolved') {
+			// `resolved` without a resolution (a copy the member answered, back out of an archive) keeps the answer it holds.
+			if (body['state'] === 'resolved' && (body['resolution'] !== undefined || !item['answeredAt'])) {
 				const resolution = (body['resolution'] ?? null) as { choiceId?: string; text?: string } | null;
 				Object.assign(item, {
 					resolution,

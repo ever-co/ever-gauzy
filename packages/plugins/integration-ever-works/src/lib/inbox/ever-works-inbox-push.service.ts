@@ -156,7 +156,9 @@ function keepingTheMembersAnswer(
 	if (!patch || seen.answeredBy !== 'member') return patch;
 	const kept: EverWorksInboxItemPatch = { ...patch };
 	delete kept.resolution;
-	if (kept.state === 'resolved') delete kept.state;
+	// A move to `resolved` is Gauzy's answer, which the member's stands over; out of an archive it only brings the copy
+	// back as the member left it (answered), so that move still goes, without a resolution.
+	if (kept.state === 'resolved' && seen.state !== 'archived') delete kept.state;
 	return Object.keys(kept).length ? kept : null;
 }
 
@@ -658,7 +660,13 @@ export class EverWorksInboxPushService
 			if (error instanceof EverWorksApiError && error.status === 412) {
 				// Read again and sent once more on the current version: with the member's moves applied first, or, when the
 				// Gauzy row is gone (an archive), on that version alone (else the stale If-Match would fail every retry).
-				if (!refetched) return this.afterConflict(context, link, copy, now);
+				if (!refetched) {
+					// A key that writes the inbox but cannot read it (no `inbox:read`) does not read the copy again: it sends once
+					// more on the version the 412 names (`details.current`); such a key sees none of the member's moves anyway.
+					if (!this.scopesOf(context).has('inbox:read'))
+						return this.retryOnNamedVersion(context, link, now, copy, error);
+					return this.afterConflict(context, link, copy, now);
+				}
 				return {
 					status: 'deferred',
 					message: 'the Ever Works copy keeps moving; retried later',
@@ -791,6 +799,39 @@ export class EverWorksInboxPushService
 			current,
 			true
 		);
+	}
+
+	/**
+	 * A `412` for a key without `inbox:read`: the version the error names (`details.current`) is recorded and the change
+	 * is sent once more on it; without one, the change waits and is tried again.
+	 */
+	private async retryOnNamedVersion(
+		context: EverWorksMappingContext,
+		link: EverWorksEntityLink,
+		now: GauzyInboxShared,
+		copy: CopyOf | null,
+		error: EverWorksApiError
+	): Promise<EverWorksPushOutcome> {
+		const current = error.details?.['current'];
+		if (typeof current !== 'number' || (link.ewVersion != null && current <= link.ewVersion)) {
+			return {
+				status: 'deferred',
+				message: 'the Ever Works copy moved, and this key cannot read its version (inbox:read); retried later',
+				retryInMs: GAUZY_INBOX_CONFLICT_RETRY_MS
+			};
+		}
+		const recorded = await this.links.record({
+			tenantId: context.tenantId,
+			organizationId: context.organizationId,
+			integrationTenantId: context.integrationTenantId,
+			entityType: EverWorksLinkType.GAUZY_INBOX_ITEM,
+			gauzyId: link.gauzyId as ID,
+			ewId: link.ewId,
+			ewVersion: current,
+			snapshot: { g: this.snapshotOf(link), e: this.everWorksSideOf(link) },
+			direction: 'inbound'
+		});
+		return this.patchCopy(context, recorded, now, copy, true);
 	}
 
 	/** Ever Works' side of a copy as an answer of Ever Works shows it (`fallback` for what it leaves out). */
@@ -1121,10 +1162,12 @@ export class EverWorksInboxPushService
 	 */
 	async backfillPage(
 		context: EverWorksMappingContext,
-		after: string | null
+		after: string | null,
+		pairedUsers?: ID[]
 	): Promise<{ ids: ID[]; next: string | null }> {
 		if (!this.feed) return { ids: [], next: null };
-		const users = await this.pairedUsersOfMapping(context);
+		// The paired people, read once by a caller that reads many pages (the preview), else here.
+		const users = pairedUsers ?? (await this.pairedUsersOfMapping(context));
 		if (!users.length) return { ids: [], next: null };
 		const page = await this.feed.openRecipientsOf(context.tenantId, context.organizationId, users, {
 			after,
@@ -1183,8 +1226,9 @@ export class EverWorksInboxPushService
 		let linked = 0;
 		let after: string | null = null;
 		let pages = 0;
+		const users = this.feed ? await this.pairedUsersOfMapping(context) : [];
 		do {
-			const page = await this.backfillPage(context, after);
+			const page = await this.backfillPage(context, after, users);
 			total += page.ids.length;
 			linked += (await this.linkedIds(context, page.ids)).size;
 			after = page.next;

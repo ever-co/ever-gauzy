@@ -90,7 +90,7 @@ export type EverWorksInboxKind = 'notice' | 'question' | 'approval' | 'mention' 
 export const EVER_WORKS_INBOX_KINDS: ReadonlyArray<EverWorksInboxKind> = ['notice', 'question', 'approval', 'mention', 'assignment', 'email', 'other'];
 
 /** Why the Gauzy Inbox items of an organization are not sent to Ever Works. */
-export type EverWorksInboxNotSendingReason = 'not_paired' | 'mapping_disabled' | 'direction' | 'sync_setting_off' | 'connection_inactive';
+export type EverWorksInboxNotSendingReason = 'not_paired' | 'mapping_disabled' | 'direction' | 'sync_setting_off' | 'connection_inactive' | 'missing_scope';
 
 /** `GET /me/inbox-preferences`: which of my Gauzy Inbox items go to Ever Works, and where they go. */
 export interface EverWorksInboxPreferencesView {

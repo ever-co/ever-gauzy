@@ -19,7 +19,7 @@ import {
 
 /** Why a person's items of an organization are not sent to Ever Works (`null` while they are). */
 export type EverWorksInboxSendReason =
-	'mapping_disabled' | 'connection_inactive' | 'sync_setting_off' | 'direction' | 'not_paired';
+	'mapping_disabled' | 'connection_inactive' | 'missing_scope' | 'sync_setting_off' | 'direction' | 'not_paired';
 
 /** `GET /me/inbox-preferences`: what the signed-in person sends to Ever Works, and where it goes. */
 export interface EverWorksInboxPreferencesView {
@@ -228,9 +228,21 @@ export class EverWorksInboxPreferencesService {
 }
 
 /** Why a paired (or not) person's Gauzy Inbox items of a mapping are not sent, or `null` while they are. */
+/** The connection key's scopes (an unreadable list holds none). */
+function keyScopesOf(context: EverWorksMappingContext): string[] {
+	try {
+		const scopes = JSON.parse(context.connection.scopes || '[]');
+		return Array.isArray(scopes) ? scopes.filter((scope): scope is string => typeof scope === 'string') : [];
+	} catch {
+		return [];
+	}
+}
+
 export function sendReason(context: EverWorksMappingContext, paired: boolean): EverWorksInboxSendReason | null {
 	if (!context.isEnabled) return 'mapping_disabled';
 	if (context.connection.status !== EverWorksConnectionStatus.ACTIVE) return 'connection_inactive';
+	// The connection's key must be allowed to file inbox items (`inbox:write`), else Ever Works refuses every copy.
+	if (!keyScopesOf(context).includes('inbox:write')) return 'missing_scope';
 	if (!entitySynced(context, IntegrationEntity.INBOX_ITEM)) return 'sync_setting_off';
 	if (!toEverWorks(context.directions.inbox)) return 'direction';
 	if (!paired) return 'not_paired';

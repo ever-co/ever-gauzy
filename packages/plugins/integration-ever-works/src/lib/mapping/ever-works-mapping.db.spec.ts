@@ -367,6 +367,18 @@ describe('Ever Works organization mapping on SQLite', () => {
 		const restored = await mappings.create({ everWorksOrganizationId: ewOrgs[0].id });
 		expect(restored.integrationTenantId).toBe(view.integrationTenantId);
 		expect(Date.parse(await pushSince(view.integrationTenantId))).toBeGreaterThan(Date.parse(before));
+		// Switched off, then on again (the mapping, or its InboxItem setting): the push starts over each time it resumes.
+		for (const [off, on] of [
+			[{ isEnabled: false }, { isEnabled: true }],
+			[{ entitySettings: [{ entity: IntegrationEntity.INBOX_ITEM, sync: false }] }, { entitySettings: [{ entity: IntegrationEntity.INBOX_ITEM, sync: true }] }]
+		] as const) {
+			const resumedFrom = await pushSince(view.integrationTenantId);
+			await mappings.update(view.integrationTenantId, off as never);
+			expect(await pushSince(view.integrationTenantId)).toBe(resumedFrom);
+			await new Promise((resolve) => setTimeout(resolve, 5));
+			await mappings.update(view.integrationTenantId, on as never);
+			expect(Date.parse(await pushSince(view.integrationTenantId))).toBeGreaterThan(Date.parse(resumedFrom));
+		}
 	});
 
 	it('updates directions, flags, projects and toggles; refuses an unknown domain, a disallowed direction and a foreign project', async () => {

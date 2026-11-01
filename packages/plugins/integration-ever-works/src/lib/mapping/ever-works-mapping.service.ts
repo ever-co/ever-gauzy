@@ -198,13 +198,21 @@ export class EverWorksMappingService {
 		const connectionId = await this.transaction(scope, async (manager) => {
 			const mapping = await this.require(manager, scope, integrationTenantId);
 			const values: Record<string, string> = {};
-			if (dto.directions !== undefined) {
-				const current = this.directions(mapping);
-				const merged = { ...current, ...this.validDirections(dto.directions) };
-				values[S.ENTITY_DIRECTIONS] = JSON.stringify(merged);
-				// The Gauzy Inbox starts going to Ever Works now: older items only with the backfill.
-				if (toEverWorks(merged.inbox) && !toEverWorks(current.inbox)) values[S.INBOX_PUSH_SINCE] = new Date().toISOString();
-			}
+			const current = this.directions(mapping);
+			const directions = dto.directions !== undefined ? { ...current, ...this.validDirections(dto.directions) } : current;
+			if (dto.directions !== undefined) values[S.ENTITY_DIRECTIONS] = JSON.stringify(directions);
+			// The Gauzy Inbox starts going to Ever Works now (the mapping on, its InboxItem setting on and an inbox direction
+			// that writes there, where one of them was not before): older items only with the backfill.
+			const inboxRows = await manager.find(IntegrationEntitySetting, { where: { integrationId: mapping.id, entity: IntegrationEntity.INBOX_ITEM } as never });
+			const inboxSyncedBefore = !inboxRows.some((row) => row.sync === false);
+			const inboxToggle = dto.entitySettings?.find((change) => change.entity === IntegrationEntity.INBOX_ITEM);
+			const enabledBefore = this.setting(mapping, S.IS_ENABLED) === 'true';
+			const sendsBefore = enabledBefore && inboxSyncedBefore && toEverWorks(current.inbox);
+			const sendsAfter =
+				(dto.isEnabled !== undefined ? dto.isEnabled === true : enabledBefore) &&
+				(inboxToggle ? inboxToggle.sync : inboxSyncedBefore) &&
+				toEverWorks(directions.inbox);
+			if (sendsAfter && !sendsBefore) values[S.INBOX_PUSH_SINCE] = new Date().toISOString();
 			for (const [field, name] of [
 				['defaultProjectId', S.DEFAULT_PROJECT_ID],
 				['ideasProjectId', S.IDEAS_PROJECT_ID]

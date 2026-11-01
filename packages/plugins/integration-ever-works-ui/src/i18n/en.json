@@ -230,7 +230,8 @@
 			"mapping_disabled": "Syncing with Ever Works is switched off for this organization.",
 			"direction": "This organization's Inbox does not sync from Gauzy to Ever Works.",
 			"sync_setting_off": "The Inbox sync setting of this organization's Ever Works mapping is off.",
-			"connection_inactive": "The connection to Ever Works is paused or needs a new key."
+			"connection_inactive": "The connection to Ever Works is paused or needs a new key.",
+			"missing_scope": "The Ever Works key of this organization may not file inbox items (inbox:write). An administrator gives the key that scope."
 		}
 	},
 	"PHASES": {

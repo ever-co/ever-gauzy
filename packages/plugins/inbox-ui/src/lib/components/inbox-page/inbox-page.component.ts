@@ -433,10 +433,12 @@ export class InboxPageComponent implements OnInit {
 				takeUntilDestroyed(this.destroyRef)
 			)
 			.subscribe((id) => {
-				if (!id) return;
+				// Every change of the link ends the read of the one before; a link removed (another tab chosen) opens nothing.
+				this.linkRead?.unsubscribe();
+				this.linkRead = null;
 				this.requestedItemId = id;
-				// Before the Inbox is served, the availability check opens it.
-				if (this.view() === 'ready') this.openRequestedItem();
+				// Before the Inbox is served, or while its list is being read, the list's answer opens it.
+				if (id && this.view() === 'ready' && !this.loading()) this.openRequestedItem();
 			});
 	}
 
@@ -457,8 +459,8 @@ export class InboxPageComponent implements OnInit {
 			.subscribe({
 				next: () => {
 					this.view.set('ready');
+					// The list first: its answer opens a linked item (so the list never lands over the fresher item read).
 					this.reload();
-					this.openRequestedItem();
 				},
 				error: (error: HttpErrorResponse) =>
 					this.view.set(error?.status === 404 || error?.status === 403 ? 'unavailable' : 'error')
@@ -546,6 +548,8 @@ export class InboxPageComponent implements OnInit {
 				if (!append && id && !items.some((item) => item.id === id) && this.opened()?.id !== id) {
 					this.selectedId.set(null);
 				}
+				// A linked item waiting for the list (the first page, or the retry after a failure) is read now.
+				if (!append && this.requestedItemId) this.openRequestedItem();
 			});
 	}
 

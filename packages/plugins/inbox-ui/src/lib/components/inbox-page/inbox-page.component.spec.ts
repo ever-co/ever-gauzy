@@ -389,6 +389,36 @@ describe('InboxPageComponent', () => {
 			expect(find('no-selection')).toBeNull();
 		});
 
+		it('reads the linked item once the list is served, so the list never lands over it', () => {
+			const read = { isRead: true, isArchived: false, snoozedUntil: null };
+			const list = new Subject<{ items: IInboxItemWithState[]; nextCursor: string | null }>();
+			api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(list);
+			api.get.mockReturnValue(of(item('a', { title: 'New title', recipient: read })));
+			withItemLink('a');
+			const { component, fixture } = render();
+			fixture.detectChanges();
+			expect(api.get).not.toHaveBeenCalled();
+			list.next({ items: [item('a', { title: 'Old title', recipient: read })], nextCursor: null });
+			expect(api.get).toHaveBeenCalledWith('a');
+			expect(component.selected()).toMatchObject({ id: 'a', title: 'New title' });
+		});
+
+		it('a link removed (another tab chosen) while it is read opens nothing', () => {
+			api.counts.mockReturnValue(of({ unread: 1, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));
+			const fetched = new Subject<IInboxItemWithState>();
+			api.get.mockReturnValue(fetched);
+			const params$ = withItemLink('deep');
+			const { component, fixture } = render();
+			fixture.detectChanges();
+			expect(api.get).toHaveBeenCalledWith('deep');
+			params$.next(convertToParamMap({ tab: 'decisions' }));
+			fetched.next(item('deep'));
+			expect(component.selected()).toBeNull();
+			expect(api.setState).not.toHaveBeenCalled();
+		});
+
 		it('shows the linked item as just read, not an older copy the list holds', () => {
 			const read = { isRead: true, isArchived: false, snoozedUntil: null };
 			api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
