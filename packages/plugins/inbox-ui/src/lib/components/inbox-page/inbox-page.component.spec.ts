@@ -273,15 +273,79 @@ describe('InboxPageComponent', () => {
 	describe('the deep link ?item=<id> (an Ever Works copy links back here)', () => {
 		function withItemLink(id: string) {
 			email$.next(false);
+			const params$ = new BehaviorSubject(convertToParamMap({ item: id }));
 			TestBed.configureTestingModule({
 				providers: [
 					{
 						provide: ActivatedRoute,
-						useValue: { snapshot: { queryParamMap: convertToParamMap({ item: id }) } }
+						useValue: { snapshot: { queryParamMap: params$.value }, queryParamMap: params$ }
 					}
 				]
 			});
+			return params$;
 		}
+
+		it('opens a later ?item= too (the router reuses the page for another link)', () => {
+			api.counts.mockReturnValue(of({ unread: 2, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));
+			api.get.mockImplementation((id: string) => of(item(id)));
+			api.setState.mockImplementation((id: string) =>
+				of(item(id, { recipient: { isRead: true, isArchived: false, snoozedUntil: null } }))
+			);
+			const params$ = withItemLink('first');
+			const { component, fixture } = render();
+			fixture.detectChanges();
+			expect(component.selected()).toMatchObject({ id: 'first' });
+			params$.next(convertToParamMap({ item: ' second ' }));
+			fixture.detectChanges();
+			expect(api.get).toHaveBeenLastCalledWith('second');
+			expect(component.selected()).toMatchObject({ id: 'second' });
+		});
+
+		it('never opens (marks read) an item whose detail cannot be shown: the list failed, or Notifications is chosen', () => {
+			api.counts.mockReturnValue(of({ unread: 1, decisionsOpen: 0, byMailbox: [] }));
+			const fetched = new Subject<IInboxItemWithState>();
+			api.get.mockReturnValue(fetched);
+			api.list.mockReturnValue(throwError(() => ({ status: 500 })));
+			const params$ = withItemLink('deep');
+			const { component, fixture } = render();
+			fixture.detectChanges();
+			expect(component.view()).toBe('error');
+			fetched.next(item('deep'));
+			expect(component.selected()).toBeNull();
+			expect(api.setState).not.toHaveBeenCalled();
+			// The retry serves the list, and opens the link then.
+			api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));
+			api.get.mockReturnValue(of(item('deep')));
+			api.setState.mockReturnValue(of(item('deep')));
+			component.reload();
+			fixture.detectChanges();
+			expect(component.selected()).toMatchObject({ id: 'deep' });
+
+			// Another link followed, then Notifications chosen before its fetch answers: nothing opens.
+			api.setState.mockClear();
+			const later = new Subject<IInboxItemWithState>();
+			api.get.mockReturnValue(later);
+			params$.next(convertToParamMap({ item: 'other' }));
+			expect(api.get).toHaveBeenLastCalledWith('other');
+			component.tab.set('notifications');
+			later.next(item('other'));
+			expect(component.selected()).toMatchObject({ id: 'deep' });
+			expect(api.setState).not.toHaveBeenCalled();
+		});
+
+		it('says when the linked item could not be read (not a 404), and opens nothing', () => {
+			api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));
+			api.get.mockReturnValue(throwError(() => ({ status: 503 })));
+			withItemLink('deep');
+			const { component, fixture, find } = render();
+			fixture.detectChanges();
+			expect(component.view()).toBe('ready');
+			expect(component.actionError()).toBe('INBOX.ITEM_LINK_ERROR');
+			expect(find('action-error')).not.toBeNull();
+			expect(component.selected()).toBeNull();
+		});
 
 		it('opens that item once the Inbox is served, as a click on its row does, though no tab lists it', () => {
 			api.counts.mockReturnValue(of({ unread: 1, decisionsOpen: 0, byMailbox: [] }));

@@ -17,7 +17,7 @@ import {
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { EMPTY, Subject } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, map, skip, switchMap } from 'rxjs/operators';
 import {
 	IInboxItemWithState,
 	IInboxRecipientStateInput,
@@ -408,7 +408,7 @@ export class InboxPageComponent implements OnInit {
 	readonly search$ = new Subject<string>();
 	/** `false`: a fresh first page; `true`: the next page after `nextCursor`. */
 	private readonly load$ = new Subject<boolean>();
-	/** `?item=` of the URL, opened once the Inbox is served (then forgotten: a retry does not open it again). */
+	/** `?item=` of the URL, opened once the Inbox is served (then forgotten, unless it could not be opened yet). */
 	private requestedItemId: string | null = null;
 
 	ngOnInit(): void {
@@ -416,7 +416,26 @@ export class InboxPageComponent implements OnInit {
 		this.requestedItemId = this.route.snapshot.queryParamMap.get('item')?.trim() || null;
 		this.setUpListStream();
 		this.setUpSearch();
+		this.followItemLinks();
 		this.checkAvailability();
+	}
+
+	/** A later `?item=` while the page stays (the router reuses it for another link): opened like the first one. */
+	private followItemLinks(): void {
+		this.route.queryParamMap
+			.pipe(
+				map((params) => params.get('item')?.trim() || null),
+				distinctUntilChanged(),
+				// The first value is the one read above.
+				skip(1),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe((id) => {
+				if (!id) return;
+				this.requestedItemId = id;
+				// Before the Inbox is served, the availability check opens it.
+				if (this.view() === 'ready') this.openRequestedItem();
+			});
 	}
 
 	/** `?tab=` of the URL, when it names one of the tabs. */
@@ -446,21 +465,33 @@ export class InboxPageComponent implements OnInit {
 
 	/**
 	 * The deep link `?item=<id>` (an Ever Works copy of an item links back here): the item opens as a click on its row
-	 * opens it, whichever tab it is listed in. An id the API does not show me (404: not mine, gone), or any other failure
-	 * to read it, leaves the page as it is (the list does not depend on it); so does an item I opened in the meantime.
+	 * opens it (an unread one becomes read), whichever tab it is listed in, but only while its detail can be shown: not
+	 * once the list failed (the retry opens it) or the Notifications tab is chosen, nor over an item I opened meanwhile.
+	 * An id the API does not show me (404: not mine, gone) is ignored quietly; any other failure to read it is said, and
+	 * the link is kept for the next try (a retry of the page, or the link followed again).
 	 */
 	private openRequestedItem(): void {
 		const id = this.requestedItemId;
 		this.requestedItemId = null;
 		if (!id) return;
+		const selectedBefore = this.selectedId();
 		this.api
 			.get(id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
 				next: (item) => {
-					if (item?.id && !this.selectedId()) this.open(item);
+					if (!item?.id || this.selectedId() !== selectedBefore) return;
+					if (this.view() !== 'ready') {
+						this.requestedItemId = id;
+						return;
+					}
+					if (this.tab() !== 'notifications') this.open(item);
 				},
-				error: () => undefined
+				error: (error: HttpErrorResponse) => {
+					if (error?.status === 404 || error?.status === 403) return;
+					this.requestedItemId = id;
+					this.actionError.set('INBOX.ITEM_LINK_ERROR');
+				}
 			});
 	}
 

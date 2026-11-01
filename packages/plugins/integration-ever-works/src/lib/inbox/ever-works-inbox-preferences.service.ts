@@ -154,8 +154,10 @@ export class EverWorksInboxPreferencesService {
 					excludedKinds
 				} as never);
 				break;
-			} catch {
-				// Another save inserted the row meanwhile: the next attempt merges into it.
+			} catch (error) {
+				// Another save inserted the row meanwhile: the next attempt merges into it. Still no row: a real failure
+				// (a connection, a constraint), which no retry fixes and which must not read as "changed meanwhile".
+				if (!(await this.row(tenantId, userId))) throw error;
 			}
 		}
 		this.logger.log(`User ${userId} changed what of their Gauzy Inbox goes to Ever Works.`);

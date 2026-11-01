@@ -244,7 +244,17 @@ export class EverWorksInboxPushService
 	 * the rest is queued outside the write's transaction.
 	 */
 	changed(change: IInboxItemChange): void {
-		if (EverWorksSyncContext.isApplying()) return;
+		if (EverWorksSyncContext.isApplying()) {
+			// What the sync writes is not sent back (loop guard 1), except an Ever Works member's move on their own copy
+			// that changed the shared item (an answer): the copies of the item's other recipients still get it.
+			const applied = EverWorksSyncContext.current()?.gauzyRecipientId;
+			if (!applied || change.scope !== 'item') return;
+			change = {
+				...change,
+				recipients: (change.recipients ?? []).filter((recipient) => recipient.id !== applied),
+				removedRecipients: (change.removedRecipients ?? []).filter((recipient) => recipient.id !== applied)
+			};
+		}
 		if (change.source === InboxItemSourceEnum.EVER_WORKS) return;
 		if (change.externalSource && OWN_EXTERNAL_SOURCES.includes(change.externalSource)) return;
 		if (change.scope === 'recipient' && !(change.stated ?? []).includes('isArchived')) return;
@@ -834,7 +844,8 @@ export class EverWorksInboxPushService
 			{
 				connectionId: context.connection.id as string,
 				integrationTenantId: context.integrationTenantId,
-				eventId
+				eventId,
+				gauzyRecipientId: recipient.id as string
 			},
 			() =>
 				runAsGauzyUser(context, recipient.userId as ID, async () => {

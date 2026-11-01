@@ -599,6 +599,27 @@ describe('EverWorksInboxPushService — capture', () => {
 		expect(queued).toEqual([]);
 	});
 
+	it('an Ever Works member’s answer applied to a shared item still reaches the other recipients’ copies', async () => {
+		const { addItem, service, change, queued } = setup();
+		const { item, ids } = addItem({}, [ADA.user, CAROL.user]);
+		// Ada's answer, applied as Ada: the item change goes to Carol's copy, never back to Ada's.
+		EverWorksSyncContext.run({ connectionId: 'conn-1', gauzyRecipientId: ids[ADA.user] }, () =>
+			service.changed(change(item))
+		);
+		// Ada's own read or archive, applied as Ada: nothing to send anywhere.
+		EverWorksSyncContext.run({ connectionId: 'conn-1', gauzyRecipientId: ids[ADA.user] }, () =>
+			service.changed(
+				change(item, {
+					scope: 'recipient',
+					stated: ['isArchived'],
+					recipients: [{ id: ids[ADA.user], userId: ADA.user }]
+				})
+			)
+		);
+		await settle();
+		expect(queued.map((trigger) => trigger['gauzyId'])).toEqual([ids[CAROL.user]]);
+	});
+
 	it('queues an archive, not a read or a snooze (Ever Works keeps no such state for a filed item)', async () => {
 		const { addItem, service, change, queued } = setup();
 		const { item, ada } = addItem();
@@ -1511,6 +1532,21 @@ describe('EverWorksInboxPreferencesService', () => {
 			preferenceService.updateMine({ notice: false })
 		]);
 		expect((await preferenceService.mine()).kinds).toMatchObject({ email: false, notice: false, question: true });
+	});
+
+	it('a save that fails for another reason than a concurrent insert says so (never "changed meanwhile")', async () => {
+		const { preferenceService } = setup();
+		mockCaller.tenantId = TENANT;
+		mockCaller.userId = ADA.user;
+		const table = (
+			preferenceService as unknown as { repository: () => { insert: () => Promise<void> } }
+		).repository();
+		const failure = new Error('connection lost');
+		jest.spyOn(table, 'insert').mockRejectedValueOnce(failure);
+		await expect(preferenceService.updateMine({ email: false })).rejects.toBe(failure);
+		// The next save goes through.
+		await preferenceService.updateMine({ email: false });
+		expect((await preferenceService.mine()).kinds).toMatchObject({ email: false });
 	});
 
 	it('tells why nothing is sent while the direction does not write to Ever Works', async () => {
