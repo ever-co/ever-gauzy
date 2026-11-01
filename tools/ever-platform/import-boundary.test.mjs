@@ -24,6 +24,7 @@ const EXPECTED = {
 	'packages/plugins/ever-instance/src/instance-http.ts': [2],
 	'packages/plugins/auth-zitadel/src/zitadel-imports-connect.ts': [2],
 	'packages/plugins/ever-connect/src/index.ts': [6],
+	'packages/plugins/ever-connect/src/connect-imports-zitadel-file.ts': [2, 3],
 	'packages/plugins/ever-connect-ui/src/ui-imports-server.ts': [2],
 	'apps/api/src/plugins.ts': [],
 	'apps/gauzy/src/app/deep-import.ts': [2, 3]
@@ -73,6 +74,12 @@ test('the plugin lists may import the modules through their entry points, nobody
 	assert.equal(violation('apps/gauzy/src/plugin-ui.config.ts', '@gauzy/plugin-ever-stats-ui'), null);
 	assert.match(violation('apps/api/src/plugins.ts', '@gauzy/plugin-ever-connect/src/lib/sdk'), /entry point/);
 	assert.equal(violation('packages/plugins/ever-connect/src/lib/a.ts', '@gauzy/plugin-ever-instance'), null);
+	assert.equal(violation('packages/plugins/ever-connect/src/lib/a.ts', '@gauzy/plugin-auth-zitadel'), null);
+	assert.match(
+		violation('packages/plugins/ever-connect/src/lib/a.ts', '@gauzy/plugin-auth-zitadel/src/lib/ports/ever-id-accounts.port'),
+		/only through its entry point/
+	);
+	assert.notEqual(violation('packages/plugins/auth-zitadel/src/lib/a.ts', '@gauzy/plugin-ever-connect'), null);
 	assert.equal(violation('packages/core/src/lib/a.ts', '@gauzy/plugin-integration-ever-async'), null);
 	assert.match(
 		violation('packages/core/src/lib/a.ts', '@gauzy/plugin-ever-instance'),
