@@ -1,11 +1,21 @@
 import { BadRequestException, Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { faker } from '@faker-js/faker';
-import { IOrganization, IUser, RolesEnum } from '@gauzy/contracts';
+import {
+	IAgentRestrictionLocation,
+	ID,
+	IOrganization,
+	IOrganizationCreateInput,
+	IScreenshotCaptureAcknowledgementRecord,
+	IUser,
+	newOrganizationAllowsScreenshotCapture,
+	RolesEnum
+} from '@gauzy/contracts';
 import { UserService } from '../../../user/user.service';
 import { UserOrganizationService } from '../../../user-organization/user-organization.services';
 import { OrganizationService } from '../../organization.service';
 import { ContactService } from '../../../contact/contact.service';
+import { ActivityLogService } from '../../../activity-log/activity-log.service';
 import { OrganizationCreateCommand } from '../organization.create.command';
 import { OrganizationCommerceDefaultsCreateCommand } from '../organization-commerce-defaults.create.command';
 import { assertNoAgentRestrictionOnCreate } from '../../../employee/agent-exit-logout-restriction';
@@ -19,6 +29,12 @@ import { OrganizationTaskSizeBulkCreateCommand } from './../../../tasks/sizes/co
 import { OrganizationTaskPriorityBulkCreateCommand } from './../../../tasks/priorities/commands';
 import { OrganizationIssueTypeBulkCreateCommand } from './../../../tasks/issue-type/commands';
 import { OrganizationTaskSettingCreateCommand } from '../../../organization-task-setting/commands';
+import { currentContactId, linkedContactCountry } from '../../organization-location';
+import {
+	logScreenshotCaptureAcknowledgement,
+	omitScreenshotCaptureAcknowledgementFields,
+	resolveScreenshotCaptureAcknowledgement
+} from '../../screenshot-capture-acknowledgement';
 
 @CommandHandler(OrganizationCreateCommand)
 export class OrganizationCreateHandler implements ICommandHandler<OrganizationCreateCommand> {
@@ -29,7 +45,8 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 		private readonly organizationService: OrganizationService,
 		private readonly userOrganizationService: UserOrganizationService,
 		private readonly userService: UserService,
-		private readonly contactService: ContactService
+		private readonly contactService: ContactService,
+		private readonly activityLogService: ActivityLogService
 	) {}
 
 	/**
@@ -44,8 +61,14 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 		// Issue #9873: exit/logout can only be restricted on an existing organization, with an acknowledgement.
 		// Checked before the `try` below, which turns every error into a generic one.
 		assertNoAgentRestrictionOnCreate(command.input);
+		// Issue #9872: a new organization starts with screen capture off. Turning it on here, for an EEA/UK
+		// organization, takes the admin's acknowledgement, which is recorded on the row. Also checked before
+		// the `try`, so the refusal keeps its code.
+		const { allowScreenshotCapture, screenshotCaptureAcknowledgement } = await this.resolveScreenshotCapture(
+			command.input
+		);
 		try {
-			const { input } = command;
+			const input = omitScreenshotCaptureAcknowledgementFields(command.input);
 			const { isImporting = false, sourceId = null, userOrganizationSourceId = null } = input;
 			const tenantId = RequestContext.currentTenantId();
 
@@ -79,6 +102,9 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 
 			let { contact = {} } = input;
 			delete input['contact'];
+			// Issue #9872: the flag written is the resolved one, and only when there is one. For a create that names a
+			// stored organization, an absent or unchanged flag leaves the key out, so neither ORM touches the column.
+			delete input.allowScreenshotCapture;
 
 			// 3. Create organization
 			const organization: IOrganization = await this.organizationService.create({
@@ -99,9 +125,23 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 				brandColor: faker.color.rgb(),
 				...(input.standardWorkHoursPerDay && {
 					standardWorkHoursPerDay: input.standardWorkHoursPerDay
-				})
+				}),
+				...(allowScreenshotCapture !== undefined && { allowScreenshotCapture }),
+				...screenshotCaptureAcknowledgement
 			});
 			const { id: organizationId } = organization;
+
+			if (screenshotCaptureAcknowledgement) {
+				// The new organization is not the one of the caller's token, so its log entry is written outside the
+				// organization boundary, as the provisioning steps below are (the create itself is authorized).
+				await runOutsideOrganizationBoundary(() =>
+					logScreenshotCaptureAcknowledgement(
+						this.activityLogService,
+						organization,
+						screenshotCaptureAcknowledgement
+					)
+				);
+			}
 
 			// 4. Take each super admin user and add him/her to created organization
 			try {
@@ -227,5 +267,63 @@ export class OrganizationCreateHandler implements ICommandHandler<OrganizationCr
 		} catch (error) {
 			this.logger.error('Error occurred while executing organization update tasks:', error?.message);
 		}
+	}
+
+	/**
+	 * Issue #9872: the screen capture value to create the organization with, and the acknowledgement to record
+	 * with it (see `resolveScreenshotCaptureAcknowledgement`).
+	 *
+	 * A new organization starts with capture off unless the request turns it on. A request whose `id` names an
+	 * organization of this tenant makes the save update that organization, so it is judged as the update it is:
+	 * the stored value stays unless the request sets one, turning it on is a change from the stored value, and
+	 * the stored location counts as well as the requested one. As in the update handler, the flag is then written
+	 * only when the request changes it, so a stale value is never written back. A contact the request names by id
+	 * (which the create below files with the fields sent, keeping the others) counts with the country it has.
+	 *
+	 * @param input The create request.
+	 * @returns the value to write (`undefined`: leave the stored one) and the acknowledgement record, if any
+	 * @throws ApiException 400 `SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED` (see `resolveScreenshotCaptureAcknowledgement`)
+	 */
+	private async resolveScreenshotCapture(input: IOrganizationCreateInput): Promise<{
+		allowScreenshotCapture: boolean | undefined;
+		screenshotCaptureAcknowledgement: IScreenshotCaptureAcknowledgementRecord | null;
+	}> {
+		const stored = await this.findStoredOrganization(input.id);
+
+		const effective =
+			stored && typeof input.allowScreenshotCapture !== 'boolean'
+				? stored.allowScreenshotCapture
+				: newOrganizationAllowsScreenshotCapture(input);
+		const linkedCountry = effective
+			? await linkedContactCountry(this.contactService, input.contact?.id, currentContactId(stored))
+			: undefined;
+		const locations: IAgentRestrictionLocation[] = [
+			{
+				regionCode: input.regionCode,
+				timeZone: input.timeZone,
+				country: input.contact?.country || input.country
+			},
+			{ country: linkedCountry },
+			...(stored
+				? [{ regionCode: stored.regionCode, timeZone: stored.timeZone, country: stored.contact?.country }]
+				: [])
+		];
+
+		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(
+			{ ...input, allowScreenshotCapture: effective },
+			stored,
+			locations
+		);
+		return {
+			allowScreenshotCapture: stored && effective === stored.allowScreenshotCapture ? undefined : effective,
+			screenshotCaptureAcknowledgement
+		};
+	}
+
+	/** The organization of the current tenant a create request's `id` names, if any. */
+	private async findStoredOrganization(id: ID | undefined): Promise<IOrganization | null> {
+		if (!id) return null;
+		const found = await this.organizationService.findOneOrFailByIdString(id, { relations: { contact: true } });
+		return found.success ? found.record : null;
 	}
 }

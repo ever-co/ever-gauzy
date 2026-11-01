@@ -106,6 +106,9 @@ jest.mock('@gauzy/core', () => {
 		parseEntityVersion: jest.requireActual('@gauzy/core/src/lib/concurrency/version.util').parseEntityVersion,
 		ApiException: jest.requireActual('@gauzy/core/src/lib/core/errors/api-exception').ApiException,
 		ApiErrorCode: jest.requireActual('@gauzy/core/src/lib/core/errors/api-error-codes').ApiErrorCode,
+		// How a lost insert race is told apart from a real failure is the kernel's rule, so the grant's answer to a
+		// refused insert is asserted against the codes every dialect actually raises (#11023).
+		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
 		// The cross-tenant reference check a grant runs reads a real database; the grant's own refusal of another
 		// tenant's ids is asserted in `entitlement.service.grant-references.spec.ts`.
 		assertPlainReferencesNotForeign: async () => undefined,
@@ -261,6 +264,8 @@ function entitlementFixture(
 		sequence?: { formatted: string } | Error;
 		assertWritable?: (input: any) => void;
 		issue?: (input: any) => Promise<any>;
+		/** Whether the database holds `UQ_entitlement_live_line_grant`; it does unless stated. */
+		liveLineGrantIndex?: boolean;
 	} = {}
 ) {
 	let sequence = 0;
@@ -455,6 +460,7 @@ function entitlementFixture(
 		// The statement a conditional write goes through: the criteria — `version` included — decides
 		// which row the patch reaches, so a row that holds another version reports nothing affected.
 		update: async (criteria: any, patch: Row) => await manager.update(Entitlement, criteria, patch),
+		find: async (options: any = {}) => await manager.find(Entitlement, options),
 		findOne: async (options: any = {}) => {
 			const { where, order } = options;
 
@@ -559,7 +565,8 @@ function entitlementFixture(
 		sequenceService as never,
 		ruleService as never,
 		outbox as never,
-		eventBus as never
+		eventBus as never,
+		{ isPresent: () => options.liveLineGrantIndex ?? true } as never
 	);
 
 	return {
@@ -802,6 +809,383 @@ describe('EntitlementService — granting a right (doc 05 §19.1)', () => {
 	});
 });
 
+/**
+ * The database's two unique rules over a new right, as the in-memory double has to state them for a race to be
+ * observable: one live (not revoked, not deleted) right per tenant, order line and kind
+ * (`UQ_entitlement_live_line_grant`, #11023), and one right per organization and number
+ * (`UQ_entitlement_number`). A refused insert raises the error the dialect would.
+ *
+ * @param fixture The fixture whose writes are held to the rules.
+ * @param violation The error the dialect raises.
+ * @returns The rule each refusal was raised for, in order.
+ */
+function enforceUniqueRules(fixture: ReturnType<typeof entitlementFixture>, violation: () => unknown): string[] {
+	const refusals: string[] = [];
+	const save = fixture.manager.save;
+
+	fixture.manager.save = async (entity: unknown, row: any) => {
+		if (entity === Entitlement && row && !Array.isArray(row) && !row.id) {
+			const live = fixture.tables.entitlement.some(
+				(other) =>
+					row.orderLineId &&
+					other.orderLineId === row.orderLineId &&
+					other.kind === row.kind &&
+					String(other.tenantId) === String(row.tenantId) &&
+					other.status !== EntitlementStatus.REVOKED &&
+					!other.deletedAt
+			);
+			const numbered = fixture.tables.entitlement.some(
+				(other) =>
+					other.number === row.number &&
+					String(other.organizationId) === String(row.organizationId) &&
+					!other.deletedAt
+			);
+
+			if (live || numbered) {
+				refusals.push(live ? 'UQ_entitlement_live_line_grant' : 'UQ_entitlement_number');
+
+				throw violation();
+			}
+		}
+
+		return await save(entity, row);
+	};
+
+	return refusals;
+}
+
+/** What each dialect raises for a refused insert, as the driver (or the ORM wrapping it) hands it over. */
+const UNIQUE_VIOLATIONS: Array<[string, () => unknown]> = [
+	[
+		'Postgres (TypeORM QueryFailedError)',
+		() =>
+			Object.assign(
+				new Error('duplicate key value violates unique constraint "UQ_entitlement_live_line_grant"'),
+				{
+					driverError: { code: '23505' }
+				}
+			)
+	],
+	[
+		'MySQL',
+		() =>
+			Object.assign(new Error("Duplicate entry 't:l:LICENCE' for key 'UQ_entitlement_live_line_grant'"), {
+				code: 'ER_DUP_ENTRY'
+			})
+	],
+	[
+		'SQLite',
+		() =>
+			Object.assign(
+				new Error('UNIQUE constraint failed: entitlement.tenantId, entitlement.orderLineId, entitlement.kind'),
+				{
+					code: 'SQLITE_CONSTRAINT_UNIQUE'
+				}
+			)
+	],
+	[
+		'MikroORM (no code, the driver message only)',
+		() =>
+			new Error(
+				'insert into "entitlement" - duplicate key value violates unique constraint "UQ_entitlement_number"'
+			)
+	]
+];
+
+/** The number a grant of the suite's order line derives from its provenance. */
+const DERIVED_LINE_NUMBER = `E-${ORDER.replace(/-/g, '').slice(0, 8).toUpperCase()}-${ORDER_LINE.replace(/-/g, '')
+	.slice(0, 8)
+	.toUpperCase()}-L`;
+
+describe('EntitlementService — a grant racing another grant of the same line (#11023)', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/**
+	 * A grant whose duplicate read ran before the winner committed: the read answers nothing once, and every
+	 * later read sees the table as it is.
+	 */
+	function racingGrant(fixture: ReturnType<typeof entitlementFixture>) {
+		const original = (fixture.service as any).findExistingGrant.bind(fixture.service);
+		const read = jest.spyOn(fixture.service as any, 'findExistingGrant');
+
+		read.mockImplementationOnce(async () => null).mockImplementation(original);
+
+		return read;
+	}
+
+	it.each(UNIQUE_VIOLATIONS)(
+		'answers a %s refusal with the right the winner wrote, and announces nothing',
+		async (_dialect, violation) => {
+			const winner = rightRow('winner', {
+				orderId: ORDER,
+				orderLineId: ORDER_LINE,
+				status: EntitlementStatus.PENDING,
+				number: 'E-WINNER'
+			});
+			const fixture = entitlementFixture({ rights: [winner] }, { sequence: new Error('no series in context') });
+			const refusals = enforceUniqueRules(fixture, violation);
+			const read = racingGrant(fixture);
+
+			const result = await fixture.service.grant(
+				{
+					orderId: ORDER,
+					orderLineId: ORDER_LINE,
+					issueKey: true,
+					conditions: [{ attribute: 'region' } as never]
+				},
+				{ tenantId: TENANT, organizationId: ORG }
+			);
+
+			expect(result).toEqual({ entitlement: expect.objectContaining({ id: 'winner' }), created: false });
+			expect(result.plaintextKey).toBeUndefined();
+			expect(refusals).toEqual(['UQ_entitlement_live_line_grant']);
+			expect(read).toHaveBeenCalledTimes(2);
+			// The loser's insert and its event rolled back together; the replay writes no conditions and no key.
+			expect(fixture.tables.entitlement.map((row) => row.id)).toEqual(['winner']);
+			expect(fixture.appended).toEqual([]);
+			expect(fixture.published).toEqual([]);
+			expect(fixture.conditionsReplaced).toEqual([]);
+			expect(fixture.tables.entitlement_key).toEqual([]);
+		}
+	);
+
+	it('answers a line another organization of the tenant holds with a 409, without trying another number', async () => {
+		// The index keys a live right on the tenant, the line and the kind, so it refuses this grant; the read of the
+		// grant's own organization does not see the right that holds the line (#11601 review).
+		const theirs = rightRow('theirs', { orderId: ORDER, orderLineId: ORDER_LINE, organizationId: 'another-org' });
+		const fixture = entitlementFixture({ rights: [theirs] }, { sequence: new Error('no series in context') });
+		const refusals = enforceUniqueRules(fixture, UNIQUE_VIOLATIONS[0][1]);
+
+		const refusal = await fixture.service
+			.grant({ orderId: ORDER, orderLineId: ORDER_LINE }, { tenantId: TENANT, organizationId: ORG })
+			.catch((error) => error);
+
+		expect(refusal).toMatchObject({ status: 409, code: ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION });
+		expect(refusals).toEqual(['UQ_entitlement_live_line_grant']);
+		expect(fixture.tables.entitlement.map((row) => row.id)).toEqual(['theirs']);
+		expect(fixture.appended).toEqual([]);
+		expect(fixture.published).toEqual([]);
+	});
+
+	it('rethrows any error that is not a unique violation, untouched and without a second read', async () => {
+		const fixture = entitlementFixture();
+		const failure = Object.assign(new Error('connection reset'), { code: 'ECONNRESET' });
+		const read = jest.spyOn(fixture.service as any, 'findExistingGrant');
+
+		fixture.manager.save = async () => {
+			throw failure;
+		};
+
+		await expect(fixture.service.grant({ orderId: ORDER, orderLineId: ORDER_LINE, number: 'ENT-1' })).rejects.toBe(
+			failure
+		);
+		expect(read).toHaveBeenCalledTimes(1);
+		expect(fixture.appended).toEqual([]);
+	});
+
+	it('rethrows the refusal of a number the caller stated, which is the caller’s conflict and not a race', async () => {
+		const holder = rightRow('holder', { number: 'ENT-1' });
+		const fixture = entitlementFixture({ rights: [holder] });
+		const refusals = enforceUniqueRules(fixture, UNIQUE_VIOLATIONS[0][1]);
+
+		await expect(
+			fixture.service.grant({ orderId: ORDER, orderLineId: ORDER_LINE, number: 'ENT-1' })
+		).rejects.toThrow(/duplicate key value/);
+		expect(refusals).toEqual(['UQ_entitlement_number']);
+		expect(fixture.tables.entitlement.map((row) => row.id)).toEqual(['holder']);
+		expect(fixture.appended).toEqual([]);
+	});
+
+	it('rethrows the refusal of a number the series allocated, rather than numbering the right some other way', async () => {
+		const holder = rightRow('holder', { number: 'ENT-2026-0001' });
+		const fixture = entitlementFixture({ rights: [holder] });
+		const refusals = enforceUniqueRules(fixture, UNIQUE_VIOLATIONS[2][1]);
+
+		await expect(fixture.service.grant({ orderId: ORDER, orderLineId: ORDER_LINE })).rejects.toThrow(
+			/UNIQUE constraint/
+		);
+		expect(refusals).toEqual(['UQ_entitlement_number']);
+		expect(fixture.tables.entitlement).toHaveLength(1);
+	});
+
+	it('grants a line again after its right was revoked, numbering the new right with the next revision', async () => {
+		// The revoked right keeps the number it was issued under, so the derived number is held and the new
+		// right takes the next revision of it; before #11023 the re-grant was refused outright.
+		const revoked = rightRow('revoked', {
+			orderId: ORDER,
+			orderLineId: ORDER_LINE,
+			status: EntitlementStatus.REVOKED,
+			number: DERIVED_LINE_NUMBER
+		});
+		const fixture = entitlementFixture({ rights: [revoked] }, { sequence: new Error('no series in context') });
+		const refusals = enforceUniqueRules(fixture, UNIQUE_VIOLATIONS[1][1]);
+
+		const result = await fixture.service.grant({ orderId: ORDER, orderLineId: ORDER_LINE });
+
+		expect(result.created).toBe(true);
+		expect(result.entitlement.number).toBe(`${DERIVED_LINE_NUMBER}-2`);
+		expect(refusals).toEqual(['UQ_entitlement_number']);
+		expect(fixture.tables.entitlement).toHaveLength(2);
+		expect(fixture.events()).toEqual([EntitlementEventName.CREATED]);
+		expect(fixture.published).toHaveLength(1);
+	});
+
+	it('takes the first free revision when several are held, and gives up after a bounded number of tries', async () => {
+		const revokedTwice = [DERIVED_LINE_NUMBER, `${DERIVED_LINE_NUMBER}-2`].map((number, index) =>
+			rightRow(`revoked-${index}`, {
+				orderId: ORDER,
+				orderLineId: ORDER_LINE,
+				status: EntitlementStatus.REVOKED,
+				number
+			})
+		);
+		const third = entitlementFixture({ rights: revokedTwice }, { sequence: new Error('no series') });
+
+		enforceUniqueRules(third, UNIQUE_VIOLATIONS[0][1]);
+
+		expect((await third.service.grant({ orderId: ORDER, orderLineId: ORDER_LINE })).entitlement.number).toBe(
+			`${DERIVED_LINE_NUMBER}-3`
+		);
+
+		// Every number is held by something that is not this line's live right.
+		const exhausted = entitlementFixture({}, { sequence: new Error('no series') });
+		let attempts = 0;
+
+		exhausted.manager.save = async () => {
+			attempts++;
+
+			throw UNIQUE_VIOLATIONS[0][1]();
+		};
+
+		await expect(exhausted.service.grant({ orderId: ORDER, orderLineId: ORDER_LINE })).rejects.toThrow(
+			/duplicate key/
+		);
+		expect(attempts).toBe(10);
+		expect(exhausted.appended).toEqual([]);
+	});
+});
+
+/**
+ * A database whose existing duplicates kept the migration from creating `UQ_entitlement_live_line_grant` has nothing
+ * that refuses a second live right of a line (#11601 review). Until the index is in place, a grant of a line locks the
+ * line on its own transaction and reads again under the lock; on the dialects with row locks the lock is a statement
+ * of its own, recorded here in order with the inserts.
+ */
+describe('EntitlementService — a grant of an order line where the unique index is missing (#11601 review)', () => {
+	const PG_LOCK = 'SELECT "id" FROM "order_line" WHERE "id" = $1 FOR UPDATE';
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	function onDialect(type: 'postgres' | 'mysql', seed: { rights?: Row[] } = {}, liveLineGrantIndex = false) {
+		const fixture = entitlementFixture(seed, { liveLineGrantIndex });
+		const statements: Array<[string, unknown[]]> = [];
+		const save = fixture.manager.save;
+
+		fixture.manager.connection = { options: { type } };
+		fixture.manager.query = async (sql: string, parameters: unknown[]) => {
+			statements.push([sql, parameters]);
+
+			return [];
+		};
+		fixture.manager.save = async (entity: unknown, row: any) => {
+			if (entity === Entitlement) {
+				statements.push(['INSERT entitlement', [row.orderLineId ?? null]]);
+			}
+
+			return await save(entity, row);
+		};
+
+		return { fixture, statements };
+	}
+
+	it.each([
+		['postgres', PG_LOCK],
+		['mysql', 'SELECT `id` FROM `order_line` WHERE `id` = ? FOR UPDATE']
+	] as const)('locks the order line on %s before it reads again and inserts', async (type, lock) => {
+		const { fixture, statements } = onDialect(type);
+
+		const result = await fixture.service.grant({ orderId: ORDER, orderLineId: ORDER_LINE });
+
+		expect(result.created).toBe(true);
+		expect(statements).toEqual([
+			[lock, [ORDER_LINE]],
+			['INSERT entitlement', [ORDER_LINE]]
+		]);
+	});
+
+	it('answers a grant that lost the race with the right its read under the lock finds, and writes nothing', async () => {
+		const winner = rightRow('winner', {
+			orderId: ORDER,
+			orderLineId: ORDER_LINE,
+			status: EntitlementStatus.PENDING,
+			number: 'E-WINNER'
+		});
+		const { fixture, statements } = onDialect('postgres', { rights: [winner] });
+		// The read before the transaction ran before the winner committed; the one under the lock sees the table.
+		const original = (fixture.service as any).findExistingGrant.bind(fixture.service);
+		const read = jest.spyOn(fixture.service as any, 'findExistingGrant');
+
+		read.mockImplementationOnce(async () => null).mockImplementation(original);
+
+		const result = await fixture.service.grant(
+			{ orderId: ORDER, orderLineId: ORDER_LINE, issueKey: true, conditions: [{ attribute: 'region' } as never] },
+			{ tenantId: TENANT, organizationId: ORG }
+		);
+
+		expect(result).toEqual({ entitlement: expect.objectContaining({ id: 'winner' }), created: false });
+		expect(statements).toEqual([[PG_LOCK, [ORDER_LINE]]]);
+		expect(read).toHaveBeenCalledTimes(2);
+		expect(read.mock.calls[1][3]).toBe(fixture.manager);
+		expect(fixture.tables.entitlement.map((row) => row.id)).toEqual(['winner']);
+		expect(fixture.appended).toEqual([]);
+		expect(fixture.published).toEqual([]);
+		expect(fixture.conditionsReplaced).toEqual([]);
+		expect(fixture.tables.entitlement_key).toEqual([]);
+	});
+
+	it('refuses, under the lock, a line another organization of the tenant holds, as the index would', async () => {
+		const theirs = rightRow('theirs', { orderId: ORDER, orderLineId: ORDER_LINE, organizationId: 'another-org' });
+		const { fixture, statements } = onDialect('postgres', { rights: [theirs] });
+
+		const refusal = await fixture.service
+			.grant(
+				{ orderId: ORDER, orderLineId: ORDER_LINE, issueKey: true },
+				{ tenantId: TENANT, organizationId: ORG }
+			)
+			.catch((error) => error);
+
+		expect(refusal).toMatchObject({ status: 409, code: ApiErrorCode.UNIQUE_CONSTRAINT_VIOLATION });
+		// Neither returned to this organization nor duplicated: the lock was taken, and nothing was written.
+		expect(statements).toEqual([[PG_LOCK, [ORDER_LINE]]]);
+		expect(fixture.tables.entitlement.map((row) => row.id)).toEqual(['theirs']);
+		expect(fixture.appended).toEqual([]);
+		expect(fixture.published).toEqual([]);
+		expect(fixture.tables.entitlement_key).toEqual([]);
+	});
+
+	it('locks nothing once the index is in place, nor for a right no order line granted', async () => {
+		const indexed = onDialect('postgres', {}, true);
+
+		await indexed.fixture.service.grant({ orderId: ORDER, orderLineId: ORDER_LINE });
+		expect(indexed.statements).toEqual([['INSERT entitlement', [ORDER_LINE]]]);
+
+		const operator = onDialect('postgres');
+
+		await operator.fixture.service.grant({ customerId: 'customer-1' });
+		expect(operator.statements).toEqual([['INSERT entitlement', [null]]]);
+	});
+});
+
 describe('EntitlementService — putting a purchased right into force (doc 05 §19.1)', () => {
 	beforeEach(() => {
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
@@ -892,6 +1276,61 @@ describe('EntitlementService — putting a purchased right into force (doc 05 §
 		const fixture = entitlementFixture({ rights: [rightRow('a', { status: EntitlementStatus.PENDING })] });
 
 		expect(await fixture.service.activateGranted({})).toEqual([]);
+		expect(fixture.store('a').status).toBe(EntitlementStatus.PENDING);
+	});
+
+	it('puts into force only the rights one line of the order granted when the line is named (#11023)', async () => {
+		const fixture = entitlementFixture({
+			rights: [
+				rightRow('paid', { orderId: ORDER, orderLineId: 'line-paid', status: EntitlementStatus.PENDING }),
+				rightRow('refunded', {
+					orderId: ORDER,
+					orderLineId: 'line-refunded',
+					status: EntitlementStatus.PENDING
+				}),
+				rightRow('elsewhere', {
+					orderId: 'another-order',
+					orderLineId: 'line-paid',
+					status: EntitlementStatus.PENDING
+				})
+			]
+		});
+
+		const activated = await fixture.service.activateGranted({ orderId: ORDER, orderLineId: 'line-paid' });
+
+		expect(activated).toEqual(['paid']);
+		expect(fixture.store('refunded').status).toBe(EntitlementStatus.PENDING);
+		expect(fixture.store('elsewhere').status).toBe(EntitlementStatus.PENDING);
+		expect(fixture.events()).toEqual([EntitlementEventName.ACTIVATED]);
+	});
+
+	it('reads the rights one provenance granted under the scope stated, in any status, and nothing for none', async () => {
+		const fixture = entitlementFixture({
+			rights: [
+				rightRow('a', { orderId: ORDER, orderLineId: 'line-1', status: EntitlementStatus.PENDING }),
+				rightRow('b', { orderId: ORDER, orderLineId: 'line-2', status: EntitlementStatus.REVOKED }),
+				rightRow('c', { orderId: 'another-order', subscriptionId: 'sub-1', status: EntitlementStatus.ACTIVE })
+			]
+		});
+		const ids = (rows: { id?: unknown }[]) => rows.map((row) => row.id).sort();
+
+		expect(
+			ids(await fixture.service.findGranted({ orderId: ORDER }, { tenantId: TENANT, organizationId: ORG }))
+		).toEqual(['a', 'b']);
+		expect(ids(await fixture.service.findGranted({ orderLineId: 'line-2' }, { tenantId: TENANT }))).toEqual(['b']);
+		expect(ids(await fixture.service.findGranted({ subscriptionId: 'sub-1' }, { tenantId: TENANT }))).toEqual([
+			'c'
+		]);
+		expect(await fixture.service.findGranted({ orderId: ORDER }, { tenantId: 'another-tenant' })).toEqual([]);
+		expect(await fixture.service.findGranted({}, { tenantId: TENANT })).toEqual([]);
+	});
+
+	it('ignores a line named without its order, and answers nothing', async () => {
+		const fixture = entitlementFixture({
+			rights: [rightRow('a', { orderId: ORDER, orderLineId: 'line-1', status: EntitlementStatus.PENDING })]
+		});
+
+		expect(await fixture.service.activateGranted({ orderLineId: 'line-1' })).toEqual([]);
 		expect(fixture.store('a').status).toBe(EntitlementStatus.PENDING);
 	});
 });
@@ -1081,6 +1520,20 @@ describe('EntitlementService — lowering the ceiling (doc 05 §19.1)', () => {
 
 		expect(outcome).toMatchObject({ status: EntitlementStatus.REVOKED, revokedReason: EntitlementRevocationReason.REFUNDED });
 		expect(fixture.tables.entitlement_key[0].status).toBe(EntitlementKeyStatus.REVOKED);
+	});
+
+	it('changes nothing and announces nothing for a right that is already revoked, whatever the quantity asked', async () => {
+		const fixture = entitlementFixture({
+			rights: [rightRow('a', { quantity: 3, status: EntitlementStatus.REVOKED })]
+		});
+
+		const lower = await fixture.service.reduce('a', 2, 'REFUNDED');
+		const notLower = await fixture.service.reduce('a', 5, 'REFUNDED');
+
+		expect(lower).toMatchObject({ id: 'a', status: EntitlementStatus.REVOKED, quantity: 3 });
+		expect(notLower).toMatchObject({ id: 'a', status: EntitlementStatus.REVOKED, quantity: 3 });
+		expect(fixture.store('a').quantity).toBe(3);
+		expect(fixture.events()).toEqual([]);
 	});
 
 	it('refuses a "reduction" that does not lower the quantity', async () => {

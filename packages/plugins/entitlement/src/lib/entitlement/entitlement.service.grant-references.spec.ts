@@ -90,7 +90,8 @@ describe('EntitlementService.grant references', () => {
 			{} as any,
 			{} as any,
 			{} as any,
-			{} as any
+			{} as any,
+			{ isPresent: () => true } as any
 		);
 		// The grant goes on to its idempotency lookup only past the check; answering there keeps the test off the write
 		findExistingGrant = jest

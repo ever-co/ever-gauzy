@@ -95,7 +95,7 @@
 							nbButton
 							status="basic"
 							class="download-btn mr-4"
-							(click)="getRequestForm('paid')"
+							(click)="getRequestForm(RequestFormType.PAID)"
 						>
 							{{ 'BUTTONS.PAID_DAYS_OFF' | translate }}
 						</button>
@@ -103,10 +103,17 @@
 							nbButton
 							status="basic"
 							class="download-btn"
-							(click)="getRequestForm('unpaid')"
+							(click)="getRequestForm(RequestFormType.UNPAID)"
 						>
 							{{ 'BUTTONS.UNPAID_DAYS_OFF' | translate }}
 						</button>
+						@if (blockedRequestForm) {
+						<div class="mt-2">
+							<a [href]="blockedRequestForm.url" target="_blank" rel="noopener noreferrer">
+								{{ 'TIME_OFF_PAGE.OPEN_REQUEST_FORM' | translate: { name: blockedRequestForm.name } }}
+							</a>
+						</div>
+						}
 					</div>
 				</div>
 				<div class="col-6">

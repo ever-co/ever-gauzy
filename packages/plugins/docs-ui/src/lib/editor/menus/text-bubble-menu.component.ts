@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import {
 	AfterViewInit,
 	ChangeDetectionStrategy,
@@ -46,14 +45,7 @@ export const TEXT_COLORS = [
 export const HIGHLIGHT_COLORS = ['#fef08a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#fed7aa'];
 
 type TurnInto =
-	| 'paragraph'
-	| 'heading1'
-	| 'heading2'
-	| 'heading3'
-	| 'bulletList'
-	| 'orderedList'
-	| 'blockquote'
-	| 'callout';
+	'paragraph' | 'heading1' | 'heading2' | 'heading3' | 'bulletList' | 'orderedList' | 'blockquote' | 'callout';
 
 /**
  * Selection bubble menu (spec 05 §6.5): marks, link, highlight, text color and
@@ -63,11 +55,11 @@ type TurnInto =
 @Component({
 	selector: 'gz-text-bubble-menu',
 	standalone: true,
-	imports: [CommonModule, FormsModule, TranslatePipe, NbButtonModule, NbIconModule, NbInputModule, NbTooltipModule],
+	imports: [FormsModule, TranslatePipe, NbButtonModule, NbIconModule, NbInputModule, NbTooltipModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<div class="gz-bubble-menu" #menu>
-			<ng-container *ngIf="!linkEditing; else linkEditor">
+			@if (!linkEditing) {
 				<button
 					nbButton
 					ghost
@@ -187,9 +179,7 @@ type TurnInto =
 					{{ 'DOCS.EDITOR.FORMAT.TURN_INTO' | translate }}
 					<nb-icon icon="chevron-down-outline"></nb-icon>
 				</button>
-			</ng-container>
-
-			<ng-template #linkEditor>
+			} @else {
 				<input
 					nbInput
 					fieldSize="tiny"
@@ -206,44 +196,62 @@ type TurnInto =
 				<button nbButton ghost size="tiny" status="danger" type="button" (click)="removeLink()">
 					{{ 'DOCS.EDITOR.FORMAT.UNLINK' | translate }}
 				</button>
-			</ng-template>
+			}
 
-			<div class="gz-bubble-panel" *ngIf="highlightOpen">
-				<button
-					*ngFor="let color of highlightColors"
-					type="button"
-					class="gz-swatch"
-					[style.background]="color"
-					(click)="setHighlight(color)"
-				></button>
-				<button type="button" class="gz-swatch gz-swatch-clear" (click)="setHighlight(null)">×</button>
-			</div>
-			<div class="gz-bubble-panel" *ngIf="colorOpen">
-				<button
-					*ngFor="let color of textColors"
-					type="button"
-					class="gz-swatch"
-					[style.background]="color"
-					(click)="setColor(color)"
-				></button>
-				<button type="button" class="gz-swatch gz-swatch-clear" (click)="setColor(null)">×</button>
-			</div>
-			<div class="gz-bubble-panel gz-turn-into-panel" *ngIf="turnIntoOpen">
-				<button type="button" (click)="turnInto('paragraph')">{{ 'DOCS.EDITOR.SLASH.TEXT' | translate }}</button>
-				<button type="button" (click)="turnInto('heading1')">{{ 'DOCS.EDITOR.SLASH.HEADING_1' | translate }}</button>
-				<button type="button" (click)="turnInto('heading2')">{{ 'DOCS.EDITOR.SLASH.HEADING_2' | translate }}</button>
-				<button type="button" (click)="turnInto('heading3')">{{ 'DOCS.EDITOR.SLASH.HEADING_3' | translate }}</button>
-				<button type="button" (click)="turnInto('bulletList')">
-					{{ 'DOCS.EDITOR.SLASH.BULLET_LIST' | translate }}
-				</button>
-				<button type="button" (click)="turnInto('orderedList')">
-					{{ 'DOCS.EDITOR.SLASH.ORDERED_LIST' | translate }}
-				</button>
-				<button type="button" (click)="turnInto('blockquote')">{{ 'DOCS.EDITOR.SLASH.QUOTE' | translate }}</button>
-				<button type="button" (click)="turnInto('callout')">
-					{{ 'DOCS.EDITOR.SLASH.CALLOUT_INFO' | translate }}
-				</button>
-			</div>
+			@if (highlightOpen) {
+				<div class="gz-bubble-panel">
+					@for (color of highlightColors; track color) {
+						<button
+							type="button"
+							class="gz-swatch"
+							[style.background]="color"
+							(click)="setHighlight(color)"
+						></button>
+					}
+					<button type="button" class="gz-swatch gz-swatch-clear" (click)="setHighlight(null)">×</button>
+				</div>
+			}
+			@if (colorOpen) {
+				<div class="gz-bubble-panel">
+					@for (color of textColors; track color) {
+						<button
+							type="button"
+							class="gz-swatch"
+							[style.background]="color"
+							(click)="setColor(color)"
+						></button>
+					}
+					<button type="button" class="gz-swatch gz-swatch-clear" (click)="setColor(null)">×</button>
+				</div>
+			}
+			@if (turnIntoOpen) {
+				<div class="gz-bubble-panel gz-turn-into-panel">
+					<button type="button" (click)="turnInto('paragraph')">
+						{{ 'DOCS.EDITOR.SLASH.TEXT' | translate }}
+					</button>
+					<button type="button" (click)="turnInto('heading1')">
+						{{ 'DOCS.EDITOR.SLASH.HEADING_1' | translate }}
+					</button>
+					<button type="button" (click)="turnInto('heading2')">
+						{{ 'DOCS.EDITOR.SLASH.HEADING_2' | translate }}
+					</button>
+					<button type="button" (click)="turnInto('heading3')">
+						{{ 'DOCS.EDITOR.SLASH.HEADING_3' | translate }}
+					</button>
+					<button type="button" (click)="turnInto('bulletList')">
+						{{ 'DOCS.EDITOR.SLASH.BULLET_LIST' | translate }}
+					</button>
+					<button type="button" (click)="turnInto('orderedList')">
+						{{ 'DOCS.EDITOR.SLASH.ORDERED_LIST' | translate }}
+					</button>
+					<button type="button" (click)="turnInto('blockquote')">
+						{{ 'DOCS.EDITOR.SLASH.QUOTE' | translate }}
+					</button>
+					<button type="button" (click)="turnInto('callout')">
+						{{ 'DOCS.EDITOR.SLASH.CALLOUT_INFO' | translate }}
+					</button>
+				</div>
+			}
 		</div>
 	`,
 	styles: [

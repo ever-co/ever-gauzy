@@ -46,10 +46,11 @@ jest.mock(
 jest.mock('form-data', () => class {}, { virtual: true });
 
 const appSetting = { monitor: { captured: 'active-only' } };
+const auth: { current: Record<string, unknown> | null } = { current: { allowScreenshotCapture: true } };
 jest.mock('./desktop-store', () => ({
 	LocalStore: {
 		getStore: jest.fn((key: string) => {
-			if (key === 'auth') return { allowScreenshotCapture: true };
+			if (key === 'auth') return auth.current;
 			if (key === 'appSetting') return appSetting;
 			return {};
 		}),
@@ -57,7 +58,7 @@ jest.mock('./desktop-store', () => ({
 	}
 }));
 
-import { detectActiveWindow, getScreenshot } from './desktop-screenshot';
+import { captureScreen, detectActiveWindow, getScreenshot } from './desktop-screenshot';
 
 describe('detectActiveWindow', () => {
 	it('picks the display under the cursor when monitors are stacked vertically', () => {
@@ -116,5 +117,81 @@ describe('getScreenshot in active-only mode', () => {
 		const result = await getScreenshot();
 
 		expect(result.map((display) => display.id).sort()).toEqual(['1', '2']);
+	});
+});
+
+/**
+ * Issue #9872: the screen is captured only when the organization and the employee both allow it. The employee's own
+ * setting (stored at sign-in) used to be enough, so an employee was still captured while their organization was off.
+ */
+describe('screen capture permission', () => {
+	/** Whether the timer captures: `detectActiveWindow` answers nothing and no display is listed when it may not */
+	const captures = async () => {
+		listDisplays.mockClear();
+		const active = detectActiveWindow();
+		await captureScreen({ webContents: { send: jest.fn() } }, null, 'slot-1', false, null, null);
+		const listed = listDisplays.mock.calls.length > 0;
+		expect(listed).toBe(active !== undefined);
+		return listed;
+	};
+
+	beforeEach(() => {
+		cursor = { x: 100, y: 100 };
+		listDisplays.mockResolvedValue([]);
+	});
+
+	afterAll(() => {
+		auth.current = { allowScreenshotCapture: true };
+	});
+
+	it('does not capture an employee who allows it while the organization does not', async () => {
+		// What the timer stores once it has read the user: the employee allows it, the organization does not
+		auth.current = {
+			allowScreenshotCapture: false,
+			user: { employee: { allowScreenshotCapture: true, organization: { allowScreenshotCapture: false } } }
+		};
+
+		expect(await captures()).toBe(false);
+	});
+
+	it('follows the combined setting the timer read last over the employee stored at sign-in', async () => {
+		auth.current = { allowScreenshotCapture: true, user: { employee: { allowScreenshotCapture: false } } };
+
+		expect(await captures()).toBe(true);
+	});
+
+	it('before the timer has read the user, captures only when the employee and organization stored at sign-in allow it', async () => {
+		auth.current = {
+			user: { employee: { allowScreenshotCapture: true, organization: { allowScreenshotCapture: true } } }
+		};
+		expect(await captures()).toBe(true);
+
+		auth.current = {
+			user: { employee: { allowScreenshotCapture: true, organization: { allowScreenshotCapture: false } } }
+		};
+		expect(await captures()).toBe(false);
+
+		// No organization stored: not known to allow it
+		auth.current = { user: { employee: { allowScreenshotCapture: true } } };
+		expect(await captures()).toBe(false);
+	});
+
+	it('does not capture when signed out', async () => {
+		auth.current = null;
+
+		expect(await captures()).toBe(false);
+	});
+
+	it('takes no image with the screenshot-desktop engine of a time slot when the organization does not allow it', async () => {
+		// `getScreenshot` is what the timer calls for the "ScreenshotDesktopLib" engine; it used to capture regardless
+		auth.current = {
+			allowScreenshotCapture: false,
+			user: { employee: { allowScreenshotCapture: true, organization: { allowScreenshotCapture: false } } }
+		};
+		listDisplays.mockClear();
+		listDisplays.mockResolvedValue([{ id: '1' }, { id: '2' }]);
+
+		expect(await getScreenshot()).toEqual([]);
+		expect(listDisplays).not.toHaveBeenCalled();
 	});
 });

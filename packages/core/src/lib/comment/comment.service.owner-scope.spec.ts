@@ -10,6 +10,7 @@ import { CrudService } from '../core/crud/crud.service';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { CommentService } from './comment.service';
+import { CommentParentAccessService } from './parent-access';
 
 /**
  * A comment is its author's: `CommentService.update` lets a CHANGE_SELECTED_EMPLOYEE holder edit any comment of
@@ -47,6 +48,7 @@ describe('CommentService — withdrawing, restoring and removing a comment follo
 
 	beforeEach(() => {
 		service = Object.create(CommentService.prototype);
+		(service as any)._parentAccess = new CommentParentAccessService();
 		// The tenant-scoped lookup: a comment is found by its id, and — when the caller states an author — only
 		// when it is that author's.
 		findOne = jest.fn(async (id: string, options?: { where?: { employeeId?: string; createdByUserId?: string }; withDeleted?: boolean }) => {

@@ -70,6 +70,7 @@ export class TaskSelectorService extends SelectorService<ITask> {
 	}
 
 	public async load(options?: { searchTerm?: string; projectId?: string }): Promise<void> {
+		const isCurrent = this.requests.start(() => this.store.organizationId);
 		try {
 			this.taskSelectorStore.setLoading(true);
 			if (this.store.isOffline) {
@@ -98,11 +99,17 @@ export class TaskSelectorService extends SelectorService<ITask> {
 				...options
 			};
 			const { total, items: tasks } = await this.timeTrackerService.getPaginatedTasks(request);
+			if (!isCurrent()) {
+				return; // for a list emptied since, or another organization
+			}
 			if (tasks.length) {
 				const statistics = await this.timeTrackerService.getTasksStatistics({
 					...request,
 					taskIds: tasks.map((task) => task.id)
 				});
+				if (!isCurrent()) {
+					return;
+				}
 				const data = this.merge(tasks, statistics);
 				this.taskSelectorStore.updateInfiniteList({ data, total });
 			} else {
@@ -110,6 +117,9 @@ export class TaskSelectorService extends SelectorService<ITask> {
 			}
 			this.taskSelectorStore.setError(null);
 		} catch (error) {
+			if (!isCurrent()) {
+				return;
+			}
 			this.toastrNotifier.error(error.message || 'An error occurred while fetching tasks.');
 			this.taskSelectorStore.setError(error);
 		} finally {

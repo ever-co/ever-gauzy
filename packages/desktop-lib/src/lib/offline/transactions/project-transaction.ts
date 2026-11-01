@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import { AppError } from '../../error-handler';
 import { ITransaction, IDatabaseProvider } from '../../interfaces';
 import { ProjectTO, TABLE_NAME_PROJECTS } from '../dto';
+import { toUpdatePayload, warnEmptyUpdate } from '../utils';
 
 export class ProjectTransaction implements ITransaction<ProjectTO> {
 	private _databaseProvider: IDatabaseProvider;
@@ -24,12 +25,16 @@ export class ProjectTransaction implements ITransaction<ProjectTO> {
 	}
 
 	public async update(id: number, value: Partial<ProjectTO>): Promise<void> {
+		const changes = toUpdatePayload(value);
+		if (!changes) {
+			return warnEmptyUpdate('PROJECTRX', id);
+		}
 		await this._databaseProvider.connection.transaction(
 			async (trx: Knex.Transaction) => {
 				try {
 					await trx(TABLE_NAME_PROJECTS)
 						.where('id', '=', id)
-						.update(value);
+						.update(changes);
 					await trx.commit();
 				} catch (error) {
 					await trx.rollback();

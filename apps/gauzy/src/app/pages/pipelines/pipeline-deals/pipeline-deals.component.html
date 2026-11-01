@@ -1,4 +1,4 @@
-<nb-card [nbSpinner]="loading" class="card-scroll" nbSpinnerSize="large" nbSpinnerStatus="primary">
+<nb-card [nbSpinner]="loading || isBoardHeld" class="card-scroll" nbSpinnerSize="large" nbSpinnerStatus="primary">
 	<nb-card-header class="card-header-title">
 		@if (pipeline$ | async; as pipeline) {
 		<div class="card-header-title">
@@ -16,16 +16,19 @@
 			</h4>
 		</div>
 		<div class="gauzy-button-container">
+			<!-- On the board the stages are the columns: the table/grid switch has nothing to switch. -->
 			<ngx-gauzy-button-action
 				[buttonTemplateVisible]="visibleButton"
 				[buttonTemplate]="actionButtons"
 				[componentName]="viewComponentName"
+				[hasLayoutSelector]="!isBoardView"
 				[isDisable]="disableButton"
 			></ngx-gauzy-button-action>
 		</div>
 		}
 	</nb-card-header>
 	<nb-card-body>
+		@if (!isBoardView) {
 		<div class="row btn-container mb-3">
 			<div class="col">
 				<nb-select
@@ -44,11 +47,25 @@
 				</nb-select>
 			</div>
 		</div>
+		}
 		@if (deals$ | async; as deals) {
+		@if (isBoardView) {
+		<!-- Held back while moves made before the board was left settle and the deals are read again. -->
+		@if (!isBoardHeld) {
+		<ga-pipeline-deals-board
+			[stages]="pipeline?.stages"
+			[deals]="deals"
+			[organizationId]="pipeline?.organizationId"
+			[tenantId]="pipeline?.tenantId"
+			(dealMoving)="onBoardDealMoving($event)"
+		></ga-pipeline-deals-board>
+		}
+		} @else {
 		<ng-template
 			[ngTemplateOutlet]="dataLayoutStyle === componentLayoutStyleEnum.TABLE ? tableLayout : gridLayout"
 			[ngTemplateOutletContext]="{ deals: deals }"
 		></ng-template>
+		}
 		}
 	</nb-card-body>
 </nb-card>
@@ -116,6 +133,21 @@
 </ng-template>
 
 <ng-template #visibleButton>
+	<!-- The board: an extra view of the deals, one column per stage; the table and grid stay as they were. -->
+	<button
+		type="button"
+		nbButton
+		size="small"
+		status="basic"
+		class="board-toggle"
+		[class.primary]="isBoardView"
+		[attr.aria-pressed]="isBoardView"
+		[nbTooltip]="(isBoardView ? 'PIPELINE_DEALS_PAGE.LIST_VIEW' : 'PIPELINE_DEALS_PAGE.BOARD_VIEW') | translate"
+		(click)="toggleBoardView()"
+	>
+		<nb-icon icon="layout-outline"></nb-icon>
+		<span>{{ 'PIPELINE_DEALS_PAGE.BOARD' | translate }}</span>
+	</button>
 	<ng-template ngxPermissionsOnly="EDIT_SALES_PIPELINES">
 		<button [routerLink]="['./create']" nbButton size="small" status="success">
 			<nb-icon icon="plus-outline"></nb-icon>

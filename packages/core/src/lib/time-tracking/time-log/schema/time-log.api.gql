@@ -279,7 +279,8 @@ extend type Query {
 
 	`sum` is the employee's summed duration over the range, **in seconds**, and it is null where the
 	range holds no log of theirs at all — the delivered answer rather than a fabricated zero.
-	`activity` is the tracked activity of the range as a percentage of its tracked time.
+	`activity` is the tracked activity of the range as a percentage of its tracked time. `spent` is
+	that duration priced at the employee's bill rate, in `currency`, and null where they have no rate.
 	"""
 	timeLogWeeklyReport(
 		"The organization whose week is reported."

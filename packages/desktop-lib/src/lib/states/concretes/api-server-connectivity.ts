@@ -4,6 +4,7 @@ dns.setDefaultResultOrder('ipv4first');
 
 import { INetworkState } from '../../interfaces';
 import { LocalStore } from '../../desktop-store';
+import { API_PROBE_TIMEOUT_MS } from '../../offline/connectivity-timing';
 
 export class ApiServerConnectivity implements INetworkState {
 	public async established(): Promise<boolean> {
@@ -12,16 +13,18 @@ export class ApiServerConnectivity implements INetworkState {
 
 			console.log('[ApiServerConnectivity]: Checking server connectivity to url: ', url);
 
-			// if more than 30 sec to get response, then we think no connectivity for now to API servers
+			// No answer within API_PROBE_TIMEOUT_MS (connecting, or answering once connected): no connectivity to the
+			// API for now. The whole probe is bounded, so a lost connection is noticed within the detection budget.
 			const res = await fetch(url, {
 				headers: {
 					'Cache-Control': 'no-cache'
 				},
 				dispatcher: new Agent({
 					connect: {
-						timeout: 30 * 1000
+						timeout: API_PROBE_TIMEOUT_MS
 					}
-				})
+				}),
+				signal: AbortSignal.timeout(API_PROBE_TIMEOUT_MS)
 			});
 
 			if (res?.ok && res?.status === 200) {

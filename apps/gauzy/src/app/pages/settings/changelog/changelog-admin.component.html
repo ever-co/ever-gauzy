@@ -1,0 +1,152 @@
+<nb-card class="changelog-admin card-scroll">
+	<!-- A plain heading, not ngx-header-title: these entries belong to the installation, not to the
+	     selected organization the header title would name. -->
+	<nb-card-header class="header">
+		<h4 class="page-title">
+			<span class="menu-setting">{{ 'MENU.SETTINGS' | translate }}/ </span>{{ i18n + '.TITLE' | translate }}
+		</h4>
+		<p class="subtitle">{{ i18n + '.SUBTITLE' | translate }}</p>
+	</nb-card-header>
+
+	<nb-card-body>
+		@if (loading && !loadFailed) {
+			<div class="loading">
+				<nb-spinner status="primary" size="medium"></nb-spinner>
+			</div>
+		}
+
+		@if (loadFailed) {
+			<div class="state" role="alert">
+				<p class="state-title">{{ i18n + '.LOAD_FAILED' | translate }}</p>
+				<button type="button" nbButton size="small" status="primary" (click)="load()">
+					<nb-icon icon="refresh-outline"></nb-icon>
+					{{ 'BUTTONS.RETRY' | translate }}
+				</button>
+			</div>
+		} @else if (!loading) {
+			@for (section of sections; track section.isFeature) {
+				<section class="section">
+					<div class="section-header">
+						<div class="section-copy">
+							<h5 class="section-title">{{ section.titleKey | translate }}</h5>
+							<p class="section-hint">{{ section.hintKey | translate }}</p>
+						</div>
+						<button type="button" nbButton size="small" status="primary" (click)="add(section)">
+							<nb-icon icon="plus-outline"></nb-icon>
+							{{ i18n + '.ADD' | translate }}
+						</button>
+					</div>
+
+					@if (section.entries.length) {
+						<div class="table-panel">
+							<table class="entries-table">
+								<thead>
+									<tr>
+										<th class="date-col">{{ i18n + '.COLUMNS.DATE' | translate }}</th>
+										<th>{{ i18n + '.COLUMNS.ENTRY' | translate }}</th>
+										<th class="actions-col">{{ i18n + '.COLUMNS.ACTIONS' | translate }}</th>
+									</tr>
+								</thead>
+								<tbody>
+									@for (entry of section.entries; track entry.id) {
+										<tr>
+											<td class="date-col">{{ entry.date | date: 'mediumDate' : 'UTC' }}</td>
+											<td>
+												<div class="entry-title">
+													<nb-icon class="entry-icon" [icon]="entry.icon"></nb-icon>
+													<span>{{ entry.title }}</span>
+													@if (entry.learnMoreUrl) {
+														<a
+															class="entry-link"
+															[href]="entry.learnMoreUrl"
+															target="_blank"
+															rel="noopener noreferrer"
+															[nbTooltip]="entry.learnMoreUrl"
+															[attr.aria-label]="
+																i18n + '.FIELDS.LEARN_MORE_URL' | translate
+															"
+														>
+															<nb-icon icon="external-link-outline"></nb-icon>
+														</a>
+													}
+												</div>
+												<div class="entry-content">{{ entry.content }}</div>
+											</td>
+											<td class="actions-col">
+												<button
+													type="button"
+													nbButton
+													size="tiny"
+													ghost
+													status="basic"
+													(click)="edit(entry)"
+													[nbTooltip]="'BUTTONS.EDIT' | translate"
+													[attr.aria-label]="'BUTTONS.EDIT' | translate"
+												>
+													<nb-icon icon="edit-outline"></nb-icon>
+												</button>
+												<button
+													type="button"
+													nbButton
+													size="tiny"
+													ghost
+													status="danger"
+													[disabled]="!!busyId"
+													[nbSpinner]="busyId === entry.id"
+													nbSpinnerSize="tiny"
+													(click)="remove(entry)"
+													[nbTooltip]="'BUTTONS.DELETE' | translate"
+													[attr.aria-label]="'BUTTONS.DELETE' | translate"
+												>
+													<nb-icon icon="trash-2-outline"></nb-icon>
+												</button>
+											</td>
+										</tr>
+									}
+								</tbody>
+							</table>
+						</div>
+					} @else {
+						<div class="state">
+							<p class="state-hint">{{ i18n + '.EMPTY' | translate }}</p>
+						</div>
+					}
+				</section>
+			}
+		}
+
+		@if (deleted.length) {
+			<section class="section deleted">
+				<div class="section-header">
+					<div class="section-copy">
+						<h5 class="section-title">{{ i18n + '.DELETED' | translate }}</h5>
+						<p class="section-hint">{{ i18n + '.DELETED_HINT' | translate }}</p>
+					</div>
+				</div>
+				<ul class="deleted-list">
+					@for (entry of deleted; track entry.id) {
+						<li class="deleted-item">
+							<span class="entry-title">
+								<nb-icon class="entry-icon" [icon]="entry.icon"></nb-icon>
+								<span>{{ entry.title }}</span>
+							</span>
+							<button
+								type="button"
+								nbButton
+								size="tiny"
+								status="basic"
+								[disabled]="!!busyId"
+								[nbSpinner]="busyId === entry.id"
+								nbSpinnerSize="tiny"
+								(click)="restore(entry)"
+							>
+								<nb-icon icon="undo-outline"></nb-icon>
+								{{ 'BUTTONS.RESTORE' | translate }}
+							</button>
+						</li>
+					}
+				</ul>
+			</section>
+		}
+	</nb-card-body>
+</nb-card>

@@ -2,6 +2,7 @@ import { AppError } from '../../error-handler';
 import { UserService } from '.';
 import { Timer, TimerDAO, TimerTO } from '..';
 import { ISequence, ITimerService } from '../../interfaces';
+import { toUpdatePayload } from '../utils';
 
 export class TimerService implements ITimerService<TimerTO> {
 	private _timerDAO: TimerDAO;
@@ -42,23 +43,20 @@ export class TimerService implements ITimerService<TimerTO> {
 		}
 	}
 
-	private checkEmptyUpdate(timer: Partial<Timer>) {
-		const obj = typeof timer?.toObject === 'function' ? timer.toObject() : timer;
-		const keys = Object.keys(obj ?? {}).filter((key: keyof Timer) => key !== 'id');
-		return keys.length <= 0;
-	}
-
 	public async update(timer: Partial<Timer>): Promise<void> {
 		try {
 			if (!timer.id) {
 				return console.error('WARN[TIMER_SERVICE]: No timer data, cannot update');
 			}
 
-			if (this.checkEmptyUpdate(timer)) {
+			// `toObject()` lists every field, the unset ones as `undefined`: only the set ones are written (#7811).
+			const changes = toUpdatePayload<TimerTO>(typeof timer.toObject === 'function' ? timer.toObject() : timer);
+
+			if (!changes) {
 				return console.error('WARN[TIMER_SERVICE]: No timer data want to update');
 			}
 
-			await this._timerDAO.update(timer.id, timer.toObject());
+			await this._timerDAO.update(timer.id, changes);
 		} catch (error) {
 			throw new AppError('[TIMER_SERVICE]', error);
 		}

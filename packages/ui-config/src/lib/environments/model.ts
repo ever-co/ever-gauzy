@@ -40,6 +40,8 @@ export interface Environment {
 	ZITADEL_AUTH_LINK?: string;
 	/** Keycloak sign-in start URL. Empty (the default) shows no Keycloak button. */
 	KEYCLOAK_AUTH_LINK?: string;
+	/** OpenID Connect sign-in start URL. Empty (the default) shows no "Sign in with ..." button. */
+	OIDC_AUTH_LINK?: string;
 
 	NO_INTERNET_LOGO: string;
 

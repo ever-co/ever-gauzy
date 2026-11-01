@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { NbIconModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -12,7 +11,7 @@ import { AngularNodeViewComponent } from '../node-view/angular-node-view-rendere
 @Component({
 	selector: 'gz-embed-card-node-view',
 	standalone: true,
-	imports: [CommonModule, TranslatePipe, NbIconModule],
+	imports: [TranslatePipe, NbIconModule],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<div class="gz-embed-card" [class.selected]="selected()" tabindex="0" role="group">
@@ -20,7 +19,9 @@ import { AngularNodeViewComponent } from '../node-view/angular-node-view-rendere
 			<div class="gz-embed-meta">
 				<span class="gz-embed-title">{{ title }}</span>
 				<span class="gz-embed-domain">{{ domain }}</span>
-				<span class="gz-embed-description" *ngIf="description">{{ description }}</span>
+				@if (description) {
+					<span class="gz-embed-description">{{ description }}</span>
+				}
 			</div>
 			<a
 				class="gz-embed-open"

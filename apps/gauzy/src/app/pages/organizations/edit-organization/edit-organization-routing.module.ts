@@ -13,7 +13,7 @@ export function redirectTo() {
 	return '/pages/dashboard';
 }
 
-const routes: Routes = [
+export const routes: Routes = [
 	{
 		path: ':id',
 		component: EditOrganizationComponent,
@@ -69,6 +69,12 @@ const routes: Routes = [
 				component: EditOrganizationOtherSettingsComponent,
 				data: {
 					relations: ['accountingTemplates'],
+					// The contact holds the organization's country, which the EEA/UK checks on this page read
+					// (agent exit/logout #9873, screen capture acknowledgement #9872), as the API does. The API
+					// answers it only with ORG_CONTACT_VIEW, while the page is every organization editor's: without
+					// that permission the page opens without the contact and judges the location by its region code
+					// and time zone, and the API still checks the country when the settings are saved.
+					permittedRelations: { contact: PermissionsEnum.ORG_CONTACT_VIEW },
 					selectors: {
 						project: false,
 						team: false,

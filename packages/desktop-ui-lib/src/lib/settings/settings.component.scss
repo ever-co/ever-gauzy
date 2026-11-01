@@ -248,6 +248,27 @@
     }
 
   }
+
+  .screenshot-sound {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+
+    .screenshot-sound-name {
+      flex: 1 1 8rem;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+
+    small {
+      flex-basis: 100%;
+    }
+  }
 }
 
 :host {

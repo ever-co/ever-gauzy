@@ -27,7 +27,9 @@ import {
 	getAuthConfig,
 	TAuthConfig,
 	updateTimerStatus,
-	updateOrganizationTimerSetting
+	updateOrganizationTimerSetting,
+	updateOrganizationScreenshotCapture,
+	screenshotCaptureAllowed
 } from '../util';
 import { resolveScreenshotIntervalSeconds } from '../screenshot-interval';
 import { getScreenshot, TScreenShot } from '../screenshot';
@@ -632,6 +634,10 @@ class PullActivities {
 			if (updateOrganizationTimerSetting(organization) !== null) {
 				this.applyScreenshotInterval();
 			}
+			// The tray says whether screenshots are captured: tell it when the organisation turned capture off or on
+			if (updateOrganizationScreenshotCapture(organization)) {
+				this.mainEvent.emit(MAIN_EVENT, { type: MAIN_EVENT_TYPE.TRAY_TIMER_STATUS });
+			}
 		} catch (error) {
 			this.agentLogger.warn(`Organisation timer settings not refreshed: ${error?.message}`);
 		}
@@ -735,7 +741,7 @@ class PullActivities {
 		this.agentLogger.info('Taking screenshot');
 		const appSetting = getAppSetting();
 		let imgs = [];
-		if (appSetting?.allowScreenshotCapture) {
+		if (screenshotCaptureAllowed(appSetting)) {
 			const screenData = getScreen();
 			imgs = await getScreenshot({
 				monitor: {

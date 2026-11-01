@@ -24,7 +24,9 @@ import { IDocumentFacetBucket } from '../../models/docs-api.model';
 			<ng-template ng-option-tmp let-option="item">
 				<div class="docs-facet-option">
 					<span>{{ option.label }}</span>
-					<span class="docs-facet-count" *ngIf="option.count !== undefined"> ({{ option.count }}) </span>
+					@if (option.count !== undefined) {
+						<span class="docs-facet-count"> ({{ option.count }}) </span>
+					}
 				</div>
 			</ng-template>
 		</ng-select>

@@ -1,6 +1,6 @@
-import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { Validators, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { NbDialogRef } from '@nebular/theme';
+import { NbDialogRef, NbTooltipDirective, NbTrigger } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import moment from 'moment';
 import {
@@ -23,7 +23,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
-export class PublicPageOrganizationMutationComponent extends TranslationBaseComponent implements OnInit {
+export class PublicPageOrganizationMutationComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	income: IIncome;
 	organization?: IOrganization;
 	client_focus = Object.values(ClientFocusEnum);
@@ -102,6 +102,12 @@ export class PublicPageOrganizationMutationComponent extends TranslationBaseComp
 	@Input('selectedClientFocus')
 	selectedClientFocus: any;
 
+	/** The banner field's info hint; present while the tab that holds it is open. */
+	@ViewChild('bannerHint') private bannerHint?: NbTooltipDirective;
+
+	/** The hint opens and closes from its button's own events only, so Nebular adds no trigger of its own. */
+	readonly bannerHintTrigger = NbTrigger.NOOP;
+
 	constructor(
 		readonly translateService: TranslateService,
 		private readonly fb: UntypedFormBuilder,
@@ -118,6 +124,7 @@ export class PublicPageOrganizationMutationComponent extends TranslationBaseComp
 		this._initializeForm();
 		this.loadAwards();
 		this.loadLanguages();
+		window.addEventListener('keyup', this.closeHintOnEscape, true);
 	}
 
 	editPublicPage() {
@@ -137,6 +144,23 @@ export class PublicPageOrganizationMutationComponent extends TranslationBaseComp
 	close() {
 		this.dialogRef.close();
 	}
+
+	ngOnDestroy(): void {
+		window.removeEventListener('keyup', this.closeHintOnEscape, true);
+	}
+
+	/**
+	 * Escape while the banner hint is open closes the hint only. The dialog also closes on Escape, on a `keyup`
+	 * that reaches the document, which would throw away unsaved edits. This listener runs before that one (it
+	 * listens on the window, in the capture phase), so wherever focus is (the hint opens on hover too) the key
+	 * stops here while the hint is open. With the hint closed, Escape closes the dialog as before.
+	 */
+	private readonly closeHintOnEscape = (event: KeyboardEvent): void => {
+		if (event.key === 'Escape' && this.bannerHint?.isShown) {
+			this.bannerHint.hide();
+			event.stopPropagation();
+		}
+	};
 
 	private _initializeForm() {
 		if (this.organization) {

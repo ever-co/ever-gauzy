@@ -1,6 +1,12 @@
-import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
-import { NbButtonModule, NbCardModule, NbDialogRef, NbIconModule, NbSpinnerModule, NbTooltipModule } from '@nebular/theme';
+import {
+	NbButtonModule,
+	NbCardModule,
+	NbDialogRef,
+	NbIconModule,
+	NbSpinnerModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
@@ -15,7 +21,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 @Component({
 	selector: 'gz-document-image-preview-dialog',
 	standalone: true,
-	imports: [CommonModule, TranslatePipe, NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule, NbTooltipModule],
+	imports: [TranslatePipe, NbButtonModule, NbCardModule, NbIconModule, NbSpinnerModule, NbTooltipModule],
 	templateUrl: './document-image-preview-dialog.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrls: ['./document-image-preview-dialog.component.scss']

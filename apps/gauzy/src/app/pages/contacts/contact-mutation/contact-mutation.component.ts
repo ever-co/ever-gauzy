@@ -25,7 +25,8 @@ import {
 	ErrorHandlingService,
 	OrganizationProjectsService,
 	Store,
-	ToastrService
+	ToastrService,
+	projectsLinkableToNewContact
 } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
@@ -254,7 +255,8 @@ export class ContactMutationComponent extends TranslationBaseComponent implement
 				tenantId
 			});
 
-			this.projects = items;
+			// A new contact created without ORG_CONTACT_EDIT links only projects that have no contact yet.
+			this.projects = this.organizationContact?.id ? items : projectsLinkableToNewContact(this.store, items);
 		} catch (error) {
 			console.error('Error fetching projects:', error);
 		}

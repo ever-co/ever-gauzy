@@ -24,6 +24,7 @@ import {
 	IZapierConfig
 } from '@gauzy/common';
 import { FileStorageProviderEnum } from '@gauzy/contracts';
+import { IAuthSwitches } from './auth-switches.helper';
 import { ISocialAuthClientsConfig } from './social-auth.helper';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -159,6 +160,11 @@ export interface IEnvironment {
 	isElectron?: boolean;
 	gauzyUserPath?: string;
 	allowSuperAdminRole?: boolean;
+	/**
+	 * Self-service registration and admin password-reset switches (`APP_USER_REGISTRATION`,
+	 * `ALLOW_TENANTS_REGISTRATION`, `ADMIN_PASSWORD_RESET`). All on by default; see {@link IAuthSwitches}.
+	 */
+	authSwitches: IAuthSwitches;
 	/**
 	 * Whether a Super Admin may write the report catalogue (`report`, `report_category`). Those tables have no
 	 * tenant: a row one tenant writes is in every tenant's report menu, and every tenant owner is a Super Admin

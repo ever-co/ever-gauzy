@@ -97,9 +97,11 @@ export interface ISubtaskCount {
  * sidebar opens, and where the task drawer's "expand to full width" icon leads. The URL is the task's —
  * bookmark it, share it, reload it.
  *
- * Laid out as Jira's issue page: a breadcrumb, the title and the actions — the status, Edit and Copy link —
- * across the top; the work in the wide column — the description, the hours per day as Hubstaff charts them,
- * the subtasks and the linked issues; and the facts in the side column — the details, the time tracking with
+ * Laid out as Jira's issue page: the actions — the status (with the filters, on the Board), Edit, Copy link and
+ * the star — across the top beside the back button, then the breadcrumb and the title; the work in the wide
+ * column — the description, the hours
+ * per day as Hubstaff charts them, the subtasks and the linked issues; and the facts in the side column — the
+ * details, the time tracking with
  * who worked most and the recent time entries, then the stamps.
  *
  * The page belongs to the organization selected in the header, like the task lists: a task of another

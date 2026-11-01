@@ -1,12 +1,25 @@
 <nb-card [nbSpinner]="loading" nbSpinnerStatus="primary" nbSpinnerSize="large" class="card-scroll">
   <nb-card-header>
-    <div class="row">
+    <div class="row align-items-center">
       <div class="col-auto">
         <h4>
           <ngx-header-title>
             {{ 'REPORT_PAGE.TIME_AND_ACTIVITY_REPORT' | translate }}
           </ngx-header-title>
         </h4>
+      </div>
+      <div class="col-auto ml-auto">
+        <button
+          nbButton
+          status="basic"
+          size="small"
+          class="export-csv-button"
+          [disabled]="!canExport"
+          (click)="exportToCsv()"
+        >
+          <nb-icon icon="download-outline"></nb-icon>
+          {{ 'BUTTONS.EXPORT_TO_CSV' | translate }}
+        </button>
       </div>
     </div>
     <div class="row">

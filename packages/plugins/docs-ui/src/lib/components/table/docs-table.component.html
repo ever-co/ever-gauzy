@@ -8,25 +8,27 @@
 	(dblclick)="onRowDoubleClick($event)"
 >
 	<!-- Column chooser — header kebab, persisted to localStorage['gauzy_docs_columns'] -->
-	<div class="docs-table-toolbar" *ngIf="!reviewMode">
-		<!-- The tooltip sits on a wrapper, not on the button: `nbTooltip` and `nbPopover` each
-		     provide `NbDynamicOverlay` on their host element, so on the same element they share one
-		     overlay — the tooltip's config wins and the click only ever showed "Columns". -->
-		<span class="docs-column-chooser-hint" [nbTooltip]="'DOCS.TABLE.COLUMN_CHOOSER' | translate">
-			<button
-				nbButton
-				ghost
-				size="tiny"
-				class="docs-column-chooser-toggle"
-				[nbPopover]="columnChooser"
-				nbPopoverTrigger="click"
-				nbPopoverPlacement="bottom"
-				[attr.aria-label]="'DOCS.TABLE.COLUMN_CHOOSER' | translate"
-			>
-				<nb-icon icon="more-vertical-outline"></nb-icon>
-			</button>
-		</span>
-	</div>
+	@if (!reviewMode) {
+		<div class="docs-table-toolbar">
+			<!-- The tooltip sits on a wrapper, not on the button: `nbTooltip` and `nbPopover` each
+      provide `NbDynamicOverlay` on their host element, so on the same element they share one
+      overlay — the tooltip's config wins and the click only ever showed "Columns". -->
+			<span class="docs-column-chooser-hint" [nbTooltip]="'DOCS.TABLE.COLUMN_CHOOSER' | translate">
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					class="docs-column-chooser-toggle"
+					[nbPopover]="columnChooser"
+					nbPopoverTrigger="click"
+					nbPopoverPlacement="bottom"
+					[attr.aria-label]="'DOCS.TABLE.COLUMN_CHOOSER' | translate"
+				>
+					<nb-icon icon="more-vertical-outline"></nb-icon>
+				</button>
+			</span>
+		</div>
+	}
 
 	<angular2-smart-table
 		[settings]="settings"
@@ -41,48 +43,54 @@
 		<div class="docs-column-chooser-head">
 			<span class="docs-column-chooser-title">{{ 'DOCS.TABLE.COLUMN_CHOOSER' | translate }}</span>
 			<span class="docs-column-chooser-count">
-				{{ 'DOCS.TABLE.COLUMNS_SHOWN' | translate : { visible: visibleColumnCount, total: totalColumnCount } }}
+				{{ 'DOCS.TABLE.COLUMNS_SHOWN' | translate: { visible: visibleColumnCount, total: totalColumnCount } }}
 			</span>
 		</div>
 
 		<div class="docs-column-chooser-list">
 			<!-- Always-on columns: listed so the count adds up, but not toggleable. -->
-			<div
-				class="docs-column-option locked"
-				*ngFor="let column of requiredColumns"
-				[title]="'DOCS.TABLE.COLUMN_ALWAYS_SHOWN' | translate"
-			>
-				<nb-icon class="docs-column-option-icon" [icon]="columnIcon(column)"></nb-icon>
-				<span class="docs-column-option-text">
-					<span class="docs-column-option-label">{{ columnTitleKey(column) | translate }}</span>
-					<span class="docs-column-option-hint">{{ 'DOCS.TABLE.COLUMN_ALWAYS_SHOWN' | translate }}</span>
-				</span>
-				<nb-icon class="docs-column-option-lock" icon="lock-outline"></nb-icon>
-			</div>
+			@for (column of requiredColumns; track column) {
+				<div class="docs-column-option locked" [title]="'DOCS.TABLE.COLUMN_ALWAYS_SHOWN' | translate">
+					<nb-icon class="docs-column-option-icon" [icon]="columnIcon(column)"></nb-icon>
+					<span class="docs-column-option-text">
+						<span class="docs-column-option-label">{{ columnTitleKey(column) | translate }}</span>
+						<span class="docs-column-option-hint">{{ 'DOCS.TABLE.COLUMN_ALWAYS_SHOWN' | translate }}</span>
+					</span>
+					<nb-icon class="docs-column-option-lock" icon="lock-outline"></nb-icon>
+				</div>
+			}
 
 			<!-- The whole row is the switch: a bigger target than a bare checkbox. -->
-			<button
-				type="button"
-				role="switch"
-				class="docs-column-option"
-				*ngFor="let column of selectableColumns"
-				[class.on]="isColumnVisible(column)"
-				[attr.aria-checked]="isColumnVisible(column)"
-				(click)="toggleColumn(column, !isColumnVisible(column))"
-			>
-				<nb-icon class="docs-column-option-icon" [icon]="columnIcon(column)"></nb-icon>
-				<span class="docs-column-option-text">
-					<span class="docs-column-option-label">{{ columnTitleKey(column) | translate }}</span>
-					<span class="docs-column-option-hint" *ngIf="isColumnAutoHidden(column)">
-						{{ 'DOCS.TABLE.COLUMN_AUTO_HIDDEN' | translate }}
+			@for (column of selectableColumns; track column) {
+				<button
+					type="button"
+					role="switch"
+					class="docs-column-option"
+					[class.on]="isColumnVisible(column)"
+					[attr.aria-checked]="isColumnVisible(column)"
+					(click)="toggleColumn(column, !isColumnVisible(column))"
+				>
+					<nb-icon class="docs-column-option-icon" [icon]="columnIcon(column)"></nb-icon>
+					<span class="docs-column-option-text">
+						<span class="docs-column-option-label">{{ columnTitleKey(column) | translate }}</span>
+						@if (isColumnAutoHidden(column)) {
+							<span class="docs-column-option-hint">
+								{{ 'DOCS.TABLE.COLUMN_AUTO_HIDDEN' | translate }}
+							</span>
+						}
 					</span>
-				</span>
-				<span class="docs-column-switch" aria-hidden="true"></span>
-			</button>
+					<span class="docs-column-switch" aria-hidden="true"></span>
+				</button>
+			}
 		</div>
 
 		<div class="docs-column-chooser-foot">
-			<button type="button" class="docs-column-chooser-link" [disabled]="allColumnsVisible" (click)="showAllColumns()">
+			<button
+				type="button"
+				class="docs-column-chooser-link"
+				[disabled]="allColumnsVisible"
+				(click)="showAllColumns()"
+			>
 				{{ 'DOCS.TABLE.COLUMNS_SHOW_ALL' | translate }}
 			</button>
 			<button

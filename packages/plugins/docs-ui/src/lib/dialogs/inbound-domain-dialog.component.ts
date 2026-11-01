@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbInputModule, NbToggleModule } from '@nebular/theme';
@@ -32,7 +31,7 @@ export interface IDocsInboundDomainDialogResult {
  */
 @Component({
 	selector: 'gz-docs-inbound-domain-dialog',
-	imports: [CommonModule, FormsModule, TranslatePipe, NbButtonModule, NbCardModule, NbInputModule, NbToggleModule],
+	imports: [FormsModule, TranslatePipe, NbButtonModule, NbCardModule, NbInputModule, NbToggleModule],
 	template: `
 		<nb-card class="docs-dialog docs-inbound-domain-dialog">
 			<nb-card-header>{{ 'DOCS.INBOUND.DIALOG_TITLE' | translate }}</nb-card-header>
@@ -79,10 +78,12 @@ export interface IDocsInboundDomainDialogResult {
 					}}
 				</div>
 
-				<div class="docs-inbound-preview" *ngIf="previewAddress">
-					<span class="hint">{{ 'DOCS.INBOUND.RESULTING_ADDRESS' | translate }}</span>
-					<code>{{ previewAddress }}</code>
-				</div>
+				@if (previewAddress) {
+					<div class="docs-inbound-preview">
+						<span class="hint">{{ 'DOCS.INBOUND.RESULTING_ADDRESS' | translate }}</span>
+						<code>{{ previewAddress }}</code>
+					</div>
+				}
 
 				<nb-toggle class="docs-inbound-toggle" labelPosition="end" [(ngModel)]="importBodyAsNote">
 					{{ 'DOCS.INBOUND.IMPORT_BODY' | translate }}

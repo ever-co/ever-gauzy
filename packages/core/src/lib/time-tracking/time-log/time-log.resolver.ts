@@ -191,6 +191,8 @@ export interface ITimeLogWeeklyReport {
 	dates: ITimeLogWeeklyReportDay[];
 	sum?: number;
 	activity?: number;
+	spent?: number | null;
+	currency?: string | null;
 }
 
 /**
@@ -757,7 +759,9 @@ export class TimeLogResolver {
 			employeeId: week.employee?.id,
 			dates: this.weekOf(week.dates),
 			sum: week.sum,
-			activity: week.activity
+			activity: week.activity,
+			spent: week.spent ?? null,
+			currency: week.currency ?? null
 		}));
 	}
 
