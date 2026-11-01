@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
 	DeleteResult,
 	EntityManager,
+	FindOperator,
 	FindOptionsWhere,
 	In,
 	IsNull,
@@ -356,17 +357,47 @@ async function lockedCycleRow(manager: EntityManager, id: ID): Promise<Subscript
 }
 
 /**
- * Refuses conditions that state no value (`{}`, `{ subscriptionId: undefined }`) for a bulk delete or retirement.
+ * Whether a condition's value still selects once every `undefined` leaf is left out, as the platform's own guard reads it
+ * (`assertCriteriaHasPredicate` in `@gauzy/core`): `null` is a predicate (`IS NULL`), a find operator or a date is one, a
+ * nested (relation) object counts only through a leaf of its own, and an array (an OR of conditions) only through a
+ * branch that does.
  *
- * Read, they select every cycle in the caller's scope; the base write refused them (TypeORM's empty-criteria guard), and
- * restricting the write to the rows read would have turned that refusal into a write of all of them (Copilot).
+ * @param value A condition's value.
+ * @returns True when it selects by something.
+ */
+function statesPredicate(value: unknown): boolean {
+	if (value === undefined) {
+		return false;
+	}
+
+	if (value === null || value instanceof FindOperator || value instanceof Date) {
+		return true;
+	}
+
+	if (Array.isArray(value)) {
+		return value.some((branch) => statesPredicate(branch));
+	}
+
+	if (typeof value === 'object') {
+		return Object.values(value as Record<string, unknown>).some((nested) => statesPredicate(nested));
+	}
+
+	return true;
+}
+
+/**
+ * Refuses conditions that state no value for a bulk delete or retirement: `{}`, `{ subscriptionId: undefined }`, a
+ * relation with only `undefined` leaves (`{ subscription: { id: undefined } }`), or an OR whose branches state none.
+ *
+ * Read, they select every cycle in the caller's scope; the base write refused them (the platform's empty-criteria guard),
+ * and restricting the write to the rows read would have turned that refusal into a write of all of them (Copilot, cubic).
  *
  * @param criteria The conditions the caller stated.
  * @param action What the write would do, for the refusal.
  * @throws BadRequestException with `SUBSCRIPTION_BILLING_CRITERIA_REQUIRED` when they state none.
  */
 function assertStatedCriteria(criteria: object, action: string): void {
-	if (!Object.values(criteria as Record<string, unknown>).some((value) => value !== undefined)) {
+	if (!statesPredicate(criteria)) {
 		throw new BadRequestException(
 			`SUBSCRIPTION_BILLING_CRITERIA_REQUIRED: cycles are ${action} by the conditions that select them, and none were stated.`
 		);

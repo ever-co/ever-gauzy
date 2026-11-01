@@ -1515,7 +1515,7 @@ describe('SubscriptionBillingService — a charge in flight fences the cycle (ch
 	it('refuses a bulk delete or retirement whose conditions state no value, rather than writing every cycle in scope', async () => {
 		const fixture = billingFixture([billingRow('billing-1'), nextPeriod('billing-2')]);
 
-		for (const criteria of [{}, { subscriptionId: undefined }]) {
+		for (const criteria of [{}, { subscriptionId: undefined }, { subscription: { id: undefined } }]) {
 			await expect(fixture.service.delete(criteria as never)).rejects.toThrow('SUBSCRIPTION_BILLING_CRITERIA_REQUIRED');
 			await expect(fixture.service.softDelete(criteria as never)).rejects.toThrow('SUBSCRIPTION_BILLING_CRITERIA_REQUIRED');
 		}
