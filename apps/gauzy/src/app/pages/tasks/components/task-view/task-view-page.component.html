@@ -489,62 +489,89 @@
 	}
 </ng-template>
 
-<!-- A task row — check, key, title, then a subtask's priority and assignees, and its status — opening the task's own
-     page, as Jira lists child issues. The columns stay when empty, so the rows line up. -->
+<!-- A task row: check, key, title, then a subtask's priority and assignees — the link to the task's own page, as Jira
+     lists child issues — and its status. The columns stay when empty, so the rows line up. A subtask's status is a menu
+     for those who may edit it, as the header's, so it sits beside the link and not in it: a choice opens no page. -->
 <ng-template #taskRow let-row let-id="id">
-	<a class="task-row" [class.is-done]="row.done" [routerLink]="taskLink(id)">
-		<nb-icon
-			class="task-row-check"
-			[icon]="row.done ? 'checkmark-circle-2' : 'radio-button-off-outline'"
-			aria-hidden="true"
-		></nb-icon>
-		@if (row.key) {
-			<span class="task-row-key">{{ row.key }}</span>
-		}
-		<span class="task-row-title" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
-		@if (row.people) {
-			<span class="task-row-priority" [class]="row.priority ? 'tone-' + row.priority.tone : ''">
-				@if (row.priority; as priority) {
-					<nb-icon
-						role="img"
-						[icon]="priority.icon"
-						[nbTooltip]="priority.text"
-						nbTooltipPlacement="top"
-						[attr.aria-label]="priority.text"
-					></nb-icon>
-				}
+	<div class="task-row" [class.is-done]="row.done">
+		<a class="task-row-link" [routerLink]="taskLink(id)">
+			<nb-icon
+				class="task-row-check"
+				[icon]="row.done ? 'checkmark-circle-2' : 'radio-button-off-outline'"
+				aria-hidden="true"
+			></nb-icon>
+			@if (row.key) {
+				<span class="task-row-key">{{ row.key }}</span>
+			}
+			<span class="task-row-title" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
+			@if (row.people) {
+				<span class="task-row-priority" [class]="row.priority ? 'tone-' + row.priority.tone : ''">
+					@if (row.priority; as priority) {
+						<nb-icon
+							role="img"
+							[icon]="priority.icon"
+							[nbTooltip]="priority.text"
+							nbTooltipPlacement="top"
+							[attr.aria-label]="priority.text"
+						></nb-icon>
+					}
+				</span>
+				<span
+					class="task-row-people"
+					role="img"
+					[nbTooltip]="peopleNames(row.people) || ('PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate)"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="peopleNames(row.people) || ('PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate)"
+				>
+					@for (person of row.people.slice(0, 3); track person.id) {
+						<ng-container *ngTemplateOutlet="avatar; context: { $implicit: person }"></ng-container>
+					} @empty {
+						<span class="project-task-worker-avatar task-row-unassigned">
+							<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
+						</span>
+					}
+					@if (row.people.length > 3) {
+						<span class="project-task-worker-avatar">+{{ row.people.length - 3 }}</span>
+					}
+				</span>
+			}
+		</a>
+		@if (row.people && canEdit && statuses.length) {
+			<span class="task-row-status">
+				<nb-select
+					class="task-status-select"
+					size="small"
+					status="basic"
+					[style.--status-color]="menuStatusOf(row)?.color || row.status?.color"
+					[selected]="row.statusId"
+					[placeholder]="row.status?.text"
+					[optionsWidth]="224"
+					[disabled]="savingSubtasks.has(row.id)"
+					[attr.aria-label]="('TASK_VIEW.CHANGE_STATUS' | translate) + ': ' + row.title"
+					(selectedChange)="changeSubtaskStatus(row, $event)"
+				>
+					<nb-select-label>
+						<span class="task-status-tag">{{ statusName(menuStatusOf(row)?.name || row.status?.text) }}</span>
+					</nb-select-label>
+					@for (option of statuses; track option.id) {
+						<nb-option class="task-status-option" [style.--status-color]="option.color" [value]="option.id">
+							<span class="task-status-tag">{{ statusName(option.name) }}</span>
+						</nb-option>
+					}
+				</nb-select>
 			</span>
-			<span
-				class="task-row-people"
-				role="img"
-				[nbTooltip]="peopleNames(row.people) || ('PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate)"
-				nbTooltipPlacement="top"
-				[attr.aria-label]="peopleNames(row.people) || ('PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate)"
-			>
-				@for (person of row.people.slice(0, 3); track person.id) {
-					<ng-container *ngTemplateOutlet="avatar; context: { $implicit: person }"></ng-container>
-				} @empty {
-					<span class="project-task-worker-avatar task-row-unassigned">
-						<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
-					</span>
-				}
-				@if (row.people.length > 3) {
-					<span class="project-task-worker-avatar">+{{ row.people.length - 3 }}</span>
-				}
-			</span>
-		}
-		@if (row.status; as status) {
+		} @else if (row.status; as status) {
 			<span class="task-row-status">
 				<span
 					[class]="'task-status-tag tone-' + (status.tone || 'basic')"
 					[style.--status-color]="status.color"
-					[nbTooltip]="status.text"
+					[nbTooltip]="statusName(status.text)"
 					nbTooltipPlacement="top"
-					>{{ status.text }}</span
+					>{{ statusName(status.text) }}</span
 				>
 			</span>
 		}
-	</a>
+	</div>
 </ng-template>
 
 <!-- A project's image (or a folder) and its name. -->

@@ -144,35 +144,53 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   }
 }
 
-// Check | key | title | priority | assignees | status, one line per task; the row opens the task's page. The columns
-// after the title have fixed widths, so they line up from row to row.
+// Check | key | title | priority | assignees | status, one line per task. The columns after the title have fixed widths,
+// so they line up from row to row.
 .task-row {
   display: flex;
   align-items: center;
   gap: 0.625rem;
   min-width: 0;
-  min-height: 2.75rem;
-  padding: 0.5rem 1rem;
+  // Stated in full: the employee page's stylesheet, which this page loads, pads a `.task-row` of its own.
+  padding: 0;
+  padding-inline-end: 1rem;
   font-size: 0.8125rem;
   line-height: 1.25rem;
   color: var(--gauzy-text-color-1);
-  text-decoration: none;
   transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint);
+  }
+
+  &.is-done .task-row-title {
+    color: var(--gauzy-text-color-2);
+    text-decoration: line-through;
+  }
+}
+
+// All of the row but its status opens the task's page.
+.task-row-link {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding-block: 0.5rem;
+  padding-inline-start: 1rem;
+  color: inherit;
+  text-decoration: none;
 
   &:hover,
   &:focus-visible {
-    background-color: var(--gauzy-hover-tint);
+    color: inherit;
     text-decoration: none;
   }
 
   &:focus-visible {
     outline: 2px solid var(--gauzy-action-info-text);
     outline-offset: -2px;
-  }
-
-  &.is-done .task-row-title {
-    color: var(--gauzy-text-color-2);
-    text-decoration: line-through;
   }
 }
 
@@ -263,12 +281,30 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 
 // The status as the header draws it: one tag, in the status's own colour — seeded ones are too pale to be text as they
 // are — or in its tone for a status with none. Held to the row's end, in line with the panel's Add subtask button. A
-// long name is cut short; its tooltip reads in full.
+// long name is cut short; its tooltip reads in full. The column is wide enough for the longest seeded status and the
+// menu's chevron.
 .task-row-status {
   --status-color: var(--gauzy-text-color-2);
 
-  flex: 0 0 6.5rem;
+  flex: 0 0 8.75rem;
   min-width: 0;
+
+  .task-status-select {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-inline-start: auto;
+
+    // A name longer than the column stops short of the chevron: the header's menu lets its label overflow.
+    &.appearance-outline.status-basic.size-small ::ng-deep .select-button {
+      max-width: 100%;
+
+      span {
+        min-width: 0;
+        overflow: hidden;
+      }
+    }
+  }
 
   .task-status-tag {
     display: block;
@@ -278,7 +314,6 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    text-transform: capitalize;
 
     &.tone-success {
       --status-color: var(--gauzy-chart-revenue);
@@ -579,7 +614,7 @@ a.task-project {
   }
 
   .task-row-status {
-    flex-basis: 5.5rem;
+    flex-basis: 6.5rem;
   }
 }
 
