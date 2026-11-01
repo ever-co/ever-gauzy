@@ -3,7 +3,7 @@ import { normaliseEverWorksBaseUrl, readEverWorksConfig } from './ever-works-con
 describe('readEverWorksConfig', () => {
 	it('is empty by default (no URL is offered, nothing is called)', () => {
 		const warn = jest.fn();
-		expect(readEverWorksConfig({}, warn)).toEqual({ defaultApiUrl: null, appUrl: null, gauzyApiUrl: null, allowLoopback: false });
+		expect(readEverWorksConfig({}, warn)).toEqual({ defaultApiUrl: null, appUrl: null, gauzyApiUrl: null, gauzyAppUrl: null, allowLoopback: false });
 		expect(warn).not.toHaveBeenCalled();
 	});
 
@@ -13,13 +13,19 @@ describe('readEverWorksConfig', () => {
 				EVER_WORKS_API_URL: 'https://api.example.test/api/',
 				EVER_WORKS_APP_URL: 'https://app.example.test'
 			})
-		).toEqual({ defaultApiUrl: 'https://api.example.test/api', appUrl: 'https://app.example.test', gauzyApiUrl: null, allowLoopback: false });
+		).toEqual({ defaultApiUrl: 'https://api.example.test/api', appUrl: 'https://app.example.test', gauzyApiUrl: null, gauzyAppUrl: null, allowLoopback: false });
 	});
 
 	it('takes the public API address for webhooks from API_BASE_URL, silently ignoring a local one', () => {
 		const warn = jest.fn();
 		expect(readEverWorksConfig({ API_BASE_URL: 'https://api.gauzy.example/' }, warn).gauzyApiUrl).toBe('https://api.gauzy.example');
 		expect(readEverWorksConfig({ API_BASE_URL: 'http://localhost:3000' }, warn).gauzyApiUrl).toBeNull();
+		// The web app the Ever Works copies of Gauzy Inbox items link back to: APP_LINK, else CLIENT_BASE_URL (as Gauzy's
+		// own links, resolveAppLink); HTTPS only.
+		expect(readEverWorksConfig({ CLIENT_BASE_URL: 'https://app.gauzy.example/' }, warn).gauzyAppUrl).toBe('https://app.gauzy.example');
+		expect(readEverWorksConfig({ APP_LINK: 'https://link.gauzy.example' }, warn).gauzyAppUrl).toBe('https://link.gauzy.example');
+		expect(readEverWorksConfig({ CLIENT_BASE_URL: 'https://app.gauzy.example', APP_LINK: 'https://link.gauzy.example/' }, warn).gauzyAppUrl).toBe('https://link.gauzy.example');
+		expect(readEverWorksConfig({ CLIENT_BASE_URL: 'http://localhost:4200', APP_LINK: '' }, warn).gauzyAppUrl).toBeNull();
 		expect(warn).not.toHaveBeenCalled();
 	});
 

@@ -98,6 +98,12 @@
 			"escalation": "An escalation",
 			"notice": "A notice"
 		},
+		"INBOX_TO_EVER_WORKS": {
+			"TITLE": "Inbox → Ever Works",
+			"ALL": "all kinds",
+			"NONE": "no kind (nothing is sent)",
+			"SOME": "{{ on }} of {{ total }} kinds"
+		},
 		"UNLINK": "Remove pairing",
 		"NOT_PAIRED_OPTION": "— not paired —",
 		"ACCEPT_ALL": "Accept every suggestion",
@@ -144,6 +150,8 @@
 		"DOMAIN": "Records",
 		"DIRECTION": "Direction",
 		"SYNC_UNLINKED_PROJECT_TASKS": "Also sync tasks of projects that are not paired with a work",
+		"BACKFILL_GAUZY_INBOX": "Also send the open Gauzy Inbox items of paired people at the next initial sync or resync",
+		"BACKFILL_NEEDS_DIRECTION": "Takes effect only while the Inbox syncs Gauzy → Ever Works (both ways, or Gauzy → Ever Works). Each person's own choice of kinds is respected.",
 		"OFF_BY_SYNC_SETTING": "Not synced: the sync setting of this record type is off for the mapping.",
 		"VALUES": {
 			"both": "Both ways",
@@ -166,6 +174,65 @@
 		"inbox": "Inbox",
 		"docs": "Docs",
 		"agentEmail": "Agent email (a read-only copy in the Inbox)"
+	},
+	"INBOX_KINDS": {
+		"notice": {
+			"LABEL": "Notices",
+			"HINT": "Information for you to read, with nothing to answer.",
+			"NO": "no notices"
+		},
+		"question": {
+			"LABEL": "Questions",
+			"HINT": "Questions that wait for your answer.",
+			"NO": "no questions"
+		},
+		"approval": {
+			"LABEL": "Approvals",
+			"HINT": "Requests for you to approve or reject.",
+			"NO": "no approvals"
+		},
+		"mention": {
+			"LABEL": "Mentions",
+			"HINT": "Places where someone mentioned you, for example in a comment.",
+			"NO": "no mentions"
+		},
+		"assignment": {
+			"LABEL": "Assignments",
+			"HINT": "Work assigned to you, for example a task.",
+			"NO": "no assignments"
+		},
+		"email": {
+			"LABEL": "Emails",
+			"HINT": "Emails of your mailboxes, with sender and subject.",
+			"NO": "no emails"
+		},
+		"other": {
+			"LABEL": "Other items",
+			"HINT": "Anything else that reaches your Inbox.",
+			"NO": "no other items"
+		}
+	},
+	"INBOX_PREFERENCES": {
+		"MENU": "Ever Works inbox",
+		"TITLE": "Send to Ever Works",
+		"INTRO": "Your Gauzy Inbox items are also sent to your Ever Works inbox, in each organization where you are paired with an Ever Works member. Choose which kinds of items are sent; every kind is sent until you change it. What you answer or archive on either side shows on the other, and each item links back to Gauzy.",
+		"UNAVAILABLE": "The Ever Works integration is not switched on.",
+		"DEFAULTS": "You have not changed anything yet: every kind is sent.",
+		"NOTHING_SENT": "Every kind is off: none of your Inbox items is sent to Ever Works.",
+		"ORGANIZATIONS": "Organizations connected to Ever Works",
+		"NO_ORGANIZATIONS": "No organization of your workspace is connected to Ever Works yet, so nothing is sent.",
+		"ORGANIZATION": "Organization",
+		"STATE": "Your Inbox items",
+		"SENDING": "Sent to Ever Works",
+		"NOT_SENDING": "Not sent",
+		"REASONS": {
+			"not_paired": "You are not paired with an Ever Works member of this organization yet. An administrator pairs people in Integrations → Ever Works.",
+			"mapping_disabled": "Syncing with Ever Works is switched off for this organization.",
+			"direction": "This organization's Inbox does not sync from Gauzy to Ever Works.",
+			"sync_setting_off": "The Inbox sync setting of this organization's Ever Works mapping is off.",
+			"connection_inactive": "The connection to Ever Works is paused or needs a new key.",
+			"missing_scope": "The Ever Works key of this organization may not file inbox items (inbox:write). An administrator gives the key that scope."
+		}
 	},
 	"PHASES": {
 		"members": "People",

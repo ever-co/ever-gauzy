@@ -569,6 +569,74 @@ describe('EverWorksMatchReviewComponent', () => {
 		});
 	});
 
+	describe('People: what each paired person sends from their Gauzy Inbox to Ever Works', () => {
+		const ALL_ON = { notice: true, question: true, approval: true, mention: true, assignment: true, email: true, other: true };
+		const text = (el: HTMLElement, selector: string) => el.querySelector(selector)?.textContent?.trim() ?? null;
+
+		function withInbox(rows: Record<string, unknown>) {
+			api.people.mockReturnValue(
+				of({
+					...PEOPLE,
+					members: [
+						...PEOPLE.members,
+						...Object.entries(rows).map(([ewUserId, inboxToEverWorks]) => ({
+							...PEOPLE.members[1],
+							ewUserId,
+							linkedEmployeeId: `e-${ewUserId}`,
+							inboxToEverWorks
+						}))
+					]
+				})
+			);
+		}
+
+		it('sums up each paired person’s choice: all kinds, some of them (and which not), or none', () => {
+			withInbox({
+				all: { kinds: ALL_ON, customized: false },
+				some: { kinds: { ...ALL_ON, email: false, other: false }, customized: true },
+				none: { kinds: Object.fromEntries(Object.keys(ALL_ON).map((kind) => [kind, false])), customized: true }
+			});
+			const { el } = render();
+			expect(text(el, '[data-test="inbox-summary-all"]')).toContain('EVER_WORKS.REVIEW.INBOX_TO_EVER_WORKS.TITLE');
+			expect(text(el, '[data-test="inbox-summary-all"]')).toContain('EVER_WORKS.REVIEW.INBOX_TO_EVER_WORKS.ALL');
+			expect(text(el, '[data-test="inbox-summary-all"]')).not.toContain('(');
+			const some = text(el, '[data-test="inbox-summary-some"]');
+			expect(some).toContain('EVER_WORKS.REVIEW.INBOX_TO_EVER_WORKS.SOME');
+			expect(some).toContain('(EVER_WORKS.INBOX_KINDS.email.NO, EVER_WORKS.INBOX_KINDS.other.NO)');
+			expect(text(el, '[data-test="inbox-summary-none"]')).toContain('EVER_WORKS.REVIEW.INBOX_TO_EVER_WORKS.NONE');
+			expect(text(el, '[data-test="inbox-summary-none"]')).not.toContain('(');
+		});
+
+		it('counts the kinds sent of the kinds listed (for the "5 of 7 kinds" text)', () => {
+			const { component } = render();
+			expect(component.inboxSummary({ ...ALL_ON, email: false, other: false })).toEqual({
+				key: 'EVER_WORKS.REVIEW.INBOX_TO_EVER_WORKS.SOME',
+				on: 5,
+				total: 7,
+				off: ['EVER_WORKS.INBOX_KINDS.email.NO', 'EVER_WORKS.INBOX_KINDS.other.NO']
+			});
+			// A kind of a newer API is counted and named as it is.
+			expect(component.inboxSummary({ ...ALL_ON, digest: false } as Record<string, boolean>)).toMatchObject({ on: 7, total: 8, off: ['digest'] });
+		});
+
+		it('shows nothing for an unpaired member, nor for a row an older API sent without it', () => {
+			api.people.mockReturnValue(
+				of({
+					...PEOPLE,
+					members: [
+						// Unpaired: whatever the row says, there is no choice of theirs to show.
+						{ ...PEOPLE.members[0], inboxToEverWorks: { kinds: ALL_ON, customized: false } },
+						{ ...PEOPLE.members[1], ewUserId: 'legacy' },
+						{ ...PEOPLE.members[1], ewUserId: 'cleared', inboxToEverWorks: null }
+					]
+				})
+			);
+			const { el } = render();
+			expect(el.querySelector('[data-test="person-legacy"]')).not.toBeNull();
+			expect(el.querySelector('[data-test^="inbox-summary-"]')).toBeNull();
+		});
+	});
+
 	it('a late answer for a previous mapping is dropped', () => {
 		const late = new Subject<typeof PEOPLE>();
 		api.people.mockReturnValueOnce(late);
