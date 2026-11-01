@@ -4,7 +4,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { ITask, PermissionsEnum, TaskRelatedIssuesRelationEnum, TaskStatusEnum } from '@gauzy/contracts';
+import {
+	ITask,
+	PermissionsEnum,
+	TaskPriorityEnum,
+	TaskRelatedIssuesRelationEnum,
+	TaskStatusEnum
+} from '@gauzy/contracts';
 import {
 	Store,
 	TasksService,
@@ -383,6 +389,98 @@ describe('TaskViewPageComponent', () => {
 			expect(page.subtasks.map((row) => row.done)).toEqual([false, false, true]);
 			expect(page.subtaskCount).toEqual(expect.objectContaining({ done: 1, total: 3 }));
 			expect(page.taskLink('s1')).toEqual(['/pages/tasks/view', 's1']);
+		});
+
+		describe("a subtask's row", () => {
+			const member = (id: string, firstName: string) => ({ id, user: { firstName, lastName: 'Brown' } });
+			const child = (id: string, overrides: Record<string, unknown> = {}) => ({
+				id,
+				title: 'A subtask',
+				status: TaskStatusEnum.OPEN,
+				...overrides
+			});
+			const load = async (children: unknown[]) => {
+				tasksService.getById.mockResolvedValueOnce(task({ children: children as ITask[] }));
+				const page = create();
+				await settle();
+				return page;
+			};
+			const rows = (): HTMLElement[] => Array.from(fixture.nativeElement.querySelectorAll('.task-row'));
+
+			it('reads the relations the rows show', () => {
+				expect(TASK_PAGE_RELATIONS).toEqual(
+					expect.arrayContaining(['children.taskPriority', 'children.members', 'children.members.user'])
+				);
+			});
+
+			it('shows the assignees', async () => {
+				const page = await load([child('s1', { members: [member('e1', 'Ann'), member('e2', 'Bob')] })]);
+
+				expect(page.subtasks[0].people.map((person) => person.name)).toEqual(['Ann Brown', 'Bob Brown']);
+				expect(rows()[0].querySelector('.task-row-people').getAttribute('aria-label')).toBe('Ann Brown, Bob Brown');
+				expect(rows()[0].querySelectorAll('.project-task-worker-avatar').length).toBe(2);
+				expect(rows()[0].querySelector('.task-row-unassigned')).toBeNull();
+			});
+
+			it('shows three assignees, then how many more', async () => {
+				await load([
+					child('s1', { members: ['Ann', 'Bob', 'Cid', 'Dee', 'Eve'].map((name) => member(name, name)) })
+				]);
+
+				const circles = rows()[0].querySelectorAll('.project-task-worker-avatar');
+				expect(circles.length).toBe(4);
+				expect(circles[3].textContent.trim()).toBe('+2');
+			});
+
+			it('marks a subtask with no assignee, keeping the column', async () => {
+				const page = await load([child('s1')]);
+
+				expect(page.subtasks[0].people).toEqual([]);
+				expect(rows()[0].querySelector('.task-row-people')).not.toBeNull();
+				expect(rows()[0].querySelector('.task-row-unassigned')).not.toBeNull();
+			});
+
+			it('shows the priority, named for those who cannot see the arrow', async () => {
+				await load([child('s1', { priority: TaskPriorityEnum.URGENT })]);
+
+				const priority = rows()[0].querySelector('.task-row-priority');
+				expect(priority.classList).toContain('tone-danger');
+				expect(priority.querySelector('nb-icon').getAttribute('aria-label')).toBe(TaskPriorityEnum.URGENT);
+			});
+
+			it('keeps the priority column empty for a subtask with none, so the rows line up', async () => {
+				await load([child('s1')]);
+
+				const priority = rows()[0].querySelector('.task-row-priority');
+				expect(priority).not.toBeNull();
+				expect(priority.querySelector('nb-icon')).toBeNull();
+			});
+
+			it('draws the status in its own colour, or in its tone when it has none', async () => {
+				await load([
+					child('s1', { taskStatus: { name: 'Open', color: '#D6E4F9' } }),
+					child('s2', { status: TaskStatusEnum.BLOCKED })
+				]);
+
+				const [coloured, toned] = rows().map((row): HTMLElement => row.querySelector('.task-status-tag'));
+				expect(coloured.style.getPropertyValue('--status-color')).toBe('#D6E4F9');
+				expect(toned.classList).toContain('tone-danger');
+				expect(toned.style.getPropertyValue('--status-color')).toBe('');
+			});
+
+			it('keeps a linked issue to its key, title and status', async () => {
+				outgoingLinks = of({
+					items: [{ id: 'l1', action: TaskRelatedIssuesRelationEnum.BLOCKS, taskTo: { id: 't2', title: 'Ship it' } }]
+				});
+				create();
+				await settle();
+				await flush();
+				fixture.detectChanges();
+
+				expect(rows().length).toBe(1);
+				expect(rows()[0].querySelector('.task-row-people')).toBeNull();
+				expect(rows()[0].querySelector('.task-row-priority')).toBeNull();
+			});
 		});
 
 		it('has no subtask count for a task without subtasks', async () => {
