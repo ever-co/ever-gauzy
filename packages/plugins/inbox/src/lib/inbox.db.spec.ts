@@ -1162,6 +1162,12 @@ describe('Inbox on SQLite', () => {
 			const changed = await feed.recipientsChangedSince(TENANT, new Date(Date.now() - 60_000));
 			expect(changed.recipients.length).toBe(4);
 			expect(changed.recipients.every((row) => row.changedAt !== null)).toBe(true);
+			// The times read the same in every time zone of the process: just written, not hours off.
+			for (const row of changed.recipients) {
+				for (const at of [row.changedAt, row.itemUpdatedAt]) {
+					expect(Math.abs(new Date(at as string | Date).getTime() - Date.now())).toBeLessThan(5 * 60_000);
+				}
+			}
 			expect((await feed.recipientsChangedSince(TENANT, new Date(Date.now() + 60_000))).recipients).toEqual([]);
 		});
 	});

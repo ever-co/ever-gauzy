@@ -1062,6 +1062,33 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 		expect(actions.reply).toHaveBeenCalledTimes(1);
 	});
 
+	it('a write-only key never sends Gauzy’s answer blind after a 412: the rest goes first, the answer once the member’s side is known', async () => {
+		const scopes = MOCK_PRESET_SCOPES.filter((scope) => scope !== 'inbox:read');
+		const { addItem, push, inboxWrite, items, linkOf } = setup({ scopes });
+		const { item, ada } = addItem();
+		await push(ada);
+		const ewId = linkOf(ada)?.['ewId'] as string;
+		// The member answers in Ever Works (version 2) while Gauzy answers and renames the item.
+		await inboxWrite.answer(ewId, { choiceId: 'no' });
+		Object.assign(items.get(item.id as string) as IInboxItem, {
+			title: 'Ship the release today?',
+			status: InboxItemStatusEnum.ANSWERED,
+			response: { optionId: 'yes', answeredByUserId: ADA.user, answeredAt: new Date().toISOString() }
+		});
+		await expect(push(ada)).resolves.toMatchObject({ status: 'deferred' });
+		expect(inboxWrite.patched.map((patch) => [patch.ifMatch, patch.body])).toEqual([
+			['"1"', { title: 'Ship the release today?', state: 'resolved', resolution: { choiceId: 'yes' } }],
+			['"2"', { title: 'Ship the release today?' }]
+		]);
+		// The next try knows the member answered: Gauzy's answer stays out, the member's stands.
+		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped' });
+		expect(inboxWrite.patched).toHaveLength(2);
+		expect(inboxWrite.byExternalId(`${item.id}:${ada}`)).toMatchObject({
+			title: 'Ship the release today?',
+			answerOptionId: 'no'
+		});
+	});
+
 	it('a copy the member answered comes back out of an archive made in Gauzy, its answer kept', async () => {
 		const { addItem, push, inboxWrite, apply, recipients, items, linkOf } = setup();
 		const { item, ada } = addItem();

@@ -36,6 +36,17 @@ type RawRecipientRow = {
 	metadata: string | null;
 };
 
+/**
+ * A raw timestamp as a zoned value: SQLite answers its UTC datetimes as text without a zone (`2026-11-01 10:00:00.000`),
+ * which `new Date()` would read in the process's local time; such a text is marked UTC. Other values are kept as they are.
+ */
+function zoned(value: Date | string | null | undefined): Date | string | null {
+	if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(value)) {
+		return `${value.replace(' ', 'T')}Z`;
+	}
+	return value ?? null;
+}
+
 /** The later of two times read from the database (a driver answers a `Date` or a string). */
 function laterOf(a: Date | string | null, b: Date | string | null): Date | string | null {
 	const at = (value: Date | string | null) => (value === null ? Number.NaN : new Date(value).getTime());
@@ -299,8 +310,8 @@ export class InboxItemFeed implements IInboxItemFeed {
 				organizationId: row.organizationId ?? null,
 				source: row.source,
 				kind: row.kind as never,
-				changedAt: laterOf(row.itemUpdatedAt, row.recipientUpdatedAt),
-				itemUpdatedAt: row.itemUpdatedAt ?? null,
+				changedAt: laterOf(zoned(row.itemUpdatedAt), zoned(row.recipientUpdatedAt)),
+				itemUpdatedAt: zoned(row.itemUpdatedAt),
 				externalSource: row.externalSource ?? null,
 				taskId: row.taskId ?? null,
 				entity: row.entity ?? null,

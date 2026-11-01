@@ -835,6 +835,25 @@ export class EverWorksInboxPushService
 			snapshot: { g: this.snapshotOf(link), e: this.everWorksSideOf(link) },
 			direction: 'inbound'
 		});
+		// Gauzy's answer is not sent blind over a copy that moved: the member may have answered it meanwhile (an answer
+		// Ever Works refuses to overwrite, which would stop the whole change). The rest of the change goes now, without the
+		// answer; its PATCH answer shows whether the member answered, and the answer follows on the next try (or stays
+		// out, the member's standing).
+		const before = this.snapshotOf(link);
+		const withoutAnswer: GauzyInboxShared = {
+			...now,
+			resolution: before.resolution ?? null,
+			state: now.state === 'resolved' ? (before.state ?? 'open') : now.state
+		};
+		if (patchOf(now, before)?.resolution && patchOf(withoutAnswer, before)) {
+			const outcome = await this.patchCopy(context, recorded, withoutAnswer, copy, true);
+			if (outcome.status !== 'pushed') return outcome;
+			return {
+				status: 'deferred',
+				message: `${outcome.message}; Gauzy's answer follows once the member's side is known`,
+				retryInMs: GAUZY_INBOX_CONFLICT_RETRY_MS
+			};
+		}
 		return this.patchCopy(context, recorded, now, copy, true);
 	}
 

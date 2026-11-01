@@ -205,7 +205,8 @@ export class EverWorksMappingService {
 			// that writes there, where one of them was not before): older items only with the backfill.
 			const inboxRows = await manager.find(IntegrationEntitySetting, { where: { integrationId: mapping.id, entity: IntegrationEntity.INBOX_ITEM } as never });
 			const inboxSyncedBefore = !inboxRows.some((row) => row.sync === false);
-			const inboxToggle = dto.entitySettings?.find((change) => change.entity === IntegrationEntity.INBOX_ITEM);
+			// The last toggle of InboxItem in the request, the one the save below keeps.
+			const inboxToggle = (dto.entitySettings ?? []).filter((change) => change.entity === IntegrationEntity.INBOX_ITEM).pop();
 			const enabledBefore = this.setting(mapping, S.IS_ENABLED) === 'true';
 			const sendsBefore = enabledBefore && inboxSyncedBefore && toEverWorks(current.inbox);
 			const sendsAfter =

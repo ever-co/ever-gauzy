@@ -370,7 +370,17 @@ describe('Ever Works organization mapping on SQLite', () => {
 		// Switched off, then on again (the mapping, or its InboxItem setting): the push starts over each time it resumes.
 		for (const [off, on] of [
 			[{ isEnabled: false }, { isEnabled: true }],
-			[{ entitySettings: [{ entity: IntegrationEntity.INBOX_ITEM, sync: false }] }, { entitySettings: [{ entity: IntegrationEntity.INBOX_ITEM, sync: true }] }]
+			[{ entitySettings: [{ entity: IntegrationEntity.INBOX_ITEM, sync: false }] }, { entitySettings: [{ entity: IntegrationEntity.INBOX_ITEM, sync: true }] }],
+			// The last toggle of a request is the one saved, and the one that counts.
+			[
+				{ entitySettings: [{ entity: IntegrationEntity.INBOX_ITEM, sync: false }] },
+				{
+					entitySettings: [
+						{ entity: IntegrationEntity.INBOX_ITEM, sync: false },
+						{ entity: IntegrationEntity.INBOX_ITEM, sync: true }
+					]
+				}
+			]
 		] as const) {
 			const resumedFrom = await pushSince(view.integrationTenantId);
 			await mappings.update(view.integrationTenantId, off as never);
