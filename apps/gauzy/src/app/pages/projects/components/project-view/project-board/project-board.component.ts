@@ -165,6 +165,8 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	public filterOptions: IBoardFilterOptions = NO_BOARD_FILTER_OPTIONS;
 	/** The column under a dragged card that will not take it, marked so the user sees it before letting go. */
 	public refusingColumnId: string | null = null;
+	/** The column under a dragged card that will take it, marked so the user sees where it will land. */
+	public dropColumnId: string | null = null;
 	/** The project's tasks, read or not: the subtasks, on a task's board. */
 	public total = 0;
 	/** A task's board shows the task itself, so it is not empty without subtasks. */
@@ -249,11 +251,13 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	/** Only a column backed by a status row takes a card: its status is what the move saves. */
 	readonly acceptsDrop = (_drag: unknown, drop: { data: IBoardColumn }): boolean => !!drop.data?.statusId;
 
-	/** While a card is dragged, marks the column under the pointer if it will not take the card. */
+	/** While a card is dragged, marks the column under the pointer: whether it will take the card, or will not. */
 	onDragMoved(event: CdkDragMove<IBoardCard>): void {
 		const column = this.columnAt(event.pointerPosition);
-		const id = column && !column.statusId ? column.id : null;
-		if (id !== this.refusingColumnId) this.refusingColumnId = id;
+		const refusing = column && !column.statusId ? column.id : null;
+		if (refusing !== this.refusingColumnId) this.refusingColumnId = refusing;
+		const taking = column?.statusId && !column.cards.includes(event.source.data) ? column.id : null;
+		if (taking !== this.dropColumnId) this.dropColumnId = taking;
 	}
 
 	/** No page lands during a drag: the drop lists measured themselves when it began. */
@@ -262,16 +266,19 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	}
 
 	onDragEnded(): void {
+		this.dropColumnId = null;
 		this.endDrag();
 		this.watchEnd();
 	}
 
 	/**
 	 * A card dropped on another column: it moves at once and the task is saved with that column's
-	 * status. If the save fails, the card goes back to where it was and an error says so.
+	 * status. If the save fails, the card goes back to where it was and an error says so. A task has no stored place
+	 * in its column, so a card dropped on its own column stays where it was.
 	 */
 	async drop(event: CdkDragDrop<IBoardColumn, IBoardColumn, IBoardCard>): Promise<void> {
 		this.refusingColumnId = null;
+		this.dropColumnId = null;
 		const from = event.previousContainer.data;
 		const to = event.container.data;
 		// Where the card was let go decides, not the last column that took it on the way: a card carried
@@ -281,25 +288,33 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			this._toastrService.danger('PROJECT_VIEW.CANNOT_DROP', 'TOASTR.TITLE.ERROR', { column: released.name });
 			return;
 		}
-		// Let go over its own column, outside the column that took it, or on one without a status: no move.
-		if (from === to || !to.statusId || !event.isPointerOverContainer) return;
+		// The whole column takes the card, its header too: the drop list is only the cards' part of it, and a
+		// short column's header is where a card is most often let go.
+		const target = released ?? (event.isPointerOverContainer ? to : undefined);
+		// Let go over its own column, outside any column, or on one without a status: no move.
+		if (!target || target === from || !target.statusId) return;
 		// The dragged card itself, at the place it has now: a move that failed while this card was dragged
 		// puts its card back and shifts the others, so the index the drag started at may name another card.
 		let card = event.item.data;
 		const index = card ? from.cards.indexOf(card) : -1;
 		if (index < 0 || card.saving) return;
 
-		transferArrayItem(from.cards, to.cards, index, event.currentIndex);
+		// The drop's index counts the cards on show of the list that took it; those the filter hides are still in
+		// the column. Let go over a column's header, the card goes to its top.
+		const next = this.visibleCards(target)[target === to ? event.currentIndex : 0];
+		transferArrayItem(from.cards, target.cards, index, next ? target.cards.indexOf(next) : target.cards.length);
 		const wasDone = card.done;
-		this.setDone(card, to.group === 'done');
+		this.setDone(card, target.group === 'done');
+		// Where the column's order puts it, as a reload will: the parent's card stays first.
+		this.sortCards(target);
 		card.saving = true;
 		const sequence = this._sequence;
 		try {
 			// The status alone: a title or anything else read when the board loaded would undo a newer edit.
 			await firstValueFrom(
 				this._http.put<ITask>(`${API_PREFIX}/tasks/${card.id}/status`, {
-					status: to.value,
-					taskStatusId: to.statusId,
+					status: target.value,
+					taskStatusId: target.statusId,
 					organizationId: this.organizationId,
 					tenantId: this.tenantId
 				})
@@ -308,9 +323,9 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		} catch (error) {
 			// A reload since the drop replaced the board: there is no card left to put back.
 			if (sequence !== this._sequence) return;
-			const current = to.cards.indexOf(card);
+			const current = target.cards.indexOf(card);
 			if (current > -1) {
-				transferArrayItem(to.cards, from.cards, current, Math.min(index, from.cards.length));
+				transferArrayItem(target.cards, from.cards, current, Math.min(index, from.cards.length));
 			}
 			this.setDone(card, wasDone);
 			this._toastrService.danger(error);
@@ -592,12 +607,14 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			}
 			column.cards.push(this.toCard(task, today));
 		}
-		// Each column: the parent first, then overdue cards, the rest in the order the tasks came.
-		for (const column of columns) {
-			column.cards.sort(
-				(a, b) => Number(!!b.isParent) - Number(!!a.isParent) || Number(b.overdue) - Number(a.overdue)
-			);
-		}
+		for (const column of columns) this.sortCards(column);
+	}
+
+	/** A column's order: the parent first, then overdue cards, the rest in the order they came. */
+	private sortCards(column: IBoardColumn): void {
+		column.cards.sort(
+			(a, b) => Number(!!b.isParent) - Number(!!a.isParent) || Number(b.overdue) - Number(a.overdue)
+		);
 	}
 
 	private toCard(task: ITask, today: moment.Moment): IBoardCard {
