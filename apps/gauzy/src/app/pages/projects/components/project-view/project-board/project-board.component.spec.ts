@@ -111,6 +111,169 @@ describe('ProjectBoardComponent', () => {
 		expect(component.visibleCards(done)).toEqual([]);
 	});
 
+	describe('dropping a card', () => {
+		let put: jest.Mock;
+
+		/** The screen under the pointer: the column with this id, or nothing of the board. */
+		const pointerOver = (columnId: string | null) => {
+			const element = document.createElement('section');
+			if (columnId) element.dataset['columnId'] = columnId;
+			(document as any).elementFromPoint = jest.fn(() => (columnId ? element : null));
+		};
+
+		const release = (component: ProjectBoardComponent, overrides: Record<string, unknown>) =>
+			component.drop({ isPointerOverContainer: true, currentIndex: 0, dropPoint: { x: 1, y: 1 }, ...overrides } as any);
+
+		const ids = (column: { cards: { id: string }[] }) => column.cards.map((card) => card.id);
+
+		beforeEach(() => {
+			put = jest.fn(() => of({}));
+			Object.assign(http, { put });
+		});
+
+		afterEach(() => {
+			delete (document as any).elementFromPoint;
+		});
+
+		it('takes a card let go over the header of a column, which is no part of the drop list', async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+			pointerOver('done');
+
+			await release(component, {
+				previousContainer: { data: open },
+				container: { data: open },
+				item: { data: open.cards[1] },
+				isPointerOverContainer: false
+			});
+
+			expect(ids(open)).toEqual([PARENT_ID]);
+			expect(ids(done)).toEqual(['sub-1', 'sub-2']);
+			expect(put).toHaveBeenCalledWith(
+				expect.stringContaining('/tasks/sub-1/status'),
+				expect.objectContaining({ status: 'done', taskStatusId: 'done' })
+			);
+		});
+
+		it('saves the column let go over, not the last one the card passed through', async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+			pointerOver('open');
+
+			await release(component, {
+				previousContainer: { data: done },
+				container: { data: done },
+				item: { data: done.cards[0] },
+				isPointerOverContainer: false
+			});
+
+			expect(ids(open)).toContain('sub-2');
+			expect(put).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ status: 'open' }));
+		});
+
+		it('leaves a card let go outside every column where it was', async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+			pointerOver(null);
+
+			await release(component, {
+				previousContainer: { data: open },
+				container: { data: done },
+				item: { data: open.cards[1] },
+				isPointerOverContainer: false
+			});
+
+			expect(ids(open)).toEqual([PARENT_ID, 'sub-1']);
+			expect(put).not.toHaveBeenCalled();
+		});
+
+		it('leaves a card let go on its own column where it was: a task has no stored place in it', async () => {
+			const component = await board();
+			const [open] = component.board.value;
+			pointerOver('open');
+
+			await release(component, {
+				previousContainer: { data: open },
+				container: { data: open },
+				item: { data: open.cards[1] },
+				currentIndex: 0
+			});
+
+			expect(ids(open)).toEqual([PARENT_ID, 'sub-1']);
+			expect(put).not.toHaveBeenCalled();
+		});
+
+		it('puts a dropped card where it was let go among the cards on show, with others hidden by the filter', async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+
+			// The parent's card is hidden, and stays in the column: the drop after `sub-1` is index 1 among those on show.
+			component.filter = { ...component.filter, search: 'sub' };
+			await release(component, {
+				previousContainer: { data: done },
+				container: { data: open },
+				item: { data: done.cards[0] },
+				currentIndex: 1,
+				dropPoint: undefined
+			});
+
+			expect(ids(open)).toEqual([PARENT_ID, 'sub-1', 'sub-2']);
+			expect(put).toHaveBeenCalledTimes(1);
+		});
+
+		it("keeps the parent's card first, as a reload will", async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+			pointerOver('open');
+
+			await release(component, {
+				previousContainer: { data: done },
+				container: { data: open },
+				item: { data: done.cards[0] },
+				currentIndex: 0
+			});
+
+			expect(ids(open)).toEqual([PARENT_ID, 'sub-2', 'sub-1']);
+		});
+
+		it('puts the card back when the save fails, and says so', async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+			put.mockReturnValue(throwError(() => new Error('refused')));
+			pointerOver('done');
+
+			await release(component, {
+				previousContainer: { data: open },
+				container: { data: open },
+				item: { data: open.cards[1] },
+				isPointerOverContainer: false
+			});
+
+			expect(ids(open)).toEqual([PARENT_ID, 'sub-1']);
+			expect(ids(done)).toEqual(['sub-2']);
+			expect(open.cards[1].saving).toBe(false);
+		});
+
+		it('marks the column that will take the card, not its own, and clears the mark when the drag ends', async () => {
+			const component = await board();
+			const [open] = component.board.value;
+			const moved = { pointerPosition: { x: 1, y: 1 }, source: { data: open.cards[1] } } as any;
+
+			pointerOver('done');
+			component.onDragMoved(moved);
+			expect(component.dropColumnId).toBe('done');
+
+			pointerOver('open');
+			component.onDragMoved(moved);
+			expect(component.dropColumnId).toBeNull();
+
+			pointerOver('done');
+			component.onDragMoved(moved);
+			component.onDragEnded();
+			expect(component.dropColumnId).toBeNull();
+		});
+	});
+
 	it('reads what only the filter needs, and offers what the cards carry, on a filterable board only', async () => {
 		http.get.mockImplementation((url: string) => {
 			if (url.endsWith('/task-statuses')) return of({ items: STATUSES });
