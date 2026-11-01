@@ -186,6 +186,8 @@ nb-option.board-filter-option.board-filter-option {
 
   padding: 0.25rem 0.5rem;
   line-height: 1rem;
+  // A long name wraps, however long its words, rather than being cut off by the menu's edge.
+  overflow-wrap: anywhere;
 
   &.selected {
     font-weight: 400;
