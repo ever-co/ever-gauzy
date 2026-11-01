@@ -11,8 +11,8 @@ const OPTIONS_POSITIONS = [NbPosition.BOTTOM_END, NbPosition.TOP_END, NbPosition
 /**
  * Opens an `nb-select`'s options from the start edge of its trigger, for a menu wider than the trigger: `NbSelect`
  * always centres them, with no input to say otherwise. It builds its position once, on first opening, so swapping the
- * method here is in time. None of Nebular's adjustments offers these positions, so the strategy is given its own list,
- * and pushed back on screen when none fits, which Nebular's builder turns off.
+ * method here is in time. Nebular's adjustments that reach these positions cycle through centred and side ones too, so
+ * the strategy is given its own list, and pushed back on screen when none fits, which Nebular's builder turns off.
  */
 @Directive({
 	selector: 'nb-select[gaOptionsAtStart]',
