@@ -39,6 +39,7 @@ import { IEmployeeHoursDay } from '../../../employees/view-employee/employee-hou
 import {
 	failed,
 	formatDuration,
+	humanize,
 	IPersonChip,
 	ITaskWorker,
 	Loadable,
@@ -98,6 +99,8 @@ export interface ISubtaskRow {
 	key: string;
 	title: string;
 	status: IRecordViewStatus | null;
+	/** Its entry in the status menu, once the statuses are read; none when the menu has no such status. */
+	statusId: string | null;
 	priority: IRecordViewStatus | null;
 	/** Its assignees. A row with this list keeps the priority and people columns, so the rows line up. */
 	people: IPersonChip[];
@@ -197,6 +200,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	/** The status menu's entry for the task's status: by its status row, else by its value or name. */
 	currentStatusId: string | null = null;
 	savingStatus = false;
+	/** The subtasks whose status is being saved from their rows. */
+	readonly savingSubtasks = new Set<string>();
 
 	readonly canEdit: boolean;
 	/**
@@ -405,6 +410,39 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	}
 
 	/**
+	 * Moves a subtask to another status from its row, as the header moves the task: the status alone. The row shows it
+	 * at once and a failed save puts it back, or the menu, which keeps its own selection, would show a status that
+	 * was never saved. The task is read again after, so the rows' order, the count and the bar follow.
+	 */
+	async changeSubtaskStatus(row: ISubtaskRow, statusId: string): Promise<void> {
+		const status = this.statuses.find((item) => item.id === statusId);
+		if (!status || !this.task || !this.canEdit || this.savingSubtasks.has(row.id) || status.id === row.statusId) return;
+		const { id: subtaskId, statusId: previousStatusId } = row;
+		const taskId = this.task.id;
+		row.statusId = status.id;
+		this.savingSubtasks.add(subtaskId);
+		try {
+			await firstValueFrom(
+				this.http.put<ITask>(`${API_PREFIX}/tasks/${subtaskId}/status`, {
+					status: status.value || status.name,
+					taskStatusId: status.id,
+					...this.scope()
+				})
+			);
+			await this.refresh(taskId);
+			// After the read: the server writes the move's log entry as the update lands.
+			this.reloadPanes();
+		} catch (error) {
+			// Another row's save may have read the task again meanwhile: the row on screen is found afresh.
+			const current = this.subtasks.find((item) => item.id === subtaskId);
+			if (current) current.statusId = previousStatusId;
+			this.toastrService.danger(error);
+		} finally {
+			this.savingSubtasks.delete(subtaskId);
+		}
+	}
+
+	/**
 	 * Opens the task dialog the task list edits with, on the task read as the list reads it — with its modules,
 	 * which the dialog saves back — then saves what it answers and reads the task again. A failed read opens no
 	 * dialog: one opened without the modules would unlink them all.
@@ -528,6 +566,14 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		return people.map((person) => person.name).join(', ');
 	}
 
+	/** A status's name in a row, read as words: a seeded status is named by its slug, `ready-for-review`. */
+	readonly statusName = humanize;
+
+	/** The menu's entry for a subtask's status, for its button's label and colour. */
+	menuStatusOf(row: ISubtaskRow): ITaskStatus | null {
+		return this.statuses.find((status) => status.id === row.statusId) || null;
+	}
+
 	/** The total of the hours chart, so an empty fortnight says so instead of drawing flat bars. */
 	get hoursTotal(): number {
 		return (this.hours.value || []).reduce((sum, day) => sum + day.tracked + day.manual, 0);
@@ -642,6 +688,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			if (sequence !== this.loadSequence) return;
 			this.statuses = [...statuses].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 			this.currentStatusId = this.currentStatusOf(task);
+			// The rows find their entries in the menu now that it has them.
+			this.subtasks = this.subtasksOf(task);
 		} catch {
 			// The status shows without its menu.
 		}
@@ -718,6 +766,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 					key: number ? this.hashNumberPipe.transform(number) : '',
 					title: child.title,
 					status: taskStatusOf(child),
+					statusId: this.currentStatusOf(child),
 					priority: taskPriorityOf(child),
 					people: (child.members || []).map((member) => personOf(member)).filter(Boolean),
 					done
