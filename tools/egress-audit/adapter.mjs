@@ -11,7 +11,9 @@
 // - loaded_off: the Super Admin (the instance operator) switches the statistics off in Settings.
 // - every_trigger: every trigger of every call this release makes, against the mock platform
 //   (connect, link, entitlement refresh, a consent and the operator's accept, the statistics link,
-//   switching off, unlink, disconnect); the call log must be exactly the generated rows.
+//   Sign in with Ever ID's sign-in client, the answer to a person's deletion request, switching off,
+//   unlink, disconnect); the call log must be exactly the generated rows. Rows 19 and 22 need an
+//   Ever ID sign-in the mock platform cannot serve yet (see triggerAll).
 // - connect_off_sign_in_on: the connection off and the Ever ID sign-in plugin on with an issuer on
 //   an Ever host: the plugin must not use it (no lookup, no request, no redirect to it).
 // - entitlement_ladder: entitlement documents dated so the stored one is in grace, then paused, one
@@ -104,6 +106,17 @@ const SIGN_IN_ON = {
 	ZITADEL_ISSUERS: 'https://auth.ever.co',
 	ZITADEL_CLIENT_ID: 'gauzy-egress-audit',
 	ZITADEL_CLIENT_SECRET: 'egress-audit-not-a-secret'
+};
+
+/**
+ * every_trigger: the Ever ID sign-in addresses the connection sends when it asks Ever Platform for
+ * this installation's sign-in client (row 14). Ever Platform takes only exact https addresses on one
+ * origin, and the audit's API answers on http://api:3000, so the callback is set the way an operator
+ * behind a proxy sets it (`ZITADEL_CALLBACK_URL`). It is only data in the request: nothing looks it
+ * up, and the Ever ID sign-in plugin stays off (`ZITADEL_ENABLED` unset).
+ */
+const EVER_ID_CLIENT = {
+	ZITADEL_CALLBACK_URL: 'https://gauzy.example.com/api/auth/zitadel/callback'
 };
 
 /** entitlement_ladder: the operator connects with the mock's code and the statistics stay off. */
@@ -273,7 +286,7 @@ export default {
 		loaded_off: { ...LOADED_OFF, ...RUN_SEED },
 		positive_stats: RUN_SEED,
 		positive_connect: RUN_SEED,
-		every_trigger: RUN_SEED,
+		every_trigger: { ...EVER_ID_CLIENT, ...RUN_SEED },
 		positive_managed: RUN_SEED,
 		connect_off_sign_in_on: { ...LOADED_BY_MISTAKE_WOULD_SHOW, ...SIGN_IN_ON, ...RUN_SEED },
 		entitlement_ladder: { ...LADDER, ...RUN_SEED }
@@ -336,6 +349,41 @@ export default {
 			async () => (await recordedRows(session)).includes(11) || null,
 			120
 		);
+
+		// Row 14: Sign in with Ever ID is consented for the installation in app.ever.co and waits for the
+		// operator, who accepts (row 31); the connection asks for this installation's sign-in client and
+		// reads it until it is ready. Ever Platform still offers ever_id_login as "coming soon"; the mock
+		// lets a consent enable it, so the calls of what comes next are audited now.
+		await mock(session, 'consent', {
+			instance_id: session.instanceId,
+			integration: 'ever_id_login',
+			operator_accept: 'pending'
+		});
+		await until('the Sign in with Ever ID consent waiting for the operator', async () => {
+			const status = await api(session, 'GET', `/api/ever-connect/status?organizationId=${org}`);
+			return (status.body?.pending_approvals ?? []).some((p) => p.key === 'ever_id_login') || null;
+		});
+		expect(
+			'operator accept (Sign in with Ever ID)',
+			await api(session, 'POST', '/api/ever-connect/integrations/ever_id_login/accept', { accepted: true }),
+			[200]
+		);
+		await until('the sign-in client (row 14)', async () => (await recordedRows(session)).includes(14) || null, 120);
+
+		// Row 20: a person's deletion request arrives on the event feed (row 7) and the installation
+		// answers it. No call depends on Sign in with Ever ID for this one.
+		await mock(session, 'person-request', { instance_id: session.instanceId, kind: 'deletion' });
+		await until(
+			"the answer to a person's request (row 20)",
+			async () => (await recordedRows(session)).includes(20) || null,
+			120
+		);
+
+		// Rows 19 and 22 are not triggered here: both need a person who signed in with Ever ID through
+		// this installation's sign-in client (a link reported, an identity resolved at sign-in), and
+		// the mock platform serves no Ever ID issuer to sign in at (no discovery, authorization, token or
+		// key endpoints, and its issuer's name does not resolve on the sealed network). Until it does,
+		// this run reports both as required but never called (see README.md, "Modes").
 
 		// Row 10: switched off here, Ever Platform told.
 		expect(
