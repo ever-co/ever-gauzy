@@ -172,6 +172,26 @@
   }
 }
 
+// A row of a menu, opened in an overlay: compact, with the checkbox saying what is chosen, so a chosen row keeps its
+// weight and takes only the hover tint. Text and checkbox sizes go through the variables the overlay and Nebular's
+// checkbox read. The padding and the weight are fixed in the overlay's rule for every menu, which the repeated class
+// outranks here alone.
+nb-option.board-filter-option.board-filter-option {
+  --menu-text-font-size: 0.75rem;
+  --menu-text-font-weight: 400;
+  --checkbox-width: 0.875rem;
+  --checkbox-height: 0.875rem;
+  --checkbox-border-radius: 0.1875rem;
+  --gauzy-overlay-item-active-background: var(--gauzy-hover-tint);
+
+  padding: 0.25rem 0.5rem;
+  line-height: 1rem;
+
+  &.selected {
+    font-weight: 400;
+  }
+}
+
 .board-filter-count {
   display: inline-block;
   min-width: 1rem;

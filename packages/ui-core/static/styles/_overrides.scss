@@ -1736,6 +1736,16 @@ nb-option-list.fit-content {
   min-width: var(--select-min-width);
 }
 
+// A board filter's menu: no scrollbars. A long list still scrolls, by wheel and by its arrow keys.
+nb-option-list.board-filter-options .option-list {
+  overflow-x: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Apply style on spinner */
 .sync-container {
   .sync {
