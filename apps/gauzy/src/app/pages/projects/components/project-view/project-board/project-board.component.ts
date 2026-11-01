@@ -290,7 +290,9 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		const index = card ? from.cards.indexOf(card) : -1;
 		if (index < 0 || card.saving) return;
 
-		transferArrayItem(from.cards, to.cards, index, event.currentIndex);
+		// The drop's index counts the cards on show; those the filter hides are still in the column.
+		const next = this.visibleCards(to)[event.currentIndex];
+		transferArrayItem(from.cards, to.cards, index, next ? to.cards.indexOf(next) : to.cards.length);
 		const wasDone = card.done;
 		this.setDone(card, to.group === 'done');
 		card.saving = true;

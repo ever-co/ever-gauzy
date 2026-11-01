@@ -111,6 +111,26 @@ describe('ProjectBoardComponent', () => {
 		expect(component.visibleCards(done)).toEqual([]);
 	});
 
+	it('puts a dropped card where it was let go among the cards on show, with others hidden by the filter', async () => {
+		const component = await board();
+		const [open, done] = component.board.value;
+		const put = jest.fn(() => of({}));
+		Object.assign(http, { put });
+
+		// The parent's card is hidden, and stays in the column: the drop after `sub-1` is index 1 among those on show.
+		component.filter = { ...component.filter, search: 'sub' };
+		await component.drop({
+			previousContainer: { data: done },
+			container: { data: open },
+			item: { data: done.cards[0] },
+			isPointerOverContainer: true,
+			currentIndex: 1
+		} as any);
+
+		expect(open.cards.map((card) => card.id)).toEqual([PARENT_ID, 'sub-1', 'sub-2']);
+		expect(put).toHaveBeenCalledTimes(1);
+	});
+
 	it('reads what only the filter needs, and offers what the cards carry, on a filterable board only', async () => {
 		http.get.mockImplementation((url: string) => {
 			if (url.endsWith('/task-statuses')) return of({ items: STATUSES });
