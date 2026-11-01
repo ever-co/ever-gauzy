@@ -265,7 +265,12 @@ export interface ISubscriptionOrderResult {
 export interface ISubscriptionOrderGatewayPort {
 	/**
 	 * @param request The cycle's lines, amount and payer.
-	 * @returns The order the cycle produced and whether it settled.
+	 * @returns The order the cycle produced and whether it settled. A key an earlier call completed is answered with
+	 * that call's order rather than a second one.
+	 * @throws An error whose message starts with `ORDER_SUBSCRIPTION_IN_FLIGHT:` when another call still holds the
+	 * request's `idempotencyKey` and is working: the attempt is in flight elsewhere, not failed. One whose message starts
+	 * with `ORDER_SUBSCRIPTION_KEY_REUSED:` when the key already raised an order for a different request: the attempt's
+	 * outcome is the earlier call's, not a failure of this one.
 	 */
 	raiseSubscriptionOrder(request: ISubscriptionOrderRequest): Promise<ISubscriptionOrderResult>;
 
@@ -427,6 +432,9 @@ export interface ISubscriptionBilling extends IBasePerTenantAndOrganizationEntit
 	attemptCount: number;
 	lastError?: string;
 	nextRetryAt?: Date;
+	/** The billing pass charging the cycle right now, and when it took the claim; null when no charge is in flight. */
+	chargeClaimToken?: string;
+	chargeClaimedAt?: Date;
 	metadata?: Record<string, unknown>;
 }
 

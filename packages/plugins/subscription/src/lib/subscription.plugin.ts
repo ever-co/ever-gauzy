@@ -5,6 +5,9 @@ import {
 	AddSubscriptionVersionColumn1791000000575
 } from './database/migrations/1791000000575-AddSubscriptionVersionColumn';
 import {
+	AddSubscriptionBillingChargeClaim1791000003520
+} from './database/migrations/1791000003520-AddSubscriptionBillingChargeClaim';
+import {
 	AddSubscriptionReservedPlan1791000003540
 } from './database/migrations/1791000003540-AddSubscriptionReservedPlan';
 import { resolvers } from './graphql/resolvers';
@@ -56,6 +59,7 @@ const SUBSCRIPTION_DEPENDS_ON: string[] = [
 	migrations: [
 		CreateSubscriptionTables1791000000320,
 		AddSubscriptionVersionColumn1791000000575,
+		AddSubscriptionBillingChargeClaim1791000003520,
 		AddSubscriptionReservedPlan1791000003540
 	],
 	/**
