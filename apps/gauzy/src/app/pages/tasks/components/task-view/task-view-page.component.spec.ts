@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import {
 	ITask,
 	PermissionsEnum,
@@ -480,6 +480,181 @@ describe('TaskViewPageComponent', () => {
 				expect(rows().length).toBe(1);
 				expect(rows()[0].querySelector('.task-row-people')).toBeNull();
 				expect(rows()[0].querySelector('.task-row-priority')).toBeNull();
+			});
+
+			describe('status menu', () => {
+				const MENU = [
+					{ id: 'st-open', name: 'Open', value: 'open', color: '#112233', order: 1, organizationId: ORGANIZATION },
+					{ id: 'st-done', name: 'Done', value: 'done', order: 2, organizationId: ORGANIZATION },
+					{ id: 'st-ready', name: 'ready-for-review', value: 'ready-for-review', order: 3, organizationId: ORGANIZATION }
+				];
+				const select = (row: HTMLElement) => row.querySelector('nb-select');
+
+				/** The page, once the statuses are in, for one who may edit: the task stays as read across a refresh. */
+				const editable = async (children: unknown[], allowed = [PermissionsEnum.ORG_TASK_EDIT]) => {
+					permissions = allowed;
+					statuses = MENU;
+					tasksService.getById.mockImplementation(async (id: string) => task({ id, children: children as ITask[] }));
+					const page = create();
+					await settle();
+					await flush();
+					fixture.detectChanges();
+					return page;
+				};
+
+				it('offers the menu beside the link, so a choice opens no page', async () => {
+					await editable([child('s1')]);
+
+					expect(select(rows()[0])).not.toBeNull();
+					expect(rows()[0].tagName).toBe('DIV');
+					expect(rows()[0].querySelector('.task-row-link').tagName).toBe('A');
+					expect(rows()[0].querySelector('.task-row-link nb-select')).toBeNull();
+				});
+
+				it('names the subtask it moves', async () => {
+					await editable([child('s1', { title: 'Write docs' })]);
+
+					expect(select(rows()[0]).getAttribute('aria-label')).toContain('Write docs');
+				});
+
+				it("finds each subtask's status in the menu by its row, else by its value", async () => {
+					const page = await editable([
+						child('s1', { status: 'Whatever', taskStatusId: 'st-done' }),
+						child('s2', { status: TaskStatusEnum.OPEN })
+					]);
+
+					expect(page.subtasks.find((row) => row.id === 's1').statusId).toBe('st-done');
+					expect(page.subtasks.find((row) => row.id === 's2').statusId).toBe('st-open');
+				});
+
+				it('names the status on the button, as the menu has it', async () => {
+					const page = await editable([child('s1', { status: TaskStatusEnum.OPEN })]);
+
+					expect(page.menuStatusOf(page.subtasks[0]).name).toBe('Open');
+					expect(rows()[0].querySelector('nb-select-label .task-status-tag').textContent.trim()).toBe('Open');
+				});
+
+				it('reads a status named by its slug as words, on the button and in the menu', async () => {
+					await editable([child('s1', { status: TaskStatusEnum.READY_FOR_REVIEW })]);
+
+					expect(rows()[0].querySelector('nb-select-label .task-status-tag').textContent.trim()).toBe('Ready for review');
+					const options = Array.from(rows()[0].querySelectorAll('nb-option .task-status-tag'));
+					expect(options.map((option) => option.textContent.trim())).toEqual(['Open', 'Done', 'Ready for review']);
+				});
+
+				it('keeps the plain tag for those who may not edit', async () => {
+					await editable([child('s1')], [PermissionsEnum.ORG_TASK_VIEW, PermissionsEnum.ORG_TASK_ADD]);
+
+					expect(select(rows()[0])).toBeNull();
+					expect(rows()[0].querySelector('.task-status-tag')).not.toBeNull();
+				});
+
+				it('keeps the plain tag on a linked issue', async () => {
+					outgoingLinks = of({
+						items: [{ id: 'l1', action: TaskRelatedIssuesRelationEnum.BLOCKS, taskTo: { id: 't2', title: 'Ship it' } }]
+					});
+					await editable([]);
+
+					expect(rows().length).toBe(1);
+					expect(select(rows()[0])).toBeNull();
+				});
+
+				it('saves the status alone, on the subtask', async () => {
+					const page = await editable([child('s1', { status: TaskStatusEnum.OPEN })]);
+
+					await page.changeSubtaskStatus(page.subtasks[0], 'st-done');
+
+					expect(http.put).toHaveBeenCalledTimes(1);
+					expect(http.put).toHaveBeenCalledWith(expect.stringContaining('/tasks/s1/status'), {
+						status: 'done',
+						taskStatusId: 'st-done',
+						organizationId: ORGANIZATION,
+						tenantId: undefined
+					});
+				});
+
+				it('reads the task again, so the count and the Board follow', async () => {
+					const page = await editable([child('s1', { status: TaskStatusEnum.OPEN })]);
+					const reads = tasksService.getById.mock.calls.length;
+					const { boardReloadKey, activityReloadKey } = page;
+					tasksService.getById.mockImplementation(async (id: string) =>
+						task({ id, children: [child('s1', { status: TaskStatusEnum.DONE })] as unknown as ITask[] })
+					);
+
+					await page.changeSubtaskStatus(page.subtasks[0], 'st-done');
+
+					expect(tasksService.getById.mock.calls.length).toBe(reads + 1);
+					expect(page.subtaskCount).toEqual(expect.objectContaining({ done: 1, total: 1 }));
+					expect(page.boardReloadKey).toBe(boardReloadKey + 1);
+					expect(page.activityReloadKey).toBe(activityReloadKey + 1);
+				});
+
+				it('shows the new status at once, and holds the menu while it saves', async () => {
+					const save$ = new Subject<ITask>();
+					http.put.mockReturnValueOnce(save$);
+					const page = await editable([child('s1', { status: TaskStatusEnum.OPEN })]);
+					const row = page.subtasks[0];
+
+					const saving = page.changeSubtaskStatus(row, 'st-done');
+
+					expect(row.statusId).toBe('st-done');
+					expect(page.savingSubtasks.has('s1')).toBe(true);
+					save$.next({} as ITask);
+					save$.complete();
+					await saving;
+					expect(page.savingSubtasks.has('s1')).toBe(false);
+				});
+
+				it('puts the row back and says so when the save fails', async () => {
+					const error = new HttpErrorResponse({ status: 500 });
+					http.put.mockReturnValueOnce(throwError(() => error));
+					const page = await editable([child('s1', { status: TaskStatusEnum.OPEN })]);
+					const { boardReloadKey } = page;
+
+					await page.changeSubtaskStatus(page.subtasks[0], 'st-done');
+
+					expect(page.subtasks[0].statusId).toBe('st-open');
+					expect(toastr.danger).toHaveBeenCalledWith(error);
+					expect(page.savingSubtasks.size).toBe(0);
+					expect(page.boardReloadKey).toBe(boardReloadKey);
+				});
+
+				it('saves nothing for the status it is in, a status it does not know, or a second move', async () => {
+					const save$ = new Subject<ITask>();
+					http.put.mockReturnValueOnce(save$);
+					const page = await editable([child('s1', { status: TaskStatusEnum.OPEN })]);
+					const row = page.subtasks[0];
+
+					await page.changeSubtaskStatus(row, 'st-open');
+					await page.changeSubtaskStatus(row, 'nowhere');
+					expect(http.put).not.toHaveBeenCalled();
+
+					const saving = page.changeSubtaskStatus(row, 'st-done');
+					row.statusId = 'st-open';
+					await page.changeSubtaskStatus(row, 'st-done');
+					expect(http.put).toHaveBeenCalledTimes(1);
+
+					save$.next({} as ITask);
+					save$.complete();
+					await saving;
+				});
+
+				it('moves one subtask without holding another', async () => {
+					const save$ = new Subject<ITask>();
+					http.put.mockReturnValueOnce(save$);
+					const page = await editable([
+						child('s1', { status: TaskStatusEnum.OPEN, number: 1 }),
+						child('s2', { status: TaskStatusEnum.OPEN, number: 2 })
+					]);
+
+					const first = page.changeSubtaskStatus(page.subtasks[0], 'st-done');
+					await page.changeSubtaskStatus(page.subtasks[1], 'st-done');
+
+					expect(http.put).toHaveBeenCalledTimes(2);
+					save$.next({} as ITask);
+					save$.complete();
+					await first;
+				});
 			});
 		});
 
