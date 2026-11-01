@@ -21,6 +21,7 @@ import { SubscriptionBilling } from './subscription-billing.entity';
 import { MikroOrmSubscriptionBillingRepository } from './repository/mikro-orm-subscription-billing.repository';
 import { TypeOrmSubscriptionBillingRepository } from './repository/type-orm-subscription-billing.repository';
 import { SubscriptionCrudService } from '../subscription-crud.service';
+import { signScheduledChange, verifyScheduledChange } from '../subscription.schedule-signature';
 
 /**
  * The members of a cycle a correction may move (review R4-08): the members the GraphQL
@@ -329,27 +330,40 @@ function invalidTransition(
 }
 
 /**
- * Locks a cycle's row for the rest of the caller's transaction (Postgres and MySQL; SQLite has a single writer and no row
- * locks), so a read the transaction decides from is the row its write lands on: a billing pass's claim or frozen attempt
- * committed before the lock is seen by the read, and one after it waits for the transaction.
+ * Locks a cycle's row for the rest of the caller's transaction and reads it as it now stands (Postgres and MySQL; SQLite
+ * has a single writer and no row locks), so the row the transaction decides from is the row its write lands on: a
+ * billing pass's claim or frozen attempt committed before the lock is seen, and one after it waits for the transaction.
+ *
+ * The row is read by the locking statement itself (`SELECT ... FOR UPDATE`), not by a plain read after it: under MySQL's
+ * REPEATABLE READ a plain read answers from the snapshot the transaction took at its first read, which an activation
+ * took when it read this cycle before deciding to move it, so it would not see an attempt frozen since (Copilot).
  *
  * @param manager The transaction's entity manager.
  * @param id The cycle.
+ * @returns The cycle as it stands under the lock, or null when the database takes no row lock (or the row is gone).
  */
-async function lockCycleRow(manager: EntityManager, id: ID): Promise<void> {
+async function lockedCycleRow(manager: EntityManager, id: ID): Promise<SubscriptionBilling | null> {
 	const type = manager.connection?.options?.type;
 
 	if (type !== 'postgres' && type !== 'mysql') {
-		return;
+		return null;
 	}
 
-	const name = (identifier: string) => (type === 'mysql' ? `\`${identifier}\`` : `"${identifier}"`);
-	const placeholder = type === 'postgres' ? '$1' : '?';
+	return await manager.getRepository(SubscriptionBilling).findOne({
+		where: { id } as FindOptionsWhere<SubscriptionBilling>,
+		lock: { mode: 'pessimistic_write' }
+	});
+}
 
-	await manager.query(
-		`SELECT ${name('id')} FROM ${name('subscription_billing')} WHERE ${name('id')} = ${placeholder} FOR UPDATE`,
-		[id]
-	);
+/**
+ * What a frozen attempt is signed for (`freezeAttempt`): the cycle it was frozen on, named apart from the subscriptions a
+ * scheduled change is signed for, so neither signature verifies as the other.
+ *
+ * @param id The cycle.
+ * @returns The subject the signature binds.
+ */
+function attemptSubject(id: ID): string {
+	return `subscription_billing.attemptRequest:${String(id)}`;
 }
 
 /**
@@ -735,7 +749,15 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			id,
 			{ status: In([...CHARGEABLE_FROM]), chargeClaimToken: chargeClaim },
 			async () => null,
-			{ metadata: { ...(billing.metadata ?? {}), [ATTEMPT_REQUEST]: frozen } }
+			{
+				metadata: {
+					...(billing.metadata ?? {}),
+					// Signed for this cycle: the key could be written through a caller's metadata before it was reserved
+					// (`SERVICE_OWNED_CYCLE_KEYS`), and a pass resends what it holds to the order path, payer included, so
+					// only a request this service froze is trusted (`frozenAttemptOf`).
+					[ATTEMPT_REQUEST]: { ...frozen, signature: signScheduledChange(attemptSubject(id), frozen) }
+				}
+			}
 		);
 
 		return !!written?.affected;
@@ -790,9 +812,15 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * @returns The frozen attempt, its period instants restored to dates, or null.
 	 */
 	public frozenAttemptOf(billing: SubscriptionBilling, attempt: number): IFrozenAttempt | null {
-		const frozen = billing?.metadata?.[ATTEMPT_REQUEST] as IFrozenAttempt | undefined;
+		const frozen = billing?.metadata?.[ATTEMPT_REQUEST] as (IFrozenAttempt & { signature?: string }) | undefined;
 
 		if (!frozen?.request || Number(frozen.attempt) !== attempt) {
+			return null;
+		}
+
+		// Only a request this service froze on this cycle (`freezeAttempt`): one a caller's metadata wrote before the key
+		// was reserved carries no signature that verifies, and is neither resent nor held against an operator.
+		if (!verifyScheduledChange(attemptSubject(billing.id), frozen)) {
 			return null;
 		}
 
@@ -1150,11 +1178,8 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		// Every statement on the caller's transaction when there is one: a read on a second connection waits
 		// for one the transaction may be holding (a pool of one never frees it). The row is locked first, so the read is
 		// the row the write lands on: an attempt a pass froze and abandoned after the caller read the cycle is seen here.
-		if (manager) {
-			await lockCycleRow(manager, id);
-		}
-
-		const billing = await this.findOneScoped(id, manager);
+		const scoped = await this.findOneScoped(id, manager);
+		const billing = (manager ? await lockedCycleRow(manager, id) : null) ?? scoped;
 
 		// A cycle a pass is charging right now (`claimCharge`) is being billed for the period it covers, so it stays there;
 		// so does one sent to the order path whose outcome was never recorded (its order names this period).
@@ -1464,7 +1489,11 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 		}
 
 		if (!cycles.length) {
-			return super.delete(criteria as any, options);
+			// A single cycle is left to the base class, which answers it as it always did. Conditions that selected nothing
+			// delete nothing: evaluated again by the DELETE, they could reach a cycle opened since, which no fence covers.
+			return typeof criteria === 'string'
+				? super.delete(criteria as any, options)
+				: ({ raw: [], affected: 0 } as DeleteResult);
 		}
 
 		// A schedule entry a pass is charging, or starts charging after the read above, is about to record money billed:
@@ -1476,7 +1505,14 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 				throw notDeletable(billedMeanwhile);
 			}
 
-			return super.delete(criteria as any, options);
+			// Only the cycles read and fenced above (Copilot): the conditions evaluated again by the DELETE would also reach
+			// a cycle opened and claimed after the read, during its gateway call.
+			return super.delete(
+				typeof criteria === 'string'
+					? (criteria as any)
+					: ({ ...where, id: In(fenced.map((cycle) => cycle.id)) } as any),
+				options
+			);
 		});
 	}
 
@@ -1511,7 +1547,11 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 			return super.softRemove(id, options, saveOptions);
 		}
 
-		return this.fencedAgainstCharges([billing], 'retired', () => super.softRemove(id, options, saveOptions));
+		return this.fencedAgainstCharges([billing], 'retired', (fenced) => {
+			this.assertNoUnrecordedAttempt(fenced, 'retired');
+
+			return super.softRemove(id, options, saveOptions);
+		});
 	}
 
 	/**
@@ -1523,11 +1563,43 @@ export class SubscriptionBillingService extends SubscriptionCrudService<Subscrip
 	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when a billing pass is charging one.
 	 */
 	public async softDelete(criteria: string | number | FindOptionsWhere<SubscriptionBilling>, options?: any): Promise<any> {
-		const where = typeof criteria === 'object' && criteria !== null ? { ...criteria } : { id: criteria };
+		const selects = typeof criteria === 'object' && criteria !== null;
+		const where = selects ? { ...(criteria as FindOptionsWhere<SubscriptionBilling>) } : { id: criteria };
 		// The base class's own scope, the one its soft delete runs in.
 		const cycles = await this.find({ where: where as FindOptionsWhere<SubscriptionBilling> });
 
-		return this.fencedAgainstCharges(cycles, 'retired', () => super.softDelete(criteria as any, options));
+		if (selects && !cycles.length) {
+			// Conditions that selected nothing retire nothing, as a delete's (`delete`).
+			return { raw: [], affected: 0, generatedMaps: [] };
+		}
+
+		return this.fencedAgainstCharges(cycles, 'retired', (fenced) => {
+			this.assertNoUnrecordedAttempt(fenced, 'retired');
+
+			// Only the cycles read and fenced above, as a delete's (`delete`).
+			return super.softDelete(
+				selects ? ({ ...where, id: In(fenced.map((cycle) => cycle.id)) } as any) : (criteria as any),
+				options
+			);
+		});
+	}
+
+	/**
+	 * Refuses an operator's retirement of a cycle sent to the order path whose outcome was never recorded
+	 * (`holdsUnrecordedAttempt`), read under the fence (Greptile, Copilot). Its order may exist, and the next pass recovers
+	 * it from the cycle under the attempt's key; retired, the cycle leaves every read (`findByPeriod`), the next pass opens
+	 * another one under another key, and the order is never recorded. A settlement refuses it the same way (`settleFenced`).
+	 *
+	 * @param fenced The cycles, as they stand under the fence.
+	 * @param action What the write does to them, for the refusal.
+	 * @throws ConflictException with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT` when one carries such an attempt.
+	 */
+	private assertNoUnrecordedAttempt(fenced: SubscriptionBilling[], action: string): void {
+		const stranded = fenced.find((cycle) => this.holdsUnrecordedAttempt(cycle));
+
+		if (stranded) {
+			throw chargeInFlight(stranded, action);
+		}
 	}
 
 	/**

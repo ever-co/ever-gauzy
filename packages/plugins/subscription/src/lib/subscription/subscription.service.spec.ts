@@ -5328,6 +5328,25 @@ describe('SubscriptionService — a charged cycle is finished once, by whichever
 		expect(fixture.adjustmentsOf(fixture.cycle(MAY)?.id).map((row) => row.amount)).toEqual(['-10.000000']);
 	});
 
+	it('writes no adjustment when the cycle it opens turns out to be one another pass opened and froze after its lookup', async () => {
+		const fixture = subscriptionFixture({ orders: idempotentOrders() });
+
+		// The attempt carries no credit, and the write recording its payment fails before it lands.
+		jest.spyOn(fixture.billingService, 'markPaid').mockRejectedValueOnce(new Error('the database went away'));
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+
+		writeSubscription(fixture, { metadata: { pendingCredit: { amount: '-10.000000', currency: 'USD' } } });
+		leaseRunsOut(fixture);
+		// The next pass looked the period up before that row existed, so the row reaches it through `createPending`.
+		jest.spyOn(fixture.billingService, 'findByPeriod').mockResolvedValueOnce(null);
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		// The frozen request is resent as it was, and nothing is written from this pass's own pricing.
+		expect(fixture.orderCalls[1]).toEqual(fixture.orderCalls[0]);
+		expect(fixture.adjustmentsOf(fixture.cycle(APRIL)?.id)).toEqual([]);
+		expect(fixture.subscription(SUBSCRIPTION)?.metadata?.['pendingCredit']).toMatchObject({ amount: '-10.000000' });
+	});
+
 	it('keeps the calendar on an attempt whose outcome was never recorded when the subscription is paused and resumed', async () => {
 		const fixture = subscriptionFixture({ orders: idempotentOrders() });
 
@@ -5491,14 +5510,48 @@ describe('SubscriptionService — a charged cycle is finished once, by whichever
 		});
 		const append = (fixture.service as any).appendDiscount.bind(fixture.service);
 
-		// While the first pass reconciles, its period's lease runs out and another pass takes the period over.
+		// While the first pass reconciles, its period's lease runs out and another pass takes the period over. That pass
+		// meets the reconciliation in flight and stops, rather than finishing the cycle on a ledger that may stay short.
 		jest.spyOn(fixture.service as any, 'appendDiscount').mockImplementationOnce(async (...args: unknown[]) => {
 			fixture.idempotencyService.records.delete(`subscription.bill:${SUBSCRIPTION}:${APRIL.toISOString()}`);
-			await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+			await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow(
+				'SUBSCRIPTION_DISCOUNT_RECONCILE_IN_FLIGHT'
+			);
 
 			return append(...args);
 		});
 
+		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
+
+		expect(fixture.adjustmentsOf('cycle-april').map((row) => row.amount)).toEqual(['-12.000000']);
+	});
+
+	it('reconciles a settled cycle’s discount once the claim of a pass that stopped while reconciling it runs out', async () => {
+		const fixture = subscriptionFixture({
+			billings: [
+				{
+					id: 'cycle-april',
+					tenantId: TENANT,
+					organizationId: ORG,
+					subscriptionId: SUBSCRIPTION,
+					periodStart: new Date(APRIL),
+					periodEnd: MAY,
+					amount: '108.000000',
+					currency: 'USD',
+					status: SubscriptionBillingStatus.PAID,
+					paidAt: new Date(APRIL),
+					attemptCount: 0,
+					metadata: { gross: '120.000000', discount: '12.000000' }
+				}
+			]
+		});
+
+		// The pass took the reconciliation and stopped before its rows landed.
+		jest.spyOn(fixture.service as any, 'appendDiscount').mockRejectedValueOnce(new Error('the database went away'));
+		await expect(fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL })).rejects.toThrow('the database went away');
+		expect(fixture.adjustmentsOf('cycle-april')).toEqual([]);
+
+		leaseRunsOut(fixture);
 		await fixture.service.billCycle(SUBSCRIPTION, { asOf: APRIL });
 
 		expect(fixture.adjustmentsOf('cycle-april').map((row) => row.amount)).toEqual(['-12.000000']);

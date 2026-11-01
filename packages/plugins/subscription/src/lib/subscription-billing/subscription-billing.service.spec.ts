@@ -1455,6 +1455,86 @@ describe('SubscriptionBillingService — a charge in flight fences the cycle (ch
 		expect(fixture.billing('paid')).toMatchObject({ deletedAt: expect.any(Date), status: SubscriptionBillingStatus.PAID });
 	});
 
+	/** An attempt a pass froze for the order path (`freezeAttempt`). */
+	const frozenAttempt = (billingId: string) =>
+		({
+			attempt: 1,
+			request: {
+				subscriptionId: SUBSCRIPTION,
+				billingId,
+				currency: 'USD',
+				periodStart: new Date(PERIOD_START),
+				periodEnd: new Date(PERIOD_END),
+				firstCycle: false,
+				lines: [],
+				amount: '120.000000',
+				idempotencyKey: `${SUBSCRIPTION}:${PERIOD_START}:1`
+			},
+			bookkeeping: {}
+		}) as never;
+
+	it('refuses to retire a cycle whose attempt was sent to the order path and never recorded', async () => {
+		// The pass froze its request, raised the order, failed to record the outcome and released its claim: the next pass
+		// recovers the order from this row. Retired, the row would leave every read and the order would never be recorded.
+		const fixture = billingFixture([billingRow('billing-1'), nextPeriod('idle')]);
+		const claim = await fixture.service.claimCharge('billing-1');
+
+		expect(await fixture.service.freezeAttempt('billing-1', claim.token as string, frozenAttempt('billing-1'))).toBe(true);
+		await fixture.service.releaseChargeClaim('billing-1', claim.token as string);
+
+		await expect(fixture.service.softRemove('billing-1')).rejects.toMatchObject(inFlight);
+		await expect(fixture.service.softDelete({ subscriptionId: SUBSCRIPTION } as never)).rejects.toMatchObject(inFlight);
+
+		// Nothing was retired, and the retirement's own fences were released.
+		expect(fixture.billing('billing-1')).toMatchObject({ chargeClaimToken: null });
+		expect(fixture.billing('billing-1')?.deletedAt).toBeUndefined();
+		expect(fixture.billing('idle')).toMatchObject({ chargeClaimToken: null });
+		expect(fixture.billing('idle')?.deletedAt).toBeUndefined();
+	});
+
+	it('trusts a frozen attempt only when this service froze it, on that cycle', async () => {
+		const fixture = billingFixture([billingRow('billing-1')]);
+		const claim = await fixture.service.claimCharge('billing-1');
+
+		await fixture.service.freezeAttempt('billing-1', claim.token as string, frozenAttempt('billing-1'));
+
+		expect(fixture.service.frozenAttemptOf(fixture.billing('billing-1') as never, 1)).toMatchObject({ attempt: 1 });
+
+		// Written through a caller's metadata before the key was reserved: no signature, or the signature of another cycle.
+		// Neither is resent to the order path nor held against an operator.
+		const unsigned = { ...fixture.billing('billing-1'), metadata: { attemptRequest: frozenAttempt('billing-1') } };
+		const copied = { ...fixture.billing('billing-1'), id: 'billing-2' };
+
+		for (const forged of [unsigned, copied]) {
+			expect(fixture.service.frozenAttemptOf(forged as never, 1)).toBeNull();
+			expect(fixture.service.holdsUnrecordedAttempt(forged as never)).toBe(false);
+		}
+	});
+
+	it('deletes only the cycles its conditions selected when they were checked, and nothing when they selected none', async () => {
+		const fixture = billingFixture([billingRow('billing-1')]);
+		const find = fixture.service.find.bind(fixture.service);
+
+		// A pass opens the next cycle right after the delete read its selection.
+		jest.spyOn(fixture.service, 'find').mockImplementationOnce(async (options: never) => {
+			const selected = await find(options);
+
+			fixture.table.push(nextPeriod('opened-after-the-read'));
+
+			return selected;
+		});
+
+		await fixture.service.delete({ subscriptionId: SUBSCRIPTION } as never);
+
+		expect(fixture.billing('billing-1')).toBeUndefined();
+		expect(fixture.billing('opened-after-the-read')).toBeDefined();
+
+		await expect(fixture.service.delete({ subscriptionId: 'no-such-subscription' } as never)).resolves.toMatchObject({
+			affected: 0
+		});
+		expect(fixture.billing('opened-after-the-read')).toBeDefined();
+	});
+
 	it.each([
 		['retire', (service: SubscriptionBillingService) => service.softRemove('billing-1'), 'findOne'],
 		['delete', (service: SubscriptionBillingService) => service.delete('billing-1'), 'find']

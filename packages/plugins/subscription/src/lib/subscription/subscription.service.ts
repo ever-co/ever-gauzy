@@ -2579,12 +2579,19 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			}
 
 			const billing = existing ? priced : claim.billing;
+			// A row this pass did not find but `createPending` handed back was opened by another pass after the lookup, and
+			// that pass may have frozen an attempt on it and stopped before recording its outcome (Copilot). The claim
+			// just taken reads it as it stands: its frozen request is resent as it was (`raiseCycleOrder`), so nothing is
+			// written from this pass's own pricing either.
+			const resending =
+				replaying ||
+				(!existing && !!this.billingService.frozenAttemptOf(billing, (billing.attemptCount ?? 0) + 1));
 
-			if (!restated && !replaying) {
+			if (!restated && !resending) {
 				await this.appendDiscount(billing, subscription, discount);
 			}
 
-			const credit = replaying ? null : await this.consumePendingCredit(subscription, billing);
+			const credit = resending ? null : await this.consumePendingCredit(subscription, billing);
 			const bookkeeping = this.cycleBookkeepingFor(subscription, plan, credit);
 
 			const raised = await this.raiseCycleOrder(
@@ -3229,6 +3236,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			requestHash: this.hash({ billingId: billing.id, discount: discount.toStorageString() }),
 			resourceType: 'subscription_billing'
 		});
+
+		if (claim.outcome === IdempotencyOutcome.IN_FLIGHT) {
+			// Another pass is appending the rows now, or stopped while it was and its claim has not run out yet (Copilot).
+			// Finishing the cycle here would complete the period's key on a ledger that may stay short, and no later pass
+			// would reconcile it; the pass stops instead, and the next one reconciles once that claim ends or goes stale.
+			throw new ConflictException(
+				`SUBSCRIPTION_DISCOUNT_RECONCILE_IN_FLIGHT: another billing pass is reconciling the discount rows of cycle '${billing.id}'.`
+			);
+		}
 
 		if (claim.outcome !== IdempotencyOutcome.CLAIMED) {
 			return;
