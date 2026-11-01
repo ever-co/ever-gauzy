@@ -58,7 +58,9 @@ describe('EverWorksDirectionsComponent', () => {
 		const box = el.querySelector('[data-test="backfill-gauzy-inbox"]');
 		expect(box?.textContent).toContain('EVER_WORKS.DIRECTIONS.BACKFILL_GAUZY_INBOX');
 		expect(component.backfillGauzyInbox).toBe(false);
-		(box?.querySelector('input') as HTMLInputElement).click();
+		const input = box?.querySelector('input') ?? null;
+		expect(input).not.toBeNull();
+		input?.click();
 		fixture.detectChanges();
 		expect(component.backfillGauzyInbox).toBe(true);
 		// Both ways sends Gauzy items: no hint.

@@ -96,7 +96,7 @@ import { MOCK_PRESET_SCOPES, MockEverWorksServer } from '../testing/mock-ever-wo
 import { everWorksKindOf } from './ever-works-inbox-kinds';
 import { EverWorksInboxPreference } from './ever-works-inbox-preference.entity';
 import { EverWorksInboxPreferencesService } from './ever-works-inbox-preferences.service';
-import { parseGauzyInboxExternalId, plainTextAsMarkdown, sharedOf } from './ever-works-inbox-push.mapper';
+import { choicesOf, parseGauzyInboxExternalId, plainTextAsMarkdown, sharedOf } from './ever-works-inbox-push.mapper';
 import { EverWorksInboxPushService } from './ever-works-inbox-push.service';
 import { EverWorksInboxService } from './ever-works-inbox.service';
 import { EverWorksPeopleService } from '../people/ever-works-people.service';
@@ -950,6 +950,78 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 		});
 		expect(inboxWrite.created).toHaveLength(0);
 	});
+
+	it('a replay that answers a copy filed for the member the person was paired with before keeps it theirs', async () => {
+		const { addItem, push, inboxWrite, items, links, mock, apply, actions, recipients, linkOf } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		const first = linkOf(ada) as Row;
+		// The link was lost, and the person was paired with another Ever Works member before the retry.
+		links.splice(links.indexOf(first), 1);
+		mock.expireIdempotencyKeys();
+		const pairing = links.find(
+			(l) => l['entityType'] === EverWorksLinkType.MEMBER && l['gauzyId'] === ADA.employee
+		) as Row;
+		pairing['ewId'] = 'ew-user-ada-new';
+		Object.assign(items.get(item.id as string) as IInboxItem, { title: 'Renamed' });
+		await expect(push(ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('another Ever Works member')
+		});
+		// Recorded as the previous member's copy: never patched with this person's content, nor its moves applied here.
+		expect(JSON.parse(linkOf(ada)?.['ewOnly'] as string)).toMatchObject({ recipientUserId: ADA.ew });
+		expect(inboxWrite.patched).toHaveLength(0);
+		await expect(apply(await inboxWrite.archive(first['ewId']))).resolves.toMatchObject({ status: 'skipped' });
+		expect(actions.setState).not.toHaveBeenCalled();
+		expect(recipients.get(ada)).toMatchObject({ isArchived: false });
+		await expect(push(ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('another Ever Works member')
+		});
+		expect(inboxWrite.patched).toHaveLength(0);
+	});
+
+	it('a replay of a question filed without choices patches in the choices Gauzy has now', async () => {
+		const { addItem, push, inboxWrite, items, links, mock, linkOf } = setup();
+		const { item, ada } = addItem({ options: null });
+		await push(ada);
+		expect(inboxWrite.created[0]).not.toHaveProperty('choices');
+		// The link was lost; Gauzy added options before the retry, whose POST replays the copy filed without any.
+		links.splice(links.indexOf(linkOf(ada) as Row), 1);
+		mock.expireIdempotencyKeys();
+		Object.assign(items.get(item.id as string) as IInboxItem, {
+			options: [
+				{ id: 'yes', label: 'Yes' },
+				{ id: 'no', label: 'No' }
+			]
+		});
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(inboxWrite.patched.map((patch) => patch.body)).toEqual([
+			{
+				choices: [
+					{ id: 'yes', label: 'Yes' },
+					{ id: 'no', label: 'No' }
+				]
+			}
+		]);
+	});
+
+	it('archives the copy of a gone recipient row on the current version after a 412 (never a stale If-Match forever)', async () => {
+		const { addItem, push, inboxWrite, recipients, linkOf } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		const ewId = linkOf(ada)?.['ewId'] as string;
+		// The member reads the copy (version 2); its event never reaches Gauzy, whose recipient row is then gone.
+		await inboxWrite.read(ewId);
+		recipients.delete(ada);
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(inboxWrite.patched.map((patch) => [patch.ifMatch, patch.body])).toEqual([
+			['"1"', { state: 'archived' }],
+			['"2"', { state: 'archived' }]
+		]);
+		expect(inboxWrite.byExternalId(`${item.id}:${ada}`)).toMatchObject({ state: 'archived', version: 3 });
+		expect(linkOf(ada)).toMatchObject({ ewVersion: 3 });
+	});
 });
 
 describe('EverWorksInboxPushService — what an Ever Works user does', () => {
@@ -1163,6 +1235,45 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 			status: 'answered'
 		});
 	});
+
+	it('an answer applied once is never applied again to an item its source reopened (a push answer, a later read)', async () => {
+		const { addItem, push, inboxWrite, apply, actions, items, linkOf } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		const ewId = linkOf(ada)?.['ewId'] as string;
+		await expect(apply(await inboxWrite.answer(ewId, { choiceId: 'no' }))).resolves.toMatchObject({
+			status: 'applied',
+			message: 'reply'
+		});
+		expect(actions.reply).toHaveBeenCalledTimes(1);
+		// The source reopens the Gauzy item; Ever Works still holds the member's answer.
+		Object.assign(items.get(item.id as string) as IInboxItem, {
+			status: InboxItemStatusEnum.OPEN,
+			response: null,
+			title: 'Ship the release on Monday?'
+		});
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		// A later read of the copy carries the same answer again.
+		await apply(await inboxWrite.read(ewId, false));
+		expect(actions.reply).toHaveBeenCalledTimes(1);
+		expect(items.get(item.id as string)).toMatchObject({ status: InboxItemStatusEnum.OPEN, response: null });
+	});
+
+	it('finds a pending copy by its externalId while the connection does not know its key id yet', async () => {
+		const { addItem, mock, apply, writer, context } = setup();
+		const { item, ada } = addItem();
+		(context.connection as { keyId: string | null }).keyId = null;
+		const orphan = mock.addInboxItem('ew-org-1', {
+			recipientUserId: ADA.ew,
+			integrationKeyId: 'the-key-of-this-connection',
+			externalId: `${item.id}:${ada}`,
+			version: 2
+		});
+		await expect(apply(await mock.emitInbox('inbox.item.updated', orphan))).resolves.toMatchObject({
+			status: 'deferred'
+		});
+		expect(writer.upsertExternal).not.toHaveBeenCalled();
+	});
 });
 
 describe('EverWorksInboxPushService — backfill', () => {
@@ -1349,6 +1460,20 @@ describe('the kind mapping and the text', () => {
 		expect(everWorksKindOf(InboxItemKindEnum.NOTICE, { notificationType: 'Mention' })).toBe('mention');
 		expect(everWorksKindOf(InboxItemKindEnum.NOTICE, { notificationType: 'Assignment' })).toBe('assignment');
 		expect(everWorksKindOf('SOMETHING_NEW')).toBe('other');
+		// A type naming an inherited member of a plain object is just a notice.
+		for (const notificationType of ['constructor', '__proto__', 'toString', 'hasOwnProperty'])
+			expect(everWorksKindOf(InboxItemKindEnum.NOTICE, { notificationType })).toBe('notice');
+	});
+
+	it('offers Approve / Reject only for an approval that lists no option (the Gauzy Inbox takes them only then)', () => {
+		expect(choicesOf({ options: null } as never, 'approval')).toEqual([
+			{ id: 'approve', label: 'Approve' },
+			{ id: 'reject', label: 'Reject' }
+		]);
+		expect(choicesOf({ options: [] } as never, 'approval')).toHaveLength(2);
+		// Options whose ids Ever Works cannot hold (over 64 characters): no choice there, never ones Gauzy refuses.
+		expect(choicesOf({ options: [{ id: 'x'.repeat(65), label: 'Ship it' }] } as never, 'approval')).toBeNull();
+		expect(choicesOf({ options: null } as never, 'question')).toBeNull();
 	});
 
 	it('keeps plain text from turning into Markdown formatting', () => {

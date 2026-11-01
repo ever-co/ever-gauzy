@@ -237,6 +237,17 @@ export class MockEverWorksInboxWrite {
 		const choices = body['choices'];
 		if (choices !== undefined && (!Array.isArray(choices) || choices.length > 10))
 			errors.push('choices are at most 10.');
+		else if (
+			Array.isArray(choices) &&
+			!choices.every(
+				(choice) =>
+					!!choice &&
+					typeof choice === 'object' &&
+					typeof (choice as Record<string, unknown>)['id'] === 'string' &&
+					typeof (choice as Record<string, unknown>)['label'] === 'string'
+			)
+		)
+			errors.push('each choice is an object with a string id and label.');
 		return errors.find((error) => error !== null) ?? null;
 	}
 }

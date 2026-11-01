@@ -409,7 +409,7 @@ and answered `202`.
     with the answer, and `archived` when the person archives it (or its source
     cancels it); read and snooze stay in Gauzy. Only the fields Gauzy changed
     since its last push are sent, so what the person did in Ever Works is never
-    undone, and Gauzy's answer never goes over one the person gave there. A
+    undone, and Gauzy's answer never overwrites an answer the person gave there. A
     `412` (the person changed the copy meanwhile) reads it again, applies what
     the person did to Gauzy, then sends Gauzy's change once on the current
     version (contract v1-draft.17, CR-15). An item archived before it went out
@@ -426,7 +426,11 @@ and answered `202`.
     item already answered in Gauzy keeps Gauzy's answer. A copy deleted in Ever
     Works is unlinked and kept as a tombstone (Ever Works deletes for good, so
     the copy is never filed again); the Gauzy item stays. A copy filed for a
-    member the person is no longer paired with gets nothing more. An item this
+    member the person is no longer paired with gets no updates while the person
+    is unpaired or paired with another member (a replay of its `externalId` keeps
+    it recorded as that member's); paired again with the same member, its
+    updates resume. An answer an event carries again (a later read of an answered
+    copy) is applied once, never a second time. An item this
     connection's key filed (`integrationKeyId`) is never brought into the
     Gauzy Inbox as an Ever Works item.
   - **Each person decides what goes.** Every kind is sent by default, emails

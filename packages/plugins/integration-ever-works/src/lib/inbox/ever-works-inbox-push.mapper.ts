@@ -97,18 +97,21 @@ export function titleOf(item: Pick<IInboxItem, 'title'>): string {
 }
 
 /**
- * The choices of a question or an approval (at most 10): the item's options; an approval without options offers
- * Approve / Reject, the ids the Gauzy Inbox itself accepts for it. Other kinds have none.
+ * The choices of a question or an approval (at most 10): the item's options; an approval that lists no option at all
+ * offers Approve / Reject, the ids the Gauzy Inbox itself accepts for it then (it accepts only its own options once it
+ * lists any, so an approval whose options Ever Works cannot hold, ids over 64 characters, offers no choice there: its
+ * answer comes back as text). Other kinds have none.
  */
 export function choicesOf(item: Pick<IInboxItem, 'options'>, kind: EverWorksInboxKind): GauzyInboxChoice[] | null {
 	if (kind !== 'question' && kind !== 'approval') return null;
-	const options = (Array.isArray(item.options) ? item.options : [])
+	const listed = Array.isArray(item.options) ? item.options : [];
+	const options = listed
 		.filter((option) => option && typeof option.id === 'string' && option.id && typeof option.label === 'string')
 		.filter((option) => option.id.length <= CHOICE_ID_MAX)
 		.slice(0, EVER_WORKS_INBOX_WRITE_LIMITS.choices)
 		.map((option) => ({ id: option.id, label: cut(option.label.trim() || option.id, CHOICE_LABEL_MAX) }));
 	if (options.length) return options;
-	return kind === 'approval'
+	return kind === 'approval' && !listed.length
 		? [
 				{ id: 'approve', label: 'Approve' },
 				{ id: 'reject', label: 'Reject' }
@@ -212,18 +215,26 @@ export function filedAnswerOf(item: Partial<EverWorksFiledInboxItem>): { optionI
 	return Object.keys(answer).length ? answer : null;
 }
 
+/**
+ * The choices Ever Works holds for a filed item (the write's `choices`, else the DTO's `options`): `null` when it holds
+ * none (an empty or `null` list is a value, not a missing field), `undefined` when its answer names neither.
+ */
+export function filedChoicesOf(item: Partial<EverWorksFiledInboxItem>): GauzyInboxChoice[] | null | undefined {
+	const lists = [item.choices, item.options];
+	const held = lists.find((list) => Array.isArray(list) && list.length);
+	if (held) return held.map((choice) => ({ id: choice.id, label: choice.label }));
+	return lists.some((list) => list !== undefined) ? null : undefined;
+}
+
 /** What Ever Works holds for a filed item, as a snapshot (`sent` fills what its answer leaves out). */
 export function filedAsShared(item: Partial<EverWorksFiledInboxItem>, sent: GauzyInboxShared): GauzyInboxShared {
-	const choices = Array.isArray(item.choices)
-		? item.choices.map((choice) => ({ id: choice.id, label: choice.label }))
-		: Array.isArray(item.options)
-			? item.options.map((option) => ({ id: option.id, label: option.label }))
-			: sent.choices;
+	// A replay of a copy filed without choices holds none, even when Gauzy has some now: they are patched in, not assumed.
+	const choices = filedChoicesOf(item);
 	const answer = filedAnswerOf(item);
 	return {
 		title: typeof item.title === 'string' ? item.title : sent.title,
 		body: typeof item.body === 'string' ? item.body : sent.body,
-		choices: choices && choices.length ? choices : sent.choices,
+		choices: choices === undefined ? sent.choices : choices,
 		state: filedStateOf(item) ?? 'open',
 		resolution: answer
 			? {

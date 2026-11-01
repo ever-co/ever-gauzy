@@ -25,10 +25,10 @@ export function isEverWorksInboxKind(value: unknown): value is EverWorksInboxKin
  * The platform's own notification types (`EmployeeNotificationTypeEnum`) a Gauzy notice may name in
  * `metadata.notificationType`: a mention and an assignment have kinds of their own in Ever Works.
  */
-const NOTICE_KINDS: Readonly<Record<string, EverWorksInboxKind>> = {
-	mention: 'mention',
-	assignment: 'assignment'
-};
+const NOTICE_KINDS: ReadonlyMap<string, EverWorksInboxKind> = new Map<string, EverWorksInboxKind>([
+	['mention', 'mention'],
+	['assignment', 'assignment']
+]);
 
 /**
  * The Ever Works kind of a Gauzy Inbox item:
@@ -55,8 +55,9 @@ export function everWorksKindOf(
 		case InboxItemKindEnum.EMAIL:
 			return 'email';
 		case InboxItemKindEnum.NOTICE: {
+			// A map, not an object literal: a type such as `constructor` or `__proto__` is no inherited member, just a notice.
 			const type = metadata?.['notificationType'];
-			return (typeof type === 'string' && NOTICE_KINDS[type.trim().toLowerCase()]) || 'notice';
+			return (typeof type === 'string' && NOTICE_KINDS.get(type.trim().toLowerCase())) || 'notice';
 		}
 		default:
 			return 'other';
