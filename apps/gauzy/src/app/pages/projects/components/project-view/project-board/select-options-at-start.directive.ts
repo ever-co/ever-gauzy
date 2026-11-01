@@ -1,11 +1,18 @@
 import { Directive, inject } from '@angular/core';
-import { NbAdjustment, NbLayoutDirectionService, NbPosition, NbSelectComponent } from '@nebular/theme';
+import { NbLayoutDirectionService, NbPosition, NbSelectComponent } from '@nebular/theme';
+
+/**
+ * Where the options open, the first that fits: below the trigger, else above it, from its start edge; failing that,
+ * from its end edge, for a trigger too near the screen's far side. Nebular names these after the side the overlay
+ * grows towards, so `_END` is what lines up the start edges.
+ */
+const OPTIONS_POSITIONS = [NbPosition.BOTTOM_END, NbPosition.TOP_END, NbPosition.BOTTOM_START, NbPosition.TOP_START];
 
 /**
  * Opens an `nb-select`'s options from the start edge of its trigger, for a menu wider than the trigger: `NbSelect`
  * always centres them, with no input to say otherwise. It builds its position once, on first opening, so swapping the
- * method here is in time. Its `VERTICAL` adjustment only knows centred positions, so the menu always opens below the
- * trigger; this suits a control near the top of the page.
+ * method here is in time. None of Nebular's adjustments offers these positions, so the strategy is given its own list,
+ * and pushed back on screen when none fits, which Nebular's builder turns off.
  */
 @Directive({
 	selector: 'nb-select[gaOptionsAtStart]',
@@ -16,13 +23,14 @@ export class SelectOptionsAtStartDirective {
 		// `createPositionStrategy` and `positionBuilder` are protected: the select offers no public way in.
 		const select = inject(NbSelectComponent) as any;
 		const layoutDirection = inject(NbLayoutDirectionService);
-		select.createPositionStrategy = () =>
-			select.positionBuilder
+		select.createPositionStrategy = () => {
+			const strategy = select.positionBuilder
 				.connectedTo(select.button)
-				// Nebular names these after the side the overlay grows towards: `BOTTOM_END` lines up the start edges.
-				.position(NbPosition.BOTTOM_END)
 				.offset(select.optionsOverlayOffset)
-				.adjustment(NbAdjustment.NOOP)
-				.direction(layoutDirection.getDirection());
+				.direction(layoutDirection.getDirection())
+				.withPush(true);
+			strategy.createPositions = () => OPTIONS_POSITIONS;
+			return strategy;
+		};
 	}
 }
