@@ -489,7 +489,8 @@
 	}
 </ng-template>
 
-<!-- A task row — check, key, title, status — opening the task's own page. -->
+<!-- A task row — check, key, title, then a subtask's priority and assignees, and its status — opening the task's own
+     page, as Jira lists child issues. The columns stay when empty, so the rows line up. -->
 <ng-template #taskRow let-row let-id="id">
 	<a class="task-row" [class.is-done]="row.done" [routerLink]="taskLink(id)">
 		<nb-icon
@@ -501,8 +502,47 @@
 			<span class="task-row-key">{{ row.key }}</span>
 		}
 		<span class="task-row-title" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
+		@if (row.people) {
+			<span class="task-row-priority" [class]="row.priority ? 'tone-' + row.priority.tone : ''">
+				@if (row.priority; as priority) {
+					<nb-icon
+						role="img"
+						[icon]="priority.icon"
+						[nbTooltip]="priority.text"
+						nbTooltipPlacement="top"
+						[attr.aria-label]="priority.text"
+					></nb-icon>
+				}
+			</span>
+			<span
+				class="task-row-people"
+				role="img"
+				[nbTooltip]="peopleNames(row.people) || ('PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate)"
+				nbTooltipPlacement="top"
+				[attr.aria-label]="peopleNames(row.people) || ('PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate)"
+			>
+				@for (person of row.people.slice(0, 3); track person.id) {
+					<ng-container *ngTemplateOutlet="avatar; context: { $implicit: person }"></ng-container>
+				} @empty {
+					<span class="project-task-worker-avatar task-row-unassigned">
+						<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
+					</span>
+				}
+				@if (row.people.length > 3) {
+					<span class="project-task-worker-avatar">+{{ row.people.length - 3 }}</span>
+				}
+			</span>
+		}
 		@if (row.status; as status) {
-			<span [class]="'project-status tone-' + (status.tone || 'basic')">{{ status.text }}</span>
+			<span class="task-row-status">
+				<span
+					[class]="'task-status-tag tone-' + (status.tone || 'basic')"
+					[style.--status-color]="status.color"
+					[nbTooltip]="status.text"
+					nbTooltipPlacement="top"
+					>{{ status.text }}</span
+				>
+			</span>
 		}
 	</a>
 </ng-template>
