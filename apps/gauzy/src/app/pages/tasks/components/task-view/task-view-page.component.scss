@@ -212,6 +212,18 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   margin-top: 0;
 }
 
+// The share done and the Add subtask button, at the end of the panel's header.
+.task-subtasks-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.task-subtask-add {
+  flex: 0 0 auto;
+}
+
 // "Blocks", "Is blocked by": the relation over its tasks.
 .task-link-group {
   margin: 0;

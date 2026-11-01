@@ -177,9 +177,9 @@
 					</div>
 				</section>
 
-				<!-- Subtasks, open ones first, with the share done. -->
+				<!-- Subtasks, open ones first, with the share done, and a button to add one in the task dialog. -->
 				<section class="panel project-view-panel">
-					<header class="panel-header">
+					<header class="panel-header panel-header--wrap">
 						<div class="panel-heading">
 							<h5 class="panel-title panel-title--icon">
 								<nb-icon icon="list-outline" aria-hidden="true"></nb-icon>
@@ -194,18 +194,35 @@
 								}}</span>
 							}
 						</div>
-						@if (subtaskCount; as count) {
-							<span
-								class="project-timeline-track task-subtasks-track"
-								[class.is-done]="count.done === count.total"
-								role="progressbar"
-								aria-valuemin="0"
-								aria-valuemax="100"
-								[attr.aria-valuenow]="count.percent | number : '1.0-0'"
-								[attr.aria-label]="'TASK_VIEW.SUBTASKS' | translate"
-								><span [style.width.%]="count.percent"></span
-							></span>
-						}
+						<div class="task-subtasks-actions">
+							@if (subtaskCount; as count) {
+								<span
+									class="project-timeline-track task-subtasks-track"
+									[class.is-done]="count.done === count.total"
+									role="progressbar"
+									aria-valuemin="0"
+									aria-valuemax="100"
+									[attr.aria-valuenow]="count.percent | number : '1.0-0'"
+									[attr.aria-label]="'TASK_VIEW.SUBTASKS' | translate"
+									><span [style.width.%]="count.percent"></span
+								></span>
+							}
+							@if (canAddSubtask) {
+								<button
+									nbButton
+									ghost
+									size="tiny"
+									status="basic"
+									type="button"
+									class="task-subtask-add"
+									aria-haspopup="dialog"
+									(click)="addSubtask()"
+								>
+									<nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
+									{{ 'TASK_VIEW.ADD_SUBTASK' | translate }}
+								</button>
+							}
+						</div>
 					</header>
 					<div class="panel-body panel-body--flush">
 						@if (subtasks.length) {
