@@ -134,9 +134,9 @@ Run on every pull request that touches code, with nothing installed but the harn
   because the workflows that build and deploy the images can put a host into one.
 - `node tools/ever-platform/check-import-boundary.mjs`: only the modules and the two plugin lists
   import a module, through its entry point; the statistics never import the connection or an
-  analytics plugin, the instance identity no HTTP client, the connection and the sign-in plugin
-  never each other, a web part never a server module, and the connection's entry point exports no
-  entitlement code. The same rules are the ESLint rule `ever-platform/import-boundary` of the root
+  analytics plugin, the instance identity no HTTP client, the sign-in plugin never the
+  connection (which uses the sign-in plugin only through its entry point), a web part never a
+  server module, and the connection's entry point exports no entitlement code. The same rules are the ESLint rule `ever-platform/import-boundary` of the root
   `eslint.config.js` (`tools/ever-platform/import-boundary.cjs`).
 - `node tools/ever-platform/outbound-calls.mjs --check`: the tables of
   [`tools/ever-platform/outbound-calls.md`](../ever-platform/outbound-calls.md) are the pinned

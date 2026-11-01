@@ -1,3 +1,4 @@
+// cspell:ignore DDGBQTCEH HKPQVJ JDFTGFSNB JJAB JJYMM MRHJXQBQWY THER
 import { createHash, verify as edVerify } from 'node:crypto';
 import { EverConnectScheduler } from '../ever-connect-scheduler.service';
 import { EverConnectSignals } from '../ever-connect-signals';
