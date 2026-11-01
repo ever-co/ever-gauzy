@@ -8,3 +8,4 @@ export * from './lib/ever-connect.plugin';
 export * from './lib/ever-connect.module';
 export * from './lib/ever-connect-connection.service';
 export * from './lib/ever-connect-integration-state.service';
+export * from './lib/ports/person-data-participant.port';

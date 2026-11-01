@@ -36,6 +36,10 @@ describe('integration definitions', () => {
 		expect(GAUZY_INTEGRATIONS.map((definition) => definition.key).sort()).toEqual(forGauzy);
 	});
 
+	it('Sign in with Ever ID is pinned at its second scope version (the consent text app.ever.co shows)', () => {
+		expect(gauzyIntegration('ever_id_login')?.scopeVersion).toBe(2);
+	});
+
 	it.each(GAUZY_INTEGRATIONS.map((definition) => [definition.key, definition] as const))(
 		'%s: the pinned scope version and digest are the scope shipped',
 		(key, definition) => {
@@ -45,10 +49,10 @@ describe('integration definitions', () => {
 		}
 	);
 
-	it('only instance_url and stats_link can be enabled in this release; lookup and discoverability are coming soon', () => {
+	it('only instance_url, stats_link and ever_id_login can be enabled in this release; lookup and discoverability are coming soon', () => {
 		expect(
 			GAUZY_INTEGRATIONS.filter((definition) => definition.available).map((definition) => definition.key)
-		).toEqual(['instance_url', 'stats_link']);
+		).toEqual(['instance_url', 'stats_link', 'ever_id_login']);
 		expect(gauzyIntegration('counterparty_lookup')?.available).toBe(false);
 		expect(gauzyIntegration('counterparty_discoverable')?.available).toBe(false);
 	});
