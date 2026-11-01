@@ -1,5 +1,11 @@
 <!-- A task's own page, laid out as Jira's issue page: the work in the wide column, the facts in the side one. -->
-<ngx-record-view-page heading="TASKS_PAGE.HEADER" [backLink]="backLink" [state]="state" (retry)="load()">
+<ngx-record-view-page
+	heading="TASKS_PAGE.HEADER"
+	[backLink]="backLink"
+	[backLabel]="backLabel"
+	[state]="state"
+	(retry)="load()"
+>
 	@if (task) {
 		<!-- The page's actions, on one line with its back button, as the project page's: the status, then Edit, the
 		     link and the star. On the Board the status sits with the filters instead. -->

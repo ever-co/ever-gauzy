@@ -196,6 +196,42 @@ describe('TaskViewPageComponent', () => {
 		expect(labels).not.toContain('TASKS_PAGE.TASKS_PROJECT');
 	});
 
+	describe('back button', () => {
+		const PARENT = { id: OTHER_ID, title: 'The main task' } as ITask;
+
+		it('leads a task to the list it belongs to', async () => {
+			const page = create();
+			await settle();
+
+			expect(page.backLink).toBe('/pages/tasks/dashboard');
+			expect(page.backLabel).toBe('RECORD_VIEW_PAGE.BACK_TO_LIST');
+		});
+
+		it('leads a subtask to its main task, and says so', async () => {
+			tasksService.getById.mockImplementation(async (id: string) => task({ id, parentId: OTHER_ID, parent: PARENT }));
+			const page = create();
+			await settle();
+
+			expect(page.backLink).toBe(`/pages/tasks/view/${OTHER_ID}`);
+			expect(page.backLabel).toBe('TASKS_PAGE.PARENT_TASK');
+		});
+
+		it('leads to the list while the task loads, with no task to go by', () => {
+			const page = create();
+
+			expect(page.backLink).toBe('/pages/tasks/dashboard');
+		});
+
+		it('leads to the list from a subtask whose main task is gone: its page would read "not found"', async () => {
+			tasksService.getById.mockImplementation(async (id: string) => task({ id, parentId: OTHER_ID, parent: null }));
+			const page = create();
+			await settle();
+
+			expect(page.backLink).toBe('/pages/tasks/dashboard');
+			expect(page.backLabel).toBe('RECORD_VIEW_PAGE.BACK_TO_LIST');
+		});
+	});
+
 	describe('project panel', () => {
 		const PROJECT = { id: PROJECT_ID, name: 'Gauzy Platform' };
 		const panel = (): HTMLElement => fixture.nativeElement.querySelector('.task-project');

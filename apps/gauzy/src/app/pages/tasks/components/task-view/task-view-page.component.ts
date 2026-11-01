@@ -151,8 +151,6 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	readonly favoriteEntity = BaseEntityEnum.Task;
 	readonly hoursDays = HOURS_DAYS;
 	readonly entriesDays = ENTRIES_DAYS;
-	/** The list a task belongs to, for the page's back button. */
-	readonly backLink = '/pages/tasks/dashboard';
 	readonly tabs: { id: TaskViewTab; label: string; icon: string }[] = [
 		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
 		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
@@ -546,6 +544,20 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	/** Whether the task sits under another. Subtasks go one level deep for now: a subtask takes none of its own. */
 	get isSubtask(): boolean {
 		return !!(this.task?.parentId || this.task?.parent);
+	}
+
+	/**
+	 * Where the back button leads: a subtask's own task, else the list a task belongs to. By the parent as read, not
+	 * its id: the id outlives a deleted parent, whose page would read "not found".
+	 */
+	get backLink(): string {
+		const parentId = this.task?.parent?.id;
+		return parentId ? `/pages/tasks/view/${parentId}` : '/pages/tasks/dashboard';
+	}
+
+	/** What the back button is named: the task it returns to, when it does not lead to the list. */
+	get backLabel(): string {
+		return this.task?.parent?.id ? 'TASKS_PAGE.PARENT_TASK' : 'RECORD_VIEW_PAGE.BACK_TO_LIST';
 	}
 
 	/** Whether the Subtasks panel offers to add one. */
