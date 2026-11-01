@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
-import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
+import { BehaviorSubject, NEVER, of, Subject, throwError } from 'rxjs';
 import {
 	ITask,
 	PermissionsEnum,
@@ -854,6 +854,23 @@ describe('TaskViewPageComponent', () => {
 				await page.addSubtask();
 
 				expect(reads()).toBe(before);
+			});
+
+			it('reads them again when a refresh of the task discards the read under way', async () => {
+				const page = await ready();
+				const discarded$ = new Subject<{ items: unknown[] }>();
+				// The Add subtask read, the refresh's own, which never answers here, then the read that holds.
+				const reads = [discarded$, NEVER, of({ items: [OPEN] })];
+				http.get.mockImplementation((url: string) => (url.endsWith('/task-statuses') ? reads.shift() : of({ items: [] })));
+
+				const opening = page.addSubtask();
+				await page.onBoardTaskMoved();
+				discarded$.next({ items: [] });
+				discarded$.complete();
+				await opening;
+
+				expect(reads).toEqual([]);
+				expect(context().selectedTask.taskStatus.id).toBe('open');
 			});
 
 			it('opens one dialog however many times the button is pressed while they are read', async () => {

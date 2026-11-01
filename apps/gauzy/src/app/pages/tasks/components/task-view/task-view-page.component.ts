@@ -495,7 +495,12 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		const { id: taskId } = this.task;
 		if (!this.statuses.length) {
 			this.openingSubtask = true;
-			await this.loadStatuses(this.task, this.loadSequence);
+			// A refresh of this task while they are read discards that read, so they are read again until one holds.
+			let sequence: number;
+			do {
+				sequence = this.loadSequence;
+				await this.loadStatuses(this.task, sequence);
+			} while (sequence !== this.loadSequence && this.task?.id === taskId);
 			this.openingSubtask = false;
 			// The page moved on to another task while the read was under way.
 			if (this.task?.id !== taskId || !this.canAddSubtask) return;
