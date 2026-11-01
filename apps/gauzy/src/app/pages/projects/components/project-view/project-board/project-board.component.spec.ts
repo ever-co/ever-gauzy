@@ -116,10 +116,13 @@ describe('ProjectBoardComponent', () => {
 	describe('dropping a card', () => {
 		let put: jest.Mock;
 
-		/** The screen under the pointer: the column with this id, or nothing of the board. */
-		const pointerOver = (columnId: string | null) => {
-			const element = document.createElement('section');
-			if (columnId) element.dataset['columnId'] = columnId;
+		/** The screen under the pointer: the column with this id, its header unless `cards`, or nothing of the board. */
+		const pointerOver = (columnId: string | null, { cards = false } = {}) => {
+			const column = document.createElement('section');
+			if (columnId) column.dataset['columnId'] = columnId;
+			const list = column.appendChild(document.createElement('ul'));
+			list.className = 'board-cards';
+			const element = cards ? list : column;
 			(document as any).elementFromPoint = jest.fn(() => (columnId ? element : null));
 		};
 
@@ -172,6 +175,23 @@ describe('ProjectBoardComponent', () => {
 			});
 
 			expect(ids(done)).toEqual(['sub-1', 'sub-2']);
+		});
+
+		it("keeps a card where it was let go among a list's cards, when the drag's own flag is out of date", async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+			pointerOver('done', { cards: true });
+
+			// The list was measured when the drag began; a scrolled page leaves that behind.
+			await release(component, {
+				previousContainer: { data: open },
+				container: { data: done },
+				item: { data: open.cards[1] },
+				isPointerOverContainer: false,
+				currentIndex: 1
+			});
+
+			expect(ids(done)).toEqual(['sub-2', 'sub-1']);
 		});
 
 		it('saves the column let go over, not the last one the card passed through', async () => {

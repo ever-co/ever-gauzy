@@ -301,8 +301,10 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 
 		// The drop's index counts the cards on show of the list that took it; those the filter hides are still in
 		// the column. It means something only over that list: a card carried into a list and on to its header keeps
-		// the last index it had there, so anywhere else in a column it goes to the top.
-		const overCards = target === to && event.isPointerOverContainer;
+		// the last index it had there, so anywhere else in a column it goes to the top. The list is found on screen, as
+		// the column is: the drag's own flag goes by where the list was measured, which a scrolled page leaves behind.
+		const overCards =
+			target === to && (event.dropPoint ? this.isOverCards(event.dropPoint) : event.isPointerOverContainer);
 		const next = this.visibleCards(target)[overCards ? event.currentIndex : 0];
 		transferArrayItem(from.cards, target.cards, index, next ? target.cards.indexOf(next) : target.cards.length);
 		const wasDone = card.done;
@@ -389,9 +391,17 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 
 	/** The board column at a point on screen, if any. The drag preview takes no pointer events, so it is never the hit. */
 	private columnAt(point: { x: number; y: number }): IBoardColumn | undefined {
-		const element = point ? document.elementFromPoint(point.x, point.y) : null;
-		const id = element?.closest<HTMLElement>('[data-column-id]')?.dataset['columnId'];
+		const id = this.elementAt(point)?.closest<HTMLElement>('[data-column-id]')?.dataset['columnId'];
 		return id ? (this.board.value || []).find((column) => column.id === id) : undefined;
+	}
+
+	/** Whether a point on screen is over a column's cards, not its header. */
+	private isOverCards(point: { x: number; y: number }): boolean {
+		return !!this.elementAt(point)?.closest('.board-cards');
+	}
+
+	private elementAt(point: { x: number; y: number }): Element | null {
+		return point ? document.elementFromPoint(point.x, point.y) : null;
 	}
 
 	private onEndReached(): void {
