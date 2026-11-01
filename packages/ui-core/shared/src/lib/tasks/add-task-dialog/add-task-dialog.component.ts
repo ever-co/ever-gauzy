@@ -120,6 +120,14 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		return !!this.selectedTask?.id;
 	}
 
+	/** The dialog's heading: editing a task, adding a subtask under a fixed parent, or creating a task. */
+	get headingKey(): string {
+		if (this.isEditing) {
+			return 'TASKS_PAGE.EDIT_TASK';
+		}
+		return this.parentLocked ? 'TASK_VIEW.ADD_SUBTASK' : 'TASKS_PAGE.CREATE_TASK';
+	}
+
 	/** The task's short reference for the dialog header, e.g. `GAU-42`. */
 	get taskReference(): string {
 		if (!this.isEditing) {
