@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import {
 	NbDialogModule,
 	NbRadioModule,
@@ -29,6 +30,7 @@ const Components = [AlertComponent, ConfirmComponent, PromptComponent, QuickActi
 @NgModule({
 	imports: [
 		CommonModule,
+		DragDropModule,
 		FormsModule,
 		ReactiveFormsModule,
 		NbBadgeModule,

@@ -1,0 +1,35 @@
+// The columns, cards and drag states come from the tasks board's stylesheet (see the component's
+// `styleUrls`), the probability chip from the deals table's; this adds only what a deal card has of its own.
+
+:host {
+  display: block;
+}
+
+// The client under the deal's title.
+.deal-card-client nb-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  font-size: 0.75rem;
+}
+
+// A pipeline without stages has no columns to show.
+.deals-board-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--gauzy-text-color-2);
+
+  nb-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 1.5rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.75rem;
+  }
+}

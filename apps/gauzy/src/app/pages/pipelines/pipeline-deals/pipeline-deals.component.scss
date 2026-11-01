@@ -11,6 +11,15 @@
     min-width: 9rem;
   }
 
+  // The Board switch, before the Add button.
+  .board-toggle {
+    margin-inline-end: 0.5rem;
+
+    nb-icon {
+      margin-inline-end: 0.25rem;
+    }
+  }
+
   .grid {
     height: 100%;
     overflow: auto;

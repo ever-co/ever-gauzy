@@ -3,19 +3,20 @@
 		<span class="docs-image-preview-name" [title]="name">{{ name }}</span>
 		<span class="docs-image-preview-actions">
 			<!-- A `blob:` URL downloads under the file's own name, with no second request. -->
-			<a
-				*ngIf="src && !failed"
-				nbButton
-				ghost
-				status="basic"
-				size="small"
-				[href]="src"
-				[attr.download]="name"
-				[attr.aria-label]="'DOCS.PREVIEW.DOWNLOAD' | translate"
-				[nbTooltip]="'DOCS.PREVIEW.DOWNLOAD' | translate"
-			>
-				<nb-icon icon="download-outline"></nb-icon>
-			</a>
+			@if (src && !failed) {
+				<a
+					nbButton
+					ghost
+					status="basic"
+					size="small"
+					[href]="src"
+					[attr.download]="name"
+					[attr.aria-label]="'DOCS.PREVIEW.DOWNLOAD' | translate"
+					[nbTooltip]="'DOCS.PREVIEW.DOWNLOAD' | translate"
+				>
+					<nb-icon icon="download-outline"></nb-icon>
+				</a>
+			}
 			<button
 				type="button"
 				nbButton
@@ -32,10 +33,14 @@
 	</nb-card-header>
 
 	<nb-card-body class="docs-image-preview-body" [nbSpinner]="loading" nbSpinnerStatus="primary">
-		<img *ngIf="src && !failed" class="docs-image-preview-img" [src]="src" [alt]="name" (error)="onImageError()" />
-		<p *ngIf="!loading && failed" class="docs-image-preview-error" role="alert">
-			<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
-			{{ 'DOCS.LINKS.PREVIEW_ERROR' | translate }}
-		</p>
+		@if (src && !failed) {
+			<img class="docs-image-preview-img" [src]="src" [alt]="name" (error)="onImageError()" />
+		}
+		@if (!loading && failed) {
+			<p class="docs-image-preview-error" role="alert">
+				<nb-icon icon="alert-triangle-outline" status="danger"></nb-icon>
+				{{ 'DOCS.LINKS.PREVIEW_ERROR' | translate }}
+			</p>
+		}
 	</nb-card-body>
 </nb-card>

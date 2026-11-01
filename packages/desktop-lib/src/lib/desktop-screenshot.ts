@@ -3,6 +3,7 @@ import { writeFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import * as moment from 'moment';
 import * as path from 'path';
 import { LocalStore } from './desktop-store';
+import { playScreenshotSound } from './screenshot-sound/screenshot-sound.service';
 import * as Form from 'form-data';
 import { screen } from 'electron';
 import screenshot from 'screenshot-desktop';
@@ -19,7 +20,7 @@ const captureOnlyActiveWindow = async (
 	soundPath
 ) => {
 	/* Checking if the user is allowed to take a screenshot. */
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 	// The screenshot library and Electron do not always report the same display ids (Linux can
@@ -61,7 +62,7 @@ const captureAllWindow = async (
 	soundPath
 ) => {
 	/* Checking if the user is allowed to take a screenshot. */
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
@@ -107,7 +108,7 @@ const uploadScreenShot = async (
 	soundPath
 ) => {
 	// Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
@@ -200,7 +201,7 @@ const uploadScreenShot = async (
 
 const writeScreenshotLocally = (img, fileName) => {
 	// Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 	const imgLocation = path.join(app.getPath('userData'), '/public/temp');
@@ -246,7 +247,7 @@ const readOrCreateTempDir = (tempPath) => {
 
 export const detectActiveWindow = () => {
 	// Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
@@ -266,7 +267,7 @@ export const detectActiveWindow = () => {
 
 const updateLastCapture = (timeTrackerWindow, timeSlotId) => {
 	// Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
@@ -278,7 +279,7 @@ const updateLastCapture = (timeTrackerWindow, timeSlotId) => {
 
 const showCapture = (timeTrackerWindow, url) => {
 	// Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
@@ -294,25 +295,16 @@ const showCapturedToRenderer = async (
 	timeTrackerWindow
 ) => {
 	//  Checking if the user is allowed to take a screenshot
-	if (!allowScreenshotCapture()) {
+	if (!isScreenshotCaptureAllowed()) {
 		return;
 	}
 
 	console.log('showCapturedToRenderer:', windowPath);
 
-	const soundCamera = soundPath;
-
 	notificationWindow.show(thumbUrl);
 
-	try {
-		if (existsSync(soundCamera)) {
-			timeTrackerWindow.webContents.send('play_sound', {
-				soundFile: soundCamera
-			});
-		}
-	} catch (err) {
-		console.error('sound camera not found', err);
-	}
+	// The custom sound chosen on this computer, or the bundled one; silent when muted in the settings
+	playScreenshotSound(timeTrackerWindow, soundPath);
 
 	notificationWindow.hide();
 
@@ -326,7 +318,7 @@ const showCapturedToRenderer = async (
 export async function takeshot(timeTrackerWindow, arg, notificationWindow, isTemp, windowPath, soundPath) {
 	try {
 		// Checking if the user is allowed to take a screenshot. */
-		if (!allowScreenshotCapture()) {
+		if (!isScreenshotCaptureAllowed()) {
 			return;
 		}
 
@@ -382,7 +374,7 @@ export async function takeshot(timeTrackerWindow, arg, notificationWindow, isTem
 export async function captureScreen(timeTrackerWindow, notificationWindow, timeSlotId, quitApp, windowPath, soundPath) {
 	try {
 		// Checking if the user is allowed to take a screenshot
-		if (!allowScreenshotCapture()) {
+		if (!isScreenshotCaptureAllowed()) {
 			return;
 		}
 
@@ -451,6 +443,11 @@ export function saveTempImage(img, name, timeSlotId, timeTrackerWindow) {
 export async function getScreenshot() {
 	const allDisplays = [];
 
+	// Checking if the user is allowed to take a screenshot
+	if (!isScreenshotCaptureAllowed()) {
+		return allDisplays;
+	}
+
 	try {
 		const displays = await screenshot.listDisplays();
 		console.log('getScreenshot -> displays');
@@ -512,10 +509,6 @@ export async function getScreenshot() {
 }
 
 export async function notifyScreenshot(notificationWindow, thumb, windowPath, soundPath, timeTrackerWindow) {
-	const soundCamera = soundPath;
-
-	const appSetting = LocalStore.getStore('appSetting');
-
 	const thumbImg = `data:image/png;base64, ${thumb.img}`;
 
 	global.variableGlobal.screenshotSrc = thumbImg;
@@ -526,20 +519,29 @@ export async function notifyScreenshot(notificationWindow, thumb, windowPath, so
 		fullUrl: thumbImg
 	});
 
-	try {
-		if (existsSync(soundCamera) && appSetting && !appSetting.mutedNotification) {
-			timeTrackerWindow?.webContents.send('play_sound', {
-				soundFile: soundCamera
-			});
-		}
-	} catch (err) {
-		console.error('sound camera not found');
-	}
+	// The custom sound chosen on this computer, or the bundled one; silent when muted in the settings
+	playScreenshotSound(timeTrackerWindow, soundPath);
 
 	notificationWindow?.hide();
 }
 
-function allowScreenshotCapture(): boolean {
+/**
+ * Whether the screen may be captured: only when the organization and the employee both allow it (issue #9872).
+ *
+ * The timer stores the two combined (`allowScreenshotCapture`, sent with `update_timer_auth_config`) each time it reads
+ * the signed-in user, so a change on either side applies from its next refresh. Until it has, the employee and the
+ * organization stored at sign-in decide, by the same rule. The employee's own setting used to be enough on its own, so
+ * an employee was still captured while their organization had capture off.
+ *
+ * Every capture of the timer asks it before taking an image: the functions in this file, and the time slot that
+ * `TimerHandler.takeScreenshotActivities` builds, which also hands the answer to the renderer so that its own capture
+ * (Wayland's included) takes none either.
+ */
+export function isScreenshotCaptureAllowed(): boolean {
 	const auth = LocalStore.getStore('auth');
-	return Boolean((auth?.allowScreenshotCapture ?? false) || (auth?.user?.employee?.allowScreenshotCapture ?? false));
+	if (typeof auth?.allowScreenshotCapture === 'boolean') {
+		return auth.allowScreenshotCapture;
+	}
+	const employee = auth?.user?.employee;
+	return employee?.allowScreenshotCapture === true && employee?.organization?.allowScreenshotCapture === true;
 }

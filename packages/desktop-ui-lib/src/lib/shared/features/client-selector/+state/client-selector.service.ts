@@ -56,6 +56,7 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 	}
 
 	public async load(options?: { searchTerm?: string }): Promise<void> {
+		const isCurrent = this.requests.start(() => this.store.organizationId);
 		try {
 			this.selectorStore.setLoading(true);
 
@@ -91,9 +92,15 @@ export class ClientSelectorService extends SelectorService<IOrganizationContact>
 				skip: this.selectorQuery.page
 			};
 			const { items: data, total } = await this.timeTrackerService.getPaginatedClients(request);
+			if (!isCurrent()) {
+				return; // for a list emptied since, or another organization
+			}
 			this.selectorStore.updateInfiniteList({ data, total });
 			this.selectorStore.setError(null);
 		} catch (error) {
+			if (!isCurrent()) {
+				return;
+			}
 			this.toastrNotifier.error(error.message || 'An error occurred while fetching clients.');
 			this.selectorStore.setError(error);
 		} finally {

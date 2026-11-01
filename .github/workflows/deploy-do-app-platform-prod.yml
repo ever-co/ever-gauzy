@@ -55,7 +55,7 @@ jobs:
           API_HOST: '0.0.0.0'
           DEMO: 'false'
           NODE_ENV: 'production'
-          ADMIN_PASSWORD_RESET: 'false'
+          ADMIN_PASSWORD_RESET: 'true'
           API_BASE_URL: 'https://apida.gauzy.co'
           CLIENT_BASE_URL: 'https://app.gauzy.co'
           DB_TYPE: '${{ secrets.DB_TYPE }}'

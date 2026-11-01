@@ -1,14 +1,33 @@
 <!-- The project's tasks as a board: one column per status, each card opening its task. No title of its own: the
      host's Board tab names it. -->
-<section class="panel project-view-panel board-panel" [nbSpinner]="board.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+<section
+	class="panel project-view-panel board-panel"
+	[class.is-flat]="filterable"
+	[nbSpinner]="board.loading"
+	nbSpinnerSize="small"
+	nbSpinnerStatus="basic"
+>
 	<div class="panel-body">
+		<!-- Whatever the board's state: what the host puts in this row must not go when the board fails to load. -->
+		@if (filterable) {
+		<ga-board-filter-bar
+			[filter]="filter"
+			[options]="filterOptions"
+			[shown]="shownCards"
+			[total]="totalCards"
+			(filterChange)="filter = $event"
+		>
+			<ng-content></ng-content>
+		</ga-board-filter-bar>
+		}
 		@if (board.failed) {
 		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
 		} @else if (!board.loading && !total && !hasParent) {
 		<ng-container *ngTemplateOutlet="empty; context: { $implicit: emptyKey, icon: 'checkmark-square-2-outline' }"></ng-container>
 		} @else {
-		<div class="board" role="list" cdkDropListGroup>
+		<div #boardScroller class="board" role="list" cdkDropListGroup>
 			@for (column of board.value; track column.id) {
+			@let cards = visibleCards(column);
 			<section
 				class="board-column"
 				role="listitem"
@@ -20,7 +39,7 @@
 					<span class="board-column-dot" [class]="'board-column-dot group-' + column.group" [style.background-color]="column.color || null"></span>
 					<span class="board-column-name" [nbTooltip]="column.name" nbTooltipPlacement="top">{{ column.name }}</span>
 					<!-- With pages still to read, the column may hold more than it shows. -->
-					<span class="board-column-count">{{ column.cards.length }}{{ hasMore ? '+' : '' }}</span>
+					<span class="board-column-count">{{ cards.length }}{{ hasMore ? '+' : '' }}</span>
 				</header>
 				<ul
 					class="board-cards"
@@ -31,7 +50,7 @@
 					[cdkDropListSortingDisabled]="true"
 					(cdkDropListDropped)="drop($event)"
 				>
-					@for (card of column.cards; track card.id) {
+					@for (card of cards; track card.id) {
 					<li
 						class="board-card-item"
 						cdkDrag
@@ -136,6 +155,9 @@
 			</section>
 			}
 		</div>
+		@if (filterable) {
+		<ga-board-minimap [target]="boardScroller" [columnCount]="board.value.length"></ga-board-minimap>
+		}
 		@if (hasMore) {
 		<div #boardEnd class="board-end" [nbSpinner]="loadingMore" nbSpinnerSize="tiny" nbSpinnerStatus="basic">
 			@if (loadMoreFailed) {

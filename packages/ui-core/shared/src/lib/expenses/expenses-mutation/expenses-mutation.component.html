@@ -236,6 +236,14 @@
 						>
 							<i class="fas fa-paperclip mr-1"></i>
 							{{ 'EXPENSES_PAGE.MUTATION.ATTACH_A_RECEIPT' | translate }}
+							@if (form.get('receipt').value) {
+							<i
+								class="fas fa-check-circle ml-1 receipt-attached"
+								role="img"
+								[attr.aria-label]="'EXPENSES_PAGE.MUTATION.RECEIPT_ATTACHED' | translate"
+								[attr.title]="'EXPENSES_PAGE.MUTATION.RECEIPT_ATTACHED' | translate"
+							></i>
+							}
 						</button>
 					</div>
 				</div>

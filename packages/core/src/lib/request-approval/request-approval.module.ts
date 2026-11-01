@@ -14,6 +14,7 @@ import { RoleModule } from './../role/role.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { EquipmentSharingModule } from './../equipment-sharing/equipment-sharing.module';
 import { TimeOffRequestModule } from './../time-off-request/time-off-request.module';
+import { TimeOffBalanceModule } from './../time-off-balance/time-off-balance.module';
 import { CommandHandlers } from './commands/handlers';
 import { TaskModule } from './../tasks/task.module';
 import { StatisticModule } from '../time-tracking/statistic/statistic.module';
@@ -52,6 +53,8 @@ import { MikroOrmRequestApprovalRepository } from './repository/mikro-orm-reques
 		RoleModule,
 		OrganizationModule,
 		forwardRef(() => TimeOffRequestModule),
+		// An answer that moves a time-off request moves its leave balance too, as the time-off route does (#10183).
+		TimeOffBalanceModule,
 		forwardRef(() => EquipmentSharingModule),
 		TaskModule,
 		TimerModule,

@@ -5,13 +5,13 @@ import { BehaviorSubject, EMPTY, Subject, debounceTime, finalize, of } from 'rxj
 import { Observable } from 'rxjs';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { NbPopoverDirective, NbTabComponent } from '@nebular/theme';
+import { NbDialogService, NbPopoverDirective, NbTabComponent } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { Angular2SmartTableComponent, Cell } from 'angular2-smart-table';
-import { SyncTags } from '@gauzy/constants';
 import {
 	GithubRepositoryStatusEnum,
 	HttpStatus,
+	ID,
 	IGithubIssue,
 	IGithubRepository,
 	IIntegrationMapSyncRepository,
@@ -19,8 +19,10 @@ import {
 	IOrganization,
 	IOrganizationGithubRepository,
 	IOrganizationProject,
+	IOrganizationProjectSetting,
 	IUser,
-	TaskStatusEnum
+	TaskStatusEnum,
+	resolveGithubSyncLabel
 } from '@gauzy/contracts';
 import {
 	ErrorHandlingService,
@@ -42,6 +44,8 @@ import {
 	HashNumberPipe,
 	StatusBadgeComponent
 } from '@gauzy/ui-core/shared';
+import { GithubProjectSyncLabelComponent } from '../project-sync-label/project-sync-label.component';
+import { GithubProjectSyncSettingsComponent } from '../project-sync-settings/project-sync-settings.component';
 
 export enum SyncTabsEnum {
 	AUTO_SYNC = 'AUTO_SYNC',
@@ -110,7 +114,8 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly _store: Store,
 		private readonly _githubService: GithubService,
-		private readonly _organizationProjectsService: OrganizationProjectsService
+		private readonly _organizationProjectsService: OrganizationProjectsService,
+		private readonly _dialogService: NbDialogService
 	) {
 		super(_translateService);
 	}
@@ -408,6 +413,25 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 						return this.getTranslation('SM_TABLE.ISSUES_SYNC_COUNT', { count });
 					}
 				},
+				syncLabel: {
+					title: this.getTranslation('INTEGRATIONS.GITHUB_PAGE.PROJECT_SYNC.COLUMN'),
+					type: 'custom',
+					isFilterable: false,
+					renderComponent: GithubProjectSyncLabelComponent,
+					componentInitFunction: (instance: GithubProjectSyncLabelComponent, cell: Cell) => {
+						// Get the data of the entire row
+						const rowData = cell.getRow().getData();
+
+						// Set properties on the GithubProjectSyncLabelComponent instance
+						instance.rowData = rowData;
+
+						// Open the project's sync settings when its edit button is clicked
+						instance.edit.subscribe({
+							next: (project: IOrganizationProject) => this.openProjectSyncSettings(project),
+							error: (error: any) => this._errorHandlingService.handleError(error)
+						});
+					}
+				},
 				hasSyncEnabled: {
 					title: this.getTranslation('SM_TABLE.ENABLED_DISABLED_SYNC'),
 					type: 'custom',
@@ -533,6 +557,53 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 	}
 
 	/**
+	 * Opens the sync settings of a project mapped to a repository (auto-sync, label-based sync and the label), and
+	 * refreshes the synced projects once they are saved.
+	 *
+	 * @param project - The project, as a row of the synced projects table.
+	 */
+	public openProjectSyncSettings(project: IOrganizationProject): void {
+		if (!project || !this.integration) {
+			return;
+		}
+
+		this._dialogService
+			.open(GithubProjectSyncSettingsComponent, {
+				context: { project, integration: this.integration }
+			})
+			.onClose.pipe(
+				filter((setting: IOrganizationProjectSetting) => !!setting),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Links a project to the GitHub repository it syncs. The project keeps the sync label it has; one without a label
+	 * gets the default label, which every repository sync used to set, overwriting a label of its own (#7083).
+	 *
+	 * @param projectId - The project to link.
+	 * @param repositoryId - The synced repository (`IOrganizationGithubRepository.id`).
+	 * @returns The updated project setting.
+	 */
+	private _linkProjectToRepository(projectId: ID, repositoryId: ID): Observable<IOrganizationProjectSetting> {
+		const { id: organizationId, tenantId } = this.organization;
+
+		// Read the stored label: the selected project may predate a label saved since.
+		return this._organizationProjectsService.getById(projectId).pipe(
+			mergeMap(({ syncTag }: IOrganizationProject) =>
+				this._organizationProjectsService.updateProjectSetting(projectId, {
+					organizationId,
+					tenantId,
+					customFields: { repositoryId },
+					syncTag: resolveGithubSyncLabel(syncTag)
+				})
+			)
+		);
+	}
+
+	/**
 	 * Opens a modal popover for integration settings if the 'integration' object is defined.
 	 */
 	openSettingModalPopover() {
@@ -601,12 +672,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 						repository = item;
 					}),
 					mergeMap(({ id: repositoryId }: IOrganizationGithubRepository) => {
-						const setting$ = this._organizationProjectsService.updateProjectSetting(projectId, {
-							organizationId,
-							tenantId,
-							customFields: { repositoryId },
-							syncTag: SyncTags.GAUZY
-						});
+						const setting$ = this._linkProjectToRepository(projectId, repositoryId);
 						const issues$ = this._githubService.autoSyncIssues(integrationId, repository, {
 							projectId,
 							organizationId,
@@ -688,12 +754,7 @@ export class GithubViewComponent extends PaginationFilterBaseComponent implement
 				.pipe(
 					tap((item: IOrganizationGithubRepository) => (repository = item)),
 					mergeMap(({ id: repositoryId }: IOrganizationGithubRepository) =>
-						this._organizationProjectsService.updateProjectSetting(projectId, {
-							organizationId,
-							tenantId,
-							customFields: { repositoryId },
-							syncTag: SyncTags.GAUZY
-						})
+						this._linkProjectToRepository(projectId, repositoryId)
 					),
 					mergeMap(() =>
 						this._githubService.manualSyncIssues(integrationId, repository, {

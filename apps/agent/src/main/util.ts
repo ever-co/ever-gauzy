@@ -25,7 +25,9 @@ export type TEmployeeResponse = {
 	allowLogoutFromAgentApp: boolean,
 	trackKeyboardMouseActivity: boolean,
 	trackAllDisplays: boolean,
-	randomScreenshot: boolean
+	randomScreenshot: boolean,
+	/** The employee's organisation, which `ApiService.getEmployeeSetting` asks for */
+	organization?: Pick<TOrganizationScreenshotSetting, 'allowScreenshotCapture'> | null
 }
 
 
@@ -42,7 +44,13 @@ export type TAppSetting = {
 	kbMouseTracking: boolean,
 	allowAgentAppExit: boolean,
 	allowLogoutFromAgentApp: boolean,
+	/** The employee's own screen capture setting */
 	allowScreenshotCapture: boolean,
+	/**
+	 * The organisation's screen capture setting, which capture needs on as well (see `screenshotCaptureAllowed`). Unset
+	 * until the agent has read it.
+	 */
+	organizationAllowsScreenshotCapture: boolean,
 	randomScreenshotTime: boolean,
 	preventDisplaySleep: boolean,
 	alwaysOn: boolean
@@ -164,9 +172,41 @@ export function updateAgentSetting(employee: Partial<TEmployeeResponse>) {
 		},
 		kbMouseTracking: employee.trackKeyboardMouseActivity,
 		allowScreenshotCapture: employee.allowScreenshotCapture ?? false,
+		// Read with the employee; a response without it keeps the value read last
+		...(employee.organization && {
+			organizationAllowsScreenshotCapture: employee.organization.allowScreenshotCapture === true
+		}),
 		randomScreenshotTime: employee.randomScreenshot ?? false
 	}
 	LocalStore.updateApplicationSetting(appSetting);
+}
+
+/**
+ * Whether the agent may capture the screen (issue #9872): only when the organisation and the employee both allow it, the
+ * rule the desktop timer follows. A new organisation has capture off, and turning it on can take an admin's
+ * acknowledgement, so the employee's own setting is not enough: the agent used to capture on it alone. Nothing is
+ * captured until the agent has read the organisation's setting.
+ */
+export function screenshotCaptureAllowed(appSetting: Partial<TAppSetting> | null | undefined): boolean {
+	return appSetting?.allowScreenshotCapture === true && appSetting?.organizationAllowsScreenshotCapture === true;
+}
+
+/**
+ * Store the organisation's screen capture setting, read with its timer settings, so turning it off (or on again) reaches
+ * an agent that runs for days. Returns whether the stored value changed.
+ */
+export function updateOrganizationScreenshotCapture(
+	organization: TOrganizationScreenshotSetting | null | undefined
+): boolean {
+	if (!organization) {
+		return false;
+	}
+	const organizationAllowsScreenshotCapture = organization.allowScreenshotCapture === true;
+	if (getAppSetting()?.organizationAllowsScreenshotCapture === organizationAllowsScreenshotCapture) {
+		return false;
+	}
+	LocalStore.updateApplicationSetting({ organizationAllowsScreenshotCapture });
+	return true;
 }
 
 /**

@@ -2,6 +2,7 @@ import { environment } from '@gauzy/config';
 
 import { AiChatPlugin } from '@gauzy/plugin-ai-chat';
 import { AuthKeycloakPlugin, isKeycloakEnabled } from '@gauzy/plugin-auth-keycloak';
+import { AuthOidcPlugin, isOidcEnabled } from '@gauzy/plugin-auth-oidc';
 import { AuthZitadelPlugin, isZitadelEnabled } from '@gauzy/plugin-auth-zitadel';
 import { AiProviderAnthropicPlugin } from '@gauzy/plugin-ai-provider-anthropic';
 import { AiProviderOpenAiPlugin } from '@gauzy/plugin-ai-provider-openai';
@@ -91,6 +92,10 @@ export const plugins = [
 	// Keycloak as an additional sign-in method. Off unless KEYCLOAK_ENABLED=true and a Keycloak client
 	// id and secret are set; when off it is not loaded at all.
 	...(isKeycloakEnabled() ? [AuthKeycloakPlugin] : []),
+
+	// Any OpenID Connect provider as an additional sign-in method. Off unless OIDC_ENABLED=true and an issuer,
+	// a client id and a secret are set; when off it is not loaded at all (no route, no outbound request).
+	...(isOidcEnabled() ? [AuthOidcPlugin] : []),
 
 	// Anonymous usage statistics (one signed report a day: counts and monthly totals, never a name or a
 	// record). On unless EVER_STATS_ENABLED=false; when off it is not loaded at all (no route, no timer,

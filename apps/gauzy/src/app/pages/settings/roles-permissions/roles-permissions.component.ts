@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ChangeDetectionStr
 import { FormControl } from '@angular/forms';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, Subject, of as observableOf, startWith, catchError } from 'rxjs';
+import { Observable, Subject, of as observableOf, startWith, catchError, combineLatest } from 'rxjs';
 import { debounceTime, filter, tap, map } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { environment } from '@gauzy/ui-config';
@@ -15,6 +15,7 @@ import {
 	IPermissionSection,
 	toPermissionSections
 } from './permission-sections';
+import { IPermissionTexts, matchesPermissionSearch, permissionTextKeys, toPermissionTexts } from './permission-texts';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -39,6 +40,11 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 	/** The filtered lists split into titled sections; rebuilt with them on each search. */
 	generalSections: IPermissionSection[] = [];
 	adminSections: IPermissionSection[] = [];
+	/**
+	 * Each listed permission's label and description in the active language, re-read when the language
+	 * changes. The template shows a description only when there is one, and the search matches both texts.
+	 */
+	permissionTexts = new Map<PermissionsEnum, IPermissionTexts>();
 	roles$: Observable<IRole[]> = observableOf([]);
 	permissions$: Subject<any> = new Subject();
 	roleSubject$: Subject<any> = new Subject();
@@ -394,13 +400,28 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 	}
 
 	/**
-	 * Sets up a search filter with debounce to improve performance.
-	 */ private _setupSearchFilter(): void {
-		this.searchControl.valueChanges
+	 * Reads the label and description of every permission the page can list, in the active language, and again
+	 * whenever the language changes. A permission's description is shown under its toggle; the page renders
+	 * at once and the descriptions appear as soon as the translations are in.
+	 */
+	private _permissionTexts$(): Observable<Map<PermissionsEnum, IPermissionTexts>> {
+		const permissions = [...new Set([...this.permissionGroups.GENERAL, ...this.permissionGroups.ADMINISTRATION])];
+
+		return this.translateService.stream(permissionTextKeys(permissions)).pipe(
+			map((translations) => toPermissionTexts(permissions, translations as Record<string, unknown>)),
+			tap((texts) => (this.permissionTexts = texts)),
+			startWith(this.permissionTexts)
+		);
+	}
+
+	/**
+	 * Sets up a search filter with debounce to improve performance. The lists are rebuilt for each search, and
+	 * when the language changes, since the search also matches the translated label and description.
+	 */
+	private _setupSearchFilter(): void {
+		combineLatest([this.searchControl.valueChanges.pipe(debounceTime(300), startWith('')), this._permissionTexts$()])
 			.pipe(
-				debounceTime(300),
-				startWith(''),
-				map((searchTerm) => {
+				map(([searchTerm]) => {
 					this.filteredGeneralPermissions = this._filterPermissions('GENERAL', searchTerm);
 					this.filteredAdminPermissions = this._filterPermissions('ADMINISTRATION', searchTerm);
 					this.generalSections = toPermissionSections(
@@ -411,29 +432,26 @@ export class RolesPermissionsComponent extends TranslationBaseComponent implemen
 						this.filteredAdminPermissions,
 						ADMINISTRATION_PERMISSION_SECTIONS
 					);
-				})
+				}),
+				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
 	/**
-	 * Filters permissions based on the search term.
+	 * Filters permissions based on the search term: the permission's code read as words, or its label or
+	 * description in the active language.
 	 * @param group The group of permissions to filter ('GENERAL' or 'ADMINISTRATION')
 	 * @param searchTerm The term used for filtering permissions.
 	 * @returns The filtered list of permissions.
 	 */
-	private _filterPermissions(group: 'GENERAL' | 'ADMINISTRATION', searchTerm: string | null = ''): any[] {
+	private _filterPermissions(group: 'GENERAL' | 'ADMINISTRATION', searchTerm: string | null = ''): PermissionsEnum[] {
 		const permissions = group === 'GENERAL' ? this.permissionGroups.GENERAL : this.getAdministrationPermissions();
-		console.log(permissions);
 
 		if (!searchTerm) return permissions;
 		return permissions.filter((permission) =>
-			this._formatPermissionForSearch(permission).includes(searchTerm.toLowerCase())
+			matchesPermissionSearch(permission, searchTerm, this.permissionTexts.get(permission))
 		);
-	}
-
-	private _formatPermissionForSearch(permission: string): string {
-		return permission.replace(/_/g, ' ').toLowerCase();
 	}
 
 	ngOnDestroy() {}

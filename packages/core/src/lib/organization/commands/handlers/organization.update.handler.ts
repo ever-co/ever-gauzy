@@ -4,6 +4,7 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
 	BaseEntityEnum,
 	checkAgentExitLogoutRestrictionChange,
+	IAgentRestrictionLocation,
 	ID,
 	IOrganization,
 	IOrganizationUpdateInput,
@@ -11,12 +12,19 @@ import {
 } from '@gauzy/contracts';
 import { RequestContext } from '../../../core/context';
 import { ActivityLogService } from '../../../activity-log/activity-log.service';
+import { ContactService } from '../../../contact/contact.service';
 import { EmployeeService } from '../../../employee/employee.service';
 import {
 	liftEmployeeAgentRestrictions,
 	recordAgentRestrictionAcknowledgement
 } from '../../../employee/agent-exit-logout-restriction';
 import { OrganizationService } from '../../organization.service';
+import { linkedContact, organizationLocations, storedOrganizationLocation } from '../../organization-location';
+import {
+	logScreenshotCaptureAcknowledgement,
+	omitScreenshotCaptureAcknowledgementFields,
+	resolveScreenshotCaptureAcknowledgement
+} from '../../screenshot-capture-acknowledgement';
 import { OrganizationUpdateCommand } from '../organization.update.command';
 
 @CommandHandler(OrganizationUpdateCommand)
@@ -26,7 +34,8 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 	constructor(
 		private readonly organizationService: OrganizationService,
 		private readonly activityLogService: ActivityLogService,
-		private readonly moduleRef: ModuleRef
+		private readonly moduleRef: ModuleRef,
+		private readonly contactService: ContactService
 	) {}
 
 	/**
@@ -48,9 +57,10 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 	 * @returns The updated organization.
 	 */
 	private async update(id: ID, input: IOrganizationUpdateInput): Promise<IOrganization> {
-		const organization: IOrganization = await this.organizationService.findOneByIdString(id, {
-			relations: { contact: true }
-		});
+		// Read without its `contact`: the location rules read the linked contact's country themselves (see
+		// `linkedContact`), so a caller who may save the settings but not view contacts still saves, and the
+		// contact is never answered.
+		const organization: IOrganization = await this.organizationService.findOneByIdString(id);
 
 		if (!organization) {
 			throw new NotFoundException(`Organization with ID ${id} not found.`);
@@ -59,18 +69,27 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		// Issue #9873: EEA/UK organizations may not stop workers exiting or logging out of the agent;
 		// elsewhere doing so requires an explicit acknowledgement, recorded against the admin.
 		// The acknowledgement is a request flag, not an organization column.
-		const changes: IOrganizationUpdateInput = { ...input };
+		// Issue #9872: the screen capture acknowledgement is request-only too, and its record is the server's.
+		const changes: IOrganizationUpdateInput = omitScreenshotCaptureAcknowledgementFields(input);
 		delete changes.acknowledgeAgentExitLogoutRestriction;
-		const previousLocation = {
-			regionCode: organization.regionCode,
-			timeZone: organization.timeZone,
-			country: organization.contact?.country
-		};
-		const location = {
-			regionCode: changes.regionCode ?? previousLocation.regionCode,
-			timeZone: changes.timeZone ?? previousLocation.timeZone,
-			country: changes.country || previousLocation.country
-		};
+		// The location is judged from what is stored and what this write stores (see `organizationLocations`): the
+		// region code, the time zone and the country of the contact the organization is linked to. Neither a top-level
+		// `country` nor the fields of a contact the request carries are stored by the save, so they move nothing.
+		// The exit/logout rule judges the location after the write only.
+		const {
+			stored: previousLocation,
+			after: location,
+			requested,
+			unreadContactId
+		} = await organizationLocations(
+			{ ...organization, contact: await linkedContact(organization, this.contactService) },
+			changes,
+			this.contactService
+		);
+		// Without the contact the save links, the location after the write is unknown: nothing is judged or saved.
+		if (unreadContactId) {
+			throw new NotFoundException(`Contact with ID ${unreadContactId} not found.`);
+		}
 		const { error: restrictionError, newRestrictions } = checkAgentExitLogoutRestrictionChange(
 			input,
 			organization,
@@ -80,6 +99,16 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 		if (restrictionError) {
 			throw new BadRequestException(restrictionError);
 		}
+
+		// Issue #9872: turning screen capture on for an EEA/UK organization takes the admin's acknowledgement,
+		// stored with the change below. Re-saving an organization that already captures, or turning capture
+		// off, asks nothing, so existing organizations keep their value without a new step. It asks if the
+		// organization is in the EEA/UK before or after the write, or by any location value the request names.
+		const screenshotCaptureAcknowledgement = resolveScreenshotCaptureAcknowledgement(input, organization, [
+			previousLocation,
+			location,
+			...requested
+		]);
 		input = changes;
 
 		// Written and awaited before the save: no restriction without its recorded acknowledgement.
@@ -120,14 +149,34 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 			...(has('show_employees_count') && { show_employees_count: input.show_employees_count !== false }),
 			...(input.standardWorkHoursPerDay !== undefined && {
 				standardWorkHoursPerDay: input.standardWorkHoursPerDay
-			})
+			}),
+			...screenshotCaptureAcknowledgement
 		};
+		// Issue #9872: the flag is written only when this request changes it from the row read above. Sending the
+		// stored value back writes nothing, so a save that raced one turning capture off cannot turn it back on
+		// without an acknowledgement: every write of `true` went through the check above.
+		if (updateData.allowScreenshotCapture === organization.allowScreenshotCapture) {
+			delete updateData.allowScreenshotCapture;
+		}
 
 		// Creates a new organization or updates an existing one based on the provided data.
 		await this.organizationService.create({ ...updateData, id });
 
-		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker.
-		if (!isEEAOrUKLocation(previousLocation) && isEEAOrUKLocation(location)) {
+		if (screenshotCaptureAcknowledgement) {
+			await logScreenshotCaptureAcknowledgement(
+				this.activityLogService,
+				organization,
+				screenshotCaptureAcknowledgement
+			);
+		}
+
+		// Moving into the EEA/UK makes every employee of this organization an EEA/UK worker. Confirmed on the row as
+		// saved, read back only when the write may have moved the organization.
+		if (
+			!isEEAOrUKLocation(previousLocation) &&
+			isEEAOrUKLocation([location, ...requested]) &&
+			isEEAOrUKLocation(await this.savedLocation(id))
+		) {
 			try {
 				await liftEmployeeAgentRestrictions(
 					this.moduleRef.get(EmployeeService, { strict: false }),
@@ -142,5 +191,16 @@ export class OrganizationUpdateHandler implements ICommandHandler<OrganizationUp
 
 		// Return the updated organization entity
 		return await this.organizationService.findOneByIdString(id);
+	}
+
+	/**
+	 * Where the organization is as saved: read back after the save, with the country of the contact it links (read as
+	 * `update` reads it, see `linkedContact`).
+	 *
+	 * @param id The organization.
+	 */
+	private async savedLocation(id: ID): Promise<IAgentRestrictionLocation> {
+		const saved = await this.organizationService.findOneByIdString(id);
+		return storedOrganizationLocation({ ...saved, contact: await linkedContact(saved, this.contactService) });
 	}
 }

@@ -1,0 +1,551 @@
+#!/usr/bin/env node
+/**
+ * Gate: the self-hosting templates ask the operator for every secret the API needs and ship none of them, and they
+ * route every path the API serves to the API.
+ *
+ * Secrets. In production (`NODE_ENV=production`, `DEMO` not `true`) the API refuses to start while a JWT or session
+ * secret is unset or a published default (`CHECKED_SECRETS`), and refuses to seed while a `DEMO_*_PASSWORD` is
+ * (`KNOWN_DEFAULT_SEED_CREDENTIALS`), both in `packages/core/src/lib/bootstrap/validate-secrets.ts`. A one-click
+ * template that leaves one of them out deploys an API that never starts; one that fills one in publishes that
+ * credential to everyone who deploys it. The lists are read from that file, so a secret it starts to require is
+ * required here too.
+ *
+ *   - `.do/deploy.template.yaml` (Deploy to DigitalOcean): each is an `envs` entry with `type: SECRET` and no value,
+ *     at app level or on the `api` component, which App Platform asks for when the app is created. No SECRET carries
+ *     a value.
+ *   - `docker-compose.caddy.yml`: each, and `DB_PASS`, is interpolated as `${KEY:?message}` only, so compose refuses
+ *     to start without it, and never given a literal value.
+ *   - `.env.caddy.sample`: each, and `DB_PASS`, is listed with an empty value.
+ *
+ * Routes. Both templates serve the web app and the API from one origin, so a path the API serves but the proxy sends
+ * to the web app is a feature that silently does not work (GraphQL did, at first). The API's paths are read from
+ * where it declares them: the REST global prefix (`packages/core/src/lib/bootstrap/index.ts`), the uploaded files'
+ * `serveRoot` (`packages/core/src/lib/helper.ts`), the GraphQL path (`packages/constants/src/lib/api.ts`) and the
+ * Swagger UI path with its OpenAPI documents (`packages/core/src/lib/bootstrap/swagger.ts`). Each must reach the API,
+ * App Platform's with its path kept (`preserve_path_prefix: true`), and the web app's own paths must reach the web
+ * app (App Platform's `webapp` component, Caddy's catch-all `handle` block), each path resolved by its proxy's own
+ * precedence rules (App Platform: the longest prefix; Caddy: see `caddyRoutes`). (The Scalar reference that
+ * `swagger.ts` also mounts is left out on purpose: see the comment in the Caddyfile.)
+ *
+ * Read by hand rather than with a YAML parser: this job installs nothing (see static-checks.yml), and the shapes
+ * below are the ones these templates use. A list or path the reader cannot find is reported rather than skipped.
+ *
+ * Run from the repository root: `node tools/scripts/self-hosting-templates-check.mjs`
+ */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
+
+const SECRETS_SOURCE = 'packages/core/src/lib/bootstrap/validate-secrets.ts';
+const REST_PREFIX_SOURCE = 'packages/core/src/lib/bootstrap/index.ts';
+const FILES_ROOT_SOURCE = 'packages/core/src/lib/helper.ts';
+const GRAPHQL_PATH_SOURCE = 'packages/constants/src/lib/api.ts';
+const SWAGGER_PATH_SOURCE = 'packages/core/src/lib/bootstrap/swagger.ts';
+
+const APP_PLATFORM_TEMPLATE = '.do/deploy.template.yaml';
+const CADDYFILE = '.deploy/caddy/Caddyfile';
+const COMPOSE_FILE = 'docker-compose.caddy.yml';
+const COMPOSE_ENV_SAMPLE = '.env.caddy.sample';
+
+/** The App Platform component, and the Caddy upstream host, that run the API. */
+const API_COMPONENT = 'api';
+
+/** The App Platform component, and the Caddy upstream host, that serve the web app. */
+const WEB_APP_COMPONENT = 'webapp';
+
+/** Secrets only the compose file needs: the password of the Postgres it runs itself. */
+const COMPOSE_ONLY_SECRETS = ['DB_PASS'];
+
+/** Paths of the web app, which must not be sent to the API. */
+const WEB_APP_PATHS = ['/', '/auth/login'];
+
+/** What each kind of API path serves; `apiPaths` returns at least one path of each kind it finds. */
+export const API_PATH_KINDS = {
+	rest: 'REST',
+	graphql: 'GraphQL, including the subscription socket',
+	files: 'uploaded files',
+	swagger: 'Swagger UI',
+	openApi: 'the OpenAPI document'
+};
+
+/**
+ * The secrets the API requires, as read from `validate-secrets.ts`.
+ *
+ * @param {string} source The text of `validate-secrets.ts`.
+ * @returns {{ checked: string[], seed: string[] }} The JWT/session secrets and the seed passwords; empty when the
+ *   list is not found.
+ */
+export function requiredSecrets(source) {
+	const list = (name) => new RegExp(`const ${name}\\b[^=]*=\\s*\\[([\\s\\S]*?)\\];`).exec(source)?.[1] ?? '';
+	return {
+		checked: [...list('CHECKED_SECRETS').matchAll(/'([A-Z0-9_]+)'/g)].map((match) => match[1]),
+		seed: [...list('KNOWN_DEFAULT_SEED_CREDENTIALS').matchAll(/\bkey:\s*'([A-Z0-9_]+)'/g)].map((match) => match[1])
+	};
+}
+
+/**
+ * The paths the API serves outside the web app, as read from where the API declares them.
+ *
+ * @param {{ restPrefix: string, filesRoot: string, graphqlPath: string, swaggerPath: string }} sources The texts of
+ *   the four files.
+ * @returns {Array<{ path: string, what: string }>} Request paths that must reach the API; none for a declaration
+ *   that is not found.
+ */
+export function apiPaths({ restPrefix, filesRoot, graphqlPath, swaggerPath }) {
+	const rest = /const globalPrefix = '([^']+)'/.exec(restPrefix)?.[1];
+	const files = /serveRoot: '([^']+)'/.exec(filesRoot)?.[1];
+	const graphql = /export const DEFAULT_GRAPHQL_API_PATH = '([^']+)'/.exec(graphqlPath)?.[1];
+	// The default of setupSwagger's `swaggerPath` option. Nest serves the UI's page and files under it, and the
+	// OpenAPI document next to it, at `<path>-json` and `<path>-yaml`.
+	const swagger = /\bswaggerPath = '([^']+)'/.exec(swaggerPath)?.[1];
+	const under = (root, name) => `/${root.replace(/^\/+|\/+$/g, '')}${name ? `/${name}` : ''}`;
+
+	return [
+		...(rest
+			? [
+					{ path: under(rest), what: API_PATH_KINDS.rest },
+					{ path: under(rest, 'health'), what: API_PATH_KINDS.rest }
+				]
+			: []),
+		...(graphql ? [{ path: under(graphql), what: API_PATH_KINDS.graphql }] : []),
+		...(files ? [{ path: under(files, 'avatar.png'), what: API_PATH_KINDS.files }] : []),
+		...(swagger
+			? [
+					{ path: under(swagger), what: API_PATH_KINDS.swagger },
+					{ path: under(swagger, 'swagger-ui-init.js'), what: API_PATH_KINDS.swagger },
+					{ path: `${under(swagger)}-json`, what: API_PATH_KINDS.openApi },
+					{ path: `${under(swagger)}-yaml`, what: API_PATH_KINDS.openApi }
+				]
+			: [])
+	];
+}
+
+/**
+ * The `envs` entries of an App Platform app spec.
+ *
+ * @param {string} source The spec's text.
+ * @returns {Array<{ component: string|null, key: string, type: string|null, hasValue: boolean }>} One per `- key:`
+ *   entry, with the component whose `envs` list holds it (null for the app-level list).
+ */
+export function appPlatformEnvs(source) {
+	const entries = [];
+	// The `- name:` items enclosing the current line, innermost last.
+	const named = [];
+	let owner = null;
+	let entry = null;
+	// The indentation of the current entry's `- key:` line: the lines indented further belong to that entry.
+	let entryIndent = -1;
+
+	for (const line of source.split(/\r?\n/)) {
+		if (/^\s*(#|$)/.test(line)) continue;
+		const indent = line.length - line.trimStart().length;
+
+		if (entry && indent > entryIndent) {
+			const field = /^\s*(type|value):\s*(.*?)\s*(#.*)?$/.exec(line);
+			if (field?.[1] === 'type') entry.type = field[2].replace(/^['"]|['"]$/g, '');
+			if (field?.[1] === 'value') entry.hasValue = true;
+			continue;
+		}
+		entry = null;
+
+		while (named.length > 0 && named[named.length - 1].indent >= indent) named.pop();
+
+		const keyed = /^(\s*)- key:\s*['"]?([A-Za-z0-9_]+)['"]?\s*(#.*)?$/.exec(line);
+		if (keyed) {
+			entry = { component: owner, key: keyed[2], type: null, hasValue: false };
+			entryIndent = keyed[1].length;
+			entries.push(entry);
+			continue;
+		}
+
+		const item = /^\s*- name:\s*['"]?([A-Za-z0-9_-]+)/.exec(line);
+		if (item) named.push({ indent, name: item[1] });
+
+		if (/^\s*envs:\s*(#.*)?$/.test(line)) owner = named.at(-1)?.name ?? null;
+	}
+
+	return entries;
+}
+
+/**
+ * What an App Platform template gets wrong about the secrets.
+ *
+ * @param {string} source The spec's text.
+ * @param {string[]} secrets The secrets the API needs.
+ * @returns {string[]} One message per problem; empty when there is none.
+ */
+export function appPlatformProblems(source, secrets) {
+	const envs = appPlatformEnvs(source);
+	const label = (component) => component ?? 'app-level envs';
+	const problems = [];
+
+	for (const env of envs) {
+		if (env.hasValue && (env.type === 'SECRET' || secrets.includes(env.key))) {
+			problems.push(
+				`${label(env.component)}: ${env.key} ships a value; declare it as \`type: SECRET\` with no value`
+			);
+		}
+	}
+
+	for (const key of secrets) {
+		// The API gets its own variables and the app-level ones.
+		const declared = envs.find(
+			(env) => (env.component === API_COMPONENT || env.component === null) && env.key === key
+		);
+		if (!declared) {
+			problems.push(
+				`${API_COMPONENT}: does not ask for ${key} (an envs entry with \`type: SECRET\` and no value, on the ` +
+					`${API_COMPONENT} component or at app level)`
+			);
+		} else if (declared.type !== 'SECRET') {
+			problems.push(`${label(declared.component)}: ${key} is not \`type: SECRET\``);
+		}
+	}
+
+	return problems;
+}
+
+/**
+ * The ingress rules of an App Platform app spec.
+ *
+ * @param {string} source The spec's text.
+ * @returns {Array<{ prefix: string|null, component: string|null, preservePathPrefix: boolean }>} One per rule.
+ */
+export function appPlatformRoutes(source) {
+	const rules = [];
+	let inIngress = false;
+	let inComponent = false;
+	let rule = null;
+
+	for (const line of source.split(/\r?\n/)) {
+		if (/^\s*(#|$)/.test(line)) continue;
+		if (/^\s*ingress:/.test(line)) {
+			inIngress = true;
+			continue;
+		}
+		if (!inIngress) continue;
+		// A key at the spec's own level ends the ingress block.
+		if (/^ {0,2}[a-z_]+:/.test(line)) break;
+
+		if (/^\s*- match:/.test(line)) {
+			rule = { prefix: null, component: null, preservePathPrefix: false };
+			rules.push(rule);
+			inComponent = false;
+			continue;
+		}
+		if (!rule) continue;
+
+		const prefix = /^\s*prefix:\s*['"]?([^'"\s#]+)/.exec(line);
+		if (prefix) rule.prefix = prefix[1];
+		if (/^\s*component:\s*$/.test(line)) inComponent = true;
+		const name = /^\s*name:\s*['"]?([A-Za-z0-9_-]+)/.exec(line);
+		if (name && inComponent) rule.component = name[1];
+		if (/^\s*preserve_path_prefix:\s*true\b/.test(line)) rule.preservePathPrefix = true;
+	}
+
+	return rules;
+}
+
+/**
+ * What an App Platform template gets wrong about routing: a request path goes to the rule with the longest matching
+ * prefix.
+ *
+ * @param {string} source The spec's text.
+ * @param {Array<{ path: string, what: string }>} paths The paths that must reach the API.
+ * @returns {string[]} One message per problem; empty when there is none.
+ */
+export function appPlatformRouteProblems(source, paths) {
+	const rules = appPlatformRoutes(source).filter((rule) => rule.prefix !== null);
+	const covers = (prefix, path) => path === prefix || path.startsWith(prefix.endsWith('/') ? prefix : `${prefix}/`);
+	const route = (path) =>
+		rules.filter((rule) => covers(rule.prefix, path)).sort((a, b) => b.prefix.length - a.prefix.length)[0];
+	const problems = [];
+
+	for (const { path, what } of paths) {
+		const rule = route(path);
+		if (rule?.component !== API_COMPONENT) {
+			problems.push(`${path} (${what}) goes to ${rule?.component ?? 'no component'}, not the ${API_COMPONENT}`);
+		} else if (!rule.preservePathPrefix) {
+			problems.push(
+				`${path} (${what}) reaches the ${API_COMPONENT} without ${rule.prefix}: set preserve_path_prefix`
+			);
+		}
+	}
+	for (const path of WEB_APP_PATHS) {
+		const component = route(path)?.component;
+		if (component !== WEB_APP_COMPONENT)
+			problems.push(`${path} (the web app) goes to ${component ?? 'no component'}, not the ${WEB_APP_COMPONENT}`);
+	}
+
+	return problems;
+}
+
+/**
+ * The Caddyfile blocks that route requests, by the rank of their directive: Caddy tries a lower rank first, and sorts
+ * `handle_path` with `handle` (one mutually exclusive group).
+ */
+const CADDY_ROUTE_BLOCKS = { handle: 0, handle_path: 0, route: 1 };
+
+/** The rank of a `reverse_proxy` outside any block: it runs only when no block before it answered. */
+const CADDY_OUTSIDE_RANK = 2;
+
+/**
+ * The routes of a Caddyfile, in the order Caddy tries them. Its top-level `handle` and `handle_path` blocks come
+ * first (one mutually exclusive group), then its `route` blocks, then the `reverse_proxy` lines outside any block,
+ * which run only when no block before them answered. Within each, the order is the one Caddy's `sortRoutes`
+ * (caddyconfig/httpcaddyfile/directives.go) gives, by a stable insertion sort as Go's `sort.SliceStable` does for
+ * short lists: of two blocks matching exactly one path each, the one longer without its trailing `*` comes first
+ * (`/x` before `/x*`, equal lengths in lexical order); otherwise one with a matcher comes before one without (the
+ * catch-all); otherwise they
+ * keep the order they are written in, so `handle /graphql` written after `handle @api` (several paths) never runs
+ * for /graphql.
+ *
+ * A block's upstream is the first `reverse_proxy` line without a matcher directly inside it: null when it has none
+ * (e.g. one that only redirects), and marked when `handle_path` strips the matched prefix first. Named matchers are
+ * read from one-line `@name path ...` definitions. What this reader does not model is left out so that the paths it
+ * would serve are reported rather than assumed: a matcher defined otherwise matches no path, and a `reverse_proxy`
+ * nested in any other block (`handle_errors`, a block inside a route block) is ignored.
+ *
+ * @param {string} source The Caddyfile's text.
+ * @returns {Array<{ paths: string[]|null, upstream: string|null }>} Each route's path patterns (null: every path)
+ *   and the host it proxies to.
+ */
+export function caddyRoutes(source) {
+	const matchers = new Map();
+	const routes = [];
+	// The blocks the current line is in, outermost first: a site (or global options) block, a route block, or other.
+	const blocks = [];
+
+	for (const line of source.split(/\r?\n/)) {
+		if (/^\s*(#|$)/.test(line)) continue;
+		const matcher = /^\s*@([A-Za-z0-9_-]+)\s+path\s+(.+?)\s*$/.exec(line);
+		if (matcher) matchers.set(matcher[1], matcher[2].split(/\s+/));
+
+		const topLevel = blocks.every((block) => block.kind === 'site');
+		const inner = blocks.at(-1);
+		const proxy = /^\s*reverse_proxy\s+(?:(@[A-Za-z0-9_-]+|[/*]\S*)\s+)?([A-Za-z0-9_.-]+):/.exec(line);
+		if (proxy && inner?.kind === 'route') {
+			if (!proxy[1] && inner.route.upstream === null) inner.route.upstream = proxy[2];
+		} else if (proxy && topLevel) {
+			routes.push({ kind: CADDY_OUTSIDE_RANK, matcher: proxy[1] ?? null, upstream: proxy[2], strips: false });
+		}
+
+		const opened = /^\s*(handle|handle_path|route)(?:\s+(@[A-Za-z0-9_-]+|[/*]\S*))?\s*\{/.exec(line);
+		const net = (line.match(/\{/g) ?? []).length - (line.match(/\}/g) ?? []).length;
+		for (let count = 0; count < net; count++) {
+			if (count === 0 && opened && topLevel) {
+				const route = {
+					kind: CADDY_ROUTE_BLOCKS[opened[1]],
+					matcher: opened[2] ?? null,
+					upstream: null,
+					strips: opened[1] === 'handle_path'
+				};
+				routes.push(route);
+				blocks.push({ kind: 'route', route });
+			} else {
+				// A snippet, `(name) {`, is not a site: what it holds is not known to run.
+				blocks.push({ kind: blocks.length === 0 && !/^\s*\(/.test(line) ? 'site' : 'other' });
+			}
+		}
+		blocks.splice(blocks.length + Math.min(net, 0));
+	}
+
+	// `*` matches every request, as no matcher does.
+	const paths = (matcher) =>
+		matcher === null || matcher === '*'
+			? null
+			: matcher.startsWith('@')
+				? (matchers.get(matcher.slice(1)) ?? [])
+				: [matcher];
+	const stripped = ({ strips, upstream }) =>
+		upstream !== null && strips ? `${upstream} (prefix stripped by handle_path)` : upstream;
+	const resolved = routes.map((route) => ({
+		kind: route.kind,
+		paths: paths(route.matcher),
+		upstream: stripped(route)
+	}));
+
+	// Caddy's comparator: whether route a sorts before route b.
+	const before = (a, b) => {
+		if (a.kind !== b.kind) return a.kind < b.kind;
+		if (a.paths?.length === 1 && b.paths?.length === 1) {
+			const [aPath, bPath] = [a.paths[0], b.paths[0]];
+			const [aTrimmed, bTrimmed] = [aPath.replace(/\*$/, ''), bPath.replace(/\*$/, '')];
+			if (aTrimmed === bTrimmed) return aPath.length < bPath.length;
+			if (aTrimmed.length === bTrimmed.length) return aTrimmed < bTrimmed;
+			return aTrimmed.length > bTrimmed.length;
+		}
+		return a.paths !== null && b.paths === null;
+	};
+	for (let index = 1; index < resolved.length; index++) {
+		for (let at = index; at > 0 && before(resolved[at], resolved[at - 1]); at--) {
+			[resolved[at - 1], resolved[at]] = [resolved[at], resolved[at - 1]];
+		}
+	}
+
+	return resolved.map(({ paths: routePaths, upstream }) => ({ paths: routePaths, upstream }));
+}
+
+/**
+ * Whether a request path matches a Caddy path pattern (exact, or `*` for any run of characters; case-insensitive).
+ *
+ * @param {string} pattern A Caddy path pattern.
+ * @param {string} path A request path.
+ * @returns {boolean} True when the pattern matches the path.
+ */
+export function caddyPathMatches(pattern, path) {
+	const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+	return new RegExp(`^${escaped}$`, 'i').test(path);
+}
+
+/**
+ * Where a Caddyfile sends a request path: the upstream of the first route that matches it.
+ *
+ * @param {Array<{ paths: string[]|null, upstream: string|null }>} routes The Caddyfile's routes (`caddyRoutes`).
+ * @param {string} path A request path.
+ * @returns {string|null} The upstream host; null when no route proxies the path.
+ */
+export function caddyUpstream(routes, path) {
+	const route = routes.find(
+		({ paths }) => paths === null || paths.some((pattern) => caddyPathMatches(pattern, path))
+	);
+	return route?.upstream ?? null;
+}
+
+/**
+ * What a Caddyfile gets wrong about routing: every API path must be proxied to the API, and the web app's paths to
+ * the web app (which the catch-all `handle { reverse_proxy webapp:... }` does).
+ *
+ * @param {string} source The Caddyfile's text.
+ * @param {Array<{ path: string, what: string }>} paths The paths that must reach the API.
+ * @returns {string[]} One message per problem; empty when there is none.
+ */
+export function caddyRouteProblems(source, paths) {
+	const routes = caddyRoutes(source);
+	const problem = (path, what, expected) => {
+		const upstream = caddyUpstream(routes, path);
+		if (upstream === expected) return [];
+		return [
+			upstream === null
+				? `${path} (${what}) is not proxied to the ${expected}`
+				: `${path} (${what}) goes to ${upstream}, not the ${expected}`
+		];
+	};
+
+	return [
+		...paths.flatMap(({ path, what }) => problem(path, what, API_COMPONENT)),
+		...WEB_APP_PATHS.flatMap((path) => problem(path, 'the web app', WEB_APP_COMPONENT))
+	];
+}
+
+/**
+ * What a compose file gets wrong about the secrets.
+ *
+ * @param {string} source The compose file's text.
+ * @param {string[]} secrets The secrets it must require.
+ * @returns {string[]} One message per problem; empty when there is none.
+ */
+export function composeProblems(source, secrets) {
+	const lines = source.split(/\r?\n/).filter((line) => !/^\s*#/.test(line));
+	const text = lines.join('\n');
+	const problems = [];
+
+	for (const key of secrets) {
+		const uses = [...text.matchAll(new RegExp(`\\$\\{${key}(?![A-Za-z0-9_])(:\\?)?`, 'g'))];
+		if (uses.length === 0) {
+			problems.push(`never asks for ${key} (\`\${${key}:?message}\`)`);
+		} else if (uses.some((use) => use[1] === undefined)) {
+			problems.push(
+				`\${${key}} can be empty or defaulted; use \`\${${key}:?message}\` so compose refuses to start without it`
+			);
+		}
+
+		const literal = lines.find((line) => {
+			const assigned = new RegExp(`^\\s*(?:-\\s*)?${key}\\s*[:=]\\s*(.*)$`).exec(line);
+			return assigned && !assigned[1].includes('${');
+		});
+		if (literal !== undefined) {
+			problems.push(`${key} has a literal value: ${literal.trim()}`);
+		}
+	}
+
+	return problems;
+}
+
+/**
+ * What an env sample gets wrong about the secrets.
+ *
+ * @param {string} source The sample's text.
+ * @param {string[]} secrets The secrets it must list, empty.
+ * @returns {string[]} One message per problem; empty when there is none.
+ */
+export function envSampleProblems(source, secrets) {
+	const lines = source.split(/\r?\n/);
+	const problems = [];
+
+	for (const key of secrets) {
+		// Every line that assigns the key (a later one would win), each matched as a whole assignment: nothing, or
+		// empty quotes optionally followed by a comment. Anything else is a value: `abc=`, base64 `YWJj==`, and
+		// `KEY= # note`, which compose reads as the value `# note` (so `${KEY:?}` would accept it).
+		const listed = lines.filter((candidate) => new RegExp(`^\\s*${key}\\s*=`).test(candidate));
+		const empty = new RegExp(`^\\s*${key}\\s*=\\s*(?:(?:""|'')(?:\\s+#.*)?)?\\s*$`);
+		if (listed.length === 0) {
+			problems.push(`does not list ${key}= for the operator to fill in`);
+		} else if (!listed.every((line) => empty.test(line))) {
+			problems.push(`${key} has a value; leave it empty for the operator to fill in`);
+		}
+	}
+
+	return problems;
+}
+
+function main() {
+	const read = (file) => readFileSync(join(ROOT, file), 'utf8');
+	const { checked, seed } = requiredSecrets(read(SECRETS_SOURCE));
+	const apiSecrets = [...checked, ...seed];
+	const composeSecrets = [...apiSecrets, ...COMPOSE_ONLY_SECRETS];
+	const paths = apiPaths({
+		restPrefix: read(REST_PREFIX_SOURCE),
+		filesRoot: read(FILES_ROOT_SOURCE),
+		graphqlPath: read(GRAPHQL_PATH_SOURCE),
+		swaggerPath: read(SWAGGER_PATH_SOURCE)
+	});
+
+	const problems = [];
+	if (checked.length === 0 || seed.length === 0) {
+		problems.push(
+			`${SECRETS_SOURCE}: CHECKED_SECRETS or KNOWN_DEFAULT_SEED_CREDENTIALS not found; update this gate's reader`
+		);
+	}
+	const found = new Set(paths.map((path) => path.what));
+	const missing = Object.values(API_PATH_KINDS).filter((kind) => !found.has(kind));
+	if (missing.length > 0) {
+		problems.push(
+			`the API's paths for ${missing.join(', ')} were not found in ${REST_PREFIX_SOURCE}, ${GRAPHQL_PATH_SOURCE}, ` +
+				`${FILES_ROOT_SOURCE} or ${SWAGGER_PATH_SOURCE}; update this gate's reader`
+		);
+	}
+	const report = (file, found) => problems.push(...found.map((problem) => `${file}: ${problem}`));
+	const appPlatform = read(APP_PLATFORM_TEMPLATE);
+	report(APP_PLATFORM_TEMPLATE, appPlatformProblems(appPlatform, apiSecrets));
+	report(APP_PLATFORM_TEMPLATE, appPlatformRouteProblems(appPlatform, paths));
+	report(CADDYFILE, caddyRouteProblems(read(CADDYFILE), paths));
+	report(COMPOSE_FILE, composeProblems(read(COMPOSE_FILE), composeSecrets));
+	report(COMPOSE_ENV_SAMPLE, envSampleProblems(read(COMPOSE_ENV_SAMPLE), composeSecrets));
+
+	if (problems.length > 0) {
+		console.error(`FAILED — ${problems.length} problem(s) in the self-hosting templates:`);
+		for (const problem of problems) console.error(`  - ${problem}`);
+		process.exit(1);
+	}
+
+	console.log(
+		`PASSED — ${APP_PLATFORM_TEMPLATE}, ${COMPOSE_FILE} and ${COMPOSE_ENV_SAMPLE} ask for every secret the API ` +
+			`needs and ship none of them (${composeSecrets.join(', ')}); ${APP_PLATFORM_TEMPLATE} and ${CADDYFILE} ` +
+			`route ${paths.map((path) => path.path).join(', ')} to the API and the web app's paths to the web app.`
+	);
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

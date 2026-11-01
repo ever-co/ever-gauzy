@@ -43,7 +43,7 @@ describe('ProjectBoardComponent', () => {
 
 	let statistics: { getTasksStatistics: jest.Mock };
 
-	const board = async () => {
+	const board = async (inputs: Partial<ProjectBoardComponent> = {}) => {
 		statistics = { getTasksStatistics: jest.fn(async () => []) };
 		const component = new ProjectBoardComponent(
 			http as unknown as HttpClient,
@@ -52,7 +52,7 @@ describe('ProjectBoardComponent', () => {
 			statistics as unknown as TimesheetStatisticsService,
 			{ markForCheck: jest.fn() } as unknown as ChangeDetectorRef
 		);
-		Object.assign(component, { parentId: PARENT_ID, organizationId: ORGANIZATION, tenantId: TENANT });
+		Object.assign(component, { parentId: PARENT_ID, organizationId: ORGANIZATION, tenantId: TENANT, ...inputs });
 		component.ngOnChanges({ parentId: new SimpleChange(undefined, PARENT_ID, true) });
 		for (let i = 0; i < 5; i++) await new Promise((resolve) => setTimeout(resolve));
 		return component;
@@ -89,6 +89,60 @@ describe('ProjectBoardComponent', () => {
 		await new Promise((resolve) => setTimeout(resolve));
 
 		expect(http.get).toHaveBeenCalled();
+	});
+
+	it('narrows the cards to the filter, and a moved card stays in its new column', async () => {
+		const component = await board();
+		const [open, done] = component.board.value;
+
+		expect(component.visibleCards(open)).toBe(open.cards);
+
+		component.filter = { ...component.filter, search: 'sub' };
+
+		expect(component.visibleCards(open).map((card) => card.id)).toEqual(['sub-1']);
+		expect(component.visibleCards(done).map((card) => card.id)).toEqual(['sub-2']);
+		expect(component.shownCards).toBe('2');
+		expect(component.totalCards).toBe(3);
+
+		const [moved] = done.cards.splice(0, 1);
+		open.cards.push(moved);
+
+		expect(component.visibleCards(open).map((card) => card.id)).toEqual(['sub-1', 'sub-2']);
+		expect(component.visibleCards(done)).toEqual([]);
+	});
+
+	it('reads what only the filter needs, and offers what the cards carry, on a filterable board only', async () => {
+		http.get.mockImplementation((url: string) => {
+			if (url.endsWith('/task-statuses')) return of({ items: STATUSES });
+			if (url.endsWith(`/tasks/${PARENT_ID}`)) return parent$();
+			return of({
+				items: [
+					{
+						...task('sub-1', 'open'),
+						issueType: 'bug',
+						tags: [{ id: 'tag-1', name: 'Backend', color: '#000' }]
+					}
+				],
+				total: 1
+			});
+		});
+		const relations = () =>
+			http.get.mock.calls
+				.filter(([url]) => url.endsWith('/tasks'))
+				.flatMap(([, options]) => options.params.getAll('relations[4]') || []);
+
+		const plain = await board();
+
+		expect(relations()).toEqual([]);
+		expect(plain.filterOptions.labels).toEqual([]);
+
+		http.get.mockClear();
+		const component = await board({ filterable: true });
+
+		expect(relations()).toEqual(['taskType']);
+		expect(component.filterOptions.types).toEqual([{ id: 'bug', name: 'Bug' }]);
+		expect(component.filterOptions.labels).toEqual([{ id: 'tag-1', name: 'Backend' }]);
+		expect(component.filterOptions.unassigned).toBe(true);
 	});
 
 	it('reads the time of a task outside any project for its cards, a page at a time', async () => {

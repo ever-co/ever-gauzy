@@ -9,7 +9,8 @@
 		<nb-icon [icon]="entry.icon" class="icon"></nb-icon>
 		<div class="entry-headings">
 			<div class="entry-header">{{ entry.title }}</div>
-			<div class="entry-header-date">{{ entry.date | date }}</div>
+			<!-- Entries are dated at midnight UTC: read in local time, the day would be the one before west of UTC. -->
+			<div class="entry-header-date">{{ entry.date | date: 'mediumDate' : 'UTC' }}</div>
 		</div>
 	</div>
 	<p class="paragraph">

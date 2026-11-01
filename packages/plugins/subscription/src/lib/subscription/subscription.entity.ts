@@ -45,6 +45,19 @@ export class Subscription extends TenantOrganizationBaseEntity implements ISubsc
 	planId: ID;
 
 	/**
+	 * The plan a mid-cycle change is moving the subscription onto, while the change is being settled: written with the
+	 * change's record under the plan row's lock before any money moves, and cleared by the write that applies the change
+	 * or releases it. A plan update counts it as a live subscription of that plan, so the plan is not deactivated or
+	 * re-priced in another currency under a change that has already charged or credited for it.
+	 */
+	@ApiPropertyOptional({ type: () => String, readOnly: true })
+	@IsOptional()
+	@IsUUID()
+	@ColumnIndex('IDX_subscription_reserved_plan')
+	@MultiORMColumn({ nullable: true })
+	reservedPlanId?: ID | null;
+
+	/**
 	 * The subscriber. Restricted for the same reason a plan is: a subscription without a customer
 	 * cannot bill, so deleting one is refused rather than cascaded.
 	 */

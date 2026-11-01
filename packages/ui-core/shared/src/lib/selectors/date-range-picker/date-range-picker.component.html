@@ -2,7 +2,7 @@
 	<div class="filter-input">
 		<div class="custom-input" (click)="openDatepicker($event)" (keydown)="onControlKeydown($event)">
 			@if (arrows) {
-			<button size="tiny" nbButton status="primary" outline (click)="previousRange()">
+			<button size="tiny" nbButton [disabled]="isPreviousDisabled()" status="primary" outline (click)="previousRange()">
 				<nb-icon icon="arrow-ios-back-outline"></nb-icon>
 			</button>
 			<button size="tiny" nbButton [disabled]="isNextDisabled()" status="primary" outline (click)="nextRange()">

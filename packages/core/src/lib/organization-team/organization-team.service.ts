@@ -54,6 +54,7 @@ import { TaskService } from './../tasks/task.service';
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { EmployeeService } from './../employee/employee.service';
+import { withoutAssignedComments } from '../comment/assigned-comments';
 import { TimerService } from '../time-tracking/timer/timer.service';
 import { StatisticService } from '../time-tracking/statistic';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
@@ -464,9 +465,10 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				input = { ...input, projects: withArchivedLinks(input.projects, linked) };
 			}
 
-			// Update the organization team with the prepared members
+			// Update the organization team with the prepared members. The comments the team is assigned are never
+			// written here: a comment is assigned through the comment API, where its record's policy decides.
 			return await super.create({
-				...input,
+				...withoutAssignedComments(input),
 				organizationId,
 				tenantId,
 				id: organizationTeamId

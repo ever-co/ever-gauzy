@@ -6,6 +6,7 @@ import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactController } from './organization-contact.controller';
 import { OrganizationContactResolver } from './organization-contact.resolver';
 import { OrganizationContactService } from './organization-contact.service';
+import { OrganizationContactCommentAccessPolicy } from './organization-contact-comment-access.policy';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { OrganizationModule } from './../organization/organization.module';
@@ -40,6 +41,8 @@ import { MikroOrmOrganizationContactRepository } from './repository/mikro-orm-or
 	controllers: [OrganizationContactController],
 	providers: [
 		OrganizationContactService,
+		// Who may read and write a contact's notes (the comment service discovers it).
+		OrganizationContactCommentAccessPolicy,
 		// The GraphQL view of the same resource.
 		OrganizationContactResolver,
 		TypeOrmOrganizationContactRepository,

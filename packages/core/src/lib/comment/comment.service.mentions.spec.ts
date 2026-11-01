@@ -8,6 +8,7 @@ import { BaseEntityEnum, ICommentUpdateInput } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { CommentService } from './comment.service';
+import { CommentParentAccessService } from './parent-access';
 
 /**
  * `CommentService.update` syncs the comment's mentions only when the caller sends `mentionEmployeeIds`. A resolve or
@@ -38,6 +39,8 @@ describe('CommentService.update — the mentions of the comment', () => {
 		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(false);
 
 		service = Object.create(CommentService.prototype);
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(service as any)._parentAccess = new CommentParentAccessService();
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(service as any).findOneByWhereOptions = jest.fn().mockResolvedValue({ ...STORED });
 		updateEntityMentions = jest.fn().mockResolvedValue(undefined);

@@ -39,20 +39,28 @@ import {
 	statusGroupOf,
 	taskProgressOf
 } from '../project-view.utils';
+import { BoardFilterBarComponent } from './board-filter-bar.component';
+import { BoardMinimapComponent } from './board-minimap.component';
+import {
+	boardFilterOptionsOf,
+	IBoardFilter,
+	IBoardFilterCard,
+	IBoardFilterOptions,
+	isBoardFilterActive,
+	matchesBoardFilter,
+	NO_BOARD_FILTER,
+	NO_BOARD_FILTER_OPTIONS
+} from './board-filter';
 
 /** One task as a board card. */
-interface IBoardCard {
+interface IBoardCard extends IBoardFilterCard {
 	id: string;
-	key: string;
-	title: string;
 	/** Days until the due date (negative once past), or `null` without one. */
 	daysLeft: number | null;
-	priority?: string;
 	priorityLevel?: 'urgent' | 'high' | 'medium' | 'low';
 	due: { key: string; count?: number } | null;
 	overdue: boolean;
 	soon: boolean;
-	people: IPersonChip[];
 	done: boolean;
 	/** The task's estimate in seconds, or 0 without one. */
 	estimate: number;
@@ -65,6 +73,9 @@ interface IBoardCard {
 }
 
 const BOARD_RELATIONS = ['taskStatus', 'taskPriority', 'members', 'members.user'];
+
+/** What only the filter reads: a card shows neither. */
+const BOARD_FILTER_RELATIONS = ['taskType', 'tags'];
 
 /** One board column: a status, its colour, and its cards. */
 interface IBoardColumn {
@@ -103,6 +114,10 @@ const normalizeStatus = (value?: string): string => (value || '').trim().toLower
  *
  * Given a `parentId`, the board is a task's: the task itself and its subtasks, in the columns of the task's
  * project, the task's card marked as the parent and first in its column.
+ *
+ * With `filterable`, filters over the columns narrow the cards. They work on the cards read so far, as the tasks
+ * endpoint cannot ask for an assignee or a label: a narrowed board is short, which brings its end into reach, so
+ * the remaining pages are read and filtered in turn. What the host projects sits in the filters' row.
  */
 @Component({
 	selector: 'ga-project-board',
@@ -111,6 +126,8 @@ const normalizeStatus = (value?: string): string => (value || '').trim().toLower
 		CommonModule,
 		RouterModule,
 		DragDropModule,
+		BoardFilterBarComponent,
+		BoardMinimapComponent,
 		NbButtonModule,
 		NbIconModule,
 		NbSpinnerModule,
@@ -137,10 +154,15 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	@Input() emptyKey = 'PROJECT_QUICK_LOOK.NO_TASKS';
 	/** Bumped by the host after a change it made elsewhere (its status menu, an edit): the board reads again. */
 	@Input() reloadKey = 0;
+	/** Shows the filters over the columns, and the map of the columns once they no longer fit. */
+	@Input() filterable = false;
 	/** A card's task saved with another status, so the host can bring what else shows the task up to date. */
 	@Output() readonly taskMoved = new EventEmitter<string>();
 
 	public board: Loadable<IBoardColumn[]> = loading([]);
+	public filter: IBoardFilter = NO_BOARD_FILTER;
+	/** What the cards read so far offer to filter by. */
+	public filterOptions: IBoardFilterOptions = NO_BOARD_FILTER_OPTIONS;
 	/** The column under a dragged card that will not take it, marked so the user sees it before letting go. */
 	public refusingColumnId: string | null = null;
 	/** The project's tasks, read or not: the subtasks, on a task's board. */
@@ -200,6 +222,23 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	/** Pages remain to read. */
 	get hasMore(): boolean {
 		return this._offset < this.total;
+	}
+
+	/** The cards the filter leaves on the board, "12+" while pages remain to read. */
+	get shownCards(): string {
+		const shown = (this.board.value || []).reduce((sum, column) => sum + this.visibleCards(column).length, 0);
+		return `${shown}${this.hasMore ? '+' : ''}`;
+	}
+
+	/** Every card of the board: `total` leaves out the parent's own. */
+	get totalCards(): number {
+		return this.total + Number(this.hasParent);
+	}
+
+	/** A column's cards the filter leaves. */
+	visibleCards(column: IBoardColumn): IBoardCard[] {
+		if (!isBoardFilterActive(this.filter)) return column.cards;
+		return column.cards.filter((card) => matchesBoardFilter(card, this.filter));
 	}
 
 	/** Moving a card writes the task, so only a user who may edit tasks can drag. */
@@ -380,7 +419,7 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 				parentId
 					? firstValueFrom(
 							this._http.get<ITask>(`${API_PREFIX}/tasks/${parentId}`, {
-								params: toParams({ relations: BOARD_RELATIONS })
+								params: toParams({ relations: this.relations })
 							})
 						).catch((): ITask | null => null)
 					: Promise.resolve<ITask | null>(null)
@@ -403,6 +442,10 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		}
 	}
 
+	private get relations(): string[] {
+		return this.filterable ? [...BOARD_RELATIONS, ...BOARD_FILTER_RELATIONS] : BOARD_RELATIONS;
+	}
+
 	/**
 	 * A page of the project's tasks, or of a task's subtasks given a `parentId`, from row `skip`. The id settles
 	 * equal dates, so a row stays on one page.
@@ -413,7 +456,7 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			this._http.get<IPagination<ITask>>(`${API_PREFIX}/tasks`, {
 				params: toParams({
 					where: { organizationId, tenantId, ...(parentId ? { parentId } : { projectId }) },
-					relations: BOARD_RELATIONS,
+					relations: this.relations,
 					order: { createdAt: 'DESC', id: 'ASC' },
 					take: BOARD_PAGE_SIZE,
 					skip
@@ -437,6 +480,7 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		const fresh = items.filter((task) => !this._placed.has(task.id));
 		this.place(columns, fresh);
 		items.forEach((task) => this._placed.add(task.id));
+		if (this.filterable) this.filterOptions = boardFilterOptionsOf(columns.flatMap((column) => column.cards));
 		return fresh;
 	}
 
@@ -569,6 +613,8 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 			overdue: false,
 			soon: false,
 			people: (task.members || []).map((member) => personOf(member)).filter(Boolean),
+			type: task.taskType?.name || humanize(task.issueType) || undefined,
+			labels: (task.tags || []).map(({ id, name }) => ({ id, name })),
 			done: false,
 			estimate: Number(task.estimate) || 0,
 			isParent: !!this.parentId && task.id === this.parentId

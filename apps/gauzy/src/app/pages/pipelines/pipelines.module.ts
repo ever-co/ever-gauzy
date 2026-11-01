@@ -23,6 +23,7 @@ import { StageFormComponent } from './stage-form/stage-form.component';
 import { DealsService, PipelinesService } from '@gauzy/ui-core/core';
 import { PipelineDealsComponent } from './pipeline-deals/pipeline-deals.component';
 import { PipelineDealFormComponent } from './pipeline-deals/pipeline-deal-form/pipeline-deal-form.component';
+import { PipelineDealsBoardComponent } from './pipeline-deals/pipeline-deals-board/pipeline-deals-board.component';
 import { PipelineDealExcerptComponent } from './table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from './table-components/pipeline-deal-probability/pipeline-deal-probability.component';
 import { StageComponent } from './stage/stage.component';
@@ -69,7 +70,9 @@ import { PipelinesComponent } from './pipelines.component';
 		SharedModule,
 		NgxPermissionsModule.forChild(),
 		SmartDataViewLayoutModule,
-		NbTabsetModule
+		NbTabsetModule,
+		// The deals board: a standalone view of a pipeline's deals, one column per stage.
+		PipelineDealsBoardComponent
 	],
 	providers: [PipelinesService, DealsService]
 })

@@ -18,7 +18,9 @@
 	<ng-template let-item="item" ng-option-tmp>
 		<div class="status-option">
 			<span class="status-lozenge" [style.--status-color]="colorOf(item)">{{ labelOf(item) }}</span>
-			<nb-icon *ngIf="isSelected(item)" class="status-option__check" icon="checkmark-outline"></nb-icon>
+			@if (isSelected(item)) {
+				<nb-icon class="status-option__check" icon="checkmark-outline"></nb-icon>
+			}
 		</div>
 	</ng-template>
 

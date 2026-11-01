@@ -153,6 +153,11 @@ export {
 	OrganizationContactModule,
 	OrganizationContactService
 } from './lib/organization-contact';
+// The comment-access policy contract, for a package whose records carry comments that must follow the record's own
+// access rules: it declares a provider with `@CommentParentAccessPolicy()` implementing the interface, and the
+// comment API applies it (see `OrganizationContactCommentAccessPolicy`, which governs a contact's notes).
+export { CommentParentAccessPolicy } from './lib/comment/parent-access';
+export type { ICommentParent, ICommentParentAccessPolicy } from './lib/comment/parent-access';
 export {
 	OrganizationProjectCreateCommand,
 	OrganizationProjectModule,
@@ -403,6 +408,16 @@ export {
 // plugin's sign-up requires exactly the documents the register form requires.
 export { AuthModule } from './lib/auth/auth.module';
 export { AuthService } from './lib/auth/auth.service';
+// The operator's registration switches as the API applies them (APP_USER_REGISTRATION,
+// ALLOW_TENANTS_REGISTRATION, ADMIN_PASSWORD_RESET), for a plugin that creates accounts or tenants of its own:
+// it asks the same policy, so it can never stay open on a server whose operator closed registration.
+export {
+	RegistrationPolicyService,
+	SelfRegistrationGuard,
+	SELF_REGISTRATION_DISABLED_MESSAGE,
+	TENANT_REGISTRATION_DISABLED_MESSAGE,
+	canResetPasswordByEmail
+} from './lib/auth/auth-switches';
 // The per-account login failure counter, for the MCP OAuth server (apps/mcp-auth), which checks Gauzy
 // passwords against the same database and must give a guesser no more attempts than the API's login does.
 export { LoginAttemptModule } from './lib/auth/login-attempt.module';

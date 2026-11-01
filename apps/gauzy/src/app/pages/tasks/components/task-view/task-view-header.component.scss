@@ -50,6 +50,17 @@
     border-radius: 0.1875rem;
     object-fit: cover;
   }
+
+  &:is(a) {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      color: nb-theme(text-basic-color);
+      text-decoration: underline;
+    }
+  }
 }
 
 .task-view-project-name {
@@ -96,14 +107,5 @@
   }
   &.tone-info {
     --tone: #{nb-theme(color-info-500)};
-  }
-}
-
-// The full-width page: the title is the page's main heading.
-.task-view-header.is-large {
-  .task-view-title {
-    font-size: 1.375rem;
-    line-height: 1.875rem;
-    font-weight: 600;
   }
 }

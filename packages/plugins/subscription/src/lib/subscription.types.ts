@@ -382,6 +382,8 @@ export interface ISubscriptionPlan extends IBasePerTenantAndOrganizationEntityMo
 /** One running agreement with a customer. */
 export interface ISubscription extends IBasePerTenantAndOrganizationEntityModel {
 	planId: ID;
+	/** The plan a mid-cycle change is moving the subscription onto, while the change is being settled. */
+	reservedPlanId?: ID | null;
 	customerId: ID;
 	originOrderId?: ID;
 	paymentAccountHolderId?: ID;

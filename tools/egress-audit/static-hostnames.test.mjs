@@ -1,6 +1,9 @@
 // cspell:ignore notever
 // node --test tools/egress-audit/static-hostnames.test.mjs
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import {
@@ -11,7 +14,8 @@ import {
 	occurrences,
 	readBaseline,
 	REPO_ROOT,
-	scanCode
+	scanCode,
+	sourceFiles
 } from './static-hostnames.mjs';
 
 const quiet = () => {
@@ -77,6 +81,28 @@ test('the modules, docs, the audit and tests may name Ever hosts; core code may 
 		'.github/workflows/external-uptime-monitor-copy.yml'
 	])
 		assert.equal(allowed(file), false, file);
+});
+
+test('a git work tree is scanned as git sees it: tracked and new files, not ignored or build output', () => {
+	const dir = mkdtempSync(join(tmpdir(), 'static-hostnames-'));
+	try {
+		execFileSync('git', ['init', '-q'], { cwd: dir });
+		writeFileSync(join(dir, '.gitignore'), 'environment.ts\n');
+		mkdirSync(join(dir, 'src'));
+		writeFileSync(join(dir, 'src', 'tracked.ts'), "const api = 'https://api.ever.co';\n");
+		execFileSync('git', ['add', '.'], { cwd: dir });
+		// Not added yet but not ignored: scanned, so a new file is caught before it is committed.
+		writeFileSync(join(dir, 'src', 'new.ts'), "const api = 'https://api.ever.co';\n");
+		// Ignored (generated from .env in a real checkout) and build output: never scanned.
+		writeFileSync(join(dir, 'src', 'environment.ts'), "const api = 'https://api.ever.co';\n");
+		mkdirSync(join(dir, 'dist'));
+		writeFileSync(join(dir, 'dist', 'main.js'), "const api = 'https://api.ever.co';\n");
+
+		assert.deepEqual(sourceFiles(dir), ['.gitignore', 'src/new.ts', 'src/tracked.ts']);
+		assert.deepEqual(Object.keys(scanCode(dir, { patterns: [] })), ['src/new.ts', 'src/tracked.ts']);
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
+	}
 });
 
 test('the baseline holds no file the scan does not reach (an entry for an allowed file would excuse nothing)', () => {

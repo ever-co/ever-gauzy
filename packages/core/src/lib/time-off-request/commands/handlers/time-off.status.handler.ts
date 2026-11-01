@@ -9,12 +9,15 @@ import { TimeOffStatusCommand } from '../time-off.status.command';
 import { TimeOffRequest } from '../../time-off-request.entity';
 import { TypeOrmTimeOffRequestRepository } from '../../repository/type-orm-time-off-request.repository';
 import { TypeOrmRequestApprovalRepository } from '../../../request-approval/repository/type-orm-request-approval.repository';
+import { TimeOffBalanceDeductionService } from '../../../time-off-balance/time-off-balance-deduction.service';
+import { typeOrmTimeOffBalanceLedger } from '../../../time-off-balance/time-off-balance-ledger';
 
 @CommandHandler(TimeOffStatusCommand)
 export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusCommand> {
 	constructor(
 		private readonly typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
-		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
+		private readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
+		private readonly timeOffBalanceDeductionService: TimeOffBalanceDeductionService
 	) {}
 
 	/**
@@ -22,7 +25,8 @@ export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusComman
 	 * `approveTimeOffRequest` / `denyTimeOffRequest`), and the request approval recorded beside it.
 	 *
 	 * Who may decide, and that a decided request may be decided again, are unchanged. What changed is how the two rows
-	 * are written (follow-up listed on ever-co/ever-gauzy#11382): see {@link decide}.
+	 * are written (follow-up listed on ever-co/ever-gauzy#11382), and that a decision moves the leave balance of the
+	 * request's employees (ever-co/ever-gauzy#10183): see {@link decide}.
 	 *
 	 * @param command The request and the decision.
 	 * @returns The request, as decided.
@@ -67,10 +71,21 @@ export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusComman
 	 * This handler works through TypeORM's repositories on either ORM the installation runs, as it always has: the
 	 * locks are the database's, so they hold against the MikroORM answer route as well.
 	 *
+	 * The leave balance moves on the same transaction, and only on a real move into or out of `APPROVED` (see
+	 * {@link TimeOffBalanceDeductionService}): approving takes the request's working days from the balances its
+	 * employees have for its policy and year, denying an approved request gives back what its approval took, and
+	 * deciding a request the way it is already decided moves nothing. No balance row, no change — approval works as
+	 * before for an organization that never allocated balances. A balance that cannot cover the request is overdrawn,
+	 * unless the request's policy requires sufficient balance (`requireSufficientBalance`, off by default). The lock on
+	 * the leave makes two decisions of the same request take turns, so the second sees the first's status and its
+	 * deduction.
+	 *
 	 * @param id The time-off request.
 	 * @param tenantId The caller's tenant.
 	 * @param status The decision.
 	 * @throws NotFoundException when the leave was removed since it was read; neither status is written then.
+	 * @throws BadRequestException when the policy requires sufficient balance and an approval needs more days than a
+	 * balance has left; nothing is written then.
 	 */
 	protected async decide(id: ID, tenantId: ID, status: StatusTypesEnum): Promise<void> {
 		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
@@ -93,6 +108,10 @@ export class TimeOffStatusHandler implements ICommandHandler<TimeOffStatusComman
 			if (!leave) {
 				throw new NotFoundException('Request time off not found');
 			}
+
+			// The balance first, so an approval a strict policy's balance cannot cover is refused (400) before a status is
+			// written; the transaction rolls back whatever was written either way.
+			await this.timeOffBalanceDeductionService.settle(typeOrmTimeOffBalanceLedger(manager), leave, status);
 
 			await manager.update(TimeOffRequest, { id, tenantId }, { status });
 

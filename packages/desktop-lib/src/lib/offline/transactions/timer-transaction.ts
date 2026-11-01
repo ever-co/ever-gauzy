@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import { AppError } from '../../error-handler';
 import { ITimerTransaction, IDatabaseProvider } from '../../interfaces';
 import { TABLE_NAME_TIMERS, TimerTO } from '../dto';
+import { toUpdatePayload, warnEmptyUpdate } from '../utils';
 
 export class TimerTransaction implements ITimerTransaction {
 	private _databaseProvider: IDatabaseProvider;
@@ -39,12 +40,16 @@ export class TimerTransaction implements ITimerTransaction {
 	}
 
 	public async update(id: number, value: Partial<TimerTO>): Promise<void> {
+		const changes = toUpdatePayload(value);
+		if (!changes) {
+			return warnEmptyUpdate('TIMERTRX', id);
+		}
 		await this._databaseProvider.connection.transaction(
 			async (trx: Knex.Transaction) => {
 				try {
 					await trx(TABLE_NAME_TIMERS)
 						.where('id', '=', id)
-						.update(value);
+						.update(changes);
 					await trx.commit();
 				} catch (error) {
 					await trx.rollback();

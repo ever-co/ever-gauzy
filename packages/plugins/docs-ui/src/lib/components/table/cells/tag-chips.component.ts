@@ -6,16 +6,19 @@ import { IDocument, ITag } from '@gauzy/contracts';
 	selector: 'gz-docs-tag-chips',
 	template: `
 		<span class="docs-chips">
-			<span
-				class="docs-chip"
-				*ngFor="let tag of visible; trackBy: trackById"
-				[style.background-color]="tag.color || null"
-				[nbTooltip]="tag.name"
-				nbTooltipStatus="basic"
-			>
-				{{ tag.name }}
-			</span>
-			<span class="docs-chip overflow" *ngIf="overflow > 0">+{{ overflow }}</span>
+			@for (tag of visible; track trackById($index, tag)) {
+				<span
+					class="docs-chip"
+					[style.background-color]="tag.color || null"
+					[nbTooltip]="tag.name"
+					nbTooltipStatus="basic"
+				>
+					{{ tag.name }}
+				</span>
+			}
+			@if (overflow > 0) {
+				<span class="docs-chip overflow">+{{ overflow }}</span>
+			}
 		</span>
 	`,
 	styles: [

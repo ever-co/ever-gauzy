@@ -65,6 +65,7 @@
 		"@gauzy/plugin-integration-activepieces": "^0.1.0",
 		"@gauzy/plugin-integration-ai": "^0.1.0",
 		"@gauzy/plugin-auth-keycloak": "^0.1.0",
+		"@gauzy/plugin-auth-oidc": "^0.1.0",
 		"@gauzy/plugin-auth-zitadel": "^0.1.0",
 		"@gauzy/plugin-ever-instance": "^0.1.0",
 		"@gauzy/plugin-ever-stats": "^0.1.0",
