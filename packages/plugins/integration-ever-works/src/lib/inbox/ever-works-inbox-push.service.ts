@@ -1,3 +1,4 @@
+// cspell:ignore refetched
 import {
 	BadRequestException,
 	ConflictException,

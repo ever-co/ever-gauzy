@@ -1,3 +1,4 @@
+// cspell:ignore checkpointed
 import { BadGatewayException, BadRequestException, ConflictException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DataSource, EntityManager, In, MoreThan, Not } from 'typeorm';
