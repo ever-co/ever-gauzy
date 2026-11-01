@@ -42,7 +42,7 @@ describe('TaskViewPageComponent', () => {
 	let params$: BehaviorSubject<ParamMap>;
 	let queryParams$: BehaviorSubject<ParamMap>;
 	let organization$: BehaviorSubject<{ id: string }>;
-	let tasksService: { getById: jest.Mock; editTask: jest.Mock };
+	let tasksService: { getById: jest.Mock; editTask: jest.Mock; createTask: jest.Mock };
 	let statisticsService: { getTasksStatistics: jest.Mock; getTaskEmployees: jest.Mock };
 	let timesheetService: { getDailyReportChart: jest.Mock; getTimeLogs: jest.Mock };
 	let http: { get: jest.Mock; put: jest.Mock };
@@ -64,7 +64,8 @@ describe('TaskViewPageComponent', () => {
 		organization$ = new BehaviorSubject({ id: ORGANIZATION });
 		tasksService = {
 			getById: jest.fn(async (id: string) => task({ id })),
-			editTask: jest.fn(() => of({}))
+			editTask: jest.fn(() => of({})),
+			createTask: jest.fn(() => of({}))
 		};
 		statisticsService = {
 			getTasksStatistics: jest.fn(async () => []),
@@ -390,6 +391,218 @@ describe('TaskViewPageComponent', () => {
 
 			expect(page.subtasks).toEqual([]);
 			expect(page.subtaskCount).toBeNull();
+		});
+	});
+
+	describe('adding a subtask', () => {
+		const PARENT_ID = 'ffffffff-6666-4666-8666-666666666666';
+		const PROJECT = { id: PROJECT_ID, name: 'Gauzy Platform' };
+		const addButton = (): HTMLButtonElement => fixture.nativeElement.querySelector('.task-subtask-add');
+		const panel = (): HTMLElement => fixture.nativeElement.querySelector('.task-subtasks-actions');
+		const context = () => dialogService.open.mock.calls[0][1].context;
+		const answerDialog = (data: any) => dialogService.open.mockReturnValue({ onClose: of(data) });
+		const ANSWER = { title: 'A subtask', status: 'Open', estimateDays: 1, estimateHours: 2, estimateMinutes: 30 };
+
+		const ready = async () => {
+			const page = create();
+			await settle();
+			await flush();
+			return page;
+		};
+
+		beforeEach(() => {
+			permissions = [PermissionsEnum.ORG_TASK_ADD];
+		});
+
+		it('offers the button to those the create route admits', async () => {
+			await ready();
+
+			expect(panel()).not.toBeNull();
+			expect(addButton()).not.toBeNull();
+		});
+
+		it('offers no button to those it does not', async () => {
+			permissions = [PermissionsEnum.ORG_TASK_VIEW];
+			await ready();
+
+			expect(panel()).not.toBeNull();
+			expect(addButton()).toBeNull();
+		});
+
+		it('offers the button once the permission loads after the page is built', async () => {
+			permissions = [];
+			await ready();
+			expect(addButton()).toBeNull();
+
+			permissions = [PermissionsEnum.ALL_ORG_EDIT];
+			permissions$.next(permissions);
+			fixture.detectChanges();
+
+			expect(addButton()).not.toBeNull();
+		});
+
+		it('opens the task dialog on a new task under this one, with its project, teams and opening status', async () => {
+			const teams = [{ id: 'team-1', name: 'Core' }];
+			tasksService.getById.mockImplementation(async (id: string) =>
+				task({ id, projectId: PROJECT_ID, project: PROJECT as any, teams: teams as any })
+			);
+			statuses = [
+				{ id: 'backlog', value: TaskStatusEnum.BACKLOG, name: 'Backlog', isTodo: true, order: 0 },
+				{ id: 'open', value: TaskStatusEnum.OPEN, name: 'Open', isTodo: true, order: 1 }
+			];
+			await ready();
+
+			addButton().click();
+			await flush();
+
+			expect(dialogService.open).toHaveBeenCalledTimes(1);
+			expect(context().parentLocked).toBe(true);
+			const { selectedTask } = context();
+			// No id: the dialog creates; it edits a task that has one.
+			expect(selectedTask.id).toBeUndefined();
+			expect(selectedTask.parent.id).toBe(TASK_ID);
+			expect(selectedTask.project).toEqual(PROJECT);
+			expect(selectedTask.teams).toEqual(teams);
+			expect(selectedTask.status).toBe(TaskStatusEnum.OPEN);
+			expect(selectedTask.taskStatus.id).toBe('open');
+		});
+
+		it('gives the dialog a status even before any is read: its form requires one', async () => {
+			const page = await ready();
+
+			await page.addSubtask();
+
+			expect(context().selectedTask.status).toBe(TaskStatusEnum.OPEN);
+		});
+
+		it('saves what the dialog answers, under this task and in its organization', async () => {
+			answerDialog(ANSWER);
+			const page = await ready();
+
+			await page.addSubtask();
+
+			expect(tasksService.createTask).toHaveBeenCalledTimes(1);
+			expect(tasksService.createTask).toHaveBeenCalledWith(
+				expect.objectContaining({
+					title: 'A subtask',
+					status: 'Open',
+					estimate: 1 * 24 * 60 * 60 + 2 * 60 * 60 + 30 * 60,
+					parentId: TASK_ID,
+					organizationId: ORGANIZATION
+				})
+			);
+		});
+
+		it('saves as Open when the dialog answers no status, which the server would refuse', async () => {
+			answerDialog({ title: 'A subtask', status: undefined });
+			const page = await ready();
+
+			await page.addSubtask();
+
+			expect(tasksService.createTask).toHaveBeenCalledWith(
+				expect.objectContaining({ status: TaskStatusEnum.OPEN, estimate: null })
+			);
+		});
+
+		it('shows the new subtask, and reads the Board and the Activity again', async () => {
+			answerDialog(ANSWER);
+			const page = await ready();
+			const reads = tasksService.getById.mock.calls.length;
+			const { boardReloadKey, activityReloadKey } = page;
+			tasksService.getById.mockResolvedValue(
+				task({ children: [{ id: 's1', title: 'A subtask', status: TaskStatusEnum.OPEN }] as unknown as ITask[] })
+			);
+
+			await page.addSubtask();
+
+			expect(tasksService.getById.mock.calls.length).toBe(reads + 1);
+			expect(page.subtasks.map((row) => row.id)).toEqual(['s1']);
+			expect(page.boardReloadKey).toBe(boardReloadKey + 1);
+			expect(page.activityReloadKey).toBe(activityReloadKey + 1);
+		});
+
+		it('saves nothing when the dialog is cancelled', async () => {
+			const page = await ready();
+			const { boardReloadKey } = page;
+
+			await page.addSubtask();
+
+			expect(dialogService.open).toHaveBeenCalledTimes(1);
+			expect(tasksService.createTask).not.toHaveBeenCalled();
+			expect(page.boardReloadKey).toBe(boardReloadKey);
+		});
+
+		it('leaves the toast of a failed save to the service', async () => {
+			answerDialog(ANSWER);
+			tasksService.createTask.mockReturnValue(throwError(() => 'Bad request'));
+			const page = await ready();
+			const { boardReloadKey } = page;
+
+			await page.addSubtask();
+
+			expect(toastr.danger).not.toHaveBeenCalled();
+			expect(page.boardReloadKey).toBe(boardReloadKey);
+		});
+
+		it('reads the statuses for those who may add but not edit, without showing them the menu', async () => {
+			statuses = [{ id: 'open', value: TaskStatusEnum.OPEN, name: 'Open' }];
+			const page = await ready();
+
+			expect(page.statuses.map((status) => status.id)).toEqual(['open']);
+			expect(page.canEdit).toBe(false);
+			fixture.detectChanges();
+			expect(fixture.nativeElement.querySelector('.task-status-select')).toBeNull();
+		});
+
+		describe('on a task that is itself a subtask', () => {
+			it('offers no button and draws no Subtasks panel when the task has a parent', async () => {
+				tasksService.getById.mockImplementation(async (id: string) => task({ id, parentId: PARENT_ID }));
+				const page = await ready();
+
+				expect(page.isSubtask).toBe(true);
+				expect(page.canAddSubtask).toBe(false);
+				expect(panel()).toBeNull();
+			});
+
+			it('does likewise when only the parent relation came back', async () => {
+				tasksService.getById.mockImplementation(async (id: string) =>
+					task({ id, parent: { id: PARENT_ID, title: 'The parent' } as ITask })
+				);
+				await ready();
+
+				expect(panel()).toBeNull();
+			});
+
+			it('opens no dialog, whatever calls it', async () => {
+				tasksService.getById.mockImplementation(async (id: string) => task({ id, parentId: PARENT_ID }));
+				const page = await ready();
+
+				await page.addSubtask();
+
+				expect(dialogService.open).not.toHaveBeenCalled();
+			});
+
+			it('reads no statuses for those who could only have added one', async () => {
+				tasksService.getById.mockImplementation(async (id: string) => task({ id, parentId: PARENT_ID }));
+				await ready();
+
+				expect(http.get).not.toHaveBeenCalledWith(expect.stringMatching(/\/task-statuses$/), expect.anything());
+			});
+
+			it('still lists the subtasks it already has, with nothing to add more', async () => {
+				tasksService.getById.mockImplementation(async (id: string) =>
+					task({
+						id,
+						parentId: PARENT_ID,
+						children: [{ id: 's1', title: 'Nested', status: TaskStatusEnum.OPEN }] as unknown as ITask[]
+					})
+				);
+				const page = await ready();
+
+				expect(page.subtasks.map((row) => row.id)).toEqual(['s1']);
+				expect(panel()).not.toBeNull();
+				expect(addButton()).toBeNull();
+			});
 		});
 	});
 
