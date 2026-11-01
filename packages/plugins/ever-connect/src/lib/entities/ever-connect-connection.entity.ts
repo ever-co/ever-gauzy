@@ -41,6 +41,13 @@ export class EverConnectConnection {
 	@MultiORMColumn({ type: 'varchar', length: 255, nullable: true })
 	publicUrl?: string | null;
 
+	/**
+	 * Until when Ever Platform's check of `publicUrl` is pending: `/.well-known/ever-connect` answers
+	 * only until then (added by the core `EverConnectIdentity` migration).
+	 */
+	@MultiORMColumn({ type: 'bigint', nullable: true })
+	publicUrlCheckUntil?: number | null;
+
 	/** `connected`, `pending_approval`, `revoked` or `disconnected`. */
 	@MultiORMColumn({ type: 'varchar', length: 24 })
 	status: string;

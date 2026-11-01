@@ -28,3 +28,9 @@ export class ZitadelAccountLinkedEvent extends ZitadelAccountEvent {}
 
 /** Published on the core event bus after a link was removed. */
 export class ZitadelAccountUnlinkedEvent extends ZitadelAccountEvent {}
+
+/**
+ * Published on the core event bus when an Ever ID sign-in found Gauzy users linked to the identity
+ * (one event per user), before the person picks a workspace. Nothing in this plugin subscribes to it.
+ */
+export class ZitadelAccountSignedInEvent extends ZitadelAccountEvent {}

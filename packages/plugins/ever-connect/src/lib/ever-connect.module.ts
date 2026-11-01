@@ -1,24 +1,35 @@
 import { DynamicModule, Inject, Injectable, Logger, Module, OnApplicationBootstrap, Optional } from '@nestjs/common';
-import { RolePermissionModule } from '@gauzy/core';
+import { EventBusModule, RolePermissionModule } from '@gauzy/core';
+import { EVER_CONNECT_CONFIG } from '@gauzy/plugin-auth-zitadel';
 import { EverInstanceModule, EverInstanceService, EverOperatorService } from '@gauzy/plugin-ever-instance';
 import { EverConnectAuditService } from './ever-connect-audit.service';
 import { EverConnectCatalogService } from './ever-connect-catalog.service';
 import { EverConnectCleanupService } from './ever-connect-cleanup.service';
 import { readEverConnectConfig } from './ever-connect-config';
+import { EVER_CONNECT_CONFIG_PROVIDER } from './ever-connect-config.provider';
 import { EverConnectConnectionService } from './ever-connect-connection.service';
 import { EVER_CONNECT_ENV, EVER_CONNECT_SETTINGS } from './ever-connect.constants';
 import { EverConnectController } from './ever-connect.controller';
 import { isEverConnectEnabled } from './ever-connect-enabled';
 import { EverConnectEntitlementService } from './ever-connect-entitlement.service';
 import { EverConnectHealthController } from './ever-connect-health.controller';
+import { EverConnectIdentityStore } from './ever-connect-identity.store';
+import { EverConnectIdentityWorker } from './ever-connect-identity.worker';
 import { EverConnectInstanceController } from './ever-connect-instance.controller';
 import { EverConnectIntegrationStateService } from './ever-connect-integration-state.service';
+import { EverConnectLease } from './ever-connect-lease';
 import { EverConnectLinkService } from './ever-connect-link.service';
 import { EverConnectPlatformService, errorCode } from './ever-connect-platform.service';
 import { EverConnectScheduler } from './ever-connect-scheduler.service';
 import { EverConnectSignals } from './ever-connect-signals';
 import { EverConnectStore } from './ever-connect.store';
 import { EverConnectEnabledGuard, EverConnectOperatorGuard } from './guards/ever-connect-operator.guard';
+import { EverIdLoginHandler } from './handlers/ever-id-login.handler';
+import { PersonDeletionHandler } from './handlers/person-deletion.handler';
+import { PersonExportHandler } from './handlers/person-export.handler';
+import { PersonRequestsHandler } from './handlers/person-requests.handler';
+import { PersonLinkReporter } from './reporters/person-link.reporter';
+import { EverConnectWellKnownService } from './well-known/ever-connect-well-known.service';
 
 /**
  * Lists "Ever Platform" among the integrations, pins the operator of a single-tenant installation,
@@ -63,6 +74,9 @@ export class EverConnectLifecycle implements OnApplicationBootstrap {
 /**
  * The Ever Platform connection module. `register()` reads the environment once; the health route
  * for a paired Ever Teams web app is mounted only when `EVER_STATS_SERVES` names `teams`.
+ *
+ * Global so that the Ever ID sign-in plugin finds `EVER_CONNECT_CONFIG` (Sign in with Ever ID's
+ * client), which it asks optionally; the module's other providers stay its own.
  */
 @Module({})
 export class EverConnectModule {
@@ -74,8 +88,10 @@ export class EverConnectModule {
 		);
 		return {
 			module: EverConnectModule,
-			// Gauzy's tenant and permission guards of the organization routes need the role permissions.
-			imports: [EverInstanceModule, RolePermissionModule],
+			global: true,
+			// Gauzy's tenant and permission guards of the organization routes need the role permissions;
+			// the event bus carries the Ever ID sign-in plugin's link events.
+			imports: [EverInstanceModule, RolePermissionModule, EventBusModule],
 			controllers: [
 				EverConnectController,
 				EverConnectInstanceController,
@@ -94,12 +110,22 @@ export class EverConnectModule {
 				EverConnectLinkService,
 				EverConnectCleanupService,
 				EverConnectConnectionService,
+				EverConnectLease,
+				EverConnectIdentityStore,
+				EverIdLoginHandler,
+				EVER_CONNECT_CONFIG_PROVIDER,
+				PersonLinkReporter,
+				PersonDeletionHandler,
+				PersonExportHandler,
+				PersonRequestsHandler,
+				EverConnectIdentityWorker,
+				EverConnectWellKnownService,
 				EverConnectScheduler,
 				EverConnectOperatorGuard,
 				EverConnectEnabledGuard,
 				EverConnectLifecycle
 			],
-			exports: [EverConnectConnectionService, EverConnectIntegrationStateService]
+			exports: [EverConnectConnectionService, EverConnectIntegrationStateService, EVER_CONNECT_CONFIG]
 		};
 	}
 }

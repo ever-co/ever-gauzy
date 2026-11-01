@@ -1,5 +1,5 @@
 {
-	"$comment": "Every endpoint of this module that answers without an organization permission or the operator check (public or signed-in only), and every request Ever Platform makes to an installation through it. routes-manifest.spec.ts compares it with the registered routes; UPDATE_ROUTES_MANIFEST=1 rewrites the method and path list.",
+	"$comment": "Every endpoint of this module that answers without an organization permission or the operator check (public or signed-in only; adapter_endpoints: registered on the HTTP server outside /api), and every request Ever Platform makes to an installation through it. routes-manifest.spec.ts compares it with the registered routes; UPDATE_ROUTES_MANIFEST=1 rewrites the method and path list.",
 	"version": 1,
 	"product": "gauzy",
 	"module": "ever-connect",
@@ -11,6 +11,16 @@
 			"mounted_when": "EVER_STATS_SERVES contains teams",
 			"answers": "{\"connected\": true|false}",
 			"purpose": "The paired Ever Teams web app asks it, with the signed-in person's token, whether this installation is connected to Ever Platform."
+		}
+	],
+	"adapter_endpoints": [
+		{
+			"method": "GET",
+			"path": "/.well-known/ever-connect",
+			"auth": "public",
+			"mounted_when": "the module is loaded (EVER_CONNECT_ENABLED=true); outside the /api prefix",
+			"answers": "{\"statement\": \"<compact JWS signed with the connection key>\"} while Ever Platform checks the installation's address (at most 10 minutes); otherwise the same 404 as an address that does not exist",
+			"purpose": "Lets Ever Platform check that this installation answers at the address it was given, after the instance_url integration was consented and accepted."
 		}
 	],
 	"platform_requests": [

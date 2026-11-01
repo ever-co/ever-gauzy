@@ -56,6 +56,14 @@ export interface EverConnectConfig {
 	 * (test keys) honoured, as the SDK honours them. A public address never is.
 	 */
 	localPlatform: boolean;
+	/**
+	 * The sign-in endpoints of this installation that Sign in with Ever ID registers with its sign-in
+	 * client: the Ever ID callback (`ZITADEL_CALLBACK_URL`, else `${API_BASE_URL}/api/auth/zitadel/callback`)
+	 * and the back-channel logout next to it. `null` when they cannot be registered: not https (plain
+	 * http only on `localhost`, `127.0.0.1` or `[::1]`), not on one origin, or with credentials, a
+	 * query or a fragment.
+	 */
+	signIn: { redirectUri: string; logoutUri: string } | null;
 }
 
 /** `localhost` (and `*.localhost`), `127.0.0.0/8` and `::1`. */
@@ -179,6 +187,33 @@ function parseReturn(raw: string | undefined): { origin: string; url: string } |
 	return { origin: url.origin, url: `${base}/${CONSENT_RETURN_FRAGMENT}` };
 }
 
+/** The longest sign-in endpoint Ever Platform takes. */
+const MAX_URI_LENGTH = 2048;
+
+/**
+ * The Ever ID sign-in endpoints of this API, as the sign-in plugin serves them (see
+ * {@link EverConnectConfig.signIn}).
+ */
+function parseSignIn(env: Env): EverConnectConfig['signIn'] {
+	const apiBase = (env['API_BASE_URL']?.trim() || 'http://localhost:3000').replace(/\/+$/, '');
+	const redirectUri = env['ZITADEL_CALLBACK_URL']?.trim() || `${apiBase}/api/auth/zitadel/callback`;
+	const logoutUri = redirectUri.endsWith('/callback')
+		? `${redirectUri.slice(0, -'/callback'.length)}/backchannel-logout`
+		: `${apiBase}/api/auth/zitadel/backchannel-logout`;
+	const origins = [redirectUri, logoutUri].map((raw) => {
+		let url: URL;
+		try {
+			url = new URL(raw);
+		} catch {
+			return null;
+		}
+		const httpOk = url.protocol === 'http:' && HTTP_RETURN_HOSTS.has(url.hostname.toLowerCase());
+		const clean = !url.username && !url.password && !raw.includes('?') && !raw.includes('#') && !url.hostname.includes('*');
+		return (url.protocol === 'https:' || httpOk) && clean && raw.length <= MAX_URI_LENGTH ? url.origin : null;
+	});
+	return origins[0] && origins[0] === origins[1] ? { redirectUri, logoutUri } : null;
+}
+
 /**
  * Reads the settings once. A malformed value falls back to its default with one `warn` line (which
  * never repeats the value), except an unusable Ever Platform address, which sends nothing.
@@ -207,7 +242,8 @@ export function readEverConnectConfig(env: Env = process.env, warn: Warn = () =>
 		returnUrl: ret?.url ?? null,
 		returnUnusable: Boolean(env['CLIENT_BASE_URL']?.trim()) && !ret,
 		issuer: localPlatform ? issuer : null,
-		localPlatform
+		localPlatform,
+		signIn: parseSignIn(env)
 	};
 }
 

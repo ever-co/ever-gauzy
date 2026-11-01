@@ -12,6 +12,7 @@ export interface ConnectionRecord {
 	ownerHandle: string | null;
 	apiUrl: string | null;
 	publicUrl: string | null;
+	publicUrlCheckUntil: number | null;
 	status: 'connected' | 'pending_approval' | 'revoked' | 'disconnected';
 	connectedAt: number | null;
 	connectedByUserId: string | null;
@@ -72,6 +73,8 @@ export interface IntegrationRecord {
 	revokedAt: number | null;
 	revokeSource: string | null;
 	pendingRemoteRevoke: boolean;
+	/** The integration's configuration, sealed (Sign in with Ever ID: its sign-in client). */
+	configEncrypted: string | null;
 	updatedAt: number;
 }
 
@@ -98,6 +101,7 @@ function toConnection(row: Row): ConnectionRecord {
 		ownerHandle: str(row['ownerHandle']),
 		apiUrl: str(row['apiUrl']),
 		publicUrl: str(row['publicUrl']),
+		publicUrlCheckUntil: num(row['publicUrlCheckUntil']),
 		status: (str(row['status']) ?? 'disconnected') as ConnectionRecord['status'],
 		connectedAt: num(row['connectedAt']),
 		connectedByUserId: str(row['connectedByUserId']),
@@ -160,6 +164,7 @@ function toIntegration(row: Row): IntegrationRecord {
 		revokedAt: num(row['revokedAt']),
 		revokeSource: str(row['revokeSource']),
 		pendingRemoteRevoke: flag(row['pendingRemoteRevoke']),
+		configEncrypted: str(row['configEncrypted']),
 		updatedAt: num(row['updatedAt']) ?? 0
 	};
 }
@@ -367,6 +372,45 @@ export class EverConnectStore {
 			await this.sql.update(INTEGRATION, { ...values, updatedAt: at }, { scope, name });
 		}
 		return (await this.integration(scope, name)) as IntegrationRecord;
+	}
+
+	/**
+	 * Replaces the sealed configuration of one integration, only when it is still `expected` (compare
+	 * and set): two API processes never overwrite each other's newer value. With `whileEnabled`, only
+	 * while the integration is enabled under that consent (a value made for a consent that ended
+	 * meanwhile is not stored). Returns whether it was written.
+	 */
+	async setIntegrationConfig(
+		scope: string,
+		name: string,
+		configEncrypted: string | null,
+		expected: string | null,
+		whileEnabled?: { consentId: string | null }
+	): Promise<boolean> {
+		await this.saveIntegration(scope, name, {});
+		const q = (c: string) => this.sql.q(c);
+		const params: unknown[] = [configEncrypted, this.now(), scope, name];
+		let condition = `${q('configEncrypted')} IS NULL`;
+		if (expected !== null) {
+			params.push(expected);
+			condition = `${q('configEncrypted')} = ${this.sql.ph(params.length)}`;
+		}
+		if (whileEnabled) {
+			params.push(true);
+			condition += ` AND ${q('enabled')} = ${this.sql.ph(params.length)}`;
+			if (whileEnabled.consentId === null) {
+				condition += ` AND ${q('consentId')} IS NULL`;
+			} else {
+				params.push(whileEnabled.consentId);
+				condition += ` AND ${q('consentId')} = ${this.sql.ph(params.length)}`;
+			}
+		}
+		const { affected } = await this.sql.run(
+			`UPDATE ${q(INTEGRATION)} SET ${q('configEncrypted')} = ${this.sql.ph(1)}, ${q('updatedAt')} = ${this.sql.ph(2)} ` +
+				`WHERE ${q('scope')} = ${this.sql.ph(3)} AND ${q('name')} = ${this.sql.ph(4)} AND ${condition}`,
+			params
+		);
+		return affected === 1;
 	}
 
 	// ── Policy ────────────────────────────────────────────────────────────────

@@ -8,7 +8,7 @@ import { ROWS } from '@ever-co/connect-contracts';
  * `@ever-co/connect-contracts`), under that row's number, and the table lists exactly the rows this
  * release uses.
  */
-const USED_ROWS = [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 16, 31];
+const USED_ROWS = [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 16, 19, 20, 22, 31];
 
 function tableRows(): Array<{ row: number; requests: string[] }> {
 	const readme = readFileSync(join(__dirname, '../../README.md'), 'utf8');
