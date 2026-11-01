@@ -154,7 +154,8 @@ export class MockEverWorksInboxWrite {
 		};
 		this.mock.inboxItems.set(item['id'] as string, item);
 		void this.mock.emitInbox('inbox.item.created', this.dto(item), {
-			tag: context.headers['x-sync-origin'] ?? null
+			tag: context.headers['x-sync-origin'] ?? null,
+			integrationKeyId: context.key.keyId
 		});
 		return context.ok(this.dto(item), 201);
 	}
@@ -201,7 +202,8 @@ export class MockEverWorksInboxWrite {
 		}
 		Object.assign(item, { version: Number(item['version']) + 1, updatedAt: new Date().toISOString() });
 		void this.mock.emitInbox('inbox.item.updated', this.dto(item), {
-			tag: context.headers['x-sync-origin'] ?? null
+			tag: context.headers['x-sync-origin'] ?? null,
+			integrationKeyId: context.key.keyId
 		});
 		return context.ok(this.dto(item));
 	}

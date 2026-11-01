@@ -155,7 +155,11 @@ export class EverWorksMappingService {
 				[S.CONNECTION_ID]: connection.id as ID,
 				[S.EVER_WORKS_ORGANIZATION_ID]: pinned.id,
 				[S.EVER_WORKS_ORGANIZATION_SLUG]: pinned.slug,
-				[S.IS_ENABLED]: 'true'
+				[S.IS_ENABLED]: 'true',
+				// When the inbox starts going to Ever Works (the default direction writes there), also when an archived mapping
+				// is restored (what was written while it was archived is not quietly sent): only the backfill sends older items.
+				// A later switch to a writing direction records its own time.
+				[S.INBOX_PUSH_SINCE]: new Date().toISOString()
 			};
 			const firstTime: Record<string, string> = {
 				[S.ENTITY_DIRECTIONS]: JSON.stringify(DEFAULT_EVER_WORKS_DIRECTIONS),
@@ -165,10 +169,7 @@ export class EverWorksMappingService {
 				[S.INCLUDE_HIDDEN_TASKS]: 'false',
 				[S.INCLUDE_TRIAGE_TASKS]: 'false',
 				[S.INCLUDE_GOAL_ITERATION_KEY_RESULTS]: 'false',
-				[S.SYNC_UNLINKED_PROJECT_TASKS]: 'true',
-				// When the inbox starts going to Ever Works (the default direction writes there): only the backfill sends older
-				// items. A later switch to a writing direction records its own time.
-				[S.INBOX_PUSH_SINCE]: new Date().toISOString()
+				[S.SYNC_UNLINKED_PROJECT_TASKS]: 'true'
 			};
 			this.set(row, defaults, manager, true);
 			this.set(row, firstTime, manager, false);

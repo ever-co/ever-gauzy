@@ -62,8 +62,8 @@ export function parseGauzyInboxExternalId(value: unknown): { inboxItemId: string
 
 /**
  * Plain text as Markdown that reads the same: the characters that format inline (emphasis, code, links, HTML, tables,
- * strikethrough) are escaped everywhere, and what starts a block (a heading, a quote, a list item, a rule) at the
- * start of a line; line breaks are kept as hard breaks.
+ * strikethrough, entities such as `&copy;`) are escaped everywhere, and what starts a block (a heading, a quote, a list
+ * item, a rule) at the start of a line; line breaks are kept as hard breaks.
  */
 export function plainTextAsMarkdown(text: string): string {
 	return text
@@ -71,7 +71,7 @@ export function plainTextAsMarkdown(text: string): string {
 		.split('\n')
 		.map((line) =>
 			line
-				.replace(/[\\`*_[\]<>|~]/g, (character) => `\\${character}`)
+				.replace(/[\\`*_[\]<>|~&]/g, (character) => `\\${character}`)
 				.replace(/^(\s*)([#+=-])/, '$1\\$2')
 				.replace(/^(\s*\d+)([.)])/, '$1\\$2')
 				.replace(/\s+$/, '')

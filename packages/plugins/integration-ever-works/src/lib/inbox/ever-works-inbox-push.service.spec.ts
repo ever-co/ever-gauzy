@@ -112,17 +112,15 @@ const ADA = { user: randomUUID(), employee: randomUUID(), ew: 'ew-user-ada' };
 const BOB = { user: randomUUID(), employee: randomUUID() }; // a person of the organization, not paired
 const CAROL = { user: randomUUID(), employee: randomUUID(), ew: 'ew-user-carol' };
 
-/** `where` as TypeORM reads it: equality, and `In(...)`. */
+/** `where` as TypeORM reads it: equality, `In(...)`, `IsNull()` and `MoreThan(...)`; any other operator fails the spec. */
 function matches(row: Row, where: Row | undefined): boolean {
-	return Object.entries(where ?? {}).every(([key, value]) =>
-		value instanceof FindOperator
-			? value.type === 'in'
-				? (value.value as unknown[]).includes(row[key])
-				: value.type === 'isNull'
-					? row[key] === null || row[key] === undefined
-					: true
-			: row[key] === value
-	);
+	return Object.entries(where ?? {}).every(([key, value]) => {
+		if (!(value instanceof FindOperator)) return row[key] === value;
+		if (value.type === 'in') return (value.value as unknown[]).includes(row[key]);
+		if (value.type === 'isNull') return row[key] === null || row[key] === undefined;
+		if (value.type === 'moreThan') return row[key] > (value.value as never);
+		throw new Error(`The in-memory repository does not read the ${value.type} operator.`);
+	});
 }
 
 function repository(rows: Row[], unique?: (a: Row, b: Row) => boolean) {
@@ -1483,6 +1481,20 @@ describe('EverWorksInitialSyncService — the inbox phase', () => {
 			expect.objectContaining({ entityType: EverWorksLinkType.GAUZY_INBOX_ITEM, changedFields: ['backfill'] })
 		);
 	});
+
+	it('stops within a page when the lease is lost, and carries on after the last row it queued', async () => {
+		const ids = Array.from({ length: 120 }, (_, index) => `r${String(index).padStart(3, '0')}`);
+		const { sync, queue } = initialSync({ '': { ids, next: null }, r049: { ids: ids.slice(50), next: null } });
+		const context = contextWith(['inbox:write'], true);
+		const state: Record<string, unknown> = { exported: 0, exportCursor: null };
+		const deadline = Date.now() + 60_000;
+		let owner = 0;
+		await expect(sync['exportGauzyInbox'](context, state, deadline, async () => ++owner < 2)).resolves.toBe(false);
+		expect(state).toMatchObject({ exported: 50, exportCursor: 'r049' });
+		await expect(sync['exportGauzyInbox'](context, state, deadline, async () => true)).resolves.toBe(true);
+		expect(state).toMatchObject({ exported: 120, exportCursor: 'done' });
+		expect(queue.enqueue.mock.calls.map((call) => call[0]['gauzyId'])).toEqual(ids);
+	});
 });
 
 describe('EverWorksInboxPreferencesService', () => {
@@ -1521,6 +1533,13 @@ describe('EverWorksInboxPreferencesService', () => {
 			kinds: expect.objectContaining({ email: false })
 		});
 		expect(summaries.get(BOB.user)).toMatchObject({ customized: false });
+		// Every kind back on is still a choice of Ada's own.
+		mockCaller.userId = ADA.user;
+		await preferenceService.updateMine({ email: true });
+		expect((await preferenceService.summaries(TENANT, [ADA.user])).get(ADA.user)).toMatchObject({
+			customized: true,
+			kinds: expect.objectContaining({ email: true, other: true })
+		});
 	});
 
 	it('two overlapping saves of different kinds keep both', async () => {
@@ -1635,6 +1654,8 @@ describe('the kind mapping and the text', () => {
 		expect(plainTextAsMarkdown('1. not a list\n- nor this\n*a* _b_ `c` [d](e) | f ~g~')).toBe(
 			'1\\. not a list  \n\\- nor this  \n\\*a\\* \\_b\\_ \\`c\\` \\[d\\](e) \\| f \\~g\\~'
 		);
+		// An entity is text too: `AT&amp;T` and `&copy;` read as written, not as `AT&T` and `©`.
+		expect(plainTextAsMarkdown('AT&amp;T &copy;')).toBe('AT\\&amp;T \\&copy;');
 		expect(parseGauzyInboxExternalId('not:ours')).toBeNull();
 	});
 });

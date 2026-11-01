@@ -338,13 +338,38 @@ describe('InboxPageComponent', () => {
 			api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
 			api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));
 			api.get.mockReturnValue(throwError(() => ({ status: 503 })));
-			withItemLink('deep');
+			const params$ = withItemLink('deep');
 			const { component, fixture, find } = render();
 			fixture.detectChanges();
 			expect(component.view()).toBe('ready');
 			expect(component.actionError()).toBe('INBOX.ITEM_LINK_ERROR');
 			expect(find('action-error')).not.toBeNull();
 			expect(component.selected()).toBeNull();
+			// A link that opens clears the alert.
+			api.get.mockReturnValue(of(item('other')));
+			api.setState.mockReturnValue(of(item('other')));
+			params$.next(convertToParamMap({ item: 'other' }));
+			expect(component.selected()).toMatchObject({ id: 'other' });
+			expect(component.actionError()).toBeNull();
+		});
+
+		it('only the latest link counts: a link followed while an earlier one is read cancels that read', () => {
+			api.counts.mockReturnValue(of({ unread: 2, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));
+			const first = new Subject<IInboxItemWithState>();
+			const second = new Subject<IInboxItemWithState>();
+			api.get.mockImplementation((id: string) => (id === 'first' ? first : second));
+			api.setState.mockImplementation((id: string) => of(item(id)));
+			const params$ = withItemLink('first');
+			const { component, fixture } = render();
+			fixture.detectChanges();
+			params$.next(convertToParamMap({ item: 'second' }));
+			first.next(item('first'));
+			expect(component.selected()).toBeNull();
+			second.next(item('second'));
+			expect(component.selected()).toMatchObject({ id: 'second' });
+			expect(api.setState).toHaveBeenCalledTimes(1);
+			expect(api.setState).toHaveBeenCalledWith('second', { isRead: true });
 		});
 
 		it('opens that item once the Inbox is served, as a click on its row does, though no tab lists it', () => {

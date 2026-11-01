@@ -16,7 +16,7 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { EMPTY, Subject } from 'rxjs';
+import { EMPTY, Subject, Subscription } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, skip, switchMap } from 'rxjs/operators';
 import {
 	IInboxItemWithState,
@@ -410,6 +410,8 @@ export class InboxPageComponent implements OnInit {
 	private readonly load$ = new Subject<boolean>();
 	/** `?item=` of the URL, opened once the Inbox is served (then forgotten, unless it could not be opened yet). */
 	private requestedItemId: string | null = null;
+	/** The read of the latest `?item=` link still on its way (a later link cancels it). */
+	private linkRead: Subscription | null = null;
 
 	ngOnInit(): void {
 		this.readRequestedTab();
@@ -468,14 +470,16 @@ export class InboxPageComponent implements OnInit {
 	 * opens it (an unread one becomes read), whichever tab it is listed in, but only while its detail can be shown: not
 	 * once the list failed (the retry opens it) or the Notifications tab is chosen, nor over an item I opened meanwhile.
 	 * An id the API does not show me (404: not mine, gone) is ignored quietly; any other failure to read it is said, and
-	 * the link is kept for the next try (a retry of the page, or the link followed again).
+	 * the link is kept for the next try (a retry of the page, or the link followed again). Only the latest link counts:
+	 * a link followed while an earlier one is still being read cancels that read.
 	 */
 	private openRequestedItem(): void {
 		const id = this.requestedItemId;
 		this.requestedItemId = null;
 		if (!id) return;
+		this.linkRead?.unsubscribe();
 		const selectedBefore = this.selectedId();
-		this.api
+		this.linkRead = this.api
 			.get(id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe({
@@ -485,7 +489,10 @@ export class InboxPageComponent implements OnInit {
 						this.requestedItemId = id;
 						return;
 					}
-					if (this.tab() !== 'notifications') this.open(item);
+					if (this.tab() === 'notifications') return;
+					// The link works now: an earlier failure to open it is no longer news.
+					if (this.actionError() === 'INBOX.ITEM_LINK_ERROR') this.actionError.set(null);
+					this.open(item);
 				},
 				error: (error: HttpErrorResponse) => {
 					if (error?.status === 404 || error?.status === 403) return;

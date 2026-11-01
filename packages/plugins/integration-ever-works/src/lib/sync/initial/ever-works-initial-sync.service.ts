@@ -750,7 +750,10 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		for (;;) {
 			if (isOver(deadline) || (stillOwner && !(await stillOwner()))) return false;
 			const page = await this.inboxPush.backfillPage(context, state.exportCursor ?? null);
-			for (const gauzyId of page.ids) {
+			for (const [index, gauzyId] of page.ids.entries()) {
+				// Within the sweep's budget and lease, as the other exporters: a stopped page carries on after the last row
+				// queued (the rows are in recipient id order, the feed's own cursor).
+				if (index > 0 && index % 50 === 0 && (isOver(deadline) || (stillOwner && !(await stillOwner())))) return false;
 				const queued = await this.queue.enqueue({
 					tenantId: context.tenantId,
 					organizationId: context.organizationId,
@@ -760,6 +763,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 					changedFields: ['backfill']
 				});
 				if (queued) state.exported++;
+				state.exportCursor = gauzyId;
 			}
 			state.exportCursor = page.next ?? INBOX_EXPORT_DONE;
 			if (!page.next) return true;

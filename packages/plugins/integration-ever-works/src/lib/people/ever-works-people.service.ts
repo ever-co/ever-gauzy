@@ -767,15 +767,23 @@ export class EverWorksPeopleService {
 			};
 		});
 		if (this.inboxPreferences) {
-			// The admin sees each paired person's effective choice (read-only: only the person changes it).
-			const userOf = (row: EverWorksPersonRow) => (row.linkedEmployeeId ? (people.get(row.linkedEmployeeId)?.userId as ID | null | undefined) : null) ?? null;
-			const summaries = await this.inboxPreferences.summaries(
-				context.tenantId,
-				rows.map(userOf).filter((userId): userId is ID => !!userId)
-			);
-			for (const row of rows) {
-				const userId = userOf(row);
-				row.inboxToEverWorks = userId ? (summaries.get(userId) ?? null) : null;
+			// The admin sees each paired person's effective choice (read-only: only the person changes it), for every live
+			// pairing (the pusher sends for an inactive or archived person too). A read that fails leaves it out (`null`)
+			// instead of failing the whole tab, pairing included.
+			try {
+				const users = await this.usersOfEmployees(
+					context,
+					rows.map((row) => row.linkedEmployeeId).filter((id): id is ID => !!id),
+					people
+				);
+				const summaries = await this.inboxPreferences.summaries(context.tenantId, [...new Set(users.values())]);
+				for (const row of rows) {
+					const userId = row.linkedEmployeeId ? users.get(row.linkedEmployeeId) : undefined;
+					row.inboxToEverWorks = userId ? (summaries.get(userId) ?? null) : null;
+				}
+			} catch (error) {
+				this.logger.warn(`Mapping ${context.integrationTenantId}: the Ever Works inbox choices were not read (${(error as Error)?.message ?? 'error'}).`);
+				for (const row of rows) row.inboxToEverWorks = null;
 			}
 		}
 		return {
@@ -786,6 +794,30 @@ export class EverWorksPeopleService {
 				.map(([employeeId, p]) => ({ employeeId, name: p.name, email: p.email })),
 			deferredInbox: deferredInboxOf(await this.deferredInboxEvents(context), new Set(linkByUser.keys()))
 		};
+	}
+
+	/** The Gauzy user of each employee named: from the active people read already, else read (inactive or archived). */
+	private async usersOfEmployees(
+		context: EverWorksMappingContext,
+		employeeIds: ID[],
+		people: Map<ID, { userId: string | null }>
+	): Promise<Map<ID, ID>> {
+		const users = new Map<ID, ID>();
+		const missing: ID[] = [];
+		for (const id of new Set(employeeIds)) {
+			const known = people.get(id);
+			if (known?.userId) users.set(id, known.userId as ID);
+			else if (!known) missing.push(id);
+		}
+		for (let start = 0; start < missing.length; start += 500) {
+			const chunk = missing.slice(start, start + 500);
+			const rows = await this.dataSource.getRepository(Employee).find({
+				where: { tenantId: context.tenantId, organizationId: context.organizationId, id: In(chunk) },
+				select: { id: true, userId: true }
+			});
+			for (const row of rows) if (chunk.includes(row.id as ID) && row.userId) users.set(row.id as ID, row.userId as ID);
+		}
+		return users;
 	}
 
 	/** The active people (not agents) of the organization, optionally only the given ones. */

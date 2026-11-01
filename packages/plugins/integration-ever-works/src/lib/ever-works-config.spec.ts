@@ -20,9 +20,11 @@ describe('readEverWorksConfig', () => {
 		const warn = jest.fn();
 		expect(readEverWorksConfig({ API_BASE_URL: 'https://api.gauzy.example/' }, warn).gauzyApiUrl).toBe('https://api.gauzy.example');
 		expect(readEverWorksConfig({ API_BASE_URL: 'http://localhost:3000' }, warn).gauzyApiUrl).toBeNull();
-		// The web app the Ever Works copies of Gauzy Inbox items link back to: CLIENT_BASE_URL, else APP_LINK; HTTPS only.
+		// The web app the Ever Works copies of Gauzy Inbox items link back to: APP_LINK, else CLIENT_BASE_URL (as Gauzy's
+		// own links, resolveAppLink); HTTPS only.
 		expect(readEverWorksConfig({ CLIENT_BASE_URL: 'https://app.gauzy.example/' }, warn).gauzyAppUrl).toBe('https://app.gauzy.example');
 		expect(readEverWorksConfig({ APP_LINK: 'https://link.gauzy.example' }, warn).gauzyAppUrl).toBe('https://link.gauzy.example');
+		expect(readEverWorksConfig({ CLIENT_BASE_URL: 'https://app.gauzy.example', APP_LINK: 'https://link.gauzy.example/' }, warn).gauzyAppUrl).toBe('https://link.gauzy.example');
 		expect(readEverWorksConfig({ CLIENT_BASE_URL: 'http://localhost:4200', APP_LINK: '' }, warn).gauzyAppUrl).toBeNull();
 		expect(warn).not.toHaveBeenCalled();
 	});

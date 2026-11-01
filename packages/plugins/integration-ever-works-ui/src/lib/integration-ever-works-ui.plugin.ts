@@ -106,8 +106,9 @@ export const EVER_WORKS_INBOX_NAV_ITEM = {
  * (`EVER_WORKS_ENABLED` unset, the default, or a user without `INBOX_VIEW`) the settings menu looks exactly as before;
  * the route still exists and the page then says the integration is off.
  *
- * The nav builder has no way to remove an item, so the entry is hidden (`data.hide`) while it is not available, and
- * added again (replacing itself) at each change: the menu reads `hide` only when it is built.
+ * The entry is hidden (`data.hide`) while it is not available, as the Inbox's own menu items are, and added again
+ * (replacing itself) at each change: the menu reads `hide` only when it is built, so a new emission is what shows or
+ * hides it.
  */
 export function registerEverWorksInboxSettingsEntryPoints(injector: Injector): Subscription {
 	const state = { available: false, added: false };

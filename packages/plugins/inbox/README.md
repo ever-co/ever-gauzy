@@ -173,10 +173,14 @@ sends each person's items to their Ever Works inbox) observes it through
   recipient's read / archive / snooze (`stated` names the fields), and
   mark-all-read (one change per item, in the background). A change names the
   item, its kind, source and organization and the recipient rows it concerns;
-  never its title, body or answer. An observer never fails or delays a write
-  (its error is logged); one that must not lose a change keeps its own durable
-  queue.
+  never its title, body or answer. An observer never fails or delays a write:
+  it is called without being awaited, and its error is logged. The one cost a
+  write carries while an observer is registered is the feed's own read of the
+  item's recipient rows, to name them. An observer that must not lose a change
+  keeps its own durable queue.
 - `readRecipient(tenantId, recipientId)`: one recipient's copy of an item.
+- `missingRecipients(tenantId, recipientIds)`: of the recipient rows named,
+  the ones that are gone (or whose item is), so an observer ends their copies.
 - `recipientsChangedSince(tenantId, since, …)`: the recipient rows whose item
   or own state changed since a time, for a recovery sweep.
 - `openRecipientsOf(tenantId, organizationId, userIds, …)`: the open, not

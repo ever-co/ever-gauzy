@@ -399,9 +399,10 @@ and answered `202`.
     (`INBOX_ITEM_FEED`, see the Inbox README), which queues one outbound change
     per paired recipient (coalesced, retried, dead-lettered, fenced on the
     lease like every push). A 10-minute sweep queues a change whose notice was
-    missed in the last hour (an item never sent only when it changed after the
-    inbox started going to Ever Works: older ones go only with the backfill)
-    and archives the copy of a recipient row that is gone. A replay of the same
+    missed in the last hour, and archives the copy of a recipient row that is
+    gone. An item never sent is filed by the sweep only if it changed after
+    the inbox started going to Ever Works; older items go only with the
+    backfill. A replay of the same
     `externalId` answers the copy filed before, so a retry never files twice;
     what its person did to it meanwhile is applied to Gauzy first. Later
     changes are patched with

@@ -113,7 +113,7 @@ export interface EverWorksInboxOrganizationState {
 	/** Sent now: paired, the mapping on, its inbox direction includes Gauzy → Ever Works, its InboxItem sync setting on. */
 	sending: boolean;
 	/** Why not, when `sending` is `false` (another value from a newer API is shown as it is). */
-	reason: EverWorksInboxNotSendingReason | string | null;
+	reason: EverWorksInboxNotSendingReason | (string & Record<never, never>) | null;
 }
 
 /** One organization mapping and its settings. */

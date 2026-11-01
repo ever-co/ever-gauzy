@@ -133,6 +133,28 @@ describe('EverWorksInboxPreferencesComponent', () => {
 		expect(find('defaults')).not.toBeNull();
 		expect(find('no-organizations')).not.toBeNull();
 		expect(find('organizations')).toBeNull();
+		expect(find('nothing-sent')).toBeNull();
+	});
+
+	it('every kind saved off: says nothing of mine is sent', async () => {
+		api.inboxPreferences.mockReturnValue(
+			of({
+				...VIEW,
+				kinds: {
+					notice: false,
+					question: false,
+					approval: false,
+					mention: false,
+					assignment: false,
+					email: false,
+					other: false
+				},
+				updatedAt: '2026-11-01T10:00:00.000Z'
+			})
+		);
+		const { find } = await render();
+		expect(find('nothing-sent')?.textContent).toContain('EVER_WORKS.INBOX_PREFERENCES.NOTHING_SENT');
+		expect(find('defaults')).toBeNull();
 	});
 
 	it('404 (the Ever Works plugin is off): says the integration is not switched on, nothing else', async () => {

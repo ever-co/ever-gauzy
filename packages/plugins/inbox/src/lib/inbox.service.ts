@@ -588,8 +588,10 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 			);
 		} catch (error) {
 			// The rows inserted before the failure stay; the source's retry finds them and adds only the rest, so they
-			// are announced now (#11091 review).
+			// are announced now (#11091 review), to the observers too (the item and the rows that stay; best effort).
 			if (addedUserIds.length) await this.realtime?.itemCreated(item, addedUserIds);
+			if (addedUserIds.length || removedRows.length)
+				await this.feed?.itemChanged(item, created ? 'created' : 'updated', removedRows);
 			throw error;
 		}
 		const { recipientUserIds, skippedUserIds } = written;

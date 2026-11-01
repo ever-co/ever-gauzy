@@ -1011,6 +1011,22 @@ describe('Inbox on SQLite', () => {
 			service = new InboxService(dataSource, registry, undefined, feed);
 		});
 
+		it('are told about a write whose recipients failed part way: the rows inserted before the failure stay', async () => {
+			const failure = new Error('the database went away');
+			jest.spyOn(service as never, 'writeRecipients').mockImplementationOnce((async (
+				_item: unknown,
+				_recipients: unknown,
+				_replace: unknown,
+				added: string[]
+			) => {
+				added.push(ADA);
+				throw failure;
+			}) as never);
+			await expect(question({ recipients: [{ userId: ADA }, { userId: BOB }] })).rejects.toBe(failure);
+			expect(changes).toHaveLength(1);
+			expect(changes[0]).toMatchObject({ scope: 'item', type: 'created' });
+		});
+
 		it('are told about a new item, a re-delivery, a reply and a recipient state, naming the recipient rows', async () => {
 			const { item } = await question({ recipients: [{ userId: ADA }, { userId: BOB }] });
 			const rows: Array<{ id: string; userId: string }> = await dataSource.query(
@@ -1027,6 +1043,7 @@ describe('Inbox on SQLite', () => {
 				scope: 'item',
 				type: 'created'
 			});
+			expect(changes[0].recipients).toHaveLength(rows.length);
 			expect(changes[0].recipients).toEqual(
 				expect.arrayContaining(rows.map((row) => ({ id: row.id, userId: row.userId })))
 			);

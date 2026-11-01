@@ -42,7 +42,7 @@ export interface EverWorksInboxPreferencesView {
 /** A person's effective choice, as the People tab shows it. */
 export interface EverWorksInboxPreferenceSummary {
 	kinds: Record<EverWorksInboxKind, boolean>;
-	/** `false` while the person never changed the defaults. */
+	/** `false` while the person never saved a choice (once saved, `true` even when every kind is back on). */
 	customized: boolean;
 }
 
@@ -106,7 +106,8 @@ export class EverWorksInboxPreferencesService {
 		return new Map(
 			users.map((userId) => {
 				const excluded = excludedOf(byUser.get(userId));
-				return [userId, { kinds: kindsOf(excluded), customized: excluded.size > 0 }];
+				// Customized once the person saved a choice, even one that turned every kind back on.
+				return [userId, { kinds: kindsOf(excluded), customized: byUser.has(userId) }];
 			})
 		);
 	}
@@ -174,10 +175,13 @@ export class EverWorksInboxPreferencesService {
 		};
 	}
 
-	/** The person's Ever Works-mapped organizations, and whether their items go there now. */
+	/**
+	 * The person's Ever Works-mapped organizations, and whether their items go there now: every organization the person
+	 * is an employee of, inactive or archived too (the push sends while the pairing is live, so the list says so).
+	 */
 	private async organizationsOf(tenantId: ID, userId: ID): Promise<EverWorksInboxPreferencesView['organizations']> {
 		const employees = await this.dataSource.getRepository(Employee).find({
-			where: { tenantId, userId, isActive: true, isArchived: false } as never,
+			where: { tenantId, userId } as never,
 			select: { id: true, organizationId: true } as never
 		});
 		const result: EverWorksInboxPreferencesView['organizations'] = [];

@@ -86,7 +86,8 @@ why (not paired, the mapping or its Inbox sync setting off, the Inbox direction,
 the connection inactive). The settings entry appears only once
 `GET /api/integration/ever-works/me/inbox-preferences` answered for the
 signed-in user; where the plugin is off (404) the page only says so. An item
-sent to Ever Works links back to `/pages/inbox?item=<id>`, which opens it.
+sent to Ever Works links back to `/#/pages/inbox?item=<id>` (the app's hash
+route), which opens it.
 
 The page names no Ever Works address of its own: every address it shows comes
 from the API's configuration or from what the admin typed.
