@@ -1586,6 +1586,16 @@ describe('EverWorksInitialSyncService — the inbox phase', () => {
 		expect(queue.enqueue.mock.calls.map((call) => call[0]['gauzyId'])).toEqual(ids);
 	});
 
+	it('stops before a row the queue refuses (the organization no longer mapped), so it is not skipped later', async () => {
+		const { sync, queue } = initialSync({ '': { ids: ['r1', 'r2', 'r3'], next: null } });
+		queue.enqueue.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+		const state: Record<string, unknown> = { exported: 0, exportCursor: null };
+		await expect(
+			sync['exportGauzyInbox'](contextWith(['inbox:write'], true), state, Date.now() + 60_000, async () => true)
+		).resolves.toBe(false);
+		expect(state).toMatchObject({ exported: 1, exportCursor: 'r1' });
+	});
+
 	it('checkpoints each backfill page, and stops when the run ended meanwhile (a cancel)', async () => {
 		const { sync, queue } = initialSync({ '': { ids: ['r1'], next: 'r1' }, r1: { ids: ['r2'], next: null } });
 		const state: Record<string, unknown> = { exported: 0, exportCursor: null };

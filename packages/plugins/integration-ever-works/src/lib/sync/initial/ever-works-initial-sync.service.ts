@@ -771,7 +771,9 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 					op: 'upsert',
 					changedFields: ['backfill']
 				});
-				if (queued) state.exported++;
+				// Not queued: the organization is no longer mapped. The run stops before this row, so it is not skipped later.
+				if (!queued) return false;
+				state.exported++;
 				state.exportCursor = gauzyId;
 			}
 			state.exportCursor = page.next ?? INBOX_EXPORT_DONE;
