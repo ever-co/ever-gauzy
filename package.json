@@ -679,7 +679,7 @@
 		"@nebular/auth": "file:./vendor/nebular/nebular-auth-18.0.0-ng22.9f3a1f9-eager.tgz",
 		"@nebular/security": "file:./vendor/nebular/nebular-security-18.0.0-ng22.9f3a1f9-eager.tgz",
 		"@angular/cdk": "22.2.2",
-		"follow-redirects": "^1.16.1",
+		"follow-redirects": "^1.16.2",
 		"@angular-devkit/architect": "^0.2202.2",
 		"@angular-devkit/core": "^22.2.2",
 		"@typescript-eslint/scope-manager": "^8.71.1",
