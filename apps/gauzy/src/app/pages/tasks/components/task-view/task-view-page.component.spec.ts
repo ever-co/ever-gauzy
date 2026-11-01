@@ -585,6 +585,40 @@ describe('TaskViewPageComponent', () => {
 					expect(rows()[0].querySelector('.task-status-tag')).not.toBeNull();
 				});
 
+				describe('a subtask of another project', () => {
+					const OTHER_PROJECT = 'ffffffff-7777-4777-8777-777777777777';
+
+					it("keeps the plain tag: the menu lists this task's project's statuses", async () => {
+						const page = await editable([child('s1', { projectId: OTHER_PROJECT })]);
+
+						expect(page.subtasks[0].sameProject).toBe(false);
+						expect(select(rows()[0])).toBeNull();
+						expect(rows()[0].querySelector('.task-status-tag')).not.toBeNull();
+					});
+
+					it('saves no status of this project on it, whatever calls the save', async () => {
+						const page = await editable([child('s1', { projectId: OTHER_PROJECT })]);
+
+						await page.changeSubtaskStatus(page.subtasks[0], 'st-done');
+
+						expect(http.put).not.toHaveBeenCalled();
+						expect(page.subtasks[0].statusId).not.toBe('st-done');
+					});
+
+					it('treats a subtask with no project under a task with none as the same project', async () => {
+						const page = await editable([child('s1', { projectId: null })]);
+
+						expect(page.subtasks[0].sameProject).toBe(true);
+					});
+				});
+
+				it('names the status on a tooltip, as a long name is cut short', async () => {
+					await editable([child('s1', { status: TaskStatusEnum.READY_FOR_REVIEW })]);
+
+					const label: any = rows()[0].querySelector('nb-select-label .task-status-tag');
+					expect(label.nbTooltip).toBe('Ready for review');
+				});
+
 				it('keeps the plain tag on a linked issue', async () => {
 					outgoingLinks = of({
 						items: [{ id: 'l1', action: TaskRelatedIssuesRelationEnum.BLOCKS, taskTo: { id: 't2', title: 'Ship it' } }]
@@ -776,12 +810,78 @@ describe('TaskViewPageComponent', () => {
 			expect(selectedTask.taskStatus.id).toBe('open');
 		});
 
-		it('gives the dialog a status even before any is read: its form requires one', async () => {
+		it('gives the dialog a status even when none can be read: its form requires one', async () => {
 			const page = await ready();
 
 			await page.addSubtask();
 
 			expect(context().selectedTask.status).toBe(TaskStatusEnum.OPEN);
+		});
+
+		describe('before the statuses are read', () => {
+			const OPEN = { id: 'open', value: TaskStatusEnum.OPEN, name: 'Open', isTodo: true, order: 1 };
+
+			/** The statuses' read, held until the test answers it. */
+			const holdStatuses = () => {
+				const read$ = new Subject<{ items: unknown[] }>();
+				http.get.mockImplementation((url: string) => (url.endsWith('/task-statuses') ? read$ : of({ items: [] })));
+				return read$;
+			};
+			const answer = (read$: Subject<{ items: unknown[] }>) => {
+				read$.next({ items: [OPEN] });
+				read$.complete();
+			};
+
+			it("reads them first, for a permission that came too late for the page's own read", async () => {
+				permissions = [];
+				const page = await ready();
+				expect(http.get).not.toHaveBeenCalledWith(expect.stringMatching(/\/task-statuses$/), expect.anything());
+				statuses = [OPEN];
+				permissions = [PermissionsEnum.ORG_TASK_ADD];
+				permissions$.next(permissions);
+
+				await page.addSubtask();
+
+				expect(context().selectedTask.taskStatus.id).toBe('open');
+			});
+
+			it('reads nothing more when the statuses are already in', async () => {
+				statuses = [OPEN];
+				const page = await ready();
+				const reads = () => http.get.mock.calls.filter(([url]) => url.endsWith('/task-statuses')).length;
+				const before = reads();
+
+				await page.addSubtask();
+
+				expect(reads()).toBe(before);
+			});
+
+			it('opens one dialog however many times the button is pressed while they are read', async () => {
+				const page = await ready();
+				const read$ = holdStatuses();
+
+				const first = page.addSubtask();
+				await page.addSubtask();
+				expect(dialogService.open).not.toHaveBeenCalled();
+				answer(read$);
+				await first;
+
+				expect(dialogService.open).toHaveBeenCalledTimes(1);
+			});
+
+			it('opens no dialog when the page moves to another task while they are read', async () => {
+				const page = await ready();
+				const read$ = holdStatuses();
+
+				const opening = page.addSubtask();
+				params$.next(convertToParamMap({ id: OTHER_ID }));
+				await settle();
+				answer(read$);
+				await opening;
+
+				expect(page.task.id).toBe(OTHER_ID);
+				expect(dialogService.open).not.toHaveBeenCalled();
+			});
 		});
 
 		it('saves what the dialog answers, under this task and in its organization', async () => {

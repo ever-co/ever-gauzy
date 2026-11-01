@@ -300,8 +300,10 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		if (index < 0 || card.saving) return;
 
 		// The drop's index counts the cards on show of the list that took it; those the filter hides are still in
-		// the column. Let go over a column's header, the card goes to its top.
-		const next = this.visibleCards(target)[target === to ? event.currentIndex : 0];
+		// the column. It means something only over that list: a card carried into a list and on to its header keeps
+		// the last index it had there, so anywhere else in a column it goes to the top.
+		const overCards = target === to && event.isPointerOverContainer;
+		const next = this.visibleCards(target)[overCards ? event.currentIndex : 0];
 		transferArrayItem(from.cards, target.cards, index, next ? target.cards.indexOf(next) : target.cards.length);
 		const wasDone = card.done;
 		this.setDone(card, target.group === 'done');

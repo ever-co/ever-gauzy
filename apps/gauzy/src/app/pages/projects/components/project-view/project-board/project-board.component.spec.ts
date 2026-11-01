@@ -42,13 +42,15 @@ describe('ProjectBoardComponent', () => {
 		component.board.value.reduce((sum, column) => sum + column.cards.length, 0);
 
 	let statistics: { getTasksStatistics: jest.Mock };
+	let toastr: { danger: jest.Mock };
 
 	const board = async (inputs: Partial<ProjectBoardComponent> = {}) => {
 		statistics = { getTasksStatistics: jest.fn(async () => []) };
+		toastr = { danger: jest.fn() };
 		const component = new ProjectBoardComponent(
 			http as unknown as HttpClient,
 			{ hasAnyPermission: () => true } as unknown as Store,
-			{ danger: jest.fn() } as unknown as ToastrService,
+			toastr as unknown as ToastrService,
 			statistics as unknown as TimesheetStatisticsService,
 			{ markForCheck: jest.fn() } as unknown as ChangeDetectorRef
 		);
@@ -155,6 +157,23 @@ describe('ProjectBoardComponent', () => {
 			);
 		});
 
+		it('puts a card at the top of a column let go over its header, after passing through its cards', async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+			pointerOver('done');
+
+			// The list took the card on the way to its header, and keeps the last index it had there.
+			await release(component, {
+				previousContainer: { data: open },
+				container: { data: done },
+				item: { data: open.cards[1] },
+				isPointerOverContainer: false,
+				currentIndex: 1
+			});
+
+			expect(ids(done)).toEqual(['sub-1', 'sub-2']);
+		});
+
 		it('saves the column let go over, not the last one the card passed through', async () => {
 			const component = await board();
 			const [open, done] = component.board.value;
@@ -239,7 +258,8 @@ describe('ProjectBoardComponent', () => {
 		it('puts the card back when the save fails, and says so', async () => {
 			const component = await board();
 			const [open, done] = component.board.value;
-			put.mockReturnValue(throwError(() => new Error('refused')));
+			const error = new Error('refused');
+			put.mockReturnValue(throwError(() => error));
 			pointerOver('done');
 
 			await release(component, {
@@ -252,6 +272,7 @@ describe('ProjectBoardComponent', () => {
 			expect(ids(open)).toEqual([PARENT_ID, 'sub-1']);
 			expect(ids(done)).toEqual(['sub-2']);
 			expect(open.cards[1].saving).toBe(false);
+			expect(toastr.danger).toHaveBeenCalledWith(error);
 		});
 
 		it('marks the column that will take the card, not its own, and clears the mark when the drag ends', async () => {

@@ -101,6 +101,8 @@ export interface ISubtaskRow {
 	status: IRecordViewStatus | null;
 	/** Its entry in the status menu, once the statuses are read; none when the menu has no such status. */
 	statusId: string | null;
+	/** Whether it is in the task's project: the status menu lists that project's statuses, which another may not take. */
+	sameProject: boolean;
 	priority: IRecordViewStatus | null;
 	/** Its assignees. A row with this list keeps the priority and people columns, so the rows line up. */
 	people: IPersonChip[];
@@ -211,6 +213,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	canCreateTasks = false;
 
 	private taskId: string = null;
+	/** The statuses are being read for the dialog: a second press opens no second one. */
+	private openingSubtask = false;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
 	private loadSequence = 0;
 	private readonly hashNumberPipe = new HashNumberPipe();
@@ -414,7 +418,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	 */
 	async changeSubtaskStatus(row: ISubtaskRow, statusId: string): Promise<void> {
 		const status = this.statuses.find((item) => item.id === statusId);
-		if (!status || !this.task || !this.canEdit || this.savingSubtasks.has(row.id) || status.id === row.statusId) return;
+		if (!status || !this.task || !this.canEdit || !row.sameProject) return;
+		if (this.savingSubtasks.has(row.id) || status.id === row.statusId) return;
 		const { id: subtaskId, statusId: previousStatusId } = row;
 		const taskId = this.task.id;
 		row.statusId = status.id;
@@ -482,10 +487,20 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	 * dialog holds no id, so it creates; it answers what to save, which is saved here with the parent it leaves out.
 	 * The dialog's form requires a status and saves the one `taskStatus` names, so both are given, and Open backs up
 	 * a save with neither: the status menu picks no default of its own for a status named otherwise than `open`.
+	 * Statuses not read yet, or skipped because the permission to add came late, are read first: the opening status
+	 * is the project's to say.
 	 */
 	async addSubtask(): Promise<void> {
-		if (!this.task || !this.canAddSubtask) return;
-		const { id: taskId, project, teams } = this.task;
+		if (!this.task || !this.canAddSubtask || this.openingSubtask) return;
+		const { id: taskId } = this.task;
+		if (!this.statuses.length) {
+			this.openingSubtask = true;
+			await this.loadStatuses(this.task, this.loadSequence);
+			this.openingSubtask = false;
+			// The page moved on to another task while the read was under way.
+			if (this.task?.id !== taskId || !this.canAddSubtask) return;
+		}
+		const { project, teams } = this.task;
 		const selectedTask = {
 			parent: this.task,
 			project,
@@ -779,6 +794,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 					title: child.title,
 					status: taskStatusOf(child),
 					statusId: this.currentStatusOf(child),
+					sameProject: (child.projectId ?? null) === (task.projectId ?? null),
 					priority: taskPriorityOf(child),
 					people: (child.members || []).map((member) => personOf(member)).filter(Boolean),
 					done

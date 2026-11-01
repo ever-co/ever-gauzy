@@ -497,7 +497,8 @@
 
 <!-- A task row: check, key, title, then a subtask's priority and assignees — the link to the task's own page, as Jira
      lists child issues — and its status. The columns stay when empty, so the rows line up. A subtask's status is a menu
-     for those who may edit it, as the header's, so it sits beside the link and not in it: a choice opens no page. -->
+     for those who may edit it, as the header's, so it sits beside the link and not in it: a choice opens no page. The
+     menu lists this task's project's statuses, so a subtask of another project keeps the plain tag. -->
 <ng-template #taskRow let-row let-id="id">
 	<div class="task-row" [class.is-done]="row.done">
 		<a class="task-row-link" [routerLink]="taskLink(id)">
@@ -542,7 +543,8 @@
 				</span>
 			}
 		</a>
-		@if (row.people && canEdit && statuses.length) {
+		@if (row.people && row.sameProject && canEdit && statuses.length) {
+			@let statusLabel = statusName(menuStatusOf(row)?.name || row.status?.text);
 			<span class="task-row-status">
 				<nb-select
 					class="task-status-select"
@@ -557,7 +559,7 @@
 					(selectedChange)="changeSubtaskStatus(row, $event)"
 				>
 					<nb-select-label>
-						<span class="task-status-tag">{{ statusName(menuStatusOf(row)?.name || row.status?.text) }}</span>
+						<span class="task-status-tag" [nbTooltip]="statusLabel" nbTooltipPlacement="top">{{ statusLabel }}</span>
 					</nb-select-label>
 					@for (option of statuses; track option.id) {
 						<nb-option class="task-status-option" [style.--status-color]="option.color" [value]="option.id">
