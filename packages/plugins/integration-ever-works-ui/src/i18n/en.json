@@ -209,7 +209,7 @@
 		"other": {
 			"LABEL": "Other items",
 			"HINT": "Anything else that reaches your Inbox.",
-			"NO": "no other"
+			"NO": "no other items"
 		}
 	},
 	"INBOX_PREFERENCES": {

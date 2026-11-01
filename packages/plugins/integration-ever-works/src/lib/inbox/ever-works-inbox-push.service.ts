@@ -687,7 +687,11 @@ export class EverWorksInboxPushService
 		const expected: EverWorksCopySide = {
 			state: patch.state ?? seen.state,
 			unread: seen.unread,
-			answeredBy: patch.resolution || patch.state === 'resolved' ? 'gauzy' : seen.answeredBy,
+			// A move to `resolved` without a resolution (a member's answered copy back out of an archive) keeps whose answer it is.
+			answeredBy:
+				patch.resolution || (patch.state === 'resolved' && seen.answeredBy !== 'member')
+					? 'gauzy'
+					: seen.answeredBy,
 			answer: sentAnswer !== undefined ? sentAnswer : seen.answer
 		};
 		let moves: { done: string[]; e: EverWorksCopySide };

@@ -412,6 +412,8 @@ export class InboxPageComponent implements OnInit {
 	private requestedItemId: string | null = null;
 	/** The read of the latest `?item=` link still on its way (a later link cancels it). */
 	private linkRead: Subscription | null = null;
+	/** The item open when the pending link arrived: a link never replaces an item opened after it. */
+	private selectedAtLink: string | null = null;
 
 	ngOnInit(): void {
 		this.readRequestedTab();
@@ -437,6 +439,7 @@ export class InboxPageComponent implements OnInit {
 				this.linkRead?.unsubscribe();
 				this.linkRead = null;
 				this.requestedItemId = id;
+				this.selectedAtLink = this.selectedId();
 				// Before the Inbox is served, or while its list is being read, the list's answer opens it.
 				if (id && this.view() === 'ready' && !this.loading()) this.openRequestedItem();
 			});
@@ -480,7 +483,8 @@ export class InboxPageComponent implements OnInit {
 		this.requestedItemId = null;
 		if (!id) return;
 		this.linkRead?.unsubscribe();
-		const selectedBefore = this.selectedId();
+		// Counted from the link's arrival (it may have waited for the list), not from this read.
+		const selectedBefore = this.selectedAtLink;
 		this.linkRead = this.api
 			.get(id)
 			.pipe(takeUntilDestroyed(this.destroyRef))
@@ -499,6 +503,8 @@ export class InboxPageComponent implements OnInit {
 					this.open(item);
 				},
 				error: (error: HttpErrorResponse) => {
+					// An item opened meanwhile makes the link obsolete: no alert, nothing kept for a retry.
+					if (this.selectedId() !== selectedBefore) return;
 					if (error?.status === 404 || error?.status === 403) return;
 					this.requestedItemId = id;
 					this.actionError.set('INBOX.ITEM_LINK_ERROR');
@@ -548,8 +554,9 @@ export class InboxPageComponent implements OnInit {
 				if (!append && id && !items.some((item) => item.id === id) && this.opened()?.id !== id) {
 					this.selectedId.set(null);
 				}
-				// A linked item waiting for the list (the first page, or the retry after a failure) is read now.
-				if (!append && this.requestedItemId) this.openRequestedItem();
+				// A linked item waiting for the list (its first page, a page loaded while it waited, or the retry after a failure)
+				// is read now.
+				if (this.requestedItemId) this.openRequestedItem();
 			});
 	}
 

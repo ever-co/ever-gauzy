@@ -404,6 +404,57 @@ describe('InboxPageComponent', () => {
 			expect(component.selected()).toMatchObject({ id: 'a', title: 'New title' });
 		});
 
+		it('a link that waited for the list never replaces an item opened meanwhile, nor alerts when its read fails then', () => {
+			const read = { isRead: true, isArchived: false, snoozedUntil: null };
+			api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(of({ items: [item('a', { recipient: read })], nextCursor: null }));
+			api.get.mockReturnValue(of(item('x', { recipient: read })));
+			const params$ = withItemLink('x');
+			const { component, fixture } = render();
+			fixture.detectChanges();
+			expect(component.selected()).toMatchObject({ id: 'x' });
+			// A list reload is on its way when another link arrives; the user opens a row before the list answers.
+			const list = new Subject<{ items: IInboxItemWithState[]; nextCursor: string | null }>();
+			api.list.mockReturnValue(list);
+			component.reload();
+			params$.next(convertToParamMap({ item: 'deep' }));
+			component.open(item('a', { recipient: read }));
+			api.get.mockReturnValue(of(item('deep', { recipient: read })));
+			list.next({ items: [item('a', { recipient: read })], nextCursor: null });
+			expect(component.selected()).toMatchObject({ id: 'a' });
+			// The same with a read that fails: no alert, and nothing kept for the next list.
+			const failing = new Subject<IInboxItemWithState>();
+			api.get.mockReturnValue(failing);
+			api.list.mockReturnValue(of({ items: [item('a', { recipient: read })], nextCursor: null }));
+			params$.next(convertToParamMap({ item: 'other' }));
+			component.open(item('b', { recipient: read }));
+			failing.error({ status: 503 });
+			expect(component.actionError()).toBeNull();
+			api.get.mockClear();
+			component.reload();
+			expect(api.get).not.toHaveBeenCalled();
+			expect(component.selected()).toMatchObject({ id: 'b' });
+		});
+
+		it('a link followed while more items load opens once that page is served', () => {
+			api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(of({ items: [item('a')], nextCursor: 'c1' }));
+			api.get.mockReturnValue(
+				of(item('deep', { recipient: { isRead: true, isArchived: false, snoozedUntil: null } }))
+			);
+			const params$ = withItemLink('');
+			const { component, fixture } = render();
+			fixture.detectChanges();
+			const page = new Subject<{ items: IInboxItemWithState[]; nextCursor: string | null }>();
+			api.list.mockReturnValue(page);
+			component.more();
+			params$.next(convertToParamMap({ item: 'deep' }));
+			expect(api.get).not.toHaveBeenCalled();
+			page.next({ items: [item('b')], nextCursor: null });
+			expect(api.get).toHaveBeenCalledWith('deep');
+			expect(component.selected()).toMatchObject({ id: 'deep' });
+		});
+
 		it('a link removed (another tab chosen) while it is read opens nothing', () => {
 			api.counts.mockReturnValue(of({ unread: 1, decisionsOpen: 0, byMailbox: [] }));
 			api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));

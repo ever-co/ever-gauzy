@@ -439,7 +439,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 				state.imported = true;
 			}
 			if (plan.export && !state.exportDone) {
-				if (!(await this.exportPhase(context, spec, state, deadline, stillOwner))) return;
+				if (!(await this.exportPhase(context, spec, state, deadline, stillOwner, checkpoint))) return;
 				state.exportDone = true;
 			}
 			state.attempts = 0;
@@ -497,6 +497,9 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		if (!canImport && !canExport) {
 			if (inboxNote) return { import: false, export: false, done: true, note: inboxNote };
 			if (missingScope) return { import: false, export: false, note: `the Ever Works key lacks ${spec.scope}` };
+			// The inbox sends with inbox:write: a direction that only sends, with a key that may only read, names that scope.
+			if (spec.name === 'inbox' && toEverWorks(direction) && !scopes.includes('inbox:write'))
+				return { import: false, export: false, note: 'the Ever Works key lacks inbox:write' };
 			return { import: false, export: false, note: 'not synced by this version yet; a later resync picks it up' };
 		}
 		const note = spec.name === 'teams' || spec.name === 'works' ? 'unpaired records wait for their tab; only pairs are refreshed' : inboxNote;
@@ -720,10 +723,11 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		spec: EverWorksSyncPhaseSpec,
 		state: EverWorksSyncPhaseState,
 		deadline: number,
-		stillOwner?: () => Promise<boolean>
+		stillOwner?: () => Promise<boolean>,
+		checkpoint?: () => Promise<boolean>
 	): Promise<boolean> {
 		const entityType = (spec.exportLinkType ?? spec.linkType) as EverWorksLinkType;
-		if (spec.name === 'inbox') return this.exportGauzyInbox(context, state, deadline, stillOwner);
+		if (spec.name === 'inbox') return this.exportGauzyInbox(context, state, deadline, stillOwner, checkpoint);
 		for (;;) {
 			const after = state.exportCursor ?? null;
 			const ids = spec.name === 'teams' ? await this.pairedTeams(context, after) : spec.name === 'tasks' ? await this.tasksInScope(context, after) : [];
@@ -739,12 +743,14 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 	/**
 	 * The inbox phase's backfill (the mapping's `BACKFILL_GAUZY_INBOX`): the open Gauzy Inbox items of paired people,
 	 * as their preferences allow, one change per recipient row, from `state.exportCursor`; true once every page is queued.
+	 * Each page is checkpointed: a run ended meanwhile (an admin's cancel) stops it there.
 	 */
 	private async exportGauzyInbox(
 		context: EverWorksMappingContext,
 		state: EverWorksSyncPhaseState,
 		deadline: number,
-		stillOwner?: () => Promise<boolean>
+		stillOwner?: () => Promise<boolean>,
+		checkpoint?: () => Promise<boolean>
 	): Promise<boolean> {
 		if (!this.inboxPush) return true;
 		if (state.exportCursor === INBOX_EXPORT_DONE) return true;
@@ -752,9 +758,9 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			if (isOver(deadline) || (stillOwner && !(await stillOwner()))) return false;
 			const page = await this.inboxPush.backfillPage(context, state.exportCursor ?? null);
 			for (const [index, gauzyId] of page.ids.entries()) {
-				// Within the sweep's budget and lease, as the other exporters: a stopped page carries on after the last row
-				// queued (the rows are in recipient id order, the feed's own cursor).
-				if (index > 0 && index % 50 === 0 && (isOver(deadline) || (stillOwner && !(await stillOwner())))) return false;
+				// Within the sweep's budget and lease, as the other exporters (checked again once the page is read): a stopped
+				// page carries on after the last row queued (the rows are in recipient id order, the feed's own cursor).
+				if (index % 50 === 0 && (isOver(deadline) || (stillOwner && !(await stillOwner())))) return false;
 				const queued = await this.queue.enqueue({
 					tenantId: context.tenantId,
 					organizationId: context.organizationId,
@@ -768,6 +774,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			}
 			state.exportCursor = page.next ?? INBOX_EXPORT_DONE;
 			if (!page.next) return true;
+			if (checkpoint && !(await checkpoint())) return false;
 		}
 	}
 
@@ -1077,7 +1084,9 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			...(spec.linkType ? await this.stoppedLinks(context, spec.linkType) : []).map((link) => link.ewId),
 			...(spec.name === 'inbox' ? await this.stoppedLinks(context, EverWorksLinkType.GAUZY_INBOX_ITEM) : []).map((link) => link.ewId)
 		]);
-		const neverLinked = records.filter((record) => !known.has(idOf(record))).length;
+		// An inbox item this connection's key filed is a Gauzy copy (its link may be missing a moment, a replay): never created.
+		const ownKey = spec.name === 'inbox' ? context.connection.keyId || null : null;
+		const neverLinked = records.filter((record) => !known.has(idOf(record)) && !(ownKey && record['integrationKeyId'] === ownKey)).length;
 		if (spec.name === 'missions') {
 			// Missions that predate the mapping wait for the Initiatives tab; the run creates none of them.
 			preview.toPair = { everWorks: neverLinked, gauzy: 0 };

@@ -1050,7 +1050,7 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 	});
 
 	it('a copy the member answered comes back out of an archive made in Gauzy, its answer kept', async () => {
-		const { addItem, push, inboxWrite, apply, recipients, linkOf } = setup();
+		const { addItem, push, inboxWrite, apply, recipients, items, linkOf } = setup();
 		const { item, ada } = addItem();
 		await push(ada);
 		const ewId = linkOf(ada)?.['ewId'] as string;
@@ -1062,6 +1062,14 @@ describe('EverWorksInboxPushService — filing and patching', () => {
 		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
 		expect(inboxWrite.patched[inboxWrite.patched.length - 1].body).toEqual({ state: 'resolved' });
 		expect(inboxWrite.byExternalId(`${item.id}:${ada}`)).toMatchObject({ state: 'resolved', answerOptionId: 'no' });
+		// The answer is still the member's: a later change of Gauzy's answer never goes over it.
+		const patches = inboxWrite.patched.length;
+		Object.assign(items.get(item.id as string) as IInboxItem, {
+			response: { optionId: 'yes', answeredByUserId: ADA.user, answeredAt: new Date().toISOString() }
+		});
+		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped' });
+		expect(inboxWrite.patched).toHaveLength(patches);
+		expect(inboxWrite.byExternalId(`${item.id}:${ada}`)).toMatchObject({ answerOptionId: 'no' });
 	});
 
 	it('archives the copy of a gone recipient row on the current version after a 412 (never a stale If-Match forever)', async () => {
@@ -1494,13 +1502,13 @@ describe('EverWorksInitialSyncService — the inbox phase', () => {
 		return { sync: sync as unknown as Record<string, (...args: unknown[]) => any>, queue, inboxPush };
 	}
 
-	const contextWith = (scopes: string[], backfill: boolean) => ({
+	const contextWith = (scopes: string[], backfill: boolean, inbox = 'both') => ({
 		tenantId: TENANT,
 		organizationId: ORG,
 		integrationTenantId: MAPPING,
 		connection: { scopes: JSON.stringify(scopes) },
 		mapping: { settings: [{ settingsName: 'BACKFILL_GAUZY_INBOX', settingsValue: String(backfill) }] },
-		directions: { ...DEFAULT_EVER_WORKS_DIRECTIONS, inbox: 'both' },
+		directions: { ...DEFAULT_EVER_WORKS_DIRECTIONS, inbox },
 		entitySync: {}
 	});
 
@@ -1516,6 +1524,12 @@ describe('EverWorksInitialSyncService — the inbox phase', () => {
 		expect(plan(['inbox:write'], true)).toMatchObject({ import: false, export: true });
 		expect(plan(['inbox:read'], true)).toMatchObject({ import: true, export: false });
 		expect(plan(['inbox:write'], false)).toMatchObject({ import: false, export: false, done: true });
+		// Gauzy to Ever Works only, with a key that may only read: the missing scope is named.
+		expect(sync['planOf'](INBOX, contextWith(['inbox:read'], true, 'gauzy_to_ew'))).toMatchObject({
+			import: false,
+			export: false,
+			note: 'the Ever Works key lacks inbox:write'
+		});
 	});
 
 	it('queues the backfill page by page and resumes a stopped run from its saved cursor', async () => {
@@ -1528,7 +1542,7 @@ describe('EverWorksInitialSyncService — the inbox phase', () => {
 		const deadline = Date.now() + 60_000;
 		// The lease is lost after the first page: the run stops with its cursor saved.
 		let owner = 0;
-		await expect(sync['exportGauzyInbox'](context, state, deadline, async () => ++owner < 2)).resolves.toBe(false);
+		await expect(sync['exportGauzyInbox'](context, state, deadline, async () => ++owner < 3)).resolves.toBe(false);
 		expect(state).toMatchObject({ exported: 2, exportCursor: 'r2' });
 		// Another sweep carries on from it, to the end; a finished backfill reads nothing more.
 		await expect(sync['exportGauzyInbox'](context, state, deadline, async () => true)).resolves.toBe(true);
@@ -1548,11 +1562,29 @@ describe('EverWorksInitialSyncService — the inbox phase', () => {
 		const state: Record<string, unknown> = { exported: 0, exportCursor: null };
 		const deadline = Date.now() + 60_000;
 		let owner = 0;
-		await expect(sync['exportGauzyInbox'](context, state, deadline, async () => ++owner < 2)).resolves.toBe(false);
+		await expect(sync['exportGauzyInbox'](context, state, deadline, async () => ++owner < 3)).resolves.toBe(false);
 		expect(state).toMatchObject({ exported: 50, exportCursor: 'r049' });
 		await expect(sync['exportGauzyInbox'](context, state, deadline, async () => true)).resolves.toBe(true);
 		expect(state).toMatchObject({ exported: 120, exportCursor: 'done' });
 		expect(queue.enqueue.mock.calls.map((call) => call[0]['gauzyId'])).toEqual(ids);
+	});
+
+	it('checkpoints each backfill page, and stops when the run ended meanwhile (a cancel)', async () => {
+		const { sync, queue } = initialSync({ '': { ids: ['r1'], next: 'r1' }, r1: { ids: ['r2'], next: null } });
+		const state: Record<string, unknown> = { exported: 0, exportCursor: null };
+		const checkpoint = jest.fn(async () => false);
+		await expect(
+			sync['exportGauzyInbox'](
+				contextWith(['inbox:write'], true),
+				state,
+				Date.now() + 60_000,
+				async () => true,
+				checkpoint
+			)
+		).resolves.toBe(false);
+		expect(checkpoint).toHaveBeenCalledTimes(1);
+		expect(state).toMatchObject({ exported: 1, exportCursor: 'r1' });
+		expect(queue.enqueue).toHaveBeenCalledTimes(1);
 	});
 });
 
