@@ -19781,7 +19781,7 @@ flru@1.0.2:
   resolved "https://registry.npmjs.org/flru/-/flru-1.0.2.tgz#1ae514c62b8b035ffff9ca9e4563ddcc817f4845"
   integrity sha512-kWyh8ADvHBFz6ua5xYOPnUroZTT/bwWfrCeL0Wj1dzG4/YOmOcfJ99W8dOVyyynJN35rZ9aCOtHChqQovV7yog==
 
-follow-redirects@^1.0.0, follow-redirects@^1.16.0, follow-redirects@^1.16.1:
+follow-redirects@^1.0.0, follow-redirects@^1.16.0, follow-redirects@^1.16.2:
   version "1.16.2"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.16.2.tgz#a233160dd1bc9b16cbbab43709e6adc7cc941c8c"
   integrity sha512-/kVP2U8z596Ia0gwFrwyIeo74ta5aVmSeU1FfAUMAmcEP5EP7zydmag3SLiN64NaRKef3lxsq7i/g7ltJQDGow==
