@@ -7667,6 +7667,7 @@
 		"SUBTASKS": "Unteraufgaben",
 		"SUBTASKS_DONE": "{{ done }} von {{ total }} erledigt",
 		"NO_SUBTASKS": "Keine Unteraufgaben",
+		"ADD_SUBTASK": "Unteraufgabe hinzufügen",
 		"LINKED_ISSUES": "Verknüpfte Aufgaben",
 		"NO_LINKED_ISSUES": "Keine verknüpften Aufgaben",
 		"LINKS": {

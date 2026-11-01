@@ -36,6 +36,54 @@ describe('AddTaskDialogComponent', () => {
 		expect(component).toBeTruthy();
 	});
 
+	it('leaves the parent to the user, and heads a new task as one', () => {
+		expect(component.form.get('parentId').enabled).toBe(true);
+		expect(component.headingKey).toBe('TASKS_PAGE.CREATE_TASK');
+	});
+
+	describe('a parent fixed by the opener', () => {
+		const PARENT = { id: 'parent-1', title: 'The parent' } as ITask;
+		let store: Store;
+
+		beforeEach(async () => {
+			// The form takes the task once the organization is known.
+			store = TestBed.inject(Store);
+			store.user = { id: 'user-1', tenantId: 'tenant-1' } as IUser;
+			store.selectedOrganization = { id: 'organization-1', tenantId: 'tenant-1' } as IOrganization;
+			fixture = TestBed.createComponent(AddTaskDialogComponent);
+			component = fixture.componentInstance;
+			component.selectedTask = { parent: PARENT, status: TaskStatusEnum.OPEN } as ITask;
+			component.parentLocked = true;
+			fixture.detectChanges();
+			await fixture.whenStable();
+		});
+
+		afterEach(() => {
+			store.selectedOrganization = null;
+		});
+
+		it('shows the field but does not let it change', () => {
+			expect(component.form.get('parentId').disabled).toBe(true);
+		});
+
+		it('heads the dialog as adding a subtask', () => {
+			expect(component.headingKey).toBe('TASK_VIEW.ADD_SUBTASK');
+		});
+
+		it('leaves the parent out of what it answers: the opener sets it', () => {
+			component.form.get('title').setValue('A subtask');
+
+			expect(component.form.getRawValue().parentId).toBe(PARENT.id);
+			expect(component.form.value).not.toHaveProperty('parentId');
+		});
+
+		it('still heads a task being edited as an edit', () => {
+			component.selectedTask = { id: 'task-1', parent: PARENT } as ITask;
+
+			expect(component.headingKey).toBe('TASKS_PAGE.EDIT_TASK');
+		});
+	});
+
 	describe('optional client', () => {
 		const ACME = 'client-acme';
 		const GLOBEX = 'client-globex';

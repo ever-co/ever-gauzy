@@ -14,7 +14,8 @@ import {
 	ITask,
 	ITaskLinkedIssue,
 	ITaskStatus,
-	PermissionsEnum
+	PermissionsEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams, toUtcOffset } from '@gauzy/ui-core/common';
 import {
@@ -38,26 +39,43 @@ import { IEmployeeHoursDay } from '../../../employees/view-employee/employee-hou
 import {
 	failed,
 	formatDuration,
+	humanize,
+	IPersonChip,
 	ITaskWorker,
 	Loadable,
 	loaded,
 	loading,
+	personOf,
 	scopedTaskStatusesOf,
 	taskWorkersOf
 } from '../../../projects/components/project-view/project-view.utils';
-import { buildTaskViewSections, isTaskFinished, taskStatusOf, TASK_VIEW_RELATIONS } from './task-view-sections';
+import {
+	buildTaskViewSections,
+	isTaskFinished,
+	taskPriorityOf,
+	taskStatusOf,
+	TASK_VIEW_RELATIONS
+} from './task-view-sections';
 import {
 	hoursDaysOf,
 	ILinkedIssueGroup,
 	ITimeEntryRow,
 	ITimeTracking,
 	linkedIssueGroupsOf,
+	newTaskStatusOf,
 	timeEntriesOf,
 	timeTrackingOf
 } from './task-view-page.utils';
 
-/** The relations the page reads: the View's, and the subtasks with their status. */
-export const TASK_PAGE_RELATIONS: string[] = [...TASK_VIEW_RELATIONS, 'children', 'children.taskStatus'];
+/** The relations the page reads: the View's, and the subtasks with what their rows show, as the Board's cards. */
+export const TASK_PAGE_RELATIONS: string[] = [
+	...TASK_VIEW_RELATIONS,
+	'children',
+	'children.taskStatus',
+	'children.taskPriority',
+	'children.members',
+	'children.members.user'
+];
 
 /**
  * The relations the edit dialog reads, as the task list loads them: the View's and the modules. The dialog saves
@@ -81,6 +99,13 @@ export interface ISubtaskRow {
 	key: string;
 	title: string;
 	status: IRecordViewStatus | null;
+	/** Its entry in the status menu, once the statuses are read; none when the menu has no such status. */
+	statusId: string | null;
+	/** Whether it is in the task's project: the status menu lists that project's statuses, which another may not take. */
+	sameProject: boolean;
+	priority: IRecordViewStatus | null;
+	/** Its assignees. A row with this list keeps the priority and people columns, so the rows line up. */
+	people: IPersonChip[];
 	done: boolean;
 }
 
@@ -128,8 +153,6 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	readonly favoriteEntity = BaseEntityEnum.Task;
 	readonly hoursDays = HOURS_DAYS;
 	readonly entriesDays = ENTRIES_DAYS;
-	/** The list a task belongs to, for the page's back button. */
-	readonly backLink = '/pages/tasks/dashboard';
 	readonly tabs: { id: TaskViewTab; label: string; icon: string }[] = [
 		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
 		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
@@ -172,11 +195,13 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	entries: Loadable<ITimeEntryRow[]> = loading([]);
 	links: Loadable<ILinkedIssueGroup[]> = loading([]);
 
-	/** The statuses the task can move to; read for those who may edit it. */
+	/** The statuses the task can move to; read for those who may edit it or add a subtask to it. */
 	statuses: ITaskStatus[] = [];
 	/** The status menu's entry for the task's status: by its status row, else by its value or name. */
 	currentStatusId: string | null = null;
 	savingStatus = false;
+	/** The subtasks whose status is being saved from their rows. */
+	readonly savingSubtasks = new Set<string>();
 
 	readonly canEdit: boolean;
 	/**
@@ -184,8 +209,12 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	 * permissions, which may load after the page is built.
 	 */
 	canViewProject = false;
+	/** Whether the viewer holds the create route's grants. Follows the permissions likewise. */
+	canCreateTasks = false;
 
 	private taskId: string = null;
+	/** The statuses are being read for the dialog: a second press opens no second one. */
+	private openingSubtask = false;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
 	private loadSequence = 0;
 	private readonly hashNumberPipe = new HashNumberPipe();
@@ -233,6 +262,13 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				untilDestroyed(this)
 			)
 			.subscribe((canViewProject) => (this.canViewProject = canViewProject));
+		this.store.userRolePermissions$
+			.pipe(
+				map(() => this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)),
+				distinctUntilChanged(),
+				untilDestroyed(this)
+			)
+			.subscribe((canCreateTasks) => (this.canCreateTasks = canCreateTasks));
 		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back.
 		this.route.queryParamMap
 			.pipe(
@@ -376,6 +412,40 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	}
 
 	/**
+	 * Moves a subtask to another status from its row, as the header moves the task: the status alone. The row shows it
+	 * at once and a failed save puts it back, or the menu, which keeps its own selection, would show a status that
+	 * was never saved. The task is read again after, so the rows' order, the count and the bar follow.
+	 */
+	async changeSubtaskStatus(row: ISubtaskRow, statusId: string): Promise<void> {
+		const status = this.statuses.find((item) => item.id === statusId);
+		if (!status || !this.task || !this.canEdit || !row.sameProject) return;
+		if (this.savingSubtasks.has(row.id) || status.id === row.statusId) return;
+		const { id: subtaskId, statusId: previousStatusId } = row;
+		const taskId = this.task.id;
+		row.statusId = status.id;
+		this.savingSubtasks.add(subtaskId);
+		try {
+			await firstValueFrom(
+				this.http.put<ITask>(`${API_PREFIX}/tasks/${subtaskId}/status`, {
+					status: status.value || status.name,
+					taskStatusId: status.id,
+					...this.scope()
+				})
+			);
+			await this.refresh(taskId);
+			// After the read: the server writes the move's log entry as the update lands.
+			this.reloadPanes();
+		} catch (error) {
+			// Another row's save may have read the task again meanwhile: the row on screen is found afresh.
+			const current = this.subtasks.find((item) => item.id === subtaskId);
+			if (current) current.statusId = previousStatusId;
+			this.toastrService.danger(error);
+		} finally {
+			this.savingSubtasks.delete(subtaskId);
+		}
+	}
+
+	/**
 	 * Opens the task dialog the task list edits with, on the task read as the list reads it — with its modules,
 	 * which the dialog saves back — then saves what it answers and reads the task again. A failed read opens no
 	 * dialog: one opened without the modules would unlink them all.
@@ -395,14 +465,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		const dialog = this.dialogService.open(AddTaskDialogComponent, { context: { selectedTask } });
 		const data: any = await firstValueFrom(dialog.onClose.pipe(first()));
 		if (!data) return;
-		const { estimateDays, estimateHours, estimateMinutes } = data;
-		const estimate =
-			(Number(estimateDays) || 0) * 24 * 60 * 60 + (Number(estimateHours) || 0) * 60 * 60 + (Number(estimateMinutes) || 0) * 60;
 		try {
 			await firstValueFrom(
 				this.tasksService.editTask({
 					...data,
-					estimate: estimate || null,
+					estimate: this.estimateOf(data),
 					...this.scope(),
 					id: taskId
 				})
@@ -412,6 +479,65 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
+	}
+
+	/**
+	 * Opens the task dialog on a new task under this one: the parent shown and fixed, the task's project and teams
+	 * filled in — so it is numbered with its siblings and shows on their lists — and the project's opening status. The
+	 * dialog holds no id, so it creates; it answers what to save, which is saved here with the parent it leaves out.
+	 * The dialog's form requires a status and saves the one `taskStatus` names, so both are given, and Open backs up
+	 * a save with neither: the status menu picks no default of its own for a status named otherwise than `open`.
+	 * Statuses not read yet, or skipped because the permission to add came late, are read first: the opening status
+	 * is the project's to say.
+	 */
+	async addSubtask(): Promise<void> {
+		if (!this.task || !this.canAddSubtask || this.openingSubtask) return;
+		const { id: taskId } = this.task;
+		if (!this.statuses.length) {
+			this.openingSubtask = true;
+			// A refresh of this task while they are read discards that read, so they are read again until one holds.
+			let sequence: number;
+			do {
+				sequence = this.loadSequence;
+				await this.loadStatuses(this.task, sequence);
+			} while (sequence !== this.loadSequence && this.task?.id === taskId);
+			this.openingSubtask = false;
+			// The page moved on to another task while the read was under way.
+			if (this.task?.id !== taskId || !this.canAddSubtask) return;
+		}
+		const { project, teams } = this.task;
+		const selectedTask = {
+			parent: this.task,
+			project,
+			teams,
+			status: TaskStatusEnum.OPEN,
+			taskStatus: newTaskStatusOf(this.statuses)
+		} as ITask;
+		const dialog = this.dialogService.open(AddTaskDialogComponent, { context: { selectedTask, parentLocked: true } });
+		const data: any = await firstValueFrom(dialog.onClose.pipe(first()));
+		if (!data) return;
+		try {
+			await firstValueFrom(
+				this.tasksService.createTask({
+					...data,
+					status: data.status || TaskStatusEnum.OPEN,
+					estimate: this.estimateOf(data),
+					parentId: taskId,
+					...this.scope()
+				})
+			);
+			await this.refresh(taskId);
+			this.reloadPanes();
+		} catch {
+			// The service has shown the error.
+		}
+	}
+
+	/** The seconds the task dialog's estimate fields add up to, or none when they are blank. */
+	private estimateOf({ estimateDays, estimateHours, estimateMinutes }: any): number | null {
+		const estimate =
+			(Number(estimateDays) || 0) * 24 * 60 * 60 + (Number(estimateHours) || 0) * 60 * 60 + (Number(estimateMinutes) || 0) * 60;
+		return estimate || null;
 	}
 
 	/** Copies the page's address, with the open tab, to paste in a chat or a ticket. */
@@ -435,6 +561,30 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	/* ── View helpers ── */
 
+	/** Whether the task sits under another. Subtasks go one level deep for now: a subtask takes none of its own. */
+	get isSubtask(): boolean {
+		return !!(this.task?.parentId || this.task?.parent);
+	}
+
+	/**
+	 * Where the back button leads: a subtask's own task, else the list a task belongs to. By the parent as read, not
+	 * its id: the id outlives a deleted parent, whose page would read "not found".
+	 */
+	get backLink(): string {
+		const parentId = this.task?.parent?.id;
+		return parentId ? `/pages/tasks/view/${parentId}` : '/pages/tasks/dashboard';
+	}
+
+	/** What the back button is named: the task it returns to, when it does not lead to the list. */
+	get backLabel(): string {
+		return this.task?.parent?.id ? 'TASKS_PAGE.PARENT_TASK' : 'RECORD_VIEW_PAGE.BACK_TO_LIST';
+	}
+
+	/** Whether the Subtasks panel offers to add one. */
+	get canAddSubtask(): boolean {
+		return this.canCreateTasks && !this.isSubtask;
+	}
+
 	/** The menu's entry for the task's status, for the button's label and colour. */
 	get currentStatus(): ITaskStatus | null {
 		return this.statuses.find((status) => status.id === this.currentStatusId) || null;
@@ -442,6 +592,18 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	taskLink(id: string): string[] {
 		return ['/pages/tasks/view', id];
+	}
+
+	peopleNames(people: IPersonChip[]): string {
+		return people.map((person) => person.name).join(', ');
+	}
+
+	/** A status's name in a row, read as words: a seeded status is named by its slug, `ready-for-review`. */
+	readonly statusName = humanize;
+
+	/** The menu's entry for a subtask's status, for its button's label and colour. */
+	menuStatusOf(row: ISubtaskRow): ITaskStatus | null {
+		return this.statuses.find((status) => status.id === row.statusId) || null;
 	}
 
 	/** The total of the hours chart, so an empty fortnight says so instead of drawing flat bars. */
@@ -459,7 +621,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		void this.loadHours(task, sequence);
 		void this.loadEntries(task, sequence);
 		void this.loadLinks(task, sequence);
-		if (this.canEdit) void this.loadStatuses(task, sequence);
+		// The status menu's choices, and the status a new subtask starts in.
+		if (this.canEdit || this.canAddSubtask) void this.loadStatuses(task, sequence);
 	}
 
 	/**
@@ -557,6 +720,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			if (sequence !== this.loadSequence) return;
 			this.statuses = [...statuses].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 			this.currentStatusId = this.currentStatusOf(task);
+			// The rows find their entries in the menu now that it has them.
+			this.subtasks = this.subtasksOf(task);
 		} catch {
 			// The status shows without its menu.
 		}
@@ -633,6 +798,10 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 					key: number ? this.hashNumberPipe.transform(number) : '',
 					title: child.title,
 					status: taskStatusOf(child),
+					statusId: this.currentStatusOf(child),
+					sameProject: (child.projectId ?? null) === (task.projectId ?? null),
+					priority: taskPriorityOf(child),
+					people: (child.members || []).map((member) => personOf(member)).filter(Boolean),
 					done
 				};
 			});

@@ -1,5 +1,11 @@
 <!-- A task's own page, laid out as Jira's issue page: the work in the wide column, the facts in the side one. -->
-<ngx-record-view-page heading="TASKS_PAGE.HEADER" [backLink]="backLink" [state]="state" (retry)="load()">
+<ngx-record-view-page
+	heading="TASKS_PAGE.HEADER"
+	[backLink]="backLink"
+	[backLabel]="backLabel"
+	[state]="state"
+	(retry)="load()"
+>
 	@if (task) {
 		<!-- The page's actions, on one line with its back button, as the project page's: the status, then Edit, the
 		     link and the star. On the Board the status sits with the filters instead. -->
@@ -177,54 +183,74 @@
 					</div>
 				</section>
 
-				<!-- Subtasks, open ones first, with the share done. -->
-				<section class="panel project-view-panel">
-					<header class="panel-header">
-						<div class="panel-heading">
-							<h5 class="panel-title panel-title--icon">
-								<nb-icon icon="list-outline" aria-hidden="true"></nb-icon>
-								{{ 'TASK_VIEW.SUBTASKS' | translate }}
-								@if (subtasks.length) {
-									<span class="title-count">{{ subtasks.length }}</span>
+				<!-- Subtasks, open ones first, with the share done, and a button to add one in the task dialog. -->
+				<!-- A subtask has none of its own, so no panel: only one that already has some still lists them. -->
+				@if (!isSubtask || subtasks.length) {
+					<section class="panel project-view-panel">
+						<header class="panel-header panel-header--wrap">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="list-outline" aria-hidden="true"></nb-icon>
+									{{ 'TASK_VIEW.SUBTASKS' | translate }}
+									@if (subtasks.length) {
+										<span class="title-count">{{ subtasks.length }}</span>
+									}
+								</h5>
+								@if (subtaskCount; as count) {
+									<span class="panel-caption">{{
+										'TASK_VIEW.SUBTASKS_DONE' | translate : { done: count.done, total: count.total }
+									}}</span>
 								}
-							</h5>
-							@if (subtaskCount; as count) {
-								<span class="panel-caption">{{
-									'TASK_VIEW.SUBTASKS_DONE' | translate : { done: count.done, total: count.total }
-								}}</span>
+							</div>
+							<div class="task-subtasks-actions">
+								@if (subtaskCount; as count) {
+									<span
+										class="project-timeline-track task-subtasks-track"
+										[class.is-done]="count.done === count.total"
+										role="progressbar"
+										aria-valuemin="0"
+										aria-valuemax="100"
+										[attr.aria-valuenow]="count.percent | number : '1.0-0'"
+										[attr.aria-label]="'TASK_VIEW.SUBTASKS' | translate"
+										><span [style.width.%]="count.percent"></span
+									></span>
+								}
+								@if (canAddSubtask) {
+									<button
+										nbButton
+										ghost
+										size="tiny"
+										status="basic"
+										type="button"
+										class="task-subtask-add"
+										aria-haspopup="dialog"
+										(click)="addSubtask()"
+									>
+										<nb-icon icon="plus-outline" aria-hidden="true"></nb-icon>
+										{{ 'TASK_VIEW.ADD_SUBTASK' | translate }}
+									</button>
+								}
+							</div>
+						</header>
+						<div class="panel-body panel-body--flush">
+							@if (subtasks.length) {
+								<ul class="task-rows">
+									@for (subtask of subtasks; track subtask.id) {
+										<li>
+											<ng-container
+												*ngTemplateOutlet="taskRow; context: { $implicit: subtask, id: subtask.id }"
+											></ng-container>
+										</li>
+									}
+								</ul>
+							} @else {
+								<ng-container
+									*ngTemplateOutlet="empty; context: { $implicit: 'TASK_VIEW.NO_SUBTASKS', icon: 'list-outline' }"
+								></ng-container>
 							}
 						</div>
-						@if (subtaskCount; as count) {
-							<span
-								class="project-timeline-track task-subtasks-track"
-								[class.is-done]="count.done === count.total"
-								role="progressbar"
-								aria-valuemin="0"
-								aria-valuemax="100"
-								[attr.aria-valuenow]="count.percent | number : '1.0-0'"
-								[attr.aria-label]="'TASK_VIEW.SUBTASKS' | translate"
-								><span [style.width.%]="count.percent"></span
-							></span>
-						}
-					</header>
-					<div class="panel-body panel-body--flush">
-						@if (subtasks.length) {
-							<ul class="task-rows">
-								@for (subtask of subtasks; track subtask.id) {
-									<li>
-										<ng-container
-											*ngTemplateOutlet="taskRow; context: { $implicit: subtask, id: subtask.id }"
-										></ng-container>
-									</li>
-								}
-							</ul>
-						} @else {
-							<ng-container
-								*ngTemplateOutlet="empty; context: { $implicit: 'TASK_VIEW.NO_SUBTASKS', icon: 'list-outline' }"
-							></ng-container>
-						}
-					</div>
-				</section>
+					</section>
+				}
 
 				<!-- Linked issues, by relation, read from this task's side. -->
 				<section class="panel project-view-panel" [nbSpinner]="links.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
@@ -469,22 +495,91 @@
 	}
 </ng-template>
 
-<!-- A task row — check, key, title, status — opening the task's own page. -->
+<!-- A task row: check, key, title, then a subtask's priority and assignees — the link to the task's own page, as Jira
+     lists child issues — and its status. The columns stay when empty, so the rows line up. A subtask's status is a menu
+     for those who may edit it, as the header's, so it sits beside the link and not in it: a choice opens no page. The
+     menu lists this task's project's statuses, so a subtask of another project keeps the plain tag. -->
 <ng-template #taskRow let-row let-id="id">
-	<a class="task-row" [class.is-done]="row.done" [routerLink]="taskLink(id)">
-		<nb-icon
-			class="task-row-check"
-			[icon]="row.done ? 'checkmark-circle-2' : 'radio-button-off-outline'"
-			aria-hidden="true"
-		></nb-icon>
-		@if (row.key) {
-			<span class="task-row-key">{{ row.key }}</span>
+	<div class="task-row" [class.is-done]="row.done">
+		<a class="task-row-link" [routerLink]="taskLink(id)">
+			<nb-icon
+				class="task-row-check"
+				[icon]="row.done ? 'checkmark-circle-2' : 'radio-button-off-outline'"
+				aria-hidden="true"
+			></nb-icon>
+			@if (row.key) {
+				<span class="task-row-key">{{ row.key }}</span>
+			}
+			<span class="task-row-title" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
+			@if (row.people) {
+				<span class="task-row-priority" [class]="row.priority ? 'tone-' + row.priority.tone : ''">
+					@if (row.priority; as priority) {
+						<nb-icon
+							role="img"
+							[icon]="priority.icon"
+							[nbTooltip]="priority.text"
+							nbTooltipPlacement="top"
+							[attr.aria-label]="priority.text"
+						></nb-icon>
+					}
+				</span>
+				<span
+					class="task-row-people"
+					role="img"
+					[nbTooltip]="peopleNames(row.people) || ('PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate)"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="peopleNames(row.people) || ('PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate)"
+				>
+					@for (person of row.people.slice(0, 3); track person.id) {
+						<ng-container *ngTemplateOutlet="avatar; context: { $implicit: person }"></ng-container>
+					} @empty {
+						<span class="project-task-worker-avatar task-row-unassigned">
+							<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
+						</span>
+					}
+					@if (row.people.length > 3) {
+						<span class="project-task-worker-avatar">+{{ row.people.length - 3 }}</span>
+					}
+				</span>
+			}
+		</a>
+		@if (row.people && row.sameProject && canEdit && statuses.length) {
+			@let statusLabel = statusName(menuStatusOf(row)?.name || row.status?.text);
+			<span class="task-row-status">
+				<nb-select
+					class="task-status-select"
+					size="small"
+					status="basic"
+					[style.--status-color]="menuStatusOf(row)?.color || row.status?.color"
+					[selected]="row.statusId"
+					[placeholder]="row.status?.text"
+					[optionsWidth]="224"
+					[disabled]="savingSubtasks.has(row.id)"
+					[attr.aria-label]="('TASK_VIEW.CHANGE_STATUS' | translate) + ': ' + row.title"
+					(selectedChange)="changeSubtaskStatus(row, $event)"
+				>
+					<nb-select-label>
+						<span class="task-status-tag" [nbTooltip]="statusLabel" nbTooltipPlacement="top">{{ statusLabel }}</span>
+					</nb-select-label>
+					@for (option of statuses; track option.id) {
+						<nb-option class="task-status-option" [style.--status-color]="option.color" [value]="option.id">
+							<span class="task-status-tag">{{ statusName(option.name) }}</span>
+						</nb-option>
+					}
+				</nb-select>
+			</span>
+		} @else if (row.status; as status) {
+			<span class="task-row-status">
+				<span
+					[class]="'task-status-tag tone-' + (status.tone || 'basic')"
+					[style.--status-color]="status.color"
+					[nbTooltip]="statusName(status.text)"
+					nbTooltipPlacement="top"
+					>{{ statusName(status.text) }}</span
+				>
+			</span>
 		}
-		<span class="task-row-title" [nbTooltip]="row.title" nbTooltipPlacement="top">{{ row.title }}</span>
-		@if (row.status; as status) {
-			<span [class]="'project-status tone-' + (status.tone || 'basic')">{{ status.text }}</span>
-		}
-	</a>
+	</div>
 </ng-template>
 
 <!-- A project's image (or a folder) and its name. -->

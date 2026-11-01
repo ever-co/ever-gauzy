@@ -7671,6 +7671,7 @@
 		"SUBTASKS": "Subtaken",
 		"SUBTASKS_DONE": "{{ done }} van {{ total }} klaar",
 		"NO_SUBTASKS": "Geen subtaken",
+		"ADD_SUBTASK": "Subtaak toevoegen",
 		"LINKED_ISSUES": "Gekoppelde taken",
 		"NO_LINKED_ISSUES": "Geen gekoppelde taken",
 		"LINKS": {

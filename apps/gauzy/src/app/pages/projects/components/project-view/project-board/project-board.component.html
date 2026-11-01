@@ -25,7 +25,8 @@
 		} @else if (!board.loading && !total && !hasParent) {
 		<ng-container *ngTemplateOutlet="empty; context: { $implicit: emptyKey, icon: 'checkmark-square-2-outline' }"></ng-container>
 		} @else {
-		<div #boardScroller class="board" role="list" cdkDropListGroup>
+		<!-- cdkScrollable: a drag only scrolls what is marked so, and the columns run past the board's width. -->
+		<div #boardScroller class="board" role="list" cdkDropListGroup cdkScrollable>
 			@for (column of board.value; track column.id) {
 			@let cards = visibleCards(column);
 			<section
@@ -34,6 +35,7 @@
 				[attr.aria-label]="column.name"
 				[attr.data-column-id]="column.id"
 				[class.is-refusing]="refusingColumnId === column.id"
+				[class.is-drop-target]="dropColumnId === column.id"
 			>
 				<header class="board-column-header">
 					<span class="board-column-dot" [class]="'board-column-dot group-' + column.group" [style.background-color]="column.color || null"></span>
@@ -48,6 +50,7 @@
 					[cdkDropListDisabled]="!canMove"
 					[cdkDropListEnterPredicate]="acceptsDrop"
 					[cdkDropListSortingDisabled]="true"
+					[cdkDropListAutoScrollStep]="12"
 					(cdkDropListDropped)="drop($event)"
 				>
 					@for (card of cards; track card.id) {

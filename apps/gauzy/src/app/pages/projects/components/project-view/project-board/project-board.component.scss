@@ -40,6 +40,12 @@
   background-color: var(--gauzy-hover-tint);
 }
 
+// Tall enough to aim at: a task's board holds few cards, and a column as short as they are leaves little to drop on.
+// Under the panel, as the pipeline's deals board loads this stylesheet for its columns too.
+.board-panel .board-column {
+  min-height: 20rem;
+}
+
 .board-column-header {
   display: flex;
   align-items: center;
@@ -103,10 +109,11 @@
   min-height: 3rem;
 }
 
-.board-cards.cdk-drop-list-dragging {
-  border-radius: 0.375rem;
+// The column the dragged card will land in. All of it takes the card, so all of it is marked.
+.board-column.is-drop-target {
   outline: 1px dashed var(--gauzy-action-info-text);
   outline-offset: -1px;
+  background-color: color-mix(in srgb, var(--gauzy-action-info-text) 8%, transparent);
 }
 
 // A column that will not take the dragged card: it has no status of its own to save.
