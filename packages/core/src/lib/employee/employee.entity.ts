@@ -844,7 +844,12 @@ export class Employee extends TenantOrganizationBaseEntity implements IEmployee,
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		/**
+		 * Read-only from this side: a comment is assigned through the comment API (`Comment.members`), where its
+		 * record's policy decides, never by saving an employee, directly or through a cascade.
+		 */
+		persistence: false
 	})
 	assignedComments?: IComment[];
 

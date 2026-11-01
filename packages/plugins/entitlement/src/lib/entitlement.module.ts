@@ -31,6 +31,7 @@ import { TypeOrmEntitlementKeyRepository } from './entitlement-key/repository/ty
 import { EntitlementCheckService } from './entitlement-check/entitlement-check.service';
 import { EntitlementRequiredGuard } from './entitlement-check/entitlement-check.guard';
 import { EntitlementStreamedEvents } from './entitlement-streamed-events';
+import { EntitlementLiveLineGrantIndex } from './database/entitlement-live-line-grant-index';
 
 /** Every entity this plugin owns, in dependency order, as one array. */
 export const ALL_ENTITLEMENT_ENTITIES = [Entitlement, EntitlementKey, EntitlementActivation];
@@ -78,6 +79,9 @@ export const ALL_ENTITLEMENT_ENTITIES = [Entitlement, EntitlementKey, Entitlemen
 		MikroOrmEntitlementKeyRepository,
 		TypeOrmEntitlementActivationRepository,
 		MikroOrmEntitlementActivationRepository,
+		// Whether the database holds one live right per order line, checked (and installed once it can be) at
+		// every start; the grant locks the line where it does not.
+		EntitlementLiveLineGrantIndex,
 		// The grant path registers itself with the platform's consumer registry on bootstrap, so an
 		// order or subscription event is what grants a right without this package reading another
 		// package's tables.

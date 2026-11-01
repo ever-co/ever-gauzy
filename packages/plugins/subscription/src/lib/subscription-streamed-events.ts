@@ -20,7 +20,9 @@ export const SUBSCRIPTION_STREAMED_EVENTS: readonly string[] = [
 	'subscription.cancellation-undone',
 	'subscription.expired',
 	'subscription.payment-failed',
-	'subscription.renewed'
+	'subscription.renewed',
+	'subscription.scheduled-change-refused',
+	'subscription.settlement-reversal-required'
 ];
 
 /**

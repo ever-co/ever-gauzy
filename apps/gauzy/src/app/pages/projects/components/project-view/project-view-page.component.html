@@ -47,6 +47,7 @@
 		<div class="tab-row project-page-tabs">
 			<div class="tabs" role="tablist" [attr.aria-label]="card.name">
 				@for (item of tabs; track item.id) {
+				@if (item.id !== 'documents' || canSeeDocuments) {
 				<button
 					type="button"
 					role="tab"
@@ -62,12 +63,17 @@
 					@if (item.id === 'comments' && commentCount) {
 					<span class="title-count tab-count">{{ commentCount }}</span>
 					}
+					@if (item.id === 'documents' && documentCount) {
+					<span class="title-count tab-count">{{ documentCount }}</span>
+					}
 				</button>
+				}
 				}
 			</div>
 		</div>
 
-		<!-- Overview stays loaded while another tab is open, so coming back to it does not reload it. -->
+		<!-- Overview loads when first opened, then stays loaded, so coming back to it does not reload it. -->
+		@if (overviewOpened) {
 		<div
 			class="project-page-pane"
 			role="tabpanel"
@@ -76,7 +82,6 @@
 			[hidden]="tab !== 'overview'"
 		>
 			<ngx-project-quick-look
-				#quickLook
 				mode="page"
 				[project]="card"
 				[organizationId]="organization?.id"
@@ -88,6 +93,7 @@
 				[tasksInDrawer]="true"
 			></ngx-project-quick-look>
 		</div>
+		}
 
 		<!-- The Board loads when first opened, then stays loaded: a move still saving when another tab opens
 		     still reaches the Overview. -->
@@ -99,12 +105,12 @@
 			aria-labelledby="project-view-tab-board"
 			[hidden]="tab !== 'board'"
 		>
-			<!-- A card moved on the board changes its task's status: the Overview's task panels read it again. -->
+			<!-- A card moved on the board changes its task's status: the Overview's task panels, once open, read it again. -->
 			<ga-project-board
 				[projectId]="card.id"
 				[organizationId]="organization?.id"
 				[tenantId]="organization?.tenantId"
-				(taskMoved)="quickLook.reloadTasks()"
+				(taskMoved)="quickLook?.reloadTasks()"
 			></ga-project-board>
 		</div>
 		}
@@ -118,13 +124,32 @@
 			aria-labelledby="project-view-tab-comments"
 			[hidden]="tab !== 'comments'"
 		>
-			<ga-project-comments
-				[projectId]="card.id"
-				[projectName]="card.name"
+			<ga-entity-comments
+				[entity]="documentEntity"
+				[entityId]="card.id"
+				[entityName]="card.name"
 				[organizationId]="organization?.id"
 				[tenantId]="organization?.tenantId"
 				(countChange)="onCommentCount($event)"
-			></ga-project-comments>
+			></ga-entity-comments>
+		</div>
+		}
+
+		<!-- The Documents load when first opened, then stay loaded, so an upload in flight finishes. -->
+		@if (documentsOpened) {
+		<div
+			class="project-page-pane"
+			role="tabpanel"
+			id="project-view-pane-documents"
+			aria-labelledby="project-view-tab-documents"
+			[hidden]="tab !== 'documents'"
+		>
+			<gz-document-links-panel
+				[entity]="documentEntity"
+				[entityId]="card.id"
+				[entityLabel]="card.name"
+				(countChanged)="onDocumentCount($event)"
+			></gz-document-links-panel>
 		</div>
 		}
 

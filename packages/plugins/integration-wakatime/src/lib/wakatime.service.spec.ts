@@ -1,4 +1,10 @@
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { RequestContext } from '@gauzy/core';
+import { DataSource } from 'typeorm';
 import { WakatimeService, splitDuration } from './wakatime.service';
 import { MikroOrmWakatimeRepository } from './repository/mikro-orm-wakatime.repository';
 import { TypeOrmWakatimeRepository } from './repository/type-orm-wakatime.repository';
@@ -50,6 +56,12 @@ describe('splitDuration (WakaTime summary)', () => {
 });
 
 describe('WakatimeService.getSummaries', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue('employee-1');
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
 	// Both repositories return the rows, so the tests hold whichever ORM (DB_ORM) the service was loaded with
 	const summaryFor = async (rows: any[]) => {
 		const query = jest.fn().mockResolvedValue(rows);
@@ -58,6 +70,64 @@ describe('WakatimeService.getSummaries', () => {
 		const { data } = await service.getSummaries({});
 		return data[0].grand_total;
 	};
+
+	it('counts only the caller’s own heartbeats', async () => {
+		const query = jest.fn().mockResolvedValue([{ seconds: 60 }]);
+		const raw = jest.fn().mockResolvedValue([{ seconds: 60 }]);
+		const service = new WakatimeService({ query } as any, { getKnex: () => ({ raw }) } as any);
+
+		await service.getSummaries({});
+
+		const [sql, parameters] = (query.mock.calls[0] ?? raw.mock.calls[0]) as [string, unknown[]];
+		expect(sql).toContain('"employeeId" = ?');
+		expect(parameters).toEqual(['employee-1']);
+	});
+
+	it('refuses a caller with no employee record, without reading', async () => {
+		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(null);
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue(null);
+		const query = jest.fn();
+		const service = new WakatimeService({ query } as any, { getKnex: () => ({ raw: query }) } as any);
+
+		await expect(service.getSummaries({})).rejects.toBeInstanceOf(ForbiddenException);
+		expect(query).not.toHaveBeenCalled();
+	});
+
+	it('sums the caller’s own coding time on SQLite, not everyone’s', async () => {
+		const dbPath = path.join(os.tmpdir(), `gauzy-wakatime-summaries-${process.pid}-${Date.now()}.sqlite3`);
+		const dataSource = new DataSource({
+			type: 'better-sqlite3',
+			database: dbPath,
+			synchronize: false,
+			logging: false
+		});
+		await dataSource.initialize();
+		try {
+			await dataSource.query(
+				'CREATE TABLE "heartbeats" ("id" integer PRIMARY KEY, "employeeId" varchar, "time" integer, "entities" varchar)'
+			);
+			const now = Math.floor(Date.now() / 1000);
+			// Today: two heartbeats of mine on two files, three of a coworker's on three files.
+			await dataSource.query(
+				`INSERT INTO "heartbeats" ("employeeId", "time", "entities") VALUES
+					('employee-1', ${now}, 'a.ts'), ('employee-1', ${now}, 'b.ts'),
+					('employee-2', ${now}, 'c.ts'), ('employee-2', ${now}, 'd.ts'), ('employee-2', ${now}, 'e.ts')`
+			);
+			const service = new WakatimeService(
+				{ query: (sql: string, parameters?: unknown[]) => dataSource.query(sql, parameters) } as any,
+				{
+					getKnex: () => ({ raw: (sql: string, parameters?: unknown[]) => dataSource.query(sql, parameters) })
+				} as any
+			);
+
+			const { data } = await service.getSummaries({});
+
+			expect(data[0].grand_total.total_seconds).toBe(2);
+		} finally {
+			await dataSource.destroy();
+			fs.rmSync(dbPath, { force: true });
+		}
+	});
 
 	it('shows the minutes left over after the hours, zero-padded', async () => {
 		expect(await summaryFor([{ seconds: 3700 }])).toMatchObject({
@@ -99,7 +169,9 @@ describe('WakatimeService under MikroORM', () => {
 					}
 				}));
 				jest.doMock('./wakatime.entity', () => ({ Wakatime: class {} }));
-				jest.doMock('./repository/type-orm-wakatime.repository', () => ({ TypeOrmWakatimeRepository: class {} }));
+				jest.doMock('./repository/type-orm-wakatime.repository', () => ({
+					TypeOrmWakatimeRepository: class {}
+				}));
 				jest.doMock('./repository/mikro-orm-wakatime.repository', () => ({
 					MikroOrmWakatimeRepository: class {}
 				}));
@@ -122,6 +194,18 @@ describe('WakatimeService under MikroORM', () => {
 		const knex = jest.fn().mockReturnValue({ insert });
 		return { knex, insert };
 	};
+
+	it('getSummaries counts only the caller’s heartbeats through knex', async () => {
+		const Service = loadMikroOrmService();
+		const raw = jest.fn().mockResolvedValue([{ seconds: 1 }]);
+		const query = jest.fn();
+		const service = new Service({ query } as any, { getKnex: () => ({ raw }) } as any);
+
+		await service.getSummaries({});
+
+		expect(query).not.toHaveBeenCalled();
+		expect(raw).toHaveBeenCalledWith(expect.stringContaining('"employeeId" = ?'), ['employee-1']);
+	});
 
 	it('bulkSave reports one identifier per heartbeat, like TypeORM', async () => {
 		const Service = loadMikroOrmService();

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, Input, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -33,7 +32,7 @@ type ResendState = 'idle' | 'sending' | 'sent' | 'error';
 @Component({
 	selector: 'ngx-email-verification-notice',
 	standalone: true,
-	imports: [CommonModule, NbButtonModule, TranslatePipe],
+	imports: [NbButtonModule, TranslatePipe],
 	templateUrl: './email-verification-notice.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrls: ['./email-verification-notice.component.scss']

@@ -11,8 +11,12 @@ import { DOCS_PERMISSIONS } from '../../../docs-permission-groups';
 	selector: 'gz-docs-status-badge',
 	template: `
 		<span class="docs-badge" [ngClass]="cssClass" [nbTooltip]="tooltip" nbTooltipStatus="basic">
-			<nb-icon *ngIf="isProcessing" icon="loader-outline" size="tiny" class="docs-badge-spin"></nb-icon>
-			<span class="docs-badge-dot" *ngIf="!isProcessing"></span>
+			@if (isProcessing) {
+				<nb-icon icon="loader-outline" size="tiny" class="docs-badge-spin"></nb-icon>
+			}
+			@if (!isProcessing) {
+				<span class="docs-badge-dot"></span>
+			}
 			{{ labelKey | translate }}
 			<a
 				*ngxPermissionsOnly="docsPermissions.update"
@@ -113,7 +117,7 @@ export class StatusBadgeComponent {
 	}
 
 	get tooltip(): string {
-		return this.status === DocumentStatusEnum.FAILED ? this.rowData?.statusMessage ?? '' : '';
+		return this.status === DocumentStatusEnum.FAILED ? (this.rowData?.statusMessage ?? '') : '';
 	}
 
 	onRetry(event: Event): void {

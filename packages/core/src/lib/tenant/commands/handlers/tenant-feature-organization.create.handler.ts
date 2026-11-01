@@ -21,7 +21,7 @@ export class TenantFeatureOrganizationCreateHandler implements ICommandHandler<T
 	 * @returns A Promise that resolves to an array of IFeatureOrganization, representing the updated or created feature organizations.
 	 */
 	public async execute(command: TenantFeatureOrganizationCreateCommand): Promise<IFeatureOrganization[]> {
-		const { input } = command;
-		return await this._featureOrganizationService.updateTenantFeatureOrganizations(input);
+		const { input, options } = command;
+		return await this._featureOrganizationService.updateTenantFeatureOrganizations(input, options);
 	}
 }

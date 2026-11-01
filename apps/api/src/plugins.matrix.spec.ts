@@ -12,6 +12,7 @@ const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.
 	(name) =>
 		name !== '@gauzy/plugin-auth-zitadel' &&
 		name !== '@gauzy/plugin-auth-keycloak' &&
+		name !== '@gauzy/plugin-auth-oidc' &&
 		name !== '@gauzy/plugin-ever-stats' &&
 		name !== '@gauzy/plugin-ever-connect' &&
 		name !== '@gauzy/plugin-integration-ever-works' &&
@@ -25,6 +26,7 @@ const STUBBED = Array.from(PLUGINS_SOURCE.matchAll(/from '((?:@gauzy\/plugin-|\.
 
 class AuthZitadelPlugin {}
 class AuthKeycloakPlugin {}
+class AuthOidcPlugin {}
 class EverStatsPlugin {}
 class EverConnectPlugin {}
 class IntegrationEverWorksPlugin {}
@@ -67,6 +69,10 @@ function loadPlugins(env: Record<string, string | undefined>, before?: () => voi
 			jest.doMock('@gauzy/plugin-auth-keycloak', () => ({
 				AuthKeycloakPlugin,
 				isKeycloakEnabled: jest.requireActual('../../../packages/plugins/auth-keycloak/src/lib/auth-keycloak.config').isKeycloakEnabled
+			}));
+			jest.doMock('@gauzy/plugin-auth-oidc', () => ({
+				AuthOidcPlugin,
+				isOidcEnabled: jest.requireActual('../../../packages/plugins/auth-oidc/src/lib/auth-oidc.config').isOidcEnabled
 			}));
 			jest.doMock('@gauzy/plugin-ever-stats', () => ({
 				EverStatsPlugin,
@@ -139,6 +145,46 @@ describe('API plugin list: optional sign-in plugins', () => {
 		const plugins = loadPlugins({ ZITADEL_ENABLED: undefined, KEYCLOAK_ENABLED: undefined, ...env });
 		expect(plugins.includes(AuthZitadelPlugin)).toBe(zitadel);
 		expect(plugins.includes(AuthKeycloakPlugin)).toBe(keycloak);
+	});
+});
+
+describe('API plugin list: OpenID Connect sign-in', () => {
+	const oidcConfigured = {
+		OIDC_ISSUER: 'https://id.example.test/application/o/gauzy/',
+		OIDC_CLIENT_ID: 'gauzy',
+		OIDC_CLIENT_SECRET: 'a-real-secret'
+	};
+	const off = { OIDC_ENABLED: undefined, OIDC_ISSUER: undefined, OIDC_CLIENT_ID: undefined, OIDC_CLIENT_SECRET: undefined };
+
+	it.each([
+		['unset (the default)', {}, false],
+		['false', { OIDC_ENABLED: 'false', ...oidcConfigured }, false],
+		['configured but not switched on', { ...oidcConfigured }, false],
+		['on', { OIDC_ENABLED: 'true', ...oidcConfigured }, true],
+		['on with the sample placeholders', { ...oidcConfigured, OIDC_ENABLED: 'true', OIDC_CLIENT_ID: 'XXXXXXX', OIDC_CLIENT_SECRET: 'XXXXXXX' }, false],
+		['on without an issuer', { ...oidcConfigured, OIDC_ENABLED: 'true', OIDC_ISSUER: '' }, false],
+		['on with a plain-http issuer on another host', { ...oidcConfigured, OIDC_ENABLED: 'true', OIDC_ISSUER: 'http://id.example.test' }, false],
+		['OIDC_ENABLED=TRUE', { ...oidcConfigured, OIDC_ENABLED: 'TRUE' }, false],
+		['OIDC_ENABLED=1', { ...oidcConfigured, OIDC_ENABLED: '1' }, false]
+	])('%s', (_name, env, loaded) => {
+		const plugins = loadPlugins({ ...off, ...env });
+		expect(plugins.includes(AuthOidcPlugin)).toBe(loaded);
+	});
+
+	// Independent of the other sign-in plugins: each switch loads exactly its own.
+	const combinations = [false, true].flatMap((zitadel) => [false, true].flatMap((keycloak) => [false, true].map((oidc) => ({ zitadel, keycloak, oidc }))));
+	it.each(combinations)('Ever ID $zitadel, Keycloak $keycloak, OpenID Connect $oidc', ({ zitadel, keycloak, oidc }) => {
+		const plugins = loadPlugins({
+			ZITADEL_ENABLED: zitadel ? 'true' : undefined,
+			KEYCLOAK_ENABLED: keycloak ? 'true' : undefined,
+			KEYCLOAK_CLIENT_ID: 'gauzy',
+			KEYCLOAK_CLIENT_SECRET: 'a-real-secret',
+			KEYCLOAK_REALM: 'gauzy',
+			KEYCLOAK_AUTH_SERVER_URL: 'https://id.example.test',
+			...oidcConfigured,
+			OIDC_ENABLED: oidc ? 'true' : undefined
+		});
+		expect([plugins.includes(AuthZitadelPlugin), plugins.includes(AuthKeycloakPlugin), plugins.includes(AuthOidcPlugin)]).toEqual([zitadel, keycloak, oidc]);
 	});
 });
 

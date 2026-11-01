@@ -8,6 +8,7 @@ import { BaseEntityEnum, ICommentCreateInput, PermissionsEnum } from '@gauzy/con
 import { TenantAwareCrudService } from '../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../core/context/request-context';
 import { CommentService } from './comment.service';
+import { CommentParentAccessService } from './parent-access';
 
 /**
  * Who wrote a comment is the caller, never the body (privilege-escalation audit 2026-10-24, F8).
@@ -65,6 +66,7 @@ describe('CommentService — the author and the resolver are the caller', () => 
 
 	beforeEach(() => {
 		service = Object.create(CommentService.prototype);
+		(service as any)._parentAccess = new CommentParentAccessService();
 		findEmployee = jest.fn(async (id: string) => ({ id }));
 		publish = jest.fn();
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,9 +1,39 @@
 import '../../../core/entities/internal';
 
-import { IOrganizationUpdateInput } from '@gauzy/contracts';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { EntityMetadata } from 'typeorm';
+import { EEA_UK_AGENT_RESTRICTION_ERR_MSG, IOrganizationUpdateInput, PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '../../../core/context';
+import { ApiErrorCode } from '../../../core/errors/api-error-codes';
+import { ApiException } from '../../../core/errors/api-exception';
+import { assertSensitiveRelationsAllowed } from '../../../core/util/sensitive-relations.helper';
 import { asTenantUser, createTenantFixture } from '../../../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { OrganizationUpdateCommand } from '../organization.update.command';
 import { OrganizationUpdateHandler } from './organization.update.handler';
+
+/** The contact lookup (`ContactService`) over `contacts`, by id: a contact it does not hold is not found. */
+const contactLookup = (contacts: Record<string, Record<string, unknown>>) => ({
+	findOneOrFailByIdString: jest.fn(async (id: string) =>
+		id in contacts ? { success: true, record: contacts[id] } : { success: false }
+	)
+});
+
+/**
+ * The `contactId` an organization row read without its relations holds for a fixture's linked `contact`, which is
+ * added to `contacts` so the lookup finds it.
+ */
+const linking = (
+	contacts: Record<string, Record<string, unknown>>,
+	contactId: unknown,
+	contact: unknown
+): { contactId?: string } => {
+	if (!contact || typeof contact !== 'object') {
+		return {};
+	}
+	const linked = (contactId as string) ?? (contact as { id?: string }).id ?? 'contact-stored';
+	contacts[linked] = contact as Record<string, unknown>;
+	return { contactId: linked };
+};
 
 /**
  * The update coerced every `show_*` flag whether or not the input carried it: `!!undefined` turned the unsent
@@ -84,5 +114,529 @@ describe('OrganizationUpdateHandler — public profile flags', () => {
 			show_income: false,
 			show_projects_count: true
 		});
+	});
+});
+
+/**
+ * Issue #9872 — turning screen capture on for an EEA/UK organization takes the admin's acknowledgement, recorded
+ * on the organization (who, when) in the same write, and in its activity log (with the tenant). Every other
+ * change, and every organization outside the EEA and the UK, behaves as before.
+ */
+describe('OrganizationUpdateHandler — screen capture acknowledgement', () => {
+	const fixture = createTenantFixture();
+	const ALL = { lawfulBasis: true, employeeNotice: true, worksCouncil: true };
+
+	let restore: () => void;
+	let organizationService: { findOneByIdString: jest.Mock; create: jest.Mock; update: jest.Mock };
+	let activityLogService: { create: jest.Mock };
+	let contactService: { findOneOrFailByIdString: jest.Mock };
+	let contacts: Record<string, Record<string, unknown>>;
+	let self: Record<string, unknown>;
+
+	/**
+	 * The organization as the handler reads it: without its relations, the contact it links named by its `contactId`
+	 * column. A fixture's `contact` is that contact, found by the contact lookup.
+	 */
+	const given = ({ contact, ...stored }: Record<string, unknown>) => {
+		organizationService.findOneByIdString.mockResolvedValue({
+			id: 'org-1',
+			name: 'Org',
+			tenantId: fixture.tenantId,
+			...stored,
+			...linking(contacts, stored.contactId, contact)
+		});
+	};
+
+	beforeEach(() => {
+		({ restore } = asTenantUser(fixture));
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(fixture.user.id);
+		organizationService = {
+			findOneByIdString: jest.fn(),
+			create: jest.fn(async (entity) => entity),
+			update: jest.fn()
+		};
+		activityLogService = { create: jest.fn().mockResolvedValue({}) };
+		contacts = {};
+		contactService = contactLookup(contacts);
+		self = {
+			organizationService,
+			activityLogService,
+			contactService,
+			moduleRef: { get: jest.fn() },
+			logger: { error: jest.fn() }
+		};
+		const prototype = OrganizationUpdateHandler.prototype as unknown as { update: (...args: unknown[]) => unknown };
+		self.update = prototype.update.bind(self);
+	});
+
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	const update = (input: Record<string, unknown>) =>
+		OrganizationUpdateHandler.prototype.execute.call(
+			self,
+			new OrganizationUpdateCommand('org-1', input as unknown as IOrganizationUpdateInput)
+		);
+
+	const saved = () => organizationService.create.mock.calls[0][0];
+
+	it('refuses turning capture on for an EEA organization without the acknowledgement, and saves nothing', async () => {
+		given({ allowScreenshotCapture: false, regionCode: 'de', timeZone: 'Europe/Berlin' });
+
+		await expect(update({ allowScreenshotCapture: true })).rejects.toMatchObject({
+			code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED,
+			details: { missing: ['lawfulBasis', 'employeeNotice', 'worksCouncil'] }
+		});
+		expect(organizationService.create).not.toHaveBeenCalled();
+		expect(activityLogService.create).not.toHaveBeenCalled();
+	});
+
+	it('judges the location after the change: moving into the UK while turning capture on asks too', async () => {
+		given({ allowScreenshotCapture: false, regionCode: 'en', timeZone: 'America/New_York' });
+
+		await expect(update({ allowScreenshotCapture: true, timeZone: 'Europe/London' })).rejects.toBeInstanceOf(
+			ApiException
+		);
+	});
+
+	it('turns capture on with the acknowledgement, recording who and when in the same write', async () => {
+		given({ allowScreenshotCapture: false, regionCode: 'de', timeZone: 'Europe/Berlin' });
+
+		await update({ allowScreenshotCapture: true, screenshotCaptureAcknowledgement: ALL });
+
+		const written = saved();
+		expect(written).toMatchObject({
+			id: 'org-1',
+			allowScreenshotCapture: true,
+			screenshotCaptureAcknowledgedByUserId: fixture.user.id
+		});
+		expect(written.screenshotCaptureAcknowledgedAt).toBeInstanceOf(Date);
+		// The acknowledgement itself is request-only, not a column.
+		expect(written).not.toHaveProperty('screenshotCaptureAcknowledgement');
+		expect(activityLogService.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				entityId: 'org-1',
+				tenantId: fixture.tenantId,
+				data: {
+					screenshotCaptureAcknowledgement: expect.objectContaining({
+						acknowledgedByUserId: fixture.user.id,
+						tenantId: fixture.tenantId
+					})
+				}
+			})
+		);
+	});
+
+	it('keeps an organization that already captures as it is: re-saving it asks nothing', async () => {
+		given({ allowScreenshotCapture: true, regionCode: 'de', timeZone: 'Europe/Berlin' });
+
+		await update({ name: 'Renamed', allowScreenshotCapture: true });
+
+		expect(saved()).toMatchObject({ name: 'Renamed' });
+		// The stored value sent back is not written: the column keeps what it holds.
+		expect(saved()).not.toHaveProperty('allowScreenshotCapture');
+		expect(saved()).not.toHaveProperty('screenshotCaptureAcknowledgedAt');
+		expect(activityLogService.create).not.toHaveBeenCalled();
+	});
+
+	it('cannot turn capture back on by racing a save that turned it off', async () => {
+		// Read while capture was still on; another admin turns it off before this save is written.
+		given({ allowScreenshotCapture: true, regionCode: 'de', timeZone: 'Europe/Berlin' });
+
+		await update({ name: 'Renamed', allowScreenshotCapture: true });
+
+		// Nothing of this write sets the flag, so the other admin's `false` stays.
+		expect(saved()).not.toHaveProperty('allowScreenshotCapture');
+	});
+
+	it('reads the stored contact country: a top-level country the write does not store does not skip the check', async () => {
+		given({
+			allowScreenshotCapture: false,
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contact: { country: 'GB' }
+		});
+
+		await expect(update({ allowScreenshotCapture: true, country: 'US' })).rejects.toMatchObject({
+			code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED
+		});
+		expect(organizationService.create).not.toHaveBeenCalled();
+	});
+
+	it('reads the contact the write carries: moving the address into the EEA while turning capture on asks too', async () => {
+		given({
+			allowScreenshotCapture: false,
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contact: { country: 'US' }
+		});
+
+		await expect(update({ allowScreenshotCapture: true, contact: { country: 'DE' } })).rejects.toMatchObject({
+			code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED
+		});
+	});
+
+	it.each([
+		['contact: { id }', { contact: { id: 'contact-uk' } }],
+		['contactId', { contactId: 'contact-uk' }]
+	])('reads the country of a contact the write links by %s: a UK contact asks too', async (_, link) => {
+		given({
+			allowScreenshotCapture: false,
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contactId: 'contact-us',
+			contact: { country: 'US' }
+		});
+		contacts['contact-uk'] = { country: 'GB' };
+
+		await expect(update({ allowScreenshotCapture: true, ...link })).rejects.toMatchObject({
+			code: ApiErrorCode.SCREENSHOT_CAPTURE_ACKNOWLEDGEMENT_REQUIRED
+		});
+		expect(contactService.findOneOrFailByIdString).toHaveBeenCalledWith('contact-uk');
+		expect(organizationService.create).not.toHaveBeenCalled();
+	});
+
+	it('reads no other contact than the linked one when the write links none, or links the current one', async () => {
+		given({
+			allowScreenshotCapture: false,
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contactId: 'contact-us'
+		});
+
+		await update({ name: 'Renamed' });
+		await update({ allowScreenshotCapture: true, contactId: 'contact-us' });
+
+		const read = contactService.findOneOrFailByIdString.mock.calls.map(([id]) => id);
+		expect(new Set(read)).toEqual(new Set(['contact-us']));
+	});
+
+	it('never asks to turn capture off', async () => {
+		given({ allowScreenshotCapture: true, regionCode: 'de', timeZone: 'Europe/Berlin' });
+
+		await update({ allowScreenshotCapture: false });
+
+		expect(saved()).toMatchObject({ allowScreenshotCapture: false });
+		expect(activityLogService.create).not.toHaveBeenCalled();
+	});
+
+	it('asks nothing outside the EEA and the UK, as before', async () => {
+		given({ allowScreenshotCapture: false, regionCode: 'en', timeZone: 'America/New_York' });
+
+		await update({ allowScreenshotCapture: true });
+
+		expect(saved()).toMatchObject({ allowScreenshotCapture: true });
+		expect(saved()).not.toHaveProperty('screenshotCaptureAcknowledgedByUserId');
+	});
+
+	it('never takes the record from the body', async () => {
+		given({ allowScreenshotCapture: true, regionCode: 'en', timeZone: 'America/New_York' });
+
+		await update({
+			name: 'Renamed',
+			screenshotCaptureAcknowledgedAt: '2020-01-01T00:00:00.000Z',
+			screenshotCaptureAcknowledgedByUserId: 'someone-else'
+		});
+
+		expect(saved()).not.toHaveProperty('screenshotCaptureAcknowledgedAt');
+		expect(saved()).not.toHaveProperty('screenshotCaptureAcknowledgedByUserId');
+	});
+});
+
+/**
+ * Issue #9873 — the agent exit/logout restriction judges the organization's location after the write, from what is
+ * stored and what the write stores (region code, time zone, the country of a contact it links by id). Neither a
+ * top-level `country` nor the country of a contact the request carries is stored, so they change no decision.
+ */
+describe('OrganizationUpdateHandler — agent exit/logout restriction location', () => {
+	const fixture = createTenantFixture();
+	const RESTRICT = { allowAgentAppExit: false, acknowledgeAgentExitLogoutRestriction: true };
+
+	let restore: () => void;
+	let organizationService: { findOneByIdString: jest.Mock; create: jest.Mock; update: jest.Mock };
+	let activityLogService: { create: jest.Mock };
+	let contactService: { findOneOrFailByIdString: jest.Mock };
+	let contacts: Record<string, Record<string, unknown>>;
+	let moduleRef: { get: jest.Mock };
+	let self: Record<string, unknown>;
+
+	/**
+	 * The organization as the handler reads it: without its relations, the contact it links named by its `contactId`
+	 * column. A fixture's `contact` is that contact, found by the contact lookup.
+	 */
+	const row = ({ contact, ...values }: Record<string, unknown>) => ({
+		id: 'org-1',
+		name: 'Org',
+		tenantId: fixture.tenantId,
+		allowScreenshotCapture: false,
+		...values,
+		...linking(contacts, values.contactId, contact)
+	});
+	/** The organization as read before the update and, by default the same, as read back after the save. */
+	const given = (stored: Record<string, unknown>, saved: Record<string, unknown> = stored) => {
+		organizationService.findOneByIdString.mockResolvedValueOnce(row(stored)).mockResolvedValue(row(saved));
+	};
+
+	beforeEach(() => {
+		({ restore } = asTenantUser(fixture));
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(fixture.user.id);
+		organizationService = {
+			findOneByIdString: jest.fn(),
+			create: jest.fn(async (entity) => entity),
+			update: jest.fn()
+		};
+		activityLogService = { create: jest.fn().mockResolvedValue({}) };
+		contacts = {};
+		contactService = contactLookup(contacts);
+		// No employee service here: lifting the employees' restrictions shows only as this lookup.
+		moduleRef = { get: jest.fn() };
+		self = {
+			organizationService,
+			activityLogService,
+			contactService,
+			moduleRef,
+			logger: { error: jest.fn() }
+		};
+		const prototype = OrganizationUpdateHandler.prototype as unknown as Record<
+			'update' | 'savedLocation',
+			(...args: unknown[]) => unknown
+		>;
+		self.update = prototype.update.bind(self);
+		self.savedLocation = prototype.savedLocation.bind(self);
+	});
+
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	const update = (input: Record<string, unknown>) =>
+		OrganizationUpdateHandler.prototype.execute.call(
+			self,
+			new OrganizationUpdateCommand('org-1', input as unknown as IOrganizationUpdateInput)
+		);
+
+	describe.each([
+		['no country', {}],
+		['an unstored country outside the EEA/UK', { country: 'US' }],
+		['an unstored country inside the EEA/UK', { country: 'DE' }]
+	])('a request with %s', (_, country) => {
+		it('cannot restrict exit for a UK organization', async () => {
+			given({ regionCode: 'en', timeZone: 'America/New_York', contact: { country: 'GB' } });
+
+			await expect(update({ ...country, ...RESTRICT })).rejects.toThrow(EEA_UK_AGENT_RESTRICTION_ERR_MSG);
+			expect(organizationService.create).not.toHaveBeenCalled();
+			expect(activityLogService.create).not.toHaveBeenCalled();
+		});
+
+		it('restricts exit for an organization outside the EEA/UK with the acknowledgement, recording it', async () => {
+			given({ regionCode: 'en', timeZone: 'America/New_York', contact: { country: 'US' } });
+
+			await update({ ...country, ...RESTRICT });
+
+			expect(organizationService.create).toHaveBeenCalledWith(
+				expect.objectContaining({ allowAgentAppExit: false })
+			);
+			expect(activityLogService.create).toHaveBeenCalledWith(
+				expect.objectContaining({ updatedFields: ['allowAgentAppExit'] })
+			);
+		});
+
+		it('does not move a restricted organization into the EEA/UK, so it saves and lifts nothing', async () => {
+			given({
+				regionCode: 'en',
+				timeZone: 'America/New_York',
+				contact: { country: 'US' },
+				allowAgentAppExit: false
+			});
+
+			await update({ ...country, name: 'Renamed' });
+
+			expect(organizationService.create).toHaveBeenCalledWith(expect.objectContaining({ name: 'Renamed' }));
+			expect(moduleRef.get).not.toHaveBeenCalled();
+		});
+	});
+
+	it('counts a contact the write links by id: linking a UK contact while restricting exit is refused', async () => {
+		given({ regionCode: 'en', timeZone: 'America/New_York', contactId: 'contact-us', contact: { country: 'US' } });
+		contacts['contact-uk'] = { country: 'GB' };
+
+		await expect(update({ contact: { id: 'contact-uk' }, ...RESTRICT })).rejects.toThrow(
+			EEA_UK_AGENT_RESTRICTION_ERR_MSG
+		);
+		expect(contactService.findOneOrFailByIdString).toHaveBeenCalledWith('contact-uk');
+		expect(organizationService.create).not.toHaveBeenCalled();
+	});
+
+	it('does not move the organization for a contact the request carries: its country is not stored', async () => {
+		given({
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contact: { country: 'US' },
+			allowAgentAppExit: false
+		});
+
+		await update({ contact: { country: 'DE' } });
+
+		// Saved although exit stays restricted, and nothing is lifted: the saved row is still in the US.
+		expect(organizationService.create).toHaveBeenCalled();
+		expect(moduleRef.get).not.toHaveBeenCalled();
+	});
+
+	it('lifts employee restrictions when a linked contact moves the organization into the EEA/UK', async () => {
+		const US = { regionCode: 'en', timeZone: 'America/New_York' };
+		given(
+			{ ...US, contactId: 'contact-us', contact: { country: 'US' } },
+			{ ...US, contactId: 'contact-uk', contact: { country: 'GB' } }
+		);
+
+		await update({ contact: { id: 'contact-uk' } });
+
+		expect(moduleRef.get).toHaveBeenCalled();
+	});
+
+	it('allows moving out of the EEA/UK and restricting exit in one save when the stored result is outside it', async () => {
+		given({ regionCode: 'en', timeZone: 'Europe/Berlin', contact: { country: 'US' } });
+
+		await update({ timeZone: 'America/New_York', ...RESTRICT });
+
+		expect(organizationService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ timeZone: 'America/New_York', allowAgentAppExit: false })
+		);
+		expect(activityLogService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ updatedFields: ['allowAgentAppExit'] })
+		);
+	});
+
+	it('still refuses when the stored result stays in the EEA/UK: the time zone moves out, the UK contact stays', async () => {
+		given({ regionCode: 'en', timeZone: 'Europe/Berlin', contact: { country: 'GB' } });
+
+		await expect(update({ timeZone: 'America/New_York', ...RESTRICT })).rejects.toThrow(
+			EEA_UK_AGENT_RESTRICTION_ERR_MSG
+		);
+		expect(organizationService.create).not.toHaveBeenCalled();
+	});
+
+	it('allows unlinking a UK contact and restricting exit in one save when the stored result is outside the EEA/UK', async () => {
+		given({
+			regionCode: 'en',
+			timeZone: 'America/New_York',
+			contactId: 'contact-uk',
+			contact: { id: 'contact-uk', country: 'GB' }
+		});
+
+		await update({ contact: null, ...RESTRICT });
+
+		expect(organizationService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ contact: null, allowAgentAppExit: false })
+		);
+		expect(activityLogService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ updatedFields: ['allowAgentAppExit'] })
+		);
+	});
+
+	it('refuses an update that links a contact it cannot read: the location after the save is unknown', async () => {
+		given({ regionCode: 'en', timeZone: 'America/New_York', contactId: 'contact-us', contact: { country: 'US' } });
+
+		await expect(update({ contact: { id: 'contact-x' }, ...RESTRICT })).rejects.toThrow(NotFoundException);
+		await expect(update({ contact: { id: 'contact-x' }, name: 'Renamed' })).rejects.toThrow(NotFoundException);
+		expect(organizationService.create).not.toHaveBeenCalled();
+		expect(activityLogService.create).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * Saving the organization's settings takes the permission to edit the organization, not the one to view contacts. The
+ * update judges the location from the country of the contact the organization links, which it reads itself, so a
+ * caller without ORG_CONTACT_VIEW saves the settings, and is answered no contact.
+ */
+describe('OrganizationUpdateHandler — a settings editor who may not view contacts', () => {
+	const fixture = createTenantFixture();
+	/** The organization's metadata, as the read sink walks it (the sink every CRUD read goes through). */
+	const ORGANIZATION = {
+		name: 'Organization',
+		tableName: 'organization',
+		findRelationWithPropertyPath: () => undefined
+	} as unknown as EntityMetadata;
+	/** A UK organization by its contact alone: its region code and time zone are outside the EEA/UK. */
+	const STORED = {
+		id: 'org-1',
+		name: 'Org',
+		tenantId: fixture.tenantId,
+		regionCode: 'en',
+		timeZone: 'America/New_York',
+		contactId: 'contact-uk',
+		allowScreenshotCapture: false
+	};
+
+	let restore: () => void;
+	let organizationService: { findOneByIdString: jest.Mock; create: jest.Mock; update: jest.Mock };
+	let contactService: { findOneOrFailByIdString: jest.Mock };
+	let self: Record<string, unknown>;
+
+	beforeEach(() => {
+		({ restore } = asTenantUser(fixture, { permissions: [PermissionsEnum.ALL_ORG_EDIT] }));
+		jest.spyOn(RequestContext, 'currentRequestContext').mockReturnValue({} as never);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue(fixture.user.id);
+		organizationService = {
+			findOneByIdString: jest.fn(async (_id: string, options?: { relations?: unknown }) => {
+				assertSensitiveRelationsAllowed(ORGANIZATION, options?.relations);
+				return { ...STORED };
+			}),
+			create: jest.fn(async (entity) => entity),
+			update: jest.fn()
+		};
+		contactService = contactLookup({ 'contact-uk': { id: 'contact-uk', country: 'GB', city: 'London' } });
+		self = {
+			organizationService,
+			activityLogService: { create: jest.fn().mockResolvedValue({}) },
+			contactService,
+			moduleRef: { get: jest.fn() },
+			logger: { error: jest.fn() }
+		};
+		const prototype = OrganizationUpdateHandler.prototype as unknown as Record<
+			'update' | 'savedLocation',
+			(...args: unknown[]) => unknown
+		>;
+		self.update = prototype.update.bind(self);
+		self.savedLocation = prototype.savedLocation.bind(self);
+	});
+
+	afterEach(() => {
+		restore();
+		jest.restoreAllMocks();
+	});
+
+	const update = (input: Record<string, unknown>) =>
+		OrganizationUpdateHandler.prototype.execute.call(
+			self,
+			new OrganizationUpdateCommand('org-1', input as unknown as IOrganizationUpdateInput)
+		);
+
+	it('is refused the organization’s contact on a read of its own', async () => {
+		await expect(
+			organizationService.findOneByIdString('org-1', { relations: { contact: true } })
+		).rejects.toBeInstanceOf(ForbiddenException);
+	});
+
+	it('saves the settings, and is answered the organization without its contact', async () => {
+		const answer = await update({ name: 'Renamed', show_profits: true });
+
+		expect(organizationService.create).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'org-1', name: 'Renamed', show_profits: true })
+		);
+		expect(answer).toMatchObject({ id: 'org-1' });
+		expect(answer).not.toHaveProperty('contact');
+	});
+
+	it('still judges the location by the linked contact: a UK organization cannot restrict exit', async () => {
+		await expect(update({ allowAgentAppExit: false, acknowledgeAgentExitLogoutRestriction: true })).rejects.toThrow(
+			EEA_UK_AGENT_RESTRICTION_ERR_MSG
+		);
+
+		expect(contactService.findOneOrFailByIdString).toHaveBeenCalledWith('contact-uk');
+		expect(organizationService.create).not.toHaveBeenCalled();
 	});
 });

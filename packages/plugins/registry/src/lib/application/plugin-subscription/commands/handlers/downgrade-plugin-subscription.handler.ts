@@ -1,15 +1,19 @@
 import { BadRequestException, Logger, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PluginSubscriptionService } from '../../../../domain';
+import { PluginSubscriptionPlanService, PluginSubscriptionService } from '../../../../domain';
 import { PluginSubscription } from '../../../../domain/entities';
 import { IPluginSubscription } from '../../../../shared';
 import { DowngradePluginSubscriptionCommand } from '../downgrade-plugin-subscription.command';
+import { assertPlanChangeAllowed } from './plan-change';
 
 @CommandHandler(DowngradePluginSubscriptionCommand)
 export class DowngradePluginSubscriptionCommandHandler implements ICommandHandler<DowngradePluginSubscriptionCommand> {
 	private readonly logger = new Logger(DowngradePluginSubscriptionCommandHandler.name);
 
-	constructor(private readonly pluginSubscriptionService: PluginSubscriptionService) {}
+	constructor(
+		private readonly pluginSubscriptionService: PluginSubscriptionService,
+		private readonly pluginSubscriptionPlanService: PluginSubscriptionPlanService
+	) {}
 
 	/**
 	 * Execute plugin subscription downgrade command.
@@ -17,7 +21,9 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 	 * Business Rules:
 	 * 1. Subscription must exist and be accessible by the requesting user
 	 * 2. Subscription must be in ACTIVE status to be downgraded
-	 * 3. New plan must be different from current plan
+	 * 3. New plan must be different from current plan, active, of the subscription's plugin, and cost no more
+	 *    ({@link assertPlanChangeAllowed}): a "downgrade" to a pricier plan is
+	 *    an upgrade without a payment
 	 * 4. Downgrade sets metadata tracking previous plan and downgrade timestamp
 	 * 5. Updates subscription's planId and updatedAt timestamp
 	 * 6. Downgrade may trigger prorated refund calculations (handled in metadata)
@@ -30,7 +36,7 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 	 * @throws BadRequestException if downgrade conditions are not met
 	 */
 	async execute(command: DowngradePluginSubscriptionCommand): Promise<IPluginSubscription> {
-		const { subscriptionId, newPlanId, tenantId, organizationId, userId } = command;
+		const { subscriptionId, newPlanId, tenantId, organizationId, userId, pluginId } = command;
 
 		// Find the existing subscription with proper tenant/organization filtering
 		const subscription = await this.pluginSubscriptionService.findOneByIdString(subscriptionId, {
@@ -50,6 +56,9 @@ export class DowngradePluginSubscriptionCommandHandler implements ICommandHandle
 		if (userId && subscription.subscriberId && subscription.subscriberId !== userId) {
 			throw new BadRequestException('You can only downgrade your own subscriptions');
 		}
+
+		// The route's plugin first, so a subscription under another plugin's route is not found, whatever the plan
+		await assertPlanChangeAllowed(this.pluginSubscriptionPlanService, subscription, newPlanId, pluginId);
 
 		// Validate that the new plan is different from current plan
 		if (subscription.planId === newPlanId) {

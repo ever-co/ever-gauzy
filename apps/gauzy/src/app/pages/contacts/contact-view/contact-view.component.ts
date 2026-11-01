@@ -6,7 +6,8 @@ import {
 	IFavorite,
 	IOrganization,
 	IOrganizationContact,
-	IOrganizationContactCreateInput
+	IOrganizationContactCreateInput,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +18,7 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { FilterArrayPipe, LeafletMapComponent } from '@gauzy/ui-core/shared';
 import { Store } from '@gauzy/ui-core/core';
 import { EmployeesService, OrganizationContactService } from '@gauzy/ui-core/core';
+import { IEntityCommentsLabels } from '../../shared/entity-comments/entity-comments.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -40,8 +42,26 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 	/** Tail of the queued member saves; see `updateOrganizationContactMembers`. */
 	private _membersUpdate: Promise<void> = Promise.resolve();
 
-	/** Entity type the record-side Documents tab attaches its links to. */
+	/** Entity type the record-side Documents tab attaches its links to, and the Notes tab its notes. */
 	readonly documentEntity = BaseEntityEnum.OrganizationContact;
+
+	/**
+	 * The Notes tab (ever-co/ever-gauzy#1114): the contact's comments, shown to those who may view contacts and
+	 * written by those who may edit them, the permissions the server checks on the contact itself. Both follow the
+	 * caller's permissions, which can arrive after the page opens (a direct link to it).
+	 */
+	canReadNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_VIEW);
+	canWriteNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT);
+	/** The Notes tab's id, and whether it has been opened: its comments are loaded on the first opening only. */
+	readonly notesTabId = 'notes';
+	notesOpened = false;
+
+	readonly notesLabels: IEntityCommentsLabels = {
+		empty: 'CONTACTS_PAGE.NO_NOTES',
+		placeholder: 'CONTACTS_PAGE.NOTE_PLACEHOLDER',
+		send: 'CONTACTS_PAGE.ADD_NOTE',
+		deleted: 'CONTACTS_PAGE.NOTE_DELETED'
+	};
 
 	constructor(
 		readonly translateService: TranslateService,
@@ -55,7 +75,24 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 		super(translateService);
 	}
 
+	/**
+	 * Notes the first opening of the Notes tab. The flag stays set, so switching tabs keeps the notes rather than
+	 * loading them again.
+	 */
+	onTabChange(tab: { tabId?: string } | null | undefined): void {
+		if (tab?.tabId === this.notesTabId) {
+			this.notesOpened = true;
+		}
+	}
+
 	ngOnInit(): void {
+		this.store.userRolePermissions$
+			.pipe(
+				tap(() => this.readNotesPermissions()),
+				untilDestroyed(this)
+			)
+			.subscribe();
+
 		// Watch for route parameter changes to handle navigation between different contacts
 		this.activatedRoute.params
 			.pipe(
@@ -72,6 +109,17 @@ export class ContactViewComponent extends TranslationBaseComponent implements On
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/** Reads the Notes tab's permissions from the store again, and redraws the page when they changed. */
+	private readNotesPermissions(): void {
+		const canReadNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_VIEW);
+		const canWriteNotes = this.store.hasPermission(PermissionsEnum.ORG_CONTACT_EDIT);
+		if (canReadNotes !== this.canReadNotes || canWriteNotes !== this.canWriteNotes) {
+			this.canReadNotes = canReadNotes;
+			this.canWriteNotes = canWriteNotes;
+			this.cd.markForCheck();
+		}
 	}
 
 	/**

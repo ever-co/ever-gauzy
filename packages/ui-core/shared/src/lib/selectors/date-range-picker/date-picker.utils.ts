@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { IDateRangePicker, ISelectedDateRange, ITimeLogFilters, WeekDaysEnum } from '@gauzy/contracts';
-import { TimePeriod } from './date-picker.interface';
+import { DateRangeKeyEnum, DateRanges, TimePeriod } from './date-picker.interface';
 
 /**
  * We are having issue, when organization not allowed future date
@@ -153,6 +153,43 @@ export function toPickerRange(
 	};
 }
 
+/** A preset's start or end: a moment, or the date object the picker library rewrites presets into. */
+type PresetDate = { format(format: string): string };
+
+/**
+ * Whether a picked range is "custom", that is, not one of the menu's presets. The arrows step a custom
+ * range by its length in days, and a preset by its calendar unit.
+ *
+ * A locked picker only ever selects one whole unit (`toPickerRange` widens every pick to it), so its
+ * ranges are never custom. Comparing them with the presets would mark the current month custom wherever
+ * future dates are disallowed, because that preset ends today, and "Previous" would then step 31 days
+ * back from October (31 Aug to 30 Sep) instead of to September.
+ *
+ * @param range The picked range.
+ * @param presets The menu's preset ranges, as the picker holds them (moment or library date objects).
+ * @param isLockDatePicker Whether the picker only allows one whole unit of time.
+ */
+export function isCustomDateRange(
+	range: { startDate: moment.Moment; endDate: moment.Moment },
+	presets: Record<string, [PresetDate, PresetDate]> | null | undefined,
+	isLockDatePicker: boolean
+): boolean {
+	if (isLockDatePicker) {
+		return false;
+	}
+	if (!presets) {
+		return true;
+	}
+
+	const day = 'YYYY-MM-DD';
+	const start = moment(range.startDate).format(day);
+	const end = moment(range.endDate).format(day);
+
+	return !Object.values(presets).some(
+		([presetStart, presetEnd]) => presetStart.format(day) === start && presetEnd.format(day) === end
+	);
+}
+
 /**
  * Brings a range written back through `[(ngModel)]` to the `Date`s `IDateRangePicker` promises.
  *
@@ -248,4 +285,138 @@ export function selectUnitOfTime({
 	}
 
 	return null;
+}
+
+/** The units whose presets an unlocked picker offers, in the order the ranges menu lists them. */
+export const PRESET_UNITS_OF_TIME: readonly moment.unitOfTime.Base[] = ['day', 'week', 'month', 'year'];
+
+/**
+ * The unit of time each preset spans. Picking a preset switches the picker to that unit, so the
+ * arrows then step by it: a day after "Today", a whole year after "Current Year".
+ */
+export const PRESET_UNIT_OF_TIME: Readonly<Record<DateRangeKeyEnum, moment.unitOfTime.Base>> = {
+	[DateRangeKeyEnum.TODAY]: 'day',
+	[DateRangeKeyEnum.YESTERDAY]: 'day',
+	[DateRangeKeyEnum.CURRENT_WEEK]: 'week',
+	[DateRangeKeyEnum.LAST_WEEK]: 'week',
+	[DateRangeKeyEnum.CURRENT_MONTH]: 'month',
+	[DateRangeKeyEnum.LAST_MONTH]: 'month',
+	[DateRangeKeyEnum.CURRENT_YEAR]: 'year',
+	[DateRangeKeyEnum.LAST_YEAR]: 'year'
+};
+
+/** The "current" and "last" preset of each unit that has presets. */
+const PRESETS_BY_UNIT: Partial<Record<moment.unitOfTime.Base, readonly [DateRangeKeyEnum, DateRangeKeyEnum]>> = {
+	day: [DateRangeKeyEnum.TODAY, DateRangeKeyEnum.YESTERDAY],
+	week: [DateRangeKeyEnum.CURRENT_WEEK, DateRangeKeyEnum.LAST_WEEK],
+	month: [DateRangeKeyEnum.CURRENT_MONTH, DateRangeKeyEnum.LAST_MONTH],
+	year: [DateRangeKeyEnum.CURRENT_YEAR, DateRangeKeyEnum.LAST_YEAR]
+};
+
+/**
+ * Builds the preset ranges of the picker's menu: for each unit, the whole unit containing `now`
+ * ("Today", "Current Week", …) and the whole unit before it ("Yesterday", "Last Week", …).
+ *
+ * A preset reaching past `maxDate` ends on `maxDate` instead, so on an organization that does not
+ * allow future dates "Current Year" runs from 1 January to today rather than to 31 December.
+ * Likewise a preset reaching back before `minDate` starts on `minDate`, and one that is over before
+ * `minDate`'s day ("Yesterday", "Last Year", … where past dates are not allowed) is left out: the
+ * picker would otherwise still list it, and picking it would give a range that ends before it starts.
+ *
+ * @param units The units to offer presets for; a unit without presets is skipped.
+ * @param now The instant the presets are relative to.
+ * @param maxDate The last selectable instant, or `null` when future dates are allowed.
+ * @param minDate The first selectable instant, or `null` when past dates are allowed.
+ * @returns The ranges keyed by their menu label, in the order of `units`.
+ */
+export function buildPresetRanges(
+	units: readonly moment.unitOfTime.Base[],
+	now: moment.Moment = moment(),
+	maxDate: moment.Moment | null = null,
+	minDate: moment.Moment | null = null
+): DateRanges {
+	const ranges: DateRanges = {};
+
+	for (const unit of units) {
+		const presets = PRESETS_BY_UNIT[unit];
+		if (!presets) {
+			continue;
+		}
+
+		const [currentKey, lastKey] = presets;
+		const current = now.clone().startOf(unit);
+		const last = current.clone().subtract(1, unit);
+
+		addPreset(ranges, currentKey, wholeUnit(current, unit, maxDate), minDate);
+		addPreset(ranges, lastKey, wholeUnit(last, unit, maxDate), minDate);
+	}
+
+	return ranges;
+}
+
+/** Adds `range` under `key`, starting on `minDate` at the earliest; a range over before `minDate`'s day is left out. */
+function addPreset(
+	ranges: DateRanges,
+	key: DateRangeKeyEnum,
+	[start, end]: [moment.Moment, moment.Moment],
+	minDate: moment.Moment | null
+): void {
+	if (minDate && end.isBefore(minDate, 'day')) {
+		return;
+	}
+	const from = minDate && start.isBefore(minDate) ? minDate.clone() : start;
+	// Limits that leave nothing of the unit (`maxDate` before `minDate`, or before the unit starts): no preset.
+	if (from.isAfter(end)) {
+		return;
+	}
+	ranges[key] = [from, end];
+}
+
+/**
+ * Whether the "Previous" arrow is disabled, the counterpart of "Next" stopping at today. Where past dates
+ * are disallowed, a range that already starts today (or earlier) has no earlier period left to step to:
+ * stepping back would select days before `minDate`.
+ *
+ * @param range The selected range.
+ * @param isPastDisallowed Whether the page disallows past dates.
+ * @param now Today.
+ */
+export function isPreviousRangeDisabled(
+	range: { startDate?: Date | string | null } | null | undefined,
+	isPastDisallowed: boolean,
+	now: moment.Moment = moment()
+): boolean {
+	if (!range?.startDate) {
+		return true;
+	}
+	return isPastDisallowed && moment(range.startDate).isSameOrBefore(now, 'day');
+}
+
+/**
+ * Where past dates are disallowed, a step back that would start before today starts today instead, as
+ * the presets do at `minDate`. (From a range that already starts today, "Previous" is disabled.)
+ *
+ * @param range The range "Previous" stepped to.
+ * @param isPastDisallowed Whether the page disallows past dates.
+ * @param now Today.
+ */
+export function keepRangeFromToday<T extends { startDate?: Date | string | null }>(
+	range: T,
+	isPastDisallowed: boolean,
+	now: moment.Moment = moment()
+): T {
+	if (!isPastDisallowed || !range?.startDate || !moment(range.startDate).isBefore(now, 'day')) {
+		return range;
+	}
+	return { ...range, startDate: now.clone().startOf('day').toDate() };
+}
+
+/** The whole `unit` starting at `start`, ending on `maxDate` at the latest. */
+function wholeUnit(
+	start: moment.Moment,
+	unit: moment.unitOfTime.Base,
+	maxDate: moment.Moment | null
+): [moment.Moment, moment.Moment] {
+	const end = start.clone().endOf(unit);
+	return [start, maxDate && end.isAfter(maxDate) ? maxDate.clone() : end];
 }

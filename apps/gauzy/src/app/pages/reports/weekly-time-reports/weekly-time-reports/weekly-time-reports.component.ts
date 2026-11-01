@@ -234,4 +234,15 @@ export class WeeklyTimeReportsComponent extends BaseSelectorFilterComponent impl
 	public getStatus(value: number) {
 		return progressStatus(value);
 	}
+
+	/**
+	 * Whether the week of an employee has an amount to show in the Spent column. An employee without a bill
+	 * rate has none (`spent` is null), and keeps the dash.
+	 *
+	 * @param log - One employee's week.
+	 * @returns `true` when `spent` is a number.
+	 */
+	public hasSpent(log: ReportDayData): boolean {
+		return typeof log?.spent === 'number' && Number.isFinite(log.spent);
+	}
 }

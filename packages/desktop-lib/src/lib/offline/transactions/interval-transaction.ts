@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 import { AppError } from '../../error-handler';
 import { IIntervalTransaction, IDatabaseProvider } from '../../interfaces';
 import { IntervalTO, TABLE_NAME_INTERVALS } from '../dto';
+import { toUpdatePayload, warnEmptyUpdate } from '../utils';
 
 export class IntervalTransaction implements IIntervalTransaction {
 	private _databaseProvider: IDatabaseProvider;
@@ -25,12 +26,16 @@ export class IntervalTransaction implements IIntervalTransaction {
 	}
 
 	public async update(id: number, value: IntervalTO): Promise<void> {
+		const changes = toUpdatePayload(value);
+		if (!changes) {
+			return warnEmptyUpdate('INTERTRX', id);
+		}
 		await this._databaseProvider.connection.transaction(
 			async (trx: Knex.Transaction) => {
 				try {
 					await trx(TABLE_NAME_INTERVALS)
 						.where('id', '=', id)
-						.update(value);
+						.update(changes);
 					await trx.commit();
 				} catch (error) {
 					await trx.rollback();

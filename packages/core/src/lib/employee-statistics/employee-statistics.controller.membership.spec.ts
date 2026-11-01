@@ -50,6 +50,8 @@ describe('EmployeeStatisticsController — organization membership', () => {
 		);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
 		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+		// A caller who may choose any employee: the own-employee rule has its own spec (employee-statistics.own-employee.spec.ts).
+		jest.spyOn(RequestContext, 'hasPermission').mockReturnValue(true);
 		// The user's token names their own organization: the only one the organization boundary lets them name.
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(MINE);
 	});

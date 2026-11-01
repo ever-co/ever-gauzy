@@ -111,6 +111,14 @@ export class OrganizationSwitchService {
 	}
 
 	/**
+	 * True while a timer start is under way (`beginTimerStart()`), from its first step until the main process has
+	 * started the timer: the start takes the selection shown then, which nothing else may change meanwhile.
+	 */
+	public get isStartingTimer(): boolean {
+		return this._timerStarts$.getValue() > 0;
+	}
+
+	/**
 	 * Hold off organization switches while the timer starts. The time tracker calls this before the first step of a
 	 * start (its preflight awaits the platform, the macOS permission prompt and today's time, which would leave room for
 	 * a switch to begin) and calls the function returned once the main process has answered `START_TIMER`, or the start
@@ -156,7 +164,7 @@ export class OrganizationSwitchService {
 		if (this.isSwitching) {
 			return false;
 		}
-		if (this._timerStarts$.getValue() > 0) {
+		if (this.isStartingTimer) {
 			console.warn('[OrganizationSwitchService] Not switching organization: the timer is starting');
 			return false;
 		}

@@ -31,14 +31,24 @@ export class KeyResultUpdateService extends TenantAwareCrudService<KeyResultUpda
 	}
 
 	/**
+	 * The progress updates of one key result, in the caller's tenant.
 	 *
-	 * @param keyResultId
-	 * @returns
+	 * The repositories are read directly, so the tenant condition is stated here: filtering on the key result alone
+	 * answered the updates of another tenant's key result to anyone who named it. Without a tenant in the request
+	 * nothing is answered.
+	 *
+	 * @param keyResultId - The key result.
+	 * @returns Its updates in the caller's tenant; none for a key result of another tenant.
 	 */
 	async findByKeyResultId(keyResultId: ID): Promise<KeyResultUpdate[]> {
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId || !keyResultId) {
+			return [];
+		}
+
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
-				const items = await this.mikroOrmRepository.find({ keyResultId } as any);
+				const items = await this.mikroOrmRepository.find({ keyResultId, tenantId } as any);
 				return items.map((e) => this.serialize(e)) as KeyResultUpdate[];
 			}
 			case MultiORMEnum.TypeORM:
@@ -48,6 +58,7 @@ export class KeyResultUpdateService extends TenantAwareCrudService<KeyResultUpda
 					.where('key_result_update.keyResultId = :keyResultId', {
 						keyResultId
 					})
+					.andWhere('key_result_update.tenantId = :tenantId', { tenantId })
 					.getMany();
 		}
 	}

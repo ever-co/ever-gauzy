@@ -1,0 +1,54 @@
+<div class="server-host">
+	<div class="server-host-row">
+		<input
+			nbInput
+			fullWidth
+			type="text"
+			placeholder="0.0.0.0"
+			[status]="status()"
+			[value]="host() ?? ''"
+			[disabled]="disabled()"
+			[attr.aria-label]="'TIMER_TRACKER.SETTINGS.SERVER_HOSTNAME' | translate"
+			[attr.aria-invalid]="!check().valid"
+			(input)="onInput($event)"
+		/>
+		<button
+			nbButton
+			type="button"
+			status="basic"
+			class="detect-button"
+			[disabled]="disabled() || detecting()"
+			[nbTooltip]="'TIMER_TRACKER.SETTINGS.SERVER_HOST.DETECT_HINT' | translate"
+			(click)="detect()"
+		>
+			<nb-icon icon="wifi-outline"></nb-icon>
+			{{ 'TIMER_TRACKER.SETTINGS.SERVER_HOST.DETECT' | translate }}
+		</button>
+	</div>
+	@if (check().error; as error) {
+		<p class="caption status-danger message" role="alert">{{ error | translate }}</p>
+	}
+	@for (warning of check().warnings; track warning) {
+		<p class="caption status-warning message">{{ warning | translate }}</p>
+	}
+	@if (addresses().length) {
+		<div class="detected-addresses">
+			<span class="caption">{{ 'TIMER_TRACKER.SETTINGS.SERVER_HOST.DETECTED' | translate }}</span>
+			@for (address of addresses(); track address.address) {
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					type="button"
+					status="primary"
+					class="detected-address"
+					[disabled]="disabled()"
+					(click)="use(address)"
+				>
+					{{ address.address }}
+					<span class="interface-name">{{ address.name }}</span>
+				</button>
+			}
+		</div>
+	}
+</div>

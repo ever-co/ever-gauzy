@@ -8,6 +8,7 @@ import { TimeOffRequestController } from './time-off-request.controller';
 import { TimeOffRequestResolver } from './time-off-request.resolver';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RequestApprovalModule } from '../request-approval/request-approval.module';
+import { TimeOffBalanceModule } from '../time-off-balance/time-off-balance.module';
 import { CommandHandlers } from './commands/handlers';
 import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-request.repository';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
@@ -18,6 +19,8 @@ import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-of
 		MikroOrmModule.forFeature([TimeOffRequest]),
 		RolePermissionModule,
 		forwardRef(() => RequestApprovalModule),
+		// The approve / deny decision takes and gives back leave balance days (issue #10183).
+		TimeOffBalanceModule,
 		CqrsModule
 	],
 	controllers: [TimeOffRequestController],

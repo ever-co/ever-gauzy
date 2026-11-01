@@ -7,7 +7,9 @@ export const DEFAULT_EVER_ORGANIZATIONS = [
 		defaultValueDateType: DefaultValueDateTypeEnum.TODAY,
 		imageUrl: 'assets/images/logos/ever-large.jpg',
 		isDefault: true,
-		totalEmployees: 17
+		totalEmployees: 17,
+		// The one-line tagline the public page shows under the company name.
+		banner: 'We build open-source software for businesses'
 	},
 	{
 		name: 'Ever Co. Ltd',

@@ -332,7 +332,12 @@ export class OrganizationTeam extends TenantOrganizationBaseEntity implements IO
 		/** Defines the database action to perform on update. */
 		onUpdate: 'CASCADE',
 		/** Defines the database cascade action on delete. */
-		onDelete: 'CASCADE'
+		onDelete: 'CASCADE',
+		/**
+		 * Read-only from this side: a comment is assigned through the comment API (`Comment.teams`), where its
+		 * record's policy decides, never by saving a team.
+		 */
+		persistence: false
 	})
 	assignedComments?: IComment[];
 }

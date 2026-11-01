@@ -1,4 +1,4 @@
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import {
 	ChangeDetectionStrategy,
 	ChangeDetectorRef,
@@ -76,7 +76,7 @@ function readSchemaVersion(document: IDocument | null | undefined): number | nul
 @Component({
 	selector: 'gz-document-editor',
 	standalone: true,
-	imports: [CommonModule, TextBubbleMenuComponent, TableBubbleMenuComponent, FloatingBlockMenuComponent],
+	imports: [TextBubbleMenuComponent, TableBubbleMenuComponent, FloatingBlockMenuComponent],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	providers: [DocumentAutosaveService, EditorUploadService, SuggestionHostService],
 	templateUrl: './document-editor.component.html',
@@ -254,7 +254,9 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 	toggleInvisibleCharacters(): void {
 		if (!this.editor) return;
 		this.invisiblesVisible = !this.invisiblesVisible;
-		(this.editor.commands as unknown as { toggleInvisibleCharacters?: () => boolean }).toggleInvisibleCharacters?.();
+		(
+			this.editor.commands as unknown as { toggleInvisibleCharacters?: () => boolean }
+		).toggleInvisibleCharacters?.();
 		this.cdr.markForCheck();
 	}
 
@@ -385,8 +387,7 @@ export class DocumentEditorComponent implements OnChanges, OnDestroy {
 
 	private emitStats(): void {
 		const storage = this.editor?.storage as
-			| { characterCount?: { characters?: () => number; words?: () => number } }
-			| undefined;
+			{ characterCount?: { characters?: () => number; words?: () => number } } | undefined;
 		const characters = storage?.characterCount?.characters?.() ?? 0;
 		const words = storage?.characterCount?.words?.() ?? 0;
 		this.statsChanged.emit({

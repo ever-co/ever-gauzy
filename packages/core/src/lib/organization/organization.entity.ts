@@ -29,7 +29,8 @@ import {
 	IImageAsset,
 	ID,
 	BonusTypeEnum,
-	CurrenciesEnum
+	CurrenciesEnum,
+	IUser
 } from '@gauzy/contracts';
 import {
 	AccountingTemplate,
@@ -47,7 +48,8 @@ import {
 	ReportOrganization,
 	Skill,
 	Tag,
-	TenantBaseEntity
+	TenantBaseEntity,
+	User
 } from '../core/entities/internal';
 import {
 	ColumnIndex,
@@ -399,8 +401,30 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ default: false })
 	isRemoveIdleTime?: boolean;
 
+	/**
+	 * Whether the desktop apps take screenshots for this organization's members.
+	 *
+	 * A new organization starts with it off (issue #9872, see `newOrganizationAllowsScreenshotCapture`), and
+	 * turning it on for an EEA/UK organization takes the admin's acknowledgement. The column default stays
+	 * `true` on purpose: changing it would not change existing rows, and every path that creates an
+	 * organization states the value (the create handler, the client-invite acceptance and the demo seeds).
+	 */
+	@ApiPropertyOptional({ type: () => Boolean })
+	@IsOptional()
+	@IsBoolean()
 	@MultiORMColumn({ default: true })
 	allowScreenshotCapture?: boolean;
+
+	/**
+	 * When screen capture was last turned on with the admin's acknowledgement (issue #9872).
+	 *
+	 * Written by the server in the same write that turns capture on, never from a request body. Kept when
+	 * capture is turned off: it is the record of the last acknowledgement, and turning capture on again asks
+	 * again and overwrites it. The activity log keeps every acknowledgement.
+	 */
+	@ApiPropertyOptional({ type: () => Date, readOnly: true })
+	@MultiORMColumn({ nullable: true })
+	screenshotCaptureAcknowledgedAt?: Date;
 
 	/** Upwork Organization ID */
 	@ApiPropertyOptional({ type: () => String })
@@ -607,6 +631,28 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true, relationId: true })
 	imageId?: ID;
+
+	/**
+	 * The user who last turned screen capture on with an acknowledgement (issue #9872).
+	 *
+	 * Releases rather than cascades: the acknowledgement is history, and the organization outlives the
+	 * admin's account (the activity log entry keeps the user's ID).
+	 */
+	@MultiORMManyToOne(() => User, {
+		/** Indicates if the relation column value can be nullable or not. */
+		nullable: true,
+
+		/** Database cascade action on delete. */
+		onDelete: 'SET NULL'
+	})
+	@JoinColumn()
+	screenshotCaptureAcknowledgedByUser?: IUser;
+
+	/** The user `screenshotCaptureAcknowledgedByUser` names. Written by the server only. */
+	@ApiPropertyOptional({ type: () => String, readOnly: true })
+	@RelationId((it: Organization) => it.screenshotCaptureAcknowledgedByUser)
+	@MultiORMColumn({ nullable: true, relationId: true })
+	screenshotCaptureAcknowledgedByUserId?: ID;
 
 	/*
 	|--------------------------------------------------------------------------

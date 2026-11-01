@@ -1,4 +1,6 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { NbIconModule } from '@nebular/theme';
 import { ITask } from '@gauzy/contracts';
 import { HashNumberPipe, IRecordViewStatus } from '@gauzy/ui-core/shared';
@@ -14,11 +16,11 @@ import { HashNumberPipe, IRecordViewStatus } from '@gauzy/ui-core/shared';
 	styleUrls: ['./task-view-header.component.scss'],
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: true,
-	imports: [NbIconModule, HashNumberPipe]
+	imports: [NgTemplateOutlet, RouterLink, NbIconModule, HashNumberPipe]
 })
 export class TaskViewHeaderComponent {
 	@Input() task: ITask;
 	@Input() status: IRecordViewStatus;
-	/** The page shows the title as its main heading; the drawer keeps the softer size. */
-	@Input() large = false;
+	/** Where the breadcrumb's project leads, for a viewer who may open it; without one it is plain text. */
+	@Input() projectLink: string[] | null = null;
 }

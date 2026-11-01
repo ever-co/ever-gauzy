@@ -138,16 +138,19 @@ function repository(rows: object[]) {
 /**
  * @param variants The `product_variant` rows.
  * @param settings The `product_variant_setting` rows.
- * @returns The service, wired to the two doubles, and the doubles themselves.
+ * @param products The `product` rows.
+ * @returns The service, wired to the three doubles, and the doubles themselves.
  */
-function fixture(variants: IVariantRow[] = [], settings: ISettingRow[] = []) {
+function fixture(variants: IVariantRow[] = [], settings: ISettingRow[] = [], products: object[] = []) {
 	const productVariants = repository(variants);
 	const variantSettings = repository(settings);
+	const productRows = repository(products);
 
 	return {
 		productVariants,
 		variantSettings,
-		service: new ProductVariantSaleService(productVariants as never, variantSettings as never)
+		products: productRows,
+		service: new ProductVariantSaleService(productVariants as never, variantSettings as never, productRows as never)
 	};
 }
 
@@ -243,11 +246,47 @@ describe('ProductVariantSaleService — how a variant is sold', () => {
 	});
 
 	it('refuses to answer when no identifier was named', async () => {
-		const { service, productVariants, variantSettings } = fixture();
+		const { service, productVariants, variantSettings, products } = fixture();
 
 		await expect(service.isVariantSubscribable(undefined as never)).rejects.toThrow(/CATALOG_VARIANT_REQUIRED/);
 		await expect(service.defaultVariantOf(undefined as never)).rejects.toThrow(/CATALOG_PRODUCT_REQUIRED/);
+		await expect(service.variantExists(undefined as never)).rejects.toThrow(/CATALOG_VARIANT_REQUIRED/);
+		await expect(service.productExists(undefined as never)).rejects.toThrow(/CATALOG_PRODUCT_REQUIRED/);
 		expect(variantSettings.options).toEqual([]);
 		expect(productVariants.options).toEqual([]);
+		expect(products.options).toEqual([]);
+	});
+
+	it('finds a variant of the caller’s own catalogue whether or not it is marked for recurring sale', async () => {
+		// The existence read a plan's target is checked with: a plan may be drafted on a variant not marked yet.
+		const { service } = fixture([variant({ id: UNMARKED_VARIANT })]);
+
+		expect(await service.variantExists(UNMARKED_VARIANT)).toBe(true);
+		expect(await service.variantExists('variant-nowhere')).toBe(false);
+	});
+
+	it('does not find a variant or a product of another organization', async () => {
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(OTHER_ORG);
+		const { service, productVariants, products } = fixture(
+			[variant({ id: SUBSCRIBABLE_VARIANT })],
+			[],
+			[{ id: PRODUCT, tenantId: TENANT, organizationId: ORG }]
+		);
+
+		expect(await service.variantExists(SUBSCRIBABLE_VARIANT)).toBe(false);
+		expect(await service.productExists(PRODUCT)).toBe(false);
+		expect(productVariants.options[0]).toMatchObject({
+			where: { id: SUBSCRIBABLE_VARIANT, tenantId: TENANT, organizationId: OTHER_ORG }
+		});
+		expect(products.options[0]).toMatchObject({
+			where: { id: PRODUCT, tenantId: TENANT, organizationId: OTHER_ORG }
+		});
+	});
+
+	it('finds a product of the caller’s own catalogue', async () => {
+		const { service } = fixture([], [], [{ id: PRODUCT, tenantId: TENANT, organizationId: ORG }]);
+
+		expect(await service.productExists(PRODUCT)).toBe(true);
+		expect(await service.productExists('product-nowhere')).toBe(false);
 	});
 });

@@ -1,0 +1,98 @@
+<section class="board-filter" [attr.aria-label]="'PROJECT_VIEW.BOARD_FILTER.TITLE' | translate">
+	<label class="board-filter-search">
+		<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+		<input
+			#searchInput
+			type="search"
+			class="board-filter-search-input"
+			[value]="filter.search"
+			[placeholder]="'PROJECT_VIEW.BOARD_FILTER.SEARCH' | translate"
+			[attr.aria-label]="'PROJECT_VIEW.BOARD_FILTER.SEARCH' | translate"
+			(input)="onSearch(searchInput.value)"
+		/>
+	</label>
+
+	@if (options.people.length || options.unassigned) {
+	<!-- As Jira's: Unassigned first, then the people. -->
+	<div class="board-filter-people" role="group" [attr.aria-label]="'PROJECT_VIEW.BOARD_FILTER.ASSIGNEES' | translate">
+		@if (options.unassigned) {
+		@let selected = filter.people.includes(unassigned);
+		<button
+			type="button"
+			class="board-filter-person"
+			[class.is-active]="selected"
+			[attr.aria-pressed]="selected"
+			[attr.aria-label]="'PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate"
+			[nbTooltip]="'PROJECT_VIEW.BOARD_FILTER.UNASSIGNED' | translate"
+			nbTooltipPlacement="top"
+			(click)="togglePerson(unassigned)"
+		>
+			<nb-icon icon="person-outline" aria-hidden="true"></nb-icon>
+		</button>
+		}
+		@for (person of options.people; track person.id) {
+		@let selected = filter.people.includes(person.id);
+		<button
+			type="button"
+			class="board-filter-person"
+			[class.is-active]="selected"
+			[attr.aria-pressed]="selected"
+			[attr.aria-label]="person.name"
+			[nbTooltip]="person.name"
+			nbTooltipPlacement="top"
+			(click)="togglePerson(person.id)"
+		>
+			@if (person.avatarUrl) {
+			<img [src]="person.avatarUrl" alt="" />
+			} @else {
+			<span class="board-filter-initials" [style.background-color]="avatarColor(person.name)" aria-hidden="true">{{
+				person.initials
+			}}</span>
+			}
+		</button>
+		}
+	</div>
+	}
+
+	<ng-content></ng-content>
+
+	<!-- A menu shows once a card carries something to pick in it. -->
+	@for (menu of menus; track menu.facet) {
+	@if (options[menu.facet].length) {
+	<nb-select
+		multiple
+		size="tiny"
+		status="basic"
+		class="board-filter-menu"
+		[class.is-active]="filter[menu.facet].length"
+		[placeholder]="menu.label | translate"
+		[selected]="filter[menu.facet]"
+		[attr.aria-label]="menu.label | translate"
+		(selectedChange)="onSelect(menu.facet, $event)"
+	>
+		<nb-select-label>
+			{{ menu.label | translate }}
+			<span class="board-filter-count">{{ filter[menu.facet].length }}</span>
+		</nb-select-label>
+		@for (option of options[menu.facet]; track option.id) {
+		<nb-option [value]="option.id">{{ option.name }}</nb-option>
+		}
+	</nb-select>
+	}
+	}
+
+	<div class="board-filter-end">
+		<!-- Always there, so a screen reader announces the count as it changes. -->
+		<span class="board-filter-results" role="status">
+			@if (active) {
+			{{ 'PROJECT_VIEW.BOARD_FILTER.RESULTS' | translate : { shown: shown, total: total } }}
+			}
+		</span>
+		@if (active) {
+		<button nbButton ghost size="tiny" status="basic" type="button" (click)="clear()">
+			<nb-icon icon="close-outline"></nb-icon>
+			{{ 'PROJECT_VIEW.BOARD_FILTER.CLEAR' | translate }}
+		</button>
+		}
+	</div>
+</section>

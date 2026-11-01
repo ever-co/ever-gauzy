@@ -22,6 +22,7 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmExpenseRepository } from './repository/type-orm-expense.repository';
 import { MikroOrmExpenseRepository } from './repository/mikro-orm-expense.repository';
 import { FavoriteService } from '../core/decorators';
+import { NO_ACCESSIBLE_EMPLOYEE_ID } from '../employee/managed-employee.service';
 
 /** One total of expense amounts: how many rows, and their exact sum, in one currency. */
 export interface IExpenseTotal {
@@ -121,9 +122,8 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const { organizationId, startDate, endDate, categoryId, projectIds = [] } = request;
-				let { employeeIds = [] } = request;
+				const employeeIds = this.resolveEmployeeIds(request);
 				const tenantId = RequestContext.currentTenantId() || request.tenantId;
-				const user = RequestContext.currentUser();
 				const { start, end } = getDateRangeFormat(
 					moment.utc(startDate || moment().startOf('week')),
 					moment.utc(endDate || moment().endOf('week'))
@@ -131,13 +131,6 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 				const hasChangeSelectedEmployeePermission = RequestContext.hasPermission(
 					PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 				);
-				const isOnlyMeSelected = request.onlyMe;
-				if (
-					(user.employeeId && isOnlyMeSelected) ||
-					(!hasChangeSelectedEmployeePermission && user.employeeId)
-				) {
-					employeeIds = [user.employeeId];
-				}
 
 				const where: any = {
 					tenantId,
@@ -187,7 +180,8 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	 * The rows are the ones `GET /expense/report` reads — the same reader, so the same tenant (the
 	 * credential's), the same organization, the same window (the current week when none is stated), the same
 	 * employee, project and category narrowing, and the same rule that a caller without
-	 * `CHANGE_SELECTED_EMPLOYEE` reads their own expenses only. What differs is the answer: the report nests
+	 * `CHANGE_SELECTED_EMPLOYEE` reads their own expenses only (and none when they have no employee record,
+	 * unless their role views the whole organization). What differs is the answer: the report nests
 	 * the rows by date, employee and project and the daily chart rounds each day to one decimal place, while
 	 * this sums them exactly — as decimal strings, never as binary floats — per currency, because adding two
 	 * currencies together produces a number that means nothing. The page the report reader accepts is not
@@ -264,25 +258,15 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	 */
 	async getDailyReportChartData(request: IGetExpenseInput) {
 		const { startDate, endDate, organizationId, categoryId, projectIds = [] } = request;
-		let { employeeIds = [] } = request;
+		const employeeIds = this.resolveEmployeeIds(request);
 
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
-		const user = RequestContext.currentUser();
 		const days: Array<string> = getDaysBetweenDates(startDate, endDate);
 
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
 		);
-
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		);
-		const isOnlyMeSelected: boolean = request.onlyMe;
-
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
-			employeeIds = [user.employeeId];
-		}
 
 		let expenses: IExpense[];
 
@@ -344,35 +328,49 @@ export class ExpenseService extends TenantAwareCrudService<Expense> {
 	}
 
 	/**
+	 * The employees whose expenses a report read covers; an empty list means no employee filter.
+	 *
+	 * "Only me" and a caller who may not pick employees read their own expenses. The employee predicate of
+	 * every read is applied only to a non-empty list, so a caller who may not pick employees and has no
+	 * employee record of their own — after switching to an organization they are not an employee of, or once
+	 * their employee record is gone — would read the whole organization, or any colleague they name. They get
+	 * an id that matches nothing instead, unless their role lets them view the whole organization. "Only me"
+	 * from a caller with no employee record matches nothing as well, whatever their role: they have no
+	 * expenses of their own.
+	 *
+	 * @param request The report's own selectors.
+	 * @returns The employeeIds to filter on.
+	 */
+	private resolveEmployeeIds(request: IGetExpenseInput): ID[] {
+		const { employeeIds = [], onlyMe } = request;
+		const employeeId = RequestContext.currentUser()?.employeeId;
+		const canChangeEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+
+		if (employeeId && (onlyMe || !canChangeEmployee)) {
+			return [employeeId];
+		}
+		if (!onlyMe && (canChangeEmployee || RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW))) {
+			return employeeIds;
+		}
+		return [NO_ACCESSIBLE_EMPLOYEE_ID];
+	}
+
+	/**
 	 *
 	 * @param request
 	 * @returns
 	 */
 	private filterQuery(request: IGetExpenseInput) {
 		const { organizationId, startDate, endDate, categoryId, projectIds = [] } = request;
-		let { employeeIds = [] } = request;
+		const employeeIds = this.resolveEmployeeIds(request);
 
 		const tenantId = RequestContext.currentTenantId() || request.tenantId;
-		const user = RequestContext.currentUser();
 
 		// Calculate start and end dates using a utility function
 		const { start, end } = getDateRangeFormat(
 			moment.utc(startDate || moment().startOf('week')),
 			moment.utc(endDate || moment().endOf('week'))
 		);
-
-		// Check if the current user has the permission to change the selected employee
-		const hasChangeSelectedEmployeePermission: boolean = RequestContext.hasPermission(
-			PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
-		);
-
-		// Determine if the request specifies to retrieve data for the current user only
-		const isOnlyMeSelected: boolean = request.onlyMe;
-
-		// Set employeeIds based on permissions and request
-		if ((user.employeeId && isOnlyMeSelected) || (!hasChangeSelectedEmployeePermission && user.employeeId)) {
-			employeeIds = [user.employeeId];
-		}
 
 		const query = this.typeOrmRepository.createQueryBuilder();
 		if (request.limit > 0) {

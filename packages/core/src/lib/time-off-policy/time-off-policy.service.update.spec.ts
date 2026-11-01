@@ -16,7 +16,7 @@ describe('TimeOffPolicyService.update', () => {
 	const input = { name: 'Vacation', organizationId: ORGANIZATION_ID, tenantId: TENANT_ID, employees: [] } as any;
 
 	/** Runs the real method against a stub of the lookup, the employee repository and the save. */
-	const run = (stub: Record<string, unknown>) =>
+	const run = (stub: Record<string, unknown>, body: Record<string, unknown> = input) =>
 		TimeOffPolicyService.prototype.update.call(
 			{
 				ormType: MultiORMEnum.TypeORM,
@@ -27,7 +27,7 @@ describe('TimeOffPolicyService.update', () => {
 				...stub
 			},
 			ID,
-			input
+			body
 		);
 
 	it('keeps the 404 for an unknown policy', async () => {
@@ -51,5 +51,23 @@ describe('TimeOffPolicyService.update', () => {
 		const stub = { findOneByWhereOptions: jest.fn().mockResolvedValue({ id: ID }) };
 
 		await expect(run(stub)).resolves.toMatchObject({ id: ID, name: 'Vacation' });
+	});
+
+	it('saves whether approvals require sufficient balance (issue #10183)', async () => {
+		const stub = {
+			findOneByWhereOptions: jest.fn().mockResolvedValue({ id: ID, requireSufficientBalance: false })
+		};
+
+		await expect(run(stub, { ...input, requireSufficientBalance: true })).resolves.toMatchObject({
+			requireSufficientBalance: true
+		});
+	});
+
+	it('keeps that setting when the body leaves it out', async () => {
+		const stub = {
+			findOneByWhereOptions: jest.fn().mockResolvedValue({ id: ID, requireSufficientBalance: true })
+		};
+
+		await expect(run(stub)).resolves.toMatchObject({ requireSufficientBalance: true });
 	});
 });

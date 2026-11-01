@@ -1,54 +1,70 @@
 <div class="gz-comments" [nbSpinner]="loading" nbSpinnerStatus="primary">
 	<!-- Error state — mirrors the panel's own retry affordance. -->
-	<div class="gz-comments-error" *ngIf="loadError">
-		<span>{{ 'DOCS.COMMENTS.LOAD_ERROR' | translate }}</span>
-		<button nbButton size="tiny" status="primary" type="button" (click)="reload()">
-			{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
-		</button>
-	</div>
+	@if (loadError) {
+		<div class="gz-comments-error">
+			<span>{{ 'DOCS.COMMENTS.LOAD_ERROR' | translate }}</span>
+			<button nbButton size="tiny" status="primary" type="button" (click)="reload()">
+				{{ 'DOCS.ERRORS.GENERIC_RETRY' | translate }}
+			</button>
+		</div>
+	}
 
 	<!-- Empty state -->
-	<p class="muted" *ngIf="!loading && !loadError && !nodes.length">{{ 'DOCS.COMMENTS.EMPTY' | translate }}</p>
+	@if (!loading && !loadError && !nodes.length) {
+		<p class="muted">{{ 'DOCS.COMMENTS.EMPTY' | translate }}</p>
+	}
 
 	<!-- Thread -->
-	<ul class="gz-comments-list" *ngIf="nodes.length">
-		<li class="gz-comment-node" *ngFor="let node of nodes; trackBy: trackNode">
-			<ng-container
-				*ngTemplateOutlet="commentBlock; context: { $implicit: node.comment, isReply: false }"
-			></ng-container>
-
-			<ul class="gz-comment-replies" *ngIf="node.replies.length">
-				<li *ngFor="let reply of node.replies; trackBy: trackComment">
+	@if (nodes.length) {
+		<ul class="gz-comments-list">
+			@for (node of nodes; track trackNode($index, node)) {
+				<li class="gz-comment-node">
 					<ng-container
-						*ngTemplateOutlet="commentBlock; context: { $implicit: reply, isReply: true }"
+						*ngTemplateOutlet="commentBlock; context: { $implicit: node.comment, isReply: false }"
 					></ng-container>
+					@if (node.replies.length) {
+						<ul class="gz-comment-replies">
+							@for (reply of node.replies; track trackComment($index, reply)) {
+								<li>
+									<ng-container
+										*ngTemplateOutlet="commentBlock; context: { $implicit: reply, isReply: true }"
+									></ng-container>
+								</li>
+							}
+						</ul>
+					}
+					<!-- Reply box — only ever on a root, replies are single-level (parentId). -->
+					@if (isReplying(node.comment)) {
+						<div class="gz-comment-reply-box">
+							<gz-docs-comment-composer
+								[compact]="true"
+								[cancellable]="true"
+								placeholderKey="DOCS.COMMENTS.REPLY_PLACEHOLDER"
+								submitLabelKey="DOCS.COMMENTS.REPLY"
+								[pending]="isBusy(node.comment)"
+								(submitted)="reply(node.comment, $event)"
+								(cancelled)="cancelReply()"
+							></gz-docs-comment-composer>
+						</div>
+					}
 				</li>
-			</ul>
-
-			<!-- Reply box — only ever on a root, replies are single-level (parentId). -->
-			<div class="gz-comment-reply-box" *ngIf="isReplying(node.comment)">
-				<gz-docs-comment-composer
-					[compact]="true"
-					[cancellable]="true"
-					placeholderKey="DOCS.COMMENTS.REPLY_PLACEHOLDER"
-					submitLabelKey="DOCS.COMMENTS.REPLY"
-					[pending]="isBusy(node.comment)"
-					(submitted)="reply(node.comment, $event)"
-					(cancelled)="cancelReply()"
-				></gz-docs-comment-composer>
-			</div>
-		</li>
-	</ul>
+			}
+		</ul>
+	}
 
 	<!-- New comment -->
-	<div class="gz-comments-composer" *ngIf="canComment">
-		<gz-docs-comment-composer
-			#rootComposer
-			[pending]="posting"
-			(submitted)="post($event)"
-		></gz-docs-comment-composer>
-	</div>
-	<p class="muted" *ngIf="commentingUnavailable">{{ 'DOCS.COMMENTS.NO_EMPLOYEE_RECORD' | translate }}</p>
+	@if (canComment) {
+		<div class="gz-comments-composer">
+			<gz-docs-comment-composer
+				#rootComposer
+				[pending]="posting"
+				(submitted)="post($event)"
+			></gz-docs-comment-composer>
+		</div>
+	}
+	@if (commentingUnavailable) {
+		<p class="muted">{{ 'DOCS.COMMENTS.NO_EMPLOYEE_RECORD' | translate }}</p>
+	}
 </div>
 
 <!-- One comment: header, body (or inline editor), actions. -->
@@ -56,72 +72,75 @@
 	<article class="gz-comment" [class.resolved]="comment.resolved" [class.reply]="isReply">
 		<header class="gz-comment-head">
 			<span class="gz-comment-author">{{ authorLabel(comment) }}</span>
-			<span class="gz-comment-date">{{ comment.createdAt | date : 'medium' }}</span>
-			<span class="gz-comment-edited" *ngIf="comment.editedAt">{{ 'DOCS.COMMENTS.EDITED' | translate }}</span>
-			<nb-badge
-				*ngIf="comment.resolved"
-				status="success"
-				[text]="'DOCS.COMMENTS.RESOLVED' | translate"
-			></nb-badge>
+			<span class="gz-comment-date">{{ comment.createdAt | date: 'medium' }}</span>
+			@if (comment.editedAt) {
+				<span class="gz-comment-edited">{{ 'DOCS.COMMENTS.EDITED' | translate }}</span>
+			}
+			@if (comment.resolved) {
+				<nb-badge status="success" [text]="'DOCS.COMMENTS.RESOLVED' | translate"></nb-badge>
+			}
 			<!-- Posted from the editor's block thread — this panel shows the whole document. -->
-			<span class="gz-comment-anchor" *ngIf="isBlockAnchored(comment)">
-				<nb-icon icon="pin-outline"></nb-icon>{{ 'DOCS.COMMENTS.ON_BLOCK' | translate }}
-			</span>
+			@if (isBlockAnchored(comment)) {
+				<span class="gz-comment-anchor">
+					<nb-icon icon="pin-outline"></nb-icon>{{ 'DOCS.COMMENTS.ON_BLOCK' | translate }}
+				</span>
+			}
 		</header>
 
-		<ng-container *ngIf="!isEditing(comment); else editor">
+		@if (!isEditing(comment)) {
 			<p class="gz-comment-body">{{ body(comment) }}</p>
-
 			<div class="gz-comment-actions">
-				<button
-					*ngIf="canComment && !isReply"
-					nbButton
-					ghost
-					size="tiny"
-					type="button"
-					[disabled]="isBusy(comment)"
-					(click)="startReply(comment)"
-				>
-					{{ 'DOCS.COMMENTS.REPLY' | translate }}
-				</button>
-				<button
-					*ngIf="canResolve(comment)"
-					nbButton
-					ghost
-					size="tiny"
-					type="button"
-					[disabled]="isBusy(comment)"
-					(click)="toggleResolved(comment)"
-				>
-					{{ (comment.resolved ? 'DOCS.COMMENTS.REOPEN' : 'DOCS.COMMENTS.RESOLVE') | translate }}
-				</button>
-				<button
-					*ngIf="canEdit(comment)"
-					nbButton
-					ghost
-					size="tiny"
-					type="button"
-					[disabled]="isBusy(comment)"
-					(click)="startEdit(comment)"
-				>
-					{{ 'DOCS.COMMENTS.EDIT' | translate }}
-				</button>
-				<button
-					*ngIf="canDelete(comment)"
-					nbButton
-					ghost
-					size="tiny"
-					status="danger"
-					type="button"
-					[disabled]="isBusy(comment)"
-					(click)="remove(comment)"
-				>
-					{{ 'DOCS.COMMENTS.DELETE' | translate }}
-				</button>
+				@if (canComment && !isReply) {
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						type="button"
+						[disabled]="isBusy(comment)"
+						(click)="startReply(comment)"
+					>
+						{{ 'DOCS.COMMENTS.REPLY' | translate }}
+					</button>
+				}
+				@if (canResolve(comment)) {
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						type="button"
+						[disabled]="isBusy(comment)"
+						(click)="toggleResolved(comment)"
+					>
+						{{ (comment.resolved ? 'DOCS.COMMENTS.REOPEN' : 'DOCS.COMMENTS.RESOLVE') | translate }}
+					</button>
+				}
+				@if (canEdit(comment)) {
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						type="button"
+						[disabled]="isBusy(comment)"
+						(click)="startEdit(comment)"
+					>
+						{{ 'DOCS.COMMENTS.EDIT' | translate }}
+					</button>
+				}
+				@if (canDelete(comment)) {
+					<button
+						nbButton
+						ghost
+						size="tiny"
+						status="danger"
+						type="button"
+						[disabled]="isBusy(comment)"
+						(click)="remove(comment)"
+					>
+						{{ 'DOCS.COMMENTS.DELETE' | translate }}
+					</button>
+				}
 			</div>
-		</ng-container>
-
-		<ng-template #editor>
+		} @else {
 			<gz-docs-comment-composer
 				[compact]="true"
 				[cancellable]="true"
@@ -132,6 +151,6 @@
 				(submitted)="saveEdit(comment, $event)"
 				(cancelled)="cancelEdit()"
 			></gz-docs-comment-composer>
-		</ng-template>
+		}
 	</article>
 </ng-template>

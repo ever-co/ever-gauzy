@@ -73,6 +73,8 @@ import {
 	OrganizationTeamEmployee,
 	OrganizationVendor,
 	Payment,
+	PayrollItem,
+	PayrollRun,
 	Pipeline,
 	PipelineStage,
 	Product,
@@ -225,6 +227,8 @@ import { MikroOrmOrganizationRepository } from '../../organization/repository/mi
 import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
 import { MikroOrmPaymentRepository } from '../../payment/repository/mikro-orm-payment.repository';
 import { TypeOrmPaymentRepository } from '../../payment/repository/type-orm-payment.repository';
+import { TypeOrmPayrollItemRepository } from '../../payroll-item/repository/type-orm-payroll-item.repository';
+import { TypeOrmPayrollRunRepository } from '../../payroll-run/repository/type-orm-payroll-run.repository';
 import { MikroOrmPipelineStageRepository } from '../../pipeline-stage/repository/mikro-orm-pipeline-stage.repository';
 import { TypeOrmPipelineStageRepository } from '../../pipeline-stage/repository/type-orm-pipeline-stage.repository';
 import { MikroOrmPipelineRepository } from '../../pipeline/repository/mikro-orm-pipeline.repository';
@@ -601,6 +605,12 @@ export class FactoryResetService {
 
 		mikroOrmPaymentRepository: MikroOrmPaymentRepository,
 
+		@InjectRepository(PayrollItem)
+		private typeOrmPayrollItemRepository: TypeOrmPayrollItemRepository,
+
+		@InjectRepository(PayrollRun)
+		private typeOrmPayrollRunRepository: TypeOrmPayrollRunRepository,
+
 		@InjectRepository(Pipeline)
 		private typeOrmPipelineRepository: TypeOrmPipelineRepository,
 
@@ -934,6 +944,10 @@ export class FactoryResetService {
 			this.typeOrmInvoiceItemRepository,
 			this.typeOrmInvoiceEstimateHistoryRepository,
 			this.typeOrmInvoiceRepository,
+			// Payroll lines before the runs they belong to, as invoice items go before invoices, and both before the
+			// employees the lines are paid to. Without these a reset kept the organization's payroll.
+			this.typeOrmPayrollItemRepository,
+			this.typeOrmPayrollRunRepository,
 			this.typeOrmFeatureOrganizationRepository,
 			this.typeOrmEmployeeAppointmentRepository,
 			this.typeOrmEmployeeAwardRepository,

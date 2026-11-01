@@ -8,6 +8,7 @@ import { TimeOffBalance } from './time-off-balance.entity';
 import { TimeOffBalanceController } from './time-off-balance.controller';
 import { TimeOffBalanceResolver } from './time-off-balance.resolver';
 import { TimeOffBalanceService } from './time-off-balance.service';
+import { TimeOffBalanceDeductionService } from './time-off-balance-deduction.service';
 import { MikroOrmTimeOffBalanceRepository } from './repository/mikro-orm-time-off-balance.repository';
 import { TypeOrmTimeOffBalanceRepository } from './repository/type-orm-time-off-balance.repository';
 
@@ -25,12 +26,19 @@ import { TypeOrmTimeOffBalanceRepository } from './repository/type-orm-time-off-
 	controllers: [TimeOffBalanceController],
 	providers: [
 		TimeOffBalanceService,
+		// Takes and gives back the days of a time-off request's decision, on the decision's transaction.
+		TimeOffBalanceDeductionService,
 		// The GraphQL view of the same resource: declared here because a resolver can only inject
 		// services its own module can reach, and this module is what reaches them.
 		TimeOffBalanceResolver,
 		TypeOrmTimeOffBalanceRepository,
 		MikroOrmTimeOffBalanceRepository
 	],
-	exports: [TimeOffBalanceService, TypeOrmTimeOffBalanceRepository, MikroOrmTimeOffBalanceRepository]
+	exports: [
+		TimeOffBalanceService,
+		TimeOffBalanceDeductionService,
+		TypeOrmTimeOffBalanceRepository,
+		MikroOrmTimeOffBalanceRepository
+	]
 })
 export class TimeOffBalanceModule {}

@@ -298,6 +298,13 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 				entities: []
 			},
 			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PAYROLL_RUN'),
+				value: 'payroll_run',
+				checked: true,
+				isGroup: true,
+				entities: this.getPayrollEntities()
+			},
+			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.PIPELINE'),
 				value: 'pipeline',
 				checked: true,
@@ -1243,6 +1250,18 @@ export class ExportComponent extends TranslationBaseComponent implements AfterVi
 			{
 				name: this.getTranslation('MENU.IMPORT_EXPORT.INVOICE_ITEM'),
 				value: 'invoice_item',
+				checked: true,
+				isGroup: false,
+				entities: []
+			}
+		];
+	}
+
+	getPayrollEntities(): IEntityModel[] {
+		return [
+			{
+				name: this.getTranslation('MENU.IMPORT_EXPORT.PAYROLL_ITEM'),
+				value: 'payroll_item',
 				checked: true,
 				isGroup: false,
 				entities: []

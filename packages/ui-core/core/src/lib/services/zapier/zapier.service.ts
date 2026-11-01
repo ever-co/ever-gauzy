@@ -23,7 +23,7 @@ export class ZapierService {
 	constructor(private readonly http: HttpClient) {}
 
 	/**
-	 * Get OAuth configuration
+	 * Get the OAuth configuration the API exposes: client ID, redirect URI, post-install URL and scopes (never the secret)
 	 */
 	getOAuthConfig(): Observable<IZapierAuthConfig> {
 		return this.http.get<IZapierAuthConfig>(`${API_PREFIX}/integration/zapier/oauth/config`);
@@ -75,7 +75,8 @@ export class ZapierService {
 	}
 
 	/**
-	 * Update Zapier integration settings
+	 * Update Zapier integration settings (of the selected organization's integration: the API reads the
+	 * `Organization-Id` header the tenant interceptor sends)
 	 */
 	updateSettings(settings: IZapierIntegrationSettings): Observable<IZapierIntegrationSettings> {
 		return this.http.put<IZapierIntegrationSettings>(`${API_PREFIX}/integration/zapier/settings`, settings);
@@ -201,13 +202,16 @@ export class ZapierService {
 	}
 
 	/**
-	 * Get all webhooks
+	 * Get the webhook subscriptions of an integration.
+	 * With an integration ID the API reads the integration in the user's tenant: the token interceptor sends the user's
+	 * session as `Authorization`, whatever this method sets, so the token alone cannot name the integration.
 	 */
-	getWebhooks(token: string): Observable<IZapierWebhook[]> {
+	getWebhooks(token: string, integrationId?: ID | null): Observable<IZapierWebhook[]> {
 		return this.http.get<IZapierWebhook[]>(`${API_PREFIX}/integration/zapier/webhooks`, {
 			headers: {
 				Authorization: `Bearer ${token}`
-			}
+			},
+			params: integrationId ? { integrationId } : {}
 		});
 	}
 
@@ -223,13 +227,14 @@ export class ZapierService {
 	}
 
 	/**
-	 * Delete an existing Zapier webhook subscription
+	 * Delete an existing Zapier webhook subscription (of the integration named, when one is; see `getWebhooks`)
 	 */
-	deleteWebhook(id: string, token: string): Observable<void> {
-		return this.http.delete<void>(`${API_PREFIX}/integration/zapier/webhooks/${id}`, {
+	deleteWebhook(id: string, token: string, integrationId?: ID | null): Observable<void> {
+		return this.http.delete<void>(`${API_PREFIX}/integration/zapier/webhooks/${encodeURIComponent(id)}`, {
 			headers: {
 				Authorization: `Bearer ${token}`
-			}
+			},
+			params: integrationId ? { integrationId } : {}
 		});
 	}
 }

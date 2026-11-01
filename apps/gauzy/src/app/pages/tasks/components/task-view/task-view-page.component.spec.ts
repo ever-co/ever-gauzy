@@ -48,8 +48,10 @@ describe('TaskViewPageComponent', () => {
 	let http: { get: jest.Mock; put: jest.Mock };
 	let toastr: { success: jest.Mock; danger: jest.Mock };
 	let dialogService: { open: jest.Mock };
-	let router: { navigate: jest.Mock; createUrlTree: jest.Mock; serializeUrl: jest.Mock };
+	let router: { navigate: jest.Mock; createUrlTree: jest.Mock; serializeUrl: jest.Mock<string, [any]> };
 	let permissions: PermissionsEnum[];
+	/** Emits when the test loads permissions, as the store does once they arrive. */
+	let permissions$: BehaviorSubject<PermissionsEnum[]>;
 
 	/** The HTTP reads the page makes itself: task statuses and linked issues. */
 	let statuses: any[];
@@ -87,10 +89,17 @@ describe('TaskViewPageComponent', () => {
 		dialogService = { open: jest.fn(() => ({ onClose: of(null) })) };
 		router = {
 			navigate: jest.fn(async () => true),
-			createUrlTree: jest.fn((commands: string[]) => commands),
-			serializeUrl: jest.fn((commands: string[]) => commands.join('/'))
+			createUrlTree: jest.fn((commands: string[], extras?: { queryParams?: Record<string, string> }) => ({
+				commands,
+				queryParams: extras?.queryParams || {}
+			})),
+			serializeUrl: jest.fn(({ commands, queryParams }: { commands: string[]; queryParams: Record<string, string> }) => {
+				const query = new URLSearchParams(queryParams).toString();
+				return commands.join('/') + (query ? `?${query}` : '');
+			})
 		};
 		permissions = [];
+		permissions$ = new BehaviorSubject<PermissionsEnum[]>([]);
 		await TestBed.configureTestingModule({
 			declarations: [TaskViewPageComponent],
 			providers: [
@@ -110,6 +119,7 @@ describe('TaskViewPageComponent', () => {
 					provide: Store,
 					useValue: {
 						selectedOrganization$: organization$.asObservable(),
+						userRolePermissions$: permissions$.asObservable(),
 						hasAnyPermission: (...wanted: PermissionsEnum[]) => wanted.some((p) => permissions.includes(p))
 					}
 				}
@@ -169,6 +179,69 @@ describe('TaskViewPageComponent', () => {
 		const labels = page.detailsSections.flatMap((section) => section.fields.map((field) => field.label));
 		expect(labels).not.toContain('TASKS_PAGE.TASKS_STATUS');
 		expect(labels).toContain('TASKS_PAGE.TASK_PRIORITY');
+	});
+
+	it('leaves the project out of the details: it has a panel of its own', async () => {
+		const page = create();
+		await settle();
+
+		const labels = page.detailsSections.flatMap((section) => section.fields.map((field) => field.label));
+		expect(labels).not.toContain('TASKS_PAGE.TASKS_PROJECT');
+	});
+
+	describe('project panel', () => {
+		const PROJECT = { id: PROJECT_ID, name: 'Gauzy Platform' };
+		const panel = (): HTMLElement => fixture.nativeElement.querySelector('.task-project');
+
+		beforeEach(() => {
+			tasksService.getById.mockImplementation(async (id: string) =>
+				task({ id, projectId: PROJECT_ID, project: PROJECT as any })
+			);
+		});
+
+		it("links the task's project to the project's own page for those who may view projects", async () => {
+			permissions = [PermissionsEnum.ORG_PROJECT_VIEW];
+			create();
+			await settle();
+
+			const row = panel();
+			expect(row.tagName).toBe('A');
+			expect(row.querySelector('.task-project-name').textContent.trim()).toBe(PROJECT.name);
+			expect((row as any).routerLink).toEqual(['/pages/organization/projects/view', PROJECT_ID]);
+		});
+
+		it('names the project without a link for those who may not view projects', async () => {
+			create();
+			await settle();
+
+			const row = panel();
+			expect(row.tagName).toBe('SPAN');
+			expect(row.querySelector('.task-project-name').textContent.trim()).toBe(PROJECT.name);
+			expect(fixture.nativeElement.querySelector('a.task-project')).toBeNull();
+		});
+
+		it('links the project once the permission loads after the page is built', async () => {
+			const page = create();
+			await settle();
+			expect(panel().tagName).toBe('SPAN');
+
+			permissions = [PermissionsEnum.ALL_ORG_VIEW];
+			permissions$.next(permissions);
+			fixture.detectChanges();
+
+			expect(page.canViewProject).toBe(true);
+			expect(panel().tagName).toBe('A');
+			expect((panel() as any).routerLink).toEqual(['/pages/organization/projects/view', PROJECT_ID]);
+		});
+
+		it('says so when the task has no project', async () => {
+			tasksService.getById.mockImplementation(async (id: string) => task({ id }));
+			create();
+			await settle();
+
+			expect(panel()).toBeNull();
+			expect(fixture.nativeElement.textContent).toContain('TASK_VIEW.NO_PROJECT');
+		});
 	});
 
 	it('follows the URL to the next task when the page is reused', async () => {
@@ -541,6 +614,52 @@ describe('TaskViewPageComponent', () => {
 		await page.copyLink();
 
 		expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`#/pages/tasks/view/${TASK_ID}`));
+		expect(writeText).not.toHaveBeenCalledWith(expect.stringContaining('tab='));
 		expect(toastr.success).toHaveBeenCalledWith('TASK_VIEW.LINK_COPIED');
+	});
+
+	it('copies the open tab with the address, so the link opens on it', async () => {
+		const writeText = jest.fn(async () => undefined);
+		Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+		window.location.hash = '#/pages/tasks/view/x';
+		queryParams$.next(convertToParamMap({ tab: 'board' }));
+		const page = create();
+		await settle();
+
+		await page.copyLink();
+
+		expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`#/pages/tasks/view/${TASK_ID}?tab=board`));
+	});
+
+	describe('reloading the Board and the Activity', () => {
+		it('reads the Activity again once a board move has saved, but not the Board', async () => {
+			const page = create();
+			await settle();
+			const { boardReloadKey, activityReloadKey } = page;
+
+			await page.onBoardTaskMoved();
+
+			// The Board's own moves still saving would be dropped by a reload of the board.
+			expect(page.boardReloadKey).toBe(boardReloadKey);
+			expect(page.activityReloadKey).toBe(activityReloadKey + 1);
+		});
+
+		it('reads both again after a status move from the header', async () => {
+			permissions = [PermissionsEnum.ORG_TASK_EDIT];
+			statuses = [
+				{ id: 'st-1', name: 'In Progress', value: 'in-progress', order: 1, organizationId: ORGANIZATION },
+				{ id: 'st-2', name: 'Done', value: 'done', order: 2, organizationId: ORGANIZATION }
+			];
+			const page = create();
+			await settle();
+			// The status menu reads its statuses once the task has loaded.
+			await flush();
+			const { boardReloadKey, activityReloadKey } = page;
+
+			await page.changeStatus('st-2');
+
+			expect(page.boardReloadKey).toBe(boardReloadKey + 1);
+			expect(page.activityReloadKey).toBe(activityReloadKey + 1);
+		});
 	});
 });

@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NbButtonModule, NbCardModule, NbDialogRef, NbInputModule } from '@nebular/theme';
@@ -18,7 +17,7 @@ export type IDocsCategoryDialogResult = Pick<IDocumentCategory, 'name' | 'color'
  */
 @Component({
 	selector: 'gz-docs-category-dialog',
-	imports: [CommonModule, FormsModule, TranslatePipe, NbButtonModule, NbCardModule, NbInputModule],
+	imports: [FormsModule, TranslatePipe, NbButtonModule, NbCardModule, NbInputModule],
 	template: `
 		<nb-card class="docs-dialog docs-category-dialog">
 			<nb-card-header>

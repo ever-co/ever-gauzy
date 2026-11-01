@@ -7,10 +7,12 @@ import {
 	IExpense,
 	IIncome,
 	IMonthAggregatedSplitExpense,
-	IStatisticSum
+	IStatisticSum,
+	PermissionsEnum
 } from '@gauzy/contracts';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import * as moment from 'moment';
+import { RequestContext } from '../../../core/context';
 import { EmployeeService } from '../../../employee/employee.service';
 import { AggregatedEmployeeStatisticQuery } from '../aggregate-employee-statistic.query';
 import { EmployeeStatisticsService, monthOf, shareOf } from './../../employee-statistics.service';
@@ -54,7 +56,7 @@ export class AggregateOrganizationQueryHandler
 		const { input } = command;
 		const { organizationId, startDate, endDate } = input;
 		// Agent employees (`kind = 'agent'`) earn no income and take no share of an expense: people only.
-		const { items: employees } =
+		const { items: working } =
 			await this.employeeService.findWorkingEmployees(
 				organizationId,
 				{
@@ -64,6 +66,11 @@ export class AggregateOrganizationQueryHandler
 				true,
 				true
 			);
+		// A caller without CHANGE_SELECTED_EMPLOYEE is answered with their own figures only, totals included: the
+		// default EMPLOYEE role reaches this route through ADMIN_DASHBOARD_VIEW (see `assertOwnEmployeeUnlessSelecting`).
+		const employees = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
+			? working
+			: working.filter(({ id }) => !!id && id === RequestContext.currentEmployeeId());
 		const employeeMap: Map<string, IEmployeeStatisticSum> = new Map();
 
 		employees.forEach((employee) => {

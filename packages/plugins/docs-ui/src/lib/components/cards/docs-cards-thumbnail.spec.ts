@@ -146,7 +146,7 @@ describe('document card thumbnails', () => {
 		});
 
 		it('binds the image through the sanitizing accessor, never `thumbUrl` directly', () => {
-			expect(template).toContain('thumbnailUrl(doc) as thumbnail');
+			expect(template).toContain('@if (thumbnailUrl(doc); as thumbnail)');
 			expect(template).not.toContain('[src]="doc.thumbUrl"');
 		});
 

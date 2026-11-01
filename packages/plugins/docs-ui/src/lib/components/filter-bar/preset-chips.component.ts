@@ -16,18 +16,21 @@ interface IPresetChip {
 	selector: 'gz-docs-preset-chips',
 	template: `
 		<div class="docs-presets" role="group">
-			<button
-				*ngFor="let chip of chips"
-				nbButton
-				size="tiny"
-				[status]="isActive(chip) ? 'primary' : 'basic'"
-				[appearance]="isActive(chip) ? 'filled' : 'outline'"
-				(click)="toggle(chip)"
-				[attr.aria-pressed]="isActive(chip)"
-			>
-				<span class="docs-preset-label">{{ chip.labelKey | translate }}</span>
-				<span class="docs-preset-count" *ngIf="counts">({{ counts[chip.countKey] }})</span>
-			</button>
+			@for (chip of chips; track chip) {
+				<button
+					nbButton
+					size="tiny"
+					[status]="isActive(chip) ? 'primary' : 'basic'"
+					[appearance]="isActive(chip) ? 'filled' : 'outline'"
+					(click)="toggle(chip)"
+					[attr.aria-pressed]="isActive(chip)"
+				>
+					<span class="docs-preset-label">{{ chip.labelKey | translate }}</span>
+					@if (counts) {
+						<span class="docs-preset-count">({{ counts[chip.countKey] }})</span>
+					}
+				</button>
+			}
 		</div>
 	`,
 	styles: [
