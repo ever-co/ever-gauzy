@@ -8886,6 +8886,7 @@
 		"SUBTASKS": "子任务",
 		"SUBTASKS_DONE": "已完成 {{ done }} / {{ total }}",
 		"NO_SUBTASKS": "没有子任务",
+		"ADD_SUBTASK": "添加子任务",
 		"LINKED_ISSUES": "关联任务",
 		"NO_LINKED_ISSUES": "没有关联任务",
 		"LINKS": {

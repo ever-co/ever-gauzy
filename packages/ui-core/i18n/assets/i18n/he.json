@@ -7679,6 +7679,7 @@
 		"SUBTASKS": "תתי־משימות",
 		"SUBTASKS_DONE": "{{ done }} מתוך {{ total }} הושלמו",
 		"NO_SUBTASKS": "אין תתי־משימות",
+		"ADD_SUBTASK": "הוספת תת־משימה",
 		"LINKED_ISSUES": "משימות מקושרות",
 		"NO_LINKED_ISSUES": "אין משימות מקושרות",
 		"LINKS": {

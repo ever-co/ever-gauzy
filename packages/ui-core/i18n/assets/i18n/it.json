@@ -7671,6 +7671,7 @@
 		"SUBTASKS": "Sottoattività",
 		"SUBTASKS_DONE": "{{ done }} su {{ total }} completate",
 		"NO_SUBTASKS": "Nessuna sottoattività",
+		"ADD_SUBTASK": "Aggiungi sottoattività",
 		"LINKED_ISSUES": "Attività collegate",
 		"NO_LINKED_ISSUES": "Nessuna attività collegata",
 		"LINKS": {
