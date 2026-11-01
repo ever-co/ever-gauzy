@@ -18,8 +18,9 @@
 			[entityType]="'OrganizationProject'"
 			[entityId]="card.id"
 			[entityName]="card.name"
-			size="small"
+			size="tiny"
 			status="basic"
+			appearance="ghost"
 			spacing="list"
 		></ngx-favorite-toggle>
 		<!-- The period, on the tabs whose figures read over it. -->
@@ -110,6 +111,7 @@
 				[projectId]="card.id"
 				[organizationId]="organization?.id"
 				[tenantId]="organization?.tenantId"
+				[filterable]="true"
 				(taskMoved)="quickLook?.reloadTasks()"
 			></ga-project-board>
 		</div>

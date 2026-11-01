@@ -51,8 +51,9 @@
 
 .record-page-body {
   // The record reads as a document: wide enough for long descriptions, but the
-  // label/value rows stay readable on very wide screens.
-  padding: 1.25rem 1.5rem 2rem;
+  // label/value rows stay readable on very wide screens. A page that starts with its own header or tabs sets the top
+  // inset through the variable.
+  padding: var(--record-page-body-padding-top, 1.25rem) 1.5rem 2rem;
 }
 
 .record-page-message {

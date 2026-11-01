@@ -4,9 +4,9 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 
 /* ── Header: the actions beside the back button, then the task's own header ── */
 
-// The breadcrumb starts right under the page's header; other record pages keep the shell's inset.
-:host(.is-page) ::ng-deep .record-page-body {
-  padding-top: 0;
+// The breadcrumb starts right under the page's header.
+:host(.is-page) {
+  --record-page-body-padding-top: 0;
 }
 
 // The task's own header, with the page's whole width for a long title.

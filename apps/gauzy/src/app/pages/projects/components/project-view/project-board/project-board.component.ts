@@ -117,7 +117,8 @@ const normalizeStatus = (value?: string): string => (value || '').trim().toLower
  *
  * With `filterable`, filters over the columns narrow the cards. They work on the cards read so far, as the tasks
  * endpoint cannot ask for an assignee or a label: a narrowed board is short, which brings its end into reach, so
- * the remaining pages are read and filtered in turn. What the host projects sits in the filters' row.
+ * the remaining pages are read and filtered in turn, a whole project's included. What the host projects sits in the
+ * filters' row.
  */
 @Component({
 	selector: 'ga-project-board',
@@ -289,7 +290,9 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		const index = card ? from.cards.indexOf(card) : -1;
 		if (index < 0 || card.saving) return;
 
-		transferArrayItem(from.cards, to.cards, index, event.currentIndex);
+		// The drop's index counts the cards on show; those the filter hides are still in the column.
+		const next = this.visibleCards(to)[event.currentIndex];
+		transferArrayItem(from.cards, to.cards, index, next ? to.cards.indexOf(next) : to.cards.length);
 		const wasDone = card.done;
 		this.setDone(card, to.group === 'done');
 		card.saving = true;
