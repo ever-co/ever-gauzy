@@ -6668,6 +6668,7 @@
 		"SUBTASKS": "Subtasks",
 		"SUBTASKS_DONE": "{{ done }} of {{ total }} done",
 		"NO_SUBTASKS": "No subtasks",
+		"ADD_SUBTASK": "Add subtask",
 		"LINKED_ISSUES": "Linked issues",
 		"NO_LINKED_ISSUES": "No linked issues",
 		"LINKS": {
