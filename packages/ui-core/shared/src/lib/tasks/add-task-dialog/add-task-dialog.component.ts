@@ -47,6 +47,11 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	availableModules: IOrganizationProjectModule[] = [];
 	organization: IOrganization;
 	@Input() createTask = false;
+	/**
+	 * The task's parent is the opener's to say, as a new subtask's is: the field shows it and cannot change it. Its
+	 * value leaves the form's answer with it, so the opener sets the parent on what it saves.
+	 */
+	@Input() parentLocked = false;
 	/*
 	 * Payment Mutation Form
 	 */
@@ -125,6 +130,10 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	}
 
 	ngOnInit() {
+		if (this.parentLocked) {
+			this.form.get('parentId').disable();
+		}
+
 		// Subscribed first, so the project the task being edited already has (set by `initializeForm`) and
 		// the page's selected project (set below) load their modules too. They used to load only when the
 		// project selector re-applied the URL's project, which it no longer does over a form's own project.
