@@ -39,14 +39,22 @@ import { IEmployeeHoursDay } from '../../../employees/view-employee/employee-hou
 import {
 	failed,
 	formatDuration,
+	IPersonChip,
 	ITaskWorker,
 	Loadable,
 	loaded,
 	loading,
+	personOf,
 	scopedTaskStatusesOf,
 	taskWorkersOf
 } from '../../../projects/components/project-view/project-view.utils';
-import { buildTaskViewSections, isTaskFinished, taskStatusOf, TASK_VIEW_RELATIONS } from './task-view-sections';
+import {
+	buildTaskViewSections,
+	isTaskFinished,
+	taskPriorityOf,
+	taskStatusOf,
+	TASK_VIEW_RELATIONS
+} from './task-view-sections';
 import {
 	hoursDaysOf,
 	ILinkedIssueGroup,
@@ -58,8 +66,15 @@ import {
 	timeTrackingOf
 } from './task-view-page.utils';
 
-/** The relations the page reads: the View's, and the subtasks with their status. */
-export const TASK_PAGE_RELATIONS: string[] = [...TASK_VIEW_RELATIONS, 'children', 'children.taskStatus'];
+/** The relations the page reads: the View's, and the subtasks with what their rows show, as the Board's cards. */
+export const TASK_PAGE_RELATIONS: string[] = [
+	...TASK_VIEW_RELATIONS,
+	'children',
+	'children.taskStatus',
+	'children.taskPriority',
+	'children.members',
+	'children.members.user'
+];
 
 /**
  * The relations the edit dialog reads, as the task list loads them: the View's and the modules. The dialog saves
@@ -83,6 +98,9 @@ export interface ISubtaskRow {
 	key: string;
 	title: string;
 	status: IRecordViewStatus | null;
+	priority: IRecordViewStatus | null;
+	/** Its assignees. A row with this list keeps the priority and people columns, so the rows line up. */
+	people: IPersonChip[];
 	done: boolean;
 }
 
@@ -506,6 +524,10 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		return ['/pages/tasks/view', id];
 	}
 
+	peopleNames(people: IPersonChip[]): string {
+		return people.map((person) => person.name).join(', ');
+	}
+
 	/** The total of the hours chart, so an empty fortnight says so instead of drawing flat bars. */
 	get hoursTotal(): number {
 		return (this.hours.value || []).reduce((sum, day) => sum + day.tracked + day.manual, 0);
@@ -696,6 +718,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 					key: number ? this.hashNumberPipe.transform(number) : '',
 					title: child.title,
 					status: taskStatusOf(child),
+					priority: taskPriorityOf(child),
+					people: (child.members || []).map((member) => personOf(member)).filter(Boolean),
 					done
 				};
 			});
