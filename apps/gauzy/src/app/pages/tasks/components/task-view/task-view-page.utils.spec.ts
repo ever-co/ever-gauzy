@@ -1,11 +1,49 @@
-import { ITaskLinkedIssue, ITimeLog, TaskRelatedIssuesRelationEnum, TaskStatusEnum, TimeLogType } from '@gauzy/contracts';
-import { hoursDaysOf, linkedIssueGroupsOf, timeEntriesOf, timeTrackingOf } from './task-view-page.utils';
+import {
+	ITaskLinkedIssue,
+	ITaskStatus,
+	ITimeLog,
+	TaskRelatedIssuesRelationEnum,
+	TaskStatusEnum,
+	TimeLogType
+} from '@gauzy/contracts';
+import { hoursDaysOf, linkedIssueGroupsOf, newTaskStatusOf, timeEntriesOf, timeTrackingOf } from './task-view-page.utils';
 
 const TASK_ID = 'task-1';
 const hash = (value: number | string) => `#${value}`;
 
 const link = (overrides: Partial<ITaskLinkedIssue>): ITaskLinkedIssue =>
 	({ id: 'l', action: TaskRelatedIssuesRelationEnum.RELATES_TO, ...overrides }) as ITaskLinkedIssue;
+
+describe('newTaskStatusOf', () => {
+	const status = (overrides: Partial<ITaskStatus>): ITaskStatus => ({ id: 's', name: 'S', value: 's', ...overrides }) as ITaskStatus;
+	const backlog = status({ id: 'backlog', name: 'Backlog', value: TaskStatusEnum.BACKLOG, isTodo: true });
+	const open = status({ id: 'open', name: 'Open', value: TaskStatusEnum.OPEN, isTodo: true });
+	const review = status({ id: 'review', name: 'In Review', value: TaskStatusEnum.IN_REVIEW });
+
+	it('takes the one marked the default', () => {
+		const marked = { ...review, isDefault: true };
+
+		expect(newTaskStatusOf([backlog, open, marked])).toBe(marked);
+	});
+
+	it('takes Open over a to-do listed before it, as the seeded Backlog is', () => {
+		expect(newTaskStatusOf([backlog, open, review])).toBe(open);
+	});
+
+	it('takes the first to-do of statuses without an Open', () => {
+		const planned = status({ id: 'planned', value: 'planned', isTodo: true });
+
+		expect(newTaskStatusOf([review, planned])).toBe(planned);
+	});
+
+	it('takes the first of statuses with no to-do', () => {
+		expect(newTaskStatusOf([review])).toBe(review);
+	});
+
+	it('has none when no status was read', () => {
+		expect(newTaskStatusOf([])).toBeUndefined();
+	});
+});
 
 describe('linkedIssueGroupsOf', () => {
 	it('reads a link the task starts as written, and one that ends at it turned round', () => {

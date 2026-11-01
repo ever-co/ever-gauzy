@@ -1,5 +1,12 @@
 import * as moment from 'moment-timezone';
-import { ITaskLinkedIssue, ITimeLog, TaskRelatedIssuesRelationEnum, TimeLogType } from '@gauzy/contracts';
+import {
+	ITaskLinkedIssue,
+	ITaskStatus,
+	ITimeLog,
+	TaskRelatedIssuesRelationEnum,
+	TaskStatusEnum,
+	TimeLogType
+} from '@gauzy/contracts';
 import { IRecordViewStatus } from '@gauzy/ui-core/shared';
 import { IEmployeeHoursDay } from '../../../employees/view-employee/employee-hours-chart/employee-hours-chart.component';
 import { formatDuration, IPersonChip, personOf } from '../../../projects/components/project-view/project-view.utils';
@@ -9,6 +16,22 @@ import { isTaskFinished, taskStatusOf } from './task-view-sections';
  * The task page's pure helpers: its linked issues, its recent time entries, its hours per day and its time
  * tracking, each worked out from what the server answered.
  */
+
+/* ── New subtasks ── */
+
+/**
+ * The status a new subtask starts in, among the statuses its project takes (in their order): the one marked the
+ * default, else Open as the task dialog starts, else the first to-do — Backlog comes before Open and is also a
+ * to-do, so a plain "first to-do" would file it there — else the first. None without any read.
+ */
+export function newTaskStatusOf(statuses: ITaskStatus[]): ITaskStatus | undefined {
+	return (
+		statuses.find((item) => item.isDefault) ||
+		statuses.find((item) => item.value === TaskStatusEnum.OPEN) ||
+		statuses.find((item) => item.isTodo) ||
+		statuses[0]
+	);
+}
 
 /* ── Linked issues ── */
 
