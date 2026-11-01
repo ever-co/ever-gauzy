@@ -117,7 +117,8 @@ const normalizeStatus = (value?: string): string => (value || '').trim().toLower
  *
  * With `filterable`, filters over the columns narrow the cards. They work on the cards read so far, as the tasks
  * endpoint cannot ask for an assignee or a label: a narrowed board is short, which brings its end into reach, so
- * the remaining pages are read and filtered in turn. What the host projects sits in the filters' row.
+ * the remaining pages are read and filtered in turn, a whole project's included. What the host projects sits in the
+ * filters' row.
  */
 @Component({
 	selector: 'ga-project-board',

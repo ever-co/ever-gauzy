@@ -111,6 +111,7 @@
 				[projectId]="card.id"
 				[organizationId]="organization?.id"
 				[tenantId]="organization?.tenantId"
+				[filterable]="true"
 				(taskMoved)="quickLook?.reloadTasks()"
 			></ga-project-board>
 		</div>
