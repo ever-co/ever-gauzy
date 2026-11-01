@@ -14,7 +14,8 @@ import {
 	ITask,
 	ITaskLinkedIssue,
 	ITaskStatus,
-	PermissionsEnum
+	PermissionsEnum,
+	TaskStatusEnum
 } from '@gauzy/contracts';
 import { API_PREFIX, toParams, toUtcOffset } from '@gauzy/ui-core/common';
 import {
@@ -52,6 +53,7 @@ import {
 	ITimeEntryRow,
 	ITimeTracking,
 	linkedIssueGroupsOf,
+	newTaskStatusOf,
 	timeEntriesOf,
 	timeTrackingOf
 } from './task-view-page.utils';
@@ -172,7 +174,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	entries: Loadable<ITimeEntryRow[]> = loading([]);
 	links: Loadable<ILinkedIssueGroup[]> = loading([]);
 
-	/** The statuses the task can move to; read for those who may edit it. */
+	/** The statuses the task can move to; read for those who may edit it or add a subtask to it. */
 	statuses: ITaskStatus[] = [];
 	/** The status menu's entry for the task's status: by its status row, else by its value or name. */
 	currentStatusId: string | null = null;
@@ -184,6 +186,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	 * permissions, which may load after the page is built.
 	 */
 	canViewProject = false;
+	/** Whether the viewer holds the create route's grants. Follows the permissions likewise. */
+	canCreateTasks = false;
 
 	private taskId: string = null;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
@@ -233,6 +237,13 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				untilDestroyed(this)
 			)
 			.subscribe((canViewProject) => (this.canViewProject = canViewProject));
+		this.store.userRolePermissions$
+			.pipe(
+				map(() => this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_ADD)),
+				distinctUntilChanged(),
+				untilDestroyed(this)
+			)
+			.subscribe((canCreateTasks) => (this.canCreateTasks = canCreateTasks));
 		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back.
 		this.route.queryParamMap
 			.pipe(
@@ -411,6 +422,43 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		}
 	}
 
+	/**
+	 * Opens the task dialog on a new task under this one: the parent shown and fixed, the task's project and teams
+	 * filled in — so it is numbered with its siblings and shows on their lists — and the project's opening status. The
+	 * dialog holds no id, so it creates; it answers what to save, which is saved here with the parent it leaves out.
+	 * The dialog's form requires a status and saves the one `taskStatus` names, so both are given, and Open backs up
+	 * a save with neither: the status menu picks no default of its own for a status named otherwise than `open`.
+	 */
+	async addSubtask(): Promise<void> {
+		if (!this.task || !this.canAddSubtask) return;
+		const { id: taskId, project, teams } = this.task;
+		const selectedTask = {
+			parent: this.task,
+			project,
+			teams,
+			status: TaskStatusEnum.OPEN,
+			taskStatus: newTaskStatusOf(this.statuses)
+		} as ITask;
+		const dialog = this.dialogService.open(AddTaskDialogComponent, { context: { selectedTask, parentLocked: true } });
+		const data: any = await firstValueFrom(dialog.onClose.pipe(first()));
+		if (!data) return;
+		try {
+			await firstValueFrom(
+				this.tasksService.createTask({
+					...data,
+					status: data.status || TaskStatusEnum.OPEN,
+					estimate: this.estimateOf(data),
+					parentId: taskId,
+					...this.scope()
+				})
+			);
+			await this.refresh(taskId);
+			this.reloadPanes();
+		} catch {
+			// The service has shown the error.
+		}
+	}
+
 	/** The seconds the task dialog's estimate fields add up to, or none when they are blank. */
 	private estimateOf({ estimateDays, estimateHours, estimateMinutes }: any): number | null {
 		const estimate =
@@ -439,6 +487,16 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	/* ── View helpers ── */
 
+	/** Whether the task sits under another. Subtasks go one level deep for now: a subtask takes none of its own. */
+	get isSubtask(): boolean {
+		return !!(this.task?.parentId || this.task?.parent);
+	}
+
+	/** Whether the Subtasks panel offers to add one. */
+	get canAddSubtask(): boolean {
+		return this.canCreateTasks && !this.isSubtask;
+	}
+
 	/** The menu's entry for the task's status, for the button's label and colour. */
 	get currentStatus(): ITaskStatus | null {
 		return this.statuses.find((status) => status.id === this.currentStatusId) || null;
@@ -463,7 +521,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		void this.loadHours(task, sequence);
 		void this.loadEntries(task, sequence);
 		void this.loadLinks(task, sequence);
-		if (this.canEdit) void this.loadStatuses(task, sequence);
+		// The status menu's choices, and the status a new subtask starts in.
+		if (this.canEdit || this.canAddSubtask) void this.loadStatuses(task, sequence);
 	}
 
 	/**
