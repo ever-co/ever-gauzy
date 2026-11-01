@@ -2,9 +2,8 @@
 	"version": "0.2",
 	"language": "en",
 	"$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
-	"ignoreRegExpList": ["GHSA-[A-Za-z0-9-]+", "/\\b[0-7][0-9A-HJKMNP-TV-Z]{25}\\b/g"],
+	"ignoreRegExpList": ["GHSA-[A-Za-z0-9-]+"],
 	"words": [
-		"evit",
 		"hashtextextended",
 		"SMTPAPI",
 		"clicktrack",

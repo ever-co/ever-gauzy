@@ -76,7 +76,10 @@ test('the plugin lists may import the modules through their entry points, nobody
 	assert.equal(violation('packages/plugins/ever-connect/src/lib/a.ts', '@gauzy/plugin-ever-instance'), null);
 	assert.equal(violation('packages/plugins/ever-connect/src/lib/a.ts', '@gauzy/plugin-auth-zitadel'), null);
 	assert.match(
-		violation('packages/plugins/ever-connect/src/lib/a.ts', '@gauzy/plugin-auth-zitadel/src/lib/ports/ever-id-accounts.port'),
+		violation(
+			'packages/plugins/ever-connect/src/lib/a.ts',
+			'@gauzy/plugin-auth-zitadel/src/lib/ports/ever-id-accounts.port'
+		),
 		/only through its entry point/
 	);
 	assert.notEqual(violation('packages/plugins/auth-zitadel/src/lib/a.ts', '@gauzy/plugin-ever-connect'), null);

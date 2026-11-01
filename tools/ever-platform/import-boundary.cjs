@@ -73,7 +73,11 @@ function violation(file, specifier) {
 		const hit = anyOf(specifier, [pkg('ever-connect'), pkg('ever-stats'), ...ANALYTICS, ...HTTP_CLIENTS]);
 		if (hit) return `${hit}: the instance identity makes no request and depends on neither module`;
 	}
-	if (from === 'ever-connect' && /^@gauzy\/plugin-auth-zitadel/.test(specifier) && specifier !== '@gauzy/plugin-auth-zitadel') {
+	if (
+		from === 'ever-connect' &&
+		/^@gauzy\/plugin-auth-zitadel/.test(specifier) &&
+		specifier !== '@gauzy/plugin-auth-zitadel'
+	) {
 		return `${specifier}: the connection uses the Ever ID sign-in plugin only through its entry point (the ports the plugin defines), never its files or its web part`;
 	}
 	if (from && from.startsWith('auth-zitadel') && isPackage(specifier, pkg('ever-connect'))) {

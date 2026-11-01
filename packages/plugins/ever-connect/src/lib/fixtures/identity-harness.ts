@@ -1,3 +1,4 @@
+// cspell:ignore evit
 /**
  * Test-only harness for Sign in with Ever ID and a person's requests: the plugin's services on an
  * in-memory SQLite database (with the real migrations), talking through the real SDK client (which
