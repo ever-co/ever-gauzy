@@ -138,8 +138,9 @@ export function resolutionOf(item: Pick<IInboxItem, 'status' | 'response'>): Gau
 	if (!response || (item.status !== InboxItemStatusEnum.ANSWERED && item.status !== InboxItemStatusEnum.RESOLVED))
 		return null;
 	const resolution: { choiceId?: string; text?: string } = {};
-	if (typeof response.optionId === 'string' && response.optionId)
-		resolution.choiceId = response.optionId.slice(0, CHOICE_ID_MAX);
+	// The full id: `sharedOf` sends an option the copy's choices leave out (an id over 64 characters among them) as its
+	// label; a cut id could name another option or lose that label.
+	if (typeof response.optionId === 'string' && response.optionId) resolution.choiceId = response.optionId;
 	if (typeof response.text === 'string' && response.text.trim())
 		resolution.text = cut(response.text.trim(), EVER_WORKS_INBOX_REPLY_MAX);
 	return Object.keys(resolution).length ? resolution : null;

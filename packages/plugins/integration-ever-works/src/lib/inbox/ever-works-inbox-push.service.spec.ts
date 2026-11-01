@@ -64,7 +64,7 @@ jest.mock('../sync/ever-works-actor', () => {
 
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import {
 	BaseEntityEnum,
@@ -101,6 +101,7 @@ import { EverWorksInboxPushService } from './ever-works-inbox-push.service';
 import { EverWorksInboxService } from './ever-works-inbox.service';
 import { EverWorksPeopleService } from '../people/ever-works-people.service';
 import { EverWorksInitialSyncService } from '../sync/initial/ever-works-initial-sync.service';
+import { EVER_WORKS_SYNC_PHASE_SPECS, EverWorksSyncPhaseSpec } from '../sync/initial/ever-works-sync-phases';
 
 type Row = Record<string, any>;
 
@@ -387,6 +388,8 @@ function setup(
 			const item = items.get(id) as IInboxItem;
 			if (item.status !== InboxItemStatusEnum.OPEN)
 				throw new ConflictException('This item was already answered.');
+			if (item.requireReason && !input.text)
+				throw new BadRequestException('This item asks for a reason with the reply.');
 			Object.assign(item, {
 				status: InboxItemStatusEnum.ANSWERED,
 				response: {
@@ -1259,6 +1262,27 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 		expect(items.get(item.id as string)).toMatchObject({ status: InboxItemStatusEnum.OPEN, response: null });
 	});
 
+	it('an answer Gauzy refuses (no reason where one is asked) is not acknowledged: the item stays open and it is tried again', async () => {
+		const { addItem, push, inboxWrite, apply, actions, items, linkOf } = setup();
+		const { item, ada } = addItem({ requireReason: true } as Partial<IInboxItem>);
+		await push(ada);
+		const ewId = linkOf(ada)?.['ewId'] as string;
+		await apply(await inboxWrite.answer(ewId, { choiceId: 'yes' }));
+		expect(actions.reply).toHaveBeenCalledTimes(1);
+		expect(items.get(item.id as string)).toMatchObject({ status: InboxItemStatusEnum.OPEN });
+		// A later event of the copy carries the same answer: tried again, still refused, never taken as applied.
+		await apply(await inboxWrite.read(ewId, false));
+		expect(actions.reply).toHaveBeenCalledTimes(2);
+		// The member answers again with a reason: it goes.
+		await expect(
+			apply(await inboxWrite.answer(ewId, { choiceId: 'yes', text: 'The changelog is ready' }))
+		).resolves.toMatchObject({ status: 'applied' });
+		expect(items.get(item.id as string)).toMatchObject({
+			status: InboxItemStatusEnum.ANSWERED,
+			response: expect.objectContaining({ optionId: 'yes', text: 'The changelog is ready' })
+		});
+	});
+
 	it('finds a pending copy by its externalId while the connection does not know its key id yet', async () => {
 		const { addItem, mock, apply, writer, context } = setup();
 		const { item, ada } = addItem();
@@ -1366,6 +1390,80 @@ describe('dependency injection', () => {
 	});
 });
 
+describe('EverWorksInitialSyncService — the inbox phase', () => {
+	const INBOX = EVER_WORKS_SYNC_PHASE_SPECS.find((spec) => spec.name === 'inbox') as EverWorksSyncPhaseSpec;
+
+	/** The initial sync with only what its inbox phase reads; `pages` maps a cursor to one backfill page. */
+	function initialSync(pages: Record<string, { ids: string[]; next: string | null }> = {}) {
+		const queue = { enqueue: jest.fn(async (_trigger: Row) => true) };
+		const inboxPush = {
+			canBackfill: true,
+			backfillPage: jest.fn(
+				async (_context: unknown, after: string | null) => pages[after ?? ''] ?? { ids: [], next: null }
+			)
+		};
+		const sync = new EverWorksInitialSyncService(
+			null as never,
+			null as never,
+			null as never,
+			null as never,
+			{ hasHandler: () => true } as never,
+			{ hasHandler: () => true } as never,
+			queue as never,
+			null as never,
+			inboxPush as never
+		);
+		return { sync: sync as unknown as Record<string, (...args: unknown[]) => any>, queue, inboxPush };
+	}
+
+	const contextWith = (scopes: string[], backfill: boolean) => ({
+		tenantId: TENANT,
+		organizationId: ORG,
+		integrationTenantId: MAPPING,
+		connection: { scopes: JSON.stringify(scopes) },
+		mapping: { settings: [{ settingsName: 'BACKFILL_GAUZY_INBOX', settingsValue: String(backfill) }] },
+		directions: { ...DEFAULT_EVER_WORKS_DIRECTIONS, inbox: 'both' },
+		entitySync: {}
+	});
+
+	it('sends the open Gauzy items only with the backfill on, and runs each half with its own scope', () => {
+		const { sync } = initialSync();
+		const plan = (scopes: string[], backfill: boolean) => sync['planOf'](INBOX, contextWith(scopes, backfill));
+		expect(plan(['inbox:read', 'inbox:write'], false)).toMatchObject({
+			import: true,
+			export: false,
+			note: expect.stringContaining('backfill of open items is off')
+		});
+		expect(plan(['inbox:read', 'inbox:write'], true)).toMatchObject({ import: true, export: true });
+		expect(plan(['inbox:write'], true)).toMatchObject({ import: false, export: true });
+		expect(plan(['inbox:read'], true)).toMatchObject({ import: true, export: false });
+		expect(plan(['inbox:write'], false)).toMatchObject({ import: false, export: false, done: true });
+	});
+
+	it('queues the backfill page by page and resumes a stopped run from its saved cursor', async () => {
+		const { sync, queue, inboxPush } = initialSync({
+			'': { ids: ['r1', 'r2'], next: 'r2' },
+			r2: { ids: ['r3'], next: null }
+		});
+		const context = contextWith(['inbox:write'], true);
+		const state: Record<string, unknown> = { exported: 0, exportCursor: null };
+		const deadline = Date.now() + 60_000;
+		// The lease is lost after the first page: the run stops with its cursor saved.
+		let owner = 0;
+		await expect(sync['exportGauzyInbox'](context, state, deadline, async () => ++owner < 2)).resolves.toBe(false);
+		expect(state).toMatchObject({ exported: 2, exportCursor: 'r2' });
+		// Another sweep carries on from it, to the end; a finished backfill reads nothing more.
+		await expect(sync['exportGauzyInbox'](context, state, deadline, async () => true)).resolves.toBe(true);
+		expect(state).toMatchObject({ exported: 3, exportCursor: 'done' });
+		await expect(sync['exportGauzyInbox'](context, state, deadline, async () => true)).resolves.toBe(true);
+		expect(inboxPush.backfillPage.mock.calls.map((call) => call[1])).toEqual([null, 'r2']);
+		expect(queue.enqueue.mock.calls.map((call) => call[0]['gauzyId'])).toEqual(['r1', 'r2', 'r3']);
+		expect(queue.enqueue).toHaveBeenCalledWith(
+			expect.objectContaining({ entityType: EverWorksLinkType.GAUZY_INBOX_ITEM, changedFields: ['backfill'] })
+		);
+	});
+});
+
 describe('EverWorksInboxPreferencesService', () => {
 	it('sends every kind by default; a person changes only the kinds they state, and sees where their items go', async () => {
 		const { preferenceService } = setup();
@@ -1449,6 +1547,27 @@ describe('the kind mapping and the text', () => {
 		);
 		expect(shared.choices).toHaveLength(10);
 		expect(shared.resolution).toEqual({ text: 'Option 11 — Late pick' });
+	});
+
+	it('sends an answer whose option id is over 64 characters as its label, never as another option cut to the same id', () => {
+		const short = 'a'.repeat(64);
+		const shared = sharedOf(
+			{
+				title: 'Pick one',
+				body: '',
+				kind: InboxItemKindEnum.QUESTION,
+				options: [
+					{ id: short, label: 'Short' },
+					{ id: `${short}b`, label: 'Long' }
+				],
+				status: InboxItemStatusEnum.ANSWERED,
+				response: { optionId: `${short}b`, answeredByUserId: ADA.user, answeredAt: new Date().toISOString() }
+			} as never,
+			{ isArchived: false },
+			'question'
+		);
+		expect(shared.choices).toEqual([{ id: short, label: 'Short' }]);
+		expect(shared.resolution).toEqual({ text: 'Long' });
 	});
 
 	it('maps Gauzy kinds onto the Ever Works kinds', () => {

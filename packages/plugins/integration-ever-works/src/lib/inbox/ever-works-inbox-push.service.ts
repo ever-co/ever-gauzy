@@ -843,9 +843,12 @@ export class EverWorksInboxPushService
 							await actions.reply(item.id as ID, answer as { optionId?: string; text?: string });
 							done.push('reply');
 						} catch (error) {
-							// Answered in Gauzy first, or an answer Gauzy cannot take (an option it does not list): Gauzy's stays.
+							// Answered in Gauzy first (a conflict): Gauzy's answer stays. An answer Gauzy refuses (an option it does
+							// not list, no reason where the item asks for one) is not acknowledged: the item stays open in Gauzy,
+							// and the next event of the copy tries the member's answer again (one given with a reason then goes).
 							if (!(error instanceof ConflictException || error instanceof BadRequestException))
 								throw error;
+							if (error instanceof BadRequestException) e.answer = seen.answer ?? null;
 							this.logger.warn(
 								`Inbox item ${item.id}: the answer given in Ever Works was not applied (${error.message}).`
 							);
