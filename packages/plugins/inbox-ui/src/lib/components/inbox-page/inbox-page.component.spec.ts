@@ -389,6 +389,20 @@ describe('InboxPageComponent', () => {
 			expect(find('no-selection')).toBeNull();
 		});
 
+		it('shows the linked item as just read, not an older copy the list holds', () => {
+			const read = { isRead: true, isArchived: false, snoozedUntil: null };
+			api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
+			api.list.mockReturnValue(
+				of({ items: [item('a', { title: 'Old title', recipient: read })], nextCursor: null })
+			);
+			api.get.mockReturnValue(of(item('a', { title: 'New title', recipient: read })));
+			withItemLink('a');
+			const { component, fixture } = render();
+			fixture.detectChanges();
+			expect(component.selected()).toMatchObject({ id: 'a', title: 'New title' });
+			expect(api.setState).not.toHaveBeenCalled();
+		});
+
 		it('an id the API does not show me (404) is ignored quietly', () => {
 			api.counts.mockReturnValue(of({ unread: 0, decisionsOpen: 0, byMailbox: [] }));
 			api.list.mockReturnValue(of({ items: [item('a')], nextCursor: null }));

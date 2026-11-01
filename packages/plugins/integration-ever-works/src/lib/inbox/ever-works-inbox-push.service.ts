@@ -114,6 +114,8 @@ export const GAUZY_INBOX_CONFLICT_RETRY_MS = 60_000;
 export const GAUZY_INBOX_UNSERVED_RETRY_MS = 6 * 60 * 60_000;
 /** Recipient rows one backfill page reads. */
 const BACKFILL_PAGE = 500;
+/** Backfill pages the sync preview reads at most (100 000 recipient rows). */
+const BACKFILL_PREVIEW_PAGES = 200;
 /** Ids one `IN` list names at most. */
 const IN_CHUNK = 500;
 
@@ -1168,18 +1170,27 @@ export class EverWorksInboxPushService
 		return kept;
 	}
 
-	/** The dry run: open items a backfill would send, and how many of them are in Ever Works already. */
-	async backfillCounts(context: EverWorksMappingContext, max = 100_000): Promise<{ total: number; linked: number }> {
+	/**
+	 * The dry run: open items a backfill would send, and how many of them are in Ever Works already. It reads at most
+	 * `maxPages` recipient pages ({@link BACKFILL_PAGE} rows each, whatever the preferences and rules leave of them):
+	 * `truncated` when it stopped there, so a preview never scans a whole history.
+	 */
+	async backfillCounts(
+		context: EverWorksMappingContext,
+		maxPages = BACKFILL_PREVIEW_PAGES
+	): Promise<{ total: number; linked: number; truncated: boolean }> {
 		let total = 0;
 		let linked = 0;
 		let after: string | null = null;
+		let pages = 0;
 		do {
 			const page = await this.backfillPage(context, after);
 			total += page.ids.length;
 			linked += (await this.linkedIds(context, page.ids)).size;
 			after = page.next;
-		} while (after && total < max);
-		return { total, linked };
+			pages++;
+		} while (after && pages < maxPages);
+		return { total, linked, truncated: !!after };
 	}
 
 	// ── Helpers ────────────────────────────────────────────────────────────────────────────────────

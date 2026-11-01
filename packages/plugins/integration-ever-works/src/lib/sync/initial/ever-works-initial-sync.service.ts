@@ -97,7 +97,8 @@ export interface EverWorksSyncPhasePreview {
 	supported: boolean;
 	note: string | null;
 	everWorks: { total: number; linked: number; truncated: boolean } | null;
-	gauzy: { total: number; linked: number } | null;
+	/** `truncated`: the count stopped at the preview's bound (the Gauzy Inbox phase, which scans recipient pages). */
+	gauzy: { total: number; linked: number; truncated?: boolean } | null;
 	/** Records the run creates on each side. */
 	creates: { inGauzy: number; inEverWorks: number };
 	/** Records that are only paired on their tab (people, teams, works): never created by the run. */

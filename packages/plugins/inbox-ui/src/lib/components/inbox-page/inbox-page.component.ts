@@ -492,6 +492,8 @@ export class InboxPageComponent implements OnInit {
 					if (this.tab() === 'notifications') return;
 					// The link works now: an earlier failure to open it is no longer news.
 					if (this.actionError() === 'INBOX.ITEM_LINK_ERROR') this.actionError.set(null);
+					// The detail shows the item as just read, also when the list holds an older copy of it.
+					this.items.update((items) => items.map((entry) => (entry.id === item.id ? item : entry)));
 					this.open(item);
 				},
 				error: (error: HttpErrorResponse) => {

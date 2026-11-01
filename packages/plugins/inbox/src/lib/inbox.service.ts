@@ -588,10 +588,11 @@ export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 			);
 		} catch (error) {
 			// The rows inserted before the failure stay; the source's retry finds them and adds only the rest, so they
-			// are announced now (#11091 review), to the observers too (the item and the rows that stay; best effort).
+			// are announced now (#11091 review). The observers are told in any case: the item write itself is stored (a
+			// re-delivery's new title, a recipient state reset), whatever its recipients did (best effort, as stored now).
 			if (addedUserIds.length) await this.realtime?.itemCreated(item, addedUserIds);
-			if (addedUserIds.length || removedRows.length)
-				await this.feed?.itemChanged(item, created ? 'created' : 'updated', removedRows);
+			const current = await repository.findOne({ where: { id: item.id } }).catch(() => null);
+			await this.feed?.itemChanged(current ?? item, created ? 'created' : 'updated', removedRows);
 			throw error;
 		}
 		const { recipientUserIds, skippedUserIds } = written;

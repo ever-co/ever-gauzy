@@ -1349,7 +1349,11 @@ describe('EverWorksInboxPushService — backfill', () => {
 		});
 		addItem({ taskId: hidden });
 		expect((await service.backfillPage(context as never, null)).ids).toEqual([kept.ada]);
-		await expect(service.backfillCounts(context as never)).resolves.toEqual({ total: 1, linked: 0 });
+		await expect(service.backfillCounts(context as never)).resolves.toEqual({
+			total: 1,
+			linked: 0,
+			truncated: false
+		});
 	});
 
 	it('lists the open Gauzy-origin items of paired people, as their preferences allow', async () => {
@@ -1365,7 +1369,26 @@ describe('EverWorksInboxPushService — backfill', () => {
 		mockCaller.userId = ADA.user;
 		await preferenceService.updateMine({ email: false });
 		expect((await service.backfillPage(context as never, null)).ids).toEqual([open.ada]);
-		await expect(service.backfillCounts(context as never)).resolves.toEqual({ total: 1, linked: 0 });
+		await expect(service.backfillCounts(context as never)).resolves.toEqual({
+			total: 1,
+			linked: 0,
+			truncated: false
+		});
+	});
+
+	it('the preview count reads a bounded number of recipient pages, and says when it stopped there', async () => {
+		const { addItem, service, context, feed } = setup();
+		addItem();
+		const real = feed.openRecipientsOf;
+		const endless = jest.fn(async (...args: Parameters<IInboxItemFeed['openRecipientsOf']>) => ({
+			...(await real(...args)),
+			next: 'more'
+		}));
+		feed.openRecipientsOf = endless;
+		await expect(service.backfillCounts(context as never, 3)).resolves.toMatchObject({ truncated: true });
+		expect(endless).toHaveBeenCalledTimes(3);
+		feed.openRecipientsOf = real;
+		await expect(service.backfillCounts(context as never, 3)).resolves.toMatchObject({ truncated: false });
 	});
 });
 

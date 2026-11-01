@@ -1011,20 +1011,29 @@ describe('Inbox on SQLite', () => {
 			service = new InboxService(dataSource, registry, undefined, feed);
 		});
 
-		it('are told about a write whose recipients failed part way: the rows inserted before the failure stay', async () => {
+		it('are told about a write whose recipients failed part way, naming the rows inserted before the failure', async () => {
 			const failure = new Error('the database went away');
+			const real = (
+				InboxService.prototype as unknown as { writeRecipients: (...args: unknown[]) => Promise<unknown> }
+			).writeRecipients;
+			// Ada's row is written, then the database goes away before Bob's.
 			jest.spyOn(service as never, 'writeRecipients').mockImplementationOnce((async (
-				_item: unknown,
-				_recipients: unknown,
-				_replace: unknown,
-				added: string[]
+				item: unknown,
+				recipients: unknown[],
+				...rest: unknown[]
 			) => {
-				added.push(ADA);
+				await real.call(service, item, recipients.slice(0, 1), ...rest);
 				throw failure;
 			}) as never);
 			await expect(question({ recipients: [{ userId: ADA }, { userId: BOB }] })).rejects.toBe(failure);
 			expect(changes).toHaveLength(1);
 			expect(changes[0]).toMatchObject({ scope: 'item', type: 'created' });
+			const rows: Array<{ id: string; userId: string }> = await dataSource.query(
+				`SELECT "id", "userId" FROM "inbox_item_recipient" WHERE "inboxItemId" = ?`,
+				[changes[0].inboxItemId]
+			);
+			expect(rows.map((row) => row.userId)).toEqual([ADA]);
+			expect(changes[0].recipients).toEqual(rows.map((row) => ({ id: row.id, userId: row.userId })));
 		});
 
 		it('are told about a new item, a re-delivery, a reply and a recipient state, naming the recipient rows', async () => {
