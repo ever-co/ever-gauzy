@@ -116,12 +116,20 @@ describe('ProjectBoardComponent', () => {
 	describe('dropping a card', () => {
 		let put: jest.Mock;
 
-		/** The screen under the pointer: the column with this id, its header unless `cards`, or nothing of the board. */
-		const pointerOver = (columnId: string | null, { cards = false } = {}) => {
+		/**
+		 * The screen under the pointer: the column with this id, its header unless `cards`, or nothing of the board. Its
+		 * list shows the cards of `shown`, each 40px tall from the top.
+		 */
+		const pointerOver = (columnId: string | null, { cards = false, shown = [] as string[] } = {}) => {
 			const column = document.createElement('section');
 			if (columnId) column.dataset['columnId'] = columnId;
 			const list = column.appendChild(document.createElement('ul'));
 			list.className = 'board-cards';
+			shown.forEach((id, index) => {
+				const item = list.appendChild(document.createElement('li'));
+				item.dataset['cardId'] = id;
+				item.getBoundingClientRect = () => ({ top: index * 40, height: 40 }) as DOMRect;
+			});
 			const element = cards ? list : column;
 			(document as any).elementFromPoint = jest.fn(() => (columnId ? element : null));
 		};
@@ -189,6 +197,39 @@ describe('ProjectBoardComponent', () => {
 				item: { data: open.cards[1] },
 				isPointerOverContainer: false,
 				currentIndex: 1
+			});
+
+			expect(ids(done)).toEqual(['sub-2', 'sub-1']);
+		});
+
+		it('puts a card before the card it was let go over, not where it entered the list', async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+			// The upper half of `sub-2`, the first card shown; the drag's own index stays past it, where the card entered.
+			pointerOver('done', { cards: true, shown: ['sub-2'] });
+
+			await release(component, {
+				previousContainer: { data: open },
+				container: { data: done },
+				item: { data: open.cards[1] },
+				currentIndex: 1,
+				dropPoint: { x: 1, y: 10 }
+			});
+
+			expect(ids(done)).toEqual(['sub-1', 'sub-2']);
+		});
+
+		it('puts a card after the card whose lower half it was let go over', async () => {
+			const component = await board();
+			const [open, done] = component.board.value;
+			pointerOver('done', { cards: true, shown: ['sub-2'] });
+
+			await release(component, {
+				previousContainer: { data: open },
+				container: { data: done },
+				item: { data: open.cards[1] },
+				currentIndex: 0,
+				dropPoint: { x: 1, y: 30 }
 			});
 
 			expect(ids(done)).toEqual(['sub-2', 'sub-1']);

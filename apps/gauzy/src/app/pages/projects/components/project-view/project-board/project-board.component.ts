@@ -299,13 +299,19 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 		const index = card ? from.cards.indexOf(card) : -1;
 		if (index < 0 || card.saving) return;
 
-		// The drop's index counts the cards on show of the list that took it; those the filter hides are still in
-		// the column. It means something only over that list: a card carried into a list and on to its header keeps
-		// the last index it had there, so anywhere else in a column it goes to the top. The list is found on screen, as
-		// the column is: the drag's own flag goes by where the list was measured, which a scrolled page leaves behind.
+		// Let go over the list that took it, the card goes before the card on show under the release point; anywhere
+		// else in a column, a card carried into a list and on to its header, it goes to the top. The list is found on
+		// screen, as the column is: the drag's own flag goes by where the list was measured, which a scrolled page
+		// leaves behind. The drop's own index serves only without a release point: with sorting off, it stays where the
+		// card entered the list.
 		const overCards =
 			target === to && (event.dropPoint ? this.isOverCards(event.dropPoint) : event.isPointerOverContainer);
-		const next = this.visibleCards(target)[overCards ? event.currentIndex : 0];
+		const visible = this.visibleCards(target);
+		const next = !overCards
+			? visible[0]
+			: event.dropPoint
+				? this.cardBelow(visible, event.dropPoint)
+				: visible[event.currentIndex];
 		transferArrayItem(from.cards, target.cards, index, next ? target.cards.indexOf(next) : target.cards.length);
 		const wasDone = card.done;
 		this.setDone(card, target.group === 'done');
@@ -398,6 +404,20 @@ export class ProjectBoardComponent implements OnChanges, OnDestroy {
 	/** Whether a point on screen is over a column's cards, not its header. */
 	private isOverCards(point: { x: number; y: number }): boolean {
 		return !!this.elementAt(point)?.closest('.board-cards');
+	}
+
+	/**
+	 * The first of the cards whose middle on screen is below a point over their list, or none past the last: what a
+	 * card let go there goes before. The dragged card's placeholder in the list is none of them.
+	 */
+	private cardBelow(cards: IBoardCard[], point: { x: number; y: number }): IBoardCard | undefined {
+		const list = this.elementAt(point)?.closest('.board-cards');
+		for (const element of Array.from(list?.querySelectorAll<HTMLElement>('[data-card-id]') ?? [])) {
+			const card = cards.find((item) => item.id === element.dataset['cardId']);
+			const { top, height } = element.getBoundingClientRect();
+			if (card && point.y < top + height / 2) return card;
+		}
+		return undefined;
 	}
 
 	private elementAt(point: { x: number; y: number }): Element | null {
