@@ -56,6 +56,9 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 	/** True while an Approve or Deny is being saved. */
 	updatingStatus = false;
 
+	/** Numbers each read of the logs, so only the latest one's answer is shown. */
+	private logsFetchId = 0;
+
 	constructor(
 		private readonly timesheetService: TimesheetService,
 		private readonly activatedRoute: ActivatedRoute,
@@ -90,10 +93,17 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 		return this.timesheet?.status === TimesheetStatus.APPROVED;
 	}
 
+	/**
+	 * Reads the timesheet's logs. An edit or a delete starts a new read while
+	 * the rows stay usable, so a read still in flight when a newer one starts
+	 * is dropped when it answers: an older answer arriving last cannot put back
+	 * days and totals the newer one has replaced.
+	 */
 	async getLogs() {
 		if (!this.timesheet) {
 			return;
 		}
+		const fetchId = ++this.logsFetchId;
 		this.loading = true;
 		try {
 			const { organizationId, id: timesheetId } = this.timesheet;
@@ -106,12 +116,17 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 				'task',
 				'employee.user'
 			]);
+			if (fetchId !== this.logsFetchId) {
+				return;
+			}
 			this.setLogs(logs);
 			await this.loadEmployeeIfMissing();
 		} catch (error) {
 			console.error('Error while retrieving logs', error);
 		} finally {
-			this.loading = false;
+			if (fetchId === this.logsFetchId) {
+				this.loading = false;
+			}
 		}
 	}
 
