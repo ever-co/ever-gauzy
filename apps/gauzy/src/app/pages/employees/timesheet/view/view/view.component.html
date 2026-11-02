@@ -1,196 +1,235 @@
 <ng-template ngxPermissionsOnly="CAN_APPROVE_TIMESHEET">
-  <nb-card>
+  <nb-card class="timesheet-card">
     <!-- `d-flex`, not `flex`: Bootstrap has no `.flex` utility, so the column
          direction was being applied to a block. -->
     <nb-card-header class="d-flex flex-column">
       <div class="title-row">
         <ngx-back-navigation></ngx-back-navigation>
         <h4>
-          <!-- Every other page in this area routes its title through
-               `ngx-header-title`, which is what places the breadcrumb trail
-               under the heading and lets the action row share the title's line.
-               This page rendered a bare <h4>, so it had no trail and its
-               buttons took a band of their own. -->
+          <!-- `ngx-header-title` places the breadcrumb trail under the heading
+               and lets the review actions share the title's line. -->
           <ngx-header-title>
             {{ 'MENU.TIMESHEETS' | translate }}
             <ngx-date-range-title
-              [start]="timesheet.startedAt"
-              [end]="timesheet.stoppedAt"
-              [format]="'dddd, LL'"
+              [start]="timesheet?.startedAt"
+              [end]="timesheet?.stoppedAt"
+              [format]="'ddd, ll'"
             ></ngx-date-range-title>
           </ngx-header-title>
         </h4>
       </div>
       <div class="gauzy-button-action">
-        <ngx-gauzy-button-action
-          [hasLayoutSelector]="false"
-          [isDisable]="!selectedLog?.isSelected"
-          [buttonTemplate]="actionButtons"
-        ></ngx-gauzy-button-action>
+        <ngx-gauzy-button-action [hasLayoutSelector]="false" [buttonTemplateVisible]="reviewActions">
+        </ngx-gauzy-button-action>
       </div>
     </nb-card-header>
-    <nb-card-body class="custom-card-body">
-      @for (dayLogs of timeLogs | keyvalue; track dayLogs) {
-        <div class="mb-5">
-          <h5 class="mb-3">
-            {{ dayLogs.key | date }}
-          </h5>
-          <div class="row custom-header m-0 align-items-center">
-            <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
-              <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
-                <div class="col-auto">
-                  <nb-checkbox status="basic" class="checkbox-spacer"></nb-checkbox>
-                </div>
-              </ng-template>
-            </ng-template>
-            <div class="col-4 project-name">
-              {{ 'TIMESHEET.PROJECT' | translate }} /
-              {{ 'TIMESHEET.TODO' | translate }}
+    <nb-card-body [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
+      <!-- What an approver reads first: whose time it is, how much, and where
+           the timesheet stands. -->
+      <div class="summary">
+        <!-- Only for users who may see other employees, as on the Approvals tab. -->
+        <div
+          class="summary-item summary-employee"
+          *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
+        >
+          <span class="summary-label">{{ 'TIMESHEET.EMPLOYEE' | translate }}</span>
+          @if (employee) {
+            <ngx-avatar
+              class="report-table"
+              [id]="employee?.id"
+              [name]="employee?.user?.name"
+              [src]="employee?.user?.imageUrl"
+              [employee]="employee"
+            ></ngx-avatar>
+          } @else {
+            <span class="summary-value">—</span>
+          }
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'TIMESHEET.TOTAL_TIME' | translate }}</span>
+          <span class="summary-value numeric">{{ totalDuration | durationFormat }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'TIMESHEET.VIEW_TIME_LOGS' | translate }}</span>
+          <span class="summary-value numeric">{{ logCount }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
+          <span class="summary-value numeric">{{ projectCount }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'TIMESHEET.SUBMITTED_AT' | translate }}</span>
+          <span class="summary-value">
+            {{ timesheet?.submittedAt ? (timesheet.submittedAt | dateFormat) : '—' }}
+          </span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'TIMESHEET.STATUS' | translate }}</span>
+          <span class="status-chip" [attr.data-status]="timesheet?.status">
+            {{ timesheet?.status | titlecase }}
+          </span>
+        </div>
+      </div>
+
+      @if (days.length > 0) {
+        <!-- The table scrolls on its own, under its sticky header; the summary
+             above it stays in view. -->
+        <div class="log-scroll">
+          <div class="log-table" role="table">
+            <!-- One header for the whole table; it stays in view while the days
+                 scroll under it. -->
+            <div class="log-row log-head" role="row">
+              <div role="columnheader">{{ 'TIMESHEET.PROJECT' | translate }} / {{ 'TIMESHEET.TODO' | translate }}</div>
+              <div role="columnheader">{{ 'TIMESHEET.LOG_TYPE' | translate }}</div>
+              <div role="columnheader">{{ 'TIMESHEET.SOURCE' | translate }}</div>
+              <div role="columnheader">{{ 'TIMESHEET.TIME_SPAN' | translate }}</div>
+              <div role="columnheader" class="numeric">{{ 'TIMESHEET.DURATION' | translate }}</div>
+              <div role="columnheader" class="col-notes">{{ 'TIMESHEET.NOTES' | translate }}</div>
+              <div role="columnheader" class="cell-actions">
+                <span class="sr-only">{{ 'TIMESHEET.ACTION' | translate }}</span>
+              </div>
             </div>
-            <div class="col employee-name" *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
-              {{ 'TIMESHEET.EMPLOYEE' | translate }}
-            </div>
-            <div class="col-1">
-              {{ 'TIMESHEET.LOG_TYPE' | translate }}
-            </div>
-            <div class="col-1">
-              {{ 'TIMESHEET.DURATION' | translate }}
-            </div>
-            <div class="col">
-              {{ 'TIMESHEET.TIME_SPAN' | translate }}
-            </div>
-          </div>
-          @if (dayLogs.value?.length > 0) {
-            <div class="custom-body">
-              @for (log of dayLogs.value; track log; let last = $last) {
-                <div
-                  class="row m-0 py-3 align-items-center"
-                  [class.border-bottom]="!last"
-                  [class.selected]="selectedLog?.data?.id === log.id"
-                  >
-                  <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
-                    <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
-                      <div class="col-auto">
-                        <nb-checkbox
-                          [checked]="selectedLog?.data?.id === log.id"
-                          (checkedChange)="selectLog($event, log)"
-                          status="basic"
-                          [disabled]="log.isRunning"
-                        ></nb-checkbox>
-                      </div>
-                    </ng-template>
-                  </ng-template>
-                  <div class="col-4 project-name">
-                    @if (log?.task) {
-                      <span>
-                        {{ log?.project?.name }}
-                      </span>
-                    } @else {
-                      <span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
+
+            @for (day of days; track day.date.getTime()) {
+              <div class="day-row" role="row">
+                <!-- The date spans the first four columns and the total sits under
+                     Duration, the fifth; the ARIA positions say the same. -->
+                <span class="day-date" role="cell" aria-colspan="4">{{ day.date | date: 'EEEE, MMM d, y' }}</span>
+                <span class="day-total numeric" role="cell" aria-colindex="5">{{ day.duration | durationFormat }}</span>
+              </div>
+
+              @for (log of day.logs; track log.id) {
+                <div class="log-row" role="row">
+                  <div class="cell-project" role="cell">
+                    <span class="project-name">
+                      <span
+                        class="project-dot"
+                        [style.background-color]="log?.project?.color || null"
+                      ></span>
+                      {{ log?.project?.name || ('TIMESHEET.NO_PROJECT' | translate) }}
+                    </span>
+                    <span class="task-title" [nbTooltip]="log?.task?.title" [nbTooltipDisabled]="!log?.task?.title">
+                      {{ log?.task?.title ? (log.task.title | truncate: 60) : ('TIMESHEET.NO_TODO' | translate) }}
+                    </span>
+                  </div>
+                  <div role="cell">
+                    <span class="chip">{{ log.logType | titlecase }}</span>
+                  </div>
+                  <div role="cell">
+                    @if (log?.source) {
+                      <span class="chip">{{ log.source | replace: '_' : ' ' | titlecase }}</span>
                     }
-                    <div class="mt-2 small">
-                      @if (log?.task) {
-                        <span>
-                          <strong
-                            >{{ 'TIMESHEET.TODO' | translate }}
-                            :
-                          </strong>
-                          {{ log?.task?.title }}
-                        </span>
-                      } @else {
-                        <span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
-                      }
-                    </div>
                   </div>
-                  <div
-                    class="col employee-name"
-                    *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
-                    >
-                    <div class="name-container">
-                      <ngx-avatar
-                        [id]="$safeNavigationMigration(log?.employee?.id)"
-                        [name]="$safeNavigationMigration(log?.employee?.user?.name)"
-                        [src]="$safeNavigationMigration(log?.employee?.user?.imageUrl)"
-                        [employee]="$safeNavigationMigration(log?.employee)"
-                      ></ngx-avatar>
-                    </div>
+                  <div role="cell" class="time-span">
+                    {{ log.startedAt | utcToLocal | timeFormat }}
+                    –
+                    @if (!log.isRunning) {
+                      {{ log.stoppedAt | utcToLocal | timeFormat }}
+                    } @else {
+                      <span class="running">{{ 'TIMESHEET.TILL_NOW' | translate }}</span>
+                    }
                   </div>
-                  <div class="col-1">
-                    <span class="log">{{ log.logType | titlecase }}</span>
-                  </div>
-                  <div class="col-1">
+                  <div role="cell" class="numeric duration">
                     {{ log.duration | durationFormat }}
                   </div>
-                  <div class="col">
-                    <span class="start-timer">
-                      {{ log.startedAt | utcToLocal | timeFormat : true }}
-                    </span>
-                    -
-                    @if (!log.isRunning) {
-                      <span class="end-timer">
-                        {{ log.stoppedAt | utcToLocal | timeFormat : true }}
-                      </span>
+                  <div role="cell" class="notes col-notes" [nbTooltip]="log?.description" [nbTooltipDisabled]="!log?.description">
+                    {{ log?.description || '—' }}
+                  </div>
+                  <div role="cell" class="cell-actions">
+                    @if (isLocked) {
+                      <nb-icon
+                        class="lock-icon"
+                        icon="lock-outline"
+                        role="img"
+                        [nbTooltip]="'TIMESHEET.IMMUTABLE_TIME' | translate"
+                        [attr.aria-label]="'TIMESHEET.IMMUTABLE_TIME' | translate"
+                      ></nb-icon>
                     } @else {
-                      <span class="running-timer">
-                        {{ 'TIMESHEET.TILL_NOW' | translate }}
-                      </span>
+                      <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME">
+                        <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MODIFY_TIME">
+                          <button
+                            type="button"
+                            nbButton
+                            ghost
+                            size="tiny"
+                            class="row-action"
+                            [disabled]="log.isRunning"
+                            [nbTooltip]="'TIMESHEET.EDIT' | translate"
+                            [attr.aria-label]="'TIMESHEET.EDIT' | translate"
+                            (click)="openEditDialog(log)"
+                          >
+                            <nb-icon icon="edit-2-outline"></nb-icon>
+                          </button>
+                        </ng-template>
+                      </ng-template>
+                      <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
+                        <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
+                          <button
+                            type="button"
+                            nbButton
+                            ghost
+                            size="tiny"
+                            class="row-action"
+                            [disabled]="log.isRunning"
+                            ngxConfirmDialog
+                            [message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+                            (confirm)="deleteTimeLog(log)"
+                            [nbTooltip]="'TIMESHEET.DELETE' | translate"
+                            [attr.aria-label]="'TIMESHEET.DELETE' | translate"
+                          >
+                            <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+                          </button>
+                        </ng-template>
+                      </ng-template>
                     }
                   </div>
                 </div>
               }
-            </div>
-          } @else {
-            <div class="row font-weight-bold py-3 align-items-center">
-              <div class="col text-center">
-                {{ 'TIMESHEET.NO_TIMELOG' | translate }}
-              </div>
-            </div>
-          }
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="empty-state">
+          <ngx-no-data-message
+            [loading]="loading"
+            [message]="'TIMESHEET.NO_TIMELOG' | translate"
+          ></ngx-no-data-message>
         </div>
       }
     </nb-card-body>
   </nb-card>
 </ng-template>
-<ng-template #actionButtons>
-  <div class="actions">
-    @if (selectedLog.data?.status != TimesheetStatus.APPROVED) {
-      <div class="action-button">
-        <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME">
-          <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MODIFY_TIME">
-            <button
-              [disabled]="$safeNavigationMigration(selectedLog?.data?.isRunning)"
-              class="action primary"
-              nbButton
-              status="basic"
-              (click)="openEditDialog($safeNavigationMigration(selectedLog?.data))"
-              size="small"
-              >
-              <nb-icon icon="edit"></nb-icon>
-              {{ 'TIMESHEET.EDIT' | translate }}
-            </button>
-          </ng-template>
-        </ng-template>
-        <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
-          <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
-            <button
-              [disabled]="$safeNavigationMigration(selectedLog?.data?.isRunning)"
-              class="action"
-              nbButton
-              status="basic"
-              size="small"
-              ngxConfirmDialog
-              [message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-              (confirm)="deleteTimeLog($safeNavigationMigration(selectedLog?.data))"
-              >
-              <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-            </button>
-          </ng-template>
-        </ng-template>
-      </div>
-    } @else {
-      <button [disabled]="true" class="m-1" nbButton status="default" size="small">
-        {{ 'TIMESHEET.IMMUTABLE_TIME' | translate }}
+<ng-template #reviewActions>
+  <!-- Nothing to approve or deny when the timesheet could not be read. -->
+  @if (timesheet) {
+  <div class="review-actions">
+    @if (timesheet.status !== TimesheetStatus.DENIED) {
+      <button
+        type="button"
+        nbButton
+        status="basic"
+        size="small"
+        class="action warning"
+        [disabled]="updatingStatus"
+        (click)="updateStatus(TimesheetStatus.DENIED)"
+      >
+        <nb-icon icon="close-outline"></nb-icon>
+        {{ 'TIMESHEET.DENY' | translate }}
+      </button>
+    }
+    @if (timesheet.status !== TimesheetStatus.APPROVED) {
+      <button
+        type="button"
+        nbButton
+        status="success"
+        size="small"
+        [disabled]="updatingStatus"
+        (click)="updateStatus(TimesheetStatus.APPROVED)"
+      >
+        <nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+        {{ 'TIMESHEET.APPROVE' | translate }}
       </button>
     }
   </div>
+  }
 </ng-template>

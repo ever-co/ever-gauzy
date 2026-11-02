@@ -6867,6 +6867,7 @@
 		"MONTHLY": "Monthly",
 		"CALENDAR": "Calendar",
 		"APPROVALS": "Approvals",
+		"ALL": "All",
 		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
 		"DENIED_SUCCESS": "Timesheet Successfully Denied",
 		"SUBMIT_SUCCESS": "Timesheet Successfully Submitted",

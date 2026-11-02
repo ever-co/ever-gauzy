@@ -6252,6 +6252,7 @@
 		"MONTHLY": "Mensuel",
 		"CALENDAR": "Calendrier",
 		"APPROVALS": "Approbations",
+		"ALL": "Tous",
 		"APPROVE_SUCCESS": "Feuille de temps approuvée avec succès",
 		"DENIED_SUCCESS": "Feuille de temps refusée avec succès",
 		"SUBMIT_SUCCESS": "Feuille de temps soumise avec succès.",
