@@ -16,11 +16,15 @@
 :host {
     nb-card {
         height: calc(100vh - 13rem);
+    }
 
-        ::ng-deep {
-            .transition-container span {
-                background: unset;
-            }
+    // Page title and breadcrumb at 12px, as in the timesheet tabs' header (see
+    // `layout.component.scss`, which this page is routed outside of).
+    nb-card > nb-card-header {
+        --gauzy-page-title-font-size: 12px;
+
+        ::ng-deep .ga-breadcrumb-item {
+            font-size: 12px;
         }
     }
 
@@ -63,6 +67,20 @@
             @include nb-ltr(padding-left, 12px);
             @include nb-rtl(padding-right, 12px);
 
+            // Row text at 12px, the same size as the column labels above it —
+            // what Daily sets on its `.content`.
+            font-size: 12px;
+
+            // `.small` would take the To-do line down to ~10px.
+            .small {
+                font-size: inherit;
+            }
+
+            ngx-project ::ng-deep .project-render .name {
+                font-size: 12px;
+                line-height: 15px;
+            }
+
             // Out-ranks Bootstrap's `.border-bottom` utility, which is `!important`.
             .border-bottom {
                 border-bottom: 1px solid var(--gauzy-border-default-color) !important;
@@ -77,6 +95,15 @@
         }
     }
 
+    // Each day's date above its rows, at the timesheet tabs' 12px rather than
+    // the 1.125rem of a bare <h5>.
+    .day-title {
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 15px;
+        margin-bottom: 0.5rem;
+    }
+
     // The heading and its back arrow share a line.
     .title-row {
         display: flex;
@@ -86,11 +113,6 @@
     // rows' checkbox column below.
     .checkbox-spacer {
         visibility: hidden;
-    }
-
-    .project-name {
-        flex: 0 0 20%;
-        max-width: 20%;
     }
 
     // The log-type chip ("Manual" / "Tracked"), same pill as on Daily.

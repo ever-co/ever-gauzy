@@ -30,11 +30,12 @@
       </div>
     </nb-card-header>
     <nb-card-body class="custom-card-body">
-      @for (dayLogs of timeLogs | keyvalue; track dayLogs) {
+      @for (dayLogs of timeLogs | keyvalue; track dayLogs.key) {
         <div class="mb-5">
-          <h5 class="mb-3">
+          <h5 class="day-title">
             {{ dayLogs.key | date }}
           </h5>
+          <!-- Same columns, in the same order, as the Daily tab. -->
           <div class="row custom-header m-0 align-items-center">
             <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
               <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
@@ -43,36 +44,43 @@
                 </div>
               </ng-template>
             </ng-template>
-            <div class="col-4 project-name">
-              {{ 'TIMESHEET.PROJECT' | translate }} /
-              {{ 'TIMESHEET.TODO' | translate }}
+            <div class="col-3">
+              {{ 'TIMESHEET.PROJECT' | translate }} / {{ 'TIMESHEET.TODO' | translate }}
             </div>
-            <div class="col employee-name" *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
+            <div class="col" *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
               {{ 'TIMESHEET.EMPLOYEE' | translate }}
             </div>
-            <div class="col-1">
+            <div class="col">
               {{ 'TIMESHEET.LOG_TYPE' | translate }}
             </div>
-            <div class="col-1">
-              {{ 'TIMESHEET.DURATION' | translate }}
+            <div class="col">
+              {{ 'TIMESHEET.SOURCE' | translate }}
             </div>
             <div class="col">
+              {{ 'TIMESHEET.DURATION' | translate }}
+            </div>
+            <div class="col-2">
               {{ 'TIMESHEET.TIME_SPAN' | translate }}
+            </div>
+            <div class="col">
+              {{ 'TIMESHEET.NOTES' | translate }}
             </div>
           </div>
           @if (dayLogs.value?.length > 0) {
             <div class="custom-body">
-              @for (log of dayLogs.value; track log; let last = $last) {
+              @for (log of dayLogs.value; track log.id; let last = $last) {
                 <div
-                  class="row m-0 py-3 align-items-center"
+                  class="row item m-0 py-3 align-items-center"
                   [class.border-bottom]="!last"
                   [class.selected]="selectedLog?.data?.id === log.id"
-                  >
+                  (click)="selectLog(selectedLog?.data?.id !== log.id, log)"
+                >
                   <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
                     <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
                       <div class="col-auto">
                         <nb-checkbox
                           [checked]="selectedLog?.data?.id === log.id"
+                          (click)="$event.stopPropagation()"
                           (checkedChange)="selectLog($event, log)"
                           status="basic"
                           [disabled]="log.isRunning"
@@ -80,7 +88,7 @@
                       </div>
                     </ng-template>
                   </ng-template>
-                  <div class="col-4 project-name">
+                  <div class="col-3">
                     @if (log?.project) {
                       <ngx-project [rowData]="log"></ngx-project>
                     } @else {
@@ -100,9 +108,10 @@
                   <div
                     class="col employee-name"
                     *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
-                    >
+                  >
                     <div class="name-container">
                       <ngx-avatar
+                        class="report-table"
                         [id]="$safeNavigationMigration(log?.employee?.id)"
                         [name]="$safeNavigationMigration(log?.employee?.user?.name)"
                         [src]="$safeNavigationMigration(log?.employee?.user?.imageUrl)"
@@ -110,13 +119,26 @@
                       ></ngx-avatar>
                     </div>
                   </div>
-                  <div class="col-1">
+                  <div class="col">
                     <span class="log">{{ log.logType | titlecase }}</span>
                   </div>
-                  <div class="col-1">
-                    {{ log.duration | durationFormat }}
+                  <div class="col source-version">
+                    <ngx-badge-label
+                      [text]="$safeNavigationMigration(log?.source) | replace: '_' : ' ' | titlecase"
+                      class="badge-item"
+                    ></ngx-badge-label>
+                    @if (log?.version) {
+                      <ngx-badge-label
+                        [text]="$safeNavigationMigration(log?.version)"
+                        status="info"
+                        class="badge-item"
+                      ></ngx-badge-label>
+                    }
                   </div>
                   <div class="col">
+                    {{ log.duration | durationFormat }}
+                  </div>
+                  <div class="col-2">
                     <span class="start-timer">
                       {{ log.startedAt | utcToLocal | timeFormat }}
                     </span>
@@ -130,6 +152,9 @@
                         {{ 'TIMESHEET.TILL_NOW' | translate }}
                       </span>
                     }
+                  </div>
+                  <div class="col">
+                    {{ log?.description }}
                   </div>
                 </div>
               }
@@ -153,13 +178,14 @@
         <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME">
           <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MODIFY_TIME">
             <button
-              [disabled]="$safeNavigationMigration(selectedLog?.data?.isRunning)"
-              class="action primary"
+              type="button"
               nbButton
               status="basic"
-              (click)="openEditDialog($safeNavigationMigration(selectedLog?.data))"
+              class="action primary"
               size="small"
-              >
+              [disabled]="$safeNavigationMigration(selectedLog?.data?.isRunning)"
+              (click)="openEditDialog($safeNavigationMigration(selectedLog?.data))"
+            >
               <nb-icon icon="edit"></nb-icon>
               {{ 'TIMESHEET.EDIT' | translate }}
             </button>
@@ -168,22 +194,25 @@
         <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
           <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
             <button
-              [disabled]="$safeNavigationMigration(selectedLog?.data?.isRunning)"
-              class="action"
+              type="button"
               nbButton
               status="basic"
+              class="action"
               size="small"
+              [disabled]="$safeNavigationMigration(selectedLog?.data?.isRunning)"
               ngxConfirmDialog
               [message]="'TIMESHEET.DELETE_TIMELOG' | translate"
               (confirm)="deleteTimeLog($safeNavigationMigration(selectedLog?.data))"
-              >
+              [nbTooltip]="'TIMESHEET.DELETE' | translate"
+              [attr.aria-label]="'TIMESHEET.DELETE' | translate"
+            >
               <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
             </button>
           </ng-template>
         </ng-template>
       </div>
     } @else {
-      <button [disabled]="true" class="m-1" nbButton status="default" size="small">
+      <button type="button" [disabled]="true" class="m-1" nbButton status="default" size="small">
         {{ 'TIMESHEET.IMMUTABLE_TIME' | translate }}
       </button>
     }
