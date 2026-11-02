@@ -14,7 +14,7 @@ import {
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import { filter, firstValueFrom, Subject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { distinctUntilChanged, map, skip, tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
@@ -83,6 +83,20 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 				tap((data) => !!data && !!data.timesheet),
 				tap(({ timesheet }) => (this.timesheet = timesheet)),
 				tap(() => this.logs$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		// The permissions can land after the logs are read (they are loaded
+		// without being awaited at start-up), and the employee lookup needs one
+		// of them: when it arrives, look the employee up then. Its value when the
+		// page opens is skipped, as the read of the logs looks it up itself.
+		this.store.userRolePermissions$
+			.pipe(
+				map(() => this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)),
+				distinctUntilChanged(),
+				skip(1),
+				filter(Boolean),
+				tap(() => this.loadEmployeeIfMissing()),
 				untilDestroyed(this)
 			)
 			.subscribe();
