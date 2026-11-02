@@ -45,11 +45,15 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
   }
 
   // The toolbar keeps its height and the table takes the rest of the body,
-  // scrolling on its own. The body's height comes from the timesheet layout.
+  // scrolling on its own. The forwarded timesheet sheets give the body a
+  // viewport height and a 100% one; both are reset, and the body takes exactly
+  // the room the card has left under its header, as on a timesheet's page.
   nb-card.approvals-card > nb-card-body {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    flex: 1 1 0;
+    height: auto;
     min-height: 0;
     overflow: hidden;
     font-size: 12px;
