@@ -6254,6 +6254,7 @@
 		"MONTHLY": "Maandelijks",
 		"CALENDAR": "Agenda",
 		"APPROVALS": "Goedkeuringen",
+		"ALL": "Alle",
 		"APPROVE_SUCCESS": "Timesheet succesvol goedgekeurd",
 		"DENIED_SUCCESS": "Tijdsregistratie succesvol geweigerd",
 		"SUBMIT_SUCCESS": "Timesheet succesvol ingediend",

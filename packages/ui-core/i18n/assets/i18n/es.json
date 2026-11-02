@@ -6256,6 +6256,7 @@
 		"MONTHLY": "Mensual",
 		"CALENDAR": "Calendario",
 		"APPROVALS": "Aprobaciones.",
+		"ALL": "Todos",
 		"APPROVE_SUCCESS": "Hoja de horas aprobada exitosamente.",
 		"DENIED_SUCCESS": "Hoja de tiempo rechazada exitosamente.",
 		"SUBMIT_SUCCESS": "Hoja de horas enviada exitosamente",

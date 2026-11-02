@@ -5671,6 +5671,7 @@
 		"MONTHLY": "crwdns11072:0crwdne11072:0",
 		"CALENDAR": "crwdns3860:0crwdne3860:0",
 		"APPROVALS": "crwdns3862:0crwdne3862:0",
+		"ALL": "All",
 		"APPROVE_SUCCESS": "crwdns4044:0crwdne4044:0",
 		"DENIED_SUCCESS": "crwdns4046:0crwdne4046:0",
 		"SUBMIT_SUCCESS": "crwdns8360:0crwdne8360:0",

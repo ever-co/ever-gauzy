@@ -6870,6 +6870,7 @@
 		"MONTHLY": "每月",
 		"CALENDAR": "日历",
 		"APPROVALS": "批准",
+		"ALL": "全部",
 		"APPROVE_SUCCESS": "时间表已成功批准",
 		"DENIED_SUCCESS": "工作时间表已成功被拒绝",
 		"SUBMIT_SUCCESS": "时间表成功提交",

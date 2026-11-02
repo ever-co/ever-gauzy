@@ -6250,6 +6250,7 @@
 		"MONTHLY": "Monatlich",
 		"CALENDAR": "Kalender",
 		"APPROVALS": "Genehmigungen",
+		"ALL": "Alle",
 		"APPROVE_SUCCESS": "Zeiterfassung erfolgreich genehmigt",
 		"DENIED_SUCCESS": "Zeiterfassung erfolgreich abgelehnt",
 		"SUBMIT_SUCCESS": "Zeiterfassung erfolgreich eingereicht",
