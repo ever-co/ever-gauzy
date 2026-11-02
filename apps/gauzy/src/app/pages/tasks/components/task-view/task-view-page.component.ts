@@ -493,14 +493,16 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	async addSubtask(): Promise<void> {
 		if (!this.task || !this.canAddSubtask || this.openingSubtask) return;
 		const { id: taskId } = this.task;
-		if (!this.statuses.length) {
+		let statuses = this.statuses;
+		if (!statuses.length) {
 			this.openingSubtask = true;
-			// A refresh of this task while they are read discards that read, so they are read again until one holds.
-			let sequence: number;
+			// The dialog's own read: a refresh of the task meanwhile neither discards it nor is overwritten by it. A
+			// refresh that moved the task to another project has them read again, for that one.
+			let projectId: string | undefined;
 			do {
-				sequence = this.loadSequence;
-				await this.loadStatuses(this.task, sequence);
-			} while (sequence !== this.loadSequence && this.task?.id === taskId);
+				projectId = this.task.projectId;
+				statuses = await this.readStatuses(projectId).catch((): ITaskStatus[] => []);
+			} while (this.task?.id === taskId && (this.task.projectId ?? null) !== (projectId ?? null));
 			this.openingSubtask = false;
 			// The page moved on to another task while the read was under way.
 			if (this.task?.id !== taskId || !this.canAddSubtask) return;
@@ -511,7 +513,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			project,
 			teams,
 			status: TaskStatusEnum.OPEN,
-			taskStatus: newTaskStatusOf(this.statuses)
+			taskStatus: newTaskStatusOf(statuses)
 		} as ITask;
 		const dialog = this.dialogService.open(AddTaskDialogComponent, { context: { selectedTask, parentLocked: true } });
 		const data: any = await firstValueFrom(dialog.onClose.pipe(first()));
@@ -705,26 +707,32 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		);
 	}
 
-	/** The statuses the task's project takes, in their order, as the project board's columns. */
+	/** The statuses the task's project takes, for the menus. */
 	private async loadStatuses(task: ITask, sequence: number): Promise<void> {
 		try {
-			const read = async (where: Record<string, string>) =>
-				(
-					await firstValueFrom(
-						this.http.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, {
-							params: toParams(where)
-						})
-					)
-				)?.items || [];
-			const statuses = await scopedTaskStatusesOf(read, { ...this.scope(), projectId: task.projectId });
+			const statuses = await this.readStatuses(task.projectId);
 			if (sequence !== this.loadSequence) return;
-			this.statuses = [...statuses].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+			this.statuses = statuses;
 			this.currentStatusId = this.currentStatusOf(task);
 			// The rows find their entries in the menu now that it has them.
 			this.subtasks = this.subtasksOf(task);
 		} catch {
 			// The status shows without its menu.
 		}
+	}
+
+	/** The statuses a project takes, in their order, as the project board's columns. */
+	private async readStatuses(projectId: string | undefined): Promise<ITaskStatus[]> {
+		const read = async (where: Record<string, string>) =>
+			(
+				await firstValueFrom(
+					this.http.get<IPagination<ITaskStatus>>(`${API_PREFIX}/task-statuses`, {
+						params: toParams(where)
+					})
+				)
+			)?.items || [];
+		const statuses = await scopedTaskStatusesOf(read, { ...this.scope(), projectId });
+		return [...statuses].sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 	}
 
 	/**

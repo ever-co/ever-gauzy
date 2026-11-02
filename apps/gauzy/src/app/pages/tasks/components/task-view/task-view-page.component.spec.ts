@@ -856,21 +856,48 @@ describe('TaskViewPageComponent', () => {
 				expect(reads()).toBe(before);
 			});
 
-			it('reads them again when a refresh of the task discards the read under way', async () => {
+			it("keeps its own read through a refresh of the task, and leaves the page's statuses to the refresh", async () => {
 				const page = await ready();
-				const discarded$ = new Subject<{ items: unknown[] }>();
-				// The Add subtask read, the refresh's own, which never answers here, then the read that holds.
-				const reads = [discarded$, NEVER, of({ items: [OPEN] })];
+				const held$ = new Subject<{ items: unknown[] }>();
+				// The Add subtask read, then the refresh's own, which never answers here.
+				const reads = [held$, NEVER];
 				http.get.mockImplementation((url: string) => (url.endsWith('/task-statuses') ? reads.shift() : of({ items: [] })));
 
 				const opening = page.addSubtask();
 				await page.onBoardTaskMoved();
-				discarded$.next({ items: [] });
-				discarded$.complete();
+				answer(held$);
 				await opening;
 
 				expect(reads).toEqual([]);
 				expect(context().selectedTask.taskStatus.id).toBe('open');
+				expect(page.statuses).toEqual([]);
+			});
+
+			it('reads them again for the new project when a refresh moved the task to another one', async () => {
+				const OTHER_PROJECT = { id: 'ffffffff-7777-4777-8777-777777777777', name: 'Other' };
+				const OTHER_OPEN = { ...OPEN, id: 'other-open', projectId: OTHER_PROJECT.id };
+				tasksService.getById.mockImplementation(async (id: string) => task({ id, projectId: PROJECT_ID }));
+				const page = await ready();
+				const held$ = new Subject<{ items: unknown[] }>();
+				http.get.mockImplementation((url: string, options: any) => {
+					if (!url.endsWith('/task-statuses')) return of({ items: [] });
+					const where = options?.params?.toString() || '';
+					if (where.includes(PROJECT_ID)) return held$;
+					return of({ items: where.includes(OTHER_PROJECT.id) ? [OTHER_OPEN] : [] });
+				});
+
+				const opening = page.addSubtask();
+				tasksService.getById.mockImplementation(async (id: string) =>
+					task({ id, projectId: OTHER_PROJECT.id, project: OTHER_PROJECT as any })
+				);
+				await page.onBoardTaskMoved();
+				held$.next({ items: [] });
+				held$.complete();
+				await opening;
+
+				const { selectedTask } = context();
+				expect(selectedTask.project).toEqual(OTHER_PROJECT);
+				expect(selectedTask.taskStatus.id).toBe('other-open');
 			});
 
 			it('opens one dialog however many times the button is pressed while they are read', async () => {
