@@ -56,6 +56,9 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	/** The employee is read, and its column shown, only for users who may see other employees. */
 	showEmployee: boolean = false;
 
+	/** Numbers each read of the timesheets, so only the latest one's answer is shown. */
+	private _fetchId = 0;
+
 	TimesheetStatus = TimesheetStatus;
 	PermissionsEnum = PermissionsEnum;
 
@@ -113,21 +116,33 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 		return this.visibleTimesheets.reduce((total: number, timesheet: ITimesheet) => total + (timesheet.duration || 0), 0);
 	}
 
+	/**
+	 * Reads the timesheets of the period. A read still in flight when a newer
+	 * one starts (the permissions landing mid-read, say) is dropped when it
+	 * answers, so an answer fetched without the employee cannot replace one
+	 * fetched with it.
+	 */
 	async getTimeSheets() {
 		if (!this.organization) {
 			return;
 		}
+		const fetchId = ++this._fetchId;
 		this.loading = true;
 		try {
-			this.timesheets = await this.timesheetService.getTimeSheets({
+			const timesheets = await this.timesheetService.getTimeSheets({
 				...this.getFilterRequest(this.request),
 				relations: [...(this.showEmployee ? ['employee', 'employee.user'] : [])]
 			});
+			if (fetchId === this._fetchId) {
+				this.timesheets = timesheets;
+			}
 		} catch (error) {
 			console.log('Error while getting timesheets for selected date range');
 		} finally {
-			this._buildStatusOptions();
-			this.loading = false;
+			if (fetchId === this._fetchId) {
+				this._buildStatusOptions();
+				this.loading = false;
+			}
 		}
 	}
 
