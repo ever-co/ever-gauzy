@@ -25,6 +25,7 @@ import { OrderService } from './order/order.service';
 import { TypeOrmOrderRepository } from './order/repository/type-orm-order.repository';
 import { OrderEditGuard } from './order/order-edit.guard';
 import { MikroOrmOrderRepository } from './order/repository/mikro-orm-order.repository';
+import { OrderStateReader } from './order/order-state.reader';
 import { OrderLineController } from './order-line/order-line.controller';
 import { OrderLineService } from './order-line/order-line.service';
 import { TypeOrmOrderLineRepository } from './order-line/repository/type-orm-order-line.repository';
@@ -157,6 +158,9 @@ import { OrderInvoicingService } from './order-invoicing/order-invoicing.service
 		// under that ORM, the work itself under TypeORM — and the one answer to which ORM an order row is
 		// read through. The two scheduled passes below cannot run on MikroORM without it.
 		OrderUnitOfWork,
+		// Where an order is now, for a consumer of its events that needs the state rather than the fact — the
+		// entitlement grant path, when a settlement was delivered before the placement it settles (#11023).
+		OrderStateReader,
 		OrderCheckoutHandler,
 		// Copies a cart's discount and tax rows onto the order it becomes (Q7-W1a).
 		OrderCartLedgerCarryover,
@@ -232,7 +236,8 @@ import { OrderInvoicingService } from './order-invoicing/order-invoicing.service
 		OrderCheckoutHandler,
 		SubscriptionOrderService,
 		OrderInvoicingService,
-		OrderPaymentLedgerService
+		OrderPaymentLedgerService,
+		OrderStateReader
 	]
 })
 export class OrderModule {}

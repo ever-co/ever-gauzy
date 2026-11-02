@@ -11,7 +11,9 @@ export const CustomersPage = {
 	nameInputCss: 'nb-stepper [formcontrolname="name"]',
 	emailInputCss: '#email',
 	budgetInputCss: 'input[formcontrolname="budget"]',
-	lastStepBtnCss: 'button[status="success"]:has-text("Save")',
+	// Forward button of every contact-wizard step ("Next" on 1-3, "Save" on 4). The step-4 Save is no
+	// longer `status="success"`: #10308 (e9e6bfd9fa) restyled it `outline status="basic" class="green"`.
+	lastStepBtnCss: 'ga-contact-mutation .wizard-actions button.green',
 	phoneInputCss: 'nb-stepper [formcontrolname="primaryPhone"]',
 	countryDropdownCss: 'ga-country ng-select',
 	cityInputCss: '[formcontrolname="city"]',
@@ -19,15 +21,22 @@ export const CustomersPage = {
 	streetInputCss: '[formcontrolname="address"]',
 	projectsDropdownCss: '[formcontrolname="projects"]',
 	projectsDropdownOptionCss: 'div.ng-option',
-	usersMultiSelectCss: 'div.form-group ga-employee-multi-select nb-select',
+	// Members step: #10308 (e9e6bfd9fa) replaced `ga-employee-multi-select` (nb-select) with a searchable
+	// multi `ng-select.members-select` (appendTo="body"; the panel carries the host class).
+	usersMultiSelectCss: 'ga-contact-mutation ng-select.members-select',
+	membersOptionCss: 'ng-dropdown-panel.members-select div.ng-option',
 	dropdownOptionCss: '.option-list nb-option, .ng-option',
 	addTagsDropdownCss: '#addTags',
 	tagsDropdownOption: 'div.ng-option',
 	websiteInputCss: '[formcontrolname="website"]',
-	cardBodyCss: 'div.contact-container',
-	saveButtonCss: 'button[status="success"]',
-	nextButtonCss: 'button:has-text("Next")',
-	finishButtonCss: 'button[status="success"]:has-text("Save")',
+	// The wizard's title — `div.contact-container` is gone (#10308 made it an <aside> around the image
+	// uploader).
+	cardBodyCss: 'ga-contact-mutation nb-card-header h4',
+	saveButtonCss: 'ga-contact-mutation .wizard-actions button.green',
+	nextButtonCss: 'ga-contact-mutation .wizard-actions button.green',
+	finishButtonCss: 'ga-contact-mutation .wizard-actions button.green',
+	// Host of the add/edit wizard: removed from the page once the contact is saved.
+	contactMutationCss: 'ga-contact-mutation',
 	selectTableRowCss: 'table > tbody > tr.angular2-smart-row',
 	confirmDeleteButtonCss: 'nb-card-footer > button[status="danger"]',
 	customerNameCss: '[formcontrolname="name"]',

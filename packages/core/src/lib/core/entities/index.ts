@@ -1,4 +1,5 @@
 import {
+	AccountDeletionRequest,
 	AccountingTemplate,
 	Activity,
 	ActivityLog,
@@ -188,6 +189,7 @@ import {
 	TermsAcceptance,
 	TimeLog,
 	TimeOffBalance,
+	TimeOffBalanceDeduction,
 	TimeOffPolicy,
 	TimeOffRequest,
 	Timesheet,
@@ -207,6 +209,7 @@ import {
 } from './internal';
 
 export const coreEntities = [
+	AccountDeletionRequest,
 	AccountingTemplate,
 	Activity,
 	ActivityLog,
@@ -396,6 +399,7 @@ export const coreEntities = [
 	TermsAcceptance,
 	TimeLog,
 	TimeOffBalance,
+	TimeOffBalanceDeduction,
 	TimeOffPolicy,
 	TimeOffRequest,
 	Timesheet,

@@ -149,9 +149,7 @@ When('I send the sales invoice', async () => {
 	await salesInvoicesPage.moreButtonVisible();
 	await salesInvoicesPage.clickMoreButton();
 	await salesInvoicesPage.actionButtonVisible();
-	await salesInvoicesPage.clickActionButtonByText(
-		SalesInvoicesPageData.sendButton
-	);
+	await salesInvoicesPage.clickActionButtonByText(SalesInvoicesPageData.sendButton, fullName);
 	await salesInvoicesPage.confirmButtonVisible();
 	await salesInvoicesPage.clickConfirmButton();
 	await salesInvoicesPage.waitMessageToHide();
@@ -172,9 +170,7 @@ When('I send the sales invoice by email', async () => {
 	await salesInvoicesPage.moreButtonVisible();
 	await salesInvoicesPage.clickMoreButton();
 	await salesInvoicesPage.actionButtonVisible();
-	await salesInvoicesPage.clickActionButtonByText(
-		SalesInvoicesPageData.emailButton
-	);
+	await salesInvoicesPage.clickActionButtonByText(SalesInvoicesPageData.emailButton, fullName);
 	await salesInvoicesPage.scrollEmailInviteTemplate();
 	await salesInvoicesPage.emailInputVisible();
 	await salesInvoicesPage.enterEmailData(sendEmail);
@@ -200,7 +196,7 @@ When('I delete the sales invoice', async () => {
 	await salesInvoicesPage.moreButtonVisible();
 	await salesInvoicesPage.clickMoreButton();
 	await salesInvoicesPage.deleteButtonVisible();
-	await salesInvoicesPage.clickDeleteButton();
+	await salesInvoicesPage.clickDeleteButton(fullName);
 	await salesInvoicesPage.confirmDeleteButtonVisible();
 	await salesInvoicesPage.clickConfirmDeleteButton();
 	await salesInvoicesPage.waitMessageToHide();

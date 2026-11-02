@@ -433,6 +433,41 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 	}
 
 	/**
+	 * Archive an organization project: a project the organization finished with. No list offers it any more
+	 * unless the caller asks for archived projects (`where[isArchived]`); it stays readable by its id.
+	 *
+	 * @param id - UUID of the organization project.
+	 * @returns The archived project.
+	 */
+	@ApiOperation({ summary: 'Archive an organization project' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The project was archived', type: OrganizationProject })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Organization project not found' })
+	@ApiParam({ name: 'id', description: 'UUID of the organization project', type: String, required: true })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
+	@Put('/:id/archive')
+	async archive(@Param('id', UUIDValidationPipe) id: ID): Promise<IOrganizationProject> {
+		return await this.organizationProjectService.setArchived(id, true);
+	}
+
+	/**
+	 * Bring an archived organization project back: the lists offer it again.
+	 *
+	 * @param id - UUID of the organization project.
+	 * @returns The project, no longer archived.
+	 */
+	@ApiOperation({ summary: 'Unarchive an organization project' })
+	@ApiResponse({ status: HttpStatus.ACCEPTED, description: 'The project was unarchived', type: OrganizationProject })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Organization project not found' })
+	@ApiParam({ name: 'id', description: 'UUID of the organization project', type: String, required: true })
+	@HttpCode(HttpStatus.ACCEPTED)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
+	@Put('/:id/unarchive')
+	async unarchive(@Param('id', UUIDValidationPipe) id: ID): Promise<IOrganizationProject> {
+		return await this.organizationProjectService.setArchived(id, false);
+	}
+
+	/**
 	 * Delete an organization project by ID.
 	 * @param id - UUID of the organization project
 	 */

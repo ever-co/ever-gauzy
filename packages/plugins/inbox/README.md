@@ -163,9 +163,36 @@ await this.inbox?.upsertExternal({
   from `GAUZY` and `SYSTEM` need no handler: their replies stay in Gauzy.
 - EMAIL items (P4) also state `mailboxId` and `emailId`.
 
-The writer (`create`, `upsertExternal`), the recipient model and the
-source-handler registry are the stable surface other plugins build on (the Ever
-Works integration, the P4 inbound-email pipeline): change them additively.
+A plugin that mirrors the Inbox somewhere else (the Ever Works integration
+sends each person's items to their Ever Works inbox) observes it through
+`INBOX_ITEM_FEED` and acts on an item as its recipient through
+`INBOX_RECIPIENT_ACTIONS`, both optional injections as above:
+
+- `register({ id, changed(change) })`: the observer is told after every write
+  of the Inbox: an item created or re-delivered by its source, a reply, one
+  recipient's read / archive / snooze (`stated` names the fields), and
+  mark-all-read (one change per item, in the background). A change names the
+  item, its kind, source and organization and the recipient rows it concerns;
+  never its title, body or answer. An observer never fails or delays a write:
+  it is called without being awaited, and its error is logged. The one cost a
+  write carries while an observer is registered is the feed's own read of the
+  item's recipient rows, to name them. An observer that must not lose a change
+  keeps its own durable queue.
+- `readRecipient(tenantId, recipientId)`: one recipient's copy of an item.
+- `missingRecipients(tenantId, recipientIds)`: of the recipient rows named,
+  the ones that are gone (or whose item is), so an observer ends their copies.
+- `recipientsChangedSince(tenantId, since, …)`: the recipient rows whose item
+  or own state changed since a time, for a recovery sweep.
+- `openRecipientsOf(tenantId, organizationId, userIds, …)`: the open, not
+  archived items of some users, for a backfill.
+- `INBOX_RECIPIENT_ACTIONS` is `InboxService` itself (`reply`, `setState`): run
+  in a request context signed in as the recipient, it acts exactly as the
+  routes do, the source handler of the item included.
+
+The writer (`create`, `upsertExternal`), the recipient model, the
+source-handler registry and the observer seam are the stable surface other
+plugins build on (the Ever Works integration, the P4 inbound-email pipeline):
+change them additively.
 
 ## Real time (G-P3-6)
 
@@ -205,7 +232,8 @@ node --experimental-vm-modules node_modules/jest/bin/jest.js \
   counts, replies (local; through a handler; released when the source refuses;
   kept when only the bookkeeping failed; one dispatch for two overlapping
   replies; refused for a source that is not connected), recipient state,
-  mark-all-read, source writes (idempotent, a re-delivery changes only what it
-  states, overlapping deliveries create the item once, recipients limited to
+  mark-all-read, the observers (told about every write, never failing it, and
+  the feed's reads), source writes (idempotent, a re-delivery changes only what
+  it states, overlapping deliveries create the item once, recipients limited to
   the tenant, the organization checked against the tenant), and the mailbox
   readers' scope.

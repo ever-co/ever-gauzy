@@ -1,6 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
 import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Brackets, ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
+import { Brackets, FindOptionsWhere, ILike, In, IsNull, SelectQueryBuilder } from 'typeorm';
 import { EntityProperty, FilterQuery, raw } from '@mikro-orm/core';
 import {
 	ActionTypeEnum,
@@ -24,6 +24,7 @@ import { CustomEmbeddedFieldConfig } from '@gauzy/common';
 import { isNotEmpty } from '@gauzy/utils';
 import { RelationsQueryDTO } from '../shared/dto';
 import { BaseQueryDTO, TenantAwareCrudService } from '../core/crud';
+import { archivedStates, withArchivedLinks, withArchivedScope } from '../core/crud/archived-scope';
 import { sanitizeRichHtml } from '../core/html-sanitizer';
 import { RequestContext } from '../core/context';
 import { MultiORMEnum, parseFindOptionsRelations } from '../core/utils';
@@ -41,6 +42,19 @@ import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-emplo
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
 import { MikroOrmOrganizationProjectRepository } from './repository/mikro-orm-organization-project.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-orm-organization-project-employee.repository';
+
+/** A project or team membership, as a read answers it under either ORM. */
+type IMembership = { employeeId?: ID; employee?: { id?: ID } | ID };
+
+/**
+ * The employee of a membership. TypeORM answers its `employeeId` column; MikroORM maps that column through the
+ * `employee` relation and leaves `employeeId` unset on a loaded row, so the relation is read too — the employee
+ * when it was loaded, or its key as a serialized reference.
+ */
+function memberEmployeeId(member: IMembership): ID | undefined {
+	const employee = member?.employee;
+	return member?.employeeId ?? (typeof employee === 'string' ? employee : employee?.id);
+}
 
 @FavoriteService(BaseEntityEnum.OrganizationProject)
 @Injectable()
@@ -235,6 +249,12 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 			const { id: organizationProjectId } = organizationProject;
 
+			// A client edits the teams from a list that offers no archived team: the archived teams the project is
+			// linked to are kept, or the save would unlink them
+			if (Array.isArray(entity.teams)) {
+				entity.teams = withArchivedLinks(entity.teams, organizationProject.teams);
+			}
+
 			// Update the organization project with the prepared members
 			const updatedProject = await super.create({
 				...entity,
@@ -274,6 +294,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 	async findById(id: ID, options?: RelationsQueryDTO): Promise<OrganizationProject> {
 		try {
 			const organizationProject = await this.findOneByIdString(id, options);
+			await this.withoutFormerEmployees([organizationProject]);
 
 			// Register the last visited at date for the current employee
 			try {
@@ -350,8 +371,16 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// Create a map of existing members for quick lookup
 		const existingMemberMap = new Map(projectMembers.map((member) => [member.employeeId, member]));
 
+		// The members whose work ended are never listed (`withoutFormerEmployees`), so an edit never sends them back:
+		// their rows are kept rather than removed, and Back to Work restores them to the project.
+		const workingEmployeeIds = await this.findWorkingEmployeeIds(
+			projectMembers.map(({ employeeId }) => employeeId)
+		);
+
 		// Separate members into removed, updated, and new members
-		const removedMembers = projectMembers.filter((member) => !membersToUpdate.has(member.employeeId));
+		const removedMembers = projectMembers.filter(
+			(member) => !membersToUpdate.has(member.employeeId) && workingEmployeeIds.has(member.employeeId)
+		);
 		const updatedMembers = projectMembers.filter((member) => membersToUpdate.has(member.employeeId));
 		const newMembers = employees.filter((employee) => !existingMemberMap.has(employee.id));
 
@@ -450,13 +479,16 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 
 		const tenantId = RequestContext.currentTenantId() ?? input.tenantId; // Use the current tenant ID or fallback to input tenantId
 		const { organizationId, organizationContactId, organizationTeamId, relations = [] } = input;
+		// The employee's projects that are not archived, unless the caller states `isArchived` (see archivedStates)
+		const isArchived = archivedStates(input?.isArchived);
 
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM: {
 				const where: any = {
 					tenantId,
 					organizationId,
-					members: { employeeId }
+					members: { employeeId },
+					isArchived: { $in: isArchived }
 				};
 				if (isNotEmpty(organizationContactId)) {
 					where.organizationContactId = organizationContactId;
@@ -467,7 +499,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				const items = await this.mikroOrmRepository.find(where, {
 					populate: relations as any[]
 				});
-				return items.map((e) => this.serialize(e)) as IOrganizationProject[];
+				return this.withoutFormerEmployees(items.map((e) => this.serialize(e)) as IOrganizationProject[]);
 			}
 			case MultiORMEnum.TypeORM:
 			default: {
@@ -492,7 +524,8 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				query
 					.where(`project_members.employeeId = :employeeId`, { employeeId })
 					.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId })
-					.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+					.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId })
+					.andWhere(p(`"${query.alias}"."isArchived" IN (:...isArchived)`), { isArchived });
 
 				// Apply additional filters if organizationContactId is provided
 				if (isNotEmpty(organizationContactId)) {
@@ -507,7 +540,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				}
 
 				// Get the results
-				return query.getMany();
+				return this.withoutFormerEmployees(await query.getMany());
 			}
 		}
 	}
@@ -524,8 +557,11 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			options.where.organizationContactId = IsNull();
 		}
 
-		// Call the parent class's findAll method with the modified options
-		return super.findAll(options);
+		// Call the parent class's findAll method with the modified options, on the projects that are not archived
+		// unless the caller states `isArchived`
+		const result = await super.findAll({ ...options, where: withArchivedScope(options?.where) });
+		await this.withoutFormerEmployees(result.items);
+		return result;
 	}
 
 	/**
@@ -546,8 +582,119 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 			options.where.name = ILike(`%${options.where.name}%`);
 		}
 
-		// Call the parent class's paginate method with the modified options
-		return super.paginate(options);
+		// Call the parent class's paginate method with the modified options, on the projects that are not archived
+		// unless the caller states `isArchived` (the Projects page's "Include Archived" states both)
+		const result = await super.paginate({ ...options, where: withArchivedScope(options?.where) });
+		await this.withoutFormerEmployees(result.items);
+		return result;
+	}
+
+	/**
+	 * Counts the projects that are not archived, unless the caller states `isArchived`: an archived project is
+	 * counted nowhere it is not listed.
+	 *
+	 * @param options - The caller's `where`.
+	 * @returns The number of projects.
+	 */
+	public async countBy(options?: FindOptionsWhere<OrganizationProject>): Promise<number> {
+		return super.countBy(withArchivedScope(options) as FindOptionsWhere<OrganizationProject>);
+	}
+
+	/**
+	 * Archives a project, or brings an archived one back.
+	 *
+	 * An archived project is one the organization finished with. It keeps everything it holds — members, tasks,
+	 * time logged — and stays readable by its id, but no list offers it unless the caller asks for archived
+	 * projects (`archivedStates`): not the pickers, the timers, the dashboards. Deleting a project is still there,
+	 * for one created by mistake.
+	 *
+	 * @param id - The project.
+	 * @param isArchived - `true` to archive it, `false` to bring it back.
+	 * @returns The project, in its new state.
+	 */
+	async setArchived(id: ID, isArchived: boolean): Promise<IOrganizationProject> {
+		const project = await this.findOneByIdString(id);
+		const { organizationId, tenantId } = project;
+
+		// The two archive columns alone: a save of the whole row would run its update hooks over every column
+		const archive = { isArchived, archivedAt: isArchived ? new Date() : null };
+		await super.update(project.id, archive);
+		const updated = { ...project, ...archive };
+
+		this._activityLogService.logActivity<OrganizationProject>(
+			BaseEntityEnum.OrganizationProject,
+			ActionTypeEnum.Updated,
+			ActorTypeEnum.User,
+			project.id,
+			project.name,
+			updated,
+			organizationId,
+			tenantId,
+			project,
+			{ isArchived }
+		);
+
+		return updated;
+	}
+
+	/**
+	 * Leaves out of the projects' member lists, and of the member lists of their teams, the employees who no longer
+	 * work in the organization.
+	 *
+	 * "End Work" deactivates and archives an employee but keeps their memberships, so that "Back to Work" restores
+	 * them. Until then they are not listed: not among a project's members or managers, nor in its edit form, whose
+	 * employee picker offers working employees only and so could not take them off. Their memberships are kept
+	 * when the project is edited (`updateOrganizationProjectMembers`), and `membersCount` leaves them out too.
+	 *
+	 * @param projects - The projects read, changed in place. A project read without its members is left as it is.
+	 * @returns The same projects.
+	 */
+	private async withoutFormerEmployees<T extends IOrganizationProject>(projects: T[]): Promise<T[]> {
+		const memberLists = (projects ?? [])
+			.filter(Boolean)
+			.flatMap((project) => [project.members, ...(project.teams ?? []).map((team) => team?.members)])
+			.filter(Array.isArray);
+		if (!memberLists.length) {
+			return projects;
+		}
+
+		const workingEmployeeIds = await this.findWorkingEmployeeIds(memberLists.flat().map(memberEmployeeId));
+		// A member whose employee cannot be named is kept: only an employee known not to work is left out
+		const isWorking = (member: IMembership) => {
+			const employeeId = memberEmployeeId(member);
+			return !employeeId || workingEmployeeIds.has(employeeId);
+		};
+
+		for (const project of projects.filter(Boolean)) {
+			if (Array.isArray(project.members)) {
+				project.members = project.members.filter(isWorking);
+			}
+			for (const team of project.teams ?? []) {
+				if (Array.isArray(team?.members)) {
+					team.members = team.members.filter(isWorking);
+				}
+			}
+		}
+		return projects;
+	}
+
+	/**
+	 * The employees, among the given ones, who still work in the organization: active and not archived. End Work
+	 * sets both flags (EmployeeSubscriber); a deleted employee is not found.
+	 *
+	 * @param employeeIds - The employees to look up; empty values are ignored.
+	 * @returns The IDs of the working employees.
+	 */
+	private async findWorkingEmployeeIds(employeeIds: ID[]): Promise<Set<ID>> {
+		const ids = [...new Set(employeeIds.filter(Boolean))];
+		if (!ids.length) {
+			return new Set();
+		}
+
+		const employees = await this._employeeService.find({
+			where: { id: In(ids), isActive: true, isArchived: false }
+		});
+		return new Set(employees.map(({ id }) => id));
 	}
 
 	/**

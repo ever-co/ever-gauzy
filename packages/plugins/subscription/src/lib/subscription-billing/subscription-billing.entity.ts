@@ -121,6 +121,31 @@ export class SubscriptionBilling extends TenantOrganizationBaseEntity implements
 	@MultiORMColumn({ nullable: true })
 	nextRetryAt?: Date;
 
+	/**
+	 * The billing pass charging the cycle right now, while it calls the order path: a token only that pass knows.
+	 *
+	 * A charge is an external call, and an operator settling the same cycle while it is in flight (`pay`, `waive`)
+	 * was only noticed after the money was taken. The billing run writes the token, with `chargeClaimedAt`, in one
+	 * conditional statement before it calls the order path and only while the cycle is `PENDING` or `FAILED`; the
+	 * write that records the attempt's outcome clears both. While the claim is live the settling actions refuse the
+	 * cycle with `SUBSCRIPTION_BILLING_CHARGE_IN_FLIGHT`; a claim older than the claim window (`chargeClaimWindowMs`,
+	 * two of the windows the order path fences one attempt for) is stale, and the next pass recovers it
+	 * (`SubscriptionBillingService.claimCharge`).
+	 */
+	@ApiPropertyOptional({ type: () => String, readOnly: true })
+	@IsOptional()
+	@IsString()
+	@MaxLength(36)
+	@MultiORMColumn({ type: 'varchar', length: 36, nullable: true })
+	chargeClaimToken?: string;
+
+	/** When the pass that holds `chargeClaimToken` took it: what tells a live claim from a stale one. */
+	@ApiPropertyOptional({ type: () => 'timestamptz', readOnly: true })
+	@IsOptional()
+	@IsDate()
+	@MultiORMColumn({ nullable: true })
+	chargeClaimedAt?: Date;
+
 	/** Open-ended extras: the payer the attempt used, the adjustments granted on the cycle. */
 	@ApiPropertyOptional({ type: () => Object })
 	@IsOptional()

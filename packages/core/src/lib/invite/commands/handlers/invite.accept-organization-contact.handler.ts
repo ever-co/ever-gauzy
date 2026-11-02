@@ -16,6 +16,7 @@ import { AuthService } from '../../../auth/auth.service';
 import { OrganizationContactService } from '../../../organization-contact/organization-contact.service';
 import { OrganizationCommerceDefaultsCreateCommand } from '../../../organization/commands';
 import { OrganizationService } from '../../../organization/organization.service';
+import { omitScreenshotCaptureAcknowledgementFields } from '../../../organization/screenshot-capture-acknowledgement';
 import { TenantRoleBulkCreateCommand } from '../../../role/commands';
 import { RoleService } from '../../../role/role.service';
 import { TenantService } from '../../../tenant/tenant.service';
@@ -154,9 +155,12 @@ export class InviteAcceptOrganizationContactHandler
 			const { contact: contactInput = {}, ...organizationInput } = contactOrganization;
 			let contact = contactInput;
 
-			// 4. Create Organization for the contact
+			// 4. Create Organization for the contact. Screen capture starts off (issue #9872), whatever the body
+			// says: this request is public, so nobody could be recorded as having acknowledged turning it on. The
+			// new tenant's admin turns it on from the organization's settings.
 			const organization: IOrganization = await this.organizationService.create({
-				...organizationInput,
+				...omitScreenshotCaptureAcknowledgementFields(organizationInput),
+				allowScreenshotCapture: false,
 				tenant
 			});
 

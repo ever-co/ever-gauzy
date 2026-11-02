@@ -31,6 +31,7 @@ import {
 } from '@gauzy/ui-core/core';
 import { API_PREFIX, ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import { InviteContactComponent } from './invite-contact/invite-contact.component';
+import { CONTACT_ACTION_PERMISSIONS } from './contact-action-permissions';
 import {
 	BreadcrumbTailService,
 	ContactWithTagsComponent,
@@ -64,6 +65,8 @@ export class ContactsComponent extends PaginationFilterBaseComponent implements 
 	countries: ICountry[] = [];
 	disableButton = true;
 	loading = false;
+	/** Who sees each action: any one of the listed permissions. */
+	readonly actionPermissions = CONTACT_ACTION_PERMISSIONS;
 	smartTableSource: ServerDataSource;
 	public favoriteContacts: IFavorite[] = [];
 

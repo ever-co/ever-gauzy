@@ -1,4 +1,5 @@
 import { TokenPurposeEnum, verifyPurposeToken } from '@gauzy/core';
+import { ZitadelAccountSignedInEvent } from '../events/zitadel-account.events';
 import { manualPause } from '../fixtures/in-memory-accounts';
 import { TEST_CLIENT_BASE_URL, TestBrowser, ZitadelTestApp, createZitadelTestApp, hashParam } from '../fixtures/zitadel-test-app';
 
@@ -80,6 +81,10 @@ describe('Ever ID sign-in (HTTP, against a mock OpenID Provider)', () => {
 			const landing = await signIn('person-a');
 			expect(landing).toMatch(`${TEST_CLIENT_BASE_URL}/#/auth/ever-id?handoff=`);
 			const handoff = hashParam(landing, 'handoff');
+			// One sign-in event per linked user (ids and the tenant name only).
+			const signedIn = t.published.filter((event) => event instanceof ZitadelAccountSignedInEvent) as ZitadelAccountSignedInEvent[];
+			expect(signedIn.map((event) => event.payload.userId).sort()).toEqual([user1.id, user2.id, user3.id].sort());
+			expect(JSON.stringify(signedIn.map((event) => event.payload))).not.toContain('@');
 
 			const redeemed = await browser.post(`${t.baseUrl}/api/auth/zitadel/handoff`, { handoff });
 			expect(redeemed.status).toBe(200);

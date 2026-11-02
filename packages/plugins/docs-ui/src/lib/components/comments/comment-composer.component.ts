@@ -1,4 +1,14 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, type SimpleChanges, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+	Component,
+	ElementRef,
+	EventEmitter,
+	Input,
+	OnChanges,
+	Output,
+	type SimpleChanges,
+	ViewChild,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ID } from '@gauzy/contracts';
 import {
@@ -50,39 +60,37 @@ export interface ICommentDraft {
 				(blur)="closeMentions()"
 			></textarea>
 
-			<ul
-				class="gz-comment-mentions"
-				*ngIf="mentionsOpen && suggestions.length"
-				role="listbox"
-				[attr.aria-label]="'DOCS.COMMENTS.MENTION_ARIA' | translate"
-			>
-				<li *ngFor="let candidate of suggestions; let index = index">
-					<button
-						type="button"
-						role="option"
-						[attr.aria-selected]="index === activeIndex"
-						[class.active]="index === activeIndex"
-						(mousedown)="pick(candidate, $event)"
-					>
-						<nb-icon icon="person-outline"></nb-icon>
-						<span>{{ candidate.label }}</span>
-					</button>
-				</li>
-			</ul>
+			@if (mentionsOpen && suggestions.length) {
+				<ul
+					class="gz-comment-mentions"
+					role="listbox"
+					[attr.aria-label]="'DOCS.COMMENTS.MENTION_ARIA' | translate"
+				>
+					@for (candidate of suggestions; track candidate; let index = $index) {
+						<li>
+							<button
+								type="button"
+								role="option"
+								[attr.aria-selected]="index === activeIndex"
+								[class.active]="index === activeIndex"
+								(mousedown)="pick(candidate, $event)"
+							>
+								<nb-icon icon="person-outline"></nb-icon>
+								<span>{{ candidate.label }}</span>
+							</button>
+						</li>
+					}
+				</ul>
+			}
 
 			<div class="gz-comment-composer-actions">
 				<span class="gz-comment-hint">{{ 'DOCS.COMMENTS.MENTION_HINT' | translate }}</span>
-				<button *ngIf="cancellable" nbButton ghost size="tiny" type="button" (click)="cancelled.emit()">
-					{{ 'DOCS.COMMENTS.CANCEL' | translate }}
-				</button>
-				<button
-					nbButton
-					status="primary"
-					size="tiny"
-					type="button"
-					[disabled]="!canSubmit"
-					(click)="submit()"
-				>
+				@if (cancellable) {
+					<button nbButton ghost size="tiny" type="button" (click)="cancelled.emit()">
+						{{ 'DOCS.COMMENTS.CANCEL' | translate }}
+					</button>
+				}
+				<button nbButton status="primary" size="tiny" type="button" [disabled]="!canSubmit" (click)="submit()">
 					{{ submitLabelKey | translate }}
 				</button>
 			</div>

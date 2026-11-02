@@ -4,6 +4,7 @@ import { IOrganizationContact } from '@gauzy/contracts';
 import { OrganizationContactUpdateCommand } from '../organization-contact-update.command';
 import { OrganizationContactService } from '../../organization-contact.service';
 import { ContactService } from '../../../contact/contact.service';
+import { withFormerEmployeeLinks } from '../../../employee/former-employees';
 
 @CommandHandler(OrganizationContactUpdateCommand)
 export class OrganizationContactUpdateHandler implements ICommandHandler<OrganizationContactUpdateCommand> {
@@ -37,6 +38,18 @@ export class OrganizationContactUpdateHandler implements ICommandHandler<Organiz
 					'Error occurred during creation of contact details or creating the organization contact:',
 					error
 				);
+			}
+
+			// The members whose work ended are never listed (`former-employees.ts`), so an edit of the members never
+			// sends them back: they stay linked, and Back to Work restores them
+			if (Array.isArray(input.members)) {
+				// The client itself must be live; its links are read with the deleted employees too
+				await this._organizationContactService.findOneByIdString(id);
+				const { members: linked = [] } = await this._organizationContactService.findOneByIdString(id, {
+					relations: { members: true },
+					withDeleted: true
+				});
+				input.members = withFormerEmployeeLinks(input.members, linked);
 			}
 
 			// Update the organization contact using the provided ID and input data.

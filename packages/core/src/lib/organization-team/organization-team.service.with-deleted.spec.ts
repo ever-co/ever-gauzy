@@ -4,6 +4,7 @@ import { DataSource, EntitySchema, Repository } from 'typeorm';
 import { BetterSqliteDriver } from '@mikro-orm/better-sqlite';
 import { Entity, MikroORM, PrimaryKey, Property } from '@mikro-orm/core';
 import { SoftDeletable, SoftDeleteHandler } from 'mikro-orm-soft-delete';
+import { BadRequestException } from '@nestjs/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { TYPEORM_INVALID_WHERE_VALUES_BEHAVIOR } from '@gauzy/config';
 import { RequestContext } from '../core/context';
@@ -34,10 +35,13 @@ const RETIRED_AT = new Date('2026-01-01T00:00:00.000Z');
 
 /** The teams every case reads, named so a leak names itself rather than moving a count. */
 const SEED = [
-	{ id: '60000000-0000-4000-8000-000000000001', name: 'live', tenantId: TENANT_A, organizationId: ORGANIZATION_A, deletedAt: null },
-	{ id: '60000000-0000-4000-8000-000000000002', name: 'retired', tenantId: TENANT_A, organizationId: ORGANIZATION_A, deletedAt: RETIRED_AT },
-	{ id: '60000000-0000-4000-8000-000000000003', name: 'retired-other-organization', tenantId: TENANT_A, organizationId: ORGANIZATION_B, deletedAt: RETIRED_AT },
-	{ id: '60000000-0000-4000-8000-000000000004', name: 'retired-other-tenant', tenantId: TENANT_B, organizationId: ORGANIZATION_A, deletedAt: RETIRED_AT }
+	{ id: '60000000-0000-4000-8000-000000000001', name: 'live', tenantId: TENANT_A, organizationId: ORGANIZATION_A, isArchived: false, deletedAt: null },
+	{ id: '60000000-0000-4000-8000-000000000002', name: 'retired', tenantId: TENANT_A, organizationId: ORGANIZATION_A, isArchived: false, deletedAt: RETIRED_AT },
+	{ id: '60000000-0000-4000-8000-000000000003', name: 'retired-other-organization', tenantId: TENANT_A, organizationId: ORGANIZATION_B, isArchived: false, deletedAt: RETIRED_AT },
+	{ id: '60000000-0000-4000-8000-000000000004', name: 'retired-other-tenant', tenantId: TENANT_B, organizationId: ORGANIZATION_A, isArchived: false, deletedAt: RETIRED_AT },
+	// Archived: the organization finished with it. No list answers it unless asked for archived teams.
+	{ id: '60000000-0000-4000-8000-000000000005', name: 'archived', tenantId: TENANT_A, organizationId: ORGANIZATION_A, isArchived: true, deletedAt: null },
+	{ id: '60000000-0000-4000-8000-000000000006', name: 'archived-other-tenant', tenantId: TENANT_B, organizationId: ORGANIZATION_A, isArchived: true, deletedAt: null }
 ];
 
 // `deleteDate` is what makes a TypeORM query builder add its own `deletedAt IS NULL` — the predicate
@@ -50,6 +54,7 @@ const OrganizationTeamSchema = new EntitySchema<any>({
 		name: { type: 'varchar' },
 		tenantId: { type: 'varchar', nullable: true },
 		organizationId: { type: 'varchar', nullable: true },
+		isArchived: { type: 'boolean', nullable: true, default: false },
 		deletedAt: { type: 'datetime', nullable: true, deleteDate: true }
 	}
 });
@@ -72,6 +77,9 @@ class OrganizationTeamWithDeletedRow {
 
 	@Property({ type: 'string', nullable: true })
 	organizationId?: string | null;
+
+	@Property({ type: 'boolean', nullable: true })
+	isArchived?: boolean | null;
 
 	@Property({ type: 'datetime', nullable: true })
 	deletedAt?: Date | null;
@@ -204,5 +212,69 @@ describe.each([
 		// converter used to read the non-empty string 'false' as a request for the retired rows.
 		expect(await read({ withDeleted: 'false' })).toEqual(['live']);
 		expect(await read({ withDeleted: 'true' })).toEqual(['live', 'retired']);
+	});
+});
+
+describe.each([
+	[MultiORMEnum.TypeORM, typeOrmHarness],
+	[MultiORMEnum.MikroORM, mikroOrmHarness]
+])('OrganizationTeamService.findAll leaves archived teams out unless asked (%s)', (ormType, createHarness) => {
+	let harness: IHarness;
+
+	beforeAll(async () => {
+		harness = await createHarness();
+	});
+
+	afterAll(async () => {
+		await harness?.close();
+	});
+
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentRequestContext').mockReturnValue({} as any);
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT_A);
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
+			(permission: PermissionsEnum) => permission === PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+		jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(ormType);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	/** The teams of the caller's organization one read answered, sorted. */
+	const read = async (where: Record<string, unknown> = {}): Promise<string[]> => {
+		const { items, total } = await harness
+			.service()
+			.findAll({ where: { organizationId: ORGANIZATION_A, ...where } } as any);
+
+		expect(total).toBe(items.length);
+		return items.map((item: any) => item.name).sort();
+	};
+
+	it('answers no archived team when the caller states nothing about it (the pickers, `/me`)', async () => {
+		expect(await read()).toEqual(['live']);
+	});
+
+	it('answers the archived teams only when asked, as a boolean or as query-string text', async () => {
+		expect(await read({ isArchived: true })).toEqual(['archived']);
+		expect(await read({ isArchived: 'true' })).toEqual(['archived']);
+		expect(await read({ isArchived: 'false' })).toEqual(['live']);
+	});
+
+	it('answers both with "Include Archived", and never another tenant’s archived team', async () => {
+		expect(await read({ isArchived: [false, true] })).toEqual(['archived', 'live']);
+		expect(await read({ isArchived: ['false', 'true'] })).toEqual(['archived', 'live']);
+	});
+
+	it('refuses an OR list of `where` conditions, which the employee restriction would not reach', async () => {
+		await expect(
+			harness.service().findAll({ where: [{ organizationId: ORGANIZATION_A }, { name: 'archived' }] } as any)
+		).rejects.toBeInstanceOf(BadRequestException);
+	});
+
+	it('answers no archived team when the options carry no `where` at all', async () => {
+		const { items } = await harness.service().findAll(undefined);
+
+		expect(items.map((item: any) => item.name)).not.toContain('archived');
+		expect(items.map((item: any) => item.name)).not.toContain('archived-other-tenant');
 	});
 });

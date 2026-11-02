@@ -1,0 +1,152 @@
+<nb-card class="entry-dialog" [nbSpinner]="saving" nbSpinnerStatus="primary">
+	<nb-card-header class="header">
+		<h6 class="title">{{ (isEdit ? i18n + '.EDIT_TITLE' : i18n + '.ADD_TITLE') | translate }}</h6>
+		<button
+			type="button"
+			class="close-button"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			[disabled]="saving"
+			(click)="cancel()"
+		>
+			<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
+		</button>
+	</nb-card-header>
+
+	<nb-card-body class="body">
+		<form id="changelog-entry-form" class="form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+			<div class="field">
+				<label class="label" for="changelog-title">{{ i18n + '.FIELDS.TITLE' | translate }}</label>
+				<input
+					id="changelog-title"
+					nbInput
+					fullWidth
+					formControlName="title"
+					[maxlength]="maxLength"
+					[status]="invalid('title') ? 'danger' : 'basic'"
+				/>
+				@if (invalid('title')) {
+					<small class="error">{{ i18n + '.ERRORS.REQUIRED' | translate }}</small>
+				}
+			</div>
+
+			<div class="field-row">
+				<div class="field">
+					<label class="label" for="changelog-date">{{ i18n + '.FIELDS.DATE' | translate }}</label>
+					<input
+						id="changelog-date"
+						type="date"
+						nbInput
+						fullWidth
+						formControlName="date"
+						[status]="invalid('date') ? 'danger' : 'basic'"
+					/>
+					@if (invalid('date')) {
+						<small class="error">{{ i18n + '.ERRORS.REQUIRED' | translate }}</small>
+					}
+				</div>
+				<div class="field">
+					<label class="label" for="changelog-icon">{{ i18n + '.FIELDS.ICON' | translate }}</label>
+					<input
+						id="changelog-icon"
+						nbInput
+						fullWidth
+						class="mono"
+						spellcheck="false"
+						formControlName="icon"
+						[maxlength]="maxLength"
+						[status]="invalid('icon') ? 'danger' : 'basic'"
+					/>
+					@if (invalid('icon')) {
+						<small class="error">
+							{{
+								(form.get('icon')?.hasError('unknownIcon')
+									? i18n + '.ERRORS.UNKNOWN_ICON'
+									: i18n + '.ERRORS.REQUIRED'
+								) | translate
+							}}
+						</small>
+					} @else {
+						<small class="hint">{{ i18n + '.FIELDS.ICON_HINT' | translate }}</small>
+					}
+				</div>
+			</div>
+
+			<div class="field">
+				<label class="label" for="changelog-content">{{ i18n + '.FIELDS.CONTENT' | translate }}</label>
+				<textarea
+					id="changelog-content"
+					nbInput
+					fullWidth
+					rows="4"
+					formControlName="content"
+					[maxlength]="maxLength"
+					[status]="invalid('content') ? 'danger' : 'basic'"
+				></textarea>
+				@if (invalid('content')) {
+					<small class="error">{{ i18n + '.ERRORS.REQUIRED' | translate }}</small>
+				} @else {
+					<small class="hint">
+						{{ i18n + '.FIELDS.CONTENT_HINT' | translate: { max: maxLength } }}
+					</small>
+				}
+			</div>
+
+			<div class="field">
+				<label class="label" for="changelog-learn-more">{{
+					i18n + '.FIELDS.LEARN_MORE_URL' | translate
+				}}</label>
+				<input
+					id="changelog-learn-more"
+					type="url"
+					nbInput
+					fullWidth
+					spellcheck="false"
+					placeholder="https://"
+					formControlName="learnMoreUrl"
+					[maxlength]="maxLength"
+					[status]="invalid('learnMoreUrl') ? 'danger' : 'basic'"
+				/>
+				@if (invalid('learnMoreUrl')) {
+					<small class="error">{{ i18n + '.ERRORS.HTTP_URL' | translate }}</small>
+				}
+			</div>
+
+			<div class="field">
+				<label class="label" for="changelog-image">{{ i18n + '.FIELDS.IMAGE_URL' | translate }}</label>
+				<input
+					id="changelog-image"
+					type="url"
+					nbInput
+					fullWidth
+					spellcheck="false"
+					placeholder="https://"
+					formControlName="imageUrl"
+					[maxlength]="maxLength"
+					[status]="invalid('imageUrl') ? 'danger' : 'basic'"
+				/>
+				@if (invalid('imageUrl')) {
+					<small class="error">{{ i18n + '.ERRORS.HTTP_URL' | translate }}</small>
+				}
+			</div>
+
+			<div class="field">
+				<nb-checkbox formControlName="isFeature">{{ i18n + '.FIELDS.IS_FEATURE' | translate }}</nb-checkbox>
+				<small class="hint">{{ i18n + '.FIELDS.IS_FEATURE_HINT' | translate }}</small>
+			</div>
+		</form>
+
+		<section class="preview" [attr.aria-label]="i18n + '.PREVIEW' | translate">
+			<span class="label">{{ i18n + '.PREVIEW' | translate }}</span>
+			<ngx-changelog-entry [entry]="preview"></ngx-changelog-entry>
+		</section>
+	</nb-card-body>
+
+	<nb-card-footer class="footer">
+		<button type="button" nbButton ghost status="basic" size="small" [disabled]="saving" (click)="cancel()">
+			{{ 'BUTTONS.CANCEL' | translate }}
+		</button>
+		<button type="submit" form="changelog-entry-form" nbButton status="primary" size="small" [disabled]="saving">
+			{{ 'BUTTONS.SAVE' | translate }}
+		</button>
+	</nb-card-footer>
+</nb-card>

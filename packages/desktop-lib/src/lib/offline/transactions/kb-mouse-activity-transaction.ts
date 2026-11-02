@@ -3,6 +3,7 @@ import { Knex } from 'knex';
 import { AppError } from '../../error-handler';
 import { IKbMouseTransaction, IDatabaseProvider } from '../../interfaces';
 import { KbMouseActivityTO, TABLE_NAME_KB_MOUSE_ACTIVITY } from '../dto';
+import { toUpdatePayload, warnEmptyUpdate } from '../utils';
 
 export class KbMouseTransaction implements IKbMouseTransaction {
 	private _databaseProvider: IDatabaseProvider;
@@ -45,12 +46,16 @@ export class KbMouseTransaction implements IKbMouseTransaction {
 	}
 
 	public async update(id: number, value: Partial<KbMouseActivityTO>): Promise<void> {
+		const changes = toUpdatePayload(value);
+		if (!changes) {
+			return warnEmptyUpdate('KB_MOUSE_TRX', id);
+		}
 		await this._databaseProvider.connection.transaction(
 			async (trx: Knex.Transaction) => {
 				try {
 					await trx(TABLE_NAME_KB_MOUSE_ACTIVITY)
 						.where('id', '=', id)
-						.update(value);
+						.update(changes);
 					await trx.commit();
 				} catch (error) {
 					await trx.rollback();

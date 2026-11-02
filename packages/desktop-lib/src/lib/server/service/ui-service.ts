@@ -1,6 +1,7 @@
 import { BrowserWindow, app } from 'electron';
 import { ServerTask } from './server-task';
 import { resolveDesktopListenHost } from '../../config/desktop-listen-host';
+import { buildUiRuntimeConfigScript, UI_RUNTIME_CONFIG_SCRIPT_ENV } from '../../config/ui-runtime-config';
 
 export class UiService extends ServerTask {
 	/**
@@ -42,8 +43,9 @@ export class UiService extends ServerTask {
 	}
 
 	/**
-	 * Sets the UI server configuration, including the UI port and the address it listens on (read at
-	 * every start, so a change of the LAN access setting applies on the next restart).
+	 * Sets the UI server configuration, including the UI port, the address it listens on and the web
+	 * UI's runtime configuration, the script the UI server inserts into `index.html` to point the UI at
+	 * this API (all read at every start, so a change of these settings applies on the next restart).
 	 *
 	 * @returns {void}
 	 */
@@ -52,7 +54,8 @@ export class UiService extends ServerTask {
 		this.args = {
 			...this.args,
 			UI_PORT: this.config.uiPort,
-			UI_HOST: resolveDesktopListenHost(this.config.setting, this.allowLanAccess)
+			UI_HOST: resolveDesktopListenHost(this.config.setting, this.allowLanAccess),
+			[UI_RUNTIME_CONFIG_SCRIPT_ENV]: buildUiRuntimeConfigScript(this.config.apiUrl)
 		};
 	}
 

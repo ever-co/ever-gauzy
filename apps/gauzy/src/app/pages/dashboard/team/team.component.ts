@@ -24,11 +24,15 @@ import {
 import { BaseSelectorFilterComponent, TimeZoneService } from '@gauzy/ui-core/shared';
 import {
 	IMemberRow,
+	IProjectWorked,
 	IRankedMember,
+	ITeamPerson,
+	ITeamPersonDay,
 	ITeamRow,
 	activityOf,
 	activityTone,
 	avatarOf,
+	fitProjectsPopover,
 	formatDuration,
 	formatPercent,
 	initialsOf,
@@ -66,6 +70,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	public readonly formatDuration = formatDuration;
 	public readonly formatPercent = formatPercent;
 	public readonly activityTone = activityTone;
+	/** Fits the "Projects worked" popover to the screen as it opens. */
+	protected readonly fitProjectsPopover = fitProjectsPopover;
 
 	private _logs: ITimeLog[] = [];
 	private _countsStatistics: any;
@@ -113,6 +119,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	/** Every team's member rows, for the open team and the overview's expandable rows. */
 	public membersByTeam: Record<string, IMemberRow[]> = {};
 	public topMembers: IRankedMember[] = [];
+	/** Every project worked on across the listed teams, for the overview's "Projects worked" list. */
+	public overviewProjects: IProjectWorked[] = [];
 	public projectCount = 0;
 	/** Sequence of the project-count requests: only the latest one may write `projectCount`. */
 	private _projectCountRequest = 0;
@@ -281,7 +289,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 
 		this.isLoading = true;
 		this._organizationTeamsService
-			.getAll(['members', 'members.role', 'members.employee', 'members.employee.user'], {
+			// `projects`: the teams' own projects, listed under their "Projects worked" tiles.
+			.getAll(['members', 'members.role', 'members.employee', 'members.employee.user', 'projects'], {
 				organizationId,
 				tenantId
 			})
@@ -382,16 +391,33 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 						};
 					});
 					projects.push(...proj);
+					// Time per project, for the "Projects worked" list; logs without a project are not one.
+					const projectTimes = projectKeys
+						.map((value: string) => ({
+							project: groupByProject[value][0].project,
+							duration: groupByProject[value].reduce((total, log) => total + (log.duration || 0), 0)
+						}))
+						.filter(({ project }) => !!project?.id);
 					// This team's slots only, like the duration beside it; the daily report is grouped by
 					// employee alone, so its figure spans every team the person worked on.
 					const slots = logs.flatMap((log) => log.timeSlots ?? []);
+					const latestLog = this._latestLog(logs);
 					return {
 						...member,
-						isRunningTimer: isWorkingToday ? logs.reverse()[0].isRunning : false,
+						// What the person is on now — or was on last — for their hover card.
+						latestTask: latestLog
+							? { title: latestLog.task?.title || null, projectName: latestLog.project?.name || null }
+							: null,
+						latestTaskAt: latestLog ? this._logTime(latestLog) : 0,
+						latestTaskRunning: !!latestLog?.isRunning,
+						// From the same log as the task above, so "Working on" and the task agree
+						// whatever order the logs arrive in.
+						isRunningTimer: !!latestLog?.isRunning,
 						todayWorkDuration,
 						isWorkingToday: isWorkingToday,
 						tasks: tasks,
 						projects: proj,
+						projectTimes,
 						workPeriod: this._period,
 						slots,
 						activity: activityOf(slots),
@@ -453,6 +479,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		this.teamRows = this._todayTeamsWorkers.map((team) => {
 			const members: any[] = team.members;
 			const working = members.filter((member) => member.isWorkingToday);
+			const projectList = this._projectsOf(working, team.projects ?? []);
 			return {
 				id: team.id,
 				name: team.name,
@@ -471,9 +498,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				duration: working.reduce((total, member) => total + (member.todayWorkDuration || 0), 0),
 				// From the team's own slots, weighted by time — not an average of members' whole-day figures.
 				activity: activityOf(working.flatMap((member) => member.slots ?? [])) ?? 0,
-				// Logs without a project group under an empty object: not a project worked.
-				projects: this._uniques(working.flatMap((member) => member.projects ?? []).filter((project) => !!project?.id))
-					.length,
+				projects: projectList.filter((project) => project.duration > 0).length,
+				projectList,
 				managers: members
 					.filter((member) => this._isManager(member))
 					.map((member) => member.employee?.user?.name)
@@ -494,13 +520,25 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					continue;
 				}
 				const isLargerShare = duration > known.teamDuration;
+				// Across teams as within one: a running task wins, then the later start.
+				const isLaterTask =
+					(member.latestTaskRunning && !known.latestTaskRunning) ||
+					(!!member.latestTaskRunning === !!known.latestTaskRunning &&
+						(member.latestTaskAt || 0) > (known.latestTaskAt || 0));
 				people.set(member.employeeId, {
 					...known,
 					todayWorkDuration: (known.todayWorkDuration || 0) + duration,
 					isWorkingToday: known.isWorkingToday || member.isWorkingToday,
 					isRunningTimer: known.isRunningTimer || member.isRunningTimer,
+					// The displayed team and the person's role in it always come from the same membership.
 					teamName: isLargerShare ? team.name : known.teamName,
-					teamDuration: isLargerShare ? duration : known.teamDuration
+					teamDuration: isLargerShare ? duration : known.teamDuration,
+					role: isLargerShare ? member.role : known.role,
+					isManager: isLargerShare ? member.isManager : known.isManager,
+					tasks: this._mergeTasks(known.tasks, member.tasks),
+					latestTask: isLaterTask ? member.latestTask : known.latestTask,
+					latestTaskAt: isLaterTask ? member.latestTaskAt : known.latestTaskAt,
+					latestTaskRunning: isLaterTask ? member.latestTaskRunning : known.latestTaskRunning
 				});
 			}
 		}
@@ -510,6 +548,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		this.topMembers = ranked.map((member) => ({
 			id: member.id,
 			employeeId: member.employeeId,
+			// The whole day across teams: summed time, every task, the day's own activity.
+			person: this._personOf(member, member.teamName, member.dayActivity),
 			name: member.employee?.user?.name,
 			// The whole day across teams, matching the summed duration.
 			meta: `${member.teamName} · ${formatPercent(member.dayActivity)}`,
@@ -517,11 +557,17 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			width: toPercentage(member.todayWorkDuration, top)
 		}));
 
+		this.overviewProjects = this._projectsOf(
+			this._todayTeamsWorkers.flatMap((team) => team.members),
+			this._todayTeamsWorkers.flatMap((team) => team.projects ?? [])
+		);
+
 		this.overview = {
 			teamsWorked: this.teamRows.filter((row) => row.worked > 0).length,
 			membersWorked: worked.length,
 			membersTotal: people.size,
-			projectsWorked: this._countsStatistics?.projectsCount || 0,
+			// From the list it opens, so the figure and the list always agree.
+			projectsWorked: this.overviewProjects.filter((project) => project.duration > 0).length,
 			duration: worked.reduce((total, member) => total + (member.todayWorkDuration || 0), 0),
 			// The statistics API's figure for the day, as the dashboard has always shown it.
 			activity: Number(this._countsStatistics?.weekActivities) || 0
@@ -539,8 +585,121 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		setTimeout(() => this.updateTabsScroll());
 	}
 
+	/**
+	 * A team's projects — `linked`, the projects linked to the team — with the time `members`
+	 * logged on each during the selected day and how many of them did, plus any project they
+	 * logged time on without it being linked, as the team page shows it. Worked projects come
+	 * first, longest first, then the rest by name.
+	 *
+	 * Each log belongs to one team, so adding every membership's time counts no time twice; a
+	 * person on several teams still counts once per project.
+	 */
+	private _projectsOf(members: any[], linked: any[]): IProjectWorked[] {
+		let byProject = new Map<string, { project: any; duration: number; people: Set<string>; isLinked: boolean }>();
+		for (const project of linked) {
+			if (project?.id && !byProject.has(project.id)) {
+				byProject.set(project.id, { project, duration: 0, people: new Set<string>(), isLinked: true });
+			}
+		}
+		for (const member of members) {
+			for (const { project, duration } of member.projectTimes ?? []) {
+				let entry = byProject.get(project.id) ?? { project, duration: 0, people: new Set<string>(), isLinked: false };
+				entry.duration += duration;
+				entry.people.add(member.employeeId);
+				byProject.set(project.id, entry);
+			}
+		}
+		const list = [...byProject.values()].sort(
+			(a, b) => b.duration - a.duration || (a.project.name || '').localeCompare(b.project.name || '')
+		);
+		const top = list[0]?.duration || 0;
+		return list.map(({ project, duration, people, isLinked }) => ({
+			id: project.id,
+			name: project.name || '',
+			imageUrl: project.image?.fullUrl || project.imageUrl || null,
+			initials: initialsOf(project.name || ''),
+			duration,
+			members: people.size,
+			width: toPercentage(duration, top),
+			isLinked
+		}));
+	}
+
 	private _buildMemberRows(): void {
 		this.memberRows = (this.selectedTeamId && this.membersByTeam[this.selectedTeamId]) || [];
+	}
+
+	/**
+	 * A team member as their hover card shows them: who they are, read the way the
+	 * team page reads an assignee, and their selected day on `teamName`.
+	 */
+	private _personOf(member: any, teamName: string | null, activity: number | null): ITeamPerson {
+		const employee = member.employee;
+		const user = employee?.user;
+		return {
+			employeeId: member.employeeId,
+			name: user?.name || '',
+			avatarUrl: avatarOf(user?.image?.fullUrl || user?.imageUrl),
+			presence: presenceOf(employee, member.isRunningTimer),
+			email: user?.email || null,
+			bio: employee?.short_description?.trim() || null,
+			since: employee?.startedWorkOn ? moment(employee.startedWorkOn).format('ll') : null,
+			teamName,
+			isManager: this._isManager(member),
+			timeZone: user?.timeZone || null,
+			day: this._dayOf(member, activity)
+		};
+	}
+
+	private _dayOf(member: any, activity: number | null): ITeamPersonDay {
+		const tasks: any[] = member.tasks ?? [];
+		const duration = member.todayWorkDuration || 0;
+		const workPeriod = member.workPeriod || this._period;
+		return {
+			duration,
+			activity: member.isWorkingToday && activity !== null && activity !== undefined ? Number(activity) : null,
+			tasksCount: tasks.length,
+			workPeriod,
+			workdayShare: toPercentage(duration, workPeriod),
+			task: member.latestTask ?? null
+		};
+	}
+
+	/**
+	 * The log a member is on now, or was on last: a running log wins, then the latest start.
+	 * Does not rely on the order the logs arrive in.
+	 */
+	private _latestLog(logs: ITimeLog[]): ITimeLog | null {
+		let latest: ITimeLog | null = null;
+		for (const log of logs) {
+			if (
+				!latest ||
+				(log.isRunning && !latest.isRunning) ||
+				(!!log.isRunning === !!latest.isRunning && this._logTime(log) > this._logTime(latest))
+			) {
+				latest = log;
+			}
+		}
+		return latest;
+	}
+
+	private _logTime(log: ITimeLog): number {
+		const time = new Date(log?.startedAt as any).getTime();
+		return Number.isNaN(time) ? 0 : time;
+	}
+
+	/**
+	 * One person's tasks across their teams: the same task logged under two teams is
+	 * one task, its durations added — so the hover card does not count it twice.
+	 */
+	private _mergeTasks(first: any[] = [], second: any[] = []): any[] {
+		const byTask = new Map<string, any>();
+		for (const task of [...first, ...second]) {
+			const key = task?.id ?? 'no-task';
+			const known = byTask.get(key);
+			byTask.set(key, known ? { ...known, duration: (known.duration || 0) + (task.duration || 0) } : { ...task });
+		}
+		return [...byTask.values()].sort((a, b) => (b.duration || 0) - (a.duration || 0));
 	}
 
 	private _memberRowsOf(team: any): IMemberRow[] {
@@ -550,12 +709,9 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				const workPeriod = member.workPeriod || this._period;
 				const duration = member.todayWorkDuration || 0;
 				return {
+					...this._personOf(member, team.name, member.activity),
 					id: member.id,
-					employeeId: member.employeeId,
-					name: user?.name || '',
 					caption: member.employee?.organizationPosition?.name || user?.email || null,
-					avatarUrl: avatarOf(user?.image?.fullUrl || user?.imageUrl),
-					presence: presenceOf(member.employee, member.isRunningTimer),
 					isManager: this._isManager(member),
 					isWorking: !!member.isWorkingToday,
 					tasks: (member.tasks ?? []).map((task, index) => {

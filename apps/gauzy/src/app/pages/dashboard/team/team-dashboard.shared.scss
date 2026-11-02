@@ -215,6 +215,50 @@ $weight-medium: 500;
   }
 }
 
+/* ── A tile's own action: the label on the left, a small button on the right ── */
+
+.kpi-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.kpi-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  flex: 0 0 auto;
+  padding: 0.0625rem 0.25rem 0.0625rem 0.375rem;
+  border: 0;
+  border-radius: var(--gauzy-radius-sm);
+  background-color: color-mix(in srgb, var(--color-primary-default) 10%, transparent);
+  font: inherit;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1rem;
+  color: var(--color-primary-default);
+  cursor: pointer;
+  transition: background-color 0.12s ease-in-out;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+    color: inherit;
+  }
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--color-primary-default) 16%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: 1px;
+  }
+}
+
 /* ── Progress bars ───────────────────────────────────────────────────────── */
 
 .table-scroll {

@@ -22,6 +22,7 @@ import {
 	ToastrService
 } from '@gauzy/ui-core/core';
 import { ALL_PROJECT_SELECTED } from './default-project';
+import { shouldSelectUrlProject } from './project-selector.utils';
 import { entitySelectPanelClass } from '../../entity-select-panel-class';
 
 @UntilDestroy({ checkProperties: true })
@@ -49,6 +50,8 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	private _projectId: ID | ID[]; // Internal storage for the project IDs.
 	private _employeeId: ID; // Internal storage for the employee ID.
 	private _organizationContactId: ID; // Internal storage for the organization contact ID.
+	private _projectsRequest = 0; // Counts project list requests, so only the latest one fills the list.
+	private _hasLoadedProjects = false; // Whether a project list has loaded yet; reloads come after it.
 
 	/**
 	 * Determines whether the component should be displayed in a shortened form.
@@ -151,12 +154,15 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	/**
-	 * Sets the employee ID and triggers change and touch events.
+	 * Narrows the list to the employee's projects and reloads it.
 	 *
 	 * @param value - The ID of the employee to be set.
 	 */
 	@Input()
 	public set employeeId(value: ID) {
+		if (value !== this._employeeId) {
+			this.clearProjects();
+		}
 		this._employeeId = value;
 		this.subject$.next(true);
 	}
@@ -171,12 +177,15 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	/**
-	 * Sets the organization contact ID and triggers change and touch events.
+	 * Narrows the list to the projects of the organization contact (client) and reloads it.
 	 *
 	 * @param value - The ID of the organization contact to be set.
 	 */
 	@Input()
 	public set organizationContactId(value: ID) {
+		if (value !== this._organizationContactId) {
+			this.clearProjects();
+		}
 		this._organizationContactId = value;
 		this.subject$.next(true);
 	}
@@ -280,18 +289,30 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 				switchMap(([_, queryParams]) =>
 					// Fetch projects and handle errors during retrieval
 					from(this.getProjects()).pipe(
-						// Return the projectId from queryParams on success
-						map(() => queryParams.projectId),
+						// Pass on the URL's projectId, and whether this request's list is the one now shown
+						map((loaded: boolean) => ({ projectId: queryParams.projectId as ID | null, loaded })),
 						// Handle any errors that occur during project fetching
 						catchError((error) => {
 							console.error('Error fetching projects:', error);
-							return of(null); // Return a null value to prevent project selection on error
+							return of({ projectId: null as ID | null, loaded: false }); // No list, so no selection
 						})
 					)
 				),
-				// After fetching, select the project if projectId exists
-				tap((projectId: ID | null) => {
-					if (projectId) {
+				// After fetching, select the URL's project. A form's selector takes it only as its starting value.
+				tap(({ projectId, loaded }) => {
+					// A failed or superseded request installed no list: the first load is still to come.
+					if (!loaded) {
+						return;
+					}
+					const isFirstLoad = !this._hasLoadedProjects;
+					this._hasLoadedProjects = true;
+					const context = {
+						urlProjectId: projectId,
+						selected: this.projectId,
+						skipGlobalChange: this.skipGlobalChange,
+						isFirstLoad
+					};
+					if (shouldSelectUrlProject(context)) {
 						this.selectProjectById(projectId);
 					}
 				}),
@@ -327,12 +348,15 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 * Retrieves projects based on specified parameters.
 	 * If an employee ID is provided, retrieves projects associated with that employee.
 	 * Otherwise, retrieves all projects for the organization. Optionally inserts an "All Projects" option.
+	 *
+	 * @returns true once this request's list is the one shown; false with no organization, on an error,
+	 * or when a newer request took over.
 	 */
-	async getProjects(): Promise<void> {
+	async getProjects(): Promise<boolean> {
 		// Return early if the organization is not defined
 		if (!this.organization) {
 			console.warn('Organization is not defined.');
-			return;
+			return false;
 		}
 
 		const { id: organizationId, tenantId } = this.organization;
@@ -344,21 +368,42 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			tenantId
 		};
 
+		const request = ++this._projectsRequest;
+
 		try {
 			// Retrieve projects based on whether employeeId is provided
-			this.projects = this.employeeId
+			const projects = this.employeeId
 				? await this._organizationProjects.getAllByEmployee(this.employeeId, queryOptions)
 				: (await this._organizationProjects.getAll([], queryOptions)).items || [];
+
+			// A newer request (another client or employee picked meanwhile) owns the list now: an earlier
+			// one that answers last must not put the previous filter's projects back.
+			if (request !== this._projectsRequest) {
+				return false;
+			}
+			this.projects = projects;
 
 			// Optionally add "All Projects" option
 			if (this.showAllOption) {
 				this.projects.unshift(ALL_PROJECT_SELECTED);
 				this.selectProject(ALL_PROJECT_SELECTED);
 			}
+			return true;
 		} catch (error) {
 			console.error('Error retrieving projects:', error);
 			this._errorHandlingService.handleError(error);
+			return false;
 		}
+	}
+
+	/**
+	 * Empties the list once the client or employee it is narrowed to changes, until the new list loads.
+	 * The previous filter's projects must not be offered meanwhile: one picked from them would not belong
+	 * to the new client or employee. A failed load leaves the list empty rather than offering them again.
+	 * The selected project keeps its label, as ng-select does not drop a selection for an empty list.
+	 */
+	private clearProjects(): void {
+		this.projects = [];
 	}
 
 	/**
@@ -484,6 +529,14 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 
 		// Filter out the project with the matching ID
 		this.projects = (this.projects ?? []).filter((item) => item.id !== project.id).filter(isNotEmpty);
+
+		// A deleted or archived project no longer narrows the pages it was selected for. The selection is read from
+		// both the selected project and the bound ID, which `writeValue` sets alone.
+		const selectedIds = ([] as ID[]).concat(this.projectId ?? []);
+		const wasSelected = this.selectedProject?.id === project.id || selectedIds.includes(project.id);
+		if (!this.skipGlobalChange && wasSelected) {
+			this.selectProject(ALL_PROJECT_SELECTED);
+		}
 	}
 
 	/**

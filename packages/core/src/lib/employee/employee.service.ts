@@ -51,10 +51,13 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { Employee } from './employee.entity';
+import { NO_ACCESSIBLE_EMPLOYEE_ID } from './managed-employee.service';
 import { FavoriteService } from '../core/decorators';
 import { EmployeeAgentProfile, Organization, Role, Tenant, User } from '../core/entities/internal';
 import { writeAgentProfile } from '../employee-agent-profile/employee-agent-profile.service';
+import { recountMembersOfEmployeeProjects } from '../organization-project/organization-project-members-count';
 import { defaultAgentEmail, findOneForUpdate, isAgentEmail, isEmployeeKind } from './agent-employee';
+import { withoutAssignedComments } from '../comment/assigned-comments';
 
 /**
  * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
@@ -77,15 +80,19 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * `Employee.description` is rendered with `[innerHTML]` on the PUBLIC organization page, so
 	 * every write path must be sanitized (see `sanitizeRichHtml`).
 	 *
+	 * The comments the employee is assigned (`assignedComments`) are never written here: a comment is assigned
+	 * through the comment API, where its record's policy decides (see `withoutAssignedComments`).
+	 *
 	 * @param entity - The employee data to persist.
 	 * @returns The persisted employee.
 	 */
 	public async create(entity: IPartialEntity<Employee>): Promise<Employee> {
-		const input = entity as { description?: string };
+		const employee = withoutAssignedComments(entity);
+		const input = employee as { description?: string };
 		if (typeof input.description === 'string') {
 			input.description = sanitizeRichHtml(input.description);
 		}
-		return await super.create(entity);
+		return await super.create(employee);
 	}
 
 	/**
@@ -286,9 +293,10 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * Finds members based on provided options.
 	 *
 	 * @param options - The options to filter members.
+	 * @param employeeIds - Narrows the list to these employees (a caller's colleagues); not a client input.
 	 * @returns A pagination object containing the list of members and total count.
 	 */
-	async findMembers(options: IFindMembersInput): Promise<IPagination<IEmployee>> {
+	async findMembers(options: IFindMembersInput, employeeIds?: ID[]): Promise<IPagination<IEmployee>> {
 		const { organizationId, organizationTeamId, organizationProjectId } = options;
 		const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
@@ -307,6 +315,9 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 				}
 				if (organizationTeamId) {
 					mWhere.teams = { organizationTeamId };
+				}
+				if (employeeIds) {
+					mWhere.id = { $in: employeeIds };
 				}
 
 				const [mItems, mTotal] = await this.mikroOrmRepository.findAndCount(mWhere, {
@@ -354,6 +365,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 					query.andWhere('teams.organizationTeamId = :organizationTeamId', { organizationTeamId });
 				}
 
+				// A caller's colleagues. An empty list matches no one, and is never read as "no filter".
+				if (employeeIds) {
+					query.andWhere(p(`"${query.alias}"."id" IN (:...employeeIds)`), {
+						employeeIds: employeeIds.length ? employeeIds : [NO_ACCESSIBLE_EMPLOYEE_ID]
+					});
+				}
+
 				// Apply filter conditions using TypeORM SelectQueryBuilder
 				query.andWhere(
 					new Brackets((web: WhereExpressionBuilder) => {
@@ -375,6 +393,26 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			default:
 				throw new Error(`Not implemented for ${this.ormType}`);
 		}
+	}
+
+	/**
+	 * The employees, among the given ones, who still work in the organization: active and not archived. End Work
+	 * sets both flags (`EmployeeSubscriber`); a deleted employee is not found. The member lists leave the others
+	 * out, and the member edits keep their memberships (`former-employees.ts`).
+	 *
+	 * @param employeeIds - The employees to look up; empty values are ignored.
+	 * @returns The IDs of the working employees.
+	 */
+	async findWorkingEmployeeIds(employeeIds: ID[]): Promise<Set<ID>> {
+		const ids = [...new Set((employeeIds ?? []).filter(Boolean))];
+		if (!ids.length) {
+			return new Set();
+		}
+
+		const employees = await this.find({
+			where: { id: In(ids), isActive: true, isArchived: false }
+		});
+		return new Set(employees.map(({ id }) => id));
 	}
 
 	/**
@@ -1080,10 +1118,13 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const tenantId = RequestContext.currentTenantId() || params.tenantId;
 
 			// Perform the soft delete operation
-			return await super.softRemove(employeeId, {
+			const employee = await super.softRemove(employeeId, {
 				where: { organizationId, tenantId },
 				relations: { user: { organizations: true }, teams: true }
 			});
+			// A deleted employee no longer counts in the members of their projects
+			await this.recountMembersOfProjects(employeeId);
+			return employee;
 		} catch (error) {
 			console.error('Error during soft delete for employee', error);
 			throw new BadRequestException(error.message || 'Soft delete failed');
@@ -1110,15 +1151,38 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 			const tenantId = RequestContext.currentTenantId() || params.tenantId;
 
 			// Perform the soft recovery operation using the ID, organization ID, and tenant ID
-			return await super.softRecover(employeeId, {
+			const employee = await super.softRecover(employeeId, {
 				where: { organizationId, tenantId },
 				relations: { user: { organizations: true }, teams: true },
 				withDeleted: true
 			});
+			// A recovered employee who still works counts in the members of their projects again
+			await this.recountMembersOfProjects(employeeId);
+			return employee;
 		} catch (error) {
 			console.error('Error during soft recovery operation for employee:', error);
 			// Throw a BadRequestException if any error occurs during soft recovery
 			throw new BadRequestException(error.message || 'Failed to recover soft-deleted employee');
+		}
+	}
+
+	/**
+	 * Recounts `membersCount` of the employee's projects after a soft delete or its recovery, which change whether
+	 * the employee counts there but run no update hook (`EmployeeSubscriber` recounts for the writes that do). A
+	 * failure is logged and does not undo the write: the count is derived, and the next save of the project
+	 * recounts it.
+	 *
+	 * @param employeeId - The employee deleted or recovered.
+	 */
+	private async recountMembersOfProjects(employeeId: ID): Promise<void> {
+		try {
+			const em =
+				this.ormType === MultiORMEnum.MikroORM
+					? this.mikroOrmRepository.getEntityManager()
+					: this.typeOrmRepository.manager;
+			await recountMembersOfEmployeeProjects(em, employeeId);
+		} catch (error) {
+			console.error('EmployeeService: could not recount the members of the employee’s projects', error);
 		}
 	}
 }

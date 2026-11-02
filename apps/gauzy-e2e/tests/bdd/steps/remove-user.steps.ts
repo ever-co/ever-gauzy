@@ -16,7 +16,6 @@ let lastName = ' ';
 let username = ' ';
 let email = ' ';
 let password = ' ';
-let imgUrl = ' ';
 
 When('I add a user to remove', async () => {
 	firstName = faker.person.firstName();
@@ -24,7 +23,6 @@ When('I add a user to remove', async () => {
 	username = faker.internet.username();
 	email = faker.internet.exampleEmail();
 	password = faker.internet.password();
-	imgUrl = faker.image.avatar();
 
 	await getPage().goto('/#/pages/users');
 	await addUserPage.addUserButtonVisible();
@@ -41,8 +39,9 @@ When('I add a user to remove', async () => {
 	await addUserPage.selectUserRoleData(AddUserPageData.role);
 	await addUserPage.passwordInputVisible();
 	await addUserPage.enterPasswordInputData(password);
-	await addUserPage.imageInputVisible();
-	await addUserPage.enterImageDataUrl(imgUrl);
+	// The image-URL field became an avatar uploader (#10336): give the user a picture by uploading one.
+	await addUserPage.imageUploaderVisible();
+	await addUserPage.uploadImage();
 	await addUserPage.confirmAddButtonVisible();
 	await addUserPage.clickConfirmAddButton();
 	await addUserPage.waitMessageToHide();

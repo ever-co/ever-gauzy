@@ -1,7 +1,16 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { ID, IUser, IUserUiPreferences, IUserUiPreferencesUpdateInput, IUserUpdateInput } from '@gauzy/contracts';
+import {
+	IAccountDeletionConfirmMeInput,
+	IAccountDeletionPreview,
+	IAccountDeletionResult,
+	ID,
+	IUser,
+	IUserUiPreferences,
+	IUserUiPreferencesUpdateInput,
+	IUserUpdateInput
+} from '@gauzy/contracts';
 import { API_PREFIX, buildHttpParams } from '@gauzy/ui-core/common';
 import { Store } from '../store/store.service';
 import { cloneJson, RecentAnswers } from '../recent-answers';
@@ -113,6 +122,28 @@ export class UsersService {
 	 */
 	async delete(id: ID, user: any): Promise<any> {
 		return this.write(() => firstValueFrom(this.http.delete(`${API_PREFIX}/user/${id}`, { body: user })));
+	}
+
+	/**
+	 * What deleting the signed-in user's account in the current workspace would do: the whole workspace
+	 * when they are its only member, otherwise only their account.
+	 */
+	async previewMyAccountDeletion(): Promise<IAccountDeletionPreview> {
+		return firstValueFrom(this.http.get<IAccountDeletionPreview>(`${API_PREFIX}/account-deletion/me`));
+	}
+
+	/**
+	 * Deletes the signed-in user's account in the current workspace (see {@link previewMyAccountDeletion}).
+	 * Shared content stays with the workspace, without their name; a confirmation email is sent.
+	 *
+	 * @param planHash The `planHash` of the preview the user saw: the API deletes only if the account and its
+	 * outcome are still what that preview said, and answers 409 otherwise (nothing deleted).
+	 */
+	async deleteMyAccount(planHash: string): Promise<IAccountDeletionResult> {
+		const body: IAccountDeletionConfirmMeInput = { confirm: true, planHash };
+		return this.write(() =>
+			firstValueFrom(this.http.post<IAccountDeletionResult>(`${API_PREFIX}/account-deletion/me`, body))
+		);
 	}
 
 	/**

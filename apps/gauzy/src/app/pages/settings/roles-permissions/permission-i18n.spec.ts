@@ -125,6 +125,47 @@ describe('Roles & Permissions labels', () => {
 		expect(commercePermissions().length).toBeGreaterThanOrEqual(174);
 	});
 
+	/**
+	 * #3912 — the line under each toggle says what the permission lets a role do, from
+	 * `ORGANIZATIONS_PAGE.PERMISSIONS.DESCRIPTIONS.<permission value>`. A permission added to the groups without
+	 * one shows no line at all, so this is where the omission fails instead.
+	 */
+	describe('descriptions (#3912)', () => {
+		const pagePermissions = [...new Set([...PermissionGroups.GENERAL, ...PermissionGroups.ADMINISTRATION])];
+		const permissionValues = new Set<string>(Object.values(PermissionsEnum));
+		const descriptionsOf = (language: string) =>
+			(permissionsNamespace(languages.get(language) ?? {})['DESCRIPTIONS'] ?? {}) as Dictionary;
+
+		it('describes every permission the page lists in en.json', () => {
+			const descriptions = descriptionsOf('en');
+			expect(pagePermissions.filter((permission) => !hasLabel(descriptions, permission))).toEqual([]);
+		});
+
+		it.each([...languages.keys()])('%s.json describes every listed permission, with no empty text', (language) => {
+			// Every language carries them (English is only the fallback for a key a language lacks), and an empty
+			// string would shadow that fallback with a blank line
+			const descriptions = descriptionsOf(language);
+			expect(pagePermissions.filter((permission) => !hasLabel(descriptions, permission))).toEqual([]);
+		});
+
+		it.each([...languages.keys()])('%s.json keys descriptions by permission values only', (language) => {
+			// A key that is no permission value is a typo (or a member name, like APPROVAL_POLICY_VIEW for the
+			// value APPROVALS_POLICY_VIEW) that no toggle would ever show
+			const strays = Object.keys(descriptionsOf(language)).filter((key) => !permissionValues.has(key));
+			expect(strays).toEqual([]);
+		});
+
+		it('does not repeat the label as the description', () => {
+			// The page once printed each label twice; a description must add something the label does not say
+			const descriptions = descriptionsOf('en');
+			const repeats = pagePermissions.filter(
+				(permission) =>
+					String(descriptions[permission]).trim().toLowerCase() === String(en[permission]).trim().toLowerCase()
+			);
+			expect(repeats).toEqual([]);
+		});
+	});
+
 	it.each([...languages.keys()])('%s.json titles every section and labels every commerce permission', (language) => {
 		const namespace = permissionsNamespace(languages.get(language) ?? {});
 		const sections = (namespace['SECTIONS'] ?? {}) as Dictionary;

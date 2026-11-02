@@ -1,6 +1,7 @@
 /**
  * Public API Surface of @gauzy/contracts
  */
+export * from './lib/account-deletion.model';
 export * from './lib/accounting-template.model';
 export * from './lib/activepieces-integration-config.model';
 export * from './lib/ai-chat.model';
@@ -48,6 +49,7 @@ export * from './lib/contact.model';
 export * from './lib/core.model';
 export * from './lib/country.model';
 export * from './lib/eea-uk-region.util';
+export * from './lib/screenshot-capture-acknowledgement.util';
 export * from './lib/currency.model';
 export * from './lib/custom-smtp.model';
 export * from './lib/daily-plan.model';
@@ -92,6 +94,7 @@ export * from './lib/feature.model';
 export * from './lib/file-provider';
 export * from './lib/geo-location.model';
 export * from './lib/github.model';
+export * from './lib/github-sync-label';
 export * from './lib/goal-settings.model';
 export * from './lib/goals.model';
 export * from './lib/help-center-article.model';
@@ -147,6 +150,7 @@ export * from './lib/payment-instrument.model';
 export * from './lib/payment-method-token.model';
 export * from './lib/payment.model';
 export * from './lib/payroll.model';
+export * from './lib/payroll-frequency.util';
 export * from './lib/pipeline-stage.model';
 export * from './lib/pipeline.model';
 export * from './lib/plain-object.model';

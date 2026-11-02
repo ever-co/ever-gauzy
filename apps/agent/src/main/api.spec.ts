@@ -158,3 +158,41 @@ describe('ApiService — organisation timer settings', () => {
 		expect(init.signal).toBeUndefined();
 	});
 });
+
+/**
+ * Issue #9872: the agent captures the screen only when the organisation allows it as well as the employee, so the
+ * employee's settings, read at sign-in and on start, come with the employee's organisation.
+ */
+describe('ApiService — employee settings', () => {
+	let api: ApiService;
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		mockStore['configs'] = { serverUrl: 'https://api.example.test' };
+		mockStore['auth'] = {
+			token: 'token',
+			user: { id: 'user-1', employee: { id: 'employee-1', organizationId: 'org-1', tenantId: 'tenant-1' } }
+		};
+		api = new ApiService();
+		jest.spyOn(console, 'log').mockImplementation(() => undefined);
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	it('reads the employee with its organisation, whose screen capture setting the agent needs', async () => {
+		const employee = {
+			id: 'employee-1',
+			allowScreenshotCapture: true,
+			organization: { id: 'org-1', allowScreenshotCapture: false }
+		};
+		mockFetch.mockResolvedValue({ ok: true, status: 200, statusText: 'OK', json: async () => employee });
+
+		await expect(api.getEmployeeSetting('employee-1')).resolves.toEqual(employee);
+
+		const [url] = mockFetch.mock.calls[0];
+		expect(new URL(url).pathname).toBe('/api/employee/employee-1');
+		expect(new URL(url).searchParams.getAll('relations[0]')).toEqual(['organization']);
+	});
+});

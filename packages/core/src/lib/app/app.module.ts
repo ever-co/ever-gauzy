@@ -25,6 +25,7 @@ import { AdjustmentModule } from '../adjustment/adjustment.module';
 import { ApiCallLogModule } from '../api-call-log/api-call-log.module'; // Global Api Call Log Module
 import { AppointmentEmployeesModule } from '../appointment-employees/appointment-employees.module';
 import { ApprovalPolicyModule } from '../approval-policy/approval-policy.module';
+import { AccountDeletionModule } from '../account-deletion/account-deletion.module';
 import { AuthModule } from '../auth/auth.module';
 import { SocialAccountModule } from '../auth/social-account/social-account.module';
 import { AvailabilitySlotsModule } from '../availability-slots/availability-slots.module';
@@ -133,6 +134,7 @@ import { PaymentModule } from '../payment/payment.module';
 import { PayrollRunModule } from '../payroll-run/payroll-run.module';
 import { StageModule } from '../pipeline-stage/pipeline-stage.module';
 import { PipelineModule } from '../pipeline/pipeline.module';
+import { PlaceholderImageModule } from '../placeholder-image/placeholder-image.module';
 import { ProductCategoryModule } from '../product-category/product-category.module';
 import { ProductVariantSettingModule } from '../product-setting/product-setting.module';
 import { ProductTypeModule } from '../product-type/product-type.module';
@@ -156,6 +158,7 @@ import { IdempotencyModule } from '../idempotency/idempotency.module';
 import { IdempotencyMaintenanceModule } from '../idempotency/idempotency-maintenance.module';
 import { IdempotencyInterceptor } from '../idempotency/idempotency.interceptor';
 import { GraphqlOrganizationMembershipInterceptor } from '../graphql/graphql-organization-membership.interceptor';
+import { ReadableCommentsInterceptor } from '../comment/readable-comments.interceptor';
 import { EventOutboxModule } from '../event-outbox/event-outbox.module';
 import { EventOutboxMaintenanceModule } from '../event-outbox/event-outbox-maintenance.module';
 import { WebhookMaintenanceModule } from '../webhook/webhook-maintenance.module';
@@ -436,9 +439,11 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 			  ]
 			: []),
 		HealthModule,
+		PlaceholderImageModule,
 		CoreModule,
 		ValidatorModule,
 		AuthModule,
+		AccountDeletionModule,
 		EmailCheckModule,
 		UserModule,
 		SocialAccountModule,
@@ -720,6 +725,13 @@ if (environment.EVER_TEAMS_CLIENT_IP_SECRET?.trim() && !clientIpSecretOf(environ
 		{
 			provide: APP_INTERCEPTOR,
 			useClass: IdempotencyInterceptor
+		},
+		// The comments an employee or a team is assigned (`assignedComments`) are answered by the rules of the comment
+		// API's own reads, through whichever route loads them. Inert on every request that does not name them.
+		// Registered last, so it filters the answer before the interceptors above record or serialize it.
+		{
+			provide: APP_INTERCEPTOR,
+			useClass: ReadableCommentsInterceptor
 		}
 	]
 })

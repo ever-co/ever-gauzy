@@ -1,5 +1,5 @@
 import { OnInit, Component, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Cell } from 'angular2-smart-table';
 import { filter, tap, debounceTime } from 'rxjs/operators';
@@ -78,6 +78,7 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 		private readonly invoiceEstimateHistoryService: InvoiceEstimateHistoryService,
 		private readonly _errorHandlingService: ErrorHandlingService,
 		private readonly route: ActivatedRoute,
+		private readonly router: Router,
 		private readonly httpClient: HttpClient,
 		private readonly dateRangePickerBuilderService: DateRangePickerBuilderService
 	) {
@@ -349,6 +350,28 @@ export class PaymentsComponent extends PaginationFilterBaseComponent implements 
 				this.payments$.next(true);
 			}
 		});
+	}
+
+	/**
+	 * Opens the selected payment's own page, `/pages/accounting/payments/view/:id`.
+	 * The header toolbar renders the action buttons without a `selectedItem`, so
+	 * this falls back to the row picked in the table.
+	 *
+	 * @param selectedItem - The payment item to view.
+	 */
+	viewPayment(selectedItem?: IPayment): void {
+		if (selectedItem) {
+			this.selectPayment({
+				isSelected: true,
+				data: selectedItem
+			});
+		}
+
+		if (!this.selectedPayment?.id) {
+			return;
+		}
+
+		this.router.navigate(['/pages/accounting/payments/view', this.selectedPayment.id]);
 	}
 
 	/**

@@ -3,9 +3,11 @@ import { getPage } from '../../support/page-context';
 import * as settingsButton from '../../support/pages/SettingsButton.po';
 import { SettingsButtonData } from '../../../src/support/Base/pagedata/SettingsButtonPageData';
 
-// Quick Settings dropdown order (DOM): 0 = Language, 1 = Themes, 2 = Layout.
+// Quick Settings nb-select order (DOM): 0 = Language, 1 = Layout. Themes is no longer an nb-select:
+// the professional-panel redesign (#10044, 01171bba2e) replaced its fake select with a
+// `button.theme-trigger` + popover, so Layout moved from index 2 to index 1.
 const LANGUAGE = 0;
-const LAYOUT = 2;
+const LAYOUT = 1;
 
 When('I open Quick Settings and verify the language options', async () => {
 	await settingsButton.verifySettingsButtonVisible();

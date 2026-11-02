@@ -32,7 +32,10 @@ When('I manage the organization', async () => {
 	);
 	await manageOrganizationPage.gridBtnExists();
 	await manageOrganizationPage.gridBtnClick(1);
-	await manageOrganizationPage.selectTableRow();
+	// Manage the organization created just above — selected by name, not "whatever row is last": the
+	// Main tab below overwrites the selected organization's name, so picking the wrong row would rename a
+	// seeded organization (e.g. Default Company) that every other spec runs against.
+	await manageOrganizationPage.selectTableRow(organizationName);
 	await manageOrganizationPage.manageBtnExists();
 	await manageOrganizationPage.manageBtnClick();
 	await manageOrganizationPage.enterOrganizationName(organizationName);

@@ -92,8 +92,10 @@ export async function deliver(message, env, fetcher = fetch) {
 
 	const response = await fetcher(`${settings.apiUrl}${INBOUND_PATH}`, {
 		method: 'POST',
-		// The signed message goes to the configured API only, never where a redirect points.
-		redirect: 'error',
+		// The signed message goes to the configured API only, never where a redirect points: a 3xx comes back as is and
+		// is a failure below (the sender retries). Workers refuse `redirect: 'error'` ("must be one of follow or manual"):
+		// with it every delivery threw on the real runtime, while Node (the tests) accepted it.
+		redirect: 'manual',
 		headers: { 'content-type': 'application/json', [SIGNATURE_HEADER]: `t=${timestamp},v1=${signature}` },
 		body
 	});

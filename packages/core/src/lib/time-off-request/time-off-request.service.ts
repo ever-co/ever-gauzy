@@ -1,14 +1,26 @@
-import { Injectable, BadRequestException, ConflictException, ForbiddenException, HttpException } from '@nestjs/common';
+import {
+	Injectable,
+	BadRequestException,
+	ConflictException,
+	ForbiddenException,
+	HttpException,
+	NotFoundException
+} from '@nestjs/common';
 import {
 	Brackets,
+	DeleteResult,
+	EntityManager,
+	FindOptionsWhere,
 	In,
 	LessThanOrEqual,
 	Like,
 	MoreThanOrEqual,
+	SaveOptions,
 	SelectQueryBuilder,
 	WhereExpressionBuilder
 } from 'typeorm';
 import * as moment from 'moment';
+import { isMySQL, isPostgres } from '@gauzy/config';
 import {
 	ITimeOffCreateInput,
 	RequestApprovalStatusTypesEnum,
@@ -26,16 +38,22 @@ import { TimeOffRequest } from './time-off-request.entity';
 import { RequestApproval } from '../request-approval/request-approval.entity';
 import { Employee, TimeOffPolicy } from '../core/entities/internal';
 import {
+	editChangesCharge,
 	filedTimeOffStatus,
 	ITimeOffWriteBody,
+	ITimeOffWriteMembers,
 	requestedPolicyId,
+	sameId,
 	TIME_OFF_FOR_OTHERS_PERMISSIONS,
 	timeOffEmployees,
 	writableTimeOffMembers
 } from './time-off-request-input.helper';
-import { TenantAwareCrudService } from './../core/crud';
+import { isWithinOrganizationBoundary, TenantAwareCrudService } from './../core/crud';
+import { IFindOneOptions } from './../core/crud/icrud.service';
 import { RequestContext } from './../core/context';
+import { redactDatabaseError, safeErrorMessage, toClientSafeError } from './../core/errors/database-error';
 import {
+	LegacyFindOneOptions,
 	mikroOrmContains,
 	MultiORMEnum,
 	parseFindOptionsRelations,
@@ -45,6 +63,8 @@ import {
 import { prepareSQLQuery as p } from './../database/database.helper';
 import { assertCurrentUserBelongsToSentOrganization } from '../user-organization/assert-organization-membership';
 import { TypeOrmRequestApprovalRepository } from '../request-approval/repository/type-orm-request-approval.repository';
+import { TimeOffBalanceDeductionService } from '../time-off-balance/time-off-balance-deduction.service';
+import { ITimeOffBalanceLedger, typeOrmTimeOffBalanceLedger } from '../time-off-balance/time-off-balance-ledger';
 import { MikroOrmTimeOffRequestRepository } from './repository/mikro-orm-time-off-request.repository';
 import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-request.repository';
 
@@ -53,18 +73,20 @@ import { TypeOrmTimeOffRequestRepository } from './repository/type-orm-time-off-
  */
 const SORTABLE_COLUMNS = ['start', 'end', 'requestDate'] as const;
 
-/** Whether two ids name the same row: the database compares UUIDs without regard to case. */
-const sameId = (a: unknown, b: unknown): boolean => String(a ?? '').toLowerCase() === String(b ?? '').toLowerCase();
-
 /** A write naming a policy that is not one of the request's organization, in the caller's tenant. */
 const POLICY_OUT_OF_SCOPE = 'The time-off policy is not a policy of this organization.';
+
+/** The answer to a request that is not there, or no longer in the caller's scope. */
+const TIME_OFF_NOT_FOUND = 'Request time off not found';
 
 @Injectable()
 export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest> {
 	constructor(
 		readonly typeOrmTimeOffRequestRepository: TypeOrmTimeOffRequestRepository,
 		readonly mikroOrmTimeOffRequestRepository: MikroOrmTimeOffRequestRepository,
-		readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository
+		readonly typeOrmRequestApprovalRepository: TypeOrmRequestApprovalRepository,
+		// Keeps the leave balance an approval took following the request's edits and removal (#10183).
+		readonly timeOffBalanceDeductionService?: TimeOffBalanceDeductionService
 	) {
 		super(typeOrmTimeOffRequestRepository, mikroOrmTimeOffRequestRepository);
 	}
@@ -247,11 +269,14 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 			}
 			await this.assertPolicyChangeKeepsDecision(stored, policyId);
 
-			return await this.save({
-				...members,
-				...(employees ? { employees } : {}),
-				id
-			} as unknown as TimeOffRequest);
+			const edit = { ...members, ...(employees ? { employees } : {}), id } as unknown as TimeOffRequest;
+
+			// An edit that writes what leave balances follow is decided and saved under the request's row lock, with its
+			// balances (#10183); any other edit saves as before.
+			if (this.writesCharge(members, employees)) {
+				return await this.saveFollowingCharge(edit, members, employees, policyId);
+			}
+			return await this.save(edit);
 		} catch (error) {
 			// Preserve intentional HTTP exceptions (the 404 above, and the ForbiddenException that
 			// `save()` raises for a cross-tenant row) instead of flattening them to 400.
@@ -280,6 +305,288 @@ export class TimeOffRequestService extends TenantAwareCrudService<TimeOffRequest
 				throw err;
 			}
 			throw new BadRequestException(err);
+		}
+	}
+
+	/**
+	 * Removes a time-off request outright, giving back first what its approval took from leave balances (#10183): the
+	 * record of the deduction would otherwise go with the request (`ON DELETE CASCADE`) and the days stay taken.
+	 *
+	 * A request in the caller's scope — a withdrawn one too, as the CRUD base deletes it — is removed on one
+	 * transaction that holds its row lock (see {@link withChargeFollowing}): the days its approval took are given back,
+	 * then the row is deleted. Anything else — an id that is not in the caller's scope, criteria other than an id — is
+	 * answered by the CRUD base, as before.
+	 *
+	 * @param criteria The request's id, or conditions.
+	 * @param options Additional conditions, as the CRUD base takes them.
+	 * @returns The delete's result.
+	 */
+	public async delete(
+		criteria: string | FindOptionsWhere<TimeOffRequest>,
+		options?: LegacyFindOneOptions<TimeOffRequest>
+	): Promise<DeleteResult> {
+		const leave =
+			typeof criteria === 'string' && !options ? await this.leaveInScope(criteria, { withDeleted: true }) : null;
+		if (!leave) {
+			return await super.delete(criteria, options);
+		}
+		return await this.withChargeFollowing(
+			leave.id,
+			() => new NotFoundException('The record was not found'),
+			async (manager, ledger, locked, tenantId) => {
+				await this.timeOffBalanceDeductionService.restore(ledger, locked);
+				return await manager.delete(TimeOffRequest, { id: locked.id, tenantId });
+			},
+			{ withDeleted: true }
+		);
+	}
+
+	/**
+	 * Withdraws a time-off request (`DELETE /time-off-request/:id/soft`, GraphQL `softDeleteTimeOffRequest`), giving
+	 * back what its approval took from leave balances (#10183), on one transaction with the withdrawal (see
+	 * {@link withChargeFollowing}). Putting it back takes those days again ({@link softRecover}).
+	 *
+	 * A request that is not in the caller's scope is answered by the CRUD base, as before.
+	 *
+	 * @param id The request.
+	 * @param options Find options, as the CRUD base takes them.
+	 * @param saveOptions Save options, as the CRUD base takes them.
+	 * @returns The withdrawn request.
+	 */
+	public async softRemove(
+		id: ID,
+		options?: IFindOneOptions<TimeOffRequest>,
+		saveOptions?: SaveOptions
+	): Promise<TimeOffRequest> {
+		const leave = await this.leaveInScope(id);
+		if (!leave) {
+			return await super.softRemove(id, options, saveOptions);
+		}
+		return await this.withChargeFollowing(
+			leave.id,
+			(error) => new NotFoundException(`An error occurred during soft removal: ${safeErrorMessage(error)}`),
+			async (manager, ledger, locked) => {
+				await this.timeOffBalanceDeductionService.withdraw(ledger, locked);
+				const removed = await manager.softRemove(TimeOffRequest, locked, saveOptions);
+				return Object.assign(leave, { deletedAt: removed.deletedAt });
+			}
+		);
+	}
+
+	/**
+	 * Puts a withdrawn time-off request back (`PUT /time-off-request/:id/recover`, GraphQL `recoverTimeOffRequest`). The
+	 * days its withdrawal gave back to leave balances are taken again, by the rules an approval follows, on one
+	 * transaction with the recovery (see {@link withChargeFollowing}): a policy that requires sufficient balance refuses
+	 * (400) a recovery its balances cannot cover, and the request stays withdrawn. A request whose withdrawal gave
+	 * nothing back takes nothing.
+	 *
+	 * A request that is not in the caller's scope is answered by the CRUD base, as before.
+	 *
+	 * @param id The request.
+	 * @param options Find options, as the CRUD base takes them.
+	 * @param saveOptions Save options, as the CRUD base takes them.
+	 * @returns The recovered request.
+	 */
+	public async softRecover(
+		id: ID,
+		options?: IFindOneOptions<TimeOffRequest>,
+		saveOptions?: SaveOptions
+	): Promise<TimeOffRequest> {
+		const leave = await this.leaveInScope(id, { withDeleted: true });
+		if (!leave) {
+			return await super.softRecover(id, options, saveOptions);
+		}
+		return await this.withChargeFollowing(
+			leave.id,
+			(error) => new NotFoundException(`An error occurred during restoring entity: ${safeErrorMessage(error)}`),
+			async (manager, ledger, locked) => {
+				const recovered = await manager.recover(TimeOffRequest, locked, saveOptions);
+				await this.timeOffBalanceDeductionService.reinstate(ledger, recovered);
+				return Object.assign(leave, { deletedAt: recovered.deletedAt ?? null });
+			},
+			{ withDeleted: true }
+		);
+	}
+
+	/**
+	 * Whether an edit writes something an approved request's charge on leave balances follows: its dates, its holiday
+	 * flag, its policy or its employees. Such an edit is decided under the request's row lock
+	 * ({@link saveFollowingCharge}); any other (its description, its document, archiving it) saves as before.
+	 *
+	 * @param members The members the edit writes.
+	 * @param employees The employees the edit writes, or undefined when it keeps the stored ones.
+	 */
+	private writesCharge(members: ITimeOffWriteMembers, employees: Array<{ id: ID }> | undefined): boolean {
+		return (
+			!!this.timeOffBalanceDeductionService &&
+			!!RequestContext.currentTenantId() &&
+			(members.start !== undefined ||
+				members.end !== undefined ||
+				members.isHoliday !== undefined ||
+				members.policy !== undefined ||
+				employees !== undefined)
+		);
+	}
+
+	/**
+	 * Saves an edit that writes what leave balances follow (see {@link writesCharge}), on one transaction that holds the
+	 * request's row lock from before anything is decided (see {@link withChargeFollowing}), so a decision of the request
+	 * or another edit of it waits, or is waited for, and never lands in between (#11608 review):
+	 *
+	 *  - the request is compared as it stands under the lock: its status, its dates, holiday flag, policy and employees,
+	 *    and whether its approval charged it — a request approved meanwhile is recharged, and an edit found to change
+	 *    nothing that counts leaves a charge another edit just moved where it is;
+	 *  - when it is approved, charged, and the edit changes one of them, what its approval took is given back and what
+	 *    the edited request takes is taken (`TimeOffBalanceDeductionService.recharge`); a policy that requires
+	 *    sufficient balance refuses (400) an edit its balances cannot cover, and the edit is not saved;
+	 *  - otherwise the edit is saved as it is, and nothing moves.
+	 *
+	 * The policy guard runs again on what the lock found (an approval committed since the first read must not let the
+	 * request move onto a policy that requires one). The checks `save()` makes (the tenant of the stored row and of the
+	 * graph the save writes, the organization boundary) run before the transaction opens, so none of their reads waits
+	 * for it; the save itself is the one the CRUD base hands TypeORM, on the transaction's manager (as the request
+	 * approval's edit does).
+	 *
+	 * @param edit The members the edit writes, with the request's id.
+	 * @param members The members the edit writes.
+	 * @param employees The employees the edit writes, or undefined when it keeps the stored ones.
+	 * @param policyId The policy the edit names, if any.
+	 * @returns The request, as saved.
+	 */
+	private async saveFollowingCharge(
+		edit: TimeOffRequest,
+		members: ITimeOffWriteMembers,
+		employees: Array<{ id: ID }> | undefined,
+		policyId: ID | undefined
+	): Promise<TimeOffRequest> {
+		const tenantId = RequestContext.currentTenantId();
+		await this.assertNotForeignRow(edit, tenantId);
+		await this.assertNestedGraphNotForeign([edit], tenantId);
+		await this.assertInsideOrganizationBoundary([edit]);
+
+		return await this.withChargeFollowing(
+			edit.id,
+			(error) => new BadRequestException(toClientSafeError(error)),
+			async (manager, ledger, locked, lockTenantId) => {
+				await this.assertPolicyChangeKeepsDecision(locked, policyId);
+				const recharge =
+					locked.status === StatusTypesEnum.APPROVED &&
+					(await this.timeOffBalanceDeductionService.hasCharge(ledger, locked)) &&
+					(await this.editChangesLockedCharge(manager, locked, members, employees));
+
+				const saved = await manager.save(TimeOffRequest, {
+					...edit,
+					tenant: { id: lockTenantId },
+					tenantId: lockTenantId
+				} as TimeOffRequest);
+				if (recharge) {
+					// The request as the edit left it, read on the transaction.
+					const edited = await manager.findOne(TimeOffRequest, {
+						where: { id: edit.id, tenantId: lockTenantId },
+						loadEagerRelations: false
+					});
+					await this.timeOffBalanceDeductionService.recharge(ledger, edited);
+				}
+				return saved;
+			}
+		);
+	}
+
+	/**
+	 * Whether an edit changes the dates, holiday flag, policy or employees of the request as its row lock found it (see
+	 * `editChangesCharge`). Its employees are read, on the transaction, only for an edit that names employees and
+	 * changes nothing else that counts.
+	 *
+	 * @param manager The transaction's manager.
+	 * @param locked The request, as its row lock found it.
+	 * @param members The members the edit writes.
+	 * @param employees The employees the edit writes, or undefined when it keeps the stored ones.
+	 */
+	private async editChangesLockedCharge(
+		manager: EntityManager,
+		locked: TimeOffRequest,
+		members: ITimeOffWriteMembers,
+		employees: Array<{ id: ID }> | undefined
+	): Promise<boolean> {
+		if (editChangesCharge(locked, members, undefined)) {
+			return true;
+		}
+		if (employees === undefined) {
+			return false;
+		}
+		const current = await manager.findOne(TimeOffRequest, {
+			where: { id: locked.id, tenantId: locked.tenantId },
+			relations: { employees: true },
+			loadEagerRelations: false
+		});
+		return editChangesCharge({ ...locked, employees: current?.employees ?? [] }, members, employees);
+	}
+
+	/**
+	 * The request with this id, when the caller reaches it through the CRUD base's scoped read; null otherwise, and
+	 * when there is no leave balance to follow it (no tenant in context).
+	 *
+	 * @param id The request.
+	 * @param options.withDeleted Whether a withdrawn request is found too.
+	 */
+	private async leaveInScope(id: ID, options: { withDeleted?: boolean } = {}): Promise<TimeOffRequest | null> {
+		if (!this.timeOffBalanceDeductionService || !RequestContext.currentTenantId()) {
+			return null;
+		}
+		try {
+			return await this.findOneByIdString(id, options.withDeleted ? { withDeleted: true } : undefined);
+		} catch {
+			// Not found, or not readable: the CRUD base answers it, as it did before.
+			return null;
+		}
+	}
+
+	/**
+	 * Runs a write of one time-off request together with the leave-balance side of it (#10183) on one TypeORM
+	 * transaction, on either ORM the installation runs, as the approve / deny decision does (`TimeOffStatusHandler`).
+	 *
+	 * The request is read again under its row lock (`SELECT … FOR UPDATE` on PostgreSQL and MySQL; SQLite serializes
+	 * the transaction instead): the lock a decision of it takes, so a decision and this write take turns, and the
+	 * balance side sees the decision's status and deduction. It is held to the caller's organization boundary again, as
+	 * the scoped read before it was; gone or moved out of it, nothing is written (404). A refusal of the balance side
+	 * (400) rolls the write back; any other failure is answered as the CRUD base answers that write.
+	 *
+	 * @param id The request, found in the caller's scope.
+	 * @param failure The CRUD base's answer to a failure of this write.
+	 * @param work The write, handed the transaction, the ledger over it, the locked request and the caller's tenant.
+	 * @param options.withDeleted Whether a withdrawn request is read too (its recovery).
+	 * @returns What the write answers.
+	 */
+	private async withChargeFollowing<R>(
+		id: ID,
+		failure: (error: unknown) => HttpException,
+		work: (manager: EntityManager, ledger: ITimeOffBalanceLedger, leave: TimeOffRequest, tenantId: ID) => Promise<R>,
+		options: { withDeleted?: boolean } = {}
+	): Promise<R> {
+		const tenantId = RequestContext.currentTenantId();
+		// SQLite has no row locks (TypeORM refuses `setLock` there); its transactions are serialized instead.
+		const rowLock = isPostgres() || isMySQL();
+
+		try {
+			return await this.typeOrmRepository.manager.transaction(async (manager: EntityManager) => {
+				// The request row alone (a query builder joins no eager relation, such as its document), so the lock is
+				// on that row.
+				const query = manager.createQueryBuilder(TimeOffRequest, 'time_off_request').where({ id, tenantId });
+				if (options.withDeleted) {
+					query.withDeleted();
+				}
+				const leave = rowLock ? await query.setLock('pessimistic_write').getOne() : await query.getOne();
+				if (!leave || !isWithinOrganizationBoundary(leave.organizationId)) {
+					throw new NotFoundException(TIME_OFF_NOT_FOUND);
+				}
+				return await work(manager, typeOrmTimeOffBalanceLedger(manager), leave, tenantId);
+			});
+		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			console.error('Error writing a time-off request with its leave balance:', redactDatabaseError(error));
+			throw failure(error);
 		}
 	}
 

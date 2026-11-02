@@ -387,6 +387,21 @@ $pad-x: 1rem;
 	transition: color 0.12s ease-in-out;
 }
 
+// A held file's name and meta: not a link yet, so nothing to open.
+.docs-links-row-file {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.docs-links-panel-pending-note {
+	margin: 0.5rem 0.5rem 0;
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	color: nb-theme(text-hint-color);
+}
+
 .docs-links-row-meta {
 	display: flex;
 	gap: 0.25rem;
@@ -423,4 +438,52 @@ $pad-x: 1rem;
 // Remove reads as danger only when it is about to happen.
 .docs-links-row-remove:hover nb-icon {
 	color: nb-theme(color-danger-500);
+}
+
+/* ── Grid ─────────────────────────────────────────────────────────────────── */
+
+// The same rows as tiles: the family tile grows into a 4:3 picture area — the
+// image itself for a picture — with the name and meta under it, and the row's
+// buttons floating over its top corner.
+.docs-links-list.is-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+	gap: 0.5rem;
+
+	.docs-links-row {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 0.5rem;
+		box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+	}
+
+	.docs-links-icon {
+		width: 100%;
+		height: auto;
+		aspect-ratio: 4 / 3;
+		overflow: hidden;
+
+		nb-icon {
+			width: 1.75rem;
+			height: 1.75rem;
+			font-size: 1.75rem;
+		}
+	}
+
+	.docs-links-row-actions {
+		position: absolute;
+		top: 0.75rem;
+		inset-inline-end: 0.75rem;
+		padding: 0.125rem;
+		border-radius: nb-theme(border-radius);
+		background-color: var(--gauzy-card-1);
+		box-shadow: 0 0 0 1px var(--gauzy-border-default-color);
+	}
+}
+
+.docs-links-thumb {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
 }

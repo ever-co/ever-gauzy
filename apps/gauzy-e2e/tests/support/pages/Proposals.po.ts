@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { expect } from '@playwright/test';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -205,6 +206,44 @@ export const clickKeyboardButtonByKeyCode = async (keycode) => {
 
 export const tableRowVisible = async () => {
 	await verifyElementIsVisible(ProposalsPage.selectTableRowCss);
+};
+
+// Narrow the proposals grid to THIS spec's proposal through the "Job Title" column filter, which is a
+// server-side LIKE on jobPostContent (proposal.service.ts). The seed's 30 proposals per organization
+// share our valueDate (the list's only sort key) and the grid pages by 10, so without this the new
+// proposal can sit on page 2+ and row 0 is an arbitrary seeded proposal. The leading words of the
+// faker paragraph we typed are unique and appear verbatim in the stored `<p>…</p>` HTML.
+// Idempotent: re-filling the same term is a no-op for the debounced, distinctUntilChanged filter.
+export const filterProposalsByJobPostContent = async (content: string) => {
+	const page = getPage();
+	const term = String(content).trim().split(/\s+/).slice(0, 4).join(' ');
+	await waitForSpinnerGone();
+	const input = page.locator(ProposalsPage.jobTitleFilterInputCss).first();
+	await input.waitFor({ state: 'visible', timeout: 24_000 });
+	for (let attempt = 0; attempt < 3; attempt++) {
+		if ((await input.inputValue().catch(() => '')) !== term) {
+			await input.fill(term);
+		}
+		// Debounced InputFilterComponent + server-side refetch: let it land before the caller reads rows.
+		await page.waitForTimeout(1500);
+		await waitForSpinnerGone();
+		await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
+		if ((await page.locator(ProposalsPage.jobTitleFilterInputCss).first().inputValue().catch(() => '')) === term) {
+			return;
+		}
+	}
+	// Fail before the caller picks a row from an unfiltered grid (row 0 would be an arbitrary seeded proposal).
+	await expect(page.locator(ProposalsPage.jobTitleFilterInputCss).first()).toHaveValue(term, { timeout: 5_000 });
+};
+
+// The edit page patches its form from the resolved proposal after a debounceTime(100) on route.data,
+// i.e. AFTER the Job Post URL input is already visible. Typing the new URL before that patch lands
+// gets it overwritten with the stored one (and the edit silently saves nothing new), so wait for the
+// patched value first.
+export const waitForEditFormLoaded = async () => {
+	await expect(getPage().locator(ProposalsPage.jobPostUrlInputCss).first()).not.toHaveValue('', {
+		timeout: 24_000
+	});
 };
 
 export const selectTableRow = async (index) => {

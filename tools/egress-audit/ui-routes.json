@@ -24,13 +24,13 @@
     },
     {
       "path": "/auth",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:28",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:30",
       "redirect_to": "login",
       "source": "router"
     },
     {
       "path": "/auth/accept-client-invite",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:67",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:69",
       "guards": [
         "NoAuthGuard"
       ],
@@ -38,7 +38,7 @@
     },
     {
       "path": "/auth/accept-invite",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:62",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:64",
       "guards": [
         "NoAuthGuard"
       ],
@@ -46,12 +46,22 @@
     },
     {
       "path": "/auth/confirm-email",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:53",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:55",
+      "source": "router"
+    },
+    {
+      "path": "/auth/delete-account",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:86",
+      "source": "router"
+    },
+    {
+      "path": "/auth/delete-account/confirm",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:90",
       "source": "router"
     },
     {
       "path": "/auth/estimate",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:72",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:74",
       "guards": [
         "NoAuthGuard"
       ],
@@ -77,7 +87,7 @@
     },
     {
       "path": "/auth/login",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:33",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:35",
       "guards": [
         "NoAuthGuard"
       ],
@@ -97,7 +107,7 @@
     },
     {
       "path": "/auth/logout",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:82",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:94",
       "source": "router"
     },
     {
@@ -108,12 +118,12 @@
     },
     {
       "path": "/auth/oauth-authorize",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:78",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:80",
       "source": "router"
     },
     {
       "path": "/auth/register",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:38",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:40",
       "guards": [
         "NoAuthGuard"
       ],
@@ -121,7 +131,7 @@
     },
     {
       "path": "/auth/request-password",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:43",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:45",
       "guards": [
         "NoAuthGuard"
       ],
@@ -129,7 +139,7 @@
     },
     {
       "path": "/auth/reset-password",
-      "file": "packages/ui-auth/src/lib/auth.routes.ts:48",
+      "file": "packages/ui-auth/src/lib/auth.routes.ts:50",
       "guards": [
         "NoAuthGuard"
       ],
@@ -1783,6 +1793,14 @@
       "note": "registered at run time by a UI plugin of apps/gauzy/src/plugin-ui.config.ts or a page module (the generator lists the registry call as a note)"
     },
     {
+      "path": "/pages/settings/whats-new",
+      "file": "apps/gauzy/src/app/pages/settings/settings.routes.ts:161",
+      "guards": [
+        "changelogManagerGuard"
+      ],
+      "source": "router"
+    },
+    {
       "path": "/pages/tasks",
       "file": "apps/gauzy/src/app/pages/tasks/tasks-routing.module.ts:13",
       "redirect_to": "dashboard",
@@ -1959,6 +1977,6 @@
     "apps/gauzy/src/app/pages/pages.routes.ts:590: the wildcard route under /pages/reports is not walked",
     "apps/gauzy/src/app/pages/settings/settings.routes.ts:162: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('settings-sections')): add the routes it adds as manual entries",
     "packages/plugins/public-layout-ui/src/lib/public-layout.routes.ts:128: the wildcard route under /share is not walked",
-    "packages/ui-auth/src/lib/auth.routes.ts:86: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('auth-sections')): add the routes it adds as manual entries"
+    "packages/ui-auth/src/lib/auth.routes.ts:98: routes built at run time (_pageRouteRegistryService.getPageLocationRoutes('auth-sections')): add the routes it adds as manual entries"
   ]
 }

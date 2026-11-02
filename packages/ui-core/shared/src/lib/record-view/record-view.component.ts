@@ -13,8 +13,8 @@ import {
 } from './record-view.model';
 import { richTextToHtml } from './record-view-markdown';
 
-/** Seeded / generated avatar placeholders: a grey silhouette, or a letter on black. */
-const PLACEHOLDER_AVATAR = /avatar-default\.svg|dummyimage\.com/i;
+/** Seeded / generated avatar placeholders: a grey silhouette, or a letter on a color (the API placeholder route, formerly dummyimage.com). */
+const PLACEHOLDER_AVATAR = /avatar-default\.svg|dummyimage\.com|\/api\/placeholder\//i;
 
 /**
  * Read-only rendering of one record as label/value pairs, driven by a field

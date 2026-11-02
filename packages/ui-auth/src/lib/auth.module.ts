@@ -24,11 +24,15 @@ import {
 	InviteService,
 	NoAuthGuard,
 	PageRouteRegistryService,
+	RegistrationEnabledDirective,
 	RoleService
 } from '@gauzy/ui-core/core';
 import { ThemeModule, ThemeSelectorModule } from '@gauzy/ui-core/theme';
 import { ChangelogEntryComponent, NgxFaqModule, PasswordFormFieldModule, SharedModule } from '@gauzy/ui-core/shared';
 import { createAuthRoutes } from './auth.routes';
+import { AccountDeletionService } from './components/delete-account/account-deletion.service';
+import { NgxDeleteAccountComponent } from './components/delete-account/delete-account.component';
+import { NgxDeleteAccountConfirmComponent } from './components/delete-account/delete-account-confirm.component';
 import { WorkspaceSelectionComponent } from './components/workspace-selection/workspace-selection.component';
 import { SocialLinksComponent } from './components/social-links/social-links.component';
 import { EverIdLoginLabelComponent } from './components/social-links/ever-id-login-label.component';
@@ -79,6 +83,8 @@ const COMPONENTS = [
 	ConfirmEmailComponent,
 	EstimateEmailComponent,
 	NgxAuthComponent,
+	NgxDeleteAccountComponent,
+	NgxDeleteAccountConfirmComponent,
 	NgxForgotPasswordComponent,
 	NgxLoginComponent,
 	NgxLoginMagicComponent,
@@ -107,7 +113,9 @@ const COMPONENTS = [
 		// Standalone card shared with the changelog sidebar
 		ChangelogEntryComponent,
 		// The content of the "Login with Ever ID" button
-		EverIdLoginLabelComponent
+		EverIdLoginLabelComponent,
+		// Hides the Register links while the server does not accept public sign-ups
+		RegistrationEnabledDirective
 	],
 	declarations: [...COMPONENTS],
 	providers: [
@@ -121,6 +129,7 @@ const COMPONENTS = [
 		},
 		InviteService,
 		RoleService,
+		AccountDeletionService,
 		// Read by the register and accept-invite forms to fetch the legal
 		// documents they must pin an acceptance to.
 		AuthService

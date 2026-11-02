@@ -21,6 +21,7 @@ import {
 	buildConnection
 } from '../api/graphql-connection';
 import { BaseQueryDTO } from '../core/crud';
+import { archivedScopeOfFilter } from '../core/crud/archived-scope';
 import { Permissions } from '../shared/decorators';
 import { FeatureFlagGuard, TenantPermissionGuard } from '../shared/guards';
 import { FEATURE_GRAPHQL } from '../feature/graphql-feature.code';
@@ -257,7 +258,11 @@ export class OrganizationProjectResolver {
 		// no relations, no page — and the connection protocol's `filter` is applied to the rows the
 		// service returns. The tenant is applied to the criterion by the service, from the credential
 		// rather than from the caller.
-		const options = { ...(withDeleted ? { withDeleted: true } : {}) } as BaseQueryDTO<OrganizationProject>;
+		// A `filter` on `isArchived` is answered from both states: the service reads no archived project otherwise.
+		const options = {
+			where: archivedScopeOfFilter(filter),
+			...(withDeleted ? { withDeleted: true } : {})
+		} as BaseQueryDTO<OrganizationProject>;
 		const { items }: IPagination<OrganizationProject> =
 			await this.organizationProjectService.findAll(options);
 
@@ -539,5 +544,23 @@ export class OrganizationProjectResolver {
 	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
 	async recoverOrganizationProject(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationProject> {
 		return await this.organizationProjectService.softRecover(id);
+	}
+
+	/**
+	 * Archives a project the organization finished with, as `PUT /organization-projects/:id/archive` does.
+	 */
+	@Mutation('archiveOrganizationProject')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
+	async archiveOrganizationProject(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationProject> {
+		return (await this.organizationProjectService.setArchived(id, true)) as OrganizationProject;
+	}
+
+	/**
+	 * Brings an archived project back, as `PUT /organization-projects/:id/unarchive` does.
+	 */
+	@Mutation('unarchiveOrganizationProject')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_PROJECT_EDIT)
+	async unarchiveOrganizationProject(@Args('id', { type: () => ID }) id: Id): Promise<OrganizationProject> {
+		return (await this.organizationProjectService.setArchived(id, false)) as OrganizationProject;
 	}
 }

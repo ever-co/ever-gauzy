@@ -1,0 +1,181 @@
+/*
+ * What the dashboard adds to the team page's person card: the role and team,
+ * and the person's day — three figures, the working-day bar and their task.
+ */
+
+$hairline: 1px solid var(--gauzy-border-default-color);
+
+// A little wider than the team page's card, to fit three figures side by side.
+.team-person-card {
+  width: 20rem;
+}
+
+.person-role {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.person-team {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.role-chip.is-manager {
+  color: var(--color-primary-default);
+  background-color: color-mix(in srgb, var(--color-primary-default) 12%, transparent);
+}
+
+/* ── The day ─────────────────────────────────────────────────────────────── */
+
+.person-day {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background-color: var(--gauzy-card-2);
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+}
+
+.person-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+}
+
+.person-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+
+  & + & {
+    padding-inline-start: 0.625rem;
+    border-inline-start: $hairline;
+  }
+
+  dt {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.625rem;
+    font-weight: 500;
+    line-height: 0.875rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--gauzy-text-color-2);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: var(--gauzy-text-color-1);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.is-muted {
+  color: var(--gauzy-text-color-2);
+  font-weight: 500;
+}
+
+.activity {
+  font-variant-numeric: tabular-nums;
+
+  &--high {
+    color: var(--gauzy-chart-revenue);
+  }
+
+  &--mid {
+    color: var(--gauzy-chart-expenses);
+  }
+
+  &--low {
+    color: var(--gauzy-action-danger-text);
+  }
+}
+
+.person-workday {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  .bar-track {
+    margin-top: 0;
+  }
+
+  .bar--live {
+    background-color: var(--gauzy-chart-revenue);
+  }
+}
+
+.person-workday-label {
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+  color: var(--gauzy-text-color-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.person-task {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-top: 0.5rem;
+  border-top: $hairline;
+}
+
+.person-task-label {
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 0.875rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--gauzy-text-color-2);
+}
+
+.person-task-title,
+.person-task-project {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-task-title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.person-task-project {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+}
+
+/* ── Profile link: a compact button, not the team page's full-width one ──── */
+
+.person-card-action {
+  align-self: flex-start;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  padding: 0.3125rem 0.625rem;
+  border-radius: var(--gauzy-radius-sm);
+  font-size: 0.75rem;
+  line-height: 1rem;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+}

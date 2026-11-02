@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -65,7 +64,6 @@ const BYTES_PER_GIB = 1024 * 1024 * 1024;
 @Component({
 	selector: 'gz-docs-settings-page',
 	imports: [
-		CommonModule,
 		FormsModule,
 		TranslatePipe,
 		NgxPermissionsModule,

@@ -44,4 +44,6 @@ export interface IDailyPlansTasksUpdateInput
 	extends Pick<IDailyPlanCreateInput, 'employeeId' | 'organizationTeamId'>,
 		IBasePerTenantAndOrganizationEntityModel {
 	plansIds: ID[];
+	/** The caller's current day, as YYYY-MM-DD. Plans dated before it keep the task. */
+	today?: string;
 }

@@ -26,6 +26,7 @@ import { environment as env } from '@gauzy/config';
 import { deepMerge } from '@gauzy/utils';
 import { allowedEmailBaseUrl, warnRejectedEmailLink, withAllowedEmailLinks } from '../auth/email-link-origin';
 import { RequestContext } from '../core/context';
+import { printEmailCodeInLocalDevelopment } from '../logger';
 import { EmailSendService } from './../email-send/email-send.service';
 import { describeEmailSendError } from './email-send-error';
 import { Organization, EmailHistory } from './../core/entities/internal';
@@ -42,7 +43,13 @@ const DISALLOW_EMAIL_SERVER_DOMAIN: string[] = ['@example.com'];
  * and stores the original URL - token, address and all - as the click's OriginalLink. `X-PM-TrackLinks:
  * None` turns that off for one message. Other providers ignore the header.
  */
-const NO_LINK_TRACKING_HEADERS = { 'X-PM-TrackLinks': 'None' };
+const NO_LINK_TRACKING_HEADERS = {
+	'X-PM-TrackLinks': 'None',
+	// The same for the other providers an SMTP relay is commonly backed by (each ignores the others').
+	'X-Mailgun-Track': 'no',
+	'X-Mailgun-Track-Clicks': 'no',
+	'X-SMTPAPI': JSON.stringify({ filters: { clicktrack: { settings: { enable: 0 } } } })
+};
 
 @Injectable()
 export class EmailService {
@@ -270,6 +277,12 @@ export class EmailService {
 			message: '',
 			organization
 		};
+		printEmailCodeInLocalDevelopment(
+			this.logger,
+			'Client invitation link',
+			primaryEmail,
+			sendOptions.locals.generatedUrl
+		);
 
 		// Check if the email domain is allowed.
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
@@ -327,6 +340,7 @@ export class EmailService {
 			organization,
 			user: invitedByUser
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Invitation link', email, registerUrl);
 
 		// Check if the email domain is allowed.
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
@@ -383,6 +397,8 @@ export class EmailService {
 			organization,
 			user: invitedByUser
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Team invitation code', email, inviteCode);
+		printEmailCodeInLocalDevelopment(this.logger, 'Team invitation link', email, inviteLink);
 
 		// Check if the email domain is disallowed.
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
@@ -437,6 +453,7 @@ export class EmailService {
 			organization,
 			user: invitedByUser
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Invitation link', email, registerUrl);
 
 		// Check if the email domain is disallowed.
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
@@ -627,6 +644,8 @@ export class EmailService {
 				host: env.clientBaseUrl
 			}
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Email verification code', email, verificationCode);
+		printEmailCodeInLocalDevelopment(this.logger, 'Email verification link', email, verificationLink);
 
 		if (DISALLOW_EMAIL_SERVER_DOMAIN.some((server) => email.includes(server))) {
 			this.logger.warn(`Verification email for user ${user.id} not sent: the recipient domain is blocked.`);
@@ -742,6 +761,7 @@ export class EmailService {
 			languageCode,
 			message: ''
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Password reset link', email, resetLink);
 
 		// Check if the email domain is disallowed
 		if (DISALLOW_EMAIL_SERVER_DOMAIN.some((server) => email.includes(server))) {
@@ -806,6 +826,10 @@ export class EmailService {
 			languageCode,
 			message: ''
 		};
+		for (const { tenantName, resetLink } of items) {
+			const label = `Password reset link (${tenantName})`;
+			printEmailCodeInLocalDevelopment(this.logger, label, email, resetLink);
+		}
 
 		// Return early if the email domain is disallowed
 		if (DISALLOW_EMAIL_SERVER_DOMAIN.some((server) => email.includes(server))) {
@@ -1024,6 +1048,8 @@ export class EmailService {
 			languageCode: locale,
 			message: ''
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Sign-in code', email, magicCode);
+		printEmailCodeInLocalDevelopment(this.logger, 'Sign-in link', email, magicLink);
 
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 
@@ -1077,6 +1103,7 @@ export class EmailService {
 			user: user,
 			organization
 		};
+		printEmailCodeInLocalDevelopment(this.logger, 'Email change code', user.email, verificationCode);
 
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
@@ -1136,6 +1163,12 @@ export class EmailService {
 			message: '',
 			organization
 		};
+		printEmailCodeInLocalDevelopment(
+			this.logger,
+			'Team join request code',
+			organizationTeamJoinRequest.email,
+			organizationTeamJoinRequest.code
+		);
 		const match = !!DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => body.email.includes(server));
 		if (!match) {
 			try {
@@ -1379,5 +1412,108 @@ export class EmailService {
 
 		console.log('Message sent: %s', info.messageId);
 		console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+	}
+
+	/**
+	 * Sends the "confirm the deletion of your account" email.
+	 *
+	 * The link carries a single-use deletion token in its fragment, so the email is sent with link tracking
+	 * off and, unlike the other emails, is NOT copied into `email_history`: that table keeps the rendered
+	 * message, which would put a live deletion token in the database.
+	 *
+	 * @param input.email The address the request was made for.
+	 * @param input.deletionLink The confirmation page with the token in its fragment.
+	 * @param input.expiresInMinutes How long the link stays valid, for the email text.
+	 * @param input.locale The recipient's language.
+	 * @param input.integration The branding the email is rendered with (links already checked by the caller).
+	 */
+	async sendAccountDeletionLink({
+		email,
+		deletionLink,
+		expiresInMinutes,
+		locale,
+		integration
+	}: {
+		email: string;
+		deletionLink: string;
+		expiresInMinutes: number;
+		locale: LanguagesEnum;
+		integration: IAppIntegrationConfig;
+	}): Promise<void> {
+		printEmailCodeInLocalDevelopment(this.logger, 'Account deletion link', email, deletionLink);
+		await this.sendAccountDeletionEmail(EmailTemplateEnum.ACCOUNT_DELETION_REQUEST, email, {
+			locale,
+			email,
+			deletionLink,
+			expiresInMinutes,
+			...this.withAllowedLinks(integration, EmailTemplateEnum.ACCOUNT_DELETION_REQUEST)
+		});
+	}
+
+	/**
+	 * Sends the "your account has been deleted" email once a deletion went through.
+	 *
+	 * @param input.email The address whose accounts were deleted.
+	 * @param input.accounts How many accounts (one per workspace) were deleted.
+	 * @param input.workspacesDeleted How many of those workspaces were deleted entirely.
+	 * @param input.allAccounts Whether every account of the address went (emailed link) or one (in the app).
+	 * @param input.workspace The workspace of that one account.
+	 * @param input.locale The recipient's language.
+	 * @param input.integration The branding the email is rendered with.
+	 */
+	async sendAccountDeletionCompleted({
+		email,
+		accounts,
+		workspacesDeleted,
+		allAccounts,
+		workspace,
+		locale,
+		integration
+	}: {
+		email: string;
+		accounts: number;
+		workspacesDeleted: number;
+		/** True for the emailed link (every account of the address); false for one account deleted in the app. */
+		allAccounts: boolean;
+		/** The workspace of that one account. */
+		workspace?: string;
+		locale: LanguagesEnum;
+		integration: IAppIntegrationConfig;
+	}): Promise<void> {
+		await this.sendAccountDeletionEmail(EmailTemplateEnum.ACCOUNT_DELETION_COMPLETED, email, {
+			locale,
+			email,
+			accounts,
+			workspacesDeleted,
+			allAccounts,
+			multipleAccounts: accounts > 1,
+			workspace,
+			...this.withAllowedLinks(integration, EmailTemplateEnum.ACCOUNT_DELETION_COMPLETED)
+		});
+	}
+
+	/**
+	 * Sends one of the account deletion emails through the deployment's default transporter (the
+	 * accounts may belong to several tenants, or none any more, so no tenant SMTP applies). Never
+	 * throws and never records the message in `email_history`; failures are logged without the address.
+	 */
+	private async sendAccountDeletionEmail(
+		template: EmailTemplateEnum,
+		email: string,
+		locals: Record<string, unknown>
+	): Promise<void> {
+		if (DISALLOW_EMAIL_SERVER_DOMAIN.find((server) => email.includes(server))) {
+			return;
+		}
+		try {
+			const instance = await this.emailSendService.getEmailInstance({ tenantId: null });
+			await instance.send({
+				template,
+				message: { to: email, headers: NO_LINK_TRACKING_HEADERS },
+				locals
+			});
+		} catch (error) {
+			this.logger.error(`The "${template}" email could not be sent: ${describeEmailSendError(error)}`);
+		}
 	}
 }

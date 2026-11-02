@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { PageRouteRegistryService } from '@gauzy/ui-core/core';
+import { PageRouteRegistryService, registrationEnabledGuard } from '@gauzy/ui-core/core';
 import { NotFoundComponent } from '@gauzy/ui-core/shared';
 import {
 	AppointmentFormComponent,
@@ -99,6 +99,8 @@ export const createPublicLayoutRoutes = (_pageRouteRegistryService: PageRouteReg
 					},
 					{
 						path: 'create',
+						// Signs up a new account: closed, like /auth/register, while the server does not accept sign-ups.
+						canActivate: [registrationEnabledGuard],
 						loadChildren: () =>
 							import('./components/workspace-actions/workspace-create/workspace-create.module').then(
 								(m) => m.WorkspaceCreateModule

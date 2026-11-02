@@ -79,11 +79,15 @@ When('I add a new proposal', async () => {
 	await proposalsPage.saveProposalButtonVisible();
 	await proposalsPage.clickSaveProposalButton();
 	await proposalsPage.waitMessageToHide();
+	// The default seed adds 30 proposals per organization with the same valueDate (the list's only sort
+	// key, 10 per page): narrow the grid to this proposal so it is on page 1 and is row 0 below.
+	await proposalsPage.filterProposalsByJobPostContent(jobPostContent);
 	await proposalsPage.verifyProposalExists(jobPostUrl);
 });
 
 When('I edit the proposal', async () => {
 	await proposalsPage.waitMessageToHide();
+	await proposalsPage.filterProposalsByJobPostContent(jobPostContent);
 	await proposalsPage.tableRowVisible();
 	await proposalsPage.selectTableRow(0);
 	await proposalsPage.detailsButtonVisible();
@@ -91,6 +95,8 @@ When('I edit the proposal', async () => {
 	await proposalsPage.editProposalButtonVisible();
 	await proposalsPage.clickEditProposalButton();
 	await proposalsPage.jobPostInputVisible();
+	// Let the edit form's async patch (stored URL) land before typing over it.
+	await proposalsPage.waitForEditFormLoaded();
 	await proposalsPage.enterJobPostInputData(editJobPostUrl);
 	await proposalsPage.tagsDropdownVisible();
 	await proposalsPage.clickTagsDropdown();
@@ -102,6 +108,10 @@ When('I edit the proposal', async () => {
 
 When('I mark the proposal as accepted', async () => {
 	await proposalsPage.waitMessageToHide();
+	// Saving the edit navigated back to a fresh list (filter cleared): narrow it to this proposal again
+	// and confirm the edited Job Post URL was persisted before acting on the row.
+	await proposalsPage.filterProposalsByJobPostContent(jobPostContent);
+	await proposalsPage.verifyProposalExists(editJobPostUrl);
 	await proposalsPage.selectTableRow(0);
 	await proposalsPage.markAsStatusButtonVisible();
 	await proposalsPage.clickMarkAsStatusButton();
@@ -112,6 +122,7 @@ When('I mark the proposal as accepted', async () => {
 });
 
 When('I delete the proposal', async () => {
+	await proposalsPage.filterProposalsByJobPostContent(jobPostContent);
 	await proposalsPage.selectTableRow(0);
 	await proposalsPage.deleteProposalButtonVisible();
 	await proposalsPage.clickDeleteProposalButton();

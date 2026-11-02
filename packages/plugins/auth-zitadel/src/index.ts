@@ -14,4 +14,6 @@ export * from './lib/auth-zitadel.module';
 export * from './lib/entities';
 export * from './lib/events/zitadel-account.events';
 export * from './lib/ports/ever-connect-config.port';
+export * from './lib/ports/ever-id-accounts.port';
+export { subjectHashOf } from './lib/handlers/person-deletion.listener';
 export * from './lib/ports/create-user-pre-linked.port';

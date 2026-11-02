@@ -1,5 +1,5 @@
 {
-	"description": "Links to Ever hosts the Gauzy web app renders that predate the Ever Platform modules (the product website, its documentation and legal pages, the company website), recorded with both modules off from the web app image built from base_commit. Links on the signed-out pages are recorded under the path /. The sidebar and footer links are listed for every route, since a route that redirects may be captured before or after its redirect. May only shrink (check-baseline-shrink); an entry excuses that link on that route only, never a lookup or a request.",
+	"description": "Links to Ever hosts the Gauzy web app renders that predate the Ever Platform modules (the product website, its documentation and legal pages, the company website), recorded with both modules off from the web app image built from base_commit. Links on the signed-out pages are recorded under the path /. The sidebar and footer links are listed for every route, since a route that redirects may be captured before or after its redirect. May only shrink (check-baseline-shrink), with one standing exception: a link a legal document vendored from the @ever-co/legal corpus writes, on the legal page that renders it, may be added when the corpus is re-synced (check-baseline-legal.mjs); an entry excuses that link on that route only, never a lookup or a request.",
 	"base_commit": "65c127cc62f27a4053b838bb2a0b297424d0d471",
 	"entries": [
 		{
@@ -9645,6 +9645,78 @@
 			"reason": "the same link as on the other signed-out pages (recorded under / before), now recorded under the route of its page"
 		},
 		{
+			"route": "/auth/delete-account",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/auth/delete-account",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/auth/delete-account",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/auth/delete-account",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/auth/delete-account",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "link to the company website (footer of every page)"
+		},
+		{
+			"route": "/auth/delete-account",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "link to the Gauzy website (logo and footer of every page)"
+		},
+		{
+			"route": "/auth/delete-account/confirm",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/auth/delete-account/confirm",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/auth/delete-account/confirm",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/auth/delete-account/confirm",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/auth/delete-account/confirm",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "link to the company website (footer of every page)"
+		},
+		{
+			"route": "/auth/delete-account/confirm",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "link to the Gauzy website (logo and footer of every page)"
+		},
+		{
 			"route": "/pages/candidates/edit/:id",
 			"attribute": "href",
 			"url": "https://docs.gauzy.co/features/ai-agent-chat",
@@ -11589,6 +11661,30 @@
 			"reason": "link to the Gauzy website (logo and footer of every page)"
 		},
 		{
+			"route": "/legal/dpia",
+			"attribute": "href",
+			"url": "https://gauzy.co/dpa",
+			"reason": "link to a Gauzy legal page, written in the DPIA Support Pack vendored from @ever-co/legal 0.5.0 (packages/plugins/legal-ui/src/lib/content/dpia.en.generated.ts)"
+		},
+		{
+			"route": "/legal/dpia",
+			"attribute": "href",
+			"url": "https://gauzy.co/privacy",
+			"reason": "link to a Gauzy legal page, written in the DPIA Support Pack vendored from @ever-co/legal 0.5.0 (packages/plugins/legal-ui/src/lib/content/dpia.en.generated.ts)"
+		},
+		{
+			"route": "/legal/dpia",
+			"attribute": "href",
+			"url": "https://gauzy.co/security",
+			"reason": "link to a Gauzy legal page, written in the DPIA Support Pack vendored from @ever-co/legal 0.5.0 (packages/plugins/legal-ui/src/lib/content/dpia.en.generated.ts)"
+		},
+		{
+			"route": "/legal/dpia",
+			"attribute": "href",
+			"url": "https://gauzy.co/subprocessors",
+			"reason": "link to a Gauzy legal page, written in the DPIA Support Pack vendored from @ever-co/legal 0.5.0 (packages/plugins/legal-ui/src/lib/content/dpia.en.generated.ts)"
+		},
+		{
 			"route": "/pages/legal/dpia",
 			"attribute": "href",
 			"url": "https://docs.gauzy.co/features/ai-agent-chat",
@@ -11620,6 +11716,66 @@
 		},
 		{
 			"route": "/pages/legal/dpia",
+			"attribute": "href",
+			"url": "https://gauzy.co/",
+			"reason": "link to the Gauzy website (logo and footer of every page)"
+		},
+		{
+			"route": "/pages/legal/dpia",
+			"attribute": "href",
+			"url": "https://gauzy.co/dpa",
+			"reason": "link to a Gauzy legal page, written in the DPIA Support Pack vendored from @ever-co/legal 0.5.0 (packages/plugins/legal-ui/src/lib/content/dpia.en.generated.ts)"
+		},
+		{
+			"route": "/pages/legal/dpia",
+			"attribute": "href",
+			"url": "https://gauzy.co/privacy",
+			"reason": "link to a Gauzy legal page, written in the DPIA Support Pack vendored from @ever-co/legal 0.5.0 (packages/plugins/legal-ui/src/lib/content/dpia.en.generated.ts)"
+		},
+		{
+			"route": "/pages/legal/dpia",
+			"attribute": "href",
+			"url": "https://gauzy.co/security",
+			"reason": "link to a Gauzy legal page, written in the DPIA Support Pack vendored from @ever-co/legal 0.5.0 (packages/plugins/legal-ui/src/lib/content/dpia.en.generated.ts)"
+		},
+		{
+			"route": "/pages/legal/dpia",
+			"attribute": "href",
+			"url": "https://gauzy.co/subprocessors",
+			"reason": "link to a Gauzy legal page, written in the DPIA Support Pack vendored from @ever-co/legal 0.5.0 (packages/plugins/legal-ui/src/lib/content/dpia.en.generated.ts)"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/ai-agent-chat",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/dashboard-widgets",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/features/documents/overview",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
+			"url": "https://docs.gauzy.co/reference/faq",
+			"reason": "link to the Gauzy documentation"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
+			"url": "https://ever.co/",
+			"reason": "link to the company website (footer of every page)"
+		},
+		{
+			"route": "/pages/settings/whats-new",
 			"attribute": "href",
 			"url": "https://gauzy.co/",
 			"reason": "link to the Gauzy website (logo and footer of every page)"

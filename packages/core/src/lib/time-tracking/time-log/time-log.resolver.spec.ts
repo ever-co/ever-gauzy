@@ -180,7 +180,9 @@ const WEEKLY_REPORT = [
 			'2026-03-02': 0
 		},
 		sum: 3600,
-		activity: 42.5
+		activity: 42.5,
+		spent: 40,
+		currency: 'EUR'
 	}
 ];
 
@@ -719,6 +721,8 @@ describe('TimeLogResolver — which members the surface exposes, and which it re
 		expect(typeBody('ClientBudgetLimit')).toMatch(/\bbudget: Decimal!/);
 		expect(typeBody('ClientBudgetLimit')).toMatch(/\bspent: Decimal!/);
 		expect(typeBody('ClientBudgetLimit')).toMatch(/\bremainingBudget: Decimal!/);
+		// Null where the employee has no bill rate to price the week at
+		expect(typeBody('TimeLogWeeklyReport')).toMatch(/\bspent: Decimal\b(?!!)/);
 
 		// The charts of the tracked hours are hours and not money, so they are `Float`, and no duration
 		// anywhere is an amount.
@@ -1277,6 +1281,9 @@ describe('TimeLogResolver — one concept, two protocols, the same operations', 
 		const [week] = answer;
 		expect(week.employeeId).toBe(EMPLOYEE);
 		expect(week.sum).toBe(3600);
+		// The week priced at the employee's bill rate travels as the route answers it
+		expect(week.spent).toBe(40);
+		expect(week.currency).toBe('EUR');
 		// Every day of the range is an entry, in the range's own order: the delivered map's bare zero
 		// is a day nothing was recorded on, and it is read as one.
 		expect(week.dates.map((day) => day.date)).toEqual(['2026-03-01', '2026-03-02']);

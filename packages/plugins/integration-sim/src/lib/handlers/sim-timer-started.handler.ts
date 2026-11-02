@@ -3,6 +3,7 @@ import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { TimerStartedEvent } from '@gauzy/core';
 import { SimService } from '../sim.service';
 import { SimEventName } from '../dto/event-mapping.dto';
+import { redactForSim } from './sim-task-scope';
 
 @Injectable()
 @EventsHandler(TimerStartedEvent)
@@ -25,7 +26,7 @@ export class SimTimerStartedHandler implements IEventHandler<TimerStartedEvent> 
 
 			await this.simService.triggerEventWorkflow({
 				event: SimEventName['TIMER_STARTED'],
-				data: timeLog,
+				data: redactForSim(timeLog), // a task private to the Ever platform reaches Sim as its id only
 				tenantId: timeLog.tenantId,
 				organizationId: timeLog.organizationId
 			});

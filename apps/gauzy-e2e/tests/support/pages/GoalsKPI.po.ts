@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import {
 	enterInput,
 	verifyElementIsVisible,
@@ -149,24 +150,29 @@ export const saveKPIButtonVisible = async () => {
 
 export const clickSaveKPIButton = async () => {
 	// Save closes the KPI dialog (and the form may briefly show a spinner); dispatch the click so it
-	// fires even with the dialog's own fading backdrop in play.
+	// fires even with the dialog's own fading backdrop in play. Save is [disabled]="kpiForm.invalid"
+	// (name + Lead are required) and NbButton swallows clicks on a disabled host, so gate on it being
+	// enabled first: an unset Lead then fails HERE instead of as a missing KPI row a step later.
 	await waitForSpinnerGone();
+	await expect(getPage().locator(GoalsKPIPage.saveKPIButtonCss).first()).toBeEnabled({ timeout: 24_000 });
 	await dispatchClick(GoalsKPIPage.saveKPIButtonCss);
+	// The dialog closes once createKPI/updateKPI resolved; let it detach before the grid is read.
+	await getPage()
+		.locator('ga-edit-kpi')
+		.first()
+		.waitFor({ state: 'detached', timeout: 24_000 })
+		.catch(() => undefined);
 };
 
 export const tableRowVisible = async () => {
 	await verifyElementIsVisible(GoalsKPIPage.selectTableRowCss);
 };
 
-export const selectTableRow = async (index) => {
-	// A smart-table row click TOGGLES selection, which enables the toolbar Edit/Delete buttons. Settle
-	// the grid first (the KPI save just closed its dialog), click the row ONCE, then poll the Edit
-	// button's real disabled attr; only re-click if selection was lost. Never rapid re-click.
+// A smart-table row click TOGGLES selection, which enables the toolbar Edit/Delete buttons. Settle
+// the grid first (the KPI save just closed its dialog), click the row ONCE, then poll the Edit
+// button's real disabled attr; only re-click if selection was lost. Never rapid re-click.
+const selectRowAndAwaitToolbar = async (row) => {
 	const page = getPage();
-	await waitForSpinnerGone();
-	await page.waitForLoadState('networkidle').catch(() => {});
-	await page.waitForTimeout(1500);
-	const row = page.locator(GoalsKPIPage.selectTableRowCss).nth(index);
 	const editBtn = page.locator(GoalsKPIPage.editButtonCss).first();
 	await row.click({ force: true, timeout: 60_000 });
 	for (let i = 0; i < 6; i++) {
@@ -177,6 +183,31 @@ export const selectTableRow = async (index) => {
 		if (stillDisabled === null) return;
 		if (i === 2) await row.click({ force: true, timeout: 60_000 }); // single re-click halfway
 	}
+	// Name the real cause here: a disabled Nebular button ignores the dispatched Edit/Delete click, so
+	// carrying on would only fail later as a dialog that never opened.
+	throw new Error('selectRowAndAwaitToolbar: selecting the KPI row never enabled the toolbar Edit button.');
+};
+
+const settleGrid = async () => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	await page.waitForLoadState('networkidle').catch(() => {});
+	await page.waitForTimeout(1500);
+};
+
+export const selectTableRow = async (index) => {
+	await settleGrid();
+	await selectRowAndAwaitToolbar(getPage().locator(GoalsKPIPage.selectTableRowCss).nth(index));
+};
+
+// Select the row of a specific KPI instead of a positional index: the KPI grid can hold KPIs this
+// scenario did not create (a retry's earlier attempt, other specs on the same shard DB), and a blind
+// row 0 would edit and then DELETE one of those.
+export const selectTableRowByName = async (name: string) => {
+	await settleGrid();
+	const row = getPage().locator(GoalsKPIPage.selectTableRowCss).filter({ hasText: name }).first();
+	await row.waitFor({ state: 'visible', timeout: 24_000 });
+	await selectRowAndAwaitToolbar(row);
 };
 
 export const editKPIButtonVisible = async () => {

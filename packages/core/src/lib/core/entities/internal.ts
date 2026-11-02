@@ -6,6 +6,7 @@ export * from './translate-base';
 export * from './entity-type-base.entity';
 
 //core entities
+export * from '../../account-deletion/account-deletion-request.entity';
 export * from '../../accounting-template/accounting-template.entity';
 export * from '../../activity-log/activity-log.entity';
 export * from '../../adjustment/adjustment-reason.entity';
@@ -174,6 +175,7 @@ export * from '../../terms-acceptance/terms-acceptance.entity';
 export * from '../../official-holiday/official-holiday.entity';
 export * from '../../time-off-policy/time-off-policy.entity';
 export * from '../../time-off-balance/time-off-balance.entity';
+export * from '../../time-off-balance/time-off-balance-deduction.entity';
 export * from '../../time-off-request/time-off-request.entity';
 export * from '../../time-tracking/activity/activity.entity';
 export * from '../../time-tracking/screenshot/screenshot.entity';

@@ -23,6 +23,8 @@ describe('OrganizationProjectService.updateOrganizationProjectMembers', () => {
 				save: jest.fn()
 			},
 			deleteMemberByIds: jest.fn(),
+			// Both members still work in the organization
+			findWorkingEmployeeIds: jest.fn().mockImplementation(async (ids: string[]) => new Set(ids)),
 			_entitySubscriptionService: entitySubscriptionService,
 			_eventBus: { publish: jest.fn() }
 		};

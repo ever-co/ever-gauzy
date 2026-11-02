@@ -58,6 +58,27 @@ export class OrganizationProjectsService {
 	}
 
 	/**
+	 * Archives a project the organization finished with: no list offers it any more unless archived projects
+	 * are asked for (`where.isArchived`). It stays readable by its ID.
+	 *
+	 * @param id The project ID.
+	 * @returns A promise resolving to the archived project.
+	 */
+	archive(id: ID): Promise<IOrganizationProject> {
+		return firstValueFrom(this._http.put<IOrganizationProject>(`${this.API_URL}/${id}/archive`, {}));
+	}
+
+	/**
+	 * Brings an archived project back: the lists offer it again.
+	 *
+	 * @param id The project ID.
+	 * @returns A promise resolving to the project, no longer archived.
+	 */
+	unarchive(id: ID): Promise<IOrganizationProject> {
+		return firstValueFrom(this._http.put<IOrganizationProject>(`${this.API_URL}/${id}/unarchive`, {}));
+	}
+
+	/**
 	 * Retrieves all projects assigned to a specific employee.
 	 *
 	 * @param id The employee ID.

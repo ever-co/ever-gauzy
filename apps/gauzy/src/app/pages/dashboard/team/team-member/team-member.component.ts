@@ -1,5 +1,6 @@
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { IMemberRow, activityTone, formatDuration, formatPercent } from '../team-dashboard.utils';
+import { PersonCardKeyboard, personCardId } from '../person-card-keyboard';
 
 /** Tasks listed in a row before "Show all". */
 const VISIBLE_TASKS = 2;
@@ -27,6 +28,11 @@ export class TeamMemberComponent {
 	public readonly formatDuration = formatDuration;
 	public readonly formatPercent = formatPercent;
 	public readonly activityTone = activityTone;
+
+	/** Keyboard access to the member's hover card. */
+	protected readonly cardKeyboard = new PersonCardKeyboard();
+	/** The id of this member's card, so the keyboard reaches this card and no other. */
+	protected readonly cardId = personCardId();
 
 	/** `true` renders the compact overview line instead of table cells. */
 	@Input() public isClassic = false;

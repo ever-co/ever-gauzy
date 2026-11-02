@@ -37,6 +37,18 @@ export interface StoreSchema extends IApplicationConfig {
 	 * Includes the `appSetting` property which specifies the application settings.
 	 */
 	appSetting: IApplicationSetting;
+
+	/**
+	 * Where windows the user can move were last left, by window (see `WindowPositionMemory` in desktop-window).
+	 * Kept apart from `appSetting`, which the settings page writes back whole.
+	 */
+	windowPositions?: Record<string, IWindowPosition>;
+}
+
+/** The top-left corner of a window, in screen coordinates (DIP). */
+export interface IWindowPosition {
+	x: number;
+	y: number;
 }
 
 /**
@@ -115,6 +127,13 @@ export interface IApplicationSetting {
 	/** Display that shows the screenshot notification: an Electron display id, or `null` for the primary display */
 	screenshotNotificationDisplayId?: number | null;
 	mutedNotification: boolean;
+	/**
+	 * The screenshot sound chosen on this computer (the `IDesktopScreenshotSound` of @gauzy/contracts), played instead
+	 * of the bundled one while its file exists; `null` or unset plays the bundled sound. `mutedNotification` still mutes it.
+	 */
+	customScreenshotSound?: { path: string; name: string } | null;
+	/** Short tones when this computer's timer starts and stops tracking. Off unless `true`. */
+	timerStartStopSound?: boolean;
 	autoLaunch: boolean;
 	visibleAwOption: boolean;
 	randomScreenshotTime: boolean;

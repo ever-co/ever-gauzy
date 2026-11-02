@@ -35,18 +35,19 @@ export interface IDocsFolderDestination {
 			[(ngModel)]="search"
 		/>
 		<div class="docs-folder-picker-list">
-			<button
-				*ngFor="let destination of filtered"
-				type="button"
-				class="docs-folder-picker-item"
-				[class.selected]="isSelected(destination)"
-				[disabled]="destination.disabled"
-				[style.padding-left.rem]="0.5 + destination.depth * 1"
-				(click)="select(destination)"
-			>
-				<nb-icon [icon]="destination.id ? 'folder-outline' : 'home-outline'" size="tiny"></nb-icon>
-				{{ destination.name }}
-			</button>
+			@for (destination of filtered; track destination) {
+				<button
+					type="button"
+					class="docs-folder-picker-item"
+					[class.selected]="isSelected(destination)"
+					[disabled]="destination.disabled"
+					[style.padding-left.rem]="0.5 + destination.depth * 1"
+					(click)="select(destination)"
+				>
+					<nb-icon [icon]="destination.id ? 'folder-outline' : 'home-outline'" size="tiny"></nb-icon>
+					{{ destination.name }}
+				</button>
+			}
 		</div>
 	`,
 	styles: [
@@ -96,7 +97,10 @@ export class DocsFolderPickerComponent extends TranslationBaseComponent implemen
 	public destinations: IDocsFolderDestination[] = [];
 	public search = '';
 
-	constructor(public readonly translateService: TranslateService, private readonly treeStore: DocumentTreeStore) {
+	constructor(
+		public readonly translateService: TranslateService,
+		private readonly treeStore: DocumentTreeStore
+	) {
 		super(translateService);
 	}
 

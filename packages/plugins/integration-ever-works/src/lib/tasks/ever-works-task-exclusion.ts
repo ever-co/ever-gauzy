@@ -1,4 +1,4 @@
-import { ID } from '@gauzy/contracts';
+import { ID, isTaskSyncAllowed } from '@gauzy/contracts';
 import { EverWorksSettingName } from '../ever-works-setting.enum';
 import type { EverWorksMappingContext } from '../mapping/ever-works-mapping-context.service';
 import { EverWorksLinkState, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
@@ -9,6 +9,7 @@ export interface EverWorksTaskExclusionInput {
 	issueType?: string | null;
 	taskTypeId?: ID | string | null;
 	projectId?: ID | string | null;
+	syncScope?: string | null;
 }
 
 /**
@@ -27,7 +28,8 @@ export function isIdeaTask(
 
 /**
  * Why a Gauzy task is not pushed to Ever Works at all, or `null` when it is (plan 01 §7, §8): an idea syncs as an
- * Ever Works idea, and a task of a project not linked to a work only when the mapping allows it. Shared by the task
+ * Ever Works idea, a task whose sync scope is `none` never syncs, and a task of a project not linked to a work only
+ * when the mapping allows it (an `ever-platform` task does sync: Ever Works is part of the Ever platform). Shared by the task
  * handler and the comment handler, whose comments of such a task never wait for it (review F22).
  */
 export async function taskSyncExclusion(
@@ -37,6 +39,9 @@ export async function taskSyncExclusion(
 ): Promise<string | null> {
 	const setting = (name: EverWorksSettingName) =>
 		context.mapping.settings?.find((row) => row.settingsName === name)?.settingsValue ?? '';
+	if (!isTaskSyncAllowed(task, 'ever-platform')) {
+		return 'the task is kept out of every integration (its sync scope is none)';
+	}
 	if (isIdeaTask(context, task)) {
 		return 'ideas sync as Ever Works ideas (plan 01 §8), not as tasks';
 	}

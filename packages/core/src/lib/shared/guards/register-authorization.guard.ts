@@ -2,11 +2,13 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@
 import { ModuleRef } from '@nestjs/core';
 import { environment as env } from '@gauzy/config';
 import { ID, IRole, IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { Request } from 'express';
 import { verify } from 'jsonwebtoken';
+import { ExtractJwt } from 'passport-jwt';
 import { RequestContext } from '../../core/context';
 import { TypeOrmRoleRepository } from '../../role/repository/type-orm-role.repository';
 import { MikroOrmRoleRepository } from '../../role/repository/mikro-orm-role.repository';
-import { RoleAuthorizationService } from '../../role/role-authorization.service';
+import { IRoleAuthorizationState, RoleAuthorizationService } from '../../role/role-authorization.service';
 import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
 import { MikroOrmOrganizationRepository } from '../../organization/repository/mikro-orm-organization.repository';
 import { getORMType, MultiORMEnum } from '../../core/utils';
@@ -29,6 +31,14 @@ export interface RegisterRequestUser {
 	role?: IRole;
 	/** Enabled permissions of that role, so RequestContext.hasPermission() is answerable downstream. */
 	permissions?: PermissionsEnum[];
+}
+
+/** The caller of the register route, authenticated as an active ADMIN or SUPER_ADMIN from the database. */
+interface AuthenticatedAdministrator {
+	caller: IUser;
+	authorization: IRoleAuthorizationState;
+	callerUserId: ID;
+	callerTenantId: ID;
 }
 
 /**
@@ -118,35 +128,17 @@ export class RegisterAuthorizationGuard implements CanActivate {
 	}
 
 	/**
-	 * Checks if the request is authorized to proceed.
+	 * Authenticates the caller of the register route as an active ADMIN or SUPER_ADMIN.
 	 *
-	 * @param context The execution context.
-	 * @returns A promise that resolves to a boolean indicating whether the request is authorized.
+	 * Only the account id is taken from the token; whether the account is active and which role it holds are read
+	 * from the DATABASE, never from the token's claims.
+	 *
+	 * @param token The bearer token of the request, or null when it carries none.
+	 * @returns The caller, its DB-fresh authorization state and tenant.
+	 * @throws ForbiddenException when there is no token, it is not a valid access token, it is a third-party
+	 * application token, or the account is unknown, inactive, archived or neither ADMIN nor SUPER_ADMIN.
 	 */
-	async canActivate(context: ExecutionContext): Promise<boolean> {
-		const request = context.switchToHttp().getRequest();
-		const body = request.body || {};
-		const userPayload = body.user || {};
-
-		// Check if any privileged fields are present in the request body
-		const hasPrivilegedTopLevel = PRIVILEGED_FIELDS.some(
-			(field) => body[field] !== undefined && body[field] !== null
-		);
-
-		// Check if any privileged fields are present in the user payload
-		const hasPrivilegedUser = PRIVILEGED_USER_FIELDS.some(
-			(field) => userPayload[field] !== undefined && userPayload[field] !== null
-		);
-
-		// If no privileged fields → pure public self-registration → allow through
-		if (!hasPrivilegedTopLevel && !hasPrivilegedUser) {
-			return true;
-		}
-
-		// --- Privileged fields detected: require authenticated ADMIN/SUPER_ADMIN ---
-
-		// Extract the JWT token from the Authorization header
-		const token = RequestContext.currentToken();
+	private async authenticateAdministrator(token: string | null): Promise<AuthenticatedAdministrator> {
 		if (!token) {
 			throw new ForbiddenException(
 				'Authentication required: privileged registration fields (role, tenant, organization) ' +
@@ -205,6 +197,66 @@ export class RegisterAuthorizationGuard implements CanActivate {
 				'Insufficient privileges: only ADMIN or SUPER_ADMIN can create users with assigned roles, tenants, or organizations.'
 			);
 		}
+
+		return { caller, authorization, callerUserId, callerTenantId };
+	}
+
+	/**
+	 * Whether the request carries the token of an active ADMIN or SUPER_ADMIN, decided exactly as for a privileged
+	 * registration ({@link authenticateAdministrator}), but answering instead of throwing: a missing, invalid,
+	 * expired, non-access or third-party application token, or any other account, answers false.
+	 *
+	 * `SelfRegistrationGuard` asks it only while the operator has closed registration, so that an administrator can
+	 * still create a user through this route. Nothing is attached to the request.
+	 *
+	 * @param request The HTTP request, whose bearer token is read like `RequestContext.currentToken()` reads it.
+	 */
+	async isAdministratorRequest(request: Request): Promise<boolean> {
+		const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request);
+		if (!token) {
+			return false;
+		}
+		try {
+			await this.authenticateAdministrator(token);
+			return true;
+		} catch (error) {
+			if (error instanceof ForbiddenException) {
+				return false;
+			}
+			throw error;
+		}
+	}
+
+	/**
+	 * Checks if the request is authorized to proceed.
+	 *
+	 * @param context The execution context.
+	 * @returns A promise that resolves to a boolean indicating whether the request is authorized.
+	 */
+	async canActivate(context: ExecutionContext): Promise<boolean> {
+		const request = context.switchToHttp().getRequest();
+		const body = request.body || {};
+		const userPayload = body.user || {};
+
+		// Check if any privileged fields are present in the request body
+		const hasPrivilegedTopLevel = PRIVILEGED_FIELDS.some(
+			(field) => body[field] !== undefined && body[field] !== null
+		);
+
+		// Check if any privileged fields are present in the user payload
+		const hasPrivilegedUser = PRIVILEGED_USER_FIELDS.some(
+			(field) => userPayload[field] !== undefined && userPayload[field] !== null
+		);
+
+		// If no privileged fields → pure public self-registration → allow through
+		if (!hasPrivilegedTopLevel && !hasPrivilegedUser) {
+			return true;
+		}
+
+		// --- Privileged fields detected: require authenticated ADMIN/SUPER_ADMIN ---
+		const { caller, authorization, callerUserId, callerTenantId } = await this.authenticateAdministrator(
+			RequestContext.currentToken()
+		);
 
 		// Get ORM type from request context
 		const ormType = getORMType();

@@ -1,0 +1,223 @@
+:host {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+// Search | assignees | menus, then how many match and the way out, at the far end. Wraps on narrow screens.
+.board-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.board-filter-search {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex: 0 1 15rem;
+  min-width: 10rem;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0 0.5rem;
+  border-radius: 0.25rem;
+  background-color: var(--gauzy-card-2);
+  box-shadow: inset 0 0 0 1px var(--gauzy-border-default-color);
+  color: var(--gauzy-text-color-2);
+  cursor: text;
+
+  &:focus-within {
+    box-shadow: inset 0 0 0 1px var(--gauzy-action-info-text);
+  }
+
+  nb-icon {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+// A bare `<input>`, so the global form-control rule lands on it, with a full control's height and chrome: stripped
+// so it reads as the search box's text, as the dashboard's filter bar does.
+.board-filter-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  box-shadow: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-1);
+  appearance: none;
+
+  &::placeholder {
+    color: var(--gauzy-text-color-2);
+  }
+
+  &::-webkit-search-cancel-button {
+    cursor: pointer;
+  }
+}
+
+// The assignees as Jira stacks them: overlapping, each cut out of the one before by a ring of the page's colour.
+.board-filter-people {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 0.25rem;
+  padding-inline-start: 0.125rem;
+}
+
+// An assignee to toggle: it rises out of the stack on hover, and an outer ring says it is on.
+.board-filter-person {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.375rem;
+  height: 1.375rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--gauzy-active-tint);
+  box-shadow: 0 0 0 2px var(--gauzy-card-1);
+  font: inherit;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-1);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease-out,
+    box-shadow 0.12s ease-in-out;
+
+  & + & {
+    margin-inline-start: -0.3125rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    z-index: 2;
+    transform: translateY(-2px);
+  }
+
+  &.is-active {
+    z-index: 1;
+    box-shadow:
+      0 0 0 2px var(--gauzy-card-1),
+      0 0 0 4px var(--gauzy-action-info-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: 2px;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+// Initials on a colour of their own, as the page's dark and light themes both carry white text on it.
+.board-filter-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  color: #fff;
+}
+
+.board-filter-menu {
+  min-width: 7.5rem;
+  max-width: 11rem;
+
+  // The search box's height and surface, through the variables Nebular's select and the global select rules read, so
+  // nothing reaches into the component. The global height floor (`$default-height`) is this line height plus 0.875rem
+  // of padding: 1.75rem, as the search box; a tiny select draws no line of it. The rules read the hairline, the radius
+  // and the `!important` background straight from their variables, so setting those here restyles this select alone.
+  --select-medium-text-line-height: 0.875rem;
+  --select-tiny-text-font-size: 0.75rem;
+  --select-tiny-text-line-height: 1rem;
+  --select-tiny-placeholder-text-font-size: 0.75rem;
+  --select-outline-tiny-padding: 0 0.5rem;
+  --select-icon-offset: 1.5rem;
+  --select-outline-basic-text-color: var(--gauzy-text-color-2);
+  --select-outline-basic-placeholder-text-color: var(--gauzy-text-color-2);
+  --gauzy-overlay-border-color: var(--gauzy-border-default-color);
+  --gauzy-card-1: var(--gauzy-card-2);
+  --border-radius: 0.25rem;
+
+  &.is-active {
+    --gauzy-overlay-border-color: var(--gauzy-action-info-text);
+    --select-outline-basic-text-color: var(--gauzy-text-color-1);
+  }
+}
+
+.board-filter-count {
+  display: inline-block;
+  min-width: 1rem;
+  margin-inline-start: 0.25rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-active-tint);
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.board-filter-end {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.board-filter-results {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--gauzy-text-color-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-filter-person {
+    transition: none;
+
+    &:hover,
+    &:focus-visible {
+      transform: none;
+    }
+  }
+}
+
+// The search takes the whole line, and the rest wraps under it.
+@media screen and (max-width: 40rem) {
+  .board-filter-search {
+    flex: 1 1 100%;
+  }
+
+  .board-filter-end {
+    margin-inline-start: 0;
+  }
+}

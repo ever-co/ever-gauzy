@@ -7,7 +7,9 @@ import { IDocument } from '@gauzy/contracts';
 @Component({
 	selector: 'gz-docs-updated-cell',
 	template: `
-		<span class="docs-updated" *ngIf="display" [nbTooltip]="tooltip" nbTooltipPlacement="top">{{ display }}</span>
+		@if (display) {
+			<span class="docs-updated" [nbTooltip]="tooltip" nbTooltipPlacement="top">{{ display }}</span>
+		}
 	`,
 	styles: [
 		`

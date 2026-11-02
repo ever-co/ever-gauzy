@@ -73,6 +73,8 @@ import {
 	OrganizationTeamEmployee,
 	OrganizationVendor,
 	Payment,
+	PayrollItem,
+	PayrollRun,
 	Pipeline,
 	PipelineStage,
 	Product,
@@ -225,6 +227,8 @@ import { MikroOrmOrganizationRepository } from '../../organization/repository/mi
 import { TypeOrmOrganizationRepository } from '../../organization/repository/type-orm-organization.repository';
 import { MikroOrmPaymentRepository } from '../../payment/repository/mikro-orm-payment.repository';
 import { TypeOrmPaymentRepository } from '../../payment/repository/type-orm-payment.repository';
+import { TypeOrmPayrollItemRepository } from '../../payroll-item/repository/type-orm-payroll-item.repository';
+import { TypeOrmPayrollRunRepository } from '../../payroll-run/repository/type-orm-payroll-run.repository';
 import { MikroOrmPipelineStageRepository } from '../../pipeline-stage/repository/mikro-orm-pipeline-stage.repository';
 import { TypeOrmPipelineStageRepository } from '../../pipeline-stage/repository/type-orm-pipeline-stage.repository';
 import { MikroOrmPipelineRepository } from '../../pipeline/repository/mikro-orm-pipeline.repository';
@@ -267,6 +271,7 @@ import { MikroOrmUserOrganizationRepository } from '../../user-organization/repo
 import { TypeOrmUserOrganizationRepository } from '../../user-organization/repository/type-orm-user-organization.repository';
 import { MikroOrmUserRepository } from '../../user/repository/mikro-orm-user.repository';
 import { TypeOrmUserRepository } from '../../user/repository/type-orm-user.repository';
+import { collectStoredFiles, deleteStoredFiles, onlyFilesOfTenant } from '../../account-deletion/account-deletion-files';
 
 @Injectable()
 export class FactoryResetService {
@@ -600,6 +605,12 @@ export class FactoryResetService {
 
 		mikroOrmPaymentRepository: MikroOrmPaymentRepository,
 
+		@InjectRepository(PayrollItem)
+		private typeOrmPayrollItemRepository: TypeOrmPayrollItemRepository,
+
+		@InjectRepository(PayrollRun)
+		private typeOrmPayrollRunRepository: TypeOrmPayrollRunRepository,
+
 		@InjectRepository(Pipeline)
 		private typeOrmPipelineRepository: TypeOrmPipelineRepository,
 
@@ -787,6 +798,22 @@ export class FactoryResetService {
 			tenantId: user.tenantId
 		};
 
+		// The time-tracking captures (screenshots, camshots, ...) go with their time slots through the database
+		// cascade, which runs no entity subscriber: read their storage keys first and remove the files after.
+		// The organizations deleted outright (all but the first) take every file-owning row with them.
+		const capturedFiles = [
+			...(await collectStoredFiles(this.typeOrmUserRepository.manager, {
+				kind: 'reset',
+				tenantId: user.tenantId,
+				organizationIds: allOrganizationsIds
+			})),
+			...(await collectStoredFiles(this.typeOrmUserRepository.manager, {
+				kind: 'organizations',
+				tenantId: user.tenantId,
+				organizationIds: deleteOrganizationIds || []
+			}))
+		];
+
 		await this.deleteSpecificTables(findInput);
 		if (deleteOrganizationIds?.length > 0) {
 			switch (this.ormType) {
@@ -815,6 +842,10 @@ export class FactoryResetService {
 					break;
 			}
 		}
+
+		// Only now that every row the files belonged to is gone: a failure above leaves rows and files together.
+		// And only keys under this tenant: a key is a string a client could have written (see isKeyOfTenant).
+		await deleteStoredFiles(onlyFilesOfTenant(capturedFiles, user.tenantId));
 
 		let firstOrganization;
 		switch (this.ormType) {
@@ -913,6 +944,10 @@ export class FactoryResetService {
 			this.typeOrmInvoiceItemRepository,
 			this.typeOrmInvoiceEstimateHistoryRepository,
 			this.typeOrmInvoiceRepository,
+			// Payroll lines before the runs they belong to, as invoice items go before invoices, and both before the
+			// employees the lines are paid to. Without these a reset kept the organization's payroll.
+			this.typeOrmPayrollItemRepository,
+			this.typeOrmPayrollRunRepository,
 			this.typeOrmFeatureOrganizationRepository,
 			this.typeOrmEmployeeAppointmentRepository,
 			this.typeOrmEmployeeAwardRepository,

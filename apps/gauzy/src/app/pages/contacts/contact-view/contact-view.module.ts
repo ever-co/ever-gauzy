@@ -23,6 +23,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 // Record-side Documents panel (spec 00 §6.14 R-LNK-02). Standalone, so it is
 // imported directly — the Documents hub module is never pulled in here.
 import { DocumentLinksPanelComponent } from '@gauzy/plugin-docs-ui';
+// The Notes tab: the shared comments of a record, as the project page's Comments. Standalone.
+import { EntityCommentsComponent } from '../../shared/entity-comments/entity-comments.component';
 import { ContactViewComponent } from './contact-view.component';
 import { ContactViewRoutingModule } from './contact-view-routing.module';
 
@@ -49,7 +51,8 @@ import { ContactViewRoutingModule } from './contact-view-routing.module';
 		EmployeeMultiSelectModule,
 		FavoriteToggleModule,
 		TableComponentsModule,
-		DocumentLinksPanelComponent
+		DocumentLinksPanelComponent,
+		EntityCommentsComponent
 	],
 	declarations: [ContactViewComponent]
 })

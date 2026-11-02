@@ -50,6 +50,7 @@ import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
 import { TimeLog, TimeSlot } from './../../core/entities/internal';
 import { MultiORMEnum, getDateRangeFormat, getORMType } from './../../core/utils';
+import { withoutDummyImageHost } from '../../placeholder-image/placeholder-image-url';
 import { UserService } from '../../user/user.service';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -2114,16 +2115,20 @@ export class StatisticService {
 		}
 
 		// Set employeeIds based on permissions and request
-		// Special handling for getTasks: if organizationTeamId or ORG_MEMBER_LAST_LOG_VIEW permission exists,
-		// allow empty employeeIds to fetch all team members
-		if (
-			user &&
-			user.employeeId &&
-			!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE) &&
-			!onlyMe &&
-			!isNotEmpty(employeeIds) &&
-			(isNotEmpty(organizationTeamId) || RequestContext.hasPermission(PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW))
-		) {
+		// Special handling for getTasks: with the ORG_MEMBER_LAST_LOG_VIEW permission, or for a named team the caller
+		// belongs to, allow empty employeeIds to fetch all team members
+		const hasEmployeeIdentity = Boolean(user?.employeeId);
+		const canChangeSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		const hasEmployeeIds = isNotEmpty(employeeIds);
+		const asksForAllMembers = hasEmployeeIdentity && !canChangeSelectedEmployee && !onlyMe && !hasEmployeeIds;
+		const canViewMembersLastLog = RequestContext.hasPermission(PermissionsEnum.ORG_MEMBER_LAST_LOG_VIEW);
+
+		let keepsAllMembers = asksForAllMembers && canViewMembersLastLog;
+		if (asksForAllMembers && !canViewMembersLastLog) {
+			keepsAllMembers = await this.canReadAllTeamMembers(user.employeeId, organizationTeamId, teamIds);
+		}
+
+		if (keepsAllMembers) {
 			// Special case: Keep empty employeeIds to fetch all team members
 			// This will be filtered by organizationTeamId in the query
 		} else {
@@ -2432,6 +2437,37 @@ export class StatisticService {
 				)
 			])
 		);
+	}
+
+	/**
+	 * Whether an employee may read the time of every member of the teams a getTasks request names.
+	 *
+	 * The read covers organizationTeamId and every team of teamIds, so the employee must belong to each of them
+	 * (a team's manager is one of its members), unless they may view the whole organization.
+	 *
+	 * @param employeeId - The caller's employee
+	 * @param organizationTeamId - The team the request names
+	 * @param teamIds - The other teams the request names
+	 * @returns true when the request may keep its empty employee list
+	 */
+	private async canReadAllTeamMembers(employeeId: ID, organizationTeamId: ID, teamIds: ID[]): Promise<boolean> {
+		if (!isNotEmpty(organizationTeamId)) {
+			return false;
+		}
+		if (RequestContext.hasPermission(PermissionsEnum.ALL_ORG_VIEW)) {
+			return true;
+		}
+
+		const otherTeamIds = teamIds ?? [];
+		const readTeamIds = new Set([organizationTeamId, ...otherTeamIds]);
+		for (const teamId of readTeamIds) {
+			const isMember = await this._managedEmployeeService.isMemberOfTeam(employeeId, teamId);
+			if (!isMember) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -2753,15 +2789,16 @@ export class StatisticService {
 
 				const rows = await qb.orderBy('time_log.startedAt', 'DESC').limit(5);
 
+				// Raw rows skip the subscribers: a stored dummyimage.com image is replaced by the API's own placeholder here.
 				timeLogs = rows.map((row: any) => ({
 					id: row.id,
 					startedAt: row.startedAt,
 					duration: row.duration,
 					user: {
 						name: `${row.user_firstName || ''} ${row.user_lastName || ''}`.trim(),
-						imageUrl: row.user_imageUrl
+						imageUrl: withoutDummyImageHost(row.user_imageUrl)
 					},
-					project: { name: row.project_name, imageUrl: row.project_imageUrl },
+					project: { name: row.project_name, imageUrl: withoutDummyImageHost(row.project_imageUrl) },
 					employeeId: row.employee_id,
 					employee: { id: row.employee_id, kind: row.employee_kind }
 				}));

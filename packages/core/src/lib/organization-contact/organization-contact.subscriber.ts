@@ -5,6 +5,7 @@ import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-ent
 import { ApiErrorCode } from '../core/errors/api-error-codes';
 import { getDummyImage } from './../core/utils';
 import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
+import { replaceDummyImageUrl } from '../placeholder-image/placeholder-image-url';
 
 /**
  * The two rules a party row is written through, on every path that writes one.
@@ -52,6 +53,9 @@ export class OrganizationContactSubscriber extends BaseEntityEventSubscriber<Org
 				// Otherwise, generate a dummy image URL based on the first character of the name
 				entity.imageUrl = getDummyImage(330, 300, entity.name.charAt(0).toUpperCase());
 			}
+
+			// A stored dummyimage.com placeholder (older rows) is shown as the API's own, never fetched from that third party.
+			replaceDummyImageUrl(entity, 'imageUrl');
 		} catch (error) {
 			console.error(
 				'OrganizationContactSubscriber: An error occurred during the afterEntityLoad process:',
@@ -101,6 +105,8 @@ export class OrganizationContactSubscriber extends BaseEntityEventSubscriber<Org
 	 * @throws BadRequestException when the row would carry a negative loyalty balance.
 	 */
 	private beforeWrite(entity: OrganizationContact): void {
+		// A dummyimage.com placeholder sent by a client is stored as the API's own (a first-party URL).
+		replaceDummyImageUrl(entity, 'imageUrl');
 		this.mirrorEmailKey(entity);
 		this.assertLoyaltyPointsAreNotNegative(entity);
 	}

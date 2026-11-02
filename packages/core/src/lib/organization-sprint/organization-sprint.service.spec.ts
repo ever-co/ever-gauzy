@@ -96,6 +96,8 @@ describe('OrganizationSprintService.updateOrganizationSprintMembers', () => {
 		const entitySubscriptionService = { deleteForEmployee: jest.fn(), delete: jest.fn() };
 		const self = {
 			_roleService: { findOneByWhereOptions: jest.fn().mockResolvedValue({ id: 'role-manager' }) },
+			// Every existing member still works in the organization
+			_employeeService: { findWorkingEmployeeIds: jest.fn(async (ids: string[]) => new Set(ids)) },
 			typeOrmOrganizationSprintEmployeeRepository: {
 				find: jest.fn().mockResolvedValue([
 					{ id: 'row-a', employeeId: 'employee-a', roleId: null },
@@ -136,6 +138,8 @@ describe('OrganizationSprintService.updateOrganizationSprintMembers', () => {
 			const repository = { find: jest.fn().mockResolvedValue(rows), update: jest.fn(), save: jest.fn() };
 			const self = {
 				_roleService: { findOneByWhereOptions: jest.fn().mockResolvedValue({ id: 'role-manager' }) },
+				// Every existing member still works in the organization
+				_employeeService: { findWorkingEmployeeIds: jest.fn(async (ids: string[]) => new Set(ids)) },
 				typeOrmOrganizationSprintEmployeeRepository: repository,
 				deleteMemberByIds: jest.fn(),
 				_entitySubscriptionService: { deleteForEmployee: jest.fn() },

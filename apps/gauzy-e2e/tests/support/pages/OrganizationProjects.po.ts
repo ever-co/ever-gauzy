@@ -12,6 +12,7 @@ import {
 	dispatchClick,
 	waitForSpinnerGone
 } from '../util';
+import { expect } from '@playwright/test';
 import { selectNgOption } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
@@ -41,8 +42,25 @@ export const nameInputVisible = async () => {
 };
 
 export const enterNameInputData = async (data) => {
-	await clearField(OrganizationProjectsPage.projectNameInputCss);
-	await enterInput(OrganizationProjectsPage.projectNameInputCss, data);
+	const page = getPage();
+	const input = page.locator(OrganizationProjectsPage.projectNameInputCss).first();
+	await input.waitFor({ state: 'visible', timeout: 24_000 });
+	// On the EDIT page ga-project-mutation patches the form from the resolved project twice: when the
+	// [project] input is set, and again from its debounced (100 ms) selectedOrganization$ subscription
+	// (_syncProject in project-mutation.component.ts). A name typed in between is overwritten with the
+	// stored one and the edit silently saves the old name. Wait for the stored name to land, let the
+	// second patch pass, then type — and read the value back so an overwrite is retried, not missed.
+	if (/\/pages\/organization\/projects\/[^/?#]+\/edit/.test(page.url())) {
+		await expect(input).not.toHaveValue('', { timeout: 24_000 }).catch(() => undefined);
+		await page.waitForTimeout(1000);
+	}
+	for (let attempt = 0; attempt < 3; attempt++) {
+		await clearField(OrganizationProjectsPage.projectNameInputCss);
+		await enterInput(OrganizationProjectsPage.projectNameInputCss, data);
+		await page.waitForTimeout(400);
+		if ((await input.inputValue().catch(() => '')) === String(data)) return;
+	}
+	await expect(input).toHaveValue(String(data), { timeout: 5_000 });
 };
 
 export const selectEmployeeDropdownVisible = async () => {
@@ -122,13 +140,44 @@ export const descriptionInputVisible = async () => {
 	await verifyElementIsVisible(OrganizationProjectsPage.projectDescriptionCss);
 };
 
-export const clickTabButton = async (index) => {
-	// Close any open ng-select panel (e.g. the body-appended tags dropdown) so its overlay can't swallow
-	// the tab click, then dispatch the click straight to the tab header (nb-tabset switches on click).
-	await getPage().keyboard.press('Escape').catch(() => undefined);
-	const tab = getPage().locator(OrganizationProjectsPage.tabButtonCss).nth(index);
-	await tab.waitFor({ state: 'visible', timeout: 8000 }).catch(() => undefined);
-	await tab.dispatchEvent('click');
+/**
+ * The project form's sections, in the order the old <nb-tabset> rendered them for a project without a
+ * GitHub integration (Sprints is only offered for a saved sprint-mode project, so it never sat between
+ * these). Kept so a legacy numeric index still resolves to the same section: 1 = Description,
+ * 3 = Budget, 5 = Settings.
+ */
+const LEGACY_PROJECT_TAB_ORDER = ['main', 'description', 'billing', 'budget', 'openSource', 'settings'];
+
+/**
+ * Open a section of the project form.
+ *
+ * Since #11177 (954aac863c, "Feat/polish project edit page") the form no longer uses <nb-tabset>
+ * (`span.tab-text`); it renders its own tablist of `<button role="tab" id="project-form-tab-<id>">`
+ * and hides the inactive panes with [hidden]. Prefer the section id (`'description'`, `'budget'`,
+ * `'settings'`, ...); a number is mapped through the legacy nb-tabset order. Proves the switch via
+ * aria-selected rather than assuming the click landed.
+ */
+export const clickTabButton = async (tab: number | string) => {
+	const page = getPage();
+	const id = typeof tab === 'number' ? LEGACY_PROJECT_TAB_ORDER[tab] : tab;
+	if (!id) {
+		throw new Error(`clickTabButton: no project form section for index ${tab}`);
+	}
+	// Close any open dropdown (the members nb-select overlay, the body-appended tags ng-select panel) so
+	// it can't sit over the tablist. The form is a routed page, not an nb-dialog, so Escape is safe here.
+	await page.keyboard.press('Escape').catch(() => undefined);
+	const button = page.locator(`${OrganizationProjectsPage.projectFormTabIdPrefix}${id}`).first();
+	await button.waitFor({ state: 'visible', timeout: 24_000 });
+	for (let attempt = 0; attempt < 3; attempt++) {
+		// DOM-level click: the (click)="selectTab(id)" handler fires even if a fading overlay covers the tab.
+		await button.dispatchEvent('click');
+		const selected = await expect(button)
+			.toHaveAttribute('aria-selected', 'true', { timeout: 4_000 })
+			.then(() => true)
+			.catch(() => false);
+		if (selected) return;
+	}
+	await expect(button).toHaveAttribute('aria-selected', 'true', { timeout: 4_000 });
 };
 
 export const budgetHoursInputVisible = async () => {
@@ -148,18 +197,40 @@ export const saveProjectButtonVisible = async () => {
 	await verifyElementIsVisible(OrganizationProjectsPage.saveProjectButtonCss);
 };
 
+const onProjectsList = (href: string) => /\/pages\/organization\/projects(\?|$)/.test(href);
+
 export const clickSaveProjectButton = async () => {
-	// dispatchClick after the card spinner settles: a coordinate click can land on the full-card
-	// nb-spinner shown during save, and onSubmit fires on click regardless of the overlay. (.first()
-	// targets Save, which precedes the edit-only "Add Module" success button in the same form-group.)
+	// Save is the action bar's status="primary" button (#11177), [disabled]="form.invalid". Wait for it to
+	// be enabled (a click on a disabled button is dropped), then dispatch the click so the full-card
+	// nb-spinner shown during the save can't intercept it.
+	const page = getPage();
+	const save = page.locator(OrganizationProjectsPage.saveProjectButtonCss).first();
 	await waitForSpinnerGone();
+	await expect(save).toBeEnabled({ timeout: 24_000 });
 	await dispatchClick(OrganizationProjectsPage.saveProjectButtonCss);
-	// The save is async and the component navigates back to the projects list on success.
-	// Wait for that navigation so callers (e.g. CustomCommands.addProject) don't race a
-	// subsequent goto() against the in-flight save/redirect.
-	await getPage()
-		.waitForURL((url) => /\/pages\/organization\/projects(\?|$)/.test(url.href), { timeout: 30000 })
-		.catch(() => undefined);
+	// The create/edit page saves asynchronously and then navigates back to the projects list. Wait for
+	// that navigation so callers (e.g. CustomCommands.addProject) don't race a subsequent goto() against
+	// the in-flight save/redirect. If the click was swallowed (still on the form, Save still there and
+	// enabled, no save in flight), dispatch it once more.
+	const navigated = await page
+		.waitForURL((url) => onProjectsList(url.href), { timeout: 30_000 })
+		.then(() => true)
+		.catch(() => false);
+	if (!navigated && !onProjectsList(page.url()) && (await save.isEnabled().catch(() => false))) {
+		await waitForSpinnerGone();
+		await dispatchClick(OrganizationProjectsPage.saveProjectButtonCss);
+		await page.waitForURL((url) => onProjectsList(url.href), { timeout: 30_000 }).catch(() => undefined);
+	}
+};
+
+/**
+ * The project form closed back onto the projects list — i.e. the save went through (create/edit only
+ * navigate away after the API accepted the project; an API error keeps the form open with a toast).
+ */
+export const verifyProjectFormClosed = async () => {
+	const page = getPage();
+	await page.waitForURL((url) => onProjectsList(url.href), { timeout: 30_000 });
+	await expect(page.locator(OrganizationProjectsPage.projectFormCss)).toHaveCount(0, { timeout: 24_000 });
 };
 
 export const tableRowVisible = async () => {
@@ -228,7 +299,16 @@ export const verifyProjectExists = async (text) => {
 };
 
 export const verifyProjectIsDeleted = async (text) => {
-	await verifyTextNotExisting(OrganizationProjectsPage.verifyProjectCss, text);
+	// Assert on the Name column, matching the WHOLE name: a table-wide `hasText` is a case-insensitive
+	// substring match, so the short edit name ("Ever") would also hit any member/contact/tag that merely
+	// contains it (e.g. an employee called "Everett" or "Beverly") and fail although the project is gone.
+	const page = getPage();
+	await page.locator(OrganizationProjectsPage.verifyProjectCss).first().waitFor({ state: 'visible', timeout: 24_000 });
+	const escaped = String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const exact = new RegExp('^\\s*' + escaped + '\\s*$');
+	await expect(page.locator(OrganizationProjectsPage.projectNameCellCss).filter({ hasText: exact })).toHaveCount(0, {
+		timeout: 24_000
+	});
 };
 
 export const waitMessageToHide = async () => {

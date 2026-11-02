@@ -472,6 +472,14 @@ export class TeamSelectorComponent implements OnInit, OnDestroy {
 		}
 
 		this.teams = (this.teams || []).filter((item: IOrganizationTeam) => item.id !== team.id).filter(isNotEmpty);
+
+		// A deleted or archived team no longer narrows the pages it was selected for. The selection is read from both
+		// the selected team and the bound ID, which `writeValue` sets alone.
+		const selectedIds = ([] as ID[]).concat(this.organizationTeamId ?? []);
+		const wasSelected = this.selectedTeam?.id === team.id || selectedIds.includes(team.id);
+		if (!this.skipGlobalChange && wasSelected) {
+			this.selectTeam(null);
+		}
 	}
 
 	selectTeam(team: IOrganizationTeam): void {

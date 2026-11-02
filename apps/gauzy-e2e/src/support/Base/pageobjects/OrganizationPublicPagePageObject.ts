@@ -36,7 +36,10 @@ export const OrganizationPublicPage = {
 	skillsDropdownOptionsCss: 'ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	languagesTabCss: 'nb-card-header.dialog-header button[role="tab"]',
 	addLanguageButtonCss: '#org-edit-pane-languages button.add-link',
-	languageDropdownCss: 'ngx-language-selector div[role="combobox"]',
+	// ngx-language-selector [template]="'ng-select'" renders an <ng-select class="language-select">. In
+	// ng-select 24 role="combobox" sits on the inner <input>, not on a div, so the old
+	// `div[role="combobox"]` matched nothing.
+	languageDropdownCss: 'ngx-language-selector ng-select',
 	languageDropdownOptionsCss: 'ng-dropdown-panel > div.ng-dropdown-panel-items div.ng-option',
 	languageLevelDropdownCss: 'nb-select#languageLevel',
 	languageLevelDropdownOptionsCss: 'nb-option-list > ul.option-list > nb-option',
@@ -55,7 +58,9 @@ export const OrganizationPublicPage = {
 	officialNameFieldCss: '#officialNameInput',
 	gridButtonCss: 'div.layout-switch > button',
 	taxFieldCss: '#taxIdInput',
-	nextButtonCss: 'button[type="submit"]',
+	// The step form's actions moved to its card footer in #10608 (ffc762ee8a) — there is no submit button.
+	// The .po drives steps 2-4 and this button through AddOrganization.po (advanceStepForm).
+	nextButtonCss: 'ga-organizations-step-form nb-card-footer.dialog-footer button[status="primary"]',
 	// Add button moved from nb-card-body into the nb-card-header toolbar (ngx-gauzy-button-action
 	// #visible template). Scope to the plus icon so a leaked success button elsewhere can't match first.
 	addButtonCss: 'button[status="success"]:has(nb-icon[icon="plus-outline"])',

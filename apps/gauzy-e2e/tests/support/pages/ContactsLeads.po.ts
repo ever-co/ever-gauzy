@@ -1,7 +1,9 @@
+import { expect } from '@playwright/test';
 import {
 	verifyElementIsVisible,
 	clickButton,
 	dispatchClick,
+	dispatchClickWhenSettled,
 	waitForSpinnerGone,
 	clearField,
 	enterInput,
@@ -13,10 +15,73 @@ import {
 	verifyByLength,
 	verifyByText
 } from '../util';
-import { selectNgOption } from '../ng-select';
+import { selectNgOption, openNgSelect, realOptions } from '../ng-select';
 import { getPage } from '../page-context';
 // Selectors are framework-agnostic — reused from the Cypress tree during migration.
 import { ContactsLeadsPage } from '../../../src/support/Base/pageobjects/ContactsLeadsPageObject';
+
+/**
+ * Click the forward button of the contact wizard's CURRENT step ("Next" on steps 1-3, "Save" on step 4 —
+ * see ContactsLeadsPage.lastStepBtnCss) once it is enabled. Steps 1-3 bind `[disabled]` to their form's
+ * validity; a click dispatched while Angular has not yet re-enabled the button is lost and the stepper
+ * silently stays put, so wait for the state that matters first. Dispatched (not a coordinate click) so a
+ * transient card spinner cannot swallow it; nbStepperNext still gates on the step's form validity.
+ * Shared with Clients.po / Customers.po — all three pages render the same ga-contact-mutation wizard.
+ */
+export const clickWizardForward = async (selector: string = ContactsLeadsPage.nextButtonCss) => {
+	await waitForSpinnerGone();
+	await expect(getPage().locator(selector).first()).toBeEnabled({ timeout: 24_000 });
+	await dispatchClick(selector);
+};
+
+/**
+ * Pick an employee on the wizard's Members step (step 4) and confirm it is a member.
+ *
+ * #10308 (e9e6bfd9fa) replaced `ga-employee-multi-select` (nb-select, `.option-list nb-option`) with a
+ * searchable multi `ng-select.members-select` (appendTo="body", closeOnSelect=false). Its
+ * `ng-multi-label-tmp` renders a fixed "Search employees" placeholder instead of `div.ng-value` chips, so
+ * the generic ng-select driver's `div.ng-value` commit check can never see a pick (and would re-click,
+ * i.e. TOGGLE the member off again). The pick is confirmed against the option's own
+ * `ng-option-selected` state instead. An option that is already selected (the edit flow reopens a
+ * contact saved with a member) is left as it is, never clicked off.
+ *
+ * Returns whether the target is a member afterwards. `false` only when the organization lists no
+ * employees at all / no option matches — callers decide whether that is acceptable.
+ */
+export const pickContactMember = async (
+	controlCss: string,
+	optionCss: string,
+	target: number | string
+): Promise<boolean> => {
+	const page = getPage();
+	await waitForSpinnerGone();
+	if (!(await openNgSelect(controlCss, optionCss))) {
+		return false;
+	}
+	const options = realOptions(optionCss);
+	const option = typeof target === 'string' ? options.filter({ hasText: target }).first() : options.nth(target);
+	if ((await option.count().catch(() => 0)) === 0) {
+		return false;
+	}
+	const isPicked = async () =>
+		/(^|\s)ng-option-selected(\s|$)/.test((await option.getAttribute('class').catch(() => null)) || '');
+	for (let attempt = 0; attempt < 2; attempt++) {
+		if (await isPicked()) {
+			return true;
+		}
+		// DOM-level click first (ng-select binds (click)="toggleItem(item)" on the option, and a dispatched
+		// event cannot be intercepted); a real click only as the fallback.
+		if (attempt === 0) {
+			await option.dispatchEvent('click').catch(() => undefined);
+		} else {
+			await option.click({ force: true }).catch(() => undefined);
+		}
+		for (let i = 0; i < 10 && !(await isPicked()); i++) {
+			await page.waitForTimeout(300);
+		}
+	}
+	return isPicked();
+};
 
 export const gridBtnExists = async () => {
 	/* no-op: grid list/grid layout toggle removed from the app */
@@ -32,9 +97,17 @@ export const addButtonVisible = async () => {
 
 export const clickAddButton = async () => {
 	// the leads page shows a load spinner over the toolbar right after navigation; wait it out then
-	// dispatch the click so the Add stepper reliably opens (a coordinate click can land on the spinner).
-	await waitForSpinnerGone();
-	await dispatchClick(ContactsLeadsPage.addButtonCss);
+	// dispatch the click so the Add stepper reliably opens (a coordinate click can land on the spinner),
+	// and confirm the wizard's Name field rendered (re-dispatching once if the click was swallowed).
+	await dispatchClickWhenSettled(ContactsLeadsPage.addButtonCss, ContactsLeadsPage.nameInputCss);
+	await settleWizardForm();
+};
+
+// ga-contact-mutation patches its whole main form (`_patchForm`: name/email/phone/projects/tags…) from
+// the selected organization 200 ms (debounceTime) after it renders — values typed before that are wiped.
+// Let that land before the caller starts filling (the Name re-fill before "Next" stays as the backstop).
+export const settleWizardForm = async () => {
+	await getPage().waitForTimeout(1000);
 };
 
 export const nameInputVisible = async () => {
@@ -79,7 +152,10 @@ export const clickCountryDropdown = async () => {
 	await clickButton(ContactsLeadsPage.countryDropdownCss);
 };
 
-export const selectCountryFromDropdown = async (text) => {
+export const selectCountryFromDropdown = async (country) => {
+	// Trimmed: ga-country's searchFn matches the raw term, so a padded value (' Bulgaria ') typed into an
+	// already-open panel would filter on ' Bul' and match nothing.
+	const text = String(country).trim();
 	const page = getPage();
 	const input = page.locator(ContactsLeadsPage.countryDropdownCss).locator('input').first();
 	const option = page.locator(ContactsLeadsPage.countryDropdownOptionCss);
@@ -133,7 +209,12 @@ export const clickProjectDropdown = async () => {
 };
 
 export const selectProjectFromDropdown = async (text) => {
-	await clickElementByText(ContactsLeadsPage.projectsDropdownOptionCss, text);
+	// Through the shared ng-select driver: it re-opens the panel by keyboard if the click above did not
+	// (card spinner), ignores the "Loading…/No items found" rows and proves the pick on `div.ng-value`.
+	// Strict, like the clickElementByText it replaces (which threw when the option never appeared).
+	if (!(await selectNgOption(ContactsLeadsPage.projectsDropdownCss, ContactsLeadsPage.projectsDropdownOptionCss, String(text)))) {
+		throw new Error(`Project "${text}" could not be selected in the contact wizard's Projects picker`);
+	}
 };
 
 export const selectEmployeeDropdownVisible = async () => {
@@ -142,26 +223,18 @@ export const selectEmployeeDropdownVisible = async () => {
 
 export const clickSelectEmployeeDropdown = async () => {
 	// Wait out the full-card spinner first (it overlays the select, swallowing the open click), then
-	// open the employee multi-select. Its options are the org's employees "working" in the header date
-	// range (EmployeeSelectComponent.getWorkingEmployees), loaded async — selectEmployeeDropdownOption
-	// handles an empty/slow list best-effort.
+	// open the Members picker (ng-select.members-select, opens on mousedown). If the click is lost,
+	// selectEmployeeDropdownOption re-opens it via the keyboard.
 	await waitForSpinnerGone();
 	await clickButton(ContactsLeadsPage.usersMultiSelectCss);
 };
 
 export const selectEmployeeDropdownOption = async (index) => {
-	const page = getPage();
-	const option = page.locator(ContactsLeadsPage.dropdownOptionCss);
-	// Best-effort employee pick: the option list loads async and can legitimately be empty (no
-	// employee "working" in the selected date range). Select one if it shows; otherwise leave members
-	// empty — a contact saves fine without members — so the stepper still finishes. This avoids a hard
-	// 60s timeout on an empty list, which was the main flake on the contact-mutation employees step.
-	try {
-		await option.first().waitFor({ state: 'visible', timeout: 8000 });
-		await option.nth(index).click({ force: true });
-	} catch {
-		await page.keyboard.press('Escape').catch(() => {});
-	}
+	// Best-effort, as before: members are optional and a contact saves fine without them, so an
+	// organization with no employees leaves the list empty and the wizard still finishes. What changed
+	// is the control (see pickContactMember): no more Escape — the wizard is not a dialog, and the pick is
+	// confirmed on the option instead of being a blind click.
+	await pickContactMember(ContactsLeadsPage.usersMultiSelectCss, ContactsLeadsPage.membersOptionCss, index);
 };
 
 export const tagsMultiSelectVisible = async () => {
@@ -206,8 +279,7 @@ export const clickSaveButton = async () => {
 	// full-card nb-spinner (async geocode on the location step, employee load on the last) overlays the
 	// button so a coordinate click lands on the spinner. Wait briefly, then dispatch the click straight
 	// to the button — nbStepperNext fires on the click event and still gates on form validity.
-	await waitForSpinnerGone();
-	await dispatchClick(ContactsLeadsPage.saveButtonCss);
+	await clickWizardForward(ContactsLeadsPage.saveButtonCss);
 };
 
 export const inviteButtonVisible = async () => {
@@ -217,7 +289,8 @@ export const inviteButtonVisible = async () => {
 export const clickInviteButton = async () => {
 	// dispatchClick (not force-click): the preceding add-contact/toastr flow leaves fading cdk-overlay
 	// backdrops over the toolbar that intercept a coordinate click; dispatch fires invite() directly.
-	await dispatchClick(ContactsLeadsPage.inviteButtonCss);
+	// Confirmed on the Invite Contact dialog's name field (re-dispatched once if the click was lost).
+	await dispatchClickWhenSettled(ContactsLeadsPage.inviteButtonCss, ContactsLeadsPage.contactNameCss);
 };
 
 export const saveInviteButtonVisible = async () => {
@@ -225,10 +298,35 @@ export const saveInviteButtonVisible = async () => {
 };
 
 export const clickSaveInviteButton = async () => {
-	// dispatchClick: a leftover stepper backdrop can sit over the dialog footer and swallow the click,
-	// leaving the invite dialog open (so the grid behind it stays hidden from the next assertion).
+	// "Email Invite" is [disabled]="form.invalid", but the dialog's form has an ASYNC validator
+	// (usersService.getUserByEmail): while it is PENDING the button is enabled yet inviteContact() only
+	// persists when `form.valid`, so an early click is a silent no-op and the dialog stays open. Let the
+	// validator settle, dispatch, and re-dispatch until the dialog (ga-invite-contact) actually closes —
+	// the same handling as Clients.po, which drives this very dialog.
+	const page = getPage();
+	const dialog = page.locator(ContactsLeadsPage.inviteDialogCss);
 	await waitForSpinnerGone();
-	await dispatchClick(ContactsLeadsPage.saveInviteButtonCss);
+	await page.waitForTimeout(1200);
+	for (let attempt = 0; attempt < 6; attempt++) {
+		if ((await dialog.count().catch(() => 0)) === 0) {
+			return; // closed (a slow earlier dispatch landed) — never click into the page behind it
+		}
+		await page
+			.locator(ContactsLeadsPage.saveInviteButtonCss)
+			.first()
+			.dispatchEvent('click', undefined, { timeout: 5000 })
+			.catch(() => undefined);
+		try {
+			await dialog.first().waitFor({ state: 'detached', timeout: 5000 });
+			return;
+		} catch {
+			await page.waitForTimeout(900);
+		}
+	}
+	// Fail here, naming the cause, instead of in the next step's grid assertion.
+	await expect(dialog, 'the Invite Contact dialog never closed after "Email Invite"').toHaveCount(0, {
+		timeout: 5000
+	});
 };
 
 export const tableRowVisible = async () => {
@@ -271,6 +369,8 @@ export const selectTableRowByName = async (name: string) => {
 		.filter({ hasText: name })
 		.first();
 	const editBtn = page.locator(ContactsLeadsPage.editButtonCss).first();
+	// Fail on the missing row itself (24 s), not on a click that would wait out the whole test.
+	await row.waitFor({ state: 'visible', timeout: 24_000 });
 	for (let attempt = 0; attempt < 4; attempt++) {
 		await row.click({ force: true });
 		for (let i = 0; i < 8; i++) {
@@ -287,8 +387,9 @@ export const editButtonVisible = async () => {
 export const clickEditButton = async (_index: number = 0) => {
 	// dispatchClick: the preceding mutation dialogs (add/invite) leave fading cdk-overlay backdrops over
 	// the toolbar that swallow a coordinate click on Edit; dispatch fires editOrganizationContact().
-	await waitForSpinnerGone();
-	await dispatchClick(ContactsLeadsPage.editButtonCss);
+	// Confirmed on the wizard's Name field, then settled (see settleWizardForm).
+	await dispatchClickWhenSettled(ContactsLeadsPage.editButtonCss, ContactsLeadsPage.nameInputCss);
+	await settleWizardForm();
 };
 
 export const deleteButtonVisible = async () => {
@@ -359,8 +460,7 @@ export const verifyNextButtonVisible = async () => {
 export const clickNextButton = async () => {
 	// see clickSaveButton: wait out the location-step geocode spinner, then dispatch (the overlay
 	// otherwise swallows a coordinate click and the stepper silently stays on the current step).
-	await waitForSpinnerGone();
-	await dispatchClick(ContactsLeadsPage.nextButtonCss);
+	await clickWizardForward(ContactsLeadsPage.nextButtonCss);
 };
 
 export const verifyFinishButtonVisible = async () => {
@@ -371,8 +471,17 @@ export const clickFinishButton = async () => {
 	// The contact-mutation card shows a full-card nb-spinner while the final step loads its data; it
 	// overlays the footer Save button, so a coordinate click (even force) lands on the spinner and the
 	// save never fires. Wait for it to clear, then dispatch the click straight to the button.
-	await waitForSpinnerGone();
-	await dispatchClick(ContactsLeadsPage.finishButtonCss);
+	await clickWizardForward(ContactsLeadsPage.finishButtonCss);
+};
+
+// The wizard is replaced by the grid only once addOrEditOrganizationContact() has persisted the contact
+// (on an API error it stays up with a danger toast), so this proves the save landed — and fails HERE,
+// naming the cause, instead of in whatever the caller does with the contact next.
+export const verifyContactFormClosed = async () => {
+	await expect(
+		getPage().locator(ContactsLeadsPage.contactMutationCss),
+		'the contact wizard is still open after Save — the contact was not saved'
+	).toHaveCount(0, { timeout: 24_000 });
 };
 
 export const lastStepBtnVisible = async () => {
@@ -381,8 +490,7 @@ export const lastStepBtnVisible = async () => {
 
 export const clickLastStepBtn = async () => {
 	// see clickSaveButton: wait out the spinner, then dispatch to advance into the employees step.
-	await waitForSpinnerGone();
-	await dispatchClick(ContactsLeadsPage.lastStepBtnCss);
+	await clickWizardForward(ContactsLeadsPage.lastStepBtnCss);
 };
 
 export const budgetInputVisible = async () => {

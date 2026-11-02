@@ -67,6 +67,10 @@ export class TenantController {
 		status: HttpStatus.BAD_REQUEST,
 		description: 'Invalid input, The response body may contain clues as to what went wrong'
 	})
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description: 'Creating new workspaces is disabled on this server (ALLOW_TENANTS_REGISTRATION is false)'
+	})
 	@Post('/')
 	// `whitelist` strips anything the DTO does not declare, which the update route below has always
 	// done. Without it this route persisted whatever the body carried — and now that Tenant has a

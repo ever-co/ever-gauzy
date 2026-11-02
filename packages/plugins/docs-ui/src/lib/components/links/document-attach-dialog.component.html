@@ -3,10 +3,10 @@
 
 	<nb-card-body [nbSpinner]="loading" nbSpinnerStatus="primary">
 		<!--
-			The field has no visible label by design (the card header names the dialog), so it needs
-			an explicit accessible name — a placeholder is not one: it is not exposed as the
-			accessible name by every screen reader and it disappears as soon as the user types.
-		-->
+    The field has no visible label by design (the card header names the dialog), so it needs
+    an explicit accessible name — a placeholder is not one: it is not exposed as the
+    accessible name by every screen reader and it disappears as soon as the user types.
+    -->
 		<input
 			id="docs-attach-search"
 			nbInput
@@ -20,38 +20,47 @@
 			(ngModelChange)="onSearchChange($event)"
 		/>
 
-		<p class="muted" *ngIf="!loading && !filtered.length">
-			{{ 'DOCS.LINKS.ATTACH_NO_DOCUMENTS' | translate }}
-		</p>
+		@if (!loading && !filtered.length) {
+			<p class="muted">
+				{{ 'DOCS.LINKS.ATTACH_NO_DOCUMENTS' | translate }}
+			</p>
+		}
 
 		<!-- Pick as many as needed: each row toggles, and the selection survives a new search. -->
-		<div class="docs-attach-list" *ngIf="filtered.length">
-			<button
-				type="button"
-				class="docs-attach-item"
-				*ngFor="let document of filtered; trackBy: trackByDocument"
-				[class.selected]="isSelected(document)"
-				[attr.aria-pressed]="isSelected(document)"
-				[disabled]="saving"
-				(click)="toggle(document)"
-			>
-				<span class="docs-attach-check" aria-hidden="true">
-					<nb-icon *ngIf="isSelected(document)" icon="checkmark-outline"></nb-icon>
-				</span>
-				<nb-icon [icon]="iconOf(document)" size="tiny"></nb-icon>
-				<span class="docs-attach-item-name" [title]="document.name">{{ document.name }}</span>
-			</button>
-		</div>
+		@if (filtered.length) {
+			<div class="docs-attach-list">
+				@for (document of filtered; track trackByDocument($index, document)) {
+					<button
+						type="button"
+						class="docs-attach-item"
+						[class.selected]="isSelected(document)"
+						[attr.aria-pressed]="isSelected(document)"
+						[disabled]="saving"
+						(click)="toggle(document)"
+					>
+						<span class="docs-attach-check" aria-hidden="true">
+							@if (isSelected(document)) {
+								<nb-icon icon="checkmark-outline"></nb-icon>
+							}
+						</span>
+						<nb-icon [icon]="iconOf(document)" size="tiny"></nb-icon>
+						<span class="docs-attach-item-name" [title]="document.name">{{ document.name }}</span>
+					</button>
+				}
+			</div>
+		}
 	</nb-card-body>
 
 	<nb-card-footer class="docs-dialog-footer">
-		<span class="docs-attach-count" *ngIf="selectedCount" aria-live="polite">
-			{{ 'DOCS.LINKS.ATTACH_SELECTED' | translate : { count: selectedCount } }}
-		</span>
+		@if (selectedCount) {
+			<span class="docs-attach-count" aria-live="polite">
+				{{ 'DOCS.LINKS.ATTACH_SELECTED' | translate: { count: selectedCount } }}
+			</span>
+		}
 		<button nbButton ghost [disabled]="saving" (click)="cancel()">{{ 'DOCS.UPLOAD.CANCEL' | translate }}</button>
 		<button nbButton status="primary" [disabled]="!canConfirm" (click)="confirm()">
 			@if (selectedCount > 1) {
-				{{ 'DOCS.LINKS.ATTACH_CONFIRM_COUNT' | translate : { count: selectedCount } }}
+				{{ 'DOCS.LINKS.ATTACH_CONFIRM_COUNT' | translate: { count: selectedCount } }}
 			} @else {
 				{{ 'DOCS.LINKS.CONFIRM' | translate }}
 			}

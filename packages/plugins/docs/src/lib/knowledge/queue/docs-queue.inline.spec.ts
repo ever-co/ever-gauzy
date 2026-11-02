@@ -109,10 +109,32 @@ describe('DocsQueueService — queue mode', () => {
 
 		await service.enqueue(DOCS_JOB_CHUNK, PAYLOAD, { jobId: 'docs:chunk:doc-1:1700000000000', priority: 10 });
 
+		// BullMQ 6 accepts `:` only in a three-part id, so the run-unique part is joined with `-`.
 		expect(enqueue.mock.calls[0][0].options).toMatchObject({
-			jobId: 'docs:chunk:doc-1:1700000000000',
+			jobId: 'docs:chunk:doc-1-1700000000000',
 			priority: 10
 		});
+	});
+
+	/**
+	 * BullMQ 6 throws "Custom Id cannot contain :" for an id with `:` and other than three parts. Every run-unique id
+	 * (chained stage, park, recovery sweep, reprocess, re-index, replace) had four or more, so each enqueue failed and the
+	 * stage ran inline instead, in the API process for a reprocess or a replace.
+	 */
+	it.each([
+		['docs:extract:doc-1', 'docs:extract:doc-1'],
+		['docs:classify:doc-1:0123456789abcdef', 'docs:classify:doc-1-0123456789abcdef'],
+		['docs:extract:doc-1:parked:1700000000000', 'docs:extract:doc-1-parked-1700000000000'],
+		['docs:reconcile', 'docs-reconcile']
+	])('hands BullMQ an id it accepts: %s -> %s', async (given, expected) => {
+		const enqueue = jest.fn().mockResolvedValue(undefined);
+		const { service } = buildService({ enqueue });
+
+		await service.enqueue(DOCS_JOB_EXTRACT, PAYLOAD, { jobId: given });
+
+		const jobId: string = enqueue.mock.calls[0][0].options.jobId;
+		expect(jobId).toBe(expected);
+		expect(!jobId.includes(':') || jobId.split(':').length === 3).toBe(true);
 	});
 
 	it('degrades to the inline runner when the queue rejects the enqueue', async () => {

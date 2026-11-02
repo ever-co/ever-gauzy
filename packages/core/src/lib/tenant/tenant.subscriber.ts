@@ -3,6 +3,7 @@ import { getTenantLogo } from '../core/utils';
 import { Tenant } from './tenant.entity';
 import { BaseEntityEventSubscriber } from '../core/entities/subscribers/base-entity-event.subscriber';
 import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
+import { replaceDummyImageUrl } from '../placeholder-image/placeholder-image-url';
 
 @EventSubscriber()
 export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
@@ -74,6 +75,10 @@ export class TenantSubscriber extends BaseEntityEventSubscriber<Tenant> {
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
 				await this.setImageUrl(entity);
 			}
+
+			// A dummyimage.com placeholder (older rows, or sent by a client) becomes the API's own: shown and stored as
+			// a first-party URL, never fetched from that third party.
+			replaceDummyImageUrl(entity, 'logo');
 		} catch (error) {
 			console.error('TenantSubscriber: An error occurred during the updateTenantLogo process:', error);
 		}

@@ -11,6 +11,7 @@ import { FileStorageProviderEnum, isKnownDefaultSecret } from '@gauzy/contracts'
 import { IEnvironment, IGauzyFeatures } from './ienvironment';
 import { isEnvFlagEnabled, isFeatureEnabled, parseNonNegativeInt, resolveAppLink } from './environment.helper';
 import { resolveSocialAuthClients } from './social-auth.helper';
+import { resolveAuthSwitches } from './auth-switches.helper';
 import { resolveSecret } from './secret-resolver';
 
 /**
@@ -304,7 +305,7 @@ export const environment: IEnvironment = {
 		maxAuthCodes: Number.parseInt(process.env.GAUZY_ZAPIER_MAX_AUTH_CODES) || 1000,
 		instanceCount: process.env.GAUZY_ZAPIER_INSTANCE_COUNT === 'true',
 		redirectUri:
-			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integrations/zapier/callback`,
+			process.env.GAUZY_ZAPIER_REDIRECT_URL || `${process.env.API_BASE_URL}/api/integration/zapier/oauth/callback`,
 		postInstallUrl:
 			process.env.GAUZY_ZAPIER_POST_INSTALL_URL || `${process.env.CLIENT_BASE_URL}/#/pages/integrations/zapier`
 	},
@@ -324,6 +325,7 @@ export const environment: IEnvironment = {
 	gauzyUserPath: process.env.GAUZY_USER_PATH,
 	gauzySeedPath: process.env.GAUZY_SEED_PATH,
 	allowSuperAdminRole: process.env.ALLOW_SUPER_ADMIN_ROLE === 'false' ? false : true,
+	authSwitches: resolveAuthSwitches(process.env, (message) => console.warn(message)),
 	reportCatalogueAuthoring: process.env.REPORT_CATALOGUE_AUTHORING_ENABLED === 'true',
 	electronResourcesPath: process.env.ELECTRON_RESOURCES_PATH,
 

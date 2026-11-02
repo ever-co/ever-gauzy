@@ -1,4 +1,3 @@
-import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -35,16 +34,7 @@ const DOCUMENT_PICKER_PAGE_SIZE = 20;
 @Component({
 	selector: 'gz-document-attach-dialog',
 	standalone: true,
-	imports: [
-		CommonModule,
-		FormsModule,
-		TranslatePipe,
-		NbButtonModule,
-		NbCardModule,
-		NbIconModule,
-		NbInputModule,
-		NbSpinnerModule
-	],
+	imports: [FormsModule, TranslatePipe, NbButtonModule, NbCardModule, NbIconModule, NbInputModule, NbSpinnerModule],
 	providers: [DocumentsService],
 	templateUrl: './document-attach-dialog.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,

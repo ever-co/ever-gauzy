@@ -1,12 +1,17 @@
 export const SettingsFeaturesPage = {
 	headerTextCss: 'nb-card-header > h4.email-history-header',
-	// The feature-toggle card now renders its subheader via Angular @if control flow
-	// (feature-toggle.component.html), which no longer emits the legacy `.ng-star-inserted`
-	// class — match the plain `<header>` inside `nb-card-header` instead.
-	subheaderTextCss: 'nb-card-header > header',
+	// Settings features polish (#10439, 418bc244c6): the feature-toggle card header is now
+	// `nb-card-header.feature-page-header > h5.feature-page-title` ("Manage Features for '<tenant>'"),
+	// not a bare `<header>`.
+	subheaderTextCss: 'nb-card.card-feature nb-card-header.feature-page-header > h5.feature-page-title',
 	tabButtonCss: 'ul.route-tabset > li.route-tab > a.tab-link',
-	nbToggleCss: 'div.col-2 > nb-toggle',
-	checkboxCss: 'input.native-input',
-	textCss: 'span.text',
-	mainTextCss: 'div.row > div.col-10'
+	// One `section.settings-group` per feature: `header.group-header` holds the icon, the
+	// `h6.group-title` (name), the `p.group-description` and the feature's master nb-toggle; each
+	// sub-feature is a `.setting-row > nb-checkbox` below it. (Was a masonry of nb-cards with the
+	// description in `div.row > div.col-10` and the toggle in `div.col-2`.)
+	featureGroupCss: 'nb-card.card-feature section.settings-group',
+	featureToggleInputCss: 'header.group-header nb-toggle input.native-input',
+	subFeatureCss: '.setting-row nb-checkbox',
+	textCss: 'nb-card.card-feature section.settings-group .setting-row nb-checkbox span.text',
+	mainTextCss: 'nb-card.card-feature section.settings-group p.group-description'
 };

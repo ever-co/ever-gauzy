@@ -45,4 +45,24 @@ export interface IZapierIntegrationSettings {
 	hasClientCredentials: boolean;
 	hasAccessToken: boolean;
 	hasRefreshToken: boolean;
+	/** The webhook URL saved with `PUT /integration/zapier/settings`, or null. */
+	webhookUrl?: string | null;
+}
+
+/** The body of `PUT /integration/zapier/settings`. */
+export interface IZapierUpdateSettingsInput {
+	isEnabled: boolean;
+	/** An empty string or null clears it; leaving it out keeps the stored one. */
+	webhookUrl?: string | null;
+}
+
+/**
+ * The Zapier OAuth configuration the web app may see (`GET /integration/zapier/oauth/config`): never the client secret.
+ * A value the server does not configure is null.
+ */
+export interface IZapierOAuthPublicConfig {
+	clientId: string | null;
+	redirectUri: string | null;
+	postInstallUrl: string | null;
+	scopes: string[];
 }

@@ -1,0 +1,67 @@
+// The panel, list rows and empty states come from the dashboard's stylesheet (see the component's
+// `styleUrls`); this adds only what an activity row has of its own.
+
+.activity-filter {
+  min-width: 7.5rem;
+}
+
+.activity-item {
+  align-items: flex-start;
+}
+
+// What was done, as a small round badge: green for created, blue for changed, red for deleted.
+.activity-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background-color: var(--gauzy-hover-tint);
+  color: var(--gauzy-text-color-2);
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  &[data-tone='created'] {
+    color: var(--gauzy-action-success-text);
+    background-color: var(--gauzy-action-success-tint);
+  }
+
+  &[data-tone='updated'] {
+    color: var(--gauzy-action-info-text);
+    background-color: var(--gauzy-action-info-tint);
+  }
+
+  &[data-tone='deleted'] {
+    color: var(--gauzy-action-danger-text);
+    background-color: var(--gauzy-action-danger-tint);
+  }
+}
+
+// A task's or project's row title opens its page.
+.activity-title {
+  display: block;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--gauzy-action-info-text);
+    outline-offset: 1px;
+  }
+}
+
+.activity-time {
+  flex: 0 0 auto;
+  font-size: 0.625rem;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-2);
+  white-space: nowrap;
+}

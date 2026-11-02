@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { NbDialogRef } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import moment from 'moment';
@@ -8,6 +8,7 @@ import { filter, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
+	ID,
 	IEmployee,
 	IOrganization,
 	IOrganizationProject,
@@ -26,6 +27,7 @@ import {
 	Store,
 	TasksService
 } from '@gauzy/ui-core/core';
+import { isProjectOfClient } from './add-task-dialog.utils';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -49,6 +51,12 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	 * Payment Mutation Form
 	 */
 	public form: UntypedFormGroup = AddTaskDialogComponent.buildForm(this.fb);
+
+	/**
+	 * Optional client the project list is narrowed to; empty lists every project, as before.
+	 * Kept out of `form` on purpose: a task has no client of its own, so it must not reach the task payload.
+	 */
+	public readonly organizationContactControl = new FormControl<ID | null>(null);
 
 	constructor(
 		public readonly dialogRef: NbDialogRef<AddTaskDialogComponent>,
@@ -102,7 +110,29 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 		this._task = value;
 	}
 
+	/** Callers also pass an id-less `selectedTask` to prefill a new task, so only an id means editing. */
+	get isEditing(): boolean {
+		return !!this.selectedTask?.id;
+	}
+
+	/** The task's short reference for the dialog header, e.g. `GAU-42`. */
+	get taskReference(): string {
+		if (!this.isEditing) {
+			return '';
+		}
+		// `taskNumber` is a server-side virtual column (prefix + number), absent from ITask.
+		return (this.selectedTask as any).taskNumber || '';
+	}
+
 	ngOnInit() {
+		// Subscribed first, so the project the task being edited already has (set by `initializeForm`) and
+		// the page's selected project (set below) load their modules too. They used to load only when the
+		// project selector re-applied the URL's project, which it no longer does over a form's own project.
+		this.form
+			.get('projectId')
+			.valueChanges.pipe(untilDestroyed(this))
+			.subscribe(() => this.loadAvailableModules());
+
 		const storeOrganization$ = this.store.selectedOrganization$;
 		const storeEmployee$ = this.store.selectedEmployee$;
 		const storeProject$ = this.store.selectedProject$;
@@ -146,10 +176,31 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 			)
 			.subscribe();
 
-		this.form
-			.get('projectId')
-			.valueChanges.pipe(untilDestroyed(this))
-			.subscribe(() => this.loadAvailableModules());
+		this.organizationContactControl.valueChanges
+			.pipe(untilDestroyed(this))
+			.subscribe((organizationContactId) => this.onClientChanged(organizationContactId));
+	}
+
+	/**
+	 * Clears the selected project when it does not belong to the client the project list is now narrowed to.
+	 *
+	 * @param organizationContactId The picked client, or `null` once it is cleared.
+	 */
+	onClientChanged(organizationContactId: ID | null): void {
+		if (!isProjectOfClient(this.form.get('project').value, organizationContactId)) {
+			this.clearProject();
+		}
+	}
+
+	/**
+	 * Clears the selected project together with its modules: modules belong to a project, and
+	 * `loadAvailableModules` keeps the old project's list when there is no project, so they would
+	 * otherwise be saved on a task without one.
+	 */
+	private clearProject(): void {
+		this.selectedModules = [];
+		this.availableModules = [];
+		this.form.patchValue({ project: null, projectId: null, modules: [] });
 	}
 
 	initializeForm() {
@@ -187,9 +238,11 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 				status,
 				priority,
 				size,
-				estimateDays: duration.days(),
-				estimateHours: duration.hours(),
-				estimateMinutes: duration.minutes(),
+				// `asDays`, not `days`: `days()` wraps at a month and would drop the rest on save.
+				// `|| null` leaves an unset part showing its placeholder instead of a 0.
+				estimateDays: Math.floor(duration.asDays()) || null,
+				estimateHours: duration.hours() || null,
+				estimateMinutes: duration.minutes() || null,
 				dueDate: dueDate ? new Date(dueDate) : null,
 				description,
 				tags,
@@ -248,6 +301,14 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	}
 
 	selectedProject(project: IOrganizationProject) {
+		// The selector lists the picked client's projects, but its list is not only the server's answer (a project
+		// created elsewhere is appended to it), so the pick is checked too: the task would be saved on it.
+		// `id` skips the empty "All Projects" entry the selector reports when its project is cleared: that is no
+		// project, not another client's.
+		if (project?.id && !isProjectOfClient(project, this.organizationContactControl.value)) {
+			this.clearProject();
+			return;
+		}
 		this.form.get('project').setValue(project);
 		this.form.get('project').updateValueAndValidity();
 	}
@@ -295,13 +356,15 @@ export class AddTaskDialogComponent extends TranslationBaseComponent implements 
 	 * Loads available modules based on the selected project ID.
 	 */
 	private async loadAvailableModules() {
-		if (!this.organization || !this.form.get('projectId')?.value) return;
+		const projectId = this.form.get('projectId')?.value;
+		if (!this.organization || !projectId) return;
 		const modules = await firstValueFrom(
-			this.organizationProjectModuleService.getAllModulesByProjectId({
-				projectId: this.form.get('projectId')?.value
-			})
+			this.organizationProjectModuleService.getAllModulesByProjectId({ projectId })
 		);
 
+		// The project changed (or a client cleared it) while this answer was on its way: it lists another
+		// project's modules, which must not be offered, or saved, for the current one.
+		if (this.form.get('projectId')?.value !== projectId) return;
 		this.availableModules = modules?.items || [];
 	}
 

@@ -25,7 +25,7 @@
 						[attr.data-provider]="provider.id"
 						class="sign-in-provider"
 					>
-						{{ provider.titleKey | translate }}
+						{{ provider.titleKey | translate: provider.titleParams }}
 					</a>
 				}
 			}

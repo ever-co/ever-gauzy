@@ -1,4 +1,5 @@
-import { NotFoundException, UseGuards } from '@nestjs/common';
+import { NotFoundException, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FormerEmployeesInterceptor } from '../employee/former-employees.interceptor';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { FeatureFlag } from '@gauzy/common';
@@ -150,6 +151,7 @@ const ORGANIZATION_PROJECT_MODULE_DEFAULT_SORT: readonly ConnectionSortKey[] = [
  * appended to the guard chain the routes below already carry rather than replacing any part of it.
  */
 @Resolver('OrganizationProjectModule')
+@UseInterceptors(FormerEmployeesInterceptor)
 @UseGuards(TenantPermissionGuard, PermissionGuard, FeatureFlagGuard)
 @FeatureFlag(FEATURE_GRAPHQL)
 @Permissions(PermissionsEnum.ALL_ORG_EDIT)

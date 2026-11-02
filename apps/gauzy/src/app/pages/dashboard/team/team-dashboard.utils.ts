@@ -1,4 +1,5 @@
 import { IEmployee, ITimeSlot } from '@gauzy/contracts';
+import { NbPopoverDirective, NbPosition } from '@nebular/theme';
 import { AVATAR_DEFAULT_SVG } from '@gauzy/ui-core/common';
 
 /** Live presence of a member, as the team page shows it. */
@@ -20,8 +21,26 @@ export interface ITeamRow {
 	online: number;
 	duration: number;
 	activity: number;
+	/** Projects with time on the selected day. */
 	projects: number;
+	/** The team's projects with the day's time on each, plus any worked on but not linked. */
+	projectList: IProjectWorked[];
 	managers: string[];
+}
+
+/** One project of a team, with the time it got on the selected day — a "Projects worked" list line. */
+export interface IProjectWorked {
+	id: string;
+	name: string;
+	imageUrl: string | null;
+	initials: string;
+	duration: number;
+	/** People who logged time on it; a person counts once, whichever of their teams they logged under. */
+	members: number;
+	/** Bar length against the longest project of the list, 0..100. */
+	width: number;
+	/** Linked to the team; `false` for a project members tracked time on without it being linked. */
+	isLinked: boolean;
 }
 
 /** One task a member worked on during the selected day. */
@@ -37,15 +56,44 @@ export interface ITaskRow {
 	isOverEstimate: boolean;
 }
 
-/** One member of a team's members table. */
-export interface IMemberRow {
-	id: string;
+/** What a member's hover card shows — the team page's assignee card. */
+export interface ITeamPerson {
 	employeeId: string;
 	name: string;
-	caption: string | null;
 	/** The member's photo, or the default avatar when they have none. */
 	avatarUrl: string;
 	presence: Presence;
+	email: string | null;
+	/** The employee's short description. */
+	bio: string | null;
+	/** When they started, e.g. `Mar 4, 2024`. */
+	since: string | null;
+	/** The team the card is shown for, and the person's role in it. */
+	teamName: string | null;
+	isManager: boolean;
+	/** The person's own time zone, for their local time; `null` when unset. */
+	timeZone: string | null;
+	/** Their selected day so far. */
+	day: ITeamPersonDay;
+}
+
+/** A person's selected day, as their hover card summarizes it. */
+export interface ITeamPersonDay {
+	duration: number;
+	/** `null` when no activity was recorded. */
+	activity: number | null;
+	tasksCount: number;
+	/** The organization's working day, in seconds, and the share of it worked, 0..100. */
+	workPeriod: number;
+	workdayShare: number;
+	/** The longest task of the day — the one running, while tracking. */
+	task: { title: string | null; projectName: string | null } | null;
+}
+
+/** One member of a team's members table. */
+export interface IMemberRow extends ITeamPerson {
+	id: string;
+	caption: string | null;
 	isManager: boolean;
 	isWorking: boolean;
 	/** Longest first. */
@@ -64,6 +112,8 @@ export interface IRankedMember {
 	employeeId: string;
 	name: string;
 	meta: string;
+	/** For the hover card on the name. */
+	person: ITeamPerson;
 	duration: number;
 	/** Bar length against the top line, 0..100. */
 	width: number;
@@ -140,4 +190,54 @@ export function toPercentage(value: number, total: number): number {
 		return 0;
 	}
 	return Math.min(Math.max((value / total) * 100, 0), 100);
+}
+
+/** What a "Projects worked" popover is given: the list, and how big it may grow. */
+export interface IProjectsPopoverContext {
+	projects: IProjectWorked[];
+	maxHeight: number;
+	maxWidth: number;
+}
+
+/** The list's own caps; on a short screen it shrinks to the room it has (it scrolls inside either way). */
+const PROJECTS_LIST_MAX_HEIGHT = 352;
+const PROJECTS_LIST_MAX_WIDTH = 320;
+/** Nebular's 15px popover offset, plus a little room from the screen's edge. */
+const POPOVER_GAP = 24;
+/** Room kept between the list and the screen's left edge. */
+const POPOVER_EDGE = 8;
+
+/**
+ * Fits a tile's "Projects worked" popover to the screen just before it opens: below the
+ * button when the list fits there — or when below is the larger side — otherwise above,
+ * with the list capped to the room on that side. Tiles wrap onto more rows on narrow
+ * screens, so the button can sit anywhere on the screen. The list opens leftwards from the
+ * button's right edge, so its width is capped to the room between that edge and the
+ * screen's left edge — on a screen narrower than the list, it narrows instead of spilling.
+ *
+ * Nebular's own adjustments do not fit here: `vertical` only knows centred top and bottom
+ * (it drops the aligned position), the clockwise ones move the list beside the button —
+ * hence the popover's `noop`, with the side chosen here.
+ *
+ * Bound to the button's own `(click)`, which runs before Nebular's click trigger (that one
+ * listens on the document) opens the popover. A click that closes it changes nothing.
+ * The `-start` positions, in Nebular's naming, line the popover's END edge up with the
+ * button's, so it opens into the page from the tile's right-hand corner.
+ */
+export function fitProjectsPopover(popover: NbPopoverDirective, trigger: EventTarget | null, projects: IProjectWorked[]): void {
+	if (popover.isShown || !(trigger instanceof HTMLElement)) {
+		return;
+	}
+	const rect = trigger.getBoundingClientRect();
+	const below = window.innerHeight - rect.bottom - POPOVER_GAP;
+	const above = rect.top - POPOVER_GAP;
+	const placeBelow = below >= PROJECTS_LIST_MAX_HEIGHT || below >= above;
+	const room = placeBelow ? below : above;
+	popover.position = placeBelow ? NbPosition.BOTTOM_START : NbPosition.TOP_START;
+	popover.context = {
+		projects,
+		maxHeight: Math.max(Math.min(room, PROJECTS_LIST_MAX_HEIGHT), 0),
+		maxWidth: Math.max(Math.min(rect.right - POPOVER_EDGE, PROJECTS_LIST_MAX_WIDTH), 0)
+	} as IProjectsPopoverContext;
+	popover.rebuild();
 }

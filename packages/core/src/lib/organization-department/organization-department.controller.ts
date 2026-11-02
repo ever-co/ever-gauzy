@@ -18,8 +18,10 @@ import {
 	Put,
 	Query,
 	UseGuards,
-	UsePipes
+	UsePipes,
+	UseInterceptors
 } from '@nestjs/common';
+import { FormerEmployeesInterceptor } from '../employee/former-employees.interceptor';
 import { CommandBus } from '@nestjs/cqrs';
 import { DeepPartial } from 'typeorm';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -34,6 +36,7 @@ import { TenantOrganizationBaseDTO } from './../core/dto';
 
 @ApiTags('OrganizationDepartment')
 @UseGuards(TenantPermissionGuard)
+@UseInterceptors(FormerEmployeesInterceptor)
 @Controller('/organization-department')
 export class OrganizationDepartmentController extends CrudController<OrganizationDepartment> {
 	constructor(

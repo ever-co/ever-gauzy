@@ -70,6 +70,14 @@ export class EverWorksUpdateMappingDto {
 	@IsBoolean()
 	readonly syncUnlinkedProjectTasks?: boolean;
 
+	@ApiPropertyOptional({
+		description:
+			'Also send the open Gauzy Inbox items of paired people to Ever Works at the next initial sync or resync (off by default).'
+	})
+	@ValidateIf((_o, v) => v !== undefined)
+	@IsBoolean()
+	readonly backfillGauzyInbox?: boolean;
+
 	@ApiPropertyOptional()
 	@ValidateIf((_o, v) => v !== undefined)
 	@IsBoolean()
