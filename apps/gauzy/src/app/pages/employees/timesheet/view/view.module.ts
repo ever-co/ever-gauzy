@@ -1,12 +1,20 @@
 import { NgModule } from '@angular/core';
 import { ROUTES } from '@angular/router';
-import { NbCardModule, NbButtonModule, NbIconModule, NbCheckboxModule, NbTooltipModule } from '@nebular/theme';
+import {
+	NbCardModule,
+	NbButtonModule,
+	NbIconModule,
+	NbCheckboxModule,
+	NbSpinnerModule,
+	NbTooltipModule
+} from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import {
 	DialogsModule,
 	EditTimeLogModalModule,
 	GauzyButtonActionModule,
+	NoDataMessageModule,
 	SharedModule,
 	TableComponentsModule
 } from '@gauzy/ui-core/shared';
@@ -14,7 +22,7 @@ import { createTimesheetDetailsRoutes } from './view.routes';
 import { TimesheetViewComponent } from './view/view.component';
 
 // Nebular Modules
-const NB_MODULES = [NbButtonModule, NbCardModule, NbCheckboxModule, NbIconModule, NbTooltipModule];
+const NB_MODULES = [NbButtonModule, NbCardModule, NbCheckboxModule, NbIconModule, NbSpinnerModule, NbTooltipModule];
 
 @NgModule({
 	declarations: [TimesheetViewComponent],
@@ -25,6 +33,7 @@ const NB_MODULES = [NbButtonModule, NbCardModule, NbCheckboxModule, NbIconModule
 		DialogsModule,
 		EditTimeLogModalModule,
 		GauzyButtonActionModule,
+		NoDataMessageModule,
 		TableComponentsModule
 	],
 	providers: [

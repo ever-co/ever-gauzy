@@ -104,6 +104,14 @@
         margin-bottom: 0.5rem;
     }
 
+    // The empty state's heading and message, at the same 12px.
+    ngx-no-data-message ::ng-deep {
+        h5,
+        p {
+            font-size: 12px;
+        }
+    }
+
     // The heading and its back arrow share a line.
     .title-row {
         display: flex;

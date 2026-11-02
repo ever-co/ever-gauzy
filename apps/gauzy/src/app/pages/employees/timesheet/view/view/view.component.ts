@@ -32,6 +32,7 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 		isSelected: false
 	};
 	disable = true;
+	loading = false;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -63,6 +64,7 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 		if (!this.timesheet) {
 			return;
 		}
+		this.loading = true;
 		try {
 			const { organizationId, id: timesheetId } = this.timesheet;
 			const request: IGetTimeLogInput = {
@@ -79,6 +81,8 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 				.value();
 		} catch (error) {
 			console.error('Error while retrieving logs', error);
+		} finally {
+			this.loading = false;
 		}
 	}
 
