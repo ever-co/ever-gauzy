@@ -30,7 +30,7 @@
 							(checkedChange)="checkedAll($event)"
 						></nb-checkbox>
 					</div>
-					<div class="col-2">
+					<div class="col-2" *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]">
 						{{ 'TIMESHEET.EMPLOYEE' | translate }}
 					</div>
 					<div class="col">
@@ -71,14 +71,19 @@
 										status="basic"
 									></nb-checkbox>
 								</div>
-								<div class="col-2">
-									<ngx-avatar
-										class="report-table"
-										[name]="$safeNavigationMigration(timesheet?.employee?.user?.name)"
-										[src]="$safeNavigationMigration(timesheet?.employee?.user?.imageUrl)"
-										[id]="$safeNavigationMigration(timesheet?.employee?.id)"
-										[employee]="$safeNavigationMigration(timesheet?.employee)"
-									></ngx-avatar>
+								<div
+									class="col-2 employee-name"
+									*ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
+								>
+									<div class="name-container">
+										<ngx-avatar
+											class="report-table"
+											[name]="$safeNavigationMigration(timesheet?.employee?.user?.name)"
+											[src]="$safeNavigationMigration(timesheet?.employee?.user?.imageUrl)"
+											[id]="$safeNavigationMigration(timesheet?.employee?.id)"
+											[employee]="$safeNavigationMigration(timesheet?.employee)"
+										></ngx-avatar>
+									</div>
 								</div>
 								<div class="col">
 									{{ timesheet.duration | durationFormat }}

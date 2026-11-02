@@ -33,6 +33,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	disableButton: boolean = true;
 
 	TimesheetStatus = TimesheetStatus;
+	PermissionsEnum = PermissionsEnum;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
