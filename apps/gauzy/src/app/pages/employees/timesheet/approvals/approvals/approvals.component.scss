@@ -13,6 +13,23 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
   minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr) 8rem;
 
 :host {
+  // Bulk action stands on the tab strip. The shared rule hangs it 0.75rem above
+  // the card, so its lower half sat on the card's edge, inside the 1rem padding
+  // the action strip gives itself. It is now anchored to the card's top edge
+  // from below, with a gap, so it sits in the strip clear of the card.
+  nb-card.approvals-card {
+    position: relative;
+
+    .gauzy-action {
+      top: auto;
+      bottom: calc(100% + 0.375rem);
+
+      ::ng-deep .actions-container {
+        padding: 0;
+      }
+    }
+  }
+
   // The toolbar keeps its height and the table takes the rest of the body,
   // scrolling on its own. The body's height comes from the timesheet layout.
   nb-card.approvals-card > nb-card-body {
