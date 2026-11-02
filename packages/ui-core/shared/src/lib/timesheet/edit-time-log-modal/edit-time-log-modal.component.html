@@ -80,11 +80,7 @@
                       <span class="overlap-project">
                         {{ overlapTimeLog?.project?.name || ('TIMESHEET.NO_PROJECT' | translate) }}
                       </span>
-                      <span
-                        class="overlap-task"
-                        [nbTooltip]="overlapTimeLog?.task?.title"
-                        [nbTooltipDisabled]="!overlapTimeLog?.task?.title"
-                      >
+                      <span class="overlap-task">
                         {{ overlapTimeLog?.task?.title || ('TIMESHEET.NO_TODO' | translate) }}
                       </span>
                     </div>

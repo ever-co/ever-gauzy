@@ -279,11 +279,10 @@ $gap: 0.75rem;
     color: var(--gauzy-text-color-1);
   }
 
-  // One line; the full title is in the tooltip.
+  // Wraps rather than being cut off: a hover tooltip on a span is out of reach
+  // of keyboard users, who need the whole title before replacing that time.
   .overlap-task {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
     color: var(--gauzy-text-color-2);
   }
 
