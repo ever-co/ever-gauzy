@@ -17,10 +17,13 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
   // instead of bright white everywhere. Strong is kept for what an approver
   // scans for (total time, the toolbar total); the row body is the theme text
   // softened a little; details (dates, labels, headers) take the muted face.
-  // All three keep well above 4.5:1 on the card in the dark and light themes.
+  // All three keep at least 4.5:1 on the card in the dark and light themes.
   --ts-text-strong: var(--gauzy-text-color-1);
   --ts-text: color-mix(in srgb, var(--gauzy-text-color-1) 82%, transparent);
-  --ts-text-muted: var(--gauzy-text-color-2);
+  // The muted face is the theme's own, blended a fifth of the way toward the
+  // main text: on the older light themes `gauzy-text-color-2` alone (#7e7e8f)
+  // comes to about 3.9:1 on white, under AA for 12px text.
+  --ts-text-muted: color-mix(in srgb, var(--gauzy-text-color-2) 80%, var(--gauzy-text-color-1));
 
   // Bulk action stands on the tab strip. The shared rule hangs it 0.75rem above
   // the card, so its lower half sat on the card's edge, inside the 1rem padding
@@ -147,10 +150,10 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
       outline-offset: 1px;
     }
 
-    // How many timesheets the option holds: a quiet figure after its name.
+    // How many timesheets the option holds, after its name in the option's own
+    // colour: a faded figure fell under AA on the light themes.
     .count {
       font-size: 11px;
-      opacity: 0.7;
       font-variant-numeric: tabular-nums;
     }
   }

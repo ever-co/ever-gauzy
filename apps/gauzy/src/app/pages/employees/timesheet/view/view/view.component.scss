@@ -12,10 +12,13 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
   // the dark themes and left nothing standing out. Strong is kept for what an
   // approver scans for (project, duration, the summary figures); the row body
   // is the theme text softened a little; details take the theme's muted face.
-  // All three keep well above 4.5:1 on the card in the dark and light themes.
+  // All three keep at least 4.5:1 on the card in the dark and light themes.
   --ts-text-strong: var(--gauzy-text-color-1);
   --ts-text: color-mix(in srgb, var(--gauzy-text-color-1) 82%, transparent);
-  --ts-text-muted: var(--gauzy-text-color-2);
+  // The muted face is the theme's own, blended a fifth of the way toward the
+  // main text: on the older light themes `gauzy-text-color-2` alone (#7e7e8f)
+  // comes to about 3.9:1 on white, under AA for 12px text.
+  --ts-text-muted: color-mix(in srgb, var(--gauzy-text-color-2) 80%, var(--gauzy-text-color-1));
 
   // The page frame (`styles/_overrides.scss`) makes this host a flex item of
   // the content column with a definite height, so the card fills it down to
