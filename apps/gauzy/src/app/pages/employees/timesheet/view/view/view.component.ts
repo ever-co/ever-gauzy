@@ -2,7 +2,13 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { IGetTimeLogInput, ITimeLog, ITimesheet, TimesheetStatus, PermissionsEnum } from '@gauzy/contracts';
+import {
+	IGetTimeLogInput,
+	ITimeLog,
+	ITimesheet,
+	TimesheetStatus,
+	PermissionsEnum
+} from '@gauzy/contracts';
 import { chain } from 'underscore';
 import * as moment from 'moment';
 import { filter, Subject } from 'rxjs';
@@ -13,25 +19,30 @@ import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { TimesheetService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from '@gauzy/ui-core/shared';
 
+/** One day of the timesheet: its logs, earliest first, and the time they add up to. */
+interface ITimesheetDay {
+	date: Date;
+	logs: ITimeLog[];
+	duration: number;
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-timesheet-view',
-    templateUrl: './view.component.html',
-    styleUrls: ['../../daily/daily/daily.component.scss', './view.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	selector: 'ngx-timesheet-view',
+	templateUrl: './view.component.html',
+	styleUrls: ['./view.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
 export class TimesheetViewComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	PermissionsEnum = PermissionsEnum;
 	TimesheetStatus = TimesheetStatus;
-	timeLogs: any;
 	logs$: Subject<any> = new Subject();
 	timesheet: ITimesheet;
-	selectedLog = {
-		data: null,
-		isSelected: false
-	};
-	disable = true;
+
+	/** The timesheet's logs by day, earliest day first. */
+	days: ITimesheetDay[] = [];
+
 	loading = false;
 
 	constructor(
@@ -76,9 +87,7 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 				'task',
 				'employee.user'
 			]);
-			this.timeLogs = chain(logs)
-				.groupBy((log) => moment(log.startedAt).format('YYYY-MM-DD'))
-				.value();
+			this.setLogs(logs);
 		} catch (error) {
 			console.error('Error while retrieving logs', error);
 		} finally {
@@ -118,22 +127,29 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 		}
 	}
 
-	public selectLog(isChecked: boolean, log: ITimeLog) {
-		if ((this.selectedLog.data && this.selectedLog.data.id === log?.id) || !isChecked) {
-			this.clearData();
-		} else {
-			this.disable = true;
-			this.selectedLog.isSelected = this.disable;
-			this.selectedLog.data = log;
-		}
+	/**
+	 * Groups the logs by the local day they started on and totals the time on
+	 * each day.
+	 *
+	 * @param logs The timesheet's logs
+	 */
+	private setLogs(logs: ITimeLog[]) {
+		const sorted = [...(logs || [])].sort((a, b) => moment(a.startedAt).diff(moment(b.startedAt)));
+
+		this.days = chain(sorted)
+			.groupBy((log: ITimeLog) => moment(log.startedAt).format('YYYY-MM-DD'))
+			.map((dayLogs: ITimeLog[], day: string) => ({
+				// Built from local parts: the date pipe would read a bare
+				// `YYYY-MM-DD` as UTC midnight, the day before west of Greenwich.
+				date: moment(day, 'YYYY-MM-DD').toDate(),
+				logs: dayLogs,
+				duration: this.sumDuration(dayLogs)
+			}))
+			.value();
 	}
 
-	public clearData() {
-		this.selectedLog = {
-			data: null,
-			isSelected: false
-		};
-		this.disable = true;
+	private sumDuration(logs: ITimeLog[]): number {
+		return logs.reduce((total: number, log: ITimeLog) => total + (log.duration || 0), 0);
 	}
 
 	ngOnDestroy() {}
