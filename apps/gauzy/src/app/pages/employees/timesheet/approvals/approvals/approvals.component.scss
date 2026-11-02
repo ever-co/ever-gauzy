@@ -1,55 +1,13 @@
 @use '../../daily/daily/daily.component' as *;
 
+// The list is built from Daily's blocks (`.log-container`, `.custom-header`,
+// `.custom-body > .content`), so its sizing, row surface, 12px text and
+// selection marker all come from the Daily sheet used above. The body's height
+// is no longer pinned here either: the timesheet layout hands the page frame's
+// height down to every tab, Approvals included.
 :host {
-  .filters {
-    .form-control {
-      min-height: 40px;
-    }
-  }
-
+  // The status pill keeps to its text instead of filling the column.
   ga-status-badge ::ng-deep .badge {
     width: fit-content;
-  }
-
-  nb-card {
-    ::ng-deep {
-      .transition-container span {
-        background: unset;
-      }
-    }
-    nb-card-body {
-      height: 100%;
-      background-color: unset;
-    }
-  }
-
-  .custom-header-container {
-    @include nb-ltr(padding, 0 0.5rem 0 0 !important);
-    @include nb-rtl(padding, 0 0 0 0.5rem !important);
-  }
-
-  .custom-body {
-    &.approval {
-      height: calc(100vh - 21.75rem) !important;
-      width: 100%;
-      background: unset;
-      @include nb-ltr(padding, 0 0.5rem 0 0 !important);
-      @include nb-rtl(padding, 0 0 0 0.5rem !important);
-      background-color: unset !important;
-      .content-approval {
-        background-color: var(--gauzy-card-3);
-        border-radius: var(--border-radius);
-        @include nb-ltr(padding-left, 12px);
-        @include nb-rtl(padding-right, 12px);
-      }
-    }
-  }
-}
-
-.menu-item {
-  min-width: 150px;
-
-  button {
-    width: 100%;
   }
 }
