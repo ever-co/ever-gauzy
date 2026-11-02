@@ -8,8 +8,16 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
   minmax(0, 1.8fr) 4.5rem;
 
 :host {
+  // The page frame (`styles/_overrides.scss`) makes this host a flex item of
+  // the content column with a definite height, so the card fills it down to
+  // the footer at any screen size, where a `100vh` estimate of the chrome
+  // above left a band of empty page under the card.
+  min-height: 0;
+
   nb-card.timesheet-card {
-    height: calc(100vh - 13rem);
+    height: 100%;
+    min-height: 0;
+    margin: 0;
   }
 
   // Page title and breadcrumb at 12px, as in the timesheet tabs' header (see
@@ -42,11 +50,14 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     }
   }
 
-  // The body is the page's one scroller. The shared card sheet gives it
+  // The body takes the card's remaining room. The shared card sheet gives it
   // `overflow: unset` and a viewport-sized height, so a long timesheet ran out
-  // below the card; here it takes the card's remaining room instead, and
-  // `min-height: 0` lets it shrink to that room and scroll. Scoped to the card's
-  // class to out-rank that sheet's `nb-card nb-card-body`.
+  // below the card; `min-height: 0` lets it shrink to the card instead. Scoped
+  // to the card's class to out-rank that sheet's `nb-card nb-card-body`.
+  //
+  // The summary keeps its height and the table takes the rest, scrolling on
+  // its own, so the summary never scrolls out of view. The body itself only
+  // scrolls on a screen too short for the summary and a few rows.
   nb-card.timesheet-card > nb-card-body {
     flex: 1 1 0;
     height: auto;
@@ -59,6 +70,17 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     > * {
       flex: none;
     }
+
+    > .log-scroll,
+    > .empty-state {
+      flex: 1 1 auto;
+      min-height: 12rem;
+    }
+  }
+
+  .log-scroll {
+    overflow: auto;
+    border-radius: var(--border-radius);
   }
 
   .numeric {
@@ -273,8 +295,6 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
   }
 
   .empty-state {
-    flex: 1 1 auto;
-
     ngx-no-data-message ::ng-deep {
       h5,
       p {
