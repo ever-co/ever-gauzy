@@ -13,6 +13,15 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
   minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr) 8rem;
 
 :host {
+  // The same three levels of text as a timesheet's page (view.component.scss),
+  // instead of bright white everywhere. Strong is kept for what an approver
+  // scans for (total time, the toolbar total); the row body is the theme text
+  // softened a little; details (dates, labels, headers) take the muted face.
+  // All three keep well above 4.5:1 on the card in the dark and light themes.
+  --ts-text-strong: var(--gauzy-text-color-1);
+  --ts-text: color-mix(in srgb, var(--gauzy-text-color-1) 82%, transparent);
+  --ts-text-muted: var(--gauzy-text-color-2);
+
   // Bulk action stands on the tab strip. The shared rule hangs it 0.75rem above
   // the card, so its lower half sat on the card's edge, inside the 1rem padding
   // the action strip gives itself. It is now anchored to the card's top edge
@@ -40,6 +49,7 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
     overflow: hidden;
     font-size: 12px;
     line-height: 16px;
+    color: var(--ts-text);
 
     > * {
       flex: none;
@@ -58,11 +68,12 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
   }
 
   .strong {
-    font-weight: 600;
+    font-weight: 500;
+    color: var(--ts-text-strong);
   }
 
   .muted {
-    color: nb-theme(gauzy-text-color-2);
+    color: var(--ts-text-muted);
   }
 
   // ---- Toolbar --------------------------------------------------------------
@@ -149,16 +160,17 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
       font-size: 14px;
       width: 14px;
       height: 14px;
-      color: nb-theme(gauzy-text-color-2);
+      color: var(--ts-text-muted);
     }
 
     .toolbar-label {
-      font-weight: 600;
-      color: nb-theme(gauzy-text-color-2);
+      font-weight: 500;
+      color: var(--ts-text-muted);
     }
 
     .toolbar-value {
-      font-weight: 700;
+      font-weight: 600;
+      color: var(--ts-text-strong);
       font-variant-numeric: tabular-nums;
     }
   }
@@ -220,8 +232,8 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
     top: 0;
     z-index: 1;
     min-height: 2.5rem;
-    font-weight: 600;
-    color: nb-theme(gauzy-text-color-2);
+    font-weight: 500;
+    color: var(--ts-text-muted);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
     background:
       linear-gradient(var(--gauzy-card-4), var(--gauzy-card-4)),
@@ -258,6 +270,7 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
   }
 
   .time-span {
+    color: var(--ts-text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -276,9 +289,11 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
     padding: 2px 8px;
     border-radius: var(--border-radius);
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 16px;
     white-space: nowrap;
+    // Draft, and any status without a colour of its own, in the muted face.
+    color: var(--ts-text-muted);
     background-color: var(--gauzy-sidebar-background-3);
   }
 
