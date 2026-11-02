@@ -217,6 +217,23 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
   .cell-check {
     display: flex;
     align-items: center;
+
+    // A 14px box with a thinner edge, instead of Nebular's 20px one with the
+    // 2px border the Weekly sheet gives every checkbox; the tick scales with it.
+    nb-checkbox ::ng-deep {
+      .custom-checkbox {
+        width: 14px;
+        height: 14px;
+        border-width: 1.5px;
+        border-radius: 3px;
+      }
+
+      .custom-checkbox nb-icon {
+        width: 10px;
+        height: 10px;
+        font-size: 10px;
+      }
+    }
   }
 
   .cell-employee {
