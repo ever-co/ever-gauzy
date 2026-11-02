@@ -26,8 +26,13 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
   // the card, so its lower half sat on the card's edge, inside the 1rem padding
   // the action strip gives itself. It is now anchored to the card's top edge
   // from below, with a gap, so it sits in the strip clear of the card.
+  // The tab's own card paints no fill. It sits on the timesheet layout's card,
+  // and every fill here is translucent, so a third `card-2` layer (layout card,
+  // this card, its body) came out lighter than a timesheet's page, which has two
+  // (its card and its body). Now both pages stack the same two.
   nb-card.approvals-card {
     position: relative;
+    background-color: transparent;
 
     .gauzy-action {
       top: auto;
@@ -78,12 +83,16 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
 
   // ---- Toolbar --------------------------------------------------------------
 
+  // On the same panel as a timesheet page's summary.
   .toolbar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
+    background-color: var(--gauzy-card-3);
+    border-radius: var(--border-radius);
   }
 
   // A segmented control, styled as the status tabs on the dashboard's project
@@ -150,8 +159,6 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
     align-items: center;
     gap: 0.375rem;
     padding: 4px 0;
-    @include nb-ltr(margin-right, 1rem);
-    @include nb-rtl(margin-left, 1rem);
     font-size: 12px;
     line-height: 16px;
     white-space: nowrap;
@@ -224,9 +231,8 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
   }
 
   // Stays at the top of the table while the rows scroll under it. Every colour
-  // behind it is translucent, so it paints the stack it is seen against — its
-  // own `card-4` over the three `card-2` layers (timesheet card, this card, its
-  // body) over the layout — as one opaque fill, as the Calendar's day row does.
+  // behind it is translucent, so it paints one opaque fill instead: the same
+  // stack as a timesheet page's table header, so the two read alike.
   .sheet-head {
     position: sticky;
     top: 0;
@@ -237,8 +243,6 @@ $sheet-columns-employee: 2rem minmax(0, 1.6fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
     border-radius: var(--border-radius) var(--border-radius) 0 0;
     background:
       linear-gradient(var(--gauzy-card-4), var(--gauzy-card-4)),
-      linear-gradient(var(--gauzy-card-2), var(--gauzy-card-2)),
-      linear-gradient(var(--gauzy-card-2), var(--gauzy-card-2)),
       linear-gradient(var(--gauzy-card-2), var(--gauzy-card-2)),
       var(--layout-background-color);
   }
