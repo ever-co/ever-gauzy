@@ -92,8 +92,8 @@
 
             @for (day of days; track day.date.getTime()) {
               <div class="day-row" role="row">
-                <span class="day-date">{{ day.date | date: 'EEEE, MMM d, y' }}</span>
-                <span class="day-total numeric">{{ day.duration | durationFormat }}</span>
+                <span class="day-date" role="cell">{{ day.date | date: 'EEEE, MMM d, y' }}</span>
+                <span class="day-total numeric" role="cell">{{ day.duration | durationFormat }}</span>
               </div>
 
               @for (log of day.logs; track log.id) {
