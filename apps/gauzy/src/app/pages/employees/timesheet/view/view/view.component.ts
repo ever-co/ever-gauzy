@@ -58,6 +58,8 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 
 	/** Numbers each read of the logs, so only the latest one's answer is shown. */
 	private logsFetchId = 0;
+	/** The employee lookup in flight, shared by every caller asking for the same employee. */
+	private employeeLookup: { employeeId: string; request: Promise<void> } | null = null;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -148,17 +150,37 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 	 * The employee is read off the logs, as the timesheet is fetched without it,
 	 * so a timesheet with no logs had none to show. It is then read on its own,
 	 * for users who may see other employees: the only ones the summary shows it to.
+	 *
+	 * The read of the logs and the arrival of the permission can both ask while
+	 * the employee is unknown, so a lookup already in flight for the same
+	 * employee is shared rather than sent twice. The page is reused when another
+	 * timesheet is opened, so an answer is applied only while its employee is
+	 * still the open timesheet's and the summary still has none.
 	 */
-	private async loadEmployeeIfMissing() {
+	private loadEmployeeIfMissing(): Promise<void> {
 		const employeeId = this.timesheet?.employeeId;
 		if (this.employee || !employeeId || !this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			return;
+			return Promise.resolve();
 		}
-		try {
-			this.employee = await firstValueFrom(this.employeesService.getEmployeeById(employeeId, ['user']));
-		} catch (error) {
-			console.error('Error while retrieving the timesheet employee', error);
+		if (this.employeeLookup?.employeeId === employeeId) {
+			return this.employeeLookup.request;
 		}
+		const request = (async () => {
+			try {
+				const employee = await firstValueFrom(this.employeesService.getEmployeeById(employeeId, ['user']));
+				if (this.timesheet?.employeeId === employeeId && !this.employee) {
+					this.employee = employee;
+				}
+			} catch (error) {
+				console.error('Error while retrieving the timesheet employee', error);
+			} finally {
+				if (this.employeeLookup?.employeeId === employeeId) {
+					this.employeeLookup = null;
+				}
+			}
+		})();
+		this.employeeLookup = { employeeId, request };
+		return request;
 	}
 
 	/**
