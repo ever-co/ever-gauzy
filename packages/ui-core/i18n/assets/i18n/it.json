@@ -6254,6 +6254,7 @@
 		"MONTHLY": "Mensile",
 		"CALENDAR": "Calendario",
 		"APPROVALS": "Approvazioni",
+		"ALL": "Tutti",
 		"APPROVE_SUCCESS": "Timesheet approvata con successo",
 		"DENIED_SUCCESS": "Timesheet è stato rifiutato con successo",
 		"SUBMIT_SUCCESS": "Timesheet inviata con successo",
@@ -7671,6 +7672,7 @@
 		"SUBTASKS": "Sottoattività",
 		"SUBTASKS_DONE": "{{ done }} su {{ total }} completate",
 		"NO_SUBTASKS": "Nessuna sottoattività",
+		"ADD_SUBTASK": "Aggiungi sottoattività",
 		"LINKED_ISSUES": "Attività collegate",
 		"NO_LINKED_ISSUES": "Nessuna attività collegata",
 		"LINKS": {

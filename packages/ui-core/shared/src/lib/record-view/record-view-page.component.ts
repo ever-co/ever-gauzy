@@ -44,8 +44,10 @@ export class RecordViewPageComponent {
 	@Input() heading: string;
 	/** Free text under the heading — typically the record's own name. */
 	@Input() subtitle: string;
-	/** The list the record belongs to, for the back button. */
+	/** Where the back button leads: the list the record belongs to, unless the page says otherwise. */
 	@Input() backLink: string | null = null;
+	/** i18n key naming where the back button leads, for a `backLink` that is not the list. */
+	@Input() backLabel = 'RECORD_VIEW_PAGE.BACK_TO_LIST';
 	@Input() state: RecordViewPageState = 'loading';
 
 	/** The viewer asked to load the record again after a load error. */

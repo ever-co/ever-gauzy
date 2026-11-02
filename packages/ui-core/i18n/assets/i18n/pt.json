@@ -6254,6 +6254,7 @@
 		"MONTHLY": "Mensal.",
 		"CALENDAR": "Calendário",
 		"APPROVALS": "Aprovações",
+		"ALL": "Todos",
 		"APPROVE_SUCCESS": "Folha de ponto aprovada com sucesso.",
 		"DENIED_SUCCESS": "Folha de Horas Rejeitada com Sucesso",
 		"SUBMIT_SUCCESS": "Timesheet enviada com sucesso",
@@ -7671,6 +7672,7 @@
 		"SUBTASKS": "Subtarefas",
 		"SUBTASKS_DONE": "{{ done }} de {{ total }} concluídas",
 		"NO_SUBTASKS": "Sem subtarefas",
+		"ADD_SUBTASK": "Adicionar subtarefa",
 		"LINKED_ISSUES": "Tarefas vinculadas",
 		"NO_LINKED_ISSUES": "Sem tarefas vinculadas",
 		"LINKS": {

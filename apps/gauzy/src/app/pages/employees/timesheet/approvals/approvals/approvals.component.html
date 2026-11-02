@@ -1,196 +1,216 @@
-<nb-card>
+<nb-card class="approvals-card">
 	<nb-card-header class="p-0">
+		<!-- This tab has no filter row (the timesheet query only reads the page's own
+			date range and employee selectors), so Bulk action stands on the tab
+			strip, where the other tabs keep `+ Add Time`. -->
 		<div class="gauzy-action">
-			<ngx-gauzy-button-action
-				[hasLayoutSelector]="false"
-				[isDisable]="!isRowSelected() && !isCheckboxSelected()"
-			>
-				<ng-container
-					buttonTemplate
-					[ngTemplateOutlet]="actionButtons"
-					[ngTemplateOutletContext]="{
-						$implicit: $safeNavigationMigration(selectedTimesheet?.data)
-					}"
-				>
-				</ng-container>
+			<ngx-gauzy-button-action [hasLayoutSelector]="false" [isDisable]="!isCheckboxSelected()">
+				<ng-container buttonTemplate [ngTemplateOutlet]="bulkActions"></ng-container>
 			</ngx-gauzy-button-action>
 		</div>
 	</nb-card-header>
-	<nb-card-body>
-		<div class="approval-container">
-			<div class="custom-header-container">
-				<div class="row custom-header m-0 align-items-center">
-					<div class="col-auto">
-						<nb-checkbox
-							status="basic"
-							[checked]="allChecked"
-							[indeterminate]="isIndeterminate()"
-							(checkedChange)="checkedAll($event)"
-						>
-						</nb-checkbox>
-					</div>
-					<div class="col-2">
-						{{ 'TIMESHEET.EMPLOYEE' | translate }}
-					</div>
-					<div class="col">
-						{{ 'TIMESHEET.TOTAL_TIME' | translate }}
-					</div>
-					<div class="col">
-						{{ 'TIMESHEET.ACTIVITIES' | translate }}
-					</div>
-					<div class="col-3">
-						{{ 'TIMESHEET.DURATION' | translate }}
-					</div>
-					<div class="col">
-						{{ 'TIMESHEET.APPROVED_AT' | translate }}
-					</div>
-					<div class="col">
-						{{ 'TIMESHEET.SUBMITTED_AT' | translate }}
-					</div>
-					<div class="col-1">
-						{{ 'TIMESHEET.STATUS' | translate }}
-					</div>
-				</div>
-			</div>
-			<div
-				[nbSpinner]="loading"
-				[nbSpinnerSize]="'giant'"
-				[nbSpinnerStatus]="'primary'"
-				class="custom-body approval"
-			>
-				@if (timesheets?.length > 0) {
-				<div class="content-approval">
-					@for (timesheet of timesheets; track timesheet.id; let last = $last) {
-					<div
-						(click)="userRowSelect(timesheet)"
-						class="row item m-0 py-3 align-items-center"
-						[class.border-bottom]="!last"
-						[class.selected]="timesheet?.isSelected"
+	<nb-card-body [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
+		<!-- Narrows the list to one status, with how many timesheets each holds,
+			and the time the timesheets in view add up to. -->
+		<div class="toolbar">
+			<div class="status-filter" role="group">
+				@for (option of statusOptions; track option.status) {
+					<button
+						type="button"
+						class="status-option"
+						[class.active]="statusFilter === option.status"
+						[attr.aria-pressed]="statusFilter === option.status"
+						(click)="setStatusFilter(option.status)"
 					>
-						<div class="col-auto">
+						{{ option.status ? (option.status | titlecase) : ('TIMESHEET.ALL' | translate) }}
+						<span class="count">{{ option.count }}</span>
+					</button>
+				}
+			</div>
+			<div class="toolbar-total">
+				<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
+				<span class="toolbar-label">{{ 'TIMESHEET.TOTAL_TIME' | translate }}</span>
+				<span class="toolbar-value">{{ visibleDuration | durationFormat }}</span>
+			</div>
+		</div>
+
+		@if (visibleTimesheets.length > 0) {
+			<!-- The table scrolls on its own, under its sticky header; the toolbar
+				above it stays in view. -->
+			<div class="sheet-scroll">
+				<div class="sheet-table" role="table" [class.with-employee]="showEmployee">
+					<div class="sheet-row sheet-head" role="row">
+						<div role="columnheader" class="cell-check">
 							<nb-checkbox
-								[checked]="timesheet.checked"
-								(click)="$event.stopPropagation()"
-								(checkedChange)="toggleCheckbox($event, timesheet)"
 								status="basic"
+								[checked]="allChecked"
+								[indeterminate]="isIndeterminate()"
+								(checkedChange)="checkedAll($event)"
 							></nb-checkbox>
 						</div>
-						<div class="col-2">
-							<ngx-avatar
-								class="report-table"
-								[name]="$safeNavigationMigration(timesheet?.employee?.user?.name)"
-								[src]="$safeNavigationMigration(timesheet?.employee?.user?.imageUrl)"
-								[id]="$safeNavigationMigration(timesheet?.employee?.id)"
-								[employee]="$safeNavigationMigration(timesheet?.employee)"
-							></ngx-avatar>
-						</div>
-						<div class="col">
-							{{ timesheet.duration | durationFormat }}
-						</div>
-						<div class="col">{{ timesheet.keyboard }}</div>
-						<div class="col-3">
-							{{ timesheet.startedAt | dateFormat }} -
-							{{ timesheet.stoppedAt | dateFormat }}
-						</div>
-						<div class="col">
-							{{ timesheet.approvedAt | dateFormat }}
-						</div>
-						<div class="col">
-							{{ timesheet.submittedAt | dateFormat }}
-						</div>
-						<div class="col-1">
-							<ga-status-badge [value]="statusMapper(timesheet)"></ga-status-badge>
+						@if (showEmployee) {
+							<div role="columnheader">{{ 'TIMESHEET.EMPLOYEE' | translate }}</div>
+						}
+						<div role="columnheader">{{ 'TIMESHEET.TIME_SPAN' | translate }}</div>
+						<div role="columnheader" class="numeric">{{ 'TIMESHEET.TOTAL_TIME' | translate }}</div>
+						<div role="columnheader" class="numeric">{{ 'TIMESHEET.ACTIVITIES' | translate }}</div>
+						<div role="columnheader" class="col-gap">{{ 'TIMESHEET.SUBMITTED_AT' | translate }}</div>
+						<div role="columnheader">{{ 'TIMESHEET.APPROVED_AT' | translate }}</div>
+						<div role="columnheader">{{ 'TIMESHEET.STATUS' | translate }}</div>
+						<div role="columnheader" class="cell-actions">
+							<span class="sr-only">{{ 'TIMESHEET.ACTION' | translate }}</span>
 						</div>
 					</div>
+
+					@for (timesheet of visibleTimesheets; track timesheet.id) {
+						<!-- The row opens the timesheet, as a ticket opens in a board. -->
+						<div
+							class="sheet-row"
+							role="row"
+							tabindex="0"
+							[class.checked]="timesheet.checked"
+							(click)="redirectToView(timesheet)"
+							(keydown.enter)="$event.target === $event.currentTarget && redirectToView(timesheet)"
+						>
+							<div role="cell" class="cell-check" (click)="$event.stopPropagation()">
+								<nb-checkbox
+									[checked]="timesheet.checked"
+									(checkedChange)="toggleCheckbox($event, timesheet)"
+									status="basic"
+								></nb-checkbox>
+							</div>
+							@if (showEmployee) {
+								<div role="cell" class="cell-employee">
+									<ngx-avatar
+										class="report-table"
+										[name]="timesheet?.employee?.user?.name"
+										[src]="timesheet?.employee?.user?.imageUrl"
+										[id]="timesheet?.employee?.id"
+										[employee]="timesheet?.employee"
+									></ngx-avatar>
+								</div>
+							}
+							<div role="cell" class="time-span">
+								{{ timesheet.startedAt | dateFormat }} – {{ timesheet.stoppedAt | dateFormat }}
+							</div>
+							<div role="cell" class="numeric strong">{{ timesheet.duration | durationFormat }}</div>
+							<div role="cell" class="numeric">{{ timesheet.keyboard }}</div>
+							<div role="cell" class="col-gap muted">
+								{{ timesheet.submittedAt ? (timesheet.submittedAt | dateFormat) : '—' }}
+							</div>
+							<div role="cell" class="muted">
+								{{ timesheet.approvedAt ? (timesheet.approvedAt | dateFormat) : '—' }}
+							</div>
+							<div role="cell">
+								<span class="status-chip" [attr.data-status]="timesheet.status">
+									{{ timesheet.status | titlecase }}
+								</span>
+							</div>
+							<div role="cell" class="cell-actions" (click)="$event.stopPropagation()">
+								<button
+									type="button"
+									nbButton
+									ghost
+									size="tiny"
+									class="row-action"
+									[nbTooltip]="'TIMESHEET.VIEW' | translate"
+									[attr.aria-label]="'TIMESHEET.VIEW' | translate"
+									(click)="redirectToView(timesheet)"
+								>
+									<nb-icon icon="eye-outline"></nb-icon>
+								</button>
+								@if (!timesheet.submittedAt) {
+									<button
+										type="button"
+										nbButton
+										ghost
+										size="tiny"
+										class="row-action"
+										[disabled]="saving"
+										[nbTooltip]="'TIMESHEET.SUBMIT_TIMESHEET' | translate"
+										[attr.aria-label]="'TIMESHEET.SUBMIT_TIMESHEET' | translate"
+										(click)="submitTimesheet(timesheet.id, 'submit')"
+									>
+										<nb-icon icon="paper-plane-outline"></nb-icon>
+									</button>
+								} @else {
+									<button
+										type="button"
+										nbButton
+										ghost
+										size="tiny"
+										class="row-action"
+										[disabled]="saving"
+										[nbTooltip]="'TIMESHEET.UNSUBMIT_TIMESHEET' | translate"
+										[attr.aria-label]="'TIMESHEET.UNSUBMIT_TIMESHEET' | translate"
+										(click)="submitTimesheet(timesheet.id, 'unsubmit')"
+									>
+										<nb-icon icon="undo-outline"></nb-icon>
+									</button>
+								}
+								@if (timesheet.status !== TimesheetStatus.APPROVED) {
+									<button
+										type="button"
+										nbButton
+										ghost
+										size="tiny"
+										class="row-action"
+										[disabled]="saving"
+										[nbTooltip]="'TIMESHEET.APPROVE' | translate"
+										[attr.aria-label]="'TIMESHEET.APPROVE' | translate"
+										(click)="updateStatus(timesheet.id, TimesheetStatus.APPROVED)"
+									>
+										<nb-icon status="success" icon="checkmark-circle-2-outline"></nb-icon>
+									</button>
+								}
+								@if (timesheet.status !== TimesheetStatus.DENIED) {
+									<button
+										type="button"
+										nbButton
+										ghost
+										size="tiny"
+										class="row-action"
+										[disabled]="saving"
+										[nbTooltip]="'TIMESHEET.DENY' | translate"
+										[attr.aria-label]="'TIMESHEET.DENY' | translate"
+										(click)="updateStatus(timesheet.id, TimesheetStatus.DENIED)"
+									>
+										<nb-icon status="danger" icon="close-circle-outline"></nb-icon>
+									</button>
+								}
+							</div>
+						</div>
 					}
 				</div>
-				} @else {
+			</div>
+		} @else {
+			<div class="empty-state">
 				<ngx-no-data-message
 					[loading]="loading"
 					[message]="'TIMESHEET.NO_DATA.APPROVAL_TIMESHEET' | translate"
 				></ngx-no-data-message>
-				}
 			</div>
-		</div>
+		}
 	</nb-card-body>
 </nb-card>
-<ng-template #actionButtons let-selectedItem>
+<ng-template #bulkActions>
 	<div class="actions">
 		@if (isCheckboxSelected()) {
-		<button
-			outline
-			nbButton
-			status="primary"
-			class="action"
-			[title]="'TIMESHEET.BULK_ACTION' | translate"
-			[nbContextMenu]="contextMenus"
-			nbContextMenuTag="timesheet-bulk-action"
-		>
-			{{ 'TIMESHEET.BULK_ACTION' | translate }}
-			<nb-icon icon="chevron-down-outline"></nb-icon>
-		</button>
+			<button
+				type="button"
+				outline
+				nbButton
+				status="primary"
+				class="action"
+				size="small"
+				[disabled]="saving"
+				[title]="'TIMESHEET.BULK_ACTION' | translate"
+				[nbContextMenu]="contextMenus"
+				nbContextMenuTag="timesheet-bulk-action"
+			>
+				{{ 'TIMESHEET.BULK_ACTION' | translate }}
+				<nb-icon icon="chevron-down-outline"></nb-icon>
+			</button>
 		}
-		<!-- Row-selection actions -->
-		@else if (selectedItem) {
-		<button
-			(click)="redirectToView(selectedItem)"
-			class="action secondary"
-			status="basic"
-			nbButton
-			size="small"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="edit-outline"></nb-icon>
-			{{ 'TIMESHEET.VIEW' | translate }}
-		</button>
-		@if (!selectedItem.submittedAt) {
-		<button
-			(click)="submitTimesheet(selectedItem.id, 'submit')"
-			class="action primary"
-			status="basic"
-			nbButton
-			size="small"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="email-outline"></nb-icon>
-			{{ 'TIMESHEET.SUBMIT_TIMESHEET' | translate }}
-		</button>
-		} @else {
-		<button
-			(click)="submitTimesheet(selectedItem.id, 'unsubmit')"
-			class="action primary"
-			status="basic"
-			nbButton
-			size="small"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="email-outline"></nb-icon>
-			{{ 'TIMESHEET.UNSUBMIT_TIMESHEET' | translate }}
-		</button>
-		} @if (selectedItem.status != TimesheetStatus.APPROVED) {
-		<button
-			(click)="updateStatus(selectedItem.id, TimesheetStatus.APPROVED)"
-			class="action success"
-			status="basic"
-			nbButton
-			size="small"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="checkmark-circle-2-outline"></nb-icon>
-			{{ 'TIMESHEET.APPROVE' | translate }}
-		</button>
-		} @if (selectedItem.status != TimesheetStatus.DENIED) {
-		<button
-			(click)="updateStatus(selectedItem.id, TimesheetStatus.DENIED)"
-			class="action warning"
-			status="basic"
-			nbButton
-			size="small"
-			[disabled]="disableButton"
-		>
-			<nb-icon icon="close-outline"></nb-icon>
-			{{ 'TIMESHEET.DENY' | translate }}
-		</button>
-		} }
 	</div>
 </ng-template>
