@@ -89,7 +89,17 @@ jest.mock('./desktop-notifier', () => ({
 		timerActionNotification = jest.fn();
 	}
 }));
-jest.mock('./desktop-screenshot', () => ({ detectActiveWindow: jest.fn(), getScreenshot: jest.fn() }));
+
+/** The screen capture permission (organization and employee) and the screenshot-desktop engine of the main process. */
+const screenshots = {
+	allowed: true,
+	getScreenshot: jest.fn(async () => [{ img: Buffer.from('img'), name: 'Screen 0', id: '1' }])
+};
+jest.mock('./desktop-screenshot', () => ({
+	detectActiveWindow: jest.fn(),
+	getScreenshot: () => screenshots.getScreenshot(),
+	isScreenshotCaptureAllowed: () => screenshots.allowed
+}));
 jest.mock('./desktop-wakatime', () => ({ metaData: { getActivity: jest.fn(async () => []), removeActivity: jest.fn() } }));
 
 /** Stands in for the ActivityWatch event tables: saved by queue jobs, read and reset when a time slot is built. */
@@ -739,6 +749,54 @@ describe('TimerHandler', () => {
 			const next = await handler.getAllActivities(knex, moment());
 			expect(next.activities).toEqual([]);
 		}, 20_000);
+	});
+
+	/**
+	 * Issue #9872: a time slot takes no image unless the organization and the employee both allow screen capture. With
+	 * the screenshot-desktop engine the main process took the images itself without asking, and with Electron's desktop
+	 * capturer the renderer took them (WebRTC on Wayland) without being told.
+	 */
+	describe('screen capture permission', () => {
+		beforeEach(() => {
+			screenshots.allowed = true;
+			screenshots.getScreenshot.mockClear();
+		});
+
+		const timeSlot = (engine: string) => {
+			appSetting = { SCREENSHOTS_ENGINE_METHOD: engine, timer: { updatePeriod: 1 } };
+			const handler = newHandler();
+			handler.lastTimer = { id: 7 };
+			return handler.getAllActivities(knex, moment().subtract(1, 'minute'));
+		};
+
+		it('takes no image with the screenshot-desktop engine when capture is not allowed', async () => {
+			screenshots.allowed = false;
+
+			const slot = await timeSlot('ScreenshotDesktopLib');
+
+			expect(screenshots.getScreenshot).not.toHaveBeenCalled();
+			expect(slot).toMatchObject({ type: 'ScreenshotDesktopLib', displays: [], allowScreenshotCapture: false });
+		});
+
+		it('takes the images with the screenshot-desktop engine when capture is allowed', async () => {
+			const slot = await timeSlot('ScreenshotDesktopLib');
+
+			expect(screenshots.getScreenshot).toHaveBeenCalledTimes(1);
+			expect(slot.displays).toHaveLength(1);
+			expect(slot.allowScreenshotCapture).toBe(true);
+		});
+
+		it("tells the renderer, which captures for Electron's desktop capturer, whether it may", async () => {
+			screenshots.allowed = false;
+			expect(await timeSlot('ElectronDesktopCapturer')).toMatchObject({
+				type: 'ElectronDesktopCapturer',
+				allowScreenshotCapture: false
+			});
+
+			screenshots.allowed = true;
+			expect((await timeSlot('ElectronDesktopCapturer')).allowScreenshotCapture).toBe(true);
+			expect(screenshots.getScreenshot).not.toHaveBeenCalled();
+		});
 	});
 
 	describe('activity resets', () => {

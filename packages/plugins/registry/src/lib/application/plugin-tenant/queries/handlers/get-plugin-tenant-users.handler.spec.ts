@@ -4,7 +4,12 @@ jest.mock('@gauzy/core', () => ({
 	RequestContext: {
 		currentUserId: () => mockContext.userId,
 		currentTenantId: () => mockContext.tenantId
-	}
+	},
+	// The real helper is covered in core; here only that the handler applies it to each row's avatar.
+	withoutDummyImageHost: (value: unknown) =>
+		typeof value === 'string' && value.includes('dummyimage.com')
+			? 'https://api.example.com/api/placeholder'
+			: value
 }));
 
 import { GetPluginTenantUsersQuery } from '../get-plugin-tenant-users.query';
@@ -77,6 +82,32 @@ describe('GetPluginTenantUsersHandler tenant scoping', () => {
 		expect(params).toEqual([PLUGIN_TENANT, 'user-a', 'tenant-a', 5, 10]);
 		expect(sql).toContain('LIMIT $4');
 		expect(sql).toContain('OFFSET $5');
+	});
+
+	it('replaces a stored dummyimage.com avatar by the first-party placeholder (raw rows skip the user subscriber)', async () => {
+		const source = {
+			query: jest.fn(async (sql: string) =>
+				sql.includes('COUNT(*)')
+					? [{ total: 2 }]
+					: [
+							{
+								id: 'u1',
+								imageUrl: 'https://dummyimage.com/330x300/269aff/ffffff.jpg&text=A',
+								accessType: 'allowed'
+							},
+							{ id: 'u2', imageUrl: 'https://cdn.example.com/u2.png', accessType: 'denied' }
+						]
+			)
+		};
+
+		const { items } = await new GetPluginTenantUsersHandler(source as any).execute(
+			new GetPluginTenantUsersQuery(PLUGIN_TENANT)
+		);
+
+		expect(items.map(({ imageUrl }) => imageUrl)).toEqual([
+			'https://api.example.com/api/placeholder',
+			'https://cdn.example.com/u2.png'
+		]);
 	});
 
 	it('reads nothing, and runs no query, when the request carries no tenant', async () => {

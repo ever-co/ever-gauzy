@@ -12,6 +12,11 @@ import { ITag, ITaggable } from './tag.model';
 import { ITenant } from './tenant.model';
 import { IReportOrganization } from './report.model';
 import { IRelationalImageAsset } from './image-asset.model';
+import {
+	IScreenshotCaptureAcknowledgementRecord,
+	IScreenshotCaptureSettingInput
+} from './screenshot-capture-acknowledgement.util';
+import { IUser } from './user.model';
 
 export interface IRegisterAsEmployee {
 	registerAsEmployee?: boolean;
@@ -36,6 +41,7 @@ export interface IOrganization
 		IRelationalImageAsset,
 		IOrganizationAgentSetting,
 		IOrganizationTimerSetting,
+		IScreenshotCaptureAcknowledgementRecord,
 		ITaggable {
 	name: string;
 	isDefault: boolean;
@@ -111,6 +117,8 @@ export interface IOrganization
 	/** Upwork Organization For Gauzy AI*/
 	upworkOrganizationId?: string;
 	upworkOrganizationName?: string;
+	/** The user who last turned screen capture on with an acknowledgement (issue #9872). */
+	screenshotCaptureAcknowledgedByUser?: IUser;
 }
 
 export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
@@ -126,7 +134,11 @@ export interface IOrganizationFindInput extends IBasePerTenantEntityModel {
 	tags?: ITag[];
 }
 
-export interface IOrganizationCreateInput extends IContact, IRegisterAsEmployee, IRelationalImageAsset {
+export interface IOrganizationCreateInput
+	extends IContact,
+		IRegisterAsEmployee,
+		IRelationalImageAsset,
+		IScreenshotCaptureSettingInput {
 	name: string;
 	isDefault?: boolean;
 	profile_link?: string;

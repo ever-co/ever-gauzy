@@ -1,6 +1,16 @@
-import { BadRequestException, ConflictException, Injectable, Inject, Logger, NotFoundException, Optional } from '@nestjs/common';
-import { createHash } from 'node:crypto';
-import { DeepPartial, EntityManager, LessThanOrEqual } from 'typeorm';
+// cspell:ignore bookkept Finishable
+import {
+	BadRequestException,
+	ConflictException,
+	HttpException,
+	Injectable,
+	Inject,
+	Logger,
+	NotFoundException,
+	Optional
+} from '@nestjs/common';
+import { createHash, randomUUID } from 'node:crypto';
+import { DeepPartial, EntityManager, IsNull, LessThanOrEqual, MoreThan, Not } from 'typeorm';
 import {
 	AdjustmentOwnerType,
 	AdjustmentType,
@@ -23,7 +33,9 @@ import {
 	assertPlainReferencesNotForeign,
 	commitVersionedUpdate,
 	matchesExpectation,
-	parseEntityVersion
+	parseEntityVersion,
+	redactDatabaseError,
+	toClientSafeError
 } from '@gauzy/core';
 import {
 	IChangeSubscriptionPlanInput,
@@ -31,6 +43,7 @@ import {
 	ISubscriptionInstrumentPort,
 	ISubscriptionItemInput,
 	ISubscriptionOrderGatewayPort,
+	ISubscriptionOrderResult,
 	ISubscriptionPlanChangeOutcome,
 	ISubscriptionBillingOutcome,
 	ISubscriptionBillingRunOutcome,
@@ -58,15 +71,21 @@ import {
 	recurringAmount,
 	resumedNextBillingAt
 } from '../subscription.cycle';
+import { signScheduledChange, verifyScheduledChange } from '../subscription.schedule-signature';
 import { SubscriptionPlan } from '../subscription-plan/subscription-plan.entity';
 import { SubscriptionPlanService } from '../subscription-plan/subscription-plan.service';
+import { lockPlanRow } from '../subscription-plan/subscription-plan.lock';
 import { SUBSCRIPTION_REFERENCES } from '../subscription.references';
 import { currentScope } from '../subscription.scope';
 import { movedReadOnlyMembers, notWritable, writableOnly } from '../subscription.writable';
 import { SubscriptionItem } from '../subscription-item/subscription-item.entity';
 import { SubscriptionItemService } from '../subscription-item/subscription-item.service';
 import { SubscriptionBilling } from '../subscription-billing/subscription-billing.entity';
-import { SubscriptionBillingService } from '../subscription-billing/subscription-billing.service';
+import {
+	CHARGE_CLAIM_LOST,
+	ICycleBookkeeping,
+	SubscriptionBillingService
+} from '../subscription-billing/subscription-billing.service';
 import { Subscription } from './subscription.entity';
 import { MikroOrmSubscriptionRepository } from './repository/mikro-orm-subscription.repository';
 import { TypeOrmSubscriptionRepository } from './repository/type-orm-subscription.repository';
@@ -127,8 +146,33 @@ function spendableExpectation(expectation: IVersionExpectation): () => IVersionE
 /** The key a billing cycle's idempotency claim is scoped under. */
 const BILLING_SCOPE = 'subscription.bill';
 
+/**
+ * The code the order path refuses an attempt with while another call still holds the attempt's key and is working
+ * (`ISubscriptionOrderGatewayPort.raiseSubscriptionOrder`).
+ *
+ * That attempt is in flight elsewhere, not failed. Recorded as a failure, it would move the cycle's attempt count — and
+ * with it the order key of the next attempt, which the order path no longer fences against the call still running.
+ */
+const ORDER_ATTEMPT_IN_FLIGHT = 'ORDER_SUBSCRIPTION_IN_FLIGHT';
+
+/**
+ * The code the order path refuses an attempt with when its key already raised an order for a request priced otherwise
+ * (`ISubscriptionOrderGatewayPort.raiseSubscriptionOrder`).
+ *
+ * The attempt key is reused only by a pass that recovered a stale claim, and the call that took the key first is one
+ * whose outcome this pass cannot learn: recorded as a failure, it would move the attempt count, and the next attempt's
+ * new key could charge a period that call already charged.
+ */
+const ORDER_ATTEMPT_KEY_REUSED = 'ORDER_SUBSCRIPTION_KEY_REUSED';
+
 /** The key a proration charge's idempotency claim is scoped under. */
 const PRORATION_SCOPE = 'subscription.proration';
+
+/**
+ * The key a proration credit's idempotency claim is scoped under: one claim per change, so two requests resuming one
+ * recorded change (`reserveChange`) write its `CREDIT` adjustment once.
+ */
+const PRORATION_CREDIT_SCOPE = 'subscription.proration.credit';
 
 /**
  * The key the release of an invoiced cycle's held-back rights is claimed under (R4-05): one claim per cycle,
@@ -136,6 +180,13 @@ const PRORATION_SCOPE = 'subscription.proration';
  * and a release interrupted half-way is taken over and finished by the next attempt once its lease is stale.
  */
 const RIGHTS_RELEASE_SCOPE = 'subscription.rights.release';
+
+/**
+ * The key the reconciliation of a raised cycle's discount rows is claimed under (`reconcileRecordedDiscount`): one claim
+ * per cycle, so two passes meeting one cycle — one whose period's lease ran out, and the pass that took it over — do not
+ * both append the difference the ledger is missing.
+ */
+const DISCOUNT_RECONCILE_SCOPE = 'subscription.discount.reconcile';
 
 /**
  * The subscription statuses a late payment releases no rights for (R4-05, review note from px-refunds): the
@@ -186,6 +237,27 @@ const CHARGED_SETUP_FEES = 'chargedSetupFeePlanIds';
 /** The metadata key that carries a proration credit into the next cycle. */
 const PENDING_CREDIT = 'pendingCredit';
 
+/**
+ * The description of the adjustment a cycle consumes the carried credit under (`consumePendingCredit`). A plan
+ * change's own record of a credit it decided is described in the change's words (`appendCredit`), so this one tells the
+ * consumption apart when a cycle recorded before `CYCLE_BOOKKEEPING` existed is finished (`owedBookkeepingOf`).
+ */
+const CONSUMED_CREDIT_DESCRIPTION = 'Credit from an earlier plan change.';
+
+/**
+ * The metadata key the cycles whose consumed credit was taken off the carried credit are listed under, apart from the
+ * carried entry, so the list outlives an entry consumed to nothing. The last {@link CONSUMED_CREDIT_CYCLES_KEPT} are kept.
+ *
+ * A build that took the credit off in the billing pass itself (`clearPendingCredit`, #11603) listed the cycle here, and
+ * the finish (`bookkeptMetadata`) takes nothing more off a cycle listed here: a cycle that build charged and left
+ * unfinished has had its credit taken off already, and a second subtraction would come out of a credit a change carried
+ * since. The finish lists the cycles it takes credit off too, so the two builds agree while both run.
+ */
+const CONSUMED_CREDIT_CYCLES = 'consumedCreditCycles';
+
+/** How many cycles {@link CONSUMED_CREDIT_CYCLES} keeps: far more than can be billed while one pass runs. */
+const CONSUMED_CREDIT_CYCLES_KEPT = 20;
+
 /** The metadata key a per-subscription discount override is stored under. */
 const DISCOUNT_OVERRIDE = 'discountPercentage';
 
@@ -210,14 +282,178 @@ const CANCEL_AT_PERIOD_END = 'cancelAtPeriodEnd';
 const EXPIRED_BY_CYCLE = 'expiredByCycle';
 
 /**
+ * The metadata key a subscription records the last cycle whose charge's bookkeeping it applied under: the setup fee the
+ * order carried, and the deferred credit it consumed, subtracted from the one still carried (`finishCycle`).
+ *
+ * It is written in the statement that applies the bookkeeping, so a cycle's bookkeeping is applied once, whichever of
+ * the run, a later pass recovering the cycle, or the payment of an invoiced cycle reaches it first. One cycle is open
+ * at a time — the calendar stays on a cycle until it is finished or paid — so the last one is all it needs to name.
+ */
+const BOOKKEPT_CYCLE = 'bookkeptCycleId';
+
+/**
+ * The metadata key a change taken from the next period is recorded under (`effective = 'NEXT_PERIOD'`), until the
+ * cycle that opens that period applies it (`applyScheduledChange`).
+ */
+const SCHEDULED_PLAN_CHANGE = 'scheduledPlanChange';
+
+/**
+ * The metadata key a mid-cycle change records what it is about to settle under (`reserveChange`), before any money
+ * moves, until the write that applies it clears it (`applySettledChange`) or a settlement that failed releases it.
+ */
+const CHANGE_INTENT = 'changeIntent';
+
+/**
+ * The metadata key the write that applies a change adds the change's key to: a request that settled the same change
+ * and lost the race to apply it finds it here and stops, rather than taking the change for one replaced — also when
+ * further changes were applied since. The last {@link APPLIED_CHANGES_KEPT} are kept.
+ */
+const APPLIED_CHANGES = 'appliedChanges';
+
+/** How many applied changes' keys {@link APPLIED_CHANGES} keeps: far more than can be applied while one request runs. */
+const APPLIED_CHANGES_KEPT = 20;
+
+/**
+ * The metadata key a settlement that stands without the change it paid for is recorded under, for an operator to
+ * reverse: a charge or a `CREDIT` adjustment whose change was replaced before it could be applied. Each entry is
+ * announced with `subscription.settlement-reversal-required`.
+ */
+const SETTLEMENT_REVERSALS = 'settlementReversals';
+
+/**
+ * How long a recorded change holds the subscription against another change. Inside it, another change is refused
+ * (`SUBSCRIPTION_CHANGE_IN_FLIGHT`) because the first may still be settling; past it, the request that recorded it is
+ * taken to be gone, and the next change replaces the record (`reserveChange`). It is well past the window a proration
+ * claim's lock is taken over after (`IdempotencyService.DEFAULT_STALE_LOCK_MS`), so a charge still running is seen as
+ * one (`settlementOf`) rather than replaced unseen.
+ */
+const CHANGE_INTENT_LEASE_MS = 10 * 60 * 1000;
+
+/**
+ * How long after a change was recorded its settlement may be made again under its own key to find out what it did.
+ * The order path replays a proration raised under a key it has seen for as long as it keeps the key's claim — a day,
+ * `IdempotencyService.DEFAULT_RETENTION_MS` — so inside this window raising the charge again answers with the order
+ * already made, or makes the one never made; past it, raising it again could charge twice (`resolveAbandonedChange`).
+ */
+const CHANGE_REPLAY_WINDOW_MS = 23 * 60 * 60 * 1000;
+
+/**
+ * The adjustment reason a cycle's discount is lowered under when a retry is priced on a smaller one. A `PROMOTION`
+ * only ever lowers what is payable, so giving part of an earlier grant back is a governed `MANUAL` correction.
+ */
+const DISCOUNT_RESTATED_REASON = 'SUBSCRIPTION_DISCOUNT_RESTATED';
+
+/** A recurring line as `SubscriptionItemService.prepareItems` prices it, written nowhere yet. */
+type IPricedLine = {
+	variantId: ID;
+	quantity: DecimalString;
+	unitPrice: DecimalString;
+	position: number;
+	metadata?: Record<string, unknown>;
+};
+
+/** A change recorded under {@link SCHEDULED_PLAN_CHANGE}, as `applyChange` writes it. */
+interface IScheduledPlanChange {
+	/** What `signScheduledChange` signed the change with when `applyChange` recorded it. */
+	signature?: string;
+	/** The plan to move to; absent for a change of lines alone. */
+	planId?: ID;
+	/** The quantity the plan change states. */
+	quantity?: DecimalString;
+	/** The recurring lines of a change of lines alone, as they were priced when it was recorded. */
+	items?: IPricedLine[];
+	/** The start of the first period the change applies to; null when it was recorded with no current period. */
+	effectiveAt?: Date | string | null;
+	description?: string;
+	/**
+	 * A token of this decision alone, signed with it: the same change scheduled again is another decision, which a plan
+	 * change decided before it does not replace (`replacesSchedule`).
+	 */
+	decision?: string;
+}
+
+/**
+ * A mid-cycle change recorded under {@link CHANGE_INTENT} before it is settled (`reserveChange`): what it moves to and
+ * what it settles, so a write that fails after the money moved leaves the settlement on the subscription instead of
+ * nowhere.
+ */
+interface IChangeIntent {
+	/**
+	 * The settlement's key, derived from the change: the subscription, what changes, the amount, the period and the
+	 * version the change was read at. The charge is claimed under it and the `CREDIT` adjustment carries it, so the
+	 * change settles once however often it is repeated while outstanding.
+	 */
+	key: string;
+	/**
+	 * What changes — the plan, the quantity, the lines and the description — with the amount and the period aside: the
+	 * same change repeated resumes this record rather than pricing another, in the period it was recorded in or after a
+	 * renewal moved the subscription on.
+	 */
+	change: string;
+	/** The plan the change moves to; reserved on the row (`reservedPlanId`) until the change is applied or released. */
+	planId: ID | null;
+	/** How the change settles: charged now, credited against the next cycle, or waived. */
+	settlement: 'CHARGED' | 'DEFERRED' | 'WAIVED';
+	credit: DecimalString;
+	charge: DecimalString;
+	net: DecimalString;
+	currency: CurrencyCode;
+	/** The start of the period the change was priced in. */
+	periodStart: string;
+	description: string;
+	/** When the change was recorded or last resumed: what tells a change still settling from an abandoned one. */
+	at: string;
+	/** When the change was first recorded, kept when it is resumed: what the replay window is measured from. */
+	recordedAt?: string;
+	/**
+	 * The request holding the record: a token written by each request that records or resumes it. A request releases
+	 * the record only while it still holds it (`releaseChange`), so it never takes the record from one that resumed it.
+	 */
+	owner?: string;
+	/** The quantity the change states, as stored; null when it states none. */
+	quantity?: DecimalString | null;
+	/** The discount a plan change restates: the new plan's, or null when it grants none. Unused for a change of lines. */
+	discountPercentage?: string | null;
+	/**
+	 * The recurring lines the change writes, as priced: every line the subscription is left with when `replaceLines`,
+	 * otherwise only the lines whose quantity changes. The record carries what it applies, so it can be applied from the
+	 * record alone — by a request resuming it, or by a billing pass recovering it (`recoverAbandonedChange`).
+	 */
+	items?: IPricedLine[];
+	/** Whether the change replaces the line set (a plan change, a line added or removed), or only changes quantities. */
+	replaceLines?: boolean;
+	/**
+	 * What the change scheduled for the next period was when this plan change was decided (`scheduleIdentity`), or null
+	 * when none was: the one it replaces, signed or not. A change scheduled after it is a later decision, and the apply
+	 * leaves it.
+	 */
+	replacesSchedule?: string | null;
+	/**
+	 * When the settlement was made, written only when the apply that should have followed it could not be: a repeat of
+	 * the change applies it without settling it again, however long after (the claim a charge was made under is deleted
+	 * once its retention ends), and a change replacing it knows its settlement stands.
+	 */
+	settledAt?: string;
+	/** Whether that settlement moved money outside the row: a charge, or a `CREDIT` adjustment written. */
+	moved?: boolean;
+}
+
+/** Whether a recorded change's settlement moved money, as far as the stores that took it can tell (`settlementOf`). */
+type ISettlementState = 'SETTLED' | 'UNKNOWN' | 'UNSETTLED';
+
+/**
  * The metadata keys the service writes and the billing run trusts (SEC-B-03): the discount override, the proration
  * credit carried into the next cycle, the plans whose setup fee was charged, the end of the trial, the proration
- * threshold below which a plan change's charge is waived, the cancellation at the end of the period, and the cycle
- * whose payment expired the subscription. A caller's metadata can neither set nor erase them —
+ * threshold below which a plan change's charge is waived, the cancellation at the end of the period, the cycle
+ * whose payment expired the subscription, the change scheduled for the next period, a mid-cycle change being settled
+ * with the settlements recorded for reversal, the cycles whose consumed credit was taken off, and the cycle whose
+ * bookkeeping was last applied. A caller's metadata can neither set nor erase them —
  * `metadata: { discountPercentage: "1" }` billed every later cycle at 0, `{ pendingCredit: { amount: "100000" } }`
  * credited the next one, `{ minimumProrationCharge: "1000000" }` waived every upgrade's charge, and
- * `{ cancelAtPeriodEnd: true }` cancelled the subscription with no cancellation (CodeRabbit). They move through the
- * service's own actions.
+ * `{ cancelAtPeriodEnd: true }` cancelled the subscription with no cancellation (CodeRabbit);
+ * `{ scheduledPlanChange: { planId } }` would move it to another plan at the next renewal with no plan change at all,
+ * and erasing `changeIntent` would let a settled change go unapplied and unrecorded. They move through the service's
+ * own actions.
  */
 export const RESERVED_SUBSCRIPTION_METADATA_KEYS: readonly string[] = [
 	DISCOUNT_OVERRIDE,
@@ -226,7 +462,13 @@ export const RESERVED_SUBSCRIPTION_METADATA_KEYS: readonly string[] = [
 	TRIAL_ENDS_AT,
 	MINIMUM_PRORATION_CHARGE,
 	CANCEL_AT_PERIOD_END,
-	EXPIRED_BY_CYCLE
+	EXPIRED_BY_CYCLE,
+	SCHEDULED_PLAN_CHANGE,
+	BOOKKEPT_CYCLE,
+	CHANGE_INTENT,
+	APPLIED_CHANGES,
+	SETTLEMENT_REVERSALS,
+	CONSUMED_CREDIT_CYCLES
 ];
 
 /**
@@ -274,6 +516,52 @@ function reservedMetadataOf(metadata: unknown): Record<string, unknown> {
  */
 function isVersionConflict(error: unknown): boolean {
 	return (error as { code?: unknown } | null)?.code === ApiErrorCode.ENTITY_VERSION_CONFLICT;
+}
+
+/**
+ * Raised inside the transaction that applies a scheduled change when the plan it moves to is no longer the plan the
+ * change was priced on: deactivated, priced in another currency, or given other terms after the change was read. The
+ * change is read again (`applyScheduledChange`), so it is refused or priced on the plan as it now stands.
+ */
+class ScheduledPlanMoved extends ConflictException {
+	constructor() {
+		super(
+			'SUBSCRIPTION_SCHEDULED_PLAN_CHANGED: the plan a scheduled change moves to changed while the change was being applied. Read the subscription again and retry.'
+		);
+	}
+}
+
+/**
+ * Raised when the settlement of a change is already being made by another request under the same key: a charge or a
+ * credit whose claim is held. That request owns the recorded change, so the one refused leaves it in place
+ * (`applyChange`) rather than releasing a record the other still settles and applies.
+ */
+class ProrationInFlight extends BadRequestException {
+	constructor() {
+		super('SUBSCRIPTION_PRORATION_IN_FLIGHT: an identical change is already being settled for this period.');
+	}
+}
+
+/**
+ * @param plan A plan as read.
+ * @returns What a scheduled change is checked and priced against, so two reads of the plan can be compared: whether it
+ * may be taken up, its currency, what it delivers, its discount, its cadence and its cycle ceiling.
+ */
+function scheduledPlanTerms(plan: SubscriptionPlan | null): string {
+	return JSON.stringify(
+		plan
+			? [
+					plan.isActive !== false,
+					plan.currency ?? null,
+					plan.variantId ?? null,
+					plan.productId ?? null,
+					plan.discountPercentage ?? null,
+					plan.billingPeriod ?? null,
+					plan.billingInterval ?? null,
+					plan.maxBillingCycles ?? null
+			  ]
+			: null
+	);
 }
 
 /**
@@ -561,6 +849,22 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		};
 
 		const created = await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+			// The plan row in share mode until this commits (`lockPlanRow`): a plan update waits for it and then counts
+			// this subscription, and an update that committed first is seen here, so the subscription never starts on a
+			// plan that was deactivated or re-priced in another currency after the checks above.
+			await lockPlanRow(manager, plan.id, 'share');
+			const current = await manager.findOne(SubscriptionPlan, { where: { id: plan.id } });
+			if (!current || current.isActive === false) {
+				throw new BadRequestException(
+					`SUBSCRIPTION_PLAN_INACTIVE: the plan "${plan.code}" is not active, so no new subscription may be created from it.`
+				);
+			}
+			if (current.currency && currency && current.currency !== currency) {
+				throw new BadRequestException(
+					`SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in ${current.currency} and the request states ${currency}.`
+				);
+			}
+
 			const subscription = await manager.save(
 				Subscription,
 				manager.create(Subscription, {
@@ -797,11 +1101,44 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @throws BadRequestException when it is not paused.
 	 */
 	public async resume(id: ID, at?: Date, expectation: IVersionExpectation = ANY_VERSION): Promise<Subscription> {
-		const subscription = await this.findOneScoped(id);
-
-		this.assertStatus(subscription, [SubscriptionStatus.PAUSED], 'resume');
-
 		const now = at ?? new Date();
+
+		// The calendar a resume writes is decided from the subscription as read, so the write is predicated on the version
+		// it was read at (Copilot): predicated on whatever version the row holds when its statement runs, a resume that
+		// read the calendar on a cycle being charged wrote that instant back over the calendar the cycle's finish had
+		// moved meanwhile, and the next pass finished the cycle a second time. On that conflict the row is read again and
+		// the calendar decided again.
+		for (let attempt = 1; ; attempt += 1) {
+			const subscription = await this.findOneScoped(id);
+
+			this.assertStatus(subscription, [SubscriptionStatus.PAUSED], 'resume');
+
+			try {
+				const nextBillingAt = await this.resumeAsRead(subscription, now, this.readVersionPredicate(subscription, expectation));
+
+				await this.emit('subscription.resumed', id, { subscriptionId: id, resumedAt: now, nextBillingAt });
+
+				return await this.findOneScoped(id);
+			} catch (error) {
+				if (expectation.wildcard && attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				throw error;
+			}
+		}
+	}
+
+	/**
+	 * Writes the resume of a paused subscription, decided from the subscription as read.
+	 *
+	 * @param subscription The subscription, as read.
+	 * @param now The instant it resumes at.
+	 * @param expectation The version the decision was read at, which the write is predicated on.
+	 * @returns The next billing instant the resume wrote.
+	 */
+	private async resumeAsRead(subscription: Subscription, now: Date, expectation: IVersionExpectation): Promise<Date> {
+		const id = subscription.id;
 
 		if (this.owesOpeningPeriod(subscription)) {
 			const plan = await this.planService.findOneScoped(subscription.planId);
@@ -842,14 +1179,13 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				}
 			});
 
-			await this.emit('subscription.resumed', id, { subscriptionId: id, resumedAt: now, nextBillingAt });
-
-			return await this.findOneScoped(id);
+			return nextBillingAt;
 		}
 
 		// An invoice still waiting for its payment keeps the subscription on its period (Q7-W4): resuming past it
-		// would start a new period over the invoiced one, and bill the customer twice for the same time.
-		const nextBillingAt = (await this.awaitsCyclePayment(subscription))
+		// would start a new period over the invoiced one, and bill the customer twice for the same time. So does a
+		// charge of that period a pass has started or recorded and not finished (`calendarHeldByCycle`).
+		const nextBillingAt = (await this.calendarHeldByCycle(subscription))
 			? new Date(subscription.nextBillingAt as Date)
 			: resumedNextBillingAt(subscription.currentPeriodEnd, now);
 
@@ -864,13 +1200,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			}
 		});
 
-		await this.emit('subscription.resumed', id, {
-			subscriptionId: id,
-			resumedAt: now,
-			nextBillingAt
-		});
-
-		return await this.findOneScoped(id);
+		return nextBillingAt;
 	}
 
 	/**
@@ -922,10 +1252,11 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			return { restart: period, nextBillingAt: period.start };
 		}
 
-		if (opening && this.billingService.holdsDeferredCalendar(opening)) {
+		if (opening && (this.billingService.holdsDeferredCalendar(opening) || this.heldByCharge(opening))) {
 			// Invoiced and waiting for its payment (Q7-W4): the period stays open, and its payment moves the calendar.
 			// A cycle already paid whose payment was interrupted before it moved the calendar still holds it, and is
-			// kept just the same: its retry is what moves the calendar.
+			// kept just the same: its retry is what moves the calendar. So does a charge of the opening period that is
+			// under way, or recorded and not finished: the finish moves the calendar onto it (`finishCycle`).
 			return { restart: null, nextBillingAt: new Date(subscription.nextBillingAt as Date) };
 		}
 
@@ -956,31 +1287,48 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		options: { reason?: string; immediate?: boolean } = {},
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<Subscription> {
-		const subscription = await this.findOneScoped(id);
-
-		if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(subscription.status)) {
-			return subscription;
-		}
-
 		const now = new Date();
-		const deferred = !options.immediate && subscription.status === SubscriptionStatus.ACTIVE;
+		let deferred = false;
 
-		await commitVersionedUpdate<Subscription>(this, {
-			where: currentScope(),
-			id,
-			expectation,
-			patch: {
-				status: deferred ? SubscriptionStatus.ACTIVE : SubscriptionStatus.CANCELED,
-				canceledAt: now,
-				cancelReason: options.reason ?? subscription.cancelReason,
-				nextBillingAt: deferred ? subscription.nextBillingAt : null,
-				pausedUntil: deferred ? subscription.pausedUntil : null,
-				metadata: {
-					...(subscription.metadata ?? {}),
-					...(deferred ? { [CANCEL_AT_PERIOD_END]: true } : {})
-				}
+		// Predicated on the version read, and read again on a race while the caller stated none: the metadata is written
+		// from that read, so a write made between the read and this one — a change recorded (`reserveChange`), a credit
+		// carried — is kept rather than written over.
+		for (let attempt = 1; ; attempt += 1) {
+			const subscription = await this.findOneScoped(id);
+
+			if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(subscription.status)) {
+				return subscription;
 			}
-		});
+
+			deferred = !options.immediate && subscription.status === SubscriptionStatus.ACTIVE;
+
+			try {
+				await commitVersionedUpdate<Subscription>(this, {
+					where: currentScope(),
+					id,
+					expectation: this.readVersionPredicate(subscription, expectation),
+					patch: {
+						status: deferred ? SubscriptionStatus.ACTIVE : SubscriptionStatus.CANCELED,
+						canceledAt: now,
+						cancelReason: options.reason ?? subscription.cancelReason,
+						nextBillingAt: deferred ? subscription.nextBillingAt : null,
+						pausedUntil: deferred ? subscription.pausedUntil : null,
+						metadata: {
+							...(subscription.metadata ?? {}),
+							...(deferred ? { [CANCEL_AT_PERIOD_END]: true } : {})
+						}
+					}
+				});
+
+				break;
+			} catch (error) {
+				if (expectation.wildcard && attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				throw error;
+			}
+		}
 
 		await this.emit('subscription.canceled', id, {
 			subscriptionId: id,
@@ -1140,17 +1488,18 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		this.assertLive(subscription);
 
 		const plan = await this.planService.assertSubscribable(input.planId);
-		const variantId = await this.planService.resolveVariantId(plan);
+
+		// A subscription is billed in its plan's currency (`POST /subscriptions` refuses another, and a plan with live
+		// subscriptions may not change it): its lines, prorations and carried credits are priced in it, so it moves
+		// only to a plan priced in the same one.
+		if (plan.currency && plan.currency !== subscription.currency) {
+			throw new BadRequestException(
+				`SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in ${plan.currency} and the subscription is billed in ${subscription.currency}.`
+			);
+		}
+
 		const existing = await this.itemService.findForSubscription(id);
-		const requested: ISubscriptionItemInput[] = variantId
-			? [{ variantId, quantity: input.quantity ?? subscription.quantity }]
-			: existing.map((row) => ({
-					variantId: row.variantId,
-					quantity: input.quantity ?? row.quantity,
-					unitPrice: row.unitPrice,
-					position: row.position
-			  }));
-		const prepared = await this.itemService.prepareItems(requested, subscription.currency, subscription.customerId);
+		const prepared = await this.planLines(subscription, plan, existing, input.quantity);
 
 		return await this.applyChange(
 			subscription,
@@ -1171,6 +1520,35 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
+	 * The recurring lines a subscription has on a plan it moves to, priced, written nowhere: the plan's own variant
+	 * at the stated quantity, or — for a plan that delivers none — the subscription's lines at that quantity.
+	 *
+	 * @param subscription The subscription moving.
+	 * @param plan The plan it moves to.
+	 * @param existing Its recurring lines now.
+	 * @param quantity The quantity the change states, when it states one.
+	 * @returns The lines, in position order.
+	 */
+	private async planLines(
+		subscription: Subscription,
+		plan: SubscriptionPlan,
+		existing: SubscriptionItem[],
+		quantity?: DecimalString | number
+	): Promise<IPricedLine[]> {
+		const variantId = await this.planService.resolveVariantId(plan);
+		const requested: ISubscriptionItemInput[] = variantId
+			? [{ variantId, quantity: quantity ?? subscription.quantity }]
+			: existing.map((row) => ({
+					variantId: row.variantId,
+					quantity: quantity ?? row.quantity,
+					unitPrice: row.unitPrice,
+					position: row.position
+			  }));
+
+		return await this.itemService.prepareItems(requested, subscription.currency, subscription.customerId);
+	}
+
+	/**
 	 * Adds a recurring line mid-cycle and settles the remainder of the period.
 	 *
 	 * @param id The subscription to add the line to.
@@ -1187,7 +1565,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		this.assertLive(subscription);
 
-		const before = await this.itemService.findForSubscription(id);
+		const before = await this.linesToEdit(subscription);
 		const prepared = await this.itemService.prepareItems(
 			[
 				...before.map((row) => ({
@@ -1233,7 +1611,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		this.assertLive(subscription);
 
-		const before = await this.itemService.findForSubscription(id);
+		const before = await this.linesToEdit(subscription);
 
 		if (!before.some((row) => row.variantId === variantId)) {
 			throw new NotFoundException(
@@ -1281,7 +1659,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 
 		this.assertLive(subscription);
 
-		const before = await this.itemService.findForSubscription(id);
+		const before = await this.linesToEdit(subscription);
 
 		if (!before.some((row) => row.variantId === variantId)) {
 			throw new NotFoundException(
@@ -1449,6 +1827,18 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		});
 
 		if (claim.outcome === IdempotencyOutcome.REPLAYED) {
+			// A key completed on a cycle the run charged but never finished — a build before this one replayed such a
+			// cycle as settled — leaves the subscription on that cycle's period for good, and every pass replays the key.
+			// The finish is once-only on its own (`finishCycle`), so it is run here without the key, charging nothing.
+			const charged = await this.billingService.findByPeriod(subscription.id, period.start);
+
+			if (charged && this.leftUnfinished(charged)) {
+				return await this.finishCycle(subscription.id, charged.id, await this.owedBookkeepingOf(charged), {
+					expectation: spend(),
+					replayed: true
+				});
+			}
+
 			return {
 				...(claim.response?.body as unknown as ISubscriptionBillingOutcome),
 				subscriptionId: subscription.id,
@@ -1553,7 +1943,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				};
 			} else {
 				calendar = {
-					nextBillingAt: (await this.awaitsCyclePayment(subscription))
+					nextBillingAt: (await this.calendarHeldByCycle(subscription))
 						? new Date(subscription.nextBillingAt as Date)
 						: resumedNextBillingAt(subscription.currentPeriodEnd, runsAt),
 					currentPeriodEnd: subscription.currentPeriodEnd
@@ -1603,16 +1993,28 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			return null;
 		}
 
+		// The cycle applies the change scheduled for this period before pricing it (`applyScheduledChange`), so the
+		// preview prices what that change makes of the subscription, writing none of it.
+		const scheduled = await this.scheduledChangeAt(subscription, period.start);
+		const opensOn =
+			scheduled?.items && !scheduled.refused
+				? { items: scheduled.items, plan: scheduled.plan ?? plan, metadata: scheduled.metadata }
+				: { items, plan, metadata: subscription.metadata };
+		const periodEnd =
+			scheduled?.plan && !scheduled.refused
+				? periodFrom(period.start, this.planService.cadenceOf(scheduled.plan)).end
+				: period.end;
+
 		// A retry prices the lines as they stand when it runs, exactly as a first attempt does, rather than
 		// charging what the failed attempt recorded — so the preview prices them now, with the same function.
-		const { net } = priceCycle({ items, currency: subscription.currency, plan, metadata: subscription.metadata });
+		const { net } = priceCycle({ ...opensOn, currency: subscription.currency });
 
 		return {
 			subscriptionId: subscription.id,
 			amount: net.toStorageString(),
 			currency: subscription.currency,
 			periodStart: period.start,
-			periodEnd: period.end,
+			periodEnd,
 			nextBillingAt: retryAt ?? period.start
 		};
 	}
@@ -1634,6 +2036,10 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	): Promise<ISubscriptionBillingRunOutcome> {
 		const now = options.asOf ?? new Date();
 		const limit = Math.max(1, Math.trunc(options.limit ?? 200));
+
+		if (!options.subscriptionId) {
+			await this.recoverAbandonedChanges(limit);
+		}
 
 		const due = options.subscriptionId
 			? [await this.findOneScoped(options.subscriptionId)]
@@ -1681,6 +2087,126 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
+	 * Recovers the mid-cycle changes abandoned with a plan reserved: a change whose apply kept losing and was not
+	 * repeated, one whose release could not be written, one whose request stopped. Each holds its target plan against
+	 * every plan update (`SubscriptionPlanService.hasLiveSubscriptions`) until it is resolved, and nothing else resolves
+	 * it unless the subscription is changed again, so every billing pass looks for them, by the reservation's index.
+	 *
+	 * A record past {@link CHANGE_INTENT_LEASE_MS} is resolved as a change meeting it resolves it
+	 * (`resolveAbandonedChange`): applied when its settlement was made or is made again under its own key; recorded for
+	 * reversal and announced when nothing can tell, its record and reservation cleared in the same versioned write; cleared
+	 * when it moved nothing. A record still inside the lease is left to the request settling it. One
+	 * that cannot be recovered is logged and left for the next pass; it never stops the billing.
+	 *
+	 * Every reserving subscription is looked at, page by page in id order: reservations exist only while changes are in
+	 * flight, so they are few, and a page that took only the first ones would let a row that keeps failing (or keeps
+	 * settling) hold the place of a paid change behind it on every pass.
+	 *
+	 * **Only in an organization's scope.** The claims a settlement was made under, the lines a change writes and the
+	 * events it appends are all the request's tenant's and organization's (`IdempotencyService` reads by the credential;
+	 * a new line and an event take the context's), so a pass run without both — a tenant-wide or scheduled one — could
+	 * miss a completed claim and raise the charge again under another scope. Such a pass recovers nothing; a pass run in
+	 * the organization, and the next change to the subscription (`reserveChange`), do.
+	 *
+	 * @param limit How many reserving subscriptions one page reads.
+	 */
+	private async recoverAbandonedChanges(limit: number): Promise<void> {
+		if (!RequestContext.currentTenantId() || !RequestContext.currentOrganizationId()) {
+			return;
+		}
+
+		let after: ID | undefined;
+
+		for (;;) {
+			const page = await this.typeOrmSubscriptionRepository.find({
+				where: {
+					reservedPlanId: Not(IsNull()),
+					...(after ? { id: MoreThan(after) } : {}),
+					...currentScope()
+				} as never,
+				order: { id: 'ASC' } as never,
+				take: limit
+			});
+
+			for (const subscription of page) {
+				try {
+					await this.recoverAbandonedChange(subscription.id);
+				} catch (error) {
+					this.logger.error(
+						`Subscription ${subscription.id}: its abandoned change could not be recovered: ${(error as Error)?.message ?? error}`
+					);
+				}
+			}
+
+			if (page.length < limit) {
+				return;
+			}
+
+			after = page[page.length - 1].id;
+		}
+	}
+
+	/**
+	 * @param id A subscription holding a plan reservation.
+	 */
+	private async recoverAbandonedChange(id: ID): Promise<void> {
+		for (let attempt = 1; ; attempt += 1) {
+			const current = await this.findOneScoped(id);
+			const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
+			const recorded = this.changeIntentOf(metadata);
+
+			if (!current.reservedPlanId || (recorded && Date.now() - new Date(recorded.at).getTime() < CHANGE_INTENT_LEASE_MS)) {
+				return;
+			}
+
+			// A charge still being raised (its claim held) throws here and is left for the next pass.
+			const state = recorded ? await this.resolveAbandonedChange(current, recorded) : 'UNSETTLED';
+
+			if (state === 'APPLIED') {
+				this.logger.warn(`Subscription ${id}: the change ${recorded?.key} was abandoned after it was settled; it is applied.`);
+
+				return;
+			}
+
+			const noted = !!recorded && state !== 'UNSETTLED' && this.noteReversal(metadata, recorded, state);
+
+			delete metadata[CHANGE_INTENT];
+
+			try {
+				await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+					await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+						where: currentScope(),
+						id,
+						expectation: this.readVersionPredicate(current, ANY_VERSION),
+						patch: { metadata, reservedPlanId: null }
+					});
+
+					if (noted) {
+						await this.emit(
+							'subscription.settlement-reversal-required',
+							id,
+							this.reversalEvent(id, recorded, state),
+							manager
+						);
+					}
+				});
+
+				this.logger.warn(
+					`Subscription ${id}: the change ${recorded?.key ?? '(no record)'} was abandoned with plan ${current.reservedPlanId} reserved; the reservation is released and its settlement is ${state}.`
+				);
+
+				return;
+			} catch (error) {
+				if (attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				throw error;
+			}
+		}
+	}
+
+	/**
 	 * Reads the subscriptions a billing pass must examine.
 	 *
 	 * A subscription in dunning is not selected here: its retry is driven by the cycle row's own
@@ -1694,7 +2220,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * passed unnoticed, the trial ran on indefinitely and nothing was ever charged, in every tenant,
 	 * until a human called the activate endpoint for each one. `billCycle` needs no special case for
 	 * it: the period it bills starts at `nextBillingAt`, which is exactly the trial's end, and
-	 * `recordSuccess` is what moves the row to `ACTIVE` — so the trial's last instant and the first paid
+	 * `finishCycle` is what moves the row to `ACTIVE` — so the trial's last instant and the first paid
 	 * period's first instant are the same instant, with no free interval between them.
 	 *
 	 * A `PENDING` subscription that is **not** in a trial is one nobody has activated yet, and it stays
@@ -1917,7 +2443,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		manual: boolean,
 		expectation: IVersionExpectation = ANY_VERSION
 	): Promise<ISubscriptionBillingOutcome> {
-		const items = await this.itemService.findForSubscription(subscription.id);
+		let items = await this.itemService.findForSubscription(subscription.id);
 
 		if (!items.length) {
 			throw new BadRequestException(
@@ -1925,22 +2451,23 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			);
 		}
 
-		const existing = await this.billingService.findByPeriod(subscription.id, period.start);
+		let existing = await this.billingService.findByPeriod(subscription.id, period.start);
 
 		if (existing && RAISED_CYCLE_STATUSES.includes(existing.status)) {
 			// The period is settled. Recomputing it would be a second answer to a question the row has
 			// already answered, and acting on that answer is how a customer is charged twice.
-			return {
-				subscriptionId: subscription.id,
-				billingId: existing.id,
-				status: existing.status,
-				replayed: true,
-				orderId: existing.orderId,
-				amount: existing.amount,
-				currency: existing.currency,
-				periodStart: existing.periodStart,
-				periodEnd: existing.periodEnd
-			};
+			await this.reconcileRecordedDiscount(existing, subscription);
+
+			if (this.leftUnfinished(existing)) {
+				// The run charged it and the pass that did was cut off before the cycle was finished: what is left is
+				// done from the row, charging nothing.
+				return await this.finishCycle(subscription.id, existing.id, await this.owedBookkeepingOf(existing), {
+					expectation,
+					replayed: true
+				});
+			}
+
+			return this.raisedCycleOutcome(subscription, existing);
 		}
 
 		if (existing?.nextRetryAt && !manual && new Date(existing.nextRetryAt).getTime() > now.getTime()) {
@@ -1956,54 +2483,258 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			};
 		}
 
-		// The one computation of a cycle's amount, which the upcoming-billing preview calls as well.
-		const { gross, discount, net } = priceCycle({
-			items,
-			currency: subscription.currency,
-			plan,
-			metadata: subscription.metadata
-		});
-
-		// The subscription is written by whichever of the two writes below runs first — the metadata the
-		// order path records, or the cycle's own record — so the caller's version is handed to the writes
-		// rather than to the calls, and a path that writes nothing does not spend it.
+		// The subscription is written by whichever of the writes below runs first — the change scheduled for this
+		// period, the failure the dunning schedule records, or the finish of a charged cycle — so the caller's version is
+		// handed to the writes rather than to the calls, and a path that writes nothing does not spend it.
 		const spend = spendableExpectation(expectation);
 
-		const billing =
-			existing ??
-			(await this.billingService.createPending({
-				subscriptionId: subscription.id,
-				periodStart: period.start,
-				periodEnd: period.end,
-				amount: net.toStorageString(),
+		// The charge is claimed on the cycle before anything touches it, and while the order path is called the claim is
+		// what an operator's `pay` or `waive` meets (`SubscriptionBillingService.claimCharge`). One conditional statement
+		// takes it, so no row lock is held across the external call. A row an earlier attempt wrote is claimed before the
+		// change scheduled for its period restates it and before the retry reprices it, so both write under the claim; a
+		// row this attempt opens is claimed as soon as it exists.
+		let claim = existing ? await this.billingService.claimCharge(existing.id) : null;
+
+		if (claim && !claim.token) {
+			return this.unclaimedCycleOutcome(subscription, claim.billing);
+		}
+
+		// The claimed row is the one charged: a pass that recovered a stale claim reads the attempt count the earlier
+		// call left, so it calls the order path under that call's attempt key and the order path's own idempotency says
+		// what the call did.
+		existing = claim ? claim.billing : existing;
+		let stillFenced = false;
+		// A takeover of an attempt whose outcome was never recorded resends that attempt's frozen request
+		// (`raiseCycleOrder`) verbatim. The attempt applied the change scheduled for its period, priced the row and wrote
+		// its adjustments before it froze the request, so none of that is done again from the subscription as it now
+		// stands: a restated or repriced row would no longer be the one the order was raised for, and the cycle would
+		// record a discount or a credit its order never granted.
+		const replaying = !!existing && !!this.billingService.frozenAttemptOf(existing, (existing.attemptCount ?? 0) + 1);
+
+		try {
+			// A change taken from the next period (`effective = 'NEXT_PERIOD'`) takes hold here, as the period it was
+			// scheduled for opens: the period is priced on the plan and lines it moved to. It used to be recorded and never
+			// read, so the subscription kept renewing on the plan it was leaving. The cycle holds the period's claim, so one
+			// pass applies it.
+			const opened = replaying
+				? null
+				: await this.applyScheduledChange(subscription.id, period.start, spend, existing, plan, claim?.token);
+
+			if (opened) {
+				// Applied or refused, the cycle goes on with the subscription as the change left it: the period is priced on
+				// it, and the finish reads the subscription afresh (`finishCycle`), so nothing writes back the metadata read
+				// before the change.
+				subscription = opened.subscription;
+				items = await this.itemService.findForSubscription(subscription.id);
+
+				if (opened.plan) {
+					plan = opened.plan;
+					// The period opens on the new plan's cadence. A row an earlier attempt wrote for it moved its end with the
+					// change, so every later retry, which reads the period from the plan, finds the row on the same period.
+					period = periodFrom(period.start, this.planService.cadenceOf(plan));
+					existing = existing ? await this.billingService.findByPeriod(subscription.id, period.start) : existing;
+				}
+			}
+
+			// The one computation of a cycle's amount, which the upcoming-billing preview calls as well.
+			const { gross, discount, net } = priceCycle({
+				items,
 				currency: subscription.currency,
-				dueAt: period.start,
-				metadata: { gross: gross.toStorageString(), discount: discount.toStorageString() }
-			}));
+				plan,
+				metadata: subscription.metadata
+			});
 
-		if (discount.isPositive()) {
-			await this.appendDiscount(billing, subscription, discount);
+			// A retry charges what it prices now (the lines as they stand, a change that took hold at this attempt), so the
+			// row an earlier attempt wrote records that: the amount the cycle settles for, and that `subscription.renewed`
+			// reports, is the amount its order charged.
+			const pricing = { gross: gross.toStorageString(), discount: discount.toStorageString() };
+			// A row the change restated on its own transaction (`applyScheduledChange`) already carries this discount, so its
+			// discount rows are brought to it first: a payment recorded after that commit stops the retry below
+			// (`SUBSCRIPTION_BILLING_CYCLE_SETTLED`), and the row it settled then still agrees with its ledger.
+			const restated = !!existing && !!opened?.plan;
+
+			if (restated) {
+				await this.appendDiscount(existing as SubscriptionBilling, subscription, discount);
+			}
+
+			const priced = existing
+				? replaying
+					? existing
+					: await this.billingService.repriceUnsettled(existing, net.toStorageString(), pricing, claim.token)
+				: await this.billingService.createPending({
+						subscriptionId: subscription.id,
+						periodStart: period.start,
+						periodEnd: period.end,
+						amount: net.toStorageString(),
+						currency: subscription.currency,
+						dueAt: period.start,
+						metadata: pricing
+				  });
+
+			if (!claim) {
+				claim = await this.billingService.claimCharge(priced.id);
+
+				if (!claim.token) {
+					return this.unclaimedCycleOutcome(subscription, claim.billing);
+				}
+			}
+
+			const billing = existing ? priced : claim.billing;
+			// A row this pass did not find but `createPending` handed back was opened by another pass after the lookup, and
+			// that pass may have frozen an attempt on it and stopped before recording its outcome (Copilot). The claim
+			// just taken reads it as it stands: its frozen request is resent as it was (`raiseCycleOrder`), so nothing is
+			// written from this pass's own pricing either.
+			const resending =
+				replaying ||
+				(!existing && !!this.billingService.frozenAttemptOf(billing, (billing.attemptCount ?? 0) + 1));
+
+			if (!restated && !resending) {
+				await this.appendDiscount(billing, subscription, discount);
+			}
+
+			const credit = resending ? null : await this.consumePendingCredit(subscription, billing);
+			const bookkeeping = this.cycleBookkeepingFor(subscription, plan, credit);
+
+			const raised = await this.raiseCycleOrder(
+				subscription,
+				plan,
+				items,
+				billing,
+				period,
+				net,
+				credit,
+				discount,
+				bookkeeping,
+				claim.token
+			);
+			const failure = raised.failure;
+
+			if (failure?.code === ORDER_ATTEMPT_IN_FLIGHT) {
+				// An earlier call is still charging this attempt, and the order path still fences it. This pass records
+				// nothing and keeps its claim, so the cycle stays fenced against an operator for as long as the order path
+				// fences the call; that call's outcome ends the claim, or the claim goes stale and the next pass recovers it.
+				stillFenced = true;
+
+				return this.unclaimedCycleOutcome(subscription, billing);
+			}
+
+			if (failure?.code === CHARGE_CLAIM_LOST) {
+				// The charge outlived its claim and another pass holds the cycle; that pass records it.
+				return this.unclaimedCycleOutcome(subscription, await this.billingService.findOneScoped(billing.id));
+			}
+
+			if (failure?.code === ORDER_ATTEMPT_KEY_REUSED) {
+				// An earlier call of this attempt raised its order on other terms (the cycle was repriced since), and its
+				// outcome cannot be read from here. Nothing is recorded, so the attempt count and the key stay where that
+				// call left them; the claim is released, so an operator can reconcile the cycle with that order. A takeover
+				// resends the attempt's frozen request (`ATTEMPT_REQUEST`), so this answers an attempt made before requests
+				// were frozen.
+				this.logger.error(
+					`Subscription ${subscription.id}: attempt ${(billing.attemptCount ?? 0) + 1} of cycle ${billing.id} ` +
+						`already raised an order on other terms; the cycle is left for an operator to reconcile with it.`
+				);
+				// The request this pass froze is not the one the order path holds: it is dropped, so it neither stands as the
+				// attempt's nor keeps an operator from reconciling the cycle.
+				await this.billingService.unfreezeAttempt(billing.id, claim.token);
+
+				return {
+					subscriptionId: subscription.id,
+					billingId: billing.id,
+					status: billing.status,
+					replayed: true,
+					periodStart: billing.periodStart,
+					periodEnd: billing.periodEnd,
+					errorCode: ORDER_ATTEMPT_KEY_REUSED,
+					message:
+						'An earlier call of this attempt raised its order on other terms; nothing is recorded until the cycle is reconciled with that order.'
+				};
+			}
+
+			if (failure) {
+				return await this.recordFailure(subscription, billing, failure, now, spend(), claim.token);
+			}
+
+			// The bookkeeping the order was raised with is handed over as well as recorded on the row: a cycle an operator
+			// settled while the charge was in flight kept the operator's record, without it.
+			return await this.finishCycle(subscription.id, billing.id, raised.bookkeeping, {
+				expectation: spend(),
+				replayed: false
+			});
+		} finally {
+			if (claim?.token && !stillFenced) {
+				await this.endChargeClaim(claim.billing, claim.token);
+			}
+		}
+	}
+
+	/**
+	 * Ends a cycle's charge claim once the attempt that took it is over.
+	 *
+	 * The write that recorded the attempt's outcome has ended it already, and the token keeps a claim another pass
+	 * recovered in place. A release that fails leaves the claim to go stale, which fences the cycle a little longer
+	 * and is answered by the next pass, so it does not replace the cycle's own answer.
+	 *
+	 * @param billing The cycle.
+	 * @param token The claim's token.
+	 */
+	private async endChargeClaim(billing: SubscriptionBilling, token: string): Promise<void> {
+		try {
+			await this.billingService.releaseChargeClaim(billing.id, token);
+		} catch (error) {
+			// The driver's message without the statement's bound values, as the platform's database-error filter logs it.
+			const redacted = redactDatabaseError(error);
+
+			this.logger.warn(
+				`Subscription ${billing.subscriptionId}: the charge claim on cycle ${billing.id} was not released ` +
+					`(${redacted instanceof Error ? redacted.message : 'a database error'}); it goes stale and the next ` +
+					`pass recovers it.`
+			);
+		}
+	}
+
+	/**
+	 * What a pass answers for a period whose cycle is already raised: the row's own record of it.
+	 *
+	 * @param subscription The subscription being billed.
+	 * @param billing The raised cycle.
+	 * @returns The replayed outcome.
+	 */
+	private raisedCycleOutcome(subscription: Subscription, billing: SubscriptionBilling): ISubscriptionBillingOutcome {
+		return {
+			subscriptionId: subscription.id,
+			billingId: billing.id,
+			status: billing.status,
+			replayed: true,
+			orderId: billing.orderId,
+			amount: billing.amount,
+			currency: billing.currency,
+			periodStart: billing.periodStart,
+			periodEnd: billing.periodEnd
+		};
+	}
+
+	/**
+	 * What a pass answers for a cycle it could not charge: one settled since it was read, or one another pass is
+	 * charging. Nothing is charged, written or told, so nothing is spent either.
+	 *
+	 * @param subscription The subscription being billed.
+	 * @param billing The cycle as it now stands.
+	 * @returns The replayed outcome.
+	 */
+	private unclaimedCycleOutcome(subscription: Subscription, billing: SubscriptionBilling): ISubscriptionBillingOutcome {
+		if (RAISED_CYCLE_STATUSES.includes(billing.status)) {
+			return this.raisedCycleOutcome(subscription, billing);
 		}
 
-		const credit = await this.consumePendingCredit(subscription, billing);
-
-		const failure = await this.raiseCycleOrder(
-			subscription,
-			plan,
-			items,
-			billing,
-			period,
-			net,
-			credit,
-			discount,
-			spend
-		);
-
-		if (failure) {
-			return await this.recordFailure(subscription, billing, failure, now, spend());
-		}
-
-		return await this.recordSuccess(subscription, plan, billing, period, items, spend());
+		return {
+			subscriptionId: subscription.id,
+			billingId: billing.id,
+			status: billing.status,
+			replayed: true,
+			periodStart: billing.periodStart,
+			periodEnd: billing.periodEnd,
+			message: 'Another billing pass is charging this cycle, so this pass leaves it to that one.'
+		};
 	}
 
 	/**
@@ -2017,9 +2748,12 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param net The recurring amount after the plan discount.
 	 * @param credit The deferred proration credit, when one is owed.
 	 * @param discount The plan discount granted, when one was.
-	 * @param nextExpectation The reader the two subscription writes below take their expectation from,
-	 * so that whichever of them runs first carries the version the route's caller stated.
-	 * @returns A platform code and message when the charge could not be made, or undefined on success.
+	 * @param bookkeeping What the order leaves the subscription to record, written on the cycle with the charge's outcome.
+	 * @param chargeClaim The token of the charge claim this pass holds on the cycle, which its payment ends.
+	 * @returns A platform code and message when the charge could not be made (none once its outcome is recorded), and the
+	 * bookkeeping of the request the order path was called with: a takeover of an attempt resends that attempt's.
+	 * @throws Whatever recording the outcome of an order the order path raised throws, other than the refusals handled
+	 * below: that is not a failed charge, since the money may have been taken.
 	 */
 	private async raiseCycleOrder(
 		subscription: Subscription,
@@ -2030,109 +2764,168 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		net: Money,
 		credit: Money | null,
 		discount: Money,
-		nextExpectation: () => IVersionExpectation
-	): Promise<{ code: string; message: string } | undefined> {
+		bookkeeping: ICycleBookkeeping,
+		chargeClaim: string
+	): Promise<{ failure?: { code: string; message: string }; bookkeeping: ICycleBookkeeping }> {
 		if (!this.orderGateway) {
 			return {
-				code: 'SUBSCRIPTION_ORDER_GATEWAY_UNAVAILABLE',
-				message:
-					'The order capability is not registered, so a cycle cannot raise the order it bills; the cycle is recorded as failed rather than marked paid.'
+				failure: {
+					code: 'SUBSCRIPTION_ORDER_GATEWAY_UNAVAILABLE',
+					message:
+						'The order capability is not registered, so a cycle cannot raise the order it bills; the cycle is recorded as failed rather than marked paid.'
+				},
+				bookkeeping
 			};
 		}
 
-		const payer = await this.resolvePayer(subscription);
-
-		if (payer.refusal) {
-			return payer.refusal;
-		}
-
-		const setupFee = this.setupFeeFor(subscription, plan);
 		// One key per attempt, not per period. The per-period key is what the cycle's idempotency claim
 		// holds, and it is deliberately left open after a failure so the dunning schedule's next
 		// attempt can take it over; the order path's key has to move with the attempt, or a retry
 		// would be answered with the decline it is trying to recover from. Two runs of the *same*
 		// attempt still collide, which is what stops one attempt charging twice.
 		const attempt = (billing.attemptCount ?? 0) + 1;
+		// A pass that takes over an attempt whose outcome was never recorded — its pass died, or the write recording it
+		// failed — resends the request that attempt made (`ATTEMPT_REQUEST`). The order path replays an attempt only for
+		// the same request: one rebuilt from lines changed since was refused, recorded as a failed charge and charged again
+		// under the next attempt's key, and a credit deferred since was recorded as consumed by an order that never carried it.
+		let frozen = this.billingService.frozenAttemptOf(billing, attempt);
 
-		try {
-			const result = await this.orderGateway.raiseSubscriptionOrder({
-				subscriptionId: subscription.id,
-				billingId: billing.id,
-				customerId: subscription.customerId,
-				originOrderId: subscription.originOrderId,
-				currency: subscription.currency,
-				periodStart: period.start,
-				periodEnd: period.end,
-				firstCycle: subscription.billingCycleCount === 0,
-				lines: items.map((item) => ({
-					variantId: item.variantId,
-					quantity: item.quantity,
-					unitPrice: item.unitPrice
-				})),
-				amount: net.toStorageString(),
-				...(setupFee ? { setupFee } : {}),
-				...(discount.isPositive() ? { discountAmount: discount.toStorageString() } : {}),
-				...(credit && !credit.isZero() ? { creditAmount: credit.toStorageString() } : {}),
-				paymentAccountHolderId: payer.accountHolderId,
-				paymentMethodTokenId: payer.paymentMethodTokenId,
-				idempotencyKey: `${subscription.id}:${period.start.toISOString()}:${attempt}`,
-				note: `Subscription cycle ${period.start.toISOString()}, attempt ${attempt}`
-			});
+		if (frozen) {
+			this.logger.warn(
+				`Subscription ${subscription.id}: attempt ${attempt} at cycle ${billing.id} was made before and its outcome ` +
+					`never recorded; resending its request so the order path answers with what it did.`
+			);
+		} else {
+			const payer = await this.resolvePayer(subscription);
 
-			if (!result?.orderId) {
+			if (payer.refusal) {
+				return { failure: payer.refusal, bookkeeping };
+			}
+
+			const setupFee = this.setupFeeFor(subscription, plan);
+
+			frozen = {
+				attempt,
+				request: {
+					subscriptionId: subscription.id,
+					billingId: billing.id,
+					customerId: subscription.customerId,
+					originOrderId: subscription.originOrderId,
+					currency: subscription.currency,
+					periodStart: period.start,
+					periodEnd: period.end,
+					firstCycle: subscription.billingCycleCount === 0,
+					lines: items.map((item) => ({
+						variantId: item.variantId,
+						quantity: item.quantity,
+						unitPrice: item.unitPrice
+					})),
+					amount: net.toStorageString(),
+					...(setupFee ? { setupFee } : {}),
+					...(discount.isPositive() ? { discountAmount: discount.toStorageString() } : {}),
+					...(credit && !credit.isZero() ? { creditAmount: credit.toStorageString() } : {}),
+					paymentAccountHolderId: payer.accountHolderId,
+					paymentMethodTokenId: payer.paymentMethodTokenId,
+					idempotencyKey: `${subscription.id}:${period.start.toISOString()}:${attempt}`,
+					note: `Subscription cycle ${period.start.toISOString()}, attempt ${attempt}`
+				},
+				bookkeeping
+			};
+
+			if (!(await this.billingService.freezeAttempt(billing.id, chargeClaim, frozen))) {
+				// The claim went stale before the call and another pass holds the cycle; that pass charges it.
 				return {
-					code: 'SUBSCRIPTION_ORDER_NOT_RAISED',
-					message: 'The order capability did not return an order for this cycle.'
+					failure: {
+						code: CHARGE_CLAIM_LOST,
+						message: `${CHARGE_CLAIM_LOST}: the charge claim on billing cycle '${billing.id}' went stale before its order was raised.`
+					},
+					bookkeeping
 				};
 			}
+		}
 
-			if (result.paid) {
-				try {
-					await this.billingService.markPaid(billing.id, {
-						paidAt: result.paidAt ?? new Date(),
-						orderId: result.orderId,
-						attemptCount: billing.attemptCount ?? 0
-					});
-				} catch (error) {
-					// The money was taken; an operator settled the cycle another way (waived or refunded it) while the
-					// charge was in flight. That is not a failed charge, and reporting it as one would schedule a retry -
-					// a second charge. The cycle keeps the operator's decision and the conflict is logged for follow-up.
-					if ((error as { response?: { code?: string } })?.response?.code !== 'SUBSCRIPTION_BILLING_TRANSITION_INVALID') {
-						throw error;
-					}
+		let result: ISubscriptionOrderResult;
 
-					this.logger.warn(
-						`Subscription ${subscription.id}: cycle ${billing.id} was settled by an operator while its charge ` +
-							`(order ${result.orderId}) succeeded; the cycle keeps the operator's status.`
-					);
-				}
-			} else {
-				// R4-05: nothing was paid, so the rights of the period wait for the payment. The flags are written
-				// with the status, so no payment can see the cycle invoiced without them.
-				// Q7-W4: the calendar waits for the payment too, so the flag that says so is written with the status.
-				await this.billingService.markInvoiced(billing.id, result.orderId, net.toStorageString(), {
-					activation: this.convertsTrial(subscription, plan),
-					calendar: true
-				});
-			}
-
-			if (setupFee) {
-				await this.rememberSetupFee(subscription, plan, nextExpectation());
-			}
-
-			if (credit && !credit.isZero()) {
-				await this.clearPendingCredit(subscription, nextExpectation());
-			}
-
-			return undefined;
+		try {
+			result = await this.orderGateway.raiseSubscriptionOrder(frozen.request);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
 
 			return {
-				code: /^([A-Z][A-Z0-9_]{3,}):/.exec(message)?.[1] ?? 'SUBSCRIPTION_CHARGE_FAILED',
-				message
+				failure: { code: /^([A-Z][A-Z0-9_]{3,}):/.exec(message)?.[1] ?? 'SUBSCRIPTION_CHARGE_FAILED', message },
+				bookkeeping: frozen.bookkeeping
 			};
 		}
+
+		if (!result?.orderId) {
+			return {
+				failure: {
+					code: 'SUBSCRIPTION_ORDER_NOT_RAISED',
+					message: 'The order capability did not return an order for this cycle.'
+				},
+				bookkeeping: frozen.bookkeeping
+			};
+		}
+
+		// The order is raised, so the money may have been taken. An error recording its outcome is therefore not a failed
+		// charge: recorded as one, it marked a cycle whose money was taken as failed and the dunning retry charged it
+		// again, and a payment that committed but whose read-back threw was replayed as settled while the calendar never
+		// moved, completing the period's key on it. It propagates instead, so nothing charges the cycle again and the key
+		// stays open: a cycle still unpaid is charged by the next pass under this attempt's key, which the order path
+		// answers with this order, and a paid one is finished by it (`finishCycle`).
+		try {
+			if (result.paid) {
+				await this.billingService.markPaid(billing.id, {
+					paidAt: result.paidAt ?? new Date(),
+					orderId: result.orderId,
+					attemptCount: billing.attemptCount ?? 0,
+					chargeClaim,
+					bookkeeping: frozen.bookkeeping
+				});
+			} else {
+				// R4-05: nothing was paid, so the rights of the period wait for the payment. The flags are written
+				// with the status, so no payment can see the cycle invoiced without them.
+				// Q7-W4: the calendar waits for the payment too, so the flag that says so is written with the status.
+				await this.billingService.markInvoiced(
+					billing.id,
+					result.orderId,
+					frozen.request.amount,
+					{ activation: this.convertsTrial(subscription, plan), calendar: true },
+					chargeClaim,
+					frozen.bookkeeping
+				);
+			}
+		} catch (error) {
+			const code = (error as { response?: { code?: string } })?.response?.code;
+
+			if (code === CHARGE_CLAIM_LOST) {
+				// This charge outlived its claim, and another pass recovered the cycle. That pass charges under the same
+				// attempt key, so the order path hands it this charge's order to record; recording it here as well
+				// would clear that pass's fence while it is still working.
+				this.logger.warn(
+					`Subscription ${subscription.id}: the charge of cycle ${billing.id} (order ${result.orderId}) ` +
+						`outlived its claim; the pass that now holds the cycle records it.`
+				);
+
+				return { failure: { code: CHARGE_CLAIM_LOST, message: (error as Error).message }, bookkeeping: frozen.bookkeeping };
+			}
+
+			// The order was raised, and an operator settled the cycle another way (paid, waived or refunded it) once
+			// this charge's claim had gone stale - the claim refuses that while it is live. That is not a failed
+			// charge, and reporting it as one would schedule a retry - a second charge. The cycle keeps the
+			// operator's decision and the conflict is logged for follow-up.
+			if (code !== 'SUBSCRIPTION_BILLING_TRANSITION_INVALID') {
+				throw error;
+			}
+
+			this.logger.warn(
+				`Subscription ${subscription.id}: cycle ${billing.id} was settled by an operator while its charge ` +
+					`(order ${result.orderId}, ${result.paid ? 'paid' : 'unpaid'}) was in flight; the cycle keeps ` +
+					`the operator's status.`
+			);
+		}
+
+		return { bookkeeping: frozen.bookkeeping };
 	}
 
 	/**
@@ -2144,6 +2937,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param now The instant the attempt failed at.
 	 * @param expectation The version the caller read the subscription at, carried by whichever of the
 	 * two writes below records the attempt — only one of them ever runs.
+	 * @param chargeClaim The token of the charge claim this pass holds on the cycle. The attempt is recorded only while
+	 * the claim is still the pass's (`SubscriptionBillingService.markFailed`).
 	 * @returns What the attempt did.
 	 */
 	private async recordFailure(
@@ -2151,7 +2946,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		billing: SubscriptionBilling,
 		failure: { code: string; message: string },
 		now: Date,
-		expectation: IVersionExpectation = ANY_VERSION
+		expectation: IVersionExpectation = ANY_VERSION,
+		chargeClaim?: string
 	): Promise<ISubscriptionBillingOutcome> {
 		const attempts = (billing.attemptCount ?? 0) + 1;
 		const exhausted = isDunningExhausted(attempts);
@@ -2161,8 +2957,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		const failed = await this.billingService.markFailed(billing.id, {
 			attemptCount: attempts,
 			error,
-			nextRetryAt: retryAt
+			nextRetryAt: retryAt,
+			chargeClaim
 		});
+
+		if (!failed) {
+			// This attempt outlived its claim and another pass recovered the cycle: that pass records the attempt it made
+			// under the same order key. Nothing is recorded here — no dunning step, no `subscription.payment-failed`.
+			return this.unclaimedCycleOutcome(subscription, await this.billingService.findOneScoped(billing.id));
+		}
 
 		if (exhausted) {
 			// The retry policy is spent. The subscription keeps its history and its period, and stops
@@ -2214,133 +3017,463 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
-	 * Records a settled cycle and advances the calendar.
+	 * Finishes a cycle whose charge's outcome is recorded: applies the bookkeeping its order left on the subscription and,
+	 * for a cycle the run settled, moves the calendar onto its period and tells the renewal — once, whichever pass gets
+	 * there first.
 	 *
-	 * The next billing instant is computed from the period that was just billed rather than from the
-	 * moment the cycle ran, so a run that is six hours late — or a dunning recovery a week late —
-	 * produces the same calendar as one that was on time. Reaching the plan's ceiling on this cycle
-	 * expires the subscription instead of scheduling another one.
+	 * The billing run calls it right after recording the outcome, and a pass that meets a cycle the run charged but never
+	 * finished calls it in place of a replay (`leftUnfinished`), charging nothing. The bookkeeping and the calendar used to
+	 * be separate writes after the outcome, so a pass cut off between them — a crash, a failed write, a payment whose
+	 * read-back threw — left the cycle paid and the subscription on its period: every later pass replayed the cycle and
+	 * completed the period's key on it, and the subscription was never billed again nor its renewal told.
+	 *
+	 * - **One statement.** The bookkeeping (`bookkeptMetadata`: the setup fee remembered, the consumed credit subtracted
+	 *   from the one still carried) and the calendar are one write of the subscription, so neither lands without the other.
+	 * - **Once.** The decision is read from a subscription whose calendar still points at the cycle (`isFinishable`), and
+	 *   the write is predicated on the version it was read at. Of two passes finishing one cycle — the run, and a pass that
+	 *   took the period's key over once its lease ran out — the second meets the first's write, reads again, finds the
+	 *   calendar past the cycle and the bookkeeping applied, and writes and tells nothing.
+	 * - **Told with the write.** `subscription.activated`, `subscription.renewed` and `subscription.expired` are appended to
+	 *   the outbox in the write's transaction, so they are told exactly when the calendar moves.
+	 * - **The row's own period.** The calendar moves onto the period the cycle records, not one recomputed from the plan's
+	 *   cadence: a customer who moved to a yearly plan before a monthly cycle was finished is billed again a month on.
+	 * - **An invoiced cycle keeps the calendar for its payment** (Q7-W4), and so does a paid one that held it: only the
+	 *   bookkeeping is applied here, and the payment moves the calendar and releases the rights (`payCycle`).
+	 *
+	 * A paused subscription stays paused, and one that ended while the cycle was charged is left as it ended.
+	 *
+	 * @param subscriptionId The subscription.
+	 * @param billingId The cycle, its outcome recorded.
+	 * @param owed What the cycle's order left the subscription to record: the run's own, or the row's (`CYCLE_BOOKKEEPING`).
+	 * @param options The version the caller read the subscription at, which this write spends, and whether the pass is
+	 * replaying a cycle charged before rather than finishing its own charge.
+	 * @returns What the cycle did.
+	 */
+	private async finishCycle(
+		subscriptionId: ID,
+		billingId: ID,
+		owed: ICycleBookkeeping,
+		options: { expectation: IVersionExpectation; replayed: boolean }
+	): Promise<ISubscriptionBillingOutcome> {
+		for (let attempt = 1; ; attempt += 1) {
+			const subscription = await this.findOneScoped(subscriptionId);
+			const billing = await this.billingService.findOneScoped(billingId);
+
+			if (!this.isFinishable(subscription, billing)) {
+				if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(subscription.status) && !options.replayed) {
+					this.logger.warn(
+						`Subscription ${subscription.id}: cycle ${billing.id} (${billing.status}) was charged while the ` +
+							`subscription became ${subscription.status}; its calendar is left as it ended.`
+					);
+				}
+
+				return this.finishedCycleOutcome(subscription, billing, options.replayed);
+			}
+
+			const paidFor = SETTLED_CYCLE_STATUSES.includes(billing.status);
+			const movesCalendar = paidFor && !this.billingService.heldCalendar(billing);
+			const bookkept = this.bookkeptMetadata(subscription, billing, owed);
+
+			if (!movesCalendar && !bookkept) {
+				return this.finishedCycleOutcome(subscription, billing, options.replayed);
+			}
+
+			// The version the decision was read at, taken now: the write must not land on a row another pass moved since.
+			const predicate = this.readVersionPredicate(subscription, options.expectation);
+			const plan = movesCalendar ? await this.planService.findOneScoped(subscription.planId) : null;
+			const cycleCount = (subscription.billingCycleCount ?? 0) + 1;
+			const ceilingReached =
+				!!plan &&
+				plan.maxBillingCycles !== undefined &&
+				plan.maxBillingCycles !== null &&
+				cycleCount >= plan.maxBillingCycles;
+			const periodStart = new Date(billing.periodStart);
+			const periodEnd = new Date(billing.periodEnd);
+			const nextBillingAt = ceilingReached ? null : periodEnd;
+			const status = ceilingReached
+				? SubscriptionStatus.EXPIRED
+				: subscription.status === SubscriptionStatus.PAUSED
+				? SubscriptionStatus.PAUSED
+				: SubscriptionStatus.ACTIVE;
+			// R4-05 (interim): a cycle that held its rights back for a payment releases them through the same once-only
+			// claim the payment does; one paid on the spot tells them here.
+			const held = this.billingService.heldRights(billing);
+			const converts = subscription.status === SubscriptionStatus.PENDING && !ceilingReached;
+			const items = movesCalendar && !held ? await this.itemService.findForSubscription(subscription.id) : [];
+
+			try {
+				await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+					await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+						where: currentScope(),
+						id: subscription.id,
+						expectation: predicate,
+						patch: {
+							...(bookkept ? { metadata: bookkept } : {}),
+							...(movesCalendar
+								? {
+										status,
+										currentPeriodStart: periodStart,
+										currentPeriodEnd: periodEnd,
+										nextBillingAt,
+										billingCycleCount: cycleCount
+								  }
+								: {})
+						}
+					});
+
+					if (!movesCalendar) {
+						return;
+					}
+
+					if (converts && !held) {
+						// The trial converted. The write above is the transition, and this is what says so: a
+						// subscription that leaves `PENDING` because its first paid cycle settled has become active
+						// just as surely as one an operator activated by hand, and a consumer that only listens for
+						// `subscription.renewed` would never learn that the trial ended.
+						await this.emit(
+							'subscription.activated',
+							subscription.id,
+							{
+								subscriptionId: subscription.id,
+								planId: plan.id,
+								currentPeriodStart: periodStart,
+								currentPeriodEnd: periodEnd
+							},
+							manager
+						);
+					}
+
+					if (!held) {
+						await this.emit(
+							'subscription.renewed',
+							subscription.id,
+							{
+								subscriptionId: subscription.id,
+								billingId: billing.id,
+								orderId: billing.orderId ?? null,
+								periodStart,
+								periodEnd,
+								amount: billing.amount,
+								nextBillingAt,
+								planId: plan.id,
+								lineCount: items.length
+							},
+							manager
+						);
+					}
+
+					if (ceilingReached) {
+						await this.emit(
+							'subscription.expired',
+							subscription.id,
+							{
+								subscriptionId: subscription.id,
+								expiredAt: new Date(),
+								reason: 'MAX_BILLING_CYCLES_REACHED'
+							},
+							manager
+						);
+					}
+				});
+			} catch (error) {
+				if (options.expectation.wildcard && attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					// Another writer moved the subscription since it was read — perhaps another pass finishing this cycle.
+					// The decision is taken again on the row as it now stands.
+					continue;
+				}
+
+				throw error;
+			}
+
+			if (movesCalendar && held) {
+				await this.releaseHeldRights(billing.id);
+			}
+
+			if (options.replayed) {
+				this.logger.warn(
+					`Subscription ${subscription.id}: finished cycle ${billing.id} (${billing.status}, order ` +
+						`${billing.orderId}), which the pass that charged it had left unfinished; nothing was charged.`
+				);
+			}
+
+			return this.finishedCycleOutcome(subscription, billing, options.replayed);
+		}
+	}
+
+	/**
+	 * Brings a raised cycle's discount rows to the discount the row itself records (`metadata.discount`), a no-op when they
+	 * already agree (`appendDiscount`).
+	 *
+	 * A change scheduled for the period restates the row — its amount, period end, gross and discount — on the change's own
+	 * transaction, and the discount rows are appended after it. A pass cut off in between left a row whose ledger disagrees
+	 * with it, and once a payment settled the row every later pass only replayed it, so nothing reconciled the two
+	 * (CodeRabbit on #11602). A pass that meets the row reconciles it first. A waived cycle is left as it is: it billed
+	 * nothing, and a trial's records the discount it would have granted.
+	 *
+	 * @param billing The raised cycle.
+	 * @param subscription The subscription, whose plan the discount rows are referenced to.
+	 */
+	private async reconcileRecordedDiscount(billing: SubscriptionBilling, subscription: Subscription): Promise<void> {
+		if (
+			![SubscriptionBillingStatus.PAID, SubscriptionBillingStatus.INVOICED, SubscriptionBillingStatus.REFUNDED].includes(
+				billing.status
+			)
+		) {
+			return;
+		}
+
+		const recorded = billing.metadata?.['discount'];
+
+		if (recorded === undefined || recorded === null || recorded === '') {
+			return;
+		}
+
+		const discount = Money.of(String(recorded), billing.currency).round();
+		// The ledger is read and appended to under the claim (Greptile, Copilot): a ledger appends without checking for a
+		// row like the one it appends, so two passes that both read it short would both append what is missing.
+		const claim = await this.idempotencyService.claim({
+			scope: DISCOUNT_RECONCILE_SCOPE,
+			key: String(billing.id),
+			requestHash: this.hash({ billingId: billing.id, discount: discount.toStorageString() }),
+			resourceType: 'subscription_billing'
+		});
+
+		if (claim.outcome === IdempotencyOutcome.IN_FLIGHT) {
+			// Another pass is appending the rows now, or stopped while it was and its claim has not run out yet (Copilot).
+			// Finishing the cycle here would complete the period's key on a ledger that may stay short, and no later pass
+			// would reconcile it; the pass stops instead, and the next one reconciles once that claim ends or goes stale.
+			throw new ConflictException(
+				`SUBSCRIPTION_DISCOUNT_RECONCILE_IN_FLIGHT: another billing pass is reconciling the discount rows of cycle '${billing.id}'.`
+			);
+		}
+
+		if (claim.outcome !== IdempotencyOutcome.CLAIMED) {
+			return;
+		}
+
+		await this.appendDiscount(billing, subscription, discount);
+		await this.idempotencyService.complete(claim.record, {
+			responseStatus: 200,
+			responseBody: { billingId: billing.id, discount: discount.toStorageString() },
+			resourceType: 'subscription_billing',
+			resourceId: billing.id
+		});
+	}
+
+	/**
+	 * Whether a raised cycle is one the billing run charged whose finish may not have run (`finishCycle`).
+	 *
+	 * The run writes `orderId` and nothing else does, so an order names a cycle the run charged. Met at the period the
+	 * calendar points at, it was charged by a pass cut off before the cycle was finished. A paid cycle that never held the
+	 * calendar for its payment is finished whole — refunded since, too: its period was billed and counted, and left
+	 * unfinished the subscription would stay on it — and an invoiced one that holds it has its bookkeeping left (Q7-W4).
+	 * A paid cycle that held the calendar is its payment's to finish (`payCycle`), and one settled without an order is
+	 * the operator's.
+	 *
+	 * @param billing The raised cycle.
+	 * @returns True when a pass finishes it.
+	 */
+	private leftUnfinished(billing: SubscriptionBilling): boolean {
+		if (!billing?.orderId) {
+			return false;
+		}
+
+		if ([SubscriptionBillingStatus.PAID, SubscriptionBillingStatus.REFUNDED].includes(billing.status)) {
+			return !this.billingService.heldCalendar(billing);
+		}
+
+		return billing.status === SubscriptionBillingStatus.INVOICED && this.billingService.holdsDeferredCalendar(billing);
+	}
+
+	/**
+	 * Whether a cycle is still the one its subscription's calendar points at, so its finish is still owed: the
+	 * subscription has not ended, and its next billing instant is the cycle's start — or, once the dunning schedule ran
+	 * out and cleared that instant, the end of its current period is, which is where a manual attempt bills from
+	 * (`nextCyclePeriod`). A finished cycle moved the calendar past itself.
+	 *
+	 * @param subscription The subscription, as read.
+	 * @param billing The cycle.
+	 * @returns True when the cycle is the subscription's open one.
+	 */
+	private isFinishable(subscription: Subscription, billing: SubscriptionBilling): boolean {
+		if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(subscription.status)) {
+			return false;
+		}
+
+		const at = subscription.nextBillingAt ?? subscription.currentPeriodEnd;
+
+		return !!at && !!billing.periodStart && new Date(at).getTime() === new Date(billing.periodStart).getTime();
+	}
+
+	/**
+	 * What a cycle's order leaves the subscription to record (`CYCLE_BOOKKEEPING`), decided as the order's own amounts are.
 	 *
 	 * @param subscription The subscription being billed.
 	 * @param plan The plan it is on.
-	 * @param billing The cycle's row.
-	 * @param period The period the cycle covered.
-	 * @param items The recurring lines.
-	 * @param expectation The version the caller read the subscription at.
-	 * @returns What the cycle did.
+	 * @param credit The deferred credit the order carries, when it carries one.
+	 * @returns The credit and the plan whose setup fee the order carries.
 	 */
-	private async recordSuccess(
+	private cycleBookkeepingFor(subscription: Subscription, plan: SubscriptionPlan, credit: Money | null): ICycleBookkeeping {
+		return {
+			...(credit && !credit.isZero() ? { credit: credit.toStorageString() } : {}),
+			...(this.setupFeeFor(subscription, plan) ? { setupFeePlanId: plan.id } : {})
+		};
+	}
+
+	/**
+	 * What a charged cycle left the subscription to record, read from the cycle (`CYCLE_BOOKKEEPING`).
+	 *
+	 * A cycle whose outcome a build before this one recorded carries no such record, and that build may or may not have
+	 * cleared the deferred credit before it was cut off. The credit the cycle consumed is then read back from the
+	 * adjustment it was consumed under (`consumePendingCredit`), marked as inferred with the instant it was consumed: it
+	 * is subtracted only from a carried credit no change has written since (`bookkeptMetadata`). One written since may be
+	 * a new credit after that build cleared the consumed one, or the consumed one with more added, and nothing on the row
+	 * tells the two apart, so it is left for reconciliation. The setup fee needs no such reading: one is charged only on a
+	 * subscription's first cycle (`setupFeeFor`), which the finish counts.
+	 *
+	 * @param billing The cycle.
+	 * @returns What is owed, and whether (and when) it was inferred.
+	 */
+	private async owedBookkeepingOf(
+		billing: SubscriptionBilling
+	): Promise<ICycleBookkeeping & { inferred?: boolean; consumedAt?: Date | null }> {
+		const recorded = this.billingService.bookkeepingOf(billing);
+
+		if (recorded) {
+			return recorded;
+		}
+
+		const consumed = (await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, billing.id)).filter(
+			(row) => row.type === AdjustmentType.CREDIT && row.description === CONSUMED_CREDIT_DESCRIPTION
+		);
+
+		if (!consumed.length) {
+			return {};
+		}
+
+		const credit = Money.sum(
+			consumed.map((row) => Money.of(String(row.amount), billing.currency)),
+			billing.currency
+		).round();
+		const instants = consumed.map((row) => (row.createdAt ? new Date(row.createdAt).getTime() : NaN));
+		const consumedAt = instants.every((instant) => Number.isFinite(instant)) ? new Date(Math.max(...instants)) : null;
+
+		return credit.isNegative() ? { credit: credit.toStorageString(), inferred: true, consumedAt } : {};
+	}
+
+	/**
+	 * The subscription's metadata with a cycle's bookkeeping applied, or null when none is left to apply.
+	 *
+	 * The setup fee the order carried is remembered against its plan, and the deferred credit the order consumed is
+	 * subtracted from the credit the subscription still carries — not cleared: a plan change that deferred another credit
+	 * after the cycle consumed this one added it to the same total (`applyChange`), and that part is owed to the next
+	 * cycle. A remainder that is not a credit is not carried. A consumption inferred for a cycle an older build recorded
+	 * (`owedBookkeepingOf`) is subtracted only from a carried credit no change has written since the cycle consumed it;
+	 * one written since is kept as it is and logged for reconciliation, since the row cannot say whether that build
+	 * cleared the consumed credit first. The cycle is recorded as applied in the same metadata (`BOOKKEPT_CYCLE`), so a
+	 * cycle already applied answers null; and a cycle whose credit was already taken off (listed under
+	 * {@link CONSUMED_CREDIT_CYCLES}) has nothing more taken off, while one this finish takes credit off is listed there.
+	 *
+	 * @param subscription The subscription, as read.
+	 * @param billing The cycle.
+	 * @param owed What the cycle's order left to record.
+	 * @returns The metadata to write, or null.
+	 */
+	private bookkeptMetadata(
 		subscription: Subscription,
-		plan: SubscriptionPlan,
 		billing: SubscriptionBilling,
-		period: ISubscriptionPeriod,
-		items: SubscriptionItem[],
-		expectation: IVersionExpectation = ANY_VERSION
-	): Promise<ISubscriptionBillingOutcome> {
-		const settled = await this.billingService.findOneScoped(billing.id);
+		owed: ICycleBookkeeping & { inferred?: boolean; consumedAt?: Date | null }
+	): Record<string, unknown> | null {
+		const stored: Record<string, unknown> = subscription.metadata ?? {};
 
-		if (
-			settled.status === SubscriptionBillingStatus.INVOICED &&
-			this.billingService.holdsDeferredCalendar(settled)
-		) {
-			// Q7-W4: an invoice nobody has paid yet is the subscription's open cycle. The calendar stays on it — the
-			// period is not counted, a trial does not convert, the plan's ceiling is not reached — so every later
-			// pass replays this cycle instead of invoicing the period after it, and the payment moves the calendar
-			// (`payCycle`). Nothing is written to the subscription, so a route's `If-Match` is not spent either.
-			return {
-				subscriptionId: subscription.id,
-				billingId: settled.id,
-				status: settled.status,
-				replayed: false,
-				orderId: settled.orderId,
-				amount: settled.amount,
-				currency: settled.currency,
-				periodStart: period.start,
-				periodEnd: period.end,
-				message:
-					'The cycle is invoiced; the rights of its period are put in force when its payment is recorded, and the calendar moves on with that payment.'
-			};
+		if (String(stored[BOOKKEPT_CYCLE] ?? '') === String(billing.id)) {
+			return null;
 		}
 
-		const cycleCount = (subscription.billingCycleCount ?? 0) + 1;
-		const ceilingReached =
-			plan.maxBillingCycles !== undefined && plan.maxBillingCycles !== null && cycleCount >= plan.maxBillingCycles;
+		const consumed = owed.credit ? Money.of(owed.credit, subscription.currency).round() : null;
+		const credits = !!consumed && consumed.isNegative();
 
-		await commitVersionedUpdate<Subscription>(this, {
-			where: currentScope(),
-			id: subscription.id,
-			expectation,
-			patch: {
-				status: ceilingReached ? SubscriptionStatus.EXPIRED : SubscriptionStatus.ACTIVE,
-				currentPeriodStart: period.start,
-				currentPeriodEnd: period.end,
-				nextBillingAt: ceilingReached ? null : period.end,
-				billingCycleCount: cycleCount
+		if (!credits && !owed.setupFeePlanId) {
+			return null;
+		}
+
+		const metadata: Record<string, unknown> = { ...stored, [BOOKKEPT_CYCLE]: billing.id };
+
+		if (owed.setupFeePlanId) {
+			const charged = (stored[CHARGED_SETUP_FEES] as ID[]) ?? [];
+
+			if (!charged.includes(owed.setupFeePlanId)) {
+				metadata[CHARGED_SETUP_FEES] = [...charged, owed.setupFeePlanId];
 			}
-		});
-
-		// R4-05 (interim): the rights of a period are put in force only once the period is paid for. An
-		// `INVOICED` cycle has an order and no money: its two rights events were held back on the cycle by
-		// `markInvoiced` and are released by `payCycle` when its payment is recorded. A cycle paid on the spot
-		// emits them here; one whose payment raced this run is released through the same once-only claim.
-		const paidFor = SETTLED_CYCLE_STATUSES.includes(settled.status);
-		const held = this.billingService.heldRights(settled);
-		const converts = subscription.status === SubscriptionStatus.PENDING && !ceilingReached;
-
-		if (paidFor && held) {
-			await this.releaseHeldRights(settled.id);
 		}
 
-		if (converts && paidFor && !held) {
-			// The trial converted. The write above is the transition, and this is what says so: a
-			// subscription that leaves `PENDING` because its first paid cycle settled has become active
-			// just as surely as one an operator activated by hand, and a consumer that only listens for
-			// `subscription.renewed` would never learn that the trial ended.
-			await this.emit('subscription.activated', subscription.id, {
-				subscriptionId: subscription.id,
-				planId: plan.id,
-				currentPeriodStart: period.start,
-				currentPeriodEnd: period.end
-			});
+		// Read as `consumePendingCredit` read it when the cycle consumed it.
+		const pending = stored[PENDING_CREDIT] as { amount?: string; at?: string } | undefined;
+		const consumedCycles = Array.isArray(stored[CONSUMED_CREDIT_CYCLES])
+			? (stored[CONSUMED_CREDIT_CYCLES] as unknown[]).map(String)
+			: [];
+		// Taken off already, by a build that took it off in the billing pass (`CONSUMED_CREDIT_CYCLES`).
+		const takenOff = consumedCycles.includes(String(billing.id));
+
+		if (credits && pending?.amount && !takenOff) {
+			const left = Money.of(pending.amount, subscription.currency).round().subtract(consumed).round();
+			const unchangedSinceConsumed =
+				!!pending.at &&
+				!!owed.consumedAt &&
+				new Date(pending.at).getTime() <= new Date(owed.consumedAt).getTime();
+
+			if (owed.inferred && !unchangedSinceConsumed) {
+				this.logger.error(
+					`Subscription ${subscription.id}: cycle ${billing.id} was recorded by an earlier build and consumed a ` +
+						`credit of ${consumed.toStorageString()}, and the credit carried now (${pending.amount}) was written ` +
+						`after it; whether that build cleared the consumed credit is unknown, so the carried credit is kept ` +
+						`for reconciliation.`
+				);
+			} else {
+				if (left.isNegative()) {
+					metadata[PENDING_CREDIT] = { ...pending, amount: left.toStorageString() };
+				} else {
+					delete metadata[PENDING_CREDIT];
+				}
+
+				metadata[CONSUMED_CREDIT_CYCLES] = [...consumedCycles, String(billing.id)].slice(-CONSUMED_CREDIT_CYCLES_KEPT);
+			}
 		}
 
-		if (paidFor && !held) {
-			await this.emit('subscription.renewed', subscription.id, {
-				subscriptionId: subscription.id,
-				billingId: settled.id,
-				orderId: settled.orderId ?? null,
-				periodStart: period.start,
-				periodEnd: period.end,
-				amount: settled.amount,
-				nextBillingAt: ceilingReached ? null : period.end,
-				planId: plan.id,
-				lineCount: items.length
-			});
-		}
+		return metadata;
+	}
 
-		if (ceilingReached) {
-			await this.emit('subscription.expired', subscription.id, {
-				subscriptionId: subscription.id,
-				expiredAt: new Date(),
-				reason: 'MAX_BILLING_CYCLES_REACHED'
-			});
-		}
+	/**
+	 * What a pass answers for a cycle it finished, or found finished.
+	 *
+	 * @param subscription The subscription being billed.
+	 * @param billing The cycle.
+	 * @param replayed Whether the pass charged nothing.
+	 * @returns The outcome.
+	 */
+	private finishedCycleOutcome(
+		subscription: Subscription,
+		billing: SubscriptionBilling,
+		replayed: boolean
+	): ISubscriptionBillingOutcome {
+		const paidFor = SETTLED_CYCLE_STATUSES.includes(billing.status);
 
 		return {
 			subscriptionId: subscription.id,
-			billingId: settled.id,
-			status: settled.status,
-			replayed: false,
-			orderId: settled.orderId,
-			amount: settled.amount,
-			currency: settled.currency,
-			periodStart: period.start,
-			periodEnd: period.end,
+			billingId: billing.id,
+			status: billing.status,
+			replayed,
+			orderId: billing.orderId,
+			amount: billing.amount,
+			currency: billing.currency,
+			periodStart: billing.periodStart,
+			periodEnd: billing.periodEnd,
 			...(paidFor
 				? {}
 				: {
-						message:
-							'The cycle is invoiced; the rights of its period are put in force when its payment is recorded.'
+						message: this.billingService.holdsDeferredCalendar(billing)
+							? 'The cycle is invoiced; the rights of its period are put in force when its payment is recorded, and the calendar moves on with that payment.'
+							: 'The cycle is invoiced; the rights of its period are put in force when its payment is recorded.'
 				  })
 		};
 	}
@@ -2392,9 +3525,11 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	/**
 	 * Moves the subscription onto the period of the invoiced cycle that was just paid (Q7-W4).
 	 *
-	 * This is the calendar half of `recordSuccess`, run when the money arrives rather than when the order was
+	 * This is the calendar half of `finishCycle`, run when the money arrives rather than when the order was
 	 * raised: the period is counted, a trial converts to `ACTIVE`, and the next billing instant is the period's
-	 * end — or the subscription expires, when this cycle reaches the plan's ceiling.
+	 * end — or the subscription expires, when this cycle reaches the plan's ceiling. The bookkeeping the cycle's order
+	 * left is applied in the same statement when the pass that invoiced the cycle was cut off before applying it
+	 * (`bookkeptMetadata`, once: an applied cycle is recorded on the subscription).
 	 *
 	 * Only the subscription's open cycle moves it: one whose period starts at the subscription's next billing
 	 * instant, on a subscription that is still billed (`ACTIVE`, a trial still `PENDING`, or `PAUSED` — which keeps
@@ -2405,7 +3540,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 *
 	 * An expiry is written here with the cycle that caused it (`expiredByCycle`, in the same statement) and is told
 	 * by the release of the cycle's rights, after the renewal of the period it paid for (`releaseHeldRights`) — the
-	 * order a cycle paid on the spot writes them in (`recordSuccess`). Told here, before the renewal, the entitlement
+	 * order a cycle paid on the spot writes them in (`finishCycle`). Told here, before the renewal, the entitlement
 	 * package expired the rights (closing their activations and withdrawing their keys) and the renewal then put them
 	 * back in force without either (Greptile); and an expiry whose event was lost after this write was never told,
 	 * because the retry finds the subscription expired and moves nothing.
@@ -2413,6 +3548,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param billing The paid cycle.
 	 */
 	private async settleDeferredCalendar(billing: SubscriptionBilling): Promise<void> {
+		const owed = await this.owedBookkeepingOf(billing);
+
 		for (let attempt = 1; ; attempt += 1) {
 			const subscription = await this.findOneScoped(billing.subscriptionId);
 
@@ -2431,6 +3568,8 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				: subscription.status === SubscriptionStatus.PENDING
 					? SubscriptionStatus.ACTIVE
 					: subscription.status;
+			// The bookkeeping the cycle's order left, when the pass that invoiced it was cut off before applying it.
+			const bookkept = this.bookkeptMetadata(subscription, billing, owed);
 
 			try {
 				await commitVersionedUpdate<Subscription>(this, {
@@ -2444,7 +3583,9 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 						nextBillingAt: ceilingReached ? null : billing.periodEnd,
 						billingCycleCount: cycleCount,
 						...(ceilingReached
-							? { metadata: { ...(subscription.metadata ?? {}), [EXPIRED_BY_CYCLE]: billing.id } }
+							? { metadata: { ...(bookkept ?? subscription.metadata ?? {}), [EXPIRED_BY_CYCLE]: billing.id } }
+							: bookkept
+							? { metadata: bookkept }
 							: {})
 					}
 				});
@@ -2484,24 +3625,57 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
-	 * Whether the subscription's next billing instant is held by an invoice still waiting for its payment (Q7-W4).
+	 * Whether the subscription's next billing instant is held by the cycle at it, so a resume keeps it there: an invoice
+	 * still waiting for its payment (Q7-W4), or a charge — one a pass has started (it holds or held the cycle's charge
+	 * claim), or one recorded whose cycle is not finished yet (`leftUnfinished`).
 	 *
-	 * The cycle's flag decides, not its status: a payment interrupted after the cycle was recorded `PAID` and before
-	 * it moved the calendar leaves the flag on, and the period must stay where the retry of that payment finds it —
-	 * moved past it, the retry would find the cycle no longer open and the paid period would never be counted
-	 * (Greptile).
+	 * The cycle's flag decides for an invoice, not its status: a payment interrupted after the cycle was recorded `PAID`
+	 * and before it moved the calendar leaves the flag on, and the period must stay where the retry of that payment finds
+	 * it — moved past it, the retry would find the cycle no longer open and the paid period would never be counted
+	 * (Greptile). A charge holds it for the same reason: resumed past the cycle a pass is charging, the finish would find
+	 * the calendar elsewhere and leave the paid period uncounted, and the next pass would bill a period over it (Copilot).
 	 *
 	 * @param subscription The subscription, as read.
-	 * @returns True when its calendar waits on that invoice.
+	 * @returns True when its calendar waits on that cycle.
 	 */
-	private async awaitsCyclePayment(subscription: Subscription): Promise<boolean> {
+	private async calendarHeldByCycle(subscription: Subscription): Promise<boolean> {
 		if (!subscription.nextBillingAt) {
 			return false;
 		}
 
-		const open = await this.billingService.findByPeriod(subscription.id, new Date(subscription.nextBillingAt));
+		const at = new Date(subscription.nextBillingAt);
+		const open = await this.billingService.findByPeriod(subscription.id, at);
 
-		return !!open && this.billingService.holdsDeferredCalendar(open);
+		if (open && (this.billingService.holdsDeferredCalendar(open) || this.heldByCharge(open))) {
+			return true;
+		}
+
+		if (open && !this.isUntouched(open)) {
+			return false;
+		}
+
+		// A pass holds the period's billing key from before it opens or claims the cycle (Copilot): a charge that has not
+		// reached the cycle yet shows only there. A failed cycle keeps the key open for its dunning attempt, and is not
+		// held by it.
+		const key = await this.idempotencyService.findByKey(BILLING_SCOPE, `${subscription.id}:${at.toISOString()}`);
+
+		return key?.status === IdempotencyStatus.IN_PROGRESS;
+	}
+
+	/**
+	 * Whether a charge holds a cycle's period: a pass holds or held its charge claim, an attempt was frozen for the order
+	 * path and its outcome never recorded (its order may exist, and the next pass recovers it under the same key), or it
+	 * was charged and not finished yet (`leftUnfinished`).
+	 *
+	 * @param cycle The cycle.
+	 * @returns True when moving the calendar past it would bill a period over a charge.
+	 */
+	private heldByCharge(cycle: SubscriptionBilling): boolean {
+		return (
+			!!cycle.chargeClaimToken ||
+			!!this.billingService.frozenAttemptOf(cycle, (cycle.attemptCount ?? 0) + 1) ||
+			this.leftUnfinished(cycle)
+		);
 	}
 
 	/**
@@ -2626,8 +3800,9 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 *
 	 * @param subscription The subscription being changed.
 	 * @param change What is changing: the plan, the line set, or both.
-	 * @param expectation The version the caller read the subscription at, carried by whichever of the
-	 * two writes below the change takes — a scheduled change and an immediate one never both run.
+	 * @param expectation The version the caller read the subscription at, carried by the first write the change
+	 * makes: the scheduled change's, or the immediate change's record (`reserveChange`), which is written before
+	 * anything is settled. The writes after it ride the row's own version.
 	 * @returns What the change decided and what it settled.
 	 */
 	private async applyChange(
@@ -2636,7 +3811,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			planId?: ID;
 			quantity?: DecimalString | number;
 			discountPercentage?: string;
-			before: SubscriptionItem[];
+			before: Array<Pick<IPricedLine, 'variantId' | 'quantity' | 'unitPrice'>>;
 			after: Array<{ variantId: ID; quantity: DecimalString; unitPrice: DecimalString; position: number; metadata?: Record<string, unknown> }>;
 			effective: 'IMMEDIATE' | 'NEXT_PERIOD';
 			description: string;
@@ -2649,31 +3824,47 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		const newRecurring = recurringAmount(change.after, currency);
 		const metadata: Record<string, unknown> = { ...(subscription.metadata ?? {}) };
 
-		if (change.planId) {
-			// A plan change re-states the discount: the new plan's terms replace whatever the old one
-			// was sold with, and a plan that grants none must not inherit the previous one's.
-			if (change.discountPercentage === undefined) {
-				delete metadata['discountPercentage'];
-			} else {
-				metadata['discountPercentage'] = change.discountPercentage;
-			}
-		}
-
 		const scheduled =
 			change.effective === 'NEXT_PERIOD' || !subscription.currentPeriodStart || !subscription.currentPeriodEnd;
 
 		if (scheduled) {
-			metadata['scheduledPlanChange'] = {
+			// Recorded, not made: the cycle that opens the next period applies it (`applyScheduledChange`), so the plan,
+			// its lines, the quantity and the discount move together at that boundary. A plan change keeps no lines here:
+			// they are priced from the plan when the period opens, over the lines the subscription has then. The discount
+			// is restated there too; restated now, the cycles still billed on the old plan took the new plan's discount.
+			const recorded: IScheduledPlanChange = {
 				...(change.planId ? { planId: change.planId } : {}),
+				...(change.planId && change.quantity !== undefined
+					? { quantity: normalizeDecimal(change.quantity, subscription.quantity) }
+					: {}),
+				...(change.planId
+					? {}
+					: {
+							items: change.after.map((line) => ({
+								variantId: line.variantId,
+								quantity: line.quantity,
+								unitPrice: line.unitPrice,
+								position: line.position,
+								...(line.metadata ? { metadata: line.metadata } : {})
+							}))
+						}),
 				effectiveAt: subscription.currentPeriodEnd ?? null,
-				description: change.description
+				description: change.description,
+				decision: randomUUID()
 			};
 
-			await commitVersionedUpdate<Subscription>(this, {
-				where: currentScope(),
-				id: subscription.id,
-				expectation,
-				patch: { metadata }
+			// Signed, so the billing run can tell it from an entry a caller's metadata wrote (`scheduledChangeAt`).
+			metadata[SCHEDULED_PLAN_CHANGE] = {
+				...recorded,
+				signature: signScheduledChange(subscription.id, recorded)
+			};
+
+			// Merged into the row as it is, not into the copy read above: a change recorded meanwhile (`reserveChange`) keeps
+			// its record.
+			await this.mergeMetadata(subscription.id, expectation, (current) => {
+				current[SCHEDULED_PLAN_CHANGE] = metadata[SCHEDULED_PLAN_CHANGE];
+
+				return true;
 			});
 
 			return {
@@ -2695,86 +3886,1133 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			String(metadata[MINIMUM_PRORATION_CHARGE] ?? DEFAULT_MINIMUM_PRORATION_CHARGE),
 			currency
 		);
+		// Below the minimum a positive difference is waived: charging would lose money and refunding would be theatre.
+		const settlement: IChangeIntent['settlement'] = net.isNegative()
+			? 'DEFERRED'
+			: net.isPositive() && net.greaterThan(minimum)
+			? 'CHARGED'
+			: 'WAIVED';
+		const periodStart = period.start.toISOString();
+		const quantity = change.quantity !== undefined ? normalizeDecimal(change.quantity, subscription.quantity) : null;
+		// The period is left out, so a repeat after a renewal is still the same change; the key carries it.
+		const identity = this.hash({
+			planId: change.planId ?? null,
+			quantity,
+			lines: change.after.map((line) => [line.variantId, line.quantity, line.unitPrice, line.position]),
+			description: change.description
+		});
+		const amount = net.toStorageString();
+		// A quantity changed on the lines the subscription has writes those lines alone: rewriting every line from the copy
+		// read here would put back a correction made to another line meanwhile (`SubscriptionItemService.update`).
+		const replaceLines = !!change.planId || change.after.length !== change.before.length;
 
-		let settlement: ISubscriptionPlanChangeOutcome['settlement'] = 'DEFERRED';
+		// **The change is recorded before it is settled, and applied after.** It was settled first and written last, so a
+		// write that failed — a version conflict, a refused write — left the charge or the `CREDIT` adjustment standing
+		// with the subscription unchanged, and a retry appended the credit again. The record (`reserveChange`) holds the
+		// target plan against a plan update meanwhile; the settlement runs outside any transaction, because the order path
+		// takes connections of its own and holding one across it deadlocks a pool of one; and the apply re-reads the row
+		// until it lands, while the record is still this change's (`applySettledChange`).
+		const { intent: held, resumed } = await this.reserveChange(
+			subscription,
+			{
+				// The version the change was read at too: the same change made twice in one period (120 → 60 → 120 → 60)
+				// is two changes, each settled on its own account. A repeat of one still outstanding resumes its record, key
+				// and all (`reserveChange`), and one repeated after it was applied nets nothing.
+				key: `${subscription.id}:${this.hash({
+					change: identity,
+					amount,
+					periodStart,
+					version: parseEntityVersion((subscription as unknown as Record<string, unknown>)['version'])
+				}).slice(0, 32)}`,
+				change: identity,
+				planId: change.planId ?? null,
+				settlement,
+				credit: credit.toStorageString(),
+				charge: charge.toStorageString(),
+				net: amount,
+				currency,
+				periodStart,
+				description: change.description,
+				at: new Date().toISOString(),
+				recordedAt: new Date().toISOString(),
+				quantity,
+				discountPercentage: change.planId ? change.discountPercentage ?? null : null,
+				replaceLines,
+				replacesSchedule: change.planId ? this.scheduleIdentity(metadata[SCHEDULED_PLAN_CHANGE]) : null,
+				items: replaceLines
+					? change.after
+					: change.after.filter((line) => {
+							const current = change.before.find((row) => row.variantId === line.variantId);
 
-		if (net.isPositive() && net.greaterThan(minimum)) {
-			await this.chargeProration(subscription, net, change.description);
-			settlement = 'CHARGED';
-		} else if (net.isPositive()) {
-			// Below the cost of collecting it: charging would lose money and refunding would be theatre.
+							return !!current && String(current.quantity) !== String(line.quantity);
+					  })
+			},
+			expectation
+		);
+
+		let moved: boolean;
+
+		if (held.settledAt) {
+			// Resumed after its settlement was made and its apply failed: it is applied, not settled again.
+			moved = held.moved === true;
+		} else {
+			const progress = { started: false };
+
+			try {
+				moved = await this.settleChange(subscription, held, progress);
+			} catch (error) {
+				// Released only when the failure is known to come before anything was settled — the payer was refused, the
+				// order capability is missing — so the target plan is free to be updated again. Once the order path or the
+				// credit's row was reached, a failure there or in completing the claim after it may have left money moved:
+				// the record stays, a repeat of the change resumes it under the same key (which the order path replays),
+				// and a change replacing it records its settlement for reversal. A change another request is settling under
+				// the same key keeps it too: the record is that request's as much as this one's. And a record this request
+				// resumed rather than made is never released here: an earlier attempt may have settled it, and a refusal this
+				// time (a payer revoked since) says nothing about that one.
+				if (!progress.started && !resumed && !(error instanceof ProrationInFlight)) {
+					await this.releaseChange(subscription.id, held);
+				}
+
+				throw error;
+			}
+		}
+
+		await this.applySettledChange(subscription.id, held, moved);
+
+		return {
+			subscription: await this.findOneScoped(subscription.id),
+			credit: held.credit,
+			charge: held.charge,
+			net: held.net,
+			settlement: held.settlement,
+			currency
+		};
+	}
+
+	/**
+	 * Records a mid-cycle change on the subscription before anything is settled, and reserves the plan it moves to.
+	 *
+	 * The record is a versioned write of the subscription as the change read it, so a change priced on a row that moved
+	 * since is refused before any money moves. A plan change writes it under the target plan's share lock, reading the
+	 * plan again under it as `createSubscription` does, in a transaction that holds nothing else: a plan update either
+	 * committed first (and a plan deactivated or re-priced in another currency is refused here) or waits for this
+	 * write, and then counts the reservation (`SubscriptionPlanService.hasLiveSubscriptions`) until the change is
+	 * applied or released.
+	 *
+	 * A change recorded already is resumed when it is the same change — a retry of a request whose write was refused,
+	 * or a second click — so its key, and the claim and the credit under it, are shared. It is resumed as recorded, with
+	 * the period and the amounts it was settled on, also after a renewal moved the subscription on: what it charged or
+	 * credited is what it settled, and it takes hold when it is applied. Another change is refused while
+	 * the record is fresh; one abandoned past {@link CHANGE_INTENT_LEASE_MS} is replaced, and its settlement, when the
+	 * stores that took it say it moved money or cannot tell, is recorded for reversal with the write that replaces it.
+	 *
+	 * @param subscription The subscription, as the change read it.
+	 * @param intent The change, as priced.
+	 * @param expectation The version the caller read the subscription at.
+	 * @returns The record the change settles under — this one, or the one it resumes — and whether it was resumed.
+	 * @throws ConflictException with `SUBSCRIPTION_CHANGE_IN_FLIGHT` while another change is being settled.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the subscription moved since the change read it.
+	 * @throws BadRequestException when the target plan was deactivated or re-priced in another currency meanwhile.
+	 */
+	private async reserveChange(
+		subscription: Subscription,
+		intent: IChangeIntent,
+		expectation: IVersionExpectation
+	): Promise<{ intent: IChangeIntent; resumed: boolean }> {
+		const metadata: Record<string, unknown> = { ...(subscription.metadata ?? {}) };
+		const recorded = this.changeIntentOf(metadata);
+		let held = intent;
+		let resumed = false;
+		let replaced: { intent: IChangeIntent; state: Exclude<ISettlementState, 'UNSETTLED'> } | null = null;
+
+		// The same change resumes its record while settling it again under its key is safe: once it is marked settled, or
+		// inside the order path's replay window. Past that window an unmarked record is resolved as an abandoned one below
+		// — its charge raised again under an expired key could be raised twice.
+		const resumable =
+			!!recorded &&
+			recorded.change === intent.change &&
+			(!!recorded.settledAt ||
+				Date.now() - new Date(recorded.recordedAt ?? recorded.at).getTime() < CHANGE_REPLAY_WINDOW_MS);
+
+		if (recorded) {
+			if (resumable) {
+				// Resumed with its own key, amounts and lines: priced again a second later, the same change would carry
+				// another amount, and so another key, and be settled twice. The token is this request's from now on.
+				held = { ...recorded, at: intent.at, owner: randomUUID() };
+				resumed = true;
+			} else if (Date.now() - new Date(recorded.at).getTime() < CHANGE_INTENT_LEASE_MS) {
+				throw new ConflictException(
+					'SUBSCRIPTION_CHANGE_IN_FLIGHT: another change to this subscription is being settled. Retry once it has been applied.'
+				);
+			} else {
+				// Resolved here, before the transaction: the stores it asks and the order path take connections of their own.
+				let state: 'APPLIED' | ISettlementState;
+
+				try {
+					state = await this.resolveAbandonedChange(subscription, recorded);
+				} catch (error) {
+					throw new ConflictException(
+						error instanceof ProrationInFlight
+							? 'SUBSCRIPTION_CHANGE_IN_FLIGHT: an earlier change to this subscription is still being settled. Retry once it has been applied.'
+							: 'SUBSCRIPTION_CHANGE_UNRESOLVED: an earlier change to this subscription could not be resolved yet; it stays recorded. Retry later.'
+					);
+				}
+
+				if (state === 'APPLIED') {
+					// This change was priced on the row before the earlier one took hold, so it is read again.
+					throw new ConflictException(
+						'SUBSCRIPTION_CHANGE_APPLIED_FIRST: an earlier change to this subscription, already settled, was applied first. Read the subscription again and retry.'
+					);
+				}
+
+				if (state !== 'UNSETTLED' && this.noteReversal(metadata, recorded, state)) {
+					replaced = { intent: recorded, state };
+				}
+
+				this.logger.warn(
+					`Subscription ${subscription.id}: the change recorded at ${recorded.at} (${recorded.key}) was abandoned and is replaced; its settlement is ${state}.`
+				);
+			}
+		}
+
+		if (held === intent) {
+			held = { ...intent, owner: randomUUID() };
+		}
+
+		metadata[CHANGE_INTENT] = held;
+
+		const predicate = this.readVersionPredicate(subscription, expectation);
+
+		await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+			if (held.planId) {
+				await lockPlanRow(manager, held.planId, 'share');
+
+				const plan = await manager.findOne(SubscriptionPlan, { where: { id: held.planId } });
+
+				if (!plan || plan.isActive === false) {
+					throw new BadRequestException(
+						'SUBSCRIPTION_PLAN_INACTIVE: the plan this change moves to is no longer active, so the subscription may not be moved onto it.'
+					);
+				}
+
+				if (plan.currency && plan.currency !== subscription.currency) {
+					throw new BadRequestException(
+						`SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in ${plan.currency} and the subscription is billed in ${subscription.currency}.`
+					);
+				}
+			}
+
+			// A change of lines reserves the plan the subscription is on, which its own live status already holds: the
+			// reservation is also what a billing pass finds an abandoned change by (`recoverAbandonedChanges`).
+			await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+				where: currentScope(),
+				id: subscription.id,
+				expectation: predicate,
+				patch: { metadata, reservedPlanId: held.planId ?? subscription.planId }
+			});
+
+			if (replaced) {
+				await this.emit(
+					'subscription.settlement-reversal-required',
+					subscription.id,
+					this.reversalEvent(subscription.id, replaced.intent, replaced.state),
+					manager
+				);
+			}
+		});
+
+		return { intent: held, resumed };
+	}
+
+	/**
+	 * Settles a recorded change: charges it through the order path, writes its `CREDIT` adjustment, or does nothing
+	 * for a waived one. Runs outside any transaction (`applyChange`).
+	 *
+	 * @param subscription The subscription, as the change read it.
+	 * @param intent The record the change settles under.
+	 * @param progress Set once the settlement reaches the order path or the credit's row: from there on a failure may
+	 * have left money moved.
+	 * @returns Whether money moved outside the subscription's own row: a charge, or a `CREDIT` adjustment written.
+	 */
+	private async settleChange(
+		subscription: Subscription,
+		intent: IChangeIntent,
+		progress: { started: boolean }
+	): Promise<boolean> {
+		if (intent.settlement === 'CHARGED') {
+			await this.chargeProration(subscription, intent, progress);
+
+			return true;
+		}
+
+		if (intent.settlement === 'DEFERRED') {
+			return await this.appendCredit(subscription, intent, progress);
+		}
+
+		return false;
+	}
+
+	/**
+	 * Applies a settled change: the plan, the quantity, the metadata and the recurring lines it moves, with the record
+	 * and the reservation cleared, in one short transaction — the versioned write of the subscription and the lines on
+	 * the same manager, as a scheduled change is applied. Lines written after the record was cleared could fail with the
+	 * settlement made and nothing left to resume.
+	 *
+	 * The write is built from the row as it is now, not as the change read it: a billing pass or an edit that moved the
+	 * row since keeps what it wrote (the credit a pass consumed, the calendar it advanced), and the carried credit is
+	 * added to what is carried now. A write that loses its race reads the row again and is made again, for as long as
+	 * the record is this change's. A record that is gone was applied by a request resuming the same change — the row
+	 * lists its key among those applied — or replaced, and then the settlement stands without its change and is recorded
+	 * for reversal rather than lost.
+	 *
+	 * @param id The subscription.
+	 * @param intent The record the change was settled under, which carries what it applies.
+	 * @param moved Whether the settlement moved money outside the row.
+	 * @throws ConflictException with `SUBSCRIPTION_CHANGE_SUPERSEDED` when the record was replaced.
+	 * @throws ApiException with `ENTITY_VERSION_CONFLICT` when the row kept moving; the record stays, and repeating the
+	 * change applies it without settling it again.
+	 */
+	private async applySettledChange(id: ID, intent: IChangeIntent, moved: boolean): Promise<void> {
+		for (let attempt = 1; ; attempt += 1) {
+			try {
+				await this.applySettledChangeOnce(id, intent, moved);
+
+				return;
+			} catch (error) {
+				if (attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				// Whatever stopped the apply — the row kept moving, it could not be read, a line could not be written — the
+				// settlement stands. A record that is no longer this change's is not marked (`markSettled` checks).
+				if (moved) {
+					await this.markSettled(id, intent);
+				}
+
+				throw error;
+			}
+		}
+	}
+
+	/**
+	 * One attempt of {@link applySettledChange}: read the row, and write the change onto it.
+	 *
+	 * @param id The subscription.
+	 * @param intent The record the change was settled under.
+	 * @param moved Whether the settlement moved money outside the row.
+	 */
+	private async applySettledChangeOnce(id: ID, intent: IChangeIntent, moved: boolean): Promise<void> {
+		const current = await this.findOneScoped(id);
+		const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
+		const applied = Array.isArray(metadata[APPLIED_CHANGES]) ? (metadata[APPLIED_CHANGES] as string[]) : [];
+
+		if (this.changeIntentOf(metadata)?.key !== intent.key) {
+			if (applied.includes(intent.key)) {
+				return;
+			}
+
+			if (moved) {
+				await this.recordReversal(id, intent, 'SETTLED');
+			}
+
+			throw new ConflictException(
+				`SUBSCRIPTION_CHANGE_SUPERSEDED: another change replaced this one before it could be applied${
+					moved ? '; its settlement is recorded on the subscription for reversal' : ''
+				}. Read the subscription again.`
+			);
+		}
+
+		if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(current.status)) {
+			// The subscription ended while the change was being settled: it takes no change. What the change settled is
+			// recorded for reversal and announced, and the record and the reservation go, in one write.
+			const noted = moved && this.noteReversal(metadata, intent, 'SETTLED');
+
+			delete metadata[CHANGE_INTENT];
+
+			await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+				await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+					where: currentScope(),
+					id,
+					expectation: this.readVersionPredicate(current, ANY_VERSION),
+					patch: { metadata, reservedPlanId: null }
+				});
+
+				if (noted) {
+					await this.emit(
+						'subscription.settlement-reversal-required',
+						id,
+						this.reversalEvent(id, intent, 'SETTLED'),
+						manager
+					);
+				}
+			});
+
+			throw new ConflictException(
+				`SUBSCRIPTION_CHANGE_NOT_APPLIED: the subscription ended while this change was being settled${
+					moved ? '; its settlement is recorded on the subscription for reversal' : ''
+				}.`
+			);
+		}
+
+		if (intent.planId) {
+			// A plan change re-states the discount: the new plan's terms replace whatever the old one
+			// was sold with, and a plan that grants none must not inherit the previous one's.
+			this.restateDiscount(metadata, intent.discountPercentage ?? undefined);
+
+			// And it replaces the plan change scheduled for the next period when it was decided: the latest decision about
+			// the plan holds, so an upgrade made now is not undone at the renewal by a downgrade scheduled before it. One
+			// scheduled after it, while it was being settled, is the later decision, and stays.
+			const scheduled = this.scheduleIdentity(metadata[SCHEDULED_PLAN_CHANGE]);
+
+			if (!scheduled || intent.replacesSchedule === undefined || scheduled === intent.replacesSchedule) {
+				delete metadata[SCHEDULED_PLAN_CHANGE];
+			}
+		}
+
+		const net = Money.of(intent.net, intent.currency);
+
+		if (intent.settlement === 'WAIVED' && net.isPositive()) {
 			metadata['waivedProrations'] = [
 				...((metadata['waivedProrations'] as unknown[]) ?? []),
-				{ amount: net.toStorageString(), currency, at: new Date().toISOString(), description: change.description }
+				{ amount: intent.net, currency: intent.currency, at: intent.at, description: intent.description }
 			];
-			settlement = 'WAIVED';
-		} else if (net.isNegative()) {
+		} else if (intent.settlement === 'DEFERRED') {
 			// **The carried credit accumulates; it does not replace.** Assigning the new amount outright
 			// meant that two downgrades inside one period left only the second one's credit on the row and
 			// the first one simply stopped existing — the customer was owed 30.97 and 12.00 and was given
 			// 12.00. The money itself moves when the next cycle consumes what is carried here, which is
 			// what doc 11 §10.8 states: "no money moves now; a `CREDIT` adjustment is attached to the
 			// **next** billing order".
-			const carried = this.pendingCreditOf(metadata, currency);
+			const carried = this.pendingCreditOf(metadata, intent.currency);
 			const total = carried ? carried.add(net).round() : net;
 
 			metadata[PENDING_CREDIT] = {
 				amount: total.toStorageString(),
-				currency,
-				at: new Date().toISOString(),
-				description: change.description
+				currency: intent.currency,
+				at: intent.at,
+				description: intent.description
 			};
-			// And the adjustment written against the period the change happened in is the audit record of
-			// the decision rather than the money: that period's row has already settled, so nothing is
-			// collected or refunded by it. The pair is deliberate — one row says when the credit was
-			// decided, the next cycle's says when it was given.
-			await this.appendCredit(subscription, net, change.description);
-		} else {
-			settlement = 'WAIVED';
 		}
 
-		await commitVersionedUpdate<Subscription>(this, {
-			where: currentScope(),
-			id: subscription.id,
-			expectation,
-			patch: {
-				...(change.planId ? { planId: change.planId } : {}),
-				...(change.quantity !== undefined ? { quantity: normalizeDecimal(change.quantity, subscription.quantity) } : {}),
-				metadata
+		delete metadata[CHANGE_INTENT];
+		metadata[APPLIED_CHANGES] = [...applied.filter((key) => key !== intent.key), intent.key].slice(
+			-APPLIED_CHANGES_KEPT
+		);
+
+		await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+			await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+				where: currentScope(),
+				id,
+				expectation: this.readVersionPredicate(current, ANY_VERSION),
+				patch: {
+					...(intent.planId ? { planId: intent.planId } : {}),
+					...(intent.quantity !== undefined && intent.quantity !== null ? { quantity: intent.quantity } : {}),
+					metadata,
+					reservedPlanId: null
+				}
+			});
+
+			try {
+				if (intent.replaceLines) {
+					await this.itemService.writePreparedItems(manager, id, intent.items ?? []);
+				} else {
+					await this.itemService.writeQuantities(manager, id, intent.items ?? []);
+				}
+			} catch (error) {
+				// The lines are written on the transaction's repository, not through `CrudService`, so a refused write is
+				// answered here as `transactionWriter` answers one: a 400 that carries none of the database's internals.
+				// The service's own refusals (a line that is not there) pass as they are.
+				if (error instanceof HttpException) {
+					throw error;
+				}
+
+				const redacted = redactDatabaseError(error);
+
+				this.logger.error(
+					`The database refused a line write of subscription ${id}: ${
+						redacted instanceof Error ? redacted.message : String(redacted)
+					}`
+				);
+
+				throw new BadRequestException(toClientSafeError(error));
 			}
 		});
+	}
 
-		if (change.planId || change.after.length !== change.before.length) {
-			await this.itemService.replaceItems(
-				subscription.id,
-				change.after.map((line) => ({
-					variantId: line.variantId,
-					quantity: line.quantity,
-					unitPrice: line.unitPrice,
-					position: line.position,
-					metadata: line.metadata
-				})),
-				currency,
-				subscription.customerId
-			);
-		} else {
-			for (const line of change.after) {
-				const current = change.before.find((row) => row.variantId === line.variantId);
+	/**
+	 * Writes on a change's record that its settlement was made, when the apply that should have followed could not be
+	 * written: the record then says so itself, for as long as it stands, rather than through a claim whose retention
+	 * ends. A mark that cannot be written is logged; the claim still replays the charge until its retention ends, and the
+	 * order path replays its own key.
+	 *
+	 * @param id The subscription.
+	 * @param intent The record the settlement was made under.
+	 */
+	private async markSettled(id: ID, intent: IChangeIntent): Promise<void> {
+		for (let attempt = 1; ; attempt += 1) {
+			try {
+				const current = await this.findOneScoped(id);
+				const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
+				const recorded = this.changeIntentOf(metadata);
 
-				if (current && String(current.quantity) !== String(line.quantity)) {
-					await this.itemService.changeQuantity(subscription.id, line.variantId, line.quantity, currency);
+				if (recorded?.key !== intent.key || recorded.settledAt) {
+					return;
 				}
+
+				metadata[CHANGE_INTENT] = { ...recorded, settledAt: new Date().toISOString(), moved: true };
+
+				await commitVersionedUpdate<Subscription>(this, {
+					where: currentScope(),
+					id,
+					expectation: this.readVersionPredicate(current, ANY_VERSION),
+					patch: { metadata }
+				});
+
+				return;
+			} catch (error) {
+				if (attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				this.logger.error(
+					`Subscription ${id}: the change ${intent.key} was settled and not applied, and its record could not be marked settled: ${
+						(error as Error)?.message ?? error
+					}`
+				);
+
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Releases a change whose settlement failed: the record and the reservation go, while this request still holds the
+	 * record — a request that resumed it meanwhile holds it now, and may be charging it. A release that cannot be written is logged rather than raised — the caller is answered with the
+	 * settlement's own failure — and the record it leaves lapses after {@link CHANGE_INTENT_LEASE_MS}.
+	 *
+	 * @param id The subscription.
+	 * @param intent The record the change was to settle under.
+	 */
+	private async releaseChange(id: ID, intent: IChangeIntent): Promise<void> {
+		for (let attempt = 1; ; attempt += 1) {
+			try {
+				const current = await this.findOneScoped(id);
+				const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
+
+				const recorded = this.changeIntentOf(metadata);
+
+				if (recorded?.key !== intent.key || recorded.owner !== intent.owner) {
+					return;
+				}
+
+				delete metadata[CHANGE_INTENT];
+
+				await commitVersionedUpdate<Subscription>(this, {
+					where: currentScope(),
+					id,
+					expectation: this.readVersionPredicate(current, ANY_VERSION),
+					patch: { metadata, reservedPlanId: null }
+				});
+
+				return;
+			} catch (error) {
+				if (attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				this.logger.error(
+					`Subscription ${id}: the change ${intent.key} was not settled and its record could not be released: ${
+						(error as Error)?.message ?? error
+					}`
+				);
+
+				return;
+			}
+		}
+	}
+
+	/**
+	 * Records a settlement that stands without its change, for an operator to reverse, and announces it with
+	 * `subscription.settlement-reversal-required` in the same transaction. Recorded once per change: a second record
+	 * of the same key only replaces one whose settlement was unknown with one known to have moved money.
+	 *
+	 * @param id The subscription.
+	 * @param intent The record the settlement was made under.
+	 * @param state Whether it moved money, or nothing can tell.
+	 */
+	private async recordReversal(id: ID, intent: IChangeIntent, state: Exclude<ISettlementState, 'UNSETTLED'>): Promise<void> {
+		for (let attempt = 1; ; attempt += 1) {
+			const current = await this.findOneScoped(id);
+			const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
+
+			if (!this.noteReversal(metadata, intent, state)) {
+				return;
+			}
+
+			try {
+				await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+					await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+						where: currentScope(),
+						id,
+						expectation: this.readVersionPredicate(current, ANY_VERSION),
+						patch: { metadata }
+					});
+					await this.emit(
+						'subscription.settlement-reversal-required',
+						id,
+						this.reversalEvent(id, intent, state),
+						manager
+					);
+				});
+
+				return;
+			} catch (error) {
+				if (attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				// The last place the settlement is written down when the subscription cannot take it.
+				this.logger.error(
+					`Subscription ${id}: the settlement ${intent.key} (${intent.settlement} ${intent.net} ${intent.currency}) stands without its change and could not be recorded for reversal.`
+				);
+
+				throw error;
+			}
+		}
+	}
+
+	/**
+	 * Adds a settlement to the record of those to reverse, in place.
+	 *
+	 * @param metadata The subscription's metadata, edited in place.
+	 * @param intent The record the settlement was made under.
+	 * @param state Whether it moved money, or nothing can tell.
+	 * @returns False when the record already holds the settlement as surely, and nothing changed.
+	 */
+	private noteReversal(
+		metadata: Record<string, unknown>,
+		intent: IChangeIntent,
+		state: Exclude<ISettlementState, 'UNSETTLED'>
+	): boolean {
+		const recorded = Array.isArray(metadata[SETTLEMENT_REVERSALS])
+			? [...(metadata[SETTLEMENT_REVERSALS] as Array<Record<string, unknown>>)]
+			: [];
+		const index = recorded.findIndex((entry) => entry?.['key'] === intent.key);
+
+		if (index >= 0 && (recorded[index]['settled'] === 'SETTLED' || state === 'UNKNOWN')) {
+			return false;
+		}
+
+		const entry = {
+			key: intent.key,
+			settlement: intent.settlement,
+			amount: intent.net,
+			currency: intent.currency,
+			planId: intent.planId,
+			periodStart: intent.periodStart,
+			description: intent.description,
+			settled: state,
+			at: new Date().toISOString()
+		};
+
+		if (index >= 0) {
+			recorded[index] = entry;
+		} else {
+			recorded.push(entry);
+		}
+
+		metadata[SETTLEMENT_REVERSALS] = recorded;
+
+		return true;
+	}
+
+	/**
+	 * @param id The subscription.
+	 * @param intent The record the settlement was made under.
+	 * @param state Whether it moved money, or nothing can tell.
+	 * @returns What `subscription.settlement-reversal-required` carries.
+	 */
+	private reversalEvent(id: ID, intent: IChangeIntent, state: Exclude<ISettlementState, 'UNSETTLED'>): Record<string, unknown> {
+		return {
+			subscriptionId: id,
+			key: intent.key,
+			settlement: intent.settlement,
+			amount: intent.net,
+			currency: intent.currency,
+			planId: intent.planId,
+			periodStart: intent.periodStart,
+			settled: state
+		};
+	}
+
+	/**
+	 * Resolves a change abandoned past {@link CHANGE_INTENT_LEASE_MS}, for a change meeting it (`reserveChange`) and for
+	 * the billing pass (`recoverAbandonedChange`).
+	 *
+	 * - Its settlement is known to have moved money: the customer paid for the change, so it takes hold, applied from its
+	 *   record, rather than being reversed for having waited. A repeat of it afterwards nets nothing.
+	 * - Nothing can tell whether it did — a charge whose claim is still held or gone, a credit whose claim is held — and the
+	 *   change was recorded inside {@link CHANGE_REPLAY_WINDOW_MS}: its settlement is made again under its own key, which
+	 *   the order path answers with the order already made, or by making the one never made, and the credit's row is found
+	 *   by its key or written once; then it is applied. Replacing it instead let a second charge be raised under another
+	 *   key while the first might stand. A claim another request still holds stops this with `ProrationInFlight`.
+	 * - Past that window raising it again could charge twice, so it is `UNKNOWN`: the caller records it for reversal, and an
+	 *   operator settles it from that record.
+	 * - It moved nothing: `UNSETTLED`, and the caller clears or replaces it.
+	 * - The subscription ended meanwhile: nothing is applied or raised again; what moved (`SETTLED`) or may have
+	 *   (`UNKNOWN`) is recorded for reversal by the caller.
+	 *
+	 * @param subscription The subscription, as read.
+	 * @param recorded The abandoned record.
+	 * @returns `APPLIED`, or the state the caller clears or replaces the record in.
+	 * @throws ProrationInFlight when the settlement is still held by another request; another failure of the settlement
+	 * made again is raised as it is, and the record stays.
+	 */
+	private async resolveAbandonedChange(
+		subscription: Subscription,
+		recorded: IChangeIntent
+	): Promise<'APPLIED' | ISettlementState> {
+		const state = await this.settlementOf(subscription, recorded);
+
+		if (state === 'UNSETTLED') {
+			return 'UNSETTLED';
+		}
+
+		// A subscription that ended since takes no change and is charged nothing more: what the change settled is recorded
+		// for reversal as it stands, and nothing is raised again for it.
+		if ([SubscriptionStatus.CANCELED, SubscriptionStatus.EXPIRED].includes(subscription.status)) {
+			return state;
+		}
+
+		let moved = true;
+
+		if (state === 'UNKNOWN') {
+			if (Date.now() - new Date(recorded.recordedAt ?? recorded.at).getTime() >= CHANGE_REPLAY_WINDOW_MS) {
+				return 'UNKNOWN';
+			}
+
+			moved = await this.settleChange(subscription, recorded, { started: false });
+		}
+
+		await this.applySettledChange(subscription.id, recorded, moved);
+
+		return 'APPLIED';
+	}
+
+	/**
+	 * Whether an abandoned change's settlement moved money: as its record says when it was marked settled
+	 * (`markSettled`), otherwise as the stores that took it tell. A charge is known settled only by its completed claim;
+	 * a claim still held, or none at all, proves nothing — a completed claim is deleted once its retention ends — so the
+	 * charge is unknown. A credit is known by its `CREDIT` row, which carries the change's key and is never deleted.
+	 *
+	 * @param subscription The subscription.
+	 * @param intent The abandoned record.
+	 * @returns `SETTLED`, `UNKNOWN`, or `UNSETTLED` when nothing moved.
+	 */
+	private async settlementOf(subscription: Subscription, intent: IChangeIntent): Promise<ISettlementState> {
+		if (intent.settledAt) {
+			return intent.moved ? 'SETTLED' : 'UNSETTLED';
+		}
+
+		if (intent.settlement === 'CHARGED') {
+			const claim = await this.idempotencyService.findByKey(PRORATION_SCOPE, intent.key);
+
+			return claim?.status === IdempotencyStatus.COMPLETED ? 'SETTLED' : 'UNKNOWN';
+		}
+
+		if (intent.settlement === 'DEFERRED') {
+			const owner = await this.currentPeriodBilling(subscription, intent.periodStart);
+			const rows = owner
+				? await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, owner.id)
+				: [];
+
+			if (rows.some((row) => row.metadata?.['changeKey'] === intent.key)) {
+				return 'SETTLED';
+			}
+
+			const claim = await this.idempotencyService.findByKey(PRORATION_CREDIT_SCOPE, intent.key);
+
+			return claim?.status === IdempotencyStatus.IN_PROGRESS ? 'UNKNOWN' : 'UNSETTLED';
+		}
+
+		return 'UNSETTLED';
+	}
+
+	/**
+	 * @param scheduled The change scheduled for the next period, as stored, or nothing.
+	 * @returns What tells that entry from any other — the hash of its members in a fixed order, so the same entry read
+	 * twice gives the same answer whichever order its JSON column hands the members back in, signed or not — or null
+	 * when there is none.
+	 */
+	private scheduleIdentity(scheduled: unknown): string | null {
+		if (!scheduled || typeof scheduled !== 'object') {
+			return null;
+		}
+
+		const canonical = (value: unknown): unknown =>
+			Array.isArray(value)
+				? value.map(canonical)
+				: value && typeof value === 'object' && !(value instanceof Date)
+				? Object.fromEntries(
+						Object.keys(value as Record<string, unknown>)
+							.sort()
+							.map((key) => [key, canonical((value as Record<string, unknown>)[key])])
+				  )
+				: value instanceof Date
+				? value.toISOString()
+				: value;
+
+		return this.hash({ scheduled: canonical(scheduled) });
+	}
+
+	/**
+	 * @param metadata A subscription's metadata.
+	 * @returns The change recorded on it, or null when none is.
+	 */
+	private changeIntentOf(metadata: Record<string, unknown> | undefined): IChangeIntent | null {
+		const recorded = metadata?.[CHANGE_INTENT] as IChangeIntent | undefined;
+
+		return recorded && typeof recorded === 'object' && typeof recorded.key === 'string' ? recorded : null;
+	}
+
+	/**
+	 * The lines a change of lines builds on.
+	 *
+	 * The lines the subscription has, unless it has no current period and a change of lines is already recorded: with
+	 * no period a change of lines is recorded rather than made (`applyChange`), and a second one built on the lines the
+	 * subscription has replaced the first, which was then missing from the first bill. It builds on the recorded lines.
+	 *
+	 * @param subscription The subscription being changed.
+	 * @returns The lines, in position order.
+	 */
+	private async linesToEdit(
+		subscription: Subscription
+	): Promise<Array<Omit<IPricedLine, 'position'> & { position?: number }>> {
+		const pending = subscription.metadata?.[SCHEDULED_PLAN_CHANGE] as IScheduledPlanChange | undefined;
+		const recordsLines = !subscription.currentPeriodStart || !subscription.currentPeriodEnd;
+
+		if (
+			recordsLines &&
+			!!pending &&
+			verifyScheduledChange(subscription.id, pending) &&
+			!pending.planId &&
+			Array.isArray(pending.items) &&
+			pending.items.length
+		) {
+			return pending.items.map((line) => ({ ...line }));
+		}
+
+		return (await this.itemService.findForSubscription(subscription.id)).map((row) => ({
+			variantId: row.variantId,
+			quantity: row.quantity,
+			unitPrice: row.unitPrice,
+			position: row.position
+		}));
+	}
+
+	/**
+	 * Restates the discount a plan change carries: the new plan's terms replace whatever the old one was sold with,
+	 * and a plan that grants none leaves none behind.
+	 *
+	 * @param metadata The subscription's metadata, edited in place.
+	 * @param discountPercentage The new plan's discount, when it grants one.
+	 */
+	private restateDiscount(metadata: Record<string, unknown>, discountPercentage?: string): void {
+		if (discountPercentage === undefined) {
+			delete metadata[DISCOUNT_OVERRIDE];
+		} else {
+			metadata[DISCOUNT_OVERRIDE] = discountPercentage;
+		}
+	}
+
+	/**
+	 * What the change scheduled for a period makes of the subscription when the cycle opening that period applies it.
+	 * Reads only: the cycle applies the answer (`applyScheduledChange`) and the upcoming-billing preview prices it.
+	 *
+	 * A change is due once the period it was recorded for opens: its `effectiveAt`, the end of the period it was
+	 * recorded in, is at or before the start of the period being billed. A plan change is checked again against the
+	 * plan as it stands then, as `changePlan` checks it: a plan that may no longer be taken up (deactivated, gone, its
+	 * target no longer sellable) or that is priced in another currency now refuses the change, and the period opens on
+	 * the plan the subscription is on. Its lines are priced from the plan then, over the lines the subscription has then.
+	 *
+	 * @param subscription The subscription being billed.
+	 * @param periodStart The start of the period the cycle bills.
+	 * @returns Null when no change is due; otherwise the metadata without the change, and either why the change is
+	 * refused or the lines (and, for a plan change, the plan) the period opens on.
+	 */
+	private async scheduledChangeAt(
+		subscription: Subscription,
+		periodStart: Date
+	): Promise<{
+		change: IScheduledPlanChange;
+		metadata: Record<string, unknown>;
+		refused?: string;
+		plan?: SubscriptionPlan;
+		quantity?: DecimalString;
+		items?: IPricedLine[];
+	} | null> {
+		const change = subscription.metadata?.[SCHEDULED_PLAN_CHANGE] as IScheduledPlanChange | undefined;
+
+		if (!change || typeof change !== 'object') {
+			return null;
+		}
+
+		if (change.effectiveAt && new Date(change.effectiveAt).getTime() > periodStart.getTime()) {
+			return null;
+		}
+
+		const metadata: Record<string, unknown> = { ...(subscription.metadata ?? {}) };
+
+		delete metadata[SCHEDULED_PLAN_CHANGE];
+
+		// Only what this service recorded and signed is applied (`verifyScheduledChange`): an entry a caller's metadata
+		// wrote before the key was reserved, or through an instance that does not reserve it yet, may still be on the row,
+		// and its lines or quantity were never checked by anything. A plan alone, the shape the service wrote before it
+		// signed anything, still takes hold: the plan is checked again below and the lines are priced from it.
+		const trusted = verifyScheduledChange(subscription.id, change);
+
+		// A signature that is there and does not verify is refused outright, rather than read as the unsigned shape: the
+		// change was recorded with lines or a quantity it can no longer prove (an edited entry, a key since removed), and
+		// applying its plan without them would bill terms nobody asked for. The refusal is told, so it is not silent.
+		if (!trusted && change.signature !== undefined) {
+			return {
+				change,
+				metadata,
+				refused:
+					'SUBSCRIPTION_SCHEDULED_CHANGE_UNTRUSTED: the scheduled change carries a signature that does not verify.'
+			};
+		}
+
+		if (!change.planId) {
+			if (!trusted || !Array.isArray(change.items) || !change.items.length) {
+				return {
+					change,
+					metadata,
+					refused:
+						'SUBSCRIPTION_SCHEDULED_CHANGE_UNTRUSTED: the scheduled change names no plan and no recurring lines this service recorded.'
+				};
+			}
+
+			try {
+				// Checked again as a change of lines made now is checked: the variants still sellable and the set well formed.
+				const items = await this.itemService.prepareItems(
+					change.items.map((line) => ({
+						variantId: line.variantId,
+						quantity: line.quantity,
+						unitPrice: line.unitPrice,
+						position: line.position,
+						...(line.metadata ? { metadata: line.metadata } : {})
+					})),
+					subscription.currency,
+					subscription.customerId
+				);
+
+				return { change, metadata, items };
+			} catch (error) {
+				if (error instanceof BadRequestException || error instanceof NotFoundException) {
+					return { change, metadata, refused: error.message };
+				}
+
+				throw error;
 			}
 		}
 
-		return {
-			subscription: await this.findOneScoped(subscription.id),
-			credit: credit.toStorageString(),
-			charge: charge.toStorageString(),
-			net: net.toStorageString(),
-			settlement,
-			currency
-		};
+		const quantity = trusted ? change.quantity : undefined;
+
+		try {
+			const plan = await this.planService.assertSubscribable(change.planId);
+
+			if (plan.currency && plan.currency !== subscription.currency) {
+				return {
+					change,
+					metadata,
+					refused: `SUBSCRIPTION_CURRENCY_MISMATCH: the plan is priced in ${plan.currency} and the subscription is billed in ${subscription.currency}.`
+				};
+			}
+
+			// The cycle's ceiling was checked against the plan the subscription is leaving (`billCycle`), so the plan it
+			// moves to is checked here: a plan that bills at most N cycles, already used, does not bill this one.
+			if (
+				plan.maxBillingCycles !== undefined &&
+				plan.maxBillingCycles !== null &&
+				(subscription.billingCycleCount ?? 0) >= plan.maxBillingCycles
+			) {
+				return {
+					change,
+					metadata,
+					refused: `SUBSCRIPTION_CYCLE_CEILING_REACHED: the plan bills at most ${plan.maxBillingCycles} cycles, which the subscription has already used.`
+				};
+			}
+
+			const existing = await this.itemService.findForSubscription(subscription.id);
+			const items = await this.planLines(subscription, plan, existing, quantity);
+
+			this.restateDiscount(
+				metadata,
+				plan.discountPercentage !== undefined && plan.discountPercentage !== null
+					? String(plan.discountPercentage)
+					: undefined
+			);
+
+			return { change, metadata, plan, quantity, items };
+		} catch (error) {
+			// The plan's own answer (inactive, gone, its target or a line no longer sellable) refuses the change; anything
+			// else fails the cycle, which is retried, rather than dropping a change the customer asked for.
+			if (error instanceof BadRequestException || error instanceof NotFoundException) {
+				return { change, metadata, refused: error.message };
+			}
+
+			throw error;
+		}
+	}
+
+	/**
+	 * Applies the change scheduled for the period a cycle opens, before the period is priced (`executeCycle`).
+	 *
+	 * One transaction, the claim first: the plan, the quantity, the restated discount and the cleared change are one
+	 * write predicated on the version the change was read at, and the lines follow it on the same transaction. A change
+	 * made meanwhile (a plan change made now, a change recorded again) moves the version, so the claim matches nothing
+	 * before any line is written and the change is read again rather than overwritten; a failure after the claim rolls
+	 * both back. A refused change is cleared and told (`subscription.scheduled-change-refused`) in one transaction too,
+	 * so a retry cannot find it cleared and its notice never written, and the period opens on the plan the subscription
+	 * is on. A cycle row an earlier attempt wrote for the period (a retry of a failed charge) is restated on the same
+	 * transaction (`restateUnsettled`): its end moves to the new plan's cadence and its amount to what the period is now
+	 * priced at, so a payment recorded meanwhile cannot leave the new period on the old amount.
+	 *
+	 * The plan the change moves to is read again under its row lock, as `createSubscription` reads it, and has to be the
+	 * plan the change was priced on; a plan changed meanwhile has the change read again (`ScheduledPlanMoved`). A claim
+	 * lost to a write that took the change away (a plan change made now clears it) stops the cycle: it read the plan,
+	 * the lines and the metadata before that write, and the next pass bills the subscription as the write left it.
+	 *
+	 * @param id The subscription being billed.
+	 * @param periodStart The start of the period the cycle bills.
+	 * @param spend The reader the cycle's subscription writes take their expectation from.
+	 * @param cycle The row an earlier attempt wrote for the period, when there is one.
+	 * @param current The plan the subscription is on, which a change of lines alone opens the period on.
+	 * @param chargeClaim The token of the charge claim the cycle holds on that row, which its restatement names.
+	 * @returns Null when no change was due; otherwise the subscription as the change left it, with the plan the period
+	 * opens on when the change was applied, and without one when it was refused.
+	 */
+	private async applyScheduledChange(
+		id: ID,
+		periodStart: Date,
+		spend: () => IVersionExpectation,
+		cycle: SubscriptionBilling | null,
+		current: SubscriptionPlan,
+		chargeClaim?: string
+	): Promise<{ subscription: Subscription; plan?: SubscriptionPlan } | null> {
+		for (let attempt = 1; ; attempt += 1) {
+			const subscription = await this.findOneScoped(id);
+			const due = await this.scheduledChangeAt(subscription, periodStart);
+
+			if (!due) {
+				if (attempt > 1) {
+					throw new ConflictException(
+						'SUBSCRIPTION_CHANGED_DURING_CYCLE: the subscription changed while its billing cycle was opening; the next billing pass bills it as it now stands.'
+					);
+				}
+
+				return null;
+			}
+
+			const stated = spend();
+			const lines = due.refused ? undefined : due.items;
+
+			try {
+				await this.typeOrmSubscriptionRepository.manager.transaction(async (manager) => {
+					if (lines && due.plan) {
+						// A plan update holds this lock while it counts the plan's live subscriptions, so it either committed
+						// before (and the plan is read here as it left it) or waits for this change to commit (and counts it).
+						await lockPlanRow(manager, due.plan.id, 'share');
+
+						const current = await manager.findOne(SubscriptionPlan, { where: { id: due.plan.id } });
+
+						if (scheduledPlanTerms(current) !== scheduledPlanTerms(due.plan)) {
+							throw new ScheduledPlanMoved();
+						}
+					}
+
+					await commitVersionedUpdate<Subscription>(this.transactionWriter(manager), {
+						where: currentScope(),
+						id,
+						expectation: this.readVersionPredicate(subscription, stated),
+						patch: lines
+							? {
+									...(due.plan ? { planId: due.plan.id } : {}),
+									...(due.quantity !== undefined ? { quantity: due.quantity } : {}),
+									metadata: due.metadata
+							  }
+							: { metadata: due.metadata }
+					});
+
+					if (lines) {
+						await this.itemService.writePreparedItems(manager, id, lines);
+
+						if (cycle) {
+							// Priced as `executeCycle` prices the period (`priceCycle`), on the lines, plan and metadata the
+							// change opens it on, so the reprice that follows the commit finds nothing left to restate.
+							const opensOn = due.plan ?? current;
+							const { gross, discount, net } = priceCycle({
+								items: lines,
+								currency: subscription.currency,
+								plan: opensOn,
+								metadata: due.metadata
+							});
+							const end = due.plan
+								? periodFrom(periodStart, this.planService.cadenceOf(due.plan)).end
+								: null;
+
+							await this.billingService.restateUnsettled(
+								cycle.id,
+								{
+									...(end && new Date(cycle.periodEnd).getTime() !== end.getTime()
+										? { periodEnd: end }
+										: {}),
+									amount: net.toStorageString(),
+									pricing: { gross: gross.toStorageString(), discount: discount.toStorageString() }
+								},
+								manager,
+								chargeClaim
+							);
+						}
+					} else {
+						await this.emit(
+							'subscription.scheduled-change-refused',
+							id,
+							{
+								subscriptionId: id,
+								planId: due.change.planId ?? null,
+								periodStart,
+								reason: due.refused ?? null
+							},
+							manager
+						);
+					}
+				});
+			} catch (error) {
+				if (
+					stated.wildcard &&
+					attempt < METADATA_EDIT_ATTEMPTS &&
+					(isVersionConflict(error) || error instanceof ScheduledPlanMoved)
+				) {
+					continue;
+				}
+
+				throw error;
+			}
+
+			const opened = await this.findOneScoped(id);
+
+			if (!lines) {
+				this.logger.warn(
+					`Subscription ${id}: the change scheduled for the period from ${periodStart.toISOString()} was refused: ${due.refused}`
+				);
+
+				return { subscription: opened };
+			}
+
+			return { subscription: opened, plan: await this.planService.findOneScoped(opened.planId) };
+		}
 	}
 
 	/**
@@ -2786,12 +5024,32 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * still settles on its own account.
 	 *
 	 * @param subscription The subscription that changed.
-	 * @param net What is owed, positive.
-	 * @param description What the change was.
-	 * @throws BadRequestException when the order capability is not registered, when the remembered
-	 * payer may not be charged, or when the identical change is already being settled.
+	 * @param intent The recorded change (`reserveChange`): what is owed, positive, the period it was priced in, and the
+	 * key the charge is claimed and raised under.
+	 * @param progress Set just before the order path is called: from there on a failure may have left a charge raised.
+	 * @throws BadRequestException when the order capability is not registered, or when the remembered
+	 * payer may not be charged.
+	 * @throws ProrationInFlight when the identical change is already being settled.
 	 */
-	private async chargeProration(subscription: Subscription, net: Money, description: string): Promise<void> {
+	private async chargeProration(
+		subscription: Subscription,
+		intent: IChangeIntent,
+		progress: { started: boolean }
+	): Promise<void> {
+		// The record's own amount and period, so a change resumed after a renewal is claimed as it was first claimed.
+		const amount = intent.net;
+		const periodStart = intent.periodStart;
+		const key = intent.key;
+		const requestHash = this.hash({ subscriptionId: subscription.id, amount, periodStart });
+		// A charge already made is recognised before the order capability or the payer is asked again: a resumed change
+		// whose payer was revoked since would otherwise be refused, and its charge taken for one never made. Read only; a
+		// missing claim is taken below, after the checks, so a refused request leaves none behind.
+		const made = await this.idempotencyService.findByKey(PRORATION_SCOPE, key);
+
+		if (made?.status === IdempotencyStatus.COMPLETED && made.requestHash === requestHash) {
+			return;
+		}
+
 		if (!this.orderGateway) {
 			throw new BadRequestException(
 				'SUBSCRIPTION_ORDER_GATEWAY_UNAVAILABLE: the order capability is not registered, so the difference this change produced cannot be charged.'
@@ -2804,14 +5062,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 			throw new BadRequestException(`${payer.refusal.code}: ${payer.refusal.message}`);
 		}
 
-		const amount = net.toStorageString();
-		const periodStart = subscription.currentPeriodStart ? new Date(subscription.currentPeriodStart).toISOString() : '';
-		const key = `${subscription.id}:${this.hash({ description, amount, periodStart }).slice(0, 32)}`;
-		const claim = await this.idempotencyService.claim({
-			scope: PRORATION_SCOPE,
-			key,
-			requestHash: this.hash({ subscriptionId: subscription.id, amount, periodStart })
-		});
+		const claim = await this.idempotencyService.claim({ scope: PRORATION_SCOPE, key, requestHash });
 
 		if (claim.outcome === IdempotencyOutcome.REPLAYED) {
 			// This exact change was already charged for this period. The caller gets the same answer
@@ -2820,17 +5071,17 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		}
 
 		if (claim.outcome === IdempotencyOutcome.IN_FLIGHT || claim.outcome === IdempotencyOutcome.REUSED_KEY) {
-			throw new BadRequestException(
-				'SUBSCRIPTION_PRORATION_IN_FLIGHT: an identical change is already being settled for this period.'
-			);
+			throw new ProrationInFlight();
 		}
+
+		progress.started = true;
 
 		const result = await this.orderGateway.raiseProrationOrder({
 			subscriptionId: subscription.id,
 			customerId: subscription.customerId,
 			currency: subscription.currency,
 			amount,
-			description,
+			description: intent.description,
 			paymentAccountHolderId: payer.accountHolderId,
 			paymentMethodTokenId: payer.paymentMethodTokenId,
 			idempotencyKey: key
@@ -2853,27 +5104,86 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * which happens when a change lands after the period settled and before the next cycle opened —
 	 * there is nothing to attach the record to and the carried amount is the whole of it.
 	 *
+	 * **Once per change.** The row carries the change's key, and is written under a claim of that key: a retry of a
+	 * change whose apply failed resumes its record (`reserveChange`) and finds the row rather than appending a second
+	 * one, two requests resuming one change at once are serialized by the claim, and a claim taken over from an attempt
+	 * that stopped after writing the row finds it too.
+	 *
 	 * @param subscription The subscription that changed.
-	 * @param net The negative difference the change produced.
-	 * @param description What the change was.
+	 * @param intent The recorded change (`reserveChange`): the negative difference it produced, the period it was priced
+	 * in (whose cycle the row is written against, also when it is resumed after a renewal) and its key.
+	 * @param progress Set once the row may be written: from there on a failure may have left it written.
+	 * @returns Whether the cycle carries the change's `CREDIT` row: false when the period has no cycle to attach it to.
+	 * @throws ProrationInFlight when another request is writing the same change's row.
 	 */
-	private async appendCredit(subscription: Subscription, net: Money, description: string): Promise<void> {
-		const owner = await this.currentPeriodBilling(subscription);
+	private async appendCredit(
+		subscription: Subscription,
+		intent: IChangeIntent,
+		progress: { started: boolean }
+	): Promise<boolean> {
+		const owner = await this.currentPeriodBilling(subscription, intent.periodStart);
 
 		if (!owner) {
-			return;
+			return false;
 		}
 
-		await this.adjustmentService.append({
-			ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
-			ownerId: owner.id,
-			type: AdjustmentType.CREDIT,
-			amount: net.toStorageString(),
-			currency: subscription.currency,
-			referenceType: 'subscription',
-			referenceId: subscription.id,
-			description
+		const amount = intent.net;
+		const key = intent.key;
+		const claim = await this.idempotencyService.claim({
+			scope: PRORATION_CREDIT_SCOPE,
+			key,
+			requestHash: this.hash({ subscriptionId: subscription.id, billingId: owner.id, amount })
 		});
+
+		if (claim.outcome === IdempotencyOutcome.REPLAYED) {
+			return true;
+		}
+
+		if (claim.outcome === IdempotencyOutcome.IN_FLIGHT || claim.outcome === IdempotencyOutcome.REUSED_KEY) {
+			throw new ProrationInFlight();
+		}
+
+		progress.started = true;
+
+		const written = (await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, owner.id)).find(
+			(row) => row.metadata?.['changeKey'] === key
+		);
+		const row =
+			written ??
+			(await this.adjustmentService.append({
+				ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
+				ownerId: owner.id,
+				type: AdjustmentType.CREDIT,
+				amount,
+				currency: subscription.currency,
+				referenceType: 'subscription',
+				referenceId: subscription.id,
+				description: intent.description,
+				metadata: { changeKey: key }
+			}));
+
+		await this.idempotencyService.complete(claim.record, {
+			responseStatus: 200,
+			resourceType: 'adjustment',
+			resourceId: row?.id
+		});
+
+		if (!written) {
+			// The lookup and the insert are two statements; a writer that stalled between them past the claim's lock while
+			// another took the claim over writes a second row. Such a row moves no money — the credit is carried by the
+			// apply, once — but an operator is told, since the ledger is append-only and only a reversing row corrects it.
+			const rows = (await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, owner.id)).filter(
+				(candidate) => candidate.metadata?.['changeKey'] === key
+			);
+
+			if (rows.length > 1) {
+				this.logger.error(
+					`Subscription ${subscription.id}: cycle ${owner.id} carries ${rows.length} CREDIT rows for the change ${key}; all but the first need a reversing row.`
+				);
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -2906,21 +5216,63 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param discount The discount granted.
 	 */
 	private async appendDiscount(billing: SubscriptionBilling, subscription: Subscription, discount: Money): Promise<void> {
-		const existing = await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, billing.id);
+		const currency = subscription.currency;
+		// What the cycle's rows grant of the plan's discount so far: its plan promotions, and the corrections that gave
+		// part of them back. A promotion with another reference is another discount's, which this one does not restate.
+		const granted = (
+			await this.adjustmentService.findByOwner(AdjustmentOwnerType.SUBSCRIPTION_BILLING, billing.id)
+		).filter(
+			(row) =>
+				row.referenceType === 'subscription-plan' &&
+				(row.type === AdjustmentType.PROMOTION ||
+					(row.type === AdjustmentType.MANUAL && row.reasonCode === DISCOUNT_RESTATED_REASON))
+		);
+		const total = Money.sum(
+			granted.map((row) => Money.of(row.amount, currency)),
+			currency
+		).round();
+		const owed = discount.negate().round();
 
-		if (existing.some((row) => row.type === AdjustmentType.PROMOTION)) {
+		if (total.equals(owed)) {
 			return;
 		}
 
+		// The ledger is append-only, and its rows add up to the discount the order carries: a retry priced on other terms
+		// (a change that took hold at this attempt, lines changed since the first) adds the difference. A larger discount
+		// is a further `PROMOTION`. A smaller one, or none, gives part of an earlier grant back, which a `PROMOTION` (only
+		// ever negative) cannot say: it is a governed `MANUAL` correction under the service's own reason.
+		const difference = owed.subtract(total).round();
+
+		if (difference.isNegative()) {
+			await this.adjustmentService.append({
+				ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
+				ownerId: billing.id,
+				type: AdjustmentType.PROMOTION,
+				amount: difference.toStorageString(),
+				currency,
+				referenceType: 'subscription-plan',
+				referenceId: subscription.planId,
+				description: granted.length ? 'Recurring plan discount, raised on a retry.' : 'Recurring plan discount.'
+			});
+
+			return;
+		}
+
+		await this.adjustmentService.ensureReason({
+			code: DISCOUNT_RESTATED_REASON,
+			label: 'Subscription discount restated on a retry',
+			appliesTo: AdjustmentType.MANUAL
+		});
 		await this.adjustmentService.append({
 			ownerType: AdjustmentOwnerType.SUBSCRIPTION_BILLING,
 			ownerId: billing.id,
-			type: AdjustmentType.PROMOTION,
-			amount: discount.negate().toStorageString(),
-			currency: subscription.currency,
+			type: AdjustmentType.MANUAL,
+			amount: difference.toStorageString(),
+			currency,
 			referenceType: 'subscription-plan',
 			referenceId: subscription.planId,
-			description: 'Recurring plan discount.'
+			reasonCode: DISCOUNT_RESTATED_REASON,
+			description: 'Recurring plan discount lowered on a retry priced on other terms.'
 		});
 	}
 
@@ -2955,7 +5307,7 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 				currency: subscription.currency,
 				referenceType: 'subscription',
 				referenceId: subscription.id,
-				description: 'Credit from an earlier plan change.'
+				description: CONSUMED_CREDIT_DESCRIPTION
 			});
 		}
 
@@ -3059,61 +5411,59 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	}
 
 	/**
-	 * @param subscription The subscription whose setup fee was charged.
-	 * @param plan The plan whose setup fee it was.
+	 * Edits a subscription's metadata on the row as it is: read, edited, and written under the version read, again on a
+	 * conflict while the caller conditioned on none.
+	 *
+	 * @param id The subscription.
 	 * @param expectation The version the write is predicated on.
+	 * @param edit Edits the metadata in place; false when there is nothing to write.
 	 */
-	private async rememberSetupFee(
-		subscription: Subscription,
-		plan: SubscriptionPlan,
-		expectation: IVersionExpectation = ANY_VERSION
+	private async mergeMetadata(
+		id: ID,
+		expectation: IVersionExpectation,
+		edit: (metadata: Record<string, unknown>) => boolean
 	): Promise<void> {
-		const charged = (subscription.metadata?.[CHARGED_SETUP_FEES] as ID[]) ?? [];
+		for (let attempt = 1; ; attempt += 1) {
+			const current = await this.findOneScoped(id);
+			const metadata: Record<string, unknown> = { ...(current.metadata ?? {}) };
 
-		if (charged.includes(plan.id)) {
-			return;
-		}
-
-		await commitVersionedUpdate<Subscription>(this, {
-			where: currentScope(),
-			id: subscription.id,
-			expectation,
-			patch: {
-				metadata: { ...(subscription.metadata ?? {}), [CHARGED_SETUP_FEES]: [...charged, plan.id] }
+			if (!edit(metadata)) {
+				return;
 			}
-		});
+
+			try {
+				await commitVersionedUpdate<Subscription>(this, {
+					where: currentScope(),
+					id,
+					expectation: this.readVersionPredicate(current, expectation),
+					patch: { metadata }
+				});
+
+				return;
+			} catch (error) {
+				if (expectation.wildcard && attempt < METADATA_EDIT_ATTEMPTS && isVersionConflict(error)) {
+					continue;
+				}
+
+				throw error;
+			}
+		}
 	}
 
 	/**
-	 * @param subscription The subscription whose deferred credit was applied.
-	 * @param expectation The version the write is predicated on.
+	 * @param subscription The subscription to read a period's cycle of.
+	 * @param periodStart The start of the period; by default the current one.
+	 * @returns The cycle covering the period, or null when it has none.
 	 */
-	private async clearPendingCredit(
+	private async currentPeriodBilling(
 		subscription: Subscription,
-		expectation: IVersionExpectation = ANY_VERSION
-	): Promise<void> {
-		const metadata = { ...(subscription.metadata ?? {}) };
-
-		delete metadata[PENDING_CREDIT];
-
-		await commitVersionedUpdate<Subscription>(this, {
-			where: currentScope(),
-			id: subscription.id,
-			expectation,
-			patch: { metadata }
-		});
-	}
-
-	/**
-	 * @param subscription The subscription to read the current period's cycle of.
-	 * @returns The cycle covering the current period, or null when it has none.
-	 */
-	private async currentPeriodBilling(subscription: Subscription): Promise<SubscriptionBilling | null> {
-		if (!subscription.currentPeriodStart) {
+		periodStart: Date | string | undefined = subscription.currentPeriodStart
+	): Promise<SubscriptionBilling | null> {
+		if (!periodStart) {
 			return null;
 		}
 
-		return await this.billingService.findByPeriod(subscription.id, new Date(subscription.currentPeriodStart));
+		return await this.billingService.findByPeriod(subscription.id, new Date(periodStart));
 	}
 
 	/**
@@ -3156,6 +5506,21 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	): Promise<void> {
 		if ((subscription.billingCycleCount ?? 0) > 0) {
 			return;
+		}
+
+		if (
+			opening &&
+			(!!this.billingService.frozenAttemptOf(opening, (opening.attemptCount ?? 0) + 1) || this.leftUnfinished(opening)) &&
+			new Date(opening.periodStart).getTime() !== period.start.getTime()
+		) {
+			// The opening cycle was sent to the order path and its outcome never recorded, or it was charged and not
+			// finished (a manual bill of a pending subscription, say): it cannot move, and committing the subscription onto
+			// another period would leave the charge's finish with a calendar that no longer points at it — the paid period
+			// uncounted and a later one billed over it (Copilot). The whole write is refused, as for a cycle charged since
+			// it was read. A charge still before the order path holds a live claim, which `reschedulePending` refuses.
+			throw new ConflictException(
+				'SUBSCRIPTION_OPENING_CYCLE_CHANGED: the opening billing cycle is being charged. Read the subscription again once its charge is recorded and retry.'
+			);
 		}
 
 		if (!opening || !this.isUntouched(opening) || new Date(opening.periodStart).getTime() === period.start.getTime()) {
@@ -3219,7 +5584,13 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @returns Whether it records no money billed and no attempt: `PENDING`, with no order and no attempt.
 	 */
 	private isUntouched(cycle: SubscriptionBilling): boolean {
-		return cycle.status === SubscriptionBillingStatus.PENDING && !cycle.orderId && !cycle.attemptCount;
+		return (
+			cycle.status === SubscriptionBillingStatus.PENDING &&
+			!cycle.orderId &&
+			!cycle.attemptCount &&
+			// An attempt frozen for the order path, whose outcome was never recorded, may have an order.
+			!this.billingService.frozenAttemptOf(cycle, 1)
+		);
 	}
 
 	/**
@@ -3236,7 +5607,29 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 		const subscriptions = manager.getRepository(Subscription);
 
 		return {
-			update: (criteria, partial) => subscriptions.update(criteria as never, partial as never),
+			update: async (criteria, partial) => {
+				try {
+					return await subscriptions.update(criteria as never, partial as never);
+				} catch (error) {
+					// Logged as the platform's database-error filter logs one (the driver's code, its masked message and
+					// the statement, without the bound values), because the answer below no longer carries any of it.
+					const redacted = redactDatabaseError(error);
+					let detail: string;
+					try {
+						detail = redacted instanceof Error ? redacted.message : JSON.stringify(redacted);
+					} catch {
+						detail = 'the error could not be converted to JSON';
+					}
+					this.logger.error(
+						`The database refused a write of subscription ${String((criteria as { id?: unknown })?.id ?? '')}: ${detail}`
+					);
+
+					// Answered as `CrudService.update` answers a failed write: a 400 that carries none of the database's
+					// internals (the statement, its parameters, the driver's detail). A version conflict is not an error
+					// of this statement — `commitVersionedUpdate` raises it from the affected-row count — so it is unchanged.
+					throw new BadRequestException(toClientSafeError(error));
+				}
+			},
 			findOneByIdString: async (id) => {
 				const subscription = await subscriptions.findOne({ where: { id, ...currentScope() } } as never);
 
@@ -3270,9 +5663,15 @@ export class SubscriptionService extends SubscriptionCrudService<Subscription> {
 	 * @param name The event name.
 	 * @param subscriptionId The aggregate the event is about.
 	 * @param data The projection a consumer receives.
+	 * @param manager The transaction the event commits with, when the write it reports is made on one.
 	 */
-	private async emit(name: string, subscriptionId: ID, data: Record<string, unknown>): Promise<void> {
-		await this.outbox.append(this.typeOrmSubscriptionRepository.manager, {
+	private async emit(
+		name: string,
+		subscriptionId: ID,
+		data: Record<string, unknown>,
+		manager: EntityManager = this.typeOrmSubscriptionRepository.manager
+	): Promise<void> {
+		await this.outbox.append(manager, {
 			name,
 			aggregateType: 'SUBSCRIPTION',
 			aggregateId: subscriptionId,

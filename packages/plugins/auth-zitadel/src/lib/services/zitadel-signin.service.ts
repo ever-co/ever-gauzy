@@ -115,7 +115,7 @@ export class ZitadelSigninService {
 			return { type: 'email_unverified' };
 		}
 		const { redirect } = options;
-		const hints = this.claims.resolve(idToken.claims);
+		const hints = await this.claims.resolveFor(idToken);
 		const identity: ZitadelIdentity = {
 			issuer: idToken.issuer,
 			subject: idToken.subject,
@@ -126,6 +126,7 @@ export class ZitadelSigninService {
 
 		const linked = await this.accounts.findLinkedUsers(identity.issuer, identity.subject);
 		if (linked.length) {
+			await this.events.signedIn(linked, identity);
 			return { type: 'workspaces', response: await this.signInLinked(linked, identity, hints, idToken.sid) };
 		}
 

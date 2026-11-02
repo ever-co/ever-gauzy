@@ -105,8 +105,9 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 	 * Fetches invoice details, including invoice items, tags, organizations, contacts,
 	 * payments, and their associated details. Loads payments into the smart table source
 	 * and calculates the total paid amount.
+	 * @param updateStatus Whether to update the status after a payment mutation.
 	 */
-	async getInvoice(): Promise<void> {
+	async getInvoice(updateStatus = false): Promise<void> {
 		// Check if the organization is available
 		if (!this.organization) {
 			return;
@@ -145,6 +146,9 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 
 			// Calculate total paid amount
 			await this.calculateTotalPaid();
+			if (updateStatus) {
+				await this.updateInvoiceStatus(+this.invoice.totalValue, this.totalPaid);
+			}
 		} catch (error) {
 			// Handle errors, e.g., log the error or show a user-friendly message
 			this.toastrService.danger(error);
@@ -205,9 +209,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 
 		if (result) {
 			await this.paymentService.add(result);
-			this.totalPaid = 0;
-			this.subject$.next(true);
-			await this.updateInvoiceStatus(+this.invoice.totalValue, this.totalPaid);
+			await this.getInvoice(true);
 
 			if (result.invoice) {
 				const { invoice, amount, currency } = result;
@@ -230,8 +232,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 
 		if (result) {
 			await this.paymentService.update(result.id, result);
-			this.subject$.next(true);
-			await this.updateInvoiceStatus(+this.invoice.totalValue, this.totalPaid);
+			await this.getInvoice(true);
 
 			if (result.invoice) {
 				const { invoice } = result;
@@ -245,11 +246,10 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 		const result = await firstValueFrom(this.dialogService.open(DeleteConfirmationComponent).onClose);
 
 		if (result) {
-			await this.paymentService.delete(this.selectedPayment.id);
-			this.subject$.next(true);
-			await this.updateInvoiceStatus(+this.invoice.totalValue, this.totalPaid);
+			const { id, invoice } = this.selectedPayment;
+			await this.paymentService.delete(id);
+			await this.getInvoice(true);
 
-			const { invoice } = this.selectedPayment;
 			if (invoice) {
 				const action = this.getTranslation('INVOICES_PAGE.PAYMENTS.PAYMENT_DELETE');
 				await this.createInvoiceHistory(action, invoice);
@@ -408,6 +408,7 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 		payment.overdue = this.invoice.dueDate >= new Date();
 
 		await this.paymentService.add(payment);
+		await this.getInvoice(true);
 		const { amount, currency, invoice } = payment;
 
 		if (payment.invoice) {
@@ -415,7 +416,6 @@ export class InvoicePaymentsComponent extends TranslationBaseComponent implement
 			await this.createInvoiceHistory(action, invoice);
 		}
 
-		this.subject$.next(true);
 		this.toastrService.success('INVOICES_PAGE.PAYMENTS.PAYMENT_ADD', { amount, currency });
 	}
 

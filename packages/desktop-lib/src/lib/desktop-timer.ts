@@ -11,7 +11,7 @@ import * as moment from 'moment';
 import { DesktopActiveWindow } from './desktop-active-window';
 import { DesktopEventCounter } from '@gauzy/desktop-activity';
 import NotificationDesktop from './desktop-notifier';
-import { detectActiveWindow, getScreenshot } from './desktop-screenshot';
+import { detectActiveWindow, getScreenshot, isScreenshotCaptureAllowed } from './desktop-screenshot';
 import { LocalStore } from './desktop-store';
 import { metaData } from './desktop-wakatime';
 import { ActivityWatchEventManager, ActivityWatchEventTableList, ActivityWatchService } from './integrations';
@@ -539,6 +539,10 @@ export default class TimerHandler {
 		// Check api connectivity before to take a screenshot
 		await this._offlineMode.connectivity();
 
+		// Issue #9872: no image is taken unless the organization and the employee both allow screen capture. The renderer,
+		// which takes the screenshots with Electron's desktop capturer (or WebRTC on Wayland), is told the same.
+		const allowScreenshotCapture = isScreenshotCaptureAllowed();
+
 		switch (appSetting.SCREENSHOTS_ENGINE_METHOD || config.SCREENSHOTS_ENGINE_METHOD) {
 			case 'ElectronDesktopCapturer':
 				console.log('ElectronDesktopCapturer');
@@ -567,13 +571,14 @@ export default class TimerHandler {
 					activeWindow: detectActiveWindow(),
 					isAw: projectInfo.aw.isAw,
 					isAwConnected: appSetting.awIsConnected,
+					allowScreenshotCapture,
 					...activityPercentages
 				};
 				break;
 
 			case 'ScreenshotDesktopLib':
 				console.log('ScreenshotDesktopLib');
-				const displays = await getScreenshot();
+				const displays = allowScreenshotCapture ? await getScreenshot() : [];
 
 				preparedActivities = {
 					screenSize: screen?.getPrimaryDisplay()?.workAreaSize,
@@ -600,6 +605,7 @@ export default class TimerHandler {
 					activeWindow: null,
 					isAw: projectInfo.aw.isAw,
 					isAwConnected: appSetting.awIsConnected,
+					allowScreenshotCapture,
 					...activityPercentages
 				};
 				break;

@@ -52,6 +52,11 @@ jest.mock('@gauzy/core', () => {
 			return record;
 		}
 
+		/** The platform's check that a patch names nothing of another tenant (SEC-D-03); a case about it replaces it. */
+		async assertNestedGraphNotForeign(_entities: any[], _tenantId: any): Promise<void> {
+			return undefined;
+		}
+
 		async create(entity: any): Promise<any> {
 			return this.typeOrmRepository.save(this.typeOrmRepository.create(entity));
 		}
@@ -97,6 +102,7 @@ jest.mock('@gauzy/core', () => {
 		// The plan's discount is range-checked on its digits (`normalizeDiscountFraction`), by the platform's own comparison.
 		compareDecimalStrings: jest.requireActual('@gauzy/core/src/lib/money/decimal').compareDecimalStrings,
 		isUniqueViolation: jest.requireActual('@gauzy/core/src/lib/core/errors/unique-violation').isUniqueViolation,
+		toClientSafeError: jest.requireActual('@gauzy/core/src/lib/core/errors/database-error').toClientSafeError,
 		SequenceService: class SequenceService {},
 		RequestContext: {
 			currentUser: () => null,
@@ -109,7 +115,7 @@ jest.mock('@gauzy/core', () => {
 	};
 });
 
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { RequestContext } from '@gauzy/core';
 import { SubscriptionBillingPeriod, SubscriptionStatus } from '../subscription.types';
@@ -182,8 +188,11 @@ function repository(tables: ITables, tableName: keyof ITables, options: { onSave
 
 		return same(value, expected);
 	};
-	const matches = (row: Row, where: Row = {}): boolean =>
-		Object.entries(where ?? {}).every(([field, expected]) => matchesValue(row[field], expected));
+	// A list of conditions is TypeORM's OR: the row matches when any one of them matches.
+	const matches = (row: Row, where: Row | Row[] = {}): boolean =>
+		Array.isArray(where)
+			? where.some((alternative) => matches(row, alternative))
+			: Object.entries(where ?? {}).every(([field, expected]) => matchesValue(row[field], expected));
 	const sorted = (found: Row[], order?: Record<string, 'ASC' | 'DESC'>) => {
 		const columns = Object.keys(order ?? {});
 
@@ -295,13 +304,23 @@ const subscriptionRow = (id: string, overrides: Row = {}): Row => ({
  * @param options.subscriptions The subscriptions the fixture starts with.
  * @param options.catalog The catalogue, or `false` for a tenant that has none.
  * @param options.uniqueViolationOnSave Whether the write loses a race against another writer's insert.
+ * @param options.uniqueViolationOnUpdate Whether an update's write loses a race for the code it takes.
+ * @param options.updateError What an update's write fails with instead, when a case is about another failure.
  */
 function planFixture(
 	options: {
 		plans?: Row[];
 		subscriptions?: Row[];
-		catalog?: { subscribable?: Record<string, boolean>; defaultVariant?: Record<string, string | null> } | false;
+		catalog?:
+			| {
+					subscribable?: Record<string, boolean>;
+					defaultVariant?: Record<string, string | null>;
+					foreign?: string[];
+			  }
+			| false;
 		uniqueViolationOnSave?: boolean;
+		uniqueViolationOnUpdate?: boolean;
+		updateError?: () => Error;
 	} = {}
 ) {
 	const tables: ITables = {
@@ -333,6 +352,9 @@ function planFixture(
 		options.catalog === false
 			? undefined
 			: {
+					// The catalogue holds every product and variant but those the fixture names as another organization's.
+					variantExists: async (variantId: string) => !configured?.foreign?.includes(variantId),
+					productExists: async (productId: string) => !configured?.foreign?.includes(productId),
 					isVariantSubscribable: async (variantId: string) => configured?.subscribable?.[variantId] ?? true,
 					defaultVariantOf: async (productId: string) => {
 						// A product the fixture states nothing about has a default variant; a product it states
@@ -342,10 +364,47 @@ function planFixture(
 						return stated && productId in stated ? stated[productId] : VARIANT;
 					}
 			  };
+	const subscriptionRepository = repository(tables, 'subscription');
+	/**
+	 * Every statement run in the update's transaction, in order: the plan row's lock, the plan read again under it,
+	 * then the live counts.
+	 */
+	const statements: string[] = [];
+	const transactional = {
+		connection: { options: { type: 'postgres' } },
+		query: async (sql: string) => {
+			statements.push(sql);
+			return [];
+		},
+		findOne: async (_entity: unknown, findOptions: any) => {
+			statements.push('read the plan');
+			return planRepository.findOne(findOptions);
+		},
+		count: async (_entity: unknown, findOptions: any) => {
+			statements.push('count live subscriptions');
+			return subscriptionRepository.count(findOptions);
+		},
+		update: async (_entity: unknown, criteria: any, partial: any) => {
+			if (options.uniqueViolationOnUpdate) {
+				const error = new Error('duplicate key value violates unique constraint "UQ_subscription_plan_org_code"');
+
+				(error as Row).code = '23505';
+
+				throw error;
+			}
+
+			if (options.updateError) {
+				throw options.updateError();
+			}
+
+			return patchRecorder.update(criteria, partial);
+		}
+	};
+	Object.assign(patchRecorder, { manager: { transaction: async (run: (manager: any) => Promise<any>) => run(transactional) } });
 	const service = new SubscriptionPlanService(
 		patchRecorder as never,
 		{} as never,
-		repository(tables, 'subscription') as never,
+		subscriptionRepository as never,
 		catalog as never
 	);
 
@@ -353,6 +412,7 @@ function planFixture(
 		service,
 		tables,
 		patches,
+		statements,
 		plan: (id: string) => tables.subscription_plan.find((row) => row.id === id)
 	};
 }
@@ -771,6 +831,54 @@ describe('SubscriptionPlanService — the cadence and the sellability the catalo
 		await expect(entitlement.service.assertSubscribable('plan-1')).resolves.toMatchObject({ id: 'plan-1' });
 	});
 
+	it("refuses to create or move a plan onto a product or variant outside the caller's catalogue", async () => {
+		// CodeRabbit on #11558: the target is two scalar columns, so the foreign-graph check (SEC-D-03) never read them.
+		const fixture = planFixture({
+			plans: [planRow('plan-1', { variantId: VARIANT })],
+			catalog: { foreign: ['foreign-variant', 'foreign-product'] }
+		});
+
+		await expect(
+			fixture.service.create({
+				name: 'Foreign',
+				code: 'FOREIGN',
+				currency: 'USD',
+				variantId: 'foreign-variant'
+			} as never)
+		).rejects.toThrow(/SUBSCRIPTION_PLAN_TARGET_NOT_FOUND: variant foreign-variant/);
+		await expect(
+			fixture.service.create({
+				name: 'Foreign',
+				code: 'FOREIGN',
+				currency: 'USD',
+				productId: 'foreign-product'
+			} as never)
+		).rejects.toThrow(/SUBSCRIPTION_PLAN_TARGET_NOT_FOUND: product foreign-product/);
+		await expect(fixture.service.updatePlan('plan-1', { variantId: 'foreign-variant' } as never)).rejects.toThrow(
+			/SUBSCRIPTION_PLAN_TARGET_NOT_FOUND/
+		);
+		expect(fixture.plan('plan-1')?.variantId).toBe(VARIANT);
+		expect(fixture.tables.subscription_plan).toHaveLength(1);
+	});
+
+	it('reads only a target the update moves, so a plan keeps the one it has', async () => {
+		// A plan stored before the check (with a target the catalogue no longer finds) can still be corrected.
+		const fixture = planFixture({
+			plans: [planRow('plan-1', { variantId: 'foreign-variant' })],
+			catalog: { foreign: ['foreign-variant'] }
+		});
+
+		await expect(fixture.service.updatePlan('plan-1', { name: 'Renamed' } as never)).resolves.toMatchObject({
+			name: 'Renamed'
+		});
+		await expect(
+			fixture.service.updatePlan('plan-1', { variantId: 'foreign-variant' } as never)
+		).resolves.toMatchObject({ variantId: 'foreign-variant' });
+		await expect(fixture.service.updatePlan('plan-1', { variantId: VARIANT } as never)).resolves.toMatchObject({
+			variantId: VARIANT
+		});
+	});
+
 	it('resolves the variant a plan delivers, and answers nothing for an entitlement', async () => {
 		const fixture = planFixture({
 			plans: [
@@ -827,6 +935,24 @@ describe('SubscriptionPlanService — the reads a listing and a guard are built 
 		expect(await fixture.service.hasLiveSubscriptions('plan-3')).toBe(false);
 	});
 
+	it('counts a live subscription a change is moving onto the plan', async () => {
+		// A mid-cycle change reserves the plan it moves to before it settles, and the subscription is on the plan only once
+		// the change is applied: until then the reservation is what holds the plan.
+		const fixture = planFixture({
+			subscriptions: [
+				subscriptionRow('moving', { planId: 'plan-2', reservedPlanId: 'plan-1', status: SubscriptionStatus.PAUSED }),
+				subscriptionRow('ended', { planId: 'plan-2', reservedPlanId: 'plan-4', status: SubscriptionStatus.CANCELED }),
+				subscriptionRow('theirs', { planId: 'plan-2', reservedPlanId: 'plan-3', organizationId: OTHER_ORG })
+			]
+		});
+
+		expect(await fixture.service.hasLiveSubscriptions('plan-1')).toBe(true);
+		// A subscription that ended bills nothing on the plan, so a reservation it was left with does not hold it.
+		expect(await fixture.service.hasLiveSubscriptions('plan-4')).toBe(false);
+		// Another organization's reservation is not this one's.
+		expect(await fixture.service.hasLiveSubscriptions('plan-3')).toBe(false);
+	});
+
 	it('lists the sellable plans of the organization, by name', async () => {
 		const fixture = planFixture({
 			plans: [
@@ -847,5 +973,217 @@ describe('SubscriptionPlanService — the reads a listing and a guard are built 
 		expect(await fixture.service.findByCode('NOPE')).toBeNull();
 		await expect(fixture.service.findOneScoped('plan-1')).resolves.toMatchObject({ id: 'plan-1' });
 		await expect(fixture.service.findOneScoped('theirs')).rejects.toBeInstanceOf(NotFoundException);
+	});
+});
+
+describe('SubscriptionPlanService.updatePlan under the plan row lock', () => {
+	beforeEach(() => {
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORG);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('locks the plan row before it counts live subscriptions, and writes in that transaction', async () => {
+		const fixture = planFixture();
+
+		await fixture.service.updatePlan('plan-1', { isActive: false });
+
+		expect(fixture.statements[0]).toMatch(/FROM "subscription_plan" WHERE "id" = \$1 FOR UPDATE$/);
+		expect(fixture.statements.slice(1)).toEqual(['read the plan', 'count live subscriptions']);
+		expect(fixture.plan('plan-1').isActive).toBe(false);
+	});
+
+	it('refuses to deactivate or re-price a plan a change being settled has reserved', async () => {
+		// The subscription is still on another plan: a change moving it here has charged or credited for this plan and
+		// not yet applied the move. Counting only `planId`, the update found no subscriber and went through.
+		const fixture = planFixture({
+			subscriptions: [subscriptionRow('moving', { planId: 'plan-2', reservedPlanId: 'plan-1' })]
+		});
+
+		await expect(fixture.service.updatePlan('plan-1', { isActive: false })).rejects.toThrow(
+			'SUBSCRIPTION_PLAN_HAS_SUBSCRIBERS'
+		);
+		await expect(fixture.service.updatePlan('plan-1', { currency: 'EUR' } as any)).rejects.toThrow(
+			'SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE'
+		);
+		expect(fixture.plan('plan-1')).toMatchObject({ isActive: true, currency: 'USD' });
+		expect(fixture.patches).toEqual([]);
+
+		// Once the change is applied (or released), the reservation is gone and the plan is free again.
+		fixture.tables.subscription[0].reservedPlanId = null;
+
+		await fixture.service.updatePlan('plan-1', { isActive: false });
+
+		expect(fixture.plan('plan-1').isActive).toBe(false);
+	});
+
+	it('writes over the plan as an update that committed while it waited for the lock left it', async () => {
+		const fixture = planFixture();
+		const transaction = (fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction;
+		// Another update moves the plan to EUR and commits before this one is granted the lock.
+		(fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction = async (run: any) =>
+			transaction(async (manager: any) =>
+				run({
+					...manager,
+					query: async (sql: string) => {
+						fixture.statements.push(sql);
+						fixture.tables.subscription_plan[0] = { ...fixture.tables.subscription_plan[0], currency: 'EUR' };
+						return [];
+					}
+				})
+			);
+
+		const updated = await fixture.service.updatePlan('plan-1', { name: 'Renamed' });
+
+		expect(updated).toMatchObject({ name: 'Renamed', currency: 'EUR' });
+		expect(fixture.patches[0]).toMatchObject({ name: 'Renamed', currency: 'EUR' });
+	});
+
+	it('refuses to write back a restated target once an update that committed meanwhile moved it', async () => {
+		// Copilot, Greptile and CodeRabbit on #11571: a restated target is not read from the catalogue (it was the plan's
+		// own), so writing it over a target another update set while this one waited would put an unchecked one back.
+		const fixture = planFixture({
+			plans: [planRow('plan-1', { variantId: 'foreign-variant' })],
+			catalog: { foreign: ['foreign-variant'] }
+		});
+		const transaction = (fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction;
+		// Another update repairs the target onto the caller's own variant before this one is granted the lock.
+		(fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction = async (run: any) =>
+			transaction(async (manager: any) =>
+				run({
+					...manager,
+					query: async (sql: string) => {
+						fixture.statements.push(sql);
+						fixture.tables.subscription_plan[0] = {
+							...fixture.tables.subscription_plan[0],
+							variantId: VARIANT
+						};
+						return [];
+					}
+				})
+			);
+
+		await expect(
+			fixture.service.updatePlan('plan-1', { name: 'Renamed', variantId: 'foreign-variant' } as never)
+		).rejects.toThrow(/SUBSCRIPTION_PLAN_TARGET_CHANGED/);
+		expect(fixture.plan('plan-1')).toMatchObject({ variantId: VARIANT });
+		expect(fixture.patches).toEqual([]);
+	});
+
+	it('answers a code another plan took after the pre-check with 409 SUBSCRIPTION_PLAN_CODE_TAKEN', async () => {
+		const fixture = planFixture({ uniqueViolationOnUpdate: true });
+
+		await expect(fixture.service.updatePlan('plan-1', { code: 'TAKEN' })).rejects.toThrow(
+			new ConflictException('SUBSCRIPTION_PLAN_CODE_TAKEN: this organization already has a plan coded "TAKEN".')
+		);
+		expect(fixture.plan('plan-1').code).toBe('PLAN-1');
+	});
+
+	it('counts a subscription that committed while it waited for the lock, and refuses the deactivation', async () => {
+		const fixture = planFixture({ subscriptions: [] });
+		const query = fixture.statements;
+		// A subscription created on the plan commits before the lock is granted.
+		const transaction = (fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction;
+		(fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction = async (run: any) =>
+			transaction(async (manager: any) =>
+				run({
+					...manager,
+					query: async (sql: string) => {
+						query.push(sql);
+						fixture.tables.subscription.push(subscriptionRow('committed-meanwhile'));
+						return [];
+					}
+				})
+			);
+
+		await expect(fixture.service.updatePlan('plan-1', { isActive: false })).rejects.toThrow(
+			'SUBSCRIPTION_PLAN_HAS_SUBSCRIBERS'
+		);
+		expect(fixture.plan('plan-1').isActive).not.toBe(false);
+	});
+
+	it("refuses a plan outside the caller's organization boundary before it takes the lock", async () => {
+		const fixture = planFixture();
+		const boundaryRead = jest
+			.spyOn(fixture.service as any, 'findOneByIdString')
+			.mockRejectedValue(new NotFoundException('The requested record was not found'));
+
+		await expect(fixture.service.updatePlan('plan-1', { isActive: false })).rejects.toBeInstanceOf(NotFoundException);
+		expect(boundaryRead).toHaveBeenCalledWith('plan-1');
+		expect(fixture.statements).toEqual([]);
+		expect(fixture.patches).toEqual([]);
+	});
+
+	it('checks a stated currency against the plan as it is once the lock is granted, not as it was read', async () => {
+		const fixture = planFixture({ subscriptions: [] });
+		const transaction = (fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction;
+		// While this update waits for the lock, another moves the plan to EUR and a EUR subscription commits on it.
+		(fixture.service as any).typeOrmSubscriptionPlanRepository.manager.transaction = async (run: any) =>
+			transaction(async (manager: any) =>
+				run({
+					...manager,
+					query: async (sql: string) => {
+						fixture.statements.push(sql);
+						fixture.tables.subscription_plan[0] = { ...fixture.tables.subscription_plan[0], currency: 'EUR' };
+						fixture.tables.subscription.push(subscriptionRow('eur-subscription'));
+						return [];
+					}
+				})
+			);
+
+		// Read before the lock, the plan was USD, so stating USD looked like no change at all.
+		await expect(fixture.service.updatePlan('plan-1', { currency: 'USD' } as any)).rejects.toThrow(
+			'SUBSCRIPTION_PLAN_CURRENCY_IMMUTABLE'
+		);
+		expect(fixture.plan('plan-1').currency).toBe('EUR');
+		expect(fixture.patches).toEqual([]);
+	});
+
+	it('answers any other failure of the write with a 400 that carries no database internals', async () => {
+		const fixture = planFixture({
+			updateError: () =>
+				Object.assign(new Error('null value in column "name" of relation "subscription_plan" violates not-null constraint'), {
+					code: '23502',
+					query: 'UPDATE "subscription_plan" SET "name" = $1 WHERE "id" = $2',
+					parameters: [null, 'plan-1']
+				})
+		});
+
+		const refused = await fixture.service.updatePlan('plan-1', { name: 'Renamed' }).catch((error: unknown) => error);
+
+		expect(refused).toBeInstanceOf(BadRequestException);
+		expect(JSON.stringify((refused as BadRequestException).getResponse())).not.toMatch(/subscription_plan|UPDATE|plan-1/);
+	});
+
+	it('answers 404 for a plan outside the boundary before the patch is validated against that plan', async () => {
+		// The plan has a variant, so a patch naming a product would be refused as ambiguous: that answer would tell
+		// the caller the plan exists and has a variant.
+		const fixture = planFixture({ plans: [planRow('plan-1', { variantId: VARIANT })] });
+
+		jest.spyOn(fixture.service as any, 'findOneByIdString').mockRejectedValue(
+			new NotFoundException('The requested record was not found')
+		);
+
+		await expect(fixture.service.updatePlan('plan-1', { productId: 'product-1' } as any)).rejects.toBeInstanceOf(
+			NotFoundException
+		);
+	});
+
+	it("checks what the patch points at against the signed-in caller's tenant, and writes nothing it refuses", async () => {
+		const fixture = planFixture();
+
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-1', tenantId: TENANT } as any);
+		jest.spyOn(fixture.service as any, 'findOneByIdString').mockResolvedValue(fixture.plan('plan-1'));
+		const graphCheck = jest
+			.spyOn(fixture.service as any, 'assertNestedGraphNotForeign')
+			.mockRejectedValue(new ForbiddenException('foreign variant'));
+
+		await expect(fixture.service.updatePlan('plan-1', { variantId: 'their-variant' } as any)).rejects.toBeInstanceOf(
+			ForbiddenException
+		);
+		expect(graphCheck).toHaveBeenCalledWith([expect.objectContaining({ variantId: 'their-variant' })], TENANT);
+		expect(fixture.statements).toEqual([]);
+		expect(fixture.patches).toEqual([]);
 	});
 });

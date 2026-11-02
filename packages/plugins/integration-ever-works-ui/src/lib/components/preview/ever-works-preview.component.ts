@@ -59,6 +59,9 @@ import { errorText } from '../shared/ever-works-ui.utils';
 							<td>
 								@if (row.gauzy) {
 									{{ 'EVER_WORKS.PREVIEW.LINKED_OF' | translate: { linked: row.gauzy.linked, total: row.gauzy.total } }}
+									@if (row.gauzy.truncated) {
+										<small data-test="gauzy-truncated">({{ 'EVER_WORKS.PREVIEW.TRUNCATED' | translate }})</small>
+									}
 								} @else {
 									—
 								}

@@ -22,6 +22,8 @@ import {
 	IEmployee,
 	IOrganizationContact,
 	IPagination,
+	ORGANIZATION_CONTACT_CREATE_PERMISSIONS,
+	ORGANIZATION_CONTACT_DELETE_PERMISSIONS,
 	PermissionsEnum
 } from '@gauzy/contracts';
 import { CrudController, BaseQueryDTO } from './../core/crud';
@@ -33,6 +35,7 @@ import {
 } from './commands';
 import { OrganizationContact } from './organization-contact.entity';
 import { OrganizationContactService } from './organization-contact.service';
+import { organizationContactCreateOptions } from './organization-contact.permissions';
 import { PermissionGuard, TenantPermissionGuard } from './../shared/guards';
 import { Permissions } from './../shared/decorators';
 import { CountQueryDTO } from './../shared/dto';
@@ -201,15 +204,20 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	/**
 	 * CREATE organization contact
 	 *
+	 * `ORG_CONTACT_ADD` or `ORG_CONTACT_EDIT`. A caller without `ORG_CONTACT_EDIT` creates only: the body cannot
+	 * name or reach a record that already exists (see `toCreateOnlyContactInput`).
+	 *
 	 * @param entity
 	 * @returns
 	 */
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Permissions(...ORGANIZATION_CONTACT_CREATE_PERMISSIONS)
 	@Post('/')
 	@UseValidationPipe()
 	async create(@Body() entity: CreateOrganizationContactDTO): Promise<IOrganizationContact> {
-		return await this.commandBus.execute(new OrganizationContactCreateCommand(entity));
+		return await this.commandBus.execute(
+			new OrganizationContactCreateCommand(entity, organizationContactCreateOptions())
+		);
 	}
 
 	/**
@@ -234,9 +242,8 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	/**
 	 * DELETE organization contact by id
 	 *
-	 * Overrides the inherited `CrudController.delete()` route only to attach the permission gate.
-	 * Same permission as create/update; the contacts page shows delete only to ORG_CONTACT_EDIT
-	 * (GHSA-v79w-54p2-wmh5).
+	 * Overrides the inherited `CrudController.delete()` route only to attach the permission gate
+	 * (GHSA-v79w-54p2-wmh5): `ORG_CONTACT_DELETE`, or `ORG_CONTACT_EDIT`, which has always allowed it.
 	 *
 	 * @param id
 	 * @returns
@@ -248,7 +255,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Permissions(...ORGANIZATION_CONTACT_DELETE_PERMISSIONS)
 	@Delete(':id')
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<any> {
 		return super.delete(id);
@@ -257,9 +264,8 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	/**
 	 * SOFT DELETE organization contact by id
 	 *
-	 * Overrides the inherited `CrudController.softRemove()` route only to attach the permission gate.
-	 * Same permission as create/update; the contacts page shows delete only to ORG_CONTACT_EDIT
-	 * (GHSA-v79w-54p2-wmh5).
+	 * Overrides the inherited `CrudController.softRemove()` route only to attach the permission gate
+	 * (GHSA-v79w-54p2-wmh5): the same as the delete, `ORG_CONTACT_DELETE` or `ORG_CONTACT_EDIT`.
 	 *
 	 * @param id
 	 * @returns
@@ -271,7 +277,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Permissions(...ORGANIZATION_CONTACT_DELETE_PERMISSIONS)
 	@Delete(':id/soft')
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRemove(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationContact> {
@@ -281,9 +287,9 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	/**
 	 * RESTORE a soft-deleted organization contact by id
 	 *
-	 * Overrides the inherited `CrudController.softRecover()` route only to attach the permission gate.
-	 * Same permission as create/update; the contacts page shows delete only to ORG_CONTACT_EDIT
-	 * (GHSA-v79w-54p2-wmh5).
+	 * Overrides the inherited `CrudController.softRecover()` route only to attach the permission gate
+	 * (GHSA-v79w-54p2-wmh5): `ORG_CONTACT_DELETE` or `ORG_CONTACT_EDIT`, the pair that withdraws a contact. A restore
+	 * undoes a withdrawal, so whoever may withdraw a contact may bring it back (ever-co/ever-gauzy#5468).
 	 *
 	 * @param id
 	 * @returns
@@ -295,7 +301,7 @@ export class OrganizationContactController extends CrudController<OrganizationCo
 	})
 	@HttpCode(HttpStatus.ACCEPTED)
 	@UseGuards(PermissionGuard)
-	@Permissions(PermissionsEnum.ORG_CONTACT_EDIT)
+	@Permissions(...ORGANIZATION_CONTACT_DELETE_PERMISSIONS)
 	@Put(':id/recover')
 	@UsePipes(new AbstractValidationPipe({ whitelist: true }, { query: TenantOrganizationBaseDTO }))
 	async softRecover(@Param('id', UUIDValidationPipe) id: ID, ...options: any[]): Promise<OrganizationContact> {

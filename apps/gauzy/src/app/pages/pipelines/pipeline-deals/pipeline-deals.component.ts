@@ -1,13 +1,13 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { ActivatedRoute, Data } from '@angular/router';
+import { ActivatedRoute, Data, ParamMap, Router } from '@angular/router';
 import { LocalDataSource, Cell } from 'angular2-smart-table';
 import { TranslateService } from '@ngx-translate/core';
 import { NbDialogService } from '@nebular/theme';
 import { IDeal, IPipeline, ComponentLayoutStyleEnum, IOrganization, ID, IPagination } from '@gauzy/contracts';
 import { ComponentEnum, distinctUntilChange } from '@gauzy/ui-core/common';
 import { DealsService, ErrorHandlingService, PipelinesService, Store, ToastrService } from '@gauzy/ui-core/core';
-import { debounceTime, filter, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, tap } from 'rxjs/operators';
 import { catchError, combineLatest, firstValueFrom, map, Observable, of, Subject, switchMap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
@@ -18,6 +18,11 @@ import {
 } from '@gauzy/ui-core/shared';
 import { PipelineDealExcerptComponent } from '../table-components/pipeline-deal-excerpt/pipeline-deal-excerpt.component';
 import { PipelineDealProbabilityComponent } from '../table-components/pipeline-deal-probability/pipeline-deal-probability.component';
+import { IDealStageMove } from './pipeline-deals-board/pipeline-deals-board.component';
+import { DealBoardMoves } from './pipeline-deals-board/pipeline-deals-board.utils';
+
+/** The `view` query parameter that opens the deals as a board, so the board can be linked to and survives a reload. */
+export const DEALS_BOARD_VIEW = 'board';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -43,6 +48,20 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 	public pipeline: IPipeline;
 	public pipeline$: Observable<IPipeline>;
 	public deals$: Observable<IDeal[]>;
+	/** The deals shown as a board, one column per stage, in place of the table or the cards grid (opt-in). */
+	public isBoardView = false;
+	/** Deals moved on the board: once their saves settle, the table and grid read the deals again. */
+	private readonly _boardMoves = new DealBoardMoves();
+	/** Emits each time a read of the deals ends, whether it succeeded or failed. */
+	private readonly _dealsRead$ = new Subject<void>();
+
+	/**
+	 * The board was left while its moves were saving: it shows again once they settle and the deals have been
+	 * read again, so it is never built from deals read before the moves (see {@link DealBoardMoves}).
+	 */
+	public get isBoardHeld(): boolean {
+		return this._boardMoves.held;
+	}
 
 	/**
 	 * Checks if the current layout style is grid.
@@ -67,7 +86,8 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 		private readonly _toastrService: ToastrService,
 		private readonly _store: Store,
 		private readonly _activatedRoute: ActivatedRoute,
-		private readonly _errorHandlingService: ErrorHandlingService
+		private readonly _errorHandlingService: ErrorHandlingService,
+		private readonly _router: Router
 	) {
 		super(translateService);
 		this.setView();
@@ -108,7 +128,8 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 						organizationId,
 						tenantId
 					},
-					['stage', 'createdByUser']
+					// `client`: the board's cards name the deal's client.
+					['stage', 'createdByUser', 'client']
 				);
 			}),
 			// Map the contacts to the clients property
@@ -124,6 +145,7 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 			}),
 			tap(() => {
 				this.loading = false;
+				this._dealsRead$.next();
 			}),
 			untilDestroyed(this)
 		);
@@ -149,6 +171,62 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 				untilDestroyed(this)
 			)
 			.subscribe();
+
+		// The board view follows the `view` query parameter, so it can be linked to and survives a reload.
+		this._activatedRoute.queryParamMap
+			.pipe(
+				map((params: ParamMap) => params.get('view') === DEALS_BOARD_VIEW),
+				distinctUntilChanged(),
+				tap((isBoardView: boolean) => this._applyBoardView(isBoardView)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+	}
+
+	/**
+	 * Opens the deals as a board, or goes back to the table or cards grid the layout selector chose.
+	 */
+	toggleBoardView(): void {
+		this._router.navigate([], {
+			relativeTo: this._activatedRoute,
+			queryParams: { view: this.isBoardView ? null : DEALS_BOARD_VIEW },
+			queryParamsHandling: 'merge'
+		});
+	}
+
+	/**
+	 * A deal is being saved at another stage from the board.
+	 *
+	 * @param move The move, with its save.
+	 */
+	onBoardDealMoving(move: IDealStageMove): void {
+		this._boardMoves.track(move.saved);
+	}
+
+	/**
+	 * Shows or leaves the board.
+	 *
+	 * @param isBoardView Whether the deals show as a board.
+	 */
+	private _applyBoardView(isBoardView: boolean): void {
+		this.isBoardView = isBoardView;
+		// A row picked in the table has no card standing for it on the board.
+		this.clearItem();
+		// Back from a board where deals moved: once the saves still under way settle, the table and grid read
+		// the deals again (leaving the board removed it, so it can no longer report them).
+		if (!isBoardView) {
+			void this._boardMoves.settle(() => this._readDealsAgain()).finally(() => this._cdr.markForCheck());
+		}
+	}
+
+	/**
+	 * Reads the deals again, resolving once the read ends. The read starts at once and marks the page as
+	 * loading; a list that stopped reading after an earlier failure has nothing to wait for.
+	 */
+	private _readDealsAgain(): Promise<void> {
+		const read = firstValueFrom(this._dealsRead$);
+		this.subject$.next(true);
+		return this.loading ? read : Promise.resolve();
 	}
 
 	ngAfterViewInit() {
@@ -172,6 +250,11 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 		// Set the smart table source
 		this.smartTableSource = new LocalDataSource();
 		await this.smartTableSource.load(deals);
+		// A new source starts unfiltered: keep the list narrowed to the stage the stage filter still shows
+		// (after the deals are read again, for example once the board's moves have saved).
+		if (this.stageFormControl.value) {
+			this._applyStageFilter(this.stageFormControl.value);
+		}
 
 		// Get pagination details
 		const { activePage, itemsPerPage } = this.getPagination();
@@ -296,20 +379,7 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 	 * Filter deals in the smart table data source by stageId.
 	 */
 	async filterDealsByStage(stageId: ID): Promise<void> {
-		// Set header selectors filters configuration
-		this.smartTableSource.setFilter(
-			[
-				...(stageId
-					? [
-							{
-								field: 'stageId',
-								search: stageId
-							}
-					  ]
-					: [])
-			],
-			true
-		);
+		this._applyStageFilter(stageId);
 
 		if (this.isGridLayout) {
 			try {
@@ -320,6 +390,13 @@ export class PipelineDealsComponent extends PaginationFilterBaseComponent implem
 				this._errorHandlingService.handleError(error);
 			}
 		}
+	}
+
+	/**
+	 * Narrows the table's source to the deals at `stageId`, or shows every stage again.
+	 */
+	private _applyStageFilter(stageId: ID | null): void {
+		this.smartTableSource.setFilter(stageId ? [{ field: 'stageId', search: stageId }] : [], true);
 	}
 
 	/**

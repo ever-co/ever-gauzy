@@ -206,7 +206,9 @@ export async function deleteStoredFiles(
 	try {
 		for (const { provider, key } of unique(files)) {
 			try {
-				await new FileStorage().getProvider(provider || undefined).deleteFile(key);
+				// `deleteFileOrFail`: `deleteFile` resolves without deleting when a provider has no client or a key
+				// resolves outside the local root, and such a file would be reported as removed while it stays stored.
+				await new FileStorage().getProvider(provider || undefined).deleteFileOrFail(key);
 			} catch {
 				failed++;
 			}
@@ -418,4 +420,62 @@ function unique(files: StoredFile[]): StoredFile[] {
 		seen.add(id);
 		return true;
 	});
+}
+
+/**
+ * The tables of the rows a workspace keeps addressed to a person by their email: invitations (`invite`) and the
+ * history of the emails sent (`email_sent`, the `EmailHistory` entity).
+ */
+export const ADDRESSED_ROW_TABLES: ReadonlyArray<string> = ['invite', 'email_sent'];
+
+/**
+ * Deletes the rows of a workspace that are addressed to the deleted person: the invitations sent to their address
+ * and the history of the emails sent to it ({@link ADDRESSED_ROW_TABLES}). Deleting the account removed the user, but
+ * these rows kept the address in the workspace the person left (a deleted whole workspace takes them with it).
+ *
+ * Matched on the address case-insensitively, in the account's own workspace only: another workspace that invited or
+ * emailed the same address keeps its own rows. A table or column the deployment's schema lacks is skipped.
+ *
+ * @param manager The transaction's entity manager.
+ * @param tenantId The account's workspace.
+ * @param email The account's address.
+ */
+export async function deleteRowsAddressedTo(manager: EntityManager, tenantId: ID, email: string): Promise<void> {
+	const address = (email || '').trim().toLowerCase();
+	if (!tenantId || !address) {
+		return;
+	}
+	const driver = manager.connection.driver;
+	const p = (n: number) => sqlPlaceholder(manager, n);
+	// SQL LOWER folds non-ASCII letters (`É@…`) on some databases only: not on SQLite, nor on Postgres under the C
+	// collation. An address with such letters is therefore matched here, the way the address itself was lowercased.
+	const matchInCode = /[^\x00-\x7f]/.test(address);
+	for (const table of ADDRESSED_ROW_TABLES) {
+		const target = { table, columns: ['id', 'tenantId', 'email'] };
+		if (!matchInCode) {
+			await queryUnlessSchemaLacks(
+				manager,
+				`DELETE FROM ${driver.escape(table)} WHERE ${driver.escape('tenantId')} = ${p(1)} AND LOWER(TRIM(${driver.escape('email')})) = ${p(2)}`,
+				[tenantId, address],
+				target
+			);
+			continue;
+		}
+		const rows: Array<{ id: ID; email: string | null }> | null = await queryUnlessSchemaLacks(
+			manager,
+			`SELECT ${driver.escape('id')}, ${driver.escape('email')} FROM ${driver.escape(table)} WHERE ${driver.escape('tenantId')} = ${p(1)}`,
+			[tenantId],
+			target
+		);
+		const ids = (rows ?? [])
+			.filter((row) => (row.email || '').trim().toLowerCase() === address)
+			.map((row) => row.id);
+		for (let offset = 0; offset < ids.length; offset += 500) {
+			const chunk = ids.slice(offset, offset + 500);
+			await manager.query(
+				`DELETE FROM ${driver.escape(table)} WHERE ${driver.escape('id')} IN (${chunk.map((_, i) => p(i + 1)).join(', ')})`,
+				chunk
+			);
+		}
+	}
 }

@@ -304,3 +304,62 @@ describe('RequestContext.runWithRequest', () => {
 		expect(RequestContext.runWithRequest({ headers: {} } as any, () => RequestContext.currentTenantId())).toBeNull();
 	});
 });
+
+/**
+ * `runIsolated` keeps what a piece of work sets in the request store to that work: a GraphQL request resolves its
+ * fields concurrently in one store, so a value one field sets while it awaits must not reach the others.
+ */
+describe('RequestContext.runIsolated', () => {
+	const originalClsService = RequestContext['clsService'];
+	let cls: ClsService;
+	const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 5));
+
+	beforeEach(() => {
+		cls = new ClsService(new AsyncLocalStorage());
+		RequestContext.setClsService(cls);
+	});
+
+	afterEach(() => {
+		RequestContext.setClsService(originalClsService);
+	});
+
+	it('hides what the work sets from work running beside it, and from the code after it', async () => {
+		await cls.run(async () => {
+			cls.set('bypass', 0);
+			const seenBeside: unknown[] = [];
+
+			const isolated = RequestContext.runIsolated(async () => {
+				cls.set('bypass', 1);
+				await tick();
+				return cls.get('bypass');
+			});
+			const beside = (async () => {
+				seenBeside.push(cls.get('bypass'));
+				await tick();
+				seenBeside.push(cls.get('bypass'));
+			})();
+
+			await expect(isolated).resolves.toBe(1);
+			await beside;
+			expect(seenBeside).toEqual([0, 0]);
+			expect(cls.get('bypass')).toBe(0);
+		});
+	});
+
+	it('starts the work with the request’s own values', async () => {
+		await cls.run(async () => {
+			cls.set(RequestContext.name, { id: 'request-context' });
+
+			await expect(
+				RequestContext.runIsolated(async () => (cls.get(RequestContext.name) as { id: string }).id)
+			).resolves.toBe('request-context');
+		});
+	});
+
+	it('runs the work as it is outside any store, and without a CLS service', () => {
+		expect(RequestContext.runIsolated(() => 'outside a store')).toBe('outside a store');
+
+		RequestContext.setClsService(undefined as any);
+		expect(RequestContext.runIsolated(() => 'no service')).toBe('no service');
+	});
+});

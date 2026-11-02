@@ -2,7 +2,7 @@ import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/cor
 import { HttpClient } from '@angular/common/http';
 import { environment } from '@gauzy/ui-config';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, startWith } from 'rxjs/operators';
 import { combineLatest, Observable, of } from 'rxjs';
 import { IAppConfig } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
@@ -27,16 +27,18 @@ export interface ISocialLink {
 }
 
 /**
- * A sign-in method contributed by an optional sign-in plugin (Ever ID, Keycloak), shown as a labelled
- * button above the social icons.
+ * A sign-in method contributed by an optional sign-in plugin (Ever ID, Keycloak, OpenID Connect), shown
+ * as a labelled button above the social icons.
  */
 export interface ISignInProvider {
 	/** Stable id, used in tests and as the track key. */
-	id: 'ever-id' | 'keycloak';
+	id: 'ever-id' | 'keycloak' | 'oidc';
 	/** The API route that starts the sign-in. */
 	url: string;
 	/** Translation key of the button label. */
 	titleKey: string;
+	/** Parameters of the label (the OpenID Connect button carries the provider's display name). */
+	titleParams?: { name: string };
 	/** The most prominent additional sign-in method gets the primary style. */
 	prominent: boolean;
 }
@@ -51,6 +53,26 @@ export interface ISignInProvider {
 export function configuredSignInLink(link: string | undefined): string {
 	const value = (link ?? '').trim();
 	return value && !value.startsWith('DOCKER_') ? value : '';
+}
+
+/** Longest provider name shown on a sign-in button (the API applies the same limit to `OIDC_DISPLAY_NAME`). */
+export const SIGN_IN_DISPLAY_NAME_MAX_LENGTH = 40;
+
+/** The provider name on a sign-in button when the API reports none: "Sign in with SSO". */
+export const DEFAULT_SIGN_IN_DISPLAY_NAME = 'SSO';
+
+/**
+ * Returns the provider name to show on a sign-in button: the one the API reports when it is a short
+ * label, `SSO` otherwise.
+ *
+ * @param value - The `displayName` of the plugin's config answer.
+ * @returns The name to show.
+ */
+export function signInDisplayName(value: unknown): string {
+	const name = typeof value === 'string' ? value.trim() : '';
+	// eslint-disable-next-line no-control-regex
+	const usable = !!name && name.length <= SIGN_IN_DISPLAY_NAME_MAX_LENGTH && !/[\u0000-\u001f\u007f]/.test(name);
+	return usable ? name : DEFAULT_SIGN_IN_DISPLAY_NAME;
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -86,7 +108,8 @@ export class SocialLinksComponent implements OnInit {
 
 		this.signInProviders$ = combineLatest([
 			this.signInProvider('ever-id', environment.ZITADEL_AUTH_LINK, '/auth/zitadel/config', 'LOGIN_PAGE.SIGN_IN_WITH_EVER_ID', true),
-			this.signInProvider('keycloak', environment.KEYCLOAK_AUTH_LINK, '/auth/keycloak/config', 'LOGIN_PAGE.SIGN_IN_WITH_KEYCLOAK', false)
+			this.signInProvider('keycloak', environment.KEYCLOAK_AUTH_LINK, '/auth/keycloak/config', 'LOGIN_PAGE.SIGN_IN_WITH_KEYCLOAK', false),
+			this.signInProvider('oidc', environment.OIDC_AUTH_LINK, '/auth/oidc/config', 'LOGIN_PAGE.SIGN_IN_WITH_SSO', false, true)
 		]).pipe(
 			map((providers) => providers.filter((provider): provider is ISignInProvider => !!provider)),
 			untilDestroyed(this)
@@ -102,6 +125,7 @@ export class SocialLinksComponent implements OnInit {
 	 * @param configPath - The plugin's config route, relative to the API prefix.
 	 * @param titleKey - Translation key of the label.
 	 * @param prominent - Whether the button gets the primary style.
+	 * @param namedLabel - Whether the label names the provider, with the `displayName` the API reports.
 	 * @returns The provider, or `null` when it must not be shown.
 	 */
 	private signInProvider(
@@ -109,15 +133,24 @@ export class SocialLinksComponent implements OnInit {
 		link: string | undefined,
 		configPath: string,
 		titleKey: string,
-		prominent: boolean
+		prominent: boolean,
+		namedLabel = false
 	): Observable<ISignInProvider | null> {
 		const url = configuredSignInLink(link);
 		if (!url) {
 			return of(null);
 		}
-		return this._http.get<{ enabled?: boolean }>(`${API_PREFIX}${configPath}`).pipe(
-			map((config) => (config?.enabled === true ? { id, url, titleKey, prominent } : null)),
-			catchError(() => of(null))
+		return this._http.get<{ enabled?: boolean; displayName?: unknown }>(`${API_PREFIX}${configPath}`).pipe(
+			map((config): ISignInProvider | null => {
+				if (config?.enabled !== true) {
+					return null;
+				}
+				const provider: ISignInProvider = { id, url, titleKey, prominent };
+				return namedLabel ? { ...provider, titleParams: { name: signInDisplayName(config.displayName) } } : provider;
+			}),
+			catchError(() => of(null)),
+			// Hidden until its own check answers: a slow check never holds back the other buttons.
+			startWith(null)
 		);
 	}
 

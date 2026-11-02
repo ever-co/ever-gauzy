@@ -60,6 +60,56 @@ export interface IDesktopSecret {
 	}
 }
 
+/**
+ * The screenshot sound chosen on one computer in the desktop apps (#6715): a copy of the file the user picked, kept in
+ * the app's own data folder so that it stays on that computer and keeps playing when the original is moved or deleted.
+ */
+export interface IDesktopScreenshotSound {
+	/** The copy that is played, inside the app's data folder. */
+	path: string;
+	/** The name of the file the user picked, shown in the settings. */
+	name: string;
+}
+
+/** IPC channels (`ipcRenderer.invoke`) of the custom screenshot sound, answered with an {@link IDesktopScreenshotSoundResult}. */
+export enum DesktopScreenshotSoundChannel {
+	/** Asks for a sound file and uses a copy of it from now on. */
+	CHOOSE = 'SELECT_SCREENSHOT_SOUND',
+	/** Goes back to the sound bundled with the app. */
+	RESET = 'RESET_SCREENSHOT_SOUND'
+}
+
+/** Why a picked file was not used as the screenshot sound. */
+export enum DesktopScreenshotSoundError {
+	/** Not one of the supported audio formats. */
+	UNSUPPORTED = 'unsupported',
+	/** Larger than a short notification sound needs to be. */
+	TOO_LARGE = 'too_large',
+	/** It could not be read or copied. */
+	FAILED = 'failed'
+}
+
+export interface IDesktopScreenshotSoundResult {
+	/** The custom sound in use now, `null` for the bundled sound. */
+	sound: IDesktopScreenshotSound | null;
+	/** The file dialog was closed without a choice: nothing changed. */
+	canceled?: boolean;
+	/** The picked file was refused: nothing changed. */
+	error?: DesktopScreenshotSoundError;
+}
+
+/** The sound settings a desktop window reads with {@link DesktopSoundSettingsChannel.GET}, without the rest of the settings. */
+export interface IDesktopSoundSettings {
+	/** Whether a short sound plays when this computer starts or stops tracking (#7141). Off unless switched on. */
+	timerStartStopSound: boolean;
+}
+
+/** IPC channels (`ipcRenderer.invoke`) of the sound settings. */
+export enum DesktopSoundSettingsChannel {
+	/** Answers with the {@link IDesktopSoundSettings}. */
+	GET = 'GET_SOUND_SETTINGS'
+}
+
 export type TLogLevel = 'info' | 'warn' | 'error' | 'all';
 export type TServiceName = 'timer' | 'screenshot' | 'timeslot' | 'all';
 export type TSyncStatus = 'pending' | 'success' | 'failure' | 'all';
@@ -90,6 +140,26 @@ export interface IOSInfo {
 	os: NodeJS.Platform;
 	arch: NodeJS.Architecture;
 	version: string;
+}
+
+/**
+ * IPC channel (`ipcRenderer.invoke`) answered by the main process of Gauzy Server and Gauzy API
+ * Server with this computer's network addresses ({@link IDesktopNetworkAddress}[], best first).
+ */
+export const DESKTOP_NETWORK_ADDRESSES_CHANNEL = 'GET_NETWORK_ADDRESSES';
+
+/**
+ * A network address of the computer a desktop server app runs on, as offered next to the
+ * "Server Hostname / IP Address" setting. Read from the operating system only (no online lookup).
+ */
+export interface IDesktopNetworkAddress {
+	/** The network interface, such as `Wi-Fi`, `Ethernet`, `eth0` or `en0`. */
+	name: string;
+	/** The address, IPv6 without brackets, such as `192.168.1.20` or `fd00::20`. */
+	address: string;
+	family: 'IPv4' | 'IPv6';
+	/** Whether the interface looks like a virtual machine, container or VPN adapter (listed last). */
+	virtual: boolean;
 }
 
 // Combine them into a union

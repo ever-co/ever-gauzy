@@ -8,12 +8,13 @@ import {
 	HttpException,
 	HttpStatus,
 	Patch,
+	Delete,
 	UsePipes,
 	ValidationPipe,
 	Logger,
 	HttpCode
 } from '@nestjs/common';
-import { ListMcpServersDto, ActivepiecesMcpUpdateDto, McpServerProjectQueryDto } from './dto';
+import { ListMcpServersDto, ActivepiecesMcpCreateDto, ActivepiecesMcpUpdateDto, McpServerProjectQueryDto } from './dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { PermissionGuard, TenantPermissionGuard, Permissions } from '@gauzy/core';
@@ -114,6 +115,31 @@ export class ActivepiecesMcpController {
 			};
 		} catch (error: any) {
 			this.handleError('Failed to list ActivePieces MCP servers', error);
+		}
+	}
+
+	/**
+	 * Create MCP server (legacy MCP API only: under MCP 2.0 a project has exactly one server, and this answers 400)
+	 */
+	@ApiOperation({ summary: 'Create ActivePieces MCP server (legacy MCP API only)' })
+	@ApiQuery({ name: 'projectId', required: false, type: String, description: PROJECT_QUERY_DESCRIPTION })
+	@ApiResponse({
+		status: 201,
+		description: 'Returns the created MCP server (token is not returned)',
+		schema: { type: 'object' }
+	})
+	@ApiResponse({ status: 400, description: 'MCP 2.0 (one server per project), or an invalid body' })
+	@Post()
+	@Permissions(PermissionsEnum.INTEGRATION_ADD)
+	async createMcpServer(
+		@Body() data: ActivepiecesMcpCreateDto,
+		@Query() { projectId }: McpServerProjectQueryDto
+	): Promise<IActivepiecesMcpServerPublic> {
+		try {
+			const server = await this.activepiecesMcpService.createMcpServer(data, projectId);
+			return this.sanitizeMcpServer(server);
+		} catch (error: any) {
+			this.handleError('Failed to create ActivePieces MCP server', error);
 		}
 	}
 
@@ -226,6 +252,25 @@ export class ActivepiecesMcpController {
 			return this.sanitizeMcpServer(server);
 		} catch (error: any) {
 			this.handleError('Failed to rotate ActivePieces MCP server token', error);
+		}
+	}
+
+	/**
+	 * Delete MCP server (legacy MCP API only: under MCP 2.0 a project's one server cannot be deleted, and this answers 400)
+	 */
+	@ApiOperation({ summary: 'Delete ActivePieces MCP server (legacy MCP API only)' })
+	@ApiParam({ name: 'serverId', required: true, type: String, description: 'MCP server ID' })
+	@ApiResponse({ status: 200, description: 'MCP server deleted' })
+	@ApiResponse({ status: 400, description: "MCP 2.0 (the project's one server cannot be deleted)" })
+	@Delete('/:serverId')
+	@Permissions(PermissionsEnum.INTEGRATION_DELETE)
+	async deleteMcpServer(@Param('serverId') serverId: string): Promise<void> {
+		try {
+			const id = this.validateAndTrimId('Server ID', serverId);
+
+			await this.activepiecesMcpService.deleteMcpServer(id);
+		} catch (error: any) {
+			this.handleError('Failed to delete ActivePieces MCP server', error);
 		}
 	}
 }

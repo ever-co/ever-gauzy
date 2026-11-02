@@ -175,6 +175,7 @@ export * from '../../terms-acceptance/terms-acceptance.entity';
 export * from '../../official-holiday/official-holiday.entity';
 export * from '../../time-off-policy/time-off-policy.entity';
 export * from '../../time-off-balance/time-off-balance.entity';
+export * from '../../time-off-balance/time-off-balance-deduction.entity';
 export * from '../../time-off-request/time-off-request.entity';
 export * from '../../time-tracking/activity/activity.entity';
 export * from '../../time-tracking/screenshot/screenshot.entity';

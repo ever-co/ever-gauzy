@@ -109,6 +109,8 @@ jest.mock('../queue/worker-queue', () => ({
 }));
 
 import PullActivities from './pull-activities';
+import MainEvent from '../events/events';
+import { MAIN_EVENT, MAIN_EVENT_TYPE } from '../../constant';
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
 const T0 = new Date('2026-10-25T09:00:00.000Z').getTime();
@@ -409,6 +411,7 @@ describe('PullActivities', () => {
 			await pull.startTracking();
 			await settle();
 			mockStore['appSetting'].allowScreenshotCapture = true;
+			mockStore['appSetting'].organizationAllowsScreenshotCapture = true;
 			const capturing = deferred<unknown[]>();
 			mockGetScreenshot.mockImplementationOnce(() => capturing.promise);
 			mockTimerService.saveAndReturn.mockResolvedValueOnce({ id: 8 });
@@ -622,6 +625,116 @@ describe('PullActivities', () => {
 			await pull.refreshOrganizationSetting();
 
 			expect(mockApi.getOrganizationTimerSetting).not.toHaveBeenCalled();
+		});
+	});
+
+	/**
+	 * Issue #9872: the agent captures the screen only when the organisation and the employee both allow it. It used to
+	 * read the employee's setting alone, so an employee whose own setting was on was captured while their organisation
+	 * had capture off, and an organisation turning capture off never reached a running agent.
+	 */
+	describe('screen capture', () => {
+		/** The tray updates the worker asked for (the tray says whether screenshots are captured) */
+		const trayUpdates: unknown[] = [];
+		const onMainEvent = (args: { type: string }) => {
+			if (args?.type === MAIN_EVENT_TYPE.TRAY_TIMER_STATUS) {
+				trayUpdates.push(args);
+			}
+		};
+
+		beforeAll(() => {
+			MainEvent.getInstance().on(MAIN_EVENT, onMainEvent);
+		});
+
+		afterAll(() => {
+			MainEvent.getInstance().eventEmitter.off(MAIN_EVENT, onMainEvent);
+		});
+
+		beforeEach(() => {
+			trayUpdates.length = 0;
+			mockGetScreenshot.mockResolvedValue([]);
+		});
+
+		/** Whether a screenshot is taken now */
+		const captures = async () => {
+			mockGetScreenshot.mockClear();
+			await pull.getScreenShot();
+			return mockGetScreenshot.mock.calls.length > 0;
+		};
+
+		it('captures only when the employee and the organisation both allow it', async () => {
+			mockStore['appSetting'].allowScreenshotCapture = true;
+			mockStore['appSetting'].organizationAllowsScreenshotCapture = true;
+			expect(await captures()).toBe(true);
+
+			mockStore['appSetting'].organizationAllowsScreenshotCapture = false;
+			expect(await captures()).toBe(false);
+
+			mockStore['appSetting'].allowScreenshotCapture = false;
+			mockStore['appSetting'].organizationAllowsScreenshotCapture = true;
+			expect(await captures()).toBe(false);
+		});
+
+		it("does not capture before the organisation's setting has been read", async () => {
+			mockStore['appSetting'].allowScreenshotCapture = true;
+
+			expect(await captures()).toBe(false);
+		});
+
+		it('applies the organisation turning capture off, and on again, to a running agent', async () => {
+			jest.useFakeTimers();
+			mockStore['appSetting'].allowScreenshotCapture = true;
+			mockStore['appSetting'].organizationAllowsScreenshotCapture = true;
+			const turnedOff = deferred<unknown>();
+			mockApi.getOrganizationTimerSetting.mockImplementationOnce(() => turnedOff.promise);
+			await pull.startTracking();
+			trayUpdates.length = 0;
+
+			turnedOff.resolve({ id: 'org-1', allowScreenshotCapture: false });
+			await settleMicrotasks();
+
+			expect(mockStore['appSetting'].organizationAllowsScreenshotCapture).toBe(false);
+			expect(await captures()).toBe(false);
+			expect(trayUpdates).toHaveLength(1);
+
+			trayUpdates.length = 0;
+			mockApi.getOrganizationTimerSetting.mockResolvedValue({ id: 'org-1', allowScreenshotCapture: true });
+			jest.advanceTimersByTime(FIFTEEN_MINUTES);
+			await settleMicrotasks();
+
+			expect(mockStore['appSetting'].organizationAllowsScreenshotCapture).toBe(true);
+			expect(await captures()).toBe(true);
+			expect(trayUpdates).toHaveLength(1);
+
+			// An unchanged setting asks the tray for nothing
+			jest.advanceTimersByTime(FIFTEEN_MINUTES);
+			await settleMicrotasks();
+			expect(mockApi.getOrganizationTimerSetting).toHaveBeenCalledTimes(3);
+			expect(trayUpdates).toHaveLength(1);
+		});
+
+		it("never applies another organisation's screen capture setting", async () => {
+			mockStore['appSetting'].allowScreenshotCapture = true;
+			mockStore['appSetting'].organizationAllowsScreenshotCapture = false;
+			mockApi.getOrganizationTimerSetting.mockResolvedValue({ id: 'org-2', allowScreenshotCapture: true });
+
+			await pull.startTracking();
+			await settle();
+
+			expect(mockStore['appSetting'].organizationAllowsScreenshotCapture).toBe(false);
+			expect(await captures()).toBe(false);
+		});
+
+		it('keeps the stored setting when the organisation cannot be read', async () => {
+			mockStore['appSetting'].allowScreenshotCapture = true;
+			mockStore['appSetting'].organizationAllowsScreenshotCapture = true;
+			mockApi.getOrganizationTimerSetting.mockRejectedValue(new Error('offline'));
+
+			await pull.startTracking();
+			await settle();
+
+			expect(mockStore['appSetting'].organizationAllowsScreenshotCapture).toBe(true);
+			expect(await captures()).toBe(true);
 		});
 	});
 });

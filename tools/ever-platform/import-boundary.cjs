@@ -8,8 +8,10 @@
  *   module (`@gauzy/plugin-ever-*`), and only through its public entry point: no core code depends
  *   on a module, so switching one off removes it whole.
  * - The statistics never import the connection or an analytics plugin; the instance identity makes
- *   no request and depends on neither module; the connection and the Ever ID sign-in plugin never
- *   import each other; a web part never imports a server part.
+ *   no request and depends on neither module; the Ever ID sign-in plugin never imports the
+ *   connection, and the connection uses the sign-in plugin only through its entry point (the ports
+ *   and tokens the plugin defines and binds when it is loaded: the connection works without it);
+ *   a web part never imports a server part.
  * - Nothing outside the connection reads an entitlement document: its entry point exports no
  *   entitlement code.
  */
@@ -71,8 +73,12 @@ function violation(file, specifier) {
 		const hit = anyOf(specifier, [pkg('ever-connect'), pkg('ever-stats'), ...ANALYTICS, ...HTTP_CLIENTS]);
 		if (hit) return `${hit}: the instance identity makes no request and depends on neither module`;
 	}
-	if (from === 'ever-connect' && /^@gauzy\/plugin-auth-zitadel/.test(specifier)) {
-		return `${specifier}: the connection and the Ever ID sign-in plugin never import each other`;
+	if (
+		from === 'ever-connect' &&
+		/^@gauzy\/plugin-auth-zitadel/.test(specifier) &&
+		specifier !== '@gauzy/plugin-auth-zitadel'
+	) {
+		return `${specifier}: the connection uses the Ever ID sign-in plugin only through its entry point (the ports the plugin defines), never its files or its web part`;
 	}
 	if (from && from.startsWith('auth-zitadel') && isPackage(specifier, pkg('ever-connect'))) {
 		return `${specifier}: the Ever ID sign-in plugin and the connection never import each other`;

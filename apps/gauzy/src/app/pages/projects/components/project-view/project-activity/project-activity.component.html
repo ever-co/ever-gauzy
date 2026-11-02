@@ -1,17 +1,6 @@
-<!-- What changed on the project and its tasks, by whom and when, newest first under each day. -->
+<!-- What changed on the project and its tasks, by whom and when, newest first under each day. No title of its own:
+     the host's Activity tab names it. -->
 <section class="panel project-view-panel" [nbSpinner]="feed.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
-	<header class="panel-header">
-		<div class="panel-heading">
-			<h5 class="panel-title panel-title--icon">
-				<nb-icon icon="clock-outline" aria-hidden="true"></nb-icon>
-				{{ 'PROJECT_VIEW.ACTIVITY' | translate }}
-				@if (count) {
-				<span class="title-count">{{ count }}</span>
-				}
-			</h5>
-			<span class="panel-caption">{{ 'PROJECT_VIEW.ACTIVITY_CAPTION' | translate }}</span>
-		</div>
-	</header>
 	<div class="panel-body">
 		@if (feed.failed) {
 		<ng-container *ngTemplateOutlet="unavailable"></ng-container>
@@ -51,14 +40,38 @@
 						<span>
 							{{ entry.sentence | translate : { actor: entry.actor?.name || ('PROJECT_VIEW.SOMEONE' | translate) } }}
 							@if (entry.taskId) {
-							<a class="feed-target" [routerLink]="[]" [queryParams]="{ task: entry.taskId }" queryParamsHandling="merge">{{ entry.target }}</a>
-							} @else if (entry.isComment) {
+							<a
+								class="feed-target"
+								[routerLink]="openTaskPage ? ['/pages/tasks/view', entry.taskId] : []"
+								[queryParams]="openTaskPage ? null : { task: entry.taskId }"
+								[queryParamsHandling]="openTaskPage ? null : 'merge'"
+								>{{ entry.target }}</a
+							>
+							} @else if (entry.isComment && !taskId) {
 							<a class="feed-target" [routerLink]="[]" [queryParams]="{ tab: 'comments' }" queryParamsHandling="merge">{{ entry.target }}</a>
 							} @else {
 							<strong class="feed-target">{{ entry.target }}</strong>
 							}
 						</span>
 					</span>
+					@if (entry.status; as status) {
+					<span
+						class="feed-status"
+						role="img"
+						[attr.aria-label]="'PROJECT_VIEW.ACTIVITY_STATUS_FROM_TO' | translate : { from: status.from.name || '—', to: status.to.name }"
+					>
+						<!-- Each status in its own colour, as the board's columns draw it. -->
+						@if (status.from.name) {
+						<span class="feed-status-pill is-from" [class.has-color]="!!status.from.color" [style.--status-color]="status.from.color || null" aria-hidden="true">
+							<span class="feed-status-dot"></span>{{ status.from.name }}
+						</span>
+						<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>
+						}
+						<span class="feed-status-pill is-to" [class.has-color]="!!status.to.color" [style.--status-color]="status.to.color || null" aria-hidden="true">
+							<span class="feed-status-dot"></span>{{ status.to.name }}
+						</span>
+					</span>
+					}
 					@if (entry.fields) {
 					<span class="feed-fields">{{ 'PROJECT_VIEW.ACTIVITY_FIELDS' | translate : { fields: entry.fields } }}</span>
 					}

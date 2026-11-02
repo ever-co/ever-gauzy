@@ -21,6 +21,7 @@ export class FavoriteToggleComponent extends TranslationBaseComponent implements
 	@Input() entityName?: string;
 	@Input() size: 'tiny' | 'small' | 'medium' | 'large' | 'giant' = 'small';
 	@Input() status: 'basic' | 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'control' = 'basic';
+	@Input() appearance: 'filled' | 'outline' | 'ghost' = 'filled';
 	@Input() disabled = false;
 	@Input() showLabel = false;
 	@Input() spacing: 'default' | 'detail' | 'list' = 'default';

@@ -105,3 +105,34 @@ export const ENV_CODE_RETRY_MS = Object.freeze([
 	6 * 3_600_000,
 	24 * 3_600_000
 ]);
+
+/**
+ * Injection token of the participant that deletes, anonymises or exports a Gauzy account's personal
+ * data for a person's request ({@link PersonDataParticipantPort}). Nothing provides it yet.
+ */
+export const EVER_PERSON_DATA_PARTICIPANT = 'EVER_PERSON_DATA_PARTICIPANT';
+
+/** The sign-in client of Sign in with Ever ID: read 5 seconds after it was asked for, then less often. */
+export const OIDC_CLIENT_POLL_FIRST_MS = 5_000;
+export const OIDC_CLIENT_POLL_MAX_MS = 5 * 60_000;
+
+/** The identity worker (sign-in client, link reports, answers) looks for due work this often. */
+export const IDENTITY_TICK_MS = 15_000;
+
+/** A link report or an answer that could not be sent is retried after this long, doubling each time. */
+export const IDENTITY_RETRY_MS = 30_000;
+
+/** The longest wait between two retries; a link report still failing after it is given up. */
+export const IDENTITY_RETRY_MAX_MS = 24 * 3_600_000;
+
+/** How many link reports or answers one tick sends at most. */
+export const IDENTITY_BATCH = 50;
+
+/** How long a sign-in waits for Ever Platform's view of an identity (`POST /v1/identity/resolve`). */
+export const RESOLVE_TIMEOUT_MS = 6_000;
+
+/** The longest a statement of `/.well-known/ever-connect` is valid, and the longest a check stays pending. */
+export const URL_CHECK_MAX_S = 600;
+
+/** The audience of the statement `/.well-known/ever-connect` serves. */
+export const URL_CHECK_AUDIENCE = 'urn:ever:instance-url';

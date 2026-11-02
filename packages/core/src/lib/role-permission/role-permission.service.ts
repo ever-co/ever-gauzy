@@ -484,7 +484,18 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 		await this.createMany(rolePermissions);
 	}
 
-	public async updateRolesAndPermissions(tenants: ITenant[]): Promise<IRolePermission[] & RolePermission[]> {
+	/**
+	 * Writes the default permission rows of every role of the given tenants.
+	 *
+	 * @param tenants - The tenants whose roles get their default permissions.
+	 * @param options.onlyMissing - Skip every (role, permission) pair the tenant already holds, soft-deleted rows
+	 * included, so their `enabled` flags stay as they are and the unique index is never hit: for a tenant an
+	 * earlier, failed onboarding created.
+	 */
+	public async updateRolesAndPermissions(
+		tenants: ITenant[],
+		options: { onlyMissing?: boolean } = {}
+	): Promise<IRolePermission[] & RolePermission[]> {
 		if (!tenants.length) {
 			return;
 		}
@@ -499,6 +510,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 					}
 				})
 			).items;
+			const held = options.onlyMissing ? await this.heldPermissionPairs(tenant.id) : new Set<string>();
 			for await (const role of roles) {
 				const defaultPermissions = DEFAULT_ROLE_PERMISSIONS.find(
 					(defaultRole) => role.name === defaultRole.role
@@ -507,7 +519,7 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 					environment.demo ? !deniedPermissions.includes(permission) : true
 				);
 				for await (const permission of permissions) {
-					if (defaultPermissions) {
+					if (defaultPermissions && !held.has(`${role.id}:${permission}`)) {
 						const { defaultEnabledPermissions = [] } = defaultPermissions;
 						const rolePermission = new RolePermission();
 						rolePermission.roleId = role.id;
@@ -532,6 +544,16 @@ export class RolePermissionService extends TenantAwareCrudService<RolePermission
 				break;
 		}
 		return rolesPermissions;
+	}
+
+	/**
+	 * The (role, permission) pairs a tenant holds, soft-deleted rows included, as `roleId:permission` keys.
+	 *
+	 * @param tenantId - The tenant.
+	 */
+	private async heldPermissionPairs(tenantId: ID): Promise<Set<string>> {
+		const rows = await this.find({ where: { tenantId }, withDeleted: true } as never);
+		return new Set((rows ?? []).map((row) => `${row.roleId}:${row.permission}`));
 	}
 
 	public async migratePermissions(): Promise<IRolePermissionMigrateInput[]> {

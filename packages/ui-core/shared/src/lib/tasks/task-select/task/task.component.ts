@@ -1,4 +1,12 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, ChangeDetectionStrategy } from '@angular/core';
+import {
+	booleanAttribute,
+	Component,
+	OnInit,
+	OnDestroy,
+	Input,
+	forwardRef,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
 import { Subject, firstValueFrom, Observable } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
@@ -28,6 +36,20 @@ export class TaskSelectorComponent implements OnInit, OnDestroy, ControlValueAcc
 	 * selector without a label of its own.
 	 */
 	@Input() placeholder: string | null = null;
+
+	/** The id of the combobox inside, for a `<label for>` beside this selector to name it. */
+	@Input() labelForId: string | null = null;
+
+	/** Attributes for the combobox inside. */
+	public inputAttrs: Record<string, string> = {};
+
+	/**
+	 * Tells the combobox a task is required: the `required` validator sits on this host, out of a screen reader's
+	 * reach. Always `true` or `false`, because ng-select never removes an attribute it has set.
+	 */
+	@Input({ transform: booleanAttribute }) set required(value: boolean) {
+		this.inputAttrs = { 'aria-required': String(value) };
+	}
 
 	private _multiple: boolean = false;
 	public get multiple(): boolean {

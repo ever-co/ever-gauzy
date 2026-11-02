@@ -31,4 +31,6 @@ export {
 	BACKCHANNEL_LOGOUT_EVENT,
 	OIDC_LOGOUT_TOKEN_MAX_AGE_SECONDS
 } from './oidc-logout-token.service';
+export { OidcEmailSignInService } from './oidc-email-sign-in.service';
+export type { OidcCallbackQuery, OidcEmailSignInFlow, OidcEmailSignInResult } from './oidc-email-sign-in.service';
 export { OidcModule } from './oidc.module';

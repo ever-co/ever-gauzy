@@ -662,9 +662,14 @@ describe('OrganizationContactResolver — the guard stack is the controller’s,
 			PermissionsEnum.ORG_CONTACT_EDIT
 		);
 
-		for (const field of ['createOrganizationContact', 'updateOrganizationContact']) {
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
-		}
+		// The create takes the create grant or the edit grant (ever-co/ever-gauzy#5468); the edit only the edit grant.
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto['createOrganizationContact'])).toEqual([
+			PermissionsEnum.ORG_CONTACT_ADD,
+			PermissionsEnum.ORG_CONTACT_EDIT
+		]);
+		expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto['updateOrganizationContact'])).toEqual([
+			PermissionsEnum.ORG_CONTACT_EDIT
+		]);
 
 		// The employee assignment is the employee domain's own operation and carries the permission its
 		// route carries, which is not this resource's edit permission.
@@ -691,26 +696,32 @@ describe('OrganizationContactResolver — the guard stack is the controller’s,
 		}
 	});
 
-	it('holds the lifecycle trio to the permission its own routes state, which is the resource’s edit permission', () => {
+	it('holds the lifecycle trio to the permissions its own routes state', () => {
 		const proto = fieldsOf(OrganizationContactResolver);
 
 		// This test used to assert the opposite — that the three lifecycle fields state no permission —
 		// because the controller inherited `delete`, `softRemove` and `softRecover` from the CRUD base,
 		// whose handlers state none. It now overrides all three for no other reason than to attach
-		// `@UseGuards(PermissionGuard)` with `ORG_CONTACT_EDIT` (GHSA-v79w-54p2-wmh5), so a field left
-		// unpermissioned here is a way to remove, withdraw or restore a party that the route refuses.
-		// The route side is read first so the comparison below cannot pass on the two surfaces being
-		// empty together.
-		for (const route of ['delete', 'softRemove', 'softRecover']) {
-			expect(permissionOfRoute(OrganizationContactController, route)).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
+		// `@UseGuards(PermissionGuard)` (GHSA-v79w-54p2-wmh5), so a field left unpermissioned here is a
+		// way to remove, withdraw or restore a party that the route refuses. The removal and the
+		// withdrawal take the delete grant or the edit grant (ever-co/ever-gauzy#5468), and so does the
+		// restoration that undoes a withdrawal. The route side is read first so the comparison below cannot
+		// pass on the two surfaces being empty together.
+		const expected: Record<string, PermissionsEnum[]> = {
+			delete: [PermissionsEnum.ORG_CONTACT_DELETE, PermissionsEnum.ORG_CONTACT_EDIT],
+			softRemove: [PermissionsEnum.ORG_CONTACT_DELETE, PermissionsEnum.ORG_CONTACT_EDIT],
+			softRecover: [PermissionsEnum.ORG_CONTACT_DELETE, PermissionsEnum.ORG_CONTACT_EDIT]
+		};
+		for (const [route, permissions] of Object.entries(expected)) {
+			expect(permissionOfRoute(OrganizationContactController, route)).toEqual(permissions);
 		}
 
-		for (const field of [
-			'deleteOrganizationContact',
-			'softDeleteOrganizationContact',
-			'recoverOrganizationContact'
+		for (const [field, route] of [
+			['deleteOrganizationContact', 'delete'],
+			['softDeleteOrganizationContact', 'softRemove'],
+			['recoverOrganizationContact', 'softRecover']
 		]) {
-			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toEqual([PermissionsEnum.ORG_CONTACT_EDIT]);
+			expect(Reflect.getMetadata(PERMISSIONS_METADATA, proto[field])).toEqual(expected[route]);
 			expect(Reflect.getMetadata('__guards__', proto[field])).toEqual([PermissionGuard]);
 		}
 	});

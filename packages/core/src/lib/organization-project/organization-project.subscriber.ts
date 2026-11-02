@@ -10,6 +10,7 @@ import {
 } from '../core/entities/subscribers/entity-event-subscriber.types';
 import { prepareSQLQuery as p } from '../database/database.helper';
 import { imageAssetUrlsReady } from '../image-asset/image-asset-urls';
+import { replaceDummyImageUrl } from '../placeholder-image/placeholder-image-url';
 import { WORKING_EMPLOYEE_SQL_CONDITION } from './organization-project-members-count';
 
 @EventSubscriber()
@@ -34,6 +35,9 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
 			if (Object.prototype.hasOwnProperty.call(entity, 'image')) {
 				await this.setImageUrl(entity);
 			}
+
+			// A stored dummyimage.com placeholder (older rows) is shown as the API's own, never fetched from that third party.
+			replaceDummyImageUrl(entity, 'imageUrl');
 		} catch (error) {
 			console.error(
 				'OrganizationProjectSubscriber: An error occurred during the afterEntityLoad process:',
@@ -61,9 +65,30 @@ export class OrganizationProjectSubscriber extends BaseEntityEventSubscriber<Org
 					.join('');
 				entity.imageUrl = getDummyImage(330, 300, initials.toUpperCase());
 			}
+
+			// A dummyimage.com placeholder sent by a client is stored as the API's own (a first-party URL).
+			replaceDummyImageUrl(entity, 'imageUrl');
 		} catch (error) {
 			console.error(
 				'OrganizationProjectSubscriber: An error occurred during the beforeEntityCreate process:',
+				error.message
+			);
+		}
+	}
+
+	/**
+	 * Called before an OrganizationProject entity is updated in the database.
+	 *
+	 * @param entity The OrganizationProject entity about to be updated.
+	 * @returns {Promise<void>} A promise that resolves when the pre-update processing is complete.
+	 */
+	async beforeEntityUpdate(entity: OrganizationProject): Promise<void> {
+		try {
+			// A dummyimage.com placeholder sent by a client is stored as the API's own (a first-party URL).
+			replaceDummyImageUrl(entity, 'imageUrl');
+		} catch (error) {
+			console.error(
+				'OrganizationProjectSubscriber: An error occurred during the beforeEntityUpdate process:',
 				error.message
 			);
 		}

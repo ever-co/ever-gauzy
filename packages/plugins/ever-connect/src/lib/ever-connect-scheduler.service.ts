@@ -19,14 +19,16 @@ import {
 } from './ever-connect.constants';
 import { EverConnectEntitlementService } from './ever-connect-entitlement.service';
 import { EverConnectIntegrationStateService } from './ever-connect-integration-state.service';
+import { EverConnectLease } from './ever-connect-lease';
 import { EverConnectLinkService } from './ever-connect-link.service';
 import { EverConnectPlatformService, errorCode, isCredentialRevoked } from './ever-connect-platform.service';
 import { EverConnectSignals } from './ever-connect-signals';
 import { EverConnectStore } from './ever-connect.store';
+import { personRequestKind, PersonRequestsHandler } from './handlers/person-requests.handler';
 import { EventEnvelope, ProblemError } from './sdk';
 
 /** What the dispatcher did with one event. */
-export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' | 'ignored';
+export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' | 'person' | 'ignored';
 
 /**
  * The heartbeat and the event feed, run by one API process at a time (a lease on the connection
@@ -39,9 +41,10 @@ export type DispatchOutcome = 'states' | 'entitlements' | 'link' | 'connection' 
  * - Feed: a long poll of 25 seconds (or one read every 15 minutes with
  *   `EVER_CONNECT_FEED_MODE=interval`). Each event is dispatched by its catalog type, then the
  *   cursor is kept and acknowledged (in that order); handlers are idempotent (they re-read state),
- *   so an event read twice changes nothing more. Types this release has no handler for are
- *   acknowledged and ignored, and so are connection events of another installation or of before
- *   this connection (a cursor read again from the start replays them).
+ *   so an event read twice changes nothing more. A person's deletion or export request is recorded
+ *   by its event id and answered once. Types this release has no handler for are acknowledged and
+ *   ignored, and so are connection events (and a person's requests) of another installation or of
+ *   before this connection (a cursor read again from the start replays them).
  */
 /** How far Ever Platform's clock may be ahead of this one when an event's time is compared. */
 const CLOCK_SKEW_MS = 300_000;
@@ -49,7 +52,8 @@ const CLOCK_SKEW_MS = 300_000;
 @Injectable()
 export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	private readonly logger = new Logger('EverConnect');
-	private readonly holder = randomUUID();
+	/** This process's name on the connection's lease (shared with Sign in with Ever ID's worker). */
+	private readonly holder: string;
 	private readonly now: () => number;
 	private heartbeatTimer: NodeJS.Timeout | null = null;
 	private feedTimer: NodeJS.Timeout | null = null;
@@ -71,9 +75,12 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 		private readonly cleanup: EverConnectCleanupService,
 		private readonly signals: EverConnectSignals,
 		@Inject(EVER_CONNECT_SETTINGS) private readonly config: EverConnectConfig,
-		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number }
+		@Optional() @Inject(EVER_CONNECT_CLOCK) clock?: { now: () => number },
+		@Optional() private readonly personRequests?: PersonRequestsHandler,
+		@Optional() lease?: EverConnectLease
 	) {
 		this.now = clock?.now ?? (() => Date.now());
+		this.holder = lease?.holder ?? randomUUID();
 	}
 
 	onModuleInit(): void {
@@ -280,9 +287,19 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 	): Promise<DispatchOutcome> {
 		const data = (event.data ?? {}) as Record<string, unknown>;
 		const linkId = typeof data['tenant_link_id'] === 'string' ? data['tenant_link_id'] : event.subject?.id;
-		if (event.type.startsWith('ever.registry.instance.') && connection && !this.forThisConnection(event, connection)) {
-			// A connection event of another installation, or of before this connection: ignored.
+		const personRequest = personRequestKind(event.type) !== null;
+		if (
+			(event.type.startsWith('ever.registry.instance.') || personRequest) &&
+			connection &&
+			!this.forThisConnection(event, connection)
+		) {
+			// A connection event (or a person's request) of another installation, or of before this
+			// connection: ignored.
 			return 'ignored';
+		}
+		if (personRequest) {
+			// Deletion and export requests: recorded by event id, answered once (`POST /v1/instances/me/ack`).
+			return this.personRequests && (await this.personRequests.handle(event)) ? 'person' : 'ignored';
 		}
 		switch (event.type) {
 			case 'ever.consent.consent.granted':
@@ -321,8 +338,8 @@ export class EverConnectScheduler implements OnModuleInit, OnModuleDestroy {
 				await this.connection.approved();
 				return 'connection';
 			default:
-				// Deletion and export requests, memberships, managed operations and every other type:
-				// acknowledged and ignored by this release.
+				// Memberships, managed operations and every other type: acknowledged and ignored by this
+				// release.
 				return 'ignored';
 		}
 	}

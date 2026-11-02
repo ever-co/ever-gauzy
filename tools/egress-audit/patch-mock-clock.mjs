@@ -30,8 +30,11 @@ import { fileURLToPath } from 'node:url';
 const PACKAGE = new URL('./node_modules/@ever-co/connect-tools/', import.meta.url);
 export const STATE_FILE = fileURLToPath(new URL('dist/mock-platform/src/state.mjs', PACKAGE));
 
-/** The harness versions this patch was written for. */
-export const PATCHED_VERSIONS = ['1.0.0-rc.7'];
+/**
+ * The harness versions this patch was written for. 1.0.0-rc.8 keeps the bucket of rc.7 line for line
+ * (`MockState.bucket` in `dist/mock-platform/src/state.mjs`), so the same one-line patch applies.
+ */
+export const PATCHED_VERSIONS = ['1.0.0-rc.7', '1.0.0-rc.8'];
 
 export const BEFORE = '    const arrival = Math.max(this.arrivals.get(key) ?? now, now);';
 

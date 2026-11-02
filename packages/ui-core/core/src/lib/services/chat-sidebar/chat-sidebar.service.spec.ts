@@ -172,6 +172,35 @@ describe('ChatSidebarService — persisted state precedence and server sync', ()
 		expect(service.position()).toBe('end');
 	});
 
+	it('keeps another feature’s preferences saved while its write was in flight', async () => {
+		const { service, user$, updateUiPreferences, store } = setup();
+		service.register(CONFIG);
+		user$.next({ id: 'u1', uiPreferences: { aiChat: { expanded: true } } } as any);
+		let answer: (value: any) => void;
+		updateUiPreferences.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+
+		service.collapse();
+		await flushPersist();
+		expect(updateUiPreferences).toHaveBeenCalledTimes(1);
+
+		// The Quick Actions save lands meanwhile; the server's answer to the panel's write predates it.
+		store.user = {
+			...store.user,
+			uiPreferences: { ...store.user.uiPreferences, quickActions: { shortcuts: { createTask: 'y' } } }
+		} as any;
+		const saved = { expanded: false, position: 'start', width: 384, maximized: false };
+		answer({ aiChat: saved });
+		for (let i = 0; i < 5; i++) {
+			await Promise.resolve();
+		}
+
+		expect(store.user?.uiPreferences).toEqual({
+			aiChat: saved,
+			quickActions: { shortcuts: { createTask: 'y' } }
+		});
+		expect(service.expanded()).toBe(false);
+	});
+
 	it('does not write when nothing changed against the known server state', async () => {
 		const { service, user$, updateUiPreferences } = setup();
 		service.register(CONFIG);

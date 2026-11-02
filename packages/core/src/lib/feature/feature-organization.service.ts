@@ -135,9 +135,16 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 	 * Create/Update feature organization for relative tenants.
 	 *
 	 * @param tenants An array of ITenant instances.
+	 * @param options.onlyMissing - Create only the tenant-wide toggles a tenant does not have yet, keeping the
+	 * existing ones as they are: for a tenant an earlier, failed onboarding created. A migration
+	 * (`SeedCoreFeatures1791000000510`) gives every tenant, empty ones included, its default-on toggles, so
+	 * having some rows does not mean having all of them.
 	 * @returns A Promise resolving to an array of IFeatureOrganization.
 	 */
-	public async updateTenantFeatureOrganizations(tenants: ITenant[]): Promise<IFeatureOrganization[]> {
+	public async updateTenantFeatureOrganizations(
+		tenants: ITenant[],
+		options: { onlyMissing?: boolean } = {}
+	): Promise<IFeatureOrganization[]> {
 		if (!tenants || tenants.length === 0) {
 			return [];
 		}
@@ -145,22 +152,47 @@ export class FeatureOrganizationService extends TenantAwareCrudService<FeatureOr
 		// Retrieve all available features
 		const features: IFeature[] = await this._featureService.find();
 
+		const held = options.onlyMissing ? await this.heldTenantFeatures(tenants) : new Set<string>();
+
 		// Generate a cartesian product of features and tenants to create FeatureOrganization entities
 		const featureOrganizations: IFeatureOrganization[] = features.flatMap((feature: IFeature) =>
-			tenants.map(
-				(tenant: ITenant) =>
-					new FeatureOrganization({
-						isEnabled: !!feature.isEnabled,
-						tenant,
-						feature
-					})
-			)
+			tenants
+				.filter((tenant: ITenant) => !held.has(`${tenant.id}:${feature.id}`))
+				.map(
+					(tenant: ITenant) =>
+						new FeatureOrganization({
+							isEnabled: !!feature.isEnabled,
+							tenant,
+							feature
+						})
+				)
 		);
+
+		if (featureOrganizations.length === 0) {
+			return [];
+		}
 
 		/**
 		 * Use saveManyWithoutEnrichment to avoid TenantAwareCrudService.saveMany()
 		 * which would overwrite per-entity tenantId with the current RequestContext tenantId.
 		 */
 		return await this.saveManyWithoutEnrichment(featureOrganizations);
+	}
+
+	/**
+	 * The tenant-wide toggles (no organization) the given tenants hold, soft-deleted ones included, as
+	 * `tenantId:featureId` keys.
+	 *
+	 * @param tenants - The tenants.
+	 */
+	private async heldTenantFeatures(tenants: ITenant[]): Promise<Set<string>> {
+		const held = new Set<string>();
+		for (const tenant of tenants) {
+			const rows = await this.find({ where: { tenantId: tenant.id }, withDeleted: true } as never);
+			for (const row of rows ?? []) {
+				if (!row.organizationId) held.add(`${tenant.id}:${row.featureId}`);
+			}
+		}
+		return held;
 	}
 }

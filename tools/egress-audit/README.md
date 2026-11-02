@@ -85,10 +85,20 @@ that ends on it faults the run.
 | `loaded_off` | both modules loaded: statistics on by configuration and switched off by the operator in Settings, connection on and not connected | yes | no call at all, in both legs |
 | `positive_stats` | statistics on, `EVER_STATS_API_URL` = the mock platform | yes | reports accepted (`202`), no call but the statistics report; the browser's settings page asks the API for the statistics status |
 | control | `positive_stats` with the mock platform left out | yes | must **fail** (exit 1): a green run is not a blind one |
-| `every_trigger` | both modules on against the mock platform; the adapter fires every trigger of every call (connect with `EVER_CONNECT_CODE`, link, entitlement refresh unchanged and new, a consent and the operator's accept, the statistics link, switching off, unlink, disconnect; the report goes out by itself) | no | the calls made are **exactly** the Gauzy rows of the contract this release makes, row for row; the rows it does not make (`every_trigger_exclude_rows`, kept equal to the "not made" table of [the list of outbound calls](../ever-platform/outbound-calls.md) by a check) are never called |
+| `every_trigger` | both modules on against the mock platform; the adapter fires every trigger of every call (connect with `EVER_CONNECT_CODE`, link, entitlement refresh unchanged and new, a consent and the operator's accept, the statistics link, Sign in with Ever ID consented and accepted so the connection asks for its sign-in client, a person's deletion request on the event feed and its answer, switching off, unlink, disconnect; the report goes out by itself) | no | the calls made are **exactly** the Gauzy rows of the contract this release makes, row for row; the rows it does not make (`every_trigger_exclude_rows`, kept equal to the "not made" table of [the list of outbound calls](../ever-platform/outbound-calls.md) by a check) are never called |
 | `connect_off_sign_in_on` | connection off, statistics off, the Ever ID sign-in plugin on (`ZITADEL_ENABLED=true`) with an issuer on an Ever host | yes | the plugin leaves the issuer unused on a self-hosted installation: no Ever host looked up or requested, no redirect to it, `/api/ever-stats/*` 404 |
 | `entitlement_ladder` | connection on against the mock platform; the mock's clock moves so its documents are issued 600 s in the future, 8 days ago (a 7-day document: expired a day ago), 38 days ago (expired 31 days ago), 200 s ahead | no | the future one is refused and the stored one kept; the others are stored and the ladder reads `grace`, `paused` (every feature off), `valid`; Gauzy's own routes (health, sign-in, the user, the organization, projects, invoices, time logs, contacts) answer the same at every step; only the connection's documented calls |
 | static-bundle | the web app image's built files | - | no Ever host the baseline's `bundle` list does not have |
+
+`every_trigger` cannot yet fire rows 19 (person links) and 22 (identity resolution) of the
+connection. Both need a person who signed in with Ever ID through the installation's own sign-in
+client, and the mock platform of `@ever-co/connect-tools` 1.0.0-rc.8 serves no Ever ID issuer to sign
+in at: no discovery, authorization, token or key endpoints, and its issuer's name
+(`https://mock-platform.test`) does not resolve on the sealed networks, so a sign-in attempt would
+itself be a lookup outside the compose services. The module makes both rows (its README's request
+table and the list of outbound calls name them), so they are not in `every_trigger_exclude_rows`,
+and the run reports each as required but never called until the mock platform can serve that
+sign-in or the audit gets a way to name rows it cannot fire.
 
 ## Running it
 
@@ -134,9 +144,9 @@ Run on every pull request that touches code, with nothing installed but the harn
   because the workflows that build and deploy the images can put a host into one.
 - `node tools/ever-platform/check-import-boundary.mjs`: only the modules and the two plugin lists
   import a module, through its entry point; the statistics never import the connection or an
-  analytics plugin, the instance identity no HTTP client, the connection and the sign-in plugin
-  never each other, a web part never a server module, and the connection's entry point exports no
-  entitlement code. The same rules are the ESLint rule `ever-platform/import-boundary` of the root
+  analytics plugin, the instance identity no HTTP client, the sign-in plugin never the
+  connection (which uses the sign-in plugin only through its entry point), a web part never a
+  server module, and the connection's entry point exports no entitlement code. The same rules are the ESLint rule `ever-platform/import-boundary` of the root
   `eslint.config.js` (`tools/ever-platform/import-boundary.cjs`).
 - `node tools/ever-platform/outbound-calls.mjs --check`: the tables of
   [`tools/ever-platform/outbound-calls.md`](../ever-platform/outbound-calls.md) are the pinned

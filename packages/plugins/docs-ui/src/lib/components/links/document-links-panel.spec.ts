@@ -16,9 +16,10 @@ jest.mock('@gauzy/ui-core/i18n', () => ({
 jest.mock('@gauzy/ui-core/core', () => ({ Store: class Store {}, ToastrService: class ToastrService {} }));
 
 import { HttpEventType, HttpResponse } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { NEVER, Observable, of, Subject, throwError } from 'rxjs';
 import { BaseEntityEnum, DocumentKindEnum, ID, IDocument, IDocumentLink, PermissionsEnum } from '@gauzy/contracts';
 import { DocumentLinksPanelComponent } from './document-links-panel.component';
+import { DocumentImagePreviewDialogComponent } from './document-image-preview-dialog.component';
 
 const ENTITY_ID = 'cccccccc-1111-4111-8111-111111111111' as ID;
 const OTHER_ENTITY_ID = 'cccccccc-1111-4111-8111-222222222222' as ID;
@@ -76,7 +77,8 @@ function createPanel(
 		createLink: jest.fn(() => of({ id: LINK_ID } as IDocumentLink)),
 		deleteLink: jest.fn(() => of(undefined)),
 		getDownloadUrl: jest.fn(() => of('https://files.example/signed/invoice.pdf')),
-		upload: jest.fn(() => overrides.upload ?? of())
+		upload: jest.fn(() => overrides.upload ?? of()),
+		getRawBlob: jest.fn(() => of(new Blob(['png'], { type: 'image/png' })))
 	};
 	const dialogService = { open: jest.fn(() => ({ onClose: of(null) })) };
 	const toastrService = { success: jest.fn(), danger: jest.fn() };
@@ -401,5 +403,258 @@ describe('DocumentLinksPanelComponent â€” record-side Documents panel (spec 00 Â
 
 			expect(panel.dragActive).toBe(false);
 		});
+	});
+
+	describe('deferred hosting (a create page: the record has no id yet)', () => {
+		function createDeferredPanel(overrides: Parameters<typeof createPanel>[0] = {}) {
+			const context = createPanel(overrides);
+			context.panel.deferred = true;
+			context.panel.entityId = undefined as never;
+			return context;
+		}
+
+		it('is shown without a record id, but only to someone who can upload', () => {
+			expect(createDeferredPanel().panel.visible).toBe(true);
+			expect(
+				createDeferredPanel({ permissions: [PermissionsEnum.DOCS_READ, PermissionsEnum.DOCS_CREATE] }).panel.visible
+			).toBe(false);
+		});
+
+		it('holds picked files without uploading or asking for links, once per file', async () => {
+			const { panel, documentsService } = createDeferredPanel();
+			const file = new File(['x'], 'brief.pdf');
+
+			await panel.load();
+			await panel.uploadFiles([file]);
+			await panel.uploadFiles([file, new File(['y'], 'plan.xlsx')]);
+
+			expect(documentsService.findLinks).not.toHaveBeenCalled();
+			expect(documentsService.upload).not.toHaveBeenCalled();
+			expect(panel.pending.map(({ file }) => file.name)).toEqual(['brief.pdf', 'plan.xlsx']);
+			expect(panel.familyOf(panel.pending[1].row)).toBe('sheet');
+		});
+
+		it('drops a held file on remove', async () => {
+			const { panel } = createDeferredPanel();
+			const file = new File(['x'], 'brief.pdf');
+			await panel.uploadFiles([file]);
+
+			panel.removePending(file);
+
+			expect(panel.pending).toEqual([]);
+		});
+
+		it('opens a held PDF from the machine in a new tab, typed as a PDF, without uploading it', () => {
+			const { panel, documentsService } = createDeferredPanel();
+			const file = new File(['x'], 'brief.pdf');
+			const createObjectURL = jest.fn().mockReturnValue('blob:brief');
+			Object.assign(URL, { createObjectURL, revokeObjectURL: jest.fn() });
+			const open = jest.spyOn(window, 'open').mockReturnValue(null);
+
+			panel.previewPending(file);
+
+			expect((createObjectURL.mock.calls[0][0] as Blob).type).toBe('application/pdf');
+			expect(open).toHaveBeenCalledWith('blob:brief', '_blank', 'noopener');
+			expect(documentsService.upload).not.toHaveBeenCalled();
+			expect(panel.canPreviewPending(file)).toBe(true);
+			open.mockRestore();
+		});
+
+		it('downloads a held HTML file instead of opening it as a page', () => {
+			const { panel } = createDeferredPanel();
+			const file = new File(['<script></script>'], 'page.html', { type: 'text/html' });
+			Object.assign(URL, { createObjectURL: jest.fn().mockReturnValue('blob:page'), revokeObjectURL: jest.fn() });
+			const open = jest.spyOn(window, 'open').mockReturnValue(null);
+			const click = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+				expect(this.download).toBe('page.html');
+				expect(this.href).toBe('blob:page');
+			});
+
+			panel.previewPending(file);
+
+			expect(click).toHaveBeenCalledTimes(1);
+			expect(open).not.toHaveBeenCalled();
+			expect(panel.canPreviewPending(file)).toBe(false);
+			open.mockRestore();
+			click.mockRestore();
+		});
+
+		it('uploads and links the held files to the saved record', async () => {
+			const uploaded = { id: FILE_ID, name: 'brief.pdf' } as IDocument;
+			const { panel, documentsService } = createDeferredPanel({ upload: of(new HttpResponse({ body: uploaded })) });
+			await panel.uploadFiles([new File(['x'], 'brief.pdf')]);
+
+			await expect(panel.attachPending(ENTITY_ID, 'Website')).resolves.toBe(true);
+
+			expect(documentsService.upload).toHaveBeenCalledTimes(1);
+			expect(documentsService.createLink).toHaveBeenCalledWith(
+				expect.objectContaining({ documentId: FILE_ID, entityId: ENTITY_ID, metadata: { label: 'Website' } })
+			);
+			expect(panel.pending).toEqual([]);
+		});
+
+		it('keeps a file that failed to attach, and retries only it', async () => {
+			const uploaded = { id: FILE_ID, name: 'brief.pdf' } as IDocument;
+			const { panel, documentsService } = createDeferredPanel({ upload: of(new HttpResponse({ body: uploaded })) });
+			const failing = new File(['y'], 'plan.xlsx');
+			await panel.uploadFiles([new File(['x'], 'brief.pdf'), failing]);
+			documentsService.upload
+				.mockReturnValueOnce(of(new HttpResponse({ body: uploaded })))
+				.mockReturnValueOnce(throwError(() => new Error('rejected')));
+
+			await expect(panel.attachPending(ENTITY_ID, 'Website')).resolves.toBe(false);
+
+			expect(panel.pending.map(({ file }) => file)).toEqual([failing]);
+
+			await expect(panel.attachPending(ENTITY_ID, 'Website')).resolves.toBe(true);
+			expect(documentsService.upload).toHaveBeenCalledTimes(3);
+			expect(documentsService.upload).toHaveBeenLastCalledWith(failing, expect.anything());
+			expect(panel.pending).toEqual([]);
+		});
+
+		it('retries only the link when the upload went through, never uploading the bytes again', async () => {
+			const uploaded = { id: FILE_ID, name: 'brief.pdf' } as IDocument;
+			const { panel, documentsService } = createDeferredPanel({ upload: of(new HttpResponse({ body: uploaded })) });
+			await panel.uploadFiles([new File(['x'], 'brief.pdf')]);
+			documentsService.createLink.mockReturnValueOnce(throwError(() => new Error('link lost')));
+
+			await expect(panel.attachPending(ENTITY_ID, 'Website')).resolves.toBe(false);
+			await expect(panel.attachPending(ENTITY_ID, 'Website')).resolves.toBe(true);
+
+			expect(documentsService.upload).toHaveBeenCalledTimes(1);
+			expect(documentsService.createLink).toHaveBeenCalledTimes(2);
+			expect(documentsService.createLink).toHaveBeenLastCalledWith(expect.objectContaining({ documentId: FILE_ID }));
+			expect(panel.pending).toEqual([]);
+		});
+
+		it('attaches nothing when no file was held', async () => {
+			const { panel, documentsService } = createDeferredPanel();
+
+			await panel.attachPending(ENTITY_ID, 'Website');
+
+			expect(documentsService.upload).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('grid view and image preview', () => {
+		const IMAGE_ID = 'cccccccc-2222-4222-8222-333333333333' as ID;
+		const imageLink = () =>
+			fileLink({
+				id: 'cccccccc-3333-4333-8333-222222222222' as ID,
+				documentId: IMAGE_ID,
+				document: { id: IMAGE_ID, name: 'site.png', kind: DocumentKindEnum.FILE, mimeType: 'image/png', fileSize: 4096 } as IDocument
+			});
+		let createObjectURL: jest.Mock;
+
+		beforeEach(() => {
+			localStorage.clear();
+			createObjectURL = jest.fn((source: Blob) => `blob:${source instanceof File ? source.name : 'raw'}`);
+			Object.assign(URL, { createObjectURL, revokeObjectURL: jest.fn() });
+		});
+
+		it('switches between list and grid, and remembers the choice in this browser', () => {
+			const { panel } = createPanel();
+			expect(panel.view).toBe('list');
+
+			panel.toggleView();
+
+			expect(panel.view).toBe('grid');
+			expect(createPanel().panel.view).toBe('grid');
+			panel.toggleView();
+			expect(localStorage.getItem('gauzy-docs-links-view')).toBe('list');
+		});
+
+		it('fetches each saved image once for its grid tile, and nothing else', async () => {
+			const { panel, documentsService } = createPanel({ links: of([fileLink(), imageLink()]) });
+			panel.toggleView();
+
+			await panel.load();
+			await panel.load();
+			await new Promise((resolve) => setTimeout(resolve));
+
+			expect(documentsService.getRawBlob).toHaveBeenCalledTimes(1);
+			expect(documentsService.getRawBlob).toHaveBeenCalledWith(IMAGE_ID);
+			expect(panel.thumbOf(imageLink())).toBe('blob:raw');
+			expect(panel.thumbOf(fileLink())).toBeNull();
+		});
+
+		it('cancels the image reads when the panel closes, and creates no URL after', async () => {
+			const second = 'cccccccc-2222-4222-8222-444444444444' as ID;
+			const links = [
+				imageLink(),
+				fileLink({ id: 'cccccccc-3333-4333-8333-333333333333' as ID, documentId: second, document: { id: second, name: 'b.png', kind: DocumentKindEnum.FILE, mimeType: 'image/png' } as IDocument })
+			];
+			const { panel, documentsService } = createPanel({ links: of(links) });
+			documentsService.getRawBlob.mockReturnValue(NEVER);
+			panel.toggleView();
+			await panel.load();
+
+			panel.ngOnDestroy();
+			await new Promise((resolve) => setTimeout(resolve));
+
+			expect(documentsService.getRawBlob).toHaveBeenCalledTimes(1);
+			expect(createObjectURL).not.toHaveBeenCalled();
+		});
+
+		it('shares one read and one URL when a preview opens while the grid fetches the same image', async () => {
+			const { panel, documentsService, dialogService } = createPanel({ links: of([imageLink()]) });
+			const blob$ = new Subject<Blob>();
+			documentsService.getRawBlob.mockReturnValue(blob$);
+			panel.toggleView();
+			await panel.load();
+
+			panel.previewLink(imageLink());
+			const [, config] = dialogService.open.mock.calls[0] as unknown as [unknown, { context: any }];
+			const preview = config.context.resolveSrc();
+			blob$.next(new Blob(['png'], { type: 'image/png' }));
+			blob$.complete();
+
+			await expect(preview).resolves.toBe('blob:raw');
+			expect(documentsService.getRawBlob).toHaveBeenCalledTimes(1);
+			expect(createObjectURL).toHaveBeenCalledTimes(1);
+			expect(panel.thumbOf(imageLink())).toBe('blob:raw');
+		});
+
+		it('offers the popup for images only', () => {
+			const { panel } = createPanel();
+
+			expect(panel.isImage(imageLink())).toBe(true);
+			expect(panel.isImage(fileLink())).toBe(false);
+		});
+
+		it('opens a saved image in the popup, fetched through the authenticated client', async () => {
+			const { panel, dialogService, documentsService } = createPanel();
+
+			panel.previewLink(imageLink());
+
+			const [component, config] = dialogService.open.mock.calls[0] as unknown as [unknown, { context: any }];
+			expect(component).toBe(DocumentImagePreviewDialogComponent);
+			expect(config.context.name).toBe('site.png');
+			await expect(config.context.resolveSrc()).resolves.toBe('blob:raw');
+			expect(documentsService.getRawBlob).toHaveBeenCalledWith(IMAGE_ID);
+		});
+
+		it('opens a held image in the popup from the machine, not a new tab', async () => {
+			const { panel, dialogService, documentsService } = createDeferredPanelForGrid();
+			const file = new File(['png'], 'logo.png', { type: 'image/png' });
+			const open = jest.spyOn(window, 'open').mockReturnValue(null);
+			await panel.uploadFiles([file]);
+
+			panel.previewPending(file);
+
+			const [, config] = dialogService.open.mock.calls[0] as unknown as [unknown, { context: any }];
+			await expect(config.context.resolveSrc()).resolves.toBe('blob:logo.png');
+			expect(panel.pendingThumbOf(file)).toBe('blob:logo.png');
+			expect(open).not.toHaveBeenCalled();
+			expect(documentsService.getRawBlob).not.toHaveBeenCalled();
+			open.mockRestore();
+		});
+
+		function createDeferredPanelForGrid() {
+			const context = createPanel();
+			context.panel.deferred = true;
+			context.panel.entityId = undefined as never;
+			return context;
+		}
 	});
 });

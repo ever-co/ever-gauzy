@@ -36,10 +36,16 @@ settings; any other one gets the **connect wizard** (plan item G-P1-11):
    itself and each pairing shows how it was made (Ever ID, verified email, by
    hand); an unpaired member can be invited to Gauzy (Employee role) and an
    unpaired Gauzy person to Ever Works, each after a confirmation that names
-   the organization and role. An invitation pairs nobody.
+   the organization and role. An invitation pairs nobody. Each paired person
+   shows which kinds of their Gauzy Inbox items go to Ever Works ("all kinds",
+   "5 of 7 kinds (no emails, no other)"); read-only, as each person chooses for
+   themselves (below).
 5. **Entities and directions**: one direction per synced domain (only the
-   directions that domain allows) and whether tasks of projects not paired with
-   a work sync too.
+   directions that domain allows; the Inbox syncs both ways, Ever Works →
+   Gauzy, Gauzy → Ever Works or not at all), whether tasks of projects not
+   paired with a work sync too, and whether the next initial sync or resync also
+   sends the open Gauzy Inbox items of paired people (off by default; only while
+   the Inbox syncs Gauzy → Ever Works, and as each person chose).
 6. **Preview and start**: the dry run per phase (records on each side, pairs,
    what the sync creates, what is still to pair; phases this installation does
    not sync yet are greyed with the reason), then **Start**: the webhook is
@@ -68,6 +74,20 @@ the address the list of connected integrations opens) are in tabs:
 
 Only the selected organization's own mapping is shown; another organization's
 mapping is not.
+
+**Settings → Ever Works inbox** (`/pages/settings/ever-works-inbox`, "Send to
+Ever Works") is for every signed-in person with `INBOX_VIEW`, about their own
+account. A paired person's Gauzy Inbox items are also sent to their Ever Works
+inbox; the page has one switch per kind (notices, questions, approvals,
+mentions, assignments, emails of their mailboxes with sender and subject, other
+items; all on until they change it) and lists each organization of the tenant
+mapped to Ever Works with whether their items are sent there now and, if not,
+why (not paired, the mapping or its Inbox sync setting off, the Inbox direction,
+the connection inactive). The settings entry appears only once
+`GET /api/integration/ever-works/me/inbox-preferences` answered for the
+signed-in user; where the plugin is off (404) the page only says so. An item
+sent to Ever Works links back to `/#/pages/inbox?item=<id>` (the app's hash
+route), which opens it.
 
 The page names no Ever Works address of its own: every address it shows comes
 from the API's configuration or from what the admin typed.

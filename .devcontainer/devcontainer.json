@@ -1,0 +1,60 @@
+// Ever Gauzy development container: VS Code Dev Containers, GitHub Codespaces and other tools that read
+// devcontainer.json (https://containers.dev/implementors/json_reference/).
+//
+// After the container is created (`yarn bootstrap` runs once, it takes a while), start the API and the web UI with
+// `yarn start`; they use SQLite by default (see .env.local). For PostgreSQL, Redis, MinIO and the other services, run
+// `docker compose -f docker-compose.infra.yml up -d` inside the container.
+{
+	"name": "Ever Gauzy",
+
+	// Node 26 (the major pinned in .nvmrc) with Yarn 1.22, on Debian.
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:5-26-trixie",
+
+	"features": {
+		// Docker inside the container, so docker-compose.infra.yml's bind mounts resolve and its published ports
+		// (5432, 6379, 9000, ...) are reachable from the API on localhost.
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {}
+	},
+
+	// The monorepo build (Nx, Angular, the API) needs memory: smaller machines run out of it.
+	"hostRequirements": {
+		"cpus": 4,
+		"memory": "16gb",
+		"storage": "64gb"
+	},
+
+	"forwardPorts": [3000, 4200],
+	"portsAttributes": {
+		"3000": {
+			"label": "API",
+			"onAutoForward": "notify"
+		},
+		"4200": {
+			"label": "Web UI",
+			"onAutoForward": "openBrowser"
+		}
+	},
+
+	"postCreateCommand": {
+		"dependencies": "yarn bootstrap",
+		// In GitHub Codespaces, the API and web UI URLs the browser can reach (see codespaces-env.sh); nothing elsewhere.
+		"codespaces-urls": "echo '. \"${containerWorkspaceFolder}/.devcontainer/codespaces-env.sh\" \"${containerWorkspaceFolder}\"' | tee -a ~/.bashrc ~/.zshrc > /dev/null"
+	},
+
+	"customizations": {
+		"vscode": {
+			// The editor tooling this repository's formatting and lint rely on; .vscode/extensions.json still offers
+			// the rest of its recommendations.
+			"extensions": [
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"EditorConfig.EditorConfig",
+				"angular.ng-template",
+				"nrwl.angular-console",
+				"firsttris.vscode-jest-runner",
+				"stylelint.vscode-stylelint"
+			]
+		}
+	}
+}

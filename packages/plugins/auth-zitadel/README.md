@@ -176,6 +176,12 @@ check a back-channel logout token or a first-party token (all cached). None
 while the plugin is off or unconfigured, and none at start. Issuers must use
 https (http only on the local machine).
 
+With the Ever Platform connection plugin loaded (`EVER_CONNECT_ENABLED=true`)
+and Sign in with Ever ID enabled there, a sign-in whose ID token carries none of
+Ever Platform's `urn:ever:*` claims asks that plugin for Ever Platform's view of
+the identity (its issuer and subject only, Ever Platform's own issuer only). The
+sign-in waits at most 6 seconds and goes on without it.
+
 ## Data
 
 Four tables, created by the core migration listed in `MIGRATIONS.md`:
@@ -187,6 +193,12 @@ Four tables, created by the core migration listed in `MIGRATIONS.md`:
 
 Ever ID tokens are never stored. Deleting a Gauzy user deletes that user's
 links and session records with it (foreign keys with `ON DELETE CASCADE`).
+
+When a person asks Ever Platform to delete their data, the Ever Platform
+connection plugin asks this plugin (`EVER_ID_ACCOUNTS`) to remove the links of
+that person's Ever ID identities and to end the Gauzy sessions opened through
+them; the Gauzy users themselves are not changed here. The identities are named
+by `sha256(<issuer>#<subject>)` only.
 
 ## Turning it off
 

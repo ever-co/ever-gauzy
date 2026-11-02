@@ -19,6 +19,8 @@ export type TOrganizationScreenshotSetting = {
 	id?: string;
 	/** Minutes between screenshots. A `numeric` column, so Postgres hands it over as a string ("10") */
 	screenshotFrequency?: number | string | null;
+	/** Whether the organisation allows screen capture at all (issue #9872, see `screenshotCaptureAllowed`) */
+	allowScreenshotCapture?: boolean | null;
 };
 
 /**

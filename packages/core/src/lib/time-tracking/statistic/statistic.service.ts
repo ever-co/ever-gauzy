@@ -50,6 +50,7 @@ import { prepareSQLQuery as p } from './../../database/database.helper';
 import { RequestContext } from '../../core/context';
 import { TimeLog, TimeSlot } from './../../core/entities/internal';
 import { MultiORMEnum, getDateRangeFormat, getORMType } from './../../core/utils';
+import { withoutDummyImageHost } from '../../placeholder-image/placeholder-image-url';
 import { UserService } from '../../user/user.service';
 import { TypeOrmTimeSlotRepository } from '../../time-tracking/time-slot/repository/type-orm-time-slot.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -2788,15 +2789,16 @@ export class StatisticService {
 
 				const rows = await qb.orderBy('time_log.startedAt', 'DESC').limit(5);
 
+				// Raw rows skip the subscribers: a stored dummyimage.com image is replaced by the API's own placeholder here.
 				timeLogs = rows.map((row: any) => ({
 					id: row.id,
 					startedAt: row.startedAt,
 					duration: row.duration,
 					user: {
 						name: `${row.user_firstName || ''} ${row.user_lastName || ''}`.trim(),
-						imageUrl: row.user_imageUrl
+						imageUrl: withoutDummyImageHost(row.user_imageUrl)
 					},
-					project: { name: row.project_name, imageUrl: row.project_imageUrl },
+					project: { name: row.project_name, imageUrl: withoutDummyImageHost(row.project_imageUrl) },
 					employeeId: row.employee_id,
 					employee: { id: row.employee_id, kind: row.employee_kind }
 				}));

@@ -2,10 +2,13 @@ import {
 	ACCOUNT_DELETION_DEFAULT_TTL_MINUTES,
 	ACCOUNT_DELETION_MAX_TTL_MINUTES,
 	ACCOUNT_DELETION_MIN_TTL_MINUTES,
+	accountDeletionAddressLockKey,
+	accountDeletionEmailHashes,
 	accountDeletionTtlMinutes,
 	buildAccountDeletionLink,
 	generateAccountDeletionToken,
 	hashAccountDeletionEmail,
+	hashAccountDeletionIp,
 	hashAccountDeletionToken,
 	isWellFormedAccountDeletionToken,
 	maskAccountDeletionEmail
@@ -38,6 +41,61 @@ describe('account deletion token helpers', () => {
 
 	it('hashes addresses case- and whitespace-insensitively', () => {
 		expect(hashAccountDeletionEmail(' Jane@Example.COM ')).toBe(hashAccountDeletionEmail('jane@example.com'));
+	});
+
+	describe('address and client-address digests are keyed with the deployment secret', () => {
+		const sha256 = (value: string) => require('node:crypto').createHash('sha256').update(value, 'utf8').digest('hex');
+		const withKey = { ENCRYPTION_KEY: 'a-deployment-encryption-key-1', JWT_SECRET: 'a-deployment-jwt-secret-2' };
+		const jwtOnly = { JWT_SECRET: 'a-deployment-jwt-secret-2' };
+		const noKey = {};
+
+		beforeAll(() => jest.spyOn(console, 'warn').mockImplementation(() => undefined));
+		afterAll(() => jest.restoreAllMocks());
+
+		it('stores a keyed 64-hex digest of the address, never the unkeyed SHA-256 that a list of addresses matches', () => {
+			const digest = hashAccountDeletionEmail('jane@example.com', withKey);
+
+			expect(digest).toMatch(/^[0-9a-f]{64}$/);
+			expect(digest).not.toBe(sha256('jane@example.com'));
+			expect(hashAccountDeletionEmail(' Jane@Example.COM ', withKey)).toBe(digest);
+			// Another deployment's secret gives another digest.
+			expect(hashAccountDeletionEmail('jane@example.com', { ENCRYPTION_KEY: 'another-key' })).not.toBe(digest);
+		});
+
+		it('keys under JWT_SECRET when ENCRYPTION_KEY is not set, and falls back to the legacy digest with neither', () => {
+			expect(hashAccountDeletionEmail('jane@example.com', jwtOnly)).toMatch(/^[0-9a-f]{64}$/);
+			expect(hashAccountDeletionEmail('jane@example.com', jwtOnly)).not.toBe(sha256('jane@example.com'));
+			expect(hashAccountDeletionEmail('jane@example.com', noKey)).toBe(sha256('jane@example.com'));
+		});
+
+		it('ignores a secret published in the repository', () => {
+			expect(hashAccountDeletionEmail('jane@example.com', { JWT_SECRET: 'secretKey' })).toBe(sha256('jane@example.com'));
+			expect(hashAccountDeletionIp('203.0.113.7', { JWT_SECRET: 'secretKey' })).toBeNull();
+		});
+
+		it('looks a stored request up by every digest it may carry: keyed under either secret, or the legacy one', () => {
+			const hashes = accountDeletionEmailHashes('Jane@Example.com', withKey);
+
+			expect(hashes[0]).toBe(hashAccountDeletionEmail('jane@example.com', withKey));
+			expect(hashes).toContain(hashAccountDeletionEmail('jane@example.com', jwtOnly));
+			expect(hashes).toContain(sha256('jane@example.com'));
+			expect(new Set(hashes).size).toBe(hashes.length);
+			expect(accountDeletionEmailHashes('jane@example.com', noKey)).toEqual([sha256('jane@example.com')]);
+		});
+
+		it('names the address lock independently of the secret, so instances holding different ones still serialise', () => {
+			expect(accountDeletionAddressLockKey(' Jane@Example.com ')).toBe(sha256('jane@example.com'));
+			expect(accountDeletionAddressLockKey('jane@example.com')).not.toBe(hashAccountDeletionEmail('jane@example.com', withKey));
+		});
+
+		it('keys the client address, and records none rather than an unkeyed digest IPv4 can be enumerated from', () => {
+			const digest = hashAccountDeletionIp('203.0.113.7', withKey);
+
+			expect(digest).toMatch(/^[0-9a-f]{64}$/);
+			expect(digest).not.toBe(sha256('203.0.113.7'));
+			expect(hashAccountDeletionIp('203.0.113.7', noKey)).toBeNull();
+			expect(hashAccountDeletionIp(null, withKey)).toBeNull();
+		});
 	});
 
 	it('puts the token in the fragment of a plain URL', () => {

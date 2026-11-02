@@ -13,6 +13,7 @@ import { BrowserWindow, app, desktopCapturer, ipcMain, screen, systemPreferences
 import * as moment from 'moment';
 import * as _ from 'underscore';
 import { AppWindowManager } from './app-window-manager';
+import { ServerConfig } from './config/server-config';
 import { TrackingSleepInactivity } from './contexts';
 import {
 	DialogStopTimerLogoutConfirmation,
@@ -24,7 +25,8 @@ import NotificationDesktop from './desktop-notifier';
 import { DesktopOsInactivityHandler } from './desktop-os-inactivity-handler';
 import { DesktopPowerManager } from './desktop-power-manager';
 import { notifyScreenshot, takeshot } from './desktop-screenshot';
-import { LocalStore } from './desktop-store';
+import { DesktopServerFactory } from './desktop-server-factory';
+import { GAUZY_CLOUD_API_URL, LocalStore } from './desktop-store';
 import TimerHandler from './desktop-timer';
 import { UIError } from './error-handler';
 import { ActivityWatchEventAdapter, ActivityWatchEventManager, ActivityWatchEventTableList } from './integrations';
@@ -44,6 +46,8 @@ import {
 import { pluginListeners } from './plugin-system';
 import { AkitaStorageHandler } from './storage/akita-storage.handler';
 import { RemoteTrackingSleep } from './strategies';
+import { registerScreenshotSoundHandlers, removeScreenshotSoundHandlers } from './screenshot-sound';
+import { registerSoundSettingsHandlers, removeSoundSettingsHandlers } from './sound-settings';
 import { TranslateService } from './translation';
 import { ActivityWindow } from '@gauzy/desktop-activity';
 import { DesktopPermissionHandler } from './utilities/desktop-permission-handler';
@@ -687,6 +691,13 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		return process.platform === 'linux' && process.env.XDG_SESSION_TYPE === 'wayland';
 	});
 
+	// The time tracker links to the web app (#9517): the web UI this app serves, only while its UI server runs.
+	ipcMain.handle('GET_LOCAL_WEB_APP_URL', (): string | null =>
+		new ServerConfig().localUiUrl(!!DesktopServerFactory.getUiInstance()?.running)
+	);
+	// And to Gauzy Cloud's web app when the API in use is Gauzy Cloud's: its address is kept here, in the main process.
+	ipcMain.handle('GET_GAUZY_CLOUD_API_URL', (): string => GAUZY_CLOUD_API_URL);
+
 	ipcMain.handle('GET_ALL_DISPLAYS', () => {
 		return screen.getAllDisplays();
 	});
@@ -701,6 +712,11 @@ export function ipcMainHandler(store, startServer, knex, config, timeTrackerWind
 		}
 		return _cachedScreen;
 	});
+
+	// The custom screenshot sound of the settings page (#6715)
+	registerScreenshotSoundHandlers();
+	// The sound settings the time tracker reads (#7141)
+	registerSoundSettingsHandlers();
 
 	pluginListeners();
 }
@@ -1639,6 +1655,8 @@ export function removeTimerListener() {
 }
 
 export function removeAllHandlers() {
+	removeScreenshotSoundHandlers();
+	removeSoundSettingsHandlers();
 	const channels = [
 		'UPDATE_SYNCED_TIMER',
 		'UPDATE_SYNCED',
@@ -1664,6 +1682,8 @@ export function removeAllHandlers() {
 		'UPDATE_SCREENSHOT_SYNC_STATUS',
 		'EXPORT_AUDIT_LOGS',
 		'GET_IS_WAYLAND',
+		'GET_LOCAL_WEB_APP_URL',
+		'GET_GAUZY_CLOUD_API_URL',
 		'GET_ALL_DISPLAYS',
 		'GET_SCREEN_SOURCES'
 	];

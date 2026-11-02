@@ -1,81 +1,146 @@
 <!-- A task's own page, laid out as Jira's issue page: the work in the wide column, the facts in the side one. -->
 <ngx-record-view-page heading="TASKS_PAGE.HEADER" [backLink]="backLink" [state]="state" (retry)="load()">
 	@if (task) {
-		<ngx-favorite-toggle
-			recordPageActions
-			[entityType]="favoriteEntity"
-			[entityId]="task.id"
-			[entityName]="task.title"
-			size="small"
-			status="basic"
-			spacing="list"
-		></ngx-favorite-toggle>
+		<!-- The page's actions, on one line with its back button, as the project page's: the status, then Edit, the
+		     link and the star. On the Board the status sits with the filters instead. -->
+		<div recordPageActions class="task-page-actions">
+			@if (tab !== 'board') {
+				<ng-container *ngTemplateOutlet="statusMenu"></ng-container>
+			}
+			@if (canEdit) {
+				<button
+					nbButton
+					size="tiny"
+					status="primary"
+					type="button"
+					[attr.aria-label]="'TASKS_PAGE.EDIT_TASK' | translate"
+					(click)="edit()"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					<span class="task-page-edit-label">{{ 'TASKS_PAGE.EDIT_TASK' | translate }}</span>
+				</button>
+			}
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				type="button"
+				[nbTooltip]="'BUTTONS.COPY_LINK' | translate"
+				nbTooltipPlacement="top"
+				[attr.aria-label]="'BUTTONS.COPY_LINK' | translate"
+				(click)="copyLink()"
+			>
+				<nb-icon icon="link-2-outline"></nb-icon>
+			</button>
+			<ngx-favorite-toggle
+				[entityType]="favoriteEntity"
+				[entityId]="task.id"
+				[entityName]="task.title"
+				size="tiny"
+				status="basic"
+				appearance="ghost"
+				spacing="list"
+			></ngx-favorite-toggle>
+		</div>
 	}
 	@if (task) {
 		<div class="project-view-top">
-			<!-- Where it sits, what it is, and what can be done with it. -->
+			<!-- Where it sits and what it is. -->
 			<div class="project-view-headline">
-				<div class="project-view-header task-page-header">
+				<div class="project-view-header">
 					<!-- The task's own header, as the drawers show it: project and key, the title, and — when there is no
-					     status menu beside it — the status. -->
+					     status menu — the status. -->
 					<ga-task-view-header
 						class="task-page-heading"
 						[task]="task"
 						[status]="canEdit && statuses.length ? null : status"
-						[large]="true"
+						[projectLink]="canViewProject && task.project ? ['/pages/organization/projects/view', task.project.id] : null"
 					></ga-task-view-header>
-
-					<div class="task-page-actions">
-						<!-- The status, as Jira's status button, for those who may edit; the header shows it to the others. -->
-						@if (canEdit && statuses.length) {
-							<!-- A status the menu does not list still shows its name, as the placeholder. -->
-							<nb-select
-								class="task-status-select"
-								size="small"
-								status="basic"
-								[selected]="currentStatusId"
-								[placeholder]="status?.text"
-								[disabled]="savingStatus"
-								[attr.aria-label]="'TASK_VIEW.CHANGE_STATUS' | translate"
-								(selectedChange)="changeStatus($event)"
-							>
-								<nb-select-label>
-									<span class="task-status-dot" [style.background-color]="currentStatus?.color" aria-hidden="true"></span>
-									{{ currentStatus?.name || status?.text }}
-								</nb-select-label>
-								@for (option of statuses; track option.id) {
-									<nb-option [value]="option.id">
-										<span class="task-status-dot" [style.background-color]="option.color" aria-hidden="true"></span>
-										{{ option.name }}
-									</nb-option>
-								}
-							</nb-select>
-						}
-						@if (canEdit) {
-							<button nbButton outline size="tiny" status="basic" type="button" (click)="edit()">
-								<nb-icon icon="edit-outline"></nb-icon>
-								{{ 'TASKS_PAGE.EDIT_TASK' | translate }}
-							</button>
-						}
-						<button
-							nbButton
-							ghost
-							size="tiny"
-							status="basic"
-							type="button"
-							[nbTooltip]="'BUTTONS.COPY_LINK' | translate"
-							nbTooltipPlacement="top"
-							[attr.aria-label]="'BUTTONS.COPY_LINK' | translate"
-							(click)="copyLink()"
-						>
-							<nb-icon icon="link-2-outline"></nb-icon>
-						</button>
-					</div>
 				</div>
 			</div>
 
+			<!-- Tabs, as the project page's: the task itself, and its subtasks as a board. -->
+			<div class="tab-row project-page-tabs task-page-tabs">
+				<div class="tabs" role="tablist" [attr.aria-label]="task.title">
+					@for (item of tabs; track item.id) {
+						<button
+							type="button"
+							role="tab"
+							class="tab"
+							[id]="'task-view-tab-' + item.id"
+							[attr.aria-controls]="'task-view-pane-' + item.id"
+							[class.is-active]="tab === item.id"
+							[attr.aria-selected]="tab === item.id"
+							(click)="selectTab(item.id)"
+						>
+							<nb-icon [icon]="item.icon" aria-hidden="true"></nb-icon>
+							{{ item.label | translate }}
+							@if (item.id === 'board' && subtasks.length) {
+								<span class="title-count tab-count">{{ subtasks.length }}</span>
+							}
+						</button>
+					}
+				</div>
+			</div>
+
+			<!-- The Board loads when first opened, then stays loaded: a move still saving when the Overview opens
+			     still reaches its Subtasks panel. -->
+			@if (boardOpened) {
+				<div
+					class="project-page-pane task-page-wide"
+					role="tabpanel"
+					id="task-view-pane-board"
+					aria-labelledby="task-view-tab-board"
+					[hidden]="tab !== 'board'"
+				>
+					<!-- The task and its subtasks on one board, as Jira's. A card moved on it changes its task's status:
+					     the page reads the task again. -->
+					<ga-project-board
+						[parentId]="task.id"
+						[projectId]="task.projectId"
+						[organizationId]="organization?.id"
+						[tenantId]="organization?.tenantId"
+						[openTaskPage]="true"
+						emptyKey="TASK_VIEW.NO_SUBTASKS"
+						[reloadKey]="boardReloadKey"
+						[filterable]="true"
+						(taskMoved)="onBoardTaskMoved()"
+					>
+						<ng-container *ngTemplateOutlet="statusMenu"></ng-container>
+					</ga-project-board>
+				</div>
+			}
+
+			<!-- Activity loads each time it is opened: what changed on the task and its subtasks, and its comments. -->
+			@if (tab === 'activity') {
+				<div
+					class="project-page-pane task-page-wide"
+					role="tabpanel"
+					id="task-view-pane-activity"
+					aria-labelledby="task-view-tab-activity"
+				>
+					<ga-project-activity
+						[taskId]="task.id"
+						[taskTitle]="task.title"
+						[projectId]="task.projectId"
+						[subtasks]="subtasks"
+						[organizationId]="organization?.id"
+						[tenantId]="organization?.tenantId"
+						[openTaskPage]="true"
+						[reloadKey]="activityReloadKey"
+					></ga-project-activity>
+				</div>
+			}
+
 			<!-- The work: what it is, the time put into it day by day, what it breaks down into and what it is tied to. -->
-			<div class="project-view-col project-view-col--main">
+			<div
+				class="project-view-col project-view-col--main"
+				role="tabpanel"
+				id="task-view-pane-overview"
+				aria-labelledby="task-view-tab-overview"
+				[hidden]="tab !== 'overview'"
+			>
 				<ngx-record-view
 					class="task-description"
 					[record]="task"
@@ -195,7 +260,41 @@
 			</div>
 
 			<!-- The facts: its details, its time — tracked and entry by entry — and its stamps. -->
-			<div class="project-view-col project-view-col--side">
+			<div class="project-view-col project-view-col--side" [hidden]="tab !== 'overview'">
+				<!-- The project the task belongs to, opening the project's own page for those who may view it. -->
+				<section class="panel project-view-panel">
+					<header class="panel-header">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="folder-outline" aria-hidden="true"></nb-icon>
+							{{ 'TASK_VIEW.PROJECT' | translate }}
+						</h5>
+					</header>
+					<div class="panel-body panel-body--flush">
+						@if (task.project; as project) {
+							@if (canViewProject) {
+								<a class="task-project" [routerLink]="['/pages/organization/projects/view', project.id]">
+									<ng-container *ngTemplateOutlet="projectRow; context: { $implicit: project }"></ng-container>
+									<nb-icon
+										class="task-project-open"
+										icon="arrow-forward-outline"
+										[nbTooltip]="'TASK_VIEW.OPEN_PROJECT' | translate"
+										nbTooltipPlacement="top"
+										[attr.aria-label]="'TASK_VIEW.OPEN_PROJECT' | translate"
+									></nb-icon>
+								</a>
+							} @else {
+								<span class="task-project">
+									<ng-container *ngTemplateOutlet="projectRow; context: { $implicit: project }"></ng-container>
+								</span>
+							}
+						} @else {
+							<ng-container
+								*ngTemplateOutlet="empty; context: { $implicit: 'TASK_VIEW.NO_PROJECT', icon: 'folder-outline' }"
+							></ng-container>
+						}
+					</div>
+				</section>
+
 				<ngx-record-view [record]="task" [sections]="detailsSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
 
 				<!-- Time tracking, as Jira's: logged against the estimate, and what is left (or how far over). -->
@@ -342,6 +441,34 @@
 	}
 </ngx-record-view-page>
 
+<!-- The task's status, as Jira's status button, for those who may edit it; the header shows it to the others. A status
+     the menu does not list still shows its name, as the placeholder. -->
+<ng-template #statusMenu>
+	@if (canEdit && statuses.length) {
+		<nb-select
+			class="task-status-select"
+			size="small"
+			status="basic"
+			[style.--status-color]="currentStatus?.color || status?.color"
+			[selected]="currentStatusId"
+			[placeholder]="status?.text"
+			[optionsWidth]="224"
+			[disabled]="savingStatus"
+			[attr.aria-label]="'TASK_VIEW.CHANGE_STATUS' | translate"
+			(selectedChange)="changeStatus($event)"
+		>
+			<nb-select-label>
+				<span class="task-status-tag">{{ currentStatus?.name || status?.text }}</span>
+			</nb-select-label>
+			@for (option of statuses; track option.id) {
+				<nb-option class="task-status-option" [style.--status-color]="option.color" [value]="option.id">
+					<span class="task-status-tag">{{ option.name }}</span>
+				</nb-option>
+			}
+		</nb-select>
+	}
+</ng-template>
+
 <!-- A task row — check, key, title, status — opening the task's own page. -->
 <ng-template #taskRow let-row let-id="id">
 	<a class="task-row" [class.is-done]="row.done" [routerLink]="taskLink(id)">
@@ -358,6 +485,18 @@
 			<span [class]="'project-status tone-' + (status.tone || 'basic')">{{ status.text }}</span>
 		}
 	</a>
+</ng-template>
+
+<!-- A project's image (or a folder) and its name. -->
+<ng-template #projectRow let-project>
+	<span class="task-project-avatar" aria-hidden="true">
+		@if (project.imageUrl) {
+			<img [src]="project.imageUrl" alt="" />
+		} @else {
+			<nb-icon icon="folder-outline"></nb-icon>
+		}
+	</span>
+	<span class="task-project-name" [nbTooltip]="project.name" nbTooltipPlacement="top">{{ project.name }}</span>
 </ng-template>
 
 <ng-template #avatar let-person>

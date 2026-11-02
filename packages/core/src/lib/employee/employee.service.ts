@@ -57,6 +57,7 @@ import { EmployeeAgentProfile, Organization, Role, Tenant, User } from '../core/
 import { writeAgentProfile } from '../employee-agent-profile/employee-agent-profile.service';
 import { recountMembersOfEmployeeProjects } from '../organization-project/organization-project-members-count';
 import { defaultAgentEmail, findOneForUpdate, isAgentEmail, isEmployeeKind } from './agent-employee';
+import { withoutAssignedComments } from '../comment/assigned-comments';
 
 /**
  * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
@@ -79,15 +80,19 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * `Employee.description` is rendered with `[innerHTML]` on the PUBLIC organization page, so
 	 * every write path must be sanitized (see `sanitizeRichHtml`).
 	 *
+	 * The comments the employee is assigned (`assignedComments`) are never written here: a comment is assigned
+	 * through the comment API, where its record's policy decides (see `withoutAssignedComments`).
+	 *
 	 * @param entity - The employee data to persist.
 	 * @returns The persisted employee.
 	 */
 	public async create(entity: IPartialEntity<Employee>): Promise<Employee> {
-		const input = entity as { description?: string };
+		const employee = withoutAssignedComments(entity);
+		const input = employee as { description?: string };
 		if (typeof input.description === 'string') {
 			input.description = sanitizeRichHtml(input.description);
 		}
-		return await super.create(entity);
+		return await super.create(employee);
 	}
 
 	/**

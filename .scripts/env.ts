@@ -75,9 +75,10 @@ export type Env = Readonly<{
 
 	HUBSTAFF_REDIRECT_URL: string;
 
-	// Sign-in start URLs of the optional Ever ID and Keycloak sign-in plugins. Empty shows no button.
+	// Sign-in start URLs of the optional Ever ID, Keycloak and OpenID Connect sign-in plugins. Empty shows no button.
 	ZITADEL_AUTH_LINK: string;
 	KEYCLOAK_AUTH_LINK: string;
+	OIDC_AUTH_LINK: string;
 
 	DEFAULT_LATITUDE: number;
 	DEFAULT_LONGITUDE: number;
@@ -251,6 +252,7 @@ export const env: Env = cleanEnv(
 
 		ZITADEL_AUTH_LINK: str({ default: '' }),
 		KEYCLOAK_AUTH_LINK: str({ default: '' }),
+		OIDC_AUTH_LINK: str({ default: '' }),
 
 		DEFAULT_LATITUDE: num({ default: 42.6459136 }),
 		DEFAULT_LONGITUDE: num({ default: 23.3332736 }),

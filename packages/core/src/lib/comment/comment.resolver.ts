@@ -1,7 +1,7 @@
-import { NotFoundException, UseGuards } from '@nestjs/common';
+import { BadRequestException, NotFoundException, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, ID, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { ICommentCreateInput, ICommentUpdateInput, ID as Id, IPagination } from '@gauzy/contracts';
+import { BaseEntityEnum, ICommentCreateInput, ICommentUpdateInput, ID as Id, IPagination } from '@gauzy/contracts';
 import { FeatureFlag } from '@gauzy/common';
 import {
 	ConnectionFilter,
@@ -197,7 +197,7 @@ export class CommentResolver {
 	@Query('comment')
 	async comment(@Args('id', { type: () => ID }) id: Id): Promise<Comment | null> {
 		try {
-			return await this.commentService.findOneByIdString(id, {} as FindOptionsQueryDTO<Comment>);
+			return await this.commentService.findReadableById(id, {} as FindOptionsQueryDTO<Comment>);
 		} catch (error) {
 			if (error instanceof NotFoundException) {
 				return null;
@@ -233,9 +233,13 @@ export class CommentResolver {
 	 * `entity` and `actorType` — are the kernel's `BaseEntityEnum` and `ActorTypeEnum` values, and the
 	 * cast is where the schema's open string meets that vocabulary: the delivered route makes the same
 	 * reading through its DTO, which declares them as the entity's own members.
+	 *
+	 * The route's DTO also validates `entity` (`@IsEnum(BaseEntityEnum)`), so the field refuses a value that is
+	 * not exactly one of those, as the route does, before anything is dispatched.
 	 */
 	@Mutation('createComment')
 	async createComment(@Args('input') input: ICreateCommentInput): Promise<Comment> {
+		assertEntityType(input?.entity);
 		return await this.commandBus.execute(new CommentCreateCommand(input as unknown as ICommentCreateInput));
 	}
 
@@ -292,5 +296,20 @@ export class CommentResolver {
 	@Mutation('recoverComment')
 	async recoverComment(@Args('id', { type: () => ID }) id: Id): Promise<Comment> {
 		return await this.commentService.softRecover(id);
+	}
+}
+
+/** The record types a comment may be posted on: exactly the values of `BaseEntityEnum`. */
+const ENTITY_TYPES: ReadonlySet<string> = new Set(Object.values(BaseEntityEnum));
+
+/**
+ * Refuses a comment's `entity` that is not exactly a `BaseEntityEnum` value, the rule the REST route's DTO applies
+ * with `@IsEnum(BaseEntityEnum)`.
+ *
+ * @throws {BadRequestException} When `entity` is not one of those values.
+ */
+function assertEntityType(entity: unknown): void {
+	if (typeof entity !== 'string' || !ENTITY_TYPES.has(entity)) {
+		throw new BadRequestException(`entity must be one of the following values: ${[...ENTITY_TYPES].join(', ')}`);
 	}
 }

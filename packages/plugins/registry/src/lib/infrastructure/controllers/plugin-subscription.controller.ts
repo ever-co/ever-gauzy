@@ -262,6 +262,7 @@ export class PluginSubscriptionController {
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post(':id/upgrade')
 	async upgrade(
+		@Param('pluginId', ParseUUIDPipe) pluginId: string,
 		@Param('id', ParseUUIDPipe) id: string,
 		@Body() body: { planId: string }
 	): Promise<PluginSubscription> {
@@ -270,7 +271,7 @@ export class PluginSubscriptionController {
 		const userId = RequestContext.currentUserId();
 
 		return await this.commandBus.execute(
-			new UpgradePluginSubscriptionCommand(id, body.planId, tenantId, organizationId, userId)
+			new UpgradePluginSubscriptionCommand(id, body.planId, tenantId, organizationId, userId, pluginId)
 		);
 	}
 
@@ -286,6 +287,7 @@ export class PluginSubscriptionController {
 	@Permissions(PermissionsEnum.PLUGIN_CONFIGURE)
 	@Post(':id/downgrade')
 	async downgrade(
+		@Param('pluginId', ParseUUIDPipe) pluginId: string,
 		@Param('id', ParseUUIDPipe) id: string,
 		@Body() body: { planId: string }
 	): Promise<PluginSubscription> {
@@ -294,7 +296,7 @@ export class PluginSubscriptionController {
 		const userId = RequestContext.currentUserId();
 
 		return await this.commandBus.execute(
-			new DowngradePluginSubscriptionCommand(id, body.planId, tenantId, organizationId, userId)
+			new DowngradePluginSubscriptionCommand(id, body.planId, tenantId, organizationId, userId, pluginId)
 		);
 	}
 

@@ -1,0 +1,41 @@
+:host {
+  display: block;
+}
+
+.server-host-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .detect-button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+.message {
+  margin: 0.25rem 0 0;
+}
+
+.detected-addresses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  margin-top: 0.25rem;
+
+  .detected-address {
+    text-transform: none;
+  }
+
+  .interface-name {
+    margin-left: 0.25rem;
+    color: var(--text-hint-color);
+    font-weight: normal;
+  }
+}

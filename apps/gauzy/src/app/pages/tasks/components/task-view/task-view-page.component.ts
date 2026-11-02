@@ -70,6 +70,11 @@ export const HOURS_DAYS = 14;
 /** Days the recent time entries are read over. */
 export const ENTRIES_DAYS = 30;
 
+/** The page's tabs, as the project page's; the open one is in the URL (`?tab=`). */
+export type TaskViewTab = 'overview' | 'board' | 'activity';
+
+const TABS: TaskViewTab[] = ['overview', 'board', 'activity'];
+
 /** One subtask, as the Subtasks panel lists it. */
 export interface ISubtaskRow {
 	id: string;
@@ -92,9 +97,11 @@ export interface ISubtaskCount {
  * sidebar opens, and where the task drawer's "expand to full width" icon leads. The URL is the task's —
  * bookmark it, share it, reload it.
  *
- * Laid out as Jira's issue page: a breadcrumb, the title and the actions — the status, Edit and Copy link —
- * across the top; the work in the wide column — the description, the hours per day as Hubstaff charts them,
- * the subtasks and the linked issues; and the facts in the side column — the details, the time tracking with
+ * Laid out as Jira's issue page: the actions — the status (with the filters, on the Board), Edit, Copy link and
+ * the star — across the top beside the back button, then the breadcrumb and the title; the work in the wide
+ * column — the description, the hours
+ * per day as Hubstaff charts them, the subtasks and the linked issues; and the facts in the side column — the
+ * details, the time tracking with
  * who worked most and the recent time entries, then the stamps.
  *
  * The page belongs to the organization selected in the header, like the task lists: a task of another
@@ -123,6 +130,25 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	readonly entriesDays = ENTRIES_DAYS;
 	/** The list a task belongs to, for the page's back button. */
 	readonly backLink = '/pages/tasks/dashboard';
+	readonly tabs: { id: TaskViewTab; label: string; icon: string }[] = [
+		{ id: 'overview', label: 'PROJECT_VIEW.TABS.OVERVIEW', icon: 'home-outline' },
+		{ id: 'board', label: 'PROJECT_VIEW.TABS.BOARD', icon: 'grid-outline' },
+		{ id: 'activity', label: 'PROJECT_VIEW.TABS.ACTIVITY', icon: 'list-outline' }
+	];
+	tab: TaskViewTab = 'overview';
+	/**
+	 * The Board — the subtasks as the project board — loads when first opened, then stays mounted behind the
+	 * Overview: a move still saving when the user leaves it must still reach the Subtasks panel when it lands.
+	 */
+	boardOpened = false;
+	/**
+	 * Bumped after a change made from the header — a status move, an edit — so the Board, which shows the task's own
+	 * card, reads again. A move made on the Board itself does not bump it: reading the board again would drop the
+	 * other cards still saving.
+	 */
+	boardReloadKey = 0;
+	/** Bumped after any change made here — from the header or on the Board — so an open Activity tab reads again. */
+	activityReloadKey = 0;
 
 	task: ITask = null;
 	status: IRecordViewStatus = null;
@@ -153,6 +179,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	savingStatus = false;
 
 	readonly canEdit: boolean;
+	/**
+	 * Whether the project panel links to the project's own page, which has its own guard. Follows the
+	 * permissions, which may load after the page is built.
+	 */
+	canViewProject = false;
 
 	private taskId: string = null;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
@@ -195,6 +226,21 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				this.organization = organization;
 				void this.load();
 			});
+		this.store.userRolePermissions$
+			.pipe(
+				map(() => this.store.hasAnyPermission(PermissionsEnum.ALL_ORG_VIEW, PermissionsEnum.ORG_PROJECT_VIEW)),
+				distinctUntilChanged(),
+				untilDestroyed(this)
+			)
+			.subscribe((canViewProject) => (this.canViewProject = canViewProject));
+		// The open tab follows the URL, so a tab can be bookmarked, shared and reached with Back.
+		this.route.queryParamMap
+			.pipe(
+				map((params) => params.get('tab') as TaskViewTab),
+				distinctUntilChanged(),
+				untilDestroyed(this)
+			)
+			.subscribe((tab) => this.openTab(TABS.includes(tab) ? tab : 'overview'));
 		// The estimate is spelled out in the viewer's language.
 		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => this.show());
 	}
@@ -210,6 +256,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		// Nothing of the previous task (or organization) stays on screen — nor reachable by the star. Its figures
 		// and its project's statuses go too: the menu stays hidden until this task's own statuses arrive.
 		this.task = null;
+		// Another task's board is not read behind the Overview until its own tab is opened.
+		this.boardOpened = this.tab === 'board';
 		this.tracking = loading(null);
 		this.workers = [];
 		this.statuses = [];
@@ -266,6 +314,40 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 
 	/* ── Actions ── */
 
+	/** Opens a tab, keeping it in the URL without a new history entry per click. */
+	selectTab(tab: TaskViewTab): void {
+		this.openTab(tab);
+		void this.router.navigate([], {
+			relativeTo: this.route,
+			queryParams: { tab: tab === 'overview' ? null : tab },
+			queryParamsHandling: 'merge',
+			replaceUrl: true
+		});
+	}
+
+	private openTab(tab: TaskViewTab): void {
+		this.tab = tab;
+		if (tab === 'board') this.boardOpened = true;
+	}
+
+	/**
+	 * A card moved on the Board — the task's own or a subtask's: the task is read again, so the header's status and
+	 * the Subtasks panel show the new one, then an open Activity tab reads again — it may have been opened while the
+	 * move was still saving.
+	 */
+	async onBoardTaskMoved(): Promise<void> {
+		if (!this.task) return;
+		const taskId = this.task.id;
+		await this.refresh(taskId);
+		if (this.task?.id === taskId) this.activityReloadKey++;
+	}
+
+	/** After a change made from the header: the Board and the Activity read again. */
+	private reloadPanes(): void {
+		this.boardReloadKey++;
+		this.activityReloadKey++;
+	}
+
 	/**
 	 * Moves the task to another status — the status alone, as the project board does, so nothing else read
 	 * with the page can undo a newer edit — then reads the task again.
@@ -284,6 +366,8 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				})
 			);
 			await this.refresh(taskId);
+			// After the read: the server writes the move's log entry as the update lands.
+			this.reloadPanes();
 		} catch (error) {
 			this.toastrService.danger(error);
 		} finally {
@@ -324,15 +408,20 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				})
 			);
 			await this.refresh(taskId);
+			this.reloadPanes();
 		} catch (error) {
 			this.toastrService.danger(error);
 		}
 	}
 
-	/** Copies the page's address, to paste in a chat or a ticket. */
+	/** Copies the page's address, with the open tab, to paste in a chat or a ticket. */
 	async copyLink(): Promise<void> {
 		if (!this.task) return;
-		const path = this.router.serializeUrl(this.router.createUrlTree(['/pages/tasks/view', this.task.id]));
+		const path = this.router.serializeUrl(
+			this.router.createUrlTree(['/pages/tasks/view', this.task.id], {
+				queryParams: this.tab === 'overview' ? {} : { tab: this.tab }
+			})
+		);
 		const { origin, pathname, hash } = window.location;
 		// The app routes by the hash (`/#/pages/…`); the link keeps to it.
 		const url = hash.startsWith('#/') ? `${origin}${pathname}#${path}` : `${origin}${path}`;
@@ -518,14 +607,16 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			hash: (value) => this.hashNumberPipe.transform(value)
 		});
 		// The description is the work, beside the subtasks; the details and the stamps are the facts. The
-		// status is the header's button, as in Jira, so the details leave it out.
+		// status is the header's button, as in Jira, and the project has a panel of its own, so the details leave
+		// both out.
+		const ownedElsewhere = new Set(['TASKS_PAGE.TASKS_STATUS', 'TASKS_PAGE.TASKS_PROJECT']);
 		this.mainSections = sections.filter((section) => section.variant === 'plain');
 		this.metaSections = sections.filter((section) => section.variant === 'meta');
 		this.detailsSections = sections
 			.filter((section) => section.variant !== 'plain' && section.variant !== 'meta')
 			.map((section) => ({
 				...section,
-				fields: section.fields.filter((field) => field.label !== 'TASKS_PAGE.TASKS_STATUS')
+				fields: section.fields.filter((field) => !ownedElsewhere.has(field.label))
 			}));
 	}
 
