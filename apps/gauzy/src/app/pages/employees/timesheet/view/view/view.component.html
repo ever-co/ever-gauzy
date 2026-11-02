@@ -81,21 +81,16 @@
                     </ng-template>
                   </ng-template>
                   <div class="col-4 project-name">
-                    @if (log?.task) {
-                      <span>
-                        {{ log?.project?.name }}
-                      </span>
+                    @if (log?.project) {
+                      <ngx-project [rowData]="log"></ngx-project>
                     } @else {
                       <span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
                     }
                     <div class="mt-2 small">
                       @if (log?.task) {
-                        <span>
-                          <strong
-                            >{{ 'TIMESHEET.TODO' | translate }}
-                            :
-                          </strong>
-                          {{ log?.task?.title }}
+                        <span [nbTooltip]="$safeNavigationMigration(log?.task?.title)">
+                          <strong>{{ 'TIMESHEET.TODO' | translate }}:</strong>
+                          {{ $safeNavigationMigration(log?.task?.title) | truncate: 40 }}
                         </span>
                       } @else {
                         <span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
@@ -123,12 +118,12 @@
                   </div>
                   <div class="col">
                     <span class="start-timer">
-                      {{ log.startedAt | utcToLocal | timeFormat : true }}
+                      {{ log.startedAt | utcToLocal | timeFormat }}
                     </span>
                     -
                     @if (!log.isRunning) {
                       <span class="end-timer">
-                        {{ log.stoppedAt | utcToLocal | timeFormat : true }}
+                        {{ log.stoppedAt | utcToLocal | timeFormat }}
                       </span>
                     } @else {
                       <span class="running-timer">
