@@ -92,8 +92,10 @@
 
             @for (day of days; track day.date.getTime()) {
               <div class="day-row" role="row">
-                <span class="day-date" role="cell">{{ day.date | date: 'EEEE, MMM d, y' }}</span>
-                <span class="day-total numeric" role="cell">{{ day.duration | durationFormat }}</span>
+                <!-- The date spans the first four columns and the total sits under
+                     Duration, the fifth; the ARIA positions say the same. -->
+                <span class="day-date" role="cell" aria-colspan="4">{{ day.date | date: 'EEEE, MMM d, y' }}</span>
+                <span class="day-total numeric" role="cell" aria-colindex="5">{{ day.duration | durationFormat }}</span>
               </div>
 
               @for (log of day.logs; track log.id) {
