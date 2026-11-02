@@ -27,7 +27,11 @@
       <!-- What an approver reads first: whose time it is, how much, and where
            the timesheet stands. -->
       <div class="summary">
-        <div class="summary-item summary-employee">
+        <!-- Only for users who may see other employees, as on the Approvals tab. -->
+        <div
+          class="summary-item summary-employee"
+          *ngxPermissionsOnly="[PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]"
+        >
           <span class="summary-label">{{ 'TIMESHEET.EMPLOYEE' | translate }}</span>
           @if (employee) {
             <ngx-avatar
@@ -134,7 +138,9 @@
                       <nb-icon
                         class="lock-icon"
                         icon="lock-outline"
+                        role="img"
                         [nbTooltip]="'TIMESHEET.IMMUTABLE_TIME' | translate"
+                        [attr.aria-label]="'TIMESHEET.IMMUTABLE_TIME' | translate"
                       ></nb-icon>
                     } @else {
                       <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME">
@@ -192,8 +198,10 @@
   </nb-card>
 </ng-template>
 <ng-template #reviewActions>
+  <!-- Nothing to approve or deny when the timesheet could not be read. -->
+  @if (timesheet) {
   <div class="review-actions">
-    @if (timesheet?.status !== TimesheetStatus.DENIED) {
+    @if (timesheet.status !== TimesheetStatus.DENIED) {
       <button
         type="button"
         nbButton
@@ -207,7 +215,7 @@
         {{ 'TIMESHEET.DENY' | translate }}
       </button>
     }
-    @if (timesheet?.status !== TimesheetStatus.APPROVED) {
+    @if (timesheet.status !== TimesheetStatus.APPROVED) {
       <button
         type="button"
         nbButton
@@ -221,4 +229,5 @@
       </button>
     }
   </div>
+  }
 </ng-template>
