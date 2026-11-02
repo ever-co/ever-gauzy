@@ -253,6 +253,25 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     padding: 0.25rem;
   }
 
+  // Edit and Delete show on the row under the pointer, or under keyboard focus.
+  // Screens without hover keep them in view.
+  @media (hover: hover) {
+    .log-row .row-action {
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .log-row:hover .row-action,
+    .log-row:focus-within .row-action {
+      opacity: 1;
+    }
+  }
+
+  .lock-icon {
+    font-size: 1rem;
+    color: nb-theme(text-hint-color);
+  }
+
   .empty-state {
     flex: 1 1 auto;
 

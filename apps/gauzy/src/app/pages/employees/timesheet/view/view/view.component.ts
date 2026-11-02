@@ -83,6 +83,11 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 			.subscribe();
 	}
 
+	/** An approved timesheet's logs can no longer be edited or deleted. */
+	get isLocked(): boolean {
+		return this.timesheet?.status === TimesheetStatus.APPROVED;
+	}
+
 	async getLogs() {
 		if (!this.timesheet) {
 			return;

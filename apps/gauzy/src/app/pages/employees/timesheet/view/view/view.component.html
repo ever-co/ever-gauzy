@@ -127,42 +127,50 @@
                   {{ log?.description || '—' }}
                 </div>
                 <div role="cell" class="cell-actions">
-                  <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME">
-                    <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MODIFY_TIME">
-                      <button
-                        type="button"
-                        nbButton
-                        ghost
-                        size="tiny"
-                        class="row-action"
-                        [disabled]="log.isRunning"
-                        [nbTooltip]="'TIMESHEET.EDIT' | translate"
-                        [attr.aria-label]="'TIMESHEET.EDIT' | translate"
-                        (click)="openEditDialog(log)"
-                      >
-                        <nb-icon icon="edit-2-outline"></nb-icon>
-                      </button>
+                  @if (isLocked) {
+                    <nb-icon
+                      class="lock-icon"
+                      icon="lock-outline"
+                      [nbTooltip]="'TIMESHEET.IMMUTABLE_TIME' | translate"
+                    ></nb-icon>
+                  } @else {
+                    <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_MODIFY_TIME">
+                      <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_MODIFY_TIME">
+                        <button
+                          type="button"
+                          nbButton
+                          ghost
+                          size="tiny"
+                          class="row-action"
+                          [disabled]="log.isRunning"
+                          [nbTooltip]="'TIMESHEET.EDIT' | translate"
+                          [attr.aria-label]="'TIMESHEET.EDIT' | translate"
+                          (click)="openEditDialog(log)"
+                        >
+                          <nb-icon icon="edit-2-outline"></nb-icon>
+                        </button>
+                      </ng-template>
                     </ng-template>
-                  </ng-template>
-                  <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
-                    <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
-                      <button
-                        type="button"
-                        nbButton
-                        ghost
-                        size="tiny"
-                        class="row-action"
-                        [disabled]="log.isRunning"
-                        ngxConfirmDialog
-                        [message]="'TIMESHEET.DELETE_TIMELOG' | translate"
-                        (confirm)="deleteTimeLog(log)"
-                        [nbTooltip]="'TIMESHEET.DELETE' | translate"
-                        [attr.aria-label]="'TIMESHEET.DELETE' | translate"
-                      >
-                        <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
-                      </button>
+                    <ng-template [ngxPermissionsOnly]="PermissionsEnum.ALLOW_DELETE_TIME">
+                      <ng-template ngxTimeTrackingAuthorized [permission]="PermissionsEnum.ALLOW_DELETE_TIME">
+                        <button
+                          type="button"
+                          nbButton
+                          ghost
+                          size="tiny"
+                          class="row-action"
+                          [disabled]="log.isRunning"
+                          ngxConfirmDialog
+                          [message]="'TIMESHEET.DELETE_TIMELOG' | translate"
+                          (confirm)="deleteTimeLog(log)"
+                          [nbTooltip]="'TIMESHEET.DELETE' | translate"
+                          [attr.aria-label]="'TIMESHEET.DELETE' | translate"
+                        >
+                          <nb-icon status="danger" icon="trash-2-outline"></nb-icon>
+                        </button>
+                      </ng-template>
                     </ng-template>
-                  </ng-template>
+                  }
                 </div>
               </div>
             }
