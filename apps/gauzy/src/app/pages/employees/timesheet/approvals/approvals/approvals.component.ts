@@ -8,7 +8,7 @@ import {
 	TimesheetStatus
 } from '@gauzy/contracts';
 import { NbMenuItem, NbMenuService } from '@nebular/theme';
-import { debounceTime, filter, map, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
@@ -76,7 +76,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	}
 
 	ngOnInit() {
-		this.showEmployee = this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		this._applyEmployeePermission();
 		this._applyTranslationOnChange();
 		this.subject$
 			.pipe(
@@ -265,6 +265,26 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	toggleCheckbox(checked: boolean, timesheet: ITimesheet) {
 		timesheet['checked'] = checked;
 		this.allChecked = this.visibleTimesheets.length > 0 && this.visibleTimesheets.every((t: any) => t.checked);
+	}
+
+	/**
+	 * Shows the Employee column, and reads the employee with the timesheets, as
+	 * soon as the user may see other employees. The permissions can land after
+	 * this page opens (they are loaded without being awaited at start-up), so
+	 * they are followed rather than read once; when the answer changes, the
+	 * timesheets are read again with or without the employee.
+	 */
+	private _applyEmployeePermission() {
+		this.store.userRolePermissions$
+			.pipe(
+				map(() => this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)),
+				distinctUntilChanged(),
+				filter((showEmployee: boolean) => showEmployee !== this.showEmployee),
+				tap((showEmployee: boolean) => (this.showEmployee = showEmployee)),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
