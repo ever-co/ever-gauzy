@@ -19,6 +19,49 @@
       </div>
     </nb-card-header>
     <nb-card-body [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
+      <!-- What an approver reads first: whose time it is, how much, and where
+           the timesheet stands. -->
+      <div class="summary">
+        <div class="summary-item summary-employee">
+          <span class="summary-label">{{ 'TIMESHEET.EMPLOYEE' | translate }}</span>
+          @if (employee) {
+            <ngx-avatar
+              class="report-table"
+              [id]="employee?.id"
+              [name]="employee?.user?.name"
+              [src]="employee?.user?.imageUrl"
+              [employee]="employee"
+            ></ngx-avatar>
+          } @else {
+            <span class="summary-value">—</span>
+          }
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'TIMESHEET.TOTAL_TIME' | translate }}</span>
+          <span class="summary-value numeric">{{ totalDuration | durationFormat }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'TIMESHEET.VIEW_TIME_LOGS' | translate }}</span>
+          <span class="summary-value numeric">{{ logCount }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'TIMESHEET.PROJECTS_WORKED' | translate }}</span>
+          <span class="summary-value numeric">{{ projectCount }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'TIMESHEET.SUBMITTED_AT' | translate }}</span>
+          <span class="summary-value">
+            {{ timesheet?.submittedAt ? (timesheet.submittedAt | dateFormat) : '—' }}
+          </span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'TIMESHEET.STATUS' | translate }}</span>
+          <span class="status-chip" [attr.data-status]="timesheet?.status">
+            {{ timesheet?.status | titlecase }}
+          </span>
+        </div>
+      </div>
+
       @if (days.length > 0) {
         <div class="log-table" role="table">
           <!-- One header for the whole table; it stays in view while the days

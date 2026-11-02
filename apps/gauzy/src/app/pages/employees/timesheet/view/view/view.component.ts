@@ -3,6 +3,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/
 import { ActivatedRoute } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import {
+	IEmployee,
 	IGetTimeLogInput,
 	ITimeLog,
 	ITimesheet,
@@ -42,6 +43,12 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 
 	/** The timesheet's logs by day, earliest day first. */
 	days: ITimesheetDay[] = [];
+	/** Time logged across the whole timesheet, in seconds. */
+	totalDuration = 0;
+	logCount = 0;
+	projectCount = 0;
+	/** A timesheet is one employee's: read off its logs, as the timesheet comes without it. */
+	employee: IEmployee;
 
 	loading = false;
 
@@ -129,7 +136,7 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 
 	/**
 	 * Groups the logs by the local day they started on and totals the time on
-	 * each day.
+	 * each day and on the whole timesheet.
 	 *
 	 * @param logs The timesheet's logs
 	 */
@@ -146,6 +153,11 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 				duration: this.sumDuration(dayLogs)
 			}))
 			.value();
+
+		this.totalDuration = this.sumDuration(sorted);
+		this.logCount = sorted.length;
+		this.projectCount = new Set(sorted.map((log) => log.projectId).filter(Boolean)).size;
+		this.employee = sorted.find((log) => !!log.employee)?.employee ?? this.timesheet?.employee;
 	}
 
 	private sumDuration(logs: ITimeLog[]): number {
