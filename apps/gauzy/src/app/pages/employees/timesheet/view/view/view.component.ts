@@ -7,6 +7,7 @@ import {
 	IGetTimeLogInput,
 	ITimeLog,
 	ITimesheet,
+	IUpdateTimesheetStatusInput,
 	TimesheetStatus,
 	PermissionsEnum
 } from '@gauzy/contracts';
@@ -17,7 +18,7 @@ import { tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { TimesheetService } from '@gauzy/ui-core/core';
+import { Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from '@gauzy/ui-core/shared';
 
 /** One day of the timesheet: its logs, earliest first, and the time they add up to. */
@@ -51,11 +52,15 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 	employee: IEmployee;
 
 	loading = false;
+	/** True while an Approve or Deny is being saved. */
+	updatingStatus = false;
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
 		private readonly activatedRoute: ActivatedRoute,
 		private readonly nbDialogService: NbDialogService,
+		private readonly store: Store,
+		private readonly toastrService: ToastrService,
 		public readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -99,6 +104,37 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 			console.error('Error while retrieving logs', error);
 		} finally {
 			this.loading = false;
+		}
+	}
+
+	/**
+	 * Approves or denies the timesheet, then shows its new status.
+	 *
+	 * @param status APPROVED or DENIED
+	 */
+	async updateStatus(status: TimesheetStatus) {
+		if (!this.timesheet || this.updatingStatus) {
+			return;
+		}
+		const { id, organizationId } = this.timesheet;
+		const request: IUpdateTimesheetStatusInput = {
+			ids: [id],
+			status,
+			organizationId,
+			tenantId: this.store.user?.tenantId
+		};
+		this.updatingStatus = true;
+		try {
+			const updated = await this.timesheetService.updateStatus(request);
+			const timesheet = (updated || []).find((item: ITimesheet) => item.id === id);
+			this.timesheet = { ...this.timesheet, ...(timesheet || { status }) };
+			this.toastrService.success(
+				status === TimesheetStatus.APPROVED ? 'TIMESHEET.APPROVE_SUCCESS' : 'TIMESHEET.DENIED_SUCCESS'
+			);
+		} catch (error) {
+			this.toastrService.danger(error);
+		} finally {
+			this.updatingStatus = false;
 		}
 	}
 

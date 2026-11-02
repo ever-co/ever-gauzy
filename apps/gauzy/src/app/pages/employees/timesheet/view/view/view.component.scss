@@ -27,6 +27,21 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     display: flex;
   }
 
+  .gauzy-button-action {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .review-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    button {
+      margin: 0;
+    }
+  }
+
   // The body is the page's one scroller. The shared card sheet gives it
   // `overflow: unset` and a viewport-sized height, so a long timesheet ran out
   // below the card; here it takes the card's remaining room instead, and

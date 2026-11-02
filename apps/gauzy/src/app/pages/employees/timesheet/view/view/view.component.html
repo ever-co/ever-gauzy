@@ -6,7 +6,8 @@
       <div class="title-row">
         <ngx-back-navigation></ngx-back-navigation>
         <h4>
-          <!-- `ngx-header-title` places the breadcrumb trail under the heading. -->
+          <!-- `ngx-header-title` places the breadcrumb trail under the heading
+               and lets the review actions share the title's line. -->
           <ngx-header-title>
             {{ 'MENU.TIMESHEETS' | translate }}
             <ngx-date-range-title
@@ -16,6 +17,10 @@
             ></ngx-date-range-title>
           </ngx-header-title>
         </h4>
+      </div>
+      <div class="gauzy-button-action">
+        <ngx-gauzy-button-action [hasLayoutSelector]="false" [buttonTemplateVisible]="reviewActions">
+        </ngx-gauzy-button-action>
       </div>
     </nb-card-header>
     <nb-card-body [nbSpinner]="loading" nbSpinnerSize="giant" nbSpinnerStatus="primary">
@@ -173,4 +178,35 @@
       }
     </nb-card-body>
   </nb-card>
+</ng-template>
+<ng-template #reviewActions>
+  <div class="review-actions">
+    @if (timesheet?.status !== TimesheetStatus.DENIED) {
+      <button
+        type="button"
+        nbButton
+        status="basic"
+        size="small"
+        class="action warning"
+        [disabled]="updatingStatus"
+        (click)="updateStatus(TimesheetStatus.DENIED)"
+      >
+        <nb-icon icon="close-outline"></nb-icon>
+        {{ 'TIMESHEET.DENY' | translate }}
+      </button>
+    }
+    @if (timesheet?.status !== TimesheetStatus.APPROVED) {
+      <button
+        type="button"
+        nbButton
+        status="success"
+        size="small"
+        [disabled]="updatingStatus"
+        (click)="updateStatus(TimesheetStatus.APPROVED)"
+      >
+        <nb-icon icon="checkmark-circle-2-outline"></nb-icon>
+        {{ 'TIMESHEET.APPROVE' | translate }}
+      </button>
+    }
+  </div>
 </ng-template>
