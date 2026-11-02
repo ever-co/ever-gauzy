@@ -121,10 +121,12 @@
 	<div class="actions">
 		@if (isCheckboxSelected()) {
 			<button
+				type="button"
 				outline
 				nbButton
 				status="primary"
 				class="action"
+				size="small"
 				[title]="'TIMESHEET.BULK_ACTION' | translate"
 				[nbContextMenu]="contextMenus"
 				nbContextMenuTag="timesheet-bulk-action"
@@ -136,6 +138,7 @@
 		<!-- Row-selection actions -->
 		@else if (selectedItem) {
 			<button
+				type="button"
 				nbButton
 				status="basic"
 				class="action secondary"
@@ -143,11 +146,12 @@
 				[disabled]="disableButton"
 				(click)="redirectToView(selectedItem)"
 			>
-				<nb-icon icon="edit-outline"></nb-icon>
+				<nb-icon icon="eye-outline"></nb-icon>
 				{{ 'TIMESHEET.VIEW' | translate }}
 			</button>
 			@if (!selectedItem.submittedAt) {
 				<button
+					type="button"
 					nbButton
 					status="basic"
 					class="action primary"
@@ -160,6 +164,7 @@
 				</button>
 			} @else {
 				<button
+					type="button"
 					nbButton
 					status="basic"
 					class="action primary"
@@ -173,6 +178,7 @@
 			}
 			@if (selectedItem.status != TimesheetStatus.APPROVED) {
 				<button
+					type="button"
 					nbButton
 					status="basic"
 					class="action success"
@@ -186,6 +192,7 @@
 			}
 			@if (selectedItem.status != TimesheetStatus.DENIED) {
 				<button
+					type="button"
 					nbButton
 					status="basic"
 					class="action warning"
