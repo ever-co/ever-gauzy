@@ -8,6 +8,15 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
   minmax(0, 1.8fr) 4.5rem;
 
 :host {
+  // Three levels of text instead of bright white everywhere, which glared on
+  // the dark themes and left nothing standing out. Strong is kept for what an
+  // approver scans for (project, duration, the summary figures); the row body
+  // is the theme text softened a little; details take the theme's muted face.
+  // All three keep well above 4.5:1 on the card in the dark and light themes.
+  --ts-text-strong: var(--gauzy-text-color-1);
+  --ts-text: color-mix(in srgb, var(--gauzy-text-color-1) 82%, transparent);
+  --ts-text-muted: var(--gauzy-text-color-2);
+
   // The page frame (`styles/_overrides.scss`) makes this host a flex item of
   // the content column with a definite height, so the card fills it down to
   // the footer at any screen size, where a `100vh` estimate of the chrome
@@ -81,6 +90,7 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     gap: 1rem;
     font-size: 12px;
     line-height: 16px;
+    color: var(--ts-text);
 
     > * {
       flex: none;
@@ -123,7 +133,7 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
 
   .summary-label {
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: nb-theme(gauzy-text-color-2);
@@ -133,6 +143,7 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     font-size: 14px;
     font-weight: 600;
     line-height: 20px;
+    color: var(--ts-text-strong);
   }
 
   .status-chip {
@@ -140,8 +151,10 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     padding: 2px 8px;
     border-radius: var(--border-radius);
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 16px;
+    // Draft, and any status without a colour of its own, in the muted face.
+    color: var(--ts-text-muted);
     background-color: var(--gauzy-sidebar-background-3);
 
     &[data-status='APPROVED'] {
@@ -195,8 +208,8 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     top: 0;
     z-index: 1;
     padding-block: 0.625rem;
-    font-weight: 600;
-    color: nb-theme(gauzy-text-color-2);
+    font-weight: 500;
+    color: var(--ts-text-muted);
     border-radius: var(--border-radius) var(--border-radius) 0 0;
     background:
       linear-gradient(var(--gauzy-card-4), var(--gauzy-card-4)),
@@ -233,7 +246,8 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-weight: 600;
+    font-weight: 500;
+    color: var(--ts-text-strong);
     min-width: 0;
   }
 
@@ -251,7 +265,7 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: nb-theme(gauzy-text-color-2);
+    color: var(--ts-text-muted);
   }
 
   // Under the project name, past its dot.
@@ -266,13 +280,20 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     padding: 2px 8px;
     border-radius: var(--border-radius);
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     white-space: nowrap;
+    color: var(--ts-text-muted);
     background-color: var(--gauzy-sidebar-background-3);
   }
 
   .time-span {
     white-space: nowrap;
+    color: var(--ts-text-muted);
+  }
+
+  .log-row .duration {
+    font-weight: 500;
+    color: var(--ts-text-strong);
   }
 
   // Duration is right-aligned, so without this Notes started a single column
