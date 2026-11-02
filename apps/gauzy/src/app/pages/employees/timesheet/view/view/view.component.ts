@@ -13,12 +13,12 @@ import {
 } from '@gauzy/contracts';
 import { chain } from 'underscore';
 import * as moment from 'moment';
-import { filter, Subject } from 'rxjs';
+import { filter, firstValueFrom, Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
+import { EmployeesService, Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 import { EditTimeLogModalComponent } from '@gauzy/ui-core/shared';
 
 /** One day of the timesheet: its logs, earliest first, and the time they add up to. */
@@ -33,6 +33,7 @@ interface ITimesheetDay {
 	selector: 'ngx-timesheet-view',
 	templateUrl: './view.component.html',
 	styleUrls: ['./view.component.scss'],
+	providers: [EmployeesService],
 	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
@@ -61,6 +62,7 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 		private readonly nbDialogService: NbDialogService,
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,
+		private readonly employeesService: EmployeesService,
 		public readonly translateService: TranslateService
 	) {
 		super(translateService);
@@ -105,10 +107,28 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 				'employee.user'
 			]);
 			this.setLogs(logs);
+			await this.loadEmployeeIfMissing();
 		} catch (error) {
 			console.error('Error while retrieving logs', error);
 		} finally {
 			this.loading = false;
+		}
+	}
+
+	/**
+	 * The employee is read off the logs, as the timesheet is fetched without it,
+	 * so a timesheet with no logs had none to show. It is then read on its own,
+	 * for users who may see other employees: the only ones the summary shows it to.
+	 */
+	private async loadEmployeeIfMissing() {
+		const employeeId = this.timesheet?.employeeId;
+		if (this.employee || !employeeId || !this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return;
+		}
+		try {
+			this.employee = await firstValueFrom(this.employeesService.getEmployeeById(employeeId, ['user']));
+		} catch (error) {
+			console.error('Error while retrieving the timesheet employee', error);
 		}
 	}
 
