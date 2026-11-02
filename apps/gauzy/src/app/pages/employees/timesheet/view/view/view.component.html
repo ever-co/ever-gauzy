@@ -80,7 +80,7 @@
               <div role="columnheader">{{ 'TIMESHEET.SOURCE' | translate }}</div>
               <div role="columnheader">{{ 'TIMESHEET.TIME_SPAN' | translate }}</div>
               <div role="columnheader" class="numeric">{{ 'TIMESHEET.DURATION' | translate }}</div>
-              <div role="columnheader">{{ 'TIMESHEET.NOTES' | translate }}</div>
+              <div role="columnheader" class="col-notes">{{ 'TIMESHEET.NOTES' | translate }}</div>
               <div role="columnheader" class="cell-actions">
                 <span class="sr-only">{{ 'TIMESHEET.ACTION' | translate }}</span>
               </div>
@@ -126,7 +126,7 @@
                   <div role="cell" class="numeric duration">
                     {{ log.duration | durationFormat }}
                   </div>
-                  <div role="cell" class="notes" [nbTooltip]="log?.description" [nbTooltipDisabled]="!log?.description">
+                  <div role="cell" class="notes col-notes" [nbTooltip]="log?.description" [nbTooltipDisabled]="!log?.description">
                     {{ log?.description || '—' }}
                   </div>
                   <div role="cell" class="cell-actions">

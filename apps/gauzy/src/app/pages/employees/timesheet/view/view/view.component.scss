@@ -260,6 +260,13 @@ $log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr
     white-space: nowrap;
   }
 
+  // Duration is right-aligned, so without this Notes started a single column
+  // gap after its digits and the two read as one.
+  .col-notes {
+    @include nb-ltr(padding-left, 1rem);
+    @include nb-rtl(padding-right, 1rem);
+  }
+
   .running {
     color: var(--color-success-default);
   }
