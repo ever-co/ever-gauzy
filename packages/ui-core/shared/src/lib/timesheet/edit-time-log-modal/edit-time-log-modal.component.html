@@ -63,12 +63,16 @@
             <!-- A callout in the form's own flow, not a nested card: the dialog's
                  card width reached the nested card too, which ran it past the
                  dialog's right edge. -->
-            <div class="span-4 overlap-alert" role="alert">
-              <div class="overlap-title">
-                <nb-icon icon="alert-triangle-outline" aria-hidden="true"></nb-icon>
-                {{ 'TIMESHEET.TIME_OVERLAPS' | translate }}
+            <div class="span-4 overlap-alert">
+              <!-- Only the short warning is announced; the entries below are read
+                   in turn, not pushed at the user each time the overlaps refresh. -->
+              <div role="alert">
+                <div class="overlap-title">
+                  <nb-icon icon="alert-triangle-outline" aria-hidden="true"></nb-icon>
+                  {{ 'TIMESHEET.TIME_OVERLAPS' | translate }}
+                </div>
+                <p class="overlap-message">{{ 'TIMESHEET.OVERLAP_MESSAGE' | translate }}</p>
               </div>
-              <p class="overlap-message">{{ 'TIMESHEET.OVERLAP_MESSAGE' | translate }}</p>
               <div class="overlap-list" role="table">
                 <div class="overlap-row overlap-head" role="row">
                   <span role="columnheader">{{ 'TIMESHEET.PROJECT' | translate }} / {{ 'TIMESHEET.TODO' | translate }}</span>
