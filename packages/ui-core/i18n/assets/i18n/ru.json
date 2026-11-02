@@ -6274,6 +6274,7 @@
 		"MONTHLY": "Ежемесячно",
 		"CALENDAR": "Календарь",
 		"APPROVALS": "Утверждения",
+		"ALL": "Все",
 		"APPROVE_SUCCESS": "Сроки успешно утверждены",
 		"DENIED_SUCCESS": "Таблица времени успешно отклонена",
 		"SUBMIT_SUCCESS": "Таблица времени успешно отправлена",
@@ -7687,6 +7688,7 @@
 		"SUBTASKS": "Подзадачи",
 		"SUBTASKS_DONE": "Выполнено {{ done }} из {{ total }}",
 		"NO_SUBTASKS": "Нет подзадач",
+		"ADD_SUBTASK": "Добавить подзадачу",
 		"LINKED_ISSUES": "Связанные задачи",
 		"NO_LINKED_ISSUES": "Нет связанных задач",
 		"LINKS": {

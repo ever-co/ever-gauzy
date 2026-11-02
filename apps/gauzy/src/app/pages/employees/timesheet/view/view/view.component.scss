@@ -1,112 +1,351 @@
 @use 'themes' as *;
+@use '@shared/_pg-card';
 
-// This page renders the same day/log rows as Daily, Weekly and Timesheet
-// Approvals. It does not `@forward` their chain here, but it does not need to:
-// the component's `styleUrls` already loads `daily.component.scss`, which
-// forwards weekly and calendar. So `.content`, `.selected` and
-// `.custom-header-container` are all styled on this page — the markup simply
-// was not using them.
-//
-// What this file is for is the handful of places where this page's structure
-// differs from Daily's and the shared rules land wrong. Those overrides are
-// nested under `.custom-card-body` so they out-rank the forwarded chain, whose
-// own selectors (`nb-card-body .custom-body`) are more specific than a bare
-// `:host .custom-body` and would otherwise win no matter what order they load
-// in.
+// One grid for the header, the day rows and the log rows, so every column lines
+// up down the whole page: Project / To-do, Log type, Source, Time span,
+// Duration, Notes, and the row actions.
+$log-columns: minmax(0, 2.4fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 1.5fr) minmax(0, 0.8fr)
+  minmax(0, 1.8fr) 4.5rem;
+
 :host {
-    nb-card {
-        height: calc(100vh - 13rem);
+  // Three levels of text instead of bright white everywhere, which glared on
+  // the dark themes and left nothing standing out. Strong is kept for what an
+  // approver scans for (project, duration, the summary figures); the row body
+  // is the theme text softened a little; details take the theme's muted face.
+  // All three keep at least 4.5:1 on the card in the dark and light themes.
+  --ts-text-strong: var(--gauzy-text-color-1);
+  --ts-text: color-mix(in srgb, var(--gauzy-text-color-1) 82%, transparent);
+  // The muted face is the theme's own, blended a fifth of the way toward the
+  // main text: on the older light themes `gauzy-text-color-2` alone (#7e7e8f)
+  // comes to about 3.9:1 on white, under AA for 12px text.
+  --ts-text-muted: color-mix(in srgb, var(--gauzy-text-color-2) 80%, var(--gauzy-text-color-1));
 
-        ::ng-deep {
-            .transition-container span {
-                background: unset;
-            }
-        }
+  // The page frame (`styles/_overrides.scss`) makes this host a flex item of
+  // the content column with a definite height, so the card fills it down to
+  // the footer at any screen size, where a `100vh` estimate of the chrome
+  // above left a band of empty page under the card.
+  min-height: 0;
+
+  nb-card.timesheet-card {
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+  }
+
+  // Page title and breadcrumb at 12px, as in the timesheet tabs' header (see
+  // `layout.component.scss`, which this page is routed outside of).
+  nb-card > nb-card-header {
+    --gauzy-page-title-font-size: 12px;
+
+    ::ng-deep .ga-breadcrumb-item {
+      font-size: 12px;
+    }
+  }
+
+  // The heading and its back arrow share a line.
+  .title-row {
+    display: flex;
+  }
+
+  // The date range follows the page name on the title's own line, at the
+  // title's size, instead of the block of its own the shared component gives
+  // it. Its muted colour still sets it apart from the name.
+  ngx-date-range-title {
+    display: inline;
+    margin: 0;
+    @include nb-ltr(margin-left, 0.375rem);
+    @include nb-rtl(margin-right, 0.375rem);
+
+    ::ng-deep span {
+      font-size: inherit;
+      line-height: inherit;
+    }
+  }
+
+  .gauzy-button-action {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .review-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    button {
+      margin: 0;
+    }
+  }
+
+  // The body takes the card's remaining room. The shared card sheet gives it
+  // `overflow: unset` and a viewport-sized height, so a long timesheet ran out
+  // below the card; `min-height: 0` lets it shrink to the card instead. Scoped
+  // to the card's class to out-rank that sheet's `nb-card nb-card-body`.
+  //
+  // The summary keeps its height and the table takes the rest, scrolling on
+  // its own, so the summary never scrolls out of view. The body itself only
+  // scrolls on a screen too short for the summary and a few rows.
+  nb-card.timesheet-card > nb-card-body {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 0;
+    overflow: auto;
+    gap: 1rem;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--ts-text);
+
+    > * {
+      flex: none;
     }
 
-    .custom-card-body {
-        overflow: auto;
-        background-color: var(--gauzy-card-2);
+    > .log-scroll,
+    > .empty-state {
+      flex: 1 1 auto;
+      min-height: 12rem;
+    }
+  }
 
-        // Column labels above each day's rows — same muted strip as Daily/Weekly.
-        .custom-header {
-            font-size: 12px;
-            font-weight: 600;
-            line-height: 15px;
-            letter-spacing: 0em;
-            text-align: left;
-            color: nb-theme(gauzy-text-color-2);
-            background: var(--gauzy-card-4);
-            border-radius: nb-theme(border-radius);
-            padding: 10px 10px 10px 12px;
-            flex-wrap: nowrap;
-        }
+  .log-scroll {
+    overflow: auto;
+    border-radius: var(--border-radius);
+  }
 
-        // Daily and Weekly split this in two: `.custom-body` is the scroll
-        // container and `.content` inside it is the surface the rows sit on.
-        // This page has no scroll container of its own — the card body above is
-        // already scrolling, and one `.custom-body` is rendered per DAY, so
-        // making each of them scroll would put a second scrollbar inside the
-        // page's own. That leaves `.custom-body` playing the `.content` part,
-        // so it carries the panel's background and its 12px text inset; without
-        // them the rows sat transparent on the card and started 12px to the
-        // left of the header labels above them.
-        //
-        // No right-hand gutter either: that exists on Daily/Weekly to clear
-        // their scrollbar, and there is no scrollbar here to clear.
-        .custom-body {
-            overflow: visible;
-            height: auto;
-            background-color: var(--gauzy-card-3);
-            border-radius: var(--border-radius);
-            margin-top: 6px;
-            @include nb-ltr(padding-left, 12px);
-            @include nb-rtl(padding-right, 12px);
+  .numeric {
+    font-variant-numeric: tabular-nums;
+  }
 
-            // Out-ranks Bootstrap's `.border-bottom` utility, which is `!important`.
-            .border-bottom {
-                border-bottom: 1px solid var(--gauzy-border-default-color) !important;
-            }
+  // ---- Summary --------------------------------------------------------------
 
-            // Daily and Weekly drop the divider under the row that is marked
-            // selected, so the marker bar reads as one block. That rule is not
-            // `!important`, so it would lose to the one above; restate it here.
-            .selected.border-bottom {
-                border-bottom: none !important;
-            }
-        }
+  .summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.75rem 2.5rem;
+    padding: 0.875rem 1rem;
+    background-color: var(--gauzy-card-3);
+    border-radius: var(--border-radius);
+  }
+
+  .summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    min-width: 0;
+  }
+
+  .summary-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: nb-theme(gauzy-text-color-2);
+  }
+
+  .summary-value {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    color: var(--ts-text-strong);
+  }
+
+  .status-chip {
+    width: fit-content;
+    padding: 2px 8px;
+    border-radius: var(--border-radius);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 16px;
+    // Draft, and any status without a colour of its own, in the muted face.
+    color: var(--ts-text-muted);
+    background-color: var(--gauzy-sidebar-background-3);
+
+    &[data-status='APPROVED'] {
+      color: var(--color-success-default);
+      background-color: var(--color-success-transparent-default);
     }
 
-    // The heading and its back arrow share a line.
-    .title-row {
-        display: flex;
+    &[data-status='DENIED'] {
+      color: var(--color-danger-default);
+      background-color: var(--color-danger-transparent-default);
     }
 
-    // Holds the header strip's first column open so its labels line up with the
-    // rows' checkbox column below.
-    .checkbox-spacer {
-        visibility: hidden;
+    &[data-status='PENDING'],
+    &[data-status='IN REVIEW'] {
+      color: var(--color-primary-default);
+      background-color: var(--color-primary-transparent-default);
+    }
+  }
+
+  // ---- Log table ------------------------------------------------------------
+
+  .log-table {
+    min-width: 860px;
+    background-color: var(--gauzy-card-3);
+    border-radius: var(--border-radius);
+  }
+
+  .log-row,
+  .day-row {
+    display: grid;
+    grid-template-columns: $log-columns;
+    column-gap: 1rem;
+    align-items: center;
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid var(--gauzy-border-default-color);
+  }
+
+  .log-row:last-child {
+    border-bottom: none;
+  }
+
+  .log-row:not(.log-head):hover {
+    background-color: var(--gauzy-sidebar-background-3);
+  }
+
+  // Stays at the top of the body while the days scroll under it. Every colour
+  // behind it is translucent, so it paints the stack it is seen against — its
+  // own `card-4` over the card's `card-2` over the layout — as one opaque fill.
+  .log-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding-block: 0.625rem;
+    font-weight: 500;
+    color: var(--ts-text-muted);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    background:
+      linear-gradient(var(--gauzy-card-4), var(--gauzy-card-4)),
+      linear-gradient(var(--gauzy-card-2), var(--gauzy-card-2)),
+      var(--layout-background-color);
+  }
+
+  // The day's date across the first four columns, its total under Duration.
+  .day-row {
+    padding-block: 0.5rem;
+    font-weight: 600;
+    background-color: var(--gauzy-card-2);
+
+    .day-date {
+      grid-column: 1 / 5;
     }
 
-    .project-name {
-        flex: 0 0 20%;
-        max-width: 20%;
+    .day-total {
+      grid-column: 5;
+      text-align: end;
+    }
+  }
+
+  // Durations right-aligned, so their digits line up down the column.
+  .log-table .numeric {
+    text-align: end;
+  }
+
+  .cell-project {
+    min-width: 0;
+  }
+
+  .project-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: var(--ts-text-strong);
+    min-width: 0;
+  }
+
+  .project-dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-primary-default);
+  }
+
+  .task-title,
+  .notes {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ts-text-muted);
+  }
+
+  // Under the project name, past its dot.
+  .task-title {
+    margin-top: 2px;
+    @include nb-ltr(padding-left, calc(8px + 0.5rem));
+    @include nb-rtl(padding-right, calc(8px + 0.5rem));
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--border-radius);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--ts-text-muted);
+    background-color: var(--gauzy-sidebar-background-3);
+  }
+
+  .time-span {
+    white-space: nowrap;
+    color: var(--ts-text-muted);
+  }
+
+  .log-row .duration {
+    font-weight: 500;
+    color: var(--ts-text-strong);
+  }
+
+  // Duration is right-aligned, so without this Notes started a single column
+  // gap after its digits and the two read as one.
+  .col-notes {
+    @include nb-ltr(padding-left, 1rem);
+    @include nb-rtl(padding-right, 1rem);
+  }
+
+  .running {
+    color: var(--color-success-default);
+  }
+
+  .cell-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .row-action {
+    padding: 0.25rem;
+  }
+
+  // Edit and Delete show on the row under the pointer, or under keyboard focus.
+  // Screens without hover keep them in view.
+  @media (hover: hover) {
+    .log-row .row-action {
+      opacity: 0;
+      transition: opacity 0.15s ease;
     }
 
-    // The log-type chip ("Manual" / "Tracked"), same pill as on Daily.
-    .log {
-        width: fit-content;
+    .log-row:hover .row-action,
+    .log-row:focus-within .row-action {
+      opacity: 1;
+    }
+  }
+
+  .lock-icon {
+    font-size: 1rem;
+    color: nb-theme(text-hint-color);
+  }
+
+  .empty-state {
+    ngx-no-data-message ::ng-deep {
+      h5,
+      p {
         font-size: 12px;
-        font-weight: 600;
-        line-height: 15px;
-        letter-spacing: 0em;
-        text-align: left;
-        padding: 3px 8px;
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        border-radius: nb-theme(border-radius);
-        background: var(--gauzy-sidebar-background-3);
+      }
     }
+  }
 }

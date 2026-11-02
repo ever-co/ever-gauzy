@@ -6256,6 +6256,7 @@
 		"MONTHLY": "Mensual",
 		"CALENDAR": "Calendario",
 		"APPROVALS": "Aprobaciones.",
+		"ALL": "Todos",
 		"APPROVE_SUCCESS": "Hoja de horas aprobada exitosamente.",
 		"DENIED_SUCCESS": "Hoja de tiempo rechazada exitosamente.",
 		"SUBMIT_SUCCESS": "Hoja de horas enviada exitosamente",
@@ -7673,6 +7674,7 @@
 		"SUBTASKS": "Subtareas",
 		"SUBTASKS_DONE": "{{ done }} de {{ total }} hechas",
 		"NO_SUBTASKS": "Sin subtareas",
+		"ADD_SUBTASK": "Añadir subtarea",
 		"LINKED_ISSUES": "Tareas vinculadas",
 		"NO_LINKED_ISSUES": "Sin tareas vinculadas",
 		"LINKS": {

@@ -6867,6 +6867,7 @@
 		"MONTHLY": "Monthly",
 		"CALENDAR": "Calendar",
 		"APPROVALS": "Approvals",
+		"ALL": "All",
 		"APPROVE_SUCCESS": "Timesheet Successfully Approved",
 		"DENIED_SUCCESS": "Timesheet Successfully Denied",
 		"SUBMIT_SUCCESS": "Timesheet Successfully Submitted",
@@ -8883,6 +8884,7 @@
 		"SUBTASKS": "Subtasks",
 		"SUBTASKS_DONE": "{{ done }} of {{ total }} done",
 		"NO_SUBTASKS": "No subtasks",
+		"ADD_SUBTASK": "Add subtask",
 		"LINKED_ISSUES": "Linked issues",
 		"NO_LINKED_ISSUES": "No linked issues",
 		"LINKS": {

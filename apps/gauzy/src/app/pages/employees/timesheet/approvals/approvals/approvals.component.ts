@@ -8,13 +8,28 @@ import {
 	TimesheetStatus
 } from '@gauzy/contracts';
 import { NbMenuItem, NbMenuService } from '@nebular/theme';
-import { debounceTime, filter, map, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty } from '@gauzy/ui-core/common';
 import { DateRangePickerBuilderService, Store, TimesheetService, ToastrService } from '@gauzy/ui-core/core';
 import { BaseSelectorFilterComponent, GauzyFiltersComponent, TimeZoneService } from '@gauzy/ui-core/shared';
+
+/** One choice of the status filter above the list, with how many timesheets it holds. */
+interface IStatusFilterOption {
+	status: TimesheetStatus | null;
+	count: number;
+}
+
+/** The order the statuses are offered in: the ones waiting on a decision first. */
+const STATUS_ORDER: TimesheetStatus[] = [
+	TimesheetStatus.PENDING,
+	TimesheetStatus.IN_REVIEW,
+	TimesheetStatus.APPROVED,
+	TimesheetStatus.DENIED,
+	TimesheetStatus.DRAFT
+];
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -30,17 +45,25 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 
 	loading: boolean = false;
 	allChecked: boolean = false;
-	disableButton: boolean = true;
+	/** True while a status change or a submit is being saved. */
+	saving: boolean = false;
+
+	/** The status the list is narrowed to; null shows every timesheet. */
+	statusFilter: TimesheetStatus | null = null;
+	/** All, then each status that has timesheets in the period. */
+	statusOptions: IStatusFilterOption[] = [];
+
+	/** The employee is read, and its column shown, only for users who may see other employees. */
+	showEmployee: boolean = false;
+
+	/** Numbers each read of the timesheets, so only the latest one's answer is shown. */
+	private _fetchId = 0;
 
 	TimesheetStatus = TimesheetStatus;
+	PermissionsEnum = PermissionsEnum;
 
 	@ViewChild(GauzyFiltersComponent) gauzyFiltersComponent: GauzyFiltersComponent;
 	datePickerConfig$: Observable<any> = this.dateRangePickerBuilderService.datePickerConfig$;
-
-	selectedTimesheet: {
-		data: ITimesheet;
-		isSelected: boolean;
-	};
 
 	constructor(
 		private readonly timesheetService: TimesheetService,
@@ -56,11 +79,11 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	}
 
 	ngOnInit() {
+		this._applyEmployeePermission();
 		this._applyTranslationOnChange();
 		this.subject$
 			.pipe(
 				debounceTime(500),
-				tap(() => this._clearItem()),
 				tap(() => this.getTimeSheets()),
 				tap(() => (this.allChecked = false)),
 				untilDestroyed(this)
@@ -81,25 +104,57 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 		this._createContextMenus();
 	}
 
+	/** The timesheets the status filter lets through. */
+	get visibleTimesheets(): ITimesheet[] {
+		return this.statusFilter
+			? this.timesheets.filter((timesheet: ITimesheet) => timesheet.status === this.statusFilter)
+			: this.timesheets;
+	}
+
+	/** Time logged across the timesheets in view, in seconds. */
+	get visibleDuration(): number {
+		return this.visibleTimesheets.reduce((total: number, timesheet: ITimesheet) => total + (timesheet.duration || 0), 0);
+	}
+
+	/**
+	 * Reads the timesheets of the period. A read still in flight when a newer
+	 * one starts (the permissions landing mid-read, say) is dropped when it
+	 * answers, so an answer fetched without the employee cannot replace one
+	 * fetched with it.
+	 */
 	async getTimeSheets() {
 		if (!this.organization) {
 			return;
 		}
+		const fetchId = ++this._fetchId;
 		this.loading = true;
 		try {
-			this.timesheets = await this.timesheetService.getTimeSheets({
+			const timesheets = await this.timesheetService.getTimeSheets({
 				...this.getFilterRequest(this.request),
-				relations: [
-					...(this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)
-						? ['employee', 'employee.user']
-						: [])
-				]
+				relations: [...(this.showEmployee ? ['employee', 'employee.user'] : [])]
 			});
+			if (fetchId === this._fetchId) {
+				this.timesheets = timesheets;
+			}
 		} catch (error) {
 			console.log('Error while getting timesheets for selected date range');
 		} finally {
-			this.loading = false;
+			if (fetchId === this._fetchId) {
+				this._buildStatusOptions();
+				this.loading = false;
+			}
 		}
+	}
+
+	/**
+	 * Narrows the list to one status, or shows every timesheet again. Checked
+	 * rows are cleared, so a bulk action never reaches a row out of view.
+	 *
+	 * @param status The status to show, or null for all of them
+	 */
+	setStatusFilter(status: TimesheetStatus | null) {
+		this.statusFilter = status;
+		this.checkedAll(false);
 	}
 
 	/**
@@ -110,7 +165,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	 * @returns
 	 */
 	updateStatus(timesheetIds: string | string[], status: TimesheetStatus) {
-		if (!this.organization || isEmpty(timesheetIds)) {
+		if (!this.organization || isEmpty(timesheetIds) || this.saving) {
 			return;
 		}
 		const { id: organizationId } = this.organization;
@@ -121,6 +176,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 			organizationId,
 			tenantId
 		};
+		this.saving = true;
 		this.timesheetService
 			.updateStatus(request)
 			.then(() => {
@@ -131,12 +187,13 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 				}
 			})
 			.finally(() => {
+				this.saving = false;
 				this.subject$.next(true);
 			});
 	}
 
 	submitTimesheet(timesheetIds: string | string[], status: 'submit' | 'unsubmit') {
-		if (!this.organization || isEmpty(timesheetIds)) {
+		if (!this.organization || isEmpty(timesheetIds) || this.saving) {
 			return;
 		}
 		const { id: organizationId } = this.organization;
@@ -147,6 +204,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 			organizationId,
 			tenantId
 		};
+		this.saving = true;
 		this.timesheetService
 			.submitTimesheet(request)
 			.then(() => {
@@ -157,6 +215,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 				}
 			})
 			.finally(() => {
+				this.saving = false;
 				this.subject$.next(true);
 			});
 	}
@@ -167,7 +226,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	 * @param status
 	 */
 	bulkAction(status: TimesheetStatus) {
-		const timeSheetIds = this.timesheets
+		const timeSheetIds = this.visibleTimesheets
 			.filter((timesheet: ITimesheet) => timesheet['checked'])
 			.map((timesheet: ITimesheet) => timesheet.id);
 		if (status === TimesheetStatus.APPROVED) {
@@ -198,7 +257,8 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	 */
 	checkedAll(checked: boolean) {
 		this.allChecked = checked;
-		this.timesheets.forEach((timesheet: any) => (timesheet.checked = checked));
+		this.timesheets.forEach((timesheet: any) => (timesheet.checked = false));
+		this.visibleTimesheets.forEach((timesheet: any) => (timesheet.checked = checked));
 	}
 
 	/**
@@ -207,7 +267,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	 * @returns
 	 */
 	isIndeterminate() {
-		const c1 = this.timesheets.filter((t: any) => t.checked).length > 0;
+		const c1 = this.visibleTimesheets.filter((t: any) => t.checked).length > 0;
 		return c1 && !this.allChecked;
 	}
 
@@ -219,7 +279,27 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	 */
 	toggleCheckbox(checked: boolean, timesheet: ITimesheet) {
 		timesheet['checked'] = checked;
-		this.allChecked = this.timesheets.every((t: any) => t.checked);
+		this.allChecked = this.visibleTimesheets.length > 0 && this.visibleTimesheets.every((t: any) => t.checked);
+	}
+
+	/**
+	 * Shows the Employee column, and reads the employee with the timesheets, as
+	 * soon as the user may see other employees. The permissions can land after
+	 * this page opens (they are loaded without being awaited at start-up), so
+	 * they are followed rather than read once; when the answer changes, the
+	 * timesheets are read again with or without the employee.
+	 */
+	private _applyEmployeePermission() {
+		this.store.userRolePermissions$
+			.pipe(
+				map(() => this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)),
+				distinctUntilChanged(),
+				filter((showEmployee: boolean) => showEmployee !== this.showEmployee),
+				tap((showEmployee: boolean) => (this.showEmployee = showEmployee)),
+				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -250,87 +330,22 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 		];
 	}
 
-	public statusMapper = (timesheet: ITimesheet) => {
-		let badgeClass: string;
-		const status = timesheet.status;
-		if (status) {
-			switch (status) {
-				case TimesheetStatus.APPROVED:
-					badgeClass = 'success';
-					break;
-				case TimesheetStatus.DENIED:
-					badgeClass = 'danger';
-					break;
-				case TimesheetStatus.PENDING:
-					badgeClass = 'primary';
-					break;
-				case TimesheetStatus.DRAFT:
-					badgeClass = 'warning';
-					break;
-				default:
-					badgeClass = 'primary';
-					break;
-			}
-			return {
-				text: status,
-				class: badgeClass
-			};
-		}
-	};
-
-	selectTimesheet({ isSelected, data }) {
-		this.disableButton = !isSelected;
-		this.selectedTimesheet = {
-			isSelected: isSelected,
-			data: isSelected ? data : null
-		};
-	}
-
-	/*
-	 * Clear selected item
-	 */
-	private _clearItem() {
-		this.selectTimesheet({
-			isSelected: false,
-			data: null
-		});
-	}
-
 	/**
-	 * User Select Single Row
-	 *
-	 * @param timesheet
+	 * Counts the timesheets of each status. A status the period has none of is
+	 * left out, unless it is the one the list is narrowed to.
 	 */
-	userRowSelect(timesheet: ITimesheet) {
-		// if row is already selected, deselect it.
-		if (timesheet['isSelected']) {
-			timesheet['isSelected'] = false;
-			this.selectTimesheet({
-				isSelected: timesheet['isSelected'],
-				data: null
-			});
-		} else {
-			// find the row which was previously selected.
-			const isRowSelected = this.timesheets.find((item: ITimesheet) => item['isSelected'] === true);
-			if (!!isRowSelected) {
-				// if row found successfully, mark that row as deselected
-				isRowSelected['isSelected'] = false;
-			}
-			// mark new row as selected
-			timesheet['isSelected'] = true;
-			this.selectTimesheet({
-				isSelected: timesheet['isSelected'],
-				data: timesheet
-			});
-		}
-	}
-
-	/**
-	 * Checks if at least one timesheet in the list is selected.
-	 * @returns True if a timesheet is selected, otherwise false.
-	 */
-	isRowSelected(): boolean {
-		return !!this.timesheets.find((timesheet: ITimesheet) => timesheet['isSelected'] === true);
+	private _buildStatusOptions() {
+		const counts = new Map<TimesheetStatus, number>();
+		this.timesheets.forEach((timesheet: ITimesheet) =>
+			counts.set(timesheet.status, (counts.get(timesheet.status) || 0) + 1)
+		);
+		this.statusOptions = [
+			{ status: null, count: this.timesheets.length },
+			...STATUS_ORDER.filter((status) => counts.has(status) || status === this.statusFilter).map((status) => ({
+				status,
+				count: counts.get(status) || 0
+			}))
+		];
 	}
 
 	/**
@@ -338,7 +353,7 @@ export class ApprovalsComponent extends BaseSelectorFilterComponent implements A
 	 * @returns True if a timesheet's checkbox is selected, otherwise false.
 	 */
 	isCheckboxSelected(): boolean {
-		return !!this.timesheets.find((timesheet: ITimesheet) => timesheet['checked'] === true);
+		return !!this.visibleTimesheets.find((timesheet: ITimesheet) => timesheet['checked'] === true);
 	}
 
 	/**
