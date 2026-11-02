@@ -7670,6 +7670,7 @@
 		"SUBTASKS": "Podzadania",
 		"SUBTASKS_DONE": "Ukończono {{ done }} z {{ total }}",
 		"NO_SUBTASKS": "Brak podzadań",
+		"ADD_SUBTASK": "Dodaj podzadanie",
 		"LINKED_ISSUES": "Powiązane zadania",
 		"NO_LINKED_ISSUES": "Brak powiązanych zadań",
 		"LINKS": {

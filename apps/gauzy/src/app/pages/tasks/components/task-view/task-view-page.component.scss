@@ -144,37 +144,53 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   }
 }
 
-// Check | key | title | status, one line per task; the row opens the task's page.
+// Check | key | title | priority | assignees | status, one line per task. The columns after the title have fixed widths,
+// so they line up from row to row.
 .task-row {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.625rem;
   min-width: 0;
-  padding: 0.5rem 1rem;
-  font-size: 0.75rem;
-  line-height: 1.125rem;
+  // Stated in full: the employee page's stylesheet, which this page loads, pads a `.task-row` of its own.
+  padding: 0;
+  padding-inline-end: 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
   color: var(--gauzy-text-color-1);
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint);
+  }
+
+  &.is-done .task-row-title {
+    color: var(--gauzy-text-color-2);
+    text-decoration: line-through;
+  }
+}
+
+// All of the row but its status opens the task's page.
+.task-row-link {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding-block: 0.5rem;
+  padding-inline-start: 1rem;
+  color: inherit;
   text-decoration: none;
 
   &:hover,
   &:focus-visible {
-    background-color: var(--gauzy-hover-tint);
+    color: inherit;
     text-decoration: none;
   }
 
   &:focus-visible {
     outline: 2px solid var(--gauzy-action-info-text);
     outline-offset: -2px;
-  }
-
-  .project-status {
-    flex: 0 0 auto;
-    font-size: 0.6875rem;
-  }
-
-  &.is-done .task-row-title {
-    color: var(--gauzy-text-color-2);
-    text-decoration: line-through;
   }
 }
 
@@ -192,6 +208,7 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 
 .task-row-key {
   flex: 0 0 auto;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   color: var(--gauzy-text-color-2);
 }
@@ -202,7 +219,114 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 600;
+  font-weight: 500;
+}
+
+// The priority as an arrow in its tone, as the Board's cards draw it; its name is on the tooltip.
+.task-row-priority {
+  flex: 0 0 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gauzy-text-color-2);
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+
+  &.tone-danger {
+    color: var(--gauzy-action-danger-text);
+  }
+
+  &.tone-warning {
+    color: var(--gauzy-chart-expenses);
+  }
+
+  &.tone-success {
+    color: var(--gauzy-chart-revenue);
+  }
+}
+
+// Up to three assignees, overlapping, then how many more; a dashed circle says there is none. Wide enough for all four
+// circles, and held to the status beside it.
+.task-row-people {
+  flex: 0 0 4.625rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  .project-task-worker-avatar {
+    width: 1.375rem;
+    height: 1.375rem;
+    box-shadow: 0 0 0 2px var(--gauzy-card-1);
+
+    & + .project-task-worker-avatar {
+      margin-inline-start: -0.3125rem;
+    }
+  }
+
+  .task-row-unassigned {
+    border: 1px dashed $hairline;
+    background-color: transparent;
+    box-shadow: none;
+    color: var(--gauzy-text-color-2);
+
+    nb-icon {
+      font-size: 0.75rem;
+    }
+  }
+}
+
+// The status as the header draws it: one tag, in the status's own colour — seeded ones are too pale to be text as they
+// are — or in its tone for a status with none. Held to the row's end, in line with the panel's Add subtask button. A
+// long name is cut short; its tooltip reads in full. The column is wide enough for the longest seeded status and the
+// menu's chevron.
+.task-row-status {
+  --status-color: var(--gauzy-text-color-2);
+
+  flex: 0 0 8.75rem;
+  min-width: 0;
+
+  .task-status-select {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-inline-start: auto;
+
+    // A name longer than the column stops short of the chevron: the header's menu lets its label overflow.
+    &.appearance-outline.status-basic.size-small ::ng-deep .select-button {
+      max-width: 100%;
+
+      span {
+        min-width: 0;
+        overflow: hidden;
+      }
+    }
+  }
+
+  .task-status-tag {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin-inline-start: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &.tone-success {
+      --status-color: var(--gauzy-chart-revenue);
+    }
+
+    &.tone-info {
+      --status-color: var(--gauzy-chart-profit);
+    }
+
+    &.tone-danger {
+      --status-color: var(--gauzy-chart-negative);
+    }
+  }
 }
 
 // The share of subtasks done, under the panel's title.
@@ -210,6 +334,18 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   flex: 0 0 8rem;
   align-self: center;
   margin-top: 0;
+}
+
+// The share done and the Add subtask button, at the end of the panel's header.
+.task-subtasks-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.task-subtask-add {
+  flex: 0 0 auto;
 }
 
 // "Blocks", "Is blocked by": the relation over its tasks.
@@ -470,5 +606,20 @@ a.task-project {
 
   .task-status-select {
     max-width: 8rem;
+  }
+
+  // A row keeps its title and status; the assignees are on the subtask's own page.
+  .task-row-people {
+    display: none;
+  }
+
+  .task-row-status {
+    flex-basis: 6.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-row {
+    transition: none;
   }
 }

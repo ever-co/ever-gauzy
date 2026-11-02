@@ -7687,6 +7687,7 @@
 		"SUBTASKS": "Подзадачи",
 		"SUBTASKS_DONE": "Выполнено {{ done }} из {{ total }}",
 		"NO_SUBTASKS": "Нет подзадач",
+		"ADD_SUBTASK": "Добавить подзадачу",
 		"LINKED_ISSUES": "Связанные задачи",
 		"NO_LINKED_ISSUES": "Нет связанных задач",
 		"LINKS": {

@@ -7663,6 +7663,7 @@
 		"SUBTASKS": "المهام الفرعية",
 		"SUBTASKS_DONE": "أُنجز {{ done }} من {{ total }}",
 		"NO_SUBTASKS": "لا توجد مهام فرعية",
+		"ADD_SUBTASK": "إضافة مهمة فرعية",
 		"LINKED_ISSUES": "المهام المرتبطة",
 		"NO_LINKED_ISSUES": "لا توجد مهام مرتبطة",
 		"LINKS": {

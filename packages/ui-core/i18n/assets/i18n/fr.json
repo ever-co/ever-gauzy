@@ -7668,6 +7668,7 @@
 		"SUBTASKS": "Sous-tâches",
 		"SUBTASKS_DONE": "{{ done }} sur {{ total }} terminées",
 		"NO_SUBTASKS": "Aucune sous-tâche",
+		"ADD_SUBTASK": "Ajouter une sous-tâche",
 		"LINKED_ISSUES": "Tâches liées",
 		"NO_LINKED_ISSUES": "Aucune tâche liée",
 		"LINKS": {

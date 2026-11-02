@@ -7673,6 +7673,7 @@
 		"SUBTASKS": "Subtareas",
 		"SUBTASKS_DONE": "{{ done }} de {{ total }} hechas",
 		"NO_SUBTASKS": "Sin subtareas",
+		"ADD_SUBTASK": "Añadir subtarea",
 		"LINKED_ISSUES": "Tareas vinculadas",
 		"NO_LINKED_ISSUES": "Sin tareas vinculadas",
 		"LINKS": {
