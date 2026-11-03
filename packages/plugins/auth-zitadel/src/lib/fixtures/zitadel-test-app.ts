@@ -26,6 +26,7 @@ import { ZitadelClaimsService } from '../services/zitadel-claims.service';
 import { ZitadelConfigService } from '../services/zitadel-config.service';
 import { ZitadelEventsService } from '../services/zitadel-events.service';
 import { ZitadelFlowService } from '../services/zitadel-flow.service';
+import { ZitadelHandoffService } from '../services/zitadel-handoff.service';
 import { ZitadelLinkService } from '../services/zitadel-link.service';
 import { ZitadelSessionService } from '../services/zitadel-session.service';
 import { ZitadelSigninService } from '../services/zitadel-signin.service';
@@ -53,6 +54,8 @@ export interface ZitadelTestApp {
 	terms: FakeTermsDocuments;
 	/** The plugin's one-time store (to hold a key as a concurrent attempt would). */
 	store: ZitadelStoreService;
+	/** The hand-off of a sign-in started to confirm a workspace (`ZITADEL_HANDOFF_READER`). */
+	handoffs: ZitadelHandoffService;
 	published: unknown[];
 	close(): Promise<void>;
 }
@@ -159,6 +162,7 @@ async function startApp(
 			ZitadelSignupService,
 			ZitadelSigninService,
 			ZitadelLinkService,
+			ZitadelHandoffService,
 			ZitadelFlowService,
 			ZitadelTokenSigninService,
 			ZitadelBackchannelService,
@@ -189,6 +193,7 @@ async function startApp(
 		cache,
 		terms,
 		store: moduleRef.get(ZitadelStoreService),
+		handoffs: moduleRef.get(ZitadelHandoffService),
 		published,
 		async close() {
 			await app.close();

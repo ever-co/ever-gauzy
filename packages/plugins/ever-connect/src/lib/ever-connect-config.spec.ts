@@ -45,7 +45,8 @@ describe('readEverConnectConfig', () => {
 			signIn: {
 				redirectUri: 'http://localhost:3000/api/auth/zitadel/callback',
 				logoutUri: 'http://localhost:3000/api/auth/zitadel/backchannel-logout'
-			}
+			},
+			provision: { enabled: false, appUrl: 'http://localhost:4200', apiUrl: 'http://localhost:3000' }
 		});
 	});
 

@@ -240,7 +240,9 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
 			'/auth/microsoft',
 			'/auth/microsoft/callback',
 			'/auth/auth0',
-			'/auth/auth0/callback'
+			'/auth/auth0/callback',
+			// Creating a workspace from Ever: public routes whose 401 refuses the request, not a session.
+			'/ever-connect/provision'
 		];
 
 		return authEndpoints.some((endpoint) => {

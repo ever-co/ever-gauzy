@@ -3,7 +3,8 @@ import { ITermsAcceptanceClaim, IUserSigninWorkspaceResponse, LanguagesEnum } fr
 
 /** The registration input this plugin passes to Gauzy's own register path. */
 export interface ZitadelRegistrationInput {
-	user: { email: string; firstName?: string; lastName?: string };
+	/** `isActive: false`: an account that cannot be used until its creator activates it. */
+	user: { email: string; firstName?: string; lastName?: string; isActive?: false };
 	terms?: ITermsAcceptanceClaim[];
 }
 

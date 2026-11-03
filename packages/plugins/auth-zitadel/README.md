@@ -79,7 +79,17 @@ All under `/api/auth/zitadel`:
 - `GET /config` (anyone): whether the sign-in is enabled, and which flows
   are on.
 - `GET /` (anyone): starts a sign-in (PKCE, `state`, `nonce`; never a login
-  hint).
+  hint). With `?provision=<key>` (the opaque key of a workspace the Ever
+  Platform connection plugin was asked to create) the key rides in the signed
+  transaction cookie on the way to the issuer (never in the authorize URL),
+  and the callback links nothing and signs nobody
+  in: it keeps the verified identity (issuer, subject, verified e-mail,
+  names; never the token; stored under the SHA-256 of a new one-time key)
+  and opens the web app's confirmation page
+  `#/auth/ever-connect/provision?provision=<key>&handoff=<key>`. That plugin
+  reads it through `ZITADEL_HANDOFF_READER` and creates the workspace through
+  `ZITADEL_PROVISIONER` (Gauzy's own register, tenant, organization,
+  employee and team paths; the owner linked with method `provisioned`).
 - `GET /callback` (the issuer): returns from the issuer, for sign-in and
   linking.
 - `POST /handoff` (anyone): redeems the one-time key of a redirect, once.

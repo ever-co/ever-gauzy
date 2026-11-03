@@ -94,13 +94,21 @@ export class AuthZitadelController {
 		return this.config.publicConfig();
 	}
 
-	/** Starts a sign-in: redirects to the issuer (PKCE, state and nonce; never a login hint). */
+	/**
+	 * Starts a sign-in: redirects to the issuer (PKCE, state and nonce; never a login hint). With
+	 * `provision` (the opaque key of a workspace this installation was asked to create), the sign-in
+	 * leads to that workspace's confirmation page.
+	 */
 	@Public()
 	@UseGuards(ZitadelConfiguredGuard)
 	@Get()
 	@Header('Cache-Control', 'no-store')
-	async start(@Res() res: Response, @Query('redirect') redirect?: string): Promise<void> {
-		res.redirect(302, await this.flow.startSignin(res, redirect));
+	async start(
+		@Res() res: Response,
+		@Query('redirect') redirect?: string,
+		@Query('provision') provision?: string
+	): Promise<void> {
+		res.redirect(302, await this.flow.startSignin(res, redirect, typeof provision === 'string' ? provision : undefined));
 	}
 
 	/** The issuer redirects back here, for sign-in and link flows alike. */

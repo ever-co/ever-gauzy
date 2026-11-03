@@ -48,13 +48,26 @@ export const EVER_CONNECT_ROUTE: PluginRouteInput = {
 };
 
 /**
- * Ever Platform UI plugin (`@gauzy/plugin-ever-connect-ui`): Integrations > Ever Platform. The page
- * asks the API first; where the Ever Platform module is not loaded (the default) it only says so.
+ * `#/auth/ever-connect/provision?provision=…&handoff=…`: the one confirmation of creating a workspace a
+ * person asked for in Ever, after their Ever ID sign-in. Not behind the signed-out guard: a person who
+ * is signed in to another workspace in this browser confirms it the same way. Its API answers 404
+ * unless the operator switched it on.
+ */
+export const EVER_CONNECT_PROVISION_ROUTE: PluginRouteInput = {
+	location: 'auth-sections',
+	path: 'ever-connect/provision',
+	loadComponent: () => import('./provision/provision-confirm.component').then((m) => m.ProvisionConfirmComponent)
+};
+
+/**
+ * Ever Platform UI plugin (`@gauzy/plugin-ever-connect-ui`): Integrations > Ever Platform, and the
+ * confirmation page of a workspace created from Ever. The pages ask the API first; where the Ever
+ * Platform module is not loaded (the default) they only say so.
  */
 export const EverConnectUiPlugin = defineDeclarativePlugin('ever-connect', {
 	version: '0.1.0',
 	location: 'integrations-sections',
-	routes: [EVER_CONNECT_ROUTE],
+	routes: [EVER_CONNECT_ROUTE, EVER_CONNECT_PROVISION_ROUTE],
 	permissionKeys: [PermissionsEnum.INTEGRATION_VIEW],
 	translationNamespace: 'EVER_CONNECT',
 	translations: { en }

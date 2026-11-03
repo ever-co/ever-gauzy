@@ -21,12 +21,21 @@ const MIGRATIONS = join(__dirname, '../../../../../core/src/lib/database/migrati
 
 type Migration = { name: string; up(runner: unknown): Promise<void>; down(runner: unknown): Promise<void> };
 
-/** The core migrations the plugin needs, in order: `ever_instance`, the six Ever Platform tables, then Sign in with Ever ID's. */
+/**
+ * The core migrations the plugin needs, in order: `ever_instance`, the six Ever Platform tables, Sign in
+ * with Ever ID's, then those of creating a workspace from Ever.
+ */
 export function connectMigrations(): Migration[] {
 	const { EverInstance1790000021000 } = require(join(MIGRATIONS, '1790000021000-EverInstance'));
 	const { EverConnect1790000021200 } = require(join(MIGRATIONS, '1790000021200-EverConnect'));
 	const { EverConnectIdentity1791000003500 } = require(join(MIGRATIONS, '1791000003500-EverConnectIdentity'));
-	return [new EverInstance1790000021000(), new EverConnect1790000021200(), new EverConnectIdentity1791000003500()];
+	const { EverConnectProvision1791000003950 } = require(join(MIGRATIONS, '1791000003950-EverConnectProvision'));
+	return [
+		new EverInstance1790000021000(),
+		new EverConnect1790000021200(),
+		new EverConnectIdentity1791000003500(),
+		new EverConnectProvision1791000003950()
+	];
 }
 
 export const PLUGIN_TABLES = [
@@ -38,6 +47,8 @@ export const PLUGIN_TABLES = [
 	'ever_connect_lookup_cache',
 	'ever_connect_person_link_report',
 	'ever_connect_person_request',
+	'ever_connect_provision_intent',
+	'ever_connect_provision_result',
 	'ever_instance'
 ];
 
