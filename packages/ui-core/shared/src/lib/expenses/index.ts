@@ -1,6 +1,7 @@
 export * from './expense-category-select/expense-category-select.component';
 export * from './expense-category-select/expense-category-select.module';
 export * from './expenses-mutation/attach-receipt/attach-receipt.component';
+export * from './expenses-mutation/expense-receipt.utils';
 export * from './expenses-mutation/expenses-mutation.component';
 export * from './expenses-mutation/expenses-mutation.module';
 export * from './recurring-expense-block/recurring-expense-block.component';
