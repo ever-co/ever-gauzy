@@ -45,7 +45,13 @@ class FakeDatabase {
 
 	repository(entity: unknown, rows = this.table(entity)) {
 		return {
-			findOne: async ({ where }: { where: Row }) => rows.find((row) => this.matches(row, where)) ?? null,
+			findOne: async ({ where, select, order }: { where: Row; select?: Row; order?: Row }) => {
+				// As TypeORM on an entity with eager relations: a one-row find orders by its own selection only.
+				for (const column of Object.keys(order ?? {})) {
+					if (select && !select[column]) throw new Error(`no such column: distinctAlias.${column}`);
+				}
+				return rows.find((row) => this.matches(row, where)) ?? null;
+			},
 			find: async ({ where }: { where: Row }) => rows.filter((row) => this.matches(row, where)),
 			exists: async ({ where }: { where: Row }) => rows.some((row) => this.matches(row, where)),
 			update: async (where: Row, values: Row) => {

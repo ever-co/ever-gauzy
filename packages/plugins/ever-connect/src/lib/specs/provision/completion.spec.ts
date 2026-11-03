@@ -210,10 +210,55 @@ describe('workspace completion report', () => {
 			completionNextAt: h.clock.now() + 4 * 60_000
 		});
 		h.clock.t += 4 * 60_000;
-		h.platform.on(COMPLETE, { status: 200, body: { status: 'completed' } });
+		h.platform.on(COMPLETE, { status: 200, body: { status: 'completed', tenant_link_id: LINK_ID } });
 		await completion.sendDue();
 		expect(await row()).toMatchObject({ completionState: 'done', completionAttempts: 3 });
 		expect(h.platform.callsTo(COMPLETE)).toHaveLength(3);
+	});
+
+	it('a link found nowhere keeps the report open, without asking Ever Platform again, until it is found or given up', async () => {
+		// A repeat whose first answer was lost: told "already completed", with no id, and no such link listed yet.
+		h.platform.on(COMPLETE, { status: 200, body: { status: 'already_completed' } });
+		await completion.sendDue();
+		expect(await row()).toMatchObject({
+			completionState: 'pending',
+			completionAttempts: 1,
+			completionError: 'link_not_found',
+			completionNextAt: h.clock.now() + 60_000,
+			tenantLinkId: null
+		});
+		expect((await row()).completedAt).toEqual(expect.any(Number));
+		expect(await h.store.linkById(LINK_ID)).toBeNull();
+
+		// Listed later: kept, and only now done.
+		h.clock.t += 60_000;
+		h.platform.on('GET /v1/instances/me', {
+			status: 200,
+			body: {
+				instance: { id: INSTANCE_ID },
+				tenant_links: [{ id: LINK_ID, org_id: '01K9A0000000000000000000RG', product_tenant_id: tenantId }]
+			}
+		});
+		await completion.sendDue();
+		expect(h.platform.callsTo(COMPLETE)).toHaveLength(1);
+		expect(await row()).toMatchObject({ completionState: 'done', completionAttempts: 2, tenantLinkId: LINK_ID });
+		expect(await h.store.linkById(LINK_ID)).toMatchObject({ tenantId, organizationId, status: 'linked' });
+	});
+
+	it(`a link never found is given up after ${COMPLETION_MAX_ATTEMPTS} attempts, never reported done`, async () => {
+		h.platform.on(COMPLETE, { status: 200, body: { status: 'already_completed' } });
+		for (let attempt = 1; attempt <= COMPLETION_MAX_ATTEMPTS; attempt++) {
+			await completion.sendDue();
+			const current = await row();
+			if (current.completionNextAt !== null) h.clock.t = current.completionNextAt;
+		}
+		expect(await row()).toMatchObject({
+			completionState: 'failed',
+			completionAttempts: COMPLETION_MAX_ATTEMPTS,
+			completionNextAt: null,
+			completionError: 'link_not_found'
+		});
+		expect(h.platform.callsTo(COMPLETE)).toHaveLength(1);
 	});
 
 	it(`gives up after ${COMPLETION_MAX_ATTEMPTS} attempts, the waits growing from 1 minute to 4 hours`, async () => {

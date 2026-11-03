@@ -181,10 +181,12 @@ export class EverConnectProvisionStore {
 	/**
 	 * Claims the creation of `idempotencyKey` for `holder` until `until`: a new row (pending), or one a
 	 * failed or stopped attempt left behind. The row also holds the Ever organization (`everOrgKey`,
-	 * unique), so two keys never create a workspace for one Ever organization at once. Answers who has
-	 * it: this attempt (`claimed`), a finished creation (`created`), another attempt still within its
-	 * claim (`busy`), a request whose `jti` was used under another key (`replayed`), or another key
-	 * holding the Ever organization (`org_linked`).
+	 * unique), so two keys never create a workspace for one Ever organization at once. The same key under
+	 * a new `jti` is Ever Platform's retry of the same step (each attempt is a new request): it takes the
+	 * creation over, and its report names the new request. Answers who has it: this attempt (`claimed`),
+	 * a finished creation (`created`), another attempt still within its claim (`busy`), a request whose
+	 * `jti` was used under another key (`replayed`), or another key holding the Ever organization
+	 * (`org_linked`).
 	 */
 	async claim(
 		values: { idempotencyKey: string; jti: string; everOrgId: string },
@@ -220,9 +222,6 @@ export class EverConnectProvisionStore {
 				? { outcome: 'org_linked' }
 				: { outcome: 'replayed' };
 		}
-		if (existing.jti !== values.jti) {
-			return { outcome: 'replayed' };
-		}
 		if (existing.status === 'created') {
 			return { outcome: 'created', record: existing };
 		}
@@ -230,13 +229,15 @@ export class EverConnectProvisionStore {
 		let affected: number;
 		try {
 			({ affected } = await this.sql.run(
-				`UPDATE ${q(RESULT)} SET ${q('claimedBy')} = ${this.sql.ph(1)}, ${q('claimedUntil')} = ${this.sql.ph(2)}, ${q('status')} = ${this.sql.ph(3)}, ${q('updatedAt')} = ${this.sql.ph(4)}, ${q('everOrgKey')} = ${this.sql.ph(5)} ` +
-					`WHERE ${q('idempotencyKey')} = ${this.sql.ph(6)} AND ${q('status')} <> ${this.sql.ph(7)} AND (${q('claimedUntil')} IS NULL OR ${q('claimedUntil')} < ${this.sql.ph(8)})`,
+				`UPDATE ${q(RESULT)} SET ${q('claimedBy')} = ${this.sql.ph(1)}, ${q('claimedUntil')} = ${this.sql.ph(2)}, ${q('status')} = ${this.sql.ph(3)}, ${q('updatedAt')} = ${this.sql.ph(4)}, ${q('everOrgKey')} = ${this.sql.ph(5)}, ${q('jti')} = ${this.sql.ph(6)} ` +
+					`WHERE ${q('idempotencyKey')} = ${this.sql.ph(7)} AND ${q('status')} <> ${this.sql.ph(8)} AND (${q('claimedUntil')} IS NULL OR ${q('claimedUntil')} < ${this.sql.ph(9)})`,
 				// In the order of the placeholders: MySQL and SQLite bind them by position.
-				[holder, until, 'pending', at, values.everOrgId, values.idempotencyKey, 'created', at]
+				[holder, until, 'pending', at, values.everOrgId, values.jti, values.idempotencyKey, 'created', at]
 			));
 		} catch (error) {
-			// Another key took the Ever organization while this one had failed.
+			// The request's `jti` was used under another key, or another key took the Ever organization while this one had failed.
+			const byJti = await this.resultByJti(values.jti);
+			if (byJti && byJti.idempotencyKey !== values.idempotencyKey) return { outcome: 'replayed' };
 			if (await this.sql.one(RESULT, { everOrgKey: values.everOrgId })) return { outcome: 'org_linked' };
 			throw error;
 		}
@@ -281,6 +282,24 @@ export class EverConnectProvisionStore {
 			},
 			{ idempotencyKey, claimedBy: holder }
 		);
+	}
+
+	/**
+	 * Ever Platform asks again (a new request, `jti`, for the same step) for a workspace that exists and
+	 * has not heard of it: the request the report named ended before the report got through. The report
+	 * now names the new request and is due at once. Answers whether it did: never once Ever Platform
+	 * answered it (`completedAt`).
+	 */
+	async reportUnder(idempotencyKey: string, jti: string): Promise<boolean> {
+		const q = (c: string) => this.sql.q(c);
+		const at = this.now();
+		const { affected } = await this.sql.run(
+			`UPDATE ${q(RESULT)} SET ${q('jti')} = ${this.sql.ph(1)}, ${q('completionState')} = ${this.sql.ph(2)}, ${q('completionAttempts')} = ${this.sql.ph(3)}, ${q('completionNextAt')} = ${this.sql.ph(4)}, ${q('completionError')} = NULL, ${q('updatedAt')} = ${this.sql.ph(5)} ` +
+				`WHERE ${q('idempotencyKey')} = ${this.sql.ph(6)} AND ${q('status')} = ${this.sql.ph(7)} AND ${q('completedAt')} IS NULL AND ${q('jti')} <> ${this.sql.ph(8)}`,
+			// In the order of the placeholders: MySQL and SQLite bind them by position.
+			[jti, 'pending', 0, at, at, idempotencyKey, 'created', jti]
+		);
+		return affected > 0;
 	}
 
 	/** Records a creation another attempt finished (the links exist): heals a row that missed it. */

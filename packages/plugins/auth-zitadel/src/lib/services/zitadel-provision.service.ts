@@ -214,7 +214,9 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 		if (!ids.organizationId) {
 			const existing = await this.dataSource
 				.getRepository(Organization)
-				.findOne({ where: { tenantId }, order: { createdAt: 'ASC' }, select: { id: true } });
+				// The ordered column must be selected too: these entities have eager relations, and TypeORM's
+				// paged query (a one-row find with joins) orders by a column of its own selection.
+				.findOne({ where: { tenantId }, order: { createdAt: 'ASC' }, select: { id: true, createdAt: true } });
 			if (existing) {
 				ids.organizationId = existing.id;
 			} else {
@@ -401,7 +403,7 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 		return this.dataSource.getRepository(OrganizationTeam).findOne({
 			where: name ? { organizationId, name } : { organizationId },
 			order: { createdAt: 'ASC' },
-			select: { id: true }
+			select: { id: true, createdAt: true }
 		});
 	}
 

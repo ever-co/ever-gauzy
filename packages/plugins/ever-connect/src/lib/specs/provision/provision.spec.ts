@@ -433,6 +433,80 @@ describe('creating a workspace from Ever', () => {
 			expect(h.provisioner.users).toBe(1);
 		});
 
+		describe('a new request for the same step (Ever Platform makes a new jti for each attempt, under the step key)', () => {
+			const NEW_JTI = '01K9A0000000000000000000J9';
+			const KEY = `${TEST_JOB_ID}:2:provision_cloud_tenant:gauzy`;
+
+			it('finishes a creation that stopped: the same workspace, and the report names the new request', async () => {
+				h.provisioner.failAt = 'tenant';
+				const first = await h.signedIn(h.request());
+				expect(await failure(h.service.create(first.provisionKey, first.handoffKey, {}))).toEqual({
+					status: 500,
+					code: 'provisioning_failed'
+				});
+				const [failed] = await h.rows('ever_connect_provision_result');
+
+				const retry = await h.signedIn(h.request({ jti: NEW_JTI }));
+				const answer = await h.service.create(retry.provisionKey, retry.handoffKey, {});
+				expect(answer.status).toBe('created');
+				expect(answer.product_tenant_id).toBe(failed['productTenantId']);
+				expect(h.provisioner.tenants).toBe(1);
+				expect(h.provisioner.users).toBe(1);
+				const rows = await h.rows('ever_connect_provision_result');
+				expect(rows).toHaveLength(1);
+				expect(rows[0]).toMatchObject({ jti: NEW_JTI, status: 'created', completionState: 'pending' });
+			});
+
+			it('a workspace Ever Platform has not heard of: the report moves to the new request and is sent; no second workspace', async () => {
+				const first = await h.signedIn(h.request());
+				const created = await h.service.create(first.provisionKey, first.handoffKey, {});
+				// The report under the first request was refused: that request had ended on Ever Platform's side.
+				await h.provisionStore.updateCompletion(KEY, 0, {
+					completionState: 'failed',
+					completionAttempts: 1,
+					completionNextAt: null,
+					completionError: '410_intent_expired'
+				});
+				h.completion.sendNow.mockClear();
+
+				const retry = await h.signedIn(h.request({ jti: NEW_JTI }));
+				const answer = await h.service.create(retry.provisionKey, retry.handoffKey, {});
+				expect(answer).toMatchObject({ status: 'exists', product_tenant_id: created.product_tenant_id });
+				expect(h.provisioner.tenants).toBe(1);
+				expect(await h.provisionStore.result(KEY)).toMatchObject({
+					jti: NEW_JTI,
+					completionState: 'pending',
+					completionAttempts: 0,
+					completionError: null
+				});
+				expect(h.completion.sendNow).toHaveBeenCalledWith(KEY);
+			});
+
+			it('a workspace Ever Platform already answered keeps its report', async () => {
+				const first = await h.signedIn(h.request());
+				await h.service.create(first.provisionKey, first.handoffKey, {});
+				const answered = h.nowS() * 1000;
+				await h.provisionStore.updateCompletion(KEY, 0, { completedAt: answered, completionState: 'done' });
+				h.completion.sendNow.mockClear();
+
+				const retry = await h.signedIn(h.request({ jti: NEW_JTI }));
+				expect(await h.service.create(retry.provisionKey, retry.handoffKey, {})).toMatchObject({ status: 'exists' });
+				expect(await h.provisionStore.result(KEY)).toMatchObject({
+					jti: '01K9A0000000000000000000JT',
+					completionState: 'done',
+					completedAt: answered
+				});
+				expect(h.completion.sendNow).not.toHaveBeenCalled();
+			});
+
+			it('a jti already used under another key stays a replay, whatever the key says', async () => {
+				const first = await h.signedIn(h.request());
+				await h.service.create(first.provisionKey, first.handoffKey, {});
+				const other = h.request({ idempotency_key: `${TEST_JOB_ID}:3:provision_cloud_tenant:gauzy` });
+				expect(await failure(h.service.preflight(other))).toEqual({ status: 409, code: 'intent_replayed' });
+			});
+		});
+
 		it('a failure in the last step leaves no link record and no audit row (one transaction)', async () => {
 			h.provisioner.failAt = 'finalize';
 			const keys = await h.signedIn(h.request());

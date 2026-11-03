@@ -86,8 +86,8 @@ All under `/api/auth/zitadel`:
   in: it keeps the verified identity (issuer, subject, verified e-mail,
   names; never the token; stored under the SHA-256 of a new one-time key)
   and opens the web app's confirmation page
-  `#/auth/ever-connect/provision?provision=<key>&handoff=<key>`. That plugin reads it
-  through `ZITADEL_HANDOFF_READER` and creates the workspace through
+  `#/auth/ever-connect/provision?provision=<key>&handoff=<key>`. That plugin
+  reads it through `ZITADEL_HANDOFF_READER` and creates the workspace through
   `ZITADEL_PROVISIONER` (Gauzy's own register, tenant, organization,
   employee and team paths; the owner linked with method `provisioned`).
 - `GET /callback` (the issuer): returns from the issuer, for sign-in and

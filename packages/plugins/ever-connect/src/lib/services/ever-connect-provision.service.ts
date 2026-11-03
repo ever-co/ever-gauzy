@@ -133,7 +133,9 @@ interface Resolved {
  * already made (`exists`) and never creates a second one; the same `jti` under another key is a replay
  * (409 `intent_replayed`); an Ever organization already linked by another creation is refused (409
  * `organization_already_linked`). One attempt creates at a time (a claim on the result row); a creation
- * that stopped half way is finished by its retry with the same tenant and organization.
+ * that stopped half way is finished by its retry with the same tenant and organization, whether that
+ * retry carries the same request or a new one for the same step (Ever Platform makes a new `jti` for
+ * each attempt of a step, under the step's idempotency key).
  */
 @Injectable()
 export class EverConnectProvisionService {
@@ -231,7 +233,7 @@ export class EverConnectProvisionService {
 		}
 		const existing = await this.store.result(key);
 		if (existing?.status === 'created') {
-			return this.answer('exists', existing, claims, handoffKey as string);
+			return this.answerExisting(existing, claims, handoffKey as string);
 		}
 		const provisioner = this.provisioner as ZitadelProvisionerPort;
 		const terms = this.acceptedTerms(request?.terms, provisioner.requiredTerms());
@@ -262,7 +264,7 @@ export class EverConnectProvisionService {
 		if (claim.outcome === 'busy') {
 			const finished = await this.waitForCreation(key);
 			if (finished) {
-				return this.answer('exists', finished, claims, handoffKey as string);
+				return this.answerExisting(finished, claims, handoffKey as string);
 			}
 			throw new ConflictException({
 				statusCode: 409,
@@ -271,7 +273,7 @@ export class EverConnectProvisionService {
 			});
 		}
 		if (claim.outcome === 'created') {
-			return this.answer('exists', claim.record, claims, handoffKey as string);
+			return this.answerExisting(claim.record, claims, handoffKey as string);
 		}
 
 		let ids: ProvisionIds;
@@ -281,7 +283,7 @@ export class EverConnectProvisionService {
 			if (error instanceof ClaimLostError) {
 				// Another attempt took over (this one was too slow): it owns the outcome now.
 				const finished = await this.waitForCreation(key);
-				if (finished) return this.answer('exists', finished, claims, handoffKey as string);
+				if (finished) return this.answerExisting(finished, claims, handoffKey as string);
 				throw new ConflictException({
 					statusCode: 409,
 					code: 'provisioning_in_progress',
@@ -397,6 +399,21 @@ export class EverConnectProvisionService {
 			if (record?.status === 'failed') return null;
 		}
 		return null;
+	}
+
+	/**
+	 * The answer for a workspace that exists. A newer request for it (`jti`) means Ever Platform has not
+	 * heard of it: the report then names that request, and is sent now.
+	 */
+	private async answerExisting(
+		record: ProvisionResultRecord,
+		claims: ProvisionIntentClaims,
+		handoffKey: string
+	): Promise<ProvisionResponse> {
+		if (record.jti !== claims.jti && (await this.store.reportUnder(record.idempotencyKey, claims.jti))) {
+			void this.completion.sendNow(record.idempotencyKey);
+		}
+		return this.answer('exists', record, claims, handoffKey);
 	}
 
 	/** The answer for a created workspace; the person's sign-in key is used up for its one-time sign-in key. */

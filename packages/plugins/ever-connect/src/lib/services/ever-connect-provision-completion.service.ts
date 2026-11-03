@@ -16,7 +16,7 @@ import { EverConnectStore, LiveLinkExistsError } from '../ever-connect.store';
 
 /**
  * The waits between the attempts of a completion report: 1 minute, then longer, at most 4 hours; after
- * the 8th failed attempt the report is given up (`failed`) and the Connection tab says so.
+ * the 8th failed attempt the report is given up (`failed`, with its code, on the result row).
  */
 export const COMPLETION_RETRY_MS: ReadonlyArray<number> = Object.freeze([
 	60_000,
@@ -165,17 +165,19 @@ export class EverConnectProvisionCompletion {
 				await this.failed(record, `link_${errorCode(error)}`, false, true);
 				return;
 			}
-			if (tenantLinkId) {
-				await this.provisions.updateCompletion(record.idempotencyKey, attempts, { tenantLinkId });
-			}
-		}
-		if (tenantLinkId) {
-			try {
-				await this.keepLink(record, tenantLinkId);
-			} catch (error) {
-				await this.failed(record, `link_${errorCode(error)}`, false, true);
+			if (!tenantLinkId) {
+				// Not found: the report stays open and is retried. Done here, nothing would ever repair it:
+				// the entitlement refresh and the integration sync only visit links this installation keeps.
+				await this.failed(record, 'link_not_found', false, true);
 				return;
 			}
+			await this.provisions.updateCompletion(record.idempotencyKey, attempts, { tenantLinkId });
+		}
+		try {
+			await this.keepLink(record, tenantLinkId);
+		} catch (error) {
+			await this.failed(record, `link_${errorCode(error)}`, false, true);
+			return;
 		}
 		await this.provisions.updateCompletion(record.idempotencyKey, attempts, {
 			completionAttempts: attempts + 1,
