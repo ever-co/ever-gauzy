@@ -166,6 +166,24 @@ export class EverConnectProvisionStore {
 		);
 	}
 
+	/**
+	 * Removes the requests that ended before `before`: their claims name a person's Ever ID subject and
+	 * perhaps a billing reference, and nothing reads them any more (an ended request is refused anyway,
+	 * and replays are told by the result row). One whose workspace report is still open stays: the report
+	 * reads the organization's handle from it.
+	 *
+	 * @returns How many were removed.
+	 */
+	async purgeEndedIntents(before: number): Promise<number> {
+		const q = (c: string) => this.sql.q(c);
+		const { affected } = await this.sql.run(
+			`DELETE FROM ${q(INTENT)} WHERE ${q('expiresAt')} < ${this.sql.ph(1)} AND NOT EXISTS (` +
+				`SELECT 1 FROM ${q(RESULT)} WHERE ${q(RESULT)}.${q('jti')} = ${q(INTENT)}.${q('jti')} AND ${q(RESULT)}.${q('completionState')} = ${this.sql.ph(2)})`,
+			[before, 'pending']
+		);
+		return affected;
+	}
+
 	// ── Results ───────────────────────────────────────────────────────────────
 
 	async result(idempotencyKey: string): Promise<ProvisionResultRecord | null> {

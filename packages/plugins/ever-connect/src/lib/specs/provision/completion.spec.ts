@@ -4,7 +4,8 @@ import { IdentityHarness, identityHarness, INSTANCE_ID, problem } from '../../fi
 import {
 	COMPLETION_MAX_ATTEMPTS,
 	COMPLETION_RETRY_MS,
-	EverConnectProvisionCompletion
+	EverConnectProvisionCompletion,
+	INTENT_RETENTION_MS
 } from '../../services/ever-connect-provision-completion.service';
 
 jest.setTimeout(60_000);
@@ -303,6 +304,47 @@ describe('workspace completion report', () => {
 		expect(await row()).toMatchObject({ completionState: 'done', completionAttempts: 2 });
 		expect(await h.store.linkById(LINK_ID)).toMatchObject({ tenantId, organizationId, status: 'linked' });
 		expect((await h.auditRows()).map((r) => r.action)).toEqual(['provision.accept', 'link.create']);
+	});
+
+	it('a request is removed a day after it ended, unless its workspace report is still open', async () => {
+		const stored = () => provisions.intent(JTI);
+		h.platform.on(COMPLETE, problem(503, 'unavailable'));
+		await completion.sendDue();
+		expect(await row()).toMatchObject({ completionState: 'pending', completionAttempts: 1 });
+
+		// Long past its end, with the report still open: it stays, the report reads the handle from it.
+		h.clock.t += INTENT_RETENTION_MS + 3_600_000;
+		await completion.sendDue();
+		expect(await stored()).not.toBeNull();
+
+		// The report ends: the request goes at the next removal.
+		h.platform.on(COMPLETE, { status: 200, body: { status: 'completed', tenant_link_id: LINK_ID } });
+		h.clock.t += 4 * 3_600_000;
+		await completion.sendDue();
+		expect(await row()).toMatchObject({ completionState: 'done' });
+		h.clock.t += 3_600_000;
+		await completion.sendDue();
+		expect(await stored()).toBeNull();
+		// The result row stays: replays are told by it.
+		expect(await row()).toMatchObject({ jti: JTI, status: 'created' });
+	});
+
+	it('a request nobody confirmed goes a day after it ended; one still valid stays', async () => {
+		const save = (jti: string, expiresAt: number) =>
+			provisions.saveIntent({
+				jti,
+				intent: JSON.stringify({ person: { ever_id_sub: 'someone' } }),
+				keyHash: jti.padEnd(64, '0').slice(0, 64),
+				idempotencyKey: `other:${jti}`,
+				expiresAt
+			});
+		const ended = '01K9A0000000000000000000E1';
+		const valid = '01K9A0000000000000000000V1';
+		await save(ended, h.clock.now() - INTENT_RETENTION_MS - 1);
+		await save(valid, h.clock.now() + 60_000);
+		expect(await provisions.purgeEndedIntents(h.clock.now() - INTENT_RETENTION_MS)).toBe(1);
+		expect(await provisions.intent(ended)).toBeNull();
+		expect(await provisions.intent(valid)).not.toBeNull();
 	});
 
 	it('a refusal is final, kept as a code', async () => {

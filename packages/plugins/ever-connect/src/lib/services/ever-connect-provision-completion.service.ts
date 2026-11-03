@@ -40,6 +40,12 @@ const COMPLETION_LEASE_MS = 2 * 60_000;
 /** What an id of Ever Platform's (a link) may look like; anything else is not kept. */
 const LINK_ID_SHAPE = /^[0-9A-Za-z_-]{8,64}$/;
 
+/** How long a request stays after it ended (its claims name a person's Ever ID subject). */
+export const INTENT_RETENTION_MS = 24 * 3_600_000;
+
+/** How often the requests that ended are removed. */
+const INTENT_PURGE_EVERY_MS = 3_600_000;
+
 /**
  * Tells Ever Platform that a workspace it asked for exists
  * (`POST /v1/provision-intents/{jti}/complete`, with the instance token): the request's `jti`, this
@@ -63,6 +69,7 @@ export class EverConnectProvisionCompletion {
 	private readonly logger = new Logger('EverConnect');
 	private readonly now: () => number;
 	private running: Promise<void> | null = null;
+	private lastPurgeAt = 0;
 
 	constructor(
 		private readonly provisions: EverConnectProvisionStore,
@@ -95,6 +102,12 @@ export class EverConnectProvisionCompletion {
 		}
 		for (const record of await this.provisions.dueCompletions(COMPLETION_BATCH)) {
 			await this.send(record, connection.platformInstanceId);
+		}
+		if (this.now() - this.lastPurgeAt >= INTENT_PURGE_EVERY_MS) {
+			this.lastPurgeAt = this.now();
+			await this.provisions.purgeEndedIntents(this.now() - INTENT_RETENTION_MS).catch((error) => {
+				this.logger.warn(`The ended workspace requests could not be removed now (${errorCode(error)}).`);
+			});
 		}
 	}
 

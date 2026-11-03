@@ -47,7 +47,7 @@ One row per deletion or export request of a person (`id` = the event id): `kind`
 
 ## `ever_connect_provision_intent`
 
-One row per signed request from Ever Platform to create a workspace (`jti`, the request's id): `intent` (the verified claims as JSON: the Ever organization's ids and public details (handle, display and legal name, country, website), the person's Ever ID subject, the plan, the job and step, the callback and return addresses and, when present, a billing customer reference; never an e-mail address), `keyHash` (unique: the SHA-256 of the one-time key the browser holds while the person signs in and confirms; the key itself is never stored), `idempotencyKey`, `status` (`pending`, `accepted`, `rejected`, `expired`), `result` (JSON of the ids created), `receivedAt`, `expiresAt` (the request's own expiry), `updatedAt`. Index on (`expiresAt`).
+One row per signed request from Ever Platform to create a workspace (`jti`, the request's id): `intent` (the verified claims as JSON: the Ever organization's ids and public details (handle, display and legal name, country, website), the person's Ever ID subject, the plan, the job and step, the callback and return addresses and, when present, a billing customer reference; never an e-mail address), `keyHash` (unique: the SHA-256 of the one-time key the browser holds while the person signs in and confirms; the key itself is never stored), `idempotencyKey`, `status` (`pending`, `accepted`, `rejected`, `expired`), `result` (JSON of the ids created), `receivedAt`, `expiresAt` (the request's own expiry), `updatedAt`. Index on (`expiresAt`). A row is removed a day after the request ended, unless the report of its workspace is still open.
 
 ## `ever_connect_provision_result`
 

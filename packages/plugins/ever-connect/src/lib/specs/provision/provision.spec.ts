@@ -490,7 +490,9 @@ describe('creating a workspace from Ever', () => {
 				h.completion.sendNow.mockClear();
 
 				const retry = await h.signedIn(h.request({ jti: NEW_JTI }));
-				expect(await h.service.create(retry.provisionKey, retry.handoffKey, {})).toMatchObject({ status: 'exists' });
+				expect(await h.service.create(retry.provisionKey, retry.handoffKey, {})).toMatchObject({
+					status: 'exists'
+				});
 				expect(await h.provisionStore.result(KEY)).toMatchObject({
 					jti: '01K9A0000000000000000000JT',
 					completionState: 'done',
