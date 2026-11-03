@@ -41,6 +41,7 @@ describe('EVER_CONNECT_PROVISION_ENABLED', () => {
 		['a fragment', 'https://app.gauzy.example/#/x'],
 		['credentials', 'https://user:pw@app.gauzy.example'],
 		['another scheme', 'ftp://app.gauzy.example'],
+		['plain http off this computer', 'http://app.gauzy.example'],
 		['no URL', 'app.gauzy.example']
 	])('stays off, with a warning, when CLIENT_BASE_URL has %s', (_name, value) => {
 		const warn = jest.fn();

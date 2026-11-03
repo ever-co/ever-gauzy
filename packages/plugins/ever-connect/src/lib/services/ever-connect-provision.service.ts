@@ -8,11 +8,12 @@ import {
 	Optional,
 	UnauthorizedException
 } from '@nestjs/common';
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { ITermsAcceptanceClaim, ITermsAcceptanceDocument } from '@gauzy/contracts';
 import {
 	isEverHost,
 	PROVISION_KEY_SHAPE,
+	provisionKeyHash,
 	ZITADEL_HANDOFF_READER,
 	ZITADEL_PROVISIONER,
 	ZitadelHandoffReaderPort,
@@ -96,8 +97,6 @@ export interface ProvisionResponse {
 	return_to: string;
 }
 
-const sha256 = (text: string): string => createHash('sha256').update(text).digest('hex');
-
 const problem = (status: number, code: string, message: string): HttpException =>
 	new HttpException({ statusCode: status, code, message }, status);
 
@@ -170,7 +169,7 @@ export class EverConnectProvisionService {
 		const saved = await this.store.saveIntent({
 			jti: claims.jti,
 			intent: JSON.stringify(claims),
-			keyHash: sha256(key),
+			keyHash: provisionKeyHash(key),
 			idempotencyKey: claims.idempotency_key,
 			expiresAt: claims.exp * 1000
 		});
@@ -437,7 +436,7 @@ export class EverConnectProvisionService {
 		) {
 			throw invalid();
 		}
-		const intent = await this.store.intentByKey(sha256(provisionKey));
+		const intent = await this.store.intentByKey(provisionKeyHash(provisionKey));
 		if (!intent || (intent.status !== 'pending' && intent.status !== 'accepted')) {
 			throw invalid();
 		}
@@ -462,7 +461,7 @@ export class EverConnectProvisionService {
 				message: 'Sign in with Ever ID again.'
 			});
 		}
-		if (handoff.provisionKeyHash !== sha256(provisionKey)) {
+		if (handoff.provisionKeyHash !== provisionKeyHash(provisionKey)) {
 			throw invalid();
 		}
 		// The person the request names, at Ever ID (a subject is unique at its issuer only).

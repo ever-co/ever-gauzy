@@ -58,7 +58,7 @@ export function errorCodeOf(failure: { status?: number; error?: unknown } | null
 	template: `
 		<section class="ever-connect-provision">
 			<h2 class="title">{{ 'EVER_CONNECT.PROVISION.TITLE' | translate }}</h2>
-			@if (error) {
+			@if (error && error !== 'terms_required') {
 				<nb-alert
 					[status]="error === 'provisioning_in_progress' ? 'warning' : 'danger'"
 					role="alert"
@@ -160,6 +160,11 @@ export function errorCodeOf(failure: { status?: number; error?: unknown } | null
 						[(ngModel)]="lastName"
 						maxlength="100"
 					/>
+					@if (error === 'terms_required') {
+						<nb-alert status="danger" role="alert" class="error">
+							{{ 'EVER_CONNECT.PROVISION.ERRORS.terms_required' | translate }}
+						</nb-alert>
+					}
 					@if (summary.terms?.length) {
 						<nb-checkbox name="terms" [(ngModel)]="termsAccepted" class="terms">
 							{{ 'EVER_CONNECT.PROVISION.TERMS' | translate }}

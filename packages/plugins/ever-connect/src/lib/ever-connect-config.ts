@@ -238,7 +238,8 @@ export function isProvisionEnabled(env: Env, warn: Warn = () => undefined): bool
 }
 
 /**
- * An address of this installation sent to Ever Platform (`CLIENT_BASE_URL`, `API_BASE_URL`): http(s), no
+ * An address of this installation sent to Ever Platform (`CLIENT_BASE_URL`, `API_BASE_URL`): https (plain
+ * http only on a loopback address: the sign-in link it carries must not cross a network in clear), no
  * credentials, query or fragment, without trailing slashes; `null` when it is not one.
  */
 function baseUrlOf(raw: string | undefined, fallback: string): string | null {
@@ -248,7 +249,8 @@ function baseUrlOf(raw: string | undefined, fallback: string): string | null {
 	} catch {
 		return null;
 	}
-	if (!(url.protocol === 'https:' || url.protocol === 'http:') || url.username || url.password || url.search || url.hash) {
+	const secure = url.protocol === 'https:' || (url.protocol === 'http:' && isLoopbackHost(url.hostname));
+	if (!secure || url.username || url.password || url.search || url.hash) {
 		return null;
 	}
 	return `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
@@ -261,7 +263,7 @@ function parseProvision(env: Env, warn: Warn): EverConnectConfig['provision'] {
 	const apiUrl = baseUrlOf(env['API_BASE_URL'], 'http://localhost:3000');
 	if (enabled && (!appUrl || !apiUrl)) {
 		warn(
-			'CLIENT_BASE_URL and API_BASE_URL must be http(s) addresses without credentials, a query or a fragment; creating workspaces from Ever stays off until they are.'
+			'CLIENT_BASE_URL and API_BASE_URL must be https addresses (plain http on a loopback address only) without credentials, a query or a fragment; creating workspaces from Ever stays off until they are.'
 		);
 	}
 	return { enabled: enabled && !!appUrl && !!apiUrl, appUrl: appUrl ?? '', apiUrl: apiUrl ?? '' };

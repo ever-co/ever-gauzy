@@ -80,7 +80,7 @@ describe('provisioning request verification', () => {
 
 	async function expectInvalid(jws: unknown, overrides: Partial<IntentExpectations> = {}): Promise<string> {
 		const error = await refused(jws, overrides);
-		expect({ status: error.status, code: error.code }).toEqual({ status: 401, code: 'intent_invalid' });
+		expect({ status: error.getStatus(), code: error.code }).toEqual({ status: 401, code: 'intent_invalid' });
 		return error.reason;
 	}
 
@@ -214,7 +214,7 @@ describe('provisioning request verification', () => {
 
 	it('a request for another product with this audience is 422 product_mismatch', async () => {
 		const error = await refused(signIntent(platform.active, claimsAt({ product: 'works' })));
-		expect({ status: error.status, code: error.code }).toEqual({ status: 422, code: 'product_mismatch' });
+		expect({ status: error.getStatus(), code: error.code }).toEqual({ status: 422, code: 'product_mismatch' });
 	});
 
 	it('accepts the optional billing reference and a request without features.teams', async () => {

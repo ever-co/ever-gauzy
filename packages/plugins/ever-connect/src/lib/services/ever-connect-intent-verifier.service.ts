@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
+import { HttpException, Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { createPublicKey, verify as verifySignature } from 'node:crypto';
 import type { EverConnectConfig } from '../ever-connect-config';
 import { EVER_CONNECT_CLOCK, EVER_CONNECT_SETTINGS, PRODUCT, ULID_SHAPE } from '../ever-connect.constants';
@@ -59,17 +59,18 @@ export interface ProvisionIntentClaims {
 }
 
 /**
- * A request refused. `status` and `code` are what the caller is answered (401 `intent_invalid` for
- * every check but the product, 422 `product_mismatch`); `reason` names the check that failed, for this
- * installation's tests and logs only, never for the answer.
+ * A request refused: an HTTP error whose body is `{statusCode, code, message}` (401 `intent_invalid` for
+ * every check but the product, 422 `product_mismatch`), so it reaches the caller as such through any
+ * interceptor. `reason` names the check that failed, for this installation's tests and logs only, never
+ * for the answer.
  */
-export class IntentRefusedError extends Error {
+export class IntentRefusedError extends HttpException {
 	constructor(
-		readonly status: 401 | 422,
+		status: 401 | 422,
 		readonly code: 'intent_invalid' | 'product_mismatch',
 		readonly reason: string
 	) {
-		super(`The provisioning request was refused (${reason}).`);
+		super({ statusCode: status, code, message: 'This request is not valid.' }, status);
 		this.name = 'IntentRefusedError';
 	}
 }

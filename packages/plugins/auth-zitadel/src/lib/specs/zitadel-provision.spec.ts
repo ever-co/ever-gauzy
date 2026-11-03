@@ -48,6 +48,11 @@ class FakeDatabase {
 			findOne: async ({ where }: { where: Row }) => rows.find((row) => this.matches(row, where)) ?? null,
 			find: async ({ where }: { where: Row }) => rows.filter((row) => this.matches(row, where)),
 			exists: async ({ where }: { where: Row }) => rows.some((row) => this.matches(row, where)),
+			update: async (where: Row, values: Row) => {
+				rows.forEach((row, at) => {
+					if (this.matches(row, where)) rows[at] = { ...row, ...values };
+				});
+			},
 			insert: async (values: Row) => {
 				if (
 					entity === ZitadelOrganization &&
@@ -155,12 +160,6 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 				return { id: user.id };
 			}
 		};
-		const accounts = {
-			markEmailVerified: async (userId: string) => {
-				const user = users.find((row) => row['id'] === userId);
-				if (user) user['emailVerifiedAt'] = new Date();
-			}
-		};
 		const tenantService = {
 			onboardTenant: async (entity: { name: string }, user: Row) => {
 				onboarded.push({ name: entity.name, userId: user['id'] });
@@ -210,7 +209,6 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		service = new ZitadelProvisionService(
 			db.dataSource(queries) as never,
 			moduleRef as never,
-			accounts as never,
 			config as never,
 			gauzyAuth as never,
 			termsDocuments as never
@@ -318,7 +316,8 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 			service.createUserPreLinked(INPUT, { checkpoint: async (ids) => void (kept = ids) })
 		).rejects.toThrow('connection timeout');
 		expect(kept).toEqual({ userId: expect.any(String), tenantId: expect.any(String) });
-		// Nobody can sign in yet: no Ever ID link.
+		// Nobody can sign in yet: no Ever ID link, the address not marked verified.
+		expect(db.table(User)[0]['emailVerifiedAt']).toBeNull();
 		expect(db.table(ZitadelAccount)).toEqual([]);
 
 		const result = await service.createUserPreLinked(INPUT, { resume: kept });
@@ -329,7 +328,7 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		expect(db.table(ZitadelAccount)).toHaveLength(1);
 	});
 
-	it('an owner an attempt registered but could not report is found again, never registered twice', async () => {
+	it('an attempt that stopped before keeping the owner id leaves an unusable account; nothing is bound by e-mail', async () => {
 		await expect(
 			service.createUserPreLinked(INPUT, {
 				checkpoint: async () => {
@@ -337,24 +336,14 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 				}
 			})
 		).rejects.toThrow('the id could not be kept');
-		expect(registered).toHaveLength(1);
-
+		const [stopped] = db.table(User);
 		const result = await service.createUserPreLinked(INPUT);
-		expect(registered).toHaveLength(1);
-		expect(result.userId).toBe(db.table(User)[0]['id']);
-	});
-
-	it('an account someone registered on the address with a password is never taken over', async () => {
-		db.table(User).push({
-			id: 'theirs',
-			email: INPUT.email,
-			tenantId: null,
-			hash: 'a-password-hash',
-			createdAt: new Date()
-		});
-		const result = await service.createUserPreLinked(INPUT);
-		expect(result.userId).not.toBe('theirs');
-		expect(registered).toHaveLength(1);
+		expect(registered).toHaveLength(2);
+		expect(result.userId).not.toBe(stopped['id']);
+		// The account the stopped attempt left: no tenant, no password, not verified, no Ever ID link.
+		const left = db.table(User).find((row) => row['id'] === stopped['id']) as Row;
+		expect(left).toMatchObject({ tenantId: null, hash: null, emailVerifiedAt: null });
+		expect(db.table(ZitadelAccount).map((row) => row['userId'])).toEqual([result.userId]);
 	});
 
 	it('the documents Gauzy requires: refused before anything is created without them, recorded by the register path with them', async () => {

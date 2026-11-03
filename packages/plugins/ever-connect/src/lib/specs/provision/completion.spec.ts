@@ -146,11 +146,44 @@ describe('workspace completion report', () => {
 		expect(h.platform.callsTo(COMPLETE)).toHaveLength(1);
 	});
 
-	it('a repeat Ever Platform already recorded (already_completed) counts as done', async () => {
+	it('a repeat Ever Platform already recorded (already_completed) counts as done; its link is found again', async () => {
 		h.platform.on(COMPLETE, { status: 200, body: { status: 'already_completed' } });
+		h.platform.on('GET /v1/instances/me', {
+			status: 200,
+			body: {
+				instance: { id: INSTANCE_ID },
+				tenant_links: [
+					{
+						id: '01K9A0000000000000000000XX',
+						org_id: '01K9A0000000000000000000ZZ',
+						product_tenant_id: tenantId
+					},
+					{ id: LINK_ID, org_id: '01K9A0000000000000000000RG', product_tenant_id: tenantId }
+				]
+			}
+		});
 		await completion.sendNow(KEY);
-		expect(await row()).toMatchObject({ completionState: 'done', completionAttempts: 1 });
+		expect(await row()).toMatchObject({ completionState: 'done', completionAttempts: 1, tenantLinkId: LINK_ID });
 		expect(h.platform.callsTo(COMPLETE)).toHaveLength(1);
+		expect(await h.store.linkById(LINK_ID)).toMatchObject({ tenantId, organizationId });
+	});
+
+	it('the report right after the creation and the worker never send it twice at once', async () => {
+		h.platform.on(COMPLETE, { status: 200, body: { status: 'completed', tenant_link_id: LINK_ID } });
+		const other = new EverConnectProvisionCompletion(
+			provisions,
+			h.store,
+			h.platformService as never,
+			h.audit,
+			h.signals,
+			h.config,
+			undefined,
+			undefined,
+			h.clock
+		);
+		await Promise.all([completion.sendNow(KEY), other.sendDue(), completion.sendDue()]);
+		expect(h.platform.callsTo(COMPLETE)).toHaveLength(1);
+		expect(await row()).toMatchObject({ completionState: 'done', tenantLinkId: LINK_ID });
 	});
 
 	it('Ever Platform unreachable: retried after 1 minute, then longer; done once it answers', async () => {

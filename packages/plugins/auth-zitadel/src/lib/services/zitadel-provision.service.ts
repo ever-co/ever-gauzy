@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable, Logger, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { CommandBus } from '@nestjs/cqrs';
-import { DataSource, EntityManager, IsNull, MoreThan } from 'typeorm';
+import { DataSource, EntityManager, IsNull } from 'typeorm';
 import {
 	CurrenciesEnum,
 	ITermsAcceptanceClaim,
@@ -31,12 +31,8 @@ import {
 } from '../ports/create-user-pre-linked.port';
 import { GAUZY_AUTH, GauzyAuthPort } from '../ports/gauzy-auth.port';
 import { TERMS_DOCUMENTS, TermsDocumentsPort } from '../ports/terms-documents.port';
-import { ZitadelAccountService } from './zitadel-account.service';
 import { ZitadelConfigService } from './zitadel-config.service';
 import { absoluteDocumentUrl } from './zitadel-signup.service';
-
-/** How long an owner an attempt registered stays recognisable to its retry (it has no tenant yet). */
-const UNFINISHED_OWNER_MS = 24 * 3_600_000;
 
 /** Longest name of a tenant, an organization or a team created here. */
 const MAX_NAME_LENGTH = 200;
@@ -95,7 +91,6 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 	constructor(
 		private readonly dataSource: DataSource,
 		private readonly moduleRef: ModuleRef,
-		private readonly accounts: ZitadelAccountService,
 		private readonly config: ZitadelConfigService,
 		@Inject(GAUZY_AUTH) private readonly gauzyAuth: GauzyAuthPort,
 		@Inject(TERMS_DOCUMENTS) private readonly termsDocuments: TermsDocumentsPort
@@ -155,14 +150,12 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 			await hooks.checkpoint?.({ ...ids });
 		};
 
-		// 1. The owner: Gauzy's register path (which checks and records the accepted documents), then the
-		// address is marked verified (Ever ID verified it). An owner an earlier attempt registered but could
-		// not report is found again rather than registered twice.
-		let user = ids.userId ? await this.loadUser(ids.userId) : await this.findUnfinishedOwner(input.email);
-		if (user && !ids.userId) {
-			ids.userId = user.id;
-			await checkpoint();
-		}
+		// 1. The owner: Gauzy's register path (which checks and records the accepted documents). The
+		// address is marked verified (Ever ID verified it), and the account usable, only in the last
+		// transaction: until then no sign-in path (Ever ID, Gauzy's e-mail code) reaches the new workspace.
+		// Its id is kept at once; an attempt that stopped before that leaves an unusable account (no tenant,
+		// no password, no link, not verified), never a second workspace.
+		let user = ids.userId ? await this.loadUser(ids.userId) : null;
 		if (!user) {
 			this.assertRequiredTermsAccepted(input.terms ?? []);
 			const created = await this.gauzyAuth.register(
@@ -178,13 +171,10 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 			);
 			ids.userId = created.id;
 			await checkpoint();
-			await this.accounts.markEmailVerified(created.id);
 			user = await this.loadUser(created.id);
 			if (!user) {
 				throw new Error('The new owner could not be read back.');
 			}
-		} else if (!user.emailVerifiedAt) {
-			await this.accounts.markEmailVerified(user.id);
 		}
 
 		// 2. The tenant, with the owner as its SUPER_ADMIN (Gauzy finishes a tenant a failed attempt left).
@@ -302,6 +292,11 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 			return false;
 		}
 		const now = new Date();
+		// The owner becomes usable here, with the links: the address Ever ID verified, the account active.
+		await manager
+			.getRepository(User)
+			.update({ id: ids.userId, emailVerifiedAt: IsNull() }, { emailVerifiedAt: now } as never);
+		await manager.getRepository(User).update({ id: ids.userId }, { isActive: true } as never);
 		await manager.getRepository(ZitadelOrganization).insert({
 			tenantId: ids.tenantId,
 			organizationId: ids.organizationId,
@@ -334,29 +329,6 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 			.execute();
 		await hooks.finalize?.({ query: (sql, params) => manager.query(sql, params) }, ids);
 		return true;
-	}
-
-	/**
-	 * An owner an earlier attempt registered whose id it could not keep: same address, no tenant yet, no
-	 * password (Gauzy's register path made it without one; an account someone registered with a password
-	 * is never taken over), not linked to an Ever ID, registered within the last day.
-	 */
-	private async findUnfinishedOwner(email: string): Promise<User | null> {
-		const candidates = await this.dataSource.getRepository(User).find({
-			where: {
-				email,
-				tenantId: IsNull(),
-				hash: IsNull(),
-				createdAt: MoreThan(new Date(Date.now() - UNFINISHED_OWNER_MS))
-			},
-			order: { createdAt: 'DESC' }
-		});
-		for (const candidate of candidates) {
-			if (!(await this.dataSource.getRepository(ZitadelAccount).exists({ where: { userId: candidate.id } }))) {
-				return candidate;
-			}
-		}
-		return null;
 	}
 
 	/**

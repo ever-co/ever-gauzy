@@ -34,6 +34,9 @@ export const COMPLETION_MAX_ATTEMPTS = COMPLETION_RETRY_MS.length + 1;
 /** How many due reports one pass sends at most. */
 const COMPLETION_BATCH = 20;
 
+/** How long one attempt holds a report (then another may take it, as for a stopped process). */
+const COMPLETION_LEASE_MS = 2 * 60_000;
+
 /** What an id of Ever Platform's (a link) may look like; anything else is not kept. */
 const LINK_ID_SHAPE = /^[0-9A-Za-z_-]{8,64}$/;
 
@@ -119,7 +122,11 @@ export class EverConnectProvisionCompletion {
 	 * local failure does not ask again), then the link it answered is kept here; only then is the report
 	 * done. A failure of either step counts an attempt and is retried.
 	 */
-	private async send(record: ProvisionResultRecord, instanceId: string): Promise<void> {
+	private async send(due: ProvisionResultRecord, instanceId: string): Promise<void> {
+		if (!(await this.provisions.leaseCompletion(due, this.now() + COMPLETION_LEASE_MS))) {
+			return;
+		}
+		const record = (await this.provisions.result(due.idempotencyKey)) as ProvisionResultRecord;
 		const attempts = record.completionAttempts;
 		let tenantLinkId = record.tenantLinkId;
 		if (!record.completedAt) {
@@ -150,6 +157,18 @@ export class EverConnectProvisionCompletion {
 				tenantLinkId
 			});
 		}
+		if (!tenantLinkId) {
+			// A repeat (`already_completed`, its first answer lost) may carry no id: the link is found again.
+			try {
+				tenantLinkId = await this.findLink(record);
+			} catch (error) {
+				await this.failed(record, `link_${errorCode(error)}`, false, true);
+				return;
+			}
+			if (tenantLinkId) {
+				await this.provisions.updateCompletion(record.idempotencyKey, attempts, { tenantLinkId });
+			}
+		}
 		if (tenantLinkId) {
 			try {
 				await this.keepLink(record, tenantLinkId);
@@ -164,6 +183,23 @@ export class EverConnectProvisionCompletion {
 			completionNextAt: null,
 			completionError: null
 		});
+	}
+
+	/**
+	 * The id of the link Ever Platform recorded for this workspace (`GET /v1/instances/me`: the Ever
+	 * organization and the tenant it was created for), or `null`.
+	 */
+	private async findLink(record: ProvisionResultRecord): Promise<string | null> {
+		const client = await this.platform.getClient();
+		const self = await client.instances.self();
+		const link = (self?.tenant_links ?? []).find(
+			(candidate) =>
+				candidate.org_id === record.everOrgId &&
+				candidate.product_tenant_id === record.productTenantId &&
+				!candidate.unlinked_at &&
+				LINK_ID_SHAPE.test(candidate.id)
+		);
+		return link?.id ?? null;
 	}
 
 	/**

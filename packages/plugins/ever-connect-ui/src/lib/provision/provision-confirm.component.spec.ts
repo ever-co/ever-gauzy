@@ -239,6 +239,16 @@ describe('ProvisionConfirmComponent', () => {
 		});
 	});
 
+	it('documents not accepted (422 terms_required): the form stays, to accept them and create again', () => {
+		api.summary.mockReturnValue(of(summary()));
+		api.create.mockReturnValueOnce(throwError(() => ({ status: 422, error: { code: 'terms_required' } })));
+		const component = create({ provision: PROVISION, handoff: HANDOFF });
+		component.create();
+		expect(component.error).toBe('terms_required');
+		expect(component.summary).not.toBeNull();
+		expect(component.result).toBeNull();
+	});
+
 	it('a summary that fails still offers the way back to Ever', () => {
 		api.summary.mockReturnValue(throwError(() => ({ status: 401, error: { code: 'intent_expired' } })));
 		expect(create({ provision: PROVISION, handoff: HANDOFF }).returnTo).toBe('https://app.ever.co');

@@ -411,6 +411,23 @@ export class EverConnectProvisionStore {
 	}
 
 	/**
+	 * Takes the next attempt of a completion report for `until` (a lease: an attempt that stops is
+	 * retried when it ends), only while the report is still as the caller read it and due. Answers
+	 * whether this caller has it: two callers (the API process right after the creation, the lease
+	 * holder's worker) never send one report at once.
+	 */
+	async leaseCompletion(record: ProvisionResultRecord, until: number): Promise<boolean> {
+		const q = (c: string) => this.sql.q(c);
+		const { affected } = await this.sql.run(
+			`UPDATE ${q(RESULT)} SET ${q('completionNextAt')} = ${this.sql.ph(1)}, ${q('updatedAt')} = ${this.sql.ph(2)} ` +
+				`WHERE ${q('idempotencyKey')} = ${this.sql.ph(3)} AND ${q('completionState')} = ${this.sql.ph(4)} AND ${q('completionAttempts')} = ${this.sql.ph(5)} ` +
+				`AND (${q('completionNextAt')} IS NULL OR ${q('completionNextAt')} <= ${this.sql.ph(6)})`,
+			[until, this.now(), record.idempotencyKey, 'pending', record.completionAttempts, this.now()]
+		);
+		return affected > 0;
+	}
+
+	/**
 	 * Updates a completion report only while it is still in the state the caller read (`attempts`), so
 	 * two API processes never both count one attempt. Answers whether it did.
 	 */

@@ -45,7 +45,7 @@ export class EverConnectProvisionExceptionFilter implements ExceptionFilter {
 		let status: number = HttpStatus.INTERNAL_SERVER_ERROR;
 		let code = 'provisioning_failed';
 		if (exception instanceof IntentRefusedError) {
-			status = exception.status;
+			status = exception.getStatus();
 			code = exception.code;
 		} else if (exception instanceof ThrottlerException) {
 			status = HttpStatus.TOO_MANY_REQUESTS;
