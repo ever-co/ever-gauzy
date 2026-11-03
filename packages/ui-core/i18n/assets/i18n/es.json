@@ -7681,7 +7681,21 @@
 		"TAX_LABEL": "Etiqueta del impuesto",
 		"TYPE": "Tipo",
 		"EXPENSE_DATE": "Fecha del gasto",
-		"LINK_COPIED": "Enlace copiado"
+		"LINK_COPIED": "Enlace copiado",
+		"CATEGORY_SPENDING": "Gasto de la categoría",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · últimos {{ count }} meses · {{ currency }}",
+		"VENDOR_PAYMENTS": "Pagos al proveedor",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · últimos {{ count }} pagos · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "Aún no hay otros pagos a este proveedor",
+		"MONTH_SHARE": "Parte del mes",
+		"MONTH_SHARE_CAPTION": "{{ category }} en {{ month }}",
+		"THIS_EXPENSE": "Este gasto",
+		"THIS_MONTH": "Mes de este gasto",
+		"OTHER_MONTHS": "Otros meses",
+		"OTHER_PAYMENTS": "Otros pagos",
+		"REST_OF_MONTH": "Resto del mes",
+		"MONTH_TOTAL": "Total del mes",
+		"CHART_FAILED": "No se pudo cargar el gráfico"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Proyecto",

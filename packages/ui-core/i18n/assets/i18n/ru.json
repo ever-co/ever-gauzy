@@ -7695,7 +7695,21 @@
 		"TAX_LABEL": "Название налога",
 		"TYPE": "Тип",
 		"EXPENSE_DATE": "Дата расхода",
-		"LINK_COPIED": "Ссылка скопирована"
+		"LINK_COPIED": "Ссылка скопирована",
+		"CATEGORY_SPENDING": "Расходы по категории",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · последние месяцы: {{ count }} · {{ currency }}",
+		"VENDOR_PAYMENTS": "Платежи поставщику",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · последние платежи: {{ count }} · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "Других платежей этому поставщику пока нет",
+		"MONTH_SHARE": "Доля месяца",
+		"MONTH_SHARE_CAPTION": "{{ category }}: {{ month }}",
+		"THIS_EXPENSE": "Этот расход",
+		"THIS_MONTH": "Месяц этого расхода",
+		"OTHER_MONTHS": "Другие месяцы",
+		"OTHER_PAYMENTS": "Другие платежи",
+		"REST_OF_MONTH": "Остаток месяца",
+		"MONTH_TOTAL": "Итого за месяц",
+		"CHART_FAILED": "Не удалось загрузить диаграмму"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Проект",

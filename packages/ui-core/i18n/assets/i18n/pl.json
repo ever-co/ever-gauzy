@@ -7678,7 +7678,21 @@
 		"TAX_LABEL": "Etykieta podatku",
 		"TYPE": "Typ",
 		"EXPENSE_DATE": "Data wydatku",
-		"LINK_COPIED": "Link skopiowany"
+		"LINK_COPIED": "Link skopiowany",
+		"CATEGORY_SPENDING": "Wydatki w kategorii",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · ostatnie {{ count }} mies. · {{ currency }}",
+		"VENDOR_PAYMENTS": "Płatności na rzecz dostawcy",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · ostatnie płatności: {{ count }} · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "Brak innych płatności na rzecz tego dostawcy",
+		"MONTH_SHARE": "Udział w miesiącu",
+		"MONTH_SHARE_CAPTION": "{{ category }} w {{ month }}",
+		"THIS_EXPENSE": "Ten wydatek",
+		"THIS_MONTH": "Miesiąc tego wydatku",
+		"OTHER_MONTHS": "Inne miesiące",
+		"OTHER_PAYMENTS": "Inne płatności",
+		"REST_OF_MONTH": "Reszta miesiąca",
+		"MONTH_TOTAL": "Suma miesiąca",
+		"CHART_FAILED": "Nie udało się wczytać wykresu"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Projekt",

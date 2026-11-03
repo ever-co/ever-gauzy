@@ -8894,7 +8894,21 @@
 		"TAX_LABEL": "税标签",
 		"TYPE": "类型",
 		"EXPENSE_DATE": "费用日期",
-		"LINK_COPIED": "链接已复制"
+		"LINK_COPIED": "链接已复制",
+		"CATEGORY_SPENDING": "类别支出",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · 最近 {{ count }} 个月 · {{ currency }}",
+		"VENDOR_PAYMENTS": "供应商付款",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · 最近 {{ count }} 笔付款 · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "尚无向该供应商的其他付款",
+		"MONTH_SHARE": "本月占比",
+		"MONTH_SHARE_CAPTION": "{{ month }}的{{ category }}",
+		"THIS_EXPENSE": "此费用",
+		"THIS_MONTH": "此费用所在月份",
+		"OTHER_MONTHS": "其他月份",
+		"OTHER_PAYMENTS": "其他付款",
+		"REST_OF_MONTH": "本月其余部分",
+		"MONTH_TOTAL": "本月合计",
+		"CHART_FAILED": "无法加载图表"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "项目",

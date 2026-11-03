@@ -7671,7 +7671,21 @@
 		"TAX_LABEL": "تسمية الضريبة",
 		"TYPE": "النوع",
 		"EXPENSE_DATE": "تاريخ المصروف",
-		"LINK_COPIED": "تم نسخ الرابط"
+		"LINK_COPIED": "تم نسخ الرابط",
+		"CATEGORY_SPENDING": "الإنفاق حسب الفئة",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · آخر {{ count }} أشهر · {{ currency }}",
+		"VENDOR_PAYMENTS": "مدفوعات المورّد",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · آخر {{ count }} دفعات · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "لا توجد دفعات أخرى لهذا المورّد بعد",
+		"MONTH_SHARE": "حصة الشهر",
+		"MONTH_SHARE_CAPTION": "{{ category }} في {{ month }}",
+		"THIS_EXPENSE": "هذا المصروف",
+		"THIS_MONTH": "شهر هذا المصروف",
+		"OTHER_MONTHS": "الأشهر الأخرى",
+		"OTHER_PAYMENTS": "الدفعات الأخرى",
+		"REST_OF_MONTH": "باقي الشهر",
+		"MONTH_TOTAL": "إجمالي الشهر",
+		"CHART_FAILED": "تعذّر تحميل المخطط"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "المشروع",

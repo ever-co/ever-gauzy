@@ -7687,7 +7687,21 @@
 		"TAX_LABEL": "תווית המס",
 		"TYPE": "סוג",
 		"EXPENSE_DATE": "תאריך ההוצאה",
-		"LINK_COPIED": "הקישור הועתק"
+		"LINK_COPIED": "הקישור הועתק",
+		"CATEGORY_SPENDING": "הוצאות לפי קטגוריה",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · {{ count }} החודשים האחרונים · {{ currency }}",
+		"VENDOR_PAYMENTS": "תשלומים לספק",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · {{ count }} התשלומים האחרונים · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "עדיין אין תשלומים נוספים לספק זה",
+		"MONTH_SHARE": "חלק מהחודש",
+		"MONTH_SHARE_CAPTION": "{{ category }} ב{{ month }}",
+		"THIS_EXPENSE": "הוצאה זו",
+		"THIS_MONTH": "החודש של הוצאה זו",
+		"OTHER_MONTHS": "חודשים אחרים",
+		"OTHER_PAYMENTS": "תשלומים אחרים",
+		"REST_OF_MONTH": "יתרת החודש",
+		"MONTH_TOTAL": "סך החודש",
+		"CHART_FAILED": "לא ניתן היה לטעון את התרשים"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "פרויקט",

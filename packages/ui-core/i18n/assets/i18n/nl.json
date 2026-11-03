@@ -7679,7 +7679,21 @@
 		"TAX_LABEL": "Belastinglabel",
 		"TYPE": "Type",
 		"EXPENSE_DATE": "Uitgavedatum",
-		"LINK_COPIED": "Link gekopieerd"
+		"LINK_COPIED": "Link gekopieerd",
+		"CATEGORY_SPENDING": "Uitgaven van de categorie",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · laatste {{ count }} maanden · {{ currency }}",
+		"VENDOR_PAYMENTS": "Betalingen aan de leverancier",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · laatste {{ count }} betalingen · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "Nog geen andere betalingen aan deze leverancier",
+		"MONTH_SHARE": "Aandeel in de maand",
+		"MONTH_SHARE_CAPTION": "{{ category }} in {{ month }}",
+		"THIS_EXPENSE": "Deze uitgave",
+		"THIS_MONTH": "Maand van deze uitgave",
+		"OTHER_MONTHS": "Andere maanden",
+		"OTHER_PAYMENTS": "Andere betalingen",
+		"REST_OF_MONTH": "Rest van de maand",
+		"MONTH_TOTAL": "Maandtotaal",
+		"CHART_FAILED": "De grafiek kon niet worden geladen"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Project",

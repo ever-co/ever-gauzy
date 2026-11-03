@@ -7722,7 +7722,21 @@
 		"TAX_LABEL": "Етикет на данъка",
 		"TYPE": "Вид",
 		"EXPENSE_DATE": "Дата на разхода",
-		"LINK_COPIED": "Връзката е копирана"
+		"LINK_COPIED": "Връзката е копирана",
+		"CATEGORY_SPENDING": "Разходи по категория",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · последните {{ count }} месеца · {{ currency }}",
+		"VENDOR_PAYMENTS": "Плащания към доставчика",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · последните {{ count }} плащания · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "Все още няма други плащания към този доставчик",
+		"MONTH_SHARE": "Дял от месеца",
+		"MONTH_SHARE_CAPTION": "{{ category }} през {{ month }}",
+		"THIS_EXPENSE": "Този разход",
+		"THIS_MONTH": "Месецът на този разход",
+		"OTHER_MONTHS": "Други месеци",
+		"OTHER_PAYMENTS": "Други плащания",
+		"REST_OF_MONTH": "Останалата част от месеца",
+		"MONTH_TOTAL": "Общо за месеца",
+		"CHART_FAILED": "Диаграмата не можа да се зареди"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Проект",

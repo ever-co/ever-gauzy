@@ -7679,7 +7679,21 @@
 		"TAX_LABEL": "Rótulo do imposto",
 		"TYPE": "Tipo",
 		"EXPENSE_DATE": "Data da despesa",
-		"LINK_COPIED": "Link copiado"
+		"LINK_COPIED": "Link copiado",
+		"CATEGORY_SPENDING": "Gastos da categoria",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · últimos {{ count }} meses · {{ currency }}",
+		"VENDOR_PAYMENTS": "Pagamentos ao fornecedor",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · últimos {{ count }} pagamentos · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "Ainda não há outros pagamentos a este fornecedor",
+		"MONTH_SHARE": "Parte do mês",
+		"MONTH_SHARE_CAPTION": "{{ category }} em {{ month }}",
+		"THIS_EXPENSE": "Esta despesa",
+		"THIS_MONTH": "Mês desta despesa",
+		"OTHER_MONTHS": "Outros meses",
+		"OTHER_PAYMENTS": "Outros pagamentos",
+		"REST_OF_MONTH": "Resto do mês",
+		"MONTH_TOTAL": "Total do mês",
+		"CHART_FAILED": "Não foi possível carregar o gráfico"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Projeto",

@@ -7679,7 +7679,21 @@
 		"TAX_LABEL": "Etichetta dell'imposta",
 		"TYPE": "Tipo",
 		"EXPENSE_DATE": "Data della spesa",
-		"LINK_COPIED": "Link copiato"
+		"LINK_COPIED": "Link copiato",
+		"CATEGORY_SPENDING": "Spesa della categoria",
+		"CATEGORY_SPENDING_CAPTION": "{{ category }} · ultimi {{ count }} mesi · {{ currency }}",
+		"VENDOR_PAYMENTS": "Pagamenti al fornitore",
+		"VENDOR_PAYMENTS_CAPTION": "{{ vendor }} · ultimi {{ count }} pagamenti · {{ currency }}",
+		"NO_OTHER_PAYMENTS": "Ancora nessun altro pagamento a questo fornitore",
+		"MONTH_SHARE": "Quota del mese",
+		"MONTH_SHARE_CAPTION": "{{ category }} a {{ month }}",
+		"THIS_EXPENSE": "Questa spesa",
+		"THIS_MONTH": "Mese di questa spesa",
+		"OTHER_MONTHS": "Altri mesi",
+		"OTHER_PAYMENTS": "Altri pagamenti",
+		"REST_OF_MONTH": "Resto del mese",
+		"MONTH_TOTAL": "Totale del mese",
+		"CHART_FAILED": "Impossibile caricare il grafico"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Progetto",
