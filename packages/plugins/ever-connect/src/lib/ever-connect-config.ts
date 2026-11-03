@@ -64,6 +64,13 @@ export interface EverConnectConfig {
 	 * query or a fragment.
 	 */
 	signIn: { redirectUri: string; logoutUri: string } | null;
+	/**
+	 * Creating a workspace a person confirmed from Ever (`EVER_CONNECT_PROVISION_ENABLED`, off unless
+	 * exactly `true`; while off every route of it answers 404). `appUrl` and `apiUrl` are this
+	 * installation's web app and API (`CLIENT_BASE_URL`, `API_BASE_URL`), sent back to Ever Platform as
+	 * the new workspace's addresses.
+	 */
+	provision: { enabled: boolean; appUrl: string; apiUrl: string };
 }
 
 /** `localhost` (and `*.localhost`), `127.0.0.0/8` and `::1`. */
@@ -215,6 +222,24 @@ function parseSignIn(env: Env): EverConnectConfig['signIn'] {
 }
 
 /**
+ * `EVER_CONNECT_PROVISION_ENABLED`: only the exact value `true` turns it on; unset, empty and `false`
+ * keep it off silently, anything else keeps it off with one warning that never repeats the value.
+ */
+export function isProvisionEnabled(env: Env, warn: Warn = () => undefined): boolean {
+	const raw = env['EVER_CONNECT_PROVISION_ENABLED'];
+	if (raw === undefined || raw === '' || raw === 'false') {
+		return false;
+	}
+	if (raw === 'true') {
+		return true;
+	}
+	warn('EVER_CONNECT_PROVISION_ENABLED is neither "true" nor "false"; creating workspaces from Ever stays off (the default).');
+	return false;
+}
+
+const stripTrailingSlashes = (value: string): string => value.replace(/\/+$/, '');
+
+/**
  * Reads the settings once. A malformed value falls back to its default with one `warn` line (which
  * never repeats the value), except an unusable Ever Platform address, which sends nothing.
  */
@@ -243,7 +268,12 @@ export function readEverConnectConfig(env: Env = process.env, warn: Warn = () =>
 		returnUnusable: Boolean(env['CLIENT_BASE_URL']?.trim()) && !ret,
 		issuer: localPlatform ? issuer : null,
 		localPlatform,
-		signIn: parseSignIn(env)
+		signIn: parseSignIn(env),
+		provision: {
+			enabled: isProvisionEnabled(env, warn),
+			appUrl: stripTrailingSlashes(env['CLIENT_BASE_URL']?.trim() || 'http://localhost:4200'),
+			apiUrl: stripTrailingSlashes(env['API_BASE_URL']?.trim() || 'http://localhost:3000')
+		}
 	};
 }
 

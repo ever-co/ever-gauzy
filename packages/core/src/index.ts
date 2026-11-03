@@ -143,6 +143,11 @@ export { UserModule, UserService } from './lib/user';
 // The command that invites people through the platform's own invite flow (its e-mail, its role rules, its accept
 // path), for a package that invites someone it found elsewhere: the Ever Works integration's "invite to Gauzy".
 export { InviteBulkCreateCommand } from './lib/invite/commands/invite.bulk.create.command';
+// The commands that create an organization and a team through the platform's own paths (their seeding, their
+// admin memberships), for a package that creates a workspace a person confirmed elsewhere: the Ever ID sign-in
+// plugin's workspace provisioning. `@nestjs/cqrs` dispatches on the constructor, so a copy would reach no handler.
+export { OrganizationCreateCommand } from './lib/organization/commands/organization.create.command';
+export { OrganizationTeamCreateCommand } from './lib/organization-team/commands/organization-team.create.command';
 // The membership check a REST DTO makes through `@IsOrganizationBelongsToUser()`, for a package that resolves the
 // organization from a stored record rather than from the request (an integration ID, for instance).
 export { assertCurrentUserBelongsToOrganization } from './lib/user-organization/assert-organization-membership';

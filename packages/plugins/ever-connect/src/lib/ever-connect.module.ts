@@ -20,15 +20,22 @@ import { EverConnectIntegrationStateService } from './ever-connect-integration-s
 import { EverConnectLease } from './ever-connect-lease';
 import { EverConnectLinkService } from './ever-connect-link.service';
 import { EverConnectPlatformService, errorCode } from './ever-connect-platform.service';
+import { EverConnectProvisionController } from './ever-connect-provision.controller';
+import { EverConnectProvisionStore } from './ever-connect-provision.store';
 import { EverConnectScheduler } from './ever-connect-scheduler.service';
 import { EverConnectSignals } from './ever-connect-signals';
 import { EverConnectStore } from './ever-connect.store';
 import { EverConnectEnabledGuard, EverConnectOperatorGuard } from './guards/ever-connect-operator.guard';
+import { EverConnectProvisionGuard } from './guards/ever-connect-provision.guard';
 import { EverIdLoginHandler } from './handlers/ever-id-login.handler';
 import { PersonDeletionHandler } from './handlers/person-deletion.handler';
 import { PersonExportHandler } from './handlers/person-export.handler';
 import { PersonRequestsHandler } from './handlers/person-requests.handler';
 import { PersonLinkReporter } from './reporters/person-link.reporter';
+import { EverConnectIntentVerifier } from './services/ever-connect-intent-verifier.service';
+import { EverConnectProvisionCompletion } from './services/ever-connect-provision-completion.service';
+import { EverConnectProvisionGate } from './services/ever-connect-provision-gate.service';
+import { EverConnectProvisionService } from './services/ever-connect-provision.service';
 import { EverConnectWellKnownService } from './well-known/ever-connect-well-known.service';
 
 /**
@@ -95,6 +102,8 @@ export class EverConnectModule {
 			controllers: [
 				EverConnectController,
 				EverConnectInstanceController,
+				// Answers 404 unless EVER_CONNECT_PROVISION_ENABLED=true (see its guard).
+				EverConnectProvisionController,
 				...(config.serves.includes('teams') ? [EverConnectHealthController] : [])
 			],
 			providers: [
@@ -120,6 +129,12 @@ export class EverConnectModule {
 				PersonRequestsHandler,
 				EverConnectIdentityWorker,
 				EverConnectWellKnownService,
+				EverConnectProvisionStore,
+				EverConnectIntentVerifier,
+				EverConnectProvisionGate,
+				EverConnectProvisionCompletion,
+				EverConnectProvisionService,
+				EverConnectProvisionGuard,
 				EverConnectScheduler,
 				EverConnectOperatorGuard,
 				EverConnectEnabledGuard,

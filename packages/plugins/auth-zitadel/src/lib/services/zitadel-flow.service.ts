@@ -5,11 +5,13 @@ import {
 	OidcCookieResponse,
 	OidcTransactionCookieOptions,
 	OidcTransactionService,
+	OidcValidatedIdToken,
 	isOidcError
 } from '@gauzy/auth';
 import { ID } from '@gauzy/contracts';
 import { ZITADEL_TRANSACTION_COOKIE } from '../auth-zitadel.tokens';
 import { ZitadelConfigService } from './zitadel-config.service';
+import { isProvisionKey, ZitadelHandoffService } from './zitadel-handoff.service';
 import { ZitadelLinkService } from './zitadel-link.service';
 import { ZitadelSigninOutcome, ZitadelSigninService } from './zitadel-signin.service';
 
@@ -67,22 +69,28 @@ export class ZitadelFlowService {
 		private readonly transactions: OidcTransactionService,
 		private readonly client: OidcClientService,
 		private readonly signin: ZitadelSigninService,
-		private readonly links: ZitadelLinkService
+		private readonly links: ZitadelLinkService,
+		private readonly handoffs: ZitadelHandoffService
 	) {}
 
 	/**
-	 * Starts a sign-in.
+	 * Starts a sign-in. With `provision` (the opaque key of a workspace Ever Platform asked this
+	 * installation to create, shape-checked here), the key rides in the signed transaction cookie only
+	 * and the callback leads to that workspace's confirmation instead of a sign-in.
 	 *
 	 * @returns The authorize URL to redirect to.
 	 */
-	async startSignin(response: OidcCookieResponse, redirect?: string): Promise<string> {
+	async startSignin(response: OidcCookieResponse, redirect?: string, provision?: string): Promise<string> {
 		try {
 			const issuer = await this.config.primary();
-			const path = safeRedirect(redirect, this.config.settings.clientBaseUrl);
+			if (provision !== undefined && !isProvisionKey(provision)) {
+				return this.errorUrl('signin', 'sign_in_failed');
+			}
+			const path = provision ? undefined : safeRedirect(redirect, this.config.settings.clientBaseUrl);
 			const transaction = await this.transactions.begin(response, this.cookie(), {
 				issuer: issuer.issuer,
 				mode: 'signin',
-				payload: path ? { redirect: path } : undefined
+				payload: provision ? { provision } : path ? { redirect: path } : undefined
 			});
 			return await this.client.buildAuthorizeUrl(issuer, transaction);
 		} catch (error) {
@@ -144,6 +152,10 @@ export class ZitadelFlowService {
 			if (mode === 'link') {
 				return this.links.callback(transaction.payload?.['userId'] as ID, idToken);
 			}
+			const provision = transaction.payload?.['provision'];
+			if (provision !== undefined) {
+				return this.provisionUrl(idToken, provision);
+			}
 			const redirect = transaction.payload?.['redirect'];
 			const outcome = await this.signin.decide(idToken, 'browser', { redirect });
 			return this.outcomeUrl(outcome, redirect);
@@ -169,6 +181,21 @@ export class ZitadelFlowService {
 			default:
 				return `${base}/ever-id?error=sign_in_failed`;
 		}
+	}
+
+	/**
+	 * A sign-in started to confirm a workspace: nothing is linked and nobody is signed in; the verified
+	 * identity is kept under a one-time key for the confirmation page, which gets both opaque keys.
+	 */
+	private async provisionUrl(idToken: OidcValidatedIdToken, provision: unknown): Promise<string> {
+		if (!idToken.emailVerified || !idToken.email) {
+			return `${this.config.settings.clientBaseUrl}/#/auth/ever-id?error=email_unverified`;
+		}
+		const key = isProvisionKey(provision) ? await this.handoffs.create(idToken, provision) : null;
+		if (!key) {
+			return this.errorUrl('signin', 'sign_in_failed');
+		}
+		return `${this.config.settings.clientBaseUrl}/#/auth/ever-connect/provision?provision=${provision}&handoff=${key}`;
 	}
 
 	private errorUrl(mode: string, error: string): string {

@@ -39,6 +39,7 @@
 		"@gauzy/core": "^0.1.0",
 		"@gauzy/plugin": "^0.1.0",
 		"@nestjs/cache-manager": "^12.0.1",
+		"@nestjs/cqrs": "^12.1.0",
 		"@nestjs/swagger": "^12.0.2",
 		"@nestjs/throttler": "^6.7.1",
 		"@nestjs/typeorm": "^12.0.2",

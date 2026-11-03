@@ -9,6 +9,7 @@ Plugins cannot carry their own migrations yet, so the tables of this plugin are 
 | `1790000021000-EverInstance.ts` | `ever_instance`                                                                                                                                                        | Owned by `@gauzy/plugin-ever-instance`; the connection key lives in its `connect*` columns. |
 | `1790000021200-EverConnect.ts`  | `ever_connect_connection`, `ever_connect_link`, `ever_connect_integration`, `ever_connect_policy`, `ever_connect_audit`, `ever_connect_lookup_cache` and their indexes | This plugin.                                                                                |
 | `1791000003500-EverConnectIdentity.ts` | `ever_connect_person_link_report`, `ever_connect_person_request` and their indexes; the column `ever_connect_connection.publicUrlCheckUntil` | This plugin (Sign in with Ever ID and a person's requests). `down` drops the two tables and the column. |
+| `1791000003900-EverConnectProvision.ts` | `ever_connect_provision_intent`, `ever_connect_provision_result` and their indexes | This plugin (creating a workspace from Ever). `down` drops the two tables. |
 
 It is hand-written for Postgres, MySQL and SQLite, uses `CREATE TABLE IF NOT EXISTS` / `CREATE INDEX IF NOT EXISTS` (MySQL: the indexes are part of the table), so running `up` twice is harmless, creates new empty tables only (no foreign key, no change to an existing table, no statement per tenant or per row), and takes a transaction-scoped advisory lock on Postgres so two API processes booting together run it one after the other. `down` drops the six tables. It runs whether or not the plugin is loaded; the tables stay empty when it is not.
 
@@ -43,6 +44,14 @@ One row per Ever ID link (`op = 'link'`) or unlink (`op = 'unlink'`) of a Gauzy 
 ## `ever_connect_person_request`
 
 One row per deletion or export request of a person (`id` = the event id): `kind` (`deletion`, `export`), `jobId`, `respondBy`, `subjectHashes` (JSON: the identities the request names), `userIds` (JSON: the Gauzy users linked to them, kept before any link is removed), `claimedBy` / `claimedUntil` (the handling working on it holds it until then, renewed while it runs; only that handling writes the answer), `result`, `reasonCode`, `legalBasis`, `exportUrlEncrypted` (AES-256-GCM), `state` (`pending`, `answered`, `rejected`), `attempts`, `nextAttemptAt`, `lastError` (a code), `answeredAt`, `createdAt`, `updatedAt`. Indexes on (`state`, `nextAttemptAt`) and (`jobId`).
+
+## `ever_connect_provision_intent`
+
+One row per signed request from Ever Platform to create a workspace (`jti`, the request's id): `intent` (the verified claims as JSON: ids and public names only, never an e-mail), `keyHash` (unique: the SHA-256 of the one-time key the browser holds while the person signs in and confirms; the key itself is never stored), `idempotencyKey`, `status` (`pending`, `accepted`, `rejected`, `expired`), `result` (JSON of the ids created), `receivedAt`, `expiresAt` (the request's own expiry), `updatedAt`. Index on (`expiresAt`).
+
+## `ever_connect_provision_result`
+
+One row per idempotency key of a workspace creation (`idempotencyKey`, primary key; `jti` unique, so one request never creates under two keys): `status` (`pending`, `created`, `failed`), `everOrgId`, `productTenantId`, `productOrgId`, `productUserId`, `employeeId`, `teamId` (filled step by step, so a creation that stopped is finished by its retry), `integrationTenantId` (Gauzy's record of the organization link), `errorCode` (a code), `claimedBy` / `claimedUntil` (the attempt creating it right now), `completionState` (`pending`, `done`, `failed`), `completionAttempts`, `completionNextAt`, `completionError` (a code), `completedAt`, `tenantLinkId` (Ever Platform's id of the link, from its answer), `createdAt`, `updatedAt`. Index on (`completionState`, `completionNextAt`). No e-mail address.
 
 ## `ever_connect_lookup_cache`
 

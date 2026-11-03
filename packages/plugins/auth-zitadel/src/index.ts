@@ -17,3 +17,4 @@ export * from './lib/ports/ever-connect-config.port';
 export * from './lib/ports/ever-id-accounts.port';
 export { subjectHashOf } from './lib/handlers/person-deletion.listener';
 export * from './lib/ports/create-user-pre-linked.port';
+export * from './lib/ports/handoff-reader.port';
