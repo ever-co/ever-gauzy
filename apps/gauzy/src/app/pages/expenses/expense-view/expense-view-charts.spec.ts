@@ -1,5 +1,13 @@
+import * as moment from 'moment';
 import { IExpense } from '@gauzy/contracts';
-import { categoryMonthBars, comparableExpenses, monthShareOf, vendorPaymentBars } from './expense-view-charts';
+import {
+	categoryMonthBars,
+	categoryReadRange,
+	comparableExpenses,
+	monthShareOf,
+	vendorPaymentBars,
+	vendorReadRange
+} from './expense-view-charts';
 
 function expense(id: string, valueDate: string, amount: number, currency = 'USD'): IExpense {
 	return { id, valueDate: new Date(`${valueDate}T12:00:00`), amount, currency } as IExpense;
@@ -67,6 +75,26 @@ describe('expense view charts', () => {
 
 			expect(bars.map((bar) => bar.value)).toEqual([7, 1, 2, 3]);
 			expect(bars[0].highlight).toBe(true);
+		});
+	});
+
+	describe('read ranges', () => {
+		const utc = (value: string) => moment(value).utc().format('YYYY-MM-DD HH:mm:ss');
+
+		it('reads the category over the longest span, through the end of the expense month', () => {
+			expect(categoryReadRange(current)).toEqual({
+				startDate: utc('2025-04-01T00:00:00'),
+				endDate: utc('2026-03-31T23:59:59')
+			});
+		});
+
+		it('reads the vendor payments up to the expense', () => {
+			expect(vendorReadRange(current)).toEqual({ startDate: '1970-01-01 00:00:00', endDate: utc('2026-03-10T12:00:00') });
+		});
+
+		it('reads nothing for an expense without a date', () => {
+			expect(categoryReadRange({ ...current, valueDate: null })).toBeNull();
+			expect(vendorReadRange({ ...current, valueDate: null })).toBeNull();
 		});
 	});
 

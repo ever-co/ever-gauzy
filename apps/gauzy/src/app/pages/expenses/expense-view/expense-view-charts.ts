@@ -10,6 +10,43 @@ export const VENDOR_CHART_PAYMENTS = 12;
 /** The counts the vendor chart's range filter offers, in payments. */
 export const VENDOR_CHART_PAYMENT_OPTIONS = [6, 12, 24];
 
+/** The longest span and the most payments the filters offer: the charts read that much once, and a filter only redraws. */
+export const CATEGORY_CHART_READ_MONTHS = Math.max(...CATEGORY_CHART_MONTH_OPTIONS);
+export const VENDOR_CHART_READ_PAYMENTS = Math.max(...VENDOR_CHART_PAYMENT_OPTIONS);
+
+/** A `valueDate` range as the expenses API takes it: UTC, to the second, both ends included. */
+export interface IExpenseDateRange {
+	startDate: string;
+	endDate: string;
+}
+
+/** Before any expense: the open start of the vendor chart's read of the payments up to the expense. */
+const EARLIEST = moment.utc('1970-01-01');
+
+/**
+ * The dates the category chart reads: from the first month of its longest span to the end of the expense's own
+ * month. The months are the viewer's, as the bars group them. None for an expense without a date.
+ */
+export function categoryReadRange(expense: IExpense, months = CATEGORY_CHART_READ_MONTHS): IExpenseDateRange | null {
+	if (!expense?.valueDate) {
+		return null;
+	}
+	const start = moment(expense.valueDate).startOf('month').subtract(months - 1, 'months');
+	return { startDate: apiDate(start), endDate: apiDate(moment(expense.valueDate).endOf('month')) };
+}
+
+/**
+ * The dates of the payments up to the expense, its own day included: the vendor chart reads the latest of them,
+ * newest first. None for an expense without a date.
+ */
+export function vendorReadRange(expense: IExpense): IExpenseDateRange | null {
+	return expense?.valueDate ? { startDate: apiDate(EARLIEST), endDate: apiDate(moment(expense.valueDate)) } : null;
+}
+
+function apiDate(date: moment.Moment): string {
+	return date.clone().utc().format('YYYY-MM-DD HH:mm:ss');
+}
+
 /** One bar: its axis label, the tooltip's title, the amount, and whether it is the expense's own. */
 export interface IExpenseChartBar {
 	label: string;

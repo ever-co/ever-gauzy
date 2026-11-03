@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostBinding, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,15 +28,21 @@ import {
 } from '../expense-record-view';
 import {
 	categoryMonthBars,
+	categoryReadRange,
 	CATEGORY_CHART_MONTHS,
 	CATEGORY_CHART_MONTH_OPTIONS,
 	IExpenseChartBar,
 	IExpenseMonthShare,
 	monthShareOf,
 	vendorPaymentBars,
+	vendorReadRange,
 	VENDOR_CHART_PAYMENTS,
-	VENDOR_CHART_PAYMENT_OPTIONS
+	VENDOR_CHART_PAYMENT_OPTIONS,
+	VENDOR_CHART_READ_PAYMENTS
 } from './expense-view-charts';
+
+/** The page size of the category chart's read: the most the expenses API serves at once. */
+const CHART_READ_PAGE = 100;
 
 /** Where the expense page's back button leads, and where a deleted expense's page goes. */
 export const EXPENSES_LIST_LINK = '/pages/accounting/expenses';
@@ -103,12 +109,11 @@ const NO_CHARTS: IExpenseCharts = {
 		'./expense-view-page.component.scss'
 	],
 	changeDetection: ChangeDetectionStrategy.Eager,
-	standalone: false
+	standalone: false,
+	// The project page's page layout: headline, then two columns.
+	host: { class: 'is-page' }
 })
 export class ExpenseViewPageComponent extends TranslationBaseComponent implements OnInit {
-	/** The project page's page layout: headline, then two columns. */
-	@HostBinding('class.is-page') readonly isPage = true;
-
 	readonly PermissionsEnum = PermissionsEnum;
 	readonly favoriteEntity = BaseEntityEnum.Expense;
 	readonly backLink = EXPENSES_LIST_LINK;
@@ -198,6 +203,8 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 			return;
 		}
 		const sequence = ++this.loadSequence;
+		// The previous expense's chart reads are discarded too: answering now, they would refill what is cleared here.
+		this.chartsSequence++;
 		// Nothing of the previous expense stays on screen while this one loads or if it fails.
 		this.expense = null;
 		this.record = null;
@@ -378,14 +385,12 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 			return;
 		}
 		this.charts = { ...this.charts, loading: true, failed: false };
-		const read = async (where: Partial<IExpense>): Promise<IExpense[]> => {
-			const { items } = await this.expensesService.getAll([], { ...where, ...scope } as any);
-			return items ?? [];
-		};
+		// Only the expense's currency is charted, so only it is read.
+		const where = { ...scope, ...(expense.currency ? { currency: expense.currency } : {}) };
 		try {
 			const [category, vendor] = await Promise.all([
-				categoryId ? read({ categoryId }) : Promise.resolve([]),
-				vendorId ? read({ vendorId }) : Promise.resolve([])
+				categoryId ? this.readCategoryExpenses(expense, { ...where, categoryId }) : Promise.resolve([]),
+				vendorId ? this.readVendorPayments(expense, { ...where, vendorId }) : Promise.resolve([])
 			]);
 			if (sequence !== this.chartsSequence) return;
 			this.categoryExpenses = category;
@@ -397,6 +402,52 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 				this.charts = { ...NO_CHARTS, failed: true };
 			}
 		}
+	}
+
+	/**
+	 * The category's expenses over the longest span the range filter offers, every page of them: the bars are
+	 * sums, so none may be missing. Ordered by date, then id, so the pages neither overlap nor skip.
+	 */
+	private async readCategoryExpenses(expense: IExpense, where: Record<string, unknown>): Promise<IExpense[]> {
+		const valueDate = categoryReadRange(expense);
+		if (!valueDate) {
+			return [];
+		}
+		const expenses: IExpense[] = [];
+		for (let page = 1; ; page++) {
+			const { items = [], total = 0 } = await this.expensesService.pagination({
+				where: { ...where, valueDate },
+				order: { valueDate: 'ASC', id: 'ASC' },
+				skip: page,
+				take: CHART_READ_PAGE
+			});
+			expenses.push(...items);
+			if (!items.length || expenses.length >= total) {
+				return expenses;
+			}
+		}
+	}
+
+	/**
+	 * The vendor payments the chart can show at its largest range, as `vendorPaymentBars` picks them: the latest
+	 * ones up to the expense — or, when fewer than that come before it, the vendor's first payments, which run on
+	 * past it.
+	 */
+	private async readVendorPayments(expense: IExpense, where: Record<string, unknown>): Promise<IExpense[]> {
+		const valueDate = vendorReadRange(expense);
+		const take = VENDOR_CHART_READ_PAYMENTS;
+		if (valueDate) {
+			const { items = [] } = await this.expensesService.pagination({
+				where: { ...where, valueDate },
+				order: { valueDate: 'DESC' },
+				take
+			});
+			if (items.length >= take) {
+				return items;
+			}
+		}
+		const { items = [] } = await this.expensesService.pagination({ where, order: { valueDate: 'ASC' }, take });
+		return items;
 	}
 
 	/** Draws the charts from the expenses last read, in the viewer's language. */
