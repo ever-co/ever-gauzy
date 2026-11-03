@@ -30,24 +30,37 @@ export function getUrlPath(url: string | null | undefined): string {
 /**
  * How specifically a menu entry claims a path, or -1 when it does not claim it at all.
  *
- * The score is the length of the matched link, so the most specific entry wins: an entry whose link
- * IS the path always outscores a prefix entry whose link is merely the start of it. Hidden entries
- * (filtered out by permissions or features) never match, so they cannot steal the highlight from a
- * row that is actually on screen.
+ * An entry claims its own link (and, with `pathMatch: 'prefix'`, everything below it) plus any
+ * `data.activePaths`, which always cover everything below them — for a row that opens one page of
+ * a section but owns all of it, like the Standard dashboard. The score is the length of the matched
+ * path, so the most specific entry wins: an entry whose link IS the path always outscores one whose
+ * link is merely the start of it. Hidden entries (filtered out by permissions or features) never
+ * match, so they cannot steal the highlight from a row that is actually on screen.
  *
  * @param item The menu entry to test.
  * @param path A bare path, as returned by `getUrlPath`.
  * @return {number} The match score, -1 for no match.
  */
 export function getMenuItemMatchScore(item: IMenuItem | null | undefined, path: string): number {
-	if (!item?.link || item.hidden) {
+	if (!item || item.hidden) {
 		return -1;
 	}
-	const link = getUrlPath(item.link);
+	let score = item.link ? getPathMatchScore(getUrlPath(item.link), path, item.pathMatch === 'prefix') : -1;
+	for (const activePath of item.data?.activePaths ?? []) {
+		score = Math.max(score, getPathMatchScore(getUrlPath(activePath), path, true));
+	}
+	return score;
+}
+
+/** Length of `link` when it claims `path` (exactly, or as a parent of it when `prefix`), else -1. */
+function getPathMatchScore(link: string, path: string, prefix: boolean): number {
+	if (!link) {
+		return -1;
+	}
 	if (path === link) {
 		return link.length;
 	}
-	if (item.pathMatch === 'prefix' && path.startsWith(`${link}/`)) {
+	if (prefix && path.startsWith(`${link}/`)) {
 		return link.length;
 	}
 	return -1;

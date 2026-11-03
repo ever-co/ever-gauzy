@@ -16,5 +16,6 @@ export interface IMenuItem extends NbMenuItem {
 		withOrganizationShortcuts?: boolean; //Declare if the sidebar item has organization level shortcuts
 		hide?: () => boolean; //Hide the menu item if this returns true,
 		add?: string;
+		activePaths?: string[]; // Extra paths the item is highlighted on besides its link, each matched with everything below it
 	};
 }

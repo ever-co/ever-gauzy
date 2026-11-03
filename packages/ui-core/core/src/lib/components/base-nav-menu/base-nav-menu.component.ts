@@ -171,7 +171,10 @@ export class BaseNavMenuComponent extends TranslationBaseComponent implements On
 				icon: 'fas fa-columns',
 				link: '/pages/dashboard/time-tracking',
 				data: {
-					translationKey: 'DASHBOARD_PAGE.CUSTOM.STANDARD'
+					translationKey: 'DASHBOARD_PAGE.CUSTOM.STANDARD',
+					// Every standard tab (accounting, hr, teams, plugin tabs...) belongs to this row, not just
+					// the one it opens. Custom dashboards still win: their links are longer, so more specific.
+					activePaths: ['/pages/dashboard']
 				}
 			},
 			...this._customDashboards.map((dashboard: IDashboard) => ({
