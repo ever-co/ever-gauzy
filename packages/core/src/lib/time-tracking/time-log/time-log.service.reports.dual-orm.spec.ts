@@ -36,6 +36,7 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 	process.env.DB_ORM = 'mikro-orm';
 	const file = path.join(os.tmpdir(), `gauzy-time-log-reports-${process.pid}-${Date.now()}.sqlite3`);
 	const measurement = {} as { mikroOrm: Reads; typeOrm: Reads };
+	let dataSource: any;
 
 	try {
 		await jest.isolateModulesAsync(async () => {
@@ -53,7 +54,7 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 			const { OrganizationContact } = require('../../organization-contact/organization-contact.entity');
 
 			// The tables TypeORM creates, as the migrations create them for the running platform.
-			const dataSource = new DataSource({
+			dataSource = new DataSource({
 				type: 'better-sqlite3',
 				database: file,
 				entities: coreEntities,
@@ -209,11 +210,12 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 				measurement.typeOrm = await reads(() => service(undefined));
 			} finally {
 				jest.restoreAllMocks();
-				await dataSource.destroy();
 			}
 		});
 	} finally {
 		jest.restoreAllMocks();
+		// Here rather than after the reads, so a read that throws cannot leave the database file open
+		if (dataSource?.isInitialized) await dataSource.destroy();
 		if (previous === undefined) delete process.env.DB_ORM;
 		else process.env.DB_ORM = previous;
 		try {
