@@ -303,7 +303,8 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		const first = await service.createUserPreLinked(INPUT);
 		const again = await service.createUserPreLinked(INPUT);
 		// The team is not guessed (an organization may hold teams made later): the caller keeps its id.
-		const { teamId: _team, ...ids } = first;
+		const ids = { ...first };
+		delete ids.teamId;
 		expect(again).toEqual({ ...ids, existing: true });
 		expect(registered).toHaveLength(1);
 		expect(onboarded).toHaveLength(1);
