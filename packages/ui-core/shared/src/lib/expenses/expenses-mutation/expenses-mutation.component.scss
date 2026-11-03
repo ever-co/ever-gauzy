@@ -203,6 +203,23 @@ $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 	resize: vertical;
 }
 
+// The tax section's label, with the button that takes the taxes out again.
+.label-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.25rem;
+
+	.label {
+		margin-bottom: 0;
+	}
+
+	[nbButton] {
+		text-transform: none;
+	}
+}
+
 .tax-grid {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
