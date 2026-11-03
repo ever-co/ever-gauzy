@@ -156,6 +156,10 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 		// Its id is kept at once; an attempt that stopped before that leaves an unusable account (no tenant,
 		// no password, no link, not verified), never a second workspace.
 		let user = ids.userId ? await this.loadUser(ids.userId) : null;
+		if (ids.userId && !user) {
+			// The owner an earlier attempt made is gone: its tenant and organization are not reused.
+			throw new Error('The owner of this workspace creation no longer exists.');
+		}
 		if (!user) {
 			this.assertRequiredTermsAccepted(input.terms ?? []);
 			const created = await this.gauzyAuth.register(
@@ -293,10 +297,11 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 		}
 		const now = new Date();
 		// The owner becomes usable here, with the links: the address Ever ID verified, the account active.
-		await manager
-			.getRepository(User)
-			.update({ id: ids.userId, emailVerifiedAt: IsNull() }, { emailVerifiedAt: now } as never);
-		await manager.getRepository(User).update({ id: ids.userId }, { isActive: true } as never);
+		// Once, in the state the creation left it (never verified): an account changed meanwhile is left as it is.
+		await manager.getRepository(User).update({ id: ids.userId, emailVerifiedAt: IsNull(), isArchived: false }, {
+			emailVerifiedAt: now,
+			isActive: true
+		} as never);
 		await manager.getRepository(ZitadelOrganization).insert({
 			tenantId: ids.tenantId,
 			organizationId: ids.organizationId,

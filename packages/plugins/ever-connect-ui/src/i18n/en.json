@@ -179,7 +179,7 @@
 			"not_found": "Creating a workspace from Ever is not available on this installation.",
 			"provisioning_failed": "The workspace could not be created. Try again.",
 			"generic": "Something went wrong. Try again.",
-			"terms_required": "Accept the documents above to create the workspace."
+			"terms_required": "Accept the documents below to create the workspace."
 		},
 		"SIGN_IN_ELSEWHERE": "Your workspace is ready. Sign in with Ever ID to open it."
 	}

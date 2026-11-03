@@ -154,6 +154,8 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 					tenantId: null,
 					hash: null,
 					emailVerifiedAt: null,
+					isActive: false,
+					isArchived: false,
 					createdAt: new Date()
 				};
 				users.push(user);
@@ -233,6 +235,7 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		]);
 		const [user] = db.table(User);
 		expect(user['emailVerifiedAt']).toBeInstanceOf(Date);
+		expect(user['isActive']).toBe(true);
 		expect(onboarded).toEqual([{ name: 'Acme', userId: user['id'] }]);
 
 		const organization = commands.find((c) => c instanceof OrganizationCreateCommand) as OrganizationCreateCommand;
@@ -326,6 +329,16 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		expect(onboarded).toHaveLength(1);
 		expect(db.table(Organization)).toHaveLength(1);
 		expect(db.table(ZitadelAccount)).toHaveLength(1);
+	});
+
+	it('a resume whose owner is gone is refused: its tenant and organization are never reused', async () => {
+		await expect(
+			service.createUserPreLinked(INPUT, {
+				resume: { userId: 'gone', tenantId: 'old-tenant', organizationId: 'old-org' }
+			})
+		).rejects.toThrow('no longer exists');
+		expect(registered).toEqual([]);
+		expect(db.table(ZitadelOrganization)).toEqual([]);
 	});
 
 	it('an attempt that stopped before keeping the owner id leaves an unusable account; nothing is bound by e-mail', async () => {

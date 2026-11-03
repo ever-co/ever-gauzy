@@ -240,13 +240,31 @@ describe('ProvisionConfirmComponent', () => {
 	});
 
 	it('documents not accepted (422 terms_required): the form stays, to accept them and create again', () => {
-		api.summary.mockReturnValue(of(summary()));
+		const document = {
+			documentId: 'tos:gauzy',
+			version: '1.0.0',
+			sha256: 'a'.repeat(64),
+			locale: 'en',
+			url: 'https://app.gauzy.test/#/legal/terms',
+			title: 'Terms'
+		};
+		api.summary.mockReturnValue(of(summary({ terms: [document] })));
 		api.create.mockReturnValueOnce(throwError(() => ({ status: 422, error: { code: 'terms_required' } })));
+		api.create.mockReturnValueOnce(of(created({ sign_in_url: null })));
 		const component = create({ provision: PROVISION, handoff: HANDOFF });
 		component.create();
 		expect(component.error).toBe('terms_required');
 		expect(component.summary).not.toBeNull();
 		expect(component.result).toBeNull();
+		component.termsAccepted = true;
+		component.create();
+		expect(api.create).toHaveBeenCalledTimes(2);
+		expect(api.create).toHaveBeenLastCalledWith(PROVISION, HANDOFF, {
+			first_name: 'Ada',
+			last_name: 'Owner',
+			terms: [{ documentId: 'tos:gauzy', version: '1.0.0', sha256: 'a'.repeat(64), locale: 'en' }]
+		});
+		expect(component.result?.status).toBe('created');
 	});
 
 	it('a summary that fails still offers the way back to Ever', () => {
