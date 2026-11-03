@@ -5,14 +5,14 @@
  * user can copy it before it is gone for good. Nothing else on this page ever holds it: the list only has the prefix.
  */
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
 import { EMPTY, Observable, Subject } from 'rxjs';
 import { filter, switchMap, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ID, IUserApiToken, IUserApiTokenCreateInput, IUserApiTokenWithSecret } from '@gauzy/contracts';
 import { UserApiTokenService } from '@gauzy/ui-core/core';
-import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
+import { AlertModalComponent } from '@gauzy/ui-core/shared';
 import { ApiTokenFormDialogComponent } from './api-token-form-dialog/api-token-form-dialog.component';
 import { ApiTokenSecretDialogComponent } from './api-token-secret-dialog/api-token-secret-dialog.component';
 
@@ -24,15 +24,14 @@ import { ApiTokenSecretDialogComponent } from './api-token-secret-dialog/api-tok
 	changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ApiTokensComponent implements OnInit, OnDestroy {
-	tokens: IUserApiToken[] = [];
-	loading = false;
+	readonly tokens = signal<IUserApiToken[]>([]);
+	readonly loading = signal(false);
 	private readonly destroy$ = new Subject<void>();
 
 	private readonly service = inject(UserApiTokenService);
 	private readonly dialogService = inject(NbDialogService);
 	private readonly toastr = inject(NbToastrService);
 	private readonly translate = inject(TranslateService);
-	private readonly cdr = inject(ChangeDetectorRef);
 
 	ngOnInit(): void {
 		this.loadTokens();
@@ -44,19 +43,17 @@ export class ApiTokensComponent implements OnInit, OnDestroy {
 	}
 
 	loadTokens(): void {
-		this.loading = true;
+		this.loading.set(true);
 		this.service
 			.list()
 			.pipe(takeUntil(this.destroy$))
 			.subscribe({
 				next: (result) => {
-					this.tokens = result.items ?? [];
-					this.loading = false;
-					this.cdr.markForCheck();
+					this.tokens.set(result.items ?? []);
+					this.loading.set(false);
 				},
 				error: () => {
-					this.loading = false;
-					this.cdr.markForCheck();
+					this.loading.set(false);
 					this.toastError('USER_API_TOKENS.ERRORS.LOAD_FAILED');
 				}
 			});
@@ -93,7 +90,7 @@ export class ApiTokensComponent implements OnInit, OnDestroy {
 	revoke(token: IUserApiToken): void {
 		this.openConfirmationDialog(this.translate.instant('USER_API_TOKENS.CONFIRM.REVOKE', { name: token.name }))
 			.pipe(
-				filter((confirmed) => !!confirmed),
+				filter((answer) => answer === 'yes'),
 				switchMap(() => this.service.revoke(token.id as ID)),
 				takeUntil(this.destroy$)
 			)
@@ -119,12 +116,20 @@ export class ApiTokensComponent implements OnInit, OnDestroy {
 	}
 
 	/**
-	 * Opens the shared confirmation dialog, whose `recordType` is used as the whole sentence, as on the OAuth Clients
-	 * page, so it can name the token. Wrapping it in an Observable keeps the chain inside one `takeUntil`.
+	 * Opens the shared yes/no dialog, which shows the sentence as it is. Wrapping it in an Observable keeps the chain
+	 * inside one `takeUntil`.
+	 *
+	 * @returns `yes` or `no`, or nothing when the dialog is dismissed.
 	 */
-	private openConfirmationDialog(message: string): Observable<boolean> {
-		const dialogRef = this.dialogService.open(DeleteConfirmationComponent, {
-			context: { recordType: message, isRecord: false }
+	private openConfirmationDialog(message: string): Observable<string | undefined> {
+		const dialogRef = this.dialogService.open(AlertModalComponent, {
+			context: {
+				data: {
+					title: this.translate.instant('USER_API_TOKENS.ACTIONS.REVOKE'),
+					message,
+					status: 'danger'
+				}
+			}
 		});
 		return dialogRef ? dialogRef.onClose : EMPTY;
 	}

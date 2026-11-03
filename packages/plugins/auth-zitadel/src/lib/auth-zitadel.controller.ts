@@ -24,7 +24,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { Public } from '@gauzy/common';
 import { LanguagesEnum } from '@gauzy/contracts';
-import { RequestContext, UseValidationPipe } from '@gauzy/core';
+import { assertFirstPartyRequest, RequestContext, UseValidationPipe } from '@gauzy/core';
 import {
 	BackchannelLogoutDTO,
 	ConfirmDTO,
@@ -204,6 +204,9 @@ export class AuthZitadelController {
 	@HttpCode(HttpStatus.OK)
 	@Header('Cache-Control', 'no-store')
 	async link(): Promise<{ url: string }> {
+		// A linked identity signs in for good, so it is the person's own to add, not a token's.
+		assertFirstPartyRequest('Linking a sign-in identity');
+
 		return { url: await this.links.createTicket(currentUserId()) };
 	}
 

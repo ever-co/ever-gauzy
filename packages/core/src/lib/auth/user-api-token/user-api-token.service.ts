@@ -70,7 +70,8 @@ export class UserApiTokenService extends TenantAwareCrudService<UserApiToken> {
 
 		const items = (await this.find({
 			where: { userId: this.currentUserIdOrFail(), revokedAt: IsNull() },
-			order: { createdAt: 'DESC' }
+			order: { createdAt: 'DESC' },
+			take: 100
 		})).map((row) => UserApiTokenResponseDTO.fromEntity(row));
 
 		return { items, total: items.length };
@@ -93,11 +94,12 @@ export class UserApiTokenService extends TenantAwareCrudService<UserApiToken> {
 		}
 
 		const now = new Date();
-		const held = await this.find({ where: { userId, revokedAt: IsNull() } });
-		if (held.filter((row) => !this.hasExpired(row, now)).length >= MAX_ACTIVE_USER_API_TOKENS) {
-			throw new BadRequestException(
+		const tooMany = () =>
+			new BadRequestException(
 				`You can hold ${MAX_ACTIVE_USER_API_TOKENS} API tokens at once. Revoke one you no longer use first.`
 			);
+		if ((await this.countActive(userId, now)) >= MAX_ACTIVE_USER_API_TOKENS) {
+			throw tooMany();
 		}
 
 		const token = generateUserApiToken();
@@ -111,6 +113,14 @@ export class UserApiTokenService extends TenantAwareCrudService<UserApiToken> {
 			lastUsedAt: null,
 			revokedAt: null
 		});
+
+		// Counted again now that the row is there: two creates in parallel both passed the check above. Neither has shown
+		// its token yet, so the one that finds too many takes its row back. Both can, and then the user just tries again:
+		// the limit holds on every database without a lock.
+		if ((await this.countActive(userId, new Date())) > MAX_ACTIVE_USER_API_TOKENS) {
+			await this.update({ id: row.id, userId }, { revokedAt: new Date() });
+			throw tooMany();
+		}
 
 		this.logger.log(`API token created: id=${row.id} userId=${userId} tenantId=${tenantId}`);
 
@@ -271,6 +281,12 @@ export class UserApiTokenService extends TenantAwareCrudService<UserApiToken> {
 			limits.push(new Date(row.expiresAt).getTime());
 		}
 		return new Date(Math.min(...limits));
+	}
+
+	/** How many working tokens the user holds. Read here and not by SQL, so that a date compares alike on every database. */
+	private async countActive(userId: ID, now: Date): Promise<number> {
+		const held = await this.find({ where: { userId, revokedAt: IsNull() } });
+		return held.filter((row) => !this.hasExpired(row, now)).length;
 	}
 
 	private hasExpired(row: UserApiToken, now: Date): boolean {

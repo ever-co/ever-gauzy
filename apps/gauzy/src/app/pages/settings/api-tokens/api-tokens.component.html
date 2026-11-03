@@ -16,13 +16,13 @@
 	</nb-card-header>
 
 	<nb-card-body>
-		@if (loading) {
+		@if (loading()) {
 			<div class="loading">
 				<nb-spinner status="primary" size="medium"></nb-spinner>
 			</div>
 		}
 
-		@if (!loading && tokens.length === 0) {
+		@if (!loading() && tokens().length === 0) {
 			<div class="empty-state">
 				<span class="empty-mark" aria-hidden="true">
 					<nb-icon icon="lock-outline"></nb-icon>
@@ -32,7 +32,7 @@
 			</div>
 		}
 
-		@if (!loading && tokens.length > 0) {
+		@if (!loading() && tokens().length > 0) {
 			<div class="table-panel">
 				<table class="api-tokens-table">
 					<thead>
@@ -46,7 +46,7 @@
 						</tr>
 					</thead>
 					<tbody>
-						@for (token of tokens; track trackById($index, token)) {
+						@for (token of tokens(); track trackById($index, token)) {
 							<tr>
 								<td class="token-name">{{ token.name }}</td>
 								<td>

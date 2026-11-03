@@ -1,11 +1,10 @@
-import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NbDialogRef, NbDialogService, NbToastrService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
 import { IUserApiToken, UserApiTokenExpiryEnum } from '@gauzy/contracts';
 import { UserApiTokenService } from '@gauzy/ui-core/core';
-import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
+import { AlertModalComponent } from '@gauzy/ui-core/shared';
 import { ApiTokenFormDialogComponent } from './api-token-form-dialog/api-token-form-dialog.component';
 import { ApiTokenSecretDialogComponent } from './api-token-secret-dialog/api-token-secret-dialog.component';
 import { ApiTokensComponent } from './api-tokens.component';
@@ -42,7 +41,7 @@ describe('ApiTokensComponent', () => {
 		};
 		dialogResults = new Map<unknown, unknown>([
 			[ApiTokenFormDialogComponent, input],
-			[DeleteConfirmationComponent, 'ok']
+			[AlertModalComponent, 'yes']
 		]);
 		dialog = { open: jest.fn((type: unknown) => ({ onClose: of(dialogResults.get(type)) })) };
 		toastr = { success: jest.fn(), danger: jest.fn() };
@@ -52,8 +51,7 @@ describe('ApiTokensComponent', () => {
 				{ provide: UserApiTokenService, useValue: service },
 				{ provide: NbDialogService, useValue: dialog },
 				{ provide: NbToastrService, useValue: toastr },
-				{ provide: TranslateService, useValue: { instant: (key: string) => key } },
-				{ provide: ChangeDetectorRef, useValue: { markForCheck: jest.fn() } }
+				{ provide: TranslateService, useValue: { instant: (key: string) => key } }
 			]
 		});
 		component = TestBed.runInInjectionContext(() => new ApiTokensComponent());
@@ -66,8 +64,8 @@ describe('ApiTokensComponent', () => {
 	it('lists the tokens when it opens', () => {
 		component.ngOnInit();
 
-		expect(component.tokens).toEqual([token]);
-		expect(component.loading).toBe(false);
+		expect(component.tokens()).toEqual([token]);
+		expect(component.loading()).toBe(false);
 	});
 
 	it('says so when the list cannot be read', () => {
@@ -76,7 +74,7 @@ describe('ApiTokensComponent', () => {
 		component.ngOnInit();
 
 		expect(toastr.danger).toHaveBeenCalledWith('USER_API_TOKENS.ERRORS.LOAD_FAILED', expect.anything());
-		expect(component.loading).toBe(false);
+		expect(component.loading()).toBe(false);
 	});
 
 	describe('creating', () => {
@@ -93,7 +91,7 @@ describe('ApiTokensComponent', () => {
 		it('never keeps the plain value on the page', () => {
 			component.openCreateDialog();
 
-			expect(JSON.stringify(component.tokens)).not.toContain(created.token);
+			expect(JSON.stringify(component.tokens())).not.toContain(created.token);
 		});
 
 		it('sends nothing when the form is cancelled', () => {
@@ -126,16 +124,18 @@ describe('ApiTokensComponent', () => {
 		it('revokes after the confirmation and reads the list again', () => {
 			component.revoke(token);
 
-			expect(dialog.open.mock.calls[0][0]).toBe(DeleteConfirmationComponent);
+			expect(dialog.open.mock.calls[0][0]).toBe(AlertModalComponent);
 			expect(service.revoke).toHaveBeenCalledWith('token-1');
 			expect(service.list).toHaveBeenCalled();
 		});
 
 		it('does nothing when the confirmation is declined', () => {
-			dialogResults.set(DeleteConfirmationComponent, undefined);
-
+			dialogResults.set(AlertModalComponent, 'no');
 			component.revoke(token);
+			expect(service.revoke).not.toHaveBeenCalled();
 
+			dialogResults.set(AlertModalComponent, undefined);
+			component.revoke(token);
 			expect(service.revoke).not.toHaveBeenCalled();
 		});
 

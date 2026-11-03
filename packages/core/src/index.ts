@@ -408,6 +408,8 @@ export {
 // plugin's sign-up requires exactly the documents the register form requires.
 export { AuthModule } from './lib/auth/auth.module';
 export { AuthService } from './lib/auth/auth.service';
+// For a plugin's route that lets a holder keep access once a token is gone (linking a sign-in identity, for one).
+export { assertFirstPartyRequest } from './lib/auth/oauth-app-first-party';
 // The operator's registration switches as the API applies them (APP_USER_REGISTRATION,
 // ALLOW_TENANTS_REGISTRATION, ADMIN_PASSWORD_RESET), for a plugin that creates accounts or tenants of its own:
 // it asks the same policy, so it can never stay open on a server whose operator closed registration.

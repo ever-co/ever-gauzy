@@ -68,6 +68,7 @@ export class UserApiTokenController {
 	})
 	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input, or too many tokens held already' })
 	@UseGuards(UserApiTokensEnabledGuard)
+	@Throttle({ default: { limit: 10, ttl: 60000 } })
 	@Post('/')
 	@HttpCode(HttpStatus.CREATED)
 	@Header('Cache-Control', 'no-store')

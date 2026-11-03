@@ -175,6 +175,30 @@ describe('UserApiTokenService', () => {
 			);
 		});
 
+		it('holds the limit against creates in parallel: one that finds too many takes its row back and shows nothing', async () => {
+			const { service, rows } = build();
+			signIn(USER_1, TENANT_A);
+
+			for (let i = 0; i < MAX_ACTIVE_USER_API_TOKENS - 1; i++) {
+				await service.createOwn({ name: `T${i}`, expiry: UserApiTokenExpiryEnum.NEVER });
+			}
+			// Another create lands between this one's check and its insert.
+			const create = service.create as jest.Mock;
+			const insert = create.getMockImplementation();
+			create.mockImplementationOnce(async (input: any) => {
+				await insert({ ...input, name: 'The other one', tokenHash: 'the-other-hash' });
+				return insert(input);
+			});
+
+			const caught = await service
+				.createOwn({ name: 'This one', expiry: UserApiTokenExpiryEnum.NEVER })
+				.catch((error) => error);
+
+			expect(caught).toBeInstanceOf(BadRequestException);
+			expect(rows.find((row) => row.name === 'This one').revokedAt).toBeInstanceOf(Date);
+			expect(rows.filter((row) => !row.revokedAt)).toHaveLength(MAX_ACTIVE_USER_API_TOKENS);
+		});
+
 		it('cannot be done from a session that came from an API token', async () => {
 			const { service, rows } = build();
 			signIn(USER_1, TENANT_A, { [USER_API_TOKEN_CLAIM]: 'row-1' });
