@@ -7608,7 +7608,7 @@
 			"TITLE": "Enregistrez votre jeton API",
 			"WARNING": "C'est la seule fois que le jeton s'affiche, et il ne pourra plus être lu. Copiez-le maintenant. Si vous le perdez, révoquez-le et créez-en un nouveau.",
 			"ACKNOWLEDGE": "J'ai copié et conservé le jeton en lieu sûr.",
-			"CLOSE": "C'est enregistré, fermer",
+			"CLOSE": "Fermer",
 			"COPIED": "Jeton copié dans le presse-papiers",
 			"COPY_ARIA": "Copier le jeton"
 		},

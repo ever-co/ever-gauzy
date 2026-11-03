@@ -12,6 +12,7 @@ const routes: Routes = [
 		data: {
 			selectors: {
 				project: false,
+				team: false,
 				employee: false,
 				date: false,
 				organization: false

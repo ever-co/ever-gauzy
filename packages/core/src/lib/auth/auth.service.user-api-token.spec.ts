@@ -389,6 +389,8 @@ describe('a session that came from an API token is not the user’s own session'
 
 		it.each([
 			['a new password', { hash: 'new-password' }],
+			['clearing the password', { hash: null }],
+			['blanking the password', { hash: '' }],
 			['a new address', { email: 'new@ever.co' }]
 		])('%s is refused for such a session', async (_what, body) => {
 			asApiTokenSession();

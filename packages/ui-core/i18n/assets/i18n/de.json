@@ -7597,7 +7597,7 @@
 			"TITLE": "API-Token erstellen",
 			"NAME": "Name",
 			"NAME_PLACEHOLDER": "z. B. Aufgaben-Agent auf meinem PC",
-			"EXPIRY": "Läuft ab nach",
+			"EXPIRY": "Gültigkeitsdauer",
 			"EXPIRY_90_DAYS": "90 Tage",
 			"EXPIRY_1_YEAR": "1 Jahr",
 			"EXPIRY_NEVER": "Nie",

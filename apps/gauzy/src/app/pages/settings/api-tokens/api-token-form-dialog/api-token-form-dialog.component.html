@@ -1,6 +1,6 @@
-<nb-card class="form-dialog">
+<nb-card class="form-dialog" role="dialog" aria-modal="true" aria-labelledby="api-token-form-title">
 	<nb-card-header class="header">
-		<h6 class="title">{{ 'USER_API_TOKENS.DIALOG.TITLE' | translate }}</h6>
+		<h6 id="api-token-form-title" class="title">{{ 'USER_API_TOKENS.DIALOG.TITLE' | translate }}</h6>
 		<button type="button" class="close-button" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="cancel()">
 			<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
 		</button>
@@ -15,14 +15,21 @@
 					nbInput
 					fullWidth
 					maxlength="100"
+					required
 					formControlName="name"
+					[status]="form.controls.name.touched && form.controls.name.invalid ? 'danger' : 'basic'"
 					[placeholder]="'USER_API_TOKENS.DIALOG.NAME_PLACEHOLDER' | translate"
 				/>
 			</div>
 
 			<div class="field">
-				<span class="label">{{ 'USER_API_TOKENS.DIALOG.EXPIRY' | translate }}</span>
-				<nb-radio-group formControlName="expiry" class="expiry-options">
+				<span id="api-token-expiry-label" class="label">{{ 'USER_API_TOKENS.DIALOG.EXPIRY' | translate }}</span>
+				<nb-radio-group
+					formControlName="expiry"
+					class="expiry-options"
+					role="radiogroup"
+					aria-labelledby="api-token-expiry-label"
+				>
 					@for (expiry of expiries; track expiry.value) {
 						<nb-radio [value]="expiry.value">{{ expiry.labelKey | translate }}</nb-radio>
 					}

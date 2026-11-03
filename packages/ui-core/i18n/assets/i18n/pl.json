@@ -7609,7 +7609,7 @@
 		"SECRET_DIALOG": {
 			"TITLE": "Zapisz swój token API",
 			"WARNING": "Token jest wyświetlany tylko ten jeden raz i nie można go ponownie odczytać. Skopiuj go teraz. Jeśli go zgubisz, unieważnij go i utwórz nowy.",
-			"ACKNOWLEDGE": "Skopiowałem token i bezpiecznie go zapisałem.",
+			"ACKNOWLEDGE": "Token został skopiowany i bezpiecznie zapisany.",
 			"CLOSE": "Zapisane, zamknij",
 			"COPIED": "Token skopiowano do schowka",
 			"COPY_ARIA": "Kopiuj token"

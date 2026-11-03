@@ -78,7 +78,7 @@
 										status="danger"
 										(click)="revoke(token)"
 										[nbTooltip]="'USER_API_TOKENS.ACTIONS.REVOKE' | translate"
-										[attr.aria-label]="'USER_API_TOKENS.ACTIONS.REVOKE' | translate"
+										[attr.aria-label]="('USER_API_TOKENS.ACTIONS.REVOKE' | translate) + ': ' + token.name"
 									>
 										<nb-icon icon="trash-2-outline"></nb-icon>
 									</button>

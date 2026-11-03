@@ -102,6 +102,9 @@ describe('UserApiTokenService', () => {
 			expect(JSON.stringify(items)).not.toContain(created.token);
 			expect(JSON.stringify(items)).not.toContain(rows[0].tokenHash);
 			expect(items[0]).toBeInstanceOf(UserApiTokenResponseDTO);
+			expect(service.find).toHaveBeenLastCalledWith(
+				expect.objectContaining({ order: { createdAt: 'DESC' }, take: 100 })
+			);
 		});
 
 		it('generates a different token every time', async () => {

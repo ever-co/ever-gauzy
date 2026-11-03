@@ -1,4 +1,5 @@
 // Must stay first: loads the entity graph before anything else pulls an entity.
+import 'reflect-metadata';
 import '../../core/entities/internal';
 
 import { getMetadataArgsStorage } from 'typeorm';

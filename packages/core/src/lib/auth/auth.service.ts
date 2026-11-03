@@ -743,7 +743,9 @@ export class AuthService extends SocialAuthService {
 
 		let organizationId: ID | null | undefined;
 		if (requested) {
-			if (endedIn(requested) || !(await this.hasActiveOrganizationMembership(userId, requested, tenantId))) {
+			// The service's own check, not this class's: that one reads a failed lookup as "not a member", and a database
+			// that cannot be reached is a 503 here, so that a client keeps a good token.
+			if (endedIn(requested) || !(await this.userService.hasActiveOrganizationMembership(userId, requested, tenantId))) {
 				throw new UnauthorizedException();
 			}
 			organizationId = requested;

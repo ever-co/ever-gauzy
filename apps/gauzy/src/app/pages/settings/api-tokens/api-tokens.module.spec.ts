@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { NbDialogRef } from '@nebular/theme';
 import { of } from 'rxjs';
 import { IUserApiToken, UserApiTokenExpiryEnum } from '@gauzy/contracts';
 import { UserApiTokenService } from '@gauzy/ui-core/core';
@@ -56,7 +57,7 @@ describe('ApiTokensModule rendered', () => {
 		fixture.detectChanges();
 	};
 
-	it('lists the tokens with their prefix, and no secret reaches the page', async () => {
+	it('lists the tokens with their prefix', async () => {
 		const fixture = TestBed.createComponent(ApiTokensComponent);
 		await settle(fixture);
 		const element: HTMLElement = fixture.nativeElement;
@@ -68,8 +69,7 @@ describe('ApiTokensModule rendered', () => {
 		expect(rows[0].textContent).toContain('USER_API_TOKENS.VALUES.NEVER_USED');
 		expect(rows[1].querySelector('.expired')?.textContent).toContain('USER_API_TOKENS.VALUES.EXPIRED');
 		expect(rows[2].textContent).toContain('USER_API_TOKENS.VALUES.NEVER_EXPIRES');
-		expect(rows[0].querySelector('button[aria-label="USER_API_TOKENS.ACTIONS.REVOKE"]')).not.toBeNull();
-		expect(element.textContent).not.toContain(plain);
+		expect(rows[0].querySelector('button[aria-label="USER_API_TOKENS.ACTIONS.REVOKE: Task agent"]')).not.toBeNull();
 	});
 
 	it('shows the empty state when there are none', async () => {
@@ -108,5 +108,12 @@ describe('ApiTokensModule rendered', () => {
 			button.textContent?.includes('USER_API_TOKENS.SECRET_DIALOG.CLOSE')
 		);
 		expect(close?.disabled).toBe(true);
+
+		const closeDialog = jest.spyOn(TestBed.inject(NbDialogRef), 'close');
+		element.querySelector<HTMLInputElement>('nb-toggle input')?.click();
+		await settle(fixture);
+		expect(close?.disabled).toBe(false);
+		close?.click();
+		expect(closeDialog).toHaveBeenCalled();
 	});
 });

@@ -7,7 +7,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { NbDialogService, NbToastrService } from '@nebular/theme';
-import { EMPTY, Observable, Subject } from 'rxjs';
+import { EMPTY, Observable, Subject, Subscription } from 'rxjs';
 import { filter, switchMap, takeUntil } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ID, IUserApiToken, IUserApiTokenCreateInput, IUserApiTokenWithSecret } from '@gauzy/contracts';
@@ -27,6 +27,7 @@ export class ApiTokensComponent implements OnInit, OnDestroy {
 	readonly tokens = signal<IUserApiToken[]>([]);
 	readonly loading = signal(false);
 	private readonly destroy$ = new Subject<void>();
+	private listing?: Subscription;
 
 	private readonly service = inject(UserApiTokenService);
 	private readonly dialogService = inject(NbDialogService);
@@ -44,7 +45,9 @@ export class ApiTokensComponent implements OnInit, OnDestroy {
 
 	loadTokens(): void {
 		this.loading.set(true);
-		this.service
+		// Only the newest read counts: an older answer must not bring back a token just revoked.
+		this.listing?.unsubscribe();
+		this.listing = this.service
 			.list()
 			.pipe(takeUntil(this.destroy$))
 			.subscribe({

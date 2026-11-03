@@ -30,7 +30,7 @@ describe('UserApiTokenService', () => {
 		])('%j reads as %s', async (answer, expected) => {
 			const read = firstValueFrom(service.enabled$);
 
-			http.expectOne(`${base}/config`).flush(answer);
+			http.expectOne({ method: 'GET', url: `${base}/config` }).flush(answer);
 
 			await expect(read).resolves.toBe(expected);
 		});
@@ -58,7 +58,7 @@ describe('UserApiTokenService', () => {
 	it('lists the user’s tokens', async () => {
 		const read = firstValueFrom(service.list());
 
-		http.expectOne(base).flush({ items: [], total: 0 });
+		http.expectOne({ method: 'GET', url: base }).flush({ items: [], total: 0 });
 
 		await expect(read).resolves.toEqual({ items: [], total: 0 });
 	});

@@ -686,7 +686,7 @@ export class UserService extends TenantAwareCrudService<User> {
 
 			// A password or an address is how an account is kept for good, so a session that came from an API token does
 			// not set one: it would hold the account after the API token is revoked.
-			if (entity['hash'] || isEmailAddressChange(user.email, entity.email)) {
+			if (entity['hash'] !== undefined || isEmailAddressChange(user.email, entity.email)) {
 				assertFirstPartyRequest('Changing the password or the address of an account');
 			}
 

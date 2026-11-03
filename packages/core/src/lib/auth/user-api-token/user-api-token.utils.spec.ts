@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { NotFoundException } from '@nestjs/common';
 import { decode, sign } from 'jsonwebtoken';
 import { UserApiTokenExpiryEnum } from '@gauzy/contracts';
@@ -80,7 +81,7 @@ describe('the token', () => {
 	it('stores a SHA-256 digest, and shows only its first characters', () => {
 		const token = `gzp_${'a'.repeat(43)}`;
 
-		expect(hashUserApiToken(token)).toMatch(/^[0-9a-f]{64}$/);
+		expect(hashUserApiToken(token)).toBe(createHash('sha256').update(token).digest('hex'));
 		expect(userApiTokenDisplayPrefix(token)).toBe('gzp_aaaaaaaa');
 		expect(userApiTokenDisplayPrefix(token).length).toBeLessThanOrEqual(20);
 	});
