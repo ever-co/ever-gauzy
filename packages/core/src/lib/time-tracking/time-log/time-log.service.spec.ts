@@ -125,6 +125,11 @@ describe('TimeLogService', () => {
 			const select = await run(['project']);
 			expect(select).not.toHaveProperty('timeSlots');
 		});
+
+		it("selects the project's colour with each log, so a calendar can tint an entry by its project", async () => {
+			const select = await run(['project']);
+			expect(select.project).toEqual(expect.objectContaining({ id: true, name: true, color: true }));
+		});
 	});
 
 	describe('report queries', () => {
@@ -514,6 +519,207 @@ describe('TimeLogService', () => {
 				expect(findOne).toHaveBeenCalledWith(Organization, { id: ORGANIZATION_ID, tenantId: TENANT_ID });
 				// Half an hour at 1,501 yen is 750.5, and yen has no minor unit
 				expect(report[0]).toEqual(expect.objectContaining({ spent: 751, currency: 'JPY' }));
+			});
+		});
+
+		/**
+		 * The owed-amount report and its chart price an employee's day as the weekly report prices their week:
+		 * once, in exact decimals, to the decimals of the rate's currency. Both used to round a binary floating
+		 * point product themselves, to one decimal (1h 20m at 47.50 was 63.3), and two decimals still left half a
+		 * cent on the wrong side (half an hour at 20.15 was 10.07) and gave a yen rate sen nobody can pay.
+		 */
+		describe('owed amounts', () => {
+			const OTHER_EMPLOYEE_ID = '9c8b7a69-5847-4362-9150-4f3e2d1c0b9a';
+			const DAY = '2026-01-06';
+
+			const log = (employee: Record<string, unknown>, id: string, duration: number) => ({
+				id,
+				employeeId: employee.id,
+				startedAt: `${DAY}T09:00:00.000Z`,
+				stoppedAt: `${DAY}T10:00:00.000Z`,
+				duration,
+				employee
+			});
+
+			/** The day's lines in the report, and the same day's figure in the chart. */
+			const owedDay = async (target: TimeLogService = service) => {
+				const report = await target.getOwedAmountReport(request);
+				const chart = await target.getOwedAmountReportCharts(request);
+				return {
+					lines: report[0].employees,
+					value: chart.find(({ date }) => date === DAY)?.value
+				};
+			};
+
+			/** Hands the TypeORM repository an entity manager, for the organization currency lookup. */
+			const organizationLookup = (organization: { currency?: string | null } | null) => {
+				const findOne = jest.fn().mockResolvedValue(organization);
+				Object.assign(service.typeOrmTimeLogRepository, { manager: { findOne } });
+				return findOne;
+			};
+
+			beforeEach(() => {
+				actAs({ canChangeSelectedEmployee: true });
+			});
+
+			it.each<[string, number, number | string, string, number]>([
+				['keeps the cents of 1h 20m at 47.50', 4800, 47.5, 'USD', 63.33],
+				['rounds the half cent of 30 minutes at 20.15 up, as a person does by hand', 1800, 20.15, 'USD', 10.08],
+				['reads a rate a driver hands back as text', 1800, '20.15', 'USD', 10.08],
+				['gives a currency without a minor unit whole amounts', 1800, 1501, 'JPY', 751],
+				['gives a currency of thousandths its third decimal', 1000, 7.25, 'KWD', 2.014]
+			])(
+				'%s, in the report and in the chart',
+				async (_name, duration, billRateValue, billRateCurrency, expected) => {
+					const employee = { id: TARGET_EMPLOYEE_ID, billRateValue, billRateCurrency };
+					builder.rows = [log(employee, 'a1a2b3c4-0000-4000-8000-000000000001', duration)];
+
+					const { lines, value } = await owedDay();
+
+					expect(lines).toEqual([expect.objectContaining({ amount: expected, duration })]);
+					expect(value).toBe(expected);
+				}
+			);
+
+			it("prices the day's total seconds once, not log by log", async () => {
+				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: 1501, billRateCurrency: 'JPY' };
+				builder.rows = [
+					log(employee, 'a1a2b3c4-0000-4000-8000-000000000002', 900),
+					log(employee, 'a1a2b3c4-0000-4000-8000-000000000003', 900)
+				];
+
+				const { lines, value } = await owedDay();
+
+				// Each quarter hour alone is 375.25, which is 375, twice: 750
+				expect(lines[0].amount).toBe(751);
+				expect(value).toBe(751);
+			});
+
+			it('selects the currency with the rate for the chart, as the report does', async () => {
+				const setFindOptions = jest.spyOn(builder, 'setFindOptions');
+
+				await service.getOwedAmountReportCharts(request);
+
+				const [{ select }] = setFindOptions.mock.calls[0] as unknown as [{ select: Record<string, any> }];
+				expect(select.employee).toEqual(
+					expect.objectContaining({ billRateValue: true, billRateCurrency: true })
+				);
+			});
+
+			it("prices a rate that states no currency in the organization's, as the weekly report does", async () => {
+				const findOrganization = organizationLookup({ currency: 'JPY' });
+				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: 1501, billRateCurrency: null };
+				builder.rows = [log(employee, 'a1a2b3c4-0000-4000-8000-000000000004', 1800)];
+
+				const { lines, value } = await owedDay();
+
+				expect(lines[0].amount).toBe(751);
+				expect(value).toBe(751);
+				// Once per read, scoped to the caller's tenant
+				expect(findOrganization).toHaveBeenCalledTimes(2);
+				expect(findOrganization).toHaveBeenCalledWith(
+					Organization,
+					expect.objectContaining({ where: { id: ORGANIZATION_ID, tenantId: TENANT_ID } })
+				);
+			});
+
+			it('does not read the organization when every rate states its currency', async () => {
+				const findOrganization = organizationLookup({ currency: 'JPY' });
+				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: 20.15, billRateCurrency: 'EUR' };
+				builder.rows = [log(employee, 'a1a2b3c4-0000-4000-8000-000000000005', 1800)];
+
+				const { lines } = await owedDay();
+
+				expect(lines[0].amount).toBe(10.08);
+				expect(findOrganization).not.toHaveBeenCalled();
+			});
+
+			it('keeps owing nothing for an employee without a rate, as a number the grid and the schema accept', async () => {
+				const findOrganization = organizationLookup({ currency: 'JPY' });
+				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: null, billRateCurrency: null };
+				builder.rows = [log(employee, 'a1a2b3c4-0000-4000-8000-000000000006', 3600)];
+
+				const { lines, value } = await owedDay();
+
+				// `amount: Decimal!` in the schema, so a null here would fail the whole GraphQL answer
+				expect(lines).toEqual([expect.objectContaining({ amount: 0, duration: 3600 })]);
+				expect(value).toBe(0);
+				expect(findOrganization).not.toHaveBeenCalled();
+			});
+
+			it("adds the day's amounts exactly for the chart, with no binary noise in the total", async () => {
+				const first = { id: TARGET_EMPLOYEE_ID, billRateValue: 1.1, billRateCurrency: 'USD' };
+				const second = { id: OTHER_EMPLOYEE_ID, billRateValue: 2.2, billRateCurrency: 'USD' };
+				builder.rows = [
+					log(first, 'a1a2b3c4-0000-4000-8000-000000000007', 3600),
+					log(second, 'a1a2b3c4-0000-4000-8000-000000000008', 3600)
+				];
+
+				const { lines, value } = await owedDay();
+
+				expect(lines.map(({ amount }) => amount)).toEqual([1.1, 2.2]);
+				// 1.1 + 2.2 is 3.3000000000000003 in a double
+				expect(value).toBe(3.3);
+			});
+
+			it('prices the same under MikroORM, where a numeric column may arrive as a string', async () => {
+				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: '20.15', billRateCurrency: null };
+				const find = jest.fn().mockResolvedValue([log(employee, 'a1a2b3c4-0000-4000-8000-000000000009', 1800)]);
+				const findOne = jest.fn().mockResolvedValue({ currency: 'EUR' });
+				// The MikroORM branch only needs its where-builder, the repository and the serializer; own
+				// properties shadow the prototype's `ormType` getter.
+				const self = Object.create(TimeLogService.prototype, {
+					ormType: { value: MultiORMEnum.MikroORM },
+					mikroOrmRepository: { value: { find, getEntityManager: () => ({ findOne }) } },
+					buildMikroOrmTimeLogWhere: { value: jest.fn().mockResolvedValue({}) },
+					serialize: { value: (entity: unknown) => entity }
+				});
+
+				const { lines, value } = await owedDay(self);
+
+				// The whole employee is populated, currency included
+				expect(find.mock.calls[0][1].populate).toEqual(expect.arrayContaining(['employee']));
+				expect(lines[0].amount).toBe(10.08);
+				expect(value).toBe(10.08);
+			});
+		});
+
+		/**
+		 * A cost budget is an amount in the project's currency, so a client needs that currency to print the
+		 * report, and the colour to draw the project.
+		 */
+		describe('project budget report', () => {
+			it("selects each project's currency and colour, and answers them with the project", async () => {
+				actAs({ canChangeSelectedEmployee: true });
+				const projectBuilder = new RecordingQueryBuilder('organization_project');
+				projectBuilder.rows = [
+					{
+						id: '3f2e1d0c-9b8a-4765-8432-10fedcba9876',
+						name: 'Site',
+						budget: 100,
+						budgetType: 'cost',
+						currency: 'EUR',
+						color: '#3366ff',
+						timeLogs: [{ duration: 3600, employee: { billRateValue: 10 } }]
+					}
+				];
+				Object.assign(service.typeOrmOrganizationProjectRepository, {
+					createQueryBuilder: () => projectBuilder
+				});
+				const setFindOptions = jest.spyOn(projectBuilder, 'setFindOptions');
+
+				const report = await service.getProjectBudgetLimit(request);
+
+				const [{ select }] = setFindOptions.mock.calls[0] as unknown as [{ select: Record<string, any> }];
+				expect(select).toEqual(expect.objectContaining({ currency: true, color: true }));
+				expect(report).toEqual([
+					expect.objectContaining({
+						spent: 10,
+						project: expect.objectContaining({ currency: 'EUR', color: '#3366ff' })
+					})
+				]);
+				// The logs it was priced from stay out of the answer
+				expect(report[0].project).not.toHaveProperty('timeLogs');
 			});
 		});
 	});

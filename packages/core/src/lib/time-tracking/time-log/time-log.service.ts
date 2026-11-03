@@ -58,6 +58,7 @@ import {
 } from './../../core/utils';
 import { RequestContext } from '../../core/context';
 import { moment } from './../../core/moment-extend';
+import { addDecimalStrings } from '../../money/decimal';
 import {
 	calculateAverage,
 	calculateAverageActivity,
@@ -165,7 +166,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							id: true,
 							name: true,
 							imageUrl: true,
-							membersCount: true
+							membersCount: true,
+							color: true
 						},
 						...(slotActivityOnly ? { timeSlots: { id: true, overall: true, duration: true } } : {}),
 						task: TimeLogService.TASK_SELECT_FIELDS,
@@ -303,9 +305,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { days, timeZone } = this.reportDateRange(request);
 
 		// A rate that states no currency is in the organization's, as the report page shows it; read only when needed
-		const organizationCurrency = logs.some(({ employee }) => this.hasRateWithoutCurrency(employee))
-			? await this.findOrganizationCurrency(request.organizationId)
-			: null;
+		const organizationCurrency = await this.findCurrencyForRatesWithoutOne(logs, request.organizationId);
 
 		// Process weekly logs using lodash and Moment.js
 		const weeklyLogs = chain(logs)
@@ -360,6 +360,40 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 */
 	private hasRateWithoutCurrency(employee: IEmployee | null | undefined): boolean {
 		return !!employee && !employee.billRateCurrency && Number(employee.billRateValue) > 0;
+	}
+
+	/**
+	 * The currency of the rates that state none: the organization's, read only when some log has such a rate.
+	 *
+	 * @param logs - The logs a report prices, each with its employee.
+	 * @param organizationId - The organization the report is about.
+	 * @returns The currency, or null when no rate needs one or the organization states none.
+	 */
+	private async findCurrencyForRatesWithoutOne(
+		logs: ITimeLog[],
+		organizationId: ID | undefined
+	): Promise<string | null> {
+		return logs.some(({ employee }) => this.hasRateWithoutCurrency(employee))
+			? await this.findOrganizationCurrency(organizationId)
+			: null;
+	}
+
+	/**
+	 * What the owed-amount report and its chart answer for an employee's day: priced once, in exact decimals, to
+	 * the decimals of the rate's currency, as the weekly report prices a week.
+	 *
+	 * @param duration - The seconds of the day.
+	 * @param employee - The employee, with their bill rate and its currency.
+	 * @param organizationCurrency - The currency of a rate that states none.
+	 * @returns The amount. An employee without a rate is owed nothing, which both surfaces declare as a number.
+	 */
+	private owedAmount(
+		duration: number,
+		employee: IEmployee | null | undefined,
+		organizationCurrency: string | null
+	): number {
+		const currency = employee?.billRateCurrency || organizationCurrency;
+		return calculateBillableAmount(duration, employee?.billRateValue, currency) ?? 0;
 	}
 
 	/**
@@ -676,6 +710,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
+		// A rate that states no currency is in the organization's, as on the weekly report
+		const organizationCurrency = await this.findCurrencyForRatesWithoutOne(timeLogs, request.organizationId);
+
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
 			.map((byDateLogs: ITimeLog[], date: string) => {
@@ -687,11 +724,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 						// Retrieve employee details
 						const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
-						const amount = employee?.billRateValue * (durationSum / 3600);
 
 						return {
 							employee,
-							amount: parseFloat(amount.toFixed(1)),
+							amount: this.owedAmount(durationSum, employee, organizationCurrency),
 							duration: durationSum
 						};
 					})
@@ -741,6 +777,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						employee: {
 							id: true,
 							billRateValue: true,
+							// The currency sets the decimals the amount is rounded to
+							billRateCurrency: true,
 							userId: true,
 							isAway: true,
 							isOnline: true,
@@ -774,6 +812,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// The days the report covers, and the zone its rows are grouped by
 		const { days, timeZone } = this.reportDateRange(request);
 
+		// A rate that states no currency is in the organization's, as on the weekly report
+		const organizationCurrency = await this.findCurrencyForRatesWithoutOne(timeLogs, request.organizationId);
+
 		const byDate: any = chain(timeLogs)
 			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
 			.mapObject((byDateLogs: ITimeLog[], date) => {
@@ -786,20 +827,19 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						// Retrieve employee details
 						const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
 
-						// Calculate the owed amount based on the employee's bill rate and duration
-						const amount = employee?.billRateValue * (durationSum / 3600);
-
 						return {
 							employee,
-							amount: parseFloat(amount.toFixed(1)),
+							// Calculate the owed amount based on the employee's bill rate and duration
+							amount: this.owedAmount(durationSum, employee, organizationCurrency),
 							duration: durationSum
 						};
 					})
 					.value();
 
-				// Calculate the total owed amount for all employees on a specific date
-				const value = byEmployee.reduce((iteratee: any, item: any) => {
-					return iteratee + item.amount;
+				// The total owed for all employees on a specific date, added exactly: as doubles, 1.1 + 2.2 is
+				// 3.3000000000000003
+				const value = byEmployee.reduce((total: number, item: any) => {
+					return Number(addDecimalStrings(total, item.amount));
 				}, 0);
 
 				return { date, value };
@@ -957,7 +997,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					{
 						table: 'organization_project',
 						timeLogKey: 'projectId',
-						columns: ['id', 'name', 'budget', 'budgetType', 'imageUrl', 'membersCount']
+						columns: ['id', 'name', 'budget', 'budgetType', 'imageUrl', 'membersCount', 'currency', 'color']
 					},
 					{ tenantId, organizationId, employeeIds, projectIds, startDate, endDate }
 				);
@@ -980,7 +1020,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						budget: true,
 						budgetType: true,
 						imageUrl: true,
-						membersCount: true
+						membersCount: true,
+						currency: true,
+						color: true
 					},
 					relations: {
 						timeLogs: {
@@ -1151,7 +1193,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				.innerJoin('employee', 'time_log.employeeId', 'employee.id')
 				.select(
 					'time_log.id as id',
-					'time_log.duration as duration',
+					'time_log.startedAt as startedAt',
+					'time_log.stoppedAt as stoppedAt',
 					`time_log.${timeLogKey} as targetId`,
 					'employee.billRateValue as employee_billRateValue'
 				)
@@ -1164,7 +1207,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			const timeLogs = timeLogsByTarget[row.targetId] || [];
 			timeLogs.push({
 				id: row.id,
-				duration: row.duration,
+				// No column holds a log's duration: the entity works it out when it loads, and this read loads none
+				duration: moment.utc(row.stoppedAt || new Date()).diff(moment.utc(row.startedAt), 'seconds'),
 				employee: { billRateValue: row.employee_billRateValue }
 			});
 			timeLogsByTarget[row.targetId] = timeLogs;
