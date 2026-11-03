@@ -676,6 +676,98 @@ export class AuthService extends SocialAuthService {
 	}
 
 	/**
+	 * Mints the access token a personal API token is exchanged for (`auth/user-api-token`).
+	 *
+	 * It goes through `getJwtAccessToken` like every sign-in, so the token is an ordinary one, and it holds the API
+	 * token's owner to what a sign-in holds them to, every time: an account that is no longer active, archived or deleted
+	 * gets nothing, and neither does a deactivated employee. It carries the claim that marks an API token session, lives
+	 * only until `expiresAt`, and comes with no refresh token, so nothing about the user's own sessions changes.
+	 *
+	 * The organization is the one asked for when the user is an active member of it and was not ended there, else the
+	 * one the user works in (the rule a token refresh applies), else an organization where they are an active employee,
+	 * else their first active membership.
+	 *
+	 * @param input The owner of the API token, the API token's id, the organization asked for, and the expiry.
+	 * @returns The signed access token.
+	 * @throws UnauthorizedException when any of that does not hold.
+	 */
+	public async issueUserApiTokenSession(input: {
+		userId: ID;
+		tenantId: ID;
+		apiTokenId: ID;
+		organizationId?: ID;
+		expiresAt: Date;
+	}): Promise<string> {
+		const { userId, tenantId, apiTokenId, organizationId: requested, expiresAt } = input;
+
+		const where = { id: userId, tenantId, isActive: true, isArchived: false };
+		let user: User;
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const parsed = parseTypeORMFindToMikroOrm<User>({ where });
+				user = (await this.mikroOrmUserRepository.findOne(parsed.where, parsed.mikroOptions)) as User;
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+				user = await this.typeOrmUserRepository.findOne({ where });
+				break;
+			default:
+				throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+		}
+		if (!user) {
+			throw new UnauthorizedException();
+		}
+
+		const options = {
+			where: { userId, tenantId },
+			select: { id: true, organizationId: true, isActive: true, isArchived: true }
+		};
+		let employees: Pick<Employee, 'organizationId' | 'isActive' | 'isArchived'>[];
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const { where: employeeWhere, mikroOptions } = parseTypeORMFindToMikroOrm<Employee>(options);
+				employees = (await this.mikroOrmEmployeeRepository.find(employeeWhere, mikroOptions)) as Employee[];
+				break;
+			}
+			case MultiORMEnum.TypeORM:
+				employees = await this.typeOrmEmployeeRepository.find(options);
+				break;
+			default:
+				throw new Error(`Method not implemented for ORM type: ${this.ormType}`);
+		}
+
+		const endedIn = (organizationId: ID): boolean =>
+			employees.some(
+				(employee) => employee.organizationId === organizationId && !(employee.isActive && !employee.isArchived)
+			);
+
+		let organizationId: ID | null | undefined;
+		if (requested) {
+			// The service's own check, not this class's: that one reads a failed lookup as "not a member", and a database
+			// that cannot be reached is a 503 here, so that a client keeps a good token.
+			if (endedIn(requested) || !(await this.userService.hasActiveOrganizationMembership(userId, requested, tenantId))) {
+				throw new UnauthorizedException();
+			}
+			organizationId = requested;
+		} else {
+			organizationId = await this.resolveStoredOrganizationId(user, tenantId);
+			if (!organizationId || endedIn(organizationId)) {
+				organizationId =
+					employees.find((employee) => employee.isActive && !employee.isArchived)?.organizationId ??
+					(await this.resolveDefaultOrganizationId(userId, tenantId));
+			}
+		}
+
+		// The rest of the judgement (the account and the deactivated employee) is the mint's own, as for every sign-in.
+		return await this.getJwtAccessToken(
+			{ id: userId, tenantId },
+			organizationId ?? undefined,
+			{ apiTokenId },
+			expiresAt
+		);
+	}
+
+	/**
 	 * Last-resort organization scope for a token: the user's first active `UserOrganization`
 	 * membership.
 	 *
@@ -1969,7 +2061,12 @@ export class AuthService extends SocialAuthService {
 	 * @returns A Promise that resolves to a JWT access token string.
 	 * @throws Throws an UnauthorizedException if the user is not found or if there is an issue in token generation.
 	 */
-	public async getJwtAccessToken(request: Partial<IUser>, organizationId?: ID, metadata?: IAccessTokenMetadata) {
+	public async getJwtAccessToken(
+		request: Partial<IUser>,
+		organizationId?: ID,
+		metadata?: IAccessTokenMetadata,
+		expiresAt?: Date
+	) {
 		const tenantId = request.tenantId || RequestContext.currentTenantId();
 		try {
 			// Validate that the request contains a user ID
@@ -2084,11 +2181,13 @@ export class AuthService extends SocialAuthService {
 				userAgent: RequestContext.currentUserAgent(),
 				...(metadata?.clientId && { clientId: metadata.clientId }),
 				// Only the OAuth-app code exchange passes it: the client and scopes the user approved (oauth-app-scope.ts).
-				...(metadata?.oauthApp && { oauthApp: metadata.oauthApp })
+				...(metadata?.oauthApp && { oauthApp: metadata.oauthApp }),
+				// Only the API token exchange passes it: the API token behind this session (user-api-token-session.ts).
+				...(metadata?.apiTokenId && { apiTokenId: metadata.apiTokenId })
 			};
 
 			// Generate the JWT access token using the payload
-			return this.accessTokenService.generate(userId, payload);
+			return this.accessTokenService.generate(userId, payload, expiresAt);
 		} catch (error) {
 			// Log and rethrow any errors encountered during the process
 			this.logger.error('Error while generating JWT access token:', error?.message);

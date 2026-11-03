@@ -1155,6 +1155,7 @@
 		"SMS_GATEWAYS": "Gateway SMS",
 		"CUSTOM_SMTP": "SMTP personalizzato",
 		"OAUTH_CLIENTS": "Client OAuth",
+		"API_TOKENS": "Token API",
 		"INVENTORY": "Inventario",
 		"SALES": "Vendite",
 		"PAYMENTS": "Pagamenti",
@@ -7570,6 +7571,63 @@
 			"UPDATE_FAILED": "Impossibile aggiornare il client OAuth",
 			"ROTATE_FAILED": "Impossibile ruotare il segreto del client",
 			"DELETE_FAILED": "Impossibile revocare il client OAuth"
+		}
+	},
+	"USER_API_TOKENS": {
+		"TITLE": "Token API",
+		"SUBTITLE": "Token per i tuoi agenti e script. Un token può fare tutto ciò che puoi fare tu, quindi custodiscilo come una password.",
+		"EMPTY": {
+			"TITLE": "Non hai ancora token API.",
+			"HINT": "Fai clic su \"Crea token\" per generarne uno per un agente o uno script."
+		},
+		"TABLE": {
+			"NAME": "Nome",
+			"TOKEN": "Token",
+			"CREATED": "Creato",
+			"LAST_USED": "Ultimo utilizzo",
+			"EXPIRES": "Scade",
+			"ACTIONS": "Azioni"
+		},
+		"VALUES": {
+			"NEVER_USED": "Mai usato",
+			"NEVER_EXPIRES": "Mai",
+			"EXPIRED": "Scaduto"
+		},
+		"ACTIONS": {
+			"CREATE": "Crea token",
+			"REVOKE": "Revoca"
+		},
+		"DIALOG": {
+			"TITLE": "Crea un token API",
+			"NAME": "Nome",
+			"NAME_PLACEHOLDER": "es. agente attività sul mio PC",
+			"EXPIRY": "Scade dopo",
+			"EXPIRY_90_DAYS": "90 giorni",
+			"EXPIRY_1_YEAR": "1 anno",
+			"EXPIRY_NEVER": "Mai",
+			"HINT": "Un token senza scadenza funziona finché non lo revochi."
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Salva il tuo token API",
+			"WARNING": "Questa è l'unica volta in cui il token viene mostrato e non potrà più essere letto. Copialo ora. Se lo perdi, revocalo e creane uno nuovo.",
+			"ACKNOWLEDGE": "Ho copiato e conservato il token in modo sicuro.",
+			"CLOSE": "L'ho salvato, chiudi",
+			"COPIED": "Token copiato negli appunti",
+			"COPY_ARIA": "Copia token"
+		},
+		"CONFIRM": {
+			"REVOKE": "Revocare \"{{name}}\"? Da ora non potrà avviare nuove sessioni e una sessione già avviata terminerà entro un'ora."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" creato",
+			"REVOKED": "Token API revocato"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Impossibile caricare i token API",
+			"CREATE_FAILED": "Impossibile creare il token API",
+			"TOO_MANY": "Hai già il numero massimo di token API. Revocane prima uno che non usi più.",
+			"REVOKE_FAILED": "Impossibile revocare il token API",
+			"COPY_FAILED": "Impossibile copiare negli appunti"
 		}
 	},
 	"PROJECT_QUICK_LOOK": {

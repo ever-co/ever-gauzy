@@ -1155,6 +1155,7 @@
 		"SMS_GATEWAYS": "SMS-Gateways",
 		"CUSTOM_SMTP": "Benutzerdefiniertes SMTP",
 		"OAUTH_CLIENTS": "OAuth-Clients",
+		"API_TOKENS": "API-Tokens",
 		"INVENTORY": "Lagerbestand",
 		"SALES": "Verkauf",
 		"PAYMENTS": "Zahlungen",
@@ -7566,6 +7567,63 @@
 			"UPDATE_FAILED": "OAuth-Client konnte nicht aktualisiert werden",
 			"ROTATE_FAILED": "Client-Geheimnis konnte nicht rotiert werden",
 			"DELETE_FAILED": "OAuth-Client konnte nicht widerrufen werden"
+		}
+	},
+	"USER_API_TOKENS": {
+		"TITLE": "API-Tokens",
+		"SUBTITLE": "Tokens für Ihre eigenen Agenten und Skripte. Ein Token kann alles, was Sie auch können. Schützen Sie es daher wie ein Passwort.",
+		"EMPTY": {
+			"TITLE": "Sie haben noch keine API-Tokens.",
+			"HINT": "Klicken Sie auf \"Token erstellen\", um eines für einen Agenten oder ein Skript zu erzeugen."
+		},
+		"TABLE": {
+			"NAME": "Name",
+			"TOKEN": "Token",
+			"CREATED": "Erstellt",
+			"LAST_USED": "Zuletzt verwendet",
+			"EXPIRES": "Läuft ab",
+			"ACTIONS": "Aktionen"
+		},
+		"VALUES": {
+			"NEVER_USED": "Nie verwendet",
+			"NEVER_EXPIRES": "Nie",
+			"EXPIRED": "Abgelaufen"
+		},
+		"ACTIONS": {
+			"CREATE": "Token erstellen",
+			"REVOKE": "Widerrufen"
+		},
+		"DIALOG": {
+			"TITLE": "API-Token erstellen",
+			"NAME": "Name",
+			"NAME_PLACEHOLDER": "z. B. Aufgaben-Agent auf meinem PC",
+			"EXPIRY": "Gültigkeitsdauer",
+			"EXPIRY_90_DAYS": "90 Tage",
+			"EXPIRY_1_YEAR": "1 Jahr",
+			"EXPIRY_NEVER": "Nie",
+			"HINT": "Ein Token ohne Ablaufdatum funktioniert, bis Sie es widerrufen."
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Speichern Sie Ihr API-Token",
+			"WARNING": "Das Token wird nur dieses eine Mal angezeigt und kann nicht erneut gelesen werden. Kopieren Sie es jetzt. Falls Sie es verlieren, widerrufen Sie es und erstellen Sie ein neues.",
+			"ACKNOWLEDGE": "Ich habe das Token kopiert und sicher gespeichert.",
+			"CLOSE": "Gespeichert, schließen",
+			"COPIED": "Token in die Zwischenablage kopiert",
+			"COPY_ARIA": "Token kopieren"
+		},
+		"CONFIRM": {
+			"REVOKE": "\"{{name}}\" widerrufen? Es kann ab sofort keine neue Sitzung mehr starten, und eine bereits gestartete Sitzung endet innerhalb einer Stunde."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" erstellt",
+			"REVOKED": "API-Token widerrufen"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "API-Tokens konnten nicht geladen werden",
+			"CREATE_FAILED": "Das API-Token konnte nicht erstellt werden",
+			"TOO_MANY": "Sie haben die maximale Anzahl an API-Tokens erreicht. Widerrufen Sie zuerst eines, das Sie nicht mehr verwenden.",
+			"REVOKE_FAILED": "Das API-Token konnte nicht widerrufen werden",
+			"COPY_FAILED": "Kopieren in die Zwischenablage fehlgeschlagen"
 		}
 	},
 	"PROJECT_QUICK_LOOK": {

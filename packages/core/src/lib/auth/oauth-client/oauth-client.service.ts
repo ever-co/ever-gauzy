@@ -26,6 +26,7 @@ import { hashPassword, verifyPassword } from '@gauzy/utils';
 import { ID, IPagination, OAuthClientType, OAuthGrantType, RolesEnum } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../../core/crud/tenant-aware-crud.service';
 import { RequestContext } from '../../core/context/request-context';
+import { assertFirstPartyRequest } from '../oauth-app-first-party';
 import { OAuthClient } from './oauth-client.entity';
 import { TypeOrmOAuthClientRepository } from './repository/type-orm-oauth-client.repository';
 import { MikroOrmOAuthClientRepository } from './repository/mikro-orm-oauth-client.repository';
@@ -85,6 +86,8 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 		dto: CreateOAuthClientDTO,
 		options?: { tenantId?: ID | null }
 	): Promise<OAuthClientWithSecretResponseDTO> {
+		assertFirstPartyRequest('Registering an OAuth client');
+
 		const clientType = dto.clientType ?? OAuthClientType.CONFIDENTIAL;
 
 		// Public clients require end-to-end PKCE support in the `/token`
@@ -274,6 +277,9 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 	// ---------------------------------------------------------------------------
 
 	public async updateClient(id: ID, dto: UpdateOAuthClientDTO): Promise<OAuthClientResponseDTO> {
+		// A new redirect address on a client people already trust is as good as a new client.
+		assertFirstPartyRequest('Changing an OAuth client');
+
 		const existing = await this.findScopedById(id);
 		if (!existing) {
 			throw new NotFoundException(`OAuth client not found: ${id}`);
@@ -307,6 +313,8 @@ export class OAuthClientService extends TenantAwareCrudService<OAuthClient> {
 	 * code stays signed by the old per-client HMAC secret.
 	 */
 	public async rotateSecret(id: ID): Promise<OAuthClientWithSecretResponseDTO> {
+		assertFirstPartyRequest('Rotating an OAuth client secret');
+
 		const existing = await this.findScopedById(id);
 		if (!existing) {
 			throw new NotFoundException(`OAuth client not found: ${id}`);

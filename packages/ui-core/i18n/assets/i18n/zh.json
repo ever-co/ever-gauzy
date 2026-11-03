@@ -1215,6 +1215,7 @@
 		"SMS_GATEWAYS": "短信网关",
 		"CUSTOM_SMTP": "自定义SMTP",
 		"OAUTH_CLIENTS": "OAuth客户端",
+		"API_TOKENS": "API 令牌",
 		"INVENTORY": "库存",
 		"SALES": "销售",
 		"PAYMENTS": "支付",
@@ -8713,6 +8714,63 @@
 			"UPDATE_FAILED": "更新OAuth客户端失败",
 			"ROTATE_FAILED": "轮换客户端密钥失败",
 			"DELETE_FAILED": "撤销OAuth客户端失败",
+			"COPY_FAILED": "复制到剪贴板失败"
+		}
+	},
+	"USER_API_TOKENS": {
+		"TITLE": "API 令牌",
+		"SUBTITLE": "供您自己的代理和脚本使用的令牌。令牌可以执行您能执行的所有操作，请像保管密码一样妥善保管。",
+		"EMPTY": {
+			"TITLE": "您还没有 API 令牌。",
+			"HINT": "点击\"创建令牌\"，为代理或脚本生成一个令牌。"
+		},
+		"TABLE": {
+			"NAME": "名称",
+			"TOKEN": "令牌",
+			"CREATED": "创建时间",
+			"LAST_USED": "上次使用",
+			"EXPIRES": "过期时间",
+			"ACTIONS": "操作"
+		},
+		"VALUES": {
+			"NEVER_USED": "从未使用",
+			"NEVER_EXPIRES": "永不",
+			"EXPIRED": "已过期"
+		},
+		"ACTIONS": {
+			"CREATE": "创建令牌",
+			"REVOKE": "撤销"
+		},
+		"DIALOG": {
+			"TITLE": "创建 API 令牌",
+			"NAME": "名称",
+			"NAME_PLACEHOLDER": "例如：我电脑上的任务代理",
+			"EXPIRY": "有效期",
+			"EXPIRY_90_DAYS": "90 天",
+			"EXPIRY_1_YEAR": "1 年",
+			"EXPIRY_NEVER": "永不过期",
+			"HINT": "永不过期的令牌会一直有效，直到您将其撤销。"
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "保存您的 API 令牌",
+			"WARNING": "令牌仅显示这一次，之后无法再次读取。请立即复制。如果丢失，请将其撤销并创建新令牌。",
+			"ACKNOWLEDGE": "我已复制并安全保存该令牌。",
+			"CLOSE": "已保存，关闭",
+			"COPIED": "令牌已复制到剪贴板",
+			"COPY_ARIA": "复制令牌"
+		},
+		"CONFIRM": {
+			"REVOKE": "撤销\"{{name}}\"？从现在起它无法再开始新会话，已开始的会话将在一小时内结束。"
+		},
+		"TOASTS": {
+			"CREATED": "已创建\"{{name}}\"",
+			"REVOKED": "API 令牌已撤销"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "加载 API 令牌失败",
+			"CREATE_FAILED": "创建 API 令牌失败",
+			"TOO_MANY": "您持有的 API 令牌已达上限。请先撤销不再使用的令牌。",
+			"REVOKE_FAILED": "撤销 API 令牌失败",
 			"COPY_FAILED": "复制到剪贴板失败"
 		}
 	},
