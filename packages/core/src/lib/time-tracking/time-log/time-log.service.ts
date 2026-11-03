@@ -691,7 +691,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 						return {
 							employee,
-							amount: parseFloat(amount.toFixed(1)),
+							amount: parseFloat(amount.toFixed(2)),
 							duration: durationSum
 						};
 					})
@@ -791,7 +791,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 						return {
 							employee,
-							amount: parseFloat(amount.toFixed(1)),
+							amount: parseFloat(amount.toFixed(2)),
 							duration: durationSum
 						};
 					})
