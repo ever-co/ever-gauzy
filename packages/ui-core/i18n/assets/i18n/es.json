@@ -7695,7 +7695,12 @@
 		"OTHER_PAYMENTS": "Otros pagos",
 		"REST_OF_MONTH": "Resto del mes",
 		"MONTH_TOTAL": "Total del mes",
-		"CHART_FAILED": "No se pudo cargar el gráfico"
+		"CHART_FAILED": "No se pudo cargar el gráfico",
+		"RECEIPT_UPLOAD": "Subir un recibo",
+		"RECEIPT_UPLOAD_HINT": "Haz clic para elegir una imagen: PNG, JPG, GIF, WebP o BMP",
+		"RECEIPT_REPLACE": "Reemplazar",
+		"RECEIPT_UPLOADING": "Subiendo…",
+		"RECEIPT_UPLOAD_FAILED": "No se pudo subir el recibo. Prueba con otra imagen."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Proyecto",

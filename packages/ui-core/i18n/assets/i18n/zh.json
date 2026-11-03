@@ -8908,7 +8908,12 @@
 		"OTHER_PAYMENTS": "其他付款",
 		"REST_OF_MONTH": "本月其余部分",
 		"MONTH_TOTAL": "本月合计",
-		"CHART_FAILED": "无法加载图表"
+		"CHART_FAILED": "无法加载图表",
+		"RECEIPT_UPLOAD": "上传收据",
+		"RECEIPT_UPLOAD_HINT": "点击选择图片：PNG、JPG、GIF、WebP 或 BMP",
+		"RECEIPT_REPLACE": "替换",
+		"RECEIPT_UPLOADING": "正在上传…",
+		"RECEIPT_UPLOAD_FAILED": "无法上传收据。请尝试其他图片。"
 	},
 	"TASK_VIEW": {
 		"PROJECT": "项目",

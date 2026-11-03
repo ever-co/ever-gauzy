@@ -7693,7 +7693,12 @@
 		"OTHER_PAYMENTS": "Andere betalingen",
 		"REST_OF_MONTH": "Rest van de maand",
 		"MONTH_TOTAL": "Maandtotaal",
-		"CHART_FAILED": "De grafiek kon niet worden geladen"
+		"CHART_FAILED": "De grafiek kon niet worden geladen",
+		"RECEIPT_UPLOAD": "Bon uploaden",
+		"RECEIPT_UPLOAD_HINT": "Klik om een afbeelding te kiezen: PNG, JPG, GIF, WebP of BMP",
+		"RECEIPT_REPLACE": "Vervangen",
+		"RECEIPT_UPLOADING": "Uploaden…",
+		"RECEIPT_UPLOAD_FAILED": "De bon kon niet worden geüpload. Probeer een andere afbeelding."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Project",

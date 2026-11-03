@@ -7690,7 +7690,12 @@
 		"OTHER_PAYMENTS": "Autres paiements",
 		"REST_OF_MONTH": "Reste du mois",
 		"MONTH_TOTAL": "Total du mois",
-		"CHART_FAILED": "Le graphique n’a pas pu être chargé"
+		"CHART_FAILED": "Le graphique n’a pas pu être chargé",
+		"RECEIPT_UPLOAD": "Téléverser un reçu",
+		"RECEIPT_UPLOAD_HINT": "Cliquez pour choisir une image : PNG, JPG, GIF, WebP ou BMP",
+		"RECEIPT_REPLACE": "Remplacer",
+		"RECEIPT_UPLOADING": "Téléversement…",
+		"RECEIPT_UPLOAD_FAILED": "Le reçu n’a pas pu être téléversé. Essayez une autre image."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Projet",

@@ -8905,7 +8905,12 @@
 		"OTHER_PAYMENTS": "Other payments",
 		"REST_OF_MONTH": "Rest of the month",
 		"MONTH_TOTAL": "Month total",
-		"CHART_FAILED": "The chart could not be loaded"
+		"CHART_FAILED": "The chart could not be loaded",
+		"RECEIPT_UPLOAD": "Upload a receipt",
+		"RECEIPT_UPLOAD_HINT": "Click to choose an image: PNG, JPG, GIF, WebP or BMP",
+		"RECEIPT_REPLACE": "Replace",
+		"RECEIPT_UPLOADING": "Uploading…",
+		"RECEIPT_UPLOAD_FAILED": "The receipt could not be uploaded. Try another image."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Project",

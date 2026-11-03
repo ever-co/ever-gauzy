@@ -7692,7 +7692,12 @@
 		"OTHER_PAYMENTS": "Inne płatności",
 		"REST_OF_MONTH": "Reszta miesiąca",
 		"MONTH_TOTAL": "Suma miesiąca",
-		"CHART_FAILED": "Nie udało się wczytać wykresu"
+		"CHART_FAILED": "Nie udało się wczytać wykresu",
+		"RECEIPT_UPLOAD": "Prześlij paragon",
+		"RECEIPT_UPLOAD_HINT": "Kliknij, aby wybrać obraz: PNG, JPG, GIF, WebP lub BMP",
+		"RECEIPT_REPLACE": "Zamień",
+		"RECEIPT_UPLOADING": "Przesyłanie…",
+		"RECEIPT_UPLOAD_FAILED": "Nie udało się przesłać paragonu. Spróbuj innego obrazu."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Projekt",

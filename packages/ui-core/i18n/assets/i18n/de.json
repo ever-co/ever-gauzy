@@ -7689,7 +7689,12 @@
 		"OTHER_PAYMENTS": "Andere Zahlungen",
 		"REST_OF_MONTH": "Rest des Monats",
 		"MONTH_TOTAL": "Monatssumme",
-		"CHART_FAILED": "Das Diagramm konnte nicht geladen werden"
+		"CHART_FAILED": "Das Diagramm konnte nicht geladen werden",
+		"RECEIPT_UPLOAD": "Beleg hochladen",
+		"RECEIPT_UPLOAD_HINT": "Klicken, um ein Bild zu wählen: PNG, JPG, GIF, WebP oder BMP",
+		"RECEIPT_REPLACE": "Ersetzen",
+		"RECEIPT_UPLOADING": "Wird hochgeladen…",
+		"RECEIPT_UPLOAD_FAILED": "Der Beleg konnte nicht hochgeladen werden. Versuchen Sie ein anderes Bild."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Projekt",

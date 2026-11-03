@@ -7701,7 +7701,12 @@
 		"OTHER_PAYMENTS": "תשלומים אחרים",
 		"REST_OF_MONTH": "יתרת החודש",
 		"MONTH_TOTAL": "סך החודש",
-		"CHART_FAILED": "לא ניתן היה לטעון את התרשים"
+		"CHART_FAILED": "לא ניתן היה לטעון את התרשים",
+		"RECEIPT_UPLOAD": "העלאת קבלה",
+		"RECEIPT_UPLOAD_HINT": "לחצו לבחירת תמונה: PNG,‏ JPG,‏ GIF,‏ WebP או BMP",
+		"RECEIPT_REPLACE": "החלפה",
+		"RECEIPT_UPLOADING": "מעלה…",
+		"RECEIPT_UPLOAD_FAILED": "לא ניתן היה להעלות את הקבלה. נסו תמונה אחרת."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "פרויקט",

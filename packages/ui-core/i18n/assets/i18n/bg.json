@@ -7736,7 +7736,12 @@
 		"OTHER_PAYMENTS": "Други плащания",
 		"REST_OF_MONTH": "Останалата част от месеца",
 		"MONTH_TOTAL": "Общо за месеца",
-		"CHART_FAILED": "Диаграмата не можа да се зареди"
+		"CHART_FAILED": "Диаграмата не можа да се зареди",
+		"RECEIPT_UPLOAD": "Качване на касова бележка",
+		"RECEIPT_UPLOAD_HINT": "Щракнете, за да изберете изображение: PNG, JPG, GIF, WebP или BMP",
+		"RECEIPT_REPLACE": "Замяна",
+		"RECEIPT_UPLOADING": "Качване…",
+		"RECEIPT_UPLOAD_FAILED": "Касовата бележка не можа да бъде качена. Опитайте с друго изображение."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Проект",

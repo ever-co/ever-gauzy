@@ -7693,7 +7693,12 @@
 		"OTHER_PAYMENTS": "Altri pagamenti",
 		"REST_OF_MONTH": "Resto del mese",
 		"MONTH_TOTAL": "Totale del mese",
-		"CHART_FAILED": "Impossibile caricare il grafico"
+		"CHART_FAILED": "Impossibile caricare il grafico",
+		"RECEIPT_UPLOAD": "Carica una ricevuta",
+		"RECEIPT_UPLOAD_HINT": "Fai clic per scegliere un'immagine: PNG, JPG, GIF, WebP o BMP",
+		"RECEIPT_REPLACE": "Sostituisci",
+		"RECEIPT_UPLOADING": "Caricamento…",
+		"RECEIPT_UPLOAD_FAILED": "Impossibile caricare la ricevuta. Prova con un'altra immagine."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "Progetto",

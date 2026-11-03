@@ -7685,7 +7685,12 @@
 		"OTHER_PAYMENTS": "الدفعات الأخرى",
 		"REST_OF_MONTH": "باقي الشهر",
 		"MONTH_TOTAL": "إجمالي الشهر",
-		"CHART_FAILED": "تعذّر تحميل المخطط"
+		"CHART_FAILED": "تعذّر تحميل المخطط",
+		"RECEIPT_UPLOAD": "رفع إيصال",
+		"RECEIPT_UPLOAD_HINT": "انقر لاختيار صورة: PNG أو JPG أو GIF أو WebP أو BMP",
+		"RECEIPT_REPLACE": "استبدال",
+		"RECEIPT_UPLOADING": "جارٍ الرفع…",
+		"RECEIPT_UPLOAD_FAILED": "تعذّر رفع الإيصال. جرّب صورة أخرى."
 	},
 	"TASK_VIEW": {
 		"PROJECT": "المشروع",
