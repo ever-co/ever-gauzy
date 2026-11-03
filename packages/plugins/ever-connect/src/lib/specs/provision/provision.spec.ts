@@ -218,7 +218,7 @@ describe('creating a workspace from Ever', () => {
 			});
 			const [input] = h.provisioner.inputs;
 			expect(input).toEqual({
-				issuer: 'https://auth.ever.test',
+				issuer: 'https://auth.ever.co',
 				subject: '300000000000000001',
 				email: OWNER_EMAIL,
 				firstName: 'Ada',

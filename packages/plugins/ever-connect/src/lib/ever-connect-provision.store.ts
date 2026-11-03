@@ -230,9 +230,10 @@ export class EverConnectProvisionStore {
 		let affected: number;
 		try {
 			({ affected } = await this.sql.run(
-				`UPDATE ${q(RESULT)} SET ${q('claimedBy')} = ${this.sql.ph(1)}, ${q('claimedUntil')} = ${this.sql.ph(2)}, ${q('status')} = ${this.sql.ph(3)}, ${q('updatedAt')} = ${this.sql.ph(4)}, ${q('everOrgKey')} = ${this.sql.ph(8)} ` +
-					`WHERE ${q('idempotencyKey')} = ${this.sql.ph(5)} AND ${q('status')} <> ${this.sql.ph(6)} AND (${q('claimedUntil')} IS NULL OR ${q('claimedUntil')} < ${this.sql.ph(7)})`,
-				[holder, until, 'pending', at, values.idempotencyKey, 'created', at, values.everOrgId]
+				`UPDATE ${q(RESULT)} SET ${q('claimedBy')} = ${this.sql.ph(1)}, ${q('claimedUntil')} = ${this.sql.ph(2)}, ${q('status')} = ${this.sql.ph(3)}, ${q('updatedAt')} = ${this.sql.ph(4)}, ${q('everOrgKey')} = ${this.sql.ph(5)} ` +
+					`WHERE ${q('idempotencyKey')} = ${this.sql.ph(6)} AND ${q('status')} <> ${this.sql.ph(7)} AND (${q('claimedUntil')} IS NULL OR ${q('claimedUntil')} < ${this.sql.ph(8)})`,
+				// In the order of the placeholders: MySQL and SQLite bind them by position.
+				[holder, until, 'pending', at, values.everOrgId, values.idempotencyKey, 'created', at]
 			));
 		} catch (error) {
 			// Another key took the Ever organization while this one had failed.

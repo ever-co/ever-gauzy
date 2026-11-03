@@ -70,6 +70,7 @@ describe('workspace completion report', () => {
 			{ query: (sql, params) => runner.query(sql, params) },
 			{
 				idempotencyKey: KEY,
+				holder: 'holder',
 				ids: {
 					productTenantId: tenantId,
 					productOrgId: organizationId,
