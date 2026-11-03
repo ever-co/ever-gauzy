@@ -113,6 +113,9 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 		this.checkTagsFit(this.selectedTags);
 	}
 
+	/** Accessible name of the control, for a host that shows its own label. */
+	@Input() ariaLabel: string;
+
 	constructor(
 		private readonly tagsService: TagsService,
 		private readonly store: Store,

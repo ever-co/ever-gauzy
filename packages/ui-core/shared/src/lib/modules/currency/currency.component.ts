@@ -86,6 +86,9 @@ export class CurrencyComponent extends TranslationBaseComponent implements OnIni
 		this._label = val;
 	}
 
+	/** Accessible name of the control, for a host that shows its own label. */
+	@Input() ariaLabel: string;
+
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly cdr: ChangeDetectorRef,

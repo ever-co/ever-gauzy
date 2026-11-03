@@ -100,6 +100,9 @@ export class ContactSelectComponent extends TranslationBaseComponent implements 
 	@Output()
 	onChanged = new EventEmitter<IOrganizationContact>();
 
+	/** Accessible name of the control, for a host that shows its own label. */
+	@Input() ariaLabel: string;
+
 	constructor(
 		public readonly translateService: TranslateService,
 		private readonly store: Store,

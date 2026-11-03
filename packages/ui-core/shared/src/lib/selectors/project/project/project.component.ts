@@ -211,6 +211,9 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 */
 	private onTouched: () => void = () => {};
 
+	/** Accessible name of the control, for a host that shows its own label. */
+	@Input() ariaLabel: string;
+
 	constructor(
 		private readonly _organizationProjects: OrganizationProjectsService,
 		private readonly _store: Store,

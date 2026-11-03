@@ -165,6 +165,37 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 		this.setExpenseStatuses(typeOfExpense);
 	}
 
+	/** The type control's one Tab stop: the selected type, or the first while none is. */
+	isExpenseTypeTabStop(typeOfExpense: ExpenseTypesEnum, index: number): boolean {
+		const selected = this.form.get('typeOfExpense').value;
+		return this.expenseTypes.includes(selected) ? selected === typeOfExpense : index === 0;
+	}
+
+	/**
+	 * Moves the type's choice with the arrow keys, Home and End, as a radio group does, and takes the focus with it.
+	 *
+	 * @param event
+	 * @param index The focused type's position.
+	 */
+	onExpenseTypeKeydown(event: KeyboardEvent, index: number) {
+		const count = this.expenseTypes.length;
+		const steps: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+		let next: number;
+		if (event.key in steps) {
+			next = (index + steps[event.key] + count) % count;
+		} else if (event.key === 'Home') {
+			next = 0;
+		} else if (event.key === 'End') {
+			next = count - 1;
+		} else {
+			return;
+		}
+		event.preventDefault();
+		this.selectExpenseType(this.expenseTypes[next]);
+		const options = (event.currentTarget as HTMLElement)?.parentElement?.querySelectorAll<HTMLElement>('[role="radio"]');
+		options?.[next]?.focus();
+	}
+
 	/**
 	 * Selected Organization Contact
 	 *
@@ -212,11 +243,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 		if (this.form.invalid) {
 			return;
 		}
-		this.dialogRef.close(
-			Object.assign(this.form.getRawValue(), {
-				splitExpense: this.showTooltip
-			})
-		);
+		// An edited expense keeps the split it was saved with: its employee selector is hidden but still mounted,
+		// and may report "All employees" as it initializes.
+		const splitExpense = this.expense && !this.duplicate ? !!this.expense.splitExpense : this.showTooltip;
+		this.dialogRef.close(Object.assign(this.form.getRawValue(), { splitExpense }));
 	}
 
 	showNotesInput() {
@@ -302,8 +332,9 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 		});
 	}
 
+	/** Hides the warning: both the close button and its timeout call this, so it never toggles. */
 	closeWarning() {
-		this.showWarning = !this.showWarning;
+		this.showWarning = false;
 	}
 
 	attachReceipt() {

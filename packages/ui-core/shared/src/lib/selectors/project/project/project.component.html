@@ -5,6 +5,7 @@
 <!-- Single Select -->
 @if (!multiple) {
   <ng-select
+    [ariaLabel]="ariaLabel"
     #select
     class="gauzy-entity-select"
     [ngClass]="panelClass"

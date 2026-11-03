@@ -99,6 +99,9 @@ export class ExpenseCategorySelectComponent implements OnInit, OnDestroy {
 	@Output()
 	onChanged = new EventEmitter<IOrganizationVendor>();
 
+	/** Accessible name of the control, for a host that shows its own label. */
+	@Input() ariaLabel: string;
+
 	constructor(
 		private readonly store: Store,
 		private readonly toastrService: ToastrService,

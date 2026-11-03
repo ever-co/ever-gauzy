@@ -6,6 +6,7 @@
       </label>
     }
     <ng-select
+      [ariaLabel]="ariaLabel"
       class="currency-selector"
       #select
       [items]="currencies$ | async"
