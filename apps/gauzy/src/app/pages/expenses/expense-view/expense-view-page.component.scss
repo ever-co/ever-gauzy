@@ -135,6 +135,25 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
   }
 }
 
+/* ── Charts ── */
+
+// The chart panels' range filter, at the project page's period switcher's size: the global input floor
+// would draw it 46px tall and stretch the panel's header.
+.expense-chart-range {
+  flex: 0 0 auto;
+  min-width: 9rem;
+
+  // Matched to Nebular's own `nb-select.appearance-outline.size-small` so this rule outranks it.
+  &.appearance-outline.status-basic.size-small ::ng-deep .select-button {
+    min-height: 1.75rem !important;
+    height: 1.75rem;
+    padding: 0 1.75rem 0 0.625rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 600;
+  }
+}
+
 /* ── Narrow pages ── */
 
 // The actions share a line with the back button and the page's name: Edit keeps its icon.

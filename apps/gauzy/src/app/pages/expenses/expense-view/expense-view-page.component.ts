@@ -29,10 +29,13 @@ import {
 import {
 	categoryMonthBars,
 	CATEGORY_CHART_MONTHS,
+	CATEGORY_CHART_MONTH_OPTIONS,
 	IExpenseChartBar,
 	IExpenseMonthShare,
 	monthShareOf,
-	vendorPaymentBars
+	vendorPaymentBars,
+	VENDOR_CHART_PAYMENTS,
+	VENDOR_CHART_PAYMENT_OPTIONS
 } from './expense-view-charts';
 
 /** Where the expense page's back button leads, and where a deleted expense's page goes. */
@@ -128,7 +131,11 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 
 	/** The category, vendor and month charts, read after the expense itself. */
 	charts: IExpenseCharts = NO_CHARTS;
-	readonly categoryChartMonths = CATEGORY_CHART_MONTHS;
+	/** The category chart's span in months, and the payments the vendor chart shows at most: the panels' filters. */
+	categoryMonths = CATEGORY_CHART_MONTHS;
+	vendorPayments = VENDOR_CHART_PAYMENTS;
+	readonly categoryMonthOptions = CATEGORY_CHART_MONTH_OPTIONS;
+	readonly vendorPaymentOptions = VENDOR_CHART_PAYMENT_OPTIONS;
 	/** Formats a chart's amount in the expense's currency. */
 	readonly formatAmount = (value: number): string =>
 		formatExpenseMoney(value, this.expense?.currency, this.translateService.getCurrentLang() || undefined);
@@ -315,6 +322,18 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		}
 	}
 
+	/** Sets the category chart's span; the expenses already read are drawn again, nothing is read. */
+	setCategoryMonths(months: number): void {
+		this.categoryMonths = months;
+		this.describeCharts();
+	}
+
+	/** Sets how many payments the vendor chart shows at most, as the category's span. */
+	setVendorPayments(payments: number): void {
+		this.vendorPayments = payments;
+		this.describeCharts();
+	}
+
 	/* ── Reading and describing ── */
 
 	/** Reads the expense again after a change made here, keeping the page on screen while it does. */
@@ -392,8 +411,8 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		const share = hasCategory ? monthShareOf(this.categoryExpenses, expense) : null;
 		this.charts = {
 			...this.charts,
-			categoryBars: hasCategory ? categoryMonthBars(this.categoryExpenses, expense, locale) : [],
-			vendorBars: hasVendor ? vendorPaymentBars(this.vendorExpenses, expense, locale) : [],
+			categoryBars: hasCategory ? categoryMonthBars(this.categoryExpenses, expense, locale, this.categoryMonths) : [],
+			vendorBars: hasVendor ? vendorPaymentBars(this.vendorExpenses, expense, locale, this.vendorPayments) : [],
 			share,
 			shareMonth: share ? moment(expense.valueDate).locale(locale).format('MMMM YYYY') : null
 		};

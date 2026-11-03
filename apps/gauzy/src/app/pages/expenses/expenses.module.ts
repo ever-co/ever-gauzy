@@ -7,6 +7,7 @@ import {
 	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
+	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
@@ -42,6 +43,7 @@ const NB_MODULES = [
 	NbDialogModule.forChild(),
 	NbIconModule,
 	NbInputModule,
+	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule
 ];

@@ -263,10 +263,24 @@
 								<span class="panel-caption">
 									{{
 										'EXPENSE_VIEW.CATEGORY_SPENDING_CAPTION'
-											| translate : { category: expense.category.name, count: categoryChartMonths, currency: expense.currency }
+											| translate : { category: expense.category.name, count: categoryMonths, currency: expense.currency }
 									}}
 								</span>
 							</div>
+							@if (!charts.failed) {
+								<nb-select
+									class="expense-chart-range"
+									size="small"
+									status="basic"
+									[selected]="categoryMonths"
+									(selectedChange)="setCategoryMonths($event)"
+									[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+								>
+									@for (months of categoryMonthOptions; track months) {
+										<nb-option [value]="months">{{ 'EXPENSE_VIEW.LAST_MONTHS' | translate : { count: months } }}</nb-option>
+									}
+								</nb-select>
+							}
 						</header>
 						<div class="panel-body project-chart-body">
 							@if (charts.failed) {
@@ -301,6 +315,20 @@
 									</span>
 								}
 							</div>
+							@if (!charts.failed) {
+								<nb-select
+									class="expense-chart-range"
+									size="small"
+									status="basic"
+									[selected]="vendorPayments"
+									(selectedChange)="setVendorPayments($event)"
+									[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+								>
+									@for (payments of vendorPaymentOptions; track payments) {
+										<nb-option [value]="payments">{{ 'EXPENSE_VIEW.LAST_PAYMENTS' | translate : { count: payments } }}</nb-option>
+									}
+								</nb-select>
+							}
 						</header>
 						<div class="panel-body project-chart-body">
 							@if (charts.failed) {
