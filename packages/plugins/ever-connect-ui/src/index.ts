@@ -3,3 +3,4 @@
  */
 export * from './lib/ever-connect-ui.plugin';
 export * from './lib/services/ever-connect.service';
+export * from './lib/provision/provision.service';
