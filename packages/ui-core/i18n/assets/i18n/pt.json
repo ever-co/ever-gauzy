@@ -1155,6 +1155,7 @@
 		"SMS_GATEWAYS": "SMS Gateways são serviços que permitem o envio e recebimento de mensagens de texto através de redes de telefonia móvel. Esses gateways atuam como intermediários, conectando diferentes plataformas, como aplicativos de mensagens, sites ou sistemas de software, aos sistemas das operadoras de telefonia móvel. Eles facilitam a comunicação por SMS em grande escala, permitindo que empresas e indivíduos enviem mensagens para diversos destinatários simultaneamente. Os SMS Gateways desempenham um papel crucial nas comunicações empresariais e no marketing, fornecendo uma maneira rápida e eficiente de alcançar um grande público via SMS.",
 		"CUSTOM_SMTP": "SMTP personalizado",
 		"OAUTH_CLIENTS": "Clientes OAuth",
+		"API_TOKENS": "Tokens de API",
 		"INVENTORY": "Inventário",
 		"SALES": "Vendas",
 		"PAYMENTS": "Pagamentos",
@@ -7570,6 +7571,63 @@
 			"UPDATE_FAILED": "Falha ao atualizar cliente OAuth",
 			"ROTATE_FAILED": "Falha ao rotacionar segredo do cliente",
 			"DELETE_FAILED": "Falha ao revogar cliente OAuth"
+		}
+	},
+	"USER_API_TOKENS": {
+		"TITLE": "Tokens de API",
+		"SUBTITLE": "Tokens para os seus próprios agentes e scripts. Um token pode fazer o mesmo que você, por isso guarde-o com o cuidado de uma senha.",
+		"EMPTY": {
+			"TITLE": "Você ainda não tem tokens de API.",
+			"HINT": "Clique em \"Criar token\" para gerar um para um agente ou script."
+		},
+		"TABLE": {
+			"NAME": "Nome",
+			"TOKEN": "Token",
+			"CREATED": "Criado",
+			"LAST_USED": "Último uso",
+			"EXPIRES": "Expira",
+			"ACTIONS": "Ações"
+		},
+		"VALUES": {
+			"NEVER_USED": "Nunca usado",
+			"NEVER_EXPIRES": "Nunca",
+			"EXPIRED": "Expirado"
+		},
+		"ACTIONS": {
+			"CREATE": "Criar token",
+			"REVOKE": "Revogar"
+		},
+		"DIALOG": {
+			"TITLE": "Criar um token de API",
+			"NAME": "Nome",
+			"NAME_PLACEHOLDER": "ex.: agente de tarefas no meu PC",
+			"EXPIRY": "Expira após",
+			"EXPIRY_90_DAYS": "90 dias",
+			"EXPIRY_1_YEAR": "1 ano",
+			"EXPIRY_NEVER": "Nunca",
+			"HINT": "Um token que não expira continua funcionando até você revogá-lo."
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Guarde o seu token de API",
+			"WARNING": "Esta é a única vez que o token é exibido, e ele não pode ser lido novamente. Copie-o agora. Se perdê-lo, revogue-o e crie um novo.",
+			"ACKNOWLEDGE": "Copiei e guardei o token em segurança.",
+			"CLOSE": "Já guardei, fechar",
+			"COPIED": "Token copiado para a área de transferência",
+			"COPY_ARIA": "Copiar token"
+		},
+		"CONFIRM": {
+			"REVOKE": "Revogar \"{{name}}\"? A partir de agora ele não poderá iniciar novas sessões, e uma sessão já iniciada terminará em até uma hora."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" criado",
+			"REVOKED": "Token de API revogado"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Falha ao carregar os tokens de API",
+			"CREATE_FAILED": "Falha ao criar o token de API",
+			"TOO_MANY": "Você já tem o número máximo de tokens de API. Revogue primeiro um que não usa mais.",
+			"REVOKE_FAILED": "Falha ao revogar o token de API",
+			"COPY_FAILED": "Falha ao copiar para a área de transferência"
 		}
 	},
 	"PROJECT_QUICK_LOOK": {

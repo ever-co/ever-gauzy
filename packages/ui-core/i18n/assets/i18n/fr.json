@@ -1156,6 +1156,7 @@
 		"SMS_GATEWAYS": "Passerelles SMS",
 		"CUSTOM_SMTP": "SMTP personnalisé",
 		"OAUTH_CLIENTS": "Clients OAuth",
+		"API_TOKENS": "Jetons API",
 		"INVENTORY": "Inventaire",
 		"SALES": "Ventes",
 		"PAYMENTS": "Paiements",
@@ -7567,6 +7568,63 @@
 			"UPDATE_FAILED": "Échec de la mise à jour du client OAuth",
 			"ROTATE_FAILED": "Échec de la rotation du secret client",
 			"DELETE_FAILED": "Échec de la révocation du client OAuth"
+		}
+	},
+	"USER_API_TOKENS": {
+		"TITLE": "Jetons API",
+		"SUBTITLE": "Des jetons pour vos propres agents et scripts. Un jeton peut faire tout ce que vous pouvez faire : protégez-le comme un mot de passe.",
+		"EMPTY": {
+			"TITLE": "Vous n'avez pas encore de jeton API.",
+			"HINT": "Cliquez sur \"Créer un jeton\" pour en générer un pour un agent ou un script."
+		},
+		"TABLE": {
+			"NAME": "Nom",
+			"TOKEN": "Jeton",
+			"CREATED": "Créé le",
+			"LAST_USED": "Dernière utilisation",
+			"EXPIRES": "Expire le",
+			"ACTIONS": "Actions"
+		},
+		"VALUES": {
+			"NEVER_USED": "Jamais utilisé",
+			"NEVER_EXPIRES": "Jamais",
+			"EXPIRED": "Expiré"
+		},
+		"ACTIONS": {
+			"CREATE": "Créer un jeton",
+			"REVOKE": "Révoquer"
+		},
+		"DIALOG": {
+			"TITLE": "Créer un jeton API",
+			"NAME": "Nom",
+			"NAME_PLACEHOLDER": "p. ex. agent de tâches sur mon PC",
+			"EXPIRY": "Expire après",
+			"EXPIRY_90_DAYS": "90 jours",
+			"EXPIRY_1_YEAR": "1 an",
+			"EXPIRY_NEVER": "Jamais",
+			"HINT": "Un jeton sans expiration fonctionne jusqu'à ce que vous le révoquiez."
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Enregistrez votre jeton API",
+			"WARNING": "C'est la seule fois que le jeton s'affiche, et il ne pourra plus être lu. Copiez-le maintenant. Si vous le perdez, révoquez-le et créez-en un nouveau.",
+			"ACKNOWLEDGE": "J'ai copié et conservé le jeton en lieu sûr.",
+			"CLOSE": "C'est enregistré, fermer",
+			"COPIED": "Jeton copié dans le presse-papiers",
+			"COPY_ARIA": "Copier le jeton"
+		},
+		"CONFIRM": {
+			"REVOKE": "Révoquer \"{{name}}\" ? Il ne pourra plus ouvrir de nouvelle session, et une session déjà ouverte se terminera dans l'heure."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" créé",
+			"REVOKED": "Jeton API révoqué"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Impossible de charger les jetons API",
+			"CREATE_FAILED": "Impossible de créer le jeton API",
+			"TOO_MANY": "Vous détenez déjà le nombre maximal de jetons API. Révoquez d'abord un jeton que vous n'utilisez plus.",
+			"REVOKE_FAILED": "Impossible de révoquer le jeton API",
+			"COPY_FAILED": "Impossible de copier dans le presse-papiers"
 		}
 	},
 	"PROJECT_QUICK_LOOK": {

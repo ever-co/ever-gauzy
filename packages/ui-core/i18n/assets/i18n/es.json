@@ -1157,6 +1157,7 @@
 		"SMS_GATEWAYS": "SMS Gateways",
 		"CUSTOM_SMTP": "SMTP personalizado",
 		"OAUTH_CLIENTS": "Clientes OAuth",
+		"API_TOKENS": "Tokens de API",
 		"INVENTORY": "Inventario",
 		"SALES": "Ventas",
 		"PAYMENTS": "Pagos",
@@ -7572,6 +7573,63 @@
 			"UPDATE_FAILED": "Error al actualizar el cliente OAuth",
 			"ROTATE_FAILED": "Error al rotar el secreto del cliente",
 			"DELETE_FAILED": "Error al revocar el cliente OAuth"
+		}
+	},
+	"USER_API_TOKENS": {
+		"TITLE": "Tokens de API",
+		"SUBTITLE": "Tokens para tus propios agentes y scripts. Un token puede hacer lo mismo que tú, así que guárdalo con el mismo cuidado que una contraseña.",
+		"EMPTY": {
+			"TITLE": "Aún no tienes tokens de API.",
+			"HINT": "Haz clic en \"Crear token\" para generar uno para un agente o un script."
+		},
+		"TABLE": {
+			"NAME": "Nombre",
+			"TOKEN": "Token",
+			"CREATED": "Creado",
+			"LAST_USED": "Último uso",
+			"EXPIRES": "Caduca",
+			"ACTIONS": "Acciones"
+		},
+		"VALUES": {
+			"NEVER_USED": "Sin usar",
+			"NEVER_EXPIRES": "Nunca",
+			"EXPIRED": "Caducado"
+		},
+		"ACTIONS": {
+			"CREATE": "Crear token",
+			"REVOKE": "Revocar"
+		},
+		"DIALOG": {
+			"TITLE": "Crear un token de API",
+			"NAME": "Nombre",
+			"NAME_PLACEHOLDER": "p. ej., agente de tareas en mi PC",
+			"EXPIRY": "Caduca después de",
+			"EXPIRY_90_DAYS": "90 días",
+			"EXPIRY_1_YEAR": "1 año",
+			"EXPIRY_NEVER": "Nunca",
+			"HINT": "Un token que no caduca sigue funcionando hasta que lo revoques."
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Guarda tu token de API",
+			"WARNING": "Esta es la única vez que se muestra el token y no se puede volver a leer. Cópialo ahora. Si lo pierdes, revócalo y crea uno nuevo.",
+			"ACKNOWLEDGE": "He copiado y guardado el token de forma segura.",
+			"CLOSE": "Ya lo he guardado, cerrar",
+			"COPIED": "Token copiado al portapapeles",
+			"COPY_ARIA": "Copiar token"
+		},
+		"CONFIRM": {
+			"REVOKE": "¿Revocar \"{{name}}\"? A partir de ahora no podrá iniciar nuevas sesiones, y una sesión ya iniciada terminará en menos de una hora."
+		},
+		"TOASTS": {
+			"CREATED": "Se creó \"{{name}}\"",
+			"REVOKED": "Token de API revocado"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "No se pudieron cargar los tokens de API",
+			"CREATE_FAILED": "No se pudo crear el token de API",
+			"TOO_MANY": "Ya tienes el máximo de tokens de API permitido. Revoca primero uno que ya no uses.",
+			"REVOKE_FAILED": "No se pudo revocar el token de API",
+			"COPY_FAILED": "No se pudo copiar al portapapeles"
 		}
 	},
 	"PROJECT_QUICK_LOOK": {
