@@ -119,7 +119,13 @@
 				<!-- Taxes open a section once included; the receipt button says whether one is attached. -->
 				@if (showTaxesInput) {
 					<div class="form-group">
-						<label class="label">{{ 'EXPENSE_VIEW.TAX' | translate }}</label>
+						<div class="label-row">
+							<label class="label">{{ 'EXPENSE_VIEW.TAX' | translate }}</label>
+							<button nbButton ghost size="tiny" status="basic" type="button" (click)="removeTaxes()">
+								<nb-icon icon="close-outline" aria-hidden="true"></nb-icon>
+								{{ 'BUTTONS.REMOVE' | translate }}
+							</button>
+						</div>
 						<div class="tax-grid">
 							<input
 								nbInput
