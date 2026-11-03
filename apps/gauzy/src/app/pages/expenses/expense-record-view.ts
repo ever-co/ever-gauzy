@@ -1,8 +1,6 @@
-import { Injector } from '@angular/core';
-import { BaseEntityEnum, ExpenseStatusesEnum, ExpenseTypesEnum, IExpense, PermissionsEnum, TaxTypesEnum } from '@gauzy/contracts';
-import { employeeMapper } from '@gauzy/ui-core/common';
+import { ExpenseStatusesEnum, ExpenseTypesEnum, IExpense, PermissionsEnum, TaxTypesEnum } from '@gauzy/contracts';
 import { ExpensesService } from '@gauzy/ui-core/core';
-import { IRecordViewRouteData, IRecordViewScope, IRecordViewSection, toActualReceipt } from '@gauzy/ui-core/shared';
+import { IRecordViewScope, IRecordViewSection, toActualReceipt } from '@gauzy/ui-core/shared';
 
 /** Relations an expense's View reads — the same the expenses grid loads. */
 export const EXPENSE_VIEW_RELATIONS = [
@@ -81,8 +79,8 @@ export async function loadExpense(service: ExpensesService, id: string, scope: I
 }
 
 /**
- * An expense, described for `ngx-record-view` — the grid columns read vertically. Shared by the expenses
- * drawer (a quick look) and the expense's full-width page (`/pages/accounting/expenses/view/:id`).
+ * An expense, described for `ngx-record-view` — the grid columns read vertically. Used by the expenses drawer
+ * (a quick look); the expense's own page lays the same facts out in its columns.
  */
 export function buildExpenseViewSections(): IRecordViewSection[] {
 	return [
@@ -116,27 +114,3 @@ export function buildExpenseViewSections(): IRecordViewSection[] {
 		}
 	];
 }
-
-/** `/pages/accounting/expenses/view/:id` — one expense, full width (what an expense favorite opens). */
-export const EXPENSE_RECORD_VIEW: IRecordViewRouteData<IExpense> = {
-	heading: 'EXPENSES_PAGE.EXPENSES',
-	backLink: '/pages/accounting/expenses',
-	load: async (id: string, injector: Injector, scope: IRecordViewScope) => {
-		const { items } = await injector.get(ExpensesService).getAll(EXPENSE_VIEW_RELATIONS, {
-			id,
-			organizationId: scope.organizationId,
-			tenantId: scope.tenantId
-		} as any);
-		const expense = items?.find((item) => item.id === id);
-		return expense
-			? ({
-					...expense,
-					statuses: expenseStatusBadge(expense.status),
-					employee: { ...employeeMapper(expense) }
-				} as any)
-			: null;
-	},
-	sections: () => buildExpenseViewSections(),
-	subtitle: (expense) => expense.vendor?.name || expense.category?.name,
-	favorite: { entity: BaseEntityEnum.Expense, name: (expense) => expense.vendor?.name || expense.category?.name }
-};
