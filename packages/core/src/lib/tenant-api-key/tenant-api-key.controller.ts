@@ -1,4 +1,5 @@
 import {
+	ForbiddenException,
 	Body,
 	Controller,
 	Delete,
@@ -44,6 +45,10 @@ export class TenantApiKeyController {
 		try {
 			return await this.tenantApiKeyService.generateApiKey(input);
 		} catch (error) {
+			// A refusal stays a refusal (a session that came from an API token mints no key), not a server error.
+			if (error instanceof ForbiddenException) {
+				throw error;
+			}
 			if (error instanceof ValidationError) {
 				throw new HttpException('Invalid API key parameters', HttpStatus.BAD_REQUEST);
 			}

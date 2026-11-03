@@ -32,4 +32,9 @@ export interface IAccessTokenMetadata extends JwtPayload {
 	 * approved for it. `JwtStrategy` holds the request to those scopes (see `auth/oauth-app-scope.ts`).
 	 */
 	oauthApp?: IOAuthAppTokenGrant;
+	/**
+	 * Set only on a token the API token exchange minted: the id of the API token behind it (see
+	 * `auth/user-api-token/user-api-token-session.ts`).
+	 */
+	apiTokenId?: string;
 }

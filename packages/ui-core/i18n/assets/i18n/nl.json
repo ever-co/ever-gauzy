@@ -1155,6 +1155,7 @@
 		"SMS_GATEWAYS": "SMS-gateways",
 		"CUSTOM_SMTP": "Aangepaste SMTP",
 		"OAUTH_CLIENTS": "OAuth-clients",
+		"API_TOKENS": "API-tokens",
 		"INVENTORY": "Inventaris",
 		"SALES": "Verkoop",
 		"PAYMENTS": "Betalingen",
@@ -7570,6 +7571,63 @@
 			"UPDATE_FAILED": "Kan OAuth-client niet bijwerken",
 			"ROTATE_FAILED": "Kan clientgeheim niet roteren",
 			"DELETE_FAILED": "Kan OAuth-client niet intrekken"
+		}
+	},
+	"USER_API_TOKENS": {
+		"TITLE": "API-tokens",
+		"SUBTITLE": "Tokens voor je eigen agents en scripts. Een token kan alles wat jij kunt, dus bewaar het zo zorgvuldig als een wachtwoord.",
+		"EMPTY": {
+			"TITLE": "Je hebt nog geen API-tokens.",
+			"HINT": "Klik op \"Token maken\" om er een te maken voor een agent of script."
+		},
+		"TABLE": {
+			"NAME": "Naam",
+			"TOKEN": "Token",
+			"CREATED": "Gemaakt",
+			"LAST_USED": "Laatst gebruikt",
+			"EXPIRES": "Verloopt",
+			"ACTIONS": "Acties"
+		},
+		"VALUES": {
+			"NEVER_USED": "Nooit gebruikt",
+			"NEVER_EXPIRES": "Nooit",
+			"EXPIRED": "Verlopen"
+		},
+		"ACTIONS": {
+			"CREATE": "Token maken",
+			"REVOKE": "Intrekken"
+		},
+		"DIALOG": {
+			"TITLE": "Een API-token maken",
+			"NAME": "Naam",
+			"NAME_PLACEHOLDER": "bijv. taakagent op mijn pc",
+			"EXPIRY": "Verloopt na",
+			"EXPIRY_90_DAYS": "90 dagen",
+			"EXPIRY_1_YEAR": "1 jaar",
+			"EXPIRY_NEVER": "Nooit",
+			"HINT": "Een token dat niet verloopt, blijft werken totdat je het intrekt."
+		},
+		"SECRET_DIALOG": {
+			"TITLE": "Bewaar je API-token",
+			"WARNING": "Dit is de enige keer dat het token wordt getoond, en het kan niet opnieuw worden gelezen. Kopieer het nu. Ben je het kwijt, trek het dan in en maak een nieuw token.",
+			"ACKNOWLEDGE": "Ik heb het token gekopieerd en veilig opgeslagen.",
+			"CLOSE": "Opgeslagen, sluiten",
+			"COPIED": "Token naar klembord gekopieerd",
+			"COPY_ARIA": "Token kopiëren"
+		},
+		"CONFIRM": {
+			"REVOKE": "\"{{name}}\" intrekken? Het kan vanaf nu geen nieuwe sessie starten, en een al gestarte sessie eindigt binnen een uur."
+		},
+		"TOASTS": {
+			"CREATED": "\"{{name}}\" gemaakt",
+			"REVOKED": "API-token ingetrokken"
+		},
+		"ERRORS": {
+			"LOAD_FAILED": "Kan API-tokens niet laden",
+			"CREATE_FAILED": "Kan het API-token niet maken",
+			"TOO_MANY": "Je hebt al het maximale aantal API-tokens. Trek eerst een token in dat je niet meer gebruikt.",
+			"REVOKE_FAILED": "Kan het API-token niet intrekken",
+			"COPY_FAILED": "Kopiëren naar klembord mislukt"
 		}
 	},
 	"PROJECT_QUICK_LOOK": {
