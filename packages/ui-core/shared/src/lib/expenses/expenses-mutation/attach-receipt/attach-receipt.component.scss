@@ -2,8 +2,10 @@
 
 // The expense dialog's look: a slim header and footer around the receipt.
 $hairline: 1px solid var(--gauzy-border-default-color);
+// The fallback is for the material themes, which do not carry the gauzy tokens (as in `_overlays.scss`).
 $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
-$radius: 0.5rem;
+$radius: var(--border-radius);
+$control-radius: calc(var(--border-radius) / 2);
 
 :host {
 	display: block;
@@ -42,7 +44,7 @@ $radius: 0.5rem;
 	height: 2rem;
 	padding: 0;
 	border: 0;
-	border-radius: 0.25rem;
+	border-radius: $control-radius;
 	background: transparent;
 	color: var(--gauzy-text-color-2);
 	cursor: pointer;
@@ -80,8 +82,8 @@ $radius: 0.5rem;
 
 	&:hover:not(.receipt-zone--busy),
 	&:focus-within {
-		border-color: var(--color-primary-default, #3366ff);
-		background-color: color-mix(in srgb, var(--color-primary-default, #3366ff) 5%, transparent);
+		border-color: var(--color-primary-default);
+		background-color: color-mix(in srgb, var(--color-primary-default) 5%, transparent);
 	}
 
 	&--busy {
@@ -93,7 +95,7 @@ $radius: 0.5rem;
 	width: 2rem;
 	height: 2rem;
 	font-size: 2rem;
-	color: var(--color-primary-default, #3366ff);
+	color: var(--color-primary-default);
 }
 
 .receipt-zone-title {
@@ -112,7 +114,7 @@ $radius: 0.5rem;
 	width: 1.75rem;
 	height: 1.75rem;
 	border: 2px solid $hover-tint;
-	border-top-color: var(--color-primary-default, #3366ff);
+	border-top-color: var(--color-primary-default);
 	border-radius: 50%;
 	animation: receipt-spin 0.8s linear infinite;
 
