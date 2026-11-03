@@ -149,6 +149,21 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 	}
 
 	/**
+	 * Picks the expense type from the segmented control, and offers the statuses that type takes.
+	 *
+	 * @param typeOfExpense
+	 */
+	selectExpenseType(typeOfExpense: ExpenseTypesEnum) {
+		const control = this.form.get('typeOfExpense');
+		if (control.value === typeOfExpense) {
+			return;
+		}
+		control.setValue(typeOfExpense);
+		control.markAsDirty();
+		this.setExpenseStatuses(typeOfExpense);
+	}
+
+	/**
 	 * Selected Organization Contact
 	 *
 	 * @param contact
