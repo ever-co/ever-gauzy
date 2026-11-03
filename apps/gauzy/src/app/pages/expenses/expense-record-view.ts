@@ -79,10 +79,15 @@ export async function loadExpense(service: ExpensesService, id: string, scope: I
 }
 
 /**
- * An expense, described for `ngx-record-view` — the grid columns read vertically. Used by the expenses drawer
- * (a quick look); the expense's own page lays the same facts out in its columns.
+ * An expense, described for `ngx-record-view` — the grid columns read vertically, then what the form took that the
+ * grid has no column for: the type and the tax. Used by the expenses drawer (a quick look); the expense's own page
+ * lays the same facts out in its columns.
+ *
+ * @param translate Translates the type's key: a field's value is shown as given.
  */
-export function buildExpenseViewSections(): IRecordViewSection[] {
+export function buildExpenseViewSections(expense: IExpense, translate: (key: string) => string): IRecordViewSection[] {
+	const typeKey = expenseTypeKey(expense?.typeOfExpense);
+	const tax = expenseTaxOf(expense);
 	return [
 		{
 			fields: [
@@ -92,6 +97,7 @@ export function buildExpenseViewSections(): IRecordViewSection[] {
 				{ label: 'SM_TABLE.STATUS', key: 'statuses', type: 'badge' },
 				{ label: 'SM_TABLE.VENDOR', key: 'vendor.name' },
 				{ label: 'SM_TABLE.CATEGORY', key: 'category.name' },
+				{ label: 'EXPENSE_VIEW.TYPE', value: typeKey ? translate(typeKey) : null },
 				{ label: 'SM_TABLE.PROJECT', key: 'project.name' },
 				{ label: 'SM_TABLE.CONTACT', key: 'organizationContact.name' },
 				{
@@ -102,7 +108,9 @@ export function buildExpenseViewSections(): IRecordViewSection[] {
 					// employee column is removed, so the View must not show it either.
 					permission: PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
 				},
-				{ label: 'EXPENSES_PAGE.SPLIT_EXPENSE', key: 'splitExpense', type: 'boolean' }
+				{ label: 'EXPENSES_PAGE.SPLIT_EXPENSE', key: 'splitExpense', type: 'boolean' },
+				{ label: 'EXPENSES_PAGE.MUTATION.TAX_RATE', value: tax?.rate ?? null, divider: true },
+				{ label: 'EXPENSE_VIEW.TAX_LABEL', value: tax?.label ?? null }
 			]
 		},
 		{

@@ -627,7 +627,7 @@ export class ExpensesComponent extends PaginationFilterBaseComponent implements 
 			return;
 		}
 
-		this.viewSections = buildExpenseViewSections();
+		this.viewSections = buildExpenseViewSections(expense, (key) => this.getTranslation(key));
 		this.viewedExpense = expense;
 	}
 
