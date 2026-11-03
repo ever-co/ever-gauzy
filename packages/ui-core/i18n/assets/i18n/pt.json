@@ -7663,6 +7663,24 @@
 		"COMMENT_IMAGE_LIMIT": "Um comentário pode ter até {{ count }} imagens.",
 		"COMMENT_IMAGE_FAILED": "Não foi possível enviar {{ name }}."
 	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "Despesa",
+		"DETAILS": "Detalhes",
+		"DESCRIPTION": "Descrição",
+		"NO_DESCRIPTION": "Nenhum propósito, nota ou etiqueta foi adicionado a esta despesa.",
+		"RECEIPT": "Recibo",
+		"NO_RECEIPT": "Nenhum recibo anexado",
+		"OPEN_RECEIPT": "Abrir recibo",
+		"AMOUNT": "Valor",
+		"CURRENCY_HINT": "Em {{ currency }}",
+		"SPLIT_HINT": "Em {{ currency }}, dividida entre todos os funcionários",
+		"TAX": "Imposto",
+		"NO_TAX": "Sem imposto",
+		"TAX_LABEL": "Rótulo do imposto",
+		"TYPE": "Tipo",
+		"EXPENSE_DATE": "Data da despesa",
+		"LINK_COPIED": "Link copiado"
+	},
 	"TASK_VIEW": {
 		"PROJECT": "Projeto",
 		"NO_PROJECT": "Sem projeto",

@@ -7663,6 +7663,24 @@
 		"COMMENT_IMAGE_LIMIT": "Un commento può contenere fino a {{ count }} immagini.",
 		"COMMENT_IMAGE_FAILED": "Impossibile caricare {{ name }}."
 	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "Spesa",
+		"DETAILS": "Dettagli",
+		"DESCRIPTION": "Descrizione",
+		"NO_DESCRIPTION": "A questa spesa non sono stati aggiunti scopo, note o tag.",
+		"RECEIPT": "Ricevuta",
+		"NO_RECEIPT": "Nessuna ricevuta allegata",
+		"OPEN_RECEIPT": "Apri ricevuta",
+		"AMOUNT": "Importo",
+		"CURRENCY_HINT": "In {{ currency }}",
+		"SPLIT_HINT": "In {{ currency }}, suddivisa tra tutti i dipendenti",
+		"TAX": "Imposta",
+		"NO_TAX": "Nessuna imposta",
+		"TAX_LABEL": "Etichetta dell'imposta",
+		"TYPE": "Tipo",
+		"EXPENSE_DATE": "Data della spesa",
+		"LINK_COPIED": "Link copiato"
+	},
 	"TASK_VIEW": {
 		"PROJECT": "Progetto",
 		"NO_PROJECT": "Nessun progetto",

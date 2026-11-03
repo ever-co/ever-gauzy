@@ -7659,6 +7659,24 @@
 		"COMMENT_IMAGE_LIMIT": "Ein Kommentar kann bis zu {{ count }} Bilder enthalten.",
 		"COMMENT_IMAGE_FAILED": "{{ name }} konnte nicht hochgeladen werden."
 	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "Ausgabe",
+		"DETAILS": "Details",
+		"DESCRIPTION": "Beschreibung",
+		"NO_DESCRIPTION": "Zu dieser Ausgabe wurden kein Zweck, keine Notizen und keine Tags hinzugefügt.",
+		"RECEIPT": "Beleg",
+		"NO_RECEIPT": "Kein Beleg angehängt",
+		"OPEN_RECEIPT": "Beleg öffnen",
+		"AMOUNT": "Betrag",
+		"CURRENCY_HINT": "In {{ currency }}",
+		"SPLIT_HINT": "In {{ currency }}, auf alle Mitarbeiter aufgeteilt",
+		"TAX": "Steuer",
+		"NO_TAX": "Keine Steuer",
+		"TAX_LABEL": "Steuerbezeichnung",
+		"TYPE": "Art",
+		"EXPENSE_DATE": "Ausgabedatum",
+		"LINK_COPIED": "Link kopiert"
+	},
 	"TASK_VIEW": {
 		"PROJECT": "Projekt",
 		"NO_PROJECT": "Kein Projekt",

@@ -7706,6 +7706,24 @@
 		"COMMENT_IMAGE_LIMIT": "Един коментар може да съдържа до {{ count }} изображения.",
 		"COMMENT_IMAGE_FAILED": "{{ name }} не можа да бъде качено."
 	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "Разход",
+		"DETAILS": "Подробности",
+		"DESCRIPTION": "Описание",
+		"NO_DESCRIPTION": "Към този разход не са добавени цел, бележки или етикети.",
+		"RECEIPT": "Касова бележка",
+		"NO_RECEIPT": "Няма прикачена касова бележка",
+		"OPEN_RECEIPT": "Отвори касовата бележка",
+		"AMOUNT": "Сума",
+		"CURRENCY_HINT": "В {{ currency }}",
+		"SPLIT_HINT": "В {{ currency }}, разделен между всички служители",
+		"TAX": "Данък",
+		"NO_TAX": "Без данък",
+		"TAX_LABEL": "Етикет на данъка",
+		"TYPE": "Вид",
+		"EXPENSE_DATE": "Дата на разхода",
+		"LINK_COPIED": "Връзката е копирана"
+	},
 	"TASK_VIEW": {
 		"PROJECT": "Проект",
 		"NO_PROJECT": "Няма проект",

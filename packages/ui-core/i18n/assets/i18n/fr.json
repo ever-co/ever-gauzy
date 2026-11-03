@@ -7660,6 +7660,24 @@
 		"COMMENT_IMAGE_LIMIT": "Un commentaire peut contenir jusqu’à {{ count }} images.",
 		"COMMENT_IMAGE_FAILED": "Impossible de téléverser {{ name }}."
 	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "Dépense",
+		"DETAILS": "Détails",
+		"DESCRIPTION": "Description",
+		"NO_DESCRIPTION": "Aucun objet, aucune note ni aucune étiquette n'a été ajouté à cette dépense.",
+		"RECEIPT": "Reçu",
+		"NO_RECEIPT": "Aucun reçu joint",
+		"OPEN_RECEIPT": "Ouvrir le reçu",
+		"AMOUNT": "Montant",
+		"CURRENCY_HINT": "En {{ currency }}",
+		"SPLIT_HINT": "En {{ currency }}, réparti entre tous les employés",
+		"TAX": "Taxe",
+		"NO_TAX": "Aucune taxe",
+		"TAX_LABEL": "Libellé de la taxe",
+		"TYPE": "Type",
+		"EXPENSE_DATE": "Date de la dépense",
+		"LINK_COPIED": "Lien copié"
+	},
 	"TASK_VIEW": {
 		"PROJECT": "Projet",
 		"NO_PROJECT": "Aucun projet",

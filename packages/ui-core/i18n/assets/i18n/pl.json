@@ -7662,6 +7662,24 @@
 		"COMMENT_IMAGE_LIMIT": "Komentarz może zawierać do {{ count }} obrazów.",
 		"COMMENT_IMAGE_FAILED": "Nie udało się przesłać {{ name }}."
 	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "Wydatek",
+		"DETAILS": "Szczegóły",
+		"DESCRIPTION": "Opis",
+		"NO_DESCRIPTION": "Do tego wydatku nie dodano celu, notatek ani tagów.",
+		"RECEIPT": "Paragon",
+		"NO_RECEIPT": "Brak załączonego paragonu",
+		"OPEN_RECEIPT": "Otwórz paragon",
+		"AMOUNT": "Kwota",
+		"CURRENCY_HINT": "W {{ currency }}",
+		"SPLIT_HINT": "W {{ currency }}, podzielony między wszystkich pracowników",
+		"TAX": "Podatek",
+		"NO_TAX": "Brak podatku",
+		"TAX_LABEL": "Etykieta podatku",
+		"TYPE": "Typ",
+		"EXPENSE_DATE": "Data wydatku",
+		"LINK_COPIED": "Link skopiowany"
+	},
 	"TASK_VIEW": {
 		"PROJECT": "Projekt",
 		"NO_PROJECT": "Brak projektu",

@@ -8878,6 +8878,24 @@
 		"COMMENT_IMAGE_LIMIT": "一条评论最多可包含 {{ count }} 张图片。",
 		"COMMENT_IMAGE_FAILED": "无法上传 {{ name }}。"
 	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "费用",
+		"DETAILS": "详情",
+		"DESCRIPTION": "描述",
+		"NO_DESCRIPTION": "此费用未添加用途、备注或标签。",
+		"RECEIPT": "收据",
+		"NO_RECEIPT": "未附加收据",
+		"OPEN_RECEIPT": "打开收据",
+		"AMOUNT": "金额",
+		"CURRENCY_HINT": "以 {{ currency }} 计",
+		"SPLIT_HINT": "以 {{ currency }} 计，由所有员工分摊",
+		"TAX": "税",
+		"NO_TAX": "无税",
+		"TAX_LABEL": "税标签",
+		"TYPE": "类型",
+		"EXPENSE_DATE": "费用日期",
+		"LINK_COPIED": "链接已复制"
+	},
 	"TASK_VIEW": {
 		"PROJECT": "项目",
 		"NO_PROJECT": "无项目",

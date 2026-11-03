@@ -7671,6 +7671,24 @@
 		"COMMENT_IMAGE_LIMIT": "תגובה יכולה לכלול עד {{ count }} תמונות.",
 		"COMMENT_IMAGE_FAILED": "לא ניתן היה להעלות את {{ name }}."
 	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "הוצאה",
+		"DETAILS": "פרטים",
+		"DESCRIPTION": "תיאור",
+		"NO_DESCRIPTION": "לא נוספו מטרה, הערות או תגיות להוצאה זו.",
+		"RECEIPT": "קבלה",
+		"NO_RECEIPT": "לא צורפה קבלה",
+		"OPEN_RECEIPT": "פתח קבלה",
+		"AMOUNT": "סכום",
+		"CURRENCY_HINT": "ב-{{ currency }}",
+		"SPLIT_HINT": "ב-{{ currency }}, מחולק בין כל העובדים",
+		"TAX": "מס",
+		"NO_TAX": "ללא מס",
+		"TAX_LABEL": "תווית המס",
+		"TYPE": "סוג",
+		"EXPENSE_DATE": "תאריך ההוצאה",
+		"LINK_COPIED": "הקישור הועתק"
+	},
 	"TASK_VIEW": {
 		"PROJECT": "פרויקט",
 		"NO_PROJECT": "אין פרויקט",

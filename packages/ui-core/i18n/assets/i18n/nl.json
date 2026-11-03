@@ -7663,6 +7663,24 @@
 		"COMMENT_IMAGE_LIMIT": "Een opmerking kan maximaal {{ count }} afbeeldingen bevatten.",
 		"COMMENT_IMAGE_FAILED": "{{ name }} kon niet worden geüpload."
 	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "Uitgave",
+		"DETAILS": "Details",
+		"DESCRIPTION": "Beschrijving",
+		"NO_DESCRIPTION": "Aan deze uitgave zijn geen doel, notities of tags toegevoegd.",
+		"RECEIPT": "Bon",
+		"NO_RECEIPT": "Geen bon bijgevoegd",
+		"OPEN_RECEIPT": "Bon openen",
+		"AMOUNT": "Bedrag",
+		"CURRENCY_HINT": "In {{ currency }}",
+		"SPLIT_HINT": "In {{ currency }}, verdeeld over alle medewerkers",
+		"TAX": "Belasting",
+		"NO_TAX": "Geen belasting",
+		"TAX_LABEL": "Belastinglabel",
+		"TYPE": "Type",
+		"EXPENSE_DATE": "Uitgavedatum",
+		"LINK_COPIED": "Link gekopieerd"
+	},
 	"TASK_VIEW": {
 		"PROJECT": "Project",
 		"NO_PROJECT": "Geen project",
