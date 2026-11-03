@@ -292,7 +292,8 @@ $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 	padding-bottom: 0.625rem;
 	border-bottom: $hairline;
 	color: var(--gauzy-text-color-1);
-	font-size: 0.875rem;
+	font-size: 0.75rem;
+	line-height: 1rem;
 	font-weight: 600;
 
 	&--group {
