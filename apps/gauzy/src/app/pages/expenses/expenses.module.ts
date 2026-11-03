@@ -29,6 +29,7 @@ import { ExpensesRoutingModule } from './expenses-routing.module';
 import { ExpensesComponent } from './expenses.component';
 import { ExpenseCategoriesComponent } from './expense-categories/expense-categories.component';
 import { ExpenseCategoryMutationComponent } from './expense-categories/expense-category-mutation/expense-category-mutation.component';
+import { ExpenseViewPageComponent } from './expense-view/expense-view-page.component';
 
 // Nebular Modules
 const NB_MODULES = [
@@ -67,7 +68,12 @@ const THIRD_PARTY_MODULES = [NgxPermissionsModule.forChild(), TranslatePipe];
 		TagsColorInputModule,
 		SmartDataViewLayoutModule
 	],
-	declarations: [ExpensesComponent, ExpenseCategoriesComponent, ExpenseCategoryMutationComponent],
+	declarations: [
+		ExpensesComponent,
+		ExpenseCategoriesComponent,
+		ExpenseCategoryMutationComponent,
+		ExpenseViewPageComponent
+	],
 	providers: [ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService]
 })
 export class ExpensesModule {}
