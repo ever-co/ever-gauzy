@@ -36,6 +36,13 @@ describe('expense view charts', () => {
 			expect(bars[5].title).toBe('March 2026');
 		});
 
+		it('covers the span the range filter picks, still ending with the expense month', () => {
+			const bars = categoryMonthBars([expense('a', '2026-01-20', 30), expense('b', '2025-12-05', 999)], current, 'en', 3);
+
+			expect(bars.map((bar) => bar.label)).toEqual(['Jan', 'Feb', 'Mar']);
+			expect(bars.map((bar) => bar.value)).toEqual([30, 0, 100]);
+		});
+
 		it('draws nothing for an expense without a date', () => {
 			expect(categoryMonthBars([], { ...current, valueDate: null })).toEqual([]);
 		});

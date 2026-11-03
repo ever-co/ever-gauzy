@@ -3,8 +3,12 @@ import { IExpense } from '@gauzy/contracts';
 
 /** How many months the category chart covers, ending with the expense's own month. */
 export const CATEGORY_CHART_MONTHS = 6;
+/** The spans the category chart's range filter offers, in months. */
+export const CATEGORY_CHART_MONTH_OPTIONS = [3, 6, 12];
 /** How many payments to the vendor the history chart shows at most. */
 export const VENDOR_CHART_PAYMENTS = 12;
+/** The counts the vendor chart's range filter offers, in payments. */
+export const VENDOR_CHART_PAYMENT_OPTIONS = [6, 12, 24];
 
 /** One bar: its axis label, the tooltip's title, the amount, and whether it is the expense's own. */
 export interface IExpenseChartBar {
