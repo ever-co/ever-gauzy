@@ -1,7 +1,7 @@
 import { UntypedFormBuilder } from '@angular/forms';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { IExpense } from '@gauzy/contracts';
+import { IExpense, TaxTypesEnum } from '@gauzy/contracts';
 import { OrganizationSettingService, Store } from '@gauzy/ui-core/core';
 import { ExpensesMutationComponent } from './expenses-mutation.component';
 import { PLACEHOLDER_RECEIPT } from './expense-receipt.utils';
@@ -58,5 +58,51 @@ describe('ExpensesMutationComponent — the receipt is what the user attached, n
 		component.expense = savedExpense(null);
 
 		expect(component.form.get('receipt').value).toBeNull();
+	});
+});
+
+describe('ExpensesMutationComponent — included taxes can be taken out again', () => {
+	let dialogRef: { close: jest.Mock };
+	let component: ExpensesMutationComponent;
+
+	beforeEach(() => {
+		dialogRef = { close: jest.fn() };
+		component = new ExpensesMutationComponent(
+			dialogRef as unknown as NbDialogRef<ExpensesMutationComponent>,
+			{} as NbDialogService,
+			new UntypedFormBuilder(),
+			{} as Store,
+			{ instant: (key: string) => key } as unknown as TranslateService,
+			{ getDateFromOrganizationSettings: () => new Date(2026, 9, 31) } as unknown as OrganizationSettingService
+		);
+	});
+
+	it('hides the tax fields and saves the expense without a tax', () => {
+		component.expense = {
+			id: 'expense-1',
+			amount: 120,
+			currency: 'USD',
+			valueDate: new Date(2026, 9, 1),
+			taxLabel: 'VAT',
+			taxType: TaxTypesEnum.VALUE,
+			rateValue: 20
+		} as IExpense;
+		expect(component.showTaxesInput).toBe(true);
+
+		component.removeTaxes();
+		component.addOrEditExpense();
+
+		expect(component.showTaxesInput).toBe(false);
+		expect(dialogRef.close).toHaveBeenCalledWith(
+			expect.objectContaining({ taxLabel: null, taxType: TaxTypesEnum.PERCENTAGE, rateValue: 0 })
+		);
+	});
+
+	it('shows the tax fields again when the taxes are included after being removed', () => {
+		component.includeTaxes();
+		component.removeTaxes();
+		component.includeTaxes();
+
+		expect(component.showTaxesInput).toBe(true);
 	});
 });
