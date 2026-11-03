@@ -1,15 +1,12 @@
 import { CommonModule, Location } from '@angular/common';
-import { Component, inject, Input, OnInit, output, ChangeDetectionStrategy } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { Component, inject, Input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Router } from '@angular/router';
 import { NgxPermissionsModule } from 'ngx-permissions';
-import { filter } from 'rxjs/operators';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslatePipe } from '@ngx-translate/core';
 import { IMenuItem, IMenuItemFocusChangeEvent } from '../../interface/menu-item.interface';
 import { NbButtonModule, NbTooltipModule } from '@nebular/theme';
 import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 
-@UntilDestroy()
 @Component({
 	selector: 'ga-children-menu-item',
 	templateUrl: './children-menu-item.component.html',
@@ -18,7 +15,7 @@ import { TooltipDirective } from '../../../../../directives/tooltip.directive';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	imports: [CommonModule, NgxPermissionsModule, NbTooltipModule, NbButtonModule, TooltipDirective, TranslatePipe]
 })
-export class ChildrenMenuItemComponent implements OnInit {
+export class ChildrenMenuItemComponent {
 	private readonly router = inject(Router);
 	private readonly location = inject(Location);
 	public readonly focusItemChange = output<IMenuItemFocusChangeEvent>();
@@ -74,17 +71,6 @@ export class ChildrenMenuItemComponent implements OnInit {
 	@Input() tooltipDisabled = false;
 
 	/**
-	 * Whether this row keeps the parent's focus state in step with the URL.
-	 *
-	 * Cleared by the rail flyout, whose rows are a SECOND copy of items that are already on screen:
-	 * nb-accordion-item-body only animates its height, so the copy it projects stays mounted while
-	 * the flyout is up. With both copies subscribed, one navigation ran the same match twice and
-	 * emitted the same focus event twice. The body's copy outlives the panel, so it keeps the job;
-	 * an explicit click still emits from whichever copy was clicked.
-	 */
-	@Input() trackActiveRoute = true;
-
-	/**
 	 * Indicates whether the mouse is hovering over the menu item.
 	 */
 	private _mouseHover: boolean;
@@ -93,26 +79,6 @@ export class ChildrenMenuItemComponent implements OnInit {
 	}
 	get mouseHover() {
 		return this._mouseHover;
-	}
-
-	ngOnInit(): void {
-		if (!this.trackActiveRoute) {
-			return;
-		}
-
-		// Log and check the current URL
-		this.checkUrl(this.router.url);
-
-		// Subscribe to router events and handle NavigationEnd
-		this.router.events
-			.pipe(
-				filter((event) => event instanceof NavigationEnd),
-				untilDestroyed(this)
-			)
-			.subscribe((event: NavigationEnd) => {
-				// Log and check the URL when navigation ends
-				this.checkUrl(event.url);
-			});
 	}
 
 	/**
@@ -149,22 +115,6 @@ export class ChildrenMenuItemComponent implements OnInit {
 			window.open(this.getExternalUrl(this.item.link), '_blank');
 			// Prevent default behavior of anchor tag
 			event.preventDefault();
-		}
-	}
-
-	/**
-	 * Checks if the provided URL matches the link of the current item,
-	 * and emits an event to focus on the item if there is a match.
-	 * @param url The URL to check against the item's link.
-	 */
-	public checkUrl(url: string): void {
-		// Extract only the path part of the URL
-		const pathOnly = url.split('?')[0];
-
-		// Check if the path part of the URL matches the item's link
-		if (pathOnly === this.item.link) {
-			// Emit an event to focus on the item
-			this.focusItemChange.emit({ children: this.item, parent: this.parent });
 		}
 	}
 
