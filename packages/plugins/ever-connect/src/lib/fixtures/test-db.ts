@@ -29,12 +29,12 @@ export function connectMigrations(): Migration[] {
 	const { EverInstance1790000021000 } = require(join(MIGRATIONS, '1790000021000-EverInstance'));
 	const { EverConnect1790000021200 } = require(join(MIGRATIONS, '1790000021200-EverConnect'));
 	const { EverConnectIdentity1791000003500 } = require(join(MIGRATIONS, '1791000003500-EverConnectIdentity'));
-	const { EverConnectProvision1791000003900 } = require(join(MIGRATIONS, '1791000003900-EverConnectProvision'));
+	const { EverConnectProvision1791000003950 } = require(join(MIGRATIONS, '1791000003950-EverConnectProvision'));
 	return [
 		new EverInstance1790000021000(),
 		new EverConnect1790000021200(),
 		new EverConnectIdentity1791000003500(),
-		new EverConnectProvision1791000003900()
+		new EverConnectProvision1791000003950()
 	];
 }
 

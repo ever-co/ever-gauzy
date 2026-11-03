@@ -127,11 +127,11 @@ const TABLES: Table[] = [
  *
  * `down` drops the two tables.
  */
-export class EverConnectProvision1791000003900 implements MigrationInterface {
-	name = 'EverConnectProvision1791000003900';
+export class EverConnectProvision1791000003950 implements MigrationInterface {
+	name = 'EverConnectProvision1791000003950';
 
 	/** Advisory lock key that serialises concurrent runs of this migration on Postgres. */
-	private readonly advisoryLockKey = 1791000003900;
+	private readonly advisoryLockKey = 1791000003950;
 
 	/**
 	 * Up Migration
