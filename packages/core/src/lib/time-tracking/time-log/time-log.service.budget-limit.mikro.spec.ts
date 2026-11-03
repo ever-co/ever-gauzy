@@ -12,15 +12,19 @@ import { TimeLogService } from './time-log.service';
  * The knex stand-in records each query (table + `whereNull` columns) and answers them in order.
  */
 function createKnex(answers: unknown[][]) {
-	const queries: { table: string; whereNull: string[] }[] = [];
+	const queries: { table: string; selected: string[]; whereNull: string[] }[] = [];
 	const knex = jest.fn((table: string) => {
-		const query = { table, whereNull: [] as string[] };
+		const query = { table, selected: [] as string[], whereNull: [] as string[] };
 		const answer = answers[queries.length];
 		queries.push(query);
 		const builder: Record<string, unknown> = {};
-		for (const method of ['innerJoin', 'select', 'where', 'andWhere', 'whereIn', 'groupBy']) {
+		for (const method of ['innerJoin', 'where', 'andWhere', 'whereIn', 'groupBy']) {
 			builder[method] = jest.fn(() => builder);
 		}
+		builder.select = jest.fn((...columns: string[]) => {
+			query.selected.push(...columns);
+			return builder;
+		});
 		builder.whereNull = jest.fn((column: string) => {
 			query.whereNull.push(column);
 			return builder;
@@ -79,6 +83,23 @@ describe('TimeLogService budget reports exclude soft-deleted rows (MikroORM)', (
 		);
 		expect(queries[1].whereNull).toEqual(['deletedAt']);
 		expect(queries[2].whereNull).toEqual(expect.arrayContaining(['time_log.deletedAt', 'employee.deletedAt']));
+	});
+
+	it("project budget: answers each project's currency and colour", async () => {
+		const { result, queries } = run('getProjectBudgetLimit', [
+			[{ id: 'p-1' }],
+			[{ id: 'p-1', name: 'Site', budget: 100, budgetType: 'cost', currency: 'EUR', color: '#3366ff' }],
+			[{ ...timeLogRow, targetId: 'p-1' }]
+		]);
+
+		await expect(result).resolves.toEqual([
+			expect.objectContaining({
+				spent: 10,
+				project: expect.objectContaining({ id: 'p-1', currency: 'EUR', color: '#3366ff' })
+			})
+		]);
+		// Asked of the project table itself, whose answer is the row the report hands back
+		expect(queries[1].selected).toEqual(expect.arrayContaining(['currency', 'color']));
 	});
 
 	it('client budget: every query excludes deleted contacts, time logs and employees', async () => {
