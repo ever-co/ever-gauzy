@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, inject, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, input, OnInit, signal } from '@angular/core';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { BaseChartDirective } from 'ng2-charts';
@@ -21,23 +21,23 @@ import { IExpenseMonthShare } from '../expense-view-charts';
 	selector: 'ga-expense-share-chart',
 	template: `
 		<div class="ring">
-			<canvas baseChart type="doughnut" [data]="data" [options]="options"></canvas>
-			<span class="ring-figure" aria-hidden="true">{{ percentText }}</span>
+			<canvas baseChart type="doughnut" [data]="data()" [options]="options()"></canvas>
+			<span class="ring-figure" aria-hidden="true">{{ percentText() }}</span>
 		</div>
 		<ul class="legend">
 			<li>
-				<span class="swatch" [style.background-color]="palette.expenses"></span>
-				<span class="legend-name">{{ amountLabel }}</span>
-				<strong>{{ formatValue(share?.amount ?? 0) }}</strong>
+				<span class="swatch" [style.background-color]="palette().expenses"></span>
+				<span class="legend-name">{{ amountLabel() }}</span>
+				<strong>{{ formatValue()(share()?.amount ?? 0) }}</strong>
 			</li>
 			<li>
-				<span class="swatch" [style.background-color]="palette.axisLineColor"></span>
-				<span class="legend-name">{{ restLabel }}</span>
-				<strong>{{ formatValue(share?.rest ?? 0) }}</strong>
+				<span class="swatch" [style.background-color]="palette().axisLineColor"></span>
+				<span class="legend-name">{{ restLabel() }}</span>
+				<strong>{{ formatValue()(share()?.rest ?? 0) }}</strong>
 			</li>
 			<li class="legend-total">
-				<span class="legend-name">{{ totalLabel }}</span>
-				<strong>{{ formatValue(share?.total ?? 0) }}</strong>
+				<span class="legend-name">{{ totalLabel() }}</span>
+				<strong>{{ formatValue()(share()?.total ?? 0) }}</strong>
 			</li>
 		</ul>
 	`,
@@ -109,39 +109,52 @@ import { IExpenseMonthShare } from '../expense-view-charts';
 			}
 		`
 	],
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: true,
 	imports: [BaseChartDirective]
 })
 export class ExpenseShareChartComponent implements OnInit {
-	private _share: IExpenseMonthShare | null = null;
-	@Input() set share(value: IExpenseMonthShare | null) {
-		this._share = value;
-		this.buildData();
-	}
-	get share(): IExpenseMonthShare | null {
-		return this._share;
-	}
+	readonly share = input<IExpenseMonthShare | null>(null);
 
-	@Input() amountLabel = '';
-	@Input() restLabel = '';
-	@Input() totalLabel = '';
+	readonly amountLabel = input('');
+	readonly restLabel = input('');
+	readonly totalLabel = input('');
 
 	/** Formats an amount, in the expense's currency. */
-	@Input() formatValue: (value: number) => string = (value) => String(value);
+	readonly formatValue = input<(value: number) => string>((value) => String(value));
 
-	public palette: IEmployeeChartPalette = resolveEmployeeChartPalette({} as NbJSThemeOptions);
-	public data: ChartConfiguration<'doughnut'>['data'] = { labels: [], datasets: [] };
-	public options: ChartConfiguration<'doughnut'>['options'];
+	/** The theme's colours, and the options built from them: both set again on every theme change. */
+	readonly palette = signal<IEmployeeChartPalette>(resolveEmployeeChartPalette({} as NbJSThemeOptions));
+	readonly options = signal<ChartConfiguration<'doughnut'>['options']>(undefined);
+
+	/** The share in the middle of the ring, e.g. "42%". */
+	readonly percentText = computed(() => {
+		const percent = this.share()?.percent ?? 0;
+		return `${Number.isInteger(percent) ? percent : percent.toFixed(1)}%`;
+	});
+
+	readonly data = computed<ChartConfiguration<'doughnut'>['data']>(() => {
+		const share = this.share();
+		const palette = this.palette();
+		const colours = [palette.expenses, palette.axisLineColor];
+		return {
+			labels: [this.amountLabel(), this.restLabel()],
+			datasets: [
+				{
+					data: share ? [share.amount, share.rest] : [],
+					backgroundColor: colours,
+					hoverBackgroundColor: colours,
+					// The surface colour between the two arcs reads as a gap, as the bar charts' borders do.
+					borderColor: palette.surface,
+					borderWidth: 2,
+					hoverBorderColor: palette.surface
+				}
+			]
+		};
+	});
 
 	private readonly _themeService = inject(NbThemeService);
 	private readonly _elementRef: ElementRef<HTMLElement> = inject(ElementRef);
-
-	/** The share in the middle of the ring, e.g. "42%". */
-	get percentText(): string {
-		const percent = this._share?.percent ?? 0;
-		return `${Number.isInteger(percent) ? percent : percent.toFixed(1)}%`;
-	}
 
 	ngOnInit(): void {
 		this._themeService
@@ -149,18 +162,19 @@ export class ExpenseShareChartComponent implements OnInit {
 			.pipe(
 				debounceTime(100),
 				tap((config: NbJSThemeOptions) => {
-					this.palette = resolveEmployeeChartPalette(config, this._elementRef.nativeElement);
-					this.buildOptions();
-					this.buildData();
+					const palette = resolveEmployeeChartPalette(config, this._elementRef.nativeElement);
+					this.palette.set(palette);
+					this.options.set(this.buildOptions(palette));
 				}),
 				untilDestroyed(this)
 			)
 			.subscribe();
 	}
 
-	private buildOptions(): void {
-		const tooltip = employeeChartTooltip(this.palette, (value) => this.formatValue(value)) as any;
-		this.options = {
+	/** The tooltip reads the format as it opens: the options follow the theme only. */
+	private buildOptions(palette: IEmployeeChartPalette): ChartConfiguration<'doughnut'>['options'] {
+		const tooltip = employeeChartTooltip(palette, (value) => this.formatValue()(value)) as any;
+		return {
 			...employeeChartBase(),
 			cutout: '72%',
 			layout: { padding: 0 },
@@ -171,29 +185,10 @@ export class ExpenseShareChartComponent implements OnInit {
 					callbacks: {
 						title: () => '',
 						label: (item: TooltipItem<'doughnut'>) =>
-							`${item.label}: ${this.formatValue(Number(item.parsed) || 0)}`
+							`${item.label}: ${this.formatValue()(Number(item.parsed) || 0)}`
 					}
 				}
 			}
-		};
-	}
-
-	private buildData(): void {
-		const share = this._share;
-		const colours = [this.palette.expenses, this.palette.axisLineColor];
-		this.data = {
-			labels: [this.amountLabel, this.restLabel],
-			datasets: [
-				{
-					data: share ? [share.amount, share.rest] : [],
-					backgroundColor: colours,
-					hoverBackgroundColor: colours,
-					// The surface colour between the two arcs reads as a gap, as the bar charts' borders do.
-					borderColor: this.palette.surface,
-					borderWidth: 2,
-					hoverBorderColor: this.palette.surface
-				}
-			]
 		};
 	}
 }

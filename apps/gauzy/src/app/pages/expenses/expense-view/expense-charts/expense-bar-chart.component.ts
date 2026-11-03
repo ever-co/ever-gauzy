@@ -2,12 +2,15 @@ import {
 	AfterViewInit,
 	ChangeDetectionStrategy,
 	Component,
+	computed,
+	effect,
 	ElementRef,
 	inject,
-	Input,
+	input,
 	OnDestroy,
 	OnInit,
-	ViewChild
+	signal,
+	viewChild
 } from '@angular/core';
 import { NbJSThemeOptions, NbThemeService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -38,11 +41,11 @@ import { IExpenseChartBar } from '../expense-view-charts';
 	selector: 'ga-expense-bar-chart',
 	template: `
 		<ul class="legend">
-			<li><span class="swatch" [style.background-color]="palette.expenses"></span>{{ highlightLabel }}</li>
-			<li><span class="swatch" [style.background-color]="palette.bonus"></span>{{ otherLabel }}</li>
+			<li><span class="swatch" [style.background-color]="palette().expenses"></span>{{ highlightLabel() }}</li>
+			<li><span class="swatch" [style.background-color]="palette().bonus"></span>{{ otherLabel() }}</li>
 		</ul>
 		<div class="canvas">
-			<canvas baseChart type="bar" [data]="data" [options]="options"></canvas>
+			<canvas baseChart type="bar" [data]="data()" [options]="options()"></canvas>
 		</div>
 	`,
 	styles: [
@@ -84,30 +87,45 @@ import { IExpenseChartBar } from '../expense-view-charts';
 			}
 		`
 	],
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: true,
 	imports: [BaseChartDirective]
 })
 export class ExpenseBarChartComponent implements OnInit, AfterViewInit, OnDestroy {
-	private _bars: IExpenseChartBar[] = [];
-	@Input() set bars(value: IExpenseChartBar[]) {
-		this._bars = value || [];
-		this.buildData();
-	}
+	readonly bars = input<IExpenseChartBar[], IExpenseChartBar[] | null | undefined>([], {
+		transform: (value) => value || []
+	});
 
 	/** The legend's name for the expense's own bar. */
-	@Input() highlightLabel = '';
+	readonly highlightLabel = input('');
 	/** The legend's name for the other bars. */
-	@Input() otherLabel = '';
+	readonly otherLabel = input('');
 
 	/** Formats an amount for the tooltip, in the expense's currency. */
-	@Input() formatValue: (value: number) => string = (value) => String(value);
+	readonly formatValue = input<(value: number) => string>((value) => String(value));
 
-	public palette: IEmployeeChartPalette = resolveEmployeeChartPalette({} as NbJSThemeOptions);
-	public data: ChartConfiguration<'bar'>['data'] = { labels: [], datasets: [] };
-	public options: ChartConfiguration<'bar'>['options'];
+	/** The theme's colours, and the options built from them: both set again on every theme change. */
+	readonly palette = signal<IEmployeeChartPalette>(resolveEmployeeChartPalette({} as NbJSThemeOptions));
+	readonly options = signal<ChartConfiguration<'bar'>['options']>(undefined);
 
-	@ViewChild(BaseChartDirective) private readonly _chart?: BaseChartDirective;
+	readonly data = computed<ChartConfiguration<'bar'>['data']>(() => {
+		const bars = this.bars();
+		const palette = this.palette();
+		const colours = bars.map((bar) => (bar.highlight ? palette.expenses : palette.bonus));
+		return {
+			labels: bars.map((bar) => bar.label),
+			datasets: [
+				{
+					...employeeChartBarDataset(palette),
+					data: bars.map((bar) => bar.value),
+					backgroundColor: colours,
+					hoverBackgroundColor: colours
+				}
+			]
+		};
+	});
+
+	private readonly _chart = viewChild(BaseChartDirective);
 
 	private readonly _themeService = inject(NbThemeService);
 	private readonly _elementRef: ElementRef<HTMLElement> = inject(ElementRef);
@@ -119,6 +137,14 @@ export class ExpenseBarChartComponent implements OnInit, AfterViewInit, OnDestro
 	/** Axis tick size: a step below the legend, so the data reads first. */
 	private static readonly TICK_FONT = { size: 10 };
 
+	constructor() {
+		// New bars can change the axis' width: the chart re-measures with each.
+		effect(() => {
+			this.data();
+			this.remeasure();
+		});
+	}
+
 	ngOnInit(): void {
 		this._resizeObserver?.observe(this._elementRef.nativeElement);
 		this._themeService
@@ -126,9 +152,9 @@ export class ExpenseBarChartComponent implements OnInit, AfterViewInit, OnDestro
 			.pipe(
 				debounceTime(100),
 				tap((config: NbJSThemeOptions) => {
-					this.palette = resolveEmployeeChartPalette(config, this._elementRef.nativeElement);
-					this.buildOptions();
-					this.buildData();
+					const palette = resolveEmployeeChartPalette(config, this._elementRef.nativeElement);
+					this.palette.set(palette);
+					this.options.set(this.buildOptions(palette));
 				}),
 				untilDestroyed(this)
 			)
@@ -144,14 +170,15 @@ export class ExpenseBarChartComponent implements OnInit, AfterViewInit, OnDestro
 	}
 
 	private remeasure(): void {
-		requestAnimationFrame(() => this._chart?.chart?.resize());
+		requestAnimationFrame(() => this._chart()?.chart?.resize());
 	}
 
-	private buildOptions(): void {
-		const valueScale = employeeChartValueScale(this.palette) as any;
-		const categoryScale = employeeChartCategoryScale(this.palette) as any;
-		const tooltip = employeeChartTooltip(this.palette, (value) => this.formatValue(value)) as any;
-		this.options = {
+	/** The tooltip reads the bars, the labels and the format as it opens: the options follow the theme only. */
+	private buildOptions(palette: IEmployeeChartPalette): ChartConfiguration<'bar'>['options'] {
+		const valueScale = employeeChartValueScale(palette) as any;
+		const categoryScale = employeeChartCategoryScale(palette) as any;
+		const tooltip = employeeChartTooltip(palette, (value) => this.formatValue()(value)) as any;
+		return {
 			...employeeChartBase(),
 			interaction: { mode: 'index', intersect: false },
 			plugins: {
@@ -161,11 +188,11 @@ export class ExpenseBarChartComponent implements OnInit, AfterViewInit, OnDestro
 					callbacks: {
 						...tooltip.callbacks,
 						// The full date or month, where the axis has room only for a short one.
-						title: (items: TooltipItem<'bar'>[]) => this._bars[items[0]?.dataIndex]?.title ?? '',
+						title: (items: TooltipItem<'bar'>[]) => this.bars()[items[0]?.dataIndex]?.title ?? '',
 						// One dataset carries both kinds of bar, so the series name comes from the bar itself.
 						label: (item: TooltipItem<'bar'>) => {
-							const series = this._bars[item.dataIndex]?.highlight ? this.highlightLabel : this.otherLabel;
-							return `${series}: ${this.formatValue(Number(item.parsed?.y) || 0)}`;
+							const series = this.bars()[item.dataIndex]?.highlight ? this.highlightLabel() : this.otherLabel();
+							return `${series}: ${this.formatValue()(Number(item.parsed?.y) || 0)}`;
 						}
 					}
 				}
@@ -193,21 +220,5 @@ export class ExpenseBarChartComponent implements OnInit, AfterViewInit, OnDestro
 				}
 			}
 		};
-	}
-
-	private buildData(): void {
-		const colours = this._bars.map((bar) => (bar.highlight ? this.palette.expenses : this.palette.bonus));
-		this.data = {
-			labels: this._bars.map((bar) => bar.label),
-			datasets: [
-				{
-					...employeeChartBarDataset(this.palette),
-					data: this._bars.map((bar) => bar.value),
-					backgroundColor: colours,
-					hoverBackgroundColor: colours
-				}
-			]
-		};
-		this.remeasure();
 	}
 }
