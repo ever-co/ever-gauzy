@@ -32,8 +32,10 @@ const DAY = '2026-01-10';
 type Reads = Record<'owed' | 'chart' | 'projectBudget' | 'clientBudget' | 'list' | 'listWithSlots', any>;
 
 async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
-	const previous = process.env.DB_ORM;
+	const previous = { DB_ORM: process.env.DB_ORM, DB_TYPE: process.env.DB_TYPE };
 	process.env.DB_ORM = 'mikro-orm';
+	// Whatever database the machine's environment names: both ORMs read the one SQLite file below
+	process.env.DB_TYPE = 'better-sqlite3';
 	const file = path.join(os.tmpdir(), `gauzy-time-log-reports-${process.pid}-${Date.now()}.sqlite3`);
 	const measurement = {} as { mikroOrm: Reads; typeOrm: Reads };
 	let dataSource: any;
@@ -216,8 +218,10 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 		jest.restoreAllMocks();
 		// Here rather than after the reads, so a read that throws cannot leave the database file open
 		if (dataSource?.isInitialized) await dataSource.destroy();
-		if (previous === undefined) delete process.env.DB_ORM;
-		else process.env.DB_ORM = previous;
+		for (const [name, value] of Object.entries(previous)) {
+			if (value === undefined) delete process.env[name];
+			else process.env[name] = value;
+		}
 		try {
 			fs.unlinkSync(file);
 		} catch {
