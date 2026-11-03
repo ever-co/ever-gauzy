@@ -64,6 +64,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 	showWarning: boolean = false;
 	showTooltip: boolean = false;
 	showTaxesInput: boolean = false;
+	/** Whether the tax amount is already worked out on every change of the form. */
+	private calculatingTaxes = false;
 
 	public organization: IOrganization;
 	/*
@@ -226,6 +228,17 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 		return (this.showTaxesInput = !this.showTaxesInput);
 	}
 
+	/**
+	 * Takes the taxes out again: hides the tax fields and clears them, so the expense is saved
+	 * without a tax — and an edited expense loses the one it had.
+	 */
+	removeTaxes() {
+		this.form.patchValue({ taxLabel: null, taxType: TaxTypesEnum.PERCENTAGE, rateValue: 0 });
+		this.form.markAsDirty();
+		this.calculatedValue = '0';
+		this.showTaxesInput = false;
+	}
+
 	private _initializeForm() {
 		if (this.expense) {
 			const { project, organizationContact } = this.expense;
@@ -261,6 +274,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 	}
 
 	private calculateTaxes() {
+		// Including the taxes again after removing them must not add a second subscription.
+		if (this.calculatingTaxes) {
+			return;
+		}
+		this.calculatingTaxes = true;
 		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe((val) => {
 			const amount = val.amount;
 			const rate = val.rateValue;
