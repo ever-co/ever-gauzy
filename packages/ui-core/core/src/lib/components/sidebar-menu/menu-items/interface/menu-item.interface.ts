@@ -2,7 +2,7 @@ import { NbMenuItem } from '@nebular/theme';
 import { FeatureEnum, PermissionsEnum } from '@gauzy/contracts';
 
 export interface IMenuItemFocusChangeEvent {
-	children: IMenuItem;
+	children: IMenuItem | null; // The sub-row that was picked, or null for a top-level row.
 	parent: IMenuItem;
 }
 
