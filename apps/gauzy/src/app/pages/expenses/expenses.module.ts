@@ -30,6 +30,8 @@ import { ExpensesComponent } from './expenses.component';
 import { ExpenseCategoriesComponent } from './expense-categories/expense-categories.component';
 import { ExpenseCategoryMutationComponent } from './expense-categories/expense-category-mutation/expense-category-mutation.component';
 import { ExpenseViewPageComponent } from './expense-view/expense-view-page.component';
+import { ExpenseBarChartComponent } from './expense-view/expense-charts/expense-bar-chart.component';
+import { ExpenseShareChartComponent } from './expense-view/expense-charts/expense-share-chart.component';
 
 // Nebular Modules
 const NB_MODULES = [
@@ -46,7 +48,10 @@ const NB_MODULES = [
 
 // Standalone Modules
 const STANDALONE_MODULES = [
-	InfiniteScrollDirective // Standalone directive must be imported, not declared
+	InfiniteScrollDirective, // Standalone directive must be imported, not declared
+	// The expense page's charts
+	ExpenseBarChartComponent,
+	ExpenseShareChartComponent
 ];
 
 // Third Party Modules
