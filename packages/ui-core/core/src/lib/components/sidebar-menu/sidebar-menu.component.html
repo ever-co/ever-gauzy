@@ -6,6 +6,7 @@
 				(selectedChange)="focusOn($event)"
 				[item]="item"
 				[selected]="isSelected(item)"
+				[activeChild]="isSelected(item) ? selectedChild : null"
 			></ga-menu-item>
 		}
 	}
