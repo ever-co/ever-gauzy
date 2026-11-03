@@ -302,11 +302,17 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 		}
 		const now = new Date();
 		// The owner becomes usable here, with the links: the address Ever ID verified, the account active.
-		// Once, in the state the creation left it (never verified): an account changed meanwhile is left as it is.
-		await manager.getRepository(User).update({ id: ids.userId, emailVerifiedAt: IsNull(), isArchived: false }, {
-			emailVerifiedAt: now,
-			isActive: true
-		} as never);
+		// The owner becomes usable here, with the links: active (an account archived meanwhile stops the
+		// creation: nothing is linked), and its address verified unless it was already.
+		const activated = await manager
+			.getRepository(User)
+			.update({ id: ids.userId, isArchived: false }, { isActive: true } as never);
+		if (!activated.affected) {
+			throw new Error('The owner of this workspace creation can no longer be activated.');
+		}
+		await manager
+			.getRepository(User)
+			.update({ id: ids.userId, emailVerifiedAt: IsNull() }, { emailVerifiedAt: now } as never);
 		await manager.getRepository(ZitadelOrganization).insert({
 			tenantId: ids.tenantId,
 			organizationId: ids.organizationId,

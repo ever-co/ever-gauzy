@@ -49,9 +49,14 @@ class FakeDatabase {
 			find: async ({ where }: { where: Row }) => rows.filter((row) => this.matches(row, where)),
 			exists: async ({ where }: { where: Row }) => rows.some((row) => this.matches(row, where)),
 			update: async (where: Row, values: Row) => {
+				let affected = 0;
 				rows.forEach((row, at) => {
-					if (this.matches(row, where)) rows[at] = { ...row, ...values };
+					if (this.matches(row, where)) {
+						rows[at] = { ...row, ...values };
+						affected += 1;
+					}
 				});
+				return { affected };
 			},
 			insert: async (values: Row) => {
 				if (
@@ -144,7 +149,6 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		commands = [];
 		failOrganizationOnce = false;
 		required = [];
-		const users = db.table(User);
 		const gauzyAuth = {
 			register: async (input: { user: { email: string } }) => {
 				registered.push({ input });
@@ -159,14 +163,14 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 					isArchived: false,
 					createdAt: new Date()
 				};
-				users.push(user);
+				db.table(User).push(user);
 				return { id: user.id };
 			}
 		};
 		const tenantService = {
 			onboardTenant: async (entity: { name: string }, user: Row) => {
 				onboarded.push({ name: entity.name, userId: user['id'] });
-				const row = users.find((candidate) => candidate['id'] === user['id']) as Row;
+				const row = db.table(User).find((candidate) => candidate['id'] === user['id']) as Row;
 				row['tenantId'] = randomUUID();
 				row['roleId'] = 'super-admin-role';
 				return { id: row['tenantId'] };
@@ -180,7 +184,10 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 						failOrganizationOnce = false;
 						throw new Error('connection timeout');
 					}
-					const tenantId = users.filter((row) => row['tenantId']).at(-1)?.['tenantId'];
+					const tenantId = db
+						.table(User)
+						.filter((row) => row['tenantId'])
+						.at(-1)?.['tenantId'];
 					const organization = { id: randomUUID(), tenantId, createdAt: new Date(), ...command.input };
 					db.table(Organization).push(organization);
 					return organization;
@@ -331,6 +338,35 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		expect(onboarded).toHaveLength(1);
 		expect(db.table(Organization)).toHaveLength(1);
 		expect(db.table(ZitadelAccount)).toHaveLength(1);
+	});
+
+	it('an owner who confirmed the address meanwhile is activated; one archived meanwhile stops the creation', async () => {
+		failOrganizationOnce = true;
+		let kept: Partial<CreateUserPreLinkedResult> = {};
+		await expect(
+			service.createUserPreLinked(INPUT, { checkpoint: async (ids) => void (kept = ids) })
+		).rejects.toThrow();
+		// The address confirmed through Gauzy's own link meanwhile: verified, still inactive.
+		const owner = db.table(User)[0];
+		const confirmedAt = new Date('2026-11-03T10:00:00Z');
+		owner['emailVerifiedAt'] = confirmedAt;
+		await service.createUserPreLinked(INPUT, { resume: kept });
+		const done = db.table(User).find((row) => row['id'] === kept.userId) as Row;
+		expect(done).toMatchObject({ isActive: true, emailVerifiedAt: confirmedAt });
+
+		// Another creation whose owner was archived before the last step: nothing is linked.
+		const other = { ...INPUT, idempotencyKey: 'another-key', everOrgId: '01K9A0000000000000000000R2' };
+		failOrganizationOnce = true;
+		let otherKept: Partial<CreateUserPreLinkedResult> = {};
+		await expect(
+			service.createUserPreLinked(other, { checkpoint: async (ids) => void (otherKept = ids) })
+		).rejects.toThrow();
+		const archived = db.table(User).find((row) => row['id'] === otherKept.userId) as Row;
+		archived['isArchived'] = true;
+		await expect(service.createUserPreLinked(other, { resume: otherKept })).rejects.toThrow(
+			'can no longer be activated'
+		);
+		expect(db.table(ZitadelOrganization).map((row) => row['provisionKey'])).toEqual([INPUT.idempotencyKey]);
 	});
 
 	it('a resume whose owner is gone is refused: its tenant and organization are never reused', async () => {
