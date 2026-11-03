@@ -127,7 +127,13 @@ export class EverConnectProvisionStore {
 	 * again (the person opened the link twice) keeps its row and gets the new key: the older key stops
 	 * working. Answers `false` when the `jti` is already recorded under another idempotency key.
 	 */
-	async saveIntent(values: { jti: string; intent: string; keyHash: string; idempotencyKey: string; expiresAt: number }): Promise<boolean> {
+	async saveIntent(values: {
+		jti: string;
+		intent: string;
+		keyHash: string;
+		idempotencyKey: string;
+		expiresAt: number;
+	}): Promise<boolean> {
 		const at = this.now();
 		const inserted = await this.sql.insertIgnore(INTENT, {
 			...values,
@@ -179,7 +185,11 @@ export class EverConnectProvisionStore {
 	 * creation (`created`), another attempt still within its claim (`busy`), or a request whose `jti`
 	 * was used under another key (`replayed`).
 	 */
-	async claim(values: { idempotencyKey: string; jti: string; everOrgId: string }, holder: string, until: number): Promise<ProvisionClaim> {
+	async claim(
+		values: { idempotencyKey: string; jti: string; everOrgId: string },
+		holder: string,
+		until: number
+	): Promise<ProvisionClaim> {
 		const at = this.now();
 		try {
 			const inserted = await this.sql.insertIgnore(RESULT, {
@@ -192,7 +202,10 @@ export class EverConnectProvisionStore {
 				updatedAt: at
 			});
 			if (inserted) {
-				return { outcome: 'claimed', record: (await this.result(values.idempotencyKey)) as ProvisionResultRecord };
+				return {
+					outcome: 'claimed',
+					record: (await this.result(values.idempotencyKey)) as ProvisionResultRecord
+				};
 			}
 		} catch {
 			// A unique key other than the primary one (the jti under another key) refuses the row.
@@ -230,7 +243,13 @@ export class EverConnectProvisionStore {
 	async fail(idempotencyKey: string, holder: string, errorCode: string): Promise<void> {
 		await this.sql.update(
 			RESULT,
-			{ status: 'failed', errorCode: errorCode.slice(0, 64), claimedBy: null, claimedUntil: null, updatedAt: this.now() },
+			{
+				status: 'failed',
+				errorCode: errorCode.slice(0, 64),
+				claimedBy: null,
+				claimedUntil: null,
+				updatedAt: this.now()
+			},
 			{ idempotencyKey, claimedBy: holder }
 		);
 	}
@@ -349,19 +368,31 @@ export class EverConnectProvisionStore {
 	 * Updates a completion report only while it is still in the state the caller read (`attempts`), so
 	 * two API processes never both count one attempt. Answers whether it did.
 	 */
-	async updateCompletion(idempotencyKey: string, attempts: number, values: Partial<ProvisionResultRecord>): Promise<boolean> {
-		const changed = await this.sql.update(
-			RESULT,
-			{ ...values, updatedAt: this.now() } as Row,
-			{ idempotencyKey, completionAttempts: attempts, completionState: 'pending' }
-		);
+	async updateCompletion(
+		idempotencyKey: string,
+		attempts: number,
+		values: Partial<ProvisionResultRecord>
+	): Promise<boolean> {
+		const changed = await this.sql.update(RESULT, { ...values, updatedAt: this.now() } as Row, {
+			idempotencyKey,
+			completionAttempts: attempts,
+			completionState: 'pending'
+		});
 		return changed > 0;
 	}
 
 	/** Adds settings to a link's `integration_tenant` row (a setting that exists is updated). */
-	async addLinkSettings(owner: { tenantId: string; organizationId: string }, integrationTenantId: string, settings: Record<string, string>): Promise<void> {
+	async addLinkSettings(
+		owner: { tenantId: string; organizationId: string },
+		integrationTenantId: string,
+		settings: Record<string, string>
+	): Promise<void> {
 		for (const [settingsName, settingsValue] of Object.entries(settings)) {
-			const changed = await this.sql.update('integration_setting', { settingsValue }, { integrationId: integrationTenantId, settingsName });
+			const changed = await this.sql.update(
+				'integration_setting',
+				{ settingsValue },
+				{ integrationId: integrationTenantId, settingsName }
+			);
 			if (changed === 0) {
 				await this.sql.insert('integration_setting', {
 					id: randomUUID(),

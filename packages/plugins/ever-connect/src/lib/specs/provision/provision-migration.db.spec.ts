@@ -1,6 +1,14 @@
 import { join } from 'node:path';
 import { DataSource } from 'typeorm';
-import { createCoreTables, dropTables, insert, migrateUp, openTestDataSource, PLUGIN_TABLES, TEST_TARGETS } from '../../fixtures/test-db';
+import {
+	createCoreTables,
+	dropTables,
+	insert,
+	migrateUp,
+	openTestDataSource,
+	PLUGIN_TABLES,
+	TEST_TARGETS
+} from '../../fixtures/test-db';
 
 const MIGRATIONS = join(__dirname, '../../../../../../core/src/lib/database/migrations');
 
@@ -55,17 +63,34 @@ describe.each(TEST_TARGETS)('EverConnectProvision migration on $name', (target) 
 	});
 
 	it('one row per key digest, and one result per jti', async () => {
-		const intent = { intent: '{}', idempotencyKey: 'k1', status: 'pending', receivedAt: 1, expiresAt: 2, updatedAt: 1 };
+		const intent = {
+			intent: '{}',
+			idempotencyKey: 'k1',
+			status: 'pending',
+			receivedAt: 1,
+			expiresAt: 2,
+			updatedAt: 1
+		};
 		await insert(dataSource, target.name, 'ever_connect_provision_intent', { jti: 'J1', keyHash: 'h1', ...intent });
 		await expect(
 			insert(dataSource, target.name, 'ever_connect_provision_intent', { jti: 'J2', keyHash: 'h1', ...intent })
 		).rejects.toThrow();
 		const result = { status: 'pending', createdAt: 1, updatedAt: 1 };
-		await insert(dataSource, target.name, 'ever_connect_provision_result', { idempotencyKey: 'k1', jti: 'J1', ...result });
+		await insert(dataSource, target.name, 'ever_connect_provision_result', {
+			idempotencyKey: 'k1',
+			jti: 'J1',
+			...result
+		});
 		await expect(
-			insert(dataSource, target.name, 'ever_connect_provision_result', { idempotencyKey: 'k2', jti: 'J1', ...result })
+			insert(dataSource, target.name, 'ever_connect_provision_result', {
+				idempotencyKey: 'k2',
+				jti: 'J1',
+				...result
+			})
 		).rejects.toThrow();
-		const [row] = await dataSource.query(`SELECT * FROM ${target.name === 'mysql' ? '`ever_connect_provision_result`' : '"ever_connect_provision_result"'}`);
+		const [row] = await dataSource.query(
+			`SELECT * FROM ${target.name === 'mysql' ? '`ever_connect_provision_result`' : '"ever_connect_provision_result"'}`
+		);
 		expect(Number(row['completionAttempts'])).toBe(0);
 	});
 });

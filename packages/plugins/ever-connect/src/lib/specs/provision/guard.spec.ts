@@ -42,7 +42,11 @@ describe('provisioning request verification', () => {
 
 	/** A key source over a fresh copy of the first manifest, whose refresh answers the newer one. */
 	function source(): IntentKeySource {
-		let current = KeySet.restore(platform.keySet.toJSON(), { issuer: TEST_ISSUER, unsafeRootKeys: [rootOf()], now: platform.now });
+		let current = KeySet.restore(platform.keySet.toJSON(), {
+			issuer: TEST_ISSUER,
+			unsafeRootKeys: [rootOf()],
+			now: platform.now
+		});
 		return {
 			keys: async () => current,
 			refresh: async () => {
@@ -97,7 +101,9 @@ describe('provisioning request verification', () => {
 	it('accepts a key in its overlap (previous), and a request that names no installation', async () => {
 		const claims = claimsAt();
 		delete claims['instance_id'];
-		await expect(verifyProvisionIntent(signIntent(platform.previous, claims), source(), expected())).resolves.toBeDefined();
+		await expect(
+			verifyProvisionIntent(signIntent(platform.previous, claims), source(), expected())
+		).resolves.toBeDefined();
 	});
 
 	it('refuses a retired key and a key of another purpose, without a refresh (both are listed)', async () => {
@@ -107,7 +113,9 @@ describe('provisioning request verification', () => {
 	});
 
 	it('an unknown kid refreshes the manifest exactly once, then verifies with the new key', async () => {
-		await expect(verifyProvisionIntent(signIntent(platform.next, claimsAt()), source(), expected())).resolves.toBeDefined();
+		await expect(
+			verifyProvisionIntent(signIntent(platform.next, claimsAt()), source(), expected())
+		).resolves.toBeDefined();
 		expect(refreshes).toBe(1);
 	});
 
@@ -150,29 +158,57 @@ describe('provisioning request verification', () => {
 		['another claim-set version', { typ: 'ever.provision_intent.v2' }, 'schema_violation'],
 		['another purpose', { ever_purpose: 'entitlement' }, 'schema_violation'],
 		['an extra claim (an e-mail)', { email: 'owner@example.test' }, 'schema_violation'],
-		['an e-mail in the person', { person: { ever_id_sub: '300000000000000001', email: 'owner@example.test' } }, 'schema_violation'],
+		[
+			'an e-mail in the person',
+			{ person: { ever_id_sub: '300000000000000001', email: 'owner@example.test' } },
+			'schema_violation'
+		],
 		['the headless mode', { mode: 'headless' }, 'mode'],
-		['a callback elsewhere', { callback: 'https://evil.test/v1/provision-intents/01K9A0000000000000000000JT/complete' }, 'callback'],
-		['a callback for another jti', { callback: `${TEST_ISSUER}/v1/provision-intents/01K9A0000000000000000000ZZ/complete` }, 'callback'],
+		[
+			'a callback elsewhere',
+			{ callback: 'https://evil.test/v1/provision-intents/01K9A0000000000000000000JT/complete' },
+			'callback'
+		],
+		[
+			'a callback for another jti',
+			{ callback: `${TEST_ISSUER}/v1/provision-intents/01K9A0000000000000000000ZZ/complete` },
+			'callback'
+		],
 		['a return address off Ever', { return_to: 'https://evil.test/start' }, 'return_to'],
 		['a return address over http', { return_to: 'http://app.ever.co/start' }, 'return_to'],
 		['an org id that is not a ULID', { org: { id: 'acme', handle: 'acme', display_name: 'Acme' } }, 'org'],
 		['a step that is not a number', { step_seq: '2' }, 'schema_violation'],
 		['a feature that is not a switch', { features: { teams: 'yes' } }, 'schema_violation'],
 		['an unknown feature', { features: { works: true } }, 'schema_violation'],
-		['a billing reference that is not a customer', { billing: { stripe_customer_ref: 'card_123' } }, 'schema_violation']
+		[
+			'a billing reference that is not a customer',
+			{ billing: { stripe_customer_ref: 'card_123' } },
+			'schema_violation'
+		]
 	])('refuses %s', async (_name, overrides, reason) => {
-		expect(await expectInvalid(signIntent(platform.active, claimsAt(overrides as Record<string, unknown>)))).toBe(reason);
+		expect(await expectInvalid(signIntent(platform.active, claimsAt(overrides as Record<string, unknown>)))).toBe(
+			reason
+		);
 	});
 
 	it('refuses a lifetime over 15 minutes, an expired request and one issued in the future', async () => {
 		const now = platform.now + 3_600;
-		expect(await expectInvalid(signIntent(platform.active, claimsAt({ iat: now - 10, exp: now + 891 })))).toBe('lifetime');
-		expect(await expectInvalid(signIntent(platform.active, claimsAt({ iat: now - 900, exp: now - 1 })))).toBe('expired');
-		expect(await expectInvalid(signIntent(platform.active, claimsAt({ iat: now + 301, exp: now + 900 })))).toBe('not_yet_valid');
+		expect(await expectInvalid(signIntent(platform.active, claimsAt({ iat: now - 10, exp: now + 891 })))).toBe(
+			'lifetime'
+		);
+		expect(await expectInvalid(signIntent(platform.active, claimsAt({ iat: now - 900, exp: now - 1 })))).toBe(
+			'expired'
+		);
+		expect(await expectInvalid(signIntent(platform.active, claimsAt({ iat: now + 301, exp: now + 900 })))).toBe(
+			'not_yet_valid'
+		);
 		// Five minutes of clock difference are tolerated.
 		await expect(
-			verifyProvisionIntent(signIntent(platform.active, claimsAt({ iat: now + 299, exp: now + 900 })), source(), expected())
+			verifyProvisionIntent(
+				signIntent(platform.active, claimsAt({ iat: now + 299, exp: now + 900 })),
+				source(),
+				expected()
+			)
 		).resolves.toBeDefined();
 	});
 
@@ -183,7 +219,9 @@ describe('provisioning request verification', () => {
 
 	it('accepts the optional billing reference and a request without features.teams', async () => {
 		const claims = claimsAt({ billing: { stripe_customer_ref: 'cus_TEST123' }, features: {} });
-		await expect(verifyProvisionIntent(signIntent(platform.active, claims), source(), expected())).resolves.toMatchObject({
+		await expect(
+			verifyProvisionIntent(signIntent(platform.active, claims), source(), expected())
+		).resolves.toMatchObject({
 			billing: { stripe_customer_ref: 'cus_TEST123' }
 		});
 	});

@@ -68,8 +68,13 @@ describe('creating a workspace from Ever', () => {
 			const second = await h.signedIn(jws);
 			expect(second.provisionKey).not.toBe(first.provisionKey);
 			expect(await h.rows('ever_connect_provision_intent')).toHaveLength(1);
-			expect(await failure(h.service.summary(first.provisionKey, first.handoffKey))).toEqual({ status: 401, code: 'intent_invalid' });
-			await expect(h.service.summary(second.provisionKey, second.handoffKey)).resolves.toMatchObject({ handle: 'acme' });
+			expect(await failure(h.service.summary(first.provisionKey, first.handoffKey))).toEqual({
+				status: 401,
+				code: 'intent_invalid'
+			});
+			await expect(h.service.summary(second.provisionKey, second.handoffKey)).resolves.toMatchObject({
+				handle: 'acme'
+			});
 		});
 
 		it('the same jti under another idempotency key is a replay (409 intent_replayed)', async () => {
@@ -79,13 +84,16 @@ describe('creating a workspace from Ever', () => {
 		});
 
 		it('a refused request writes nothing', async () => {
-			await expect(h.service.preflight('not.a.request')).rejects.toMatchObject({ status: 401, code: 'intent_invalid' });
+			await expect(h.service.preflight('not.a.request')).rejects.toMatchObject({
+				status: 401,
+				code: 'intent_invalid'
+			});
 			expect(await h.rows('ever_connect_provision_intent')).toEqual([]);
 		});
 	});
 
 	describe('the signed-in Ever ID', () => {
-		it('summary: what the confirmation page shows, with the e-mail of the person\'s own sign-in', async () => {
+		it("summary: what the confirmation page shows, with the e-mail of the person's own sign-in", async () => {
 			const keys = await h.signedIn(h.request({ features: {} }));
 			expect(await h.service.summary(keys.provisionKey, keys.handoffKey)).toEqual({
 				org_display_name: 'Acme',
@@ -107,8 +115,14 @@ describe('creating a workspace from Ever', () => {
 
 		it('another Ever ID than the one the request names: 401 identity_mismatch, nothing created', async () => {
 			const keys = await h.signedIn(h.request(), OTHER_SUBJECT);
-			expect(await failure(h.service.summary(keys.provisionKey, keys.handoffKey))).toEqual({ status: 401, code: 'identity_mismatch' });
-			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({ status: 401, code: 'identity_mismatch' });
+			expect(await failure(h.service.summary(keys.provisionKey, keys.handoffKey))).toEqual({
+				status: 401,
+				code: 'identity_mismatch'
+			});
+			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({
+				status: 401,
+				code: 'identity_mismatch'
+			});
 			expect(h.provisioner.inputs).toEqual([]);
 			expect(await h.rows('ever_connect_provision_result')).toEqual([]);
 			expect(await h.rows('integration_tenant')).toEqual([]);
@@ -118,17 +132,32 @@ describe('creating a workspace from Ever', () => {
 		it('a sign-in started for another request, an unknown or malformed key: 401, nothing created', async () => {
 			const keys = await h.signedIn(h.request());
 			const elsewhere = h.handoffs.add('x'.repeat(43));
-			expect(await failure(h.service.create(keys.provisionKey, elsewhere, {}))).toEqual({ status: 401, code: 'intent_invalid' });
-			expect(await failure(h.service.create('y'.repeat(43), keys.handoffKey, {}))).toEqual({ status: 401, code: 'intent_invalid' });
-			expect(await failure(h.service.create('short', keys.handoffKey, {}))).toEqual({ status: 401, code: 'intent_invalid' });
-			expect(await failure(h.service.create(keys.provisionKey, 'unknown-sign-in-key', {}))).toEqual({ status: 401, code: 'sign_in_required' });
+			expect(await failure(h.service.create(keys.provisionKey, elsewhere, {}))).toEqual({
+				status: 401,
+				code: 'intent_invalid'
+			});
+			expect(await failure(h.service.create('y'.repeat(43), keys.handoffKey, {}))).toEqual({
+				status: 401,
+				code: 'intent_invalid'
+			});
+			expect(await failure(h.service.create('short', keys.handoffKey, {}))).toEqual({
+				status: 401,
+				code: 'intent_invalid'
+			});
+			expect(await failure(h.service.create(keys.provisionKey, 'unknown-sign-in-key', {}))).toEqual({
+				status: 401,
+				code: 'sign_in_required'
+			});
 			expect(h.provisioner.inputs).toEqual([]);
 		});
 
 		it('an expired request: 401 intent_expired', async () => {
 			const keys = await h.signedIn(h.request());
 			h.clock.t += 900_000;
-			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({ status: 401, code: 'intent_expired' });
+			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({
+				status: 401,
+				code: 'intent_expired'
+			});
 			expect(h.provisioner.inputs).toEqual([]);
 		});
 	});
@@ -136,7 +165,10 @@ describe('creating a workspace from Ever', () => {
 	describe('create', () => {
 		it('creates the workspace with the owner e-mail of the Ever ID sign-in and writes the link record and the audit row', async () => {
 			const keys = await h.signedIn(h.request());
-			const answer = await h.service.create(keys.provisionKey, keys.handoffKey, { first_name: ' Ada ', last_name: 'Lovelace' });
+			const answer = await h.service.create(keys.provisionKey, keys.handoffKey, {
+				first_name: ' Ada ',
+				last_name: 'Lovelace'
+			});
 			expect(answer).toEqual({
 				status: 'created',
 				product_tenant_id: expect.any(String),
@@ -179,7 +211,11 @@ describe('creating a workspace from Ever', () => {
 			});
 
 			const [record] = await h.rows('integration_tenant');
-			expect(record).toMatchObject({ name: 'Ever_Connect', tenantId: answer.product_tenant_id, organizationId: answer.product_org_id });
+			expect(record).toMatchObject({
+				name: 'Ever_Connect',
+				tenantId: answer.product_tenant_id,
+				organizationId: answer.product_org_id
+			});
 			expect(result['integrationTenantId']).toBe(record['id']);
 			const settings = await h.rows('integration_setting');
 			expect(Object.fromEntries(settings.map((row) => [row['settingsName'], row['settingsValue']]))).toEqual({
@@ -223,7 +259,11 @@ describe('creating a workspace from Ever', () => {
 			const again = await h.signedIn(jws);
 			expect((await h.service.summary(again.provisionKey, again.handoffKey)).product_tenant_exists).toBe(true);
 			const replay = await h.service.create(again.provisionKey, again.handoffKey, {});
-			expect(replay).toEqual({ ...created, status: 'exists', sign_in_url: 'https://app.gauzy.test/#/auth/ever-id?handoff=signin-2' });
+			expect(replay).toEqual({
+				...created,
+				status: 'exists',
+				sign_in_url: 'https://app.gauzy.test/#/auth/ever-id?handoff=signin-2'
+			});
 			expect(h.provisioner.tenants).toBe(1);
 			expect(h.provisioner.inputs).toHaveLength(1);
 			expect(await h.rows('integration_tenant')).toHaveLength(1);
@@ -247,7 +287,10 @@ describe('creating a workspace from Ever', () => {
 		it('an Ever organization another creation linked already: 409 organization_already_linked', async () => {
 			const first = await h.signedIn(h.request());
 			await h.service.create(first.provisionKey, first.handoffKey, {});
-			const other = h.request({ jti: '01K9A0000000000000000000J2', idempotency_key: `${TEST_JOB_ID}:9:provision_cloud_tenant:gauzy` });
+			const other = h.request({
+				jti: '01K9A0000000000000000000J2',
+				idempotency_key: `${TEST_JOB_ID}:9:provision_cloud_tenant:gauzy`
+			});
 			const keys = await h.signedIn(other);
 			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({
 				status: 409,
@@ -274,7 +317,10 @@ describe('creating a workspace from Ever', () => {
 			const answer = await h.service.create(first.provisionKey, first.handoffKey, {});
 			expect(answer.status).toBe('created');
 			expect(answer.product_tenant_id).toBe(failed['productTenantId']);
-			expect(h.provisioner.resumes[1]).toMatchObject({ userId: failed['productUserId'], tenantId: failed['productTenantId'] });
+			expect(h.provisioner.resumes[1]).toMatchObject({
+				userId: failed['productUserId'],
+				tenantId: failed['productTenantId']
+			});
 			expect(h.provisioner.tenants).toBe(1);
 			expect(h.provisioner.users).toBe(1);
 		});
@@ -282,7 +328,10 @@ describe('creating a workspace from Ever', () => {
 		it('a failure in the last step leaves no link record and no audit row (one transaction)', async () => {
 			h.provisioner.failAt = 'finalize';
 			const keys = await h.signedIn(h.request());
-			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({ status: 500, code: 'provisioning_failed' });
+			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({
+				status: 500,
+				code: 'provisioning_failed'
+			});
 			expect(await h.rows('integration_tenant')).toEqual([]);
 			expect(await h.rows('integration_setting')).toEqual([]);
 			expect(await h.auditRows()).toEqual([]);
@@ -310,13 +359,21 @@ describe('creating a workspace from Ever', () => {
 	describe('entitlement check (the signed plan)', () => {
 		it.each(KNOWN_TIERS.map((tier) => [tier]))('%s: allowed', async (tier) => {
 			const keys = await h.signedIn(h.request({ tier }));
-			await expect(h.service.create(keys.provisionKey, keys.handoffKey, {})).resolves.toMatchObject({ status: 'created' });
+			await expect(h.service.create(keys.provisionKey, keys.handoffKey, {})).resolves.toMatchObject({
+				status: 'created'
+			});
 		});
 
 		it('an unknown plan: 422 validation_failed, nothing created', async () => {
 			const keys = await h.signedIn(h.request({ tier: 'platinum' }));
-			expect(await failure(h.service.summary(keys.provisionKey, keys.handoffKey))).toEqual({ status: 422, code: 'validation_failed' });
-			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({ status: 422, code: 'validation_failed' });
+			expect(await failure(h.service.summary(keys.provisionKey, keys.handoffKey))).toEqual({
+				status: 422,
+				code: 'validation_failed'
+			});
+			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({
+				status: 422,
+				code: 'validation_failed'
+			});
 			expect(h.provisioner.inputs).toEqual([]);
 		});
 
@@ -336,7 +393,11 @@ describe('creating a workspace from Ever', () => {
 			};
 			walk(root);
 			expect(files.length).toBeGreaterThan(20);
-			const offending = files.filter((path) => /StripeSubscriptionService|SubscriptionRequiredGuard|STRIPE_SECRET_KEY|from 'stripe'/.test(readFileSync(path, 'utf8')));
+			const offending = files.filter((path) =>
+				/StripeSubscriptionService|SubscriptionRequiredGuard|STRIPE_SECRET_KEY|from 'stripe'/.test(
+					readFileSync(path, 'utf8')
+				)
+			);
 			expect(offending).toEqual([]);
 		});
 	});

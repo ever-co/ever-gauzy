@@ -57,39 +57,72 @@ export function errorCodeOf(failure: { status?: number; error?: unknown } | null
 		<section class="ever-connect-provision">
 			<h2 class="title">{{ 'EVER_CONNECT.PROVISION.TITLE' | translate }}</h2>
 			@if (error) {
-				<nb-alert [status]="error === 'provisioning_in_progress' ? 'warning' : 'danger'" role="alert" class="error">
+				<nb-alert
+					[status]="error === 'provisioning_in_progress' ? 'warning' : 'danger'"
+					role="alert"
+					class="error"
+				>
 					{{ 'EVER_CONNECT.PROVISION.ERRORS.' + error | translate }}
 				</nb-alert>
 				@if (retryable && summary) {
-					<button nbButton status="primary" fullWidth type="button" class="retry" (click)="create()" [disabled]="busy">
+					<button
+						nbButton
+						status="primary"
+						fullWidth
+						type="button"
+						class="retry"
+						(click)="create()"
+						[disabled]="busy"
+					>
 						{{ 'EVER_CONNECT.PROVISION.RETRY' | translate }}
 					</button>
 				}
 				@if (returnTo) {
-					<a nbButton ghost fullWidth class="back" [attr.href]="returnTo">{{ 'EVER_CONNECT.PROVISION.BACK_TO_EVER' | translate }}</a>
+					<a nbButton ghost fullWidth class="back" [attr.href]="returnTo">{{
+						'EVER_CONNECT.PROVISION.BACK_TO_EVER' | translate
+					}}</a>
 				}
 			} @else if (result) {
 				<nb-alert status="success" role="status">
-					{{ 'EVER_CONNECT.PROVISION.' + (result.status === 'created' ? 'CREATED' : 'EXISTS') | translate: { name: summary?.org_display_name } }}
+					{{
+						'EVER_CONNECT.PROVISION.' + (result.status === 'created' ? 'CREATED' : 'EXISTS')
+							| translate: { name: summary?.org_display_name }
+					}}
 				</nb-alert>
 				<p>{{ 'EVER_CONNECT.PROVISION.SIGNING_IN' | translate }}</p>
 				@if (openUrl) {
-					<a nbButton status="primary" fullWidth class="open" [attr.href]="openUrl">{{ 'EVER_CONNECT.PROVISION.OPEN' | translate }}</a>
+					<a nbButton status="primary" fullWidth class="open" [attr.href]="openUrl">{{
+						'EVER_CONNECT.PROVISION.OPEN' | translate
+					}}</a>
 				}
 				@if (returnTo) {
-					<a nbButton ghost fullWidth class="back" [attr.href]="returnTo">{{ 'EVER_CONNECT.PROVISION.BACK_TO_EVER' | translate }}</a>
+					<a nbButton ghost fullWidth class="back" [attr.href]="returnTo">{{
+						'EVER_CONNECT.PROVISION.BACK_TO_EVER' | translate
+					}}</a>
 				}
 			} @else if (summary) {
 				<p class="lead">
-					{{ 'EVER_CONNECT.PROVISION.LEAD' | translate: { name: summary.org_display_name, handle: summary.handle } }}
+					{{
+						'EVER_CONNECT.PROVISION.LEAD'
+							| translate: { name: summary.org_display_name, handle: summary.handle }
+					}}
 				</p>
 				@if (summary.product_tenant_exists) {
-					<nb-alert status="info" role="status">{{ 'EVER_CONNECT.PROVISION.ALREADY_CREATED' | translate }}</nb-alert>
+					<nb-alert status="info" role="status">{{
+						'EVER_CONNECT.PROVISION.ALREADY_CREATED' | translate
+					}}</nb-alert>
 				}
 				<p>{{ 'EVER_CONNECT.PROVISION.WILL_CREATE' | translate }}</p>
 				<ul class="items">
-					<li>{{ 'EVER_CONNECT.PROVISION.ITEMS.WORKSPACE' | translate: { name: summary.org_display_name } }}</li>
-					<li>{{ 'EVER_CONNECT.PROVISION.ITEMS.ORGANIZATION' | translate: { name: summary.legal_name || summary.org_display_name } }}</li>
+					<li>
+						{{ 'EVER_CONNECT.PROVISION.ITEMS.WORKSPACE' | translate: { name: summary.org_display_name } }}
+					</li>
+					<li>
+						{{
+							'EVER_CONNECT.PROVISION.ITEMS.ORGANIZATION'
+								| translate: { name: summary.legal_name || summary.org_display_name }
+						}}
+					</li>
 					<li>{{ 'EVER_CONNECT.PROVISION.ITEMS.ADMIN_ACCOUNT' | translate }}</li>
 					<li>{{ 'EVER_CONNECT.PROVISION.ITEMS.EMPLOYEE' | translate }}</li>
 					@if (summary.creates.team) {
@@ -99,19 +132,41 @@ export function errorCodeOf(failure: { status?: number; error?: unknown } | null
 				<form class="form" (ngSubmit)="create()">
 					<label class="label" for="provision-email">{{ 'EVER_CONNECT.PROVISION.EMAIL' | translate }}</label>
 					<input nbInput fullWidth id="provision-email" name="email" [value]="summary.email" readonly />
-					<label class="label" for="provision-first-name">{{ 'EVER_CONNECT.PROVISION.FIRST_NAME' | translate }}</label>
-					<input nbInput fullWidth id="provision-first-name" name="firstName" [(ngModel)]="firstName" maxlength="100" />
-					<label class="label" for="provision-last-name">{{ 'EVER_CONNECT.PROVISION.LAST_NAME' | translate }}</label>
-					<input nbInput fullWidth id="provision-last-name" name="lastName" [(ngModel)]="lastName" maxlength="100" />
+					<label class="label" for="provision-first-name">{{
+						'EVER_CONNECT.PROVISION.FIRST_NAME' | translate
+					}}</label>
+					<input
+						nbInput
+						fullWidth
+						id="provision-first-name"
+						name="firstName"
+						[(ngModel)]="firstName"
+						maxlength="100"
+					/>
+					<label class="label" for="provision-last-name">{{
+						'EVER_CONNECT.PROVISION.LAST_NAME' | translate
+					}}</label>
+					<input
+						nbInput
+						fullWidth
+						id="provision-last-name"
+						name="lastName"
+						[(ngModel)]="lastName"
+						maxlength="100"
+					/>
 					<p class="terms">
 						{{ 'EVER_CONNECT.PROVISION.TERMS' | translate }}
-						<a href="#/legal/terms" target="_blank" rel="noopener noreferrer">{{ 'EVER_CONNECT.PROVISION.TERMS_LINK' | translate }}</a>
+						<a href="#/legal/terms" target="_blank" rel="noopener noreferrer">{{
+							'EVER_CONNECT.PROVISION.TERMS_LINK' | translate
+						}}</a>
 					</p>
 					<button nbButton status="primary" fullWidth type="submit" class="create" [disabled]="busy">
 						{{ 'EVER_CONNECT.PROVISION.CREATE' | translate }}
 					</button>
 					@if (returnTo) {
-						<a nbButton ghost fullWidth class="back" [attr.href]="returnTo">{{ 'EVER_CONNECT.PROVISION.CANCEL' | translate }}</a>
+						<a nbButton ghost fullWidth class="back" [attr.href]="returnTo">{{
+							'EVER_CONNECT.PROVISION.CANCEL' | translate
+						}}</a>
 					}
 				</form>
 			} @else {
@@ -223,7 +278,10 @@ export class ProvisionConfirmComponent implements OnInit {
 					const response = (record as { kind: string; response?: IUserSigninWorkspaceResponse }).response;
 					const workspace = record.kind === 'workspaces' ? response?.workspaces?.[0] : undefined;
 					if (!workspace || !response) return of(null);
-					return this.authService.signinWorkspaceByToken({ email: response.confirmed_email, token: workspace.token });
+					return this.authService.signinWorkspaceByToken({
+						email: response.confirmed_email,
+						token: workspace.token
+					});
 				}),
 				map((session) => {
 					if (!session) return false;

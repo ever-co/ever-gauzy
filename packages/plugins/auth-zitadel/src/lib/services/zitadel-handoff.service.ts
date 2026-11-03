@@ -86,12 +86,24 @@ export class ZitadelHandoffService implements ZitadelHandoffReaderPort {
 		if (!record) {
 			return null;
 		}
-		const users = (await this.accounts.findLinkedUsers(record.issuer, record.subject)).filter((user) => user.id === userId);
+		const users = (await this.accounts.findLinkedUsers(record.issuer, record.subject)).filter(
+			(user) => user.id === userId
+		);
 		if (!users.length) {
 			return null;
 		}
-		const identity = { issuer: record.issuer, subject: record.subject, email: record.email, everPersonId: record.hints?.personId };
-		const response = await this.workspaces.signIn(users, identity, record.hints ?? { filteredOrganizations: [] }, record.sid);
+		const identity = {
+			issuer: record.issuer,
+			subject: record.subject,
+			email: record.email,
+			everPersonId: record.hints?.personId
+		};
+		const response = await this.workspaces.signIn(
+			users,
+			identity,
+			record.hints ?? { filteredOrganizations: [] },
+			record.sid
+		);
 		return this.signin.handOff(response);
 	}
 }

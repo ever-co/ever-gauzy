@@ -17,6 +17,8 @@ import { ZitadelOrganization } from '../entities/zitadel-organization.entity';
 import { CreateUserPreLinkedInput, CreateUserPreLinkedResult } from '../ports/create-user-pre-linked.port';
 import { ZitadelProvisionService } from '../services/zitadel-provision.service';
 
+// A loose row: the stand-in tables hold whatever the provisioner writes.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 
 /** Tables in memory, with the repository calls the provisioner makes. */
@@ -39,7 +41,10 @@ class FakeDatabase {
 			find: async ({ where }: { where: Row }) => rows.filter((row) => this.matches(row, where)),
 			exists: async ({ where }: { where: Row }) => rows.some((row) => this.matches(row, where)),
 			insert: async (values: Row) => {
-				if (entity === ZitadelOrganization && rows.some((row) => row['provisionKey'] === values['provisionKey'])) {
+				if (
+					entity === ZitadelOrganization &&
+					rows.some((row) => row['provisionKey'] === values['provisionKey'])
+				) {
 					throw new Error('UNIQUE constraint failed: zitadel_organization.provisionKey');
 				}
 				rows.push({ id: randomUUID(), ...values });
@@ -162,7 +167,11 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 					return organization;
 				}
 				if (command instanceof EmployeeCreateCommand) {
-					db.table(Employee).push({ id: randomUUID(), userId: command.input.userId, organizationId: command.input.organizationId });
+					db.table(Employee).push({
+						id: randomUUID(),
+						userId: command.input.userId,
+						organizationId: command.input.organizationId
+					});
 					return undefined;
 				}
 				if (command instanceof OrganizationTeamCreateCommand) {
@@ -179,7 +188,12 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 			[RoleAuthorizationService, { attachAuthorizationState: async (user: unknown) => user }]
 		]);
 		const moduleRef = { get: (type: unknown) => services.get(type) };
-		service = new ZitadelProvisionService(db.dataSource(queries) as never, moduleRef as never, accounts as never, gauzyAuth as never);
+		service = new ZitadelProvisionService(
+			db.dataSource(queries) as never,
+			moduleRef as never,
+			accounts as never,
+			gauzyAuth as never
+		);
 	});
 
 	it('creates the owner, tenant, organization, employee and team, then writes both links with the caller rows in one transaction', async () => {
@@ -195,7 +209,9 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 			}
 		});
 
-		expect(registered).toEqual([{ input: { user: { email: 'owner@acme.example', firstName: 'Ada', lastName: 'Owner' } } }]);
+		expect(registered).toEqual([
+			{ input: { user: { email: 'owner@acme.example', firstName: 'Ada', lastName: 'Owner' } } }
+		]);
 		const [user] = db.table(User);
 		expect(user['emailVerifiedAt']).toBeInstanceOf(Date);
 		expect(onboarded).toEqual([{ name: 'Acme', userId: user['id'] }]);
@@ -211,7 +227,11 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		});
 		expect(organization.input).not.toHaveProperty('profile_link');
 		const team = commands.find((c) => c instanceof OrganizationTeamCreateCommand) as OrganizationTeamCreateCommand;
-		expect(team.input).toMatchObject({ name: 'Acme', memberIds: [result.employeeId], managerIds: [result.employeeId] });
+		expect(team.input).toMatchObject({
+			name: 'Acme',
+			memberIds: [result.employeeId],
+			managerIds: [result.employeeId]
+		});
 
 		expect(result).toEqual({
 			userId: user['id'],
@@ -247,10 +267,15 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 	});
 
 	it('no team unless asked; no employee unless asked', async () => {
-		const result = await service.createUserPreLinked({ ...INPUT, options: { createEmployee: false, createTeam: false } });
+		const result = await service.createUserPreLinked({
+			...INPUT,
+			options: { createEmployee: false, createTeam: false }
+		});
 		expect(result.employeeId).toBeUndefined();
 		expect(result.teamId).toBeUndefined();
-		expect(commands.filter((c) => c instanceof EmployeeCreateCommand || c instanceof OrganizationTeamCreateCommand)).toEqual([]);
+		expect(
+			commands.filter((c) => c instanceof EmployeeCreateCommand || c instanceof OrganizationTeamCreateCommand)
+		).toEqual([]);
 	});
 
 	it('a finished key answers its ids and creates nothing', async () => {
@@ -300,7 +325,9 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 
 	it('refuses an incomplete request before anything is created', async () => {
 		await expect(service.createUserPreLinked({ ...INPUT, email: '' })).rejects.toBeInstanceOf(BadRequestException);
-		await expect(service.createUserPreLinked({ ...INPUT, idempotencyKey: '' })).rejects.toBeInstanceOf(BadRequestException);
+		await expect(service.createUserPreLinked({ ...INPUT, idempotencyKey: '' })).rejects.toBeInstanceOf(
+			BadRequestException
+		);
 		expect(registered).toEqual([]);
 	});
 });

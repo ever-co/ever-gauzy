@@ -89,7 +89,9 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 
 	async findProvisioned(idempotencyKey: string): Promise<CreateUserPreLinkedResult | null> {
 		if (!idempotencyKey) return null;
-		const link = await this.dataSource.getRepository(ZitadelOrganization).findOne({ where: { provisionKey: idempotencyKey } });
+		const link = await this.dataSource
+			.getRepository(ZitadelOrganization)
+			.findOne({ where: { provisionKey: idempotencyKey } });
 		if (!link) return null;
 		const userId = link.linkedByUserId;
 		const employee = userId
@@ -160,7 +162,10 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 		if (!user.tenantId) {
 			const owner = user;
 			await this.asUser(owner.id, () =>
-				this.service(TenantService).onboardTenant({ name: clean(input.tenant.name, MAX_NAME_LENGTH) ?? input.handle }, owner)
+				this.service(TenantService).onboardTenant(
+					{ name: clean(input.tenant.name, MAX_NAME_LENGTH) ?? input.handle },
+					owner
+				)
 			);
 			user = await this.loadUser(owner.id);
 			if (!user?.tenantId) {
@@ -262,7 +267,9 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 		ids: CreateUserPreLinkedResult,
 		hooks: CreateUserPreLinkedHooks
 	): Promise<boolean> {
-		if (await manager.getRepository(ZitadelOrganization).exists({ where: { provisionKey: input.idempotencyKey } })) {
+		if (
+			await manager.getRepository(ZitadelOrganization).exists({ where: { provisionKey: input.idempotencyKey } })
+		) {
 			return false;
 		}
 		const now = new Date();
@@ -302,7 +309,9 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 
 	private assertInput(input: CreateUserPreLinkedInput): void {
 		const missing = ['issuer', 'subject', 'email', 'everOrgId', 'everTenantId', 'handle', 'idempotencyKey'].filter(
-			(field) => typeof input?.[field as keyof CreateUserPreLinkedInput] !== 'string' || !input[field as keyof CreateUserPreLinkedInput]
+			(field) =>
+				typeof input?.[field as keyof CreateUserPreLinkedInput] !== 'string' ||
+				!input[field as keyof CreateUserPreLinkedInput]
 		);
 		if (missing.length || !input.tenant?.name || !input.organization?.name) {
 			throw new BadRequestException('The workspace request is incomplete.');
@@ -314,7 +323,9 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 	}
 
 	private findEmployee(userId: string, organizationId: string): Promise<Pick<Employee, 'id'> | null> {
-		return this.dataSource.getRepository(Employee).findOne({ where: { userId, organizationId }, select: { id: true } });
+		return this.dataSource
+			.getRepository(Employee)
+			.findOne({ where: { userId, organizationId }, select: { id: true } });
 	}
 
 	private findTeam(organizationId: string, name: string | undefined): Promise<Pick<OrganizationTeam, 'id'> | null> {

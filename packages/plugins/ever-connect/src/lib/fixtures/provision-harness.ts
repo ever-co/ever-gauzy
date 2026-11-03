@@ -117,7 +117,10 @@ export class FakeProvisioner implements ZitadelProvisionerPort {
 		return [...this.provisioned.entries()].some(([other, ids]) => ids.everOrgId === everOrgId && other !== key);
 	}
 
-	async createUserPreLinked(input: CreateUserPreLinkedInput, hooks: CreateUserPreLinkedHooks = {}): Promise<CreateUserPreLinkedResult> {
+	async createUserPreLinked(
+		input: CreateUserPreLinkedInput,
+		hooks: CreateUserPreLinkedHooks = {}
+	): Promise<CreateUserPreLinkedResult> {
 		this.inputs.push(input);
 		this.resumes.push(hooks.resume);
 		const done = await this.findProvisioned(input.idempotencyKey);
@@ -221,7 +224,10 @@ export async function provisionHarness(options: { enabled?: boolean } = {}): Pro
 		request: (overrides = {}) => verifier.register(intentClaims(nowS(), overrides)),
 		async signedIn(jws, subject = TEST_SUBJECT) {
 			const preflight = await service.preflight(jws);
-			return { provisionKey: preflight.provision_key, handoffKey: handoffs.add(preflight.provision_key, subject) };
+			return {
+				provisionKey: preflight.provision_key,
+				handoffKey: handoffs.add(preflight.provision_key, subject)
+			};
 		},
 		rows: (table) => h.dataSource.query(`SELECT * FROM "${table}"`)
 	};

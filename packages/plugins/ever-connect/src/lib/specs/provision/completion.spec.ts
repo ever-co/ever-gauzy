@@ -56,7 +56,11 @@ describe('workspace completion report', () => {
 			idempotencyKey: KEY,
 			expiresAt: h.clock.now() + 900_000
 		});
-		const claim = await provisions.claim({ idempotencyKey: KEY, jti: JTI, everOrgId: '01K9A0000000000000000000RG' }, 'holder', h.clock.now() + 60_000);
+		const claim = await provisions.claim(
+			{ idempotencyKey: KEY, jti: JTI, everOrgId: '01K9A0000000000000000000RG' },
+			'holder',
+			h.clock.now() + 60_000
+		);
 		expect(claim.outcome).toBe('claimed');
 		tenantId = '2d1c0f8e-0000-4000-8000-000000000001';
 		organizationId = '2d1c0f8e-0000-4000-8000-000000000002';
@@ -74,8 +78,16 @@ describe('workspace completion report', () => {
 					teamId: null
 				},
 				catalogId: null,
-				settings: { EVER_ORG_ID: '01K9A0000000000000000000RG', EVER_HANDLE: 'acme', EVER_LINK_STATUS: 'linked' },
-				audit: { action: 'provision.accept', actorUserId: '2d1c0f8e-0000-4000-8000-000000000003', details: { job_id: 'job' } }
+				settings: {
+					EVER_ORG_ID: '01K9A0000000000000000000RG',
+					EVER_HANDLE: 'acme',
+					EVER_LINK_STATUS: 'linked'
+				},
+				audit: {
+					action: 'provision.accept',
+					actorUserId: '2d1c0f8e-0000-4000-8000-000000000003',
+					details: { job_id: 'job' }
+				}
 			}
 		);
 		await runner.release();
@@ -85,10 +97,14 @@ describe('workspace completion report', () => {
 		await h.close();
 	});
 
-	const row = async () => (await provisions.result(KEY)) as NonNullable<Awaited<ReturnType<EverConnectProvisionStore['result']>>>;
+	const row = async () =>
+		(await provisions.result(KEY)) as NonNullable<Awaited<ReturnType<EverConnectProvisionStore['result']>>>;
 
 	it('sends ids and addresses only, and keeps the link Ever Platform answers', async () => {
-		h.platform.on(COMPLETE, { status: 200, body: { status: 'completed', job_id: '01K9A0000000000000000000JB', tenant_link_id: LINK_ID } });
+		h.platform.on(COMPLETE, {
+			status: 200,
+			body: { status: 'completed', job_id: '01K9A0000000000000000000JB', tenant_link_id: LINK_ID }
+		});
 		await completion.sendDue();
 		const [call] = h.platform.callsTo(COMPLETE);
 		expect(call.body).toEqual({
@@ -104,9 +120,21 @@ describe('workspace completion report', () => {
 		expect(await row()).toMatchObject({ completionState: 'done', completionAttempts: 1, tenantLinkId: LINK_ID });
 
 		const link = await h.store.linkById(LINK_ID);
-		expect(link).toMatchObject({ tenantId, organizationId, integrationTenantId, everOrgId: '01K9A0000000000000000000RG', everHandle: 'acme', status: 'linked' });
-		const settings = await h.dataSource.query(`SELECT "settingsName", "settingsValue" FROM "integration_setting" WHERE "integrationId" = ?`, [integrationTenantId]);
-		expect(Object.fromEntries(settings.map((s: Record<string, string>) => [s['settingsName'], s['settingsValue']]))).toMatchObject({
+		expect(link).toMatchObject({
+			tenantId,
+			organizationId,
+			integrationTenantId,
+			everOrgId: '01K9A0000000000000000000RG',
+			everHandle: 'acme',
+			status: 'linked'
+		});
+		const settings = await h.dataSource.query(
+			`SELECT "settingsName", "settingsValue" FROM "integration_setting" WHERE "integrationId" = ?`,
+			[integrationTenantId]
+		);
+		expect(
+			Object.fromEntries(settings.map((s: Record<string, string>) => [s['settingsName'], s['settingsValue']]))
+		).toMatchObject({
 			EVER_LINK_ID: LINK_ID,
 			EVER_LINK_STATUS: 'linked'
 		});
@@ -127,13 +155,21 @@ describe('workspace completion report', () => {
 	it('Ever Platform unreachable: retried after 1 minute, then longer; done once it answers', async () => {
 		h.platform.on(COMPLETE, problem(503, 'unavailable'));
 		await completion.sendDue();
-		expect(await row()).toMatchObject({ completionState: 'pending', completionAttempts: 1, completionNextAt: h.clock.now() + 60_000 });
+		expect(await row()).toMatchObject({
+			completionState: 'pending',
+			completionAttempts: 1,
+			completionNextAt: h.clock.now() + 60_000
+		});
 		// Not due yet: nothing is sent.
 		await completion.sendDue();
 		expect(h.platform.callsTo(COMPLETE)).toHaveLength(1);
 		h.clock.t += 60_000;
 		await completion.sendDue();
-		expect(await row()).toMatchObject({ completionState: 'pending', completionAttempts: 2, completionNextAt: h.clock.now() + 4 * 60_000 });
+		expect(await row()).toMatchObject({
+			completionState: 'pending',
+			completionAttempts: 2,
+			completionNextAt: h.clock.now() + 4 * 60_000
+		});
 		h.clock.t += 4 * 60_000;
 		h.platform.on(COMPLETE, { status: 200, body: { status: 'completed' } });
 		await completion.sendDue();
@@ -157,7 +193,11 @@ describe('workspace completion report', () => {
 	it('a refusal is final, kept as a code', async () => {
 		h.platform.on(COMPLETE, problem(422, 'validation_failed'));
 		await completion.sendDue();
-		expect(await row()).toMatchObject({ completionState: 'failed', completionAttempts: 1, completionError: '422_validation_failed' });
+		expect(await row()).toMatchObject({
+			completionState: 'failed',
+			completionAttempts: 1,
+			completionError: '422_validation_failed'
+		});
 	});
 
 	it('nothing is sent while the installation is not connected', async () => {

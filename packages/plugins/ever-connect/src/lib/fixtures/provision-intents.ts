@@ -5,7 +5,11 @@
  */
 import { generateKeyPairSync, KeyObject, sign } from 'node:crypto';
 import { keysSha256, KeySet, signCompactJws } from '@ever-co/connect-sdk';
-import { INTENT_AUDIENCE, INTENT_CLAIMS_TYP, INTENT_HEADER_TYP } from '../services/ever-connect-intent-verifier.service';
+import {
+	INTENT_AUDIENCE,
+	INTENT_CLAIMS_TYP,
+	INTENT_HEADER_TYP
+} from '../services/ever-connect-intent-verifier.service';
 
 export const TEST_ISSUER = 'https://api.platform.test';
 export const TEST_INSTANCE_ID = '01K9A0000000000000000000IN';
@@ -29,7 +33,12 @@ export function newKey(kid: string): TestKey {
 const signer = (key: TestKey) => (bytes: Uint8Array) => new Uint8Array(sign(null, Buffer.from(bytes), key.privateKey));
 
 /** A manifest key entry (a manifest lists `active` and `previous` keys only; `notAfter` ends a key's window). */
-function entry(key: TestKey, purpose: 'intent' | 'entitlement' | 'assertion', state: 'active' | 'previous', notAfter?: string) {
+function entry(
+	key: TestKey,
+	purpose: 'intent' | 'entitlement' | 'assertion',
+	state: 'active' | 'previous',
+	notAfter?: string
+) {
 	return {
 		kty: 'OKP',
 		crv: 'Ed25519',
@@ -61,7 +70,12 @@ export interface TestPlatform {
 	now: number;
 }
 
-async function manifest(root: TestKey, keys: unknown[], now: number, issuer = TEST_ISSUER): Promise<{ manifest: string; keys: unknown[] }> {
+async function manifest(
+	root: TestKey,
+	keys: unknown[],
+	now: number,
+	issuer = TEST_ISSUER
+): Promise<{ manifest: string; keys: unknown[] }> {
 	const jws = await signCompactJws(
 		signer(root),
 		{ alg: 'EdDSA', kid: root.kid, typ: 'ever-key-manifest+jwt' },
@@ -85,7 +99,11 @@ export async function testPlatform(now = Math.floor(Date.now() / 1000)): Promise
 		entry(entitlement, 'entitlement', 'active')
 	];
 	const rootEntry = { kid: root.kid, x: root.x, iss: TEST_ISSUER };
-	const keySet = KeySet.verify(await manifest(root, base, now - 60), { issuer: TEST_ISSUER, unsafeRootKeys: [rootEntry], now });
+	const keySet = KeySet.verify(await manifest(root, base, now - 60), {
+		issuer: TEST_ISSUER,
+		unsafeRootKeys: [rootEntry],
+		now
+	});
 	const refreshed = KeySet.verify(await manifest(root, [...base, entry(next, 'intent', 'active')], now), {
 		issuer: TEST_ISSUER,
 		unsafeRootKeys: [rootEntry],
@@ -122,7 +140,11 @@ export function intentClaims(now: number, overrides: Record<string, unknown> = {
 }
 
 /** Signs a request (compact JWS) with `key`; `header` overrides the protected header. */
-export function signIntent(key: TestKey, claims: Record<string, unknown>, header: Record<string, unknown> = {}): string {
+export function signIntent(
+	key: TestKey,
+	claims: Record<string, unknown>,
+	header: Record<string, unknown> = {}
+): string {
 	const encode = (value: unknown) => Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
 	const head = encode({ alg: 'EdDSA', kid: key.kid, typ: INTENT_HEADER_TYP, ...header });
 	const body = encode(claims);

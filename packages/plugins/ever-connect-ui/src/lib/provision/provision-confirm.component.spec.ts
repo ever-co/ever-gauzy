@@ -99,10 +99,22 @@ describe('ProvisionConfirmComponent', () => {
 			})
 		);
 		api.redeemSignIn.mockReturnValue(
-			of({ kind: 'workspaces', response: { workspaces: [{ token: 'workspace-token', user: { id: 'u' } }], confirmed_email: 'owner@acme.example', total_workspaces: 1, show_popup: false } })
+			of({
+				kind: 'workspaces',
+				response: {
+					workspaces: [{ token: 'workspace-token', user: { id: 'u' } }],
+					confirmed_email: 'owner@acme.example',
+					total_workspaces: 1,
+					show_popup: false
+				}
+			})
 		);
 		auth.signinWorkspaceByToken.mockReturnValue(
-			of({ user: { id: 'u', tenantId: 't', employee: { organizationId: 'o' } }, token: 'access', refresh_token: 'refresh' })
+			of({
+				user: { id: 'u', tenantId: 't', employee: { organizationId: 'o' } },
+				token: 'access',
+				refresh_token: 'refresh'
+			})
 		);
 		const component = create({ provision: PROVISION, handoff: HANDOFF });
 		assign = jest.spyOn(component as never, 'goTo' as never).mockImplementation((() => undefined) as never);
@@ -111,8 +123,17 @@ describe('ProvisionConfirmComponent', () => {
 		component.create();
 		expect(api.create).toHaveBeenCalledWith(PROVISION, HANDOFF, { first_name: 'Ada', last_name: 'Lovelace' });
 		expect(api.redeemSignIn).toHaveBeenCalledWith(SIGN_IN);
-		expect(auth.signinWorkspaceByToken).toHaveBeenCalledWith({ email: 'owner@acme.example', token: 'workspace-token' });
-		expect(store).toMatchObject({ userId: 'u', token: 'access', refresh_token: 'refresh', tenantId: 't', organizationId: 'o' });
+		expect(auth.signinWorkspaceByToken).toHaveBeenCalledWith({
+			email: 'owner@acme.example',
+			token: 'workspace-token'
+		});
+		expect(store).toMatchObject({
+			userId: 'u',
+			token: 'access',
+			refresh_token: 'refresh',
+			tenantId: 't',
+			organizationId: 'o'
+		});
 		expect(assign).toHaveBeenCalledWith('https://app.ever.co/start/jobs/1');
 		expect(component.result?.status).toBe('created');
 	});

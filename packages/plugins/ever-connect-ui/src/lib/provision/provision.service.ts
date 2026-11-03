@@ -72,7 +72,10 @@ export class EverConnectProvisionService {
 	private readonly http = inject(HttpClient);
 
 	summary(provisionKey: string, handoffKey: string): Observable<ProvisionSummary> {
-		return this.http.post<ProvisionSummary>(`${BASE}/summary`, { provision_key: provisionKey, handoff_key: handoffKey });
+		return this.http.post<ProvisionSummary>(`${BASE}/summary`, {
+			provision_key: provisionKey,
+			handoff_key: handoffKey
+		});
 	}
 
 	create(

@@ -59,7 +59,10 @@ export interface CreateUserPreLinkedHooks {
 }
 
 export interface ZitadelProvisionerPort {
-	createUserPreLinked(input: CreateUserPreLinkedInput, hooks?: CreateUserPreLinkedHooks): Promise<CreateUserPreLinkedResult>;
+	createUserPreLinked(
+		input: CreateUserPreLinkedInput,
+		hooks?: CreateUserPreLinkedHooks
+	): Promise<CreateUserPreLinkedResult>;
 	/** The ids of a creation that finished with this key, or `null`. */
 	findProvisioned(idempotencyKey: string): Promise<CreateUserPreLinkedResult | null>;
 	/** Whether an Ever organization is already linked to a workspace by a creation with another key. */

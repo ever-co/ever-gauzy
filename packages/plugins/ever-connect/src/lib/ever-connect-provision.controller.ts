@@ -48,7 +48,10 @@ export class EverConnectProvisionController {
 
 	@Post('preflight')
 	@HttpCode(HttpStatus.OK)
-	async preflight(@Body() body: { intent?: unknown }, @Res({ passthrough: true }) res: Response): Promise<ProvisionPreflight> {
+	async preflight(
+		@Body() body: { intent?: unknown },
+		@Res({ passthrough: true }) res: Response
+	): Promise<ProvisionPreflight> {
 		res.setHeader('Cache-Control', 'no-store');
 		return this.provisions.preflight(body?.intent);
 	}
@@ -65,7 +68,12 @@ export class EverConnectProvisionController {
 
 	@Post()
 	async create(
-		@Body() body: { provision_key?: unknown; handoff_key?: unknown; request?: { first_name?: unknown; last_name?: unknown } },
+		@Body()
+		body: {
+			provision_key?: unknown;
+			handoff_key?: unknown;
+			request?: { first_name?: unknown; last_name?: unknown };
+		},
 		@Res({ passthrough: true }) res: Response
 	): Promise<ProvisionResponse> {
 		res.setHeader('Cache-Control', 'no-store');

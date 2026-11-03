@@ -4,7 +4,12 @@ import type { EverConnectConfig } from '../ever-connect-config';
 import { EVER_CONNECT_CLOCK, EVER_CONNECT_SETTINGS } from '../ever-connect.constants';
 import { EverConnectEntitlementService } from '../ever-connect-entitlement.service';
 import { EverConnectIntegrationStateService } from '../ever-connect-integration-state.service';
-import { EverConnectPlatformService, errorCode, isCredentialRevoked, isUnreachable } from '../ever-connect-platform.service';
+import {
+	EverConnectPlatformService,
+	errorCode,
+	isCredentialRevoked,
+	isUnreachable
+} from '../ever-connect-platform.service';
 import { EverConnectProvisionStore, ProvisionResultRecord } from '../ever-connect-provision.store';
 import { EverConnectSignals } from '../ever-connect-signals';
 import { EverConnectStore, LiveLinkExistsError } from '../ever-connect.store';
@@ -95,11 +100,17 @@ export class EverConnectProvisionCompletion {
 		try {
 			const record = await this.provisions.result(idempotencyKey);
 			const connection = await this.store.connection();
-			if (record?.completionState === 'pending' && connection.status === 'connected' && connection.platformInstanceId) {
+			if (
+				record?.completionState === 'pending' &&
+				connection.status === 'connected' &&
+				connection.platformInstanceId
+			) {
 				await this.send(record, connection.platformInstanceId);
 			}
 		} catch (error) {
-			this.logger.warn(`A workspace completion report could not be sent now (${errorCode(error)}); it is retried.`);
+			this.logger.warn(
+				`A workspace completion report could not be sent now (${errorCode(error)}); it is retried.`
+			);
 		}
 	}
 
@@ -116,7 +127,10 @@ export class EverConnectProvisionCompletion {
 				urls: { app: this.config.provision.appUrl, api: this.config.provision.apiUrl },
 				result: 'created'
 			} as never);
-			tenantLinkId = typeof answer?.tenant_link_id === 'string' && LINK_ID_SHAPE.test(answer.tenant_link_id) ? answer.tenant_link_id : null;
+			tenantLinkId =
+				typeof answer?.tenant_link_id === 'string' && LINK_ID_SHAPE.test(answer.tenant_link_id)
+					? answer.tenant_link_id
+					: null;
 		} catch (error) {
 			if (isCredentialRevoked(error)) {
 				this.signals.revoked$.next();
@@ -127,7 +141,9 @@ export class EverConnectProvisionCompletion {
 			await this.provisions.updateCompletion(record.idempotencyKey, attempts, {
 				completionAttempts: next,
 				completionState: final ? 'failed' : 'pending',
-				completionNextAt: final ? null : this.now() + COMPLETION_RETRY_MS[Math.min(next, COMPLETION_RETRY_MS.length) - 1],
+				completionNextAt: final
+					? null
+					: this.now() + COMPLETION_RETRY_MS[Math.min(next, COMPLETION_RETRY_MS.length) - 1],
 				completionError: errorCode(error).replace(/\s+/g, '_').slice(0, 64)
 			});
 			this.logger.warn(

@@ -157,14 +157,21 @@ export function returnToAllowed(url: unknown, localPlatform = false): boolean {
 	if (RETURN_ORIGINS.includes(parsed.origin)) return true;
 	if (!localPlatform) return false;
 	const host = parsed.hostname.toLowerCase();
-	return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && (host === 'localhost' || host === '127.0.0.1');
+	return (
+		(parsed.protocol === 'http:' || parsed.protocol === 'https:') && (host === 'localhost' || host === '127.0.0.1')
+	);
 }
 
 /** Whether `signature` (base64url) is the Ed25519 signature of `signingInput` by the key `x` (base64url). */
 function signatureValid(x: string, signingInput: string, signature: string): boolean {
 	try {
 		const publicKey = createPublicKey({ key: { kty: 'OKP', crv: 'Ed25519', x }, format: 'jwk' });
-		return verifySignature(null, Buffer.from(signingInput, 'ascii'), publicKey, Buffer.from(signature, 'base64url'));
+		return verifySignature(
+			null,
+			Buffer.from(signingInput, 'ascii'),
+			publicKey,
+			Buffer.from(signature, 'base64url')
+		);
 	} catch {
 		return false;
 	}
@@ -178,7 +185,10 @@ function checkOrg(org: unknown): ProvisionIntentClaims['org'] {
 	if (!isString(value['id'], 26, 26) || !ULID_SHAPE.test(value['id'])) throw refuse('org');
 	if (!isString(value['handle'], 1, 64) || !isString(value['display_name'], 1, 200)) throw refuse('org');
 	if (value['legal_name'] !== undefined && !isString(value['legal_name'], 0, 200)) throw refuse('org');
-	if (value['country'] !== undefined && !(typeof value['country'] === 'string' && /^[A-Z]{2}$/.test(value['country'])))
+	if (
+		value['country'] !== undefined &&
+		!(typeof value['country'] === 'string' && /^[A-Z]{2}$/.test(value['country']))
+	)
 		throw refuse('org');
 	if (value['website'] !== undefined && !isString(value['website'], 1, 2048)) throw refuse('org');
 	return value as ProvisionIntentClaims['org'];
@@ -224,7 +234,8 @@ export async function verifyProvisionIntent(
 	const claims = decodePart(parts[1]);
 	if (claims['iss'] !== expected.issuer || keySet.issuer !== expected.issuer) throw refuse('issuer_mismatch');
 	if (claims['aud'] !== INTENT_AUDIENCE) throw refuse('audience_mismatch');
-	if (claims['instance_id'] !== undefined && claims['instance_id'] !== expected.instanceId) throw refuse('instance_mismatch');
+	if (claims['instance_id'] !== undefined && claims['instance_id'] !== expected.instanceId)
+		throw refuse('instance_mismatch');
 	if (claims['typ'] !== INTENT_CLAIMS_TYP || claims['ever_purpose'] !== 'intent') throw refuse('schema_violation');
 	if (!onlyKeys(claims, CLAIM_KEYS)) throw refuse('schema_violation');
 
@@ -239,7 +250,10 @@ export async function verifyProvisionIntent(
 	const jti = claims['jti'];
 	if (!isString(jti, 26, 26) || !ULID_SHAPE.test(jti)) throw refuse('schema_violation');
 	const apiBase = expected.apiUrl.replace(/\/+$/, '');
-	const callbacks = new Set([`${expected.issuer}/v1/provision-intents/${jti}/complete`, `${apiBase}/v1/provision-intents/${jti}/complete`]);
+	const callbacks = new Set([
+		`${expected.issuer}/v1/provision-intents/${jti}/complete`,
+		`${apiBase}/v1/provision-intents/${jti}/complete`
+	]);
 	if (!callbacks.has(String(claims['callback']))) throw refuse('callback');
 	if (!returnToAllowed(claims['return_to'], expected.localPlatform)) throw refuse('return_to');
 
@@ -251,10 +265,18 @@ export async function verifyProvisionIntent(
 	const features = claims['features'];
 	if (!features || typeof features !== 'object' || Array.isArray(features)) throw refuse('schema_violation');
 	const featureMap = features as Record<string, unknown>;
-	if (!onlyKeys(featureMap, ['teams']) || (featureMap['teams'] !== undefined && typeof featureMap['teams'] !== 'boolean'))
+	if (
+		!onlyKeys(featureMap, ['teams']) ||
+		(featureMap['teams'] !== undefined && typeof featureMap['teams'] !== 'boolean')
+	)
 		throw refuse('schema_violation');
 	const person = claims['person'] as Record<string, unknown> | undefined;
-	if (!person || typeof person !== 'object' || !onlyKeys(person, ['ever_id_sub']) || !isString(person['ever_id_sub'], 1, 255))
+	if (
+		!person ||
+		typeof person !== 'object' ||
+		!onlyKeys(person, ['ever_id_sub']) ||
+		!isString(person['ever_id_sub'], 1, 255)
+	)
 		throw refuse('schema_violation');
 	const billing = claims['billing'] as Record<string, unknown> | undefined;
 	if (
@@ -262,7 +284,10 @@ export async function verifyProvisionIntent(
 		(!billing ||
 			typeof billing !== 'object' ||
 			!onlyKeys(billing, ['stripe_customer_ref']) ||
-			!(typeof billing['stripe_customer_ref'] === 'string' && /^cus_[A-Za-z0-9]+$/.test(billing['stripe_customer_ref'])))
+			!(
+				typeof billing['stripe_customer_ref'] === 'string' &&
+				/^cus_[A-Za-z0-9]+$/.test(billing['stripe_customer_ref'])
+			))
 	)
 		throw refuse('schema_violation');
 

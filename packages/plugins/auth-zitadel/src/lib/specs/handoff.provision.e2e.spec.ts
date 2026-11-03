@@ -1,5 +1,11 @@
 import { randomBytes } from 'node:crypto';
-import { TEST_CLIENT_BASE_URL, TestBrowser, ZitadelTestApp, createZitadelTestApp, hashParam } from '../fixtures/zitadel-test-app';
+import {
+	TEST_CLIENT_BASE_URL,
+	TestBrowser,
+	ZitadelTestApp,
+	createZitadelTestApp,
+	hashParam
+} from '../fixtures/zitadel-test-app';
 
 jest.setTimeout(60_000);
 
@@ -83,7 +89,10 @@ describe('Ever ID sign-in that confirms a workspace from Ever', () => {
 		const stranger = t.accounts.addUser({ email: 'someone@acme.example', tenantName: 'Other' });
 		expect(await t.handoffs.signIn(handoff, stranger.id)).toBeNull();
 
-		const second = hashParam(await signIn(`?provision=${provisionKey()}`, { sub: 'person-r', email: 'owner@acme.example' }), 'handoff');
+		const second = hashParam(
+			await signIn(`?provision=${provisionKey()}`, { sub: 'person-r', email: 'owner@acme.example' }),
+			'handoff'
+		);
 		const owner = t.accounts.addUser({ email: 'owner@acme.example', tenantName: 'Acme' });
 		await t.accounts.link([owner], { issuer: t.issuer.issuer, subject: 'person-r' }, 'provisioned');
 		const signInKey = await t.handoffs.signIn(second, owner.id);
@@ -98,7 +107,11 @@ describe('Ever ID sign-in that confirms a workspace from Ever', () => {
 	});
 
 	it('an unverified e-mail: the error page, nothing kept', async () => {
-		const location = await signIn(`?provision=${provisionKey()}`, { sub: 'person-s', email: 'owner@acme.example', email_verified: false });
+		const location = await signIn(`?provision=${provisionKey()}`, {
+			sub: 'person-s',
+			email: 'owner@acme.example',
+			email_verified: false
+		});
 		expect(location).toBe(`${TEST_CLIENT_BASE_URL}/#/auth/ever-id?error=email_unverified`);
 	});
 
@@ -110,7 +123,10 @@ describe('Ever ID sign-in that confirms a workspace from Ever', () => {
 	it('a sign-in without the key is unchanged (redirect kept, workspaces hand-off)', async () => {
 		const user = t.accounts.addUser({ email: 'person-t@example.test', tenantName: 'One' });
 		await t.accounts.link([user], { issuer: t.issuer.issuer, subject: 'person-t' }, 'explicit');
-		const location = await signIn('?redirect=/pages/dashboard', { sub: 'person-t', email: 'person-t@example.test' });
+		const location = await signIn('?redirect=/pages/dashboard', {
+			sub: 'person-t',
+			email: 'person-t@example.test'
+		});
 		expect(location.startsWith(`${TEST_CLIENT_BASE_URL}/#/auth/ever-id?handoff=`)).toBe(true);
 	});
 });

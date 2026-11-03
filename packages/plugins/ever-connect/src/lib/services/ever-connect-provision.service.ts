@@ -21,7 +21,12 @@ import { EverConnectAuditService } from '../ever-connect-audit.service';
 import type { EverConnectConfig } from '../ever-connect-config';
 import { EVER_CONNECT_CLOCK, EVER_CONNECT_SETTINGS } from '../ever-connect.constants';
 import { errorCode } from '../ever-connect-platform.service';
-import { EverConnectProvisionStore, ProvisionIds, ProvisionIntentRecord, ProvisionResultRecord } from '../ever-connect-provision.store';
+import {
+	EverConnectProvisionStore,
+	ProvisionIds,
+	ProvisionIntentRecord,
+	ProvisionResultRecord
+} from '../ever-connect-provision.store';
 import { EverConnectIntentVerifier, ProvisionIntentClaims } from './ever-connect-intent-verifier.service';
 import { EverConnectProvisionCompletion } from './ever-connect-provision-completion.service';
 import { EverConnectProvisionGate } from './ever-connect-provision-gate.service';
@@ -85,7 +90,8 @@ const sha256 = (text: string): string => createHash('sha256').update(text).diges
 const problem = (status: number, code: string, message: string): HttpException =>
 	new HttpException({ statusCode: status, code, message }, status);
 
-const invalid = (): HttpException => new UnauthorizedException({ statusCode: 401, code: 'intent_invalid', message: 'This request is not valid.' });
+const invalid = (): HttpException =>
+	new UnauthorizedException({ statusCode: 401, code: 'intent_invalid', message: 'This request is not valid.' });
 
 const cleanName = (value: unknown): string | undefined => {
 	if (typeof value !== 'string') return undefined;
@@ -184,7 +190,13 @@ export class EverConnectProvisionService {
 			email: handoff.email,
 			first_name: handoff.givenName ?? null,
 			last_name: handoff.familyName ?? null,
-			creates: { workspace: true, organization: true, admin_account: true, employee: true, team: claims.features?.teams ?? true },
+			creates: {
+				workspace: true,
+				organization: true,
+				admin_account: true,
+				employee: true,
+				team: claims.features?.teams ?? true
+			},
 			tier: claims.tier,
 			product_tenant_exists: result?.status === 'created',
 			return_to: claims.return_to,
@@ -212,11 +224,19 @@ export class EverConnectProvisionService {
 		}
 		const provisioner = this.provisioner as ZitadelProvisionerPort;
 		if (await provisioner.isLinkedElsewhere(claims.org.id, key)) {
-			throw problem(HttpStatus.CONFLICT, 'organization_already_linked', 'This Ever organization already has a workspace here.');
+			throw problem(
+				HttpStatus.CONFLICT,
+				'organization_already_linked',
+				'This Ever organization already has a workspace here.'
+			);
 		}
 
 		const holder = randomUUID();
-		let claim = await this.store.claim({ idempotencyKey: key, jti: claims.jti, everOrgId: claims.org.id }, holder, this.now() + CREATION_CLAIM_MS);
+		let claim = await this.store.claim(
+			{ idempotencyKey: key, jti: claims.jti, everOrgId: claims.org.id },
+			holder,
+			this.now() + CREATION_CLAIM_MS
+		);
 		if (claim.outcome === 'replayed') {
 			throw this.replayed();
 		}
@@ -241,7 +261,11 @@ export class EverConnectProvisionService {
 		} catch (error) {
 			await this.store.fail(key, holder, errorCode(error)).catch(() => undefined);
 			this.logger.warn(`Provisioning request ${claims.jti} failed (${errorCode(error)}).`);
-			throw problem(HttpStatus.INTERNAL_SERVER_ERROR, 'provisioning_failed', 'The workspace could not be created; try again.');
+			throw problem(
+				HttpStatus.INTERNAL_SERVER_ERROR,
+				'provisioning_failed',
+				'The workspace could not be created; try again.'
+			);
 		}
 		await this.store.markIntent(claims.jti, 'accepted', ids).catch(() => undefined);
 		claim = { outcome: 'created', record: (await this.store.result(key)) as ProvisionResultRecord };
@@ -345,7 +369,9 @@ export class EverConnectProvisionService {
 	): Promise<ProvisionResponse> {
 		let signInKey: string | null = null;
 		if (record.productUserId) {
-			signInKey = await (this.handoffs as ZitadelHandoffReaderPort).signIn(handoffKey, record.productUserId).catch(() => null);
+			signInKey = await (this.handoffs as ZitadelHandoffReaderPort)
+				.signIn(handoffKey, record.productUserId)
+				.catch(() => null);
 		}
 		return {
 			status,
@@ -364,7 +390,11 @@ export class EverConnectProvisionService {
 	 * binding of the two: the signed-in Ever ID must be the person the request names.
 	 */
 	private async resolve(provisionKey: unknown, handoffKey: unknown): Promise<Resolved> {
-		if (typeof provisionKey !== 'string' || !PROVISION_KEY_SHAPE.test(provisionKey) || typeof handoffKey !== 'string') {
+		if (
+			typeof provisionKey !== 'string' ||
+			!PROVISION_KEY_SHAPE.test(provisionKey) ||
+			typeof handoffKey !== 'string'
+		) {
 			throw invalid();
 		}
 		const intent = await this.store.intentByKey(sha256(provisionKey));
@@ -372,7 +402,11 @@ export class EverConnectProvisionService {
 			throw invalid();
 		}
 		if (this.now() >= intent.expiresAt) {
-			throw new UnauthorizedException({ statusCode: 401, code: 'intent_expired', message: 'This request has expired; start again from Ever.' });
+			throw new UnauthorizedException({
+				statusCode: 401,
+				code: 'intent_expired',
+				message: 'This request has expired; start again from Ever.'
+			});
 		}
 		let claims: ProvisionIntentClaims;
 		try {
@@ -382,7 +416,11 @@ export class EverConnectProvisionService {
 		}
 		const handoff = await (this.handoffs as ZitadelHandoffReaderPort).peek(handoffKey);
 		if (!handoff) {
-			throw new UnauthorizedException({ statusCode: 401, code: 'sign_in_required', message: 'Sign in with Ever ID again.' });
+			throw new UnauthorizedException({
+				statusCode: 401,
+				code: 'sign_in_required',
+				message: 'Sign in with Ever ID again.'
+			});
 		}
 		if (handoff.provisionKey !== provisionKey) {
 			throw invalid();
@@ -403,7 +441,13 @@ export class EverConnectProvisionService {
 }
 
 /** The ids of the provisioner, as the result row names them. */
-function toProvisionIds(ids: { userId?: string; tenantId?: string; organizationId?: string; employeeId?: string; teamId?: string }): ProvisionIds {
+function toProvisionIds(ids: {
+	userId?: string;
+	tenantId?: string;
+	organizationId?: string;
+	employeeId?: string;
+	teamId?: string;
+}): ProvisionIds {
 	return {
 		productUserId: ids.userId ?? null,
 		productTenantId: ids.tenantId ?? null,
