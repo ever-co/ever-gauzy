@@ -165,7 +165,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 							id: true,
 							name: true,
 							imageUrl: true,
-							membersCount: true
+							membersCount: true,
+							color: true
 						},
 						...(slotActivityOnly ? { timeSlots: { id: true, overall: true, duration: true } } : {}),
 						task: TimeLogService.TASK_SELECT_FIELDS,
