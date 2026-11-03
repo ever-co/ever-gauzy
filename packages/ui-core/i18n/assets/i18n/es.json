@@ -4282,6 +4282,7 @@
 		"SUCCESSFULLY_ADDED_PRODUCTS": "¡Los productos se agregaron correctamente!",
 		"MAIN": "Principal",
 		"INVENTORY": "Inventario",
+		"COULD_NOT_UPLOAD_IMAGE": "No se pudo subir la imagen",
 		"IMAGE_WAS_DELETED": "La imagen fue eliminada."
 	},
 	"TASKS_PAGE": {

@@ -4306,6 +4306,7 @@
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Products were added successfully!",
 		"MAIN": "עיקרי",
 		"INVENTORY": "Inventory",
+		"COULD_NOT_UPLOAD_IMAGE": "לא ניתן היה להעלות את התמונה",
 		"IMAGE_WAS_DELETED": "Image was deleted"
 	},
 	"TASKS_PAGE": {

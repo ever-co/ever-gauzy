@@ -4313,6 +4313,7 @@
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Товары успешно добавлены!",
 		"MAIN": "Главная",
 		"INVENTORY": "Инвентаризация",
+		"COULD_NOT_UPLOAD_IMAGE": "Не удалось загрузить изображение",
 		"IMAGE_WAS_DELETED": "Изображение было удалено"
 	},
 	"TASKS_PAGE": {

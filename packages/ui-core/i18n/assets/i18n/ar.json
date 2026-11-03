@@ -4278,6 +4278,7 @@
 		"SUCCESSFULLY_ADDED_PRODUCTS": "تمت إضافة المنتجات بنجاح!",
 		"MAIN": "الرئيسية",
 		"INVENTORY": "المخزون",
+		"COULD_NOT_UPLOAD_IMAGE": "تعذّر رفع الصورة",
 		"IMAGE_WAS_DELETED": "تم حذف الصورة"
 	},
 	"TASKS_PAGE": {

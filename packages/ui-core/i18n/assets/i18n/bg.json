@@ -4338,6 +4338,7 @@
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Products were added successfully!",
 		"MAIN": "Основни",
 		"INVENTORY": "Inventory",
+		"COULD_NOT_UPLOAD_IMAGE": "Изображението не можа да бъде качено",
 		"IMAGE_WAS_DELETED": "Image was deleted"
 	},
 	"TASKS_PAGE": {

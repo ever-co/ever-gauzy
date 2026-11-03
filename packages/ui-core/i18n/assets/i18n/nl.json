@@ -4280,6 +4280,7 @@
 		"SUCCESSFULLY_ADDED_PRODUCTS": "Producten zijn succesvol toegevoegd!",
 		"MAIN": "Hoofd",
 		"INVENTORY": "Voorraad",
+		"COULD_NOT_UPLOAD_IMAGE": "De afbeelding kon niet worden geüpload",
 		"IMAGE_WAS_DELETED": "De afbeelding is verwijderd"
 	},
 	"TASKS_PAGE": {

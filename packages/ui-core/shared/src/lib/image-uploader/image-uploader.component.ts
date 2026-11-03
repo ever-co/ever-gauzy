@@ -7,6 +7,13 @@ import { environment } from '@gauzy/ui-config';
 import { API_PREFIX, distinctUntilChange } from '@gauzy/ui-core/common';
 import { Store } from '@gauzy/ui-core/core';
 
+/** What `uploadImageAssetError` emits when the upload's response has no readable body. */
+export interface IImageUploadFailure {
+	statusCode: number;
+	message: string;
+	error: { statusCode: number; message: string };
+}
+
 @UntilDestroy()
 @Component({
 	selector: 'ngx-image-uploader',
@@ -132,9 +139,13 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 		};
 	}
 
-	/** An upload that failed without a readable body: its status, and a message every host can show. */
-	private failure(statusCode: number): { statusCode: number; message: string } {
-		return { statusCode, message: 'INVENTORY_PAGE.COULD_NOT_UPLOAD_IMAGE' };
+	/**
+	 * An upload that failed without a readable body: its status, and a translation key every host can show. The
+	 * message is also nested under `error`, as in an HTTP error, for the hosts that read `error.error.message`.
+	 */
+	private failure(statusCode: number): IImageUploadFailure {
+		const message = 'INVENTORY_PAGE.COULD_NOT_UPLOAD_IMAGE';
+		return { statusCode, message, error: { statusCode, message } };
 	}
 
 	/**

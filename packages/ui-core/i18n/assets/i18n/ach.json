@@ -4107,6 +4107,7 @@
 		"SUCCESSFULLY_ADDED_PRODUCTS": "crwdns10486:0crwdne10486:0",
 		"MAIN": "crwdns10398:0crwdne10398:0",
 		"INVENTORY": "crwdns10400:0crwdne10400:0",
+		"COULD_NOT_UPLOAD_IMAGE": "Could not upload image",
 		"IMAGE_WAS_DELETED": "crwdns11239:0crwdne11239:0"
 	},
 	"TASKS_PAGE": {

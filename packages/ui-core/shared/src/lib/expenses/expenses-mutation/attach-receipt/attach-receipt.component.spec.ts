@@ -151,6 +151,15 @@ describe('AttachReceiptComponent', () => {
 
 			expect(error().nativeElement.textContent.trim()).toBe('EXPENSE_VIEW.RECEIPT_UPLOAD_FAILED');
 		});
+
+		it('falls back to the generic message when the server sent something other than text', () => {
+			open(null);
+
+			component.handleUploadError({ statusCode: 500, message: { detail: 'boom' } } as any);
+			fixture.detectChanges();
+
+			expect(error().nativeElement.textContent.trim()).toBe('EXPENSE_VIEW.RECEIPT_UPLOAD_FAILED');
+		});
 	});
 
 	describe('removing', () => {
