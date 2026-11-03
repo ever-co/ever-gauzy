@@ -13,6 +13,7 @@ import {
 	DEFAULT_PUBLIC_STATS_TTL_MS,
 	PUBLIC_STATS_NEW_TENANT_WINDOW_DAYS,
 	PublicStatsService,
+	publicStatsCacheControl,
 	resolvePublicStatsTtlMs
 } from './public-stats.service';
 
@@ -38,6 +39,22 @@ describe('resolvePublicStatsTtlMs', () => {
 
 	it('defaults to one hour', () => {
 		expect(DEFAULT_PUBLIC_STATS_TTL_MS).toBe(60 * 60 * 1000);
+	});
+});
+
+/**
+ * The HTTP cache lifetime follows the window: a shorter `PUBLIC_STATS_TTL_MS` must not leave clients and CDNs
+ * reusing hour-old figures, and a window of `0` ("recount on every call") must not be cached at all.
+ */
+describe('publicStatsCacheControl', () => {
+	it.each([
+		['the default window', DEFAULT_PUBLIC_STATS_TTL_MS, 'public, max-age=3600, stale-while-revalidate=600'],
+		['a one-minute window', 60_000, 'public, max-age=60, stale-while-revalidate=60'],
+		['a window under a second', 500, 'public, max-age=0, stale-while-revalidate=0'],
+		['no window', 0, 'no-store'],
+		['an unreadable window', Number.NaN, 'no-store']
+	])('follows %s', (_label, ttlMs, expected) => {
+		expect(publicStatsCacheControl(ttlMs)).toBe(expected);
 	});
 });
 

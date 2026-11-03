@@ -3,13 +3,13 @@
  * `screenshot.controller.spec.ts`).
  */
 import '../../core/entities/internal';
-import { GUARDS_METADATA, HEADERS_METADATA, INTERCEPTORS_METADATA, PATH_METADATA } from '@nestjs/common/constants';
+import { GUARDS_METADATA, INTERCEPTORS_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { Test } from '@nestjs/testing';
 import { FEATURE_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 import { FeatureEnum } from '@gauzy/contracts';
 import { StatsGuard } from '../../stats/stats.guard';
 import { PublicTransformInterceptor } from '../public-transform.interceptor';
-import { PUBLIC_STATS_CACHE_CONTROL, PublicStatsController } from './public-stats.controller';
+import { PublicStatsController } from './public-stats.controller';
 import { PublicStatsService } from './public-stats.service';
 import { PublicStats } from './public-stats.types';
 
@@ -20,6 +20,29 @@ import { PublicStats } from './public-stats.types';
  */
 describe('PublicStatsController', () => {
 	const handler = PublicStatsController.prototype.getPublicStats;
+
+	const stats: PublicStats = {
+		tenants: 5458,
+		tenantsLast90Days: 660,
+		users: 5103,
+		employees: 3858,
+		teams: 2033,
+		projects: 2404,
+		screenshots: 1909960,
+		hoursTracked: 183349,
+		computedAt: '2026-11-03T21:00:00.000Z'
+	};
+
+	/** The controller over a service that answers `stats` and the given `Cache-Control`. */
+	async function build(cacheControl: string) {
+		const getPublicStats = jest.fn(async () => stats);
+		const module = await Test.createTestingModule({
+			controllers: [PublicStatsController],
+			providers: [{ provide: PublicStatsService, useValue: { getPublicStats, cacheControl } }]
+		}).compile();
+		const response = { setHeader: jest.fn() };
+		return { controller: module.get(PublicStatsController), getPublicStats, response };
+	}
 
 	it('is mounted at GET /public/stats', () => {
 		expect(Reflect.getMetadata(PATH_METADATA, PublicStatsController)).toBe('/public/stats');
@@ -41,33 +64,23 @@ describe('PublicStatsController', () => {
 		expect(Reflect.getMetadata(limitKey, handler)).toBe(30);
 	});
 
-	it('lets clients and CDNs reuse the answer for the window', () => {
-		expect(Reflect.getMetadata(HEADERS_METADATA, handler)).toEqual([
-			{ name: 'Cache-Control', value: PUBLIC_STATS_CACHE_CONTROL }
-		]);
-		expect(PUBLIC_STATS_CACHE_CONTROL).toMatch(/^public, max-age=3600/);
+	it("answers the service's counts as they are, cacheable for the service's own window", async () => {
+		const { controller, getPublicStats, response } = await build(
+			'public, max-age=3600, stale-while-revalidate=600'
+		);
+
+		await expect(controller.getPublicStats(response as any)).resolves.toEqual(stats);
+		expect(getPublicStats).toHaveBeenCalledTimes(1);
+		expect(response.setHeader).toHaveBeenCalledWith(
+			'Cache-Control',
+			'public, max-age=3600, stale-while-revalidate=600'
+		);
 	});
 
-	it("answers the service's counts as they are", async () => {
-		const stats: PublicStats = {
-			tenants: 5458,
-			tenantsLast90Days: 660,
-			users: 5103,
-			employees: 3858,
-			teams: 2033,
-			projects: 2404,
-			screenshots: 1909960,
-			hoursTracked: 183349,
-			computedAt: '2026-11-03T21:00:00.000Z'
-		};
-		const getPublicStats = jest.fn(async () => stats);
-		const module = await Test.createTestingModule({
-			controllers: [PublicStatsController],
-			providers: [{ provide: PublicStatsService, useValue: { getPublicStats } }]
-		}).compile();
-		const controller = module.get(PublicStatsController);
+	it('forbids caching when the service recounts on every call', async () => {
+		const { controller, response } = await build('no-store');
 
-		await expect(controller.getPublicStats()).resolves.toEqual(stats);
-		expect(getPublicStats).toHaveBeenCalledTimes(1);
+		await controller.getPublicStats(response as any);
+		expect(response.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
 	});
 });

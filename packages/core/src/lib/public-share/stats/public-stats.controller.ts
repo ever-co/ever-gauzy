@@ -1,18 +1,13 @@
-import { Controller, Get, Header, HttpStatus, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Response } from 'express';
 import { FeatureFlag, Public } from '@gauzy/common';
 import { FeatureEnum } from '@gauzy/contracts';
 import { StatsGuard } from '../../stats/stats.guard';
 import { PublicTransformInterceptor } from '../public-transform.interceptor';
 import { PublicStatsService } from './public-stats.service';
 import { PublicStats } from './public-stats.types';
-
-/**
- * How long a client, or a CDN in front of the API, may reuse an answer: the service's own window, plus a
- * short grace in which a stale copy may be served while the next one is fetched.
- */
-export const PUBLIC_STATS_CACHE_CONTROL = 'public, max-age=3600, stale-while-revalidate=600';
 
 /**
  * `GET /public/stats`: the installation's aggregate counts, for anyone.
@@ -33,6 +28,11 @@ export class PublicStatsController {
 	/**
 	 * The counts (see {@link PublicStats}).
 	 *
+	 * The `Cache-Control` follows the service's own window (`PUBLIC_STATS_TTL_MS`): clients and CDNs may reuse
+	 * the answer for as long as the API itself would, and not at all when the window is `0`. Set on the
+	 * response here rather than by `@Header`, which is fixed at class definition.
+	 *
+	 * @param response The response, passed through: Nest still serializes the returned counts.
 	 * @returns The counts, from the cache when it holds them.
 	 */
 	@ApiOperation({
@@ -45,9 +45,9 @@ export class PublicStatsController {
 		description: 'This installation does not publish its statistics (FEATURE_OPEN_STATS is off).'
 	})
 	@Throttle({ default: { limit: 30, ttl: 60000 } })
-	@Header('Cache-Control', PUBLIC_STATS_CACHE_CONTROL)
 	@Get()
-	async getPublicStats(): Promise<PublicStats> {
+	async getPublicStats(@Res({ passthrough: true }) response: Response): Promise<PublicStats> {
+		response.setHeader('Cache-Control', this._publicStatsService.cacheControl);
 		return await this._publicStatsService.getPublicStats();
 	}
 }

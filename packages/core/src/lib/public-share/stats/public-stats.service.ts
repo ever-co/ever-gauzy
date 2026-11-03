@@ -43,6 +43,22 @@ export function resolvePublicStatsTtlMs(value: string | undefined = process.env.
 }
 
 /**
+ * The `Cache-Control` the route answers for a given window: clients and CDNs may reuse the figures for the
+ * service's own window, with a short grace in which a stale copy may be served while the next one is fetched;
+ * `no-store` when the window is `0`, since then every call is meant to recount.
+ *
+ * @param ttlMs The reuse window in milliseconds (see {@link resolvePublicStatsTtlMs}).
+ * @returns The header value.
+ */
+export function publicStatsCacheControl(ttlMs: number): string {
+	if (!Number.isFinite(ttlMs) || ttlMs <= 0) {
+		return 'no-store';
+	}
+	const maxAge = Math.floor(ttlMs / 1000);
+	return `public, max-age=${maxAge}, stale-while-revalidate=${Math.min(600, maxAge)}`;
+}
+
+/**
  * The counts behind `GET /public/stats`: the installation's tenants, people, teams, projects, screenshots and
  * tracked hours, as whole numbers and nothing else (see {@link PublicStats}).
  *
@@ -70,6 +86,11 @@ export class PublicStatsService {
 		readonly _typeOrmTimeSlotRepository: TypeOrmTimeSlotRepository,
 		readonly _mikroOrmTimeSlotRepository: MikroOrmTimeSlotRepository
 	) {}
+
+	/** The `Cache-Control` matching this service's window (see {@link publicStatsCacheControl}). */
+	get cacheControl(): string {
+		return publicStatsCacheControl(this.ttlMs);
+	}
 
 	/**
 	 * The public counts, from the window's cache when it holds them (the class note has the reuse rules).
