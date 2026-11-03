@@ -957,7 +957,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 					{
 						table: 'organization_project',
 						timeLogKey: 'projectId',
-						columns: ['id', 'name', 'budget', 'budgetType', 'imageUrl', 'membersCount']
+						columns: ['id', 'name', 'budget', 'budgetType', 'imageUrl', 'membersCount', 'currency', 'color']
 					},
 					{ tenantId, organizationId, employeeIds, projectIds, startDate, endDate }
 				);
@@ -980,7 +980,9 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						budget: true,
 						budgetType: true,
 						imageUrl: true,
-						membersCount: true
+						membersCount: true,
+						currency: true,
+						color: true
 					},
 					relations: {
 						timeLogs: {
