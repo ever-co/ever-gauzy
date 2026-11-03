@@ -244,9 +244,79 @@
 						}
 					</div>
 				</section>
+
+				<!-- How the expense compares: its category's spending by month, this expense's month highlighted. -->
+				@if (expense.category) {
+					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+									{{ 'EXPENSE_VIEW.CATEGORY_SPENDING' | translate }}
+								</h5>
+								<span class="panel-caption">
+									{{
+										'EXPENSE_VIEW.CATEGORY_SPENDING_CAPTION'
+											| translate : { category: expense.category.name, count: categoryChartMonths, currency: expense.currency }
+									}}
+								</span>
+							</div>
+						</header>
+						<div class="panel-body project-chart-body">
+							@if (charts.failed) {
+								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (charts.categoryBars.length) {
+								<ga-expense-bar-chart
+									[formatValue]="formatAmount"
+									[highlightLabel]="'EXPENSE_VIEW.THIS_MONTH' | translate"
+									[otherLabel]="'EXPENSE_VIEW.OTHER_MONTHS' | translate"
+									[bars]="charts.categoryBars"
+								></ga-expense-bar-chart>
+							}
+						</div>
+					</section>
+				}
+
+				<!-- The payments to the same vendor in date order, this one highlighted: repeat costs and price changes. -->
+				@if (expense.vendor) {
+					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="trending-up-outline" aria-hidden="true"></nb-icon>
+									{{ 'EXPENSE_VIEW.VENDOR_PAYMENTS' | translate }}
+								</h5>
+								@if (charts.vendorBars.length > 1) {
+									<span class="panel-caption">
+										{{
+											'EXPENSE_VIEW.VENDOR_PAYMENTS_CAPTION'
+												| translate : { vendor: expense.vendor.name, count: charts.vendorBars.length, currency: expense.currency }
+										}}
+									</span>
+								}
+							</div>
+						</header>
+						<div class="panel-body project-chart-body">
+							@if (charts.failed) {
+								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (!charts.loading && charts.vendorBars.length <= 1) {
+								<ng-container
+									*ngTemplateOutlet="empty; context: { $implicit: 'EXPENSE_VIEW.NO_OTHER_PAYMENTS', icon: 'trending-up-outline' }"
+								></ng-container>
+							} @else if (charts.vendorBars.length) {
+								<ga-expense-bar-chart
+									[formatValue]="formatAmount"
+									[highlightLabel]="'EXPENSE_VIEW.THIS_EXPENSE' | translate"
+									[otherLabel]="'EXPENSE_VIEW.OTHER_PAYMENTS' | translate"
+									[bars]="charts.vendorBars"
+								></ga-expense-bar-chart>
+							}
+						</div>
+					</section>
+				}
 			</div>
 
-			<!-- The facts: every field of the expense, then its stamps. -->
+			<!-- The facts: every field of the expense, its share of its month, then its stamps. -->
 			<div class="project-view-col project-view-col--side">
 				<ngx-record-view
 					class="expense-details"
@@ -254,11 +324,54 @@
 					[sections]="detailsSections"
 					[placeholder]="'SM_TABLE.NONE' | translate"
 				></ngx-record-view>
+
+				<!-- This expense against the rest of its category's spending in the same month. -->
+				@if (expense.category && (charts.loading || charts.failed || charts.share)) {
+					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="pie-chart-outline" aria-hidden="true"></nb-icon>
+									{{ 'EXPENSE_VIEW.MONTH_SHARE' | translate }}
+								</h5>
+								@if (charts.shareMonth) {
+									<span class="panel-caption">
+										{{
+											'EXPENSE_VIEW.MONTH_SHARE_CAPTION'
+												| translate : { category: expense.category.name, month: charts.shareMonth }
+										}}
+									</span>
+								}
+							</div>
+						</header>
+						<div class="panel-body">
+							@if (charts.failed) {
+								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (charts.share) {
+								<ga-expense-share-chart
+									[formatValue]="formatAmount"
+									[amountLabel]="'EXPENSE_VIEW.THIS_EXPENSE' | translate"
+									[restLabel]="'EXPENSE_VIEW.REST_OF_MONTH' | translate"
+									[totalLabel]="'EXPENSE_VIEW.MONTH_TOTAL' | translate"
+									[share]="charts.share"
+								></ga-expense-share-chart>
+							}
+						</div>
+					</section>
+				}
+
 				<ngx-record-view [record]="record" [sections]="metaSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
 			</div>
 		</div>
 	}
 </ngx-record-view-page>
+
+<ng-template #chartFailed>
+	<div class="state state--compact">
+		<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'EXPENSE_VIEW.CHART_FAILED' | translate }}</p>
+	</div>
+</ng-template>
 
 <ng-template #empty let-key let-icon="icon">
 	<div class="state state--compact">

@@ -23,8 +23,17 @@ import {
 	expenseStatusBadge,
 	expenseTaxOf,
 	expenseTypeKey,
+	formatExpenseMoney,
 	loadExpense
 } from '../expense-record-view';
+import {
+	categoryMonthBars,
+	CATEGORY_CHART_MONTHS,
+	IExpenseChartBar,
+	IExpenseMonthShare,
+	monthShareOf,
+	vendorPaymentBars
+} from './expense-view-charts';
 
 /** Where the expense page's back button leads, and where a deleted expense's page goes. */
 export const EXPENSES_LIST_LINK = '/pages/accounting/expenses';
@@ -45,6 +54,29 @@ export interface IExpenseHeadline {
 	since: string | null;
 }
 
+/** The charts: the expenses they compare this one with, and what is drawn from them. */
+export interface IExpenseCharts {
+	loading: boolean;
+	failed: boolean;
+	/** The category's spending per month, ending with this expense's month. */
+	categoryBars: IExpenseChartBar[];
+	/** The payments to the vendor, this one among them. */
+	vendorBars: IExpenseChartBar[];
+	/** This expense against the rest of its category in its month. */
+	share: IExpenseMonthShare | null;
+	/** The month the share is of, e.g. "March 2026". */
+	shareMonth: string | null;
+}
+
+const NO_CHARTS: IExpenseCharts = {
+	loading: false,
+	failed: false,
+	categoryBars: [],
+	vendorBars: [],
+	share: null,
+	shareMonth: null
+};
+
 /**
  * An expense on its own full-width page, `/pages/accounting/expenses/view/:id` (handover §4.P): what an expense
  * favorite in the sidebar opens, and where the expense drawer's "expand to full width" icon leads.
@@ -52,7 +84,8 @@ export interface IExpenseHeadline {
  * Laid out as Jira's issue page, with the facts Hubstaff puts on an expense: the actions — Edit, Duplicate, Copy
  * link, the star and Delete — beside the back button; the headline — who was paid, the status, the category and
  * the project, then the amount, the tax, the type and the date as figures; the record in the wide column — what it
- * was for, the notes, the tags and the receipt; and the facts in the side column — the details, then the stamps.
+ * was for, the notes, the tags and the receipt, then how it compares: its category's spending by month and the
+ * payments to its vendor; and the facts in the side column — the details, its share of its month, then the stamps.
  *
  * The page belongs to the organization selected in the header, like the expenses list: an expense of another
  * organization reads "not found", and switching the organization reloads the page, discarding any load in flight.
@@ -93,6 +126,13 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 	/** The created / updated stamps, at the foot of the side column. */
 	metaSections: IRecordViewSection[] = [];
 
+	/** The category, vendor and month charts, read after the expense itself. */
+	charts: IExpenseCharts = NO_CHARTS;
+	readonly categoryChartMonths = CATEGORY_CHART_MONTHS;
+	/** Formats a chart's amount in the expense's currency. */
+	readonly formatAmount = (value: number): string =>
+		formatExpenseMoney(value, this.expense?.currency, this.translateService.getCurrentLang() || undefined);
+
 	state: RecordViewPageState = 'loading';
 	organization: IOrganization | null = null;
 	/** An edit, a duplicate or a delete is being saved: the actions wait for it. */
@@ -101,6 +141,11 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 	private expenseId: string = null;
 	/** Bumped by every load; a load that is no longer the latest one when it answers is discarded. */
 	private loadSequence = 0;
+	/** The same for the charts' reads, which answer after the expense's. */
+	private chartsSequence = 0;
+	/** The expenses of this one's category and of its vendor, as the charts last read them. */
+	private categoryExpenses: IExpense[] = [];
+	private vendorExpenses: IExpense[] = [];
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -150,6 +195,9 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		this.expense = null;
 		this.record = null;
 		this.headline = null;
+		this.charts = NO_CHARTS;
+		this.categoryExpenses = [];
+		this.vendorExpenses = [];
 		this.state = 'loading';
 		try {
 			const expense = await loadExpense(this.expensesService, id, scope);
@@ -294,6 +342,61 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		this.receipt = expenseReceiptOf(expense);
 		this.receiptBroken = false;
 		this.describe();
+		void this.loadCharts(expense);
+	}
+
+	/**
+	 * Reads the expenses the charts compare this one with: those of its category and those of its vendor. A failed
+	 * read leaves the rest of the page as it is; the charts' panels say so.
+	 */
+	private async loadCharts(expense: IExpense): Promise<void> {
+		const scope = this.scope();
+		const categoryId = expense.categoryId ?? expense.category?.id;
+		const vendorId = expense.vendorId ?? expense.vendor?.id;
+		const sequence = ++this.chartsSequence;
+		if (!scope || (!categoryId && !vendorId)) {
+			this.charts = NO_CHARTS;
+			return;
+		}
+		this.charts = { ...this.charts, loading: true, failed: false };
+		const read = async (where: Partial<IExpense>): Promise<IExpense[]> => {
+			const { items } = await this.expensesService.getAll([], { ...where, ...scope } as any);
+			return items ?? [];
+		};
+		try {
+			const [category, vendor] = await Promise.all([
+				categoryId ? read({ categoryId }) : Promise.resolve([]),
+				vendorId ? read({ vendorId }) : Promise.resolve([])
+			]);
+			if (sequence !== this.chartsSequence) return;
+			this.categoryExpenses = category;
+			this.vendorExpenses = vendor;
+			this.charts = { ...this.charts, loading: false };
+			this.describeCharts();
+		} catch {
+			if (sequence === this.chartsSequence) {
+				this.charts = { ...NO_CHARTS, failed: true };
+			}
+		}
+	}
+
+	/** Draws the charts from the expenses last read, in the viewer's language. */
+	private describeCharts(): void {
+		const expense = this.expense;
+		if (!expense || this.charts.loading || this.charts.failed) {
+			return;
+		}
+		const locale = this.translateService.getCurrentLang() || 'en';
+		const hasCategory = !!(expense.categoryId ?? expense.category?.id);
+		const hasVendor = !!(expense.vendorId ?? expense.vendor?.id);
+		const share = hasCategory ? monthShareOf(this.categoryExpenses, expense) : null;
+		this.charts = {
+			...this.charts,
+			categoryBars: hasCategory ? categoryMonthBars(this.categoryExpenses, expense, locale) : [],
+			vendorBars: hasVendor ? vendorPaymentBars(this.vendorExpenses, expense, locale) : [],
+			share,
+			shareMonth: share ? moment(expense.valueDate).locale(locale).format('MMMM YYYY') : null
+		};
 	}
 
 	/** Works out the headline and the sections from the expense, in the viewer's language. */
@@ -360,6 +463,8 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 				]
 			}
 		];
+
+		this.describeCharts();
 
 		this.metaSections = [
 			{
