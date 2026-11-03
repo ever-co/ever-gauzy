@@ -1,4 +1,16 @@
-import { ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, Output, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import {
+	ChangeDetectorRef,
+	Component,
+	effect,
+	EventEmitter,
+	inject,
+	input,
+	Input,
+	OnInit,
+	Output,
+	ViewChild,
+	ChangeDetectionStrategy
+} from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { Router } from '@angular/router';
 import {
@@ -119,18 +131,22 @@ export class MenuItemComponent implements OnInit {
 	 *
 	 * @return {IMenuItem} The selected child, or null when none is.
 	 */
-	private _selectedChildren: IMenuItem | null = null;
-	public get selectedChildren() {
-		return this._selectedChildren;
+	public readonly activeChild = input<IMenuItem | null>(null);
+	public get selectedChildren(): IMenuItem | null {
+		return this.activeChild();
 	}
-	@Input() set activeChild(value: IMenuItem | null) {
-		this._selectedChildren = value ?? null;
 
-		// Open the accordion so the active sub-row is on screen, e.g. after a reload or a deep link.
-		if (value && this.collapse) {
+	/**
+	 * Open the accordion so the active sub-row is on screen, e.g. after a reload or a deep link.
+	 *
+	 * Runs only when `activeChild` changes, so a group the user folds by hand stays folded until the
+	 * route moves to another of its rows.
+	 */
+	private readonly _expandToActiveChild = effect(() => {
+		if (this.activeChild() && this.collapse) {
 			this.collapse = false;
 		}
-	}
+	});
 
 	/**
 	 * The hover flyout that lists this entry's sub-links while the sidebar is collapsed to the icon
