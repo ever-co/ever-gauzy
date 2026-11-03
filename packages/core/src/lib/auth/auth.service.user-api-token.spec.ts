@@ -4,6 +4,7 @@ import '../core/entities/internal';
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { sign } from 'jsonwebtoken';
 import { RequestContext } from '../core/context';
+import { EmailResetService } from '../email-reset/email-reset.service';
 import { UserService } from '../user/user.service';
 import { AuthService } from './auth.service';
 import { assertFirstPartyRequest } from './oauth-app-first-party';
@@ -332,6 +333,16 @@ describe('a session that came from an API token is not the user’s own session'
 		await expect(
 			(service as AuthService).createOAuthAppAuthorizationCode({ userId: 'u1' } as any)
 		).rejects.toThrow(ForbiddenException);
+	});
+
+	it.each([
+		['asking to move the address', (service: EmailResetService) => service.requestChangeEmail({ email: 'new@ever.co' } as any, null)],
+		['confirming the move', (service: EmailResetService) => service.verifyCode({ code: '123456' } as any)]
+	])('%s is refused, and nothing answers "OK"', async (_name, call) => {
+		asApiTokenSession();
+		const service = Object.create(EmailResetService.prototype);
+
+		await expect(call(service)).rejects.toThrow(ForbiddenException);
 	});
 
 	describe('setting a password or an address on the account', () => {
