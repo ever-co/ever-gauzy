@@ -8875,6 +8875,24 @@
 		"COMMENT_IMAGE_LIMIT": "A comment can carry up to {{ count }} images.",
 		"COMMENT_IMAGE_FAILED": "Couldn’t upload {{ name }}."
 	},
+	"EXPENSE_VIEW": {
+		"EXPENSE": "Expense",
+		"DETAILS": "Details",
+		"DESCRIPTION": "Description",
+		"NO_DESCRIPTION": "No purpose, notes or tags were added to this expense.",
+		"RECEIPT": "Receipt",
+		"NO_RECEIPT": "No receipt attached",
+		"OPEN_RECEIPT": "Open receipt",
+		"AMOUNT": "Amount",
+		"CURRENCY_HINT": "In {{ currency }}",
+		"SPLIT_HINT": "In {{ currency }}, split across all employees",
+		"TAX": "Tax",
+		"NO_TAX": "No tax",
+		"TAX_LABEL": "Tax label",
+		"TYPE": "Type",
+		"EXPENSE_DATE": "Expense date",
+		"LINK_COPIED": "Link copied"
+	},
 	"TASK_VIEW": {
 		"PROJECT": "Project",
 		"NO_PROJECT": "No project",
