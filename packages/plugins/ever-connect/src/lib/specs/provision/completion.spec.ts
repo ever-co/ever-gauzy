@@ -36,6 +36,11 @@ describe('workspace completion report', () => {
 	beforeEach(async () => {
 		h = await identityHarness(ENV);
 		await h.connectAndEnable();
+		// The installation's links on Ever Platform (none unless a test says otherwise).
+		h.platform.on('GET /v1/instances/me', {
+			status: 200,
+			body: { instance: { id: INSTANCE_ID }, tenant_links: [] }
+		});
 		provisions = new EverConnectProvisionStore(h.dataSource, h.clock);
 		completion = new EverConnectProvisionCompletion(
 			provisions,
