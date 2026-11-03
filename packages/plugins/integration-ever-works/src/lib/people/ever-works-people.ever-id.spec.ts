@@ -151,6 +151,7 @@ function setup(
 		accountsMissing?: boolean;
 		declined?: string[];
 		database?: { type: string; runner: { connect: jest.Mock; release: jest.Mock; query: jest.Mock } };
+		inboxPreferences?: unknown;
 	} = {}
 ) {
 	const links: LinkRow[] = (options.links ?? []).map((l, i) => ({
@@ -242,7 +243,14 @@ function setup(
 			links.splice(links.indexOf(link), 1);
 		})
 	};
-	const service = new EverWorksPeopleService(dataSource as never, contexts as never, connections as never, linkService as never, { execute: jest.fn() } as never);
+	const service = new EverWorksPeopleService(
+		dataSource as never,
+		contexts as never,
+		connections as never,
+		linkService as never,
+		{ execute: jest.fn() } as never,
+		options.inboxPreferences as never
+	);
 	const declined = () => {
 		const row = settings.find((s) => s.settingsName === EverWorksSettingName.PEOPLE_EVER_ID_DECLINED);
 		return row ? (JSON.parse(row.settingsValue) as string[]) : [];
@@ -381,5 +389,20 @@ describe('EverWorksPeopleService — Ever ID matching', () => {
 		});
 		const view = await service.people('m1' as never);
 		expect(Object.fromEntries(view.members.map((m) => [m.ewUserId, m.matchedBy]))).toEqual({ 'U-ada': 'ever_id', 'U-bob': 'verified_email', 'U-cy': 'manual' });
+	});
+});
+
+describe('EverWorksPeopleService — what each paired person sends of their Gauzy Inbox', () => {
+	it('shows each paired person’s choice, null for an unpaired member, and null for all when the read fails', async () => {
+		const summaries = jest.fn(async (_tenantId: string, userIds: string[]) => new Map(userIds.map((userId) => [userId, { kinds: { email: false }, customized: true }])));
+		const { service } = setup({ members: [member('U-ada'), member('U-zed')], links: [{ ewId: 'U-ada', gauzyId: 'E-ada' }], inboxPreferences: { summaries } });
+		const view = await service.people('m1' as never);
+		expect(summaries).toHaveBeenCalledWith('t1', ['user-ada']);
+		expect(view.members.find((m) => m.ewUserId === 'U-ada')?.inboxToEverWorks).toEqual({ kinds: { email: false }, customized: true });
+		expect(view.members.find((m) => m.ewUserId === 'U-zed')?.inboxToEverWorks).toBeNull();
+		// A failed read never fails the tab (nor its pairing).
+		summaries.mockRejectedValueOnce(new Error('database unavailable'));
+		const after = await service.people('m1' as never);
+		expect(after.members.map((m) => m.inboxToEverWorks)).toEqual([null, null]);
 	});
 });

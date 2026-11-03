@@ -3,6 +3,7 @@ export * from './lib/inbox.plugin';
 export * from './lib/inbox.module';
 export * from './lib/inbox.service';
 export * from './lib/inbox-source-handler.registry';
+export * from './lib/inbox-item-feed';
 export * from './lib/inbox.constants';
 export * from './lib/graphql/inbox.resolver';
 export * from './lib/graphql/inbox.schema';

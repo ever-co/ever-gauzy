@@ -6253,6 +6253,7 @@
 		"MONTHLY": "Miesięcznie",
 		"CALENDAR": "Kalendarz",
 		"APPROVALS": "Zatwierdzenia",
+		"ALL": "Wszystkie",
 		"APPROVE_SUCCESS": "Arkusz czasu pracy zatwierdzony pomyślnie",
 		"DENIED_SUCCESS": "Timesheet pomyślnie odrzucone",
 		"SUBMIT_SUCCESS": "Arkusz czasu pracy został pomyślnie przesłany",
@@ -7670,6 +7671,7 @@
 		"SUBTASKS": "Podzadania",
 		"SUBTASKS_DONE": "Ukończono {{ done }} z {{ total }}",
 		"NO_SUBTASKS": "Brak podzadań",
+		"ADD_SUBTASK": "Dodaj podzadanie",
 		"LINKED_ISSUES": "Powiązane zadania",
 		"NO_LINKED_ISSUES": "Brak powiązanych zadań",
 		"LINKS": {

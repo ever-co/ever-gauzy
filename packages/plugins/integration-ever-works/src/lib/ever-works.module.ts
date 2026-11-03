@@ -16,6 +16,10 @@ import { readEverWorksConfig } from './ever-works-config';
 import { EverWorksScopeService } from './ever-works-scope.service';
 import { EverWorksController } from './ever-works.controller';
 import { EverWorksInboxService } from './inbox/ever-works-inbox.service';
+import { EverWorksInboxPreference, MikroOrmEverWorksInboxPreferenceRepository } from './inbox/ever-works-inbox-preference.entity';
+import { EverWorksInboxPreferencesController } from './inbox/ever-works-inbox-preferences.controller';
+import { EverWorksInboxPreferencesService } from './inbox/ever-works-inbox-preferences.service';
+import { EverWorksInboxPushService } from './inbox/ever-works-inbox-push.service';
 import { EverWorksAgentEmailService } from './email/ever-works-agent-email.service';
 import { EverWorksAgentEmailMirror } from './email/ever-works-agent-email.mirror';
 import { EverWorksGoalCapture, EverWorksGoalSubscriber, EverWorksKeyResultSubscriber, EverWorksKeyResultUpdateSubscriber } from './goals/ever-works-goal.signals';
@@ -90,6 +94,7 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		private readonly tasks: EverWorksTasksService,
 		private readonly taskComments: EverWorksTaskCommentsService,
 		private readonly inbox: EverWorksInboxService,
+		private readonly inboxPush: EverWorksInboxPushService,
 		private readonly agentEmail: EverWorksAgentEmailService,
 		private readonly agentEmailMirror: EverWorksAgentEmailMirror
 	) {}
@@ -110,6 +115,10 @@ export class EverWorksHandlersRegistrar implements OnModuleInit {
 		this.loop.registerSweeper(this.taskComments);
 		// EW inbox items → the Gauzy Inbox (skipped while the Gauzy Inbox is off).
 		this.applier.register(this.inbox);
+		// The Gauzy Inbox's own items → Ever Works (per person and kind), with a recovery sweep; their events come back
+		// through the inbox handler above.
+		this.pusher.register(this.inboxPush);
+		this.loop.registerSweeper(this.inboxPush);
 		// Mailboxes routed to an Ever Works agent → POST /email/inbound (only queued where the Inbox email features run).
 		this.pusher.register(this.agentEmail);
 		this.loop.registerSweeper(this.agentEmail);
@@ -138,7 +147,15 @@ export const EVER_WORKS_SUBSCRIBERS = [
 ];
 
 /** Every table the plugin owns (its migrations create them). */
-export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, EverWorksInboundEvent, EverWorksOutboundChange, EverWorksSyncLog, EverWorksSyncRun];
+export const EVER_WORKS_ENTITIES = [
+	EverWorksConnection,
+	EverWorksEntityLink,
+	EverWorksInboundEvent,
+	EverWorksOutboundChange,
+	EverWorksSyncLog,
+	EverWorksSyncRun,
+	EverWorksInboxPreference
+];
 
 /**
  * The Ever Works integration module (`@gauzy/plugin-integration-ever-works`). Loaded only when
@@ -166,7 +183,8 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksProjectsController,
 		EverWorksInitiativesController,
 		EverWorksWebhookController,
-		EverWorksSyncController
+		EverWorksSyncController,
+		EverWorksInboxPreferencesController
 	],
 	providers: [
 		EverWorksCatalogService,
@@ -199,6 +217,9 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		EverWorksTaskCommentsService,
 		EverWorksTaskEdgeCapture,
 		EverWorksInboxService,
+		// The Gauzy Inbox → Ever Works mirror and each person's choice of what it sends.
+		EverWorksInboxPreferencesService,
+		EverWorksInboxPushService,
 		EverWorksAgentEmailService,
 		EverWorksAgentEmailMirror,
 		EverWorksTeamCapture,
@@ -226,6 +247,7 @@ export const EVER_WORKS_ENTITIES = [EverWorksConnection, EverWorksEntityLink, Ev
 		MikroOrmEverWorksOutboundChangeRepository,
 		MikroOrmEverWorksSyncLogRepository,
 		MikroOrmEverWorksSyncRunRepository,
+		MikroOrmEverWorksInboxPreferenceRepository,
 		{
 			provide: EVER_WORKS_CONFIG,
 			useFactory: () => {

@@ -6,6 +6,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { Observable, Subject } from 'rxjs';
 import { map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import {
+	EVER_WORKS_INBOX_KINDS,
 	EverWorksAgentRow,
 	EverWorksInitiativesView,
 	EverWorksPeopleView,
@@ -44,6 +45,19 @@ export interface EverWorksPendingInvite {
 
 /** The Ever Works inbox item kinds the People tab names (plan 04 §4). */
 const DEFERRED_KINDS: ReadonlySet<string> = new Set(['question', 'approval', 'escalation', 'notice']);
+
+/** The Gauzy Inbox kinds the People tab names (another one, from a newer API, is shown by its name). */
+const INBOX_KINDS: ReadonlySet<string> = new Set(EVER_WORKS_INBOX_KINDS);
+
+/** A paired person's choice of the Gauzy Inbox items sent to Ever Works, summed up for the People tab. */
+export interface EverWorksInboxSummary {
+	/** All kinds, none, or some of them (a translation key). */
+	key: string;
+	on: number;
+	total: number;
+	/** The kinds not sent, as translation keys ("no emails"), in display order. */
+	off: string[];
+}
 
 /** A Gauzy initiative in this state goes to Ever Works only once it is active (the API refuses a draft). */
 export const DRAFT_INITIATIVE = 'draft';
@@ -126,6 +140,15 @@ export const DRAFT_INITIATIVE = 'draft';
 												<small [attr.data-test]="'match-source-' + row.ewUserId">· {{ 'EVER_WORKS.REVIEW.MATCHED_BY.' + row.matchedBy | translate }}</small>
 											} @else if (!row.linkedEmployeeId && row.suggestion) {
 												<small [attr.data-test]="'suggestion-reason-' + row.ewUserId">· {{ 'EVER_WORKS.REVIEW.MATCHED_BY.' + row.suggestion.reason | translate }}</small>
+											}
+											@if (row.linkedEmployeeId && row.inboxToEverWorks; as inbox) {
+												@if (inboxSummary(inbox.kinds); as summary) {
+													<small class="inbox-summary" [attr.data-test]="'inbox-summary-' + row.ewUserId"
+														>{{ 'EVER_WORKS.REVIEW.INBOX_TO_EVER_WORKS.TITLE' | translate }}: {{ summary.key | translate: summary }}@if (summary.on && summary.off.length) {
+															<span class="inbox-off"> (@for (kind of summary.off; track kind; let last = $last) {<span>{{ kind | translate }}</span>@if (!last) {, }})</span>
+														}</small
+													>
+												}
 											}
 										</td>
 									</tr>
@@ -454,7 +477,8 @@ export const DRAFT_INITIATIVE = 'draft';
 			.nested {
 				padding-left: 1.5rem;
 			}
-			.invite-note {
+			.invite-note,
+			.inbox-summary {
 				display: block;
 				margin-top: 0.25rem;
 			}
@@ -551,6 +575,27 @@ export class EverWorksMatchReviewComponent implements OnChanges {
 	/** What a waiting inbox item is, as a translation key (an unknown kind as it is): its title is never shown. */
 	deferredKind(kind: string | null): string {
 		return kind && DEFERRED_KINDS.has(kind) ? `EVER_WORKS.REVIEW.DEFERRED_KIND.${kind}` : kind || '—';
+	}
+
+	/**
+	 * Which of a paired person's Gauzy Inbox items go to Ever Works, as they chose it (read-only here: each person
+	 * chooses in Settings → Ever Works inbox). A kind without a value is sent (the default).
+	 */
+	inboxSummary(kinds: Record<string, boolean> | null | undefined): EverWorksInboxSummary {
+		const values = kinds ?? {};
+		const listed = [...EVER_WORKS_INBOX_KINDS.filter((kind) => kind in values), ...Object.keys(values).filter((kind) => !INBOX_KINDS.has(kind))];
+		const off = listed.filter((kind) => values[kind] === false);
+		const on = listed.length - off.length;
+		return {
+			key: !off.length
+				? 'EVER_WORKS.REVIEW.INBOX_TO_EVER_WORKS.ALL'
+				: on
+					? 'EVER_WORKS.REVIEW.INBOX_TO_EVER_WORKS.SOME'
+					: 'EVER_WORKS.REVIEW.INBOX_TO_EVER_WORKS.NONE',
+			on,
+			total: listed.length,
+			off: off.map((kind) => (INBOX_KINDS.has(kind) ? `EVER_WORKS.INBOX_KINDS.${kind}.NO` : kind))
+		};
 	}
 
 	/** When a waiting inbox item happened, or `null` for a time that is not a date (the date pipe would throw on it). */

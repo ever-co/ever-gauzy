@@ -16,8 +16,8 @@ import {
 	NbSpinnerModule
 } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
-import { EMPTY, Subject } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import { EMPTY, Subject, Subscription } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, skip, switchMap } from 'rxjs/operators';
 import {
 	IInboxItemWithState,
 	IInboxRecipientStateInput,
@@ -408,12 +408,41 @@ export class InboxPageComponent implements OnInit {
 	readonly search$ = new Subject<string>();
 	/** `false`: a fresh first page; `true`: the next page after `nextCursor`. */
 	private readonly load$ = new Subject<boolean>();
+	/** `?item=` of the URL, opened once the Inbox is served (then forgotten, unless it could not be opened yet). */
+	private requestedItemId: string | null = null;
+	/** The read of the latest `?item=` link still on its way (a later link cancels it). */
+	private linkRead: Subscription | null = null;
+	/** The item open when the pending link arrived: a link never replaces an item opened after it. */
+	private selectedAtLink: string | null = null;
 
 	ngOnInit(): void {
 		this.readRequestedTab();
+		this.requestedItemId = this.route.snapshot.queryParamMap.get('item')?.trim() || null;
 		this.setUpListStream();
 		this.setUpSearch();
+		this.followItemLinks();
 		this.checkAvailability();
+	}
+
+	/** A later `?item=` while the page stays (the router reuses it for another link): opened like the first one. */
+	private followItemLinks(): void {
+		this.route.queryParamMap
+			.pipe(
+				map((params) => params.get('item')?.trim() || null),
+				distinctUntilChanged(),
+				// The first value is the one read above.
+				skip(1),
+				takeUntilDestroyed(this.destroyRef)
+			)
+			.subscribe((id) => {
+				// Every change of the link ends the read of the one before; a link removed (another tab chosen) opens nothing.
+				this.linkRead?.unsubscribe();
+				this.linkRead = null;
+				this.requestedItemId = id;
+				this.selectedAtLink = this.selectedId();
+				// Before the Inbox is served, or while its list is being read, the list's answer opens it.
+				if (id && this.view() === 'ready' && !this.loading()) this.openRequestedItem();
+			});
 	}
 
 	/** `?tab=` of the URL, when it names one of the tabs. */
@@ -433,10 +462,53 @@ export class InboxPageComponent implements OnInit {
 			.subscribe({
 				next: () => {
 					this.view.set('ready');
+					// The list first: its answer opens a linked item (so the list never lands over the fresher item read).
 					this.reload();
 				},
 				error: (error: HttpErrorResponse) =>
 					this.view.set(error?.status === 404 || error?.status === 403 ? 'unavailable' : 'error')
+			});
+	}
+
+	/**
+	 * The deep link `?item=<id>` (an Ever Works copy of an item links back here): the item opens as a click on its row
+	 * opens it (an unread one becomes read), whichever tab it is listed in, but only while its detail can be shown: not
+	 * once the list failed (the retry opens it) or the Notifications tab is chosen, nor over an item I opened meanwhile.
+	 * An id the API does not show me (404: not mine, gone) is ignored quietly; any other failure to read it is said, and
+	 * the link is kept for the next try (a retry of the page, or the link followed again). Only the latest link counts:
+	 * a link followed while an earlier one is still being read cancels that read.
+	 */
+	private openRequestedItem(): void {
+		const id = this.requestedItemId;
+		this.requestedItemId = null;
+		if (!id) return;
+		this.linkRead?.unsubscribe();
+		// Counted from the link's arrival (it may have waited for the list), not from this read.
+		const selectedBefore = this.selectedAtLink;
+		this.linkRead = this.api
+			.get(id)
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe({
+				next: (item) => {
+					if (!item?.id || this.selectedId() !== selectedBefore) return;
+					if (this.view() !== 'ready') {
+						this.requestedItemId = id;
+						return;
+					}
+					if (this.tab() === 'notifications') return;
+					// The link works now: an earlier failure to open it is no longer news.
+					if (this.actionError() === 'INBOX.ITEM_LINK_ERROR') this.actionError.set(null);
+					// The detail shows the item as just read, also when the list holds an older copy of it.
+					this.items.update((items) => items.map((entry) => (entry.id === item.id ? item : entry)));
+					this.open(item);
+				},
+				error: (error: HttpErrorResponse) => {
+					// An item opened meanwhile makes the link obsolete: no alert, nothing kept for a retry.
+					if (this.selectedId() !== selectedBefore) return;
+					if (error?.status === 404 || error?.status === 403) return;
+					this.requestedItemId = id;
+					this.actionError.set('INBOX.ITEM_LINK_ERROR');
+				}
 			});
 	}
 
@@ -482,6 +554,9 @@ export class InboxPageComponent implements OnInit {
 				if (!append && id && !items.some((item) => item.id === id) && this.opened()?.id !== id) {
 					this.selectedId.set(null);
 				}
+				// A linked item waiting for the list (its first page, a page loaded while it waited, or the retry after a failure)
+				// is read now.
+				if (this.requestedItemId) this.openRequestedItem();
 			});
 	}
 

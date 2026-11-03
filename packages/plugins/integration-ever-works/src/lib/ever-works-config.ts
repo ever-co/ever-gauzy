@@ -20,8 +20,15 @@ export interface EverWorksConfig {
 	 */
 	gauzyApiUrl: string | null;
 	/**
+	 * The public HTTPS address of the Gauzy web app (`APP_LINK`, else `CLIENT_BASE_URL`, the order Gauzy's own links
+	 * follow, `resolveAppLink`): the Ever Works copy of a Gauzy Inbox item links back to it. `null` when unset or not
+	 * HTTPS: the copy is sent without a link.
+	 */
+	gauzyAppUrl?: string | null;
+	/**
 	 * `EVER_WORKS_ALLOW_LOOPBACK=true` in a development or test process: an Ever Works API and an `API_BASE_URL` on
-	 * a loopback address (`localhost`, `127.0.0.1`, `[::1]`, HTTP or HTTPS) are accepted, for a local run of the pair.
+	 * a loopback address (`localhost`, `127.0.0.1`, `[::1]`, HTTP or HTTPS) are accepted, for a local run of the pair;
+	 * so are the two web app addresses (`EVER_WORKS_APP_URL`, and Gauzy's own the copies link back to).
 	 * Off by default and always off in production (see `client/ever-works-loopback.ts`).
 	 */
 	allowLoopback?: boolean;
@@ -67,6 +74,10 @@ export function readEverWorksConfig(
 		// Not a warning when unusable: a local or private API simply receives no webhooks (unless the loopback
 		// switch is on, which admits a loopback address for a local run of the pair).
 		gauzyApiUrl: normaliseEverWorksBaseUrl(env['API_BASE_URL'], 'API_BASE_URL', () => undefined, { allowLoopback }),
+		// Silent too: without it the Ever Works copies of Gauzy Inbox items carry no link back.
+		gauzyAppUrl:
+			normaliseEverWorksBaseUrl(env['APP_LINK'], 'APP_LINK', () => undefined, { allowLoopback }) ??
+			normaliseEverWorksBaseUrl(env['CLIENT_BASE_URL'], 'CLIENT_BASE_URL', () => undefined, { allowLoopback }),
 		allowLoopback
 	};
 }

@@ -174,6 +174,7 @@ const { CreateEverWorksConnection1791000001100 } = load('database/migrations/179
 const { CreateEverWorksSyncTables1791000001300 } = load('database/migrations/1791000001300-CreateEverWorksSyncTables.ts');
 const { CreateEverWorksSyncRun1791000001550 } = load('database/migrations/1791000001550-CreateEverWorksSyncRun.ts');
 const { AlterEverWorksConnectionOrganizationForeignKey1791000003100 } = load('database/migrations/1791000003100-AlterEverWorksConnectionOrganizationForeignKey.ts');
+const { CreateEverWorksInboxPreference1791000003510 } = load('database/migrations/1791000003510-CreateEverWorksInboxPreference');
 const { EverWorksScopeService } = load('ever-works-scope.service.ts');
 const { EverWorksSettingName } = load('ever-works-setting.enum.ts');
 const { EverWorksMappingContextService } = load('mapping/ever-works-mapping-context.service.ts');
@@ -300,7 +301,7 @@ const pluginSchemas = [
 		phases: txt(), requestedByUserId: str(), startedAt: date, finishedAt: date, lastProgressAt: date, lastError: txt()
 	})
 ];
-const MIGRATIONS = [CreateEverWorksConnection1791000001100, CreateEverWorksSyncTables1791000001300, CreateEverWorksSyncRun1791000001550, AlterEverWorksConnectionOrganizationForeignKey1791000003100];
+const MIGRATIONS = [CreateEverWorksConnection1791000001100, CreateEverWorksSyncTables1791000001300, CreateEverWorksSyncRun1791000001550, AlterEverWorksConnectionOrganizationForeignKey1791000003100, CreateEverWorksInboxPreference1791000003510];
 
 // ── Ever Works teams (the mock serves whoami, the feed and webhooks; teams are kept here) ─────────
 
@@ -559,11 +560,11 @@ describe('migrations', () => {
 		try {
 			for (const Migration of MIGRATIONS) await new Migration().up(runner); // up again: no DDL error
 			for (const Migration of [...MIGRATIONS].reverse()) await new Migration().down(runner);
-			for (const table of ['ever_works_connection', 'ever_works_entity_link', 'ever_works_inbound_event', 'ever_works_outbound_change', 'ever_works_sync_log', 'ever_works_sync_run']) {
+			for (const table of ['ever_works_connection', 'ever_works_entity_link', 'ever_works_inbound_event', 'ever_works_outbound_change', 'ever_works_sync_log', 'ever_works_sync_run', 'ever_works_inbox_preference']) {
 				assert.equal(await runner.hasTable(table), false, `${table} dropped`);
 			}
 			for (const Migration of MIGRATIONS) await new Migration().up(runner);
-			for (const table of ['ever_works_connection', 'ever_works_entity_link', 'ever_works_inbound_event', 'ever_works_outbound_change', 'ever_works_sync_log', 'ever_works_sync_run']) {
+			for (const table of ['ever_works_connection', 'ever_works_entity_link', 'ever_works_inbound_event', 'ever_works_outbound_change', 'ever_works_sync_log', 'ever_works_sync_run', 'ever_works_inbox_preference']) {
 				assert.equal(await runner.hasTable(table), true, `${table} created`);
 			}
 		} finally {
@@ -596,7 +597,7 @@ describe('migrations', () => {
 			for (const Migration of MIGRATIONS) await new Migration().up(runner);
 			await runner.commitTransaction();
 			const tables = await pg.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = $1 AND table_name LIKE 'ever_works_%'`, [schema]);
-			assert.equal(tables.length, 6);
+			assert.equal(tables.length, 7);
 		} finally {
 			if (runner.isTransactionActive) await runner.rollbackTransaction();
 			await runner.release();

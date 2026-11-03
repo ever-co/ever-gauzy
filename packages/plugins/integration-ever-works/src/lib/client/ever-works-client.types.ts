@@ -178,6 +178,61 @@ export interface EverWorksInboxReplyResult {
 /** The longest reply text Ever Works takes (`requests.schema.json` `InboxReply`). */
 export const EVER_WORKS_INBOX_REPLY_MAX = 8000;
 
+/** The kind of an inbox item an integration files (`POST /inbox/items`, contract v1 inbox write). */
+export type EverWorksInboxWriteKind = 'notice' | 'question' | 'approval' | 'mention' | 'assignment' | 'email' | 'other';
+
+/** The state of an inbox item an integration filed (`PATCH /inbox/items/:id`). */
+export type EverWorksInboxWriteState = 'open' | 'resolved' | 'archived';
+
+/** The limits of the inbox write (`POST`/`PATCH /inbox/items`). */
+export const EVER_WORKS_INBOX_WRITE_LIMITS = { externalId: 128, title: 300, body: 20_000, choices: 10 } as const;
+
+/** `POST /inbox/items` (scope `inbox:write`): an item an integration files for one Ever Works user. */
+export interface EverWorksInboxItemCreate {
+	/** The integration's own id of the item (a replay with the same id answers the item already filed). */
+	externalId: string;
+	recipientUserId: string;
+	kind: EverWorksInboxWriteKind;
+	title: string;
+	/** Markdown. */
+	body: string;
+	sourceUrl?: string;
+	sourceLabel?: string;
+	/** Ever Works records the item is about (only those the integration has paired). */
+	related?: { taskId?: string; workId?: string; goalId?: string };
+	/** For kind `email`. */
+	email?: { from: string; to?: string[]; subject: string; receivedAt: string };
+	/** For kinds `question` and `approval`. */
+	choices?: Array<{ id: string; label: string }>;
+	occurredAt?: string;
+}
+
+/** `PATCH /inbox/items/:id` with `If-Match` (only items the key filed). */
+export interface EverWorksInboxItemPatch {
+	title?: string;
+	body?: string;
+	choices?: Array<{ id: string; label: string }>;
+	state?: EverWorksInboxWriteState;
+	resolution?: { choiceId?: string; text?: string };
+}
+
+/**
+ * An inbox item an integration filed, as `POST`/`PATCH /inbox/items` answer it and as its `inbox.item.*` events carry
+ * it: the inbox item DTO plus the write's own fields (each optional: v1 grows additively, and a field this plugin does
+ * not see is read from the DTO's own `status` / `answer*` fields).
+ */
+export interface EverWorksFiledInboxItem extends Partial<Omit<EverWorksInboxItem, 'id' | 'version'>> {
+	id: string;
+	version: number;
+	/** `integration` for an item a key filed (`platform` for Ever Works' own), and the key that filed it (CR-15). */
+	origin?: 'integration' | 'platform' | string | null;
+	integrationKeyId?: string | null;
+	externalId?: string | null;
+	state?: EverWorksInboxWriteState | string | null;
+	resolution?: { choiceId?: string | null; text?: string | null } | null;
+	choices?: Array<{ id: string; label: string }> | null;
+}
+
 /** One agent email (contract `email-message.schema.json`, CR-11), the fields the Gauzy bridge reads. */
 export interface EverWorksEmailMessage {
 	id: string;

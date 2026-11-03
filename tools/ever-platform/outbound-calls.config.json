@@ -3,13 +3,16 @@
 	"product": "gauzy",
 	"phase": 2,
 	"modules": {
-		"connect": [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 16, 31],
+		"connect": [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 16, 19, 20, 22, 31],
 		"stats": [17]
 	},
 	"gauzy_rows": {
 		"8": {
 			"trigger": "while connected: at connect and at each link, with each heartbeat, on an entitlement notice on the event feed, on demand (Refresh, at most 6 an hour)",
 			"cadence": "with the heartbeat (every 24 h); on a notice; on demand"
+		},
+		"14": {
+			"cadence": "once per installation (one client serves every linked organization), when ever_id_login is enabled; a request that did not go through (no answer, or an error other than a 422 refusal, which is final) is sent again by the worker 30 s later, the wait doubling up to every hour; then a read at least 5 s later (on the next 15 s pass of the worker), the wait doubling up to every 5 minutes, until the client is ready"
 		}
 	},
 	"module_names": {

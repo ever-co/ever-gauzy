@@ -14,7 +14,6 @@ import { Brackets, DataSource, In, SelectQueryBuilder } from 'typeorm';
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import {
 	ID,
-	IInboxItem,
 	IInboxItemCounts,
 	IInboxItemFindInput,
 	IInboxItemOption,
@@ -24,6 +23,8 @@ import {
 	IInboxItemUpsertResult,
 	IInboxItemWithState,
 	IInboxItemWriter,
+	IInboxRecipientActions,
+	IInboxRecipientStateField,
 	IInboxRecipientStateInput,
 	IInboxReplyInput,
 	IInboxSourceReplyResult,
@@ -39,6 +40,8 @@ import {
 import { RequestContext } from '@gauzy/core';
 import { InboxItem } from './entities/inbox-item.entity';
 import { InboxItemRecipient } from './entities/inbox-item-recipient.entity';
+import { InboxItemFeed } from './inbox-item-feed';
+import { parseJson, toInboxItem } from './inbox-item.mapper';
 import { InboxSourceHandlerRegistry } from './inbox-source-handler.registry';
 import { InboxRealtime } from './realtime/inbox-realtime';
 
@@ -84,30 +87,12 @@ const UPDATABLE_FIELDS = [
 	'metadata'
 ] as const satisfies ReadonlyArray<keyof IInboxItemUpsertInput & keyof InboxItem>;
 
-/** Parses a JSON column; a malformed document reads as `null` rather than failing the whole page. */
-function parseJson<T>(value: string | null | undefined): T | null {
-	if (value === null || value === undefined || value === '') return null;
-	try {
-		return JSON.parse(value) as T;
-	} catch {
-		return null;
-	}
-}
-
 function toJson(value: unknown): string | null {
 	return value === null || value === undefined ? null : JSON.stringify(value);
 }
 
-/** The item as the API answers it (JSON columns parsed). */
-export function toInboxItem(row: InboxItem): IInboxItem {
-	return {
-		...(row as unknown as IInboxItem),
-		options: parseJson<IInboxItemOption[]>(row.options),
-		response: parseJson<IInboxItemResponse>(row.response),
-		metadata: parseJson<Record<string, unknown>>(row.metadata),
-		requireReason: !!row.requireReason
-	};
-}
+// The item as the API answers it (JSON columns parsed); kept exported from here for existing imports.
+export { toInboxItem };
 
 /**
  * Where a page starts: after an item (the last one of the previous page, by the list's order), or at an offset (the
@@ -158,14 +143,16 @@ function decodeCursor(cursor?: string): InboxCursor {
  * identity, recipients limited to users of the item's tenant.
  */
 @Injectable()
-export class InboxService implements IInboxItemWriter {
+export class InboxService implements IInboxItemWriter, IInboxRecipientActions {
 	private readonly logger = new Logger(InboxService.name);
 
 	constructor(
 		private readonly dataSource: DataSource,
 		private readonly registry: InboxSourceHandlerRegistry,
 		/** Streams `inbox_item.created` to the recipients (G-P3-6); absent in bare test wiring. */
-		@Optional() private readonly realtime?: InboxRealtime
+		@Optional() private readonly realtime?: InboxRealtime,
+		/** Tells the observers (`INBOX_ITEM_FEED`) about every write; absent in bare test wiring. */
+		@Optional() private readonly feed?: InboxItemFeed
 	) {}
 
 	// ---------------------------------------------------------------- reads
@@ -405,6 +392,8 @@ export class InboxService implements IInboxItemWriter {
 				.getRepository(InboxItemRecipient)
 				.update({ id: recipient.id }, { isRead: true, readAt: new Date() });
 		}
+		// The observers learn about the answer once it is recorded (best effort, never failing the reply).
+		await this.feed?.itemChanged({ ...item, status: InboxItemStatusEnum.ANSWERED } as InboxItem, 'answered');
 		return this.get(id);
 	}
 
@@ -456,6 +445,7 @@ export class InboxService implements IInboxItemWriter {
 				);
 			}
 		}
+		await this.feed?.recipientChanged(item, recipient, Object.keys(stated) as IInboxRecipientStateField[]);
 		return this.get(id);
 	}
 
@@ -491,6 +481,14 @@ export class InboxService implements IInboxItemWriter {
 		const mirrored = rows.filter((row) => !!this.registry.get(row.source)?.onStateChange);
 		if (mirrored.length) {
 			void this.mirrorReads(tenantId, userId, mirrored);
+		}
+		// The observers too, one item after the other in the background (best effort).
+		if (rows.length && this.feed?.observed) {
+			void this.feed.recipientsRead(
+				tenantId,
+				userId,
+				rows.map((row) => ({ recipientId: row.recipientId, itemId: row.itemId }))
+			);
 		}
 		return { updated: ids.length };
 	}
@@ -577,18 +575,24 @@ export class InboxService implements IInboxItemWriter {
 
 		/** The recipient rows this write inserted, also when a later one fails. */
 		const addedUserIds: ID[] = [];
+		/** The recipient rows a `replaceRecipients` write removed (the observers end their copies). */
+		const removedRows: Array<Pick<InboxItemRecipient, 'id' | 'userId'>> = [];
 		let written: { recipientUserIds: ID[]; skippedUserIds: ID[] };
 		try {
 			written = await this.writeRecipients(
 				item,
 				input.recipients ?? [],
 				input.replaceRecipients === true,
-				addedUserIds
+				addedUserIds,
+				removedRows
 			);
 		} catch (error) {
 			// The rows inserted before the failure stay; the source's retry finds them and adds only the rest, so they
-			// are announced now (#11091 review).
+			// are announced now (#11091 review). The observers are told in any case: the item write itself is stored (a
+			// re-delivery's new title, a recipient state reset), whatever its recipients did (best effort, as stored now).
 			if (addedUserIds.length) await this.realtime?.itemCreated(item, addedUserIds);
+			const current = await repository.findOne({ where: { id: item.id } }).catch(() => null);
+			await this.feed?.itemChanged(current ?? item, created ? 'created' : 'updated', removedRows);
 			throw error;
 		}
 		const { recipientUserIds, skippedUserIds } = written;
@@ -597,6 +601,8 @@ export class InboxService implements IInboxItemWriter {
 		// a re-delivery: a recipient the first delivery could not add (a failed write, a pairing made later) is told
 		// too, and one who already had the item is not told again (review F104).
 		if (addedUserIds.length) await this.realtime?.itemCreated(stored, addedUserIds);
+		// The observers (`INBOX_ITEM_FEED`): every write, also a re-delivery (best effort, never failing the write).
+		await this.feed?.itemChanged(stored, created ? 'created' : 'updated', removedRows);
 		return { item: toInboxItem(stored), created, recipientUserIds, skippedUserIds };
 	}
 
@@ -701,7 +707,9 @@ export class InboxService implements IInboxItemWriter {
 		recipients: IInboxItemUpsertInput['recipients'],
 		replace = false,
 		/** Filled with the recipient rows this write inserts (an overlapping delivery that inserts one reports it). */
-		added: ID[] = []
+		added: ID[] = [],
+		/** Filled with the recipient rows a replacing write removes. */
+		removedRows: Array<Pick<InboxItemRecipient, 'id' | 'userId'>> = []
 	): Promise<{ recipientUserIds: ID[]; skippedUserIds: ID[] }> {
 		const stated = new Map<ID, IInboxItemUpsertInput['recipients'][number]>();
 		for (const recipient of recipients) {
@@ -772,6 +780,10 @@ export class InboxService implements IInboxItemWriter {
 			replace && kept.size > 0 ? [...existing.keys()].filter((userId) => !kept.has(userId as ID)) : [];
 		if (removed.length > 0) {
 			await repository.delete({ inboxItemId: item.id, userId: In(removed) } as never);
+			for (const userId of removed) {
+				const row = existing.get(userId);
+				if (row) removedRows.push({ id: row.id, userId: row.userId });
+			}
 		}
 		return {
 			recipientUserIds: [

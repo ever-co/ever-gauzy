@@ -7,6 +7,7 @@ import {
 	HttpException,
 	Injectable,
 	Logger,
+	Optional,
 	ServiceUnavailableException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
@@ -28,6 +29,7 @@ import { EverWorksConnectionService } from '../connection/ever-works-connection.
 import { EverWorksSettingName } from '../ever-works-setting.enum';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../mapping/ever-works-mapping-context.service';
 import { EVER_WORKS_INBOX_AGGREGATE } from '../inbox/ever-works-inbox.service';
+import { EverWorksInboxPreferenceSummary, EverWorksInboxPreferencesService } from '../inbox/ever-works-inbox-preferences.service';
 import { EverWorksEntityLink, EverWorksInboundEvent, EverWorksInboundStatus, EverWorksLinkType } from '../sync/entities/ever-works-sync.entities';
 import { everWorksUserOfGauzyUser } from '../sync/ever-works-actor';
 import { EverWorksLinkService } from '../sync/links/ever-works-link.service';
@@ -70,6 +72,11 @@ export interface EverWorksPersonRow {
 	suggestion: { employeeId: ID; reason: 'ever_id' | 'verified_email' } | null;
 	/** A Gauzy invitation still pending for the member's e-mail ("invite to Gauzy"), or `null`. */
 	gauzyInvite: { inviteId: ID; expireDate: Date | null } | null;
+	/**
+	 * What the paired person sends of their Gauzy Inbox to Ever Works (their own choice, every kind by default), or
+	 * `null` while unpaired.
+	 */
+	inboxToEverWorks?: EverWorksInboxPreferenceSummary | null;
 }
 
 export interface EverWorksPeopleView {
@@ -163,7 +170,9 @@ export class EverWorksPeopleService {
 		private readonly contexts: EverWorksMappingContextService,
 		private readonly connections: EverWorksConnectionService,
 		private readonly links: EverWorksLinkService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		/** Each person's choice of what of their Gauzy Inbox goes to Ever Works; absent in bare test wiring. */
+		@Optional() private readonly inboxPreferences?: EverWorksInboxPreferencesService
 	) {}
 
 	private readonly logger = new Logger(EverWorksPeopleService.name);
@@ -757,6 +766,26 @@ export class EverWorksPeopleService {
 				gauzyInvite: invite ? { inviteId: invite.id as ID, expireDate: invite.expireDate ?? null } : null
 			};
 		});
+		if (this.inboxPreferences) {
+			// The admin sees each paired person's effective choice (read-only: only the person changes it), for every live
+			// pairing (the pusher sends for an inactive or archived person too). A read that fails leaves it out (`null`)
+			// instead of failing the whole tab, pairing included.
+			try {
+				const users = await this.usersOfEmployees(
+					context,
+					rows.map((row) => row.linkedEmployeeId).filter((id): id is ID => !!id),
+					people
+				);
+				const summaries = await this.inboxPreferences.summaries(context.tenantId, [...new Set(users.values())]);
+				for (const row of rows) {
+					const userId = row.linkedEmployeeId ? users.get(row.linkedEmployeeId) : undefined;
+					row.inboxToEverWorks = userId ? (summaries.get(userId) ?? null) : null;
+				}
+			} catch (error) {
+				this.logger.warn(`Mapping ${context.integrationTenantId}: the Ever Works inbox choices were not read (${(error as Error)?.message ?? 'error'}).`);
+				for (const row of rows) row.inboxToEverWorks = null;
+			}
+		}
 		return {
 			members: rows,
 			// A suggestion is not a pairing: a suggested person stays unmatched until the admin confirms it.
@@ -765,6 +794,30 @@ export class EverWorksPeopleService {
 				.map(([employeeId, p]) => ({ employeeId, name: p.name, email: p.email })),
 			deferredInbox: deferredInboxOf(await this.deferredInboxEvents(context), new Set(linkByUser.keys()))
 		};
+	}
+
+	/** The Gauzy user of each employee named: from the active people read already, else read (inactive or archived). */
+	private async usersOfEmployees(
+		context: EverWorksMappingContext,
+		employeeIds: ID[],
+		people: Map<ID, { userId: string | null }>
+	): Promise<Map<ID, ID>> {
+		const users = new Map<ID, ID>();
+		const missing: ID[] = [];
+		for (const id of new Set(employeeIds)) {
+			const known = people.get(id);
+			if (known?.userId) users.set(id, known.userId as ID);
+			else if (!known) missing.push(id);
+		}
+		for (let start = 0; start < missing.length; start += 500) {
+			const chunk = missing.slice(start, start + 500);
+			const rows = await this.dataSource.getRepository(Employee).find({
+				where: { tenantId: context.tenantId, organizationId: context.organizationId, id: In(chunk) },
+				select: { id: true, userId: true }
+			});
+			for (const row of rows) if (chunk.includes(row.id as ID) && row.userId) users.set(row.id as ID, row.userId as ID);
+		}
+		return users;
 	}
 
 	/** The active people (not agents) of the organization, optionally only the given ones. */

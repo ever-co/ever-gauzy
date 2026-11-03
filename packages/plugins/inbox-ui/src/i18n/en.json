@@ -3,6 +3,7 @@
 	"TITLE": "Inbox",
 	"UNAVAILABLE": "The Inbox is not switched on for this installation.",
 	"ERROR": "The Inbox could not be loaded.",
+	"ITEM_LINK_ERROR": "The linked item could not be opened. Reload the page to try again.",
 	"ACTION_FAILED": "That did not work. Try again.",
 	"RETRY": "Try again",
 	"EMPTY": "Nothing here.",

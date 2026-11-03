@@ -6870,6 +6870,7 @@
 		"MONTHLY": "每月",
 		"CALENDAR": "日历",
 		"APPROVALS": "批准",
+		"ALL": "全部",
 		"APPROVE_SUCCESS": "时间表已成功批准",
 		"DENIED_SUCCESS": "工作时间表已成功被拒绝",
 		"SUBMIT_SUCCESS": "时间表成功提交",
@@ -8886,6 +8887,7 @@
 		"SUBTASKS": "子任务",
 		"SUBTASKS_DONE": "已完成 {{ done }} / {{ total }}",
 		"NO_SUBTASKS": "没有子任务",
+		"ADD_SUBTASK": "添加子任务",
 		"LINKED_ISSUES": "关联任务",
 		"NO_LINKED_ISSUES": "没有关联任务",
 		"LINKS": {

@@ -60,61 +60,41 @@
             }
           </div>
           @if (overlaps.length > 0) {
-            <nb-card class="span-4 custom-card" status="danger">
-              <nb-card-header>
-                <div class="d-flex align-items-center">
-                  <nb-icon icon="alert-triangle-outline" class="mr-3"></nb-icon>
+            <!-- A callout in the form's own flow, not a nested card: the dialog's
+                 card width reached the nested card too, which ran it past the
+                 dialog's right edge. -->
+            <div class="span-4 overlap-alert">
+              <!-- Only the short warning is announced; the entries below are read
+                   in turn, not pushed at the user each time the overlaps refresh. -->
+              <div role="alert">
+                <div class="overlap-title">
+                  <nb-icon icon="alert-triangle-outline" aria-hidden="true"></nb-icon>
                   {{ 'TIMESHEET.TIME_OVERLAPS' | translate }}
                 </div>
-              </nb-card-header>
-              <nb-card-body class="custom-card-body">
-                <p>{{ 'TIMESHEET.OVERLAP_MESSAGE' | translate }}</p>
-                <div class="row align-items-center m-0 custom-header">
-                  <div class="col">
-                    {{ 'TIMESHEET.PROJECT' | translate }} /
-                    {{ 'TIMESHEET.TODO' | translate }}
-                  </div>
-                  <div class="col text-center">
-                    {{ 'TIMESHEET.DURATION' | translate }}
-                  </div>
+                <p class="overlap-message">{{ 'TIMESHEET.OVERLAP_MESSAGE' | translate }}</p>
+              </div>
+              <div class="overlap-list" role="table">
+                <div class="overlap-row overlap-head" role="row">
+                  <span role="columnheader">{{ 'TIMESHEET.PROJECT' | translate }} / {{ 'TIMESHEET.TODO' | translate }}</span>
+                  <span role="columnheader" class="overlap-duration">{{ 'TIMESHEET.DURATION' | translate }}</span>
                 </div>
                 @for (overlapTimeLog of overlaps; track overlapTimeLog) {
-                  <div
-                    [class]="
-                      overlaps.at(-1) === overlapTimeLog
-                        ? 'row item m-0 py-3 align-items-center'
-                        : 'row item border-bottom m-0 py-3 align-items-center'
-                    "
-                    >
-                    <div class="col">
-                      @if (overlapTimeLog?.project) {
-                        <span>
-                          {{ overlapTimeLog?.project?.name }}
-                        </span>
-                      } @else {
-                        <span>{{ 'TIMESHEET.NO_PROJECT' | translate }}</span>
-                      }
-                      <div class="mt-2 small">
-                        @if (overlapTimeLog?.task) {
-                          <span>
-                            <strong
-                              >{{ 'TIMESHEET.TODO' | translate }}
-                              :
-                            </strong>
-                            {{ overlapTimeLog?.task?.title }}
-                          </span>
-                        } @else {
-                          <span>{{ 'TIMESHEET.NO_TODO' | translate }}</span>
-                        }
-                      </div>
+                  <div class="overlap-row" role="row">
+                    <div class="overlap-work" role="cell">
+                      <span class="overlap-project">
+                        {{ overlapTimeLog?.project?.name || ('TIMESHEET.NO_PROJECT' | translate) }}
+                      </span>
+                      <span class="overlap-task">
+                        {{ overlapTimeLog?.task?.title || ('TIMESHEET.NO_TODO' | translate) }}
+                      </span>
                     </div>
-                    <div class="col text-center">
+                    <span class="overlap-duration" role="cell">
                       {{ overlapTimeLog.overlapDuration | durationFormat }}
-                    </div>
+                    </span>
                   </div>
                 }
-              </nb-card-body>
-            </nb-card>
+              </div>
+            </div>
           }
           <div class="field span-4">
             <nb-checkbox formControlName="isBillable" name="isBillable" status="primary">

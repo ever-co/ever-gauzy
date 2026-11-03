@@ -41,6 +41,8 @@ export interface EverWorksSyncPhaseSpec {
 	aggregateType: string | null;
 	/** The identity-map type of the records it pairs. */
 	linkType: EverWorksLinkType | null;
+	/** The identity-map type of the Gauzy records it sends, when it is not `linkType` (the Gauzy Inbox's own items). */
+	exportLinkType?: EverWorksLinkType;
 	/** The list route (contract v1 B.6) and its query passes (each pass is read in full). */
 	list?: { path: string; passes?: Array<Record<string, string>> };
 	/** The DTO field naming the record's parent of the same kind: parents are applied first. */
@@ -72,6 +74,8 @@ export const EVER_WORKS_SYNC_PHASE_SPECS: ReadonlyArray<EverWorksSyncPhaseSpec> 
 		kind: 'list',
 		aggregateType: 'inbox_item',
 		linkType: EverWorksLinkType.INBOX_ITEM,
+		// The other way, the open Gauzy Inbox items of paired people, only with the mapping's backfill setting on.
+		exportLinkType: EverWorksLinkType.GAUZY_INBOX_ITEM,
 		// Open items, plus everything updated in the last 30 days (answered items among them).
 		list: { path: '/inbox/items', passes: [{ status: 'open' }, { updatedSince: '{{30d}}' }] },
 		scope: 'inbox:read'

@@ -5,6 +5,11 @@ export interface EverWorksSyncContextState {
 	connectionId: string;
 	integrationTenantId?: string | null;
 	eventId?: string | null;
+	/**
+	 * The Gauzy Inbox recipient row an apply acts for (an Ever Works member's move on their copy of a Gauzy item): the
+	 * item change that move writes is not sent back to that copy, but still goes to the copies of the other recipients.
+	 */
+	gauzyRecipientId?: string | null;
 }
 
 const storage = new AsyncLocalStorage<EverWorksSyncContextState>();

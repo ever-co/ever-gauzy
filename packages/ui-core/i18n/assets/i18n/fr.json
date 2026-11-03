@@ -6252,6 +6252,7 @@
 		"MONTHLY": "Mensuel",
 		"CALENDAR": "Calendrier",
 		"APPROVALS": "Approbations",
+		"ALL": "Tous",
 		"APPROVE_SUCCESS": "Feuille de temps approuvée avec succès",
 		"DENIED_SUCCESS": "Feuille de temps refusée avec succès",
 		"SUBMIT_SUCCESS": "Feuille de temps soumise avec succès.",
@@ -7668,6 +7669,7 @@
 		"SUBTASKS": "Sous-tâches",
 		"SUBTASKS_DONE": "{{ done }} sur {{ total }} terminées",
 		"NO_SUBTASKS": "Aucune sous-tâche",
+		"ADD_SUBTASK": "Ajouter une sous-tâche",
 		"LINKED_ISSUES": "Tâches liées",
 		"NO_LINKED_ISSUES": "Aucune tâche liée",
 		"LINKS": {

@@ -1,4 +1,5 @@
-import { BadGatewayException, BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+// cspell:ignore checkpointed
+import { BadGatewayException, BadRequestException, ConflictException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DataSource, EntityManager, In, MoreThan, Not } from 'typeorm';
 import { ID } from '@gauzy/contracts';
@@ -9,6 +10,7 @@ import { EverWorksConnection, EverWorksConnectionStatus } from '../../connection
 import { EverWorksConnectionService } from '../../connection/ever-works-connection.service';
 import { EVER_WORKS_INTEGRATION_NAME } from '../../ever-works.constants';
 import { EverWorksSettingName } from '../../ever-works-setting.enum';
+import { EverWorksInboxPushService } from '../../inbox/ever-works-inbox-push.service';
 import { isIdeaTask } from '../../tasks/ever-works-task-exclusion';
 import { entitySynced, type EverWorksDirection, type EverWorksDomain } from '../../mapping/ever-works-mapping.defaults';
 import { EverWorksMappingContext, EverWorksMappingContextService } from '../../mapping/ever-works-mapping-context.service';
@@ -96,7 +98,8 @@ export interface EverWorksSyncPhasePreview {
 	supported: boolean;
 	note: string | null;
 	everWorks: { total: number; linked: number; truncated: boolean } | null;
-	gauzy: { total: number; linked: number } | null;
+	/** `truncated`: the count stopped at the preview's bound (the Gauzy Inbox phase, which scans recipient pages). */
+	gauzy: { total: number; linked: number; truncated?: boolean } | null;
 	/** Records the run creates on each side. */
 	creates: { inGauzy: number; inEverWorks: number };
 	/** Records that are only paired on their tab (people, teams, works): never created by the run. */
@@ -171,7 +174,9 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		private readonly applier: EverWorksInboundApplier,
 		private readonly pusher: EverWorksOutboundPusher,
 		private readonly queue: EverWorksOutboundQueue,
-		private readonly log: EverWorksSyncLogService
+		private readonly log: EverWorksSyncLogService,
+		/** The Gauzy Inbox → Ever Works mirror (the inbox phase's backfill); absent in bare test wiring. */
+		@Optional() private readonly inboxPush?: EverWorksInboxPushService
 	) {}
 
 	// ── Routes ─────────────────────────────────────────────────────────────────────────────────────
@@ -435,7 +440,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 				state.imported = true;
 			}
 			if (plan.export && !state.exportDone) {
-				if (!(await this.exportPhase(context, spec, state, deadline, stillOwner))) return;
+				if (!(await this.exportPhase(context, spec, state, deadline, stillOwner, checkpoint))) return;
 				state.exportDone = true;
 			}
 			state.attempts = 0;
@@ -469,14 +474,38 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		if (direction === 'off') return { import: false, export: false, note: `${spec.domain} are not synced for this mapping` };
 		if (spec.kind === 'mapping_only') return { import: false, export: false, done: true, note: 'people are paired on the People tab; nobody is created' };
 		if (spec.kind === 'included') return { import: false, export: false, done: true, note: 'carried by the task records' };
-		const missingScope = spec.scope && !this.scopesOf(context.connection).includes(spec.scope);
-		if (missingScope) return { import: false, export: false, note: `the Ever Works key lacks ${spec.scope}` };
+		const scopes = this.scopesOf(context.connection);
+		const missingScope = spec.scope && !scopes.includes(spec.scope);
+		// The inbox phase reads with inbox:read and sends with inbox:write: a key with one of them runs that half.
+		if (missingScope && spec.name !== 'inbox') return { import: false, export: false, note: `the Ever Works key lacks ${spec.scope}` };
 		// Works are link only: the import refreshes paired projects from Ever Works.
-		const reads = fromEverWorks(direction) || direction === 'link_only';
+		const reads = (fromEverWorks(direction) || direction === 'link_only') && !missingScope;
 		const canImport = reads && !!spec.aggregateType && this.applier.hasHandler(spec.aggregateType);
-		const canExport = toEverWorks(direction) && !!spec.linkType && this.pusher.hasHandler(spec.linkType) && EXPORTED_PHASES.has(spec.name);
-		if (!canImport && !canExport) return { import: false, export: false, note: 'not synced by this version yet; a later resync picks it up' };
-		const note = spec.name === 'teams' || spec.name === 'works' ? 'unpaired records wait for their tab; only pairs are refreshed' : null;
+		const exportType = spec.exportLinkType ?? spec.linkType;
+		let canExport =
+			toEverWorks(direction) &&
+			!!exportType &&
+			this.pusher.hasHandler(exportType) &&
+			EXPORTED_PHASES.has(spec.name) &&
+			(spec.name !== 'inbox' || scopes.includes('inbox:write'));
+		// The Gauzy Inbox's own items are sent as they are written; a run sends the open ones only when the mapping asks.
+		let inboxNote: string | null = null;
+		if (canExport && spec.name === 'inbox') {
+			if (!this.inboxPush?.canBackfill) inboxNote = 'the Gauzy Inbox is not loaded in this process; its items are sent as they are written';
+			else if (this.setting(context.mapping, EverWorksSettingName.BACKFILL_GAUZY_INBOX) !== 'true') inboxNote = 'Gauzy Inbox items are sent as they are written; the backfill of open items is off';
+			if (inboxNote) canExport = false;
+		}
+		if (!canImport && !canExport) {
+			if (inboxNote) return { import: false, export: false, done: true, note: inboxNote };
+			// The inbox sends with inbox:write: the scope a direction that only sends needs is the one named (inbox:read is
+			// not, even when the key lacks it too); a direction that reads as well names inbox:read first.
+			const lacksWrite = spec.name === 'inbox' && toEverWorks(direction) && !scopes.includes('inbox:write');
+			if (lacksWrite && (!fromEverWorks(direction) || !missingScope))
+				return { import: false, export: false, note: 'the Ever Works key lacks inbox:write' };
+			if (missingScope) return { import: false, export: false, note: `the Ever Works key lacks ${spec.scope}` };
+			return { import: false, export: false, note: 'not synced by this version yet; a later resync picks it up' };
+		}
+		const note = spec.name === 'teams' || spec.name === 'works' ? 'unpaired records wait for their tab; only pairs are refreshed' : inboxNote;
 		return { import: canImport, export: canExport, note };
 	}
 
@@ -697,9 +726,11 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		spec: EverWorksSyncPhaseSpec,
 		state: EverWorksSyncPhaseState,
 		deadline: number,
-		stillOwner?: () => Promise<boolean>
+		stillOwner?: () => Promise<boolean>,
+		checkpoint?: () => Promise<boolean>
 	): Promise<boolean> {
-		const entityType = spec.linkType as EverWorksLinkType;
+		const entityType = (spec.exportLinkType ?? spec.linkType) as EverWorksLinkType;
+		if (spec.name === 'inbox') return this.exportGauzyInbox(context, state, deadline, stillOwner, checkpoint);
 		for (;;) {
 			const after = state.exportCursor ?? null;
 			const ids = spec.name === 'teams' ? await this.pairedTeams(context, after) : spec.name === 'tasks' ? await this.tasksInScope(context, after) : [];
@@ -709,6 +740,46 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 				if (await this.queue.enqueue({ tenantId: context.tenantId, organizationId: context.organizationId, entityType, gauzyId, op: 'upsert' })) state.exported++;
 				state.exportCursor = gauzyId;
 			}
+		}
+	}
+
+	/**
+	 * The inbox phase's backfill (the mapping's `BACKFILL_GAUZY_INBOX`): the open Gauzy Inbox items of paired people,
+	 * as their preferences allow, one change per recipient row, from `state.exportCursor`; true once every page is queued.
+	 * Each page is checkpointed: a run ended meanwhile (an admin's cancel) stops it there.
+	 */
+	private async exportGauzyInbox(
+		context: EverWorksMappingContext,
+		state: EverWorksSyncPhaseState,
+		deadline: number,
+		stillOwner?: () => Promise<boolean>,
+		checkpoint?: () => Promise<boolean>
+	): Promise<boolean> {
+		if (!this.inboxPush) return true;
+		if (state.exportCursor === INBOX_EXPORT_DONE) return true;
+		for (;;) {
+			if (isOver(deadline) || (stillOwner && !(await stillOwner()))) return false;
+			const page = await this.inboxPush.backfillPage(context, state.exportCursor ?? null);
+			for (const [index, gauzyId] of page.ids.entries()) {
+				// Within the sweep's budget and lease, as the other exporters (checked again once the page is read): a stopped
+				// page carries on after the last row queued (the rows are in recipient id order, the feed's own cursor).
+				if (index % 50 === 0 && (isOver(deadline) || (stillOwner && !(await stillOwner())))) return false;
+				const queued = await this.queue.enqueue({
+					tenantId: context.tenantId,
+					organizationId: context.organizationId,
+					entityType: EverWorksLinkType.GAUZY_INBOX_ITEM,
+					gauzyId,
+					op: 'upsert',
+					changedFields: ['backfill']
+				});
+				// Not queued: the organization is no longer mapped. The run stops before this row, so it is not skipped later.
+				if (!queued) return false;
+				state.exported++;
+				state.exportCursor = gauzyId;
+			}
+			state.exportCursor = page.next ?? INBOX_EXPORT_DONE;
+			if (!page.next) return true;
+			if (checkpoint && !(await checkpoint())) return false;
 		}
 	}
 
@@ -968,6 +1039,12 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 			creates: { inGauzy: 0, inEverWorks: 0 },
 			toPair: null
 		};
+		if (spec.name === 'inbox' && toEverWorks(direction) && this.inboxPush?.canBackfill) {
+			// The Gauzy side: the open items of paired people a backfill would send (their preferences applied).
+			const counts = await this.inboxPush.backfillCounts(context);
+			preview.gauzy = counts;
+			if (plan.export) preview.creates.inEverWorks = Math.max(0, counts.total - counts.linked);
+		}
 		if (direction === 'off' || spec.kind === 'included' || spec.kind === 'children' || !spec.list) {
 			if (spec.kind === 'children') preview.note = plan.import ? `the last ${COMMENTS_PER_TASK} comments of each synced task` : plan.note;
 			return preview;
@@ -982,7 +1059,11 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		}
 		const records = listed.records.filter((record) => record['deleted'] !== true && record['visibility'] !== 'private');
 		const idOf = (record: Record<string, unknown>) => String(spec.name === 'members' ? (record['userId'] ?? record['id']) : record['id']);
-		const links = spec.linkType ? await this.links(context, spec.linkType) : [];
+		const links = [
+			...(spec.linkType ? await this.links(context, spec.linkType) : []),
+			// The inbox list also holds the copies of Gauzy items this plugin filed: they are Gauzy's, never created there.
+			...(spec.name === 'inbox' ? await this.links(context, EverWorksLinkType.GAUZY_INBOX_ITEM) : [])
+		];
 		const linkedEw = new Set(links.map((link) => link.ewId));
 		const linkedCount = records.filter((record) => linkedEw.has(idOf(record))).length;
 		const unlinked = records.length - linkedCount;
@@ -1003,8 +1084,14 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 		}
 		// What a run would create is what has no link at all: a record whose link stopped syncing (deleted on the
 		// other side, turned private) is known and is not created again (local e2e: a resync created nothing).
-		const known = new Set([...linkedEw, ...(spec.linkType ? await this.stoppedLinks(context, spec.linkType) : []).map((link) => link.ewId)]);
-		const neverLinked = records.filter((record) => !known.has(idOf(record))).length;
+		const known = new Set([
+			...linkedEw,
+			...(spec.linkType ? await this.stoppedLinks(context, spec.linkType) : []).map((link) => link.ewId),
+			...(spec.name === 'inbox' ? await this.stoppedLinks(context, EverWorksLinkType.GAUZY_INBOX_ITEM) : []).map((link) => link.ewId)
+		]);
+		// An inbox item this connection's key filed is a Gauzy copy (its link may be missing a moment, a replay): never created.
+		const ownKey = spec.name === 'inbox' ? context.connection.keyId || null : null;
+		const neverLinked = records.filter((record) => !known.has(idOf(record)) && !(ownKey && record['integrationKeyId'] === ownKey)).length;
 		if (spec.name === 'missions') {
 			// Missions that predate the mapping wait for the Initiatives tab; the run creates none of them.
 			preview.toPair = { everWorks: neverLinked, gauzy: 0 };
@@ -1121,4 +1208,7 @@ export class EverWorksInitialSyncService implements EverWorksSyncSweeper {
 }
 
 /** Phases that queue Gauzy records for Ever Works (the others are one way, link only, or wait for their items). */
-const EXPORTED_PHASES = new Set<EverWorksSyncPhaseName>(['teams', 'tasks']);
+const EXPORTED_PHASES = new Set<EverWorksSyncPhaseName>(['teams', 'tasks', 'inbox']);
+
+/** The export checkpoint of a finished inbox backfill (the feed's own cursors are recipient ids). */
+const INBOX_EXPORT_DONE = 'done';

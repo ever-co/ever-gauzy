@@ -64,6 +64,22 @@ import { errorText } from '../shared/ever-works-ui.utils';
 		>
 			{{ 'EVER_WORKS.DIRECTIONS.SYNC_UNLINKED_PROJECT_TASKS' | translate }}
 		</nb-checkbox>
+		@if (backfillSupported) {
+			<div class="option">
+				<nb-checkbox
+					data-test="backfill-gauzy-inbox"
+					name="backfillGauzyInbox"
+					[(ngModel)]="backfillGauzyInbox"
+					[disabled]="busy || readonly"
+					(ngModelChange)="saved = false"
+				>
+					{{ 'EVER_WORKS.DIRECTIONS.BACKFILL_GAUZY_INBOX' | translate }}
+				</nb-checkbox>
+				@if (backfillGauzyInbox && !inboxSendsToEverWorks()) {
+					<small class="off-by-setting" data-test="backfill-needs-direction">{{ 'EVER_WORKS.DIRECTIONS.BACKFILL_NEEDS_DIRECTION' | translate }}</small>
+				}
+			</div>
+		}
 		@if (!readonly) {
 			<div class="actions">
 				<button nbButton status="primary" type="button" data-test="save-directions" [disabled]="busy" (click)="save()">
@@ -76,6 +92,9 @@ import { errorText } from '../shared/ever-works-ui.utils';
 		`
 			.actions {
 				margin-top: 1rem;
+			}
+			.option {
+				margin-top: 0.5rem;
 			}
 			.off-by-setting {
 				display: block;
@@ -98,6 +117,10 @@ export class EverWorksDirectionsComponent implements OnChanges {
 	readonly domains = Object.keys(EVER_WORKS_DOMAINS);
 	directions: Record<string, EverWorksDirection> = {};
 	syncUnlinkedProjectTasks = true;
+	/** An initial sync or a resync also sends the open Gauzy Inbox items of paired people. */
+	backfillGauzyInbox = false;
+	/** The mapping carries the switch: an older API, which has none (and would refuse it), is never sent it. */
+	backfillSupported = false;
 	busy = false;
 	saved = false;
 	error: string | null = null;
@@ -111,6 +134,8 @@ export class EverWorksDirectionsComponent implements OnChanges {
 			if (!this.allowed(domain).includes(this.directions[domain])) this.directions[domain] = this.allowed(domain)[0];
 		}
 		this.syncUnlinkedProjectTasks = this.mapping?.syncUnlinkedProjectTasks ?? true;
+		this.backfillSupported = typeof this.mapping?.backfillGauzyInbox === 'boolean';
+		this.backfillGauzyInbox = this.mapping?.backfillGauzyInbox === true;
 		// The settings page hands the saved mapping back as the input: that is this save, not another mapping.
 		this.saved = this.saved && !!this.mapping && this.mapping === this.lastSaved;
 		this.error = null;
@@ -125,6 +150,12 @@ export class EverWorksDirectionsComponent implements OnChanges {
 		return effective === 'off' && (this.mapping?.directions?.[domain] ?? 'off') !== 'off';
 	}
 
+	/** The inbox direction chosen here sends Gauzy Inbox items to Ever Works (what the backfill needs). */
+	inboxSendsToEverWorks(): boolean {
+		const direction = this.directions['inbox'];
+		return direction === 'both' || direction === 'gauzy_to_ew';
+	}
+
 	allowed(domain: string): ReadonlyArray<EverWorksDirection> {
 		return EVER_WORKS_DOMAINS[domain] ?? ['off'];
 	}
@@ -136,7 +167,11 @@ export class EverWorksDirectionsComponent implements OnChanges {
 		// Only directions the domain allows are sent (the API refuses anything else).
 		const directions = Object.fromEntries(this.domains.filter((domain) => this.allowed(domain).includes(this.directions[domain])).map((domain) => [domain, this.directions[domain]]));
 		this.api
-			.updateMapping(this.organizationId, this.mapping.integrationTenantId, { directions, syncUnlinkedProjectTasks: this.syncUnlinkedProjectTasks })
+			.updateMapping(this.organizationId, this.mapping.integrationTenantId, {
+				directions,
+				syncUnlinkedProjectTasks: this.syncUnlinkedProjectTasks,
+				...(this.backfillSupported ? { backfillGauzyInbox: this.backfillGauzyInbox } : {})
+			})
 			.subscribe({
 				next: (mapping) => {
 					this.busy = false;

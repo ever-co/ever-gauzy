@@ -78,11 +78,43 @@ export const EVER_WORKS_DOMAINS: Readonly<Record<string, ReadonlyArray<EverWorks
 	goals: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	ideas: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	tasks: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
-	inbox: ['ew_to_gauzy', 'off'],
+	// Gauzy → Ever Works sends the Gauzy Inbox items of paired people, as each of them chose (new mappings: both ways).
+	inbox: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	docs: ['both', 'ew_to_gauzy', 'gauzy_to_ew', 'off'],
 	// The read-only copy of Ever Works agent mail in the Gauzy Inbox (off by default).
 	agentEmail: ['off', 'ew_to_gauzy']
 };
+
+/** The kinds of Gauzy Inbox items a person may send to Ever Works, in their display order. */
+export type EverWorksInboxKind = 'notice' | 'question' | 'approval' | 'mention' | 'assignment' | 'email' | 'other';
+export const EVER_WORKS_INBOX_KINDS: ReadonlyArray<EverWorksInboxKind> = ['notice', 'question', 'approval', 'mention', 'assignment', 'email', 'other'];
+
+/** Why the Gauzy Inbox items of an organization are not sent to Ever Works. */
+export type EverWorksInboxNotSendingReason = 'not_paired' | 'mapping_disabled' | 'direction' | 'sync_setting_off' | 'connection_inactive' | 'missing_scope';
+
+/** `GET /me/inbox-preferences`: which of my Gauzy Inbox items go to Ever Works, and where they go. */
+export interface EverWorksInboxPreferencesView {
+	/** The kinds, in their display order. */
+	available: EverWorksInboxKind[];
+	/** `true`: sent to Ever Works (every kind is, by default). */
+	kinds: Record<EverWorksInboxKind, boolean>;
+	/** `null` until I saved a choice once. */
+	updatedAt: string | null;
+	/** One row per organization of my tenant mapped to Ever Works. */
+	organizations: EverWorksInboxOrganizationState[];
+}
+
+/** Whether my Gauzy Inbox items of one mapped organization are sent to Ever Works, and why not. */
+export interface EverWorksInboxOrganizationState {
+	organizationId: string;
+	organizationName: string | null;
+	/** My Gauzy person there is paired with an Ever Works member. */
+	paired: boolean;
+	/** Sent now: paired, the mapping on, its inbox direction includes Gauzy → Ever Works, its InboxItem sync setting on. */
+	sending: boolean;
+	/** Why not, when `sending` is `false` (another value from a newer API is shown as it is). */
+	reason: EverWorksInboxNotSendingReason | (string & Record<never, never>) | null;
+}
 
 /** One organization mapping and its settings. */
 export interface EverWorksMapping {
@@ -101,6 +133,11 @@ export interface EverWorksMapping {
 	includeTriageTasks: boolean;
 	includeGoalIterationKeyResults: boolean;
 	syncUnlinkedProjectTasks: boolean;
+	/**
+	 * An initial sync or a resync also sends the open Gauzy Inbox items of paired people (as each of them chose); off by
+	 * default (absent from an older API).
+	 */
+	backfillGauzyInbox?: boolean;
 	ideaIssueTypeId: string | null;
 	ideasTaskViewId: string | null;
 	entitySettings: Array<{ entity: string; sync: boolean }>;
@@ -109,6 +146,7 @@ export interface EverWorksMapping {
 export interface EverWorksMappingUpdate {
 	directions?: Record<string, EverWorksDirection>;
 	syncUnlinkedProjectTasks?: boolean;
+	backfillGauzyInbox?: boolean;
 	includeHiddenTasks?: boolean;
 	includeTriageTasks?: boolean;
 	isEnabled?: boolean;
@@ -129,6 +167,11 @@ export interface EverWorksPersonRow {
 	suggestion: { employeeId: string; reason: 'ever_id' | 'verified_email' } | null;
 	/** A Gauzy invitation still pending for the member's e-mail (absent from an older API). */
 	gauzyInvite?: { inviteId: string; expireDate: string | null } | null;
+	/**
+	 * Which of the paired person's Gauzy Inbox items go to Ever Works, as they chose it (`customized`: they saved a choice
+	 * of their own; otherwise every kind is on). `null` while unpaired, absent from an older API.
+	 */
+	inboxToEverWorks?: { kinds: Record<EverWorksInboxKind, boolean>; customized: boolean } | null;
 }
 /** How a People-tab pairing was made: the same Ever ID, an accepted verified-e-mail suggestion, or by hand. */
 export type EverWorksMatchSource = 'ever_id' | 'verified_email' | 'manual';
@@ -249,7 +292,8 @@ export interface EverWorksSyncPhasePreview {
 	supported: boolean;
 	note: string | null;
 	everWorks: { total: number; linked: number; truncated: boolean } | null;
-	gauzy: { total: number; linked: number } | null;
+	/** `truncated`: the count stopped at the preview's bound (the Gauzy Inbox phase, which scans recipient pages). */
+	gauzy: { total: number; linked: number; truncated?: boolean } | null;
 	creates: { inGauzy: number; inEverWorks: number };
 	toPair: { everWorks: number; gauzy: number } | null;
 }
@@ -373,6 +417,16 @@ export class EverWorksUiService {
 
 	status(organizationId?: string | null): Observable<EverWorksStatus> {
 		return this.http.get<EverWorksStatus>(`${BASE}/status`, this.org(organizationId));
+	}
+
+	// ── My inbox preferences (any signed-in user with INBOX_VIEW; the tenant's, not an organization's) ──────────────
+
+	inboxPreferences(): Observable<EverWorksInboxPreferencesView> {
+		return this.http.get<EverWorksInboxPreferencesView>(`${BASE}/me/inbox-preferences`);
+	}
+
+	updateInboxPreferences(kinds: Partial<Record<EverWorksInboxKind, boolean>>): Observable<EverWorksInboxPreferencesView> {
+		return this.http.put<EverWorksInboxPreferencesView>(`${BASE}/me/inbox-preferences`, { kinds });
 	}
 
 	// ── Connection ────────────────────────────────────────────────────────────────────────────────

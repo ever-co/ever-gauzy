@@ -29,12 +29,12 @@ operator made. A call that is listed but whose trigger never happens is never ma
 
 The table is generated from the outbound-call rows of the Ever Platform contract, at the exact version
 the modules pin; a check in CI fails when the table, the modules' READMEs or the egress audit drift
-from it. The row number is the contract's. Where Gauzy calls on a schedule of its own (row 8), the
-"When" and "How often" columns give Gauzy's.
+from it. The row number is the contract's. Where Gauzy calls on a schedule of its own (rows 8 and 14),
+the "When" and "How often" columns give Gauzy's.
 
 <!-- generated:version (node tools/ever-platform/outbound-calls.mjs --write, from the pinned contract; do not edit by hand) -->
 
-Contract version: `1.0.0-rc.7` (`@ever-co/connect-contracts` and `@ever-co/connect-tools` at the same version).
+Contract version: `1.0.0-rc.8` (`@ever-co/connect-contracts` and `@ever-co/connect-tools` at the same version).
 
 <!-- /generated:version -->
 
@@ -52,8 +52,12 @@ Contract version: `1.0.0-rc.7` (`@ever-co/connect-contracts` and `@ever-co/conne
 | 9 | connection | `GET /v1/instances/me/integrations`, `GET /v1/instances/me/consent-url` | after a consent notice; on return from app.ever.co; when an admin opens the integrations tab | integration, link, return (query) | on action or notice | disconnect |
 | 10 | connection | `PUT /v1/instances/me/integrations/{key}` | an admin disables an integration locally; an operator policy denies it | enabled: false, reason (instance or policy), tenant_link_id? | on action | none needed: this call only ever disables |
 | 11 | connection | `POST /v1/instances/me/stats-link` | integration stats_link enabled (self-hosted installations only) | stats_instance_id, stats_public_jwk, statement_sig: a statement signed with the separate statistics key, sent under the connect-key token, so app.ever.co can show the installation's last report | once; again after Reset instance identity | disable stats_link |
+| 14 | connection | `POST /v1/instances/me/oidc-client`, `GET /v1/instances/me/oidc-client` | integration ever_id_login enabled; then a status read until the client is ready | redirect_uri, logout_uri (the sign-in callback and back-channel logout addresses); the answer carries the client id and, once, the client secret | once per installation (one client serves every linked organization), when ever_id_login is enabled; a request that did not go through (no answer, or an error other than a 422 refusal, which is final) is sent again by the worker 30 s later, the wait doubling up to every hour; then a read at least 5 s later (on the next 15 s pass of the worker), the wait doubling up to every 5 minutes, until the client is ready | disable ever_id_login (the client is removed on the Ever Platform side) |
 | 16 | connection | `POST /v1/instances/me/disconnect`, `POST /v1/instances/me/keys` | the operator disconnects; the connect key is rotated | none (disconnect); public_jwk of the new connect key with two rotation proofs, one signed with the current connect key and one with the new key (rotation; the statistics key is never rotated by this call) | on action | none needed: operator action only |
 | 17 | statistics | `POST /v1/stats/reports` | statistics module loaded and enabled | the ever.stats.v1 document: statistics instance id, product, version, channel, install source, coarse country, month, allow-listed counts, feature flags and integer aggregates | once a day at a jittered time; at boot when the last send is older than 24 h; a final re-send of the previous month on days 1-3 | EVER_STATS_ENABLED=false, or the settings toggle |
+| 19 | connection | `POST /v1/instances/me/person-links`, `DELETE /v1/instances/me/person-links/{ref}` | a user of the installation links or unlinks Ever ID; a one-time sync of links that existed before the installation connected | product_user_ref (the product's user id), identity_issuer, identity_subject, link_method, product_tenant_id?, product_org_id?, tenant_link_id?, display_name? of the tenant; never an e-mail or a person's name | on action | disable ever_id_login |
+| 20 | connection | `POST /v1/instances/me/ack` | a deletion or export request for a person arrived on the event feed and was handled | job_id, result (deleted, anonymised, retained_legal, no_account, forwarded_to_controller, exported or failed), optional non-identifying detail | once per request | disconnect |
+| 22 | connection | `POST /v1/identity/resolve` | a backend that holds only an Ever ID token needs the Ever Platform context of that sign-in | issuer, subject, id_token? | only on such a sign-in | disable ever_id_login |
 | 31 | connection | `POST /v1/instances/me/integrations/{key}/accept` | the operator accepts or declines an installation-wide integration that waits for the local accept | consent_id, accepted | on action | none needed: operator action only |
 
 <!-- /generated:calls -->
@@ -71,11 +75,7 @@ The contract describes more calls for Gauzy than this release makes. These are n
 | # | Calls | Why Gauzy does not make them |
 | --- | --- | --- |
 | 2 | Legal texts | not built in this release |
-| 14 | Ever ID sign-in client | not served by version 1 of the Ever Platform API |
 | 18 | Installation address | not built in this release |
-| 19 | Person links | not served by version 1 of the Ever Platform API |
-| 20 | Receipt for a deletion or export request | not served by version 1 of the Ever Platform API |
-| 22 | Identity resolution | not served by version 1 of the Ever Platform API |
 | 23 | Signed-in person's context | not built in this release |
 | 25 | Cloud billing link | not served by version 1 of the Ever Platform API |
 | 27 | Usage reports | not served by version 1 of the Ever Platform API |

@@ -17,6 +17,7 @@ import {
 } from '@gauzy/core';
 import { EverWorksCatalogService } from '../ever-works-catalog.service';
 import { EVER_WORKS_INTEGRATION_NAME } from '../ever-works.constants';
+import { toEverWorks } from '../sync/initial/ever-works-sync-phases';
 import { EverWorksSettingName as S } from '../ever-works-setting.enum';
 import { EverWorksScope, EverWorksScopeService } from '../ever-works-scope.service';
 import { EverWorksConnection, EverWorksConnectionStatus } from '../connection/ever-works-connection.entity';
@@ -56,6 +57,8 @@ export interface EverWorksMappingView {
 	includeTriageTasks: boolean;
 	includeGoalIterationKeyResults: boolean;
 	syncUnlinkedProjectTasks: boolean;
+	/** An initial sync or resync also sends the open Gauzy Inbox items of paired people (off by default). */
+	backfillGauzyInbox: boolean;
 	ideaIssueTypeId: ID | null;
 	ideasTaskViewId: ID | null;
 	entitySettings: Array<{ entity: IntegrationEntity; sync: boolean }>;
@@ -152,7 +155,11 @@ export class EverWorksMappingService {
 				[S.CONNECTION_ID]: connection.id as ID,
 				[S.EVER_WORKS_ORGANIZATION_ID]: pinned.id,
 				[S.EVER_WORKS_ORGANIZATION_SLUG]: pinned.slug,
-				[S.IS_ENABLED]: 'true'
+				[S.IS_ENABLED]: 'true',
+				// When the inbox starts going to Ever Works (the default direction writes there), also when an archived mapping
+				// is restored (what was written while it was archived is not quietly sent): only the backfill sends older items.
+				// A later switch to a writing direction records its own time.
+				[S.INBOX_PUSH_SINCE]: new Date().toISOString()
 			};
 			const firstTime: Record<string, string> = {
 				[S.ENTITY_DIRECTIONS]: JSON.stringify(DEFAULT_EVER_WORKS_DIRECTIONS),
@@ -191,10 +198,22 @@ export class EverWorksMappingService {
 		const connectionId = await this.transaction(scope, async (manager) => {
 			const mapping = await this.require(manager, scope, integrationTenantId);
 			const values: Record<string, string> = {};
-			if (dto.directions !== undefined) {
-				const merged = { ...this.directions(mapping), ...this.validDirections(dto.directions) };
-				values[S.ENTITY_DIRECTIONS] = JSON.stringify(merged);
-			}
+			const current = this.directions(mapping);
+			const directions = dto.directions !== undefined ? { ...current, ...this.validDirections(dto.directions) } : current;
+			if (dto.directions !== undefined) values[S.ENTITY_DIRECTIONS] = JSON.stringify(directions);
+			// The Gauzy Inbox starts going to Ever Works now (the mapping on, its InboxItem setting on and an inbox direction
+			// that writes there, where one of them was not before): older items only with the backfill.
+			const inboxRows = await manager.find(IntegrationEntitySetting, { where: { integrationId: mapping.id, entity: IntegrationEntity.INBOX_ITEM } as never });
+			const inboxSyncedBefore = !inboxRows.some((row) => row.sync === false);
+			// The last toggle of InboxItem in the request, the one the save below keeps.
+			const inboxToggle = (dto.entitySettings ?? []).filter((change) => change.entity === IntegrationEntity.INBOX_ITEM).pop();
+			const enabledBefore = this.setting(mapping, S.IS_ENABLED) === 'true';
+			const sendsBefore = enabledBefore && inboxSyncedBefore && toEverWorks(current.inbox);
+			const sendsAfter =
+				(dto.isEnabled !== undefined ? dto.isEnabled === true : enabledBefore) &&
+				(inboxToggle ? inboxToggle.sync : inboxSyncedBefore) &&
+				toEverWorks(directions.inbox);
+			if (sendsAfter && !sendsBefore) values[S.INBOX_PUSH_SINCE] = new Date().toISOString();
 			for (const [field, name] of [
 				['defaultProjectId', S.DEFAULT_PROJECT_ID],
 				['ideasProjectId', S.IDEAS_PROJECT_ID]
@@ -210,6 +229,7 @@ export class EverWorksMappingService {
 				['includeTriageTasks', S.INCLUDE_TRIAGE_TASKS],
 				['includeGoalIterationKeyResults', S.INCLUDE_GOAL_ITERATION_KEY_RESULTS],
 				['syncUnlinkedProjectTasks', S.SYNC_UNLINKED_PROJECT_TASKS],
+				['backfillGauzyInbox', S.BACKFILL_GAUZY_INBOX],
 				['isEnabled', S.IS_ENABLED]
 			] as const) {
 				if (dto[field] !== undefined) values[name] = String(dto[field]);
@@ -539,6 +559,7 @@ export class EverWorksMappingService {
 			includeTriageTasks: bool(S.INCLUDE_TRIAGE_TASKS, false),
 			includeGoalIterationKeyResults: bool(S.INCLUDE_GOAL_ITERATION_KEY_RESULTS, false),
 			syncUnlinkedProjectTasks: bool(S.SYNC_UNLINKED_PROJECT_TASKS, true),
+			backfillGauzyInbox: bool(S.BACKFILL_GAUZY_INBOX, false),
 			ideaIssueTypeId: id(S.IDEA_ISSUE_TYPE_ID),
 			ideasTaskViewId: id(S.IDEAS_TASK_VIEW_ID),
 			entitySettings: EVER_WORKS_SYNCED_ENTITIES.map((entity) => ({

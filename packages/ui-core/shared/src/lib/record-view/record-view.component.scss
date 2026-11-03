@@ -842,6 +842,14 @@ button.record-tag {
       }
     }
 
+    // ── Images ───────────────────────────────────────────────────────────────
+    // A screenshot shrinks to the column and keeps its shape, whatever width and
+    // height the editor stored; at its own size it runs under the panels beside it.
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
     // ── Tables ───────────────────────────────────────────────────────────────
     .md-table {
       overflow-x: auto;

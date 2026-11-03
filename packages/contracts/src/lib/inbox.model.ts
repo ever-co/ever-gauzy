@@ -275,3 +275,121 @@ export interface IInboxItemWriter {
  */
 export const INBOX_SOURCE_HANDLER_REGISTRY = 'INBOX_SOURCE_HANDLER_REGISTRY';
 export const INBOX_ITEM_WRITER = 'INBOX_ITEM_WRITER';
+
+/** The recipient state a change stated (`IInboxItemChange.stated`). */
+export type IInboxRecipientStateField = 'isRead' | 'isArchived' | 'snoozedUntil';
+
+/**
+ * What changed in the Inbox (`IInboxItemObserver.changed`): an item itself (created, re-delivered by its source,
+ * answered) or one recipient's own state. It names the records only; an observer reads what it needs.
+ */
+export interface IInboxItemChange {
+	tenantId: ID;
+	organizationId: ID | null;
+	inboxItemId: ID;
+	kind: InboxItemKindEnum;
+	source: InboxItemSourceEnum | string;
+	externalSource: string | null;
+	/** `item`: the item (shared by its recipients) changed; `recipient`: only the recipients' own state did. */
+	scope: 'item' | 'recipient';
+	/** `created` for the first write of an item, else `updated` (`answered` for a reply). */
+	type: 'created' | 'updated' | 'answered';
+	/** The recipient rows the change concerns: every recipient of the item for an item change. */
+	recipients: Array<{ id: ID; userId: ID }>;
+	/** Recipient rows the write removed (a source that replaced its recipients): their copies elsewhere end. */
+	removedRecipients?: Array<{ id: ID; userId: ID }>;
+	/** For a recipient change, the state fields it stated. */
+	stated?: IInboxRecipientStateField[];
+	/** The signed-in user who made the change, when there was one. */
+	actorUserId?: ID | null;
+}
+
+/**
+ * A plugin told about every Inbox change (best effort: an observer never fails or delays the write). `changed` is
+ * called synchronously in the writer's context and never awaited: an observer that must not lose a change queues it
+ * durably itself.
+ */
+export interface IInboxItemObserver {
+	/** Unique per observer (a second registration under the same id replaces the first). */
+	readonly id: string;
+	changed(change: IInboxItemChange): Promise<void> | void;
+}
+
+/** One recipient's copy of an item, as an observer reads it (`IInboxItemFeed.readRecipient`). */
+export interface IInboxObservedItem {
+	item: IInboxItem;
+	recipient: IInboxItemRecipient;
+}
+
+/** A page of recipient rows (`IInboxItemFeed.recipientsChangedSince`, `openRecipientsOf`). */
+export interface IInboxRecipientPage {
+	recipients: Array<{
+		id: ID;
+		userId: ID;
+		inboxItemId: ID;
+		organizationId: ID | null;
+		source: InboxItemSourceEnum | string;
+		kind: InboxItemKindEnum;
+		/** The later of the item's and the recipient row's update times. */
+		changedAt: Date | string | null;
+		/** The item's own update time (a change of the item, not only of the recipient's state). */
+		itemUpdatedAt: Date | string | null;
+		/** The item's identity in its source, its links and its metadata (parsed), for an observer's own filters. */
+		externalSource: string | null;
+		taskId: ID | null;
+		entity: string | null;
+		entityId: ID | null;
+		metadata: Record<string, unknown> | null;
+	}>;
+	/** Pass back as `after` for the next page; `null` on the last page. */
+	next: string | null;
+}
+
+/**
+ * The Inbox's observer seam (additive to the writer and the source handlers): plugins that mirror the Inbox somewhere
+ * else (the Ever Works integration) register an observer, are told about every write, and read one recipient's copy
+ * of an item when they act on it. The Inbox depends on none of them. An observer that must not lose a change keeps
+ * its own durable queue, and recovers a missed notice with `recipientsChangedSince`.
+ */
+export interface IInboxItemFeed {
+	register(observer: IInboxItemObserver): void;
+	unregister(id: string): void;
+	/** One recipient row of a tenant with its item (`null` when either is gone). */
+	readRecipient(tenantId: ID, recipientId: ID): Promise<IInboxObservedItem | null>;
+	/** Of the recipient rows named, the ones that are gone (or whose item is): an observer ends their copies. */
+	missingRecipients(tenantId: ID, recipientIds: ID[]): Promise<ID[]>;
+	/**
+	 * The recipient rows of a tenant whose item or own state changed since a time, in recipient id order (not change
+	 * time), at most `limit` per page: a recovery sweep for a notice an observer missed. Page with `after` = `next`
+	 * until `next` is `null` before moving `since` on, or rows of the window are never read.
+	 */
+	recipientsChangedSince(
+		tenantId: ID,
+		since: Date,
+		options?: { organizationId?: ID; after?: string | null; limit?: number }
+	): Promise<IInboxRecipientPage>;
+	/**
+	 * The open (not answered, resolved or cancelled), not archived items of some users of an organization, one row per
+	 * recipient, in id order after `after` (a backfill, and its dry-run counts).
+	 */
+	openRecipientsOf(
+		tenantId: ID,
+		organizationId: ID,
+		userIds: ID[],
+		options?: { after?: string | null; limit?: number }
+	): Promise<IInboxRecipientPage>;
+}
+
+/**
+ * The Inbox's own recipient actions, acting as the signed-in user of the request context (the recipient): the same
+ * service methods the routes call. Used by a plugin that applies a reply or a state made elsewhere on the user's
+ * behalf (the Ever Works integration, for an item it mirrored there).
+ */
+export interface IInboxRecipientActions {
+	reply(id: ID, input: IInboxReplyInput): Promise<IInboxItemWithState>;
+	setState(id: ID, input: IInboxRecipientStateInput): Promise<IInboxItemWithState>;
+}
+
+/** Tokens of the observer seam and of the recipient actions, provided by `@gauzy/plugin-inbox` when it is loaded. */
+export const INBOX_ITEM_FEED = 'INBOX_ITEM_FEED';
+export const INBOX_RECIPIENT_ACTIONS = 'INBOX_RECIPIENT_ACTIONS';
