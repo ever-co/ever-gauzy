@@ -80,8 +80,8 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 					values[column.name] = /int|bool|numeric|decimal|real|float/.test(type)
 						? 0
 						: /date|time/.test(type)
-						? '2026-01-01 00:00:00'
-						: 'x';
+							? '2026-01-01 00:00:00'
+							: 'x';
 				}
 				const keys = Object.keys(values);
 				await dataSource.query(
@@ -114,7 +114,13 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 				currency: 'EUR',
 				color: '#3366ff'
 			});
-			await insert('organization_contact', { ...scope, id: CONTACT, name: 'Acme', budget: 2, budgetType: 'hours' });
+			await insert('organization_contact', {
+				...scope,
+				id: CONTACT,
+				name: 'Acme',
+				budget: 2,
+				budgetType: 'hours'
+			});
 
 			// Half an hour for each employee, on the same day
 			for (const [index, [employeeId]] of employees.entries()) {

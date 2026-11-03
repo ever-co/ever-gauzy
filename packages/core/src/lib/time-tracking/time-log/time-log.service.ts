@@ -369,7 +369,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * @param organizationId - The organization the report is about.
 	 * @returns The currency, or null when no rate needs one or the organization states none.
 	 */
-	private async findCurrencyForRatesWithoutOne(logs: ITimeLog[], organizationId: ID | undefined): Promise<string | null> {
+	private async findCurrencyForRatesWithoutOne(
+		logs: ITimeLog[],
+		organizationId: ID | undefined
+	): Promise<string | null> {
 		return logs.some(({ employee }) => this.hasRateWithoutCurrency(employee))
 			? await this.findOrganizationCurrency(organizationId)
 			: null;
@@ -1190,7 +1193,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				.innerJoin('employee', 'time_log.employeeId', 'employee.id')
 				.select(
 					'time_log.id as id',
-					'time_log.duration as duration',
+					'time_log.startedAt as startedAt',
+					'time_log.stoppedAt as stoppedAt',
 					`time_log.${timeLogKey} as targetId`,
 					'employee.billRateValue as employee_billRateValue'
 				)
@@ -1203,7 +1207,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			const timeLogs = timeLogsByTarget[row.targetId] || [];
 			timeLogs.push({
 				id: row.id,
-				duration: row.duration,
+				// No column holds a log's duration: the entity works it out when it loads, and this read loads none
+				duration: moment.utc(row.stoppedAt || new Date()).diff(moment.utc(row.startedAt), 'seconds'),
 				employee: { billRateValue: row.employee_billRateValue }
 			});
 			timeLogsByTarget[row.targetId] = timeLogs;

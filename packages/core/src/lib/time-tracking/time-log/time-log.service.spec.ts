@@ -568,15 +568,18 @@ describe('TimeLogService', () => {
 				['reads a rate a driver hands back as text', 1800, '20.15', 'USD', 10.08],
 				['gives a currency without a minor unit whole amounts', 1800, 1501, 'JPY', 751],
 				['gives a currency of thousandths its third decimal', 1000, 7.25, 'KWD', 2.014]
-			])('%s, in the report and in the chart', async (_name, duration, billRateValue, billRateCurrency, expected) => {
-				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue, billRateCurrency };
-				builder.rows = [log(employee, 'a1a2b3c4-0000-4000-8000-000000000001', duration)];
+			])(
+				'%s, in the report and in the chart',
+				async (_name, duration, billRateValue, billRateCurrency, expected) => {
+					const employee = { id: TARGET_EMPLOYEE_ID, billRateValue, billRateCurrency };
+					builder.rows = [log(employee, 'a1a2b3c4-0000-4000-8000-000000000001', duration)];
 
-				const { lines, value } = await owedDay();
+					const { lines, value } = await owedDay();
 
-				expect(lines).toEqual([expect.objectContaining({ amount: expected, duration })]);
-				expect(value).toBe(expected);
-			});
+					expect(lines).toEqual([expect.objectContaining({ amount: expected, duration })]);
+					expect(value).toBe(expected);
+				}
+			);
 
 			it("prices the day's total seconds once, not log by log", async () => {
 				const employee = { id: TARGET_EMPLOYEE_ID, billRateValue: 1501, billRateCurrency: 'JPY' };
@@ -598,7 +601,9 @@ describe('TimeLogService', () => {
 				await service.getOwedAmountReportCharts(request);
 
 				const [{ select }] = setFindOptions.mock.calls[0] as unknown as [{ select: Record<string, any> }];
-				expect(select.employee).toEqual(expect.objectContaining({ billRateValue: true, billRateCurrency: true }));
+				expect(select.employee).toEqual(
+					expect.objectContaining({ billRateValue: true, billRateCurrency: true })
+				);
 			});
 
 			it("prices a rate that states no currency in the organization's, as the weekly report does", async () => {
