@@ -71,14 +71,19 @@ describe('ProvisionConfirmComponent', () => {
 		expect(component.retryable).toBe(false);
 	});
 
-	it('expired request, unknown plan, missing keys', () => {
+	it('expired request: start again from Ever', () => {
 		api.summary.mockReturnValue(throwError(() => ({ status: 401, error: { code: 'intent_expired' } })));
 		expect(create({ provision: PROVISION, handoff: HANDOFF }).error).toBe('intent_expired');
-		TestBed.resetTestingModule();
+	});
+
+	it('a plan that does not include it: back to Ever', () => {
 		api.summary.mockReturnValue(throwError(() => ({ status: 422, error: { code: 'validation_failed' } })));
 		expect(create({ provision: PROVISION, handoff: HANDOFF }).error).toBe('validation_failed');
-		TestBed.resetTestingModule();
+	});
+
+	it('missing keys: nothing is asked', () => {
 		expect(create({}).error).toBe('intent_invalid');
+		expect(api.summary).not.toHaveBeenCalled();
 	});
 
 	it('success: creates with the names typed, signs in through the workspace sign-in, then goes back to Ever', () => {
@@ -100,7 +105,7 @@ describe('ProvisionConfirmComponent', () => {
 			of({ user: { id: 'u', tenantId: 't', employee: { organizationId: 'o' } }, token: 'access', refresh_token: 'refresh' })
 		);
 		const component = create({ provision: PROVISION, handoff: HANDOFF });
-		assign = jest.spyOn(component as never, 'goTo' as never);
+		assign = jest.spyOn(component as never, 'goTo' as never).mockImplementation((() => undefined) as never);
 		component.firstName = ' Ada ';
 		component.lastName = 'Lovelace';
 		component.create();
