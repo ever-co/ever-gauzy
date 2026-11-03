@@ -182,9 +182,12 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 				throw new Error('The new owner could not be read back.');
 			}
 		}
-		// Kept unusable on every attempt until the last step (also an owner a stopped attempt left), so no
-		// sign-in path (Ever ID, Gauzy's e-mail code) reaches the workspace before its links exist.
-		if (user.isActive !== false) {
+		// An owner a stopped attempt left that became usable meanwhile (its address confirmed through Gauzy's
+		// own link) is made unusable again until the last step, but only while this attempt still holds the
+		// creation: the checkpoint renews the caller's claim and fails once another attempt took it over, so a
+		// workspace another attempt finished is never touched.
+		if (user.isActive !== false && hooks.checkpoint) {
+			await checkpoint();
 			await this.dataSource.getRepository(User).update({ id: user.id }, { isActive: false } as never);
 		}
 

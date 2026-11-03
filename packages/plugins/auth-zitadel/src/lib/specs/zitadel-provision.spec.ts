@@ -150,7 +150,7 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		failOrganizationOnce = false;
 		required = [];
 		const gauzyAuth = {
-			register: async (input: { user: { email: string } }) => {
+			register: async (input: { user: { email: string; isActive?: boolean } }) => {
 				registered.push({ input });
 				const user = {
 					id: randomUUID(),
@@ -158,8 +158,8 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 					tenantId: null,
 					hash: null,
 					emailVerifiedAt: null,
-					// As Gauzy's register path leaves it where new accounts need not confirm their address.
-					isActive: true,
+					// As Gauzy's register path creates it (the flag the caller passed).
+					isActive: input.user.isActive ?? true,
 					isArchived: false,
 					createdAt: new Date()
 				};
