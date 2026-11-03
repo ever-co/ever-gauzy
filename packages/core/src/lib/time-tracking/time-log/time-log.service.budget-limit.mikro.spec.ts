@@ -9,7 +9,9 @@ import { TimeLogService } from './time-log.service';
  * MikroORM's soft-delete filter. Every query they run must therefore exclude soft-deleted rows itself,
  * as TypeORM's query builder does, or deleted time keeps counting toward the budget spent.
  *
- * The knex stand-in records each query (table + `whereNull` columns) and answers them in order.
+ * The knex stand-in records each query (table, selected columns, `whereNull` columns) and answers them in order.
+ * What a real database refuses is `time-log.service.reports.dual-orm.spec.ts`'s to prove: this stand-in answers
+ * whatever it is told to, a column that does not exist included.
  */
 function createKnex(answers: unknown[][]) {
 	const queries: { table: string; selected: string[]; whereNull: string[] }[] = [];
@@ -43,7 +45,13 @@ describe('TimeLogService budget reports exclude soft-deleted rows (MikroORM)', (
 		startDate: '2026-09-01',
 		endDate: '2026-09-30'
 	};
-	const timeLogRow = { id: 't-1', duration: 3600, employeeId: 'e-1', employee_billRateValue: 10 };
+	const timeLogRow = {
+		id: 't-1',
+		startedAt: '2026-09-01 09:00:00',
+		stoppedAt: '2026-09-01 10:00:00',
+		employeeId: 'e-1',
+		employee_billRateValue: 10
+	};
 
 	let restore: () => void;
 
@@ -83,6 +91,30 @@ describe('TimeLogService budget reports exclude soft-deleted rows (MikroORM)', (
 		);
 		expect(queries[1].whereNull).toEqual(['deletedAt']);
 		expect(queries[2].whereNull).toEqual(expect.arrayContaining(['time_log.deletedAt', 'employee.deletedAt']));
+	});
+
+	it('works out each duration from the two instants, since no column holds it', async () => {
+		const { result, queries } = run('getProjectBudgetLimit', [
+			[{ id: 'p-1' }],
+			[{ id: 'p-1', name: 'Site', budget: 10, budgetType: 'hours' }],
+			[
+				{ ...timeLogRow, targetId: 'p-1' },
+				// A driver may hand the instants back as dates, and a running log counts up to now
+				{
+					...timeLogRow,
+					id: 't-2',
+					targetId: 'p-1',
+					startedAt: new Date(Date.now() - 1800 * 1000),
+					stoppedAt: null
+				}
+			]
+		]);
+
+		await expect(result).resolves.toEqual([expect.objectContaining({ spent: 1.5 })]);
+		expect(queries[2].selected).toEqual(
+			expect.arrayContaining(['time_log.startedAt as startedAt', 'time_log.stoppedAt as stoppedAt'])
+		);
+		expect(queries[2].selected).not.toContain('time_log.duration as duration');
 	});
 
 	it("project budget: answers each project's currency and colour", async () => {
