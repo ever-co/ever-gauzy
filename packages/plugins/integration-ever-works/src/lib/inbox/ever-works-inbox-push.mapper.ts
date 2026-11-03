@@ -214,16 +214,22 @@ export function filedAnswerOf(item: Partial<EverWorksFiledInboxItem>): { optionI
 
 /** What Ever Works holds for a filed item, as a snapshot (`sent` fills what its answer leaves out). */
 export function filedAsShared(item: Partial<EverWorksFiledInboxItem>, sent: GauzyInboxShared): GauzyInboxShared {
-	const choices = Array.isArray(item.choices)
-		? item.choices.map((choice) => ({ id: choice.id, label: choice.label }))
-		: Array.isArray(item.options)
-			? item.options.map((option) => ({ id: option.id, label: option.label }))
+	// What Ever Works stores counts, an empty list or `null` included (no choices there); only a field it leaves out
+	// falls back to what was sent.
+	const stored = Array.isArray(item.choices) ? item.choices : Array.isArray(item.options) ? item.options : undefined;
+	const none = item.choices === null || item.options === null;
+	const choices = stored
+		? stored.length
+			? stored.map((choice) => ({ id: choice.id, label: choice.label }))
+			: null
+		: none
+			? null
 			: sent.choices;
 	const answer = filedAnswerOf(item);
 	return {
 		title: typeof item.title === 'string' ? item.title : sent.title,
 		body: typeof item.body === 'string' ? item.body : sent.body,
-		choices: choices && choices.length ? choices : sent.choices,
+		choices,
 		state: filedStateOf(item) ?? 'open',
 		resolution: answer
 			? {

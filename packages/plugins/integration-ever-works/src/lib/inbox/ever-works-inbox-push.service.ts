@@ -123,6 +123,8 @@ interface EverWorksCopySide {
 	unread?: boolean;
 	/** Who answered the copy in Ever Works: Gauzy (its resolution), or the member there (whose answer then stands). */
 	answeredBy?: 'gauzy' | 'member';
+	/** The answer Ever Works held when last seen: only a different one is applied to Gauzy (never the same one twice). */
+	answer?: { optionId?: string; text?: string } | null;
 }
 
 /**
@@ -523,6 +525,25 @@ export class EverWorksInboxPushService
 		// may have answered, archived or read since: those are applied to Gauzy first (never undone by the patch below).
 		const held = filedAsShared(filed, now);
 		const filedAs: Partial<GauzyInboxShared> = { ...held, state: 'open', resolution: null };
+		// A replay of a copy filed for the member the person was paired with before (the link of that filing was lost):
+		// it stays that member's; recorded as theirs, nothing more is applied or sent to it.
+		const filedFor =
+			typeof filed.recipientUserId === 'string' && filed.recipientUserId ? filed.recipientUserId : ewUserId;
+		if (filedFor !== ewUserId) {
+			await this.record(
+				context,
+				copy,
+				filed,
+				filedAs,
+				{ state: filedStateOf(filed) ?? 'open', unread: filed.unread ?? true },
+				filedFor,
+				externalId
+			);
+			return {
+				status: 'skipped',
+				message: 'the copy was filed for the member the person was paired with before; it stays theirs'
+			};
+		}
 		let moves: { done: string[]; e: EverWorksCopySide };
 		try {
 			moves = await this.applyMoves(
@@ -614,10 +635,18 @@ export class EverWorksInboxPushService
 			throw error;
 		}
 		// What this patch set itself is not a move of the member's.
+		// What this patch set itself (its answer among it) is not a move of the member's.
+		const sentAnswer = patch.resolution
+			? {
+					...(patch.resolution.choiceId ? { optionId: patch.resolution.choiceId } : {}),
+					...(patch.resolution.text ? { text: patch.resolution.text } : {})
+				}
+			: null;
 		const expected: EverWorksCopySide = {
 			state: patch.state ?? seen.state,
 			unread: seen.unread,
-			answeredBy: patch.resolution || patch.state === 'resolved' ? 'gauzy' : seen.answeredBy
+			answeredBy: patch.resolution || patch.state === 'resolved' ? 'gauzy' : seen.answeredBy,
+			answer: sentAnswer ?? seen.answer ?? null
 		};
 		let moves: { done: string[]; e: EverWorksCopySide };
 		if (copy) {
@@ -746,17 +775,20 @@ export class EverWorksInboxPushService
 		const archivedNow = state === 'archived';
 		const archiveMoved = state !== null && archivedNow !== (seen.state === 'archived');
 		const unreadMoved = typeof data.unread === 'boolean' && data.unread !== seen.unread;
+		// A new answer (not the one last seen: a later event of the same answer never answers a reopened item again).
+		const answerMoved = !!answer && JSON.stringify(answer) !== JSON.stringify(seen.answer ?? null);
 		// An answer (or a copy marked resolved) Gauzy did not send is the member's.
 		const memberAnswered =
-			(!!answer || state === 'resolved') && seen.state !== 'resolved' && seen.answeredBy !== 'gauzy';
+			answerMoved || (state === 'resolved' && seen.state !== 'resolved' && seen.answeredBy !== 'gauzy');
 		const e: EverWorksCopySide = {
 			state: state ?? seen.state,
 			unread: typeof data.unread === 'boolean' ? data.unread : seen.unread,
-			answeredBy: memberAnswered ? 'member' : seen.answeredBy
+			answeredBy: memberAnswered && seen.answeredBy !== 'gauzy' ? 'member' : seen.answeredBy,
+			answer: answer ?? seen.answer ?? null
 		};
 		const done: string[] = [];
 		const actions = this.actions;
-		const answers = !!answer && takesDecision(item.kind) && item.status === InboxItemStatusEnum.OPEN;
+		const answers = answerMoved && takesDecision(item.kind) && item.status === InboxItemStatusEnum.OPEN;
 		const archives = archiveMoved && archivedNow !== !!recipient.isArchived;
 		const reads = unreadMoved && data.unread === !!recipient.isRead;
 		if (!actions || !(answers || archives || reads)) return { done, e };

@@ -1143,6 +1143,52 @@ describe('EverWorksInboxPushService — what an Ever Works user does', () => {
 		expect(writer.upsertExternal).toHaveBeenCalledTimes(1);
 	});
 
+	it('a replay of a copy filed for the member the person was paired with before stays theirs: nothing more goes to it', async () => {
+		const { addItem, push, inboxWrite, links, items, linkOf } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		links.splice(links.indexOf(linkOf(ada) as Row), 1); // the link of that filing was lost
+		const pairing = links.find(
+			(l) => l['entityType'] === EverWorksLinkType.MEMBER && l['gauzyId'] === ADA.employee
+		) as Row;
+		pairing['ewId'] = 'ew-user-ada-new';
+		await expect(push(ada)).resolves.toMatchObject({
+			status: 'skipped',
+			message: expect.stringContaining('stays theirs')
+		});
+		expect(JSON.parse((linkOf(ada) as Row)['ewOnly'])).toMatchObject({ recipientUserId: ADA.ew });
+		Object.assign(items.get(item.id as string) as IInboxItem, { title: 'Renamed' });
+		await expect(push(ada)).resolves.toMatchObject({ status: 'skipped' });
+		expect(inboxWrite.patched).toHaveLength(0);
+		expect(inboxWrite.filed()).toHaveLength(1);
+	});
+
+	it('a replay without choices keeps that: choices Gauzy added since are sent', async () => {
+		const { addItem, push, inboxWrite, links, items, linkOf } = setup();
+		const { item, ada } = addItem({ options: null });
+		await push(ada);
+		links.splice(links.indexOf(linkOf(ada) as Row), 1);
+		Object.assign(items.get(item.id as string) as IInboxItem, { options: [{ id: 'go', label: 'Go' }] });
+		await expect(push(ada)).resolves.toMatchObject({ status: 'pushed' });
+		expect(inboxWrite.patched[inboxWrite.patched.length - 1].body).toEqual({
+			choices: [{ id: 'go', label: 'Go' }]
+		});
+	});
+
+	it('the same Ever Works answer is never applied twice, even to an item reopened in Gauzy since', async () => {
+		const { addItem, push, inboxWrite, apply, actions, items, linkOf } = setup();
+		const { item, ada } = addItem();
+		await push(ada);
+		const ewId = linkOf(ada)?.['ewId'] as string;
+		await apply(await inboxWrite.answer(ewId, { choiceId: 'yes' }));
+		expect(actions.reply).toHaveBeenCalledTimes(1);
+		// Its source reopened the Gauzy item; a later event of the copy still carries the old answer.
+		Object.assign(items.get(item.id as string) as IInboxItem, { status: InboxItemStatusEnum.OPEN, response: null });
+		await apply(await inboxWrite.read(ewId, false));
+		expect(actions.reply).toHaveBeenCalledTimes(1);
+		expect(items.get(item.id as string)).toMatchObject({ status: InboxItemStatusEnum.OPEN });
+	});
+
 	it('never sends Gauzy’s answer over the one the member gave in Ever Works', async () => {
 		const { addItem, push, inboxWrite, apply, actions, items, linkOf } = setup();
 		const { item, ada } = addItem();
