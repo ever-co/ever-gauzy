@@ -1,6 +1,12 @@
+import { createHash } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { OidcValidatedIdToken } from '@gauzy/auth';
-import { PROVISION_KEY_SHAPE, ZitadelHandoffReaderPort, ZitadelProvisionHandoff } from '../ports/handoff-reader.port';
+import {
+	PROVISION_KEY_SHAPE,
+	provisionKeyHash,
+	ZitadelHandoffReaderPort,
+	ZitadelProvisionHandoff
+} from '../ports/handoff-reader.port';
 import { ZitadelAccountService } from './zitadel-account.service';
 import { ZitadelClaimHints, ZitadelClaimsService } from './zitadel-claims.service';
 import { ZitadelConfigService } from './zitadel-config.service';
@@ -18,6 +24,13 @@ interface StoredProvisionHandoff extends ZitadelProvisionHandoff {
 	hints: ZitadelClaimHints;
 }
 
+/** The name a hand-off is stored under: the SHA-256 of its key (base64url), never the key itself. */
+function storeKeyOf(handoffKey: unknown): string {
+	return typeof handoffKey === 'string' && handoffKey
+		? createHash('sha256').update(handoffKey, 'utf8').digest('base64url')
+		: '';
+}
+
 /** Whether `value` has the shape of a provisioning key. */
 export function isProvisionKey(value: unknown): value is string {
 	return typeof value === 'string' && PROVISION_KEY_SHAPE.test(value);
@@ -30,7 +43,8 @@ export function isProvisionKey(value: unknown): value is string {
  * The callback of such a sign-in links nothing and signs nobody in: it keeps what the verified ID
  * token says about the person (issuer, subject, verified e-mail, names) under a new one-time key, for
  * as long as a confirmation stays open (`ZITADEL_CONFIRM_TTL_S`), and sends the browser to the
- * confirmation page with that key. The ID token itself is never stored or passed on.
+ * confirmation page with that key. The ID token itself is never stored or passed on; the hand-off is
+ * stored under the SHA-256 of its key, with the digest of the provisioning key only.
  */
 @Injectable()
 export class ZitadelHandoffService implements ZitadelHandoffReaderPort {
@@ -59,22 +73,22 @@ export class ZitadelHandoffService implements ZitadelHandoffReaderPort {
 			email: idToken.email,
 			givenName: idToken.givenName,
 			familyName: idToken.familyName,
-			provisionKey,
+			provisionKeyHash: provisionKeyHash(provisionKey),
 			signedInAt: Date.now(),
 			sid: idToken.sid,
 			hints
 		};
 		const key = this.store.newKey();
-		await this.store.put(NAMESPACE, key, record, this.config.settings.confirmTtlSeconds);
+		await this.store.put(NAMESPACE, storeKeyOf(key), record, this.config.settings.confirmTtlSeconds);
 		return key;
 	}
 
 	async peek(handoffKey: string): Promise<ZitadelProvisionHandoff | null> {
-		return publicPart(await this.store.get<StoredProvisionHandoff>(NAMESPACE, handoffKey));
+		return publicPart(await this.store.get<StoredProvisionHandoff>(NAMESPACE, storeKeyOf(handoffKey)));
 	}
 
 	async consume(handoffKey: string): Promise<ZitadelProvisionHandoff | null> {
-		return publicPart(await this.store.take<StoredProvisionHandoff>(NAMESPACE, handoffKey));
+		return publicPart(await this.store.take<StoredProvisionHandoff>(NAMESPACE, storeKeyOf(handoffKey)));
 	}
 
 	/**
@@ -82,29 +96,39 @@ export class ZitadelHandoffService implements ZitadelHandoffReaderPort {
 	 * that same Ever ID: answers the one-time key of `#/auth/ever-id?handoff=…`.
 	 */
 	async signIn(handoffKey: string, userId: string): Promise<string | null> {
-		const record = await this.store.take<StoredProvisionHandoff>(NAMESPACE, handoffKey);
+		const storeKey = storeKeyOf(handoffKey);
+		// Taken (single use) while the sign-in is made; put back when it cannot be made, so a retry works.
+		const record = await this.store.take<StoredProvisionHandoff>(NAMESPACE, storeKey);
 		if (!record) {
 			return null;
 		}
-		const users = (await this.accounts.findLinkedUsers(record.issuer, record.subject)).filter(
-			(user) => user.id === userId
-		);
-		if (!users.length) {
-			return null;
+		const restore = () =>
+			this.store.put(NAMESPACE, storeKey, record, this.config.settings.confirmTtlSeconds).catch(() => undefined);
+		try {
+			const users = (await this.accounts.findLinkedUsers(record.issuer, record.subject)).filter(
+				(user) => user.id === userId
+			);
+			if (!users.length) {
+				await restore();
+				return null;
+			}
+			const identity = {
+				issuer: record.issuer,
+				subject: record.subject,
+				email: record.email,
+				everPersonId: record.hints?.personId
+			};
+			const response = await this.workspaces.signIn(
+				users,
+				identity,
+				record.hints ?? { filteredOrganizations: [] },
+				record.sid
+			);
+			return await this.signin.handOff(response);
+		} catch (error) {
+			await restore();
+			throw error;
 		}
-		const identity = {
-			issuer: record.issuer,
-			subject: record.subject,
-			email: record.email,
-			everPersonId: record.hints?.personId
-		};
-		const response = await this.workspaces.signIn(
-			users,
-			identity,
-			record.hints ?? { filteredOrganizations: [] },
-			record.sid
-		);
-		return this.signin.handOff(response);
 	}
 }
 
@@ -119,7 +143,7 @@ function publicPart(record: StoredProvisionHandoff | null): ZitadelProvisionHand
 		email: record.email,
 		givenName: record.givenName,
 		familyName: record.familyName,
-		provisionKey: record.provisionKey,
+		provisionKeyHash: record.provisionKeyHash,
 		signedInAt: record.signedInAt
 	};
 }

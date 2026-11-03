@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import {
 	TEST_CLIENT_BASE_URL,
 	TestBrowser,
@@ -61,7 +61,7 @@ describe('Ever ID sign-in that confirms a workspace from Ever', () => {
 			email: 'owner@acme.example',
 			givenName: 'Ada',
 			familyName: 'Owner',
-			provisionKey: key,
+			provisionKeyHash: createHash('sha256').update(key).digest('hex'),
 			signedInAt: expect.any(Number)
 		});
 		expect(JSON.stringify(await t.handoffs.peek(handoff))).not.toMatch(/eyJ/);
@@ -116,7 +116,9 @@ describe('Ever ID sign-in that confirms a workspace from Ever', () => {
 	});
 
 	it('a malformed key is refused before the issuer is asked', async () => {
+		const before = t.issuer.requests.length;
 		const start = await browser.get(`${t.baseUrl}/api/auth/zitadel?provision=not-a-key`);
+		expect(t.issuer.requests.length).toBe(before);
 		expect(start.headers.get('location')).toBe(`${TEST_CLIENT_BASE_URL}/#/auth/ever-id?error=sign_in_failed`);
 	});
 
@@ -128,5 +130,19 @@ describe('Ever ID sign-in that confirms a workspace from Ever', () => {
 			email: 'person-t@example.test'
 		});
 		expect(location.startsWith(`${TEST_CLIENT_BASE_URL}/#/auth/ever-id?handoff=`)).toBe(true);
+		const redeemed = await browser.post(`${t.baseUrl}/api/auth/zitadel/handoff`, {
+			handoff: hashParam(location, 'handoff')
+		});
+		expect((await redeemed.json()).response.redirect).toBe('/pages/dashboard');
+	});
+
+	it('the hand-off is stored under a digest of its key, with the digest of the provisioning key only', async () => {
+		const key = provisionKey();
+		const location = await signIn(`?provision=${key}`, { sub: 'person-u', email: 'owner@acme.example' });
+		const handoff = hashParam(location, 'handoff');
+		const stored = JSON.stringify([...(t.cache as unknown as { entries: Map<string, unknown> }).entries]);
+		expect(stored).not.toContain(handoff);
+		expect(stored).not.toContain(key);
+		expect(stored).toContain(createHash('sha256').update(key).digest('hex'));
 	});
 });

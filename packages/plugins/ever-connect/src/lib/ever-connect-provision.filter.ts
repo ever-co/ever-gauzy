@@ -24,6 +24,7 @@ const CODES = new Set([
 	'provisioning_in_progress',
 	'product_mismatch',
 	'validation_failed',
+	'terms_required',
 	'rate_limited',
 	'provisioning_failed',
 	'not_found'

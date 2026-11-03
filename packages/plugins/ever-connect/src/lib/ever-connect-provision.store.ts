@@ -52,7 +52,16 @@ export type ProvisionClaim =
 	| { outcome: 'claimed'; record: ProvisionResultRecord }
 	| { outcome: 'created'; record: ProvisionResultRecord }
 	| { outcome: 'busy'; record: ProvisionResultRecord }
-	| { outcome: 'replayed' };
+	| { outcome: 'replayed' }
+	| { outcome: 'org_linked' };
+
+/** Another attempt took over a creation this one was making (its claim ended): it stops. */
+export class ClaimLostError extends Error {
+	constructor() {
+		super('Another attempt took over this workspace creation.');
+		this.name = 'ClaimLostError';
+	}
+}
 
 /** A statement runner inside a transaction someone else opened. */
 export interface ProvisionTx {
@@ -157,16 +166,6 @@ export class EverConnectProvisionStore {
 		);
 	}
 
-	/** Removes requests that expired more than a day ago and never created anything. */
-	async purgeExpired(): Promise<number> {
-		const q = (c: string) => this.sql.q(c);
-		const { affected } = await this.sql.run(
-			`DELETE FROM ${q(INTENT)} WHERE ${q('expiresAt')} < ${this.sql.ph(1)} AND ${q('status')} <> ${this.sql.ph(2)}`,
-			[this.now() - 24 * 3_600_000, 'accepted']
-		);
-		return affected;
-	}
-
 	// ── Results ───────────────────────────────────────────────────────────────
 
 	async result(idempotencyKey: string): Promise<ProvisionResultRecord | null> {
@@ -181,9 +180,11 @@ export class EverConnectProvisionStore {
 
 	/**
 	 * Claims the creation of `idempotencyKey` for `holder` until `until`: a new row (pending), or one a
-	 * failed or stopped attempt left behind. Answers who has it: this attempt (`claimed`), a finished
-	 * creation (`created`), another attempt still within its claim (`busy`), or a request whose `jti`
-	 * was used under another key (`replayed`).
+	 * failed or stopped attempt left behind. The row also holds the Ever organization (`everOrgKey`,
+	 * unique), so two keys never create a workspace for one Ever organization at once. Answers who has
+	 * it: this attempt (`claimed`), a finished creation (`created`), another attempt still within its
+	 * claim (`busy`), a request whose `jti` was used under another key (`replayed`), or another key
+	 * holding the Ever organization (`org_linked`).
 	 */
 	async claim(
 		values: { idempotencyKey: string; jti: string; everOrgId: string },
@@ -194,6 +195,7 @@ export class EverConnectProvisionStore {
 		try {
 			const inserted = await this.sql.insertIgnore(RESULT, {
 				...values,
+				everOrgKey: values.everOrgId,
 				status: 'pending',
 				claimedBy: holder,
 				claimedUntil: until,
@@ -208,21 +210,35 @@ export class EverConnectProvisionStore {
 				};
 			}
 		} catch {
-			// A unique key other than the primary one (the jti under another key) refuses the row.
+			// A unique key other than the primary one refused the row: told apart below.
 		}
 		const existing = await this.result(values.idempotencyKey);
-		if (!existing || existing.jti !== values.jti) {
+		if (!existing) {
+			// No row under this key: the jti is used under another key, or another key holds the organization.
+			if (await this.resultByJti(values.jti)) return { outcome: 'replayed' };
+			return (await this.sql.one(RESULT, { everOrgKey: values.everOrgId }))
+				? { outcome: 'org_linked' }
+				: { outcome: 'replayed' };
+		}
+		if (existing.jti !== values.jti) {
 			return { outcome: 'replayed' };
 		}
 		if (existing.status === 'created') {
 			return { outcome: 'created', record: existing };
 		}
 		const q = (c: string) => this.sql.q(c);
-		const { affected } = await this.sql.run(
-			`UPDATE ${q(RESULT)} SET ${q('claimedBy')} = ${this.sql.ph(1)}, ${q('claimedUntil')} = ${this.sql.ph(2)}, ${q('status')} = ${this.sql.ph(3)}, ${q('updatedAt')} = ${this.sql.ph(4)} ` +
-				`WHERE ${q('idempotencyKey')} = ${this.sql.ph(5)} AND ${q('status')} <> ${this.sql.ph(6)} AND (${q('claimedUntil')} IS NULL OR ${q('claimedUntil')} < ${this.sql.ph(7)})`,
-			[holder, until, 'pending', at, values.idempotencyKey, 'created', at]
-		);
+		let affected: number;
+		try {
+			({ affected } = await this.sql.run(
+				`UPDATE ${q(RESULT)} SET ${q('claimedBy')} = ${this.sql.ph(1)}, ${q('claimedUntil')} = ${this.sql.ph(2)}, ${q('status')} = ${this.sql.ph(3)}, ${q('updatedAt')} = ${this.sql.ph(4)}, ${q('everOrgKey')} = ${this.sql.ph(8)} ` +
+					`WHERE ${q('idempotencyKey')} = ${this.sql.ph(5)} AND ${q('status')} <> ${this.sql.ph(6)} AND (${q('claimedUntil')} IS NULL OR ${q('claimedUntil')} < ${this.sql.ph(7)})`,
+				[holder, until, 'pending', at, values.idempotencyKey, 'created', at, values.everOrgId]
+			));
+		} catch (error) {
+			// Another key took the Ever organization while this one had failed.
+			if (await this.sql.one(RESULT, { everOrgKey: values.everOrgId })) return { outcome: 'org_linked' };
+			throw error;
+		}
 		const record = (await this.result(values.idempotencyKey)) as ProvisionResultRecord;
 		if (affected > 0 && record.claimedBy === holder) {
 			return { outcome: 'claimed', record };
@@ -230,21 +246,33 @@ export class EverConnectProvisionStore {
 		return record.status === 'created' ? { outcome: 'created', record } : { outcome: 'busy', record };
 	}
 
-	/** Keeps the ids created so far (only while `holder` still has the claim). */
-	async checkpoint(idempotencyKey: string, holder: string, ids: Partial<ProvisionIds>): Promise<void> {
-		const values: Row = { updatedAt: this.now() };
+	/**
+	 * Keeps the ids created so far and renews the claim until `until`, only while `holder` still has it.
+	 * Answers `false` when another attempt took the creation over (the caller stops).
+	 */
+	async checkpoint(
+		idempotencyKey: string,
+		holder: string,
+		ids: Partial<ProvisionIds>,
+		until: number
+	): Promise<boolean> {
+		const values: Row = { updatedAt: this.now(), claimedUntil: until };
 		for (const [key, value] of Object.entries(ids)) {
 			if (value) values[key] = value;
 		}
-		await this.sql.update(RESULT, values, { idempotencyKey, claimedBy: holder });
+		return (await this.sql.update(RESULT, values, { idempotencyKey, claimedBy: holder })) > 0;
 	}
 
-	/** Ends a failed attempt: the row stays for a retry, which resumes from the ids kept. */
+	/**
+	 * Ends a failed attempt: the row stays for a retry, which resumes from the ids kept; the Ever
+	 * organization is free again meanwhile.
+	 */
 	async fail(idempotencyKey: string, holder: string, errorCode: string): Promise<void> {
 		await this.sql.update(
 			RESULT,
 			{
 				status: 'failed',
+				everOrgKey: null,
 				errorCode: errorCode.slice(0, 64),
 				claimedBy: null,
 				claimedUntil: null,
@@ -256,10 +284,15 @@ export class EverConnectProvisionStore {
 
 	/** Records a creation another attempt finished (the links exist): heals a row that missed it. */
 	async markCreated(idempotencyKey: string, ids: ProvisionIds): Promise<void> {
+		// Only the ids known: one the answer does not carry keeps the value the steps recorded.
+		const known: Row = {};
+		for (const [key, value] of Object.entries(ids)) {
+			if (value) known[key] = value;
+		}
 		await this.sql.update(
 			RESULT,
 			{
-				...ids,
+				...known,
 				status: 'created',
 				errorCode: null,
 				claimedBy: null,
@@ -281,7 +314,9 @@ export class EverConnectProvisionStore {
 	/**
 	 * Inside the transaction that writes the workspace's links: Gauzy's own record of the organization
 	 * link (an `integration_tenant` row named `Ever_Connect` with its settings), the audit row, and this
-	 * creation marked `created` with its ids, its completion report due now.
+	 * creation marked `created` with its ids, its completion report due now. Only while `holder` still
+	 * has the claim (read under a row lock on Postgres and MySQL): otherwise {@link ClaimLostError} and
+	 * the whole transaction is undone.
 	 *
 	 * @returns The id of the `integration_tenant` row.
 	 */
@@ -289,12 +324,23 @@ export class EverConnectProvisionStore {
 		tx: ProvisionTx,
 		input: {
 			idempotencyKey: string;
+			holder: string;
 			ids: ProvisionIds;
 			catalogId: string | null;
 			settings: Record<string, string>;
 			audit: { action: string; actorUserId: string; details: Record<string, string | number> };
 		}
 	): Promise<string> {
+		const q = (c: string) => this.sql.q(c);
+		const lock = this.sql.dialect === 'postgres' || this.sql.dialect === 'mysql' ? ' FOR UPDATE' : '';
+		const owner = (await tx.query(
+			`SELECT ${q('claimedBy')} FROM ${q(RESULT)} WHERE ${q('idempotencyKey')} = ${this.sql.ph(1)}${lock}`,
+			[input.idempotencyKey]
+		)) as Array<Record<string, unknown>> | [Array<Record<string, unknown>>, unknown];
+		const rows = (Array.isArray(owner[0]) ? owner[0] : owner) as Array<Record<string, unknown>>;
+		if (rows[0]?.['claimedBy'] !== input.holder) {
+			throw new ClaimLostError();
+		}
 		const { productTenantId: tenantId, productOrgId: organizationId } = input.ids;
 		const at = this.now();
 		const integrationTenantId = randomUUID();
@@ -343,7 +389,6 @@ export class EverConnectProvisionStore {
 			updatedAt: at
 		};
 		const columns = Object.keys(values);
-		const q = (c: string) => this.sql.q(c);
 		await tx.query(
 			`UPDATE ${q(RESULT)} SET ${columns.map((c, i) => `${q(c)} = ${this.sql.ph(i + 1)}`).join(', ')} WHERE ${q('idempotencyKey')} = ${this.sql.ph(columns.length + 1)}`,
 			[...columns.map((c) => this.bindable(values[c])), input.idempotencyKey]

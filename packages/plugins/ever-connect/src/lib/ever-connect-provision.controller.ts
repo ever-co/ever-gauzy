@@ -72,7 +72,7 @@ export class EverConnectProvisionController {
 		body: {
 			provision_key?: unknown;
 			handoff_key?: unknown;
-			request?: { first_name?: unknown; last_name?: unknown };
+			request?: { first_name?: unknown; last_name?: unknown; terms?: unknown };
 		},
 		@Res({ passthrough: true }) res: Response
 	): Promise<ProvisionResponse> {

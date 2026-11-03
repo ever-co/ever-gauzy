@@ -9,7 +9,9 @@ import {
 	UnauthorizedException
 } from '@nestjs/common';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { ITermsAcceptanceClaim, ITermsAcceptanceDocument } from '@gauzy/contracts';
 import {
+	isEverHost,
 	PROVISION_KEY_SHAPE,
 	ZITADEL_HANDOFF_READER,
 	ZITADEL_PROVISIONER,
@@ -22,6 +24,7 @@ import type { EverConnectConfig } from '../ever-connect-config';
 import { EVER_CONNECT_CLOCK, EVER_CONNECT_SETTINGS } from '../ever-connect.constants';
 import { errorCode } from '../ever-connect-platform.service';
 import {
+	ClaimLostError,
 	EverConnectProvisionStore,
 	ProvisionIds,
 	ProvisionIntentRecord,
@@ -31,8 +34,14 @@ import { EverConnectIntentVerifier, ProvisionIntentClaims } from './ever-connect
 import { EverConnectProvisionCompletion } from './ever-connect-provision-completion.service';
 import { EverConnectProvisionGate } from './ever-connect-provision-gate.service';
 
-/** How long one attempt holds a creation before another may take it over (a stopped process). */
+/**
+ * How long one attempt holds a creation before another may take it over (a stopped process); renewed
+ * after each step, so only an attempt that stopped loses it.
+ */
 export const CREATION_CLAIM_MS = 5 * 60_000;
+
+/** The most documents a confirmation can carry. */
+const MAX_TERMS = 20;
 
 /** How long a second request for a creation that is running waits for its end before answering 409. */
 export const CREATION_WAIT_MS = 10_000;
@@ -66,6 +75,8 @@ export interface ProvisionSummary {
 	creates: { workspace: true; organization: true; admin_account: true; employee: true; team: boolean };
 	tier: string;
 	product_tenant_exists: boolean;
+	/** The legal documents to accept on this page (Gauzy's own list), with links to the web app's pages. */
+	terms: ITermsAcceptanceDocument[];
 	/** The Ever page the person goes back to. */
 	return_to: string;
 	/** Unix milliseconds: the confirmation must be sent before. */
@@ -199,6 +210,7 @@ export class EverConnectProvisionService {
 			},
 			tier: claims.tier,
 			product_tenant_exists: result?.status === 'created',
+			terms: (this.provisioner as ZitadelProvisionerPort).requiredTerms(),
 			return_to: claims.return_to,
 			expires_at: intent.expiresAt
 		};
@@ -208,7 +220,7 @@ export class EverConnectProvisionService {
 	async create(
 		provisionKey: unknown,
 		handoffKey: unknown,
-		request: { first_name?: unknown; last_name?: unknown } | undefined
+		request: { first_name?: unknown; last_name?: unknown; terms?: unknown } | undefined
 	): Promise<ProvisionResponse> {
 		const { claims, handoff } = await this.resolve(provisionKey, handoffKey);
 		this.gate.check(claims);
@@ -223,6 +235,7 @@ export class EverConnectProvisionService {
 			return this.answer('exists', existing, claims, handoffKey as string);
 		}
 		const provisioner = this.provisioner as ZitadelProvisionerPort;
+		const terms = this.acceptedTerms(request?.terms, provisioner.requiredTerms());
 		if (await provisioner.isLinkedElsewhere(claims.org.id, key)) {
 			throw problem(
 				HttpStatus.CONFLICT,
@@ -239,6 +252,13 @@ export class EverConnectProvisionService {
 		);
 		if (claim.outcome === 'replayed') {
 			throw this.replayed();
+		}
+		if (claim.outcome === 'org_linked') {
+			throw problem(
+				HttpStatus.CONFLICT,
+				'organization_already_linked',
+				'This Ever organization already has a workspace here.'
+			);
 		}
 		if (claim.outcome === 'busy') {
 			const finished = await this.waitForCreation(key);
@@ -257,8 +277,18 @@ export class EverConnectProvisionService {
 
 		let ids: ProvisionIds;
 		try {
-			ids = await this.createWorkspace(claims, handoff, claim.record, holder, request);
+			ids = await this.createWorkspace(claims, handoff, claim.record, holder, request, terms);
 		} catch (error) {
+			if (error instanceof ClaimLostError) {
+				// Another attempt took over (this one was too slow): it owns the outcome now.
+				const finished = await this.waitForCreation(key);
+				if (finished) return this.answer('exists', finished, claims, handoffKey as string);
+				throw new ConflictException({
+					statusCode: 409,
+					code: 'provisioning_in_progress',
+					message: 'This workspace is being created; try again in a moment.'
+				});
+			}
 			await this.store.fail(key, holder, errorCode(error)).catch(() => undefined);
 			this.logger.warn(`Provisioning request ${claims.jti} failed (${errorCode(error)}).`);
 			throw problem(
@@ -280,7 +310,8 @@ export class EverConnectProvisionService {
 		handoff: ZitadelProvisionHandoff,
 		record: ProvisionResultRecord,
 		holder: string,
-		request: { first_name?: unknown; last_name?: unknown } | undefined
+		request: { first_name?: unknown; last_name?: unknown } | undefined,
+		terms: ITermsAcceptanceClaim[]
 	): Promise<ProvisionIds> {
 		const key = claims.idempotency_key;
 		const catalogId = await this.store.catalogId();
@@ -303,6 +334,7 @@ export class EverConnectProvisionService {
 				everTenantId: claims.org.id,
 				handle: claims.org.handle,
 				options: { createEmployee: true, createTeam: claims.features?.teams ?? true },
+				terms,
 				idempotencyKey: key
 			},
 			{
@@ -313,7 +345,14 @@ export class EverConnectProvisionService {
 					employeeId: record.employeeId ?? undefined,
 					teamId: record.teamId ?? undefined
 				},
-				checkpoint: (ids) => this.store.checkpoint(key, holder, toProvisionIds(ids)),
+				checkpoint: async (ids) => {
+					// Each step renews the claim; one that was taken over stops here.
+					if (
+						!(await this.store.checkpoint(key, holder, toProvisionIds(ids), this.now() + CREATION_CLAIM_MS))
+					) {
+						throw new ClaimLostError();
+					}
+				},
 				finalize: async (tx, ids) => {
 					const details = {
 						job_id: claims.job_id,
@@ -324,6 +363,7 @@ export class EverConnectProvisionService {
 					EverConnectAuditService.check({ ...audit, details });
 					await this.store.writeCreated(tx, {
 						idempotencyKey: key,
+						holder,
 						ids: toProvisionIds(ids),
 						catalogId,
 						settings: {
@@ -422,10 +462,11 @@ export class EverConnectProvisionService {
 				message: 'Sign in with Ever ID again.'
 			});
 		}
-		if (handoff.provisionKey !== provisionKey) {
+		if (handoff.provisionKeyHash !== sha256(provisionKey)) {
 			throw invalid();
 		}
-		if (handoff.subject !== claims.person?.ever_id_sub) {
+		// The person the request names, at Ever ID (a subject is unique at its issuer only).
+		if (!this.isEverIdIssuer(handoff.issuer) || handoff.subject !== claims.person?.ever_id_sub) {
 			throw new UnauthorizedException({
 				statusCode: 401,
 				code: 'identity_mismatch',
@@ -433,6 +474,55 @@ export class EverConnectProvisionService {
 			});
 		}
 		return { claims, intent, handoff };
+	}
+
+	/**
+	 * Whether a sign-in came from Ever ID: an issuer on an Ever host (a test platform on a local address
+	 * may name its own).
+	 */
+	private isEverIdIssuer(issuer: string): boolean {
+		return isEverHost(issuer) || this.config.localPlatform;
+	}
+
+	/**
+	 * The documents the person accepted (`request.terms`): each a `{documentId, version, sha256, locale}`
+	 * as the summary listed it, and every required one present; Gauzy's register path checks them against
+	 * the published text and records them.
+	 *
+	 * @throws 422 `terms_required` when a required document is missing or a claim is malformed.
+	 */
+	private acceptedTerms(raw: unknown, required: ITermsAcceptanceDocument[]): ITermsAcceptanceClaim[] {
+		const list = Array.isArray(raw) ? raw.slice(0, MAX_TERMS) : [];
+		const claims: ITermsAcceptanceClaim[] = [];
+		for (const item of list) {
+			const value = item as Record<string, unknown>;
+			const field = (name: string, max: number) =>
+				typeof value?.[name] === 'string' &&
+				(value[name] as string).length > 0 &&
+				(value[name] as string).length <= max
+					? (value[name] as string)
+					: null;
+			const documentId = field('documentId', 255);
+			const version = field('version', 64);
+			const digest = field('sha256', 64);
+			const locale = field('locale', 35);
+			if (!documentId || !version || !digest || !/^[0-9a-f]{64}$/.test(digest) || !locale) {
+				throw this.termsRequired();
+			}
+			claims.push({ documentId, version, sha256: digest, locale });
+		}
+		const missing = required.filter(
+			(document) =>
+				!claims.some((claim) => claim.documentId === document.documentId && claim.version === document.version)
+		);
+		if (missing.length) {
+			throw this.termsRequired();
+		}
+		return claims;
+	}
+
+	private termsRequired(): HttpException {
+		return problem(HttpStatus.UNPROCESSABLE_ENTITY, 'terms_required', 'The required terms must be accepted.');
 	}
 
 	private replayed(): HttpException {

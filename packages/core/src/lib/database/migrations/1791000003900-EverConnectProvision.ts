@@ -79,6 +79,9 @@ const TABLES: Table[] = [
 			varchar('jti', 32, true),
 			varchar('status', 16, true),
 			varchar('everOrgId', 32),
+			// The Ever organization while this creation holds it (pending or created; empty once it failed):
+			// unique, so one Ever organization is never created twice under two keys at once.
+			varchar('everOrgKey', 32),
 			varchar('productTenantId', 64),
 			varchar('productOrgId', 64),
 			varchar('productUserId', 64),
@@ -93,12 +96,13 @@ const TABLES: Table[] = [
 			bigint('completionNextAt'),
 			varchar('completionError', 64),
 			bigint('completedAt'),
-			varchar('tenantLinkId', 32),
+			varchar('tenantLinkId', 64),
 			bigint('createdAt', true),
 			bigint('updatedAt', true)
 		],
 		indexes: [
 			{ name: 'IDX_ever_connect_provision_result_jti', columns: ['jti'], unique: true },
+			{ name: 'IDX_ever_connect_provision_result_org', columns: ['everOrgKey'], unique: true },
 			{ name: 'IDX_ever_connect_provision_result_completion', columns: ['completionState', 'completionNextAt'] }
 		]
 	}

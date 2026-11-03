@@ -1,3 +1,5 @@
+import { ITermsAcceptanceClaim, ITermsAcceptanceDocument, LanguagesEnum } from '@gauzy/contracts';
+
 /**
  * Port for creating a Gauzy workspace whose owner is already linked to an Ever ID.
  *
@@ -21,9 +23,14 @@ export interface CreateUserPreLinkedInput {
 	tenantLinkId?: string;
 	options: {
 		createEmployee: boolean;
-		/** Also create a team named after the organization, with the owner's employee in it. */
+		/** Also create a team named after the organization, with the owner's employee in it (needs `createEmployee`). */
 		createTeam?: boolean;
 	};
+	/**
+	 * The documents the person accepted on the confirmation page (as `requiredTerms` listed them); every
+	 * required one must be there, and Gauzy's register path checks and records them.
+	 */
+	terms?: ITermsAcceptanceClaim[];
 	/** Replays with the same key return the ids of the first call. */
 	idempotencyKey: string;
 }
@@ -67,6 +74,8 @@ export interface ZitadelProvisionerPort {
 	findProvisioned(idempotencyKey: string): Promise<CreateUserPreLinkedResult | null>;
 	/** Whether an Ever organization is already linked to a workspace by a creation with another key. */
 	isLinkedElsewhere(everOrgId: string, idempotencyKey: string): Promise<boolean>;
+	/** The legal documents a new owner must accept (Gauzy's own list), with absolute links to the web app's pages. */
+	requiredTerms(locale?: LanguagesEnum): ITermsAcceptanceDocument[];
 }
 
 /** Injection token of {@link ZitadelProvisionerPort}. */

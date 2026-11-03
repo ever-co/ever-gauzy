@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { IUserSigninWorkspaceResponse } from '@gauzy/contracts';
+import { ITermsAcceptanceClaim, ITermsAcceptanceDocument, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 import { API_PREFIX } from '@gauzy/ui-core/common';
 
 const BASE = `${API_PREFIX}/ever-connect/provision`;
@@ -17,6 +17,8 @@ export interface ProvisionSummary {
 	creates: { workspace: boolean; organization: boolean; admin_account: boolean; employee: boolean; team: boolean };
 	tier: string;
 	product_tenant_exists: boolean;
+	/** The documents to accept, with links to this web app's pages for them. */
+	terms: ITermsAcceptanceDocument[];
 	return_to: string;
 	expires_at: number;
 }
@@ -46,12 +48,20 @@ export const EVER_RETURN_ORIGINS: ReadonlyArray<string> = Object.freeze([
 	'https://app-dev.ever.co'
 ]);
 
-/** Whether the page may send the person to `url` (a page of Ever's web app, https, no credentials). */
+/**
+ * Whether the page may send the person to `url`: a page of Ever's web app (https, no credentials), or of
+ * a local one (`localhost`, `127.0.0.1`), which the API accepts from a test platform on a local address
+ * only.
+ */
 export function isEverReturnUrl(url: unknown): url is string {
 	if (typeof url !== 'string') return false;
 	try {
 		const parsed = new URL(url);
-		return EVER_RETURN_ORIGINS.includes(parsed.origin) && !parsed.username && !parsed.password;
+		if (parsed.username || parsed.password) return false;
+		const local =
+			(parsed.protocol === 'http:' || parsed.protocol === 'https:') &&
+			(parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1');
+		return EVER_RETURN_ORIGINS.includes(parsed.origin) || local;
 	} catch {
 		return false;
 	}
@@ -81,7 +91,7 @@ export class EverConnectProvisionService {
 	create(
 		provisionKey: string,
 		handoffKey: string,
-		request: { first_name?: string; last_name?: string }
+		request: { first_name?: string; last_name?: string; terms?: ITermsAcceptanceClaim[] }
 	): Observable<ProvisionResult> {
 		return this.http.post<ProvisionResult>(BASE, { provision_key: provisionKey, handoff_key: handoffKey, request });
 	}

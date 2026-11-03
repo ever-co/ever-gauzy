@@ -7,6 +7,7 @@
  */
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { DataSource } from 'typeorm';
+import type { ITermsAcceptanceDocument } from '@gauzy/contracts';
 import type {
 	CreateUserPreLinkedHooks,
 	CreateUserPreLinkedInput,
@@ -23,7 +24,10 @@ import { EverConnectProvisionService } from '../services/ever-connect-provision.
 import { identityHarness, IdentityHarness } from './identity-harness';
 import { intentClaims, TEST_SUBJECT } from './provision-intents';
 
-export const EVER_ID_ISSUER = 'https://auth.ever.test';
+export const EVER_ID_ISSUER = 'https://auth.ever.co';
+
+/** How long a hand-off of the sign-in plugin stays usable (its confirmation lifetime). */
+export const HANDOFF_TTL_MS = 30 * 60_000;
 export const OWNER_EMAIL = 'owner@acme.example';
 export const CLIENT_BASE_URL = 'https://app.gauzy.test';
 
@@ -51,33 +55,47 @@ export class FakeHandoffs implements ZitadelHandoffReaderPort {
 	readonly records = new Map<string, ZitadelProvisionHandoff>();
 	readonly signIns: Array<{ handoffKey: string; userId: string }> = [];
 
-	/** A sign-in of `subject` that started with `provisionKey`; answers its key. */
-	add(provisionKey: string, subject = TEST_SUBJECT, email = OWNER_EMAIL): string {
+	constructor(private readonly clock: { now(): number }) {}
+
+	/** A sign-in of `subject` at `issuer` that started with `provisionKey`; answers its key. */
+	add(provisionKey: string, subject = TEST_SUBJECT, email = OWNER_EMAIL, issuer = EVER_ID_ISSUER): string {
 		const key = randomBytes(32).toString('base64url');
 		this.records.set(key, {
-			issuer: EVER_ID_ISSUER,
+			issuer,
 			subject,
 			email,
 			givenName: 'Ada',
 			familyName: 'Owner',
-			provisionKey,
-			signedInAt: Date.now()
+			provisionKeyHash: sha256(provisionKey),
+			signedInAt: this.clock.now()
 		});
 		return key;
 	}
 
+	/** A hand-off within its lifetime, as the sign-in plugin's store keeps it. */
+	private live(key: string): ZitadelProvisionHandoff | null {
+		const record = this.records.get(key);
+		if (!record) return null;
+		if (this.clock.now() - record.signedInAt > HANDOFF_TTL_MS) {
+			this.records.delete(key);
+			return null;
+		}
+		return record;
+	}
+
 	async peek(key: string): Promise<ZitadelProvisionHandoff | null> {
-		return this.records.get(key) ?? null;
+		return this.live(key);
 	}
 
 	async consume(key: string): Promise<ZitadelProvisionHandoff | null> {
-		const record = this.records.get(key) ?? null;
+		const record = this.live(key);
 		this.records.delete(key);
 		return record;
 	}
 
 	async signIn(key: string, userId: string): Promise<string | null> {
-		if (!this.records.delete(key)) return null;
+		if (!this.live(key)) return null;
+		this.records.delete(key);
 		this.signIns.push({ handoffKey: key, userId });
 		return `signin-${this.signIns.length}`;
 	}
@@ -97,6 +115,10 @@ export class FakeProvisioner implements ZitadelProvisionerPort {
 	organizations = 0;
 	failAt: 'user' | 'tenant' | 'organization' | 'finalize' | null = null;
 	delayMs = 0;
+	/** Gauzy's required documents (none by default). */
+	terms: ITermsAcceptanceDocument[] = [];
+	/** Runs once between the organization and the last step (a test makes another attempt take over there). */
+	beforeLinks: (() => Promise<void>) | null = null;
 
 	constructor(private readonly dataSource: DataSource) {}
 
@@ -115,6 +137,10 @@ export class FakeProvisioner implements ZitadelProvisionerPort {
 
 	async isLinkedElsewhere(everOrgId: string, key: string): Promise<boolean> {
 		return [...this.provisioned.entries()].some(([other, ids]) => ids.everOrgId === everOrgId && other !== key);
+	}
+
+	requiredTerms(): ITermsAcceptanceDocument[] {
+		return this.terms;
 	}
 
 	async createUserPreLinked(
@@ -153,6 +179,9 @@ export class FakeProvisioner implements ZitadelProvisionerPort {
 		if (input.options.createTeam && !ids.teamId) ids.teamId = randomUUID();
 		await hooks.checkpoint?.({ ...ids });
 		const result = ids as CreateUserPreLinkedResult;
+		const before = this.beforeLinks;
+		this.beforeLinks = null;
+		await before?.();
 		await this.dataSource.transaction(async (manager) => {
 			await hooks.finalize?.({ query: (sql, params) => manager.query(sql, params) }, result);
 			if (this.failAt === 'finalize') {
@@ -193,7 +222,7 @@ export async function provisionHarness(options: { enabled?: boolean } = {}): Pro
 	});
 	await h.connectAndEnable();
 	const verifier = new FakeVerifier();
-	const handoffs = new FakeHandoffs();
+	const handoffs = new FakeHandoffs(h.clock);
 	const provisioner = new FakeProvisioner(h.dataSource);
 	const provisionStore = new EverConnectProvisionStore(h.dataSource, h.clock);
 	const completion = { sendNow: jest.fn(async () => undefined) };

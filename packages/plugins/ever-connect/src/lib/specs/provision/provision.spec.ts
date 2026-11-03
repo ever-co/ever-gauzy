@@ -1,7 +1,15 @@
 import { HttpException } from '@nestjs/common';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { OWNER_EMAIL, provisionHarness, ProvisionHarness, sha256 } from '../../fixtures/provision-harness';
+import { NotFoundException } from '@nestjs/common';
+import {
+	HANDOFF_TTL_MS,
+	OWNER_EMAIL,
+	provisionHarness,
+	ProvisionHarness,
+	sha256
+} from '../../fixtures/provision-harness';
+import { EverConnectProvisionGuard } from '../../guards/ever-connect-provision.guard';
 import { TEST_JOB_ID, TEST_ORG_ID } from '../../fixtures/provision-intents';
 import { EverConnectProvisionGate, KNOWN_TIERS } from '../../services/ever-connect-provision-gate.service';
 
@@ -105,6 +113,7 @@ describe('creating a workspace from Ever', () => {
 				creates: { workspace: true, organization: true, admin_account: true, employee: true, team: true },
 				tier: 'starter',
 				product_tenant_exists: false,
+				terms: [],
 				return_to: 'https://app.ever.co/start/jobs/01K9A0000000000000000000JB',
 				expires_at: (h.nowS() + 890) * 1000
 			});
@@ -127,6 +136,34 @@ describe('creating a workspace from Ever', () => {
 			expect(await h.rows('ever_connect_provision_result')).toEqual([]);
 			expect(await h.rows('integration_tenant')).toEqual([]);
 			expect(await h.auditRows()).toEqual([]);
+		});
+
+		it('the same subject at an issuer that is not Ever ID: 401 identity_mismatch, nothing created', async () => {
+			const jws = h.request();
+			const preflight = await h.service.preflight(jws);
+			const handoffKey = h.handoffs.add(
+				preflight.provision_key,
+				undefined,
+				undefined,
+				'https://login.other.test'
+			);
+			expect(await failure(h.service.create(preflight.provision_key, handoffKey, {}))).toEqual({
+				status: 401,
+				code: 'identity_mismatch'
+			});
+			expect(h.provisioner.inputs).toEqual([]);
+		});
+
+		it('a sign-in that expired before the confirmation: 401 sign_in_required', async () => {
+			const keys = await h.signedIn(h.request());
+			// The sign-in is older than its lifetime (the request itself is still valid).
+			const record = h.handoffs.records.get(keys.handoffKey);
+			if (record) record.signedInAt -= HANDOFF_TTL_MS + 1;
+			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({
+				status: 401,
+				code: 'sign_in_required'
+			});
+			expect(h.provisioner.inputs).toEqual([]);
 		});
 
 		it('a sign-in started for another request, an unknown or malformed key: 401, nothing created', async () => {
@@ -192,6 +229,7 @@ describe('creating a workspace from Ever', () => {
 				everTenantId: TEST_ORG_ID,
 				handle: 'acme',
 				options: { createEmployee: true, createTeam: true },
+				terms: [],
 				idempotencyKey: `${TEST_JOB_ID}:2:provision_cloud_tenant:gauzy`
 			});
 
@@ -299,6 +337,76 @@ describe('creating a workspace from Ever', () => {
 			expect(h.provisioner.tenants).toBe(1);
 		});
 
+		it('two requests for one Ever organization under two keys at once: one workspace, the other 409', async () => {
+			h.provisioner.delayMs = 300;
+			const first = await h.signedIn(h.request());
+			const second = await h.signedIn(
+				h.request({
+					jti: '01K9A0000000000000000000J3',
+					idempotency_key: `${TEST_JOB_ID}:7:provision_cloud_tenant:gauzy`
+				})
+			);
+			const [a, b] = await Promise.allSettled([
+				h.service.create(first.provisionKey, first.handoffKey, {}),
+				h.service.create(second.provisionKey, second.handoffKey, {})
+			]);
+			const outcomes = [a, b].map((outcome) =>
+				outcome.status === 'fulfilled'
+					? outcome.value.status
+					: ((outcome.reason as HttpException).getResponse() as { code: string }).code
+			);
+			expect(outcomes.sort()).toEqual(['created', 'organization_already_linked']);
+			expect(h.provisioner.tenants).toBe(1);
+		});
+
+		it('an attempt another one took over (its claim ended) stops before writing the links', async () => {
+			const keys = await h.signedIn(h.request());
+			h.provisioner.beforeLinks = async () => {
+				// Meanwhile the claim ended and another attempt took the creation over.
+				await h.dataSource.query(`UPDATE "ever_connect_provision_result" SET "claimedBy" = 'another-attempt'`);
+			};
+			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({
+				status: 409,
+				code: 'provisioning_in_progress'
+			});
+			expect(await h.rows('integration_tenant')).toEqual([]);
+			expect(await h.auditRows()).toEqual([]);
+			expect(h.provisioner.provisioned.size).toBe(0);
+		});
+
+		it('the documents Gauzy requires: refused without them (422 terms_required), passed on with them', async () => {
+			h.provisioner.terms = [
+				{
+					documentId: 'tos:gauzy',
+					version: '1.0.0',
+					sha256: 'a'.repeat(64),
+					locale: 'en',
+					url: 'https://app.gauzy.test/#/legal/terms'
+				}
+			];
+			const keys = await h.signedIn(h.request());
+			expect((await h.service.summary(keys.provisionKey, keys.handoffKey)).terms).toEqual(h.provisioner.terms);
+			expect(await failure(h.service.create(keys.provisionKey, keys.handoffKey, {}))).toEqual({
+				status: 422,
+				code: 'terms_required'
+			});
+			expect(
+				await failure(
+					h.service.create(keys.provisionKey, keys.handoffKey, {
+						terms: [{ documentId: 'tos:gauzy', version: '0.9.0', sha256: 'a'.repeat(64), locale: 'en' }]
+					})
+				)
+			).toEqual({ status: 422, code: 'terms_required' });
+			expect(h.provisioner.inputs).toEqual([]);
+			const claim = { documentId: 'tos:gauzy', version: '1.0.0', sha256: 'a'.repeat(64), locale: 'en' };
+			await expect(
+				h.service.create(keys.provisionKey, keys.handoffKey, { terms: [claim] })
+			).resolves.toMatchObject({
+				status: 'created'
+			});
+			expect(h.provisioner.inputs[0].terms).toEqual([claim]);
+		});
+
 		it('a creation that stops half way: 500 provisioning_failed, the ids are kept, and the retry finishes the same workspace', async () => {
 			h.provisioner.failAt = 'tenant';
 			const jws = h.request();
@@ -346,13 +454,15 @@ describe('creating a workspace from Ever', () => {
 		it('the error answer carries a code only, never the e-mail or the cause', async () => {
 			h.provisioner.failAt = 'organization';
 			const keys = await h.signedIn(h.request());
+			let body = '';
 			try {
 				await h.service.create(keys.provisionKey, keys.handoffKey, {});
 			} catch (error) {
-				const body = JSON.stringify((error as HttpException).getResponse());
-				expect(body).not.toContain('@');
-				expect(body).not.toContain('timeout');
+				body = JSON.stringify((error as HttpException).getResponse());
 			}
+			expect(JSON.parse(body)).toMatchObject({ code: 'provisioning_failed' });
+			expect(body).not.toContain('@');
+			expect(body).not.toContain('timeout');
 		});
 	});
 
@@ -407,6 +517,12 @@ describe('creating a workspace from Ever', () => {
 		try {
 			expect(off.service.available).toBe(false);
 			expect(h.service.available).toBe(true);
+			// The routes' guard, with the real switch: 404 while off, through while on.
+			const env = { EVER_CONNECT_ENABLED: 'true' };
+			await expect(
+				new EverConnectProvisionGuard(off.service, off.store, env).canActivate()
+			).rejects.toBeInstanceOf(NotFoundException);
+			await expect(new EverConnectProvisionGuard(h.service, h.store, env).canActivate()).resolves.toBe(true);
 		} finally {
 			await off.close();
 		}

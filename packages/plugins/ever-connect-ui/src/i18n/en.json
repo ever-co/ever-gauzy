@@ -145,7 +145,7 @@
 		"LOADING": "Loading…",
 		"LEAD": "Create your Ever Gauzy workspace {{ name }}, linked to ever.co/{{ handle }}.",
 		"ALREADY_CREATED": "This workspace was already created. Confirm to open it.",
-		"WILL_CREATE": "This creates:",
+		"WILL_CREATE": "This includes:",
 		"ITEMS": {
 			"WORKSPACE": "the workspace {{ name }}",
 			"ORGANIZATION": "the organization {{ name }}",
@@ -156,7 +156,7 @@
 		"EMAIL": "E-mail (from your Ever ID)",
 		"FIRST_NAME": "First name",
 		"LAST_NAME": "Last name",
-		"TERMS": "By creating the workspace you accept the",
+		"TERMS": "I accept",
 		"TERMS_LINK": "Terms of Service",
 		"CREATE": "Create",
 		"CANCEL": "Back to Ever",
@@ -178,7 +178,9 @@
 			"rate_limited": "Too many attempts. Wait a minute, then try again.",
 			"not_found": "Creating a workspace from Ever is not available on this installation.",
 			"provisioning_failed": "The workspace could not be created. Try again.",
-			"generic": "Something went wrong. Try again."
-		}
+			"generic": "Something went wrong. Try again.",
+			"terms_required": "Accept the documents above to create the workspace."
+		},
+		"SIGN_IN_ELSEWHERE": "Your workspace is ready. Sign in with Ever ID to open it."
 	}
 }

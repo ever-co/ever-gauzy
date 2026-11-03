@@ -21,6 +21,7 @@ import { EverConnectLease } from './ever-connect-lease';
 import { EverConnectLinkService } from './ever-connect-link.service';
 import { EverConnectPlatformService, errorCode } from './ever-connect-platform.service';
 import { EverConnectProvisionController } from './ever-connect-provision.controller';
+import { EverConnectProvisionExceptionFilter } from './ever-connect-provision.filter';
 import { EverConnectProvisionStore } from './ever-connect-provision.store';
 import { EverConnectScheduler } from './ever-connect-scheduler.service';
 import { EverConnectSignals } from './ever-connect-signals';
@@ -135,6 +136,7 @@ export class EverConnectModule {
 				EverConnectProvisionCompletion,
 				EverConnectProvisionService,
 				EverConnectProvisionGuard,
+				EverConnectProvisionExceptionFilter,
 				EverConnectScheduler,
 				EverConnectOperatorGuard,
 				EverConnectEnabledGuard,

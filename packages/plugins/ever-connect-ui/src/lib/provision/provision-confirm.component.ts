@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inje
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NbAlertModule, NbButtonModule, NbInputModule } from '@nebular/theme';
+import { NbAlertModule, NbButtonModule, NbCheckboxModule, NbInputModule } from '@nebular/theme';
 import { TranslatePipe } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { IAuthResponse, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
+import { IAuthResponse, ITermsAcceptanceClaim, IUserSigninWorkspaceResponse } from '@gauzy/contracts';
 import { AuthService, Store } from '@gauzy/ui-core/core';
 import {
+	EVER_RETURN_ORIGINS,
 	EverConnectProvisionService,
 	handoffKeyOf,
 	isEverReturnUrl,
@@ -25,6 +26,7 @@ const KNOWN_ERRORS = new Set([
 	'intent_replayed',
 	'organization_already_linked',
 	'validation_failed',
+	'terms_required',
 	'provisioning_in_progress',
 	'rate_limited',
 	'not_found'
@@ -52,7 +54,7 @@ export function errorCodeOf(failure: { status?: number; error?: unknown } | null
 @Component({
 	selector: 'ngx-ever-connect-provision-confirm',
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [FormsModule, NbAlertModule, NbButtonModule, NbInputModule, TranslatePipe],
+	imports: [FormsModule, NbAlertModule, NbButtonModule, NbCheckboxModule, NbInputModule, TranslatePipe],
 	template: `
 		<section class="ever-connect-provision">
 			<h2 class="title">{{ 'EVER_CONNECT.PROVISION.TITLE' | translate }}</h2>
@@ -89,7 +91,11 @@ export function errorCodeOf(failure: { status?: number; error?: unknown } | null
 							| translate: { name: summary?.org_display_name }
 					}}
 				</nb-alert>
-				<p>{{ 'EVER_CONNECT.PROVISION.SIGNING_IN' | translate }}</p>
+				@if (openUrl) {
+					<p>{{ 'EVER_CONNECT.PROVISION.SIGN_IN_ELSEWHERE' | translate }}</p>
+				} @else {
+					<p>{{ 'EVER_CONNECT.PROVISION.SIGNING_IN' | translate }}</p>
+				}
 				@if (openUrl) {
 					<a nbButton status="primary" fullWidth class="open" [attr.href]="openUrl">{{
 						'EVER_CONNECT.PROVISION.OPEN' | translate
@@ -154,13 +160,24 @@ export function errorCodeOf(failure: { status?: number; error?: unknown } | null
 						[(ngModel)]="lastName"
 						maxlength="100"
 					/>
-					<p class="terms">
-						{{ 'EVER_CONNECT.PROVISION.TERMS' | translate }}
-						<a href="#/legal/terms" target="_blank" rel="noopener noreferrer">{{
-							'EVER_CONNECT.PROVISION.TERMS_LINK' | translate
-						}}</a>
-					</p>
-					<button nbButton status="primary" fullWidth type="submit" class="create" [disabled]="busy">
+					@if (summary.terms?.length) {
+						<nb-checkbox name="terms" [(ngModel)]="termsAccepted" class="terms">
+							{{ 'EVER_CONNECT.PROVISION.TERMS' | translate }}
+							@for (document of summary.terms; track document.documentId) {
+								<a [attr.href]="document.url" target="_blank" rel="noopener noreferrer">{{
+									document.title || document.documentId
+								}}</a>
+							}
+						</nb-checkbox>
+					}
+					<button
+						nbButton
+						status="primary"
+						fullWidth
+						type="submit"
+						class="create"
+						[disabled]="busy || (!!summary.terms?.length && !termsAccepted)"
+					>
 						{{ 'EVER_CONNECT.PROVISION.CREATE' | translate }}
 					</button>
 					@if (returnTo) {
@@ -184,6 +201,9 @@ export function errorCodeOf(failure: { status?: number; error?: unknown } | null
 			.items {
 				margin: 0 0 1rem;
 			}
+			.terms a {
+				margin-left: 4px;
+			}
 		`
 	]
 })
@@ -206,6 +226,7 @@ export class ProvisionConfirmComponent implements OnInit {
 	busy = false;
 	firstName = '';
 	lastName = '';
+	termsAccepted = false;
 	/** Ever's page to go back to (only a page of Ever's web app). */
 	returnTo: string | null = null;
 	/** The workspace's one-time sign-in link, when the automatic sign-in did not happen. */
@@ -230,7 +251,11 @@ export class ProvisionConfirmComponent implements OnInit {
 					this.returnTo = isEverReturnUrl(summary.return_to) ? summary.return_to : null;
 					this.cdr.markForCheck();
 				},
-				error: (failure) => this.fail(errorCodeOf(failure))
+				error: (failure) => {
+					// Without a summary there is no verified return address: Ever's own start page.
+					this.returnTo = this.returnTo ?? EVER_RETURN_ORIGINS[0];
+					this.fail(errorCodeOf(failure));
+				}
 			});
 	}
 
@@ -241,9 +266,19 @@ export class ProvisionConfirmComponent implements OnInit {
 		this.busy = true;
 		this.error = null;
 		this.cdr.markForCheck();
+		// The documents as the summary listed them, echoed back: the API and Gauzy's register path check them.
+		const terms: ITermsAcceptanceClaim[] = this.termsAccepted
+			? (this.summary.terms ?? []).map(({ documentId, version, sha256, locale }) => ({
+					documentId,
+					version,
+					sha256,
+					locale
+				}))
+			: [];
 		const request = {
 			...(this.firstName.trim() ? { first_name: this.firstName.trim() } : {}),
-			...(this.lastName.trim() ? { last_name: this.lastName.trim() } : {})
+			...(this.lastName.trim() ? { last_name: this.lastName.trim() } : {}),
+			...(terms.length ? { terms } : {})
 		};
 		this.api
 			.create(this.provisionKey, this.handoffKey, request)
@@ -267,7 +302,8 @@ export class ProvisionConfirmComponent implements OnInit {
 	private signIn(result: ProvisionResult): void {
 		const key = handoffKeyOf(result.sign_in_url);
 		if (!key) {
-			this.openUrl = null;
+			// No sign-in key came back (it expired meanwhile): the person signs in with Ever ID from the login page.
+			this.openUrl = '#/auth/login';
 			this.cdr.markForCheck();
 			return;
 		}

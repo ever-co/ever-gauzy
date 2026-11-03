@@ -81,11 +81,12 @@ export class ZitadelFlowService {
 	 * @returns The authorize URL to redirect to.
 	 */
 	async startSignin(response: OidcCookieResponse, redirect?: string, provision?: string): Promise<string> {
+		// A malformed provisioning key is refused before anything else, the issuer included.
+		if (provision !== undefined && !isProvisionKey(provision)) {
+			return this.errorUrl('signin', 'sign_in_failed');
+		}
 		try {
 			const issuer = await this.config.primary();
-			if (provision !== undefined && !isProvisionKey(provision)) {
-				return this.errorUrl('signin', 'sign_in_failed');
-			}
 			const path = provision ? undefined : safeRedirect(redirect, this.config.settings.clientBaseUrl);
 			const transaction = await this.transactions.begin(response, this.cookie(), {
 				issuer: issuer.issuer,

@@ -237,7 +237,35 @@ export function isProvisionEnabled(env: Env, warn: Warn = () => undefined): bool
 	return false;
 }
 
-const stripTrailingSlashes = (value: string): string => value.replace(/\/+$/, '');
+/**
+ * An address of this installation sent to Ever Platform (`CLIENT_BASE_URL`, `API_BASE_URL`): http(s), no
+ * credentials, query or fragment, without trailing slashes; `null` when it is not one.
+ */
+function baseUrlOf(raw: string | undefined, fallback: string): string | null {
+	let url: URL;
+	try {
+		url = new URL(raw?.trim() || fallback);
+	} catch {
+		return null;
+	}
+	if (!(url.protocol === 'https:' || url.protocol === 'http:') || url.username || url.password || url.search || url.hash) {
+		return null;
+	}
+	return `${url.origin}${url.pathname.replace(/\/+$/, '')}`;
+}
+
+/** The settings of creating a workspace from Ever (off, with a warning, when an address is unusable). */
+function parseProvision(env: Env, warn: Warn): EverConnectConfig['provision'] {
+	const enabled = isProvisionEnabled(env, warn);
+	const appUrl = baseUrlOf(env['CLIENT_BASE_URL'], 'http://localhost:4200');
+	const apiUrl = baseUrlOf(env['API_BASE_URL'], 'http://localhost:3000');
+	if (enabled && (!appUrl || !apiUrl)) {
+		warn(
+			'CLIENT_BASE_URL and API_BASE_URL must be http(s) addresses without credentials, a query or a fragment; creating workspaces from Ever stays off until they are.'
+		);
+	}
+	return { enabled: enabled && !!appUrl && !!apiUrl, appUrl: appUrl ?? '', apiUrl: apiUrl ?? '' };
+}
 
 /**
  * Reads the settings once. A malformed value falls back to its default with one `warn` line (which
@@ -269,11 +297,7 @@ export function readEverConnectConfig(env: Env = process.env, warn: Warn = () =>
 		issuer: localPlatform ? issuer : null,
 		localPlatform,
 		signIn: parseSignIn(env),
-		provision: {
-			enabled: isProvisionEnabled(env, warn),
-			appUrl: stripTrailingSlashes(env['CLIENT_BASE_URL']?.trim() || 'http://localhost:4200'),
-			apiUrl: stripTrailingSlashes(env['API_BASE_URL']?.trim() || 'http://localhost:3000')
-		}
+		provision: parseProvision(env, warn)
 	};
 }
 

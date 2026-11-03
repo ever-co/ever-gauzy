@@ -35,4 +35,17 @@ describe('EVER_CONNECT_PROVISION_ENABLED', () => {
 			}).provision
 		).toEqual({ enabled: true, appUrl: 'https://app.gauzy.example', apiUrl: 'https://api.gauzy.example' });
 	});
+
+	it.each([
+		['a query', 'https://app.gauzy.example/?x=1'],
+		['a fragment', 'https://app.gauzy.example/#/x'],
+		['credentials', 'https://user:pw@app.gauzy.example'],
+		['another scheme', 'ftp://app.gauzy.example'],
+		['no URL', 'app.gauzy.example']
+	])('stays off, with a warning, when CLIENT_BASE_URL has %s', (_name, value) => {
+		const warn = jest.fn();
+		const config = readEverConnectConfig({ EVER_CONNECT_PROVISION_ENABLED: 'true', CLIENT_BASE_URL: value }, warn);
+		expect(config.provision.enabled).toBe(false);
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('CLIENT_BASE_URL and API_BASE_URL'));
+	});
 });

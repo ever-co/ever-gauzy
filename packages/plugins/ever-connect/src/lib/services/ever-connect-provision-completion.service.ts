@@ -114,102 +114,128 @@ export class EverConnectProvisionCompletion {
 		}
 	}
 
+	/**
+	 * One attempt: Ever Platform is told (once: `completedAt` marks its answer, so an attempt after a
+	 * local failure does not ask again), then the link it answered is kept here; only then is the report
+	 * done. A failure of either step counts an attempt and is retried.
+	 */
 	private async send(record: ProvisionResultRecord, instanceId: string): Promise<void> {
 		const attempts = record.completionAttempts;
-		let tenantLinkId: string | null;
-		try {
-			const client = await this.platform.getClient();
-			const answer = await client.connect.completeProvisionIntent(record.jti, {
-				instance_id: instanceId,
-				product_tenant_id: record.productTenantId,
-				product_org_id: record.productOrgId,
-				product_user_ref: record.productUserId,
-				urls: { app: this.config.provision.appUrl, api: this.config.provision.apiUrl },
-				result: 'created'
-			} as never);
-			tenantLinkId =
-				typeof answer?.tenant_link_id === 'string' && LINK_ID_SHAPE.test(answer.tenant_link_id)
-					? answer.tenant_link_id
-					: null;
-		} catch (error) {
-			if (isCredentialRevoked(error)) {
-				this.signals.revoked$.next();
+		let tenantLinkId = record.tenantLinkId;
+		if (!record.completedAt) {
+			try {
+				const client = await this.platform.getClient();
+				const answer = await client.connect.completeProvisionIntent(record.jti, {
+					instance_id: instanceId,
+					product_tenant_id: record.productTenantId,
+					product_org_id: record.productOrgId,
+					product_user_ref: record.productUserId,
+					urls: { app: this.config.provision.appUrl, api: this.config.provision.apiUrl },
+					result: 'created'
+				} as never);
+				tenantLinkId =
+					typeof answer?.tenant_link_id === 'string' && LINK_ID_SHAPE.test(answer.tenant_link_id)
+						? answer.tenant_link_id
+						: null;
+			} catch (error) {
+				if (isCredentialRevoked(error)) {
+					this.signals.revoked$.next();
+					return;
+				}
+				await this.failed(record, errorCode(error), !isUnreachable(error));
 				return;
 			}
-			const next = attempts + 1;
-			const final = !isUnreachable(error) || next >= COMPLETION_MAX_ATTEMPTS;
 			await this.provisions.updateCompletion(record.idempotencyKey, attempts, {
-				completionAttempts: next,
-				completionState: final ? 'failed' : 'pending',
-				completionNextAt: final
-					? null
-					: this.now() + COMPLETION_RETRY_MS[Math.min(next, COMPLETION_RETRY_MS.length) - 1],
-				completionError: errorCode(error).replace(/\s+/g, '_').slice(0, 64)
+				completedAt: this.now(),
+				tenantLinkId
 			});
-			this.logger.warn(
-				final
-					? `A workspace completion report was given up (${errorCode(error)}).`
-					: `A workspace completion report could not be sent (${errorCode(error)}); it is retried.`
-			);
-			return;
 		}
-		const done = await this.provisions.updateCompletion(record.idempotencyKey, attempts, {
+		if (tenantLinkId) {
+			try {
+				await this.keepLink(record, tenantLinkId);
+			} catch (error) {
+				await this.failed(record, `link_${errorCode(error)}`, false, true);
+				return;
+			}
+		}
+		await this.provisions.updateCompletion(record.idempotencyKey, attempts, {
 			completionAttempts: attempts + 1,
 			completionState: 'done',
 			completionNextAt: null,
-			completionError: null,
-			completedAt: this.now(),
-			tenantLinkId
+			completionError: null
 		});
-		if (done && tenantLinkId) {
-			await this.keepLink(record, tenantLinkId).catch((error) =>
-				this.logger.warn(`The link of a created workspace could not be kept now (${errorCode(error)}).`)
-			);
-		}
 	}
 
 	/**
-	 * Keeps the link Ever Platform recorded like one made with a link code: the link row, its id on
+	 * Counts a failed attempt: retried after the next wait, or given up after the last one (or at once,
+	 * for a refusal of Ever Platform's, unless only the local step failed).
+	 */
+	private async failed(record: ProvisionResultRecord, code: string, refused: boolean, local = false): Promise<void> {
+		const next = record.completionAttempts + 1;
+		const final = (refused && !local) || next >= COMPLETION_MAX_ATTEMPTS;
+		await this.provisions.updateCompletion(record.idempotencyKey, record.completionAttempts, {
+			completionAttempts: next,
+			completionState: final ? 'failed' : 'pending',
+			completionNextAt: final
+				? null
+				: this.now() + COMPLETION_RETRY_MS[Math.min(next, COMPLETION_RETRY_MS.length) - 1],
+			completionError: code.replace(/\s+/g, '_').slice(0, 64)
+		});
+		this.logger.warn(
+			final
+				? `A workspace completion report was given up (${code}).`
+				: `A workspace completion report could not be finished (${code}); it is retried.`
+		);
+	}
+
+	/**
+	 * Keeps the link Ever Platform recorded like one made with a link code: the link row (once), its id on
 	 * Gauzy's record of it, its entitlement document and the integration states (both best effort: the
-	 * heartbeat reads them again).
+	 * heartbeat reads them again). Safe to run again.
 	 */
 	private async keepLink(record: ProvisionResultRecord, linkId: string): Promise<void> {
 		if (!record.productTenantId || !record.productOrgId || !record.everOrgId) {
 			return;
 		}
 		const owner = { tenantId: record.productTenantId, organizationId: record.productOrgId };
-		const handle = handleOf(await this.provisions.intent(record.jti));
-		try {
-			await this.store.insertLink({
-				...owner,
-				integrationTenantId: record.integrationTenantId,
-				linkId,
-				everOrgId: record.everOrgId,
-				everHandle: handle,
-				status: 'linked',
-				entitlementJwsEncrypted: null,
-				entitlementSeq: null,
-				entitlementIat: null,
-				entitlementExp: null,
-				entitlementFetchedAt: null,
-				linkedByUserId: record.productUserId
-			});
-		} catch (error) {
-			if (error instanceof LiveLinkExistsError) {
-				return;
+		let inserted = false;
+		if (!(await this.store.linkById(linkId))) {
+			try {
+				await this.store.insertLink({
+					...owner,
+					integrationTenantId: record.integrationTenantId,
+					linkId,
+					everOrgId: record.everOrgId,
+					everHandle: handleOf(await this.provisions.intent(record.jti)),
+					status: 'linked',
+					entitlementJwsEncrypted: null,
+					entitlementSeq: null,
+					entitlementIat: null,
+					entitlementExp: null,
+					entitlementFetchedAt: null,
+					linkedByUserId: record.productUserId
+				});
+				inserted = true;
+			} catch (error) {
+				if (error instanceof LiveLinkExistsError) {
+					// The organization was linked otherwise meanwhile: that link stays.
+					return;
+				}
+				throw error;
 			}
-			throw error;
 		}
 		if (record.integrationTenantId) {
 			await this.provisions.addLinkSettings(owner, record.integrationTenantId, { EVER_LINK_ID: linkId });
 		}
-		await this.audit.record({
-			action: 'link.create',
-			actorLabel: 'platform',
-			actorUserId: record.productUserId,
-			...owner,
-			details: { link_id: linkId, ever_org_id: record.everOrgId }
-		});
+		if (inserted) {
+			await this.audit.record({
+				action: 'link.create',
+				actorLabel: 'platform',
+				actorUserId: record.productUserId,
+				...owner,
+				details: { link_id: linkId, ever_org_id: record.everOrgId }
+			});
+		}
 		const link = await this.store.linkById(linkId);
 		if (link && this.entitlements) {
 			await this.entitlements.refreshLink(link).catch(() => undefined);

@@ -1,8 +1,14 @@
 import { BadRequestException, Inject, Injectable, Logger, Type } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { CommandBus } from '@nestjs/cqrs';
-import { DataSource, EntityManager } from 'typeorm';
-import { CurrenciesEnum, IUser, LanguagesEnum } from '@gauzy/contracts';
+import { DataSource, EntityManager, IsNull, MoreThan } from 'typeorm';
+import {
+	CurrenciesEnum,
+	ITermsAcceptanceClaim,
+	ITermsAcceptanceDocument,
+	IUser,
+	LanguagesEnum
+} from '@gauzy/contracts';
 import {
 	Employee,
 	EmployeeCreateCommand,
@@ -24,7 +30,13 @@ import {
 	ZitadelProvisionerPort
 } from '../ports/create-user-pre-linked.port';
 import { GAUZY_AUTH, GauzyAuthPort } from '../ports/gauzy-auth.port';
+import { TERMS_DOCUMENTS, TermsDocumentsPort } from '../ports/terms-documents.port';
 import { ZitadelAccountService } from './zitadel-account.service';
+import { ZitadelConfigService } from './zitadel-config.service';
+import { absoluteDocumentUrl } from './zitadel-signup.service';
+
+/** How long an owner an attempt registered stays recognisable to its retry (it has no tenant yet). */
+const UNFINISHED_OWNER_MS = 24 * 3_600_000;
 
 /** Longest name of a tenant, an organization or a team created here. */
 const MAX_NAME_LENGTH = 200;
@@ -84,8 +96,18 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 		private readonly dataSource: DataSource,
 		private readonly moduleRef: ModuleRef,
 		private readonly accounts: ZitadelAccountService,
-		@Inject(GAUZY_AUTH) private readonly gauzyAuth: GauzyAuthPort
+		private readonly config: ZitadelConfigService,
+		@Inject(GAUZY_AUTH) private readonly gauzyAuth: GauzyAuthPort,
+		@Inject(TERMS_DOCUMENTS) private readonly termsDocuments: TermsDocumentsPort
 	) {}
+
+	requiredTerms(locale: LanguagesEnum = LanguagesEnum.ENGLISH): ITermsAcceptanceDocument[] {
+		const clientBaseUrl = this.config.settings.clientBaseUrl;
+		return this.termsDocuments.getRequiredDocuments(locale).map((document) => ({
+			...document,
+			url: absoluteDocumentUrl(document.url, clientBaseUrl)
+		}));
+	}
 
 	async findProvisioned(idempotencyKey: string): Promise<CreateUserPreLinkedResult | null> {
 		if (!idempotencyKey) return null;
@@ -100,13 +122,12 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 					select: { id: true }
 				})
 			: null;
-		const team = await this.findTeam(link.organizationId, undefined);
+		// The team is not looked up: an organization may hold teams made later; the caller keeps the id it was answered.
 		return {
 			userId,
 			tenantId: link.tenantId,
 			organizationId: link.organizationId,
 			employeeId: employee?.id,
-			teamId: team?.id,
 			existing: true
 		};
 	}
@@ -134,16 +155,24 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 			await hooks.checkpoint?.({ ...ids });
 		};
 
-		// 1. The owner: Gauzy's register path, then the address is marked verified (Ever ID verified it).
-		let user = ids.userId ? await this.loadUser(ids.userId) : null;
+		// 1. The owner: Gauzy's register path (which checks and records the accepted documents), then the
+		// address is marked verified (Ever ID verified it). An owner an earlier attempt registered but could
+		// not report is found again rather than registered twice.
+		let user = ids.userId ? await this.loadUser(ids.userId) : await this.findUnfinishedOwner(input.email);
+		if (user && !ids.userId) {
+			ids.userId = user.id;
+			await checkpoint();
+		}
 		if (!user) {
+			this.assertRequiredTermsAccepted(input.terms ?? []);
 			const created = await this.gauzyAuth.register(
 				{
 					user: {
 						email: input.email,
 						firstName: clean(input.firstName, MAX_PERSON_NAME_LENGTH),
 						lastName: clean(input.lastName, MAX_PERSON_NAME_LENGTH)
-					}
+					},
+					terms: input.terms?.length ? input.terms : undefined
 				},
 				LanguagesEnum.ENGLISH
 			);
@@ -307,13 +336,60 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 		return true;
 	}
 
+	/**
+	 * An owner an earlier attempt registered whose id it could not keep: same address, no tenant yet, no
+	 * password (Gauzy's register path made it without one; an account someone registered with a password
+	 * is never taken over), not linked to an Ever ID, registered within the last day.
+	 */
+	private async findUnfinishedOwner(email: string): Promise<User | null> {
+		const candidates = await this.dataSource.getRepository(User).find({
+			where: {
+				email,
+				tenantId: IsNull(),
+				hash: IsNull(),
+				createdAt: MoreThan(new Date(Date.now() - UNFINISHED_OWNER_MS))
+			},
+			order: { createdAt: 'DESC' }
+		});
+		for (const candidate of candidates) {
+			if (!(await this.dataSource.getRepository(ZitadelAccount).exists({ where: { userId: candidate.id } }))) {
+				return candidate;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Every document Gauzy currently requires must be accepted, as on the register form; the claims
+	 * themselves are checked against the published text by Gauzy's register path.
+	 */
+	private assertRequiredTermsAccepted(terms: ITermsAcceptanceClaim[]): void {
+		const missing = this.termsDocuments
+			.getRequiredDocuments(LanguagesEnum.ENGLISH)
+			.filter(
+				(document) =>
+					!terms.some(
+						(claim) => claim.documentId === document.documentId && claim.version === document.version
+					)
+			);
+		if (missing.length) {
+			throw new BadRequestException({
+				statusCode: 400,
+				code: 'terms_required',
+				message: 'The required terms must be accepted.'
+			});
+		}
+	}
+
 	private assertInput(input: CreateUserPreLinkedInput): void {
 		const missing = ['issuer', 'subject', 'email', 'everOrgId', 'everTenantId', 'handle', 'idempotencyKey'].filter(
 			(field) =>
 				typeof input?.[field as keyof CreateUserPreLinkedInput] !== 'string' ||
 				!input[field as keyof CreateUserPreLinkedInput]
 		);
-		if (missing.length || !input.tenant?.name || !input.organization?.name) {
+		// A team is made with the owner's employee in it: no employee, no team.
+		const teamWithoutEmployee = input.options?.createTeam && !input.options?.createEmployee;
+		if (missing.length || !input.tenant?.name || !input.organization?.name || teamWithoutEmployee) {
 			throw new BadRequestException('The workspace request is incomplete.');
 		}
 	}

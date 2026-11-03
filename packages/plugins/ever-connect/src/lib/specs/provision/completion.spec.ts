@@ -181,13 +181,44 @@ describe('workspace completion report', () => {
 		expect(COMPLETION_RETRY_MS[0]).toBe(60_000);
 		expect(COMPLETION_RETRY_MS[COMPLETION_RETRY_MS.length - 1]).toBe(4 * 3_600_000);
 		h.platform.offline = true;
+		const waits: number[] = [];
 		for (let attempt = 1; attempt <= COMPLETION_MAX_ATTEMPTS; attempt++) {
+			// Not due a moment before its time: nothing is sent.
 			await completion.sendDue();
-			h.clock.t += 4 * 3_600_000;
+			const current = await row();
+			if (current.completionNextAt === null) break;
+			waits.push(current.completionNextAt - h.clock.now());
+			h.clock.t = current.completionNextAt - 1;
+			await completion.sendDue();
+			expect(h.platform.callsTo(COMPLETE)).toHaveLength(attempt);
+			h.clock.t += 1;
 		}
+		expect(waits).toEqual([60_000, 4 * 60_000, 15 * 60_000, 30 * 60_000, 3_600_000, 2 * 3_600_000, 4 * 3_600_000]);
 		expect(await row()).toMatchObject({ completionState: 'failed', completionAttempts: 8, completionNextAt: null });
 		await completion.sendDue();
 		expect(h.platform.callsTo(COMPLETE)).toHaveLength(8);
+	});
+
+	it('the link answered is kept before the report is done; a failure to keep it is retried without asking Ever Platform again', async () => {
+		h.platform.on(COMPLETE, { status: 200, body: { status: 'completed', tenant_link_id: LINK_ID } });
+		const insertLink = jest.spyOn(h.store, 'insertLink').mockRejectedValueOnce(new Error('database timeout'));
+		await completion.sendDue();
+		expect(await row()).toMatchObject({
+			completionState: 'pending',
+			completionAttempts: 1,
+			tenantLinkId: LINK_ID,
+			completionError: 'link_Error'
+		});
+		expect((await row()).completedAt).toEqual(expect.any(Number));
+		expect(await h.store.linkById(LINK_ID)).toBeNull();
+
+		h.clock.t += 60_000;
+		await completion.sendDue();
+		expect(h.platform.callsTo(COMPLETE)).toHaveLength(1);
+		expect(insertLink).toHaveBeenCalledTimes(2);
+		expect(await row()).toMatchObject({ completionState: 'done', completionAttempts: 2 });
+		expect(await h.store.linkById(LINK_ID)).toMatchObject({ tenantId, organizationId, status: 'linked' });
+		expect((await h.auditRows()).map((r) => r.action)).toEqual(['provision.accept', 'link.create']);
 	});
 
 	it('a refusal is final, kept as a code', async () => {

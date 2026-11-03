@@ -31,8 +31,16 @@ class FakeDatabase {
 		return this.tables.get(name) as Row[];
 	}
 
+	/** Equality, or the two TypeORM operators the provisioner uses (`IsNull`, `MoreThan`). */
 	private matches(row: Row, where: Row): boolean {
-		return Object.entries(where).every(([key, value]) => row[key] === value);
+		return Object.entries(where).every(([key, value]) => {
+			if (value && typeof value === 'object' && 'type' in value && '_type' in value) {
+				const operator = value as { type: string; value: unknown };
+				if (operator.type === 'isNull') return row[key] === null || row[key] === undefined;
+				if (operator.type === 'moreThan') return row[key] > (operator.value as never);
+			}
+			return row[key] === value;
+		});
 	}
 
 	repository(entity: unknown, rows = this.table(entity)) {
@@ -120,6 +128,7 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 	let onboarded: Array<{ name: string; userId: string }>;
 	let commands: unknown[];
 	let failOrganizationOnce: boolean;
+	let required: Array<{ documentId: string; version: string; sha256: string; locale: string; url?: string }>;
 	let service: ZitadelProvisionService;
 
 	beforeEach(() => {
@@ -129,11 +138,19 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		onboarded = [];
 		commands = [];
 		failOrganizationOnce = false;
+		required = [];
 		const users = db.table(User);
 		const gauzyAuth = {
 			register: async (input: { user: { email: string } }) => {
 				registered.push({ input });
-				const user = { id: randomUUID(), email: input.user.email, tenantId: null, emailVerifiedAt: null };
+				const user = {
+					id: randomUUID(),
+					email: input.user.email,
+					tenantId: null,
+					hash: null,
+					emailVerifiedAt: null,
+					createdAt: new Date()
+				};
 				users.push(user);
 				return { id: user.id };
 			}
@@ -161,7 +178,7 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 						failOrganizationOnce = false;
 						throw new Error('connection timeout');
 					}
-					const tenantId = users[0]['tenantId'];
+					const tenantId = users.filter((row) => row['tenantId']).at(-1)?.['tenantId'];
 					const organization = { id: randomUUID(), tenantId, createdAt: new Date(), ...command.input };
 					db.table(Organization).push(organization);
 					return organization;
@@ -188,11 +205,15 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 			[RoleAuthorizationService, { attachAuthorizationState: async (user: unknown) => user }]
 		]);
 		const moduleRef = { get: (type: unknown) => services.get(type) };
+		const config = { settings: { clientBaseUrl: 'https://app.gauzy.test' } };
+		const termsDocuments = { getRequiredDocuments: () => required };
 		service = new ZitadelProvisionService(
 			db.dataSource(queries) as never,
 			moduleRef as never,
 			accounts as never,
-			gauzyAuth as never
+			config as never,
+			gauzyAuth as never,
+			termsDocuments as never
 		);
 	});
 
@@ -210,7 +231,7 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		});
 
 		expect(registered).toEqual([
-			{ input: { user: { email: 'owner@acme.example', firstName: 'Ada', lastName: 'Owner' } } }
+			{ input: { user: { email: 'owner@acme.example', firstName: 'Ada', lastName: 'Owner' }, terms: undefined } }
 		]);
 		const [user] = db.table(User);
 		expect(user['emailVerifiedAt']).toBeInstanceOf(Date);
@@ -281,10 +302,12 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 	it('a finished key answers its ids and creates nothing', async () => {
 		const first = await service.createUserPreLinked(INPUT);
 		const again = await service.createUserPreLinked(INPUT);
-		expect(again).toEqual({ ...first, existing: true });
+		// The team is not guessed (an organization may hold teams made later): the caller keeps its id.
+		const { teamId: _team, ...ids } = first;
+		expect(again).toEqual({ ...ids, existing: true });
 		expect(registered).toHaveLength(1);
 		expect(onboarded).toHaveLength(1);
-		expect(await service.findProvisioned(INPUT.idempotencyKey)).toEqual({ ...first, existing: true });
+		expect(await service.findProvisioned(INPUT.idempotencyKey)).toEqual({ ...ids, existing: true });
 	});
 
 	it('a retry resumes from the kept ids: the same owner and tenant, never a second one', async () => {
@@ -301,7 +324,55 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		expect(result).toMatchObject({ userId: kept.userId, tenantId: kept.tenantId });
 		expect(registered).toHaveLength(1);
 		expect(onboarded).toHaveLength(1);
+		expect(db.table(Organization)).toHaveLength(1);
 		expect(db.table(ZitadelAccount)).toHaveLength(1);
+	});
+
+	it('an owner an attempt registered but could not report is found again, never registered twice', async () => {
+		await expect(
+			service.createUserPreLinked(INPUT, {
+				checkpoint: async () => {
+					throw new Error('the id could not be kept');
+				}
+			})
+		).rejects.toThrow('the id could not be kept');
+		expect(registered).toHaveLength(1);
+
+		const result = await service.createUserPreLinked(INPUT);
+		expect(registered).toHaveLength(1);
+		expect(result.userId).toBe(db.table(User)[0]['id']);
+	});
+
+	it('an account someone registered on the address with a password is never taken over', async () => {
+		db.table(User).push({
+			id: 'theirs',
+			email: INPUT.email,
+			tenantId: null,
+			hash: 'a-password-hash',
+			createdAt: new Date()
+		});
+		const result = await service.createUserPreLinked(INPUT);
+		expect(result.userId).not.toBe('theirs');
+		expect(registered).toHaveLength(1);
+	});
+
+	it('the documents Gauzy requires: refused before anything is created without them, recorded by the register path with them', async () => {
+		required = [
+			{ documentId: 'tos:gauzy', version: '1.0.0', sha256: 'a'.repeat(64), locale: 'en', url: '/legal/tos' }
+		];
+		expect(service.requiredTerms()).toEqual([{ ...required[0], url: 'https://app.gauzy.test/#/legal/terms' }]);
+		await expect(service.createUserPreLinked(INPUT)).rejects.toBeInstanceOf(BadRequestException);
+		expect(registered).toEqual([]);
+		const terms = [{ documentId: 'tos:gauzy', version: '1.0.0', sha256: 'a'.repeat(64), locale: 'en' }];
+		await service.createUserPreLinked({ ...INPUT, terms });
+		expect(registered).toEqual([{ input: { user: expect.any(Object), terms } }]);
+	});
+
+	it('a team needs the owner employee', async () => {
+		await expect(
+			service.createUserPreLinked({ ...INPUT, options: { createEmployee: false, createTeam: true } })
+		).rejects.toBeInstanceOf(BadRequestException);
+		expect(registered).toEqual([]);
 	});
 
 	it('when the caller rows fail, neither link is written', async () => {
