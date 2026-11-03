@@ -222,7 +222,13 @@
 									rel="noopener noreferrer"
 									[attr.aria-label]="'EXPENSE_VIEW.OPEN_RECEIPT' | translate"
 								>
-									<img [src]="file.url" [alt]="'EXPENSE_VIEW.RECEIPT' | translate" (error)="receiptBroken = true" />
+									<!-- No referrer: a file host that refuses images embedded on other sites answers 403 to one. -->
+									<img
+										[src]="file.url"
+										[alt]="'EXPENSE_VIEW.RECEIPT' | translate"
+										referrerpolicy="no-referrer"
+										(error)="receiptBroken = true"
+									/>
 								</a>
 							} @else {
 								<a class="expense-receipt-file" [href]="file.url" target="_blank" rel="noopener noreferrer">

@@ -21,7 +21,13 @@
 				[attr.aria-label]="'EXPENSE_VIEW.OPEN_RECEIPT' | translate"
 			>
 				@if (!previewBroken) {
-					<img [src]="imageUrl" [alt]="'EXPENSE_VIEW.RECEIPT' | translate" (error)="previewBroken = true" />
+					<!-- No referrer: a file host that refuses images embedded on other sites answers 403 to one. -->
+					<img
+						[src]="imageUrl"
+						[alt]="'EXPENSE_VIEW.RECEIPT' | translate"
+						referrerpolicy="no-referrer"
+						(error)="previewBroken = true"
+					/>
 				} @else {
 					<span class="receipt-file">
 						<nb-icon icon="file-outline" aria-hidden="true"></nb-icon>
