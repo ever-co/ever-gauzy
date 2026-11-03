@@ -13,8 +13,9 @@ import { Store } from '@gauzy/ui-core/core';
 	template: `
 		<input
 			type="file"
-			accept="image/*"
-			aria-label="Upload image"
+			[accept]="accept"
+			[attr.aria-label]="ariaLabel"
+			[disabled]="disabled"
 			(change)="imageUploadHandler()"
 			(mouseenter)="changeHoverState.emit(true)"
 			(mouseleave)="changeHoverState.emit(false)"
@@ -59,7 +60,16 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 		this._folder = value;
 	}
 
+	/** File types the picker offers (the input's `accept` attribute). */
+	@Input() accept: string = 'image/*';
+	/** Accessible name of the hidden file input. */
+	@Input() ariaLabel: string = 'Upload image';
+	/** Blocks picking a file, for example while an upload is in progress. */
+	@Input() disabled: boolean = false;
+
 	@Output() changeHoverState = new EventEmitter<boolean>();
+	/** Emitted when a picked file starts uploading; `uploadedImageAsset` or `uploadImageAssetError` follows. */
+	@Output() uploadStarted = new EventEmitter<void>();
 	@Output() uploadedImageAsset = new EventEmitter<IImageAsset | any>();
 	@Output() uploadImageAssetError = new EventEmitter<any>();
 
@@ -91,26 +101,40 @@ export class ImageUploaderComponent implements AfterViewInit, OnInit {
 		this.uploader.onAfterAddingFile = (file) => {
 			file.withCredentials = false;
 		};
+		this.uploader.onBeforeUploadItem = () => {
+			this.uploadStarted.emit();
+		};
 		this.uploader.onSuccessItem = (item: any, response: string, status: number) => {
 			try {
 				if (response) {
 					const image: IImageAsset = JSON.parse(response);
 					this.uploadedImageAsset.emit(image);
+					return;
 				}
 			} catch (error) {
 				console.log('Error while uploaded image url', error);
 			}
+			// Always settle, so a host waiting on the upload is never left hanging.
+			this.uploadImageAssetError.emit(this.failure(status));
 		};
 		this.uploader.onErrorItem = (item: any, response: string, status: number) => {
 			try {
 				if (response) {
 					const error = JSON.parse(response);
 					this.uploadImageAssetError.emit(error);
+					return;
 				}
 			} catch (error) {
 				console.log('Error while uploaded image url error', error);
 			}
+			// An empty or non-JSON body: a network failure or a proxy's error page.
+			this.uploadImageAssetError.emit(this.failure(status));
 		};
+	}
+
+	/** An upload that failed without a readable body: its status, and a message every host can show. */
+	private failure(statusCode: number): { statusCode: number; message: string } {
+		return { statusCode, message: 'INVENTORY_PAGE.COULD_NOT_UPLOAD_IMAGE' };
 	}
 
 	/**
