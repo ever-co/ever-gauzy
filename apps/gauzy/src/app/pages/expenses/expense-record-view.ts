@@ -13,8 +13,11 @@ export const EXPENSE_VIEW_RELATIONS = [
 	'organizationContact'
 ];
 
-/** Files a receipt preview can show inline. */
-const IMAGE_RECEIPT = /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i;
+/**
+ * Files that are documents, not pictures. A receipt is attached through an image upload, so anything else is tried
+ * as an image — the stored name need not end in an image extension — and offered as a link if it fails to load.
+ */
+const DOCUMENT_RECEIPT = /\.(pdf|docx?|xlsx?|ods|odt|csv|txt|zip)(\?.*)?$/i;
 
 /** The status badge of the expenses grid: paid green, invoiced amber, otherwise red. */
 export function expenseStatusBadge(value: ExpenseStatusesEnum | string): { text: string; class: string | null } | null {
@@ -55,13 +58,13 @@ export function expenseTaxOf(expense: IExpense, locale?: string): { rate: string
 	};
 }
 
-/** The receipt an expense really has — none for the legacy placeholder — and whether it previews as an image. */
+/** The receipt an expense really has — none for the legacy placeholder — and whether to try it as an image. */
 export function expenseReceiptOf(expense: IExpense): { url: string; isImage: boolean } | null {
 	const url = toActualReceipt(expense?.receipt?.trim());
 	if (!url) {
 		return null;
 	}
-	return { url, isImage: IMAGE_RECEIPT.test(url) || url.startsWith('data:image/') };
+	return { url, isImage: !DOCUMENT_RECEIPT.test(url) };
 }
 
 /**
