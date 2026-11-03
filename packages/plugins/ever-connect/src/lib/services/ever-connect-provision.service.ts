@@ -325,8 +325,9 @@ export class EverConnectProvisionService {
 
 	/** Waits (briefly) for a creation another attempt is running; the finished row, or `null`. */
 	private async waitForCreation(key: string): Promise<ProvisionResultRecord | null> {
-		const deadline = this.now() + CREATION_WAIT_MS;
-		while (this.now() < deadline) {
+		// Real time: this is a wait, not a validity.
+		const deadline = Date.now() + CREATION_WAIT_MS;
+		while (Date.now() < deadline) {
 			await new Promise((resolve) => setTimeout(resolve, CREATION_POLL_MS));
 			const record = await this.store.result(key);
 			if (record?.status === 'created') return record;

@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { PUBLIC_METHOD_METADATA } from '@gauzy/constants';
 import { PermissionGuard, TenantPermissionGuard } from '@gauzy/core';
 import { EverConnectModule } from './ever-connect.module';
+import { EverConnectProvisionController } from './ever-connect-provision.controller';
+import { EverConnectProvisionGuard } from './guards/ever-connect-provision.guard';
 import { EverConnectEnabledGuard, EverConnectOperatorGuard } from './guards/ever-connect-operator.guard';
 import { WELL_KNOWN_PATH } from './well-known/ever-connect-well-known.service';
 
@@ -58,7 +60,9 @@ export function specialRoutes(controllers: Array<Type<unknown>>, prefix = '/api'
  * `ever-connect.routes.json` declares every endpoint of this module that answers without an
  * organization permission or the operator check. It must equal the routes the module registers when
  * every optional route is mounted (`EVER_STATS_SERVES=gauzy,teams`); the requests Ever Platform will
- * make to an installation are declared as not mounted in this release. `UPDATE_ROUTES_MANIFEST=1`
+ * make to an installation are declared as not mounted in this release. The workspace routes from Ever
+ * are public endpoints (the person is not signed in to Gauzy yet), each answering 404 unless
+ * `EVER_CONNECT_PROVISION_ENABLED=true`. `UPDATE_ROUTES_MANIFEST=1`
  * rewrites the method and path list; the descriptions stay hand-written.
  */
 describe('route manifest', () => {
@@ -77,11 +81,7 @@ describe('route manifest', () => {
 		}
 		expect(manifest.public_endpoints.map((e: Route) => ({ method: e.method, path: e.path }))).toEqual(registered());
 		expect(manifest.platform_requests.every((r: { mounted: boolean }) => r.mounted === false)).toBe(true);
-		expect(manifest.platform_requests.map((r: Route) => `${r.method} ${r.path}`)).toEqual([
-			'GET /api/ever-connect/usage',
-			'GET /api/ever-connect/provision',
-			'POST /api/ever-connect/provision'
-		]);
+		expect(manifest.platform_requests.map((r: Route) => `${r.method} ${r.path}`)).toEqual(['GET /api/ever-connect/usage']);
 	});
 
 	it('declares the one route registered on the HTTP server outside /api: /.well-known/ever-connect', () => {
@@ -92,8 +92,10 @@ describe('route manifest', () => {
 	});
 
 	it('health is signed-in only (never @Public) and mounted only on a paired installation', () => {
-		expect(registered()).toEqual([{ method: 'GET', path: '/api/ever-connect/health' }]);
-		expect(specialRoutes(controllers({}))).toEqual([]);
+		expect(registered().filter((r) => !r.path.includes('/provision'))).toEqual([
+			{ method: 'GET', path: '/api/ever-connect/health' }
+		]);
+		expect(specialRoutes(controllers({})).filter((r) => !r.path.includes('/provision'))).toEqual([]);
 		const health = controllers({ EVER_STATS_SERVES: 'gauzy,teams' }).find(
 			(c) => c.name === 'EverConnectHealthController'
 		) as Type<unknown>;
@@ -101,13 +103,27 @@ describe('route manifest', () => {
 		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, health.prototype.health)).toBeUndefined();
 	});
 
-	it('a declared platform route is not mounted (no usage or provision route in this release)', () => {
+	it('a declared platform route is not mounted (no usage route in this release)', () => {
 		const all = controllers({ EVER_STATS_SERVES: 'gauzy,teams' }).flatMap((c) =>
 			Object.getOwnPropertyNames(c.prototype).map((name) =>
 				String(Reflect.getMetadata(PATH_METADATA, c.prototype[name] ?? {}) ?? '')
 			)
 		);
-		expect(all.filter((path) => /usage|provision/.test(path))).toEqual([]);
+		expect(all.filter((path) => /usage/.test(path))).toEqual([]);
+	});
+
+	it('the workspace routes from Ever: public, throttled, behind their own guard (404 unless switched on), on every installation', () => {
+		const provision = specialRoutes(controllers({})).filter((r) => r.path.includes('/provision'));
+		expect(provision).toEqual([
+			{ method: 'POST', path: '/api/ever-connect/provision/preflight' },
+			{ method: 'POST', path: '/api/ever-connect/provision/summary' },
+			{ method: 'GET', path: '/api/ever-connect/provision' },
+			{ method: 'POST', path: '/api/ever-connect/provision' }
+		]);
+		expect(Reflect.getMetadata(PUBLIC_METHOD_METADATA, EverConnectProvisionController)).toBe(true);
+		expect(Reflect.getMetadata(GUARDS_METADATA, EverConnectProvisionController)).toEqual([EverConnectProvisionGuard]);
+		const limits = Reflect.getMetadataKeys(EverConnectProvisionController).filter((key) => String(key).startsWith('THROTTLER:LIMIT'));
+		expect(limits.map((key) => Reflect.getMetadata(key, EverConnectProvisionController))).toEqual([10]);
 	});
 
 	it('fails when an unguarded route is added without an entry (control)', () => {

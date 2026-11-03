@@ -1,0 +1,169 @@
+import { EverConnectProvisionStore } from '../../ever-connect-provision.store';
+import { IdentityHarness, identityHarness, INSTANCE_ID, problem } from '../../fixtures/identity-harness';
+import {
+	COMPLETION_MAX_ATTEMPTS,
+	COMPLETION_RETRY_MS,
+	EverConnectProvisionCompletion
+} from '../../services/ever-connect-provision-completion.service';
+
+jest.setTimeout(60_000);
+
+const KEY = '01K9A0000000000000000000JB:2:provision_cloud_tenant:gauzy';
+const JTI = '01K9A0000000000000000000JT';
+const COMPLETE = `POST /v1/provision-intents/${JTI}/complete`;
+const LINK_ID = '01K9A0000000000000000000LK';
+const ENV = {
+	ENCRYPTION_KEY: 'completion-spec-encryption-key-0123456789',
+	API_BASE_URL: 'https://api.gauzy.test',
+	CLIENT_BASE_URL: 'https://app.gauzy.test'
+};
+
+/**
+ * The report to Ever Platform that a workspace it asked for exists, through the real SDK client (which
+ * checks the request body against the SDK's own schema): the body (ids and addresses only), done on
+ * `completed` and `already_completed`, retried with growing waits when Ever Platform cannot be
+ * reached, given up after 8 attempts or at a refusal; the link Ever Platform answers is kept.
+ */
+describe('workspace completion report', () => {
+	let h: IdentityHarness;
+	let provisions: EverConnectProvisionStore;
+	let completion: EverConnectProvisionCompletion;
+	let tenantId: string;
+	let organizationId: string;
+	let integrationTenantId: string;
+
+	beforeEach(async () => {
+		h = await identityHarness(ENV);
+		await h.connectAndEnable();
+		provisions = new EverConnectProvisionStore(h.dataSource, h.clock);
+		completion = new EverConnectProvisionCompletion(
+			provisions,
+			h.store,
+			h.platformService as never,
+			h.audit,
+			h.signals,
+			h.config,
+			undefined,
+			undefined,
+			h.clock
+		);
+		// A workspace created for the request, as the creation leaves it.
+		await provisions.saveIntent({
+			jti: JTI,
+			intent: JSON.stringify({ org: { id: '01K9A0000000000000000000RG', handle: 'acme', display_name: 'Acme' } }),
+			keyHash: 'a'.repeat(64),
+			idempotencyKey: KEY,
+			expiresAt: h.clock.now() + 900_000
+		});
+		const claim = await provisions.claim({ idempotencyKey: KEY, jti: JTI, everOrgId: '01K9A0000000000000000000RG' }, 'holder', h.clock.now() + 60_000);
+		expect(claim.outcome).toBe('claimed');
+		tenantId = '2d1c0f8e-0000-4000-8000-000000000001';
+		organizationId = '2d1c0f8e-0000-4000-8000-000000000002';
+		const runner = h.dataSource.createQueryRunner();
+		await runner.connect();
+		integrationTenantId = await provisions.writeCreated(
+			{ query: (sql, params) => runner.query(sql, params) },
+			{
+				idempotencyKey: KEY,
+				ids: {
+					productTenantId: tenantId,
+					productOrgId: organizationId,
+					productUserId: '2d1c0f8e-0000-4000-8000-000000000003',
+					employeeId: null,
+					teamId: null
+				},
+				catalogId: null,
+				settings: { EVER_ORG_ID: '01K9A0000000000000000000RG', EVER_HANDLE: 'acme', EVER_LINK_STATUS: 'linked' },
+				audit: { action: 'provision.accept', actorUserId: '2d1c0f8e-0000-4000-8000-000000000003', details: { job_id: 'job' } }
+			}
+		);
+		await runner.release();
+	});
+
+	afterEach(async () => {
+		await h.close();
+	});
+
+	const row = async () => (await provisions.result(KEY))!;
+
+	it('sends ids and addresses only, and keeps the link Ever Platform answers', async () => {
+		h.platform.on(COMPLETE, { status: 200, body: { status: 'completed', job_id: '01K9A0000000000000000000JB', tenant_link_id: LINK_ID } });
+		await completion.sendDue();
+		const [call] = h.platform.callsTo(COMPLETE);
+		expect(call.body).toEqual({
+			instance_id: INSTANCE_ID,
+			product_tenant_id: tenantId,
+			product_org_id: organizationId,
+			product_user_ref: '2d1c0f8e-0000-4000-8000-000000000003',
+			urls: { app: 'https://app.gauzy.test', api: 'https://api.gauzy.test' },
+			result: 'created'
+		});
+		expect(call.headers['authorization']).toMatch(/^Bearer evit_/);
+		expect(JSON.stringify(call.body)).not.toContain('@');
+		expect(await row()).toMatchObject({ completionState: 'done', completionAttempts: 1, tenantLinkId: LINK_ID });
+
+		const link = await h.store.linkById(LINK_ID);
+		expect(link).toMatchObject({ tenantId, organizationId, integrationTenantId, everOrgId: '01K9A0000000000000000000RG', everHandle: 'acme', status: 'linked' });
+		const settings = await h.dataSource.query(`SELECT "settingsName", "settingsValue" FROM "integration_setting" WHERE "integrationId" = ?`, [integrationTenantId]);
+		expect(Object.fromEntries(settings.map((s: Record<string, string>) => [s['settingsName'], s['settingsValue']]))).toMatchObject({
+			EVER_LINK_ID: LINK_ID,
+			EVER_LINK_STATUS: 'linked'
+		});
+		expect((await h.auditRows()).map((r) => r.action)).toEqual(['provision.accept', 'link.create']);
+
+		// Done: never sent again.
+		await completion.sendDue();
+		expect(h.platform.callsTo(COMPLETE)).toHaveLength(1);
+	});
+
+	it('a repeat Ever Platform already recorded (already_completed) counts as done', async () => {
+		h.platform.on(COMPLETE, { status: 200, body: { status: 'already_completed' } });
+		await completion.sendNow(KEY);
+		expect(await row()).toMatchObject({ completionState: 'done', completionAttempts: 1 });
+		expect(h.platform.callsTo(COMPLETE)).toHaveLength(1);
+	});
+
+	it('Ever Platform unreachable: retried after 1 minute, then longer; done once it answers', async () => {
+		h.platform.on(COMPLETE, problem(503, 'unavailable'));
+		await completion.sendDue();
+		expect(await row()).toMatchObject({ completionState: 'pending', completionAttempts: 1, completionNextAt: h.clock.now() + 60_000 });
+		// Not due yet: nothing is sent.
+		await completion.sendDue();
+		expect(h.platform.callsTo(COMPLETE)).toHaveLength(1);
+		h.clock.t += 60_000;
+		await completion.sendDue();
+		expect(await row()).toMatchObject({ completionState: 'pending', completionAttempts: 2, completionNextAt: h.clock.now() + 4 * 60_000 });
+		h.clock.t += 4 * 60_000;
+		h.platform.on(COMPLETE, { status: 200, body: { status: 'completed' } });
+		await completion.sendDue();
+		expect(await row()).toMatchObject({ completionState: 'done', completionAttempts: 3 });
+		expect(h.platform.callsTo(COMPLETE)).toHaveLength(3);
+	});
+
+	it(`gives up after ${COMPLETION_MAX_ATTEMPTS} attempts, the waits growing from 1 minute to 4 hours`, async () => {
+		expect(COMPLETION_RETRY_MS[0]).toBe(60_000);
+		expect(COMPLETION_RETRY_MS[COMPLETION_RETRY_MS.length - 1]).toBe(4 * 3_600_000);
+		h.platform.offline = true;
+		for (let attempt = 1; attempt <= COMPLETION_MAX_ATTEMPTS; attempt++) {
+			await completion.sendDue();
+			h.clock.t += 4 * 3_600_000;
+		}
+		expect(await row()).toMatchObject({ completionState: 'failed', completionAttempts: 8, completionNextAt: null });
+		await completion.sendDue();
+		expect(h.platform.callsTo(COMPLETE)).toHaveLength(8);
+	});
+
+	it('a refusal is final, kept as a code', async () => {
+		h.platform.on(COMPLETE, problem(422, 'validation_failed'));
+		await completion.sendDue();
+		expect(await row()).toMatchObject({ completionState: 'failed', completionAttempts: 1, completionError: '422_validation_failed' });
+	});
+
+	it('nothing is sent while the installation is not connected', async () => {
+		await h.store.updateConnection({ status: 'disconnected' });
+		await completion.sendDue();
+		await completion.sendNow(KEY);
+		expect(h.platform.calls).toEqual([]);
+		expect(await row()).toMatchObject({ completionState: 'pending', completionAttempts: 0 });
+	});
+});
