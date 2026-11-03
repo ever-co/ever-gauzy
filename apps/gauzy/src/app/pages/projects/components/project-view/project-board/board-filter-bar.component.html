@@ -60,6 +60,7 @@
 	@for (menu of menus; track menu.facet) {
 	@if (options[menu.facet].length) {
 	<nb-select
+		gaOptionsAtStart
 		multiple
 		size="tiny"
 		status="basic"
@@ -67,6 +68,8 @@
 		[class.is-active]="filter[menu.facet].length"
 		[placeholder]="menu.label | translate"
 		[selected]="filter[menu.facet]"
+		[optionsWidth]="176"
+		optionsListClass="board-filter-options"
 		[attr.aria-label]="menu.label | translate"
 		(selectedChange)="onSelect(menu.facet, $event)"
 	>
@@ -75,7 +78,7 @@
 			<span class="board-filter-count">{{ filter[menu.facet].length }}</span>
 		</nb-select-label>
 		@for (option of options[menu.facet]; track option.id) {
-		<nb-option [value]="option.id">{{ option.name }}</nb-option>
+		<nb-option class="board-filter-option" [value]="option.id">{{ option.name }}</nb-option>
 		}
 	</nb-select>
 	}
