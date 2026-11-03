@@ -1,0 +1,268 @@
+<!-- An expense's own page, laid out as Jira's issue page: the record in the wide column, the facts in the side one. -->
+<ngx-record-view-page heading="EXPENSES_PAGE.EXPENSES" [backLink]="backLink" [state]="state" (retry)="load()">
+	@if (expense) {
+		<!-- The page's actions, on one line with its back button, as the task page's. -->
+		<div recordPageActions class="expense-page-actions">
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EXPENSES_EDIT]">
+				<button
+					nbButton
+					size="tiny"
+					status="primary"
+					type="button"
+					[disabled]="busy"
+					[attr.aria-label]="'BUTTONS.EDIT' | translate"
+					(click)="edit()"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					<span class="expense-page-action-label">{{ 'BUTTONS.EDIT' | translate }}</span>
+				</button>
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="basic"
+					type="button"
+					[disabled]="busy"
+					[nbTooltip]="'BUTTONS.DUPLICATE' | translate"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.DUPLICATE' | translate"
+					(click)="duplicate()"
+				>
+					<nb-icon icon="copy-outline"></nb-icon>
+				</button>
+			</ng-template>
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				type="button"
+				[nbTooltip]="'BUTTONS.COPY_LINK' | translate"
+				nbTooltipPlacement="top"
+				[attr.aria-label]="'BUTTONS.COPY_LINK' | translate"
+				(click)="copyLink()"
+			>
+				<nb-icon icon="link-2-outline"></nb-icon>
+			</button>
+			<ngx-favorite-toggle
+				[entityType]="favoriteEntity"
+				[entityId]="expense.id"
+				[entityName]="headline?.title"
+				size="tiny"
+				status="basic"
+				appearance="ghost"
+				spacing="list"
+			></ngx-favorite-toggle>
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EXPENSES_EDIT]">
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="danger"
+					type="button"
+					[disabled]="busy"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.DELETE' | translate"
+					(click)="delete()"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+				</button>
+			</ng-template>
+		</div>
+	}
+
+	@if (expense && headline) {
+		<div class="project-view-top">
+			<!-- Who was paid and how it stands, then the four figures an approver reads first. -->
+			<div class="project-view-headline">
+				<div class="project-view-header">
+					<span class="project-logo expense-logo" aria-hidden="true">
+						<nb-icon icon="shopping-bag-outline"></nb-icon>
+					</span>
+					<div class="project-view-title">
+						<h5 class="project-view-name expense-title" [nbTooltip]="headline.title" nbTooltipPlacement="top">
+							{{ headline.title }}
+						</h5>
+						<p class="project-view-meta">
+							@if (headline.status; as status) {
+								<span [class]="'project-status tone-' + (status.tone || 'basic')">{{ status.text }}</span>
+							}
+							@if (headline.category) {
+								<span
+									class="project-meta-item"
+									[nbTooltip]="('SM_TABLE.CATEGORY' | translate) + ': ' + headline.category"
+									nbTooltipPlacement="top"
+								>
+									<nb-icon icon="pricetags-outline" aria-hidden="true"></nb-icon>
+									{{ headline.category }}
+								</span>
+							}
+							@if (headline.project) {
+								<span
+									class="project-meta-item"
+									[nbTooltip]="('SM_TABLE.PROJECT' | translate) + ': ' + headline.project"
+									nbTooltipPlacement="top"
+								>
+									<nb-icon icon="folder-outline" aria-hidden="true"></nb-icon>
+									{{ headline.project }}
+								</span>
+							}
+							@if (headline.contact) {
+								<span
+									class="project-meta-item"
+									[nbTooltip]="('SM_TABLE.CONTACT' | translate) + ': ' + headline.contact"
+									nbTooltipPlacement="top"
+								>
+									<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
+									{{ headline.contact }}
+								</span>
+							}
+						</p>
+					</div>
+				</div>
+
+				<dl class="project-facts">
+					<div class="project-fact expense-fact-amount">
+						<dt>{{ 'EXPENSE_VIEW.AMOUNT' | translate }}</dt>
+						<dd>
+							<ga-income-amount class="expense-amount" [value]="$any(expense.amount)" [rowData]="expense"></ga-income-amount>
+							<span class="project-fact-hint">
+								{{ (expense.splitExpense ? 'EXPENSE_VIEW.SPLIT_HINT' : 'EXPENSE_VIEW.CURRENCY_HINT') | translate : { currency: expense.currency } }}
+							</span>
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'EXPENSE_VIEW.TAX' | translate }}</dt>
+						<dd>
+							@if (headline.tax; as tax) {
+								{{ tax.rate }}
+								@if (tax.label) {
+									<span class="project-fact-hint">{{ tax.label }}</span>
+								}
+							} @else {
+								<span class="project-fact-muted">{{ 'EXPENSE_VIEW.NO_TAX' | translate }}</span>
+							}
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'EXPENSE_VIEW.TYPE' | translate }}</dt>
+						<dd>
+							@if (headline.typeKey) {
+								{{ headline.typeKey | translate }}
+							} @else {
+								<span class="project-fact-muted">—</span>
+							}
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'EXPENSE_VIEW.EXPENSE_DATE' | translate }}</dt>
+						<dd>
+							@if (expense.valueDate) {
+								{{ expense.valueDate | dateFormat }}
+								<span class="project-fact-hint">{{ headline.since }}</span>
+							} @else {
+								<span class="project-fact-muted">—</span>
+							}
+						</dd>
+					</div>
+				</dl>
+			</div>
+
+			<!-- The record: what it was for, the notes and tags, then the receipt. -->
+			<div class="project-view-col project-view-col--main">
+				@if (record.purpose || record.notes || record.tags?.length) {
+					<ngx-record-view [record]="record" [sections]="mainSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+				} @else {
+					<section class="panel project-view-panel">
+						<header class="panel-header">
+							<h5 class="panel-title panel-title--icon">
+								<nb-icon icon="file-text-outline" aria-hidden="true"></nb-icon>
+								{{ 'EXPENSE_VIEW.DESCRIPTION' | translate }}
+							</h5>
+						</header>
+						<div class="panel-body panel-body--flush">
+							<ng-container
+								*ngTemplateOutlet="empty; context: { $implicit: 'EXPENSE_VIEW.NO_DESCRIPTION', icon: 'file-text-outline' }"
+							></ng-container>
+						</div>
+					</section>
+				}
+
+				<!-- The receipt, as Hubstaff shows it: the image itself, opening the file at full size. -->
+				<section class="panel project-view-panel">
+					<header class="panel-header">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="attach-2-outline" aria-hidden="true"></nb-icon>
+							{{ 'EXPENSE_VIEW.RECEIPT' | translate }}
+						</h5>
+						@if (receipt) {
+							<a
+								nbButton
+								ghost
+								size="tiny"
+								status="basic"
+								class="expense-receipt-open"
+								[href]="receipt.url"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+								{{ 'EXPENSE_VIEW.OPEN_RECEIPT' | translate }}
+							</a>
+						}
+					</header>
+					<div class="panel-body" [class.panel-body--flush]="!receipt">
+						@if (receipt; as file) {
+							@if (file.isImage && !receiptBroken) {
+								<a
+									class="expense-receipt-preview"
+									[href]="file.url"
+									target="_blank"
+									rel="noopener noreferrer"
+									[attr.aria-label]="'EXPENSE_VIEW.OPEN_RECEIPT' | translate"
+								>
+									<img [src]="file.url" [alt]="'EXPENSE_VIEW.RECEIPT' | translate" (error)="receiptBroken = true" />
+								</a>
+							} @else {
+								<a class="expense-receipt-file" [href]="file.url" target="_blank" rel="noopener noreferrer">
+									<nb-icon icon="file-outline" aria-hidden="true"></nb-icon>
+									<span class="expense-receipt-name">{{ file.url }}</span>
+								</a>
+							}
+						} @else {
+							<div class="state state--compact">
+								<nb-icon icon="attach-2-outline" aria-hidden="true"></nb-icon>
+								<p>{{ 'EXPENSE_VIEW.NO_RECEIPT' | translate }}</p>
+								<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EXPENSES_EDIT]">
+									<button nbButton outline size="tiny" status="basic" type="button" [disabled]="busy" (click)="edit()">
+										<nb-icon icon="attach-outline" aria-hidden="true"></nb-icon>
+										{{ 'EXPENSES_PAGE.MUTATION.ATTACH_A_RECEIPT' | translate }}
+									</button>
+								</ng-template>
+							</div>
+						}
+					</div>
+				</section>
+			</div>
+
+			<!-- The facts: every field of the expense, then its stamps. -->
+			<div class="project-view-col project-view-col--side">
+				<ngx-record-view
+					class="expense-details"
+					[record]="record"
+					[sections]="detailsSections"
+					[placeholder]="'SM_TABLE.NONE' | translate"
+				></ngx-record-view>
+				<ngx-record-view [record]="record" [sections]="metaSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+			</div>
+		</div>
+	}
+</ngx-record-view-page>
+
+<ng-template #empty let-key let-icon="icon">
+	<div class="state state--compact">
+		<nb-icon [icon]="icon" aria-hidden="true"></nb-icon>
+		<p>{{ key | translate }}</p>
+	</div>
+</ng-template>
