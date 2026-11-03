@@ -154,7 +154,8 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 					tenantId: null,
 					hash: null,
 					emailVerifiedAt: null,
-					isActive: false,
+					// As Gauzy's register path leaves it where new accounts need not confirm their address.
+					isActive: true,
 					isArchived: false,
 					createdAt: new Date()
 				};
@@ -319,8 +320,9 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 			service.createUserPreLinked(INPUT, { checkpoint: async (ids) => void (kept = ids) })
 		).rejects.toThrow('connection timeout');
 		expect(kept).toEqual({ userId: expect.any(String), tenantId: expect.any(String) });
-		// Nobody can sign in yet: no Ever ID link, the address not marked verified.
+		// Nobody can sign in yet: no Ever ID link, the address not marked verified, the account not active.
 		expect(db.table(User)[0]['emailVerifiedAt']).toBeNull();
+		expect(db.table(User)[0]['isActive']).toBe(false);
 		expect(db.table(ZitadelAccount)).toEqual([]);
 
 		const result = await service.createUserPreLinked(INPUT, { resume: kept });

@@ -175,6 +175,11 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 			);
 			ids.userId = created.id;
 			await checkpoint();
+			// Not usable before the last step: an installation that does not ask new accounts to confirm their
+			// address leaves a registered account active, and Gauzy's e-mail code would reach it.
+			await this.dataSource
+				.getRepository(User)
+				.update({ id: created.id, emailVerifiedAt: IsNull() }, { isActive: false } as never);
 			user = await this.loadUser(created.id);
 			if (!user) {
 				throw new Error('The new owner could not be read back.');
