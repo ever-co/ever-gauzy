@@ -105,7 +105,7 @@ export class EverConnectProvisionCompletion {
 
 	private async send(record: ProvisionResultRecord, instanceId: string): Promise<void> {
 		const attempts = record.completionAttempts;
-		let tenantLinkId: string | null = null;
+		let tenantLinkId: string | null;
 		try {
 			const client = await this.platform.getClient();
 			const answer = await client.connect.completeProvisionIntent(record.jti, {
@@ -162,13 +162,7 @@ export class EverConnectProvisionCompletion {
 			return;
 		}
 		const owner = { tenantId: record.productTenantId, organizationId: record.productOrgId };
-		const intent = await this.provisions.intent(record.jti);
-		let handle: string | null = null;
-		try {
-			handle = intent ? ((JSON.parse(intent.intent) as { org?: { handle?: string } }).org?.handle ?? null) : null;
-		} catch {
-			handle = null;
-		}
+		const handle = handleOf(await this.provisions.intent(record.jti));
 		try {
 			await this.store.insertLink({
 				...owner,
@@ -205,5 +199,15 @@ export class EverConnectProvisionCompletion {
 			await this.entitlements.refreshLink(link).catch(() => undefined);
 		}
 		await this.states?.sync({ force: true }).catch(() => undefined);
+	}
+}
+
+/** The Ever organization's handle in a stored request, or `null`. */
+function handleOf(intent: { intent: string } | null): string | null {
+	if (!intent) return null;
+	try {
+		return (JSON.parse(intent.intent) as { org?: { handle?: string } }).org?.handle ?? null;
+	} catch {
+		return null;
 	}
 }

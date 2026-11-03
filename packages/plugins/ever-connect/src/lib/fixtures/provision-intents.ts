@@ -28,8 +28,8 @@ export function newKey(kid: string): TestKey {
 
 const signer = (key: TestKey) => (bytes: Uint8Array) => new Uint8Array(sign(null, Buffer.from(bytes), key.privateKey));
 
-/** A manifest key entry. */
-function entry(key: TestKey, purpose: 'intent' | 'entitlement' | 'assertion', state: 'active' | 'previous' | 'retired') {
+/** A manifest key entry (a manifest lists `active` and `previous` keys only; `notAfter` ends a key's window). */
+function entry(key: TestKey, purpose: 'intent' | 'entitlement' | 'assertion', state: 'active' | 'previous', notAfter?: string) {
 	return {
 		kty: 'OKP',
 		crv: 'Ed25519',
@@ -39,7 +39,8 @@ function entry(key: TestKey, purpose: 'intent' | 'entitlement' | 'assertion', st
 		alg: 'EdDSA',
 		ever_purpose: purpose,
 		state,
-		not_before: '2026-01-01T00:00:00Z'
+		not_before: '2026-01-01T00:00:00Z',
+		...(notAfter ? { not_after: notAfter } : {})
 	};
 }
 
@@ -47,6 +48,7 @@ export interface TestPlatform {
 	root: TestKey;
 	active: TestKey;
 	previous: TestKey;
+	/** A key whose overlap ended (listed as `previous`, past its `not_after`). */
 	retired: TestKey;
 	entitlement: TestKey;
 	/** A key that is in no manifest yet (the next one). */
@@ -78,7 +80,8 @@ export async function testPlatform(now = Math.floor(Date.now() / 1000)): Promise
 	const base = [
 		entry(active, 'intent', 'active'),
 		entry(previous, 'intent', 'previous'),
-		entry(retired, 'intent', 'retired'),
+		// Retired: its overlap ended a day before the manifest was made.
+		entry(retired, 'intent', 'previous', new Date((now - 86_400) * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z')),
 		entry(entitlement, 'entitlement', 'active')
 	];
 	const rootEntry = { kid: root.kid, x: root.x, iss: TEST_ISSUER };

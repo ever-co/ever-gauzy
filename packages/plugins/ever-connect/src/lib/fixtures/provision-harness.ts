@@ -103,8 +103,14 @@ export class FakeProvisioner implements ZitadelProvisionerPort {
 	async findProvisioned(key: string): Promise<CreateUserPreLinkedResult | null> {
 		const found = this.provisioned.get(key);
 		if (!found) return null;
-		const { everOrgId: _org, ...ids } = found;
-		return { ...ids, existing: true };
+		return {
+			userId: found.userId,
+			tenantId: found.tenantId,
+			organizationId: found.organizationId,
+			employeeId: found.employeeId,
+			teamId: found.teamId,
+			existing: true
+		};
 	}
 
 	async isLinkedElsewhere(everOrgId: string, key: string): Promise<boolean> {

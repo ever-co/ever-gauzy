@@ -1,3 +1,4 @@
+// cspell:ignore evit
 import { EverConnectProvisionStore } from '../../ever-connect-provision.store';
 import { IdentityHarness, identityHarness, INSTANCE_ID, problem } from '../../fixtures/identity-harness';
 import {
@@ -84,7 +85,7 @@ describe('workspace completion report', () => {
 		await h.close();
 	});
 
-	const row = async () => (await provisions.result(KEY))!;
+	const row = async () => (await provisions.result(KEY)) as NonNullable<Awaited<ReturnType<EverConnectProvisionStore['result']>>>;
 
 	it('sends ids and addresses only, and keeps the link Ever Platform answers', async () => {
 		h.platform.on(COMPLETE, { status: 200, body: { status: 'completed', job_id: '01K9A0000000000000000000JB', tenant_link_id: LINK_ID } });

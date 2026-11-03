@@ -160,6 +160,16 @@ export function returnToAllowed(url: unknown, localPlatform = false): boolean {
 	return (parsed.protocol === 'http:' || parsed.protocol === 'https:') && (host === 'localhost' || host === '127.0.0.1');
 }
 
+/** Whether `signature` (base64url) is the Ed25519 signature of `signingInput` by the key `x` (base64url). */
+function signatureValid(x: string, signingInput: string, signature: string): boolean {
+	try {
+		const publicKey = createPublicKey({ key: { kty: 'OKP', crv: 'Ed25519', x }, format: 'jwk' });
+		return verifySignature(null, Buffer.from(signingInput, 'ascii'), publicKey, Buffer.from(signature, 'base64url'));
+	} catch {
+		return false;
+	}
+}
+
 /** The organization of a request: ids and public names only. */
 function checkOrg(org: unknown): ProvisionIntentClaims['org'] {
 	if (!org || typeof org !== 'object' || Array.isArray(org)) throw refuse('org');
@@ -209,14 +219,7 @@ export async function verifyProvisionIntent(
 	if (!key) throw refuse('unknown_kid');
 	if (expected.now >= keySet.manifest.expiresAt) throw refuse('manifest_expired');
 
-	let valid = false;
-	try {
-		const publicKey = createPublicKey({ key: { kty: 'OKP', crv: 'Ed25519', x: key.x }, format: 'jwk' });
-		valid = verifySignature(null, Buffer.from(`${parts[0]}.${parts[1]}`, 'ascii'), publicKey, Buffer.from(parts[2], 'base64url'));
-	} catch {
-		valid = false;
-	}
-	if (!valid) throw refuse('bad_signature');
+	if (!signatureValid(key.x, `${parts[0]}.${parts[1]}`, parts[2])) throw refuse('bad_signature');
 
 	const claims = decodePart(parts[1]);
 	if (claims['iss'] !== expected.issuer || keySet.issuer !== expected.issuer) throw refuse('issuer_mismatch');
