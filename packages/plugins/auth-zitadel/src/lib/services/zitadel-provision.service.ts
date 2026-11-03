@@ -167,7 +167,9 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 					user: {
 						email: input.email,
 						firstName: clean(input.firstName, MAX_PERSON_NAME_LENGTH),
-						lastName: clean(input.lastName, MAX_PERSON_NAME_LENGTH)
+						lastName: clean(input.lastName, MAX_PERSON_NAME_LENGTH),
+						// Not usable before the last step, whatever the installation does with new accounts.
+						isActive: false
 					},
 					terms: input.terms?.length ? input.terms : undefined
 				},
@@ -175,15 +177,15 @@ export class ZitadelProvisionService implements ZitadelProvisionerPort {
 			);
 			ids.userId = created.id;
 			await checkpoint();
-			// Not usable before the last step: an installation that does not ask new accounts to confirm their
-			// address leaves a registered account active, and Gauzy's e-mail code would reach it.
-			await this.dataSource
-				.getRepository(User)
-				.update({ id: created.id, emailVerifiedAt: IsNull() }, { isActive: false } as never);
 			user = await this.loadUser(created.id);
 			if (!user) {
 				throw new Error('The new owner could not be read back.');
 			}
+		}
+		// Kept unusable on every attempt until the last step (also an owner a stopped attempt left), so no
+		// sign-in path (Ever ID, Gauzy's e-mail code) reaches the workspace before its links exist.
+		if (user.isActive !== false) {
+			await this.dataSource.getRepository(User).update({ id: user.id }, { isActive: false } as never);
 		}
 
 		// 2. The tenant, with the owner as its SUPER_ADMIN (Gauzy finishes a tenant a failed attempt left).

@@ -239,7 +239,12 @@ describe('ZitadelProvisionService (createUserPreLinked)', () => {
 		});
 
 		expect(registered).toEqual([
-			{ input: { user: { email: 'owner@acme.example', firstName: 'Ada', lastName: 'Owner' }, terms: undefined } }
+			{
+				input: {
+					user: { email: 'owner@acme.example', firstName: 'Ada', lastName: 'Owner', isActive: false },
+					terms: undefined
+				}
+			}
 		]);
 		const [user] = db.table(User);
 		expect(user['emailVerifiedAt']).toBeInstanceOf(Date);
