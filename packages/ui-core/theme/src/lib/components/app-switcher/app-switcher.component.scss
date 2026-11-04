@@ -109,6 +109,7 @@ a.app-row {
   border-radius: var(--gauzy-radius-sm, 6px);
   object-fit: cover;
   user-select: none;
+  box-shadow: 0 0 0 1px var(--border-basic-color-4, rgba(143, 155, 179, 0.32));
 }
 
 .app-text {
