@@ -9,3 +9,6 @@
 	     destroying it would leave the standard tabs blank on the way back. -->
 	<gz-dynamic-tabs #dynamicTabs [tabsetId]="tabsetId" [class.hidden]="isCustomDashboard()"></gz-dynamic-tabs>
 </div>
+
+<!-- Task and project quick looks asked for by sections that cannot host them, such as Time Tracking. -->
+<ga-dashboard-quick-look></ga-dashboard-quick-look>
