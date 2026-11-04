@@ -63,7 +63,10 @@ describe('TimerService.stopRunningTimersOf', () => {
 	it('stops the other timers and returns them when one stop fails', async () => {
 		const otherLog = { ...runningLog, id: 'log-other' };
 		findLogs.mockReset();
-		findLogs.mockResolvedValueOnce([runningLog, otherLog]).mockResolvedValueOnce([runningLog]);
+		findLogs
+			.mockResolvedValueOnce([runningLog, otherLog])
+			.mockResolvedValueOnce([runningLog])
+			.mockResolvedValueOnce([runningLog]);
 		execute.mockRejectedValueOnce(new Error('connection reset'));
 		jest.spyOn((service as unknown as { logger: { warn: () => void } }).logger, 'warn').mockImplementation(
 			() => undefined
@@ -81,6 +84,24 @@ describe('TimerService.stopRunningTimersOf', () => {
 		expect(findLogs).toHaveBeenCalledWith({
 			where: { ...scope, organizationTeamId: 'team-1', isRunning: true }
 		});
+	});
+
+	it('keeps a stop the update saved before it failed', async () => {
+		findLogs.mockReset();
+		findLogs
+			.mockResolvedValueOnce([runningLog])
+			.mockResolvedValueOnce([{ ...runningLog, isRunning: false }])
+			.mockResolvedValue([]);
+		execute.mockRejectedValueOnce(new Error('time slots failed'));
+		jest.spyOn((service as unknown as { logger: { warn: () => void } }).logger, 'warn').mockImplementation(
+			() => undefined
+		);
+
+		const stopped = await service.stopRunningTimersOf(scope);
+
+		expect(findLogs).toHaveBeenNthCalledWith(2, { where: { id: 'log-running', tenantId: 'tenant-1' } });
+		expect(stopped).toEqual([expect.objectContaining({ id: 'log-running', isRunning: false })]);
+		expect(updateEmployee).toHaveBeenCalled();
 	});
 
 	it('keeps the employee tracking while a timer of another team still runs', async () => {

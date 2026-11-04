@@ -935,6 +935,12 @@ export class TimerService {
 				stoppedLogs.push(stoppedLog);
 			} catch (error) {
 				this.logger.warn(`Failed to stop the running time log ${runningLog.id}: ${error?.message}`);
+				// The update writes the stop before its later steps, so a failure after that write still stopped it
+				const [storedLog] = await this.findTimeLogsWhere({ id: runningLog.id, tenantId });
+				const wasStopped = storedLog?.isRunning === false;
+				if (wasStopped) {
+					stoppedLogs.push(storedLog);
+				}
 			}
 		}
 
