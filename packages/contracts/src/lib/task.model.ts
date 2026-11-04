@@ -118,6 +118,11 @@ export interface ITaskCreateInput extends ITask, IMentionEmployeeIds {}
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	taskSprintMoveReason?: string;
+	/**
+	 * When the update names the task's project, the task's time logs follow it, except those of an approved or
+	 * billed timesheet. Opt-in: without it the logs keep the project they were tracked under.
+	 */
+	moveTimeLogs?: boolean;
 }
 
 export interface IGetTaskById {

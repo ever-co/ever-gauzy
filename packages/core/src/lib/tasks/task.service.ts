@@ -44,7 +44,9 @@ import {
 	ITaskAdvancedFilter,
 	IAdvancedTaskFiltering,
 	EmployeeNotificationTypeEnum,
-	NotificationActionTypeEnum
+	NotificationActionTypeEnum,
+	ITimeLog,
+	TimesheetStatus
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
 import { isPostgres, isSqlite } from '@gauzy/config';
@@ -68,7 +70,7 @@ import { EmployeeNotificationService } from '../employee-notification/employee-n
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
-import { OrganizationProject } from '../core/entities/internal';
+import { OrganizationProject, TimeLog } from '../core/entities/internal';
 import { EventBus as DomainEventBus } from '../event-bus/event-bus';
 import { TaskEvent } from '../event-bus/events/task.event';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
@@ -80,6 +82,17 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 import { FavoriteService } from '../core/decorators';
+
+function isLockedTimeLog(timeLog: ITimeLog): boolean {
+	const isApproved = timeLog.timesheet?.status === TimesheetStatus.APPROVED;
+	const isBilled = timeLog.timesheet?.isBilled === true;
+	return isApproved || isBilled;
+}
+
+function isMovableToProject(timeLog: ITimeLog, projectId: ID | null): boolean {
+	const isUnderAnotherProject = (timeLog.projectId ?? null) !== projectId;
+	return isUnderAnotherProject && !isLockedTimeLog(timeLog);
+}
 
 @FavoriteService(BaseEntityEnum.Task)
 @Injectable()
@@ -137,7 +150,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const userId = RequestContext.currentUserId();
 
 			const user = RequestContext.currentUser();
-			const { mentionEmployeeIds, ...data } = input;
+			const { mentionEmployeeIds, moveTimeLogs, ...data } = input;
 
 			// Find task relations
 			const relations: FindOptionsRelations<Task> = {
@@ -246,6 +259,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			// The save returns what was written: a partial update (e.g. only the estimate) carries no organization
 			// or title, so fall back to the stored task for the subscriptions and the activity log.
 			const organizationId = updatedTask.organizationId ?? task.organizationId;
+
+			const namesProject = data.projectId !== undefined;
+			const timeLogsFollowProject = moveTimeLogs === true && namesProject;
+			if (timeLogsFollowProject) {
+				const taskProjectId = moved?.projectId ?? data.projectId ?? null;
+				await this.moveTimeLogsToProject(id, taskProjectId, organizationId, tenantId);
+			}
 
 			// Same for the sync scope: the integrations read it from the updated-task event, so a partial update of a
 			// private task must not look like an `all` task to them. The scope is read back from the row after the save
@@ -1263,18 +1283,63 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		projectId: ID,
 		tenantId: ID,
 		organizationId: ID
-	): Promise<{ exists: boolean; prefix?: string | null }> {
+	): Promise<{ exists: boolean; prefix?: string | null; billable?: boolean | null }> {
 		if (!tenantId || !organizationId) {
 			return { exists: false };
 		}
 		const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
 			where: { id: projectId, tenantId, organizationId },
-			select: { id: true, name: true }
+			select: { id: true, name: true, billable: true }
 		});
 		if (!project) {
 			return { exists: false };
 		}
-		return { exists: true, prefix: project.name?.slice(0, 3) || null };
+		return { exists: true, prefix: project.name?.slice(0, 3) || null, billable: project.billable };
+	}
+
+	/**
+	 * Moves the task's time logs to the task's project, so the time tracked on a task is counted where the task is.
+	 * A log of an approved or billed timesheet stays where it is: its hours were already signed off or invoiced
+	 * under its project. A moved log takes the billable setting of a project that has one.
+	 *
+	 * Best-effort, like the other steps after the save: a failure is logged and leaves the logs where they were,
+	 * it never fails an update that already succeeded.
+	 *
+	 * @param taskId The task whose time logs move.
+	 * @param projectId The task's project after the update, or `null` when the update removed it.
+	 * @param organizationId The task's organization.
+	 * @param tenantId The caller's tenant.
+	 */
+	private async moveTimeLogsToProject(
+		taskId: ID,
+		projectId: ID | null,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<void> {
+		try {
+			const changes: Partial<TimeLog> = { projectId };
+			if (projectId) {
+				const destination = await this.findDestinationProject(projectId, tenantId, organizationId);
+				if (isBoolean(destination.billable)) {
+					changes.isBillable = destination.billable;
+				}
+			}
+
+			const timeLogs = await this.typeOrmRepository.manager.find(TimeLog, {
+				where: { taskId, tenantId, organizationId },
+				relations: { timesheet: true },
+				select: { id: true, projectId: true, timesheet: { id: true, status: true, isBilled: true } }
+			});
+			const movableLogs = timeLogs.filter((timeLog) => isMovableToProject(timeLog, projectId));
+			const movableIds = movableLogs.map((timeLog) => timeLog.id);
+			if (movableIds.length === 0) {
+				return;
+			}
+
+			await this.typeOrmRepository.manager.update(TimeLog, { id: In(movableIds), tenantId }, changes);
+		} catch (error) {
+			console.error('Error moving the task time logs to its project:', error);
+		}
 	}
 
 	/**
