@@ -461,7 +461,7 @@ $header-title-basis: 18rem;
     cursor: pointer;
 
     &:focus-visible {
-      outline: 2px solid nb-theme(color-primary-default);
+      outline: 2px solid var(--color-primary-default);
       outline-offset: -2px;
       background-color: var(--gauzy-hover-tint);
     }
