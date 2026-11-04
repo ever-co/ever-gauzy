@@ -71,8 +71,10 @@ const ROW = {
 
 /** The resolver, over a scripted service. */
 function surfaces() {
+	const update = jest.fn().mockResolvedValue({ affected: 1 });
 	const organizationTeamEmployeeService = {
-		update: jest.fn().mockResolvedValue({ affected: 1 }),
+		update,
+		updateMember: jest.fn((id: string, input: unknown) => update(id, input)),
 		updateActiveTask: jest.fn().mockResolvedValue({ affected: 1 }),
 		deleteTeamMember: jest.fn().mockResolvedValue({ affected: 1 }),
 		findOneByIdString: jest.fn().mockResolvedValue(ROW)

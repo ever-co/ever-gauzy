@@ -104,7 +104,10 @@ export class OrganizationTeamEmployeeResolver {
 		@Args('id', { type: () => ID }) id: Id,
 		@Args('input') input: IUpdateOrganizationTeamEmployeeInput
 	): Promise<OrganizationTeamEmployee> {
-		await this.organizationTeamEmployeeService.update(id, input as unknown as IOrganizationTeamEmployeeUpdateInput);
+		await this.organizationTeamEmployeeService.updateMember(
+			id,
+			input as unknown as IOrganizationTeamEmployeeUpdateInput
+		);
 
 		return await this.organizationTeamEmployeeService.findOneByIdString(id);
 	}
