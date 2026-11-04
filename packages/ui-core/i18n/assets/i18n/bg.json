@@ -7717,7 +7717,7 @@
 		"OPEN_RECEIPT": "Отвори касовата бележка",
 		"AMOUNT": "Сума",
 		"CURRENCY_HINT": "В {{ currency }}",
-		"SPLIT_HINT": "В {{ currency }}, разделен между всички служители",
+		"SPLIT_HINT": "В {{ currency }}, разделена между всички служители",
 		"TAX": "Данък",
 		"NO_TAX": "Без данък",
 		"TAX_LABEL": "Етикет на данъка",

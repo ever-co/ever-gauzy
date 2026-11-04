@@ -7673,7 +7673,7 @@
 		"OPEN_RECEIPT": "Otwórz paragon",
 		"AMOUNT": "Kwota",
 		"CURRENCY_HINT": "W {{ currency }}",
-		"SPLIT_HINT": "W {{ currency }}, podzielony między wszystkich pracowników",
+		"SPLIT_HINT": "W {{ currency }}, podzielona między wszystkich pracowników",
 		"TAX": "Podatek",
 		"NO_TAX": "Brak podatku",
 		"TAX_LABEL": "Etykieta podatku",

@@ -7665,7 +7665,7 @@
 		"EXPENSE": "Dépense",
 		"DETAILS": "Détails",
 		"DESCRIPTION": "Description",
-		"NO_DESCRIPTION": "Aucun objet, aucune note ni aucune étiquette n'a été ajouté à cette dépense.",
+		"NO_DESCRIPTION": "Cette dépense n'a ni but, ni notes, ni étiquettes.",
 		"RECEIPT": "Reçu",
 		"NO_RECEIPT": "Aucun reçu joint",
 		"OPEN_RECEIPT": "Ouvrir le reçu",
