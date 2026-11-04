@@ -50,6 +50,7 @@ import { PageRouteRegistryService } from '@gauzy/ui-core/core';
 import { createDashboardRoutes } from './dashboard.routes';
 import { DashboardComponent } from './dashboard.component';
 import { DashboardSwitcherComponent } from './dashboard-switcher/dashboard-switcher.component';
+import { DashboardQuickLookComponent } from './dashboard-quick-look/dashboard-quick-look.component';
 import { CustomDashboardComponent } from './custom-dashboard/custom-dashboard.component';
 import { DashboardCanvasComponent } from './custom-dashboard/dashboard-canvas.component';
 import { WidgetPaletteComponent } from './custom-dashboard/widget-palette.component';
@@ -117,6 +118,7 @@ const THIRD_PARTY_MODULES = [
 const COMPONENTS = [
 	DashboardComponent,
 	DashboardSwitcherComponent,
+	DashboardQuickLookComponent,
 	// Dashboard builder: canvas page, grid canvas, widget palette, tab strip
 	// and the per-widget settings dialog opened from a widget's kebab menu
 	CustomDashboardComponent,
