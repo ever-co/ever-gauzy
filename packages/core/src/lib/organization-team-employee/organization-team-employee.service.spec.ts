@@ -22,6 +22,26 @@ const insideBoundary = (tokenOrganizationId: string, statedOrganizationId?: stri
 };
 
 /**
+ * Stands in for the database answering the team manager check (`isTeamManager`). The check always names the caller,
+ * the tenant and the team: a call that dropped one of them is a bug, so the stand-in refuses it rather than match more
+ * rows.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const membershipMatches = (row: any, where: any): boolean => {
+	const namesScope = [where.employeeId, where.tenantId, where.organizationTeamId].every((value) => value !== undefined);
+	if (!namesScope) {
+		throw new Error('A team manager check must name the employee, the tenant and the team');
+	}
+	const isEmployee = row.employeeId === where.employeeId;
+	const isTenant = row.tenantId === where.tenantId;
+	const isTeam = row.organizationTeamId === where.organizationTeamId;
+	const isOrganization = where.organizationId === undefined || row.organizationId === where.organizationId;
+	const hasRole = where.role === undefined || row.role?.name === where.role.name;
+	const hasFlag = where.isManager === undefined || row.isManager === where.isManager;
+	return isEmployee && isTenant && isTeam && isOrganization && hasRole && hasFlag;
+};
+
+/**
  * #9052 — removing a member from a team reported success but kept the member.
  *
  * A team manager with the default EMPLOYEE role lacks CHANGE_SELECTED_EMPLOYEE, so TenantAwareCrudService adds
@@ -43,7 +63,12 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 			isManager: true
 		},
 		{ id: 'row-member', employeeId: 'member-employee', roleId: null, role: null, isManager: false }
-	].map((row) => ({ ...row, organizationTeamId: teamId, organizationId: manager.organizationId }));
+	].map((row) => ({
+		...row,
+		organizationTeamId: teamId,
+		organizationId: manager.organizationId,
+		tenantId: manager.tenantId
+	}));
 
 	/** Stands in for nestjs-cls, where the employee-filter bypass is stored per request. */
 	const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
@@ -104,7 +129,7 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 				metadata: { tableName: 'organization_team_employee', hasColumnWithPropertyPath: () => true },
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				exists: async ({ where }: { where: any[] }) =>
-					where.some((condition) => rows.some((row) => matches(row, condition)))
+					where.some((condition) => rows.some((row) => membershipMatches(row, condition)))
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -491,7 +516,7 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 				metadata: { tableName: 'organization_team_employee', hasColumnWithPropertyPath: () => true },
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				exists: async ({ where }: { where: any[] }) =>
-					where.some((condition) => rows.some((row) => matches(row, condition)))
+					where.some((condition) => rows.some((row) => membershipMatches(row, condition)))
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any

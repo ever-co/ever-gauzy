@@ -10,12 +10,15 @@ import { OrganizationTeamEmployeeService } from './organization-team-employee.se
  * act for the team's members, and a member promoted by another team manager, or one made manager from Ever Teams,
  * holds it without the role: the checks that only read the role refused them the team they manage.
  *
- * The check runs on a real in-memory SQLite database, through the TypeORM repository it reads in production.
+ * A flagged membership that is inactive or archived does not count, as for acting for the members. The flags are
+ * NULL on legacy rows, so NULL counts as active and not archived. The check runs on a real in-memory SQLite
+ * database, through the TypeORM repository it reads in production.
  */
 
 const TENANT = '72000000-0000-4000-8000-00000000000a';
 const ORGANIZATION = '72000000-0000-4000-8000-0000000000a1';
 const OTHER_TENANT = '72000000-0000-4000-8000-00000000000b';
+const OTHER_ORGANIZATION = '72000000-0000-4000-8000-0000000000b1';
 const TEAM = '72000000-0000-4000-8000-000000000001';
 const OTHER_TEAM = '72000000-0000-4000-8000-000000000002';
 const MANAGER_ROLE = '72000000-0000-4000-8000-0000000000f1';
@@ -26,7 +29,10 @@ const EMPLOYEE = {
 	member: '72000000-0000-4000-8000-0000000000e3',
 	otherTeamManager: '72000000-0000-4000-8000-0000000000e4',
 	foreignTenantManager: '72000000-0000-4000-8000-0000000000e5',
-	formerManager: '72000000-0000-4000-8000-0000000000e6'
+	formerManager: '72000000-0000-4000-8000-0000000000e6',
+	foreignOrganizationManager: '72000000-0000-4000-8000-0000000000e7',
+	inactiveFlaggedManager: '72000000-0000-4000-8000-0000000000e8',
+	archivedFlaggedManager: '72000000-0000-4000-8000-0000000000e9'
 };
 
 const RoleSchema = new EntitySchema<any>({
@@ -47,6 +53,8 @@ const OrganizationTeamEmployeeSchema = new EntitySchema<any>({
 		employeeId: { type: 'varchar' },
 		roleId: { type: 'varchar', nullable: true },
 		isManager: { type: 'boolean', nullable: true },
+		isActive: { type: 'boolean', nullable: true },
+		isArchived: { type: 'boolean', nullable: true },
 		tenantId: { type: 'varchar', nullable: true },
 		organizationId: { type: 'varchar', nullable: true },
 		deletedAt: { type: 'datetime', nullable: true, deleteDate: true }
@@ -75,8 +83,39 @@ const MEMBERS = [
 		roleId: MANAGER_ROLE,
 		isManager: true,
 		tenantId: OTHER_TENANT
+	},
+	{
+		id: 'row-7',
+		organizationTeamId: TEAM,
+		employeeId: EMPLOYEE.foreignOrganizationManager,
+		roleId: MANAGER_ROLE,
+		isManager: true,
+		organizationId: OTHER_ORGANIZATION
+	},
+	{
+		id: 'row-8',
+		organizationTeamId: TEAM,
+		employeeId: EMPLOYEE.inactiveFlaggedManager,
+		roleId: null,
+		isManager: true,
+		isActive: false
+	},
+	{
+		id: 'row-9',
+		organizationTeamId: TEAM,
+		employeeId: EMPLOYEE.archivedFlaggedManager,
+		roleId: null,
+		isManager: true,
+		isArchived: true
 	}
-].map((member) => ({ tenantId: TENANT, organizationId: ORGANIZATION, deletedAt: null, ...member }));
+].map((member) => ({
+	tenantId: TENANT,
+	organizationId: ORGANIZATION,
+	isActive: null,
+	isArchived: null,
+	deletedAt: null,
+	...member
+}));
 
 const TEAM_SCOPE = { tenantId: TENANT, organizationId: ORGANIZATION, organizationTeamId: TEAM };
 
@@ -118,7 +157,10 @@ describe('OrganizationTeamEmployeeService.isTeamManager', () => {
 		['a plain member', EMPLOYEE.member],
 		['a member whose flag is NULL and who has no role', EMPLOYEE.formerManager],
 		['the manager of another team', EMPLOYEE.otherTeamManager],
-		['a manager whose row names another tenant', EMPLOYEE.foreignTenantManager]
+		['a manager whose row names another tenant', EMPLOYEE.foreignTenantManager],
+		['a manager whose row names another organization', EMPLOYEE.foreignOrganizationManager],
+		['a flagged member whose membership is inactive', EMPLOYEE.inactiveFlaggedManager],
+		['a flagged member whose membership is archived', EMPLOYEE.archivedFlaggedManager]
 	])('refuses %s', async (_, employeeId) => {
 		await expect(service.isTeamManager(employeeId, TEAM_SCOPE)).resolves.toBe(false);
 	});

@@ -461,11 +461,17 @@ describe.each([
 			expect(await harness.deletedAt(LIVE_TEAM)).toBeNull();
 		});
 
-		it('lets a manager of the team retire it', async () => {
+		it('lets a manager of the team retire it, checking the live memberships only', async () => {
 			signInAs(EMPLOYEE.manager);
+			const check = jest.spyOn(membershipFromRows, 'isTeamManager');
 
 			await expect(harness.service().softRemove(LIVE_TEAM)).resolves.toMatchObject({ id: LIVE_TEAM });
 			expect(await harness.deletedAt(LIVE_TEAM)).not.toBeNull();
+			expect(check).toHaveBeenCalledWith(
+				EMPLOYEE.manager,
+				{ tenantId: TENANT, organizationId: ORGANIZATION, organizationTeamId: LIVE_TEAM },
+				false
+			);
 		});
 
 		it("lets a member flagged as the team's manager, without the MANAGER role, retire it", async () => {
@@ -534,9 +540,15 @@ describe.each([
 
 		it('lets a manager of the retired team restore it (the check reads retired teams)', async () => {
 			signInAs(EMPLOYEE.manager);
+			const check = jest.spyOn(membershipFromRows, 'isTeamManager');
 
 			await expect(harness.service().softRecover(RETIRED_TEAM)).resolves.toMatchObject({ id: RETIRED_TEAM });
 			expect(await harness.deletedAt(RETIRED_TEAM)).toBeNull();
+			expect(check).toHaveBeenCalledWith(
+				EMPLOYEE.manager,
+				{ tenantId: TENANT, organizationId: ORGANIZATION, organizationTeamId: RETIRED_TEAM },
+				true
+			);
 		});
 
 		it("lets a member flagged as the retired team's manager, without the MANAGER role, restore it", async () => {
