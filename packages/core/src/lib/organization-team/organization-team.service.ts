@@ -400,33 +400,20 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		const memberIds = input.memberIds ?? [];
 		const managerIds = input.managerIds ?? [];
 
-		let organizationTeam = await super.findOneByIdString(id, {
+		const organizationTeam = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId }
 		});
 
-		// Without CHANGE_SELECTED_EMPLOYEE the caller must be a MANAGER member of the team, which needs an
-		// employee identity. A caller without one is refused, as deleteTeam refuses it: skipping the check
-		// let any user holding ORG_TEAM_EDIT (the default EMPLOYEE role does) with no employee record
-		// rewrite any team of the tenant, its members and managers included.
+		// Without CHANGE_SELECTED_EMPLOYEE the caller must manage the team, which needs an employee identity. A
+		// caller without one is refused, as deleteTeam refuses it: skipping the check let any user holding
+		// ORG_TEAM_EDIT (the default EMPLOYEE role does) with no employee record rewrite any team of the tenant,
+		// its members and managers included.
 		if (!RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
-			try {
-				const employeeId = RequestContext.currentEmployeeId();
-				if (!employeeId) {
-					throw new ForbiddenException();
-				}
-				organizationTeam = await super.findOneByIdString(id, {
-					where: {
-						organizationId,
-						tenantId,
-						members: {
-							employeeId,
-							tenantId,
-							organizationId,
-							role: { name: RolesEnum.MANAGER }
-						}
-					}
-				});
-			} catch (error) {
+			const isManager = await this.organizationTeamEmployeeService.isTeamManager(
+				RequestContext.currentEmployeeId(),
+				{ tenantId, organizationId, organizationTeamId: id }
+			);
+			if (!isManager) {
 				throw new ForbiddenException();
 			}
 		}
@@ -832,30 +819,21 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			const { organizationId } = options;
 			const tenantId = RequestContext.currentTenantId() || options.tenantId;
 
-			// Without CHANGE_SELECTED_EMPLOYEE the caller must be a MANAGER member of the team — which
-			// requires an employee identity. Fail closed when there is none: an empty employeeId used to
-			// be dropped from the where, degrading the check to "the team has any manager".
+			// Without CHANGE_SELECTED_EMPLOYEE the caller must manage the team, which requires an employee
+			// identity: without one the check fails closed.
 			const canChangeSelectedEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
-			const employeeId = RequestContext.currentEmployeeId();
-			if (!canChangeSelectedEmployee && !employeeId) {
-				throw new ForbiddenException('You do not have permission to delete this team.');
+			if (!canChangeSelectedEmployee) {
+				const isManager = await this.organizationTeamEmployeeService.isTeamManager(
+					RequestContext.currentEmployeeId(),
+					{ tenantId, organizationId, organizationTeamId: teamId }
+				);
+				if (!isManager) {
+					throw new ForbiddenException('You do not have permission to delete this team.');
+				}
 			}
 
 			const team = await this.findOneByIdString(teamId, {
-				where: {
-					tenantId,
-					organizationId,
-					...(!canChangeSelectedEmployee
-						? {
-								members: {
-									employeeId,
-									role: {
-										name: RolesEnum.MANAGER
-									}
-								}
-						  }
-						: {})
-				}
+				where: { tenantId, organizationId }
 			});
 
 			// Check if the team was found before attempting deletion
@@ -945,20 +923,28 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			throw new ForbiddenException();
 		}
 
-		const deleted = withDeleted ? { withDeleted: true } : {};
-		try {
-			const { tenantId, organizationId } = await this.findOneByIdString(id, deleted);
-			await this.findOneByIdString(id, {
-				where: {
-					tenantId,
-					organizationId,
-					members: { employeeId, tenantId, organizationId, role: { name: RolesEnum.MANAGER } }
-				},
-				...deleted
-			});
-		} catch {
+		// A team that cannot be read is refused like one the caller does not manage
+		const isManager = await this.managesTeam(id, employeeId, withDeleted).catch(() => false);
+		if (!isManager) {
 			throw new ForbiddenException();
 		}
+	}
+
+	/**
+	 * Whether the employee manages the team, checked in the team's own tenant and organization.
+	 *
+	 * @param id - The team.
+	 * @param employeeId - The caller's employee.
+	 * @param withDeleted - Whether the team is read among soft-deleted rows (a restoration).
+	 */
+	private async managesTeam(id: ID, employeeId: ID, withDeleted: boolean): Promise<boolean> {
+		const deleted = withDeleted ? { withDeleted: true } : {};
+		const { tenantId, organizationId } = await this.findOneByIdString(id, deleted);
+		return await this.organizationTeamEmployeeService.isTeamManager(
+			employeeId,
+			{ tenantId, organizationId, organizationTeamId: id },
+			withDeleted
+		);
 	}
 
 	/**

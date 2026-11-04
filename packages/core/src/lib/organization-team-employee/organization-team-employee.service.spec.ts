@@ -53,7 +53,8 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 	const matches = (row: any, where: any = {}) =>
 		(where.employeeId === undefined || row.employeeId === where.employeeId) &&
 		(where.id === undefined || (where.id?.value ?? [where.id]).includes(row.id)) &&
-		(where.role?.name === undefined || row.role?.name === where.role.name);
+		(where.role?.name === undefined || row.role?.name === where.role.name) &&
+		(where.isManager === undefined || row.isManager === where.isManager);
 
 	let restore: () => void;
 	let deleted: string[];
@@ -99,8 +100,13 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		});
 
 		service = new OrganizationTeamEmployeeService(
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			{ metadata: { tableName: 'organization_team_employee', hasColumnWithPropertyPath: () => true } } as any,
+			{
+				metadata: { tableName: 'organization_team_employee', hasColumnWithPropertyPath: () => true },
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				exists: async ({ where }: { where: any[] }) =>
+					where.some((condition) => rows.some((row) => matches(row, condition)))
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			{} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -417,6 +423,7 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 	const manager = asEmployee('manager-employee');
 	const member = asEmployee('member-employee');
 	const otherTeamManager = asEmployee('other-manager-employee');
+	const flaggedManager = asEmployee('flagged-manager-employee');
 
 	const rows = [
 		{
@@ -426,6 +433,13 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 			role: { name: RolesEnum.MANAGER }
 		},
 		{ id: 'row-member', employeeId: 'member-employee', organizationTeamId: teamId, role: null },
+		{
+			id: 'row-flagged-manager',
+			employeeId: 'flagged-manager-employee',
+			organizationTeamId: teamId,
+			role: null,
+			isManager: true
+		},
 		{
 			id: 'row-other-manager',
 			employeeId: 'other-manager-employee',
@@ -443,7 +457,8 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 		(where.employeeId === undefined || row.employeeId === where.employeeId) &&
 		(where.organizationTeamId === undefined || row.organizationTeamId === where.organizationTeamId) &&
 		(where.id === undefined || row.id === where.id) &&
-		(where.role?.name === undefined || row.role?.name === where.role.name);
+		(where.role?.name === undefined || row.role?.name === where.role.name) &&
+		(where.isManager === undefined || row.isManager === where.isManager);
 
 	let restore: () => void = () => undefined;
 	let updated: { id: unknown; changes: Record<string, unknown> }[];
@@ -472,8 +487,13 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 		});
 
 		service = new OrganizationTeamEmployeeService(
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			{ metadata: { tableName: 'organization_team_employee', hasColumnWithPropertyPath: () => true } } as any,
+			{
+				metadata: { tableName: 'organization_team_employee', hasColumnWithPropertyPath: () => true },
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				exists: async ({ where }: { where: any[] }) =>
+					where.some((condition) => rows.some((row) => matches(row, condition)))
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			{} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -556,6 +576,24 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 				]);
 			}
 		);
+
+		it("lets a member flagged as the team's manager, without the MANAGER role, switch another member's tracking", async () => {
+			await expect(
+				as(flaggedManager, () => service.update('row-member', { ...inTeam(teamId), isTrackingEnabled: false }))
+			).resolves.toBeDefined();
+
+			expect(updated).toEqual([
+				{
+					id: {
+						id: 'row-member',
+						tenantId: tenant.tenantId,
+						...inTeam(teamId),
+						...insideBoundary(tenant.organizationId, tenant.organizationId)
+					},
+					changes: { ...inTeam(teamId), isTrackingEnabled: false }
+				}
+			]);
+		});
 
 		it('refuses a plain member changing another member', async () => {
 			await expect(
