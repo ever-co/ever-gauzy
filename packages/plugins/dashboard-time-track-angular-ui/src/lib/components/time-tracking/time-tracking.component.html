@@ -247,6 +247,7 @@
 											[caption]="$safeNavigationMigration((employee?.timeSlots)[0]?.startedAt) | utcToLocal | dateFormat"
 											[id]="$safeNavigationMigration(employee?.id)"
 											[employee]="employee"
+											linkTo="view"
 										></ngx-avatar>
 									</ng-template>
 									<div class="button-container">
@@ -389,6 +390,7 @@
 											[src]="$safeNavigationMigration(manualTime?.user?.imageUrl)"
 											[id]="$safeNavigationMigration(manualTime?.employeeId)"
 											[employee]="$safeNavigationMigration(manualTime?.employee)"
+											linkTo="view"
 											size="sm"
 											class="avatar-dashboard"
 										></ngx-avatar>
@@ -678,6 +680,7 @@
 												[src]="$safeNavigationMigration(member?.user?.imageUrl)"
 												[id]="$safeNavigationMigration(member?.id)"
 												[employee]="member"
+												linkTo="view"
 												size="sm"
 												class="avatar-dashboard"
 											></ngx-avatar>
