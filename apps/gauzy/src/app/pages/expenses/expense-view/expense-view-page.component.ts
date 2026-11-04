@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
@@ -108,7 +108,7 @@ const NO_CHARTS: IExpenseCharts = {
 		'../../projects/components/project-quick-look/project-quick-look.component.scss',
 		'./expense-view-page.component.scss'
 	],
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: false,
 	// The project page's page layout: headline, then two columns.
 	host: { class: 'is-page' }
@@ -167,7 +167,8 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		private readonly expensesService: ExpensesService,
 		private readonly toastrService: ToastrService,
 		private readonly errorHandler: ErrorHandlingService,
-		private readonly store: Store
+		private readonly store: Store,
+		private readonly cdr: ChangeDetectorRef
 	) {
 		super(translateService);
 	}
@@ -192,7 +193,10 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 				void this.load();
 			});
 		// The type, the status and "3 days ago" are worked out in the viewer's language.
-		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => this.describe());
+		this.translateService.onLangChange.pipe(untilDestroyed(this)).subscribe(() => {
+			this.describe();
+			this.cdr.markForCheck();
+		});
 	}
 
 	/** Loads (or reloads, after an error) the expense the URL names. */
@@ -213,6 +217,7 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		this.categoryExpenses = [];
 		this.vendorExpenses = [];
 		this.state = 'loading';
+		this.cdr.markForCheck();
 		try {
 			const expense = await loadExpense(this.expensesService, id, scope);
 			if (sequence !== this.loadSequence) {
@@ -228,6 +233,8 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 				return;
 			}
 			this.state = recordViewPageStateOf(error);
+		} finally {
+			this.cdr.markForCheck();
 		}
 	}
 
@@ -241,7 +248,7 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		const edited: IExpense = await firstValueFrom(dialog.onClose.pipe(first()));
 		if (!edited || this.expense?.id !== expense.id) return;
 		const scope = this.scope();
-		this.busy = true;
+		this.setBusy(true);
 		try {
 			// As the list saves it: the expense's own employee, not the form's employee control.
 			const payload: any = { ...edited };
@@ -257,7 +264,7 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.busy = false;
+			this.setBusy(false);
 		}
 	}
 
@@ -269,7 +276,7 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		const copy: IExpense = await firstValueFrom(dialog.onClose.pipe(first()));
 		if (!copy) return;
 		const scope = this.scope();
-		this.busy = true;
+		this.setBusy(true);
 		try {
 			// The form's employee control may be the "All employees" sentinel, which the API rejects:
 			// only the resolved id is sent, as the list's add does.
@@ -289,7 +296,7 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.busy = false;
+			this.setBusy(false);
 		}
 	}
 
@@ -302,7 +309,7 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		});
 		const confirmed = await firstValueFrom(dialog.onClose.pipe(first()));
 		if (!confirmed) return;
-		this.busy = true;
+		this.setBusy(true);
 		try {
 			await this.expensesService.delete(expense.id, { employeeId: expense.employeeId, ...this.scope() });
 			this.toastrService.success('NOTES.EXPENSES.DELETE_EXPENSE', { name: this.employeeName(expense.employee) });
@@ -310,7 +317,7 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		} catch (error) {
 			this.errorHandler.handleError(error);
 		} finally {
-			this.busy = false;
+			this.setBusy(false);
 		}
 	}
 
@@ -342,6 +349,12 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 	}
 
 	/* ── Reading and describing ── */
+
+	/** The actions wait on a save that starts and ends after a dialog closes: the page is drawn again with it. */
+	private setBusy(busy: boolean): void {
+		this.busy = busy;
+		this.cdr.markForCheck();
+	}
 
 	/** Reads the expense again after a change made here, keeping the page on screen while it does. */
 	private async refresh(id: string): Promise<void> {
@@ -389,7 +402,7 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 		const where = { ...scope, ...(expense.currency ? { currency: expense.currency } : {}) };
 		try {
 			const [category, vendor] = await Promise.all([
-				categoryId ? this.readCategoryExpenses(expense, { ...where, categoryId }) : Promise.resolve([]),
+				categoryId ? this.readCategoryExpenses(expense, { ...where, categoryId }, sequence) : Promise.resolve([]),
 				vendorId ? this.readVendorPayments(expense, { ...where, vendorId }) : Promise.resolve([])
 			]);
 			if (sequence !== this.chartsSequence) return;
@@ -401,14 +414,22 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 			if (sequence === this.chartsSequence) {
 				this.charts = { ...NO_CHARTS, failed: true };
 			}
+		} finally {
+			// The charts answer after the page has been drawn.
+			this.cdr.markForCheck();
 		}
 	}
 
 	/**
 	 * The category's expenses over the longest span the range filter offers, every page of them: the bars are
-	 * sums, so none may be missing. Ordered by date, then id, so the pages neither overlap nor skip.
+	 * sums, so none may be missing. Ordered by date, then id, so the pages neither overlap nor skip. Stops once a
+	 * newer read (`sequence` behind `chartsSequence`) owns the charts: what it has read so far is discarded anyway.
 	 */
-	private async readCategoryExpenses(expense: IExpense, where: Record<string, unknown>): Promise<IExpense[]> {
+	private async readCategoryExpenses(
+		expense: IExpense,
+		where: Record<string, unknown>,
+		sequence: number
+	): Promise<IExpense[]> {
 		const valueDate = categoryReadRange(expense);
 		if (!valueDate) {
 			return [];
@@ -422,7 +443,7 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 				take: CHART_READ_PAGE
 			});
 			expenses.push(...items);
-			if (!items.length || expenses.length >= total) {
+			if (!items.length || expenses.length >= total || sequence !== this.chartsSequence) {
 				return expenses;
 			}
 		}
@@ -431,20 +452,21 @@ export class ExpenseViewPageComponent extends TranslationBaseComponent implement
 	/**
 	 * The vendor payments the chart can show at its largest range, as `vendorPaymentBars` picks them: the latest
 	 * ones up to the expense — or, when fewer than that come before it, the vendor's first payments, which run on
-	 * past it.
+	 * past it. None for an expense without a date, which has no place among them.
 	 */
 	private async readVendorPayments(expense: IExpense, where: Record<string, unknown>): Promise<IExpense[]> {
 		const valueDate = vendorReadRange(expense);
+		if (!valueDate) {
+			return [];
+		}
 		const take = VENDOR_CHART_READ_PAYMENTS;
-		if (valueDate) {
-			const { items = [] } = await this.expensesService.pagination({
-				where: { ...where, valueDate },
-				order: { valueDate: 'DESC' },
-				take
-			});
-			if (items.length >= take) {
-				return items;
-			}
+		const before = await this.expensesService.pagination({
+			where: { ...where, valueDate },
+			order: { valueDate: 'DESC' },
+			take
+		});
+		if ((before.items ?? []).length >= take) {
+			return before.items;
 		}
 		const { items = [] } = await this.expensesService.pagination({ where, order: { valueDate: 'ASC' }, take });
 		return items;
