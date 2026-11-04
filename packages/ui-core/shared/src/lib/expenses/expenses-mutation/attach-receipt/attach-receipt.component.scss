@@ -49,10 +49,15 @@ $control-radius: calc(var(--border-radius) / 2);
 	color: var(--gauzy-text-color-2);
 	cursor: pointer;
 
-	&:hover,
+	&:hover:not(:disabled),
 	&:focus-visible {
 		background-color: $hover-tint;
 		color: var(--gauzy-text-color-1);
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 }
 

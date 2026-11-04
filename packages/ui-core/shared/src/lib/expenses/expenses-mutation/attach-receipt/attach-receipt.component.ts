@@ -6,6 +6,9 @@ import { toActualReceipt } from '../expense-receipt.utils';
 /** The image types the upload endpoint accepts: SVG is refused there, so the picker does not offer it. */
 export const RECEIPT_ACCEPT = '.png,.jpg,.jpeg,.gif,.webp,.bmp,image/png,image/jpeg,image/gif,image/webp,image/bmp';
 
+/** The image uploader's message for an upload that failed without a readable response. */
+const IMAGE_UPLOAD_FAILED = 'INVENTORY_PAGE.COULD_NOT_UPLOAD_IMAGE';
+
 /** What the uploader emits on a failure: the server's error body, or its own fallback. */
 export interface IReceiptUploadError {
 	statusCode?: number;
@@ -95,7 +98,10 @@ export class AttachReceiptComponent implements OnInit {
 			: typeof message === 'string'
 			? message
 			: '';
-		this.error = text.trim() || 'EXPENSE_VIEW.RECEIPT_UPLOAD_FAILED';
+		// The uploader's own fallback, for a failure without a readable body, is its generic image message: the
+		// dialog says the same in receipt terms.
+		const reason = text.trim();
+		this.error = reason && reason !== IMAGE_UPLOAD_FAILED ? reason : 'EXPENSE_VIEW.RECEIPT_UPLOAD_FAILED';
 	}
 
 	/** Takes the receipt off the expense; Save keeps that. */
@@ -109,7 +115,11 @@ export class AttachReceiptComponent implements OnInit {
 		this.dialogRef.close(this.imageUrl);
 	}
 
+	/** Closes without a change; not while a file uploads, which would be stored and then dropped. */
 	cancelReceipt() {
+		if (this.uploading) {
+			return;
+		}
 		this.dialogRef.close(this.currentReceipt);
 	}
 }

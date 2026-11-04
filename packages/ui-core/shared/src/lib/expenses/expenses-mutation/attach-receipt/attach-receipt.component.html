@@ -1,7 +1,14 @@
 <nb-card class="receipt-dialog">
 	<nb-card-header class="receipt-header">
 		<h5 class="title">{{ 'EXPENSE_VIEW.RECEIPT' | translate }}</h5>
-		<button type="button" class="close-button" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="cancelReceipt()">
+		<!-- Closing mid-upload would drop the file the upload is storing: the dialog waits for it. -->
+		<button
+			type="button"
+			class="close-button"
+			[attr.aria-label]="'BUTTONS.CLOSE' | translate"
+			[disabled]="uploading"
+			(click)="cancelReceipt()"
+		>
 			<i class="fas fa-times" aria-hidden="true"></i>
 		</button>
 	</nb-card-header>
@@ -122,7 +129,7 @@
 		}
 	</nb-card-body>
 	<nb-card-footer class="receipt-footer">
-		<button nbButton outline status="basic" size="small" type="button" (click)="cancelReceipt()">
+		<button nbButton outline status="basic" size="small" type="button" [disabled]="uploading" (click)="cancelReceipt()">
 			{{ 'BUTTONS.CANCEL' | translate }}
 		</button>
 		<button
