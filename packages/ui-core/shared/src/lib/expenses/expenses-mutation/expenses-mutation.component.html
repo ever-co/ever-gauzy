@@ -188,6 +188,7 @@
 					<div class="field" [hidden]="expense && !duplicate">
 						<label class="label">{{ 'SM_TABLE.EMPLOYEE' | translate }}</label>
 						<ga-employee-selector
+							class="employees"
 							fullWidth
 							[ariaLabel]="'SM_TABLE.EMPLOYEE' | translate"
 							[skipGlobalChange]="true"
