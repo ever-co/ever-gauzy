@@ -935,10 +935,8 @@ export class TimerService {
 				stoppedLogs.push(stoppedLog);
 			} catch (error) {
 				this.logger.warn(`Failed to stop the running time log ${runningLog.id}: ${error?.message}`);
-				// The update writes the stop before its later steps, so a failure after that write still stopped it
-				const [storedLog] = await this.findTimeLogsWhere({ id: runningLog.id, tenantId });
-				const wasStopped = storedLog?.isRunning === false;
-				if (wasStopped) {
+				const storedLog = await this.storedStoppedLog(runningLog.id, tenantId);
+				if (storedLog) {
 					stoppedLogs.push(storedLog);
 				}
 			}
@@ -946,7 +944,34 @@ export class TimerService {
 
 		const hasStoppedAny = stoppedLogs.length > 0;
 		if (hasStoppedAny) {
-			// Turned off for one team, the employee may still have a timer running for another one
+			await this.markNotTrackingWhenNothingRuns(employeeId, organizationId, tenantId);
+		}
+		return stoppedLogs;
+	}
+
+	/**
+	 * The log as stored after a failed stop, when it no longer runs: the update writes the stop before its later
+	 * steps, so a failure after that write still stopped it. Undefined when it still runs or cannot be read.
+	 */
+	private async storedStoppedLog(timeLogId: ID, tenantId: ID): Promise<ITimeLog | undefined> {
+		try {
+			const [storedLog] = await this.findTimeLogsWhere({ id: timeLogId, tenantId });
+			const wasStopped = storedLog?.isRunning === false;
+			if (wasStopped) {
+				return storedLog;
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to read back the time log ${timeLogId}: ${error?.message}`);
+		}
+		return undefined;
+	}
+
+	/**
+	 * Marks the employee as not tracking once no timer of theirs runs: turned off for one team, a timer of another
+	 * team may still run. Left as it is when that cannot be read.
+	 */
+	private async markNotTrackingWhenNothingRuns(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+		try {
 			const stillRunning = await this.findTimeLogsWhere({
 				employeeId,
 				organizationId,
@@ -957,8 +982,9 @@ export class TimerService {
 			if (hasNoTimerLeft) {
 				await this.markNotTracking(employeeId, organizationId, tenantId);
 			}
+		} catch (error) {
+			this.logger.warn(`Failed to read the running timers of employee ${employeeId}: ${error?.message}`);
 		}
-		return stoppedLogs;
 	}
 
 	private async findTimeLogsWhere(where: FindOptionsWhere<TimeLog>): Promise<ITimeLog[]> {

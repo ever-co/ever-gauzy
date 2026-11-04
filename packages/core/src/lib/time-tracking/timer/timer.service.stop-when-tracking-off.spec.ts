@@ -23,6 +23,11 @@ describe('TimerService.stopRunningTimersOf', () => {
 	let execute: jest.Mock;
 	let updateEmployee: jest.Mock;
 
+	const silenceWarnings = () =>
+		jest
+			.spyOn((service as unknown as { logger: { warn: () => void } }).logger, 'warn')
+			.mockImplementation(() => undefined);
+
 	beforeEach(() => {
 		findLogs = jest.fn().mockResolvedValueOnce([runningLog]).mockResolvedValue([]);
 		execute = jest.fn(async (command: TimeLogUpdateCommand) => ({
@@ -101,7 +106,36 @@ describe('TimerService.stopRunningTimersOf', () => {
 
 		expect(findLogs).toHaveBeenNthCalledWith(2, { where: { id: 'log-running', tenantId: 'tenant-1' } });
 		expect(stopped).toEqual([expect.objectContaining({ id: 'log-running', isRunning: false })]);
-		expect(updateEmployee).toHaveBeenCalled();
+		expect(updateEmployee).toHaveBeenCalledWith(
+			{ id: 'employee-1', organizationId: 'organization-1', tenantId: 'tenant-1' },
+			{ isOnline: false, isTrackingTime: false }
+		);
+	});
+
+	it('goes on with the other timers when reading back a failed stop fails too', async () => {
+		const otherLog = { ...runningLog, id: 'log-other' };
+		findLogs.mockReset();
+		findLogs
+			.mockResolvedValueOnce([runningLog, otherLog])
+			.mockRejectedValueOnce(new Error('connection reset'))
+			.mockResolvedValue([]);
+		execute.mockRejectedValueOnce(new Error('time slots failed'));
+		silenceWarnings();
+
+		const stopped = await service.stopRunningTimersOf(scope);
+
+		expect(stopped).toEqual([expect.objectContaining({ id: 'log-other', isRunning: false })]);
+	});
+
+	it('still returns the stops when the running timers cannot be read afterwards', async () => {
+		findLogs.mockReset();
+		findLogs.mockResolvedValueOnce([runningLog]).mockRejectedValueOnce(new Error('connection reset'));
+		silenceWarnings();
+
+		const stopped = await service.stopRunningTimersOf(scope);
+
+		expect(stopped).toEqual([expect.objectContaining({ id: 'log-running', isRunning: false })]);
+		expect(updateEmployee).not.toHaveBeenCalled();
 	});
 
 	it('keeps the employee tracking while a timer of another team still runs', async () => {
