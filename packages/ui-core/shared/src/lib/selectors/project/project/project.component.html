@@ -42,9 +42,12 @@
     }
   </ng-select>
 } @else {
+  <!-- nb-select gives its button no label of its own: the button is pointed at this one (`_labelMultiSelect`). -->
+  <span [id]="multiSelectLabelId" hidden>
+    {{ accessibleLabel() || (label || placeholder || 'CONTEXT_MENU.PROJECT' | translate) }}
+  </span>
   <nb-select
     class="multiple-select"
-    [attr.aria-label]="accessibleLabel() || (label || placeholder || 'CONTEXT_MENU.PROJECT' | translate)"
     [disabled]="disabled"
     [multiple]="multiple"
     [placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate"
