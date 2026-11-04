@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as moment from 'moment';
-import { combineLatest, debounceTime, tap } from 'rxjs';
+import { combineLatest, debounceTime, filter, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -186,6 +186,13 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					this._selectedOrganizationTeam = organizationTeam;
 				}),
 				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		this.store.userRolePermissions$
+			.pipe(
+				filter(() => this._todayTeamsWorkers.length > 0),
+				tap(() => this._buildRows()),
 				untilDestroyed(this)
 			)
 			.subscribe();
