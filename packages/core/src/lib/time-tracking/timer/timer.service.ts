@@ -337,12 +337,9 @@ export class TimerService {
 		// Validate the date range and check if the timer is running
 		validateDateRange(request.startedAt, request.stoppedAt);
 
-		// Fetch the employee details
+		// Fetch the employee details. Turning tracking off does not refuse the stop: a timer still running when an
+		// admin turned it off could otherwise never be stopped, and would keep counting time
 		const employee = await this.findEmployee();
-		// Check if time tracking is enabled for the employee
-		if (!employee.isTrackingEnabled) {
-			throw new ForbiddenException('The time tracking functionality has been disabled for you.');
-		}
 
 		// Retrieve tenant ID
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
