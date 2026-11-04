@@ -173,7 +173,7 @@ export class ExpenseShareChartComponent implements OnInit {
 
 	/** The tooltip reads the format as it opens: the options follow the theme only. */
 	private buildOptions(palette: IEmployeeChartPalette): ChartConfiguration<'doughnut'>['options'] {
-		const tooltip = employeeChartTooltip(palette, (value) => this.formatValue()(value)) as any;
+		const tooltip = employeeChartTooltip(palette, (value) => this.formatValue()(value));
 		return {
 			...employeeChartBase(),
 			cutout: '72%',

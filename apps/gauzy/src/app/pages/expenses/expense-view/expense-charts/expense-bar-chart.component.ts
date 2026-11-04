@@ -44,9 +44,15 @@ import { IExpenseChartBar } from '../expense-view-charts';
 			<li><span class="swatch" [style.background-color]="palette().expenses"></span>{{ highlightLabel() }}</li>
 			<li><span class="swatch" [style.background-color]="palette().bonus"></span>{{ otherLabel() }}</li>
 		</ul>
-		<div class="canvas">
+		<div class="canvas" aria-hidden="true">
 			<canvas baseChart type="bar" [data]="data()" [options]="options()"></canvas>
 		</div>
+		<!-- The figures the bars draw, for a screen reader: the canvas and its tooltips are pointer-only. -->
+		<ul class="visually-hidden">
+			@for (bar of bars(); track $index) {
+				<li>{{ bar.title }}: {{ formatValue()(bar.value) }}{{ bar.highlight ? ' (' + highlightLabel() + ')' : '' }}</li>
+			}
+		</ul>
 	`,
 	styles: [
 		`
@@ -84,6 +90,17 @@ import { IExpenseChartBar } from '../expense-view-charts';
 				position: relative;
 				flex: 1 1 auto;
 				min-height: 0;
+			}
+			.visually-hidden {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				margin: -1px;
+				padding: 0;
+				overflow: hidden;
+				clip: rect(0 0 0 0);
+				white-space: nowrap;
+				border: 0;
 			}
 		`
 	],
@@ -175,9 +192,9 @@ export class ExpenseBarChartComponent implements OnInit, AfterViewInit, OnDestro
 
 	/** The tooltip reads the bars, the labels and the format as it opens: the options follow the theme only. */
 	private buildOptions(palette: IEmployeeChartPalette): ChartConfiguration<'bar'>['options'] {
-		const valueScale = employeeChartValueScale(palette) as any;
-		const categoryScale = employeeChartCategoryScale(palette) as any;
-		const tooltip = employeeChartTooltip(palette, (value) => this.formatValue()(value)) as any;
+		const valueScale = employeeChartValueScale(palette);
+		const categoryScale = employeeChartCategoryScale(palette);
+		const tooltip = employeeChartTooltip(palette, (value) => this.formatValue()(value));
 		return {
 			...employeeChartBase(),
 			interaction: { mode: 'index', intersect: false },
