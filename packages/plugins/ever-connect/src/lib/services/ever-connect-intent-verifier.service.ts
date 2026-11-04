@@ -53,6 +53,8 @@ export interface ProvisionIntentClaims {
 	person: { ever_id_sub: string };
 	billing?: { stripe_customer_ref: string };
 	instance_id?: string;
+	/** The consent Ever Platform holds for this hand-off (a ULID). Optional here until every platform sends it. */
+	consent_id?: string;
 	mode: 'handoff';
 	callback: string;
 	return_to: string;
@@ -140,6 +142,7 @@ const CLAIM_KEYS = [
 	'person',
 	'billing',
 	'instance_id',
+	'consent_id',
 	'mode',
 	'callback',
 	'return_to'
@@ -290,6 +293,9 @@ export async function verifyProvisionIntent(
 				/^cus_[A-Za-z0-9]+$/.test(billing['stripe_customer_ref'])
 			))
 	)
+		throw refuse('schema_violation');
+	const consentId = claims['consent_id'];
+	if (consentId !== undefined && !(typeof consentId === 'string' && ULID_SHAPE.test(consentId)))
 		throw refuse('schema_violation');
 
 	return { ...(claims as unknown as ProvisionIntentClaims), org };
