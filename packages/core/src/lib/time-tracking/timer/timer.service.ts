@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual, FindOptionsWhere } from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,
@@ -33,6 +33,7 @@ import { assertSensitiveRelationsAllowed } from '../../core/util/sensitive-relat
 import { withoutTrackedDataRelations } from '../../core/util/tracked-data-sensitive-relations.config';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { EmployeeService } from '../../employee/employee.service';
+import { ITrackingTurnedOffScope } from './events/tracking-turned-off.event';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
@@ -898,6 +899,68 @@ export class TimerService {
 	private debug(message: () => string): void {
 		if (Logger.isLevelEnabled('debug')) {
 			this.logger.debug(message());
+		}
+	}
+
+	/**
+	 * Stops the running timers of an employee whose time tracking was just turned off, at this moment, as a stop of
+	 * their own would. With a team, only a timer running for that team stops. Called for a caller who may change
+	 * the employee's tracking (an admin, or the team's manager), so it reads and writes by the ids given rather than
+	 * through the caller's employee scope.
+	 *
+	 * @param scope The employee, their organization and tenant, and the team when tracking was turned off for it only.
+	 * @returns The stopped time logs.
+	 */
+	async stopRunningTimersOf(scope: ITrackingTurnedOffScope): Promise<ITimeLog[]> {
+		const { employeeId, organizationId, tenantId, organizationTeamId } = scope;
+		const where: FindOptionsWhere<TimeLog> = { employeeId, organizationId, tenantId, isRunning: true };
+		if (organizationTeamId) {
+			where.organizationTeamId = organizationTeamId;
+		}
+
+		const runningLogs = await this.findTimeLogsWhere(where);
+		const stoppedAt = moment.utc().toDate();
+		const stoppedLogs: ITimeLog[] = [];
+		for (const runningLog of runningLogs) {
+			const partialTimeLog: Partial<ITimeLog> = { isRunning: false };
+			const stopsAfterStart = stoppedAt >= new Date(runningLog.startedAt);
+			if (stopsAfterStart) {
+				partialTimeLog.stoppedAt = stoppedAt;
+			}
+			const stoppedLog = await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, runningLog));
+			stoppedLogs.push(stoppedLog);
+		}
+
+		const hasStoppedAny = stoppedLogs.length > 0;
+		if (hasStoppedAny) {
+			await this.markNotTracking(employeeId, organizationId, tenantId);
+		}
+		return stoppedLogs;
+	}
+
+	private async findTimeLogsWhere(where: FindOptionsWhere<TimeLog>): Promise<ITimeLog[]> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const findOptions = parseTypeORMFindToMikroOrm<TimeLog>({ where });
+				const items = await this.mikroOrmTimeLogRepository.findAll(findOptions);
+				return items.map((entity: TimeLog) => wrapSerialize(entity)) as TimeLog[];
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmTimeLogRepository.find({ where });
+		}
+	}
+
+	private async markNotTracking(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+		const employee = { id: employeeId, organizationId, tenantId };
+		const status = { isOnline: false, isTrackingTime: false };
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmEmployeeRepository.nativeUpdate(employee, status);
+				return;
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmEmployeeRepository.update(employee, status);
 		}
 	}
 }
