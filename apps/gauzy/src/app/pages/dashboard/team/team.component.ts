@@ -9,7 +9,6 @@ import {
 	IOrganizationTeam,
 	ISelectedEmployee,
 	ITimeLog,
-	PermissionsEnum,
 	ReportGroupFilterEnum,
 	RolesEnum
 } from '@gauzy/contracts';
@@ -189,7 +188,7 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.userRolePermissions$
+		this.store.user$
 			.pipe(
 				filter(() => this._todayTeamsWorkers.length > 0),
 				tap(() => this._buildRows()),
@@ -662,7 +661,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 	}
 
 	private _canViewEveryone(): boolean {
-		return this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		const role = this.store.user?.role?.name;
+		return role === RolesEnum.SUPER_ADMIN || role === RolesEnum.ADMIN;
 	}
 
 	private _canViewDetailsOf(employeeId: string): boolean {
