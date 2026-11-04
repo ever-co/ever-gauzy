@@ -106,6 +106,12 @@ describe('provisioning request verification', () => {
 		).resolves.toBeDefined();
 	});
 
+	it('accepts the consent Ever Platform holds for the hand-off', async () => {
+		const claims = claimsAt({ consent_id: '01K9A0000000000000000000CN' });
+		const verified = await verifyProvisionIntent(signIntent(platform.active, claims), source(), expected());
+		expect(verified.consent_id).toBe('01K9A0000000000000000000CN');
+	});
+
 	it('refuses a retired key and a key of another purpose, without a refresh (both are listed)', async () => {
 		expect(await expectInvalid(signIntent(platform.retired, claimsAt()))).toBe('unknown_kid');
 		expect(await expectInvalid(signIntent(platform.entitlement, claimsAt()))).toBe('unknown_kid');
@@ -158,6 +164,8 @@ describe('provisioning request verification', () => {
 		['another claim-set version', { typ: 'ever.provision_intent.v2' }, 'schema_violation'],
 		['another purpose', { ever_purpose: 'entitlement' }, 'schema_violation'],
 		['an extra claim (an e-mail)', { email: 'owner@example.test' }, 'schema_violation'],
+		['a consent id that is not a ULID', { consent_id: 'owner@example.test' }, 'schema_violation'],
+		['a consent id that is not a string', { consent_id: 42 }, 'schema_violation'],
 		[
 			'an e-mail in the person',
 			{ person: { ever_id_sub: '300000000000000001', email: 'owner@example.test' } },
