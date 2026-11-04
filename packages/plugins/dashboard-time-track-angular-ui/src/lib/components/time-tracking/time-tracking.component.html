@@ -465,7 +465,13 @@
 							class="data-list__item--open"
 							role="button"
 							tabindex="0"
-							[attr.aria-label]="'ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_DETAILS' | translate : { title: task.title }"
+							[attr.aria-label]="
+								('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_DETAILS' | translate : { title: task.title }) +
+								', ' +
+								task.durationPercentage +
+								'%, ' +
+								(task.duration | durationFormat)
+							"
 							(click)="openTask(task)"
 							(keydown.enter)="openTask(task)"
 							(keydown.space)="$event.preventDefault(); openTask(task)"
@@ -536,7 +542,13 @@
 							class="data-list__item--open"
 							role="button"
 							tabindex="0"
-							[attr.aria-label]="'PROJECT_QUICK_LOOK.OPEN_DETAILS' | translate : { name: project.name }"
+							[attr.aria-label]="
+								('PROJECT_QUICK_LOOK.OPEN_DETAILS' | translate : { name: project.name }) +
+								', ' +
+								project.durationPercentage +
+								'%, ' +
+								(project.duration | durationFormat)
+							"
 							(click)="openProject(project)"
 							(keydown.enter)="openProject(project)"
 							(keydown.space)="$event.preventDefault(); openProject(project)"
