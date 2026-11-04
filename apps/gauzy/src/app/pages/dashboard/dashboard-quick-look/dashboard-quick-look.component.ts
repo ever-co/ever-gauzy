@@ -1,10 +1,10 @@
-import { Component, OnInit, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
-import { ID, IOrganization, IOrganizationProject, ITask } from '@gauzy/contracts';
+import { ID, IDateRangePicker, IOrganization, IOrganizationProject, ITask } from '@gauzy/contracts';
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import {
 	DashboardQuickLookRequest,
@@ -14,7 +14,12 @@ import {
 	TasksService
 } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { HashNumberPipe, IRecordViewSection, IRecordViewStatus } from '@gauzy/ui-core/shared';
+import {
+	getAdjustDateRangeFutureAllowed,
+	HashNumberPipe,
+	IRecordViewSection,
+	IRecordViewStatus
+} from '@gauzy/ui-core/shared';
 import {
 	buildTaskViewSections,
 	taskStatusOf,
@@ -31,7 +36,7 @@ import { IProjectQuickLookCard } from '../../projects/components/project-quick-l
 @Component({
 	selector: 'ga-dashboard-quick-look',
 	templateUrl: './dashboard-quick-look.component.html',
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	standalone: false
 })
 export class DashboardQuickLookComponent extends TranslationBaseComponent implements OnInit {
@@ -42,15 +47,22 @@ export class DashboardQuickLookComponent extends TranslationBaseComponent implem
 	private readonly _router = inject(Router);
 	private readonly _hashPipe = new HashNumberPipe();
 
-	public viewedTask: ITask | null = null;
-	public viewSections: IRecordViewSection[] = [];
-	public viewStatus: IRecordViewStatus | null = null;
-	public viewedProject: IProjectQuickLookCard | null = null;
-	public selectedEmployeeId: ID | null = null;
-	public rangeStart: string;
-	public rangeEnd: string;
+	public readonly viewedTask = signal<ITask | null>(null);
+	public readonly viewSections = signal<IRecordViewSection[]>([]);
+	public readonly viewStatus = signal<IRecordViewStatus | null>(null);
+	public readonly viewedProject = signal<IProjectQuickLookCard | null>(null);
+	public readonly selectedEmployeeId = signal<ID | null>(null);
+	public readonly rangeStart = signal<string | null>(null);
+	public readonly rangeEnd = signal<string | null>(null);
 
-	private _organization: IOrganization;
+	private readonly _organization = signal<IOrganization | null>(null);
+	public readonly organizationId = computed<ID | null>(() => this._organization()?.id ?? null);
+	public readonly tenantId = computed<ID | null>(() => this._organization()?.tenantId ?? null);
+	public readonly scopeEmployeeIds = computed<ID[] | null>(() =>
+		this.selectedEmployeeId() ? [this.selectedEmployeeId()] : null
+	);
+
+	private _selectedDateRange: IDateRangePicker | null = null;
 	private _viewSequence = 0;
 
 	constructor(public readonly translateService: TranslateService) {
@@ -69,9 +81,12 @@ export class DashboardQuickLookComponent extends TranslationBaseComponent implem
 		this._dateRangePickerBuilderService.selectedDateRange$
 			.pipe(
 				filter((range) => !!range?.startDate && !!range?.endDate),
-				tap(({ startDate, endDate }) => {
-					this.rangeStart = new Date(startDate).toISOString();
-					this.rangeEnd = new Date(endDate).toISOString();
+				tap((range: IDateRangePicker) => {
+					this._selectedDateRange = range;
+					// An open project drawer follows the new period.
+					if (this.viewedProject()) {
+						this._applyDateRange();
+					}
 				}),
 				untilDestroyed(this)
 			)
@@ -80,8 +95,8 @@ export class DashboardQuickLookComponent extends TranslationBaseComponent implem
 			.pipe(
 				distinctUntilChange(),
 				tap(([organization, employee]) => {
-					this._organization = organization;
-					this.selectedEmployeeId = employee?.id ?? null;
+					this._organization.set(organization);
+					this.selectedEmployeeId.set(employee?.id ?? null);
 				}),
 				// A drawer opened for the previous selection would describe a task or project no longer listed.
 				tap(() => this.closeAll()),
@@ -101,14 +116,6 @@ export class DashboardQuickLookComponent extends TranslationBaseComponent implem
 			.subscribe();
 	}
 
-	public get organizationId(): ID | null {
-		return this._organization?.id ?? null;
-	}
-
-	public get tenantId(): ID | null {
-		return this._organization?.tenantId ?? null;
-	}
-
 	/**
 	 * Opens the task's quick look straight away from the row's data, then swaps in the full
 	 * record (description, members, sprints…) once it has loaded.
@@ -119,7 +126,7 @@ export class DashboardQuickLookComponent extends TranslationBaseComponent implem
 		this._showTask(task);
 		try {
 			const full = await this._tasksService.getById(task.id, TASK_VIEW_RELATIONS);
-			if (sequence === this._viewSequence && this.viewedTask?.id === task.id && full) {
+			if (sequence === this._viewSequence && this.viewedTask()?.id === task.id && full) {
 				this._showTask(full);
 			}
 		} catch {
@@ -129,21 +136,22 @@ export class DashboardQuickLookComponent extends TranslationBaseComponent implem
 
 	public closeTask(): void {
 		this._viewSequence++;
-		this.viewedTask = null;
+		this.viewedTask.set(null);
 	}
 
 	public openProject(project: IOrganizationProject): void {
 		this.closeTask();
-		this.viewedProject = {
+		this._applyDateRange();
+		this.viewedProject.set({
 			id: project.id,
 			name: project.name,
 			imageUrl: project.imageUrl,
 			initials: this._initials(project.name)
-		};
+		});
 	}
 
 	public closeProject(): void {
-		this.viewedProject = null;
+		this.viewedProject.set(null);
 	}
 
 	public closeAll(): void {
@@ -152,12 +160,27 @@ export class DashboardQuickLookComponent extends TranslationBaseComponent implem
 	}
 
 	private _showTask(task: ITask): void {
-		this.viewStatus = taskStatusOf(task);
-		this.viewSections = buildTaskViewSections(task, {
-			translate: (key) => this.getTranslation(key),
-			hash: (value) => this._hashPipe.transform(value)
-		});
-		this.viewedTask = task;
+		this.viewStatus.set(taskStatusOf(task));
+		this.viewSections.set(
+			buildTaskViewSections(task, {
+				translate: (key) => this.getTranslation(key),
+				hash: (value) => this._hashPipe.transform(value)
+			})
+		);
+		this.viewedTask.set(task);
+	}
+
+	/**
+	 * The project drawer counts the same period as the Time Tracking cards: when the range
+	 * ends today it runs to the end of the day, so work logged after it was picked is included.
+	 */
+	private _applyDateRange(): void {
+		if (!this._selectedDateRange) {
+			return;
+		}
+		const { startDate, endDate } = getAdjustDateRangeFutureAllowed(this._selectedDateRange);
+		this.rangeStart.set(new Date(startDate).toISOString());
+		this.rangeEnd.set(new Date(endDate).toISOString());
 	}
 
 	/** "Gauzy Web App" → "GW". */
