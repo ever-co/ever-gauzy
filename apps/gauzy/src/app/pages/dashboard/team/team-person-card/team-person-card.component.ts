@@ -6,7 +6,8 @@ import { ITeamPerson, activityTone, formatDuration, formatPercent } from '../tea
  * A member's hover card on the Teams dashboard.
  *
  * Built on the team page's assignee card (`view-team` > Team tasks) — banner,
- * photo with presence, name, about, profile link — and adds what a team lead
+ * photo with presence, name, about; no profile link, the name opens the
+ * profile — and adds what a team lead
  * looks for at a glance: the person's role and team, their local time, and
  * their day so far (time, activity, tasks, share of the working day, and what
  * they are working on). Rendered inside an `nbPopover` with
