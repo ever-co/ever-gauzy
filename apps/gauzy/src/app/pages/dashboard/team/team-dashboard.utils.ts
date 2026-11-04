@@ -75,10 +75,6 @@ export interface ITeamPerson {
 	timeZone: string | null;
 	/** Their selected day so far. */
 	day: ITeamPersonDay;
-	/**
-	 * Whether the viewer may open this person's hover card and profile: their own, or anyone's
-	 * with CHANGE_SELECTED_EMPLOYEE — the rule the API applies to another employee's time logs.
-	 */
 	canViewDetails: boolean;
 }
 

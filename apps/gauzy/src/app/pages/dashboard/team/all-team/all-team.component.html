@@ -195,7 +195,6 @@
 					@for (row of topMembers; track row.id) {
 					<tr>
 						<td class="cell-main">
-							<!-- The hover card and profile link only for a member whose details are the viewer's to see. -->
 							@if (row.person.canViewDetails) {
 							<a
 								class="cell-title member-link"

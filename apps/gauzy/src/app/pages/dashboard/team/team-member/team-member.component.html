@@ -1,6 +1,5 @@
 @if (isClassic) {
 <!-- ── Compact line: under a team in the "All teams" overview ── -->
-<!-- The hover card and profile link only for a member whose details are the viewer's to see. -->
 @if (member.canViewDetails) {
 <a
 	class="member"
@@ -62,7 +61,6 @@
   total's progress bar is the working day.
 -->
 <td class="col-name">
-	<!-- The hover card and profile link only for a member whose details are the viewer's to see. -->
 	@if (member.canViewDetails) {
 	<a
 		class="member"
