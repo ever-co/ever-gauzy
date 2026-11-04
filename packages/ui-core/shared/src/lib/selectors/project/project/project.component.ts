@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, AfterViewInit, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, input, forwardRef, AfterViewInit, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { combineLatest, from, map, Observable, of, Subject, switchMap } from 'rxjs';
@@ -211,8 +211,11 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 */
 	private onTouched: () => void = () => {};
 
-	/** Accessible name of the control, for a host that shows its own label. */
-	@Input() ariaLabel: string;
+	/**
+	 * Accessible name of the control, for a host that shows its own label; without one the control is named by its
+	 * label or placeholder. Not `ariaLabel`, which is also a property of every element.
+	 */
+	readonly accessibleLabel = input<string>();
 
 	constructor(
 		private readonly _organizationProjects: OrganizationProjectsService,

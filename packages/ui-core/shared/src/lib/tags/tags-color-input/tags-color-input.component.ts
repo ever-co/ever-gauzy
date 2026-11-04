@@ -2,6 +2,7 @@ import {
 	Component,
 	OnInit,
 	Input,
+	input,
 	Output,
 	EventEmitter,
 	OnDestroy,
@@ -113,8 +114,11 @@ export class TagsColorInputComponent extends PictureNameTagsComponent implements
 		this.checkTagsFit(this.selectedTags);
 	}
 
-	/** Accessible name of the control, for a host that shows its own label. */
-	@Input() ariaLabel: string;
+	/**
+	 * Accessible name of the control, for a host that shows its own label; without one the control is named by its
+	 * label or placeholder. Not `ariaLabel`, which is also a property of every element.
+	 */
+	readonly accessibleLabel = input<string>();
 
 	constructor(
 		private readonly tagsService: TagsService,

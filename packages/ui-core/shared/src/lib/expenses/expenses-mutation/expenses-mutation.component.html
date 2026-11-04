@@ -58,7 +58,7 @@
 						</label>
 						<ga-currency
 							[label]="false"
-							[ariaLabel]="'FORM.LABELS.CURRENCY' | translate"
+							[accessibleLabel]="'FORM.LABELS.CURRENCY' | translate"
 							formControlName="currency"
 							(optionChange)="currencyChanged($event)"
 						></ga-currency>
@@ -209,7 +209,7 @@
 					<div class="field">
 						<label class="label">{{ 'SM_TABLE.CATEGORY' | translate }}</label>
 						<ga-expense-category-select
-							[ariaLabel]="'SM_TABLE.CATEGORY' | translate"
+							[accessibleLabel]="'SM_TABLE.CATEGORY' | translate"
 							[clearable]="true"
 							[addTag]="true"
 							formControlName="category"
@@ -238,7 +238,7 @@
 					<div class="field">
 						<label class="label">{{ 'SM_TABLE.VENDOR' | translate }}</label>
 						<ga-vendor-select
-							[ariaLabel]="'SM_TABLE.VENDOR' | translate"
+							[accessibleLabel]="'SM_TABLE.VENDOR' | translate"
 							formControlName="vendor"
 							[searchable]="true"
 							[addTag]="true"
@@ -266,7 +266,7 @@
 					<div class="field">
 						<label class="label">{{ 'CONTEXT_MENU.CONTACT' | translate }}</label>
 						<ga-contact-select
-							[ariaLabel]="'CONTEXT_MENU.CONTACT' | translate"
+							[accessibleLabel]="'CONTEXT_MENU.CONTACT' | translate"
 							[addTag]="true"
 							[clearable]="true"
 							[searchable]="true"
@@ -278,7 +278,7 @@
 					<div class="field">
 						<label class="label">{{ 'CONTEXT_MENU.PROJECT' | translate }}</label>
 						<ga-project-selector
-							[ariaLabel]="'CONTEXT_MENU.PROJECT' | translate"
+							[accessibleLabel]="'CONTEXT_MENU.PROJECT' | translate"
 							formControlName="projectId"
 							[placeholder]="'CONTEXT_MENU.PROJECT' | translate"
 							[skipGlobalChange]="true"
@@ -291,7 +291,7 @@
 						<label class="label">{{ 'TAGS_PAGE.HEADER' | translate }}</label>
 						<ga-tags-color-input
 							[label]="false"
-							[ariaLabel]="'TAGS_PAGE.HEADER' | translate"
+							[accessibleLabel]="'TAGS_PAGE.HEADER' | translate"
 							[selectedTags]="form.get('tags').value"
 							(selectedTagsEvent)="selectedTagsHandler($event)"
 							[isOrgLevel]="true"

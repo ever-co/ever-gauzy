@@ -5,7 +5,7 @@
 <!-- Single Select -->
 @if (!multiple) {
   <ng-select
-    [ariaLabel]="ariaLabel"
+    [ariaLabel]="accessibleLabel() || (label || placeholder || 'CONTEXT_MENU.PROJECT' | translate)"
     #select
     class="gauzy-entity-select"
     [ngClass]="panelClass"
@@ -44,6 +44,7 @@
 } @else {
   <nb-select
     class="multiple-select"
+    [attr.aria-label]="accessibleLabel() || (label || placeholder || 'CONTEXT_MENU.PROJECT' | translate)"
     [disabled]="disabled"
     [multiple]="multiple"
     [placeholder]="placeholder || 'FORM.PLACEHOLDERS.ALL_PROJECTS' | translate"
