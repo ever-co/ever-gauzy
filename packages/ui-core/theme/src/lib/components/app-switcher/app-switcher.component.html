@@ -45,7 +45,7 @@
 				<li>
 					@if (isCurrent(app)) {
 						<div class="app-row current" aria-current="page">
-							<span class="app-tile" aria-hidden="true">{{ app.monogram }}</span>
+							<img class="app-tile" [src]="app.logo" alt="" width="28" height="28" draggable="false" />
 							<span class="app-text">
 								<span class="app-name">{{ app.shortName }}</span>
 								<span class="app-domain">{{ app.domain }}</span>
@@ -66,7 +66,7 @@
 						</div>
 					} @else {
 						<a class="app-row" [href]="app.url" (click)="onAppPick($event, app)">
-							<span class="app-tile" aria-hidden="true">{{ app.monogram }}</span>
+							<img class="app-tile" [src]="app.logo" alt="" width="28" height="28" draggable="false" />
 							<span class="app-text">
 								<span class="app-name">{{ app.shortName }}</span>
 								<span class="app-domain">{{ app.domain }}</span>

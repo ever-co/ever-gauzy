@@ -102,17 +102,13 @@ a.app-row {
 }
 
 .app-tile {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   flex: 0 0 auto;
   width: 1.75rem;
   height: 1.75rem;
   border-radius: var(--gauzy-radius-sm, 6px);
-  background-color: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
+  object-fit: cover;
+  user-select: none;
 }
 
 .app-text {
@@ -140,10 +136,6 @@ a.app-row {
 }
 
 .app-row.current {
-  .app-tile {
-    background-color: var(--color-primary-transparent-100, rgba(110, 73, 232, 0.08));
-  }
-
   .app-name {
     font-weight: 600;
   }
