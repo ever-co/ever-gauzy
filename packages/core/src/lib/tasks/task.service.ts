@@ -70,7 +70,7 @@ import { EmployeeNotificationService } from '../employee-notification/employee-n
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
-import { Organization, OrganizationProject, TimeLog } from '../core/entities/internal';
+import { Organization, OrganizationProject, TimeLog, Timesheet } from '../core/entities/internal';
 import { EventBus as DomainEventBus } from '../event-bus/event-bus';
 import { TaskEvent } from '../event-bus/events/task.event';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
@@ -92,6 +92,12 @@ function isLockedTimeLog(timeLog: ITimeLog): boolean {
 function isMovableToProject(timeLog: ITimeLog, projectId: ID | null): boolean {
 	const isUnderAnotherProject = (timeLog.projectId ?? null) !== projectId;
 	return isUnderAnotherProject && !isLockedTimeLog(timeLog);
+}
+
+function timesheetIdsOf(timeLogs: ITimeLog[]): ID[] {
+	const ids = timeLogs.map((timeLog) => timeLog.timesheet?.id);
+	const presentIds = ids.filter((id): id is ID => Boolean(id));
+	return [...new Set(presentIds)];
 }
 
 @FavoriteService(BaseEntityEnum.Task)
@@ -1359,7 +1365,9 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// A concurrent move of the same task can save another project after this one: the write only lands while
 			// the task is still in the project these logs move to, so the last move saved decides where they are. The
-			// task row stays locked until the write commits, so a project saved meanwhile waits and moves the logs after
+			// task row and the logs' timesheets stay locked until the write commits, so a project saved or a timesheet
+			// approved meanwhile waits for it instead of landing between the checks and the write
+			const timesheetIds = timesheetIdsOf(writableLogs);
 			let taskStillThere = p(`"taskId" IN (SELECT "id" FROM "task" WHERE "projectId" IS NULL)`);
 			if (projectId) {
 				taskStillThere = p(`"taskId" IN (SELECT "id" FROM "task" WHERE "projectId" = :destinationProjectId)`);
@@ -1371,6 +1379,14 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				if (locksRows) {
 					const taskRow = manager.createQueryBuilder(Task, 'task').select('task.id').where({ id: taskId });
 					await taskRow.setLock('pessimistic_write').getOne();
+				}
+				const locksTimesheets = locksRows && timesheetIds.length > 0;
+				if (locksTimesheets) {
+					const timesheetRows = manager
+						.createQueryBuilder(Timesheet, 'timesheet')
+						.select('timesheet.id')
+						.where({ id: In(timesheetIds) });
+					await timesheetRows.setLock('pessimistic_write').getMany();
 				}
 
 				await manager

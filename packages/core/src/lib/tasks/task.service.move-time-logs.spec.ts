@@ -4,7 +4,7 @@ import { Brackets } from 'typeorm';
 import * as gauzyConfig from '@gauzy/config';
 import { IUser, PermissionsEnum, TimesheetStatus } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
-import { Organization, OrganizationProject, TimeLog } from '../core/entities/internal';
+import { Organization, OrganizationProject, TimeLog, Timesheet } from '../core/entities/internal';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { Task } from './task.entity';
 import { TaskService } from './task.service';
@@ -122,23 +122,34 @@ describe('TaskService.update — moving the time logs with the task', () => {
 				return { affected: 1 };
 			}
 		};
-		const taskRowLock = {
-			lockedId: undefined as unknown,
-			select: () => taskRowLock,
-			where: ({ id }: { id: unknown }) => {
-				taskRowLock.lockedId = id;
-				return taskRowLock;
-			},
-			setLock: (mode: string) => {
-				steps.push(`${mode} ${taskRowLock.lockedId}`);
-				return taskRowLock;
-			},
-			getOne: async () => ({ id: taskRowLock.lockedId })
+		const rowLock = (table: string) => {
+			const lock = {
+				lockedIds: [] as unknown[],
+				select: () => lock,
+				where: ({ id }: { id: string | { value: string[] } }) => {
+					if (typeof id === 'string') {
+						lock.lockedIds = [id];
+						return lock;
+					}
+					lock.lockedIds = id.value;
+					return lock;
+				},
+				setLock: (mode: string) => {
+					steps.push(`${mode} ${table} ${lock.lockedIds.join(',')}`);
+					return lock;
+				},
+				getOne: async () => ({ id: lock.lockedIds[0] }),
+				getMany: async () => lock.lockedIds.map((id) => ({ id }))
+			};
+			return lock;
 		};
 		const inTransaction = {
 			createQueryBuilder: (entity?: unknown) => {
 				if (entity === Task) {
-					return taskRowLock;
+					return rowLock('task');
+				}
+				if (entity === Timesheet) {
+					return rowLock('timesheet');
 				}
 				return builder;
 			}
@@ -211,7 +222,7 @@ describe('TaskService.update — moving the time logs with the task', () => {
 	});
 
 	it.each(['postgres', 'mysql'])(
-		'on %s, locks the task row in the transaction of the write, so a project saved meanwhile waits',
+		'on %s, locks the task row and the timesheets in the transaction of the write, so a save or an approval waits',
 		async (dialect) => {
 			signInWith([PermissionsEnum.ALLOW_MODIFY_TIME]);
 			isPostgresMock.mockReturnValue(dialect === 'postgres');
@@ -219,7 +230,13 @@ describe('TaskService.update — moving the time logs with the task', () => {
 
 			await service.update('task-1', { projectId: 'project-new', moveTimeLogs: true });
 
-			expect(steps).toEqual(['begin', 'pessimistic_write task-1', 'write', 'commit']);
+			expect(steps).toEqual([
+				'begin',
+				'pessimistic_write task task-1',
+				'pessimistic_write timesheet sheet-open',
+				'write',
+				'commit'
+			]);
 		}
 	);
 
