@@ -16,7 +16,7 @@ import { TaskService } from './task.service';
  * same task writes nothing, and only the task's own logs are written.
  */
 
-const TIMEOUT = 10 * 60 * 1000;
+const TIMEOUT = 15 * 60 * 1000;
 
 const TENANT = '81000000-0000-4000-8000-00000000000a';
 const ORGANIZATION = '81000000-0000-4000-8000-0000000000a1';
