@@ -21,8 +21,9 @@ import { IExpenseMonthShare } from '../expense-view-charts';
 	selector: 'ga-expense-share-chart',
 	template: `
 		<div class="ring">
-			<canvas baseChart type="doughnut" [data]="data()" [options]="options()"></canvas>
-			<span class="ring-figure" aria-hidden="true">{{ percentText() }}</span>
+			<!-- The ring is drawn for the eye; its share is the figure in the middle, its amounts the legend under it. -->
+			<canvas baseChart type="doughnut" [data]="data()" [options]="options()" aria-hidden="true"></canvas>
+			<span class="ring-figure">{{ percentText() }}</span>
 		</div>
 		<ul class="legend">
 			<li>

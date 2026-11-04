@@ -4,6 +4,7 @@ import {
 	categoryMonthBars,
 	categoryReadRange,
 	comparableExpenses,
+	currencyDigits,
 	monthShareOf,
 	vendorPaymentBars,
 	vendorReadRange
@@ -107,6 +108,16 @@ describe('expense view charts', () => {
 
 		it('is the whole month when nothing else was spent', () => {
 			expect(monthShareOf([], current)?.percent).toBe(100);
+		});
+
+		it("keeps the currency's own precision: three decimals for the Kuwaiti dinar", () => {
+			const kwd = expense('kwd', '2026-03-10', 1.234, 'KWD');
+
+			expect(monthShareOf([expense('a', '2026-03-02', 2.001, 'KWD')], kwd)).toEqual(
+				expect.objectContaining({ amount: 1.234, rest: 2.001, total: 3.235 })
+			);
+			expect(currencyDigits('JPY')).toBe(0);
+			expect(currencyDigits('not a code')).toBe(2);
 		});
 
 		it('is none for an expense without an amount', () => {

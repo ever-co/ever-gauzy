@@ -90,6 +90,7 @@ export function categoryMonthBars(
 	if (!expense?.valueDate) {
 		return [];
 	}
+	const digits = currencyDigits(expense.currency);
 	const end = moment(expense.valueDate).startOf('month');
 	const totals = new Map<string, number>();
 	for (const item of comparableExpenses(expenses, expense)) {
@@ -102,7 +103,7 @@ export function categoryMonthBars(
 		bars.push({
 			label: month.format('MMM'),
 			title: month.format('MMMM YYYY'),
-			value: round(totals.get(month.format('YYYY-MM')) ?? 0),
+			value: round(totals.get(month.format('YYYY-MM')) ?? 0, digits),
 			highlight: back === 0
 		});
 	}
@@ -122,6 +123,7 @@ export function vendorPaymentBars(
 	const payments = comparableExpenses(expenses, expense).sort(
 		(a, b) => moment(a.valueDate).valueOf() - moment(b.valueDate).valueOf()
 	);
+	const digits = currencyDigits(expense?.currency);
 	const index = payments.findIndex((item) => item.id === expense?.id);
 	const end = Math.max(Math.min(payments.length, limit), index + 1);
 	return payments.slice(Math.max(0, end - limit), end).map((item) => {
@@ -129,7 +131,7 @@ export function vendorPaymentBars(
 		return {
 			label: date.format('D MMM'),
 			title: date.format('LL'),
-			value: round(amountOf(item)),
+			value: round(amountOf(item), digits),
 			highlight: item.id === expense?.id
 		};
 	});
@@ -141,14 +143,15 @@ export function monthShareOf(expenses: IExpense[], expense: IExpense): IExpenseM
 	if (!expense?.valueDate || amount <= 0) {
 		return null;
 	}
+	const digits = currencyDigits(expense.currency);
 	const month = moment(expense.valueDate);
 	const total = comparableExpenses(expenses, expense)
 		.filter((item) => moment(item.valueDate).isSame(month, 'month'))
 		.reduce((sum, item) => sum + amountOf(item), 0);
 	return {
-		amount: round(amount),
-		rest: round(Math.max(0, total - amount)),
-		total: round(total),
+		amount: round(amount, digits),
+		rest: round(Math.max(0, total - amount), digits),
+		total: round(total, digits),
 		percent: total > 0 ? Math.round((amount / total) * 1000) / 10 : 100
 	};
 }
@@ -158,7 +161,22 @@ function amountOf(expense: IExpense): number {
 	return Number.isFinite(amount) && amount > 0 ? amount : 0;
 }
 
-/** To the cent: sums of decimals otherwise drift (0.1 + 0.2). */
-function round(value: number): number {
-	return Math.round(value * 100) / 100;
+/**
+ * How many decimals the currency's amounts carry: 2 for most, 3 for the Kuwaiti dinar, none for the yen. 2 for a
+ * code the browser does not know, or none at all.
+ */
+export function currencyDigits(currency: string | null | undefined): number {
+	try {
+		return currency
+			? new Intl.NumberFormat('en', { style: 'currency', currency }).resolvedOptions().maximumFractionDigits
+			: 2;
+	} catch {
+		return 2;
+	}
+}
+
+/** To the currency's smallest unit: sums of decimals otherwise drift (0.1 + 0.2). */
+function round(value: number, digits: number): number {
+	const scale = 10 ** digits;
+	return Math.round(value * scale) / scale;
 }

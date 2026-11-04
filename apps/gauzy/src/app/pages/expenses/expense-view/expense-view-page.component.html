@@ -251,8 +251,9 @@
 					</div>
 				</section>
 
-				<!-- How the expense compares: its category's spending by month, this expense's month highlighted. -->
-				@if (expense.category) {
+				<!-- How the expense compares: its category's spending by month, this expense's month highlighted. The months
+					 end with the expense's own, so an undated expense has none to show. -->
+				@if (expense.category && expense.valueDate) {
 					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
 						<header class="panel-header">
 							<div class="panel-heading">

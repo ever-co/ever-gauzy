@@ -19,8 +19,9 @@ $hairline: var(--gauzy-overlay-border-color, rgba(126, 126, 143, 0.18));
 
 /* ── Headline: who was paid, how it stands, then the figures ── */
 
-// The vendor's mark: a bag on the active tint, at the size of a project's logo on its page.
-.expense-logo {
+// The vendor's mark: a bag on the active tint, at the size of a project's logo on its page. Scoped as the project
+// header's own `.project-logo` rule is, which would otherwise keep it at the drawer's 2rem.
+.project-view-header .expense-logo {
   width: 2.5rem;
   height: 2.5rem;
   color: var(--gauzy-text-color-2);
