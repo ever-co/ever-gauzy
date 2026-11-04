@@ -21,7 +21,7 @@ export function personCardId(): string {
  * Keyboard access to the Teams dashboard's member hover cards.
  *
  * A card opened on hover lives in an overlay at the end of the page, out of the
- * tab order, so a keyboard user could never reach its email link.
+ * tab order, so a keyboard user could never reach its email or profile links.
  * The name that triggers it shows the card on focus, as the team page's
  * assignees do; Arrow Down then moves focus into the card, which stays open
  * while focus is inside. Escape — or tabbing out of the card past either end —
@@ -44,7 +44,7 @@ export class PersonCardKeyboard {
 
 	/**
 	 * Arrow Down on a name: open its card and move focus to that card's first link
-	 * (the email, when the person has one) — found by the card's own id, `cardId`.
+	 * (the email, else the profile) — found by the card's own id, `cardId`.
 	 */
 	onTriggerKeydown(event: KeyboardEvent, popover: NbPopoverDirective, cardId: string): void {
 		if (event.key !== 'ArrowDown') return;

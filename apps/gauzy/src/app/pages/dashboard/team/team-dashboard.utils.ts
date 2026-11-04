@@ -76,6 +76,7 @@ export interface ITeamPerson {
 	/** Their selected day so far. */
 	day: ITeamPersonDay;
 	canViewDetails: boolean;
+	canViewProfile: boolean;
 }
 
 /** A person's selected day, as their hover card summarizes it. */

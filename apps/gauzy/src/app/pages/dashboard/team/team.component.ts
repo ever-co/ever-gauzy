@@ -649,12 +649,17 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			isManager: this._isManager(member),
 			timeZone: user?.timeZone || null,
 			day: this._dayOf(member, activity),
-			canViewDetails: this._canViewDetailsOf(member.employeeId)
+			canViewDetails: this._canViewDetailsOf(member.employeeId),
+			canViewProfile: this._canViewEveryone()
 		};
 	}
 
+	private _canViewEveryone(): boolean {
+		return this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+	}
+
 	private _canViewDetailsOf(employeeId: string): boolean {
-		if (this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+		if (this._canViewEveryone()) {
 			return true;
 		}
 		const ownEmployeeId = this.store.user?.employee?.id ?? this.store.user?.employeeId;
