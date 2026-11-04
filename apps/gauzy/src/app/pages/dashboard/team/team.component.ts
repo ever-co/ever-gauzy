@@ -9,6 +9,7 @@ import {
 	IOrganizationTeam,
 	ISelectedEmployee,
 	ITimeLog,
+	PermissionsEnum,
 	ReportGroupFilterEnum,
 	RolesEnum
 } from '@gauzy/contracts';
@@ -647,8 +648,21 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			teamName,
 			isManager: this._isManager(member),
 			timeZone: user?.timeZone || null,
-			day: this._dayOf(member, activity)
+			day: this._dayOf(member, activity),
+			canViewDetails: this._canViewDetailsOf(member.employeeId)
 		};
+	}
+
+	/**
+	 * Whether the viewer may see `employeeId`'s hover card and profile: their own, or anyone's
+	 * with CHANGE_SELECTED_EMPLOYEE (Super Admin and Admin by default).
+	 */
+	private _canViewDetailsOf(employeeId: string): boolean {
+		if (this.store.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE)) {
+			return true;
+		}
+		const ownEmployeeId = this.store.user?.employee?.id ?? this.store.user?.employeeId;
+		return !!ownEmployeeId && ownEmployeeId === employeeId;
 	}
 
 	private _dayOf(member: any, activity: number | null): ITeamPersonDay {
