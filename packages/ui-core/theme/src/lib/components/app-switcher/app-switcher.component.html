@@ -65,7 +65,13 @@
 							</svg>
 						</div>
 					} @else {
-						<a class="app-row" [href]="app.url" (click)="onAppPick($event, app)">
+						<a
+							class="app-row"
+							[href]="app.url"
+							target="_blank"
+							rel="noopener noreferrer"
+							(click)="onAppPick($event, app)"
+						>
 							<img class="app-tile" [src]="app.logo" alt="" width="28" height="28" draggable="false" />
 							<span class="app-text">
 								<span class="app-name">{{ app.shortName }}</span>

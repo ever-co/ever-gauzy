@@ -76,11 +76,11 @@ export class AppSwitcherComponent {
 		// Inside the desktop apps a plain link would load the other app into the Gauzy window itself.
 		const shell = this._electronService.shell;
 		const canOpenInSystemBrowser = typeof shell?.openExternal === 'function';
+		this.appsPopover?.hide();
 		if (!canOpenInSystemBrowser) {
 			return;
 		}
 		event.preventDefault();
-		this.appsPopover?.hide();
 		shell.openExternal(app.url);
 	}
 
