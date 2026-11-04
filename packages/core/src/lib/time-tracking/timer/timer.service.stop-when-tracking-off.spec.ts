@@ -24,7 +24,7 @@ describe('TimerService.stopRunningTimersOf', () => {
 	let updateEmployee: jest.Mock;
 
 	beforeEach(() => {
-		findLogs = jest.fn(async () => [runningLog]);
+		findLogs = jest.fn().mockResolvedValueOnce([runningLog]).mockResolvedValue([]);
 		execute = jest.fn(async (command: TimeLogUpdateCommand) => ({
 			...runningLog,
 			id: command.id,
@@ -62,7 +62,8 @@ describe('TimerService.stopRunningTimersOf', () => {
 
 	it('stops the other timers and returns them when one stop fails', async () => {
 		const otherLog = { ...runningLog, id: 'log-other' };
-		findLogs.mockResolvedValue([runningLog, otherLog]);
+		findLogs.mockReset();
+		findLogs.mockResolvedValueOnce([runningLog, otherLog]).mockResolvedValueOnce([runningLog]);
 		execute.mockRejectedValueOnce(new Error('connection reset'));
 		jest.spyOn((service as unknown as { logger: { warn: () => void } }).logger, 'warn').mockImplementation(
 			() => undefined
@@ -71,7 +72,7 @@ describe('TimerService.stopRunningTimersOf', () => {
 		const stopped = await service.stopRunningTimersOf(scope);
 
 		expect(stopped).toEqual([expect.objectContaining({ id: 'log-other', isRunning: false })]);
-		expect(updateEmployee).toHaveBeenCalled();
+		expect(updateEmployee).not.toHaveBeenCalled();
 	});
 
 	it('turned off for one team, looks only for a timer running for that team', async () => {
@@ -82,7 +83,19 @@ describe('TimerService.stopRunningTimersOf', () => {
 		});
 	});
 
+	it('keeps the employee tracking while a timer of another team still runs', async () => {
+		findLogs.mockReset();
+		findLogs.mockResolvedValueOnce([runningLog]).mockResolvedValueOnce([{ ...runningLog, id: 'log-other-team' }]);
+
+		const stopped = await service.stopRunningTimersOf({ ...scope, organizationTeamId: 'team-1' });
+
+		expect(stopped).toEqual([expect.objectContaining({ id: 'log-running', isRunning: false })]);
+		expect(findLogs).toHaveBeenLastCalledWith({ where: { ...scope, isRunning: true } });
+		expect(updateEmployee).not.toHaveBeenCalled();
+	});
+
 	it('writes nothing when no timer runs', async () => {
+		findLogs.mockReset();
 		findLogs.mockResolvedValue([]);
 
 		const stopped = await service.stopRunningTimersOf(scope);

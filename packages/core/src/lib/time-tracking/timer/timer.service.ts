@@ -940,7 +940,17 @@ export class TimerService {
 
 		const hasStoppedAny = stoppedLogs.length > 0;
 		if (hasStoppedAny) {
-			await this.markNotTracking(employeeId, organizationId, tenantId);
+			// Turned off for one team, the employee may still have a timer running for another one
+			const stillRunning = await this.findTimeLogsWhere({
+				employeeId,
+				organizationId,
+				tenantId,
+				isRunning: true
+			});
+			const hasNoTimerLeft = stillRunning.length === 0;
+			if (hasNoTimerLeft) {
+				await this.markNotTracking(employeeId, organizationId, tenantId);
+			}
 		}
 		return stoppedLogs;
 	}
