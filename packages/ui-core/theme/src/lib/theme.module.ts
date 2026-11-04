@@ -58,6 +58,7 @@ import {
 	MATERIAL_LIGHT_THEME
 } from './themes';
 import { WindowModeBlockScrollService } from './services/window-mode-block-scroll.service';
+import { AppSwitcherComponent } from './components/app-switcher/app-switcher.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { HeaderComponent } from './components/header/header.component';
 import { ThemeSidebarModule } from './components/theme-sidebar/theme-sidebar.module';
@@ -105,6 +106,7 @@ const MODULES = [
 ];
 
 const COMPONENTS = [
+	AppSwitcherComponent,
 	HeaderComponent,
 	FooterComponent,
 	OneColumnLayoutComponent,

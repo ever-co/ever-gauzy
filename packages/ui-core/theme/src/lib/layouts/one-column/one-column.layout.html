@@ -79,6 +79,7 @@
 						[class.not-collapsed]="!isCollapse() && isExpanded()"
 						[class.compacted]="!isExpanded()"
 					>
+						<gauzy-app-switcher [compact]="!isExpanded()"></gauzy-app-switcher>
 						<ngx-gauzy-logo
 							[controlled]="trigger()"
 							[isWorkspaceOpen]="isWorkspaceOpen()"

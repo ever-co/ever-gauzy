@@ -1,0 +1,80 @@
+<button
+	#trigger
+	#appsPopover="nbPopover"
+	type="button"
+	class="app-switcher-trigger"
+	[class.open]="isPanelShown"
+	[nbPopover]="appsPanel"
+	nbPopoverTrigger="click"
+	[nbPopoverPlacement]="placement"
+	[nbPopoverOffset]="6"
+	nbPopoverClass="gz-app-switcher-popover"
+	(nbPopoverShowStateChange)="onPanelShowStateChange($event.isShown)"
+	aria-haspopup="true"
+	[attr.aria-expanded]="isPanelShown"
+	[attr.aria-label]="'HEADER.SWITCH_EVER_APP' | translate"
+	[title]="'HEADER.SWITCH_EVER_APP' | translate"
+>
+	<svg
+		viewBox="0 0 24 24"
+		fill="none"
+		stroke="currentColor"
+		stroke-width="2"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+		aria-hidden="true"
+		focusable="false"
+	>
+		<rect width="7" height="7" x="3" y="3" rx="1" />
+		<rect width="7" height="7" x="14" y="3" rx="1" />
+		<rect width="7" height="7" x="14" y="14" rx="1" />
+		<rect width="7" height="7" x="3" y="14" rx="1" />
+	</svg>
+</button>
+
+<ng-template #appsPanel>
+	<nav
+		class="app-switcher-panel"
+		[id]="panelId"
+		[attr.aria-label]="'HEADER.EVER_APPS' | translate"
+		(keydown)="onPanelKeydown($event)"
+	>
+		<div class="app-switcher-label" aria-hidden="true">{{ 'HEADER.EVER_APPS' | translate }}</div>
+		<ul class="app-switcher-list">
+			@for (app of apps; track app.id) {
+				<li>
+					@if (isCurrent(app)) {
+						<div class="app-row current" aria-current="page">
+							<span class="app-tile" aria-hidden="true">{{ app.monogram }}</span>
+							<span class="app-text">
+								<span class="app-name">{{ app.shortName }}</span>
+								<span class="app-domain">{{ app.domain }}</span>
+							</span>
+							<svg
+								class="app-current-check"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								aria-hidden="true"
+								focusable="false"
+							>
+								<path d="M20 6 9 17l-5-5" />
+							</svg>
+						</div>
+					} @else {
+						<a class="app-row" [href]="app.url" (click)="onAppPick($event, app)">
+							<span class="app-tile" aria-hidden="true">{{ app.monogram }}</span>
+							<span class="app-text">
+								<span class="app-name">{{ app.shortName }}</span>
+								<span class="app-domain">{{ app.domain }}</span>
+							</span>
+						</a>
+					}
+				</li>
+			}
+		</ul>
+	</nav>
+</ng-template>

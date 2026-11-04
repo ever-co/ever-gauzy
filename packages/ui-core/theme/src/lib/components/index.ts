@@ -1,3 +1,4 @@
+export * from './app-switcher/app-switcher.component';
 export * from './header/header.component';
 export * from './footer/footer.component';
 export * from './gauzy-logo/gauzy-logo.component';
