@@ -36,7 +36,9 @@ import { IProjectQuickLookCard } from '../../projects/components/project-quick-l
 @Component({
 	selector: 'ga-dashboard-quick-look',
 	templateUrl: './dashboard-quick-look.component.html',
-	changeDetection: ChangeDetectionStrategy.OnPush,
+	// Eager, not OnPush: the project quick look loads its own figures and writes them to plain
+	// fields, which an OnPush host would leave unrendered until the next event inside it.
+	changeDetection: ChangeDetectionStrategy.Eager,
 	standalone: false
 })
 export class DashboardQuickLookComponent extends TranslationBaseComponent implements OnInit {
