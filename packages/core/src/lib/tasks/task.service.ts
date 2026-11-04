@@ -49,7 +49,7 @@ import {
 	TimesheetStatus
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
-import { isPostgres, isSqlite } from '@gauzy/config';
+import { isMySQL, isPostgres, isSqlite } from '@gauzy/config';
 import { TenantAwareCrudService, BaseQueryDTO } from './../core/crud';
 import { IPartialEntity } from './../core/crud/icrud.service';
 import { sanitizeRichHtml } from './../core/html-sanitizer';
@@ -1358,30 +1358,40 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			}
 
 			// A concurrent move of the same task can save another project after this one: the write only lands while
-			// the task is still in the project these logs move to, so the last move saved decides where they are
+			// the task is still in the project these logs move to, so the last move saved decides where they are. The
+			// task row stays locked until the write commits, so a project saved meanwhile waits and moves the logs after
 			let taskStillThere = p(`"taskId" IN (SELECT "id" FROM "task" WHERE "projectId" IS NULL)`);
 			if (projectId) {
 				taskStillThere = p(`"taskId" IN (SELECT "id" FROM "task" WHERE "projectId" = :destinationProjectId)`);
 			}
 
-			await this.typeOrmRepository.manager
-				.createQueryBuilder()
-				.update(TimeLog)
-				.set(changes)
-				.where({ id: In(writableIds), tenantId, organizationId, taskId })
-				.andWhere(
-					new Brackets((qb: WhereExpressionBuilder) => {
-						qb.where(p(`"timesheetId" IS NULL`));
-						qb.orWhere(
-							p(
-								`"timesheetId" IN (SELECT "id" FROM "timesheet" WHERE "status" <> :approved AND "isBilled" = :billed)`
-							),
-							{ approved: TimesheetStatus.APPROVED, billed: false }
-						);
-					})
-				)
-				.andWhere(taskStillThere, { destinationProjectId: projectId })
-				.execute();
+			await this.typeOrmRepository.manager.transaction(async (manager) => {
+				// `pessimistic_write` maps to FOR UPDATE on both dialects; the embedded one serializes writers
+				const locksRows = isPostgres() || isMySQL();
+				if (locksRows) {
+					const taskRow = manager.createQueryBuilder(Task, 'task').select('task.id').where({ id: taskId });
+					await taskRow.setLock('pessimistic_write').getOne();
+				}
+
+				await manager
+					.createQueryBuilder()
+					.update(TimeLog)
+					.set(changes)
+					.where({ id: In(writableIds), tenantId, organizationId, taskId })
+					.andWhere(
+						new Brackets((qb: WhereExpressionBuilder) => {
+							qb.where(p(`"timesheetId" IS NULL`));
+							qb.orWhere(
+								p(
+									`"timesheetId" IN (SELECT "id" FROM "timesheet" WHERE "status" <> :approved AND "isBilled" = :billed)`
+								),
+								{ approved: TimesheetStatus.APPROVED, billed: false }
+							);
+						})
+					)
+					.andWhere(taskStillThere, { destinationProjectId: projectId })
+					.execute();
+			});
 		} catch (error) {
 			console.error('Error moving the task time logs to its project:', error);
 		}

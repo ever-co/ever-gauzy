@@ -1,11 +1,28 @@
 import '../core/entities/internal';
 
 import { Brackets } from 'typeorm';
+import * as gauzyConfig from '@gauzy/config';
 import { IUser, PermissionsEnum, TimesheetStatus } from '@gauzy/contracts';
 import { TenantAwareCrudService } from '../core/crud';
 import { Organization, OrganizationProject, TimeLog } from '../core/entities/internal';
 import { asTenantUser, createTenantFixture } from '../core/testing/tenant-isolation/tenant-isolation.fixtures';
+import { Task } from './task.entity';
 import { TaskService } from './task.service';
+
+// The dialect the task row lock depends on is stated per case; every other case keeps the configured one.
+jest.mock('@gauzy/config', () => {
+	const actual = jest.requireActual('@gauzy/config');
+
+	return {
+		...actual,
+		isPostgres: jest.fn(actual.isPostgres),
+		isMySQL: jest.fn(actual.isMySQL)
+	};
+});
+
+const actualConfig = jest.requireActual('@gauzy/config') as typeof gauzyConfig;
+const isPostgresMock = gauzyConfig.isPostgres as unknown as jest.Mock;
+const isMySQLMock = gauzyConfig.isMySQL as unknown as jest.Mock;
 
 /**
  * A time log keeps the project it was tracked under, so a task moved to another project left its time behind.
@@ -61,6 +78,7 @@ describe('TaskService.update — moving the time logs with the task', () => {
 		conditions: unknown[];
 		executed: boolean;
 	};
+	let steps: string[];
 
 	const signInWith = (permissions: PermissionsEnum[]) => {
 		({ restore } = asTenantUser(fixture, { permissions }));
@@ -72,6 +90,9 @@ describe('TaskService.update — moving the time logs with the task', () => {
 		organizationAllowsModifyTime = true;
 		projectBillable = true;
 		write = { conditions: [], executed: false };
+		steps = [];
+		isPostgresMock.mockImplementation(actualConfig.isPostgres);
+		isMySQLMock.mockImplementation(actualConfig.isMySQL);
 		findOne = jest.fn(async (entity, { where }) => {
 			if (entity === Organization) {
 				return { id: where.id, allowModifyTime: organizationAllowsModifyTime };
@@ -97,7 +118,29 @@ describe('TaskService.update — moving the time logs with the task', () => {
 			},
 			execute: async () => {
 				write.executed = true;
+				steps.push('write');
 				return { affected: 1 };
+			}
+		};
+		const taskRowLock = {
+			lockedId: undefined as unknown,
+			select: () => taskRowLock,
+			where: ({ id }: { id: unknown }) => {
+				taskRowLock.lockedId = id;
+				return taskRowLock;
+			},
+			setLock: (mode: string) => {
+				steps.push(`${mode} ${taskRowLock.lockedId}`);
+				return taskRowLock;
+			},
+			getOne: async () => ({ id: taskRowLock.lockedId })
+		};
+		const inTransaction = {
+			createQueryBuilder: (entity?: unknown) => {
+				if (entity === Task) {
+					return taskRowLock;
+				}
+				return builder;
 			}
 		};
 
@@ -115,7 +158,18 @@ describe('TaskService.update — moving the time logs with the task', () => {
 			getMaxTaskNumberByProject: jest.fn(async () => 4)
 		});
 		Object.defineProperty(service, 'typeOrmRepository', {
-			value: { manager: { findOne, find: findLogs, createQueryBuilder: () => builder } },
+			value: {
+				manager: {
+					findOne,
+					find: findLogs,
+					transaction: async (work: (manager: unknown) => Promise<unknown>) => {
+						steps.push('begin');
+						const result = await work(inTransaction);
+						steps.push('commit');
+						return result;
+					}
+				}
+			},
 			configurable: true
 		});
 	});
@@ -154,6 +208,29 @@ describe('TaskService.update — moving the time logs with the task', () => {
 		expect(movedIds()).not.toContain('log-billed');
 		expect(write.conditions).toHaveLength(2);
 		expect(write.conditions[0]).toBeInstanceOf(Brackets);
+	});
+
+	it.each(['postgres', 'mysql'])(
+		'on %s, locks the task row in the transaction of the write, so a project saved meanwhile waits',
+		async (dialect) => {
+			signInWith([PermissionsEnum.ALLOW_MODIFY_TIME]);
+			isPostgresMock.mockReturnValue(dialect === 'postgres');
+			isMySQLMock.mockReturnValue(dialect === 'mysql');
+
+			await service.update('task-1', { projectId: 'project-new', moveTimeLogs: true });
+
+			expect(steps).toEqual(['begin', 'pessimistic_write task-1', 'write', 'commit']);
+		}
+	);
+
+	it('writes in a transaction without a row lock on the embedded dialect', async () => {
+		signInWith([PermissionsEnum.ALLOW_MODIFY_TIME]);
+		isPostgresMock.mockReturnValue(false);
+		isMySQLMock.mockReturnValue(false);
+
+		await service.update('task-1', { projectId: 'project-new', moveTimeLogs: true });
+
+		expect(steps).toEqual(['begin', 'write', 'commit']);
 	});
 
 	it("moves a colleague's logs only for a caller who may act for them", async () => {
