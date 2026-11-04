@@ -1,6 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { DeleteResult, Equal, FindOptionsWhere, IsNull, Or, UpdateResult } from 'typeorm';
 import {
 	BaseEntityEnum,
 	EntitySubscriptionTypeEnum,
@@ -232,7 +232,9 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 	/**
 	 * Whether the employee manages the team: their row holds the MANAGER role or the manager flag. The flag is what
-	 * lets a manager act for the team's members (`ManagedEmployeeService`), so it lets them manage the team as well.
+	 * lets a manager act for the team's members (`ManagedEmployeeService`), so it lets them manage the team as well,
+	 * on the same terms: a flagged membership that is inactive or archived counts for neither. The role is read as the
+	 * team checks always read it.
 	 *
 	 * @param employeeId - The employee to check. Without one the answer is no: an empty id would match any manager.
 	 * @param team - The team's tenant, organization and id.
@@ -247,11 +249,15 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			return false;
 		}
 		const membership = { ...team, employeeId };
+		// Both flags are nullable and their defaults only apply on insert, so a legacy row can hold NULL
+		const activeFlaggedMembership = {
+			...membership,
+			isManager: true,
+			isActive: Or(IsNull(), Equal(true)),
+			isArchived: Or(IsNull(), Equal(false))
+		};
 		return await this.typeOrmOrganizationTeamEmployeeRepository.exists({
-			where: [
-				{ ...membership, role: { name: RolesEnum.MANAGER } },
-				{ ...membership, isManager: true }
-			],
+			where: [{ ...membership, role: { name: RolesEnum.MANAGER } }, activeFlaggedMembership],
 			withDeleted
 		});
 	}
