@@ -4,7 +4,6 @@ import {
 	categoryMonthBars,
 	categoryReadRange,
 	comparableExpenses,
-	currencyDigits,
 	monthShareOf,
 	vendorPaymentBars,
 	vendorReadRange
@@ -110,14 +109,21 @@ describe('expense view charts', () => {
 			expect(monthShareOf([], current)?.percent).toBe(100);
 		});
 
-		it("keeps the currency's own precision: three decimals for the Kuwaiti dinar", () => {
+		it('keeps the digits amounts are stored with, whatever the currency: three for the dinar', () => {
 			const kwd = expense('kwd', '2026-03-10', 1.234, 'KWD');
 
 			expect(monthShareOf([expense('a', '2026-03-02', 2.001, 'KWD')], kwd)).toEqual(
 				expect.objectContaining({ amount: 1.234, rest: 2.001, total: 3.235 })
 			);
-			expect(currencyDigits('JPY')).toBe(0);
-			expect(currencyDigits('not a code')).toBe(2);
+		});
+
+		it('keeps fractions of a yen, so the segments make up the total and the share', () => {
+			const yen = expense('yen', '2026-03-10', 0.49, 'JPY');
+
+			const share = monthShareOf([expense('a', '2026-03-02', 0.49, 'JPY')], yen);
+
+			expect(share).toEqual({ amount: 0.49, rest: 0.49, total: 0.98, percent: 50 });
+			expect(share.amount + share.rest).toBeCloseTo(share.total, 6);
 		});
 
 		it('is none for an expense without an amount', () => {
