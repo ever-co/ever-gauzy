@@ -1363,7 +1363,18 @@ describe('TaskViewPageComponent', () => {
 			expect(tabCount()).toBe('4');
 		});
 
-		it('shows no count for a task without comments, or when the count cannot be read', async () => {
+		it('shows no count for a task without comments', async () => {
+			commentService.count.mockResolvedValueOnce(0);
+			create();
+			await settle();
+			await flush();
+			fixture.detectChanges();
+
+			expect(commentService.count).toHaveBeenCalled();
+			expect(tabCount()).toBeNull();
+		});
+
+		it('shows no count when the count cannot be read', async () => {
 			commentService.count.mockRejectedValueOnce(new HttpErrorResponse({ status: 403 }));
 			create();
 			await settle();
@@ -1371,6 +1382,54 @@ describe('TaskViewPageComponent', () => {
 			fixture.detectChanges();
 
 			expect(tabCount()).toBeNull();
+		});
+
+		it("does not load the next task's comments behind another tab", async () => {
+			const page = create();
+			await settle();
+			page.selectTab('comments');
+			fixture.detectChanges();
+			page.selectTab('overview');
+			fixture.detectChanges();
+
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+
+			expect(page.task.id).toBe(OTHER_ID);
+			expect(page.commentsOpened).toBe(false);
+			expect(pane()).toBeNull();
+		});
+
+		it("loads the next task's comments when the Comments tab is the open one", async () => {
+			const page = create();
+			await settle();
+			page.selectTab('comments');
+			fixture.detectChanges();
+
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+
+			expect(page.commentsOpened).toBe(true);
+			expect(pane()).not.toBeNull();
+		});
+
+		it('drops a count from an earlier visit of the same task, after a return to it', async () => {
+			let answerFirst: (count: number) => void;
+			commentService.count.mockImplementationOnce(() => new Promise<number>((resolve) => (answerFirst = resolve)));
+			const page = create();
+			await settle();
+
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+			commentService.count.mockResolvedValueOnce(6);
+			params$.next(convertToParamMap({ id: TASK_ID }));
+			await settle();
+			await flush();
+			answerFirst(1); // the first visit's read answers last
+			await flush();
+
+			expect(page.task.id).toBe(TASK_ID);
+			expect(page.commentCount).toBe(6);
 		});
 
 		it("follows the tab's own count, and drops a first read that answers after it", async () => {
