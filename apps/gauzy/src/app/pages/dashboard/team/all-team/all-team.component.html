@@ -195,6 +195,8 @@
 					@for (row of topMembers; track row.id) {
 					<tr>
 						<td class="cell-main">
+							<!-- The hover card and profile link only for a member whose details are the viewer's to see. -->
+							@if (row.person.canViewDetails) {
 							<a
 								class="cell-title member-link"
 								[routerLink]="['/pages/employees/view', row.employeeId]"
@@ -212,6 +214,9 @@
 							>
 								{{ row.name }}
 							</a>
+							} @else {
+							<span class="cell-title">{{ row.name }}</span>
+							}
 							<span class="cell-meta">{{ row.meta }}</span>
 							<span class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="row.width"></span></span>
 						</td>
