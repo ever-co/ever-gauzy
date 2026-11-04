@@ -138,7 +138,11 @@ describe('TaskService.update — moving the time logs with the task', () => {
 		);
 		expect(movedIds()).toEqual(['log-own', 'log-own-no-sheet']);
 		expect(write.set).toEqual({ projectId: 'project-new', isBillable: true });
-		expect(write.where).toMatchObject({ tenantId: fixture.tenantId });
+		expect(write.where).toMatchObject({
+			tenantId: fixture.tenantId,
+			organizationId: fixture.organizationId,
+			taskId: 'task-1'
+		});
 	});
 
 	it('leaves the logs of an approved or billed timesheet, and re-checks that in the write itself', async () => {
@@ -148,7 +152,7 @@ describe('TaskService.update — moving the time logs with the task', () => {
 
 		expect(movedIds()).not.toContain('log-approved');
 		expect(movedIds()).not.toContain('log-billed');
-		expect(write.conditions).toHaveLength(1);
+		expect(write.conditions).toHaveLength(2);
 		expect(write.conditions[0]).toBeInstanceOf(Brackets);
 	});
 
