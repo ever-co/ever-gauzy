@@ -71,10 +71,9 @@ const ROW = {
 
 /** The resolver, over a scripted service. */
 function surfaces() {
-	const update = jest.fn().mockResolvedValue({ affected: 1 });
 	const organizationTeamEmployeeService = {
-		update,
-		updateMember: jest.fn((id: string, input: unknown) => update(id, input)),
+		update: jest.fn().mockResolvedValue({ affected: 1 }),
+		updateMember: jest.fn().mockResolvedValue({ affected: 1 }),
 		updateActiveTask: jest.fn().mockResolvedValue({ affected: 1 }),
 		deleteTeamMember: jest.fn().mockResolvedValue({ affected: 1 }),
 		findOneByIdString: jest.fn().mockResolvedValue(ROW)
@@ -333,7 +332,7 @@ describe('OrganizationTeamEmployeeResolver — one concept, two protocols, the s
 			order: 3
 		});
 
-		expect(organizationTeamEmployeeService.update).toHaveBeenCalledWith(MEMBER, {
+		expect(organizationTeamEmployeeService.updateMember).toHaveBeenCalledWith(MEMBER, {
 			organizationId: ORGANIZATION,
 			organizationTeamId: TEAM,
 			isTrackingEnabled: false,
@@ -412,7 +411,7 @@ describe('OrganizationTeamEmployeeResolver — one concept, two protocols, the s
 		const { resolver, organizationTeamEmployeeService } = surfaces();
 		const refusal = new ForbiddenException('An error occurred while updating the organization team member.');
 
-		organizationTeamEmployeeService.update.mockRejectedValueOnce(refusal);
+		organizationTeamEmployeeService.updateMember.mockRejectedValueOnce(refusal);
 
 		await expect(
 			resolver.updateOrganizationTeamEmployee(MEMBER, {

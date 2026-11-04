@@ -16,7 +16,7 @@ import { TimerService } from './timer.service';
  */
 describe('TimerService.stopRunningTimersOf', () => {
 	const scope = { employeeId: 'employee-1', organizationId: 'organization-1', tenantId: 'tenant-1' };
-	const runningLog = { id: 'log-running', startedAt: new Date('2026-11-04T09:00:00.000Z'), isRunning: true };
+	const runningLog = { id: 'log-running', startedAt: new Date(Date.now() - 60 * 60 * 1000), isRunning: true };
 
 	let service: TimerService;
 	let findLogs: jest.Mock;
@@ -25,7 +25,11 @@ describe('TimerService.stopRunningTimersOf', () => {
 
 	beforeEach(() => {
 		findLogs = jest.fn(async () => [runningLog]);
-		execute = jest.fn(async (command: TimeLogUpdateCommand) => ({ ...runningLog, ...command.input }));
+		execute = jest.fn(async (command: TimeLogUpdateCommand) => ({
+			...runningLog,
+			id: command.id,
+			...command.input
+		}));
 		updateEmployee = jest.fn(async () => ({ affected: 1 }));
 		service = new TimerService(
 			{ find: findLogs } as never,
@@ -46,7 +50,7 @@ describe('TimerService.stopRunningTimersOf', () => {
 		expect(findLogs).toHaveBeenCalledWith({ where: { ...scope, isRunning: true } });
 		const update = execute.mock.calls[0][0] as TimeLogUpdateCommand;
 		expect(update).toBeInstanceOf(TimeLogUpdateCommand);
-		expect(update.id).toBe(runningLog);
+		expect(update.id).toBe('log-running');
 		expect(update.input.isRunning).toBe(false);
 		expect(update.input.stoppedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
 		expect(stopped).toEqual([expect.objectContaining({ id: 'log-running', isRunning: false })]);
@@ -54,6 +58,20 @@ describe('TimerService.stopRunningTimersOf', () => {
 			{ id: 'employee-1', organizationId: 'organization-1', tenantId: 'tenant-1' },
 			{ isOnline: false, isTrackingTime: false }
 		);
+	});
+
+	it('stops the other timers and returns them when one stop fails', async () => {
+		const otherLog = { ...runningLog, id: 'log-other' };
+		findLogs.mockResolvedValue([runningLog, otherLog]);
+		execute.mockRejectedValueOnce(new Error('connection reset'));
+		jest.spyOn((service as unknown as { logger: { warn: () => void } }).logger, 'warn').mockImplementation(
+			() => undefined
+		);
+
+		const stopped = await service.stopRunningTimersOf(scope);
+
+		expect(stopped).toEqual([expect.objectContaining({ id: 'log-other', isRunning: false })]);
+		expect(updateEmployee).toHaveBeenCalled();
 	});
 
 	it('turned off for one team, looks only for a timer running for that team', async () => {

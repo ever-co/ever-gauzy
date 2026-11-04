@@ -23,7 +23,10 @@ describe('OrganizationTeamEmployeeService.updateMember', () => {
 	beforeEach(() => {
 		publish = jest.fn();
 		stored = { isTrackingEnabled: true };
-		update = jest.fn(async () => ({ affected: 1 }));
+		update = jest.fn(async (_memberId: string, patch: { isTrackingEnabled?: boolean }) => {
+			Object.assign(stored, patch);
+			return { affected: 1 };
+		});
 		findMembership = jest.fn(async () => ({ ...membership, ...stored }));
 		service = Object.create(OrganizationTeamEmployeeService.prototype);
 		Object.assign(service, {
