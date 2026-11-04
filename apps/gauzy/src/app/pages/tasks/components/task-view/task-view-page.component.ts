@@ -181,6 +181,11 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	commentCount = 0;
 	/** The Comments tab has counted the comments for this task: its count is newer than the first read. */
 	private commentCountFromTab = false;
+	/**
+	 * Bumped by every full load, not by a refresh: a count read started by an earlier visit — even of the same task —
+	 * is discarded, while one still pending through a refresh after a status move is kept.
+	 */
+	private commentCountSequence = 0;
 	/** Entity type the Comments tab hangs its comments off, as the Activity tab reads them. */
 	readonly commentEntity = BaseEntityEnum.Task;
 
@@ -306,12 +311,15 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 		this.task = null;
 		// Another task's board is not read behind the Overview until its own tab is opened.
 		this.boardOpened = this.tab === 'board';
+		// Nor its comments, which read every page and look up each attached image.
+		this.commentsOpened = this.tab === 'comments';
 		this.tracking = loading(null);
 		this.workers = [];
 		this.statuses = [];
 		this.currentStatusId = null;
 		this.commentCount = 0;
 		this.commentCountFromTab = false;
+		const commentSequence = ++this.commentCountSequence;
 		this.state = 'loading';
 		try {
 			const task = await this.tasksService.getById(id, TASK_PAGE_RELATIONS);
@@ -325,7 +333,7 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 			this.show();
 			this.state = 'ready';
 			this.loadPanels(task, sequence);
-			void this.loadCommentCount(task.id);
+			void this.loadCommentCount(task.id, commentSequence);
 		} catch (error) {
 			if (sequence !== this.loadSequence) {
 				return;
@@ -732,15 +740,12 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 	/**
 	 * The Comments tab's count, before the tab is opened; a failed read leaves the tab without one. An answer that
 	 * comes after the tab has counted for itself is older than the tab's count, and is dropped. It is kept to the
-	 * task and organization it was read for, not to the load: a refresh after a status move leaves the comments as
-	 * they were.
+	 * visit it was read for, not to the load sequence: a refresh after a status move leaves the comments as they were.
 	 */
-	private async loadCommentCount(taskId: string): Promise<void> {
-		const organizationId = this.organization?.id;
+	private async loadCommentCount(taskId: string, sequence: number): Promise<void> {
 		try {
 			const count = await this.commentService.count(BaseEntityEnum.Task, taskId, this.scope());
-			const current = this.task?.id === taskId && this.organization?.id === organizationId;
-			if (current && !this.commentCountFromTab) this.commentCount = count;
+			if (sequence === this.commentCountSequence && !this.commentCountFromTab) this.commentCount = count;
 		} catch {
 			// The tab shows no count.
 		}
