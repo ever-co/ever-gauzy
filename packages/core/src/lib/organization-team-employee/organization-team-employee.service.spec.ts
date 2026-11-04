@@ -28,7 +28,9 @@ const insideBoundary = (tokenOrganizationId: string, statedOrganizationId?: stri
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const membershipMatches = (row: any, where: any): boolean => {
-	const namesScope = [where.employeeId, where.tenantId, where.organizationTeamId].every((value) => value !== undefined);
+	const namesScope = [where.employeeId, where.tenantId, where.organizationTeamId].every(
+		(value) => value !== undefined
+	);
 	if (!namesScope) {
 		throw new Error('A team manager check must name the employee, the tenant and the team');
 	}
@@ -38,7 +40,10 @@ const membershipMatches = (row: any, where: any): boolean => {
 	const isOrganization = where.organizationId === undefined || row.organizationId === where.organizationId;
 	const hasRole = where.role === undefined || row.role?.name === where.role.name;
 	const hasFlag = where.isManager === undefined || row.isManager === where.isManager;
-	return isEmployee && isTenant && isTeam && isOrganization && hasRole && hasFlag;
+	const isActiveEnough = !('isActive' in where) || row.isActive !== false;
+	const isNotArchived = !('isArchived' in where) || row.isArchived !== true;
+	const keepsStatus = isActiveEnough && isNotArchived;
+	return isEmployee && isTenant && isTeam && isOrganization && hasRole && hasFlag && keepsStatus;
 };
 
 /**
@@ -449,6 +454,8 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 	const member = asEmployee('member-employee');
 	const otherTeamManager = asEmployee('other-manager-employee');
 	const flaggedManager = asEmployee('flagged-manager-employee');
+	const inactiveFlaggedManager = asEmployee('inactive-flagged-manager-employee');
+	const archivedFlaggedManager = asEmployee('archived-flagged-manager-employee');
 
 	const rows = [
 		{
@@ -464,6 +471,22 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 			organizationTeamId: teamId,
 			role: null,
 			isManager: true
+		},
+		{
+			id: 'row-inactive-flagged-manager',
+			employeeId: 'inactive-flagged-manager-employee',
+			organizationTeamId: teamId,
+			role: null,
+			isManager: true,
+			isActive: false
+		},
+		{
+			id: 'row-archived-flagged-manager',
+			employeeId: 'archived-flagged-manager-employee',
+			organizationTeamId: teamId,
+			role: null,
+			isManager: true,
+			isArchived: true
 		},
 		{
 			id: 'row-other-manager',
@@ -618,6 +641,16 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 					changes: { ...inTeam(teamId), isTrackingEnabled: false }
 				}
 			]);
+		});
+
+		it.each([
+			['inactive', () => inactiveFlaggedManager],
+			['archived', () => archivedFlaggedManager]
+		])('refuses a flagged member whose membership is %s', async (_, caller) => {
+			await expect(
+				as(caller(), () => service.update('row-member', { ...inTeam(teamId), isTrackingEnabled: false }))
+			).rejects.toThrow(ForbiddenException);
+			expect(updated).toEqual([]);
 		});
 
 		it('refuses a plain member changing another member', async () => {
