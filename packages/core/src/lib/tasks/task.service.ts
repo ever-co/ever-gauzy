@@ -70,7 +70,7 @@ import { EmployeeNotificationService } from '../employee-notification/employee-n
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
-import { OrganizationProject, TimeLog } from '../core/entities/internal';
+import { Organization, OrganizationProject, TimeLog } from '../core/entities/internal';
 import { EventBus as DomainEventBus } from '../event-bus/event-bus';
 import { TaskEvent } from '../event-bus/events/task.event';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
@@ -229,10 +229,16 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 			// Update the task with the provided data. When the task moved, the project, number and prefix computed
 			// above win over any the input carries: a client that sends the whole task back sends the old number.
+			// A body that removes the project can still carry the old `project` relation, which would keep the task in it
+			const saved: Partial<Task> = { ...(moved ?? {}) };
+			const removesProject = data.projectId === null && 'project' in data;
+			if (removesProject) {
+				saved.project = null;
+			}
 			const updatedTask = await super.create({
 				...data,
 				id,
-				...(moved ?? {})
+				...saved
 			});
 
 			// Register Task Sprint moving history
@@ -261,7 +267,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const organizationId = updatedTask.organizationId ?? task.organizationId;
 
 			const namesProject = data.projectId !== undefined;
-			const timeLogsFollowProject = moveTimeLogs === true && namesProject;
+			const changesProject = (data.projectId ?? null) !== (task.projectId ?? null);
+			const timeLogsFollowProject = moveTimeLogs === true && namesProject && changesProject;
 			if (timeLogsFollowProject) {
 				const taskProjectId = moved?.projectId ?? data.projectId ?? null;
 				await this.moveTimeLogsToProject(id, taskProjectId, organizationId, tenantId);
@@ -1299,8 +1306,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 	/**
 	 * Moves the task's time logs to the task's project, so the time tracked on a task is counted where the task is.
-	 * A log of an approved or billed timesheet stays where it is: its hours were already signed off or invoiced
-	 * under its project. A moved log takes the billable setting of a project that has one.
+	 * Moving a log changes recorded time, so it follows the rules of `PUT /timesheet/time-log/:id`: the caller holds
+	 * ALLOW_MODIFY_TIME, the organization allows modifying time, and only the logs of employees the caller may act for
+	 * move. A log of an approved or billed timesheet stays where it is: its hours were already signed off or invoiced
+	 * under its project, and the write itself re-checks that so an approval read after the logs cannot be overridden.
+	 * A moved log takes the billable setting of a project that has one.
 	 *
 	 * Best-effort, like the other steps after the save: a failure is logged and leaves the logs where they were,
 	 * it never fails an update that already succeeded.
@@ -1317,6 +1327,11 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		tenantId: ID
 	): Promise<void> {
 		try {
+			const mayModifyTime = await this.mayModifyTimeIn(organizationId, tenantId);
+			if (!mayModifyTime) {
+				return;
+			}
+
 			const changes: Partial<TimeLog> = { projectId };
 			if (projectId) {
 				const destination = await this.findDestinationProject(projectId, tenantId, organizationId);
@@ -1328,18 +1343,82 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			const timeLogs = await this.typeOrmRepository.manager.find(TimeLog, {
 				where: { taskId, tenantId, organizationId },
 				relations: { timesheet: true },
-				select: { id: true, projectId: true, timesheet: { id: true, status: true, isBilled: true } }
+				select: {
+					id: true,
+					employeeId: true,
+					projectId: true,
+					timesheet: { id: true, status: true, isBilled: true }
+				}
 			});
 			const movableLogs = timeLogs.filter((timeLog) => isMovableToProject(timeLog, projectId));
-			const movableIds = movableLogs.map((timeLog) => timeLog.id);
-			if (movableIds.length === 0) {
+			const writableLogs = await this.logsTheCallerMayModify(movableLogs, organizationId);
+			const writableIds = writableLogs.map((timeLog) => timeLog.id);
+			if (writableIds.length === 0) {
 				return;
 			}
 
-			await this.typeOrmRepository.manager.update(TimeLog, { id: In(movableIds), tenantId }, changes);
+			await this.typeOrmRepository.manager
+				.createQueryBuilder()
+				.update(TimeLog)
+				.set(changes)
+				.where({ id: In(writableIds), tenantId })
+				.andWhere(
+					new Brackets((qb: WhereExpressionBuilder) => {
+						qb.where(p(`"timesheetId" IS NULL`));
+						qb.orWhere(
+							p(
+								`"timesheetId" IN (SELECT "id" FROM "timesheet" WHERE "status" <> :approved AND "isBilled" = :billed)`
+							),
+							{ approved: TimesheetStatus.APPROVED, billed: false }
+						);
+					})
+				)
+				.execute();
 		} catch (error) {
 			console.error('Error moving the task time logs to its project:', error);
 		}
+	}
+
+	/**
+	 * Whether the caller may modify recorded time in the organization: the ALLOW_MODIFY_TIME permission and the
+	 * organization's `allowModifyTime` policy, as `OrganizationPermissionGuard` requires for a time log edit.
+	 *
+	 * @param organizationId The organization of the task.
+	 * @param tenantId The caller's tenant.
+	 */
+	private async mayModifyTimeIn(organizationId: ID, tenantId: ID): Promise<boolean> {
+		const hasPermission = RequestContext.hasPermission(PermissionsEnum.ALLOW_MODIFY_TIME);
+		if (!hasPermission) {
+			return false;
+		}
+		const organization = await this.typeOrmRepository.manager.findOne(Organization, {
+			where: { id: organizationId, tenantId },
+			select: { id: true, allowModifyTime: true }
+		});
+		return organization?.allowModifyTime === true;
+	}
+
+	/**
+	 * The logs whose employee the caller may act for: their own, the members of a team they manage, or anyone with
+	 * CHANGE_SELECTED_EMPLOYEE, as for a time log edit.
+	 *
+	 * @param timeLogs The logs that would move.
+	 * @param organizationId The organization of the task.
+	 */
+	private async logsTheCallerMayModify(timeLogs: ITimeLog[], organizationId: ID): Promise<ITimeLog[]> {
+		const employeeIds = [...new Set(timeLogs.map((timeLog) => timeLog.employeeId))];
+		const allowed = new Set<ID>();
+		for (const employeeId of employeeIds) {
+			const mayActFor = await this._managedEmployeeService.canManageEmployee(
+				employeeId,
+				undefined,
+				organizationId
+			);
+			if (mayActFor) {
+				allowed.add(employeeId);
+			}
+		}
+		return timeLogs.filter((timeLog) => allowed.has(timeLog.employeeId));
 	}
 
 	/**
