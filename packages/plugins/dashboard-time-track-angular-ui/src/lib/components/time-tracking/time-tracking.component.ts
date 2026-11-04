@@ -49,6 +49,7 @@ import {
 } from '@gauzy/contracts';
 import { GuiDrag, distinctUntilChange, isNotEmpty, progressStatus, toUtcOffset } from '@gauzy/ui-core/common';
 import {
+	DashboardQuickLookService,
 	DateRangePickerBuilderService,
 	EmployeesService,
 	EmployeeTrackedDataAccessService,
@@ -164,6 +165,7 @@ export class TimeTrackingComponent
 	public windows: GuiDrag[];
 
 	private readonly _employeeTrackedDataAccessService = inject(EmployeeTrackedDataAccessService);
+	private readonly _quickLookService = inject(DashboardQuickLookService);
 
 	constructor(
 		public readonly translateService: TranslateService,
@@ -599,6 +601,16 @@ export class TimeTrackingComponent
 		} catch (error) {
 			console.log('Error while redirecting to tasks page.', error);
 		}
+	}
+
+	/** Opens the task in the dashboard's quick-look drawer, as on the Tasks pages. */
+	public openTask(task: ITasksStatistics) {
+		this._quickLookService.openTask(task);
+	}
+
+	/** Opens the project in the dashboard's quick-look drawer. */
+	public openProject(project: IProjectsStatistics) {
+		this._quickLookService.openProject(project);
 	}
 
 	public redirectToManualTimeReport() {
