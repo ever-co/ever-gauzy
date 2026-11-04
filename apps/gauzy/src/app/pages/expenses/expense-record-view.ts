@@ -86,11 +86,17 @@ export async function loadExpense(service: ExpensesService, id: string, scope: I
  * grid has no column for: the type and the tax. Used by the expenses drawer (a quick look); the expense's own page
  * lays the same facts out in its columns.
  *
- * @param translate Translates the type's key: a field's value is shown as given.
+ * @param translate Translates the type's key: a field's value is shown as given, so the caller builds the sections
+ * again when the language changes.
+ * @param locale The app's language, which formats a flat tax amount; the browser's when not given.
  */
-export function buildExpenseViewSections(expense: IExpense, translate: (key: string) => string): IRecordViewSection[] {
+export function buildExpenseViewSections(
+	expense: IExpense,
+	translate: (key: string) => string,
+	locale?: string
+): IRecordViewSection[] {
 	const typeKey = expenseTypeKey(expense?.typeOfExpense);
-	const tax = expenseTaxOf(expense);
+	const tax = expenseTaxOf(expense, locale);
 	return [
 		{
 			fields: [
