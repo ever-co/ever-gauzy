@@ -19,6 +19,7 @@
 								[name]="$safeNavigationMigration(employee?.user?.name)"
 								[src]="$safeNavigationMigration(employee?.user?.imageUrl)"
 								[employee]="employee"
+								linkTo="view"
 								[appendCaption]="'TIMESHEET.LAST_WORKED' | translate"
 								[caption]="lastWorkedAt(employee) | utcToLocal | dateFormat"
 							></ngx-avatar>
