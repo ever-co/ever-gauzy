@@ -1357,11 +1357,18 @@ export class TaskService extends TenantAwareCrudService<Task> {
 				return;
 			}
 
+			// A concurrent move of the same task can save another project after this one: the write only lands while
+			// the task is still in the project these logs move to, so the last move saved decides where they are
+			let taskStillThere = p(`"taskId" IN (SELECT "id" FROM "task" WHERE "projectId" IS NULL)`);
+			if (projectId) {
+				taskStillThere = p(`"taskId" IN (SELECT "id" FROM "task" WHERE "projectId" = :destinationProjectId)`);
+			}
+
 			await this.typeOrmRepository.manager
 				.createQueryBuilder()
 				.update(TimeLog)
 				.set(changes)
-				.where({ id: In(writableIds), tenantId })
+				.where({ id: In(writableIds), tenantId, organizationId, taskId })
 				.andWhere(
 					new Brackets((qb: WhereExpressionBuilder) => {
 						qb.where(p(`"timesheetId" IS NULL`));
@@ -1373,6 +1380,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 						);
 					})
 				)
+				.andWhere(taskStillThere, { destinationProjectId: projectId })
 				.execute();
 		} catch (error) {
 			console.error('Error moving the task time logs to its project:', error);
