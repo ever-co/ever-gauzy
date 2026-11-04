@@ -10,6 +10,19 @@
 	<nb-card-body class="expense-body">
 		<!-- The money and what it was for on the left; who, where and when in the details panel on the right. -->
 		<form class="expense-layout" [formGroup]="form">
+			<!-- The type decides the statuses on offer: one choice of three, as radio buttons across the top. -->
+			<nb-radio-group
+				class="type-options"
+				role="radiogroup"
+				[attr.aria-label]="'EXPENSE_VIEW.TYPE' | translate"
+				formControlName="typeOfExpense"
+			>
+				@for (expenseType of expenseTypes; track expenseType) {
+					<nb-radio [value]="expenseType" (valueChange)="setExpenseStatuses($event)">
+						{{ 'EXPENSES_PAGE.MUTATION.' + expenseType | translate }}
+					</nb-radio>
+				}
+			</nb-radio-group>
 			<section class="expense-main">
 				@if (showWarning) {
 					<div class="expense-alert" role="alert">
@@ -71,29 +84,6 @@
 						<span>{{ 'EXPENSES_PAGE.SPLIT_HELP' | translate }}</span>
 					</p>
 				}
-
-				<!-- The type decides the statuses on offer: one choice of three, as a segmented control. As a radio group it is
-					 one Tab stop, the selected type, and the arrow keys move the choice. -->
-				<div class="form-group">
-					<label class="label" id="expenseTypeLabel">{{ 'EXPENSE_VIEW.TYPE' | translate }}</label>
-					<div class="type-options" role="radiogroup" aria-labelledby="expenseTypeLabel">
-						@for (expenseType of expenseTypes; track expenseType; let index = $index) {
-							<button
-								type="button"
-								role="radio"
-								[attr.tabindex]="isExpenseTypeTabStop(expenseType, index) ? 0 : -1"
-								(keydown)="onExpenseTypeKeydown($event, index)"
-								class="type-option"
-								[class.is-selected]="form.get('typeOfExpense').value === expenseType"
-								[attr.aria-checked]="form.get('typeOfExpense').value === expenseType"
-								[title]="'EXPENSES_PAGE.MUTATION.' + expenseType | translate"
-								(click)="selectExpenseType(expenseType)"
-							>
-								{{ 'EXPENSES_PAGE.MUTATION.' + expenseType | translate }}
-							</button>
-						}
-					</div>
-				</div>
 
 				<div class="form-group">
 					<label class="label" for="expensePurpose">{{ 'POP_UPS.PURPOSE' | translate }}</label>

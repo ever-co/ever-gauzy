@@ -151,49 +151,38 @@ $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 	}
 }
 
-/* ── The type: a segmented control ── */
+/* ── The type: radio buttons across the top, over both columns ── */
 
 .type-options {
+	grid-column: 1 / -1;
 	display: flex;
-	gap: 0.125rem;
-	padding: 0.1875rem;
-	border: $hairline;
-	border-radius: $radius;
-	background-color: var(--gauzy-card-2, $hover-tint);
+	flex-wrap: wrap;
+	gap: 0.25rem 1.25rem;
+	padding: 1rem 1.5rem 0;
 }
 
-.type-option {
-	flex: 1 1 0;
-	min-width: 0;
-	height: 1.875rem;
-	padding: 0 0.625rem;
-	overflow: hidden;
-	border: 0;
-	border-radius: calc(#{$radius} - 0.1875rem);
-	background: transparent;
-	color: var(--gauzy-text-color-2);
-	font: inherit;
-	font-size: 0.8125rem;
-	font-weight: 500;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	cursor: pointer;
-	transition: background-color 0.12s ease-in-out, color 0.12s ease-in-out;
+// Smaller than Nebular's default radios, in step with the form's 13px controls; the row's gap replaces the
+// label's own trailing padding.
+:host .type-options ::ng-deep nb-radio {
+	$size: 0.875rem;
 
-	&:hover {
-		color: var(--gauzy-text-color-1);
+	label {
+		padding: 0.125rem 0;
 	}
 
-	&:focus-visible {
-		outline: 2px solid var(--gauzy-action-info-text, var(--color-primary-default));
-		outline-offset: 1px;
+	.outer-circle,
+	.inner-circle {
+		width: $size;
+		height: $size;
 	}
 
-	&.is-selected {
-		background-color: var(--gauzy-card-1);
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
-		color: var(--color-primary-default);
-		font-weight: 600;
+	.text {
+		font-size: 0.8125rem;
+		line-height: 1.125rem;
+		// Nebular clears the circle with a margin and a padding on the physical side of each direction (left in
+		// LTR, right in RTL). One logical padding, important to outrank both, clears the smaller circle either way.
+		margin-inline: 0 !important;
+		padding-inline-start: calc(#{$size} + 0.375rem) !important;
 	}
 }
 
@@ -391,5 +380,6 @@ $hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
 
 	.type-options {
 		flex-direction: column;
+		align-items: flex-start;
 	}
 }

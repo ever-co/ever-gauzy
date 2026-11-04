@@ -1,7 +1,7 @@
 import { UntypedFormBuilder } from '@angular/forms';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslateService } from '@ngx-translate/core';
-import { ExpenseTypesEnum, IExpense, TaxTypesEnum } from '@gauzy/contracts';
+import { ExpenseStatusesEnum, ExpenseTypesEnum, IExpense, TaxTypesEnum } from '@gauzy/contracts';
 import { OrganizationSettingService, Store } from '@gauzy/ui-core/core';
 import { ExpensesMutationComponent } from './expenses-mutation.component';
 import { PLACEHOLDER_RECEIPT } from './expense-receipt.utils';
@@ -107,7 +107,7 @@ describe('ExpensesMutationComponent — included taxes can be taken out again', 
 	});
 });
 
-describe('ExpensesMutationComponent — the split, the warning and the type keyboard', () => {
+describe('ExpensesMutationComponent — the split and the warning', () => {
 	let dialogRef: { close: jest.Mock };
 	let component: ExpensesMutationComponent;
 
@@ -160,30 +160,75 @@ describe('ExpensesMutationComponent — the split, the warning and the type keyb
 		}
 	});
 
-	it('moves the type with the arrow keys, Home and End, wrapping at the ends', () => {
-		const key = (name: string, index: number) => {
-			const event = { key: name, preventDefault: jest.fn(), currentTarget: null } as unknown as KeyboardEvent;
-			component.onExpenseTypeKeydown(event, index);
-			return event;
-		};
-		const [first, , last] = component.expenseTypes;
+});
 
-		key('ArrowLeft', 0);
-		expect(component.form.get('typeOfExpense').value).toBe(last);
-		key('ArrowRight', 2);
-		expect(component.form.get('typeOfExpense').value).toBe(first);
-		key('End', 0);
-		expect(component.form.get('typeOfExpense').value).toBe(last);
-		key('Home', 2);
-		expect(component.form.get('typeOfExpense').value).toBe(first);
-		expect(key('Tab', 0).preventDefault).not.toHaveBeenCalled();
+/**
+ * The three expense types are a requirement of the dialog, not a detail of its layout: whatever the type control
+ * looks like, every one of them must be offered and keep what it does.
+ */
+describe('ExpensesMutationComponent — the three expense types are always offered', () => {
+	let dialogRef: { close: jest.Mock };
+	let component: ExpensesMutationComponent;
+
+	beforeEach(() => {
+		dialogRef = { close: jest.fn() };
+		component = new ExpensesMutationComponent(
+			dialogRef as unknown as NbDialogRef<ExpensesMutationComponent>,
+			{} as NbDialogService,
+			new UntypedFormBuilder(),
+			{} as Store,
+			{ instant: (key: string) => key } as unknown as TranslateService,
+			{ getDateFromOrganizationSettings: () => new Date(2026, 9, 31) } as unknown as OrganizationSettingService
+		);
 	});
 
-	it('makes only the selected type a Tab stop', () => {
-		const selected = component.form.get('typeOfExpense').value;
+	/** As a radio picks it: the radio group sets the control, the radio's valueChange the statuses. */
+	const pick = (type: ExpenseTypesEnum) => {
+		component.form.get('typeOfExpense').setValue(type);
+		component.setExpenseStatuses(type);
+	};
 
-		expect(component.expenseTypes.filter((type, index) => component.isExpenseTypeTabStop(type, index))).toEqual([
-			selected
+	it('offers Tax Deductible, Not Tax Deductible and Billable to Contact, starting on Tax Deductible', () => {
+		expect(component.expenseTypes).toEqual([
+			ExpenseTypesEnum.TAX_DEDUCTIBLE,
+			ExpenseTypesEnum.NOT_TAX_DEDUCTIBLE,
+			ExpenseTypesEnum.BILLABLE_TO_CONTACT
 		]);
+		expect(component.form.get('typeOfExpense').value).toBe(ExpenseTypesEnum.TAX_DEDUCTIBLE);
+	});
+
+	it.each([ExpenseTypesEnum.TAX_DEDUCTIBLE, ExpenseTypesEnum.NOT_TAX_DEDUCTIBLE])(
+		'saves %s as picked, as not billable',
+		(type) => {
+			pick(ExpenseTypesEnum.BILLABLE_TO_CONTACT);
+			pick(type);
+			component.form.patchValue({ amount: 120, currency: 'USD' });
+
+			component.addOrEditExpense();
+
+			expect(component.statuses).toEqual([ExpenseStatusesEnum.NOT_BILLABLE]);
+			expect(dialogRef.close).toHaveBeenCalledWith(expect.objectContaining({ typeOfExpense: type }));
+		}
+	);
+
+	it('offers the billing statuses for Billable to Contact, and saves it once a contact is picked', () => {
+		pick(ExpenseTypesEnum.BILLABLE_TO_CONTACT);
+		component.form.patchValue({ amount: 120, currency: 'USD' });
+
+		expect(component.statuses).toEqual([
+			ExpenseStatusesEnum.INVOICED,
+			ExpenseStatusesEnum.UNINVOICED,
+			ExpenseStatusesEnum.PAID
+		]);
+
+		component.addOrEditExpense();
+		expect(component.showWarning).toBe(true);
+		expect(dialogRef.close).not.toHaveBeenCalled();
+
+		component.form.patchValue({ organizationContact: { id: 'contact-1', name: 'Acme' } });
+		component.addOrEditExpense();
+		expect(dialogRef.close).toHaveBeenCalledWith(
+			expect.objectContaining({ typeOfExpense: ExpenseTypesEnum.BILLABLE_TO_CONTACT })
+		);
 	});
 });

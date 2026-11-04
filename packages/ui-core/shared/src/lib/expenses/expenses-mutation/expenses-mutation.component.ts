@@ -151,52 +151,6 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 	}
 
 	/**
-	 * Picks the expense type from the segmented control, and offers the statuses that type takes.
-	 *
-	 * @param typeOfExpense
-	 */
-	selectExpenseType(typeOfExpense: ExpenseTypesEnum) {
-		const control = this.form.get('typeOfExpense');
-		if (control.value === typeOfExpense) {
-			return;
-		}
-		control.setValue(typeOfExpense);
-		control.markAsDirty();
-		this.setExpenseStatuses(typeOfExpense);
-	}
-
-	/** The type control's one Tab stop: the selected type, or the first while none is. */
-	isExpenseTypeTabStop(typeOfExpense: ExpenseTypesEnum, index: number): boolean {
-		const selected = this.form.get('typeOfExpense').value;
-		return this.expenseTypes.includes(selected) ? selected === typeOfExpense : index === 0;
-	}
-
-	/**
-	 * Moves the type's choice with the arrow keys, Home and End, as a radio group does, and takes the focus with it.
-	 *
-	 * @param event
-	 * @param index The focused type's position.
-	 */
-	onExpenseTypeKeydown(event: KeyboardEvent, index: number) {
-		const count = this.expenseTypes.length;
-		const steps: Record<string, number> = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
-		let next: number;
-		if (event.key in steps) {
-			next = (index + steps[event.key] + count) % count;
-		} else if (event.key === 'Home') {
-			next = 0;
-		} else if (event.key === 'End') {
-			next = count - 1;
-		} else {
-			return;
-		}
-		event.preventDefault();
-		this.selectExpenseType(this.expenseTypes[next]);
-		const options = (event.currentTarget as HTMLElement)?.parentElement?.querySelectorAll<HTMLElement>('[role="radio"]');
-		options?.[next]?.focus();
-	}
-
-	/**
 	 * Selected Organization Contact
 	 *
 	 * @param contact
