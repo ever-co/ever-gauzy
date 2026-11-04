@@ -927,8 +927,15 @@ export class TimerService {
 			if (stopsAfterStart) {
 				partialTimeLog.stoppedAt = stoppedAt;
 			}
-			const stoppedLog = await this._commandBus.execute(new TimeLogUpdateCommand(partialTimeLog, runningLog));
-			stoppedLogs.push(stoppedLog);
+			// Each stop on its own: one that fails leaves the others stopped, and those are still returned
+			try {
+				const stoppedLog = await this._commandBus.execute(
+					new TimeLogUpdateCommand(partialTimeLog, runningLog.id)
+				);
+				stoppedLogs.push(stoppedLog);
+			} catch (error) {
+				this.logger.warn(`Failed to stop the running time log ${runningLog.id}: ${error?.message}`);
+			}
 		}
 
 		const hasStoppedAny = stoppedLogs.length > 0;
@@ -954,13 +961,17 @@ export class TimerService {
 	private async markNotTracking(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
 		const employee = { id: employeeId, organizationId, tenantId };
 		const status = { isOnline: false, isTrackingTime: false };
-		switch (this.ormType) {
-			case MultiORMEnum.MikroORM:
-				await this.mikroOrmEmployeeRepository.nativeUpdate(employee, status);
-				return;
-			case MultiORMEnum.TypeORM:
-			default:
-				await this.typeOrmEmployeeRepository.update(employee, status);
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					await this.mikroOrmEmployeeRepository.nativeUpdate(employee, status);
+					return;
+				case MultiORMEnum.TypeORM:
+				default:
+					await this.typeOrmEmployeeRepository.update(employee, status);
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to mark employee ${employeeId} as not tracking: ${error?.message}`);
 		}
 	}
 }

@@ -16,7 +16,7 @@ export class TrackingTurnedOffHandler implements IEventHandler<TrackingTurnedOff
 	/**
 	 * Stops the timer the employee still has running, so it does not keep counting time nobody can stop from a
 	 * client that hides the timer once tracking is off. Best-effort: the change of the tracking switch is saved by
-	 * then, and a failure here leaves the timer to the employee's own stop.
+	 * then, and a timer this fails to stop keeps running until a later stop succeeds.
 	 */
 	async handle(event: TrackingTurnedOffEvent): Promise<void> {
 		try {
