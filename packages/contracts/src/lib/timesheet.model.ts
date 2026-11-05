@@ -501,7 +501,7 @@ export interface IReportDayGroupByEmployee {
 	employee: IEmployee;
 	logs: {
 		date: string;
-		employeeLogs: {
+		projectLogs: {
 			sum: number;
 			activity: number;
 			project: IOrganizationProject;
@@ -529,14 +529,14 @@ export interface IReportDayGroupByClient {
 		project: IOrganizationProject;
 		logs: {
 			date: string;
-			employeeLogs: {
+			projectLogs: {
 				tasks: IReportDayTaskRow[];
 				employee: IEmployee;
 				sum: number;
 				activity: number;
 			}[];
 		}[];
-	};
+	}[];
 }
 
 export type IReportDayData =

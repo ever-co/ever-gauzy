@@ -1,7 +1,12 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import type { IReportDayGroupByDate, IReportDayTaskRow } from '@gauzy/contracts';
+import type {
+	IReportDayGroupByClient,
+	IReportDayGroupByDate,
+	IReportDayGroupByEmployee,
+	IReportDayTaskRow
+} from '@gauzy/contracts';
 
 /**
  * A team-scoped report counts the logs filed under the team. A member who tracked from a client that sent no team
@@ -57,6 +62,8 @@ interface ICallerReads {
 	listOn: any;
 	dailyOff: any;
 	dailyOn: any;
+	byEmployeeOn: any;
+	byClientOn: any;
 }
 
 type Reads = Record<'manager' | 'organizationWide', ICallerReads>;
@@ -71,6 +78,27 @@ function taskRowsOf(daily: IReportDayGroupByDate[]): IReportDayTaskRow[] {
 	const projects = daily.flatMap((day) => day.logs);
 	const employeeLogs = projects.flatMap((project) => project.employeeLogs);
 	return employeeLogs.flatMap((employeeLog) => employeeLog.tasks);
+}
+
+/** Every task row of a daily report grouped by employee, as the shared report contract types it. */
+function employeeTaskRowsOf(daily: IReportDayGroupByEmployee[]): IReportDayTaskRow[] {
+	const days = daily.flatMap((employee) => employee.logs);
+	const projectLogs = days.flatMap((day) => day.projectLogs);
+	return projectLogs.flatMap((projectLog) => projectLog.tasks);
+}
+
+/** Every task row of a daily report grouped by client, as the shared report contract types it. */
+function clientTaskRowsOf(daily: IReportDayGroupByClient[]): IReportDayTaskRow[] {
+	const projects: IReportDayGroupByClient['logs'] = daily.flatMap((client) => client.logs);
+	const days = projects.flatMap((project) => project.logs);
+	const employeeLogs = days.flatMap((day) => day.projectLogs);
+	return employeeLogs.flatMap((employeeLog) => employeeLog.tasks);
+}
+
+/** Each row's team, by the log it reports. */
+function teamByRow(rows: IReportDayTaskRow[]): Record<string, string | null> {
+	const entries = rows.map((row) => [row.description, row.organizationTeamId]);
+	return Object.fromEntries(entries);
 }
 
 async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
@@ -95,8 +123,18 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 			const { TimeLog } = require('./time-log.entity');
 			const { TimeLogService } = require('./time-log.service');
 			const { MikroOrmTimeLogRepository } = require('./repository/mikro-orm-time-log.repository');
-			const { GetTimeLogGroupByDateCommand } = require('./commands');
+			const {
+				GetTimeLogGroupByClientCommand,
+				GetTimeLogGroupByDateCommand,
+				GetTimeLogGroupByEmployeeCommand
+			} = require('./commands');
 			const { GetTimeLogGroupByDateHandler } = require('./commands/handlers/get-time-log-group-by-date.handler');
+			const {
+				GetTimeLogGroupByEmployeeHandler
+			} = require('./commands/handlers/get-time-log-group-by-employee.handler');
+			const {
+				GetTimeLogGroupByClientHandler
+			} = require('./commands/handlers/get-time-log-group-by-client.handler');
 			const {
 				OrganizationTeamEmployee
 			} = require('../../organization-team-employee/organization-team-employee.entity');
@@ -202,13 +240,19 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 				dataSource.getRepository(OrganizationTeamEmployee),
 				dataSource.getRepository(OrganizationProjectEmployee)
 			);
-			const groupByDate = new GetTimeLogGroupByDateHandler();
+			const handlers: Array<[new (...args: any[]) => unknown, { execute(command: unknown): Promise<unknown> }]> =
+				[
+					[GetTimeLogGroupByDateCommand, new GetTimeLogGroupByDateHandler()],
+					[GetTimeLogGroupByEmployeeCommand, new GetTimeLogGroupByEmployeeHandler()],
+					[GetTimeLogGroupByClientCommand, new GetTimeLogGroupByClientHandler()]
+				];
 			const commandBus = {
 				execute: async (command: unknown) => {
-					if (command instanceof GetTimeLogGroupByDateCommand) {
-						return await groupByDate.execute(command);
+					const handler = handlers.find(([type]) => command instanceof type)?.[1];
+					if (!handler) {
+						throw new Error('Unexpected command');
 					}
-					throw new Error('Unexpected command');
+					return await handler.execute(command);
 				}
 			};
 			const service = (mikroOrmRepository: unknown) =>
@@ -244,7 +288,9 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 					listOff: await read(() => target().getTimeLogs(off)),
 					listOn: await read(() => target().getTimeLogs(on)),
 					dailyOff: await read(() => target().getDailyReport(off)),
-					dailyOn: await read(() => target().getDailyReport(on))
+					dailyOn: await read(() => target().getDailyReport(on)),
+					byEmployeeOn: await read(() => target().getDailyReport({ ...on, groupBy: 'employee' })),
+					byClientOn: await read(() => target().getDailyReport({ ...on, groupBy: 'client' }))
 				};
 			};
 
@@ -356,6 +402,16 @@ describe('TimeLogService team-scoped reports with the time logged without a team
 			const { listOn } = measured[orm].organizationWide;
 			expect(listOn.error).toBeUndefined();
 			expect(namesOf(listOn)).toEqual(['managerWithoutTeam', 'memberInTeam', 'memberWithoutTeam']);
+		});
+
+		it('states each row team in the employee and client groupings, along the paths the contract types', () => {
+			const expected = { memberInTeam: TEAM_MANAGED, memberWithoutTeam: null, managerWithoutTeam: null };
+			const { byEmployeeOn, byClientOn } = measured[orm].manager;
+			expect(byEmployeeOn.error).toBeUndefined();
+			expect(byClientOn.error).toBeUndefined();
+
+			expect(teamByRow(employeeTaskRowsOf(byEmployeeOn))).toEqual(expected);
+			expect(teamByRow(clientTaskRowsOf(byClientOn))).toEqual(expected);
 		});
 
 		it('states each daily report row team, null for the time without a team', () => {
