@@ -28,14 +28,22 @@ export const EditEmployeePage = {
 	payPeriodDropdownCss: '#payPeriodsSelect',
 	weeklyLimitInputCss: '#reWeeklyLimitInput',
 	billRateValueInputCss: '#billRateValueInput',
-	projectOrContactsDropdownCss: '#departmentsSelect',
+	projectOrContactsDropdownCss: '#departmentsSelect, #assignContactsSearch',
 	projectOrContactDropdownOptionCss: 'div.ng-option',
-	// Projects / Contacts tabs = <ga-edit-employee-membership> (redesigned in 17125da2e8, #10115):
+	// Projects tab = <ga-edit-employee-membership> (redesigned in 17125da2e8, #10115):
 	// header "+ Add" opens the add form; its own "Add" (submitForm -> entitiesAdded) persists the pick;
 	// the employee's entities are listed as `ul.membership__list > li.membership__row`.
-	addProjectOrContactButtonCss: 'ga-edit-employee-membership header.membership__header > button[status="success"]',
-	saveProjectOrContactButtonCss: 'ga-edit-employee-membership .membership__add-actions > button[status="success"]',
-	verifyProjectOrContactCss: 'ga-edit-employee-membership ul.membership__list > li.membership__row',
+	// Contacts tab = <ga-edit-employee-contacts>, a table of its own: header "Assign contacts" opens the
+	// assign dialog (in the overlay, outside the tab) — a search (#assignContactsSearch) over a checklist of
+	// `button.assign-option` rows; its "Assign" persists the ticks; rows are `ul.contacts__list > li.contacts__row`.
+	// Only one of the two is on the page at a time, so each selector names both.
+	assignOptionCss: '.assign-dialog button.assign-option',
+	addProjectOrContactButtonCss:
+		'ga-edit-employee-membership header.membership__header > button[status="success"], ga-edit-employee-contacts button.contacts__assign-toggle',
+	saveProjectOrContactButtonCss:
+		'ga-edit-employee-membership .membership__add-actions > button[status="success"], .assign-dialog button.assign-dialog__submit',
+	verifyProjectOrContactCss:
+		'ga-edit-employee-membership ul.membership__list > li.membership__row, ga-edit-employee-contacts ul.contacts__list > li.contacts__row',
 	// Account tab's Save (17125da2e8, #10115 moved it from `div.actions` into `footer.account__actions`).
 	saveButtonCss: 'ga-edit-employee-main footer.account__actions > button[status="success"]',
 	verifyEmployeeCss: 'span.employee-name',
