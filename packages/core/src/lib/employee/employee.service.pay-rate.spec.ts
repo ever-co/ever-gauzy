@@ -6,9 +6,9 @@ import { RequestContext } from '../core/context';
 import { EmployeeService } from './employee.service';
 
 /**
- * A pay rate is salary data. The employee reads their own, and a holder of ORG_EMPLOYEES_EDIT reads and sets anyone's,
- * their own included; a teammate reads nothing. An employee without that right never changes their own pay rate by
- * editing their own record.
+ * A pay rate is salary data. The employee reads their own, and a holder of ORG_EMPLOYEES_EDIT reads and sets anyone's;
+ * a teammate reads nothing. Changing one's own pay rate needs CHANGE_OWN_RATES, which SUPER_ADMIN and ADMIN hold by
+ * default.
  */
 
 const TENANT = 'tenant-1';
@@ -105,7 +105,7 @@ describe('EmployeeService pay rate', () => {
 	});
 
 	describe("editing one's own record", () => {
-		it('refuses an employee without the right to set pay rates a change of their own', async () => {
+		it('refuses an employee without CHANGE_OWN_RATES a change of their own pay rate', async () => {
 			await expect(service.assertOwnPayRateUnchanged('employee-ana', { payRateValue: 45 })).rejects.toThrow(
 				ForbiddenException
 			);
@@ -117,13 +117,21 @@ describe('EmployeeService pay rate', () => {
 			);
 		});
 
-		it('lets a rate editor, an admin or owner who is also an employee, set their own pay rate', async () => {
-			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
+		it('lets a holder of CHANGE_OWN_RATES, an admin or owner by default, set their own pay rate', async () => {
+			permissions = [PermissionsEnum.CHANGE_OWN_RATES];
 
 			await expect(
 				service.assertOwnPayRateUnchanged('employee-ana', { payRateValue: 45 })
 			).resolves.toBeUndefined();
 			expect(find).not.toHaveBeenCalled();
+		});
+
+		it('refuses a holder of ORG_EMPLOYEES_EDIT alone a change of their own pay rate', async () => {
+			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
+
+			await expect(service.assertOwnPayRateUnchanged('employee-ana', { payRateValue: 45 })).rejects.toThrow(
+				ForbiddenException
+			);
 		});
 
 		it("lets an employee's own save that sends the stored pay rate again, or none, through", async () => {
