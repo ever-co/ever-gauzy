@@ -4,21 +4,22 @@ import '../../core/entities/internal';
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { IManualTimeInput } from '@gauzy/contracts';
-import { OrganizationTeamEmployee, Task } from '../../core/entities/internal';
+import { IManualTimeInput, IOrganization } from '@gauzy/contracts';
+import { OrganizationTeam, OrganizationTeamEmployee, Task } from '../../core/entities/internal';
 import { MultiORMEnum } from '../../core/utils';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
 import { mockRequestContext } from '../testing/recording-query-builder';
 import { IGetConflictTimeLogCommand, TimeLogCreateCommand } from './commands';
-import { ITrackingRequirements, TRACKING_FIELD_REQUIRED } from './organization-tracking-requirements';
+import { TRACKING_FIELD_REQUIRED } from './organization-tracking-requirements';
 import { TypeOrmTimeLogRepository } from './repository/type-orm-time-log.repository';
 import { TimeLogService } from './time-log.service';
 
 /**
- * Manual time records the same context a timer start does, so an organization's tracking requirements hold for it
- * too. The team the server fills is the one of the employee the time is for, who may not be the caller (a manager
- * recording a member's time). With every switch off, an entry is recorded exactly as before.
+ * Time recorded by hand is held to the organization's team and project switches as a timer start is. The team the
+ * server fills is the one of the employee the time is for, who may not be the caller (a manager recording a member's
+ * time). Time a tracker uploads is filled but never refused, and with both switches off, or for the task, client
+ * and description switches, an entry is recorded exactly as before.
  */
 describe('TimeLogService.addManualTime under the organization tracking requirements', () => {
 	const TENANT_ID = 'tenant-1';
@@ -29,8 +30,9 @@ describe('TimeLogService.addManualTime under the organization tracking requireme
 	let execute: jest.Mock;
 	let find: jest.Mock;
 	let findOne: jest.Mock;
-	let requirements: ITrackingRequirements;
+	let organization: Partial<IOrganization>;
 	let teamsOfMember: string[];
+	let teamDefaultProjectId: string | null;
 
 	const request = {
 		employeeId: MEMBER_ID,
@@ -44,19 +46,19 @@ describe('TimeLogService.addManualTime under the organization tracking requireme
 	};
 
 	beforeEach(async () => {
-		requirements = {
-			requireTeam: false,
-			requireProject: false,
-			requireTask: false,
-			requireClient: false,
-			requireDescription: false
-		};
+		organization = { requireTeam: false, requireProject: false };
 		teamsOfMember = [];
+		teamDefaultProjectId = null;
 		execute = jest.fn().mockResolvedValue([]);
 		find = jest.fn(async () =>
 			teamsOfMember.map((organizationTeamId) => ({ id: `member-${organizationTeamId}`, organizationTeamId }))
 		);
-		findOne = jest.fn(async () => ({ id: 'task-1', projectId: 'project-of-task' }));
+		findOne = jest.fn(async (entity: unknown) => {
+			if (entity === OrganizationTeam) {
+				return { id: 'team-of-member', defaultProjectId: teamDefaultProjectId };
+			}
+			return { id: 'task-1', projectId: 'project-of-task' };
+		});
 
 		const module: TestingModule = await Test.createTestingModule({ providers: [TimeLogService] })
 			.useMocker((token) => {
@@ -69,7 +71,7 @@ describe('TimeLogService.addManualTime under the organization tracking requireme
 								id: ORGANIZATION_ID,
 								futureDateAllowed: true,
 								allowManualTime: true,
-								...requirements
+								...organization
 							}
 						}))
 					};
@@ -100,7 +102,7 @@ describe('TimeLogService.addManualTime under the organization tracking requireme
 		jest.restoreAllMocks();
 	});
 
-	it('records the entry as sent when every switch is off, without any extra lookup', async () => {
+	it('records the entry as sent when both switches are off, without any extra lookup', async () => {
 		await service.addManualTime({ ...request, taskId: 'task-1' });
 
 		expect(created()).toEqual({ ...request, taskId: 'task-1', organizationId: ORGANIZATION_ID });
@@ -108,16 +110,21 @@ describe('TimeLogService.addManualTime under the organization tracking requireme
 		expect(findOne).not.toHaveBeenCalled();
 	});
 
+	it('leaves the task, client and description switches to the clients, as before', async () => {
+		organization = { requireTask: true, requireClient: true, requireDescription: true, requireReason: true };
+
+		await service.addManualTime(request);
+
+		expect(created()).toEqual({ ...request, organizationId: ORGANIZATION_ID });
+	});
+
 	it.each([
 		['requireTeam', 'organizationTeamId'],
-		['requireProject', 'projectId'],
-		['requireTask', 'taskId'],
-		['requireClient', 'organizationContactId'],
-		['requireDescription', 'description']
+		['requireProject', 'projectId']
 	] as const)(
 		'refuses an entry without the field when %s is on, before anything is written',
 		async (requirement, field) => {
-			requirements[requirement] = true;
+			organization[requirement] = true;
 
 			const error = await service.addManualTime(request).catch((caught) => caught);
 
@@ -128,7 +135,7 @@ describe('TimeLogService.addManualTime under the organization tracking requireme
 	);
 
 	it("files the entry under the member's only active team, not the caller's", async () => {
-		requirements.requireTeam = true;
+		organization.requireTeam = true;
 		teamsOfMember = ['team-of-member'];
 
 		await service.addManualTime(request);
@@ -148,11 +155,31 @@ describe('TimeLogService.addManualTime under the organization tracking requireme
 	});
 
 	it("files an entry that names a task but no project under the task's project when a project is required", async () => {
-		requirements.requireProject = true;
+		organization.requireProject = true;
 
 		await service.addManualTime({ ...request, taskId: 'task-1' });
 
 		expect(findOne).toHaveBeenCalledWith(Task, expect.anything());
 		expect(created()).toMatchObject({ projectId: 'project-of-task', taskId: 'task-1' });
+	});
+
+	it("files an entry without a task under its team's default project when a project is required", async () => {
+		organization = { requireTeam: true, requireProject: true };
+		teamsOfMember = ['team-of-member'];
+		teamDefaultProjectId = 'project-of-team';
+
+		await service.addManualTime(request);
+
+		expect(created()).toMatchObject({ organizationTeamId: 'team-of-member', projectId: 'project-of-team' });
+	});
+
+	it('records what a tracker uploads without the team and the project, and never refuses it', async () => {
+		organization = { requireTeam: true, requireProject: true };
+		teamsOfMember = ['team-a', 'team-b'];
+
+		await service.addManualTime({ ...request, uploadedByTracker: true });
+
+		expect(created()).toMatchObject({ organizationTeamId: null, projectId: null });
+		expect(created()).not.toHaveProperty('uploadedByTracker');
 	});
 });
