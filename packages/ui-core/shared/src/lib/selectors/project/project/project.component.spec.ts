@@ -37,19 +37,22 @@ describe('ProjectSelectorComponent', () => {
 
 	let getAll: jest.Mock;
 	let getAllByEmployee: jest.Mock;
+	let create: jest.Mock;
 	let queryParams$: BehaviorSubject<Record<string, string>>;
 	let component: ProjectSelectorComponent;
 
 	beforeEach(() => {
 		getAll = jest.fn();
 		getAllByEmployee = jest.fn();
+		create = jest.fn();
 		queryParams$ = new BehaviorSubject<Record<string, string>>({});
 		// Its signal inputs are created as it is constructed, which needs an injection context.
 		component = TestBed.runInInjectionContext(
 			() =>
 				new ProjectSelectorComponent(
-					{ getAll, getAllByEmployee } as unknown as OrganizationProjectsService,
+					{ getAll, getAllByEmployee, create } as unknown as OrganizationProjectsService,
 					{
+						user: { employee: { id: 'employee-1' } },
 						selectedOrganization$: of(organization),
 						userRolePermissions$: of([]),
 						hasAnyPermission: () => true
@@ -245,6 +248,63 @@ describe('ProjectSelectorComponent', () => {
 			await flush();
 
 			expect(component.projectId).toBe('page-project');
+		});
+	});
+	/*
+	 * ng-select's `addTag` selects whatever the function resolves to, as if it were picked from the list: its model
+	 * update sets `projectId` and its change event runs `selectProject`. The function used to set `projectId` itself
+	 * and resolve nothing, so ng-select then selected an empty item, which put the bound value back to none and the
+	 * selection (and, outside a form, the global project filter) on All projects.
+	 */
+	describe('creating a project from the search term', () => {
+		it('resolves to the project it created, for ng-select to select', async () => {
+			const created = project('apollo');
+			create.mockResolvedValue(created);
+			component.organization = organization;
+
+			await expect(component.createNew('apollo')).resolves.toBe(created);
+			expect(create).toHaveBeenCalledWith(
+				expect.objectContaining({ name: 'apollo', memberIds: ['employee-1'], organizationId: 'organization-1' })
+			);
+			expect(component.projects.map(({ id }) => id)).toContain('apollo');
+		});
+
+		it('rejects when nothing was created, so ng-select selects nothing', async () => {
+			create.mockRejectedValue(new Error('refused'));
+			component.organization = organization;
+
+			await expect(component.createNew('apollo')).rejects.toThrow('refused');
+			await expect(component.createNew('')).rejects.toThrow();
+		});
+
+		it('neither lists nor selects a project created for a client the list no longer shows', async () => {
+			const answer = deferred<IOrganizationProject>();
+			create.mockReturnValue(answer.promise);
+			getAll.mockResolvedValue({ items: [] });
+			component.organization = organization;
+			component.organizationContactId = 'client-acme';
+
+			const creation = component.createNew('acme-site');
+			component.organizationContactId = 'client-globex';
+			answer.resolve(project('acme-site', 'client-acme'));
+
+			await expect(creation).rejects.toThrow();
+			expect(create).toHaveBeenCalledWith(expect.objectContaining({ organizationContactId: 'client-acme' }));
+			expect(component.projects.map(({ id }) => id)).not.toContain('acme-site');
+		});
+
+		it('neither lists nor selects a project created for an organization the list no longer shows', async () => {
+			const answer = deferred<IOrganizationProject>();
+			create.mockReturnValue(answer.promise);
+			component.organization = organization;
+
+			const creation = component.createNew('old-site');
+			component.organization = { id: 'organization-2', tenantId: 'tenant-1' } as IOrganization;
+			answer.resolve(project('old-site'));
+
+			await expect(creation).rejects.toThrow();
+			expect(create).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 'organization-1' }));
+			expect(component.projects.map(({ id }) => id)).not.toContain('old-site');
 		});
 	});
 });

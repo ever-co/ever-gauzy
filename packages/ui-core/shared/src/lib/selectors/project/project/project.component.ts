@@ -484,46 +484,65 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	/**
-	 * Creates a new project with the given name.
+	 * Creates a new project with the given name: ng-select's `addTag`, typed in the search box.
+	 *
+	 * ng-select selects whatever this resolves to, as if it were picked from the list: its model update sets
+	 * `projectId` and its change event runs `selectProject`. So it resolves to the created project, and rejects
+	 * when there is none (ng-select ignores a rejected tag). Resolving nothing made ng-select select an empty
+	 * item, which set the selection back to none right after the new project was set.
 	 *
 	 * @param {string} name - The name of the new project.
+	 * @returns The created project.
 	 */
-	createNew = async (name: string): Promise<void> => {
-		// Return early if organization or project name is not defined
+	createNew = async (name: string): Promise<IOrganizationProject> => {
 		if (!this.organization || !name) {
-			console.warn('Organization or project name is missing.');
-			return;
+			throw new Error('Organization or project name is missing.');
 		}
 
+		// The organization and filters the project is created for: the list may show another organization, client or
+		// employee by the time the request answers.
+		const { organization, employeeId, organizationContactId } = this;
+
+		let project: IOrganizationProject;
 		try {
 			// Destructure tenantId and organizationId from organization
-			const { id: organizationId, tenantId } = this.organization;
+			const { id: organizationId, tenantId } = organization;
 
 			// Include member if employeeId or store user's employeeId is provided
-			const memberId = this.employeeId || this._store.user.employee?.id;
+			const memberId = employeeId || this._store.user.employee?.id;
 
 			// Create the project
-			const project = await this._organizationProjects.create({
+			project = await this._organizationProjects.create({
 				name,
 				...(memberId && { memberIds: [memberId] }),
-				...(this.organizationContactId && { organizationContactId: this.organizationContactId }),
+				...(organizationContactId && { organizationContactId }),
 				organizationId,
 				tenantId
 			});
-
-			// Handle the created project and update projectId
-			this.createOrganizationProject(project);
-
-			// Set the newly created project's ID
-			this.projectId = project.id;
-
-			// Show success message
-			this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', { name });
 		} catch (error) {
 			// Log and handle the error
 			console.error('Error while creating new project: ', error);
 			this._errorHandlingService.handleError(error);
+			throw error;
 		}
+
+		// Show success message
+		this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', { name });
+
+		// Created for an organization or filters the list no longer shows: neither listed nor selected here
+		if (
+			this.organization?.id !== organization.id ||
+			this.organization?.tenantId !== organization.tenantId ||
+			this.employeeId !== employeeId ||
+			this.organizationContactId !== organizationContactId
+		) {
+			throw new Error('The project list moved to another organization, client or employee while the project was created.');
+		}
+
+		// Add the created project to the list; ng-select selects it once this resolves
+		this.createOrganizationProject(project);
+
+		return project;
 	};
 
 	/**

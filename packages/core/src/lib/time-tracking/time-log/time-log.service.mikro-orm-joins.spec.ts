@@ -80,10 +80,13 @@ function summarize(row: any): IRead['rows'][number] {
 }
 
 async function measure(): Promise<IMeasurement> {
-	const previous = process.env.DB_ORM;
+	const previous = { DB_ORM: process.env.DB_ORM, DB_TYPE: process.env.DB_TYPE };
 	process.env.DB_ORM = 'mikro-orm';
+	// Whatever database the machine's environment names: both ORMs read the one SQLite file below
+	process.env.DB_TYPE = 'better-sqlite3';
 	const file = path.join(os.tmpdir(), `gauzy-time-log-joins-${process.pid}-${Date.now()}.sqlite3`);
 	const measurement = {} as IMeasurement;
+	let dataSource: any;
 
 	try {
 		await jest.isolateModulesAsync(async () => {
@@ -102,7 +105,7 @@ async function measure(): Promise<IMeasurement> {
 
 			// The tables TypeORM creates, as the migrations create them for the running platform.
 			const typeOrmStatements: string[] = [];
-			const dataSource = new DataSource({
+			dataSource = new DataSource({
 				type: 'better-sqlite3',
 				database: file,
 				entities: coreEntities,
@@ -293,13 +296,16 @@ async function measure(): Promise<IMeasurement> {
 				);
 			} finally {
 				jest.restoreAllMocks();
-				await dataSource.destroy();
 			}
 		});
 	} finally {
 		jest.restoreAllMocks();
-		if (previous === undefined) delete process.env.DB_ORM;
-		else process.env.DB_ORM = previous;
+		// Here rather than after the reads, so a read that throws cannot leave the database file open
+		if (dataSource?.isInitialized) await dataSource.destroy();
+		for (const [name, value] of Object.entries(previous)) {
+			if (value === undefined) delete process.env[name];
+			else process.env[name] = value;
+		}
 		try {
 			fs.unlinkSync(file);
 		} catch {

@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { ExecutionContext, NotFoundException } from '@nestjs/common';
 import { MODULE_METADATA } from '@nestjs/common/constants';
 import { Reflector } from '@nestjs/core';
-import { buildSchema, printSchema } from 'graphql';
+import { buildSchema, graphql, printSchema } from 'graphql';
 import { PermissionsEnum, ReportGroupFilterEnum, TimeLogSourceEnum, TimeLogType } from '@gauzy/contracts';
 import { FEATURE_METADATA, PERMISSIONS_METADATA } from '@gauzy/constants';
 import { CursorCodec } from '../../api/cursor';
@@ -1353,8 +1353,8 @@ describe('TimeLogResolver — one concept, two protocols, the same operations', 
 		const startDate = new Date('2026-03-01T00:00:00.000Z');
 		const endDate = new Date('2026-03-02T00:00:00.000Z');
 
-		expect(await resolver.projectBudgetLimit(ORGANIZATION, startDate, endDate, [EMPLOYEE], [PROJECT])).toBe(
-			PROJECT_BUDGET
+		expect(await resolver.projectBudgetLimit(ORGANIZATION, startDate, endDate, [EMPLOYEE], [PROJECT])).toEqual(
+			PROJECT_BUDGET.map((row) => ({ ...row, projectId: PROJECT }))
 		);
 		expect(timeLogService.getProjectBudgetLimit).toHaveBeenCalledWith({
 			organizationId: ORGANIZATION,
@@ -1368,13 +1368,75 @@ describe('TimeLogResolver — one concept, two protocols, the same operations', 
 	it('answers the client budgets through the same service method its route calls', async () => {
 		const { resolver, timeLogService } = surfaces();
 
-		expect(await resolver.clientBudgetLimit(ORGANIZATION)).toBe(CLIENT_BUDGET);
+		expect(await resolver.clientBudgetLimit(ORGANIZATION)).toEqual(
+			CLIENT_BUDGET.map((row) => ({ ...row, organizationContactId: CLIENT }))
+		);
 		expect(timeLogService.getClientBudgetLimit).toHaveBeenCalledWith({
 			organizationId: ORGANIZATION,
 			startDate: undefined,
 			endDate: undefined,
 			employeeIds: undefined,
 			projectIds: undefined
+		});
+	});
+
+	// The service answers the REST shape: the project or client row itself, with no identifier beside it. The
+	// types declare `projectId: ID!` and `organizationContactId: ID!`, so an answer passed on as it was failed
+	// every selection of the field with "Cannot return null for non-nullable field".
+	it('answers each budget with the identifier its type declares, through the composed schema', async () => {
+		const { resolver } = surfaces();
+
+		const result = await graphql({
+			schema,
+			source: `query Budgets($organizationId: ID!) {
+				projectBudgetLimit(organizationId: $organizationId) {
+					projectId
+					budgetType
+					budget
+					spent
+					remainingBudget
+					spentPercentage
+				}
+				clientBudgetLimit(organizationId: $organizationId) {
+					organizationContactId
+					budgetType
+					budget
+					spent
+					remainingBudget
+					spentPercentage
+				}
+			}`,
+			variableValues: { organizationId: ORGANIZATION },
+			rootValue: {
+				projectBudgetLimit: ({ organizationId }: { organizationId: string }) =>
+					resolver.projectBudgetLimit(organizationId),
+				clientBudgetLimit: ({ organizationId }: { organizationId: string }) =>
+					resolver.clientBudgetLimit(organizationId)
+			}
+		});
+
+		expect(result.errors).toBeUndefined();
+		expect(result.data).toEqual({
+			projectBudgetLimit: [
+				{
+					projectId: PROJECT,
+					budgetType: 'hours',
+					budget: 100,
+					spent: 42.5,
+					remainingBudget: 57.5,
+					spentPercentage: 42.5
+				}
+			],
+			clientBudgetLimit: [
+				{
+					organizationContactId: CLIENT,
+					budgetType: 'cost',
+					budget: 5000,
+					spent: 1200.5,
+					remainingBudget: 3799.5,
+					spentPercentage: 24.01
+				}
+			]
 		});
 	});
 
