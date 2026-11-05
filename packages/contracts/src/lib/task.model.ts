@@ -118,6 +118,14 @@ export interface ITaskCreateInput extends ITask, IMentionEmployeeIds {}
 
 export interface ITaskUpdateInput extends ITaskCreateInput {
 	taskSprintMoveReason?: string;
+	/**
+	 * When the update changes the task's project, the task's time logs follow it, except those of an approved or
+	 * billed timesheet. Removing the project moves them to no project. A moved log takes the destination project's
+	 * `billable` setting when that project defines one, and keeps its own otherwise. Moving them is a time edit: it
+	 * needs ALLOW_MODIFY_TIME and the organization's allowModifyTime, and moves only the logs of employees the caller
+	 * may act for. Opt-in: without it the logs keep the project they were tracked under.
+	 */
+	moveTimeLogs?: boolean;
 }
 
 export interface IGetTaskById {
