@@ -14,10 +14,10 @@ import {
 import { distinctUntilChange } from '@gauzy/ui-core/common';
 import { EmployeeStore, ErrorHandlingService, OrganizationContactService, Store, ToastrService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import { initialsOf, IPersonChip, nameOf, personOf } from '../../../../projects/components/project-view/project-view.utils';
+import { initialsOf, nameOf } from '../../../../projects/components/project-view/project-view.utils';
 
-/** Relations the table reads from the organization's contacts: their people and their projects. */
-const CONTACT_RELATIONS: string[] = ['members.user', 'projects'];
+/** Relations the table reads from the organization's contacts: their projects. */
+const CONTACT_RELATIONS: string[] = ['projects'];
 
 /** i18n prefix of the tab's own strings. */
 const T = 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.CONTACTS_TAB';
@@ -39,10 +39,6 @@ export interface IEmployeeContactRow {
 	projectNames: string[];
 	/** Every project's name, for the column's tooltip. */
 	projectList: string;
-	/** Every member's name, for the assign dialog's tooltip. */
-	memberNames: string;
-	/** How many people work with the contact. */
-	memberCount: number;
 }
 
 /** Whose memberships a dialog changes: fixed when it opens, so a later switch of employee cannot redirect it. */
@@ -313,7 +309,7 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 	/**
 	 * Loads the employee's contacts and every contact of the organization.
 	 *
-	 * Assignment comes from the employee's own list; the organization's list, read with its people and projects,
+	 * Assignment comes from the employee's own list; the organization's list, read with its projects,
 	 * fills in each row's details. The rest of the organization's contacts are what the assign dialog offers.
 	 */
 	private async loadContacts(): Promise<void> {
@@ -342,9 +338,6 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 
 	private toRow(contact: IOrganizationContact): IEmployeeContactRow {
 		const name = contact.name || '';
-		const people = (contact.members || [])
-			.map((member) => personOf(member))
-			.filter((person): person is IPersonChip => !!person);
 		const projectNames = (contact.projects || [])
 			.filter((project) => !project.isArchived)
 			.map((project) => project.name)
@@ -361,9 +354,7 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 			phone: contact.primaryPhone || undefined,
 			type: EditEmployeeContactComponent.typeOf(contact.contactType),
 			projectNames,
-			projectList: projectNames.join(', '),
-			memberNames: people.map((person) => person.name).join(', '),
-			memberCount: people.length
+			projectList: projectNames.join(', ')
 		};
 	}
 
@@ -424,7 +415,7 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 	}
 
 	/**
-	 * Fetches every contact of the organization, with its people and projects.
+	 * Fetches every contact of the organization, with its projects.
 	 *
 	 * @returns The organization's contacts; empty when the read fails.
 	 */

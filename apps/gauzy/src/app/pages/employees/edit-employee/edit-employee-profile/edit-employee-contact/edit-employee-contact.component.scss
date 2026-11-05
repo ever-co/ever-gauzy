@@ -429,7 +429,7 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
 
 // -- Assign dialog --
 // A checklist like Jira's "Add people" and Hubstaff's "Add to projects": search on top, one
-// row per contact with its avatar, email, type and team size, the count and action below.
+// row per contact with its avatar, email and type, the count and action below.
 .assign-dialog {
   display: flex;
   flex-direction: column;
@@ -677,22 +677,6 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
     flex: 0 1 auto;
     min-width: 0;
     max-width: 8rem;
-  }
-}
-
-.assign-option__members {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  min-width: 2.25rem;
-  font-size: 0.6875rem;
-  color: var(--gauzy-text-color-2);
-  font-variant-numeric: tabular-nums;
-
-  nb-icon {
-    width: 0.875rem;
-    height: 0.875rem;
-    font-size: 0.875rem;
   }
 }
 

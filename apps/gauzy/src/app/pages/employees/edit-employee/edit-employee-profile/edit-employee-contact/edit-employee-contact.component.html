@@ -283,13 +283,6 @@
 									@if (row.type) {
 										<span [class]="'lozenge tone-' + row.type.tone">{{ row.type.key | translate }}</span>
 									}
-									<span
-										class="assign-option__members"
-										[nbTooltip]="row.memberNames || '—'"
-										nbTooltipPlacement="top"
-									>
-										<nb-icon icon="people-outline"></nb-icon>{{ row.memberCount }}
-									</span>
 								</span>
 							</button>
 						</li>
