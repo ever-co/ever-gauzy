@@ -5,6 +5,7 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { IUser, PermissionsEnum } from '@gauzy/contracts';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
 import { MultiORMEnum } from '../../core/utils';
+import { assertSensitiveRelationsAllowed } from '../../core/util/sensitive-relations.helper';
 import { TimerService } from './timer.service';
 
 // The relation walk needs the real entity metadata; these specs check what reaches the last-log lookup instead.
@@ -117,6 +118,7 @@ describe('TimerService.getTimerStatus for another employee', () => {
 			canManageEmployee.mockResolvedValue(true);
 
 			expect(await relationsReadFor('member-employee')).toEqual(['task']);
+			expect(assertSensitiveRelationsAllowed).toHaveBeenCalledWith({}, RELATIONS);
 		});
 
 		it('keeps every relation for a caller who may act for every employee, and on the caller own log', async () => {
