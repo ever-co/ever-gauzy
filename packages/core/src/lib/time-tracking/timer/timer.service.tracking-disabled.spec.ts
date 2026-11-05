@@ -51,7 +51,8 @@ describe('TimerService with the employee tracking turned off', () => {
 			undefined as never,
 			undefined as never,
 			employeeService as never,
-			{ execute } as never
+			{ execute } as never,
+			undefined as never
 		);
 		Object.assign(service, {
 			getLastRunningLog: jest.fn(async () => lastRunningLog),

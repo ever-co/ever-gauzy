@@ -42,7 +42,8 @@ describe('TimerService.startTimer filing the log under the task project', () => 
 			undefined as never,
 			undefined as never,
 			employeeService as never,
-			{ execute } as never
+			{ execute } as never,
+			undefined as never
 		);
 		Object.assign(service, { stopPreviousRunningTimers: jest.fn(async () => undefined) });
 	});

@@ -90,7 +90,8 @@ describe('TimerService.startTimer with tracking turned off in the team', () => {
 			undefined as never,
 			undefined as never,
 			employeeService as never,
-			{ execute } as never
+			{ execute } as never,
+			undefined as never
 		);
 		stopPreviousRunningTimers = jest.fn(async () => undefined);
 		Object.assign(service, { stopPreviousRunningTimers });
