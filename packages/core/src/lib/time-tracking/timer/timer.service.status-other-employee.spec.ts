@@ -4,7 +4,11 @@ import '../../core/entities/internal';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { IUser, PermissionsEnum } from '@gauzy/contracts';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
+import { MultiORMEnum } from '../../core/utils';
 import { TimerService } from './timer.service';
+
+// The relation walk needs the real entity metadata; these specs check what reaches the last-log lookup instead.
+jest.mock('../../core/util/sensitive-relations.helper', () => ({ assertSensitiveRelationsAllowed: jest.fn() }));
 
 /**
  * `GET /timesheet/timer/status?employeeId=` read the named employee only for a caller holding CHANGE_SELECTED_EMPLOYEE.
@@ -81,5 +85,48 @@ describe('TimerService.getTimerStatus for another employee', () => {
 		expect(canManageEmployee).not.toHaveBeenCalled();
 		expect(fetchEmployee).toHaveBeenNthCalledWith(1, { userId: caller.user.id, tenantId, organizationId });
 		expect(fetchEmployee).toHaveBeenNthCalledWith(2, { userId: caller.user.id, tenantId, organizationId });
+	});
+
+	describe('relations loaded on the last log', () => {
+		const RELATIONS = ['task', 'timeSlots.screenshots'];
+		let findLastTimeLog: jest.Mock;
+
+		const relationsReadFor = async (employeeId?: string) => {
+			await service.getTimerStatus({ tenantId, organizationId, employeeId, relations: RELATIONS });
+			const [, request] = findLastTimeLog.mock.calls[0];
+			return request.relations;
+		};
+
+		beforeEach(() => {
+			findLastTimeLog = jest.fn().mockResolvedValue(null);
+			fetchEmployee.mockImplementation(async (query: { id?: string }) => ({ id: query.id ?? 'caller-employee' }));
+			const queryBuilder = {
+				setFindOptions: () => queryBuilder,
+				innerJoin: () => queryBuilder,
+				getMany: async () => []
+			};
+			Object.assign(service, {
+				ormType: MultiORMEnum.TypeORM,
+				typeOrmTimeLogRepository: { metadata: {}, createQueryBuilder: () => queryBuilder },
+				findLastTimeLog
+			});
+		});
+
+		it("leaves the tracked data out of a managed member's log", async () => {
+			signInAs();
+			canManageEmployee.mockResolvedValue(true);
+
+			expect(await relationsReadFor('member-employee')).toEqual(['task']);
+		});
+
+		it('keeps every relation for a caller who may act for every employee, and on the caller own log', async () => {
+			signInAs([PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]);
+			expect(await relationsReadFor('member-employee')).toEqual(RELATIONS);
+
+			restore();
+			findLastTimeLog.mockClear();
+			signInAs();
+			expect(await relationsReadFor()).toEqual(RELATIONS);
+		});
 	});
 });

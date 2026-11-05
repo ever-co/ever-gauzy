@@ -144,6 +144,8 @@ export class TimerService {
 		}
 
 		if (readsNamedEmployee) {
+			// Someone else's log: the tracked data hanging off it (slots, screenshots) stays out, as on the worked status
+			request = { ...request, relations: withoutTrackedDataRelations(request.relations) };
 			employee = await this.fetchEmployee({ id: namedEmployeeId, tenantId, organizationId });
 		} else {
 			const userId = RequestContext.currentUserId();
