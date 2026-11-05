@@ -1,6 +1,8 @@
 import '../core/entities/internal';
 
 import { ForbiddenException } from '@nestjs/common';
+import { PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
 import { EmployeeController } from './employee.controller';
 
 /**
@@ -66,6 +68,43 @@ describe('EmployeeController and the pay rate', () => {
 		} as never);
 
 		expect(countBy).toHaveBeenCalledWith({ organizationId: 'organization-1', kind: 'human' });
+	});
+
+	describe('a save of one’s own record', () => {
+		let permissions: PermissionsEnum[];
+
+		beforeEach(() => {
+			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
+			jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue('employee-1');
+			jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission) =>
+				permissions.includes(permission as PermissionsEnum)
+			);
+		});
+
+		afterEach(() => jest.restoreAllMocks());
+
+		it('writes no pay rate without CHANGE_OWN_RATES, though the unchanged values were sent', async () => {
+			await controller.update('employee-1', { payRateValue: 30, payRateCurrency: 'USD', isAway: true } as never);
+
+			const [command] = execute.mock.calls[0];
+			expect(command.input).toEqual({ isAway: true });
+		});
+
+		it('writes the pay rate with CHANGE_OWN_RATES', async () => {
+			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.CHANGE_OWN_RATES];
+
+			await controller.update('employee-1', { payRateValue: 45 } as never);
+
+			const [command] = execute.mock.calls[0];
+			expect(command.input).toEqual({ payRateValue: 45 });
+		});
+
+		it("writes a colleague's pay rate for a rate editor", async () => {
+			await controller.update('employee-2', { payRateValue: 45 } as never);
+
+			const [command] = execute.mock.calls[0];
+			expect(command.input).toEqual({ payRateValue: 45 });
+		});
 	});
 
 	it('checks an edit for a change of one’s own pay rate before it runs', async () => {

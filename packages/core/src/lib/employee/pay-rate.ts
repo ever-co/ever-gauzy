@@ -33,6 +33,20 @@ export function readsEveryPayRate(): boolean {
 	return RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT);
 }
 
+/**
+ * An edit of one's own record made without CHANGE_OWN_RATES, without its pay rate fields. They passed the own pay
+ * rate check only unchanged, and writing them back could undo a pay rate a rate editor changed meanwhile.
+ */
+export function withoutOwnPayRateWrite<T extends object>(employeeId: ID, input: T): T {
+	const isOwnRecord = callerEmployeeId() === employeeId;
+	const changesOwnRates = RequestContext.hasPermission(PermissionsEnum.CHANGE_OWN_RATES);
+	const keepsStoredPayRate = isOwnRecord && !changesOwnRates;
+	if (!keepsStoredPayRate) {
+		return input;
+	}
+	return withoutPayRateKeys(input) as T;
+}
+
 /** Whether the caller may read this employee's pay rate: their own, or anyone's for a rate editor. */
 export function mayReadPayRateOf(employeeId: ID): boolean {
 	const isOwnRecord = callerEmployeeId() === employeeId;

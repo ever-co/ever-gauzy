@@ -57,7 +57,7 @@ import {
 	EmployeePresenceDTO,
 	EmployeeListQueryDTO
 } from './dto';
-import { withoutPayRateCriteria, withoutPayRateKeys } from './pay-rate';
+import { withoutOwnPayRateWrite, withoutPayRateCriteria, withoutPayRateKeys } from './pay-rate';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
 import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
@@ -462,7 +462,8 @@ export class EmployeeController extends CrudController<Employee> {
 	@UseValidationPipe({ whitelist: true })
 	async update(@Param('id', UUIDValidationPipe) id: ID, @Body() entity: UpdateEmployeeDTO): Promise<IEmployee> {
 		await this._employeeService.assertOwnPayRateUnchanged(id, entity);
-		return await this._commandBus.execute(new EmployeeUpdateCommand(id, entity));
+		const changes = withoutOwnPayRateWrite(id, entity);
+		return await this._commandBus.execute(new EmployeeUpdateCommand(id, changes));
 	}
 
 	/**
