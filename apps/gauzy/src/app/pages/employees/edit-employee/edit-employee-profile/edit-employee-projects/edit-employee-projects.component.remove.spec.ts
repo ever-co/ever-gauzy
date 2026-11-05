@@ -144,6 +144,24 @@ describe('EditEmployeeProjectsComponent remove from project', () => {
 		expect(updateByEmployee).not.toHaveBeenCalled();
 	});
 
+	it('leaving the tab closes an open remove dialog as cancelled: remove() ends and removes nothing', async () => {
+		const { component, updateByEmployee } = tabWith(true);
+		// A dialog that stays open until something closes it.
+		const closed = new Subject<unknown>();
+		const close = jest.fn((value: unknown) => {
+			closed.next(value);
+			closed.complete();
+		});
+		component['_dialogService'] = { open: jest.fn(() => ({ close, onClose: closed.asObservable() })) };
+
+		const removing = component.remove(ROW);
+		component.ngOnDestroy();
+		await removing;
+
+		expect(close).toHaveBeenCalledWith(false);
+		expect(updateByEmployee).not.toHaveBeenCalled();
+	});
+
 	it('CONTROL: still removes when the store re-emits the same employee while the dialog is open', async () => {
 		const { component, updateByEmployee } = tabWith(true);
 
@@ -187,6 +205,15 @@ describe('EditEmployeeProjectsComponent switching employee', () => {
 		expect(component.searchTerm).toBe('');
 		expect(removeRef.close).toHaveBeenCalledWith(false);
 		expect(assignRef.close).toHaveBeenCalled();
+	});
+
+	it('leaving the tab closes both dialogs, the remove one as cancelled', () => {
+		const component = tabShowing('employee-1');
+
+		component.ngOnDestroy();
+
+		expect(component['_removeRef'].close).toHaveBeenCalledWith(false);
+		expect(component['_assignRef'].close).toHaveBeenCalled();
 	});
 
 	it('CONTROL: the same employee again keeps the rows and the dialogs', () => {
