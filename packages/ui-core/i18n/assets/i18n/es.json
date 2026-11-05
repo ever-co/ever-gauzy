@@ -4865,7 +4865,9 @@
 		"SELECT_TEAM": "Equipo",
 		"AI_CHAT": "Chat de IA",
 		"COLLAPSE_SIDEBAR": "Contraer la barra lateral",
-		"EXPAND_SIDEBAR": "Expandir la barra lateral"
+		"EXPAND_SIDEBAR": "Expandir la barra lateral",
+		"EVER_APPS": "Aplicaciones",
+		"SWITCH_EVER_APP": "Cambiar a otra aplicación de Ever"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Asistente de IA",

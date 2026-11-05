@@ -4863,7 +4863,9 @@
 		"SELECT_TEAM": "Team",
 		"AI_CHAT": "AI-chat",
 		"COLLAPSE_SIDEBAR": "Zijbalk inklappen",
-		"EXPAND_SIDEBAR": "Zijbalk uitklappen"
+		"EXPAND_SIDEBAR": "Zijbalk uitklappen",
+		"EVER_APPS": "Apps",
+		"SWITCH_EVER_APP": "Naar een andere Ever-app gaan"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI-assistent",
