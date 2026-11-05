@@ -146,7 +146,8 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 			undefined as never,
 			undefined as never,
 			employeeService as never,
-			{ execute } as never
+			{ execute } as never,
+			undefined as never
 		);
 		stopPreviousRunningTimers = jest.fn(async () => undefined);
 		Object.assign(service, { stopPreviousRunningTimers });
