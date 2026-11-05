@@ -83,3 +83,13 @@ export function assertOwnRatesMayChange(
 		throw new ForbiddenException(OWN_RATES_LOCKED_MESSAGE);
 	}
 }
+
+/**
+ * Takes the rate fields out of an edit of one's own record made without CHANGE_OWN_RATES, in place. They passed
+ * {@link assertOwnRatesMayChange} unchanged, and writing them back could undo a rate an admin changed meanwhile.
+ */
+export function removeOwnRateFields(changes: Partial<IEmployeeUpdateInput>): void {
+	for (const field of OWN_RATE_FIELDS) {
+		delete changes[field];
+	}
+}

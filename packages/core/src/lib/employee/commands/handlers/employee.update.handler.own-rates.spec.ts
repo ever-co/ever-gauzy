@@ -63,7 +63,7 @@ describe('EmployeeUpdateHandler — an employee changing their own rates', () =>
 		expect(create).not.toHaveBeenCalled();
 	});
 
-	it('saves a profile that sends the unchanged rates with it, compared as values', async () => {
+	it('saves a profile that sends the unchanged rates with it, and writes none of them back', async () => {
 		await update(OWN_ID, {
 			billRateValue: '25.00' as unknown as number,
 			billRateCurrency: CurrenciesEnum.USD,
@@ -74,6 +74,8 @@ describe('EmployeeUpdateHandler — an employee changing their own rates', () =>
 		});
 
 		expect(create).toHaveBeenCalledTimes(1);
+		const [written] = create.mock.calls[0];
+		expect(written).toEqual({ id: OWN_ID, githubUrl: 'https://github.com/someone' });
 	});
 
 	it('saves a social links only edit', async () => {

@@ -16,7 +16,7 @@ import {
 	employeeAgentRestrictionLocations,
 	recordAgentRestrictionAcknowledgement
 } from './../../agent-exit-logout-restriction';
-import { assertOwnRatesMayChange } from './../../own-rates';
+import { assertOwnRatesMayChange, removeOwnRateFields } from './../../own-rates';
 import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
 
 /** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
@@ -84,6 +84,11 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		// The acknowledgement is a request flag, not an employee column.
 		const changes: IEmployeeUpdateInput = { ...input };
 		delete changes.acknowledgeAgentExitLogoutRestriction;
+
+		const keepsStoredRates = editsOwnRecord && !changesOwnRates;
+		if (keepsStoredRates) {
+			removeOwnRateFields(changes);
+		}
 
 		// The edit writes the employee's own contact and never another one. `contact` cascades by id, and a
 		// nested id used to re-point the employee at an organization's, a client's or a candidate's contact
