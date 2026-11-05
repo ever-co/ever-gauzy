@@ -2216,7 +2216,7 @@
 				"ASSIGN": "שיוך אנשי קשר",
 				"ASSIGN_DIALOG_TITLE": "שיוך לאנשי קשר",
 				"ASSIGN_DIALOG_SUBTITLE": "בחרו את אנשי הקשר ש-{{ employee }} יעבוד איתם.",
-				"ASSIGN_SEARCH": "חיפוש לפי שם, אימייל או טלפון",
+				"ASSIGN_SEARCH": "חיפוש לפי שם",
 				"SELECT_ALL": "בחירת הכול",
 				"DESELECT_ALL": "ביטול בחירת הכול",
 				"SELECTED_COUNT": "{{ count }} נבחרו",
@@ -2224,6 +2224,8 @@
 				"ASSIGN_SUBMIT": "שיוך",
 				"ALL_ASSIGNED": "העובד הזה כבר משויך לכל אנשי הקשר.",
 				"NO_MATCH_PICKER": "אין אנשי קשר תואמים",
+				"LOAD_MORE": "טעינת עוד",
+				"LOAD_FAILED": "לא ניתן היה לטעון את אנשי הקשר.",
 				"COLUMNS": {
 					"CONTACT": "איש קשר",
 					"TYPE": "סוג",

@@ -2175,7 +2175,7 @@
 				"ASSIGN": "تعيين جهات اتصال",
 				"ASSIGN_DIALOG_TITLE": "التعيين لجهات اتصال",
 				"ASSIGN_DIALOG_SUBTITLE": "اختر جهات الاتصال التي يجب أن يعمل معها {{ employee }}.",
-				"ASSIGN_SEARCH": "ابحث بالاسم أو البريد الإلكتروني أو الهاتف",
+				"ASSIGN_SEARCH": "البحث بالاسم",
 				"SELECT_ALL": "تحديد الكل",
 				"DESELECT_ALL": "إلغاء تحديد الكل",
 				"SELECTED_COUNT": "تم تحديد {{ count }}",
@@ -2183,6 +2183,8 @@
 				"ASSIGN_SUBMIT": "تعيين",
 				"ALL_ASSIGNED": "هذا الموظف معيّن بالفعل لجميع جهات الاتصال.",
 				"NO_MATCH_PICKER": "لا توجد جهات اتصال مطابقة",
+				"LOAD_MORE": "تحميل المزيد",
+				"LOAD_FAILED": "تعذّر تحميل جهات الاتصال.",
 				"COLUMNS": {
 					"CONTACT": "جهة الاتصال",
 					"TYPE": "النوع",

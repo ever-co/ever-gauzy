@@ -2177,7 +2177,7 @@
 				"ASSIGN": "Affecter des contacts",
 				"ASSIGN_DIALOG_TITLE": "Affecter à des contacts",
 				"ASSIGN_DIALOG_SUBTITLE": "Choisissez les contacts avec lesquels {{ employee }} doit travailler.",
-				"ASSIGN_SEARCH": "Rechercher par nom, e-mail ou téléphone",
+				"ASSIGN_SEARCH": "Rechercher par nom",
 				"SELECT_ALL": "Tout sélectionner",
 				"DESELECT_ALL": "Tout désélectionner",
 				"SELECTED_COUNT": "{{ count }} sélectionné(s)",
@@ -2185,6 +2185,8 @@
 				"ASSIGN_SUBMIT": "Affecter",
 				"ALL_ASSIGNED": "Cet employé est déjà affecté à tous les contacts.",
 				"NO_MATCH_PICKER": "Aucun contact correspondant",
+				"LOAD_MORE": "Charger plus",
+				"LOAD_FAILED": "Les contacts n’ont pas pu être chargés.",
 				"COLUMNS": {
 					"CONTACT": "Contact",
 					"TYPE": "Type",

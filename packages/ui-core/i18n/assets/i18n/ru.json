@@ -2223,7 +2223,7 @@
 				"ASSIGN": "Назначить контакты",
 				"ASSIGN_DIALOG_TITLE": "Назначить к контактам",
 				"ASSIGN_DIALOG_SUBTITLE": "Выберите контакты, с которыми должен работать {{ employee }}.",
-				"ASSIGN_SEARCH": "Поиск по имени, почте или телефону",
+				"ASSIGN_SEARCH": "Поиск по имени",
 				"SELECT_ALL": "Выбрать все",
 				"DESELECT_ALL": "Снять выбор",
 				"SELECTED_COUNT": "Выбрано: {{ count }}",
@@ -2231,6 +2231,8 @@
 				"ASSIGN_SUBMIT": "Назначить",
 				"ALL_ASSIGNED": "Этот сотрудник уже назначен ко всем контактам.",
 				"NO_MATCH_PICKER": "Подходящих контактов нет",
+				"LOAD_MORE": "Загрузить ещё",
+				"LOAD_FAILED": "Не удалось загрузить контакты.",
 				"COLUMNS": {
 					"CONTACT": "Контакт",
 					"TYPE": "Тип",

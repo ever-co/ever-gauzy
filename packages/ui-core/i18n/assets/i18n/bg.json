@@ -2248,7 +2248,7 @@
 				"ASSIGN": "Добавяне на контакти",
 				"ASSIGN_DIALOG_TITLE": "Добавяне към контакти",
 				"ASSIGN_DIALOG_SUBTITLE": "Изберете контактите, с които да работи {{ employee }}.",
-				"ASSIGN_SEARCH": "Търсене по име, имейл или телефон",
+				"ASSIGN_SEARCH": "Търсене по име",
 				"SELECT_ALL": "Избери всички",
 				"DESELECT_ALL": "Премахни избора",
 				"SELECTED_COUNT": "Избрани: {{ count }}",
@@ -2256,6 +2256,8 @@
 				"ASSIGN_SUBMIT": "Добави",
 				"ALL_ASSIGNED": "Този служител вече е добавен към всички контакти.",
 				"NO_MATCH_PICKER": "Няма съвпадащи контакти",
+				"LOAD_MORE": "Зареди още",
+				"LOAD_FAILED": "Контактите не можаха да бъдат заредени.",
 				"COLUMNS": {
 					"CONTACT": "Контакт",
 					"TYPE": "Тип",

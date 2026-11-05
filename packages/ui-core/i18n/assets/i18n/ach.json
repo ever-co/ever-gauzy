@@ -2058,7 +2058,7 @@
 				"ASSIGN": "Assign contacts",
 				"ASSIGN_DIALOG_TITLE": "Assign to contacts",
 				"ASSIGN_DIALOG_SUBTITLE": "Choose the contacts {{ employee }} should work with.",
-				"ASSIGN_SEARCH": "Search by name, email or phone",
+				"ASSIGN_SEARCH": "Search by name",
 				"SELECT_ALL": "Select all",
 				"DESELECT_ALL": "Deselect all",
 				"SELECTED_COUNT": "{{ count }} selected",
@@ -2066,6 +2066,8 @@
 				"ASSIGN_SUBMIT": "Assign",
 				"ALL_ASSIGNED": "This employee is already assigned to every contact.",
 				"NO_MATCH_PICKER": "No matching contacts",
+				"LOAD_MORE": "Load more",
+				"LOAD_FAILED": "Contacts could not be loaded.",
 				"COLUMNS": {
 					"CONTACT": "Contact",
 					"TYPE": "Type",

@@ -2176,7 +2176,7 @@
 				"ASSIGN": "Contacten toewijzen",
 				"ASSIGN_DIALOG_TITLE": "Aan contacten toewijzen",
 				"ASSIGN_DIALOG_SUBTITLE": "Kies de contacten waarmee {{ employee }} moet werken.",
-				"ASSIGN_SEARCH": "Zoeken op naam, e-mail of telefoon",
+				"ASSIGN_SEARCH": "Zoeken op naam",
 				"SELECT_ALL": "Alles selecteren",
 				"DESELECT_ALL": "Alles deselecteren",
 				"SELECTED_COUNT": "{{ count }} geselecteerd",
@@ -2184,6 +2184,8 @@
 				"ASSIGN_SUBMIT": "Toewijzen",
 				"ALL_ASSIGNED": "Deze medewerker is al aan alle contacten toegewezen.",
 				"NO_MATCH_PICKER": "Geen overeenkomende contacten",
+				"LOAD_MORE": "Meer laden",
+				"LOAD_FAILED": "De contacten konden niet worden geladen.",
 				"COLUMNS": {
 					"CONTACT": "Contact",
 					"TYPE": "Type",

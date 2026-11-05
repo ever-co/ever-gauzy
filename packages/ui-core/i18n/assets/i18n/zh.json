@@ -2645,7 +2645,7 @@
 				"ASSIGN": "分配联系人",
 				"ASSIGN_DIALOG_TITLE": "分配到联系人",
 				"ASSIGN_DIALOG_SUBTITLE": "选择 {{ employee }} 要合作的联系人。",
-				"ASSIGN_SEARCH": "按名称、邮箱或电话搜索",
+				"ASSIGN_SEARCH": "按名称搜索",
 				"SELECT_ALL": "全选",
 				"DESELECT_ALL": "取消全选",
 				"SELECTED_COUNT": "已选择 {{ count }} 个",
@@ -2653,6 +2653,8 @@
 				"ASSIGN_SUBMIT": "分配",
 				"ALL_ASSIGNED": "该员工已分配到所有联系人。",
 				"NO_MATCH_PICKER": "没有匹配的联系人",
+				"LOAD_MORE": "加载更多",
+				"LOAD_FAILED": "无法加载联系人。",
 				"COLUMNS": {
 					"CONTACT": "联系人",
 					"TYPE": "类型",

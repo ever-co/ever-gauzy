@@ -2176,7 +2176,7 @@
 				"ASSIGN": "Assegna contatti",
 				"ASSIGN_DIALOG_TITLE": "Assegna a contatti",
 				"ASSIGN_DIALOG_SUBTITLE": "Scegli i contatti con cui deve lavorare {{ employee }}.",
-				"ASSIGN_SEARCH": "Cerca per nome, e-mail o telefono",
+				"ASSIGN_SEARCH": "Cerca per nome",
 				"SELECT_ALL": "Seleziona tutto",
 				"DESELECT_ALL": "Deseleziona tutto",
 				"SELECTED_COUNT": "{{ count }} selezionati",
@@ -2184,6 +2184,8 @@
 				"ASSIGN_SUBMIT": "Assegna",
 				"ALL_ASSIGNED": "Questo dipendente è già assegnato a tutti i contatti.",
 				"NO_MATCH_PICKER": "Nessun contatto corrispondente",
+				"LOAD_MORE": "Carica altri",
+				"LOAD_FAILED": "Impossibile caricare i contatti.",
 				"COLUMNS": {
 					"CONTACT": "Contatto",
 					"TYPE": "Tipo",

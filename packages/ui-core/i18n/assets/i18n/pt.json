@@ -2176,7 +2176,7 @@
 				"ASSIGN": "Atribuir contatos",
 				"ASSIGN_DIALOG_TITLE": "Atribuir a contatos",
 				"ASSIGN_DIALOG_SUBTITLE": "Escolha os contatos com quem {{ employee }} deve trabalhar.",
-				"ASSIGN_SEARCH": "Pesquisar por nome, e-mail ou telefone",
+				"ASSIGN_SEARCH": "Pesquisar por nome",
 				"SELECT_ALL": "Selecionar tudo",
 				"DESELECT_ALL": "Desmarcar tudo",
 				"SELECTED_COUNT": "{{ count }} selecionado(s)",
@@ -2184,6 +2184,8 @@
 				"ASSIGN_SUBMIT": "Atribuir",
 				"ALL_ASSIGNED": "Este funcionário já está atribuído a todos os contatos.",
 				"NO_MATCH_PICKER": "Nenhum contato correspondente",
+				"LOAD_MORE": "Carregar mais",
+				"LOAD_FAILED": "Não foi possível carregar os contatos.",
 				"COLUMNS": {
 					"CONTACT": "Contato",
 					"TYPE": "Tipo",

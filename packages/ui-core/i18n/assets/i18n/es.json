@@ -2178,7 +2178,7 @@
 				"ASSIGN": "Asignar contactos",
 				"ASSIGN_DIALOG_TITLE": "Asignar a contactos",
 				"ASSIGN_DIALOG_SUBTITLE": "Elige los contactos con los que debe trabajar {{ employee }}.",
-				"ASSIGN_SEARCH": "Buscar por nombre, correo o teléfono",
+				"ASSIGN_SEARCH": "Buscar por nombre",
 				"SELECT_ALL": "Seleccionar todo",
 				"DESELECT_ALL": "Deseleccionar todo",
 				"SELECTED_COUNT": "{{ count }} seleccionados",
@@ -2186,6 +2186,8 @@
 				"ASSIGN_SUBMIT": "Asignar",
 				"ALL_ASSIGNED": "Este empleado ya está asignado a todos los contactos.",
 				"NO_MATCH_PICKER": "No hay contactos que coincidan",
+				"LOAD_MORE": "Cargar más",
+				"LOAD_FAILED": "No se pudieron cargar los contactos.",
 				"COLUMNS": {
 					"CONTACT": "Contacto",
 					"TYPE": "Tipo",
