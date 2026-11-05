@@ -11,6 +11,7 @@ import { EmployeeController } from './employee.controller';
 describe('EmployeeController and the pay rate', () => {
 	let findAll: jest.Mock;
 	let pagination: jest.Mock;
+	let countBy: jest.Mock;
 	let assertOwnPayRateUnchanged: jest.Mock;
 	let execute: jest.Mock;
 	let controller: EmployeeController;
@@ -18,10 +19,11 @@ describe('EmployeeController and the pay rate', () => {
 	beforeEach(() => {
 		findAll = jest.fn().mockResolvedValue({ items: [], total: 0 });
 		pagination = jest.fn().mockResolvedValue({ items: [], total: 0 });
+		countBy = jest.fn().mockResolvedValue(0);
 		assertOwnPayRateUnchanged = jest.fn().mockResolvedValue(undefined);
 		execute = jest.fn().mockResolvedValue({ id: 'employee-1' });
 		controller = new EmployeeController(
-			{ findAll, pagination, assertOwnPayRateUnchanged } as never,
+			{ findAll, pagination, countBy, assertOwnPayRateUnchanged } as never,
 			{ execute } as never,
 			{} as never,
 			{} as never
@@ -54,6 +56,16 @@ describe('EmployeeController and the pay rate', () => {
 		expect(options.select).toEqual({ id: true });
 		expect(options.where).toEqual([{}, {}]);
 		expect(options.order).toEqual({ billRateValue: 'ASC' });
+	});
+
+	it('drops the pay rate from the criteria of the employee count', async () => {
+		await controller.getCount({
+			organizationId: 'organization-1',
+			payRateValue: 30,
+			payRateCurrency: 'USD'
+		} as never);
+
+		expect(countBy).toHaveBeenCalledWith({ organizationId: 'organization-1', kind: 'human' });
 	});
 
 	it('checks an edit for a change of one’s own pay rate before it runs', async () => {

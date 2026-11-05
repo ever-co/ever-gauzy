@@ -57,7 +57,7 @@ import {
 	EmployeePresenceDTO,
 	EmployeeListQueryDTO
 } from './dto';
-import { withoutPayRateCriteria } from './pay-rate';
+import { withoutPayRateCriteria, withoutPayRateKeys } from './pay-rate';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
 import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
@@ -201,8 +201,10 @@ export class EmployeeController extends CrudController<Employee> {
 	@Get('/count')
 	@UseValidationPipe()
 	async getCount(@Query() options: CountQueryDTO<Employee>): Promise<number> {
+		// The count's query keys are its filter: a count by pay rate would tell the rate
+		const criteria = withoutPayRateKeys(options) as CountQueryDTO<Employee>;
 		// The headcount is people: agent employees (`kind = 'agent'`) are not counted.
-		return await this._employeeService.countBy({ ...options, kind: EmployeeKindEnum.HUMAN });
+		return await this._employeeService.countBy({ ...criteria, kind: EmployeeKindEnum.HUMAN });
 	}
 
 	/**
