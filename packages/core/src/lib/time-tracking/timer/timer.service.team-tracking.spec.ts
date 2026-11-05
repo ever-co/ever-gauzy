@@ -28,6 +28,7 @@ describe('TimerService.startTimer with tracking turned off in the team', () => {
 	let execute: jest.Mock;
 	let findMembership: jest.Mock;
 	let membership: { id: string; isTrackingEnabled: boolean } | null;
+	let stopPreviousRunningTimers: jest.Mock;
 
 	const startFrom = (source: TimeLogSourceEnum) => service.startTimer({ source, organizationTeamId: TEAM });
 
@@ -47,7 +48,8 @@ describe('TimerService.startTimer with tracking turned off in the team', () => {
 			employeeService as never,
 			{ execute } as never
 		);
-		Object.assign(service, { stopPreviousRunningTimers: jest.fn(async () => undefined) });
+		stopPreviousRunningTimers = jest.fn(async () => undefined);
+		Object.assign(service, { stopPreviousRunningTimers });
 	});
 
 	afterEach(() => {
@@ -70,6 +72,7 @@ describe('TimerService.startTimer with tracking turned off in the team', () => {
 				select: { id: true, isTrackingEnabled: true }
 			});
 			expect(createdLog()).toBe(false);
+			expect(stopPreviousRunningTimers).not.toHaveBeenCalled();
 		}
 	);
 
