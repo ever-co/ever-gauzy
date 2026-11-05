@@ -692,6 +692,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Taux par défaut",
+			"OWN_RATES_LOCKED": "Demandez à un administrateur de modifier votre taux.",
 			"EXPECTED_RATE": "Taux prévu",
 			"LIMITS": "Limites",
 			"ERRORS": {

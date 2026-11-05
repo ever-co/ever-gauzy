@@ -691,6 +691,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Standardzinssatz",
+			"OWN_RATES_LOCKED": "Bitten Sie einen Admin, Ihren Satz zu ändern.",
 			"EXPECTED_RATE": "Erwartete Rate",
 			"LIMITS": "Grenzen",
 			"ERRORS": {

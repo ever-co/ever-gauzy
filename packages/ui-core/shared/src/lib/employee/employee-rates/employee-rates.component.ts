@@ -1,10 +1,19 @@
 import { Component, OnDestroy, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { IEmployee, PayPeriodEnum, ICandidate, ICurrency } from '@gauzy/contracts';
+import { IEmployee, PayPeriodEnum, ICandidate, ICurrency, PermissionsEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { filter, tap } from 'rxjs';
 import { Store } from '@gauzy/ui-core/core';
 import { CandidateStore, EmployeeStore } from '@gauzy/ui-core/core';
+
+/** Whether two ids name the same employee, whatever their letter case. */
+function isSameId(first: string | null | undefined, second: string | null | undefined): boolean {
+	const bothSet = Boolean(first) && Boolean(second);
+	if (!bothSet) {
+		return false;
+	}
+	return first.toLowerCase() === second.toLowerCase();
+}
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -21,6 +30,12 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 	selectedEmployee: IEmployee;
 	selectedCandidate: ICandidate;
 	payPeriods = Object.values(PayPeriodEnum);
+
+	/**
+	 * Changing one's own rates needs CHANGE_OWN_RATES (super admins and admins by default). Without it, a person's
+	 * own rates are shown read-only and they ask an admin; someone else's rates stay editable as before.
+	 */
+	public ownRatesLocked = false;
 
 	/*
 	 * Employee Rates Form
@@ -49,6 +64,7 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 				filter((employee: IEmployee) => !!employee),
 				tap((employee: IEmployee) => (this.selectedEmployee = employee)),
 				tap((employee: IEmployee) => this._syncRates(employee)),
+				tap((employee: IEmployee) => this._applyOwnRatesLock(employee)),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -89,6 +105,20 @@ export class EmployeeRatesComponent implements OnInit, OnDestroy {
 			reWeeklyLimit: user.reWeeklyLimit,
 			minimumBillingRate: user.minimumBillingRate
 		});
+	}
+
+	private _applyOwnRatesLock(employee: IEmployee) {
+		if (!this.isEmployee) {
+			return;
+		}
+		const editsOwnRecord = isSameId(this.store.user?.employeeId, employee.id);
+		const changesOwnRates = this.store.hasPermission(PermissionsEnum.CHANGE_OWN_RATES);
+		this.ownRatesLocked = editsOwnRecord && !changesOwnRates;
+		if (this.ownRatesLocked) {
+			this.form.disable({ emitEvent: false });
+			return;
+		}
+		this.form.enable({ emitEvent: false });
 	}
 
 	/*

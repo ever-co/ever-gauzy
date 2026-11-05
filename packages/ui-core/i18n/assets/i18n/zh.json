@@ -743,6 +743,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "违约率",
+			"OWN_RATES_LOCKED": "请管理员更改你的费率。",
 			"EXPECTED_RATE": "预期利率",
 			"LIMITS": "限制",
 			"ERRORS": {

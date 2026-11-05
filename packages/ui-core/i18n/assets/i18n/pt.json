@@ -691,6 +691,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Taxa de inadimplência",
+			"OWN_RATES_LOCKED": "Peça a um administrador para alterar a sua taxa.",
 			"EXPECTED_RATE": "Taxa esperada",
 			"LIMITS": "Limites",
 			"ERRORS": {

@@ -724,6 +724,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Норма по подразбиране",
+			"OWN_RATES_LOCKED": "Помолете администратор да промени ставката ви.",
 			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits"
 		},
