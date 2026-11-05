@@ -435,6 +435,13 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 
 		try {
+			// Checked against the team as stored, before any member change: a refused edit then changes nothing
+			await this.assertDefaultProjectInOrganization(
+				input.defaultProjectId,
+				organizationTeam.organizationId,
+				organizationTeam.tenantId
+			);
+
 			if (isNotEmpty(memberIds) || isNotEmpty(managerIds)) {
 				// Find the manager role
 				const role = await this.roleService.findOneByWhereOptions({
@@ -457,8 +464,6 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			}
 
 			const { id: organizationTeamId } = organizationTeam;
-
-			await this.assertDefaultProjectInOrganization(input.defaultProjectId, organizationId, tenantId);
 
 			// A client edits the projects from a list that offers no archived project: the archived projects the
 			// team is linked to are kept, or the save would unlink them
@@ -494,6 +499,10 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	): Promise<void> {
 		if (!defaultProjectId) {
 			return;
+		}
+		const knowsTeamScope = Boolean(organizationId) && Boolean(tenantId);
+		if (!knowsTeamScope) {
+			throw new BadRequestException("The team's default project must be a project of its organization.");
 		}
 		const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
 			where: { id: defaultProjectId, organizationId, tenantId },

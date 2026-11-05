@@ -22,6 +22,7 @@ describe('OrganizationTeamService — default project', () => {
 
 	let saved: Record<string, unknown> | undefined;
 	let findProject: jest.Mock;
+	let updateOrganizationTeam: jest.Mock;
 	let service: OrganizationTeamService;
 
 	beforeEach(() => {
@@ -42,6 +43,7 @@ describe('OrganizationTeamService — default project', () => {
 			tenantId: TENANT
 		} as never);
 
+		updateOrganizationTeam = jest.fn(async () => undefined);
 		findProject = jest.fn(async (entity: unknown, { where }: { where: Record<string, unknown> }) => {
 			if (entity !== OrganizationProject) {
 				return null;
@@ -63,6 +65,8 @@ describe('OrganizationTeamService — default project', () => {
 				findOneByWhereOptions: jest.fn().mockResolvedValue({ id: 'role-manager', name: RolesEnum.MANAGER })
 			},
 			retrieveEmployees: jest.fn().mockResolvedValue([]),
+			organizationTeamEmployeeService: { updateOrganizationTeam },
+			employeeService: {},
 			_eventBus: { publish: jest.fn() }
 		});
 	});
@@ -103,5 +107,26 @@ describe('OrganizationTeamService — default project', () => {
 
 		await updateTeam(null);
 		expect(saved).toEqual(expect.objectContaining({ defaultProjectId: null }));
+	});
+
+	it('refuses a foreign default project before it changes any member', async () => {
+		const edit = service.update('team-1', {
+			organizationId: ORGANIZATION,
+			memberIds: ['employee-1'],
+			defaultProjectId: 'project-elsewhere'
+		} as never);
+
+		await expect(edit).rejects.toThrow(BadRequestException);
+		expect(updateOrganizationTeam).not.toHaveBeenCalled();
+	});
+
+	it("checks against the stored team's organization when the body names it only as a relation", async () => {
+		const updateNamingRelation = (defaultProjectId: string) =>
+			service.update('team-1', { organization: { id: ORGANIZATION }, defaultProjectId } as never);
+
+		await expect(updateNamingRelation('project-elsewhere')).rejects.toThrow(BadRequestException);
+		await updateNamingRelation('project-own');
+
+		expect(saved).toEqual(expect.objectContaining({ defaultProjectId: 'project-own' }));
 	});
 });
