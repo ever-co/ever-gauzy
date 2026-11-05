@@ -37,6 +37,8 @@ interface Measurement {
 	mikroOrm: Reads;
 	typeOrm: Reads;
 	genericReads: Record<string, any>;
+	/** The same reports for a manager who holds CHANGE_SELECTED_EMPLOYEE but not ORG_EMPLOYEES_EDIT, employee PAID. */
+	managerReads: Reads;
 }
 
 async function measure(): Promise<Measurement> {
@@ -203,6 +205,23 @@ async function measure(): Promise<Measurement> {
 				jest.restoreAllMocks();
 			}
 
+			const { PermissionsEnum } = require('@gauzy/contracts');
+			jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+				id: USER,
+				tenantId: TENANT,
+				employeeId: PAID
+			} as any);
+			jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+			jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
+				(permission: string) => permission !== PermissionsEnum.ORG_EMPLOYEES_EDIT
+			);
+			jest.spyOn(CrudService.prototype, 'ormType', 'get').mockReturnValue(MultiORMEnum.TypeORM);
+			try {
+				measurement.managerReads = await reads(() => service(undefined));
+			} finally {
+				jest.restoreAllMocks();
+			}
+
 			// Generic reads, as a caller could shape them, sent through the response interceptor every route uses
 			const respond = async (body: unknown) => {
 				const interceptor = new TransformInterceptor();
@@ -309,6 +328,23 @@ describe('TimeLogService owed amounts at the pay rate, and pay rates kept out of
 			const { chart } = measured[orm];
 			expect(chart.error).toBeUndefined();
 			expect(chart.find(({ date }: any) => date === DAY).value).toBe(38.5);
+		});
+	});
+
+	describe('a manager without ORG_EMPLOYEES_EDIT', () => {
+		it("gets their own day at their pay rate and the others' at their billing rate, so no amount tells a pay rate", () => {
+			const { owed, chart } = measured.managerReads;
+			expect(owed.error).toBeUndefined();
+
+			const lines = new Map(owed[0].employees.map((line: any) => [line.employee.id, line]));
+			expect(lines.get(PAID)).toMatchObject({ amount: 15, rateSource: 'pay', currency: 'USD' });
+			expect(lines.get(PAID_IN_ORGANIZATION_CURRENCY)).toMatchObject({
+				amount: 40,
+				rateSource: 'billing',
+				currency: 'USD'
+			});
+			expect(lines.get(NOT_PAID_YET)).toMatchObject({ amount: 20, rateSource: 'billing', currency: 'USD' });
+			expect(chart.find(({ date }: any) => date === DAY).value).toBe(75);
 		});
 	});
 

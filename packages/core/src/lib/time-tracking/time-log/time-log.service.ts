@@ -74,7 +74,7 @@ import { TypeOrmOrganizationProjectRepository } from '../../organization-project
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { Organization } from '../../organization/organization.entity';
-import { findStoredPayRates, isPayRateSet, StoredPayRate } from '../../employee/pay-rate';
+import { findStoredPayRates, isPayRateSet, mayReadPayRateOf, StoredPayRate } from '../../employee/pay-rate';
 import { TimeLog } from './time-log.entity';
 import { owedRateOf, payRateNeedsOrganizationCurrency } from './owed-rate';
 
@@ -405,7 +405,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		return { amount, rateSource: owed.rateSource, currency: owed.currency };
 	}
 
-	/** The pay rates a rate editor set for the employees whose logs a report prices, by employee id. */
+	/**
+	 * The pay rates a rate editor set for the employees whose logs a report prices, by employee id: only the ones the
+	 * caller may read (their own, or anyone's for a holder of ORG_EMPLOYEES_EDIT). An amount over a duration would
+	 * otherwise tell a manager a teammate's pay rate, so the others' time is priced at their billing rate.
+	 */
 	private async findPayRatesOf(logs: ITimeLog[]): Promise<Map<ID, StoredPayRate>> {
 		const payRates = new Map<ID, StoredPayRate>();
 		const tenantId = RequestContext.currentTenantId();
@@ -414,7 +418,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 		const loggedEmployeeIds = logs.map((log) => log.employeeId);
 		const knownEmployeeIds = loggedEmployeeIds.filter(Boolean);
-		const employeeIds = Array.from(new Set(knownEmployeeIds));
+		const readableEmployeeIds = knownEmployeeIds.filter((employeeId) => mayReadPayRateOf(employeeId));
+		const employeeIds = Array.from(new Set(readableEmployeeIds));
 		const rows = await findStoredPayRates(this.typeOrmRepository.manager, employeeIds, tenantId);
 		for (const row of rows) {
 			if (isPayRateSet(row.payRateValue)) {
