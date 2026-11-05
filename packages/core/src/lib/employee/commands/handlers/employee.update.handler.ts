@@ -16,7 +16,7 @@ import {
 	employeeAgentRestrictionLocations,
 	recordAgentRestrictionAcknowledgement
 } from './../../agent-exit-logout-restriction';
-import { assertOwnRatesMayChange, removeOwnRateFields } from './../../own-rates';
+import { assertOwnRatesMayChange, isSameId, removeOwnRateFields } from './../../own-rates';
 import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
 
 /** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
@@ -65,7 +65,7 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			relations: { organization: { contact: true }, user: true, contact: true }
 		});
 
-		const editsOwnRecord = user?.employeeId === id;
+		const editsOwnRecord = isSameId(user?.employeeId, id);
 		const changesOwnRates = RequestContext.hasPermission(PermissionsEnum.CHANGE_OWN_RATES);
 		assertOwnRatesMayChange(employee, input, { editsOwnRecord, changesOwnRates });
 		// The worker's own location and their organization's: EEA/UK if either is.
