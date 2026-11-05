@@ -64,6 +64,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 	showWarning: boolean = false;
 	showTooltip: boolean = false;
 	showTaxesInput: boolean = false;
+	/** Whether the tax amount is already worked out on every change of the form. */
+	private calculatingTaxes = false;
 
 	public organization: IOrganization;
 	/*
@@ -154,10 +156,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 	 * @param contact
 	 */
 	selectedOrganizationContact(contact: IOrganizationContact) {
-		if (contact) {
-			this.form.get('organizationContactId').setValue(contact.id);
-			this.form.get('organizationContactId').updateValueAndValidity();
-		}
+		this.form.get('organizationContactId').setValue(contact?.id ?? null);
+		this.form.get('organizationContactId').updateValueAndValidity();
 	}
 
 	/**
@@ -195,11 +195,10 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 		if (this.form.invalid) {
 			return;
 		}
-		this.dialogRef.close(
-			Object.assign(this.form.getRawValue(), {
-				splitExpense: this.showTooltip
-			})
-		);
+		// An edited expense keeps the split it was saved with: its employee selector is hidden but still mounted,
+		// and may report "All employees" as it initializes.
+		const splitExpense = this.expense && !this.duplicate ? !!this.expense.splitExpense : this.showTooltip;
+		this.dialogRef.close(Object.assign(this.form.getRawValue(), { splitExpense }));
 	}
 
 	showNotesInput() {
@@ -209,6 +208,17 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 	includeTaxes() {
 		this.calculateTaxes();
 		return (this.showTaxesInput = !this.showTaxesInput);
+	}
+
+	/**
+	 * Takes the taxes out again: hides the tax fields and clears them, so the expense is saved
+	 * without a tax — and an edited expense loses the one it had.
+	 */
+	removeTaxes() {
+		this.form.patchValue({ taxLabel: null, taxType: TaxTypesEnum.PERCENTAGE, rateValue: 0 });
+		this.form.markAsDirty();
+		this.calculatedValue = '0';
+		this.showTaxesInput = false;
 	}
 
 	private _initializeForm() {
@@ -246,6 +256,11 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 	}
 
 	private calculateTaxes() {
+		// Including the taxes again after removing them must not add a second subscription.
+		if (this.calculatingTaxes) {
+			return;
+		}
+		this.calculatingTaxes = true;
 		this.form.valueChanges.pipe(untilDestroyed(this)).subscribe((val) => {
 			const amount = val.amount;
 			const rate = val.rateValue;
@@ -269,8 +284,9 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 		});
 	}
 
+	/** Hides the warning: both the close button and its timeout call this, so it never toggles. */
 	closeWarning() {
-		this.showWarning = !this.showWarning;
+		this.showWarning = false;
 	}
 
 	attachReceipt() {

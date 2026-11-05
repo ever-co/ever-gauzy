@@ -456,6 +456,17 @@ $header-title-basis: 18rem;
     }
   }
 
+  // Task and project rows open the dashboard's quick-look drawer.
+  &::ng-deep nb-list-item.data-list__item--open {
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-default);
+      outline-offset: -2px;
+      background-color: var(--gauzy-hover-tint);
+    }
+  }
+
   &::ng-deep nb-list-item.data-list__head {
     padding: nb-theme(gauzy-table-header-padding-y) nb-theme(gauzy-table-header-padding-x);
     font-size: nb-theme(gauzy-table-header-font-size);

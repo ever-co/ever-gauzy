@@ -132,8 +132,20 @@ export class EditCandidateMainComponent implements OnInit, OnDestroy {
 	 * @param error - The error object to handle.
 	 */
 	handleImageUploadError(error: any) {
-		this._toastrService.danger('Error uploading image: ' + (error.message || error));
+		// The server's reason first — nested in an HTTP-shaped error, else the body's own — each read alone, so an
+		// unusable nested one does not hide a usable top-level one; then the uploader's fallback, a translation key the
+		// toastr translates.
+		const text = [error?.error?.message, error?.message].map(messageText).find((candidate) => !!candidate);
+		this._toastrService.danger(text || 'INVENTORY_PAGE.COULD_NOT_UPLOAD_IMAGE');
 	}
 
 	ngOnDestroy(): void {}
+}
+
+/** An error message as text: a validation error's list of sentences joined, anything but text dropped. */
+function messageText(message: unknown): string {
+	if (Array.isArray(message)) {
+		return message.filter((part): part is string => typeof part === 'string').join('; ').trim();
+	}
+	return typeof message === 'string' ? message.trim() : '';
 }
