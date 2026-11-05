@@ -27,6 +27,9 @@ import { TimerService } from './timer.service';
 
 interface PlanRow {
 	organizationTeamId: string;
+	employeeId?: string;
+	organizationId?: string;
+	tenantId?: string;
 	date: Date;
 	tasks: { id: string }[];
 	isActive?: boolean | null;
@@ -79,6 +82,7 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 	let find: jest.Mock;
 	let stopPreviousRunningTimers: jest.Mock;
 	let requirePlanToTrack: boolean;
+	let storedTeam: Record<string, unknown>;
 	let plans: PlanRow[];
 
 	const start = (source: TimeLogSourceEnum, taskId = 'task-1') =>
@@ -87,10 +91,10 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 	const plansMatching = (where: Record<string, unknown>) =>
 		plans.filter((plan) => {
 			const stored: Record<string, unknown> = {
-				...plan,
 				employeeId: 'employee-1',
 				organizationId: fixture.organizationId,
 				tenantId: fixture.tenantId,
+				...plan,
 				isActive: plan.isActive ?? null,
 				isArchived: plan.isArchived ?? null
 			};
@@ -116,9 +120,14 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 		});
 		({ restore } = asTenantUser(fixture));
 		requirePlanToTrack = true;
+		storedTeam = { id: TEAM, organizationId: fixture.organizationId, tenantId: fixture.tenantId };
 		plans = [];
-		findOne = jest.fn(async (entity: unknown) => {
+		findOne = jest.fn(async (entity: unknown, { where }: { where: Record<string, unknown> }) => {
 			if (entity !== OrganizationTeam) {
+				return null;
+			}
+			const isStoredTeamAsked = Object.entries(where).every(([key, value]) => storedTeam[key] === value);
+			if (!isStoredTeamAsked) {
 				return null;
 			}
 			return { id: TEAM, requirePlanToTrack };
@@ -209,6 +218,27 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 		];
 
 		expect(await refusalCodeOf(start(TimeLogSourceEnum.TEAMS))).toBe(DAILY_PLAN_REQUIRED);
+	});
+
+	const foreignPlanOwners: [string, Partial<PlanRow>][] = [
+		['another employee', { employeeId: 'employee-2' }],
+		['another organization', { organizationId: 'organization-other' }],
+		['another tenant', { tenantId: 'tenant-other' }]
+	];
+
+	it.each(foreignPlanOwners)('does not count a plan of %s', async (_owner, owner) => {
+		plans = [{ organizationTeamId: TEAM, date: utcDay(0), tasks: [{ id: 'task-1' }], ...owner }];
+
+		expect(await refusalCodeOf(start(TimeLogSourceEnum.TEAMS))).toBe(DAILY_PLAN_REQUIRED);
+	});
+
+	it("does not apply the rule of another tenant's team", async () => {
+		storedTeam = { ...storedTeam, tenantId: 'tenant-other' };
+
+		await start(TimeLogSourceEnum.TEAMS);
+
+		expect(find).not.toHaveBeenCalled();
+		expect(createdLog()).toBe(true);
 	});
 
 	it('starts without looking for a plan when the team does not require one', async () => {
