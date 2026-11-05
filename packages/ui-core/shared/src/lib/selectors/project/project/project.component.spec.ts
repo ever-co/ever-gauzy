@@ -292,5 +292,19 @@ describe('ProjectSelectorComponent', () => {
 			expect(create).toHaveBeenCalledWith(expect.objectContaining({ organizationContactId: 'client-acme' }));
 			expect(component.projects.map(({ id }) => id)).not.toContain('acme-site');
 		});
+
+		it('neither lists nor selects a project created for an organization the list no longer shows', async () => {
+			const answer = deferred<IOrganizationProject>();
+			create.mockReturnValue(answer.promise);
+			component.organization = organization;
+
+			const creation = component.createNew('old-site');
+			component.organization = { id: 'organization-2', tenantId: 'tenant-1' } as IOrganization;
+			answer.resolve(project('old-site'));
+
+			await expect(creation).rejects.toThrow();
+			expect(create).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 'organization-1' }));
+			expect(component.projects.map(({ id }) => id)).not.toContain('old-site');
+		});
 	});
 });

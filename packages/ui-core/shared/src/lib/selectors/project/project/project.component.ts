@@ -499,14 +499,14 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			throw new Error('Organization or project name is missing.');
 		}
 
-		// The filters the project is created for: the list may be narrowed to another client or employee by the time
-		// the request answers.
-		const { employeeId, organizationContactId } = this;
+		// The organization and filters the project is created for: the list may show another organization, client or
+		// employee by the time the request answers.
+		const { organization, employeeId, organizationContactId } = this;
 
 		let project: IOrganizationProject;
 		try {
 			// Destructure tenantId and organizationId from organization
-			const { id: organizationId, tenantId } = this.organization;
+			const { id: organizationId, tenantId } = organization;
 
 			// Include member if employeeId or store user's employeeId is provided
 			const memberId = employeeId || this._store.user.employee?.id;
@@ -529,9 +529,14 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 		// Show success message
 		this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', { name });
 
-		// Created for filters the list no longer shows: neither listed nor selected here
-		if (this.employeeId !== employeeId || this.organizationContactId !== organizationContactId) {
-			throw new Error('The project list was narrowed to another client or employee while the project was created.');
+		// Created for an organization or filters the list no longer shows: neither listed nor selected here
+		if (
+			this.organization?.id !== organization.id ||
+			this.organization?.tenantId !== organization.tenantId ||
+			this.employeeId !== employeeId ||
+			this.organizationContactId !== organizationContactId
+		) {
+			throw new Error('The project list moved to another organization, client or employee while the project was created.');
 		}
 
 		// Add the created project to the list; ng-select selects it once this resolves
