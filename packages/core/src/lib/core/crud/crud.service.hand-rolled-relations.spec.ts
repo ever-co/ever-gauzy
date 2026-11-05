@@ -225,7 +225,15 @@ describe('sensitive-relation enforcement on hand-rolled queries', () => {
 		it('refuses the timer status with a protected relation on its time logs', async () => {
 			const timeLog = repositoryFor('TimeLog');
 			const employee = repositoryFor('Employee');
-			const service = new TimerService(timeLog as any, {} as any, employee as any, {} as any, {} as any, {} as any);
+			const service = new TimerService(
+				timeLog as any,
+				{} as any,
+				employee as any,
+				{} as any,
+				{} as any,
+				{} as any,
+				{} as any
+			);
 
 			await expect(service.getTimerStatus({ relations: PROTECTED } as any)).rejects.toThrow(ForbiddenException);
 			await expect(service.getTimerWorkedStatus({ relations: PROTECTED } as any)).rejects.toThrow(
