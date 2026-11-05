@@ -424,6 +424,7 @@ export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	groupBy?: ReportGroupByFilter;
 	isEdited?: boolean;
 	billableOnly?: boolean;
+	includeTimeWithoutTeam?: boolean;
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {
