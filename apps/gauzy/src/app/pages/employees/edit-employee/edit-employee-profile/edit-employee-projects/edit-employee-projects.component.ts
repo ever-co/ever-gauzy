@@ -65,6 +65,12 @@ export interface IEmployeeProjectRow {
 	memberCount: number;
 }
 
+/** Whose memberships a dialog changes: fixed when it opens, so a later switch of employee cannot redirect it. */
+interface IMembershipContext {
+	employee: IEmployee;
+	organization: IOrganization;
+}
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ga-edit-employee-projects',
@@ -75,10 +81,13 @@ export interface IEmployeeProjectRow {
 })
 export class EditEmployeeProjectsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	/** The remove confirmation; its context is the row being removed. */
-	@ViewChild('removeDialog', { static: true }) removeDialog: TemplateRef<IEmployeeProjectRow>;
+	@ViewChild('removeDialog', { static: true }) readonly removeDialog: TemplateRef<IEmployeeProjectRow>;
 	/** The assign dialog: a searchable checklist of the projects the employee is not in yet. */
-	@ViewChild('assignDialog', { static: true }) assignDialog: TemplateRef<void>;
+	@ViewChild('assignDialog', { static: true }) readonly assignDialog: TemplateRef<void>;
 	private _assignRef: NbDialogRef<void> | null = null;
+	/** The employee and organization the open assign dialog was opened for. */
+	private _assignContext: IMembershipContext | null = null;
+	private _removeRef: NbDialogRef<IEmployeeProjectRow> | null = null;
 
 	private subject$: Subject<boolean> = new Subject();
 	/** Guards against an older read landing after a newer one. */
@@ -133,17 +142,43 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 			.pipe(
 				distinctUntilChange(),
 				filter(([organization, employee]) => !!organization && !!employee),
-				tap(([organization, employee]) => {
-					this.organization = organization;
-					this.selectedEmployee = employee;
-					const person = personOf(employee);
-					this.people = person ? [{ ...person, id: employee.id }] : [];
-					this.viewedProject = null;
-				}),
+				tap(([organization, employee]) => this.selectContext(organization, employee)),
 				tap(() => this.subject$.next(true)),
 				untilDestroyed(this)
 			)
 			.subscribe();
+	}
+
+	/**
+	 * Switches the tab to an employee (or organization). Another employee's rows and dialogs belong to the
+	 * previous one: they are dropped, so nothing on screen can act on the wrong employee while the new reads run.
+	 */
+	selectContext(organization: IOrganization, employee: IEmployee): void {
+		const changed = this.selectedEmployee?.id !== employee.id || this.organization?.id !== organization.id;
+		this.organization = organization;
+		this.selectedEmployee = employee;
+		const person = personOf(employee);
+		this.people = person ? [{ ...person, id: employee.id }] : [];
+		this.viewedProject = null;
+		if (changed) {
+			this.rows = [];
+			this.availableRows = [];
+			this.searchTerm = '';
+			this._removeRef?.close(false);
+			this._assignRef?.close();
+		}
+	}
+
+	/** The employee and organization shown now, or null before both are known. */
+	private currentContext(): IMembershipContext | null {
+		return this.selectedEmployee && this.organization
+			? { employee: this.selectedEmployee, organization: this.organization }
+			: null;
+	}
+
+	/** Whether the tab still shows the employee and organization a dialog was opened for. */
+	private isCurrent(context: IMembershipContext): boolean {
+		return context.employee.id === this.selectedEmployee?.id && context.organization.id === this.organization?.id;
 	}
 
 	/** The employee's display name, for captions and the remove confirmation. */
@@ -181,17 +216,26 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 
 	/** Opens the assign dialog with nothing ticked. */
 	openAssign(): void {
-		if (this._assignRef) {
+		const context = this.currentContext();
+		if (this._assignRef || !context) {
 			return;
 		}
 		this.assignSearch = '';
 		this.assignSelection = new Set();
-		this._assignRef = this._dialogService.open(this.assignDialog, {
+		const ref = this._dialogService.open(this.assignDialog, {
 			closeOnBackdropClick: true,
 			closeOnEsc: true,
 			autoFocus: false
 		});
-		this._assignRef.onClose.subscribe(() => (this._assignRef = null));
+		this._assignRef = ref;
+		this._assignContext = context;
+		// Esc or the backdrop can close it while a save runs: forget it only if it is still the open one.
+		ref.onClose.subscribe(() => {
+			if (this._assignRef === ref) {
+				this._assignRef = null;
+				this._assignContext = null;
+			}
+		});
 		// Ready to type: the search is where picking starts.
 		setTimeout(() => document.getElementById('assignProjectsSearch')?.focus());
 	}
@@ -233,21 +277,31 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 		return item.id;
 	}
 
-	/** Adds the employee to the ticked projects, then closes the dialog. */
+	/**
+	 * Adds the dialog's employee to the ticked projects, then closes that dialog: if it was dismissed during
+	 * the save and another opened since, the new one and its ticks are left alone.
+	 */
 	async assignSelected(): Promise<void> {
 		const ids = [...this.assignSelection];
-		if (!ids.length || this.saving) {
+		const ref = this._assignRef;
+		const context = this._assignContext;
+		if (!ids.length || this.saving || !ref || !context || !this.isCurrent(context)) {
 			return;
 		}
-		const done = await this.updateMembership(ids, [], 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_ADDED');
+		const done = await this.updateMembership(context, ids, [], 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_ADDED');
 		if (done) {
-			this._assignRef?.close();
+			ref.close();
 		}
 	}
 
-	/** Asks for confirmation in the remove dialog, then takes the employee off the project. */
+	/**
+	 * Asks for confirmation in the remove dialog, then takes the employee it was opened for off the project.
+	 * Refused while the rows are loading (they may be another employee's), and dropped if the tab switched
+	 * employee while the dialog was open.
+	 */
 	async remove(row: IEmployeeProjectRow): Promise<void> {
-		if (this.removingId) {
+		const context = this.currentContext();
+		if (this.removingId || this.loading || !context) {
 			return;
 		}
 		const dialog = this._dialogService.open(this.removeDialog, {
@@ -256,11 +310,16 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 			closeOnEsc: true,
 			autoFocus: true
 		});
-		if ((await firstValueFrom(dialog.onClose)) !== true) {
+		this._removeRef = dialog;
+		const confirmed = (await firstValueFrom(dialog.onClose)) === true;
+		if (this._removeRef === dialog) {
+			this._removeRef = null;
+		}
+		if (!confirmed || !this.isCurrent(context)) {
 			return;
 		}
 		this.removingId = row.id;
-		const done = await this.updateMembership([], [row.id], 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_REMOVED');
+		const done = await this.updateMembership(context, [], [row.id], 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_REMOVED');
 		this.removingId = null;
 		if (done && this.viewedProject?.id === row.id) {
 			this.closeProject();
@@ -276,21 +335,23 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 	}
 
 	/**
-	 * Saves a change to the employee's project memberships, then reloads the table.
+	 * Saves a change to the project memberships of the context's employee, then reloads the table.
 	 *
 	 * @returns `true` when the server accepted the change.
 	 */
-	private async updateMembership(added: string[], removed: string[], successKey: string): Promise<boolean> {
-		if (!this.organization || !this.selectedEmployee) {
-			return false;
-		}
-		const { id: organizationId, tenantId } = this.organization;
+	private async updateMembership(
+		context: IMembershipContext,
+		added: string[],
+		removed: string[],
+		successKey: string
+	): Promise<boolean> {
+		const { id: organizationId, tenantId } = context.organization;
 		this.saving = true;
 		try {
 			await this._organizationProjectsService.updateByEmployee({
 				addedProjectIds: added,
 				removedProjectIds: removed,
-				member: this.selectedEmployee,
+				member: context.employee,
 				organizationId,
 				tenantId
 			});
