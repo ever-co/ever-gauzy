@@ -567,6 +567,9 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 * @throws UnauthorizedException if an unauthorized user attempts to access this information.
 	 */
 	public async findMyTeams(options: BaseQueryDTO<OrganizationTeam>): Promise<IPagination<OrganizationTeam>> {
+		// Checked before the catch below, which would answer a column refusal as a 401.
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
+
 		try {
 			return await this.findAll(options);
 		} catch (error) {

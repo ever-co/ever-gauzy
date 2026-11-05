@@ -146,6 +146,15 @@ const READS: ReadCase[] = [
 		ordinary: { where: { organizationId: 'org' }, order: { name: 'ASC' } }
 	},
 	{
+		label: 'OrganizationTeamService.findMyTeams',
+		service: OrganizationTeamService,
+		metadata: TEAM,
+		read: (service, options) => service.findMyTeams(options),
+		credential: { order: { createdByUser: { refreshToken: 'ASC' } } },
+		rate: { where: { projects: { billRateValue: '90' } } },
+		ordinary: { where: { organizationId: 'org' } }
+	},
+	{
 		label: 'EmailTemplateService.findAll',
 		service: EmailTemplateService,
 		metadata: EMAIL_TEMPLATE,
