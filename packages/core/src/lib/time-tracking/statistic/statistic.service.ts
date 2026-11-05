@@ -2759,7 +2759,7 @@ export class StatisticService {
 					.distinct([
 						'time_log.id as id',
 						'time_log.startedAt as startedAt',
-						'time_log.duration as duration',
+						'time_log.stoppedAt as stoppedAt',
 						'time_log.employeeId as employeeId',
 						'user.firstName as user_firstName',
 						'user.lastName as user_lastName',
@@ -2793,7 +2793,9 @@ export class StatisticService {
 				timeLogs = rows.map((row: any) => ({
 					id: row.id,
 					startedAt: row.startedAt,
-					duration: row.duration,
+					// No column holds a log's duration: the entity works it out when it loads, and this read loads
+					// none. Worked out as `TimeLog.afterEntityLoad` does, a running log counting up to now.
+					duration: moment.utc(row.stoppedAt || new Date()).diff(moment.utc(row.startedAt), 'seconds'),
 					user: {
 						name: `${row.user_firstName || ''} ${row.user_lastName || ''}`.trim(),
 						imageUrl: withoutDummyImageHost(row.user_imageUrl)
