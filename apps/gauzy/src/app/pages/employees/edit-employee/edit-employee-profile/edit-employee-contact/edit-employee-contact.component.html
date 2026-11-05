@@ -216,8 +216,8 @@
 						type="search"
 						id="assignContactsSearch"
 						autocomplete="off"
-						[(ngModel)]="assignSearch"
-						[disabled]="!availableRows.length"
+						[ngModel]="assignSearch"
+						(ngModelChange)="onAssignSearch($event)"
 						[placeholder]="T + '.ASSIGN_SEARCH' | translate"
 						[attr.aria-label]="T + '.ASSIGN_SEARCH' | translate"
 					/>
@@ -230,17 +230,35 @@
 			</div>
 		</nb-card-header>
 
-		<nb-card-body class="assign-dialog__body">
-			@if (!availableRows.length) {
-				<div class="assign-dialog__empty">
-					<span class="empty__badge"><nb-icon icon="checkmark-circle-2-outline"></nb-icon></span>
-					<p class="empty__text">{{ T + '.ALL_ASSIGNED' | translate }}</p>
-				</div>
-			} @else if (!assignOptions.length) {
-				<div class="assign-dialog__empty">
-					<nb-icon class="empty__icon" icon="search-outline"></nb-icon>
-					<p class="empty__text">{{ T + '.NO_MATCH_PICKER' | translate }}</p>
-				</div>
+		<!-- Contacts are read a page at a time, searched by name on the server; the next page loads near the end. -->
+		<nb-card-body class="assign-dialog__body" (scroll)="onOptionsScroll($event)">
+			@if (!assignOptions.length) {
+				@if (optionsFailed) {
+					<div class="assign-dialog__empty">
+						<nb-icon class="empty__icon" icon="alert-circle-outline"></nb-icon>
+						<p class="empty__text">{{ T + '.LOAD_FAILED' | translate }}</p>
+						<button type="button" nbButton ghost status="primary" size="small" (click)="retryOptions()">
+							{{ 'BUTTONS.RETRY' | translate }}
+						</button>
+					</div>
+				} @else if (optionsLoading) {
+					<div
+						class="assign-dialog__empty"
+						[nbSpinner]="true"
+						nbSpinnerSize="small"
+						nbSpinnerStatus="basic"
+					></div>
+				} @else if (assignSearch.trim()) {
+					<div class="assign-dialog__empty">
+						<nb-icon class="empty__icon" icon="search-outline"></nb-icon>
+						<p class="empty__text">{{ T + '.NO_MATCH_PICKER' | translate }}</p>
+					</div>
+				} @else {
+					<div class="assign-dialog__empty">
+						<span class="empty__badge"><nb-icon icon="checkmark-circle-2-outline"></nb-icon></span>
+						<p class="empty__text">{{ T + '.ALL_ASSIGNED' | translate }}</p>
+					</div>
+				}
 			} @else {
 				<ul class="assign-dialog__list">
 					@for (row of assignOptions; track row.id) {
@@ -288,6 +306,23 @@
 						</li>
 					}
 				</ul>
+				<!-- The end of what is read so far: more on its way, a failed page, or more to read. -->
+				@if (optionsLoading) {
+					<div class="assign-dialog__more" [nbSpinner]="true" nbSpinnerSize="tiny" nbSpinnerStatus="basic"></div>
+				} @else if (optionsFailed) {
+					<div class="assign-dialog__more">
+						<span class="assign-dialog__more-text">{{ T + '.LOAD_FAILED' | translate }}</span>
+						<button type="button" class="assign-dialog__link" (click)="retryOptions()">
+							{{ 'BUTTONS.RETRY' | translate }}
+						</button>
+					</div>
+				} @else if (hasMoreOptions) {
+					<div class="assign-dialog__more">
+						<button type="button" class="assign-dialog__link" (click)="loadMoreOptions()">
+							{{ T + '.LOAD_MORE' | translate }}
+						</button>
+					</div>
+				}
 			}
 		</nb-card-body>
 
