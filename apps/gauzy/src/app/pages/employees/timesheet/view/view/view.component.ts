@@ -202,8 +202,12 @@ export class TimesheetViewComponent extends TranslationBaseComponent implements 
 		this.updatingStatus = true;
 		try {
 			const updated = await this.timesheetService.updateStatus(request);
-			const timesheet = (updated || []).find((item: ITimesheet) => item.id === id);
-			this.timesheet = { ...this.timesheet, ...(timesheet || { status }) };
+			// The route reuses this page for the next timesheet opened: an answer that lands after it moved on is
+			// about another timesheet than the one on screen, which keeps its own id and status.
+			if (this.timesheet?.id === id) {
+				const timesheet = (updated || []).find((item: ITimesheet) => item.id === id);
+				this.timesheet = { ...this.timesheet, ...(timesheet || { status }) };
+			}
 			this.toastrService.success(
 				status === TimesheetStatus.APPROVED ? 'TIMESHEET.APPROVE_SUCCESS' : 'TIMESHEET.DENIED_SUCCESS'
 			);
