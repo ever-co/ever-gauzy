@@ -8,6 +8,7 @@ import { BulkExecutor } from '../../api/bulk-executor.service';
 import { FieldVisibility } from '../../api/field-visibility.service';
 import { RequestContext } from '../../core/context';
 import { OrganizationBelongsToUserConstraint } from '../../shared/validators/constraints/organization-belongs-to-user.constraint';
+import { OrganizationTeam } from '../../core/entities/internal';
 import { IGetConflictTimeLogCommand, TimeLogCreateCommand } from './commands';
 import { CreateManualTimeLogDTO } from './dto';
 import { TRACKING_FIELD_REQUIRED } from './organization-tracking-requirements';
@@ -62,7 +63,23 @@ const byHand = {
 	source: TimeLogSourceEnum.WEB_TIMER
 };
 
-function surfaces() {
+interface IStoredContext {
+	/** The employee's active teams. */
+	teamIds: string[];
+	/** The project of the uploaded task. */
+	taskProjectId: string | null;
+	/** The default project of the employee's team. */
+	teamDefaultProjectId: string | null;
+}
+
+/** By default the employee is in two teams, so no team can be filled, and nothing gives a project. */
+const SEVERAL_TEAMS: IStoredContext = {
+	teamIds: ['team-a', 'team-b'],
+	taskProjectId: null,
+	teamDefaultProjectId: null
+};
+
+function surfaces(stored: IStoredContext = SEVERAL_TEAMS) {
 	const created: Record<string, unknown>[] = [];
 	const employeeRepository = {
 		findOne: jest.fn(async () => ({
@@ -83,13 +100,16 @@ function surfaces() {
 			throw new Error(`Unexpected command ${String(command)}`);
 		})
 	};
-	// The employee is in two teams, so no team can be filled; the task has no project.
 	const manager = {
-		find: jest.fn(async () => [
-			{ id: 'member-a', organizationTeamId: 'team-a' },
-			{ id: 'member-b', organizationTeamId: 'team-b' }
-		]),
-		findOne: jest.fn(async () => ({ id: TASK, projectId: null }))
+		find: jest.fn(async () =>
+			stored.teamIds.map((organizationTeamId) => ({ id: `member-${organizationTeamId}`, organizationTeamId }))
+		),
+		findOne: jest.fn(async (entity: unknown) => {
+			if (entity === OrganizationTeam) {
+				return { id: stored.teamIds[0], defaultProjectId: stored.teamDefaultProjectId };
+			}
+			return { id: TASK, projectId: stored.taskProjectId };
+		})
 	};
 	const service = new TimeLogService(
 		{ manager } as never,
@@ -148,6 +168,30 @@ describe('POST /timesheet/time-log when the organization requires a team and a p
 			source: TimeLogSourceEnum.WEB_TIMER
 		});
 		expect(created[0]).not.toHaveProperty('uploadedByTracker');
+	});
+
+	it("files a desktop upload under the single-team employee's team and the task's project", async () => {
+		const { created, post } = surfaces({
+			teamIds: ['team-only'],
+			taskProjectId: 'project-of-task',
+			teamDefaultProjectId: 'project-of-team'
+		});
+
+		await post(desktopUpload);
+
+		expect(created[0]).toMatchObject({ organizationTeamId: 'team-only', projectId: 'project-of-task' });
+	});
+
+	it("files an agent upload, which names no task, under the team's default project", async () => {
+		const { created, post } = surfaces({
+			teamIds: ['team-only'],
+			taskProjectId: null,
+			teamDefaultProjectId: 'project-of-team'
+		});
+
+		await post(agentUpload);
+
+		expect(created[0]).toMatchObject({ organizationTeamId: 'team-only', projectId: 'project-of-team' });
 	});
 
 	it('records the time the agent tracked offline', async () => {

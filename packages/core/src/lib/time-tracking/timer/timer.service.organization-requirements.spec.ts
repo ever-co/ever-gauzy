@@ -234,6 +234,17 @@ describe('TimerService.startTimer under the organization tracking requirements',
 		});
 	});
 
+	it("files a desktop start without a team under the single-team employee's team and its default project", async () => {
+		organization = { requireTeam: true, requireProject: true };
+		teamsOfEmployee = ['team-only'];
+		taskProjectId = null;
+		teamDefaultProjectId = 'project-of-team';
+
+		await service.startTimer({ source: TimeLogSourceEnum.DESKTOP, taskId: 'task-1' });
+
+		expect(createdLog()).toMatchObject({ organizationTeamId: 'team-only', projectId: 'project-of-team' });
+	});
+
 	it("fills a desktop start with what the server can tell, the employee's only team and its task's project", async () => {
 		organization = { requireTeam: true, requireProject: true };
 		teamsOfEmployee = ['team-only'];
