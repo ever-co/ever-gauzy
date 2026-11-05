@@ -146,11 +146,18 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				// A member left out of the managers who keeps a custom role loses the manager flag whoever edits: before
 				// #6569 their role was cleared, and the flag with it. Only setting the flag still needs `flagsManagers`.
 				const keepsRoleLeavesManagers = !isManager && !!newRole;
+				// A promotion by a caller who may not flag managers gives the role only, as for a new member: the role
+				// alone must never hand on the right to act for the team's members.
+				const grantsFlagWithoutRight = isManager && !flagsManagers;
+				let storedFlag = isManager;
+				if (grantsFlagWithoutRight) {
+					storedFlag = !!member.isManager;
+				}
 				if (roleChanged || (flagChanged && (flagsManagers || keepsRoleLeavesManagers))) {
 					await this.withoutEmployeeFilter(() =>
 						super.update(member.id, {
 							role: newRole,
-							isManager
+							isManager: storedFlag
 						})
 					);
 				}

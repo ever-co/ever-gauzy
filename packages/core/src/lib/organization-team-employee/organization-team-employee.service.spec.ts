@@ -304,6 +304,18 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		]);
 	});
 
+	it('promotes a plain member to the role only when the caller holds the role without the flag', async () => {
+		// The role alone must never hand on the right to act for the team's members, on promotion as on a new member
+		await asUnflaggedManager(() => editTeam(['manager-employee', 'member-employee'], []));
+
+		expect(updated).toEqual([
+			{
+				id: expect.objectContaining({ id: 'row-member', tenantId: manager.tenantId }),
+				changes: { role: { id: 'role-manager' }, isManager: false }
+			}
+		]);
+	});
+
 	it('does not let a manager flagged only on another team flag managers on this one', async () => {
 		const otherTeamRow = {
 			id: 'row-manager-other-team',
