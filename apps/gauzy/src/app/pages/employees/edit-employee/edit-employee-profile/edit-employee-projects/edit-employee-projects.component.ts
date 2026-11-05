@@ -511,5 +511,12 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 		);
 	}
 
-	ngOnDestroy(): void {}
+	/**
+	 * Leaving the tab with a dialog open: close it rather than leave it on screen without its host. The remove
+	 * dialog closes as cancelled, so the pending remove() ends without removing anything.
+	 */
+	ngOnDestroy(): void {
+		this._removeRef?.close(false);
+		this._assignRef?.close();
+	}
 }
