@@ -19,7 +19,6 @@ import {
 	IPagination,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { isBetterSqlite3, isSqlite } from '@gauzy/config';
 import { isNotEmpty } from '@gauzy/utils';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { BaseQueryDTO, TenantAwareCrudService } from '../../core/crud';
@@ -29,31 +28,11 @@ import { EmployeeService } from '../../employee/employee.service';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { TaskService } from '../task.service';
 import { DailyPlan } from './daily-plan.entity';
+import { storedDayStart, storedPlanDay } from './daily-plan-stored-day';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
 
 const hasTask = (plan: IDailyPlan, taskId: ID): boolean => plan.tasks.some((task) => task.id === taskId);
-
-/**
- * Whether plan dates are stored in UTC. TypeORM writes a SQLite datetime as a UTC string, while on
- * PostgreSQL and MySQL it hands the Date to the driver, which writes it in the API process's local time.
- */
-const storesDatesInUtc = (): boolean => isSqlite() || isBetterSqlite3();
-
-/**
- * The day a plan dated `date` is stored under, as `YYYY-MM-DD`: the date part of the stored value, which is
- * what the unique index keys on. It is the UTC day on SQLite and on a process running in UTC, the usual
- * deployment, and the process's local day otherwise.
- */
-const storedPlanDay = (date: Date | string): string =>
-	(storesDatesInUtc() ? moment.utc(date) : moment(date)).format('YYYY-MM-DD');
-
-/**
- * The instant a stored day starts, for a bound passed to the database as a Date, which the driver writes the
- * same way as the plan dates.
- */
-const storedDayStart = (day: string): Date =>
-	(storesDatesInUtc() ? moment.utc(day, 'YYYY-MM-DD') : moment(day, 'YYYY-MM-DD')).toDate();
 
 /** From UTC-12 to UTC+14, the current day of every time zone is at most one day away from the UTC date. */
 const MAX_DAYS_FROM_UTC_DATE = 1;
