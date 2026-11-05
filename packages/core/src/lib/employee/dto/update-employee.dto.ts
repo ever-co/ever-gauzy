@@ -23,6 +23,9 @@ export class UpdateEmployeeDTO
 			'show_start_work_on'
 		] as const),
 
+		// The pay rate is set by a rate editor only: the own-profile body leaves it out.
+		PickType(Employee, ['payRateValue', 'payRateCurrency'] as const),
+
 		PickType(Employee, [
 			'isActive',
 			'isArchived',
