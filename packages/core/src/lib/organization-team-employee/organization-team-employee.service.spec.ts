@@ -380,7 +380,8 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 			role: { name: RolesEnum.MANAGER },
 			isManager: true,
 			organizationTeamId: 'team-2',
-			organizationId: manager.organizationId
+			organizationId: manager.organizationId,
+			tenantId: manager.tenantId
 		};
 		rows.push(otherTeamRow);
 
