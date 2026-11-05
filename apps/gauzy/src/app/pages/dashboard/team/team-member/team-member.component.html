@@ -3,7 +3,8 @@
 @if (member.canViewDetails) {
 <a
 	class="member"
-	[routerLink]="['/pages/employees/view', member.employeeId]"
+	[routerLink]="member.canViewProfile ? ['/pages/employees/view', member.employeeId] : null"
+	[attr.tabindex]="member.canViewProfile ? null : 0"
 	#cardPopover="nbPopover"
 	[nbPopover]="personCard"
 	[nbPopoverContext]="{ person: member, cardId: cardId }"
@@ -64,7 +65,8 @@
 	@if (member.canViewDetails) {
 	<a
 		class="member"
-		[routerLink]="['/pages/employees/view', member.employeeId]"
+		[routerLink]="member.canViewProfile ? ['/pages/employees/view', member.employeeId] : null"
+		[attr.tabindex]="member.canViewProfile ? null : 0"
 		#cardPopover="nbPopover"
 		[nbPopover]="personCard"
 		[nbPopoverContext]="{ person: member, cardId: cardId }"
