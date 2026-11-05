@@ -1515,9 +1515,9 @@ describe('TimeLogService', () => {
 		it('TypeORM: billableOnly keeps billable logs only', async () => {
 			await service.getOwedAmountReport({ ...request, billableOnly: true });
 
-			expect(billableFilters(executedFilters(builder).conditions)).toEqual([
-				'"time_log"."isBillable" = :isBillable'
-			]);
+			const executed = executedFilters(builder);
+			expect(billableFilters(executed.conditions)).toEqual(['"time_log"."isBillable" = :isBillable']);
+			expect(executed.parameters.isBillable).toBe(true);
 		});
 
 		it.each([undefined, false])('TypeORM: billableOnly %p applies no billable filter', async (value) => {
