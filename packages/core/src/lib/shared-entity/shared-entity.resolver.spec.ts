@@ -7,7 +7,7 @@ import '../core/entities/internal';
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ExecutionContext, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ExecutionContext, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { buildSchema, printSchema } from 'graphql';
 import { FEATURE_METADATA, PERMISSIONS_METADATA, PUBLIC_METHOD_METADATA } from '@gauzy/constants';
@@ -336,7 +336,7 @@ describe('SharedEntityResolver — one concept, two protocols, the same operatio
 
 	it('answers a share’s token only as the service lets the caller read it, as the REST routes do', async () => {
 		// A share's token reads its record without signing in; a member who is neither its author nor an
-		// organization administrator reads the share without it, and cannot find it through a token filter either.
+		// organization administrator reads the share without it.
 		const { resolver, sharedEntityService } = surfaces();
 		sharedEntityService.withTokenForManager.mockImplementation((share: unknown) => {
 			const { token: _token, ...withoutToken } = share as Record<string, unknown>;
@@ -349,11 +349,23 @@ describe('SharedEntityResolver — one concept, two protocols, the same operatio
 		for (const node of list.nodes) {
 			expect(node).not.toHaveProperty('token');
 		}
-		expect((await resolver.sharedEntities({ token: { eq: TOKEN } })).totalCount).toBe(0);
-		expect((await resolver.sharedEntities({ token: { like: 'k%' } })).totalCount).toBe(0);
-
 		expect(await resolver.sharedEntity(FIRST)).not.toHaveProperty('token');
 		expect(sharedEntityService.withTokenForManager).toHaveBeenCalledWith(ROWS[0]);
+	});
+
+	it('refuses a filter on the share token, for a manager as for anyone', async () => {
+		const { resolver } = surfaces();
+
+		await expect(resolver.sharedEntities({ token: { eq: TOKEN } })).rejects.toThrow(BadRequestException);
+		await expect(resolver.sharedEntities({ token: { like: 'k%' } })).rejects.toThrow(BadRequestException);
+		await expect(resolver.sharedEntities({ or: [{ token: { eq: TOKEN } }] })).rejects.toThrow(BadRequestException);
+	});
+
+	it('leaves the token out of the schema filter input', () => {
+		const filterInput = printed.slice(printed.indexOf('input SharedEntityFilter {'));
+		const filterBody = filterInput.slice(0, filterInput.indexOf('}'));
+
+		expect(filterBody).not.toMatch(/\btoken:/);
 	});
 
 	it('counts through the same service method the count route calls, with the route’s own options', async () => {
