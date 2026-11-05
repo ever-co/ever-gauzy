@@ -220,6 +220,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const { memberIds, managerIds, organizationId, members: _members, billRateValue: _rate, ...entity } = input;
 		void _members;
 		void _rate;
+		// A rate in the body is never saved here, so the activity log does not record it as changed either
+		const { billRateValue: _discardedRate, ...loggedInput } = input;
+		void _discardedRate;
 
 		const organizationProject = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId },
@@ -277,7 +280,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 				organizationId,
 				tenantId,
 				organizationProject,
-				input
+				loggedInput
 			);
 
 			return updatedProject;

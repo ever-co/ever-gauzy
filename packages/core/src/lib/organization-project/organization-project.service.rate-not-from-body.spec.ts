@@ -33,10 +33,11 @@ beforeEach(() => {
 
 afterEach(() => jest.restoreAllMocks());
 
-it('PUT /organization-projects/:id saves the other fields and not the rate', async () => {
+it('PUT /organization-projects/:id saves the other fields and not the rate, and logs no rate change', async () => {
+	const logActivity = jest.fn();
 	const service = Object.create(OrganizationProjectService.prototype);
 	Object.assign(service, {
-		_activityLogService: { logActivity: jest.fn() },
+		_activityLogService: { logActivity },
 		updateOrganizationProjectMembers: jest.fn()
 	});
 
@@ -44,6 +45,9 @@ it('PUT /organization-projects/:id saves the other fields and not the rate', asy
 
 	expect(saved).toMatchObject({ id: 'project-1', name: 'Renamed' });
 	expect(saved).not.toHaveProperty('billRateValue');
+	const loggedNewValues = logActivity.mock.calls[0][9];
+	expect(loggedNewValues).toMatchObject({ name: 'Renamed' });
+	expect(loggedNewValues).not.toHaveProperty('billRateValue');
 });
 
 it('POST /organization-projects saves the project without the rate', async () => {
