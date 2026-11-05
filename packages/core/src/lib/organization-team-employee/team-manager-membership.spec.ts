@@ -1,5 +1,5 @@
 import { IRole, RolesEnum } from '@gauzy/contracts';
-import { teamRoleAfterEdit } from './team-manager-membership';
+import { mayFlagTeamManagers, teamRoleAfterEdit } from './team-manager-membership';
 
 describe('teamRoleAfterEdit (#6569)', () => {
 	const managerRole = { id: 'role-manager', name: RolesEnum.MANAGER } as IRole;
@@ -45,5 +45,32 @@ describe('teamRoleAfterEdit (#6569)', () => {
 
 	it('clears a role it cannot read (role id without the loaded role), as before', () => {
 		expect(teamRoleAfterEdit({ roleId: reviewer.id, role: null }, false, managerRole)).toBeNull();
+	});
+});
+
+describe('mayFlagTeamManagers', () => {
+	const flagged = { employeeId: 'caller', isManager: true, isActive: true, isArchived: false };
+
+	it('lets a caller who may act for every employee flag managers on any team', () => {
+		expect(mayFlagTeamManagers([], null, true)).toBe(true);
+	});
+
+	it('lets a manager flagged on this team flag its co-managers', () => {
+		expect(mayFlagTeamManagers([flagged], 'caller', false)).toBe(true);
+	});
+
+	it('refuses a caller who holds the manager role on this team without the flag', () => {
+		expect(mayFlagTeamManagers([{ ...flagged, isManager: false }], 'caller', false)).toBe(false);
+		expect(mayFlagTeamManagers([{ ...flagged, isManager: null }], 'caller', false)).toBe(false);
+	});
+
+	it('refuses a caller whose flagged membership of this team is inactive or archived', () => {
+		expect(mayFlagTeamManagers([{ ...flagged, isActive: false }], 'caller', false)).toBe(false);
+		expect(mayFlagTeamManagers([{ ...flagged, isArchived: true }], 'caller', false)).toBe(false);
+	});
+
+	it('refuses a caller who is not on the team, or has no employee', () => {
+		expect(mayFlagTeamManagers([{ ...flagged, employeeId: 'someone-else' }], 'caller', false)).toBe(false);
+		expect(mayFlagTeamManagers([flagged], null, false)).toBe(false);
 	});
 });

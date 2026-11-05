@@ -23,7 +23,7 @@ import { EntitySubscriptionService } from '../entity-subscription/entity-subscri
 import { TypeOrmOrganizationTeamEmployeeRepository } from './repository/type-orm-organization-team-employee.repository';
 import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
 import { IWorkingEmployeeLookup } from '../employee/former-employees';
-import { teamRoleAfterEdit } from './team-manager-membership';
+import { mayFlagTeamManagers, teamRoleAfterEdit } from './team-manager-membership';
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
@@ -63,10 +63,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		const tenantId = RequestContext.currentTenantId();
 		const membersToUpdate = new Set([...managerIds, ...memberIds].filter(Boolean));
 
-		// `isManager` lets a manager act for the team's members (ManagedEmployeeService). Only a caller who may
-		// already act for every employee sets it on a new manager or repairs a manager row that lacks it; a team
-		// manager without that permission changes the flag only together with the role, as before.
-		const flagsManagers = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		const actsForEveryEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
 
 		// Fetch existing team members with their roles
 		// Bypass employee filter since authorization is handled at a higher level
@@ -76,6 +73,12 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				relations: { role: true }
 			})
 		);
+
+		// `isManager` lets a manager act for the team's members (ManagedEmployeeService). Only a caller who may
+		// already act for them (see mayFlagTeamManagers) sets it on a new manager or repairs a manager row that lacks
+		// it; any other team manager changes the flag only together with the role, as before.
+		const callerEmployeeId = RequestContext.currentEmployeeId();
+		const flagsManagers = mayFlagTeamManagers(teamMembers, callerEmployeeId, actsForEveryEmployee);
 
 		// Create a map for fast lookup of current team members
 		const existingMemberMap = new Map(teamMembers.map((member) => [member.employeeId, member]));
