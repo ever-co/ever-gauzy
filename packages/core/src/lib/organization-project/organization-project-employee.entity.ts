@@ -1,4 +1,5 @@
 import { RelationId } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { billingRateColumn } from '../shared/pipes/billing-rate.transform';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
@@ -30,7 +31,8 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 	/**
 	 * The member's client rate on this project: what the client is billed per hour of their time on it, in the
 	 * project's currency, over the project's client rate. It does not change what the member is paid. Written and read
-	 * through the project rate routes only, which check who may: generic project and member reads leave it out.
+	 * through the project rate routes only, which check who may and answer plain objects: generic project and member
+	 * reads never answer it, even for a caller `select` naming it.
 	 */
 	@ApiPropertyOptional({
 		type: () => Number,
@@ -38,6 +40,7 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 		description:
 			"What the client is billed per hour of this member's time on the project, in the project's currency"
 	})
+	@Exclude({ toPlainOnly: true })
 	@MultiORMColumn({ ...billingRateColumn(), select: false, hidden: true })
 	billRateValue?: number | null;
 

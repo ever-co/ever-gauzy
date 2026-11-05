@@ -1,9 +1,13 @@
 import '../core/entities/internal';
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { from, lastValueFrom } from 'rxjs';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
+import { TransformInterceptor } from '../core/interceptors/transform.interceptor';
 import { toNullableBillingRate } from '../shared/pipes/billing-rate.transform';
+import { OrganizationProject } from './organization-project.entity';
+import { OrganizationProjectEmployee } from './organization-project-employee.entity';
 import { OrganizationProjectRateService } from './organization-project-rate.service';
 
 /**
@@ -42,6 +46,8 @@ describe('OrganizationProjectRateService', () => {
 		const isLeftOut = skipsArchived && row.isArchived === true;
 		return matchesKeys && !isLeftOut;
 	};
+
+	const toMembershipEntity = (row: MembershipRow) => Object.assign(new OrganizationProjectEmployee(), row);
 
 	beforeEach(() => {
 		permissions = [];
@@ -93,7 +99,7 @@ describe('OrganizationProjectRateService', () => {
 				if (!known) {
 					return null;
 				}
-				return { id: where.id, billRateValue: 40, currency: 'EUR' };
+				return Object.assign(new OrganizationProject(), { id: where.id, billRateValue: 40, currency: 'EUR' });
 			}),
 			update: projectUpdate,
 			manager: {
@@ -109,9 +115,10 @@ describe('OrganizationProjectRateService', () => {
 				async ({ where }: { where: Record<string, unknown> }) =>
 					memberships.find((row) => matches(row, where)) ?? null
 			),
-			find: jest.fn(async ({ where }: { where: Record<string, unknown> }) =>
-				memberships.filter((row) => matches(row, where))
-			),
+			find: jest.fn(async ({ where }: { where: Record<string, unknown> }) => {
+				const rows = memberships.filter((row) => matches(row, where));
+				return rows.map(toMembershipEntity);
+			}),
 			update: membershipUpdate
 		};
 		service = new OrganizationProjectRateService(projectRepository as never, membershipRepository as never);
@@ -241,6 +248,23 @@ describe('OrganizationProjectRateService', () => {
 		const rates = await service.findProjectRates(PROJECT, ORGANIZATION);
 
 		expect(rates).toEqual({
+			id: PROJECT,
+			billRateValue: 40,
+			currency: 'EUR',
+			members: [
+				{ employeeId: 'manager-employee', billRateValue: null },
+				{ employeeId: 'member-employee', billRateValue: 30 }
+			]
+		});
+	});
+
+	it('keeps the rates read from entity rows in the body the API answers', async () => {
+		const rates = service.findProjectRates(PROJECT, ORGANIZATION);
+		const handler = { handle: () => from(rates) };
+
+		const body = await lastValueFrom(new TransformInterceptor().intercept({} as never, handler));
+
+		expect(body).toEqual({
 			id: PROJECT,
 			billRateValue: 40,
 			currency: 'EUR',
