@@ -1,0 +1,107 @@
+import '../core/entities/internal';
+
+import { BadRequestException } from '@nestjs/common';
+import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
+import { TenantAwareCrudService } from '../core/crud';
+import { OrganizationProject } from '../core/entities/internal';
+import { OrganizationTeamService } from './organization-team.service';
+
+/**
+ * Ever Teams creates a project with each team and filed every new task under whichever project the team listed
+ * first: with several projects that was arbitrary. The team now names its default project. It must be a project of
+ * the team's organization, since the members' new tasks and time are filed under it.
+ */
+describe('OrganizationTeamService — default project', () => {
+	const ORGANIZATION = 'organization-1';
+	const TENANT = 'tenant-1';
+	const projects = [
+		{ id: 'project-own', organizationId: ORGANIZATION, tenantId: TENANT },
+		{ id: 'project-elsewhere', organizationId: 'organization-2', tenantId: TENANT }
+	];
+
+	let saved: Record<string, unknown> | undefined;
+	let findProject: jest.Mock;
+	let service: OrganizationTeamService;
+
+	beforeEach(() => {
+		saved = undefined;
+		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		jest.spyOn(RequestContext, 'currentEmployeeId').mockReturnValue(null);
+		jest.spyOn(RequestContext, 'currentRoleId').mockReturnValue('role-admin');
+		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
+			(permission) => permission === PermissionsEnum.CHANGE_SELECTED_EMPLOYEE
+		);
+		jest.spyOn(TenantAwareCrudService.prototype, 'create').mockImplementation(async (entity) => {
+			saved = entity as Record<string, unknown>;
+			return { id: 'team-1', ...entity } as never;
+		});
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({
+			id: 'team-1',
+			organizationId: ORGANIZATION,
+			tenantId: TENANT
+		} as never);
+
+		findProject = jest.fn(async (entity: unknown, { where }: { where: Record<string, unknown> }) => {
+			if (entity !== OrganizationProject) {
+				return null;
+			}
+			const match = projects.find(
+				(project) =>
+					project.id === where.id &&
+					project.organizationId === where.organizationId &&
+					project.tenantId === where.tenantId
+			);
+			return match ?? null;
+		});
+
+		service = Object.create(OrganizationTeamService.prototype);
+		Object.assign(service, {
+			typeOrmRepository: { manager: { findOne: findProject } },
+			roleService: {
+				findOneByIdString: jest.fn().mockRejectedValue(new Error('not an employee')),
+				findOneByWhereOptions: jest.fn().mockResolvedValue({ id: 'role-manager', name: RolesEnum.MANAGER })
+			},
+			retrieveEmployees: jest.fn().mockResolvedValue([]),
+			_eventBus: { publish: jest.fn() }
+		});
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
+	});
+
+	const createTeam = (defaultProjectId?: string | null) =>
+		service.create({ name: 'Support', organizationId: ORGANIZATION, defaultProjectId } as never);
+
+	const updateTeam = (defaultProjectId?: string | null) =>
+		service.update('team-1', { organizationId: ORGANIZATION, defaultProjectId } as never);
+
+	it('stores the default project a new team names', async () => {
+		await createTeam('project-own');
+
+		expect(saved).toEqual(expect.objectContaining({ defaultProjectId: 'project-own' }));
+	});
+
+	it('creates a team without a default project as before', async () => {
+		await createTeam();
+
+		expect(findProject).not.toHaveBeenCalled();
+		expect(saved?.defaultProjectId).toBeUndefined();
+	});
+
+	it('refuses a default project of another organization, on create and on update', async () => {
+		await expect(createTeam('project-elsewhere')).rejects.toThrow(BadRequestException);
+		await expect(updateTeam('project-elsewhere')).rejects.toThrow(BadRequestException);
+
+		expect(saved).toBeUndefined();
+	});
+
+	it('changes or clears the default project on update', async () => {
+		await updateTeam('project-own');
+		expect(saved).toEqual(expect.objectContaining({ defaultProjectId: 'project-own' }));
+
+		await updateTeam(null);
+		expect(saved).toEqual(expect.objectContaining({ defaultProjectId: null }));
+	});
+});

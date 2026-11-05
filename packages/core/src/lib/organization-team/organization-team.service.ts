@@ -35,7 +35,7 @@ import {
 } from '@gauzy/contracts';
 import { isNotEmpty, parseToBoolean } from '@gauzy/utils';
 import { FavoriteService } from '../core/decorators';
-import { Employee, OrganizationTeamEmployee } from '../core/entities/internal';
+import { Employee, OrganizationProject, OrganizationTeamEmployee } from '../core/entities/internal';
 import {
 	MultiORMEnum,
 	enhanceWhereWithTenantId,
@@ -290,7 +290,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 	 */
 	async create(input: IOrganizationTeamCreateInput): Promise<IOrganizationTeam> {
 		const { tags = [], memberIds = [], managerIds = [], projects = [] } = input;
-		const { name, organizationId, prefix, profile_link, logo, imageId } = input;
+		const { name, organizationId, prefix, profile_link, logo, imageId, defaultProjectId } = input;
 
 		try {
 			const tenantId = RequestContext.currentTenantId();
@@ -309,6 +309,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 					managerIds.push(employeeId);
 				}
 			} catch (error) {}
+
+			await this.assertDefaultProjectInOrganization(defaultProjectId, organizationId, tenantId);
 
 			// Retrieves a collection of employees based on specified criteria.
 			const employees = await this.retrieveEmployees(memberIds, managerIds, organizationId, tenantId);
@@ -349,7 +351,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 				public: input.public,
 				logo,
 				imageId,
-				projects
+				projects,
+				defaultProjectId
 			});
 
 			// Subscribe creator and assignees to the team
@@ -455,6 +458,8 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 
 			const { id: organizationTeamId } = organizationTeam;
 
+			await this.assertDefaultProjectInOrganization(input.defaultProjectId, organizationId, tenantId);
+
 			// A client edits the projects from a list that offers no archived project: the archived projects the
 			// team is linked to are kept, or the save would unlink them
 			if (Array.isArray(input.projects)) {
@@ -475,6 +480,27 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 			});
 		} catch (error) {
 			throw new BadRequestException(error);
+		}
+	}
+
+	/**
+	 * Refuses a default project outside the team's organization: the team files its members' new tasks and time under
+	 * it, so a project of another organization would carry them there.
+	 */
+	private async assertDefaultProjectInOrganization(
+		defaultProjectId: ID | null | undefined,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<void> {
+		if (!defaultProjectId) {
+			return;
+		}
+		const project = await this.typeOrmRepository.manager.findOne(OrganizationProject, {
+			where: { id: defaultProjectId, organizationId, tenantId },
+			select: { id: true }
+		});
+		if (!project) {
+			throw new BadRequestException("The team's default project must be a project of its organization.");
 		}
 	}
 
