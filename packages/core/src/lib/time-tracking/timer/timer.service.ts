@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual, FindOptionsWhere } from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,
@@ -33,6 +33,7 @@ import { assertSensitiveRelationsAllowed } from '../../core/util/sensitive-relat
 import { withoutTrackedDataRelations } from '../../core/util/tracked-data-sensitive-relations.config';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { EmployeeService } from '../../employee/employee.service';
+import { ITrackingTurnedOffScope } from './events/tracking-turned-off.event';
 import {
 	DeleteTimeSpanCommand,
 	IGetConflictTimeLogCommand,
@@ -363,12 +364,9 @@ export class TimerService {
 		// Validate the date range and check if the timer is running
 		validateDateRange(request.startedAt, request.stoppedAt);
 
-		// Fetch the employee details
+		// Fetch the employee details. Turning tracking off does not refuse the stop: a timer still running when an
+		// admin turned it off could otherwise never be stopped, and would keep counting time
 		const employee = await this.findEmployee();
-		// Check if time tracking is enabled for the employee
-		if (!employee.isTrackingEnabled) {
-			throw new ForbiddenException('The time tracking functionality has been disabled for you.');
-		}
 
 		// Retrieve tenant ID
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
@@ -927,6 +925,121 @@ export class TimerService {
 	private debug(message: () => string): void {
 		if (Logger.isLevelEnabled('debug')) {
 			this.logger.debug(message());
+		}
+	}
+
+	/**
+	 * Stops the running timers of an employee whose time tracking was just turned off, at this moment, as a stop of
+	 * their own would. With a team, only a timer running for that team stops. Called for a caller who may change
+	 * the employee's tracking (an admin, or the team's manager), so it reads and writes by the ids given rather than
+	 * through the caller's employee scope.
+	 *
+	 * @param scope The employee, their organization and tenant, and the team when tracking was turned off for it only.
+	 * @returns The stopped time logs.
+	 */
+	async stopRunningTimersOf(scope: ITrackingTurnedOffScope): Promise<ITimeLog[]> {
+		const { employeeId, organizationId, tenantId, organizationTeamId } = scope;
+		const where: FindOptionsWhere<TimeLog> = { employeeId, organizationId, tenantId, isRunning: true };
+		if (organizationTeamId) {
+			where.organizationTeamId = organizationTeamId;
+		}
+
+		const runningLogs = await this.findTimeLogsWhere(where);
+		const stoppedAt = moment.utc().toDate();
+		const stoppedLogs: ITimeLog[] = [];
+		for (const runningLog of runningLogs) {
+			const partialTimeLog: Partial<ITimeLog> = { isRunning: false };
+			const stopsAfterStart = stoppedAt >= new Date(runningLog.startedAt);
+			if (stopsAfterStart) {
+				partialTimeLog.stoppedAt = stoppedAt;
+			}
+			// Each stop on its own: one that fails leaves the others stopped, and those are still returned
+			try {
+				const stoppedLog = await this._commandBus.execute(
+					new TimeLogUpdateCommand(partialTimeLog, runningLog.id)
+				);
+				stoppedLogs.push(stoppedLog);
+			} catch (error) {
+				this.logger.warn(`Failed to stop the running time log ${runningLog.id}: ${error?.message}`);
+				const storedLog = await this.storedStoppedLog(runningLog.id, tenantId);
+				if (storedLog) {
+					stoppedLogs.push(storedLog);
+				}
+			}
+		}
+
+		const hasStoppedAny = stoppedLogs.length > 0;
+		if (hasStoppedAny) {
+			await this.markNotTrackingWhenNothingRuns(employeeId, organizationId, tenantId);
+		}
+		return stoppedLogs;
+	}
+
+	/**
+	 * The log as stored after a failed stop, when it no longer runs: the update writes the stop before its later
+	 * steps, so a failure after that write still stopped it. Undefined when it still runs or cannot be read.
+	 */
+	private async storedStoppedLog(timeLogId: ID, tenantId: ID): Promise<ITimeLog | undefined> {
+		try {
+			const [storedLog] = await this.findTimeLogsWhere({ id: timeLogId, tenantId });
+			const wasStopped = storedLog?.isRunning === false;
+			if (wasStopped) {
+				return storedLog;
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to read back the time log ${timeLogId}: ${error?.message}`);
+		}
+		return undefined;
+	}
+
+	/**
+	 * Marks the employee as not tracking once no timer of theirs runs: turned off for one team, a timer of another
+	 * team may still run. Left as it is when that cannot be read.
+	 */
+	private async markNotTrackingWhenNothingRuns(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+		try {
+			const stillRunning = await this.findTimeLogsWhere({
+				employeeId,
+				organizationId,
+				tenantId,
+				isRunning: true
+			});
+			const hasNoTimerLeft = stillRunning.length === 0;
+			if (hasNoTimerLeft) {
+				await this.markNotTracking(employeeId, organizationId, tenantId);
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to read the running timers of employee ${employeeId}: ${error?.message}`);
+		}
+	}
+
+	private async findTimeLogsWhere(where: FindOptionsWhere<TimeLog>): Promise<ITimeLog[]> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const findOptions = parseTypeORMFindToMikroOrm<TimeLog>({ where });
+				const items = await this.mikroOrmTimeLogRepository.findAll(findOptions);
+				return items.map((entity: TimeLog) => wrapSerialize(entity)) as TimeLog[];
+			}
+			case MultiORMEnum.TypeORM:
+			default:
+				return await this.typeOrmTimeLogRepository.find({ where });
+		}
+	}
+
+	private async markNotTracking(employeeId: ID, organizationId: ID, tenantId: ID): Promise<void> {
+		const employee = { id: employeeId, organizationId, tenantId };
+		const status = { isOnline: false, isTrackingTime: false };
+		try {
+			switch (this.ormType) {
+				case MultiORMEnum.MikroORM:
+					await this.mikroOrmEmployeeRepository.nativeUpdate(employee, status);
+					return;
+				case MultiORMEnum.TypeORM:
+				default:
+					await this.typeOrmEmployeeRepository.update(employee, status);
+			}
+		} catch (error) {
+			this.logger.warn(`Failed to mark employee ${employeeId} as not tracking: ${error?.message}`);
 		}
 	}
 }
