@@ -149,17 +149,12 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				// A promotion by a caller who may not flag managers gives the role only, as for a new member: the role
 				// alone must never hand on the right to act for the team's members.
 				const grantsFlagWithoutRight = isManager && !flagsManagers;
-				let storedFlag = isManager;
-				if (grantsFlagWithoutRight) {
-					storedFlag = !!member.isManager;
+				const changes: Partial<OrganizationTeamEmployee> = { role: newRole };
+				if (!grantsFlagWithoutRight) {
+					changes.isManager = isManager;
 				}
 				if (roleChanged || (flagChanged && (flagsManagers || keepsRoleLeavesManagers))) {
-					await this.withoutEmployeeFilter(() =>
-						super.update(member.id, {
-							role: newRole,
-							isManager: storedFlag
-						})
-					);
+					await this.withoutEmployeeFilter(() => super.update(member.id, changes));
 				}
 			})
 		);

@@ -308,10 +308,11 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		// The role alone must never hand on the right to act for the team's members, on promotion as on a new member
 		await asUnflaggedManager(() => editTeam(['manager-employee', 'member-employee'], []));
 
+		// The flag is not written at all, so a grant made meanwhile by a caller who may give it is not overwritten
 		expect(updated).toEqual([
 			{
 				id: expect.objectContaining({ id: 'row-member', tenantId: manager.tenantId }),
-				changes: { role: { id: 'role-manager' }, isManager: false }
+				changes: { role: { id: 'role-manager' } }
 			}
 		]);
 	});
