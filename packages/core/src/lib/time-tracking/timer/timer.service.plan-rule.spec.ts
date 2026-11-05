@@ -1,6 +1,14 @@
 // Must stay first: see timer.service.spec.ts.
 import '../../core/entities/internal';
 
+// Plan dates are stored in UTC on SQLite and in the process's local time elsewhere (daily-plan-stored-day.spec.ts
+// covers both): the UTC dates below hold whatever database and time zone the suite runs with.
+jest.mock('@gauzy/config', () => ({
+	...jest.requireActual('@gauzy/config'),
+	isSqlite: () => true,
+	isBetterSqlite3: () => false
+}));
+
 import { UnprocessableEntityException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import * as moment from 'moment';
