@@ -794,7 +794,20 @@ $columns-md: minmax(0, 1fr) 7.5rem 8rem 5rem;
   line-height: 1;
 }
 
-// The dialog reads a step smaller than the page: the shared row pieces shrink inside it only.
+// The dialogs read a step smaller than the page: the shared row pieces shrink inside them only.
+.remove-dialog {
+  .logo {
+    width: 1.875rem;
+    height: 1.875rem;
+    font-size: 0.6875rem;
+  }
+
+  .project-meta {
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
+  }
+}
+
 .assign-dialog {
   .logo {
     width: 1.875rem;
@@ -854,15 +867,15 @@ $columns-md: minmax(0, 1fr) 7.5rem 8rem 5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   background-color: color-mix(in srgb, nb-theme(color-danger-500) 16%, transparent);
 
   nb-icon {
-    width: 1.25rem;
-    height: 1.25rem;
-    font-size: 1.25rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    font-size: 1.125rem;
     color: nb-theme(color-danger-500);
   }
 }
@@ -870,9 +883,9 @@ $columns-md: minmax(0, 1fr) 7.5rem 8rem 5rem;
 .remove-dialog__title {
   flex: 1 1 auto;
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 600;
-  line-height: 1.5rem;
+  line-height: 1.375rem;
   color: var(--gauzy-text-color-1);
 }
 
@@ -904,24 +917,24 @@ $columns-md: minmax(0, 1fr) 7.5rem 8rem 5rem;
 }
 
 .remove-dialog__project-name {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
-  line-height: 1.25rem;
+  line-height: 1.125rem;
   color: var(--gauzy-text-color-1);
   overflow-wrap: anywhere;
 }
 
 .remove-dialog__message {
   margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.375rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
   color: var(--gauzy-text-color-1);
 }
 
 .remove-dialog__hint {
   margin: 0;
-  font-size: 0.75rem;
-  line-height: 1.125rem;
+  font-size: 0.6875rem;
+  line-height: 1rem;
   color: var(--gauzy-text-color-2);
 }
 
