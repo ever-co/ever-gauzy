@@ -458,7 +458,7 @@ export interface IReportDayTaskRow {
 	task?: ITask | null;
 	description?: string | null;
 	duration?: number;
-	client?: IOrganizationContact | null;
+	client?: Pick<IOrganizationContact, 'id' | 'name' | 'imageUrl'> | null;
 	organizationTeamId?: ID | null;
 }
 

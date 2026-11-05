@@ -27,6 +27,17 @@ const LONER = '44444444-4444-4444-8444-444444444444';
 const TEAM_MANAGED = '55555555-5555-4555-8555-555555555551';
 const TEAM_OTHER = '55555555-5555-4555-8555-555555555552';
 const DAY = '2026-01-10';
+const CONTACT = '99999999-9999-4999-8999-999999999991';
+
+/**
+ * The client members a daily report row states, as the shared contract types them. A `Record` over the contract's
+ * keys, so widening or narrowing the type without this list fails the typecheck.
+ */
+const ROW_CLIENT_MEMBERS: Record<keyof NonNullable<IReportDayTaskRow['client']>, true> = {
+	id: true,
+	name: true,
+	imageUrl: true
+};
 
 /** The logs, by what they show in the report: who, under which team, and for how long. */
 const LOGS = {
@@ -146,6 +157,7 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 			for (const id of [MANAGER, MEMBER, OUTSIDER, LONER]) {
 				await insert('employee', { ...scope, id, userId: USER });
 			}
+			await insert('organization_contact', { ...scope, id: CONTACT, name: 'Acme' });
 			await insert('organization_team', { ...scope, id: TEAM_MANAGED, name: 'Managed' });
 			await insert('organization_team', { ...scope, id: TEAM_OTHER, name: 'Other' });
 			const memberships: Array<[string, string, boolean]> = [
@@ -175,6 +187,7 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 					id,
 					employeeId: log.employeeId,
 					organizationTeamId: log.organizationTeamId,
+					organizationContactId: CONTACT,
 					description: name,
 					startedAt,
 					stoppedAt
@@ -294,6 +307,19 @@ describe('TimeLogService team-scoped reports with the time logged without a team
 	beforeAll(async () => {
 		measured = await measure();
 	}, TIMEOUT);
+
+	it('answers each row client with every member the shared contract states, and TypeORM with no contact details', () => {
+		const contractMembers = Object.keys(ROW_CLIENT_MEMBERS);
+
+		for (const orm of ['mikroOrm', 'typeOrm'] as const) {
+			const client = taskRowsOf(measured[orm].manager.dailyOn)[0].client;
+			expect(client).toMatchObject({ id: CONTACT, name: 'Acme' });
+			expect(Object.keys(client)).toEqual(expect.arrayContaining(contractMembers));
+		}
+		const typeOrmClient = taskRowsOf(measured.typeOrm.manager.dailyOn)[0].client;
+		expect(typeOrmClient).not.toHaveProperty('primaryEmail');
+		expect(typeOrmClient).not.toHaveProperty('contactType');
+	});
 
 	describe.each<['MikroORM' | 'TypeORM', 'mikroOrm' | 'typeOrm']>([
 		['MikroORM', 'mikroOrm'],
