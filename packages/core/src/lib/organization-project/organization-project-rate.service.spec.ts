@@ -17,11 +17,25 @@ import { OrganizationProjectRateService } from './organization-project-rate.serv
  */
 
 const TENANT = 'tenant-1';
+const OTHER_TENANT = 'tenant-2';
 const ORGANIZATION = 'organization-1';
+const OTHER_ORGANIZATION = 'organization-2';
+const HOME = { organizationId: ORGANIZATION, tenantId: TENANT };
 const PROJECT = 'project-1';
 const OTHER_PROJECT = 'project-2';
+const FOREIGN_ORGANIZATION_PROJECT = 'project-of-organization-2';
+const FOREIGN_TENANT_PROJECT = 'project-of-tenant-2';
 
-interface MembershipRow {
+interface ScopedRow {
+	organizationId: string;
+	tenantId: string;
+}
+
+interface ProjectRow extends ScopedRow {
+	id: string;
+}
+
+interface MembershipRow extends ScopedRow {
 	id: string;
 	organizationProjectId: string;
 	employeeId: string;
@@ -29,6 +43,22 @@ interface MembershipRow {
 	billRateValue: number | null;
 	isArchived?: boolean;
 }
+
+const PROJECTS: ProjectRow[] = [
+	{ id: PROJECT, ...HOME },
+	{ id: OTHER_PROJECT, ...HOME },
+	{ id: FOREIGN_ORGANIZATION_PROJECT, organizationId: OTHER_ORGANIZATION, tenantId: TENANT },
+	{ id: FOREIGN_TENANT_PROJECT, organizationId: ORGANIZATION, tenantId: OTHER_TENANT }
+];
+
+const PROJECT_KEYS = ['id', 'organizationId', 'tenantId'];
+const MEMBERSHIP_KEYS = ['organizationProjectId', 'employeeId', 'isManager', 'organizationId', 'tenantId'];
+
+/** TypeORM drops an undefined `where` value, so a predicate the service leaves out matches every row. */
+const matchesKeys = (row: object, where: Record<string, unknown>, keys: string[]) => {
+	const values = row as Record<string, unknown>;
+	return keys.every((key) => where[key] === undefined || values[key] === where[key]);
+};
 
 describe('OrganizationProjectRateService', () => {
 	let permissions: PermissionsEnum[];
@@ -40,11 +70,10 @@ describe('OrganizationProjectRateService', () => {
 
 	/** A condition on `isArchived` (the current-membership filter) leaves an archived row out, as the database does. */
 	const matches = (row: MembershipRow, where: Record<string, unknown>) => {
-		const keys = ['organizationProjectId', 'employeeId', 'isManager'] as const;
-		const matchesKeys = keys.every((key) => where[key] === undefined || row[key] === where[key]);
+		const matchesWhere = matchesKeys(row, where, MEMBERSHIP_KEYS);
 		const skipsArchived = where.isArchived !== undefined;
 		const isLeftOut = skipsArchived && row.isArchived === true;
-		return matchesKeys && !isLeftOut;
+		return matchesWhere && !isLeftOut;
 	};
 
 	const toMembershipEntity = (row: MembershipRow) => Object.assign(new OrganizationProjectEmployee(), row);
@@ -58,14 +87,16 @@ describe('OrganizationProjectRateService', () => {
 				organizationProjectId: PROJECT,
 				employeeId: 'manager-employee',
 				isManager: true,
-				billRateValue: null
+				billRateValue: null,
+				...HOME
 			},
 			{
 				id: 'm-member',
 				organizationProjectId: PROJECT,
 				employeeId: 'member-employee',
 				isManager: false,
-				billRateValue: 30
+				billRateValue: 30,
+				...HOME
 			},
 			{
 				id: 'm-former',
@@ -73,33 +104,54 @@ describe('OrganizationProjectRateService', () => {
 				employeeId: 'former-employee',
 				isManager: false,
 				billRateValue: null,
-				isArchived: true
+				isArchived: true,
+				...HOME
 			},
 			{
 				id: 'm-role-only',
 				organizationProjectId: OTHER_PROJECT,
 				employeeId: 'creator-employee',
 				isManager: false,
-				billRateValue: null
+				billRateValue: null,
+				...HOME
 			},
 			{
 				id: 'm-other',
 				organizationProjectId: OTHER_PROJECT,
 				employeeId: 'manager-employee',
 				isManager: false,
-				billRateValue: null
+				billRateValue: null,
+				...HOME
+			},
+			{
+				id: 'm-foreign-organization',
+				organizationProjectId: PROJECT,
+				employeeId: 'foreign-organization-manager',
+				isManager: true,
+				billRateValue: 70,
+				organizationId: OTHER_ORGANIZATION,
+				tenantId: TENANT
+			},
+			{
+				id: 'm-foreign-tenant',
+				organizationProjectId: PROJECT,
+				employeeId: 'foreign-tenant-manager',
+				isManager: true,
+				billRateValue: 90,
+				organizationId: ORGANIZATION,
+				tenantId: OTHER_TENANT
 			}
 		];
 		projectUpdate = jest.fn(async () => ({ affected: 1 }));
 		membershipUpdate = jest.fn(async () => ({ affected: 1 }));
 
 		const projectRepository = {
-			findOne: jest.fn(async ({ where }: { where: { id: string } }) => {
-				const known = [PROJECT, OTHER_PROJECT].includes(where.id);
-				if (!known) {
+			findOne: jest.fn(async ({ where }: { where: Record<string, unknown> }) => {
+				const row = PROJECTS.find((project) => matchesKeys(project, where, PROJECT_KEYS));
+				if (!row) {
 					return null;
 				}
-				return Object.assign(new OrganizationProject(), { id: where.id, billRateValue: 40, currency: 'EUR' });
+				return Object.assign(new OrganizationProject(), { id: row.id, billRateValue: 40, currency: 'EUR' });
 			}),
 			update: projectUpdate,
 			manager: {
@@ -293,6 +345,43 @@ describe('OrganizationProjectRateService', () => {
 
 		expect(projectUpdate).not.toHaveBeenCalled();
 		expect(membershipUpdate).not.toHaveBeenCalled();
+	});
+
+	describe('another organization or tenant', () => {
+		it.each(['foreign-organization-manager', 'foreign-tenant-manager'])(
+			'does not let in %s, flagged manager of the project there',
+			async (employeeId) => {
+				callerEmployeeId = employeeId;
+
+				await expect(service.findProjectRates(PROJECT, ORGANIZATION)).rejects.toThrow(ForbiddenException);
+				await expect(setProjectRate(PROJECT, 55)).rejects.toThrow(ForbiddenException);
+
+				expect(projectUpdate).not.toHaveBeenCalled();
+			}
+		);
+
+		it.each([FOREIGN_ORGANIZATION_PROJECT, FOREIGN_TENANT_PROJECT])(
+			'answers 404 to an admin for %s',
+			async (projectId) => {
+				permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
+
+				await expect(service.findProjectRates(projectId, ORGANIZATION)).rejects.toThrow(NotFoundException);
+				await expect(setProjectRate(projectId, 55)).rejects.toThrow(NotFoundException);
+
+				expect(projectUpdate).not.toHaveBeenCalled();
+			}
+		);
+
+		it.each(['foreign-organization-manager', 'foreign-tenant-manager'])(
+			'answers 404 to an admin setting the rate of %s, a member there',
+			async (employeeId) => {
+				permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
+
+				await expect(setMemberRate(employeeId, 35)).rejects.toThrow(NotFoundException);
+
+				expect(membershipUpdate).not.toHaveBeenCalled();
+			}
+		);
 	});
 });
 
