@@ -43611,6 +43611,11 @@ input CreateManualTimeLogInput {
   """The client to attribute the work to."""
   organizationContactId: ID
 
+  """
+  The team to attribute the work to. An organization that requires a team refuses an entry without one, unless the employee has a single team.
+  """
+  organizationTeamId: ID
+
   """What was worked on."""
   description: String
 

@@ -13,6 +13,7 @@ import { IGetConflictTimeLogCommand, TimeLogCreateCommand } from './commands';
 import { CreateManualTimeLogDTO } from './dto';
 import { TRACKING_FIELD_REQUIRED } from './organization-tracking-requirements';
 import { TimeLogController } from './time-log.controller';
+import { TimeLogResolver } from './time-log.resolver';
 import { TimeLogService } from './time-log.service';
 
 /**
@@ -133,7 +134,9 @@ function surfaces(stored: IStoredContext = SEVERAL_TEAMS) {
 		return await controller.addManualTime(dto);
 	};
 
-	return { created, controller, post };
+	const resolver = new TimeLogResolver(service, commandBus as never, new BulkExecutor(visibility), guard as never);
+
+	return { created, controller, post, resolver };
 }
 
 beforeEach(() => {
@@ -222,6 +225,23 @@ describe('POST /timesheet/time-log when the organization requires a team and a p
 			fields: ['organizationTeamId', 'projectId']
 		});
 		expect(created).toHaveLength(0);
+	});
+
+	it('records an interval entered by hand over GraphQL under the team and project it names', async () => {
+		const { created, resolver } = surfaces();
+		const input = {
+			organizationId: ORGANIZATION,
+			employeeId: EMPLOYEE,
+			startedAt: new Date(byHand.startedAt),
+			stoppedAt: new Date(byHand.stoppedAt),
+			organizationTeamId: 'team-b',
+			projectId: 'project-named'
+		};
+
+		await resolver.addManualTime(input);
+
+		expect(created).toHaveLength(1);
+		expect(created[0]).toMatchObject({ organizationTeamId: 'team-b', projectId: 'project-named' });
 	});
 
 	it('does not let a hand entry pass as an upload by saying so in its body', async () => {
