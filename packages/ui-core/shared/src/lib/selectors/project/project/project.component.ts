@@ -499,35 +499,45 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 			throw new Error('Organization or project name is missing.');
 		}
 
+		// The filters the project is created for: the list may be narrowed to another client or employee by the time
+		// the request answers.
+		const { employeeId, organizationContactId } = this;
+
+		let project: IOrganizationProject;
 		try {
 			// Destructure tenantId and organizationId from organization
 			const { id: organizationId, tenantId } = this.organization;
 
 			// Include member if employeeId or store user's employeeId is provided
-			const memberId = this.employeeId || this._store.user.employee?.id;
+			const memberId = employeeId || this._store.user.employee?.id;
 
 			// Create the project
-			const project = await this._organizationProjects.create({
+			project = await this._organizationProjects.create({
 				name,
 				...(memberId && { memberIds: [memberId] }),
-				...(this.organizationContactId && { organizationContactId: this.organizationContactId }),
+				...(organizationContactId && { organizationContactId }),
 				organizationId,
 				tenantId
 			});
-
-			// Add the created project to the list; ng-select selects it once this resolves
-			this.createOrganizationProject(project);
-
-			// Show success message
-			this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', { name });
-
-			return project;
 		} catch (error) {
 			// Log and handle the error
 			console.error('Error while creating new project: ', error);
 			this._errorHandlingService.handleError(error);
 			throw error;
 		}
+
+		// Show success message
+		this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', { name });
+
+		// Created for filters the list no longer shows: neither listed nor selected here
+		if (this.employeeId !== employeeId || this.organizationContactId !== organizationContactId) {
+			throw new Error('The project list was narrowed to another client or employee while the project was created.');
+		}
+
+		// Add the created project to the list; ng-select selects it once this resolves
+		this.createOrganizationProject(project);
+
+		return project;
 	};
 
 	/**

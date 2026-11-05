@@ -276,5 +276,21 @@ describe('ProjectSelectorComponent', () => {
 			await expect(component.createNew('apollo')).rejects.toThrow('refused');
 			await expect(component.createNew('')).rejects.toThrow();
 		});
+
+		it('neither lists nor selects a project created for a client the list no longer shows', async () => {
+			const answer = deferred<IOrganizationProject>();
+			create.mockReturnValue(answer.promise);
+			getAll.mockResolvedValue({ items: [] });
+			component.organization = organization;
+			component.organizationContactId = 'client-acme';
+
+			const creation = component.createNew('acme-site');
+			component.organizationContactId = 'client-globex';
+			answer.resolve(project('acme-site', 'client-acme'));
+
+			await expect(creation).rejects.toThrow();
+			expect(create).toHaveBeenCalledWith(expect.objectContaining({ organizationContactId: 'client-acme' }));
+			expect(component.projects.map(({ id }) => id)).not.toContain('acme-site');
+		});
 	});
 });
