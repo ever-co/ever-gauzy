@@ -185,15 +185,15 @@ export class OrganizationProject
 
 	/**
 	 * The project's client rate: what the client is billed per hour of the project's time, in the project's currency,
-	 * else the organization's. It does not change what members are paid. Written through the project rate route only,
-	 * which checks who may.
+	 * else the organization's. It does not change what members are paid. Written and read through the project rate
+	 * routes only, which check who may: generic project reads, open to any employee who views projects, leave it out.
 	 */
 	@ApiPropertyOptional({
 		type: () => Number,
 		nullable: true,
 		description: "What the client is billed per hour of the project's time, in the project's currency"
 	})
-	@MultiORMColumn(billingRateColumn())
+	@MultiORMColumn({ ...billingRateColumn(), select: false, hidden: true })
 	billRateValue?: number | null;
 
 	// Specifies the type of budget for the project, if provided.

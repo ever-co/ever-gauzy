@@ -29,8 +29,8 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 
 	/**
 	 * The member's client rate on this project: what the client is billed per hour of their time on it, in the
-	 * project's currency, over the project's client rate. It does not change what the member is paid. Written through
-	 * the member rate route only, which checks who may.
+	 * project's currency, over the project's client rate. It does not change what the member is paid. Written and read
+	 * through the project rate routes only, which check who may: generic project and member reads leave it out.
 	 */
 	@ApiPropertyOptional({
 		type: () => Number,
@@ -38,7 +38,7 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 		description:
 			"What the client is billed per hour of this member's time on the project, in the project's currency"
 	})
-	@MultiORMColumn(billingRateColumn())
+	@MultiORMColumn({ ...billingRateColumn(), select: false, hidden: true })
 	billRateValue?: number | null;
 
 	/*
