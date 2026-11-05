@@ -519,6 +519,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	async getDailyReport(request: IGetTimeLogReportInput) {
 		// Extract timezone from the request
 		const { timeZone } = request;
+		const statesTeam = request.includeTimeWithoutTeam === true;
 
 		let logs: ITimeLog[];
 
@@ -562,6 +563,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						projectId: true,
 						taskId: true,
 						organizationContactId: true,
+						organizationTeamId: statesTeam,
 						project: {
 							id: true,
 							name: true,
@@ -623,16 +625,22 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		let dailyLogs: any;
 		switch (request.groupBy) {
 			case ReportGroupFilterEnum.employee:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByEmployeeCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(
+					new GetTimeLogGroupByEmployeeCommand(logs, timeZone, statesTeam)
+				);
 				break;
 			case ReportGroupFilterEnum.project:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByProjectCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(
+					new GetTimeLogGroupByProjectCommand(logs, timeZone, statesTeam)
+				);
 				break;
 			case ReportGroupFilterEnum.client:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByClientCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(
+					new GetTimeLogGroupByClientCommand(logs, timeZone, statesTeam)
+				);
 				break;
 			default:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByDateCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByDateCommand(logs, timeZone, statesTeam));
 				break;
 		}
 

@@ -6,7 +6,8 @@ import * as path from 'path';
  * A team-scoped report counts the logs filed under the team. A member who tracked from a client that sent no team
  * (the desktop timer, the agent) left logs under no team at all, and no team-scoped report showed them to the team's
  * manager. With `includeTimeWithoutTeam`, the report also counts the time the members of the caller's teams logged
- * without a team. Without it, a report answers exactly as before.
+ * without a team, and the daily report states each row's team so a client can group that time as "No team". Without
+ * it, a report answers exactly as before.
  *
  * Run on one SQLite database with the tables TypeORM creates, through both ORMs, with the real manager rules
  * (`ManagedEmployeeService`) over the stored memberships. The entities are imported under `DB_ORM=mikro-orm`, as in
@@ -327,6 +328,21 @@ describe('TimeLogService team-scoped reports with the time logged without a team
 			const { listOn } = measured[orm].organizationWide;
 			expect(listOn.error).toBeUndefined();
 			expect(namesOf(listOn)).toEqual(['managerWithoutTeam', 'memberInTeam', 'memberWithoutTeam']);
+		});
+
+		it('states each daily report row team, null for the time without a team', () => {
+			for (const caller of ['manager', 'organizationWide'] as const) {
+				const { dailyOn } = measured[orm][caller];
+				expect(dailyOn.error).toBeUndefined();
+				const teamByRow = Object.fromEntries(
+					taskRowsOf(dailyOn).map((row) => [row.description, row.organizationTeamId])
+				);
+				expect(teamByRow).toEqual({
+					memberInTeam: TEAM_MANAGED,
+					memberWithoutTeam: null,
+					managerWithoutTeam: null
+				});
+			}
 		});
 	});
 });

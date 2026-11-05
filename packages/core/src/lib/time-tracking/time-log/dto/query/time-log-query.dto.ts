@@ -41,7 +41,9 @@ export class TimeLogQueryDTO
 
 	@ApiPropertyOptional({
 		type: () => Boolean,
-		description: "With teamIds, also count the time the members of the caller's teams logged without a team."
+		description:
+			"With teamIds, also count the time the members of the caller's teams logged without a team. The daily report " +
+			"then states each row's organizationTeamId, null for that time."
 	})
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))

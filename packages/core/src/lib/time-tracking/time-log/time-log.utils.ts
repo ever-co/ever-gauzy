@@ -31,6 +31,21 @@ export const calculateAverageActivity = (slots: ITimeSlot[]): number => {
 	return (overallSum * 100) / durationSum || 0;
 };
 
+/**
+ * The team a report row states: its log's team, null for time logged without a team, when the report includes that
+ * time (`includeTimeWithoutTeam`); nothing otherwise, so the row keeps its usual shape.
+ *
+ * @param log The log the row reports.
+ * @param statesTeam Whether the report states each row's team.
+ * @returns The row's team, or nothing.
+ */
+export function teamOfReportRow(log: ITimeLog, statesTeam: boolean): Pick<ITimeLog, 'organizationTeamId'> {
+	if (!statesTeam) {
+		return {};
+	}
+	return { organizationTeamId: log.organizationTeamId ?? null };
+}
+
 /** An hour, in the seconds a duration is stored in. */
 const SECONDS_PER_HOUR = parseDecimalString(3600);
 
