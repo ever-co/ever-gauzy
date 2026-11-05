@@ -33675,8 +33675,9 @@ type Organization {
   requireClient: Boolean!
 
   """
-  Whether a time entry must name a team. The server files an entry without one under the employee's only active team,
-  and refuses it otherwise, except what a client sends with source `DESKTOP` (the desktop timer and the agent).
+  Whether a time entry must name a team. The server files an entry without one under the employee's team when they
+  have exactly one active team in the organization (inactive, archived or deleted teams do not count), and refuses it
+  otherwise, except what a client sends with source `DESKTOP` (the desktop timer and the agent).
   """
   requireTeam: Boolean!
 
@@ -43612,7 +43613,9 @@ input CreateManualTimeLogInput {
   organizationContactId: ID
 
   """
-  The team to attribute the work to. An organization that requires a team refuses an entry without one, unless the employee has a single team.
+  The team to attribute the work to. An organization that requires a team refuses an entry without one, unless the
+  employee has exactly one active team in the organization, which the entry is then filed under. Inactive, archived
+  or deleted teams do not count.
   """
   organizationTeamId: ID
 
