@@ -7,7 +7,19 @@ import {
 	UnprocessableEntityException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual, FindOptionsWhere, Or, Equal } from 'typeorm';
+import {
+	IsNull,
+	Between,
+	Not,
+	In,
+	LessThanOrEqual,
+	MoreThanOrEqual,
+	FindOneOptions,
+	FindOptionsRelations,
+	FindOptionsWhere,
+	Or,
+	Equal
+} from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,
@@ -24,7 +36,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { DailyPlan, OrganizationTeam, OrganizationTeamEmployee, Task, TimeLog } from '../../core/entities/internal';
+import { DailyPlan, Employee, OrganizationTeam, OrganizationTeamEmployee, TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {
 	MultiORM,
@@ -49,6 +61,11 @@ import {
 	TimeLogCreateCommand,
 	TimeLogUpdateCommand
 } from '../time-log/commands';
+import {
+	assertRequiredContext,
+	projectIdForEntry,
+	teamIdForEntry
+} from '../time-log/organization-tracking-requirements';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -325,8 +342,7 @@ export class TimerService {
 		this.debug(() => `Start Timer Request (${moment.utc(request.startedAt).toDate()}): ${JSON.stringify(request)}`);
 
 		// Destructure the necessary parameters from the request
-		const { source, logType, taskId, organizationContactId, organizationTeamId, description, isBillable, version } =
-			request;
+		const { source, logType, taskId, organizationContactId, description, isBillable, version } = request;
 
 		// Retrieve the tenant ID from the current context or the provided one in the request
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
@@ -335,8 +351,8 @@ export class TimerService {
 		const startedAt = moment.utc(request.startedAt ?? moment.utc()).toDate();
 		this.debug(() => `new timer started at: ${startedAt}`);
 
-		// Retrieve the employee information
-		const employee = await this.findEmployee();
+		// Retrieve the employee information, with the organization whose switches the start must meet
+		const employee = await this.findEmployee({ organization: true });
 
 		// Throw an exception if the employee is not found or tracking is disabled
 		if (!employee.isTrackingEnabled) {
@@ -345,19 +361,33 @@ export class TimerService {
 
 		// Get the employee ID
 		const { id: employeeId, organizationId } = employee;
+		const requirements = employee.organization;
+		const trackedEmployee = { employeeId, organizationId, tenantId };
+		const manager = this.typeOrmTimeLogRepository.manager;
 
-		await this.assertTrackingOnInTeam(employeeId, organizationId, tenantId, organizationTeamId, source);
+		const teamIdToLog = await teamIdForEntry(manager, trackedEmployee, request, requirements);
+
+		await this.assertTrackingOnInTeam(employeeId, organizationId, tenantId, teamIdToLog, source);
 
 		await this.assertPlannedWhenTeamRequiresIt({
 			employeeId,
 			organizationId,
 			tenantId,
-			organizationTeamId,
+			organizationTeamId: teamIdToLog,
 			taskId,
 			source
 		});
 
-		const projectIdToLog = await this.projectIdForStart(request, organizationId, tenantId);
+		const takesTaskProject = PROJECT_FROM_TASK_SOURCES.includes(source);
+		const projectIdToLog = await projectIdForEntry(
+			manager,
+			trackedEmployee,
+			request,
+			requirements,
+			takesTaskProject
+		);
+
+		assertRequiredContext(requirements, { ...request, organizationTeamId: teamIdToLog, projectId: projectIdToLog });
 
 		// Stop any previous running timers
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
@@ -373,10 +403,10 @@ export class TimerService {
 				duration: 0,
 				source: source || TimeLogSourceEnum.WEB_TIMER,
 				logType: logType || TimeLogType.TRACKED,
-				projectId: projectIdToLog,
+				projectId: projectIdToLog || null,
 				taskId: taskId || null,
 				organizationContactId: organizationContactId || null,
-				organizationTeamId: organizationTeamId || null,
+				organizationTeamId: teamIdToLog || null,
 				description: description || null,
 				isBillable: isBillable || false,
 				version: version || null,
@@ -397,33 +427,6 @@ export class TimerService {
 	}
 
 	/**
-	 * The project a started log is filed under: the one the start names, or for an Ever Teams start that names a task
-	 * and no project, the task's own project, so its time shows in the project's reports.
-	 *
-	 * @param request The start request.
-	 * @param organizationId The employee's organization.
-	 * @param tenantId The caller's tenant.
-	 */
-	private async projectIdForStart(request: ITimerToggleInput, organizationId: ID, tenantId: ID): Promise<ID | null> {
-		const { projectId, taskId, source } = request;
-		if (projectId) {
-			return projectId;
-		}
-		const takesTaskProject = PROJECT_FROM_TASK_SOURCES.includes(source);
-		if (!takesTaskProject) {
-			return null;
-		}
-		if (!taskId) {
-			return null;
-		}
-		const task = await this.typeOrmTimeLogRepository.manager.findOne(Task, {
-			where: { id: taskId, tenantId, organizationId },
-			select: { id: true, projectId: true }
-		});
-		return task?.projectId ?? null;
-	}
-
-	/**
 	 * Refuses an Ever Teams start for a team that requires a daily plan when the employee has no plan with tasks
 	 * around today in that team, or when the task they start is in none of those plans. Ever Teams web checks the
 	 * same before starting; the mobile app and older web tabs did not, and the rule stayed advisory.
@@ -434,7 +437,7 @@ export class TimerService {
 		employeeId: ID;
 		organizationId: ID;
 		tenantId: ID;
-		organizationTeamId?: ID;
+		organizationTeamId?: ID | null;
 		taskId?: ID;
 		source?: TimeLogSourceEnum;
 	}): Promise<void> {
@@ -503,7 +506,7 @@ export class TimerService {
 		employeeId: ID,
 		organizationId: ID,
 		tenantId: ID,
-		organizationTeamId: ID | undefined,
+		organizationTeamId: ID | null | undefined,
 		source: TimeLogSourceEnum | undefined
 	): Promise<void> {
 		const isTeamSwitchClient = TEAM_TRACKING_SWITCH_SOURCES.includes(source);
@@ -848,15 +851,20 @@ export class TimerService {
 	/**
 	 * Retrieves the current employee record based on the user and tenant context.
 	 *
+	 * @param relations The relations to load with the employee, none by default.
 	 * @returns The employee record if found.
 	 * @throws NotFoundException if the employee record is not found.
 	 */
-	async findEmployee(): Promise<IEmployee> {
+	async findEmployee(relations?: FindOptionsRelations<Employee>): Promise<IEmployee> {
 		const userId = RequestContext.currentUserId(); // Get the current user ID
 		const tenantId = RequestContext.currentTenantId(); // Get the current tenant ID
 
 		// Fetch the employee record using userId and tenantId
-		const employee = await this._employeeService.findOneByUserId(userId, undefined, { where: { tenantId } });
+		const options: FindOneOptions<Employee> = { where: { tenantId } };
+		if (relations) {
+			options.relations = relations;
+		}
+		const employee = await this._employeeService.findOneByUserId(userId, undefined, options);
 
 		if (!employee) {
 			throw new NotFoundException('Employee record not found. Please verify your details and try again.');
