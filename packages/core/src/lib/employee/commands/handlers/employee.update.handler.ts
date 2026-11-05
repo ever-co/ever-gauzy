@@ -16,6 +16,7 @@ import {
 	employeeAgentRestrictionLocations,
 	recordAgentRestrictionAcknowledgement
 } from './../../agent-exit-logout-restriction';
+import { assertOwnRatesMayChange } from './../../own-rates';
 
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
@@ -54,6 +55,12 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		const employee: IEmployee = await this._employeeService.findOneByIdString(id, {
 			relations: { organization: { contact: true }, user: true, contact: true }
 		});
+
+		const editsOwnRecord = user?.employeeId === id;
+		const editsEveryEmployee =
+			RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT) ||
+			RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		assertOwnRatesMayChange(employee, input, { editsOwnRecord, editsEveryEmployee });
 		// The worker's own location and their organization's: EEA/UK if either is.
 		const previousLocation = employeeAgentRestrictionLocations(employee);
 		const location = employeeAgentRestrictionLocations(employee, input.contact);
