@@ -2635,7 +2635,51 @@
 			"HR": "hr",
 			"SETTINGS": "Settings",
 			"GENERAL_SETTINGS": "General Settings",
-			"INTEGRATIONS": "Integrations"
+			"INTEGRATIONS": "Integrations",
+			"PROJECTS_TAB": {
+				"TITLE": "Projects",
+				"CAPTION": "Projects this employee is a member of. Members can track time and work on the project’s tasks.",
+				"SEARCH": "Search projects",
+				"ASSIGN": "Assign projects",
+				"ASSIGN_PLACEHOLDER": "Select projects to assign…",
+				"ASSIGN_SUBMIT": "Assign",
+				"ALL_ASSIGNED": "This employee is already a member of every project.",
+				"COLUMNS": {
+					"PROJECT": "Project",
+					"ROLE": "Role",
+					"STATUS": "Status",
+					"MEMBERS": "Members",
+					"BILLING": "Billing"
+				},
+				"ROLE_MANAGER": "Manager",
+				"ROLE_MEMBER": "Member",
+				"STATUS": {
+					"OPEN": "Open",
+					"IN_PROGRESS": "In progress",
+					"COMPLETED": "Completed",
+					"CANCELLED": "Cancelled",
+					"CUSTOM": "Custom"
+				},
+				"BILLING": {
+					"RATE": "Hourly rate",
+					"FLAT_FEE": "Flat fee",
+					"MILESTONES": "Milestones"
+				},
+				"PUBLIC": "Public",
+				"PRIVATE": "Private",
+				"QUICK_LOOK": "Quick look",
+				"OPEN_PROJECT": "Open project page",
+				"REMOVE": "Remove from project",
+				"REMOVE_TITLE": "Remove from project",
+				"REMOVE_MESSAGE": "Remove {{ employee }} from {{ project }}? They will no longer be able to track time on it.",
+				"REMOVE_HINT": "You can assign them to this project again at any time.",
+				"SHOWING": "Showing {{ count }} of {{ total }} projects",
+				"NO_MATCH": "No projects match “{{ term }}”",
+				"NO_MATCH_PICKER": "No matching projects",
+				"CLEAR_SEARCH": "Clear search",
+				"EMPTY_TITLE": "No projects yet",
+				"EMPTY_TEXT": "Assign this employee to a project so they can track time and work on its tasks."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",
