@@ -107,8 +107,9 @@ function visitNode(
 	uses: RestrictedColumnUse[],
 	depth: number
 ): void {
+	// Nothing below this depth is checked, so the read is refused rather than run unchecked
 	if (depth > MAX_DEPTH) {
-		return;
+		throw new BadRequestException('The filter, sort or select is nested too deeply.');
 	}
 
 	if (Array.isArray(node)) {
@@ -267,8 +268,9 @@ function legacyDataOf(source: unknown): unknown {
 }
 
 function collectPaths(node: unknown, path: string[], paths: Set<string>, depth: number): void {
+	// A caller's options deeper than the check can follow would name nothing, and the read would run unchecked
 	if (depth > MAX_DEPTH) {
-		return;
+		throw new BadRequestException('The filter, sort or select is nested too deeply.');
 	}
 
 	if (Array.isArray(node)) {

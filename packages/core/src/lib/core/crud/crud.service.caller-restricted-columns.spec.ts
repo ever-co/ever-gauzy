@@ -168,6 +168,31 @@ describe('CrudService caller-restricted columns', () => {
 			await expect(service.findAll({ where } as any)).rejects.toThrow(BadRequestException);
 			expect(mikroOrmRepository.findAndCount).not.toHaveBeenCalled();
 		});
+
+		it('refuses a filter nested deeper than it can check, instead of running it unchecked', async () => {
+			let where: unknown = { user: { hash: 'x' } };
+			for (let level = 0; level < 13; level++) {
+				where = [where];
+			}
+			request = { query: { where } };
+			const { repository, service } = serviceOver(INVITE());
+
+			await expect(service.findAll({ where } as any)).rejects.toThrow(BadRequestException);
+			expect(repository.findAndCount).not.toHaveBeenCalled();
+		});
+
+		it('refuses a read that nests the caller filter deeper than it can check', async () => {
+			const callerWhere = { user: { hash: 'x' } };
+			let readWhere: unknown = callerWhere;
+			for (let level = 0; level < 13; level++) {
+				readWhere = [readWhere];
+			}
+			request = { query: { where: callerWhere } };
+			const { repository, service } = serviceOver(INVITE());
+
+			await expect(service.findAll({ where: readWhere } as any)).rejects.toThrow(BadRequestException);
+			expect(repository.findAndCount).not.toHaveBeenCalled();
+		});
 	});
 
 	describe('rate columns', () => {
