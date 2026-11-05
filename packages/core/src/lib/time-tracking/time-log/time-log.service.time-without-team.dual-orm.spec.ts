@@ -317,6 +317,7 @@ describe('TimeLogService team-scoped reports with the time logged without a team
 			expect(Object.keys(client)).toEqual(expect.arrayContaining(contractMembers));
 		}
 		const typeOrmClient = taskRowsOf(measured.typeOrm.manager.dailyOn)[0].client;
+		expect(typeOrmClient.imageUrl).toBeNull();
 		expect(typeOrmClient).not.toHaveProperty('primaryEmail');
 		expect(typeOrmClient).not.toHaveProperty('contactType');
 	});
