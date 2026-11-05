@@ -60,6 +60,7 @@ const TRACKED_DATA_PATH_SEGMENTS: ReadonlySet<string> = new Set([
 	'screenshots',
 	'activities',
 	'timeLogs',
+	'timesheet',
 	'timesheets'
 ]);
 

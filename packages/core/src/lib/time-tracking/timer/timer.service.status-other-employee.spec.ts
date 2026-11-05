@@ -89,7 +89,7 @@ describe('TimerService.getTimerStatus for another employee', () => {
 	});
 
 	describe('relations loaded on the last log', () => {
-		const RELATIONS = ['task', 'timeSlots.screenshots'];
+		const RELATIONS = ['task', 'timeSlots.screenshots', 'timesheet'];
 		let findLastTimeLog: jest.Mock;
 
 		const relationsReadFor = async (employeeId?: string) => {
