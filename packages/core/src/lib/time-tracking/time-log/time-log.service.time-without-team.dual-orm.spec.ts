@@ -90,6 +90,13 @@ function employeeTaskRowsOf(daily: IReportDayGroupByEmployee[]): IReportDayTaskR
 	return projectLogs.flatMap((projectLog) => projectLog.tasks);
 }
 
+/** Every task row of a daily report grouped by project, as the shared report contract types it. */
+function projectTaskRowsOf(daily: IReportDayGroupByProject[]): IReportDayTaskRow[] {
+	const days = daily.flatMap((project) => project.logs);
+	const employeeLogs = days.flatMap((day) => day.employeeLogs);
+	return employeeLogs.flatMap((employeeLog) => employeeLog.tasks);
+}
+
 /** Every task row of a daily report grouped by client, as the shared report contract types it. */
 function clientTaskRowsOf(daily: IReportDayGroupByClient[]): IReportDayTaskRow[] {
 	const projects: IReportDayGroupByClient['logs'] = daily.flatMap((client) => client.logs);
@@ -437,14 +444,16 @@ describe('TimeLogService team-scoped reports with the time logged without a team
 			expect(namesOf(listOn)).toEqual(['managerWithoutTeam', 'memberInTeam', 'memberWithoutTeam']);
 		});
 
-		it('states each row team in the employee and client groupings, along the paths the contract types', () => {
+		it('states each row team in the employee, client and project groupings, along the paths the contract types', () => {
 			const expected = { memberInTeam: TEAM_MANAGED, memberWithoutTeam: null, managerWithoutTeam: null };
-			const { byEmployeeOn, byClientOn } = measured[orm].manager;
+			const { byEmployeeOn, byClientOn, byProjectOn } = measured[orm].manager;
 			expect(byEmployeeOn.error).toBeUndefined();
 			expect(byClientOn.error).toBeUndefined();
+			expect(byProjectOn.error).toBeUndefined();
 
 			expect(teamByRow(employeeTaskRowsOf(byEmployeeOn))).toEqual(expected);
 			expect(teamByRow(clientTaskRowsOf(byClientOn))).toEqual(expected);
+			expect(teamByRow(projectTaskRowsOf(byProjectOn))).toEqual(expected);
 		});
 
 		it('states each daily report row team, null for the time without a team', () => {
