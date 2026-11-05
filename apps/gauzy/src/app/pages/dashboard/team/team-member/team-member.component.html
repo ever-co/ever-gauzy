@@ -1,8 +1,10 @@
 @if (isClassic) {
 <!-- ── Compact line: under a team in the "All teams" overview ── -->
+@if (member.canViewDetails) {
 <a
 	class="member"
-	[routerLink]="['/pages/employees/view', member.employeeId]"
+	[routerLink]="member.canViewProfile ? ['/pages/employees/view', member.employeeId] : null"
+	[attr.tabindex]="member.canViewProfile ? null : 0"
 	#cardPopover="nbPopover"
 	[nbPopover]="personCard"
 	[nbPopoverContext]="{ person: member, cardId: cardId }"
@@ -15,6 +17,14 @@
 	(keydown)="cardKeyboard.onTriggerKeydown($event, cardPopover, cardId)"
 	aria-keyshortcuts="ArrowDown"
 >
+	<ng-container *ngTemplateOutlet="classicName"></ng-container>
+</a>
+} @else {
+<span class="member">
+	<ng-container *ngTemplateOutlet="classicName"></ng-container>
+</span>
+}
+<ng-template #classicName>
 	<span class="member-avatar member-avatar--sm" [class]="'member-avatar member-avatar--sm presence-' + member.presence">
 		<img type="user" [src]="member.avatarUrl" [alt]="member.name" />
 		<span class="avatar-dot"></span>
@@ -27,7 +37,7 @@
 		</span>
 		}
 	</span>
-</a>
+</ng-template>
 <span
 	class="bar-track workday-track"
 	[title]="'DASHBOARD_PAGE.TEAMS_DASHBOARD.OF_WORKDAY' | translate: { percent: formatPercent(member.workdayShare), hours: formatDuration(member.workPeriod) }"
@@ -52,9 +62,11 @@
   total's progress bar is the working day.
 -->
 <td class="col-name">
+	@if (member.canViewDetails) {
 	<a
 		class="member"
-		[routerLink]="['/pages/employees/view', member.employeeId]"
+		[routerLink]="member.canViewProfile ? ['/pages/employees/view', member.employeeId] : null"
+		[attr.tabindex]="member.canViewProfile ? null : 0"
 		#cardPopover="nbPopover"
 		[nbPopover]="personCard"
 		[nbPopoverContext]="{ person: member, cardId: cardId }"
@@ -67,6 +79,14 @@
 		(keydown)="cardKeyboard.onTriggerKeydown($event, cardPopover, cardId)"
 		aria-keyshortcuts="ArrowDown"
 	>
+		<ng-container *ngTemplateOutlet="tableName"></ng-container>
+	</a>
+	} @else {
+	<span class="member">
+		<ng-container *ngTemplateOutlet="tableName"></ng-container>
+	</span>
+	}
+	<ng-template #tableName>
 		<span class="member-avatar" [class]="'member-avatar presence-' + member.presence">
 			<img type="user" [src]="member.avatarUrl" [alt]="member.name" />
 			<span class="avatar-dot"></span>
@@ -83,7 +103,7 @@
 				}
 			</span>
 		</span>
-	</a>
+	</ng-template>
 </td>
 
 <!-- Task -->

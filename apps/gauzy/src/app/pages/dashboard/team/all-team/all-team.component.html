@@ -195,9 +195,11 @@
 					@for (row of topMembers; track row.id) {
 					<tr>
 						<td class="cell-main">
+							@if (row.person.canViewDetails) {
 							<a
 								class="cell-title member-link"
-								[routerLink]="['/pages/employees/view', row.employeeId]"
+								[routerLink]="row.person.canViewProfile ? ['/pages/employees/view', row.employeeId] : null"
+								[attr.tabindex]="row.person.canViewProfile ? null : 0"
 								#cardPopover="nbPopover"
 								[nbPopover]="personCard"
 								[nbPopoverContext]="{ person: row.person, cardId: cardIdPrefix + '-' + $index }"
@@ -212,6 +214,9 @@
 							>
 								{{ row.name }}
 							</a>
+							} @else {
+							<span class="cell-title">{{ row.name }}</span>
+							}
 							<span class="cell-meta">{{ row.meta }}</span>
 							<span class="bar-track" aria-hidden="true"><span class="bar" [style.width.%]="row.width"></span></span>
 						</td>
