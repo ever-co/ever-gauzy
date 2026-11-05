@@ -2208,7 +2208,43 @@
 			"VETTED": "Vetted",
 			"HR": "hr",
 			"SETTINGS": "הגדרות",
-			"GENERAL_SETTINGS": "הגדרות כלליות"
+			"GENERAL_SETTINGS": "הגדרות כלליות",
+			"CONTACTS_TAB": {
+				"TITLE": "אנשי קשר",
+				"CAPTION": "לקוחות, קונים ולידים שהעובד הזה עובד איתם.",
+				"SEARCH": "חיפוש אנשי קשר",
+				"ASSIGN": "שיוך אנשי קשר",
+				"ASSIGN_DIALOG_TITLE": "שיוך לאנשי קשר",
+				"ASSIGN_DIALOG_SUBTITLE": "בחרו את אנשי הקשר ש-{{ employee }} יעבוד איתם.",
+				"ASSIGN_SEARCH": "חיפוש לפי שם, אימייל או טלפון",
+				"SELECT_ALL": "בחירת הכול",
+				"DESELECT_ALL": "ביטול בחירת הכול",
+				"SELECTED_COUNT": "{{ count }} נבחרו",
+				"CLEAR_SELECTION": "ניקוי",
+				"ASSIGN_SUBMIT": "שיוך",
+				"ALL_ASSIGNED": "העובד הזה כבר משויך לכל אנשי הקשר.",
+				"NO_MATCH_PICKER": "אין אנשי קשר תואמים",
+				"COLUMNS": {
+					"CONTACT": "איש קשר",
+					"TYPE": "סוג",
+					"PROJECTS": "פרויקטים"
+				},
+				"TYPE": {
+					"CLIENT": "לקוח",
+					"CUSTOMER": "קונה",
+					"LEAD": "ליד"
+				},
+				"OPEN_CONTACT": "פתיחת דף איש הקשר",
+				"REMOVE": "הסרה מאיש הקשר",
+				"REMOVE_TITLE": "הסרה מאיש הקשר",
+				"REMOVE_MESSAGE": "להסיר את {{ employee }} מ-{{ contact }}? הוא לא יהיה משויך עוד לאיש קשר זה.",
+				"REMOVE_HINT": "ניתן לשייך אותו שוב לאיש קשר זה בכל עת.",
+				"SHOWING": "מוצגים {{ count }} מתוך {{ total }} אנשי קשר",
+				"NO_MATCH": "אין אנשי קשר התואמים ל-\"{{ term }}\"",
+				"CLEAR_SEARCH": "ניקוי החיפוש",
+				"EMPTY_TITLE": "אין עדיין אנשי קשר",
+				"EMPTY_TEXT": "שייכו את העובד ללקוח, קונה או ליד כדי להציג עם מי הוא עובד."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",

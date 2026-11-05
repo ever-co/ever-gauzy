@@ -2167,7 +2167,43 @@
 			"HR": "ZL",
 			"SETTINGS": "Ustawienia",
 			"GENERAL_SETTINGS": "Ustawienia ogólne",
-			"INTEGRATIONS": "Integracje"
+			"INTEGRATIONS": "Integracje",
+			"CONTACTS_TAB": {
+				"TITLE": "Kontakty",
+				"CAPTION": "Klienci, nabywcy i potencjalni klienci, z którymi pracuje ten pracownik.",
+				"SEARCH": "Szukaj kontaktów",
+				"ASSIGN": "Przypisz kontakty",
+				"ASSIGN_DIALOG_TITLE": "Przypisz do kontaktów",
+				"ASSIGN_DIALOG_SUBTITLE": "Wybierz kontakty, z którymi ma pracować {{ employee }}.",
+				"ASSIGN_SEARCH": "Szukaj po nazwie, e-mailu lub telefonie",
+				"SELECT_ALL": "Zaznacz wszystko",
+				"DESELECT_ALL": "Odznacz wszystko",
+				"SELECTED_COUNT": "Wybrano: {{ count }}",
+				"CLEAR_SELECTION": "Wyczyść",
+				"ASSIGN_SUBMIT": "Przypisz",
+				"ALL_ASSIGNED": "Ten pracownik jest już przypisany do wszystkich kontaktów.",
+				"NO_MATCH_PICKER": "Brak pasujących kontaktów",
+				"COLUMNS": {
+					"CONTACT": "Kontakt",
+					"TYPE": "Typ",
+					"PROJECTS": "Projekty"
+				},
+				"TYPE": {
+					"CLIENT": "Klient",
+					"CUSTOMER": "Nabywca",
+					"LEAD": "Potencjalny klient"
+				},
+				"OPEN_CONTACT": "Otwórz stronę kontaktu",
+				"REMOVE": "Usuń z kontaktu",
+				"REMOVE_TITLE": "Usuń z kontaktu",
+				"REMOVE_MESSAGE": "Usunąć {{ employee }} z {{ contact }}? Nie będzie już przypisany do tego kontaktu.",
+				"REMOVE_HINT": "Możesz w każdej chwili ponownie przypisać go do tego kontaktu.",
+				"SHOWING": "{{ count }} z {{ total }} kontaktów",
+				"NO_MATCH": "Brak kontaktów pasujących do „{{ term }}”",
+				"CLEAR_SEARCH": "Wyczyść wyszukiwanie",
+				"EMPTY_TITLE": "Brak kontaktów",
+				"EMPTY_TEXT": "Przypisz tego pracownika do klienta, nabywcy lub potencjalnego klienta, aby pokazać, z kim pracuje."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Krok 1",

@@ -2168,7 +2168,43 @@
 			"HR": "HR",
 			"SETTINGS": "Configurações",
 			"GENERAL_SETTINGS": "Configurações Gerais",
-			"INTEGRATIONS": "Integrações"
+			"INTEGRATIONS": "Integrações",
+			"CONTACTS_TAB": {
+				"TITLE": "Contatos",
+				"CAPTION": "Clientes, compradores e leads com quem este funcionário trabalha.",
+				"SEARCH": "Pesquisar contatos",
+				"ASSIGN": "Atribuir contatos",
+				"ASSIGN_DIALOG_TITLE": "Atribuir a contatos",
+				"ASSIGN_DIALOG_SUBTITLE": "Escolha os contatos com quem {{ employee }} deve trabalhar.",
+				"ASSIGN_SEARCH": "Pesquisar por nome, e-mail ou telefone",
+				"SELECT_ALL": "Selecionar tudo",
+				"DESELECT_ALL": "Desmarcar tudo",
+				"SELECTED_COUNT": "{{ count }} selecionado(s)",
+				"CLEAR_SELECTION": "Limpar",
+				"ASSIGN_SUBMIT": "Atribuir",
+				"ALL_ASSIGNED": "Este funcionário já está atribuído a todos os contatos.",
+				"NO_MATCH_PICKER": "Nenhum contato correspondente",
+				"COLUMNS": {
+					"CONTACT": "Contato",
+					"TYPE": "Tipo",
+					"PROJECTS": "Projetos"
+				},
+				"TYPE": {
+					"CLIENT": "Cliente",
+					"CUSTOMER": "Comprador",
+					"LEAD": "Lead"
+				},
+				"OPEN_CONTACT": "Abrir a página do contato",
+				"REMOVE": "Remover do contato",
+				"REMOVE_TITLE": "Remover do contato",
+				"REMOVE_MESSAGE": "Remover {{ employee }} de {{ contact }}? Ele não estará mais atribuído a este contato.",
+				"REMOVE_HINT": "Você pode atribuí-lo a este contato novamente a qualquer momento.",
+				"SHOWING": "Mostrando {{ count }} de {{ total }} contatos",
+				"NO_MATCH": "Nenhum contato corresponde a “{{ term }}”",
+				"CLEAR_SEARCH": "Limpar pesquisa",
+				"EMPTY_TITLE": "Nenhum contato ainda",
+				"EMPTY_TEXT": "Atribua este funcionário a um cliente, comprador ou lead para mostrar com quem ele trabalha."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Passo 1",

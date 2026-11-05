@@ -2167,7 +2167,43 @@
 			"HR": "ساعة",
 			"SETTINGS": "الإعدادات",
 			"GENERAL_SETTINGS": "إعدادات عامة",
-			"INTEGRATIONS": "التكاملات"
+			"INTEGRATIONS": "التكاملات",
+			"CONTACTS_TAB": {
+				"TITLE": "جهات الاتصال",
+				"CAPTION": "العملاء والزبائن والعملاء المحتملون الذين يعمل معهم هذا الموظف.",
+				"SEARCH": "البحث في جهات الاتصال",
+				"ASSIGN": "تعيين جهات اتصال",
+				"ASSIGN_DIALOG_TITLE": "التعيين لجهات اتصال",
+				"ASSIGN_DIALOG_SUBTITLE": "اختر جهات الاتصال التي يجب أن يعمل معها {{ employee }}.",
+				"ASSIGN_SEARCH": "ابحث بالاسم أو البريد الإلكتروني أو الهاتف",
+				"SELECT_ALL": "تحديد الكل",
+				"DESELECT_ALL": "إلغاء تحديد الكل",
+				"SELECTED_COUNT": "تم تحديد {{ count }}",
+				"CLEAR_SELECTION": "مسح",
+				"ASSIGN_SUBMIT": "تعيين",
+				"ALL_ASSIGNED": "هذا الموظف معيّن بالفعل لجميع جهات الاتصال.",
+				"NO_MATCH_PICKER": "لا توجد جهات اتصال مطابقة",
+				"COLUMNS": {
+					"CONTACT": "جهة الاتصال",
+					"TYPE": "النوع",
+					"PROJECTS": "المشاريع"
+				},
+				"TYPE": {
+					"CLIENT": "عميل",
+					"CUSTOMER": "زبون",
+					"LEAD": "عميل محتمل"
+				},
+				"OPEN_CONTACT": "فتح صفحة جهة الاتصال",
+				"REMOVE": "إزالة من جهة الاتصال",
+				"REMOVE_TITLE": "إزالة من جهة الاتصال",
+				"REMOVE_MESSAGE": "هل تريد إزالة {{ employee }} من {{ contact }}؟ لن يكون معيّنًا لجهة الاتصال هذه بعد الآن.",
+				"REMOVE_HINT": "يمكنك تعيينه لجهة الاتصال هذه مرة أخرى في أي وقت.",
+				"SHOWING": "عرض {{ count }} من {{ total }} جهة اتصال",
+				"NO_MATCH": "لا توجد جهات اتصال تطابق «{{ term }}»",
+				"CLEAR_SEARCH": "مسح البحث",
+				"EMPTY_TITLE": "لا توجد جهات اتصال بعد",
+				"EMPTY_TEXT": "عيّن هذا الموظف لعميل أو زبون أو عميل محتمل لإظهار من يعمل معهم."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "الخطوة 1",

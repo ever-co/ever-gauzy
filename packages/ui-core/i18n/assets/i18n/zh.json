@@ -2637,7 +2637,43 @@
 			"HR": "小时",
 			"SETTINGS": "设置",
 			"GENERAL_SETTINGS": "常规设置",
-			"INTEGRATIONS": "整合"
+			"INTEGRATIONS": "整合",
+			"CONTACTS_TAB": {
+				"TITLE": "联系人",
+				"CAPTION": "该员工合作的客户、顾客和潜在客户。",
+				"SEARCH": "搜索联系人",
+				"ASSIGN": "分配联系人",
+				"ASSIGN_DIALOG_TITLE": "分配到联系人",
+				"ASSIGN_DIALOG_SUBTITLE": "选择 {{ employee }} 要合作的联系人。",
+				"ASSIGN_SEARCH": "按名称、邮箱或电话搜索",
+				"SELECT_ALL": "全选",
+				"DESELECT_ALL": "取消全选",
+				"SELECTED_COUNT": "已选择 {{ count }} 个",
+				"CLEAR_SELECTION": "清除",
+				"ASSIGN_SUBMIT": "分配",
+				"ALL_ASSIGNED": "该员工已分配到所有联系人。",
+				"NO_MATCH_PICKER": "没有匹配的联系人",
+				"COLUMNS": {
+					"CONTACT": "联系人",
+					"TYPE": "类型",
+					"PROJECTS": "项目"
+				},
+				"TYPE": {
+					"CLIENT": "客户",
+					"CUSTOMER": "顾客",
+					"LEAD": "潜在客户"
+				},
+				"OPEN_CONTACT": "打开联系人页面",
+				"REMOVE": "从联系人中移除",
+				"REMOVE_TITLE": "从联系人中移除",
+				"REMOVE_MESSAGE": "要将 {{ employee }} 从 {{ contact }} 中移除吗？移除后将不再分配到该联系人。",
+				"REMOVE_HINT": "你可以随时将其重新分配到此联系人。",
+				"SHOWING": "显示 {{ count }} / {{ total }} 个联系人",
+				"NO_MATCH": "没有与“{{ term }}”匹配的联系人",
+				"CLEAR_SEARCH": "清除搜索",
+				"EMPTY_TITLE": "暂无联系人",
+				"EMPTY_TEXT": "将该员工分配给客户、顾客或潜在客户，以显示其合作对象。"
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "第一步",

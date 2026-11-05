@@ -2168,7 +2168,43 @@
 			"HR": "ore",
 			"SETTINGS": "Impostazioni",
 			"GENERAL_SETTINGS": "Impostazioni generali",
-			"INTEGRATIONS": "Integrazioni"
+			"INTEGRATIONS": "Integrazioni",
+			"CONTACTS_TAB": {
+				"TITLE": "Contatti",
+				"CAPTION": "Clienti, acquirenti e potenziali clienti con cui lavora questo dipendente.",
+				"SEARCH": "Cerca contatti",
+				"ASSIGN": "Assegna contatti",
+				"ASSIGN_DIALOG_TITLE": "Assegna a contatti",
+				"ASSIGN_DIALOG_SUBTITLE": "Scegli i contatti con cui deve lavorare {{ employee }}.",
+				"ASSIGN_SEARCH": "Cerca per nome, e-mail o telefono",
+				"SELECT_ALL": "Seleziona tutto",
+				"DESELECT_ALL": "Deseleziona tutto",
+				"SELECTED_COUNT": "{{ count }} selezionati",
+				"CLEAR_SELECTION": "Cancella",
+				"ASSIGN_SUBMIT": "Assegna",
+				"ALL_ASSIGNED": "Questo dipendente è già assegnato a tutti i contatti.",
+				"NO_MATCH_PICKER": "Nessun contatto corrispondente",
+				"COLUMNS": {
+					"CONTACT": "Contatto",
+					"TYPE": "Tipo",
+					"PROJECTS": "Progetti"
+				},
+				"TYPE": {
+					"CLIENT": "Cliente",
+					"CUSTOMER": "Acquirente",
+					"LEAD": "Potenziale cliente"
+				},
+				"OPEN_CONTACT": "Apri la pagina del contatto",
+				"REMOVE": "Rimuovi dal contatto",
+				"REMOVE_TITLE": "Rimuovi dal contatto",
+				"REMOVE_MESSAGE": "Rimuovere {{ employee }} da {{ contact }}? Non sarà più assegnato a questo contatto.",
+				"REMOVE_HINT": "Puoi riassegnarlo a questo contatto in qualsiasi momento.",
+				"SHOWING": "{{ count }} di {{ total }} contatti",
+				"NO_MATCH": "Nessun contatto corrisponde a «{{ term }}»",
+				"CLEAR_SEARCH": "Cancella ricerca",
+				"EMPTY_TITLE": "Ancora nessun contatto",
+				"EMPTY_TEXT": "Assegna questo dipendente a un cliente, acquirente o potenziale cliente per mostrare con chi lavora."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Passaggio 1",
