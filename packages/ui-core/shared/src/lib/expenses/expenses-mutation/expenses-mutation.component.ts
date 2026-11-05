@@ -154,10 +154,8 @@ export class ExpensesMutationComponent extends TranslationBaseComponent implemen
 	 * @param contact
 	 */
 	selectedOrganizationContact(contact: IOrganizationContact) {
-		if (contact) {
-			this.form.get('organizationContactId').setValue(contact.id);
-			this.form.get('organizationContactId').updateValueAndValidity();
-		}
+		this.form.get('organizationContactId').setValue(contact?.id ?? null);
+		this.form.get('organizationContactId').updateValueAndValidity();
 	}
 
 	/**
