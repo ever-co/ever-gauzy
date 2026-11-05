@@ -24,6 +24,7 @@ import { TypeOrmOrganizationTeamEmployeeRepository } from './repository/type-orm
 import { MikroOrmOrganizationTeamEmployeeRepository } from './repository/mikro-orm-organization-team-employee.repository';
 import { IWorkingEmployeeLookup } from '../employee/former-employees';
 import { mayFlagTeamManagers, teamRoleAfterEdit } from './team-manager-membership';
+import { TrackingTurnedOffEvent } from '../time-tracking/timer/events/tracking-turned-off.event';
 
 @Injectable()
 export class OrganizationTeamEmployeeService extends TenantAwareCrudService<OrganizationTeamEmployee> {
@@ -503,6 +504,58 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			}
 		} catch (error) {
 			throw new ForbiddenException('An error occurred while deleting the team member.');
+		}
+	}
+
+	/**
+	 * Updates a team member, as {@link update} does, and when the update turns their time tracking off for the team,
+	 * stops the timer they still have running for that team. Without it the timer kept counting: the clients hide it
+	 * once tracking is off.
+	 *
+	 * @param memberId The membership to update.
+	 * @param entity The changes, scoped by organization and team as for {@link update}.
+	 * @returns The update result.
+	 */
+	public async updateMember(
+		memberId: ID,
+		entity: IOrganizationTeamEmployeeUpdateInput
+	): Promise<OrganizationTeamEmployee | UpdateResult> {
+		const membershipTurnedOff = await this.membershipTrackingTurnsOff(memberId, entity);
+		const result = await this.update(memberId, entity);
+		if (membershipTurnedOff) {
+			const { employeeId, organizationId, tenantId, organizationTeamId } = membershipTurnedOff;
+			this._eventBus.publish(
+				new TrackingTurnedOffEvent({ employeeId, organizationId, tenantId, organizationTeamId })
+			);
+		}
+		return result;
+	}
+
+	/**
+	 * The membership whose tracking the update turns off, read before the update, or null when the update leaves
+	 * tracking as it is. Read past the employee filter: a team manager changes another member's row.
+	 */
+	private async membershipTrackingTurnsOff(
+		memberId: ID,
+		entity: IOrganizationTeamEmployeeUpdateInput
+	): Promise<OrganizationTeamEmployee | null> {
+		const turnsTrackingOff = entity.isTrackingEnabled === false;
+		if (!turnsTrackingOff) {
+			return null;
+		}
+		const tenantId = RequestContext.currentTenantId() || entity.tenantId;
+		const { organizationId, organizationTeamId } = entity;
+		try {
+			const membership = await this.withoutEmployeeFilter(() =>
+				this.findOneByWhereOptions({ id: memberId, tenantId, organizationId, organizationTeamId })
+			);
+			const wasTracking = membership.isTrackingEnabled !== false;
+			if (!wasTracking) {
+				return null;
+			}
+			return membership;
+		} catch {
+			return null;
 		}
 	}
 }

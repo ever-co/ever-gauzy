@@ -59,6 +59,22 @@ export class ExpensesService {
 		);
 	}
 
+	/**
+	 * A page of expenses, as the expenses grid reads them: `where` may carry a `valueDate` range of `startDate` and
+	 * `endDate`; `take` is the page size, at most 100, and `skip` the page, counted from 1.
+	 */
+	pagination(query: {
+		where: Record<string, unknown>;
+		order?: Record<string, 'ASC' | 'DESC'>;
+		relations?: string[];
+		skip?: number;
+		take?: number;
+	}): Promise<IPagination<IExpense>> {
+		return firstValueFrom(
+			this.http.get<IPagination<IExpense>>(`${API_PREFIX}/expense/pagination`, { params: toParams(query) })
+		);
+	}
+
 	update(id: string, updateInput: IExpenseUpdateInput): Promise<IExpense> {
 		return firstValueFrom(this.http.put<IExpense>(`${API_PREFIX}/expense/${id}`, updateInput));
 	}

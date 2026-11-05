@@ -1,0 +1,416 @@
+<!-- An expense's own page, laid out as Jira's issue page: the record in the wide column, the facts in the side one. -->
+<ngx-record-view-page heading="EXPENSES_PAGE.EXPENSES" [backLink]="backLink" [state]="state" (retry)="load()">
+	@if (expense) {
+		<!-- The page's actions, on one line with its back button, as the task page's. -->
+		<div recordPageActions class="expense-page-actions">
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EXPENSES_EDIT]">
+				<button
+					nbButton
+					size="tiny"
+					status="primary"
+					type="button"
+					[disabled]="busy"
+					[attr.aria-label]="'BUTTONS.EDIT' | translate"
+					(click)="edit()"
+				>
+					<nb-icon icon="edit-outline"></nb-icon>
+					<span class="expense-page-action-label">{{ 'BUTTONS.EDIT' | translate }}</span>
+				</button>
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="basic"
+					type="button"
+					[disabled]="busy"
+					[nbTooltip]="'BUTTONS.DUPLICATE' | translate"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.DUPLICATE' | translate"
+					(click)="duplicate()"
+				>
+					<nb-icon icon="copy-outline"></nb-icon>
+				</button>
+			</ng-template>
+			<button
+				nbButton
+				ghost
+				size="tiny"
+				status="basic"
+				type="button"
+				[nbTooltip]="'BUTTONS.COPY_LINK' | translate"
+				nbTooltipPlacement="top"
+				[attr.aria-label]="'BUTTONS.COPY_LINK' | translate"
+				(click)="copyLink()"
+			>
+				<nb-icon icon="link-2-outline"></nb-icon>
+			</button>
+			<ngx-favorite-toggle
+				[entityType]="favoriteEntity"
+				[entityId]="expense.id"
+				[entityName]="headline?.title"
+				size="tiny"
+				status="basic"
+				appearance="ghost"
+				spacing="list"
+			></ngx-favorite-toggle>
+			<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EXPENSES_EDIT]">
+				<button
+					nbButton
+					ghost
+					size="tiny"
+					status="danger"
+					type="button"
+					[disabled]="busy"
+					[nbTooltip]="'BUTTONS.DELETE' | translate"
+					nbTooltipPlacement="top"
+					[attr.aria-label]="'BUTTONS.DELETE' | translate"
+					(click)="delete()"
+				>
+					<nb-icon icon="trash-2-outline"></nb-icon>
+				</button>
+			</ng-template>
+		</div>
+	}
+
+	@if (expense && headline) {
+		<div class="project-view-top">
+			<!-- Who was paid and how it stands, then the four figures an approver reads first. -->
+			<div class="project-view-headline">
+				<div class="project-view-header">
+					<span class="project-logo expense-logo" aria-hidden="true">
+						<nb-icon icon="shopping-bag-outline"></nb-icon>
+					</span>
+					<div class="project-view-title">
+						<h5 class="project-view-name expense-title" [nbTooltip]="headline.title" nbTooltipPlacement="top">
+							{{ headline.title }}
+						</h5>
+						<p class="project-view-meta">
+							@if (headline.status; as status) {
+								<span [class]="'project-status tone-' + (status.tone || 'basic')">{{ status.text }}</span>
+							}
+							@if (headline.category) {
+								<span
+									class="project-meta-item"
+									[nbTooltip]="('SM_TABLE.CATEGORY' | translate) + ': ' + headline.category"
+									nbTooltipPlacement="top"
+								>
+									<nb-icon icon="pricetags-outline" aria-hidden="true"></nb-icon>
+									{{ headline.category }}
+								</span>
+							}
+							@if (headline.project) {
+								<span
+									class="project-meta-item"
+									[nbTooltip]="('SM_TABLE.PROJECT' | translate) + ': ' + headline.project"
+									nbTooltipPlacement="top"
+								>
+									<nb-icon icon="folder-outline" aria-hidden="true"></nb-icon>
+									{{ headline.project }}
+								</span>
+							}
+							@if (headline.contact) {
+								<span
+									class="project-meta-item"
+									[nbTooltip]="('SM_TABLE.CONTACT' | translate) + ': ' + headline.contact"
+									nbTooltipPlacement="top"
+								>
+									<nb-icon icon="briefcase-outline" aria-hidden="true"></nb-icon>
+									{{ headline.contact }}
+								</span>
+							}
+						</p>
+					</div>
+				</div>
+
+				<dl class="project-facts">
+					<div class="project-fact expense-fact-amount">
+						<dt>{{ 'EXPENSE_VIEW.AMOUNT' | translate }}</dt>
+						<dd>
+							<ga-income-amount class="expense-amount" [value]="$any(expense.amount)" [rowData]="expense"></ga-income-amount>
+							<span class="project-fact-hint">
+								{{ (expense.splitExpense ? 'EXPENSE_VIEW.SPLIT_HINT' : 'EXPENSE_VIEW.CURRENCY_HINT') | translate : { currency: expense.currency } }}
+							</span>
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'EXPENSE_VIEW.TAX' | translate }}</dt>
+						<dd>
+							@if (headline.tax; as tax) {
+								{{ tax.rate }}
+								@if (tax.label) {
+									<span class="project-fact-hint">{{ tax.label }}</span>
+								}
+							} @else {
+								<span class="project-fact-muted">{{ 'EXPENSE_VIEW.NO_TAX' | translate }}</span>
+							}
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'EXPENSE_VIEW.TYPE' | translate }}</dt>
+						<dd>
+							@if (headline.typeKey) {
+								{{ headline.typeKey | translate }}
+							} @else {
+								<span class="project-fact-muted">—</span>
+							}
+						</dd>
+					</div>
+					<div class="project-fact">
+						<dt>{{ 'EXPENSE_VIEW.EXPENSE_DATE' | translate }}</dt>
+						<dd>
+							@if (expense.valueDate) {
+								{{ expense.valueDate | dateFormat }}
+								<span class="project-fact-hint">{{ headline.since }}</span>
+							} @else {
+								<span class="project-fact-muted">—</span>
+							}
+						</dd>
+					</div>
+				</dl>
+			</div>
+
+			<!-- The record: what it was for, the notes and tags, then the receipt. -->
+			<div class="project-view-col project-view-col--main">
+				@if (record.purpose || record.notes || record.tags?.length) {
+					<ngx-record-view [record]="record" [sections]="mainSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+				} @else {
+					<section class="panel project-view-panel">
+						<header class="panel-header">
+							<h5 class="panel-title panel-title--icon">
+								<nb-icon icon="file-text-outline" aria-hidden="true"></nb-icon>
+								{{ 'EXPENSE_VIEW.DESCRIPTION' | translate }}
+							</h5>
+						</header>
+						<div class="panel-body panel-body--flush">
+							<ng-container
+								*ngTemplateOutlet="empty; context: { $implicit: 'EXPENSE_VIEW.NO_DESCRIPTION', icon: 'file-text-outline' }"
+							></ng-container>
+						</div>
+					</section>
+				}
+
+				<!-- The receipt, as Hubstaff shows it: the image itself, opening the file at full size. -->
+				<section class="panel project-view-panel">
+					<header class="panel-header">
+						<h5 class="panel-title panel-title--icon">
+							<nb-icon icon="attach-2-outline" aria-hidden="true"></nb-icon>
+							{{ 'EXPENSE_VIEW.RECEIPT' | translate }}
+						</h5>
+						@if (receipt) {
+							<a
+								nbButton
+								ghost
+								size="tiny"
+								status="basic"
+								class="expense-receipt-open"
+								[href]="receipt.url"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<nb-icon icon="external-link-outline" aria-hidden="true"></nb-icon>
+								{{ 'EXPENSE_VIEW.OPEN_RECEIPT' | translate }}
+							</a>
+						}
+					</header>
+					<div class="panel-body" [class.panel-body--flush]="!receipt">
+						@if (receipt; as file) {
+							@if (file.isImage && !receiptBroken) {
+								<a
+									class="expense-receipt-preview"
+									[href]="file.url"
+									target="_blank"
+									rel="noopener noreferrer"
+									[attr.aria-label]="'EXPENSE_VIEW.OPEN_RECEIPT' | translate"
+								>
+									<!-- No referrer: a file host that refuses images embedded on other sites answers 403 to one. -->
+									<img
+										[src]="file.url"
+										[alt]="'EXPENSE_VIEW.RECEIPT' | translate"
+										referrerpolicy="no-referrer"
+										(error)="receiptBroken = true"
+									/>
+								</a>
+							} @else {
+								<a class="expense-receipt-file" [href]="file.url" target="_blank" rel="noopener noreferrer">
+									<nb-icon icon="file-outline" aria-hidden="true"></nb-icon>
+									<span class="expense-receipt-name">{{ file.url }}</span>
+								</a>
+							}
+						} @else {
+							<div class="state state--compact">
+								<nb-icon icon="attach-2-outline" aria-hidden="true"></nb-icon>
+								<p>{{ 'EXPENSE_VIEW.NO_RECEIPT' | translate }}</p>
+								<ng-template [ngxPermissionsOnly]="[PermissionsEnum.ORG_EXPENSES_EDIT]">
+									<button nbButton outline size="tiny" status="basic" type="button" [disabled]="busy" (click)="edit()">
+										<nb-icon icon="attach-outline" aria-hidden="true"></nb-icon>
+										{{ 'EXPENSES_PAGE.MUTATION.ATTACH_A_RECEIPT' | translate }}
+									</button>
+								</ng-template>
+							</div>
+						}
+					</div>
+				</section>
+
+				<!-- How the expense compares: its category's spending by month, this expense's month highlighted. The months
+					 end with the expense's own, so an undated expense has none to show. -->
+				@if (expense.category && expense.valueDate) {
+					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="bar-chart-outline" aria-hidden="true"></nb-icon>
+									{{ 'EXPENSE_VIEW.CATEGORY_SPENDING' | translate }}
+								</h5>
+								<span class="panel-caption">
+									{{
+										'EXPENSE_VIEW.CATEGORY_SPENDING_CAPTION'
+											| translate : { category: expense.category.name, count: categoryMonths, currency: expense.currency }
+									}}
+								</span>
+							</div>
+							@if (!charts.failed) {
+								<nb-select
+									class="expense-chart-range"
+									size="small"
+									status="basic"
+									[selected]="categoryMonths"
+									(selectedChange)="setCategoryMonths($event)"
+									[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+								>
+									@for (months of categoryMonthOptions; track months) {
+										<nb-option [value]="months">{{ 'EXPENSE_VIEW.LAST_MONTHS' | translate : { count: months } }}</nb-option>
+									}
+								</nb-select>
+							}
+						</header>
+						<div class="panel-body project-chart-body">
+							@if (charts.failed) {
+								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (charts.categoryBars.length) {
+								<ga-expense-bar-chart
+									[formatValue]="formatAmount"
+									[highlightLabel]="'EXPENSE_VIEW.THIS_MONTH' | translate"
+									[otherLabel]="'EXPENSE_VIEW.OTHER_MONTHS' | translate"
+									[bars]="charts.categoryBars"
+								></ga-expense-bar-chart>
+							}
+						</div>
+					</section>
+				}
+
+				<!-- The payments to the same vendor in date order, this one highlighted: repeat costs and price changes. -->
+				@if (expense.vendor) {
+					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="trending-up-outline" aria-hidden="true"></nb-icon>
+									{{ 'EXPENSE_VIEW.VENDOR_PAYMENTS' | translate }}
+								</h5>
+								@if (charts.vendorBars.length > 1) {
+									<span class="panel-caption">
+										{{
+											'EXPENSE_VIEW.VENDOR_PAYMENTS_CAPTION'
+												| translate : { vendor: expense.vendor.name, count: charts.vendorBars.length, currency: expense.currency }
+										}}
+									</span>
+								}
+							</div>
+							@if (!charts.failed) {
+								<nb-select
+									class="expense-chart-range"
+									size="small"
+									status="basic"
+									[selected]="vendorPayments"
+									(selectedChange)="setVendorPayments($event)"
+									[attr.aria-label]="'EXPENSE_VIEW.CHART_RANGE' | translate"
+								>
+									@for (payments of vendorPaymentOptions; track payments) {
+										<nb-option [value]="payments">{{ 'EXPENSE_VIEW.LAST_PAYMENTS' | translate : { count: payments } }}</nb-option>
+									}
+								</nb-select>
+							}
+						</header>
+						<div class="panel-body project-chart-body">
+							@if (charts.failed) {
+								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (!charts.loading && charts.vendorBars.length <= 1) {
+								<ng-container
+									*ngTemplateOutlet="empty; context: { $implicit: 'EXPENSE_VIEW.NO_OTHER_PAYMENTS', icon: 'trending-up-outline' }"
+								></ng-container>
+							} @else if (charts.vendorBars.length) {
+								<ga-expense-bar-chart
+									[formatValue]="formatAmount"
+									[highlightLabel]="'EXPENSE_VIEW.THIS_EXPENSE' | translate"
+									[otherLabel]="'EXPENSE_VIEW.OTHER_PAYMENTS' | translate"
+									[bars]="charts.vendorBars"
+								></ga-expense-bar-chart>
+							}
+						</div>
+					</section>
+				}
+			</div>
+
+			<!-- The facts: every field of the expense, its share of its month, then its stamps. -->
+			<div class="project-view-col project-view-col--side">
+				<ngx-record-view
+					class="expense-details"
+					[record]="record"
+					[sections]="detailsSections"
+					[placeholder]="'SM_TABLE.NONE' | translate"
+				></ngx-record-view>
+
+				<!-- This expense against the rest of its category's spending in the same month. -->
+				@if (expense.category && (charts.loading || charts.failed || charts.share)) {
+					<section class="panel project-view-panel" [nbSpinner]="charts.loading" nbSpinnerSize="small" nbSpinnerStatus="basic">
+						<header class="panel-header">
+							<div class="panel-heading">
+								<h5 class="panel-title panel-title--icon">
+									<nb-icon icon="pie-chart-outline" aria-hidden="true"></nb-icon>
+									{{ 'EXPENSE_VIEW.MONTH_SHARE' | translate }}
+								</h5>
+								@if (charts.shareMonth) {
+									<span class="panel-caption">
+										{{
+											'EXPENSE_VIEW.MONTH_SHARE_CAPTION'
+												| translate : { category: expense.category.name, month: charts.shareMonth }
+										}}
+									</span>
+								}
+							</div>
+						</header>
+						<div class="panel-body">
+							@if (charts.failed) {
+								<ng-container *ngTemplateOutlet="chartFailed"></ng-container>
+							} @else if (charts.share) {
+								<ga-expense-share-chart
+									[formatValue]="formatAmount"
+									[amountLabel]="'EXPENSE_VIEW.THIS_EXPENSE' | translate"
+									[restLabel]="'EXPENSE_VIEW.REST_OF_MONTH' | translate"
+									[totalLabel]="'EXPENSE_VIEW.MONTH_TOTAL' | translate"
+									[share]="charts.share"
+								></ga-expense-share-chart>
+							}
+						</div>
+					</section>
+				}
+
+				<ngx-record-view [record]="record" [sections]="metaSections" [placeholder]="'SM_TABLE.NONE' | translate"></ngx-record-view>
+			</div>
+		</div>
+	}
+</ngx-record-view-page>
+
+<ng-template #chartFailed>
+	<div class="state state--compact">
+		<nb-icon icon="alert-circle-outline" aria-hidden="true"></nb-icon>
+		<p>{{ 'EXPENSE_VIEW.CHART_FAILED' | translate }}</p>
+	</div>
+</ng-template>
+
+<ng-template #empty let-key let-icon="icon">
+	<div class="state state--compact">
+		<nb-icon [icon]="icon" aria-hidden="true"></nb-icon>
+		<p>{{ key | translate }}</p>
+	</div>
+</ng-template>
