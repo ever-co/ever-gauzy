@@ -2,6 +2,7 @@
 import '../../core/entities/internal';
 
 import { ForbiddenException } from '@nestjs/common';
+import { FindOperator } from 'typeorm';
 import { IUser, TimeLogSourceEnum } from '@gauzy/contracts';
 import { OrganizationTeamEmployee } from '../../core/entities/internal';
 import { asTenantUser, createTenantFixture } from '../../core/testing/tenant-isolation/tenant-isolation.fixtures';
@@ -13,6 +14,25 @@ import { TimerService } from './timer.service';
  * (an open tab from before, the mobile app) still went through. It is refused now, for the Ever Teams clients only:
  * the other clients of this API never set the team switch.
  */
+/** Applies a TypeORM condition as the database would: a plain value, `Or`, `IsNull` and `Equal`. */
+function matchesCondition(value: unknown, condition: unknown): boolean {
+	if (!(condition instanceof FindOperator)) {
+		return value === condition;
+	}
+	switch (condition.type) {
+		case 'or': {
+			const alternatives = condition.value as unknown as unknown[];
+			return alternatives.some((alternative) => matchesCondition(value, alternative));
+		}
+		case 'isNull':
+			return value === null || value === undefined;
+		case 'equal':
+			return value === condition.value;
+		default:
+			throw new Error(`Unexpected TypeORM operator "${condition.type}"`);
+	}
+}
+
 describe('TimerService.startTimer with tracking turned off in the team', () => {
 	const TEAM = 'team-support';
 	const fixture = createTenantFixture({ user: { employeeId: 'employee-1' } as IUser });
@@ -27,19 +47,27 @@ describe('TimerService.startTimer with tracking turned off in the team', () => {
 	let service: TimerService;
 	let execute: jest.Mock;
 	let findMembership: jest.Mock;
-	let membership: { id: string; isTrackingEnabled: boolean; isActive?: boolean; isArchived?: boolean } | null;
+	let membership: {
+		id: string;
+		isTrackingEnabled: boolean;
+		isActive?: boolean | null;
+		isArchived?: boolean | null;
+	} | null;
 	let stopPreviousRunningTimers: jest.Mock;
 
 	const startFrom = (source: TimeLogSourceEnum) => service.startTimer({ source, organizationTeamId: TEAM });
 
-	/** The stored membership when it passes the status filters the lookup states. */
+	/** The stored membership when it passes the status conditions the lookup states. */
 	const membershipMatching = (where: Record<string, unknown>) => {
 		if (!membership) {
 			return null;
 		}
-		const isActiveEnough = !('isActive' in where) || membership.isActive !== false;
-		const isNotArchived = !('isArchived' in where) || membership.isArchived !== true;
-		const keepsStatus = isActiveEnough && isNotArchived;
+		const storedStatus: Record<string, unknown> = {
+			isActive: membership.isActive ?? null,
+			isArchived: membership.isArchived ?? null
+		};
+		const statusKeys = Object.keys(storedStatus).filter((key) => key in where);
+		const keepsStatus = statusKeys.every((key) => matchesCondition(storedStatus[key], where[key]));
 		if (!keepsStatus) {
 			return null;
 		}
@@ -50,7 +78,7 @@ describe('TimerService.startTimer with tracking turned off in the team', () => {
 
 	beforeEach(() => {
 		({ restore } = asTenantUser(fixture));
-		membership = { id: 'member-1', isTrackingEnabled: false };
+		membership = { id: 'member-1', isTrackingEnabled: false, isActive: true, isArchived: false };
 		findMembership = jest.fn(async (_entity: unknown, { where }: { where: Record<string, unknown> }) =>
 			membershipMatching(where)
 		);
@@ -93,6 +121,13 @@ describe('TimerService.startTimer with tracking turned off in the team', () => {
 			expect(stopPreviousRunningTimers).not.toHaveBeenCalled();
 		}
 	);
+
+	it('refuses for a membership stored without a status, which counts as current', async () => {
+		membership = { id: 'member-1', isTrackingEnabled: false, isActive: null, isArchived: null };
+
+		await expect(startFrom(TimeLogSourceEnum.TEAMS)).rejects.toThrow(ForbiddenException);
+		expect(createdLog()).toBe(false);
+	});
 
 	it('starts when the tracking is on in the team', async () => {
 		membership = { id: 'member-1', isTrackingEnabled: true };
