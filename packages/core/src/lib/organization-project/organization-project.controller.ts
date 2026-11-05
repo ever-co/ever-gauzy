@@ -17,7 +17,6 @@ import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from 
 import { DeleteResult } from 'typeorm';
 import {
 	ID,
-	IEmployeeProjectRate,
 	IOrganizationProject,
 	IOrganizationProjectEditByEmployeeInput,
 	IOrganizationProjectRates,
@@ -67,22 +66,13 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		super(organizationProjectService);
 	}
 
-	/**
-	 * The caller's rates on their projects: on each, the rate their time is counted at and its currency. Declared
-	 * before `GET /:id`, which would read `rates` as a project id.
-	 */
-	@ApiOperation({ summary: "The caller's effective rate on each of their projects" })
-	@ApiResponse({ status: HttpStatus.OK, description: 'The rates' })
-	@Permissions()
-	@UseValidationPipe({ whitelist: true })
-	@Get('/rates/me')
-	async findMyRates(@Query() options: TenantOrganizationBaseDTO): Promise<IEmployeeProjectRate[]> {
-		return await this.organizationProjectRateService.findMyProjectRates(options.organizationId);
-	}
-
-	/** A project's rate and its members' own rates on it, for an admin or a manager the project flags. */
-	@ApiOperation({ summary: "A project's rate and its members' rates" })
-	@ApiResponse({ status: HttpStatus.OK, description: 'The rates' })
+	/** A project's client rate and its members' client rates on it, for an admin or a manager the project flags. */
+	@ApiOperation({
+		summary: "A project's client rate and its members' client rates",
+		description:
+			"What the client is billed per hour of the project's time, in the project's currency, else the organization's. Not what members are paid."
+	})
+	@ApiResponse({ status: HttpStatus.OK, description: 'The client rates' })
 	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Not an admin or a manager of the project' })
 	@Permissions()
 	@UseValidationPipe({ whitelist: true })
@@ -94,8 +84,12 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		return await this.organizationProjectRateService.findProjectRates(id, options.organizationId);
 	}
 
-	/** Sets or clears a project's rate, for an admin or a manager the project flags. */
-	@ApiOperation({ summary: "Set or clear a project's rate" })
+	/** Sets or clears a project's client rate, for an admin or a manager the project flags. */
+	@ApiOperation({
+		summary: "Set or clear a project's client rate",
+		description:
+			"What the client is billed per hour of the project's time. It does not change what members are paid."
+	})
 	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Not an admin or a manager of the project' })
 	@HttpCode(HttpStatus.OK)
 	@Permissions()
@@ -108,8 +102,12 @@ export class OrganizationProjectController extends CrudController<OrganizationPr
 		return await this.organizationProjectRateService.updateProjectRate(id, input);
 	}
 
-	/** Sets or clears a member's own rate on a project, for an admin or a manager the project flags. */
-	@ApiOperation({ summary: "Set or clear a member's rate on a project" })
+	/** Sets or clears a member's client rate on a project, for an admin or a manager the project flags. */
+	@ApiOperation({
+		summary: "Set or clear a member's client rate on a project",
+		description:
+			"What the client is billed per hour of this member's time on the project, over the project's client rate. It does not change what the member is paid."
+	})
 	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Not an admin or a manager of the project' })
 	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'The employee is not a member of the project' })
 	@HttpCode(HttpStatus.OK)

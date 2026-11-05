@@ -28,10 +28,16 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 	assignedAt?: Date;
 
 	/**
-	 * The member's own hourly rate on this project, in the project's currency. It wins over the project's rate and
-	 * the employee's own. Written through the member rate route only, which checks who may.
+	 * The member's client rate on this project: what the client is billed per hour of their time on it, in the
+	 * project's currency, over the project's client rate. It does not change what the member is paid. Written through
+	 * the member rate route only, which checks who may.
 	 */
-	@ApiPropertyOptional({ type: () => Number, nullable: true })
+	@ApiPropertyOptional({
+		type: () => Number,
+		nullable: true,
+		description:
+			"What the client is billed per hour of this member's time on the project, in the project's currency"
+	})
 	@MultiORMColumn(billingRateColumn())
 	billRateValue?: number | null;
 

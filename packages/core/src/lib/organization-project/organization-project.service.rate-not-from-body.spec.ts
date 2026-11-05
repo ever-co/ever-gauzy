@@ -6,9 +6,9 @@ import { TenantAwareCrudService } from '../core/crud';
 import { OrganizationProjectService } from './organization-project.service';
 
 /**
- * The project create and update bodies are not whitelisted, and the service saves what they carry. A project's rate
- * changes what the organization owes, so it is written through the project rate route only, which checks who may:
- * a rate stated in a create or update body reaches no save.
+ * The project create and update bodies are not whitelisted, and the service saves what they carry. A project's client
+ * rate is written through the project rate route only, which checks who may: a rate stated in a create or update body
+ * reaches no save.
  */
 
 const TENANT = 'tenant-1';

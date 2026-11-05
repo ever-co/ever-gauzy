@@ -89,7 +89,7 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const currentRoleId = RequestContext.currentRoleId();
 
 		// Destructure the input data
-		// The rate is written through the project rate route only, which checks who may set it
+		// The client rate is written through the project rate route only, which checks who may set it
 		const { tags = [], memberIds = [], managerIds = [], organizationId, billRateValue: _rate, ...entity } = input;
 		void _rate;
 

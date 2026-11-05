@@ -5,12 +5,11 @@ import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { toNullableBillingRate } from '../shared/pipes/billing-rate.transform';
 import { OrganizationProjectRateService } from './organization-project-rate.service';
-import { effectiveBillRate } from './project-rates';
 
 /**
- * A project's rate and a member's own rate on it change what the organization owes for the time. They are written by
- * someone who may edit every employee, or by a manager an admin flagged on that very project. The MANAGER role alone
- * is not enough (any employee who creates a project gets it), and a manager never sets their own rate.
+ * A project's client rate and a member's client rate on it are what the client is billed for the time. They are
+ * written by someone who may edit every employee, or by a manager an admin flagged on that very project. The MANAGER
+ * role alone is not enough (any employee who creates a project gets it), and a manager never sets their own rate.
  */
 
 const TENANT = 'tenant-1';
@@ -99,11 +98,7 @@ describe('OrganizationProjectRateService', () => {
 			),
 			update: membershipUpdate
 		};
-		service = new OrganizationProjectRateService(
-			projectRepository as never,
-			membershipRepository as never,
-			{} as never
-		);
+		service = new OrganizationProjectRateService(projectRepository as never, membershipRepository as never);
 
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission) =>
@@ -237,19 +232,6 @@ describe('OrganizationProjectRateService', () => {
 	});
 });
 
-describe('effectiveBillRate', () => {
-	it('takes the member rate, else the project rate, else the employee rate', () => {
-		expect(effectiveBillRate({ memberRate: 30, projectRate: 40, employeeRate: 20 })).toBe(30);
-		expect(effectiveBillRate({ memberRate: null, projectRate: '40.00', employeeRate: 20 })).toBe(40);
-		expect(effectiveBillRate({ memberRate: undefined, projectRate: null, employeeRate: 20 })).toBe(20);
-		expect(effectiveBillRate({})).toBeNull();
-	});
-
-	it('keeps a member rate of 0: the most specific rate wins even when it is nothing', () => {
-		expect(effectiveBillRate({ memberRate: 0, projectRate: 40, employeeRate: 20 })).toBe(0);
-	});
-});
-
 describe('toNullableBillingRate', () => {
 	const transform = (value: unknown) => toNullableBillingRate({ value } as never);
 
@@ -258,63 +240,5 @@ describe('toNullableBillingRate', () => {
 		expect(transform(undefined)).toBeUndefined();
 		expect(transform('12.345')).toBe(12.35);
 		expect(transform(25)).toBe(25);
-	});
-});
-
-describe('OrganizationProjectRateService.findMyProjectRates', () => {
-	afterEach(() => jest.restoreAllMocks());
-
-	it("answers the caller's effective rate on each open project, in the currency it is in", async () => {
-		const employeeRepository = {
-			findOne: jest.fn(async () => ({ id: 'me', billRateValue: 20, billRateCurrency: null }))
-		};
-		const memberships = [
-			{
-				billRateValue: 35,
-				organizationProject: { id: 'p-member', name: 'Member rate', billRateValue: 40, currency: 'EUR' }
-			},
-			{
-				billRateValue: null,
-				organizationProject: { id: 'p-project', name: 'Project rate', billRateValue: 40, currency: null }
-			},
-			{
-				billRateValue: null,
-				organizationProject: { id: 'p-own', name: 'Own rate', billRateValue: null, currency: 'EUR' }
-			},
-			{
-				billRateValue: 99,
-				organizationProject: { id: 'p-archived', name: 'Archived', billRateValue: 99, isArchived: true }
-			}
-		];
-		const membershipRepository = { find: jest.fn(async () => memberships) };
-		const projectRepository = {
-			manager: { findOne: jest.fn(async () => ({ id: ORGANIZATION, currency: 'USD' })) }
-		};
-		const service = new OrganizationProjectRateService(
-			projectRepository as never,
-			membershipRepository as never,
-			employeeRepository as never
-		);
-		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
-		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-me', employeeId: 'me' } as never);
-
-		await expect(service.findMyProjectRates(ORGANIZATION)).resolves.toEqual([
-			{ organizationProjectId: 'p-member', projectName: 'Member rate', billRateValue: 35, currency: 'EUR' },
-			{ organizationProjectId: 'p-project', projectName: 'Project rate', billRateValue: 40, currency: 'USD' },
-			{ organizationProjectId: 'p-own', projectName: 'Own rate', billRateValue: 20, currency: 'USD' }
-		]);
-		expect(membershipRepository.find).toHaveBeenCalledWith(
-			expect.objectContaining({
-				where: expect.objectContaining({ employeeId: 'me', organizationId: ORGANIZATION })
-			})
-		);
-	});
-
-	it('answers nothing to a caller without an employee', async () => {
-		const service = new OrganizationProjectRateService({} as never, {} as never, {} as never);
-		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
-		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-admin', employeeId: null } as never);
-
-		await expect(service.findMyProjectRates(ORGANIZATION)).resolves.toEqual([]);
 	});
 });

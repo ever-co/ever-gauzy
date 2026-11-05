@@ -184,10 +184,15 @@ export class OrganizationProject
 	budget?: number;
 
 	/**
-	 * The hourly rate of the project's time, in the project's currency. A member's own rate on the project wins over
-	 * it, and it wins over the employee's own rate. Written through the project rate route only, which checks who may.
+	 * The project's client rate: what the client is billed per hour of the project's time, in the project's currency,
+	 * else the organization's. It does not change what members are paid. Written through the project rate route only,
+	 * which checks who may.
 	 */
-	@ApiPropertyOptional({ type: () => Number, nullable: true })
+	@ApiPropertyOptional({
+		type: () => Number,
+		nullable: true,
+		description: "What the client is billed per hour of the project's time, in the project's currency"
+	})
 	@MultiORMColumn(billingRateColumn())
 	billRateValue?: number | null;
 

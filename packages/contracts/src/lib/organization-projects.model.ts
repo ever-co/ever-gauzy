@@ -74,6 +74,7 @@ export interface IOrganizationProjectBase
 	closeTasksIn?: number;
 	defaultAssigneeId?: ID;
 	defaultAssignee?: IEmployee;
+	/** What the client is billed per hour of the project's time, in the project's currency, else the organization's. */
 	billRateValue?: number | null;
 }
 
@@ -121,10 +122,14 @@ export interface IOrganizationProjectEmployee
 		IManagerAssignable {
 	organizationProject: IOrganizationProject;
 	organizationProjectId: ID;
+	/** What the client is billed per hour of this member's time on the project, over the project's client rate. */
 	billRateValue?: number | null;
 }
 
-/** A project rate, or a member's rate on a project: a non-negative amount per hour, or `null` to clear it. */
+/**
+ * A project's client rate, or a member's client rate on a project: a non-negative amount per hour, or `null` to clear
+ * it.
+ */
 export interface IOrganizationProjectRateUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
 	billRateValue: number | null;
 }
@@ -134,20 +139,15 @@ export interface IOrganizationProjectMemberRate {
 	billRateValue: number | null;
 }
 
-/** A project's rate and its members' own rates on it, in the project's currency. */
+/**
+ * A project's client rate and its members' client rates on it, in the project's currency, else the organization's.
+ * They bill the client and do not change what members are paid.
+ */
 export interface IOrganizationProjectRates {
 	id: ID;
 	billRateValue: number | null;
 	currency: string | null;
 	members: IOrganizationProjectMemberRate[];
-}
-
-/** The rate an employee's time on a project is counted at: their own on it, else the project's, else theirs. */
-export interface IEmployeeProjectRate {
-	organizationProjectId: ID;
-	projectName: string;
-	billRateValue: number | null;
-	currency: string | null;
 }
 
 // Task List Type Enum

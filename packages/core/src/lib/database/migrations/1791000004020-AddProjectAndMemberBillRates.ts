@@ -19,12 +19,11 @@ const COLUMN = 'billRateValue';
 
 /**
  * Adds `organization_project.billRateValue` and `organization_project_employee.billRateValue` (nullable
- * `numeric(14,2)`): a project's hourly rate and a member's own rate on a project, both in the project's currency.
- * The most specific one wins over the employee's own rate when the time is priced.
+ * `numeric(14,2)`): a project's client rate and a member's client rate on a project, what the client is billed per
+ * hour, both in the project's currency. Neither changes what members are paid.
  *
- * Both columns are nullable and nothing is backfilled: every project and membership reads "no rate", so every
- * amount stays the employee's own rate times the time, as before. On Postgres 11+ adding a nullable column is a
- * catalog-only change.
+ * Both columns are nullable and nothing is backfilled: every project and membership reads "no rate". On Postgres 11+
+ * adding a nullable column is a catalog-only change.
  *
  * Running `up` twice is harmless (`IF NOT EXISTS` on Postgres, a column check elsewhere), and a transaction-scoped
  * advisory lock (a named lock on MySQL) makes two API processes that boot at the same time against one database run

@@ -1,20 +1,10 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Equal, IsNull, Or } from 'typeorm';
-import {
-	ID,
-	IEmployeeProjectRate,
-	IOrganizationProjectRates,
-	IOrganizationProjectRateUpdateInput,
-	PermissionsEnum
-} from '@gauzy/contracts';
+import { ID, IOrganizationProjectRates, IOrganizationProjectRateUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
-import { Organization } from '../core/entities/internal';
-import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { OrganizationProject } from './organization-project.entity';
-import { OrganizationProjectEmployee } from './organization-project-employee.entity';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-orm-organization-project-employee.repository';
-import { effectiveBillRate, effectiveBillRateCurrency, effectiveBillRateSource } from './project-rates';
 
 /** A membership left inactive or archived no longer ties the employee to the project (NULL counts as current). */
 const CURRENT_MEMBERSHIP = {
@@ -23,8 +13,9 @@ const CURRENT_MEMBERSHIP = {
 };
 
 /**
- * The rates of a project and of its members on it. They change what the organization owes for the time, so they are
- * written by someone who may edit every employee, or by a manager an admin flagged on that project
+ * The client rates of a project and of its members on it: what the client is billed per hour of the project's time,
+ * in the project's currency, else the organization's. They are not what members are paid, which stays their own rate.
+ * They are written by someone who may edit every employee, or by a manager an admin flagged on that project
  * (`organization_project_employee.isManager`). The MANAGER role alone does not count: any employee who creates a
  * project holds it, over the colleagues they add.
  */
@@ -32,8 +23,7 @@ const CURRENT_MEMBERSHIP = {
 export class OrganizationProjectRateService {
 	constructor(
 		private readonly typeOrmOrganizationProjectRepository: TypeOrmOrganizationProjectRepository,
-		private readonly typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository,
-		private readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository
+		private readonly typeOrmOrganizationProjectEmployeeRepository: TypeOrmOrganizationProjectEmployeeRepository
 	) {}
 
 	async findProjectRates(projectId: ID, organizationId: ID): Promise<IOrganizationProjectRates> {
@@ -83,7 +73,7 @@ export class OrganizationProjectRateService {
 		const managerEmployeeId = await this.assertMayManageRates(projectId, organizationId, tenantId);
 		await this.findProject(projectId, organizationId, tenantId);
 
-		// A manager would otherwise raise their own pay on the project they manage
+		// What the client is billed for a manager's own time is an admin's call
 		const setsOwnRate = managerEmployeeId === employeeId;
 		if (setsOwnRate) {
 			throw new ForbiddenException('A project manager cannot set their own rate on the project. Ask an admin.');
@@ -102,37 +92,6 @@ export class OrganizationProjectRateService {
 			{ billRateValue }
 		);
 		return { organizationProjectId: projectId, employeeId, billRateValue };
-	}
-
-	/**
-	 * The caller's rates on the projects they are a member of: on each, the rate their time is counted at and its
-	 * currency. Any employee reads their own.
-	 */
-	async findMyProjectRates(organizationId: ID): Promise<IEmployeeProjectRate[]> {
-		const tenantId = RequestContext.currentTenantId();
-		const employeeId = RequestContext.currentUser()?.employeeId;
-		if (!employeeId) {
-			return [];
-		}
-
-		const employee = await this.typeOrmEmployeeRepository.findOne({
-			where: { id: employeeId, organizationId, tenantId },
-			select: { id: true, billRateValue: true, billRateCurrency: true }
-		});
-		if (!employee) {
-			return [];
-		}
-
-		const memberships = await this.typeOrmOrganizationProjectEmployeeRepository.find({
-			where: { employeeId, organizationId, tenantId, ...CURRENT_MEMBERSHIP },
-			relations: { organizationProject: true }
-		});
-		const projectMemberships = memberships.filter((membership) => isOpenProject(membership.organizationProject));
-		const organizationCurrency = await this.findOrganizationCurrency(organizationId, tenantId);
-
-		return projectMemberships.map((membership) =>
-			myRateOn(membership, employee.billRateValue, employee.billRateCurrency, organizationCurrency)
-		);
 	}
 
 	private async findProject(projectId: ID, organizationId: ID, tenantId: ID): Promise<OrganizationProject> {
@@ -179,41 +138,4 @@ export class OrganizationProjectRateService {
 		}
 		return employeeId;
 	}
-
-	private async findOrganizationCurrency(organizationId: ID, tenantId: ID): Promise<string | null> {
-		const organization = await this.typeOrmOrganizationProjectRepository.manager.findOne(Organization, {
-			where: { id: organizationId, tenantId },
-			select: { id: true, currency: true }
-		});
-		return organization?.currency ?? null;
-	}
-}
-
-function isOpenProject(project: OrganizationProject | undefined): boolean {
-	if (!project) {
-		return false;
-	}
-	return project.isArchived !== true;
-}
-
-function myRateOn(
-	membership: OrganizationProjectEmployee,
-	employeeRate: number | null | undefined,
-	employeeCurrency: string | null | undefined,
-	organizationCurrency: string | null
-): IEmployeeProjectRate {
-	const project = membership.organizationProject;
-	const rates = { memberRate: membership.billRateValue, projectRate: project.billRateValue, employeeRate };
-	const source = effectiveBillRateSource(rates);
-	const currency = effectiveBillRateCurrency(source, {
-		projectCurrency: project.currency,
-		employeeCurrency,
-		organizationCurrency
-	});
-	return {
-		organizationProjectId: project.id,
-		projectName: project.name,
-		billRateValue: effectiveBillRate(rates),
-		currency
-	};
 }
