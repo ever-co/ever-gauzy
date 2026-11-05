@@ -1,6 +1,6 @@
 import '../../core/entities/internal';
 
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { FindOperator } from 'typeorm';
 import { CurrenciesEnum, EmployeeNotificationTypeEnum, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../../core/context';
@@ -29,6 +29,7 @@ describe('EmployeeRateChangeRequestService', () => {
 	let rows: EmployeeRow[];
 	let callerEmployeeId: string | null;
 	let publish: jest.Mock;
+	let employeeRepository: { findOne: jest.Mock; find: jest.Mock; manager: { count: jest.Mock } };
 	let service: EmployeeRateChangeRequestService;
 
 	/** Applies the receivers' conditions as the database would: the role's permission, and `id` not the requester. */
@@ -62,19 +63,23 @@ describe('EmployeeRateChangeRequestService', () => {
 			{ id: 'colleague', permissions: [PermissionsEnum.ORG_TEAM_EDIT] }
 		];
 		publish = jest.fn();
-		const typeOrmRepository = {
+		employeeRepository = {
 			findOne: jest.fn(async ({ where }: any) => rows.find((row) => row.id === where.id) ?? null),
 			find: jest.fn(async ({ where }: any) =>
 				rows.filter((row) => holdsDecidingPermission(row, where) && isNotExcluded(row, where))
-			)
+			),
+			manager: { count: jest.fn(async () => 1) }
 		};
-		service = new EmployeeRateChangeRequestService(typeOrmRepository as never, {} as never, { publish } as never);
+		service = new EmployeeRateChangeRequestService(employeeRepository as never, {} as never, { publish } as never);
 		Object.assign(service, { ormType: 'typeorm' });
 
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
 		jest.spyOn(RequestContext, 'currentUser').mockImplementation(
 			() => ({ id: 'user-1', employeeId: callerEmployeeId }) as never
 		);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+		jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(false);
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -117,6 +122,14 @@ describe('EmployeeRateChangeRequestService', () => {
 		rows = rows.filter((row) => !row.permissions.includes(PermissionsEnum.ORG_EMPLOYEES_EDIT));
 
 		await expect(request()).resolves.toEqual({ notified: 0 });
+		expect(publish).not.toHaveBeenCalled();
+	});
+
+	it('refuses a body that names no organization before reading any employee, so no other organization is reached', async () => {
+		await expect(request({ organizationId: undefined, sentTo: 'anything' })).rejects.toThrow(BadRequestException);
+
+		expect(employeeRepository.findOne).not.toHaveBeenCalled();
+		expect(employeeRepository.find).not.toHaveBeenCalled();
 		expect(publish).not.toHaveBeenCalled();
 	});
 

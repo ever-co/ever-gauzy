@@ -13,6 +13,7 @@ import {
 import { RequestContext } from '../../core/context';
 import { MultiORM, MultiORMEnum, getORMType } from '../../core/utils';
 import { EmployeeCreateNotificationEvent } from '../../employee-notification/events/employee-notification.event';
+import { assertCurrentUserBelongsToOrganization } from '../../user-organization/assert-organization-membership';
 import { TypeOrmEmployeeRepository } from '../repository/type-orm-employee.repository';
 import { MikroOrmEmployeeRepository } from '../repository/mikro-orm-employee.repository';
 
@@ -41,6 +42,7 @@ export class EmployeeRateChangeRequestService {
 			throw new ForbiddenException('Only an employee can request a rate change.');
 		}
 		const { organizationId } = input;
+		await assertCurrentUserBelongsToOrganization(this.typeOrmEmployeeRepository.manager, organizationId);
 
 		const requester = await this.findRequester(requesterId, organizationId, tenantId);
 		if (!requester) {
