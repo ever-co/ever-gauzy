@@ -23,7 +23,27 @@ interface EmployeeRow {
 	billRateValue?: number | null;
 	billRateCurrency?: string | null;
 	user?: { name: string };
+	organizationId?: string;
+	tenantId?: string;
+	isActive?: boolean;
+	isArchived?: boolean;
+	userIsActive?: boolean;
+	permissionEnabled?: boolean;
 }
+
+/** A row's own scope and state, defaulting to an active employee and user of the organization. */
+const stateOf = (row: EmployeeRow) => ({
+	organizationId: ORGANIZATION,
+	tenantId: TENANT,
+	isActive: true,
+	isArchived: false,
+	userIsActive: true,
+	permissionEnabled: true,
+	...row
+});
+
+/** TypeORM drops an undefined `where` value, so a predicate the service leaves out matches every row. */
+const meets = (value: unknown, expected: unknown) => expected === undefined || value === expected;
 
 describe('EmployeeRateChangeRequestService', () => {
 	let rows: EmployeeRow[];
@@ -32,7 +52,10 @@ describe('EmployeeRateChangeRequestService', () => {
 	let employeeRepository: { findOne: jest.Mock; find: jest.Mock; manager: { count: jest.Mock } };
 	let service: EmployeeRateChangeRequestService;
 
-	/** Applies the receivers' conditions as the database would: the role's permission, and `id` not the requester. */
+	/**
+	 * Applies the receivers' conditions as the database would: the role's permission, switched on, `id` not the
+	 * requester, the organization and tenant, an active and unarchived employee, and an active user.
+	 */
 	const holdsDecidingPermission = (row: EmployeeRow, where: any) => {
 		const permission = where.user.role.rolePermissions.permission;
 		return row.permissions.includes(permission);
@@ -43,6 +66,18 @@ describe('EmployeeRateChangeRequestService', () => {
 			return row.id !== condition.value;
 		}
 		return true;
+	};
+	const meetsScopeAndState = (row: EmployeeRow, where: any) => {
+		const state = stateOf(row);
+		const conditions = [
+			meets(state.organizationId, where.organizationId),
+			meets(state.tenantId, where.tenantId),
+			meets(state.isActive, where.isActive),
+			meets(state.isArchived, where.isArchived),
+			meets(state.userIsActive, where.user?.isActive),
+			meets(state.permissionEnabled, where.user?.role?.rolePermissions?.enabled)
+		];
+		return conditions.every(Boolean);
 	};
 
 	beforeEach(() => {
@@ -60,13 +95,28 @@ describe('EmployeeRateChangeRequestService', () => {
 				id: 'admin-2',
 				permissions: [PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.CHANGE_SELECTED_EMPLOYEE]
 			},
-			{ id: 'colleague', permissions: [PermissionsEnum.ORG_TEAM_EDIT] }
+			{ id: 'colleague', permissions: [PermissionsEnum.ORG_TEAM_EDIT] },
+			{ id: 'admin-switched-off', permissions: [PermissionsEnum.ORG_EMPLOYEES_EDIT], permissionEnabled: false },
+			{ id: 'admin-inactive', permissions: [PermissionsEnum.ORG_EMPLOYEES_EDIT], isActive: false },
+			{ id: 'admin-archived', permissions: [PermissionsEnum.ORG_EMPLOYEES_EDIT], isArchived: true },
+			{ id: 'admin-user-inactive', permissions: [PermissionsEnum.ORG_EMPLOYEES_EDIT], userIsActive: false },
+			{
+				id: 'admin-other-organization',
+				permissions: [PermissionsEnum.ORG_EMPLOYEES_EDIT],
+				organizationId: 'organization-2'
+			},
+			{ id: 'admin-other-tenant', permissions: [PermissionsEnum.ORG_EMPLOYEES_EDIT], tenantId: 'tenant-2' }
 		];
 		publish = jest.fn();
 		employeeRepository = {
 			findOne: jest.fn(async ({ where }: any) => rows.find((row) => row.id === where.id) ?? null),
 			find: jest.fn(async ({ where }: any) =>
-				rows.filter((row) => holdsDecidingPermission(row, where) && isNotExcluded(row, where))
+				rows.filter(
+					(row) =>
+						holdsDecidingPermission(row, where) &&
+						isNotExcluded(row, where) &&
+						meetsScopeAndState(row, where)
+				)
 			),
 			manager: { count: jest.fn(async () => 1) }
 		};
@@ -89,7 +139,7 @@ describe('EmployeeRateChangeRequestService', () => {
 
 	const published = () => publish.mock.calls.map(([event]) => (event as EmployeeCreateNotificationEvent).input);
 
-	it('notifies every admin of the organization, never the requester or a plain colleague', async () => {
+	it('notifies every active admin of the organization, never the requester, a colleague or another organization', async () => {
 		await expect(request({ reason: 'New certification' })).resolves.toEqual({ notified: 2 });
 
 		expect(published().map((input) => input.receiverEmployeeId)).toEqual(['admin-1', 'admin-2']);
