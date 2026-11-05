@@ -134,7 +134,7 @@ env:
   # One exception stands without a switch: an entry for a link a legal document vendored from the
   # @ever-co/legal corpus writes, on the legal page that renders it (a re-sync of the corpus can add
   # one; tools/egress-audit/check-baseline-legal.mjs).
-  BASELINE_REWALK: 'false'
+  BASELINE_REWALK: 'true'
 
 jobs:
   inputs:
