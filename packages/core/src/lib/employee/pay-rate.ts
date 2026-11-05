@@ -1,5 +1,6 @@
 import { EntityManager, FindOptionsWhere, In } from 'typeorm';
-import { CurrenciesEnum, ID, IEmployeeUpdateInput } from '@gauzy/contracts';
+import { CurrenciesEnum, ID, IEmployeeUpdateInput, PermissionsEnum } from '@gauzy/contracts';
+import { RequestContext } from '../core/context';
 import { EMPLOYEE_PAY_RATE_KEYS } from '../core/interceptors/employee-pay-rate-scrub';
 import { Employee } from './employee.entity';
 
@@ -14,6 +15,29 @@ export interface StoredPayRate {
 }
 
 type Rate = number | string | null | undefined;
+
+/**
+ * The caller's own employee. `RequestContext.currentEmployeeId()` answers null to a holder of
+ * CHANGE_SELECTED_EMPLOYEE, whose own employee is still the one of their user.
+ */
+export function callerEmployeeId(): ID | null {
+	const contextEmployeeId = RequestContext.currentEmployeeId();
+	if (contextEmployeeId) {
+		return contextEmployeeId;
+	}
+	return RequestContext.currentUser()?.employeeId ?? null;
+}
+
+/** Whether the caller sets and reads every employee's pay rate. */
+export function readsEveryPayRate(): boolean {
+	return RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT);
+}
+
+/** Whether the caller may read this employee's pay rate: their own, or anyone's for a rate editor. */
+export function mayReadPayRateOf(employeeId: ID): boolean {
+	const isOwnRecord = callerEmployeeId() === employeeId;
+	return isOwnRecord || readsEveryPayRate();
+}
 
 export function isPayRateSet(rate: Rate): boolean {
 	const isMissing = rate === null || rate === undefined;
@@ -83,7 +107,8 @@ interface EmployeeQueryOptions {
 	order?: unknown;
 }
 
-function withoutPayRateKeys(criteria: unknown): unknown {
+/** The criteria without any pay rate key at their own level, each branch of an either-or included. */
+export function withoutPayRateKeys(criteria: unknown): unknown {
 	const isObject = typeof criteria === 'object' && criteria !== null;
 	if (!isObject) {
 		return criteria;

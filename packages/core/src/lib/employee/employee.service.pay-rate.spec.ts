@@ -46,6 +46,10 @@ describe('EmployeeService pay rate', () => {
 		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
 		jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(false);
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockImplementation(() => callerEmployeeId);
+		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({
+			id: 'user-1',
+			employeeId: 'employee-ana'
+		} as never);
 		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission) =>
 			permissions.includes(permission as PermissionsEnum)
 		);
@@ -61,6 +65,17 @@ describe('EmployeeService pay rate', () => {
 				payRateCurrency: null,
 				currency: CurrenciesEnum.USD
 			});
+		});
+
+		it('answers a holder of CHANGE_SELECTED_EMPLOYEE their own, whose context names no employee', async () => {
+			permissions = [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE];
+			callerEmployeeId = null;
+
+			await expect(service.findPayRate('employee-ana', ORGANIZATION)).resolves.toMatchObject({
+				employeeId: 'employee-ana',
+				payRateValue: 30
+			});
+			await expect(service.findPayRate('employee-ben', ORGANIZATION)).rejects.toThrow(ForbiddenException);
 		});
 
 		it("answers a rate editor anyone's pay rate", async () => {
