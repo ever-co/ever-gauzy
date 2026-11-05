@@ -55,6 +55,7 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmEmployeeRepository } from '../employee/repository/type-orm-employee.repository';
 import { EmployeeService } from './../employee/employee.service';
 import { withoutAssignedComments } from '../comment/assigned-comments';
+import { defaultProjectToCheck, organizationIdAfterUpdate } from './team-default-project';
 import { TimerService } from '../time-tracking/timer/timer.service';
 import { StatisticService } from '../time-tracking/statistic';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
@@ -435,10 +436,12 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		}
 
 		try {
-			// Checked against the team as stored, before any member change: a refused edit then changes nothing
+			// Checked before any member change, so a refused edit changes nothing
+			const targetOrganizationId = organizationIdAfterUpdate(input, organizationTeam.organizationId);
+			const checkedDefaultProjectId = defaultProjectToCheck(input, organizationTeam, targetOrganizationId);
 			await this.assertDefaultProjectInOrganization(
-				input.defaultProjectId,
-				organizationTeam.organizationId,
+				checkedDefaultProjectId,
+				targetOrganizationId,
 				organizationTeam.tenantId
 			);
 

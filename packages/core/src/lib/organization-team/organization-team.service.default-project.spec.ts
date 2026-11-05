@@ -120,7 +120,7 @@ describe('OrganizationTeamService — default project', () => {
 		expect(updateOrganizationTeam).not.toHaveBeenCalled();
 	});
 
-	it("checks against the stored team's organization when the body names it only as a relation", async () => {
+	it('checks against the organization the body names only as a relation', async () => {
 		const updateNamingRelation = (defaultProjectId: string) =>
 			service.update('team-1', { organization: { id: ORGANIZATION }, defaultProjectId } as never);
 
@@ -128,5 +128,48 @@ describe('OrganizationTeamService — default project', () => {
 		await updateNamingRelation('project-own');
 
 		expect(saved).toEqual(expect.objectContaining({ defaultProjectId: 'project-own' }));
+	});
+
+	describe('a team moved to another organization', () => {
+		beforeEach(() => {
+			jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({
+				id: 'team-1',
+				organizationId: ORGANIZATION,
+				tenantId: TENANT,
+				defaultProjectId: 'project-own'
+			} as never);
+		});
+
+		const moveTeam = (defaultProjectId?: string | null) =>
+			service.update('team-1', { organization: { id: 'organization-2' }, defaultProjectId } as never);
+
+		it('cannot keep a default project of the organization it leaves', async () => {
+			await expect(moveTeam()).rejects.toThrow(BadRequestException);
+			await expect(moveTeam('project-own')).rejects.toThrow(BadRequestException);
+
+			expect(saved).toBeUndefined();
+		});
+
+		it('takes a default project of the organization it joins, or none', async () => {
+			await moveTeam('project-elsewhere');
+			expect(saved).toEqual(expect.objectContaining({ defaultProjectId: 'project-elsewhere' }));
+
+			await moveTeam(null);
+			expect(saved).toEqual(expect.objectContaining({ defaultProjectId: null }));
+		});
+	});
+
+	it('looks no project up when an update neither names a default project nor moves the team', async () => {
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockResolvedValue({
+			id: 'team-1',
+			organizationId: ORGANIZATION,
+			tenantId: TENANT,
+			defaultProjectId: 'project-own'
+		} as never);
+
+		await service.update('team-1', { organizationId: ORGANIZATION, name: 'Support' } as never);
+
+		expect(findProject).not.toHaveBeenCalled();
+		expect(saved).toEqual(expect.objectContaining({ name: 'Support' }));
 	});
 });
