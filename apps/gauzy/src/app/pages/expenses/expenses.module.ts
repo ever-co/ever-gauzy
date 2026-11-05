@@ -7,6 +7,7 @@ import {
 	NbDialogModule,
 	NbIconModule,
 	NbInputModule,
+	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule
 } from '@nebular/theme';
@@ -29,6 +30,9 @@ import { ExpensesRoutingModule } from './expenses-routing.module';
 import { ExpensesComponent } from './expenses.component';
 import { ExpenseCategoriesComponent } from './expense-categories/expense-categories.component';
 import { ExpenseCategoryMutationComponent } from './expense-categories/expense-category-mutation/expense-category-mutation.component';
+import { ExpenseViewPageComponent } from './expense-view/expense-view-page.component';
+import { ExpenseBarChartComponent } from './expense-view/expense-charts/expense-bar-chart.component';
+import { ExpenseShareChartComponent } from './expense-view/expense-charts/expense-share-chart.component';
 
 // Nebular Modules
 const NB_MODULES = [
@@ -39,13 +43,17 @@ const NB_MODULES = [
 	NbDialogModule.forChild(),
 	NbIconModule,
 	NbInputModule,
+	NbSelectModule,
 	NbSpinnerModule,
 	NbTooltipModule
 ];
 
 // Standalone Modules
 const STANDALONE_MODULES = [
-	InfiniteScrollDirective // Standalone directive must be imported, not declared
+	InfiniteScrollDirective, // Standalone directive must be imported, not declared
+	// The expense page's charts
+	ExpenseBarChartComponent,
+	ExpenseShareChartComponent
 ];
 
 // Third Party Modules
@@ -67,7 +75,12 @@ const THIRD_PARTY_MODULES = [NgxPermissionsModule.forChild(), TranslatePipe];
 		TagsColorInputModule,
 		SmartDataViewLayoutModule
 	],
-	declarations: [ExpensesComponent, ExpenseCategoriesComponent, ExpenseCategoryMutationComponent],
+	declarations: [
+		ExpensesComponent,
+		ExpenseCategoriesComponent,
+		ExpenseCategoryMutationComponent,
+		ExpenseViewPageComponent
+	],
 	providers: [ExpenseCategoriesStoreService, OrganizationExpenseCategoriesService]
 })
 export class ExpensesModule {}

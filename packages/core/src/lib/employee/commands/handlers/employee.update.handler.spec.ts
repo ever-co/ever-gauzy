@@ -24,7 +24,7 @@ describe('EmployeeUpdateHandler — Upwork and LinkedIn ids', () => {
 			findOneByIdString: jest.fn().mockResolvedValue({ id: ID, upworkId: 'upwork-1', linkedInId: 'linkedin-1' }),
 			create
 		};
-		handler = new EmployeeUpdateHandler(employeeService as any, {} as any);
+		handler = new EmployeeUpdateHandler(employeeService as any, {} as any, { publish: jest.fn() } as any);
 
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'admin', employeeId: null } as any);
 		jest.spyOn(RequestContext, 'hasPermission').mockImplementation(
@@ -94,7 +94,7 @@ describe('EmployeeUpdateHandler — the contact is the employee’s own', () => 
 	const build = (contactId: string | null) => {
 		create = jest.fn(async (entity) => entity);
 		const employeeService = { findOneByIdString: jest.fn().mockResolvedValue(stored(contactId)), create };
-		handler = new EmployeeUpdateHandler(employeeService as any, {} as any);
+		handler = new EmployeeUpdateHandler(employeeService as any, {} as any, { publish: jest.fn() } as any);
 	};
 
 	beforeEach(() => {
@@ -135,7 +135,8 @@ describe('EmployeeUpdateHandler — the contact is the employee’s own', () => 
 		const read = { id: ID, contact: { id: OWN_CONTACT }, organization: { id: 'organization-1' } };
 		handler = new EmployeeUpdateHandler(
 			{ findOneByIdString: jest.fn().mockResolvedValue(read), create } as any,
-			{} as any
+			{} as any,
+			{ publish: jest.fn() } as any
 		);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue('tenant-1');
 

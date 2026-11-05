@@ -31,7 +31,7 @@ export class OrganizationTeamEmployeeController {
 		@Param('id', UUIDValidationPipe) id: ID,
 		@Body() entity: UpdateTeamMemberDTO
 	): Promise<UpdateResult | IOrganizationTeamEmployee> {
-		return this.organizationTeamEmployeeService.update(id, entity);
+		return this.organizationTeamEmployeeService.updateMember(id, entity);
 	}
 
 	/**

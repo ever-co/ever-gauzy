@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { IOrganization, IOrganizationProject } from '@gauzy/contracts';
@@ -43,18 +44,22 @@ describe('ProjectSelectorComponent', () => {
 		getAll = jest.fn();
 		getAllByEmployee = jest.fn();
 		queryParams$ = new BehaviorSubject<Record<string, string>>({});
-		component = new ProjectSelectorComponent(
-			{ getAll, getAllByEmployee } as unknown as OrganizationProjectsService,
-			{
-				selectedOrganization$: of(organization),
-				userRolePermissions$: of([]),
-				hasAnyPermission: () => true
-			} as unknown as Store,
-			{ success: jest.fn() } as unknown as ToastrService,
-			{ handleError: jest.fn() } as unknown as ErrorHandlingService,
-			{} as OrganizationProjectStore,
-			{ updateQueryParams: jest.fn() } as unknown as NavigationService,
-			{ queryParams: queryParams$ } as unknown as ActivatedRoute
+		// Its signal inputs are created as it is constructed, which needs an injection context.
+		component = TestBed.runInInjectionContext(
+			() =>
+				new ProjectSelectorComponent(
+					{ getAll, getAllByEmployee } as unknown as OrganizationProjectsService,
+					{
+						selectedOrganization$: of(organization),
+						userRolePermissions$: of([]),
+						hasAnyPermission: () => true
+					} as unknown as Store,
+					{ success: jest.fn() } as unknown as ToastrService,
+					{ handleError: jest.fn() } as unknown as ErrorHandlingService,
+					{} as OrganizationProjectStore,
+					{ updateQueryParams: jest.fn() } as unknown as NavigationService,
+					{ queryParams: queryParams$ } as unknown as ActivatedRoute
+				)
 		);
 		component.showAllOption = false;
 	});
