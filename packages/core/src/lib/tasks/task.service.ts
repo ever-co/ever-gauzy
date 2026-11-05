@@ -594,7 +594,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const addedMember = { id: employeeId } as IEmployee;
 		const user = RequestContext.currentUser();
 		await this.subscribeNewMembers([addedMember], task, id, task.organizationId, task.tenantId, user);
-		this.recordMemberChange(task, [...members, addedMember]);
+		await this.recordMemberChange(task, [...members, addedMember]);
 	}
 
 	/**
@@ -623,7 +623,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 
 		await this.unsubscribeRemovedMembers([removedMember], id, task.organizationId, task.tenantId);
 		const remainingMembers = members.filter((member) => member.id !== employeeId);
-		this.recordMemberChange(task, remainingMembers);
+		await this.recordMemberChange(task, remainingMembers);
 	}
 
 	/**
@@ -690,11 +690,17 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	/**
 	 * Writes the activity log and the updated-task event of a member change, as the full update does.
 	 *
+	 * The integrations read the sync scope from the event, so it is read back from the row after the write, as the
+	 * full update reads it: a scope turned off while this request waited must not reach them as the old one. A failed
+	 * read-back publishes nothing rather than a possibly stale scope.
+	 *
 	 * @param task - The task as read before the change
 	 * @param members - The task's members after the change
 	 */
-	private recordMemberChange(task: Task, members: IEmployee[]): void {
-		const updatedTask = { ...task, members } as Task;
+	private async recordMemberChange(task: Task, members: IEmployee[]): Promise<void> {
+		const saved = await this.findOneByIdString(task.id, { select: { id: true, syncScope: true } });
+		const syncScope = saved.syncScope ?? null;
+		const updatedTask = { ...task, members, syncScope } as Task;
 		this._activityLogService.logActivity<Task>(
 			BaseEntityEnum.Task,
 			ActionTypeEnum.Updated,

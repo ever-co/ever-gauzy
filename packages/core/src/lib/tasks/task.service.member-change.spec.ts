@@ -2,7 +2,15 @@ import '../core/entities/internal';
 
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { BaseEntityEnum, EntitySubscriptionTypeEnum, ID, IUser, PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import {
+	BaseEntityEnum,
+	EntitySubscriptionTypeEnum,
+	ID,
+	IUser,
+	PermissionsEnum,
+	RolesEnum,
+	TaskSyncScopeEnum
+} from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { CrudService } from '../core/crud/crud.service';
 import { TenantAwareCrudService } from '../core/crud';
@@ -47,6 +55,7 @@ describe('TaskService.addMember / removeMember — one member of one task, nothi
 	let memberships: InMemoryTenantRepository<Row>;
 	let employees: InMemoryTenantRepository<Row>;
 	let linkWrites: ILinkWrite[];
+	let onLinkWrite: () => void;
 	let entitySubscriptionService: { delete: jest.Mock };
 	let eventBus: { publish: jest.Mock };
 	let domainEventBus: { publish: jest.Mock };
@@ -123,6 +132,7 @@ describe('TaskService.addMember / removeMember — one member of one task, nothi
 		}
 
 		linkWrites = [];
+		onLinkWrite = () => undefined;
 		Object.assign(tasks, {
 			manager: {
 				findOne: (_entity: unknown, options: { where: Row }) => employees.findOne(options)
@@ -132,6 +142,7 @@ describe('TaskService.addMember / removeMember — one member of one task, nothi
 					of: (taskId: ID) => ({
 						remove: async (employeeId: ID) => {
 							linkWrites.push({ op: 'delete', target: `${entity.name}.${relation}`, taskId, employeeId });
+							onLinkWrite();
 						}
 					})
 				}),
@@ -141,6 +152,7 @@ describe('TaskService.addMember / removeMember — one member of one task, nothi
 							orIgnore: () => ({
 								execute: async () => {
 									linkWrites.push({ op: 'insert', target: table, ...values });
+									onLinkWrite();
 								}
 							})
 						})
@@ -264,6 +276,20 @@ describe('TaskService.addMember / removeMember — one member of one task, nothi
 			const [[event]] = domainEventBus.publish.mock.calls;
 			expect(event).toBeInstanceOf(TaskEvent);
 			expect(event.type).toBe(BaseEntityEventTypeEnum.UPDATED);
+		});
+
+		it('publishes the sync scope saved after the write, not the one read before it', async () => {
+			stored.syncScope = TaskSyncScopeEnum.ALL;
+			storeMembersFor(direction, caller);
+			onLinkWrite = () => {
+				tasks.seed({ ...stored, syncScope: TaskSyncScopeEnum.NONE });
+			};
+			actAs(fixture);
+
+			await change(direction, caller);
+
+			const [[event]] = domainEventBus.publish.mock.calls;
+			expect(event.entity.syncScope).toBe(TaskSyncScopeEnum.NONE);
 		});
 
 		it('refuses a task of another tenant as not found, even to an admin', async () => {
