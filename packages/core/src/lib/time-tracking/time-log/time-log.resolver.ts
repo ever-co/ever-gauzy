@@ -844,14 +844,17 @@ export class TimeLogResolver {
 		@Args('endDate', { type: () => Date, nullable: true }) endDate?: Date,
 		@Args('employeeIds', { type: () => [ID], nullable: true }) employeeIds?: Id[],
 		@Args('projectIds', { type: () => [ID], nullable: true }) projectIds?: Id[]
-	): Promise<IProjectBudgetLimitReport[]> {
-		return await this.timeLogService.getProjectBudgetLimit({
+	): Promise<Array<IProjectBudgetLimitReport & { projectId: Id }>> {
+		const budgets: IProjectBudgetLimitReport[] = await this.timeLogService.getProjectBudgetLimit({
 			organizationId,
 			startDate,
 			endDate,
 			employeeIds,
 			projectIds
 		} as IGetTimeLogReportInput);
+
+		// The service answers the route's shape, the project row itself; the type carries its identifier.
+		return budgets.map((budget) => ({ ...budget, projectId: budget.project?.id }));
 	}
 
 	/**
@@ -871,14 +874,17 @@ export class TimeLogResolver {
 		@Args('endDate', { type: () => Date, nullable: true }) endDate?: Date,
 		@Args('employeeIds', { type: () => [ID], nullable: true }) employeeIds?: Id[],
 		@Args('projectIds', { type: () => [ID], nullable: true }) projectIds?: Id[]
-	): Promise<IClientBudgetLimitReport[]> {
-		return await this.timeLogService.getClientBudgetLimit({
+	): Promise<Array<IClientBudgetLimitReport & { organizationContactId: Id }>> {
+		const budgets: IClientBudgetLimitReport[] = await this.timeLogService.getClientBudgetLimit({
 			organizationId,
 			startDate,
 			endDate,
 			employeeIds,
 			projectIds
 		} as IGetTimeLogReportInput);
+
+		// The service answers the route's shape, the client row itself; the type carries its identifier.
+		return budgets.map((budget) => ({ ...budget, organizationContactId: budget.organizationContact?.id }));
 	}
 
 	/**
