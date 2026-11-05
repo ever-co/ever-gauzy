@@ -26,73 +26,18 @@
 						/>
 					</label>
 				}
-				@if (!showAssign) {
-					<button
-						type="button"
-						class="projects__assign-toggle"
-						nbButton
-						status="primary"
-						size="small"
-						(click)="toggleAssign(true)"
-					>
-						<nb-icon icon="plus-outline"></nb-icon>{{ T + '.ASSIGN' | translate }}
-					</button>
-				}
+				<button
+					type="button"
+					class="projects__assign-toggle"
+					nbButton
+					status="primary"
+					size="small"
+					(click)="openAssign()"
+				>
+					<nb-icon icon="plus-outline"></nb-icon>{{ T + '.ASSIGN' | translate }}
+				</button>
 			</div>
 		</header>
-
-		<!-- ── Assign: pick projects the employee is not yet a member of ── -->
-		@if (showAssign) {
-			<div class="projects__assign">
-				<!-- Projects the employee already belongs to are left out; with none left, the list says so. -->
-				<ng-select
-					class="projects__select"
-					id="projectsSelect"
-					[items]="organizationProjects"
-					bindLabel="name"
-					bindValue="id"
-					[multiple]="true"
-					[hideSelected]="true"
-					[closeOnSelect]="false"
-					appendTo="body"
-					[formControl]="assignControl"
-					[placeholder]="
-						(organizationProjects.length ? T + '.ASSIGN_PLACEHOLDER' : T + '.ALL_ASSIGNED') | translate
-					"
-					[notFoundText]="
-						(organizationProjects.length ? T + '.NO_MATCH_PICKER' : T + '.ALL_ASSIGNED') | translate
-					"
-				>
-					<ng-template ng-option-tmp let-item="item">
-						<span class="option">
-							<span class="option__name">{{ item.name }}</span>
-							@if (item.code) {
-								<span class="option__meta">{{ item.code }}</span>
-							}
-						</span>
-					</ng-template>
-				</ng-select>
-
-				<div class="projects__assign-actions">
-					<button type="button" nbButton status="basic" outline size="small" (click)="toggleAssign(false)">
-						{{ 'BUTTONS.CANCEL' | translate }}
-					</button>
-					<button
-						type="button"
-						nbButton
-						status="success"
-						size="small"
-						[disabled]="!selectedToAssign.length || saving"
-						(click)="assignSelected()"
-					>
-						{{ T + '.ASSIGN_SUBMIT' | translate }}
-						@if (selectedToAssign.length) {
-							({{ selectedToAssign.length }})
-						}
-					</button>
-				</div>
-			</div>
-		}
 
 		<!-- ── Table ── -->
 		@if (visibleRows.length) {
@@ -260,15 +205,181 @@
 				<span class="empty__badge"><nb-icon icon="briefcase-outline"></nb-icon></span>
 				<p class="empty__title">{{ T + '.EMPTY_TITLE' | translate }}</p>
 				<p class="empty__text">{{ T + '.EMPTY_TEXT' | translate }}</p>
-				@if (!showAssign) {
-					<button type="button" nbButton status="primary" size="small" (click)="toggleAssign(true)">
-						<nb-icon icon="plus-outline"></nb-icon>{{ T + '.ASSIGN' | translate }}
-					</button>
-				}
+				<button type="button" nbButton status="primary" size="small" (click)="openAssign()">
+					<nb-icon icon="plus-outline"></nb-icon>{{ T + '.ASSIGN' | translate }}
+				</button>
 			</div>
 		}
 	</section>
 </div>
+
+<!-- Assign: a searchable checklist of the organization's projects the employee is not in yet. -->
+<ng-template #assignDialog>
+	<nb-card class="assign-dialog" role="dialog" aria-labelledby="assignDialogTitle">
+		<!-- nb-card projects only its header, body and footer in order: the search lives in the header. -->
+		<nb-card-header class="assign-dialog__header">
+			<div class="assign-dialog__head">
+				<span class="assign-dialog__icon" aria-hidden="true">
+					<nb-icon icon="briefcase-outline"></nb-icon>
+				</span>
+				<div class="assign-dialog__heading">
+					<h6 class="assign-dialog__title" id="assignDialogTitle">
+						{{ T + '.ASSIGN_DIALOG_TITLE' | translate }}
+					</h6>
+					<span class="assign-dialog__subtitle">
+						{{ T + '.ASSIGN_DIALOG_SUBTITLE' | translate: { employee: employeeName } }}
+					</span>
+				</div>
+				<button
+					type="button"
+					class="assign-dialog__close"
+					nbButton
+					ghost
+					size="small"
+					status="basic"
+					[disabled]="saving"
+					[attr.aria-label]="'BUTTONS.CANCEL' | translate"
+					(click)="closeAssign()"
+				>
+					<nb-icon icon="close-outline"></nb-icon>
+				</button>
+			</div>
+
+			<div class="assign-dialog__toolbar">
+				<label class="assign-dialog__search">
+					<nb-icon icon="search-outline" aria-hidden="true"></nb-icon>
+					<input
+						nbInput
+						fullWidth
+						fieldSize="medium"
+						type="search"
+						id="assignProjectsSearch"
+						autocomplete="off"
+						[(ngModel)]="assignSearch"
+						[disabled]="!availableRows.length"
+						[placeholder]="T + '.ASSIGN_SEARCH' | translate"
+						[attr.aria-label]="T + '.ASSIGN_SEARCH' | translate"
+					/>
+				</label>
+				@if (assignOptions.length) {
+					<button type="button" class="assign-dialog__link" (click)="toggleAllOptions()">
+						{{ (allOptionsSelected ? T + '.DESELECT_ALL' : T + '.SELECT_ALL') | translate }}
+					</button>
+				}
+			</div>
+		</nb-card-header>
+
+		<nb-card-body class="assign-dialog__body">
+			@if (!availableRows.length) {
+				<div class="assign-dialog__empty">
+					<span class="empty__badge"><nb-icon icon="checkmark-circle-2-outline"></nb-icon></span>
+					<p class="empty__text">{{ T + '.ALL_ASSIGNED' | translate }}</p>
+				</div>
+			} @else if (!assignOptions.length) {
+				<div class="assign-dialog__empty">
+					<nb-icon class="empty__icon" icon="search-outline"></nb-icon>
+					<p class="empty__text">{{ T + '.NO_MATCH_PICKER' | translate }}</p>
+				</div>
+			} @else {
+				<ul class="assign-dialog__list" role="listbox" aria-multiselectable="true" aria-labelledby="assignDialogTitle">
+					@for (row of assignOptions; track row.id) {
+						<li>
+							<button
+								type="button"
+								role="option"
+								class="assign-option"
+								[class.is-selected]="assignSelection.has(row.id)"
+								[attr.aria-selected]="assignSelection.has(row.id)"
+								[disabled]="saving"
+								(click)="toggleOption(row.id)"
+							>
+								<span class="assign-option__check" aria-hidden="true">
+									<nb-icon icon="checkmark-outline"></nb-icon>
+								</span>
+								<span class="logo" [style.--logo]="row.color">
+									@if (row.imageUrl) {
+										<img [src]="row.imageUrl" [alt]="row.name" />
+									} @else {
+										<span aria-hidden="true">{{ row.initials }}</span>
+									}
+								</span>
+								<span class="project-text">
+									<span class="assign-option__name">{{ row.name }}</span>
+									@if (row.code || row.client) {
+										<span class="project-meta">
+											@if (row.code) {
+												<span class="project-key">{{ row.code }}</span>
+											}
+											@if (row.client) {
+												<span class="project-client">
+													<nb-icon icon="briefcase-outline"></nb-icon>{{ row.client }}
+												</span>
+											}
+										</span>
+									}
+								</span>
+								<span class="assign-option__side">
+									@if (row.status) {
+										<span class="lozenge" [ngClass]="'tone-' + row.status.tone">
+											{{ row.status.key | translate }}
+										</span>
+									}
+									<span
+										class="assign-option__members"
+										[nbTooltip]="row.memberNames || '—'"
+										nbTooltipPlacement="top"
+									>
+										<nb-icon icon="people-outline"></nb-icon>{{ row.memberCount }}
+									</span>
+								</span>
+							</button>
+						</li>
+					}
+				</ul>
+			}
+		</nb-card-body>
+
+		<nb-card-footer class="assign-dialog__footer">
+			<span class="assign-dialog__count">
+				@if (assignSelection.size) {
+					{{ T + '.SELECTED_COUNT' | translate: { count: assignSelection.size } }}
+					<button type="button" class="assign-dialog__link" [disabled]="saving" (click)="clearSelection()">
+						{{ T + '.CLEAR_SELECTION' | translate }}
+					</button>
+				}
+			</span>
+			<div class="assign-dialog__actions">
+				<button
+					type="button"
+					nbButton
+					outline
+					status="basic"
+					size="small"
+					[disabled]="saving"
+					(click)="closeAssign()"
+				>
+					{{ 'BUTTONS.CANCEL' | translate }}
+				</button>
+				<button
+					type="button"
+					class="assign-dialog__submit"
+					nbButton
+					status="primary"
+					size="small"
+					[disabled]="!assignSelection.size || saving"
+					[nbSpinner]="saving"
+					nbSpinnerSize="tiny"
+					(click)="assignSelected()"
+				>
+					<nb-icon icon="person-add-outline"></nb-icon>{{ T + '.ASSIGN_SUBMIT' | translate }}
+					@if (assignSelection.size) {
+						<span class="assign-dialog__badge">{{ assignSelection.size }}</span>
+					}
+				</button>
+			</div>
+		</nb-card-footer>
+	</nb-card>
+</ng-template>
 
 <!-- Remove confirmation: names the employee and shows the project, so the wrong row is hard to remove by mistake. -->
 <ng-template #removeDialog let-row let-ref="dialogRef">
