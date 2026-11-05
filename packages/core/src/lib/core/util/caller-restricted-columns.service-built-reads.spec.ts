@@ -88,7 +88,7 @@ const READS: ReadCase[] = [
 		metadata: TASK,
 		read: (service, options) => service.findTeamTasks(options),
 		credential: { order: { members: { user: { refreshToken: 'ASC' } } } },
-		rate: { order: { project: { billRateValue: 'DESC' } } },
+		rate: { where: { organizationId: 'org' }, order: { project: { billRateValue: 'DESC' } } },
 		ordinary: { where: { organizationId: 'org', organizationTeamId: 'team' }, order: { createdAt: 'DESC' } }
 	},
 	{
@@ -97,7 +97,7 @@ const READS: ReadCase[] = [
 		metadata: TASK,
 		read: (service, options) => service.findModuleTasks(options),
 		credential: { select: { createdByUser: { emailToken: true } } },
-		rate: { order: { members: { payRateCurrency: 'ASC' } } },
+		rate: { where: { organizationId: 'org' }, order: { members: { payRateCurrency: 'ASC' } } },
 		ordinary: { where: { organizationId: 'org' }, order: { title: 'ASC' } }
 	},
 	{
@@ -124,7 +124,7 @@ const READS: ReadCase[] = [
 		metadata: PROJECT_MODULE,
 		read: (service, options) => service.getEmployeeProjectModules(options),
 		credential: { order: { createdByUser: { hash: 'ASC' } } },
-		rate: { order: { project: { billRateValue: 'ASC' } } },
+		rate: { where: { organizationId: 'org' }, order: { project: { billRateValue: 'ASC' } } },
 		ordinary: { where: { organizationId: 'org' }, order: { name: 'ASC' } }
 	},
 	{
@@ -168,9 +168,12 @@ const RATE_READS = READS.filter((readCase: ReadCase) => readCase.rate !== undefi
 const CREDENTIAL_REFUSAL = /cannot be used to filter, sort or select/;
 const RATE_REFUSAL = /requires ORG_EMPLOYEES_EDIT/;
 const DEPTH_REFUSAL = /nested too deeply/;
-const COLUMN_REFUSAL = new RegExp(
-	[CREDENTIAL_REFUSAL, RATE_REFUSAL, DEPTH_REFUSAL].map((rule) => rule.source).join('|')
-);
+
+/**
+ * The team task and daily plan lists answer nothing, or refuse, before their query unless the caller may pick the
+ * employee, so the reads expected to reach the store run as such a caller.
+ */
+const PICKS_THE_EMPLOYEE = PermissionsEnum.CHANGE_SELECTED_EMPLOYEE;
 
 async function outcomeOf(read: () => Promise<unknown>): Promise<unknown> {
 	try {
@@ -180,12 +183,12 @@ async function outcomeOf(read: () => Promise<unknown>): Promise<unknown> {
 	}
 }
 
-function isColumnRefusal(outcome: unknown): boolean {
+function messageOf(outcome: unknown): string {
 	const isError = outcome instanceof Error;
 	if (!isError) {
-		return false;
+		return '';
 	}
-	return COLUMN_REFUSAL.test(outcome.message);
+	return outcome.message;
 }
 
 function nestedFilter(levels: number): Record<string, unknown> {
@@ -255,21 +258,28 @@ describe('Service-built list reads and caller-restricted columns', () => {
 	it.each(RATE_READS.map((readCase: ReadCase) => [readCase.label, readCase] as const))(
 		'%s lets a rate editor filter or sort on a rate column',
 		async (_label, readCase) => {
-			granted = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
+			granted = [PermissionsEnum.ORG_EMPLOYEES_EDIT, PICKS_THE_EMPLOYEE];
 			request = { query: readCase.rate };
-			const { service } = serviceFor(readCase);
+			const { service, store } = serviceFor(readCase);
 
-			expect(isColumnRefusal(await outcomeOf(() => readCase.read(service, readCase.rate)))).toBe(false);
+			const outcome = await outcomeOf(() => readCase.read(service, readCase.rate));
+
+			expect(store.reach).toHaveBeenCalled();
+			expect(messageOf(outcome)).toContain(STORE_REACHED);
 		}
 	);
 
 	it.each(READS.map((readCase: ReadCase) => [readCase.label, readCase] as const))(
 		'%s runs the filters and sorts the clients send',
 		async (_label, readCase) => {
+			granted = [PICKS_THE_EMPLOYEE];
 			request = { query: readCase.ordinary };
-			const { service } = serviceFor(readCase);
+			const { service, store } = serviceFor(readCase);
 
-			expect(isColumnRefusal(await outcomeOf(() => readCase.read(service, readCase.ordinary)))).toBe(false);
+			const outcome = await outcomeOf(() => readCase.read(service, readCase.ordinary));
+
+			expect(store.reach).toHaveBeenCalled();
+			expect(messageOf(outcome)).toContain(STORE_REACHED);
 		}
 	);
 
