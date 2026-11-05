@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, TemplateRef, ViewChild } from '@angular/core';
-import { UntypedFormControl } from '@angular/forms';
-import { NbDialogService } from '@nebular/theme';
+import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, firstValueFrom, Subject } from 'rxjs';
@@ -62,6 +61,8 @@ export interface IEmployeeProjectRow {
 	moreMembers: number;
 	/** Every member's name, for the stack's tooltip. */
 	memberNames: string;
+	/** How many people are on the project. */
+	memberCount: number;
 }
 
 @UntilDestroy({ checkProperties: true })
@@ -75,23 +76,27 @@ export interface IEmployeeProjectRow {
 export class EditEmployeeProjectsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	/** The remove confirmation; its context is the row being removed. */
 	@ViewChild('removeDialog', { static: true }) removeDialog: TemplateRef<IEmployeeProjectRow>;
+	/** The assign dialog: a searchable checklist of the projects the employee is not in yet. */
+	@ViewChild('assignDialog', { static: true }) assignDialog: TemplateRef<void>;
+	private _assignRef: NbDialogRef<void> | null = null;
 
 	private subject$: Subject<boolean> = new Subject();
 	/** Guards against an older read landing after a newer one. */
 	private _loadId = 0;
 
 	public readonly T = T;
-	public organizationProjects: IOrganizationProject[] = [];
 	public rows: IEmployeeProjectRow[] = [];
+	/** The organization's projects the employee is not a member of: what the assign dialog offers. */
+	public availableRows: IEmployeeProjectRow[] = [];
 	public selectedEmployee: IEmployee;
 	public organization: IOrganization;
 
 	public loading = false;
 	public saving = false;
 	public removingId: string | null = null;
-	public showAssign = false;
 	public searchTerm = '';
-	public readonly assignControl = new UntypedFormControl([]);
+	public assignSearch = '';
+	public assignSelection = new Set<string>();
 
 	/** The project open in the quick-look drawer. */
 	public viewedProject: IProjectQuickLookCard | null = null;
@@ -157,13 +162,67 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 		);
 	}
 
-	get selectedToAssign(): string[] {
-		return this.assignControl.value || [];
+	/** The assign dialog's options matching its search, by name, key or client. */
+	get assignOptions(): IEmployeeProjectRow[] {
+		const term = this.assignSearch.trim().toLowerCase();
+		if (!term) {
+			return this.availableRows;
+		}
+		return this.availableRows.filter((row) =>
+			[row.name, row.code, row.client].some((value) => !!value && value.toLowerCase().includes(term))
+		);
 	}
 
-	toggleAssign(open: boolean = !this.showAssign): void {
-		this.showAssign = open;
-		this.assignControl.reset([]);
+	/** Whether every option the search shows is ticked. */
+	get allOptionsSelected(): boolean {
+		const options = this.assignOptions;
+		return options.length > 0 && options.every((row) => this.assignSelection.has(row.id));
+	}
+
+	/** Opens the assign dialog with nothing ticked. */
+	openAssign(): void {
+		if (this._assignRef) {
+			return;
+		}
+		this.assignSearch = '';
+		this.assignSelection = new Set();
+		this._assignRef = this._dialogService.open(this.assignDialog, {
+			closeOnBackdropClick: true,
+			closeOnEsc: true,
+			autoFocus: false
+		});
+		this._assignRef.onClose.subscribe(() => (this._assignRef = null));
+		// Ready to type: the search is where picking starts.
+		setTimeout(() => document.getElementById('assignProjectsSearch')?.focus());
+	}
+
+	closeAssign(): void {
+		if (!this.saving) {
+			this._assignRef?.close();
+		}
+	}
+
+	toggleOption(id: string): void {
+		const selection = new Set(this.assignSelection);
+		if (selection.has(id)) {
+			selection.delete(id);
+		} else {
+			selection.add(id);
+		}
+		this.assignSelection = selection;
+	}
+
+	/** Ticks every option the search shows, or unticks them when they all are. */
+	toggleAllOptions(): void {
+		const selection = new Set(this.assignSelection);
+		const options = this.assignOptions;
+		const select = !this.allOptionsSelected;
+		options.forEach((row) => (select ? selection.add(row.id) : selection.delete(row.id)));
+		this.assignSelection = selection;
+	}
+
+	clearSelection(): void {
+		this.assignSelection = new Set();
 	}
 
 	clearSearch(): void {
@@ -174,15 +233,15 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 		return item.id;
 	}
 
-	/** Adds the employee to the picked projects. */
+	/** Adds the employee to the ticked projects, then closes the dialog. */
 	async assignSelected(): Promise<void> {
-		const ids = this.selectedToAssign;
+		const ids = [...this.assignSelection];
 		if (!ids.length || this.saving) {
 			return;
 		}
 		const done = await this.updateMembership(ids, [], 'TOASTR.MESSAGE.EMPLOYEE_PROJECT_ADDED');
 		if (done) {
-			this.toggleAssign(false);
+			this._assignRef?.close();
 		}
 	}
 
@@ -251,7 +310,7 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 	 *
 	 * Membership comes from the employee's own list (it leaves out archived projects and former members);
 	 * the organization's list, read with members and client, fills in each row's details. The rest of the
-	 * organization's projects are what the Assign picker offers.
+	 * organization's projects are what the assign dialog offers.
 	 */
 	private async loadProjects(): Promise<void> {
 		const loadId = ++this._loadId;
@@ -270,9 +329,10 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 		this.rows = employeeProjects
 			.map((project) => this.toRow(byId.get(project.id) || project))
 			.sort((a, b) => a.name.localeCompare(b.name));
-		this.organizationProjects = organizationProjects
+		this.availableRows = organizationProjects
 			.filter((project) => !assignedIds.has(project.id))
-			.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+			.map((project) => this.toRow(project))
+			.sort((a, b) => a.name.localeCompare(b.name));
 		this.loading = false;
 	}
 
@@ -301,7 +361,8 @@ export class EditEmployeeProjectsComponent extends TranslationBaseComponent impl
 			currency: project.currency || undefined,
 			members: people.slice(0, VISIBLE_MEMBERS),
 			moreMembers: Math.max(people.length - VISIBLE_MEMBERS, 0),
-			memberNames: people.map((person) => person.name).join(', ')
+			memberNames: people.map((person) => person.name).join(', '),
+			memberCount: people.length
 		};
 	}
 
