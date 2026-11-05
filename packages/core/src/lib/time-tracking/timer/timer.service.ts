@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual, FindOptionsWhere } from 'typeorm';
+import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual, FindOptionsWhere, Or, Equal } from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,
@@ -17,7 +17,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { Task, TimeLog } from '../../core/entities/internal';
+import { OrganizationTeamEmployee, Task, TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {
 	MultiORM,
@@ -63,6 +63,12 @@ const ormType: MultiORM = getORMType();
  * the log's project is taken from the task; the other clients keep writing what they send.
  */
 const PROJECT_FROM_TASK_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
+
+/**
+ * The Ever Teams clients, web and mobile. They are the ones that turn tracking off per team, so only their starts
+ * are held to that switch; the other clients of this API never set it and keep their behavior.
+ */
+const TEAM_TRACKING_SWITCH_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
 
 @Injectable()
 export class TimerService {
@@ -288,6 +294,8 @@ export class TimerService {
 		// Get the employee ID
 		const { id: employeeId, organizationId } = employee;
 
+		await this.assertTrackingOnInTeam(employeeId, organizationId, tenantId, organizationTeamId, source);
+
 		const projectIdToLog = await this.projectIdForStart(request, organizationId, tenantId);
 
 		// Stop any previous running timers
@@ -352,6 +360,48 @@ export class TimerService {
 			select: { id: true, projectId: true }
 		});
 		return task?.projectId ?? null;
+	}
+
+	/**
+	 * Refuses an Ever Teams start for a team where the employee's tracking is turned off. Ever Teams hides the timer
+	 * then, but an open tab from before or the mobile app could still start it.
+	 *
+	 * @param employeeId The employee starting the timer.
+	 * @param organizationId The employee's organization.
+	 * @param tenantId The caller's tenant.
+	 * @param organizationTeamId The team the timer starts for, if any.
+	 * @param source The client starting the timer.
+	 */
+	private async assertTrackingOnInTeam(
+		employeeId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		organizationTeamId: ID | undefined,
+		source: TimeLogSourceEnum | undefined
+	): Promise<void> {
+		const isTeamSwitchClient = TEAM_TRACKING_SWITCH_SOURCES.includes(source);
+		if (!isTeamSwitchClient) {
+			return;
+		}
+		if (!organizationTeamId) {
+			return;
+		}
+		const membership = await this.typeOrmTimeLogRepository.manager.findOne(OrganizationTeamEmployee, {
+			// A membership left inactive or archived no longer ties the employee to the team (NULL counts as current)
+			where: {
+				employeeId,
+				organizationTeamId,
+				organizationId,
+				tenantId,
+				isActive: Or(IsNull(), Equal(true)),
+				isArchived: Or(IsNull(), Equal(false))
+			},
+			select: { id: true, isTrackingEnabled: true }
+		});
+		const isTrackingOffInTeam = membership?.isTrackingEnabled === false;
+		if (isTrackingOffInTeam) {
+			throw new ForbiddenException('Time tracking is turned off for you in this team.');
+		}
 	}
 
 	/**
