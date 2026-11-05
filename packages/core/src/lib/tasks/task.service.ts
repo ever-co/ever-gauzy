@@ -82,6 +82,7 @@ import { prepareSQLQuery as p } from './../database/database.helper';
 import { TypeOrmTaskRepository } from './repository/type-orm-task.repository';
 import { MikroOrmTaskRepository } from './repository/mikro-orm-task.repository';
 import { FavoriteService } from '../core/decorators';
+import { assertCallerColumnsAllowed } from '../core/util/caller-restricted-columns.helper';
 
 function isLockedTimeLog(timeLog: ITimeLog): boolean {
 	const isApproved = timeLog.timesheet?.status === TimesheetStatus.APPROVED;
@@ -883,6 +884,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 
 		try {
 			switch (this.ormType) {
@@ -993,6 +995,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 
 		try {
 			switch (this.ormType) {
@@ -1734,6 +1737,7 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 
 		try {
 			switch (this.ormType) {

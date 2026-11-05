@@ -31,6 +31,7 @@ import { DailyPlan } from './daily-plan.entity';
 import { storedDayStart, storedPlanDay } from './daily-plan-stored-day';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
+import { assertCallerColumnsAllowed } from '../../core/util/caller-restricted-columns.helper';
 
 const hasTask = (plan: IDailyPlan, taskId: ID): boolean => plan.tasks.some((task) => task.id === taskId);
 
@@ -261,6 +262,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 		const organizationTeamId = await this.resolveReadableTeam(options, employeeId);
 
 		try {
@@ -356,6 +358,7 @@ export class DailyPlanService extends TenantAwareCrudService<DailyPlan> {
 		// Builds its own query, so the check in the CRUD read methods never runs: assert the
 		// sensitive-relation table on the client-supplied relations before anything is loaded.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 		// The query below already filters on the team from `where`, which is the one checked here.
 		await this.resolveReadableTeam(options);
 

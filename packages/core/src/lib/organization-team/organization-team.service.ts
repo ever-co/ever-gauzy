@@ -64,6 +64,7 @@ import { OrganizationTeam } from './organization-team.entity';
 import { TypeOrmOrganizationTeamRepository } from './repository/type-orm-organization-team.repository';
 import { MikroOrmOrganizationTeamRepository } from './repository/mikro-orm-organization-team.repository';
 import { MikroOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/mikro-orm-organization-team-employee.repository';
+import { assertCallerColumnsAllowed } from '../core/util/caller-restricted-columns.helper';
 
 /**
  * Whether a team membership is still in effect. Both flags are nullable, so a row stored without them counts
@@ -611,6 +612,7 @@ export class OrganizationTeamService extends TenantAwareCrudService<Organization
 		// `relations` reaches the protected rows from any entity, not only from the ones whose
 		// controller mounts `SensitiveRelationsInterceptor`.
 		this.assertRelationsPermitted(options);
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, options);
 
 		// This read narrows the teams of a caller who may not act for every employee by setting `where.id`, which an
 		// OR list of `where` objects (`where[0][...]` in a query string) would not carry into its branches: the list
