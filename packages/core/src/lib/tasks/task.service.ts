@@ -38,6 +38,7 @@ import {
 	ITask,
 	ITaskUpdateInput,
 	PermissionsEnum,
+	RolesEnum,
 	ActionTypeEnum,
 	ITaskDateFilterInput,
 	EntitySubscriptionTypeEnum,
@@ -70,7 +71,7 @@ import { EmployeeNotificationService } from '../employee-notification/employee-n
 import { EmployeeRecentVisitService } from '../employee-recent-visit/employee-recent-visit.service';
 import { ManagedEmployeeService } from '../employee/managed-employee.service';
 import { CreateEntitySubscriptionEvent } from '../entity-subscription/events';
-import { Organization, OrganizationProject, TimeLog, Timesheet } from '../core/entities/internal';
+import { Employee, Organization, OrganizationProject, TimeLog, Timesheet } from '../core/entities/internal';
 import { EventBus as DomainEventBus } from '../event-bus/event-bus';
 import { TaskEvent } from '../event-bus/events/task.event';
 import { BaseEntityEventTypeEnum } from '../event-bus/base-entity-event';
@@ -98,6 +99,19 @@ function timesheetIdsOf(timeLogs: ITimeLog[]): ID[] {
 	const ids = timeLogs.map((timeLog) => timeLog.timesheet?.id);
 	const presentIds = ids.filter((id): id is ID => Boolean(id));
 	return [...new Set(presentIds)];
+}
+
+/**
+ * The task's teams that belong to the task's own organization. Task writes only check that a linked team is in the
+ * same tenant, so a task can reference a team of another organization: only teams of the task's organization count
+ * towards managing it, and a task without an organization has none.
+ */
+function teamIdsOfTaskOrganization(task: Pick<Task, 'organizationId' | 'teams'>): ID[] {
+	if (!isNotEmpty(task.organizationId)) {
+		return [];
+	}
+	const ownTeams = (task.teams ?? []).filter((team) => team.organizationId === task.organizationId);
+	return ownTeams.map((team) => team.id);
 }
 
 @FavoriteService(BaseEntityEnum.Task)
@@ -509,14 +523,8 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	async deleteTask(id: ID): Promise<DeleteResult> {
 		if (!RequestContext.hasAnyPermission([PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_DELETE])) {
 			const employeeId = RequestContext.currentEmployeeId();
-			const { organizationId, teams = [] } = await this.findOneByIdString(id, { relations: { teams: true } });
-
-			// Task writes only check that a linked team is in the same tenant, so a task can reference a team
-			// of another organization. Only teams of the task's own organization count, and a task without
-			// an organization grants nothing.
-			const teamIds = isNotEmpty(organizationId)
-				? teams.filter((team) => team.organizationId === organizationId).map((team) => team.id)
-				: [];
+			const taskWithTeams = await this.findOneByIdString(id, { relations: { teams: true } });
+			const teamIds = teamIdsOfTaskOrganization(taskWithTeams);
 			const isTeamManager =
 				isNotEmpty(employeeId) &&
 				(await this._managedEmployeeService.isManagerOfTeamsOrProjects(employeeId, teamIds));
@@ -541,10 +549,215 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const result = await this.delete(id);
 
 		if (task && result?.affected) {
-			this.publishTaskDeleted(task);
+			this.publishTaskEvent(task, BaseEntityEventTypeEnum.DELETED);
 		}
 
 		return result;
+	}
+
+	/**
+	 * Assigns one employee to a task and writes nothing else on the task: the full update writes the whole member list,
+	 * so a client that sends it back to add one member undoes any assignment made since it read the task.
+	 *
+	 * An employee may assign themselves. Assigning someone else needs an organization admin, a caller who acts for
+	 * every employee, or a manager of one of the task's teams. The employee must be one of the task's organization, and
+	 * an employee already on the task is a no-op.
+	 *
+	 * @param id - The task
+	 * @param employeeId - The employee to assign
+	 * @param organizationId - The caller's organization, which must be the task's
+	 * @throws NotFoundException when the task is not one of the caller's tenant and organization
+	 * @throws ForbiddenException when the caller may not assign that employee
+	 * @throws BadRequestException when the employee is not one of the task's organization
+	 */
+	async addMember(id: ID, employeeId: ID, organizationId: ID): Promise<void> {
+		const task = await this.findTaskForMemberChange(id, organizationId);
+		await this.assertMayChangeMember(task, employeeId);
+
+		const members = task.members ?? [];
+		const isAlreadyMember = members.some((member) => member.id === employeeId);
+		if (isAlreadyMember) {
+			return;
+		}
+
+		const isEmployeeOfTaskOrganization = await this.isEmployeeOfOrganization(
+			employeeId,
+			task.tenantId,
+			task.organizationId
+		);
+		if (!isEmployeeOfTaskOrganization) {
+			throw new BadRequestException("The employee is not one of the task's organization.");
+		}
+
+		await this.insertMemberLink(id, employeeId);
+
+		const addedMember = { id: employeeId } as IEmployee;
+		const user = RequestContext.currentUser();
+		await this.subscribeNewMembers([addedMember], task, id, task.organizationId, task.tenantId, user);
+		this.recordMemberChange(task, [...members, addedMember]);
+	}
+
+	/**
+	 * Takes one employee off a task and writes nothing else on the task, for the same reason as {@link addMember}.
+	 *
+	 * An employee may take themselves off. Taking off someone else needs what assigning them needs. An employee who is
+	 * not on the task is a no-op.
+	 *
+	 * @param id - The task
+	 * @param employeeId - The employee to take off the task
+	 * @param organizationId - The caller's organization, which must be the task's
+	 * @throws NotFoundException when the task is not one of the caller's tenant and organization
+	 * @throws ForbiddenException when the caller may not take that employee off the task
+	 */
+	async removeMember(id: ID, employeeId: ID, organizationId: ID): Promise<void> {
+		const task = await this.findTaskForMemberChange(id, organizationId);
+		await this.assertMayChangeMember(task, employeeId);
+
+		const members = task.members ?? [];
+		const removedMember = members.find((member) => member.id === employeeId);
+		if (!removedMember) {
+			return;
+		}
+
+		await this.deleteMemberLink(id, employeeId);
+
+		await this.unsubscribeRemovedMembers([removedMember], id, task.organizationId, task.tenantId);
+		const remainingMembers = members.filter((member) => member.id !== employeeId);
+		this.recordMemberChange(task, remainingMembers);
+	}
+
+	/**
+	 * The task whose members change, with its members and teams, read in the caller's tenant.
+	 *
+	 * @param id - The task
+	 * @param organizationId - The caller's organization, which must be the task's
+	 * @throws NotFoundException when the task is not one of the caller's tenant and organization
+	 */
+	private async findTaskForMemberChange(id: ID, organizationId: ID): Promise<Task> {
+		const task = await this.findOneByIdString(id, { relations: { members: true, teams: true } });
+		const isTaskOfOrganization = isNotEmpty(organizationId) && task.organizationId === organizationId;
+		if (!isTaskOfOrganization) {
+			throw new NotFoundException('The requested record was not found');
+		}
+		return task;
+	}
+
+	/**
+	 * Refuses to assign or unassign a member unless the caller changes their own assignment, is an organization admin
+	 * or acts for every employee, or manages one of the task's teams (by the team's MANAGER role or the manager flag).
+	 *
+	 * @param task - The task, with its teams
+	 * @param employeeId - The employee whose assignment changes
+	 * @throws ForbiddenException when none of these holds
+	 */
+	private async assertMayChangeMember(task: Task, employeeId: ID): Promise<void> {
+		// `currentEmployeeId()` answers null for a CHANGE_SELECTED_EMPLOYEE holder, so the caller's own employee is
+		// read off the user.
+		const callerEmployeeId = RequestContext.currentUser()?.employeeId;
+		const changesOwnAssignment = isNotEmpty(callerEmployeeId) && callerEmployeeId === employeeId;
+		if (changesOwnAssignment) {
+			return;
+		}
+
+		const isOrganizationAdmin = RequestContext.hasRoles([RolesEnum.SUPER_ADMIN, RolesEnum.ADMIN]);
+		const actsForEveryEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		if (isOrganizationAdmin || actsForEveryEmployee) {
+			return;
+		}
+
+		const teamIds = teamIdsOfTaskOrganization(task);
+		const managesTaskTeam = await this._managedEmployeeService.managesAnyTeam(callerEmployeeId, teamIds);
+		if (!managesTaskTeam) {
+			throw new ForbiddenException("Only a manager of the task's team can change another member's assignment.");
+		}
+	}
+
+	/**
+	 * Whether the employee is one of the organization, in the tenant.
+	 *
+	 * @param employeeId - The employee
+	 * @param tenantId - The task's tenant
+	 * @param organizationId - The task's organization
+	 */
+	private async isEmployeeOfOrganization(employeeId: ID, tenantId: ID, organizationId: ID): Promise<boolean> {
+		const employee = await this.typeOrmRepository.manager.findOne(Employee, {
+			where: { id: employeeId, tenantId, organizationId },
+			select: { id: true }
+		});
+		return Boolean(employee);
+	}
+
+	/**
+	 * Writes the activity log and the updated-task event of a member change, as the full update does.
+	 *
+	 * @param task - The task as read before the change
+	 * @param members - The task's members after the change
+	 */
+	private recordMemberChange(task: Task, members: IEmployee[]): void {
+		const updatedTask = { ...task, members } as Task;
+		this._activityLogService.logActivity<Task>(
+			BaseEntityEnum.Task,
+			ActionTypeEnum.Updated,
+			ActorTypeEnum.User,
+			task.id,
+			task.title,
+			updatedTask,
+			task.organizationId,
+			task.tenantId,
+			{ members: task.members ?? [] },
+			{ members }
+		);
+		this.publishTaskEvent(updatedTask, BaseEntityEventTypeEnum.UPDATED);
+	}
+
+	/**
+	 * Inserts the one `task_employee` row that links the employee to the task, and does nothing when it exists.
+	 *
+	 * @param taskId - The task
+	 * @param employeeId - The employee to link
+	 */
+	private async insertMemberLink(taskId: ID, employeeId: ID): Promise<void> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmRepository
+					.getKnex()('task_employee')
+					.insert({ taskId, employeeId })
+					.onConflict(['taskId', 'employeeId'])
+					.ignore();
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmRepository
+					.createQueryBuilder()
+					.insert()
+					.into('task_employee')
+					.values({ taskId, employeeId })
+					.orIgnore()
+					.execute();
+				break;
+		}
+	}
+
+	/**
+	 * Deletes the one `task_employee` row that links the employee to the task.
+	 *
+	 * @param taskId - The task
+	 * @param employeeId - The employee to unlink
+	 */
+	private async deleteMemberLink(taskId: ID, employeeId: ID): Promise<void> {
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM:
+				await this.mikroOrmRepository.getKnex()('task_employee').where({ taskId, employeeId }).del();
+				break;
+			case MultiORMEnum.TypeORM:
+			default:
+				await this.typeOrmRepository
+					.createQueryBuilder()
+					.relation(Task, 'members')
+					.of(taskId)
+					.remove(employeeId);
+				break;
+		}
 	}
 
 	/**
@@ -560,36 +773,37 @@ export class TaskService extends TenantAwareCrudService<Task> {
 		const task = await super.softRemove(id, options, saveOptions);
 
 		if (task) {
-			this.publishTaskDeleted(task);
+			this.publishTaskEvent(task, BaseEntityEventTypeEnum.DELETED);
 		}
 
 		return task;
 	}
 
 	/**
-	 * Publishes `TaskEvent` `DELETED` for a task that was removed (hard or soft), so that integrations
-	 * that mirror tasks elsewhere (Ever Works, GitHub, SIM workflows) learn about the removal the way they
-	 * learn about a create or an update.
+	 * Publishes a `TaskEvent` for a task written outside the create and update handlers (a hard or soft removal,
+	 * a member taken off), so that integrations that mirror tasks elsewhere (Ever Works, GitHub, SIM workflows)
+	 * learn about it the way they learn about a create or an update.
 	 *
 	 * The event's `input` carries the task's scope (`tenantId`, `organizationId`, `projectId`): existing
 	 * `TaskEvent` subscribers read it before they switch on the event type. Publishing never fails the
-	 * delete: the row is already gone when this runs.
+	 * write: it is already done when this runs.
 	 *
-	 * @param task - The removed task
+	 * @param task - The task as written
+	 * @param type - What happened to it
 	 */
-	private publishTaskDeleted(task: Task): void {
+	private publishTaskEvent(task: Task, type: BaseEntityEventTypeEnum): void {
 		if (!this._domainEventBus) {
 			return;
 		}
 		const logFailure = (error: unknown) =>
-			console.error(`Failed to publish the deleted event of task ${task?.id}:`, (error as Error)?.message);
+			console.error(`Failed to publish the ${type} event of task ${task?.id}:`, (error as Error)?.message);
 		try {
 			const ctx = RequestContext.currentRequestContext();
 			const { tenantId, organizationId, projectId } = task;
-			// `publish` is async: a rejection is caught here as well, never left unhandled after the delete.
+			// `publish` is async: a rejection is caught here as well, never left unhandled after the write.
 			Promise.resolve(
 				this._domainEventBus.publish(
-					new TaskEvent(ctx, task, BaseEntityEventTypeEnum.DELETED, {
+					new TaskEvent(ctx, task, type, {
 						tenantId,
 						organizationId,
 						projectId

@@ -42,6 +42,7 @@ import {
 	TaskByNumberParamsDTO,
 	TaskByNumberQueryDTO,
 	TaskMaxNumberQueryDTO,
+	TaskMemberDTO,
 	TaskQueryDTO,
 	UpdateTaskDTO,
 	UpdateTaskStatusDTO
@@ -445,6 +446,67 @@ export class TaskController extends CrudController<Task> {
 	})
 	async delete(@Param('id', UUIDValidationPipe) id: ID): Promise<DeleteResult> {
 		return this.taskService.deleteTask(id);
+	}
+
+	/**
+	 * PUT one member on a task, changing nothing else
+	 *
+	 * The full update writes the whole member list, so a client that adds one member sends back a list it read
+	 * earlier and undoes an assignment made since.
+	 *
+	 * @param id The ID of the task.
+	 * @param employeeId The ID of the employee to assign.
+	 * @param query The caller's organization, which must be the task's.
+	 */
+	@ApiOperation({ summary: 'Assign one member to a task.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The employee is a member of the task.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({ status: HttpStatus.BAD_REQUEST, description: "The employee is not one of the task's organization." })
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'Only the employee themselves, an organization admin or a manager of the task team may assign them.'
+	})
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	@Put('/:id/members/:employeeId')
+	@UseValidationPipe({ whitelist: true })
+	async addMember(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('employeeId', UUIDValidationPipe) employeeId: ID,
+		@Query() query: TaskMemberDTO
+	): Promise<void> {
+		return this.taskService.addMember(id, employeeId, query.organizationId);
+	}
+
+	/**
+	 * DELETE one member from a task, changing nothing else
+	 *
+	 * The full update writes the whole member list, so a client that drops one member sends back a list it read
+	 * earlier and undoes an assignment made since.
+	 *
+	 * @param id The ID of the task.
+	 * @param employeeId The ID of the employee to take off the task.
+	 * @param query The caller's organization, which must be the task's.
+	 */
+	@ApiOperation({ summary: 'Remove one member from a task.' })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The employee is no longer a member of the task.' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Task not found.' })
+	@ApiResponse({
+		status: HttpStatus.FORBIDDEN,
+		description:
+			'Only the employee themselves, an organization admin or a manager of the task team may remove them.'
+	})
+	@HttpCode(HttpStatus.OK)
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	@Delete('/:id/members/:employeeId')
+	@UseValidationPipe({ whitelist: true })
+	async removeMember(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('employeeId', UUIDValidationPipe) employeeId: ID,
+		@Query() query: TaskMemberDTO
+	): Promise<void> {
+		return this.taskService.removeMember(id, employeeId, query.organizationId);
 	}
 
 	/**
