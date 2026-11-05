@@ -1,6 +1,6 @@
 import { EventBus } from '@nestjs/cqrs';
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { DeleteResult, FindOptionsWhere, UpdateResult } from 'typeorm';
+import { DeleteResult, Equal, FindOptionsWhere, IsNull, Or, UpdateResult } from 'typeorm';
 import {
 	BaseEntityEnum,
 	EntitySubscriptionTypeEnum,
@@ -236,6 +236,38 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 		return { memberIds, managerIds };
 	}
 
+	/**
+	 * Whether the employee manages the team: their row holds the MANAGER role or the manager flag. The flag is what
+	 * lets a manager act for the team's members (`ManagedEmployeeService`), so it lets them manage the team as well,
+	 * on the same terms: a flagged membership that is inactive or archived counts for neither. The role is read as the
+	 * team checks always read it.
+	 *
+	 * @param employeeId - The employee to check. Without one the answer is no: an empty id would match any manager.
+	 * @param team - The team's tenant, organization and id.
+	 * @param withDeleted - Also read the rows of a soft-deleted team, for its restoration.
+	 */
+	public async isTeamManager(
+		employeeId: ID | undefined,
+		team: Pick<FindOptionsWhere<OrganizationTeamEmployee>, 'tenantId' | 'organizationId' | 'organizationTeamId'>,
+		withDeleted = false
+	): Promise<boolean> {
+		if (!employeeId) {
+			return false;
+		}
+		const membership = { ...team, employeeId };
+		// Both flags are nullable and their defaults only apply on insert, so a legacy row can hold NULL
+		const activeFlaggedMembership = {
+			...membership,
+			isManager: true,
+			isActive: Or(IsNull(), Equal(true)),
+			isArchived: Or(IsNull(), Equal(false))
+		};
+		return await this.typeOrmOrganizationTeamEmployeeRepository.exists({
+			where: [{ ...membership, role: { name: RolesEnum.MANAGER } }, activeFlaggedMembership],
+			withDeleted
+		});
+	}
+
 	public async update(
 		memberId: ID,
 		entity: IOrganizationTeamEmployeeUpdateInput
@@ -272,12 +304,10 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 						throw new ForbiddenException('You do not have sufficient permissions to perform this action.');
 					}
 
-					// Verify if the employee has a manager role in the organization and team
-					await this.findOneByWhereOptions({
-						employeeId,
-						role: { name: RolesEnum.MANAGER },
-						...whereClause
-					});
+					const isManager = await this.isTeamManager(employeeId, whereClause);
+					if (!isManager) {
+						throw new ForbiddenException('You do not have sufficient permissions to perform this action.');
+					}
 
 					// If the employee is a manager, proceed with the update (bypassed: the filter would only match
 					// the manager's own row)
@@ -333,17 +363,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 			const employeeId = RequestContext.currentEmployeeId();
 
 			if (employeeId) {
-				// Check if employee is a manager of the team
-				let isManager = false;
-				try {
-					await this.findOneByWhereOptions({
-						...whereClause,
-						role: { name: RolesEnum.MANAGER }
-					});
-					isManager = true;
-				} catch {
-					// Employee is not a manager
-				}
+				const isManager = await this.isTeamManager(employeeId, whereClause);
 
 				if (isManager) {
 					// Manager can update any team member's active task
@@ -406,15 +426,14 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 
 				// Without the member's team, the check below would accept a manager of any team
 				if (member.organizationTeamId) {
-					await this.findOneByWhereOptions({
-						employeeId,
-						role: { name: RolesEnum.MANAGER },
+					const isManager = await this.isTeamManager(employeeId, {
 						tenantId: RequestContext.currentTenantId(),
 						organizationId: member.organizationId,
 						organizationTeamId: member.organizationTeamId
 					});
-
-					return member;
+					if (isManager) {
+						return member;
+					}
 				}
 			} catch {
 				// Not a member of the caller's tenant, or not of a team the caller manages
@@ -466,17 +485,7 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 					throw new ForbiddenException('You do not have permission to delete this team member.');
 				}
 
-				// Check if employee is a manager of the team
-				let isManager = false;
-				try {
-					await this.findOneByWhereOptions({
-						...whereClause,
-						role: { name: RolesEnum.MANAGER }
-					});
-					isManager = true;
-				} catch {
-					// Employee is not a manager
-				}
+				const isManager = await this.isTeamManager(employeeId, whereClause);
 
 				if (isManager) {
 					// Manager can delete any team member

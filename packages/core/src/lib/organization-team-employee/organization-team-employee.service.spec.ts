@@ -22,6 +22,31 @@ const insideBoundary = (tokenOrganizationId: string, statedOrganizationId?: stri
 };
 
 /**
+ * Stands in for the database answering the team manager check (`isTeamManager`). The check always names the caller,
+ * the tenant and the team: a call that dropped one of them is a bug, so the stand-in refuses it rather than match more
+ * rows.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const membershipMatches = (row: any, where: any): boolean => {
+	const namesScope = [where.employeeId, where.tenantId, where.organizationTeamId].every(
+		(value) => value !== undefined
+	);
+	if (!namesScope) {
+		throw new Error('A team manager check must name the employee, the tenant and the team');
+	}
+	const isEmployee = row.employeeId === where.employeeId;
+	const isTenant = row.tenantId === where.tenantId;
+	const isTeam = row.organizationTeamId === where.organizationTeamId;
+	const isOrganization = where.organizationId === undefined || row.organizationId === where.organizationId;
+	const hasRole = where.role === undefined || row.role?.name === where.role.name;
+	const hasFlag = where.isManager === undefined || row.isManager === where.isManager;
+	const isActiveEnough = !('isActive' in where) || row.isActive !== false;
+	const isNotArchived = !('isArchived' in where) || row.isArchived !== true;
+	const keepsStatus = isActiveEnough && isNotArchived;
+	return isEmployee && isTenant && isTeam && isOrganization && hasRole && hasFlag && keepsStatus;
+};
+
+/**
  * #9052 — removing a member from a team reported success but kept the member.
  *
  * A team manager with the default EMPLOYEE role lacks CHANGE_SELECTED_EMPLOYEE, so TenantAwareCrudService adds
@@ -43,7 +68,12 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 			isManager: true
 		},
 		{ id: 'row-member', employeeId: 'member-employee', roleId: null, role: null, isManager: false }
-	].map((row) => ({ ...row, organizationTeamId: teamId, organizationId: manager.organizationId }));
+	].map((row) => ({
+		...row,
+		organizationTeamId: teamId,
+		organizationId: manager.organizationId,
+		tenantId: manager.tenantId
+	}));
 
 	/** Stands in for nestjs-cls, where the employee-filter bypass is stored per request. */
 	const requestStorage = new AsyncLocalStorage<Map<string, unknown>>();
@@ -54,7 +84,8 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		(where.organizationTeamId === undefined || row.organizationTeamId === where.organizationTeamId) &&
 		(where.employeeId === undefined || row.employeeId === where.employeeId) &&
 		(where.id === undefined || (where.id?.value ?? [where.id]).includes(row.id)) &&
-		(where.role?.name === undefined || row.role?.name === where.role.name);
+		(where.role?.name === undefined || row.role?.name === where.role.name) &&
+		(where.isManager === undefined || row.isManager === where.isManager);
 
 	let restore: () => void;
 	let deleted: string[];
@@ -100,8 +131,13 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		});
 
 		service = new OrganizationTeamEmployeeService(
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			{ metadata: { tableName: 'organization_team_employee', hasColumnWithPropertyPath: () => true } } as any,
+			{
+				metadata: { tableName: 'organization_team_employee', hasColumnWithPropertyPath: () => true },
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				exists: async ({ where }: { where: any[] }) =>
+					where.some((condition) => rows.some((row) => membershipMatches(row, condition)))
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			{} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -511,6 +547,9 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 	const manager = asEmployee('manager-employee');
 	const member = asEmployee('member-employee');
 	const otherTeamManager = asEmployee('other-manager-employee');
+	const flaggedManager = asEmployee('flagged-manager-employee');
+	const inactiveFlaggedManager = asEmployee('inactive-flagged-manager-employee');
+	const archivedFlaggedManager = asEmployee('archived-flagged-manager-employee');
 
 	const rows = [
 		{
@@ -520,6 +559,29 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 			role: { name: RolesEnum.MANAGER }
 		},
 		{ id: 'row-member', employeeId: 'member-employee', organizationTeamId: teamId, role: null },
+		{
+			id: 'row-flagged-manager',
+			employeeId: 'flagged-manager-employee',
+			organizationTeamId: teamId,
+			role: null,
+			isManager: true
+		},
+		{
+			id: 'row-inactive-flagged-manager',
+			employeeId: 'inactive-flagged-manager-employee',
+			organizationTeamId: teamId,
+			role: null,
+			isManager: true,
+			isActive: false
+		},
+		{
+			id: 'row-archived-flagged-manager',
+			employeeId: 'archived-flagged-manager-employee',
+			organizationTeamId: teamId,
+			role: null,
+			isManager: true,
+			isArchived: true
+		},
 		{
 			id: 'row-other-manager',
 			employeeId: 'other-manager-employee',
@@ -537,7 +599,8 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 		(where.employeeId === undefined || row.employeeId === where.employeeId) &&
 		(where.organizationTeamId === undefined || row.organizationTeamId === where.organizationTeamId) &&
 		(where.id === undefined || row.id === where.id) &&
-		(where.role?.name === undefined || row.role?.name === where.role.name);
+		(where.role?.name === undefined || row.role?.name === where.role.name) &&
+		(where.isManager === undefined || row.isManager === where.isManager);
 
 	let restore: () => void = () => undefined;
 	let updated: { id: unknown; changes: Record<string, unknown> }[];
@@ -566,8 +629,13 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 		});
 
 		service = new OrganizationTeamEmployeeService(
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			{ metadata: { tableName: 'organization_team_employee', hasColumnWithPropertyPath: () => true } } as any,
+			{
+				metadata: { tableName: 'organization_team_employee', hasColumnWithPropertyPath: () => true },
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				exists: async ({ where }: { where: any[] }) =>
+					where.some((condition) => rows.some((row) => membershipMatches(row, condition)))
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			{} as any,
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -650,6 +718,34 @@ describe('OrganizationTeamEmployeeService — a team manager changing another me
 				]);
 			}
 		);
+
+		it("lets a member flagged as the team's manager, without the MANAGER role, switch another member's tracking", async () => {
+			await expect(
+				as(flaggedManager, () => service.update('row-member', { ...inTeam(teamId), isTrackingEnabled: false }))
+			).resolves.toBeDefined();
+
+			expect(updated).toEqual([
+				{
+					id: {
+						id: 'row-member',
+						tenantId: tenant.tenantId,
+						...inTeam(teamId),
+						...insideBoundary(tenant.organizationId, tenant.organizationId)
+					},
+					changes: { ...inTeam(teamId), isTrackingEnabled: false }
+				}
+			]);
+		});
+
+		it.each([
+			['inactive', () => inactiveFlaggedManager],
+			['archived', () => archivedFlaggedManager]
+		])('refuses a flagged member whose membership is %s', async (_, caller) => {
+			await expect(
+				as(caller(), () => service.update('row-member', { ...inTeam(teamId), isTrackingEnabled: false }))
+			).rejects.toThrow(ForbiddenException);
+			expect(updated).toEqual([]);
+		});
 
 		it('refuses a plain member changing another member', async () => {
 			await expect(

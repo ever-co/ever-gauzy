@@ -33,6 +33,7 @@ import { assertSensitiveRelationsAllowed } from '../../core/util/sensitive-relat
 import { withoutTrackedDataRelations } from '../../core/util/tracked-data-sensitive-relations.config';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { EmployeeService } from '../../employee/employee.service';
+import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { ITrackingTurnedOffScope } from './events/tracking-turned-off.event';
 import {
 	DeleteTimeSpanCommand,
@@ -82,7 +83,8 @@ export class TimerService {
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {}
 
 	/**
@@ -104,6 +106,36 @@ export class TimerService {
 	}
 
 	/**
+	 * Whether a timer status request that names an employee reads that employee (true) or the caller, as a request
+	 * naming the caller themselves always did (false). A caller who may act for every employee reads anyone; a manager
+	 * of the employee (ManagedEmployeeService) reads them too. Anyone else is refused: they used to get their own
+	 * status back, labelled as the colleague's, with no error.
+	 *
+	 * @throws ForbiddenException when the caller may not read the named employee's status.
+	 */
+	private async readsStatusOfNamedEmployee(employeeId: ID, organizationId: ID): Promise<boolean> {
+		const actsForEveryEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		if (actsForEveryEmployee) {
+			return true;
+		}
+
+		const callerEmployeeId = RequestContext.currentEmployeeId();
+		if (employeeId === callerEmployeeId) {
+			return false;
+		}
+
+		const managesEmployee = await this._managedEmployeeService.canManageEmployee(
+			employeeId,
+			undefined,
+			organizationId
+		);
+		if (!managesEmployee) {
+			throw new ForbiddenException("You can't see this employee's timer status.");
+		}
+		return true;
+	}
+
+	/**
 	 * Implementation of timer status logic
 	 * This is intended to be used directly by the command handler
 	 */
@@ -117,12 +149,17 @@ export class TimerService {
 
 		let employee: IEmployee;
 
-		/** SUPER_ADMIN have ability to see employees timer status by specific employee (employeeId) */
-		const permission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		const namedEmployeeId = request.employeeId;
+		const namesAnEmployee = isNotEmpty(namedEmployeeId);
+		let readsNamedEmployee = false;
+		if (namesAnEmployee) {
+			readsNamedEmployee = await this.readsStatusOfNamedEmployee(namedEmployeeId, organizationId);
+		}
 
-		if (!!permission && isNotEmpty(request.employeeId)) {
-			const { employeeId } = request;
-			employee = await this.fetchEmployee({ id: employeeId, tenantId, organizationId });
+		if (readsNamedEmployee) {
+			// Someone else's log: the tracked data hanging off it (slots, screenshots) stays out, as on the worked status
+			request = { ...request, relations: withoutTrackedDataRelations(request.relations) };
+			employee = await this.fetchEmployee({ id: namedEmployeeId, tenantId, organizationId });
 		} else {
 			const userId = RequestContext.currentUserId();
 			employee = await this.fetchEmployee({ userId, tenantId, organizationId });
