@@ -188,7 +188,7 @@ describe('EditEmployeeContactComponent assign to contacts', () => {
 });
 
 /**
- * A contact as a row: its type lozenge, live projects and people.
+ * A contact as a row: its type lozenge, live projects and picture.
  */
 describe('EditEmployeeContactComponent rows', () => {
 	const rowOf = (contact: Record<string, any>): IEmployeeContactRow => {
@@ -196,7 +196,6 @@ describe('EditEmployeeContactComponent rows', () => {
 			Record<string, any>;
 		return component['toRow']({ id: 'c-1', name: 'Acme Corp', ...contact });
 	};
-	const person = (id: string, firstName: string) => ({ id, user: { firstName, lastName: 'Doe' } });
 
 	it.each([
 		['CLIENT', 'CLIENT', 'info'],
@@ -229,14 +228,5 @@ describe('EditEmployeeContactComponent rows', () => {
 		const plain = rowOf({});
 		expect(plain.imageUrl).toBeUndefined();
 		expect(plain.initials).toBe('AC');
-	});
-
-	it('counts and names the people who work with the contact, for the assign dialog', () => {
-		const members = ['Ann', 'Ben', 'Cal', 'Dee', 'Eve', 'Fay'].map((name, i) => person(`e-${i}`, name));
-
-		const row = rowOf({ members });
-
-		expect(row.memberCount).toBe(6);
-		expect(row.memberNames).toBe('Ann Doe, Ben Doe, Cal Doe, Dee Doe, Eve Doe, Fay Doe');
 	});
 });
