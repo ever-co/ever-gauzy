@@ -367,7 +367,8 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 
 	/**
 	 * Whether every time entry must name a team. The server fills it for an employee in exactly one active team of
-	 * the organization and refuses an entry without one otherwise.
+	 * the organization, and otherwise refuses a timer start or a hand-entered entry without one. What the desktop
+	 * timer and the agent start or upload is never refused.
 	 */
 	@ApiPropertyOptional({ type: () => Boolean, default: false })
 	@IsOptional()

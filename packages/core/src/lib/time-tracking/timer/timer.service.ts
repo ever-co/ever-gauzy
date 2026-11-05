@@ -66,6 +66,7 @@ import {
 	projectIdForEntry,
 	teamIdForEntry
 } from '../time-log/organization-tracking-requirements';
+import { isTrackerSource } from '../time-log/tracker-source';
 import { TypeOrmTimeLogRepository } from '../time-log/repository/type-orm-time-log.repository';
 import { MikroOrmTimeLogRepository } from '../time-log/repository/mikro-orm-time-log.repository';
 import { TypeOrmEmployeeRepository } from '../../employee/repository/type-orm-employee.repository';
@@ -379,15 +380,19 @@ export class TimerService {
 		});
 
 		const takesTaskProject = PROJECT_FROM_TASK_SOURCES.includes(source);
+		const startContext = { taskId, organizationTeamId: teamIdToLog, projectId: request.projectId };
 		const projectIdToLog = await projectIdForEntry(
 			manager,
 			trackedEmployee,
-			request,
+			startContext,
 			requirements,
 			takesTaskProject
 		);
 
-		assertRequiredContext(requirements, { ...request, organizationTeamId: teamIdToLog, projectId: projectIdToLog });
+		const isTrackerStart = isTrackerSource(source);
+		if (!isTrackerStart) {
+			assertRequiredContext(requirements, { taskId, organizationTeamId: teamIdToLog, projectId: projectIdToLog });
+		}
 
 		// Stop any previous running timers
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
