@@ -47,7 +47,7 @@
 								[queryParamsHandling]="openTaskPage ? null : 'merge'"
 								>{{ entry.target }}</a
 							>
-							} @else if (entry.isComment && !taskId) {
+							} @else if (entry.isComment) {
 							<a class="feed-target" [routerLink]="[]" [queryParams]="{ tab: 'comments' }" queryParamsHandling="merge">{{ entry.target }}</a>
 							} @else {
 							<strong class="feed-target">{{ entry.target }}</strong>

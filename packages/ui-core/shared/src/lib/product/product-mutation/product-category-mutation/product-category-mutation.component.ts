@@ -204,7 +204,10 @@ export class ProductCategoryMutationComponent extends TranslationBaseComponent i
 	}
 
 	handleImageUploadError(error: any) {
-		this.toastrService.danger(error.error.message || error.message, 'TOASTR.TITLE.ERROR');
+		this.toastrService.danger(
+			error?.error?.message || error?.message || 'INVENTORY_PAGE.COULD_NOT_UPLOAD_IMAGE',
+			'TOASTR.TITLE.ERROR'
+		);
 	}
 
 	ngOnDestroy(): void {}

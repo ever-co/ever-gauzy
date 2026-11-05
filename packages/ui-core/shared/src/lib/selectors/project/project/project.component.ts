@@ -1,4 +1,18 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, AfterViewInit, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import {
+	Component,
+	OnInit,
+	OnDestroy,
+	Input,
+	input,
+	forwardRef,
+	AfterViewInit,
+	Output,
+	EventEmitter,
+	ChangeDetectionStrategy,
+	afterRenderEffect,
+	viewChild
+} from '@angular/core';
+import { NbSelectComponent } from '@nebular/theme';
 import { ActivatedRoute } from '@angular/router';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { combineLatest, from, map, Observable, of, Subject, switchMap } from 'rxjs';
@@ -210,6 +224,33 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	 * Callback function to notify touch events in the form control.
 	 */
 	private onTouched: () => void = () => {};
+
+	/**
+	 * Accessible name of the control, for a host that shows its own label; without one the control is named by its
+	 * label or placeholder. Not `ariaLabel`, which is also a property of every element.
+	 */
+	readonly accessibleLabel = input<string>();
+
+	/** Tells this selector's multi-select label apart from another selector's on the same page. */
+	private static nextId = 0;
+	readonly multiSelectLabelId = `ga-project-selector-label-${++ProjectSelectorComponent.nextId}`;
+
+	/** The multi-select, rendered only with `multiple`. */
+	private readonly _multiSelect = viewChild(NbSelectComponent);
+
+	/**
+	 * Names the multi-select's button: nb-select renders it without a label and takes none as an input, so a label on
+	 * the nb-select host never reaches it. The button is labelled by the hidden label, then by its own text — the
+	 * projects picked, or the placeholder — so it reads as a name and a value.
+	 */
+	private readonly _labelMultiSelect = afterRenderEffect(() => {
+		const button = this._multiSelect()?.button?.nativeElement;
+		if (!button) {
+			return;
+		}
+		button.id ||= `${this.multiSelectLabelId}-button`;
+		button.setAttribute('aria-labelledby', `${this.multiSelectLabelId} ${button.id}`);
+	});
 
 	constructor(
 		private readonly _organizationProjects: OrganizationProjectsService,
