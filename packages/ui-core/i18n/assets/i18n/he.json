@@ -2208,7 +2208,51 @@
 			"VETTED": "Vetted",
 			"HR": "hr",
 			"SETTINGS": "הגדרות",
-			"GENERAL_SETTINGS": "הגדרות כלליות"
+			"GENERAL_SETTINGS": "הגדרות כלליות",
+			"PROJECTS_TAB": {
+				"TITLE": "פרויקטים",
+				"CAPTION": "פרויקטים שהעובד הזה חבר בהם. חברים יכולים לתעד זמן ולעבוד על משימות הפרויקט.",
+				"SEARCH": "חיפוש פרויקטים",
+				"ASSIGN": "שיוך לפרויקטים",
+				"ASSIGN_PLACEHOLDER": "בחרו פרויקטים לשיוך…",
+				"ASSIGN_SUBMIT": "שיוך",
+				"ALL_ASSIGNED": "העובד הזה כבר חבר בכל הפרויקטים.",
+				"COLUMNS": {
+					"PROJECT": "פרויקט",
+					"ROLE": "תפקיד",
+					"STATUS": "סטטוס",
+					"MEMBERS": "חברים",
+					"BILLING": "חיוב"
+				},
+				"ROLE_MANAGER": "מנהל",
+				"ROLE_MEMBER": "חבר",
+				"STATUS": {
+					"OPEN": "פתוח",
+					"IN_PROGRESS": "בתהליך",
+					"COMPLETED": "הושלם",
+					"CANCELLED": "בוטל",
+					"CUSTOM": "מותאם אישית"
+				},
+				"BILLING": {
+					"RATE": "תעריף שעתי",
+					"FLAT_FEE": "מחיר קבוע",
+					"MILESTONES": "אבני דרך"
+				},
+				"PUBLIC": "ציבורי",
+				"PRIVATE": "פרטי",
+				"QUICK_LOOK": "מבט מהיר",
+				"OPEN_PROJECT": "פתיחת דף הפרויקט",
+				"REMOVE": "הסרה מהפרויקט",
+				"REMOVE_TITLE": "הסרה מהפרויקט",
+				"REMOVE_MESSAGE": "להסיר את {{ employee }} מ-{{ project }}? לא ניתן יהיה עוד לתעד עליו זמן.",
+				"REMOVE_HINT": "ניתן לשייך אותו שוב לפרויקט זה בכל עת.",
+				"SHOWING": "מוצגים {{ count }} מתוך {{ total }} פרויקטים",
+				"NO_MATCH": "אין פרויקטים התואמים ל-\"{{ term }}\"",
+				"NO_MATCH_PICKER": "אין פרויקטים תואמים",
+				"CLEAR_SEARCH": "ניקוי החיפוש",
+				"EMPTY_TITLE": "אין עדיין פרויקטים",
+				"EMPTY_TEXT": "שייכו את העובד לפרויקט כדי שיוכל לתעד זמן ולעבוד על המשימות שלו."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Step 1",

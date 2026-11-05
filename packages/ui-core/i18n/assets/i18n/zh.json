@@ -2637,7 +2637,51 @@
 			"HR": "小时",
 			"SETTINGS": "设置",
 			"GENERAL_SETTINGS": "常规设置",
-			"INTEGRATIONS": "整合"
+			"INTEGRATIONS": "整合",
+			"PROJECTS_TAB": {
+				"TITLE": "项目",
+				"CAPTION": "该员工所属的项目。成员可以记录时间并处理项目的任务。",
+				"SEARCH": "搜索项目",
+				"ASSIGN": "分配项目",
+				"ASSIGN_PLACEHOLDER": "选择要分配的项目…",
+				"ASSIGN_SUBMIT": "分配",
+				"ALL_ASSIGNED": "该员工已是所有项目的成员。",
+				"COLUMNS": {
+					"PROJECT": "项目",
+					"ROLE": "角色",
+					"STATUS": "状态",
+					"MEMBERS": "成员",
+					"BILLING": "计费"
+				},
+				"ROLE_MANAGER": "经理",
+				"ROLE_MEMBER": "成员",
+				"STATUS": {
+					"OPEN": "未开始",
+					"IN_PROGRESS": "进行中",
+					"COMPLETED": "已完成",
+					"CANCELLED": "已取消",
+					"CUSTOM": "自定义"
+				},
+				"BILLING": {
+					"RATE": "按小时计费",
+					"FLAT_FEE": "固定费用",
+					"MILESTONES": "里程碑"
+				},
+				"PUBLIC": "公开",
+				"PRIVATE": "私有",
+				"QUICK_LOOK": "快速查看",
+				"OPEN_PROJECT": "打开项目页面",
+				"REMOVE": "从项目中移除",
+				"REMOVE_TITLE": "从项目中移除",
+				"REMOVE_MESSAGE": "要将 {{ employee }} 从 {{ project }} 中移除吗？移除后将无法再在该项目上记录时间。",
+				"REMOVE_HINT": "你可以随时将其重新分配到此项目。",
+				"SHOWING": "显示 {{ count }} / {{ total }} 个项目",
+				"NO_MATCH": "没有与“{{ term }}”匹配的项目",
+				"NO_MATCH_PICKER": "没有匹配的项目",
+				"CLEAR_SEARCH": "清除搜索",
+				"EMPTY_TITLE": "暂无项目",
+				"EMPTY_TEXT": "将该员工分配到项目中，以便其记录时间并处理项目任务。"
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "第一步",

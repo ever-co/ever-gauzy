@@ -2168,7 +2168,51 @@
 			"HR": "HR",
 			"SETTINGS": "Instellingen",
 			"GENERAL_SETTINGS": "Algemene instellingen",
-			"INTEGRATIONS": "Integraties"
+			"INTEGRATIONS": "Integraties",
+			"PROJECTS_TAB": {
+				"TITLE": "Projecten",
+				"CAPTION": "Projecten waarvan deze medewerker lid is. Leden kunnen tijd registreren en aan de taken van het project werken.",
+				"SEARCH": "Projecten zoeken",
+				"ASSIGN": "Projecten toewijzen",
+				"ASSIGN_PLACEHOLDER": "Selecteer projecten om toe te wijzen…",
+				"ASSIGN_SUBMIT": "Toewijzen",
+				"ALL_ASSIGNED": "Deze medewerker is al lid van alle projecten.",
+				"COLUMNS": {
+					"PROJECT": "Project",
+					"ROLE": "Rol",
+					"STATUS": "Status",
+					"MEMBERS": "Leden",
+					"BILLING": "Facturering"
+				},
+				"ROLE_MANAGER": "Manager",
+				"ROLE_MEMBER": "Lid",
+				"STATUS": {
+					"OPEN": "Open",
+					"IN_PROGRESS": "Bezig",
+					"COMPLETED": "Voltooid",
+					"CANCELLED": "Geannuleerd",
+					"CUSTOM": "Aangepast"
+				},
+				"BILLING": {
+					"RATE": "Uurtarief",
+					"FLAT_FEE": "Vast bedrag",
+					"MILESTONES": "Mijlpalen"
+				},
+				"PUBLIC": "Openbaar",
+				"PRIVATE": "Privé",
+				"QUICK_LOOK": "Snel bekijken",
+				"OPEN_PROJECT": "Projectpagina openen",
+				"REMOVE": "Uit project verwijderen",
+				"REMOVE_TITLE": "Uit project verwijderen",
+				"REMOVE_MESSAGE": "{{ employee }} uit {{ project }} verwijderen? Er kan dan geen tijd meer op worden geregistreerd.",
+				"REMOVE_HINT": "U kunt hem op elk moment opnieuw aan dit project toewijzen.",
+				"SHOWING": "{{ count }} van {{ total }} projecten",
+				"NO_MATCH": "Geen projecten gevonden voor ‘{{ term }}’",
+				"NO_MATCH_PICKER": "Geen overeenkomende projecten",
+				"CLEAR_SEARCH": "Zoekopdracht wissen",
+				"EMPTY_TITLE": "Nog geen projecten",
+				"EMPTY_TEXT": "Wijs deze medewerker toe aan een project zodat hij tijd kan registreren en aan de taken kan werken."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Stap 1",

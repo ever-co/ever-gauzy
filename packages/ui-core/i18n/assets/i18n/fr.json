@@ -2169,7 +2169,51 @@
 			"HR": "RH",
 			"SETTINGS": "Paramètres",
 			"GENERAL_SETTINGS": "Paramètres généraux",
-			"INTEGRATIONS": "Intégrations"
+			"INTEGRATIONS": "Intégrations",
+			"PROJECTS_TAB": {
+				"TITLE": "Projets",
+				"CAPTION": "Projets dont cet employé est membre. Les membres peuvent suivre leur temps et travailler sur les tâches du projet.",
+				"SEARCH": "Rechercher des projets",
+				"ASSIGN": "Affecter à des projets",
+				"ASSIGN_PLACEHOLDER": "Sélectionnez les projets à affecter…",
+				"ASSIGN_SUBMIT": "Affecter",
+				"ALL_ASSIGNED": "Cet employé est déjà membre de tous les projets.",
+				"COLUMNS": {
+					"PROJECT": "Projet",
+					"ROLE": "Rôle",
+					"STATUS": "Statut",
+					"MEMBERS": "Membres",
+					"BILLING": "Facturation"
+				},
+				"ROLE_MANAGER": "Responsable",
+				"ROLE_MEMBER": "Membre",
+				"STATUS": {
+					"OPEN": "Ouvert",
+					"IN_PROGRESS": "En cours",
+					"COMPLETED": "Terminé",
+					"CANCELLED": "Annulé",
+					"CUSTOM": "Personnalisé"
+				},
+				"BILLING": {
+					"RATE": "Taux horaire",
+					"FLAT_FEE": "Forfait",
+					"MILESTONES": "Jalons"
+				},
+				"PUBLIC": "Public",
+				"PRIVATE": "Privé",
+				"QUICK_LOOK": "Aperçu rapide",
+				"OPEN_PROJECT": "Ouvrir la page du projet",
+				"REMOVE": "Retirer du projet",
+				"REMOVE_TITLE": "Retirer du projet",
+				"REMOVE_MESSAGE": "Retirer {{ employee }} de {{ project }} ? Il ne pourra plus y suivre son temps.",
+				"REMOVE_HINT": "Vous pourrez le réaffecter à ce projet à tout moment.",
+				"SHOWING": "{{ count }} sur {{ total }} projets",
+				"NO_MATCH": "Aucun projet ne correspond à « {{ term }} »",
+				"NO_MATCH_PICKER": "Aucun projet correspondant",
+				"CLEAR_SEARCH": "Effacer la recherche",
+				"EMPTY_TITLE": "Aucun projet pour le moment",
+				"EMPTY_TEXT": "Affectez cet employé à un projet pour qu’il puisse suivre son temps et travailler sur ses tâches."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Étape 1",

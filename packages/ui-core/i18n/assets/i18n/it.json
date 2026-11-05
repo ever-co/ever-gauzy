@@ -2168,7 +2168,51 @@
 			"HR": "ore",
 			"SETTINGS": "Impostazioni",
 			"GENERAL_SETTINGS": "Impostazioni generali",
-			"INTEGRATIONS": "Integrazioni"
+			"INTEGRATIONS": "Integrazioni",
+			"PROJECTS_TAB": {
+				"TITLE": "Progetti",
+				"CAPTION": "Progetti di cui questo dipendente è membro. I membri possono registrare il tempo e lavorare alle attività del progetto.",
+				"SEARCH": "Cerca progetti",
+				"ASSIGN": "Assegna progetti",
+				"ASSIGN_PLACEHOLDER": "Seleziona i progetti da assegnare…",
+				"ASSIGN_SUBMIT": "Assegna",
+				"ALL_ASSIGNED": "Questo dipendente è già membro di tutti i progetti.",
+				"COLUMNS": {
+					"PROJECT": "Progetto",
+					"ROLE": "Ruolo",
+					"STATUS": "Stato",
+					"MEMBERS": "Membri",
+					"BILLING": "Fatturazione"
+				},
+				"ROLE_MANAGER": "Manager",
+				"ROLE_MEMBER": "Membro",
+				"STATUS": {
+					"OPEN": "Aperto",
+					"IN_PROGRESS": "In corso",
+					"COMPLETED": "Completato",
+					"CANCELLED": "Annullato",
+					"CUSTOM": "Personalizzato"
+				},
+				"BILLING": {
+					"RATE": "Tariffa oraria",
+					"FLAT_FEE": "Tariffa fissa",
+					"MILESTONES": "Milestone"
+				},
+				"PUBLIC": "Pubblico",
+				"PRIVATE": "Privato",
+				"QUICK_LOOK": "Anteprima",
+				"OPEN_PROJECT": "Apri la pagina del progetto",
+				"REMOVE": "Rimuovi dal progetto",
+				"REMOVE_TITLE": "Rimuovi dal progetto",
+				"REMOVE_MESSAGE": "Rimuovere {{ employee }} da {{ project }}? Non potrà più registrare il tempo su di esso.",
+				"REMOVE_HINT": "Puoi riassegnarlo a questo progetto in qualsiasi momento.",
+				"SHOWING": "{{ count }} di {{ total }} progetti",
+				"NO_MATCH": "Nessun progetto corrisponde a «{{ term }}»",
+				"NO_MATCH_PICKER": "Nessun progetto corrispondente",
+				"CLEAR_SEARCH": "Cancella ricerca",
+				"EMPTY_TITLE": "Ancora nessun progetto",
+				"EMPTY_TEXT": "Assegna questo dipendente a un progetto perché possa registrare il tempo e lavorare alle sue attività."
+			}
 		},
 		"ADD_EMPLOYEES": {
 			"STEP_1": "Passaggio 1",
