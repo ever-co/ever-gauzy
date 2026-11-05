@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Equal, IsNull, Or } from 'typeorm';
 import { ID, IOrganizationProjectRates, IOrganizationProjectRateUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
+import { assertCurrentUserBelongsToOrganization } from '../user-organization/assert-organization-membership';
 import { OrganizationProject } from './organization-project.entity';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from './repository/type-orm-organization-project-employee.repository';
@@ -112,6 +113,8 @@ export class OrganizationProjectRateService {
 	 * @throws ForbiddenException for anyone else.
 	 */
 	private async assertMayManageRates(projectId: ID, organizationId: ID, tenantId: ID): Promise<ID | null> {
+		await assertCurrentUserBelongsToOrganization(this.typeOrmOrganizationProjectRepository.manager, organizationId);
+
 		const editsEveryEmployee =
 			RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT) ||
 			RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);

@@ -1,6 +1,6 @@
 import '../core/entities/internal';
 
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { toNullableBillingRate } from '../shared/pipes/billing-rate.transform';
@@ -83,7 +83,10 @@ describe('OrganizationProjectRateService', () => {
 				return { id: where.id, billRateValue: 40, currency: 'EUR' };
 			}),
 			update: projectUpdate,
-			manager: { findOne: jest.fn(async () => ({ id: ORGANIZATION, currency: 'USD' })) }
+			manager: {
+				findOne: jest.fn(async () => ({ id: ORGANIZATION, currency: 'USD' })),
+				count: jest.fn(async () => 1)
+			}
 		};
 		const membershipRepository = {
 			exists: jest.fn(async ({ where }: { where: Record<string, unknown> }) =>
@@ -105,6 +108,9 @@ describe('OrganizationProjectRateService', () => {
 			permissions.includes(permission as PermissionsEnum)
 		);
 		jest.spyOn(RequestContext, 'currentEmployeeId').mockImplementation(() => callerEmployeeId);
+		jest.spyOn(RequestContext, 'currentUserId').mockReturnValue('user-1');
+		jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+		jest.spyOn(RequestContext, 'hasRoles').mockReturnValue(false);
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -229,6 +235,20 @@ describe('OrganizationProjectRateService', () => {
 		callerEmployeeId = 'member-employee';
 
 		await expect(service.findProjectRates(PROJECT, ORGANIZATION)).rejects.toThrow(ForbiddenException);
+	});
+
+	it('refuses an admin a body that names no organization, before reading or writing any rate', async () => {
+		permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
+		const withoutOrganization = { organizationId: undefined as never, billRateValue: 55 };
+
+		await expect(service.findProjectRates(PROJECT, undefined as never)).rejects.toThrow(BadRequestException);
+		await expect(service.updateProjectRate(PROJECT, withoutOrganization)).rejects.toThrow(BadRequestException);
+		await expect(service.updateMemberRate(PROJECT, 'member-employee', withoutOrganization)).rejects.toThrow(
+			BadRequestException
+		);
+
+		expect(projectUpdate).not.toHaveBeenCalled();
+		expect(membershipUpdate).not.toHaveBeenCalled();
 	});
 });
 
