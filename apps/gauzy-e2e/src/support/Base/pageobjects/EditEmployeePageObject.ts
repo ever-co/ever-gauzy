@@ -28,14 +28,20 @@ export const EditEmployeePage = {
 	payPeriodDropdownCss: '#payPeriodsSelect',
 	weeklyLimitInputCss: '#reWeeklyLimitInput',
 	billRateValueInputCss: '#billRateValueInput',
-	projectOrContactsDropdownCss: '#departmentsSelect',
+	projectOrContactsDropdownCss: '#departmentsSelect, #projectsSelect',
 	projectOrContactDropdownOptionCss: 'div.ng-option',
-	// Projects / Contacts tabs = <ga-edit-employee-membership> (redesigned in 17125da2e8, #10115):
+	// Contacts tab = <ga-edit-employee-membership> (redesigned in 17125da2e8, #10115):
 	// header "+ Add" opens the add form; its own "Add" (submitForm -> entitiesAdded) persists the pick;
 	// the employee's entities are listed as `ul.membership__list > li.membership__row`.
-	addProjectOrContactButtonCss: 'ga-edit-employee-membership header.membership__header > button[status="success"]',
-	saveProjectOrContactButtonCss: 'ga-edit-employee-membership .membership__add-actions > button[status="success"]',
-	verifyProjectOrContactCss: 'ga-edit-employee-membership ul.membership__list > li.membership__row',
+	// Projects tab = <ga-edit-employee-projects>, a table of its own: header "Assign projects" opens the
+	// picker (#projectsSelect); its "Assign" persists the pick; rows are `ul.projects__list > li.projects__row`.
+	// Only one of the two is on the page at a time, so each selector names both.
+	addProjectOrContactButtonCss:
+		'ga-edit-employee-membership header.membership__header > button[status="success"], ga-edit-employee-projects button.projects__assign-toggle',
+	saveProjectOrContactButtonCss:
+		'ga-edit-employee-membership .membership__add-actions > button[status="success"], ga-edit-employee-projects .projects__assign-actions > button[status="success"]',
+	verifyProjectOrContactCss:
+		'ga-edit-employee-membership ul.membership__list > li.membership__row, ga-edit-employee-projects ul.projects__list > li.projects__row',
 	// Account tab's Save (17125da2e8, #10115 moved it from `div.actions` into `footer.account__actions`).
 	saveButtonCss: 'ga-edit-employee-main footer.account__actions > button[status="success"]',
 	verifyEmployeeCss: 'span.employee-name',

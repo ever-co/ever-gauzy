@@ -291,7 +291,8 @@ export const clickProjectOrContactDropdown = async () => {
 };
 
 export const selectProjectOrContactFromDropdown = async (index: number) => {
-	// #departmentsSelect is the <ga-edit-employee-membership> ng-select (multiple, hideSelected,
+	// #departmentsSelect (Contacts, <ga-edit-employee-membership>) or #projectsSelect (Projects,
+	// <ga-edit-employee-projects>) is the tab's ng-select (multiple, hideSelected,
 	// appendTo="body"). Driven through the shared ng-select driver: it opens the control by keyboard,
 	// counts only REAL options (ng-select's "No items found" row is also a `div.ng-option`, which the old
 	// loop happily "clicked" as if it were a project), and confirms the pick by the chip it commits.
