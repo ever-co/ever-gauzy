@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as moment from 'moment';
-import { combineLatest, debounceTime, tap } from 'rxjs';
+import { combineLatest, debounceTime, filter, merge, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -9,6 +9,7 @@ import {
 	IOrganizationTeam,
 	ISelectedEmployee,
 	ITimeLog,
+	PermissionsEnum,
 	ReportGroupFilterEnum,
 	RolesEnum
 } from '@gauzy/contracts';
@@ -185,6 +186,14 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 					this._selectedOrganizationTeam = organizationTeam;
 				}),
 				tap(() => this.subject$.next(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
+		// Who may open the members' cards depends on the user and on their permissions, which load on their own
+		merge(this.store.user$, this.store.userRolePermissions$)
+			.pipe(
+				filter(() => this._todayTeamsWorkers.length > 0),
+				tap(() => this._buildRows()),
 				untilDestroyed(this)
 			)
 			.subscribe();
@@ -647,8 +656,26 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 			teamName,
 			isManager: this._isManager(member),
 			timeZone: user?.timeZone || null,
-			day: this._dayOf(member, activity)
+			day: this._dayOf(member, activity),
+			canViewDetails: this._canViewDetailsOf(member.employeeId),
+			canViewProfile: this._canViewEveryone()
 		};
+	}
+
+	/**
+	 * Whether the user may see every member's card and open their profile: the permission the profile page itself
+	 * requires (`/pages/employees/view/:id`), which only Admins and Super Admins hold by default.
+	 */
+	private _canViewEveryone(): boolean {
+		return this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_VIEW);
+	}
+
+	private _canViewDetailsOf(employeeId: string): boolean {
+		if (this._canViewEveryone()) {
+			return true;
+		}
+		const ownEmployeeId = this.store.user?.employee?.id ?? this.store.user?.employeeId;
+		return !!ownEmployeeId && ownEmployeeId === employeeId;
 	}
 
 	private _dayOf(member: any, activity: number | null): ITeamPersonDay {

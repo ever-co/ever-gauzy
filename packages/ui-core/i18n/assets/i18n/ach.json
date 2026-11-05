@@ -4632,7 +4632,9 @@
 		"SELECT_PROJECT": "crwdns8704:0crwdne8704:0",
 		"AI_CHAT": "Lok ki AI",
 		"COLLAPSE_SIDEBAR": "Kan bar ma i nget",
-		"EXPAND_SIDEBAR": "Yab bar ma i nget"
+		"EXPAND_SIDEBAR": "Yab bar ma i nget",
+		"EVER_APPS": "Apps",
+		"SWITCH_EVER_APP": "Switch to another Ever app"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "Lakony me AI",

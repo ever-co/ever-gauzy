@@ -5394,7 +5394,9 @@
 		"SELECT_TEAM": "Team",
 		"AI_CHAT": "AI Chat",
 		"COLLAPSE_SIDEBAR": "Collapse sidebar",
-		"EXPAND_SIDEBAR": "Expand sidebar"
+		"EXPAND_SIDEBAR": "Expand sidebar",
+		"EVER_APPS": "Apps",
+		"SWITCH_EVER_APP": "Switch to another Ever app"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI Assistant",

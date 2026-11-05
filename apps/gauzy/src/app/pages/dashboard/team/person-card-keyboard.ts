@@ -44,7 +44,8 @@ export class PersonCardKeyboard {
 
 	/**
 	 * Arrow Down on a name: open its card and move focus to that card's first link
-	 * (the email, else the profile) — found by the card's own id, `cardId`.
+	 * (the email, else the profile), or the card itself when it has no link — found by
+	 * the card's own id, `cardId`.
 	 */
 	onTriggerKeydown(event: KeyboardEvent, popover: NbPopoverDirective, cardId: string): void {
 		if (event.key !== 'ArrowDown') return;
@@ -54,7 +55,8 @@ export class PersonCardKeyboard {
 		// The card renders on the next tick, in the overlay.
 		setTimeout(() => {
 			const card = document.getElementById(cardId);
-			(card?.querySelector('a[href]') as HTMLElement | null)?.focus();
+			const target = card?.querySelector('a[href]') ?? card?.querySelector('[tabindex="-1"]');
+			(target as HTMLElement | null)?.focus();
 		});
 	}
 

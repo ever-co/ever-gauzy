@@ -4861,7 +4861,9 @@
 		"SELECT_TEAM": "فريق",
 		"AI_CHAT": "دردشة الذكاء الاصطناعي",
 		"COLLAPSE_SIDEBAR": "طي الشريط الجانبي",
-		"EXPAND_SIDEBAR": "توسيع الشريط الجانبي"
+		"EXPAND_SIDEBAR": "توسيع الشريط الجانبي",
+		"EVER_APPS": "التطبيقات",
+		"SWITCH_EVER_APP": "الانتقال إلى تطبيق Ever آخر"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "مساعد الذكاء الاصطناعي",

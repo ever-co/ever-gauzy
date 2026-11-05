@@ -4894,7 +4894,9 @@
 		"SELECT_TEAM": "Команда",
 		"AI_CHAT": "ИИ-чат",
 		"COLLAPSE_SIDEBAR": "Свернуть боковую панель",
-		"EXPAND_SIDEBAR": "Развернуть боковую панель"
+		"EXPAND_SIDEBAR": "Развернуть боковую панель",
+		"EVER_APPS": "Приложения",
+		"SWITCH_EVER_APP": "Перейти в другое приложение Ever"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "ИИ-ассистент",

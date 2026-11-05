@@ -4920,7 +4920,9 @@
 		"SELECT_TEAM": "Отбор",
 		"AI_CHAT": "AI чат",
 		"COLLAPSE_SIDEBAR": "Свиване на страничната лента",
-		"EXPAND_SIDEBAR": "Разгъване на страничната лента"
+		"EXPAND_SIDEBAR": "Разгъване на страничната лента",
+		"EVER_APPS": "Приложения",
+		"SWITCH_EVER_APP": "Превключване към друго приложение на Ever"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI асистент",

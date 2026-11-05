@@ -1,5 +1,5 @@
 @let day = person.day;
-<div class="person-card team-person-card">
+<div class="person-card team-person-card" tabindex="-1">
 	<div class="person-card-banner" aria-hidden="true"></div>
 	<div class="person-card-photo" [class]="'person-card-photo presence-' + person.presence">
 		<img type="user" [src]="person.avatarUrl" [alt]="person.name" />
@@ -81,7 +81,7 @@
 		@if (person.bio) {
 		<p class="person-card-bio">{{ person.bio }}</p>
 		}
-		@if (person.employeeId) {
+		@if (person.employeeId && person.canViewProfile) {
 		<a class="person-card-action" [routerLink]="['/pages/employees/view', person.employeeId]">
 			{{ 'EMPLOYEES_PAGE.VIEW.VIEW_PROFILE' | translate }}
 			<nb-icon icon="arrow-forward-outline" aria-hidden="true"></nb-icon>

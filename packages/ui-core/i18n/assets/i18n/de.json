@@ -4859,7 +4859,9 @@
 		"SELECT_TEAM": "Team",
 		"AI_CHAT": "KI-Chat",
 		"COLLAPSE_SIDEBAR": "Seitenleiste einklappen",
-		"EXPAND_SIDEBAR": "Seitenleiste ausklappen"
+		"EXPAND_SIDEBAR": "Seitenleiste ausklappen",
+		"EVER_APPS": "Apps",
+		"SWITCH_EVER_APP": "Zu einer anderen Ever-App wechseln"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "KI-Assistent",

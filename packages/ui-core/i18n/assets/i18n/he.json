@@ -4887,7 +4887,9 @@
 		"SELECT_TEAM": "קבוצה",
 		"AI_CHAT": "צ'אט AI",
 		"COLLAPSE_SIDEBAR": "כווץ את סרגל הצד",
-		"EXPAND_SIDEBAR": "הרחב את סרגל הצד"
+		"EXPAND_SIDEBAR": "הרחב את סרגל הצד",
+		"EVER_APPS": "אפליקציות",
+		"SWITCH_EVER_APP": "מעבר לאפליקציה אחרת של Ever"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "עוזר AI",
