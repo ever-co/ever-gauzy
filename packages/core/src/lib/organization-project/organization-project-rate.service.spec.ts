@@ -155,7 +155,11 @@ describe('OrganizationProjectRateService', () => {
 				if (!row) {
 					return null;
 				}
-				return Object.assign(new OrganizationProject(), { id: row.id, billRateValue: 40, currency: row.currency });
+				return Object.assign(new OrganizationProject(), {
+					id: row.id,
+					billRateValue: 40,
+					currency: row.currency
+				});
 			}),
 			update: projectUpdate,
 			manager: {

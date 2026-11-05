@@ -99,7 +99,11 @@ export class OrganizationProjectRateService {
 	}
 
 	/** The currency a project's client rates are in: the project's own, else the organization's. */
-	private async ratesCurrencyOf(project: OrganizationProject, organizationId: ID, tenantId: ID): Promise<string | null> {
+	private async ratesCurrencyOf(
+		project: OrganizationProject,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<string | null> {
 		if (project.currency) {
 			return project.currency;
 		}
