@@ -16,19 +16,35 @@ export const TASK_NOT_PLANNED = 'TASK_NOT_PLANNED';
 /**
  * The dates a daily plan may carry and still count as today's. The API does not know the member's own day: far from
  * UTC, a member can be on the day before or after the server's. The window takes the day on each side, so a member
- * who planned their own today is never refused. Its bounds are converted the way plan dates are stored (see
- * storedDayStart), or a plan stored at local midnight could fall just outside them.
+ * who planned their own today is never refused. A plan day has two readings once the API process does not run in
+ * UTC: Ever Teams sends it as a date, parsed as UTC midnight, while a client sending a local date-time lands on the
+ * process's midnight, the way PostgreSQL and MySQL store dates (see storedDayStart). Each bound takes the reading
+ * that widens the window, so neither kind of plan is cut off.
  *
  * @param now The server's current time.
  */
 export function planDatesAroundToday(now: moment.Moment): { from: Date; to: Date } {
 	const today = now.clone().utc().startOf('day');
-	const firstDay = today.clone().subtract(1, 'day').format('YYYY-MM-DD');
-	const dayAfterWindow = today.clone().add(2, 'days').format('YYYY-MM-DD');
-	const from = storedDayStart(firstDay);
-	const windowEnd = storedDayStart(dayAfterWindow).getTime();
+	const firstDay = today.clone().subtract(1, 'day');
+	const dayAfterWindow = today.clone().add(2, 'days');
+	const from = new Date(earliestStartOf(firstDay));
+	const windowEnd = latestStartOf(dayAfterWindow);
 	const to = new Date(windowEnd - 1);
 	return { from, to };
+}
+
+function dayStartReadings(utcDay: moment.Moment): number[] {
+	const utcStart = utcDay.valueOf();
+	const storedStart = storedDayStart(utcDay.format('YYYY-MM-DD')).getTime();
+	return [utcStart, storedStart];
+}
+
+function earliestStartOf(utcDay: moment.Moment): number {
+	return Math.min(...dayStartReadings(utcDay));
+}
+
+function latestStartOf(utcDay: moment.Moment): number {
+	return Math.max(...dayStartReadings(utcDay));
 }
 
 export function planHasTasks(plan: PlanTasks): boolean {

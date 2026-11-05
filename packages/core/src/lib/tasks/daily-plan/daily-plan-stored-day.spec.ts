@@ -13,25 +13,40 @@ import { planDatesAroundToday } from '../../time-tracking/timer/timer-plan-rule'
 
 /**
  * PostgreSQL and MySQL store a plan date in the API process's local time, SQLite in UTC. The bounds of a plan-day
- * lookup follow the same rule, or a plan stored at local midnight on the first day falls below them. The expected
- * local values are computed in the zone the tests run in, so the rule is checked whatever that zone is.
+ * lookup follow the same rule, or a plan stored at local midnight on the first day falls below them. Ever Teams sends
+ * a plan day as a date, parsed as UTC midnight, so the timer's window holds that reading too. The expected local
+ * values are computed in the zone the tests run in, so the rule is checked whatever that zone is.
  */
 describe('stored plan day bounds', () => {
 	const now = moment.utc('2026-11-05T21:30:00Z');
 	const localMidnight = (day: string) => moment(day, 'YYYY-MM-DD').toDate();
+	const utcMidnight = (day: string) => moment.utc(day, 'YYYY-MM-DD').toDate();
+	const bothMidnightsOf = (day: string) => [utcMidnight(day).getTime(), localMidnight(day).getTime()];
 
 	afterEach(() => {
 		mockDatabase.storesUtc = false;
 	});
 
 	it('start at local midnight where the database stores local time', () => {
-		const dayAfterWindow = localMidnight('2026-11-07').getTime();
+		const earliestFirstDayStart = Math.min(...bothMidnightsOf('2026-11-04'));
+		const latestDayAfterWindowStart = Math.max(...bothMidnightsOf('2026-11-07'));
 
 		expect(storedDayStart('2026-11-04')).toEqual(localMidnight('2026-11-04'));
 		expect(planDatesAroundToday(now)).toEqual({
-			from: localMidnight('2026-11-04'),
-			to: new Date(dayAfterWindow - 1)
+			from: new Date(earliestFirstDayStart),
+			to: new Date(latestDayAfterWindowStart - 1)
 		});
+	});
+
+	it('keep the plans of the day before and the day after, sent as dates or as local times', () => {
+		const { from, to } = planDatesAroundToday(now);
+
+		for (const firstDayStart of bothMidnightsOf('2026-11-04')) {
+			expect(from.getTime()).toBeLessThanOrEqual(firstDayStart);
+		}
+		for (const lastDayStart of bothMidnightsOf('2026-11-06')) {
+			expect(to.getTime()).toBeGreaterThanOrEqual(lastDayStart);
+		}
 	});
 
 	it('start at UTC midnight on SQLite', () => {
