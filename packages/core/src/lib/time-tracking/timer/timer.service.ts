@@ -17,7 +17,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { TimeLog } from '../../core/entities/internal';
+import { Task, TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {
 	MultiORM,
@@ -56,6 +56,12 @@ import {
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
+
+/**
+ * The Ever Teams clients, web and mobile. Their timer starts name a task and, in installed versions, no project, so
+ * the log's project is taken from the task; the other clients keep writing what they send.
+ */
+const PROJECT_FROM_TASK_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
 
 @Injectable()
 export class TimerService {
@@ -260,17 +266,8 @@ export class TimerService {
 		this.debug(() => `Start Timer Request (${moment.utc(request.startedAt).toDate()}): ${JSON.stringify(request)}`);
 
 		// Destructure the necessary parameters from the request
-		const {
-			source,
-			logType,
-			projectId,
-			taskId,
-			organizationContactId,
-			organizationTeamId,
-			description,
-			isBillable,
-			version
-		} = request;
+		const { source, logType, taskId, organizationContactId, organizationTeamId, description, isBillable, version } =
+			request;
 
 		// Retrieve the tenant ID from the current context or the provided one in the request
 		const tenantId = RequestContext.currentTenantId() ?? request.tenantId;
@@ -290,6 +287,8 @@ export class TimerService {
 		// Get the employee ID
 		const { id: employeeId, organizationId } = employee;
 
+		const projectIdToLog = await this.projectIdForStart(request, organizationId, tenantId);
+
 		// Stop any previous running timers
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
 
@@ -304,7 +303,7 @@ export class TimerService {
 				duration: 0,
 				source: source || TimeLogSourceEnum.WEB_TIMER,
 				logType: logType || TimeLogType.TRACKED,
-				projectId: projectId || null,
+				projectId: projectIdToLog,
 				taskId: taskId || null,
 				organizationContactId: organizationContactId || null,
 				organizationTeamId: organizationTeamId || null,
@@ -325,6 +324,33 @@ export class TimerService {
 
 		// Return the newly created time log entry
 		return timeLog;
+	}
+
+	/**
+	 * The project a started log is filed under: the one the start names, or for an Ever Teams start that names a task
+	 * and no project, the task's own project, so its time shows in the project's reports.
+	 *
+	 * @param request The start request.
+	 * @param organizationId The employee's organization.
+	 * @param tenantId The caller's tenant.
+	 */
+	private async projectIdForStart(request: ITimerToggleInput, organizationId: ID, tenantId: ID): Promise<ID | null> {
+		const { projectId, taskId, source } = request;
+		if (projectId) {
+			return projectId;
+		}
+		const takesTaskProject = PROJECT_FROM_TASK_SOURCES.includes(source);
+		if (!takesTaskProject) {
+			return null;
+		}
+		if (!taskId) {
+			return null;
+		}
+		const task = await this.typeOrmTimeLogRepository.manager.findOne(Task, {
+			where: { id: taskId, tenantId, organizationId },
+			select: { id: true, projectId: true }
+		});
+		return task?.projectId ?? null;
 	}
 
 	/**
