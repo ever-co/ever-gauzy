@@ -1,3 +1,4 @@
+// cspell:ignore elodie
 jest.mock('@gauzy/config', () => ({
 	environment: {
 		demo: false,
@@ -39,10 +40,15 @@ import {
 	ACCOUNT_DELETION_INVALID_LINK_MESSAGE,
 	ACCOUNT_DELETION_PARTIAL_MESSAGE,
 	AccountDeletionService,
+	accountDeletionEmailPatterns,
 	outcomeFor,
 	planHashOf
 } from './account-deletion.service';
-import { generateAccountDeletionToken, hashAccountDeletionToken } from './account-deletion-token';
+import {
+	generateAccountDeletionToken,
+	hashAccountDeletionToken,
+	normalizeAccountDeletionEmail
+} from './account-deletion-token';
 
 function queryBuilder() {
 	const builder: any = {};
@@ -150,20 +156,71 @@ describe('AccountDeletionService', () => {
 
 			expect(users.map(({ id }: { id: string }) => id)).toEqual(['u1']);
 			expect(recorded).toEqual({
-				sql: 'LOWER(TRIM(user.email)) LIKE :pattern',
-				params: { pattern: '_lodie@example.com' }
+				sql: "(LOWER(TRIM(user.email)) LIKE :pattern0 ESCAPE '!')",
+				params: { pattern0: '_lodie@example.com' }
 			});
 		});
 
-		it('relies on what SQLite does: LOWER keeps a non-ASCII capital, and `_` stands for any one letter', () => {
+		it('narrows to addresses of the same length and the same ASCII characters', () => {
+			// Each non-ASCII letter, and `k` (the Kelvin sign lowercases to it), stands for any one letter
+			expect(accountDeletionEmailPatterns('élodie@example.com')).toEqual(['_lodie@example.com']);
+			expect(accountDeletionEmailPatterns('jörg.k@example.com')).toEqual(['j_rg._@example.com']);
+			// `İ` lowercases to two letters: stored as the one capital, or as the two of its decomposed spelling
+			expect(accountDeletionEmailPatterns('i\u0307pek@example.com')).toEqual([
+				'_pe_@example.com',
+				'i_pe_@example.com'
+			]);
+			// The address's own `%`, `_` and `!` are characters, not wildcards: no address widens it to a domain
+			expect(accountDeletionEmailPatterns('%é_!@example.com')).toEqual(['!%_!_!!@example.com']);
+		});
+
+		// On a real SQLite table, the condition findUsersByEmail sends and the comparison it makes of the rows.
+		it('finds every stored spelling on SQLite, and nothing an address with wildcards would widen to', () => {
 			// eslint-disable-next-line @typescript-eslint/no-require-imports
 			const Database = require('better-sqlite3');
 			const db = new Database(':memory:');
 			try {
-				const row = db
-					.prepare('SELECT LOWER(TRIM(?)) = ? AS equal, LOWER(TRIM(?)) LIKE ? AS alike')
-					.get(' Élodie@Example.com ', 'élodie@example.com', ' Élodie@Example.com ', '_lodie@example.com');
-				expect(row).toEqual({ equal: 0, alike: 1 });
+				db.exec('CREATE TABLE "user" ("id" TEXT, "email" TEXT)');
+				const insert = db.prepare('INSERT INTO "user" ("id", "email") VALUES (?, ?)');
+				for (const [id, email] of [
+					['elodie', ' Élodie@Example.com '],
+					['other', 'xlodie@example.com'],
+					['dotted', 'İpek@example.com'],
+					['decomposed', 'I\u0307pek@example.com'],
+					['plain', 'IPEK@example.com'],
+					['ada', 'ada@example.com'],
+					['bo', 'bo@example.com']
+				]) {
+					insert.run(id, email);
+				}
+				/** The rows SQL hands back for the address, and those of them the exact comparison keeps. */
+				const find = (address: string) => {
+					const email = normalizeAccountDeletionEmail(address);
+					const patterns = accountDeletionEmailPatterns(email);
+					const condition = patterns.map(() => `LOWER(TRIM("email")) LIKE ? ESCAPE '!'`).join(' OR ');
+					const rows: Array<{ id: string; email: string }> = db
+						.prepare(`SELECT "id", "email" FROM "user" WHERE ${condition} ORDER BY "id"`)
+						.all(...patterns);
+					return {
+						candidates: rows.map(({ id }) => id),
+						found: rows
+							.filter((row) => normalizeAccountDeletionEmail(row.email) === email)
+							.map(({ id }) => id)
+					};
+				};
+
+				// SQLite's LOWER keeps the non-ASCII capitals, so an equality in SQL found only the decomposed spelling,
+				// whose capital is an ASCII `I`
+				expect(
+					db
+						.prepare('SELECT "id" FROM "user" WHERE LOWER(TRIM("email")) IN (?, ?)')
+						.all('élodie@example.com', 'i\u0307pek@example.com')
+				).toEqual([{ id: 'decomposed' }]);
+				expect(find('élodie@example.com').found).toEqual(['elodie']);
+				// `İ` lowercases to `i` and a combining dot: both stored spellings are the same address
+				expect(find('İpek@example.com').found).toEqual(['decomposed', 'dotted']);
+				// `%` is a character of the address: no account of the domain is even read
+				expect(find('%é@example.com')).toEqual({ candidates: [], found: [] });
 			} finally {
 				db.close();
 			}
