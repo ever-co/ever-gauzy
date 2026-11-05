@@ -25,8 +25,9 @@ describe('EditEmployeeProjectsComponent remove from project', () => {
 		});
 		component.organization = ORGANIZATION as any;
 		component.selectedEmployee = EMPLOYEE as any;
-		component.removeDialog = {} as any;
+		Object.assign(component, { removeDialog: {} }); // a readonly query, set by Angular in the app
 		component.removingId = null;
+		component.loading = false;
 		component.saving = false;
 		component.viewedProject = null;
 		component['_dialogService'] = { open };
@@ -120,5 +121,82 @@ describe('EditEmployeeProjectsComponent remove from project', () => {
 
 		expect(open).not.toHaveBeenCalled();
 		expect(updateByEmployee).not.toHaveBeenCalled();
+	});
+
+	it('refuses while the rows are loading: they may still be the previous employee’s', async () => {
+		const { component, open, updateByEmployee } = tabWith(true);
+		component.loading = true;
+
+		await component.remove(ROW);
+
+		expect(open).not.toHaveBeenCalled();
+		expect(updateByEmployee).not.toHaveBeenCalled();
+	});
+
+	it('removes nothing when the tab switched employee while the dialog was open', async () => {
+		const { component, updateByEmployee } = tabWith(true);
+
+		const removing = component.remove(ROW);
+		// Another employee's Projects route, before Remove is clicked in the dialog.
+		component.selectedEmployee = { id: 'employee-2' } as any;
+		await removing;
+
+		expect(updateByEmployee).not.toHaveBeenCalled();
+	});
+
+	it('CONTROL: still removes when the store re-emits the same employee while the dialog is open', async () => {
+		const { component, updateByEmployee } = tabWith(true);
+
+		const removing = component.remove(ROW);
+		component.selectedEmployee = { ...EMPLOYEE } as any; // the store re-emits the same employee
+		await removing;
+
+		expect(updateByEmployee).toHaveBeenCalledWith(expect.objectContaining({ member: EMPLOYEE }));
+	});
+});
+
+/**
+ * Switching employee drops what belonged to the previous one: its rows, and any dialog still open for it.
+ */
+describe('EditEmployeeProjectsComponent switching employee', () => {
+	const ORGANIZATION = { id: 'org-1', tenantId: 'tenant-1' } as any;
+
+	const tabShowing = (employeeId: string) => {
+		const component = Object.create(EditEmployeeProjectsComponent.prototype) as EditEmployeeProjectsComponent &
+			Record<string, any>;
+		component.organization = ORGANIZATION;
+		component.selectedEmployee = { id: employeeId } as any;
+		component.rows = [{ id: 'project-1', name: 'Design System' } as IEmployeeProjectRow];
+		component.availableRows = [{ id: 'project-2', name: 'Cloud Infrastructure' } as IEmployeeProjectRow];
+		component.searchTerm = 'design';
+		component['_removeRef'] = { close: jest.fn() };
+		component['_assignRef'] = { close: jest.fn() };
+		return component;
+	};
+
+	it('clears the previous employee’s rows and search, and closes their dialogs', () => {
+		const component = tabShowing('employee-1');
+		const removeRef = component['_removeRef'];
+		const assignRef = component['_assignRef'];
+
+		component.selectContext(ORGANIZATION, { id: 'employee-2' } as any);
+
+		expect(component.selectedEmployee.id).toBe('employee-2');
+		expect(component.rows).toEqual([]);
+		expect(component.availableRows).toEqual([]);
+		expect(component.searchTerm).toBe('');
+		expect(removeRef.close).toHaveBeenCalledWith(false);
+		expect(assignRef.close).toHaveBeenCalled();
+	});
+
+	it('CONTROL: the same employee again keeps the rows and the dialogs', () => {
+		const component = tabShowing('employee-1');
+
+		component.selectContext(ORGANIZATION, { id: 'employee-1' } as any);
+
+		expect(component.rows.length).toBe(1);
+		expect(component.searchTerm).toBe('design');
+		expect(component['_removeRef'].close).not.toHaveBeenCalled();
+		expect(component['_assignRef'].close).not.toHaveBeenCalled();
 	});
 });
