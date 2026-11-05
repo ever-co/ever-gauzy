@@ -1,4 +1,16 @@
 @use '@shared/employee-tab-panel' as *;
+@use 'var' as v;
+
+// The employee's projects, in the manner of Jira's and Hubstaff's member lists: a
+// header with count, caption, search and the primary action, then a real table -
+// quiet uppercase column headings, hairline rows, logo tiles, status lozenges and
+// an avatar stack. Every tint is a color-mix against `transparent`, so the same
+// rule reads on the light canvas and on the dark one.
+
+$radius: nb-theme(border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
+$columns: minmax(0, 1fr) 7.5rem 8rem 9rem 9rem 5rem;
+$columns-md: minmax(0, 1fr) 7.5rem 8rem 5rem;
 
 :host {
   @include employee-tab-host;
@@ -11,11 +23,646 @@
   height: auto;
   flex: 1 0 auto;
   min-height: 0;
+}
 
-  > ga-edit-employee-membership {
-    display: flex;
+.projects {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
+}
+
+// -- Header --
+.projects__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: $hairline;
+}
+
+.projects__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.projects__title {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.375rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.projects__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.375rem;
+  height: 1.25rem;
+  margin-inline-start: 0.5rem;
+  padding: 0 0.4375rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.projects__caption {
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.projects__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  button nb-icon {
+    margin-inline-end: 0.25rem;
+  }
+}
+
+.projects__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0;
+
+  nb-icon {
+    position: absolute;
+    inset-inline-start: 0.625rem;
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    color: var(--gauzy-text-color-2);
+    pointer-events: none;
+  }
+
+  input {
+    width: 15rem;
+    max-width: 100%;
+    padding-inline-start: 2rem;
+  }
+}
+
+// -- Assign --
+.projects__assign {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-bottom: $hairline;
+  background-color: color-mix(in srgb, nb-theme(color-primary-500) 5%, transparent);
+}
+
+.projects__select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.projects__assign-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.5rem;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.option__meta {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: nb-theme(text-hint-color);
+}
+
+// -- Table --
+.projects__table {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.projects__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.projects__row {
+  display: grid;
+  grid-template-columns: $columns;
+  align-items: center;
+  column-gap: 1rem;
+  padding: 0.625rem 1.25rem;
+  min-height: 3.5rem;
+  border-bottom: $hairline;
+  transition: background-color 0.15s ease-in-out;
+
+  > [role='cell'] {
+    min-width: 0;
+  }
+
+  &:not(.projects__row--head):hover,
+  &.is-viewed {
+    background-color: var(--gauzy-hover-tint);
+  }
+
+  &.is-viewed {
+    box-shadow: inset 2px 0 0 nb-theme(color-primary-500);
+  }
+
+  &.is-busy {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.projects__list .projects__row:last-child {
+  border-bottom: 0;
+}
+
+.projects__row--head {
+  min-height: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  background-color: var(--gauzy-card-2);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: nb-theme(text-hint-color);
+}
+
+.col-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.125rem;
+}
+
+// Project cell
+.cell-project {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo {
+  --logo: #{nb-theme(color-primary-500)};
+
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+  background-color: color-mix(in srgb, var(--logo) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--logo) 35%, transparent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--gauzy-text-color-1);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.project-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.project-name {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--gauzy-text-color-1);
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: nb-theme(text-primary-color);
+    text-decoration: underline;
+  }
+}
+
+.project-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.125rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+
+  nb-icon {
+    width: 0.8125rem;
+    height: 0.8125rem;
+    font-size: 0.8125rem;
+    margin-inline-end: 0.25rem;
+    vertical-align: -0.125rem;
+  }
+}
+
+.project-key {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.project-client,
+.project-visibility {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+// Role
+.role {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+  white-space: nowrap;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+  }
+}
+
+.role--manager {
+  background-color: color-mix(in srgb, nb-theme(color-primary-500) 14%, transparent);
+  color: nb-theme(text-primary-color);
+}
+
+// Status lozenge, as Jira draws them: uppercase, tinted by tone.
+.lozenge {
+  --tone: #{nb-theme(text-hint-color)};
+
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.125rem 0.4375rem;
+  border-radius: 0.1875rem;
+  background-color: color-mix(in srgb, var(--tone) 16%, transparent);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tone);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.tone-basic {
+    color: var(--gauzy-text-color-2);
+  }
+  &.tone-info {
+    --tone: #{nb-theme(color-info-500)};
+  }
+  &.tone-success {
+    --tone: #{nb-theme(color-success-500)};
+  }
+  &.tone-danger {
+    --tone: #{nb-theme(color-danger-500)};
+  }
+}
+
+// Members avatar stack
+.stack {
+  display: inline-flex;
+  align-items: center;
+  padding-inline-start: 0.25rem;
+}
+
+.stack__avatar {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-inline-start: -0.25rem;
+  border-radius: 50%;
+  background-color: var(--gauzy-active-tint);
+  box-shadow: 0 0 0 1.5px var(--gauzy-card-3);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--gauzy-text-color-1);
+  overflow: hidden;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+}
+
+.stack__more {
+  background-color: var(--gauzy-hover-tint);
+  color: var(--gauzy-text-color-2);
+}
+
+// Billing
+.billing {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--gauzy-text-color-1);
+  white-space: nowrap;
+}
+
+.billing__currency {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-2);
+}
+
+.muted {
+  color: var(--gauzy-text-color-2);
+}
+
+// Row actions: quiet until the row is hovered or focused.
+.row-action {
+  opacity: 0.55;
+  transition: opacity 0.15s ease-in-out;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+.projects__row:hover .row-action,
+.projects__row:focus-within .row-action,
+.projects__row.is-viewed .row-action {
+  opacity: 1;
+}
+
+.projects__footer {
+  padding: 0.625rem 1.25rem;
+  border-top: $hairline;
+  font-size: 0.75rem;
+  color: var(--gauzy-text-color-2);
+}
+
+// -- Empty states --
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  padding: 3rem 1.5rem;
+  text-align: center;
+
+  button nb-icon {
+    margin-inline-end: 0.25rem;
+  }
+}
+
+.empty__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.25rem;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, nb-theme(color-primary-500) 14%, transparent);
+
+  nb-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 1.5rem;
+    color: nb-theme(text-primary-color);
+  }
+}
+
+.empty__icon {
+  width: 2rem;
+  height: 2rem;
+  font-size: 2rem;
+  color: nb-theme(text-hint-color);
+}
+
+.empty__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-1);
+}
+
+.empty__text {
+  max-width: 26rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: var(--gauzy-text-color-2);
+}
+
+// -- Remove confirmation dialog --
+// Rendered in the dialog overlay, but declared in this template, so these rules still reach it.
+.remove-dialog {
+  width: 28rem;
+  max-width: calc(100vw - 2rem);
+  margin: 0;
+  border-radius: $radius;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.35);
+}
+
+.remove-dialog__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0.75rem 1.25rem;
+  border-bottom: 0;
+}
+
+.remove-dialog__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, nb-theme(color-danger-500) 16%, transparent);
+
+  nb-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+    color: nb-theme(color-danger-500);
+  }
+}
+
+.remove-dialog__title {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.remove-dialog__close {
+  flex: 0 0 auto;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+.remove-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.25rem 1.25rem 1.25rem;
+}
+
+.remove-dialog__project {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border: $hairline;
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+  background-color: var(--gauzy-hover-tint);
+}
+
+.remove-dialog__project-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: var(--gauzy-text-color-1);
+  overflow-wrap: anywhere;
+}
+
+.remove-dialog__message {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.remove-dialog__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.remove-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  border-top: $hairline;
+}
+
+.remove-dialog__confirm nb-icon {
+  margin-inline-end: 0.25rem;
+}
+
+// -- Narrow screens: members and billing step aside --
+@media only screen and (max-width: v.$break-lg) {
+  .projects__row {
+    grid-template-columns: $columns-md;
+  }
+
+  .col-members,
+  .col-billing {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: v.$break-md) {
+  .container-projects {
+    padding: 0.75rem;
+  }
+
+  .projects__header,
+  .projects__assign {
+    padding-inline: 1rem;
+  }
+
+  .projects__assign {
     flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
+    align-items: stretch;
+  }
+
+  .projects__assign-actions {
+    justify-content: flex-end;
+  }
+
+  .projects__search input {
+    width: 100%;
+  }
+
+  .projects__row {
+    grid-template-columns: minmax(0, 1fr) auto 5rem;
+    padding-inline: 1rem;
+  }
+
+  // Phones keep project, status and actions.
+  .projects__row > [role='cell']:nth-child(2),
+  .projects__row--head > :nth-child(2) {
+    display: none;
   }
 }
