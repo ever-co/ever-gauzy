@@ -1,7 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 import { IEmployee, IEmployeeUpdateInput } from '@gauzy/contracts';
 
-/** The fields an organization may stop its employees from changing on their own record. */
+/** The rate fields one changes on one's own employee record only with CHANGE_OWN_RATES. */
 export const OWN_RATE_FIELDS = [
 	'billRateValue',
 	'billRateCurrency',
@@ -19,7 +19,7 @@ const NUMERIC_RATE_FIELDS: ReadonlySet<OwnRateField> = new Set<OwnRateField>([
 ]);
 
 export const OWN_RATES_LOCKED_MESSAGE =
-	'Your organization does not let employees change their own rates. Send a rate change request to an admin instead.';
+	'You cannot change your own rates. Send a rate change request to an admin instead.';
 
 /**
  * Empty, null and zero are the same amount: the profile form sends an empty rate as it is, and the billing rate
@@ -58,25 +58,24 @@ export function changedOwnRateFields(stored: Partial<IEmployee>, input: Partial<
 }
 
 /**
- * Refuses an employee's change to their own rates when their organization turned `allowEmployeesToEditOwnRates` off.
- * Someone who may edit every employee is never held to it, and every other field of the profile still saves.
+ * Refuses a change to one's own rates without CHANGE_OWN_RATES, which SUPER_ADMIN and ADMIN hold by default: an
+ * employee sees their rates and sends a rate change request instead. Someone else's rates need ORG_EMPLOYEES_EDIT,
+ * which the edit route already requires. Every other field of the profile still saves.
  *
- * @param employee - The stored employee, with its organization.
+ * @param employee - The stored employee.
  * @param input - The update.
- * @param caller - Whether the caller edits their own record, and whether they may edit every employee.
- * @throws ForbiddenException when a locked rate field would change.
+ * @param caller - Whether the caller edits their own record, and whether they may change their own rates.
+ * @throws ForbiddenException when a rate field of one's own record would change.
  */
 export function assertOwnRatesMayChange(
 	employee: Partial<IEmployee>,
 	input: Partial<IEmployeeUpdateInput>,
-	caller: { editsOwnRecord: boolean; editsEveryEmployee: boolean }
+	caller: { editsOwnRecord: boolean; changesOwnRates: boolean }
 ): void {
-	const isSelfEdit = caller.editsOwnRecord && !caller.editsEveryEmployee;
-	if (!isSelfEdit) {
+	if (!caller.editsOwnRecord) {
 		return;
 	}
-	const ratesLocked = employee.organization?.allowEmployeesToEditOwnRates === false;
-	if (!ratesLocked) {
+	if (caller.changesOwnRates) {
 		return;
 	}
 	const changed = changedOwnRateFields(employee, input);

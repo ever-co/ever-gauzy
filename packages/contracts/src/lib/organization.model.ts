@@ -339,5 +339,4 @@ export interface IOrganizationTimerSetting {
 	trackKeyboardMouseActivity?: boolean;
 	trackAllDisplays?: boolean;
 	allowEmployeeToSeeTrackedData?: boolean;
-	allowEmployeesToEditOwnRates?: boolean;
 }

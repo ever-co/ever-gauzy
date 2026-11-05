@@ -66,10 +66,8 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		});
 
 		const editsOwnRecord = user?.employeeId === id;
-		const editsEveryEmployee =
-			RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT) ||
-			RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
-		assertOwnRatesMayChange(employee, input, { editsOwnRecord, editsEveryEmployee });
+		const changesOwnRates = RequestContext.hasPermission(PermissionsEnum.CHANGE_OWN_RATES);
+		assertOwnRatesMayChange(employee, input, { editsOwnRecord, changesOwnRates });
 		// The worker's own location and their organization's: EEA/UK if either is.
 		const previousLocation = employeeAgentRestrictionLocations(employee);
 		const location = employeeAgentRestrictionLocations(employee, input.contact);

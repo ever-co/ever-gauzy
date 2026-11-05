@@ -588,21 +588,6 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ default: true })
 	allowEmployeeToSeeTrackedData?: boolean;
 
-	/**
-	 * Whether employees may change their own rates and weekly limit (bill rate, its currency, minimum billing rate,
-	 * pay period, weekly limit). On by default: freelancer workspaces set their own rates. Off, only someone who may
-	 * edit every employee changes them, and an employee sends a rate change request instead.
-	 */
-	@ApiPropertyOptional({
-		type: () => Boolean,
-		description: 'Allow employees to change their own rates and weekly limit.',
-		example: true
-	})
-	@IsOptional()
-	@IsBoolean()
-	@MultiORMColumn({ default: true })
-	allowEmployeesToEditOwnRates?: boolean;
-
 	/*
 	|--------------------------------------------------------------------------
 	| @ManyToOne
