@@ -42,7 +42,8 @@ describe('TimerService.stopRunningTimersOf', () => {
 			{ update: updateEmployee } as never,
 			undefined as never,
 			undefined as never,
-			{ execute } as never
+			{ execute } as never,
+			undefined as never
 		);
 		Object.assign(service, { ormType: MultiORMEnum.TypeORM });
 	});
