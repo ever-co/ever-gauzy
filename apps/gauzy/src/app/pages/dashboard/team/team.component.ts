@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import * as moment from 'moment';
-import { combineLatest, debounceTime, filter, tap } from 'rxjs';
+import { combineLatest, debounceTime, filter, merge, tap } from 'rxjs';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -9,6 +9,7 @@ import {
 	IOrganizationTeam,
 	ISelectedEmployee,
 	ITimeLog,
+	PermissionsEnum,
 	ReportGroupFilterEnum,
 	RolesEnum
 } from '@gauzy/contracts';
@@ -188,7 +189,8 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 				untilDestroyed(this)
 			)
 			.subscribe();
-		this.store.user$
+		// Who may open the members' cards depends on the user and on their permissions, which load on their own
+		merge(this.store.user$, this.store.userRolePermissions$)
 			.pipe(
 				filter(() => this._todayTeamsWorkers.length > 0),
 				tap(() => this._buildRows()),
@@ -660,9 +662,12 @@ export class TeamComponent extends BaseSelectorFilterComponent implements OnInit
 		};
 	}
 
+	/**
+	 * Whether the user may see every member's card and open their profile: the permission the profile page itself
+	 * requires (`/pages/employees/view/:id`), which only Admins and Super Admins hold by default.
+	 */
 	private _canViewEveryone(): boolean {
-		const role = this.store.user?.role?.name;
-		return role === RolesEnum.SUPER_ADMIN || role === RolesEnum.ADMIN;
+		return this.store.hasPermission(PermissionsEnum.ORG_EMPLOYEES_VIEW);
 	}
 
 	private _canViewDetailsOf(employeeId: string): boolean {
