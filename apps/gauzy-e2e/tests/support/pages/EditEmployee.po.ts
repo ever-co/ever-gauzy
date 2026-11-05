@@ -291,18 +291,25 @@ export const clickProjectOrContactDropdown = async () => {
 };
 
 export const selectProjectOrContactFromDropdown = async (index: number) => {
-	// #departmentsSelect (Contacts, <ga-edit-employee-membership>) or #projectsSelect (Projects,
-	// <ga-edit-employee-projects>) is the tab's ng-select (multiple, hideSelected,
-	// appendTo="body"). Driven through the shared ng-select driver: it opens the control by keyboard,
+	// Projects (<ga-edit-employee-projects>): the assign dialog's checklist — tick the index-th project.
+	// Contacts (<ga-edit-employee-membership>): #departmentsSelect, an ng-select (multiple, hideSelected,
+	// appendTo="body"), driven through the shared ng-select driver: it opens the control by keyboard,
 	// counts only REAL options (ng-select's "No items found" row is also a `div.ng-option`, which the old
 	// loop happily "clicked" as if it were a project), and confirms the pick by the chip it commits.
 	// BEST-EFFORT by design: the list is "all org entities MINUS the ones already assigned to this
 	// employee", so on the Projects tab it is legitimately EMPTY when CustomCommands.addProject already
-	// made this employee a member of every project. In that case nothing is picked, the add form's "Add"
+	// made this employee a member of every project. In that case nothing is picked, the "Assign"/"Add"
 	// stays disabled, and the caller's verifyProjectOrContactExist still checks the employee's list.
 	const page = getPage();
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
+	if (await page.locator('#assignProjectsSearch').count()) {
+		const option = page.locator(EditEmployeePage.projectAssignOptionCss).nth(index);
+		if (await option.count()) {
+			await option.click();
+		}
+		return; // no Escape here: it would close the assign dialog
+	}
 	await selectNgOption(
 		EditEmployeePage.projectOrContactsDropdownCss,
 		EditEmployeePage.projectOrContactDropdownOptionCss,
@@ -323,6 +330,16 @@ export const clickSaveProjectOrContactButton = async () => {
 	// button only gates on form.invalid, which is satisfied once an option is picked).
 	await waitForSpinnerGone();
 	await dispatchClick(EditEmployeePage.saveProjectOrContactButtonCss);
+	// Projects: the assign dialog closes once the server took the ticks. With nothing left to tick its
+	// "Assign" stays disabled and the dialog open; close it so its backdrop can't swallow the next tab click.
+	const page = getPage();
+	const dialog = page.locator('.assign-dialog');
+	if (await dialog.count()) {
+		await dialog.waitFor({ state: 'detached', timeout: 10000 }).catch(async () => {
+			await page.keyboard.press('Escape').catch(() => {});
+			await dialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
+		});
+	}
 };
 
 export const verifyProjectOrContactExist = async () => {
