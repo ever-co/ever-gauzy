@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual, Or, Equal } from 'typeorm';
 import * as moment from 'moment';
 import {
 	TimeLogType,
@@ -360,7 +360,15 @@ export class TimerService {
 			return;
 		}
 		const membership = await this.typeOrmTimeLogRepository.manager.findOne(OrganizationTeamEmployee, {
-			where: { employeeId, organizationTeamId, organizationId, tenantId },
+			// A membership left inactive or archived no longer ties the employee to the team (NULL counts as current)
+			where: {
+				employeeId,
+				organizationTeamId,
+				organizationId,
+				tenantId,
+				isActive: Or(IsNull(), Equal(true)),
+				isArchived: Or(IsNull(), Equal(false))
+			},
 			select: { id: true, isTrackingEnabled: true }
 		});
 		const isTrackingOffInTeam = membership?.isTrackingEnabled === false;
