@@ -119,6 +119,8 @@ describe('TimerService.getTimerStatus for another employee', () => {
 
 			expect(await relationsReadFor('member-employee')).toEqual(['task']);
 			expect(assertSensitiveRelationsAllowed).toHaveBeenCalledWith({}, RELATIONS);
+			const [lookup] = findLastTimeLog.mock.calls[0];
+			expect(lookup.where).toEqual(expect.objectContaining({ employeeId: 'member-employee' }));
 		});
 
 		it('keeps every relation for a caller who may act for every employee, and on the caller own log', async () => {
