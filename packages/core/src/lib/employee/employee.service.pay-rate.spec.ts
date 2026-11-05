@@ -6,9 +6,9 @@ import { RequestContext } from '../core/context';
 import { EmployeeService } from './employee.service';
 
 /**
- * A pay rate is salary data. The employee reads their own, and a holder of ORG_EMPLOYEES_EDIT reads and sets anyone's;
- * a teammate reads nothing. Nobody changes their own pay rate by editing their own record, whatever their rights:
- * another rate editor sets it.
+ * A pay rate is salary data. The employee reads their own, and a holder of ORG_EMPLOYEES_EDIT reads and sets anyone's,
+ * their own included; a teammate reads nothing. An employee without that right never changes their own pay rate by
+ * editing their own record.
  */
 
 const TENANT = 'tenant-1';
@@ -89,10 +89,8 @@ describe('EmployeeService pay rate', () => {
 		});
 	});
 
-	describe('editing one’s own record', () => {
-		it('refuses a change of one’s own pay rate, to a rate editor too', async () => {
-			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
-
+	describe("editing one's own record", () => {
+		it('refuses an employee without the right to set pay rates a change of their own', async () => {
 			await expect(service.assertOwnPayRateUnchanged('employee-ana', { payRateValue: 45 })).rejects.toThrow(
 				ForbiddenException
 			);
@@ -104,7 +102,16 @@ describe('EmployeeService pay rate', () => {
 			);
 		});
 
-		it('lets a save that sends the stored pay rate again, or none, through', async () => {
+		it('lets a rate editor, an admin or owner who is also an employee, set their own pay rate', async () => {
+			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
+
+			await expect(
+				service.assertOwnPayRateUnchanged('employee-ana', { payRateValue: 45 })
+			).resolves.toBeUndefined();
+			expect(find).not.toHaveBeenCalled();
+		});
+
+		it("lets an employee's own save that sends the stored pay rate again, or none, through", async () => {
 			await expect(
 				service.assertOwnPayRateUnchanged('employee-ana', { payRateValue: 30, payRateCurrency: null })
 			).resolves.toBeUndefined();

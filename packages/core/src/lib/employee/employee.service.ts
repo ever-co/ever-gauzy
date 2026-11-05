@@ -1227,14 +1227,19 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	}
 
 	/**
-	 * Refuses an edit of one's own employee record that would change one's own pay rate, whatever the caller's rights:
-	 * another rate editor sets it. Sending the stored value again passes.
+	 * Refuses an edit of one's own employee record that would change one's own pay rate, unless the caller may set
+	 * every employee's pay rate (ORG_EMPLOYEES_EDIT): an admin or an owner who is also an employee sets their own.
+	 * Sending the stored value again passes.
 	 *
 	 * @throws ForbiddenException when the pay rate would change.
 	 */
 	async assertOwnPayRateUnchanged(employeeId: ID, input: IEmployeeUpdateInput): Promise<void> {
 		const isOwnRecord = RequestContext.currentEmployeeId() === employeeId;
 		if (!isOwnRecord) {
+			return;
+		}
+		const editsRates = RequestContext.hasPermission(PermissionsEnum.ORG_EMPLOYEES_EDIT);
+		if (editsRates) {
 			return;
 		}
 		const sendsPayRate = input.payRateValue !== undefined || input.payRateCurrency !== undefined;
@@ -1244,7 +1249,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 		const tenantId = RequestContext.currentTenantId();
 		const [stored] = await findStoredPayRates(this.typeOrmRepository.manager, [employeeId], tenantId);
 		if (changesPayRate(stored, input)) {
-			throw new ForbiddenException('You cannot change your own pay rate. Another rate editor sets it.');
+			throw new ForbiddenException('You cannot change your own pay rate. An organization rate editor sets it.');
 		}
 	}
 }
