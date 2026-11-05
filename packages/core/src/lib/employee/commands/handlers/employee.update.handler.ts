@@ -16,7 +16,7 @@ import {
 	employeeAgentRestrictionLocations,
 	recordAgentRestrictionAcknowledgement
 } from './../../agent-exit-logout-restriction';
-import { assertOwnRatesMayChange, isSameId, removeOwnRateFields } from './../../own-rates';
+import { assertOwnRatesMayChange, isSameId, removeOwnRateFields, withStoredOwnRates } from './../../own-rates';
 import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
 
 /** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
@@ -139,6 +139,11 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 				throw error;
 			}
 			throw new BadRequestException(error.message || 'Failed to update employee profile.');
+		}
+
+		if (keepsStoredRates) {
+			const persisted = await this._employeeService.findOneByIdString(id);
+			saved = withStoredOwnRates(saved, persisted);
 		}
 
 		if (turnsTrackingOff(employee, saved)) {

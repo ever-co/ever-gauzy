@@ -105,3 +105,15 @@ export function removeOwnRateFields(changes: Partial<IEmployeeUpdateInput>): voi
 		delete changes[field];
 	}
 }
+
+/**
+ * The saved employee with its rates as stored. A self save without CHANGE_OWN_RATES leaves the rates out of the
+ * write, so the save answers without them; the stored ones are read back, never the ones the request sent.
+ */
+export function withStoredOwnRates(saved: IEmployee, persisted: Partial<IEmployee>): IEmployee {
+	const answer: IEmployee = { ...saved };
+	for (const field of OWN_RATE_FIELDS) {
+		(answer as Record<string, unknown>)[field] = persisted?.[field];
+	}
+	return answer;
+}

@@ -78,6 +78,21 @@ describe('EmployeeUpdateHandler — an employee changing their own rates', () =>
 		expect(written).toEqual({ id: OWN_ID, githubUrl: 'https://github.com/someone' });
 	});
 
+	it('answers the stored rates after a self save that left them out of the write', async () => {
+		const answer = await update(OWN_ID, { billRateValue: 25, githubUrl: 'https://github.com/someone' });
+
+		expect(answer).toEqual(
+			expect.objectContaining({
+				id: OWN_ID,
+				githubUrl: 'https://github.com/someone',
+				billRateValue: 25,
+				billRateCurrency: CurrenciesEnum.USD,
+				payPeriod: PayPeriodEnum.WEEKLY,
+				reWeeklyLimit: 40
+			})
+		);
+	});
+
 	it('saves a social links only edit', async () => {
 		await update(OWN_ID, { linkedInUrl: 'https://linkedin.com/in/someone' });
 
