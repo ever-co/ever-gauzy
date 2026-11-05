@@ -144,17 +144,17 @@ export class OrganizationTeamEmployeeService extends TenantAwareCrudService<Orga
 				// they were, every plain member was rewritten on each edit of the team.
 				const roleChanged = (newRole?.id ?? null) !== (member.roleId ?? null);
 				const flagChanged = !!member.isManager !== isManager;
-				// A member left out of the managers who keeps a custom role loses the manager flag whoever edits: before
-				// #6569 their role was cleared, and the flag with it. Only setting the flag still needs `flagsManagers`.
-				const keepsRoleLeavesManagers = !isManager && !!newRole;
-				// A promotion by a caller who may not flag managers gives the role only, as for a new member: the role
-				// alone must never hand on the right to act for the team's members.
+				// Taking the manager flag away needs no right: a member left out of the managers loses it whoever edits
+				// the team, a flag-only manager included. Only giving it needs `flagsManagers`, and a promotion by any
+				// other caller gives the role only, as for a new member.
+				const clearsFlag = flagChanged && !isManager;
+				const grantsFlag = flagChanged && flagsManagers;
 				const grantsFlagWithoutRight = isManager && !flagsManagers;
 				const changes: Partial<OrganizationTeamEmployee> = { role: newRole };
 				if (!grantsFlagWithoutRight) {
 					changes.isManager = isManager;
 				}
-				if (roleChanged || (flagChanged && (flagsManagers || keepsRoleLeavesManagers))) {
+				if (roleChanged || clearsFlag || grantsFlag) {
 					await this.withoutEmployeeFilter(() => super.update(member.id, changes));
 				}
 			})

@@ -317,6 +317,25 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		]);
 	});
 
+	it('clears the flag of a flag-only manager a role-only caller leaves out of the managers', async () => {
+		// The member holds the flag without any role, as older rows can
+		const memberRow = rows.find((row) => row.id === 'row-member');
+		memberRow.isManager = true;
+
+		try {
+			await asUnflaggedManager(() => editTeam(['manager-employee'], ['member-employee']));
+		} finally {
+			memberRow.isManager = false;
+		}
+
+		expect(updated).toEqual([
+			{
+				id: expect.objectContaining({ id: 'row-member', tenantId: manager.tenantId }),
+				changes: { role: null, isManager: false }
+			}
+		]);
+	});
+
 	it('does not let a manager flagged only on another team flag managers on this one', async () => {
 		const otherTeamRow = {
 			id: 'row-manager-other-team',
