@@ -443,15 +443,19 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 	}
 
 	/**
-	 * Creates a new project with the given name.
+	 * Creates a new project with the given name: ng-select's `addTag`, typed in the search box.
+	 *
+	 * ng-select selects whatever this resolves to, as if it were picked from the list: its model update sets
+	 * `projectId` and its change event runs `selectProject`. So it resolves to the created project, and rejects
+	 * when there is none (ng-select ignores a rejected tag). Resolving nothing made ng-select select an empty
+	 * item, which set the selection back to none right after the new project was set.
 	 *
 	 * @param {string} name - The name of the new project.
+	 * @returns The created project.
 	 */
-	createNew = async (name: string): Promise<void> => {
-		// Return early if organization or project name is not defined
+	createNew = async (name: string): Promise<IOrganizationProject> => {
 		if (!this.organization || !name) {
-			console.warn('Organization or project name is missing.');
-			return;
+			throw new Error('Organization or project name is missing.');
 		}
 
 		try {
@@ -470,18 +474,18 @@ export class ProjectSelectorComponent implements OnInit, OnDestroy, AfterViewIni
 				tenantId
 			});
 
-			// Handle the created project and update projectId
+			// Add the created project to the list; ng-select selects it once this resolves
 			this.createOrganizationProject(project);
-
-			// Set the newly created project's ID
-			this.projectId = project.id;
 
 			// Show success message
 			this._toastrService.success('NOTES.ORGANIZATIONS.EDIT_ORGANIZATIONS_PROJECTS.ADD_PROJECT', { name });
+
+			return project;
 		} catch (error) {
 			// Log and handle the error
 			console.error('Error while creating new project: ', error);
 			this._errorHandlingService.handleError(error);
+			throw error;
 		}
 	};
 

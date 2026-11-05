@@ -36,16 +36,19 @@ describe('ProjectSelectorComponent', () => {
 
 	let getAll: jest.Mock;
 	let getAllByEmployee: jest.Mock;
+	let create: jest.Mock;
 	let queryParams$: BehaviorSubject<Record<string, string>>;
 	let component: ProjectSelectorComponent;
 
 	beforeEach(() => {
 		getAll = jest.fn();
 		getAllByEmployee = jest.fn();
+		create = jest.fn();
 		queryParams$ = new BehaviorSubject<Record<string, string>>({});
 		component = new ProjectSelectorComponent(
-			{ getAll, getAllByEmployee } as unknown as OrganizationProjectsService,
+			{ getAll, getAllByEmployee, create } as unknown as OrganizationProjectsService,
 			{
+				user: { employee: { id: 'employee-1' } },
 				selectedOrganization$: of(organization),
 				userRolePermissions$: of([]),
 				hasAnyPermission: () => true
@@ -240,6 +243,33 @@ describe('ProjectSelectorComponent', () => {
 			await flush();
 
 			expect(component.projectId).toBe('page-project');
+		});
+	});
+	/*
+	 * ng-select's `addTag` selects whatever the function resolves to, as if it were picked from the list: its model
+	 * update sets `projectId` and its change event runs `selectProject`. The function used to set `projectId` itself
+	 * and resolve nothing, so ng-select then selected an empty item, which put the bound value back to none and the
+	 * selection (and, outside a form, the global project filter) on All projects.
+	 */
+	describe('creating a project from the search term', () => {
+		it('resolves to the project it created, for ng-select to select', async () => {
+			const created = project('apollo');
+			create.mockResolvedValue(created);
+			component.organization = organization;
+
+			await expect(component.createNew('apollo')).resolves.toBe(created);
+			expect(create).toHaveBeenCalledWith(
+				expect.objectContaining({ name: 'apollo', memberIds: ['employee-1'], organizationId: 'organization-1' })
+			);
+			expect(component.projects.map(({ id }) => id)).toContain('apollo');
+		});
+
+		it('rejects when nothing was created, so ng-select selects nothing', async () => {
+			create.mockRejectedValue(new Error('refused'));
+			component.organization = organization;
+
+			await expect(component.createNew('apollo')).rejects.toThrow('refused');
+			await expect(component.createNew('')).rejects.toThrow();
 		});
 	});
 });
