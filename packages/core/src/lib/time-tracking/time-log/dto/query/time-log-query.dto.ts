@@ -1,4 +1,4 @@
-import { ApiPropertyOptional, IntersectionType, PickType } from '@nestjs/swagger';
+import { ApiPropertyOptional, IntersectionType, OmitType, PickType } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, IsTimeZone, IsUUID } from 'class-validator';
 import { Transform, TransformFnParams } from 'class-transformer';
 import { IGetTimeLogReportInput, ITimesheet, ReportGroupFilterEnum } from '@gauzy/contracts';
@@ -33,7 +33,18 @@ export class TimeLogQueryDTO
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
 	readonly isEdited: boolean;
+
+	@ApiPropertyOptional({ type: () => Boolean, description: 'Count billable time logs only' })
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	readonly billableOnly: boolean;
 }
+
+/**
+ * The budget limit routes count every log against the budget through their own queries: `billableOnly` is not
+ * offered there, and the whitelist drops it if sent.
+ */
+export class TimeLogBudgetQueryDTO extends OmitType(TimeLogQueryDTO, ['billableOnly'] as const) {}
 
 /**
  * Get time log list request DTO validation: the filters above plus an optional page (`take`, and

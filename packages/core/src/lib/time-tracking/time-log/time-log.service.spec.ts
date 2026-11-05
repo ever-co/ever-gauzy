@@ -1485,4 +1485,51 @@ describe('TimeLogService', () => {
 			expect(await buildMikroOrmWhere({ ...request, isEdited: true })).toHaveProperty('editedAt', { $ne: null });
 		});
 	});
+
+	/**
+	 * Every log has a billable flag and no report read it: the amount owed counted non-billable time too. A report
+	 * that asks for billable logs only gets them; one that does not ask keeps every log, as all clients expect.
+	 */
+	describe('billableOnly filter', () => {
+		const request: IGetTimeLogReportInput = {
+			organizationId: ORGANIZATION_ID,
+			employeeIds: [TARGET_EMPLOYEE_ID],
+			startDate: '2026-01-05T00:00:00.000Z',
+			endDate: '2026-01-12T00:00:00.000Z',
+			timeZone: 'UTC'
+		};
+		const billableFilters = (conditions: string[]) =>
+			conditions.filter((condition) => condition.includes('isBillable'));
+		const buildMikroOrmWhere = (input: IGetTimeLogReportInput) =>
+			(service as unknown as { buildMikroOrmTimeLogWhere(i: IGetTimeLogReportInput): Promise<any> })
+				.buildMikroOrmTimeLogWhere(input);
+
+		beforeEach(() => {
+			mockRequestContext({
+				tenantId: TENANT_ID,
+				user: { id: USER_ID, employeeId: CURRENT_EMPLOYEE_ID },
+				canChangeSelectedEmployee: true
+			});
+		});
+
+		it('TypeORM: billableOnly keeps billable logs only', async () => {
+			await service.getOwedAmountReport({ ...request, billableOnly: true });
+
+			const executed = executedFilters(builder);
+			expect(billableFilters(executed.conditions)).toEqual(['"time_log"."isBillable" = :isBillable']);
+			expect(executed.parameters.isBillable).toBe(true);
+		});
+
+		it.each([undefined, false])('TypeORM: billableOnly %p applies no billable filter', async (value) => {
+			await service.getOwedAmountReport({ ...request, billableOnly: value });
+
+			expect(billableFilters(executedFilters(builder).conditions)).toEqual([]);
+		});
+
+		it('MikroORM: billableOnly keeps billable logs only, and its absence keeps every log', async () => {
+			expect(await buildMikroOrmWhere({ ...request, billableOnly: true })).toHaveProperty('isBillable', true);
+			expect(await buildMikroOrmWhere({ ...request, billableOnly: false })).not.toHaveProperty('isBillable');
+			expect(await buildMikroOrmWhere(request)).not.toHaveProperty('isBillable');
+		});
+	});
 });
