@@ -89,7 +89,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		const currentRoleId = RequestContext.currentRoleId();
 
 		// Destructure the input data
-		const { tags = [], memberIds = [], managerIds = [], organizationId, ...entity } = input;
+		// The client rate is written through the project rate route only, which checks who may set it
+		const { tags = [], memberIds = [], managerIds = [], organizationId, billRateValue: _rate, ...entity } = input;
+		void _rate;
 
 		try {
 			// If the employee creates the project, default add as a manager
@@ -215,8 +217,9 @@ export class OrganizationProjectService extends TenantAwareCrudService<Organizat
 		// `members` is never saved from the input: the relation cascades, so a membership row stated in the body
 		// (`{ id, isManager: true }`) was written as given and raised the flag `updateOrganizationProjectMembers`
 		// gates. The members change through `memberIds` / `managerIds` alone.
-		const { memberIds, managerIds, organizationId, members: _members, ...entity } = input;
+		const { memberIds, managerIds, organizationId, members: _members, billRateValue: _rate, ...entity } = input;
 		void _members;
+		void _rate;
 
 		const organizationProject = await super.findOneByIdString(id, {
 			where: { organizationId, tenantId },

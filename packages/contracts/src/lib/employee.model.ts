@@ -350,3 +350,14 @@ export interface IMemberEntityBased {
 	memberIds?: ID[]; // Members of the given entity
 	managerIds?: ID[]; // Managers of the given entity
 }
+
+/** An employee's request that an admin change their rate. The employee is the caller, never named in the body. */
+export interface IEmployeeRateChangeRequestInput extends IBasePerTenantAndOrganizationEntityModel {
+	billRateValue: number;
+	billRateCurrency?: CurrenciesEnum;
+	reason?: string;
+}
+
+export interface IEmployeeRateChangeRequestResult {
+	notified: number;
+}

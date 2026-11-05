@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { JoinColumn, RelationId, JoinTable } from 'typeorm';
+import { Exclude } from 'class-transformer';
+import { billingRateColumn } from '../shared/pipes/billing-rate.transform';
 import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
 	CurrenciesEnum,
@@ -181,6 +183,21 @@ export class OrganizationProject
 	@IsNumber()
 	@MultiORMColumn({ nullable: true })
 	budget?: number;
+
+	/**
+	 * The project's client rate: what the client is billed per hour of the project's time, in the project's currency,
+	 * else the organization's. It does not change what members are paid. Written and read through the project rate
+	 * routes only, which check who may and answer plain objects: generic project reads, open to any employee who views
+	 * projects, never answer it, even for a caller `select` naming it.
+	 */
+	@ApiPropertyOptional({
+		type: () => Number,
+		nullable: true,
+		description: "What the client is billed per hour of the project's time, in the project's currency"
+	})
+	@Exclude({ toPlainOnly: true })
+	@MultiORMColumn({ ...billingRateColumn(), select: false, hidden: true })
+	billRateValue?: number | null;
 
 	// Specifies the type of budget for the project, if provided.
 	@ApiPropertyOptional({ type: () => String, enum: OrganizationProjectBudgetTypeEnum })

@@ -19,6 +19,7 @@ import {
 	ID,
 	IOrganizationProject,
 	IOrganizationProjectEditByEmployeeInput,
+	IOrganizationProjectRates,
 	IOrganizationProjectSetting,
 	IPagination,
 	PermissionsEnum
@@ -40,10 +41,12 @@ import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { TenantOrganizationBaseDTO } from './../core/dto';
 import {
 	CreateOrganizationProjectDTO,
+	OrganizationProjectRateDTO,
 	UpdateOrganizationProjectDTO,
 	UpdateProjectSettingDTO,
 	UpdateTaskModeDTO
 } from './dto';
+import { OrganizationProjectRateService } from './organization-project-rate.service';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
 import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
@@ -57,9 +60,66 @@ import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sens
 export class OrganizationProjectController extends CrudController<OrganizationProject> {
 	constructor(
 		private readonly organizationProjectService: OrganizationProjectService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly organizationProjectRateService: OrganizationProjectRateService
 	) {
 		super(organizationProjectService);
+	}
+
+	/** A project's client rate and its members' client rates on it, for an admin or a manager the project flags. */
+	@ApiOperation({
+		summary: "A project's client rate and its members' client rates",
+		description:
+			"What the client is billed per hour of the project's time, in the project's currency, else the organization's. Not what members are paid."
+	})
+	@ApiResponse({ status: HttpStatus.OK, description: 'The client rates' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Not an admin or a manager of the project' })
+	@Permissions()
+	@UseValidationPipe({ whitelist: true })
+	@Get('/:id/rates')
+	async findRates(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() options: TenantOrganizationBaseDTO
+	): Promise<IOrganizationProjectRates> {
+		return await this.organizationProjectRateService.findProjectRates(id, options.organizationId);
+	}
+
+	/** Sets or clears a project's client rate, for an admin or a manager the project flags. */
+	@ApiOperation({
+		summary: "Set or clear a project's client rate",
+		description:
+			"What the client is billed per hour of the project's time. It does not change what members are paid."
+	})
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Not an admin or a manager of the project' })
+	@HttpCode(HttpStatus.OK)
+	@Permissions()
+	@UseValidationPipe({ whitelist: true, transform: true })
+	@Put('/:id/rate')
+	async updateRate(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() input: OrganizationProjectRateDTO
+	): Promise<Pick<IOrganizationProjectRates, 'id' | 'billRateValue' | 'currency'>> {
+		return await this.organizationProjectRateService.updateProjectRate(id, input);
+	}
+
+	/** Sets or clears a member's client rate on a project, for an admin or a manager the project flags. */
+	@ApiOperation({
+		summary: "Set or clear a member's client rate on a project",
+		description:
+			"What the client is billed per hour of this member's time on the project, over the project's client rate. It does not change what the member is paid."
+	})
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Not an admin or a manager of the project' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'The employee is not a member of the project' })
+	@HttpCode(HttpStatus.OK)
+	@Permissions()
+	@UseValidationPipe({ whitelist: true, transform: true })
+	@Put('/:id/members/:employeeId/rate')
+	async updateMemberRate(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('employeeId', UUIDValidationPipe) employeeId: ID,
+		@Body() input: OrganizationProjectRateDTO
+	): Promise<{ organizationProjectId: ID; employeeId: ID; billRateValue: number | null }> {
+		return await this.organizationProjectRateService.updateMemberRate(id, employeeId, input);
 	}
 
 	/**

@@ -13,6 +13,8 @@ import { EmployeeController } from './employee.controller';
 import { EmployeeResolver } from './employee.resolver';
 import { EmployeeService } from './employee.service';
 import { ManagedEmployeeService } from './managed-employee.service';
+import { EmployeeRateChangeRequestController } from './rate-change-request/rate-change-request.controller';
+import { EmployeeRateChangeRequestService } from './rate-change-request/rate-change-request.service';
 import { Employee } from './employee.entity';
 import { TypeOrmEmployeeRepository } from './repository/type-orm-employee.repository';
 import { MikroOrmEmployeeRepository } from './repository/mikro-orm-employee.repository';
@@ -48,10 +50,11 @@ import { OrganizationBelongsToUserConstraint } from '../shared/validators/constr
 		RoleModule,
 		CqrsModule
 	],
-	controllers: [EmployeeController],
+	controllers: [EmployeeController, EmployeeRateChangeRequestController],
 	providers: [
 		EmployeeService,
 		ManagedEmployeeService,
+		EmployeeRateChangeRequestService,
 		// The GraphQL view of the same resource: declared here because a resolver can only inject
 		// services its own module can reach, and this module is what reaches them.
 		EmployeeResolver,
