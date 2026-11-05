@@ -3,10 +3,10 @@ import * as os from 'os';
 import * as path from 'path';
 
 /**
- * The owed-amount report and its chart price each log at the most specific rate of its project: the member's own rate
- * on the project, else the project's rate, else the employee's. Read on one SQLite database with the tables TypeORM
- * creates, through both ORMs, as `time-log.service.reports.dual-orm.spec.ts` reads the same reports without project
- * rates (where every amount stays the employee's rate times the time).
+ * A project's rate and a member's rate on a project are what the client is billed for the time. What the organization
+ * owes an employee stays their own rate times their time: setting either changes nothing in the owed-amount report or
+ * its chart. Read on one SQLite database with the tables TypeORM creates, through both ORMs, as
+ * `time-log.service.reports.dual-orm.spec.ts` reads the same reports without any project rate.
  */
 
 const TIMEOUT = 15 * 60 * 1000;
@@ -21,7 +21,7 @@ const RATED_PROJECT = '55555555-5555-4555-8555-555555555551';
 const UNRATED_PROJECT = '55555555-5555-4555-8555-555555555552';
 const DAY = '2026-01-10';
 
-/** The members' own rates on the rated project. */
+/** The members' client rates on the rated project. */
 const MEMBER_RATES = new Map<string, number>([[MEMBER_RATE_EMPLOYEE, 30]]);
 
 type Reads = Record<'owed' | 'chart', any>;
@@ -91,12 +91,12 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 			const scope = { tenantId: TENANT, organizationId: ORGANIZATION };
 			await dataSource.query('PRAGMA foreign_keys = OFF');
 			await insert('tenant', { id: TENANT, name: 'Tenant' });
-			await insert('organization', { id: ORGANIZATION, tenantId: TENANT, name: 'Organization', currency: 'JPY' });
+			await insert('organization', { id: ORGANIZATION, tenantId: TENANT, name: 'Organization', currency: 'EUR' });
 			await insert('user', { id: USER, tenantId: TENANT, firstName: 'Ada', lastName: 'Lovelace' });
 			const employees: Array<[string, number | null, string | null]> = [
 				[MEMBER_RATE_EMPLOYEE, 20.15, 'EUR'],
-				[PROJECT_RATE_EMPLOYEE, 1501, null],
-				[UNBILLED_EMPLOYEE, null, 'USD']
+				[PROJECT_RATE_EMPLOYEE, 25, null],
+				[UNBILLED_EMPLOYEE, null, 'EUR']
 			];
 			for (const [id, billRateValue, billRateCurrency] of employees) {
 				await insert('employee', { ...scope, id, userId: USER, billRateValue, billRateCurrency });
@@ -234,24 +234,24 @@ describe('TimeLogService owed amounts at project and member rates, through both 
 		['MikroORM', 'mikroOrm'],
 		['TypeORM', 'typeOrm']
 	])('%s', (_name, orm) => {
-		it('prices each log at the member rate, else the project rate, else the employee rate', () => {
+		it("owes each employee their own rate times their time, whatever the project's and members' client rates", () => {
 			const { owed } = measured[orm];
 			expect(owed.error).toBeUndefined();
 			expect(owed).toHaveLength(1);
 
 			const amounts = new Map(owed[0].employees.map((line: any) => [line.employee.id, line.amount]));
-			// Half an hour at the member's own 30 on the project, over their own 20.15 and the project's 40
-			expect(amounts.get(MEMBER_RATE_EMPLOYEE)).toBe(15);
-			// Half an hour at the project's 40, over the employee's 1,501 in the organization's yen
-			expect(amounts.get(PROJECT_RATE_EMPLOYEE)).toBe(20);
-			// The project's 40 for the rated half hour, and nothing for the unrated one without a rate of their own
-			expect(amounts.get(UNBILLED_EMPLOYEE)).toBe(20);
+			// Half an hour at their own 20.15, not at the 30 the client is billed for them on the project
+			expect(amounts.get(MEMBER_RATE_EMPLOYEE)).toBe(10.08);
+			// Half an hour at their own 25, not at the project's 40
+			expect(amounts.get(PROJECT_RATE_EMPLOYEE)).toBe(12.5);
+			// Nothing without a rate of their own, though the client is billed 40 for the rated half hour
+			expect(amounts.get(UNBILLED_EMPLOYEE)).toBe(0);
 		});
 
 		it('totals the day for the chart from the same amounts', () => {
 			const { chart } = measured[orm];
 			expect(chart.error).toBeUndefined();
-			expect(chart.find(({ date }: any) => date === DAY).value).toBe(55);
+			expect(chart.find(({ date }: any) => date === DAY).value).toBe(22.58);
 		});
 	});
 });

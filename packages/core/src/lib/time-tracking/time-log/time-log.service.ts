@@ -7,17 +7,7 @@ import {
 	NotFoundException
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import {
-	SelectQueryBuilder,
-	Brackets,
-	WhereExpressionBuilder,
-	DeleteResult,
-	UpdateResult,
-	FindOptionsWhere,
-	In,
-	IsNull,
-	Not
-} from 'typeorm';
+import { SelectQueryBuilder, Brackets, WhereExpressionBuilder, DeleteResult, UpdateResult, FindOptionsWhere } from 'typeorm';
 import { chain, pluck } from 'underscore';
 import {
 	IManualTimeInput,
@@ -83,15 +73,6 @@ import { TypeOrmOrganizationProjectRepository } from '../../organization-project
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { Organization } from '../../organization/organization.entity';
-import { OrganizationProject } from '../../organization-project/organization-project.entity';
-import { OrganizationProjectEmployee } from '../../organization-project/organization-project-employee.entity';
-import {
-	buildProjectRateLookup,
-	needsOrganizationCurrency,
-	owedAtProjectRates,
-	ProjectRateLookup,
-	uniqueProjectIds
-} from './project-rate-pricing';
 import { TimeLog } from './time-log.entity';
 
 @Injectable()
@@ -416,83 +397,6 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
-	 * What an employee's logs of a day are owed: at the most specific rate of each log's project when the report met
-	 * a project or member rate on them, else at the employee's rate, exactly as before project rates existed.
-	 */
-	private owedAmountOf(
-		logs: ITimeLog[],
-		durationSum: number,
-		employee: IEmployee | null | undefined,
-		organizationCurrency: string | null,
-		projectRates: ProjectRateLookup | null
-	): number {
-		const atProjectRates = owedAtProjectRates(logs, employee, organizationCurrency, projectRates);
-		if (atProjectRates !== null) {
-			return atProjectRates;
-		}
-		return this.owedAmount(durationSum, employee, organizationCurrency);
-	}
-
-	/** The organization's currency, read only when an employee's rate or a priced project states none. */
-	private async findCurrencyForOwedAmounts(
-		logs: ITimeLog[],
-		organizationId: ID | undefined,
-		projectRates: ProjectRateLookup | null
-	): Promise<string | null> {
-		const currency = await this.findCurrencyForRatesWithoutOne(logs, organizationId);
-		if (currency) {
-			return currency;
-		}
-		if (!needsOrganizationCurrency(projectRates)) {
-			return null;
-		}
-		return await this.findOrganizationCurrency(organizationId);
-	}
-
-	/**
-	 * The rates of the logs' projects and of their members on them, read once for a report, or `null` when none is
-	 * set.
-	 */
-	private async findProjectRateLookup(logs: ITimeLog[]): Promise<ProjectRateLookup | null> {
-		const projectIds = uniqueProjectIds(logs);
-		const tenantId = RequestContext.currentTenantId();
-		if (projectIds.length === 0) {
-			return null;
-		}
-		if (!tenantId) {
-			return null;
-		}
-		switch (this.ormType) {
-			case MultiORMEnum.MikroORM: {
-				const entityManager = this.mikroOrmRepository.getEntityManager();
-				const projects = await entityManager.find(OrganizationProject, {
-					id: { $in: projectIds },
-					tenantId
-				} as any);
-				const memberships = await entityManager.find(OrganizationProjectEmployee, {
-					organizationProjectId: { $in: projectIds },
-					tenantId,
-					billRateValue: { $ne: null }
-				} as any);
-				return buildProjectRateLookup(projects, memberships);
-			}
-			case MultiORMEnum.TypeORM:
-			default: {
-				const manager = this.typeOrmRepository.manager;
-				const projects = await manager.find(OrganizationProject, {
-					where: { id: In(projectIds), tenantId },
-					select: { id: true, billRateValue: true, currency: true }
-				});
-				const memberships = await manager.find(OrganizationProjectEmployee, {
-					where: { organizationProjectId: In(projectIds), tenantId, billRateValue: Not(IsNull()) },
-					select: { id: true, organizationProjectId: true, employeeId: true, billRateValue: true }
-				});
-				return buildProjectRateLookup(projects, memberships);
-			}
-		}
-	}
-
-	/**
 	 * The currency of an organization of the current tenant.
 	 *
 	 * @param organizationId - The organization.
@@ -807,13 +711,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		// A rate that states no currency is in the organization's, as on the weekly report
-		// A project's or a member's own rate on a project wins over the employee's rate
-		const projectRates = await this.findProjectRateLookup(timeLogs);
-		const organizationCurrency = await this.findCurrencyForOwedAmounts(
-			timeLogs,
-			request.organizationId,
-			projectRates
-		);
+		const organizationCurrency = await this.findCurrencyForRatesWithoutOne(timeLogs, request.organizationId);
 
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -829,13 +727,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 						return {
 							employee,
-							amount: this.owedAmountOf(
-								byEmployeeLogs,
-								durationSum,
-								employee,
-								organizationCurrency,
-								projectRates
-							),
+							amount: this.owedAmount(durationSum, employee, organizationCurrency),
 							duration: durationSum
 						};
 					})
@@ -921,13 +813,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { days, timeZone } = this.reportDateRange(request);
 
 		// A rate that states no currency is in the organization's, as on the weekly report
-		// A project's or a member's own rate on a project wins over the employee's rate
-		const projectRates = await this.findProjectRateLookup(timeLogs);
-		const organizationCurrency = await this.findCurrencyForOwedAmounts(
-			timeLogs,
-			request.organizationId,
-			projectRates
-		);
+		const organizationCurrency = await this.findCurrencyForRatesWithoutOne(timeLogs, request.organizationId);
 
 		const byDate: any = chain(timeLogs)
 			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -944,13 +830,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						return {
 							employee,
 							// Calculate the owed amount based on the employee's bill rate and duration
-							amount: this.owedAmountOf(
-								byEmployeeLogs,
-								durationSum,
-								employee,
-								organizationCurrency,
-								projectRates
-							),
+							amount: this.owedAmount(durationSum, employee, organizationCurrency),
 							duration: durationSum
 						};
 					})
