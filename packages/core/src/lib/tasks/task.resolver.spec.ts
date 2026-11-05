@@ -102,7 +102,9 @@ function surfaces() {
 		softRemove: jest.fn().mockResolvedValue({ ...ROWS[0], deletedAt: new Date('2026-03-02T10:00:00.000Z') }),
 		softRecover: jest.fn().mockResolvedValue(ROWS[0]),
 		findByNumber: jest.fn().mockResolvedValue(ROWS[0]),
-		unassignEmployeeFromTeamTasks: jest.fn().mockResolvedValue(undefined)
+		unassignEmployeeFromTeamTasks: jest.fn().mockResolvedValue(undefined),
+		addMember: jest.fn().mockResolvedValue(undefined),
+		removeMember: jest.fn().mockResolvedValue(undefined)
 	};
 	const commandBus = { execute: jest.fn().mockResolvedValue(ROWS[0]) };
 
@@ -217,7 +219,9 @@ const ROUTE_OF_FIELD: ReadonlyArray<readonly [string, string]> = [
 	// The pair the controller inherits from the CRUD base without overriding it.
 	['softDeleteTask', 'softRemove'],
 	['recoverTask', 'softRecover'],
-	['unassignEmployeeFromTeamTasks', 'deleteEmployeeFromTasks']
+	['unassignEmployeeFromTeamTasks', 'deleteEmployeeFromTasks'],
+	['addTaskMember', 'addMember'],
+	['removeTaskMember', 'removeMember']
 ];
 
 describe('TaskResolver — the SDL declares the capabilities the REST routes serve', () => {
@@ -247,7 +251,9 @@ describe('TaskResolver — the SDL declares the capabilities the REST routes ser
 				'deleteTask',
 				'softDeleteTask',
 				'recoverTask',
-				'unassignEmployeeFromTeamTasks'
+				'unassignEmployeeFromTeamTasks',
+				'addTaskMember',
+				'removeTaskMember'
 			])
 		);
 	});
@@ -466,6 +472,20 @@ describe('TaskResolver — one concept, two protocols, the same operations', () 
 		expect(taskService.unassignEmployeeFromTeamTasks).toHaveBeenCalledWith(EMPLOYEE, TEAM);
 	});
 
+	it('assigns and unassigns one member of one task through the service methods the routes call, in the caller’s organization', async () => {
+		const { resolver, taskService } = surfaces();
+		const organization = jest.spyOn(RequestContext, 'currentOrganizationId').mockReturnValue(ORGANIZATION);
+
+		try {
+			expect(await resolver.addTaskMember(PICKING, EMPLOYEE)).toBe(true);
+			expect(taskService.addMember).toHaveBeenCalledWith(PICKING, EMPLOYEE, ORGANIZATION);
+			expect(await resolver.removeTaskMember(PICKING, EMPLOYEE)).toBe(true);
+			expect(taskService.removeMember).toHaveBeenCalledWith(PICKING, EMPLOYEE, ORGANIZATION);
+		} finally {
+			organization.mockRestore();
+		}
+	});
+
 	it('retires and restores a task through the service methods the inherited routes call', async () => {
 		const { resolver, taskService } = surfaces();
 
@@ -600,6 +620,14 @@ describe('TaskResolver — the guard stack and the permission are the controller
 			PermissionsEnum.ORG_TASK_EDIT
 		]);
 		expect(permissionOfField('unassignEmployeeFromTeamTasks')).toEqual([
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_TASK_EDIT
+		]);
+		expect(permissionOfField('addTaskMember')).toEqual([
+			PermissionsEnum.ALL_ORG_EDIT,
+			PermissionsEnum.ORG_TASK_EDIT
+		]);
+		expect(permissionOfField('removeTaskMember')).toEqual([
 			PermissionsEnum.ALL_ORG_EDIT,
 			PermissionsEnum.ORG_TASK_EDIT
 		]);

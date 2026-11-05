@@ -626,6 +626,22 @@ extend type Mutation {
 	recoverTask(id: ID!): Task!
 
 	"""
+	Assigns one employee to one task and writes nothing else on it. Mirrors
+	`PUT /tasks/:id/members/:employeeId`, in the caller's own organization.
+
+	An employee may assign themselves; assigning someone else needs an organization admin or a manager
+	of the task's team. An employee already on the task is a no-op.
+	"""
+	addTaskMember(taskId: ID!, employeeId: ID!): Boolean!
+
+	"""
+	Takes one employee off one task and writes nothing else on it. Mirrors
+	`DELETE /tasks/:id/members/:employeeId`, under the same rule as `addTaskMember`. An employee who is
+	not on the task is a no-op.
+	"""
+	removeTaskMember(taskId: ID!, employeeId: ID!): Boolean!
+
+	"""
 	Takes one employee off every task of one team.
 
 	The delivered route answers nothing at all — it is a statement about the tasks it touched rather
