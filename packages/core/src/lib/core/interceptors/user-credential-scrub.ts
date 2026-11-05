@@ -1,3 +1,5 @@
+import { scrubEmployeePayRate } from './employee-pay-rate-scrub';
+
 /**
  * The `User` columns that must never leave the API. They mirror the entity's
  * `@Exclude({ toPlainOnly: true })` set.
@@ -66,6 +68,7 @@ function scrubNode(node: Record<string, unknown> | unknown[]): unknown[] {
 			delete node[key];
 		}
 	}
+	scrubEmployeePayRate(node);
 	return Object.values(node);
 }
 
@@ -78,6 +81,8 @@ function scrubNode(node: Record<string, unknown> | unknown[]): unknown[] {
  * that `CrudService.serialize()` returns under DB_ORM=mikro-orm (`wrap(entity).toJSON()`) — was
  * serialized with its password hash, refresh token and one-time codes. This runs AFTER
  * `instanceToPlain`, so real instances are already clean and this is a no-op for them.
+ *
+ * Every row loses an employee's pay rate on the same walk (see `employee-pay-rate-scrub.ts`).
  *
  * @param data The response body produced by `instanceToPlain`.
  * @returns The same value, with credentials removed from every user-shaped object.
