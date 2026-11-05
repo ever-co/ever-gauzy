@@ -1,7 +1,7 @@
 import * as moment from 'moment';
 import { ID, TimeLogSourceEnum } from '@gauzy/contracts';
 import { dayIfTodaySomewhere } from '../../tasks/daily-plan/daily-plan-caller-day';
-import { storedDayStart, storedPlanDay } from '../../tasks/daily-plan/daily-plan-stored-day';
+import { storedDayStart } from '../../tasks/daily-plan/daily-plan-stored-day';
 
 /**
  * The Ever Teams clients, web and mobile. "Require a daily plan to track" is their team rule, so only their starts
@@ -35,17 +35,18 @@ export function planDatesAroundToday(now: moment.Moment): { from: Date; to: Date
 }
 
 /**
- * The dates a plan for `planDay` is stored between. Ever Teams sends a plan day as a date, which the API parses as
- * UTC midnight, and the plan belongs to the stored day of that date, as for the daily plan lookups.
+ * The dates a plan for `planDay` may carry. Ever Teams sends a plan day as a date, parsed as UTC midnight, while a
+ * client sending a local date-time lands on the process's midnight (see storedDayStart). The day starts at the
+ * earlier of its two midnights and ends where the next day's earlier midnight starts: both readings of that day are
+ * in, and neither reading of the day before or after is.
  *
  * @param planDay A plan day, as `YYYY-MM-DD`.
  */
 export function planDatesOfDay(planDay: string): { from: Date; to: Date } {
-	const planDate = moment.utc(planDay, 'YYYY-MM-DD').toDate();
-	const storedDay = storedPlanDay(planDate);
-	const nextStoredDay = moment.utc(storedDay, 'YYYY-MM-DD').add(1, 'day').format('YYYY-MM-DD');
-	const from = storedDayStart(storedDay);
-	const nextDayStart = storedDayStart(nextStoredDay).getTime();
+	const day = moment.utc(planDay, 'YYYY-MM-DD');
+	const nextDay = day.clone().add(1, 'day');
+	const from = new Date(earliestStartOf(day));
+	const nextDayStart = earliestStartOf(nextDay);
 	const to = new Date(nextDayStart - 1);
 	return { from, to };
 }

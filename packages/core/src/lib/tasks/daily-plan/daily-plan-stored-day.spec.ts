@@ -57,7 +57,7 @@ describe('stored plan day bounds', () => {
 		expect(to.toISOString()).toBe('2026-11-06T23:59:59.999Z');
 	});
 
-	it.each([false, true])('read a named plan day on the stored day of its date (SQLite: %s)', (storesUtc) => {
+	it.each([false, true])('keep the plan of a named day and no other day (SQLite: %s)', (storesUtc) => {
 		mockDatabase.storesUtc = storesUtc;
 		const planDateOf = (day: string) => moment.utc(day, 'YYYY-MM-DD').valueOf();
 
