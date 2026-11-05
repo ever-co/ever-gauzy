@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Equal, IsNull, Or } from 'typeorm';
 import { ID, IOrganizationProjectRates, IOrganizationProjectRateUpdateInput, PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
+import { Organization } from '../core/entities/internal';
 import { assertCurrentUserBelongsToOrganization } from '../user-organization/assert-organization-membership';
 import { OrganizationProject } from './organization-project.entity';
 import { TypeOrmOrganizationProjectRepository } from './repository/type-orm-organization-project.repository';
@@ -40,10 +41,11 @@ export class OrganizationProjectRateService {
 			employeeId: membership.employeeId,
 			billRateValue: membership.billRateValue ?? null
 		}));
+		const currency = await this.ratesCurrencyOf(project, organizationId, tenantId);
 		return {
 			id: project.id,
 			billRateValue: project.billRateValue ?? null,
-			currency: project.currency ?? null,
+			currency,
 			members
 		};
 	}
@@ -61,7 +63,8 @@ export class OrganizationProjectRateService {
 			{ id: project.id, organizationId, tenantId },
 			{ billRateValue }
 		);
-		return { id: project.id, billRateValue, currency: project.currency ?? null };
+		const currency = await this.ratesCurrencyOf(project, organizationId, tenantId);
+		return { id: project.id, billRateValue, currency };
 	}
 
 	async updateMemberRate(
@@ -93,6 +96,22 @@ export class OrganizationProjectRateService {
 			{ billRateValue }
 		);
 		return { organizationProjectId: projectId, employeeId, billRateValue };
+	}
+
+	/** The currency a project's client rates are in: the project's own, else the organization's. */
+	private async ratesCurrencyOf(
+		project: OrganizationProject,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<string | null> {
+		if (project.currency) {
+			return project.currency;
+		}
+		const organization = await this.typeOrmOrganizationProjectRepository.manager.findOne(Organization, {
+			where: { id: organizationId, tenantId },
+			select: { id: true, currency: true }
+		});
+		return organization?.currency ?? null;
 	}
 
 	private async findProject(projectId: ID, organizationId: ID, tenantId: ID): Promise<OrganizationProject> {

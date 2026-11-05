@@ -600,6 +600,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "crwdns2407:0crwdne2407:0",
+			"OWN_RATES_LOCKED": "Ask an admin to change your rate.",
 			"EXPECTED_RATE": "crwdns3544:0crwdne3544:0",
 			"LIMITS": "crwdns2409:0crwdne2409:0"
 		},

@@ -743,6 +743,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
+			"OWN_RATES_LOCKED": "Ask an admin to change your rate.",
 			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits",
 			"ERRORS": {

@@ -693,6 +693,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Tasa de incumplimiento predeterminada",
+			"OWN_RATES_LOCKED": "Pide a un administrador que cambie tu tarifa.",
 			"EXPECTED_RATE": "Tasa esperada",
 			"LIMITS": "Límites",
 			"ERRORS": {

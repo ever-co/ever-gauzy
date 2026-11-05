@@ -691,6 +691,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Standaardtarief",
+			"OWN_RATES_LOCKED": "Vraag een beheerder om je tarief te wijzigen.",
 			"EXPECTED_RATE": "Verwacht tarief",
 			"LIMITS": "Beperkingen",
 			"ERRORS": {

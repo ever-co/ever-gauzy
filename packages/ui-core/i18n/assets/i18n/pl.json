@@ -690,6 +690,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Domyślna stawka",
+			"OWN_RATES_LOCKED": "Poproś administratora o zmianę stawki.",
 			"EXPECTED_RATE": "Oczekiwana stawka",
 			"LIMITS": "Limity",
 			"ERRORS": {

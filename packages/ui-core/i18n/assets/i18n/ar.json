@@ -690,6 +690,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "معدل الافتراضي",
+			"OWN_RATES_LOCKED": "اطلب من المسؤول تغيير سعرك.",
 			"EXPECTED_RATE": "المعدل المتوقع",
 			"LIMITS": "الحدود",
 			"ERRORS": {

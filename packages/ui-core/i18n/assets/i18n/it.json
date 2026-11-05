@@ -691,6 +691,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Tariffa predefinita",
+			"OWN_RATES_LOCKED": "Chiedi a un amministratore di modificare la tua tariffa.",
 			"EXPECTED_RATE": "Tariffa prevista",
 			"LIMITS": "Limiti",
 			"ERRORS": {

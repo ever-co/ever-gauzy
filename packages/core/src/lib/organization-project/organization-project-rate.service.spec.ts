@@ -33,6 +33,7 @@ interface ScopedRow {
 
 interface ProjectRow extends ScopedRow {
 	id: string;
+	currency: string | null;
 }
 
 interface MembershipRow extends ScopedRow {
@@ -44,11 +45,14 @@ interface MembershipRow extends ScopedRow {
 	isArchived?: boolean;
 }
 
+const NO_CURRENCY_PROJECT = 'project-no-currency';
+
 const PROJECTS: ProjectRow[] = [
-	{ id: PROJECT, ...HOME },
-	{ id: OTHER_PROJECT, ...HOME },
-	{ id: FOREIGN_ORGANIZATION_PROJECT, organizationId: OTHER_ORGANIZATION, tenantId: TENANT },
-	{ id: FOREIGN_TENANT_PROJECT, organizationId: ORGANIZATION, tenantId: OTHER_TENANT }
+	{ id: PROJECT, currency: 'EUR', ...HOME },
+	{ id: OTHER_PROJECT, currency: 'EUR', ...HOME },
+	{ id: NO_CURRENCY_PROJECT, currency: null, ...HOME },
+	{ id: FOREIGN_ORGANIZATION_PROJECT, currency: 'EUR', organizationId: OTHER_ORGANIZATION, tenantId: TENANT },
+	{ id: FOREIGN_TENANT_PROJECT, currency: 'EUR', organizationId: ORGANIZATION, tenantId: OTHER_TENANT }
 ];
 
 const PROJECT_KEYS = ['id', 'organizationId', 'tenantId'];
@@ -151,7 +155,11 @@ describe('OrganizationProjectRateService', () => {
 				if (!row) {
 					return null;
 				}
-				return Object.assign(new OrganizationProject(), { id: row.id, billRateValue: 40, currency: 'EUR' });
+				return Object.assign(new OrganizationProject(), {
+					id: row.id,
+					billRateValue: 40,
+					currency: row.currency
+				});
 			}),
 			update: projectUpdate,
 			manager: {
@@ -239,6 +247,20 @@ describe('OrganizationProjectRateService', () => {
 			await expect(setProjectRate(OTHER_PROJECT, 55)).rejects.toThrow(ForbiddenException);
 
 			expect(projectUpdate).not.toHaveBeenCalled();
+		});
+
+		it("answers the organization's currency for a project that states none", async () => {
+			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
+			callerEmployeeId = null;
+
+			await expect(setProjectRate(NO_CURRENCY_PROJECT, 55)).resolves.toEqual({
+				id: NO_CURRENCY_PROJECT,
+				billRateValue: 55,
+				currency: 'USD'
+			});
+			await expect(service.findProjectRates(NO_CURRENCY_PROJECT, ORGANIZATION)).resolves.toEqual(
+				expect.objectContaining({ id: NO_CURRENCY_PROJECT, currency: 'USD' })
+			);
 		});
 
 		it('answers 404 to an admin for a project that does not exist', async () => {
