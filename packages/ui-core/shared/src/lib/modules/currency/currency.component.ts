@@ -5,6 +5,7 @@ import {
 	EventEmitter,
 	forwardRef,
 	Input,
+	input,
 	OnInit,
 	Output,
 	ChangeDetectionStrategy
@@ -85,6 +86,12 @@ export class CurrencyComponent extends TranslationBaseComponent implements OnIni
 	@Input() set label(val: boolean) {
 		this._label = val;
 	}
+
+	/**
+	 * Accessible name of the control, for a host that shows its own label; without one the control is named by its
+	 * label or placeholder. Not `ariaLabel`, which is also a property of every element.
+	 */
+	readonly accessibleLabel = input<string>();
 
 	constructor(
 		public readonly translateService: TranslateService,

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Input, forwardRef, EventEmitter, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, input, forwardRef, EventEmitter, Output, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { map, Observable, Subject } from 'rxjs';
 import { debounceTime, filter, tap } from 'rxjs/operators';
@@ -99,6 +99,12 @@ export class ContactSelectComponent extends TranslationBaseComponent implements 
 
 	@Output()
 	onChanged = new EventEmitter<IOrganizationContact>();
+
+	/**
+	 * Accessible name of the control, for a host that shows its own label; without one the control is named by its
+	 * label or placeholder. Not `ariaLabel`, which is also a property of every element.
+	 */
+	readonly accessibleLabel = input<string>();
 
 	constructor(
 		public readonly translateService: TranslateService,
