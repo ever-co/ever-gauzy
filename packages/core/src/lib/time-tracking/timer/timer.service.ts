@@ -17,7 +17,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { TimeLog } from '../../core/entities/internal';
+import { OrganizationTeamEmployee, TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {
 	MultiORM,
@@ -56,6 +56,12 @@ import {
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
+
+/**
+ * The Ever Teams clients, web and mobile. They are the ones that turn tracking off per team, so only their starts
+ * are held to that switch; the other clients of this API never set it and keep their behavior.
+ */
+const TEAM_TRACKING_SWITCH_SOURCES: ReadonlyArray<string> = [TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE];
 
 @Injectable()
 export class TimerService {
@@ -290,6 +296,8 @@ export class TimerService {
 		// Get the employee ID
 		const { id: employeeId, organizationId } = employee;
 
+		await this.assertTrackingOnInTeam(employeeId, organizationId, tenantId, organizationTeamId, source);
+
 		// Stop any previous running timers
 		await this.stopPreviousRunningTimers(employeeId, organizationId, tenantId);
 
@@ -325,6 +333,40 @@ export class TimerService {
 
 		// Return the newly created time log entry
 		return timeLog;
+	}
+
+	/**
+	 * Refuses an Ever Teams start for a team where the employee's tracking is turned off. Ever Teams hides the timer
+	 * then, but an open tab from before or the mobile app could still start it.
+	 *
+	 * @param employeeId The employee starting the timer.
+	 * @param organizationId The employee's organization.
+	 * @param tenantId The caller's tenant.
+	 * @param organizationTeamId The team the timer starts for, if any.
+	 * @param source The client starting the timer.
+	 */
+	private async assertTrackingOnInTeam(
+		employeeId: ID,
+		organizationId: ID,
+		tenantId: ID,
+		organizationTeamId: ID | undefined,
+		source: TimeLogSourceEnum | undefined
+	): Promise<void> {
+		const isTeamSwitchClient = TEAM_TRACKING_SWITCH_SOURCES.includes(source);
+		if (!isTeamSwitchClient) {
+			return;
+		}
+		if (!organizationTeamId) {
+			return;
+		}
+		const membership = await this.typeOrmTimeLogRepository.manager.findOne(OrganizationTeamEmployee, {
+			where: { employeeId, organizationTeamId, organizationId, tenantId },
+			select: { id: true, isTrackingEnabled: true }
+		});
+		const isTrackingOffInTeam = membership?.isTrackingEnabled === false;
+		if (isTrackingOffInTeam) {
+			throw new ForbiddenException('Time tracking is turned off for you in this team.');
+		}
 	}
 
 	/**
