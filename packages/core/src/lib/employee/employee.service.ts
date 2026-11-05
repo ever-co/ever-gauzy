@@ -62,6 +62,7 @@ import { defaultAgentEmail, findOneForUpdate, isAgentEmail, isEmployeeKind } fro
 import { withoutAssignedComments } from '../comment/assigned-comments';
 import { assertCurrentUserBelongsToOrganization } from '../user-organization/assert-organization-membership';
 import { callerEmployeeId, changesPayRate, findStoredPayRates, mayReadPayRateOf } from './pay-rate';
+import { isSameId } from './own-rates';
 
 /**
  * Columns the employees table can be sorted by. Any other `order` key from the query string is ignored.
@@ -1232,7 +1233,7 @@ export class EmployeeService extends TenantAwareCrudService<Employee> {
 	 * @throws ForbiddenException when the pay rate would change.
 	 */
 	async assertOwnPayRateUnchanged(employeeId: ID, input: IEmployeeUpdateInput): Promise<void> {
-		const isOwnRecord = callerEmployeeId() === employeeId;
+		const isOwnRecord = isSameId(callerEmployeeId(), employeeId);
 		if (!isOwnRecord) {
 			return;
 		}

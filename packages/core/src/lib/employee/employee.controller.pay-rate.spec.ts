@@ -90,6 +90,13 @@ describe('EmployeeController and the pay rate', () => {
 			expect(command.input).toEqual({ isAway: true });
 		});
 
+		it('writes no pay rate when the own id is sent in another letter case', async () => {
+			await controller.update('EMPLOYEE-1', { payRateValue: 30, isAway: true } as never);
+
+			const [command] = execute.mock.calls[0];
+			expect(command.input).toEqual({ isAway: true });
+		});
+
 		it('writes the pay rate with CHANGE_OWN_RATES', async () => {
 			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT, PermissionsEnum.CHANGE_OWN_RATES];
 

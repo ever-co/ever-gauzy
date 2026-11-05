@@ -126,6 +126,14 @@ describe('EmployeeService pay rate', () => {
 			expect(find).not.toHaveBeenCalled();
 		});
 
+		it('refuses the change when the own id is sent in another letter case', async () => {
+			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
+
+			await expect(service.assertOwnPayRateUnchanged('EMPLOYEE-ANA', { payRateValue: 45 })).rejects.toThrow(
+				ForbiddenException
+			);
+		});
+
 		it('refuses a holder of ORG_EMPLOYEES_EDIT alone a change of their own pay rate', async () => {
 			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
 

@@ -3,6 +3,7 @@ import { CurrenciesEnum, ID, IEmployeeUpdateInput, PermissionsEnum } from '@gauz
 import { RequestContext } from '../core/context';
 import { EMPLOYEE_PAY_RATE_KEYS } from '../core/interceptors/employee-pay-rate-scrub';
 import { Employee } from './employee.entity';
+import { isSameId } from './own-rates';
 
 /**
  * An employee's pay rate as stored. Both columns are left out of every generic read (`select: false`, MikroORM
@@ -38,7 +39,7 @@ export function readsEveryPayRate(): boolean {
  * rate check only unchanged, and writing them back could undo a pay rate a rate editor changed meanwhile.
  */
 export function withoutOwnPayRateWrite<T extends object>(employeeId: ID, input: T): T {
-	const isOwnRecord = callerEmployeeId() === employeeId;
+	const isOwnRecord = isSameId(callerEmployeeId(), employeeId);
 	const changesOwnRates = RequestContext.hasPermission(PermissionsEnum.CHANGE_OWN_RATES);
 	const keepsStoredPayRate = isOwnRecord && !changesOwnRates;
 	if (!keepsStoredPayRate) {
@@ -49,7 +50,7 @@ export function withoutOwnPayRateWrite<T extends object>(employeeId: ID, input: 
 
 /** Whether the caller may read this employee's pay rate: their own, or anyone's for a rate editor. */
 export function mayReadPayRateOf(employeeId: ID): boolean {
-	const isOwnRecord = callerEmployeeId() === employeeId;
+	const isOwnRecord = isSameId(callerEmployeeId(), employeeId);
 	return isOwnRecord || readsEveryPayRate();
 }
 
