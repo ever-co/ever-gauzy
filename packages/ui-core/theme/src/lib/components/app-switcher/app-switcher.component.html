@@ -5,30 +5,33 @@
 	class="app-switcher-trigger"
 	[class.open]="isPanelShown"
 	[nbPopover]="appsPanel"
-	nbPopoverTrigger="click"
+	nbPopoverTrigger="noop"
 	[nbPopoverPlacement]="placement"
 	[nbPopoverOffset]="6"
 	nbPopoverClass="gz-app-switcher-popover"
 	(nbPopoverShowStateChange)="onPanelShowStateChange($event.isShown)"
+	(click)="onTriggerClick()"
+	(pointerenter)="onPointerEnter($event)"
+	(pointerleave)="onPointerLeave($event)"
 	aria-haspopup="true"
 	[attr.aria-expanded]="isPanelShown"
 	[attr.aria-label]="'HEADER.SWITCH_EVER_APP' | translate"
-	[title]="'HEADER.SWITCH_EVER_APP' | translate"
 >
-	<svg
-		viewBox="0 0 24 24"
-		fill="none"
-		stroke="currentColor"
-		stroke-width="2"
-		stroke-linecap="round"
-		stroke-linejoin="round"
-		aria-hidden="true"
-		focusable="false"
-	>
-		<rect width="7" height="7" x="3" y="3" rx="1" />
-		<rect width="7" height="7" x="14" y="3" rx="1" />
-		<rect width="7" height="7" x="14" y="14" rx="1" />
-		<rect width="7" height="7" x="3" y="14" rx="1" />
+	<svg class="app-switcher-mark" viewBox="0 0 40 42" fill="none" aria-hidden="true" focusable="false">
+		<path fill-rule="evenodd" clip-rule="evenodd" [attr.d]="markPath" [attr.fill]="markGradientFill" />
+		<defs>
+			<linearGradient
+				[attr.id]="markGradientId"
+				x1="0.807"
+				y1="7.049"
+				x2="40.615"
+				y2="7.783"
+				gradientUnits="userSpaceOnUse"
+			>
+				<stop stop-color="#FF1CF7" />
+				<stop offset="1" stop-color="#00F0FF" />
+			</linearGradient>
+		</defs>
 	</svg>
 </button>
 
@@ -38,6 +41,8 @@
 		[id]="panelId"
 		[attr.aria-label]="'HEADER.EVER_APPS' | translate"
 		(keydown)="onPanelKeydown($event)"
+		(pointerenter)="onPointerEnter($event)"
+		(pointerleave)="onPointerLeave($event)"
 	>
 		<div class="app-switcher-label" aria-hidden="true">{{ 'HEADER.EVER_APPS' | translate }}</div>
 		<ul class="app-switcher-list">

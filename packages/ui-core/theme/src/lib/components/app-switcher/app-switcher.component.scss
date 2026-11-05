@@ -25,10 +25,14 @@
       background-color 0.15s ease-in-out,
       color 0.15s ease-in-out;
 
-    svg {
+    .app-switcher-mark {
       flex: 0 0 auto;
-      width: 1rem;
-      height: 1rem;
+      width: 1.25rem;
+      height: 1.25rem;
+
+      @media (prefers-reduced-motion: no-preference) {
+        animation: app-switcher-mark-spin 9s linear infinite;
+      }
     }
 
     &:hover,
@@ -41,6 +45,12 @@
       outline: 2px solid nb-theme(color-primary-default);
       outline-offset: 1px;
     }
+  }
+}
+
+@keyframes app-switcher-mark-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
