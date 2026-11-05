@@ -58,6 +58,7 @@ describe('TaskService.addMember / removeMember — one member of one task, nothi
 	let onLinkWrite: () => void;
 	let entitySubscriptionService: { delete: jest.Mock };
 	let eventBus: { publish: jest.Mock };
+	let activityLogService: { logActivity: jest.Mock };
 	let domainEventBus: { publish: jest.Mock };
 	let service: TaskService;
 	let stored: Row;
@@ -169,6 +170,7 @@ describe('TaskService.addMember / removeMember — one member of one task, nothi
 
 		entitySubscriptionService = { delete: jest.fn().mockResolvedValue(undefined) };
 		eventBus = { publish: jest.fn() };
+		activityLogService = { logActivity: jest.fn() };
 		domainEventBus = { publish: jest.fn().mockResolvedValue(undefined) };
 		const unused = {} as never;
 		service = new TaskService(
@@ -179,7 +181,7 @@ describe('TaskService.addMember / removeMember — one member of one task, nothi
 			unused,
 			entitySubscriptionService as never,
 			unused,
-			{ logActivity: jest.fn() } as never,
+			activityLogService as never,
 			{ publishNotificationEvent: jest.fn() } as never,
 			unused,
 			new ManagedEmployeeService(memberships as never, unused),
@@ -288,6 +290,22 @@ describe('TaskService.addMember / removeMember — one member of one task, nothi
 
 			await change(direction, caller);
 
+			const [[event]] = domainEventBus.publish.mock.calls;
+			expect(event.entity.syncScope).toBe(TaskSyncScopeEnum.NONE);
+		});
+
+		it('still records the change, with the none scope, when the saved scope cannot be read back', async () => {
+			stored.syncScope = TaskSyncScopeEnum.ALL;
+			storeMembersFor(direction, caller);
+			onLinkWrite = () => {
+				jest.spyOn(tasks, 'findOne').mockRejectedValue(new Error('connection lost'));
+			};
+			jest.spyOn(console, 'error').mockImplementation(() => undefined);
+			actAs(fixture);
+
+			await change(direction, caller);
+
+			expect(activityLogService.logActivity).toHaveBeenCalledTimes(1);
 			const [[event]] = domainEventBus.publish.mock.calls;
 			expect(event.entity.syncScope).toBe(TaskSyncScopeEnum.NONE);
 		});

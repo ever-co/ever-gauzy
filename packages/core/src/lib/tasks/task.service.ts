@@ -47,6 +47,7 @@ import {
 	EmployeeNotificationTypeEnum,
 	NotificationActionTypeEnum,
 	ITimeLog,
+	TaskSyncScopeEnum,
 	TimesheetStatus
 } from '@gauzy/contracts';
 import { isEmpty, isNotEmpty } from '@gauzy/utils';
@@ -691,15 +692,13 @@ export class TaskService extends TenantAwareCrudService<Task> {
 	 * Writes the activity log and the updated-task event of a member change, as the full update does.
 	 *
 	 * The integrations read the sync scope from the event, so it is read back from the row after the write, as the
-	 * full update reads it: a scope turned off while this request waited must not reach them as the old one. A failed
-	 * read-back publishes nothing rather than a possibly stale scope.
+	 * full update reads it: a scope turned off while this request waited must not reach them as the old one.
 	 *
 	 * @param task - The task as read before the change
 	 * @param members - The task's members after the change
 	 */
 	private async recordMemberChange(task: Task, members: IEmployee[]): Promise<void> {
-		const saved = await this.findOneByIdString(task.id, { select: { id: true, syncScope: true } });
-		const syncScope = saved.syncScope ?? null;
+		const syncScope = await this.savedSyncScopeOrNone(task.id);
 		const updatedTask = { ...task, members, syncScope } as Task;
 		this._activityLogService.logActivity<Task>(
 			BaseEntityEnum.Task,
@@ -714,6 +713,24 @@ export class TaskService extends TenantAwareCrudService<Task> {
 			{ members }
 		);
 		this.publishTaskEvent(updatedTask, BaseEntityEventTypeEnum.UPDATED);
+	}
+
+	/**
+	 * The task's sync scope as saved, read back after a member write. The write is already done when this runs, so a
+	 * read that fails does not fail the request and lose the activity and the event: it answers `none`, the scope no
+	 * integration syncs.
+	 *
+	 * @param id - The task
+	 * @returns The saved scope, or `none` when it cannot be read
+	 */
+	private async savedSyncScopeOrNone(id: ID): Promise<TaskSyncScopeEnum | null> {
+		try {
+			const saved = await this.findOneByIdString(id, { select: { id: true, syncScope: true } });
+			return saved.syncScope ?? null;
+		} catch (error) {
+			console.error(`Failed to read back the sync scope of task ${id}:`, (error as Error)?.message);
+			return TaskSyncScopeEnum.NONE;
+		}
 	}
 
 	/**
