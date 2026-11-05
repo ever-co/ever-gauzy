@@ -106,8 +106,10 @@ a.app-row {
     text-decoration: none;
   }
 
+  // The tint alone is too faint to show where the keyboard focus is.
   &:focus-visible {
-    outline: none;
+    outline: 2px solid var(--color-primary-default);
+    outline-offset: -2px;
   }
 }
 
@@ -158,14 +160,9 @@ a.app-row {
   height: 1rem;
 }
 
-// The panel is a menu of destinations, not a bubble hanging off the button: no arrow, and the rows bring
-// their own padding instead of Nebular's 0.75rem 1rem text inset.
+// The panel is a menu of destinations, not a bubble hanging off the button: no arrow.
 ::ng-deep .cdk-overlay-container .gz-app-switcher-popover nb-popover {
   .arrow {
     display: none;
-  }
-
-  .primitive-overlay {
-    padding: 0;
   }
 }

@@ -12,6 +12,7 @@ import {
 import { NbPopoverDirective, NbPosition } from '@nebular/theme';
 import { EVER_APPS, IEverApp, isCurrentEverApp } from '@gauzy/ui-core/common';
 import { ElectronService } from '@gauzy/ui-core/core';
+import { GAUZY_ENV } from '@gauzy/ui-config';
 
 let nextPanelNumber = 0;
 
@@ -34,6 +35,26 @@ function containsNode(container: Element | null | undefined, node: Node | null):
 		return false;
 	}
 	return container.contains(node);
+}
+
+/**
+ * The current app's row as this deployment serves it: its own `CLIENT_BASE_URL` (a self-hosted installation is not
+ * app.gauzy.co), or the catalog's entry when that setting is missing or is not a web address.
+ */
+function withDeploymentAddress(app: IEverApp, clientBaseUrl: string | undefined): IEverApp {
+	if (!isCurrentEverApp(app) || !clientBaseUrl) {
+		return app;
+	}
+	try {
+		const { protocol, host } = new URL(clientBaseUrl);
+		const isWebAddress = protocol === 'http:' || protocol === 'https:';
+		if (!isWebAddress || !host) {
+			return app;
+		}
+		return { ...app, url: clientBaseUrl, domain: host };
+	} catch {
+		return app;
+	}
 }
 
 function getNextRowIndex(key: string, focusedIndex: number, rowCount: number): number | null {
@@ -68,13 +89,16 @@ function getNextRowIndex(key: string, focusedIndex: number, rowCount: number): n
 export class AppSwitcherComponent implements OnDestroy {
 	private readonly _electronService = inject(ElectronService);
 	private readonly _document = inject(DOCUMENT);
+	private readonly _environment = inject(GAUZY_ENV, { optional: true });
 
 	@Input() compact = false;
 
-	@ViewChild('trigger') triggerRef?: ElementRef<HTMLButtonElement>;
-	@ViewChild('appsPopover') appsPopover?: NbPopoverDirective;
+	@ViewChild('trigger') readonly triggerRef?: ElementRef<HTMLButtonElement>;
+	@ViewChild('appsPopover') readonly appsPopover?: NbPopoverDirective;
 
-	readonly apps = EVER_APPS;
+	readonly apps: ReadonlyArray<IEverApp> = EVER_APPS.map((app) =>
+		withDeploymentAddress(app, this._environment?.CLIENT_BASE_URL)
+	);
 	readonly markPath = EVER_MARK_PATH;
 	readonly panelId: string;
 	readonly markGradientId: string;
@@ -119,7 +143,9 @@ export class AppSwitcherComponent implements OnDestroy {
 			this.hidePanel();
 			return;
 		}
+		// Pinning a list opened by hover moves the focus into it, as opening it by a press does
 		this.openReason = 'press';
+		setTimeout(() => this.focusFirstLink());
 	}
 
 	onPointerEnter(event: PointerEvent): void {
@@ -150,6 +176,8 @@ export class AppSwitcherComponent implements OnDestroy {
 		const shell = this._electronService.shell;
 		const canOpenInSystemBrowser = typeof shell?.openExternal === 'function';
 		this.hidePanel();
+		// Hiding detaches the row that held the focus: give it back to the button, as Escape does
+		this.triggerRef?.nativeElement.focus();
 		if (!canOpenInSystemBrowser) {
 			return;
 		}
