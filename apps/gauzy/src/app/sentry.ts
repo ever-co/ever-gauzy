@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/angular';
 import { Client, ClientOptions, BaseTransportOptions } from '@sentry/core';
 import { environment } from '@gauzy/ui-config';
-import { redactUrlSecrets } from '@gauzy/ui-core/common';
+import { hasUrlSecrets, redactUrlSecrets } from '@gauzy/ui-core/common';
 import { version } from '../../version';
 
 /**
@@ -12,16 +12,16 @@ export function initializeSentry(): Client<ClientOptions<BaseTransportOptions>> 
 	// Session Replay records the page's initial URL, fragment included, and that recording goes through neither
 	// `beforeSend` nor `beforeBreadcrumb`. An emailed link (account deletion, password reset, invitation) carries its
 	// single-use token there (`#/auth/delete-account/confirm?token=…`), so a page load that starts on such a URL
-	// gets no Replay at all (the same test as `redactUrlSecrets`). The next page load records again as usual.
-	const loadedWithUrlSecret =
-		typeof window !== 'undefined' && /[?&#](token|code)=/i.test(window.location?.href ?? '');
+	// gets no Replay at all (`hasUrlSecrets`: the same reading as `redactUrlSecrets`, a percent-encoded name
+	// included). The next page load records again as usual.
+	const loadedWithUrlSecret = typeof window !== 'undefined' && hasUrlSecrets(window.location?.href ?? '');
 
 	const replay = loadedWithUrlSecret ? null : Sentry.replayIntegration();
 	// An emailed link opened in a tab already running the app is a same-document navigation (hash routing): no page
 	// load, so the check above never sees it. Stop Replay for good the moment the URL carries a secret.
 	if (replay && typeof window !== 'undefined') {
 		const stopOnSecret = () => {
-			if (/[?&#](token|code)=/i.test(window.location?.href ?? '')) {
+			if (hasUrlSecrets(window.location?.href ?? '')) {
 				// `flush: false`: the pending segment may already hold the new URL, so it must not be sent either.
 				void replay.stop({ flush: false });
 			}
@@ -34,7 +34,7 @@ export function initializeSentry(): Client<ClientOptions<BaseTransportOptions>> 
 			const original = window.history[method];
 			window.history[method] = function (this: History, ...args: Parameters<History['pushState']>) {
 				const url = args[2];
-				if (url != null && /[?&#](token|code)=/i.test(String(url))) {
+				if (url != null && hasUrlSecrets(String(url))) {
 					void replay.stop({ flush: false });
 				}
 				return original.apply(this, args);

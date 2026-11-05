@@ -852,17 +852,34 @@ export class AccountDeletionService {
 		return await manager.count(User, { where: { tenantId: user.tenantId, id: Not(user.id) }, withDeleted: true });
 	}
 
-	/** The users with this address in every tenant, soft-deleted ones included, with their role and tenant. */
+	/**
+	 * The users with this address in every tenant, soft-deleted ones included, with their role and tenant.
+	 *
+	 * SQL LOWER folds non-ASCII letters (`É@…`) on some databases only: not on SQLite, nor on Postgres under the C
+	 * collation (as `deleteRowsAddressedTo` notes). An address with such letters is narrowed in SQL with the
+	 * patterns of {@link accountDeletionEmailPatterns}, then matched here, the way the address itself was lowercased.
+	 *
+	 * @param email The address, normalized (`normalizeAccountDeletionEmail`).
+	 */
 	private async findUsersByEmail(manager: EntityManager, email: string): Promise<User[]> {
-		return await manager
+		const query = manager
 			.getRepository(User)
 			.createQueryBuilder('user')
 			.withDeleted()
 			.leftJoinAndSelect('user.role', 'role')
-			.leftJoinAndSelect('user.tenant', 'tenant')
-			.where('LOWER(TRIM(user.email)) = :email', { email })
+			.leftJoinAndSelect('user.tenant', 'tenant');
+		if (!/[^\x00-\x7f]/.test(email)) {
+			return await query.where('LOWER(TRIM(user.email)) = :email', { email }).orderBy('user.id', 'ASC').getMany();
+		}
+		const patterns = accountDeletionEmailPatterns(email);
+		const users = await query
+			.where(
+				`(${patterns.map((_, index) => `LOWER(TRIM(user.email)) LIKE :pattern${index} ESCAPE '!'`).join(' OR ')})`,
+				Object.fromEntries(patterns.map((pattern, index) => [`pattern${index}`, pattern]))
+			)
 			.orderBy('user.id', 'ASC')
 			.getMany();
+		return users.filter((user) => normalizeAccountDeletionEmail(user.email) === email);
 	}
 
 	/**
@@ -926,6 +943,40 @@ export function planHashOf(
 		.map(({ user, account }) => `${user.id}|${user.tenantId || ''}|${account.outcome}|${account.soleAdmin ? 1 : 0}`)
 		.sort();
 	return createHash('sha256').update(parts.join('\n'), 'utf8').digest('hex').slice(0, 32);
+}
+
+/**
+ * The `LIKE` patterns (escape character `!`), compared with `LOWER(TRIM(email))`, that the stored spellings of a
+ * normalized address with non-ASCII letters match, whatever the database's LOWER does with those letters. They only
+ * narrow, so the caller compares the rows they find exactly; and they narrow to addresses of the same length with
+ * the same ASCII characters, so no address a person may type (`%é@example.com`) widens them to a whole domain.
+ *
+ * - A non-ASCII character stands for any one character (`_`): SQL may keep the capital it was lowercased from.
+ * - So does `k`, which the Kelvin sign lowercases to.
+ * - `İ`, one letter, lowercases to two (`i` and a combining dot): one pattern reads that pair as the one stored
+ *   letter, the other as the two the decomposed spelling stores. An address without it has one pattern.
+ * - `%`, `_` and `!` of the address itself are escaped: they are characters of the address, not wildcards.
+ *
+ * @param email The address, normalized (`normalizeAccountDeletionEmail`).
+ */
+export function accountDeletionEmailPatterns(email: string): string[] {
+	const characters = Array.from(email);
+	const pattern = (dottedCapitalStoredAsOne: boolean): string => {
+		let built = '';
+		for (let index = 0; index < characters.length; index++) {
+			const character = characters[index];
+			if (dottedCapitalStoredAsOne && character === 'i' && characters[index + 1] === '\u0307') {
+				built += '_';
+				index++;
+			} else if (character === 'k' || /[^\x00-\x7f]/.test(character)) {
+				built += '_';
+			} else {
+				built += /[!%_]/.test(character) ? `!${character}` : character;
+			}
+		}
+		return built;
+	};
+	return Array.from(new Set([pattern(true), pattern(false)]));
 }
 
 /** The branding stored with a request, or nothing when it is missing or unreadable. */
