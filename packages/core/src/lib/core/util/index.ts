@@ -1,3 +1,5 @@
+export * from './caller-restricted-columns.config';
+export * from './caller-restricted-columns.helper';
 export * from './find-by-date-between';
 export * from './path-util';
 export * from './db-operators';
