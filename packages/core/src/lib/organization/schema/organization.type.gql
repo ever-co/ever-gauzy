@@ -135,6 +135,8 @@ type Organization {
 	requireTask: Boolean!
 	"Whether a time entry must name a client."
 	requireClient: Boolean!
+	"Whether a time entry must name a team. The server files it under the employee's only active team when it names none."
+	requireTeam: Boolean!
 	"Whether the organization renders times on a 12- or a 24-hour clock."
 	timeFormat: Int!
 	"Whether a document's tax and its discount are stated as separate lines."

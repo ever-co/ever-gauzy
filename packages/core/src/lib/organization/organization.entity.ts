@@ -365,6 +365,16 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ default: false })
 	requireClient?: boolean;
 
+	/**
+	 * Whether every time entry must name a team. The server fills it for an employee in exactly one active team of
+	 * the organization and refuses an entry without one otherwise.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	requireTeam?: boolean;
+
 	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;
 
