@@ -21,6 +21,7 @@ let service: OrganizationTeamService;
 let permissions: PermissionsEnum[];
 let saved: Record<string, any>;
 let findOneByIdString: jest.SpyInstance;
+let isTeamManager: jest.Mock;
 
 beforeEach(() => {
 	permissions = [PermissionsEnum.CHANGE_SELECTED_EMPLOYEE];
@@ -43,7 +44,9 @@ beforeEach(() => {
 		return { affected: 1 } as never;
 	});
 
+	isTeamManager = jest.fn().mockResolvedValue(true);
 	service = Object.create(OrganizationTeamService.prototype);
+	Object.assign(service, { organizationTeamEmployeeService: { isTeamManager } });
 });
 
 afterEach(() => {
@@ -72,21 +75,18 @@ describe('OrganizationTeamService.setArchived', () => {
 
 		await service.setArchived('team-1', true);
 
-		// The manager membership was looked up for this team, with the MANAGER role
-		expect(findOneByIdString).toHaveBeenCalledWith(
-			'team-1',
-			expect.objectContaining({
-				where: expect.objectContaining({ members: expect.objectContaining({ employeeId: 'employee-1' }) })
-			})
+		// The caller's membership was checked for this team, in the team's own tenant and organization
+		expect(isTeamManager).toHaveBeenCalledWith(
+			'employee-1',
+			{ tenantId: TENANT, organizationId: ORGANIZATION, organizationTeamId: 'team-1' },
+			false
 		);
 		expect(saved).toMatchObject({ isArchived: true });
 	});
 
 	it('refuses a caller who neither acts for every employee nor manages the team, and writes nothing', async () => {
 		permissions = [PermissionsEnum.ORG_TEAM_EDIT];
-		findOneByIdString
-			.mockResolvedValueOnce({ ...stored } as never)
-			.mockRejectedValueOnce(new Error('not a manager'));
+		isTeamManager.mockResolvedValue(false);
 
 		await expect(service.setArchived('team-1', true)).rejects.toBeInstanceOf(ForbiddenException);
 		expect(saved).toBeUndefined();

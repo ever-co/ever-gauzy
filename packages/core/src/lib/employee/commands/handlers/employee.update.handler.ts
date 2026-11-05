@@ -6,7 +6,7 @@ import {
 	IEmployeeUpdateInput,
 	PermissionsEnum
 } from '@gauzy/contracts';
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { EmployeeUpdateCommand } from './../employee.update.command';
 import { EmployeeService } from './../../employee.service';
 import { RequestContext } from './../../../core/context';
@@ -16,12 +16,21 @@ import {
 	employeeAgentRestrictionLocations,
 	recordAgentRestrictionAcknowledgement
 } from './../../agent-exit-logout-restriction';
+import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
+
+/** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
+function turnsTrackingOff(before: IEmployee, saved: IEmployee): boolean {
+	const wasTracking = before?.isTrackingEnabled === true;
+	const isNowOff = saved?.isTrackingEnabled === false;
+	return wasTracking && isNowOff;
+}
 
 @CommandHandler(EmployeeUpdateCommand)
 export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateCommand> {
 	constructor(
 		private readonly _employeeService: EmployeeService,
-		private readonly _activityLogService: ActivityLogService
+		private readonly _activityLogService: ActivityLogService,
+		private readonly _eventBus: EventBus
 	) {}
 
 	/**
@@ -107,9 +116,10 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			});
 		}
 
+		let saved: IEmployee;
 		try {
 			// Use `create` to save the entity, ensuring ManyToMany relations are persisted
-			return await this._employeeService.create({
+			saved = await this._employeeService.create({
 				...changes,
 				id
 			});
@@ -120,5 +130,13 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 			}
 			throw new BadRequestException(error.message || 'Failed to update employee profile.');
 		}
+
+		if (turnsTrackingOff(employee, saved)) {
+			// The read above loads the organization, whose id MikroORM leaves off the column
+			const organizationId = employee.organizationId ?? employee.organization?.id;
+			const tenantId = employee.tenantId ?? RequestContext.currentTenantId();
+			this._eventBus.publish(new TrackingTurnedOffEvent({ employeeId: id, organizationId, tenantId }));
+		}
+		return saved;
 	}
 }
