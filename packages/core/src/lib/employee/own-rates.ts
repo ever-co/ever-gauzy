@@ -50,6 +50,18 @@ function changes(stored: Partial<IEmployee>, input: Partial<IEmployeeUpdateInput
 }
 
 /**
+ * Whether two ids name the same employee. A route id passes the UUID pipe in any letter case, and Postgres matches
+ * every case to the stored row, so ids are compared without case.
+ */
+export function isSameId(first: string | null | undefined, second: string | null | undefined): boolean {
+	const bothSet = Boolean(first) && Boolean(second);
+	if (!bothSet) {
+		return false;
+	}
+	return first.toLowerCase() === second.toLowerCase();
+}
+
+/**
  * The rate fields an update changes. Values are compared, not presence: a profile form sends the unchanged rate with
  * every save.
  */

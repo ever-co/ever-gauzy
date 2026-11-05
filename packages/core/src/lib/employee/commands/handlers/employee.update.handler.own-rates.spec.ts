@@ -86,6 +86,13 @@ describe('EmployeeUpdateHandler — an employee changing their own rates', () =>
 		);
 	});
 
+	it('refuses the change when the own id is sent in another letter case', async () => {
+		permissions = [PermissionsEnum.PROFILE_EDIT, PermissionsEnum.ORG_EMPLOYEES_EDIT];
+
+		await expect(update(OWN_ID.toUpperCase(), { billRateValue: 30 })).rejects.toThrow(ForbiddenException);
+		expect(create).not.toHaveBeenCalled();
+	});
+
 	it('lets a holder of CHANGE_OWN_RATES change their own rates', async () => {
 		permissions = [PermissionsEnum.PROFILE_EDIT, PermissionsEnum.CHANGE_OWN_RATES];
 
