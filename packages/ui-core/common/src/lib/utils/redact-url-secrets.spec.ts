@@ -30,6 +30,12 @@ describe('redactUrlSecrets', () => {
 		);
 	});
 
+	it('redacts the whole value of a secret, a `?` in it included', () => {
+		expect(redactUrlSecrets('https://x.test/#/auth/reset?token=abc?part=def&next=1')).toBe(
+			'https://x.test/#/auth/reset?token=[redacted]&next=1'
+		);
+	});
+
 	it('keeps a parameter whose name cannot be decoded, and whose raw name is no secret', () => {
 		expect(redactUrlSecrets('https://x.test/a?%E0%A4%A=1&code=2')).toBe(
 			'https://x.test/a?%E0%A4%A=1&code=[redacted]'

@@ -5,11 +5,11 @@
 const SECRET_PARAM_NAMES: ReadonlySet<string> = new Set(['token', 'code']);
 
 /**
- * One parameter of a query or a fragment: its separator, its name as written and its value. A name and a value
- * stop at `?` too: a hash route's path (`#/auth/delete-account/confirm?token=…`) is never read as a name, and a
- * `?token=` inside another parameter's value (`?next=/a?token=…`) is still read as a parameter of its own.
+ * One parameter of a query or a fragment: its separator, its name as written and its value, up to the next `&` or
+ * `#`, as a query parser reads it. A name stops at `?` too, so a hash route's path
+ * (`#/auth/delete-account/confirm?token=…`) is never read as a name.
  */
-const PARAM = /([?&#])([^=&#?]*)=([^&#?]*)/g;
+const PARAM = /([?&#])([^=&#?]*)=([^&#]*)/g;
 
 /**
  * A parameter's name as the router reads it: percent-decoded (`%74` is a `t`, so a `token` spelled with it is
@@ -37,9 +37,24 @@ export function redactUrlSecrets<T>(url: T): T {
 	if (typeof url !== 'string') {
 		return url;
 	}
-	return url.replace(PARAM, (match: string, separator: string, name: string) =>
-		SECRET_PARAM_NAMES.has(parameterName(name)) ? `${separator}${name}=[redacted]` : match
-	) as unknown as T;
+	return redactParameters(url) as unknown as T;
+}
+
+/**
+ * `text` with every secret parameter's whole value redacted, a `?` in it included. The value of any other
+ * parameter is read again from its first `?` on, so a `?token=` written inside it (`?next=/a?token=…`) is
+ * redacted as well.
+ */
+function redactParameters(text: string): string {
+	return text.replace(PARAM, (match: string, separator: string, name: string, value: string) => {
+		if (SECRET_PARAM_NAMES.has(parameterName(name))) {
+			return `${separator}${name}=[redacted]`;
+		}
+		const nested = value.indexOf('?');
+		return nested < 0
+			? match
+			: `${separator}${name}=${value.slice(0, nested)}${redactParameters(value.slice(nested))}`;
+	});
 }
 
 /**
