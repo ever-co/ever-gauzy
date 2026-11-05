@@ -64,6 +64,7 @@ interface ICallerReads {
 	dailyOn: any;
 	byEmployeeOn: any;
 	byClientOn: any;
+	ownTimeOn: any;
 }
 
 type Reads = Record<'manager' | 'organizationWide', ICallerReads>;
@@ -290,7 +291,8 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 					dailyOff: await read(() => target().getDailyReport(off)),
 					dailyOn: await read(() => target().getDailyReport(on)),
 					byEmployeeOn: await read(() => target().getDailyReport({ ...on, groupBy: 'employee' })),
-					byClientOn: await read(() => target().getDailyReport({ ...on, groupBy: 'client' }))
+					byClientOn: await read(() => target().getDailyReport({ ...on, groupBy: 'client' })),
+					ownTimeOn: await read(() => target().getTimeLogs({ ...on, employeeIds: [MANAGER] }))
 				};
 			};
 
@@ -396,6 +398,14 @@ describe('TimeLogService team-scoped reports with the time logged without a team
 				memberWithoutTeam: null,
 				managerWithoutTeam: null
 			});
+		});
+
+		it("keeps the employees the report asks for, without the other members' time without a team", () => {
+			for (const caller of ['manager', 'organizationWide'] as const) {
+				const { ownTimeOn } = measured[orm][caller];
+				expect(ownTimeOn.error).toBeUndefined();
+				expect(namesOf(ownTimeOn)).toEqual(['managerWithoutTeam']);
+			}
 		});
 
 		it('answers the projectless groups with no project, in every grouping', () => {
