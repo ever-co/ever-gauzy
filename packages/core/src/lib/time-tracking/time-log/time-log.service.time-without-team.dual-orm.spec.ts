@@ -5,6 +5,7 @@ import type {
 	IReportDayGroupByClient,
 	IReportDayGroupByDate,
 	IReportDayGroupByEmployee,
+	IReportDayGroupByProject,
 	IReportDayTaskRow
 } from '@gauzy/contracts';
 
@@ -64,6 +65,7 @@ interface ICallerReads {
 	dailyOn: any;
 	byEmployeeOn: any;
 	byClientOn: any;
+	byProjectOn: any;
 	ownTimeOn: any;
 }
 
@@ -127,7 +129,8 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 			const {
 				GetTimeLogGroupByClientCommand,
 				GetTimeLogGroupByDateCommand,
-				GetTimeLogGroupByEmployeeCommand
+				GetTimeLogGroupByEmployeeCommand,
+				GetTimeLogGroupByProjectCommand
 			} = require('./commands');
 			const { GetTimeLogGroupByDateHandler } = require('./commands/handlers/get-time-log-group-by-date.handler');
 			const {
@@ -136,6 +139,9 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 			const {
 				GetTimeLogGroupByClientHandler
 			} = require('./commands/handlers/get-time-log-group-by-client.handler');
+			const {
+				GetTimeLogGroupByProjectHandler
+			} = require('./commands/handlers/get-time-log-group-by-project.handler');
 			const {
 				OrganizationTeamEmployee
 			} = require('../../organization-team-employee/organization-team-employee.entity');
@@ -245,7 +251,8 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 				[
 					[GetTimeLogGroupByDateCommand, new GetTimeLogGroupByDateHandler()],
 					[GetTimeLogGroupByEmployeeCommand, new GetTimeLogGroupByEmployeeHandler()],
-					[GetTimeLogGroupByClientCommand, new GetTimeLogGroupByClientHandler()]
+					[GetTimeLogGroupByClientCommand, new GetTimeLogGroupByClientHandler()],
+					[GetTimeLogGroupByProjectCommand, new GetTimeLogGroupByProjectHandler()]
 				];
 			const commandBus = {
 				execute: async (command: unknown) => {
@@ -292,6 +299,7 @@ async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {
 					dailyOn: await read(() => target().getDailyReport(on)),
 					byEmployeeOn: await read(() => target().getDailyReport({ ...on, groupBy: 'employee' })),
 					byClientOn: await read(() => target().getDailyReport({ ...on, groupBy: 'client' })),
+					byProjectOn: await read(() => target().getDailyReport({ ...on, groupBy: 'project' })),
 					ownTimeOn: await read(() => target().getTimeLogs({ ...on, employeeIds: [MANAGER] }))
 				};
 			};
@@ -409,14 +417,18 @@ describe('TimeLogService team-scoped reports with the time logged without a team
 		});
 
 		it('answers the projectless groups with no project, in every grouping', () => {
-			const { dailyOn, byEmployeeOn, byClientOn } = measured[orm].manager;
+			const { dailyOn, byEmployeeOn, byClientOn, byProjectOn } = measured[orm].manager;
 			const byDate: IReportDayGroupByDate[] = dailyOn;
 			const byEmployee: IReportDayGroupByEmployee[] = byEmployeeOn;
 			const byClient: IReportDayGroupByClient[] = byClientOn;
+			const byProject: IReportDayGroupByProject[] = byProjectOn;
+			expect(byProjectOn.error).toBeUndefined();
 
 			expect(byDate[0].logs[0].project).toBeNull();
 			expect(byEmployee[0].logs[0].projectLogs[0].project).toBeNull();
 			expect(byClient[0].logs[0].project).toBeNull();
+			expect(byProject).toHaveLength(1);
+			expect(byProject[0].project).toBeNull();
 		});
 
 		it("adds the requested team's members' time without a team for an organization-wide caller, and no one else's", () => {
