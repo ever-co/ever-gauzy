@@ -21,5 +21,11 @@ describe('EmployeeRateChangeRequestDTO', () => {
 	it('accepts a rate of 0 and a positive rate, rounded to cents', async () => {
 		expect(await rateErrors({ billRateValue: 0 })).toHaveLength(0);
 		expect(await rateErrors({ billRateValue: 45.5 })).toHaveLength(0);
+
+		const dto = plainToInstance(EmployeeRateChangeRequestDTO, {
+			organizationId: ORGANIZATION,
+			billRateValue: 12.345
+		});
+		expect(dto.billRateValue).toBe(12.35);
 	});
 });
