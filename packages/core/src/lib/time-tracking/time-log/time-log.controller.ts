@@ -37,7 +37,13 @@ import {
 } from './../../shared/guards';
 import { UUIDValidationPipe, UseValidationPipe } from './../../shared/pipes';
 import { CreateManualTimeLogDTO, DeleteTimeLogDTO, UpdateManualTimeLogDTO } from './dto';
-import { GetTimeLogConflictQueryDTO, TimeLogLimitQueryDTO, TimeLogListQueryDTO, TimeLogQueryDTO } from './dto/query';
+import {
+	GetTimeLogConflictQueryDTO,
+	TimeLogBudgetQueryDTO,
+	TimeLogLimitQueryDTO,
+	TimeLogListQueryDTO,
+	TimeLogQueryDTO
+} from './dto/query';
 import { TimeLogBodyTransformPipe } from './pipes';
 import { TimeLogConflictAccessGuard } from './guards/time-log-conflict-access.guard';
 
@@ -220,7 +226,7 @@ export class TimeLogController {
 	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('project-budget-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async getProjectBudgetLimit(@Query() options: TimeLogQueryDTO) {
+	async getProjectBudgetLimit(@Query() options: TimeLogBudgetQueryDTO) {
 		return await this._timeLogService.getProjectBudgetLimit(options);
 	}
 
@@ -241,7 +247,7 @@ export class TimeLogController {
 	@UseGuards(EmployeeTrackedDataGuard)
 	@Get('client-budget-limit')
 	@UseValidationPipe({ whitelist: true, transform: true })
-	async clientBudgetLimit(@Query() options: TimeLogQueryDTO) {
+	async clientBudgetLimit(@Query() options: TimeLogBudgetQueryDTO) {
 		return await this._timeLogService.getClientBudgetLimit(options);
 	}
 

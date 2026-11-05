@@ -1,4 +1,11 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
+import {
+	Injectable,
+	Logger,
+	NotFoundException,
+	ForbiddenException,
+	NotAcceptableException,
+	UnprocessableEntityException
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual, FindOptionsWhere, Or, Equal } from 'typeorm';
 import * as moment from 'moment';
@@ -17,7 +24,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { OrganizationTeamEmployee, Task, TimeLog } from '../../core/entities/internal';
+import { DailyPlan, OrganizationTeam, OrganizationTeamEmployee, Task, TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {
 	MultiORM,
@@ -33,6 +40,7 @@ import { assertSensitiveRelationsAllowed } from '../../core/util/sensitive-relat
 import { withoutTrackedDataRelations } from '../../core/util/tracked-data-sensitive-relations.config';
 import { prepareSQLQuery as p } from '../../database/database.helper';
 import { EmployeeService } from '../../employee/employee.service';
+import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { ITrackingTurnedOffScope } from './events/tracking-turned-off.event';
 import {
 	DeleteTimeSpanCommand,
@@ -54,6 +62,14 @@ import {
 	exclusiveWindowEnd,
 	secondsWithinWindow
 } from './timer.helper';
+import {
+	DAILY_PLAN_REQUIRED,
+	PLAN_RULE_SOURCES,
+	TASK_NOT_PLANNED,
+	planDatesAroundToday,
+	planHasTasks,
+	planHoldsTask
+} from './timer-plan-rule';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -82,7 +98,8 @@ export class TimerService {
 		readonly typeOrmEmployeeRepository: TypeOrmEmployeeRepository,
 		readonly mikroOrmEmployeeRepository: MikroOrmEmployeeRepository,
 		private readonly _employeeService: EmployeeService,
-		private readonly _commandBus: CommandBus
+		private readonly _commandBus: CommandBus,
+		private readonly _managedEmployeeService: ManagedEmployeeService
 	) {}
 
 	/**
@@ -104,6 +121,36 @@ export class TimerService {
 	}
 
 	/**
+	 * Whether a timer status request that names an employee reads that employee (true) or the caller, as a request
+	 * naming the caller themselves always did (false). A caller who may act for every employee reads anyone; a manager
+	 * of the employee (ManagedEmployeeService) reads them too. Anyone else is refused: they used to get their own
+	 * status back, labelled as the colleague's, with no error.
+	 *
+	 * @throws ForbiddenException when the caller may not read the named employee's status.
+	 */
+	private async readsStatusOfNamedEmployee(employeeId: ID, organizationId: ID): Promise<boolean> {
+		const actsForEveryEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		if (actsForEveryEmployee) {
+			return true;
+		}
+
+		const callerEmployeeId = RequestContext.currentEmployeeId();
+		if (employeeId === callerEmployeeId) {
+			return false;
+		}
+
+		const managesEmployee = await this._managedEmployeeService.canManageEmployee(
+			employeeId,
+			undefined,
+			organizationId
+		);
+		if (!managesEmployee) {
+			throw new ForbiddenException("You can't see this employee's timer status.");
+		}
+		return true;
+	}
+
+	/**
 	 * Implementation of timer status logic
 	 * This is intended to be used directly by the command handler
 	 */
@@ -117,12 +164,17 @@ export class TimerService {
 
 		let employee: IEmployee;
 
-		/** SUPER_ADMIN have ability to see employees timer status by specific employee (employeeId) */
-		const permission = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		const namedEmployeeId = request.employeeId;
+		const namesAnEmployee = isNotEmpty(namedEmployeeId);
+		let readsNamedEmployee = false;
+		if (namesAnEmployee) {
+			readsNamedEmployee = await this.readsStatusOfNamedEmployee(namedEmployeeId, organizationId);
+		}
 
-		if (!!permission && isNotEmpty(request.employeeId)) {
-			const { employeeId } = request;
-			employee = await this.fetchEmployee({ id: employeeId, tenantId, organizationId });
+		if (readsNamedEmployee) {
+			// Someone else's log: the tracked data hanging off it (slots, screenshots) stays out, as on the worked status
+			request = { ...request, relations: withoutTrackedDataRelations(request.relations) };
+			employee = await this.fetchEmployee({ id: namedEmployeeId, tenantId, organizationId });
 		} else {
 			const userId = RequestContext.currentUserId();
 			employee = await this.fetchEmployee({ userId, tenantId, organizationId });
@@ -296,6 +348,15 @@ export class TimerService {
 
 		await this.assertTrackingOnInTeam(employeeId, organizationId, tenantId, organizationTeamId, source);
 
+		await this.assertPlannedWhenTeamRequiresIt({
+			employeeId,
+			organizationId,
+			tenantId,
+			organizationTeamId,
+			taskId,
+			source
+		});
+
 		const projectIdToLog = await this.projectIdForStart(request, organizationId, tenantId);
 
 		// Stop any previous running timers
@@ -360,6 +421,72 @@ export class TimerService {
 			select: { id: true, projectId: true }
 		});
 		return task?.projectId ?? null;
+	}
+
+	/**
+	 * Refuses an Ever Teams start for a team that requires a daily plan when the employee has no plan with tasks
+	 * around today in that team, or when the task they start is in none of those plans. Ever Teams web checks the
+	 * same before starting; the mobile app and older web tabs did not, and the rule stayed advisory.
+	 *
+	 * @throws UnprocessableEntityException with the code DAILY_PLAN_REQUIRED or TASK_NOT_PLANNED.
+	 */
+	private async assertPlannedWhenTeamRequiresIt(start: {
+		employeeId: ID;
+		organizationId: ID;
+		tenantId: ID;
+		organizationTeamId?: ID;
+		taskId?: ID;
+		source?: TimeLogSourceEnum;
+	}): Promise<void> {
+		const { employeeId, organizationId, tenantId, organizationTeamId, taskId, source } = start;
+		const isPlanRuleClient = PLAN_RULE_SOURCES.includes(source);
+		if (!isPlanRuleClient) {
+			return;
+		}
+		if (!organizationTeamId) {
+			return;
+		}
+
+		const team = await this.typeOrmTimeLogRepository.manager.findOne(OrganizationTeam, {
+			where: { id: organizationTeamId, organizationId, tenantId },
+			select: { id: true, requirePlanToTrack: true }
+		});
+		const teamRequiresPlan = team?.requirePlanToTrack === true;
+		if (!teamRequiresPlan) {
+			return;
+		}
+
+		const { from, to } = planDatesAroundToday(moment.utc());
+		const plans = await this.typeOrmTimeLogRepository.manager.find(DailyPlan, {
+			where: {
+				employeeId,
+				organizationTeamId,
+				organizationId,
+				tenantId,
+				date: Between(from, to),
+				isActive: Or(IsNull(), Equal(true)),
+				isArchived: Or(IsNull(), Equal(false))
+			},
+			relations: { tasks: true }
+		});
+		const plansWithTasks = plans.filter(planHasTasks);
+		if (plansWithTasks.length === 0) {
+			throw new UnprocessableEntityException({
+				message: 'Your team requires a daily plan before you track time. Plan your day first.',
+				code: DAILY_PLAN_REQUIRED
+			});
+		}
+
+		if (!taskId) {
+			return;
+		}
+		const isTaskPlanned = plansWithTasks.some((plan) => planHoldsTask(plan, taskId));
+		if (!isTaskPlanned) {
+			throw new UnprocessableEntityException({
+				message: "Add this task to today's plan before you track time on it.",
+				code: TASK_NOT_PLANNED
+			});
+		}
 	}
 
 	/**

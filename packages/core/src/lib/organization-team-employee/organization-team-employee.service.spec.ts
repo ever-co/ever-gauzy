@@ -81,6 +81,7 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const matches = (row: any, where: any = {}) =>
+		(where.organizationTeamId === undefined || row.organizationTeamId === where.organizationTeamId) &&
 		(where.employeeId === undefined || row.employeeId === where.employeeId) &&
 		(where.id === undefined || (where.id?.value ?? [where.id]).includes(row.id)) &&
 		(where.role?.name === undefined || row.role?.name === where.role.name) &&
@@ -312,10 +313,104 @@ describe('OrganizationTeamEmployeeService — a team manager removing another me
 		]);
 	});
 
-	it('gives a new manager the role but not the flag when the caller lacks CHANGE_SELECTED_EMPLOYEE', async () => {
+	/** Runs `edit` while the caller's own row on this team holds the MANAGER role without the flag. */
+	const asUnflaggedManager = async <T>(edit: () => Promise<T>): Promise<T> => {
+		const managerRow = rows.find((row) => row.id === 'row-manager');
+		managerRow.isManager = false;
+
+		try {
+			return await edit();
+		} finally {
+			managerRow.isManager = true;
+		}
+	};
+
+	it('gives a new manager the flag when the caller is a manager flagged on this team', async () => {
+		// A flagged manager already acts for the team's members: a co-manager they name gets the same reach.
 		expect(await addNewManagerAndMember()).toEqual([
+			expect.objectContaining({ employeeId: 'new-manager', isManager: true, roleId: 'role-manager' }),
+			expect.objectContaining({ employeeId: 'new-member', isManager: false, roleId: null })
+		]);
+	});
+
+	it('gives a new manager the role but not the flag when the caller holds the role without the flag', async () => {
+		expect(await asUnflaggedManager(addNewManagerAndMember)).toEqual([
 			expect.objectContaining({ employeeId: 'new-manager', isManager: false, roleId: 'role-manager' }),
 			expect.objectContaining({ employeeId: 'new-member', isManager: false, roleId: null })
+		]);
+	});
+
+	it('promotes a plain member to the role only when the caller holds the role without the flag', async () => {
+		// The role alone must never hand on the right to act for the team's members, on promotion as on a new member
+		await asUnflaggedManager(() => editTeam(['manager-employee', 'member-employee'], []));
+
+		// The flag is not written at all, so a grant made meanwhile by a caller who may give it is not overwritten
+		expect(updated).toEqual([
+			{
+				id: expect.objectContaining({ id: 'row-member', tenantId: manager.tenantId }),
+				changes: { role: { id: 'role-manager' } }
+			}
+		]);
+	});
+
+	it('clears the flag of a flag-only manager a role-only caller leaves out of the managers', async () => {
+		// The member holds the flag without any role, as older rows can
+		const memberRow = rows.find((row) => row.id === 'row-member');
+		memberRow.isManager = true;
+
+		try {
+			await asUnflaggedManager(() => editTeam(['manager-employee'], ['member-employee']));
+		} finally {
+			memberRow.isManager = false;
+		}
+
+		expect(updated).toEqual([
+			{
+				id: expect.objectContaining({ id: 'row-member', tenantId: manager.tenantId }),
+				changes: { role: null, isManager: false }
+			}
+		]);
+	});
+
+	it('does not let a manager flagged only on another team flag managers on this one', async () => {
+		const otherTeamRow = {
+			id: 'row-manager-other-team',
+			employeeId: 'manager-employee',
+			roleId: 'role-manager',
+			role: { name: RolesEnum.MANAGER },
+			isManager: true,
+			organizationTeamId: 'team-2',
+			organizationId: manager.organizationId,
+			tenantId: manager.tenantId
+		};
+		rows.push(otherTeamRow);
+
+		try {
+			expect(await asUnflaggedManager(addNewManagerAndMember)).toEqual([
+				expect.objectContaining({ employeeId: 'new-manager', isManager: false, roleId: 'role-manager' }),
+				expect.objectContaining({ employeeId: 'new-member', isManager: false, roleId: null })
+			]);
+		} finally {
+			rows.splice(rows.indexOf(otherTeamRow), 1);
+		}
+	});
+
+	it("repairs a co-manager's missing flag when the caller is a manager flagged on this team", async () => {
+		// The member holds the MANAGER role from an older edit, without the flag
+		const memberRow = rows.find((row) => row.id === 'row-member');
+		Object.assign(memberRow, { roleId: 'role-manager', role: { id: 'role-manager', name: RolesEnum.MANAGER } });
+
+		try {
+			await editTeam(['manager-employee', 'member-employee'], []);
+		} finally {
+			Object.assign(memberRow, { roleId: null, role: null });
+		}
+
+		expect(updated).toEqual([
+			{
+				id: expect.objectContaining({ id: 'row-member', tenantId: manager.tenantId }),
+				changes: { role: { id: 'role-manager' }, isManager: true }
+			}
 		]);
 	});
 
