@@ -1,47 +1,385 @@
-@use 'gauzy/_gauzy-dialogs' as *;
+@use 'gauzy/_gauzy-dialogs' as dialogs;
 
-.main {
-	height: auto;
-	width: auto;
-  	.body {
-    	width: 645px;
-  	}
-	background-color: nb-theme(gauzy-card-1);
-  	nb-card-header {
-		.help-text {
-			width: 40px;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-		nb-icon {
-			cursor: pointer;
-		}
-  	}
+// The Add task dialog's layout: a slim header, the record on the left, a details panel of
+// label | control rows on the right, and the actions in a slim footer.
+$side-width: 22rem;
+$label-width: 5.5rem;
+$control-inset: 0.5rem;
+$control-height: 2.25rem;
+// Radii follow the theme: panels take its radius, small controls half of it.
+$radius: var(--border-radius);
+$control-radius: calc(var(--border-radius) / 2);
+$hairline: 1px solid var(--gauzy-border-default-color);
+// The fallback is for the material themes, which do not carry the gauzy tokens (as in `_overlays.scss`).
+$hover-tint: var(--gauzy-hover-tint, rgba(126, 126, 143, 0.12));
+
+:host {
+	// ng-select's theme swaps a control's edge for this shadow on hover, which leaves the
+	// trigger with no visible border.
+	--ng-select-container-hover-shadow: #{dialogs.$control-hairline};
+
+	display: block;
+	width: 60rem;
+	max-width: calc(100vw - 2rem);
 }
-.categories {
-	width: 100%;
+
+.expense-dialog {
+	margin-bottom: 0;
+	max-height: calc(100vh - 3rem);
+	background-color: var(--gauzy-card-1);
+}
+
+.expense-header {
 	display: flex;
-	flex-direction: row;
+	align-items: center;
 	justify-content: space-between;
-	align-items: flex-end;
-	.form-group {
-		margin-bottom: 0;
-		width: 100%;
+	gap: 1rem;
+	padding: 0.625rem 1.5rem;
+	border-bottom: $hairline;
+}
+
+:host .title {
+	margin: 0;
+	color: var(--gauzy-text-color-1);
+	font-size: 0.9375rem;
+	font-weight: 600;
+	line-height: 1.25rem;
+}
+
+.close-button {
+	display: inline-flex;
+	flex: none;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: 0;
+	border-radius: $control-radius;
+	background: transparent;
+	color: var(--gauzy-text-color-2);
+	cursor: pointer;
+
+	&:hover,
+	&:focus-visible {
+		background-color: $hover-tint;
+		color: var(--gauzy-text-color-1);
+	}
+
+	&--small {
+		width: 1.5rem;
+		height: 1.5rem;
 	}
 }
-.datepicker {
-  	width: 100%;
+
+// The dialog takes the height of its content; past the window's, the body scrolls.
+.expense-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	padding: 0;
+	overflow-y: auto;
 }
-nb-radio-group {
+
+.expense-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) $side-width;
+	align-items: start;
+}
+
+.expense-main,
+.expense-side {
+	min-width: 0;
+	padding: 1.25rem 1.5rem;
+}
+
+.expense-side {
+	padding-inline-start: 0;
+}
+
+// Every field of the form is labelled alike, the details panel's rows included.
+.expense-main .form-group {
+	margin-bottom: 1rem;
+}
+
+.required-mark {
+	color: var(--gauzy-text-color-2);
+}
+
+/* ── The amount ── */
+
+.amount-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: 1rem;
+
+	// The currency field brings a form-group of its own.
+	::ng-deep .currency-container {
+		margin-bottom: 0;
+	}
+}
+
+// A figure, not a stepper: the browser's arrows are dropped.
+:host .amount-input {
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	-moz-appearance: textfield;
+	appearance: textfield;
+
+	&::-webkit-inner-spin-button,
+	&::-webkit-outer-spin-button {
+		-webkit-appearance: none;
+		margin: 0;
+	}
+}
+
+// While no single employee is picked: the amount is divided among everyone.
+.split-note {
 	display: flex;
-	flex-direction: row;
-	margin-bottom: 1em;
+	align-items: flex-start;
+	gap: 0.375rem;
+	margin: -0.5rem 0 1rem;
+	color: var(--gauzy-text-color-2);
+	font-size: 0.75rem;
+	line-height: 1rem;
+
+	nb-icon {
+		flex: none;
+		width: 0.875rem;
+		height: 0.875rem;
+		font-size: 0.875rem;
+		margin-top: 0.0625rem;
+	}
 }
-.employees {
-  	margin-bottom: 15px;
+
+/* ── The type: radio buttons across the top, over both columns ── */
+
+.type-options {
+	grid-column: 1 / -1;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 1.25rem;
+	padding: 1rem 1.5rem 0;
 }
-// Marks the "Attach a receipt" button once a receipt is attached.
-.receipt-attached {
-	color: var(--color-success-500);
+
+// Smaller than Nebular's default radios, in step with the form's 13px controls; the row's gap replaces the
+// label's own trailing padding.
+:host .type-options ::ng-deep nb-radio {
+	$size: 0.875rem;
+
+	label {
+		padding: 0.125rem 0;
+	}
+
+	.outer-circle,
+	.inner-circle {
+		width: $size;
+		height: $size;
+	}
+
+	.text {
+		font-size: 0.8125rem;
+		line-height: 1.125rem;
+		// Nebular clears the circle with a margin and a padding on the physical side of each direction (left in
+		// LTR, right in RTL). One logical padding, important to outrank both, clears the smaller circle either way.
+		margin-inline: 0 !important;
+		padding-inline-start: calc(#{$size} + 0.375rem) !important;
+	}
+}
+
+/* ── Purpose, notes, taxes and the receipt ── */
+
+:host .text-box {
+	display: block;
+	min-height: 4.5rem !important;
+	height: 4.5rem;
+	resize: vertical;
+}
+
+// The tax section's label, with the button that takes the taxes out again.
+.label-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.25rem;
+
+	.label {
+		margin-bottom: 0;
+	}
+
+	[nbButton] {
+		text-transform: none;
+	}
+}
+
+.tax-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.5rem;
+}
+
+.tax-result {
+	display: flex;
+	align-items: center;
+	min-height: $control-height;
+	padding: 0 $control-inset;
+	border-radius: $control-radius;
+	background-color: $hover-tint;
+	color: var(--gauzy-text-color-1);
+	font-size: 0.8125rem;
+	font-variant-numeric: tabular-nums;
+}
+
+.extra-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+
+	[nbButton] {
+		text-transform: none;
+	}
+}
+
+/* ── The warning a billable expense without a contact raises ── */
+
+.expense-alert {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.625rem;
+	margin-bottom: 1rem;
+	padding: 0.625rem 0.75rem;
+	border: 1px solid var(--color-warning-default);
+	border-radius: $radius;
+	background-color: color-mix(in srgb, var(--color-warning-default) 10%, transparent);
+
+	> nb-icon {
+		flex: none;
+		color: var(--color-warning-default);
+	}
+}
+
+.expense-alert-text {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: 0.125rem;
+	font-size: 0.8125rem;
+	line-height: 1.125rem;
+	color: var(--gauzy-text-color-1);
+}
+
+/* ── The details panel ── */
+
+.expense-details {
+	display: flex;
+	flex-direction: column;
+	gap: 0.625rem;
+	padding: 0.75rem;
+	border: $hairline;
+	border-radius: $radius;
+}
+
+.details-title {
+	margin: 0;
+	padding-bottom: 0.625rem;
+	border-bottom: $hairline;
+	color: var(--gauzy-text-color-1);
+	font-size: 0.75rem;
+	line-height: 1rem;
+	font-weight: 600;
+
+	&--group {
+		margin-top: 0.5rem;
+	}
+}
+
+// Label on the left, value on the right, the way an issue's details panel reads.
+.field {
+	display: grid;
+	grid-template-columns: $label-width minmax(0, 1fr);
+	align-items: center;
+	column-gap: 0.5rem;
+	margin: 0;
+
+	&[hidden] {
+		display: none;
+	}
+
+	.label {
+		margin: 0;
+	}
+
+	// The project selector's own 200px floor pushes it past the column.
+	ga-project-selector {
+		min-width: 0;
+	}
+}
+
+// One text inset for every control in the panel, so inputs and dropdowns share a left edge.
+:host .expense-side .detail-input {
+	min-height: $control-height !important;
+	padding: 0.25rem $control-inset;
+	font-weight: 400;
+}
+
+:host .expense-side ::ng-deep {
+	nb-select.appearance-outline.status-basic .select-button {
+		min-height: $control-height !important;
+		// `!important` to get past the global `nb-select.size-medium button` padding.
+		padding-block: 0.25rem !important;
+		padding-inline: $control-inset 2.2rem !important;
+	}
+
+	.ng-select.ng-select-single .ng-select-container,
+	.ng-select.ng-select-multiple .ng-select-container {
+		height: auto !important;
+		min-height: $control-height !important;
+	}
+
+	.ng-select .ng-select-container .ng-value-container {
+		padding-inline-start: $control-inset !important;
+	}
+
+	.ng-select.ng-select-multiple .ng-select-container .ng-value-container .ng-placeholder {
+		padding-inline-start: 0;
+	}
+
+	// The selectors bring a form-group margin of their own; the panel spaces its rows.
+	.form-group {
+		margin-bottom: 0;
+	}
+}
+
+/* ── The actions ── */
+
+.expense-footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 0.5rem;
+	padding: 0.625rem 1.5rem;
+	border-top: $hairline;
+}
+
+@media (max-width: 52rem) {
+	.expense-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.expense-side {
+		padding-inline-start: 1.5rem;
+		padding-top: 0;
+	}
+}
+
+@media (max-width: 36rem) {
+	.amount-row,
+	.tax-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.type-options {
+		flex-direction: column;
+		align-items: flex-start;
+	}
 }

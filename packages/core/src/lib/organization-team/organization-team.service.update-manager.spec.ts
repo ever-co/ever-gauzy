@@ -1,7 +1,7 @@
 import '../core/entities/internal';
 
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PermissionsEnum, RolesEnum } from '@gauzy/contracts';
+import { ForbiddenException } from '@nestjs/common';
+import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../core/context';
 import { TenantAwareCrudService } from '../core/crud';
 import { OrganizationTeamService } from './organization-team.service';
@@ -19,21 +19,23 @@ describe('OrganizationTeamService.update manager rule', () => {
 	const EMPLOYEE = '71000000-0000-4000-8000-0000000000e1';
 	const INPUT = { organizationId: ORGANIZATION, name: 'renamed' } as any;
 
-	let findOneByIdString: jest.SpyInstance;
 	let create: jest.SpyInstance;
+	let isTeamManager: jest.Mock;
 	let service: OrganizationTeamService;
 
 	beforeEach(() => {
-		findOneByIdString = jest
-			.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString')
-			.mockImplementation(async () => ({ id: TEAM }) as never);
+		jest.spyOn(TenantAwareCrudService.prototype, 'findOneByIdString').mockImplementation(
+			async () => ({ id: TEAM }) as never
+		);
 		create = jest
 			.spyOn(TenantAwareCrudService.prototype, 'create')
 			.mockImplementation(async (entity: any) => entity);
 		jest.spyOn(RequestContext, 'currentTenantId').mockReturnValue(TENANT);
+		isTeamManager = jest.fn(async (employeeId: string | null) => employeeId === EMPLOYEE);
 
 		// Only the collaborators these paths touch; the rest of the constructor graph is irrelevant here.
 		service = Object.create(OrganizationTeamService.prototype);
+		Object.assign(service, { organizationTeamEmployeeService: { isTeamManager } });
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -53,12 +55,7 @@ describe('OrganizationTeamService.update manager rule', () => {
 
 	it('refuses an employee who does not manage the team', async () => {
 		callerHolds([PermissionsEnum.ORG_TEAM_EDIT], EMPLOYEE);
-		findOneByIdString.mockImplementation(async (_id, options: any) => {
-			if (options?.where?.members) {
-				throw new NotFoundException();
-			}
-			return { id: TEAM };
-		});
+		isTeamManager.mockResolvedValue(false);
 
 		await expect(service.update(TEAM, INPUT)).rejects.toBeInstanceOf(ForbiddenException);
 
@@ -70,14 +67,11 @@ describe('OrganizationTeamService.update manager rule', () => {
 
 		await expect(service.update(TEAM, INPUT)).resolves.toMatchObject({ id: TEAM, name: 'renamed' });
 
-		expect(findOneByIdString).toHaveBeenCalledWith(
-			TEAM,
-			expect.objectContaining({
-				where: expect.objectContaining({
-					members: expect.objectContaining({ employeeId: EMPLOYEE, role: { name: RolesEnum.MANAGER } })
-				})
-			})
-		);
+		expect(isTeamManager).toHaveBeenCalledWith(EMPLOYEE, {
+			tenantId: TENANT,
+			organizationId: ORGANIZATION,
+			organizationTeamId: TEAM
+		});
 		expect(create).toHaveBeenCalledTimes(1);
 	});
 
@@ -86,6 +80,7 @@ describe('OrganizationTeamService.update manager rule', () => {
 
 		await expect(service.update(TEAM, INPUT)).resolves.toMatchObject({ id: TEAM, tenantId: TENANT });
 
+		expect(isTeamManager).not.toHaveBeenCalled();
 		expect(create).toHaveBeenCalledTimes(1);
 	});
 });

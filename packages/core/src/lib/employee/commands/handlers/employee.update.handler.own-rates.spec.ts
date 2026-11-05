@@ -42,7 +42,7 @@ describe('EmployeeUpdateHandler — an employee changing their own rates', () =>
 			findOneByIdString: jest.fn(async (id: string) => stored(id)),
 			create
 		};
-		handler = new EmployeeUpdateHandler(employeeService as any, {} as any);
+		handler = new EmployeeUpdateHandler(employeeService as any, {} as any, { publish: jest.fn() } as any);
 
 		jest.spyOn(RequestContext, 'currentUser').mockReturnValue({ id: 'user-own', employeeId: OWN_ID } as any);
 		jest.spyOn(RequestContext, 'hasPermission').mockImplementation((permission) =>

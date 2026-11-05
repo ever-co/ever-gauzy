@@ -8,6 +8,7 @@ import { TimerResolver } from './timer.resolver';
 import { TimerService } from './timer.service';
 import { CommandHandlers } from './commands/handlers';
 import { QueryHandlers } from './queries/handlers';
+import { EventHandlers } from './events/handlers';
 
 @Module({
 	imports: [RolePermissionModule, TimeLogModule, EmployeeModule, CqrsModule],
@@ -19,7 +20,8 @@ import { QueryHandlers } from './queries/handlers';
 		// services its own module can reach, and this module is what reaches them.
 		TimerResolver,
 		...CommandHandlers,
-		...QueryHandlers
+		...QueryHandlers,
+		...EventHandlers
 	]
 })
 export class TimerModule {}

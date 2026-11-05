@@ -247,6 +247,7 @@
 											[caption]="$safeNavigationMigration((employee?.timeSlots)[0]?.startedAt) | utcToLocal | dateFormat"
 											[id]="$safeNavigationMigration(employee?.id)"
 											[employee]="employee"
+											linkTo="view"
 										></ngx-avatar>
 									</ng-template>
 									<div class="button-container">
@@ -389,6 +390,7 @@
 											[src]="$safeNavigationMigration(manualTime?.user?.imageUrl)"
 											[id]="$safeNavigationMigration(manualTime?.employeeId)"
 											[employee]="$safeNavigationMigration(manualTime?.employee)"
+											linkTo="view"
 											size="sm"
 											class="avatar-dashboard"
 										></ngx-avatar>
@@ -461,7 +463,21 @@
 			<nb-card-body class="custom-card-body-inner-list window-body">
 				<nb-list class="data-list">
 					@for (task of tasks; track task.id) {
-						<nb-list-item>
+						<nb-list-item
+							class="data-list__item--open"
+							role="button"
+							tabindex="0"
+							[attr.aria-label]="
+								('ORGANIZATIONS_PAGE.EDIT.TEAMS_PAGE.VIEW.OPEN_TASK_DETAILS' | translate : { title: task.title }) +
+								', ' +
+								task.durationPercentage +
+								'%, ' +
+								(task.duration | durationFormat)
+							"
+							(click)="openTask(task)"
+							(keydown.enter)="openTask(task)"
+							(keydown.space)="$event.preventDefault(); openTask(task)"
+						>
 							<div class="w-100">
 								<div class="row align-items-center">
 									<div
@@ -524,7 +540,21 @@
 			<nb-card-body class="custom-card-body-inner-list window-body">
 				<nb-list class="data-list projects-list">
 					@for (project of projects; track project.id) {
-						<nb-list-item>
+						<nb-list-item
+							class="data-list__item--open"
+							role="button"
+							tabindex="0"
+							[attr.aria-label]="
+								('PROJECT_QUICK_LOOK.OPEN_DETAILS' | translate : { name: project.name }) +
+								', ' +
+								project.durationPercentage +
+								'%, ' +
+								(project.duration | durationFormat)
+							"
+							(click)="openProject(project)"
+							(keydown.enter)="openProject(project)"
+							(keydown.space)="$event.preventDefault(); openProject(project)"
+						>
 							<div class="w-100">
 								<div class="row align-items-center">
 									<div
@@ -678,6 +708,7 @@
 												[src]="$safeNavigationMigration(member?.user?.imageUrl)"
 												[id]="$safeNavigationMigration(member?.id)"
 												[employee]="member"
+												linkTo="view"
 												size="sm"
 												class="avatar-dashboard"
 											></ngx-avatar>

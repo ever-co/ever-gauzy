@@ -5,6 +5,7 @@ import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/ro
 import { NbDialogService } from '@nebular/theme';
 import { BehaviorSubject, NEVER, of, Subject, throwError } from 'rxjs';
 import {
+	BaseEntityEnum,
 	ITask,
 	PermissionsEnum,
 	TaskPriorityEnum,
@@ -12,6 +13,7 @@ import {
 	TaskStatusEnum
 } from '@gauzy/contracts';
 import {
+	CommentService,
 	Store,
 	TasksService,
 	TimesheetService,
@@ -51,6 +53,7 @@ describe('TaskViewPageComponent', () => {
 	let tasksService: { getById: jest.Mock; editTask: jest.Mock; createTask: jest.Mock };
 	let statisticsService: { getTasksStatistics: jest.Mock; getTaskEmployees: jest.Mock };
 	let timesheetService: { getDailyReportChart: jest.Mock; getTimeLogs: jest.Mock };
+	let commentService: { count: jest.Mock };
 	let http: { get: jest.Mock; put: jest.Mock };
 	let toastr: { success: jest.Mock; danger: jest.Mock };
 	let dialogService: { open: jest.Mock };
@@ -81,6 +84,7 @@ describe('TaskViewPageComponent', () => {
 			getDailyReportChart: jest.fn(async () => []),
 			getTimeLogs: jest.fn(async () => [])
 		};
+		commentService = { count: jest.fn(async () => 0) };
 		statuses = [];
 		outgoingLinks = of({ items: [] });
 		incomingLinks = of({ items: [] });
@@ -122,6 +126,7 @@ describe('TaskViewPageComponent', () => {
 				{ provide: TimesheetStatisticsService, useValue: statisticsService },
 				{ provide: TimeZoneService, useValue: { currentTimeZone: 'UTC' } },
 				{ provide: ToastrService, useValue: toastr },
+				{ provide: CommentService, useValue: commentService },
 				{
 					provide: Store,
 					useValue: {
@@ -1295,6 +1300,178 @@ describe('TaskViewPageComponent', () => {
 		await page.copyLink();
 
 		expect(writeText).toHaveBeenCalledWith(expect.stringContaining(`#/pages/tasks/view/${TASK_ID}?tab=board`));
+	});
+
+	describe('comments', () => {
+		const pane = (): HTMLElement => fixture.nativeElement.querySelector('#task-view-pane-comments');
+		const tabCount = (): string =>
+			fixture.nativeElement.querySelector('#task-view-tab-comments .tab-count')?.textContent.trim() ?? null;
+
+		it("offers a Comments tab, and loads the task's comments only once it is opened", async () => {
+			const page = create();
+			await settle();
+
+			expect(fixture.nativeElement.querySelector('#task-view-tab-comments')).not.toBeNull();
+			expect(pane()).toBeNull();
+
+			page.selectTab('comments');
+			fixture.detectChanges();
+
+			expect(page.commentsOpened).toBe(true);
+			expect(pane()).not.toBeNull();
+			expect(pane().hidden).toBe(false);
+			expect(page.commentEntity).toBe(BaseEntityEnum.Task);
+			expect(router.navigate).toHaveBeenLastCalledWith(
+				[],
+				expect.objectContaining({ queryParams: { tab: 'comments' }, replaceUrl: true })
+			);
+		});
+
+		it('opens on the Comments tab the URL names', async () => {
+			queryParams$.next(convertToParamMap({ tab: 'comments' }));
+			const page = create();
+			await settle();
+
+			expect(page.tab).toBe('comments');
+			expect(pane()).not.toBeNull();
+		});
+
+		it('keeps the comments behind another tab, so a draft survives', async () => {
+			const page = create();
+			await settle();
+			page.selectTab('comments');
+			fixture.detectChanges();
+
+			page.selectTab('overview');
+			fixture.detectChanges();
+
+			expect(pane()).not.toBeNull();
+			expect(pane().hidden).toBe(true);
+		});
+
+		it("counts the task's comments on the tab before it is opened", async () => {
+			commentService.count.mockResolvedValueOnce(4);
+			create();
+			await settle();
+			await flush();
+			fixture.detectChanges();
+
+			expect(commentService.count).toHaveBeenCalledWith(BaseEntityEnum.Task, TASK_ID, {
+				organizationId: ORGANIZATION,
+				tenantId: undefined
+			});
+			expect(tabCount()).toBe('4');
+		});
+
+		it('shows no count for a task without comments', async () => {
+			commentService.count.mockResolvedValueOnce(0);
+			create();
+			await settle();
+			await flush();
+			fixture.detectChanges();
+
+			expect(commentService.count).toHaveBeenCalled();
+			expect(tabCount()).toBeNull();
+		});
+
+		it('shows no count when the count cannot be read', async () => {
+			commentService.count.mockRejectedValueOnce(new HttpErrorResponse({ status: 403 }));
+			create();
+			await settle();
+			await flush();
+			fixture.detectChanges();
+
+			expect(tabCount()).toBeNull();
+		});
+
+		it("does not load the next task's comments behind another tab", async () => {
+			const page = create();
+			await settle();
+			page.selectTab('comments');
+			fixture.detectChanges();
+			page.selectTab('overview');
+			fixture.detectChanges();
+
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+
+			expect(page.task.id).toBe(OTHER_ID);
+			expect(page.commentsOpened).toBe(false);
+			expect(pane()).toBeNull();
+		});
+
+		it("loads the next task's comments when the Comments tab is the open one", async () => {
+			const page = create();
+			await settle();
+			page.selectTab('comments');
+			fixture.detectChanges();
+
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+
+			expect(page.commentsOpened).toBe(true);
+			expect(pane()).not.toBeNull();
+		});
+
+		it('drops a count from an earlier visit of the same task, after a return to it', async () => {
+			let answerFirst: (count: number) => void;
+			commentService.count.mockImplementationOnce(() => new Promise<number>((resolve) => (answerFirst = resolve)));
+			const page = create();
+			await settle();
+
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+			commentService.count.mockResolvedValueOnce(6);
+			params$.next(convertToParamMap({ id: TASK_ID }));
+			await settle();
+			await flush();
+			answerFirst(1); // the first visit's read answers last
+			await flush();
+
+			expect(page.task.id).toBe(TASK_ID);
+			expect(page.commentCount).toBe(6);
+		});
+
+		it("follows the tab's own count, and drops a first read that answers after it", async () => {
+			let answer: (count: number) => void;
+			commentService.count.mockImplementationOnce(() => new Promise<number>((resolve) => (answer = resolve)));
+			const page = create();
+			await settle();
+
+			page.onCommentCount(7);
+			answer(2);
+			await flush();
+
+			expect(page.commentCount).toBe(7);
+		});
+
+		it('keeps the count through a refresh of the task, as after a status move', async () => {
+			let answer: (count: number) => void;
+			commentService.count.mockImplementationOnce(() => new Promise<number>((resolve) => (answer = resolve)));
+			const page = create();
+			await settle();
+
+			await page.onBoardTaskMoved();
+			answer(3);
+			await flush();
+
+			expect(page.commentCount).toBe(3);
+		});
+
+		it("drops the previous task's count when the page moves to another", async () => {
+			let answer: (count: number) => void;
+			commentService.count.mockImplementationOnce(() => new Promise<number>((resolve) => (answer = resolve)));
+			const page = create();
+			await settle();
+
+			params$.next(convertToParamMap({ id: OTHER_ID }));
+			await settle();
+			answer(5);
+			await flush();
+
+			expect(page.task.id).toBe(OTHER_ID);
+			expect(page.commentCount).toBe(0);
+		});
 	});
 
 	describe('reloading the Board and the Activity', () => {
