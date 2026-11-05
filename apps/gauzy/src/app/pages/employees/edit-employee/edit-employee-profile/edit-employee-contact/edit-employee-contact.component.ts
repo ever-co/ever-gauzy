@@ -3,7 +3,7 @@ import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { TranslateService } from '@ngx-translate/core';
 import { combineLatest, firstValueFrom, Subject } from 'rxjs';
-import { filter, tap } from 'rxjs/operators';
+import { debounceTime, filter, tap } from 'rxjs/operators';
 import {
 	ContactType,
 	IEmployee,
@@ -16,8 +16,20 @@ import { EmployeeStore, ErrorHandlingService, OrganizationContactService, Store,
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { initialsOf, nameOf } from '../../../../projects/components/project-view/project-view.utils';
 
-/** Relations the table reads from the organization's contacts: their projects. */
+/** Relations the table reads for the employee's contacts: their projects. */
 const CONTACT_RELATIONS: string[] = ['projects'];
+
+/** Contacts per page in the assign dialog. */
+const OPTIONS_PAGE_SIZE = 30;
+
+/** Contacts per request for the table's details: the API's own limit. */
+const DETAILS_PAGE_SIZE = 100;
+
+/** How close to the end of the assign list, in pixels, the next page starts loading. */
+const LOAD_MORE_THRESHOLD = 48;
+
+/** Quiet time after typing in the assign dialog's search before the server is asked. */
+const SEARCH_DEBOUNCE_MS = 300;
 
 /** i18n prefix of the tab's own strings. */
 const T = 'EMPLOYEES_PAGE.EDIT_EMPLOYEE.CONTACTS_TAB';
@@ -71,8 +83,16 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 
 	public readonly T = T;
 	public rows: IEmployeeContactRow[] = [];
-	/** The organization's contacts the employee is not assigned to: what the assign dialog offers. */
-	public availableRows: IEmployeeContactRow[] = [];
+	/** The assign dialog's options: the pages read so far, less the contacts the employee already has. */
+	public assignOptions: IEmployeeContactRow[] = [];
+	public optionsLoading = false;
+	public optionsFailed = false;
+	/** Pages of options read, and how many contacts the search matches in all. */
+	private _optionsPage = 0;
+	private _optionsTotal = 0;
+	/** Guards against an older page (or an older search's) landing after a newer one. */
+	private _optionsRequest = 0;
+	private readonly _assignSearch$ = new Subject<string>();
 	public selectedEmployee: IEmployee;
 	public organization: IOrganization;
 
@@ -113,6 +133,14 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 				untilDestroyed(this)
 			)
 			.subscribe();
+		// The assign dialog's search asks the server once typing pauses.
+		this._assignSearch$
+			.pipe(
+				debounceTime(SEARCH_DEBOUNCE_MS),
+				tap(() => this.loadOptions(true)),
+				untilDestroyed(this)
+			)
+			.subscribe();
 	}
 
 	/**
@@ -125,7 +153,7 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 		this.selectedEmployee = employee;
 		if (changed) {
 			this.rows = [];
-			this.availableRows = [];
+			this.assignOptions = [];
 			this.searchTerm = '';
 			this._removeRef?.close(false);
 			this._assignRef?.close();
@@ -159,9 +187,9 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 		return EditEmployeeContactComponent.search(this.rows, this.searchTerm);
 	}
 
-	/** The assign dialog's options matching its search, by name, email or phone. */
-	get assignOptions(): IEmployeeContactRow[] {
-		return EditEmployeeContactComponent.search(this.availableRows, this.assignSearch);
+	/** Whether the search matches contacts beyond the pages read so far. */
+	get hasMoreOptions(): boolean {
+		return this._optionsPage * OPTIONS_PAGE_SIZE < this._optionsTotal;
 	}
 
 	/** Whether every option the search shows is ticked. */
@@ -185,15 +213,99 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 		});
 		this._assignRef = ref;
 		this._assignContext = context;
+		this.loadOptions(true);
 		// Esc or the backdrop can close it while a save runs: forget it only if it is still the open one.
 		ref.onClose.subscribe(() => {
 			if (this._assignRef === ref) {
 				this._assignRef = null;
 				this._assignContext = null;
+				this._optionsRequest++; // a page still on its way is no longer wanted
 			}
 		});
 		// Ready to type: the search is where picking starts.
 		setTimeout(() => document.getElementById('assignContactsSearch')?.focus());
+	}
+
+	/** The assign dialog's search: the server is asked once typing pauses. */
+	onAssignSearch(term: string): void {
+		this.assignSearch = term;
+		this._assignSearch$.next(term);
+	}
+
+	/** Reads the next page when the list is scrolled near its end. */
+	onOptionsScroll(event: Event): void {
+		const list = event.target as HTMLElement;
+		if (list.scrollTop + list.clientHeight >= list.scrollHeight - LOAD_MORE_THRESHOLD) {
+			this.loadMoreOptions();
+		}
+	}
+
+	loadMoreOptions(): void {
+		if (!this.optionsLoading && !this.optionsFailed && this.hasMoreOptions) {
+			this.loadOptions(false);
+		}
+	}
+
+	/** Asks again for the page that failed: the first one, or the next. */
+	retryOptions(): void {
+		this.loadOptions(this._optionsPage === 0);
+	}
+
+	/**
+	 * Reads a page of the organization's contacts for the assign dialog, matching its search by name, and adds the
+	 * ones the employee does not have yet. `reset` starts again from the first page (on opening, or a new search).
+	 * A page made only of contacts the employee already has shows nothing new, so reading goes on until the list
+	 * holds a page's worth or the contacts run out.
+	 */
+	async loadOptions(reset: boolean): Promise<void> {
+		const context = this._assignContext;
+		if (!context) {
+			return;
+		}
+		if (reset) {
+			this._optionsPage = 0;
+			this._optionsTotal = 0;
+			this.assignOptions = [];
+		}
+		const request = ++this._optionsRequest;
+		const term = this.assignSearch.trim();
+		const { id: organizationId, tenantId } = context.organization;
+		this.optionsLoading = true;
+		this.optionsFailed = false;
+		try {
+			const { items = [], total = 0 } = await this._organizationContactService.pagination({
+				where: { organizationId, tenantId, ...(term ? { name: term } : {}) },
+				order: { name: 'ASC' },
+				take: OPTIONS_PAGE_SIZE,
+				skip: this._optionsPage + 1
+			});
+			if (request !== this._optionsRequest) {
+				return;
+			}
+			const assigned = new Set(this.rows.map((row) => row.id));
+			const shown = new Set(this.assignOptions.map((row) => row.id));
+			this._optionsPage += 1;
+			this._optionsTotal = total;
+			this.assignOptions = [
+				...this.assignOptions,
+				...items
+					.filter((contact) => !assigned.has(contact.id) && !shown.has(contact.id))
+					.map((contact) => this.toRow(contact))
+			];
+		} catch (error) {
+			if (request === this._optionsRequest) {
+				console.error('Error loading contacts to assign:', error);
+				this.optionsFailed = true;
+			}
+			return;
+		} finally {
+			if (request === this._optionsRequest) {
+				this.optionsLoading = false;
+			}
+		}
+		if (this.hasMoreOptions && this.assignOptions.length < OPTIONS_PAGE_SIZE) {
+			await this.loadOptions(false);
+		}
 	}
 
 	closeAssign(): void {
@@ -307,31 +419,22 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 	}
 
 	/**
-	 * Loads the employee's contacts and every contact of the organization.
-	 *
-	 * Assignment comes from the employee's own list; the organization's list, read with its projects,
-	 * fills in each row's details. The rest of the organization's contacts are what the assign dialog offers.
+	 * Loads the employee's contacts: which ones from the employee's own list, and their details (type, email, phone,
+	 * projects) from the contacts of that employee alone. The organization's other contacts are read only by the
+	 * assign dialog, a page at a time.
 	 */
 	private async loadContacts(): Promise<void> {
 		const loadId = ++this._loadId;
 		this.loading = true;
-		const [employeeContacts, organizationContacts] = await Promise.all([
-			this.getSelectedEmployeeContacts(),
-			this.getOrganizationContacts()
-		]);
+		const employeeContacts = await this.getSelectedEmployeeContacts();
+		const details = employeeContacts.length ? await this.getContactDetails(employeeContacts.length) : [];
 		if (loadId !== this._loadId) {
 			return;
 		}
 
-		const byId = new Map(organizationContacts.map((contact) => [contact.id, contact]));
-		const assignedIds = new Set(employeeContacts.map((contact) => contact.id));
-
+		const byId = new Map(details.map((contact) => [contact.id, contact]));
 		this.rows = employeeContacts
 			.map((contact) => this.toRow(byId.get(contact.id) || contact))
-			.sort((a, b) => a.name.localeCompare(b.name));
-		this.availableRows = organizationContacts
-			.filter((contact) => !assignedIds.has(contact.id))
-			.map((contact) => this.toRow(contact))
 			.sort((a, b) => a.name.localeCompare(b.name));
 		this.loading = false;
 	}
@@ -358,7 +461,7 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 		};
 	}
 
-	/** Matches rows by name, email or phone. */
+	/** Matches rows by name, email or phone (the table's search). */
 	private static search(rows: IEmployeeContactRow[], term: string): IEmployeeContactRow[] {
 		const needle = term.trim().toLowerCase();
 		if (!needle) {
@@ -415,23 +518,35 @@ export class EditEmployeeContactComponent extends TranslationBaseComponent imple
 	}
 
 	/**
-	 * Fetches every contact of the organization, with its projects.
+	 * Fetches the details of the selected employee's contacts, with their projects: only that employee's, a page
+	 * of up to 100 per request. Reading contacts takes ORG_CONTACT_VIEW; without it the rows keep the name and
+	 * picture the employee's own list gives.
 	 *
-	 * @returns The organization's contacts; empty when the read fails.
+	 * @param count How many contacts the employee has.
+	 * @returns The employee's contacts with their details; empty without the permission, or when the read fails.
 	 */
-	private async getOrganizationContacts(): Promise<IOrganizationContact[]> {
-		if (!this.organization) {
+	private async getContactDetails(count: number): Promise<IOrganizationContact[]> {
+		if (!this.organization || !this.selectedEmployee || !this._store.hasPermission(PermissionsEnum.ORG_CONTACT_VIEW)) {
 			return [];
 		}
 		const { id: organizationId, tenantId } = this.organization;
+		const employeeId = this.selectedEmployee.id;
+		const pages = Math.ceil(count / DETAILS_PAGE_SIZE);
 		try {
-			const { items = [] } = await this._organizationContactService.getAll(CONTACT_RELATIONS, {
-				organizationId,
-				tenantId
-			});
-			return items;
+			const results = await Promise.all(
+				Array.from({ length: pages }, (_, page) =>
+					this._organizationContactService.pagination({
+						where: { organizationId, tenantId, members: [employeeId] },
+						relations: CONTACT_RELATIONS,
+						order: { name: 'ASC' },
+						take: DETAILS_PAGE_SIZE,
+						skip: page + 1
+					})
+				)
+			);
+			return results.flatMap((result) => result.items || []);
 		} catch (error) {
-			console.error('Error fetching organization contacts:', error);
+			console.error('Error loading the employee contacts details:', error);
 			this._errorHandlingService.handleError(error);
 			return [];
 		}
