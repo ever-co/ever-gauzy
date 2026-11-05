@@ -465,7 +465,7 @@ export interface IReportDayTaskRow {
 export interface IReportDayGroupByDate {
 	date: string;
 	logs: {
-		project: IOrganizationProject;
+		project: IOrganizationProject | null;
 		employeeLogs: {
 			tasks: IReportDayTaskRow[];
 			employee: IEmployee;
@@ -487,7 +487,7 @@ export interface IAmountOwedReport {
 export interface IReportDayGroupByDate {
 	date: string;
 	logs: {
-		project: IOrganizationProject;
+		project: IOrganizationProject | null;
 		employeeLogs: {
 			tasks: IReportDayTaskRow[];
 			employee: IEmployee;
@@ -504,14 +504,14 @@ export interface IReportDayGroupByEmployee {
 		projectLogs: {
 			sum: number;
 			activity: number;
-			project: IOrganizationProject;
+			project: IOrganizationProject | null;
 			tasks: IReportDayTaskRow[];
 		}[];
 	}[];
 }
 
 export interface IReportDayGroupByProject {
-	project: IOrganizationProject;
+	project: IOrganizationProject | null;
 	logs: {
 		date: string;
 		employeeLogs: {
@@ -526,7 +526,7 @@ export interface IReportDayGroupByProject {
 export interface IReportDayGroupByClient {
 	client: IOrganizationContact;
 	logs: {
-		project: IOrganizationProject;
+		project: IOrganizationProject | null;
 		logs: {
 			date: string;
 			projectLogs: {

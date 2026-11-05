@@ -398,6 +398,17 @@ describe('TimeLogService team-scoped reports with the time logged without a team
 			});
 		});
 
+		it('answers the projectless groups with no project, in every grouping', () => {
+			const { dailyOn, byEmployeeOn, byClientOn } = measured[orm].manager;
+			const byDate: IReportDayGroupByDate[] = dailyOn;
+			const byEmployee: IReportDayGroupByEmployee[] = byEmployeeOn;
+			const byClient: IReportDayGroupByClient[] = byClientOn;
+
+			expect(byDate[0].logs[0].project).toBeNull();
+			expect(byEmployee[0].logs[0].projectLogs[0].project).toBeNull();
+			expect(byClient[0].logs[0].project).toBeNull();
+		});
+
 		it("adds the requested team's members' time without a team for an organization-wide caller, and no one else's", () => {
 			const { listOn } = measured[orm].organizationWide;
 			expect(listOn.error).toBeUndefined();
