@@ -33675,7 +33675,8 @@ type Organization {
   requireClient: Boolean!
 
   """
-  Whether a time entry must name a team. The server files it under the employee's only active team when it names none.
+  Whether a time entry must name a team. The server files an entry without one under the employee's only active team,
+  and refuses it otherwise, except what a client sends with source `DESKTOP` (the desktop timer and the agent).
   """
   requireTeam: Boolean!
 
