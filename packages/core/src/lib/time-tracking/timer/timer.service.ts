@@ -1,4 +1,11 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException, NotAcceptableException } from '@nestjs/common';
+import {
+	Injectable,
+	Logger,
+	NotFoundException,
+	ForbiddenException,
+	NotAcceptableException,
+	UnprocessableEntityException
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { IsNull, Between, Not, In, LessThanOrEqual, MoreThanOrEqual, FindOptionsWhere, Or, Equal } from 'typeorm';
 import * as moment from 'moment';
@@ -17,7 +24,7 @@ import {
 	ID
 } from '@gauzy/contracts';
 import { isNotEmpty } from '@gauzy/utils';
-import { OrganizationTeamEmployee, Task, TimeLog } from '../../core/entities/internal';
+import { DailyPlan, OrganizationTeam, OrganizationTeamEmployee, Task, TimeLog } from '../../core/entities/internal';
 import { RequestContext } from '../../core/context';
 import {
 	MultiORM,
@@ -55,6 +62,14 @@ import {
 	exclusiveWindowEnd,
 	secondsWithinWindow
 } from './timer.helper';
+import {
+	DAILY_PLAN_REQUIRED,
+	PLAN_RULE_SOURCES,
+	TASK_NOT_PLANNED,
+	planDatesAroundToday,
+	planHasTasks,
+	planHoldsTask
+} from './timer-plan-rule';
 
 // Get the type of the Object-Relational Mapping (ORM) used in the application.
 const ormType: MultiORM = getORMType();
@@ -333,6 +348,15 @@ export class TimerService {
 
 		await this.assertTrackingOnInTeam(employeeId, organizationId, tenantId, organizationTeamId, source);
 
+		await this.assertPlannedWhenTeamRequiresIt({
+			employeeId,
+			organizationId,
+			tenantId,
+			organizationTeamId,
+			taskId,
+			source
+		});
+
 		const projectIdToLog = await this.projectIdForStart(request, organizationId, tenantId);
 
 		// Stop any previous running timers
@@ -397,6 +421,72 @@ export class TimerService {
 			select: { id: true, projectId: true }
 		});
 		return task?.projectId ?? null;
+	}
+
+	/**
+	 * Refuses an Ever Teams start for a team that requires a daily plan when the employee has no plan with tasks
+	 * around today in that team, or when the task they start is in none of those plans. Ever Teams web checks the
+	 * same before starting; the mobile app and older web tabs did not, and the rule stayed advisory.
+	 *
+	 * @throws UnprocessableEntityException with the code DAILY_PLAN_REQUIRED or TASK_NOT_PLANNED.
+	 */
+	private async assertPlannedWhenTeamRequiresIt(start: {
+		employeeId: ID;
+		organizationId: ID;
+		tenantId: ID;
+		organizationTeamId?: ID;
+		taskId?: ID;
+		source?: TimeLogSourceEnum;
+	}): Promise<void> {
+		const { employeeId, organizationId, tenantId, organizationTeamId, taskId, source } = start;
+		const isPlanRuleClient = PLAN_RULE_SOURCES.includes(source);
+		if (!isPlanRuleClient) {
+			return;
+		}
+		if (!organizationTeamId) {
+			return;
+		}
+
+		const team = await this.typeOrmTimeLogRepository.manager.findOne(OrganizationTeam, {
+			where: { id: organizationTeamId, organizationId, tenantId },
+			select: { id: true, requirePlanToTrack: true }
+		});
+		const teamRequiresPlan = team?.requirePlanToTrack === true;
+		if (!teamRequiresPlan) {
+			return;
+		}
+
+		const { from, to } = planDatesAroundToday(moment.utc());
+		const plans = await this.typeOrmTimeLogRepository.manager.find(DailyPlan, {
+			where: {
+				employeeId,
+				organizationTeamId,
+				organizationId,
+				tenantId,
+				date: Between(from, to),
+				isActive: Or(IsNull(), Equal(true)),
+				isArchived: Or(IsNull(), Equal(false))
+			},
+			relations: { tasks: true }
+		});
+		const plansWithTasks = plans.filter(planHasTasks);
+		if (plansWithTasks.length === 0) {
+			throw new UnprocessableEntityException({
+				message: 'Your team requires a daily plan before you track time. Plan your day first.',
+				code: DAILY_PLAN_REQUIRED
+			});
+		}
+
+		if (!taskId) {
+			return;
+		}
+		const isTaskPlanned = plansWithTasks.some((plan) => planHoldsTask(plan, taskId));
+		if (!isTaskPlanned) {
+			throw new UnprocessableEntityException({
+				message: "Add this task to today's plan before you track time on it.",
+				code: TASK_NOT_PLANNED
+			});
+		}
 	}
 
 	/**
