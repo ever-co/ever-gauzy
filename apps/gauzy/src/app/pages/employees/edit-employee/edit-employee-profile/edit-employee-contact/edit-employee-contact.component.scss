@@ -694,6 +694,21 @@ $columns-md: minmax(0, 1fr) 6.5rem 5rem;
   }
 }
 
+// Under the list: the next page loading, a "Load more", or a failed page with its retry.
+.assign-dialog__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.assign-dialog__more-text {
+  font-size: 0.75rem;
+  color: var(--gauzy-text-color-2);
+}
+
 .assign-dialog__footer {
   display: flex;
   align-items: center;
