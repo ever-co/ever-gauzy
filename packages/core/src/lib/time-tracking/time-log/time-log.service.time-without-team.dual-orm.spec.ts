@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import type { IReportDayGroupByDate, IReportDayTaskRow } from '@gauzy/contracts';
 
 /**
  * A team-scoped report counts the logs filed under the team. A member who tracked from a client that sent no team
@@ -54,11 +55,11 @@ function namesOf(list: any): LogName[] {
 	return list.map((log: any) => log.description).sort();
 }
 
-/** Every task row of a daily report grouped by date. */
-function taskRowsOf(daily: any): any[] {
-	return daily.flatMap((day: any) =>
-		day.logs.flatMap((project: any) => project.employeeLogs.flatMap((employee: any) => employee.tasks))
-	);
+/** Every task row of a daily report grouped by date, as the shared report contract types it. */
+function taskRowsOf(daily: IReportDayGroupByDate[]): IReportDayTaskRow[] {
+	const projects = daily.flatMap((day) => day.logs);
+	const employeeLogs = projects.flatMap((project) => project.employeeLogs);
+	return employeeLogs.flatMap((employeeLog) => employeeLog.tasks);
 }
 
 async function measure(): Promise<{ mikroOrm: Reads; typeOrm: Reads }> {

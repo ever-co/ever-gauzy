@@ -450,12 +450,24 @@ export interface IBulkActivitiesInput extends IBasePerTenantAndOrganizationEntit
 	activities: IActivity[];
 }
 
+/**
+ * One time log as a row of the daily report. `organizationTeamId` is stated only when the report includes the time
+ * logged without a team (`includeTimeWithoutTeam`), and is null for that time.
+ */
+export interface IReportDayTaskRow {
+	task?: ITask | null;
+	description?: string | null;
+	duration?: number;
+	client?: IOrganizationContact | null;
+	organizationTeamId?: ID | null;
+}
+
 export interface IReportDayGroupByDate {
 	date: string;
 	logs: {
 		project: IOrganizationProject;
 		employeeLogs: {
-			tasks: ITask[];
+			tasks: IReportDayTaskRow[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -477,7 +489,7 @@ export interface IReportDayGroupByDate {
 	logs: {
 		project: IOrganizationProject;
 		employeeLogs: {
-			tasks: ITask[];
+			tasks: IReportDayTaskRow[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -493,7 +505,7 @@ export interface IReportDayGroupByEmployee {
 			sum: number;
 			activity: number;
 			project: IOrganizationProject;
-			tasks: ITask[];
+			tasks: IReportDayTaskRow[];
 		}[];
 	}[];
 }
@@ -503,7 +515,7 @@ export interface IReportDayGroupByProject {
 	logs: {
 		date: string;
 		employeeLogs: {
-			tasks: ITask[];
+			tasks: IReportDayTaskRow[];
 			employee: IEmployee;
 			sum: number;
 			activity: number;
@@ -518,7 +530,7 @@ export interface IReportDayGroupByClient {
 		logs: {
 			date: string;
 			employeeLogs: {
-				tasks: ITask[];
+				tasks: IReportDayTaskRow[];
 				employee: IEmployee;
 				sum: number;
 				activity: number;

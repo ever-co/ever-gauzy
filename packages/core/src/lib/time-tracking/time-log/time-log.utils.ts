@@ -1,5 +1,5 @@
 import { pluck, reduce } from 'underscore';
-import { CurrencyCode, ITimeLog, ITimeSlot, RoundingMode, TimeLogType } from '@gauzy/contracts';
+import { CurrencyCode, IReportDayTaskRow, ITimeLog, ITimeSlot, RoundingMode, TimeLogType } from '@gauzy/contracts';
 import { ArraySum } from '@gauzy/utils';
 import { currencyPrecision } from '../../money/currency-precision';
 import {
@@ -39,7 +39,7 @@ export const calculateAverageActivity = (slots: ITimeSlot[]): number => {
  * @param statesTeam Whether the report states each row's team.
  * @returns The row's team, or nothing.
  */
-export function teamOfReportRow(log: ITimeLog, statesTeam: boolean): Pick<ITimeLog, 'organizationTeamId'> {
+export function teamOfReportRow(log: ITimeLog, statesTeam: boolean): Pick<IReportDayTaskRow, 'organizationTeamId'> {
 	if (!statesTeam) {
 		return {};
 	}
