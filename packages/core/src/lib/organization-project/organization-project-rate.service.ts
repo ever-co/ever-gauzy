@@ -81,7 +81,7 @@ export class OrganizationProjectRateService {
 		}
 
 		const membership = await this.typeOrmOrganizationProjectEmployeeRepository.findOne({
-			where: { organizationProjectId: projectId, employeeId, organizationId, tenantId },
+			where: { organizationProjectId: projectId, employeeId, organizationId, tenantId, ...CURRENT_MEMBERSHIP },
 			select: { id: true }
 		});
 		if (!membership) {

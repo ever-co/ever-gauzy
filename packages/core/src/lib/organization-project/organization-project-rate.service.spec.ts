@@ -23,6 +23,7 @@ interface MembershipRow {
 	employeeId: string;
 	isManager: boolean;
 	billRateValue: number | null;
+	isArchived?: boolean;
 }
 
 describe('OrganizationProjectRateService', () => {
@@ -33,9 +34,13 @@ describe('OrganizationProjectRateService', () => {
 	let membershipUpdate: jest.Mock;
 	let service: OrganizationProjectRateService;
 
+	/** A condition on `isArchived` (the current-membership filter) leaves an archived row out, as the database does. */
 	const matches = (row: MembershipRow, where: Record<string, unknown>) => {
 		const keys = ['organizationProjectId', 'employeeId', 'isManager'] as const;
-		return keys.every((key) => where[key] === undefined || row[key] === where[key]);
+		const matchesKeys = keys.every((key) => where[key] === undefined || row[key] === where[key]);
+		const skipsArchived = where.isArchived !== undefined;
+		const isLeftOut = skipsArchived && row.isArchived === true;
+		return matchesKeys && !isLeftOut;
 	};
 
 	beforeEach(() => {
@@ -55,6 +60,14 @@ describe('OrganizationProjectRateService', () => {
 				employeeId: 'member-employee',
 				isManager: false,
 				billRateValue: 30
+			},
+			{
+				id: 'm-former',
+				organizationProjectId: PROJECT,
+				employeeId: 'former-employee',
+				isManager: false,
+				billRateValue: null,
+				isArchived: true
 			},
 			{
 				id: 'm-role-only',
@@ -208,6 +221,13 @@ describe('OrganizationProjectRateService', () => {
 
 		it('answers 404 for an employee who is not a member of the project', async () => {
 			await expect(setMemberRate('stranger-employee', 35)).rejects.toThrow(NotFoundException);
+		});
+
+		it('answers 404 for a former member, whose archived membership keeps its old rate', async () => {
+			permissions = [PermissionsEnum.ORG_EMPLOYEES_EDIT];
+
+			await expect(setMemberRate('former-employee', 35)).rejects.toThrow(NotFoundException);
+			expect(membershipUpdate).not.toHaveBeenCalled();
 		});
 
 		it('is refused to a plain member', async () => {
