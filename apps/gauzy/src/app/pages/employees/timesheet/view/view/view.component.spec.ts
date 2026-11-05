@@ -56,6 +56,7 @@ describe('TimesheetViewComponent.updateStatus', () => {
 
 		expect(view.timesheet).toEqual(sheet('A', TimesheetStatus.APPROVED));
 		expect(view.updatingStatus).toBe(false);
+		expect((view as any).toastrService.success).toHaveBeenCalledWith('TIMESHEET.APPROVE_SUCCESS');
 	});
 
 	it('leaves alone a timesheet opened while the approval of another one was saved', async () => {
@@ -71,5 +72,7 @@ describe('TimesheetViewComponent.updateStatus', () => {
 		expect(view.timesheet).toBe(opened);
 		expect(view.timesheet).toEqual(sheet('B'));
 		expect(view.updatingStatus).toBe(false);
+		// Nor does B get a notice that would read as its own approval
+		expect((view as any).toastrService.success).not.toHaveBeenCalled();
 	});
 });
