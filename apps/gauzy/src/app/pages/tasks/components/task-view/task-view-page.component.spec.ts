@@ -900,6 +900,38 @@ describe('TaskViewPageComponent', () => {
 				expect(selectedTask.taskStatus.id).toBe('other-open');
 			});
 
+			it("gives no subtask the old project's status while a refresh that moved the task reads the new one's", async () => {
+				const OTHER_PROJECT = { id: 'ffffffff-7777-4777-8777-777777777777', name: 'Other' };
+				const OTHER_OPEN = { ...OPEN, id: 'other-open', projectId: OTHER_PROJECT.id };
+				statuses = [OPEN];
+				tasksService.getById.mockImplementation(async (id: string) => task({ id, projectId: PROJECT_ID }));
+				const page = await ready();
+				expect(page.statuses.map(({ id }) => id)).toEqual(['open']);
+				// The other project's statuses: held until the test answers them.
+				const other$ = new Subject<{ items: unknown[] }>();
+				http.get.mockImplementation((url: string, options: any) => {
+					if (!url.endsWith('/task-statuses')) return of({ items: [] });
+					const where = options?.params?.toString() || '';
+					return where.includes(OTHER_PROJECT.id) ? other$ : of({ items: [OPEN] });
+				});
+
+				// An edit moved the task to the other project; its statuses are still being read.
+				tasksService.getById.mockImplementation(async (id: string) =>
+					task({ id, projectId: OTHER_PROJECT.id, project: OTHER_PROJECT as any })
+				);
+				await page.onBoardTaskMoved();
+				// The old project's statuses are not offered for the task in the new one.
+				expect(page.statuses).toEqual([]);
+				const opening = page.addSubtask();
+				other$.next({ items: [OTHER_OPEN] });
+				other$.complete();
+				await opening;
+
+				const { selectedTask } = context();
+				expect(selectedTask.project).toEqual(OTHER_PROJECT);
+				expect(selectedTask.taskStatus.id).toBe('other-open');
+			});
+
 			it('opens one dialog however many times the button is pressed while they are read', async () => {
 				const page = await ready();
 				const read$ = holdStatuses();

@@ -334,6 +334,12 @@ export class TaskViewPageComponent extends TranslationBaseComponent implements O
 				this.reloadPanels(sequence);
 				return;
 			}
+			// Moved to another project (an edit, a move on a board): the old project's statuses are not this task's.
+			// They go, as on a load, so neither the status menu nor a new subtask takes one while the new ones are read.
+			if ((task.projectId ?? null) !== (this.task?.projectId ?? null)) {
+				this.statuses = [];
+				this.currentStatusId = null;
+			}
 			this.task = task;
 			this.show();
 			this.loadPanels(task, sequence);
