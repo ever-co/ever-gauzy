@@ -165,7 +165,7 @@ describe('EditEmployeeContactComponent switching employee', () => {
 		component.organization = ORGANIZATION;
 		component.selectedEmployee = { id: employeeId } as any;
 		component.rows = [{ id: 'contact-1', name: 'Acme Corp' } as IEmployeeContactRow];
-		component.availableRows = [{ id: 'contact-2', name: 'Globex' } as IEmployeeContactRow];
+		component.assignOptions = [{ id: 'contact-2', name: 'Globex' } as IEmployeeContactRow];
 		component.searchTerm = 'acme';
 		component['_removeRef'] = { close: jest.fn() };
 		component['_assignRef'] = { close: jest.fn() };
@@ -181,7 +181,7 @@ describe('EditEmployeeContactComponent switching employee', () => {
 
 		expect(component.selectedEmployee.id).toBe('employee-2');
 		expect(component.rows).toEqual([]);
-		expect(component.availableRows).toEqual([]);
+		expect(component.assignOptions).toEqual([]);
 		expect(component.searchTerm).toBe('');
 		expect(removeRef.close).toHaveBeenCalledWith(false);
 		expect(assignRef.close).toHaveBeenCalled();
