@@ -29,7 +29,8 @@ export enum EmployeeNotificationTypeEnum {
 	MENTION = 'Mention', // Stored as 3 in DB
 	COMMENT = 'Comment', // Stored as 4 in DB
 	MESSAGE = 'Message', // Stored as 5 in DB
-	BROADCAST = 'Broadcast' // Stored as 6 in DB
+	BROADCAST = 'Broadcast', // Stored as 6 in DB
+	RATE_CHANGE_REQUEST = 'RateChangeRequest' // Stored as 7 in DB
 }
 
 /**

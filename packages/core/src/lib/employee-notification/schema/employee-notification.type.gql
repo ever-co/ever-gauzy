@@ -31,7 +31,7 @@ type EmployeeNotification {
 	message: String
 	"""
 	The kind of notification, as the vocabulary's own value: `Payment`, `Assignment`, `Invitation`,
-	`Mention`, `Comment`, `Message` or `Broadcast`. The value is the column's own, which is why it is
+	`Mention`, `Comment`, `Message`, `Broadcast` or `RateChangeRequest`. The value is the column's own, which is why it is
 	carried as text rather than as an enum declared here.
 	"""
 	type: String
@@ -158,7 +158,7 @@ input CreateEmployeeNotificationInput {
 	title: String
 	"The notification's body."
 	message: String
-	"The kind of notification, as the vocabulary's own value — `Payment`, `Assignment`, `Invitation`, `Mention`, `Comment`, `Message` or `Broadcast`."
+	"The kind of notification, as the vocabulary's own value — `Payment`, `Assignment`, `Invitation`, `Mention`, `Comment`, `Message`, `Broadcast` or `RateChangeRequest`."
 	type: String
 	"When the notification should stop being held back, when the sender wants it snoozed."
 	onHoldUntil: DateTime
