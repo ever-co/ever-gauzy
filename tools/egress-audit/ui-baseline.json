@@ -11783,6 +11783,12 @@
 		{
 			"route": "/pages/settings/whats-new",
 			"attribute": "href",
+			"url": "https://docs.gauzy.co/",
+			"reason": "link to the Gauzy documentation: the seeded What's New feature entry 'Open source, your way' (migration 1790000005000-RefreshChangelogContent), which this management page lists and the signed-out pages show (entry under /)"
+		},
+		{
+			"route": "/pages/settings/whats-new",
+			"attribute": "href",
 			"url": "https://docs.gauzy.co/features/ai-agent-chat",
 			"reason": "link to the Gauzy documentation"
 		},
