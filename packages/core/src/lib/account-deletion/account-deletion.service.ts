@@ -852,17 +852,32 @@ export class AccountDeletionService {
 		return await manager.count(User, { where: { tenantId: user.tenantId, id: Not(user.id) }, withDeleted: true });
 	}
 
-	/** The users with this address in every tenant, soft-deleted ones included, with their role and tenant. */
+	/**
+	 * The users with this address in every tenant, soft-deleted ones included, with their role and tenant.
+	 *
+	 * SQL LOWER folds non-ASCII letters (`É@…`) on some databases only: not on SQLite, nor on Postgres under the C
+	 * collation (as `deleteRowsAddressedTo` notes). An address with such letters is narrowed in SQL with each of them
+	 * as a one-letter wildcard, then matched here, the way the address itself was lowercased.
+	 *
+	 * @param email The address, normalized (`normalizeAccountDeletionEmail`).
+	 */
 	private async findUsersByEmail(manager: EntityManager, email: string): Promise<User[]> {
-		return await manager
+		const query = manager
 			.getRepository(User)
 			.createQueryBuilder('user')
 			.withDeleted()
 			.leftJoinAndSelect('user.role', 'role')
-			.leftJoinAndSelect('user.tenant', 'tenant')
-			.where('LOWER(TRIM(user.email)) = :email', { email })
+			.leftJoinAndSelect('user.tenant', 'tenant');
+		if (!/[^\x00-\x7f]/.test(email)) {
+			return await query.where('LOWER(TRIM(user.email)) = :email', { email }).orderBy('user.id', 'ASC').getMany();
+		}
+		// A `_` or `%` of the address itself only widens the narrowing: the comparison below is exact.
+		const pattern = email.replace(/[^\x00-\x7f]/gu, '_');
+		const users = await query
+			.where('LOWER(TRIM(user.email)) LIKE :pattern', { pattern })
 			.orderBy('user.id', 'ASC')
 			.getMany();
+		return users.filter((user) => normalizeAccountDeletionEmail(user.email) === email);
 	}
 
 	/**

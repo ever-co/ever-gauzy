@@ -112,6 +112,64 @@ describe('AccountDeletionService', () => {
 		});
 	});
 
+	describe('findUsersByEmail', () => {
+		/** A manager whose user query records its condition and answers `rows`. */
+		const recording = (rows: Array<{ id: string; email: string }>) => {
+			const recorded: { sql?: string; params?: Record<string, unknown> } = {};
+			const builder: any = {};
+			for (const method of ['withDeleted', 'leftJoinAndSelect', 'orderBy']) {
+				builder[method] = jest.fn(() => builder);
+			}
+			builder.where = jest.fn((sql: string, params: Record<string, unknown>) => {
+				Object.assign(recorded, { sql, params });
+				return builder;
+			});
+			builder.getMany = jest.fn(async () => rows);
+			return { manager: { getRepository: () => ({ createQueryBuilder: () => builder }) }, recorded };
+		};
+
+		it('matches an ASCII address in SQL, as it is', async () => {
+			const { service } = setup();
+			const rows = [{ id: 'u1', email: 'Ada@Example.com' }];
+			const { manager, recorded } = recording(rows);
+
+			await expect((service as any).findUsersByEmail(manager, 'ada@example.com')).resolves.toBe(rows);
+			expect(recorded).toEqual({ sql: 'LOWER(TRIM(user.email)) = :email', params: { email: 'ada@example.com' } });
+		});
+
+		// SQLite's LOWER leaves `É` as it is (so does Postgres under the C collation), while the address was
+		// lowercased by JavaScript: an equality in SQL never matched such an account.
+		it('matches an address with non-ASCII letters the way the address itself was lowercased', async () => {
+			const { service } = setup();
+			const { manager, recorded } = recording([
+				{ id: 'u1', email: ' Élodie@Example.com ' },
+				{ id: 'u2', email: 'xlodie@example.com' }
+			]);
+
+			const users = await (service as any).findUsersByEmail(manager, 'élodie@example.com');
+
+			expect(users.map(({ id }: { id: string }) => id)).toEqual(['u1']);
+			expect(recorded).toEqual({
+				sql: 'LOWER(TRIM(user.email)) LIKE :pattern',
+				params: { pattern: '_lodie@example.com' }
+			});
+		});
+
+		it('relies on what SQLite does: LOWER keeps a non-ASCII capital, and `_` stands for any one letter', () => {
+			// eslint-disable-next-line @typescript-eslint/no-require-imports
+			const Database = require('better-sqlite3');
+			const db = new Database(':memory:');
+			try {
+				const row = db
+					.prepare('SELECT LOWER(TRIM(?)) = ? AS equal, LOWER(TRIM(?)) LIKE ? AS alike')
+					.get(' Élodie@Example.com ', 'élodie@example.com', ' Élodie@Example.com ', '_lodie@example.com');
+				expect(row).toEqual({ equal: 0, alike: 1 });
+			} finally {
+				db.close();
+			}
+		});
+	});
+
 	describe('request', () => {
 		it('does nothing visible for an address without accounts', async () => {
 			const { service, findUsers, repository, emailService } = setup();
