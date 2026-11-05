@@ -101,6 +101,11 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 	};
 
 	beforeEach(() => {
+		// One frozen "now" for the plan dates and the rule, so a run across UTC midnight cannot split them
+		jest.useFakeTimers({
+			now: new Date('2026-11-05T12:00:00.000Z'),
+			doNotFake: ['nextTick', 'setImmediate', 'queueMicrotask']
+		});
 		({ restore } = asTenantUser(fixture));
 		requirePlanToTrack = true;
 		plans = [];
@@ -133,6 +138,7 @@ describe('TimerService.startTimer when the team requires a daily plan', () => {
 	afterEach(() => {
 		restore();
 		jest.restoreAllMocks();
+		jest.useRealTimers();
 	});
 
 	it.each([TimeLogSourceEnum.TEAMS, TimeLogSourceEnum.MOBILE])(
