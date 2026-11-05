@@ -398,6 +398,7 @@ export interface ITimerToggleInput
 	version?: string;
 	startedAt?: Date;
 	stoppedAt?: Date;
+	planDay?: string;
 }
 
 export interface IManualTimeInput extends IBasePerTenantAndOrganizationEntityModel {

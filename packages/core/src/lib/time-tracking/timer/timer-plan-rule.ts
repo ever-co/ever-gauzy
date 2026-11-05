@@ -1,6 +1,7 @@
 import * as moment from 'moment';
 import { ID, TimeLogSourceEnum } from '@gauzy/contracts';
-import { storedDayStart } from '../../tasks/daily-plan/daily-plan-stored-day';
+import { dayIfTodaySomewhere } from '../../tasks/daily-plan/daily-plan-caller-day';
+import { storedDayStart, storedPlanDay } from '../../tasks/daily-plan/daily-plan-stored-day';
 
 /**
  * The Ever Teams clients, web and mobile. "Require a daily plan to track" is their team rule, so only their starts
@@ -31,6 +32,37 @@ export function planDatesAroundToday(now: moment.Moment): { from: Date; to: Date
 	const windowEnd = latestStartOf(dayAfterWindow);
 	const to = new Date(windowEnd - 1);
 	return { from, to };
+}
+
+/**
+ * The dates a plan for `planDay` is stored between. Ever Teams sends a plan day as a date, which the API parses as
+ * UTC midnight, and the plan belongs to the stored day of that date, as for the daily plan lookups.
+ *
+ * @param planDay A plan day, as `YYYY-MM-DD`.
+ */
+export function planDatesOfDay(planDay: string): { from: Date; to: Date } {
+	const planDate = moment.utc(planDay, 'YYYY-MM-DD').toDate();
+	const storedDay = storedPlanDay(planDate);
+	const nextStoredDay = moment.utc(storedDay, 'YYYY-MM-DD').add(1, 'day').format('YYYY-MM-DD');
+	const from = storedDayStart(storedDay);
+	const nextDayStart = storedDayStart(nextStoredDay).getTime();
+	const to = new Date(nextDayStart - 1);
+	return { from, to };
+}
+
+/**
+ * The dates the plans of a start may carry: exactly the member's day when the client names it and it is today
+ * somewhere, otherwise the window around today, for a client that does not send its day.
+ *
+ * @param planDay The day the client sent with the start, if any.
+ * @param now The server's current time.
+ */
+export function planDatesForStart(planDay: unknown, now: moment.Moment): { from: Date; to: Date } {
+	const memberDay = dayIfTodaySomewhere(planDay, now);
+	if (!memberDay) {
+		return planDatesAroundToday(now);
+	}
+	return planDatesOfDay(memberDay);
 }
 
 function dayStartReadings(utcDay: moment.Moment): number[] {

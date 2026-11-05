@@ -66,7 +66,7 @@ import {
 	DAILY_PLAN_REQUIRED,
 	PLAN_RULE_SOURCES,
 	TASK_NOT_PLANNED,
-	planDatesAroundToday,
+	planDatesForStart,
 	planHasTasks,
 	planHoldsTask
 } from './timer-plan-rule';
@@ -354,7 +354,8 @@ export class TimerService {
 			tenantId,
 			organizationTeamId,
 			taskId,
-			source
+			source,
+			planDay: request.planDay
 		});
 
 		const projectIdToLog = await this.projectIdForStart(request, organizationId, tenantId);
@@ -425,8 +426,9 @@ export class TimerService {
 
 	/**
 	 * Refuses an Ever Teams start for a team that requires a daily plan when the employee has no plan with tasks
-	 * around today in that team, or when the task they start is in none of those plans. Ever Teams web checks the
-	 * same before starting; the mobile app and older web tabs did not, and the rule stayed advisory.
+	 * for their day in that team, or when the task they start is in none of those plans. Their day is the one the
+	 * client sends (see planDatesForStart), or the days around today for a client that sends none. Ever Teams web
+	 * checks the same before starting; the mobile app and older web tabs did not, and the rule stayed advisory.
 	 *
 	 * @throws UnprocessableEntityException with the code DAILY_PLAN_REQUIRED or TASK_NOT_PLANNED.
 	 */
@@ -437,8 +439,9 @@ export class TimerService {
 		organizationTeamId?: ID;
 		taskId?: ID;
 		source?: TimeLogSourceEnum;
+		planDay?: string;
 	}): Promise<void> {
-		const { employeeId, organizationId, tenantId, organizationTeamId, taskId, source } = start;
+		const { employeeId, organizationId, tenantId, organizationTeamId, taskId, source, planDay } = start;
 		const isPlanRuleClient = PLAN_RULE_SOURCES.includes(source);
 		if (!isPlanRuleClient) {
 			return;
@@ -456,7 +459,7 @@ export class TimerService {
 			return;
 		}
 
-		const { from, to } = planDatesAroundToday(moment.utc());
+		const { from, to } = planDatesForStart(planDay, moment.utc());
 		const plans = await this.typeOrmTimeLogRepository.manager.find(DailyPlan, {
 			where: {
 				employeeId,
