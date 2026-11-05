@@ -38302,16 +38302,12 @@ input SharedEntitySort {
 The fields a share list may be narrowed by. `and` is the default; `or` requires any of its members and
 `not` excludes the rows that match it.
 
-A share's own token is filterable, and that is deliberate rather than a leak: the list is
-tenant-guarded, and the filter runs over the rows as the caller reads them, so it only matches a
-token the row already answers — one of a share the caller manages. What it is *not* is a way to
-resolve the shared record — that is the token read, and its answer is the target rather than a
-`SharedEntity`.
+A share's token is not filterable: it is a secret, like every credential column. Reading the shared
+record by its token is the token read, whose answer is the target rather than a `SharedEntity`.
 """
 input SharedEntityFilter {
   id: IDFilter
   organizationId: IDFilter
-  token: StringFilter
   entity: StringFilter
   entityId: IDFilter
   shareRules: JSONFilter
