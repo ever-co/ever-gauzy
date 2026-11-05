@@ -1,4 +1,5 @@
 import { RelationId } from 'typeorm';
+import { billingRateColumn } from '../shared/pipes/billing-rate.transform';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsDateString, IsNotEmpty, IsOptional, IsUUID } from 'class-validator';
 import { ID, IEmployee, IOrganizationProject, IOrganizationProjectEmployee, IRole } from '@gauzy/contracts';
@@ -25,6 +26,14 @@ export class OrganizationProjectEmployee extends TenantOrganizationBaseEntity im
 	@ColumnIndex()
 	@MultiORMColumn({ nullable: true })
 	assignedAt?: Date;
+
+	/**
+	 * The member's own hourly rate on this project, in the project's currency. It wins over the project's rate and
+	 * the employee's own. Written through the member rate route only, which checks who may.
+	 */
+	@ApiPropertyOptional({ type: () => Number, nullable: true })
+	@MultiORMColumn(billingRateColumn())
+	billRateValue?: number | null;
 
 	/*
 	|--------------------------------------------------------------------------

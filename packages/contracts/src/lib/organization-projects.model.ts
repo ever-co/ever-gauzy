@@ -74,6 +74,7 @@ export interface IOrganizationProjectBase
 	closeTasksIn?: number;
 	defaultAssigneeId?: ID;
 	defaultAssignee?: IEmployee;
+	billRateValue?: number | null;
 }
 
 // Base interface with optional properties of organization project setting
@@ -120,6 +121,33 @@ export interface IOrganizationProjectEmployee
 		IManagerAssignable {
 	organizationProject: IOrganizationProject;
 	organizationProjectId: ID;
+	billRateValue?: number | null;
+}
+
+/** A project rate, or a member's rate on a project: a non-negative amount per hour, or `null` to clear it. */
+export interface IOrganizationProjectRateUpdateInput extends IBasePerTenantAndOrganizationEntityModel {
+	billRateValue: number | null;
+}
+
+export interface IOrganizationProjectMemberRate {
+	employeeId: ID;
+	billRateValue: number | null;
+}
+
+/** A project's rate and its members' own rates on it, in the project's currency. */
+export interface IOrganizationProjectRates {
+	id: ID;
+	billRateValue: number | null;
+	currency: string | null;
+	members: IOrganizationProjectMemberRate[];
+}
+
+/** The rate an employee's time on a project is counted at: their own on it, else the project's, else theirs. */
+export interface IEmployeeProjectRate {
+	organizationProjectId: ID;
+	projectName: string;
+	billRateValue: number | null;
+	currency: string | null;
 }
 
 // Task List Type Enum

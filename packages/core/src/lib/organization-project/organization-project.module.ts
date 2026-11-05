@@ -7,6 +7,7 @@ import { OrganizationProjectEmployee } from './organization-project-employee.ent
 import { OrganizationProjectController } from './organization-project.controller';
 import { OrganizationProjectResolver } from './organization-project.resolver';
 import { OrganizationProjectService } from './organization-project.service';
+import { OrganizationProjectRateService } from './organization-project-rate.service';
 import { CommandHandlers } from './commands/handlers';
 import { RolePermissionModule } from '../role-permission/role-permission.module';
 import { RoleModule } from './../role/role.module';
@@ -39,6 +40,7 @@ import { MikroOrmOrganizationProjectEmployeeRepository } from './repository/mikr
 	controllers: [OrganizationProjectController],
 	providers: [
 		OrganizationProjectService,
+		OrganizationProjectRateService,
 		// The GraphQL view of the same resource: declared here because a resolver can only inject
 		// services its own module can reach, and this module is what reaches them.
 		OrganizationProjectResolver,

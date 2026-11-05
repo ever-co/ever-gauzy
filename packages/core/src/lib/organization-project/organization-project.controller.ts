@@ -17,8 +17,10 @@ import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from 
 import { DeleteResult } from 'typeorm';
 import {
 	ID,
+	IEmployeeProjectRate,
 	IOrganizationProject,
 	IOrganizationProjectEditByEmployeeInput,
+	IOrganizationProjectRates,
 	IOrganizationProjectSetting,
 	IPagination,
 	PermissionsEnum
@@ -40,10 +42,12 @@ import { UUIDValidationPipe, UseValidationPipe } from './../shared/pipes';
 import { TenantOrganizationBaseDTO } from './../core/dto';
 import {
 	CreateOrganizationProjectDTO,
+	OrganizationProjectRateDTO,
 	UpdateOrganizationProjectDTO,
 	UpdateProjectSettingDTO,
 	UpdateTaskModeDTO
 } from './dto';
+import { OrganizationProjectRateService } from './organization-project-rate.service';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
 import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
@@ -57,9 +61,67 @@ import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sens
 export class OrganizationProjectController extends CrudController<OrganizationProject> {
 	constructor(
 		private readonly organizationProjectService: OrganizationProjectService,
-		private readonly commandBus: CommandBus
+		private readonly commandBus: CommandBus,
+		private readonly organizationProjectRateService: OrganizationProjectRateService
 	) {
 		super(organizationProjectService);
+	}
+
+	/**
+	 * The caller's rates on their projects: on each, the rate their time is counted at and its currency. Declared
+	 * before `GET /:id`, which would read `rates` as a project id.
+	 */
+	@ApiOperation({ summary: "The caller's effective rate on each of their projects" })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The rates' })
+	@Permissions()
+	@UseValidationPipe({ whitelist: true })
+	@Get('/rates/me')
+	async findMyRates(@Query() options: TenantOrganizationBaseDTO): Promise<IEmployeeProjectRate[]> {
+		return await this.organizationProjectRateService.findMyProjectRates(options.organizationId);
+	}
+
+	/** A project's rate and its members' own rates on it, for an admin or a manager the project flags. */
+	@ApiOperation({ summary: "A project's rate and its members' rates" })
+	@ApiResponse({ status: HttpStatus.OK, description: 'The rates' })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Not an admin or a manager of the project' })
+	@Permissions()
+	@UseValidationPipe({ whitelist: true })
+	@Get('/:id/rates')
+	async findRates(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Query() options: TenantOrganizationBaseDTO
+	): Promise<IOrganizationProjectRates> {
+		return await this.organizationProjectRateService.findProjectRates(id, options.organizationId);
+	}
+
+	/** Sets or clears a project's rate, for an admin or a manager the project flags. */
+	@ApiOperation({ summary: "Set or clear a project's rate" })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Not an admin or a manager of the project' })
+	@HttpCode(HttpStatus.OK)
+	@Permissions()
+	@UseValidationPipe({ whitelist: true, transform: true })
+	@Put('/:id/rate')
+	async updateRate(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Body() input: OrganizationProjectRateDTO
+	): Promise<Pick<IOrganizationProjectRates, 'id' | 'billRateValue' | 'currency'>> {
+		return await this.organizationProjectRateService.updateProjectRate(id, input);
+	}
+
+	/** Sets or clears a member's own rate on a project, for an admin or a manager the project flags. */
+	@ApiOperation({ summary: "Set or clear a member's rate on a project" })
+	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Not an admin or a manager of the project' })
+	@ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'The employee is not a member of the project' })
+	@HttpCode(HttpStatus.OK)
+	@Permissions()
+	@UseValidationPipe({ whitelist: true, transform: true })
+	@Put('/:id/members/:employeeId/rate')
+	async updateMemberRate(
+		@Param('id', UUIDValidationPipe) id: ID,
+		@Param('employeeId', UUIDValidationPipe) employeeId: ID,
+		@Body() input: OrganizationProjectRateDTO
+	): Promise<{ organizationProjectId: ID; employeeId: ID; billRateValue: number | null }> {
+		return await this.organizationProjectRateService.updateMemberRate(id, employeeId, input);
 	}
 
 	/**
