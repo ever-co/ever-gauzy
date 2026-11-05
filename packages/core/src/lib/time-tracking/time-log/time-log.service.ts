@@ -1482,6 +1482,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			}
 		}
 
+		// Opt-in: a report that does not ask keeps counting every log, billable or not, as its clients expect.
+		if (request.billableOnly === true) {
+			query.andWhere(p(`"${query.alias}"."isBillable" = :isBillable`), { isBillable: true });
+		}
+
 		query.andWhere(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
 		query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
 		query.andWhere(p(`"timeSlots"."tenantId" = :tenantId`), { tenantId });
@@ -1557,6 +1562,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		// An `isEdited` key with no value applies no filter, as in getFilterTimeLogQuery.
 		if ('isEdited' in request && request.isEdited !== undefined && request.isEdited !== null) {
 			where.editedAt = request.isEdited ? { $ne: null } : null;
+		}
+
+		if (request.billableOnly === true) {
+			where.isBillable = true;
 		}
 
 		if (isNotEmpty(request.activityLevel)) {

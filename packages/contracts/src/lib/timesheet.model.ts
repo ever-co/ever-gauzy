@@ -423,6 +423,7 @@ export interface IGetTimeLogInput extends ITimeLogFilters, IBaseRelationsEntityM
 export interface IGetTimeLogReportInput extends IGetTimeLogInput {
 	groupBy?: ReportGroupByFilter;
 	isEdited?: boolean;
+	billableOnly?: boolean;
 }
 
 export interface IGetTimeLogConflictInput extends IBasePerTenantAndOrganizationEntityModel, IBaseRelationsEntityModel {

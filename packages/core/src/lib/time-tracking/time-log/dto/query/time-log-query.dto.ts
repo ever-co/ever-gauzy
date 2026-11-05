@@ -33,6 +33,11 @@ export class TimeLogQueryDTO
 	@IsOptional()
 	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
 	readonly isEdited: boolean;
+
+	@ApiPropertyOptional({ type: () => Boolean, description: 'Count billable time logs only' })
+	@IsOptional()
+	@Transform(({ value }: TransformFnParams) => parseToBoolean(value))
+	readonly billableOnly: boolean;
 }
 
 /**
