@@ -9,6 +9,17 @@ import { IUser, ITag, RolesEnum } from '@gauzy/contracts';
 import { AuthService, UsersService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 
+/** Roles with a USERS_PAGE.ROLE string; any other (INTERVIEWER, a custom role) shows by its name. */
+const TRANSLATED_ROLES: RolesEnum[] = [
+	RolesEnum.SUPER_ADMIN,
+	RolesEnum.ADMIN,
+	RolesEnum.MANAGER,
+	RolesEnum.DATA_ENTRY,
+	RolesEnum.VIEWER,
+	RolesEnum.EMPLOYEE,
+	RolesEnum.CANDIDATE
+];
+
 @UntilDestroy({ checkProperties: true })
 @Component({
     selector: 'ngx-edit-user-profile',
@@ -23,6 +34,24 @@ export class EditUserProfileComponent extends TranslationBaseComponent implement
 	user: IUser;
 	tabs: NbRouteTab[];
 	tags: ITag[];
+	/** The photo failed to load: the placeholder shows instead. */
+	avatarFailed = false;
+
+	/** The header's name: the full name, else the email. */
+	get displayName(): string {
+		return this.user?.name || [this.user?.firstName, this.user?.lastName].filter(Boolean).join(' ') || this.user?.email || '';
+	}
+
+	/** The role's label: translated for the roles with a USERS_PAGE.ROLE string, as named for any other. */
+	get roleLabel(): { key?: string; text: string } | null {
+		const name = this.user?.role?.name;
+		if (!name) {
+			return null;
+		}
+		return TRANSLATED_ROLES.includes(name as RolesEnum)
+			? { key: `USERS_PAGE.ROLE.${name}`, text: name }
+			: { text: name.replace(/_/g, ' ') };
+	}
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -96,6 +125,7 @@ export class EditUserProfileComponent extends TranslationBaseComponent implement
 			return;
 		}
 
+		this.avatarFailed = false;
 		this.user = await this.usersService.getUserById(this.params.id, ['role', 'tags']);
 
 		if (this.user?.role?.name === RolesEnum.SUPER_ADMIN) {
