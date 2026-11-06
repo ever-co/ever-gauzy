@@ -17,6 +17,17 @@ import {
 } from '@gauzy/ui-core/core';
 import { FormHelpers } from '../../forms/helpers';
 
+/** Roles with a USERS_PAGE.ROLE string; any other (INTERVIEWER, a custom role) shows by its name. */
+const TRANSLATED_ROLES: RolesEnum[] = [
+	RolesEnum.SUPER_ADMIN,
+	RolesEnum.ADMIN,
+	RolesEnum.MANAGER,
+	RolesEnum.DATA_ENTRY,
+	RolesEnum.VIEWER,
+	RolesEnum.EMPLOYEE,
+	RolesEnum.CANDIDATE
+];
+
 @UntilDestroy({ checkProperties: true })
 @Component({
 	selector: 'ngx-profile',
@@ -29,9 +40,16 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	FormHelpers: typeof FormHelpers = FormHelpers;
 	hoverState: boolean;
 	loading: boolean;
+	/** A save is on its way: the Save button waits for it. */
+	saving = false;
+	/** The photo failed to load: the placeholder shows instead. */
+	avatarFailed = false;
 	listOfTimeFormats = DEFAULT_TIME_FORMATS;
 	role: IRole;
+	/** The signed-in user (from the store). */
 	user: IUser;
+	/** The user being edited, as last read: the identity panel's name, role, dates and verification. */
+	profile: IUser;
 	user$: Subject<any> = new Subject();
 
 	/*
@@ -83,6 +101,28 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	public excludes: RolesEnum[] = [];
+
+	/** Whether the profile being edited is the signed-in user's own. */
+	get isOwnProfile(): boolean {
+		return !this.selectedUser?.id || this.selectedUser.id === this._store.userId;
+	}
+
+	/** The name shown in the identity panel: the full name, else the email. */
+	get displayName(): string {
+		const { firstName, lastName, email } = this.form.getRawValue();
+		return [firstName, lastName].filter(Boolean).join(' ') || email || '';
+	}
+
+	/** The role's label: translated for the roles with a USERS_PAGE.ROLE string, as named for any other. */
+	get roleLabel(): { key?: string; text: string } | null {
+		const name = this.role?.name;
+		if (!name) {
+			return null;
+		}
+		return TRANSLATED_ROLES.includes(name as RolesEnum)
+			? { key: `USERS_PAGE.ROLE.${name}`, text: name }
+			: { text: name.replace(/_/g, ' ') };
+	}
 
 	constructor(
 		private readonly _fb: UntypedFormBuilder,
@@ -149,6 +189,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			}
 
 			// Patch the form with the retrieved user data
+			this.profile = user;
 			this._patchForm({ ...user });
 		} catch (error) {
 			this._errorHandler?.handleError(error); // Handle errors gracefully
@@ -160,10 +201,18 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	async updateImageAsset(image: IImageAsset) {
-		this._store.user = {
-			...this._store.user,
-			imageId: image.id
-		};
+		// The signed-in user's session carries their own photo: change it only when they edit their own profile.
+		// An admin changing another user's photo used to put that photo on their own avatar.
+		const isOwnProfile = this.isOwnProfile;
+		if (isOwnProfile) {
+			this._store.user = {
+				...this._store.user,
+				imageId: image.id
+			};
+		}
+		// Show the new photo now, and keep its id with the form so a save straight after keeps it.
+		this.avatarFailed = false;
+		this.form.patchValue({ imageId: image.id, imageUrl: image.fullUrl || image.url });
 
 		let request: IUserUpdateInput = {
 			imageId: image.id
@@ -189,7 +238,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				.update(this.selectedUser ? this.selectedUser.id : this._store.userId, request)
 				.then((res: IUser) => {
 					try {
-						if (res) {
+						if (res && isOwnProfile) {
 							this._store.user = {
 								...this._store.user,
 								imageUrl: res.imageUrl
@@ -206,6 +255,9 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 	}
 
 	async submitForm() {
+		if (this.saving || this.form.invalid) {
+			return;
+		}
 		const { timeFormat, timeZone } = this.form.value;
 		const { email, firstName, lastName, tags, preferredLanguage, password, phoneNumber } = this.form.value;
 
@@ -246,6 +298,7 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 			};
 		}
 
+		this.saving = true;
 		try {
 			await this._userService
 				.update(this.selectedUser ? this.selectedUser.id : this._store.userId, request)
@@ -267,6 +320,8 @@ export class EditProfileFormComponent implements OnInit, OnDestroy {
 				});
 		} catch (error) {
 			this._errorHandler.handleError(error);
+		} finally {
+			this.saving = false;
 		}
 	}
 
