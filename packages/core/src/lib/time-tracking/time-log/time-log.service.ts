@@ -416,7 +416,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	 * caller may read (their own, or anyone's for a holder of ORG_EMPLOYEES_EDIT). An amount over a duration would
 	 * otherwise tell a manager a teammate's pay rate, so the others' time is priced at their billing rate.
 	 */
-	private async findPayRatesOf(logs: ITimeLog[]): Promise<Map<ID, StoredPayRate>> {
+	private async findPayRatesOf(logs: ITimeLog[], organizationId?: ID): Promise<Map<ID, StoredPayRate>> {
 		const payRates = new Map<ID, StoredPayRate>();
 		const tenantId = RequestContext.currentTenantId();
 		if (!tenantId) {
@@ -426,7 +426,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const knownEmployeeIds = loggedEmployeeIds.filter(Boolean);
 		const readableEmployeeIds = knownEmployeeIds.filter((employeeId) => mayReadPayRateOf(employeeId));
 		const employeeIds = Array.from(new Set(readableEmployeeIds));
-		const rows = await findStoredPayRates(this.typeOrmRepository.manager, employeeIds, tenantId);
+		const rows = await findStoredPayRates(this.typeOrmRepository.manager, employeeIds, tenantId, organizationId);
 		for (const row of rows) {
 			if (isPayRateSet(row.payRateValue)) {
 				payRates.set(row.id, row);
@@ -776,7 +776,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		// A rate that states no currency is in the organization's, as on the weekly report
-		const payRates = await this.findPayRatesOf(timeLogs);
+		const payRates = await this.findPayRatesOf(timeLogs, request.organizationId);
 		const organizationCurrency = await this.findCurrencyForOwedAmounts(timeLogs, payRates, request.organizationId);
 
 		const dailyLogs: any = chain(timeLogs)
@@ -883,7 +883,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { days, timeZone } = this.reportDateRange(request);
 
 		// A rate that states no currency is in the organization's, as on the weekly report
-		const payRates = await this.findPayRatesOf(timeLogs);
+		const payRates = await this.findPayRatesOf(timeLogs, request.organizationId);
 		const organizationCurrency = await this.findCurrencyForOwedAmounts(timeLogs, payRates, request.organizationId);
 
 		const byDate: any = chain(timeLogs)
