@@ -11,10 +11,10 @@ const contacts = (n: number, from = 1) =>
 		return { id: `c-${index}`, name: `Contact ${index}` };
 	});
 
-/** The pagination endpoint over `all`: a name substring match, `take` per page, `skip` counted from 1. */
+/** The assignable endpoint over `all`: a name substring match, `take` per page, `skip` counted from 1. */
 const serverOf = (all: { id: string; name: string }[]) =>
-	jest.fn(async ({ where, take, skip }: any) => {
-		const term = String(where.name || '').toLowerCase();
+	jest.fn(async ({ name, take, skip }: any) => {
+		const term = String(name || '').toLowerCase();
 		const matching = all.filter((contact) => contact.name.toLowerCase().includes(term));
 		return { items: matching.slice((skip - 1) * take, skip * take), total: matching.length };
 	});
@@ -22,7 +22,7 @@ const serverOf = (all: { id: string; name: string }[]) =>
 /** Lets every pending page land (the fakes answer at once). */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-/** The tab with its services faked; the assign dialog's pages come from `pagination`. */
+/** The tab with its services faked; the assign dialog's pages come from `pagination` (the assignable endpoint). */
 const tabWith = (
 	{
 		updateByEmployee = jest.fn(async () => true),
@@ -61,12 +61,18 @@ const tabWith = (
 	component['_optionsTotal'] = 0;
 	component['_optionsRequest'] = 0;
 	component['_dialogService'] = { open };
-	component['_organizationContactService'] = { updateByEmployee, pagination };
+	// The dialog reads the assignable endpoint; the contact-view one (`pagination`) must not be asked.
+	const contactViewPagination = jest.fn();
+	component['_organizationContactService'] = {
+		updateByEmployee,
+		getAssignable: pagination,
+		pagination: contactViewPagination
+	};
 	component['_toastrService'] = { success: jest.fn(), danger: jest.fn() };
 	component['subject$'] = new Subject<boolean>();
 	const reloads = jest.fn();
 	component['subject$'].subscribe(reloads);
-	return { component, open, refs, updateByEmployee, pagination, reloads };
+	return { component, open, refs, updateByEmployee, pagination, contactViewPagination, reloads };
 };
 
 /**
@@ -206,21 +212,18 @@ describe('EditEmployeeContactComponent assign to contacts', () => {
  * searched by name on the server, never all of them at once.
  */
 describe('EditEmployeeContactComponent assign dialog pages', () => {
-	it('reads nothing until the dialog opens, then the first page by name', async () => {
+	it('reads nothing until the dialog opens, then the first page of the assignable contacts', async () => {
 		const pagination = serverOf(contacts(5));
-		const { component } = tabWith({ pagination });
+		const { component, contactViewPagination } = tabWith({ pagination });
 		expect(pagination).not.toHaveBeenCalled();
 
 		component.openAssign();
 		await settle();
 
 		expect(pagination).toHaveBeenCalledTimes(1);
-		expect(pagination).toHaveBeenCalledWith({
-			where: { organizationId: 'org-1', tenantId: 'tenant-1' },
-			order: { name: 'ASC' },
-			take: 30,
-			skip: 1
-		});
+		expect(pagination).toHaveBeenCalledWith({ organizationId: 'org-1', tenantId: 'tenant-1', take: 30, skip: 1 });
+		// Choosing a contact takes ORG_EMPLOYEES_EDIT, as assigning does: never the contact-view read.
+		expect(contactViewPagination).not.toHaveBeenCalled();
 		expect(component.assignOptions.map((row) => row.id)).toEqual(['c-01', 'c-02', 'c-03', 'c-04', 'c-05']);
 		expect(component.hasMoreOptions).toBe(false);
 	});
@@ -288,17 +291,19 @@ describe('EditEmployeeContactComponent assign dialog pages', () => {
 		component.assignSearch = 'acme';
 		await component.loadOptions(true);
 
-		expect(pagination).toHaveBeenLastCalledWith(
-			expect.objectContaining({ where: { organizationId: 'org-1', tenantId: 'tenant-1', name: 'acme' }, skip: 1 })
-		);
+		expect(pagination).toHaveBeenLastCalledWith({
+			organizationId: 'org-1',
+			tenantId: 'tenant-1',
+			name: 'acme',
+			take: 30,
+			skip: 1
+		});
 		expect(component.assignOptions.map((row) => row.id)).toEqual(['acme']);
 	});
 
 	it('drops the answer of an older search that lands after a newer one', async () => {
 		const answers: Record<string, (page: any) => void> = {};
-		const pagination = jest.fn(
-			({ where }: any) => new Promise((resolve) => (answers[where.name || ''] = resolve))
-		);
+		const pagination = jest.fn(({ name }: any) => new Promise((resolve) => (answers[name || ''] = resolve)));
 		const { component } = tabWith({ pagination });
 		component.openAssign(); // asks for '' and waits
 
@@ -390,7 +395,7 @@ describe('EditEmployeeContactComponent table', () => {
 		expect(pagination).toHaveBeenCalledWith({
 			where: { organizationId: 'org-1', tenantId: 'tenant-1', members: ['employee-1'] },
 			relations: ['projects'],
-			order: { name: 'ASC' },
+			order: { name: 'ASC', id: 'ASC' },
 			take: 100,
 			skip: 1
 		});
