@@ -8,7 +8,8 @@
  *   3. runs C concurrent clients for D seconds (throughput + latency under load),
  *   4. optionally counts the SQL statements PostgreSQL executed per request (pg_stat_statements).
  *
- * Dependency-free except `pg` (only when PG_URL is set), resolved from the repo's node_modules.
+ * Dependency-free except `pg` (only when PG_URL is set) or `better-sqlite3` (only when SQLITE_PATH names the API's
+ * SQLite file instead), resolved from the repo's node_modules.
  *
  * Usage (from the repo root):
  *   BASE=http://localhost:3999/api EMAIL='<seeded super admin email>' PASSWORD=admin \
@@ -149,6 +150,23 @@ async function pgClient() {
 	return pg;
 }
 
+/**
+ * The ids (organization, employee, project, team) read from the API's SQLite file when SQLITE_PATH names one and
+ * PG_URL does not: the same queries as against PostgreSQL, through better-sqlite3 from the repo's node_modules, with
+ * the `$n` placeholders rewritten. Statement counts are not available on SQLite.
+ */
+function sqliteClient() {
+	if (!env.SQLITE_PATH) return null;
+	const Database = require('better-sqlite3');
+	const db = new Database(env.SQLITE_PATH, { readonly: true, fileMustExist: true });
+	return {
+		async query(sql, params = []) {
+			const statement = sql.replace(/\$\d+/g, '?');
+			return { rows: db.prepare(statement).all(...params) };
+		}
+	};
+}
+
 async function pgReset() {
 	const c = await pgClient();
 	if (!c) return;
@@ -238,7 +256,7 @@ async function resolveContext() {
 	const vars = { tenantId: user.tenantId, userId: user.id, employeeId: user.employee?.id || user.employeeId || '' };
 	// Whether the bench employee is the signed-in user's own (the "me" reads answer that employee's records only).
 	const employeeOfUser = !!vars.employeeId;
-	const c = await pgClient();
+	const c = (await pgClient()) ?? sqliteClient();
 	if (c) {
 		// The organization with the most employees, so list endpoints return real pages.
 		const org = await c.query(
