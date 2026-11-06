@@ -58,6 +58,7 @@ import {
 	EmployeeListQueryDTO
 } from './dto';
 import { withoutOwnPayRateWrite, withoutPayRateCriteria, withoutPayRateKeys } from './pay-rate';
+import { RespondsWithPayRate } from '../core/interceptors/employee-pay-rate-scrub';
 import { SensitiveRelations } from '../core/decorators/sensitive-relations.decorator';
 import { SensitiveRelationsInterceptor } from '../core/interceptors/sensitive-relations.interceptor';
 import { ORGANIZATION_SENSITIVE_RELATIONS } from '../core/util/organization-sensitive-relations.config';
@@ -474,6 +475,7 @@ export class EmployeeController extends CrudController<Employee> {
 	@ApiResponse({ status: HttpStatus.OK, description: 'The pay rate and the currency it is in' })
 	@ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Neither the employee nor a rate editor' })
 	@Permissions()
+	@RespondsWithPayRate()
 	@Get('/:id/pay-rate')
 	@UseValidationPipe({ whitelist: true })
 	async findPayRate(

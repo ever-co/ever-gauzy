@@ -129,7 +129,9 @@ export function withoutPayRateKeys(criteria: unknown): unknown {
 		return criteria;
 	}
 	if (Array.isArray(criteria)) {
-		return criteria.map((item) => withoutPayRateKeys(item));
+		// A `select` may be a list of property names (`?select[]=payRateValue`)
+		const isPayRateKey = (item: unknown) => typeof item === 'string' && EMPLOYEE_PAY_RATE_KEYS.includes(item);
+		return criteria.filter((item) => !isPayRateKey(item)).map((item) => withoutPayRateKeys(item));
 	}
 	const kept = { ...(criteria as Record<string, unknown>) };
 	for (const key of EMPLOYEE_PAY_RATE_KEYS) {
