@@ -174,13 +174,25 @@ export const saveSelectedOrgButtonVisible = async () => {
 
 export const clickSaveSelectedOrgButton = async () => {
 	if (!orgWasAdded) return;
-	// Add creates the user-organizations, closes the dialog and reloads the list (spinner). Dispatch the click so
-	// no overlay intercepts it.
+	const page = getPage();
+	// Add saves the memberships and then, whether they were saved or refused, reloads the user's memberships
+	// (debounced). Neither the dialog closing nor a spinner proves that reload has landed, so wait for its answer:
+	// registered before the click, it can only be a reload that follows this save.
+	const reloaded = page
+		.waitForResponse(
+			(response) =>
+				response.request().method() === 'GET' &&
+				new URL(response.url()).pathname.endsWith('/user-organization'),
+			{ timeout: 20_000 }
+		)
+		.catch(() => null);
+	// Dispatch the click so no overlay intercepts it.
 	await dispatchClick(EditUserPage.saveSelectedOrgButton);
-	await waitForSpinnerGone();
-	// A dialog still open means the add was refused: close it so its backdrop can't swallow the next click. The
-	// remove step that follows counts the rows actually shown, so a refused add is not taken for a second org.
-	const dialog = getPage().locator('.assign-dialog');
+	await reloaded;
+	await waitForSpinnerGone().catch(() => {});
+	// A dialog still open now means the add was refused: close it so its backdrop can't swallow the next click. The
+	// remove step that follows counts the rows the reload shows, so a refused add is not taken for a second org.
+	const dialog = page.locator('.assign-dialog');
 	if (await dialog.count()) {
 		await getPage().keyboard.press('Escape').catch(() => {});
 		await dialog.waitFor({ state: 'detached', timeout: 5000 }).catch(() => {});
