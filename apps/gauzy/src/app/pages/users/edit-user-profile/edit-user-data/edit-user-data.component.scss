@@ -7,3 +7,32 @@
 .loading {
   min-height: 12rem;
 }
+
+// The user could not be loaded: say so, with a way to try again or leave.
+.load-failed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  min-height: 12rem;
+  text-align: center;
+}
+
+.load-failed__icon {
+  width: 2rem;
+  height: 2rem;
+  font-size: 2rem;
+  color: var(--text-danger-color);
+}
+
+.load-failed__text {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.load-failed__actions {
+  display: flex;
+  gap: 0.5rem;
+}

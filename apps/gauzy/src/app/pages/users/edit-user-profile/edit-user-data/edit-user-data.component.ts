@@ -11,15 +11,19 @@ import { UsersService } from '@gauzy/ui-core/core';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-edit-user-data',
-    templateUrl: './edit-user-data.component.html',
-    styleUrls: ['./edit-user-data.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	selector: 'ngx-edit-user-data',
+	templateUrl: './edit-user-data.component.html',
+	styleUrls: ['./edit-user-data.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
 export class EditUserDataComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	params: Params;
 	user: IUser;
+	/** The user could not be loaded: the tab offers to try again or go back, instead of a spinner that never ends. */
+	failed = false;
+	/** Numbers each load: only the latest one, for the page's current user, is applied. */
+	private _loadSeq = 0;
 
 	constructor(
 		private readonly route: ActivatedRoute,
@@ -48,21 +52,41 @@ export class EditUserDataComponent extends TranslationBaseComponent implements O
 		this.router.navigate(['/pages/users']);
 	}
 
-	private async getUserProfile() {
-		const { id } = this.params;
-		const user = await this.usersService.getUserById(id, ['role', 'tags']);
+	/** Loads the user again after a failed load. */
+	retry() {
+		this.getUserProfile();
+	}
 
-		if (user.role.name === RolesEnum.SUPER_ADMIN) {
-			/**
-			 * Redirect If Edit Super Admin Without Permission
-			 */
-			const hasSuperAdminRole = await firstValueFrom(this.authService.hasRole([RolesEnum.SUPER_ADMIN]));
-			if (!hasSuperAdminRole) {
-				this.router.navigate(['/pages/users']);
-				return;
+	private async getUserProfile() {
+		const seq = ++this._loadSeq;
+		const { id } = this.params;
+		const isCurrent = () => seq === this._loadSeq && id === this.params?.id;
+		this.user = null;
+		this.failed = false;
+		try {
+			const user = await this.usersService.getUserById(id, ['role', 'tags']);
+
+			if (user?.role?.name === RolesEnum.SUPER_ADMIN) {
+				/**
+				 * Redirect If Edit Super Admin Without Permission
+				 */
+				const hasSuperAdminRole = await firstValueFrom(this.authService.hasRole([RolesEnum.SUPER_ADMIN]));
+				if (!hasSuperAdminRole) {
+					if (isCurrent()) {
+						this.router.navigate(['/pages/users']);
+					}
+					return;
+				}
+			}
+			if (isCurrent()) {
+				this.user = user;
+			}
+		} catch (error) {
+			if (isCurrent()) {
+				console.error('Error while loading the user', error);
+				this.failed = true;
 			}
 		}
-		this.user = user;
 	}
 
 	ngOnDestroy() {}

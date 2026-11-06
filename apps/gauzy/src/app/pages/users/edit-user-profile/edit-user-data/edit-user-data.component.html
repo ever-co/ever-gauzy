@@ -1,5 +1,18 @@
 @if (!!user) {
 	<ngx-profile [selectedUser]="user" [allowRoleChange]="true" (userSubmitted)="goBack()"></ngx-profile>
+} @else if (failed) {
+	<div class="load-failed" role="alert">
+		<nb-icon class="load-failed__icon" icon="alert-circle-outline"></nb-icon>
+		<p class="load-failed__text">{{ 'USERS_PAGE.EDIT_USER.LOAD_FAILED' | translate }}</p>
+		<div class="load-failed__actions">
+			<button type="button" nbButton outline status="basic" size="small" (click)="goBack()">
+				<nb-icon icon="arrow-back-outline"></nb-icon>{{ 'BUTTONS.BACK' | translate }}
+			</button>
+			<button type="button" nbButton status="primary" size="small" (click)="retry()">
+				<nb-icon icon="refresh-outline"></nb-icon>{{ 'BUTTONS.REFRESH' | translate }}
+			</button>
+		</div>
+	</div>
 } @else {
 	<div class="loading" [nbSpinner]="true" nbSpinnerSize="small" nbSpinnerStatus="basic"></div>
 }

@@ -22,11 +22,11 @@ const TRANSLATED_ROLES: RolesEnum[] = [
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-edit-user-profile',
-    templateUrl: './edit-user-profile.component.html',
-    styleUrls: ['./edit-user-profile.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	selector: 'ngx-edit-user-profile',
+	templateUrl: './edit-user-profile.component.html',
+	styleUrls: ['./edit-user-profile.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
 export class EditUserProfileComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	form: FormGroup;
@@ -36,10 +36,17 @@ export class EditUserProfileComponent extends TranslationBaseComponent implement
 	tags: ITag[];
 	/** The photo failed to load: the placeholder shows instead. */
 	avatarFailed = false;
+	/** Numbers each load of the user: only the latest one, for the page's current user, is applied. */
+	private _loadSeq = 0;
 
 	/** The header's name: the full name, else the email. */
 	get displayName(): string {
-		return this.user?.name || [this.user?.firstName, this.user?.lastName].filter(Boolean).join(' ') || this.user?.email || '';
+		return (
+			this.user?.name ||
+			[this.user?.firstName, this.user?.lastName].filter(Boolean).join(' ') ||
+			this.user?.email ||
+			''
+		);
 	}
 
 	/** The role's label: translated for the roles with a USERS_PAGE.ROLE string, as named for any other. */
@@ -125,20 +132,35 @@ export class EditUserProfileComponent extends TranslationBaseComponent implement
 			return;
 		}
 
+		// Another user's details never show under this one's address: cleared now, and an answer for a user the
+		// page has since left is dropped.
+		const seq = ++this._loadSeq;
+		const { id } = this.params;
+		const isCurrent = () => seq === this._loadSeq && id === this.params?.id;
+		this.user = null;
 		this.avatarFailed = false;
-		this.user = await this.usersService.getUserById(this.params.id, ['role', 'tags']);
 
-		if (this.user?.role?.name === RolesEnum.SUPER_ADMIN) {
-			/**
-			 * Redirect If Edit Super Admin Without Permission
-			 */
-			const hasSuperAdminRole = await firstValueFrom(
-				this.authService.hasRole([RolesEnum.SUPER_ADMIN])
-			);
-
-			if (!hasSuperAdminRole) {
-				this.router.navigate(['/pages/users']);
+		try {
+			const user = await this.usersService.getUserById(id, ['role', 'tags']);
+			if (!isCurrent()) {
 				return;
+			}
+			this.user = user;
+
+			if (user?.role?.name === RolesEnum.SUPER_ADMIN) {
+				/**
+				 * Redirect If Edit Super Admin Without Permission
+				 */
+				const hasSuperAdminRole = await firstValueFrom(this.authService.hasRole([RolesEnum.SUPER_ADMIN]));
+
+				if (!hasSuperAdminRole && isCurrent()) {
+					this.router.navigate(['/pages/users']);
+				}
+			}
+		} catch (error) {
+			// The header stays empty; the Main tab says the user could not be loaded and offers to try again.
+			if (isCurrent()) {
+				console.error('Error while loading the user', error);
 			}
 		}
 	}
