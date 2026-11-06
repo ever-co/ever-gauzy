@@ -5528,7 +5528,9 @@
 		"COLLAPSE_SIDEBAR": "收起侧边栏",
 		"EXPAND_SIDEBAR": "展开侧边栏",
 		"EVER_APPS": "应用",
-		"SWITCH_EVER_APP": "切换到其他 Ever 应用"
+		"SWITCH_EVER_APP": "切换到其他 Ever 应用",
+		"WORKSPACE": "工作区",
+		"SWITCH_WORKSPACE": "切换工作区"
 	},
 	"AI_ASSISTANT": {
 		"TITLE": "AI 助手",
