@@ -14,7 +14,7 @@ import {
 import { RequestContext } from '../core/context';
 import { BaseQueryDTO, TenantAwareCrudService } from './../core/crud';
 import { isNotEmpty } from '@gauzy/utils';
-import { MultiORMEnum } from '../core/utils';
+import { MultiORMEnum, mikroOrmContains } from '../core/utils';
 import { LIKE_OPERATOR } from '../core/util';
 import { redactDatabaseError, toClientSafeError } from '../core/errors/database-error';
 import { OrganizationProject } from '../core/entities/internal';
@@ -33,6 +33,67 @@ export class OrganizationContactService extends TenantAwareCrudService<Organizat
 		readonly mikroOrmOrganizationContactRepository: MikroOrmOrganizationContactRepository
 	) {
 		super(typeOrmOrganizationContactRepository, mikroOrmOrganizationContactRepository);
+	}
+
+	/**
+	 * A page of the organization's contacts to assign an employee to: what the employee's Contacts tab offers.
+	 *
+	 * Assigning a contact takes ORG_EMPLOYEES_EDIT, not ORG_CONTACT_VIEW, so this read gives no more than a choice
+	 * needs: each contact's id, name, picture and type. Ordered by name, then id, so contacts sharing a name keep
+	 * their place across pages.
+	 *
+	 * @param options The organization, an optional name to match (a case-insensitive substring), the page size
+	 * (`take`) and the page (`skip`, counted from 1).
+	 * @returns The page of contacts, and how many match in all.
+	 */
+	async findAssignable(options: {
+		organizationId: ID;
+		tenantId?: ID;
+		name?: string;
+		take?: number;
+		skip?: number;
+	}): Promise<IPagination<Pick<IOrganizationContact, 'id' | 'name' | 'imageUrl' | 'contactType'>>> {
+		const tenantId = RequestContext.currentTenantId() ?? options.tenantId;
+		const { organizationId } = options;
+		const name = options.name?.trim();
+		const take = options.take || 30;
+		const offset = take * ((options.skip || 1) - 1);
+
+		switch (this.ormType) {
+			case MultiORMEnum.MikroORM: {
+				const where: any = { tenantId, organizationId };
+				if (name) {
+					where.name = mikroOrmContains(name);
+				}
+				const [items, total] = await this.mikroOrmRepository.findAndCount(where, {
+					fields: ['id', 'name', 'imageUrl', 'contactType'] as any[],
+					orderBy: { name: 'ASC', id: 'ASC' } as any,
+					offset,
+					limit: take
+				});
+				return { items: items.map((e) => this.serialize(e)) as IOrganizationContact[], total };
+			}
+			case MultiORMEnum.TypeORM:
+			default: {
+				const query = this.typeOrmRepository.createQueryBuilder(this.tableName);
+				query.select([
+					`${query.alias}.id`,
+					`${query.alias}.name`,
+					`${query.alias}.imageUrl`,
+					`${query.alias}.contactType`
+				]);
+				query.where(p(`"${query.alias}"."tenantId" = :tenantId`), { tenantId });
+				query.andWhere(p(`"${query.alias}"."organizationId" = :organizationId`), { organizationId });
+				if (name) {
+					query.andWhere(p(`"${query.alias}"."name" ${LIKE_OPERATOR} :name`), { name: `%${name}%` });
+				}
+				query.orderBy(`${query.alias}.name`, 'ASC').addOrderBy(`${query.alias}.id`, 'ASC');
+				query.skip(offset).take(take);
+
+				const [items, total] = await query.getManyAndCount();
+				return { items, total };
+			}
+		}
 	}
 
 	/**
