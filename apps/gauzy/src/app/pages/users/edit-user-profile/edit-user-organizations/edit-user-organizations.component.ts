@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, TemplateRef, ViewChild } from '@angular/core';
-import { IOrganization } from '@gauzy/contracts';
+import { IOrganization, IUserOrganization } from '@gauzy/contracts';
 import { filter, tap, debounceTime } from 'rxjs/operators';
 import { Subject, firstValueFrom } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,22 +7,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { NbDialogRef, NbDialogService } from '@nebular/theme';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
-import {
-	OrganizationsService,
-	Store,
-	ToastrService,
-	UsersOrganizationsService,
-	UsersService
-} from '@gauzy/ui-core/core';
+import { Store, ToastrService, UsersOrganizationsService, UsersService } from '@gauzy/ui-core/core';
 import { DeleteConfirmationComponent } from '@gauzy/ui-core/shared';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
-    selector: 'ngx-edit-user-organization',
-    templateUrl: './edit-user-organizations.component.html',
-    styleUrls: ['./edit-user-organizations.component.scss'],
-    changeDetection: ChangeDetectionStrategy.Eager,
-    standalone: false
+	selector: 'ngx-edit-user-organization',
+	templateUrl: './edit-user-organizations.component.html',
+	styleUrls: ['./edit-user-organizations.component.scss'],
+	changeDetection: ChangeDetectionStrategy.Eager,
+	standalone: false
 })
 export class EditUserOrganizationsComponent extends TranslationBaseComponent implements OnInit, OnDestroy {
 	/** The add dialog: a searchable checklist of the organizations the user is not in yet. */
@@ -33,6 +27,8 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 
 	/** Every organization of the tenant, as last read: the add dialog offers those the user is not in. */
 	allOrganizations: IOrganization[] = [];
+	/** Whether the add dialog is reading the organizations it offers. */
+	addLoading = false;
 	addSearch = '';
 	addSelection = new Set<string>();
 	saving = false;
@@ -51,7 +47,6 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 		public readonly translateService: TranslateService,
 		private readonly userOrganizationsService: UsersOrganizationsService,
 		private readonly toastrService: ToastrService,
-		private readonly organizationsService: OrganizationsService,
 		private readonly dialogService: NbDialogService,
 		private readonly store: Store,
 		private readonly router: Router,
@@ -101,7 +96,9 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 			return available;
 		}
 		return available.filter((organization) =>
-			[organization.name, organization.officialName].some((value) => !!value && value.toLowerCase().includes(term))
+			[organization.name, organization.officialName].some(
+				(value) => !!value && value.toLowerCase().includes(term)
+			)
 		);
 	}
 
@@ -111,13 +108,17 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 		return options.length > 0 && options.every((organization) => this.addSelection.has(organization.id));
 	}
 
-	/** Opens the add dialog with nothing ticked, once the user's organizations are known. */
+	/**
+	 * Opens the add dialog with nothing ticked, once the user's organizations are known, and reads afresh the
+	 * organizations it offers.
+	 */
 	openAdd(): void {
 		if (this._addRef || this.loading || !this.selectedUserId) {
 			return;
 		}
 		this.addSearch = '';
 		this.addSelection = new Set();
+		this.addLoading = true;
 		const ref = this.dialogService.open(this.addDialog, {
 			closeOnBackdropClick: true,
 			closeOnEsc: true,
@@ -132,8 +133,49 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 				this._addForUserId = null;
 			}
 		});
-		// Ready to type: the search is where picking starts.
-		setTimeout(() => document.getElementById('addOrganizationsSearch')?.focus());
+		this.loadAddOptions(ref);
+	}
+
+	/**
+	 * Reads the organizations the add dialog `ref` offers: the signed-in user's, through their memberships, as the
+	 * organizations page reads them (`GET /organization` refuses a query that names no organization). An answer for
+	 * a dialog since closed is dropped.
+	 */
+	private async loadAddOptions(ref: NbDialogRef<void>): Promise<void> {
+		try {
+			const { tenantId } = this.store.user;
+			const { items } = await this.userOrganizationsService.getAll(['organization'], {
+				userId: this.store.userId,
+				tenantId
+			});
+			if (this._addRef === ref) {
+				this.allOrganizations = this.uniqueOrganizations([
+					...items,
+					...this.organizations.map((organization) => ({ organization }))
+				]);
+			}
+		} catch (error) {
+			if (this._addRef === ref) {
+				this.toastrService.danger(error);
+			}
+		} finally {
+			if (this._addRef === ref) {
+				this.addLoading = false;
+				// Ready to type: the search is where picking starts.
+				setTimeout(() => document.getElementById('addOrganizationsSearch')?.focus());
+			}
+		}
+	}
+
+	/** The organizations of `memberships`, each once. */
+	private uniqueOrganizations(memberships: Pick<IUserOrganization, 'organization'>[]): IOrganization[] {
+		const byId = new Map<string, IOrganization>();
+		for (const { organization } of memberships) {
+			if (organization?.id) {
+				byId.set(organization.id, organization);
+			}
+		}
+		return [...byId.values()];
 	}
 
 	closeAdd(): void {
@@ -174,7 +216,7 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 		const ids = [...this.addSelection];
 		const ref = this._addRef;
 		const userId = this._addForUserId;
-		if (!ids.length || this.saving || !ref || !userId || userId !== this.selectedUserId) {
+		if (!ids.length || this.saving || this.addLoading || !ref || !userId || userId !== this.selectedUserId) {
 			return;
 		}
 		const { tenantId } = this.store.user;
@@ -280,28 +322,21 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 	private async loadOrganizations() {
 		try {
 			const { tenantId } = this.store.user;
-			const users = await this.userOrganizationsService.getAll(['user', 'user.role'], { tenantId });
+			// Organizations are read through memberships, as the organizations page reads them: `GET /organization`
+			// refuses a query that names no organization ("organization must be an object").
+			const [{ items }, { items: mine }] = await Promise.all([
+				// The edited user's memberships: the organizations they are in.
+				this.userOrganizationsService.getAll(['user', 'organization'], { userId: this.paramId, tenantId }),
+				// The signed-in user's: the organizations they can add the user to.
+				this.userOrganizationsService.getAll(['organization'], { userId: this.store.userId, tenantId })
+			]);
 
-			const { items } = await this.userOrganizationsService.getAll(['user'], {
-				userId: this.paramId,
-				tenantId
-			});
+			// From the page address: a user in no organization yet has no membership to read it from, and can be added.
+			this.selectedUserId = this.paramId;
+			this.selectedUserName = items.find((membership) => membership.user)?.user?.name || '';
 
-			this.selectedUserId = items[0].userId;
-
-			const user = items[0]['user'];
-			this.selectedUserName = user.name || '';
-
-			const { items: organizations } = await this.organizationsService.getAll({
-				tenantId
-			});
-
-			const includedOrgs = users.items.filter((item) => item.user.id === items[0].userId);
-
-			const filtered = organizations.filter((a) => includedOrgs.filter((b) => b.organizationId === a.id).length);
-
-			this.organizations = filtered;
-			this.allOrganizations = organizations;
+			this.organizations = this.uniqueOrganizations(items);
+			this.allOrganizations = this.uniqueOrganizations([...mine, ...items]);
 			const available = new Set(this.availableOrganizations.map((organization) => organization.id));
 			this.addSelection = new Set([...this.addSelection].filter((id) => available.has(id)));
 		} catch (error) {

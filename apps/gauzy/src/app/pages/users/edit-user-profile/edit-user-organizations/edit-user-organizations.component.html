@@ -113,12 +113,12 @@
 						id="addOrganizationsSearch"
 						autocomplete="off"
 						[(ngModel)]="addSearch"
-						[disabled]="!availableOrganizations.length"
+						[disabled]="addLoading || !availableOrganizations.length"
 						[placeholder]="'USERS_PAGE.EDIT_USER.SEARCH_ORGANIZATIONS' | translate"
 						[attr.aria-label]="'USERS_PAGE.EDIT_USER.SEARCH_ORGANIZATIONS' | translate"
 					/>
 				</label>
-				@if (addOptions.length) {
+				@if (!addLoading && addOptions.length) {
 					<button type="button" class="assign-dialog__link" (click)="toggleAllOptions()">
 						{{ (allOptionsSelected ? 'USERS_PAGE.EDIT_USER.DESELECT_ALL' : 'USERS_PAGE.EDIT_USER.SELECT_ALL') | translate }}
 					</button>
@@ -127,7 +127,16 @@
 		</nb-card-header>
 
 		<nb-card-body class="assign-dialog__body">
-			@if (!availableOrganizations.length) {
+			@if (addLoading) {
+				<!-- The organizations it offers, read afresh each time the dialog opens. -->
+				<div
+					class="assign-dialog__empty"
+					[nbSpinner]="true"
+					nbSpinnerSize="small"
+					nbSpinnerStatus="basic"
+					aria-busy="true"
+				></div>
+			} @else if (!availableOrganizations.length) {
 				<div class="assign-dialog__empty">
 					<span class="orgs__empty-badge"><nb-icon icon="checkmark-circle-2-outline"></nb-icon></span>
 					<p class="assign-dialog__empty-text">{{ 'USERS_PAGE.EDIT_USER.ALL_ORGANIZATIONS_JOINED' | translate }}</p>
@@ -199,7 +208,7 @@
 					nbButton
 					status="primary"
 					size="small"
-					[disabled]="!addSelection.size || saving"
+					[disabled]="!addSelection.size || saving || addLoading"
 					[nbSpinner]="saving"
 					nbSpinnerSize="tiny"
 					(click)="addSelected()"
