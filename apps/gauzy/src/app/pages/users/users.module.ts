@@ -42,7 +42,6 @@ import { ManageUserInviteComponent } from './manage-user-invite/manage-user-invi
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { EditUserOrganizationsComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations.component';
 import { EditUserDataComponent } from './edit-user-profile/edit-user-data/edit-user-data.component';
-import { EditUserOrganizationsMutationComponent } from './edit-user-profile/edit-user-organizations/edit-user-organizations-mutation/edit-user-organizations-mutation.component';
 
 const COMPONENTS = [
 	UsersComponent,
@@ -50,8 +49,7 @@ const COMPONENTS = [
 	ManageUserInviteComponent,
 	EditUserMutationComponent,
 	EditUserOrganizationsComponent,
-	EditUserDataComponent,
-	EditUserOrganizationsMutationComponent
+	EditUserDataComponent
 ];
 
 @NgModule({
