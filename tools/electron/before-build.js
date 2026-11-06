@@ -11,6 +11,12 @@
  * The install mirrors electron-builder 26.0's: the package manager that runs the build (yarn), with the environment
  * that makes native modules build for Electron. Yarn, not npm: npm refuses the app's dependency set over a peer range
  * (`@datorama/akita` pins `tslib` 2.4.1).
+ *
+ * Building for another CPU than this machine's (an arm64 package on an x64 build machine, as the in-cluster pipeline does):
+ * yarn 1 picks optional platform packages (sharp's `@img/*`, `@libsql/*`) by the CPU it runs on, whatever
+ * `npm_config_arch` says, so the arm64 app would ship x64 binaries and fail to load them. Then every platform's variant is
+ * installed (`--ignore-platform`) and those whose `os`, `cpu` or `libc` field excludes the target are removed again, so the
+ * app keeps exactly the target's.
  */
 const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
@@ -51,6 +57,60 @@ function electronInstallEnv({ electronVersion, platform, arch }) {
 	return env;
 }
 
+/** npm's rule for a package's `os`, `cpu` and `libc` fields: allowed values, or excluded ones prefixed with `!`. */
+function allows(field, value) {
+	if (field === undefined || field === null) return true;
+	const list = Array.isArray(field) ? field.map(String) : [String(field)];
+	if (list.includes(`!${value}`)) return false;
+	const allowed = list.filter((entry) => !entry.startsWith('!'));
+	return allowed.length === 0 || allowed.includes(value);
+}
+
+/** CPUs a build can target from another one; `universal` (macOS) is two builds merged, not a target of its own. */
+const CPU = { x64: 'x64', arm64: 'arm64', ia32: 'ia32', armv7l: 'arm' };
+
+/**
+ * Removes the packages of an installed tree that are for another OS, CPU or C library than the target, nested ones included.
+ * Electron on Linux runs on glibc, so musl variants go too. Returns the removed paths, relative to `nodeModules`.
+ */
+function prunePlatformPackages(nodeModules, { platform, cpu }) {
+	const libc = platform === 'linux' ? 'glibc' : null;
+	const removed = [];
+	const visit = (dir) => {
+		let entries;
+		try {
+			entries = fs.readdirSync(dir, { withFileTypes: true });
+		} catch {
+			return;
+		}
+		for (const entry of entries) {
+			if (!entry.isDirectory() || entry.name === '.bin') continue;
+			const full = path.join(dir, entry.name);
+			if (entry.name.startsWith('@')) {
+				visit(full);
+				continue;
+			}
+			let manifest = null;
+			try {
+				manifest = JSON.parse(fs.readFileSync(path.join(full, 'package.json'), 'utf8'));
+			} catch {
+				// not a package
+			}
+			if (
+				manifest &&
+				!(allows(manifest.os, platform) && allows(manifest.cpu, cpu) && (libc === null || allows(manifest.libc, libc)))
+			) {
+				fs.rmSync(full, { recursive: true, force: true });
+				removed.push(path.relative(nodeModules, full));
+				continue;
+			}
+			visit(path.join(full, 'node_modules'));
+		}
+	};
+	visit(nodeModules);
+	return removed;
+}
+
 /** Yarn as the build runs it (`yarn electron-builder ...` sets npm_execpath), else the `yarn` on PATH. */
 function yarnCommand() {
 	const execPath = process.env.npm_execpath;
@@ -59,6 +119,8 @@ function yarnCommand() {
 	}
 	return { command: 'yarn', prefix: [], shell: process.platform === 'win32' };
 }
+
+exports.prunePlatformPackages = prunePlatformPackages;
 
 exports.default = async function beforeBuild({ appDir, electronVersion, platform, arch }) {
 	// Already installed (a re-run on the same dist): electron-builder 26.0 rebuilt it in place, so do we.
@@ -77,6 +139,9 @@ exports.default = async function beforeBuild({ appDir, electronVersion, platform
 		'--network-timeout',
 		'600000'
 	];
+	// Another CPU than this machine's: every platform variant now, the target's kept below (see the header).
+	const cross = platform === process.platform && CPU[arch] !== undefined && arch !== process.arch;
+	if (cross) args.push('--ignore-platform');
 	const env = electronInstallEnv({ electronVersion, platform, arch });
 	const install = (extraArgs) => {
 		const result = spawnSync(command, [...args, ...extraArgs], { cwd: appDir, env, stdio: 'inherit', shell });
@@ -98,6 +163,12 @@ exports.default = async function beforeBuild({ appDir, electronVersion, platform
 	}
 	if (status !== 0) {
 		throw new Error(`Installing the production dependencies of ${appDir} failed (exit code ${status})`);
+	}
+	if (cross) {
+		const removed = prunePlatformPackages(path.join(appDir, 'node_modules'), { platform, cpu: CPU[arch] });
+		console.log(
+			`  • kept the ${platform}-${CPU[arch]} variants of platform packages, removed ${removed.length}: ${removed.join(', ') || 'none'}`
+		);
 	}
 	// true: electron-builder goes on to rebuild the native modules of this tree for Electron, then packs it.
 	return true;
