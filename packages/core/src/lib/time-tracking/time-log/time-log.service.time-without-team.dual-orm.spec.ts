@@ -423,7 +423,7 @@ describe('TimeLogService team-scoped reports with the time logged without a team
 			}
 		});
 
-		it('answers the projectless groups with no project, in every grouping', () => {
+		it('answers the groups of time without a project with no project, in every grouping', () => {
 			const { dailyOn, byEmployeeOn, byClientOn, byProjectOn } = measured[orm].manager;
 			const byDate: IReportDayGroupByDate[] = dailyOn;
 			const byEmployee: IReportDayGroupByEmployee[] = byEmployeeOn;
