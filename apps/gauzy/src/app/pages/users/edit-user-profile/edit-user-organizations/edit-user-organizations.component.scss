@@ -1,30 +1,225 @@
-@use 'themes' as *;
+@use 'var' as v;
+
+// The user's organizations, as the employee page lists projects and contacts: a header with count, caption and the
+// Add action, an inline add panel, then hairline rows with each organization's logo, name and remove action. Theme
+// tokens are read as CSS variables.
+
+$radius: var(--border-radius);
+$hairline: 1px solid var(--gauzy-border-default-color);
 
 :host {
-    nb-card {
-        background-color: nb-theme(gauzy-card-2);
-
-        &.organization {
-            background-color: nb-theme(gauzy-card-3);
-            margin: 0 0 0.5rem 0;
-
-            .organization-image {
-                @include nb-ltr(margin-right, 10px);
-                @include nb-rtl(margin-left, 10px);
-            }
-        }
-    }
-    nb-actions{
-        @include nb-rtl(float, left !important);
-    }
+  display: block;
 }
 
-.edit-user-organizations {
-    width: 50%;
+.orgs {
+  display: flex;
+  flex-direction: column;
+  min-height: 12rem;
+  background-color: var(--gauzy-card-1);
+  border: $hairline;
+  border-radius: $radius;
 }
 
-@media only screen and (max-width: 1200px) {
-    .edit-user-organizations {
-        width: 100%;
-    }
+// -- Header --
+.orgs__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: $hairline;
+
+  button nb-icon {
+    margin-inline-end: 0.25rem;
+  }
+}
+
+.orgs__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.orgs__title {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.375rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.orgs__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.375rem;
+  height: 1.25rem;
+  margin-inline-start: 0.5rem;
+  padding: 0 0.4375rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.orgs__caption {
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-2);
+}
+
+// -- Add --
+.orgs__add {
+  padding: 1rem 1.25rem;
+  border-bottom: $hairline;
+  background-color: color-mix(in srgb, var(--color-primary-500) 5%, transparent);
+}
+
+// -- Rows --
+.orgs__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.orgs__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+  padding: 0.625rem 1.25rem;
+  border-bottom: $hairline;
+  transition: background-color 0.15s ease-in-out;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &:hover {
+    background-color: var(--gauzy-hover-tint);
+  }
+}
+
+.orgs__logo {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: $radius;
+  background-color: color-mix(in srgb, var(--color-primary-500) 18%, transparent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gauzy-text-color-1);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.orgs__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.orgs__name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--gauzy-text-color-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orgs__meta {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Quiet until the row is hovered or focused.
+.orgs__remove {
+  flex: 0 0 auto;
+  opacity: 0.55;
+  transition: opacity 0.15s ease-in-out;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+.orgs__row:hover .orgs__remove,
+.orgs__row:focus-within .orgs__remove {
+  opacity: 1;
+}
+
+// -- Empty --
+.orgs__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+
+  button nb-icon {
+    margin-inline-end: 0.25rem;
+  }
+}
+
+.orgs__empty-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--color-primary-500) 14%, transparent);
+
+  nb-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 1.5rem;
+    color: var(--text-primary-color);
+  }
+}
+
+.orgs__empty-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-1);
+}
+
+@media only screen and (max-width: v.$break-md) {
+  .orgs__header,
+  .orgs__add,
+  .orgs__row {
+    padding-inline: 1rem;
+  }
+
+  .orgs__remove {
+    opacity: 1;
+  }
 }
