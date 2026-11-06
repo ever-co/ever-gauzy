@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy, Optional } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { IUser, RolesEnum } from '@gauzy/contracts';
 import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
@@ -8,6 +8,7 @@ import { filter, tap } from 'rxjs/operators';
 import { AuthService, UserIdService } from '@gauzy/ui-core/core';
 import { TranslationBaseComponent } from '@gauzy/ui-core/i18n';
 import { UsersService } from '@gauzy/ui-core/core';
+import { EditUserProfileComponent } from '../edit-user-profile.component';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -31,7 +32,9 @@ export class EditUserDataComponent extends TranslationBaseComponent implements O
 		private readonly router: Router,
 		private readonly userIdService: UserIdService,
 		private readonly usersService: UsersService,
-		private readonly authService: AuthService
+		private readonly authService: AuthService,
+		/** The page around the tab, whose header loads the user on its own. */
+		@Optional() private readonly profilePage?: EditUserProfileComponent
 	) {
 		super(translateService);
 	}
@@ -52,9 +55,10 @@ export class EditUserDataComponent extends TranslationBaseComponent implements O
 		this.router.navigate(['/pages/users']);
 	}
 
-	/** Loads the user again after a failed load. */
+	/** Loads the user again after a failed load, and the page header with it when its own load failed too. */
 	retry() {
 		this.getUserProfile();
+		this.profilePage?.retryIfFailed();
 	}
 
 	private async getUserProfile() {

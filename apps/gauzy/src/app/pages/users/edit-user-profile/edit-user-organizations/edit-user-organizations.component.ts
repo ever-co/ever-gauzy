@@ -120,10 +120,17 @@ export class EditUserOrganizationsComponent extends TranslationBaseComponent imp
 
 	/**
 	 * Opens the add dialog with nothing ticked, once the user's organizations are known, and reads afresh the
-	 * organizations it offers.
+	 * organizations it offers. Not while a save runs (Esc or the backdrop can close the dialog during one): reopening
+	 * would clear the ticks a failed save leaves to retry.
 	 */
 	openAdd(): void {
-		if (this._addRef || this.loading || !this.selectedUserId || this.selectedUserId !== this.paramId) {
+		if (
+			this._addRef ||
+			this.saving ||
+			this.loading ||
+			!this.selectedUserId ||
+			this.selectedUserId !== this.paramId
+		) {
 			return;
 		}
 		this.addSearch = '';

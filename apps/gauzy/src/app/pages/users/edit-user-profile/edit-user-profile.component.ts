@@ -38,6 +38,8 @@ export class EditUserProfileComponent extends TranslationBaseComponent implement
 	avatarFailed = false;
 	/** Numbers each load of the user: only the latest one, for the page's current user, is applied. */
 	private _loadSeq = 0;
+	/** The latest load of the user failed: the header has no name or role until a retry. */
+	loadFailed = false;
 
 	/** The header's name: the full name, else the email. */
 	get displayName(): string {
@@ -123,6 +125,13 @@ export class EditUserProfileComponent extends TranslationBaseComponent implement
 		];
 	}
 
+	/** Loads the header's user again when its load failed: the Main tab's retry asks for it with its own. */
+	retryIfFailed(): void {
+		if (this.loadFailed) {
+			this.getUserProfile();
+		}
+	}
+
 	/**
 	 * GET user profile
 	 */
@@ -139,6 +148,7 @@ export class EditUserProfileComponent extends TranslationBaseComponent implement
 		const isCurrent = () => seq === this._loadSeq && id === this.params?.id;
 		this.user = null;
 		this.avatarFailed = false;
+		this.loadFailed = false;
 
 		try {
 			const user = await this.usersService.getUserById(id, ['role', 'tags']);
@@ -158,9 +168,10 @@ export class EditUserProfileComponent extends TranslationBaseComponent implement
 				}
 			}
 		} catch (error) {
-			// The header stays empty; the Main tab says the user could not be loaded and offers to try again.
+			// The header stays empty until a retry; the Main tab says the user could not be loaded and offers one.
 			if (isCurrent()) {
 				console.error('Error while loading the user', error);
+				this.loadFailed = true;
 			}
 		}
 	}
