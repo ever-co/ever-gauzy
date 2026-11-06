@@ -5,6 +5,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-project/repository/type-orm-organization-project-employee.repository';
+import { isTeamManagerMembership } from '../tasks/task-setting-access/task-setting-team-managers';
 
 /**
  * Service to handle manager access control and filter accessible employeeIds
@@ -217,6 +218,32 @@ export class ManagedEmployeeService {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether the employee manages at least one of the teams by the team's `MANAGER` role or by the `isManager` flag,
+	 * as Ever Teams reads a team manager. {@link isManagerOfTeamsOrProjects} reads the flag alone.
+	 *
+	 * @param employeeId - The employee to check
+	 * @param teamIds - The teams to check against
+	 * @returns True if an active membership of the employee manages one of the teams in the current tenant
+	 */
+	async managesAnyTeam(employeeId: ID, teamIds: ID[]): Promise<boolean> {
+		const tenantId = RequestContext.currentTenantId();
+		const isMissingTenant = !tenantId;
+		const isMissingEmployee = !employeeId;
+		const isMissingTeams = !isNotEmpty(teamIds);
+
+		if (isMissingTenant || isMissingEmployee || isMissingTeams) {
+			return false;
+		}
+
+		const memberships = await this.typeOrmTeamEmployeeRepository.find({
+			where: { employeeId, organizationTeamId: In(teamIds), tenantId },
+			relations: { role: true }
+		});
+
+		return memberships.some(isTeamManagerMembership);
 	}
 
 	/**

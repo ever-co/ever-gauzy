@@ -585,6 +585,39 @@ export class TaskResolver {
 	}
 
 	/**
+	 * Assigns one employee to one task, through the service method `PUT /api/tasks/:id/members/:employeeId` calls,
+	 * which writes nothing else on the task. The organization is the caller's own, read from the credential as the
+	 * readers below read it.
+	 */
+	@Mutation('addTaskMember')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	async addTaskMember(
+		@Args('taskId', { type: () => ID }) taskId: Id,
+		@Args('employeeId', { type: () => ID }) employeeId: Id
+	): Promise<boolean> {
+		const { organizationId } = this.scopeOfTheCaller();
+		await this.taskService.addMember(taskId, employeeId, organizationId);
+
+		return true;
+	}
+
+	/**
+	 * Takes one employee off one task, through the service method `DELETE /api/tasks/:id/members/:employeeId` calls,
+	 * under the same rule as `addTaskMember`.
+	 */
+	@Mutation('removeTaskMember')
+	@Permissions(PermissionsEnum.ALL_ORG_EDIT, PermissionsEnum.ORG_TASK_EDIT)
+	async removeTaskMember(
+		@Args('taskId', { type: () => ID }) taskId: Id,
+		@Args('employeeId', { type: () => ID }) employeeId: Id
+	): Promise<boolean> {
+		const { organizationId } = this.scopeOfTheCaller();
+		await this.taskService.removeMember(taskId, employeeId, organizationId);
+
+		return true;
+	}
+
+	/**
 	 * Takes one employee off every task of one team.
 	 *
 	 * The same service method the delivered route calls. The route answers nothing at all — its own
