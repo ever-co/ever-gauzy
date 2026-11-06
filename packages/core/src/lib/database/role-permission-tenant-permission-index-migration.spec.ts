@@ -116,6 +116,20 @@ describe('role_permission (tenantId, permission) index migration on Postgres', (
 			`CREATE INDEX CONCURRENTLY IF NOT EXISTS "${ROLE_PERMISSION_TENANT_PERMISSION_INDEX}" ON "role_permission" ("tenantId", "permission")`
 		]);
 	});
+
+	it('leaves CONCURRENTLY out inside a transaction block, as a rollback runs it', async () => {
+		const { queries, queryRunner } = runner([]);
+		(queryRunner as unknown as { isTransactionActive: boolean }).isTransactionActive = true;
+		const migration = new AddRolePermissionTenantPermissionIndex1791000004500();
+
+		await migration.up(queryRunner);
+		await migration.down(queryRunner);
+
+		expect(queries.slice(1)).toEqual([
+			`CREATE INDEX IF NOT EXISTS "${ROLE_PERMISSION_TENANT_PERMISSION_INDEX}" ON "role_permission" ("tenantId", "permission")`,
+			`DROP INDEX IF EXISTS "${ROLE_PERMISSION_TENANT_PERMISSION_INDEX}"`
+		]);
+	});
 });
 
 describe('role_permission (tenantId, permission) index migration on MySQL', () => {

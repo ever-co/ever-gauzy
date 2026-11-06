@@ -129,14 +129,16 @@ describe('DailyPlanService — how a plan list loads its relations', () => {
 				relations: { employee: { user: true }, tasks: { members: { user: true } } },
 				relationLoadStrategy: 'query'
 			});
-			expect(builder.joins.map(({ kind }) => kind)).toEqual(['leftJoin', 'leftJoin']);
+			// No join at all: one row per plan.
+			expect(builder.joins).toEqual([]);
 		});
 
-		it('states no load strategy when no relation is asked for', async () => {
+		it('states no load strategy, and joins as before, when no relation is asked for', async () => {
 			await service.getMyPlans({ where } as any);
 
 			expect(builder.findOptions).not.toHaveProperty('relationLoadStrategy');
 			expect(builder.findOptions).not.toHaveProperty('relations');
+			expect(builder.joins.map(({ kind }) => kind)).toEqual(['leftJoin', 'leftJoin']);
 		});
 	});
 
@@ -148,11 +150,8 @@ describe('DailyPlanService — how a plan list loads its relations', () => {
 				relations: { employee: true, tasks: true },
 				relationLoadStrategy: 'query'
 			});
-			// The joins stay for the conditions, but select nothing: the relations carry the rows.
-			expect(builder.joins).toEqual([
-				{ kind: 'leftJoin', path: 'daily_plan.employee', alias: 'employee' },
-				{ kind: 'leftJoin', path: 'daily_plan.tasks', alias: 'tasks' }
-			]);
+			// No join at all: the relations carry the rows, one row per plan.
+			expect(builder.joins).toEqual([]);
 		});
 
 		it('keeps a deeper request at its depth', async () => {

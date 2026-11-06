@@ -25,7 +25,9 @@ const COLUMNS = ['tenantId', 'permission'] as const;
  * CONCURRENTLY, which never blocks reads or writes of the table, and therefore outside a transaction
  * (`transaction = false`; Gauzy runs migrations in `each` mode). A concurrent build that was interrupted
  * leaves an INVALID index behind, which `IF NOT EXISTS` would then keep: such a leftover is dropped and
- * rebuilt. `down` drops the index.
+ * rebuilt. Inside a transaction block (a rollback, or the `all` transaction mode, which both wrap the
+ * migration whatever it declares) the statements run without CONCURRENTLY, which Postgres would refuse
+ * there. `down` drops the index.
  */
 export class AddRolePermissionTenantPermissionIndex1791000004500 implements MigrationInterface {
 	name = 'AddRolePermissionTenantPermissionIndex1791000004500';
@@ -69,6 +71,16 @@ export class AddRolePermissionTenantPermissionIndex1791000004500 implements Migr
 	}
 
 	/**
+	 * `CONCURRENTLY`, unless the statement runs inside a transaction block, where Postgres refuses it: the
+	 * executor honours `transaction = false` on `up`, but a rollback (`migration:revert`) or an `all`
+	 * transaction mode still wraps the migration, and a plain `CREATE` / `DROP INDEX` (a short lock on the
+	 * table) is better than a failed migration there.
+	 */
+	private concurrently(queryRunner: QueryRunner): string {
+		return queryRunner.isTransactionActive ? '' : 'CONCURRENTLY ';
+	}
+
+	/**
 	 * Builds the index without blocking the table. An earlier, interrupted concurrent build leaves an index
 	 * that is not valid (`pg_index.indisvalid = false`) and is never used: it is dropped first, so the index
 	 * is rebuilt rather than kept broken.
@@ -86,11 +98,14 @@ export class AddRolePermissionTenantPermissionIndex1791000004500 implements Migr
 		if (existing?.valid === true) {
 			return;
 		}
+		const concurrently = this.concurrently(queryRunner);
 		if (existing) {
-			await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "${ROLE_PERMISSION_TENANT_PERMISSION_INDEX}"`);
+			await queryRunner.query(
+				`DROP INDEX ${concurrently}IF EXISTS "${ROLE_PERMISSION_TENANT_PERMISSION_INDEX}"`
+			);
 		}
 		await queryRunner.query(
-			`CREATE INDEX CONCURRENTLY IF NOT EXISTS "${ROLE_PERMISSION_TENANT_PERMISSION_INDEX}" ON "${TABLE}" (${COLUMNS.map(
+			`CREATE INDEX ${concurrently}IF NOT EXISTS "${ROLE_PERMISSION_TENANT_PERMISSION_INDEX}" ON "${TABLE}" (${COLUMNS.map(
 				(column) => `"${column}"`
 			).join(', ')})`
 		);
@@ -104,7 +119,9 @@ export class AddRolePermissionTenantPermissionIndex1791000004500 implements Migr
 
 		switch (dialect) {
 			case 'postgres':
-				await queryRunner.query(`DROP INDEX CONCURRENTLY IF EXISTS "${ROLE_PERMISSION_TENANT_PERMISSION_INDEX}"`);
+				await queryRunner.query(
+					`DROP INDEX ${this.concurrently(queryRunner)}IF EXISTS "${ROLE_PERMISSION_TENANT_PERMISSION_INDEX}"`
+				);
 				break;
 			case 'sqlite':
 				await queryRunner.query(`DROP INDEX IF EXISTS "${ROLE_PERMISSION_TENANT_PERMISSION_INDEX}"`);

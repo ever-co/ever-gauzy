@@ -236,6 +236,8 @@ async function resolveContext() {
 	const token = data.token;
 	const user = data.user;
 	const vars = { tenantId: user.tenantId, userId: user.id, employeeId: user.employee?.id || user.employeeId || '' };
+	// Whether the bench employee is the signed-in user's own (the "me" reads answer that employee's records only).
+	const employeeOfUser = !!vars.employeeId;
 	const c = await pgClient();
 	if (c) {
 		// The organization with the most employees, so list endpoints return real pages.
@@ -268,7 +270,7 @@ async function resolveContext() {
 		vars.teamId = env.TEAM_ID || '';
 	}
 	Object.assign(vars, dateRangeVars());
-	return { token, vars };
+	return { token, vars, employeeOfUser };
 }
 
 /**
@@ -299,14 +301,21 @@ async function setupDailyPlans(ctx) {
 	const wanted = Number(env.SETUP_DAILY_PLANS || 0);
 	if (!wanted || !ctx.vars.teamId) return;
 	const { tenantId, organizationId, employeeId, teamId } = ctx.vars;
+	// `/daily-plan/me` reads the plans of the SIGNED-IN user's employee; plans made for another employee would
+	// never be read by the benchmark.
+	if (!ctx.employeeOfUser) {
+		throw new Error('SETUP_DAILY_PLANS needs a sign-in with an employee record (the plans are read as "mine")');
+	}
 	const headers = { authorization: `Bearer ${ctx.token}`, 'tenant-id': tenantId, 'organization-id': organizationId };
 	const existing = await request(
 		'GET',
 		`/daily-plan/me?where[organizationId]=${organizationId}&where[tenantId]=${tenantId}&where[organizationTeamId]=${teamId}`,
 		{ headers }
 	);
-	const have = existing.status < 300 ? JSON.parse(existing.body.toString()).total ?? 0 : 0;
-	if (have >= wanted) return;
+	const existingPlans = existing.status < 300 ? JSON.parse(existing.body.toString()).items ?? [] : [];
+	const have = existingPlans.length;
+	// One plan per day; a day that already has one is skipped (creating it again answers the existing plan).
+	const plannedDays = new Set(existingPlans.map((plan) => String(plan.date).slice(0, 10)));
 	const tasks = await request(
 		'GET',
 		`/tasks/pagination?where[organizationId]=${organizationId}&where[tenantId]=${tenantId}&take=30&skip=0`,
@@ -314,8 +323,9 @@ async function setupDailyPlans(ctx) {
 	);
 	const taskIds = tasks.status < 300 ? (JSON.parse(tasks.body.toString()).items ?? []).map((t) => t.id) : [];
 	let created = 0;
-	for (let day = have; day < wanted; day++) {
+	for (let day = 0; have + created < wanted && day < wanted + plannedDays.size; day++) {
 		const date = new Date(Date.parse(ctx.vars.todayStart) - day * 86_400_000).toISOString();
+		if (plannedDays.has(date.slice(0, 10))) continue;
 		const taskId = taskIds[day % Math.max(taskIds.length, 1)];
 		const plan = await request('POST', '/daily-plan', {
 			headers,
@@ -334,17 +344,43 @@ async function setupDailyPlans(ctx) {
 			console.warn(`  setup: daily plan for ${date.slice(0, 10)} refused: ${plan.status} ${plan.body?.toString().slice(0, 200)}`);
 			continue;
 		}
-		const planId = JSON.parse(plan.body.toString()).id;
-		for (const extra of [taskIds[(day + 1) % taskIds.length], taskIds[(day + 2) % taskIds.length]]) {
-			if (!extra || extra === taskId) continue;
-			await request('POST', `/daily-plan/${planId}/task`, {
-				headers,
-				body: { tenantId, organizationId, employeeId, taskId: extra }
-			});
-		}
 		created++;
 	}
-	console.log(`  setup: ${created} daily plan(s) created for the bench employee (had ${have}, wanted ${wanted})`);
+	// Three tasks per plan, as a planned day usually holds a few: the plans are read back (a freshly created plan is
+	// answered without its id by older API builds) and each short one gets tasks until it holds three.
+	const TASKS_PER_PLAN = 3;
+	let tasksAssigned = 0;
+	let assignmentsRefused = 0;
+	const readBack = await request(
+		'GET',
+		`/daily-plan/me?where[organizationId]=${organizationId}&where[tenantId]=${tenantId}&where[organizationTeamId]=${teamId}&relations[0]=tasks`,
+		{ headers }
+	);
+	const plans = readBack.status < 300 ? JSON.parse(readBack.body.toString()).items ?? [] : [];
+	for (const [index, plan] of plans.entries()) {
+		const held = new Set((plan.tasks ?? []).map((task) => task.id));
+		for (let offset = 0; held.size < TASKS_PER_PLAN && offset < taskIds.length; offset++) {
+			const taskId = taskIds[(index + offset) % taskIds.length];
+			if (held.has(taskId)) continue;
+			const assigned = await request('POST', `/daily-plan/${plan.id}/task`, {
+				headers,
+				body: { tenantId, organizationId, employeeId, taskId }
+			});
+			if (assigned.status >= 300) {
+				assignmentsRefused++;
+				continue;
+			}
+			held.add(taskId);
+			tasksAssigned++;
+		}
+	}
+	const short = plans.filter((plan) => (plan.tasks?.length ?? 0) + TASKS_PER_PLAN < TASKS_PER_PLAN).length;
+	console.log(
+		`  setup: ${created} daily plan(s) created for the bench employee (had ${have}, wanted ${wanted}); ${tasksAssigned} task(s) assigned, ${assignmentsRefused} refused; ${plans.length} plan(s) read back${short ? `, ${short} still short of ${TASKS_PER_PLAN} tasks` : ''}`
+	);
+	if (plans.length < wanted || assignmentsRefused) {
+		console.warn('  setup: the daily-plan benchmarks measure fewer plans or task relations than intended');
+	}
 }
 
 /**
@@ -356,6 +392,9 @@ async function setupDailyPlans(ctx) {
 async function setupTimeLogs(ctx) {
 	const wanted = Number(env.SETUP_TIME_LOGS || 0);
 	if (!wanted || !ctx.vars.teamId) return;
+	if (!ctx.employeeOfUser) {
+		throw new Error('SETUP_TIME_LOGS needs a sign-in with an employee record (the timer reads answer "my" logs)');
+	}
 	const { tenantId, organizationId, employeeId, teamId, projectId } = ctx.vars;
 	const headers = { authorization: `Bearer ${ctx.token}`, 'tenant-id': tenantId, 'organization-id': organizationId };
 	const existing = await request(
