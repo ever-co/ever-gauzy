@@ -2219,6 +2219,44 @@
 				"CLEAR_SEARCH": "Suche zurücksetzen",
 				"EMPTY_TITLE": "Noch keine Projekte",
 				"EMPTY_TEXT": "Weisen Sie diesen Mitarbeiter einem Projekt zu, damit er Zeit erfassen und an dessen Aufgaben arbeiten kann."
+			},
+			"CONTACTS_TAB": {
+				"TITLE": "Kontakte",
+				"CAPTION": "Kunden, Abnehmer und Leads, mit denen dieser Mitarbeiter arbeitet.",
+				"SEARCH": "Kontakte suchen",
+				"ASSIGN": "Kontakte zuweisen",
+				"ASSIGN_DIALOG_TITLE": "Kontakten zuweisen",
+				"ASSIGN_DIALOG_SUBTITLE": "Wählen Sie die Kontakte, mit denen {{ employee }} arbeiten soll.",
+				"ASSIGN_SEARCH": "Nach Name suchen",
+				"SELECT_ALL": "Alle auswählen",
+				"DESELECT_ALL": "Auswahl aufheben",
+				"SELECTED_COUNT": "{{ count }} ausgewählt",
+				"CLEAR_SELECTION": "Leeren",
+				"ASSIGN_SUBMIT": "Zuweisen",
+				"ALL_ASSIGNED": "Dieser Mitarbeiter ist bereits allen Kontakten zugewiesen.",
+				"NO_MATCH_PICKER": "Keine passenden Kontakte",
+				"LOAD_MORE": "Mehr laden",
+				"LOAD_FAILED": "Die Kontakte konnten nicht geladen werden.",
+				"COLUMNS": {
+					"CONTACT": "Kontakt",
+					"TYPE": "Typ",
+					"PROJECTS": "Projekte"
+				},
+				"TYPE": {
+					"CLIENT": "Kunde",
+					"CUSTOMER": "Abnehmer",
+					"LEAD": "Lead"
+				},
+				"OPEN_CONTACT": "Kontaktseite öffnen",
+				"REMOVE": "Vom Kontakt entfernen",
+				"REMOVE_TITLE": "Vom Kontakt entfernen",
+				"REMOVE_MESSAGE": "{{ employee }} von {{ contact }} entfernen? Danach ist er diesem Kontakt nicht mehr zugewiesen.",
+				"REMOVE_HINT": "Sie können ihn jederzeit wieder diesem Kontakt zuweisen.",
+				"SHOWING": "{{ count }} von {{ total }} Kontakten",
+				"NO_MATCH": "Keine Kontakte passen zu „{{ term }}“",
+				"CLEAR_SEARCH": "Suche zurücksetzen",
+				"EMPTY_TITLE": "Noch keine Kontakte",
+				"EMPTY_TEXT": "Weisen Sie diesen Mitarbeiter einem Kunden, Abnehmer oder Lead zu, um zu zeigen, mit wem er arbeitet."
 			}
 		},
 		"ADD_EMPLOYEES": {

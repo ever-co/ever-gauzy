@@ -290,12 +290,13 @@ export const clickProjectOrContactDropdown = async () => {
 	// wrapper is intentionally inert to avoid the focus-only click closing/no-opening the panel.
 };
 
-/** The project ticked in the assign dialog (Projects tab), until its row is verified; null when none was. */
-let pickedProjectName: string | null = null;
+/** The entry ticked in an assign dialog (Projects or Contacts tab), until its row is verified; null when none was. */
+let pickedName: string | null = null;
 
 export const selectProjectOrContactFromDropdown = async (index: number) => {
-	// Projects (<ga-edit-employee-projects>): the assign dialog's checklist — tick the index-th project.
-	// Contacts (<ga-edit-employee-membership>): #departmentsSelect, an ng-select (multiple, hideSelected,
+	// Projects (<ga-edit-employee-projects>) and Contacts (<ga-edit-employee-contacts>): the assign dialog's
+	// checklist — tick the index-th entry. A page that still has <ga-edit-employee-membership>:
+	// #departmentsSelect, an ng-select (multiple, hideSelected,
 	// appendTo="body"), driven through the shared ng-select driver: it opens the control by keyboard,
 	// counts only REAL options (ng-select's "No items found" row is also a `div.ng-option`, which the old
 	// loop happily "clicked" as if it were a project), and confirms the pick by the chip it commits.
@@ -306,12 +307,12 @@ export const selectProjectOrContactFromDropdown = async (index: number) => {
 	const page = getPage();
 	await waitForSpinnerGone();
 	await page.waitForLoadState('networkidle').catch(() => {});
-	pickedProjectName = null;
-	if (await page.locator('#assignProjectsSearch').count()) {
-		const option = page.locator(EditEmployeePage.projectAssignOptionCss).nth(index);
+	pickedName = null;
+	if (await page.locator('.assign-dialog').count()) {
+		const option = page.locator(EditEmployeePage.assignOptionCss).nth(index);
 		if (await option.count()) {
-			// Remembered, so the save is checked against this project rather than any row already listed.
-			pickedProjectName = (await option.locator('.assign-option__name').innerText()).trim();
+			// Remembered, so the save is checked against this entry rather than any row already listed.
+			pickedName = (await option.locator('.assign-option__name').innerText()).trim();
 			await option.click();
 		}
 		return; // no Escape here: it would close the assign dialog
@@ -336,17 +337,17 @@ export const clickSaveProjectOrContactButton = async () => {
 	// button only gates on form.invalid, which is satisfied once an option is picked).
 	await waitForSpinnerGone();
 	await dispatchClick(EditEmployeePage.saveProjectOrContactButtonCss);
-	// Projects: the assign dialog closes once the server took the ticks.
+	// Projects and Contacts: the assign dialog closes once the server took the ticks.
 	const page = getPage();
 	const dialog = page.locator('.assign-dialog');
 	if (!(await dialog.count())) {
 		return;
 	}
-	if (pickedProjectName) {
-		// A project was ticked: a dialog left open means the assignment was refused. Fail on it here,
+	if (pickedName) {
+		// An entry was ticked: a dialog left open means the assignment was refused. Fail on it here,
 		// instead of closing the dialog and losing the only sign of the failure.
 		await dialog.waitFor({ state: 'detached', timeout: 15000 }).catch(() => {
-			throw new Error(`Assigning "${pickedProjectName}" was not accepted: the assign dialog stayed open`);
+			throw new Error(`Assigning "${pickedName}" was not accepted: the assign dialog stayed open`);
 		});
 		return;
 	}
@@ -357,16 +358,18 @@ export const clickSaveProjectOrContactButton = async () => {
 };
 
 export const verifyProjectOrContactExist = async () => {
-	if (pickedProjectName) {
-		// Projects: the row of the project just assigned, not merely any membership row.
-		const escaped = pickedProjectName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	if (pickedName) {
+		// Projects and Contacts: the row of the entry just assigned, not merely any row.
+		const escaped = pickedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 		const page = getPage();
 		await page
 			.locator(EditEmployeePage.verifyProjectOrContactCss)
-			.filter({ has: page.locator('.project-name', { hasText: new RegExp(`^\\s*${escaped}\\s*$`) }) })
+			.filter({
+				has: page.locator(EditEmployeePage.assignedRowNameCss, { hasText: new RegExp(`^\\s*${escaped}\\s*$`) })
+			})
 			.first()
 			.waitFor({ state: 'visible', timeout: 30_000 });
-		pickedProjectName = null;
+		pickedName = null;
 		return;
 	}
 	await verifyElementIsVisible(EditEmployeePage.verifyProjectOrContactCss);

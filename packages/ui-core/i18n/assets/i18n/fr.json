@@ -2220,6 +2220,44 @@
 				"CLEAR_SEARCH": "Effacer la recherche",
 				"EMPTY_TITLE": "Aucun projet pour le moment",
 				"EMPTY_TEXT": "Affectez cet employé à un projet pour qu’il puisse suivre son temps et travailler sur ses tâches."
+			},
+			"CONTACTS_TAB": {
+				"TITLE": "Contacts",
+				"CAPTION": "Clients, acheteurs et prospects avec lesquels cet employé travaille.",
+				"SEARCH": "Rechercher des contacts",
+				"ASSIGN": "Affecter des contacts",
+				"ASSIGN_DIALOG_TITLE": "Affecter à des contacts",
+				"ASSIGN_DIALOG_SUBTITLE": "Choisissez les contacts avec lesquels {{ employee }} doit travailler.",
+				"ASSIGN_SEARCH": "Rechercher par nom",
+				"SELECT_ALL": "Tout sélectionner",
+				"DESELECT_ALL": "Tout désélectionner",
+				"SELECTED_COUNT": "{{ count }} sélectionné(s)",
+				"CLEAR_SELECTION": "Effacer",
+				"ASSIGN_SUBMIT": "Affecter",
+				"ALL_ASSIGNED": "Cet employé est déjà affecté à tous les contacts.",
+				"NO_MATCH_PICKER": "Aucun contact correspondant",
+				"LOAD_MORE": "Charger plus",
+				"LOAD_FAILED": "Les contacts n’ont pas pu être chargés.",
+				"COLUMNS": {
+					"CONTACT": "Contact",
+					"TYPE": "Type",
+					"PROJECTS": "Projets"
+				},
+				"TYPE": {
+					"CLIENT": "Client",
+					"CUSTOMER": "Acheteur",
+					"LEAD": "Prospect"
+				},
+				"OPEN_CONTACT": "Ouvrir la page du contact",
+				"REMOVE": "Retirer du contact",
+				"REMOVE_TITLE": "Retirer du contact",
+				"REMOVE_MESSAGE": "Retirer {{ employee }} de {{ contact }} ? Il ne sera plus affecté à ce contact.",
+				"REMOVE_HINT": "Vous pourrez le réaffecter à ce contact à tout moment.",
+				"SHOWING": "{{ count }} sur {{ total }} contacts",
+				"NO_MATCH": "Aucun contact ne correspond à « {{ term }} »",
+				"CLEAR_SEARCH": "Effacer la recherche",
+				"EMPTY_TITLE": "Aucun contact pour le moment",
+				"EMPTY_TEXT": "Affectez cet employé à un client, un acheteur ou un prospect pour montrer avec qui il travaille."
 			}
 		},
 		"ADD_EMPLOYEES": {

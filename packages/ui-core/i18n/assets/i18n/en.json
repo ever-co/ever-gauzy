@@ -2686,6 +2686,44 @@
 				"CLEAR_SEARCH": "Clear search",
 				"EMPTY_TITLE": "No projects yet",
 				"EMPTY_TEXT": "Assign this employee to a project so they can track time and work on its tasks."
+			},
+			"CONTACTS_TAB": {
+				"TITLE": "Contacts",
+				"CAPTION": "Clients, customers and leads this employee works with.",
+				"SEARCH": "Search contacts",
+				"ASSIGN": "Assign contacts",
+				"ASSIGN_DIALOG_TITLE": "Assign to contacts",
+				"ASSIGN_DIALOG_SUBTITLE": "Choose the contacts {{ employee }} should work with.",
+				"ASSIGN_SEARCH": "Search by name",
+				"SELECT_ALL": "Select all",
+				"DESELECT_ALL": "Deselect all",
+				"SELECTED_COUNT": "{{ count }} selected",
+				"CLEAR_SELECTION": "Clear",
+				"ASSIGN_SUBMIT": "Assign",
+				"ALL_ASSIGNED": "This employee is already assigned to every contact.",
+				"NO_MATCH_PICKER": "No matching contacts",
+				"LOAD_MORE": "Load more",
+				"LOAD_FAILED": "Contacts could not be loaded.",
+				"COLUMNS": {
+					"CONTACT": "Contact",
+					"TYPE": "Type",
+					"PROJECTS": "Projects"
+				},
+				"TYPE": {
+					"CLIENT": "Client",
+					"CUSTOMER": "Customer",
+					"LEAD": "Lead"
+				},
+				"OPEN_CONTACT": "Open contact page",
+				"REMOVE": "Remove from contact",
+				"REMOVE_TITLE": "Remove from contact",
+				"REMOVE_MESSAGE": "Remove {{ employee }} from {{ contact }}? They will no longer be assigned to this contact.",
+				"REMOVE_HINT": "You can assign them to this contact again at any time.",
+				"SHOWING": "Showing {{ count }} of {{ total }} contacts",
+				"NO_MATCH": "No contacts match “{{ term }}”",
+				"CLEAR_SEARCH": "Clear search",
+				"EMPTY_TITLE": "No contacts yet",
+				"EMPTY_TEXT": "Assign this employee to a client, customer or lead to show who they work with."
 			}
 		},
 		"ADD_EMPLOYEES": {

@@ -2219,6 +2219,44 @@
 				"CLEAR_SEARCH": "Zoekopdracht wissen",
 				"EMPTY_TITLE": "Nog geen projecten",
 				"EMPTY_TEXT": "Wijs deze medewerker toe aan een project zodat hij tijd kan registreren en aan de taken kan werken."
+			},
+			"CONTACTS_TAB": {
+				"TITLE": "Contacten",
+				"CAPTION": "Klanten, afnemers en leads met wie deze medewerker werkt.",
+				"SEARCH": "Contacten zoeken",
+				"ASSIGN": "Contacten toewijzen",
+				"ASSIGN_DIALOG_TITLE": "Aan contacten toewijzen",
+				"ASSIGN_DIALOG_SUBTITLE": "Kies de contacten waarmee {{ employee }} moet werken.",
+				"ASSIGN_SEARCH": "Zoeken op naam",
+				"SELECT_ALL": "Alles selecteren",
+				"DESELECT_ALL": "Alles deselecteren",
+				"SELECTED_COUNT": "{{ count }} geselecteerd",
+				"CLEAR_SELECTION": "Wissen",
+				"ASSIGN_SUBMIT": "Toewijzen",
+				"ALL_ASSIGNED": "Deze medewerker is al aan alle contacten toegewezen.",
+				"NO_MATCH_PICKER": "Geen overeenkomende contacten",
+				"LOAD_MORE": "Meer laden",
+				"LOAD_FAILED": "De contacten konden niet worden geladen.",
+				"COLUMNS": {
+					"CONTACT": "Contact",
+					"TYPE": "Type",
+					"PROJECTS": "Projecten"
+				},
+				"TYPE": {
+					"CLIENT": "Klant",
+					"CUSTOMER": "Afnemer",
+					"LEAD": "Lead"
+				},
+				"OPEN_CONTACT": "Contactpagina openen",
+				"REMOVE": "Van contact verwijderen",
+				"REMOVE_TITLE": "Van contact verwijderen",
+				"REMOVE_MESSAGE": "{{ employee }} van {{ contact }} verwijderen? Hij is dan niet meer aan dit contact toegewezen.",
+				"REMOVE_HINT": "U kunt hem op elk moment opnieuw aan dit contact toewijzen.",
+				"SHOWING": "{{ count }} van {{ total }} contacten",
+				"NO_MATCH": "Geen contacten gevonden voor ‘{{ term }}’",
+				"CLEAR_SEARCH": "Zoekopdracht wissen",
+				"EMPTY_TITLE": "Nog geen contacten",
+				"EMPTY_TEXT": "Wijs deze medewerker toe aan een klant, afnemer of lead om te laten zien met wie hij werkt."
 			}
 		},
 		"ADD_EMPLOYEES": {

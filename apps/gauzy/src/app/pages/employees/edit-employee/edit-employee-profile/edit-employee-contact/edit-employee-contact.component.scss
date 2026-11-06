@@ -1,21 +1,945 @@
 @use '@shared/employee-tab-panel' as *;
+@use 'var' as v;
+
+// The employee's contacts, in the manner of Jira's and Hubstaff's member lists: a
+// header with count, caption, search and the primary action, then a real table -
+// quiet uppercase column headings, hairline rows, contact avatars and type lozenges. Every tint is a
+// color-mix against `transparent`, so the same rule reads on the light canvas and on the dark one.
+
+// Theme tokens as CSS variables, as the Nebular guide asks; the elevated dialogs scale the base radius.
+$radius: var(--border-radius);
+$dialog-radius: calc(var(--border-radius) * 1.5);
+$hairline: 1px solid var(--gauzy-border-default-color);
+$columns: minmax(0, 1fr) 7rem 14rem 5rem;
+$columns-md: minmax(0, 1fr) 6.5rem 5rem;
 
 :host {
   @include employee-tab-host;
 }
 
-.container-contact {
+.container-contacts {
   display: flex;
   flex-direction: column;
   padding: 1rem;
   height: auto;
   flex: 1 0 auto;
   min-height: 0;
+}
 
-  > ga-edit-employee-membership {
-    display: flex;
-    flex-direction: column;
+.contacts {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  background-color: var(--gauzy-card-3);
+  border: $hairline;
+  border-radius: $radius;
+}
+
+// -- Header --
+.contacts__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: $hairline;
+}
+
+.contacts__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.contacts__title {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.375rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.contacts__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.375rem;
+  height: 1.25rem;
+  margin-inline-start: 0.5rem;
+  padding: 0 0.4375rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.contacts__caption {
+  font-size: 0.75rem;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.contacts__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  button nb-icon {
+    margin-inline-end: 0.25rem;
+  }
+}
+
+.contacts__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 0;
+
+  nb-icon {
+    position: absolute;
+    inset-inline-start: 0.625rem;
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    color: var(--gauzy-text-color-2);
+    pointer-events: none;
+  }
+
+  input {
+    width: 15rem;
+    max-width: 100%;
+    padding-inline-start: 2rem;
+  }
+}
+
+// -- Table --
+.contacts__table {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.contacts__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.contacts__row {
+  display: grid;
+  grid-template-columns: $columns;
+  align-items: center;
+  column-gap: 1rem;
+  padding: 0.625rem 1.25rem;
+  min-height: 3.5rem;
+  border-bottom: $hairline;
+  transition: background-color 0.15s ease-in-out;
+
+  > [role='cell'] {
+    min-width: 0;
+  }
+
+  &:not(.contacts__row--head):hover {
+    background-color: var(--gauzy-hover-tint);
+  }
+
+  &.is-busy {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+}
+
+.contacts__list .contacts__row:last-child {
+  border-bottom: 0;
+}
+
+.contacts__row--head {
+  min-height: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  background-color: var(--gauzy-card-2);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-hint-color);
+
+  > [role='columnheader'] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.col-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.125rem;
+}
+
+// Contact cell
+.cell-contact {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar {
+  --avatar: var(--color-primary-500);
+
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--avatar) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--avatar) 35%, transparent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--gauzy-text-color-1);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.contact-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.contact-name {
+  align-self: flex-start;
+  max-width: 100%;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--gauzy-text-color-1);
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-decoration: none;
+
+  &[href]:hover,
+  &[href]:focus-visible {
+    color: var(--text-primary-color);
+    text-decoration: underline;
+  }
+}
+
+.contact-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.125rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+
+  nb-icon {
+    width: 0.8125rem;
+    height: 0.8125rem;
+    font-size: 0.8125rem;
+    margin-inline-end: 0.25rem;
+    vertical-align: -0.125rem;
+  }
+}
+
+.contact-meta__item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Projects: the first one, and how many more.
+.projects-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  max-width: 100%;
+  font-size: 0.8125rem;
+  color: var(--gauzy-text-color-1);
+
+  nb-icon {
+    flex: 0 0 auto;
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+    color: var(--gauzy-text-color-2);
+  }
+}
+
+.projects-chip__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.projects-chip__more {
+  flex: 0 0 auto;
+  padding: 0 0.3125rem;
+  border-radius: 999px;
+  background-color: var(--gauzy-hover-tint);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-2);
+}
+
+// Type lozenge, as Jira draws its statuses: uppercase, tinted by tone.
+.lozenge {
+  --tone: var(--text-hint-color);
+
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.125rem 0.4375rem;
+  border-radius: 0.1875rem;
+  background-color: color-mix(in srgb, var(--tone) 16%, transparent);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tone);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.tone-basic {
+    color: var(--gauzy-text-color-2);
+  }
+  &.tone-info {
+    --tone: var(--color-info-500);
+  }
+  &.tone-success {
+    --tone: var(--color-success-500);
+  }
+  &.tone-warning {
+    --tone: var(--color-warning-500);
+  }
+}
+
+.muted {
+  color: var(--gauzy-text-color-2);
+}
+
+// Row actions: quiet until the row is hovered or focused.
+.row-action {
+  opacity: 0.55;
+  transition: opacity 0.15s ease-in-out;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+.contacts__row:hover .row-action,
+.contacts__row:focus-within .row-action {
+  opacity: 1;
+}
+
+.contacts__footer {
+  padding: 0.625rem 1.25rem;
+  border-top: $hairline;
+  font-size: 0.75rem;
+  color: var(--gauzy-text-color-2);
+}
+
+// -- Empty states --
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 1 1 auto;
+  padding: 3rem 1.5rem;
+  text-align: center;
+
+  button nb-icon {
+    margin-inline-end: 0.25rem;
+  }
+}
+
+.empty__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.25rem;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--color-primary-500) 14%, transparent);
+
+  nb-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 1.5rem;
+    color: var(--text-primary-color);
+  }
+}
+
+.empty__icon {
+  width: 2rem;
+  height: 2rem;
+  font-size: 2rem;
+  color: var(--text-hint-color);
+}
+
+.empty__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--gauzy-text-color-1);
+}
+
+.empty__text {
+  max-width: 26rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: var(--gauzy-text-color-2);
+}
+
+// -- Assign dialog --
+// A checklist like Jira's "Add people" and Hubstaff's "Add to projects": search on top, one
+// row per contact with its avatar, email and type, the count and action below.
+.assign-dialog {
+  display: flex;
+  flex-direction: column;
+  width: 36rem;
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 4rem);
+  margin: 0;
+  border-radius: $dialog-radius;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.35);
+}
+
+// The header holds the title row and, under it, the search: one block above the scrolling list.
+.assign-dialog__header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 0 0 auto;
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: $hairline;
+}
+
+.assign-dialog__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  min-width: 0;
+}
+
+.assign-dialog__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--color-primary-500) 16%, transparent);
+
+  nb-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+    color: var(--text-primary-color);
+  }
+}
+
+.assign-dialog__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.assign-dialog__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.375rem;
+  color: var(--gauzy-text-color-1);
+  overflow-wrap: anywhere;
+}
+
+.assign-dialog__subtitle {
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-2);
+  overflow-wrap: anywhere;
+}
+
+// Keeps its corner: the heading shrinks and wraps instead of running under it.
+.assign-dialog__close {
+  flex: 0 0 auto;
+  margin: -0.25rem -0.375rem 0 0;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+.assign-dialog__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.assign-dialog__search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+
+  nb-icon {
+    position: absolute;
+    inset-inline-start: 0.75rem;
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+    color: var(--gauzy-text-color-2);
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    max-width: none;
+    padding-inline-start: 2.25rem;
+  }
+}
+
+// Text buttons: "Select all", "Clear".
+.assign-dialog__link {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.375rem;
+  border: 0;
+  border-radius: 0.25rem;
+  background: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary-color);
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    background-color: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.assign-dialog__body {
+  flex: 1 1 auto;
+  min-height: 12rem;
+  max-height: 24rem;
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+
+.assign-dialog__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.assign-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.5rem 0.875rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 0.12s ease-in-out;
+
+  &:hover:not(:disabled) {
+    background-color: var(--gauzy-hover-tint);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: -2px;
+  }
+
+  &.is-selected {
+    background-color: color-mix(in srgb, var(--color-primary-500) 10%, transparent);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+
+  .contact-text {
     flex: 1 1 auto;
-    min-height: 0;
+    min-width: 7rem;
+  }
+}
+
+// The checkbox: an empty square, filled with the primary colour and a tick when picked.
+.assign-option__check {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 1.5px solid var(--text-hint-color);
+  border-radius: 0.25rem;
+  transition:
+    background-color 0.12s ease-in-out,
+    border-color 0.12s ease-in-out;
+
+  nb-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    font-size: 0.875rem;
+    // The theme's text colour for filled controls: it reads on the primary fill in every theme.
+    color: var(--text-control-color);
+    opacity: 0;
+  }
+
+  .is-selected & {
+    border-color: var(--color-primary-500);
+    background-color: var(--color-primary-500);
+
+    nb-icon {
+      opacity: 1;
+    }
+  }
+}
+
+.assign-option__name {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assign-option__side {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  min-width: 0;
+  max-width: 45%;
+
+  .lozenge {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 8rem;
+  }
+}
+
+.assign-dialog__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 11rem;
+  text-align: center;
+
+  .empty__text {
+    margin: 0;
+  }
+}
+
+// Under the list: the next page loading, a "Load more", or a failed page with its retry.
+.assign-dialog__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.assign-dialog__more-text {
+  font-size: 0.75rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.assign-dialog__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  border-top: $hairline;
+}
+
+.assign-dialog__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gauzy-text-color-1);
+}
+
+.assign-dialog__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.assign-dialog__submit nb-icon {
+  margin-inline-end: 0.25rem;
+}
+
+.assign-dialog__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.125rem;
+  margin-inline-start: 0.375rem;
+  padding: 0 0.3125rem;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--text-control-color) 25%, transparent);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+// The dialogs read a step smaller than the page: the shared row pieces shrink inside them only.
+.remove-dialog {
+  .avatar {
+    width: 1.875rem;
+    height: 1.875rem;
+    font-size: 0.6875rem;
+  }
+
+  .contact-meta {
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
+  }
+}
+
+.assign-dialog {
+  .avatar {
+    width: 1.875rem;
+    height: 1.875rem;
+    font-size: 0.6875rem;
+  }
+
+  .contact-meta {
+    font-size: 0.6875rem;
+    line-height: 0.9375rem;
+
+    nb-icon {
+      width: 0.75rem;
+      height: 0.75rem;
+      font-size: 0.75rem;
+    }
+  }
+
+  .lozenge {
+    font-size: 0.625rem;
+    line-height: 0.875rem;
+  }
+
+  .assign-dialog__search input {
+    font-size: 0.8125rem;
+  }
+
+  .assign-option {
+    padding-block: 0.4375rem;
+  }
+
+  .empty__text {
+    font-size: 0.75rem;
+  }
+}
+
+// -- Remove confirmation dialog --
+// Rendered in the dialog overlay, but declared in this template, so these rules still reach it.
+.remove-dialog {
+  width: 28rem;
+  max-width: calc(100vw - 2rem);
+  margin: 0;
+  border-radius: $dialog-radius;
+  box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.35);
+}
+
+.remove-dialog__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0.75rem 1.25rem;
+  border-bottom: 0;
+}
+
+.remove-dialog__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--color-danger-500) 16%, transparent);
+
+  nb-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    font-size: 1.125rem;
+    color: var(--color-danger-500);
+  }
+}
+
+.remove-dialog__title {
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.375rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.remove-dialog__close {
+  flex: 0 0 auto;
+
+  nb-icon {
+    width: 1rem;
+    height: 1rem;
+    font-size: 1rem;
+  }
+}
+
+.remove-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.25rem 1.25rem 1.25rem;
+}
+
+.remove-dialog__contact {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border: $hairline;
+  border-radius: var(--gauzy-radius-sm, 0.375rem);
+  background-color: var(--gauzy-hover-tint);
+}
+
+.remove-dialog__contact-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.125rem;
+  color: var(--gauzy-text-color-1);
+  overflow-wrap: anywhere;
+}
+
+.remove-dialog__message {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: var(--gauzy-text-color-1);
+}
+
+.remove-dialog__hint {
+  margin: 0;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: var(--gauzy-text-color-2);
+}
+
+.remove-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  border-top: $hairline;
+}
+
+.remove-dialog__confirm nb-icon {
+  margin-inline-end: 0.25rem;
+}
+
+// -- Narrow screens: projects step aside --
+@media only screen and (max-width: v.$break-lg) {
+  .contacts__row {
+    grid-template-columns: $columns-md;
+  }
+
+  .col-projects {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: v.$break-md) {
+  .container-contacts {
+    padding: 0.75rem;
+  }
+
+  .contacts__header {
+    padding-inline: 1rem;
+  }
+
+  .assign-option__side {
+    display: none;
+  }
+
+  .contacts__search input {
+    width: 100%;
+  }
+
+  .contacts__row {
+    grid-template-columns: minmax(0, 1fr) auto 4.5rem;
+    padding-inline: 1rem;
   }
 }

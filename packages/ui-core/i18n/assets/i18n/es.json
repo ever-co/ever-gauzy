@@ -2221,6 +2221,44 @@
 				"CLEAR_SEARCH": "Borrar búsqueda",
 				"EMPTY_TITLE": "Aún no hay proyectos",
 				"EMPTY_TEXT": "Asigna este empleado a un proyecto para que pueda registrar tiempo y trabajar en sus tareas."
+			},
+			"CONTACTS_TAB": {
+				"TITLE": "Contactos",
+				"CAPTION": "Clientes, compradores y prospectos con los que trabaja este empleado.",
+				"SEARCH": "Buscar contactos",
+				"ASSIGN": "Asignar contactos",
+				"ASSIGN_DIALOG_TITLE": "Asignar a contactos",
+				"ASSIGN_DIALOG_SUBTITLE": "Elige los contactos con los que debe trabajar {{ employee }}.",
+				"ASSIGN_SEARCH": "Buscar por nombre",
+				"SELECT_ALL": "Seleccionar todo",
+				"DESELECT_ALL": "Deseleccionar todo",
+				"SELECTED_COUNT": "{{ count }} seleccionados",
+				"CLEAR_SELECTION": "Borrar",
+				"ASSIGN_SUBMIT": "Asignar",
+				"ALL_ASSIGNED": "Este empleado ya está asignado a todos los contactos.",
+				"NO_MATCH_PICKER": "No hay contactos que coincidan",
+				"LOAD_MORE": "Cargar más",
+				"LOAD_FAILED": "No se pudieron cargar los contactos.",
+				"COLUMNS": {
+					"CONTACT": "Contacto",
+					"TYPE": "Tipo",
+					"PROJECTS": "Proyectos"
+				},
+				"TYPE": {
+					"CLIENT": "Cliente",
+					"CUSTOMER": "Comprador",
+					"LEAD": "Prospecto"
+				},
+				"OPEN_CONTACT": "Abrir la página del contacto",
+				"REMOVE": "Quitar del contacto",
+				"REMOVE_TITLE": "Quitar del contacto",
+				"REMOVE_MESSAGE": "¿Quitar a {{ employee }} de {{ contact }}? Ya no estará asignado a este contacto.",
+				"REMOVE_HINT": "Puedes volver a asignarlo a este contacto en cualquier momento.",
+				"SHOWING": "Mostrando {{ count }} de {{ total }} contactos",
+				"NO_MATCH": "Ningún contacto coincide con «{{ term }}»",
+				"CLEAR_SEARCH": "Borrar búsqueda",
+				"EMPTY_TITLE": "Aún no hay contactos",
+				"EMPTY_TEXT": "Asigna este empleado a un cliente, comprador o prospecto para mostrar con quién trabaja."
 			}
 		},
 		"ADD_EMPLOYEES": {
