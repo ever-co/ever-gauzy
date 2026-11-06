@@ -3,7 +3,7 @@ import { chain, pluck } from 'underscore';
 import * as moment from 'moment';
 import { IOrganizationContact, IReportDayGroupByClient, ITimeLog } from '@gauzy/contracts';
 import { GetTimeLogGroupByClientCommand } from '../get-time-log-group-by-client.command';
-import { calculateAverage, calculateAverageActivity } from './../../time-log.utils';
+import { calculateAverage, calculateAverageActivity, teamOfReportRow } from './../../time-log.utils';
 
 @CommandHandler(GetTimeLogGroupByClientCommand)
 export class GetTimeLogGroupByClientHandler implements ICommandHandler<GetTimeLogGroupByClientCommand> {
@@ -13,7 +13,7 @@ export class GetTimeLogGroupByClientHandler implements ICommandHandler<GetTimeLo
 	 * @returns A Promise that resolves to the generated report grouped by client.
 	 */
 	public async execute(command: GetTimeLogGroupByClientCommand): Promise<IReportDayGroupByClient> {
-		const { timeLogs, timeZone = moment.tz.guess() } = command;
+		const { timeLogs, timeZone = moment.tz.guess(), statesTeam } = command;
 
 		// Group timeLogs by organizationContactId
 		const dailyLogs: any = chain(timeLogs)
@@ -44,7 +44,7 @@ export class GetTimeLogGroupByClientHandler implements ICommandHandler<GetTimeLo
 							.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
 							.map((dateLogs: ITimeLog[], date) => ({
 								date,
-								projectLogs: this.getGroupByEmployee(dateLogs) // Group dateLogs by employeeId
+								projectLogs: this.getGroupByEmployee(dateLogs, statesTeam) // Group dateLogs by employeeId
 							}))
 							.value();
 
@@ -70,9 +70,10 @@ export class GetTimeLogGroupByClientHandler implements ICommandHandler<GetTimeLo
 	/**
 	 * Groups time logs by employee and calculates average duration and activity for each employee.
 	 * @param logs An array of time logs.
+	 * @param statesTeam Whether each task row states its log's team.
 	 * @returns An array containing logs grouped by employee with calculated averages.
 	 */
-	getGroupByEmployee(logs: ITimeLog[]) {
+	getGroupByEmployee(logs: ITimeLog[], statesTeam = false) {
 		const byEmployee = chain(logs)
 			.groupBy('employeeId')
 			.map((timeLogs: ITimeLog[]) => {
@@ -87,7 +88,8 @@ export class GetTimeLogGroupByClientHandler implements ICommandHandler<GetTimeLo
 				const tasks = timeLogs.map((log) => ({
 					task: log.task,
 					description: log.description,
-					duration: log.duration
+					duration: log.duration,
+					...teamOfReportRow(log, statesTeam)
 				}));
 				return {
 					tasks,
