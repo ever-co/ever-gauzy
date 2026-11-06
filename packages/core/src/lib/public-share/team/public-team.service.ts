@@ -131,7 +131,17 @@ export class PublicTeamService {
 				public: true,
 				...params
 			},
-			...(options.relations ? { relations: parseFindOptionsRelations(options.relations) } : {})
+			...(options.relations
+				? {
+						relations: parseFindOptionsRelations(options.relations),
+						// One query per relation rather than joins: the Teams app asks for `tasks`, `tasks.members`,
+						// `tasks.teams`, `tasks.tags`, `members`, `members.employee.user` on every public team page, and
+						// joined onto one another those multiplied the team into one row per (task × assignee × tag ×
+						// team member) — thousands of wide rows for a team of 113 tasks and 11 members, 2.4–10 s on
+						// production for a 400 KB answer. The `select` above still applies to each relation.
+						relationLoadStrategy: 'query' as const
+				  }
+				: {})
 		};
 
 		try {

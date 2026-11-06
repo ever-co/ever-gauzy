@@ -152,4 +152,24 @@ describe('PublicTeamService.findOneByProfileLink — task assignees', () => {
 		const team = await read({ id: 'team-1', tasks: [{ id: 'task-1' }, { id: 'task-2', members: [] }] });
 		expect(team.tasks).toEqual([{ id: 'task-1' }, { id: 'task-2', members: [] }]);
 	});
+
+	it('loads the requested relations with one query per relation, not joined onto the team row', async () => {
+		const findOneOrFail = jest.fn(async (_options: Record<string, unknown>) => ({ id: 'team-1' }));
+		const service = new PublicTeamService({ findOneOrFail } as any, {} as any, {} as any);
+
+		await service.findOneByProfileLink({ profile_link: 'team-link', id: 'team-1' } as any, {
+			relations: ['tasks', 'tasks.members', 'members', 'members.employee.user']
+		} as any);
+
+		expect(findOneOrFail).toHaveBeenCalledWith(
+			expect.objectContaining({
+				relations: { tasks: { members: true }, members: { employee: { user: true } } },
+				relationLoadStrategy: 'query'
+			})
+		);
+
+		findOneOrFail.mockClear();
+		await service.findOneByProfileLink({ profile_link: 'team-link', id: 'team-1' } as any, {} as any);
+		expect(findOneOrFail.mock.calls[0][0]).not.toHaveProperty('relationLoadStrategy');
+	});
 });
