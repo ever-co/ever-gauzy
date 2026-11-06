@@ -44232,6 +44232,12 @@ input TimerToggleInput {
 
   """The tags to file the log under, by the tag identifiers' text form."""
   tags: [String!]
+
+  """
+  The member's current day, as `YYYY-MM-DD`. When the team requires a daily plan, an Ever Teams start
+  (`TEAMS`, `MOBILE`) needs a plan for that day. Ignored unless it is today somewhere.
+  """
+  planDay: String
 }
 
 """
