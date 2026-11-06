@@ -476,12 +476,18 @@ export interface IReportDayGroupByDate {
 	}[];
 }
 
+/** Which of the employee's rates priced what they are owed: the pay rate, or the billing rate while no pay rate is set. */
+export type OwedRateSource = 'pay' | 'billing';
+
 export interface IAmountOwedReport {
 	date: string;
 	employees: {
 		employee: IEmployee;
 		duration: number;
 		amount: number;
+		rateSource?: OwedRateSource;
+		/** The currency `amount` is in. */
+		currency?: string | null;
 	}[];
 }
 

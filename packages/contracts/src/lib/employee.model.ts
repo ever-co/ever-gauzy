@@ -64,6 +64,10 @@ export interface IEmployee extends IBasePerTenantAndOrganizationEntityModel, ITa
 	payPeriod?: PayPeriodEnum;
 	billRateValue?: number;
 	billRateCurrency?: CurrenciesEnum;
+	/** What the employee is paid per hour. Salary data: only the employee and rate editors read it. */
+	payRateValue?: number | null;
+	/** The pay rate's currency; empty, the organization's. */
+	payRateCurrency?: CurrenciesEnum | null;
 	minimumBillingRate?: number;
 	reWeeklyLimit?: number;
 	organizationDepartments?: IOrganizationDepartment[];
@@ -176,11 +180,22 @@ export interface IEmployeeFindInput extends ITaggable {
 	isAway?: boolean;
 }
 
+/** An employee's pay rate, read by the employee or by a rate editor. */
+export interface IEmployeePayRate {
+	employeeId: ID;
+	payRateValue: number | null;
+	payRateCurrency: CurrenciesEnum | null;
+	/** The currency the pay rate is in: its own, else the organization's. */
+	currency: string | null;
+}
+
 export interface IEmployeeUpdateInput extends IBasePerTenantAndOrganizationEntityModel, ITaggable {
 	payPeriod?: PayPeriodEnum;
 	billRateValue?: number;
 	minimumBillingRate?: number;
 	billRateCurrency?: CurrenciesEnum;
+	payRateValue?: number | null;
+	payRateCurrency?: CurrenciesEnum | null;
 	reWeeklyLimit?: number;
 	organizationDepartment?: IOrganizationDepartment;
 	organizationPosition?: IOrganizationPosition;

@@ -18,6 +18,7 @@ import {
 	ITimeLog,
 	TimeLogType,
 	IAmountOwedReport,
+	OwedRateSource,
 	IGetTimeLimitReportInput,
 	ITimeLimitReport,
 	IProjectBudgetLimitReport,
@@ -73,7 +74,9 @@ import { TypeOrmOrganizationProjectRepository } from '../../organization-project
 import { TypeOrmOrganizationContactRepository } from '../../organization-contact/repository/type-orm-organization-contact.repository';
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { Organization } from '../../organization/organization.entity';
+import { findStoredPayRates, isPayRateSet, mayReadPayRateOf, StoredPayRate } from '../../employee/pay-rate';
 import { TimeLog } from './time-log.entity';
+import { owedRateOf, payRateNeedsOrganizationCurrency } from './owed-rate';
 import {
 	IManualTimeEntry,
 	assertRequiredContext,
@@ -386,20 +389,68 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 	/**
 	 * What the owed-amount report and its chart answer for an employee's day: priced once, in exact decimals, to
-	 * the decimals of the rate's currency, as the weekly report prices a week.
+	 * the decimals of the rate's currency, as the weekly report prices a week. The employee's pay rate prices it once
+	 * a rate editor set it, else their billing rate, as before pay rates existed (see `owedRateOf`).
 	 *
 	 * @param duration - The seconds of the day.
 	 * @param employee - The employee, with their bill rate and its currency.
+	 * @param payRates - The pay rates set, by employee id.
 	 * @param organizationCurrency - The currency of a rate that states none.
-	 * @returns The amount. An employee without a rate is owed nothing, which both surfaces declare as a number.
+	 * @returns The amount, the rate that priced it and its currency. An employee without a rate is owed nothing,
+	 *   which both surfaces declare as a number.
 	 */
-	private owedAmount(
+	private owedLine(
 		duration: number,
 		employee: IEmployee | null | undefined,
+		payRates: Map<ID, StoredPayRate>,
 		organizationCurrency: string | null
-	): number {
-		const currency = employee?.billRateCurrency || organizationCurrency;
-		return calculateBillableAmount(duration, employee?.billRateValue, currency) ?? 0;
+	): { amount: number; rateSource: OwedRateSource; currency: string | null } {
+		const payRate = payRates.get(employee?.id ?? '');
+		const owed = owedRateOf(employee, payRate, organizationCurrency);
+		const amount = calculateBillableAmount(duration, owed.rate, owed.currency) ?? 0;
+		return { amount, rateSource: owed.rateSource, currency: owed.currency };
+	}
+
+	/**
+	 * The pay rates a rate editor set for the employees whose logs a report prices, by employee id: only the ones the
+	 * caller may read (their own, or anyone's for a holder of ORG_EMPLOYEES_EDIT). An amount over a duration would
+	 * otherwise tell a manager a teammate's pay rate, so the others' time is priced at their billing rate.
+	 */
+	private async findPayRatesOf(logs: ITimeLog[], organizationId?: ID): Promise<Map<ID, StoredPayRate>> {
+		const payRates = new Map<ID, StoredPayRate>();
+		const tenantId = RequestContext.currentTenantId();
+		if (!tenantId) {
+			return payRates;
+		}
+		const loggedEmployeeIds = logs.map((log) => log.employeeId);
+		const knownEmployeeIds = loggedEmployeeIds.filter(Boolean);
+		const readableEmployeeIds = knownEmployeeIds.filter((employeeId) => mayReadPayRateOf(employeeId));
+		const employeeIds = Array.from(new Set(readableEmployeeIds));
+		const rows = await findStoredPayRates(this.typeOrmRepository.manager, employeeIds, tenantId, organizationId);
+		for (const row of rows) {
+			if (isPayRateSet(row.payRateValue)) {
+				payRates.set(row.id, row);
+			}
+		}
+		return payRates;
+	}
+
+	/** The organization's currency, read only when a billing rate or a pay rate that prices the report states none. */
+	private async findCurrencyForOwedAmounts(
+		logs: ITimeLog[],
+		payRates: Map<ID, StoredPayRate>,
+		organizationId: ID | undefined
+	): Promise<string | null> {
+		const currency = await this.findCurrencyForRatesWithoutOne(logs, organizationId);
+		if (currency) {
+			return currency;
+		}
+		const setPayRates = Array.from(payRates.values());
+		const payRateNeedsIt = setPayRates.some((payRate) => payRateNeedsOrganizationCurrency(payRate));
+		if (!payRateNeedsIt) {
+			return null;
+		}
+		return await this.findOrganizationCurrency(organizationId);
 	}
 
 	/**
@@ -725,7 +776,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		}
 
 		// A rate that states no currency is in the organization's, as on the weekly report
-		const organizationCurrency = await this.findCurrencyForRatesWithoutOne(timeLogs, request.organizationId);
+		const payRates = await this.findPayRatesOf(timeLogs, request.organizationId);
+		const organizationCurrency = await this.findCurrencyForOwedAmounts(timeLogs, payRates, request.organizationId);
 
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -739,10 +791,14 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						// Retrieve employee details
 						const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
 
+						const owed = this.owedLine(durationSum, employee, payRates, organizationCurrency);
+
 						return {
 							employee,
-							amount: this.owedAmount(durationSum, employee, organizationCurrency),
-							duration: durationSum
+							amount: owed.amount,
+							duration: durationSum,
+							rateSource: owed.rateSource,
+							currency: owed.currency
 						};
 					})
 					.value();
@@ -827,7 +883,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		const { days, timeZone } = this.reportDateRange(request);
 
 		// A rate that states no currency is in the organization's, as on the weekly report
-		const organizationCurrency = await this.findCurrencyForRatesWithoutOne(timeLogs, request.organizationId);
+		const payRates = await this.findPayRatesOf(timeLogs, request.organizationId);
+		const organizationCurrency = await this.findCurrencyForOwedAmounts(timeLogs, payRates, request.organizationId);
 
 		const byDate: any = chain(timeLogs)
 			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -841,10 +898,11 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						// Retrieve employee details
 						const employee = byEmployeeLogs.length > 0 ? byEmployeeLogs[0].employee : null;
 
+						const owed = this.owedLine(durationSum, employee, payRates, organizationCurrency);
+
 						return {
 							employee,
-							// Calculate the owed amount based on the employee's bill rate and duration
-							amount: this.owedAmount(durationSum, employee, organizationCurrency),
+							amount: owed.amount,
 							duration: durationSum
 						};
 					})

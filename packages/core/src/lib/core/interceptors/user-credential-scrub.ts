@@ -1,3 +1,5 @@
+import { scrubEmployeePayRate } from './employee-pay-rate-scrub';
+
 /**
  * The `User` columns that must never leave the API. They mirror the entity's
  * `@Exclude({ toPlainOnly: true })` set.
@@ -57,7 +59,7 @@ function isUserShaped(value: Record<string, unknown>): boolean {
  * @param node A plain object or array from the response body (mutated in place).
  * @returns The node's child values, to be walked in turn.
  */
-function scrubNode(node: Record<string, unknown> | unknown[]): unknown[] {
+function scrubNode(node: Record<string, unknown> | unknown[], keepPayRate: boolean): unknown[] {
 	if (Array.isArray(node)) {
 		return node;
 	}
@@ -66,7 +68,14 @@ function scrubNode(node: Record<string, unknown> | unknown[]): unknown[] {
 			delete node[key];
 		}
 	}
+	scrubEmployeePayRate(node, keepPayRate);
 	return Object.values(node);
+}
+
+/** Options of {@link scrubUserCredentials}. */
+export interface CredentialScrubOptions {
+	/** Keep the pay rate keys: set for the pay rate route only (see `RespondsWithPayRate`). */
+	readonly keepPayRate?: boolean;
 }
 
 /**
@@ -79,10 +88,15 @@ function scrubNode(node: Record<string, unknown> | unknown[]): unknown[] {
  * serialized with its password hash, refresh token and one-time codes. This runs AFTER
  * `instanceToPlain`, so real instances are already clean and this is a no-op for them.
  *
+ * Every node loses an employee's pay rate on the same walk, except on the pay rate route (see
+ * `employee-pay-rate-scrub.ts`).
+ *
  * @param data The response body produced by `instanceToPlain`.
+ * @param options See {@link CredentialScrubOptions}.
  * @returns The same value, with credentials removed from every user-shaped object.
  */
-export function scrubUserCredentials<T>(data: T): T {
+export function scrubUserCredentials<T>(data: T, options: CredentialScrubOptions = {}): T {
+	const keepPayRate = options.keepPayRate === true;
 	if (!isWalkable(data)) {
 		return data;
 	}
@@ -97,7 +111,7 @@ export function scrubUserCredentials<T>(data: T): T {
 		}
 		seen.add(node);
 
-		for (const child of scrubNode(node)) {
+		for (const child of scrubNode(node, keepPayRate)) {
 			if (isWalkable(child)) {
 				stack.push(child);
 			}

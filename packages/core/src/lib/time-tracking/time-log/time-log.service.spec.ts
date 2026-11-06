@@ -510,6 +510,8 @@ describe('TimeLogService', () => {
 				const self = Object.create(TimeLogService.prototype, {
 					ormType: { value: MultiORMEnum.MikroORM },
 					mikroOrmRepository: { value: { find, getEntityManager: () => ({ findOne }) } },
+					// The pay rates are read through TypeORM under both ORMs; none is set here
+					typeOrmRepository: { value: { manager: { find: jest.fn().mockResolvedValue([]) } } },
 					buildMikroOrmTimeLogWhere: { value: jest.fn().mockResolvedValue({}) },
 					serialize: { value: (entity: unknown) => entity }
 				});
@@ -671,6 +673,8 @@ describe('TimeLogService', () => {
 				const self = Object.create(TimeLogService.prototype, {
 					ormType: { value: MultiORMEnum.MikroORM },
 					mikroOrmRepository: { value: { find, getEntityManager: () => ({ findOne }) } },
+					// The pay rates are read through TypeORM under both ORMs; none is set here
+					typeOrmRepository: { value: { manager: { find: jest.fn().mockResolvedValue([]) } } },
 					buildMikroOrmTimeLogWhere: { value: jest.fn().mockResolvedValue({}) },
 					serialize: { value: (entity: unknown) => entity }
 				});
