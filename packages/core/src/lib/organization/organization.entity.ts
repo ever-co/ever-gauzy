@@ -365,6 +365,17 @@ export class Organization extends TenantBaseEntity implements IOrganization {
 	@MultiORMColumn({ default: false })
 	requireClient?: boolean;
 
+	/**
+	 * Whether a new time entry must name a team. The server checks timer starts and time recorded by hand, not stops
+	 * or edits of existing logs. It fills the team for an employee in exactly one active team of the organization, and
+	 * otherwise refuses the entry. What the desktop timer and the agent start or upload is never refused.
+	 */
+	@ApiPropertyOptional({ type: () => Boolean, default: false })
+	@IsOptional()
+	@IsBoolean()
+	@MultiORMColumn({ default: false })
+	requireTeam?: boolean;
+
 	@MultiORMColumn({ default: 12 })
 	timeFormat?: 12 | 24;
 

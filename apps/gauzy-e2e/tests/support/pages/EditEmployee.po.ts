@@ -290,12 +290,13 @@ export const clickProjectOrContactDropdown = async () => {
 	// wrapper is intentionally inert to avoid the focus-only click closing/no-opening the panel.
 };
 
-/** The entry ticked in an assign dialog (Contacts tab), until its row is verified; null when none was. */
+/** The entry ticked in an assign dialog (Projects or Contacts tab), until its row is verified; null when none was. */
 let pickedName: string | null = null;
 
 export const selectProjectOrContactFromDropdown = async (index: number) => {
-	// Contacts (<ga-edit-employee-contacts>): the assign dialog's checklist — tick the index-th contact.
-	// Projects (<ga-edit-employee-membership>): #departmentsSelect, an ng-select (multiple, hideSelected,
+	// Projects (<ga-edit-employee-projects>) and Contacts (<ga-edit-employee-contacts>): the assign dialog's
+	// checklist — tick the index-th entry. A page that still has <ga-edit-employee-membership>:
+	// #departmentsSelect, an ng-select (multiple, hideSelected,
 	// appendTo="body"), driven through the shared ng-select driver: it opens the control by keyboard,
 	// counts only REAL options (ng-select's "No items found" row is also a `div.ng-option`, which the old
 	// loop happily "clicked" as if it were a project), and confirms the pick by the chip it commits.
@@ -336,7 +337,7 @@ export const clickSaveProjectOrContactButton = async () => {
 	// button only gates on form.invalid, which is satisfied once an option is picked).
 	await waitForSpinnerGone();
 	await dispatchClick(EditEmployeePage.saveProjectOrContactButtonCss);
-	// Contacts: the assign dialog closes once the server took the ticks.
+	// Projects and Contacts: the assign dialog closes once the server took the ticks.
 	const page = getPage();
 	const dialog = page.locator('.assign-dialog');
 	if (!(await dialog.count())) {
@@ -358,12 +359,14 @@ export const clickSaveProjectOrContactButton = async () => {
 
 export const verifyProjectOrContactExist = async () => {
 	if (pickedName) {
-		// Contacts: the row of the entry just assigned, not merely any row.
+		// Projects and Contacts: the row of the entry just assigned, not merely any row.
 		const escaped = pickedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 		const page = getPage();
 		await page
 			.locator(EditEmployeePage.verifyProjectOrContactCss)
-			.filter({ has: page.locator('.contact-name', { hasText: new RegExp(`^\\s*${escaped}\\s*$`) }) })
+			.filter({
+				has: page.locator(EditEmployeePage.assignedRowNameCss, { hasText: new RegExp(`^\\s*${escaped}\\s*$`) })
+			})
 			.first()
 			.waitFor({ state: 'visible', timeout: 30_000 });
 		pickedName = null;

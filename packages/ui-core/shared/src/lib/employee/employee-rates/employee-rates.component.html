@@ -1,4 +1,7 @@
 <form class="rates" [formGroup]="form" (ngSubmit)="onSubmit()">
+	@if (ownRatesLocked) {
+		<p class="caption rates__locked-hint">{{ 'FORM.RATES.OWN_RATES_LOCKED' | translate }}</p>
+	}
 	<section class="rates__panel rates__panel--rate">
 		<header class="rates__legend">
 			@if (isEmployee) {
@@ -126,9 +129,11 @@
 		</div>
 	</section>
 
-	<footer class="rates__actions">
-		<button [disabled]="form.invalid" type="submit" nbButton status="success">
-			{{ 'BUTTONS.SAVE' | translate }}
-		</button>
-	</footer>
+	@if (!ownRatesLocked) {
+		<footer class="rates__actions">
+			<button [disabled]="form.invalid" type="submit" nbButton status="success">
+				{{ 'BUTTONS.SAVE' | translate }}
+			</button>
+		</footer>
+	}
 </form>

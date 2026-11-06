@@ -5,6 +5,7 @@ import { isNotEmpty } from '@gauzy/utils';
 import { RequestContext } from '../core/context';
 import { TypeOrmOrganizationTeamEmployeeRepository } from '../organization-team-employee/repository/type-orm-organization-team-employee.repository';
 import { TypeOrmOrganizationProjectEmployeeRepository } from '../organization-project/repository/type-orm-organization-project-employee.repository';
+import { isTeamManagerMembership } from '../tasks/task-setting-access/task-setting-team-managers';
 
 /**
  * Service to handle manager access control and filter accessible employeeIds
@@ -39,7 +40,7 @@ export type MembersReadScope = { allowed: false } | { allowed: true; employeeIds
  * NULL. Strict equality would skip it and refuse a real manager or member. A fresh object is built per
  * query because TypeORM may transform a FindOperator's value in place.
  */
-const activeMembershipWhere = () => ({
+export const activeMembershipWhere = () => ({
 	isActive: Or(IsNull(), Equal(true)),
 	isArchived: Or(IsNull(), Equal(false))
 });
@@ -48,7 +49,7 @@ const activeMembershipWhere = () => ({
  * Where clause for the team or project a membership belongs to, which must itself still be in effect:
  * deleting, archiving or deactivating a team or project leaves its membership rows untouched.
  */
-const activeGroupWhere = () => ({ ...activeMembershipWhere(), deletedAt: IsNull() });
+export const activeGroupWhere = () => ({ ...activeMembershipWhere(), deletedAt: IsNull() });
 
 @Injectable()
 export class ManagedEmployeeService {
@@ -141,6 +142,33 @@ export class ManagedEmployeeService {
 	}
 
 	/**
+	 * The members of the given teams whose time the caller may read as the team's: the members of every given team
+	 * for a caller who may act for every employee, the members of the given teams they manage for anyone else, and
+	 * nobody for a caller without an employee identity.
+	 *
+	 * @param teamIds - The teams a report is scoped to
+	 * @returns The members' employeeIds, empty when the caller reads no team's members
+	 */
+	async findMembersOfReadableTeams(teamIds: ID[]): Promise<ID[]> {
+		if (!isNotEmpty(teamIds)) {
+			return [];
+		}
+
+		const actsForEveryEmployee = RequestContext.hasPermission(PermissionsEnum.CHANGE_SELECTED_EMPLOYEE);
+		if (actsForEveryEmployee) {
+			return await this.getMembersOfTeamsAndProjects(teamIds);
+		}
+
+		const currentEmployeeId = RequestContext.currentUser()?.employeeId;
+		if (!currentEmployeeId) {
+			return [];
+		}
+
+		const managed = await this.getManagedTeamsAndProjects(currentEmployeeId, teamIds);
+		return await this.getMembersOfTeamsAndProjects(managed.teamIds);
+	}
+
+	/**
 	 * Checks if the current employee is a manager of at least one of the specified teams or projects.
 	 *
 	 * @param currentEmployeeId - The employeeId to check
@@ -190,6 +218,32 @@ export class ManagedEmployeeService {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether the employee manages at least one of the teams by the team's `MANAGER` role or by the `isManager` flag,
+	 * as Ever Teams reads a team manager. {@link isManagerOfTeamsOrProjects} reads the flag alone.
+	 *
+	 * @param employeeId - The employee to check
+	 * @param teamIds - The teams to check against
+	 * @returns True if an active membership of the employee manages one of the teams in the current tenant
+	 */
+	async managesAnyTeam(employeeId: ID, teamIds: ID[]): Promise<boolean> {
+		const tenantId = RequestContext.currentTenantId();
+		const isMissingTenant = !tenantId;
+		const isMissingEmployee = !employeeId;
+		const isMissingTeams = !isNotEmpty(teamIds);
+
+		if (isMissingTenant || isMissingEmployee || isMissingTeams) {
+			return false;
+		}
+
+		const memberships = await this.typeOrmTeamEmployeeRepository.find({
+			where: { employeeId, organizationTeamId: In(teamIds), tenantId },
+			relations: { role: true }
+		});
+
+		return memberships.some(isTeamManagerMembership);
 	}
 
 	/**

@@ -16,6 +16,7 @@ import {
 	employeeAgentRestrictionLocations,
 	recordAgentRestrictionAcknowledgement
 } from './../../agent-exit-logout-restriction';
+import { assertOwnRatesMayChange, isSameId, removeOwnRateFields, withStoredOwnRates } from './../../own-rates';
 import { TrackingTurnedOffEvent } from './../../../time-tracking/timer/events/tracking-turned-off.event';
 
 /** Whether the save turned the employee's time tracking off: it was on before, and the saved row has it off. */
@@ -63,6 +64,10 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		const employee: IEmployee = await this._employeeService.findOneByIdString(id, {
 			relations: { organization: { contact: true }, user: true, contact: true }
 		});
+
+		const editsOwnRecord = isSameId(user?.employeeId, id);
+		const changesOwnRates = RequestContext.hasPermission(PermissionsEnum.CHANGE_OWN_RATES);
+		assertOwnRatesMayChange(employee, input, { editsOwnRecord, changesOwnRates });
 		// The worker's own location and their organization's: EEA/UK if either is.
 		const previousLocation = employeeAgentRestrictionLocations(employee);
 		const location = employeeAgentRestrictionLocations(employee, input.contact);
@@ -79,6 +84,11 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 		// The acknowledgement is a request flag, not an employee column.
 		const changes: IEmployeeUpdateInput = { ...input };
 		delete changes.acknowledgeAgentExitLogoutRestriction;
+
+		const keepsStoredRates = editsOwnRecord && !changesOwnRates;
+		if (keepsStoredRates) {
+			removeOwnRateFields(changes);
+		}
 
 		// The edit writes the employee's own contact and never another one. `contact` cascades by id, and a
 		// nested id used to re-point the employee at an organization's, a client's or a candidate's contact
@@ -129,6 +139,11 @@ export class EmployeeUpdateHandler implements ICommandHandler<EmployeeUpdateComm
 				throw error;
 			}
 			throw new BadRequestException(error.message || 'Failed to update employee profile.');
+		}
+
+		if (keepsStoredRates) {
+			const persisted = await this._employeeService.findOneByIdString(id);
+			saved = withStoredOwnRates(saved, persisted);
 		}
 
 		if (turnsTrackingOff(employee, saved)) {

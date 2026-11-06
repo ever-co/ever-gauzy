@@ -62,6 +62,7 @@ import {
 import { collapseRelationMirrors, stateRelationsFromMirrors } from './mikro-orm-scope-column.helper';
 import { withoutUnloadedReferences } from './mikro-orm-serialize.helper';
 import { assertSensitiveRelationsAllowed } from '../util/sensitive-relations.helper';
+import { assertCallerColumnsAllowed, CallerColumnCheckOptions } from '../util/caller-restricted-columns.helper';
 import { redactDatabaseError, safeErrorMessage, toClientSafeError } from '../errors/database-error';
 import {
 	ICountByOptions,
@@ -198,6 +199,18 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	}
 
 	/**
+	 * Refuses a read whose caller-supplied `where`, `order` or `select` names a credential column, or a rate
+	 * column without the right that sets rates (see `assertCallerColumnsAllowed`). Lookups a service builds
+	 * itself are not affected.
+	 *
+	 * @param read - The find options about to be issued.
+	 * @param options - Set `queryIsWhere` when the read takes a bare `where`.
+	 */
+	protected assertCallerColumnsPermitted(read?: unknown, options?: CallerColumnCheckOptions): void {
+		assertCallerColumnsAllowed(this.typeOrmRepository?.metadata, read, options);
+	}
+
+	/**
 	 * Count the number of entities based on the provided options.
 	 *
 	 * @param options - Options for counting entities.
@@ -205,6 +218,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 */
 	public async count(options?: ICountOptions<T>): Promise<number> {
 		options = withDeletedAsStated(options);
+		this.assertCallerColumnsPermitted(options);
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>(options as FindManyOptions);
@@ -225,6 +239,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns
 	 */
 	public async countBy(options?: ICountByOptions<T>): Promise<number> {
+		this.assertCallerColumnsPermitted({ where: options }, { queryIsWhere: true });
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:
 				const { where, mikroOptions } = parseTypeORMFindToMikroOrm<T>({ where: options } as FindManyOptions);
@@ -260,6 +275,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async findAll(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
 		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
+		this.assertCallerColumnsPermitted(options);
 
 		const emptyWindow = statesEmptyWindow(options);
 		const read = emptyWindow ? ({ ...options, take: 1 } as IFindManyOptions<T>) : options;
@@ -298,6 +314,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async find(options?: IFindManyOptions<T>): Promise<T[]> {
 		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
+		this.assertCallerColumnsPermitted(options);
 
 		if (statesEmptyWindow(options)) {
 			return [];
@@ -327,6 +344,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async paginate(options?: IFindManyOptions<T>): Promise<IPagination<T>> {
 		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
+		this.assertCallerColumnsPermitted(options);
 
 		try {
 			let total: number;
@@ -384,6 +402,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		// Asserted outside the try: the catch below turns any throw into `{ success: false }`, which
 		// would swallow the ForbiddenException instead of refusing the read.
 		this.assertRelationsPermitted(options);
+		this.assertCallerColumnsPermitted(options);
 
 		try {
 			// A lookup "by id" with no id must not become a lookup for ANY row: TypeORM omits an
@@ -441,6 +460,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 		options = withDeletedAsStated(options);
 		// See findOneOrFailByIdString: the catch below would swallow the ForbiddenException.
 		this.assertRelationsPermitted(options);
+		this.assertCallerColumnsPermitted(options);
 
 		try {
 			let record: T;
@@ -485,6 +505,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @returns Whether a record was found, and the record.
 	 */
 	public async findOneOrFailByWhereOptions(options: IFindWhereOptions<T>): Promise<ITryRequest<T>> {
+		this.assertCallerColumnsPermitted({ where: options });
+
 		try {
 			let record: T;
 			switch (this.ormType) {
@@ -528,6 +550,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async findOneByIdString(id: ID, options?: IFindOneOptions<T>): Promise<T> {
 		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
+		this.assertCallerColumnsPermitted(options);
 
 		// See findOneOrFailByIdString: an empty id must fail closed, never match an arbitrary row.
 		if (!id) {
@@ -590,6 +613,7 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	public async findOneByOptions(options: IFindOneOptions<T>): Promise<T> {
 		options = withDeletedAsStated(options);
 		this.assertRelationsPermitted(options);
+		this.assertCallerColumnsPermitted(options);
 
 		let record: T;
 		switch (this.ormType) {
@@ -624,6 +648,8 @@ export abstract class CrudService<T extends BaseEntity> implements ICrudService<
 	 * @throws NotFoundException when no record matches.
 	 */
 	public async findOneByWhereOptions(options: IFindWhereOptions<T>): Promise<T> {
+		this.assertCallerColumnsPermitted({ where: options });
+
 		let record: T;
 		switch (this.ormType) {
 			case MultiORMEnum.MikroORM:

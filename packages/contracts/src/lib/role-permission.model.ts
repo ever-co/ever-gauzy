@@ -70,6 +70,8 @@ export enum PermissionsEnum {
 	ORG_EMPLOYEES_VIEW = 'ORG_EMPLOYEES_VIEW',
 	ORG_EMPLOYEES_EDIT = 'ORG_EMPLOYEES_EDIT',
 	ORG_EMPLOYEES_DELETE = 'ORG_EMPLOYEES_DELETE',
+	/** Change one's own rates on one's own employee record. Someone else's rates need ORG_EMPLOYEES_EDIT. */
+	CHANGE_OWN_RATES = 'CHANGE_OWN_RATES',
 	// Member View Permissions
 	ORG_MEMBERS_VIEW = 'ORG_MEMBERS_VIEW',
 	ORG_CANDIDATES_VIEW = 'ORG_CANDIDATES_VIEW',
@@ -883,6 +885,7 @@ export const PermissionGroups = {
 	//Readonly permissions, are only enabled for Super Admin/Admin role
 	ADMINISTRATION: [
 		PermissionsEnum.ORG_EMPLOYEES_EDIT,
+		PermissionsEnum.CHANGE_OWN_RATES,
 		PermissionsEnum.ORG_CANDIDATES_VIEW,
 		PermissionsEnum.ORG_CANDIDATES_EDIT,
 		PermissionsEnum.ORG_USERS_VIEW,

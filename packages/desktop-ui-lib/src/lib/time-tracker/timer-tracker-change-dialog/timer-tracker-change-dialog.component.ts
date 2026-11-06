@@ -25,6 +25,7 @@ import { TaskSelectorComponent } from '../../shared/features/task-selector/task-
 import { NoteComponent } from '../../shared/features/note/note.component';
 import { SpinnerButtonDirective } from '../../directives/spinner-button.directive';
 import { TranslatePipe } from '@ngx-translate/core';
+import { isTeamRequired } from '../timer-required-fields';
 
 @UntilDestroy({ checkProperties: true })
 @Component({
@@ -54,7 +55,7 @@ export class TimerTrackerChangeDialogComponent implements OnInit {
 	public form: FormGroup = new FormGroup({
 		clientId: new FormControl(null, this.requiredValidator(this.organization?.requireClient)),
 		projectId: new FormControl(null, this.requiredValidator(this.organization?.requireProject)),
-		teamId: new FormControl(null),
+		teamId: new FormControl(null, this.requiredValidator(isTeamRequired(this.organization))),
 		taskId: new FormControl(null, this.requiredValidator(this.organization?.requireTask)),
 		note: new FormControl(null, this.requiredValidator(this.organization?.requireDescription))
 	});

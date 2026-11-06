@@ -579,6 +579,12 @@ describe('TimeLogResolver — the SDL declares the capabilities the REST routes 
 		expect(printed).toMatch(/deleteTimeLogs\(input: DeleteTimeLogsInput!\): Boolean!\n/);
 	});
 
+	it('lets a hand-recorded interval name its team, which an organization requiring a team needs', () => {
+		expect(inputBody('CreateManualTimeLogInput')).toMatch(/organizationTeamId: ID\n/);
+		// The edit route carries no team change here: an existing log keeps the team it was filed under.
+		expect(inputBody('UpdateManualTimeLogInput')).not.toMatch(/organizationTeamId/);
+	});
+
 	it('declares the three write bodies, and never the members the delivered body stamps for itself', () => {
 		expect(printed).toMatch(/input CreateManualTimeLogInput \{/);
 		expect(printed).toMatch(/input UpdateManualTimeLogInput \{/);

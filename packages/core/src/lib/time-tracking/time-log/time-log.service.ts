@@ -74,6 +74,12 @@ import { TypeOrmOrganizationContactRepository } from '../../organization-contact
 import { ManagedEmployeeService } from '../../employee/managed-employee.service';
 import { Organization } from '../../organization/organization.entity';
 import { TimeLog } from './time-log.entity';
+import {
+	IManualTimeEntry,
+	assertRequiredContext,
+	projectIdForEntry,
+	teamIdForEntry
+} from './organization-tracking-requirements';
 
 @Injectable()
 export class TimeLogService extends TenantAwareCrudService<TimeLog> {
@@ -519,6 +525,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	async getDailyReport(request: IGetTimeLogReportInput) {
 		// Extract timezone from the request
 		const { timeZone } = request;
+		const statesTeam = request.includeTimeWithoutTeam === true;
 
 		let logs: ITimeLog[];
 
@@ -562,6 +569,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 						projectId: true,
 						taskId: true,
 						organizationContactId: true,
+						organizationTeamId: statesTeam,
 						project: {
 							id: true,
 							name: true,
@@ -623,16 +631,22 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		let dailyLogs: any;
 		switch (request.groupBy) {
 			case ReportGroupFilterEnum.employee:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByEmployeeCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(
+					new GetTimeLogGroupByEmployeeCommand(logs, timeZone, statesTeam)
+				);
 				break;
 			case ReportGroupFilterEnum.project:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByProjectCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(
+					new GetTimeLogGroupByProjectCommand(logs, timeZone, statesTeam)
+				);
 				break;
 			case ReportGroupFilterEnum.client:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByClientCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(
+					new GetTimeLogGroupByClientCommand(logs, timeZone, statesTeam)
+				);
 				break;
 			default:
-				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByDateCommand(logs, timeZone));
+				dailyLogs = await this.commandBus.execute(new GetTimeLogGroupByDateCommand(logs, timeZone, statesTeam));
 				break;
 		}
 
@@ -1428,7 +1442,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 
 		// Filter by organization team IDs if used in the request
 		if (isNotEmpty(teamIds)) {
-			query.andWhere(p(`"${query.alias}"."organizationTeamId" IN (:...teamIds)`), { teamIds });
+			const memberIdsWithoutTeam = await this.membersCountedWithoutTeam(request, teamIds);
+			this.filterByTeams(query, teamIds, memberIdsWithoutTeam);
 		}
 
 		// Filters records based on the overall column, representing the activity level.
@@ -1496,6 +1511,68 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * The members whose time logged without a team a team-scoped report also counts: nobody unless the report asks
+	 * for it (`includeTimeWithoutTeam`), and then only the members of the requested teams the caller may read as
+	 * those teams' (see `ManagedEmployeeService.findMembersOfReadableTeams`), never anyone else's.
+	 *
+	 * @param request The report input.
+	 * @param teamIds The teams the report is scoped to.
+	 * @returns The members' employeeIds, empty when the report counts no time without a team.
+	 */
+	private async membersCountedWithoutTeam(request: IGetTimeLogReportInput, teamIds: ID[]): Promise<ID[]> {
+		const includesTimeWithoutTeam = request.includeTimeWithoutTeam === true;
+		if (!includesTimeWithoutTeam) {
+			return [];
+		}
+		return await this._managedEmployeeService.findMembersOfReadableTeams(teamIds);
+	}
+
+	/**
+	 * Narrows a report to the logs of the given teams and, when members are given, to those members' logs without a
+	 * team as well.
+	 *
+	 * @param query The report query.
+	 * @param teamIds The teams the report is scoped to.
+	 * @param memberIdsWithoutTeam The members whose logs without a team the report also counts.
+	 */
+	private filterByTeams(query: SelectQueryBuilder<TimeLog>, teamIds: ID[], memberIdsWithoutTeam: ID[]): void {
+		const teamCondition = p(`"${query.alias}"."organizationTeamId" IN (:...teamIds)`);
+		if (!isNotEmpty(memberIdsWithoutTeam)) {
+			query.andWhere(teamCondition, { teamIds });
+			return;
+		}
+		query.andWhere(
+			new Brackets((teamOrMember) => {
+				teamOrMember.where(teamCondition, { teamIds });
+				teamOrMember.orWhere(
+					new Brackets((withoutTeam) => {
+						withoutTeam.where(p(`"${query.alias}"."organizationTeamId" IS NULL`));
+						withoutTeam.andWhere(p(`"${query.alias}"."employeeId" IN (:...memberIdsWithoutTeam)`), {
+							memberIdsWithoutTeam
+						});
+					})
+				);
+			})
+		);
+	}
+
+	/**
+	 * The MikroORM twin of `filterByTeams`.
+	 *
+	 * @param teamIds The teams the report is scoped to.
+	 * @param memberIdsWithoutTeam The members whose logs without a team the report also counts.
+	 * @returns The where conditions on the team.
+	 */
+	private mikroOrmTeamWhere(teamIds: ID[], memberIdsWithoutTeam: ID[]): Record<string, unknown> {
+		const teamCondition = { organizationTeamId: { $in: teamIds } };
+		if (!isNotEmpty(memberIdsWithoutTeam)) {
+			return teamCondition;
+		}
+		const withoutTeamCondition = { organizationTeamId: null, employeeId: { $in: memberIdsWithoutTeam } };
+		return { $or: [teamCondition, withoutTeamCondition] };
+	}
+
+	/**
 	 * Builds a MikroORM-compatible where object for filtering TimeLogs.
 	 * This mirrors the getFilterTimeLogQuery logic for MikroORM.
 	 *
@@ -1550,7 +1627,10 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 		if (isNotEmpty(employeeIds)) where.employeeId = { $in: employeeIds };
 		if (isNotEmpty(taskIds)) where.taskId = { $in: taskIds };
 		if (isNotEmpty(projectIds)) where.projectId = { $in: projectIds };
-		if (isNotEmpty(teamIds)) where.organizationTeamId = { $in: teamIds };
+		if (isNotEmpty(teamIds)) {
+			const memberIdsWithoutTeam = await this.membersCountedWithoutTeam(request, teamIds);
+			Object.assign(where, this.mikroOrmTeamWhere(teamIds, memberIdsWithoutTeam));
+		}
 
 		if (isNotEmpty(request.source)) {
 			where.source = request.source instanceof Array ? { $in: request.source } : request.source;
@@ -1737,12 +1817,52 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 	}
 
 	/**
+	 * The manual entry as it is recorded under its organization's switches: the team and the project filled where they
+	 * can be (see `teamIdForEntry` and `projectIdForEntry`), and refused when a required field is still missing, unless
+	 * a tracker uploaded it. The employee is the one the time is for, so the team is theirs, not the caller's.
+	 *
+	 * @param request The entry as sent.
+	 * @param employee The employee the time is for, with their organization.
+	 * @param organizationId That employee's organization.
+	 * @param tenantId The caller's tenant.
+	 * @throws BadRequestException with the code TRACKING_FIELD_REQUIRED.
+	 */
+	private async withRequiredContext(
+		request: IManualTimeEntry,
+		employee: IEmployee,
+		organizationId: ID,
+		tenantId: ID
+	): Promise<IManualTimeInput> {
+		const { uploadedByTracker, ...sent } = request;
+		const requirements = employee.organization;
+		const trackedEmployee = { employeeId: employee.id, organizationId, tenantId };
+		const manager = this.typeOrmTimeLogRepository.manager;
+		const takesTaskProject = false;
+
+		const organizationTeamId = await teamIdForEntry(manager, trackedEmployee, sent, requirements);
+		const teamContext = { ...sent, organizationTeamId };
+		const projectId = await projectIdForEntry(
+			manager,
+			trackedEmployee,
+			teamContext,
+			requirements,
+			takesTaskProject
+		);
+		const entry = { ...teamContext, projectId };
+		const isTrackerUpload = uploadedByTracker === true;
+		if (!isTrackerUpload) {
+			assertRequiredContext(requirements, entry);
+		}
+		return entry;
+	}
+
+	/**
 	 * Adds a manual time log entry.
 	 *
 	 * @param request The input data for the manual time log.
 	 * @returns The created time log entry.
 	 */
-	async addManualTime(request: IManualTimeInput): Promise<ITimeLog> {
+	async addManualTime(request: IManualTimeEntry): Promise<ITimeLog> {
 		try {
 			const tenantId = RequestContext.currentTenantId();
 			const { employeeId, startedAt, stoppedAt } = request;
@@ -1778,6 +1898,8 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 				throw new BadRequestException('Please select valid Date, start time and end time');
 			}
 
+			const entry = await this.withRequiredContext(request, employee, organizationId, tenantId);
+
 			// Check for conflicts with existing time logs
 			const conflicts = await this.commandBus.execute(
 				new IGetConflictTimeLogCommand({
@@ -1809,7 +1931,7 @@ export class TimeLogService extends TenantAwareCrudService<TimeLog> {
 			// Create the new time log entry. The handler reads it back through this service, whose employee
 			// filter would not find a log written for a member the caller manages.
 			return await this.withoutEmployeeFilter(() =>
-				this.commandBus.execute(new TimeLogCreateCommand({ ...request, organizationId }))
+				this.commandBus.execute(new TimeLogCreateCommand({ ...entry, organizationId }))
 			);
 		} catch (error) {
 			// Never swallow the reason: a blanket message here hid a real database failure indefinitely.
