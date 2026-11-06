@@ -8,7 +8,7 @@ import { OrganizationsService, Store, UserIdService, UsersOrganizationsService }
 @Component({
     selector: 'ga-edit-user-organizations-mutation',
     templateUrl: './edit-user-organizations-mutation.component.html',
-    styleUrls: ['../../../edit-user-mutation/edit-user-mutation.component.scss'],
+    styleUrls: ['./edit-user-organizations-mutation.component.scss'],
     changeDetection: ChangeDetectionStrategy.Eager,
     standalone: false
 })
@@ -82,7 +82,7 @@ export class EditUserOrganizationsMutationComponent extends TranslationBaseCompo
 	}
 
 	async submitForm() {
-		if (this.form.valid) {
+		if (this.form.valid && this.selectedOrganizationsId?.length) {
 			const { tenantId } = this.store.user;
 			for (let i = 0; i < this.selectedOrganizationsId.length; i++) {
 				this.addOrg.emit({
