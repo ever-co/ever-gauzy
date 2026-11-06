@@ -498,7 +498,8 @@ jobs:
         env:
           CI_IN_CLUSTER: ${{ vars.CI_IN_CLUSTER }}
         run: |
-          snapd=false; command -v snap >/dev/null 2>&1 && snapd=true
+          # the client alone is not enough: `snap list` needs a running snapd
+          snapd=false; command -v snap >/dev/null 2>&1 && snap list >/dev/null 2>&1 && snapd=true
           flatpak=true; [ "$CI_IN_CLUSTER" = true ] && flatpak=false
           echo "snapd=$snapd" >> "$GITHUB_OUTPUT"
           echo "flatpak=$flatpak" >> "$GITHUB_OUTPUT"
