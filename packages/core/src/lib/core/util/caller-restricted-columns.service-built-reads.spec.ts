@@ -5,6 +5,7 @@ import { EntityMetadata } from 'typeorm';
 import { PermissionsEnum } from '@gauzy/contracts';
 import { RequestContext } from '../context';
 import { CrudService } from '../crud/crud.service';
+import { assertCallerColumnsAllowed } from './caller-restricted-columns.helper';
 import { MultiORMEnum } from '../utils';
 import { TaskService } from '../../tasks/task.service';
 import { DailyPlanService } from '../../tasks/daily-plan/daily-plan.service';
@@ -291,6 +292,22 @@ describe('Service-built list reads and caller-restricted columns', () => {
 			expect(messageOf(outcome)).toContain(STORE_REACHED);
 		}
 	);
+
+	it("refuses a caller filter, sort or select on a share's token, which reads the share without signing in", () => {
+		const share = entity('SharedEntity');
+		const reads = [{ where: { token: 'guess%' } }, { order: { token: 'ASC' } }, { select: ['token'] }];
+
+		for (const read of reads) {
+			request = { query: read };
+			expect(() => assertCallerColumnsAllowed(share, read)).toThrow(BadRequestException);
+		}
+	});
+
+	it("CONTROL: a share's own lookup by token, named by the route path and not the query, still runs", () => {
+		request = { query: {} };
+
+		expect(() => assertCallerColumnsAllowed(entity('SharedEntity'), { where: { token: 'share-token' } })).not.toThrow();
+	});
 
 	it('refuses a caller filter nested past the depth the check follows', async () => {
 		const deep = { where: nestedFilter(20) };
