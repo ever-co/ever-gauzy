@@ -29,7 +29,7 @@ import { EditUserPage } from '../../../src/support/Base/pageobjects/EditUserPage
 // wipe the user before the real test (the Main-tab rename + verify) runs.
 let orgWasAdded = false;
 
-// Counts the removable org rows (nb-action[icon="close"]) currently rendered. The remove-org sub-flow
+// Counts the removable org rows (button.orgs__remove) currently rendered. The remove-org sub-flow
 // is only SAFE + meaningful when this is >= 2: removing a row when the user has only one org triggers
 // the delete-user dialog (edit-user-organizations.component.remove, counter - 1 < 1), which would wipe
 // the user before the real test (Main-tab rename + verify) runs. We gate on this LIVE DOM count rather
