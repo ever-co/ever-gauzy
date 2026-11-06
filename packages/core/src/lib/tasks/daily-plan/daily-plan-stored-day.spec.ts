@@ -9,7 +9,7 @@ jest.mock('@gauzy/config', () => ({
 }));
 
 import { storedDayStart } from './daily-plan-stored-day';
-import { planDatesAroundToday } from '../../time-tracking/timer/timer-plan-rule';
+import { planDatesAroundToday, planDatesOfDay } from '../../time-tracking/timer/timer-plan-rule';
 
 /**
  * PostgreSQL and MySQL store a plan date in the API process's local time, SQLite in UTC. The bounds of a plan-day
@@ -55,5 +55,17 @@ describe('stored plan day bounds', () => {
 		const { from, to } = planDatesAroundToday(now);
 		expect(from.toISOString()).toBe('2026-11-04T00:00:00.000Z');
 		expect(to.toISOString()).toBe('2026-11-06T23:59:59.999Z');
+	});
+
+	it.each([false, true])('keep the plan of a named day and no other day (SQLite: %s)', (storesUtc) => {
+		mockDatabase.storesUtc = storesUtc;
+		const planDateOf = (day: string) => moment.utc(day, 'YYYY-MM-DD').valueOf();
+
+		const { from, to } = planDatesOfDay('2026-11-05');
+		const holds = (time: number) => time >= from.getTime() && time <= to.getTime();
+
+		expect(holds(planDateOf('2026-11-05'))).toBe(true);
+		expect(holds(planDateOf('2026-11-04'))).toBe(false);
+		expect(holds(planDateOf('2026-11-06'))).toBe(false);
 	});
 });

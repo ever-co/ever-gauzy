@@ -701,6 +701,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Default Rate",
+			"OWN_RATES_LOCKED": "בקש ממנהל לשנות את התעריף שלך.",
 			"EXPECTED_RATE": "Expected Rate",
 			"LIMITS": "Limits"
 		},
@@ -3329,6 +3330,7 @@
 				"SEARCH_INDEX_DEFINITIONS_VIEW": "צפייה בשדות שאינדקס החיפוש מכיל ובמשקל של כל אחד מהם.",
 				"SEARCH_INDEX_DEFINITIONS_EDIT": "הוספה, שינוי משקל, השבתה או הסרה של השדות שאינדקס החיפוש מכיל.",
 				"ORG_EMPLOYEES_EDIT": "שינוי פרופילים של עובדים, פרטי העסקה, תעריפים והגדרות.",
+				"CHANGE_OWN_RATES": "שינוי התעריפים שלך בפרופיל העובד שלך. בלעדיה, אתה רואה את התעריפים שלך ומבקש ממנהל לשנות אותם.",
 				"ORG_CANDIDATES_VIEW": "צפייה במועמדים של הארגון ובפרופילים שלהם.",
 				"ORG_CANDIDATES_EDIT": "יצירה, עריכה ומחיקה של מועמדים.",
 				"ORG_USERS_VIEW": "צפייה במשתמשי הארגון ובתפקידים שלהם.",
@@ -3412,6 +3414,7 @@
 			"ORG_EMPLOYEES_ADD": "צור עובדי ארגון",
 			"ORG_EMPLOYEES_VIEW": "צפה בעובדי ארגון",
 			"ORG_EMPLOYEES_EDIT": "ערוך עובדי ארגון",
+			"CHANGE_OWN_RATES": "שינוי תעריפים עצמיים",
 			"ORG_EMPLOYEES_DELETE": "מחק עובדי ארגון",
 			"ORG_CANDIDATES_VIEW": "View Organization Candidates",
 			"ORG_CANDIDATES_EDIT": "Create/Edit/Delete Organization Candidates",

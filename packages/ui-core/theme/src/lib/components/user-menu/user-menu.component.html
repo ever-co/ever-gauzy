@@ -1,6 +1,6 @@
 <div gauzyOutside (clickOutside)="onClickOutside($event)" class="account-panel">
 	<header class="panel-header">
-		<gauzy-user showIdentity="true" [user$]="user$" (clicked)="onClick()"></gauzy-user>
+		<gauzy-user showIdentity="true" [user$]="user$" (clicked)="onOpenProfile()"></gauzy-user>
 		<button type="button" class="panel-close" [attr.aria-label]="'BUTTONS.CLOSE' | translate" (click)="onClick()">
 			<nb-icon icon="close-outline"></nb-icon>
 		</button>

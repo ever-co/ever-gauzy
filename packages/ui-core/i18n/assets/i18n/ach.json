@@ -600,6 +600,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "crwdns2407:0crwdne2407:0",
+			"OWN_RATES_LOCKED": "Ask an admin to change your rate.",
 			"EXPECTED_RATE": "crwdns3544:0crwdne3544:0",
 			"LIMITS": "crwdns2409:0crwdne2409:0"
 		},
@@ -3138,6 +3139,7 @@
 				"SEARCH_INDEX_DEFINITIONS_VIEW": "See which fields the search index holds and how much each one weighs.",
 				"SEARCH_INDEX_DEFINITIONS_EDIT": "Add, re-weight, deactivate or remove the fields the search index holds.",
 				"ORG_EMPLOYEES_EDIT": "Change employees' profiles, employment details, rates and settings.",
+				"CHANGE_OWN_RATES": "Change your own rates on your own employee profile. Without it, you see your rates and ask an admin to change them.",
 				"ORG_CANDIDATES_VIEW": "See the organization's candidates and their profiles.",
 				"ORG_CANDIDATES_EDIT": "Create, edit and delete candidates.",
 				"ORG_USERS_VIEW": "See the users of the organization and their roles.",
@@ -3215,6 +3217,7 @@
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "crwdns8726:0crwdne8726:0",
 			"ORG_EMPLOYEES_VIEW": "crwdns2667:0crwdne2667:0",
 			"ORG_EMPLOYEES_EDIT": "crwdns2669:0crwdne2669:0",
+			"CHANGE_OWN_RATES": "Change Own Rates",
 			"ORG_CANDIDATES_VIEW": "crwdns3380:0crwdne3380:0",
 			"ORG_CANDIDATES_EDIT": "crwdns3382:0crwdne3382:0",
 			"ORG_USERS_VIEW": "crwdns2671:0crwdne2671:0",

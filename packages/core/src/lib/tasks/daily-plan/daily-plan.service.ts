@@ -29,40 +29,25 @@ import { ManagedEmployeeService } from '../../employee/managed-employee.service'
 import { TaskService } from '../task.service';
 import { DailyPlan } from './daily-plan.entity';
 import { storedDayStart, storedPlanDay } from './daily-plan-stored-day';
+import { dayIfTodaySomewhere } from './daily-plan-caller-day';
 import { MikroOrmDailyPlanRepository } from './repository/mikro-orm-daily-plan.repository';
 import { TypeOrmDailyPlanRepository } from './repository/type-orm-daily-plan.repository';
 import { assertCallerColumnsAllowed } from '../../core/util/caller-restricted-columns.helper';
 
 const hasTask = (plan: IDailyPlan, taskId: ID): boolean => plan.tasks.some((task) => task.id === taskId);
 
-/** From UTC-12 to UTC+14, the current day of every time zone is at most one day away from the UTC date. */
-const MAX_DAYS_FROM_UTC_DATE = 1;
-
 /**
- * The first plan day a bulk task removal changes, as `YYYY-MM-DD`. Plans are stored on the user's own calendar day,
- * so the caller may send its current day. A value that is not a valid day that is today somewhere is ignored, and
- * the UTC date stays the cutoff, as for a caller that sends nothing.
+ * The first plan day a bulk task removal changes, as `YYYY-MM-DD`. The caller may send its current day. A value that
+ * is not a valid day that is today somewhere is ignored, and the UTC date stays the cutoff, as for a caller that
+ * sends nothing.
  */
 const removalCutoffDay = (callerToday: unknown): string => {
-	const utcToday = moment.utc().startOf('day');
-	const utcDay = utcToday.format('YYYY-MM-DD');
-
-	if (typeof callerToday !== 'string') {
-		return utcDay;
+	const callerDay = dayIfTodaySomewhere(callerToday);
+	if (callerDay) {
+		return callerDay;
 	}
 
-	const callerDay = moment.utc(callerToday, 'YYYY-MM-DD', true);
-	const isValidDay = callerDay.isValid();
-	const daysFromUtcToday = callerDay.diff(utcToday, 'days');
-	const distanceInDays = Math.abs(daysFromUtcToday);
-	const isTodaySomewhere = distanceInDays <= MAX_DAYS_FROM_UTC_DATE;
-	const isCallerToday = isValidDay && isTodaySomewhere;
-
-	if (!isCallerToday) {
-		return utcDay;
-	}
-
-	return callerDay.format('YYYY-MM-DD');
+	return moment.utc().format('YYYY-MM-DD');
 };
 
 @Injectable()

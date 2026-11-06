@@ -1,5 +1,6 @@
 import * as moment from 'moment';
 import { ID, TimeLogSourceEnum } from '@gauzy/contracts';
+import { dayIfTodaySomewhere } from '../../tasks/daily-plan/daily-plan-caller-day';
 import { storedDayStart } from '../../tasks/daily-plan/daily-plan-stored-day';
 
 /**
@@ -31,6 +32,38 @@ export function planDatesAroundToday(now: moment.Moment): { from: Date; to: Date
 	const windowEnd = latestStartOf(dayAfterWindow);
 	const to = new Date(windowEnd - 1);
 	return { from, to };
+}
+
+/**
+ * The dates a plan for `planDay` may carry. Ever Teams sends a plan day as a date, parsed as UTC midnight, while a
+ * client sending a local date-time lands on the process's midnight (see storedDayStart). The day starts at the
+ * earlier of its two midnights and ends where the next day's earlier midnight starts: both readings of that day are
+ * in, and neither reading of the day before or after is.
+ *
+ * @param planDay A plan day, as `YYYY-MM-DD`.
+ */
+export function planDatesOfDay(planDay: string): { from: Date; to: Date } {
+	const day = moment.utc(planDay, 'YYYY-MM-DD');
+	const nextDay = day.clone().add(1, 'day');
+	const from = new Date(earliestStartOf(day));
+	const nextDayStart = earliestStartOf(nextDay);
+	const to = new Date(nextDayStart - 1);
+	return { from, to };
+}
+
+/**
+ * The dates the plans of a start may carry: exactly the member's day when the client names it and it is today
+ * somewhere, otherwise the window around today, for a client that does not send its day.
+ *
+ * @param planDay The day the client sent with the start, if any.
+ * @param now The server's current time.
+ */
+export function planDatesForStart(planDay: unknown, now: moment.Moment): { from: Date; to: Date } {
+	const memberDay = dayIfTodaySomewhere(planDay, now);
+	if (!memberDay) {
+		return planDatesAroundToday(now);
+	}
+	return planDatesOfDay(memberDay);
 }
 
 function dayStartReadings(utcDay: moment.Moment): number[] {

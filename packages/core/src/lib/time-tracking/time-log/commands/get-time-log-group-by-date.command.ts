@@ -4,5 +4,9 @@ import { ITimeLog } from '@gauzy/contracts';
 export class GetTimeLogGroupByDateCommand implements ICommand {
 	static readonly type = '[TimeLog] group by date';
 
-	constructor(public readonly timeLogs: ITimeLog[], public readonly timeZone: string) {}
+	constructor(
+		public readonly timeLogs: ITimeLog[],
+		public readonly timeZone: string,
+		public readonly statesTeam = false
+	) {}
 }

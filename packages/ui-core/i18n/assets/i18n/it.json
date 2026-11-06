@@ -691,6 +691,7 @@
 		},
 		"RATES": {
 			"DEFAULT_RATE": "Tariffa predefinita",
+			"OWN_RATES_LOCKED": "Chiedi a un amministratore di modificare la tua tariffa.",
 			"EXPECTED_RATE": "Tariffa prevista",
 			"LIMITS": "Limiti",
 			"ERRORS": {
@@ -3303,6 +3304,7 @@
 				"SEARCH_INDEX_DEFINITIONS_VIEW": "Visualizza quali campi contiene l'indice di ricerca e quanto pesa ciascuno.",
 				"SEARCH_INDEX_DEFINITIONS_EDIT": "Aggiungi, ripesa, disattiva o rimuovi i campi contenuti nell'indice di ricerca.",
 				"ORG_EMPLOYEES_EDIT": "Modifica profili, dettagli di impiego, tariffe e impostazioni dei dipendenti.",
+				"CHANGE_OWN_RATES": "Modificare le proprie tariffe nel proprio profilo dipendente. Senza questo permesso, vedi le tue tariffe e chiedi a un amministratore di cambiarle.",
 				"ORG_CANDIDATES_VIEW": "Visualizza i candidati dell'organizzazione e i loro profili.",
 				"ORG_CANDIDATES_EDIT": "Crea, modifica ed elimina candidati.",
 				"ORG_USERS_VIEW": "Visualizza gli utenti dell'organizzazione e i loro ruoli.",
@@ -3385,6 +3387,7 @@
 			"ORG_PROPOSAL_TEMPLATES_EDIT": "Creare/Modificare/Eliminare modelli di proposte",
 			"ORG_EMPLOYEES_VIEW": "Visualizza dipendenti dell'organizzazione",
 			"ORG_EMPLOYEES_EDIT": "Creare/Modificare/Eliminare dipendenti dell'organizzazione",
+			"CHANGE_OWN_RATES": "Modificare le proprie tariffe",
 			"ORG_CANDIDATES_VIEW": "Visualizza candidati dell'organizzazione",
 			"ORG_CANDIDATES_EDIT": "Crea/Modifica/Elimina Candidati dell'Organizzazione",
 			"ORG_USERS_VIEW": "Visualizza utenti dell'organizzazione",

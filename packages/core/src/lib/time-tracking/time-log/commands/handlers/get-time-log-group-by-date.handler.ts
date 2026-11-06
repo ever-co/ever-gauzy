@@ -3,7 +3,7 @@ import { chain, pluck } from 'underscore';
 import * as moment from 'moment';
 import { IReportDayGroupByDate, ITimeLog } from '@gauzy/contracts';
 import { GetTimeLogGroupByDateCommand } from '../get-time-log-group-by-date.command';
-import { calculateAverage, calculateAverageActivity } from './../../time-log.utils';
+import { calculateAverage, calculateAverageActivity, teamOfReportRow } from './../../time-log.utils';
 
 @CommandHandler(GetTimeLogGroupByDateCommand)
 export class GetTimeLogGroupByDateHandler implements ICommandHandler<GetTimeLogGroupByDateCommand> {
@@ -13,7 +13,7 @@ export class GetTimeLogGroupByDateHandler implements ICommandHandler<GetTimeLogG
 	 * @returns A Promise that resolves to the generated report grouped by date.
 	 */
 	public async execute(command: GetTimeLogGroupByDateCommand): Promise<IReportDayGroupByDate> {
-		const { timeLogs, timeZone = moment.tz.guess() } = command;
+		const { timeLogs, timeZone = moment.tz.guess(), statesTeam } = command;
 
 		const dailyLogs: any = chain(timeLogs)
 			.groupBy((log: ITimeLog) => moment.utc(log.startedAt).tz(timeZone).format('YYYY-MM-DD'))
@@ -34,7 +34,7 @@ export class GetTimeLogGroupByDateHandler implements ICommandHandler<GetTimeLogG
 
 						return {
 							project,
-							employeeLogs: this.getGroupByEmployee(byProjectLogs)
+							employeeLogs: this.getGroupByEmployee(byProjectLogs, statesTeam)
 						};
 					})
 					.value();
@@ -54,9 +54,10 @@ export class GetTimeLogGroupByDateHandler implements ICommandHandler<GetTimeLogG
 	/**
 	 * Groups time logs by employee and calculates average duration and activity for each employee.
 	 * @param logs An array of time logs.
+	 * @param statesTeam Whether each task row states its log's team.
 	 * @returns An array containing logs grouped by employee with calculated averages.
 	 */
-	getGroupByEmployee(logs: ITimeLog[]) {
+	getGroupByEmployee(logs: ITimeLog[], statesTeam = false) {
 		const byEmployee = chain(logs)
 			.groupBy('employeeId')
 			.map((timeLogs: ITimeLog[]) => {
@@ -73,7 +74,8 @@ export class GetTimeLogGroupByDateHandler implements ICommandHandler<GetTimeLogG
 					task: log.task,
 					description: log.description,
 					duration: log.duration,
-					client: log.organizationContact ? log.organizationContact : null
+					client: log.organizationContact ? log.organizationContact : null,
+					...teamOfReportRow(log, statesTeam)
 				}));
 
 				return {

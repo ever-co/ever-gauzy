@@ -89,6 +89,7 @@ export interface IOrganization
 	requireProject?: boolean;
 	requireTask?: boolean;
 	requireClient?: boolean;
+	requireTeam?: boolean;
 	timeFormat?: TimeFormatEnum;
 	defaultStartTime?: string;
 	defaultEndTime?: string;
