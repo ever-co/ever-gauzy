@@ -136,6 +136,17 @@ describe('EditUserOrganizationsComponent add dialog', () => {
 		expect(component.addLoading).toBe(false);
 	});
 
+	it('does not reopen while a save runs, so the ticks a failed save leaves stay for the retry', () => {
+		const { component, open } = tabWith();
+		component.saving = true;
+		component.addSelection = new Set(['o-3']);
+
+		component.openAdd();
+
+		expect(open).not.toHaveBeenCalled();
+		expect([...component.addSelection]).toEqual(['o-3']);
+	});
+
 	it('opens once, with nothing ticked and no search', () => {
 		const { component, open } = tabWith();
 		component.addSearch = 'old';

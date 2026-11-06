@@ -1,5 +1,5 @@
 import { UntypedFormBuilder } from '@angular/forms';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { RolesEnum } from '@gauzy/contracts';
 import { EditProfileFormComponent } from './edit-profile-form.component';
 
@@ -80,6 +80,23 @@ describe('EditProfileFormComponent', () => {
 			expect(component.form.get('imageId').value).toBe('image-2');
 		});
 
+		it('leaves the session alone when the user signed out, or another signed in, while the photo was saved', async () => {
+			let land: (value: any) => void = () => undefined;
+			const { component } = formFor(
+				undefined,
+				jest.fn(() => new Promise((resolve) => (land = resolve)))
+			);
+
+			const saving = component.updateImageAsset(IMAGE);
+			const other = { id: 'user-9', imageId: 'theirs', imageUrl: 'theirs.png' };
+			component['_store'].user = other;
+			component['_store'].userId = other.id;
+			land({ imageUrl: IMAGE.fullUrl });
+			await saving;
+
+			expect(component['_store'].user).toEqual(other);
+		});
+
 		it('CONTROL: an admin editing themselves through the users page counts as their own profile', async () => {
 			const { component } = formFor({ id: 'admin-1' });
 
@@ -142,15 +159,26 @@ describe('EditProfileFormComponent', () => {
 			const { component, update } = formFor({ id: 'user-2' });
 			component.allowRoleChange = true;
 			component.form.patchValue({ role: { name: 'EMPLOYEE' } });
-			component['_roleService'].getRoleByOptions = jest.fn(() => {
-				throw new Error('404');
-			});
+			// The lookup's request fails: the observable errors, as an HTTP call does.
+			component['_roleService'].getRoleByOptions = jest.fn(() => throwError(() => new Error('404')));
 
 			await component.submitForm();
 
 			expect(update).not.toHaveBeenCalled();
 			expect(component['_errorHandler'].handleError).toHaveBeenCalled();
 			expect(component.saving).toBe(false);
+		});
+
+		it('where the role can change, sends nothing without a role, and looks none up', async () => {
+			const { component, update } = formFor({ id: 'user-2' });
+			component.allowRoleChange = true;
+			component.form.patchValue({ role: null });
+
+			expect(component.form.invalid).toBe(true);
+			await component.submitForm();
+
+			expect(component['_roleService'].getRoleByOptions).not.toHaveBeenCalled();
+			expect(update).not.toHaveBeenCalled();
 		});
 
 		it('frees the button when the save fails, and reports the error', async () => {
