@@ -4580,14 +4580,14 @@
 			"ACTIVE_STATUS": "نشط",
 			"INACTIVE_STATUS": "غير نشط",
 			"LAST_UPDATED": "آخر تحديث",
-			"EMAIL_VERIFIED_ON": "تاريخ توثيق البريد",
 			"LANGUAGE": "اللغة",
 			"TIME_ZONE": "المنطقة الزمنية",
 			"LOCAL_TIME": "الوقت المحلي",
 			"TIME_FORMAT": "تنسيق الوقت",
 			"TIME_FORMAT_12": "12 ساعة",
 			"TIME_FORMAT_24": "24 ساعة",
-			"NOT_SET": "غير محدد"
+			"NOT_SET": "غير محدد",
+			"LOAD_FAILED": "تعذر تحميل هذا المستخدم."
 		},
 		"REMOVE_USER": "تمت إزالة '{{ name }}'",
 		"ACTIVE": "نشط",

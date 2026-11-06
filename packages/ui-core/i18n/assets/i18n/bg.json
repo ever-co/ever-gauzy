@@ -4634,14 +4634,14 @@
 			"ACTIVE_STATUS": "Активен",
 			"INACTIVE_STATUS": "Неактивен",
 			"LAST_UPDATED": "Последна промяна",
-			"EMAIL_VERIFIED_ON": "Имейлът потвърден на",
 			"LANGUAGE": "Език",
 			"TIME_ZONE": "Часова зона",
 			"LOCAL_TIME": "Местно време",
 			"TIME_FORMAT": "Формат на часа",
 			"TIME_FORMAT_12": "12-часов",
 			"TIME_FORMAT_24": "24-часов",
-			"NOT_SET": "Не е зададено"
+			"NOT_SET": "Не е зададено",
+			"LOAD_FAILED": "Този потребител не може да бъде зареден."
 		},
 		"REMOVE_USER": "'{{ name }}' was removed",
 		"ACTIVE": "Активен",

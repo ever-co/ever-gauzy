@@ -4582,14 +4582,14 @@
 			"ACTIVE_STATUS": "Actief",
 			"INACTIVE_STATUS": "Inactief",
 			"LAST_UPDATED": "Laatst bijgewerkt",
-			"EMAIL_VERIFIED_ON": "E-mail geverifieerd op",
 			"LANGUAGE": "Taal",
 			"TIME_ZONE": "Tijdzone",
 			"LOCAL_TIME": "Lokale tijd",
 			"TIME_FORMAT": "Tijdnotatie",
 			"TIME_FORMAT_12": "12-uurs",
 			"TIME_FORMAT_24": "24-uurs",
-			"NOT_SET": "Niet ingesteld"
+			"NOT_SET": "Niet ingesteld",
+			"LOAD_FAILED": "Deze gebruiker kon niet worden geladen."
 		},
 		"REMOVE_USER": "'{{ name }}' werd verwijderd",
 		"ACTIVE": "Actief",

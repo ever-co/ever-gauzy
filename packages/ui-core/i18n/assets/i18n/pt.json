@@ -4582,14 +4582,14 @@
 			"ACTIVE_STATUS": "Ativo",
 			"INACTIVE_STATUS": "Inativo",
 			"LAST_UPDATED": "Última atualização",
-			"EMAIL_VERIFIED_ON": "E-mail verificado em",
 			"LANGUAGE": "Idioma",
 			"TIME_ZONE": "Fuso horário",
 			"LOCAL_TIME": "Hora local",
 			"TIME_FORMAT": "Formato de hora",
 			"TIME_FORMAT_12": "12 horas",
 			"TIME_FORMAT_24": "24 horas",
-			"NOT_SET": "Não definido"
+			"NOT_SET": "Não definido",
+			"LOAD_FAILED": "Não foi possível carregar este usuário."
 		},
 		"REMOVE_USER": "'{{ name }}' foi removido.",
 		"ACTIVE": "Ativo",

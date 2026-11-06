@@ -4583,14 +4583,14 @@
 			"ACTIVE_STATUS": "Actif",
 			"INACTIVE_STATUS": "Inactif",
 			"LAST_UPDATED": "Dernière mise à jour",
-			"EMAIL_VERIFIED_ON": "E-mail vérifié le",
 			"LANGUAGE": "Langue",
 			"TIME_ZONE": "Fuseau horaire",
 			"LOCAL_TIME": "Heure locale",
 			"TIME_FORMAT": "Format de l’heure",
 			"TIME_FORMAT_12": "12 heures",
 			"TIME_FORMAT_24": "24 heures",
-			"NOT_SET": "Non défini"
+			"NOT_SET": "Non défini",
+			"LOAD_FAILED": "Impossible de charger cet utilisateur."
 		},
 		"REMOVE_USER": "'{{ name }}' a été supprimé",
 		"ACTIVE": "Actif",

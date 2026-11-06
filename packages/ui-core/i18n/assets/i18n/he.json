@@ -4601,14 +4601,14 @@
 			"ACTIVE_STATUS": "פעיל",
 			"INACTIVE_STATUS": "לא פעיל",
 			"LAST_UPDATED": "עודכן לאחרונה",
-			"EMAIL_VERIFIED_ON": "האימייל אומת בתאריך",
 			"LANGUAGE": "שפה",
 			"TIME_ZONE": "אזור זמן",
 			"LOCAL_TIME": "שעה מקומית",
 			"TIME_FORMAT": "תבנית שעה",
 			"TIME_FORMAT_12": "12 שעות",
 			"TIME_FORMAT_24": "24 שעות",
-			"NOT_SET": "לא הוגדר"
+			"NOT_SET": "לא הוגדר",
+			"LOAD_FAILED": "לא ניתן לטעון את המשתמש הזה."
 		},
 		"REMOVE_USER": "'{{ name }}' was removed",
 		"ACTIVE": "פעיל",

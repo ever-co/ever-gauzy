@@ -4608,14 +4608,14 @@
 			"ACTIVE_STATUS": "Активен",
 			"INACTIVE_STATUS": "Неактивен",
 			"LAST_UPDATED": "Последнее изменение",
-			"EMAIL_VERIFIED_ON": "Почта подтверждена",
 			"LANGUAGE": "Язык",
 			"TIME_ZONE": "Часовой пояс",
 			"LOCAL_TIME": "Местное время",
 			"TIME_FORMAT": "Формат времени",
 			"TIME_FORMAT_12": "12-часовой",
 			"TIME_FORMAT_24": "24-часовой",
-			"NOT_SET": "Не задано"
+			"NOT_SET": "Не задано",
+			"LOAD_FAILED": "Не удалось загрузить этого пользователя."
 		},
 		"REMOVE_USER": "'{{ name }}' был удален",
 		"ACTIVE": "Активный",

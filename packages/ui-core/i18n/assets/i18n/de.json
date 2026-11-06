@@ -4578,14 +4578,14 @@
 			"ACTIVE_STATUS": "Aktiv",
 			"INACTIVE_STATUS": "Inaktiv",
 			"LAST_UPDATED": "Zuletzt aktualisiert",
-			"EMAIL_VERIFIED_ON": "E-Mail bestätigt am",
 			"LANGUAGE": "Sprache",
 			"TIME_ZONE": "Zeitzone",
 			"LOCAL_TIME": "Ortszeit",
 			"TIME_FORMAT": "Zeitformat",
 			"TIME_FORMAT_12": "12-Stunden",
 			"TIME_FORMAT_24": "24-Stunden",
-			"NOT_SET": "Nicht festgelegt"
+			"NOT_SET": "Nicht festgelegt",
+			"LOAD_FAILED": "Dieser Benutzer konnte nicht geladen werden."
 		},
 		"REMOVE_USER": "'{{ name }}' wurde entfernt.",
 		"ACTIVE": "Aktiv",

@@ -4395,14 +4395,14 @@
 			"ACTIVE_STATUS": "Active",
 			"INACTIVE_STATUS": "Inactive",
 			"LAST_UPDATED": "Last updated",
-			"EMAIL_VERIFIED_ON": "Email verified on",
 			"LANGUAGE": "Language",
 			"TIME_ZONE": "Time zone",
 			"LOCAL_TIME": "Local time",
 			"TIME_FORMAT": "Time format",
 			"TIME_FORMAT_12": "12-hour",
 			"TIME_FORMAT_24": "24-hour",
-			"NOT_SET": "Not set"
+			"NOT_SET": "Not set",
+			"LOAD_FAILED": "This user could not be loaded."
 		},
 		"REMOVE_USER": "crwdns9860:0{{ name }}crwdne9860:0",
 		"ACTIVE": "crwdns11162:0crwdne11162:0",

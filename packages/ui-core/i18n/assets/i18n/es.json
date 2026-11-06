@@ -4584,14 +4584,14 @@
 			"ACTIVE_STATUS": "Activo",
 			"INACTIVE_STATUS": "Inactivo",
 			"LAST_UPDATED": "Última actualización",
-			"EMAIL_VERIFIED_ON": "Correo verificado el",
 			"LANGUAGE": "Idioma",
 			"TIME_ZONE": "Zona horaria",
 			"LOCAL_TIME": "Hora local",
 			"TIME_FORMAT": "Formato de hora",
 			"TIME_FORMAT_12": "12 horas",
 			"TIME_FORMAT_24": "24 horas",
-			"NOT_SET": "Sin definir"
+			"NOT_SET": "Sin definir",
+			"LOAD_FAILED": "No se pudo cargar este usuario."
 		},
 		"REMOVE_USER": "'{{ name }}' fue removido.",
 		"ACTIVE": "Activo",

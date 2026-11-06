@@ -5114,14 +5114,14 @@
 			"ACTIVE_STATUS": "活跃",
 			"INACTIVE_STATUS": "未激活",
 			"LAST_UPDATED": "最后更新",
-			"EMAIL_VERIFIED_ON": "邮箱验证于",
 			"LANGUAGE": "语言",
 			"TIME_ZONE": "时区",
 			"LOCAL_TIME": "当地时间",
 			"TIME_FORMAT": "时间格式",
 			"TIME_FORMAT_12": "12 小时制",
 			"TIME_FORMAT_24": "24 小时制",
-			"NOT_SET": "未设置"
+			"NOT_SET": "未设置",
+			"LOAD_FAILED": "无法加载此用户。"
 		},
 		"REMOVE_USER": "\"{{ name }}\" 被移除了",
 		"ACTIVE": "活跃",
