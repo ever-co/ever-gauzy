@@ -85,6 +85,26 @@ export class OrganizationContactService {
 		);
 	}
 
+	/**
+	 * A page of the contacts an employee can be assigned to, ordered by name: each one's id, name, picture and type
+	 * only. It takes ORG_EMPLOYEES_EDIT (as assigning does), not ORG_CONTACT_VIEW. `name` is matched as a substring;
+	 * `take` is the page size, at most 100, and `skip` the page, counted from 1.
+	 */
+	getAssignable(query: {
+		organizationId: string;
+		tenantId: string;
+		name?: string;
+		take?: number;
+		skip?: number;
+	}): Promise<IPagination<Pick<IOrganizationContact, 'id' | 'name' | 'imageUrl' | 'contactType'>>> {
+		return firstValueFrom(
+			this.http.get<IPagination<Pick<IOrganizationContact, 'id' | 'name' | 'imageUrl' | 'contactType'>>>(
+				`${API_PREFIX}/organization-contact/assignable`,
+				{ params: toParams(query) }
+			)
+		);
+	}
+
 	getByName(relations?: string[], findInput?: string): Promise<IOrganizationContactFindInput> {
 		const data = JSON.stringify({ relations, findInput });
 		return firstValueFrom(this.http.get(`${API_PREFIX}/organization-contact`, { params: { data } }));
